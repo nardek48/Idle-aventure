@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <!-- =========================================================
+       QUEST IDLE — FANTASY CLICKER
+       Version : v2 (fichiers séparés)
+       ========================================================= -->
+
+  <!-- Métadonnées & configuration mobile / PWA -->
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d0a1a">
+
+  <!-- Titre de la page / version -->
+  <title>Quest Idle — Fantasy Clicker v2</title>
+
+  <!-- Feuille de style externe -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div id="hud">
+  <div class="hud-resources">
+    <span class="resource-badge gold"><span class="icon">💰</span><span id="hud-gold">0</span></span>
+    <span class="resource-badge essence"><span class="icon">🔮</span><span id="hud-essence">0</span></span>
+    <span class="resource-badge aether"><span class="icon">🌀</span><span id="hud-aether">0</span></span>
+  </div>
+  <div class="hud-zone">
+    <div class="zone-name" id="hud-zone-name">Forêt</div>
+    <div id="hud-adventure-name">Lisière</div>
+  </div>
+</div>
+
+<div id="game-area">
+  <div id="zone-banner">⚔️ Tappe l'ennemi pour attaquer !</div>
+  <div id="enemy-display">
+    <div id="enemy-emoji" onclick="playerAttack()">🟢</div>
+    <div id="enemy-name">Slime</div>
+    <div id="enemy-hp-bar-wrapper">
+      <div id="enemy-hp-bar" style="width:100%"></div>
+      <div id="enemy-hp-text">10 / 10</div>
+    </div>
+    <div class="enemy-counter" id="enemy-counter">Kills: 0</div>
+  </div>
+</div>
+
+<div id="stats-bar">
+  <div class="stat-item"><span class="stat-label">⚡ Dégâts/Tap</span><span class="stat-value" id="stat-tap-dmg">1</span></div>
+  <div class="stat-item"><span class="stat-label">🔁 Auto DPS</span><span class="stat-value" id="stat-auto-dps">0</span></div>
+  <div class="stat-item"><span class="stat-label">🎯 Critique</span><span class="stat-value" id="stat-crit">5%</span></div>
+  <div class="stat-item"><span class="stat-label">🌀 Aether</span><span class="stat-value" id="stat-aether-mult">x1.00</span></div>
+  <div class="stat-item"><span class="stat-label">💰 Or</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>
+</div>
+
+<div id="panel-container"></div>
+
+<div id="tab-bar">
+  <button class="tab-btn active" data-tab="combat" onclick="switchTab('combat')"><span class="tab-icon">⚔️</span>Combat</button>
+  <button class="tab-btn" data-tab="shop" onclick="switchTab('shop')"><span class="tab-icon">🛒</span>Shop</button>
+  <button class="tab-btn" data-tab="talents" onclick="switchTab('talents')"><span class="tab-icon">🌟</span>Talents</button>
+  <button class="tab-btn" data-tab="equip" onclick="switchTab('equip')"><span class="tab-icon">🎒</span>Équip.</button>
+  <button class="tab-btn" data-tab="quests" onclick="switchTab('quests')"><span class="tab-icon">📜</span>Quêtes<span class="tab-badge" id="quest-badge" style="display:none">!</span></button>
+  <button class="tab-btn" data-tab="ascension" onclick="switchTab('ascension')"><span class="tab-icon">🌀</span>Ascens.</button>
+  <button class="tab-btn" data-tab="map" onclick="switchTab('map')"><span class="tab-icon">🗺️</span>Map</button>
+  <button class="tab-btn" data-tab="village" onclick="switchTab('village')"><span class="tab-icon">🏡</span>Village</button>
+  <button class="tab-btn" data-tab="more" onclick="switchTab('more')"><span class="tab-icon">📋</span>Plus</button>
+</div>
+
+
+<div id="offline-modal">
+  <div class="offline-card">
+    <div class="offline-icon">😴</div>
+    <div class="offline-title">Bienvenue !</div>
+    <div class="offline-time" id="offline-time">Absent depuis 0m</div>
+    <div class="offline-rewards" id="offline-rewards"></div>
+    <button class="offline-btn" onclick="closeOfflineModal()">Récupérer les récompenses</button>
+  </div>
+</div>
+
+<div id="confirm-modal">
+  <div class="confirm-card">
+    <div class="confirm-icon" id="confirm-icon">🌀</div>
+    <div class="confirm-title" id="confirm-title">Confirmer</div>
+    <div class="confirm-text" id="confirm-text"></div>
+    <div class="confirm-buttons">
+      <button class="confirm-btn cancel" onclick="closeConfirmModal(false)">Annuler</button>
+      <button class="confirm-btn ok" onclick="closeConfirmModal(true)">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="hero-selection-root"></div>
+
+<!-- =========================================================
+     SCRIPTS — ORDRE DE CHARGEMENT IMPORTANT (var globales)
+     ========================================================= -->
+<script src="data.js"></script>        <!-- ASSETS, ENEMY_DB, WORLDS, UPGRADES, TALENTS, TALENTTREE, etc. -->
+<script src="game-state.js"></script>  <!-- objet game, valeurs initiales -->
+<script src="managers.js"></script>    <!-- WorldManager, EquipmentManager, QuestManager, OfflineManager... -->
+<script src="save.js"></script>        <!-- saveGame, loadGame, resetGame -->
+<script src="ui.js"></script>          <!-- renderAll, renderPanel, buildMoreHTML... -->
+<script src="main.js"></script>        <!-- initGame(), boucle principale, événements -->
+
+</body>
+</html>
