@@ -1,4 +1,5 @@
 "use strict";
+alert("main.js chargé")
 /* ============================================================
    QUEST IDLE — data.js
    Données statiques du jeu : assets, mondes, upgrades, talents,
