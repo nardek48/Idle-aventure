@@ -1,5 +1,4 @@
 "use strict";
-alert("main.js chargé")
 /* ============================================================
 Quest Idle — main.js (version refaite)
 Combat, achats, talents, ascension, boucle de jeu, initialisation
