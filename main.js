@@ -414,7 +414,7 @@ killEnemy: function () {
     addLog("Le cycle recommence, les ennemis deviennent plus forts.", "zone");
   }
 
-  var xpGain = enemy.isBoss ? (5 + WorldManager.worldIndex) : 0.1;
+  var xpGain = enemy.isBoss ? (10 + WorldManager.worldIndex * 3) : (2 + WorldManager.worldIndex);
   grantHeroXp(xpGain);
 
   this.spawnEnemy();
