@@ -13,6 +13,23 @@
   text-align: center;
 }
 
+#enemy-display,
+#enemy-emoji,
+#enemy-emoji img,
+.enemy-image {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#enemy-emoji img,
+.enemy-image {
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+
 /* =========================
    Ennemi principal : emoji ou image
    ========================= */
