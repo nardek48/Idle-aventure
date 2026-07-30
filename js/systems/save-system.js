@@ -1,10 +1,7 @@
 "use strict";
 /* ============================================================
-Quest Idle — save.js (version refaite)
-Sauvegarde / chargement / reset / autosave
-Dépend de : game, WorldManager, EquipmentManager, QuestManager,
-UPGRADES, AETHER_SHOP, CombatEngine, renderAll, updateQuestBadge,
-showToast, showConfirmModal, gameLog
+Quest Idle — systems/save-system.js
+Save, load, reset, autosave, migrations
 ============================================================ */
 
 var SAVE_KEY = "quest_idle_save_v6";
@@ -16,7 +13,6 @@ function getDefaultQuestProgress() {
   if (typeof DEFAULT_QUEST_PROGRESS !== "undefined" && DEFAULT_QUEST_PROGRESS) {
     return Object.assign({}, DEFAULT_QUEST_PROGRESS);
   }
-
   return {
     kills: 0,
     treasures: 0,
@@ -31,11 +27,7 @@ function getDefaultQuestProgress() {
 }
 
 function getDefaultEquipped() {
-  return {
-    weapon: null,
-    armor: null,
-    amulet: null
-  };
+  return { weapon: null, armor: null, amulet: null };
 }
 
 function normalizeProgressMap(obj, fallback) {
@@ -55,23 +47,28 @@ function normalizeProgressMap(obj, fallback) {
   return out;
 }
 
+function migrateHeroId(heroId) {
+  var map = {
+    ChaosNight: "chaosKnight",
+    ChaosRanger: "chaosRanger",
+    ChaosMage: "chaosMage"
+  };
+  return map[heroId] || heroId || "";
+}
+
 function ensureUpgradeDefaults() {
   if (!game.upgrades || typeof game.upgrades !== "object") game.upgrades = {};
   if (!game.aetherUpgrades || typeof game.aetherUpgrades !== "object") game.aetherUpgrades = {};
 
   if (typeof UPGRADES !== "undefined" && Array.isArray(UPGRADES)) {
     UPGRADES.forEach(function (u) {
-      if (u && u.id != null && game.upgrades[u.id] === undefined) {
-        game.upgrades[u.id] = 0;
-      }
+      if (u && u.id != null && game.upgrades[u.id] === undefined) game.upgrades[u.id] = 0;
     });
   }
 
   if (typeof AETHER_SHOP !== "undefined" && Array.isArray(AETHER_SHOP)) {
     AETHER_SHOP.forEach(function (u) {
-      if (u && u.id != null && game.aetherUpgrades[u.id] === undefined) {
-        game.aetherUpgrades[u.id] = 0;
-      }
+      if (u && u.id != null && game.aetherUpgrades[u.id] === undefined) game.aetherUpgrades[u.id] = 0;
     });
   }
 }
@@ -108,58 +105,46 @@ function buildSaveData() {
     version: SAVE_VERSION,
     savedAt: Date.now(),
     lastOnline: Date.now(),
-
     gold: Number(game.gold || 0),
     essence: Number(game.essence || 0),
     aether: Number(game.aether || 0),
-
     tapDamage: Number(game.tapDamage || 1),
     tapMult: Number(game.tapMult || 1),
     autoDps: Number(game.autoDps || 0),
     critChance: Number(game.critChance || 5),
     critMult: Number(game.critMult || 2),
     goldMult: Number(game.goldMult || 1),
-
     worldIndex: Number((window.WorldManager && WorldManager.worldIndex) || 0),
     adventureIndex: Number((window.WorldManager && WorldManager.adventureIndex) || 0),
     enemyIndex: Number((window.WorldManager && WorldManager.enemyIndex) || 0),
-
     totalKills: Number(game.totalKills || 0),
     totalGoldEarned: Number(game.totalGoldEarned || 0),
     totalDamageDealt: Number(game.totalDamageDealt || 0),
     playTime: Number(game.playTime || 0),
     cycleCount: Number(game.cycleCount || 0),
     ascensionCount: Number(game.ascensionCount || 0),
-
     killCounts: game.killCounts || {},
     upgrades: game.upgrades || {},
     talents: game.talents || {},
     inventory: Array.isArray(game.inventory) ? game.inventory : [],
     equipped: game.equipped || getDefaultEquipped(),
-
     quests: Array.isArray(game.quests) ? game.quests : [],
     questProgress: game.questProgress || getDefaultQuestProgress(),
     questResetTime: Number(game.questResetTime || 0),
-
     aetherUpgrades: game.aetherUpgrades || {},
     activeTab: game.activeTab || "combat",
-
     playerName: game.playerName,
     heroId: game.heroId,
-    
-    village: game.village || {
-      goldMine: 0,
-      essenceWell: 0,
-      barracks: 0,
-      timeRelay: 0
-    },
+    heroLevel: Number(game.heroLevel || 1),
+    heroXp: Number(game.heroXp || 0),
+    heroXpToNext: Number(game.heroXpToNext || 10),
+    talentPoints: Number(game.talentPoints || 0),
+    village: game.village || { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 }
   };
-
 }
 
 function saveGame() {
   if (!game.saveSupported) return false;
-
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(buildSaveData()));
     game.lastSave = Date.now();
@@ -178,7 +163,7 @@ function restoreBaseState(d) {
   game.aether = Number(d.aether || 0);
 
   game.playerName = d.playerName || "";
-  game.heroId = d.heroId || "";
+  game.heroId = migrateHeroId(d.heroId);
 
   game.tapDamage = 1;
   game.tapMult = 1;
@@ -186,6 +171,11 @@ function restoreBaseState(d) {
   game.critChance = 5;
   game.critMult = 2;
   game.goldMult = 1;
+
+  game.heroLevel = Number(d.heroLevel || 1);
+  game.heroXp = Number(d.heroXp || 0);
+  game.heroXpToNext = Number(d.heroXpToNext || 20);
+  game.talentPoints = Number(d.talentPoints || 0);
 
   game.totalKills = Number(d.totalKills || 0);
   game.totalGoldEarned = Number(d.totalGoldEarned || 0);
@@ -201,7 +191,6 @@ function restoreBaseState(d) {
 
   game.inventory = Array.isArray(d.inventory) ? d.inventory : [];
   game.equipped = d.equipped && typeof d.equipped === "object" ? d.equipped : getDefaultEquipped();
-
   if (game.equipped.weapon === undefined) game.equipped.weapon = null;
   if (game.equipped.armor === undefined) game.equipped.armor = null;
   if (game.equipped.amulet === undefined) game.equipped.amulet = null;
@@ -214,18 +203,14 @@ function restoreBaseState(d) {
   game.enemy = null;
   game.lastOnline = Number(d.lastOnline || d.savedAt || 0);
 
-  if (window.WorldManager) {
-    WorldManager.worldIndex = Math.max(0, Number(d.worldIndex || 0));
-    WorldManager.adventureIndex = Math.max(0, Number(d.adventureIndex || 0));
-    WorldManager.enemyIndex = Math.max(0, Number(d.enemyIndex || 0));
-  }
+  WorldManager.worldIndex = Math.max(0, Number(d.worldIndex || 0));
+  WorldManager.adventureIndex = Math.max(0, Number(d.adventureIndex || 0));
+  WorldManager.enemyIndex = Math.max(0, Number(d.enemyIndex || 0));
 
-  game.village = d.village && typeof d.village === "object" ? d.village : {
-    goldMine: 0,
-    essenceWell: 0,
-    barracks: 0,
-    timeRelay: 0
-  };
+  game.village = d.village && typeof d.village === "object"
+    ? d.village
+    : { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 };
+
   if (window.VillageManager && typeof VillageManager.ensure === "function") {
     VillageManager.ensure();
   }
@@ -246,16 +231,8 @@ function reapplyProgressEffects() {
   game.critMult = 2;
   game.goldMult = 1;
 
-  if (typeof UPGRADES !== "undefined" && Array.isArray(UPGRADES)) {
-    UPGRADES.forEach(function (u) {
-      if (u && typeof u.apply === "function") {
-        u.apply(game.upgrades[u.id] || 0);
-      }
-    });
-  }
-
-  if (window.EquipmentManager && typeof EquipmentManager.recalcStats === "function") {
-    EquipmentManager.recalcStats();
+  if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
+    StatsSystem.recalcStats();
   }
 }
 
@@ -284,7 +261,6 @@ function loadGame() {
 
 function clearSaveData() {
   if (!game.saveSupported) return;
-
   try {
     localStorage.removeItem(SAVE_KEY);
   } catch (e) {}
@@ -292,7 +268,6 @@ function clearSaveData() {
 
 function hardResetState() {
   var questDefaults = getDefaultQuestProgress();
-
   var keptAether = game.aether || 0;
   var keptAscensions = game.ascensionCount || 0;
   var keptAetherUpgrades = Object.assign({}, game.aetherUpgrades || {});
@@ -308,6 +283,11 @@ function hardResetState() {
   game.critMult = 2;
   game.goldMult = 1;
 
+  game.heroLevel = 1;
+  game.heroXp = 0;
+  game.heroXpToNext = 20;
+  game.talentPoints = 0;
+
   game.totalKills = 0;
   game.totalGoldEarned = 0;
   game.totalDamageDealt = 0;
@@ -321,41 +301,25 @@ function hardResetState() {
   game.aetherUpgrades = keptAetherUpgrades;
   game.inventory = [];
   game.equipped = getDefaultEquipped();
-
   game.quests = [];
   game.questProgress = Object.assign({}, questDefaults);
   game.questResetTime = 0;
-
   game.activeTab = "combat";
   game.enemy = null;
   game.lastOnline = Date.now();
   game.lastSave = 0;
+  game.village = { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 };
 
-  game.village = {
-    goldMine: 0,
-    essenceWell: 0,
-    barracks: 0,
-    timeRelay: 0
-  };
-
-  if (window.WorldManager) {
-    WorldManager.worldIndex = 0;
-    WorldManager.adventureIndex = 0;
-    WorldManager.enemyIndex = 0;
-  }
+  WorldManager.worldIndex = 0;
+  WorldManager.adventureIndex = 0;
+  WorldManager.enemyIndex = 0;
 
   ensureUpgradeDefaults();
-
-  if (typeof gameLog !== "undefined" && Array.isArray(gameLog)) {
-    gameLog.length = 0;
-  }
+  if (typeof gameLog !== "undefined" && Array.isArray(gameLog)) gameLog.length = 0;
 
   if (window.QuestManager && typeof QuestManager.generateDaily === "function") {
     game.quests = QuestManager.generateDaily();
-    var resetHours =
-      (typeof QUEST_CONFIG !== "undefined" && QUEST_CONFIG && QUEST_CONFIG.resetHours)
-        ? QUEST_CONFIG.resetHours
-        : 24;
+    var resetHours = (typeof QUEST_CONFIG !== "undefined" && QUEST_CONFIG && QUEST_CONFIG.resetHours) ? QUEST_CONFIG.resetHours : 24;
     game.questResetTime = Date.now() + resetHours * 3600 * 1000;
   }
 
@@ -365,10 +329,9 @@ function hardResetState() {
 function fullResetState() {
   var questDefaults = getDefaultQuestProgress();
 
-  game.gold = 0;
+  game.gold = 1000000;
   game.essence = 0;
-  game.aether = 100;
-
+  game.aether = 0;
   game.playerName = "";
   game.heroId = "";
 
@@ -378,6 +341,11 @@ function fullResetState() {
   game.critChance = 5;
   game.critMult = 2;
   game.goldMult = 1;
+
+  game.heroLevel = 1;
+  game.heroXp = 0;
+  game.heroXpToNext = 20;
+  game.talentPoints = 0;
 
   game.totalKills = 0;
   game.totalGoldEarned = 0;
@@ -392,41 +360,25 @@ function fullResetState() {
   game.aetherUpgrades = {};
   game.inventory = [];
   game.equipped = getDefaultEquipped();
-
   game.quests = [];
   game.questProgress = Object.assign({}, questDefaults);
   game.questResetTime = 0;
-
   game.activeTab = "combat";
   game.enemy = null;
   game.lastOnline = Date.now();
   game.lastSave = 0;
+  game.village = { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 };
 
-  game.village = {
-    goldMine: 0,
-    essenceWell: 0,
-    barracks: 0,
-    timeRelay: 0
-  };
-
-  if (window.WorldManager) {
-    WorldManager.worldIndex = 0;
-    WorldManager.adventureIndex = 0;
-    WorldManager.enemyIndex = 0;
-  }
+  WorldManager.worldIndex = 0;
+  WorldManager.adventureIndex = 0;
+  WorldManager.enemyIndex = 0;
 
   ensureUpgradeDefaults();
-
-  if (typeof gameLog !== "undefined" && Array.isArray(gameLog)) {
-    gameLog.length = 0;
-  }
+  if (typeof gameLog !== "undefined" && Array.isArray(gameLog)) gameLog.length = 0;
 
   if (window.QuestManager && typeof QuestManager.generateDaily === "function") {
     game.quests = QuestManager.generateDaily();
-    var resetHours =
-      (typeof QUEST_CONFIG !== "undefined" && QUEST_CONFIG && QUEST_CONFIG.resetHours)
-        ? QUEST_CONFIG.resetHours
-        : 24;
+    var resetHours = (typeof QUEST_CONFIG !== "undefined" && QUEST_CONFIG && QUEST_CONFIG.resetHours) ? QUEST_CONFIG.resetHours : 24;
     game.questResetTime = Date.now() + resetHours * 3600 * 1000;
   }
 
@@ -434,7 +386,6 @@ function fullResetState() {
 }
 
 function resetGame() {
-  console.log("resetGame appelée");
   var doReset = function () {
     clearSaveData();
     fullResetState();
@@ -447,10 +398,7 @@ function resetGame() {
     if (typeof updateQuestBadge === "function") updateQuestBadge();
 
     saveGame();
-
-    if (typeof showToast === "function") {
-      showToast("Partie réinitialisée", 1200);
-    }
+    if (typeof showToast === "function") showToast("Partie réinitialisée", 1200);
   };
 
   if (typeof showConfirmModal === "function") {
@@ -460,10 +408,8 @@ function resetGame() {
       "⚠️",
       doReset
     );
-  } else {
-    if (window.confirm("Réinitialiser toute la progression ?")) {
-      doReset();
-    }
+  } else if (window.confirm("Réinitialiser toute la progression ?")) {
+    doReset();
   }
 }
 
@@ -473,5 +419,7 @@ window.loadGame = loadGame;
 window.resetGame = resetGame;
 window.clearSaveData = clearSaveData;
 window.hardResetState = hardResetState;
+window.fullResetState = fullResetState;
 window.buildSaveData = buildSaveData;
 window.ensureUpgradeDefaults = ensureUpgradeDefaults;
+window.migrateHeroId = migrateHeroId;

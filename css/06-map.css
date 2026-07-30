@@ -1,0 +1,436 @@
+/* ============================================================
+   04-panel-map.css
+   Carte du monde + fonds dynamiques des panels
+============================================================ */
+
+/* =========================
+   Intro carte
+   ========================= */
+.map-intro {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* =========================
+   Structure générale
+   ========================= */
+.world-map-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.world-map-card,
+.map-world-card,
+.map-grid {
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.world-map-card {
+  padding: 10px;
+}
+
+.world-map-visual {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #0f1220;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.world-map-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* =========================
+   Nodes de monde
+   ========================= */
+.map-node {
+  position: absolute;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 40px;
+  padding: 0;
+
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 200, 61, 0.45);
+  background: rgba(13, 10, 26, 0.78);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+
+  transition:
+    transform 0.15s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.map-node:hover {
+  transform: translate(-50%, -50%) scale(1.04);
+  background: rgba(24, 19, 42, 0.92);
+}
+
+.map-node:active {
+  transform: translate(-50%, -50%) scale(0.96);
+}
+
+.map-node-ping {
+  position: absolute;
+  inset: -6px;
+  opacity: 0;
+  pointer-events: none;
+  border-radius: 999px;
+}
+
+.map-node-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 10px rgba(255, 200, 61, 0.7);
+}
+
+.map-node-label {
+  display: none;
+  white-space: nowrap;
+}
+
+.map-node.is-current {
+  border-color: #7dd3fc;
+  box-shadow:
+    0 0 0 2px rgba(125, 211, 252, 0.18),
+    0 0 22px rgba(125, 211, 252, 0.45);
+}
+
+.map-node.is-current .map-node-dot {
+  background: #7dd3fc;
+  box-shadow: 0 0 14px rgba(125, 211, 252, 0.85);
+}
+
+.map-node.is-current .map-node-ping {
+  opacity: 1;
+  animation: mapPulse 1.8s ease-out infinite;
+  box-shadow: 0 0 0 0 rgba(125, 211, 252, 0.65);
+}
+
+.map-node.is-selected {
+  background: rgba(47, 37, 84, 0.96);
+}
+
+.map-node.is-selected .map-node-dot {
+  background: #c084fc;
+  box-shadow: 0 0 10px rgba(192, 132, 252, 0.75);
+}
+
+.map-node.is-current.is-selected {
+  border-color: #ffffff;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.2),
+    0 0 24px rgba(125, 211, 252, 0.4),
+    0 0 18px rgba(192, 132, 252, 0.35);
+}
+
+.map-node.is-locked {
+  opacity: 0.45;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.map-node.is-locked .map-node-dot {
+  background: #7a7a7a;
+  box-shadow: none;
+}
+
+/* =========================
+   Labels flottants
+   ========================= */
+.map-node-label-floating {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+
+  transform: translate(-50%, -50%);
+  padding: 4px 10px;
+
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 12, 24, 0.78);
+  color: #fff;
+
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.map-node-label-floating.is-current {
+  border-color: rgba(125, 211, 252, 0.55);
+  box-shadow: 0 0 12px rgba(125, 211, 252, 0.18);
+}
+
+.map-node-label-floating.is-selected {
+  background: rgba(47, 37, 84, 0.92);
+}
+
+.map-node-label-floating.is-locked {
+  opacity: 0.5;
+}
+
+/* =========================
+   Nodes monstres
+   ========================= */
+.map-monster-node {
+  position: absolute;
+  z-index: 2;
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+  padding: 0;
+
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: rgba(12, 18, 32, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+
+.map-monster-node.is-current-world {
+  border-color: rgba(125, 211, 252, 0.6);
+  box-shadow: 0 0 16px rgba(125, 211, 252, 0.22);
+}
+
+.map-monster-node.is-boss {
+  width: 44px;
+  height: 44px;
+  background: rgba(55, 20, 20, 0.92);
+  border-color: rgba(248, 113, 113, 0.75);
+  box-shadow: 0 0 18px rgba(248, 113, 113, 0.35);
+}
+
+.map-monster-node.is-faded {
+  opacity: 0.58;
+}
+
+.map-monster-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.map-monster-node.is-boss .map-monster-icon {
+  font-size: 20px;
+}
+
+.map-monster-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 999px;
+}
+
+.map-monster-node.is-boss .map-monster-image {
+  transform: scale(1.02);
+}
+
+/* =========================
+   Carte monde détail
+   ========================= */
+.map-world-card {
+  padding: 14px;
+}
+
+.map-world-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.map-world-kicker {
+  margin-bottom: 4px;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.map-world-title {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.map-world-status {
+  display: inline-flex;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.map-world-status.status-current {
+  background: rgba(125, 211, 252, 0.12);
+  color: #7dd3fc;
+}
+
+.map-world-status.status-done {
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--hp-green);
+}
+
+.map-world-status.status-locked {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-dim);
+}
+
+.map-world-icon {
+  flex-shrink: 0;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.map-current-adventure {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.map-current-adventure span {
+  color: var(--text-dim);
+}
+
+.map-adventure-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.map-adventure-item {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.map-adventure-item.is-current {
+  border-color: var(--gold);
+  background: rgba(255, 200, 61, 0.08);
+}
+
+.map-adventure-item.is-next {
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.map-adventure-item.is-done {
+  opacity: 0.72;
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+.map-adventure-item.is-locked {
+  opacity: 0.45;
+}
+
+.map-adventure-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.map-adventure-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.map-adventure-boss {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.map-adventure-text,
+.map-adventure-meta {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.map-adventure-meta {
+  margin-top: 6px;
+}
+
+/* =========================
+   Fond dynamique des panels
+========================= */
+#panel-container.panel-world-bg {
+  background-image: var(--panel-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+}
+
+#panel-container.panel-world-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+#panel-container.panel-world-bg .panel-title,
+#panel-container.panel-world-bg .panel-subtitle {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+/* Cartes du panel : fond vitrifié léger */
+#panel-container.panel-world-bg .upgrade-card,
+#panel-container.panel-world-bg .talent-branch,
+#panel-container.panel-world-bg .eq-slot,
+#panel-container.panel-world-bg .eq-item-card,
+#panel-container.panel-world-bg .quest-card,
+#panel-container.panel-world-bg .ascension-card,
+#panel-container.panel-world-bg .aether-shop-card,
+#panel-container.panel-world-bg .settings-info,
+#panel-container.panel-world-bg .hero-summary-card,
+#panel-container.panel-world-bg .map-grid,
+#panel-container.panel-world-bg .world-map-card,
+#panel-container.panel-world-bg .map-world-card,
+#panel-container.panel-world-bg #log-container,
+#panel-container.panel-world-bg .log-entry {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.10);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}

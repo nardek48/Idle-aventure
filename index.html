@@ -18,7 +18,31 @@
   <title>Quest Idle — Fantasy Clicker v2</title>
 
   <!-- Feuille de style externe -->
-  <link rel="stylesheet" href="style.css">
+  <!-- <link rel="stylesheet" href="style.css"> -->
+
+  <link rel="stylesheet" href="css/00-tokens.css">
+  <link rel="stylesheet" href="css/01-base.css">
+  <link rel="stylesheet" href="css/02-layout.css">
+  <link rel="stylesheet" href="css/03-combat.css">
+
+  <link rel="stylesheet" href="./css/04-panels-common.css">
+  <link rel="stylesheet" href="./css/04-panel-upgrades.css">
+  <link rel="stylesheet" href="./css/04-panel-talents.css">
+  <link rel="stylesheet" href="./css/04-panel-zones.css">
+  <link rel="stylesheet" href="./css/04-panel-adventures.css">
+  <link rel="stylesheet" href="./css/04-panel-quests.css">
+  <link rel="stylesheet" href="./css/04-panel-bestiary.css">
+  <link rel="stylesheet" href="./css/04-panel-log.css">
+  <link rel="stylesheet" href="./css/04-panel-settings.css">
+  <link rel="stylesheet" href="./css/04-panel-aether-shop.css">
+  <link rel="stylesheet" href="./css/04-panel-equipment.css">
+  <link rel="stylesheet" href="./css/04-panel-hero-summary.css">
+  <link rel="stylesheet" href="./css/04-panel-village-shop.css">
+
+  <link rel="stylesheet" href="css/05-overlays.css">
+  <link rel="stylesheet" href="css/06-map.css">
+  <link rel="stylesheet" href="css/07-responsive.css">
+
 </head>
 
 <body>
@@ -28,9 +52,20 @@
     <span class="resource-badge essence"><span class="icon">🔮</span><span id="hud-essence">0</span></span>
     <span class="resource-badge aether"><span class="icon">🌀</span><span id="hud-aether">0</span></span>
   </div>
+
   <div class="hud-zone">
     <div class="zone-name" id="hud-zone-name">Forêt</div>
     <div id="hud-adventure-name">Lisière</div>
+  </div>
+
+  <div class="hud-hero-xp">
+    <div class="hud-hero-xp-top">
+      <span id="hud-hero-level">Niv. 1</span>
+      <span id="hud-hero-xp-text">0 / 10 XP</span>
+    </div>
+    <div class="hud-hero-xp-bar">
+      <div id="hud-hero-xp-fill" class="hud-hero-xp-fill" style="width:0%"></div>
+    </div>
   </div>
 </div>
 
@@ -58,15 +93,51 @@
 <div id="panel-container"></div>
 
 <div id="tab-bar">
-  <button class="tab-btn active" data-tab="combat" onclick="switchTab('combat')"><span class="tab-icon">⚔️</span>Combat</button>
-  <button class="tab-btn" data-tab="shop" onclick="switchTab('shop')"><span class="tab-icon">🛒</span>Shop</button>
-  <button class="tab-btn" data-tab="talents" onclick="switchTab('talents')"><span class="tab-icon">🌟</span>Talents</button>
-  <button class="tab-btn" data-tab="equip" onclick="switchTab('equip')"><span class="tab-icon">🎒</span>Équip.</button>
-  <button class="tab-btn" data-tab="quests" onclick="switchTab('quests')"><span class="tab-icon">📜</span>Quêtes<span class="tab-badge" id="quest-badge" style="display:none">!</span></button>
-  <button class="tab-btn" data-tab="ascension" onclick="switchTab('ascension')"><span class="tab-icon">🌀</span>Ascens.</button>
-  <button class="tab-btn" data-tab="map" onclick="switchTab('map')"><span class="tab-icon">🗺️</span>Map</button>
-  <button class="tab-btn" data-tab="village" onclick="switchTab('village')"><span class="tab-icon">🏡</span>Village</button>
-  <button class="tab-btn" data-tab="more" onclick="switchTab('more')"><span class="tab-icon">📋</span>Plus</button>
+  <button class="tab-btn active" data-tab="combat" onclick="switchTab('combat')">
+    <img src="images/icons/combat_menu.png" alt="" class="tab-icon-img">
+    <span>Combat</span>
+  </button>
+
+  <button class="tab-btn" data-tab="shop" onclick="switchTab('shop')">
+    <img src="images/icons/shop_menu.png" alt="" class="tab-icon-img">
+    <span>Shop</span>
+  </button>
+
+  <button class="tab-btn" data-tab="talents" onclick="switchTab('talents')">
+    <img src="images/icons/talents_menu.png" alt="" class="tab-icon-img">
+    <span>Talents</span>
+  </button>
+
+  <button class="tab-btn" data-tab="equip" onclick="switchTab('equip')">
+    <img src="images/icons/equip_menu.png" alt="" class="tab-icon-img">
+    <span>Équip.</span>
+  </button>
+
+  <button class="tab-btn" data-tab="quests" onclick="switchTab('quests')">
+    <img src="images/icons/quests_menu.png" alt="" class="tab-icon-img">
+    <span>Quêtes</span>
+    <span class="tab-badge" id="quest-badge" style="display:none">!</span>
+  </button>
+
+  <button class="tab-btn" data-tab="ascension" onclick="switchTab('ascension')">
+    <img src="images/icons/aether_menu.png" alt="" class="tab-icon-img">
+    <span>Ascens.</span>
+  </button>
+
+  <button class="tab-btn" data-tab="map" onclick="switchTab('map')">
+    <img src="images/icons/map_menu.png" alt="" class="tab-icon-img">
+    <span>Map</span>
+  </button>
+
+  <button class="tab-btn" data-tab="village" onclick="switchTab('village')">
+    <img src="images/icons/village_menu.png" alt="" class="tab-icon-img">
+    <span>Village</span>
+  </button>
+
+  <button class="tab-btn" data-tab="more" onclick="switchTab('more')">
+    <img src="images/icons/more_menu.png" alt="" class="tab-icon-img">
+    <span>Plus</span>
+  </button>
 </div>
 
 
@@ -98,12 +169,57 @@
 <!-- =========================================================
      SCRIPTS — ORDRE DE CHARGEMENT IMPORTANT (var globales)
      ========================================================= -->
-<script src="data.js"></script>        <!-- ASSETS, ENEMY_DB, WORLDS, UPGRADES, TALENTS, TALENTTREE, etc. -->
-<script src="game-state.js"></script>  <!-- objet game, valeurs initiales -->
-<script src="managers.js"></script>    <!-- WorldManager, EquipmentManager, QuestManager, OfflineManager... -->
-<script src="save.js"></script>        <!-- saveGame, loadGame, resetGame -->
-<script src="ui.js"></script>          <!-- renderAll, renderPanel, buildMoreHTML... -->
-<script src="main.js"></script>        <!-- initGame(), boucle principale, événements -->
+<!-- CORE -->
+<script src="js/core/constants.js"></script>
+<script src="js/core/event-bus.js"></script>
+<script src="js/core/state.js"></script>
+<script src="js/core/utils.js"></script>
+
+<!-- DATA -->
+<script src="js/data/enemies.js"></script>
+<script src="js/data/bosses.js"></script>
+<script src="js/data/heroes.js"></script>
+<script src="js/data/worlds.js"></script>
+<script src="js/data/upgrades.js"></script>
+<script src="js/data/talents.js"></script>
+<script src="js/data/equipment.js"></script>
+<script src="js/data/quests.js"></script>
+<script src="js/data/ascension.js"></script>
+<script src="js/data/village.js"></script>
+
+<!-- SHARED MAIN SERVICES -->
+<script src="js/main/log-service.js"></script>
+
+<!-- SYSTEMS -->
+<script src="js/systems/stats-system.js"></script>
+<script src="js/systems/equipment-system.js"></script>
+<script src="js/systems/loot-system.js"></script>
+<script src="js/systems/progression-system.js"></script>
+<script src="js/systems/offline-system.js"></script>
+<script src="js/systems/save-system.js"></script>
+<script src="js/systems/combat-engine.js"></script>
+
+<!-- UI -->
+<script src="js/ui/toast.js"></script>
+<script src="js/ui/modal-view.js"></script>
+<script src="js/ui/hud-view.js"></script>
+<script src="js/ui/combat-view.js"></script>
+<script src="js/ui/shop-view.js"></script>
+<script src="js/ui/talents-view.js"></script>
+<script src="js/ui/equipment-view.js"></script>
+<script src="js/ui/quests-view.js"></script>
+<script src="js/ui/ascension-view.js"></script>
+<script src="js/ui/village-view.js"></script>
+<script src="js/ui/map-view.js"></script>
+<script src="js/ui/bestiary-view.js"></script>
+<script src="js/ui/log-view.js"></script>
+<script src="js/ui/more-view.js"></script>
+<script src="js/ui/settings-view.js"></script>
+<script src="js/ui/ui-root.js"></script>
+
+<!-- MAIN RUNTIME -->
+<script src="js/main/game-loop.js"></script>
+<script src="js/main/boot.js"></script>
 
 </body>
 </html>

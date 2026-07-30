@@ -1,0 +1,249 @@
+/* =========================
+   Talents
+========================= */
+
+#panel-container[data-tab="talents"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.talent-category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.talent-category-tab {
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.talent-category-tab.is-active {
+  border-color: var(--aether-dark);
+  background: color-mix(in srgb, var(--aether-dark) 18%, var(--bg-card));
+}
+
+.talent-active-title,
+.panel-title {
+  width: 100%;
+  text-align: center;
+}
+
+.talent-active-title {
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.talent-center-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 12px;
+}
+
+.talent-board {
+  width: min(100%, 720px);
+  margin-inline: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.talent-board-bg {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  margin: 0 auto;
+  overflow: visible;
+  background: transparent;
+}
+
+.talent-board-image {
+  --fade-x: 12%;
+  --fade-y: 18%;
+  --fade-edge: 28%;
+
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  pointer-events: none;
+  transform: scale(1.12);
+  transform-origin: center;
+
+    -webkit-mask-image:
+    linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
+  -webkit-mask-composite: source-in;
+
+  mask-image:
+    linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
+  mask-composite: intersect;
+}
+
+.talent-board-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.talent-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: clamp(36px, 5vw, 52px);
+  height: clamp(36px, 5vw, 52px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg-card) 82%, transparent);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+
+.talent-node:hover,
+.talent-node:focus-visible {
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.talent-node.unlocked {
+  border-color: #4caf50;
+}
+
+.talent-node.available {
+  border-color: #ffc107;
+}
+
+.talent-node.locked {
+  opacity: 0.42;
+}
+
+.talent-node.branch-capstone {
+  border-color: var(--aether-dark);
+  box-shadow: 0 0 12px rgba(255, 215, 120, 0.22);
+}
+
+.talent-icon {
+  font-size: clamp(14px, 2.2vw, 20px);
+}
+
+.talent-name {
+  margin-top: 2px;
+  max-width: 90px;
+  font-size: clamp(8px, 1.4vw, 10px);
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.talent-cost {
+  margin-top: 4px;
+  font-size: clamp(8px, 1.4vw, 10px);
+  color: var(--text-dim);
+}
+
+.talent-node::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: 110%;
+  z-index: 10;
+  width: 180px;
+  padding: 6px 8px;
+  transform: translateX(-50%);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: pre-line;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease-out, visibility 0.15s ease-out;
+}
+
+.talent-node::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  z-index: 10;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease-out, visibility 0.15s ease-out;
+}
+
+.talent-node:hover::after,
+.talent-node:hover::before,
+.talent-node:focus-visible::after,
+.talent-node:focus-visible::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 760px) {
+  .talent-board {
+    width: 100%;
+  }
+
+  .talent-board-bg {
+    min-height: 560px;
+  }
+
+  .talent-board-grid {
+    height: 560px;
+  }
+
+  .talent-node {
+    width: 44px;
+    height: 44px;
+  }
+
+  .talent-icon {
+    font-size: 14px;
+  }
+
+  .talent-name {
+    font-size: 7px;
+    max-width: 64px;
+  }
+
+  .talent-cost {
+    font-size: 7px;
+  }
+
+  .talent-node::after {
+    width: 140px;
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talent-node,
+  .talent-node::before,
+  .talent-node::after {
+    transition: none;
+  }
+}

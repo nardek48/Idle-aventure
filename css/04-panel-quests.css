@@ -1,0 +1,176 @@
+/* =========================
+   Quêtes
+   ========================= */
+.quest-card {
+  margin-bottom: 8px;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+}
+
+.quest-card.completed {
+  opacity: 0.6;
+  border-color: var(--hp-green);
+}
+
+.quest-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.quest-icon {
+  font-size: 24px;
+}
+
+.quest-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.quest-desc {
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.quest-progress-bar {
+  height: 8px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+}
+
+.quest-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.quest-progress-fill.done {
+  background: var(--hp-green);
+}
+
+.quest-progress-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.quest-reward {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.quest-claim-btn {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 6px;
+  padding: 8px;
+
+  border: none;
+  border-radius: 8px;
+  background: var(--hp-green);
+  color: #0d0a1a;
+
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+
+  transition:
+    transform 0.08s ease,
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    filter 0.2s ease;
+}
+
+.quest-claim-btn:active {
+  transform: scale(0.96);
+}
+
+.quest-claim-btn:disabled,
+.quest-claim-btn.disabled {
+  background: #555;
+  color: #aaa;
+  cursor: default;
+  opacity: 0.9;
+}
+
+.quest-timer {
+  margin-bottom: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+#panel-container[data-tab="quests"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.quest-top-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+  flex-wrap: wrap;
+}
+
+.quest-mode-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.quest-timer {
+  margin-bottom: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.quest-list {
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quest-card {
+  width: 100%;
+}
+
+.quest-top-actions,
+.quest-timer {
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+}
+
+
+
+/* =========================
+   Réduction des animations
+   ========================= */
+@media (prefers-reduced-motion: reduce) {
+  .quest-claim-btn,
+  .quest-progress-fill {
+    transition: none;
+  }
+}

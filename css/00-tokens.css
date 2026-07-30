@@ -1,0 +1,66 @@
+:root {
+  /* =========================
+     Couleurs de fond
+     ========================= */
+  --bg-dark: #0d0a1a;         /* Fond principal très sombre */
+  --bg-panel: #1a1530;        /* Fond des panneaux */
+  --bg-panel-light: #251e3f;  /* Variante plus claire pour les zones secondaires */
+  --bg-card: #2a2348;         /* Fond des cartes */
+
+  /* =========================
+     Couleurs spéciales / magie / ressources
+     ========================= */
+  --gold: #ffc83d;            /* Or principal */
+  --gold-dark: #d4a017;       /* Or foncé pour hover, bordures ou ombres */
+  --essence: #c77dff;         /* Couleur essence / énergie magique */
+  --essence-dark: #9d4edd;    /* Variante foncée de l’essence */
+  --aether: #217da5;          /* Couleur aether / ressource bleue */
+  --aether-dark: #033c58;     /* Variante foncée de l’aether */
+
+  /* =========================
+     États de vie / statut
+     ========================= */
+  --hp-green: #4ade80;        /* Vie haute / état positif */
+  --hp-red: #ef4444;          /* Vie basse / danger */
+  --hp-yellow: #fbbf24;       /* Vie moyenne / alerte */
+
+  /* =========================
+     Texte et couleurs globales d’interface
+     ========================= */
+  --text: #e2dce8;            /* Texte principal */
+  --text-dim: #8b83a3;        /* Texte secondaire / moins visible */
+  --accent: #8b5cf6;          /* Couleur d’accent générale */
+  --danger: #ef4444;          /* Couleur d’erreur / danger */
+  --crit: #fbbf24;            /* Couleur critique / mise en avant */
+
+  /* =========================
+     Bordures
+     ========================= */
+  --border: #3d3461;          /* Couleur de bordure principale */
+
+  /* =========================
+     Couleurs de rareté
+     ========================= */
+  --rarity-common: #9ca3af;     /* Objet commun */
+  --rarity-rare: #3b82f6;       /* Objet rare */
+  --rarity-epic: #a855f7;       /* Objet épique */
+  --rarity-legendary: #f59e0b;  /* Objet légendaire */
+
+  /* =========================
+     Safe areas mobile
+     ========================= */
+  --safe-top: env(safe-area-inset-top, 0px);         /* Marge haute sur mobile encoche */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);   /* Marge basse sur mobile */
+
+  /* =========================
+     Rayons de bordure
+     ========================= */
+  --radius-sm: 10px;          /* Petit arrondi */
+  --radius-md: 14px;          /* Arrondi moyen */
+  --radius-lg: 16px;          /* Grand arrondi */
+
+  /* =========================
+     Ombres
+     ========================= */
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.18); /* Ombre douce globale */
+}

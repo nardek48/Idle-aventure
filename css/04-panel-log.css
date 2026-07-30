@@ -1,0 +1,50 @@
+/* =========================
+   Journal / logs
+   ========================= */
+.log-entry {
+  margin-bottom: 4px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-soft);
+  font-size: 13px;
+  animation: logSlide 0.3s ease;
+}
+
+.log-entry.event {
+  border-left-color: var(--essence);
+}
+
+.log-entry.boss {
+  border-left-color: var(--danger);
+}
+
+.log-entry.zone {
+  border-left-color: var(--gold);
+}
+
+.log-entry.ascend {
+  border-left-color: var(--aether);
+}
+
+.log-entry.quest {
+  border-left-color: var(--rarity-rare);
+}
+
+@keyframes logSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .log-entry {
+    animation: none;
+  }
+}

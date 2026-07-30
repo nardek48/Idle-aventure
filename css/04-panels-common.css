@@ -1,0 +1,174 @@
+/* =========================
+   Carte générique de panneau
+   ========================= */
+.panel-card {
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+}
+
+.panel-card h3 {
+  margin-bottom: 6px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.panel-sub {
+  margin-bottom: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+/* =========================
+   Bouton générique
+   ========================= */
+.btn {
+  flex-shrink: 0;
+  min-width: 110px;
+  min-height: 46px;
+  padding: 8px 12px;
+
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #9b6bff 0%, #7c4dff 100%);
+  color: #fff;
+
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.15;
+  cursor: pointer;
+
+  box-shadow: 0 8px 18px rgba(124, 77, 255, 0.28);
+  transition:
+    transform 0.08s ease,
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    filter 0.2s ease;
+}
+
+.btn:hover {
+  filter: brightness(1.06);
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn.disabled,
+.btn:disabled {
+  background: #444;
+  color: #888;
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.9;
+}
+
+/* =========================
+   Réduction des animations
+   ========================= */
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
+}
+
+
+.talent-board {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+}
+
+.talent-board-bg {
+  position: relative;
+  width: 100%;
+  min-height: 760px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+
+  background-image: url("./assets/talent.jpg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.talent-board-grid {
+  position: relative;
+  width: 100%;
+  height: 760px;
+}
+
+.talent-node {
+  background: transparent;
+  backdrop-filter: blur(2px);
+}
+
+.talent-node:hover,
+.talent-node:focus-visible {
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.talent-node.unlocked {
+  border-color: #4caf50;
+}
+
+.talent-node.available {
+  border-color: #ffc107;
+}
+
+.talent-node.locked {
+  opacity: 0.42;
+}
+
+.talent-node.branch-capstone {
+  border-color: var(--aether-dark);
+  box-shadow: 0 0 12px rgba(255, 215, 120, 0.28);
+}
+
+.talent-icon {
+  font-size: 24px;
+}
+
+.talent-cost {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.talent-name {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.1;
+  max-width: 68px;
+}
+
+@media (max-width: 760px) {
+  .talent-board-bg {
+    min-height: 560px;
+  }
+
+  .talent-board-grid {
+    height: 560px;
+  }
+
+  .talent-node {
+    width: 60px;
+    height: 60px;
+  }
+
+  .talent-icon {
+    font-size: 20px;
+  }
+
+  .talent-name,
+  .talent-cost {
+    font-size: 10px;
+  }
+}

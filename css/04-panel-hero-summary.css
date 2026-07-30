@@ -1,0 +1,123 @@
+/* =========================
+   Résumé héros
+   ========================= */
+.hero-summary-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.hero-summary-card h3 {
+  font-size: 16px;
+  margin: 0 0 10px 0;
+}
+
+.hero-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.hero-summary-avatar {
+  flex-shrink: 0;
+}
+
+.hero-summary-image,
+.hero-summary-placeholder {
+  width: 150px;
+  height: 150px;
+  border-radius: 14px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: var(--bg-panel-light);
+  display: block;
+}
+
+.hero-summary-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.hero-summary-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-summary-meta p {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.hero-summary-meta p:last-child {
+  margin-bottom: 0;
+}
+
+.hero-summary-stats {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.hero-summary-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hero-summary-stat span {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.hero-summary-stat strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.panel-hero-image-wrap {
+  margin: 0 0 12px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+  background: var(--bg-card);
+}
+
+.panel-hero-image {
+  display: block;
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+@media (max-width: 640px) {
+  .hero-summary-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-summary-image,
+  .hero-summary-placeholder {
+    width: 100%;
+    max-width: 220px;
+    margin: 0 auto;
+  }
+
+  .panel-hero-image {
+    height: 120px;
+  }
+}

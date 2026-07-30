@@ -1,0 +1,323 @@
+/* ============================================================
+   04-panel-aether-shop.css
+   Ascension / Prestige + Boutique Aether
+============================================================ */
+
+:root {
+  --aether-tint-strong: rgb(60 78 150 / 40%);
+  --aether-tint-soft: rgb(60 78 150 / 14%);
+  --aether-tint-border: rgb(170 190 255 / 22%);
+}
+
+#panel-container[data-tab="ascension"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#panel-container[data-tab="ascension"] > * {
+  width: 100%;
+  max-width: 720px;
+}
+
+.panel-title,
+.aether-shop-title {
+  width: 100%;
+  text-align: center;
+}
+
+.panel-title {
+  margin-bottom: 8px;
+}
+
+/* =========================
+   Prestige / Ascension
+========================= */
+
+.prestige-section {
+  width: 100%;
+  max-width: 620px;
+  margin: 12px auto 10px;
+  padding: 16px 14px;
+  text-align: center;
+  background: linear-gradient(
+    180deg,
+    var(--aether-tint-strong),
+    var(--aether-tint-soft)
+  );
+  border: 1px solid var(--aether-tint-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+}
+
+.prestige-icon {
+  margin-bottom: 8px;
+  font-size: 42px;
+  line-height: 1;
+}
+
+.prestige-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--aether);
+}
+
+.prestige-desc {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--aether-dark);
+}
+
+.prestige-gain {
+  margin: 10px 0 8px;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--aether);
+}
+
+.prestige-btn {
+  min-height: 42px;
+  margin-top: 10px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--aether-dark);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.08s ease,
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    filter 0.2s ease;
+}
+
+.prestige-btn:active:not(:disabled):not(.disabled) {
+  transform: scale(0.96);
+}
+
+.prestige-btn:disabled,
+.prestige-btn.disabled {
+  background: #555;
+  color: #aaa;
+  cursor: default;
+  opacity: 0.9;
+}
+
+/* =========================
+   Infos ascension
+========================= */
+
+.settings-info {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto 10px;
+  padding: 12px 12px;
+  background: linear-gradient(
+    180deg,
+    var(--aether-tint-strong),
+    var(--aether-tint-soft)
+  );
+  border: 1px solid var(--aether-tint-border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ascension-ok {
+  color: var(--hp-green);
+  font-weight: 700;
+}
+
+.ascension-lock {
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+/* =========================
+   Boutique Aether
+========================= */
+
+.aether-shop-title {
+  margin-top: 8px;
+  margin-bottom: 10px;
+  color: var(--aether);
+}
+
+.aether-shop-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto 8px;
+  padding: 10px 12px;
+  background: linear-gradient(
+    180deg,
+    var(--aether-tint-strong),
+    var(--aether-tint-soft)
+  );
+  border: 1px solid var(--aether-tint-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+}
+
+.aether-shop-icon {
+  width: 34px;
+  flex-shrink: 0;
+  font-size: 24px;
+  line-height: 1;
+  text-align: center;
+}
+
+.aether-shop-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.aether-shop-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.aether-shop-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--aether);
+}
+
+.aether-shop-cost {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--aether);
+}
+
+.aether-shop-level {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--aether);
+}
+
+.aether-shop-desc {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.aether-shop-btn {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  background: var(--aether-dark);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.08s ease,
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    filter 0.2s ease;
+}
+
+.aether-shop-btn:active {
+  transform: scale(0.96);
+}
+
+.aether-shop-btn:disabled,
+.aether-shop-btn.disabled {
+  background: #555;
+  color: #aaa;
+  cursor: default;
+  opacity: 0.9;
+}
+
+/* =========================
+   Réduction des animations
+========================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .prestige-btn,
+  .aether-shop-btn {
+    transition: none;
+  }
+}
+
+/* =========================
+   Mobile
+========================= */
+
+@media (max-width: 760px) {
+  #panel-container[data-tab="ascension"] > * {
+    max-width: 100%;
+  }
+
+  .prestige-section,
+  .settings-info,
+  .aether-shop-card {
+    max-width: 100%;
+  }
+
+  .prestige-section {
+    padding: 14px 12px;
+  }
+
+  .prestige-icon {
+    font-size: 36px;
+  }
+
+  .prestige-title {
+    font-size: 14px;
+  }
+
+  .prestige-gain {
+    font-size: 22px;
+  }
+
+  .prestige-desc,
+  .settings-info,
+  .aether-shop-desc,
+  .aether-shop-level {
+    font-size: 11px;
+  }
+
+  .prestige-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .settings-info {
+    padding: 10px;
+  }
+
+  .aether-shop-card {
+    padding: 9px 10px;
+  }
+
+  .aether-shop-icon {
+    width: 30px;
+    font-size: 22px;
+  }
+
+  .aether-shop-name {
+    font-size: 14px;
+  }
+
+  .aether-shop-cost {
+    font-size: 12px;
+  }
+
+  .aether-shop-btn {
+    min-height: 34px;
+    padding: 7px 9px;
+    font-size: 11px;
+  }
+}

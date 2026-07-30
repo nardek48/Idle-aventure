@@ -1,0 +1,52 @@
+/* =========================
+   Settings
+   ========================= */
+.settings-btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 8px;
+  padding: 14px;
+
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  opacity: 1;
+  filter: none;
+
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition:
+    transform 0.08s ease,
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    filter 0.2s ease;
+}
+
+.settings-btn:active {
+  transform: scale(0.96);
+}
+
+.settings-btn.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.settings-info {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+/* =========================
+   Réduction des animations
+   ========================= */
+@media (prefers-reduced-motion: reduce) {
+  .settings-btn {
+    transition: none;
+  }
+}
