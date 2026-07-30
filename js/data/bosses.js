@@ -8,7 +8,7 @@ var BOSS_DB = {
   slimeking: {
     name: "Roi Slime géant",
     asset: "slimeking",
-    image: "Images/Boss/Lord_Slim.jpg",
+    image: "./images/Boss/Lord_Slim.jpg",
     resists: ["magic"],
     weak: ["sword"],
     stats: makeRpgStats(32, 58, 16, 18, 22)
@@ -16,7 +16,7 @@ var BOSS_DB = {
   djinn: {
     name: "Djinn des dunes",
     asset: "djinn",
-    image: "Images/Boss/Lord_Djinn.jpg",
+    image: "./images/Boss/Lord_Djinn.jpg",
     resists: ["magic", "bow"],
     weak: ["sword"],
     stats: makeRpgStats(58, 48, 54, 46, 72)
@@ -24,7 +24,7 @@ var BOSS_DB = {
   skeletonlord: {
     name: "Seigneur squelette",
     asset: "skeletonlord",
-    image: "Images/Boss/Lord_Skelette.jpg",
+    image: "./images/Boss/Lord_Skelette.jpg",
     resists: ["sword"],
     weak: ["magic"],
     stats: makeRpgStats(44, 72, 14, 26, 34)
@@ -32,7 +32,7 @@ var BOSS_DB = {
   necrosupreme: {
     name: "Nécromancien suprême",
     asset: "necrosupreme",
-    image: "Images/Boss/Lord_Necro.jpg",
+    image: "./images/Boss/Lord_Necro.jpg",
     resists: ["magic"],
     weak: ["sword", "bow"],
     stats: makeRpgStats(42, 34, 28, 46, 86)
@@ -40,7 +40,7 @@ var BOSS_DB = {
   ancientdragon: {
     name: "Dragon ancien",
     asset: "ancientdragon",
-    image: "Images/Boss/Lord_Dragon.jpg",
+    image: "./images/Boss/Lord_Dragon.jpg",
     resists: ["bow"],
     weak: ["magic"],
     stats: makeRpgStats(68, 78, 26, 40, 48)
@@ -48,7 +48,7 @@ var BOSS_DB = {
   archmage: {
     name: "Archimage",
     asset: "archmage",
-    image: "Images/Boss/Lord_Archimage.jpg",
+    image: "./images/Boss/Lord_Archimage.jpg",
     resists: ["magic"],
     weak: ["sword", "bow"],
     stats: makeRpgStats(48, 32, 30, 52, 90)
