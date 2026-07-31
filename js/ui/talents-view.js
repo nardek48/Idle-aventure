@@ -121,8 +121,43 @@ function buildTalentBranchHTML(branchKey) {
   return h;
 }
 
+function buildActiveTalentBonusesHTML() {
+  var tree = getTalentTree();
+  var all = [].concat(tree.combat || [], tree.fortune || [], tree.survival || []);
+  var owned = all.filter(function (n) { return isTalentOwned(n.id); });
+
+  var h = '<div class="talent-summary">';
+  h += '<div class="talent-summary-header">';
+  h += '<span>✨ Bonus actifs (' + owned.length + ')</span>';
+  h += '<span>' + (game.talentPoints || 0) + ' pt(s) disponible(s)</span>';
+  h += '</div>';
+
+  if (owned.length) {
+    h += '<div class="talent-summary-list">';
+    owned.forEach(function (n) {
+      h += '<div class="talent-summary-item">' +
+           '<span class="talent-summary-icon">' + esc(n.icon || "✨") + '</span>' +
+           '<span>' + esc(n.name) + ' — ' + esc(n.effect || "") + '</span>' +
+           '</div>';
+    });
+    h += '</div>';
+
+    var respecCost = typeof getTalentRespecCost === "function" ? getTalentRespecCost() : 0;
+    var canRespec = (game.gold || 0) >= respecCost;
+    h += '<button class="talent-respec-btn' + (canRespec ? "" : " disabled") + '" type="button" onclick="respecTalents()">' +
+         '🔄 Réinitialiser les talents (' + formatNumber(respecCost) + ' or)' +
+         '</button>';
+  } else {
+    h += '<div class="talent-summary-empty">Aucun talent débloqué pour l\'instant.</div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
 function buildTalentsHTML() {
   var h = '<div class="panel-title">Arbres de talents</div>';
+  h += buildActiveTalentBonusesHTML();
   h += buildTalentCategoryTabs();
   h += '<div class="talent-center-wrap">';
   h += buildTalentBranchHTML(activeTalentCategory);

@@ -101,10 +101,7 @@ function getUpgradeById(id) {
   return null;
 }
 
-function getUpgradeCost(upgrade) {
-  var lvl = game.upgrades[upgrade.id] || 0;
-  return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, lvl));
-}
+/* getUpgradeCost() est définie dans systems/progression-system.js. */
 
 var AETHER_SHOP = [
   { id: "a_tap", name: "Puissance ancestrale", icon: "⚔️", desc: "+10% dégâts de tap globaux par niveau.", baseCost: 1, costMult: 1.9, maxLevel: 20 },
@@ -113,17 +110,7 @@ var AETHER_SHOP = [
   { id: "a_essence", name: "Noyau d'essence", icon: "🔮", desc: "+1 essence boss tous les 2 niveaux.", baseCost: 2, costMult: 2.2, maxLevel: 12 }
 ];
 
-function getAetherUpgradeById(id) {
-  for (var i = 0; i < AETHER_SHOP.length; i++) {
-    if (AETHER_SHOP[i].id === id) return AETHER_SHOP[i];
-  }
-  return null;
-}
-
-function getAetherUpgradeCost(upgrade) {
-  var lvl = game.aetherUpgrades[upgrade.id] || 0;
-  return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, lvl));
-}
+/* getAetherUpgradeCost() est définie dans systems/stats-system.js. */
 
 function getAetherUpgradeById(id) {
   return (AETHER_SHOP || []).find(function (u) {

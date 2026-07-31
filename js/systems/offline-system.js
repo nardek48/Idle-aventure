@@ -8,8 +8,15 @@ var VILLAGE_CONFIG = {
   goldMine: { name: "Mine d'or", desc: "Augmente les gains d'or hors-ligne.", baseCost: 250, costMult: 1.65, maxLevel: 25 },
   essenceWell: { name: "Puits d'essence", desc: "Ajoute de l'essence gagnée hors-ligne.", baseCost: 400, costMult: 1.75, maxLevel: 20 },
   barracks: { name: "Caserne", desc: "Améliore l'efficacité hors-ligne.", baseCost: 600, costMult: 1.8, maxLevel: 20 },
-  timeRelay: { name: "Relais du temps", desc: "Augmente la durée maximale des gains hors-ligne.", baseCost: 900, costMult: 2, maxLevel: 10 }
+  timeRelay: { name: "Relais du temps", desc: "Augmente la durée maximale des gains hors-ligne.", baseCost: 900, costMult: 2, maxLevel: 10 },
+  watchtower: { name: "Vigie", desc: "Simule des combats pendant ton absence : kills, bestiaire, et chance de butin.", baseCost: 1200, costMult: 1.9, maxLevel: 20 },
+  sanctuary: { name: "Sanctuaire d'Aether", desc: "Génère un peu d'Aether pendant ton absence.", baseCost: 5000, costMult: 2.3, maxLevel: 10 }
 };
+
+var OFFLINE_MAX_SIMULATED_KILLS = 2000;
+var OFFLINE_BOSS_CHECK_EVERY = 25;
+var OFFLINE_BOSS_CHECK_CHANCE = 20;
+var OFFLINE_MAX_ITEMS = 3;
 
 var VillageManager = {
   ensure: function () {
@@ -18,6 +25,8 @@ var VillageManager = {
     if (typeof game.village.essenceWell !== "number") game.village.essenceWell = 0;
     if (typeof game.village.barracks !== "number") game.village.barracks = 0;
     if (typeof game.village.timeRelay !== "number") game.village.timeRelay = 0;
+    if (typeof game.village.watchtower !== "number") game.village.watchtower = 0;
+    if (typeof game.village.sanctuary !== "number") game.village.sanctuary = 0;
   },
 
   getLevel: function (id) {
@@ -76,13 +85,35 @@ var VillageManager = {
     saveGame();
   },
 
+  /* Village total : somme des niveaux de tous les bâtiments.
+     Utilisé pour le visuel de village qui évolue (point 5). */
+  getTotalLevel: function () {
+    this.ensure();
+    var ids = Object.keys(VILLAGE_CONFIG);
+    var total = 0;
+    for (var i = 0; i < ids.length; i++) total += this.getLevel(ids[i]);
+    return total;
+  },
+
   getOfflineBonuses: function () {
     this.ensure();
+
+    var talentEfficiency = 0;
+    if (game.talents.t_calm_breath) talentEfficiency += 0.10;
+    if (game.talents.t_last_stand) talentEfficiency += 0.20;
+    if (game.talents.t_immutable_guardian) talentEfficiency += 0.10;
+
+    // Synergie d'ascension (point 6) : le village reste pertinent en fin de partie,
+    // sans bâtiment dédié -> +2% d'efficacité hors-ligne par ascension, plafonné à +40%.
+    var ascensionEfficiency = Math.min(0.40, (game.ascensionCount || 0) * 0.02);
+
     return {
       goldMult: 1 + this.getLevel("goldMine") * 0.12,
       essenceFlat: this.getLevel("essenceWell"),
-      efficiencyBonus: this.getLevel("barracks") * 0.04,
-      extraHours: this.getLevel("timeRelay") * 0.5
+      efficiencyBonus: this.getLevel("barracks") * 0.04 + talentEfficiency + ascensionEfficiency,
+      extraHours: this.getLevel("timeRelay") * 2,
+      killsPerHour: this.getLevel("watchtower") * 3,
+      aetherPerHour: this.getLevel("sanctuary") * 0.05
     };
   }
 };
@@ -98,21 +129,55 @@ var OfflineManager = {
     if (elapsedMs <= 1000) return null;
 
     var bonuses = VillageManager.getOfflineBonuses();
-    var baseCapHours = 2;
+    var baseCapHours = 4;
     var maxHours = baseCapHours + Number(bonuses.extraHours || 0);
     var cappedMs = Math.min(elapsedMs, maxHours * 3600 * 1000);
     var seconds = cappedMs / 1000;
+    var hours = seconds / 3600;
 
     var baseGoldPerSec = 1;
     var gold = Math.floor(baseGoldPerSec * seconds * (1 + Number(bonuses.efficiencyBonus || 0)) * Number(bonuses.goldMult || 1));
-    var essence = Math.floor(seconds / 3600 * Number(bonuses.essenceFlat || 0));
+    var essence = Math.floor(hours * Number(bonuses.essenceFlat || 0));
+    var aether = Math.floor(hours * Number(bonuses.aetherPerHour || 0));
 
-    if (gold <= 0 && essence <= 0) return null;
+    // v1.9.2 : Vigie -> combats simulés hors-ligne (kills, bestiaire, butin)
+    var kills = Math.min(OFFLINE_MAX_SIMULATED_KILLS, Math.floor(hours * Number(bonuses.killsPerHour || 0)));
+    var killsByEnemy = {};
+    var items = [];
+
+    if (kills > 0) {
+      var pool = [];
+      if (window.WorldManager && typeof WorldManager.getAdventure === "function") {
+        var adventure = WorldManager.getAdventure();
+        if (adventure && adventure.enemyPool && adventure.enemyPool.length) pool = adventure.enemyPool;
+      }
+
+      if (pool.length) {
+        for (var i = 0; i < kills; i++) {
+          var id = pool[randInt(0, pool.length - 1)];
+          killsByEnemy[id] = (killsByEnemy[id] || 0) + 1;
+        }
+
+        var bossChecks = Math.floor(kills / OFFLINE_BOSS_CHECK_EVERY);
+        for (var c = 0; c < bossChecks && items.length < OFFLINE_MAX_ITEMS; c++) {
+          if (chance(OFFLINE_BOSS_CHECK_CHANCE) && window.LootSystem && typeof LootSystem.rollDrop === "function") {
+            var drop = LootSystem.rollDrop();
+            if (drop) items.push(drop);
+          }
+        }
+      }
+    }
+
+    if (gold <= 0 && essence <= 0 && aether <= 0 && kills <= 0) return null;
 
     return {
       ms: cappedMs,
       gold: Math.max(0, gold),
-      essence: Math.max(0, essence)
+      essence: Math.max(0, essence),
+      aether: Math.max(0, aether),
+      kills: kills,
+      killsByEnemy: killsByEnemy,
+      items: items
     };
   },
 
@@ -123,9 +188,52 @@ var OfflineManager = {
     game.essence += Number(offline.essence || 0);
     game.totalGoldEarned += Number(offline.gold || 0);
 
-    addLog("Gain hors-ligne : +" + formatNumber(offline.gold || 0) + " or, +" + formatNumber(offline.essence || 0) + " essence", "event");
-    showToast("Hors-ligne : +" + formatNumber(offline.gold || 0) + " or", 1800);
+    if (offline.aether > 0) {
+      game.aether = Number(game.aether || 0) + offline.aether;
+      game.totalAetherEarned = Number(game.totalAetherEarned || 0) + offline.aether;
+    }
+
+    var itemNames = [];
+    if (offline.kills > 0) {
+      game.totalKills = Number(game.totalKills || 0) + offline.kills;
+      game.killCounts = game.killCounts || {};
+
+      Object.keys(offline.killsByEnemy || {}).forEach(function (id) {
+        game.killCounts[id] = (game.killCounts[id] || 0) + offline.killsByEnemy[id];
+      });
+
+      if (window.QuestManager && typeof QuestManager.track === "function") {
+        QuestManager.track("kills", offline.kills);
+      }
+
+      (offline.items || []).forEach(function (drop) {
+        game.inventory.push(drop);
+        itemNames.push(drop.name);
+      });
+    }
+
+    addLog(
+      "Gain hors-ligne : +" + formatNumber(offline.gold || 0) + " or, +" + formatNumber(offline.essence || 0) + " essence" +
+      (offline.aether > 0 ? ", +" + formatNumber(offline.aether) + " Aether" : "") +
+      (offline.kills > 0 ? ", " + formatNumber(offline.kills) + " ennemis vaincus par la Vigie" : ""),
+      "event"
+    );
+
+    if (typeof showOfflineModal === "function") {
+      showOfflineModal({
+        ms: offline.ms,
+        gold: offline.gold,
+        essence: offline.essence,
+        aether: offline.aether,
+        kills: offline.kills,
+        items: itemNames
+      });
+    } else {
+      showToast("Hors-ligne : +" + formatNumber(offline.gold || 0) + " or", 1800);
+    }
+
     if (typeof renderAll === "function") renderAll();
+    if (typeof saveGame === "function") saveGame();
   }
 };
 

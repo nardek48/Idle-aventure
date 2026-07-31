@@ -43,8 +43,11 @@ function renderEnemy() {
 
   renderEnemyHp();
   renderEnemyAffinity();
-  if (typeof renderEnemyStatsCard === "function") renderEnemyStatsCard();
 }
+
+/* ============================================================
+   Indicateur de résistance / faiblesse selon l'arme équipée.
+============================================================ */
 
 function renderEnemyAffinity() {
   var el = document.getElementById("enemy-affinity");
@@ -67,6 +70,7 @@ function renderEnemyAffinity() {
   el.textContent = labels[affinity.status] || "";
   el.className = "enemy-affinity " + affinity.status;
 }
+
 /* ============================================================
    Barre de vie. 
 ============================================================ */
@@ -82,27 +86,6 @@ function renderEnemyHp() {
       formatNumber(Math.max(0, Math.ceil(game.enemy.hp))) + " / " + formatNumber(game.enemy.maxHp);
   }
 }
-
-
-/* ============================================================
-   Carte stats ennemi. 
-============================================================ */
-
-function renderEnemyStatsCard() {
-  var host = document.getElementById("enemy-stats");
-  if (!host) return;
-
-  var enemyData = getEnemyDataForRender();
-  if (!enemyData || !enemyData.stats) {
-    host.innerHTML = "";
-    host.style.display = "none";
-    return;
-  }
-
-  host.style.display = "block";
-  host.innerHTML = buildStatsHTML(enemyData.stats, game.enemy && game.enemy.isBoss ? "boss" : "enemy");
-}
-
 
 window.renderEnemy = renderEnemy;
 window.renderEnemyHp = renderEnemyHp;

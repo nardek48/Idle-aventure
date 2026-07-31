@@ -4,20 +4,7 @@ QUEST IDLE — data/equipment.js
 Base équipement, raretés et bonus de set.
 ============================================================ */
 
-function formatSetBonusEffect(effect) {
-  if (!effect) return "";
-
-  var parts = [];
-
-  if (effect.tapDamage != null) parts.push("+" + formatNumber(effect.tapDamage) + " dégâts/tap");
-  if (effect.tapMult != null) parts.push("+" + Math.round(effect.tapMult * 100) + "% dégâts");
-  if (effect.goldMult != null) parts.push("+" + Math.round(effect.goldMult * 100) + "% or");
-  if (effect.critChance != null) parts.push("+" + formatNumber(effect.critChance) + "% critique");
-  if (effect.critMult != null) parts.push("+" + formatNumber(effect.critMult) + "x dégâts crit");
-  if (effect.autoDps != null) parts.push("+" + formatNumber(effect.autoDps) + " auto DPS");
-
-  return parts.join(" • ");
-}
+/* formatSetBonusEffect() est définie dans systems/stats-system.js. */
 
 var RARITY_COLORS = {
   common: "#9ca3af",

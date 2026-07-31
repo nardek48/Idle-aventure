@@ -55,19 +55,6 @@ var TALENTTREE = {
   ]
 };
 
-var TALENT_TREE = TALENTTREE;
-
-function getAllTalentNodes() {
-  return [].concat(TALENTTREE.combat, TALENTTREE.fortune, TALENTTREE.survival);
-}
-
-function getTalentById(id) {
-  var all = getAllTalentNodes();
-  for (var i = 0; i < all.length; i++) {
-    if (all[i].id === id) return all[i];
-  }
-  return null;
-}
-
-/* Optionnel : alias de compatibilité si certains endroits utilisent TALENT_TREE */
+/* getAllTalentNodes() est définie dans systems/progression-system.js
+   (elle y retourne l'arbre complet, utilisé par buyTalentNode). */
 var TALENT_TREE = TALENTTREE;

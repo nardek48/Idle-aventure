@@ -13,9 +13,14 @@ function syncAutoTapLoop() {
     autoTapInterval = null;
   }
 
+  var interval = 2000;
+  if (game.talents && game.talents.t_battle_trance) {
+    interval = Math.floor(interval / 1.12);
+  }
+
   autoTapInterval = setInterval(function () {
     CombatEngine.autoTap();
-  }, 2000);
+  }, interval);
 }
 
 /* ============================================================
@@ -37,6 +42,10 @@ function gameLoop() {
   }
 
   CombatEngine.autoAttack(dt);
+
+  if (typeof CombatEngine.enemyAttackTick === "function") {
+    CombatEngine.enemyAttackTick(dt);
+  }
 
   if (game.talents.t_regenerate) {
     game.essence += dt;

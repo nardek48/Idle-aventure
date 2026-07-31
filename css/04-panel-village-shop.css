@@ -1,6 +1,56 @@
 /* =========================
    Boutique village
    ========================= */
+
+/* v1.9.2 : silhouette provisoire du village (emoji en attendant l'art dédié) */
+.village-skyline {
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.village-skyline-header {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+.village-skyline-row {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  gap: 6px;
+  min-height: 64px;
+}
+
+.village-building-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.village-building-emoji {
+  font-size: 30px;
+  line-height: 1;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.village-building-visual.unbuilt .village-building-emoji {
+  filter: grayscale(1) opacity(0.35);
+}
+
+.village-building-level {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
 .village-bonus-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

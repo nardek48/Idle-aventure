@@ -22,7 +22,7 @@ var WorldManager = {
   generateEnemy: function () {
     var adventure = this.getAdventure();
     if (!adventure) {
-      return { id: "fallback", name: "Ennemi", asset: "slime", isBoss: false, hp: 10, maxHp: 10, goldReward: 1, essenceReward: 0, resists: [], weak: [] };
+      return { id: "fallback", name: "Ennemi", asset: "slime", isBoss: false, hp: 10, maxHp: 10, goldReward: 1, essenceReward: 0, resists: [], weak: [], stats: makeRpgStats(5, 10, 10, 5, 5) };
     }
 
     var isBoss = this.enemyIndex >= Math.max(0, (adventure.enemyCount || 1) - 1);
@@ -45,7 +45,8 @@ var WorldManager = {
         goldReward: Math.floor(40 * bossScale),
         essenceReward: 3 + this.worldIndex,
         resists: bossData.resists || [],
-        weak: bossData.weak || []
+        weak: bossData.weak || [],
+        stats: bossData.stats || null
       };
     }
 
@@ -55,8 +56,6 @@ var WorldManager = {
     var ENEMY_ENDURANCE_HP_COEF = 1.2;
     var enemyEndurance = (enemyData.stats && enemyData.stats.endurance) || 18;
     var hp = Math.floor(enemyEndurance * ENEMY_ENDURANCE_HP_COEF * scale + this.enemyIndex * 5);
-
-    if (game.talents.t_sturdy) hp = Math.floor(hp * 1.2);
 
     return {
       id: enemyId,
@@ -68,7 +67,8 @@ var WorldManager = {
       goldReward: Math.floor(6 * scale + this.worldIndex * 3),
       essenceReward: 1,
       resists: enemyData.resists || [],
-      weak: enemyData.weak || []
+      weak: enemyData.weak || [],
+      stats: enemyData.stats || null
     };
   },
 
@@ -337,6 +337,46 @@ function setShopBuyAmount(amount) {
   saveGame();
 }
 
+function getTalentRespecCost() {
+  var owned = Object.keys(game.talents || {}).filter(function (id) { return game.talents[id]; });
+  return owned.length * 150;
+}
+
+function respecTalents() {
+  var owned = Object.keys(game.talents || {}).filter(function (id) { return game.talents[id]; });
+  if (!owned.length) return showToast("Aucun talent à réinitialiser", 1200);
+
+  var cost = getTalentRespecCost();
+  if ((game.gold || 0) < cost) return showToast("Pas assez d'or (" + formatNumber(cost) + " requis)", 1500);
+
+  var doRespec = function () {
+    game.gold -= cost;
+    game.talentPoints = Number(game.talentPoints || 0) + owned.length;
+    game.talents = {};
+    game._frenzyTapCount = 0;
+    game._frenzyReady = false;
+
+    if (window.StatsSystem) StatsSystem.recalcStats();
+    if (typeof syncAutoTapLoop === "function") syncAutoTapLoop();
+
+    addLog("🔄 Talents réinitialisés (-" + formatNumber(cost) + " or, " + owned.length + " point(s) rendu(s))", "event");
+    showToast("Talents réinitialisés", 1500);
+    if (typeof renderAll === "function") renderAll();
+    saveGame();
+  };
+
+  if (typeof showConfirmModal === "function") {
+    showConfirmModal(
+      "Réinitialiser les talents ?",
+      "Coût : " + formatNumber(cost) + " or. Les " + owned.length + " point(s) dépensé(s) seront rendus.",
+      "🔄",
+      doRespec
+    );
+  } else if (window.confirm("Réinitialiser les talents pour " + cost + " or ?")) {
+    doRespec();
+  }
+}
+
 function buyTalentNode(id) {
   var tree = getAllTalentNodes();
   var node = null;
@@ -459,7 +499,7 @@ function ensureDailyQuests() {
 var AscensionManager = {
   previewGain: function () {
     var gain = typeof ASCENSION_CONFIG.computeGain === "function" ? ASCENSION_CONFIG.computeGain() : 0;
-    if (game.talents.t_aether_broker) gain = Math.floor(gain * 1.1);
+    if (game.talents.t_rich_ritual && gain >= 10) gain += 1;
     return Math.max(0, gain);
   },
 
@@ -486,7 +526,7 @@ function ascendNow() {
   }
 
   var gain = typeof ASCENSION_CONFIG.computeGain === "function" ? ASCENSION_CONFIG.computeGain() : 0;
-  if (game.talents.t_aether_broker) gain = Math.floor(gain * 1.1);
+  if (game.talents.t_rich_ritual && gain >= 10) gain += 1;
   if (gain <= 0) return showToast("Gain d'Aether insuffisant", 1200);
 
   var doAscend = function () {
@@ -528,6 +568,8 @@ window.getUpgradeCost = getUpgradeCost;
 window.getAllTalentNodes = getAllTalentNodes;
 window.buyUpgrade = buyUpgrade;
 window.buyTalentNode = buyTalentNode;
+window.respecTalents = respecTalents;
+window.getTalentRespecCost = getTalentRespecCost;
 window.buyAetherUpgrade = buyAetherUpgrade;
 window.grantHeroXp = grantHeroXp;
 window.ensureDailyQuests = ensureDailyQuests;

@@ -9,7 +9,6 @@ var QUEST_CONFIG = {
   resetHours: 24
 };
 
-/* Si déjà présent dans data.js, garde la même version */
 var DEFAULT_QUEST_PROGRESS = {
   kills: 0,
   bossKills: 0,
@@ -19,13 +18,10 @@ var DEFAULT_QUEST_PROGRESS = {
   combatTime: 0,
   treasures: 0,
   forestChaptersDone: 0,
-  ruinsChaptersDone: 0
-};
-
-/* Colle ici QUEST_TEMPLATES exactement tel qu'il existe dans data.js */
-var QUEST_CONFIG = {
-  perDay: 3,
-  resetHours: 24
+  ruinsChaptersDone: 0,
+  swordKills: 0,
+  bowKills: 0,
+  magicKills: 0
 };
 
 var QUEST_TEMPLATES = [
@@ -88,5 +84,35 @@ var QUEST_TEMPLATES = [
     rewardGold: 450,
     rewardEssence: 18,
     tracker: function () { return game.questProgress.treasures || 0; }
+  },
+  {
+    id: "swordKills",
+    name: "Maître de la lame",
+    icon: "🗡️",
+    desc: "Vaincre {target} ennemis à l'épée ou à la hache.",
+    target: 20,
+    rewardGold: 250,
+    rewardEssence: 10,
+    tracker: function () { return game.questProgress.swordKills || 0; }
+  },
+  {
+    id: "bowKills",
+    name: "Maître de l'arc",
+    icon: "🏹",
+    desc: "Vaincre {target} ennemis à l'arc.",
+    target: 20,
+    rewardGold: 250,
+    rewardEssence: 10,
+    tracker: function () { return game.questProgress.bowKills || 0; }
+  },
+  {
+    id: "magicKills",
+    name: "Maître arcanique",
+    icon: "🪄",
+    desc: "Vaincre {target} ennemis avec un bâton.",
+    target: 20,
+    rewardGold: 250,
+    rewardEssence: 10,
+    tracker: function () { return game.questProgress.magicKills || 0; }
   }
 ];

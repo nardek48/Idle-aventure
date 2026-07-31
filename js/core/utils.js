@@ -4,27 +4,8 @@ function cloneQuestProgress() {
   return Object.assign({}, DEFAULT_QUEST_PROGRESS);
 }
 
-function getAetherBonuses() {
-  ensureGameStateDefaults();
-
-  var tapLevel = game.aetherUpgrades.a_tap || 0;
-  var goldLevel = game.aetherUpgrades.a_gold || 0;
-  var lootLevel = game.aetherUpgrades.a_loot || 0;
-  var essenceLevel = game.aetherUpgrades.a_essence || 0;
-
-  return {
-    tapBonus: tapLevel * 0.10,
-    goldBonus: goldLevel * 0.10,
-    lootBonus: lootLevel * 3,
-    essenceBonus: Math.floor(essenceLevel / 2)
-  };
-}
-
-function getAetherMult() {
-  var bonuses = getAetherBonuses();
-  return 1 + bonuses.tapBonus + bonuses.goldBonus;
-}
-
+/* getAetherBonuses() et getAetherMult() sont définies dans
+   systems/stats-system.js. */
 
 /* ============================================================
 Formate les nombres en K, M, B, T et gère aussi les décimales simples pour l’affichage UI et log
@@ -38,6 +19,21 @@ function formatNumber(value) {
   if (n >= 1e3) return (n / 1e3).toFixed(2) + "K";
   if (n % 1 !== 0) return n.toFixed(1);
   return String(Math.floor(n));
+}
+
+/* ============================================================
+Formate une durée en secondes en "Xh Ym", "Xm Ys" ou "Xs".
+============================================================ */
+
+function formatTime(totalSeconds) {
+  var s = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  var h = Math.floor(s / 3600);
+  var m = Math.floor((s % 3600) / 60);
+  var sec = s % 60;
+
+  if (h > 0) return h + "h " + m + "m";
+  if (m > 0) return m + "m " + sec + "s";
+  return sec + "s";
 }
 
 /* ============================================================
@@ -75,9 +71,8 @@ function vibrate(pattern) {
 }
 
 window.cloneQuestProgress = cloneQuestProgress;
-window.getAetherBonuses = getAetherBonuses;
-window.getAetherMult = getAetherMult;
 window.formatNumber = formatNumber;
+window.formatTime = formatTime;
 window.chance = chance;
 window.randInt = randInt;
 window.randFloat = randFloat;

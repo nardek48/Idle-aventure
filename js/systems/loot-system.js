@@ -54,10 +54,6 @@ var LootSystem = {
       }
     }
 
-    if (game.talents.t_lucky_find && rarity === "common" && chance(20) && allowed.indexOf("green") !== -1) {
-      rarity = "green";
-    }
-
     var candidates = pool.filter(function (item) {
       return item.rarity === rarity;
     });

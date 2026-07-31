@@ -40,7 +40,6 @@ function getCurrentWorldPanelBackground() {
 ============================================================ */
 
 function updatePanelBackground() {
-  console.log("updatePanelBackground", game.activeTab);
   var panel = document.getElementById("panel-container");
   if (!panel) return;
 
@@ -86,16 +85,6 @@ function getHeroByGameId(heroId) {
 }
 
 /* ============================================================
-   Utilisé par combat et stats ennemi. 
-============================================================ */
-
-function getEnemyDataForRender() {
-  if (!game.enemy) return null;
-  var db = game.enemy.isBoss ? BOSS_DB : ENEMY_DB;
-  return db && db[game.enemy.id] ? db[game.enemy.id] : null;
-}
-
-/* ============================================================
    Helper rendu stats. 
 ============================================================ */
 
@@ -129,31 +118,6 @@ function restoreEquipBagScroll() {
       if (bag) bag.scrollTop = window.__equipBagScrollTop || 0;
     });
   });
-}
-
-/* ============================================================
-   Helper partagé héros / ennemi. 
-============================================================ */
-
-function buildStatsHTML(stats, tone) {
-  if (!stats) return "";
-  var keys = ["power", "endurance", "celerity", "precision", "will"];
-  var html = '<div class="rpg-stats rpg-stats-' + esc(tone || "neutral") + '">';
-  keys.forEach(function (key) {
-    var value = clampStatValue(stats[key]);
-    html += ''
-      + '<div class="rpg-stat-row">'
-      +   '<div class="rpg-stat-top">'
-      +     '<span class="rpg-stat-label">' + esc(getStatLabel(key)) + '</span>'
-      +     '<span class="rpg-stat-value">' + value + '</span>'
-      +   '</div>'
-      +   '<div class="rpg-stat-bar">'
-      +     '<div class="rpg-stat-fill" style="width:' + value + '%"></div>'
-      +   '</div>'
-      + '</div>';
-  });
-  html += '</div>';
-  return html;
 }
 
 /* ============================================================
@@ -209,8 +173,6 @@ function renderAll() {
   renderPanel();
   updatePanelBackground()
   updateQuestBadge();
-  if (typeof renderHeroCombatCard === "function") renderHeroCombatCard();
-  if (typeof renderEnemyStatsCard === "function") renderEnemyStatsCard();
   if (needsHeroSetup()) {
     openHeroSelection();
   }

@@ -1,16 +1,60 @@
 "use strict";
 
 /* ============================================================
-   Panneau village. 
+   Panneau village.
 ============================================================ */
+
+/* v1.9.2 : icônes provisoires par bâtiment, en attendant l'art dédié.
+   La structure ne bougera pas : il suffira de remplacer le
+   <span class="village-building-emoji"> par une image plus tard. */
+var VILLAGE_BUILDING_ICONS = {
+  goldMine: "⛏️",
+  essenceWell: "🔮",
+  barracks: "🏋️",
+  timeRelay: "🕰️",
+  watchtower: "🗼",
+  sanctuary: "⛩️"
+};
+
+function buildVillageSkylineHTML() {
+  var buildings = ["goldMine", "essenceWell", "barracks", "timeRelay", "watchtower", "sanctuary"];
+  var totalLevel = window.VillageManager && typeof VillageManager.getTotalLevel === "function"
+    ? VillageManager.getTotalLevel()
+    : 0;
+
+  var h = '<div class="village-skyline">';
+  h += '<div class="village-skyline-header">🏘️ Niveau de village : ' + totalLevel + '</div>';
+  h += '<div class="village-skyline-row">';
+
+  buildings.forEach(function (id) {
+    var cfg = VILLAGE_CONFIG[id];
+    if (!cfg) return;
+
+    var level = VillageManager.getLevel(id);
+    var maxLevel = cfg.maxLevel || 1;
+    var ratio = Math.max(0, Math.min(1, level / maxLevel));
+    var scale = (0.55 + ratio * 0.45).toFixed(2);
+    var built = level > 0;
+
+    h += '<div class="village-building-visual' + (built ? " built" : " unbuilt") + '" title="' + esc(cfg.name) + ' — niv. ' + level + '/' + maxLevel + '">';
+    h += '<span class="village-building-emoji" style="transform:scale(' + scale + ')">' + VILLAGE_BUILDING_ICONS[id] + '</span>';
+    h += '<span class="village-building-level">' + level + '</span>';
+    h += '</div>';
+  });
+
+  h += '</div></div>';
+  return h;
+}
 
 function buildVillageHTML() {
   var bonus = window.VillageManager && typeof VillageManager.getOfflineBonuses === "function"
     ? VillageManager.getOfflineBonuses()
-    : { goldMult: 1, essenceFlat: 0, efficiencyBonus: 0, extraHours: 0 };
+    : { goldMult: 1, essenceFlat: 0, efficiencyBonus: 0, extraHours: 0, killsPerHour: 0, aetherPerHour: 0 };
 
-  var buildings = ["goldMine", "essenceWell", "barracks", "timeRelay"];
+  var buildings = ["goldMine", "essenceWell", "barracks", "timeRelay", "watchtower", "sanctuary"];
   var h = '';
+
+  h += buildVillageSkylineHTML();
 
   h += '<div class="panel-card">';
   h += '<h3>Village</h3>';
@@ -19,7 +63,9 @@ function buildVillageHTML() {
   h += '<span>Or hors-ligne : x' + (bonus.goldMult || 1).toFixed(2) + '</span>';
   h += '<span>Efficacité : +' + Math.round((bonus.efficiencyBonus || 0) * 100) + '%</span>';
   h += '<span>Essence : +' + Math.floor(bonus.essenceFlat || 0) + '</span>';
-  h += '<span>Temps max : +' + (bonus.extraHours || 0).toFixed(1) + 'h</span>';
+  h += '<span>Aether : +' + (bonus.aetherPerHour || 0).toFixed(2) + '/h</span>';
+  h += '<span>Kills simulés : ' + Math.floor(bonus.killsPerHour || 0) + '/h</span>';
+  h += '<span>Temps max : ' + (4 + (bonus.extraHours || 0)).toFixed(1) + 'h</span>';
   h += '</div>';
   h += '</div>';
 
@@ -32,7 +78,7 @@ function buildVillageHTML() {
     h += '<div class="shop-item village-item">';
     h +=   '<div class="shop-main">';
     h +=     '<div class="shop-title-row">';
-    h +=       '<strong>' + cfg.name + '</strong>';
+    h +=       '<strong>' + VILLAGE_BUILDING_ICONS[id] + ' ' + cfg.name + '</strong>';
     h +=       '<span class="shop-level">Niv. ' + level + '/' + cfg.maxLevel + '</span>';
     h +=     '</div>';
     h +=     '<div class="shop-desc">' + cfg.desc + '</div>';
@@ -44,7 +90,11 @@ function buildVillageHTML() {
     } else if (id === "barracks") {
       h += '<div class="shop-meta">Bonus actuel : +' + Math.round(level * 4) + '% efficacité hors-ligne</div>';
     } else if (id === "timeRelay") {
-      h += '<div class="shop-meta">Bonus actuel : +' + (level * 0.5).toFixed(1) + 'h de cap hors-ligne</div>';
+      h += '<div class="shop-meta">Bonus actuel : +' + (level * 2).toFixed(1) + 'h de cap hors-ligne</div>';
+    } else if (id === "watchtower") {
+      h += '<div class="shop-meta">Bonus actuel : ' + (level * 3) + ' kills simulés/h (bestiaire + chance de butin)</div>';
+    } else if (id === "sanctuary") {
+      h += '<div class="shop-meta">Bonus actuel : +' + (level * 0.05).toFixed(2) + ' Aether/h</div>';
     }
 
     h +=   '</div>';
@@ -62,7 +112,7 @@ function buildVillageHTML() {
 }
 
 /* ============================================================
-   Utilisé par les boutons HTML. 
+   Utilisé par les boutons HTML.
 ============================================================ */
 
 function buyVillageUpgrade(id) {

@@ -43,6 +43,9 @@ function createInitialGameState() {
     heroXp: 0,
     heroXpToNext: 20,
     talentPoints: 0,
+    heroHp: 10,
+    heroMaxHp: 10,
+    heroDefensePct: 0,
 
     totalKills: 0,
     killCounts: {},
@@ -108,6 +111,7 @@ function ensureGameStateDefaults() {
   if (game.equipped.amulet === undefined) game.equipped.amulet = null;
 
   if (!game.aetherUpgrades) game.aetherUpgrades = {};
+  if (typeof game.totalAetherEarned !== "number") game.totalAetherEarned = Number(game.aether || 0);
   if (!Array.isArray(game.quests)) game.quests = [];
 
   if (!game.questProgress || typeof game.questProgress !== "object") {
@@ -156,7 +160,6 @@ function ensureGameStateDefaults() {
   if (![1, 10, 25, -1].includes(Number(game.shopBuyAmount))) {
     game.shopBuyAmount = 1;
   }
-  if (typeof game.totalAetherEarned !== "number") game.totalAetherEarned = 0;
 }
 
 ensureGameStateDefaults();

@@ -1,9 +1,12 @@
 "use strict";
 
 /* ============================================================
-   Helper map. 
+   v1.9.4 — Refonte de l'écran carte.
+   Fini le gros fond unique + points scattered en % fragiles.
+   Chaque monde est une carte autonome (vignette biome + statut),
+   organisée en grille 2 colonnes. Le détail (aventures/monstres)
+   passe en liste compacte, plus de coordonnées à la main.
 ============================================================ */
-
 
 function getMapSelectedWorldIndex() {
   if (typeof game.mapSelectedWorldIndex !== "number") {
@@ -16,142 +19,57 @@ function getMapSelectedWorldIndex() {
   return game.mapSelectedWorldIndex;
 }
 
-/* ============================================================
-   Utilisé par onclick.  
-============================================================ */
-
 function selectMapWorld(index) {
   if (index < 0 || index >= WORLDS.length) return;
   game.mapSelectedWorldIndex = index;
   renderPanel();
 }
 
-/* ============================================================
-   Helper interne. 
-============================================================ */
-
 function isWorldUnlocked(index) {
   return index <= (WorldManager.worldIndex || 0) && WorldManager.meetsAscensionRequirement(index);
 }
 
-/* ============================================================
-   Helper interne. 
-============================================================ */
-
 function getWorldProgressText(index) {
   if (index < (WorldManager.worldIndex || 0)) return "Terminé";
   if (index === (WorldManager.worldIndex || 0)) return "En cours";
-    if (!WorldManager.meetsAscensionRequirement(index)) {
+  if (!WorldManager.meetsAscensionRequirement(index)) {
     var req = (WORLDS[index] && WORLDS[index].requiredAscension) || 0;
-    return "🔒 " + req + " ascension(s) requise(s)";
+    var current = game.ascensionCount || 0;
+    return "🌀 Ascension " + current + "/" + req + " requise";
   }
   return "Verrouillé";
 }
 
-/* ============================================================
-   Utilisé surtout en interne. 
-============================================================ */
+/* Vignette illustrée par monde (découpée depuis la carte fantasy fournie).
+   Fallback sur un dégradé neutre si l'image n'est pas trouvée. */
+function getWorldThumb(world) {
+  return "images/Worlds/thumb_" + (world.assetKey || "forest") + ".png";
+}
 
-function getMapMonsterNodes(worldIndex) {
-  var positionsByWorld = {
-    0: [
-      { left: 22, top: 30 }, // Slim
-      { left: 34, top: 24 }, // Wolf
-      { left: 15, top: 27 }, // Gobelin
-      { left: 32, top: 28 }, // Spider
-      { left: 35, top: 19, boss: true } // Lord Slim
-    ],
-    1: [
-      { left: 65, top: 30 }, // Scarab
-      { left: 69, top: 26 }, // Scorpion
-      { left: 67, top: 20 }, // Ver
-      { left: 60, top: 20 }, // Guard
-      { left: 73, top: 18, boss: true }
-    ],
-    2: [
-      { left: 16, top: 44 },
-      { left: 29, top: 42 },
-      { left: 18, top: 55 },
-      { left: 31, top: 56 },
-      { left: 24, top: 48, boss: true }
-    ],
-    3: [
-      { left: 63, top: 41 },
-      { left: 78, top: 40 },
-      { left: 65, top: 53 },
-      { left: 79, top: 54 },
-      { left: 72, top: 47, boss: true }
-    ],
-    4: [
-      { left: 17, top: 73 },
-      { left: 31, top: 70 },
-      { left: 20, top: 84 },
-      { left: 34, top: 85 },
-      { left: 28, top: 78, boss: true }
-    ],
-    5: [
-      { left: 66, top: 76 },
-      { left: 80, top: 75 },
-      { left: 68, top: 88 },
-      { left: 81, top: 88 },
-      { left: 74, top: 82, boss: true }
-    ]
-  };
-
-  var world = WORLDS[worldIndex];
-  if (!world) return [];
-
-  var positions = positionsByWorld[worldIndex] || [];
+/* Liste des ennemis + boss d'un monde, pour l'aperçu compact (plus de
+   positionnement en % sur la carte). */
+function getWorldMonsterList(world) {
   var ids = [];
   var bossId = null;
 
-  world.adventures.forEach(function (adv) {
+  (world.adventures || []).forEach(function (adv) {
     (adv.enemyPool || []).forEach(function (enemyId) {
       if (ids.indexOf(enemyId) === -1) ids.push(enemyId);
     });
     if (!bossId && adv.boss) bossId = adv.boss;
   });
 
-  var nodes = [];
-  for (var i = 0; i < ids.length && i < positions.length - 1; i++) {
-    var enemyId = ids[i];
-    var enemyData = ENEMY_DB[enemyId];
-    if (!enemyData) continue;
-    nodes.push({
-      type: "enemy",
-      id: enemyId,
-      name: enemyData.name,
-      image: enemyData.image || "",
-      icon: renderIcon("enemies", enemyData.asset),
-      left: positions[i].left,
-      top: positions[i].top,
-      isBoss: false
-    });
+  var monsters = ids.map(function (id) {
+    var data = ENEMY_DB[id];
+    return data ? { id: id, name: data.name, icon: renderIcon("enemies", data.asset), isBoss: false } : null;
+  }).filter(Boolean);
+
+  if (bossId && BOSS_DB[bossId]) {
+    monsters.push({ id: bossId, name: BOSS_DB[bossId].name, icon: renderIcon("bosses", BOSS_DB[bossId].asset), isBoss: true });
   }
 
-  if (bossId && positions.length) {
-    var bossData = BOSS_DB[bossId];
-    var bossPos = positions[positions.length - 1];
-    if (bossData && bossPos) {
-    nodes.push({
-      type: "boss",
-      id: bossId,
-      name: bossData.name,
-      image: bossData.image || "",
-      icon: renderIcon("bosses", bossData.asset),
-      left: bossPos.left,
-      top: bossPos.top,
-      isBoss: true
-    });
-    }
-  }
-
-  return nodes;
+  return monsters;
 }
-
-/* ============================================================
-   Builder map. 
-============================================================ */
 
 function buildMapHTML() {
   var selectedIndex = getMapSelectedWorldIndex();
@@ -164,88 +82,46 @@ function buildMapHTML() {
     : 0;
   var bosses = (game.questProgress && game.questProgress.bossKills) || 0;
 
-  var mapNodes = [
-    { index: 0, left: 24, top: 18, label: "Forêt", labelOffsetX: -10, labelOffsetY: -38 },
-    { index: 1, left: 73, top: 18, label: "Désert", labelOffsetX: 10, labelOffsetY: -38 },
-    { index: 2, left: 25, top: 48, label: "Ruines", labelOffsetX: -12, labelOffsetY: 34 },
-    { index: 3, left: 71, top: 47, label: "Crypte", labelOffsetX: 14, labelOffsetY: 34 },
-    { index: 4, left: 29, top: 79, label: "Montagne", labelOffsetX: -6, labelOffsetY: -42 },
-    { index: 5, left: 73, top: 82, label: "Tour", labelOffsetX: 0, labelOffsetY: -40 }
-  ];
-
   var h = '<div class="panel-title">🗺️ Carte du monde</div>';
-  h += '<div class="map-intro">Explore les régions du monde et consulte la progression de chaque aventure.</div>';
 
   h += '<div class="map-grid">';
-  h += '<div class="map-row"><span class="map-label">Monde actuel</span><span class="map-value">' + (currentWorldIndex + 1) + '</span></div>';
+  h += '<div class="map-row"><span class="map-label">Monde actuel</span><span class="map-value">' + (currentWorldIndex + 1) + ' / ' + WORLDS.length + '</span></div>';
   h += '<div class="map-row"><span class="map-label">Quêtes terminées</span><span class="map-value">' + done + '/' + total + '</span></div>';
   h += '<div class="map-row"><span class="map-label">Boss vaincus</span><span class="map-value">' + bosses + '</span></div>';
   h += '</div>';
 
-  h += '<div class="world-map-shell">';
+  h += '<div class="map-world-grid">';
+  WORLDS.forEach(function (world, index) {
+    var unlocked = isWorldUnlocked(index);
+    var isCurrent = index === currentWorldIndex;
+    var isDone = index < currentWorldIndex;
+    var isSelected = index === selectedIndex;
 
-  h += '<div class="world-map-card">';
-  h += '<div class="world-map-visual">';
-  h += '<img src="images/Worlds/World.png" alt="Carte du monde fantasy" class="world-map-image">';
+    var classes = ["map-world-card"];
+    if (isCurrent) classes.push("is-current");
+    if (isDone) classes.push("is-done");
+    if (!unlocked) classes.push("is-locked");
+    if (isSelected) classes.push("is-selected");
 
-  mapNodes.forEach(function (node) {
-    var world = WORLDS[node.index];
-    if (!world) return;
-
-    var classes = ["map-node"];
-    if (node.index === currentWorldIndex) classes.push("is-current");
-    if (node.index === selectedIndex) classes.push("is-selected");
-    if (!isWorldUnlocked(node.index)) classes.push("is-locked");
-
-    h += '<button class="' + classes.join(" ") + '"';
-    h += ' style="left:' + node.left + '%; top:' + node.top + '%;"';
-    h += ' onclick="selectMapWorld(' + node.index + ')">';
-    h += '<span class="map-node-ping"></span>';
-    h += '<span class="map-node-dot"></span>';
-    h += '</button>';
-
-    h += '<div class="map-node-label-floating';
-    if (node.index === currentWorldIndex) h += ' is-current';
-    if (node.index === selectedIndex) h += ' is-selected';
-    if (!isWorldUnlocked(node.index)) h += ' is-locked';
-    h += '" style="left:calc(' + node.left + '% + ' + (node.labelOffsetX || 0) + 'px); top:calc(' + node.top + '% + ' + (node.labelOffsetY || 0) + 'px);">';
-    h += esc(node.label);
+    h += '<button class="' + classes.join(" ") + '" type="button" onclick="selectMapWorld(' + index + ')"';
+    h += ' style="background-image:url(\'' + esc(getWorldThumb(world)) + '\')">';
+    h += '<div class="map-world-card-overlay">';
+    if (isCurrent) h += '<span class="map-world-card-badge">Actuel</span>';
+    if (!unlocked) h += '<span class="map-world-card-lock">🔒</span>';
+    h += '<div class="map-world-card-name">' + esc(world.name) + '</div>';
+    h += '<div class="map-world-card-status status-' + (isDone ? "done" : isCurrent ? "current" : "locked") + '">' + getWorldProgressText(index) + '</div>';
     h += '</div>';
+    h += '</button>';
   });
-
-  mapNodes.forEach(function (node) {
-    if (node.index !== selectedIndex && node.index !== currentWorldIndex) return;
-
-    var monsterNodes = getMapMonsterNodes(node.index);
-    monsterNodes.forEach(function (monster) {
-      var monsterClasses = ["map-monster-node"];
-      if (monster.isBoss) monsterClasses.push("is-boss");
-      if (node.index === currentWorldIndex) monsterClasses.push("is-current-world");
-      if (node.index !== selectedIndex) monsterClasses.push("is-faded");
-
-      h += '<div class="' + monsterClasses.join(" ") + '"';
-      h += ' style="left:' + monster.left + '%; top:' + monster.top + '%;"';
-      h += ' title="' + esc(monster.name) + '">';
-      if (monster.image) {
-        h += '<img class="map-monster-image" src="' + esc(monster.image) + '" alt="' + esc(monster.name) + '">';
-      } else {
-        h += '<span class="map-monster-icon">' + monster.icon + '</span>';
-      }
-      h += '</div>';
-    });
-  });
-
-  h += '</div>';
   h += '</div>';
 
-  h += '<div class="map-world-card">';
+  h += '<div class="map-world-card-detail">';
   h += '<div class="map-world-head">';
   h += '<div>';
   h += '<div class="map-world-kicker">Monde sélectionné</div>';
   h += '<div class="map-world-title">' + esc(selectedWorld.name) + '</div>';
-  h += '<div class="map-world-status ' + (selectedIndex < currentWorldIndex ? 'status-done' : selectedIndex === currentWorldIndex ? 'status-current' : 'status-locked') + '">' + getWorldProgressText(selectedIndex) + '</div>';
+  h += '<div class="map-world-status status-' + (selectedIndex < currentWorldIndex ? "done" : selectedIndex === currentWorldIndex ? "current" : "locked") + '">' + getWorldProgressText(selectedIndex) + '</div>';
   h += '</div>';
-  h += '<div class="map-world-icon">' + esc(renderIcon("worlds", selectedWorld.assetKey)) + '</div>';
   h += '</div>';
 
   if (selectedIndex === currentWorldIndex) {
@@ -256,6 +132,21 @@ function buildMapHTML() {
       h += ' <span>(' + ((WorldManager.enemyIndex || 0) + 1) + '/' + (currentAdventure.enemyCount || 1) + ')</span>';
       h += '</div>';
     }
+  } else if (!isWorldUnlocked(selectedIndex) && !WorldManager.meetsAscensionRequirement(selectedIndex)) {
+    var reqAscend = (selectedWorld.requiredAscension || 0);
+    h += '<div class="map-lock-hint">';
+    h += '<div class="map-lock-hint-text">🌀 Ce monde se débloque en ascensionnant. Chaque ascension réinitialise ta progression classique contre de l\'Aether, et compte pour le déblocage des mondes.</div>';
+    h += '<button class="map-lock-hint-btn" type="button" onclick="switchTab(\'ascension\')">Aller à l\'Ascension</button>';
+    h += '</div>';
+  }
+
+  var monsters = getWorldMonsterList(selectedWorld);
+  if (monsters.length) {
+    h += '<div class="map-monster-row">';
+    monsters.forEach(function (m) {
+      h += '<div class="map-monster-chip' + (m.isBoss ? " is-boss" : "") + '" title="' + esc(m.name) + '">' + m.icon + '</div>';
+    });
+    h += '</div>';
   }
 
   h += '<div class="map-adventure-list">';
@@ -286,13 +177,11 @@ function buildMapHTML() {
   h += '</div>';
 
   h += '</div>';
-  h += '</div>';
 
   return h;
 }
 
-
 window.getMapSelectedWorldIndex = getMapSelectedWorldIndex;
 window.selectMapWorld = selectMapWorld;
-window.getMapMonsterNodes = getMapMonsterNodes;
+window.getWorldMonsterList = getWorldMonsterList;
 window.buildMapHTML = buildMapHTML;

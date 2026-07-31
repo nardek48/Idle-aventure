@@ -30,7 +30,6 @@
   pointer-events: none;
 }
 
-
 /* =========================
    Ennemi principal : emoji ou image
    ========================= */
@@ -101,6 +100,7 @@
   font-weight: 700;
   text-align: center;
 }
+
 #enemy-affinity {
   min-height: 16px;
   margin-top: 4px;
@@ -115,6 +115,10 @@
 
 #enemy-affinity.weak {
   color: var(--hp-green, #22c55e);
+}
+
+#enemy-affinity.unarmed {
+  color: var(--hp-yellow, #fbbf24);
 }
 
 .enemy-counter,
@@ -230,6 +234,44 @@
   border-radius: 999px;
   background: linear-gradient(90deg, #5b8cff 0%, #7d5cff 100%);
   transition: width 0.2s ease;
+}
+
+/* =========================
+   Bloc PV héros
+   ========================= */
+.hud-hero-hp {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.hud-hero-hp-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.hud-hero-hp-bar {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hud-hero-hp-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--hp-red), var(--hp-yellow), var(--hp-green));
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.hud-hero-hp-fill.low {
+  background: var(--hp-red);
 }
 
 /* =========================

@@ -88,8 +88,8 @@ function ensureUpgradeDefaults() {
     });
   }
 
-  if (typeof AETHERSHOP !== "undefined" && Array.isArray(AETHERSHOP)) {
-    AETHERSHOP.forEach(function(u) {
+  if (typeof AETHER_SHOP !== "undefined" && Array.isArray(AETHER_SHOP)) {
+    AETHER_SHOP.forEach(function(u) {
       if (u && u.id != null && game.aetherUpgrades[u.id] === undefined) game.aetherUpgrades[u.id] = 0;
     });
   }
@@ -130,6 +130,7 @@ function buildSaveData() {
     gold: Number(game.gold || 0),
     essence: Number(game.essence || 0),
     aether: Number(game.aether || 0),
+    totalAetherEarned: Number(game.totalAetherEarned || 0),
     tapDamage: Number(game.tapDamage || 1),
     tapMult: Number(game.tapMult || 1),
     autoDps: Number(game.autoDps || 0),
@@ -170,6 +171,8 @@ function buildSaveData() {
     heroXp: Number(game.heroXp || 0),
     heroXpToNext: Number(game.heroXpToNext || 10),
     talentPoints: Number(game.talentPoints || 0),
+    heroHp: Number(game.heroHp != null ? game.heroHp : (game.heroMaxHp || 10)),
+    heroMaxHp: Number(game.heroMaxHp || 10),
     village: game.village || { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 }
   };
 }
@@ -192,6 +195,7 @@ function restoreBaseState(d) {
   game.gold = Number(d.gold || 0);
   game.essence = Number(d.essence || 0);
   game.aether = Number(d.aether || 0);
+  game.totalAetherEarned = Number(d.totalAetherEarned != null ? d.totalAetherEarned : d.aether || 0);
 
   game.playerName = d.playerName || "";
   game.heroId = migrateHeroId(d.heroId);
@@ -210,6 +214,8 @@ function restoreBaseState(d) {
   game.heroXp = Number(d.heroXp || 0);
   game.heroXpToNext = Number(d.heroXpToNext || 20);
   game.talentPoints = Number(d.talentPoints || 0);
+  game.heroMaxHp = Number(d.heroMaxHp || 10);
+  game.heroHp = d.heroHp != null ? Number(d.heroHp) : game.heroMaxHp;
 
   game.totalKills = Number(d.totalKills || 0);
   game.totalGoldEarned = Number(d.totalGoldEarned || 0);
@@ -323,6 +329,8 @@ function hardResetState() {
   game.heroXp = 0;
   game.heroXpToNext = 20;
   game.talentPoints = 0;
+  game.heroHp = 10;
+  game.heroMaxHp = 10;
 
   game.totalKills = 0;
   game.totalGoldEarned = 0;
@@ -363,6 +371,7 @@ function hardResetState() {
   reapplyProgressEffects();
 
   if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {StatsSystem.recalcStats();}
+  game.heroHp = game.heroMaxHp;
 
 }
 
@@ -372,6 +381,7 @@ function fullResetState() {
   game.gold = 1000000;
   game.essence = 0;
   game.aether = 0;
+  game.totalAetherEarned = 0;
   game.playerName = "";
   game.heroId = "";
 
@@ -386,6 +396,8 @@ function fullResetState() {
   game.heroXp = 0;
   game.heroXpToNext = 20;
   game.talentPoints = 0;
+  game.heroHp = 10;
+  game.heroMaxHp = 10;
 
   game.totalKills = 0;
   game.totalGoldEarned = 0;
@@ -426,6 +438,7 @@ function fullResetState() {
   reapplyProgressEffects();
 
   if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {StatsSystem.recalcStats();}
+  game.heroHp = game.heroMaxHp;
 }
 
 function resetGame() {

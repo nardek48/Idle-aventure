@@ -67,6 +67,16 @@
       <div id="hud-hero-xp-fill" class="hud-hero-xp-fill" style="width:0%"></div>
     </div>
   </div>
+
+  <div class="hud-hero-hp">
+    <div class="hud-hero-hp-top">
+      <span>❤️ PV</span>
+      <span id="hud-hero-hp-text">10 / 10</span>
+    </div>
+    <div class="hud-hero-hp-bar">
+      <div id="hud-hero-hp-fill" class="hud-hero-hp-fill" style="width:100%"></div>
+    </div>
+  </div>
 </div>
 
 <div id="game-area">
@@ -172,8 +182,7 @@
      SCRIPTS — ORDRE DE CHARGEMENT IMPORTANT (var globales)
      ========================================================= -->
 <!-- CORE -->
-<script src="js/core/constants.js"></script>
-<script src="js/core/event-bus.js"></script>
+<script src="js/core/constants.js"></script>
 <script src="js/core/state.js"></script>
 <script src="js/core/utils.js"></script>
 
@@ -186,8 +195,7 @@
 <script src="js/data/talents.js"></script>
 <script src="js/data/equipment.js"></script>
 <script src="js/data/quests.js"></script>
-<script src="js/data/ascension.js"></script>
-<script src="js/data/village.js"></script>
+<script src="js/data/ascension.js"></script>
 
 <!-- SHARED MAIN SERVICES -->
 <script src="js/main/log-service.js"></script>
@@ -203,6 +211,7 @@
 
 <!-- UI -->
 <script src="js/ui/toast.js"></script>
+<script src="js/ui/modal.js"></script>
 <script src="js/ui/modal-view.js"></script>
 <script src="js/ui/hud-view.js"></script>
 <script src="js/ui/combat-view.js"></script>

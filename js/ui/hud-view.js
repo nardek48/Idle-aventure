@@ -37,6 +37,28 @@ function renderHud() {
   if (heroLevel) heroLevel.textContent = "Niv. " + level;
   if (heroXpText) heroXpText.textContent = xp + " / " + xpToNext + " XP";
   if (heroXpFill) heroXpFill.style.width = percent + "%";
+
+  renderHeroHp();
+}
+
+/* ============================================================
+   v1.8.5 : Barre de vie du héros.
+============================================================ */
+
+function renderHeroHp() {
+  var text = document.getElementById("hud-hero-hp-text");
+  var fill = document.getElementById("hud-hero-hp-fill");
+  if (!text && !fill) return;
+
+  var hp = Math.max(0, Math.ceil(Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1)));
+  var maxHp = Math.max(1, Math.floor(Number(game.heroMaxHp || 1)));
+  var pct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
+
+  if (text) text.textContent = formatNumber(hp) + " / " + formatNumber(maxHp);
+  if (fill) {
+    fill.style.width = pct + "%";
+    fill.classList.toggle("low", pct <= 25);
+  }
 }
 
 /* ============================================================
@@ -64,40 +86,6 @@ function renderStats() {
   if (gold) gold.textContent = "x" + fmt2(EquipmentManager.effectiveGoldMult());
 }
 
-/* ============================================================
-   Carte héros en combat. 
-============================================================ */
-
-function renderHeroCombatCard() {
-  var host = document.getElementById("hero-combat-card");
-  if (!host) return;
-
-  var hero = getSelectedHero() || getHeroByGameId(game.heroId);
-  if (!hero) {
-    host.innerHTML = "";
-    host.style.display = "none";
-    return;
-  }
-
-  host.style.display = "block";
-
-  var html = ''
-    + '<div class="hero-combat-inner">'
-    +   '<div class="hero-combat-head">'
-    +     '<div class="hero-combat-portrait">'
-    +       '<img src="' + esc(hero.image || "") + '" alt="' + esc(hero.name || "Héros") + '">'
-    +     '</div>'
-    +     '<div class="hero-combat-meta">'
-    +       '<div class="hero-combat-name">' + esc(game.playerName || hero.name || "Héros") + '</div>'
-    +       '<div class="hero-combat-subname">' + esc(hero.name || "") + '</div>'
-    +     '</div>'
-    +   '</div>'
-    +   buildStatsHTML(hero.stats, "hero")
-    + '</div>';
-
-  host.innerHTML = html;
-}
-
-
 window.renderHud = renderHud;
+window.renderHeroHp = renderHeroHp;
 window.renderStats = renderStats;
