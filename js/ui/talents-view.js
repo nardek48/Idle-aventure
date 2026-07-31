@@ -1,42 +1,13 @@
 "use strict";
 
 /* ============================================================
-   Builder panneau talents
+   v2.1 — Refonte de l'écran talents.
+   Fini les cercles positionnés à la main (2 jeux de coordonnées
+   desktop/mobile) sur une image de fond fixe. Chaque talent est
+   une carte, organisée par palier, dans une grille CSS standard.
 ============================================================ */
 
 var activeTalentCategory = "combat";
-
-var TALENT_SLOT_POSITIONS_DESKTOP = {
-  top:         { top: "32%", left: "50%" },
-  upper_left:  { top: "37.5%", left: "37%" },
-  upper_right: { top: "37.5%", left: "63%" },
-  mid_left:    { top: "46%", left: "31%" },
-  mid_right:   { top: "46%", left: "68%" },
-  inner_left:  { top: "60%", left: "31%" },
-  inner_right: { top: "60%", left: "68%" },
-  lower_left:  { top: "53%", left: "39%" },
-  lower_right: { top: "53%", left: "61%" },
-  bottom:      { top: "70%", left: "52%" }
-};
-
-var TALENT_SLOT_POSITIONS_MOBILE = {
-  top:         { top: "180px", left: "285px" },
-  upper_left:  { top: "210px", left: "220px" },
-  upper_right: { top: "210px", left: "350px" },
-  mid_left:    { top: "255px", left: "195px" },
-  mid_right:   { top: "255px", left: "380px" },
-  inner_left:  { top: "335px", left: "198px" },
-  inner_right: { top: "335px", left: "380px" },
-  lower_left:  { top: "295px", left: "230px" },
-  lower_right: { top: "295px", left: "340px" },
-  bottom:      { top: "310px", left: "160px" }
-};
-
-function getTalentSlotPositions() {
-  return window.innerWidth <= 760
-    ? TALENT_SLOT_POSITIONS_MOBILE
-    : TALENT_SLOT_POSITIONS_DESKTOP;
-}
 
 function getTalentTree() {
   if (typeof TALENTTREE !== "undefined") return TALENTTREE;
@@ -81,43 +52,100 @@ function buildTalentCategoryTabs() {
   return h;
 }
 
+/* Un talent a un "slot" hérité de l'ancien positionnement en croix
+   (top / upper_left / mid_right / ...). On s'en sert juste pour
+   déduire son palier, plus pour le positionner à l'écran. */
+var TALENT_TIER_ORDER = ["top", "upper", "mid", "inner", "lower", "bottom"];
+var TALENT_TIER_LABELS = {
+  top: "Palier 1",
+  upper: "Palier 2",
+  mid: "Palier 3",
+  inner: "Palier 4",
+  lower: "Palier 5",
+  bottom: "Palier 6"
+};
+
+function getTalentTierKey(slot) {
+  if (!slot) return "top";
+  if (slot === "top" || slot === "bottom") return slot;
+  return slot.replace(/_left$|_right$/, "");
+}
+
+function findTalentNodeInBranch(nodes, id) {
+  for (var i = 0; i < nodes.length; i++) {
+    if (nodes[i].id === id) return nodes[i];
+  }
+  return null;
+}
+
+function renderTalentIconHTML(node) {
+  if (node.img) {
+    return '<img class="talent-icon-img" src="' + esc(node.img) + '" alt="">';
+  }
+  return esc(node.icon || "✨");
+}
+
+function buildTalentStatusHTML(node, nodes) {
+  var owned = isTalentOwned(node.id);
+  var canBuy = !owned && hasTalentRequirement(node) && (game.talentPoints || 0) >= 1;
+
+  if (owned) {
+    return '<span class="talent-tier-status status-unlocked">✔ Débloqué</span>';
+  }
+  if (canBuy) {
+    return '<span class="talent-tier-status status-available">Disponible · 1 pt</span>';
+  }
+  if (node.requires && !game.talents[node.requires]) {
+    var reqNode = findTalentNodeInBranch(nodes, node.requires);
+    return '<span class="talent-tier-status status-locked">🔒 Nécessite ' + esc(reqNode ? reqNode.name : "un talent précédent") + '</span>';
+  }
+  return '<span class="talent-tier-status status-locked">🔒 Pas assez de points</span>';
+}
+
 function buildTalentBranchHTML(branchKey) {
   var tree = getTalentTree();
   var nodes = tree[branchKey] || [];
-  var h = '<div class="talent-board">';
-  h += '<div class="talent-board-bg">';
-  h += '<img class="talent-board-image" src="images/Worlds/talent_mobile.png" alt="">';
-  h += '<div class="talent-board-grid">';
 
+  var tiers = {};
   nodes.forEach(function (node) {
-    var owned = isTalentOwned(node.id);
-    var canBuy = !owned && hasTalentRequirement(node) && (game.talentPoints || 0) >= 1;
-    var classes = ["talent-node"];
-
-    if (owned) classes.push("unlocked");
-    else if (canBuy) classes.push("available");
-    else classes.push("locked");
-
-    if (node.capstone) classes.push("branch-capstone");
-
-    var tooltipText = node.desc || node.effect || "Effet non renseigné";
-    var safeTooltip = esc(tooltipText);
-    var costText = owned ? "✔" : "1 pt";
-    var positions = getTalentSlotPositions();
-    var pos = positions[node.slot] || { top: "50%", left: "50%" };
-
-    h += '<button class="' + classes.join(" ") + '" type="button" ' +
-         'style="top:' + pos.top + ';left:' + pos.left + ';" ' +
-         'data-tooltip="' + safeTooltip + '" title="' + safeTooltip + '" ' +
-         'onclick="buyTalentNode(\'' + esc(node.id) + '\')">';
-
-    h += '<div class="talent-icon">' + esc(node.icon || "✨") + '</div>';
-    h += '<div class="talent-name">' + esc(node.name) + '</div>';
-    h += '<div class="talent-cost">' + costText + '</div>';
-    h += '</button>';
+    var tierKey = getTalentTierKey(node.slot);
+    if (!tiers[tierKey]) tiers[tierKey] = [];
+    tiers[tierKey].push(node);
   });
 
-  h += '</div></div></div>';
+  var h = '<div class="talent-board talent-board-' + esc(branchKey) + '">';
+
+  TALENT_TIER_ORDER.forEach(function (tierKey) {
+    var tierNodes = tiers[tierKey];
+    if (!tierNodes || !tierNodes.length) return;
+
+    h += '<div class="talent-tier-label">' + esc(TALENT_TIER_LABELS[tierKey] || tierKey) + '</div>';
+    h += '<div class="talent-tier-row' + (tierNodes.length === 1 ? " single" : "") + '">';
+
+    tierNodes.forEach(function (node) {
+      var owned = isTalentOwned(node.id);
+      var canBuy = !owned && hasTalentRequirement(node) && (game.talentPoints || 0) >= 1;
+      var classes = ["talent-tier-card"];
+
+      if (owned) classes.push("unlocked");
+      else if (canBuy) classes.push("available");
+      else classes.push("locked");
+      if (node.capstone) classes.push("capstone");
+
+      var tooltipText = node.desc || node.effect || "";
+
+      h += '<button class="' + classes.join(" ") + '" type="button" title="' + esc(tooltipText) + '" onclick="buyTalentNode(\'' + esc(node.id) + '\')">';
+      h += '<div class="talent-tier-icon">' + renderTalentIconHTML(node) + '</div>';
+      h += '<div class="talent-tier-name">' + esc(node.name) + '</div>';
+      h += '<div class="talent-tier-effect">' + esc(node.effect || "") + '</div>';
+      h += buildTalentStatusHTML(node, nodes);
+      h += '</button>';
+    });
+
+    h += '</div>';
+  });
+
+  h += '</div>';
   return h;
 }
 
@@ -136,7 +164,7 @@ function buildActiveTalentBonusesHTML() {
     h += '<div class="talent-summary-list">';
     owned.forEach(function (n) {
       h += '<div class="talent-summary-item">' +
-           '<span class="talent-summary-icon">' + esc(n.icon || "✨") + '</span>' +
+           '<span class="talent-summary-icon">' + renderTalentIconHTML(n) + '</span>' +
            '<span>' + esc(n.name) + ' — ' + esc(n.effect || "") + '</span>' +
            '</div>';
     });
@@ -159,9 +187,7 @@ function buildTalentsHTML() {
   var h = '<div class="panel-title">Arbres de talents</div>';
   h += buildActiveTalentBonusesHTML();
   h += buildTalentCategoryTabs();
-  h += '<div class="talent-center-wrap">';
   h += buildTalentBranchHTML(activeTalentCategory);
-  h += '</div>';
   return h;
 }
 

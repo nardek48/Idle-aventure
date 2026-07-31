@@ -10,7 +10,7 @@
   overflow: hidden;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   margin-bottom: 12px;
 }
 
@@ -51,7 +51,7 @@
   aspect-ratio: 3 / 2;
   padding: 0;
   overflow: hidden;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background-color: #0f1220;
   background-size: cover;
@@ -166,7 +166,7 @@
   overflow: hidden;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   padding: 14px;
 }
 
@@ -344,19 +344,25 @@
 /* Cartes du panel : fond vitrifié léger (mais pas les vignettes de monde,
    qui ont déjà leur propre illustration en fond) */
 #panel-container.panel-world-bg .upgrade-card,
-#panel-container.panel-world-bg .talent-branch,
-#panel-container.panel-world-bg .eq-slot,
-#panel-container.panel-world-bg .eq-item-card,
+#panel-container.panel-world-bg .talent-summary,
+#panel-container.panel-world-bg .eq-hero-card,
+#panel-container.panel-world-bg .eq-orbit-slot,
+#panel-container.panel-world-bg .set-bonus,
 #panel-container.panel-world-bg .quest-card,
-#panel-container.panel-world-bg .ascension-card,
+#panel-container.panel-world-bg .prestige-section,
+#panel-container.panel-world-bg .ascension-conditions,
+#panel-container.panel-world-bg .panel-card,
 #panel-container.panel-world-bg .aether-shop-card,
 #panel-container.panel-world-bg .settings-info,
 #panel-container.panel-world-bg .hero-summary-card,
 #panel-container.panel-world-bg .map-grid,
 #panel-container.panel-world-bg .map-world-card-detail,
+#panel-container.panel-world-bg .shop-item.village-item,
+#panel-container.panel-world-bg .village-skyline,
+#panel-container.panel-world-bg .bestiary-card,
 #panel-container.panel-world-bg #log-container,
 #panel-container.panel-world-bg .log-entry {
-  background: transparent;
+  background: rgba(20, 16, 40, 0.55);
   border-color: rgba(255, 255, 255, 0.10);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);

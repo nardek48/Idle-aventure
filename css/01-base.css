@@ -44,6 +44,7 @@ input,
 textarea,
 select {
   font: inherit; /* Les champs et boutons utilisent la même police que le reste */
+  color: inherit; /* Sans ça, le navigateur remet du texte noir par défaut sur les boutons */
 }
 
 /* =========================

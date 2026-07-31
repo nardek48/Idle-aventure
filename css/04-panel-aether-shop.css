@@ -20,14 +20,9 @@
   max-width: 720px;
 }
 
-.panel-title,
 .aether-shop-title {
   width: 100%;
   text-align: center;
-}
-
-.panel-title {
-  margin-bottom: 8px;
 }
 
 /* =========================
@@ -46,7 +41,7 @@
     var(--aether-tint-soft)
   );
   border: 1px solid var(--aether-tint-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
 }
 
@@ -66,7 +61,7 @@
   margin-top: 4px;
   font-size: 12px;
   line-height: 1.5;
-  color: var(--aether-dark);
+  color: var(--text-dim);
 }
 
 .prestige-gain {
@@ -110,18 +105,14 @@
    Infos ascension
 ========================= */
 
-.settings-info {
+.ascension-conditions {
   width: 100%;
   max-width: 620px;
   margin: 0 auto 10px;
   padding: 12px 12px;
-  background: linear-gradient(
-    180deg,
-    var(--aether-tint-strong),
-    var(--aether-tint-soft)
-  );
-  border: 1px solid var(--aether-tint-border);
-  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   color: var(--text);
   font-size: 12px;
   line-height: 1.5;
@@ -144,7 +135,6 @@
 .aether-shop-title {
   margin-top: 8px;
   margin-bottom: 10px;
-  color: var(--aether);
 }
 
 .aether-shop-card {
@@ -261,7 +251,7 @@
   }
 
   .prestige-section,
-  .settings-info,
+  .ascension-conditions,
   .aether-shop-card {
     max-width: 100%;
   }
@@ -283,7 +273,7 @@
   }
 
   .prestige-desc,
-  .settings-info,
+  .ascension-conditions,
   .aether-shop-desc,
   .aether-shop-level {
     font-size: 11px;
@@ -294,7 +284,7 @@
     max-width: 280px;
   }
 
-  .settings-info {
+  .ascension-conditions {
     padding: 10px;
   }
 

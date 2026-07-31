@@ -6,7 +6,7 @@
 .village-skyline {
   margin-bottom: 14px;
   padding: 12px;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: var(--bg-card);
   border: 1px solid var(--border);
 }
@@ -82,8 +82,8 @@
   padding: 10px;
   margin-bottom: 8px;
   border-radius: var(--radius-md);
-  background: rgba(12, 18, 32, 0.58);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
 
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);

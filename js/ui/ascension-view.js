@@ -38,7 +38,7 @@ function buildAscensionHTML() {
     </button>
   </div>`;
 
-  h += `<div class="settings-info">
+  h += `<div class="ascension-conditions">
     <strong>Conditions</strong><br><br>
     Kills requis : ${minKills}<br>
     Kills actuels : ${currentKills}<br>
@@ -52,7 +52,7 @@ function buildAscensionHTML() {
   h += `<div class="panel-title aether-shop-title">Boutique d’Aether</div>`;
 
   if (typeof AETHER_SHOP === "undefined" || !Array.isArray(AETHER_SHOP) || !AETHER_SHOP.length) {
-    h += `<div class="settings-info">Aucune amélioration d’Aether disponible.</div>`;
+    h += `<div class="ascension-conditions">Aucune amélioration d’Aether disponible.</div>`;
     return h;
   }
 
