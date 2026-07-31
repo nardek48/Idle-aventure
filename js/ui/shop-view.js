@@ -72,7 +72,7 @@ function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
   }
 
   if (upgrade.id === "utrain_endurance") {
-    var ENDURANCE_HP_COEF = 2;
+    var ENDURANCE_HP_COEF = 6;
     var currentEndurance = baseEndurance + trainedEndurance;
     var nextEndurance = currentEndurance + (nextLevel - currentLevel);
     var currentHp = Math.floor(currentEndurance * ENDURANCE_HP_COEF);

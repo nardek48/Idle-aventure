@@ -129,7 +129,7 @@ var StatsSystem = {
     game.critMult += (baseWill + trainedWill) * WILL_CRIT_MULT_COEF;
 
      // NOUVEAU v1.8 : Endurance -> PV du héros
-    var ENDURANCE_HP_COEF = 2;
+    var ENDURANCE_HP_COEF = 6;
     var baseEndurance = (hero && hero.stats) ? Number(hero.stats.endurance) || 0 : 0;
     var trainedEndurance = (game.trainedStats && game.trainedStats.endurance) || 0;
     var totalEndurance = baseEndurance + trainedEndurance;
