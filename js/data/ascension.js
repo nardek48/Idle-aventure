@@ -5,7 +5,8 @@ Configuration d'ascension.
 ============================================================ */
 
 var ASCENSION_CONFIG = {
-  minWorldToAscend: 1,
+  minWorldToAscend: 0,
+  minKillsToAscend: 50,
 
   computeGain: function () {
     var kills = Number(game.totalKills || 0);

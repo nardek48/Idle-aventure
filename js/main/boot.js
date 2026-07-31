@@ -70,8 +70,8 @@ document.addEventListener("touchend", function (e) {
   var now = Date.now();
   if (now - lastTouchEnd < 300) e.preventDefault();
   lastTouchEnd = now;
-}, { passive: false });*/
-
+}, { passive: false });
+*/
 /* ============================================================
 Démarre automatiquement le jeu une fois le document prêt. 
 ============================================================ */

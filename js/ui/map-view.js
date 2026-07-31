@@ -31,7 +31,7 @@ function selectMapWorld(index) {
 ============================================================ */
 
 function isWorldUnlocked(index) {
-  return index <= (WorldManager.worldIndex || 0);
+  return index <= (WorldManager.worldIndex || 0) && WorldManager.meetsAscensionRequirement(index);
 }
 
 /* ============================================================
@@ -41,6 +41,10 @@ function isWorldUnlocked(index) {
 function getWorldProgressText(index) {
   if (index < (WorldManager.worldIndex || 0)) return "Terminé";
   if (index === (WorldManager.worldIndex || 0)) return "En cours";
+    if (!WorldManager.meetsAscensionRequirement(index)) {
+    var req = (WORLDS[index] && WORLDS[index].requiredAscension) || 0;
+    return "🔒 " + req + " ascension(s) requise(s)";
+  }
   return "Verrouillé";
 }
 

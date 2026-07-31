@@ -6,6 +6,38 @@ var autoTapInterval = null;
 Quest Idle — systems/combat-engine.js
 Combat loop actions, enemy deaths, random events, visual popups
 ============================================================ */
+/* Mappe l'icône d'arme équipée vers un type de dégâts (aligné sur
+   resists/weak des ennemis, qui utilisent "sword" / "bow" / "magic"). */
+var WEAPON_ICON_DAMAGE_TYPE = {
+  sword: "sword",
+  axe: "sword",
+  staff: "magic",
+  bow: "bow"
+};
+
+var RESIST_DMG_MULT = 0.7;   // Ennemi résistant au type d'arme → -30% de dégâts infligés (dmg * 0.7)
+var WEAK_DMG_MULT = 1.3;     // Ennemi faible au type d'arme → +30% de dégâts infligés (dmg * 1.3)
+var NO_WEAPON_MULT = 0.8;    // Aucune arme équipée → -20% de dégâts infligés (dmg * 0.8)
+
+function getPlayerDamageType() {
+  var weapon = game.equipped && game.equipped.weapon;
+  if (!weapon || !weapon.icon) return null;
+  return WEAPON_ICON_DAMAGE_TYPE[weapon.icon] || null;
+}
+
+function getDamageAffinity() {
+  if (!game.enemy) return { type: null, status: "neutral", mult: 1 };
+
+  var type = getPlayerDamageType();
+  if (!type) return { type: null, status: "unarmed", mult: NO_WEAPON_MULT };
+
+  var resists = game.enemy.resists || [];
+  var weak = game.enemy.weak || [];
+
+  if (resists.indexOf(type) !== -1) return { type: type, status: "resist", mult: RESIST_DMG_MULT };
+  if (weak.indexOf(type) !== -1) return { type: type, status: "weak", mult: WEAK_DMG_MULT };
+  return { type: type, status: "neutral", mult: 1 };
+}
 
 function showFloatingDamage(amount, isCrit) {
   var container = document.getElementById("enemy-display");
@@ -98,6 +130,7 @@ var CombatEngine = {
     if (!game.enemy) return;
 
     dmg = Math.max(0, Number(dmg || 0));
+    dmg *= getDamageAffinity().mult;
     game.enemy.hp -= dmg;
     game.totalDamageDealt += dmg;
 
@@ -171,6 +204,9 @@ var CombatEngine = {
       showToast(result.world.name, 2200);
     } else if (result && result.type === "cycle") {
       addLog("Le cycle recommence, les ennemis deviennent plus forts.", "zone");
+    } else if (result && result.type === "locked") {
+      addLog("🔒 " + result.world.name + " est verrouillé (" + result.world.requiredAscension + " ascension(s) requise(s)). Le cycle recommence.", "zone");
+      showToast("🔒 Ascensionne pour débloquer " + result.world.name, 2200);
     }
 
     var cycleXpBonus = game.cycleCount || 0;
@@ -238,3 +274,5 @@ window.autoAttack = autoAttack;
 window.autoTap = autoTap;
 window.showFloatingDamage = showFloatingDamage;
 window.showGoldPopup = showGoldPopup;
+window.getDamageAffinity = getDamageAffinity;
+window.getPlayerDamageType = getPlayerDamageType;

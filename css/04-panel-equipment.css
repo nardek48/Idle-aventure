@@ -355,6 +355,7 @@
 }
 
 .eq-orbit-slot-name.rarity-common { color: var(--rarity-common); }
+.eq-orbit-slot-name.rarity-green { color: var(--rarity-green); }
 .eq-orbit-slot-name.rarity-rare { color: var(--rarity-rare); }
 .eq-orbit-slot-name.rarity-epic { color: var(--rarity-epic); }
 .eq-orbit-slot-name.rarity-legendary { color: var(--rarity-legendary); }
@@ -446,6 +447,7 @@
 }
 
 .eq-bag-item.rarity-common { border-color: rgba(156, 163, 175, 0.40); }
+.eq-bag-item.rarity-green { border-color: rgba(34, 197, 94, 0.50); }
 .eq-bag-item.rarity-rare { border-color: rgba(59, 130, 246, 0.56); }
 .eq-bag-item.rarity-epic { border-color: rgba(168, 85, 247, 0.60); }
 .eq-bag-item.rarity-legendary {
@@ -486,6 +488,7 @@
 }
 
 .eq-bag-name.rarity-common { color: var(--rarity-common); }
+.eq-bag-name.rarity-green { color: var(--rarity-green); }
 .eq-bag-name.rarity-rare { color: var(--rarity-rare); }
 .eq-bag-name.rarity-epic { color: var(--rarity-epic); }
 .eq-bag-name.rarity-legendary {

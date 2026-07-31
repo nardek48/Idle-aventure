@@ -81,13 +81,16 @@ function confirmHeroSelection() {
   game.heroId = pendingHeroId || game.heroId;
   game.playerName = name;
 
+  if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
+    StatsSystem.recalcStats();
+  }
+
   closeHeroSelection();
   switchTab("combat");
   renderAll();
   saveGame();
   showToast("Héros sélectionné", 1200);
 }
-
 /* ============================================================
    Ouverture overlay héros.
 ============================================================ */

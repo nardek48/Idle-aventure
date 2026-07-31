@@ -47,15 +47,21 @@ function renderStats() {
   var tap = document.getElementById("stat-tap-dmg");
   var auto = document.getElementById("stat-auto-dps");
   var crit = document.getElementById("stat-crit");
+  var critPercent = document.getElementById("stat-crit-percent");
   var aether = document.getElementById("stat-aether-mult");
   var gold = document.getElementById("stat-gold-mult");
   var aetherBonuses = getAetherBonuses();
 
-  if (tap) tap.textContent = formatNumber(EquipmentManager.effectiveTapDamage());
-  if (auto) auto.textContent = formatNumber(EquipmentManager.effectiveAutoDps());
-  if (crit) crit.textContent = Math.floor(EquipmentManager.effectiveCritChance()) + "%";
+  function fmt2(n) {
+    return (Math.round((Number(n) || 0) * 100) / 100).toFixed(2);
+  }
+
+  if (tap) tap.textContent = fmt2(EquipmentManager.effectiveTapDamage());
+  if (auto) auto.textContent = fmt2(EquipmentManager.effectiveAutoDps());
+  if (crit) crit.textContent = fmt2(EquipmentManager.effectiveCritChance()) + "%";
+  if (critPercent) critPercent.textContent = "x" + fmt2(EquipmentManager.effectiveCritMult());
   if (aether) aether.textContent = "Tap +" + Math.round((aetherBonuses.tapBonus || 0) * 100) + "%";
-  if (gold) gold.textContent = "x" + EquipmentManager.effectiveGoldMult().toFixed(2);
+  if (gold) gold.textContent = "x" + fmt2(EquipmentManager.effectiveGoldMult());
 }
 
 /* ============================================================

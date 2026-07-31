@@ -17,6 +17,7 @@ var WORLDS = [
   {
     id: "forest",
     name: "Forêt enchantée",
+    requiredAscension: 0,
     assetKey: "forest",
     bg: "#0d1a0d",
     combatMap: "../images/Maps/forest-combat.jpg",
@@ -42,6 +43,7 @@ var WORLDS = [
   {
     id: "desert",
     name: "Désert oublié",
+    requiredAscension: 0,
     assetKey: "desert",
     bg: "#2a1b0f",
     combatMap: "../images/Maps/desert-combat.jpg",
@@ -67,6 +69,7 @@ var WORLDS = [
   {
     id: "ruins",
     name: "Ruines anciennes",
+    requiredAscension: 1,
     assetKey: "ruins",
     bg: "#1a1510",
     combatMap: "../images/Maps/ruins-combat.jpg",
@@ -92,6 +95,7 @@ var WORLDS = [
   {
     id: "crypt",
     name: "Crypte oubliée",
+    requiredAscension: 1,
     assetKey: "crypt",
     bg: "#0a0a15",
     combatMap: "../images/Maps/crypt-combat.jpg",
@@ -117,6 +121,7 @@ var WORLDS = [
   {
     id: "mountain",
     name: "Montagne brûlante",
+    requiredAscension: 2,
     assetKey: "mountain",
     bg: "#1a0d0a",
     combatMap: "../images/Maps/mountain-combat.jpg",
@@ -142,6 +147,7 @@ var WORLDS = [
   {
     id: "tower",
     name: "Tour du sorcier",
+    requiredAscension: 3,
     assetKey: "tower",
     bg: "#0d0d1a",
     combatMap: "../images/Maps/tower-combat.jpg",

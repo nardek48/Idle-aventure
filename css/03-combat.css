@@ -30,6 +30,7 @@
   pointer-events: none;
 }
 
+
 /* =========================
    Ennemi principal : emoji ou image
    ========================= */
@@ -99,6 +100,21 @@
   font-size: 17px;
   font-weight: 700;
   text-align: center;
+}
+#enemy-affinity {
+  min-height: 16px;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+#enemy-affinity.resist {
+  color: var(--hp-red, #ef4444);
+}
+
+#enemy-affinity.weak {
+  color: var(--hp-green, #22c55e);
 }
 
 .enemy-counter,

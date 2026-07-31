@@ -5,55 +5,100 @@
 ============================================================ */
 
 function getUpgradePreviewMeta(upgrade) {
-  if (!upgrade) {
-    return { cls: "neutral", icon: "✨", label: "Bonus" };
-  }
+  if (!upgrade) return { cls: "neutral", icon: "", label: "Bonus" };
 
-  if (upgrade.id === "u_tap") return { cls: "damage", icon: "⚔️", label: "Dégâts tap" };
-  if (upgrade.id === "u_auto") return { cls: "speed", icon: "⚙️", label: "Auto DPS" };
-  if (upgrade.id === "u_crit") return { cls: "crit", icon: "🎯", label: "Critique" };
+  if (upgrade.id === "utrain_power") return { cls: "damage", icon: "💪", label: "Force" };
+  if (upgrade.id === "utrain_celerity") return { cls: "speed", icon: "⚡", label: "Célérité" };
+  if (upgrade.id === "utrain_precision") return { cls: "crit", icon: "🎯", label: "Précision" };
+  if (upgrade.id === "utrain_will") return { cls: "crit", icon: "✨", label: "Volonté" };
+  if (upgrade.id === "utrain_endurance") return { cls: "tank", icon: "🛡️", label: "Endurance" };
+
   if (upgrade.id === "u_gold") return { cls: "gold", icon: "💰", label: "Or" };
-  if (upgrade.id === "u_tap_mult") return { cls: "damage", icon: "💥", label: "Tap final" };
-  if (upgrade.id === "u_crit_mult") return { cls: "crit", icon: "🩸", label: "Crit dmg" };
-  if (upgrade.id === "u_auto_mult") return { cls: "speed", icon: "🤖", label: "Auto final" };
   if (upgrade.id === "u_bounty") return { cls: "gold", icon: "📜", label: "Boss gold" };
 
-  return { cls: "neutral", icon: "✨", label: "Bonus" };
+  return { cls: "neutral", icon: "", label: "Bonus" };
 }
 
 function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
   if (!upgrade) return "";
 
-  if (upgrade.id === "u_tap") {
-    return (1 + currentLevel) + " -> " + (1 + nextLevel);
+  currentLevel = Number.isFinite(Number(currentLevel)) ? Number(currentLevel) : 0;
+  nextLevel = Number.isFinite(Number(nextLevel)) ? Number(nextLevel) : (currentLevel + 1);
+
+  var hero = typeof getSelectedHero === "function" ? getSelectedHero() : null;
+  var heroStats = hero && hero.stats ? hero.stats : null;
+
+  var basePower = heroStats ? Number(heroStats.power) || 0 : 0;
+  var baseCelerity = heroStats ? Number(heroStats.celerity) || 0 : 0;
+  var basePrecision = heroStats ? Number(heroStats.precision) || 0 : 0;
+  var baseWill = heroStats ? Number(heroStats.will) || 0 : 0;
+  var baseEndurance = heroStats ? Number(heroStats.endurance) || 0 : 0;
+
+  var trainedPower = (game.trainedStats && game.trainedStats.power) || 0;
+  var trainedCelerity = (game.trainedStats && game.trainedStats.celerity) || 0;
+  var trainedPrecision = (game.trainedStats && game.trainedStats.precision) || 0;
+  var trainedWill = (game.trainedStats && game.trainedStats.will) || 0;
+  var trainedEndurance = (game.trainedStats && game.trainedStats.endurance) || 0;
+
+  var baseCritChance = 5;
+  var baseCritMult = 2;
+  var baseTap = 1;
+
+  if (upgrade.id === "utrain_power") {
+    var FORCE_TAP_COEF = 0.2;
+    var currentPower = basePower + trainedPower;
+    var nextPower = currentPower + (nextLevel - currentLevel);
+    var currentDmg = (baseTap + currentPower * FORCE_TAP_COEF).toFixed(1);
+    var nextDmg = (baseTap + nextPower * FORCE_TAP_COEF).toFixed(1);
+    return "Force " + currentPower + " → " + nextPower + "  (+" + currentDmg + " → +" + nextDmg + " dgts)";
   }
 
-  if (upgrade.id === "u_auto") {
-    return currentLevel + " -> " + nextLevel;
+  if (upgrade.id === "utrain_celerity") {
+    var CELERITY_DPS_COEF = 0.03;
+    var currentCel = baseCelerity + trainedCelerity;
+    var nextCel = currentCel + (nextLevel - currentLevel);
+    var currentDps = (currentCel * CELERITY_DPS_COEF).toFixed(1);
+    var nextDps = (nextCel * CELERITY_DPS_COEF).toFixed(1);
+    return "Célérité " + currentCel + " → " + nextCel + "  (+" + currentDps + " → +" + nextDps + " DPS)";
   }
 
-  if (upgrade.id === "u_crit") {
-    return (5 + currentLevel * 0.5).toFixed(1) + "% -> " + (5 + nextLevel * 0.5).toFixed(1) + "%";
+  if (upgrade.id === "utrain_precision") {
+    var PRECISION_CRIT_COEF = 0.06;
+    var currentCritStat = basePrecision + trainedPrecision;
+    var nextCritStat = currentCritStat + (nextLevel - currentLevel);
+    var currentCrit = (baseCritChance + currentCritStat * PRECISION_CRIT_COEF).toFixed(1);
+    var nextCrit = (baseCritChance + nextCritStat * PRECISION_CRIT_COEF).toFixed(1);
+    return "Précision " + currentCritStat + " → " + nextCritStat + "  (" + currentCrit + "% → " + nextCrit + "%)";
+  }
+
+  if (upgrade.id === "utrain_endurance") {
+    var ENDURANCE_HP_COEF = 2;
+    var currentEndurance = baseEndurance + trainedEndurance;
+    var nextEndurance = currentEndurance + (nextLevel - currentLevel);
+    var currentHp = Math.floor(currentEndurance * ENDURANCE_HP_COEF);
+    var nextHp = Math.floor(nextEndurance * ENDURANCE_HP_COEF);
+    return "Endurance " + currentEndurance + " → " + nextEndurance + "  (+" + currentHp + " → +" + nextHp + " PV)";
+  }
+
+  if (upgrade.id === "utrain_will") {
+    var WILL_CRIT_MULT_COEF = 0.01;
+    var currentWillStat = baseWill + trainedWill;
+    var nextWillStat = currentWillStat + (nextLevel - currentLevel);
+    var currentWill = (baseCritMult + currentWillStat * WILL_CRIT_MULT_COEF).toFixed(2);
+    var nextWill = (baseCritMult + nextWillStat * WILL_CRIT_MULT_COEF).toFixed(2);
+    return "Volonté " + currentWillStat + " → " + nextWillStat + "  (x" + currentWill + " → x" + nextWill + ")";
   }
 
   if (upgrade.id === "u_gold") {
-    return "x" + (1 + currentLevel * 0.03).toFixed(2) + " -> x" + (1 + nextLevel * 0.03).toFixed(2);
-  }
-
-  if (upgrade.id === "u_tap_mult") {
-    return "x" + (1 + currentLevel * 0.10).toFixed(2) + " -> x" + (1 + nextLevel * 0.10).toFixed(2);
-  }
-
-  if (upgrade.id === "u_crit_mult") {
-    return "x" + (2 + currentLevel * 0.10).toFixed(2) + " -> x" + (2 + nextLevel * 0.10).toFixed(2);
-  }
-
-  if (upgrade.id === "u_auto_mult") {
-    return "x" + (1 + currentLevel * 0.18).toFixed(2) + " -> x" + (1 + nextLevel * 0.18).toFixed(2);
+    var currentGold = (1 + currentLevel * 0.03).toFixed(2);
+    var nextGold = (1 + nextLevel * 0.03).toFixed(2);
+    return "Or x" + currentGold + " → x" + nextGold;
   }
 
   if (upgrade.id === "u_bounty") {
-    return "+" + Math.round(currentLevel * 10) + "% -> +" + Math.round(nextLevel * 10) + "%";
+    var currentBoss = Math.round(currentLevel * 10);
+    var nextBoss = Math.round(nextLevel * 10);
+    return "Or boss +" + currentBoss + "% → +" + nextBoss + "%";
   }
 
   return "";
@@ -79,63 +124,66 @@ function buildShopHTML() {
   h += '<div class="shop-mode-info" style="margin:0 0 12px 0;opacity:.85;width:100%;text-align:right;">Mode d’achat : <strong>' + modeLabel + '</strong></div>';
 
   h += '<div class="shop-grid">';
-  (UPGRADES || []).forEach(function (u) {
-    var level = game.upgrades[u.id] || 0;
-    var maxLevel = u.maxLevel || Infinity;
-    var nextCost = getUpgradeCost(u, level);
-    var maxed = level >= maxLevel;
-    var locked = (WorldManager.worldIndex || 0) < (u.unlockWorld || 0);
+(UPGRADES || []).forEach(function (u) {
+  var level = game.upgrades[u.id] || 0;
+  var maxLevel = u.maxLevel || Infinity;
+  var nextCost = getUpgradeCost(u, level);
+  var maxed = level >= maxLevel;
+  var locked = (WorldManager.worldIndex || 0) < (u.unlockWorld || 0);
 
-    var preview = typeof getUpgradePurchasePreview === "function"
-      ? getUpgradePurchasePreview(u, buyAmount)
-      : {
-          count: 0,
-          totalCost: nextCost,
-          currentLevel: level,
-          nextLevel: level,
-          reachedMax: false
-        };
+  var canBuy = !locked && !maxed;
+  var buyAmountLocal = canBuy ? buyAmount : 0;
 
-    var afford = !locked && !maxed && preview.count > 0;
-    var targetLevelText = preview.nextLevel;
-    var maxLevelText = maxLevel >= 999 ? "∞" : maxLevel;
+  var preview = typeof getUpgradePurchasePreview === "function"
+    ? getUpgradePurchasePreview(u, buyAmountLocal)
+    : {
+        count: 0,
+        totalCost: nextCost,
+        currentLevel: level,
+        nextLevel: level,
+        reachedMax: false
+      };
 
-    h += '<div class="upgrade-card ' + (afford ? 'affordable ' : '') + (locked ? 'locked' : '') + '">';
-    h += '<div class="upgrade-icon">' + esc(u.icon) + '</div>';
-    h += '<div class="upgrade-info">';
-    h += '<div class="upgrade-name">' + esc(u.name) + '</div>';
-    h += '<div class="upgrade-desc">' + esc(u.desc) + '</div>';
-    h += '<div class="upgrade-level">Niv. ' + level + '/' + maxLevelText + '</div>';
+  var afford = canBuy && preview.count > 0;
+  var targetLevelText = canBuy ? preview.nextLevel : level;
+  var maxLevelText = maxLevel >= 999 ? "∞" : maxLevel;
 
-    if (!locked && !maxed) {
-      h += '<div class="upgrade-level" style="opacity:.85;">Après achat : ' + targetLevelText + '/' + maxLevelText + '</div>';
-      var previewText = getUpgradePreviewText(u, level, preview.nextLevel);
-      if (previewText) {
-        h += '<div class="upgrade-preview" style="opacity:.9;font-size:12px;margin-top:4px;">' + esc(previewText) + '</div>';
-      }
+  h += '<div class="upgrade-card ' + (afford ? 'affordable ' : '') + (locked ? 'locked' : '') + '">';
+  h += '<div class="upgrade-icon">' + esc(u.icon) + '</div>';
+  h += '<div class="upgrade-info">';
+  h += '<div class="upgrade-name">' + esc(u.name) + '</div>';
+  h += '<div class="upgrade-desc">' + esc(u.desc) + '</div>';
+  h += '<div class="upgrade-level">Niv. ' + level + '/' + maxLevelText + '</div>';
+
+  if (canBuy) {
+    h += '<div class="upgrade-level" style="opacity:.85;">Après achat : ' + targetLevelText + '/' + maxLevelText + '</div>';
+    var previewText = getUpgradePreviewText(u, level, preview.nextLevel);
+    if (previewText) {
+      h += '<div class="upgrade-preview" style="opacity:.9;font-size:12px;margin-top:4px;">' + esc(previewText) + '</div>';
     }
+  }
+  h += '</div>';
 
-    h += '</div>';
-
-    if (maxed) {
-      h += '<button class="upgrade-buy locked" disabled>MAX</button>';
-    } else if (locked) {
-      h += '<button class="upgrade-buy locked" disabled>Monde ' + ((u.unlockWorld || 0) + 1) + '</button>';
+  if (maxed) {
+    h += '<button class="upgrade-buy locked" disabled>MAX</button>';
+  } else if (locked) {
+    h += '<button class="upgrade-buy locked" disabled>Monde ' + ((u.unlockWorld || 0) + 1) + '</button>';
+  } else {
+    var label = '';
+    if (afford) {
+      label = formatNumber(preview.totalCost) + ' • +' + preview.count;
     } else {
-      var label = '';
-      if (preview.count > 0) {
-        label = formatNumber(preview.totalCost) + ' • +' + preview.count;
-      } else {
-        label = formatNumber(nextCost) + ' • ' + modeLabel;
-      }
-
-      h += '<button class="upgrade-buy ' + (!afford ? 'cant-afford' : '') + '" onclick="buyUpgrade(\'' + u.id + '\', ' + buyAmount + ')">';
-      h += label;
-      h += '</button>';
+      label = formatNumber(nextCost) + ' • ' + modeLabel;
     }
 
-    h += '</div>';
-  });
+    h += '<button class="upgrade-buy ' + (!afford ? 'cant-afford' : '') + '" onclick="buyUpgrade(\'' + u.id + '\', ' + buyAmount + ')">';
+    h += label;
+    h += '</button>';
+  }
+
+  h += '</div>';
+});
+h += '</div>';
 
   h += '</div>'; // ferme .shop-grid
   h += '</div>'; // ferme .shop-shell

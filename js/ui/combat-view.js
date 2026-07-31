@@ -42,9 +42,31 @@ function renderEnemy() {
   }
 
   renderEnemyHp();
+  renderEnemyAffinity();
   if (typeof renderEnemyStatsCard === "function") renderEnemyStatsCard();
 }
 
+function renderEnemyAffinity() {
+  var el = document.getElementById("enemy-affinity");
+  if (!el) return;
+
+  if (!game.enemy || typeof getDamageAffinity !== "function") {
+    el.textContent = "";
+    el.className = "";
+    return;
+  }
+
+  var affinity = getDamageAffinity();
+  var labels = {
+    resist: "⚠️ Résistant",
+    weak: "✅ Point faible",
+    unarmed: "🤜 Sans arme (-20%)",
+    neutral: ""
+  };
+
+  el.textContent = labels[affinity.status] || "";
+  el.className = "enemy-affinity " + affinity.status;
+}
 /* ============================================================
    Barre de vie. 
 ============================================================ */
@@ -84,3 +106,4 @@ function renderEnemyStatsCard() {
 
 window.renderEnemy = renderEnemy;
 window.renderEnemyHp = renderEnemyHp;
+window.renderEnemyAffinity = renderEnemyAffinity;

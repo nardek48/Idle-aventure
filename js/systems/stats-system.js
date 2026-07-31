@@ -69,8 +69,41 @@ var StatsSystem = {
       }
     });
 
-    var equipped = game.equipped || {};
-    [equipped.weapon, equipped.armor, equipped.amulet].forEach(function (item) {
+    // NOUVEAU v1.8 : Force (power) -> dégâts de tap
+    var FORCE_TAP_COEF = 0.2;
+    var hero = typeof getHeroByGameId === "function" ? getHeroByGameId(game.heroId) : null;
+    var basePower = (hero && hero.stats) ? Number(hero.stats.power) || 0 : 0;
+    var trainedPower = (game.trainedStats && game.trainedStats.power) || 0;
+    var totalPower = basePower + trainedPower;
+    game.tapDamage += totalPower * FORCE_TAP_COEF;
+
+    // NOUVEAU v1.8 : Célérité -> auto DPS
+    var CELERITY_DPS_COEF = 0.03;
+    var baseCelerity = (hero && hero.stats) ? Number(hero.stats.celerity) || 0 : 0;
+    var trainedCelerity = (game.trainedStats && game.trainedStats.celerity) || 0;
+    game.autoDps += (baseCelerity + trainedCelerity) * CELERITY_DPS_COEF;
+
+    // NOUVEAU v1.8 : Précision -> chance de critique
+    var PRECISION_CRIT_COEF = 0.06;
+    var basePrecision = (hero && hero.stats) ? Number(hero.stats.precision) || 0 : 0;
+    var trainedPrecision = (game.trainedStats && game.trainedStats.precision) || 0;
+    game.critChance += (basePrecision + trainedPrecision) * PRECISION_CRIT_COEF;
+
+    // NOUVEAU v1.8 : Volonté -> dégâts critiques
+    var WILL_CRIT_MULT_COEF = 0.01;
+    var baseWill = (hero && hero.stats) ? Number(hero.stats.will) || 0 : 0;
+    var trainedWill = (game.trainedStats && game.trainedStats.will) || 0;
+    game.critMult += (baseWill + trainedWill) * WILL_CRIT_MULT_COEF;
+
+     // NOUVEAU v1.8 : Endurance -> PV du héros
+    var ENDURANCE_HP_COEF = 2;
+    var baseEndurance = (hero && hero.stats) ? Number(hero.stats.endurance) || 0 : 0;
+    var trainedEndurance = (game.trainedStats && game.trainedStats.endurance) || 0;
+    game.heroMaxHp = Math.max(1, Math.floor((baseEndurance + trainedEndurance) * ENDURANCE_HP_COEF));
+    if (!game.heroHp || game.heroHp > game.heroMaxHp) game.heroHp = game.heroMaxHp;
+
+    var equipped = game.equipped;
+    [equipped.weapon, equipped.armor, equipped.amulet].forEach(function(item) {
       if (!item) return;
       if (item.stat === "tapDmg") game.tapDamage += item.value;
       else if (item.stat === "tapMult") game.tapMult += item.value;
@@ -113,6 +146,12 @@ var StatsSystem = {
     var aether = getAetherBonuses();
     game.tapMult += aether.tapBonus || 0;
     game.goldMult *= 1 + (aether.goldBonus || 0);
+
+    // Bonus passif : Aether cumulé à vie -> dégâts + or globaux (ne diminue jamais, même dépensé)
+    var AETHER_LIFETIME_MULT_COEF = 0.005;
+    var totalAether = Number(game.totalAetherEarned || 0);
+    game.tapMult += totalAether * AETHER_LIFETIME_MULT_COEF;
+    game.goldMult += totalAether * AETHER_LIFETIME_MULT_COEF;
   },
 
   effectiveTapDamage: function () {

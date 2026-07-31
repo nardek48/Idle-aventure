@@ -42,6 +42,7 @@
      Couleurs de rareté
      ========================= */
   --rarity-common: #9ca3af;     /* Objet commun */
+  --rarity-green: #22c55e;      /* Objet inhabituel */
   --rarity-rare: #3b82f6;       /* Objet rare */
   --rarity-epic: #a855f7;       /* Objet épique */
   --rarity-legendary: #f59e0b;  /* Objet légendaire */

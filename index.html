@@ -18,12 +18,12 @@
   <title>Quest Idle — Fantasy Clicker v2</title>
 
   <!-- Feuille de style externe -->
-  <!-- <link rel="stylesheet" href="style.css"> -->
+  <!-- <link rel="stylesheet" href="style../css"> -->
 
-  <link rel="stylesheet" href="css/00-tokens.css">
-  <link rel="stylesheet" href="css/01-base.css">
-  <link rel="stylesheet" href="css/02-layout.css">
-  <link rel="stylesheet" href="css/03-combat.css">
+  <link rel="stylesheet" href="./css/00-tokens.css">
+  <link rel="stylesheet" href="./css/01-base.css">
+  <link rel="stylesheet" href="./css/02-layout.css">
+  <link rel="stylesheet" href="./css/03-combat.css">
 
   <link rel="stylesheet" href="./css/04-panels-common.css">
   <link rel="stylesheet" href="./css/04-panel-upgrades.css">
@@ -39,9 +39,9 @@
   <link rel="stylesheet" href="./css/04-panel-hero-summary.css">
   <link rel="stylesheet" href="./css/04-panel-village-shop.css">
 
-  <link rel="stylesheet" href="css/05-overlays.css">
-  <link rel="stylesheet" href="css/06-map.css">
-  <link rel="stylesheet" href="css/07-responsive.css">
+  <link rel="stylesheet" href="./css/05-overlays.css">
+  <link rel="stylesheet" href="./css/06-map.css">
+  <link rel="stylesheet" href="./css/07-responsive.css">
 
 </head>
 
@@ -74,6 +74,7 @@
   <div id="enemy-display">
     <div id="enemy-emoji" onclick="playerAttack()">🟢</div>
     <div id="enemy-name">Slime</div>
+    <div id="enemy-affinity"></div>
     <div id="enemy-hp-bar-wrapper">
       <div id="enemy-hp-bar" style="width:100%"></div>
       <div id="enemy-hp-text">10 / 10</div>
@@ -86,6 +87,7 @@
   <div class="stat-item"><span class="stat-label">⚡ Dégâts/Tap</span><span class="stat-value" id="stat-tap-dmg">1</span></div>
   <div class="stat-item"><span class="stat-label">🔁 Auto DPS</span><span class="stat-value" id="stat-auto-dps">0</span></div>
   <div class="stat-item"><span class="stat-label">🎯 Critique</span><span class="stat-value" id="stat-crit">5%</span></div>
+  <div class="stat-item"><span class="stat-label">🎯 Dégâts crit.</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>
   <div class="stat-item"><span class="stat-label">🌀 Aether</span><span class="stat-value" id="stat-aether-mult">x1.00</span></div>
   <div class="stat-item"><span class="stat-label">💰 Or</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>
 </div>
@@ -94,48 +96,48 @@
 
 <div id="tab-bar">
   <button class="tab-btn active" data-tab="combat" onclick="switchTab('combat')">
-    <img src="images/icons/combat_menu.png" alt="" class="tab-icon-img">
+    <img src="./images/Icons/combat_menu.png" alt="" class="tab-icon-img">
     <span>Combat</span>
   </button>
 
   <button class="tab-btn" data-tab="shop" onclick="switchTab('shop')">
-    <img src="images/icons/shop_menu.png" alt="" class="tab-icon-img">
+    <img src="./images/Icons/shop_menu.png" alt="" class="tab-icon-img">
     <span>Shop</span>
   </button>
 
   <button class="tab-btn" data-tab="talents" onclick="switchTab('talents')">
-    <img src="images/icons/talents_menu.png" alt="" class="tab-icon-img">
+    <img src="./images/Icons/talents_menu.png" alt="" class="tab-icon-img">
     <span>Talents</span>
   </button>
 
   <button class="tab-btn" data-tab="equip" onclick="switchTab('equip')">
-    <img src="images/icons/equip_menu.png" alt="" class="tab-icon-img">
+    <img src="./images/Icons/equip_menu.png" alt="" class="tab-icon-img">
     <span>Équip.</span>
   </button>
 
   <button class="tab-btn" data-tab="quests" onclick="switchTab('quests')">
-    <img src="images/icons/quests_menu.png" alt="" class="tab-icon-img">
+    <img src="./images/Icons/quests_menu.png" alt="" class="tab-icon-img">
     <span>Quêtes</span>
     <span class="tab-badge" id="quest-badge" style="display:none">!</span>
   </button>
 
   <button class="tab-btn" data-tab="ascension" onclick="switchTab('ascension')">
-    <img src="images/icons/aether_menu.png" alt="" class="tab-icon-img">
+    <img src="./images/Icons/aether_menu.png" alt="" class="tab-icon-img">
     <span>Ascens.</span>
   </button>
 
   <button class="tab-btn" data-tab="map" onclick="switchTab('map')">
-    <img src="images/icons/map_menu.png" alt="" class="tab-icon-img">
+    <img src="./images/Icons/map_menu.png" alt="" class="tab-icon-img">
     <span>Map</span>
   </button>
 
   <button class="tab-btn" data-tab="village" onclick="switchTab('village')">
-    <img src="images/icons/village_menu.png" alt="" class="tab-icon-img">
+    <img src="./images/Icons/village_menu.png" alt="" class="tab-icon-img">
     <span>Village</span>
   </button>
 
   <button class="tab-btn" data-tab="more" onclick="switchTab('more')">
-    <img src="images/icons/more_menu.png" alt="" class="tab-icon-img">
+    <img src="./images/Icons/more_menu.png" alt="" class="tab-icon-img">
     <span>Plus</span>
   </button>
 </div>

@@ -60,14 +60,36 @@ function ensureUpgradeDefaults() {
   if (!game.upgrades || typeof game.upgrades !== "object") game.upgrades = {};
   if (!game.aetherUpgrades || typeof game.aetherUpgrades !== "object") game.aetherUpgrades = {};
 
+  var upgradeKeyMap = {
+    utap: "utrain_power",
+    ucelery: "utrain_celerity",
+    ucelerity: "utrain_celerity",
+    uprecision: "utrain_precision",
+    uwill: "utrain_will",
+    uendurance: "utrain_endurance",
+    u_crit: "u_crit",
+    u_gold: "u_gold",
+    u_tap_mult: "u_tap_mult",
+    u_crit_mult: "u_crit_mult",
+    u_auto_mult: "u_auto_mult",
+    u_bounty: "u_bounty"
+  };
+
+  Object.keys(upgradeKeyMap).forEach(function(oldKey) {
+    var newKey = upgradeKeyMap[oldKey];
+    if (game.upgrades[oldKey] != null && game.upgrades[newKey] == null) {
+      game.upgrades[newKey] = game.upgrades[oldKey];
+    }
+  });
+
   if (typeof UPGRADES !== "undefined" && Array.isArray(UPGRADES)) {
-    UPGRADES.forEach(function (u) {
+    UPGRADES.forEach(function(u) {
       if (u && u.id != null && game.upgrades[u.id] === undefined) game.upgrades[u.id] = 0;
     });
   }
 
-  if (typeof AETHER_SHOP !== "undefined" && Array.isArray(AETHER_SHOP)) {
-    AETHER_SHOP.forEach(function (u) {
+  if (typeof AETHERSHOP !== "undefined" && Array.isArray(AETHERSHOP)) {
+    AETHERSHOP.forEach(function(u) {
       if (u && u.id != null && game.aetherUpgrades[u.id] === undefined) game.aetherUpgrades[u.id] = 0;
     });
   }
@@ -114,6 +136,15 @@ function buildSaveData() {
     critChance: Number(game.critChance || 5),
     critMult: Number(game.critMult || 2),
     goldMult: Number(game.goldMult || 1),
+
+    trainedStats: game.trainedStats || {
+      power: 0,
+      endurance: 0,
+      celerity: 0,
+      precision: 0,
+      will: 0
+    },
+
     worldIndex: Number((window.WorldManager && WorldManager.worldIndex) || 0),
     adventureIndex: Number((window.WorldManager && WorldManager.adventureIndex) || 0),
     enemyIndex: Number((window.WorldManager && WorldManager.enemyIndex) || 0),
@@ -171,6 +202,9 @@ function restoreBaseState(d) {
   game.critChance = 5;
   game.critMult = 2;
   game.goldMult = 1;
+
+  game.trainedStats = (d.trainedStats && typeof d.trainedStats === "object") ? d.trainedStats : { power: 0, endurance: 0, celerity: 0, precision: 0, will: 0 };
+
 
   game.heroLevel = Number(d.heroLevel || 1);
   game.heroXp = Number(d.heroXp || 0);
@@ -269,12 +303,14 @@ function clearSaveData() {
 function hardResetState() {
   var questDefaults = getDefaultQuestProgress();
   var keptAether = game.aether || 0;
+  var keptTotalAetherEarned = game.totalAetherEarned || 0;
   var keptAscensions = game.ascensionCount || 0;
   var keptAetherUpgrades = Object.assign({}, game.aetherUpgrades || {});
 
   game.gold = 0;
   game.essence = 0;
   game.aether = keptAether;
+  game.totalAetherEarned = keptTotalAetherEarned;
 
   game.tapDamage = 1;
   game.tapMult = 1;
@@ -314,7 +350,8 @@ function hardResetState() {
   WorldManager.adventureIndex = 0;
   WorldManager.enemyIndex = 0;
 
-  ensureUpgradeDefaults();
+  if (typeof ensureUpgradeDefaults === "function") ensureUpgradeDefaults();
+
   if (typeof gameLog !== "undefined" && Array.isArray(gameLog)) gameLog.length = 0;
 
   if (window.QuestManager && typeof QuestManager.generateDaily === "function") {
@@ -324,6 +361,9 @@ function hardResetState() {
   }
 
   reapplyProgressEffects();
+
+  if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {StatsSystem.recalcStats();}
+
 }
 
 function fullResetState() {
@@ -373,7 +413,8 @@ function fullResetState() {
   WorldManager.adventureIndex = 0;
   WorldManager.enemyIndex = 0;
 
-  ensureUpgradeDefaults();
+  if (typeof ensureUpgradeDefaults === "function") ensureUpgradeDefaults();
+
   if (typeof gameLog !== "undefined" && Array.isArray(gameLog)) gameLog.length = 0;
 
   if (window.QuestManager && typeof QuestManager.generateDaily === "function") {
@@ -383,6 +424,8 @@ function fullResetState() {
   }
 
   reapplyProgressEffects();
+
+  if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {StatsSystem.recalcStats();}
 }
 
 function resetGame() {

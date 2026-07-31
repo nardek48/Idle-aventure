@@ -32,7 +32,9 @@ var WorldManager = {
       enemyId = adventure.boss;
       var bossData = BOSS_DB[enemyId] || { name: "Boss", asset: "slimeking" };
       var bossScale = 1 + this.worldIndex * 0.90 + this.adventureIndex * 0.30 + (game.cycleCount || 0) * 0.35;
-      var bossHp = Math.floor(120 * bossScale + (game.totalKills || 0) * 2);
+      var BOSS_ENDURANCE_HP_COEF = 2;
+      var bossEndurance = (bossData.stats && bossData.stats.endurance) || 58;
+      var bossHp = Math.floor(bossEndurance * BOSS_ENDURANCE_HP_COEF * bossScale + (game.totalKills || 0) * 2);
       return {
         id: enemyId,
         name: bossData.name,
@@ -50,7 +52,9 @@ var WorldManager = {
     enemyId = adventure.enemyPool[randInt(0, adventure.enemyPool.length - 1)];
     var enemyData = ENEMY_DB[enemyId] || { name: "Ennemi", asset: "slime" };
     var scale = 1 + this.worldIndex * 0.60 + this.adventureIndex * 0.22 + (game.cycleCount || 0) * 0.2 + this.enemyIndex * 0.05;
-    var hp = Math.floor(22 * scale + this.enemyIndex * 5);
+    var ENEMY_ENDURANCE_HP_COEF = 1.2;
+    var enemyEndurance = (enemyData.stats && enemyData.stats.endurance) || 18;
+    var hp = Math.floor(enemyEndurance * ENEMY_ENDURANCE_HP_COEF * scale + this.enemyIndex * 5);
 
     if (game.talents.t_sturdy) hp = Math.floor(hp * 1.2);
 
@@ -66,6 +70,12 @@ var WorldManager = {
       resists: enemyData.resists || [],
       weak: enemyData.weak || []
     };
+  },
+
+  meetsAscensionRequirement: function (index) {
+    var w = WORLDS[index];
+    if (!w) return false;
+    return (game.ascensionCount || 0) >= (w.requiredAscension || 0);
   },
 
   advance: function () {
@@ -88,14 +98,21 @@ var WorldManager = {
     }
 
     this.adventureIndex = 0;
-    this.worldIndex += 1;
+    var nextIndex = this.worldIndex + 1;
+    var nextWorld = WORLDS[nextIndex];
 
-    if (this.worldIndex < WORLDS.length) {
-      return { type: "world", world: WORLDS[this.worldIndex] };
+    if (nextWorld && this.meetsAscensionRequirement(nextIndex)) {
+      this.worldIndex = nextIndex;
+      return { type: "world", world: nextWorld };
     }
 
     this.worldIndex = 0;
     game.cycleCount = (game.cycleCount || 0) + 1;
+
+    if (nextWorld && !this.meetsAscensionRequirement(nextIndex)) {
+      return { type: "locked", world: nextWorld };
+    }
+
     return { type: "cycle" };
   },
 
@@ -306,18 +323,6 @@ function getUpgradePurchasePreview(upgrade, amount) {
   };
 }
 
-function setShopBuyAmount(amount) {
-  amount = Number(amount || 1);
-
-  if (![1, 10, 25, -1].includes(amount)) {
-    amount = 1;
-  }
-
-  game.shopBuyAmount = amount;
-
-  if (typeof renderAll === "function") renderAll();
-  saveGame();
-}
 
 function setShopBuyAmount(amount) {
   amount = Number(amount || 1);
@@ -459,7 +464,8 @@ var AscensionManager = {
   },
 
   canAscend: function () {
-    return WorldManager.worldIndex >= (ASCENSION_CONFIG.minWorldToAscend || 1) && this.previewGain() > 0;
+    var kills = Number(game.totalKills || 0);
+    return kills >= (ASCENSION_CONFIG.minKillsToAscend || 0) && this.previewGain() > 0;
   },
 
   doAscend: function () {
@@ -473,8 +479,9 @@ var AscensionManager = {
 
 function ascendNow() {
   if (typeof ASCENSION_CONFIG === "undefined") return;
-  if ((WorldManager.worldIndex || 0) < (ASCENSION_CONFIG.minWorldToAscend || 0)) {
-    showToast("Ascension non disponible", 1200);
+  var minKills = ASCENSION_CONFIG.minKillsToAscend || 0;
+  if ((game.totalKills || 0) < minKills) {
+    showToast("Ascension non disponible (" + minKills + " kills minimum)", 1500);
     return;
   }
 
@@ -484,6 +491,7 @@ function ascendNow() {
 
   var doAscend = function () {
     game.aether = Number(game.aether || 0) + gain;
+    game.totalAetherEarned = Number(game.totalAetherEarned || 0) + gain;
     game.ascensionCount = Number(game.ascensionCount || 0) + 1;
 
     addLog("Ascension accomplie : +" + gain + " Aether", "event");

@@ -16,28 +16,57 @@ function cloneItem(template, slot) {
   };
 }
 
+/* Renvoie la liste des raretés actuellement tirables, selon le monde en
+   cours. En plein cycle (le joueur a déjà bouclé tous les mondes une fois
+   sans ascensionner), toutes les raretés sont débloquées dès le monde 0. */
+function getAllowedRarities() {
+  var worldIndex = (window.WorldManager && WorldManager.worldIndex) || 0;
+  var isCycling = (game.cycleCount || 0) > 0;
+  var maxTier = WORLD_RARITY_UNLOCKS.length - 1;
+  var tierIndex = isCycling ? maxTier : Math.min(Math.max(0, worldIndex), maxTier);
+  return WORLD_RARITY_UNLOCKS[tierIndex] || ["common"];
+}
+
 var LootSystem = {
   rollDrop: function () {
     var slot = ["weapon", "armor", "amulet"][randInt(0, 2)];
     var pool = EQUIPMENT_DB[slot] || [];
     if (!pool.length) return null;
 
-    var roll = Math.random() * 100;
-    var rarity;
+    var allowed = getAllowedRarities();
+    var weights = allowed.map(function (r) { return RARITY_DROP_RATES[r] || 0; });
+    var totalWeight = weights.reduce(function (a, b) { return a + b; }, 0);
 
-    if (roll < (RARITY_DROP_RATES.common || 0)) rarity = "common";
-    else if (roll < (RARITY_DROP_RATES.common || 0) + (RARITY_DROP_RATES.rare || 0)) rarity = "rare";
-    else if (roll < (RARITY_DROP_RATES.common || 0) + (RARITY_DROP_RATES.rare || 0) + (RARITY_DROP_RATES.epic || 0)) rarity = "epic";
-    else rarity = "legendary";
+    if (totalWeight <= 0) {
+      allowed = ["common"];
+      weights = [1];
+      totalWeight = 1;
+    }
 
-    if (game.talents.t_lucky_find && rarity === "common" && chance(20)) {
-      rarity = "rare";
+    var roll = Math.random() * totalWeight;
+    var rarity = allowed[allowed.length - 1];
+    var acc = 0;
+    for (var i = 0; i < allowed.length; i++) {
+      acc += weights[i];
+      if (roll < acc) {
+        rarity = allowed[i];
+        break;
+      }
+    }
+
+    if (game.talents.t_lucky_find && rarity === "common" && chance(20) && allowed.indexOf("green") !== -1) {
+      rarity = "green";
     }
 
     var candidates = pool.filter(function (item) {
       return item.rarity === rarity;
     });
 
+    if (!candidates.length) {
+      candidates = pool.filter(function (item) {
+        return allowed.indexOf(item.rarity) !== -1;
+      });
+    }
     if (!candidates.length) candidates = pool;
     return cloneItem(candidates[randInt(0, candidates.length - 1)], slot);
   }
@@ -45,3 +74,4 @@ var LootSystem = {
 
 window.LootSystem = LootSystem;
 window.cloneItem = cloneItem;
+window.getAllowedRarities = getAllowedRarities;

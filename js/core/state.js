@@ -22,6 +22,7 @@ function createInitialGameState() {
     gold: 0,
     essence: 0,
     aether: 0,
+    totalAetherEarned: 0,
 
     tapDamage: 1,
     tapMult: 1,
@@ -29,6 +30,14 @@ function createInitialGameState() {
     critChance: 5,
     critMult: 2,
     goldMult: 1,
+        // NOUVEAU v1.8 : progression des stats RPG via le shop
+    trainedStats: {
+      power: 0,
+      endurance: 0,
+      celerity: 0,
+      precision: 0,
+      will: 0
+    },
 
     heroLevel: 1,
     heroXp: 0,
@@ -73,7 +82,23 @@ function ensureGameStateDefaults() {
   if (!game.killCounts) game.killCounts = {};
   if (!game.upgrades) game.upgrades = {};
   if (!game.talents) game.talents = {};
+
+  // NOUVEAU v1.8 : init + migration trainedStats
+  if (!game.trainedStats || typeof game.trainedStats !== "object") {
+    game.trainedStats = { power: 0, endurance: 0, celerity: 0, precision: 0, will: 0 };
+    if (game.upgrades && game.upgrades.utap) {
+      game.trainedStats.power = Number(game.upgrades.utap) || 0;
+    }
+  }
+  if (typeof game.trainedStats.power !== "number") game.trainedStats.power = 0;
+  if (typeof game.trainedStats.endurance !== "number") game.trainedStats.endurance = 0;
+  if (typeof game.trainedStats.celerity !== "number") game.trainedStats.celerity = 0;
+  if (typeof game.trainedStats.precision !== "number") game.trainedStats.precision = 0;
+  if (typeof game.trainedStats.will !== "number") game.trainedStats.will = 0;
+
   if (!Array.isArray(game.inventory)) game.inventory = [];
+
+  
 
   if (!game.equipped || typeof game.equipped !== "object") {
     game.equipped = createDefaultEquipped();
@@ -131,6 +156,7 @@ function ensureGameStateDefaults() {
   if (![1, 10, 25, -1].includes(Number(game.shopBuyAmount))) {
     game.shopBuyAmount = 1;
   }
+  if (typeof game.totalAetherEarned !== "number") game.totalAetherEarned = 0;
 }
 
 ensureGameStateDefaults();

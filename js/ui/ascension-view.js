@@ -5,11 +5,11 @@
 ============================================================ */
 
 function buildAscensionHTML() {
-  var minWorld = (typeof ASCENSION_CONFIG !== "undefined" && ASCENSION_CONFIG.minWorldToAscend != null)
-    ? ASCENSION_CONFIG.minWorldToAscend
-    : 1;
+  var minKills = (typeof ASCENSION_CONFIG !== "undefined" && ASCENSION_CONFIG.minKillsToAscend != null)
+    ? ASCENSION_CONFIG.minKillsToAscend
+    : 50;
 
-  var currentWorld = Number((window.WorldManager && WorldManager.worldIndex) || 0);
+  var currentKills = Number(game.totalKills || 0);
   var gain = (window.AscensionManager && typeof AscensionManager.previewGain === "function")
     ? AscensionManager.previewGain()
     : 0;
@@ -18,7 +18,7 @@ function buildAscensionHTML() {
     ? AscensionManager.canAscend()
     : false;
 
-  var worldsLeft = Math.max(0, minWorld - currentWorld);
+  var killsLeft = Math.max(0, minKills - currentKills);
   var h = `<div class="panel-title aether-shop-title">Ascension</div>`;
 
   h += `<div class="prestige-section">
@@ -40,12 +40,12 @@ function buildAscensionHTML() {
 
   h += `<div class="settings-info">
     <strong>Conditions</strong><br><br>
-    Monde requis : ${minWorld}<br>
-    Monde actuel : ${currentWorld}<br>
+    Kills requis : ${minKills}<br>
+    Kills actuels : ${currentKills}<br>
     ${
       canAscend
         ? '<span class="ascension-ok">Ascension disponible</span>'
-        : `<span class="ascension-lock">Encore ${worldsLeft} monde(x) à atteindre</span>`
+        : `<span class="ascension-lock">Encore ${killsLeft} kill(s) avant de pouvoir ascensionner</span>`
     }
   </div>`;
 

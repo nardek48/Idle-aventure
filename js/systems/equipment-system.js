@@ -8,7 +8,8 @@ function getEquipmentSellValue(item) {
   if (!item) return 0;
   return item.rarity === "legendary" ? 1000 :
          item.rarity === "epic" ? 200 :
-         item.rarity === "rare" ? 50 : 10;
+         item.rarity === "rare" ? 50 :
+         item.rarity === "green" ? 25 : 10;
 }
 
 var EquipmentSystem = {
