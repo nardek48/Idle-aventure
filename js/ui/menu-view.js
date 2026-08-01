@@ -20,6 +20,7 @@ var MENU_ITEMS = [
   { tab: "quests", label: "Quêtes", img: "./images/Icons/quests_menu.png", badge: true },
   { tab: "ascension", label: "Ascension", img: "./images/Icons/aether_menu.png" },
   { tab: "map", label: "Carte du monde", img: "./images/Icons/map_menu.png" },
+  { tab: "dungeon", label: "Donjon", icon: "🏰" },
   { tab: "village", label: "Village", icon: "🏘️" },
   { tab: "bestiary", label: "Bestiaire", icon: "📖" },
   { tab: "log", label: "Journal", icon: "📜" },

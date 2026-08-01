@@ -228,6 +228,13 @@ var CombatEngine = {
      "game over", juste une petite sanction pour inciter à investir
      en Endurance/défense plutôt qu'un vrai risque d'arrêt du jeu. */
   onHeroDefeated: function () {
+    // En donjon, une défaite arrête la tentative en cours (voir
+    // DungeonManager.onDefeat) au lieu du malus léger habituel.
+    if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
+      DungeonManager.onDefeat();
+      return;
+    }
+
     var lost = Math.floor((game.gold || 0) * DEFEAT_GOLD_PENALTY);
     game.gold = Math.max(0, game.gold - lost);
     game.heroHp = game.heroMaxHp || 1;
@@ -359,6 +366,24 @@ var CombatEngine = {
     }
 
     saveEquipBagScroll();
+
+    // En donjon : pas de progression de monde, pas de récompense de
+    // chapitre — DungeonManager gère la suite (vague suivante ou fin
+    // de la tentative). Le loot de boss classique juste au-dessus
+    // s'applique quand même au boss de donjon, en plus de la
+    // récompense garantie de fin de donjon.
+    if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
+      var dungeonXpBonus = game.cycleCount || 0;
+      var dungeonXpGain = enemy.isBoss ? (3 + dungeonXpBonus * 0.5) : (1 + dungeonXpBonus * 0.1);
+      if (typeof grantHeroXp === "function") grantHeroXp(dungeonXpGain, enemy.isBoss ? "boss" : "enemy");
+
+      DungeonManager.onEnemyKilled();
+      if (typeof renderAll === "function") renderAll();
+      restoreEquipBagScroll();
+      saveGame();
+      return;
+    }
+
     var result = null;
     if (window.WorldManager && typeof WorldManager.advance === "function") result = WorldManager.advance();
 

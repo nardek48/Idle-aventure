@@ -199,7 +199,13 @@ function buildSaveData() {
     heroMaxHp: Number(game.heroMaxHp || 10),
     village: game.village || { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 },
     activePotions: game.activePotions || {},
-    pendingPotionBonuses: game.pendingPotionBonuses || { aetherNext: 0 }
+    pendingPotionBonuses: game.pendingPotionBonuses || { aetherNext: 0 },
+    equipShopStock: game.equipShopStock || [],
+    equipShopResetTime: Number(game.equipShopResetTime || 0),
+    dungeonTickets: Number(game.dungeonTickets != null ? game.dungeonTickets : 1),
+    dungeonTicketResetTime: Number(game.dungeonTicketResetTime || 0),
+    dungeonRun: game.dungeonRun || { active: false, wave: 0 },
+    dungeonBestWave: Number(game.dungeonBestWave || 0)
   };
 }
 
@@ -297,6 +303,14 @@ function restoreBaseState(d) {
     ? d.pendingPotionBonuses
     : { aetherNext: 0 };
   if (typeof game.pendingPotionBonuses.aetherNext !== "number") game.pendingPotionBonuses.aetherNext = 0;
+
+  game.equipShopStock = Array.isArray(d.equipShopStock) ? d.equipShopStock : [];
+  game.equipShopResetTime = Number(d.equipShopResetTime || 0);
+
+  game.dungeonTickets = typeof d.dungeonTickets === "number" ? d.dungeonTickets : 1;
+  game.dungeonTicketResetTime = Number(d.dungeonTicketResetTime || 0);
+  game.dungeonRun = d.dungeonRun && typeof d.dungeonRun === "object" ? d.dungeonRun : { active: false, wave: 0 };
+  game.dungeonBestWave = Number(d.dungeonBestWave || 0);
 
   ensureUpgradeDefaults();
 }

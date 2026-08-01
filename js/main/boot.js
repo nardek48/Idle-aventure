@@ -27,7 +27,16 @@ function init() {
   var loaded = loadGame();
 
   ensureDailyQuests();
-  CombatEngine.spawnEnemy();
+
+  // Si le joueur a rechargé la page en pleine tentative de donjon,
+  // il faut relancer la vague en cours plutôt que de faire apparaître
+  // un ennemi normal (sinon game.dungeonRun.active resterait vrai
+  // pour un combat qui n'a plus rien d'un donjon).
+  if (game.dungeonRun && game.dungeonRun.active && window.DungeonManager) {
+    DungeonManager.spawnWave(game.dungeonRun.wave || 1);
+  } else {
+    CombatEngine.spawnEnemy();
+  }
 
   if (window.QuestManager && typeof QuestManager.checkReset === "function") {
     QuestManager.checkReset();

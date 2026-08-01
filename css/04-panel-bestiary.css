@@ -1,12 +1,12 @@
 /* =========================
-   Bestiaire
+   Bestiaire (v2.5 — détail + grille)
    ========================= */
-.bestiary-entry {
-  display: none;
-}
 
-.bestiary-card {
-  margin-top: 12px;
+/* =========================
+   Carte de détail (créature sélectionnée)
+   ========================= */
+.bestiary-detail {
+  margin-bottom: 14px;
   padding: 14px;
   border-radius: var(--radius-md);
   background: var(--bg-card);
@@ -14,37 +14,34 @@
   box-shadow: var(--shadow-soft);
 }
 
-.bestiary-card:first-of-type {
-  margin-top: 0;
-}
-
-.bestiary-card.boss {
+.bestiary-detail.boss {
   border-color: rgba(239, 68, 68, 0.35);
   background: rgba(239, 68, 68, 0.06);
 }
 
-.bestiary-card-top {
+.bestiary-detail-top {
   display: flex;
   gap: 12px;
   align-items: flex-start;
 }
 
-.bestiary-thumb-wrap,
-.bestiary-thumb-fallback {
-  width: 84px;
-  height: 84px;
-  min-width: 84px;
-  border-radius: 14px;
+.bestiary-thumb-wrap-lg,
+.bestiary-thumb-wrap-lg-fallback {
+  width: 96px;
+  height: 96px;
+  min-width: 96px;
+  border-radius: 16px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 40px;
 }
 
-.bestiary-thumb-wrap.boss,
-.bestiary-thumb-fallback.boss {
-  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.4);
+.bestiary-thumb-wrap-lg.boss,
+.bestiary-thumb-wrap-lg-fallback.boss {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
 }
 
 .bestiary-thumb {
@@ -54,11 +51,7 @@
   display: block;
 }
 
-.bestiary-thumb-fallback {
-  font-size: 34px;
-}
-
-.bestiary-card-main {
+.bestiary-detail-main {
   flex: 1;
   min-width: 0;
 }
@@ -71,7 +64,7 @@
 }
 
 .bestiary-card-name {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: #fff;
 }
@@ -112,8 +105,53 @@
   color: #fff;
 }
 
+/* =========================
+   Stats de combat estimées (PV / Dégâts / Critique)
+   ========================= */
+.bestiary-combat-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.bestiary-combat-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.bestiary-combat-icon {
+  font-size: 16px;
+}
+
+.bestiary-combat-value {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.bestiary-combat-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.bestiary-combat-note {
+  margin-top: 6px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  font-style: italic;
+}
+
 .bestiary-stats {
-  margin-top: 12px;
+  margin-top: 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -159,6 +197,65 @@
   background: linear-gradient(90deg, #60a5fa, #34d399);
 }
 
-.bestiary-card.boss .bestiary-stat-fill {
+.bestiary-detail.boss .bestiary-stat-fill {
   background: linear-gradient(90deg, #fb7185, #ef4444);
+}
+
+/* =========================
+   Grille d'icônes (toutes les créatures)
+   ========================= */
+.bestiary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bestiary-grid-item {
+  position: relative;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.bestiary-thumb-wrap-sm,
+.bestiary-thumb-wrap-sm-fallback {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  transition: border-color 0.15s ease, transform 0.08s ease;
+}
+
+.bestiary-thumb-wrap-sm.boss,
+.bestiary-thumb-wrap-sm-fallback.boss {
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5);
+}
+
+.bestiary-grid-item.is-selected .bestiary-thumb-wrap-sm,
+.bestiary-grid-item.is-selected .bestiary-thumb-wrap-sm-fallback {
+  border-color: var(--gold);
+}
+
+.bestiary-grid-item:active .bestiary-thumb-wrap-sm,
+.bestiary-grid-item:active .bestiary-thumb-wrap-sm-fallback {
+  transform: scale(0.94);
+}
+
+.bestiary-grid-kills {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
 }

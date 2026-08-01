@@ -14,7 +14,9 @@ en or) et Potions (temporaire, voir data/potions.js + ui/potion-view.js).
 var activeShopSubTab = "upgrades";
 
 function setShopSubTab(tab) {
-  activeShopSubTab = (tab === "potions") ? "potions" : "upgrades";
+  if (tab === "potions") activeShopSubTab = "potions";
+  else if (tab === "equipshop") activeShopSubTab = "equipshop";
+  else activeShopSubTab = "upgrades";
   if (typeof renderPanel === "function") renderPanel();
 }
 
@@ -141,10 +143,17 @@ function buildShopHTML() {
   h += '<div class="shop-sub-tabs">';
   h += '<button class="shop-sub-tab ' + (activeShopSubTab === "upgrades" ? "is-active" : "") + '" type="button" onclick="setShopSubTab(\'upgrades\')">⬆️ Améliorations</button>';
   h += '<button class="shop-sub-tab ' + (activeShopSubTab === "potions" ? "is-active" : "") + '" type="button" onclick="setShopSubTab(\'potions\')">🧪 Potions</button>';
+  h += '<button class="shop-sub-tab ' + (activeShopSubTab === "equipshop" ? "is-active" : "") + '" type="button" onclick="setShopSubTab(\'equipshop\')">🛡️ Équipement</button>';
   h += '</div>';
 
   if (activeShopSubTab === "potions") {
     h += typeof buildPotionShopHTML === "function" ? buildPotionShopHTML() : "";
+    h += '</div>'; // ferme .shop-shell
+    return h;
+  }
+
+  if (activeShopSubTab === "equipshop") {
+    h += typeof buildEquipShopHTML === "function" ? buildEquipShopHTML() : "";
     h += '</div>'; // ferme .shop-shell
     return h;
   }

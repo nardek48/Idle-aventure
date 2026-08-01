@@ -21,11 +21,12 @@ function updateQuestBadge() {
 function buildQuestsHTML() {
   var h = '<div class="panel-title">Quêtes journalières</div>';
 
-  // NB : les boutons "Raid"/"Donjon" n'ont pas de onclick pour l'instant
-  // (aucun mode de jeu associé) — purement décoratifs à ce stade.
+  // NB : "Raid" n'a toujours pas de onclick (aucun mode de jeu associé) —
+  // purement décoratif pour l'instant. "Donjon" navigue vers le nouvel
+  // écran Donjon (voir ui/dungeon-view.js).
   h += '<div class="quest-top-actions">';
   h += '<button class="quest-mode-btn" type="button">Raid</button>';
-  h += '<button class="quest-mode-btn" type="button">Donjon</button>';
+  h += '<button class="quest-mode-btn" type="button" onclick="switchTab(\'dungeon\')">Donjon</button>';
   h += '</div>';
 
   h += '<div class="quest-timer">Reset dans ' + esc(QuestManager.timeUntilReset()) + '</div>';

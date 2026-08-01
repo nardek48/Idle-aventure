@@ -220,6 +220,9 @@ function renderPanel() {
     case "village":
       container.innerHTML = buildVillageHTML();
       break;
+    case "dungeon":
+      container.innerHTML = buildDungeonHTML();
+      break;
     default:
       container.innerHTML = "";
   }

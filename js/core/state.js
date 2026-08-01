@@ -94,6 +94,14 @@ function createInitialGameState() {
     activePotions: {},                        // { idPotion: timestamp d'expiration }
     pendingPotionBonuses: { aetherNext: 0 },    // bonus sans minuteur (Élixir d'Aether)
 
+    equipShopStock: [],          // 6 objets en vente à l'échoppe, voir systems/equip-shop-system.js
+    equipShopResetTime: 0,        // prochain renouvellement du stock
+
+    dungeonTickets: 1,             // voir systems/dungeon-system.js
+    dungeonTicketResetTime: 0,
+    dungeonRun: { active: false, wave: 0 },
+    dungeonBestWave: 0,
+
     playerName: "",
     heroId: ""
   };
@@ -183,6 +191,14 @@ function ensureGameStateDefaults() {
     game.pendingPotionBonuses = { aetherNext: 0 };
   }
   if (typeof game.pendingPotionBonuses.aetherNext !== "number") game.pendingPotionBonuses.aetherNext = 0;
+
+  if (!Array.isArray(game.equipShopStock)) game.equipShopStock = [];
+  if (typeof game.equipShopResetTime !== "number") game.equipShopResetTime = 0;
+
+  if (typeof game.dungeonTickets !== "number") game.dungeonTickets = 1;
+  if (typeof game.dungeonTicketResetTime !== "number") game.dungeonTicketResetTime = 0;
+  if (!game.dungeonRun || typeof game.dungeonRun !== "object") game.dungeonRun = { active: false, wave: 0 };
+  if (typeof game.dungeonBestWave !== "number") game.dungeonBestWave = 0;
 
   if (typeof game.heroLevel !== "number") game.heroLevel = 1;
   if (typeof game.heroXp !== "number") game.heroXp = 0;

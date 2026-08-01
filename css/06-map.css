@@ -345,6 +345,7 @@
    qui ont déjà leur propre illustration en fond) */
 #panel-container.panel-world-bg .upgrade-card,
 #panel-container.panel-world-bg .potion-card,
+#panel-container.panel-world-bg .equip-shop-card,
 #panel-container.panel-world-bg .talent-summary,
 #panel-container.panel-world-bg .eq-hero-card,
 #panel-container.panel-world-bg .eq-orbit-slot,
@@ -353,6 +354,7 @@
 #panel-container.panel-world-bg .prestige-section,
 #panel-container.panel-world-bg .ascension-conditions,
 #panel-container.panel-world-bg .panel-card,
+#panel-container.panel-world-bg .dungeon-active-card,
 #panel-container.panel-world-bg .aether-shop-card,
 #panel-container.panel-world-bg .settings-info,
 #panel-container.panel-world-bg .hero-summary-card,
@@ -360,7 +362,7 @@
 #panel-container.panel-world-bg .map-world-card-detail,
 #panel-container.panel-world-bg .shop-item.village-item,
 #panel-container.panel-world-bg .village-skyline,
-#panel-container.panel-world-bg .bestiary-card,
+#panel-container.panel-world-bg .bestiary-detail,
 #panel-container.panel-world-bg #log-container,
 #panel-container.panel-world-bg .log-entry {
   background: rgba(20, 16, 40, 0.55);

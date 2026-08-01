@@ -77,6 +77,22 @@ var LootSystem = {
     }
     if (!candidates.length) candidates = pool;
     return cloneItem(candidates[randInt(0, candidates.length - 1)], slot);
+  },
+
+  /* Comme rollDrop(), mais avec une rareté imposée plutôt que tirée au
+     sort — utilisé pour les récompenses garanties (voir
+     systems/dungeon-system.js). Repli sur "common" si la rareté
+     demandée n'a aucun objet dans le catalogue. */
+  rollDropAtRarity: function (rarity) {
+    var slot = ["weapon", "armor", "amulet"][randInt(0, 2)];
+    var pool = EQUIPMENT_DB[slot] || [];
+    if (!pool.length) return null;
+
+    var candidates = pool.filter(function (item) { return item.rarity === rarity; });
+    if (!candidates.length) candidates = pool.filter(function (item) { return item.rarity === "common"; });
+    if (!candidates.length) candidates = pool;
+
+    return cloneItem(candidates[randInt(0, candidates.length - 1)], slot);
   }
 };
 
