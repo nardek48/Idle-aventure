@@ -1,9 +1,16 @@
 "use strict";
-
 /* ============================================================
-   Helper central, utilisé dans beaucoup de builders HTML. 
+Quest Idle — ui/ui-root.js
+Le "chef d'orchestre" de l'UI : navigation entre onglets (switchTab),
+routeur qui appelle le bon builder HTML par onglet (renderPanel),
+rendu global (renderAll), et quelques helpers transversaux utilisés
+par plusieurs écrans (esc, accès aux héros, labels de stats).
 ============================================================ */
 
+/* Échappe le HTML dangereux avant insertion dans une chaîne — TOUT
+   texte d'origine utilisateur ou de donnée externe (nom d'objet,
+   nom du joueur...) doit passer par esc() avant d'être concaténé
+   dans du HTML, pour éviter l'injection. */
 function esc(value) {
   return String(value == null ? "" : value)
     .replace(/&/g, "&amp;")
@@ -13,10 +20,10 @@ function esc(value) {
     .replace(/'/g, "&#39;");
 }
 
-/* ============================================================
-   Fond de panneau selon monde. 
-============================================================ */
-
+/* Image de fond plein panel selon l'onglet actif (une par onglet,
+   sauf Combat qui n'en a pas — voir updatePanelBackground). Note :
+   chemins préfixés par "../", à vérifier si jamais le jeu est
+   déployé dans un sous-dossier différent de la structure actuelle. */
 function getCurrentWorldPanelBackground() {
   var byTab = {
     shop: "../images/Worlds/shop.png",
@@ -35,10 +42,11 @@ function getCurrentWorldPanelBackground() {
   return byTab[game.activeTab] || "../images/Worlds/World.png";
 }
 
-/* ============================================================
-   Appelée par switchTab et renderAll. 
-============================================================ */
-
+/* Applique (ou retire) le fond illustré sur #panel-container. L'écran
+   Combat n'a jamais de fond de panel (il a son propre fond de zone,
+   voir WorldManager.applyWorldTheme). La classe "panel-world-bg"
+   ajoutée ici déclenche l'effet vitre sur les cartes (voir la longue
+   liste de sélecteurs dans css/06-map.css). */
 function updatePanelBackground() {
   var panel = document.getElementById("panel-container");
   if (!panel) return;
@@ -61,19 +69,15 @@ function updatePanelBackground() {
   }
 }
 
-/* ============================================================
-   Helper transversal. 
-============================================================ */
-
+/* Récupère un héros par sa clé d'objet dans HEROES_DB (ex: "knight"),
+   pas son `id` (voir getHeroByGameId ci-dessous pour l'inverse). */
 function getHeroByKey(heroKey) {
   if (typeof HEROES_DB === "undefined" || !heroKey) return null;
   return HEROES_DB[heroKey] || null;
 }
 
-/* ============================================================
-   Helper transversal. 
-============================================================ */
-
+/* Récupère un héros par son `id` (celui stocké dans game.heroId),
+   en cherchant dans toutes les entrées de HEROES_DB. */
 function getHeroByGameId(heroId) {
   if (typeof HEROES_DB === "undefined") return null;
   var keys = Object.keys(HEROES_DB);
@@ -84,10 +88,9 @@ function getHeroByGameId(heroId) {
   return null;
 }
 
-/* ============================================================
-   Helper rendu stats. 
-============================================================ */
-
+/* Libellé français d'une clé de stat RPG (ex: "power" -> "Puissance").
+   Utilisé par le bestiaire (les cartes héros/ennemi dédiées ont été
+   retirées, voir historique du projet). */
 function getStatLabel(statKey) {
   if (typeof RPG_STAT_LABELS !== "undefined" && RPG_STAT_LABELS[statKey]) {
     return RPG_STAT_LABELS[statKey];
@@ -95,15 +98,18 @@ function getStatLabel(statKey) {
   return statKey;
 }
 
-/* ============================================================
-   Helper rendu stats. 
-============================================================ */
-
+/* Convertit une valeur de stat brute en pourcentage 0-100 pour une
+   barre de progression visuelle (les stats RPG n'ont pas de max
+   "naturel", donc c'est une échelle purement indicative). */
 function clampStatValue(value) {
   var n = Number(value) || 0;
   return Math.max(0, Math.min(100, n));
 }
 
+/* Mémorise/restaure la position de scroll du sac d'objets lors d'un
+   re-rendu (killEnemy() peut redessiner tout l'écran équipement en
+   plein milieu du scroll du joueur — sans ça, il reviendrait en haut
+   à chaque kill). */
 window.__equipBagScrollTop = 0;
 
 function saveEquipBagScroll() {
@@ -120,10 +126,18 @@ function restoreEquipBagScroll() {
   });
 }
 
-/* ============================================================
-   Fonction de navigation centrale. 
-============================================================ */
-
+/* Change l'onglet actif : bascule l'affichage combat/panel, met à
+   jour le fond et redessine le contenu du panel. tabMap fait
+   correspondre chaque onglet logique au bouton visuel qu'il faut
+   surligner dans la barre du bas — remarque que bestiary/log/settings
+   partagent le même bouton que "more" (index 8) car on y accède
+   depuis l'écran Plus, pas directement depuis la barre. */
+/* Change l'onglet actif : bascule l'affichage combat/panel, met à
+   jour le fond et redessine le contenu du panel. Depuis la refonte
+   du menu (v2.4), la barre du bas n'a plus que 2 boutons (Combat et
+   Menu) : le bouton Combat s'allume sur l'écran de combat, le bouton
+   Menu s'allume pour TOUT le reste (indique juste "tu es dans un
+   sous-écran", plus besoin de mapper un index par onglet). */
 function switchTab(tabName) {
   game.activeTab = tabName;
 
@@ -136,25 +150,12 @@ function switchTab(tabName) {
     btn.classList.remove("active");
   });
 
-  var tabMap = {
-    combat: 0,
-    shop: 1,
-    talents: 2,
-    equip: 3,
-    quests: 4,
-    ascension: 5,
-    map: 6,
-    village: 7,
-    more: 8,
-    bestiary: 8,
-    log: 8,
-    settings: 8
-  };
-
-  var activeIndex = tabMap[tabName] != null ? tabMap[tabName] : 0;
-  if (buttons[activeIndex]) buttons[activeIndex].classList.add("active");
-
   var combatMode = tabName === "combat";
+  var combatBtn = document.querySelector('.tab-btn[data-tab="combat"]');
+  var menuBtn = document.querySelector('.tab-btn[data-tab="menu"]');
+  if (combatMode && combatBtn) combatBtn.classList.add("active");
+  if (!combatMode && menuBtn) menuBtn.classList.add("active");
+
   if (gameArea) gameArea.style.display = combatMode ? "flex" : "none";
   if (statsBar) statsBar.style.display = combatMode ? "flex" : "none";
   if (panel) panel.classList.toggle("active", !combatMode);
@@ -162,10 +163,10 @@ function switchTab(tabName) {
   renderPanel();
 }
 
-/* ============================================================
-   Point d’entrée de rendu principal. 
-============================================================ */
-
+/* Rafraîchit TOUT l'affichage (HUD, ennemi, stats, panel actif) —
+   la fonction "brute force" appelée après la plupart des actions de
+   jeu. Ouvre aussi le sélecteur de héros si aucun n'est encore
+   choisi (première visite). */
 function renderAll() {
   renderHud();
   renderEnemy();
@@ -178,10 +179,9 @@ function renderAll() {
   }
 }
 
-/* ============================================================
-   Routeur des panneaux. 
-============================================================ */
-
+/* Redessine UNIQUEMENT le contenu du panel selon l'onglet actif
+   (game.activeTab). C'est ici qu'il faut ajouter une entrée si un
+   nouvel onglet est créé un jour. */
 function renderPanel() {
   var container = document.getElementById("panel-container");
   if (!container) return;

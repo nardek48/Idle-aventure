@@ -1,9 +1,14 @@
 "use strict";
 /* ============================================================
 Quest Idle — systems/offline-system.js
-Village and offline rewards
+Le village (6 bâtiments achetables en or, chacun améliore un aspect
+des gains hors-ligne) et le calcul des récompenses hors-ligne
+(OfflineManager), déclenché au boot si le joueur était absent.
 ============================================================ */
 
+/* Catalogue des bâtiments du village. Chaque bâtiment n'affecte QUE le
+   hors-ligne (jamais les gains en jeu actif) — voir
+   VillageManager.getOfflineBonuses() pour le détail de chaque effet. */
 var VILLAGE_CONFIG = {
   goldMine: { name: "Mine d'or", desc: "Augmente les gains d'or hors-ligne.", baseCost: 250, costMult: 1.65, maxLevel: 25 },
   essenceWell: { name: "Puits d'essence", desc: "Ajoute de l'essence gagnée hors-ligne.", baseCost: 400, costMult: 1.75, maxLevel: 20 },
@@ -13,12 +18,14 @@ var VILLAGE_CONFIG = {
   sanctuary: { name: "Sanctuaire d'Aether", desc: "Génère un peu d'Aether pendant ton absence.", baseCost: 5000, costMult: 2.3, maxLevel: 10 }
 };
 
-var OFFLINE_MAX_SIMULATED_KILLS = 2000;
-var OFFLINE_BOSS_CHECK_EVERY = 25;
-var OFFLINE_BOSS_CHECK_CHANCE = 20;
-var OFFLINE_MAX_ITEMS = 3;
+var OFFLINE_MAX_SIMULATED_KILLS = 2000;   // garde-fou perf/économie, même sur une absence énorme
+var OFFLINE_BOSS_CHECK_EVERY = 25;         // 1 "chance de butin" tous les 25 kills simulés
+var OFFLINE_BOSS_CHECK_CHANCE = 20;        // % de chance de loot à chaque vérification
+var OFFLINE_MAX_ITEMS = 3;                 // butin hors-ligne plafonné (évite d'inonder l'inventaire)
 
 var VillageManager = {
+  /* Comble les niveaux de bâtiments manquants (0 par défaut) — utile
+     pour les sauvegardes créées avant l'ajout de watchtower/sanctuary. */
   ensure: function () {
     if (!game.village || typeof game.village !== "object") game.village = {};
     if (typeof game.village.goldMine !== "number") game.village.goldMine = 0;
@@ -53,6 +60,7 @@ var VillageManager = {
     return game.gold >= this.getCost(id);
   },
 
+  /* Améliore un bâtiment d'un niveau (en or). */
   buy: function (id) {
     var cfg = this.getConfig(id);
     if (!cfg) {
@@ -95,6 +103,15 @@ var VillageManager = {
     return total;
   },
 
+  /* Regroupe TOUS les bonus hors-ligne actuels (village + talents +
+     synergie d'ascension), consommé par OfflineManager.calculate().
+     - goldMult      multiplicateur d'or hors-ligne (Mine d'or)
+     - essenceFlat   essence gagnée par heure (Puits d'essence)
+     - efficiencyBonus  % additionnel sur l'or hors-ligne (Caserne +
+       talents + ascension)
+     - extraHours    heures ajoutées au plafond de base de 4h (Relais)
+     - killsPerHour  kills simulés par heure (Vigie)
+     - aetherPerHour Aether généré par heure (Sanctuaire) */
   getOfflineBonuses: function () {
     this.ensure();
 
@@ -119,6 +136,14 @@ var VillageManager = {
 };
 
 var OfflineManager = {
+  /* Calcule ce que le joueur a gagné pendant son absence, sans encore
+     rien appliquer à `game` (voir show() plus bas pour ça). Le temps
+     pris en compte est plafonné par maxHours (4h de base + bonus du
+     Relais du temps). Simule aussi des kills (Vigie) répartis
+     aléatoirement sur le pool d'ennemis du chapitre courant, avec une
+     petite chance de butin tous les OFFLINE_BOSS_CHECK_EVERY kills.
+     Renvoie null s'il n'y a rien à donner (absence trop courte, ou
+     aucun bâtiment investi). */
   calculate: function () {
     if (!game.lastOnline) return null;
     if (!window.VillageManager || typeof VillageManager.getOfflineBonuses !== "function") return null;
@@ -181,6 +206,10 @@ var OfflineManager = {
     };
   },
 
+  /* Applique réellement le résultat de calculate() à `game` (or,
+     essence, Aether, kills + bestiaire, objets), puis affiche la
+     modale de bienvenue (ou un simple toast si la modale n'est pas
+     disponible). Appelée une fois au boot si loadGame() a réussi. */
   show: function (offline) {
     if (!offline) return;
 
@@ -207,8 +236,9 @@ var OfflineManager = {
       }
 
       (offline.items || []).forEach(function (drop) {
-        game.inventory.push(drop);
-        itemNames.push(drop.name);
+        if (typeof addLootToInventory === "function" ? addLootToInventory(drop) : (game.inventory.push(drop), true)) {
+          itemNames.push(drop.name);
+        }
       });
     }
 

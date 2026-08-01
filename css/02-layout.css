@@ -132,28 +132,37 @@
 #tab-bar {
   flex-shrink: 0;
   display: flex;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  align-items: stretch;
   background: var(--bg-panel);
   border-top: 1px solid var(--border);
   padding-bottom: var(--safe-bottom);
 }
 
+#tab-bar-special-slot {
+  flex: 1;
+  /* Réservé pour de futurs boutons d'attaque spéciale. Vide pour
+     l'instant : ne prend aucune place tant qu'il n'a pas d'enfants. */
+}
+
+#tab-bar-special-slot:empty {
+  flex: 0;
+}
+
 .tab-btn {
   position: relative;
   flex: 1 0 64px;
-  min-height: 48px;
-  padding: 8px 4px;
+  min-height: 56px;
+  padding: 10px 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
 
   border: none;
   background: none;
   color: var(--text-dim);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 
@@ -247,8 +256,8 @@
 }
 
 #tab-bar .tab-icon-img {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   display: block;
   object-fit: contain;
   pointer-events: none;

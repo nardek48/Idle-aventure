@@ -1,9 +1,20 @@
 "use strict";
 /* ============================================================
 QUEST IDLE — data/heroes.js
-Base des héros jouables.
+Base des héros jouables. Le joueur en choisit un à la création du
+personnage (voir js/ui/modal-view.js) ; ce choix est définitif tant
+qu'il ne relance pas une nouvelle partie.
 ============================================================ */
 
+/* makeRpgStats(power, endurance, celerity, precision, will) — attention
+   à l'ordre des arguments, il est positionnel et ne peut pas se deviner
+   à la lecture d'une ligne isolée :
+   - power     -> dégâts (tap/auto)
+   - endurance -> PV max du héros (x6) + défense contre la riposte ennemie
+   - celerity  -> auto DPS
+   - precision -> chance de critique
+   - will      -> multiplicateur de critique
+   Voir js/systems/stats-system.js pour les coefficients exacts. */
 var HEROES_DB = {
   knight: {
     id: "knight",
@@ -43,6 +54,9 @@ var HEROES_DB = {
   }
 };
 
+/* Courbe d'XP du héros : chaque niveau demande baseXp * xpGrowth^(niveau-1)
+   XP, voir getHeroXpRequiredForLevel() dans systems/progression-system.js.
+   Chaque niveau gagné donne 1 point de talent. */
 var HERO_LEVELING = {
   baseXp: 10,
   xpGrowth: 1.35

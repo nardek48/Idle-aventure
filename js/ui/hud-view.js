@@ -1,10 +1,14 @@
 "use strict";
-
-
 /* ============================================================
-   Ressources, zone, aventure. 
+Quest Idle — ui/hud-view.js
+Barre du haut, toujours visible quel que soit l'onglet : ressources
+(or/essence/Aether), zone/aventure en cours, XP + PV du héros, et la
+barre de stats sous la zone de combat.
 ============================================================ */
 
+/* Rafraîchit tout le HUD principal (ressources, nom de zone/aventure,
+   XP du héros). Appelée très souvent (après quasiment chaque action
+   qui change une valeur affichée). */
 function renderHud() {
   var gold = document.getElementById("hud-gold");
   var essence = document.getElementById("hud-essence");
@@ -42,7 +46,8 @@ function renderHud() {
 }
 
 /* ============================================================
-   v1.8.5 : Barre de vie du héros.
+   v1.8.5 : Barre de vie du héros. La classe "low" (PV <= 25%)
+   permet au CSS de la faire clignoter/rougir davantage.
 ============================================================ */
 
 function renderHeroHp() {
@@ -62,7 +67,10 @@ function renderHeroHp() {
 }
 
 /* ============================================================
-   	Dégâts, DPS, critique, bonus. 
+   Barre de stats sous la zone de combat : dégâts/tap, auto DPS,
+   critique, bonus Aether et multiplicateur d'or — tous lus via les
+   getters "effective*" de StatsSystem (jamais game.tapDamage etc.
+   directement, pour être sûr d'avoir des valeurs propres).
 ============================================================ */
 
 function renderStats() {

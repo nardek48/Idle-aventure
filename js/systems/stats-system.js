@@ -1,13 +1,22 @@
 "use strict";
 /* ============================================================
 Quest Idle — systems/stats-system.js
-Stats, set bonus, equipment stat recompute, Aether helpers
+Fichier central du calcul des stats. StatsSystem.recalcStats() est
+LA fonction qui recompose entièrement game.tapDamage/tapMult/autoDps/
+critChance/critMult/goldMult/heroMaxHp/heroDefensePct/essenceGlobalMult
+à partir de : le héros choisi, les upgrades classiques, l'équipement,
+les talents, les améliorations Aether, le bonus de bestiaire et le
+nombre d'ascensions. Elle est appelée après CHAQUE action qui pourrait
+changer une stat (achat, équipement, talent, ascension...) — jamais en
+boucle continue.
 ============================================================ */
 
 function getAetherUpgradeLevel(id) {
   return Number((game.aetherUpgrades && game.aetherUpgrades[id]) || 0);
 }
 
+/* Bonus dérivés du niveau de chaque amélioration de la Boutique
+   d'Aether (voir data/upgrades.js -> AETHER_SHOP). */
 function getAetherBonuses() {
   if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
 
@@ -30,6 +39,8 @@ function getAetherMult() {
   };
 }
 
+/* Coût du prochain niveau d'une amélioration Aether (croissance
+   exponentielle, comme les upgrades classiques). */
 function getAetherUpgradeCost(upgrade) {
   var level = getAetherUpgradeLevel(upgrade.id);
   return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult || 1.4, level));
@@ -68,6 +79,8 @@ function getTotalBestiaryBonus() {
   return total;
 }
 
+/* Transforme un objet de bonus de set (voir SET_BONUS_CONFIG dans
+   data/equipment.js) en texte lisible pour l'UI, ex: "+10% dégâts". */
 function formatSetBonusEffect(effect) {
   if (!effect) return "";
 
@@ -84,7 +97,17 @@ function formatSetBonusEffect(effect) {
 }
 
 var StatsSystem = {
+  /* LA fonction de recalcul de toutes les stats du joueur. Repart
+     TOUJOURS de zéro (valeurs de base ci-dessous) puis additionne
+     chaque source de bonus dans l'ordre : upgrades classiques, stats
+     RPG du héros (Force/Endurance/Célérité/Précision/Volonté),
+     équipement, bonus de set, talents, améliorations Aether, bonus
+     de bestiaire, ascension. Rien ne doit modifier les stats du
+     joueur en dehors de cette fonction (sauf effets temporaires de
+     combat comme la Frénésie d'assaut, gérés directement dans
+     combat-engine.js sur l'instant d'une attaque). */
   recalcStats: function () {
+    // Valeurs de base, remises à zéro à chaque appel.
     game.tapDamage = 1;
     game.tapMult = 1;
     game.autoDps = 0;
@@ -96,6 +119,7 @@ var StatsSystem = {
     game.bossEssenceMult = 1;
     game.essenceGlobalMult = 1;
 
+    // Applique chaque upgrade classique achetée (voir data/upgrades.js).
     (UPGRADES || []).forEach(function (u) {
       if (u && typeof u.apply === "function") {
         u.apply(game.upgrades[u.id] || 0);
@@ -160,6 +184,9 @@ var StatsSystem = {
     var masteryKills = masteryType ? Number(masteryKillsById[masteryType] || 0) : 0;
     game.tapMult += Math.min(WEAPON_MASTERY_CAP, masteryKills * WEAPON_MASTERY_COEF);
 
+    // Applique le bonus de CHAQUE pièce équipée (une seule fois chacune,
+    // voir js/systems/stats-system.js dans l'historique du projet pour
+    // le bug de triplement qui existait ici avant correction).
     var equipped = game.equipped;
     [equipped.weapon, equipped.armor, equipped.amulet].forEach(function(item) {
       if (!item) return;
@@ -171,6 +198,8 @@ var StatsSystem = {
       else if (item.stat === "autoDps") game.autoDps += item.value;
     });
 
+    // Bonus de panoplie (3 pièces équipées de même rareté), voir
+    // getSetBonus() plus bas et SET_BONUS_CONFIG dans data/equipment.js.
     var setBonus = this.getSetBonus();
     if (setBonus && setBonus.config && typeof setBonus.config.apply === "function") {
       var bonus = setBonus.config.apply() || {};
@@ -182,6 +211,9 @@ var StatsSystem = {
       if (bonus.tapDamage != null) game.tapDamage += bonus.tapDamage;
     }
 
+    // Talents actifs qui touchent directement les stats globales
+    // (les autres talents — combat ponctuel, hors-ligne, événements —
+    // sont câblés ailleurs : voir combat-engine.js et offline-system.js).
     if (game.talents.t_sharpened_blades) game.tapMult += 0.05;
     if (game.talents.t_precise_strike) game.critChance += 6;
 
@@ -193,6 +225,7 @@ var StatsSystem = {
       game.tapMult += Math.min((game.ascensionCount || 0) * 0.03, 0.15);
     }
 
+    // Bonus automatique par ascension (indépendant des talents).
     if (game.ascensionCount > 0) {
       game.tapMult += game.ascensionCount * 0.15;
       game.goldMult += game.ascensionCount * 0.12;
@@ -205,6 +238,22 @@ var StatsSystem = {
     game.tapMult += aether.tapBonus || 0;
     game.goldMult *= 1 + (aether.goldBonus || 0);
 
+    // Potions temporaires actives (voir systems/potion-system.js) :
+    // appliquées en dernier, par-dessus tout le reste, comme un boost
+    // ponctuel plutôt qu'une progression permanente.
+    var potionEffects = (window.PotionManager && typeof PotionManager.getActiveEffects === "function")
+      ? PotionManager.getActiveEffects()
+      : {};
+    if (potionEffects.power) game.tapDamage *= (1 + potionEffects.power);
+    if (potionEffects.celerity) game.autoDps *= (1 + potionEffects.celerity);
+    if (potionEffects.critChance) game.critChance += potionEffects.critChance;
+    if (potionEffects.gold) game.goldMult *= (1 + potionEffects.gold);
+    if (potionEffects.endurance) {
+      game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + potionEffects.endurance)));
+      if (!game.heroHp || game.heroHp > game.heroMaxHp) game.heroHp = game.heroMaxHp;
+      game.heroDefensePct = Math.min(0.6, game.heroDefensePct + potionEffects.endurance * 0.1);
+    }
+
     // Bonus passif : Aether cumulé à vie -> dégâts + or globaux (ne diminue jamais, même dépensé)
     var AETHER_LIFETIME_MULT_COEF = 0.005;
     var totalAether = Number(game.totalAetherEarned || 0);
@@ -212,6 +261,12 @@ var StatsSystem = {
     game.goldMult += totalAether * AETHER_LIFETIME_MULT_COEF;
   },
 
+  /* Dégâts réels d'un tap, après application du multiplicateur. */
+  /* Les getters "effective*" ci-dessous sont ce que le reste du code
+     doit appeler pour AGIR (dégâts réels, DPS réel...) plutôt que de
+     lire game.tapDamage/tapMult directement, pour garantir des
+     valeurs toujours valides (jamais négatives, jamais < 1 quand ça
+     n'aurait pas de sens). */
   effectiveTapDamage: function () {
     return Math.max(1, Math.floor(game.tapDamage * game.tapMult));
   },
@@ -232,6 +287,10 @@ var StatsSystem = {
     return Math.max(1, game.goldMult);
   },
 
+  /* Détermine si les 3 pièces équipées partagent la même rareté et,
+     si oui, renvoie la config du bonus de panoplie correspondant
+     (voir SET_BONUS_CONFIG dans data/equipment.js). Renvoie
+     { rarity: null, config: null } si le bonus n'est pas actif. */
   getSetBonus: function () {
     var equipped = [
       game.equipped.weapon,

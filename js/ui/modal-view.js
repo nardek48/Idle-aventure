@@ -1,4 +1,11 @@
 "use strict";
+/* ============================================================
+Quest Idle — ui/modal-view.js
+Sélection/changement de héros : l'overlay plein écran (pas un onglet
+du panel) qui s'ouvre à la création du personnage ou via "Changer de
+héros" dans l'écran Plus. pendingHeroId garde le choix temporaire
+avant confirmation (annuler ne modifie rien).
+============================================================ */
 
 /* ============================================================
    État interne du sélecteur de héros. 

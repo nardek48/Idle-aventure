@@ -1,7 +1,8 @@
 "use strict";
 /* ============================================================
 QUEST IDLE — data/bosses.js
-Boss et finalisation des bonus de bestiaire.
+Boss (un par monde, voir data/worlds.js -> adventures[].boss) et
+finalisation des bonus de bestiaire.
 ============================================================ */
 
 var BOSS_DB = {
@@ -55,6 +56,13 @@ var BOSS_DB = {
   }
 };
 
+/* Se charge après ENEMY_DB (enemies.js) et BOSS_DB ci-dessus : construit
+   automatiquement BESTIARY_BONUS_CONFIG pour CHAQUE créature du jeu
+   (ennemis normaux ET boss), avec des paliers de bonus qui augmentent
+   avec le nombre de kills. Les boss ont des paliers plus généreux et
+   un bonus "lootBonus" supplémentaire (chance de butin en plus).
+   getBestiaryBonus(id) en systems/stats-system.js lit cette config en
+   comparant aux kills réels stockés dans game.killCounts[id]. */
 (function () {
   var allIds = Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB));
   allIds.forEach(function (id) {

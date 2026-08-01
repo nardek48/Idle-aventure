@@ -8,6 +8,11 @@
    passe en liste compacte, plus de coordonnées à la main.
 ============================================================ */
 
+/* Quel monde est actuellement affiché en détail sur la carte (pas
+   forcément le monde où le joueur progresse réellement — on peut
+   consulter un autre monde sans y être). Stocké directement sur
+   `game` par simplicité, mais volontairement PAS sauvegardé (pas
+   dans buildSaveData) : juste un état d'UI temporaire. */
 function getMapSelectedWorldIndex() {
   if (typeof game.mapSelectedWorldIndex !== "number") {
     game.mapSelectedWorldIndex = WorldManager.worldIndex || 0;
@@ -19,16 +24,23 @@ function getMapSelectedWorldIndex() {
   return game.mapSelectedWorldIndex;
 }
 
+/* Change le monde consulté en détail (clic sur une vignette). */
 function selectMapWorld(index) {
   if (index < 0 || index >= WORLDS.length) return;
   game.mapSelectedWorldIndex = index;
   renderPanel();
 }
 
+/* Un monde n'est vraiment jouable que s'il est à portée séquentielle
+   (index <= monde courant) ET que la condition d'ascension est
+   remplie — un monde "sauté" par manque d'ascension reste verrouillé
+   même si le joueur a dépassé son index (ne devrait pas arriver vu
+   WorldManager.advance(), mais gardé en sécurité). */
 function isWorldUnlocked(index) {
   return index <= (WorldManager.worldIndex || 0) && WorldManager.meetsAscensionRequirement(index);
 }
 
+/* Texte de statut affiché sur chaque vignette/en-tête de monde. */
 function getWorldProgressText(index) {
   if (index < (WorldManager.worldIndex || 0)) return "Terminé";
   if (index === (WorldManager.worldIndex || 0)) return "En cours";
@@ -71,6 +83,9 @@ function getWorldMonsterList(world) {
   return monsters;
 }
 
+/* Assemble l'écran carte : résumé en haut, grille des 6 vignettes de
+   monde, puis le détail du monde sélectionné (aventures, monstres,
+   ou message d'aide si verrouillé par ascension). */
 function buildMapHTML() {
   var selectedIndex = getMapSelectedWorldIndex();
   var selectedWorld = WORLDS[selectedIndex] || WORLDS[0];

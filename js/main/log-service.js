@@ -1,4 +1,11 @@
 "use strict";
+/* ============================================================
+Quest Idle — main/log-service.js
+Le journal d'événements du jeu (window.gameLog), lu par
+ui/log-view.js. addLog() est appelée un peu partout dans le code
+à chaque événement notable (kill, achat, ascension...). Les entrées
+les plus récentes sont en tête de tableau (unshift), limité à 100.
+============================================================ */
 
 var gameLog = window.gameLog || [];
 

@@ -1,9 +1,25 @@
 "use strict";
-
 /* ============================================================
-  Vue du Shop
+Quest Idle — ui/shop-view.js
+Écran "Boutique" : les upgrades classiques (data/upgrades.js). Ce
+fichier duplique volontairement les coefficients de recalcStats
+(stats-system.js) pour pouvoir afficher un aperçu "avant → après"
+sans avoir à réellement recalculer les stats du joueur — à garder
+synchronisé si un coefficient change côté stats-system.js.
+
+Depuis v2.3, la Boutique a 2 sous-onglets : Améliorations (permanent,
+en or) et Potions (temporaire, voir data/potions.js + ui/potion-view.js).
 ============================================================ */
 
+var activeShopSubTab = "upgrades";
+
+function setShopSubTab(tab) {
+  activeShopSubTab = (tab === "potions") ? "potions" : "upgrades";
+  if (typeof renderPanel === "function") renderPanel();
+}
+
+/* Icône/couleur/étiquette de catégorie affichées sur chaque carte
+   d'upgrade, selon son id. */
 function getUpgradePreviewMeta(upgrade) {
   if (!upgrade) return { cls: "neutral", icon: "", label: "Bonus" };
 
@@ -19,6 +35,9 @@ function getUpgradePreviewMeta(upgrade) {
   return { cls: "neutral", icon: "", label: "Bonus" };
 }
 
+/* Texte "avant → après" affiché sous chaque upgrade de stat RPG
+   (ex: "Force 58 → 59 (+11.6 → +11.8 dgts)"), pour que le joueur
+   voie concrètement l'effet avant d'acheter. */
 function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
   if (!upgrade) return "";
 
@@ -104,6 +123,11 @@ function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
   return "";
 }
 
+/* Construit toute la grille d'upgrades. Pour chaque upgrade : calcule
+   combien de niveaux seraient achetés au mode courant (x1/x10/x25/MAX,
+   via getUpgradePurchasePreview) et affiche soit le bouton d'achat
+   normal, soit "MAX" si le niveau plafond est atteint, soit un
+   verrou si le monde requis (unlockWorld) n'est pas encore débloqué. */
 function buildShopHTML() {
   var buyAmount = Number(game.shopBuyAmount || 1);
   if (![1, 10, 25, -1].includes(buyAmount)) buyAmount = 1;
@@ -113,6 +137,17 @@ function buildShopHTML() {
 
   var h = '<div class="shop-shell">';
   h += '<div class="panel-title">Boutique</div>';
+
+  h += '<div class="shop-sub-tabs">';
+  h += '<button class="shop-sub-tab ' + (activeShopSubTab === "upgrades" ? "is-active" : "") + '" type="button" onclick="setShopSubTab(\'upgrades\')">⬆️ Améliorations</button>';
+  h += '<button class="shop-sub-tab ' + (activeShopSubTab === "potions" ? "is-active" : "") + '" type="button" onclick="setShopSubTab(\'potions\')">🧪 Potions</button>';
+  h += '</div>';
+
+  if (activeShopSubTab === "potions") {
+    h += typeof buildPotionShopHTML === "function" ? buildPotionShopHTML() : "";
+    h += '</div>'; // ferme .shop-shell
+    return h;
+  }
 
   h += '<div class="shop-buy-toolbar">';
   h += '<button class="settings-btn ' + (buyAmount === 1 ? 'active' : '') + '" onclick="setShopBuyAmount(1)">x1</button>';
@@ -193,3 +228,4 @@ h += '</div>';
 }
 
 window.buildShopHTML = buildShopHTML;
+window.setShopSubTab = setShopSubTab;

@@ -1,7 +1,8 @@
 "use strict";
-
 /* ============================================================
-   Builder journal. 
+Quest Idle — ui/log-view.js
+Écran "Journal" : affiche les 50 événements les plus récents
+(window.gameLog, alimenté par addLog() dans main/log-service.js).
 ============================================================ */
 
 function buildLogHTML() {

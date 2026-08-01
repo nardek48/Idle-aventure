@@ -2,8 +2,21 @@
 /* ============================================================
 QUEST IDLE — data/worlds.js
 Mondes, chapitres, ambiance et fonds de panneaux.
+
+Structure d'un monde (WORLDS[i]) :
+  - requiredAscension  nombre d'ascensions nécessaires pour le débloquer
+                        (voir WorldManager.meetsAscensionRequirement en
+                        progression-system.js) ; 0 = accessible directement
+  - assetKey            sert à retrouver l'image/vignette du monde
+                        (images/Worlds/thumb_<assetKey>.png sur la carte)
+  - adventures[]         chapitres du monde, parcourus dans l'ordre ;
+                        chacun a son pool d'ennemis, un nombre de combats
+                        avant le boss, et l'id du boss (voir data/bosses.js)
+Ordre des mondes = ordre de progression linéaire (WorldManager.worldIndex).
 ============================================================ */
 
+/* Fond plein écran affiché derrière chaque panel, un par monde
+   (voir getCurrentWorldPanelBackground en ui/ui-root.js). */
 var WORLD_PANEL_BACKGROUNDS = {
   forest: "../images/Worlds/World_Forest.jpg",
   ruins: "../images/Worlds/World_Ruins.jpg",

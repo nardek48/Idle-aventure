@@ -1,7 +1,8 @@
 "use strict";
-
 /* ============================================================
-   Panel Aether / Ascension + Shop
+Quest Idle — ui/ascension-view.js
+Écran "Ascension" : bouton de prestige (voir ascendNow() en
+progression-system.js) + boutique d'amélioration Aether.
 ============================================================ */
 
 function buildAscensionHTML() {

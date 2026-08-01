@@ -1,4 +1,9 @@
 "use strict";
+/* ============================================================
+Quest Idle — ui/modal.js
+Deux modales génériques pilotées ici : confirmation (oui/non avec
+callback) et retour hors-ligne (résumé des gains à l'ouverture).
+============================================================ */
 
 /* ============================================================
    Modale de confirmation générique.

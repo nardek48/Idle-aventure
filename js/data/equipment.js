@@ -2,6 +2,14 @@
 /* ============================================================
 QUEST IDLE — data/equipment.js
 Base équipement, raretés et bonus de set.
+
+Chaque objet d'EQUIPMENT_DB (plus bas dans le fichier) a la forme :
+  { name, icon, rarity, stat, value }
+  - icon détermine le TYPE DE DÉGÂTS pour les armes (sword/axe -> "sword",
+    staff -> "magic", bow -> "bow", voir WEAPON_ICON_DAMAGE_TYPE dans
+    combat-engine.js) et juste l'apparence pour armure/amulette
+  - stat: un parmi tapDmg/tapMult/goldMult/critChance/critMult/autoDps,
+    appliqué une seule fois dans StatsSystem.recalcStats()
 ============================================================ */
 
 /* formatSetBonusEffect() est définie dans systems/stats-system.js. */
@@ -45,6 +53,9 @@ var WORLD_RARITY_UNLOCKS = [
   ["common", "green", "rare", "epic", "legendary"]     // Tour (monde 5)
 ];
 
+/* Bonus actif quand 3 (sameRarityCount) pièces équipées partagent la
+   même rareté. apply() retourne un objet de bonus fusionné dans les
+   stats du joueur (voir StatsSystem.getSetBonus en stats-system.js). */
 var SET_BONUS_CONFIG = {
   sameRarityCount: 3,
   bonuses: {

@@ -344,6 +344,7 @@
 /* Cartes du panel : fond vitrifié léger (mais pas les vignettes de monde,
    qui ont déjà leur propre illustration en fond) */
 #panel-container.panel-world-bg .upgrade-card,
+#panel-container.panel-world-bg .potion-card,
 #panel-container.panel-world-bg .talent-summary,
 #panel-container.panel-world-bg .eq-hero-card,
 #panel-container.panel-world-bg .eq-orbit-slot,

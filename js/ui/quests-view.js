@@ -1,10 +1,13 @@
 "use strict";
-
 /* ============================================================
-   Badge quêtes, utilisé hors panneau. 
+Quest Idle — ui/quests-view.js
+Écran "Quêtes" + badge de notification (pastille sur l'icône de
+l'onglet, hors du panneau lui-même).
 ============================================================ */
 
-
+/* Pastille numérique sur l'onglet Quêtes, comptant les quêtes
+   complétées mais pas encore réclamées. Appelée après chaque action
+   qui pourrait changer la progression d'une quête. */
 function updateQuestBadge() {
   var badge = document.getElementById("quest-badge");
   if (!badge || !Array.isArray(game.quests)) return;
@@ -15,13 +18,11 @@ function updateQuestBadge() {
   badge.style.display = available > 0 ? "inline-flex" : "none";
 }
 
-/* ============================================================
-   Builder quêtes. 
-============================================================ */
-
 function buildQuestsHTML() {
   var h = '<div class="panel-title">Quêtes journalières</div>';
 
+  // NB : les boutons "Raid"/"Donjon" n'ont pas de onclick pour l'instant
+  // (aucun mode de jeu associé) — purement décoratifs à ce stade.
   h += '<div class="quest-top-actions">';
   h += '<button class="quest-mode-btn" type="button">Raid</button>';
   h += '<button class="quest-mode-btn" type="button">Donjon</button>';

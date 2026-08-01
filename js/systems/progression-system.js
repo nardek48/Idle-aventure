@@ -1,13 +1,16 @@
 "use strict";
 /* ============================================================
 Quest Idle — systems/progression-system.js
-World progression, quests, upgrades, talents, XP and ascension
+Le plus gros fichier du projet : progression dans les mondes
+(WorldManager), quêtes journalières (QuestManager), achats
+(upgrades classiques, talents, améliorations Aether), XP/niveau du
+héros, et ascension (AscensionManager + ascendNow).
 ============================================================ */
 
 var WorldManager = {
-  worldIndex: 0,
-  adventureIndex: 0,
-  enemyIndex: 0,
+  worldIndex: 0,      // index du monde courant dans WORLDS
+  adventureIndex: 0,   // index du chapitre courant dans world.adventures
+  enemyIndex: 0,        // combien d'ennemis vaincus dans le chapitre courant
 
   getWorld: function () {
     return WORLDS[this.worldIndex] || WORLDS[0];
@@ -19,6 +22,14 @@ var WorldManager = {
     return world.adventures[this.adventureIndex] || world.adventures[0];
   },
 
+  /* Génère le prochain ennemi (ou le boss si enemyIndex a atteint le
+     dernier cran de l'aventure). Les PV de l'ennemi dérivent de sa
+     stat d'endurance de base (ENEMY_DB/BOSS_DB), multipliée par un
+     facteur d'échelle qui grandit avec :
+       - le monde atteint (worldIndex)
+       - le chapitre dans ce monde (adventureIndex)
+       - le nombre de cycles bouclés sans ascensionner (game.cycleCount)
+     Les boss ont aussi un bonus supplémentaire lié à game.totalKills. */
   generateEnemy: function () {
     var adventure = this.getAdventure();
     if (!adventure) {
@@ -72,12 +83,21 @@ var WorldManager = {
     };
   },
 
+  /* Un monde n'est atteignable que si le joueur a fait au moins
+     `requiredAscension` ascensions (voir data/worlds.js). */
   meetsAscensionRequirement: function (index) {
     var w = WORLDS[index];
     if (!w) return false;
     return (game.ascensionCount || 0) >= (w.requiredAscension || 0);
   },
 
+  /* Appelée après chaque kill (voir CombatEngine.killEnemy). Fait
+     progresser enemyIndex -> adventureIndex -> worldIndex dans cet
+     ordre, et renvoie un objet décrivant ce qui vient de se passer
+     ({ type: "enemy" | "adventure" | "world" | "locked" | "cycle" }),
+     lu par killEnemy() pour afficher le bon message. Si le monde
+     suivant est verrouillé (ascension insuffisante), boucle au
+     monde 0 et incrémente game.cycleCount au lieu d'avancer. */
   advance: function () {
     var world = this.getWorld();
     var adventure = this.getAdventure();
@@ -116,6 +136,8 @@ var WorldManager = {
     return { type: "cycle" };
   },
 
+  /* Met à jour les variables CSS --world-bg/--world-combat-map pour
+     que le fond de l'écran de combat corresponde au monde courant. */
   applyWorldTheme: function () {
     var root = document.documentElement;
     var world = this.getWorld();
@@ -127,6 +149,8 @@ var WorldManager = {
 };
 
 var QuestManager = {
+  /* Tire QUEST_CONFIG.count quêtes au hasard (sans doublon) dans
+     QUEST_TEMPLATES pour former le lot du jour. */
   generateDaily: function () {
     var templates = Array.isArray(QUEST_TEMPLATES) ? QUEST_TEMPLATES.slice() : [];
     var picked = [];
@@ -153,6 +177,8 @@ var QuestManager = {
     return (QUEST_TEMPLATES || []).find(function (q) { return q.id === id; }) || null;
   },
 
+  /* Progression actuelle d'une quête, en appelant le tracker() de son
+     template (qui lit game.questProgress). */
   getProgress: function (quest) {
     var tpl = this.getTemplate(quest.id);
     if (!tpl) return 0;
@@ -164,6 +190,8 @@ var QuestManager = {
     return this.getProgress(quest) >= Number(quest.target || 0);
   },
 
+  /* Réclame la récompense d'une quête complétée (une seule fois, via
+     quest.claimed). */
   claim: function (id) {
     var quest = (game.quests || []).find(function (q) { return q.id === id; });
     if (!quest || quest.claimed || !this.isComplete(quest)) return;
@@ -179,6 +207,9 @@ var QuestManager = {
     saveGame();
   },
 
+  /* Incrémente un compteur de progression de quête (ex:
+     QuestManager.track("kills", 1)). Utilisé un peu partout dans le
+     code à chaque fois qu'une action pertinente se produit. */
   track: function (key, amount) {
     if (!game.questProgress) game.questProgress = {};
     if (typeof game.questProgress[key] !== "number") game.questProgress[key] = 0;
@@ -190,6 +221,9 @@ var QuestManager = {
     if (worldId === "ruins") this.track("ruinsChaptersDone", 1);
   },
 
+  /* Vérifie si le délai de reset (24h par défaut) est écoulé et, si
+     oui, régénère un nouveau lot de quêtes avec une progression
+     remise à zéro. Appelée régulièrement (boot + boucle de jeu). */
   checkReset: function () {
     if (!game.questResetTime || Date.now() >= game.questResetTime) {
       game.quests = this.generateDaily();
@@ -200,6 +234,7 @@ var QuestManager = {
     }
   },
 
+  /* Texte "Xh Ym" du temps restant avant le prochain reset de quêtes. */
   timeUntilReset: function () {
     var diff = Math.max(0, (game.questResetTime || 0) - Date.now());
     var h = Math.floor(diff / 3600000);
@@ -208,12 +243,20 @@ var QuestManager = {
   }
 };
 
+/* Renvoie l'arbre de talents complet ({combat:[...], fortune:[...],
+   survival:[...]}), utilisée par buyTalentNode ci-dessous. Le résumé
+   des bonus actifs (talents-view.js) a sa propre fonction getTalentTree()
+   qui fait la même chose — gardées séparées pour ne pas coupler les
+   deux fichiers. */
 function getAllTalentNodes() {
   if (typeof TALENTTREE !== "undefined") return TALENTTREE;
   if (typeof TALENT_TREE !== "undefined") return TALENT_TREE;
   return {};
 }
 
+/* Coût du prochain niveau d'une upgrade classique. `atLevel` permet de
+   simuler un niveau différent du niveau actuel (utilisé par
+   getUpgradePurchasePreview pour calculer un achat multiple). */
 function getUpgradeCost(upgrade, atLevel) {
   if (!upgrade) return Infinity;
   var level = (atLevel === undefined || atLevel === null)
@@ -225,6 +268,10 @@ function getUpgradeCost(upgrade, atLevel) {
 
 
 
+/* Achète une upgrade classique. `amount` peut être 1/10/25 ou -1
+   (signifie "MAX", achète tant qu'il reste de l'or et que le niveau
+   max n'est pas atteint). Achète les niveaux un par un dans une
+   boucle pour respecter le coût croissant à chaque palier. */
 function buyUpgrade(id, amount) {
   var upgrade = (UPGRADES || []).find(function (u) { return u.id === id; });
   if (!upgrade) return showToast("Amélioration introuvable", 1000);
@@ -281,6 +328,9 @@ function buyUpgrade(id, amount) {
   saveGame();
 }
 
+/* Simule un achat (sans le réaliser) pour afficher un aperçu dans
+   l'UI : combien de niveaux seraient achetés et pour quel coût total,
+   selon le mode d'achat (x1/x10/x25/MAX) et l'or actuel. */
 function getUpgradePurchasePreview(upgrade, amount) {
   if (!upgrade) {
     return {
@@ -324,6 +374,7 @@ function getUpgradePurchasePreview(upgrade, amount) {
 }
 
 
+/* Change le mode d'achat de la boutique (boutons x1/x10/x25/MAX). */
 function setShopBuyAmount(amount) {
   amount = Number(amount || 1);
 
@@ -337,11 +388,16 @@ function setShopBuyAmount(amount) {
   saveGame();
 }
 
+/* Coût pour réinitialiser tous les talents : 150 or par talent
+   actuellement débloqué (donc plus cher si on a beaucoup investi). */
 function getTalentRespecCost() {
   var owned = Object.keys(game.talents || {}).filter(function (id) { return game.talents[id]; });
   return owned.length * 150;
 }
 
+/* Réinitialise tous les talents contre de l'or : rend tous les points
+   dépensés (utilisables ailleurs) et vide game.talents. Demande
+   confirmation via showConfirmModal avant d'agir. */
 function respecTalents() {
   var owned = Object.keys(game.talents || {}).filter(function (id) { return game.talents[id]; });
   if (!owned.length) return showToast("Aucun talent à réinitialiser", 1200);
@@ -377,6 +433,10 @@ function respecTalents() {
   }
 }
 
+/* Débloque un talent précis : vérifie qu'il existe, qu'il n'est pas
+   déjà appris, que son prérequis (node.requires) est rempli, et qu'il
+   reste au moins 1 point de talent. Recherche le node dans les 3
+   branches de l'arbre (l'id suffit, pas besoin de connaître la branche). */
 function buyTalentNode(id) {
   var tree = getAllTalentNodes();
   var node = null;
@@ -405,6 +465,8 @@ function buyTalentNode(id) {
   saveGame();
 }
 
+/* Achète UN niveau d'une amélioration de la Boutique d'Aether
+   (contrairement à buyUpgrade, pas d'achat multiple ici). */
 function buyAetherUpgrade(id) {
   var upgrade = (AETHER_SHOP || []).find(function (u) { return u.id === id; });
   if (!upgrade) return showToast("Amélioration astrale introuvable", 1000);
@@ -428,11 +490,16 @@ function buyAetherUpgrade(id) {
   saveGame();
 }
 
+/* XP nécessaire pour passer du niveau `level` au suivant (voir
+   HERO_LEVELING dans data/heroes.js pour les 2 constantes utilisées). */
 function getHeroXpRequiredForLevel(level) {
   level = Math.max(1, Number(level || 1));
   return Math.floor(10 * Math.pow(1.25, level - 1) + (level - 1) * 5);
 }
 
+/* Ajoute de l'XP au héros et gère la montée de niveau (potentiellement
+   plusieurs d'un coup si amount est gros, via la boucle while). Chaque
+   niveau donne 1 point de talent. Retourne le nombre de niveaux gagnés. */
 function grantHeroXp(amount, source) {
   amount = Math.max(0, Number(amount || 0));
   source = source || "generic";
@@ -476,6 +543,9 @@ function grantHeroXp(amount, source) {
   return levelsGained;
 }
 
+/* Filet de sécurité appelé au boot : s'assure qu'il existe bien un
+   lot de quêtes et un questProgress valides, même sur une toute
+   première partie ou une sauvegarde corrompue/ancienne. */
 function ensureDailyQuests() {
   if (!window.QuestManager || typeof QuestManager.generateDaily !== "function") return;
 
@@ -496,10 +566,18 @@ function ensureDailyQuests() {
   if (typeof updateQuestBadge === "function") updateQuestBadge();
 }
 
+/* Petite façade utilisée par l'UI (ascension-view.js) pour savoir si
+   le bouton d'ascension doit être actif et combien il rapporterait.
+   La vraie logique d'ascension est dans ascendNow() ci-dessous (les
+   deux gardent le même calcul de gain, à garder synchronisés). */
 var AscensionManager = {
   previewGain: function () {
     var gain = typeof ASCENSION_CONFIG.computeGain === "function" ? ASCENSION_CONFIG.computeGain() : 0;
     if (game.talents.t_rich_ritual && gain >= 10) gain += 1;
+
+    var pendingAetherBonus = (game.pendingPotionBonuses && game.pendingPotionBonuses.aetherNext) || 0;
+    if (pendingAetherBonus > 0) gain = Math.ceil(gain * (1 + pendingAetherBonus));
+
     return Math.max(0, gain);
   },
 
@@ -517,6 +595,12 @@ var AscensionManager = {
   }
 };
 
+/* Le vrai processus d'ascension, avec confirmation de l'utilisateur :
+   calcule le gain d'Aether, puis (après confirmation) l'ajoute,
+   incrémente le compteur d'ascensions, réinitialise la progression
+   classique (hardResetState, voir save-system.js) tout en conservant
+   l'Aether/les talents Aether/les ascensions, régénère les quêtes et
+   redémarre un combat depuis le monde 0. */
 function ascendNow() {
   if (typeof ASCENSION_CONFIG === "undefined") return;
   var minKills = ASCENSION_CONFIG.minKillsToAscend || 0;
@@ -527,12 +611,23 @@ function ascendNow() {
 
   var gain = typeof ASCENSION_CONFIG.computeGain === "function" ? ASCENSION_CONFIG.computeGain() : 0;
   if (game.talents.t_rich_ritual && gain >= 10) gain += 1;
+
+  // Élixir d'Aether (potion sans minuteur) : bonus consommé ici, une seule fois.
+  var pendingAetherBonus = (window.PotionManager && game.pendingPotionBonuses)
+    ? Number(game.pendingPotionBonuses.aetherNext || 0)
+    : 0;
+  if (pendingAetherBonus > 0) gain = Math.ceil(gain * (1 + pendingAetherBonus));
+
   if (gain <= 0) return showToast("Gain d'Aether insuffisant", 1200);
 
   var doAscend = function () {
     game.aether = Number(game.aether || 0) + gain;
     game.totalAetherEarned = Number(game.totalAetherEarned || 0) + gain;
     game.ascensionCount = Number(game.ascensionCount || 0) + 1;
+
+    if (pendingAetherBonus > 0 && game.pendingPotionBonuses) {
+      game.pendingPotionBonuses.aetherNext = 0;
+    }
 
     addLog("Ascension accomplie : +" + gain + " Aether", "event");
 

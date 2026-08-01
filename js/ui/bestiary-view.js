@@ -1,10 +1,16 @@
 "use strict";
-
 /* ============================================================
-   Helper interne. 
+Quest Idle — ui/bestiary-view.js
+Écran "Bestiaire" : une carte par créature rencontrée (ennemis +
+boss), avec image, compteur de kills, résistances/faiblesses et
+stats RPG en barres. getStatLabel/clampStatValue viennent de
+ui-root.js. Note : n'affiche pas encore le palier de bonus de
+bestiaire actif (voir getBestiaryBonus en stats-system.js) — ce
+serait un ajout naturel si besoin plus tard.
 ============================================================ */
 
-
+/* Barres de stats (Puissance/Endurance/Célérité/Précision/Volonté)
+   d'une créature. */
 function buildBestiaryStatsHTML(stats) {
   if (!stats) return "";
 
@@ -33,6 +39,7 @@ function buildBestiaryStatsHTML(stats) {
    Helper interne. 
 ============================================================ */
 
+/* Image de la créature si dispo, sinon repli sur l'emoji ASSETS. */
 function buildBestiaryImageHTML(data, isBoss) {
   var imagePath = data && data.image ? data.image : "";
   var iconKey = data && data.asset ? data.asset : "";
@@ -54,6 +61,8 @@ function buildBestiaryImageHTML(data, isBoss) {
    Helper interne. 
 ============================================================ */
 
+/* Liste "Résiste :" / "Faible :" d'une créature, à partir des types
+   de dégâts sword/bow/magic. */
 function buildResistWeakHTML(data) {
   var resists = data && Array.isArray(data.resists) ? data.resists : [];
   var weak = data && Array.isArray(data.weak) ? data.weak : [];
@@ -75,6 +84,9 @@ function buildResistWeakHTML(data) {
    Builder bestiaire. 
 ============================================================ */
 
+/* Liste TOUTES les créatures du jeu (ENEMY_DB + BOSS_DB), rencontrées
+   ou non — le compteur de kills affiche juste 0 pour celles jamais
+   croisées, rien n'est caché/verrouillé visuellement ici. */
 function buildBestiaryHTML() {
   var ids = Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB));
   var h = '<div class="panel-title">Bestiaire</div>';

@@ -1,12 +1,17 @@
 "use strict";
+/* ============================================================
+Quest Idle — main/game-loop.js
+La boucle de jeu principale (requestAnimationFrame), et la gestion
+de l'intervalle d'auto-tap séparé (setInterval, car son rythme
+change avec un talent — pas besoin d'être dans la boucle à 60fps).
+============================================================ */
 
 var lastTick = Date.now();
 
-/* ============================================================
-Redémarre proprement l’intervalle d’auto tap et exécute CombatEngine.autoTap() toutes les 2 secondes. 
-============================================================ */
-
-
+/* (Re)démarre l'intervalle d'auto-tap (talent Main spectrale) au bon
+   rythme : 2s par défaut, ~1.79s avec Transe de bataille (+12% vitesse).
+   À rappeler chaque fois qu'un talent qui affecte ce rythme change
+   (voir buyTalentNode/respecTalents en progression-system.js). */
 function syncAutoTapLoop() {
   if (autoTapInterval) {
     clearInterval(autoTapInterval);
@@ -23,10 +28,13 @@ function syncAutoTapLoop() {
   }, interval);
 }
 
-/* ============================================================
-Gère le temps réel, le dt, le temps de jeu, le suivi de quête combatTime, l’auto attack, la régénération, l’intérêt, le reset des quêtes et le rafraîchissement du HUD / HP. 
-============================================================ */
-
+/* La boucle de jeu, rappelée à chaque frame via requestAnimationFrame.
+   Calcule le delta-temps (dt, plafonné à 0.25s pour éviter les gros
+   sauts si l'onglet était en arrière-plan), puis avance tout ce qui
+   dépend du temps : auto-attaque, riposte ennemie, régénération
+   d'essence (Régénération), intérêt composé sur l'or (toutes les 10s),
+   reset des quêtes journalières si le délai est passé, et rafraîchit
+   le HUD/PV ennemi à chaque frame. */
 function gameLoop() {
   var now = Date.now();
   var dt = (now - lastTick) / 1000;
@@ -47,10 +55,24 @@ function gameLoop() {
     CombatEngine.enemyAttackTick(dt);
   }
 
+  // Potions temporaires : purge celles qui viennent d'expirer, et
+  // rafraîchit le compte à rebours affiché si l'onglet Boutique est
+  // ouvert (pas besoin de redessiner ailleurs, personne ne le voit).
+  if (window.PotionManager && typeof PotionManager.tick === "function") {
+    var potionExpired = PotionManager.tick();
+    game._potionUiTimer = (game._potionUiTimer || 0) + dt;
+    if (potionExpired || game._potionUiTimer >= 1) {
+      game._potionUiTimer = 0;
+      if (game.activeTab === "shop" && typeof renderPanel === "function") renderPanel();
+    }
+  }
+
   if (game.talents.t_regenerate) {
     game.essence += dt;
   }
 
+  // Talent "Intérêt composé" : +0.05% de l'or actuel toutes les 10s
+  // (accumulateur pour rester précis même avec des dt irréguliers).
   if (game.talents.t_interest) {
     game._interestTimer = (game._interestTimer || 0) + dt;
     while (game._interestTimer >= 10) {

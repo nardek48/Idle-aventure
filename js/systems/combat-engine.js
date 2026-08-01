@@ -4,7 +4,9 @@ var autoTapInterval = null;
 
 /* ============================================================
 Quest Idle — systems/combat-engine.js
-Combat loop actions, enemy deaths, random events, visual popups
+Cœur de la boucle de combat : attaque du joueur (tap/auto-DPS/auto-tap),
+riposte ennemie, mort d'un ennemi (récompenses, butin, avancée de la
+progression), et petits événements aléatoires entre deux combats.
 ============================================================ */
 
 /* Mappe l'icône d'arme équipée vers un type de dégâts (aligné sur
@@ -59,6 +61,9 @@ function getEnemyWillCritPenalty() {
   return Number(stats.will || 0) * WILL_CRIT_RESIST_COEF;
 }
 
+/* Fait apparaître un nombre de dégâts flottant à un endroit
+   légèrement aléatoire au-dessus de l'ennemi, avec un flash sur son
+   icône. Purement visuel, aucun impact sur game.* */
 function showFloatingDamage(amount, isCrit) {
   var container = document.getElementById("enemy-display");
   if (!container) return;
@@ -82,6 +87,7 @@ function showFloatingDamage(amount, isCrit) {
   }
 }
 
+/* Fait apparaître un "+X or" flottant. Purement visuel. */
 function showGoldPopup(amount) {
   var container = document.getElementById("enemy-display");
   if (!container) return;
@@ -99,6 +105,9 @@ function showGoldPopup(amount) {
 }
 
 var CombatEngine = {
+  /* Fait apparaître un nouvel ennemi (via WorldManager.generateEnemy)
+     et réinitialise le minuteur de riposte. Appelée au démarrage et
+     après chaque kill. */
   spawnEnemy: function () {
     if (!window.WorldManager || typeof WorldManager.generateEnemy !== "function") return;
 
@@ -109,6 +118,10 @@ var CombatEngine = {
     if (typeof renderHud === "function") renderHud();
   },
 
+  /* Une attaque "tap" (clic manuel, ou déclenchée par le talent
+     Main spectrale via autoTap). Calcule les dégâts avec critique
+     éventuel, applique les bonus de talents pertinents, puis
+     délègue à dealDamage() pour l'appliquer réellement. */
   playerAttack: function () {
     if (!game.enemy || !window.EquipmentManager) return;
 
@@ -145,6 +158,8 @@ var CombatEngine = {
     this.dealDamage(dmg, isCrit, true);
   },
 
+  /* DPS automatique continu (stat Célérité + bonus), appelée chaque
+     frame de la boucle de jeu avec le delta-temps écoulé. */
   autoAttack: function (dt) {
     if (!game.enemy || !window.EquipmentManager) return;
 
@@ -156,12 +171,19 @@ var CombatEngine = {
     this.dealDamage(damage, false, false);
   },
 
+  /* Talent "Main spectrale" : déclenche une vraie attaque (tap complet,
+     avec chance de critique etc.) toutes les X secondes automatiquement.
+     Voir syncAutoTapLoop() dans main/game-loop.js pour le minuteur. */
   autoTap: function () {
     if (!game.enemy || !game.talents.t_auto_tap) return;
     this.playerAttack();
   },
 
-  /* v1.8.5 : riposte ennemie, cadencée par la célérité de l'ennemi affiché. */
+  /* v1.8.5 : riposte ennemie, cadencée par la célérité de l'ennemi affiché.
+     Accumule le temps écoulé dans game._enemyAttackTimer et déclenche
+     une ou plusieurs frappes (enemyStrike) quand l'intervalle est atteint
+     — le `while` gère le cas d'un gros pic de dt (ex: onglet remis au
+     premier plan après un moment) sans spammer indéfiniment (guard). */
   enemyAttackTick: function (dt) {
     if (!game.enemy || !game.enemy.stats) return;
 
@@ -178,6 +200,9 @@ var CombatEngine = {
     }
   },
 
+  /* Une frappe de riposte ennemie : dégâts basés sur sa Puissance,
+     chance de critique basée sur sa Précision, réduits par la
+     défense du héros (issue de son Endurance). */
   enemyStrike: function () {
     if (!game.enemy || !game.enemy.stats) return;
 
@@ -198,6 +223,10 @@ var CombatEngine = {
     if (game.heroHp <= 0) this.onHeroDefeated();
   },
 
+  /* Quand les PV du héros tombent à 0 : pénalité légère (perte d'une
+     partie de l'or courant) puis PV totalement restaurés — pas de
+     "game over", juste une petite sanction pour inciter à investir
+     en Endurance/défense plutôt qu'un vrai risque d'arrêt du jeu. */
   onHeroDefeated: function () {
     var lost = Math.floor((game.gold || 0) * DEFEAT_GOLD_PENALTY);
     game.gold = Math.max(0, game.gold - lost);
@@ -212,6 +241,11 @@ var CombatEngine = {
     saveGame();
   },
 
+  /* Point d'entrée UNIQUE pour infliger des dégâts à l'ennemi affiché,
+     que ce soit depuis un tap, l'auto-DPS, ou l'auto-tap — applique
+     l'affinité de dégâts (résistance/faiblesse/sans arme) et le
+     bonus "Exécution parfaite" avant de retirer les PV, puis
+     déclenche killEnemy() si l'ennemi tombe à 0. */
   dealDamage: function (dmg, isCrit, fromTap) {
     if (!game.enemy) return;
 
@@ -234,6 +268,15 @@ var CombatEngine = {
     else if (typeof renderEnemyHp === "function") renderEnemyHp();
   },
 
+  /* La plus grosse fonction du fichier : tout ce qui se passe à la
+     mort d'un ennemi, dans l'ordre —
+     1) calcul or/essence (multiplicateurs équipement/bestiaire/talents)
+     2) application des compteurs (kills, quêtes, maîtrise d'arme)
+     3) butin si c'est un boss (+ chance de le doubler)
+     4) événement aléatoire si ce n'est PAS un boss (8% de chance)
+     5) avancée de la progression (WorldManager.advance) + récompense
+        de fin de chapitre éventuelle
+     6) XP du héros, puis fait apparaître le prochain ennemi. */
   killEnemy: function () {
     if (!game.enemy) return;
 
@@ -305,8 +348,7 @@ var CombatEngine = {
       for (var r = 0; r < rolls; r++) {
         if (window.LootSystem && typeof LootSystem.rollDrop === "function" && chance(lootChance)) {
           var drop = LootSystem.rollDrop();
-          if (drop) {
-            game.inventory.push(drop);
+          if (drop && addLootToInventory(drop)) {
             addLog("🎁 Objet trouvé : " + drop.name + " (" + drop.rarity + ")", "event");
             showToast("🎁 " + drop.name, 1800);
           }
@@ -365,6 +407,9 @@ var CombatEngine = {
     saveGame();
   },
 
+  /* Petit événement aléatoire (8% de chance après un kill normal,
+     voir killEnemy) : trésor, fontaine d'essence, bénédiction d'or,
+     ou simple texte d'ambiance. Un seul tiré au hasard parmi les 4. */
   triggerRandomEvent: function () {
     var events = [
       function () {
@@ -408,6 +453,8 @@ var CombatEngine = {
   }
 };
 
+// Alias globaux pour les onclick="..." générés dans le HTML (voir
+// index.html, le bouton d'attaque appelle playerAttack() directement).
 function playerAttack() { CombatEngine.playerAttack(); }
 function autoAttack() { CombatEngine.autoAttack(0.1); }
 function autoTap() { CombatEngine.autoTap(); }

@@ -1,7 +1,19 @@
 "use strict";
 /* ============================================================
 QUEST IDLE — data/upgrades.js
-Améliorations classiques et boutique d'Aether.
+Deux boutiques distinctes :
+  - UPGRADES    achats en or, dispo dès le début (voir shop-view.js
+                pour l'écran "Boutique"). `apply(lvl)` est appelée
+                à chaque achat avec le NIVEAU TOTAL (pas juste +1),
+                donc chaque apply() doit fixer la valeur finale.
+  - AETHER_SHOP achats en Aether (monnaie de prestige de l'ascension),
+                voir ascension-view.js pour l'écran "Boutique d'Aether"
+                et getAetherBonuses() en stats-system.js pour l'effet
+                réel (contrairement à UPGRADES, ces items n'ont pas de
+                fonction apply : leurs bonus sont calculés à la volée
+                à partir du niveau, dans getAetherBonuses()).
+unlockWorld = index de monde minimum pour que l'amélioration apparaisse
+dans la boutique (0 = dispo depuis le début).
 ============================================================ */
 
 var UPGRADES = [

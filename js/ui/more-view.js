@@ -1,10 +1,10 @@
 "use strict";
-
 /* ============================================================
-   	Builder bouton plus. 
+Quest Idle — ui/more-view.js
+Écran "Plus" : fiche personnage (portrait + stats RPG), raccourcis
+vers Bestiaire/Journal/Paramètres, et statistiques cumulées de la
+partie.
 ============================================================ */
-
-
 
 function buildMoreHTML() {
   var hero = getSelectedHero();

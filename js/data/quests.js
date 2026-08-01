@@ -1,14 +1,18 @@
 "use strict";
 /* ============================================================
 QUEST IDLE — data/quests.js
-Configuration et templates de quêtes.
+Configuration et templates de quêtes journalières.
+Chargé APRÈS core/constants.js : cette version de DEFAULT_QUEST_PROGRESS
+est celle qui fait foi (voir l'avertissement dans constants.js).
 ============================================================ */
 
 var QUEST_CONFIG = {
-  count: 3,
-  resetHours: 24
+  count: 3,        // nombre de quêtes actives simultanément (tirées de QUEST_TEMPLATES)
+  resetHours: 24    // délai avant régénération d'un nouveau lot de quêtes
 };
 
+/* Valeurs de départ de game.questProgress, remises à zéro à chaque
+   régénération de quêtes (voir cloneQuestProgress en core/utils.js). */
 var DEFAULT_QUEST_PROGRESS = {
   kills: 0,
   bossKills: 0,
@@ -24,6 +28,11 @@ var DEFAULT_QUEST_PROGRESS = {
   magicKills: 0
 };
 
+/* Réservoir de quêtes possibles : QUEST_CONFIG.count sont tirées au
+   hasard dedans à chaque régénération (voir QuestManager.generateDaily
+   en systems/progression-system.js). `tracker` lit la progression
+   actuelle dans game.questProgress ; la quête est complète quand
+   tracker() >= target. */
 var QUEST_TEMPLATES = [
   {
     id: "kills",

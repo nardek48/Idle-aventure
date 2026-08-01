@@ -1,7 +1,11 @@
 "use strict";
-
 /* ============================================================
-   Panneau village.
+Quest Idle — ui/village-view.js
+Écran "Village" : skyline visuel + liste des 6 bâtiments achetables
+(voir VILLAGE_CONFIG dans systems/offline-system.js pour les coûts
+et effets réels — les textes "Bonus actuel" ci-dessous sont dupliqués
+à la main pour l'affichage, à garder synchronisés si un coefficient
+change côté offline-system.js).
 ============================================================ */
 
 /* v1.9.2 : icônes provisoires par bâtiment, en attendant l'art dédié.
@@ -16,6 +20,9 @@ var VILLAGE_BUILDING_ICONS = {
   sanctuary: "⛩️"
 };
 
+/* Rangée de 6 silhouettes de bâtiment, grisées/floues tant qu'un
+   bâtiment est au niveau 0, sinon affichées à une taille croissante
+   selon le niveau atteint (voir CSS .village-building-emoji). */
 function buildVillageSkylineHTML() {
   var buildings = ["goldMine", "essenceWell", "barracks", "timeRelay", "watchtower", "sanctuary"];
   var totalLevel = window.VillageManager && typeof VillageManager.getTotalLevel === "function"
@@ -46,6 +53,8 @@ function buildVillageSkylineHTML() {
   return h;
 }
 
+/* Assemble l'écran : skyline, résumé des bonus hors-ligne actuels,
+   puis une carte d'achat par bâtiment. */
 function buildVillageHTML() {
   var bonus = window.VillageManager && typeof VillageManager.getOfflineBonuses === "function"
     ? VillageManager.getOfflineBonuses()

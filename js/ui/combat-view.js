@@ -1,9 +1,15 @@
 "use strict";
-
 /* ============================================================
-   	Nom, image, bannière, compteur. 
+Quest Idle — ui/combat-view.js
+Rendu de la zone de combat (écran "Combat") : image/nom/PV de
+l'ennemi affiché, et indicateur de résistance/faiblesse de l'arme
+équipée face à lui.
 ============================================================ */
 
+/* Met à jour tout l'affichage de l'ennemi courant : image (ou emoji
+   de repli), nom, compteur de kills, bannière de zone, PV et
+   indicateur d'affinité de dégâts. Appelée à chaque spawn d'ennemi
+   et après chaque coup porté. */
 function renderEnemy() {
   if (!game.enemy) return;
 
@@ -47,6 +53,8 @@ function renderEnemy() {
 
 /* ============================================================
    Indicateur de résistance / faiblesse selon l'arme équipée.
+   S'appuie sur getDamageAffinity() (combat-engine.js) qui compare
+   le type de dégâts de l'arme équipée aux resists/weak de l'ennemi.
 ============================================================ */
 
 function renderEnemyAffinity() {

@@ -1,5 +1,14 @@
 "use strict";
+/* ============================================================
+Quest Idle — core/utils.js
+Fonctions utilitaires génériques, utilisées dans tout le projet
+(formatage, aléatoire, vibration...). Aucune de ces fonctions ne
+touche à `game` directement (sauf cloneQuestProgress).
+============================================================ */
 
+/* Retourne une copie indépendante de DEFAULT_QUEST_PROGRESS, utilisée
+   à chaque (re)génération de quêtes journalières pour repartir sur
+   des compteurs de progression à zéro. */
 function cloneQuestProgress() {
   return Object.assign({}, DEFAULT_QUEST_PROGRESS);
 }

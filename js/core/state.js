@@ -1,5 +1,12 @@
 "use strict";
+/* ============================================================
+Quest Idle — core/state.js
+Définit l'objet `game` global (toute la partie vivante en mémoire)
+et ses valeurs par défaut. C'est LE fichier central : tous les
+autres systèmes lisent/modifient `game`.
+============================================================ */
 
+/* Emplacements d'équipement du héros (arme/armure/amulette). */
 function createDefaultEquipped() {
   return {
     weapon: null,
@@ -8,21 +15,31 @@ function createDefaultEquipped() {
   };
 }
 
+/* Niveaux des bâtiments du village (VillageManager en systems/offline-system.js).
+   watchtower (Vigie) et sanctuary (Sanctuaire d'Aether) ont été ajoutés
+   en v1.9.2 ; VillageManager.ensure() les recrée aussi au runtime si absents
+   d'une ancienne sauvegarde, donc les avoir ici est surtout pour la cohérence. */
 function createDefaultVillage() {
   return {
     goldMine: 0,
     essenceWell: 0,
     barracks: 0,
-    timeRelay: 0
+    timeRelay: 0,
+    watchtower: 0,
+    sanctuary: 0
   };
 }
 
+/* État complet d'une nouvelle partie. Toute nouvelle donnée de jeu
+   persistante doit être ajoutée ici ET dans ensureGameStateDefaults()
+   ci-dessous (pour réparer les sauvegardes plus anciennes qui ne
+   l'ont pas encore). */
 function createInitialGameState() {
   return {
     gold: 0,
     essence: 0,
     aether: 0,
-    totalAetherEarned: 0,
+    totalAetherEarned: 0,   // cumul à vie, ne diminue jamais même dépensé (bonus passif)
 
     tapDamage: 1,
     tapMult: 1,
@@ -30,7 +47,7 @@ function createInitialGameState() {
     critChance: 5,
     critMult: 2,
     goldMult: 1,
-        // NOUVEAU v1.8 : progression des stats RPG via le shop
+    // NOUVEAU v1.8 : progression des stats RPG via le shop (Force/Endurance/...)
     trainedStats: {
       power: 0,
       endurance: 0,
@@ -43,21 +60,21 @@ function createInitialGameState() {
     heroXp: 0,
     heroXpToNext: 20,
     talentPoints: 0,
-    heroHp: 10,
-    heroMaxHp: 10,
-    heroDefensePct: 0,
+    heroHp: 10,             // PV courants (recalculés/plafonnés dans StatsSystem.recalcStats)
+    heroMaxHp: 10,           // PV max, dérivés de l'endurance (voir stats-system.js)
+    heroDefensePct: 0,       // % de réduction des dégâts de riposte ennemie
 
     totalKills: 0,
-    killCounts: {},
+    killCounts: {},          // { idEnnemi: nombre de fois tué } -> bestiaire + bonus
     upgrades: {},
-    shopBuyAmount: 1,
+    shopBuyAmount: 1,        // mode d'achat boutique : 1 / 10 / 25 / -1 (MAX)
     talents: {},
     enemy: null,
     activeTab: "combat",
     totalGoldEarned: 0,
     totalDamageDealt: 0,
     playTime: 0,
-    cycleCount: 0,
+    cycleCount: 0,           // nombre de fois où tous les mondes ont été bouclés sans ascensionner
     ascensionCount: 0,
 
     inventory: [],
@@ -70,9 +87,12 @@ function createInitialGameState() {
 
     saveSupported: false,
     lastSave: 0,
-    lastOnline: 0,
+    lastOnline: 0,            // timestamp du dernier moment "en ligne", sert au calcul hors-ligne
 
     village: createDefaultVillage(),
+
+    activePotions: {},                        // { idPotion: timestamp d'expiration }
+    pendingPotionBonuses: { aetherNext: 0 },    // bonus sans minuteur (Élixir d'Aether)
 
     playerName: "",
     heroId: ""
@@ -81,12 +101,18 @@ function createInitialGameState() {
 
 var game = createInitialGameState();
 
+/* Répare un objet `game` chargé depuis une sauvegarde (potentiellement
+   ancienne) en comblant tous les champs manquants avec des valeurs par
+   défaut sûres. Appelée au boot juste après le chargement, et de
+   nouveau après un reset/ascension. Ne doit jamais écraser une valeur
+   déjà présente et valide. */
 function ensureGameStateDefaults() {
   if (!game.killCounts) game.killCounts = {};
   if (!game.upgrades) game.upgrades = {};
   if (!game.talents) game.talents = {};
 
-  // NOUVEAU v1.8 : init + migration trainedStats
+  // NOUVEAU v1.8 : init + migration trainedStats (anciennes sauvegardes
+  // avaient un simple compteur "utap" pour la Force, récupéré ici)
   if (!game.trainedStats || typeof game.trainedStats !== "object") {
     game.trainedStats = { power: 0, endurance: 0, celerity: 0, precision: 0, will: 0 };
     if (game.upgrades && game.upgrades.utap) {
@@ -100,8 +126,6 @@ function ensureGameStateDefaults() {
   if (typeof game.trainedStats.will !== "number") game.trainedStats.will = 0;
 
   if (!Array.isArray(game.inventory)) game.inventory = [];
-
-  
 
   if (!game.equipped || typeof game.equipped !== "object") {
     game.equipped = createDefaultEquipped();
@@ -118,12 +142,17 @@ function ensureGameStateDefaults() {
     game.questProgress = {};
   }
 
+  // Comble les compteurs de quête manquants (ex: swordKills/bowKills/magicKills
+  // ajoutés après coup) sans toucher à ceux déjà en cours.
   Object.keys(DEFAULT_QUEST_PROGRESS).forEach(function (key) {
     if (typeof game.questProgress[key] !== "number") {
       game.questProgress[key] = DEFAULT_QUEST_PROGRESS[key];
     }
   });
 
+  // Pré-remplit game.upgrades/aetherUpgrades à 0 pour chaque amélioration
+  // connue, pour que le reste du code puisse toujours lire une valeur
+  // numérique sans avoir à vérifier `undefined` partout.
   if (typeof UPGRADES !== "undefined" && Array.isArray(UPGRADES)) {
     UPGRADES.forEach(function (u) {
       if (u && u.id != null && game.upgrades[u.id] === undefined) {
@@ -146,6 +175,14 @@ function ensureGameStateDefaults() {
   if (typeof game.village.essenceWell !== "number") game.village.essenceWell = 0;
   if (typeof game.village.barracks !== "number") game.village.barracks = 0;
   if (typeof game.village.timeRelay !== "number") game.village.timeRelay = 0;
+  if (typeof game.village.watchtower !== "number") game.village.watchtower = 0;
+  if (typeof game.village.sanctuary !== "number") game.village.sanctuary = 0;
+
+  if (!game.activePotions || typeof game.activePotions !== "object") game.activePotions = {};
+  if (!game.pendingPotionBonuses || typeof game.pendingPotionBonuses !== "object") {
+    game.pendingPotionBonuses = { aetherNext: 0 };
+  }
+  if (typeof game.pendingPotionBonuses.aetherNext !== "number") game.pendingPotionBonuses.aetherNext = 0;
 
   if (typeof game.heroLevel !== "number") game.heroLevel = 1;
   if (typeof game.heroXp !== "number") game.heroXp = 0;
@@ -157,6 +194,7 @@ function ensureGameStateDefaults() {
   if (typeof game.playerName !== "string") game.playerName = "";
   if (typeof game.heroId !== "string") game.heroId = "";
 
+  // Le mode d'achat doit être l'une de ces 4 valeurs ; sinon on revient à x1.
   if (![1, 10, 25, -1].includes(Number(game.shopBuyAmount))) {
     game.shopBuyAmount = 1;
   }

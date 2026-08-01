@@ -1,10 +1,24 @@
 "use strict";
 /* ============================================================
 QUEST IDLE — data/talents.js
-Arbre de talents.
+Arbre de talents : 3 branches (combat/fortune/survival), 9 talents
+chacune. Champs de chaque talent :
+  - id        identifiant unique, lu par game.talents[id] === true
+  - name/icon/img/effect  affichage (img = icône illustrée, icon =
+              repli emoji si l'image manque)
+  - slot      hérite de l'ancien système de positionnement (top/
+              upper_left/mid_right/...) ; sert uniquement à calculer
+              le PALIER d'affichage dans talents-view.js, plus à
+              positionner quoi que ce soit visuellement
+  - requires  id du talent prérequis dans la même branche (peut
+              pointer vers un talent d'une autre "colonne", ex.
+              Exécution parfaite dépend de Soif de sang)
+  - capstone  talent de fin de branche (juste un style visuel différent)
+L'EFFET RÉEL de chaque talent (le texte `effect` n'est qu'un résumé)
+est câblé à la main dans le code des systems concernés : chercher
+`game.talents.<id>` dans js/systems/*.js pour trouver où.
 ============================================================ */
 
-/* Garde le même nom que celui déjà utilisé par ton code */
 var TALENTTREE = {
   combat: [
     { id: "t_sharpened_blades", name: "Lames affûtées", icon: "🗡️", img: "images/Icons/talents/t_sharpened_blades.png", slot: "top", effect: "+5% dégâts de tap finaux." },

@@ -1,7 +1,14 @@
 "use strict";
 /* ============================================================
 Quest Idle — systems/save-system.js
-Save, load, reset, autosave, migrations
+Sauvegarde/chargement (localStorage), autosave, migrations
+d'anciennes sauvegardes, et les 2 types de "reset" :
+  - hardResetState()  reset d'ascension : garde l'Aether/les
+    ascensions/les améliorations Aether, remet tout le reste à zéro
+  - fullResetState()   reset complet (bouton "Réinitialiser tout"
+    des Paramètres) : efface absolument tout, y compris le héros
+Augmenter SAVE_VERSION quand la structure de sauvegarde change de
+façon significative (permet de détecter d'anciennes sauvegardes).
 ============================================================ */
 
 var SAVE_KEY = "quest_idle_save_v6";
@@ -30,6 +37,8 @@ function getDefaultEquipped() {
   return { weapon: null, armor: null, amulet: null };
 }
 
+/* Fusionne un objet de progression chargé avec un objet de valeurs
+   par défaut : garde les nombres valides de `obj`, comble le reste. */
 function normalizeProgressMap(obj, fallback) {
   var out = {};
   var src = obj || {};
@@ -47,6 +56,9 @@ function normalizeProgressMap(obj, fallback) {
   return out;
 }
 
+/* D'anciennes sauvegardes stockaient l'id du héros du chaos sous un
+   format différent (ex: "ChaosNight" au lieu de "chaosKnight") ;
+   cette table de correspondance répare ça au chargement. */
 function migrateHeroId(heroId) {
   var map = {
     ChaosNight: "chaosKnight",
@@ -56,6 +68,10 @@ function migrateHeroId(heroId) {
   return map[heroId] || heroId || "";
 }
 
+/* Répare game.upgrades/aetherUpgrades pour une sauvegarde chargée :
+   renomme les vieux ids d'upgrades (upgradeKeyMap, d'avant que les
+   terrains d'entraînement soient renommés en "utrain_*"), puis
+   pré-remplit à 0 toute amélioration connue qui manquerait encore. */
 function ensureUpgradeDefaults() {
   if (!game.upgrades || typeof game.upgrades !== "object") game.upgrades = {};
   if (!game.aetherUpgrades || typeof game.aetherUpgrades !== "object") game.aetherUpgrades = {};
@@ -95,6 +111,10 @@ function ensureUpgradeDefaults() {
   }
 }
 
+/* À appeler une fois au boot : détecte si localStorage est utilisable
+   (peut échouer en navigation privée sur certains navigateurs), met en
+   place l'autosave périodique, et sauvegarde aussi quand l'onglet perd
+   le focus ou se ferme (pour ne jamais perdre de progression). */
 function initSaveSystem() {
   try {
     localStorage.setItem("__quest_idle_test__", "1");
@@ -122,6 +142,10 @@ function initSaveSystem() {
   });
 }
 
+/* Construit l'objet JSON exact qui sera stocké dans localStorage.
+   TOUT champ persistant de `game` doit être repris ici, sinon il ne
+   survivra pas à un rechargement de page. Voir restoreBaseState plus
+   bas pour le chemin inverse (lecture). */
 function buildSaveData() {
   return {
     version: SAVE_VERSION,
@@ -173,10 +197,15 @@ function buildSaveData() {
     talentPoints: Number(game.talentPoints || 0),
     heroHp: Number(game.heroHp != null ? game.heroHp : (game.heroMaxHp || 10)),
     heroMaxHp: Number(game.heroMaxHp || 10),
-    village: game.village || { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 }
+    village: game.village || { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 },
+    activePotions: game.activePotions || {},
+    pendingPotionBonuses: game.pendingPotionBonuses || { aetherNext: 0 }
   };
 }
 
+/* Écrit la sauvegarde dans localStorage. Renvoie false silencieusement
+   si le stockage n'est pas dispo ou en erreur (quota dépassé...) plutôt
+   que de faire planter le jeu. */
 function saveGame() {
   if (!game.saveSupported) return false;
   try {
@@ -189,6 +218,9 @@ function saveGame() {
   }
 }
 
+/* Recharge une sauvegarde (objet `d` = JSON.parse du localStorage)
+   dans `game`. Ne fait AUCUN recalcul de stats dérivées (ça, c'est le
+   rôle de StatsSystem.recalcStats(), appelé séparément après). */
 function restoreBaseState(d) {
   var questDefaults = getDefaultQuestProgress();
 
@@ -260,9 +292,18 @@ function restoreBaseState(d) {
   if (typeof game.village.barracks !== "number") game.village.barracks = 0;
   if (typeof game.village.timeRelay !== "number") game.village.timeRelay = 0;
 
+  game.activePotions = d.activePotions && typeof d.activePotions === "object" ? d.activePotions : {};
+  game.pendingPotionBonuses = d.pendingPotionBonuses && typeof d.pendingPotionBonuses === "object"
+    ? d.pendingPotionBonuses
+    : { aetherNext: 0 };
+  if (typeof game.pendingPotionBonuses.aetherNext !== "number") game.pendingPotionBonuses.aetherNext = 0;
+
   ensureUpgradeDefaults();
 }
 
+/* Remet les stats de base avant de laisser StatsSystem.recalcStats()
+   reconstruire tout par-dessus — évite d'accumuler d'anciennes
+   valeurs si cette fonction est appelée plusieurs fois. */
 function reapplyProgressEffects() {
   game.tapDamage = 1;
   game.tapMult = 1;
@@ -276,6 +317,11 @@ function reapplyProgressEffects() {
   }
 }
 
+/* Point d'entrée principal pour charger la partie au démarrage :
+   lit le JSON de localStorage, restaure l'état, recalcule les stats,
+   et vérifie si les quêtes journalières doivent être régénérées.
+   Renvoie false (sans planter) si rien n'est sauvegardé ou en cas
+   d'erreur de parsing. */
 function loadGame() {
   if (!game.saveSupported) return false;
 
@@ -306,6 +352,10 @@ function clearSaveData() {
   } catch (e) {}
 }
 
+/* Reset "ascension" : réinitialise la progression classique (or, dégâts,
+   monde, inventaire, talents, niveau du héros...) mais CONSERVE l'Aether,
+   le nombre d'ascensions et les améliorations Aether (kept* ci-dessous).
+   Appelée par ascendNow() en progression-system.js. */
 function hardResetState() {
   var questDefaults = getDefaultQuestProgress();
   var keptAether = game.aether || 0;
@@ -375,6 +425,11 @@ function hardResetState() {
 
 }
 
+/* Reset "complet" (bouton "Réinitialiser tout" des Paramètres) : efface
+   VRAIMENT tout, y compris l'Aether et le choix de héros — c'est
+   repartir d'une partie neuve. Contrairement à hardResetState, rien
+   n'est conservé. Note : redonne 1 000 000 d'or de départ (probablement
+   un réglage de debug/confort, à surveiller si le jeu est publié tel quel). */
 function fullResetState() {
   var questDefaults = getDefaultQuestProgress();
 
@@ -441,6 +496,9 @@ function fullResetState() {
   game.heroHp = game.heroMaxHp;
 }
 
+/* Bouton "Réinitialiser tout" des Paramètres : demande confirmation
+   (action irréversible) puis efface la sauvegarde et appelle
+   fullResetState(). */
 function resetGame() {
   var doReset = function () {
     clearSaveData();

@@ -496,6 +496,139 @@
 }
 
 /* =========================
+   Menu plein écran (v2.4)
+   remplace l'ancienne barre à 9 icônes — même principe que
+   .hero-picker-overlay ci-dessus.
+   ========================= */
+.full-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  background: rgba(10, 14, 22, 0.82);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.full-menu {
+  width: 100%;
+  max-width: 640px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 0;
+  color: #f5f7fb;
+  background: linear-gradient(180deg, #182235 0%, #101827 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45);
+  padding-bottom: var(--safe-bottom);
+}
+
+.full-menu-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 10px;
+  background: linear-gradient(180deg, #182235 60%, transparent);
+}
+
+.full-menu-header h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.full-menu-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f5f7fb;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.full-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 6px 20px 24px;
+}
+
+.full-menu-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  color: #f5f7fb;
+  cursor: pointer;
+  transition: transform 0.08s ease, background-color 0.15s ease;
+}
+
+.full-menu-card:active {
+  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.full-menu-card-icon-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.full-menu-card-icon {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.full-menu-card-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.full-menu-card-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .full-menu-card {
+    transition: none;
+  }
+
+  .full-menu-card:active {
+    transform: none;
+  }
+}
+
+/* =========================
    Réduction des animations
    ========================= */
 @media (prefers-reduced-motion: reduce) {

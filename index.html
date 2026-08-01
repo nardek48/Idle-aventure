@@ -110,47 +110,17 @@
     <span>Combat</span>
   </button>
 
-  <button class="tab-btn" data-tab="shop" onclick="switchTab('shop')">
-    <img src="./images/Icons/shop_menu.png" alt="" class="tab-icon-img">
-    <span>Shop</span>
-  </button>
+  <!-- Emplacement réservé : futurs boutons d'attaque spéciale -->
+  <div id="tab-bar-special-slot"></div>
 
-  <button class="tab-btn" data-tab="talents" onclick="switchTab('talents')">
-    <img src="./images/Icons/talents_menu.png" alt="" class="tab-icon-img">
-    <span>Talents</span>
-  </button>
-
-  <button class="tab-btn" data-tab="equip" onclick="switchTab('equip')">
-    <img src="./images/Icons/equip_menu.png" alt="" class="tab-icon-img">
-    <span>Équip.</span>
-  </button>
-
-  <button class="tab-btn" data-tab="quests" onclick="switchTab('quests')">
-    <img src="./images/Icons/quests_menu.png" alt="" class="tab-icon-img">
-    <span>Quêtes</span>
-    <span class="tab-badge" id="quest-badge" style="display:none">!</span>
-  </button>
-
-  <button class="tab-btn" data-tab="ascension" onclick="switchTab('ascension')">
-    <img src="./images/Icons/aether_menu.png" alt="" class="tab-icon-img">
-    <span>Ascens.</span>
-  </button>
-
-  <button class="tab-btn" data-tab="map" onclick="switchTab('map')">
-    <img src="./images/Icons/map_menu.png" alt="" class="tab-icon-img">
-    <span>Map</span>
-  </button>
-
-  <button class="tab-btn" data-tab="village" onclick="switchTab('village')">
-    <img src="./images/Icons/village_menu.png" alt="" class="tab-icon-img">
-    <span>Village</span>
-  </button>
-
-  <button class="tab-btn" data-tab="more" onclick="switchTab('more')">
-    <img src="./images/Icons/more_menu.png" alt="" class="tab-icon-img">
-    <span>Plus</span>
+  <button class="tab-btn" data-tab="menu" onclick="openFullMenu()">
+    <span class="tab-icon">☰</span>
+    <span>Menu</span>
+    <span class="tab-badge" id="quest-badge" style="display:none"></span>
   </button>
 </div>
+
+<div id="full-menu-root"></div>
 
 
 <div id="offline-modal">
@@ -192,6 +162,7 @@
 <script src="js/data/heroes.js"></script>
 <script src="js/data/worlds.js"></script>
 <script src="js/data/upgrades.js"></script>
+<script src="js/data/potions.js"></script>
 <script src="js/data/talents.js"></script>
 <script src="js/data/equipment.js"></script>
 <script src="js/data/quests.js"></script>
@@ -204,6 +175,7 @@
 <script src="js/systems/stats-system.js"></script>
 <script src="js/systems/equipment-system.js"></script>
 <script src="js/systems/loot-system.js"></script>
+<script src="js/systems/potion-system.js"></script>
 <script src="js/systems/progression-system.js"></script>
 <script src="js/systems/offline-system.js"></script>
 <script src="js/systems/save-system.js"></script>
@@ -215,6 +187,8 @@
 <script src="js/ui/modal-view.js"></script>
 <script src="js/ui/hud-view.js"></script>
 <script src="js/ui/combat-view.js"></script>
+<script src="js/ui/potion-view.js"></script>
+<script src="js/ui/menu-view.js"></script>
 <script src="js/ui/shop-view.js"></script>
 <script src="js/ui/talents-view.js"></script>
 <script src="js/ui/equipment-view.js"></script>

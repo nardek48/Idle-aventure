@@ -1,7 +1,8 @@
 "use strict";
-
 /* ============================================================
-   Builder paramètres. 
+Quest Idle — ui/settings-view.js
+Écran "Paramètres" : sauvegarde manuelle et reset complet (voir
+resetGame() dans systems/save-system.js pour la confirmation).
 ============================================================ */
 
 function buildSettingsHTML() {

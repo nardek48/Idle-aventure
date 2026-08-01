@@ -1,9 +1,14 @@
 "use strict";
-
 /* ============================================================
-   Inventaire et équipement.
+Quest Idle — ui/equipment-view.js
+Écran "Équipement" : fiche héros + 3 emplacements (arme/armure/
+amulette) et le sac d'inventaire. Note : le titre du sac affiche
+"/50" comme limite mais rien dans le code n'empêche réellement de
+dépasser 50 objets (LootSystem ne vérifie pas la taille de
+l'inventaire) — purement indicatif pour l'instant.
 ============================================================ */
 
+/* Texte lisible du bonus d'un objet, ex: "+10% dégâts". */
 function formatEquipmentStat(item) {
   if (!item) return "";
   var value = Number(item.value || 0);
@@ -25,6 +30,8 @@ function getCurrentHeroForEquipmentView() {
   return null;
 }
 
+/* Un des 3 emplacements équipés (arme/armure/amulette) : vide (clic
+   sans effet, juste un toast) ou rempli (clic pour déséquiper). */
 function buildEquipmentSlot(slot, label, icon) {
   var item = game.equipped[slot];
   var h = '<button class="eq-orbit-slot ' + (item ? 'filled' : 'empty') + '" onclick="' +
@@ -48,6 +55,8 @@ function buildEquipmentSlot(slot, label, icon) {
   return h;
 }
 
+/* Une tuile d'objet dans le sac : cliquer sur l'objet l'équipe,
+   le bouton "Vendre" séparé le vend directement sans l'équiper. */
 function buildInventoryTile(item) {
   var h = '<div class="eq-bag-item rarity-' + esc(item.rarity) + '">';
   h += '<button class="eq-bag-main" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">';
@@ -60,6 +69,9 @@ function buildInventoryTile(item) {
   return h;
 }
 
+/* Assemble l'écran entier : bandeau de bonus de set (actif ou non),
+   carte héros avec les 3 emplacements, puis le sac avec ses outils
+   de tri/vente rapide. */
 function buildEquipHTML() {
   var setBonus = EquipmentManager.getSetBonus();
   var hero = getCurrentHeroForEquipmentView();

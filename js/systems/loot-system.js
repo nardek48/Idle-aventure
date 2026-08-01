@@ -1,9 +1,13 @@
 "use strict";
 /* ============================================================
 Quest Idle — systems/loot-system.js
-Drop generation only
+Génération des drops d'objets (uniquement au kill d'un boss, voir
+CombatEngine.killEnemy en combat-engine.js).
 ============================================================ */
 
+/* Duplique un objet du catalogue (EQUIPMENT_DB) en une instance
+   possédée par le joueur, avec un identifiant unique (uid) pour
+   pouvoir la retrouver dans l'inventaire/l'équipé. */
 function cloneItem(template, slot) {
   return {
     uid: "itm_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8),
@@ -28,6 +32,10 @@ function getAllowedRarities() {
 }
 
 var LootSystem = {
+  /* Tire un objet aléatoire : d'abord un emplacement (arme/armure/
+     amulette) au hasard, puis une rareté pondérée par RARITY_DROP_RATES
+     MAIS restreinte aux raretés débloquées (getAllowedRarities), puis un
+     objet au hasard parmi ceux du catalogue ayant cette rareté. */
   rollDrop: function () {
     var slot = ["weapon", "armor", "amulet"][randInt(0, 2)];
     var pool = EQUIPMENT_DB[slot] || [];
@@ -43,6 +51,8 @@ var LootSystem = {
       totalWeight = 1;
     }
 
+    // Tirage pondéré classique : on accumule les poids et on regarde
+    // dans quelle "tranche" tombe le nombre aléatoire.
     var roll = Math.random() * totalWeight;
     var rarity = allowed[allowed.length - 1];
     var acc = 0;
@@ -58,6 +68,8 @@ var LootSystem = {
       return item.rarity === rarity;
     });
 
+    // Filets de sécurité si jamais aucun objet de cette rareté exacte
+    // n'existe dans ce catalogue (ne devrait pas arriver en pratique).
     if (!candidates.length) {
       candidates = pool.filter(function (item) {
         return allowed.indexOf(item.rarity) !== -1;
