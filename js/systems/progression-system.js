@@ -42,7 +42,9 @@ var WorldManager = {
     if (isBoss) {
       enemyId = adventure.boss;
       var bossData = BOSS_DB[enemyId] || { name: "Boss", asset: "slimeking" };
-      var bossScale = 1 + this.worldIndex * 0.90 + this.adventureIndex * 0.30 + (game.cycleCount || 0) * 0.35;
+      // v2.11 : coefficients augmentés (0.90/0.30/0.35 -> 1.3/0.4/0.7)
+      // pour suivre la croissance multiplicative de la puissance du joueur.
+      var bossScale = 1 + this.worldIndex * 1.3 + this.adventureIndex * 0.4 + (game.cycleCount || 0) * 0.7;
       var BOSS_ENDURANCE_HP_COEF = 2;
       var bossEndurance = (bossData.stats && bossData.stats.endurance) || 58;
       var bossHp = Math.floor(bossEndurance * BOSS_ENDURANCE_HP_COEF * bossScale + (game.totalKills || 0) * 2);
@@ -63,7 +65,9 @@ var WorldManager = {
 
     enemyId = adventure.enemyPool[randInt(0, adventure.enemyPool.length - 1)];
     var enemyData = ENEMY_DB[enemyId] || { name: "Ennemi", asset: "slime" };
-    var scale = 1 + this.worldIndex * 0.60 + this.adventureIndex * 0.22 + (game.cycleCount || 0) * 0.2 + this.enemyIndex * 0.05;
+    // v2.11 : coefficients augmentés (0.60/0.22/0.20 -> 0.90/0.30/0.45)
+    // pour suivre la croissance multiplicative de la puissance du joueur.
+    var scale = 1 + this.worldIndex * 0.90 + this.adventureIndex * 0.30 + (game.cycleCount || 0) * 0.45 + this.enemyIndex * 0.05;
     var ENEMY_ENDURANCE_HP_COEF = 1.2;
     var enemyEndurance = (enemyData.stats && enemyData.stats.endurance) || 18;
     var hp = Math.floor(enemyEndurance * ENEMY_ENDURANCE_HP_COEF * scale + this.enemyIndex * 5);
@@ -492,9 +496,15 @@ function buyAetherUpgrade(id) {
 
 /* XP nécessaire pour passer du niveau `level` au suivant (voir
    HERO_LEVELING dans data/heroes.js pour les 2 constantes utilisées). */
+/* XP nécessaire pour passer du niveau `level` au suivant. v2.11 :
+   base 10->20, croissance 1.25->1.35, terme linéaire 5->10 (chaque
+   niveau donne 1 point de talent, c'était trop rapide à obtenir).
+   Voir HERO_LEVELING dans data/heroes.js — cette donnée existe mais
+   n'est PAS branchée ici, les valeurs sont en dur ci-dessous ; les
+   deux devraient être fusionnées un jour pour éviter la confusion. */
 function getHeroXpRequiredForLevel(level) {
   level = Math.max(1, Number(level || 1));
-  return Math.floor(10 * Math.pow(1.25, level - 1) + (level - 1) * 5);
+  return Math.floor(20 * Math.pow(1.35, level - 1) + (level - 1) * 10);
 }
 
 /* Ajoute de l'XP au héros et gère la montée de niveau (potentiellement

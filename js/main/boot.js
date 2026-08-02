@@ -18,6 +18,15 @@ function init() {
   if (gameStarted) return;
   gameStarted = true;
 
+  // v2.8 : le HUD, la zone de combat et la barre de stats sont
+  // maintenant générés dynamiquement comme tous les autres écrans
+  // (voir ui/hud-view.js et ui/combat-view.js). Il faut les injecter
+  // AVANT tout le reste, car ensureDailyQuests()/spawnEnemy()/
+  // renderAll() ci-dessous s'attendent à trouver ces éléments déjà
+  // présents dans le DOM.
+  if (typeof mountHudAndStatsBar === "function") mountHudAndStatsBar();
+  if (typeof mountCombatArea === "function") mountCombatArea();
+
   if (typeof ensureGameStateDefaults === "function") {
     ensureGameStateDefaults();
   }

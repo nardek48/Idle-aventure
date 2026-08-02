@@ -629,6 +629,94 @@
 }
 
 /* =========================
+   Modale export/import (code texte)
+   ========================= */
+.export-text-body {
+  padding: 0 20px 24px;
+}
+
+.export-text-body p {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.5;
+}
+
+.export-textarea {
+  width: 100%;
+  height: 160px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.3);
+  color: #f5f7fb;
+  font-family: "Consolas", monospace;
+  font-size: 11px;
+  resize: vertical;
+  margin-bottom: 10px;
+}
+
+/* =========================
+   Tutoriel d'accueil (onboarding)
+   ========================= */
+.onboarding-card {
+  padding: 28px 24px 24px;
+  text-align: center;
+}
+
+.onboarding-icon {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 14px;
+}
+
+.onboarding-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: #f5f7fb;
+}
+
+.onboarding-text {
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.78);
+  margin-bottom: 20px;
+}
+
+.onboarding-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.onboarding-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.onboarding-dot.is-active {
+  background: var(--gold);
+  width: 18px;
+}
+
+.onboarding-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.onboarding-actions .settings-btn {
+  margin-bottom: 0;
+}
+
+.onboarding-full-width {
+  width: 100%;
+}
+
+/* =========================
    Réduction des animations
    ========================= */
 @media (prefers-reduced-motion: reduce) {

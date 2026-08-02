@@ -205,7 +205,8 @@ function buildSaveData() {
     dungeonTickets: Number(game.dungeonTickets != null ? game.dungeonTickets : 1),
     dungeonTicketResetTime: Number(game.dungeonTicketResetTime || 0),
     dungeonRun: game.dungeonRun || { active: false, wave: 0 },
-    dungeonBestWave: Number(game.dungeonBestWave || 0)
+    dungeonBestWave: Number(game.dungeonBestWave || 0),
+    hasSeenOnboarding: !!game.hasSeenOnboarding
   };
 }
 
@@ -311,6 +312,7 @@ function restoreBaseState(d) {
   game.dungeonTicketResetTime = Number(d.dungeonTicketResetTime || 0);
   game.dungeonRun = d.dungeonRun && typeof d.dungeonRun === "object" ? d.dungeonRun : { active: false, wave: 0 };
   game.dungeonBestWave = Number(d.dungeonBestWave || 0);
+  game.hasSeenOnboarding = !!d.hasSeenOnboarding;
 
   ensureUpgradeDefaults();
 }
@@ -549,5 +551,197 @@ window.clearSaveData = clearSaveData;
 window.hardResetState = hardResetState;
 window.fullResetState = fullResetState;
 window.buildSaveData = buildSaveData;
+window.restoreBaseState = restoreBaseState;
+window.reapplyProgressEffects = reapplyProgressEffects;
 window.ensureUpgradeDefaults = ensureUpgradeDefaults;
 window.migrateHeroId = migrateHeroId;
+
+/* ============================================================
+   v2.9 : export/import de sauvegarde. Toute la partie repose sur le
+   localStorage du navigateur (rien côté serveur) — un simple export
+   en fichier JSON sert de filet de sécurité en cas de changement
+   d'appareil, de nettoyage du cache, etc. Deux façons d'exporter/
+   importer : fichier téléchargé (le plus simple) ou code texte à
+   copier/coller (repli si le téléchargement de fichier ne convient
+   pas dans le contexte où tourne le jeu).
+============================================================ */
+
+/* Génère le JSON de sauvegarde et déclenche son téléchargement comme
+   fichier .json (le navigateur choisit où l'enregistrer). */
+function exportSaveToFile() {
+  var data = buildSaveData();
+  var json = JSON.stringify(data, null, 2);
+  var blob = new Blob([json], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+
+  var date = new Date().toISOString().slice(0, 10);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "quest-idle-save-" + date + ".json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast("💾 Sauvegarde exportée", 1800);
+}
+
+/* Affiche le JSON de sauvegarde dans une modale texte, à copier
+   manuellement — repli pratique si le téléchargement de fichier ne
+   convient pas. */
+function showExportTextModal() {
+  var host = document.getElementById("export-text-root");
+  if (!host) return;
+  var json = JSON.stringify(buildSaveData());
+
+  host.innerHTML = ''
+    + '<div class="full-menu-overlay" onclick="if (event.target === this) closeExportTextModal();">'
+    +   '<div class="full-menu" style="max-height:75vh;">'
+    +     '<div class="full-menu-header"><h2>Code de sauvegarde</h2><button class="full-menu-close" type="button" onclick="closeExportTextModal()">✕</button></div>'
+    +     '<div class="export-text-body">'
+    +       '<p>Copie ce texte et garde-le en lieu sûr. Tu pourras le recoller via "Importer un code" pour restaurer cette progression.</p>'
+    +       '<textarea readonly id="export-text-area" class="export-textarea">' + esc(json) + '</textarea>'
+    +       '<button class="settings-btn" type="button" onclick="copyExportText()">📋 Copier</button>'
+    +     '</div>'
+    +   '</div>'
+    + '</div>';
+}
+
+/* Modale d'import par copier/coller (symétrique de showExportTextModal). */
+function showImportTextModal() {
+  var host = document.getElementById("export-text-root");
+  if (!host) return;
+
+  host.innerHTML = ''
+    + '<div class="full-menu-overlay" onclick="if (event.target === this) closeExportTextModal();">'
+    +   '<div class="full-menu" style="max-height:75vh;">'
+    +     '<div class="full-menu-header"><h2>Importer un code</h2><button class="full-menu-close" type="button" onclick="closeExportTextModal()">✕</button></div>'
+    +     '<div class="export-text-body">'
+    +       '<p>Colle ici un code de sauvegarde exporté précédemment. Ça remplacera ta progression actuelle.</p>'
+    +       '<textarea id="import-text-area" class="export-textarea" placeholder="Colle le code ici..."></textarea>'
+    +       '<button class="settings-btn" type="button" onclick="importSaveFromText(document.getElementById(\'import-text-area\').value)">📥 Importer ce code</button>'
+    +     '</div>'
+    +   '</div>'
+    + '</div>';
+}
+
+function closeExportTextModal() {
+  var host = document.getElementById("export-text-root");
+  if (host) host.innerHTML = "";
+}
+
+function copyExportText() {
+  var area = document.getElementById("export-text-area");
+  if (!area) return;
+  area.select();
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(area.value)
+      .then(function () { showToast("📋 Copié !", 1200); })
+      .catch(function () { showToast("Sélectionne et copie manuellement", 1500); });
+  } else {
+    try {
+      document.execCommand("copy");
+      showToast("📋 Copié !", 1200);
+    } catch (e) {
+      showToast("Sélectionne et copie manuellement", 1500);
+    }
+  }
+}
+
+/* Vérifie grossièrement qu'un objet ressemble à une sauvegarde Quest
+   Idle avant de l'appliquer — évite d'écraser la partie avec un
+   fichier/texte quelconque collé par erreur. */
+function looksLikeQuestIdleSave(d) {
+  return !!(d && typeof d === "object" &&
+    typeof d.gold === "number" &&
+    typeof d.heroId === "string" &&
+    d.equipped !== undefined &&
+    d.talents !== undefined);
+}
+
+/* Applique une sauvegarde importée (objet déjà parsé), après
+   confirmation explicite — remplace TOUTE la progression actuelle. */
+function applyImportedSave(data) {
+  if (!looksLikeQuestIdleSave(data)) {
+    showToast("❌ Fichier invalide (pas une sauvegarde Quest Idle)", 2200);
+    return;
+  }
+
+  var doImport = function () {
+    restoreBaseState(data);
+    reapplyProgressEffects();
+
+    if (window.QuestManager && typeof QuestManager.checkReset === "function") {
+      QuestManager.checkReset();
+    }
+    if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
+      CombatEngine.spawnEnemy();
+    }
+
+    saveGame();
+    if (typeof renderAll === "function") renderAll();
+    showToast("✅ Sauvegarde importée", 1800);
+    addLog("📥 Sauvegarde importée.", "event");
+  };
+
+  // Ferme la modale d'import (copier/coller) AVANT d'ouvrir la
+  // confirmation, sinon les deux se superposent et bloquent le clic.
+  if (typeof closeExportTextModal === "function") closeExportTextModal();
+
+  if (typeof showConfirmModal === "function") {
+    showConfirmModal(
+      "Importer cette sauvegarde ?",
+      "Ceci va REMPLACER toute ta progression actuelle par celle importée. Cette action est irréversible.",
+      "📥",
+      doImport
+    );
+  } else if (window.confirm("Remplacer la progression actuelle par cette sauvegarde ?")) {
+    doImport();
+  }
+}
+
+/* Lit le fichier choisi via l'input caché (voir index.html) et tente
+   de l'importer comme sauvegarde. */
+function importSaveFromFile(fileInput) {
+  var file = fileInput && fileInput.files && fileInput.files[0];
+  if (!file) return;
+
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      applyImportedSave(data);
+    } catch (err) {
+      showToast("❌ Fichier illisible (JSON invalide)", 2200);
+    }
+    fileInput.value = "";
+  };
+  reader.onerror = function () {
+    showToast("❌ Erreur de lecture du fichier", 1800);
+  };
+  reader.readAsText(file);
+}
+
+function importSaveFromText(text) {
+  try {
+    var data = JSON.parse(text);
+    applyImportedSave(data);
+  } catch (err) {
+    showToast("❌ Texte invalide (JSON incorrect)", 2200);
+  }
+}
+
+function triggerImportFilePicker() {
+  var input = document.getElementById("import-save-file-input");
+  if (input) input.click();
+}
+
+window.exportSaveToFile = exportSaveToFile;
+window.showExportTextModal = showExportTextModal;
+window.showImportTextModal = showImportTextModal;
+window.closeExportTextModal = closeExportTextModal;
+window.copyExportText = copyExportText;
+window.importSaveFromFile = importSaveFromFile;
+window.importSaveFromText = importSaveFromText;
+window.triggerImportFilePicker = triggerImportFilePicker;

@@ -85,6 +85,11 @@ function confirmHeroSelection() {
     return;
   }
 
+  // Détecté AVANT d'écraser game.playerName : sert à savoir si c'est
+  // la toute première création de personnage (pour le tutoriel
+  // d'accueil), pas un simple changement de héros en cours de partie.
+  var isFirstEverSetup = !game.playerName;
+
   game.heroId = pendingHeroId || game.heroId;
   game.playerName = name;
 
@@ -97,6 +102,10 @@ function confirmHeroSelection() {
   renderAll();
   saveGame();
   showToast("Héros sélectionné", 1200);
+
+  if (isFirstEverSetup && typeof openOnboarding === "function") {
+    openOnboarding();
+  }
 }
 /* ============================================================
    Ouverture overlay héros.

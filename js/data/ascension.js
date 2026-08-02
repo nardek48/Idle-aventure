@@ -7,7 +7,7 @@ sa progression classique contre de l'Aether, une monnaie permanente).
 
 var ASCENSION_CONFIG = {
   minWorldToAscend: 0,     // désormais sans effet, gardé pour compat (voir minKillsToAscend)
-  minKillsToAscend: 50,    // nombre de kills minimum dans la run en cours avant de pouvoir ascensionner
+  minKillsToAscend: 200,   // v2.11 : 50 -> 200 (rééquilibrage, voir doc d'équilibrage)
 
   /* Calcule combien d'Aether l'ascension rapporterait maintenant.
      Formule : 1 Aether tous les 50 kills, + 1 par monde déjà atteint.

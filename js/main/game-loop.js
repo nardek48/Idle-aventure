@@ -51,7 +51,14 @@ function gameLoop() {
 
   CombatEngine.autoAttack(dt);
 
-  if (typeof CombatEngine.enemyAttackTick === "function") {
+  // v2.10 : la riposte ennemie ne s'applique QUE quand le joueur est
+  // réellement sur l'écran Combat — avant, elle tournait en continu
+  // même en naviguant dans les autres onglets, faisant baisser les PV
+  // "dans le dos" du joueur sans qu'il puisse réagir. Le reste (auto
+  // DPS, potions, régénération, intérêt composé...) continue de
+  // tourner normalement en arrière-plan, seule la riposte est mise
+  // en pause hors de l'écran Combat.
+  if (game.activeTab === "combat" && typeof CombatEngine.enemyAttackTick === "function") {
     CombatEngine.enemyAttackTick(dt);
   }
 

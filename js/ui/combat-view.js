@@ -4,7 +4,33 @@ Quest Idle — ui/combat-view.js
 Rendu de la zone de combat (écran "Combat") : image/nom/PV de
 l'ennemi affiché, et indicateur de résistance/faiblesse de l'arme
 équipée face à lui.
+
+v2.8 : buildCombatHTML() génère le marquage de #game-area (mêmes
+id/class que l'ancien HTML statique d'index.html), injecté une seule
+fois au boot par mountCombatArea() — voir main/boot.js.
 ============================================================ */
+
+function buildCombatHTML() {
+  return ''
+    + '<div id="zone-banner">⚔️ Tappe l\'ennemi pour attaquer !</div>'
+    + '<div id="enemy-display">'
+    +   '<div id="enemy-emoji" onclick="playerAttack()">🟢</div>'
+    +   '<div id="enemy-name">Slime</div>'
+    +   '<div id="enemy-affinity"></div>'
+    +   '<div id="enemy-hp-bar-wrapper">'
+    +     '<div id="enemy-hp-bar" style="width:100%"></div>'
+    +     '<div id="enemy-hp-text">10 / 10</div>'
+    +   '</div>'
+    +   '<div class="enemy-counter" id="enemy-counter">Kills: 0</div>'
+    + '</div>';
+}
+
+/* Injecte la zone de combat une seule fois au boot, avant le tout
+   premier spawnEnemy()/renderEnemy(). */
+function mountCombatArea() {
+  var gameArea = document.getElementById("game-area");
+  if (gameArea) gameArea.innerHTML = buildCombatHTML();
+}
 
 /* Met à jour tout l'affichage de l'ennemi courant : image (ou emoji
    de repli), nom, compteur de kills, bannière de zone, PV et
@@ -98,3 +124,5 @@ function renderEnemyHp() {
 window.renderEnemy = renderEnemy;
 window.renderEnemyHp = renderEnemyHp;
 window.renderEnemyAffinity = renderEnemyAffinity;
+window.buildCombatHTML = buildCombatHTML;
+window.mountCombatArea = mountCombatArea;

@@ -47,61 +47,11 @@
 </head>
 
 <body>
-<div id="hud">
-  <div class="hud-resources">
-    <span class="resource-badge gold"><span class="icon">💰</span><span id="hud-gold">0</span></span>
-    <span class="resource-badge essence"><span class="icon">🔮</span><span id="hud-essence">0</span></span>
-    <span class="resource-badge aether"><span class="icon">🌀</span><span id="hud-aether">0</span></span>
-  </div>
+<div id="hud"></div>
 
-  <div class="hud-zone">
-    <div class="zone-name" id="hud-zone-name">Forêt</div>
-    <div id="hud-adventure-name">Lisière</div>
-  </div>
+<div id="game-area"></div>
 
-  <div class="hud-hero-xp">
-    <div class="hud-hero-xp-top">
-      <span id="hud-hero-level">Niv. 1</span>
-      <span id="hud-hero-xp-text">0 / 10 XP</span>
-    </div>
-    <div class="hud-hero-xp-bar">
-      <div id="hud-hero-xp-fill" class="hud-hero-xp-fill" style="width:0%"></div>
-    </div>
-  </div>
-
-  <div class="hud-hero-hp">
-    <div class="hud-hero-hp-top">
-      <span>❤️ PV</span>
-      <span id="hud-hero-hp-text">10 / 10</span>
-    </div>
-    <div class="hud-hero-hp-bar">
-      <div id="hud-hero-hp-fill" class="hud-hero-hp-fill" style="width:100%"></div>
-    </div>
-  </div>
-</div>
-
-<div id="game-area">
-  <div id="zone-banner">⚔️ Tappe l'ennemi pour attaquer !</div>
-  <div id="enemy-display">
-    <div id="enemy-emoji" onclick="playerAttack()">🟢</div>
-    <div id="enemy-name">Slime</div>
-    <div id="enemy-affinity"></div>
-    <div id="enemy-hp-bar-wrapper">
-      <div id="enemy-hp-bar" style="width:100%"></div>
-      <div id="enemy-hp-text">10 / 10</div>
-    </div>
-    <div class="enemy-counter" id="enemy-counter">Kills: 0</div>
-  </div>
-</div>
-
-<div id="stats-bar">
-  <div class="stat-item"><span class="stat-label">⚡ Dégâts/Tap</span><span class="stat-value" id="stat-tap-dmg">1</span></div>
-  <div class="stat-item"><span class="stat-label">🔁 Auto DPS</span><span class="stat-value" id="stat-auto-dps">0</span></div>
-  <div class="stat-item"><span class="stat-label">🎯 Critique</span><span class="stat-value" id="stat-crit">5%</span></div>
-  <div class="stat-item"><span class="stat-label">🎯 Dégâts crit.</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>
-  <div class="stat-item"><span class="stat-label">🌀 Aether</span><span class="stat-value" id="stat-aether-mult">x1.00</span></div>
-  <div class="stat-item"><span class="stat-label">💰 Or</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>
-</div>
+<div id="stats-bar"></div>
 
 <div id="panel-container"></div>
 
@@ -122,6 +72,9 @@
 </div>
 
 <div id="full-menu-root"></div>
+<div id="export-text-root"></div>
+<div id="onboarding-root"></div>
+<input type="file" id="import-save-file-input" accept=".json,application/json" style="display:none" onchange="importSaveFromFile(this)">
 
 
 <div id="offline-modal">
@@ -189,6 +142,7 @@
 <script src="js/ui/toast.js"></script>
 <script src="js/ui/modal.js"></script>
 <script src="js/ui/modal-view.js"></script>
+<script src="js/ui/onboarding-view.js"></script>
 <script src="js/ui/hud-view.js"></script>
 <script src="js/ui/combat-view.js"></script>
 <script src="js/ui/potion-view.js"></script>

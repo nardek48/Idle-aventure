@@ -102,6 +102,8 @@ function createInitialGameState() {
     dungeonRun: { active: false, wave: 0 },
     dungeonBestWave: 0,
 
+    hasSeenOnboarding: false,   // tutoriel d'accueil, voir ui/onboarding-view.js
+
     playerName: "",
     heroId: ""
   };
@@ -199,6 +201,8 @@ function ensureGameStateDefaults() {
   if (typeof game.dungeonTicketResetTime !== "number") game.dungeonTicketResetTime = 0;
   if (!game.dungeonRun || typeof game.dungeonRun !== "object") game.dungeonRun = { active: false, wave: 0 };
   if (typeof game.dungeonBestWave !== "number") game.dungeonBestWave = 0;
+
+  if (typeof game.hasSeenOnboarding !== "boolean") game.hasSeenOnboarding = false;
 
   if (typeof game.heroLevel !== "number") game.heroLevel = 1;
   if (typeof game.heroXp !== "number") game.heroXp = 0;

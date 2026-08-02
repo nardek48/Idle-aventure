@@ -226,9 +226,11 @@ var StatsSystem = {
     }
 
     // Bonus automatique par ascension (indépendant des talents).
+    // v2.11 : 0.15/0.12 -> 0.06/0.05 (l'ancien taux cumulait trop vite
+    // en linéaire pur, voir doc d'équilibrage).
     if (game.ascensionCount > 0) {
-      game.tapMult += game.ascensionCount * 0.15;
-      game.goldMult += game.ascensionCount * 0.12;
+      game.tapMult += game.ascensionCount * 0.06;
+      game.goldMult += game.ascensionCount * 0.05;
     }
 
     if (game.talents.t_essence_bloom) game.essenceGlobalMult += 0.15;
