@@ -332,16 +332,8 @@
 }
 
 #panel-container.panel-world-bg > * {
-  z-index: 1;
-}
-
-/* Les éléments "sticky" (titre de panel, cartes de détail figées)
-   ont besoin de garder position:sticky — la règle générique
-   ci-dessus la remplaçait par position:relative (nécessaire pour que
-   le z-index s'applique aux autres enfants), ce qui les empêchait de
-   se figer au scroll. On ne force relative que sur les autres. */
-#panel-container.panel-world-bg > *:not(.panel-title):not(.achievement-detail):not(.bestiary-detail) {
   position: relative;
+  z-index: 1;
 }
 
 #panel-container.panel-world-bg .panel-title,
