@@ -96,6 +96,32 @@
   color: var(--text-dim);
 }
 
+.dungeon-reminder-banner {
+  margin: 0 auto 8px;
+  max-width: 320px;
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7dd3fc;
+  background: rgba(125, 211, 252, 0.12);
+  border: 1px solid rgba(125, 211, 252, 0.4);
+  border-radius: 12px;
+  cursor: pointer;
+  animation: dungeonReminderPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes dungeonReminderPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dungeon-reminder-banner {
+    animation: none;
+  }
+}
+
 /* =========================
    Barre de stats
    ========================= */

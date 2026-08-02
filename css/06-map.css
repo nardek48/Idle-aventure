@@ -332,8 +332,16 @@
 }
 
 #panel-container.panel-world-bg > * {
-  position: relative;
   z-index: 1;
+}
+
+/* Les éléments "sticky" (titre de panel, cartes de détail figées)
+   ont besoin de garder position:sticky — la règle générique
+   ci-dessus la remplaçait par position:relative (nécessaire pour que
+   le z-index s'applique aux autres enfants), ce qui les empêchait de
+   se figer au scroll. On ne force relative que sur les autres. */
+#panel-container.panel-world-bg > *:not(.panel-title):not(.achievement-detail):not(.bestiary-detail) {
+  position: relative;
 }
 
 #panel-container.panel-world-bg .panel-title,
@@ -362,7 +370,6 @@
 #panel-container.panel-world-bg .map-world-card-detail,
 #panel-container.panel-world-bg .shop-item.village-item,
 #panel-container.panel-world-bg .village-skyline,
-#panel-container.panel-world-bg .bestiary-detail,
 #panel-container.panel-world-bg #log-container,
 #panel-container.panel-world-bg .log-entry {
   background: rgba(20, 16, 40, 0.55);

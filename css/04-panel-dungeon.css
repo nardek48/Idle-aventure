@@ -69,3 +69,90 @@
 .dungeon-progress-fill.is-boss {
   background: linear-gradient(90deg, #fb7185, #ef4444);
 }
+
+/* =========================
+   Boutique du donjon (Éclats)
+   ========================= */
+.dungeon-shard-count {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: #7dd3fc;
+  margin: 8px 0 12px;
+}
+
+.dungeon-shop-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dungeon-shop-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  background: rgba(125, 211, 252, 0.06);
+  border: 1px solid rgba(125, 211, 252, 0.25);
+}
+
+.dungeon-shop-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dungeon-shop-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dungeon-shop-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.dungeon-shop-level {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.dungeon-shop-desc {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.dungeon-shop-buy {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(125, 211, 252, 0.5);
+  background: rgba(125, 211, 252, 0.15);
+  color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dungeon-shop-buy.cant-afford {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dungeon-shop-buy.is-maxed {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim);
+  border-color: var(--border);
+  cursor: default;
+}

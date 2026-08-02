@@ -6,12 +6,15 @@
    Carte de détail (créature sélectionnée)
    ========================= */
 .bestiary-detail {
+  position: sticky;
+  top: 29px;   /* juste sous le titre de panel, lui-même sticky */
+  z-index: 5;
   margin-bottom: 14px;
   padding: 14px;
   border-radius: var(--radius-md);
   background: var(--bg-card);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-soft), 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
 .bestiary-detail.boss {

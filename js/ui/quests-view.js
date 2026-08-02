@@ -1,21 +1,44 @@
 "use strict";
 /* ============================================================
 Quest Idle — ui/quests-view.js
-Écran "Quêtes" + badge de notification (pastille sur l'icône de
-l'onglet, hors du panneau lui-même).
+Écran "Quêtes" + badge de notification unifié sur le bouton Menu
+(pastille numérique, hors du panneau lui-même).
+
+v2.14 : le badge (toujours nommé updateQuestBadge pour ne pas casser
+tous ses appels existants) agrège maintenant 3 sources d'attention :
+quêtes prêtes à réclamer + hauts faits prêts à réclamer + ticket de
+donjon disponible et non utilisé — plutôt que les quêtes seules.
 ============================================================ */
 
-/* Pastille numérique sur l'onglet Quêtes, comptant les quêtes
-   complétées mais pas encore réclamées. Appelée après chaque action
-   qui pourrait changer la progression d'une quête. */
+/* Pastille numérique sur le bouton Menu, agrégeant tout ce qui mérite
+   l'attention du joueur. Appelée après quasiment chaque action de jeu
+   (achat, kill, ascension...). */
 function updateQuestBadge() {
   var badge = document.getElementById("quest-badge");
-  if (!badge || !Array.isArray(game.quests)) return;
-  var available = game.quests.filter(function (q) {
-    return !q.claimed && QuestManager.isComplete(q);
-  }).length;
-  badge.textContent = available > 0 ? String(available) : "";
-  badge.style.display = available > 0 ? "inline-flex" : "none";
+  if (!badge) return;
+
+  var questsReady = Array.isArray(game.quests)
+    ? game.quests.filter(function (q) { return !q.claimed && QuestManager.isComplete(q); }).length
+    : 0;
+
+  var achievementsReady = (window.AchievementManager && typeof AchievementManager.getAvailableToClaimCount === "function")
+    ? AchievementManager.getAvailableToClaimCount()
+    : 0;
+
+  var dungeonTicketReady = 0;
+  if (window.DungeonManager && typeof DungeonManager.checkTicketReset === "function") {
+    DungeonManager.checkTicketReset();
+    if ((game.dungeonTickets || 0) > 0 && !(game.dungeonRun && game.dungeonRun.active)) {
+      dungeonTicketReady = 1;
+    }
+  }
+
+  var total = questsReady + achievementsReady + dungeonTicketReady;
+  badge.textContent = total > 0 ? String(total) : "";
+  badge.style.display = total > 0 ? "inline-flex" : "none";
+
+  var reminder = document.getElementById("dungeon-reminder-banner");
+  if (reminder) reminder.style.display = dungeonTicketReady > 0 ? "block" : "none";
 }
 
 function buildQuestsHTML() {

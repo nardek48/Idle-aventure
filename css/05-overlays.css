@@ -517,7 +517,9 @@
   width: 100%;
   max-width: 640px;
   max-height: 88vh;
+  min-height: 0;               /* évite un bug flexbox classique qui empêche le scroll interne */
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;  /* scroll fluide au doigt sur iOS/mobile */
   padding: 0;
   color: #f5f7fb;
   background: linear-gradient(180deg, #182235 0%, #101827 100%);
@@ -525,6 +527,23 @@
   border-radius: 22px 22px 0 0;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45);
   padding-bottom: var(--safe-bottom);
+}
+
+/* Sur les écrans larges (PC, tablette), le style "glisse depuis le
+   bas" atterrissait tout en bas de la fenêtre, loin du regard —
+   on centre la modale à la place. Le mobile garde le comportement
+   d'origine (feuille qui glisse depuis le bas). */
+@media (min-width: 700px) {
+  .full-menu-overlay {
+    align-items: center;
+  }
+
+  .full-menu {
+    max-height: 80vh;
+    border-radius: 22px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    padding-bottom: 0;
+  }
 }
 
 .full-menu-header {

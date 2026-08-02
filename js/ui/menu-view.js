@@ -20,7 +20,8 @@ var MENU_ITEMS = [
   { tab: "quests", label: "Quêtes", img: "./images/Icons/quests_menu.png", badge: true },
   { tab: "ascension", label: "Ascension", img: "./images/Icons/aether_menu.png" },
   { tab: "map", label: "Carte du monde", img: "./images/Icons/map_menu.png" },
-  { tab: "dungeon", label: "Donjon", icon: "🏰" },
+  { tab: "dungeon", label: "Donjon", icon: "🏰", badge: "dungeon" },
+  { tab: "achievements", label: "Hauts faits", icon: "🏆", badge: "achievement" },
   { tab: "village", label: "Village", icon: "🏘️" },
   { tab: "bestiary", label: "Bestiaire", icon: "📖" },
   { tab: "log", label: "Journal", icon: "📜" },
@@ -47,7 +48,19 @@ function buildFullMenuHTML() {
   h += '    <div class="full-menu-grid">';
 
   MENU_ITEMS.forEach(function (item) {
-    var badgeCount = item.badge ? getMenuQuestBadgeCount() : 0;
+    var badgeCount = 0;
+    if (item.badge === "achievement") {
+      badgeCount = (window.AchievementManager && typeof AchievementManager.getAvailableToClaimCount === "function")
+        ? AchievementManager.getAvailableToClaimCount()
+        : 0;
+    } else if (item.badge === "dungeon") {
+      if (window.DungeonManager && typeof DungeonManager.checkTicketReset === "function") {
+        DungeonManager.checkTicketReset();
+        badgeCount = ((game.dungeonTickets || 0) > 0 && !(game.dungeonRun && game.dungeonRun.active)) ? 1 : 0;
+      }
+    } else if (item.badge) {
+      badgeCount = getMenuQuestBadgeCount();
+    }
 
     h += '<button class="full-menu-card" type="button" onclick="selectMenuTab(\'' + item.tab + '\')">';
     if (badgeCount > 0) {

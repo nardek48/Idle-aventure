@@ -45,6 +45,45 @@ function buildDungeonLobbyHTML() {
   h += '<button class="settings-btn' + (canStart ? '' : ' disabled') + '" type="button" ' + (canStart ? 'onclick="DungeonManager.start()"' : 'disabled') + '>' + (canStart ? 'Entrer dans le donjon' : 'Aucun ticket disponible') + '</button>';
   h += '</div>';
 
+  h += buildDungeonShopHTML();
+
+  return h;
+}
+
+/* Boutique exclusive du donjon (voir DUNGEON_SHOP dans data/dungeon.js) :
+   3 bonus permanents achetables en Éclats, la monnaie gagnée en
+   passant des vagues — indépendante de l'or/essence classiques. */
+function buildDungeonShopHTML() {
+  var shards = game.dungeonShards || 0;
+
+  var h = '<div class="panel-card">';
+  h += '<h3>🔷 Boutique du donjon</h3>';
+  h += '<p class="panel-sub">Payée en Éclats — gagnés en passant des vagues (1 par vague, +' + DUNGEON_CONFIG.shardsBossBonus + ' bonus si le boss tombe). Utilisables uniquement ici.</p>';
+  h += '<div class="dungeon-shard-count">🔷 ' + formatNumber(shards) + ' Éclats</div>';
+
+  h += '<div class="dungeon-shop-grid">';
+  (DUNGEON_SHOP || []).forEach(function (item) {
+    var level = DungeonManager.getShardShopLevel(item.id);
+    var maxed = level >= item.maxLevel;
+    var cost = DungeonManager.getShardShopCost(item);
+    var canBuy = !maxed && shards >= cost;
+
+    h += '<div class="dungeon-shop-card">';
+    h += '<div class="dungeon-shop-icon">' + esc(item.icon) + '</div>';
+    h += '<div class="dungeon-shop-info">';
+    h += '<div class="dungeon-shop-name">' + esc(item.name) + ' <span class="dungeon-shop-level">Niv. ' + level + '/' + item.maxLevel + '</span></div>';
+    h += '<div class="dungeon-shop-desc">' + esc(item.desc) + '</div>';
+    h += '</div>';
+    if (maxed) {
+      h += '<button class="dungeon-shop-buy is-maxed" type="button" disabled>Max</button>';
+    } else {
+      h += '<button class="dungeon-shop-buy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="DungeonManager.buyShardUpgrade(\'' + esc(item.id) + '\')">🔷 ' + formatNumber(cost) + '</button>';
+    }
+    h += '</div>';
+  });
+  h += '</div>';
+
+  h += '</div>';
   return h;
 }
 

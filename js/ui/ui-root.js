@@ -223,6 +223,9 @@ function renderPanel() {
     case "dungeon":
       container.innerHTML = buildDungeonHTML();
       break;
+    case "achievements":
+      container.innerHTML = buildAchievementsHTML();
+      break;
     default:
       container.innerHTML = "";
   }

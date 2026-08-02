@@ -36,8 +36,15 @@ function selectMapWorld(index) {
    remplie — un monde "sauté" par manque d'ascension reste verrouillé
    même si le joueur a dépassé son index (ne devrait pas arriver vu
    WorldManager.advance(), mais gardé en sécurité). */
+/* Un monde déjà atteint reste débloqué pour toujours, même si son
+   requiredAscension est relevé plus tard par un patch d'équilibrage
+   (sinon un joueur en cours de route dans ce monde le verrait
+   affiché "verrouillé" alors qu'il y joue activement — c'est
+   exactement ce bug qui a été corrigé ici en v2.12 : avant, la
+   condition vérifiait meetsAscensionRequirement() à chaque affichage,
+   qui pouvait échouer rétroactivement pour un monde déjà en cours). */
 function isWorldUnlocked(index) {
-  return index <= (WorldManager.worldIndex || 0) && WorldManager.meetsAscensionRequirement(index);
+  return index <= (WorldManager.worldIndex || 0);
 }
 
 /* Texte de statut affiché sur chaque vignette/en-tête de monde. */

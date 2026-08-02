@@ -101,6 +101,11 @@ function createInitialGameState() {
     dungeonTicketResetTime: 0,
     dungeonRun: { active: false, wave: 0 },
     dungeonBestWave: 0,
+    dungeonBossClears: 0,
+    dungeonShards: 0,           // monnaie exclusive au donjon, voir data/dungeon.js DUNGEON_SHOP
+    dungeonShopLevels: {},
+
+    achievementsClaimed: {},   // { idHautFait: true }, voir systems/achievement-system.js
 
     hasSeenOnboarding: false,   // tutoriel d'accueil, voir ui/onboarding-view.js
 
@@ -201,6 +206,11 @@ function ensureGameStateDefaults() {
   if (typeof game.dungeonTicketResetTime !== "number") game.dungeonTicketResetTime = 0;
   if (!game.dungeonRun || typeof game.dungeonRun !== "object") game.dungeonRun = { active: false, wave: 0 };
   if (typeof game.dungeonBestWave !== "number") game.dungeonBestWave = 0;
+  if (typeof game.dungeonBossClears !== "number") game.dungeonBossClears = 0;
+  if (typeof game.dungeonShards !== "number") game.dungeonShards = 0;
+  if (!game.dungeonShopLevels || typeof game.dungeonShopLevels !== "object") game.dungeonShopLevels = {};
+
+  if (!game.achievementsClaimed || typeof game.achievementsClaimed !== "object") game.achievementsClaimed = {};
 
   if (typeof game.hasSeenOnboarding !== "boolean") game.hasSeenOnboarding = false;
 

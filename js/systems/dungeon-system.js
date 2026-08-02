@@ -16,6 +16,9 @@ var DungeonManager = {
       game.dungeonRun = { active: false, wave: 0 };
     }
     if (typeof game.dungeonBestWave !== "number") game.dungeonBestWave = 0;
+    if (typeof game.dungeonBossClears !== "number") game.dungeonBossClears = 0;
+    if (typeof game.dungeonShards !== "number") game.dungeonShards = 0;
+    if (!game.dungeonShopLevels || typeof game.dungeonShopLevels !== "object") game.dungeonShopLevels = {};
   },
 
   /* Comme les quêtes journalières : régénère les tickets gratuits une
@@ -144,6 +147,11 @@ var DungeonManager = {
     var clearedWave = game.dungeonRun.wave;
     if (clearedWave > (game.dungeonBestWave || 0)) game.dungeonBestWave = clearedWave;
 
+    // v2.14 : chaque vague passée (succès ou non au final) rapporte
+    // des Éclats de donjon, la monnaie exclusive de la boutique
+    // ci-dessous — indépendant de la récompense or/essence.
+    game.dungeonShards = Number(game.dungeonShards || 0) + (DUNGEON_CONFIG.shardsPerWaveCleared || 1);
+
     if (clearedWave > DUNGEON_CONFIG.waveCount) {
       this.finish(true, clearedWave);
       return;
@@ -204,6 +212,8 @@ var DungeonManager = {
       essenceReward = Math.floor(DUNGEON_CONFIG.fullClearEssenceBase * worldBonus);
       grantLoot = true;
       lootRarity = allowed[allowed.length - 1];
+      game.dungeonBossClears = Number(game.dungeonBossClears || 0) + 1;
+      game.dungeonShards = Number(game.dungeonShards || 0) + (DUNGEON_CONFIG.shardsBossBonus || 10);
     } else {
       goldReward = Math.floor(DUNGEON_CONFIG.fullClearGoldBase * worldBonus * progress * 0.6);
       essenceReward = Math.floor(DUNGEON_CONFIG.fullClearEssenceBase * worldBonus * progress * 0.6);
@@ -237,6 +247,56 @@ var DungeonManager = {
 
     if (typeof renderAll === "function") renderAll();
     saveGame();
+  },
+
+  // ============================================================
+  // Boutique du donjon (payée en Éclats, voir DUNGEON_SHOP dans data/dungeon.js)
+  // ============================================================
+
+  getShardShopLevel: function (id) {
+    this.ensure();
+    return Number(game.dungeonShopLevels[id] || 0);
+  },
+
+  getShardShopCost: function (item) {
+    var level = this.getShardShopLevel(item.id);
+    return Math.floor(item.baseCost * Math.pow(item.costMult, level));
+  },
+
+  buyShardUpgrade: function (id) {
+    this.ensure();
+    var item = (DUNGEON_SHOP || []).find(function (u) { return u.id === id; });
+    if (!item) return;
+
+    var level = this.getShardShopLevel(id);
+    if (level >= item.maxLevel) return showToast("Niveau maximum atteint", 1200);
+
+    var cost = this.getShardShopCost(item);
+    if ((game.dungeonShards || 0) < cost) return showToast("Pas assez d'Éclats", 1000);
+
+    game.dungeonShards -= cost;
+    game.dungeonShopLevels[id] = level + 1;
+
+    if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
+      StatsSystem.recalcStats();
+    }
+
+    addLog("🔷 " + item.name + " amélioré (niveau " + (level + 1) + ")", "event");
+    showToast(item.name + " +1", 1500);
+    if (typeof renderAll === "function") renderAll();
+    saveGame();
+  },
+
+  /* Bonus cumulés de la boutique du donjon, appliqués dans
+     StatsSystem.recalcStats() (même principe que les autres bonus
+     de boutique). */
+  getShardShopBonuses: function () {
+    this.ensure();
+    return {
+      power: this.getShardShopLevel("d_power") * 0.02,
+      gold: this.getShardShopLevel("d_gold") * 0.02,
+      essence: this.getShardShopLevel("d_essence") * 0.02
+    };
   }
 };
 

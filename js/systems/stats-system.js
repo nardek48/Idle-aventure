@@ -256,6 +256,22 @@ var StatsSystem = {
       game.heroDefensePct = Math.min(0.6, game.heroDefensePct + potionEffects.endurance * 0.1);
     }
 
+    // Bonus cumulés des hauts faits réclamés (voir systems/achievement-system.js).
+    var achievementBonus = (window.AchievementManager && typeof AchievementManager.getTotalBonus === "function")
+      ? AchievementManager.getTotalBonus()
+      : {};
+    if (achievementBonus.goldMult) game.goldMult += achievementBonus.goldMult;
+    if (achievementBonus.tapMult) game.tapMult += achievementBonus.tapMult;
+    if (achievementBonus.essenceGlobalMult) game.essenceGlobalMult += achievementBonus.essenceGlobalMult;
+
+    // Bonus de la boutique du donjon (voir systems/dungeon-system.js).
+    var dungeonShopBonus = (window.DungeonManager && typeof DungeonManager.getShardShopBonuses === "function")
+      ? DungeonManager.getShardShopBonuses()
+      : {};
+    if (dungeonShopBonus.power) game.tapMult += dungeonShopBonus.power;
+    if (dungeonShopBonus.gold) game.goldMult += dungeonShopBonus.gold;
+    if (dungeonShopBonus.essence) game.essenceGlobalMult += dungeonShopBonus.essence;
+
     // Bonus passif : Aether cumulé à vie -> dégâts + or globaux (ne diminue jamais, même dépensé)
     var AETHER_LIFETIME_MULT_COEF = 0.005;
     var totalAether = Number(game.totalAetherEarned || 0);

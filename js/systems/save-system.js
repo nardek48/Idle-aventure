@@ -206,6 +206,10 @@ function buildSaveData() {
     dungeonTicketResetTime: Number(game.dungeonTicketResetTime || 0),
     dungeonRun: game.dungeonRun || { active: false, wave: 0 },
     dungeonBestWave: Number(game.dungeonBestWave || 0),
+    dungeonBossClears: Number(game.dungeonBossClears || 0),
+    dungeonShards: Number(game.dungeonShards || 0),
+    dungeonShopLevels: game.dungeonShopLevels || {},
+    achievementsClaimed: game.achievementsClaimed || {},
     hasSeenOnboarding: !!game.hasSeenOnboarding
   };
 }
@@ -312,6 +316,10 @@ function restoreBaseState(d) {
   game.dungeonTicketResetTime = Number(d.dungeonTicketResetTime || 0);
   game.dungeonRun = d.dungeonRun && typeof d.dungeonRun === "object" ? d.dungeonRun : { active: false, wave: 0 };
   game.dungeonBestWave = Number(d.dungeonBestWave || 0);
+  game.dungeonBossClears = Number(d.dungeonBossClears || 0);
+  game.dungeonShards = Number(d.dungeonShards || 0);
+  game.dungeonShopLevels = d.dungeonShopLevels && typeof d.dungeonShopLevels === "object" ? d.dungeonShopLevels : {};
+  game.achievementsClaimed = d.achievementsClaimed && typeof d.achievementsClaimed === "object" ? d.achievementsClaimed : {};
   game.hasSeenOnboarding = !!d.hasSeenOnboarding;
 
   ensureUpgradeDefaults();

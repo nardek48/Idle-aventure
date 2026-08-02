@@ -13,6 +13,7 @@ fois au boot par mountCombatArea() — voir main/boot.js.
 function buildCombatHTML() {
   return ''
     + '<div id="zone-banner">⚔️ Tappe l\'ennemi pour attaquer !</div>'
+    + '<div id="dungeon-reminder-banner" class="dungeon-reminder-banner" style="display:none" onclick="switchTab(\'dungeon\')">🎟️ Ticket de donjon disponible — appuie pour y aller</div>'
     + '<div id="enemy-display">'
     +   '<div id="enemy-emoji" onclick="playerAttack()">🟢</div>'
     +   '<div id="enemy-name">Slime</div>'
