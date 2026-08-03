@@ -20,6 +20,27 @@ function esc(value) {
     .replace(/'/g, "&#39;");
 }
 
+/* v2.23 : icône illustrée d'un objet d'équipement (une image par
+   type ET par rareté, voir getEquipmentIconPath en
+   systems/equipment-system.js), avec repli sur l'emoji générique si
+   jamais l'image ne charge pas. Utilisé par l'inventaire, les
+   emplacements équipés et l'échoppe. */
+function buildEquipmentIconHTML(item, cssClass) {
+  var cls = cssClass || "";
+  if (!item) return '<div class="' + cls + '">' + renderIcon("equipment", "") + '</div>';
+
+  var path = (typeof getEquipmentIconPath === "function") ? getEquipmentIconPath(item) : "";
+  var fallbackEmoji = renderIcon("equipment", item.icon);
+
+  if (!path) return '<div class="' + cls + '">' + fallbackEmoji + '</div>';
+
+  return '<div class="' + cls + ' has-icon-img">'
+    + '<img src="' + esc(path) + '" alt="' + esc(item.name || "") + '" '
+    + 'onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">'
+    + '<span class="icon-img-fallback">' + fallbackEmoji + '</span>'
+    + '</div>';
+}
+
 /* Image de fond plein panel selon l'onglet actif (une par onglet,
    sauf Combat qui n'en a pas — voir updatePanelBackground). Note :
    chemins préfixés par "../", à vérifier si jamais le jeu est
@@ -229,6 +250,9 @@ function renderPanel() {
     case "achievements":
       container.innerHTML = buildAchievementsHTML();
       break;
+    case "codex":
+      container.innerHTML = buildCodexHTML();
+      break;
     default:
       container.innerHTML = "";
   }
@@ -236,6 +260,7 @@ function renderPanel() {
 }
 
 window.esc = esc;
+window.buildEquipmentIconHTML = buildEquipmentIconHTML;
 window.getCurrentWorldPanelBackground = getCurrentWorldPanelBackground;
 window.updatePanelBackground = updatePanelBackground;
 window.switchTab = switchTab;

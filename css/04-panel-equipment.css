@@ -321,6 +321,32 @@
   color: var(--text-dim);
 }
 
+/* =========================
+   v2.23 : icônes illustrées d'équipement (image par type + rareté),
+   avec repli automatique sur l'emoji si l'image ne charge pas — voir
+   buildEquipmentIconHTML() dans ui/ui-root.js.
+   ========================= */
+.has-icon-img {
+  position: relative;
+  overflow: hidden;
+}
+
+.has-icon-img img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.icon-img-fallback {
+  display: block;
+}
+
+.has-icon-img .icon-img-fallback {
+  display: none;
+}
+
 .eq-orbit-slot-icon {
   display: inline-flex;
   align-items: center;
@@ -332,6 +358,7 @@
   font-size: 18px;
   line-height: 1;
   vertical-align: middle;
+  border-radius: 6px;
 }
 
 .eq-orbit-slot-name {
@@ -475,8 +502,14 @@
 }
 
 .eq-bag-icon {
-  margin-bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 6px;
   font-size: 28px;
+  border-radius: 8px;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
 }
 

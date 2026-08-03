@@ -1,0 +1,140 @@
+/* =========================
+   Codex
+   ========================= */
+
+/* Extrait réutilisable ailleurs que dans l'écran Codex (Ascension,
+   Village, Carte, sélection de héros...) — voir buildCodexExcerptHTML. */
+.codex-excerpt {
+  margin: 10px 0 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 2px solid var(--gold);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.codex-summary {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 14px;
+}
+
+.codex-category-label {
+  margin: 14px 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.codex-category-label:first-of-type {
+  margin-top: 0;
+}
+
+.codex-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.codex-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.codex-list-item.is-locked {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.codex-list-item.is-unread {
+  border-color: rgba(239, 199, 117, 0.5);
+  background: rgba(239, 199, 117, 0.06);
+}
+
+.codex-list-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  width: 26px;
+  text-align: center;
+}
+
+.codex-list-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.codex-list-new {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #241a00;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+/* =========================
+   Mode lecture
+   ========================= */
+.codex-back-btn {
+  display: block;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.codex-reading-card {
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+.codex-reading-icon {
+  font-size: 34px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.codex-reading-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.codex-reading-para {
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 12px;
+}
+
+.codex-reading-para:last-child {
+  margin-bottom: 0;
+}

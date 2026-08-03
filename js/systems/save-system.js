@@ -218,6 +218,10 @@ function buildSaveData() {
     lastDefenseUse: Number(game.lastDefenseUse || 0),
     defenseBuffExpires: Number(game.defenseBuffExpires || 0),
     achievementsClaimed: game.achievementsClaimed || {},
+    worldsEverReached: game.worldsEverReached || {},
+    dungeonTiersEntered: game.dungeonTiersEntered || {},
+    codexChaosSeen: !!game.codexChaosSeen,
+    codexRead: game.codexRead || {},
     hasSeenOnboarding: !!game.hasSeenOnboarding
   };
 }
@@ -337,6 +341,10 @@ function restoreBaseState(d) {
   game.lastDefenseUse = Number(d.lastDefenseUse || 0);
   game.defenseBuffExpires = Number(d.defenseBuffExpires || 0);
   game.achievementsClaimed = d.achievementsClaimed && typeof d.achievementsClaimed === "object" ? d.achievementsClaimed : {};
+  game.worldsEverReached = d.worldsEverReached && typeof d.worldsEverReached === "object" ? d.worldsEverReached : {};
+  game.dungeonTiersEntered = d.dungeonTiersEntered && typeof d.dungeonTiersEntered === "object" ? d.dungeonTiersEntered : {};
+  game.codexChaosSeen = !!d.codexChaosSeen;
+  game.codexRead = d.codexRead && typeof d.codexRead === "object" ? d.codexRead : {};
   game.hasSeenOnboarding = !!d.hasSeenOnboarding;
 
   ensureUpgradeDefaults();

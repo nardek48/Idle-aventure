@@ -41,6 +41,13 @@ function init() {
 
   ensureDailyQuests();
 
+  // Marque le monde courant comme "déjà atteint" pour le Codex, y
+  // compris à la toute première partie (le joueur démarre en Forêt
+  // sans jamais passer par WorldManager.advance() pour y arriver).
+  if (window.WorldManager && typeof WorldManager.markWorldReached === "function") {
+    WorldManager.markWorldReached(WorldManager.worldIndex || 0);
+  }
+
   // Si le joueur a rechargé la page en pleine tentative de donjon,
   // il faut relancer la vague en cours plutôt que de faire apparaître
   // un ennemi normal (sinon game.dungeonRun.active resterait vrai

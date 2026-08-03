@@ -166,6 +166,8 @@ var DungeonManager = {
 
     game.dungeonTickets -= 1;
     game.dungeonRun = { active: true, wave: 0, tierId: tier.id, shardsEarned: 0 };
+    if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
+    game.dungeonTiersEntered[tier.id] = true;
     addLog("🏰 Entrée dans " + tier.name + " !", "event");
     this.spawnWave(1);
     if (typeof switchTab === "function") switchTab("combat");

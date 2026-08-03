@@ -57,8 +57,11 @@ function updateQuestBadge() {
 
   var talentsReady = getTalentsAvailableCount();
   var ascensionReady = getAscensionAvailableCount();
+  var codexUnread = (window.CodexManager && typeof CodexManager.getUnreadCount === "function")
+    ? CodexManager.getUnreadCount()
+    : 0;
 
-  var total = questsReady + achievementsReady + dungeonTicketReady + talentsReady + ascensionReady;
+  var total = questsReady + achievementsReady + dungeonTicketReady + talentsReady + ascensionReady + codexUnread;
   badge.textContent = total > 0 ? String(total) : "";
   badge.style.display = total > 0 ? "inline-flex" : "none";
 

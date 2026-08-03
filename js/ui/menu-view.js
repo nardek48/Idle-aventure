@@ -22,6 +22,7 @@ var MENU_ITEMS = [
   { tab: "map", label: "Carte du monde", img: "./images/Icons/map_menu.png" },
   { tab: "dungeon", label: "Donjon", icon: "🏰", badge: "dungeon" },
   { tab: "achievements", label: "Hauts faits", icon: "🏆", badge: "achievement" },
+  { tab: "codex", label: "Codex", icon: "📖", badge: "codex" },
   { tab: "village", label: "Village", icon: "🏘️" },
   { tab: "bestiary", label: "Bestiaire", icon: "📖" },
   { tab: "log", label: "Journal", icon: "📜" },
@@ -62,6 +63,10 @@ function buildFullMenuHTML() {
       badgeCount = (typeof getTalentsAvailableCount === "function") ? getTalentsAvailableCount() : 0;
     } else if (item.badge === "ascension") {
       badgeCount = (typeof getAscensionAvailableCount === "function") ? getAscensionAvailableCount() : 0;
+    } else if (item.badge === "codex") {
+      badgeCount = (window.CodexManager && typeof CodexManager.getUnreadCount === "function")
+        ? CodexManager.getUnreadCount()
+        : 0;
     } else if (item.badge) {
       badgeCount = getMenuQuestBadgeCount();
     }

@@ -118,6 +118,11 @@ function createInitialGameState() {
 
     achievementsClaimed: {},   // { idHautFait: true }, voir systems/achievement-system.js
 
+    worldsEverReached: {},      // { indexMonde: true }, persiste même après ascension — voir data/codex.js
+    dungeonTiersEntered: {},    // { idPalier: true }
+    codexChaosSeen: false,      // vrai dès qu'un héros du Chaos a été choisi une fois
+    codexRead: {},              // { idEntree: true }, voir systems/codex-system.js
+
     hasSeenOnboarding: false,   // tutoriel d'accueil, voir ui/onboarding-view.js
 
     playerName: "",
@@ -234,6 +239,11 @@ function ensureGameStateDefaults() {
   if (typeof game.defenseBuffExpires !== "number") game.defenseBuffExpires = 0;
 
   if (!game.achievementsClaimed || typeof game.achievementsClaimed !== "object") game.achievementsClaimed = {};
+
+  if (!game.worldsEverReached || typeof game.worldsEverReached !== "object") game.worldsEverReached = {};
+  if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
+  if (typeof game.codexChaosSeen !== "boolean") game.codexChaosSeen = false;
+  if (!game.codexRead || typeof game.codexRead !== "object") game.codexRead = {};
 
   if (typeof game.hasSeenOnboarding !== "boolean") game.hasSeenOnboarding = false;
 

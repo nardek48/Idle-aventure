@@ -91,6 +91,9 @@ function confirmHeroSelection() {
   var isFirstEverSetup = !game.playerName;
 
   game.heroId = pendingHeroId || game.heroId;
+  if (game.heroId && game.heroId.indexOf("chaos") === 0) {
+    game.codexChaosSeen = true;
+  }
   game.playerName = name;
 
   if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
@@ -167,6 +170,14 @@ function openHeroSelection() {
     html += '        <div class="hero-stat"><span>Volonté</span><strong>' + esc(stats.will || 0) + '</strong></div>';
     html += '      </div>';
     html += '    </div>';
+
+    if (selectedHero.id && selectedHero.id.indexOf("chaos") === 0 && typeof CodexManager !== "undefined") {
+      var chaosEntry = CodexManager.getById("chaos");
+      if (chaosEntry) {
+        var chaosSentence = chaosEntry.text.split(".")[0] + ".";
+        html += '    <div class="hero-preview-lore">📖 « ' + esc(chaosSentence) + ' »</div>';
+      }
+    }
   }
 
   html += '    <div class="hero-picker-actions">';

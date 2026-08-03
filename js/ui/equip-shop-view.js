@@ -11,7 +11,7 @@ function buildEquipShopCardHTML(item) {
   var canBuy = !item.bought && (game.gold || 0) >= item.price;
 
   var h = '<div class="equip-shop-card rarity-' + esc(item.rarity) + (item.bought ? ' is-bought' : '') + '">';
-  h += '<div class="equip-shop-icon">' + esc(renderIcon("equipment", item.icon)) + '</div>';
+  h += buildEquipmentIconHTML(item, "equip-shop-icon");
   h += '<div class="equip-shop-info">';
   h += '<div class="equip-shop-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
   h += '<div class="equip-shop-rarity">' + esc(rarityLabel) + '</div>';

@@ -21,6 +21,7 @@ function buildAscensionHTML() {
 
   var killsLeft = Math.max(0, minKills - currentKills);
   var h = `<div class="panel-title aether-shop-title">Ascension</div>`;
+  h += (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("ascension") : "";
 
   h += `<div class="prestige-section">
     <div class="prestige-icon">🌀</div>

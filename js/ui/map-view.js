@@ -93,6 +93,17 @@ function getWorldMonsterList(world) {
 /* Assemble l'écran carte : résumé en haut, grille des 6 vignettes de
    monde, puis le détail du monde sélectionné (aventures, monstres,
    ou message d'aide si verrouillé par ascension). */
+/* Courte citation du Codex pour le monde sélectionné, si l'entrée
+   correspondante est débloquée — un avant-goût qui donne envie
+   d'aller lire l'entrée complète dans le Codex. */
+var MAP_WORLD_CODEX_IDS = ["world_forest", "world_desert", "world_ruins", "world_crypt", "world_mountain", "world_tower"];
+
+function buildWorldLoreExcerptHTML(worldIndex) {
+  var codexId = MAP_WORLD_CODEX_IDS[worldIndex];
+  if (!codexId || typeof buildCodexExcerptHTML !== "function") return "";
+  return buildCodexExcerptHTML(codexId, "map-world-lore");
+}
+
 function buildMapHTML() {
   var selectedIndex = getMapSelectedWorldIndex();
   var selectedWorld = WORLDS[selectedIndex] || WORLDS[0];
@@ -145,6 +156,8 @@ function buildMapHTML() {
   h += '<div class="map-world-status status-' + (selectedIndex < currentWorldIndex ? "done" : selectedIndex === currentWorldIndex ? "current" : "locked") + '">' + getWorldProgressText(selectedIndex) + '</div>';
   h += '</div>';
   h += '</div>';
+
+  h += buildWorldLoreExcerptHTML(selectedIndex);
 
   if (selectedIndex === currentWorldIndex) {
     var currentAdventure = selectedWorld.adventures[currentAdventureIndex];

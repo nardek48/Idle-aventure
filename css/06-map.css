@@ -202,6 +202,14 @@
   font-weight: 700;
 }
 
+.map-world-lore {
+  margin-top: 10px;
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.65);
+}
+
 .map-world-status.status-current {
   background: rgba(125, 211, 252, 0.12);
   color: #7dd3fc;
@@ -357,7 +365,9 @@
 #panel-container.panel-world-bg .dungeon-active-card,
 #panel-container.panel-world-bg .aether-shop-card,
 #panel-container.panel-world-bg .settings-info,
-#panel-container.panel-world-bg .hero-summary-card,
+#panel-container.panel-world-bg .char-header,
+#panel-container.panel-world-bg .ability-card,
+#panel-container.panel-world-bg .stat-chip,
 #panel-container.panel-world-bg .map-grid,
 #panel-container.panel-world-bg .map-world-card-detail,
 #panel-container.panel-world-bg .shop-item.village-item,

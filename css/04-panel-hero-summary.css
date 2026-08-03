@@ -1,123 +1,309 @@
 /* =========================
-   Résumé héros
+   Personnage (v2.25 — fiche de personnage)
    ========================= */
-.hero-summary-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 12px;
-}
 
-.hero-summary-card h3 {
-  font-size: 16px;
-  margin: 0 0 10px 0;
-}
-
-.hero-summary-row {
+/* ===== En-tête (portrait + XP/PV) ===== */
+.char-header {
+  position: relative;
   display: flex;
-  align-items: center;
   gap: 14px;
-  margin-bottom: 12px;
-}
-
-.hero-summary-avatar {
-  flex-shrink: 0;
-}
-
-.hero-summary-image,
-.hero-summary-placeholder {
-  width: 150px;
-  height: 150px;
-  border-radius: 14px;
-  object-fit: cover;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-panel) 100%);
   border: 1px solid var(--border);
-  background: var(--bg-panel-light);
+  overflow: hidden;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-soft);
+}
+
+.char-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 200, 61, 0.12), transparent 60%);
+  pointer-events: none;
+}
+
+.char-portrait-wrap {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 4px rgba(255, 200, 61, 0.15), 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.char-portrait-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
-.hero-summary-placeholder {
+.char-portrait-placeholder {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 32px;
   font-weight: 700;
   color: var(--text-dim);
+  background: var(--bg-panel-light);
 }
 
-.hero-summary-meta {
+.char-level-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: var(--gold);
+  color: #241a00;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 2px solid var(--bg-dark);
+}
+
+.char-info {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.char-class {
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.char-name {
+  font-size: 19px;
+  font-weight: 800;
+  margin: 2px 0 8px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.char-xp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.char-xp-row:last-child {
+  margin-bottom: 0;
+}
+
+.char-xp-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  width: 38px;
+  flex-shrink: 0;
+}
+
+.char-bar-bg {
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.char-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.char-bar-fill.xp {
+  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+}
+
+.char-bar-fill.hp {
+  background: linear-gradient(90deg, #ef4444, #4ade80);
+}
+
+.char-xp-text {
+  font-size: 10px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ===== Sections ===== */
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  margin: 16px 0 8px;
+}
+
+.section-label:first-of-type {
+  margin-top: 0;
+}
+
+/* ===== Capacités actives ===== */
+.ability-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.ability-card.attack {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.10), var(--bg-card));
+}
+
+.ability-card.defense {
+  border-color: rgba(96, 165, 250, 0.4);
+  background: linear-gradient(180deg, rgba(96, 165, 250, 0.10), var(--bg-card));
+}
+
+.ability-icon-wrap {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ability-body {
   flex: 1;
   min-width: 0;
 }
 
-.hero-summary-meta p {
-  margin: 0 0 6px 0;
-  font-size: 14px;
+.ability-name {
+  font-size: 13px;
+  font-weight: 800;
   color: var(--text);
 }
 
-.hero-summary-meta p:last-child {
-  margin-bottom: 0;
+.ability-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  margin-top: 2px;
 }
 
-.hero-summary-stats {
-  margin-top: 12px;
+.ability-cd {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.ability-cd.is-active {
+  color: var(--gold);
+  background: rgba(255, 200, 61, 0.1);
+}
+
+/* ===== Stats en grille ===== */
+.stat-grid {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
-.hero-summary-stat {
+.stat-grid-single {
+  grid-template-columns: 1fr;
+  margin-top: 8px;
+}
+
+.stat-chip {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.stat-chip-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.stat-chip-label {
+  font-size: 11px;
+  color: var(--text-dim);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.hero-summary-stat span {
-  color: var(--text-dim);
-  font-size: 13px;
-}
-
-.hero-summary-stat strong {
-  color: var(--text);
+.stat-chip-value {
   font-size: 14px;
   font-weight: 800;
+  color: var(--text);
+  flex-shrink: 0;
 }
 
-.panel-hero-image-wrap {
-  margin: 0 0 12px;
-  border-radius: 16px;
+.stat-chip-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-soft);
-  background: var(--bg-card);
 }
 
-.panel-hero-image {
+.stat-chip-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* ===== Bouton changer de héros ===== */
+.btn-change-hero {
   display: block;
   width: 100%;
-  height: 150px;
-  object-fit: cover;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
 }
 
-@media (max-width: 640px) {
-  .hero-summary-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.btn-change-hero:active {
+  transform: scale(0.98);
+}
 
-  .hero-summary-image,
-  .hero-summary-placeholder {
-    width: 100%;
-    max-width: 220px;
-    margin: 0 auto;
+@media (prefers-reduced-motion: reduce) {
+  .btn-change-hero:active {
+    transform: none;
   }
-
-  .panel-hero-image {
-    height: 120px;
+  .char-bar-fill,
+  .stat-chip-bar-fill {
+    transition: none;
   }
 }

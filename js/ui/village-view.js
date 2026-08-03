@@ -68,6 +68,7 @@ function buildVillageHTML() {
   h += '<div class="panel-card">';
   h += '<h3>Village</h3>';
   h += '<p class="panel-sub">Développe ton village pour améliorer les gains hors-ligne.</p>';
+  h += buildCodexExcerptHTML("village");
   h += '<div class="village-bonus-row">';
   h += '<span>Or hors-ligne : x' + (bonus.goldMult || 1).toFixed(2) + '</span>';
   h += '<span>Efficacité : +' + Math.round((bonus.efficiencyBonus || 0) * 100) + '%</span>';

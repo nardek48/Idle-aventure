@@ -20,6 +20,25 @@ function getEquipmentSellValue(item) {
          item.rarity === "green" ? 25 : 10;
 }
 
+/* v2.23 : chemin de l'icône illustrée d'un objet (images/Icons/equipment_icon/),
+   une image DIFFÉRENTE par type ET par rareté (avant, une seule
+   icône générique par type, ignorant la rareté). Le jeu de fichiers
+   fourni ne couvre pas la rareté "green" (Inhabituel) — on retombe
+   sur l'image "common" du même type en attendant un visuel dédié. */
+var EQUIPMENT_ICON_RARITY_FALLBACK = {
+  common: "common",
+  green: "common",   // pas d'asset dédié fourni, repli sur "common"
+  rare: "rare",
+  epic: "epic",
+  legendary: "legendary"
+};
+
+function getEquipmentIconPath(item) {
+  if (!item || !item.icon) return "";
+  var rarityFile = EQUIPMENT_ICON_RARITY_FALLBACK[item.rarity] || "common";
+  return "images/Icons/equipment_icon/" + item.icon + "_" + rarityFile + ".jpg";
+}
+
 /* Capacité maximale du sac (voir l'affichage "Sac (X/50)" dans
    equipment-view.js). Utilisé UNIQUEMENT quand un objet entre pour
    la première fois dans l'inventaire (butin trouvé) — équiper/
@@ -292,6 +311,7 @@ sortInventoryByType: function () {
 };
 
 window.getEquipmentSellValue = getEquipmentSellValue;
+window.getEquipmentIconPath = getEquipmentIconPath;
 window.addLootToInventory = addLootToInventory;
 window.MAX_INVENTORY_SIZE = MAX_INVENTORY_SIZE;
 window.sortInventoryByRarity = function () {

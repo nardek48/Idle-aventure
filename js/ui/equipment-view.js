@@ -43,7 +43,7 @@ function buildEquipmentSlot(slot, label, icon) {
   h += '<div class="eq-orbit-slot-label">' + esc(label) + '</div>';
 
   if (item) {
-    h += '<div class="eq-orbit-slot-icon">' + renderIcon("equipment", item.icon) + '</div>';
+    h += buildEquipmentIconHTML(item, "eq-orbit-slot-icon");
     h += '<div class="eq-orbit-slot-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
     h += '<div class="eq-orbit-slot-stat">' + esc(formatEquipmentStat(item)) + '</div>';
   } else {
@@ -60,7 +60,7 @@ function buildEquipmentSlot(slot, label, icon) {
 function buildInventoryTile(item) {
   var h = '<div class="eq-bag-item rarity-' + esc(item.rarity) + '">';
   h += '<button class="eq-bag-main" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">';
-  h += '<div class="eq-bag-icon">' + renderIcon("equipment", item.icon) + '</div>';
+  h += buildEquipmentIconHTML(item, "eq-bag-icon");
   h += '<div class="eq-bag-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
   h += '<div class="eq-bag-stat">' + esc(formatEquipmentStat(item)) + '</div>';
   h += '</button>';
@@ -74,9 +74,6 @@ function buildInventoryTile(item) {
    de tri/vente rapide. */
 function buildEquipHTML() {
   var setBonus = EquipmentManager.getSetBonus();
-  var hero = getCurrentHeroForEquipmentView();
-  var heroName = hero && hero.name ? hero.name : "Héros";
-  var heroStats = hero && hero.stats ? hero.stats : null;
   var inventory = Array.isArray(game.inventory) ? game.inventory : [];
 
   var h = '<div class="panel-title">Équipement</div>';
@@ -99,44 +96,12 @@ function buildEquipHTML() {
     h += '</div>';
   }
 
+  // v2.24 : le portrait/nom/niveau/mini-stats du héros a été retiré
+  // d'ici (doublon exact de l'écran Personnage) — cet écran ne
+  // montre plus que ce qui concerne l'ÉQUIPEMENT lui-même.
   h += '<div class="eq-layout">';
-
   h += '<div class="eq-hero-card">';
-  h += '<div class="eq-hero-topbar">';
-  var heroLevelEl = document.getElementById("hud-hero-level");
-  var heroLevel = heroLevelEl ? heroLevelEl.textContent.trim() : 1;
-  h += '<div class="eq-hero-level">' + esc(heroLevel) + '</div>';
-  
-  h += '<p><strong>Nom :</strong> ' + esc(game.playerName || "Non défini") + '</p>';
-  h += '</div>';
-
-  h += '<div class="eq-hero-main">';
-
-  h += '<div class="eq-hero-left">';
-  h += '<div class="eq-hero-portrait-area">';
-  if (hero && hero.image) {
-    h += '<div class="eq-hero-portrait-wrap">';
-    h += '<img src="' + esc(hero.image) + '" alt="' + esc(heroName) + '" class="eq-hero-portrait">';
-    h += '</div>';
-  } else {
-    h += '<div class="eq-hero-avatar">' + esc(heroName.charAt(0).toUpperCase()) + '</div>';
-  }
-  h += '</div>';
-
-  h += '<div class="eq-hero-stats">';
-  if (heroStats) {
-    h += '<div class="eq-mini-stats">';
-    h += '<div class="eq-mini-stat"><span class="eq-mini-icon">❤</span><span class="eq-mini-value">' + esc(heroStats.endurance || 0) + '</span></div>';
-    h += '<div class="eq-mini-stat"><span class="eq-mini-icon">⚔</span><span class="eq-mini-value">' + esc(heroStats.power || 0) + '</span></div>';
-    h += '<div class="eq-mini-stat"><span class="eq-mini-icon">✦</span><span class="eq-mini-value">' + esc(heroStats.celerity || 0) + '</span></div>';
-    h += '<div class="eq-mini-stat"><span class="eq-mini-icon">🎯</span><span class="eq-mini-value">' + esc(heroStats.precision || 0) + '</span></div>';
-    h += '<div class="eq-mini-stat"><span class="eq-mini-icon">🔥</span><span class="eq-mini-value">' + esc(heroStats.will || 0) + '</span></div>';
-    h += '</div>';
-  } else {
-    h += '<div class="eq-hero-stats-fallback">Aucune statistique disponible.</div>';
-  }
-  h += '</div>';
-  h += '</div>';
+  h += '<div class="eq-hero-main eq-hero-main-slots-only">';
 
   h += '<div class="eq-hero-right">';
   h += buildEquipmentSlot("weapon", "Arme", "⚔️");

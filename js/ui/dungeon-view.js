@@ -150,6 +150,7 @@ function buildDungeonIntroHTML(tierId) {
   h += '    <div class="dungeon-story-icon">🏰</div>';
   h += '    <div class="dungeon-story-title">' + esc(tier.name) + '</div>';
   h += '    <div class="dungeon-story-text">' + esc(tier.story) + '</div>';
+  h += buildDungeonSceauLoreHTML(tierId);
   h += '    <div class="dungeon-story-meta">🎁 Butin garanti jusqu\u2019à : <strong>' + esc(rarityLabel) + '</strong> · ⚔️ ' + DUNGEON_CONFIG.waveCount + ' vagues + boss</div>';
   h += '    <div class="dungeon-story-actions">';
   h += '      <button class="settings-btn" type="button" onclick="closeDungeonIntro()">Annuler</button>';
@@ -158,6 +159,17 @@ function buildDungeonIntroHTML(tierId) {
   h += '  </div>';
   h += '</div>';
   return h;
+}
+
+/* Citation du Codex sur ce Sceau précis (data/codex.js), en
+   complément du texte d'ambiance existant — affichée même si
+   l'entrée n'a pas encore été "lue" au sens du Codex, puisque cette
+   fenêtre EST le moment de la découverte. */
+function buildDungeonSceauLoreHTML(tierId) {
+  if (typeof CodexManager === "undefined") return "";
+  var entry = CodexManager.getById("dungeon_tier_" + tierId);
+  if (!entry) return "";
+  return '    <div class="dungeon-story-lore">📖 « ' + esc(entry.text) + ' »</div>';
 }
 
 function openDungeonIntro(tierId) {

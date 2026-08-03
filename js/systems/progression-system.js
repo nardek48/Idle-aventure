@@ -102,6 +102,14 @@ var WorldManager = {
      lu par killEnemy() pour afficher le bon message. Si le monde
      suivant est verrouillé (ascension insuffisante), boucle au
      monde 0 et incrémente game.cycleCount au lieu d'avancer. */
+  /* Marque un monde comme "déjà atteint au moins une fois" — pour le
+     Codex (data/codex.js), qui doit rester débloqué même après une
+     ascension (worldIndex, lui, retombe à 0 à chaque ascension). */
+  markWorldReached: function (index) {
+    if (!game.worldsEverReached || typeof game.worldsEverReached !== "object") game.worldsEverReached = {};
+    game.worldsEverReached[index] = true;
+  },
+
   advance: function () {
     var world = this.getWorld();
     var adventure = this.getAdventure();
@@ -127,6 +135,7 @@ var WorldManager = {
 
     if (nextWorld && this.meetsAscensionRequirement(nextIndex)) {
       this.worldIndex = nextIndex;
+      this.markWorldReached(nextIndex);
       return { type: "world", world: nextWorld };
     }
 
