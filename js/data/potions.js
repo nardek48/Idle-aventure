@@ -27,7 +27,7 @@ var POTIONS_DB = [
     stat: "power",
     bonus: 0.20,
     durationMin: 30,
-    cost: 200,
+    cost: 2000,
     rarity: "common"
   },
   {
@@ -38,7 +38,7 @@ var POTIONS_DB = [
     stat: "celerity",
     bonus: 0.20,
     durationMin: 30,
-    cost: 200,
+    cost: 2000,
     rarity: "common"
   },
   {
@@ -49,7 +49,7 @@ var POTIONS_DB = [
     stat: "critChance",
     bonus: 15,
     durationMin: 30,
-    cost: 350,
+    cost: 3500,
     rarity: "green"
   },
   {
@@ -60,7 +60,7 @@ var POTIONS_DB = [
     stat: "endurance",
     bonus: 0.30,
     durationMin: 30,
-    cost: 350,
+    cost: 3500,
     rarity: "green"
   },
   {
@@ -71,7 +71,7 @@ var POTIONS_DB = [
     stat: "gold",
     bonus: 0.25,
     durationMin: 20,
-    cost: 600,
+    cost: 6000,
     rarity: "rare"
   },
   {
@@ -82,9 +82,27 @@ var POTIONS_DB = [
     stat: "aetherNext",
     bonus: 0.10,
     durationMin: null,
-    cost: 1000,
+    cost: 10000,
     rarity: "rare"
   }
 ];
 
 window.POTIONS_DB = POTIONS_DB;
+
+/* ============================================================
+v2.16 : potions de SOIN — mécanique différente des potions ci-dessus
+(qui s'activent immédiatement à l'achat). Celles-ci s'achètent en
+stock (game.healingPotionsOwned[id] = quantité) et se consomment à la
+demande depuis le bouton dédié en bas d'écran (voir
+ui/combat-view.js), avec un petit cooldown entre deux usages pour
+éviter le spam pendant un donjon corsé.
+============================================================ */
+var HEALING_POTIONS_DB = [
+  { id: "heal_minor", name: "Potion de soin mineure", icon: "🧉", healPercent: 0.25, cost: 1000 },
+  { id: "heal_major", name: "Potion de soin majeure", icon: "🧪", healPercent: 0.60, cost: 3000 }
+];
+
+var HEALING_POTION_COOLDOWN_MS = 4000;
+
+window.HEALING_POTIONS_DB = HEALING_POTIONS_DB;
+window.HEALING_POTION_COOLDOWN_MS = HEALING_POTION_COOLDOWN_MS;

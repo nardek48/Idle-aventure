@@ -204,11 +204,17 @@ function buildSaveData() {
     equipShopResetTime: Number(game.equipShopResetTime || 0),
     dungeonTickets: Number(game.dungeonTickets != null ? game.dungeonTickets : 1),
     dungeonTicketResetTime: Number(game.dungeonTicketResetTime || 0),
-    dungeonRun: game.dungeonRun || { active: false, wave: 0 },
+    dungeonTicketsPurchasedToday: Number(game.dungeonTicketsPurchasedToday || 0),
+    dungeonRun: game.dungeonRun || { active: false, wave: 0, tierId: 1 },
     dungeonBestWave: Number(game.dungeonBestWave || 0),
     dungeonBossClears: Number(game.dungeonBossClears || 0),
     dungeonShards: Number(game.dungeonShards || 0),
     dungeonShopLevels: game.dungeonShopLevels || {},
+    healingPotionsOwned: game.healingPotionsOwned || {},
+    lastHealUse: Number(game.lastHealUse || 0),
+    lastSpecialUse: Number(game.lastSpecialUse || 0),
+    specialBuffExpires: Number(game.specialBuffExpires || 0),
+    specialBuffPct: Number(game.specialBuffPct || 0),
     achievementsClaimed: game.achievementsClaimed || {},
     hasSeenOnboarding: !!game.hasSeenOnboarding
   };
@@ -314,11 +320,18 @@ function restoreBaseState(d) {
 
   game.dungeonTickets = typeof d.dungeonTickets === "number" ? d.dungeonTickets : 1;
   game.dungeonTicketResetTime = Number(d.dungeonTicketResetTime || 0);
-  game.dungeonRun = d.dungeonRun && typeof d.dungeonRun === "object" ? d.dungeonRun : { active: false, wave: 0 };
+  game.dungeonTicketsPurchasedToday = Number(d.dungeonTicketsPurchasedToday || 0);
+  game.dungeonRun = d.dungeonRun && typeof d.dungeonRun === "object" ? d.dungeonRun : { active: false, wave: 0, tierId: 1 };
+  if (typeof game.dungeonRun.tierId !== "number") game.dungeonRun.tierId = 1;
   game.dungeonBestWave = Number(d.dungeonBestWave || 0);
   game.dungeonBossClears = Number(d.dungeonBossClears || 0);
   game.dungeonShards = Number(d.dungeonShards || 0);
   game.dungeonShopLevels = d.dungeonShopLevels && typeof d.dungeonShopLevels === "object" ? d.dungeonShopLevels : {};
+  game.healingPotionsOwned = d.healingPotionsOwned && typeof d.healingPotionsOwned === "object" ? d.healingPotionsOwned : {};
+  game.lastHealUse = Number(d.lastHealUse || 0);
+  game.lastSpecialUse = Number(d.lastSpecialUse || 0);
+  game.specialBuffExpires = Number(d.specialBuffExpires || 0);
+  game.specialBuffPct = Number(d.specialBuffPct || 0);
   game.achievementsClaimed = d.achievementsClaimed && typeof d.achievementsClaimed === "object" ? d.achievementsClaimed : {};
   game.hasSeenOnboarding = !!d.hasSeenOnboarding;
 

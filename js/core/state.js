@@ -99,11 +99,19 @@ function createInitialGameState() {
 
     dungeonTickets: 1,             // voir systems/dungeon-system.js
     dungeonTicketResetTime: 0,
-    dungeonRun: { active: false, wave: 0 },
+    dungeonTicketsPurchasedToday: 0,
+    dungeonRun: { active: false, wave: 0, tierId: 1 },
     dungeonBestWave: 0,
     dungeonBossClears: 0,
     dungeonShards: 0,           // monnaie exclusive au donjon, voir data/dungeon.js DUNGEON_SHOP
     dungeonShopLevels: {},
+
+    healingPotionsOwned: {},   // { idPotionSoin: quantité en stock }, voir systems/potion-system.js
+    lastHealUse: 0,             // timestamp du dernier usage (cooldown commun)
+
+    lastSpecialUse: 0,          // voir systems/special-attack-system.js
+    specialBuffExpires: 0,
+    specialBuffPct: 0,
 
     achievementsClaimed: {},   // { idHautFait: true }, voir systems/achievement-system.js
 
@@ -204,11 +212,20 @@ function ensureGameStateDefaults() {
 
   if (typeof game.dungeonTickets !== "number") game.dungeonTickets = 1;
   if (typeof game.dungeonTicketResetTime !== "number") game.dungeonTicketResetTime = 0;
-  if (!game.dungeonRun || typeof game.dungeonRun !== "object") game.dungeonRun = { active: false, wave: 0 };
+  if (typeof game.dungeonTicketsPurchasedToday !== "number") game.dungeonTicketsPurchasedToday = 0;
+  if (!game.dungeonRun || typeof game.dungeonRun !== "object") game.dungeonRun = { active: false, wave: 0, tierId: 1 };
+  if (typeof game.dungeonRun.tierId !== "number") game.dungeonRun.tierId = 1;
   if (typeof game.dungeonBestWave !== "number") game.dungeonBestWave = 0;
   if (typeof game.dungeonBossClears !== "number") game.dungeonBossClears = 0;
   if (typeof game.dungeonShards !== "number") game.dungeonShards = 0;
   if (!game.dungeonShopLevels || typeof game.dungeonShopLevels !== "object") game.dungeonShopLevels = {};
+
+  if (!game.healingPotionsOwned || typeof game.healingPotionsOwned !== "object") game.healingPotionsOwned = {};
+  if (typeof game.lastHealUse !== "number") game.lastHealUse = 0;
+
+  if (typeof game.lastSpecialUse !== "number") game.lastSpecialUse = 0;
+  if (typeof game.specialBuffExpires !== "number") game.specialBuffExpires = 0;
+  if (typeof game.specialBuffPct !== "number") game.specialBuffPct = 0;
 
   if (!game.achievementsClaimed || typeof game.achievementsClaimed !== "object") game.achievementsClaimed = {};
 

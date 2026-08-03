@@ -316,3 +316,87 @@
     transform: translate(-50%, -12px);
   }
 }
+
+/* =========================
+   Bouton d'attaque spéciale (v2.20, sous l'ennemi)
+   ========================= */
+#special-attack-root {
+  display: flex;
+  justify-content: center;
+  padding: 0 12px 12px;
+}
+
+.special-attack-btn {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 360px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.16), rgba(239, 68, 68, 0.06));
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.special-attack-btn:active {
+  transform: scale(0.98);
+}
+
+.special-attack-btn.on-cooldown {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.special-attack-icon {
+  flex-shrink: 0;
+  font-size: 26px;
+}
+
+.special-attack-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.special-attack-name {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.special-attack-desc {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.special-attack-cooldown {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fca5a5;
+}
+
+.special-attack-cooldown-fill {
+  position: absolute;
+  inset: 0;
+  right: auto;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .special-attack-btn:active {
+    transform: none;
+  }
+}

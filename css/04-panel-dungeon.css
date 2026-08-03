@@ -29,6 +29,13 @@
   color: var(--text-dim);
 }
 
+.dungeon-ticket-limit {
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
 .dungeon-best-wave {
   margin: 10px 0;
   padding: 8px 10px;
@@ -42,6 +49,15 @@
 
 .dungeon-active-card {
   text-align: center;
+}
+
+.dungeon-active-tier {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
 }
 
 .dungeon-wave-label {
@@ -68,6 +84,68 @@
 
 .dungeon-progress-fill.is-boss {
   background: linear-gradient(90deg, #fb7185, #ef4444);
+}
+
+/* =========================
+   Sélecteur de palier
+   ========================= */
+.dungeon-tier-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dungeon-tier-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+}
+
+.dungeon-tier-card.is-locked {
+  opacity: 0.6;
+}
+
+.dungeon-tier-top {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dungeon-tier-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.dungeon-tier-rarity {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dungeon-tier-btn {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: none;
+  background: var(--gold);
+  color: #241a00;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dungeon-tier-lock {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: right;
+  max-width: 130px;
 }
 
 /* =========================
@@ -155,4 +233,91 @@
   color: var(--text-dim);
   border-color: var(--border);
   cursor: default;
+}
+
+/* =========================
+   Fenêtre d'introduction / résumé de fin (v2.18)
+   Réutilisent .full-menu-overlay / .full-menu (voir css/05-overlays.css)
+   ========================= */
+.dungeon-story-card {
+  padding: 24px 22px;
+  text-align: center;
+}
+
+.dungeon-story-icon {
+  font-size: 44px;
+  margin-bottom: 10px;
+}
+
+.dungeon-story-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: #f5f7fb;
+  margin-bottom: 12px;
+}
+
+.dungeon-story-card.is-success .dungeon-story-title {
+  color: #efc775;
+}
+
+.dungeon-story-card.is-failure .dungeon-story-title {
+  color: #fca5a5;
+}
+
+.dungeon-story-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
+  font-style: italic;
+  margin-bottom: 16px;
+}
+
+.dungeon-story-meta {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 18px;
+}
+
+.dungeon-story-meta strong {
+  color: var(--gold);
+}
+
+.dungeon-story-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.dungeon-story-actions .settings-btn {
+  margin-bottom: 0;
+}
+
+.dungeon-summary-rewards {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dungeon-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.dungeon-summary-row span:last-child {
+  font-weight: 700;
+  color: #fff;
+}
+
+.dungeon-summary-loot span:last-child {
+  color: var(--gold);
+}
+
+.dungeon-story-close {
+  width: 100%;
+  margin-bottom: 0;
 }

@@ -26,6 +26,9 @@ function init() {
   // présents dans le DOM.
   if (typeof mountHudAndStatsBar === "function") mountHudAndStatsBar();
   if (typeof mountCombatArea === "function") mountCombatArea();
+  if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
+  if (typeof renderHealButtons === "function") renderHealButtons();
+  if (typeof initHealKeyboardShortcuts === "function") initHealKeyboardShortcuts();
 
   if (typeof ensureGameStateDefaults === "function") {
     ensureGameStateDefaults();

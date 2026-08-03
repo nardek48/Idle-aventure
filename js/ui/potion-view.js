@@ -42,6 +42,38 @@ function buildPotionShopHTML() {
     h += buildPotionCardHTML(potion);
   });
   h += '</div>';
+
+  h += buildHealingPotionShopHTML();
+
+  return h;
+}
+
+/* Carte d'une potion de soin : achetée en stock (pas activée
+   immédiatement), à consommer depuis le bouton dédié de l'écran
+   Combat (voir ui/combat-view.js). */
+function buildHealingPotionCardHTML(potion) {
+  var stock = PotionManager.getHealingStock(potion.id);
+  var canBuy = (game.gold || 0) >= potion.cost;
+
+  var h = '<div class="potion-card heal-card">';
+  h += '<div class="potion-icon">' + esc(potion.icon) + '</div>';
+  h += '<div class="potion-info">';
+  h += '<div class="potion-name">' + esc(potion.name) + '</div>';
+  h += '<div class="potion-desc">Restaure ' + Math.round(potion.healPercent * 100) + '% des PV max, à la demande depuis l\u2019écran Combat.</div>';
+  h += '<div class="potion-heal-stock">🩹 Stock : ' + stock + '</div>';
+  h += '</div>';
+  h += '<button class="potion-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')">' + formatNumber(potion.cost) + ' or</button>';
+  h += '</div>';
+  return h;
+}
+
+function buildHealingPotionShopHTML() {
+  var h = '<div class="potion-section-label">🩹 Potions de soin (usage instantané)</div>';
+  h += '<div class="potion-grid">';
+  (HEALING_POTIONS_DB || []).forEach(function (potion) {
+    h += buildHealingPotionCardHTML(potion);
+  });
+  h += '</div>';
   return h;
 }
 

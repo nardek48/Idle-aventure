@@ -174,6 +174,78 @@
   flex: 0;
 }
 
+.heal-quick-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 100%;
+  padding: 6px;
+}
+
+.heal-quick-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  background: rgba(74, 222, 128, 0.12);
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.heal-quick-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.heal-quick-count {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #0f1420;
+  border: 1px solid rgba(74, 222, 128, 0.5);
+  color: #4ade80;
+  font-size: 9px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Petit indice de raccourci clavier ("1"/"2") — uniquement affiché
+   sur les appareils à pointeur précis (souris), inutile au doigt. */
+.heal-quick-key {
+  display: none;
+}
+
+@media (pointer: fine) {
+  .heal-quick-key {
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 8px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 .tab-btn {
   position: relative;
   flex: 1 0 64px;

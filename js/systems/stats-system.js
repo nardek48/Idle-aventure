@@ -272,6 +272,13 @@ var StatsSystem = {
     if (dungeonShopBonus.gold) game.goldMult += dungeonShopBonus.gold;
     if (dungeonShopBonus.essence) game.essenceGlobalMult += dungeonShopBonus.essence;
 
+    // Bonus temporaire de l'attaque spéciale (ex: Fureur du Chaos),
+    // voir systems/special-attack-system.js.
+    var specialBuff = (window.SpecialAttackManager && typeof SpecialAttackManager.getActiveBuffPct === "function")
+      ? SpecialAttackManager.getActiveBuffPct()
+      : 0;
+    if (specialBuff) game.tapMult += specialBuff;
+
     // Bonus passif : Aether cumulé à vie -> dégâts + or globaux (ne diminue jamais, même dépensé)
     var AETHER_LIFETIME_MULT_COEF = 0.005;
     var totalAether = Number(game.totalAetherEarned || 0);

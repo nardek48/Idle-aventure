@@ -174,6 +174,8 @@ function renderAll() {
   renderPanel();
   updatePanelBackground()
   updateQuestBadge();
+  if (typeof renderHealButtons === "function") renderHealButtons();
+  if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
   if (needsHeroSetup()) {
     openHeroSelection();
   }

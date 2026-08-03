@@ -96,6 +96,84 @@ var PotionManager = {
     return changed;
   },
 
+  // ============================================================
+  // Potions de soin (v2.16) — achat en stock, usage instantané
+  // depuis le bouton dédié de l'écran Combat (voir ui/combat-view.js).
+  // ============================================================
+
+  ensureHealing: function () {
+    if (!game.healingPotionsOwned || typeof game.healingPotionsOwned !== "object") {
+      game.healingPotionsOwned = {};
+    }
+    if (typeof game.lastHealUse !== "number") game.lastHealUse = 0;
+  },
+
+  getHealingPotion: function (id) {
+    return (HEALING_POTIONS_DB || []).find(function (p) { return p.id === id; }) || null;
+  },
+
+  getHealingStock: function (id) {
+    this.ensureHealing();
+    return Number(game.healingPotionsOwned[id] || 0);
+  },
+
+  /* Achète UNE potion de soin (ajoutée au stock, pas consommée
+     immédiatement — voir useHealingPotion pour l'usage). */
+  buyHealingPotion: function (id) {
+    this.ensureHealing();
+    var potion = this.getHealingPotion(id);
+    if (!potion) return;
+    if ((game.gold || 0) < potion.cost) return showToast("Pas assez d'or", 1000);
+
+    game.gold -= potion.cost;
+    game.healingPotionsOwned[id] = this.getHealingStock(id) + 1;
+
+    addLog("🩹 " + potion.name + " achetée (stock : " + game.healingPotionsOwned[id] + ")", "event");
+    showToast(potion.name + " +1", 1300);
+    if (typeof renderAll === "function") renderAll();
+    saveGame();
+  },
+
+  /* Millisecondes restantes avant de pouvoir réutiliser une potion de
+     soin (cooldown commun à toutes, pour éviter le spam). */
+  getHealCooldownRemainingMs: function () {
+    this.ensureHealing();
+    var elapsed = Date.now() - (game.lastHealUse || 0);
+    return Math.max(0, HEALING_POTION_COOLDOWN_MS - elapsed);
+  },
+
+  /* Consomme une potion de soin du stock et restaure des PV
+     immédiatement (plafonnés aux PV max). Respecte le cooldown
+     commun. Utilisable à tout moment, y compris en plein donjon. */
+  useHealingPotion: function (id) {
+    this.ensureHealing();
+    var potion = this.getHealingPotion(id);
+    if (!potion) return;
+
+    if (this.getHealCooldownRemainingMs() > 0) {
+      return showToast("⏳ Encore un instant...", 900);
+    }
+
+    var stock = this.getHealingStock(id);
+    if (stock <= 0) return showToast("Aucune potion en stock", 1000);
+
+    var maxHp = Number(game.heroMaxHp || 1);
+    var currentHp = Number(game.heroHp != null ? game.heroHp : maxHp);
+    if (currentHp >= maxHp) return showToast("PV déjà au maximum", 1000);
+
+    game.healingPotionsOwned[id] = stock - 1;
+    var healed = Math.floor(maxHp * potion.healPercent);
+    game.heroHp = Math.min(maxHp, currentHp + healed);
+    game.lastHealUse = Date.now();
+
+    addLog("🩹 " + potion.name + " utilisée (+" + formatNumber(healed) + " PV)", "event");
+    showToast("+" + formatNumber(healed) + " PV", 1200);
+    if (typeof renderHeroHp === "function") renderHeroHp();
+    if (typeof renderHud === "function") renderHud();
+    if (typeof renderHealButtons === "function") renderHealButtons();
+    saveGame();
+  },
+
   /* Agrège les bonus de TOUTES les potions à durée actuellement
      actives, par clé de stat (voir StatsSystem.recalcStats). Les
      potions n'ayant pas de durée (Élixir d'Aether) n'apparaissent

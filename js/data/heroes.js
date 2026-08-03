@@ -61,3 +61,70 @@ var HERO_LEVELING = {
   baseXp: 10,
   xpGrowth: 1.35
 };
+
+/* ============================================================
+v2.20 : attaque spéciale propre à chaque héros — bouton dédié sur
+l'écran de combat (voir ui/combat-view.js), temps de recharge commun
+de 10s sauf mention contraire. Voir systems/special-attack-system.js
+pour la logique d'utilisation.
+
+Champs :
+  - multiplier      dégâts = tapDamage effectif × multiplier, en un
+                     seul coup (absent si hits>1 ou minMult/maxMult utilisés)
+  - hits             nombre de coups (chacun à `multiplier`) — Rôdeur
+  - minMult/maxMult  dégâts aléatoires entre les deux — Rôdeur du Chaos
+  - ignoreAffinity   ignore résistance/faiblesse d'arme — Mage
+  - buffPct/buffDurationMs  bonus de dégâts temporaire après le coup — Chevalier du Chaos
+  - cooldownMs       temps de recharge avant réutilisation
+============================================================ */
+var HERO_SPECIAL_ATTACKS = {
+  knight: {
+    name: "Coup fracassant",
+    icon: "💥",
+    desc: "Assène un coup titanesque à 6× tes dégâts de tap habituels.",
+    multiplier: 6,
+    cooldownMs: 10000
+  },
+  ranger: {
+    name: "Tir groupé",
+    icon: "🏹",
+    desc: "Décoche 3 flèches rapides, chacune à 2.5× tes dégâts de tap.",
+    multiplier: 2.5,
+    hits: 3,
+    cooldownMs: 10000
+  },
+  mage: {
+    name: "Explosion arcanique",
+    icon: "🔮",
+    desc: "Libère une explosion de magie pure (8× dégâts) qui ignore toute résistance ou faiblesse d'arme.",
+    multiplier: 8,
+    ignoreAffinity: true,
+    cooldownMs: 10000
+  },
+  chaosKnight: {
+    name: "Fureur du Chaos",
+    icon: "🔥",
+    desc: "Frappe à 6× tes dégâts, puis enrage ton héros (+10% dégâts) pendant 10 secondes.",
+    multiplier: 6,
+    buffPct: 0.10,
+    buffDurationMs: 10000,
+    cooldownMs: 10000
+  },
+  chaosRanger: {
+    name: "Tir chaotique",
+    icon: "🎲",
+    desc: "Un tir à la puissance imprévisible : entre 3× et 12× tes dégâts de tap, au hasard.",
+    minMult: 3,
+    maxMult: 12,
+    cooldownMs: 10000
+  },
+  chaosMage: {
+    name: "Cataclysme",
+    icon: "☄️",
+    desc: "Déchaîne 10× tes dégâts de tap en un seul coup dévastateur — la capacité la plus puissante, mais qui recharge plus lentement.",
+    multiplier: 10,
+    cooldownMs: 16000
+  }
+};
+
+window.HERO_SPECIAL_ATTACKS = HERO_SPECIAL_ATTACKS;

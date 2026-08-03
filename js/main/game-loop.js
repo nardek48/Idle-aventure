@@ -78,6 +78,25 @@ function gameLoop() {
     game.essence += dt;
   }
 
+  // Bouton de soin rapide : rafraîchi chaque seconde pour que le
+  // cooldown se débloque visuellement tout seul, sans action du joueur.
+  if (window.PotionManager && typeof renderHealButtons === "function") {
+    game._healUiTimer = (game._healUiTimer || 0) + dt;
+    if (game._healUiTimer >= 1) {
+      game._healUiTimer = 0;
+      renderHealButtons();
+    }
+  }
+
+  // Idem pour le bouton d'attaque spéciale (compte à rebours du cooldown).
+  if (window.SpecialAttackManager && typeof renderSpecialAttackButton === "function") {
+    game._specialUiTimer = (game._specialUiTimer || 0) + dt;
+    if (game._specialUiTimer >= 1) {
+      game._specialUiTimer = 0;
+      renderSpecialAttackButton();
+    }
+  }
+
   // Talent "Intérêt composé" : +0.05% de l'or actuel toutes les 10s
   // (accumulateur pour rester précis même avec des dt irréguliers).
   if (game.talents.t_interest) {

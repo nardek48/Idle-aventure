@@ -253,11 +253,14 @@ var CombatEngine = {
      l'affinité de dégâts (résistance/faiblesse/sans arme) et le
      bonus "Exécution parfaite" avant de retirer les PV, puis
      déclenche killEnemy() si l'ennemi tombe à 0. */
-  dealDamage: function (dmg, isCrit, fromTap) {
+  /* ignoreAffinity (optionnel) : si vrai, saute le multiplicateur de
+     résistance/faiblesse d'arme — utilisé par l'attaque spéciale du
+     Mage ("Explosion arcanique", dégâts purs qui ignorent tout). */
+  dealDamage: function (dmg, isCrit, fromTap, ignoreAffinity) {
     if (!game.enemy) return;
 
     dmg = Math.max(0, Number(dmg || 0));
-    dmg *= getDamageAffinity().mult;
+    if (!ignoreAffinity) dmg *= getDamageAffinity().mult;
 
     if (game.enemy.isBoss && game.talents.t_perfect_execution && game.enemy.maxHp > 0 && (game.enemy.hp / game.enemy.maxHp) < 0.2) {
       dmg *= 1.15;

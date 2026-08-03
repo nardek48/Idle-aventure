@@ -23,7 +23,8 @@ function buildCombatHTML() {
     +     '<div id="enemy-hp-text">10 / 10</div>'
     +   '</div>'
     +   '<div class="enemy-counter" id="enemy-counter">Kills: 0</div>'
-    + '</div>';
+    + '</div>'
+    + '<div id="special-attack-root"></div>';
 }
 
 /* Injecte la zone de combat une seule fois au boot, avant le tout
@@ -31,6 +32,46 @@ function buildCombatHTML() {
 function mountCombatArea() {
   var gameArea = document.getElementById("game-area");
   if (gameArea) gameArea.innerHTML = buildCombatHTML();
+}
+
+/* ============================================================
+   v2.16 : bouton de soin rapide, dans l'emplacement réservé de la
+   barre du bas (#tab-bar-special-slot) — utilisable depuis n'importe
+   quel écran, pas seulement en combat, pour ne jamais être bloqué en
+   plein donjon. Une icône par potion de soin possédée, avec son
+   stock ; grisée pendant le cooldown commun ou si le stock est à 0.
+============================================================ */
+function buildHealButtonsHTML() {
+  if (typeof HEALING_POTIONS_DB === "undefined" || !window.PotionManager) return "";
+
+  var onCooldown = PotionManager.getHealCooldownRemainingMs() > 0;
+  var h = '<div class="heal-quick-bar">';
+
+  HEALING_POTIONS_DB.forEach(function (potion, index) {
+    var stock = PotionManager.getHealingStock(potion.id);
+    var disabled = onCooldown || stock <= 0;
+    var keyLabel = String(index + 1); // touche "1" pour la 1ère potion, "2" pour la 2e...
+
+    h += '<button class="heal-quick-btn' + (disabled ? ' disabled' : '') + '" type="button" '
+      + (disabled ? 'disabled' : '')
+      + ' onclick="PotionManager.useHealingPotion(\'' + esc(potion.id) + '\')" title="' + esc(potion.name) + ' (touche ' + keyLabel + ' sur PC)">';
+    h += '<span class="heal-quick-icon">' + esc(potion.icon) + '</span>';
+    h += '<span class="heal-quick-count">' + stock + '</span>';
+    h += '<span class="heal-quick-key">' + keyLabel + '</span>';
+    h += '</button>';
+  });
+
+  h += '</div>';
+  return h;
+}
+
+/* Rafraîchit le bouton de soin rapide (stock + état du cooldown).
+   Appelée au boot, après achat/usage, et régulièrement depuis la
+   boucle de jeu pour que le cooldown se débloque visuellement tout
+   seul sans action du joueur. */
+function renderHealButtons() {
+  var host = document.getElementById("tab-bar-special-slot");
+  if (host) host.innerHTML = buildHealButtonsHTML();
 }
 
 /* Met à jour tout l'affichage de l'ennemi courant : image (ou emoji
@@ -127,3 +168,69 @@ window.renderEnemyHp = renderEnemyHp;
 window.renderEnemyAffinity = renderEnemyAffinity;
 window.buildCombatHTML = buildCombatHTML;
 window.mountCombatArea = mountCombatArea;
+window.buildHealButtonsHTML = buildHealButtonsHTML;
+window.renderHealButtons = renderHealButtons;
+
+/* ============================================================
+   v2.19 : raccourcis clavier (version PC) pour les potions de soin —
+   touche "1" = 1ère potion (mineure), "2" = 2e (majeure), dans
+   l'ordre de HEALING_POTIONS_DB. Ignorés si le joueur est en train
+   de taper dans un champ texte (nom du joueur, code d'import de
+   sauvegarde, recherche...), pour ne pas interférer avec la saisie.
+   Fonctionne depuis n'importe quel écran, comme le bouton rapide. */
+function initHealKeyboardShortcuts() {
+  document.addEventListener("keydown", function (e) {
+    var active = document.activeElement;
+    var tag = active ? active.tagName : "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || (active && active.isContentEditable)) return;
+    if (typeof HEALING_POTIONS_DB === "undefined" || !window.PotionManager) return;
+
+    var index = -1;
+    if (e.key === "1") index = 0;
+    else if (e.key === "2") index = 1;
+    if (index === -1) return;
+
+    var potion = HEALING_POTIONS_DB[index];
+    if (potion) PotionManager.useHealingPotion(potion.id);
+  });
+}
+
+window.initHealKeyboardShortcuts = initHealKeyboardShortcuts;
+
+/* ============================================================
+   v2.20 : bouton d'attaque spéciale, propre au héros choisi (voir
+   HERO_SPECIAL_ATTACKS dans data/heroes.js), affiché juste sous
+   l'ennemi sur l'écran Combat — fonctionne aussi en plein donjon.
+============================================================ */
+function buildSpecialAttackHTML() {
+  if (!window.SpecialAttackManager) return "";
+  var special = SpecialAttackManager.getCurrentSpecial();
+  if (!special) return "";
+
+  var remainingMs = SpecialAttackManager.getCooldownRemainingMs();
+  var onCooldown = remainingMs > 0;
+  var cooldownPct = onCooldown ? Math.round((remainingMs / special.cooldownMs) * 100) : 0;
+
+  var h = '<button class="special-attack-btn' + (onCooldown ? ' on-cooldown' : '') + '" type="button" '
+    + (onCooldown ? 'disabled' : '')
+    + ' onclick="SpecialAttackManager.use()">';
+  h += '<span class="special-attack-icon">' + esc(special.icon) + '</span>';
+  h += '<span class="special-attack-info">';
+  h += '<span class="special-attack-name">' + esc(special.name) + '</span>';
+  h += '<span class="special-attack-desc">' + esc(special.desc) + '</span>';
+  h += '</span>';
+  if (onCooldown) {
+    h += '<span class="special-attack-cooldown">' + Math.ceil(remainingMs / 1000) + 's</span>';
+    h += '<span class="special-attack-cooldown-fill" style="width:' + cooldownPct + '%"></span>';
+  }
+  h += '</button>';
+  return h;
+}
+
+function renderSpecialAttackButton() {
+  var host = document.getElementById("special-attack-root");
+  if (host) host.innerHTML = buildSpecialAttackHTML();
+}
+
+window.buildSpecialAttackHTML = buildSpecialAttackHTML;
+window.renderSpecialAttackButton = renderSpecialAttackButton;
