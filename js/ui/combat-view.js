@@ -24,7 +24,10 @@ function buildCombatHTML() {
     +   '</div>'
     +   '<div class="enemy-counter" id="enemy-counter">Kills: 0</div>'
     + '</div>'
-    + '<div id="special-attack-root"></div>';
+    + '<div class="combat-action-row">'
+    +   '<div id="special-attack-root"></div>'
+    +   '<div id="defense-root"></div>'
+    + '</div>';
 }
 
 /* Injecte la zone de combat une seule fois au boot, avant le tout
@@ -211,17 +214,14 @@ function buildSpecialAttackHTML() {
   var onCooldown = remainingMs > 0;
   var cooldownPct = onCooldown ? Math.round((remainingMs / special.cooldownMs) * 100) : 0;
 
-  var h = '<button class="special-attack-btn' + (onCooldown ? ' on-cooldown' : '') + '" type="button" '
+  var h = '<button class="combat-action-btn attack-action-btn' + (onCooldown ? ' on-cooldown' : '') + '" type="button" '
     + (onCooldown ? 'disabled' : '')
-    + ' onclick="SpecialAttackManager.use()">';
-  h += '<span class="special-attack-icon">' + esc(special.icon) + '</span>';
-  h += '<span class="special-attack-info">';
-  h += '<span class="special-attack-name">' + esc(special.name) + '</span>';
-  h += '<span class="special-attack-desc">' + esc(special.desc) + '</span>';
-  h += '</span>';
+    + ' onclick="SpecialAttackManager.use()" title="' + esc(special.desc) + '">';
+  h += '<span class="combat-action-icon">' + esc(special.icon) + '</span>';
+  h += '<span class="combat-action-name">' + esc(special.name) + '</span>';
   if (onCooldown) {
-    h += '<span class="special-attack-cooldown">' + Math.ceil(remainingMs / 1000) + 's</span>';
-    h += '<span class="special-attack-cooldown-fill" style="width:' + cooldownPct + '%"></span>';
+    h += '<span class="combat-action-cooldown">' + Math.ceil(remainingMs / 1000) + 's</span>';
+    h += '<span class="combat-action-cooldown-fill" style="width:' + cooldownPct + '%"></span>';
   }
   h += '</button>';
   return h;
@@ -234,3 +234,38 @@ function renderSpecialAttackButton() {
 
 window.buildSpecialAttackHTML = buildSpecialAttackHTML;
 window.renderSpecialAttackButton = renderSpecialAttackButton;
+
+/* ============================================================
+   v2.21 : bouton de bouclier temporaire (voir DEFENSE_ABILITY dans
+   data/heroes.js), universel — juste à côté du bouton d'attaque.
+============================================================ */
+function buildDefenseHTML() {
+  if (typeof DEFENSE_ABILITY === "undefined" || !window.DefenseManager) return "";
+
+  var remainingMs = DefenseManager.getCooldownRemainingMs();
+  var onCooldown = remainingMs > 0;
+  var cooldownPct = onCooldown ? Math.round((remainingMs / DEFENSE_ABILITY.cooldownMs) * 100) : 0;
+  var active = DefenseManager.isActive();
+
+  var h = '<button class="combat-action-btn defense-action-btn' + (onCooldown ? ' on-cooldown' : '') + (active ? ' is-active' : '') + '" type="button" '
+    + (onCooldown ? 'disabled' : '')
+    + ' onclick="DefenseManager.use()" title="' + esc(DEFENSE_ABILITY.desc) + '">';
+  h += '<span class="combat-action-icon">' + esc(DEFENSE_ABILITY.icon) + '</span>';
+  h += '<span class="combat-action-name">' + esc(DEFENSE_ABILITY.name) + '</span>';
+  if (onCooldown) {
+    h += '<span class="combat-action-cooldown">' + Math.ceil(remainingMs / 1000) + 's</span>';
+    h += '<span class="combat-action-cooldown-fill" style="width:' + cooldownPct + '%"></span>';
+  } else if (active) {
+    h += '<span class="combat-action-active-tag">ACTIF</span>';
+  }
+  h += '</button>';
+  return h;
+}
+
+function renderDefenseButton() {
+  var host = document.getElementById("defense-root");
+  if (host) host.innerHTML = buildDefenseHTML();
+}
+
+window.buildDefenseHTML = buildDefenseHTML;
+window.renderDefenseButton = renderDefenseButton;

@@ -5,10 +5,32 @@ Quest Idle — ui/quests-view.js
 (pastille numérique, hors du panneau lui-même).
 
 v2.14 : le badge (toujours nommé updateQuestBadge pour ne pas casser
-tous ses appels existants) agrège maintenant 3 sources d'attention :
+tous ses appels existants) agrège plusieurs sources d'attention :
 quêtes prêtes à réclamer + hauts faits prêts à réclamer + ticket de
 donjon disponible et non utilisé — plutôt que les quêtes seules.
+v2.21 : + talents à dépenser + ascension disponible.
 ============================================================ */
+
+/* 1 si au moins un point de talent est disponible ET dépensable dans
+   au moins une branche (évite de signaler "disponible" si le joueur
+   a des points mais que tous les talents accessibles sont déjà pris). */
+function getTalentsAvailableCount() {
+  if ((game.talentPoints || 0) <= 0) return 0;
+  if (typeof getAllTalentNodes !== "function") return (game.talentPoints > 0) ? 1 : 0;
+
+  var tree = getAllTalentNodes();
+  var hasPurchasable = ["combat", "fortune", "survival"].some(function (branch) {
+    return (tree[branch] || []).some(function (node) {
+      return !game.talents[node.id] && (!node.requires || game.talents[node.requires]);
+    });
+  });
+  return hasPurchasable ? 1 : 0;
+}
+
+/* 1 si une ascension est possible dès maintenant. */
+function getAscensionAvailableCount() {
+  return (window.AscensionManager && typeof AscensionManager.canAscend === "function" && AscensionManager.canAscend()) ? 1 : 0;
+}
 
 /* Pastille numérique sur le bouton Menu, agrégeant tout ce qui mérite
    l'attention du joueur. Appelée après quasiment chaque action de jeu
@@ -33,7 +55,10 @@ function updateQuestBadge() {
     }
   }
 
-  var total = questsReady + achievementsReady + dungeonTicketReady;
+  var talentsReady = getTalentsAvailableCount();
+  var ascensionReady = getAscensionAvailableCount();
+
+  var total = questsReady + achievementsReady + dungeonTicketReady + talentsReady + ascensionReady;
   badge.textContent = total > 0 ? String(total) : "";
   badge.style.display = total > 0 ? "inline-flex" : "none";
 
@@ -88,4 +113,6 @@ function buildQuestsHTML() {
 }
 
 window.updateQuestBadge = updateQuestBadge;
+window.getTalentsAvailableCount = getTalentsAvailableCount;
+window.getAscensionAvailableCount = getAscensionAvailableCount;
 window.buildQuestsHTML = buildQuestsHTML;

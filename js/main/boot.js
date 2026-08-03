@@ -27,6 +27,7 @@ function init() {
   if (typeof mountHudAndStatsBar === "function") mountHudAndStatsBar();
   if (typeof mountCombatArea === "function") mountCombatArea();
   if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
+  if (typeof renderDefenseButton === "function") renderDefenseButton();
   if (typeof renderHealButtons === "function") renderHealButtons();
   if (typeof initHealKeyboardShortcuts === "function") initHealKeyboardShortcuts();
 

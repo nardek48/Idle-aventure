@@ -15,10 +15,10 @@ que l'overlay de sélection de héros (voir ui/modal-view.js).
 var MENU_ITEMS = [
   { tab: "more", label: "Personnage", img: "./images/Icons/more_menu.png" },
   { tab: "shop", label: "Boutique", img: "./images/Icons/shop_menu.png" },
-  { tab: "talents", label: "Talents", img: "./images/Icons/talents_menu.png" },
+  { tab: "talents", label: "Talents", img: "./images/Icons/talents_menu.png", badge: "talents" },
   { tab: "equip", label: "Équipement", img: "./images/Icons/equip_menu.png" },
   { tab: "quests", label: "Quêtes", img: "./images/Icons/quests_menu.png", badge: true },
-  { tab: "ascension", label: "Ascension", img: "./images/Icons/aether_menu.png" },
+  { tab: "ascension", label: "Ascension", img: "./images/Icons/aether_menu.png", badge: "ascension" },
   { tab: "map", label: "Carte du monde", img: "./images/Icons/map_menu.png" },
   { tab: "dungeon", label: "Donjon", icon: "🏰", badge: "dungeon" },
   { tab: "achievements", label: "Hauts faits", icon: "🏆", badge: "achievement" },
@@ -58,6 +58,10 @@ function buildFullMenuHTML() {
         DungeonManager.checkTicketReset();
         badgeCount = ((game.dungeonTickets || 0) > 0 && !(game.dungeonRun && game.dungeonRun.active)) ? 1 : 0;
       }
+    } else if (item.badge === "talents") {
+      badgeCount = (typeof getTalentsAvailableCount === "function") ? getTalentsAvailableCount() : 0;
+    } else if (item.badge === "ascension") {
+      badgeCount = (typeof getAscensionAvailableCount === "function") ? getAscensionAvailableCount() : 0;
     } else if (item.badge) {
       badgeCount = getMenuQuestBadgeCount();
     }

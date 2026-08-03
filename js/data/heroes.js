@@ -128,3 +128,24 @@ var HERO_SPECIAL_ATTACKS = {
 };
 
 window.HERO_SPECIAL_ATTACKS = HERO_SPECIAL_ATTACKS;
+
+/* ============================================================
+v2.21 : capacité défensive, universelle (pas propre à un héros,
+contrairement à l'attaque spéciale) — un vrai bouton "panique" pour
+encaisser un pic de riposte, notamment utile dans les hauts paliers
+de donjon. Voir systems/special-attack-system.js (DefenseManager).
+============================================================ */
+var DEFENSE_ABILITY = {
+  name: "Posture défensive",
+  icon: "🛡️",
+  desc: "+35% de réduction des dégâts de riposte pendant 8 secondes.",
+  defenseBonusPct: 0.35,
+  durationMs: 8000,
+  cooldownMs: 15000,
+  // Plafond de défense TOTALE pendant que le bouclier est actif (plus
+  // haut que le plafond normal de 60%, pour que le bonus reste utile
+  // même avec beaucoup d'Endurance déjà investie).
+  maxTotalDefensePct: 0.85
+};
+
+window.DEFENSE_ABILITY = DEFENSE_ABILITY;

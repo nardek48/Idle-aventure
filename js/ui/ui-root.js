@@ -176,6 +176,7 @@ function renderAll() {
   updateQuestBadge();
   if (typeof renderHealButtons === "function") renderHealButtons();
   if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
+  if (typeof renderDefenseButton === "function") renderDefenseButton();
   if (needsHeroSetup()) {
     openHeroSelection();
   }

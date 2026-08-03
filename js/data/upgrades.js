@@ -23,7 +23,7 @@ var UPGRADES = [
     icon: "💪",
     desc: "+1 Force par niveau (augmente les dégâts de tap).",
     baseCost: 15,
-    costMult: 1.22,
+    costMult: 1.20,
     maxLevel: 400,
     unlockWorld: 0,
     apply: function(lvl) {
@@ -36,7 +36,7 @@ var UPGRADES = [
     icon: "⚡",
     desc: "+1 Célérité par niveau (augmente l'auto DPS).",
     baseCost: 45,
-    costMult: 1.26,
+    costMult: 1.24,
     maxLevel: 320,
     unlockWorld: 0,
     apply: function(lvl) {
@@ -49,7 +49,7 @@ var UPGRADES = [
     icon: "🎯",
     desc: "+1 Précision par niveau (augmente la chance de critique).",
     baseCost: 50,
-    costMult: 1.26,
+    costMult: 1.24,
     maxLevel: 100,
     unlockWorld: 0,
     apply: function(lvl) {
@@ -62,7 +62,7 @@ var UPGRADES = [
     icon: "✨",
     desc: "+1 Volonté par niveau (améliore les critiques).",
     baseCost: 60,
-    costMult: 1.28,
+    costMult: 1.26,
     maxLevel: 130,
     unlockWorld: 0,
     apply: function(lvl) {
@@ -75,7 +75,7 @@ var UPGRADES = [
     icon: "🛡️",
     desc: "+1 Endurance par niveau (augmente les PV du héros).",
     baseCost: 60,
-    costMult: 1.28,
+    costMult: 1.26,
     maxLevel: 200,
     unlockWorld: 0,
     apply: function(lvl) {
@@ -88,7 +88,7 @@ var UPGRADES = [
     icon: "💰",
     desc: "+3% or gagné par niveau.",
     baseCost: 55,
-    costMult: 1.25,
+    costMult: 1.23,
     maxLevel: 200,
     unlockWorld: 0,
     apply: function (lvl) { game.goldMult = 1 + lvl * 0.03; }
@@ -99,7 +99,7 @@ var UPGRADES = [
     icon: "📜",
     desc: "+10% or sur boss par niveau.",
     baseCost: 260,
-    costMult: 1.36,
+    costMult: 1.34,
     maxLevel: 50,
     unlockWorld: 2,
     apply: function (lvl) { game.goldMult = (game.goldMult || 1) + lvl * 0.10; }

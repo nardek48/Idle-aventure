@@ -279,6 +279,16 @@ var StatsSystem = {
       : 0;
     if (specialBuff) game.tapMult += specialBuff;
 
+    // Bouclier temporaire (v2.21) : plafond de défense relevé pendant
+    // qu'il est actif, voir DEFENSE_ABILITY dans data/heroes.js.
+    var defenseBuff = (window.DefenseManager && typeof DefenseManager.getActiveBonusPct === "function")
+      ? DefenseManager.getActiveBonusPct()
+      : 0;
+    if (defenseBuff) {
+      var defenseCap = (typeof DEFENSE_ABILITY !== "undefined" && DEFENSE_ABILITY.maxTotalDefensePct) || 0.85;
+      game.heroDefensePct = Math.min(defenseCap, game.heroDefensePct + defenseBuff);
+    }
+
     // Bonus passif : Aether cumulé à vie -> dégâts + or globaux (ne diminue jamais, même dépensé)
     var AETHER_LIFETIME_MULT_COEF = 0.005;
     var totalAether = Number(game.totalAetherEarned || 0);

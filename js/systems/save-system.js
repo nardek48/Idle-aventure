@@ -215,6 +215,8 @@ function buildSaveData() {
     lastSpecialUse: Number(game.lastSpecialUse || 0),
     specialBuffExpires: Number(game.specialBuffExpires || 0),
     specialBuffPct: Number(game.specialBuffPct || 0),
+    lastDefenseUse: Number(game.lastDefenseUse || 0),
+    defenseBuffExpires: Number(game.defenseBuffExpires || 0),
     achievementsClaimed: game.achievementsClaimed || {},
     hasSeenOnboarding: !!game.hasSeenOnboarding
   };
@@ -332,6 +334,8 @@ function restoreBaseState(d) {
   game.lastSpecialUse = Number(d.lastSpecialUse || 0);
   game.specialBuffExpires = Number(d.specialBuffExpires || 0);
   game.specialBuffPct = Number(d.specialBuffPct || 0);
+  game.lastDefenseUse = Number(d.lastDefenseUse || 0);
+  game.defenseBuffExpires = Number(d.defenseBuffExpires || 0);
   game.achievementsClaimed = d.achievementsClaimed && typeof d.achievementsClaimed === "object" ? d.achievementsClaimed : {};
   game.hasSeenOnboarding = !!d.hasSeenOnboarding;
 

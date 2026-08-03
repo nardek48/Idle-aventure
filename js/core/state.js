@@ -113,6 +113,9 @@ function createInitialGameState() {
     specialBuffExpires: 0,
     specialBuffPct: 0,
 
+    lastDefenseUse: 0,           // bouclier temporaire, voir DefenseManager
+    defenseBuffExpires: 0,
+
     achievementsClaimed: {},   // { idHautFait: true }, voir systems/achievement-system.js
 
     hasSeenOnboarding: false,   // tutoriel d'accueil, voir ui/onboarding-view.js
@@ -226,6 +229,9 @@ function ensureGameStateDefaults() {
   if (typeof game.lastSpecialUse !== "number") game.lastSpecialUse = 0;
   if (typeof game.specialBuffExpires !== "number") game.specialBuffExpires = 0;
   if (typeof game.specialBuffPct !== "number") game.specialBuffPct = 0;
+
+  if (typeof game.lastDefenseUse !== "number") game.lastDefenseUse = 0;
+  if (typeof game.defenseBuffExpires !== "number") game.defenseBuffExpires = 0;
 
   if (!game.achievementsClaimed || typeof game.achievementsClaimed !== "object") game.achievementsClaimed = {};
 

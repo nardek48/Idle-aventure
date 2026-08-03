@@ -89,3 +89,52 @@ var SpecialAttackManager = {
 };
 
 window.SpecialAttackManager = SpecialAttackManager;
+
+/* ============================================================
+   v2.21 : bouclier temporaire, universel (pas propre à un héros).
+   Voir DEFENSE_ABILITY dans data/heroes.js.
+============================================================ */
+var DefenseManager = {
+  ensure: function () {
+    if (typeof game.lastDefenseUse !== "number") game.lastDefenseUse = 0;
+    if (typeof game.defenseBuffExpires !== "number") game.defenseBuffExpires = 0;
+  },
+
+  getCooldownRemainingMs: function () {
+    this.ensure();
+    var elapsed = Date.now() - (game.lastDefenseUse || 0);
+    return Math.max(0, DEFENSE_ABILITY.cooldownMs - elapsed);
+  },
+
+  isActive: function () {
+    this.ensure();
+    return game.defenseBuffExpires > Date.now();
+  },
+
+  /* Bonus de défense actif, lu par StatsSystem.recalcStats() comme
+     les autres bonus temporaires (potions, attaque spéciale...). */
+  getActiveBonusPct: function () {
+    return this.isActive() ? DEFENSE_ABILITY.defenseBonusPct : 0;
+  },
+
+  use: function () {
+    this.ensure();
+    if (this.getCooldownRemainingMs() > 0) {
+      return showToast("⏳ Encore un instant...", 900);
+    }
+
+    game.lastDefenseUse = Date.now();
+    game.defenseBuffExpires = Date.now() + DEFENSE_ABILITY.durationMs;
+
+    if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
+      StatsSystem.recalcStats();
+    }
+
+    addLog("🛡️ " + DEFENSE_ABILITY.name + " activée (" + Math.round(DEFENSE_ABILITY.durationMs / 1000) + "s)", "event");
+    showToast(DEFENSE_ABILITY.icon + " " + DEFENSE_ABILITY.name, 1400);
+    if (typeof renderDefenseButton === "function") renderDefenseButton();
+    saveGame();
+  }
+};
+
+window.DefenseManager = DefenseManager;

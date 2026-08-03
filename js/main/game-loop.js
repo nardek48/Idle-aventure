@@ -97,6 +97,15 @@ function gameLoop() {
     }
   }
 
+  // Idem pour le bouton de défense.
+  if (window.DefenseManager && typeof renderDefenseButton === "function") {
+    game._defenseUiTimer = (game._defenseUiTimer || 0) + dt;
+    if (game._defenseUiTimer >= 1) {
+      game._defenseUiTimer = 0;
+      renderDefenseButton();
+    }
+  }
+
   // Talent "Intérêt composé" : +0.05% de l'or actuel toutes les 10s
   // (accumulateur pour rester précis même avec des dt irréguliers).
   if (game.talents.t_interest) {
