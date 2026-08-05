@@ -115,6 +115,15 @@ var StatsSystem = {
     game.critMult = 2;
     game.goldMult = 1;
 
+    // v2.29 : bonus plat de dégâts venant de l'équipement (tapDmg des
+    // objets + bonus de panoplie), appliqué APRÈS la multiplication
+    // par tapMult — voir effectiveTapDamage() plus bas. Avant, ce
+    // bonus plat était ajouté à game.tapDamage AVANT la
+    // multiplication, ce qui le faisait grimper avec tapMult : un
+    // objet "+100 dégâts" devenait +500 dégâts réels avec un
+    // multiplicateur x5, au lieu de rester +100 comme annoncé.
+    game.equipFlatTapBonus = 0;
+
     game.essenceRegen = 0;
     game.bossEssenceMult = 1;
     game.essenceGlobalMult = 1;
@@ -190,7 +199,7 @@ var StatsSystem = {
     var equipped = game.equipped;
     [equipped.weapon, equipped.armor, equipped.amulet].forEach(function(item) {
       if (!item) return;
-      if (item.stat === "tapDmg") game.tapDamage += item.value;
+      if (item.stat === "tapDmg") game.equipFlatTapBonus += item.value;
       else if (item.stat === "tapMult") game.tapMult += item.value;
       else if (item.stat === "goldMult") game.goldMult += item.value;
       else if (item.stat === "critChance") game.critChance += item.value;
@@ -208,7 +217,7 @@ var StatsSystem = {
       if (bonus.critChance != null) game.critChance += bonus.critChance;
       if (bonus.critMult != null) game.critMult += bonus.critMult;
       if (bonus.autoDps != null) game.autoDps += bonus.autoDps;
-      if (bonus.tapDamage != null) game.tapDamage += bonus.tapDamage;
+      if (bonus.tapDamage != null) game.equipFlatTapBonus += bonus.tapDamage;
     }
 
     // Talents actifs qui touchent directement les stats globales
@@ -302,8 +311,12 @@ var StatsSystem = {
      lire game.tapDamage/tapMult directement, pour garantir des
      valeurs toujours valides (jamais négatives, jamais < 1 quand ça
      n'aurait pas de sens). */
+  /* v2.29 : (base × multiplicateur) PUIS + bonus plat d'équipement —
+     voir la note dans recalcStats() plus haut sur pourquoi l'ordre
+     compte ici. */
   effectiveTapDamage: function () {
-    return Math.max(1, Math.floor(game.tapDamage * game.tapMult));
+    var multiplied = game.tapDamage * game.tapMult;
+    return Math.max(1, Math.floor(multiplied) + Math.floor(game.equipFlatTapBonus || 0));
   },
 
   effectiveAutoDps: function () {

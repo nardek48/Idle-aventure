@@ -43,6 +43,7 @@ function createInitialGameState() {
 
     tapDamage: 1,
     tapMult: 1,
+    equipFlatTapBonus: 0,
     autoDps: 0,
     critChance: 5,
     critMult: 2,
@@ -93,9 +94,11 @@ function createInitialGameState() {
 
     activePotions: {},                        // { idPotion: timestamp d'expiration }
     pendingPotionBonuses: { aetherNext: 0 },    // bonus sans minuteur (Élixir d'Aether)
+    aetherElixirStackCount: 0,                  // v2.26 : nombre d'Élixirs d'Aether achetés depuis la dernière ascension (coût croissant)
 
     equipShopStock: [],          // 6 objets en vente à l'échoppe, voir systems/equip-shop-system.js
     equipShopResetTime: 0,        // prochain renouvellement du stock
+    equipShopManualRefreshCount: 0,  // v2.27 : nombre de renouvellements payants depuis le dernier renouvellement
 
     dungeonTickets: 1,             // voir systems/dungeon-system.js
     dungeonTicketResetTime: 0,
@@ -108,6 +111,8 @@ function createInitialGameState() {
 
     healingPotionsOwned: {},   // { idPotionSoin: quantité en stock }, voir systems/potion-system.js
     lastHealUse: 0,             // timestamp du dernier usage (cooldown commun)
+
+    autoSellEquipment: false,   // v2.26 : autovente du butin de rareté inférieure à l'équipé
 
     lastSpecialUse: 0,          // voir systems/special-attack-system.js
     specialBuffExpires: 0,
@@ -214,9 +219,11 @@ function ensureGameStateDefaults() {
     game.pendingPotionBonuses = { aetherNext: 0 };
   }
   if (typeof game.pendingPotionBonuses.aetherNext !== "number") game.pendingPotionBonuses.aetherNext = 0;
+  if (typeof game.aetherElixirStackCount !== "number") game.aetherElixirStackCount = 0;
 
   if (!Array.isArray(game.equipShopStock)) game.equipShopStock = [];
   if (typeof game.equipShopResetTime !== "number") game.equipShopResetTime = 0;
+  if (typeof game.equipShopManualRefreshCount !== "number") game.equipShopManualRefreshCount = 0;
 
   if (typeof game.dungeonTickets !== "number") game.dungeonTickets = 1;
   if (typeof game.dungeonTicketResetTime !== "number") game.dungeonTicketResetTime = 0;
@@ -230,6 +237,8 @@ function ensureGameStateDefaults() {
 
   if (!game.healingPotionsOwned || typeof game.healingPotionsOwned !== "object") game.healingPotionsOwned = {};
   if (typeof game.lastHealUse !== "number") game.lastHealUse = 0;
+
+  if (typeof game.autoSellEquipment !== "boolean") game.autoSellEquipment = false;
 
   if (typeof game.lastSpecialUse !== "number") game.lastSpecialUse = 0;
   if (typeof game.specialBuffExpires !== "number") game.specialBuffExpires = 0;

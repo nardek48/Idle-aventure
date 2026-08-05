@@ -183,7 +183,6 @@ function buildBestiaryDetailHTML(id) {
     h += '<div class="bestiary-combat-note">Estimation à la première rencontre — augmente avec ta progression.</div>';
   }
 
-  h += buildBestiaryStatsHTML(data.stats);
   h += '</div>';
   return h;
 }

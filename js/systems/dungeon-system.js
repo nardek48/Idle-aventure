@@ -56,16 +56,28 @@ var DungeonManager = {
     return h + "h " + m + "m";
   },
 
+  /* Coût du prochain ticket : grimpe à chaque achat depuis le début
+     de la journée (voir DUNGEON_CONFIG.ticketCostGrowth dans
+     data/dungeon.js), repart de la base au renouvellement gratuit
+     quotidien. */
+  getTicketBuyCost: function () {
+    this.ensure();
+    var baseCost = DUNGEON_CONFIG.ticketCostEssence || 100;
+    var boughtToday = game.dungeonTicketsPurchasedToday || 0;
+    var growth = DUNGEON_CONFIG.ticketCostGrowth || 1.35;
+    return Math.floor(baseCost * Math.pow(growth, boughtToday));
+  },
+
   buyTicket: function () {
     this.ensure();
     this.checkTicketReset();
 
-    var maxPerDay = DUNGEON_CONFIG.maxTicketPurchasesPerDay || 10;
+    var maxPerDay = DUNGEON_CONFIG.maxTicketPurchasesPerDay || 20;
     if ((game.dungeonTicketsPurchasedToday || 0) >= maxPerDay) {
       return showToast("Limite journalière atteinte (" + maxPerDay + "/jour)", 1600);
     }
 
-    var cost = DUNGEON_CONFIG.ticketCostEssence;
+    var cost = this.getTicketBuyCost();
     if ((game.essence || 0) < cost) return showToast("Pas assez d'essence", 1000);
 
     game.essence -= cost;
@@ -118,7 +130,17 @@ var DungeonManager = {
     }
 
     var stats = (data && data.stats) || makeRpgStats(10, 10, 10, 10, 10);
-    var hpCoef = isBossWave ? 2 : 1.2;
+
+    // v2.30 : rééquilibrage complet de la difficulté du donjon —
+    // PV et riposte revus avec des coefficients dédiés (hpCoef plus
+    // élevé, mais dégâts/vitesse/précision de riposte modérés via
+    // damageScale/speedScale/precisionScale) pour un combat plus
+    // long sans être injuste.
+    var hpCoef = isBossWave ? 2.8 : 1.5;
+    var damageScale = 0.4;
+    var speedScale = 0.65;
+    var precisionScale = 0.75;
+
     var hp = Math.max(1, Math.floor((stats.endurance || 0) * hpCoef * scale));
 
     return {
@@ -135,10 +157,10 @@ var DungeonManager = {
       // Stats de riposte gonflées progressivement avec la vague (pas
       // l'endurance, qui ne sert qu'au calcul des PV ci-dessus).
       stats: {
-        power: Math.floor((stats.power || 0) * (1 + waveProgress) * Math.sqrt(tierDifficultyMult)),
+        power: Math.floor((stats.power || 0) * (1 + waveProgress) * Math.sqrt(tierDifficultyMult) * damageScale),
         endurance: stats.endurance || 0,
-        celerity: Math.floor((stats.celerity || 0) * (1 + waveProgress * 0.5) * Math.sqrt(tierDifficultyMult)),
-        precision: Math.floor((stats.precision || 0) * (1 + waveProgress * 0.5)),
+        celerity: Math.floor((stats.celerity || 0) * (1 + waveProgress * 0.5) * Math.sqrt(tierDifficultyMult) * speedScale),
+        precision: Math.floor((stats.precision || 0) * (1 + waveProgress * 0.5) * precisionScale),
         will: stats.will || 0
       }
     };
@@ -271,7 +293,7 @@ var DungeonManager = {
     var lootedItem = null;
     if (grantLoot && window.LootSystem && typeof LootSystem.rollDropAtRarity === "function") {
       var drop = LootSystem.rollDropAtRarity(lootRarity);
-      if (drop && addLootToInventory(drop)) lootedItem = drop;
+      if (drop && addDropToInventory(drop)) lootedItem = drop;
     }
 
     var shardsGained = Number(game.dungeonRun.shardsEarned || 0);

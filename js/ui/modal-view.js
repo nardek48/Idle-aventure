@@ -158,6 +158,11 @@ function openHeroSelection() {
 
   html += '    </div>';
 
+  html += '    <div class="hero-picker-actions">';
+  html += '      <button class="btn secondary" onclick="closeHeroSelection()">Annuler</button>';
+  html += '      <button class="btn primary" onclick="confirmHeroSelection()">Confirmer</button>';
+  html += '    </div>';
+
   if (selectedHero) {
     var stats = selectedHero.stats || {};
     html += '    <div class="hero-preview">';
@@ -180,10 +185,6 @@ function openHeroSelection() {
     }
   }
 
-  html += '    <div class="hero-picker-actions">';
-  html += '      <button class="btn secondary" onclick="closeHeroSelection()">Annuler</button>';
-  html += '      <button class="btn primary" onclick="confirmHeroSelection()">Confirmer</button>';
-  html += '    </div>';
   html += '  </div>';
   html += '</div>';
 

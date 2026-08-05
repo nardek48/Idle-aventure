@@ -8,52 +8,61 @@
   margin-bottom: 8px;
   padding: 14px;
 
-  background: var(--bg-card);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  background: var(--nb-cream);
+  color: var(--nb-ink);
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-sm);
+  box-shadow: 0 3px 0 var(--nb-frame-light);
   opacity: 1;
   filter: none;
 
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 
   transition:
     transform 0.08s ease,
-    background-color 0.2s ease,
+    box-shadow 0.08s ease,
     opacity 0.2s ease,
     filter 0.2s ease;
 }
 
 .settings-btn:active {
-  transform: scale(0.96);
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
 .settings-btn.danger {
-  color: var(--danger);
-  border-color: var(--danger);
+  color: #b3261e;
+  border-color: #b3261e;
 }
 
 .settings-info {
   margin-top: 12px;
   padding: 12px 14px;
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  border: 2px solid var(--nb-frame);
   font-size: 12px;
   line-height: 1.5;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 /* =========================
    Réduction des animations
    ========================= */
 .settings-btn.primary {
-  background: var(--gold);
-  color: #241a00;
-  border-color: var(--gold);
+  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
+  color: #4a2f06;
+  border-color: var(--nb-gold-dark);
+  box-shadow: 0 3px 0 var(--nb-gold-deep);
   font-weight: 800;
+}
+
+.settings-btn.disabled,
+.settings-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (prefers-reduced-motion: reduce) {

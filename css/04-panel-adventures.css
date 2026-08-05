@@ -10,7 +10,7 @@
   padding: 12px;
 
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--nb-frame);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-soft);
 }

@@ -64,4 +64,53 @@
      Ombres
      ========================= */
   --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.18); /* Ombre douce globale */
+
+  /* ============================================================
+     v2.31 — NOUVEAU DESIGN (thème clair "parchemin")
+     Tokens séparés des anciens ci-dessus : le temps de la migration
+     progressive écran par écran, les deux systèmes coexistent. Les
+     écrans pas encore migrés continuent d'utiliser les tokens
+     d'origine (bg-dark, bg-card, text...) sans aucun changement.
+     Une fois TOUS les écrans migrés (fin du chantier), on pourra
+     supprimer les anciens tokens et renommer ceux-ci plus simplement.
+     ============================================================ */
+
+  /* Fonds */
+  --nb-shell: #171224;        /* cadre sombre autour de l'app (visible aux bords, comme le "téléphone" de la maquette) */
+  --nb-cream: #f6ecd9;         /* fond crème principal des cartes */
+  --nb-cream-alt: #efe0c2;     /* variante légèrement plus foncée (zones secondaires, rayures) */
+  --nb-cream-deep: #e4cfa0;    /* encore plus foncée, pour les zones creusées/inactives */
+
+  /* Bordures "BD" épaisses, contraste marqué */
+  /* v2.44 : bordure principale repointée vers un doré sobre (avant :
+     encre sombre #241b3a) — demande explicite "bordures dorées
+     partout". Comme --nb-frame est déjà LE token de bordure utilisé
+     par ~59 règles dans toute l'app (cartes, boutons, HUD, modales,
+     barres de vie...), ce seul changement suffit à tout mettre à
+     jour d'un coup. --nb-frame-light (séparateurs internes, ombres
+     "3D") n'est pas touché, il reste comme avant. */
+  --nb-frame: var(--nb-gold-dark);
+  --nb-frame-light: #d8c49a;   /* bordure claire, séparations internes sur fond crème */
+
+  /* Texte (inversé par rapport à l'ancien thème : sombre sur clair) */
+  --nb-ink: #3a2c1a;            /* texte principal, brun très foncé */
+  --nb-ink-dim: #8a7a5c;        /* texte secondaire */
+  --nb-ink-inverse: #f6ecd9;    /* texte clair, pour les fonds sombres (barre du haut, boutons) */
+
+  /* Or (réutilise les mêmes teintes que l'ancien thème, l'accent doré fonctionne dans les deux) */
+  --nb-gold: #f0aa3e;
+  --nb-gold-dark: #c27f1f;
+  --nb-gold-deep: #8a5c14;
+
+  /* Bleu gemme (essence) */
+  --nb-blue: #4fa8e8;
+  --nb-blue-dark: #2c7dbf;
+
+  /* Rayons et ombres */
+  --nb-radius-sm: 10px;
+  --nb-radius-md: 16px;
+  --nb-radius-lg: 22px;
+  --nb-radius-pill: 999px;
+  --nb-shadow-card: 0 3px 0 rgba(36, 27, 58, 0.9), 0 6px 14px rgba(0, 0, 0, 0.25);
+  --nb-shadow-btn: 0 3px 0 var(--nb-gold-deep);
 }

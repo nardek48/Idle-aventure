@@ -8,9 +8,9 @@
    ========================= */
 .map-grid {
   overflow: hidden;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
   margin-bottom: 12px;
 }
 
@@ -20,7 +20,7 @@
   align-items: center;
   padding: 10px 14px;
   font-size: 13px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--nb-frame);
 }
 
 .map-row:last-child {
@@ -28,12 +28,12 @@
 }
 
 .map-label {
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .map-value {
   font-weight: 700;
-  color: var(--text);
+  color: var(--nb-ink);
 }
 
 /* =========================
@@ -51,8 +51,8 @@
   aspect-ratio: 3 / 2;
   padding: 0;
   overflow: hidden;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
+  border-radius: var(--nb-radius-md);
+  border: 1px solid var(--nb-frame);
   background-color: #0f1220;
   background-size: cover;
   background-position: center;
@@ -80,7 +80,7 @@
   left: 8px;
   padding: 2px 9px;
   border-radius: 999px;
-  background: var(--gold);
+  background: var(--nb-gold);
   color: #241a00;
   font-size: 10px;
   font-weight: 800;
@@ -146,8 +146,8 @@
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border);
+  background: var(--nb-cream-alt);
+  border: 1px solid var(--nb-frame);
   font-size: 16px;
 }
 
@@ -164,9 +164,9 @@
    ========================= */
 .map-world-card-detail {
   overflow: hidden;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
   padding: 14px;
 }
 
@@ -183,14 +183,14 @@
   font-size: 11px;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .map-world-title {
   font-size: 18px;
   font-weight: 800;
   line-height: 1.2;
-  color: var(--text);
+  color: var(--nb-ink);
 }
 
 .map-world-status {
@@ -207,7 +207,7 @@
   font-size: 12px;
   font-style: italic;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(58, 44, 26, 0.75);
 }
 
 .map-world-status.status-current {
@@ -221,35 +221,35 @@
 }
 
 .map-world-status.status-locked {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-dim);
+  background: var(--nb-cream-deep);
+  color: var(--nb-ink-dim);
 }
 
 .map-current-adventure {
   margin-bottom: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
   font-size: 13px;
 }
 
 .map-current-adventure span {
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .map-lock-hint {
   margin-bottom: 12px;
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid rgba(125, 211, 252, 0.3);
+  border: 1px solid var(--nb-frame);
   background: rgba(125, 211, 252, 0.08);
 }
 
 .map-lock-hint-text {
   font-size: 12px;
   line-height: 1.5;
-  color: var(--text);
+  color: var(--nb-ink);
   margin-bottom: 10px;
 }
 
@@ -257,7 +257,7 @@
   width: 100%;
   padding: 9px 10px;
   border-radius: 10px;
-  border: 1px solid rgba(125, 211, 252, 0.5);
+  border: 1px solid var(--nb-frame);
   background: rgba(125, 211, 252, 0.15);
   color: #7dd3fc;
   font-size: 12px;
@@ -274,12 +274,12 @@
 .map-adventure-item {
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
 }
 
 .map-adventure-item.is-current {
-  border-color: var(--gold);
+  border-color: var(--nb-gold);
   background: rgba(255, 200, 61, 0.08);
 }
 
@@ -308,20 +308,20 @@
 .map-adventure-name {
   font-size: 14px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--nb-ink);
 }
 
 .map-adventure-boss {
   font-size: 11px;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--nb-gold);
 }
 
 .map-adventure-text,
 .map-adventure-meta {
   font-size: 12px;
   line-height: 1.45;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .map-adventure-meta {
@@ -332,11 +332,22 @@
    Fond dynamique des panels
 ========================= */
 #panel-container.panel-world-bg {
+  position: relative;
+}
+
+#panel-container.panel-world-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background-image: var(--panel-bg-image);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: scroll;
+  filter: blur(5px) brightness(0.45);
+  transform: scale(1.08); /* évite les bords flous visibles au bord du panel */
 }
 
 #panel-container.panel-world-bg > * {
@@ -350,32 +361,7 @@
 }
 
 /* Cartes du panel : fond vitrifié léger (mais pas les vignettes de monde,
-   qui ont déjà leur propre illustration en fond) */
-#panel-container.panel-world-bg .upgrade-card,
-#panel-container.panel-world-bg .potion-card,
-#panel-container.panel-world-bg .equip-shop-card,
-#panel-container.panel-world-bg .talent-summary,
-#panel-container.panel-world-bg .eq-hero-card,
-#panel-container.panel-world-bg .eq-orbit-slot,
-#panel-container.panel-world-bg .set-bonus,
-#panel-container.panel-world-bg .quest-card,
-#panel-container.panel-world-bg .prestige-section,
-#panel-container.panel-world-bg .ascension-conditions,
-#panel-container.panel-world-bg .panel-card,
-#panel-container.panel-world-bg .dungeon-active-card,
-#panel-container.panel-world-bg .aether-shop-card,
-#panel-container.panel-world-bg .settings-info,
-#panel-container.panel-world-bg .char-header,
-#panel-container.panel-world-bg .ability-card,
-#panel-container.panel-world-bg .stat-chip,
-#panel-container.panel-world-bg .map-grid,
-#panel-container.panel-world-bg .map-world-card-detail,
-#panel-container.panel-world-bg .shop-item.village-item,
-#panel-container.panel-world-bg .village-skyline,
-#panel-container.panel-world-bg #log-container,
-#panel-container.panel-world-bg .log-entry {
-  background: rgba(20, 16, 40, 0.55);
-  border-color: rgba(255, 255, 255, 0.10);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-}
+   qui ont déjà leur propre illustration en fond, ni les cartes déjà
+   migrées vers le nouveau design crème — voir css/00-components.css
+   et le chantier de refonte visuelle v2.31+, qui les rend opaques
+   par construction). */

@@ -33,7 +33,11 @@ function buildEquipShopHTML() {
     EquipShopManager.checkRefresh();
   }
 
-  var h = '<div class="equip-shop-timer">🔄 Renouvellement dans ' + esc(EquipShopManager.timeUntilRefresh()) + '</div>';
+  var manualCost = EquipShopManager.getManualRefreshCost();
+  var canRefresh = (game.gold || 0) >= manualCost;
+
+  var h = '<div class="equip-shop-timer">🔄 Renouvellement gratuit dans ' + esc(EquipShopManager.timeUntilRefresh()) + '</div>';
+  h += '<button class="settings-btn' + (canRefresh ? '' : ' disabled') + '" type="button" ' + (canRefresh ? 'onclick="EquipShopManager.manualRefresh()"' : 'disabled') + '>🔄 Renouveler maintenant (' + formatNumber(manualCost) + ' or)</button>';
   h += '<div class="equip-shop-grid">';
 
   (game.equipShopStock || []).forEach(function (item) {

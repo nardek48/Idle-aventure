@@ -52,7 +52,7 @@ var SpecialAttackManager = {
 
     var baseDamage = (window.EquipmentManager && typeof EquipmentManager.effectiveTapDamage === "function")
       ? EquipmentManager.effectiveTapDamage()
-      : Math.max(1, Math.floor(game.tapDamage * game.tapMult));
+      : Math.max(1, Math.floor(game.tapDamage * game.tapMult) + Math.floor(game.equipFlatTapBonus || 0));
 
     game.lastSpecialUse = Date.now();
 

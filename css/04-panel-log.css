@@ -4,10 +4,10 @@
 .log-entry {
   margin-bottom: 4px;
   padding: 6px 8px;
-  border-left: 3px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  box-shadow: var(--shadow-soft);
+  border-left: 3px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  box-shadow: var(--nb-shadow-card);
   font-size: 13px;
   animation: logSlide 0.3s ease;
 }
@@ -21,7 +21,7 @@
 }
 
 .log-entry.zone {
-  border-left-color: var(--gold);
+  border-left-color: var(--nb-gold);
 }
 
 .log-entry.ascend {

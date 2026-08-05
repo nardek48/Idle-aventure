@@ -358,7 +358,7 @@ var CombatEngine = {
       for (var r = 0; r < rolls; r++) {
         if (window.LootSystem && typeof LootSystem.rollDrop === "function" && chance(lootChance)) {
           var drop = LootSystem.rollDrop();
-          if (drop && addLootToInventory(drop)) {
+          if (drop && addDropToInventory(drop)) {
             addLog("🎁 Objet trouvé : " + drop.name + " (" + drop.rarity + ")", "event");
             showToast("🎁 " + drop.name, 1800);
           }
@@ -398,9 +398,11 @@ var CombatEngine = {
       showToast(result.world.name, 2200);
     } else if (result && result.type === "cycle") {
       addLog("Le cycle recommence, les ennemis deviennent plus forts.", "zone");
+      if (typeof openCycleSummary === "function") openCycleSummary();
     } else if (result && result.type === "locked") {
       addLog("🔒 " + result.world.name + " est verrouillé (" + result.world.requiredAscension + " ascension(s) requise(s)). Le cycle recommence.", "zone");
       showToast("🔒 Ascensionne pour débloquer " + result.world.name, 2200);
+      if (typeof openCycleSummary === "function") openCycleSummary(result.world);
     }
 
     // Second souffle / Bourse profonde : récompense de fin de chapitre

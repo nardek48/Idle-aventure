@@ -63,6 +63,32 @@ function addLootToInventory(item) {
   return true;
 }
 
+/* v2.26 : autovente. Si activée (game.autoSellEquipment), tout
+   nouveau BUTIN (pas les achats à l'échoppe, qui passent directement
+   par addLootToInventory) dont la rareté est INFÉRIEURE à celle de
+   l'objet déjà équipé sur le même emplacement est vendu
+   automatiquement au lieu d'encombrer le sac. Renvoie true si
+   l'objet a été traité d'une façon ou d'une autre (ajouté ou vendu),
+   false seulement si le sac est plein ET qu'il n'a pas été vendu. */
+function addDropToInventory(item) {
+  if (!item) return false;
+
+  if (game.autoSellEquipment) {
+    var equippedItem = game.equipped ? game.equipped[item.slot] : null;
+    var equippedRank = equippedItem ? RARITY_ORDER.indexOf(equippedItem.rarity) : -1;
+    var dropRank = RARITY_ORDER.indexOf(item.rarity);
+
+    if (equippedItem && dropRank < equippedRank) {
+      var value = getEquipmentSellValue(item);
+      game.gold += value;
+      addLog("💰 " + item.name + " vendu automatiquement (+" + formatNumber(value) + " or)", "event");
+      return true;
+    }
+  }
+
+  return addLootToInventory(item);
+}
+
 var EquipmentSystem = {
   /* Équipe un objet de l'inventaire par son uid. Si un objet occupait
      déjà cet emplacement, il retourne dans l'inventaire (pas de perte). */
@@ -313,6 +339,18 @@ sortInventoryByType: function () {
 window.getEquipmentSellValue = getEquipmentSellValue;
 window.getEquipmentIconPath = getEquipmentIconPath;
 window.addLootToInventory = addLootToInventory;
+window.addDropToInventory = addDropToInventory;
+
+/* Bascule l'autovente et redessine l'écran Équipement pour refléter
+   le nouvel état du bouton. */
+function toggleAutoSellEquipment() {
+  game.autoSellEquipment = !game.autoSellEquipment;
+  addLog(game.autoSellEquipment ? "🤖 Autovente activée" : "🤖 Autovente désactivée", "event");
+  showToast(game.autoSellEquipment ? "Autovente activée" : "Autovente désactivée", 1300);
+  if (typeof renderPanel === "function") renderPanel();
+  saveGame();
+}
+window.toggleAutoSellEquipment = toggleAutoSellEquipment;
 window.MAX_INVENTORY_SIZE = MAX_INVENTORY_SIZE;
 window.sortInventoryByRarity = function () {
   EquipmentSystem.sortInventoryByRarity();

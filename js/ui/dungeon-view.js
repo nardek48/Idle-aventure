@@ -49,21 +49,23 @@ function buildDungeonTierCardHTML(tier) {
 function buildDungeonLobbyHTML() {
   var tickets = game.dungeonTickets || 0;
   var purchasedToday = game.dungeonTicketsPurchasedToday || 0;
-  var maxPerDay = DUNGEON_CONFIG.maxTicketPurchasesPerDay || 10;
+  var maxPerDay = DUNGEON_CONFIG.maxTicketPurchasesPerDay || 20;
   var remainingPurchases = Math.max(0, maxPerDay - purchasedToday);
-  var canBuyTicket = (game.essence || 0) >= DUNGEON_CONFIG.ticketCostEssence && remainingPurchases > 0;
+  var nextTicketCost = DungeonManager.getTicketBuyCost();
+  var canBuyTicket = (game.essence || 0) >= nextTicketCost && remainingPurchases > 0;
   var bestWave = game.dungeonBestWave || 0;
   var beatBoss = bestWave > DUNGEON_CONFIG.waveCount;
 
   var h = '<div class="panel-card">';
   h += '<h3>🎟️ Tickets de donjon</h3>';
-  h += '<p class="panel-sub">1 ticket gratuit par jour, valable pour n\u2019importe quel palier. Un ticket supplémentaire coûte ' + DUNGEON_CONFIG.ticketCostEssence + ' essence — limité à ' + maxPerDay + ' achats par jour.</p>';
+  h += '<p class="panel-sub">1 ticket gratuit par jour, valable pour n\u2019importe quel palier. Chaque ticket supplémentaire coûte de plus en plus cher au fil de la journée, en commençant à ' + formatNumber(DUNGEON_CONFIG.ticketCostEssence || 100) + ' essence — limité à ' + maxPerDay + ' achats par jour.</p>';
   h += '<div class="dungeon-ticket-row">';
   h += '<span class="dungeon-ticket-count">🎟️ ' + tickets + '</span>';
   h += '<span class="dungeon-ticket-reset">Renouvellement dans ' + esc(DungeonManager.timeUntilTicketReset()) + '</span>';
   h += '</div>';
   h += '<div class="dungeon-ticket-limit">Achats aujourd\u2019hui : ' + purchasedToday + ' / ' + maxPerDay + '</div>';
-  h += '<button class="settings-btn' + (canBuyTicket ? '' : ' disabled') + '" type="button" ' + (canBuyTicket ? 'onclick="DungeonManager.buyTicket()"' : 'disabled') + '>' + (remainingPurchases > 0 ? 'Acheter un ticket (' + DUNGEON_CONFIG.ticketCostEssence + ' essence)' : 'Limite journalière atteinte') + '</button>';
+  h += '<div class="dungeon-ticket-limit">Prix du prochain ticket : ' + formatNumber(nextTicketCost) + ' essence</div>';
+  h += '<button class="settings-btn' + (canBuyTicket ? '' : ' disabled') + '" type="button" ' + (canBuyTicket ? 'onclick="DungeonManager.buyTicket()"' : 'disabled') + '>' + (remainingPurchases > 0 ? 'Acheter un ticket (' + formatNumber(nextTicketCost) + ' essence)' : 'Limite journalière atteinte') + '</button>';
   h += '</div>';
 
   h += '<div class="panel-card">';

@@ -1,5 +1,5 @@
 /* =========================
-   Talents (v2.1 — cartes par palier)
+   Talents (v2.33 — nouveau design crème/or)
    ========================= */
 
 #panel-container[data-tab="talents"] {
@@ -18,18 +18,21 @@
 
 .talent-category-tab {
   padding: 8px 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: var(--nb-cream);
+  border: 2px solid var(--nb-frame);
   border-radius: 999px;
-  color: var(--text);
+  box-shadow: 0 3px 0 var(--nb-frame-light);
+  color: var(--nb-ink);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
 
 .talent-category-tab.is-active {
-  border-color: var(--aether-dark);
-  background: color-mix(in srgb, var(--aether-dark) 18%, var(--bg-card));
+  border-color: var(--nb-gold-dark);
+  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
+  box-shadow: 0 3px 0 var(--nb-gold-deep);
+  color: #4a2f06;
 }
 
 .talent-summary {
@@ -37,9 +40,11 @@
   max-width: 460px;
   margin: 0 auto 14px;
   padding: 10px 12px;
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  border: 2px solid var(--nb-frame);
+  box-shadow: var(--nb-shadow-card);
+  color: var(--nb-ink);
 }
 
 .talent-summary-header {
@@ -49,7 +54,7 @@
   font-size: 12px;
   font-weight: 700;
   margin-bottom: 8px;
-  opacity: 0.9;
+  color: var(--nb-ink);
 }
 
 .talent-summary-list {
@@ -68,7 +73,8 @@
   font-size: 12px;
   padding: 4px 6px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
 }
 
 .talent-summary-icon {
@@ -77,7 +83,7 @@
 
 .talent-summary-empty {
   font-size: 12px;
-  opacity: 0.7;
+  color: var(--nb-ink-dim);
   text-align: center;
   padding: 6px 0 10px;
 }
@@ -85,10 +91,10 @@
 .talent-respec-btn {
   width: 100%;
   padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--rarity-rare, #3b82f6) 20%, var(--bg-card));
-  color: var(--text);
+  border-radius: var(--nb-radius-sm);
+  border: 2px solid var(--nb-frame);
+  background: var(--nb-blue);
+  color: #fff;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -108,22 +114,23 @@
   max-width: 460px;
   margin: 0 auto;
   padding: 14px;
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  border: 2px solid var(--nb-frame);
+  box-shadow: var(--nb-shadow-card);
 }
 
 /* Teinte douce par catégorie, sans dépendre d'une image */
 .talent-board-combat {
-  background: radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.10), transparent 65%), var(--bg-card);
+  background: radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.08), transparent 65%), var(--nb-cream);
 }
 
 .talent-board-fortune {
-  background: radial-gradient(circle at 50% 0%, rgba(250, 199, 117, 0.12), transparent 65%), var(--bg-card);
+  background: radial-gradient(circle at 50% 0%, rgba(240, 170, 62, 0.10), transparent 65%), var(--nb-cream);
 }
 
 .talent-board-survival {
-  background: radial-gradient(circle at 50% 0%, rgba(74, 222, 128, 0.10), transparent 65%), var(--bg-card);
+  background: radial-gradient(circle at 50% 0%, rgba(74, 222, 128, 0.10), transparent 65%), var(--nb-cream);
 }
 
 .talent-tier-label {
@@ -132,7 +139,7 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
   text-align: center;
 }
 
@@ -157,37 +164,39 @@
   gap: 4px;
   padding: 10px;
   text-align: center;
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream-alt);
+  border: 2px solid var(--nb-frame);
+  box-shadow: 0 2px 0 var(--nb-frame-light);
   cursor: pointer;
   transition: transform 0.1s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .talent-tier-card:active {
-  transform: scale(0.97);
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
 .talent-tier-card.unlocked {
-  background: rgba(74, 222, 128, 0.10);
-  border-color: rgba(74, 222, 128, 0.45);
+  background: #eaf7ea;
+  border-color: var(--hp-green);
 }
 
 .talent-tier-card.available {
-  border-color: #efc775;
-  background: rgba(239, 199, 117, 0.10);
+  border-color: var(--nb-gold-dark);
+  background: #fff3d6;
 }
 
 .talent-tier-card.locked {
-  opacity: 0.62;
+  opacity: 0.65;
 }
 
 .talent-tier-card.capstone {
-  border-color: rgba(192, 132, 252, 0.4);
+  border-color: #a855f7;
 }
 
 .talent-tier-card.capstone.available {
-  border-color: #efc775;
+  border-color: var(--nb-gold-dark);
 }
 
 .talent-tier-icon {
@@ -199,7 +208,7 @@
   justify-content: center;
   font-size: 16px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--nb-cream-deep);
 }
 
 .talent-icon-img {
@@ -216,23 +225,23 @@
 }
 
 .talent-tier-card.unlocked .talent-tier-icon {
-  background: rgba(74, 222, 128, 0.18);
+  background: rgba(74, 222, 128, 0.25);
 }
 
 .talent-tier-card.available .talent-tier-icon {
-  background: rgba(239, 199, 117, 0.2);
+  background: rgba(240, 170, 62, 0.3);
 }
 
 .talent-tier-name {
   font-size: 12px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--nb-ink);
   line-height: 1.2;
 }
 
 .talent-tier-effect {
   font-size: 10px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
   line-height: 1.3;
 }
 
@@ -243,15 +252,15 @@
 }
 
 .talent-tier-status.status-unlocked {
-  color: #4ade80;
+  color: #2f8f4e;
 }
 
 .talent-tier-status.status-available {
-  color: #efc775;
+  color: var(--nb-gold-deep);
 }
 
 .talent-tier-status.status-locked {
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
   font-weight: 400;
 }
 

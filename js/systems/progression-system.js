@@ -647,6 +647,7 @@ function ascendNow() {
     if (pendingAetherBonus > 0 && game.pendingPotionBonuses) {
       game.pendingPotionBonuses.aetherNext = 0;
     }
+    game.aetherElixirStackCount = 0;
 
     addLog("Ascension accomplie : +" + gain + " Aether", "event");
 

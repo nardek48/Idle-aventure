@@ -8,12 +8,12 @@
   display: flex;
   gap: 14px;
   padding: 16px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-panel) 100%);
-  border: 1px solid var(--border);
+  border-radius: var(--nb-radius-md);
+  background: linear-gradient(135deg, var(--nb-cream) 0%, var(--nb-cream-alt) 100%);
+  border: 1px solid var(--nb-frame);
   overflow: hidden;
   margin-bottom: 14px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--nb-shadow-card);
 }
 
 .char-header::before {
@@ -31,7 +31,7 @@
   flex-shrink: 0;
   border-radius: 16px;
   overflow: hidden;
-  border: 2px solid var(--gold);
+  border: 2px solid var(--nb-gold);
   box-shadow: 0 0 0 4px rgba(255, 200, 61, 0.15), 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
@@ -50,21 +50,21 @@
   justify-content: center;
   font-size: 32px;
   font-weight: 700;
-  color: var(--text-dim);
-  background: var(--bg-panel-light);
+  color: var(--nb-ink-dim);
+  background: var(--nb-cream-alt);
 }
 
 .char-level-badge {
   position: absolute;
   bottom: -4px;
   right: -4px;
-  background: var(--gold);
+  background: var(--nb-gold);
   color: #241a00;
   font-size: 11px;
   font-weight: 800;
   padding: 2px 7px;
   border-radius: 999px;
-  border: 2px solid var(--bg-dark);
+  border: 2px solid var(--nb-shell);
 }
 
 .char-info {
@@ -76,7 +76,7 @@
 
 .char-class {
   font-size: 11px;
-  color: var(--gold);
+  color: var(--nb-gold);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -86,7 +86,7 @@
   font-size: 19px;
   font-weight: 800;
   margin: 2px 0 8px;
-  color: var(--text);
+  color: var(--nb-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -105,7 +105,7 @@
 
 .char-xp-label {
   font-size: 10px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
   width: 38px;
   flex-shrink: 0;
 }
@@ -114,7 +114,7 @@
   flex: 1;
   height: 7px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--nb-cream-deep);
   overflow: hidden;
 }
 
@@ -134,7 +134,7 @@
 
 .char-xp-text {
   font-size: 10px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -145,7 +145,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
   margin: 16px 0 8px;
 }
 
@@ -161,18 +161,18 @@
   padding: 10px 12px;
   margin-bottom: 8px;
   border-radius: 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame);
 }
 
 .ability-card.attack {
   border-color: rgba(239, 68, 68, 0.4);
-  background: linear-gradient(180deg, rgba(239, 68, 68, 0.10), var(--bg-card));
+  background: #fdeaea;
 }
 
 .ability-card.defense {
   border-color: rgba(96, 165, 250, 0.4);
-  background: linear-gradient(180deg, rgba(96, 165, 250, 0.10), var(--bg-card));
+  background: #e8f6ff;
 }
 
 .ability-icon-wrap {
@@ -184,7 +184,7 @@
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--nb-cream-alt);
 }
 
 .ability-body {
@@ -195,12 +195,12 @@
 .ability-name {
   font-size: 13px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--nb-ink);
 }
 
 .ability-desc {
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
   line-height: 1.4;
   margin-top: 2px;
 }
@@ -209,14 +209,14 @@
   flex-shrink: 0;
   font-size: 10px;
   font-weight: 700;
-  color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--nb-ink-dim);
+  background: var(--nb-cream-alt);
   padding: 3px 8px;
   border-radius: 999px;
 }
 
 .ability-cd.is-active {
-  color: var(--gold);
+  color: var(--nb-gold);
   background: rgba(255, 200, 61, 0.1);
 }
 
@@ -235,8 +235,8 @@
 .stat-chip {
   padding: 10px 12px;
   border-radius: 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame);
 }
 
 .stat-chip-top {
@@ -249,7 +249,7 @@
 
 .stat-chip-label {
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -261,14 +261,14 @@
 .stat-chip-value {
   font-size: 14px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--nb-ink);
   flex-shrink: 0;
 }
 
 .stat-chip-bar {
   height: 5px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--nb-cream-deep);
   overflow: hidden;
 }
 
@@ -285,9 +285,9 @@
   margin-top: 14px;
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  color: var(--text);
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream);
+  color: var(--nb-ink);
   font-size: 13px;
   font-weight: 700;
   text-align: center;

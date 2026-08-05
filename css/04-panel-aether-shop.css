@@ -4,9 +4,9 @@
 ============================================================ */
 
 :root {
-  --aether-tint-strong: rgb(60 78 150 / 40%);
-  --aether-tint-soft: rgb(60 78 150 / 14%);
-  --aether-tint-border: rgb(170 190 255 / 22%);
+  --aether-tint-strong: #e4ecff;
+  --aether-tint-soft: var(--nb-cream);
+  --aether-tint-border: var(--nb-frame);
 }
 
 #panel-container[data-tab="ascension"] {
@@ -41,8 +41,8 @@
     var(--aether-tint-soft)
   );
   border: 1px solid var(--aether-tint-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-soft);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-card);
 }
 
 .prestige-icon {
@@ -61,7 +61,7 @@
   margin-top: 4px;
   font-size: 12px;
   line-height: 1.5;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .prestige-gain {
@@ -76,7 +76,7 @@
   margin-top: 10px;
   padding: 10px 22px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--nb-radius-sm);
   background: var(--aether-dark);
   color: #fff;
   font-size: 13px;
@@ -110,10 +110,10 @@
   max-width: 620px;
   margin: 0 auto 10px;
   padding: 12px 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  color: var(--text);
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  color: var(--nb-ink);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -124,7 +124,7 @@
 }
 
 .ascension-lock {
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
   font-weight: 700;
 }
 
@@ -151,8 +151,8 @@
     var(--aether-tint-soft)
   );
   border: 1px solid var(--aether-tint-border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-soft);
+  border-radius: var(--nb-radius-sm);
+  box-shadow: var(--nb-shadow-card);
 }
 
 .aether-shop-icon {
@@ -198,7 +198,7 @@
   margin-top: 2px;
   font-size: 12px;
   line-height: 1.45;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .aether-shop-btn {

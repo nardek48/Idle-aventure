@@ -172,14 +172,24 @@ function switchTab(tabName) {
   });
 
   var combatMode = tabName === "combat";
-  var combatBtn = document.querySelector('.tab-btn[data-tab="combat"]');
-  var menuBtn = document.querySelector('.tab-btn[data-tab="menu"]');
-  if (combatMode && combatBtn) combatBtn.classList.add("active");
-  if (!combatMode && menuBtn) menuBtn.classList.add("active");
+
+  // v2.38 : la barre du bas a maintenant 5 boutons dédiés (Combat,
+  // Village, Donjon, Héros, Menu). Si l'onglet actif a son propre
+  // bouton (data-tab correspondant), on l'allume directement ; sinon
+  // (Boutique, Talents, Quêtes, Ascension...) c'est forcément un
+  // écran ouvert depuis le menu principal, donc on allume "Menu".
+  var directBtn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
+  if (directBtn) {
+    directBtn.classList.add("active");
+  } else {
+    var menuBtn = document.querySelector('.tab-btn[data-tab="menu"]');
+    if (menuBtn) menuBtn.classList.add("active");
+  }
 
   if (gameArea) gameArea.style.display = combatMode ? "flex" : "none";
   if (statsBar) statsBar.style.display = combatMode ? "flex" : "none";
   if (panel) panel.classList.toggle("active", !combatMode);
+  document.body.classList.toggle("combat-active", combatMode);
   updatePanelBackground();
   renderPanel();
 }
@@ -198,6 +208,7 @@ function renderAll() {
   if (typeof renderHealButtons === "function") renderHealButtons();
   if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
   if (typeof renderDefenseButton === "function") renderDefenseButton();
+  if (typeof renderCombatHeroMini === "function") renderCombatHeroMini();
   if (needsHeroSetup()) {
     openHeroSelection();
   }

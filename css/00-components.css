@@ -1,0 +1,135 @@
+/* ============================================================
+Quest Idle — css/00-components.css
+v2.31 — Composants RÉUTILISABLES du nouveau design (thème clair
+"parchemin"). Le but de ce fichier : que la grande majorité des
+futurs ajustements visuels se fassent ICI plutôt que dans chacun des
+~20 fichiers de panel — un changement sur ".nb-card" doit se
+répercuter partout où une carte est utilisée, sans avoir à toucher
+20 fichiers un par un.
+
+Convention : tout ce qui appartient au nouveau design est préfixé
+"nb-" (Nouveau Bar/design), pour ne jamais entrer en collision avec
+les classes de l'ancien thème pendant la migration progressive.
+============================================================ */
+
+/* =========================
+   Cartes
+   ========================= */
+.nb-card {
+  background: var(--nb-cream);
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-card);
+  color: var(--nb-ink);
+  padding: 12px 14px;
+}
+
+.nb-card-alt {
+  background: var(--nb-cream-alt);
+}
+
+/* =========================
+   Boutons
+   ========================= */
+.nb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: var(--nb-radius-sm);
+  border: 2px solid var(--nb-frame);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.nb-btn:active {
+  transform: translateY(2px);
+  box-shadow: none !important;
+}
+
+.nb-btn-primary {
+  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
+  color: #4a2f06;
+  box-shadow: var(--nb-shadow-btn);
+}
+
+.nb-btn-secondary {
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  box-shadow: 0 3px 0 var(--nb-frame-light);
+}
+
+.nb-btn.is-disabled,
+.nb-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-btn:active {
+    transform: none;
+  }
+}
+
+/* =========================
+   Tuiles d'icône (grille de menu, emplacements...)
+   ========================= */
+.nb-icon-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream-alt);
+  border: 2px solid var(--nb-frame);
+  color: var(--nb-ink);
+}
+
+/* =========================
+   Pastille de ressource (barre du haut : or/essence/aether)
+   ========================= */
+.nb-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px 5px 6px;
+  border-radius: var(--nb-radius-pill);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--nb-ink-inverse);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.nb-pill-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* =========================
+   Titres de section
+   ========================= */
+.nb-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  text-align: center;
+}
+
+.nb-subtitle {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--nb-ink-dim);
+}

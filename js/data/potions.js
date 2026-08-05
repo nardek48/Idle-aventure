@@ -83,6 +83,7 @@ var POTIONS_DB = [
     bonus: 0.10,
     durationMin: null,
     cost: 10000,
+    costMult: 2.5,   // v2.26 : coût qui grimpe à chaque achat depuis la dernière ascension (voir game.aetherElixirStackCount) — empêche d'en acheter 10 d'un coup pour un bonus démesuré
     rarity: "rare"
   }
 ];

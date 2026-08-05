@@ -4,10 +4,10 @@
 .quest-card {
   margin-bottom: 8px;
   padding: 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-soft);
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-card);
 }
 
 .quest-card.completed {
@@ -35,7 +35,7 @@
 .quest-desc {
   margin-bottom: 6px;
   font-size: 12px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .quest-progress-bar {
@@ -61,13 +61,13 @@
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .quest-reward {
   font-size: 12px;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--nb-gold);
 }
 
 .quest-claim-btn {
@@ -108,7 +108,7 @@
   margin-bottom: 8px;
   text-align: center;
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 #panel-container[data-tab="quests"] {
@@ -128,9 +128,9 @@
 .quest-mode-btn {
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  color: var(--text);
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream);
+  color: var(--nb-ink);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -140,7 +140,7 @@
   margin-bottom: 12px;
   text-align: center;
   font-size: 12px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .quest-list {

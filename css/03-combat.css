@@ -1,15 +1,184 @@
 /* =========================
-   Zone d’affichage de l’ennemi
+   Mini-carte héros (v2.40 — portrait + niveau + PV réduits, posée en
+   survol du coin haut-gauche de la zone de jeu). #game-area a déjà
+   position:relative (voir css/02-layout.css), donc ce positionnement
+   absolu est relatif à la zone de jeu, pas à toute la page.
+   v2.61 : agrandi d'environ 20% (portrait + mini-barre de PV) à la
+   demande de l'utilisateur.
+   v2.69 : repositionné manuellement par l'utilisateur (top 8px→75px,
+   overflow:hidden + border-radius ajoutés) — l'image du cadre n'était
+   pas bien placée.
    ========================= */
-#enemy-display {
-  position: relative;
-  flex: 1;
+.combat-hero-mini {
+  position: absolute;
+  top: 1%;
+  left: 12px;
+  z-index: 6;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  width: clamp(64.03px, calc(31.63px + 10.13vw), 75.17px);
+  overflow: hidden;
+  border-radius: var(--nb-radius-sm); /* même rayon que le cadre */
+}
+
+.combat-hero-mini-portrait {
+  position: relative;
   width: 100%;
-  min-height: 180px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--nb-radius-sm);
+  border: none;
+  background: var(--nb-cream-alt);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  overflow: visible;
+}
+
+/* v2.64 : cadre doré fourni par l'utilisateur
+   (images/Borders/cadre-hero.png) posé en surcouche par-dessus le
+   portrait (image ou placeholder "?") — centre transparent, donc le
+   portrait reste visible au travers, seul le cadre recouvre les
+   bords.
+   v2.69 : transform: scale(1.05, 1.11) ajouté par l'utilisateur pour
+   ajuster le cadre au bon endroit sur le portrait. */
+.combat-hero-mini-portrait::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: url('../images/Borders/cadre-hero.png') center / 100% 100% no-repeat;
+  transform: scale(1.05, 1.11);
+  transform-origin: center;
+  pointer-events: none;
+}
+
+/* v2.66 : fond ajouté sur .combat-hero-mini-portrait — l'image étant
+   maintenant en retrait (inset, voir v2.65 ci-dessous), l'espace
+   entre elle et la fenêtre du cadre était transparent et laissait
+   voir le décor du monde derrière (effet d'ombre/tache irrégulière).
+   v2.65 : image inset (au lieu de 100%/100%) pour que le portrait
+   tienne DANS la fenêtre visible du cadre au lieu de déborder dessous
+   — le cadre a une bordure épaisse + un losange qui empiète en haut,
+   donc un portrait plein cadre se faisait rogner par-dessus.
+   v2.69 : inset retiré sur .combat-hero-mini-img par l'utilisateur
+   (repositionnement manuel). */
+.combat-hero-mini-img {
+  position: absolute;
+  width: auto;
+  height: auto;
+  object-fit: cover;
+  display: block;
+  border-radius: calc(var(--nb-radius-sm) - 4px);
+}
+
+.combat-hero-mini-placeholder {
+  position: absolute;
+  inset: 14% 10% 10%;
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(22.08px, calc(10.91px + 3.49vw), 25.92px);
+  font-weight: 700;
+  color: var(--nb-ink-dim);
+  background: var(--nb-cream-alt);
+  border-radius: calc(var(--nb-radius-sm) - 4px);
+}
+
+/* v2.63 : cadre doré fourni par l'utilisateur
+   (images/Borders/niveau-hero.png), fond opaque donc pas besoin de
+   filet de secours en dessous.
+   v2.65 : z-index:3 ajouté — doit rester au-dessus du cadre du
+   portrait (::after, z-index:2), qui sinon le recouvrait. Ordre voulu
+   : image du héros < cadre du héros < badge de niveau. */
+.combat-hero-mini-level {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  z-index: 3;
+  transform: translateX(-50%);
+  padding: clamp(1.06px, calc(0.53px + 0.16vw), 1.24px) clamp(6.35px, calc(3.14px + 1vw), 7.45px);
+  background: url('../images/Borders/niveau-hero.png') center / 100% 100% no-repeat;
+  border: none;
+  color: var(--nb-ink);
+  font-size: clamp(9.52px, calc(4.7px + 1.51vw), 11.18px);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.combat-hero-mini-hp-bar {
+  position: relative;
+  width: 100%;
+  height: clamp(15.46px, calc(7.63px + 2.45vw), 18.14px);
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+}
+
+/* v2.63 : cadre doré fourni par l'utilisateur
+   (images/Borders/pv-hero.png) posé en surcouche par-dessus le
+   remplissage — centre transparent, donc le dégradé de PV et le texte
+   restent visibles au travers, seul l'anneau doré recouvre. Pas de
+   pointes décoratives qui dépassent ici (contrairement au cadre de PV
+   ennemi), donc pas besoin de sous-conteneur séparé pour le découpage. */
+.combat-hero-mini-hp-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: url('../images/Borders/pv-hero.png') center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.combat-hero-mini-hp-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--hp-red), var(--hp-yellow), var(--hp-green));
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.combat-hero-mini-hp-fill.low {
+  background: var(--hp-red);
+  animation: hpLowPulse 1.2s ease-in-out infinite;
+}
+
+.combat-hero-mini-hp-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(8.83px, calc(4.37px + 1.39vw), 10.37px);
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* =========================
+   Zone d’affichage de l’ennemi
+   ========================= */
+/* v2.62 : "flex:1 + justify-content:center" retirés — ça faisait
+   grandir #enemy-display bien au-delà de son contenu réel (nom + PV +
+   sprite), avec le surplus centré À L'INTÉRIEUR de cette boîte
+   gonflée, créant un grand vide entre le sprite et les boutons
+   d'attaque spéciale juste en dessous. Maintenant #enemy-display fait
+   la taille de son contenu, et c'est #game-area (justify-content:
+   center, voir plus haut dans ce fichier) qui centre le groupe entier
+   (nom+PV+sprite + boutons + bouton Attaque) comme un seul bloc. Petit
+   espace contrôlé ajouté en dessous à la place (margin-bottom: 5%). */
+/* v2.68 : margin-bottom passé de 5% à 3% (chaîne d'espacement
+   régulière demandée par l'utilisateur : monstre → boutons spéciaux →
+   bouton Attaque → barre de stats, 3% entre chaque). */
+#enemy-display {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: clamp(157.32px, calc(77.73px + 24.87vw), 184.68px);
+  margin-bottom: 3%;
   text-align: center;
 }
 
@@ -33,28 +202,30 @@
 /* =========================
    Ennemi principal : emoji ou image
    ========================= */
+/* v2.62 : taille réduite de 5% à la demande de l'utilisateur. */
 #enemy-emoji {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: min(72vw, 240px);
-  height: min(72vw, 240px);
-  min-width: 180px;
-  min-height: 180px;
+  width: min(68.4vw, 228px);
+  height: min(68.4vw, 228px);
+  min-width: clamp(157.32px, calc(77.73px + 24.87vw), 184.68px);
+  min-height: clamp(157.32px, calc(77.73px + 24.87vw), 184.68px);
   margin: 0 auto;
   padding: 0;
   overflow: visible;
 
-  font-size: 72px;
+  font-size: clamp(66.24px, calc(32.73px + 10.47vw), 77.76px);
   line-height: 1;
   cursor: pointer;
 
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+  transform: translateY(-25px);
   transition: transform 0.08s ease, filter 0.2s ease;
 }
 
 #enemy-emoji.boss {
-  font-size: 88px;
+  font-size: clamp(80.96px, calc(40px + 12.8vw), 95.04px);
   filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.6));
 }
 
@@ -94,60 +265,89 @@
 /* =========================
    Nom et compteur
    ========================= */
+/* v2.59 : cadre doré fourni par l'utilisateur
+   (images/Borders/nom-ennemi.png) — remplace le fond crème + bordure
+   CSS. La boîte reste "inline-block" (largeur pilotée par le texte du
+   nom), donc le ratio de l'image ne colle pas exactement à chaque nom
+   (court comme "Slime" ou long comme "Araignée géante") ; le losange
+   décoratif du haut reste centré quoi qu'il arrive (étirement 100%
+   100%, pas de découpe 9-slice — un seul motif centré ne se prête pas
+   bien au découpage en tuiles). Padding vertical augmenté pour laisser
+   la place aux liserés du haut/bas de l'image. */
 #enemy-name {
-  margin-top: 6px;
-  font-size: 17px;
-  font-weight: 700;
+  margin-top: 0px;
+  padding: 13px clamp(16px, calc(8px + 2.5vw), 20px) 6px;
+  display: inline-block;
+  font-size: clamp(13.8px, calc(6.82px + 2.18vw), 16.2px);
+  font-weight: 800;
   text-align: center;
+  color: var(--nb-ink);
+  background: url('../images/Borders/nom-ennemi.png') center / 100% 100% no-repeat;
+  border: none;
+  box-shadow: none;
+  max-width: 85%;
+  min-width: 150px;
+  box-sizing: border-box;
+
+  transform: translateY(-25px);
 }
 
-#enemy-affinity {
-  min-height: 16px;
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 700;
-  text-align: center;
-}
-
-#enemy-affinity.resist {
-  color: var(--hp-red, #ef4444);
-}
-
-#enemy-affinity.weak {
-  color: var(--hp-green, #22c55e);
-}
-
-#enemy-affinity.unarmed {
-  color: var(--hp-yellow, #fbbf24);
-}
-
-.enemy-counter,
-#enemy-counter {
-  margin-top: 6px;
-  font-size: 12px;
-  text-align: center;
-  color: var(--text-dim);
-}
+/* v2.58 : indicateur de résistance/point faible (#enemy-affinity)
+   retiré à la demande de l'utilisateur — voir renderEnemy() dans
+   ui/combat-view.js. La logique de calcul (getDamageAffinity() dans
+   systems/combat-engine.js) reste intacte, seul l'affichage a
+   disparu.
+   v2.60 : compteur "Kills X" (.enemy-counter / #enemy-counter) retiré
+   du même coup — données (game.killCounts) toujours suivies en
+   interne, seul l'affichage sous le monstre a disparu. */
 
 /* =========================
    Barre de vie ennemie
    ========================= */
+/* v2.61 : overflow:hidden + border-radius retirés d'ici (rognaient
+   les pointes décoratives du cadre image sur les côtés) — déplacés
+   sur .enemy-hp-bar-track ci-dessous, qui ne contient que le
+   remplissage rouge. */
 #enemy-hp-bar-wrapper {
   position: relative;
-  width: min(80%, 320px);
+  width: min(75%, 320px);
   max-width: 320px;
-  height: 24px;
-  margin-top: 8px;
+  height: clamp(26px, calc(13px + 4vw), 30px);   /* nettement plus haute */
+  margin-top: 0;
+  margin-bottom: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
+  border: none;
+
+  transform: translateY(-25px);
+}
+
+.enemy-hp-bar-track {
+  position: absolute;
+  inset: 3px 10px; /* haut/bas : 3 px — gauche/droite : 6 px */
   overflow: hidden;
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.5);
+  border-radius: 999px;
+  background: var(--nb-cream-deep);
+  box-shadow: var(--nb-shadow-card);
+}
+
+/* v2.58 : cadre doré fourni par l'utilisateur
+   (images/Borders/barre-pv-ennemi.png) posé en surcouche par-dessus
+   le remplissage — son centre est transparent, donc le dégradé rouge
+   (#enemy-hp-bar, largeur pilotée par le JS selon les PV restants) et
+   le texte "X / Y" restent visibles au travers, seul l'anneau doré
+   recouvre. pointer-events:none pour ne jamais bloquer un clic. */
+#enemy-hp-bar-wrapper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: url('../images/Borders/barre-pv-ennemi.png') center / 100% 100% no-repeat;
+  pointer-events: none;
 }
 
 #enemy-hp-bar {
   height: 100%;
-  border-radius: 10px;
-  background: linear-gradient(90deg, var(--hp-red), var(--hp-yellow), var(--hp-green));
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ef5555, #c62828);
   transition: width 0.12s ease;
 }
 
@@ -158,9 +358,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  font-size: clamp(10.12px, calc(5px + 1.6vw), 11.88px);
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* =========================
@@ -170,7 +371,7 @@
   position: absolute;
   z-index: 5;
   pointer-events: none;
-  font-size: 22px;
+  font-size: clamp(20.24px, calc(10px + 3.2vw), 23.76px);
   font-weight: 800;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
   animation: floatUp 0.8s ease-out forwards;
@@ -181,7 +382,7 @@
 }
 
 .float-dmg.crit {
-  font-size: 32px;
+  font-size: clamp(29.44px, calc(14.54px + 4.66vw), 34.56px);
   color: var(--crit);
   text-shadow:
     2px 2px 4px rgba(0, 0, 0, 0.9),
@@ -195,7 +396,7 @@
   position: absolute;
   z-index: 5;
   pointer-events: none;
-  font-size: 16px;
+  font-size: clamp(14.72px, calc(7.27px + 2.33vw), 17.28px);
   font-weight: 700;
   color: var(--gold);
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
@@ -203,45 +404,11 @@
 }
 
 /* =========================
-   Bloc XP héros
-   ========================= */
-.hud-hero-xp {
-  margin-top: 8px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.hud-hero-xp-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 6px;
-  font-size: 12px;
-}
-
-.hud-hero-xp-bar {
-  width: 100%;
-  height: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.hud-hero-xp-fill {
-  width: 0%;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #5b8cff 0%, #7d5cff 100%);
-  transition: width 0.2s ease;
-}
-
-/* =========================
    Bloc PV héros
    ========================= */
 .hud-hero-hp {
   margin-top: 6px;
-  padding: 8px 10px;
+  padding: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px) clamp(9.2px, calc(4.54px + 1.46vw), 10.8px);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.06);
 }
@@ -249,14 +416,14 @@
 .hud-hero-hp-top {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
   margin-bottom: 6px;
-  font-size: 12px;
+  font-size: clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
 }
 
 .hud-hero-hp-bar {
   width: 100%;
-  height: 8px;
+  height: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
   overflow: hidden;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
@@ -272,6 +439,25 @@
 
 .hud-hero-hp-fill.low {
   background: var(--hp-red);
+}
+
+/* =========================
+   v2.41 : la carte "❤️ Points de vie" sous le bouton Attaque a été
+   retirée (redondante avec la mini-barre de PV du héros ajoutée en
+   v2.40, voir .combat-hero-mini-hp-fill plus haut dans ce fichier).
+   L'animation de pouls "PV bas" est conservée mais réappliquée à la
+   mini-barre ci-dessous.
+   ========================= */
+
+@keyframes hpLowPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .combat-hero-mini-hp-fill.low {
+    animation: none;
+  }
 }
 
 /* =========================
@@ -299,8 +485,7 @@
    ========================= */
 @media (prefers-reduced-motion: reduce) {
   #enemy-emoji,
-  #enemy-hp-bar,
-  .hud-hero-xp-fill {
+  #enemy-hp-bar {
     transition: none;
   }
 
@@ -321,10 +506,21 @@
    Boutons d'action de combat (v2.21 : attaque spéciale + défense,
    côte à côte, sous l'ennemi)
    ========================= */
+/* v2.68 : margin-bottom:3% ajouté (espace contrôlé avant le bouton
+   Attaque) — l'ancien padding-bottom fixe est retiré au profit de
+   cette marge en pourcentage, cohérente avec le reste de la chaîne
+   d'espacement (voir #enemy-display et .combat-attack-row). */
 .combat-action-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10%;
+
   display: flex;
-  gap: 8px;
-  padding: 0 12px 12px;
+  justify-content: center;
+  gap: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
+  padding: 0 clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
+  margin-bottom: 0;
 }
 
 .combat-action-btn {
@@ -334,15 +530,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 10px 6px;
-  border-radius: 14px;
-  color: #fff;
+  gap: clamp(1.84px, calc(0.91px + 0.29vw), 2.16px);
+  padding: clamp(6.44px, calc(3.18px + 1.02vw), 7.56px) clamp(3.68px, calc(1.82px + 0.58vw), 4.32px);
+  border-radius: var(--nb-radius-md);
+  border: 2px solid var(--nb-frame);
+  background: var(--nb-cream);
+  color: var(--nb-ink);
+  box-shadow: 0 3px 0 var(--nb-frame-light);
   cursor: pointer;
 }
 
 .combat-action-btn:active {
-  transform: scale(0.97);
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
 .combat-action-btn.on-cooldown {
@@ -351,49 +551,53 @@
 }
 
 .attack-action-btn {
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  background: linear-gradient(180deg, rgba(239, 68, 68, 0.16), rgba(239, 68, 68, 0.06));
+  border-color: var(--nb-gold-dark);
+  background: linear-gradient(180deg, #fff3d6, var(--nb-cream));
 }
 
-.defense-action-btn {
-  border: 1px solid rgba(96, 165, 250, 0.4);
-  background: linear-gradient(180deg, rgba(96, 165, 250, 0.16), rgba(96, 165, 250, 0.06));
-}
-
+/* v2.45 : bordure bleue par défaut retirée (uniformisation "bordures
+   dorées partout") — le bouton hérite maintenant du gold par défaut
+   de .combat-action-btn. Le halo bleu ci-dessous reste : il indique
+   un état réel (bouclier actuellement actif), pas une couleur de
+   thème. */
 .defense-action-btn.is-active {
-  border-color: rgba(96, 165, 250, 0.8);
-  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25);
+  box-shadow: 0 0 0 3px rgba(79, 168, 232, 0.35), 0 3px 0 var(--nb-frame-light);
 }
 
+/* v2.60 : boutons rétrécis à la demande de l'utilisateur (padding +
+   tailles de police réduites) — libère de la hauteur, voir aussi
+   #game-area plus bas (justify-content:center) qui utilise cet espace
+   récupéré pour redescendre le nom/PV du monstre vers le centre. */
 .combat-action-icon {
-  font-size: 22px;
+  font-size: clamp(16.56px, calc(8.18px + 2.62vw), 19.44px);
 }
 
 .combat-action-name {
-  font-size: 11px;
+  font-size: clamp(8.28px, calc(4.09px + 1.31vw), 9.72px);
   font-weight: 800;
   text-align: center;
   line-height: 1.2;
+  color: var(--nb-ink);
 }
 
 .combat-action-cooldown {
   position: relative;
   z-index: 1;
-  font-size: 11px;
+  font-size: clamp(10.12px, calc(5px + 1.6vw), 11.88px);
   font-weight: 800;
-  color: #fca5a5;
+  color: var(--nb-ink);
 }
 
 .combat-action-cooldown-fill {
   position: absolute;
   inset: 0;
   right: auto;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(58, 44, 26, 0.35);
   pointer-events: none;
 }
 
 .combat-action-active-tag {
-  font-size: 9px;
+  font-size: clamp(8.28px, calc(4.09px + 1.31vw), 9.72px);
   font-weight: 800;
   letter-spacing: 0.4px;
   color: #93c5fd;
@@ -402,5 +606,171 @@
 @media (prefers-reduced-motion: reduce) {
   .combat-action-btn:active {
     transform: none;
+  }
+}
+
+/* =========================
+   Rangée du bouton Attaque (v2.40 — sous l'attaque spéciale/défense,
+   potions de soin juste à côté). Le tap direct sur #enemy-emoji
+   continue de fonctionner en parallèle, ce bouton est un raccourci
+   explicite supplémentaire (même fonction playerAttack()).
+   ========================= */
+/* v2.67 : justify-content:center — les deux côtés (une potion
+   chacun) ont maintenant la même largeur naturelle, donc centrer le
+   trio entier centre aussi parfaitement le bouton au milieu.
+   v2.68 : margin-bottom:3% ajouté — espace contrôlé avant
+   #stats-bar, dernier maillon de la chaîne d'espacement (voir
+   #enemy-display et .combat-action-row). */
+.combat-attack-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(5.52px, calc(2.73px + 0.87vw), 6.48px);
+  padding: 0 clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
+  margin-bottom: 0;
+}
+/* v2.53 : correction d'un bug de chevauchement — #heal-quick-root
+   avait flex:1 des deux côtés, ce qui le forçait à RÉTRÉCIR en
+   dessous de la largeur réelle des 2 potions dès que l'écran manquait
+   de place ; comme son contenu ne pouvait pas suivre, il débordait
+   par la gauche (justify-content:flex-end) et chevauchait le bouton.
+   Fix : #heal-quick-root passe en taille naturelle fixe (flex:0 0
+   auto, jamais rétréci), donc les potions restent toujours entières,
+   collées au bord droit — elles ne peuvent plus chevaucher le bouton.
+   #combat-attack-left-slot garde flex:1 pour absorber l'espace
+   restant à gauche (et accueillir de futures potions) ; le bouton
+   n'est donc plus mathématiquement centré à la virgule près sur les
+   écrans les plus étroits (le vrai centrage parfait + zéro
+   chevauchement sont géométriquement incompatibles à 320px avec un
+   bouton fixe de 168px), mais reste visuellement très proche du
+   centre, sans jamais empiéter sur les potions. */
+/* v2.67 : #combat-attack-left-slot renommé #heal-quick-root-left
+   (accueille maintenant une vraie potion, plus un simple espaceur
+   vide) — même traitement que #heal-quick-root : taille naturelle
+   fixe, jamais rétréci. */
+#heal-quick-root-left,
+#heal-quick-root {
+  flex: 0 0 auto;
+}
+
+/* v2.51 : bouton "ATTACK" fourni par l'utilisateur en une seule image
+   (texte inclus) — remplace le bouton CSS (dégradé + texte). Taille
+   FIXE en px (pas de clamp fluide) à la demande explicite, contraire
+   au reste de l'interface : ratio de l'image (426×127) conservé pour
+   ne jamais la déformer. */
+.combat-attack-btn {
+  flex-shrink: 0;
+  width: 168px;
+  height: 50px;
+  border: none;
+  background: url('../images/Buttons/bouton-attaque.png') center / 100% 100% no-repeat;
+  cursor: pointer;
+}
+
+.combat-attack-btn:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .combat-attack-btn:active {
+    transform: none;
+  }
+}
+
+/* =========================
+   Potions de soin rapides (v2.38 — déplacées ici depuis la barre du
+   bas, troisième élément de .combat-action-row à côté de l'attaque
+   spéciale et de la défense). Boutons ronds compacts au lieu de
+   cartes pleine hauteur comme .combat-action-btn : ils gardent leur
+   taille naturelle en interne (pas de flex:1 sur .heal-quick-btn) —
+   c'est #heal-quick-root lui-même qui prend flex:1 depuis la v2.52,
+   pour équilibrer visuellement avec #combat-attack-left-slot et
+   garder le bouton Attaque centré (voir plus haut dans ce fichier).
+   ========================= */
+#heal-quick-root-left,
+#heal-quick-root {
+  display: flex;
+  align-items: center;
+}
+
+.heal-quick-bar {
+  display: flex;
+  align-items: center;
+  gap: clamp(5.52px, calc(2.73px + 0.87vw), 6.48px);
+}
+
+.heal-quick-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(36.8px, calc(18.18px + 5.82vw), 43.2px);
+  height: clamp(36.8px, calc(18.18px + 5.82vw), 43.2px);
+  border-radius: 999px;
+  border: none;
+  /* v2.46 : bordure ronde dorée fournie par l'utilisateur
+     (images/Borders/bordure-ronde.png), posée par-dessus le fond
+     crème existant — son centre est transparent, donc le crème reste
+     visible au milieu, seul l'anneau doré recouvre les bords. */
+  background:
+    url('../images/Borders/bordure-ronde.png') center / 100% 100% no-repeat,
+    var(--nb-cream);
+  box-shadow: none;
+  font-size: clamp(15.64px, calc(7.73px + 2.47vw), 18.36px);
+  cursor: pointer;
+}
+
+.heal-quick-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.heal-quick-count {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  min-width: clamp(13.8px, calc(6.82px + 2.18vw), 16.2px);
+  height: clamp(13.8px, calc(6.82px + 2.18vw), 16.2px);
+  padding: 0 clamp(2.76px, calc(1.36px + 0.44vw), 3.24px);
+  border-radius: 999px;
+  background: #0f1420;
+  border: 1px solid var(--nb-gold-dark);
+  color: #4ade80;
+  font-size: clamp(8.28px, calc(4.09px + 1.31vw), 9.72px);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Petit indice de raccourci clavier ("1"/"2") — uniquement affiché
+   sur les appareils à pointeur précis (souris), inutile au doigt. */
+.heal-quick-key {
+  display: none;
+}
+
+@media (pointer: fine) {
+  .heal-quick-key {
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    min-width: clamp(12.88px, calc(6.36px + 2.04vw), 15.12px);
+    height: clamp(12.88px, calc(6.36px + 2.04vw), 15.12px);
+    padding: 0 clamp(2.76px, calc(1.36px + 0.44vw), 3.24px);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(240, 170, 62, 0.5);
+    color: rgba(255, 255, 255, 0.75);
+    font-size: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }

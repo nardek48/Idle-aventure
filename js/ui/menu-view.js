@@ -8,22 +8,20 @@ ui-root.js/switchTab) ; ce fichier construit l'écran de destinations
 que l'overlay de sélection de héros (voir ui/modal-view.js).
 ============================================================ */
 
-/* Toutes les destinations sauf Combat (qui a son propre bouton dédié
-   dans la barre du bas). img = icône dédiée si elle existe, sinon
-   repli sur un emoji (icon). badge = affiche le compteur de quêtes
-   complétées non réclamées sur cette carte. */
+/* Toutes les destinations sauf Combat, Village, Donjon et Héros, qui
+   ont chacun leur propre bouton dédié dans la barre du bas depuis la
+   v2.38 (voir index.html + ui-root.js/switchTab). img = icône dédiée
+   si elle existe, sinon repli sur un emoji (icon). badge = affiche le
+   compteur de quêtes complétées non réclamées sur cette carte. */
 var MENU_ITEMS = [
-  { tab: "more", label: "Personnage", img: "./images/Icons/more_menu.png" },
   { tab: "shop", label: "Boutique", img: "./images/Icons/shop_menu.png" },
   { tab: "talents", label: "Talents", img: "./images/Icons/talents_menu.png", badge: "talents" },
   { tab: "equip", label: "Équipement", img: "./images/Icons/equip_menu.png" },
   { tab: "quests", label: "Quêtes", img: "./images/Icons/quests_menu.png", badge: true },
   { tab: "ascension", label: "Ascension", img: "./images/Icons/aether_menu.png", badge: "ascension" },
   { tab: "map", label: "Carte du monde", img: "./images/Icons/map_menu.png" },
-  { tab: "dungeon", label: "Donjon", icon: "🏰", badge: "dungeon" },
   { tab: "achievements", label: "Hauts faits", icon: "🏆", badge: "achievement" },
   { tab: "codex", label: "Codex", icon: "📖", badge: "codex" },
-  { tab: "village", label: "Village", icon: "🏘️" },
   { tab: "bestiary", label: "Bestiaire", icon: "📖" },
   { tab: "log", label: "Journal", icon: "📜" },
   { tab: "settings", label: "Paramètres", icon: "⚙️" }

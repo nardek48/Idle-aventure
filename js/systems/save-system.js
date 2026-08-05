@@ -157,6 +157,7 @@ function buildSaveData() {
     totalAetherEarned: Number(game.totalAetherEarned || 0),
     tapDamage: Number(game.tapDamage || 1),
     tapMult: Number(game.tapMult || 1),
+    equipFlatTapBonus: Number(game.equipFlatTapBonus || 0),
     autoDps: Number(game.autoDps || 0),
     critChance: Number(game.critChance || 5),
     critMult: Number(game.critMult || 2),
@@ -200,8 +201,10 @@ function buildSaveData() {
     village: game.village || { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 },
     activePotions: game.activePotions || {},
     pendingPotionBonuses: game.pendingPotionBonuses || { aetherNext: 0 },
+    aetherElixirStackCount: Number(game.aetherElixirStackCount || 0),
     equipShopStock: game.equipShopStock || [],
     equipShopResetTime: Number(game.equipShopResetTime || 0),
+    equipShopManualRefreshCount: Number(game.equipShopManualRefreshCount || 0),
     dungeonTickets: Number(game.dungeonTickets != null ? game.dungeonTickets : 1),
     dungeonTicketResetTime: Number(game.dungeonTicketResetTime || 0),
     dungeonTicketsPurchasedToday: Number(game.dungeonTicketsPurchasedToday || 0),
@@ -212,6 +215,7 @@ function buildSaveData() {
     dungeonShopLevels: game.dungeonShopLevels || {},
     healingPotionsOwned: game.healingPotionsOwned || {},
     lastHealUse: Number(game.lastHealUse || 0),
+    autoSellEquipment: !!game.autoSellEquipment,
     lastSpecialUse: Number(game.lastSpecialUse || 0),
     specialBuffExpires: Number(game.specialBuffExpires || 0),
     specialBuffPct: Number(game.specialBuffPct || 0),
@@ -257,6 +261,7 @@ function restoreBaseState(d) {
 
   game.tapDamage = 1;
   game.tapMult = 1;
+  game.equipFlatTapBonus = 0;
   game.autoDps = 0;
   game.critChance = 5;
   game.critMult = 2;
@@ -320,9 +325,11 @@ function restoreBaseState(d) {
     ? d.pendingPotionBonuses
     : { aetherNext: 0 };
   if (typeof game.pendingPotionBonuses.aetherNext !== "number") game.pendingPotionBonuses.aetherNext = 0;
+  game.aetherElixirStackCount = Number(d.aetherElixirStackCount || 0);
 
   game.equipShopStock = Array.isArray(d.equipShopStock) ? d.equipShopStock : [];
   game.equipShopResetTime = Number(d.equipShopResetTime || 0);
+  game.equipShopManualRefreshCount = Number(d.equipShopManualRefreshCount || 0);
 
   game.dungeonTickets = typeof d.dungeonTickets === "number" ? d.dungeonTickets : 1;
   game.dungeonTicketResetTime = Number(d.dungeonTicketResetTime || 0);
@@ -335,6 +342,7 @@ function restoreBaseState(d) {
   game.dungeonShopLevels = d.dungeonShopLevels && typeof d.dungeonShopLevels === "object" ? d.dungeonShopLevels : {};
   game.healingPotionsOwned = d.healingPotionsOwned && typeof d.healingPotionsOwned === "object" ? d.healingPotionsOwned : {};
   game.lastHealUse = Number(d.lastHealUse || 0);
+  game.autoSellEquipment = !!d.autoSellEquipment;
   game.lastSpecialUse = Number(d.lastSpecialUse || 0);
   game.specialBuffExpires = Number(d.specialBuffExpires || 0);
   game.specialBuffPct = Number(d.specialBuffPct || 0);
@@ -356,6 +364,7 @@ function restoreBaseState(d) {
 function reapplyProgressEffects() {
   game.tapDamage = 1;
   game.tapMult = 1;
+  game.equipFlatTapBonus = 0;
   game.autoDps = 0;
   game.critChance = 5;
   game.critMult = 2;
@@ -412,6 +421,31 @@ function hardResetState() {
   var keptAscensions = game.ascensionCount || 0;
   var keptAetherUpgrades = Object.assign({}, game.aetherUpgrades || {});
 
+  // v2.26 : la progression VRAIMENT permanente (indépendante de la
+  // run en cours) doit survivre à l'ascension, comme l'Aether et sa
+  // boutique le faisaient déjà — sinon chaque ascension effaçait
+  // silencieusement le Codex, les hauts faits, la boutique du
+  // donjon, etc. Ce qui reste lié à la run "classique" (or, potions,
+  // stock de soin...) continue de repartir à zéro normalement.
+  var keptAchievementsClaimed = Object.assign({}, game.achievementsClaimed || {});
+  var keptWorldsEverReached = Object.assign({}, game.worldsEverReached || {});
+  var keptDungeonTiersEntered = Object.assign({}, game.dungeonTiersEntered || {});
+  var keptCodexChaosSeen = !!game.codexChaosSeen;
+  var keptCodexRead = Object.assign({}, game.codexRead || {});
+  var keptDungeonShopLevels = Object.assign({}, game.dungeonShopLevels || {});
+  var keptDungeonShards = Number(game.dungeonShards || 0);
+  var keptDungeonBestWave = Number(game.dungeonBestWave || 0);
+  var keptDungeonBossClears = Number(game.dungeonBossClears || 0);
+  var keptDungeonTickets = Number(game.dungeonTickets != null ? game.dungeonTickets : 1);
+  var keptDungeonTicketResetTime = Number(game.dungeonTicketResetTime || 0);
+  var keptDungeonTicketsPurchasedToday = Number(game.dungeonTicketsPurchasedToday || 0);
+  var keptEquipShopStock = game.equipShopStock || [];
+  var keptEquipShopResetTime = Number(game.equipShopResetTime || 0);
+  var keptEquipShopManualRefreshCount = Number(game.equipShopManualRefreshCount || 0);
+  var keptVillage = Object.assign({ goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0, watchtower: 0, sanctuary: 0 }, game.village || {});
+  var keptAutoSellEquipment = !!game.autoSellEquipment;
+  var keptHasSeenOnboarding = !!game.hasSeenOnboarding;
+
   game.gold = 0;
   game.essence = 0;
   game.aether = keptAether;
@@ -419,10 +453,15 @@ function hardResetState() {
 
   game.tapDamage = 1;
   game.tapMult = 1;
+  game.equipFlatTapBonus = 0;
   game.autoDps = 0;
   game.critChance = 5;
   game.critMult = 2;
   game.goldMult = 1;
+  game.essenceGlobalMult = 1;
+  game.heroDefensePct = 0;
+
+  game.trainedStats = { power: 0, endurance: 0, celerity: 0, precision: 0, will: 0 };
 
   game.heroLevel = 1;
   game.heroXp = 0;
@@ -451,11 +490,47 @@ function hardResetState() {
   game.enemy = null;
   game.lastOnline = Date.now();
   game.lastSave = 0;
-  game.village = { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 };
+  game.village = keptVillage;
+
+  game.equipShopStock = keptEquipShopStock;
+  game.equipShopResetTime = keptEquipShopResetTime;
+  game.equipShopManualRefreshCount = keptEquipShopManualRefreshCount;
+
+  game.activePotions = {};
+  game.pendingPotionBonuses = { aetherNext: 0 };
+  game.aetherElixirStackCount = 0;
+  game.healingPotionsOwned = {};
+  game.lastHealUse = 0;
+
+  game.dungeonTickets = keptDungeonTickets;
+  game.dungeonTicketResetTime = keptDungeonTicketResetTime;
+  game.dungeonTicketsPurchasedToday = keptDungeonTicketsPurchasedToday;
+  game.dungeonRun = { active: false, wave: 0, tierId: 1 };
+  game.dungeonBestWave = keptDungeonBestWave;
+  game.dungeonBossClears = keptDungeonBossClears;
+  game.dungeonShards = keptDungeonShards;
+  game.dungeonShopLevels = keptDungeonShopLevels;
+
+  game.achievementsClaimed = keptAchievementsClaimed;
+
+  game.worldsEverReached = keptWorldsEverReached;
+  game.dungeonTiersEntered = keptDungeonTiersEntered;
+  game.codexChaosSeen = keptCodexChaosSeen;
+  game.codexRead = keptCodexRead;
+
+  game.lastSpecialUse = 0;
+  game.specialBuffExpires = 0;
+  game.specialBuffPct = 0;
+  game.lastDefenseUse = 0;
+  game.defenseBuffExpires = 0;
+
+  game.autoSellEquipment = keptAutoSellEquipment;
+  game.hasSeenOnboarding = keptHasSeenOnboarding;
 
   WorldManager.worldIndex = 0;
   WorldManager.adventureIndex = 0;
   WorldManager.enemyIndex = 0;
+  if (typeof WorldManager.markWorldReached === "function") WorldManager.markWorldReached(0);
 
   if (typeof ensureUpgradeDefaults === "function") ensureUpgradeDefaults();
 
@@ -482,7 +557,9 @@ function hardResetState() {
 function fullResetState() {
   var questDefaults = getDefaultQuestProgress();
 
-  game.gold = 1000000;
+  // v2.26 : plus d'or de confort au reset complet (était 1 000 000,
+  // un réglage de test qui n'avait pas sa place dans un vrai reset).
+  game.gold = 0;
   game.essence = 0;
   game.aether = 0;
   game.totalAetherEarned = 0;
@@ -491,10 +568,15 @@ function fullResetState() {
 
   game.tapDamage = 1;
   game.tapMult = 1;
+  game.equipFlatTapBonus = 0;
   game.autoDps = 0;
   game.critChance = 5;
   game.critMult = 2;
   game.goldMult = 1;
+  game.essenceGlobalMult = 1;
+  game.heroDefensePct = 0;
+
+  game.trainedStats = { power: 0, endurance: 0, celerity: 0, precision: 0, will: 0 };
 
   game.heroLevel = 1;
   game.heroXp = 0;
@@ -523,11 +605,50 @@ function fullResetState() {
   game.enemy = null;
   game.lastOnline = Date.now();
   game.lastSave = 0;
-  game.village = { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 };
+  game.village = { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0, watchtower: 0, sanctuary: 0 };
+
+  // v2.26 : tous les systèmes ajoutés depuis la première version de
+  // fullResetState() — oubliés jusqu'ici, un reset "complet" ne
+  // l'était donc pas vraiment.
+  game.equipShopStock = [];
+  game.equipShopResetTime = 0;
+  game.equipShopManualRefreshCount = 0;
+
+  game.activePotions = {};
+  game.pendingPotionBonuses = { aetherNext: 0 };
+  game.aetherElixirStackCount = 0;
+  game.healingPotionsOwned = {};
+  game.lastHealUse = 0;
+
+  game.dungeonTickets = 1;
+  game.dungeonTicketResetTime = 0;
+  game.dungeonTicketsPurchasedToday = 0;
+  game.dungeonRun = { active: false, wave: 0, tierId: 1 };
+  game.dungeonBestWave = 0;
+  game.dungeonBossClears = 0;
+  game.dungeonShards = 0;
+  game.dungeonShopLevels = {};
+
+  game.achievementsClaimed = {};
+
+  game.worldsEverReached = {};
+  game.dungeonTiersEntered = {};
+  game.codexChaosSeen = false;
+  game.codexRead = {};
+
+  game.lastSpecialUse = 0;
+  game.specialBuffExpires = 0;
+  game.specialBuffPct = 0;
+  game.lastDefenseUse = 0;
+  game.defenseBuffExpires = 0;
+
+  game.autoSellEquipment = false;
+  game.hasSeenOnboarding = false;
 
   WorldManager.worldIndex = 0;
   WorldManager.adventureIndex = 0;
   WorldManager.enemyIndex = 0;
+  if (typeof WorldManager.markWorldReached === "function") WorldManager.markWorldReached(0);
 
   if (typeof ensureUpgradeDefaults === "function") ensureUpgradeDefaults();
 

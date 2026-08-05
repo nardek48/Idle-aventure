@@ -34,7 +34,13 @@ function getAscensionAvailableCount() {
 
 /* Pastille numérique sur le bouton Menu, agrégeant tout ce qui mérite
    l'attention du joueur. Appelée après quasiment chaque action de jeu
-   (achat, kill, ascension...). */
+   (achat, kill, ascension...).
+   v2.70 : le ticket de donjon disponible a sa propre pastille dédiée
+   sur le bouton Donjon (#dungeon-tab-badge) depuis que Donjon a son
+   propre bouton dans la barre du bas — retiré du total agrégé du
+   Menu pour ne pas doublonner l'alerte. La bannière
+   "#dungeon-reminder-banner" est retirée du même coup (remplacée par
+   cette pastille). */
 function updateQuestBadge() {
   var badge = document.getElementById("quest-badge");
   if (!badge) return;
@@ -61,12 +67,15 @@ function updateQuestBadge() {
     ? CodexManager.getUnreadCount()
     : 0;
 
-  var total = questsReady + achievementsReady + dungeonTicketReady + talentsReady + ascensionReady + codexUnread;
+  var total = questsReady + achievementsReady + talentsReady + ascensionReady + codexUnread;
   badge.textContent = total > 0 ? String(total) : "";
   badge.style.display = total > 0 ? "inline-flex" : "none";
 
-  var reminder = document.getElementById("dungeon-reminder-banner");
-  if (reminder) reminder.style.display = dungeonTicketReady > 0 ? "block" : "none";
+  var dungeonBadge = document.getElementById("dungeon-tab-badge");
+  if (dungeonBadge) {
+    dungeonBadge.textContent = dungeonTicketReady > 0 ? String(game.dungeonTickets || 1) : "";
+    dungeonBadge.style.display = dungeonTicketReady > 0 ? "inline-flex" : "none";
+  }
 }
 
 function buildQuestsHTML() {

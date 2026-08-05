@@ -6,7 +6,7 @@
   text-align: center;
   font-size: 13px;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--nb-gold);
   margin-bottom: 12px;
 }
 
@@ -20,20 +20,20 @@
   margin-bottom: 16px;
   padding: 18px;
   text-align: center;
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-soft), 0 8px 16px rgba(0, 0, 0, 0.35);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame);
+  box-shadow: var(--nb-shadow-card), 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
 .achievement-detail.is-ready {
-  border-color: #efc775;
-  background: rgba(239, 199, 117, 0.08);
+  border-color: var(--nb-gold-dark);
+  background: #fff3d6;
 }
 
 .achievement-detail.is-claimed {
-  border-color: rgba(74, 222, 128, 0.4);
-  background: rgba(74, 222, 128, 0.06);
+  border-color: var(--hp-green);
+  background: #eaf7ea;
 }
 
 .achievement-detail-icon {
@@ -44,21 +44,21 @@
 .achievement-detail-name {
   font-size: 17px;
   font-weight: 800;
-  color: #fff;
+  color: var(--nb-ink);
 }
 
 .achievement-detail-category {
   font-size: 10px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
   margin-top: 2px;
 }
 
 .achievement-detail-desc {
   margin-top: 8px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(58, 44, 26, 0.8);
   line-height: 1.4;
 }
 
@@ -68,7 +68,7 @@
   height: 10px;
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.10);
+  background: var(--nb-cream-alt);
 }
 
 .achievement-progress-fill {
@@ -86,14 +86,14 @@
 .achievement-progress-text {
   margin-top: 6px;
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .achievement-reward-text {
   margin-top: 10px;
   font-size: 12px;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--nb-gold);
 }
 
 .achievement-claimed-badge {
@@ -110,7 +110,7 @@
 .achievement-locked-text {
   margin-top: 12px;
   font-size: 12px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
   font-style: italic;
 }
 
@@ -128,7 +128,7 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .achievement-category-label:first-of-type {
@@ -145,8 +145,8 @@
   position: relative;
   aspect-ratio: 1 / 1;
   border-radius: 12px;
-  border: 2px solid var(--border);
-  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -165,11 +165,11 @@
 .achievement-grid-item.is-claimed {
   opacity: 1;
   border-color: rgba(74, 222, 128, 0.5);
-  background: rgba(74, 222, 128, 0.08);
+  background: #eaf7ea;
 }
 
 .achievement-grid-item.is-selected {
-  border-color: var(--gold);
+  border-color: var(--nb-gold);
 }
 
 .achievement-grid-item:active {

@@ -80,11 +80,12 @@ function getWorldMonsterList(world) {
 
   var monsters = ids.map(function (id) {
     var data = ENEMY_DB[id];
-    return data ? { id: id, name: data.name, icon: renderIcon("enemies", data.asset), isBoss: false } : null;
+    return data ? { id: id, name: data.name, icon: renderIcon("enemies", data.asset), image: data.image || "", isBoss: false } : null;
   }).filter(Boolean);
 
   if (bossId && BOSS_DB[bossId]) {
-    monsters.push({ id: bossId, name: BOSS_DB[bossId].name, icon: renderIcon("bosses", BOSS_DB[bossId].asset), isBoss: true });
+    var bossData = BOSS_DB[bossId];
+    monsters.push({ id: bossId, name: bossData.name, icon: renderIcon("bosses", bossData.asset), image: bossData.image || "", isBoss: true });
   }
 
   return monsters;
@@ -179,7 +180,14 @@ function buildMapHTML() {
   if (monsters.length) {
     h += '<div class="map-monster-row">';
     monsters.forEach(function (m) {
-      h += '<div class="map-monster-chip' + (m.isBoss ? " is-boss" : "") + '" title="' + esc(m.name) + '">' + m.icon + '</div>';
+      h += '<div class="map-monster-chip' + (m.isBoss ? " is-boss" : "") + (m.image ? " has-icon-img" : "") + '" title="' + esc(m.name) + '">';
+      if (m.image) {
+        h += '<img src="' + esc(m.image) + '" alt="' + esc(m.name) + '" onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">';
+        h += '<span class="icon-img-fallback">' + m.icon + '</span>';
+      } else {
+        h += m.icon;
+      }
+      h += '</div>';
     });
     h += '</div>';
   }

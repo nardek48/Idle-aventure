@@ -6,9 +6,9 @@
 .village-skyline {
   margin-bottom: 14px;
   padding: 12px;
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame);
 }
 
 .village-skyline-header {
@@ -64,9 +64,9 @@
   min-height: 36px;
   padding: 6px 8px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  color: var(--text);
+  background: var(--nb-cream-alt);
+  border: 1px solid rgba(194, 127, 31, 0.3);
+  color: var(--nb-ink);
   font-size: 11px;
   font-weight: 700;
   text-align: center;
@@ -81,9 +81,9 @@
   gap: 10px;
   padding: 10px;
   margin-bottom: 8px;
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame);
 
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
@@ -109,7 +109,7 @@
 
 .shop-title-row strong {
   font-size: 13px;
-  color: var(--text);
+  color: var(--nb-ink);
   font-weight: 800;
 }
 
@@ -120,7 +120,7 @@
   padding: 2px 7px;
   border-radius: 999px;
   background: rgba(139, 92, 246, 0.14);
-  border: 1px solid rgba(139, 92, 246, 0.28);
+  border: 1px solid var(--nb-gold-dark);
   color: #d8c7ff;
   font-size: 10px;
   font-weight: 700;
@@ -131,18 +131,18 @@
   margin-bottom: 4px;
   font-size: 11px;
   line-height: 1.35;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .shop-meta {
   font-size: 10px;
-  color: var(--gold);
+  color: var(--nb-gold);
   font-weight: 700;
 }
 
 .shop-mode-info {
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .shop-buy-toolbar {
@@ -164,9 +164,9 @@
 
 .shop-buy-toolbar .settings-btn.active {
   border-color: var(--accent);
-  background: rgba(91, 140, 255, 0.16);
-  color: #fff;
-  box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.22) inset;
+  background: rgba(91, 140, 255, 0.22);
+  color: var(--nb-ink);
+  box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.3) inset;
 }
 
 @media (max-width: 560px) {

@@ -12,21 +12,76 @@ fois au boot par mountCombatArea() — voir main/boot.js.
 
 function buildCombatHTML() {
   return ''
-    + '<div id="zone-banner">⚔️ Tappe l\'ennemi pour attaquer !</div>'
-    + '<div id="dungeon-reminder-banner" class="dungeon-reminder-banner" style="display:none" onclick="switchTab(\'dungeon\')">🎟️ Ticket de donjon disponible — appuie pour y aller</div>'
+    // v2.58 : bannière "Tappe l'ennemi pour attaquer !" (#zone-banner)
+    // retirée à la demande de l'utilisateur — le bouton ATTAQUE et le
+    // tap direct sur le monstre sont déjà assez explicites sans elle.
+    // v2.70 : bannière "Ticket de donjon disponible" (#dungeon-
+    // reminder-banner) retirée aussi — remplacée par une pastille
+    // dédiée sur le bouton Donjon de la barre du bas (voir
+    // #dungeon-tab-badge dans index.html et updateQuestBadge() dans
+    // ui/quests-view.js).
+
+    // v2.40 : mini-portrait du héros en survol du coin haut-gauche de
+    // la zone de jeu (position absolute, voir css/03-combat.css) avec
+    // son niveau et une petite barre de PV en dessous — synchronisée
+    // par renderHeroHp() (déjà appelée dans renderHud()), voir aussi
+    // renderCombatHeroMini() pour le portrait/niveau (appelée par
+    // renderAll() et à chaque changement de héros).
+    + '<div id="combat-hero-mini" class="combat-hero-mini">'
+    +   '<div class="combat-hero-mini-portrait">'
+    +     '<img id="combat-hero-mini-img" class="combat-hero-mini-img" src="" alt="" style="display:none">'
+    +     '<div id="combat-hero-mini-placeholder" class="combat-hero-mini-placeholder">?</div>'
+    +     '<span class="combat-hero-mini-level" id="combat-hero-mini-level">Niv. 1</span>'
+    +   '</div>'
+    +   '<div class="combat-hero-mini-hp-bar">'
+    +     '<div id="combat-hero-mini-hp-fill" class="combat-hero-mini-hp-fill" style="width:100%"></div>'
+    +     '<span class="combat-hero-mini-hp-text" id="combat-hero-mini-hp-text">10 / 10</span>'
+    +   '</div>'
+    + '</div>'
+
+    // v2.40 : nom + PV de l'ennemi remontés AU-DESSUS de son
+    // icône/image (avant : en dessous). Même id/class, juste
+    // réordonné dans le flux (#enemy-display reste en colonne).
+    // v2.58 : indicateur de résistance/point faible (#enemy-affinity)
+    // retiré à la demande de l'utilisateur.
     + '<div id="enemy-display">'
-    +   '<div id="enemy-emoji" onclick="playerAttack()">🟢</div>'
     +   '<div id="enemy-name">Slime</div>'
-    +   '<div id="enemy-affinity"></div>'
+    // v2.61 : le remplissage (#enemy-hp-bar) est maintenant dans un
+    // sous-conteneur dédié (.enemy-hp-bar-track) qui porte le
+    // découpage arrondi — avant, ce découpage était sur
+    // #enemy-hp-bar-wrapper lui-même et rognait au passage les pointes
+    // décoratives du cadre image, qui dépassaient légèrement de chaque
+    // côté. Le cadre (::after sur le wrapper, voir css/03-combat.css)
+    // n'est plus découpé, seul le remplissage rouge l'est.
     +   '<div id="enemy-hp-bar-wrapper">'
-    +     '<div id="enemy-hp-bar" style="width:100%"></div>'
+    +     '<div class="enemy-hp-bar-track"><div id="enemy-hp-bar" style="width:100%"></div></div>'
     +     '<div id="enemy-hp-text">10 / 10</div>'
     +   '</div>'
-    +   '<div class="enemy-counter" id="enemy-counter">Kills: 0</div>'
+    +   '<div id="enemy-emoji" onclick="playerAttack()">🟢</div>'
+    // v2.60 : compteur "Kills X" retiré à la demande de l'utilisateur.
     + '</div>'
+
     + '<div class="combat-action-row">'
     +   '<div id="special-attack-root"></div>'
     +   '<div id="defense-root"></div>'
+    + '</div>'
+
+    // v2.40 : nouveau bouton ATTAQUE explicite (en plus du tap direct
+    // sur #enemy-emoji, toujours actif) — les potions de soin
+    // rapides sont passées à côté de CE bouton (avant : à côté de
+    // l'attaque spéciale/défense juste au-dessus).
+    // v2.41 : la carte "❤️ Points de vie" qui suivait ce bloc a été
+    // retirée (redondante avec la mini-barre de PV sous le portrait
+    // du héros en haut à gauche, ajoutée en v2.40). Voir
+    // renderHeroHp() dans ui/hud-view.js, qui ne cible plus que
+    // #combat-hero-mini-hp-text/-fill désormais.
+    // v2.67 : une potion de chaque côté (#heal-quick-root-left et
+    // #heal-quick-root) pour un centrage parfait du bouton, voir
+    // renderHealButtons() plus bas.
+    + '<div class="combat-attack-row">'
+    +   '<div id="heal-quick-root-left"></div>'
+    +   '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="playerAttack()" aria-label="Attaque"></button>'
+    +   '<div id="heal-quick-root"></div>'
     + '</div>';
 }
 
@@ -38,56 +93,69 @@ function mountCombatArea() {
 }
 
 /* ============================================================
-   v2.16 : bouton de soin rapide, dans l'emplacement réservé de la
-   barre du bas (#tab-bar-special-slot) — utilisable depuis n'importe
-   quel écran, pas seulement en combat, pour ne jamais être bloqué en
-   plein donjon. Une icône par potion de soin possédée, avec son
-   stock ; grisée pendant le cooldown commun ou si le stock est à 0.
+   v2.16 : bouton de soin rapide. Une icône par potion de soin
+   possédée, avec son stock ; grisée pendant le cooldown commun ou si
+   le stock est à 0.
+   v2.38 : déplacé de la barre du bas (#tab-bar-special-slot,
+   supprimée) vers la rangée d'actions de combat (#heal-quick-root,
+   juste à côté des boutons d'attaque spéciale et de défense) — la
+   barre du bas accueille maintenant la navigation principale
+   (Combat/Village/Donjon/Héros/Menu). Toujours visible pendant un
+   donjon : DungeonManager bascule sur l'onglet "combat" pour
+   combattre les vagues (voir switchTab("combat") dans
+   dungeon-system.js), donc #heal-quick-root reste affiché.
 ============================================================ */
-function buildHealButtonsHTML() {
+function buildHealButtonHTML(index) {
   if (typeof HEALING_POTIONS_DB === "undefined" || !window.PotionManager) return "";
+  var potion = HEALING_POTIONS_DB[index];
+  if (!potion) return "";
 
   var onCooldown = PotionManager.getHealCooldownRemainingMs() > 0;
+  var stock = PotionManager.getHealingStock(potion.id);
+  var disabled = onCooldown || stock <= 0;
+  var keyLabel = String(index + 1); // touche "1" pour la 1ère potion, "2" pour la 2e...
+
   var h = '<div class="heal-quick-bar">';
-
-  HEALING_POTIONS_DB.forEach(function (potion, index) {
-    var stock = PotionManager.getHealingStock(potion.id);
-    var disabled = onCooldown || stock <= 0;
-    var keyLabel = String(index + 1); // touche "1" pour la 1ère potion, "2" pour la 2e...
-
-    h += '<button class="heal-quick-btn' + (disabled ? ' disabled' : '') + '" type="button" '
-      + (disabled ? 'disabled' : '')
-      + ' onclick="PotionManager.useHealingPotion(\'' + esc(potion.id) + '\')" title="' + esc(potion.name) + ' (touche ' + keyLabel + ' sur PC)">';
-    h += '<span class="heal-quick-icon">' + esc(potion.icon) + '</span>';
-    h += '<span class="heal-quick-count">' + stock + '</span>';
-    h += '<span class="heal-quick-key">' + keyLabel + '</span>';
-    h += '</button>';
-  });
-
+  h += '<button class="heal-quick-btn' + (disabled ? ' disabled' : '') + '" type="button" '
+    + (disabled ? 'disabled' : '')
+    + ' onclick="PotionManager.useHealingPotion(\'' + esc(potion.id) + '\')" title="' + esc(potion.name) + ' (touche ' + keyLabel + ' sur PC)">';
+  h += '<span class="heal-quick-icon">' + esc(potion.icon) + '</span>';
+  h += '<span class="heal-quick-count">' + stock + '</span>';
+  h += '<span class="heal-quick-key">' + keyLabel + '</span>';
+  h += '</button>';
   h += '</div>';
   return h;
 }
 
-/* Rafraîchit le bouton de soin rapide (stock + état du cooldown).
+/* Rafraîchit les boutons de soin rapide (stock + état du cooldown).
+   v2.67 : une potion de chaque côté du bouton ATTAQUE (#heal-quick-
+   root-left et #heal-quick-root) au lieu des deux groupées à droite —
+   ça permet au bouton, de taille fixe, d'être PARFAITEMENT centré
+   (les deux côtés ont désormais le même contenu, donc la même
+   largeur), sans le compromis de centrage approximatif qu'il fallait
+   avant pour ne pas chevaucher 2 potions groupées à droite.
    Appelée au boot, après achat/usage, et régulièrement depuis la
    boucle de jeu pour que le cooldown se débloque visuellement tout
    seul sans action du joueur. */
 function renderHealButtons() {
-  var host = document.getElementById("tab-bar-special-slot");
-  if (host) host.innerHTML = buildHealButtonsHTML();
+  var left = document.getElementById("heal-quick-root-left");
+  var right = document.getElementById("heal-quick-root");
+  if (left) left.innerHTML = buildHealButtonHTML(0);
+  if (right) right.innerHTML = buildHealButtonHTML(1);
 }
 
 /* Met à jour tout l'affichage de l'ennemi courant : image (ou emoji
-   de repli), nom, compteur de kills, bannière de zone, PV et
-   indicateur d'affinité de dégâts. Appelée à chaque spawn d'ennemi
-   et après chaque coup porté. */
+/* v2.58 : nom du monstre, icône (image ou emoji de repli), compteur
+   de kills et PV — la bannière de zone (#zone-banner) et l'indicateur
+   de résistance/point faible (#enemy-affinity, voir
+   renderEnemyAffinity ci-dessous) ont été retirés à la demande de
+   l'utilisateur. Appelée à chaque spawn d'ennemi et après chaque
+   coup porté. */
 function renderEnemy() {
   if (!game.enemy) return;
 
   var emoji = document.getElementById("enemy-emoji");
   var name = document.getElementById("enemy-name");
-  var counter = document.getElementById("enemy-counter");
-  var banner = document.getElementById("zone-banner");
   var db = game.enemy.isBoss ? BOSS_DB : ENEMY_DB;
   var enemyData = db[game.enemy.id] || {};
   var assetKey = enemyData.asset || game.enemy.asset || "";
@@ -110,44 +178,8 @@ function renderEnemy() {
   }
 
   if (name) name.textContent = game.enemy.name + (game.enemy.isBoss ? " [BOSS]" : "");
-  if (counter) counter.textContent = "Kills " + (game.killCounts[game.enemy.id] || 0);
-
-  if (banner) {
-    banner.textContent = game.enemy.isBoss
-      ? "🔥 BOSS ! Vainquez-le pour avancer !"
-      : "⚔️ Tappe l'ennemi pour attaquer !";
-  }
 
   renderEnemyHp();
-  renderEnemyAffinity();
-}
-
-/* ============================================================
-   Indicateur de résistance / faiblesse selon l'arme équipée.
-   S'appuie sur getDamageAffinity() (combat-engine.js) qui compare
-   le type de dégâts de l'arme équipée aux resists/weak de l'ennemi.
-============================================================ */
-
-function renderEnemyAffinity() {
-  var el = document.getElementById("enemy-affinity");
-  if (!el) return;
-
-  if (!game.enemy || typeof getDamageAffinity !== "function") {
-    el.textContent = "";
-    el.className = "";
-    return;
-  }
-
-  var affinity = getDamageAffinity();
-  var labels = {
-    resist: "⚠️ Résistant",
-    weak: "✅ Point faible",
-    unarmed: "🤜 Sans arme (-20%)",
-    neutral: ""
-  };
-
-  el.textContent = labels[affinity.status] || "";
-  el.className = "enemy-affinity " + affinity.status;
 }
 
 /* ============================================================
@@ -168,10 +200,9 @@ function renderEnemyHp() {
 
 window.renderEnemy = renderEnemy;
 window.renderEnemyHp = renderEnemyHp;
-window.renderEnemyAffinity = renderEnemyAffinity;
 window.buildCombatHTML = buildCombatHTML;
 window.mountCombatArea = mountCombatArea;
-window.buildHealButtonsHTML = buildHealButtonsHTML;
+window.buildHealButtonHTML = buildHealButtonHTML;
 window.renderHealButtons = renderHealButtons;
 
 /* ============================================================

@@ -20,6 +20,7 @@ var PotionManager = {
       game.pendingPotionBonuses = { aetherNext: 0 };
     }
     if (typeof game.pendingPotionBonuses.aetherNext !== "number") game.pendingPotionBonuses.aetherNext = 0;
+    if (typeof game.aetherElixirStackCount !== "number") game.aetherElixirStackCount = 0;
   },
 
   getPotion: function (id) {
@@ -44,24 +45,40 @@ var PotionManager = {
      potion déjà active la RECHARGE, ne cumule pas son effet). Pour
      l'Élixir d'Aether (pas de durationMin), additionne son bonus dans
      pendingPotionBonuses.aetherNext, consommé à la prochaine ascension. */
+  /* Coût réel d'une potion : fixe pour les potions à durée, mais
+     CROISSANT pour l'Élixir d'Aether (potion.costMult) — chaque achat
+     depuis la dernière ascension augmente le prix du suivant, ce qui
+     empêche d'en empiler dix d'un coup pour un bonus disproportionné.
+     Le compteur (game.aetherElixirStackCount) repart à 0 à chaque
+     ascension (voir progression-system.js, ascendNow()). */
+  getCost: function (potion) {
+    this.ensure();
+    if (!potion.costMult) return potion.cost;
+    var stacks = Number(game.aetherElixirStackCount || 0);
+    return Math.floor(potion.cost * Math.pow(potion.costMult, stacks));
+  },
+
   buy: function (id) {
     this.ensure();
     var potion = this.getPotion(id);
     if (!potion) return showToast("Potion introuvable", 1000);
-    if ((game.gold || 0) < potion.cost) return showToast("Pas assez d'or", 1000);
 
-    game.gold -= potion.cost;
+    var cost = this.getCost(potion);
+    if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
+
+    game.gold -= cost;
 
     if (potion.durationMin) {
       game.activePotions[id] = Date.now() + potion.durationMin * 60000;
       addLog("🧪 " + potion.name + " bue (" + potion.durationMin + " min)", "event");
     } else {
       game.pendingPotionBonuses.aetherNext = Number(game.pendingPotionBonuses.aetherNext || 0) + potion.bonus;
+      game.aetherElixirStackCount = Number(game.aetherElixirStackCount || 0) + 1;
       addLog("🌀 " + potion.name + " bu — bonus prêt pour la prochaine ascension", "event");
     }
 
     if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldSpent", potion.cost);
+      QuestManager.track("goldSpent", cost);
     }
 
     if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {

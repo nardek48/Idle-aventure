@@ -14,36 +14,17 @@ de rendu (renderHud, renderStats...) n'a eu besoin de changer, elles
 continuent de faire de simples getElementById. */
 
 function buildHudHTML() {
+  // v2.38 : le HUD n'affiche plus que les 3 ressources (or/essence/
+  // Aether). Le bloc zone/aventure en cours + niveau/XP du héros
+  // (anciennement ".nb-hud-lower") a été retiré à la demande de
+  // l'utilisateur. Les styles CSS associés ont aussi été supprimés
+  // (voir css/02-layout.css) et les lookups DOM correspondants dans
+  // renderHud() ci-dessous.
   return ''
-    + '<div class="hud-resources">'
-    +   '<span class="resource-badge gold"><span class="icon">💰</span><span id="hud-gold">0</span></span>'
-    +   '<span class="resource-badge essence"><span class="icon">🔮</span><span id="hud-essence">0</span></span>'
-    +   '<span class="resource-badge aether"><span class="icon">🌀</span><span id="hud-aether">0</span></span>'
-    + '</div>'
-
-    + '<div class="hud-zone">'
-    +   '<div class="zone-name" id="hud-zone-name">Forêt</div>'
-    +   '<div id="hud-adventure-name">Lisière</div>'
-    + '</div>'
-
-    + '<div class="hud-hero-xp">'
-    +   '<div class="hud-hero-xp-top">'
-    +     '<span id="hud-hero-level">Niv. 1</span>'
-    +     '<span id="hud-hero-xp-text">0 / 10 XP</span>'
-    +   '</div>'
-    +   '<div class="hud-hero-xp-bar">'
-    +     '<div id="hud-hero-xp-fill" class="hud-hero-xp-fill" style="width:0%"></div>'
-    +   '</div>'
-    + '</div>'
-
-    + '<div class="hud-hero-hp">'
-    +   '<div class="hud-hero-hp-top">'
-    +     '<span>❤️ PV</span>'
-    +     '<span id="hud-hero-hp-text">10 / 10</span>'
-    +   '</div>'
-    +   '<div class="hud-hero-hp-bar">'
-    +     '<div id="hud-hero-hp-fill" class="hud-hero-hp-fill" style="width:100%"></div>'
-    +   '</div>'
+    + '<div class="nb-hud-resources">'
+    +   '<span class="nb-pill nb-pill-gold"><span class="nb-pill-icon">💰</span><span id="hud-gold">0</span></span>'
+    +   '<span class="nb-pill nb-pill-essence"><span class="nb-pill-icon">🔮</span><span id="hud-essence">0</span></span>'
+    +   '<span class="nb-pill nb-pill-aether"><span class="nb-pill-icon">🌀</span><span id="hud-aether">0</span></span>'
     + '</div>';
 }
 
@@ -73,34 +54,10 @@ function renderHud() {
   var gold = document.getElementById("hud-gold");
   var essence = document.getElementById("hud-essence");
   var aether = document.getElementById("hud-aether");
-  var zone = document.getElementById("hud-zone-name");
-  var adventure = document.getElementById("hud-adventure-name");
-
-  var heroLevel = document.getElementById("hud-hero-level");
-  var heroXpText = document.getElementById("hud-hero-xp-text");
-  var heroXpFill = document.getElementById("hud-hero-xp-fill");
 
   if (gold) gold.textContent = formatNumber(game.gold);
   if (essence) essence.textContent = formatNumber(game.essence);
   if (aether) aether.textContent = formatNumber(game.aether);
-
-  var world = WorldManager.getWorld();
-  var adv = WorldManager.getAdventure();
-
-  if (zone && world) zone.textContent = world.name;
-  if (adventure && adv) {
-    var currentStep = Math.min((WorldManager.enemyIndex || 0) + 1, adv.enemyCount || 1);
-    adventure.textContent = adv.name + " (" + currentStep + "/" + (adv.enemyCount || 1) + ")";
-  }
-
-  var level = Number(game.heroLevel || 1);
-  var xp = Math.floor(Number(game.heroXp || 0));
-  var xpToNext = Math.max(1, Math.floor(Number(game.heroXpToNext || 10)));
-  var percent = Math.max(0, Math.min(100, (xp / xpToNext) * 100));
-
-  if (heroLevel) heroLevel.textContent = "Niv. " + level;
-  if (heroXpText) heroXpText.textContent = xp + " / " + xpToNext + " XP";
-  if (heroXpFill) heroXpFill.style.width = percent + "%";
 
   renderHeroHp();
 }
@@ -108,24 +65,65 @@ function renderHud() {
 /* ============================================================
    v1.8.5 : Barre de vie du héros. La classe "low" (PV <= 25%)
    permet au CSS de la faire clignoter/rougir davantage.
+   v2.26 : synchronise AUSSI la barre dupliquée sous les boutons
+   d'attaque spéciale/bouclier de l'écran Combat (mêmes PV, deux
+   affichages) — voir ui/combat-view.js.
+   v2.38 : la barre du HUD (#hud-hero-hp-text/#hud-hero-hp-fill) a été
+   retirée avec le bloc zone/XP — plus de lookup ici.
+   v2.40 : synchronise aussi la mini-barre sous le portrait du héros
+   en haut à gauche de l'écran Combat (#combat-hero-mini-hp-*).
+   v2.41 : la carte "❤️ Points de vie" (#combat-hero-hp-text/-fill)
+   sous le bouton Attaque a été retirée, redondante avec la mini-barre
+   — c'est maintenant la SEULE barre de PV du héros affichée en jeu.
 ============================================================ */
 
 function renderHeroHp() {
-  var text = document.getElementById("hud-hero-hp-text");
-  var fill = document.getElementById("hud-hero-hp-fill");
-  if (!text && !fill) return;
+  var miniText = document.getElementById("combat-hero-mini-hp-text");
+  var miniFill = document.getElementById("combat-hero-mini-hp-fill");
+  if (!miniText && !miniFill) return;
 
   var hp = Math.max(0, Math.ceil(Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1)));
   var maxHp = Math.max(1, Math.floor(Number(game.heroMaxHp || 1)));
   var pct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
+  var hpText = formatNumber(hp) + " / " + formatNumber(maxHp);
 
-  if (text) text.textContent = formatNumber(hp) + " / " + formatNumber(maxHp);
-  if (fill) {
-    fill.style.width = pct + "%";
-    fill.classList.toggle("low", pct <= 25);
+  if (miniText) miniText.textContent = hpText;
+  if (miniFill) {
+    miniFill.style.width = pct + "%";
+    miniFill.classList.toggle("low", pct <= 25);
   }
 }
 
+/* ============================================================
+   v2.40 : portrait + niveau du héros dans la mini-carte en haut à
+   gauche de l'écran Combat (#combat-hero-mini). Contrairement à la
+   barre de PV (renderHeroHp, appelée très souvent), le portrait ne
+   change que si le héros change — appelée depuis renderAll() et
+   après confirmHeroSelection(), coût négligeable de toute façon.
+============================================================ */
+
+function renderCombatHeroMini() {
+  var img = document.getElementById("combat-hero-mini-img");
+  var placeholder = document.getElementById("combat-hero-mini-placeholder");
+  var levelEl = document.getElementById("combat-hero-mini-level");
+  if (!img && !placeholder && !levelEl) return;
+
+  var hero = (typeof getHeroByGameId === "function") ? getHeroByGameId(game.heroId) : null;
+
+  if (hero && hero.image) {
+    if (img) {
+      img.src = hero.image;
+      img.alt = hero.name || "";
+      img.style.display = "block";
+    }
+    if (placeholder) placeholder.style.display = "none";
+  } else {
+    if (img) img.style.display = "none";
+    if (placeholder) placeholder.style.display = "flex";
+  }
+
+  if (levelEl) levelEl.textContent = "Niv. " + Number(game.heroLevel || 1);
+}
 /* ============================================================
    Barre de stats sous la zone de combat : dégâts/tap, auto DPS,
    critique, bonus Aether et multiplicateur d'or — tous lus via les
@@ -159,4 +157,5 @@ window.buildHudHTML = buildHudHTML;
 window.buildStatsBarHTML = buildStatsBarHTML;
 window.mountHudAndStatsBar = mountHudAndStatsBar;
 window.renderHeroHp = renderHeroHp;
+window.renderCombatHeroMini = renderCombatHeroMini;
 window.renderStats = renderStats;

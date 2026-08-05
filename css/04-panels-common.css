@@ -4,24 +4,24 @@
 .panel-card {
   margin-bottom: 12px;
   padding: 14px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-soft);
+  background: var(--nb-cream);
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-card);
 }
 
 .panel-card h3 {
   margin-bottom: 6px;
   font-size: 17px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--nb-ink);
 }
 
 .panel-sub {
   margin-bottom: 12px;
   font-size: 12px;
   line-height: 1.5;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 /* =========================
@@ -33,39 +33,48 @@
   min-height: 46px;
   padding: 8px 12px;
 
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #9b6bff 0%, #7c4dff 100%);
-  color: #fff;
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream);
+  color: var(--nb-ink);
 
   font-size: 12px;
   font-weight: 800;
   line-height: 1.15;
   cursor: pointer;
 
-  box-shadow: 0 8px 18px rgba(124, 77, 255, 0.28);
+  box-shadow: 0 3px 0 var(--nb-frame-light);
   transition:
     transform 0.08s ease,
-    background-color 0.2s ease,
+    box-shadow 0.08s ease,
     opacity 0.2s ease,
     filter 0.2s ease;
 }
 
+.btn.primary {
+  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
+  border-color: var(--nb-gold-dark);
+  color: #4a2f06;
+  box-shadow: 0 3px 0 var(--nb-gold-deep);
+}
+
 .btn:hover {
-  filter: brightness(1.06);
+  filter: brightness(1.04);
 }
 
 .btn:active {
-  transform: scale(0.96);
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
 .btn.disabled,
 .btn:disabled {
-  background: #444;
-  color: #888;
+  background: var(--nb-cream-deep);
+  color: var(--nb-ink-dim);
+  border-color: var(--nb-frame-light);
   box-shadow: none;
   cursor: default;
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
 /* =========================
@@ -80,7 +89,7 @@
 
 .talent-board {
   padding: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--nb-frame);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-soft);
 }

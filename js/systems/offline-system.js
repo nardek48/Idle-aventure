@@ -236,7 +236,7 @@ var OfflineManager = {
       }
 
       (offline.items || []).forEach(function (drop) {
-        if (typeof addLootToInventory === "function" ? addLootToInventory(drop) : (game.inventory.push(drop), true)) {
+        if (typeof addDropToInventory === "function" ? addDropToInventory(drop) : (game.inventory.push(drop), true)) {
           itemNames.push(drop.name);
         }
       });

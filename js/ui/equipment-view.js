@@ -114,11 +114,17 @@ function buildEquipHTML() {
 
   h += '<div class="eq-bag-panel">';
 
+  h += '<div class="auto-sell-toggle-row">';
+  h += '<button class="auto-sell-toggle' + (game.autoSellEquipment ? ' is-on' : '') + '" type="button" onclick="toggleAutoSellEquipment()">';
+  h += '<span class="auto-sell-switch"></span>';
+  h += '<span class="auto-sell-label">🤖 Autovente ' + (game.autoSellEquipment ? "activée" : "désactivée") + '</span>';
+  h += '</button>';
+  h += '<p class="panel-sub" style="margin:6px 0 0;">Vend automatiquement tout nouveau butin d\u2019une rareté inférieure à celle déjà équipée sur le même emplacement.</p>';
+  h += '</div>';
+
   h += '<div class="equip-toolbar">';
   h += '<button class="settings-btn" onclick="sortInventoryByRarity()">Tri rareté</button>';
   h += '<button class="settings-btn" onclick="sortInventoryByType()">Tri type</button>';
-  h += '<button class="settings-btn danger" onclick="sellInventoryByRarity(\'common\')">Vendre communs</button>';
-  h += '<button class="settings-btn danger" onclick="sellInventoryByRarity(\'rare\')">Vendre rares</button>';
   h += '<button class="settings-btn danger" onclick="sellAllInventory()">Tout vendre</button>';
   h += '</div>';
 

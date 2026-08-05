@@ -14,7 +14,7 @@
   pointer-events: none;
 
   background: rgba(0, 0, 0, 0.85);
-  color: var(--gold);
+  color: var(--nb-gold);
   text-align: center;
   font-size: 14px;
   font-weight: 700;
@@ -59,19 +59,20 @@
   width: 100%;
   padding: 24px;
   text-align: center;
-  background: var(--bg-panel);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-soft);
+  background: var(--nb-cream-alt);
+  border-radius: var(--nb-radius-lg);
+  box-shadow: var(--nb-shadow-card);
+  color: var(--nb-ink);
 }
 
 .offline-card {
   max-width: 340px;
-  border: 1px solid var(--aether-dark);
+  border: 1px solid var(--nb-frame);
 }
 
 .confirm-card {
   max-width: 320px;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--nb-frame);
 }
 
 .offline-icon {
@@ -89,14 +90,14 @@
 .offline-time {
   margin-bottom: 12px;
   font-size: 13px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .offline-rewards {
   margin-bottom: 12px;
   padding: 12px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-card);
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream);
 }
 
 .offline-reward-row {
@@ -111,7 +112,7 @@
   min-height: 48px;
   padding: 14px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--nb-radius-sm);
   background: var(--aether-dark);
   color: #fff;
   font-size: 15px;
@@ -136,6 +137,7 @@
   margin-bottom: 8px;
   font-size: 17px;
   font-weight: 700;
+  color: var(--nb-ink);
 }
 
 .confirm-text {
@@ -143,7 +145,7 @@
   white-space: pre-line;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .confirm-buttons {
@@ -156,7 +158,7 @@
   min-height: 46px;
   padding: 12px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--nb-radius-sm);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -171,9 +173,9 @@
 }
 
 .confirm-btn.cancel {
-  background: var(--bg-card);
-  color: var(--text);
-  border: 1px solid var(--border);
+  background: var(--nb-cream);
+  color: var(--nb-ink);
+  border: 1px solid var(--nb-frame);
 }
 
 .confirm-btn.ok {
@@ -205,11 +207,12 @@
 .hero-picker {
   width: min(960px, 100%);
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   padding: 0;
-  color: #f5f7fb;
-  background: linear-gradient(180deg, #182235 0%, #101827 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--nb-ink);
+  background: var(--nb-cream);
+  border: 3px solid var(--nb-frame);
   border-radius: 22px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
 }
@@ -223,12 +226,13 @@
   margin: 0 0 8px;
   font-size: 28px;
   font-weight: 800;
+  color: var(--nb-ink);
 }
 
 .hero-picker-header p {
   margin: 0;
   font-size: 16px;
-  color: rgba(245, 247, 251, 0.78);
+  color: var(--nb-ink-dim);
 }
 
 .hero-picker-body {
@@ -242,13 +246,11 @@
   width: 100%;
   margin-bottom: 18px;
   padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
   font-size: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: none;
-  border-right: none;
-  border-radius: 0;
+  border: 2px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-sm);
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
@@ -256,17 +258,17 @@
 }
 
 #player-name-input::placeholder {
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--nb-ink-dim);
 }
 
 #player-name-input:focus {
-  border-color: rgba(109, 180, 255, 0.9);
-  box-shadow: inset 0 0 0 1px rgba(109, 180, 255, 0.35);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--nb-blue);
+  box-shadow: 0 0 0 3px rgba(79, 168, 232, 0.25);
+  background: var(--nb-cream);
 }
 
 #player-name-input:focus-visible {
-  outline: 2px solid rgba(109, 180, 255, 0.55);
+  outline: 2px solid var(--nb-blue);
   outline-offset: 2px;
 }
 
@@ -293,9 +295,10 @@
   text-align: center;
   cursor: pointer;
 
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--nb-radius-md);
+  border: 2px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  box-shadow: 0 3px 0 var(--nb-frame-light);
 
   transition:
     transform 0.15s ease,
@@ -306,14 +309,13 @@
 
 .hero-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--nb-cream);
 }
 
 .hero-card.active {
-  border-color: #6db4ff;
-  background: rgba(109, 180, 255, 0.10);
-  box-shadow: 0 0 0 2px rgba(109, 180, 255, 0.14);
+  border-color: var(--nb-gold-dark);
+  background: #fff3d6;
+  box-shadow: 0 0 0 3px rgba(240, 170, 62, 0.25);
 }
 
 .hero-card-image {
@@ -321,8 +323,8 @@
   width: 74px;
   height: 74px;
   object-fit: cover;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream-deep);
 }
 
 .hero-card-name,
@@ -330,7 +332,7 @@
   font-size: 15px;
   font-weight: 800;
   line-height: 1.2;
-  color: #f8fbff;
+  color: var(--nb-ink);
   text-align: center;
 }
 
@@ -356,8 +358,8 @@
 .menu-action-btn {
   appearance: none;
   padding: 12px 18px;
-  border: none;
-  border-radius: 14px;
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -369,7 +371,7 @@
 
 .hero-picker-actions .btn:active,
 .menu-action-btn:active {
-  transform: scale(0.96);
+  transform: translateY(2px);
 }
 
 .hero-picker-actions .btn:hover,
@@ -378,21 +380,22 @@
 }
 
 .hero-picker-actions .primary {
-  background: #69aef6;
-  color: #08111f;
+  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
+  border-color: var(--nb-gold-dark);
+  color: #4a2f06;
 }
 
 .hero-picker-actions .secondary {
-  background: rgba(255, 255, 255, 0.10);
-  color: #f5f7fb;
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
 }
 
 .menu-action-btn {
   width: 100%;
   margin-top: 10px;
-  background: linear-gradient(180deg, #22314b 0%, #182235 100%);
-  color: #f5f7fb;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  border: 2px solid var(--nb-frame);
 }
 
 /* =========================
@@ -401,19 +404,19 @@
 .hero-preview {
   margin-top: 16px;
   padding: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream-alt);
 }
 
 .hero-preview-lore {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--nb-frame-light);
   font-size: 12px;
   font-style: italic;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--nb-ink-dim);
 }
 
 .hero-preview-title {
@@ -421,7 +424,7 @@
   text-align: center;
   font-size: 16px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--nb-ink);
 }
 
 .hero-preview-stats {
@@ -435,18 +438,18 @@
   justify-content: space-between;
   gap: 12px;
   padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream);
 }
 
 .hero-stat span {
   font-size: 13px;
-  color: var(--text-dim);
+  color: var(--nb-ink-dim);
 }
 
 .hero-stat strong {
   font-size: 14px;
-  color: var(--text);
+  color: var(--nb-ink);
 }
 
 /* =========================
@@ -471,6 +474,7 @@
 
   .hero-picker {
     max-height: 92vh;
+    max-height: 92dvh;
     border-radius: 18px;
   }
 
@@ -518,7 +522,7 @@
   align-items: flex-end;
   justify-content: center;
   padding: 0;
-  background: rgba(10, 14, 22, 0.82);
+  background: rgba(10, 8, 18, 0.75);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
@@ -527,34 +531,24 @@
   width: 100%;
   max-width: 640px;
   max-height: 88vh;
+  max-height: 88dvh;
   min-height: 0;               /* évite un bug flexbox classique qui empêche le scroll interne */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;  /* scroll fluide au doigt sur iOS/mobile */
   padding: 0;
-  color: #f5f7fb;
-  background: linear-gradient(180deg, #182235 0%, #101827 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 22px 22px 0 0;
+  color: var(--nb-ink);
+  background: var(--nb-cream);
+  border: 3px solid var(--nb-frame);
+  border-bottom: none;
+  border-radius: 24px 24px 0 0;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45);
   padding-bottom: var(--safe-bottom);
 }
 
-/* Sur les écrans larges (PC, tablette), le style "glisse depuis le
-   bas" atterrissait tout en bas de la fenêtre, loin du regard —
-   on centre la modale à la place. Le mobile garde le comportement
-   d'origine (feuille qui glisse depuis le bas). */
-@media (min-width: 700px) {
-  .full-menu-overlay {
-    align-items: center;
-  }
-
-  .full-menu {
-    max-height: 80vh;
-    border-radius: 22px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    padding-bottom: 0;
-  }
-}
+/* v2.38 — Projet figé sur mobile uniquement (320–430px) : la règle
+   desktop/tablette "≥700px" qui recentrait la modale a été retirée
+   car elle ne peut plus jamais se déclencher. Le comportement mobile
+   (feuille qui glisse depuis le bas) devient le seul comportement. */
 
 .full-menu-header {
   position: sticky;
@@ -564,22 +558,23 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 20px 10px;
-  background: linear-gradient(180deg, #182235 60%, transparent);
+  background: linear-gradient(180deg, var(--nb-cream) 60%, transparent);
 }
 
 .full-menu-header h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
+  color: var(--nb-ink);
 }
 
 .full-menu-close {
   width: 36px;
   height: 36px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: #f5f7fb;
+  border: 2px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
   font-size: 16px;
   cursor: pointer;
 }
@@ -598,18 +593,19 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 18px 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  color: #f5f7fb;
+  padding: 16px 10px;
+  background: var(--nb-cream-alt);
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  box-shadow: 0 3px 0 var(--nb-frame-light);
+  color: var(--nb-ink);
   cursor: pointer;
-  transition: transform 0.08s ease, background-color 0.15s ease;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 
 .full-menu-card:active {
-  transform: scale(0.96);
-  background: rgba(255, 255, 255, 0.09);
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
 .full-menu-card-icon-img {
@@ -620,14 +616,15 @@
 }
 
 .full-menu-card-icon {
-  font-size: 30px;
+  font-size: 28px;
   line-height: 1;
 }
 
 .full-menu-card-label {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
   text-align: center;
+  color: var(--nb-ink);
 }
 
 .full-menu-card-badge {
@@ -645,6 +642,7 @@
   color: #fff;
   font-size: 10px;
   font-weight: 700;
+  border: 1px solid var(--nb-cream);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -667,7 +665,7 @@
 .export-text-body p {
   margin: 0 0 10px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--nb-ink-dim);
   line-height: 1.5;
 }
 
@@ -675,10 +673,10 @@
   width: 100%;
   height: 160px;
   padding: 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(0, 0, 0, 0.3);
-  color: #f5f7fb;
+  border-radius: var(--nb-radius-sm);
+  border: 2px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
   font-family: "Consolas", monospace;
   font-size: 11px;
   resize: vertical;
@@ -703,13 +701,13 @@
   font-size: 20px;
   font-weight: 800;
   margin-bottom: 10px;
-  color: #f5f7fb;
+  color: var(--nb-ink);
 }
 
 .onboarding-text {
   font-size: 13px;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--nb-ink-dim);
   margin-bottom: 20px;
 }
 
@@ -724,11 +722,11 @@
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--nb-cream-deep);
 }
 
 .onboarding-dot.is-active {
-  background: var(--gold);
+  background: var(--nb-gold);
   width: 18px;
 }
 

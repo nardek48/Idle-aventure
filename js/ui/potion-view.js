@@ -12,7 +12,8 @@ function buildPotionCardHTML(potion) {
     ? PotionManager.getRemainingMs(potion.id)
     : 0;
   var isActive = remaining > 0;
-  var canBuy = (game.gold || 0) >= potion.cost;
+  var cost = (window.PotionManager && typeof PotionManager.getCost === "function") ? PotionManager.getCost(potion) : potion.cost;
+  var canBuy = (game.gold || 0) >= cost;
 
   var h = '<div class="potion-card rarity-' + esc(potion.rarity) + (isActive ? ' is-active' : '') + '">';
   h += '<div class="potion-icon">' + esc(potion.icon) + '</div>';
@@ -30,7 +31,7 @@ function buildPotionCardHTML(potion) {
   }
 
   h += '</div>';
-  h += '<button class="potion-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buy(\'' + esc(potion.id) + '\')">' + formatNumber(potion.cost) + ' or</button>';
+  h += '<button class="potion-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buy(\'' + esc(potion.id) + '\')">' + formatNumber(cost) + ' or</button>';
   h += '</div>';
   return h;
 }

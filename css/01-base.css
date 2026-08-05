@@ -22,6 +22,19 @@ html {
 
 /* =========================
    Corps de page
+   v2.43 : le fond du monde (image d'arène de combat, --world-combat-map
+   posé sur <html> par WorldManager.applyWorldTheme() dans
+   systems/progression-system.js) est maintenant peint ICI, sur body,
+   au lieu de #game-area — il couvre donc TOUTE la page (HUD, zone de
+   jeu, barre de stats, panneaux, barre d'onglets), pas seulement
+   l'écran Combat. Les variables CSS étaient déjà posées sur <html>
+   par le JS, donc aucun changement de script n'a été nécessaire,
+   juste ce déplacement de règle CSS de #game-area vers body.
+   Note : les panneaux qui ont leur propre image de fond par onglet
+   (village, boutique..., voir #panel-container.panel-world-bg dans
+   css/06-map.css) continuent de peindre PAR-DESSUS ce fond commun
+   quand ils sont actifs — à retirer plus tard si on veut un fond
+   unique partout, y compris sur ces écrans-là.
    ========================= */
 body {
   height: 100%;
@@ -30,7 +43,15 @@ body {
   display: flex;                          /* Mise en page en colonne */
   flex-direction: column;
   overflow: hidden;                       /* Bloque le scroll global, utile si une zone interne gère le scroll */
-  background: var(--bg-dark);
+
+  background:
+    linear-gradient(to top, rgba(0, 0, 0, 0.30), rgba(0, 0, 0, 0.10)),
+    var(--world-combat-map, none),
+    var(--world-bg, var(--nb-shell));
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition: background-color 0.5s ease;
   color: var(--text);
   overscroll-behavior: none;
   -webkit-touch-callout: none;

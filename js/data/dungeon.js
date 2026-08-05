@@ -19,13 +19,14 @@ var DUNGEON_CONFIG = {
   waveCount: 15,              // vagues normales avant le boss (vague 16)
   freeTicketsPerDay: 1,
   ticketResetHours: 24,
-  ticketCostEssence: 100,      // prix d'un ticket supplémentaire (valable pour n'importe quel palier)
-  maxTicketPurchasesPerDay: 10, // v2.17 : limite journalière d'achat de tickets (au-delà, seul le ticket gratuit du lendemain compte)
+  ticketCostEssence: 100,      // prix du premier ticket supplémentaire de la journée (valable pour n'importe quel palier)
+  ticketCostGrowth: 1.2,        // v2.30 : le prix grimpe ×1.2 à chaque achat depuis le début de la journée
+  maxTicketPurchasesPerDay: 20, // v2.30 : 10 -> 20 achats par jour max (au-delà, seul le ticket gratuit du lendemain compte)
 
   // Multiplicateurs de difficulté, appliqués par-dessus la difficulté
   // de base du palier choisi (voir DUNGEON_TIERS.worldPower ci-dessous).
   basePremiumMult: 1.3,        // le donjon est TOUJOURS plus dur qu'un combat normal au même "niveau de monde"
-  waveRampMult: 1.5,           // intensité additionnelle entre la vague 1 et la vague 15
+  waveRampMult: 1,             // v2.30 : 1.5 -> 1, intensité additionnelle entre la vague 1 et la vague 15
   bossPremiumMult: 1.8,        // le boss de donjon est nettement plus fort qu'un boss de monde
 
   // Récompenses

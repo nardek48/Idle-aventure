@@ -11,15 +11,15 @@
   z-index: 5;
   margin-bottom: 14px;
   padding: 14px;
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-soft), 0 8px 16px rgba(0, 0, 0, 0.35);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame);
+  box-shadow: var(--nb-shadow-card), 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
 .bestiary-detail.boss {
   border-color: rgba(239, 68, 68, 0.35);
-  background: rgba(239, 68, 68, 0.06);
+  background: #fdeaea;
 }
 
 .bestiary-detail-top {
@@ -35,7 +35,7 @@
   min-width: 96px;
   border-radius: 16px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--nb-cream-alt);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -69,7 +69,7 @@
 .bestiary-card-name {
   font-size: 17px;
   font-weight: 700;
-  color: #fff;
+  color: var(--nb-ink);
 }
 
 .bestiary-boss-badge {
@@ -87,7 +87,7 @@
 .bestiary-card-kills {
   margin-top: 4px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(58, 44, 26, 0.75);
 }
 
 .bestiary-tags {
@@ -96,7 +96,7 @@
   flex-direction: column;
   gap: 4px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(58, 44, 26, 0.8);
 }
 
 .bestiary-tag-group {
@@ -105,7 +105,7 @@
 
 .bestiary-tag-title {
   font-weight: 700;
-  color: #fff;
+  color: var(--nb-ink);
 }
 
 /* =========================
@@ -125,7 +125,7 @@
   gap: 2px;
   padding: 10px 6px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--nb-cream-alt);
 }
 
 .bestiary-combat-icon {
@@ -135,12 +135,12 @@
 .bestiary-combat-value {
   font-size: 15px;
   font-weight: 800;
-  color: #fff;
+  color: var(--nb-ink);
 }
 
 .bestiary-combat-label {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(58, 44, 26, 0.65);
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
@@ -148,7 +148,7 @@
 .bestiary-combat-note {
   margin-top: 6px;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(58, 44, 26, 0.55);
   text-align: center;
   font-style: italic;
 }
@@ -172,7 +172,7 @@
   align-items: center;
   gap: 10px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--nb-ink);
 }
 
 .bestiary-stat-label {
@@ -191,7 +191,7 @@
   height: 7px;
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.10);
+  background: var(--nb-cream-deep);
 }
 
 .bestiary-stat-fill {
@@ -227,7 +227,7 @@
   aspect-ratio: 1 / 1;
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--nb-cream-alt);
   border: 2px solid transparent;
   display: flex;
   align-items: center;
@@ -243,7 +243,7 @@
 
 .bestiary-grid-item.is-selected .bestiary-thumb-wrap-sm,
 .bestiary-grid-item.is-selected .bestiary-thumb-wrap-sm-fallback {
-  border-color: var(--gold);
+  border-color: var(--nb-gold);
 }
 
 .bestiary-grid-item:active .bestiary-thumb-wrap-sm,

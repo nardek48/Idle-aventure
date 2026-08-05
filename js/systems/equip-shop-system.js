@@ -10,6 +10,13 @@ fois chacun, stock renouvelé toutes les 6h.
 var EQUIP_SHOP_SIZE = 6;
 var EQUIP_SHOP_REFRESH_MS = 6 * 3600 * 1000;
 
+/* v2.27 : renouvellement payant, en plus du renouvellement gratuit
+   toutes les 6h — coût CROISSANT à chaque renouvellement payant
+   utilisé depuis le dernier renouvellement (payant ou naturel), pour
+   ne pas pouvoir farmer le stock en boucle. */
+var EQUIP_SHOP_MANUAL_REFRESH_BASE_COST = 1000;
+var EQUIP_SHOP_MANUAL_REFRESH_MULT = 2.2;
+
 /* Prix d'achat par rareté — volontairement bien au-dessus du prix de
    revente (getEquipmentSellValue en equipment-system.js), sinon
    "vendre pour racheter" n'aurait aucun sens. */
@@ -25,6 +32,7 @@ var EquipShopManager = {
   ensure: function () {
     if (!Array.isArray(game.equipShopStock)) game.equipShopStock = [];
     if (typeof game.equipShopResetTime !== "number") game.equipShopResetTime = 0;
+    if (typeof game.equipShopManualRefreshCount !== "number") game.equipShopManualRefreshCount = 0;
   },
 
   getPrice: function (item) {
@@ -58,7 +66,39 @@ var EquipShopManager = {
     if (!game.equipShopStock.length || now >= game.equipShopResetTime) {
       game.equipShopStock = this.generateStock();
       game.equipShopResetTime = now + EQUIP_SHOP_REFRESH_MS;
+      game.equipShopManualRefreshCount = 0;
     }
+  },
+
+  /* Coût du prochain renouvellement payant — augmente à chaque fois
+     qu'on l'utilise, remis à zéro par le prochain renouvellement
+     naturel (voir checkRefresh ci-dessus). */
+  getManualRefreshCost: function () {
+    this.ensure();
+    var count = Number(game.equipShopManualRefreshCount || 0);
+    return Math.floor(EQUIP_SHOP_MANUAL_REFRESH_BASE_COST * Math.pow(EQUIP_SHOP_MANUAL_REFRESH_MULT, count));
+  },
+
+  /* Paye pour régénérer immédiatement tout le stock (objets déjà
+     achetés remis en jeu inclus) et relance un plein cycle de 6h. */
+  manualRefresh: function () {
+    this.ensure();
+    var cost = this.getManualRefreshCost();
+    if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
+
+    game.gold -= cost;
+    game.equipShopManualRefreshCount = Number(game.equipShopManualRefreshCount || 0) + 1;
+    game.equipShopStock = this.generateStock();
+    game.equipShopResetTime = Date.now() + EQUIP_SHOP_REFRESH_MS;
+
+    if (window.QuestManager && typeof QuestManager.track === "function") {
+      QuestManager.track("goldSpent", cost);
+    }
+
+    addLog("🔄 Échoppe renouvelée (" + formatNumber(cost) + " or)", "event");
+    showToast("🔄 Stock renouvelé !", 1500);
+    if (typeof renderAll === "function") renderAll();
+    saveGame();
   },
 
   timeUntilRefresh: function () {
