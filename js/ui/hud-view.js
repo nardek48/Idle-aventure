@@ -20,11 +20,33 @@ function buildHudHTML() {
   // l'utilisateur. Les styles CSS associés ont aussi été supprimés
   // (voir css/02-layout.css) et les lookups DOM correspondants dans
   // renderHud() ci-dessous.
+  // v2.72 : mini-portrait du héros (#combat-hero-mini) déplacé ici,
+  // à côté des ressources, à la demande de l'utilisateur — avant, il
+  // flottait en survol de la zone de jeu (écran Combat uniquement,
+  // voir css/03-combat.css pour l'historique). Il garde exactement la
+  // même taille, structure et IDs qu'avant : renderHeroHp() et
+  // renderCombatHeroMini() (dans ui/combat-view.js et ui/hud-view.js)
+  // n'ont besoin d'aucun changement, elles ciblent les mêmes IDs peu
+  // importe où ils se trouvent dans le DOM. Visible sur tous les
+  // écrans maintenant, pas seulement en combat.
   return ''
-    + '<div class="nb-hud-resources">'
-    +   '<span class="nb-pill nb-pill-gold"><span class="nb-pill-icon">💰</span><span id="hud-gold">0</span></span>'
-    +   '<span class="nb-pill nb-pill-essence"><span class="nb-pill-icon">🔮</span><span id="hud-essence">0</span></span>'
-    +   '<span class="nb-pill nb-pill-aether"><span class="nb-pill-icon">🌀</span><span id="hud-aether">0</span></span>'
+    + '<div class="nb-hud-top-row">'
+    +   '<div class="nb-hud-resources">'
+    +     '<span class="nb-pill nb-pill-gold"><span class="nb-pill-icon">💰</span><span id="hud-gold">0</span></span>'
+    +     '<span class="nb-pill nb-pill-essence"><span class="nb-pill-icon">🔮</span><span id="hud-essence">0</span></span>'
+    +     '<span class="nb-pill nb-pill-aether"><span class="nb-pill-icon">🌀</span><span id="hud-aether">0</span></span>'
+    +   '</div>'
+    +   '<div id="combat-hero-mini" class="combat-hero-mini">'
+    +     '<div class="combat-hero-mini-portrait">'
+    +       '<img id="combat-hero-mini-img" class="combat-hero-mini-img" src="" alt="" style="display:none">'
+    +       '<div id="combat-hero-mini-placeholder" class="combat-hero-mini-placeholder">?</div>'
+    +       '<span class="combat-hero-mini-level" id="combat-hero-mini-level">Niv. 1</span>'
+    +     '</div>'
+    +     '<div class="combat-hero-mini-hp-bar">'
+    +       '<div id="combat-hero-mini-hp-fill" class="combat-hero-mini-hp-fill" style="width:100%"></div>'
+    +       '<span class="combat-hero-mini-hp-text" id="combat-hero-mini-hp-text">10 / 10</span>'
+    +     '</div>'
+    +   '</div>'
     + '</div>';
 }
 

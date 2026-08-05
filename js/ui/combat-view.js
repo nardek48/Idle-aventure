@@ -20,24 +20,10 @@ function buildCombatHTML() {
     // dédiée sur le bouton Donjon de la barre du bas (voir
     // #dungeon-tab-badge dans index.html et updateQuestBadge() dans
     // ui/quests-view.js).
-
-    // v2.40 : mini-portrait du héros en survol du coin haut-gauche de
-    // la zone de jeu (position absolute, voir css/03-combat.css) avec
-    // son niveau et une petite barre de PV en dessous — synchronisée
-    // par renderHeroHp() (déjà appelée dans renderHud()), voir aussi
-    // renderCombatHeroMini() pour le portrait/niveau (appelée par
-    // renderAll() et à chaque changement de héros).
-    + '<div id="combat-hero-mini" class="combat-hero-mini">'
-    +   '<div class="combat-hero-mini-portrait">'
-    +     '<img id="combat-hero-mini-img" class="combat-hero-mini-img" src="" alt="" style="display:none">'
-    +     '<div id="combat-hero-mini-placeholder" class="combat-hero-mini-placeholder">?</div>'
-    +     '<span class="combat-hero-mini-level" id="combat-hero-mini-level">Niv. 1</span>'
-    +   '</div>'
-    +   '<div class="combat-hero-mini-hp-bar">'
-    +     '<div id="combat-hero-mini-hp-fill" class="combat-hero-mini-hp-fill" style="width:100%"></div>'
-    +     '<span class="combat-hero-mini-hp-text" id="combat-hero-mini-hp-text">10 / 10</span>'
-    +   '</div>'
-    + '</div>'
+    // v2.72 : mini-portrait du héros (#combat-hero-mini) déplacé dans
+    // le HUD (voir ui/hud-view.js), à côté des ressources — il était
+    // ici en survol de la zone de jeu, maintenant visible en
+    // permanence sur tous les écrans, pas seulement en combat.
 
     // v2.40 : nom + PV de l'ennemi remontés AU-DESSUS de son
     // icône/image (avant : en dessous). Même id/class, juste
