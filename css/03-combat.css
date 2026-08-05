@@ -11,7 +11,7 @@
    ========================= */
 .combat-hero-mini {
   position: absolute;
-  top: 1%;
+  top: 10px;
   left: 12px;
   z-index: 6;
   display: flex;
@@ -288,7 +288,6 @@
   max-width: 85%;
   min-width: 150px;
   box-sizing: border-box;
-
   transform: translateY(-25px);
 }
 
@@ -312,17 +311,16 @@
   position: relative;
   width: min(75%, 320px);
   max-width: 320px;
-  height: clamp(26px, calc(13px + 4vw), 30px);   /* nettement plus haute */
+  height: clamp(26px, calc(13px + 4vw), 30px);
   margin-top: 0;
   margin-bottom: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
   border: none;
-
   transform: translateY(-25px);
 }
 
 .enemy-hp-bar-track {
   position: absolute;
-  inset: 3px 10px; /* haut/bas : 3 px — gauche/droite : 6 px */
+  inset: 3px 10px;
   overflow: hidden;
   border-radius: 999px;
   background: var(--nb-cream-deep);
@@ -464,9 +462,9 @@
    Animations
    ========================= */
 @keyframes hitFlash {
-  0% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(0.9); filter: brightness(2.2); }
-  100% { transform: scale(1); filter: brightness(1); }
+  0% { transform: translateY(-25px) scale(1); filter: brightness(1); }
+  50% { transform: translateY(-25px) scale(0.9); filter: brightness(2.2); }
+  100% { transform: translateY(-25px) scale(1); filter: brightness(1); }
 }
 
 @keyframes floatUp {
@@ -506,16 +504,14 @@
    Boutons d'action de combat (v2.21 : attaque spéciale + défense,
    côte à côte, sous l'ennemi)
    ========================= */
-/* v2.68 : margin-bottom:3% ajouté (espace contrôlé avant le bouton
-   Attaque) — l'ancien padding-bottom fixe est retiré au profit de
-   cette marge en pourcentage, cohérente avec le reste de la chaîne
-   d'espacement (voir #enemy-display et .combat-attack-row). */
+/* v2.71 : repositionné en absolu par l'utilisateur (ancré à 10% du
+   bas de #game-area) — remplace l'espacement par margin-bottom (v2.68)
+   qui dépendait de l'empilement en flux normal. */
 .combat-action-row {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 10%;
-
   display: flex;
   justify-content: center;
   gap: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
@@ -618,15 +614,15 @@
 /* v2.67 : justify-content:center — les deux côtés (une potion
    chacun) ont maintenant la même largeur naturelle, donc centrer le
    trio entier centre aussi parfaitement le bouton au milieu.
-   v2.68 : margin-bottom:3% ajouté — espace contrôlé avant
-   #stats-bar, dernier maillon de la chaîne d'espacement (voir
-   #enemy-display et .combat-action-row). */
+   v2.71 : repositionné en absolu par l'utilisateur (ancré à 3% du bas
+   de #game-area, juste au-dessus de #stats-bar) — remplace
+   margin-bottom:3% (v2.68), même logique que .combat-action-row
+   ci-dessus. */
 .combat-attack-row {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 1%;
-
+  bottom: 3%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -634,6 +630,7 @@
   padding: 0 clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
   margin-bottom: 0;
 }
+
 /* v2.53 : correction d'un bug de chevauchement — #heal-quick-root
    avait flex:1 des deux côtés, ce qui le forçait à RÉTRÉCIR en
    dessous de la largeur réelle des 2 potions dès que l'écran manquait

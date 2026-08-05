@@ -6,18 +6,20 @@
    leur propre fond (.nb-pill), donc restent lisibles quel que soit
    ce qu'il y a derrière.
    ========================= */
+/* v2.71 : largeur figée à 390px (centrée) — cohérent avec #game-area,
+   pour que le HUD s'aligne pile avec la zone de jeu en dessous au
+   lieu de suivre toute la largeur de l'écran sur les tablettes/écrans
+   plus larges que 390px. */
 #hud {
   z-index: 10;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
-
-  width: 390px;      /* taille fixe souhaitée */
-  max-width: 100%;   /* évite de dépasser un petit écran */
+  width: 390px;
+  max-width: 100%;
   box-sizing: border-box;
-  margin: 0 auto;    /* centre horizontalement */
-
+  margin: 0 auto;
   padding: calc(var(--safe-top) + 8px) 12px 10px;
   background: transparent;
   border-bottom: none;
@@ -98,12 +100,12 @@
    boutons de sorts rétrécis et le compteur de kills retiré, l'espace
    récupéré permet au nom + PV du monstre de redescendre un peu au
    lieu de rester collés en haut de la zone.
-   v2.68 : passé à "flex-end" (ancré en bas, juste au-dessus de
-   #stats-bar) — chaque section (monstre / boutons spéciaux / bouton
-   Attaque) a maintenant son propre espacement de 3% contrôlé via
-   margin-bottom (voir #enemy-display, .combat-action-row,
-   .combat-attack-row plus bas), donc plus besoin de centrage
-   automatique ici. */
+   v2.68 : passé à "flex-end" — tentative d'ancrage en bas via le flux
+   normal, remplacée en v2.71 (voir ci-dessous) par un positionnement
+   absolu direct sur .combat-action-row/.combat-attack-row, donc
+   retour à "center" : #enemy-display (seul élément restant dans le
+   flux) se centre simplement dans l'espace libre.
+   v2.71 : largeur figée à 390px (centrée), cohérent avec #hud. */
 #game-area {
   position: relative;
   flex: 1;
@@ -112,16 +114,13 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-
   width: 100%;
   max-width: 390px;
   box-sizing: border-box;
   margin: 0 auto;
-
-  padding: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px)
-           clamp(11.04px, calc(5.46px + 1.75vw), 12.96px)
-           0;
+  padding: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px) clamp(11.04px, calc(5.46px + 1.75vw), 12.96px) 0;
   background: transparent;
+  touch-action: manipulation;
 }
 
 /* v2.70 : .dungeon-reminder-banner et son animation ont été retirés
@@ -140,18 +139,32 @@
   box-sizing: border-box;
   margin: 0 auto 1%;
   padding: clamp(5.52px, calc(2.73px + 0.87vw), 6.48px);
-
-
+  /* v2.71 : fond crème réduit de 4px (2px de chaque côté) via un
+     second calque en dégradé de taille explicite — avant, le crème en
+     aplat plein cadre débordait légèrement des coins arrondis de
+     l'image (même défaut que celui corrigé sur #tab-bar en v2.56).
+     v2.54 : dimensions ajustées par l'utilisateur directement — height
+     8%, largeur 95% (au lieu de 90%), marge basse 1% (au lieu de 5%).
+     v2.50 : border-radius retiré (coupait les fioritures des coins de
+     l'image), largeur plafonnée à 400px pour ne pas s'étirer à
+     l'infini sur de grands écrans, marge ajoutée aussi en dessous.
+     v2.49 : marge visible de chaque côté (au lieu de toucher les
+     bords de l'écran) pour laisser voir le fond du monde.
+     v2.48 : cadre doré fourni par l'utilisateur
+     (images/Borders/affichage-des-stats.png), en couche par-dessus le
+     fond crème existant — son centre est transparent, donc le crème
+     reste visible dedans, seul le cadre + les petits traits séparateurs
+     recouvrent. Étiré en 100% 100% (pas de découpe 9-slice) : le
+     ratio de la barre reste proche de celui de l'image sur toute la
+     plage mobile (320–430px), donc les coins ne se déforment pas de
+     façon visible. À revoir en vrai 9-slice si un jour la barre change
+     beaucoup de forme. */
   background:
-  url('../images/Borders/affichage-des-stats.png') center / 100% 100% no-repeat,
-  /* fond réduit de 4 px au total */
-linear-gradient(var(--nb-cream), var(--nb-cream)) center / calc(100% - 4px) calc(100% - 4px) no-repeat;
-
-
+    url('../images/Borders/affichage-des-stats.png') center / 100% 100% no-repeat,
+    linear-gradient(var(--nb-cream), var(--nb-cream)) center / calc(100% - 4px) calc(100% - 4px) no-repeat;
   border-top: none;
   font-size: clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
 }
-
 
 /* v2.62 : justify-content:center ajouté — #stats-bar n'a pas
    d'align-items défini (stretch par défaut), donc chaque .stat-item
@@ -166,13 +179,11 @@ linear-gradient(var(--nb-cream), var(--nb-cream)) center / calc(100% - 4px) calc
   gap: clamp(0.92px, calc(0.46px + 0.14vw), 1.08px);
 }
 
-
 .stat-item .stat-label {
   font-size: clamp(8.28px, calc(4.09px + 1.31vw), 9.72px);
   color: var(--nb-ink-dim);
   white-space: nowrap;
 }
-
 
 .stat-item .stat-value {
   font-size: clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
