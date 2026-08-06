@@ -22,6 +22,7 @@
   min-height: clamp(157.32px, calc(77.73px + 24.87vw), 184.68px);
   margin-bottom: 3%;
   text-align: center;
+  margin-top: -100px; /* remonte de 100 px, ajuste la valeur */
 }
 
 #enemy-display,
@@ -353,7 +354,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 10%;
+   bottom: 80px;
   display: flex;
   justify-content: center;
   gap: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);

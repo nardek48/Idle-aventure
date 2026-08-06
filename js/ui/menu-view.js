@@ -14,17 +14,17 @@ que l'overlay de sélection de héros (voir ui/modal-view.js).
    si elle existe, sinon repli sur un emoji (icon). badge = affiche le
    compteur de quêtes complétées non réclamées sur cette carte. */
 var MENU_ITEMS = [
-  { tab: "shop", label: "Boutique", img: "./images/Icons/shop_menu.png" },
-  { tab: "talents", label: "Talents", img: "./images/Icons/talents_menu.png", badge: "talents" },
-  { tab: "equip", label: "Équipement", img: "./images/Icons/equip_menu.png" },
-  { tab: "quests", label: "Quêtes", img: "./images/Icons/quests_menu.png", badge: true },
-  { tab: "ascension", label: "Ascension", img: "./images/Icons/aether_menu.png", badge: "ascension" },
-  { tab: "map", label: "Carte du monde", img: "./images/Icons/map_menu.png" },
-  { tab: "achievements", label: "Hauts faits", icon: "🏆", badge: "achievement" },
-  { tab: "codex", label: "Codex", icon: "📖", badge: "codex" },
-  { tab: "bestiary", label: "Bestiaire", icon: "📖" },
-  { tab: "log", label: "Journal", icon: "📜" },
-  { tab: "settings", label: "Paramètres", icon: "⚙️" }
+  { tab: "shop", label: "Boutique", img: "./images/Icons/menu_icons/shop_menu.png" },
+  { tab: "talents", label: "Talents", img: "./images/Icons/menu_icons/talents_menu.png", badge: "talents" },
+  { tab: "equip", label: "Équipement", img: "./images/Icons/menu_icons/equip_menu.png" },
+  { tab: "quests", label: "Quêtes", img: "./images/Icons/menu_icons/quests_menu.png", badge: true },
+  { tab: "ascension", label: "Ascension", img: "./images/Icons/menu_icons/aether_menu.png", badge: "ascension" },
+  { tab: "map", label: "Carte du monde", img: "./images/Icons/menu_icons/map_menu.png" },
+  { tab: "achievements", label: "Hauts faits", img: "./images/Icons/menu_icons/achivment_menu.png" },
+  { tab: "codex", label: "Codex", img: "./images/Icons/menu_icons/codex_menu.png" },
+  { tab: "bestiary", label: "Bestiaire", img: "./images/Icons/menu_icons/bestiaire_menu.png" },
+  { tab: "log", label: "Journal", img: "./images/Icons/menu_icons/journal_menu.png" },
+  { tab: "settings", label: "Paramètres", img: "./images/Icons/menu_icons/settings_menu.png" }
 ];
 
 /* Nombre de quêtes complétées mais pas encore réclamées (même calcul

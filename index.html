@@ -60,28 +60,28 @@
 
 <div id="tab-bar">
   <button class="tab-btn active" data-tab="combat" onclick="switchTab('combat')">
-    <img src="./images/Icons/combat_menu.png" alt="" class="tab-icon-img">
+    <img src="./images/Icons/menu_icons/combat_menu.png" alt="" class="tab-icon-img">
     <span>Combat</span>
   </button>
 
   <button class="tab-btn" data-tab="village" onclick="switchTab('village')">
-    <span class="tab-icon">🏘️</span>
+    <img src="./images/Icons/menu_icons/village_menu.png" alt="" class="tab-icon-img">
     <span>Village</span>
   </button>
 
   <button class="tab-btn" data-tab="dungeon" onclick="switchTab('dungeon')">
-    <span class="tab-icon">🏰</span>
+    <img src="./images/Icons/menu_icons/donjon_menu.png" alt="" class="tab-icon-img">
     <span>Donjon</span>
     <span class="tab-badge" id="dungeon-tab-badge" style="display:none"></span>
   </button>
 
   <button class="tab-btn" data-tab="more" onclick="switchTab('more')">
-    <img src="./images/Icons/more_menu.png" alt="" class="tab-icon-img">
+    <img src="./images/Icons/menu_icons/heroes_menu.png" alt="" class="tab-icon-img">
     <span>Héros</span>
   </button>
 
   <button class="tab-btn" data-tab="menu" onclick="openFullMenu()">
-    <span class="tab-icon">☰</span>
+    <img src="./images/Icons/menu_icons/menu_menu.png" alt="" class="tab-icon-img">
     <span>Menu</span>
     <span class="tab-badge" id="quest-badge" style="display:none"></span>
   </button>
@@ -124,7 +124,8 @@
      SCRIPTS — ORDRE DE CHARGEMENT IMPORTANT (var globales)
      ========================================================= -->
 <!-- CORE -->
-<script src="js/core/constants.js"></script>
+<script src="js/core/constants.js"></script>
+
 <script src="js/core/state.js"></script>
 <script src="js/core/utils.js"></script>
 
@@ -141,7 +142,8 @@
 <script src="js/data/talents.js"></script>
 <script src="js/data/equipment.js"></script>
 <script src="js/data/quests.js"></script>
-<script src="js/data/ascension.js"></script>
+<script src="js/data/ascension.js"></script>
+
 
 <!-- SHARED MAIN SERVICES -->
 <script src="js/main/log-service.js"></script>

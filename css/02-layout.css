@@ -504,8 +504,8 @@
 }
 
 #tab-bar .tab-icon-img {
-  width: clamp(23.92px, calc(11.82px + 3.78vw), 28.08px);
-  height: clamp(23.92px, calc(11.82px + 3.78vw), 28.08px);
+  width: clamp(40px, calc(15px + 4vw), 50px);
+  height: clamp(40px, calc(15px + 4vw), 50px);
   display: block;
   object-fit: contain;
   pointer-events: none;
