@@ -30,11 +30,10 @@ html {
    l'écran Combat. Les variables CSS étaient déjà posées sur <html>
    par le JS, donc aucun changement de script n'a été nécessaire,
    juste ce déplacement de règle CSS de #game-area vers body.
-   Note : les panneaux qui ont leur propre image de fond par onglet
-   (village, boutique..., voir #panel-container.panel-world-bg dans
-   css/06-map.css) continuent de peindre PAR-DESSUS ce fond commun
-   quand ils sont actifs — à retirer plus tard si on veut un fond
-   unique partout, y compris sur ces écrans-là.
+   v2.74 : les panneaux avaient autrefois leur propre image de fond
+   par onglet (village, boutique...), retirée à la demande de
+   l'utilisateur — ce fond de body est maintenant le seul fond visible
+   derrière tous les écrans.
    ========================= */
 body {
   height: 100%;
@@ -55,7 +54,6 @@ body {
   color: var(--text);
   overscroll-behavior: none;
   -webkit-touch-callout: none;
-   touch-action: manipulation;
 }
 
 /* =========================

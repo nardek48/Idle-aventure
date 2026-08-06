@@ -1,10 +1,14 @@
 "use strict";
 /* ============================================================
 Quest Idle — ui/modal-view.js
-Sélection/changement de héros : l'overlay plein écran (pas un onglet
-du panel) qui s'ouvre à la création du personnage ou via "Changer de
-héros" dans l'écran Plus. pendingHeroId garde le choix temporaire
-avant confirmation (annuler ne modifie rien).
+Sélection de héros à la création du personnage : overlay plein écran
+(pas un onglet du panel) qui s'ouvre tant que le joueur n'a pas encore
+choisi de héros/nom (voir needsHeroSetup(), appelée depuis renderAll()
+dans ui-root.js). pendingHeroId garde le choix temporaire avant
+confirmation (annuler ne modifie rien).
+v2.73 : le changement de héros EN COURS DE PARTIE ne passe plus par
+cet overlay — voir le carrousel inline dans js/ui/heros-view.js
+(buildHeroCarouselHTML / selectHeroInline).
 ============================================================ */
 
 /* ============================================================
@@ -56,15 +60,6 @@ function selectHeroTemp(heroId) {
 function closeHeroSelection() {
   var host = document.getElementById("hero-selection-root");
   if (host) host.innerHTML = "";
-}
-
-/* ============================================================
-   Utilisée dans le panneau more.
-============================================================ */
-
-function changeHero() {
-  pendingHeroId = game.heroId || "";
-  openHeroSelection();
 }
 
 /* ============================================================
@@ -195,6 +190,5 @@ window.getSelectedHero = getSelectedHero;
 window.needsHeroSetup = needsHeroSetup;
 window.selectHeroTemp = selectHeroTemp;
 window.closeHeroSelection = closeHeroSelection;
-window.changeHero = changeHero;
 window.confirmHeroSelection = confirmHeroSelection;
 window.openHeroSelection = openHeroSelection;

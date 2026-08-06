@@ -244,43 +244,7 @@
   animation: goldPop 1s ease forwards;
 }
 
-/* =========================
-   Bloc PV héros
-   ========================= */
-.hud-hero-hp {
-  margin-top: 6px;
-  padding: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px) clamp(9.2px, calc(4.54px + 1.46vw), 10.8px);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
-}
 
-.hud-hero-hp-top {
-  display: flex;
-  justify-content: space-between;
-  gap: clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
-  margin-bottom: 6px;
-  font-size: clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
-}
-
-.hud-hero-hp-bar {
-  width: 100%;
-  height: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.hud-hero-hp-fill {
-  width: 100%;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--hp-red), var(--hp-yellow), var(--hp-green));
-  transition: width 0.2s ease, background 0.2s ease;
-}
-
-.hud-hero-hp-fill.low {
-  background: var(--hp-red);
-}
 
 /* =========================
    v2.41 : la carte "❤️ Points de vie" sous le bouton Attaque a été

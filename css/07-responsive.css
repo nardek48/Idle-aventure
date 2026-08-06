@@ -110,15 +110,6 @@
     width: 100%;
     min-width: 0;
   }
-
-  #panel-container.panel-world-bg {
-    background-position: center center;
-  }
-
-  #panel-container.panel-world-bg::after {
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
-  }
 }
 
 /* =========================

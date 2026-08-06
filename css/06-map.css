@@ -328,40 +328,8 @@
   margin-top: 6px;
 }
 
-/* =========================
-   Fond dynamique des panels
-========================= */
-#panel-container.panel-world-bg {
-  position: relative;
-}
-
-#panel-container.panel-world-bg::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: var(--panel-bg-image);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: scroll;
-  filter: blur(5px) brightness(0.45);
-  transform: scale(1.08); /* évite les bords flous visibles au bord du panel */
-}
-
-#panel-container.panel-world-bg > * {
-  position: relative;
-  z-index: 1;
-}
-
-#panel-container.panel-world-bg .panel-title,
-#panel-container.panel-world-bg .panel-subtitle {
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
-}
-
-/* Cartes du panel : fond vitrifié léger (mais pas les vignettes de monde,
-   qui ont déjà leur propre illustration en fond, ni les cartes déjà
-   migrées vers le nouveau design crème — voir css/00-components.css
-   et le chantier de refonte visuelle v2.31+, qui les rend opaques
-   par construction). */
+/* v2.74 : le bloc "Fond dynamique des panels" (.panel-world-bg) a été
+   retiré — les onglets hors-combat n'ont plus d'image de fond par
+   panel (voir js/ui/ui-root.js, ancienne updatePanelBackground()).
+   Le fond de zone de combat (WorldManager.applyWorldTheme, peint sur
+   body, voir css/01-base.css) n'est pas concerné. */

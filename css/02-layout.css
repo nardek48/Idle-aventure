@@ -11,6 +11,7 @@
    lieu de suivre toute la largeur de l'écran sur les tablettes/écrans
    plus larges que 390px. */
 #hud {
+  position: relative;
   z-index: 10;
   flex-shrink: 0;
   display: flex;
@@ -20,10 +21,9 @@
   max-width: 100%;
   box-sizing: border-box;
   margin: 0 auto;
-  padding: calc(var(--safe-top) + 8px) 12px 10px;
+  padding: calc(var(--safe-top) + 1px) 12px 0;
   background: transparent;
   border-bottom: none;
-  touch-action: manipulation;
 }
 
 /* v2.37 : sur l'écran Combat, les pastilles de ressources passent en
@@ -59,7 +59,7 @@
   justify-content: space-around;
   gap: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
   width: 75%;
-  padding: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px) clamp(18.4px, calc(9.09px + 2.91vw), 21.6px);
+  padding: 12px clamp(18.4px, calc(9.09px + 2.91vw), 21.6px); /* ↑ padding vertical */
   background: url('../images/Borders/zone-haut-ressources.png') center / 100% 100% no-repeat;
 }
 
@@ -90,8 +90,11 @@
    combat, ressources seules dans le HUD). */
 .nb-hud-top-row {
   display: flex;
-  align-items: center;
-  gap: clamp(5.52px, calc(2.73px + 0.87vw), 6.48px);
+  align-items: flex-start;    /* aligner les enfants en haut, pas au centre */
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 0;
+  padding-top: 0;
 }
 
 /* =========================
@@ -332,7 +335,6 @@
     linear-gradient(var(--nb-cream), var(--nb-cream)) center / calc(100% - 4px) calc(100% - 4px) no-repeat;
   border-top: none;
   font-size: clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
-   touch-action: manipulation;
 }
 
 /* v2.62 : justify-content:center ajouté — #stats-bar n'a pas
@@ -382,7 +384,6 @@
   background: url('../images/Borders/menu-principal.png') center / 100% 100% no-repeat;
   border-top: none;
   padding-bottom: var(--safe-bottom);
-   touch-action: manipulation;
 }
 
 /* v2.38 : #tab-bar-special-slot et les styles .heal-quick-* ont été
@@ -469,7 +470,13 @@
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 8px 12px calc(12px + var(--safe-bottom));
+
+  width: 100%;
+  max-width: 390px;
+  margin: 0 auto;
+
+  /* ↓ moins d’espace en bas \*/
+  padding: 8px 12px calc(2px + var(--safe-bottom));
 }
 
 #panel-container.active {

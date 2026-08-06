@@ -1,48 +1,78 @@
 /* =========================
-   Personnage (v2.25 — fiche de personnage)
+   Personnage (v2.75 — fiche de personnage, thème doré/parchemin)
+   Reprend une maquette fournie par l'utilisateur. Premier écran à
+   adopter ce thème plus orné (bordures dorées doubles, plaque-titre,
+   barres à cadre sombre) — le reste du jeu garde le thème crème
+   actuel pour l'instant, un passage à ce thème partout étant un
+   chantier séparé.
    ========================= */
 
-/* ===== En-tête (portrait + XP/PV) ===== */
-.char-header {
+/* ===== Plaque-titre "PERSONNAGE" ===== */
+.pc-title-banner {
   position: relative;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--nb-ink);
+
+  /* Essaie une hauteur plus contrôlée */
+  padding: 10px 30px;              /* moins de padding vertical */
+  margin: 0 auto 0;    /* au lieu de 14px */
+  max-width: 100%;
+
+  /* Centre légèrement plus haut ou plus bas selon ton sprite */
+  background: url('../images/templates/title.png') center 50% / contain no-repeat;
+}
+
+/* ===== Carte fiche de personnage ===== */
+.pc-card {
+  position: relative;
+  padding: 16px;
+  margin-top: 0px;  
+  margin-bottom: 14px;
+  border-radius: var(--nb-radius-lg);
+  background: linear-gradient(160deg, var(--nb-cream) 0%, var(--nb-cream-alt) 100%);
+  border: 2px solid var(--nb-gold-dark);
+  box-shadow: var(--nb-shadow-card), inset 0 0 0 3px rgba(255, 200, 61, 0.18);
+}
+
+.pc-card-top {
   display: flex;
   gap: 14px;
-  padding: 16px;
-  border-radius: var(--nb-radius-md);
-  background: linear-gradient(135deg, var(--nb-cream) 0%, var(--nb-cream-alt) 100%);
-  border: 1px solid var(--nb-frame);
-  overflow: hidden;
-  margin-bottom: 14px;
-  box-shadow: var(--nb-shadow-card);
 }
 
-.char-header::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 20% 20%, rgba(255, 200, 61, 0.12), transparent 60%);
-  pointer-events: none;
-}
-
-.char-portrait-wrap {
-  position: relative;
-  width: 84px;
-  height: 84px;
+.pc-portrait-col {
   flex-shrink: 0;
-  border-radius: 16px;
+  width: 118px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 35%;
+}
+
+.pc-portrait-frame {
+    width: 120px;      /* ou 130 px */
+  height: 120px;     /* carré ou proportion du portrait */
+  overflow: hidden;  /* coupe ce qui dépasse */
+  aspect-ratio: 1 / 1;
+  border-radius: var(--nb-radius-md);
   overflow: hidden;
   border: 2px solid var(--nb-gold);
-  box-shadow: 0 0 0 4px rgba(255, 200, 61, 0.15), 0 8px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 4px rgba(255, 200, 61, 0.15), 0 6px 14px rgba(0, 0, 0, 0.35);
+  margin-bottom: 8px;
 }
 
-.char-portrait-wrap img {
+.pc-portrait-frame img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  max-width: 100%; 
 }
 
-.char-portrait-placeholder {
+.pc-portrait-placeholder {
   width: 100%;
   height: 100%;
   display: flex;
@@ -51,109 +81,164 @@
   font-size: 32px;
   font-weight: 700;
   color: var(--nb-ink-dim);
-  background: var(--nb-cream-alt);
+  background: var(--nb-cream-deep);
 }
 
-.char-level-badge {
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  background: var(--nb-gold);
-  color: #241a00;
-  font-size: 11px;
+.pc-exp-label {
+  font-size: 10px;
   font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 999px;
-  border: 2px solid var(--nb-shell);
+  letter-spacing: 1px;
+  color: var(--nb-ink-dim);
+  margin-bottom: 3px;
 }
 
-.char-info {
-  flex: 1;
+.pc-info-col {
+  flex: 1 1 65%;
   min-width: 0;
-  position: relative;
-  z-index: 1;
 }
 
-.char-class {
-  font-size: 11px;
-  color: var(--nb-gold);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.char-name {
-  font-size: 19px;
-  font-weight: 800;
-  margin: 2px 0 8px;
-  color: var(--nb-ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.char-xp-row {
-  display: flex;
+.pc-level-pill {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 5px 12px 5px 5px;
+  border-radius: var(--nb-radius-pill);
+  background: var(--nb-shell);
+  border: 1px solid var(--nb-gold-dark);
   margin-bottom: 6px;
 }
 
-.char-xp-row:last-child {
-  margin-bottom: 0;
+.pc-level-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--nb-gold);
+  color: #241a00;
+  font-size: 9px;
+  font-weight: 800;
 }
 
-.char-xp-label {
-  font-size: 10px;
-  color: var(--nb-ink-dim);
-  width: 38px;
-  flex-shrink: 0;
+.pc-level-pill > span:last-child {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--nb-ink-inverse);
 }
 
-.char-bar-bg {
-  flex: 1;
-  height: 7px;
-  border-radius: 999px;
-  background: var(--nb-cream-deep);
+/* ===== Barres à cadre sombre (niveau/XP) ===== */
+.pc-bar {
+  position: relative;
+  width: 100%;
+  height: 18px;
+  border-radius: var(--nb-radius-pill);
+  background: var(--nb-shell);
+  border: 1px solid var(--nb-gold-dark);
   overflow: hidden;
 }
 
-.char-bar-fill {
+.pc-bar-compact {
+  height: 10px;
+  margin-bottom: 10px;
+}
+
+.pc-bar-fill {
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--nb-radius-pill);
   transition: width 0.3s ease;
 }
 
-.char-bar-fill.xp {
-  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+.pc-bar-exp .pc-bar-fill {
+  background: linear-gradient(90deg, #2563eb, #60a5fa);
 }
 
-.char-bar-fill.hp {
-  background: linear-gradient(90deg, #ef4444, #4ade80);
+.pc-bar-level .pc-bar-fill {
+  background: linear-gradient(90deg, #16a34a, #4ade80);
 }
 
-.char-xp-text {
+.pc-bar-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 10px;
-  color: var(--nb-ink-dim);
-  flex-shrink: 0;
-  white-space: nowrap;
+  font-weight: 800;
+  color: var(--nb-ink-inverse);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
-/* ===== Sections ===== */
-.section-label {
+/* ===== Liste de stats PV/ATK/DEF/VIT/CRIT ===== */
+.pc-stat-list {
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream-alt);
+  border: 1px solid var(--nb-frame-light);
+  overflow: hidden;
+}
+
+.pc-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--nb-frame-light);
+}
+
+.pc-stat-row:last-child {
+  border-bottom: none;
+}
+
+.pc-stat-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+}
+
+.pc-stat-label {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nb-ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.pc-stat-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+/* ===== Sections (labels au-dessus du carrousel, stats cumulées...) ===== */
+.pc-section-label {
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--nb-ink-dim);
-  margin: 16px 0 8px;
+  margin: 2px 0 4px;  /* moins d’espace sous le label */
 }
 
-.section-label:first-of-type {
-  margin-top: 0;
+.pc-cumulative-card {
+  padding: 12px 14px;
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--nb-ink);
 }
 
-/* ===== Capacités actives ===== */
+.pc-empty {
+  padding: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--nb-ink-dim);
+}
+
+/* ===== Capacités actives (sous-onglet "Stats") ===== */
 .ability-card {
   display: flex;
   align-items: center;
@@ -220,90 +305,134 @@
   background: rgba(255, 200, 61, 0.1);
 }
 
-/* ===== Stats en grille ===== */
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.stat-grid-single {
-  grid-template-columns: 1fr;
-  margin-top: 8px;
-}
-
-.stat-chip {
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--nb-cream);
-  border: 1px solid var(--nb-frame);
-}
-
-.stat-chip-top {
+/* ===== Carrousel de héros (v2.73) =====
+   Défilement horizontal des 6 héros dans l'onglet Personnage.
+   Réutilise le style .hero-card / .hero-card-image / .hero-card-name
+   existant (voir css/05-overlays.css, sélecteur modal de création de
+   perso) pour rester visuellement cohérent, avec une mise en page en
+   ligne plutôt qu'en grille 3 colonnes. */
+.hero-carousel-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-  gap: 8px;
+  gap: 4px;
+  padding: 0 2px 2px;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
 }
 
-.stat-chip-label {
-  font-size: 11px;
-  color: var(--nb-ink-dim);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.hero-carousel-row::-webkit-scrollbar {
+  height: 4px;
 }
 
-.stat-chip-value {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  flex-shrink: 0;
-}
-
-.stat-chip-bar {
-  height: 5px;
+.hero-carousel-row::-webkit-scrollbar-thumb {
+  background: var(--nb-frame);
   border-radius: 999px;
-  background: var(--nb-cream-deep);
-  overflow: hidden;
 }
 
-.stat-chip-bar-fill {
+/* cartes du carrousel : padding réduit */
+.hero-carousel-row .hero-card.hero-carousel-card {
+  flex: 0 0 auto;
+  width: 68px;
+  min-height: 0;
+  padding: 4px;
+  gap: 3px;
+  scroll-snap-align: start;
+}
+
+/* image plus petite */
+.hero-carousel-row .hero-card.hero-carousel-card .hero-card-image {
+  width: 40px;
+  height: 40px;
+}
+
+/* texte compact */
+.hero-carousel-row .hero-card.hero-carousel-card .hero-card-name {
+  font-size: 9px;
+  line-height: 1.1;
+}
+
+/* ===== Barre des 3 sous-onglets (Héros / Amélioration / Stats) =====
+   Placée sous le contenu, comme sur la maquette : pilule dorée pour
+   le sous-onglet actif, pilules sombres (cadre doré, texte clair)
+   pour les inactifs. */
+
+/* Conteneur du panneau héros (occupant toute la zone du panel) */
+.pc-heros-panel {
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  border-radius: 999px;
-  transition: width 0.3s ease;
 }
 
-/* ===== Bouton changer de héros ===== */
-.btn-change-hero {
-  display: block;
-  width: 100%;
-  margin-top: 14px;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid var(--nb-frame);
-  background: var(--nb-cream);
-  color: var(--nb-ink);
-  font-size: 13px;
-  font-weight: 700;
-  text-align: center;
+/* Contenu scrollable qui prend la place disponible au-dessus de la barre */
+.pc-heros-content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-bottom: 4px;  /* espace réduit au-dessus de la barre */
+}
+
+/* Conteneur de la barre, collé en bas du panneau */
+.pc-heros-subtab-bar-wrapper {
+  flex: 0 0 auto;
+  padding-top: 4px;     /* plus léger */
+  padding-bottom: 0;    /* plus de “coussin” inutile en bas */
+}
+
+/* Barre des sous-onglets */
+.pc-subtab-bar {
+  display: flex;
+  gap: 2px;
+  margin-top: 0;
+}
+
+
+.pc-subtab-btn {
+  flex: 0 0 auto;                 /* le bouton ne s’étire plus pour remplir la ligne */
+  width: 110px;                   /* ajuste en fonction de la taille de ton image */
+  height: 58px;                   /* plus bas qu’avant → visuellement moins haut */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0;                     /* enlève le padding qui agrandissait le bouton */
+
+  border: none;
+  border-radius: 0;
+  background: url('../images/Buttons/boutonGlobal.png') center / contain no-repeat;
+
+  color: var(--nb-ink-inverse);
+  font-size: 12px;
+  font-weight: 800;
   cursor: pointer;
+  transition: transform 0.15s ease;
 }
 
-.btn-change-hero:active {
-  transform: scale(0.98);
+.pc-subtab-btn span {
+  white-space: nowrap;
+}
+
+.pc-subtab-btn:active {
+  transform: scale(0.97);
+}
+
+.pc-subtab-btn.is-active {
+  flex: 0 0 auto;  /* pour être sûr qu’il ne s’étire pas différemment */
+  width: 125px;    /* plus large que 120px, ajuste à l’œil */
+  height: 58px;    /* garde la même hauteur si ça te convient */
+
+  background: url('../images/Buttons/boutonActiverGlobal.png') center / contain no-repeat;
+  border-color: var(--nb-gold);
+  color: #241a00;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn-change-hero:active {
-    transform: none;
+  .pc-subtab-btn {
+    transition: none;
   }
-  .char-bar-fill,
-  .stat-chip-bar-fill {
+  .pc-bar-fill {
     transition: none;
   }
 }
+

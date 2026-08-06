@@ -41,55 +41,6 @@ function buildEquipmentIconHTML(item, cssClass) {
     + '</div>';
 }
 
-/* Image de fond plein panel selon l'onglet actif (une par onglet,
-   sauf Combat qui n'en a pas — voir updatePanelBackground). Note :
-   chemins préfixés par "../", à vérifier si jamais le jeu est
-   déployé dans un sous-dossier différent de la structure actuelle. */
-function getCurrentWorldPanelBackground() {
-  var byTab = {
-    shop: "../images/Worlds/shop.png",
-    talents: "../images/Worlds/talent.png",
-    equip: "../images/Worlds/equipment.png",
-    quests: "../images/Worlds/quest.png",
-    ascension: "../images/Worlds/aether.png",
-    map: "../images/Worlds/World.png",
-    bestiary: "../images/Worlds/bestiary.png",
-    log: "../images/Worlds/log.png",
-    more: "../images/Worlds/more.png",
-    village: "../images/Worlds/village.png",
-    settings: "../images/Worlds/more.png"
-  };
-
-  return byTab[game.activeTab] || "../images/Worlds/World.png";
-}
-
-/* Applique (ou retire) le fond illustré sur #panel-container. L'écran
-   Combat n'a jamais de fond de panel (il a son propre fond de zone,
-   voir WorldManager.applyWorldTheme). La classe "panel-world-bg"
-   ajoutée ici déclenche l'effet vitre sur les cartes (voir la longue
-   liste de sélecteurs dans css/06-map.css). */
-function updatePanelBackground() {
-  var panel = document.getElementById("panel-container");
-  if (!panel) return;
-
-  var isCombat = game.activeTab === "combat";
-  var bg = getCurrentWorldPanelBackground();
-
-  if (isCombat) {
-    panel.style.removeProperty("--panel-bg-image");
-    panel.classList.remove("panel-world-bg");
-    return;
-  }
-
-  if (bg) {
-    panel.style.setProperty("--panel-bg-image", 'url("' + bg + '")');
-    panel.classList.add("panel-world-bg");
-  } else {
-    panel.style.removeProperty("--panel-bg-image");
-    panel.classList.remove("panel-world-bg");
-  }
-}
-
 /* Récupère un héros par sa clé d'objet dans HEROES_DB (ex: "knight"),
    pas son `id` (voir getHeroByGameId ci-dessous pour l'inverse). */
 function getHeroByKey(heroKey) {
@@ -158,7 +109,12 @@ function restoreEquipBagScroll() {
    du menu (v2.4), la barre du bas n'a plus que 2 boutons (Combat et
    Menu) : le bouton Combat s'allume sur l'écran de combat, le bouton
    Menu s'allume pour TOUT le reste (indique juste "tu es dans un
-   sous-écran", plus besoin de mapper un index par onglet). */
+   sous-écran", plus besoin de mapper un index par onglet).
+   v2.74 : les images de fond par onglet (Worlds/*.png sur les
+   panels hors-combat) ont été retirées à la demande de l'utilisateur
+   — voir l'ancienne getCurrentWorldPanelBackground()/updatePanelBackground()
+   supprimées de ce fichier. Le fond de zone de combat (WorldManager.
+   applyWorldTheme, peint sur <html>/body) n'est pas concerné. */
 function switchTab(tabName) {
   game.activeTab = tabName;
 
@@ -190,7 +146,6 @@ function switchTab(tabName) {
   if (statsBar) statsBar.style.display = combatMode ? "flex" : "none";
   if (panel) panel.classList.toggle("active", !combatMode);
   document.body.classList.toggle("combat-active", combatMode);
-  updatePanelBackground();
   renderPanel();
 }
 
@@ -203,7 +158,6 @@ function renderAll() {
   renderEnemy();
   renderStats();
   renderPanel();
-  updatePanelBackground()
   updateQuestBadge();
   if (typeof renderHealButtons === "function") renderHealButtons();
   if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
@@ -250,7 +204,7 @@ function renderPanel() {
       container.innerHTML = buildSettingsHTML();
       break;
     case "more":
-      container.innerHTML = buildMoreHTML();
+      container.innerHTML = buildHerosHTML();
       break;
     case "village":
       container.innerHTML = buildVillageHTML();
@@ -272,8 +226,6 @@ function renderPanel() {
 
 window.esc = esc;
 window.buildEquipmentIconHTML = buildEquipmentIconHTML;
-window.getCurrentWorldPanelBackground = getCurrentWorldPanelBackground;
-window.updatePanelBackground = updatePanelBackground;
 window.switchTab = switchTab;
 window.renderAll = renderAll;
 window.renderPanel = renderPanel;

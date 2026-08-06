@@ -125,6 +125,73 @@ function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
   return "";
 }
 
+/* v2.75 : rendu d'une carte d'upgrade extrait en fonction réutilisable
+   (appelée par buildShopHTML ci-dessous ET par le sous-onglet
+   "Amélioration" de l'écran Héros, voir ui/heros-view.js) — évite de
+   dupliquer cette logique (calcul preview, verrouillage, affordabilité)
+   à deux endroits. */
+function buildUpgradeCardHTML(u, buyAmount) {
+  var level = game.upgrades[u.id] || 0;
+  var maxLevel = u.maxLevel || Infinity;
+  var nextCost = getUpgradeCost(u, level);
+  var maxed = level >= maxLevel;
+  var locked = (WorldManager.worldIndex || 0) < (u.unlockWorld || 0);
+
+  var canBuy = !locked && !maxed;
+  var buyAmountLocal = canBuy ? buyAmount : 0;
+  var modeLabel = buyAmount === -1 ? "MAX" : ("x" + buyAmount);
+
+  var preview = typeof getUpgradePurchasePreview === "function"
+    ? getUpgradePurchasePreview(u, buyAmountLocal)
+    : {
+        count: 0,
+        totalCost: nextCost,
+        currentLevel: level,
+        nextLevel: level,
+        reachedMax: false
+      };
+
+  var afford = canBuy && preview.count > 0;
+  var targetLevelText = canBuy ? preview.nextLevel : level;
+  var maxLevelText = maxLevel >= 999 ? "∞" : maxLevel;
+
+  var h = '<div class="upgrade-card ' + (afford ? 'affordable ' : '') + (locked ? 'locked' : '') + '">';
+  h += '<div class="upgrade-icon">' + esc(u.icon) + '</div>';
+  h += '<div class="upgrade-info">';
+  h += '<div class="upgrade-name">' + esc(u.name) + '</div>';
+  h += '<div class="upgrade-desc">' + esc(u.desc) + '</div>';
+  h += '<div class="upgrade-level">Niv. ' + level + '/' + maxLevelText + '</div>';
+
+  if (canBuy) {
+    h += '<div class="upgrade-level" style="opacity:.85;">Après achat : ' + targetLevelText + '/' + maxLevelText + '</div>';
+    var previewText = getUpgradePreviewText(u, level, preview.nextLevel);
+    if (previewText) {
+      h += '<div class="upgrade-preview" style="opacity:.9;font-size:12px;margin-top:4px;">' + esc(previewText) + '</div>';
+    }
+  }
+  h += '</div>';
+
+  if (maxed) {
+    h += '<button class="upgrade-buy locked" disabled>MAX</button>';
+  } else if (locked) {
+    h += '<button class="upgrade-buy locked" disabled>Monde ' + ((u.unlockWorld || 0) + 1) + '</button>';
+  } else {
+    var label = '';
+    if (afford) {
+      label = formatNumber(preview.totalCost) + ' • +' + preview.count;
+    } else {
+      label = formatNumber(nextCost) + ' • ' + modeLabel;
+    }
+
+    h += '<button class="upgrade-buy ' + (!afford ? 'cant-afford' : '') + '" onclick="buyUpgrade(\'' + u.id + '\', ' + buyAmount + ')">';
+    h += label;
+    h += '</button>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
 /* Construit toute la grille d'upgrades. Pour chaque upgrade : calcule
    combien de niveaux seraient achetés au mode courant (x1/x10/x25/MAX,
    via getUpgradePurchasePreview) et affiche soit le bouton d'achat
@@ -168,66 +235,10 @@ function buildShopHTML() {
   h += '<div class="shop-mode-info" style="margin:0 0 12px 0;opacity:.85;width:100%;text-align:right;">Mode d’achat : <strong>' + modeLabel + '</strong></div>';
 
   h += '<div class="shop-grid">';
-(UPGRADES || []).forEach(function (u) {
-  var level = game.upgrades[u.id] || 0;
-  var maxLevel = u.maxLevel || Infinity;
-  var nextCost = getUpgradeCost(u, level);
-  var maxed = level >= maxLevel;
-  var locked = (WorldManager.worldIndex || 0) < (u.unlockWorld || 0);
-
-  var canBuy = !locked && !maxed;
-  var buyAmountLocal = canBuy ? buyAmount : 0;
-
-  var preview = typeof getUpgradePurchasePreview === "function"
-    ? getUpgradePurchasePreview(u, buyAmountLocal)
-    : {
-        count: 0,
-        totalCost: nextCost,
-        currentLevel: level,
-        nextLevel: level,
-        reachedMax: false
-      };
-
-  var afford = canBuy && preview.count > 0;
-  var targetLevelText = canBuy ? preview.nextLevel : level;
-  var maxLevelText = maxLevel >= 999 ? "∞" : maxLevel;
-
-  h += '<div class="upgrade-card ' + (afford ? 'affordable ' : '') + (locked ? 'locked' : '') + '">';
-  h += '<div class="upgrade-icon">' + esc(u.icon) + '</div>';
-  h += '<div class="upgrade-info">';
-  h += '<div class="upgrade-name">' + esc(u.name) + '</div>';
-  h += '<div class="upgrade-desc">' + esc(u.desc) + '</div>';
-  h += '<div class="upgrade-level">Niv. ' + level + '/' + maxLevelText + '</div>';
-
-  if (canBuy) {
-    h += '<div class="upgrade-level" style="opacity:.85;">Après achat : ' + targetLevelText + '/' + maxLevelText + '</div>';
-    var previewText = getUpgradePreviewText(u, level, preview.nextLevel);
-    if (previewText) {
-      h += '<div class="upgrade-preview" style="opacity:.9;font-size:12px;margin-top:4px;">' + esc(previewText) + '</div>';
-    }
-  }
+  (UPGRADES || []).forEach(function (u) {
+    h += buildUpgradeCardHTML(u, buyAmount);
+  });
   h += '</div>';
-
-  if (maxed) {
-    h += '<button class="upgrade-buy locked" disabled>MAX</button>';
-  } else if (locked) {
-    h += '<button class="upgrade-buy locked" disabled>Monde ' + ((u.unlockWorld || 0) + 1) + '</button>';
-  } else {
-    var label = '';
-    if (afford) {
-      label = formatNumber(preview.totalCost) + ' • +' + preview.count;
-    } else {
-      label = formatNumber(nextCost) + ' • ' + modeLabel;
-    }
-
-    h += '<button class="upgrade-buy ' + (!afford ? 'cant-afford' : '') + '" onclick="buyUpgrade(\'' + u.id + '\', ' + buyAmount + ')">';
-    h += label;
-    h += '</button>';
-  }
-
-  h += '</div>';
-});
-h += '</div>';
 
   h += '</div>'; // ferme .shop-grid
   h += '</div>'; // ferme .shop-shell
@@ -238,3 +249,4 @@ h += '</div>';
 
 window.buildShopHTML = buildShopHTML;
 window.setShopSubTab = setShopSubTab;
+window.buildUpgradeCardHTML = buildUpgradeCardHTML;

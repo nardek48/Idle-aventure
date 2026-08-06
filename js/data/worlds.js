@@ -15,8 +15,9 @@ Structure d'un monde (WORLDS[i]) :
 Ordre des mondes = ordre de progression linéaire (WorldManager.worldIndex).
 ============================================================ */
 
-/* Fond plein écran affiché derrière chaque panel, un par monde
-   (voir getCurrentWorldPanelBackground en ui/ui-root.js). */
+/* v2.74 : les fonds de panel par onglet ont été retirés (voir
+   js/ui/ui-root.js) — cette table n'est plus utilisée nulle part,
+   conservée telle quelle au cas où elle resservirait plus tard. */
 var WORLD_PANEL_BACKGROUNDS = {
   forest: "../images/Worlds/World_Forest.jpg",
   ruins: "../images/Worlds/World_Ruins.jpg",
