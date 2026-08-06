@@ -23,6 +23,7 @@
   padding: calc(var(--safe-top) + 8px) 12px 10px;
   background: transparent;
   border-bottom: none;
+  touch-action: manipulation;
 }
 
 /* v2.37 : sur l'écran Combat, les pastilles de ressources passent en
@@ -331,6 +332,7 @@
     linear-gradient(var(--nb-cream), var(--nb-cream)) center / calc(100% - 4px) calc(100% - 4px) no-repeat;
   border-top: none;
   font-size: clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
+   touch-action: manipulation;
 }
 
 /* v2.62 : justify-content:center ajouté — #stats-bar n'a pas
@@ -380,6 +382,7 @@
   background: url('../images/Borders/menu-principal.png') center / 100% 100% no-repeat;
   border-top: none;
   padding-bottom: var(--safe-bottom);
+   touch-action: manipulation;
 }
 
 /* v2.38 : #tab-bar-special-slot et les styles .heal-quick-* ont été
