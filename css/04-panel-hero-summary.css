@@ -18,7 +18,7 @@
   padding: 16px;
   margin-bottom: 14px;
 
-  background: url('../images/templates/ecrantext1.png') center / 100% 100% no-repeat;
+  background: url('../images/Templates/ecrantext1.png') center / 100% 100% no-repeat;
 }
 
 .pc-card-top {
@@ -57,7 +57,7 @@
   content: "";
   position: absolute;
   inset: 0; /* cadre sur toute la surface */
-  background: url('../images/templates/big-hero-frame.png') center / 100% 100% no-repeat;
+  background: url('../images/Templates/big-hero-frame.png') center / 100% 100% no-repeat;
   /* 100% 100% au lieu de cover pour coller exactement aux bords du carré */
   pointer-events: none;
   z-index: 2;
@@ -114,7 +114,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: url('../images/templates/right-panel-frame.png') center / 100% 100% no-repeat;
+  background: url('../images/Templates/right-panel-frame.png') center / 100% 100% no-repeat;
   pointer-events: none;
   z-index: 0;
 }
