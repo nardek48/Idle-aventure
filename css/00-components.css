@@ -133,3 +133,518 @@ les classes de l'ancien thème pendant la migration progressive.
   text-transform: uppercase;
   color: var(--nb-ink-dim);
 }
+
+/* =========================
+   Bouton d'achat (vert)
+   v2.80 : déplacé ici depuis css/04-panel-upgrades.css (où il
+   s'appelait ".upgrade-buy", propre à l'écran Amélioration) —
+   réutilisé maintenant par TOUS les boutons d'achat du jeu (Boutique
+   d'Aether, Potions, Équipement, Village, Donjon), voir chaque
+   fichier ui/*.js pour son usage. Toujours "min-height" plutôt que
+   "height" fixe : certains boutons (Village) ont 2 lignes de texte,
+   d'autres 1 seule — le fond (bouton_achat.png) s'étire proprement
+   dans les deux cas.
+   ========================= */
+.btn-buy {
+  min-width: 80px;
+  min-height: 28px;
+  padding: 4px 12px;
+  box-sizing: border-box;
+
+  border: none;
+  border-radius: 0;
+  appearance: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+
+  background: url('../images/Buttons/bouton_achat.png') center / 100% 100% no-repeat;
+  cursor: pointer;
+}
+
+/* Bouton visible mais non achetable/déjà acheté/au niveau max */
+.btn-buy:disabled,
+.btn-buy.locked,
+.btn-buy.cant-afford,
+.btn-buy.is-maxed,
+.btn-buy.is-bought {
+  background: url('../images/Buttons/bouton_achat_max.png') center / 100% 100% no-repeat;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+/* Effets seulement sur les boutons achetables */
+.btn-buy:not(:disabled):hover {
+  filter: brightness(1.05);
+}
+
+.btn-buy:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+/* Icône (or ou autre monnaie) à l'intérieur d'un .btn-buy */
+.btn-buy-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+/* =========================
+   Carte d'achat (icône + infos + bouton)
+   v2.81 : composant partagé par TOUS les écrans avec un coût à payer
+   (Amélioration, Potions, Équipement, Village, Boutique d'Aether,
+   Donjon) — remplace les styles dupliqués par écran (.upgrade-card,
+   .potion-card, .equip-shop-card, .dungeon-shop-card,
+   .aether-shop-card, .shop-item.village-item...), qui avaient même
+   fini par se dédoubler entre plusieurs fichiers CSS (voir
+   l'ancien .upgrade-name défini deux fois, dans 04-panel-upgrades.css
+   ET 04-panel-hero-summary.css, nettoyé en v2.81). Structure commune :
+   icône (.nb-purchase-icon-col) + infos (.nb-purchase-info-col, nom/
+   description/ligne meta optionnelle) + bouton d'achat (.btn-buy,
+   voir plus haut dans ce fichier).
+   ========================= */
+.nb-purchase-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  margin: 4px 0;
+  background: #f9f1dd url('../images/Borders/background_upgrade.png') center / 100% 100% no-repeat;
+}
+
+/* Carte non achetable (pas assez de monnaie) : léger flouté */
+.nb-purchase-card:not(.affordable):not(.locked):not(.is-bought):not(.is-maxed) {
+  opacity: 0.8;
+}
+
+/* Carte verrouillée (palier/monde non débloqué), déjà achetée ou au
+   niveau max : plus estompée, pas d'ambiguïté avec "pas assez cher" */
+.nb-purchase-card.locked,
+.nb-purchase-card.is-bought,
+.nb-purchase-card.is-maxed {
+  opacity: 0.55;
+}
+
+/* Bordures de rareté (Équipement, Potions) — mêmes variables
+   --rarity-* déjà utilisées ailleurs dans le projet */
+.nb-purchase-card.rarity-green { box-shadow: inset 0 0 0 2px var(--rarity-green); }
+.nb-purchase-card.rarity-rare { box-shadow: inset 0 0 0 2px var(--rarity-rare); }
+.nb-purchase-card.rarity-epic { box-shadow: inset 0 0 0 2px var(--rarity-epic); }
+.nb-purchase-card.rarity-legendary { box-shadow: inset 0 0 0 2px var(--rarity-legendary); }
+
+.nb-purchase-card.is-active {
+  box-shadow: inset 0 0 0 2px var(--hp-green);
+}
+
+.nb-purchase-icon-col {
+  width: 50px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Halo subtil derrière l'icône (repris du réglage fin fait dans
+   Amélioration : fond légèrement teinté, coins arrondis un peu plus
+   larges que l'icône elle-même). */
+.nb-purchase-icon-slot {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nb-purchase-icon,
+img.nb-purchase-icon {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* Variante texte de .nb-purchase-icon pour les icônes encore en
+   emoji (voir renderIconOrEmojiHTML dans core/utils.js) — même
+   empreinte 46x46 que la version <img>, juste centrée avec une
+   taille de police adaptée. */
+.nb-purchase-icon-emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.nb-purchase-info-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.nb-purchase-name {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--nb-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nb-purchase-name.rarity-common { color: var(--rarity-common); }
+.nb-purchase-name.rarity-green { color: var(--rarity-green); }
+.nb-purchase-name.rarity-rare { color: var(--rarity-rare); }
+.nb-purchase-name.rarity-epic { color: var(--rarity-epic); }
+.nb-purchase-name.rarity-legendary { color: var(--rarity-legendary); }
+
+.nb-purchase-desc {
+  margin-top: 1px;
+  font-size: 11px;
+  opacity: 0.85;
+  line-height: 1.3;
+  color: var(--nb-ink-dim);
+}
+
+/* Ligne d'info secondaire générique : rareté, stock, minuteur actif,
+   bonus actuel... selon l'écran (voir chaque ui/*.js). */
+.nb-purchase-meta {
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--nb-gold-deep);
+}
+
+/* Barre de niveau + progression (Amélioration, Donjon) */
+.nb-purchase-level-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 2px;
+}
+
+.nb-purchase-level-badge {
+  min-width: 2px;
+  padding: 2px 4px;
+  border-radius: 999px;
+  background: #3b2a1a;
+  color: #f9f1dd;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.nb-purchase-level-bar {
+  position: relative;
+  flex: 1;
+  height: 16px;
+  border-radius: 999px;
+  background: #2b1f18;
+  border: 1px solid #c89b4a;
+  overflow: hidden;
+}
+
+.nb-purchase-level-fill {
+  height: 100%;
+  width: 0; /* remplacé par style="width: xx%;" en JS */
+  background: linear-gradient(to bottom, #60a5fa, #2563eb);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.nb-purchase-level-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.nb-purchase-buy-col {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* Petits labels facultatifs au-dessus/dessous du bouton d'achat
+   (ex. "COÛT" en haut, "x1"/"MAX" en bas — voir Amélioration). */
+.nb-purchase-buy-label {
+  color: #3b2a1a;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* =========================
+   Carte de collection (icône + infos + statut/progression)
+   v2.82 : composant partagé par les écrans "liste à parcourir"
+   (Bestiaire, Hauts faits, Quêtes, Codex) — même esprit que
+   ".nb-purchase-card" ci-dessus, mais pour du contenu qu'on consulte
+   plutôt qu'on achète : pas de bouton d'achat à droite, plutôt un
+   statut ("En cours"/"Terminé"), une barre de progression, ou un
+   bouton de réclamation (qui réutilise ".btn-buy", même vert que
+   partout ailleurs — un haut fait/une quête qu'on récupère, c'est
+   aussi une forme d'"achat" avec de l'effort comme monnaie).
+   ========================= */
+.nb-entry-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  margin: 6px 0;
+  background: #f9f1dd url('../images/Borders/background_upgrade.png') center / 100% 100% no-repeat;
+}
+
+/* Reset pour les cas où ".nb-entry-card" est posée sur un <button>
+   plutôt qu'un <div> (ex. Codex, où toute la carte est cliquable) —
+   annule les styles natifs de bouton du navigateur, le reste des
+   règles ci-dessus s'applique normalement par-dessus. */
+button.nb-entry-card {
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+}
+
+.nb-entry-card.is-locked {
+  opacity: 0.55;
+}
+
+.nb-entry-card.is-complete {
+  box-shadow: inset 0 0 0 2px var(--hp-green);
+}
+
+.nb-entry-card.is-claimed {
+  opacity: 0.75;
+}
+
+.nb-entry-card.boss {
+  box-shadow: inset 0 0 0 2px var(--rarity-legendary);
+}
+
+.nb-entry-icon-col {
+  width: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nb-entry-icon-frame {
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid var(--nb-gold-dark);
+  background: var(--nb-cream-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nb-entry-icon-frame img,
+.nb-entry-icon-frame .nb-entry-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.nb-entry-icon-frame .nb-entry-icon-emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.nb-entry-info-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.nb-entry-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  line-height: 1.25;
+}
+
+.nb-entry-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--rarity-legendary);
+  color: #2a1400;
+  font-size: 9px;
+  font-weight: 800;
+  vertical-align: middle;
+}
+
+.nb-entry-desc {
+  font-size: 11px;
+  color: var(--nb-ink-dim);
+  margin-top: 1px;
+  line-height: 1.35;
+}
+
+.nb-entry-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin-top: 2px;
+}
+
+.nb-entry-meta {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--nb-gold-deep);
+}
+
+.nb-entry-progress-bar {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  background: #2b1f18;
+  border: 1px solid #c89b4a;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.nb-entry-progress-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(to bottom, #facc15, #ca8a04);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.nb-entry-progress-fill.done {
+  background: linear-gradient(to bottom, #4ade80, #16a34a);
+}
+
+.nb-entry-progress-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.nb-entry-status-col {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 60px;
+  text-align: center;
+}
+
+.nb-entry-status-label {
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--nb-ink-dim);
+}
+
+.nb-entry-status-label.is-ready,
+.nb-entry-status-label.is-complete {
+  color: #2f8f4e;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.nb-entry-category-label {
+  margin: 14px 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--nb-ink-dim);
+}
+
+.nb-entry-category-label:first-child {
+  margin-top: 0;
+}
+
+@media (max-width: 640px) {
+  .nb-entry-name {
+    font-size: 13px;
+  }
+  .nb-entry-desc,
+  .nb-entry-meta {
+    font-size: 9px;
+  }
+  .nb-entry-icon-col {
+    width: 48px;
+  }
+  .nb-entry-icon-frame {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-entry-progress-fill {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .nb-purchase-name {
+    font-size: 12px;
+  }
+  .nb-purchase-desc,
+  .nb-purchase-meta {
+    font-size: 9px;
+  }
+  .nb-purchase-icon-col {
+    width: 40px;
+  }
+  .nb-purchase-icon,
+  img.nb-purchase-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-purchase-level-fill {
+    transition: none;
+  }
+}

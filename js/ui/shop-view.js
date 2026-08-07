@@ -157,28 +157,28 @@ function buildUpgradeCardHTML(u, buyAmount) {
   var levelPct        = maxLevel > 0 && maxLevel !== Infinity ? (level / maxLevel) * 100 : 0;
 
   // === Carte d'amélioration : 3 colonnes (icône / infos / bouton) ===
-  var h  = '<div class="upgrade-card ' + (afford ? 'affordable ' : '') + (locked ? 'locked' : '') + '">';
+  var h  = '<div class="nb-purchase-card ' + (afford ? 'affordable ' : '') + (locked ? 'locked' : '') + '">';
 
-  // Colonne icône (environ 25 %)
-  h += '<div class="upgrade-icon-col">';
-    h += '<div class="upgrade-icon-slot">';
-      if (u.icon) {
-        h += '<img class="upgrade-icon" src="' + esc(u.icon) + '" alt="' + esc(u.name) + '">';
-      }
-    h += '</div>';
-  h += '</div>';
+  // Colonne icône
+  h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">';
+    if (u.icon) {
+      // v2.79 : détection emoji/image centralisée, voir
+      // renderIconOrEmojiHTML() dans core/utils.js.
+      h += renderIconOrEmojiHTML(u.icon, "nb-purchase-icon", u.name);
+    }
+  h += '</div></div>';
 
-  // Colonne infos (environ 50 %)
-  h += '<div class="upgrade-info-col">';
-    h += '<div class="upgrade-name">' + esc(u.name) + '</div>';
-    h += '<div class="upgrade-desc">' + esc(u.desc) + '</div>';
+  // Colonne infos
+  h += '<div class="nb-purchase-info-col">';
+    h += '<div class="nb-purchase-name">' + esc(u.name) + '</div>';
+    h += '<div class="nb-purchase-desc">' + esc(u.desc) + '</div>';
 
     // Badge de niveau + barre de progression
-    h += '<div class="upgrade-level-row">';
-      h += '<div class="upgrade-level-badge">' + esc(level) + '</div>';
-      h += '<div class="upgrade-level-bar">';
-        h += '<div class="upgrade-level-fill" style="width:' + levelPct + '%;"></div>';
-        h += '<span class="upgrade-level-text">' + esc(level) + ' / ' + esc(maxLevelText) + '</span>';
+    h += '<div class="nb-purchase-level-row">';
+      h += '<div class="nb-purchase-level-badge">' + esc(level) + '</div>';
+      h += '<div class="nb-purchase-level-bar">';
+        h += '<div class="nb-purchase-level-fill" style="width:' + levelPct + '%;"></div>';
+        h += '<span class="nb-purchase-level-text">' + esc(level) + ' / ' + esc(maxLevelText) + '</span>';
       h += '</div>';
     h += '</div>';
 
@@ -189,17 +189,17 @@ function buildUpgradeCardHTML(u, buyAmount) {
     //        h += '<div class="upgrade-preview" style="opacity:.9;font-size:12px;margin-top:4px;">' + esc(previewText) + '</div>';
     //      }
     //    }
-  h += '</div>'; // /upgrade-info-col
+  h += '</div>'; // /nb-purchase-info-col
 
-  // Colonne bouton d'achat (environ 25 %)
-  h += '<div class="upgrade-buy-col">';
+  // Colonne bouton d'achat
+  h += '<div class="nb-purchase-buy-col">';
 
-    h += '<div class="upgrade-buy-title">COÛT</div>';
+    h += '<div class="nb-purchase-buy-label">COÛT</div>';
 
     if (maxed) {
-      h += '<button class="upgrade-buy locked" disabled>MAX</button>';
+      h += '<button class="btn-buy locked" disabled>MAX</button>';
     } else if (locked) {
-      h += '<button class="upgrade-buy locked" disabled>Monde ' + ((u.unlockWorld || 0) + 1) + '</button>';
+      h += '<button class="btn-buy locked" disabled>Monde ' + ((u.unlockWorld || 0) + 1) + '</button>';
     } else {
       var label = '';
 
@@ -210,21 +210,21 @@ function buildUpgradeCardHTML(u, buyAmount) {
       }
 
       if (afford) {
-        h += '<button class="upgrade-buy" onclick="buyUpgrade(\'' + u.id + '\', ' + buyAmount + ')">';
-          h += '<img class="upgrade-buy-gold-icon" src="images/Icons/gold_icon.png" alt="">';
+        h += '<button class="btn-buy" onclick="buyUpgrade(\'' + u.id + '\', ' + buyAmount + ')">';
+          h += '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">';
           h += '<span class="upgrade-buy-price">' + label + '</span>';
         h += '</button>';
       } else {
-        h += '<button class="upgrade-buy cant-afford" disabled>';
-          h += '<img class="upgrade-buy-gold-icon" src="images/Icons/gold_icon.png" alt="">';
+        h += '<button class="btn-buy cant-afford" disabled>';
+          h += '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">';
           h += '<span class="upgrade-buy-price">' + label + '</span>';
         h += '</button>';
       }
     }
 
-    h += '<div class="upgrade-buy-test">' + esc(modeLabel) + '</div>';
+    h += '<div class="nb-purchase-buy-label">' + esc(modeLabel) + '</div>';
 
-  h += '</div>'; // /upgrade-buy-col
+  h += '</div>'; // /nb-purchase-buy-col
 
   h += '</div>'; // /upgrade-card
 

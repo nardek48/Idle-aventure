@@ -85,7 +85,7 @@ var UPGRADES = [
   {
     id: "u_gold",
     name: "Bourse lourde",
-    icon: "💰",
+    icon: "images/Icons/gold_icon.png",
     desc: "+3% or gagné par niveau.",
     baseCost: 55,
     costMult: 1.23,
@@ -117,7 +117,7 @@ function getUpgradeById(id) {
 
 var AETHER_SHOP = [
   { id: "a_tap", name: "Puissance ancestrale", icon: "⚔️", desc: "+10% dégâts de tap globaux par niveau.", baseCost: 1, costMult: 1.9, maxLevel: 20 },
-  { id: "a_gold", name: "Fortune astrale", icon: "💰", desc: "+10% or global par niveau.", baseCost: 1, costMult: 1.9, maxLevel: 20 },
+  { id: "a_gold", name: "Fortune astrale", icon: "images/Icons/gold_icon.png", desc: "+10% or global par niveau.", baseCost: 1, costMult: 1.9, maxLevel: 20 },
   { id: "a_loot", name: "Main du destin", icon: "🎁", desc: "+3% chance de loot boss par niveau.", baseCost: 2, costMult: 2.1, maxLevel: 15 },
   { id: "a_essence", name: "Noyau d'essence", icon: "🔮", desc: "+1 essence boss tous les 2 niveaux.", baseCost: 2, costMult: 2.2, maxLevel: 12 }
 ];

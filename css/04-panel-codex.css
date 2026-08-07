@@ -24,74 +24,13 @@
   margin-bottom: 14px;
 }
 
-.codex-category-label {
-  margin: 14px 0 8px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--nb-ink-dim);
-}
-
-.codex-category-label:first-of-type {
-  margin-top: 0;
-}
-
-.codex-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.codex-list-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--nb-frame);
-  background: var(--nb-cream);
-  color: var(--nb-ink);
-  text-align: left;
-  cursor: pointer;
-}
-
-.codex-list-item.is-locked {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.codex-list-item.is-unread {
-  border-color: rgba(239, 199, 117, 0.5);
-  background: #fff3d6;
-}
-
-.codex-list-icon {
-  flex-shrink: 0;
-  font-size: 18px;
-  width: 26px;
-  text-align: center;
-}
-
-.codex-list-title {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.codex-list-new {
-  flex-shrink: 0;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--nb-gold);
-  color: #241a00;
-  font-size: 9px;
-  font-weight: 800;
-}
-
-/* =========================
-   Mode lecture
+/* v2.82 : ".codex-list"/".codex-list-item" et leurs enfants ont été
+   retirés d'ici — chaque entrée du Codex utilise maintenant le
+   composant partagé ".nb-entry-card" (voir css/00-components.css et
+   ui/codex-view.js), comme le Bestiaire, les Hauts faits et les
+   Quêtes. Le mode lecture (plein texte d'une entrée) ci-dessous est
+   inchangé — ce n'est pas une liste, pas concerné par cette
+   unification.
    ========================= */
 .codex-back-btn {
   display: block;

@@ -15,23 +15,23 @@ function buildPotionCardHTML(potion) {
   var cost = (window.PotionManager && typeof PotionManager.getCost === "function") ? PotionManager.getCost(potion) : potion.cost;
   var canBuy = (game.gold || 0) >= cost;
 
-  var h = '<div class="potion-card rarity-' + esc(potion.rarity) + (isActive ? ' is-active' : '') + '">';
-  h += '<div class="potion-icon">' + esc(potion.icon) + '</div>';
-  h += '<div class="potion-info">';
-  h += '<div class="potion-name">' + esc(potion.name) + '</div>';
-  h += '<div class="potion-desc">' + esc(potion.desc) + '</div>';
+  var h = '<div class="nb-purchase-card rarity-' + esc(potion.rarity) + (isActive ? ' is-active' : '') + '">';
+  h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(potion.icon, "nb-purchase-icon", potion.name) + '</div></div>';
+  h += '<div class="nb-purchase-info-col">';
+  h += '<div class="nb-purchase-name">' + esc(potion.name) + '</div>';
+  h += '<div class="nb-purchase-desc">' + esc(potion.desc) + '</div>';
 
   if (isActive) {
-    h += '<div class="potion-timer">⏳ ' + esc(formatTime(Math.ceil(remaining / 1000))) + ' restant</div>';
+    h += '<div class="nb-purchase-meta">⏳ ' + esc(formatTime(Math.ceil(remaining / 1000))) + ' restant</div>';
   } else if (!potion.durationMin) {
     var pending = (game.pendingPotionBonuses && game.pendingPotionBonuses.aetherNext) || 0;
     if (pending > 0) {
-      h += '<div class="potion-timer">🌀 Bonus prêt : +' + Math.round(pending * 100) + '% à la prochaine ascension</div>';
+      h += '<div class="nb-purchase-meta">🌀 Bonus prêt : +' + Math.round(pending * 100) + '% à la prochaine ascension</div>';
     }
   }
 
   h += '</div>';
-  h += '<button class="potion-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buy(\'' + esc(potion.id) + '\')">' + formatNumber(cost) + ' or</button>';
+  h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buy(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
   h += '</div>';
   return h;
 }
@@ -56,14 +56,14 @@ function buildHealingPotionCardHTML(potion) {
   var stock = PotionManager.getHealingStock(potion.id);
   var canBuy = (game.gold || 0) >= potion.cost;
 
-  var h = '<div class="potion-card heal-card">';
-  h += '<div class="potion-icon">' + esc(potion.icon) + '</div>';
-  h += '<div class="potion-info">';
-  h += '<div class="potion-name">' + esc(potion.name) + '</div>';
-  h += '<div class="potion-desc">Restaure ' + Math.round(potion.healPercent * 100) + '% des PV max, à la demande depuis l\u2019écran Combat.</div>';
-  h += '<div class="potion-heal-stock">🩹 Stock : ' + stock + '</div>';
+  var h = '<div class="nb-purchase-card">';
+  h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(potion.icon, "nb-purchase-icon", potion.name) + '</div></div>';
+  h += '<div class="nb-purchase-info-col">';
+  h += '<div class="nb-purchase-name">' + esc(potion.name) + '</div>';
+  h += '<div class="nb-purchase-desc">Restaure ' + Math.round(potion.healPercent * 100) + '% des PV max, à la demande depuis l\u2019écran Combat.</div>';
+  h += '<div class="nb-purchase-meta">🩹 Stock : ' + stock + '</div>';
   h += '</div>';
-  h += '<button class="potion-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')">' + formatNumber(potion.cost) + ' or</button>';
+  h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(potion.cost) + '</button></div>';
   h += '</div>';
   return h;
 }

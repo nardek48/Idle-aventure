@@ -165,75 +165,15 @@
   gap: 8px;
 }
 
-.dungeon-shop-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: var(--nb-radius-md);
-  background: #e8f6ff;
-  border: 1px solid var(--nb-frame);
-}
+/* v2.81 : ".dungeon-shop-card" et ses enfants (icône/infos/nom/
+   niveau/desc) ont été retirés d'ici — remplacés par la classe
+   partagée ".nb-purchase-card" (voir css/00-components.css), comme
+   toutes les autres cartes d'achat du jeu. */
 
-.dungeon-shop-icon {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  border-radius: 9px;
-  background: var(--nb-cream-alt);
-}
-
-.dungeon-shop-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.dungeon-shop-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--nb-ink);
-}
-
-.dungeon-shop-level {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--nb-ink-dim);
-}
-
-.dungeon-shop-desc {
-  margin-top: 2px;
-  font-size: 11px;
-  color: var(--nb-ink-dim);
-}
-
-.dungeon-shop-buy {
-  flex-shrink: 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--nb-frame);
-  background: rgba(125, 211, 252, 0.15);
-  color: #7dd3fc;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.dungeon-shop-buy.cant-afford {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.dungeon-shop-buy.is-maxed {
-  background: var(--nb-cream-alt);
-  color: var(--nb-ink-dim);
-  border-color: var(--nb-frame);
-  cursor: default;
-}
+/* v2.80 : ".dungeon-shop-buy" retiré — le bouton d'achat de la
+   Boutique d'éclats utilise maintenant la classe globale ".btn-buy"
+   (voir css/00-components.css), comme tous les autres boutons
+   d'achat du jeu. */
 
 /* =========================
    Fenêtre d'introduction / résumé de fin (v2.18)

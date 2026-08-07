@@ -6,6 +6,30 @@ Fonctions utilitaires génériques, utilisées dans tout le projet
 touche à `game` directement (sauf cloneQuestProgress).
 ============================================================ */
 
+/* ============================================================
+   v2.79 : helper partagé pour afficher une icône qui peut être soit
+   un emoji (texte), soit un vrai fichier image — plusieurs écrans
+   (Boutique, Boutique d'Aether, Potions, Quêtes...) ont des icônes de
+   données mixtes : certaines entrées ont une vraie image (ex.
+   "images/Icons/gold_icon.png"), d'autres encore un simple emoji en
+   attendant leur icône dédiée. Rendre un emoji directement dans un
+   <img src="..."> génère une requête réseau vers un fichier
+   inexistant (404) — voir le bug corrigé en v2.78 sur les cartes
+   d'upgrade. Ce helper centralise la détection pour éviter de la
+   dupliquer dans chaque écran.
+   baseClass : nom de classe CSS déjà utilisé par l'ancien rendu texte
+   (ex. "potion-icon", "quest-icon") — réutilisé tel quel sur le tag
+   <img> pour garder le même habillage (fond, position...), avec en
+   plus "<baseClass>-emoji" quand c'est un emoji, pour ajuster la
+   taille de police indépendamment (voir CSS de chaque écran). */
+function renderIconOrEmojiHTML(icon, baseClass, altText) {
+  var isImagePath = typeof icon === "string" && /\.(png|jpg|jpeg|svg|gif|webp)$/i.test(icon);
+  if (isImagePath) {
+    return '<img class="' + baseClass + '" src="' + esc(icon) + '" alt="' + esc(altText || "") + '">';
+  }
+  return '<span class="' + baseClass + ' ' + baseClass + '-emoji">' + esc(icon || "") + '</span>';
+}
+
 /* Retourne une copie indépendante de DEFAULT_QUEST_PROGRESS, utilisée
    à chaque (re)génération de quêtes journalières pour repartir sur
    des compteurs de progression à zéro. */

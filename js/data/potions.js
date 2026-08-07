@@ -66,7 +66,7 @@ var POTIONS_DB = [
   {
     id: "elixir_fortune",
     name: "Élixir de Fortune",
-    icon: "💰",
+    icon: "images/Icons/gold_icon.png",
     desc: "+25% or gagné pendant 20 min.",
     stat: "gold",
     bonus: 0.25,

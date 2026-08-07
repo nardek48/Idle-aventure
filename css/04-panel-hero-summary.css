@@ -541,128 +541,14 @@
   padding: 0;          /* évite du padding supplémentaire autour */
 }
 
-
-
-.upgrade-card.affordable {
-  padding: 4px 8px;
-  box-shadow: none;
-}
-
-.upgrade-icon {
-  width: 46px;
-  height: 46px;
-  object-fit: contain;
-  display: block;
-}
-
-/* Icône : largeur fixe */
-.upgrade-icon-col {
-  width: 50px;          /* largeur réservée pour l'icône */
-  flex-shrink: 0;
-  display: flex;
-  justify-content: flex-start;
-}
-
-/* Texte : colonne centrale flexible */
-.upgrade-info-col {
-  flex: 1 1 auto;       /* prend tout l'espace disponible au centre */
-  padding: 0 0px;
-}
-
-/* Bouton : largeur fixe réservée */
-.upgrade-buy-col {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-}
-
-.upgrade-buy-title,
-.upgrade-buy-test {
-  color: #3b2a1a;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.upgrade-icon-slot {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background-color: rgba(0, 0, 0, 0.06);
-}
-
-.upgrade-name {
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 0px;
-  line-height: 1.3;
-  color: var(--nb-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;   /* largeur max, ajuste à l’œil (160–200) */
-}
-
-.upgrade-desc {
-  margin-top: 1px;
-  font-size: 11px;
-  opacity: 0.85;
-  line-height: 1.3;
-  color: var(--nb-ink-dim);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;   /* largeur max, ajuste à l’œil (160–200) */
-}
-
-/* barre niveau + progression, comme on a déjà défini */
-.upgrade-level-row   {
-  margin-top: 1px;
-  font-size: 11px;
-  opacity: 0.85;
-  line-height: 1.3;
-  color: var(--nb-ink-dim);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;   /* largeur max, ajuste à l’œil (160–200) */
-}
-
-.upgrade-level-badge {
-  min-width: 2px;
-  padding: 2px 4px;
-  border-radius: 999px;
-  background: #3b2a1a;
-  color: #f9f1dd;
-  font-size: 10px;
-  font-weight: 700;
-  text-align: center;
-}
-
-
-/* barre niveau + progression, comme on a déjà défini */
-.upgrade-level-bar   { position:relative; flex:1; height:16px; border-radius:999px; background:#2b1f18; overflow:hidden; border:1px solid #c89b4a; }
-.upgrade-level-fill  { height:100%; background:linear-gradient(to bottom,#60a5fa,#2563eb); border-radius:inherit; transition:width .3s ease; }
-.upgrade-level-text  { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.7); }
-
-/* Bouton achat avec ton image */
-.upgrade-buy {
-  width: 90px;          /* doit rentrer dans la colonne réservée */
-  height: 28px;
-  padding: 0;
-  border: none;
-  background: url('../images/Buttons/bouton_achat.png') center / 100% 100% no-repeat;
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* v2.81 : tout le bloc de règles ".upgrade-card"/".upgrade-icon"/
+   ".upgrade-buy"/etc. qui vivait ici a été retiré — la carte
+   d'amélioration (et maintenant toutes les cartes d'achat du jeu :
+   Potions, Équipement, Village, Boutique d'Aether, Donjon) utilise la
+   classe partagée ".nb-purchase-card" et sa famille, définie une
+   seule fois dans css/00-components.css. Ce bloc dupliquait (avec de
+   légères variantes qui l'emportaient sur celles de
+   04-panel-upgrades.css à cause de l'ordre de chargement dans
+   index.html) une bonne partie de ces règles — c'est d'ailleurs
+   exactement ce genre de duplication silencieuse que la
+   centralisation doit éviter à l'avenir. */

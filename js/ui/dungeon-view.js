@@ -65,7 +65,7 @@ function buildDungeonLobbyHTML() {
   h += '</div>';
   h += '<div class="dungeon-ticket-limit">Achats aujourd\u2019hui : ' + purchasedToday + ' / ' + maxPerDay + '</div>';
   h += '<div class="dungeon-ticket-limit">Prix du prochain ticket : ' + formatNumber(nextTicketCost) + ' essence</div>';
-  h += '<button class="settings-btn' + (canBuyTicket ? '' : ' disabled') + '" type="button" ' + (canBuyTicket ? 'onclick="DungeonManager.buyTicket()"' : 'disabled') + '>' + (remainingPurchases > 0 ? 'Acheter un ticket (' + formatNumber(nextTicketCost) + ' essence)' : 'Limite journalière atteinte') + '</button>';
+  h += '<button class="btn-buy' + (canBuyTicket ? '' : ' cant-afford') + '" type="button" ' + (canBuyTicket ? 'onclick="DungeonManager.buyTicket()"' : 'disabled') + '>' + (remainingPurchases > 0 ? 'Acheter un ticket (' + formatNumber(nextTicketCost) + ' essence)' : 'Limite journalière atteinte') + '</button>';
   h += '</div>';
 
   h += '<div class="panel-card">';
@@ -104,17 +104,20 @@ function buildDungeonShopHTML() {
     var cost = DungeonManager.getShardShopCost(item);
     var canBuy = !maxed && shards >= cost;
 
-    h += '<div class="dungeon-shop-card">';
-    h += '<div class="dungeon-shop-icon">' + esc(item.icon) + '</div>';
-    h += '<div class="dungeon-shop-info">';
-    h += '<div class="dungeon-shop-name">' + esc(item.name) + ' <span class="dungeon-shop-level">Niv. ' + level + '/' + item.maxLevel + '</span></div>';
-    h += '<div class="dungeon-shop-desc">' + esc(item.desc) + '</div>';
+    h += '<div class="nb-purchase-card' + (maxed ? ' is-maxed' : '') + '">';
+    h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(item.icon, "nb-purchase-icon", item.name) + '</div></div>';
+    h += '<div class="nb-purchase-info-col">';
+    h += '<div class="nb-purchase-name">' + esc(item.name) + '</div>';
+    h += '<div class="nb-purchase-meta">Niv. ' + level + '/' + item.maxLevel + '</div>';
+    h += '<div class="nb-purchase-desc">' + esc(item.desc) + '</div>';
     h += '</div>';
+    h += '<div class="nb-purchase-buy-col">';
     if (maxed) {
-      h += '<button class="dungeon-shop-buy is-maxed" type="button" disabled>Max</button>';
+      h += '<button class="btn-buy is-maxed" type="button" disabled>Max</button>';
     } else {
-      h += '<button class="dungeon-shop-buy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="DungeonManager.buyShardUpgrade(\'' + esc(item.id) + '\')">🔷 ' + formatNumber(cost) + '</button>';
+      h += '<button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="DungeonManager.buyShardUpgrade(\'' + esc(item.id) + '\')">🔷 ' + formatNumber(cost) + '</button>';
     }
+    h += '</div>';
     h += '</div>';
   });
   h += '</div>';

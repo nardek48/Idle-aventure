@@ -50,14 +50,21 @@ function buildCodexListItemHTML(entry) {
   var unlocked = CodexManager.isUnlocked(entry);
   var read = CodexManager.isRead(entry.id);
 
-  var classes = ["codex-list-item"];
-  if (!unlocked) classes.push("is-locked");
-  else if (!read) classes.push("is-unread");
-
-  var h = '<button class="' + classes.join(" ") + '" type="button" onclick="selectCodexEntry(\'' + esc(entry.id) + '\')">';
-  h += '<span class="codex-list-icon">' + (unlocked ? esc(entry.icon) : '🔒') + '</span>';
-  h += '<span class="codex-list-title">' + (unlocked ? esc(entry.title) : '???') + '</span>';
-  if (unlocked && !read) h += '<span class="codex-list-new">Nouveau</span>';
+  var h = '<button type="button" class="nb-entry-card' + (!unlocked ? ' is-locked' : '') + '" onclick="selectCodexEntry(\'' + esc(entry.id) + '\')">';
+  h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame"><span class="nb-entry-icon-emoji">' + (unlocked ? esc(entry.icon) : '🔒') + '</span></div></div>';
+  h += '<div class="nb-entry-info-col">';
+  h += '<div class="nb-entry-name">' + (unlocked ? esc(entry.title) : '???') + '</div>';
+  h += '<div class="nb-entry-desc">' + (unlocked ? (read ? 'Déjà lu.' : 'Nouvelle entrée à découvrir.') : 'Pas encore découvert.') + '</div>';
+  h += '</div>';
+  h += '<div class="nb-entry-status-col">';
+  if (unlocked && !read) {
+    h += '<span class="nb-entry-status-label is-ready">Nouveau</span>';
+  } else if (unlocked) {
+    h += '<span class="nb-entry-status-label is-complete">Déchiffré</span>';
+  } else {
+    h += '<span class="nb-entry-status-label">Verrouillé</span>';
+  }
+  h += '</div>';
   h += '</button>';
   return h;
 }
@@ -70,12 +77,10 @@ function buildCodexListHTML() {
     var items = (CODEX_ENTRIES || []).filter(function (e) { return e.category === cat; });
     if (!items.length) return;
 
-    h += '<div class="codex-category-label">' + esc(CODEX_CATEGORY_LABELS[cat] || cat) + '</div>';
-    h += '<div class="codex-list">';
+    h += '<div class="nb-entry-category-label">' + esc(CODEX_CATEGORY_LABELS[cat] || cat) + '</div>';
     items.forEach(function (entry) {
       h += buildCodexListItemHTML(entry);
     });
-    h += '</div>';
   });
 
   return h;

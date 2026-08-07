@@ -10,19 +10,21 @@ function buildEquipShopCardHTML(item) {
   var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[item.rarity]) || item.rarity;
   var canBuy = !item.bought && (game.gold || 0) >= item.price;
 
-  var h = '<div class="equip-shop-card rarity-' + esc(item.rarity) + (item.bought ? ' is-bought' : '') + '">';
-  h += buildEquipmentIconHTML(item, "equip-shop-icon");
-  h += '<div class="equip-shop-info">';
-  h += '<div class="equip-shop-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
-  h += '<div class="equip-shop-rarity">' + esc(rarityLabel) + '</div>';
-  h += '<div class="equip-shop-stat">' + esc(statText) + '</div>';
+  var h = '<div class="nb-purchase-card rarity-' + esc(item.rarity) + (item.bought ? ' is-bought' : '') + '">';
+  h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + buildEquipmentIconHTML(item, "nb-purchase-icon") + '</div></div>';
+  h += '<div class="nb-purchase-info-col">';
+  h += '<div class="nb-purchase-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
+  h += '<div class="nb-purchase-meta">' + esc(rarityLabel) + '</div>';
+  h += '<div class="nb-purchase-desc">' + esc(statText) + '</div>';
   h += '</div>';
 
+  h += '<div class="nb-purchase-buy-col">';
   if (item.bought) {
-    h += '<button class="equip-shop-buy is-bought" type="button" disabled>Acheté</button>';
+    h += '<button class="btn-buy is-bought" type="button" disabled>Acheté</button>';
   } else {
-    h += '<button class="equip-shop-buy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="EquipShopManager.buy(\'' + esc(item.uid) + '\')">' + formatNumber(item.price) + ' or</button>';
+    h += '<button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="EquipShopManager.buy(\'' + esc(item.uid) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(item.price) + '</button>';
   }
+  h += '</div>';
 
   h += '</div>';
   return h;

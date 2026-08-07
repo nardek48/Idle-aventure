@@ -57,7 +57,7 @@ var QUEST_TEMPLATES = [
   {
     id: "goldEarned",
     name: "Bourse pleine",
-    icon: "💰",
+    icon: "images/Icons/gold_icon.png",
     desc: "Gagner {target} or.",
     target: 2000,
     rewardGold: 400,

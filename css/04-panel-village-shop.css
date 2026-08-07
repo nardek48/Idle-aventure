@@ -75,70 +75,12 @@
   backdrop-filter: blur(4px);
 }
 
-.shop-item.village-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  margin-bottom: 8px;
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream);
-  border: 1px solid var(--nb-frame);
-
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-}
-
-.shop-item.village-item:last-child {
-  margin-bottom: 0;
-}
-
-.shop-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.shop-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 2px;
-  flex-wrap: wrap;
-}
-
-.shop-title-row strong {
-  font-size: 13px;
-  color: var(--nb-ink);
-  font-weight: 800;
-}
-
-.shop-level {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: rgba(139, 92, 246, 0.14);
-  border: 1px solid var(--nb-gold-dark);
-  color: #d8c7ff;
-  font-size: 10px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.shop-desc {
-  margin-bottom: 4px;
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--nb-ink-dim);
-}
-
-.shop-meta {
-  font-size: 10px;
-  color: var(--nb-gold);
-  font-weight: 700;
-}
+/* v2.81 : ".shop-item.village-item" et ses enfants (".shop-main",
+   ".shop-title-row", ".shop-level", ".shop-desc", ".shop-meta") ont
+   été retirés d'ici — les cartes de bâtiment du Village utilisent
+   maintenant la classe partagée ".nb-purchase-card" (voir
+   css/00-components.css), comme toutes les autres cartes d'achat du
+   jeu. */
 
 .shop-mode-info {
   font-size: 11px;

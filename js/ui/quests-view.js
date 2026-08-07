@@ -103,19 +103,24 @@ function buildQuestsHTML() {
     var claimed = !!q.claimed;
     var pct = Math.min(100, (progress / q.target) * 100);
 
-    h += '<div class="quest-card ' + (claimed ? 'completed' : '') + '">';
-    h += '<div class="quest-header"><span class="quest-icon">' + esc(q.icon) + '</span><span class="quest-name">' + esc(q.name) + '</span></div>';
-    h += '<div class="quest-desc">' + esc(q.desc) + '</div>';
-    h += '<div class="quest-progress-bar"><div class="quest-progress-fill ' + (done ? 'done' : '') + '" style="width:' + pct + '%"></div></div>';
-    h += '<div class="quest-progress-text"><span>' + Math.min(progress, q.target) + ' / ' + q.target + '</span><span class="quest-reward">' + formatNumber(q.rewardGold || 0) + ' or · ' + formatNumber(q.rewardEssence || 0) + ' essence</span></div>';
+    h += '<div class="nb-entry-card' + (claimed ? ' is-claimed' : done ? ' is-complete' : '') + '">';
+    h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame">' + renderIconOrEmojiHTML(q.icon, "nb-entry-icon", q.name) + '</div></div>';
+    h += '<div class="nb-entry-info-col">';
+    h += '<div class="nb-entry-name">' + esc(q.name) + '</div>';
+    h += '<div class="nb-entry-desc">' + esc(q.desc) + '</div>';
+    h += '<div class="nb-entry-progress-bar"><div class="nb-entry-progress-fill' + (done ? ' done' : '') + '" style="width:' + pct + '%"></div><span class="nb-entry-progress-text">' + Math.min(progress, q.target) + ' / ' + q.target + '</span></div>';
+    h += '<div class="nb-entry-meta">🎁 ' + formatNumber(q.rewardGold || 0) + ' or · ' + formatNumber(q.rewardEssence || 0) + ' essence</div>';
+    h += '</div>';
 
+    h += '<div class="nb-entry-status-col">';
     if (claimed) {
-      h += '<button class="quest-claim-btn" disabled>Réclamée</button>';
+      h += '<span class="nb-entry-status-label is-complete">✔ Reçue</span>';
     } else if (done) {
-      h += '<button class="quest-claim-btn" onclick="QuestManager.claim(\'' + esc(q.id) + '\')">Réclamer</button>';
+      h += '<button class="btn-buy" onclick="QuestManager.claim(\'' + esc(q.id) + '\')">Réclamer</button>';
     } else {
-      h += '<button class="quest-claim-btn" disabled>En cours</button>';
+      h += '<span class="nb-entry-status-label">En cours</span>';
     }
+    h += '</div>';
 
     h += '</div>';
   });

@@ -79,7 +79,7 @@ function buildHudHTML() {
     + '<div class="nb-hud-top-row">'
     +   '<div class="nb-hud-left-col">'
     +     '<div class="nb-hud-resources">'
-    +       '<span class="nb-pill nb-pill-gold"><span class="nb-pill-icon">💰</span><span id="hud-gold">0</span></span>'
+    +       '<span class="nb-pill nb-pill-gold"><img class="nb-pill-icon" src="images/Icons/gold_icon.png" alt="Or"><span id="hud-gold">0</span></span>'
     +       '<span class="nb-pill nb-pill-essence"><span class="nb-pill-icon">🔮</span><span id="hud-essence">0</span></span>'
     +       '<span class="nb-pill nb-pill-aether"><span class="nb-pill-icon">🌀</span><span id="hud-aether">0</span></span>'
     +     '</div>'
@@ -106,7 +106,7 @@ function buildStatsBarHTML() {
     + '<div class="stat-item"><span class="stat-label">🎯 Critique</span><span class="stat-value" id="stat-crit">5%</span></div>'
     + '<div class="stat-item"><span class="stat-label">🎯 Dégâts crit.</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>'
     + '<div class="stat-item"><span class="stat-label">🌀 Aether</span><span class="stat-value" id="stat-aether-mult">x1.00</span></div>'
-    + '<div class="stat-item"><span class="stat-label">💰 Or</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>';
+    + '<div class="stat-item"><span class="stat-label"><img class="stat-label-icon" src="images/Icons/gold_icon.png" alt="Or"> Or</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>';
 }
 
 /* Injecte le HUD et la barre de stats une seule fois au boot (voir

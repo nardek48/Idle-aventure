@@ -1,189 +1,22 @@
 /* =========================
    Upgrades - ligne compacte
+   v2.81 : ".upgrade-card" et ses enfants (icône/colonnes/niveau) ont
+   été retirés d'ici — remplacés par la classe partagée
+   ".nb-purchase-card" (voir css/00-components.css), réutilisée par
+   TOUTES les cartes d'achat du jeu. Ne reste ici que
+   ".upgrade-buy-price", propre à la mise en page de CETTE carte.
    ========================= */
-
-
-/* Carte de base */
-.upgrade-card {
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  border-radius: 12px;
-  margin: 4px 0;
-
-  background: #f9f1dd url('../images/Borders/background_upgrade.png') center / 100% 100% no-repeat;
-  box-shadow: none;
-}
-
-
-/* Carte achetable */
-.upgrade-card.affordable {
-  border-color: var(--nb-gold-dark);
-  box-shadow: none;
-}
-
-
-/* Carte non achetable : pas de classe affordable */
-.upgrade-card:not(.affordable):not(.locked) {
-  opacity: 0.80;
-}
-
-
-/* Carte verrouillée par le monde */
-.upgrade-card.locked {
-  opacity: 0.55;
-}
-
-
-/* Colonne de l'icône */
-.upgrade-icon-col {
-  width: 50px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-
-/* Zone contenant l'icône */
-.upgrade-icon-slot {
-  width: 46px;
-  height: 46px;
-  padding: 0;
-  flex-shrink: 0;
-
-  border-radius: 12px;
-  background-color: transparent;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-
-/* Image de l'amélioration */
-.upgrade-icon {
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
-  object-fit: contain;
-  flex-shrink: 0;
-  display: block;
-}
-
-
-/* Colonne texte — correspond à upgrade-info-col dans ton JavaScript */
-.upgrade-info-col {
-  flex: 1;
-  min-width: 0;
-}
-
-
-/* Niveau */
-.upgrade-level {
-  margin-top: 2px;
-  font-size: 10px;
-  line-height: 1;
-  color: var(--nb-gold-deep);
-  white-space: nowrap;
-}
-
-
-/* Colonne du bouton */
-.upgrade-buy-col {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-
-/* Bouton actif et désactivé : mêmes dimensions */
-.upgrade-buy {
-  min-width: 80px;
-  height: 28px;
-  padding: 0;
-  box-sizing: border-box;
-
-  border: none;
-  border-radius: 0;
-  appearance: none;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  text-align: center;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-
-  background: url('../images/Buttons/bouton_achat.png') center / 100% 100% no-repeat;
-  cursor: pointer;
-}
-
-
-/* Bouton visible mais non achetable */
-.upgrade-buy:disabled,
-.upgrade-buy.locked,
-.upgrade-buy.cant-afford {
-  background: url('../images/Buttons/bouton_achat_max.png') center / 100% 100% no-repeat;
-  opacity: 1;
-  cursor: not-allowed;
-}
-
-
-/* Effets seulement sur les boutons achetables */
-.upgrade-buy:not(:disabled):hover {
-  filter: brightness(1.05);
-}
-
-
-.upgrade-buy:not(:disabled):active {
-  transform: translateY(1px);
-}
-
-.upgrade-buy-gold-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  object-fit: contain;
-  margin-right: 4px;
-}
 
 .upgrade-buy-price {
   white-space: nowrap;
 }
+
 /* =========================
    Mobile
    ========================= */
 
 @media (max-width: 640px) {
-  .upgrade-card {
-    padding: 7px 8px;
-    gap: 7px;
-    min-height: 40px;
-  }
-
-  .upgrade-icon {
-    width: 24px;
-    min-width: 24px;
-    font-size: 16px;
-  }
-
-  .upgrade-desc {
-    font-size: 11px;
-    opacity: 0.85;
-  }
-
-  .upgrade-desc,
-  .upgrade-level {
-    font-size: 9px;
-  }
-
-  .upgrade-buy {
+  .btn-buy {
     min-width: 46px;
     min-height: 26px;
     padding: 4px 7px;
@@ -196,7 +29,7 @@
    ========================= */
 
 @media (prefers-reduced-motion: reduce) {
-  .upgrade-buy {
+  .btn-buy {
     transition: none;
   }
 }
@@ -252,6 +85,11 @@
 
 /* =========================
    Potions
+   v2.81 : ".potion-card" et ses enfants (icône/infos/nom/desc) ont
+   été retirés d'ici — remplacés par la classe partagée
+   ".nb-purchase-card" (voir css/00-components.css). Ne restent ici
+   que les éléments propres à cet écran : la grille, le libellé de
+   section, les indicateurs (minuteur actif, stock).
    ========================= */
 .potion-grid {
   display: flex;
@@ -260,81 +98,6 @@
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-}
-
-.potion-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  background: var(--nb-cream);
-  border: 2px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  box-shadow: var(--nb-shadow-card);
-}
-
-.potion-card.rarity-green { border-color: var(--rarity-green); }
-.potion-card.rarity-rare { border-color: var(--rarity-rare); }
-
-.potion-card.is-active {
-  border-color: var(--hp-green);
-  background: #eaf7ea;
-}
-
-.potion-icon {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  border-radius: var(--nb-radius-sm);
-  background: var(--nb-cream-alt);
-  border: 1px solid var(--nb-frame-light);
-}
-
-.potion-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.potion-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--nb-ink);
-}
-
-.potion-desc {
-  font-size: 11px;
-  color: var(--nb-ink-dim);
-  line-height: 1.4;
-  margin-top: 2px;
-}
-
-.potion-timer {
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #2f8f4e;
-}
-
-.potion-buy {
-  flex-shrink: 0;
-  padding: 8px 12px;
-  border-radius: var(--nb-radius-sm);
-  border: 2px solid var(--nb-gold-dark);
-  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
-  color: #4a2f06;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.potion-buy.cant-afford {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .potion-section-label {
@@ -346,19 +109,12 @@
   color: var(--text-dim);
 }
 
-.potion-card.heal-card {
-  border-color: rgba(74, 222, 128, 0.3);
-}
-
-.potion-heal-stock {
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #4ade80;
-}
-
 /* =========================
    Échoppe d'équipement
+   v2.81 : ".equip-shop-card" et ses enfants ont été retirés d'ici —
+   remplacés par la classe partagée ".nb-purchase-card" (voir
+   css/00-components.css). Ne restent ici que les éléments propres à
+   cet écran : minuteur de renouvellement, grille.
    ========================= */
 .equip-shop-timer {
   text-align: center;
@@ -376,92 +132,10 @@
   margin: 0 auto;
 }
 
-.equip-shop-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  background: var(--nb-cream);
-  border: 2px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  box-shadow: var(--nb-shadow-card);
-}
-
-.equip-shop-card.rarity-green { border-color: var(--rarity-green); }
-.equip-shop-card.rarity-rare { border-color: var(--rarity-rare); }
-.equip-shop-card.rarity-epic { border-color: var(--rarity-epic); }
-.equip-shop-card.rarity-legendary { border-color: var(--rarity-legendary); }
-
-.equip-shop-card.is-bought {
-  opacity: 0.55;
-}
-
-.equip-shop-icon {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  border-radius: var(--nb-radius-sm);
-  background: var(--nb-cream-alt);
-  border: 1px solid var(--nb-frame-light);
-}
-
-.equip-shop-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.equip-shop-name {
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.equip-shop-name.rarity-common { color: var(--rarity-common); }
-.equip-shop-name.rarity-green { color: var(--rarity-green); }
-.equip-shop-name.rarity-rare { color: var(--rarity-rare); }
-.equip-shop-name.rarity-epic { color: var(--rarity-epic); }
-.equip-shop-name.rarity-legendary { color: var(--rarity-legendary); }
-
-.equip-shop-rarity {
-  font-size: 10px;
-  color: var(--nb-ink-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.equip-shop-stat {
-  margin-top: 2px;
-  font-size: 11px;
-  color: var(--nb-ink-dim);
-}
-
-.equip-shop-buy {
-  flex-shrink: 0;
-  padding: 8px 12px;
-  border-radius: var(--nb-radius-sm);
-  border: 2px solid var(--nb-gold-dark);
-  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
-  color: #4a2f06;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.equip-shop-buy.cant-afford {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.equip-shop-buy.is-bought {
-  background: var(--nb-cream-deep);
-  border-color: var(--nb-frame-light);
-  color: var(--nb-ink-dim);
-  cursor: default;
-}
+/* v2.80 : ".equip-shop-buy" retiré — le bouton d'achat de la
+   Boutique d'équipement utilise maintenant la classe globale
+   ".btn-buy" (voir css/00-components.css), comme tous les autres
+   boutons d'achat du jeu. */
 
 .shop-buy-toolbar .settings-btn {
   display: inline-flex;

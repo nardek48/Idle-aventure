@@ -69,23 +69,25 @@ function buildAscensionHTML() {
 
     var canBuy = !isMax && (game.aether || 0) >= cost;
 
-    h += `<div class="aether-shop-card">
-      <div class="aether-shop-icon">${u.icon || "🌀"}</div>
+    h += `<div class="nb-purchase-card">
+      <div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">${renderIconOrEmojiHTML(u.icon || "🌀", "nb-purchase-icon", u.name)}</div></div>
 
-      <div class="aether-shop-info">
-        <div class="aether-shop-top">
-          <div class="aether-shop-name">${esc(u.name)}</div>
-          <div class="aether-shop-cost">🌀 ${isMax ? "MAX" : formatNumber(cost)}</div>
+      <div class="nb-purchase-info-col">
+        <div class="nb-purchase-top" style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;">
+          <div class="nb-purchase-name">${esc(u.name)}</div>
+          <div class="nb-purchase-meta" style="color:var(--aether);">🌀 ${isMax ? "MAX" : formatNumber(cost)}</div>
         </div>
 
-        <div class="aether-shop-level">Niveau ${level} / ${maxLevel}</div>
-        ${u.desc ? `<div class="aether-shop-desc">${esc(u.desc)}</div>` : ""}
+        <div class="nb-purchase-meta">Niveau ${level} / ${maxLevel}</div>
+        ${u.desc ? `<div class="nb-purchase-desc">${esc(u.desc)}</div>` : ""}
       </div>
 
-      <button class="aether-shop-btn ${isMax || !canBuy ? "disabled" : ""}"
-        ${isMax || !canBuy ? "disabled" : `onclick="buyAetherUpgrade('${esc(u.id)}')"`}>
-        ${isMax ? "Maximum" : canBuy ? "Acheter" : "Coût trop élevé"}
-      </button>
+      <div class="nb-purchase-buy-col">
+        <button class="btn-buy ${isMax || !canBuy ? "cant-afford" : ""}"
+          ${isMax || !canBuy ? "disabled" : `onclick="buyAetherUpgrade('${esc(u.id)}')"`}>
+          ${isMax ? "Maximum" : canBuy ? "Acheter" : "Coût trop élevé"}
+        </button>
+      </div>
     </div>`;
   });
 

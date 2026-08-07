@@ -1,28 +1,13 @@
 "use strict";
 /* ============================================================
 Quest Idle — ui/achievement-view.js
-Écran "Hauts faits" : carte de détail en haut pour le haut fait
-sélectionné (comme le Bestiaire), grille de toutes les cartes en
-dessous, groupées par catégorie.
+Écran "Hauts faits".
+
+v2.82 : passage d'une grille d'icônes + un seul détail affiché en
+dessous à une liste complète (une carte par haut fait, toutes les
+infos visibles directement), même principe que Quêtes/Bestiaire —
+voir css/00-components.css pour le composant partagé ".nb-entry-card".
 ============================================================ */
-
-function getAchievementSelectedId() {
-  var ids = (ACHIEVEMENTS_DB || []).map(function (a) { return a.id; });
-  if (!ids.length) return null;
-  if (!game.achievementSelectedId || ids.indexOf(game.achievementSelectedId) === -1) {
-    // Sélectionne par défaut le premier haut fait prêt à réclamer, sinon le premier tout court.
-    var ready = ACHIEVEMENTS_DB.find(function (a) {
-      return !AchievementManager.isClaimed(a.id) && AchievementManager.isComplete(a);
-    });
-    game.achievementSelectedId = ready ? ready.id : ids[0];
-  }
-  return game.achievementSelectedId;
-}
-
-function selectAchievement(id) {
-  game.achievementSelectedId = id;
-  if (typeof renderPanel === "function") renderPanel();
-}
 
 function formatAchievementRewardText(reward) {
   var parts = [];
@@ -32,40 +17,40 @@ function formatAchievementRewardText(reward) {
   return parts.join(" • ");
 }
 
-function buildAchievementDetailHTML(id) {
-  var ach = AchievementManager.getById(id);
-  if (!ach) return "";
-
+/* Une carte de haut fait : icône, nom, description, barre de
+   progression, récompense, et un statut à droite (bouton "Réclamer"
+   si complet, "✔ Réclamé" si déjà pris, "En cours" sinon). */
+function buildAchievementCardHTML(ach) {
   var progress = AchievementManager.getProgress(ach);
   var target = ach.target;
   var pct = Math.max(0, Math.min(100, Math.round((progress / target) * 100)));
   var complete = AchievementManager.isComplete(ach);
-  var claimed = AchievementManager.isClaimed(id);
+  var claimed = AchievementManager.isClaimed(ach.id);
 
-  var h = '<div class="achievement-detail' + (claimed ? ' is-claimed' : complete ? ' is-ready' : '') + '">';
-  h += '<div class="achievement-detail-icon">' + esc(ach.icon) + '</div>';
-  h += '<div class="achievement-detail-name">' + esc(ach.name) + '</div>';
-  h += '<div class="achievement-detail-category">' + esc(ACHIEVEMENT_CATEGORY_LABELS[ach.category] || ach.category) + '</div>';
-  h += '<div class="achievement-detail-desc">' + esc(ach.desc) + '</div>';
+  var h = '<div class="nb-entry-card' + (claimed ? ' is-claimed' : complete ? ' is-complete' : '') + '">';
+  h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame">' + renderIconOrEmojiHTML(ach.icon, "nb-entry-icon", ach.name) + '</div></div>';
+  h += '<div class="nb-entry-info-col">';
+  h += '<div class="nb-entry-name">' + esc(ach.name) + '</div>';
+  h += '<div class="nb-entry-desc">' + esc(ach.desc) + '</div>';
+  h += '<div class="nb-entry-progress-bar"><div class="nb-entry-progress-fill' + (complete ? ' done' : '') + '" style="width:' + pct + '%"></div><span class="nb-entry-progress-text">' + formatNumber(Math.min(progress, target)) + ' / ' + formatNumber(target) + '</span></div>';
+  h += '<div class="nb-entry-meta">🎁 ' + esc(formatAchievementRewardText(ach.reward)) + '</div>';
+  h += '</div>';
 
-  h += '<div class="achievement-progress-bar"><div class="achievement-progress-fill" style="width:' + pct + '%"></div></div>';
-  h += '<div class="achievement-progress-text">' + formatNumber(Math.min(progress, target)) + ' / ' + formatNumber(target) + '</div>';
-
-  h += '<div class="achievement-reward-text">🎁 ' + esc(formatAchievementRewardText(ach.reward)) + '</div>';
-
+  h += '<div class="nb-entry-status-col">';
   if (claimed) {
-    h += '<div class="achievement-claimed-badge">✔ Réclamé</div>';
+    h += '<span class="nb-entry-status-label is-complete">✔ Réclamé</span>';
   } else if (complete) {
-    h += '<button class="settings-btn primary" type="button" onclick="AchievementManager.claim(\'' + esc(id) + '\')">Réclamer</button>';
+    h += '<button class="btn-buy" type="button" onclick="AchievementManager.claim(\'' + esc(ach.id) + '\')">Réclamer</button>';
   } else {
-    h += '<div class="achievement-locked-text">En cours...</div>';
+    h += '<span class="nb-entry-status-label">En cours</span>';
   }
+  h += '</div>';
 
   h += '</div>';
   return h;
 }
 
-function buildAchievementGridHTML(selectedId) {
+function buildAchievementListHTML() {
   var h = '';
   var categories = ["combat", "ascension", "bestiary", "equipment", "dungeon"];
 
@@ -73,44 +58,23 @@ function buildAchievementGridHTML(selectedId) {
     var items = (ACHIEVEMENTS_DB || []).filter(function (a) { return a.category === cat; });
     if (!items.length) return;
 
-    h += '<div class="achievement-category-label">' + esc(ACHIEVEMENT_CATEGORY_LABELS[cat] || cat) + '</div>';
-    h += '<div class="achievement-grid">';
-
+    h += '<div class="nb-entry-category-label">' + esc(ACHIEVEMENT_CATEGORY_LABELS[cat] || cat) + '</div>';
     items.forEach(function (ach) {
-      var claimed = AchievementManager.isClaimed(ach.id);
-      var complete = AchievementManager.isComplete(ach);
-      var isSelected = ach.id === selectedId;
-
-      var classes = ["achievement-grid-item"];
-      if (claimed) classes.push("is-claimed");
-      else if (complete) classes.push("is-ready");
-      if (isSelected) classes.push("is-selected");
-
-      h += '<button class="' + classes.join(" ") + '" type="button" onclick="selectAchievement(\'' + esc(ach.id) + '\')" title="' + esc(ach.name) + '">';
-      h += '<span class="achievement-grid-icon">' + esc(ach.icon) + '</span>';
-      if (claimed) h += '<span class="achievement-grid-check">✔</span>';
-      h += '</button>';
+      h += buildAchievementCardHTML(ach);
     });
-
-    h += '</div>';
   });
 
   return h;
 }
 
 function buildAchievementsHTML() {
-  var selectedId = getAchievementSelectedId();
   var claimedCount = AchievementManager.getClaimedCount();
   var total = (ACHIEVEMENTS_DB || []).length;
 
   var h = '<div class="achievement-summary">' + claimedCount + ' / ' + total + ' réclamés</div>';
-
-  if (selectedId) h += buildAchievementDetailHTML(selectedId);
-  h += buildAchievementGridHTML(selectedId);
+  h += buildAchievementListHTML();
 
   return h;
 }
 
 window.buildAchievementsHTML = buildAchievementsHTML;
-window.selectAchievement = selectAchievement;
-window.getAchievementSelectedId = getAchievementSelectedId;

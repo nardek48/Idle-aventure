@@ -80,6 +80,15 @@
   background: var(--nb-cream-deep);
 }
 
+/* v2.79 : la pilule Or utilise maintenant une vraie image
+   (images/Icons/gold_icon.png, fournie par l'utilisateur) au lieu de
+   l'emoji 💰 — même empreinte que .nb-pill-icon, juste un object-fit
+   pour que l'image ne soit pas déformée. */
+.nb-hud-resources img.nb-pill-icon {
+  object-fit: contain;
+  padding: 3px;
+}
+
 .nb-pill-gold .nb-pill-icon { color: var(--nb-gold-deep); }
 .nb-pill-essence .nb-pill-icon { color: var(--nb-blue-dark); }
 .nb-pill-aether .nb-pill-icon { color: #6d3fd1; }
@@ -388,6 +397,16 @@
   font-size: clamp(8.28px, calc(4.09px + 1.31vw), 9.72px);
   color: var(--nb-ink-dim);
   white-space: nowrap;
+}
+
+/* v2.79 : petite image inline pour le label "Or" de la barre de
+   stats (voir ui/hud-view.js) — hauteur calée sur la taille de
+   police du label pour rester alignée avec le texte. */
+.stat-label-icon {
+  height: 1em;
+  width: 1em;
+  object-fit: contain;
+  vertical-align: -0.15em;
 }
 
 .stat-item .stat-value {

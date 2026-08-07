@@ -1,11 +1,14 @@
 "use strict";
 /* ============================================================
 Quest Idle — ui/bestiary-view.js
-Écran "Bestiaire" v2.5 — même principe que la carte du monde et les
-talents : une grille d'icônes en bas, la créature sélectionnée
-s'affiche en grand en haut avec ses vraies stats de combat calculées
-(PV, dégâts de riposte, chance de critique), pas juste le profil brut
-power/endurance/celerity/precision/will.
+Écran "Bestiaire" — liste complète (une carte par créature), même
+principe que Quêtes/Hauts faits/Codex, voir css/00-components.css
+pour le composant partagé ".nb-entry-card".
+
+v2.82 : abandon du principe grille d'icônes + un seul détail affiché
+en haut (v2.5) au profit d'une liste complète — chaque créature
+affiche directement ses PV/dégâts/critique estimés et ses
+résistances/faiblesses, plus besoin de taper dessus.
 
 Les PV/dégâts affichés sont une ESTIMATION "à la première rencontre"
 (monde où la créature apparaît, cycle 0) : les vraies valeurs en jeu
@@ -64,159 +67,78 @@ function estimateCreatureCombatStats(id, data, isBoss) {
   return { hp: Math.max(1, hp), dmg: dmg, critChance: critChance };
 }
 
-/* Barres de stats (Puissance/Endurance/Célérité/Précision/Volonté)
-   d'une créature — profil relatif, en complément des stats de combat
-   ci-dessus. */
-function buildBestiaryStatsHTML(stats) {
-  if (!stats) return "";
-
-  var keys = ["power", "endurance", "celerity", "precision", "will"];
-  var html = '<div class="bestiary-stats">';
-
-  keys.forEach(function (key) {
-    var value = clampStatValue(stats[key]);
-    html += ''
-      + '<div class="bestiary-stat-row">'
-      +   '<div class="bestiary-stat-head">'
-      +     '<span class="bestiary-stat-label">' + esc(getStatLabel(key)) + '</span>'
-      +     '<span class="bestiary-stat-value">' + value + '</span>'
-      +   '</div>'
-      +   '<div class="bestiary-stat-bar">'
-      +     '<div class="bestiary-stat-fill" style="width:' + value + '%"></div>'
-      +   '</div>'
-      + '</div>';
-  });
-
-  html += '</div>';
-  return html;
-}
-
-/* Image de la créature si dispo, sinon repli sur l'emoji ASSETS. */
-function buildBestiaryImageHTML(data, isBoss, size) {
-  var imagePath = data && data.image ? data.image : "";
-  var iconKey = data && data.asset ? data.asset : "";
-  var cls = size === "lg" ? "bestiary-thumb-wrap-lg" : "bestiary-thumb-wrap-sm";
-
-  if (imagePath) {
-    return ''
-      + '<div class="' + cls + (isBoss ? ' boss' : '') + '">'
-      +   '<img class="bestiary-thumb" src="' + esc(imagePath) + '" alt="' + esc(data.name || "Créature") + '">'
-      + '</div>';
-  }
-
-  return ''
-    + '<div class="' + cls + '-fallback' + (isBoss ? ' boss' : '') + '">'
-    +   renderIcon(isBoss ? "bosses" : "enemies", iconKey)
-    + '</div>';
-}
-
-/* Liste "Résiste :" / "Faible :" d'une créature, à partir des types
-   de dégâts sword/bow/magic. */
-function buildResistWeakHTML(data) {
-  var resists = data && Array.isArray(data.resists) ? data.resists : [];
-  var weak = data && Array.isArray(data.weak) ? data.weak : [];
-  var html = '<div class="bestiary-tags">';
-
-  if (resists.length) {
-    html += '<div class="bestiary-tag-group"><span class="bestiary-tag-title">Résiste :</span> ' + esc(resists.join(", ")) + '</div>';
-  }
-
-  if (weak.length) {
-    html += '<div class="bestiary-tag-group"><span class="bestiary-tag-title">Faible :</span> ' + esc(weak.join(", ")) + '</div>';
-  }
-
-  html += '</div>';
-  return html;
-}
-
-/* Liste ordonnée de tous les ids de créatures (ennemis puis boss),
-   utilisée à la fois par la grille et par la sélection courante. */
+/* Une carte de créature : icône, nom, kills, résistances/faiblesses,
+   et le nombre de kills en statut à droite (grand nombre, plus
+   parlant qu'un badge "En cours"/"Terminé" puisque les kills
+   s'accumulent sans plafond réel). */
 function getAllBestiaryIds() {
   return Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB));
 }
 
-function getBestiarySelectedId() {
-  var ids = getAllBestiaryIds();
-  if (!game.bestiarySelectedId || ids.indexOf(game.bestiarySelectedId) === -1) {
-    game.bestiarySelectedId = ids[0];
-  }
-  return game.bestiarySelectedId;
-}
-
-/* Sélectionne une créature pour l'affichage détaillé en haut d'écran. */
-function selectBestiaryCreature(id) {
-  var ids = getAllBestiaryIds();
-  if (ids.indexOf(id) === -1) return;
-  game.bestiarySelectedId = id;
-  if (typeof renderPanel === "function") renderPanel();
-}
-
-/* Grande carte de détail en haut d'écran pour la créature sélectionnée :
-   image, nom, kills, PV/dégâts/critique estimés, résistances/faiblesses,
-   puis le profil de stats en barres. */
-function buildBestiaryDetailHTML(id) {
+function buildBestiaryEntryCardHTML(id) {
   var isBoss = !!BOSS_DB[id];
   var data = isBoss ? BOSS_DB[id] : ENEMY_DB[id];
   if (!data) return "";
 
   var kills = game.killCounts[id] || 0;
-  var combat = estimateCreatureCombatStats(id, data, isBoss);
+  var met = kills > 0;
 
-  var h = '<div class="bestiary-detail' + (isBoss ? ' boss' : '') + '">';
-  h += '<div class="bestiary-detail-top">';
-  h += buildBestiaryImageHTML(data, isBoss, "lg");
-  h += '<div class="bestiary-detail-main">';
-  h += '<div class="bestiary-card-title-row">';
-  h += '<div class="bestiary-card-name">' + esc(data.name) + (isBoss ? ' <span class="bestiary-boss-badge">BOSS</span>' : '') + '</div>';
-  h += '</div>';
-  h += '<div class="bestiary-card-kills">Tués : ' + formatNumber(kills) + '</div>';
-  h += buildResistWeakHTML(data);
-  h += '</div>';
-  h += '</div>';
+  var h = '<div class="nb-entry-card' + (isBoss ? ' boss' : '') + (!met ? ' is-locked' : '') + '">';
 
-  if (combat) {
-    h += '<div class="bestiary-combat-row">';
-    h += '<div class="bestiary-combat-stat"><span class="bestiary-combat-icon">❤️</span><span class="bestiary-combat-value">' + formatNumber(combat.hp) + '</span><span class="bestiary-combat-label">PV</span></div>';
-    h += '<div class="bestiary-combat-stat"><span class="bestiary-combat-icon">⚔️</span><span class="bestiary-combat-value">' + formatNumber(combat.dmg) + '</span><span class="bestiary-combat-label">Dégâts</span></div>';
-    h += '<div class="bestiary-combat-stat"><span class="bestiary-combat-icon">🎯</span><span class="bestiary-combat-value">' + Math.round(combat.critChance) + '%</span><span class="bestiary-combat-label">Critique</span></div>';
-    h += '</div>';
-    h += '<div class="bestiary-combat-note">Estimation à la première rencontre — augmente avec ta progression.</div>';
+  h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame">';
+  var imagePath = data.image || "";
+  if (imagePath) {
+    h += '<img src="' + esc(imagePath) + '" alt="' + esc(data.name || "Créature") + '">';
+  } else {
+    h += '<span class="nb-entry-icon-emoji">' + renderIcon(isBoss ? "bosses" : "enemies", data.asset || "") + '</span>';
   }
+  h += '</div></div>';
+
+  h += '<div class="nb-entry-info-col">';
+  h += '<div class="nb-entry-name">' + esc(met ? data.name : "???") + (isBoss ? ' <span class="nb-entry-badge">BOSS</span>' : '') + '</div>';
+
+  if (met) {
+    var resists = Array.isArray(data.resists) ? data.resists : [];
+    var weak = Array.isArray(data.weak) ? data.weak : [];
+    if (resists.length) h += '<div class="nb-entry-desc">Résiste : ' + esc(resists.join(", ")) + '</div>';
+    if (weak.length) h += '<div class="nb-entry-desc">Faible : ' + esc(weak.join(", ")) + '</div>';
+
+    var combat = estimateCreatureCombatStats(id, data, isBoss);
+    if (combat) {
+      h += '<div class="nb-entry-meta-row">';
+      h += '<span class="nb-entry-meta">❤️ ' + formatNumber(combat.hp) + '</span>';
+      h += '<span class="nb-entry-meta">⚔️ ' + formatNumber(combat.dmg) + '</span>';
+      h += '<span class="nb-entry-meta">🎯 ' + Math.round(combat.critChance) + '%</span>';
+      h += '</div>';
+    }
+  } else {
+    h += '<div class="nb-entry-desc">Pas encore rencontrée.</div>';
+  }
+
+  h += '</div>'; // /nb-entry-info-col
+
+  h += '<div class="nb-entry-status-col">';
+  h += '<span class="nb-entry-status-label' + (met ? ' is-complete' : '') + '">' + (met ? formatNumber(kills) : "—") + '</span>';
+  if (met) h += '<span class="nb-entry-meta">tués</span>';
+  h += '</div>';
 
   h += '</div>';
   return h;
 }
 
-/* Grille d'icônes de toutes les créatures (rencontrées ou non). Le
-   compteur de kills apparaît en petit badge, la créature sélectionnée
-   est mise en évidence. */
-function buildBestiaryGridHTML(selectedId) {
+function buildBestiaryListHTML() {
   var ids = getAllBestiaryIds();
-  var h = '<div class="bestiary-grid">';
-
+  var h = '';
   ids.forEach(function (id) {
-    var isBoss = !!BOSS_DB[id];
-    var data = isBoss ? BOSS_DB[id] : ENEMY_DB[id];
-    var kills = game.killCounts[id] || 0;
-    var isSelected = id === selectedId;
-
-    h += '<button class="bestiary-grid-item' + (isBoss ? ' boss' : '') + (isSelected ? ' is-selected' : '') + '" type="button" onclick="selectBestiaryCreature(\'' + esc(id) + '\')" title="' + esc(data.name) + '">';
-    h += buildBestiaryImageHTML(data, isBoss, "sm");
-    if (kills > 0) h += '<span class="bestiary-grid-kills">' + formatNumber(kills) + '</span>';
-    h += '</button>';
+    h += buildBestiaryEntryCardHTML(id);
   });
-
-  h += '</div>';
   return h;
 }
 
 function buildBestiaryHTML() {
-  var selectedId = getBestiarySelectedId();
   var h = (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("bestiary") : "";
-  h += buildBestiaryDetailHTML(selectedId);
-  h += buildBestiaryGridHTML(selectedId);
+  h += buildBestiaryListHTML();
   return h;
 }
 
 window.buildBestiaryHTML = buildBestiaryHTML;
-window.selectBestiaryCreature = selectBestiaryCreature;

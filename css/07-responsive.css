@@ -35,7 +35,6 @@
     max-height: 210px;
   }
 
-  .bestiary-card-top,
   .hero-summary-row,
   .ascension-card {
     flex-direction: column;
@@ -43,13 +42,8 @@
     text-align: center;
   }
 
-  .bestiary-card-main,
   .hero-summary-meta {
     width: 100%;
-  }
-
-  .bestiary-card-title-row {
-    justify-content: center;
   }
 
   .hero-summary-image,
@@ -94,16 +88,6 @@
 
   .map-adventure-item {
     padding: 10px;
-  }
-
-  .shop-item.village-item {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .shop-title-row {
-    flex-direction: column;
-    align-items: flex-start;
   }
 
   .btn {

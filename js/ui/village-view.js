@@ -84,35 +84,36 @@ function buildVillageHTML() {
     var cost = VillageManager.getCost(id);
     var maxed = level >= (cfg.maxLevel || Infinity);
 
-    h += '<div class="shop-item village-item">';
-    h +=   '<div class="shop-main">';
-    h +=     '<div class="shop-title-row">';
-    h +=       '<strong>' + VILLAGE_BUILDING_ICONS[id] + ' ' + cfg.name + '</strong>';
-    h +=       '<span class="shop-level">Niv. ' + level + '/' + cfg.maxLevel + '</span>';
-    h +=     '</div>';
-    h +=     '<div class="shop-desc">' + cfg.desc + '</div>';
+    h += '<div class="nb-purchase-card' + (maxed ? ' is-maxed' : '') + '">';
+    h +=   '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot nb-purchase-icon-emoji">' + esc(VILLAGE_BUILDING_ICONS[id]) + '</div></div>';
+    h +=   '<div class="nb-purchase-info-col">';
+    h +=     '<div class="nb-purchase-name">' + esc(cfg.name) + '</div>';
+    h +=     '<div class="nb-purchase-desc">' + esc(cfg.desc) + '</div>';
+    h +=     '<div class="nb-purchase-meta">Niv. ' + level + '/' + cfg.maxLevel + '</div>';
 
     if (id === "goldMine") {
-      h += '<div class="shop-meta">Bonus actuel : +' + Math.round(level * 12) + '% or hors-ligne</div>';
+      h += '<div class="nb-purchase-meta">Bonus actuel : +' + Math.round(level * 12) + '% or hors-ligne</div>';
     } else if (id === "essenceWell") {
-      h += '<div class="shop-meta">Bonus actuel : +' + level + ' essence hors-ligne</div>';
+      h += '<div class="nb-purchase-meta">Bonus actuel : +' + level + ' essence hors-ligne</div>';
     } else if (id === "barracks") {
-      h += '<div class="shop-meta">Bonus actuel : +' + Math.round(level * 4) + '% efficacité hors-ligne</div>';
+      h += '<div class="nb-purchase-meta">Bonus actuel : +' + Math.round(level * 4) + '% efficacité hors-ligne</div>';
     } else if (id === "timeRelay") {
-      h += '<div class="shop-meta">Bonus actuel : +' + (level * 2).toFixed(1) + 'h de cap hors-ligne</div>';
+      h += '<div class="nb-purchase-meta">Bonus actuel : +' + (level * 2).toFixed(1) + 'h de cap hors-ligne</div>';
     } else if (id === "watchtower") {
-      h += '<div class="shop-meta">Bonus actuel : ' + (level * 3) + ' kills simulés/h (bestiaire + chance de butin)</div>';
+      h += '<div class="nb-purchase-meta">Bonus actuel : ' + (level * 3) + ' kills simulés/h (bestiaire + chance de butin)</div>';
     } else if (id === "sanctuary") {
-      h += '<div class="shop-meta">Bonus actuel : +' + (level * 0.05).toFixed(2) + ' Aether/h</div>';
+      h += '<div class="nb-purchase-meta">Bonus actuel : +' + (level * 0.05).toFixed(2) + ' Aether/h</div>';
     }
 
-    h +=   '</div>';
+    h +=   '</div>'; // /nb-purchase-info-col
 
+    h += '<div class="nb-purchase-buy-col">';
     if (maxed) {
-      h += '<button class="btn disabled" disabled>Max</button>';
+      h += '<button class="btn-buy is-maxed" disabled>Max</button>';
     } else {
-      h += '<button class="btn" onclick="buyVillageUpgrade(\'' + id + '\')">Améliorer<br>' + formatNumber(cost) + ' or</button>';
+      h += '<button class="btn-buy" onclick="buyVillageUpgrade(\'' + id + '\')">Améliorer<br><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button>';
     }
+    h += '</div>';
 
     h += '</div>';
   });

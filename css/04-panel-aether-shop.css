@@ -137,98 +137,15 @@
   margin-bottom: 10px;
 }
 
-.aether-shop-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  max-width: 620px;
-  margin: 0 auto 8px;
-  padding: 10px 12px;
-  background: linear-gradient(
-    180deg,
-    var(--aether-tint-strong),
-    var(--aether-tint-soft)
-  );
-  border: 1px solid var(--aether-tint-border);
-  border-radius: var(--nb-radius-sm);
-  box-shadow: var(--nb-shadow-card);
-}
+/* v2.81 : ".aether-shop-card" et ses enfants (icône/infos/nom/coût/
+   niveau/desc) ont été retirés d'ici — remplacés par la classe
+   partagée ".nb-purchase-card" (voir css/00-components.css), comme
+   toutes les autres cartes d'achat du jeu. */
 
-.aether-shop-icon {
-  width: 34px;
-  flex-shrink: 0;
-  font-size: 24px;
-  line-height: 1;
-  text-align: center;
-}
-
-.aether-shop-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.aether-shop-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.aether-shop-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--aether);
-}
-
-.aether-shop-cost {
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--aether);
-}
-
-.aether-shop-level {
-  margin-top: 3px;
-  font-size: 12px;
-  color: var(--aether);
-}
-
-.aether-shop-desc {
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--nb-ink-dim);
-}
-
-.aether-shop-btn {
-  min-height: 36px;
-  padding: 7px 10px;
-  border: none;
-  border-radius: 8px;
-  background: var(--aether-dark);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    transform 0.08s ease,
-    background-color 0.2s ease,
-    opacity 0.2s ease,
-    filter 0.2s ease;
-}
-
-.aether-shop-btn:active {
-  transform: scale(0.96);
-}
-
-.aether-shop-btn:disabled,
-.aether-shop-btn.disabled {
-  background: #555;
-  color: #aaa;
-  cursor: default;
-  opacity: 0.9;
-}
+/* v2.80 : ".aether-shop-btn" retiré — le bouton d'achat de la
+   Boutique d'Aether utilise maintenant la classe globale ".btn-buy"
+   (voir css/00-components.css), comme tous les autres boutons
+   d'achat du jeu. */
 
 /* =========================
    Réduction des animations
@@ -236,7 +153,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .prestige-btn,
-  .aether-shop-btn {
+  .btn-buy {
     transition: none;
   }
 }
@@ -251,8 +168,7 @@
   }
 
   .prestige-section,
-  .ascension-conditions,
-  .aether-shop-card {
+  .ascension-conditions {
     max-width: 100%;
   }
 
@@ -273,9 +189,7 @@
   }
 
   .prestige-desc,
-  .ascension-conditions,
-  .aether-shop-desc,
-  .aether-shop-level {
+  .ascension-conditions {
     font-size: 11px;
   }
 
@@ -288,24 +202,7 @@
     padding: 10px;
   }
 
-  .aether-shop-card {
-    padding: 9px 10px;
-  }
-
-  .aether-shop-icon {
-    width: 30px;
-    font-size: 22px;
-  }
-
-  .aether-shop-name {
-    font-size: 14px;
-  }
-
-  .aether-shop-cost {
-    font-size: 12px;
-  }
-
-  .aether-shop-btn {
+  .btn-buy {
     min-height: 34px;
     padding: 7px 9px;
     font-size: 11px;
