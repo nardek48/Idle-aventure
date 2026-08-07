@@ -164,19 +164,21 @@ function buildHeroFicheHTML() {
   h += '<div class="pc-bar pc-bar-exp"><div class="pc-bar-fill" style="width:' + xpPct + '%"></div><span class="pc-bar-text">' + formatNumber(heroXp) + ' / ' + formatNumber(heroXpToNext) + '</span></div>';
   h += '</div>'; // /pc-portrait-col
 
+h += '<div class="pc-info-wrapper">';
   h += '<div class="pc-info-col">';
-  h += '<div class="pc-level-pill"><span class="pc-level-badge">Niv.</span><span>Niveau ' + esc(heroLevel) + '</span></div>';
-  h += '<div class="pc-bar pc-bar-level pc-bar-compact"><div class="pc-bar-fill" style="width:' + xpPct + '%"></div></div>';
+    h += '<div class="pc-level-pill"><span class="pc-level-badge">Niv.</span><span>Niveau ' + esc(heroLevel) + '</span></div>';
+    h += '<div class="pc-bar pc-bar-level pc-bar-compact"><div class="pc-bar-fill" style="width:' + xpPct + '%"></div></div>';
 
-  h += '<div class="pc-stat-list">';
-  h += buildPcStatRowHTML("❤️", "PV", formatNumber(heroMaxHp));
-  h += buildPcStatRowHTML("⚔️", "ATK", formatNumber(atk));
-  h += buildPcStatRowHTML("🛡️", "DEF", defPct + "%");
-  h += buildPcStatRowHTML("⚡", "VIT", formatNumber(vit));
-  h += buildPcStatRowHTML("🎯", "CRIT", critPct + "%");
-  h += '</div>'; // /pc-stat-list
+    h += '<div class="pc-stat-list">';
+      h += buildPcStatRowHTML("❤️", "PV", formatNumber(heroMaxHp));
+      h += buildPcStatRowHTML("⚔️", "ATK", formatNumber(atk));
+      h += buildPcStatRowHTML("🛡️", "DEF", defPct + "%");
+      h += buildPcStatRowHTML("⚡", "VIT", formatNumber(vit));
+      h += buildPcStatRowHTML("🎯", "CRIT", critPct + "%");
+    h += '</div>'; // /pc-stat-list
 
   h += '</div>'; // /pc-info-col
+h += '</div>';   // /pc-info-wrapper
 
   h += '</div>'; // /pc-card-top
 
@@ -214,20 +216,32 @@ function buildHerosAmeliorationHTML() {
   var modeLabel = buyAmount === -1 ? "MAX" : ("x" + buyAmount);
 
   var h = '';
-  h += '<div class="shop-buy-toolbar">';
-  h += '<button class="settings-btn ' + (buyAmount === 1 ? 'active' : '') + '" onclick="setShopBuyAmount(1)">x1</button>';
-  h += '<button class="settings-btn ' + (buyAmount === 10 ? 'active' : '') + '" onclick="setShopBuyAmount(10)">x10</button>';
-  h += '<button class="settings-btn ' + (buyAmount === 25 ? 'active' : '') + '" onclick="setShopBuyAmount(25)">x25</button>';
-  h += '<button class="settings-btn ' + (buyAmount === -1 ? 'active' : '') + '" onclick="setShopBuyAmount(-1)">MAX</button>';
-  h += '</div>';
-  h += '<div class="shop-mode-info" style="margin:0 0 12px 0;opacity:.85;width:100%;text-align:right;">Mode d’achat : <strong>' + esc(modeLabel) + '</strong></div>';
 
-  h += '<div class="shop-grid">';
-  UPGRADES.forEach(function (u) {
-    if (HEROS_TRAINING_UPGRADE_IDS.indexOf(u.id) === -1) return;
-    h += buildUpgradeCardHTML(u, buyAmount);
-  });
-  h += '</div>';
+  // === Conteneur global de la section Héro / Améliorations ===
+  h += '<div class="pc-heros-train-section">';
+    // --- Toolbar de mode d’achat (x1, x10, x25, MAX) ---
+    h += '<div class="pc-heros-train-toolbar">';
+      h += '<div class="shop-buy-toolbar">';
+        h += '<button class="settings-btn ' + (buyAmount === 1 ? 'active' : '') + '" onclick="setShopBuyAmount(1)">x1</button>';
+        h += '<button class="settings-btn ' + (buyAmount === 10 ? 'active' : '') + '" onclick="setShopBuyAmount(10)">x10</button>';
+        h += '<button class="settings-btn ' + (buyAmount === 25 ? 'active' : '') + '" onclick="setShopBuyAmount(25)">x25</button>';
+        h += '<button class="settings-btn ' + (buyAmount === -1 ? 'active' : '') + '" onclick="setShopBuyAmount(-1)">MAX</button>';
+      h += '</div>';
+
+      //h += '<div class="shop-mode-info">Mode d’achat : <strong>' + esc(modeLabel) + '</strong></div>';
+    h += '</div>'; // /pc-hero-train-toolbar
+
+    // --- Liste de cartes d’entraînement (Force, Célérité, etc.) ---
+    h += '<div class="pc-heros-train-list">';
+      h += '<div class="shop-grid">';
+        UPGRADES.forEach(function (u) {
+          if (HEROS_TRAINING_UPGRADE_IDS.indexOf(u.id) === -1) return;
+          h += buildUpgradeCardHTML(u, buyAmount);
+        });
+      h += '</div>'; // /shop-grid
+    h += '</div>';   // /pc-hero-train-list
+
+  h += '</div>';     // /pc-hero-train-section
 
   return h;
 }
@@ -287,7 +301,6 @@ function buildHerosHTML() {
 
   // zone principale scrollable
   h += '<div class="pc-heros-content">';
-  h +=   '<div class="pc-title-banner">Hero</div>';
 
   if (activeHerosSubTab === "amelioration") {
     h += buildHerosAmeliorationHTML();

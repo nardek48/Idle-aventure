@@ -2,63 +2,84 @@
    Upgrades - ligne compacte
    ========================= */
 
+
+/* Carte de base */
 .upgrade-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 42px;
-  margin-bottom: 6px;
-  padding: 8px 10px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  margin: 4px 0;
 
-  background: var(--nb-cream);
-  border: 2px solid var(--nb-frame);
-  border-radius: var(--nb-radius-sm);
-  box-shadow: var(--nb-shadow-card);
+  background: #f9f1dd url('../images/Borders/background_upgrade.png') center / 100% 100% no-repeat;
+  box-shadow: none;
 }
 
+
+/* Carte achetable */
 .upgrade-card.affordable {
   border-color: var(--nb-gold-dark);
-  box-shadow: var(--nb-shadow-card), 0 0 0 2px rgba(240, 170, 62, 0.2);
+  box-shadow: none;
 }
 
+
+/* Carte non achetable : pas de classe affordable */
+.upgrade-card:not(.affordable):not(.locked) {
+  opacity: 0.80;
+}
+
+
+/* Carte verrouillée par le monde */
 .upgrade-card.locked {
   opacity: 0.55;
 }
 
-.upgrade-icon {
-  width: 28px;
-  min-width: 28px;
+
+/* Colonne de l'icône */
+.upgrade-icon-col {
+  width: 50px;
   flex-shrink: 0;
-  font-size: 18px;
-  line-height: 1;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
-.upgrade-info {
+
+/* Zone contenant l'icône */
+.upgrade-icon-slot {
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  flex-shrink: 0;
+
+  border-radius: 12px;
+  background-color: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* Image de l'amélioration */
+.upgrade-icon {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+}
+
+
+/* Colonne texte — correspond à upgrade-info-col dans ton JavaScript */
+.upgrade-info-col {
   flex: 1;
   min-width: 0;
 }
 
-.upgrade-name {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.15;
-  color: var(--nb-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
-.upgrade-desc {
-  margin-top: 1px;
-  font-size: 10px;
-  line-height: 1.2;
-  color: var(--nb-ink-dim);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+/* Niveau */
 .upgrade-level {
   margin-top: 2px;
   font-size: 10px;
@@ -67,46 +88,74 @@
   white-space: nowrap;
 }
 
-.upgrade-buy {
+
+/* Colonne du bouton */
+.upgrade-buy-col {
   flex-shrink: 0;
-  min-width: 52px;
-  min-height: 28px;
-  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  border: 2px solid var(--nb-frame);
-  border-radius: 9px;
-  background: var(--nb-blue);
-  color: #fff;
 
-  font-size: 11px;
+/* Bouton actif et désactivé : mêmes dimensions */
+.upgrade-buy {
+  min-width: 80px;
+  height: 28px;
+  padding: 0;
+  box-sizing: border-box;
+
+  border: none;
+  border-radius: 0;
+  appearance: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #ffffff;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+
+  background: url('../images/Buttons/bouton_achat.png') center / 100% 100% no-repeat;
   cursor: pointer;
-  transition:
-    transform 0.08s ease,
-    background-color 0.2s ease,
-    opacity 0.2s ease,
-    filter 0.2s ease;
 }
 
-.upgrade-buy:hover {
-  filter: brightness(1.06);
-}
 
-.upgrade-buy:active {
-  transform: scale(0.96);
-}
-
+/* Bouton visible mais non achetable */
+.upgrade-buy:disabled,
 .upgrade-buy.locked,
-.upgrade-buy.cant-afford,
-.upgrade-buy:disabled {
-  background: var(--nb-cream-deep);
-  border-color: var(--nb-frame-light);
-  color: var(--nb-ink-dim);
-  cursor: default;
-  filter: none;
+.upgrade-buy.cant-afford {
+  background: url('../images/Buttons/bouton_achat_max.png') center / 100% 100% no-repeat;
+  opacity: 1;
+  cursor: not-allowed;
 }
 
+
+/* Effets seulement sur les boutons achetables */
+.upgrade-buy:not(:disabled):hover {
+  filter: brightness(1.05);
+}
+
+
+.upgrade-buy:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.upgrade-buy-gold-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  object-fit: contain;
+  margin-right: 4px;
+}
+
+.upgrade-buy-price {
+  white-space: nowrap;
+}
 /* =========================
    Mobile
    ========================= */
@@ -124,8 +173,9 @@
     font-size: 16px;
   }
 
-  .upgrade-name {
+  .upgrade-desc {
     font-size: 11px;
+    opacity: 0.85;
   }
 
   .upgrade-desc,
@@ -416,7 +466,12 @@
 .shop-buy-toolbar .settings-btn {
   display: inline-flex;
   width: auto;
-  min-width: 64px;
+  min-width: 48px;        /* largeur minimale plus petite */
+  height: 26px;           /* hauteur réduite */
+  padding: 3px 8px;       /* moins de padding interne */
+  border-radius: 12px;    /* arrondi plus compact */
+  font-size: 11px;        /* texte un peu plus petit */
+  font-weight: 700;
   margin: 0;
   padding: 10px 14px;
   justify-content: center;
@@ -431,7 +486,7 @@
 .shop-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 0px;
 }
 
 
@@ -443,4 +498,59 @@
   .shop-grid {
     grid-template-columns: 1fr;
   }
+}
+
+
+/* Ligne niveau + barre */
+.upgrade-level-row {
+  display: flex;
+  align-items: center;
+  gap: 0;            /* pas d'espace automatique entre les enfants */
+}
+
+/* Badge collé à la barre */
+.upgrade-level-badge {
+  min-width: 23px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: #3b2a1a;
+  color: #f9f1dd;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  margin-right: 0;   /* on s'assure qu'il n'y a aucune marge à droite */
+}
+
+/* Barre tout de suite à droite du badge */
+.upgrade-level-bar {
+  position: relative;
+  flex: 1;
+  height: 16px;
+  border-radius: 999px;
+  background: #2b1f18;
+  overflow: hidden;
+  border: 1px solid #c89b4a;
+  margin-left: 0;    /* aucune marge à gauche */
+}
+
+/* Remplissage de la barre */
+.upgrade-level-fill {
+  height: 100%;
+  width: 0; /* override par style="width: xx%;" */
+  background: linear-gradient(to bottom, #60a5fa, #2563eb); /* bleu clair -> bleu foncé */
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+/* Texte centré dans la barre */
+.upgrade-level-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }

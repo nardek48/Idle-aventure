@@ -212,8 +212,7 @@ function buildBestiaryGridHTML(selectedId) {
 
 function buildBestiaryHTML() {
   var selectedId = getBestiarySelectedId();
-  var h = '<div class="panel-title">Bestiaire</div>';
-  h += (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("bestiary") : "";
+  var h = (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("bestiary") : "";
   h += buildBestiaryDetailHTML(selectedId);
   h += buildBestiaryGridHTML(selectedId);
   return h;

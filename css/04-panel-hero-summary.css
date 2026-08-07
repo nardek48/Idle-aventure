@@ -7,35 +7,18 @@
    chantier séparé.
    ========================= */
 
-/* ===== Plaque-titre "PERSONNAGE" ===== */
-.pc-title-banner {
-  position: relative;
-  text-align: center;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--nb-ink);
-
-  /* Essaie une hauteur plus contrôlée */
-  padding: 10px 30px;              /* moins de padding vertical */
-  margin: 0 auto 0;    /* au lieu de 14px */
-  max-width: 100%;
-
-  /* Centre légèrement plus haut ou plus bas selon ton sprite */
-  background: url('../images/templates/title.png') center 50% / contain no-repeat;
-}
+/* ===== Plaque-titre "PERSONNAGE" =====
+   v2.76 : retirée — le titre de page est maintenant centralisé dans
+   le HUD (voir HUD_PAGE_TITLES dans ui/hud-view.js). Cette règle
+   n'est plus utilisée nulle part. */
 
 /* ===== Carte fiche de personnage ===== */
 .pc-card {
   position: relative;
   padding: 16px;
-  margin-top: 0px;  
   margin-bottom: 14px;
-  border-radius: var(--nb-radius-lg);
-  background: linear-gradient(160deg, var(--nb-cream) 0%, var(--nb-cream-alt) 100%);
-  border: 2px solid var(--nb-gold-dark);
-  box-shadow: var(--nb-shadow-card), inset 0 0 0 3px rgba(255, 200, 61, 0.18);
+
+  background: url('../images/templates/ecrantext1.png') center / 100% 100% no-repeat;
 }
 
 .pc-card-top {
@@ -49,27 +32,46 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start; /* contenu en haut */
+
   flex: 0 0 35%;
+   margin-top: 25px;            /* force la barre d'XP à se coller en bas de la colonne */
+
 }
 
 .pc-portrait-frame {
-    width: 120px;      /* ou 130 px */
-  height: 120px;     /* carré ou proportion du portrait */
-  overflow: hidden;  /* coupe ce qui dépasse */
-  aspect-ratio: 1 / 1;
+  position: relative;
+  width: 130px;
+  height: 130px;
+  margin-bottom: 8px;
   border-radius: var(--nb-radius-md);
   overflow: hidden;
-  border: 2px solid var(--nb-gold);
-  box-shadow: 0 0 0 4px rgba(255, 200, 61, 0.15), 0 6px 14px rgba(0, 0, 0, 0.35);
-  margin-bottom: 8px;
+  background-color: #f5e4c7;   /* fond crème derrière, comme ta maquette */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pc-portrait-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0; /* cadre sur toute la surface */
+  background: url('../images/templates/big-hero-frame.png') center / 100% 100% no-repeat;
+  /* 100% 100% au lieu de cover pour coller exactement aux bords du carré */
+  pointer-events: none;
+  z-index: 2;
 }
 
 .pc-portrait-frame img {
-  width: 100%;
-  height: 100%;
+  position: relative;
+  z-index: 1;
+  width: 90%;
+  height: 90%;
   object-fit: cover;
   display: block;
-  max-width: 100%; 
+
+  transform: translateY(2px);  /* décale l’image de 2px vers le bas */
 }
 
 .pc-portrait-placeholder {
@@ -92,39 +94,66 @@
   margin-bottom: 3px;
 }
 
-.pc-info-col {
-  flex: 1 1 65%;
-  min-width: 0;
+
+
+
+
+/* Panneau de droite : cadre doré + fond crème */
+.pc-info-wrapper {
+  position: relative;
+  width: 220px;             /* ajuste à l’œil ou à la taille de ton cadre */
+  min-height: 160px;
+  padding: 12px 16px;       /* espace intérieur pour le contenu */
+  background-color: #f5e4c7;/* fond crème */
+  border-radius: var(--nb-radius-md);
+  overflow: hidden;
 }
 
+/* image de cadre autour du panneau de stats */
+.pc-info-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url('../images/templates/right-panel-frame.png') center / 100% 100% no-repeat;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* contenu du panneau au-dessus du cadre */
+.pc-info-col {
+  position: relative;
+  z-index: 1;
+}
+
+/* tu peux garder tes styles existants pour les éléments à l’intérieur */
 .pc-level-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 12px 5px 5px;
-  border-radius: var(--nb-radius-pill);
-  background: var(--nb-shell);
-  border: 1px solid var(--nb-gold-dark);
-  margin-bottom: 6px;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 8px;
 }
 
 .pc-level-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--nb-gold);
-  color: #241a00;
-  font-size: 9px;
-  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #c89b4a;
+  color: #000;
+  font-size: 10px;
+  text-transform: uppercase;
 }
 
-.pc-level-pill > span:last-child {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--nb-ink-inverse);
+.pc-stat-list {
+  margin-top: 4px;
+  padding: 4px 10px 2px; /* padding interne : haut / droite / bas / gauche */
+  /* 10px de chaque côté pour que le texte ne colle pas aux bords du cadre */
+  background-color: #f8efd7 !important;  /* fond plus clair forcé */
+  border-radius: 6px;              /* léger arrondi interne */
 }
 
 /* ===== Barres à cadre sombre (niveau/XP) ===== */
@@ -138,25 +167,57 @@
   overflow: hidden;
 }
 
+/* Variante compacte générique (pour les autres barres) */
 .pc-bar-compact {
   height: 10px;
   margin-bottom: 10px;
 }
 
+/* Remplissage générique */
 .pc-bar-fill {
   height: 100%;
   border-radius: var(--nb-radius-pill);
   transition: width 0.3s ease;
 }
 
+/* ===== XP : cadre image + fond interne ===== */
+.pc-bar-exp {
+  position: relative;
+  width: 130px;  /* mets ici la largeur de ton PNG barre-pv-ennemi.png (à ajuster à l’œil) */
+  height: 24px;  /* mets ici la hauteur de ton PNG */
+  background: url('../images/Borders/barre-pv-ennemi.png') center / 100% 100% no-repeat;
+  border: none;
+  padding: 3px 4px; /* espace intérieur pour que le remplissage ne déborde pas le cadre doré */
+  overflow: hidden;  
+}
+
+/* fond sombre sous la barre (partie non remplie) */
+.pc-bar-exp::before {
+  content: "";
+  position: absolute;
+  inset: 3px 4px;         /* même valeurs que le padding pour coller à l’intérieur du cadre */
+  background: #22141c;    /* fond noir/brun comme sur ta capture */
+  border-radius: 999px;
+  z-index: 0;
+}
+
+/* remplissage XP, en pourcentage de la largeur interne */
 .pc-bar-exp .pc-bar-fill {
-  background: linear-gradient(90deg, #2563eb, #60a5fa);
+  position: relative;
+  z-index: 1;             /* au-dessus du fond sombre, mais sous le texte */
+    background: linear-gradient(to bottom, #c3d7f0, #08235e); /* bleu clair en haut, bleu foncé en bas */
+  height: 100%;
+  border-radius: 999px;   /* pill bien arrondi */
 }
 
+/* barre de niveau (utilise le même fond interne sombre si tu l'appliques à pc-bar-level) */
 .pc-bar-level .pc-bar-fill {
-  background: linear-gradient(90deg, #16a34a, #4ade80);
+  
+  background: linear-gradient(to bottom, #a2eebe, #063f1b); /* bleu clair en haut, bleu foncé en bas */
+
 }
 
+/* texte centré par-dessus la barre (24 / 37, etc.) */
 .pc-bar-text {
   position: absolute;
   inset: 0;
@@ -167,6 +228,7 @@
   font-weight: 800;
   color: var(--nb-ink-inverse);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  z-index: 2;             /* au-dessus du bleu et du fond sombre */
 }
 
 /* ===== Liste de stats PV/ATK/DEF/VIT/CRIT ===== */
@@ -177,12 +239,15 @@
   overflow: hidden;
 }
 
+/* Une ligne de stat : icône + label + valeur */
 .pc-stat-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-bottom: 1px solid var(--nb-frame-light);
+  justify-content: space-between;
+  font-size: 11px;
+  line-height: 1.6;   /* comme dans ton exemple à gauche, pas trop serré */
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08); /* ligne fine entre les stats */
 }
 
 .pc-stat-row:last-child {
@@ -190,10 +255,7 @@
 }
 
 .pc-stat-icon {
-  flex-shrink: 0;
-  font-size: 14px;
-  width: 18px;
-  text-align: center;
+  margin-right: 6px;  /* un peu d’air entre l’icône et le label */
 }
 
 .pc-stat-label {
@@ -202,12 +264,14 @@
   font-weight: 700;
   color: var(--nb-ink-dim);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.4px;  
 }
 
 .pc-stat-value {
   font-size: 13px;
   font-weight: 800;
+  margin-left: 8px;
+  text-align: right;
   color: var(--nb-ink);
 }
 
@@ -363,6 +427,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  padding-top: 3px; /* espace en haut */
 }
 
 /* Contenu scrollable qui prend la place disponible au-dessus de la barre */
@@ -436,3 +501,168 @@
   }
 }
 
+.pc-heros-train-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* important pour autoriser le scroll interne */
+  overflow: hidden;
+}
+
+.pc-heros-train-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  background: url('../images/Borders/ecrantext2.png') center / 100% 100% no-repeat;
+
+  padding: 6px 6px 16px; /* haut, côtés, bas */
+  margin-bottom: 14px;
+}
+
+.pc-heros-train-toolbar .settings-btn {
+  font-size: 10px;
+  padding: 2px 6px;
+  min-width: 32px;
+  min-height: 22px;
+}
+
+.pc-heros-train-toolbar .shop-buy-toolbar {
+  gap: 4px;
+  padding: 0 8px;
+  margin: 0;
+}
+
+/* Grille des upgrades dans la section Héros */
+.pc-heros-train-list .shop-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;            /* espace vertical entre les cartes, réduit */
+  padding: 0;          /* évite du padding supplémentaire autour */
+}
+
+
+
+.upgrade-card.affordable {
+  padding: 4px 8px;
+  box-shadow: none;
+}
+
+.upgrade-icon {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Icône : largeur fixe */
+.upgrade-icon-col {
+  width: 50px;          /* largeur réservée pour l'icône */
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Texte : colonne centrale flexible */
+.upgrade-info-col {
+  flex: 1 1 auto;       /* prend tout l'espace disponible au centre */
+  padding: 0 0px;
+}
+
+/* Bouton : largeur fixe réservée */
+.upgrade-buy-col {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.upgrade-buy-title,
+.upgrade-buy-test {
+  color: #3b2a1a;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.upgrade-icon-slot {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.upgrade-name {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 0px;
+  line-height: 1.3;
+  color: var(--nb-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;   /* largeur max, ajuste à l’œil (160–200) */
+}
+
+.upgrade-desc {
+  margin-top: 1px;
+  font-size: 11px;
+  opacity: 0.85;
+  line-height: 1.3;
+  color: var(--nb-ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;   /* largeur max, ajuste à l’œil (160–200) */
+}
+
+/* barre niveau + progression, comme on a déjà défini */
+.upgrade-level-row   {
+  margin-top: 1px;
+  font-size: 11px;
+  opacity: 0.85;
+  line-height: 1.3;
+  color: var(--nb-ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;   /* largeur max, ajuste à l’œil (160–200) */
+}
+
+.upgrade-level-badge {
+  min-width: 2px;
+  padding: 2px 4px;
+  border-radius: 999px;
+  background: #3b2a1a;
+  color: #f9f1dd;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+
+
+/* barre niveau + progression, comme on a déjà défini */
+.upgrade-level-bar   { position:relative; flex:1; height:16px; border-radius:999px; background:#2b1f18; overflow:hidden; border:1px solid #c89b4a; }
+.upgrade-level-fill  { height:100%; background:linear-gradient(to bottom,#60a5fa,#2563eb); border-radius:inherit; transition:width .3s ease; }
+.upgrade-level-text  { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.7); }
+
+/* Bouton achat avec ton image */
+.upgrade-buy {
+  width: 90px;          /* doit rentrer dans la colonne réservée */
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: url('../images/Buttons/bouton_achat.png') center / 100% 100% no-repeat;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

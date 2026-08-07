@@ -76,7 +76,7 @@ function buildEquipHTML() {
   var setBonus = EquipmentManager.getSetBonus();
   var inventory = Array.isArray(game.inventory) ? game.inventory : [];
 
-  var h = '<div class="panel-title">Équipement</div>';
+  var h = '';
 
   if (setBonus && setBonus.config) {
     h += '<div class="set-bonus set-bonus-active">';

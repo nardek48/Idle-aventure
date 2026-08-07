@@ -128,8 +128,7 @@ function buildDungeonHTML() {
     DungeonManager.checkTicketReset();
   }
 
-  var h = '<div class="panel-title">🏰 Donjon</div>';
-  h += (game.dungeonRun && game.dungeonRun.active) ? buildDungeonActiveHTML() : buildDungeonLobbyHTML();
+  var h = (game.dungeonRun && game.dungeonRun.active) ? buildDungeonActiveHTML() : buildDungeonLobbyHTML();
   return h;
 }
 

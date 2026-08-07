@@ -131,15 +131,15 @@ function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
    dupliquer cette logique (calcul preview, verrouillage, affordabilité)
    à deux endroits. */
 function buildUpgradeCardHTML(u, buyAmount) {
-  var level = game.upgrades[u.id] || 0;
-  var maxLevel = u.maxLevel || Infinity;
-  var nextCost = getUpgradeCost(u, level);
-  var maxed = level >= maxLevel;
-  var locked = (WorldManager.worldIndex || 0) < (u.unlockWorld || 0);
+  var level     = game.upgrades[u.id] || 0;
+  var maxLevel  = u.maxLevel || Infinity;
+  var nextCost  = getUpgradeCost(u, level);
+  var maxed     = level >= maxLevel;
+  var locked    = (WorldManager.worldIndex || 0) < (u.unlockWorld || 0);
 
-  var canBuy = !locked && !maxed;
+  var canBuy        = !locked && !maxed;
   var buyAmountLocal = canBuy ? buyAmount : 0;
-  var modeLabel = buyAmount === -1 ? "MAX" : ("x" + buyAmount);
+  var modeLabel      = buyAmount === -1 ? "MAX" : ("x" + buyAmount);
 
   var preview = typeof getUpgradePurchasePreview === "function"
     ? getUpgradePurchasePreview(u, buyAmountLocal)
@@ -151,44 +151,83 @@ function buildUpgradeCardHTML(u, buyAmount) {
         reachedMax: false
       };
 
-  var afford = canBuy && preview.count > 0;
+  var afford         = canBuy && preview.count > 0;
   var targetLevelText = canBuy ? preview.nextLevel : level;
-  var maxLevelText = maxLevel >= 999 ? "∞" : maxLevel;
+  var maxLevelText    = maxLevel >= 999 ? "∞" : maxLevel;
+  var levelPct        = maxLevel > 0 && maxLevel !== Infinity ? (level / maxLevel) * 100 : 0;
 
-  var h = '<div class="upgrade-card ' + (afford ? 'affordable ' : '') + (locked ? 'locked' : '') + '">';
-  h += '<div class="upgrade-icon">' + esc(u.icon) + '</div>';
-  h += '<div class="upgrade-info">';
-  h += '<div class="upgrade-name">' + esc(u.name) + '</div>';
-  h += '<div class="upgrade-desc">' + esc(u.desc) + '</div>';
-  h += '<div class="upgrade-level">Niv. ' + level + '/' + maxLevelText + '</div>';
+  // === Carte d'amélioration : 3 colonnes (icône / infos / bouton) ===
+  var h  = '<div class="upgrade-card ' + (afford ? 'affordable ' : '') + (locked ? 'locked' : '') + '">';
 
-  if (canBuy) {
-    h += '<div class="upgrade-level" style="opacity:.85;">Après achat : ' + targetLevelText + '/' + maxLevelText + '</div>';
-    var previewText = getUpgradePreviewText(u, level, preview.nextLevel);
-    if (previewText) {
-      h += '<div class="upgrade-preview" style="opacity:.9;font-size:12px;margin-top:4px;">' + esc(previewText) + '</div>';
-    }
-  }
+  // Colonne icône (environ 25 %)
+  h += '<div class="upgrade-icon-col">';
+    h += '<div class="upgrade-icon-slot">';
+      if (u.icon) {
+        h += '<img class="upgrade-icon" src="' + esc(u.icon) + '" alt="' + esc(u.name) + '">';
+      }
+    h += '</div>';
   h += '</div>';
 
-  if (maxed) {
-    h += '<button class="upgrade-buy locked" disabled>MAX</button>';
-  } else if (locked) {
-    h += '<button class="upgrade-buy locked" disabled>Monde ' + ((u.unlockWorld || 0) + 1) + '</button>';
-  } else {
-    var label = '';
-    if (afford) {
-      label = formatNumber(preview.totalCost) + ' • +' + preview.count;
+  // Colonne infos (environ 50 %)
+  h += '<div class="upgrade-info-col">';
+    h += '<div class="upgrade-name">' + esc(u.name) + '</div>';
+    h += '<div class="upgrade-desc">' + esc(u.desc) + '</div>';
+
+    // Badge de niveau + barre de progression
+    h += '<div class="upgrade-level-row">';
+      h += '<div class="upgrade-level-badge">' + esc(level) + '</div>';
+      h += '<div class="upgrade-level-bar">';
+        h += '<div class="upgrade-level-fill" style="width:' + levelPct + '%;"></div>';
+        h += '<span class="upgrade-level-text">' + esc(level) + ' / ' + esc(maxLevelText) + '</span>';
+      h += '</div>';
+    h += '</div>';
+
+    // Preview des effets (Force 58 → 59, etc.)
+    //    if (canBuy) {
+    //      var previewText = getUpgradePreviewText(u, level, preview.nextLevel);
+    //      if (previewText) {
+    //        h += '<div class="upgrade-preview" style="opacity:.9;font-size:12px;margin-top:4px;">' + esc(previewText) + '</div>';
+    //      }
+    //    }
+  h += '</div>'; // /upgrade-info-col
+
+  // Colonne bouton d'achat (environ 25 %)
+  h += '<div class="upgrade-buy-col">';
+
+    h += '<div class="upgrade-buy-title">COÛT</div>';
+
+    if (maxed) {
+      h += '<button class="upgrade-buy locked" disabled>MAX</button>';
+    } else if (locked) {
+      h += '<button class="upgrade-buy locked" disabled>Monde ' + ((u.unlockWorld || 0) + 1) + '</button>';
     } else {
-      label = formatNumber(nextCost) + ' • ' + modeLabel;
+      var label = '';
+
+      if (afford) {
+        label = formatNumber(preview.totalCost);
+      } else {
+        label = formatNumber(nextCost);
+      }
+
+      if (afford) {
+        h += '<button class="upgrade-buy" onclick="buyUpgrade(\'' + u.id + '\', ' + buyAmount + ')">';
+          h += '<img class="upgrade-buy-gold-icon" src="images/Icons/gold_icon.png" alt="">';
+          h += '<span class="upgrade-buy-price">' + label + '</span>';
+        h += '</button>';
+      } else {
+        h += '<button class="upgrade-buy cant-afford" disabled>';
+          h += '<img class="upgrade-buy-gold-icon" src="images/Icons/gold_icon.png" alt="">';
+          h += '<span class="upgrade-buy-price">' + label + '</span>';
+        h += '</button>';
+      }
     }
 
-    h += '<button class="upgrade-buy ' + (!afford ? 'cant-afford' : '') + '" onclick="buyUpgrade(\'' + u.id + '\', ' + buyAmount + ')">';
-    h += label;
-    h += '</button>';
-  }
+    h += '<div class="upgrade-buy-test">' + esc(modeLabel) + '</div>';
 
-  h += '</div>';
+  h += '</div>'; // /upgrade-buy-col
+
+  h += '</div>'; // /upgrade-card
+
   return h;
 }
 
@@ -205,7 +244,6 @@ function buildShopHTML() {
 
 
   var h = '<div class="shop-shell">';
-  h += '<div class="panel-title">Boutique</div>';
 
   h += '<div class="shop-sub-tabs">';
   h += '<button class="shop-sub-tab ' + (activeShopSubTab === "upgrades" ? "is-active" : "") + '" type="button" onclick="setShopSubTab(\'upgrades\')">⬆️ Améliorations</button>';

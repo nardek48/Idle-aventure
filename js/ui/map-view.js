@@ -116,9 +116,7 @@ function buildMapHTML() {
     : 0;
   var bosses = (game.questProgress && game.questProgress.bossKills) || 0;
 
-  var h = '<div class="panel-title">🗺️ Carte du monde</div>';
-
-  h += '<div class="map-grid">';
+  var h = '<div class="map-grid">';
   h += '<div class="map-row"><span class="map-label">Monde actuel</span><span class="map-value">' + (currentWorldIndex + 1) + ' / ' + WORLDS.length + '</span></div>';
   h += '<div class="map-row"><span class="map-label">Quêtes terminées</span><span class="map-value">' + done + '/' + total + '</span></div>';
   h += '<div class="map-row"><span class="map-label">Boss vaincus</span><span class="map-value">' + bosses + '</span></div>';

@@ -11,7 +11,44 @@ comme tous les autres écrans). buildHudHTML()/buildStatsBarHTML()
 ci-dessous génèrent exactement le même marquage (mêmes id/class),
 injecté une seule fois au boot (voir main/boot.js) — aucune fonction
 de rendu (renderHud, renderStats...) n'a eu besoin de changer, elles
-continuent de faire de simples getElementById. */
+continuent de faire de simples getElementById.
+
+v2.76 : titre de page centralisé dans le HUD, sous la ligne de
+ressources — à la demande de l'utilisateur, pour libérer de la place
+en haut de chaque panel (avant : chaque écran avait son propre
+".panel-title" sticky en haut du panel, retiré des ~11 fichiers
+ui/*.js concernés — voir HUD_PAGE_TITLES et updateHudPageTitle()
+ci-dessous). Exceptions qui GARDENT un titre dans le panel lui-même
+(pas dans le HUD) :
+  - Combat : jamais de titre (écran principal, l'espace y est le
+    plus précieux).
+  - Ascension : 2 "panel-title" internes ("Ascension" au-dessus du
+    bouton prestige, "Boutique d'Aether" plus bas) sont en réalité
+    des séparateurs de section dans UN SEUL écran, pas un titre de
+    page — laissés tels quels. Le HUD affiche juste "Ascension".
+  - Équipement : le titre "Sac (X/50)" au-dessus de l'inventaire est
+    aussi un séparateur de section, laissé tel quel. Seul le titre
+    principal "Équipement" part dans le HUD. */
+
+/* Titre affiché dans le HUD pour chaque onglet. "combat" est absent
+   exprès : updateHudPageTitle() masque complètement la zone titre
+   sur cet écran (voir plus bas). */
+var HUD_PAGE_TITLES = {
+  village: "Village",
+  dungeon: "Donjon",
+  more: "Personnage",
+  shop: "Boutique",
+  talents: "Arbres de talents",
+  equip: "Équipement",
+  quests: "Quêtes journalières",
+  ascension: "Ascension",
+  map: "🗺️ Carte du monde",
+  bestiary: "Bestiaire",
+  log: "Journal",
+  settings: "Paramètres",
+  achievements: "🏆 Hauts faits",
+  codex: "📖 Codex"
+};
 
 function buildHudHTML() {
   // v2.38 : le HUD n'affiche plus que les 3 ressources (or/essence/
@@ -29,12 +66,24 @@ function buildHudHTML() {
   // n'ont besoin d'aucun changement, elles ciblent les mêmes IDs peu
   // importe où ils se trouvent dans le DOM. Visible sur tous les
   // écrans maintenant, pas seulement en combat.
+  // v2.76 : ligne de titre de page ajoutée sous nb-hud-top-row (voir
+  // updateHudPageTitle()) — vide/masquée par défaut, remplie au
+  // premier rendu par renderAll()/switchTab().
+  // v2.77 : le titre est remonté DANS .nb-hud-top-row, empilé sous
+  // .nb-hud-resources dans une colonne commune (.nb-hud-left-col),
+  // au lieu d'être une ligne à part sur toute la largeur du HUD — à
+  // la demande de l'utilisateur, pour coller le titre juste sous les
+  // ressources, à côté du portrait, sans le grand espace vide qu'il
+  // y avait avant.
   return ''
     + '<div class="nb-hud-top-row">'
-    +   '<div class="nb-hud-resources">'
-    +     '<span class="nb-pill nb-pill-gold"><span class="nb-pill-icon">💰</span><span id="hud-gold">0</span></span>'
-    +     '<span class="nb-pill nb-pill-essence"><span class="nb-pill-icon">🔮</span><span id="hud-essence">0</span></span>'
-    +     '<span class="nb-pill nb-pill-aether"><span class="nb-pill-icon">🌀</span><span id="hud-aether">0</span></span>'
+    +   '<div class="nb-hud-left-col">'
+    +     '<div class="nb-hud-resources">'
+    +       '<span class="nb-pill nb-pill-gold"><span class="nb-pill-icon">💰</span><span id="hud-gold">0</span></span>'
+    +       '<span class="nb-pill nb-pill-essence"><span class="nb-pill-icon">🔮</span><span id="hud-essence">0</span></span>'
+    +       '<span class="nb-pill nb-pill-aether"><span class="nb-pill-icon">🌀</span><span id="hud-aether">0</span></span>'
+    +     '</div>'
+    +     '<div id="hud-page-title" class="nb-hud-page-title"></div>'
     +   '</div>'
     +   '<div id="combat-hero-mini" class="combat-hero-mini">'
     +     '<div class="combat-hero-mini-portrait">'
@@ -174,6 +223,29 @@ function renderStats() {
   if (gold) gold.textContent = "x" + fmt2(EquipmentManager.effectiveGoldMult());
 }
 
+/* ============================================================
+   v2.76 : titre de page dans le HUD (voir HUD_PAGE_TITLES plus haut).
+   Masqué entièrement sur Combat (display:none) pour ne pas grignoter
+   d'espace là où c'est le plus précieux ; affiché pour tous les
+   autres onglets. Appelée depuis switchTab() ET renderAll() (voir
+   ui/ui-root.js) pour être sûre d'être à jour au premier rendu comme
+   à chaque changement d'onglet.
+============================================================ */
+function updateHudPageTitle() {
+  var el = document.getElementById("hud-page-title");
+  if (!el) return;
+
+  var tab = game.activeTab;
+  if (tab === "combat") {
+    el.style.display = "none";
+    el.textContent = "";
+    return;
+  }
+
+  el.textContent = HUD_PAGE_TITLES[tab] || "";
+  el.style.display = el.textContent ? "block" : "none";
+}
+
 window.renderHud = renderHud;
 window.buildHudHTML = buildHudHTML;
 window.buildStatsBarHTML = buildStatsBarHTML;
@@ -181,3 +253,4 @@ window.mountHudAndStatsBar = mountHudAndStatsBar;
 window.renderHeroHp = renderHeroHp;
 window.renderCombatHeroMini = renderCombatHeroMini;
 window.renderStats = renderStats;
+window.updateHudPageTitle = updateHudPageTitle;

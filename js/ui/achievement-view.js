@@ -103,8 +103,7 @@ function buildAchievementsHTML() {
   var claimedCount = AchievementManager.getClaimedCount();
   var total = (ACHIEVEMENTS_DB || []).length;
 
-  var h = '<div class="panel-title">🏆 Hauts faits</div>';
-  h += '<div class="achievement-summary">' + claimedCount + ' / ' + total + ' réclamés</div>';
+  var h = '<div class="achievement-summary">' + claimedCount + ' / ' + total + ' réclamés</div>';
 
   if (selectedId) h += buildAchievementDetailHTML(selectedId);
   h += buildAchievementGridHTML(selectedId);

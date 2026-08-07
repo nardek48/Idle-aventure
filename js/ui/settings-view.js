@@ -6,8 +6,7 @@ resetGame() dans systems/save-system.js pour la confirmation).
 ============================================================ */
 
 function buildSettingsHTML() {
-  var h = '<div class="panel-title">Paramètres</div>';
-  h += '<button class="settings-btn" onclick="saveGame()">Sauvegarder</button>';
+  var h = '<button class="settings-btn" onclick="saveGame()">Sauvegarder</button>';
   h += '<button class="settings-btn" onclick="openOnboarding(true)">🎓 Revoir le tutoriel</button>';
 
   h += '<div class="panel-card">';

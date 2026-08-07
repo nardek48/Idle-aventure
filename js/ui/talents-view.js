@@ -184,8 +184,7 @@ function buildActiveTalentBonusesHTML() {
 }
 
 function buildTalentsHTML() {
-  var h = '<div class="panel-title">Arbres de talents</div>';
-  h += buildActiveTalentBonusesHTML();
+  var h = buildActiveTalentBonusesHTML();
   h += buildTalentCategoryTabs();
   h += buildTalentBranchHTML(activeTalentCategory);
   return h;

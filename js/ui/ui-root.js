@@ -146,6 +146,7 @@ function switchTab(tabName) {
   if (statsBar) statsBar.style.display = combatMode ? "flex" : "none";
   if (panel) panel.classList.toggle("active", !combatMode);
   document.body.classList.toggle("combat-active", combatMode);
+  if (typeof updateHudPageTitle === "function") updateHudPageTitle();
   renderPanel();
 }
 
@@ -159,6 +160,7 @@ function renderAll() {
   renderStats();
   renderPanel();
   updateQuestBadge();
+  if (typeof updateHudPageTitle === "function") updateHudPageTitle();
   if (typeof renderHealButtons === "function") renderHealButtons();
   if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
   if (typeof renderDefenseButton === "function") renderDefenseButton();

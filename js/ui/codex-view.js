@@ -86,8 +86,7 @@ function buildCodexHTML() {
   var unlockedCount = CodexManager.getUnlockedEntries().length;
   var total = (CODEX_ENTRIES || []).length;
 
-  var h = '<div class="panel-title">📖 Codex</div>';
-  h += '<div class="codex-summary">' + unlockedCount + ' / ' + total + ' découvertes</div>';
+  var h = '<div class="codex-summary">' + unlockedCount + ' / ' + total + ' découvertes</div>';
 
   if (game.codexSelectedId) {
     h += buildCodexReadingHTML(game.codexSelectedId);

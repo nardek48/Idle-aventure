@@ -58,7 +58,7 @@
   align-items: center;
   justify-content: space-around;
   gap: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
-  width: 75%;
+  width: 100%; /* v2.77 : 100% de .nb-hud-left-col (avant : 75% du HUD entier, quand ce bloc était encore côte à côte avec le portrait au même niveau) */
   padding: 12px clamp(18.4px, calc(9.09px + 2.91vw), 21.6px); /* ↑ padding vertical */
   background: url('../images/Borders/zone-haut-ressources.png') center / 100% 100% no-repeat;
 }
@@ -95,6 +95,40 @@
   width: 100%;
   margin-top: 0;
   padding-top: 0;
+}
+
+/* v2.77 : colonne qui empile les ressources et le titre de page,
+   pour que le titre colle juste sous les ressources au lieu d'être
+   une ligne à part sur toute la largeur du HUD (voir nb-hud-page-title
+   ci-dessous). Reste à gauche du portrait mini du héros, qui garde sa
+   propre largeur fixe à droite. */
+.nb-hud-left-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+/* v2.76 : titre de page centralisé dans le HUD, sous la ligne de
+   ressources — remplace les ".panel-title" sticky qui étaient
+   dupliqués en haut de chaque écran (voir ui/hud-view.js,
+   updateHudPageTitle()). Masqué (display:none, posé en JS) sur
+   Combat.
+   v2.77 : remonté juste sous .nb-hud-resources (voir .nb-hud-left-col
+   ci-dessus) — marge réduite, plus de largeur 100% du HUD entier. */
+.nb-hud-page-title {
+  width: 100%;
+  margin-top: 2px;
+  padding: 8px 20px; /* espace pour que le texte ne touche pas le cadre */
+  text-align: center;
+
+  font-size: clamp(14.72px, calc(7.27px + 2.33vw), 17.28px);
+  font-weight: 700;
+  color: #5a3518; /* brun foncé */
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+
+  background: url('../images/Borders/title.png') center / 50% 90% no-repeat;
 }
 
 /* =========================
@@ -475,8 +509,7 @@
   max-width: 390px;
   margin: 0 auto;
 
-  /* ↓ moins d’espace en bas \*/
-  padding: 8px 12px calc(2px + var(--safe-bottom));
+  padding: 0px 12px calc(2px + var(--safe-bottom));
 }
 
 #panel-container.active {

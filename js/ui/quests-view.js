@@ -79,7 +79,7 @@ function updateQuestBadge() {
 }
 
 function buildQuestsHTML() {
-  var h = '<div class="panel-title">Quêtes journalières</div>';
+  var h = '';
 
   // NB : "Raid" n'a toujours pas de onclick (aucun mode de jeu associé) —
   // purement décoratif pour l'instant. "Donjon" navigue vers le nouvel
