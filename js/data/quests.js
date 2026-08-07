@@ -37,7 +37,7 @@ var QUEST_TEMPLATES = [
   {
     id: "kills",
     name: "Chasseur débutant",
-    icon: "⚔️",
+    icon: "images/Icons/quest/chasseur_debutant_icone.png",
     desc: "Vaincre {target} ennemis.",
     target: 25,
     rewardGold: 150,
@@ -47,7 +47,7 @@ var QUEST_TEMPLATES = [
   {
     id: "bossKills",
     name: "Briseur de boss",
-    icon: "👑",
+    icon: "images/Icons/quest/briseur_boss_icone.png",
     desc: "Vaincre {target} boss.",
     target: 3,
     rewardGold: 300,
@@ -57,7 +57,7 @@ var QUEST_TEMPLATES = [
   {
     id: "goldEarned",
     name: "Bourse pleine",
-    icon: "images/Icons/gold_icon.png",
+    icon: "images/Icons/quest/bourse_pleine_icone.png",
     desc: "Gagner {target} or.",
     target: 2000,
     rewardGold: 400,
@@ -67,7 +67,7 @@ var QUEST_TEMPLATES = [
   {
     id: "goldSpent",
     name: "Investisseur",
-    icon: "🛒",
+    icon: "images/Icons/quest/investisseur_icone.png",
     desc: "Dépenser {target} or en améliorations.",
     target: 1500,
     rewardGold: 300,
@@ -77,7 +77,7 @@ var QUEST_TEMPLATES = [
   {
     id: "crits",
     name: "Exécuteur",
-    icon: "💥",
+    icon: "images/Icons/quest/executueur_icone.png",
     desc: "Infliger {target} coups critiques.",
     target: 20,
     rewardGold: 250,
@@ -87,7 +87,7 @@ var QUEST_TEMPLATES = [
   {
     id: "treasures",
     name: "Chercheur de trésors",
-    icon: "🎁",
+    icon: "images/Icons/quest/chercheur_tresors_icone.png",
     desc: "Déclencher {target} trésors.",
     target: 3,
     rewardGold: 450,
@@ -97,7 +97,7 @@ var QUEST_TEMPLATES = [
   {
     id: "swordKills",
     name: "Maître de la lame",
-    icon: "🗡️",
+    icon: "images/Icons/quest/maitre_lame_icone.png",
     desc: "Vaincre {target} ennemis à l'épée ou à la hache.",
     target: 20,
     rewardGold: 250,
@@ -107,7 +107,7 @@ var QUEST_TEMPLATES = [
   {
     id: "bowKills",
     name: "Maître de l'arc",
-    icon: "🏹",
+    icon: "images/Icons/quest/maitre_arc_icone.png",
     desc: "Vaincre {target} ennemis à l'arc.",
     target: 20,
     rewardGold: 250,
@@ -117,7 +117,7 @@ var QUEST_TEMPLATES = [
   {
     id: "magicKills",
     name: "Maître arcanique",
-    icon: "🪄",
+    icon: "images/Icons/quest/maitre_arcanique_icone.png",
     desc: "Vaincre {target} ennemis avec un bâton.",
     target: 20,
     rewardGold: 250,

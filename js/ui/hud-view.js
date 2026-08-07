@@ -40,14 +40,14 @@ var HUD_PAGE_TITLES = {
   shop: "Boutique",
   talents: "Arbres de talents",
   equip: "Équipement",
-  quests: "Quêtes journalières",
+  quests: "Quêtes",
   ascension: "Ascension",
-  map: "🗺️ Carte du monde",
+  map: "Carte du monde",
   bestiary: "Bestiaire",
   log: "Journal",
   settings: "Paramètres",
-  achievements: "🏆 Hauts faits",
-  codex: "📖 Codex"
+  achievements: "Hauts faits",
+  codex: "Codex"
 };
 
 function buildHudHTML() {

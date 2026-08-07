@@ -109,7 +109,7 @@ var WORLDS = [
   {
     id: "crypt",
     name: "Crypte oubliée",
-    requiredAscension: 4,
+    requiredAscension: 3,
     assetKey: "crypt",
     bg: "#0a0a15",
     combatMap: "../images/Maps/crypt-combat.jpg",
@@ -135,7 +135,7 @@ var WORLDS = [
   {
     id: "mountain",
     name: "Montagne brûlante",
-    requiredAscension: 8,
+    requiredAscension: 6,
     assetKey: "mountain",
     bg: "#1a0d0a",
     combatMap: "../images/Maps/mountain-combat.jpg",
@@ -161,7 +161,7 @@ var WORLDS = [
   {
     id: "tower",
     name: "Tour du sorcier",
-    requiredAscension: 15,
+    requiredAscension: 10,
     assetKey: "tower",
     bg: "#0d0d1a",
     combatMap: "../images/Maps/tower-combat.jpg",

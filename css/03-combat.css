@@ -514,17 +514,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: clamp(36.8px, calc(18.18px + 5.82vw), 43.2px);
-  height: clamp(36.8px, calc(18.18px + 5.82vw), 43.2px);
+  width: clamp(44px, calc(21.7px + 6.85vw), 52px);
+  height: clamp(44px, calc(21.7px + 6.85vw), 52px);
   border-radius: 999px;
   border: none;
-  /* v2.46 : bordure ronde dorée fournie par l'utilisateur
-     (images/Borders/bordure-ronde.png), posée par-dessus le fond
-     crème existant — son centre est transparent, donc le crème reste
-     visible au milieu, seul l'anneau doré recouvre les bords. */
-  background:
-    url('../images/Borders/bordure-ronde.png') center / 100% 100% no-repeat,
-    var(--nb-cream);
   box-shadow: none;
   font-size: clamp(15.64px, calc(7.73px + 2.47vw), 18.36px);
   cursor: pointer;

@@ -105,7 +105,7 @@ function buildHealButtonHTML(index) {
   h += '<button class="heal-quick-btn' + (disabled ? ' disabled' : '') + '" type="button" '
     + (disabled ? 'disabled' : '')
     + ' onclick="PotionManager.useHealingPotion(\'' + esc(potion.id) + '\')" title="' + esc(potion.name) + ' (touche ' + keyLabel + ' sur PC)">';
-  h += '<span class="heal-quick-icon">' + esc(potion.icon) + '</span>';
+  h += '<span class="heal-quick-icon">' + '<img src="' + esc(potion.icon) + '" alt="" draggable="false">' + '</span>';
   h += '<span class="heal-quick-count">' + stock + '</span>';
   h += '<span class="heal-quick-key">' + keyLabel + '</span>';
   h += '</button>';

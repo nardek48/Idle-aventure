@@ -23,7 +23,7 @@ var UPGRADES = [
     icon: "./images/Icons/improvement_icons/power.png",
     desc: "Augmente les dégâts de tap.",
     baseCost: 15,
-    costMult: 1.20,
+    costMult: 1.15,
     maxLevel: 400,
     unlockWorld: 0,
     apply: function(lvl) {
@@ -36,7 +36,7 @@ var UPGRADES = [
     icon: "./images/Icons/improvement_icons/celerity.png",
     desc: "Augmente l'auto DPS.",
     baseCost: 45,
-    costMult: 1.24,
+    costMult: 1.20,
     maxLevel: 320,
     unlockWorld: 0,
     apply: function(lvl) {
@@ -49,7 +49,7 @@ var UPGRADES = [
     icon: "./images/Icons/improvement_icons/accuracy.png",
     desc: "Augmente la chance de critique.",
     baseCost: 50,
-    costMult: 1.24,
+    costMult: 1.20,
     maxLevel: 100,
     unlockWorld: 0,
     apply: function(lvl) {
@@ -62,7 +62,7 @@ var UPGRADES = [
     icon: "./images/Icons/improvement_icons/will.png",
     desc: "Améliore les critiques.",
     baseCost: 60,
-    costMult: 1.26,
+    costMult: 1.22,
     maxLevel: 130,
     unlockWorld: 0,
     apply: function(lvl) {
@@ -75,7 +75,7 @@ var UPGRADES = [
     icon: "./images/Icons/improvement_icons/endurance.png",
     desc: "Augmente les PV du héros.",
     baseCost: 60,
-    costMult: 1.26,
+    costMult: 1.22,
     maxLevel: 200,
     unlockWorld: 0,
     apply: function(lvl) {
@@ -88,7 +88,7 @@ var UPGRADES = [
     icon: "images/Icons/gold_icon.png",
     desc: "+3% or gagné par niveau.",
     baseCost: 55,
-    costMult: 1.23,
+    costMult: 1.20,
     maxLevel: 200,
     unlockWorld: 0,
     apply: function (lvl) { game.goldMult = 1 + lvl * 0.03; }
@@ -99,7 +99,7 @@ var UPGRADES = [
     icon: "📜",
     desc: "+10% or sur boss par niveau.",
     baseCost: 260,
-    costMult: 1.34,
+    costMult: 1.30,
     maxLevel: 50,
     unlockWorld: 2,
     apply: function (lvl) { game.goldMult = (game.goldMult || 1) + lvl * 0.10; }
@@ -116,10 +116,42 @@ function getUpgradeById(id) {
 /* getUpgradeCost() est définie dans systems/progression-system.js. */
 
 var AETHER_SHOP = [
-  { id: "a_tap", name: "Puissance ancestrale", icon: "⚔️", desc: "+10% dégâts de tap globaux par niveau.", baseCost: 1, costMult: 1.9, maxLevel: 20 },
-  { id: "a_gold", name: "Fortune astrale", icon: "images/Icons/gold_icon.png", desc: "+10% or global par niveau.", baseCost: 1, costMult: 1.9, maxLevel: 20 },
-  { id: "a_loot", name: "Main du destin", icon: "🎁", desc: "+3% chance de loot boss par niveau.", baseCost: 2, costMult: 2.1, maxLevel: 15 },
-  { id: "a_essence", name: "Noyau d'essence", icon: "🔮", desc: "+1 essence boss tous les 2 niveaux.", baseCost: 2, costMult: 2.2, maxLevel: 12 }
+  {
+    id: "a_tap",
+    name: "Puissance ancestrale",
+    icon: "images/Icons/ascension/puissance_ancestrale.png",
+    desc: "+10% dégâts de tap globaux par niveau.",
+    baseCost: 1,
+    costMult: 1.9,
+    maxLevel: 20
+  },
+  {
+    id: "a_gold",
+    name: "Fortune astrale",
+    icon: "images/Icons/ascension/fortune_astrale.png",
+    desc: "+10% or global par niveau.",
+    baseCost: 1,
+    costMult: 1.9,
+    maxLevel: 20
+  },
+  {
+    id: "a_loot",
+    name: "Main du destin",
+    icon: "images/Icons/ascension/main_du_destin.png",
+    desc: "+3% chance de loot boss par niveau.",
+    baseCost: 2,
+    costMult: 2.1,
+    maxLevel: 15
+  },
+  {
+    id: "a_essence",
+    name: "Noyau d'essence",
+    icon: "images/Icons/ascension/noyau_essence.png",
+    desc: "+1 essence boss tous les 2 niveaux.",
+    baseCost: 2,
+    costMult: 2.2,
+    maxLevel: 12
+  }
 ];
 
 /* getAetherUpgradeCost() est définie dans systems/stats-system.js. */

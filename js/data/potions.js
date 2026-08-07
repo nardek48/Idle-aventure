@@ -22,7 +22,7 @@ var POTIONS_DB = [
   {
     id: "potion_power",
     name: "Potion de Force",
-    icon: "🧪",
+    icon: "images/Icons/potions/potion_force.png",
     desc: "+20% Force (dégâts de tap) pendant 30 min.",
     stat: "power",
     bonus: 0.20,
@@ -33,7 +33,7 @@ var POTIONS_DB = [
   {
     id: "potion_celerity",
     name: "Potion de Célérité",
-    icon: "⚡",
+    icon: "images/Icons/potions/potion_celerite.png",
     desc: "+20% Célérité (auto DPS) pendant 30 min.",
     stat: "celerity",
     bonus: 0.20,
@@ -44,7 +44,7 @@ var POTIONS_DB = [
   {
     id: "potion_precision",
     name: "Potion de Précision",
-    icon: "🎯",
+    icon: "images/Icons/potions/potion_precision.png",
     desc: "+15% chance de critique pendant 30 min.",
     stat: "critChance",
     bonus: 15,
@@ -55,7 +55,7 @@ var POTIONS_DB = [
   {
     id: "potion_endurance",
     name: "Potion d'Endurance",
-    icon: "🛡️",
+    icon: "images/Icons/potions/potion_endurance.png",
     desc: "+30% PV max et défense pendant 30 min.",
     stat: "endurance",
     bonus: 0.30,
@@ -66,7 +66,7 @@ var POTIONS_DB = [
   {
     id: "elixir_fortune",
     name: "Élixir de Fortune",
-    icon: "images/Icons/gold_icon.png",
+    icon: "images/Icons/potions/potion_fortune.png",
     desc: "+25% or gagné pendant 20 min.",
     stat: "gold",
     bonus: 0.25,
@@ -77,13 +77,13 @@ var POTIONS_DB = [
   {
     id: "elixir_aether",
     name: "Élixir d'Aether",
-    icon: "🌀",
+    icon: "images/Icons/potions/potion_aether.png",
     desc: "+10% Aether au prochain gain d'ascension (se consomme à la prochaine ascension, sans minuteur).",
     stat: "aetherNext",
     bonus: 0.10,
     durationMin: null,
     cost: 10000,
-    costMult: 2.5,   // v2.26 : coût qui grimpe à chaque achat depuis la dernière ascension (voir game.aetherElixirStackCount) — empêche d'en acheter 10 d'un coup pour un bonus démesuré
+    costMult: 2.5,
     rarity: "rare"
   }
 ];
@@ -98,9 +98,17 @@ demande depuis le bouton dédié en bas d'écran (voir
 ui/combat-view.js), avec un petit cooldown entre deux usages pour
 éviter le spam pendant un donjon corsé.
 ============================================================ */
-var HEALING_POTIONS_DB = [
-  { id: "heal_minor", name: "Potion de soin mineure", icon: "🧉", healPercent: 0.25, cost: 1000 },
-  { id: "heal_major", name: "Potion de soin majeure", icon: "🧪", healPercent: 0.60, cost: 3000 }
+const HEALING_POTIONS_DB = [
+  {
+    id: "potion_soin_mineur",
+    name: "Potion de soin mineur",
+    icon: "images/Icons/potions/potion_soin_mineur_icone.png"
+  },
+  {
+    id: "potion_soin_majeur",
+    name: "Potion de soin majeur",
+    icon: "images/Icons/potions/potion_soin_majeur_icone.png"
+  }
 ];
 
 var HEALING_POTION_COOLDOWN_MS = 4000;
