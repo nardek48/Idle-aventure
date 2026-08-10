@@ -2,140 +2,36 @@
    Équipement — layout compact, version 2
 ========================= */
 
-.set-bonus {
-  margin: 0 auto 12px;
-  padding: 14px 16px;
-  max-width: 760px;
-  border-radius: var(--nb-radius-md);
-  border: 2px solid var(--nb-frame);
-  background: var(--nb-cream);
-  color: var(--nb-ink);
-  box-shadow: var(--nb-shadow-card);
-  position: relative;
-  overflow: hidden;
-}
-
-.set-bonus::before {
-  content: none;
-}
-
-.set-bonus-active {
-  border-color: var(--nb-gold-dark);
-  box-shadow: var(--nb-shadow-card), 0 0 0 3px rgba(240, 170, 62, 0.25);
-}
-
-.set-bonus-inactive {
-  opacity: 0.85;
-}
-
-.set-bonus-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--nb-frame-light);
-}
-
-.set-bonus-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: var(--nb-ink);
-}
-
-.set-bonus-title::before {
-  content: "✦";
-  color: var(--nb-gold-dark);
-  font-size: 14px;
-}
-
-.set-bonus-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 900;
-  color: var(--nb-gold-deep);
-  background: rgba(240, 170, 62, 0.18);
-  border: 1px solid var(--nb-gold-dark);
-  padding: 4px 10px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.set-bonus-state::before {
-  content: "●";
-  font-size: 9px;
-  line-height: 1;
-}
-
-.set-bonus-text {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--nb-ink);
-  font-weight: 700;
-}
-
-.set-bonus-inactive .set-bonus-text {
-  color: var(--nb-ink-dim);
-  font-weight: 600;
-}
+/* v2.83.23 : le grand bandeau "BONUS DE SET" (.set-bonus et ses
+   variantes) a été retiré — remplacé par le rappel compact sous le
+   panneau de détail (.eq-detail-setbonus, voir plus bas). */
 
 .eq-layout {
   display: flex;
   flex-direction: column;
   gap: 14px;
   align-items: center;
+  min-height: 100%;
 }
 
+/* v2.83.20 : .eq-hero-card repeint en thème parchemin (tokens
+   --nb-*) — portait un vieux fond bleu marine (rgba(15,23,42,...))
+   datant d'avant la migration parchemin v2.31, jamais nettoyé après
+   le retrait du portrait/nom/niveau du héros ici en v2.24. C'est ce
+   carré bleu marine vide qui apparaissait derrière la grille. */
+/* v2.83.27 : .eq-hero-card / .eq-bag-panel utilisent maintenant la
+   classe globale .nb-page-frame (+ .nb-page-frame-fill), voir
+   css/00-components.css — plus de duplication de la technique de
+   bordure ici, ne reste que ce qui est vraiment spécifique à cet
+   écran (largeur max, flex pour le layout interne). */
 .eq-hero-card {
-  width: 100%;
-  max-width: 760px;
-  padding: 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--nb-frame);
-  background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 36%),
-    radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.12), transparent 32%),
-    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.88));
-  box-shadow:
-    0 16px 34px rgba(0, 0, 0, 0.28),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  flex: 1 1 auto;
 }
 
-.eq-hero-topbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.eq-hero-level {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 54px;
-  padding: 6px 9px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #ef4444, #b91c1c);
-  color: #fff1a8;
-  font-weight: 900;
-  font-size: 12px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-}
-
-.eq-hero-name {
-  font-size: 18px;
-  font-weight: 900;
-  color: #f8fafc;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
-}
+/* v2.83.20 : .eq-hero-topbar/-level/-name/-left/-avatar/-portrait*
+   supprimées d'ici — mortes depuis le retrait du portrait de héros de
+   cet écran en v2.24 (doublon avec l'onglet Personnage), aucun JS ne
+   les génère plus. */
 
 .eq-hero-main {
   display: flex;
@@ -143,102 +39,24 @@
   gap: 12px;
 }
 
-.eq-hero-left {
-  width: 250px;
-  flex: 0 0 250px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.eq-hero-portrait-area {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 190px;
-  border-radius: 20px;
-  border: 1px solid var(--nb-frame);
-  background:
-    radial-gradient(circle at 50% 42%, rgba(99, 102, 241, 0.18), transparent 55%),
-    rgba(255, 255, 255, 0.03);
-}
-
-.eq-hero-avatar {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3px solid var(--nb-frame);
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.98), rgba(37, 99, 235, 0.86));
-  box-shadow:
-    0 16px 40px rgba(59, 130, 246, 0.28),
-    0 0 0 10px rgba(99, 102, 241, 0.10);
-  font-size: 40px;
-  font-weight: 800;
-  color: #fff;
-}
-
-.eq-hero-portrait-wrap {
-  width: 132px;
-  height: 160px;
-  overflow: hidden;
-  border: 2px solid var(--nb-frame);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow:
-    0 18px 34px rgba(0, 0, 0, 0.30),
-    0 0 0 10px rgba(255, 255, 255, 0.03);
-}
-
-.eq-hero-portrait {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.eq-hero-stats {
-  padding: 10px 12px;
-  border-radius: 16px;
-  border: 1px solid var(--nb-frame);
-  background: rgba(2, 6, 23, 0.28);
-}
-
-.eq-mini-stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 10px;
-}
-
-.eq-mini-stat {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 800;
-  color: #e2e8f0;
-}
-
-.eq-mini-icon {
-  width: 20px;
-  text-align: center;
-  color: #93c5fd;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
-}
-
-.eq-mini-value {
-  min-width: 20px;
-}
-
 .eq-hero-right {
   flex: 0 0 50%;
   width: 50%;
-  display: grid;
-  grid-template-columns: 50% 50%;
+  display: flex;
   gap: 8px;
-  align-content: start;
+}
+
+/* v2.83.20 : structure a 3 colonnes EXPLICITES demandee - plus de
+   grille qui "wrap" toute seule (trop fragile, ecrasee par la media
+   query mobile dans les versions precedentes). Colonne 1 = 4
+   emplacements empiles, colonne 2 = 3 emplacements empiles, chacune
+   flex:1 (soit 25% de la largeur totale du panel, 50%/2). */
+.eq-slot-col {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
 
 .eq-hero-right .eq-orbit-slot {
@@ -251,14 +69,14 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   min-height: 0;
-  padding: 4px;
+  padding: 2px;
   border-radius: 12px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 0;
 }
 
 .eq-hero-right .eq-orbit-slot:active {
@@ -272,10 +90,13 @@
 }
 
 .eq-hero-right .eq-orbit-slot-icon {
-  width: 40px;
-  height: 40px;
+  width: 88%;
+  height: 88%;
   margin-right: 0;
-  font-size: 26px;
+  font-size: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .eq-orbit-slot {
@@ -396,6 +217,226 @@
   margin-bottom: 0;
 }
 
+/* v2.83.29 : 2 boutons d'action possibles maintenant (Équiper +
+   Vendre, côté Inventaire) — petit espace entre eux, le 1er garde
+   margin-bottom:0 (pas de gap sur .eq-detail-panel). */
+.eq-detail-action + .eq-detail-action {
+  margin-top: 8px;
+}
+
+/* =========================
+   v2.83.34 : lien Équipement ↔ Inventaire
+   ========================= */
+
+/* Mini-liste "Dans le sac" côté Équipement (buildCompatibleItemsListHTML) */
+.eq-compat-list {
+  width: 100%;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--nb-frame);
+  text-align: left;
+}
+
+.eq-compat-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--nb-ink-dim);
+  margin-bottom: 6px;
+}
+
+.eq-compat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--nb-frame-light);
+}
+
+.eq-compat-row:last-of-type {
+  border-bottom: none;
+}
+
+.eq-compat-icon {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  overflow: hidden;
+  position: relative;
+}
+
+.eq-compat-icon-img {
+  width: 100%;
+  height: 100%;
+}
+
+.eq-compat-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.eq-compat-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eq-compat-name.rarity-common { color: var(--rarity-common); }
+.eq-compat-name.rarity-green { color: var(--rarity-green); }
+.eq-compat-name.rarity-rare { color: var(--rarity-rare); }
+.eq-compat-name.rarity-epic { color: var(--rarity-epic); }
+.eq-compat-name.rarity-legendary { color: var(--rarity-legendary); }
+
+.eq-compat-stat {
+  font-size: 10px;
+  color: var(--nb-ink-dim);
+}
+
+.eq-compat-delta.is-up { color: #16a34a; font-weight: 800; }
+.eq-compat-delta.is-down { color: #dc2626; font-weight: 800; }
+.eq-compat-delta.is-flat { color: var(--nb-ink-dim); }
+
+.eq-compat-equip-btn {
+  flex: 0 0 auto;
+  min-width: 0;
+  width: auto;
+  min-height: 28px;
+  padding: 4px 10px;
+  font-size: 10px;
+}
+
+.eq-compat-more-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px;
+  border: none;
+  background: none;
+  color: var(--nb-gold-dark);
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Comparaison avec l'équipé, côté Inventaire (buildEquippedComparisonHTML) */
+.eq-compare-box {
+  width: 100%;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--nb-frame);
+  text-align: left;
+}
+
+.eq-compare-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--nb-ink-dim);
+  margin-bottom: 6px;
+}
+
+.eq-compare-empty {
+  font-size: 11px;
+  color: var(--nb-ink-dim);
+  font-style: italic;
+}
+
+.eq-compare-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eq-compare-icon {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  overflow: hidden;
+  position: relative;
+}
+
+.eq-compare-icon-img {
+  width: 100%;
+  height: 100%;
+}
+
+.eq-compare-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.eq-compare-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-ink);
+}
+
+.eq-compare-name.rarity-common { color: var(--rarity-common); }
+.eq-compare-name.rarity-green { color: var(--rarity-green); }
+.eq-compare-name.rarity-rare { color: var(--rarity-rare); }
+.eq-compare-name.rarity-epic { color: var(--rarity-epic); }
+.eq-compare-name.rarity-legendary { color: var(--rarity-legendary); }
+
+.eq-compare-stat {
+  font-size: 10px;
+  color: var(--nb-ink-dim);
+}
+
+.eq-compare-delta {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.eq-compare-delta.is-up { color: #16a34a; }
+.eq-compare-delta.is-down { color: #dc2626; }
+.eq-compare-delta.is-flat { color: var(--nb-ink-dim); }
+
+.eq-compare-hint {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--nb-ink-dim);
+  font-style: italic;
+}
+
+/* v2.83.22 : rappel compact du bonus de set, sous le panneau de
+   détail — version courte du bandeau "BONUS DE SET" du haut d'écran
+   (voir buildCompactSetBonusHTML), pour suivre son état sans remonter
+   en haut pendant qu'on change d'équipement. */
+.eq-detail-setbonus {
+  width: 100%;
+  margin-top: 10px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--nb-ink-dim);
+  text-align: left;
+  line-height: 1.4;
+}
+
+.eq-detail-setbonus.is-active {
+  border-color: var(--nb-gold-dark);
+  color: var(--nb-gold-dark);
+}
+
+.eq-detail-setbonus-icon {
+  flex: 0 0 auto;
+  font-size: 12px;
+}
+
 .eq-orbit-slot-label {
   margin-bottom: 4px;
   font-size: 10px;
@@ -461,10 +502,21 @@
 .eq-hero-right {
   flex: 0 0 50%;
   width: 50%;
-  display: grid;
-  grid-template-columns: 50% 50%;
+  display: flex;
   gap: 8px;
-  align-content: start;
+}
+
+/* v2.83.20 : structure a 3 colonnes EXPLICITES demandee - plus de
+   grille qui "wrap" toute seule (trop fragile, ecrasee par la media
+   query mobile dans les versions precedentes). Colonne 1 = 4
+   emplacements empiles, colonne 2 = 3 emplacements empiles, chacune
+   flex:1 (soit 25% de la largeur totale du panel, 50%/2). */
+.eq-slot-col {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
 
 .eq-orbit-slot-name.rarity-common { color: var(--rarity-common); }
@@ -482,18 +534,16 @@
 }
 
 .eq-bag-panel {
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 14px;
-  border: 2px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
   overflow-anchor: none;
-  background: var(--nb-cream-alt);
-  box-shadow: var(--nb-shadow-card);
-  max-height: 360px;
-  overflow-y: auto;
-  overflow-x: hidden;
+}
+
+/* v2.83.33 : le titre "Sac (X/50)" utilise .panel-title, dont la
+   couleur globale (--text, quasi blanc) est pensée pour le HUD sur
+   fond de monde sombre — invisible ici sur le fond parchemin clair.
+   Recolorée en noir/encre localement, sans toucher à la règle
+   globale (qui reste correcte pour le HUD). */
+.eq-bag-panel .panel-title {
+  color: var(--nb-ink);
 }
 
 .auto-sell-toggle-row {
@@ -567,6 +617,147 @@
   margin-bottom: 0;
   padding: 10px 12px;
   font-size: 12px;
+}
+
+/* =========================
+   v2.83.31 : barre d'outils compacte du sac (⇅ Trier / ⚙) — remplace
+   .equip-toolbar + .auto-sell-toggle-row en pleine largeur ci-dessus
+   (classes conservées, encore utilisées ailleurs/dans le panneau de
+   réglages).
+   ========================= */
+.inv-toolbar {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.inv-toolbar-sort-wrap {
+  position: relative;
+  flex: 1 1 auto;
+}
+
+.inv-toolbar-btn {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: var(--nb-radius-sm);
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inv-toolbar-btn:active {
+  transform: scale(0.98);
+}
+
+/* Le bouton ⚙ n'a pas besoin de flex:1 1 auto (juste assez large
+   pour l'icône) — .inv-toolbar-sort-wrap prend le reste. */
+.inv-toolbar > .inv-toolbar-btn {
+  width: auto;
+  min-width: 44px;
+  flex: 0 0 auto;
+}
+
+.inv-sort-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--nb-radius-sm);
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream);
+  box-shadow: var(--nb-shadow-card);
+  overflow: hidden;
+}
+
+.inv-sort-menu button {
+  padding: 10px 12px;
+  border: none;
+  border-bottom: 1px solid var(--nb-frame-light);
+  background: none;
+  color: var(--nb-ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inv-sort-menu button:last-child {
+  border-bottom: none;
+}
+
+.inv-sort-menu button:active {
+  background: var(--nb-cream-alt);
+}
+
+/* Panneau de réglages (overlay #full-menu-root) */
+.inv-threshold-label {
+  margin-top: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-ink-dim);
+  text-align: left;
+}
+
+.inv-threshold-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.inv-threshold-pill {
+  flex: 1 1 auto;
+  padding: 8px 6px;
+  border-radius: 999px;
+  border: 2px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.inv-threshold-pill.rarity-common { border-color: var(--rarity-common); }
+.inv-threshold-pill.rarity-green { border-color: var(--rarity-green); }
+.inv-threshold-pill.rarity-rare { border-color: var(--rarity-rare); }
+.inv-threshold-pill.rarity-epic { border-color: var(--rarity-epic); }
+.inv-threshold-pill.rarity-legendary { border-color: var(--rarity-legendary); }
+
+.inv-threshold-pill.is-active {
+  background: var(--nb-gold);
+  color: #241a00;
+  border-color: var(--nb-gold-dark);
+}
+
+.inv-threshold-hint {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--nb-ink-dim);
+  text-align: left;
+}
+
+.inv-sell-all-btn {
+  width: 100%;
+  margin-top: 18px;
+  padding: 10px 12px;
+  border-radius: var(--nb-radius-sm);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  background: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inv-sell-all-btn:active {
+  background: rgba(220, 38, 38, 0.16);
 }
 
 .eq-bag-grid {
@@ -688,24 +879,83 @@
   color: var(--nb-ink-dim);
 }
 
+/* =========================
+   v2.83.29 : grille 3 colonnes + panneau de détail pour l'Inventaire
+   (même principe que l'onglet Équipement) — remplace l'ancienne liste
+   .eq-bag-grid/.eq-bag-item (conservées telles quelles pour
+   compatibilité, plus utilisées).
+   ========================= */
+.eq-bag-flex {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.eq-bag-inv-grid {
+  flex: 0 0 50%;
+  width: 50%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  align-content: start;
+}
+
+.eq-bag-tile {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 2px;
+  border-radius: 10px;
+  border: 2px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.eq-bag-tile:active {
+  transform: scale(0.97);
+}
+
+.eq-bag-tile.is-selected {
+  border-color: var(--nb-gold-dark);
+  border-width: 3px;
+  box-shadow: 0 0 0 2px rgba(194, 127, 31, 0.25);
+}
+
+.eq-bag-tile.rarity-common { border-color: var(--rarity-common); }
+.eq-bag-tile.rarity-green { border-color: var(--rarity-green); }
+.eq-bag-tile.rarity-rare { border-color: var(--rarity-rare); }
+.eq-bag-tile.rarity-epic { border-color: var(--rarity-epic); }
+.eq-bag-tile.rarity-legendary {
+  border-color: var(--rarity-legendary);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+}
+
+.eq-bag-tile.is-selected.rarity-common,
+.eq-bag-tile.is-selected.rarity-green,
+.eq-bag-tile.is-selected.rarity-rare,
+.eq-bag-tile.is-selected.rarity-epic,
+.eq-bag-tile.is-selected.rarity-legendary {
+  border-width: 3px;
+  box-shadow: 0 0 0 2px rgba(194, 127, 31, 0.35);
+}
+
+.eq-bag-tile-icon {
+  width: 88%;
+  height: 88%;
+  font-size: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* === Responsive === */
 
 @media (max-width: 640px) {
   .eq-hero-card {
     padding: 12px;
-  }
-
-  .eq-hero-main {
-    flex-direction: column;
-  }
-
-  .eq-hero-left {
-    width: 100%;
-    flex: 0 0 auto;
-  }
-
-  .eq-hero-right {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 
   .eq-bag-grid {

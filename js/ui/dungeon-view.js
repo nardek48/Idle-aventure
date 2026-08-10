@@ -33,7 +33,7 @@ restants apparaît aussi dans la fenêtre "Entrer" d'un palier.
 ============================================================ */
 
 var activeDungeonSubTab = "tiers"; // "tiers" | "shop"
-var expandedDungeonId = (window.DUNGEONS && DUNGEONS[0]) ? DUNGEONS[0].id : null;
+var expandedDungeonId = null; // v2.83.30 : replié par défaut (demande explicite — on veut voir la liste complète des donjons directement)
 
 function setDungeonSubTab(tab) {
   activeDungeonSubTab = (tab === "shop") ? "shop" : "tiers";
@@ -166,7 +166,7 @@ function buildDungeonLobbyHTML() {
 
   if (activeDungeonSubTab === "shop") {
     h += buildDungeonShopHTML();
-    return h;
+    return '<div class="nb-page-frame nb-page-frame-fill">' + h + '</div>'; // v2.83.28
   }
 
   h += buildDungeonTicketBadgeHTML();
@@ -177,7 +177,7 @@ function buildDungeonLobbyHTML() {
   });
   h += '</div>';
 
-  return h;
+  return '<div class="nb-page-frame nb-page-frame-fill">' + h + '</div>'; // v2.83.28
 }
 
 /* Boutique exclusive du donjon (voir DUNGEON_SHOP dans data/dungeon.js) :

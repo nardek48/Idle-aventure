@@ -13,6 +13,14 @@ var CODEX_CATEGORY_LABELS = {
   system: "Le Cycle"
 };
 
+var expandedCodexCategory = null; // v2.83.37 : accordéon replié par défaut
+
+function toggleCodexCategory(cat) {
+  expandedCodexCategory = (expandedCodexCategory === cat) ? null : cat;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.toggleCodexCategory = toggleCodexCategory;
+
 function selectCodexEntry(id) {
   var entry = CodexManager.getById(id);
   if (!entry || !CodexManager.isUnlocked(entry)) return showToast("Pas encore découvert", 1200);
@@ -69,6 +77,18 @@ function buildCodexListItemHTML(entry) {
   return h;
 }
 
+/* En-tête cliquable d'une section (accordéon) — nom de catégorie +
+   compteur "X/Y découvertes". */
+function buildCodexCategoryHeaderHTML(cat, items, isExpanded) {
+  var unlockedInCat = items.filter(function (e) { return CodexManager.isUnlocked(e); }).length;
+  var h = '<button type="button" class="nb-accordion-head' + (isExpanded ? ' is-expanded' : '') + '" onclick="toggleCodexCategory(\'' + esc(cat) + '\')">';
+  h += '<span class="nb-accordion-name">' + esc(CODEX_CATEGORY_LABELS[cat] || cat) + '</span>';
+  h += '<span class="nb-accordion-count">' + unlockedInCat + ' / ' + items.length + '</span>';
+  h += '<span class="nb-accordion-chevron">' + (isExpanded ? "▲" : "▼") + '</span>';
+  h += '</button>';
+  return h;
+}
+
 function buildCodexListHTML() {
   var categories = ["intro", "world", "system"];
   var h = '';
@@ -77,10 +97,18 @@ function buildCodexListHTML() {
     var items = (CODEX_ENTRIES || []).filter(function (e) { return e.category === cat; });
     if (!items.length) return;
 
-    h += '<div class="nb-entry-category-label">' + esc(CODEX_CATEGORY_LABELS[cat] || cat) + '</div>';
-    items.forEach(function (entry) {
-      h += buildCodexListItemHTML(entry);
-    });
+    var isExpanded = expandedCodexCategory === cat;
+
+    h += '<div class="nb-accordion-section' + (isExpanded ? ' is-expanded' : '') + '">';
+    h += buildCodexCategoryHeaderHTML(cat, items, isExpanded);
+    if (isExpanded) {
+      h += '<div class="nb-accordion-body">';
+      items.forEach(function (entry) {
+        h += buildCodexListItemHTML(entry);
+      });
+      h += '</div>';
+    }
+    h += '</div>';
   });
 
   return h;
@@ -99,7 +127,7 @@ function buildCodexHTML() {
     h += buildCodexListHTML();
   }
 
-  return h;
+  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
 window.buildCodexHTML = buildCodexHTML;

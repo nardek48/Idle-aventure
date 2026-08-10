@@ -55,7 +55,7 @@ function buildAscensionHTML() {
 
   if (typeof AETHER_SHOP === "undefined" || !Array.isArray(AETHER_SHOP) || !AETHER_SHOP.length) {
     h += `<div class="ascension-conditions">Aucune amélioration d’Aether disponible.</div>`;
-    return h;
+    return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
   }
 
   AETHER_SHOP.forEach(function (u) {
@@ -91,7 +91,7 @@ function buildAscensionHTML() {
     </div>`;
   });
 
-  return h;
+  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
 window.buildAscensionHTML = buildAscensionHTML;

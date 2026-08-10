@@ -762,3 +762,94 @@ button.nb-entry-card {
     transition: none;
   }
 }
+
+/* =========================
+   v2.83.27 : cadre de page générique (fond parchemin bordé,
+   images/Borders/ecrantext2.png) — À UTILISER pour le conteneur
+   PRINCIPAL d'un écran (le grand cadre qui remplit la zone sous le
+   titre), PAS pour les petites cartes imbriquées à l'intérieur (une
+   carte de quête, un item de Bestiaire, etc. gardent leurs propres
+   styles .panel-card/.nb-purchase-card/.nb-entry-card). Ne pas non
+   plus l'utiliser sur un écran qui a déjà son propre fond plein écran
+   (Combat, Donjon en tentative, Carte du monde).
+
+   .nb-page-frame       : le cadre lui-même, hauteur = son contenu.
+   .nb-page-frame-fill  : variante qui s'étire jusqu'en bas de son
+                          conteneur parent flex (utile dans un
+                          .subtab-page-content qui doit remplir tout
+                          l'espace scrollable disponible).
+   ========================= */
+.nb-page-frame {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 14px 12px 20px;
+  border-radius: var(--nb-radius-md);
+  background: url('../images/Borders/ecrantext2.png') center / 100% 100% no-repeat;
+  box-sizing: border-box;
+}
+
+.nb-page-frame-fill {
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+
+/* =========================
+   v2.83.37 : section en accordéon générique (repliée par défaut,
+   compteur dans l'en-tête) — utilisée par Hauts faits, Codex,
+   Bestiaire. Introduite pour les Hauts faits sous le nom
+   .achievement-category*, généralisée ici sans changement de
+   comportement ni de style.
+   ========================= */
+.nb-accordion-section {
+  margin-bottom: 8px;
+  border-radius: var(--nb-radius-md);
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  overflow: hidden;
+}
+
+.nb-accordion-section.is-expanded {
+  border-color: var(--nb-gold-dark);
+}
+
+.nb-accordion-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.nb-accordion-name {
+  flex: 1 1 auto;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.nb-accordion-count {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-gold-dark);
+}
+
+.nb-accordion-chevron {
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: var(--nb-ink-dim);
+}
+
+.nb-accordion-body {
+  padding: 0 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

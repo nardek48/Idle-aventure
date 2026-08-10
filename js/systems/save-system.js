@@ -216,6 +216,7 @@ function buildSaveData() {
     healingPotionsOwned: game.healingPotionsOwned || {},
     lastHealUse: Number(game.lastHealUse || 0),
     autoSellEquipment: !!game.autoSellEquipment,
+    autoSellRarityThreshold: game.autoSellRarityThreshold || "common",
     lastSpecialUse: Number(game.lastSpecialUse || 0),
     specialBuffExpires: Number(game.specialBuffExpires || 0),
     specialBuffPct: Number(game.specialBuffPct || 0),
@@ -345,6 +346,7 @@ function restoreBaseState(d) {
   game.healingPotionsOwned = d.healingPotionsOwned && typeof d.healingPotionsOwned === "object" ? d.healingPotionsOwned : {};
   game.lastHealUse = Number(d.lastHealUse || 0);
   game.autoSellEquipment = !!d.autoSellEquipment;
+  game.autoSellRarityThreshold = (typeof d.autoSellRarityThreshold === "string") ? d.autoSellRarityThreshold : "common";
   game.lastSpecialUse = Number(d.lastSpecialUse || 0);
   game.specialBuffExpires = Number(d.specialBuffExpires || 0);
   game.specialBuffPct = Number(d.specialBuffPct || 0);
@@ -450,6 +452,7 @@ function hardResetState() {
   var keptEquipShopManualRefreshCount = Number(game.equipShopManualRefreshCount || 0);
   var keptVillage = Object.assign({ goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0, watchtower: 0, sanctuary: 0 }, game.village || {});
   var keptAutoSellEquipment = !!game.autoSellEquipment;
+  var keptAutoSellRarityThreshold = game.autoSellRarityThreshold || "common";
   var keptHasSeenOnboarding = !!game.hasSeenOnboarding;
 
   game.gold = 0;
@@ -533,6 +536,7 @@ function hardResetState() {
   game.defenseBuffExpires = 0;
 
   game.autoSellEquipment = keptAutoSellEquipment;
+  game.autoSellRarityThreshold = keptAutoSellRarityThreshold;
   game.hasSeenOnboarding = keptHasSeenOnboarding;
 
   WorldManager.worldIndex = 0;
@@ -653,6 +657,7 @@ function fullResetState() {
   game.defenseBuffExpires = 0;
 
   game.autoSellEquipment = false;
+  game.autoSellRarityThreshold = "common";
   game.hasSeenOnboarding = false;
 
   WorldManager.worldIndex = 0;

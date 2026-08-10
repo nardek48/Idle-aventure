@@ -110,7 +110,7 @@ const HEALING_POTIONS_DB = [
     id: "potion_soin_majeur",
     name: "Potion de soin majeur",
     icon: "images/Icons/potions/potion_soin_majeur_icone.png",
-    healPercent: 0.60, 
+    healPercent: 0.60,
     cost: 3000
   }
 ];

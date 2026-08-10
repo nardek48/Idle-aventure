@@ -112,7 +112,8 @@ function createInitialGameState() {
     healingPotionsOwned: {},   // { idPotionSoin: quantité en stock }, voir systems/potion-system.js
     lastHealUse: 0,             // timestamp du dernier usage (cooldown commun)
 
-    autoSellEquipment: false,   // v2.26 : autovente du butin de rareté inférieure à l'équipé
+    autoSellEquipment: false,   // v2.26 : autovente du butin ≤ au seuil de rareté choisi
+    autoSellRarityThreshold: "common", // v2.83.31 : seuil réglable (voir addDropToInventory)
 
     lastSpecialUse: 0,          // voir systems/special-attack-system.js
     specialBuffExpires: 0,
@@ -241,6 +242,9 @@ function ensureGameStateDefaults() {
   if (typeof game.lastHealUse !== "number") game.lastHealUse = 0;
 
   if (typeof game.autoSellEquipment !== "boolean") game.autoSellEquipment = false;
+  if (typeof game.autoSellRarityThreshold !== "string" || (typeof RARITY_ORDER !== "undefined" && RARITY_ORDER.indexOf(game.autoSellRarityThreshold) === -1)) {
+    game.autoSellRarityThreshold = "common";
+  }
 
   if (typeof game.lastSpecialUse !== "number") game.lastSpecialUse = 0;
   if (typeof game.specialBuffExpires !== "number") game.specialBuffExpires = 0;

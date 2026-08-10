@@ -10,8 +10,15 @@
   margin-bottom: 12px;
 }
 
+/* v2.83.36 : catégories en accordéon (repliées par défaut), avec un
+   compteur "X/Y réclamés" par section — voir
+   buildAchievementCategoryHeaderHTML. */
 /* v2.82 : la carte de détail sticky + la grille par catégorie ont
    été retirées d'ici — chaque haut fait affiche maintenant sa carte
    complète directement dans la liste, avec le composant partagé
    ".nb-entry-card" (voir css/00-components.css et
-   ui/achievement-view.js). */
+   ui/achievement-view.js).
+   v2.83.37 : les classes d'accordéon par section (.achievement-
+   category*) ont déménagé vers css/00-components.css sous des noms
+   génériques (.nb-accordion-section*), partagées avec Codex et
+   Bestiaire. */

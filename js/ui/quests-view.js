@@ -93,7 +93,7 @@ function buildQuestsHTML() {
 
   if (!game.quests || !game.quests.length) {
     h += '<div class="eq-empty">Aucune quête active.</div>';
-    return h;
+    return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
   }
 
   h += '<div class="quest-list">';
@@ -126,7 +126,7 @@ function buildQuestsHTML() {
   });
   h += '</div>';
 
-  return h;
+  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
 window.updateQuestBadge = updateQuestBadge;

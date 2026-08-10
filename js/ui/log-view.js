@@ -18,7 +18,7 @@ function buildLogHTML() {
   }
 
   h += '</div>';
-  return h;
+  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
 window.buildLogHTML = buildLogHTML;

@@ -442,10 +442,9 @@
   overflow-y: auto;
   overflow-x: hidden;
 
-  background: url('../images/Borders/ecrantext2.png') center / 100% 100% no-repeat;
-
   padding: 6px 6px 16px; /* haut, côtés, bas */
   margin-bottom: 14px;
+  box-sizing: border-box;
 }
 
 .pc-heros-train-toolbar .settings-btn {

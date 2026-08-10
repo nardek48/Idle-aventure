@@ -187,7 +187,7 @@ h += '</div>';   // /pc-info-wrapper
   // ===== Carrousel de sélection de héros =====
   h += buildHeroCarouselHTML();
 
-  return h;
+  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
 /* ============================================================
@@ -218,7 +218,7 @@ function buildHerosAmeliorationHTML() {
   var h = '';
 
   // === Conteneur global de la section Héro / Améliorations ===
-  h += '<div class="pc-heros-train-section">';
+  h += '<div class="pc-heros-train-section nb-page-frame">';
     // --- Toolbar de mode d’achat (x1, x10, x25, MAX) ---
     h += '<div class="pc-heros-train-toolbar">';
       h += '<div class="shop-buy-toolbar">';
@@ -264,7 +264,7 @@ function buildHerosStatsHTML() {
   // Ajout des statistiques cumulées sous les capacités
   h += buildHerosCumulativeStatsHTML();
 
-  return h;
+  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
 function buildHerosCumulativeStatsHTML() {

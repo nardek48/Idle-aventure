@@ -217,6 +217,7 @@ var DungeonManager = {
     game.dungeonRun = { active: true, wave: 0, tierId: tier.id, shardsEarned: 0 };
     if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
     game.dungeonTiersEntered[tier.id] = true;
+    game.heroHp = game.heroMaxHp || 1; // v2.83.30 : PV pleins à l'entrée d'un donjon (demande explicite)
     addLog("🏰 Entrée dans " + tier.name + " !", "event");
     this.applyDungeonTheme(tier.id);
     this.spawnWave(1);

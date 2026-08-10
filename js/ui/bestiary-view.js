@@ -75,6 +75,8 @@ function getAllBestiaryIds() {
   return Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB));
 }
 
+var expandedBestiaryWorld = null; // v2.83.37 : accordéon replié par défaut
+
 function buildBestiaryEntryCardHTML(id) {
   var isBoss = !!BOSS_DB[id];
   var data = isBoss ? BOSS_DB[id] : ENEMY_DB[id];
@@ -126,19 +128,74 @@ function buildBestiaryEntryCardHTML(id) {
   return h;
 }
 
-function buildBestiaryListHTML() {
+function toggleBestiaryWorld(worldIndex) {
+  expandedBestiaryWorld = (expandedBestiaryWorld === worldIndex) ? null : worldIndex;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.toggleBestiaryWorld = toggleBestiaryWorld;
+
+/* Regroupe toutes les créatures (ennemis normaux + boss) par monde
+   d'origine — déduit via findCreatureLocation (v2.83.37), sans rien
+   ajouter aux données : { worldIndex: [id, id, ...] }, dans l'ordre
+   des mondes (WORLDS[0..n]). */
+function getBestiaryGroupedByWorld() {
   var ids = getAllBestiaryIds();
-  var h = '';
+  var groups = {};
+
   ids.forEach(function (id) {
-    h += buildBestiaryEntryCardHTML(id);
+    var isBoss = !!BOSS_DB[id];
+    var location = findCreatureLocation(id, isBoss);
+    var worldIndex = location ? location.worldIndex : 0;
+    if (!groups[worldIndex]) groups[worldIndex] = [];
+    // Boss en dernier dans sa section, ennemis normaux avant.
+    if (isBoss) groups[worldIndex].push(id); else groups[worldIndex].unshift(id);
   });
+
+  return groups;
+}
+
+/* En-tête cliquable d'une section-monde (accordéon) — nom du monde +
+   compteur "X/Y rencontrées". */
+function buildBestiaryWorldHeaderHTML(worldIndex, ids, isExpanded) {
+  var world = WORLDS[worldIndex];
+  var metCount = ids.filter(function (id) { return (game.killCounts[id] || 0) > 0; }).length;
+  var h = '<button type="button" class="nb-accordion-head' + (isExpanded ? ' is-expanded' : '') + '" onclick="toggleBestiaryWorld(' + worldIndex + ')">';
+  h += '<span class="nb-accordion-name">' + esc(world ? world.name : "Monde inconnu") + '</span>';
+  h += '<span class="nb-accordion-count">' + metCount + ' / ' + ids.length + '</span>';
+  h += '<span class="nb-accordion-chevron">' + (isExpanded ? "▲" : "▼") + '</span>';
+  h += '</button>';
+  return h;
+}
+
+function buildBestiaryListHTML() {
+  var groups = getBestiaryGroupedByWorld();
+  var h = '';
+
+  WORLDS.forEach(function (world, worldIndex) {
+    var ids = groups[worldIndex];
+    if (!ids || !ids.length) return;
+
+    var isExpanded = expandedBestiaryWorld === worldIndex;
+
+    h += '<div class="nb-accordion-section' + (isExpanded ? ' is-expanded' : '') + '">';
+    h += buildBestiaryWorldHeaderHTML(worldIndex, ids, isExpanded);
+    if (isExpanded) {
+      h += '<div class="nb-accordion-body">';
+      ids.forEach(function (id) {
+        h += buildBestiaryEntryCardHTML(id);
+      });
+      h += '</div>';
+    }
+    h += '</div>';
+  });
+
   return h;
 }
 
 function buildBestiaryHTML() {
   var h = (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("bestiary") : "";
   h += buildBestiaryListHTML();
-  return h;
+  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
 window.buildBestiaryHTML = buildBestiaryHTML;

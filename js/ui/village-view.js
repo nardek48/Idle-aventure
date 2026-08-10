@@ -113,12 +113,12 @@ function buildVillageHTML() {
     } else {
       h += '<button class="btn-buy" onclick="buyVillageUpgrade(\'' + id + '\')">Améliorer<br><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button>';
     }
-    h += '</div>';
+    h += '</div>'; // /nb-purchase-buy-col
 
-    h += '</div>';
+    h += '</div>'; // /nb-purchase-card
   });
 
-  return h;
+  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
 /* ============================================================

@@ -63,13 +63,15 @@ function addLootToInventory(item) {
   return true;
 }
 
-/* v2.26 : autovente. Si activée (game.autoSellEquipment), tout
-   nouveau BUTIN (pas les achats à l'échoppe, qui passent directement
-   par addLootToInventory) dont la rareté est INFÉRIEURE à celle de
-   l'objet déjà équipé sur le même emplacement est vendu
-   automatiquement au lieu d'encombrer le sac. Renvoie true si
-   l'objet a été traité d'une façon ou d'une autre (ajouté ou vendu),
-   false seulement si le sac est plein ET qu'il n'a pas été vendu. */
+/* v2.26 : autovente. v2.83.31 : la règle est passée d'une comparaison
+   à l'objet déjà équipé à un SEUIL DE RARETÉ réglable
+   (game.autoSellRarityThreshold) — tout nouveau BUTIN (pas les achats
+   à l'échoppe, qui passent directement par addLootToInventory) dont
+   la rareté est INFÉRIEURE OU ÉGALE au seuil choisi est vendu
+   automatiquement au lieu d'encombrer le sac, quel que soit ce qui
+   est équipé. Renvoie true si l'objet a été traité d'une façon ou
+   d'une autre (ajouté ou vendu), false seulement si le sac est plein
+   ET qu'il n'a pas été vendu. */
 function addDropToInventory(item) {
   if (!item) return false;
 
@@ -81,11 +83,11 @@ function addDropToInventory(item) {
   }
 
   if (game.autoSellEquipment) {
-    var equippedItem = game.equipped ? game.equipped[item.slot] : null;
-    var equippedRank = equippedItem ? RARITY_ORDER.indexOf(equippedItem.rarity) : -1;
+    var threshold = game.autoSellRarityThreshold || "common";
+    var thresholdRank = RARITY_ORDER.indexOf(threshold);
     var dropRank = RARITY_ORDER.indexOf(item.rarity);
 
-    if (equippedItem && dropRank < equippedRank) {
+    if (thresholdRank !== -1 && dropRank <= thresholdRank) {
       var value = getEquipmentSellValue(item);
       game.gold += value;
       addLog("💰 " + item.name + " vendu automatiquement (+" + formatNumber(value) + " or)", "event");
@@ -358,6 +360,19 @@ function toggleAutoSellEquipment() {
   saveGame();
 }
 window.toggleAutoSellEquipment = toggleAutoSellEquipment;
+
+/* v2.83.31 : seuil de rareté réglable pour l'autovente (voir
+   addDropToInventory) — remplace l'ancienne règle fixe basée sur
+   l'objet équipé. */
+function setAutoSellRarityThreshold(rarity) {
+  if (typeof RARITY_ORDER === "undefined" || RARITY_ORDER.indexOf(rarity) === -1) return;
+  game.autoSellRarityThreshold = rarity;
+  var label = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[rarity]) || rarity;
+  showToast("Seuil d\u2019autovente : " + label + " et en dessous", 1300);
+  if (typeof renderPanel === "function") renderPanel();
+  saveGame();
+}
+window.setAutoSellRarityThreshold = setAutoSellRarityThreshold;
 window.MAX_INVENTORY_SIZE = MAX_INVENTORY_SIZE;
 window.sortInventoryByRarity = function () {
   EquipmentSystem.sortInventoryByRarity();

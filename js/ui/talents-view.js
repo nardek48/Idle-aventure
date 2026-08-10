@@ -187,7 +187,7 @@ function buildTalentsHTML() {
   var h = buildActiveTalentBonusesHTML();
   h += buildTalentCategoryTabs();
   h += buildTalentBranchHTML(activeTalentCategory);
-  return h;
+  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
 window.buildTalentsHTML = buildTalentsHTML;

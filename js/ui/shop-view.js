@@ -275,6 +275,8 @@ function buildShopHTML() {
     h += '</div>';
   }
 
+  h = '<div class="nb-page-frame nb-page-frame-fill">' + h + '</div>'; // v2.83.28
+
   h += '</div>'; // fin .subtab-page-content
 
   h += '<div class="subtab-bar-wrapper">';

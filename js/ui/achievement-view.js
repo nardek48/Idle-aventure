@@ -7,7 +7,22 @@ v2.82 : passage d'une grille d'icônes + un seul détail affiché en
 dessous à une liste complète (une carte par haut fait, toutes les
 infos visibles directement), même principe que Quêtes/Bestiaire —
 voir css/00-components.css pour le composant partagé ".nb-entry-card".
+
+v2.83.36 : les catégories (Combat/Ascension/Bestiaire/Équipement/
+Donjon — déjà présentes dans les données via ACHIEVEMENTS_DB[].category
+et ACHIEVEMENT_CATEGORY_LABELS) passent en accordéon, repliées par
+défaut, avec un compteur "X/Y réclamés" par section — même principe
+que la liste de donjons (voir ui/dungeon-view.js). Rien n'est inventé
+côté données, juste un nouvel affichage sur ce qui existait déjà.
 ============================================================ */
+
+var expandedAchievementCategory = null; // repliées par défaut
+
+function toggleAchievementCategory(cat) {
+  expandedAchievementCategory = (expandedAchievementCategory === cat) ? null : cat;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.toggleAchievementCategory = toggleAchievementCategory;
 
 function formatAchievementRewardText(reward) {
   var parts = [];
@@ -50,6 +65,18 @@ function buildAchievementCardHTML(ach) {
   return h;
 }
 
+/* En-tête cliquable d'une section (accordéon) — nom de catégorie +
+   compteur "X/Y réclamés", chevron d'état. */
+function buildAchievementCategoryHeaderHTML(cat, items, isExpanded) {
+  var claimedInCat = items.filter(function (a) { return AchievementManager.isClaimed(a.id); }).length;
+  var h = '<button type="button" class="nb-accordion-head' + (isExpanded ? ' is-expanded' : '') + '" onclick="toggleAchievementCategory(\'' + esc(cat) + '\')">';
+  h += '<span class="nb-accordion-name">' + esc(ACHIEVEMENT_CATEGORY_LABELS[cat] || cat) + '</span>';
+  h += '<span class="nb-accordion-count">' + claimedInCat + ' / ' + items.length + '</span>';
+  h += '<span class="nb-accordion-chevron">' + (isExpanded ? "▲" : "▼") + '</span>';
+  h += '</button>';
+  return h;
+}
+
 function buildAchievementListHTML() {
   var h = '';
   var categories = ["combat", "ascension", "bestiary", "equipment", "dungeon"];
@@ -58,10 +85,18 @@ function buildAchievementListHTML() {
     var items = (ACHIEVEMENTS_DB || []).filter(function (a) { return a.category === cat; });
     if (!items.length) return;
 
-    h += '<div class="nb-entry-category-label">' + esc(ACHIEVEMENT_CATEGORY_LABELS[cat] || cat) + '</div>';
-    items.forEach(function (ach) {
-      h += buildAchievementCardHTML(ach);
-    });
+    var isExpanded = expandedAchievementCategory === cat;
+
+    h += '<div class="nb-accordion-section' + (isExpanded ? ' is-expanded' : '') + '">';
+    h += buildAchievementCategoryHeaderHTML(cat, items, isExpanded);
+    if (isExpanded) {
+      h += '<div class="nb-accordion-body">';
+      items.forEach(function (ach) {
+        h += buildAchievementCardHTML(ach);
+      });
+      h += '</div>';
+    }
+    h += '</div>';
   });
 
   return h;
@@ -74,7 +109,7 @@ function buildAchievementsHTML() {
   var h = '<div class="achievement-summary">' + claimedCount + ' / ' + total + ' réclamés</div>';
   h += buildAchievementListHTML();
 
-  return h;
+  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
 window.buildAchievementsHTML = buildAchievementsHTML;
