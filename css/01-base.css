@@ -7,6 +7,14 @@
   padding: 0;             /* Supprime les espacements internes par défaut */
 }
 
+/* v2.83.13 : désactive le double-tap-to-zoom sur mobile, dans tout le
+   jeu (voir touch-action ci-dessous). Le viewport a déjà
+   user-scalable=no/maximum-scale=1.0 dans index.html, mais Safari iOS
+   récent les ignore pour l'accessibilité — la vraie garantie
+   cross-navigateur est touch-action:manipulation. "manipulation"
+   autorise toujours le scroll normal (pan) et le tap simple, retire
+   seulement le double-tap-zoom et le pinch-zoom. */
+
 /* =========================
    Racine du document
    ========================= */
@@ -18,6 +26,7 @@ html {
   color: var(--text);                     /* Couleur de texte principale */
   -webkit-tap-highlight-color: transparent; /* Retire le flash bleu/gris au tap sur mobile WebKit */
   overscroll-behavior: none;              /* Empêche le rebond / scroll chaining global */
+  touch-action: manipulation;             /* Désactive le double-tap-to-zoom (et le pinch-zoom) sur tout le jeu */
 }
 
 /* =========================
@@ -42,6 +51,7 @@ body {
   display: flex;                          /* Mise en page en colonne */
   flex-direction: column;
   overflow: hidden;                       /* Bloque le scroll global, utile si une zone interne gère le scroll */
+  touch-action: manipulation;             /* v2.83.13 : désactive le double-tap-to-zoom (voir html ci-dessus) */
 
   background:
     linear-gradient(to top, rgba(0, 0, 0, 0.30), rgba(0, 0, 0, 0.10)),

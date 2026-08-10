@@ -124,6 +124,8 @@ function createInitialGameState() {
     achievementsClaimed: {},   // { idHautFait: true }, voir systems/achievement-system.js
 
     worldsEverReached: {},      // { indexMonde: true }, persiste même après ascension — voir data/codex.js
+    worldQuestProgress: {},     // v2.83 : { idQuestline: { idEtape: nombre } }, persiste même après ascension — voir systems/world-quest-system.js
+    worldQuestsCompleted: {},   // v2.83 : { idQuestline: true }, persiste même après ascension — c'est CE flag qui débloque le monde
     dungeonTiersEntered: {},    // { idPalier: true }
     codexChaosSeen: false,      // vrai dès qu'un héros du Chaos a été choisi une fois
     codexRead: {},              // { idEntree: true }, voir systems/codex-system.js
@@ -250,6 +252,14 @@ function ensureGameStateDefaults() {
   if (!game.achievementsClaimed || typeof game.achievementsClaimed !== "object") game.achievementsClaimed = {};
 
   if (!game.worldsEverReached || typeof game.worldsEverReached !== "object") game.worldsEverReached = {};
+
+  // v2.83 : questlines de déblocage des mondes — ensureDefaults() crée
+  // les compteurs manquants, migrate() rattrape les parties antérieures
+  // à v2.83 (un monde déjà atteint sous l'ancien système reste débloqué).
+  if (window.WorldQuestManager && typeof WorldQuestManager.migrate === "function") {
+    WorldQuestManager.migrate();
+  }
+
   if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
   if (typeof game.codexChaosSeen !== "boolean") game.codexChaosSeen = false;
   if (!game.codexRead || typeof game.codexRead !== "object") game.codexRead = {};

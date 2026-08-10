@@ -24,7 +24,7 @@ function buildAscensionHTML() {
   h += (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("ascension") : "";
 
   h += `<div class="prestige-section">
-    <div class="prestige-icon">🌀</div>
+    <div class="prestige-icon">${renderIconOrEmojiHTML("images/Icons/aether_icon.png", "prestige-icon-img", "Aether")}</div>
     <div class="prestige-title">Ascension</div>
     <div class="prestige-desc">
       Réinitialise la progression classique mais conserve l’Aether, les ascensions et les améliorations astrales.
@@ -70,12 +70,12 @@ function buildAscensionHTML() {
     var canBuy = !isMax && (game.aether || 0) >= cost;
 
     h += `<div class="nb-purchase-card">
-      <div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">${renderIconOrEmojiHTML(u.icon || "🌀", "nb-purchase-icon", u.name)}</div></div>
+      <div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">${renderIconOrEmojiHTML(u.icon || "images/Icons/aether_icon.png", "nb-purchase-icon", u.name)}</div></div>
 
       <div class="nb-purchase-info-col">
         <div class="nb-purchase-top" style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;">
           <div class="nb-purchase-name">${esc(u.name)}</div>
-          <div class="nb-purchase-meta" style="color:var(--aether);">🌀 ${isMax ? "MAX" : formatNumber(cost)}</div>
+          <div class="nb-purchase-meta" style="color:var(--aether);display:flex;align-items:center;gap:3px;">${renderIconOrEmojiHTML("images/Icons/aether_icon.png", "nb-purchase-cost-icon", "Aether")} ${isMax ? "MAX" : formatNumber(cost)}</div>
         </div>
 
         <div class="nb-purchase-meta">Niveau ${level} / ${maxLevel}</div>

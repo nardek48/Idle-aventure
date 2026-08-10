@@ -6,7 +6,36 @@ amulette) et le sac d'inventaire. Note : le titre du sac affiche
 "/50" comme limite mais rien dans le code n'empêche réellement de
 dépasser 50 objets (LootSystem ne vérifie pas la taille de
 l'inventaire) — purement indicatif pour l'instant.
+
+v2.83.16 : ajout du panneau de détail façon maquette — la grille de
+gauche ne montre plus que des icônes (clic = sélectionne), le détail
+de l'emplacement sélectionné (nom, stat, action) s'affiche à droite.
+Pas de bouton "Améliorer" (aucune mécanique de ce type dans le jeu) :
+remplacé par "Déséquiper", la vraie action disponible.
 ============================================================ */
+
+var activeEquipSubTab = "equipment"; // "equipment" | "inventory"
+var selectedEquipSlot = "weapon"; // slot réel ("weapon"/"armor"/"amulet") ou id verrouillé ("locked0".."locked3")
+
+function setEquipSubTab(tab) {
+  activeEquipSubTab = (tab === "inventory") ? "inventory" : "equipment";
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setEquipSubTab = setEquipSubTab;
+
+function selectEquipSlot(slotId) {
+  selectedEquipSlot = slotId;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.selectEquipSlot = selectEquipSlot;
+
+function buildEquipSubTabBarHTML() {
+  var h = '<div class="pc-subtab-bar">';
+  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "equipment" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'equipment\')">🛡️<span>Équipement</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "inventory" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'inventory\')">🎒<span>Inventaire</span></button>';
+  h += '</div>';
+  return h;
+}
 
 /* Texte lisible du bonus d'un objet, ex: "+10% dégâts". */
 function formatEquipmentStat(item) {
@@ -30,28 +59,65 @@ function getCurrentHeroForEquipmentView() {
   return null;
 }
 
-/* Un des 3 emplacements équipés (arme/armure/amulette) : vide (clic
-   sans effet, juste un toast) ou rempli (clic pour déséquiper). */
+/* Un des 3 emplacements équipés (arme/armure/amulette), version
+   "icône seule" (v2.83.16) — le détail complet (nom, stat, action)
+   est maintenant dans le panneau de droite, voir
+   buildEquipDetailPanelHTML. Cliquer sélectionne l'emplacement,
+   qu'il soit rempli ou vide. */
 function buildEquipmentSlot(slot, label, icon) {
   var item = game.equipped[slot];
-  var h = '<button class="eq-orbit-slot ' + (item ? 'filled' : 'empty') + '" onclick="' +
-    (item
-      ? "EquipmentManager.unequip('" + slot + "')"
-      : "showToast('Aucun objet équipé', 900)") +
-    '">';
+  var isSelected = selectedEquipSlot === slot;
+  var h = '<button class="eq-orbit-slot ' + (item ? 'filled' : 'empty') + (isSelected ? ' is-selected' : '') + '" onclick="selectEquipSlot(\'' + esc(slot) + '\')" aria-label="' + esc(label) + '">';
+  h += item
+    ? buildEquipmentIconHTML(item, "eq-orbit-slot-icon")
+    : '<div class="eq-orbit-slot-icon eq-orbit-slot-placeholder">' + esc(icon) + '</div>';
+  h += '</button>';
+  return h;
+}
 
-  h += '<div class="eq-orbit-slot-label">' + esc(label) + '</div>';
+/* Emplacement RÉSERVÉ pour un futur type d'objet (casque, anneau,
+   bottes...) — pas encore défini côté données, donc pas de nom
+   inventé : juste un cadenas générique. Cliquable (contrairement à
+   v2.83.15) pour afficher l'explication dans le panneau de droite,
+   mais aucune action réelle possible tant que le type n'existe pas. */
+function buildLockedEquipmentSlot(slotId) {
+  var isSelected = selectedEquipSlot === slotId;
+  var h = '<button class="eq-orbit-slot locked' + (isSelected ? ' is-selected' : '') + '" onclick="selectEquipSlot(\'' + esc(slotId) + '\')" aria-label="Emplacement à venir">';
+  h += '<div class="eq-orbit-slot-icon eq-orbit-slot-placeholder">🔒</div>';
+  h += '</button>';
+  return h;
+}
 
-  if (item) {
-    h += buildEquipmentIconHTML(item, "eq-orbit-slot-icon");
-    h += '<div class="eq-orbit-slot-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
-    h += '<div class="eq-orbit-slot-stat">' + esc(formatEquipmentStat(item)) + '</div>';
+/* Panneau de détail (colonne de droite) — reflète l'emplacement
+   actuellement sélectionné dans la grille de gauche. 3 états
+   possibles : objet équipé (icône + nom + stat + bouton Déséquiper),
+   emplacement réel vide (juste une invite vers l'Inventaire), ou
+   emplacement verrouillé (explication, aucune action). */
+function buildEquipDetailPanelHTML() {
+  var realSlots = { weapon: "Arme", armor: "Armure", amulet: "Amulette" };
+  var h = '<div class="eq-detail-panel">';
+
+  if (realSlots[selectedEquipSlot]) {
+    var slot = selectedEquipSlot;
+    var item = game.equipped[slot];
+
+    if (item) {
+      h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img") + '</div>';
+      h += '<div class="eq-detail-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
+      h += '<div class="eq-detail-stat">' + esc(formatEquipmentStat(item)) + '</div>';
+      h += '<button class="settings-btn danger eq-detail-action" type="button" onclick="EquipmentManager.unequip(\'' + esc(slot) + '\')">Déséquiper</button>';
+    } else {
+      h += '<div class="eq-detail-icon eq-detail-icon-empty">' + esc(realSlots[slot] === "Arme" ? "⚔️" : realSlots[slot] === "Armure" ? "🛡️" : "💍") + '</div>';
+      h += '<div class="eq-detail-name">' + esc(realSlots[slot]) + ' — Vide</div>';
+      h += '<div class="eq-detail-hint">Équipe un objet depuis l\u2019Inventaire pour remplir cet emplacement.</div>';
+    }
   } else {
-    h += '<div class="eq-orbit-slot-icon eq-orbit-slot-placeholder">' + esc(icon) + '</div>';
-    h += '<div class="eq-orbit-slot-empty">Vide</div>';
+    h += '<div class="eq-detail-icon eq-detail-icon-empty">🔒</div>';
+    h += '<div class="eq-detail-name">Emplacement à venir</div>';
+    h += '<div class="eq-detail-hint">Ce type d\u2019objet n\u2019existe pas encore dans le jeu — réservé pour une future mise à jour.</div>';
   }
 
-  h += '</button>';
+  h += '</div>';
   return h;
 }
 
@@ -69,13 +135,11 @@ function buildInventoryTile(item) {
   return h;
 }
 
-/* Assemble l'écran entier : bandeau de bonus de set (actif ou non),
-   carte héros avec les 3 emplacements, puis le sac avec ses outils
-   de tri/vente rapide. */
-function buildEquipHTML() {
+/* Contenu du sous-onglet "Équipement" : bandeau de bonus de set +
+   les 3 emplacements réels + emplacements verrouillés réservés pour
+   de futurs types d'objets. */
+function buildEquipmentTabContentHTML() {
   var setBonus = EquipmentManager.getSetBonus();
-  var inventory = Array.isArray(game.inventory) ? game.inventory : [];
-
   var h = '';
 
   if (setBonus && setBonus.config) {
@@ -99,6 +163,8 @@ function buildEquipHTML() {
   // v2.24 : le portrait/nom/niveau/mini-stats du héros a été retiré
   // d'ici (doublon exact de l'écran Personnage) — cet écran ne
   // montre plus que ce qui concerne l'ÉQUIPEMENT lui-même.
+  // v2.83.16 : grille d'icônes (gauche) + panneau de détail (droite),
+  // façon maquette — voir buildEquipDetailPanelHTML.
   h += '<div class="eq-layout">';
   h += '<div class="eq-hero-card">';
   h += '<div class="eq-hero-main eq-hero-main-slots-only">';
@@ -107,12 +173,30 @@ function buildEquipHTML() {
   h += buildEquipmentSlot("weapon", "Arme", "⚔️");
   h += buildEquipmentSlot("armor", "Armure", "🛡️");
   h += buildEquipmentSlot("amulet", "Amulette", "💍");
+  // Emplacements réservés pour de futurs types d'objets (pas encore
+  // définis — voir buildLockedEquipmentSlot). 4 pour matcher la
+  // maquette (7 emplacements au total), à ajuster une fois les vrais
+  // types décidés.
+  h += buildLockedEquipmentSlot("locked0");
+  h += buildLockedEquipmentSlot("locked1");
+  h += buildLockedEquipmentSlot("locked2");
+  h += buildLockedEquipmentSlot("locked3");
   h += '</div>';
+
+  h += buildEquipDetailPanelHTML();
 
   h += '</div>';
   h += '</div>';
+  h += '</div>';
 
-  h += '<div class="eq-bag-panel">';
+  return h;
+}
+
+/* Contenu du sous-onglet "Inventaire" : bascule d'autovente, outils
+   de tri/vente rapide, puis la grille du sac. */
+function buildInventoryTabContentHTML() {
+  var inventory = Array.isArray(game.inventory) ? game.inventory : [];
+  var h = '<div class="eq-bag-panel">';
 
   h += '<div class="auto-sell-toggle-row">';
   h += '<button class="auto-sell-toggle' + (game.autoSellEquipment ? ' is-on' : '') + '" type="button" onclick="toggleAutoSellEquipment()">';
@@ -141,8 +225,24 @@ function buildEquipHTML() {
   }
 
   h += '</div>';
+  return h;
+}
+
+/* Assemble l'écran entier — 2 sous-onglets (Équipement/Inventaire),
+   même pattern que Personnage/Donjon/Boutique (voir
+   css/00-components.css : .subtab-page/-content/-bar-wrapper +
+   .pc-subtab-bar/.pc-subtab-btn). */
+function buildEquipHTML() {
+  var h = '<div class="subtab-page">';
+  h += '<div class="subtab-page-content">';
+  h += (activeEquipSubTab === "inventory") ? buildInventoryTabContentHTML() : buildEquipmentTabContentHTML();
   h += '</div>';
 
+  h += '<div class="subtab-bar-wrapper">';
+  h += buildEquipSubTabBarHTML();
+  h += '</div>';
+
+  h += '</div>';
   return h;
 }
 

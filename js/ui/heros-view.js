@@ -297,10 +297,10 @@ function buildHerosSubTabBarHTML() {
 }
 
 function buildHerosHTML() {
-  var h = '<div class="pc-heros-panel">';
+  var h = '<div class="subtab-page">';
 
   // zone principale scrollable
-  h += '<div class="pc-heros-content">';
+  h += '<div class="subtab-page-content">';
 
   if (activeHerosSubTab === "amelioration") {
     h += buildHerosAmeliorationHTML();
@@ -310,14 +310,14 @@ function buildHerosHTML() {
     h += buildHeroFicheHTML();
   }
 
-  h += '</div>'; // fin .pc-heros-content
+  h += '</div>'; // fin .subtab-page-content
 
   // barre de sous-onglets fixée en bas
-  h += '<div class="pc-heros-subtab-bar-wrapper">';
+  h += '<div class="subtab-bar-wrapper">';
   h +=   buildHerosSubTabBarHTML();
   h += '</div>';
 
-  h += '</div>'; // fin .pc-heros-panel
+  h += '</div>'; // fin .subtab-page
 
   return h;
 }

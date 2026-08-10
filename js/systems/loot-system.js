@@ -21,11 +21,24 @@ function cloneItem(template, slot) {
 }
 
 /* Renvoie la liste des raretés actuellement tirables, selon le monde en
-   cours. En plein cycle (le joueur a déjà bouclé tous les mondes une fois
-   sans ascensionner), toutes les raretés sont débloquées dès le monde 0. */
+   cours. En plein cycle (le joueur a bouclé tous les mondes une fois
+   sans ascensionner), toutes les raretés sont débloquées dès le monde 0
+   — mais SEULEMENT si la questline de la Tour est terminée (v2.83.1).
+
+   Avant le système de questlines (v2.83), "cycleCount > 0" impliquait
+   forcément d'avoir fait beaucoup d'ascensions (seul moyen d'atteindre
+   la Tour), donc ce déblocage anticipé était implicitement réservé aux
+   joueurs très avancés. Depuis que les mondes se débloquent par
+   questline indépendamment de l'ascension, un joueur pouvait boucler
+   un cycle sans avoir ascensionné une seule fois et se retrouver à
+   looter du Légendaire dès la Forêt avec un perso encore très faible.
+   On re-conditionne donc explicitement à la questline de la Tour
+   (voir data/world-quests.js / WorldQuestManager), qui reste le signe
+   fiable d'avoir vraiment fini le contenu, peu importe l'ascension. */
 function getAllowedRarities() {
   var worldIndex = (window.WorldManager && WorldManager.worldIndex) || 0;
-  var isCycling = (game.cycleCount || 0) > 0;
+  var towerQuestDone = !!(window.WorldQuestManager && WorldQuestManager.isWorldUnlocked(5));
+  var isCycling = (game.cycleCount || 0) > 0 && towerQuestDone;
   var maxTier = WORLD_RARITY_UNLOCKS.length - 1;
   var tierIndex = isCycling ? maxTier : Math.min(Math.max(0, worldIndex), maxTier);
   return WORLD_RARITY_UNLOCKS[tierIndex] || ["common"];

@@ -308,7 +308,11 @@ var CombatEngine = {
       if (game.talents.t_vital_anchor) essenceGain = Math.ceil(essenceGain * 1.12);
     }
 
-    // Volonté tenace : +10% or/essence dans les mondes verrouillés (nécessitant une ascension)
+    // Volonté tenace : +10% or/essence dans les mondes autrefois verrouillés
+    // par ascension (Ruines/Crypte/Montagne/Tour). v2.83 : le déblocage
+    // réel passe désormais par une questline (data/world-quests.js), mais
+    // requiredAscension reste un marqueur fiable de "monde avancé" pour
+    // ce talent — pas besoin de le faire dépendre de WorldQuestManager.
     var currentWorld = (window.WORLDS && window.WorldManager) ? WORLDS[WorldManager.worldIndex] : null;
     var isDifficultWorld = !!(currentWorld && (currentWorld.requiredAscension || 0) > 0);
     if (game.talents.t_tenacious_will && isDifficultWorld) {
@@ -387,6 +391,14 @@ var CombatEngine = {
       return;
     }
 
+    // v2.83 : progression des questlines de déblocage de monde (voir
+    // data/world-quests.js) — uniquement en combat classique, jamais
+    // en donjon (return plus haut avant d'arriver ici).
+    if (window.WorldQuestManager && currentWorld) {
+      if (enemy.isBoss) WorldQuestManager.trackBossKill(enemy.id);
+      else WorldQuestManager.trackKill(currentWorld.id);
+    }
+
     var result = null;
     if (window.WorldManager && typeof WorldManager.advance === "function") result = WorldManager.advance();
 
@@ -400,8 +412,8 @@ var CombatEngine = {
       addLog("Le cycle recommence, les ennemis deviennent plus forts.", "zone");
       if (typeof openCycleSummary === "function") openCycleSummary();
     } else if (result && result.type === "locked") {
-      addLog("🔒 " + result.world.name + " est verrouillé (" + result.world.requiredAscension + " ascension(s) requise(s)). Le cycle recommence.", "zone");
-      showToast("🔒 Ascensionne pour débloquer " + result.world.name, 2200);
+      addLog("🔒 " + result.world.name + " est verrouillé (questline de déblocage incomplète, voir Carte). Le cycle recommence.", "zone");
+      showToast("🔒 Termine la questline pour débloquer " + result.world.name, 2200);
       if (typeof openCycleSummary === "function") openCycleSummary(result.world);
     }
 

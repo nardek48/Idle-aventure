@@ -36,7 +36,7 @@ function buildCodexReadingHTML(id) {
 
   var h = '<button class="codex-back-btn" type="button" onclick="closeCodexReading()">← Retour au Codex</button>';
   h += '<div class="codex-reading-card">';
-  h += '<div class="codex-reading-icon">' + esc(entry.icon) + '</div>';
+  h += '<div class="codex-reading-icon">' + renderIconOrEmojiHTML(entry.icon, "codex-reading-icon-img", entry.title) + '</div>';
   h += '<div class="codex-reading-title">' + esc(entry.title) + '</div>';
   paragraphs.forEach(function (para) {
     h += '<p class="codex-reading-para">' + esc(para) + '</p>';
@@ -51,7 +51,7 @@ function buildCodexListItemHTML(entry) {
   var read = CodexManager.isRead(entry.id);
 
   var h = '<button type="button" class="nb-entry-card' + (!unlocked ? ' is-locked' : '') + '" onclick="selectCodexEntry(\'' + esc(entry.id) + '\')">';
-  h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame"><span class="nb-entry-icon-emoji">' + (unlocked ? esc(entry.icon) : '🔒') + '</span></div></div>';
+  h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame"><span class="nb-entry-icon-emoji">' + (unlocked ? renderIconOrEmojiHTML(entry.icon, "nb-entry-icon-img", entry.title) : '🔒') + '</span></div></div>';
   h += '<div class="nb-entry-info-col">';
   h += '<div class="nb-entry-name">' + (unlocked ? esc(entry.title) : '???') + '</div>';
   h += '<div class="nb-entry-desc">' + (unlocked ? (read ? 'Déjà lu.' : 'Nouvelle entrée à découvrir.') : 'Pas encore découvert.') + '</div>';

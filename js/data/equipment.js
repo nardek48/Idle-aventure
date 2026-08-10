@@ -45,7 +45,7 @@ var RARITY_DROP_RATES = {
    Si le joueur est en plein cycle (a déjà bouclé tous les mondes une fois),
    toutes les raretés sont disponibles dès le premier monde. */
 var WORLD_RARITY_UNLOCKS = [
-  ["common"],                                        // Forêt (monde 0)
+  ["common", "green"],                                // Forêt (monde 0) — v2.83.2 : ajout Inhabituel (était [common] seul)
   ["common", "green"],                                // Désert (monde 1)
   ["common", "green", "rare"],                        // Ruines (monde 2)
   ["common", "green", "rare", "epic"],                // Crypte (monde 3)

@@ -47,17 +47,74 @@ function isWorldUnlocked(index) {
   return index <= (WorldManager.worldIndex || 0);
 }
 
-/* Texte de statut affiché sur chaque vignette/en-tête de monde. */
+/* Texte de statut affiché sur chaque vignette/en-tête de monde.
+   v2.83 : le verrou n'est plus lié à l'ascension mais à une questline
+   (voir data/world-quests.js) — le texte reflète sa progression. */
 function getWorldProgressText(index) {
   if (index < (WorldManager.worldIndex || 0)) return "Terminé";
   if (index === (WorldManager.worldIndex || 0)) return "En cours";
   if (!WorldManager.meetsAscensionRequirement(index)) {
-    var req = (WORLDS[index] && WORLDS[index].requiredAscension) || 0;
-    var current = game.ascensionCount || 0;
-    return "🌀 Ascension " + current + "/" + req + " requise";
+    var quest = window.WorldQuestManager ? WorldQuestManager.getQuestForWorldIndex(index) : null;
+    if (quest && WorldQuestManager.isReadyToClaim(quest)) return "🗺️ Questline prête !";
+    if (quest) return "🗺️ " + quest.name;
+    return "Verrouillé";
   }
   return "Verrouillé";
 }
+
+/* Bloc détaillé de la questline de déblocage d'un monde verrouillé :
+   narration + progression de chaque étape + bouton de réclamation
+   dès que tout est terminé. */
+function buildWorldQuestHTML(worldIndex) {
+  if (!window.WorldQuestManager) return "";
+  var quest = WorldQuestManager.getQuestForWorldIndex(worldIndex);
+  if (!quest) return "";
+
+  var h = '<div class="map-quest-card">';
+  h += '<div class="map-quest-head"><span class="map-quest-icon">' + esc(quest.icon || "🗺️") + '</span><span class="map-quest-name">' + esc(quest.name) + '</span></div>';
+
+  quest.steps.forEach(function (step) {
+    var progress = WorldQuestManager.getStepProgress(quest, step);
+    var done = progress >= step.target;
+    var pct = Math.min(100, Math.floor((progress / step.target) * 100));
+    var desc = String(step.desc || "").replace("{target}", step.target);
+
+    h += '<div class="map-quest-step' + (done ? " is-done" : "") + '">';
+    h += '<div class="map-quest-step-text">' + esc(step.text || "") + '</div>';
+    h += '<div class="map-quest-step-row">';
+    h += '<span class="map-quest-step-desc">' + (done ? "✔ " : "") + esc(desc) + '</span>';
+    h += '<span class="map-quest-step-count">' + esc(progress) + '/' + esc(step.target) + '</span>';
+    h += '</div>';
+    h += '<div class="map-quest-step-bar"><div class="map-quest-step-fill" style="width:' + pct + '%"></div></div>';
+    h += '</div>';
+  });
+
+  var reward = quest.reward || {};
+  h += '<div class="map-quest-reward">';
+  h += '<span class="map-quest-reward-label">Récompense</span>';
+  h += '<span class="map-quest-reward-value">';
+  if (reward.gold) h += esc(formatNumber(reward.gold)) + ' or · ';
+  if (reward.essence) h += esc(formatNumber(reward.essence)) + ' essence · ';
+  if (reward.equipmentRarity) h += '1 objet ' + esc(RARITY_LABELS[reward.equipmentRarity] || reward.equipmentRarity) + ' · ';
+  if (reward.aether) h += esc(reward.aether) + ' Aether';
+  h += '</span>';
+  h += '</div>';
+
+  if (WorldQuestManager.isReadyToClaim(quest)) {
+    var targetWorld = WORLDS[worldIndex];
+    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="claimWorldQuest(' + worldIndex + ')">🗺️ Réclamer et débloquer ' + esc(targetWorld ? targetWorld.name : "") + '</button>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+/* Callback bouton "Réclamer" — voir WorldQuestManager.claim(). */
+function claimWorldQuest(worldIndex) {
+  if (window.WorldQuestManager) WorldQuestManager.claim(worldIndex);
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.claimWorldQuest = claimWorldQuest;
 
 /* Vignette illustrée par monde (découpée depuis la carte fantasy fournie).
    Fallback sur un dégradé neutre si l'image n'est pas trouvée. */
@@ -167,11 +224,7 @@ function buildMapHTML() {
       h += '</div>';
     }
   } else if (!isWorldUnlocked(selectedIndex) && !WorldManager.meetsAscensionRequirement(selectedIndex)) {
-    var reqAscend = (selectedWorld.requiredAscension || 0);
-    h += '<div class="map-lock-hint">';
-    h += '<div class="map-lock-hint-text">🌀 Ce monde se débloque en ascensionnant. Chaque ascension réinitialise ta progression classique contre de l\'Aether, et compte pour le déblocage des mondes.</div>';
-    h += '<button class="map-lock-hint-btn" type="button" onclick="switchTab(\'ascension\')">Aller à l\'Ascension</button>';
-    h += '</div>';
+    h += buildWorldQuestHTML(selectedIndex);
   }
 
   var monsters = getWorldMonsterList(selectedWorld);
@@ -225,4 +278,5 @@ function buildMapHTML() {
 window.getMapSelectedWorldIndex = getMapSelectedWorldIndex;
 window.selectMapWorld = selectMapWorld;
 window.getWorldMonsterList = getWorldMonsterList;
+window.buildWorldQuestHTML = buildWorldQuestHTML;
 window.buildMapHTML = buildMapHTML;

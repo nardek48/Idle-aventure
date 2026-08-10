@@ -27,6 +27,33 @@ var DungeonManager = {
     return (DUNGEON_TIERS || []).find(function (t) { return t.id === tierId; }) || DUNGEON_TIERS[0];
   },
 
+  /* v2.83.12 : retrouve à quel DONJON (voir DUNGEONS dans
+     data/dungeon.js) appartient un palier donné, pour pouvoir peindre
+     le bon fond de combat (applyDungeonTheme ci-dessous). */
+  getDungeonForTier: function (tierId) {
+    return (window.DUNGEONS || []).find(function (d) {
+      return (d.tierIds || []).indexOf(tierId) !== -1;
+    }) || null;
+  },
+
+  /* Peint le fond de combat propre à CE donjon (dungeon.combatMap),
+     même mécanisme que WorldManager.applyWorldTheme() pour les mondes
+     classiques (variable CSS --world-combat-map, posée sur <html> et
+     peinte sur body dans css/01-base.css). Appelée une seule fois au
+     démarrage d'une tentative (start() ci-dessous) — pas besoin de la
+     rappeler à chaque vague, le fond ne change pas en cours de
+     tentative. Le retour au fond du monde classique se fait tout seul
+     : finish() appelle déjà CombatEngine.spawnEnemy(), qui réapplique
+     systématiquement WorldManager.applyWorldTheme(). */
+  applyDungeonTheme: function (tierId) {
+    var root = document.documentElement;
+    if (!root) return;
+    var dungeon = this.getDungeonForTier(tierId);
+    if (dungeon && dungeon.combatMap) {
+      root.style.setProperty("--world-combat-map", 'url("' + dungeon.combatMap + '")');
+    }
+  },
+
   /* Un palier se débloque par nombre d'ascensions, comme les mondes
      (voir data/worlds.js) — indépendant de la progression de monde
      en cours, donc pas de risque de reverrouillage rétroactif. */
@@ -191,6 +218,7 @@ var DungeonManager = {
     if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
     game.dungeonTiersEntered[tier.id] = true;
     addLog("🏰 Entrée dans " + tier.name + " !", "event");
+    this.applyDungeonTheme(tier.id);
     this.spawnWave(1);
     if (typeof switchTab === "function") switchTab("combat");
     saveGame();

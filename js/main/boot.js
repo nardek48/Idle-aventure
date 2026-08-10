@@ -53,6 +53,7 @@ function init() {
   // un ennemi normal (sinon game.dungeonRun.active resterait vrai
   // pour un combat qui n'a plus rien d'un donjon).
   if (game.dungeonRun && game.dungeonRun.active && window.DungeonManager) {
+    if (typeof DungeonManager.applyDungeonTheme === "function") DungeonManager.applyDungeonTheme(game.dungeonRun.tierId);
     DungeonManager.spawnWave(game.dungeonRun.wave || 1);
   } else {
     CombatEngine.spawnEnemy();

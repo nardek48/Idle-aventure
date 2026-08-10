@@ -80,8 +80,8 @@ function buildHudHTML() {
     +   '<div class="nb-hud-left-col">'
     +     '<div class="nb-hud-resources">'
     +       '<span class="nb-pill nb-pill-gold"><img class="nb-pill-icon" src="images/Icons/gold_icon.png" alt="Or"><span id="hud-gold">0</span></span>'
-    +       '<span class="nb-pill nb-pill-essence"><span class="nb-pill-icon">🔮</span><span id="hud-essence">0</span></span>'
-    +       '<span class="nb-pill nb-pill-aether"><span class="nb-pill-icon">🌀</span><span id="hud-aether">0</span></span>'
+    +       '<span class="nb-pill nb-pill-essence"><img class="nb-pill-icon" src="images/Icons/essence_icon.png" alt="Essence"><span id="hud-essence">0</span></span>'
+    +       '<span class="nb-pill nb-pill-aether"><img class="nb-pill-icon" src="images/Icons/aether_icon.png" alt="Aether"><span id="hud-aether">0</span></span>'
     +     '</div>'
     +     '<div id="hud-page-title" class="nb-hud-page-title"></div>'
     +   '</div>'
@@ -100,12 +100,16 @@ function buildHudHTML() {
 }
 
 function buildStatsBarHTML() {
+  // v2.83.11 : indicateur "Aether" retiré de la barre de stats de
+  // Combat (demande explicite — pas besoin d'afficher ce chiffre en
+  // continu). La mécanique elle-même (getAetherBonuses().tapBonus,
+  // voir systems/stats-system.js) reste inchangée et toujours
+  // appliquée à game.tapMult — seul l'affichage disparaît.
   return ''
     + '<div class="stat-item"><span class="stat-label">⚡ Dégâts/Tap</span><span class="stat-value" id="stat-tap-dmg">1</span></div>'
     + '<div class="stat-item"><span class="stat-label">🔁 Auto DPS</span><span class="stat-value" id="stat-auto-dps">0</span></div>'
     + '<div class="stat-item"><span class="stat-label">🎯 Critique</span><span class="stat-value" id="stat-crit">5%</span></div>'
     + '<div class="stat-item"><span class="stat-label">🎯 Dégâts crit.</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>'
-    + '<div class="stat-item"><span class="stat-label">🌀 Aether</span><span class="stat-value" id="stat-aether-mult">x1.00</span></div>'
     + '<div class="stat-item"><span class="stat-label"><img class="stat-label-icon" src="images/Icons/gold_icon.png" alt="Or"> Or</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>';
 }
 
@@ -197,9 +201,11 @@ function renderCombatHeroMini() {
 }
 /* ============================================================
    Barre de stats sous la zone de combat : dégâts/tap, auto DPS,
-   critique, bonus Aether et multiplicateur d'or — tous lus via les
-   getters "effective*" de StatsSystem (jamais game.tapDamage etc.
+   critique, multiplicateur d'or — tous lus via les getters
+   "effective*" de StatsSystem (jamais game.tapDamage etc.
    directement, pour être sûr d'avoir des valeurs propres).
+   v2.83.11 : ligne "Aether — Tap +X%" retirée (redondante, le joueur
+   n'a pas besoin de ce détail en continu pendant le combat).
 ============================================================ */
 
 function renderStats() {
@@ -207,9 +213,7 @@ function renderStats() {
   var auto = document.getElementById("stat-auto-dps");
   var crit = document.getElementById("stat-crit");
   var critPercent = document.getElementById("stat-crit-percent");
-  var aether = document.getElementById("stat-aether-mult");
   var gold = document.getElementById("stat-gold-mult");
-  var aetherBonuses = getAetherBonuses();
 
   function fmt2(n) {
     return (Math.round((Number(n) || 0) * 100) / 100).toFixed(2);
@@ -219,7 +223,6 @@ function renderStats() {
   if (auto) auto.textContent = fmt2(EquipmentManager.effectiveAutoDps());
   if (crit) crit.textContent = fmt2(EquipmentManager.effectiveCritChance()) + "%";
   if (critPercent) critPercent.textContent = "x" + fmt2(EquipmentManager.effectiveCritMult());
-  if (aether) aether.textContent = "Tap +" + Math.round((aetherBonuses.tapBonus || 0) * 100) + "%";
   if (gold) gold.textContent = "x" + fmt2(EquipmentManager.effectiveGoldMult());
 }
 

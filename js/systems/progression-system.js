@@ -87,12 +87,18 @@ var WorldManager = {
     };
   },
 
-  /* Un monde n'est atteignable que si le joueur a fait au moins
-     `requiredAscension` ascensions (voir data/worlds.js). */
+  /* v2.83 : un monde n'est plus débloqué par un nombre d'ascensions
+     mais par la questline associée (voir data/world-quests.js et
+     WorldQuestManager.isWorldUnlocked). Le nom de la fonction est
+     conservé tel quel (beaucoup d'appelants dans l'UI) même si elle
+     ne regarde plus l'ascension — ça évite de renommer partout ;
+     `requiredAscension` reste dans data/worlds.js pour référence/
+     historique mais n'est plus consulté ici. */
   meetsAscensionRequirement: function (index) {
     var w = WORLDS[index];
     if (!w) return false;
-    return (game.ascensionCount || 0) >= (w.requiredAscension || 0);
+    if (!window.WorldQuestManager) return true;
+    return WorldQuestManager.isWorldUnlocked(index);
   },
 
   /* Appelée après chaque kill (voir CombatEngine.killEnemy). Fait
@@ -668,7 +674,7 @@ function ascendNow() {
     showConfirmModal(
       "Ascension",
       "Tu vas recommencer ta progression, mais garder ton Aether, tes ascensions et tes améliorations d'Aether.\n\nGain prévu : +" + gain + " Aether.",
-      "🌀",
+      "images/Icons/aether_icon.png",
       doAscend
     );
   } else if (window.confirm("Ascensionner et gagner +" + gain + " Aether ?")) {

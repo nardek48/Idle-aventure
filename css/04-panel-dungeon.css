@@ -2,6 +2,12 @@
    Donjon
    ========================= */
 
+/* v2.83.4 : structure flex du panel Donjon (contenu scrollable +
+   sous-onglets collés en bas). v2.83.5 : classes renommées en
+   génériques .subtab-page/-content/-bar-wrapper, déplacées vers
+   css/00-components.css (partagées avec Personnage et Boutique) —
+   plus rien de spécifique à garder ici. */
+
 .settings-btn:disabled,
 .settings-btn.disabled {
   opacity: 0.5;
@@ -88,64 +94,112 @@
 
 /* =========================
    Sélecteur de palier
+   v2.83.7 : grille 2 colonnes, le 5e palier (.is-full) en pleine
+   largeur et mis en page à l'horizontale. Chaque carte réserve un
+   emplacement d'image (voir buildDungeonTierCardHTML) — repli sur un
+   numéro stylisé tant qu'aucune image n'est fournie.
    ========================= */
 .dungeon-tier-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-top: 10px;
 }
 
 .dungeon-tier-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
+  flex-direction: column;
   border-radius: var(--nb-radius-md);
   background: var(--nb-cream-alt);
   border: 1px solid var(--nb-frame);
+  overflow: hidden;
 }
 
 .dungeon-tier-card.is-locked {
   opacity: 0.6;
 }
 
-.dungeon-tier-top {
+.dungeon-tier-card.is-full {
+  grid-column: 1 / -1;
+  flex-direction: row;
+}
+
+.dungeon-tier-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--nb-cream-deep);
+  border-bottom: 1px solid var(--nb-frame);
+  overflow: hidden;
+}
+
+.dungeon-tier-card.is-full .dungeon-tier-image {
+  width: 96px;
+  aspect-ratio: auto;
+  flex: 0 0 auto;
+  border-bottom: none;
+  border-right: 1px solid var(--nb-frame);
+  align-self: stretch;
+}
+
+.dungeon-tier-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dungeon-tier-num {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--nb-gold-dark);
+  opacity: 0.55;
+}
+
+.dungeon-tier-image-lock {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 13px;
+}
+
+.dungeon-tier-info {
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  flex: 1 1 auto;
 }
 
 .dungeon-tier-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   color: var(--nb-ink);
 }
 
 .dungeon-tier-rarity {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
 }
 
 .dungeon-tier-btn {
-  flex-shrink: 0;
-  padding: 8px 14px;
+  margin-top: 4px;
+  padding: 7px 10px;
   border-radius: 10px;
   border: none;
   background: var(--nb-gold);
   color: #241a00;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   cursor: pointer;
 }
 
-.dungeon-tier-lock {
-  flex-shrink: 0;
-  font-size: 10px;
+.dungeon-tier-lock-text {
+  margin-top: 4px;
+  font-size: 9px;
   color: var(--nb-ink-dim);
-  text-align: right;
-  max-width: 130px;
 }
 
 /* =========================
@@ -187,6 +241,17 @@
 .dungeon-story-icon {
   font-size: 44px;
   margin-bottom: 10px;
+}
+
+/* v2.83.10 : variante image (voir cycle-summary-view.js), même
+   empreinte que l'emoji 44px qu'elle peut remplacer — les autres
+   usages de .dungeon-story-icon (intro/résumé de palier) restent en
+   emoji, inchangés. */
+.dungeon-story-icon-img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  display: inline-block;
 }
 
 .dungeon-story-title {
@@ -266,6 +331,15 @@
   color: var(--nb-ink);
 }
 
+/* v2.83.10 : petite icône inline (Essence/Aether) dans les lignes de
+   résumé de fin de donjon. */
+.dungeon-summary-icon {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+  vertical-align: -2px;
+}
+
 .dungeon-summary-loot span:last-child {
   color: var(--nb-gold);
 }
@@ -273,4 +347,126 @@
 .dungeon-story-close {
   width: 100%;
   margin-bottom: 0;
+}
+
+/* =========================
+   v2.83.6 : liste de donjons en accordéon + badge ticket compact
+   ========================= */
+
+.dungeon-ticket-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  color: var(--nb-gold);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dungeon-ticket-badge:active {
+  transform: scale(0.97);
+}
+
+.dungeon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dungeon-card {
+  border-radius: var(--nb-radius-md);
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  overflow: hidden;
+}
+
+.dungeon-card.is-expanded {
+  border-color: var(--nb-gold-dark);
+}
+
+.dungeon-card.is-locked {
+  opacity: 0.55;
+}
+
+/* v2.83.12 : l'en-tête cliquable EST maintenant le bandeau (voir
+   buildDungeonCardHTML) — plus de petite icône carrée à côté d'une
+   colonne de texte, le nom s'affiche en surimpression sur l'image. */
+.dungeon-card-head {
+  position: relative;
+  width: 100%;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--nb-cream-deep);
+  border: none;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.dungeon-card.is-locked .dungeon-card-head {
+  cursor: not-allowed;
+}
+
+.dungeon-card-head-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dungeon-card-head-placeholder {
+  font-size: 44px;
+  opacity: 0.5;
+}
+
+.dungeon-card-head-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 8px 34px 8px 12px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.6), transparent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: left;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.dungeon-card-head-hint {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 10px;
+  font-size: 10px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.dungeon-card-chevron {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 11px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.dungeon-card-body {
+  padding: 12px;
+}
+
+.dungeon-card-desc {
+  font-size: 12px;
+  color: var(--nb-ink-dim);
+  line-height: 1.5;
+  margin-bottom: 10px;
 }

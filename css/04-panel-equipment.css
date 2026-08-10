@@ -139,8 +139,8 @@
 
 .eq-hero-main {
   display: flex;
-  align-items: stretch;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .eq-hero-left {
@@ -233,10 +233,12 @@
 }
 
 .eq-hero-right {
-  flex: 1;
+  flex: 0 0 50%;
+  width: 50%;
   display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: 50% 50%;
+  gap: 8px;
+  align-content: start;
 }
 
 .eq-hero-right .eq-orbit-slot {
@@ -247,14 +249,33 @@
   bottom: auto !important;
   transform: none !important;
   width: 100%;
-  min-height: 76px;
-  padding: 8px 10px;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  padding: 4px;
   border-radius: 12px;
-  text-align: left;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
 }
 
 .eq-hero-right .eq-orbit-slot:active {
   transform: scale(0.98) !important;
+}
+
+.eq-hero-right .eq-orbit-slot.is-selected {
+  border-color: var(--nb-gold-dark);
+  border-width: 3px;
+  box-shadow: 0 0 0 2px rgba(194, 127, 31, 0.25);
+}
+
+.eq-hero-right .eq-orbit-slot-icon {
+  width: 40px;
+  height: 40px;
+  margin-right: 0;
+  font-size: 26px;
 }
 
 .eq-orbit-slot {
@@ -292,6 +313,87 @@
   border-style: dashed;
   background: var(--nb-cream-alt);
   opacity: 0.85;
+}
+
+/* v2.83.15 : emplacement réservé pour un futur type d'objet (voir
+   buildLockedEquipmentSlot) — pas cliquable, distinct visuellement
+   de ".empty" (qui EST cliquable, juste sans objet dessus). */
+.eq-orbit-slot.locked {
+  border-style: dotted;
+  background: var(--nb-cream-alt);
+  opacity: 0.5;
+}
+
+/* =========================
+   v2.83.16 : panneau de détail (colonne de droite, voir
+   buildEquipDetailPanelHTML)
+   ========================= */
+.eq-detail-panel {
+  flex: 0 0 50%;
+  width: 50%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 14px 10px;
+  border-radius: var(--nb-radius-md);
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream);
+}
+
+.eq-detail-icon {
+  width: 84px;
+  height: 84px;
+  margin-bottom: 10px;
+  border-radius: var(--nb-radius-md);
+  border: 2px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 40px;
+}
+
+.eq-detail-icon-empty {
+  opacity: 0.5;
+}
+
+.eq-detail-icon-img {
+  width: 100%;
+  height: 100%;
+}
+
+.eq-detail-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  margin-bottom: 8px;
+}
+
+.eq-detail-name.rarity-common { color: var(--rarity-common); }
+.eq-detail-name.rarity-green { color: var(--rarity-green); }
+.eq-detail-name.rarity-rare { color: var(--rarity-rare); }
+.eq-detail-name.rarity-epic { color: var(--rarity-epic); }
+.eq-detail-name.rarity-legendary { color: var(--rarity-legendary); }
+
+.eq-detail-stat {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nb-gold-dark);
+  margin-bottom: 14px;
+}
+
+.eq-detail-hint {
+  font-size: 11px;
+  color: var(--nb-ink-dim);
+  line-height: 1.5;
+}
+
+.eq-detail-action {
+  width: 100%;
+  margin-bottom: 0;
 }
 
 .eq-orbit-slot-label {
@@ -357,10 +459,12 @@
 }
 
 .eq-hero-right {
-  flex: 1;
+  flex: 0 0 50%;
+  width: 50%;
   display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
+  grid-template-columns: 50% 50%;
   gap: 8px;
+  align-content: start;
 }
 
 .eq-orbit-slot-name.rarity-common { color: var(--rarity-common); }

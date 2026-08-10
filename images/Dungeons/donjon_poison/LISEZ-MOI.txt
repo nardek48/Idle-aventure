@@ -1,0 +1,5 @@
+Dossier réservé pour les futures images des 5 paliers de ce donjon
+(champ DUNGEON_TIERS[].icon dans js/data/dungeon.js, actuellement à
+null). Dépose les fichiers ici puis renseigne le chemin dans le code
+— aucun autre changement nécessaire, l'affichage bascule
+automatiquement de l'emoji/numéro vers l'image.

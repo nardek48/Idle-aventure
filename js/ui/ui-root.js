@@ -170,12 +170,37 @@ function renderAll() {
   }
 }
 
+/* Mémorise le dernier onglet réellement rendu, pour que
+   renderPanel() (ci-dessous) sache s'il s'agit d'un vrai changement
+   d'onglet (scroll remis à zéro, normal) ou d'un simple re-rendu du
+   même onglet suite à une action de jeu (scroll à conserver). */
+var lastRenderedTab = null;
+
 /* Redessine UNIQUEMENT le contenu du panel selon l'onglet actif
    (game.activeTab). C'est ici qu'il faut ajouter une entrée si un
-   nouvel onglet est créé un jour. */
+   nouvel onglet est créé un jour.
+
+   v2.83.14 : conserve la position de scroll à travers le re-rendu,
+   MAIS seulement quand l'onglet actif n'a pas changé depuis le
+   dernier rendu (voir lastRenderedTab). renderPanel() est appelée
+   très souvent (à chaque kill, via renderAll() — l'auto-attaque
+   continue même si le joueur regarde un autre onglet que Combat), et
+   remplaçait tout le innerHTML du panel à chaque fois, ramenant le
+   scroll en haut à chaque mort d'ennemi — gênant en pleine
+   Boutique/Équipement/etc. En revanche, un VRAI changement d'onglet
+   (via switchTab()) doit toujours réouvrir en haut, comme avant.
+   Deux conteneurs possibles selon l'écran : #panel-container
+   lui-même (la plupart des onglets), ou .subtab-page-content à
+   l'intérieur (Boutique, Donjon, Personnage — voir
+   css/00-components.css, pattern des sous-onglets en pilules). */
 function renderPanel() {
   var container = document.getElementById("panel-container");
   if (!container) return;
+
+  var sameTab = game.activeTab === lastRenderedTab;
+  var savedScrollTop = sameTab ? container.scrollTop : 0;
+  var innerScroll = sameTab ? container.querySelector(".subtab-page-content") : null;
+  var savedInnerScrollTop = innerScroll ? innerScroll.scrollTop : null;
 
   switch (game.activeTab) {
     case "shop":
@@ -223,6 +248,15 @@ function renderPanel() {
     default:
       container.innerHTML = "";
   }
+
+  if (sameTab) {
+    container.scrollTop = savedScrollTop;
+    if (savedInnerScrollTop !== null) {
+      var newInnerScroll = container.querySelector(".subtab-page-content");
+      if (newInnerScroll) newInnerScroll.scrollTop = savedInnerScrollTop;
+    }
+  }
+  lastRenderedTab = game.activeTab;
 
 }
 

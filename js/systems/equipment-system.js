@@ -73,6 +73,13 @@ function addLootToInventory(item) {
 function addDropToInventory(item) {
   if (!item) return false;
 
+  // v2.83 : progression des objectifs "loot" des questlines de monde
+  // (voir data/world-quests.js) — compte tout vrai butin trouvé, même
+  // auto-vendu juste après (l'objet a bien été récupéré un instant).
+  if (window.WorldQuestManager && typeof WorldQuestManager.trackLoot === "function") {
+    WorldQuestManager.trackLoot(item.rarity);
+  }
+
   if (game.autoSellEquipment) {
     var equippedItem = game.equipped ? game.equipped[item.slot] : null;
     var equippedRank = equippedItem ? RARITY_ORDER.indexOf(equippedItem.rarity) : -1;

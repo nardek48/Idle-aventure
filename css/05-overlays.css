@@ -107,6 +107,15 @@
   font-size: 14px;
 }
 
+/* v2.83.10 : petite icône inline (Essence/Aether) dans le résumé
+   hors-ligne. */
+.offline-reward-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: -2px;
+}
+
 .offline-btn {
   width: 100%;
   min-height: 48px;
@@ -131,6 +140,16 @@
 .confirm-icon {
   margin-bottom: 8px;
   font-size: 40px;
+}
+
+/* v2.83.10 : variante image (voir renderIconOrEmojiHTML dans
+   modal.js showConfirmModal), même empreinte que l'emoji 40px
+   qu'elle peut remplacer. */
+.confirm-icon-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  display: inline-block;
 }
 
 .confirm-title {

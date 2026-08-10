@@ -4,7 +4,56 @@ Quest Idle — ui/dungeon-view.js
 Écran "Donjon" v2.16 : sélection d'un palier (comme la Carte du
 monde) si aucune tentative n'est en cours, ou état de la vague
 actuelle sinon (voir systems/dungeon-system.js).
+
+v2.83.3 : séparation Donjon / Boutique en 2 sous-onglets. Première
+étape vers plusieurs donjons distincts à terme (voir discussion) :
+chaque futur donjon aura sa propre grille de 5 paliers, affichée dans
+ce même sous-onglet "Donjon".
+
+v2.83.4 : sous-onglets restylés pour reprendre EXACTEMENT le pattern
+visuel de l'onglet Personnage (pc-subtab-bar / pc-subtab-btn, voir
+heros-view.js + css/04-panel-hero-summary.css) — pilules collées en
+bas du panel, juste au-dessus de la nav — plutôt que le style
+shop-sub-tabs utilisé en v2.83.3.
+
+v2.83.5 : le pattern est devenu générique (voir css/00-components.css)
+et partagé avec Personnage + Boutique — classes renommées ici
+pc-donjon-panel/-content/-subtab-bar-wrapper -> subtab-page/-content/
+-bar-wrapper (pc-subtab-bar/pc-subtab-btn inchangés, déjà génériques).
+
+v2.83.6 : liste de donjons en accordéon (voir DUNGEONS dans
+data/dungeon.js) — un seul déplié à la fois (expandedDungeonId), la
+grille des 5 paliers d'un donjon apparaît sous sa carte au tap. Avec
+un seul donjon existant, il est déplié par défaut (comportement
+inchangé visuellement). La carte "Tickets" pleine largeur est
+remplacée par un badge compact (🎟️ N) en haut de la liste, qui ouvre
+désormais une fenêtre dédiée (buildDungeonTicketOverlayHTML) au tap —
+même overlay que l'intro/résumé de donjon. Le compte de tickets
+restants apparaît aussi dans la fenêtre "Entrer" d'un palier.
 ============================================================ */
+
+var activeDungeonSubTab = "tiers"; // "tiers" | "shop"
+var expandedDungeonId = (window.DUNGEONS && DUNGEONS[0]) ? DUNGEONS[0].id : null;
+
+function setDungeonSubTab(tab) {
+  activeDungeonSubTab = (tab === "shop") ? "shop" : "tiers";
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setDungeonSubTab = setDungeonSubTab;
+
+function toggleDungeonExpand(dungeonId) {
+  expandedDungeonId = (expandedDungeonId === dungeonId) ? null : dungeonId;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.toggleDungeonExpand = toggleDungeonExpand;
+
+function buildDungeonSubTabBarHTML() {
+  var h = '<div class="pc-subtab-bar">';
+  h += '<button type="button" class="pc-subtab-btn' + (activeDungeonSubTab === "tiers" ? ' is-active' : '') + '" onclick="setDungeonSubTab(\'tiers\')">🏰<span>Donjon</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeDungeonSubTab === "shop" ? ' is-active' : '') + '" onclick="setDungeonSubTab(\'shop\')">🔷<span>Boutique</span></button>';
+  h += '</div>';
+  return h;
+}
 
 function buildDungeonActiveHTML() {
   var tier = DungeonManager.getTierById(game.dungeonRun.tierId);
@@ -23,65 +72,110 @@ function buildDungeonActiveHTML() {
   return h;
 }
 
-/* Une carte de palier dans le sélecteur (même principe visuel que la
-   grille de mondes de la Carte). */
-function buildDungeonTierCardHTML(tier) {
+/* Une carte de palier dans le sélecteur, en grille 2 colonnes (voir
+   .dungeon-tier-grid) — le 5e palier (Cauchemar) prend toute la
+   largeur via .is-full, mis en page à l'horizontale plutôt qu'en
+   carré. Emplacement d'image réservé (tier.icon, vide pour l'instant
+   → repli sur un numéro stylisé) pour une future illustration par
+   palier, même principe que renderIconOrEmojiHTML ailleurs : dès que
+   tier.icon pointe vers un fichier, l'image prend le dessus
+   automatiquement, aucun changement de code nécessaire. */
+function buildDungeonTierCardHTML(tier, isLast) {
   var unlocked = DungeonManager.isTierUnlocked(tier.id);
   var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[tier.maxRarity]) || tier.maxRarity;
   var rarityColor = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[tier.maxRarity]) || "#9ca3af";
 
-  var h = '<div class="dungeon-tier-card' + (unlocked ? '' : ' is-locked') + '">';
-  h += '<div class="dungeon-tier-top">';
+  var imageHTML = tier.icon
+    ? renderIconOrEmojiHTML(tier.icon, "dungeon-tier-img", tier.name)
+    : '<span class="dungeon-tier-num">' + tier.id + '</span>';
+
+  var h = '<div class="dungeon-tier-card' + (unlocked ? '' : ' is-locked') + (isLast ? ' is-full' : '') + '">';
+  h += '<div class="dungeon-tier-image">' + imageHTML + (unlocked ? '' : '<span class="dungeon-tier-image-lock">🔒</span>') + '</div>';
+  h += '<div class="dungeon-tier-info">';
   h += '<div class="dungeon-tier-name">' + esc(tier.name) + '</div>';
   h += '<div class="dungeon-tier-rarity" style="color:' + rarityColor + '">🎁 ' + esc(rarityLabel) + ' max</div>';
-  h += '</div>';
 
   if (unlocked) {
     h += '<button class="dungeon-tier-btn" type="button" onclick="openDungeonIntro(' + tier.id + ')">Entrer</button>';
   } else {
-    h += '<div class="dungeon-tier-lock">🔒 ' + (tier.requiredAscension) + ' ascension(s) requise(s)</div>';
+    h += '<div class="dungeon-tier-lock-text">' + (tier.requiredAscension) + ' ascension(s) requise(s)</div>';
+  }
+
+  h += '</div>';
+  h += '</div>';
+  return h;
+}
+
+/* Carte d'un DONJON dans la liste en accordéon (voir DUNGEONS dans
+   data/dungeon.js). v2.83.12 : le bandeau (dungeon.banner) sert
+   désormais de FOND à l'en-tête cliquable lui-même (nom en
+   surimpression), remplaçant la petite icône carrée + la colonne
+   texte d'avant. La description, elle, apparaît maintenant dans la
+   section dépliée (avant : c'était le bandeau qui s'y trouvait, en
+   double avec l'en-tête — plus la peine). dungeon.icon ne sert plus
+   du tout ici : voir buildDungeonHTML/DungeonManager.start(), c'est
+   maintenant le fond de COMBAT affiché quand on joue ce donjon
+   (comme WorldManager.applyWorldTheme pour les mondes classiques). */
+function buildDungeonCardHTML(dungeon) {
+  var isExpanded = expandedDungeonId === dungeon.id;
+  var isLocked = !!dungeon.locked;
+  var bestWave = game.dungeonBestWave || 0;
+  var beatBoss = bestWave > DUNGEON_CONFIG.waveCount;
+
+  var h = '<div class="dungeon-card' + (isExpanded ? ' is-expanded' : '') + (isLocked ? ' is-locked' : '') + '">';
+  h += '<button type="button" class="dungeon-card-head" onclick="' + (isLocked ? '' : 'toggleDungeonExpand(\'' + esc(dungeon.id) + '\')') + '">';
+  if (dungeon.banner) {
+    h += renderIconOrEmojiHTML(dungeon.banner, "dungeon-card-head-img", dungeon.name);
+  } else {
+    h += '<span class="dungeon-card-head-placeholder">' + esc(dungeon.icon || "🏰") + '</span>';
+  }
+  h += '<div class="dungeon-card-head-name">' + esc(dungeon.name) + (isLocked ? ' 🔒' : '') + '</div>';
+  if (isLocked) h += '<div class="dungeon-card-head-hint">' + esc(dungeon.lockedHint || "Pas encore disponible") + '</div>';
+  if (!isLocked) h += '<div class="dungeon-card-chevron">' + (isExpanded ? "▲" : "▼") + '</div>';
+  h += '</button>';
+
+  if (isExpanded && !isLocked) {
+    h += '<div class="dungeon-card-body">';
+    h += '<div class="dungeon-card-desc">' + esc(dungeon.desc) + '</div>';
+    h += '<div class="dungeon-best-wave">🏅 Record : vague ' + Math.min(bestWave, DUNGEON_CONFIG.waveCount) + ' / ' + DUNGEON_CONFIG.waveCount + (beatBoss ? ' — Boss vaincu !' : '') + '</div>';
+    h += '<div class="dungeon-tier-grid">';
+    var tierIds = dungeon.tierIds || [];
+    tierIds.forEach(function (tierId, index) {
+      h += buildDungeonTierCardHTML(DungeonManager.getTierById(tierId), index === tierIds.length - 1);
+    });
+    h += '</div>';
+    h += '</div>';
   }
 
   h += '</div>';
   return h;
 }
 
-function buildDungeonLobbyHTML() {
+/* Badge ticket compact en haut de la liste — remplace l'ancienne carte
+   pleine largeur, ouvre buildDungeonTicketOverlayHTML() au tap. */
+function buildDungeonTicketBadgeHTML() {
   var tickets = game.dungeonTickets || 0;
-  var purchasedToday = game.dungeonTicketsPurchasedToday || 0;
-  var maxPerDay = DUNGEON_CONFIG.maxTicketPurchasesPerDay || 20;
-  var remainingPurchases = Math.max(0, maxPerDay - purchasedToday);
-  var nextTicketCost = DungeonManager.getTicketBuyCost();
-  var canBuyTicket = (game.essence || 0) >= nextTicketCost && remainingPurchases > 0;
-  var bestWave = game.dungeonBestWave || 0;
-  var beatBoss = bestWave > DUNGEON_CONFIG.waveCount;
+  var h = '<button type="button" class="dungeon-ticket-badge" onclick="openDungeonTicketOverlay()">';
+  h += '🎟️ <span>' + tickets + '</span>';
+  h += '</button>';
+  return h;
+}
 
-  var h = '<div class="panel-card">';
-  h += '<h3>🎟️ Tickets de donjon</h3>';
-  h += '<p class="panel-sub">1 ticket gratuit par jour, valable pour n\u2019importe quel palier. Chaque ticket supplémentaire coûte de plus en plus cher au fil de la journée, en commençant à ' + formatNumber(DUNGEON_CONFIG.ticketCostEssence || 100) + ' essence — limité à ' + maxPerDay + ' achats par jour.</p>';
-  h += '<div class="dungeon-ticket-row">';
-  h += '<span class="dungeon-ticket-count">🎟️ ' + tickets + '</span>';
-  h += '<span class="dungeon-ticket-reset">Renouvellement dans ' + esc(DungeonManager.timeUntilTicketReset()) + '</span>';
-  h += '</div>';
-  h += '<div class="dungeon-ticket-limit">Achats aujourd\u2019hui : ' + purchasedToday + ' / ' + maxPerDay + '</div>';
-  h += '<div class="dungeon-ticket-limit">Prix du prochain ticket : ' + formatNumber(nextTicketCost) + ' essence</div>';
-  h += '<button class="btn-buy' + (canBuyTicket ? '' : ' cant-afford') + '" type="button" ' + (canBuyTicket ? 'onclick="DungeonManager.buyTicket()"' : 'disabled') + '>' + (remainingPurchases > 0 ? 'Acheter un ticket (' + formatNumber(nextTicketCost) + ' essence)' : 'Limite journalière atteinte') + '</button>';
-  h += '</div>';
+function buildDungeonLobbyHTML() {
+  var h = "";
 
-  h += '<div class="panel-card">';
-  h += '<h3>🏰 Choisis ton palier</h3>';
-  h += '<p class="panel-sub">' + DUNGEON_CONFIG.waveCount + ' vagues + boss par tentative, avec des ennemis puisés dans les mondes couverts par le palier. Plus le palier est haut, plus c\u2019est dur — mais plus le butin garanti est bon.</p>';
-  h += '<div class="dungeon-best-wave">🏅 Record : vague ' + Math.min(bestWave, DUNGEON_CONFIG.waveCount) + ' / ' + DUNGEON_CONFIG.waveCount + (beatBoss ? ' — Boss vaincu !' : '') + '</div>';
+  if (activeDungeonSubTab === "shop") {
+    h += buildDungeonShopHTML();
+    return h;
+  }
 
-  h += '<div class="dungeon-tier-grid">';
-  (DUNGEON_TIERS || []).forEach(function (tier) {
-    h += buildDungeonTierCardHTML(tier);
+  h += buildDungeonTicketBadgeHTML();
+
+  h += '<div class="dungeon-list">';
+  (DUNGEONS || []).forEach(function (dungeon) {
+    h += buildDungeonCardHTML(dungeon);
   });
   h += '</div>';
-
-  h += '</div>';
-
-  h += buildDungeonShopHTML();
 
   return h;
 }
@@ -131,7 +225,22 @@ function buildDungeonHTML() {
     DungeonManager.checkTicketReset();
   }
 
-  var h = (game.dungeonRun && game.dungeonRun.active) ? buildDungeonActiveHTML() : buildDungeonLobbyHTML();
+  var isActive = !!(game.dungeonRun && game.dungeonRun.active);
+
+  var h = '<div class="subtab-page">';
+  h += '<div class="subtab-page-content">';
+  h += isActive ? buildDungeonActiveHTML() : buildDungeonLobbyHTML();
+  h += '</div>'; // fin .subtab-page-content
+
+  // Sous-onglets masqués pendant une tentative en cours (voir
+  // buildDungeonActiveHTML) — pas de bascule Boutique en plein combat.
+  if (!isActive) {
+    h += '<div class="subtab-bar-wrapper">';
+    h += buildDungeonSubTabBarHTML();
+    h += '</div>';
+  }
+
+  h += '</div>'; // fin .subtab-page
   return h;
 }
 
@@ -148,6 +257,7 @@ var pendingDungeonTierId = null;
 function buildDungeonIntroHTML(tierId) {
   var tier = DungeonManager.getTierById(tierId);
   var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[tier.maxRarity]) || tier.maxRarity;
+  var tickets = game.dungeonTickets || 0;
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card">';
@@ -156,6 +266,7 @@ function buildDungeonIntroHTML(tierId) {
   h += '    <div class="dungeon-story-text">' + esc(tier.story) + '</div>';
   h += buildDungeonSceauLoreHTML(tierId);
   h += '    <div class="dungeon-story-meta">🎁 Butin garanti jusqu\u2019à : <strong>' + esc(rarityLabel) + '</strong> · ⚔️ ' + DUNGEON_CONFIG.waveCount + ' vagues + boss</div>';
+  h += '    <div class="dungeon-story-meta">🎟️ Tickets restants : <strong>' + tickets + '</strong>' + (tickets <= 0 ? ' · <a href="javascript:void(0)" onclick="closeDungeonIntro();openDungeonTicketOverlay();">en acheter</a>' : '') + '</div>';
   h += '    <div class="dungeon-story-actions">';
   h += '      <button class="settings-btn" type="button" onclick="closeDungeonIntro()">Annuler</button>';
   h += '      <button class="settings-btn primary" type="button" onclick="confirmDungeonStart()">Entrer</button>';
@@ -211,7 +322,7 @@ function buildDungeonSummaryHTML(result) {
   h += '    <div class="dungeon-summary-rewards">';
   h += '      <div class="dungeon-summary-row"><span>Vagues passées</span><span>' + Math.min(result.clearedWave, result.wavesTotal) + ' / ' + result.wavesTotal + (result.success ? ' + Boss' : '') + '</span></div>';
   h += '      <div class="dungeon-summary-row"><span>💰 Or</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
-  h += '      <div class="dungeon-summary-row"><span>🔮 Essence</span><span>+' + formatNumber(result.essenceReward) + '</span></div>';
+  h += '      <div class="dungeon-summary-row"><span>' + renderIconOrEmojiHTML("images/Icons/essence_icon.png", "dungeon-summary-icon", "Essence") + ' Essence</span><span>+' + formatNumber(result.essenceReward) + '</span></div>';
   h += '      <div class="dungeon-summary-row"><span>🔷 Éclats</span><span>+' + formatNumber(result.shardsGained) + '</span></div>';
   if (result.lootedItem) {
     h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span>🎁 Butin</span><span>' + esc(result.lootedItem.name) + '</span></div>';
@@ -239,3 +350,65 @@ window.closeDungeonIntro = closeDungeonIntro;
 window.confirmDungeonStart = confirmDungeonStart;
 window.openDungeonSummary = openDungeonSummary;
 window.closeDungeonSummary = closeDungeonSummary;
+
+/* ============================================================
+   v2.83.6 : fenêtre dédiée aux tickets (ouverte depuis le badge
+   compact en haut de la liste de donjons, voir
+   buildDungeonTicketBadgeHTML) — reprend le contenu de l'ancienne
+   carte "Tickets de donjon" pleine largeur, juste déplacé dans le
+   même système d'overlay que l'intro/résumé de palier.
+============================================================ */
+
+function buildDungeonTicketOverlayHTML() {
+  var tickets = game.dungeonTickets || 0;
+  var purchasedToday = game.dungeonTicketsPurchasedToday || 0;
+  var maxPerDay = DUNGEON_CONFIG.maxTicketPurchasesPerDay || 20;
+  var remainingPurchases = Math.max(0, maxPerDay - purchasedToday);
+  var nextTicketCost = DungeonManager.getTicketBuyCost();
+  var canBuyTicket = (game.essence || 0) >= nextTicketCost && remainingPurchases > 0;
+
+  var h = '<div class="full-menu-overlay">';
+  h += '  <div class="full-menu dungeon-story-card">';
+  h += '    <div class="dungeon-story-icon">🎟️</div>';
+  h += '    <div class="dungeon-story-title">Tickets de donjon</div>';
+  h += '    <div class="dungeon-story-text">1 ticket gratuit par jour, valable pour n\u2019importe quel donjon et n\u2019importe quel palier. Chaque ticket supplémentaire coûte de plus en plus cher au fil de la journée — limité à ' + maxPerDay + ' achats par jour.</div>';
+
+  h += '    <div class="dungeon-ticket-row">';
+  h += '      <span class="dungeon-ticket-count">🎟️ ' + tickets + '</span>';
+  h += '      <span class="dungeon-ticket-reset">Renouvellement dans ' + esc(DungeonManager.timeUntilTicketReset()) + '</span>';
+  h += '    </div>';
+  h += '    <div class="dungeon-ticket-limit">Achats aujourd\u2019hui : ' + purchasedToday + ' / ' + maxPerDay + '</div>';
+  h += '    <div class="dungeon-ticket-limit">Prix du prochain ticket : ' + formatNumber(nextTicketCost) + ' essence</div>';
+
+  h += '    <div class="dungeon-story-actions">';
+  h += '      <button class="settings-btn" type="button" onclick="closeDungeonTicketOverlay()">Fermer</button>';
+  h += '      <button class="settings-btn primary' + (canBuyTicket ? '' : ' disabled') + '" type="button" ' + (canBuyTicket ? 'onclick="buyDungeonTicketFromOverlay()"' : 'disabled') + '>' + (remainingPurchases > 0 ? 'Acheter (' + formatNumber(nextTicketCost) + ' essence)' : 'Limite atteinte') + '</button>';
+  h += '    </div>';
+
+  h += '  </div>';
+  h += '</div>';
+  return h;
+}
+
+function openDungeonTicketOverlay() {
+  var host = document.getElementById("dungeon-modal-root");
+  if (host) host.innerHTML = buildDungeonTicketOverlayHTML();
+}
+
+function closeDungeonTicketOverlay() {
+  var host = document.getElementById("dungeon-modal-root");
+  if (host) host.innerHTML = "";
+}
+
+/* La fenêtre ticket vit dans #dungeon-modal-root, en dehors du cycle
+   renderAll()/renderPanel() habituel (voir ui-root.js) — sans ce
+   wrapper, le compteur/prix affichés resteraient figés après achat
+   tant que la fenêtre n'est pas refermée puis rouverte. */
+function buyDungeonTicketFromOverlay() {
+  DungeonManager.buyTicket();
+  openDungeonTicketOverlay();
+}
+
+window.openDungeonTicketOverlay = openDungeonTicketOverlay;
+window.closeDungeonTicketOverlay = closeDungeonTicketOverlay;
+window.buyDungeonTicketFromOverlay = buyDungeonTicketFromOverlay;

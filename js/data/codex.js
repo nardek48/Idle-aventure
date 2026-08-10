@@ -54,7 +54,7 @@ var CODEX_ENTRIES = [
   {
     id: "ascension",
     title: "L'Ascension et la promesse de l'Aether",
-    icon: "🌀",
+    icon: "images/Icons/aether_icon.png",
     category: "system",
     text: "Chaque héros qui s'aventure jusqu'à la Tour, ou qui tombe en chemin, découvre la même vérité : le corps ne suffit pas à contenir ce qu'il faudra affronter au sommet. Alors on Ascensionne — on accepte de tout perdre, sauf l'essentiel, pour renaître un peu plus proche de ce que l'Aether exige.\n\nL'Aether gagné à chaque Ascension n'est pas qu'une monnaie. C'est un souvenir du Cycle précédent, une trace qui reste quand tout le reste s'efface. Certains anciens champions racontent que si l'on accumule assez d'Aether, on cesse un jour d'être simplement plus fort — on commence à comprendre le langage de la Rupture elle-même.",
     isUnlocked: function () { return (game.ascensionCount || 0) >= 1; }

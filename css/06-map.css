@@ -265,6 +265,109 @@
   cursor: pointer;
 }
 
+/* v2.83 : questline de déblocage de monde (remplace .map-lock-hint,
+   conservée ci-dessus pour référence/historique CSS mais plus utilisée). */
+.map-quest-card {
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+}
+
+.map-quest-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--nb-ink);
+}
+
+.map-quest-icon {
+  font-size: 18px;
+}
+
+.map-quest-step {
+  padding: 8px 0;
+  border-top: 1px solid var(--nb-frame);
+}
+
+.map-quest-step:first-of-type {
+  border-top: none;
+}
+
+.map-quest-step-text {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--nb-ink-dim);
+  margin-bottom: 4px;
+}
+
+.map-quest-step-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+  color: var(--nb-ink);
+  margin-bottom: 4px;
+}
+
+.map-quest-step.is-done .map-quest-step-desc {
+  color: #4ade80;
+}
+
+.map-quest-step-count {
+  color: var(--nb-ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.map-quest-step-bar {
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.map-quest-step-fill {
+  height: 100%;
+  background: var(--nb-gold);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.map-quest-step.is-done .map-quest-step-fill {
+  background: #4ade80;
+}
+
+.map-quest-reward {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--nb-frame);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+}
+
+.map-quest-reward-label {
+  color: var(--nb-ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+}
+
+.map-quest-reward-value {
+  color: var(--nb-gold);
+  font-weight: 600;
+}
+
+.map-quest-claim-btn {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
 .map-adventure-list {
   display: flex;
   flex-direction: column;

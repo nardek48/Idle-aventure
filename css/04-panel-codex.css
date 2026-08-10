@@ -59,6 +59,15 @@
   margin-bottom: 8px;
 }
 
+/* v2.83.10 : variante image (voir renderIconOrEmojiHTML), même
+   empreinte visuelle que l'emoji 34px qu'elle peut remplacer. */
+.codex-reading-icon-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  display: inline-block;
+}
+
 .codex-reading-title {
   font-size: 17px;
   font-weight: 800;

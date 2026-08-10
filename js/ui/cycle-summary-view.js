@@ -14,22 +14,29 @@ function buildCycleSummaryHTML(lockedWorld) {
   var cycleNumber = game.cycleCount || 0;
   var isLocked = !!lockedWorld;
 
-  var minKills = (typeof ASCENSION_CONFIG !== "undefined" && ASCENSION_CONFIG.minKillsToAscend) || 200;
   var currentKills = Number(game.totalKills || 0);
   var currentAscensions = Number(game.ascensionCount || 0);
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card is-success">';
-  h += '    <div class="dungeon-story-icon">🌀</div>';
+  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "dungeon-story-icon-img", "Cycle") + '</div>';
 
   if (isLocked) {
-    var ascNeeded = Math.max(0, (lockedWorld.requiredAscension || 0) - currentAscensions);
+    // v2.83 : le monde se débloque désormais via une questline (voir
+    // data/world-quests.js), plus par nombre d'ascensions.
+    var lockedWorldIndex = WORLDS.indexOf(lockedWorld);
+    var quest = window.WorldQuestManager ? WorldQuestManager.getQuestForWorldIndex(lockedWorldIndex) : null;
+    var questStepsDone = quest ? quest.steps.filter(function (s) { return WorldQuestManager.isStepComplete(quest, s); }).length : 0;
+    var questStepsTotal = quest ? quest.steps.length : 0;
+
     h += '    <div class="dungeon-story-title">Nouveau tour !</div>';
-    h += '    <div class="dungeon-story-text">' + esc(lockedWorld.name) + ' est encore hors de portée — il faut plus d\u2019ascensions pour s\u2019y aventurer. Tu repars de la Forêt, mais rien n\u2019est perdu : chaque ascension compte pour de bon.</div>';
+    h += '    <div class="dungeon-story-text">' + esc(lockedWorld.name) + ' est encore hors de portée — il faut terminer sa questline de déblocage pour s\u2019y aventurer (voir l\u2019écran Carte). Tu repars de la Forêt, mais rien n\u2019est perdu : ta progression de questline compte pour de bon.</div>';
 
     h += '    <div class="dungeon-summary-rewards">';
-    h += '      <div class="dungeon-summary-row"><span>Kills (pour ascensionner)</span><span>' + esc(formatNumber(currentKills)) + ' / ' + esc(formatNumber(minKills)) + '</span></div>';
-    h += '      <div class="dungeon-summary-row"><span>Ascensions avant ' + esc(lockedWorld.name) + '</span><span>' + esc(ascNeeded) + '</span></div>';
+    if (quest) {
+      h += '      <div class="dungeon-summary-row"><span>Questline "' + esc(quest.name) + '"</span><span>' + esc(questStepsDone) + '/' + esc(questStepsTotal) + ' étapes</span></div>';
+    }
+    h += '      <div class="dungeon-summary-row"><span>Ascensions (puissance)</span><span>' + esc(formatNumber(currentAscensions)) + '</span></div>';
     h += '      <div class="dungeon-summary-row"><span>Tours effectués</span><span>' + esc(cycleNumber) + '</span></div>';
     h += '    </div>';
   } else {

@@ -26,7 +26,7 @@ function buildPotionCardHTML(potion) {
   } else if (!potion.durationMin) {
     var pending = (game.pendingPotionBonuses && game.pendingPotionBonuses.aetherNext) || 0;
     if (pending > 0) {
-      h += '<div class="nb-purchase-meta">🌀 Bonus prêt : +' + Math.round(pending * 100) + '% à la prochaine ascension</div>';
+      h += '<div class="nb-purchase-meta">' + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "nb-purchase-cost-icon", "Aether") + ' Bonus prêt : +' + Math.round(pending * 100) + '% à la prochaine ascension</div>';
     }
   }
 

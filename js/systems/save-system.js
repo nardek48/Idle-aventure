@@ -223,6 +223,8 @@ function buildSaveData() {
     defenseBuffExpires: Number(game.defenseBuffExpires || 0),
     achievementsClaimed: game.achievementsClaimed || {},
     worldsEverReached: game.worldsEverReached || {},
+    worldQuestProgress: game.worldQuestProgress || {},
+    worldQuestsCompleted: game.worldQuestsCompleted || {},
     dungeonTiersEntered: game.dungeonTiersEntered || {},
     codexChaosSeen: !!game.codexChaosSeen,
     codexRead: game.codexRead || {},
@@ -350,6 +352,8 @@ function restoreBaseState(d) {
   game.defenseBuffExpires = Number(d.defenseBuffExpires || 0);
   game.achievementsClaimed = d.achievementsClaimed && typeof d.achievementsClaimed === "object" ? d.achievementsClaimed : {};
   game.worldsEverReached = d.worldsEverReached && typeof d.worldsEverReached === "object" ? d.worldsEverReached : {};
+  game.worldQuestProgress = d.worldQuestProgress && typeof d.worldQuestProgress === "object" ? d.worldQuestProgress : {};
+  game.worldQuestsCompleted = d.worldQuestsCompleted && typeof d.worldQuestsCompleted === "object" ? d.worldQuestsCompleted : {};
   game.dungeonTiersEntered = d.dungeonTiersEntered && typeof d.dungeonTiersEntered === "object" ? d.dungeonTiersEntered : {};
   game.codexChaosSeen = !!d.codexChaosSeen;
   game.codexRead = d.codexRead && typeof d.codexRead === "object" ? d.codexRead : {};
@@ -429,6 +433,8 @@ function hardResetState() {
   // stock de soin...) continue de repartir à zéro normalement.
   var keptAchievementsClaimed = Object.assign({}, game.achievementsClaimed || {});
   var keptWorldsEverReached = Object.assign({}, game.worldsEverReached || {});
+  var keptWorldQuestProgress = Object.assign({}, game.worldQuestProgress || {});
+  var keptWorldQuestsCompleted = Object.assign({}, game.worldQuestsCompleted || {});
   var keptDungeonTiersEntered = Object.assign({}, game.dungeonTiersEntered || {});
   var keptCodexChaosSeen = !!game.codexChaosSeen;
   var keptCodexRead = Object.assign({}, game.codexRead || {});
@@ -514,6 +520,8 @@ function hardResetState() {
   game.achievementsClaimed = keptAchievementsClaimed;
 
   game.worldsEverReached = keptWorldsEverReached;
+  game.worldQuestProgress = keptWorldQuestProgress;
+  game.worldQuestsCompleted = keptWorldQuestsCompleted;
   game.dungeonTiersEntered = keptDungeonTiersEntered;
   game.codexChaosSeen = keptCodexChaosSeen;
   game.codexRead = keptCodexRead;
@@ -632,6 +640,8 @@ function fullResetState() {
   game.achievementsClaimed = {};
 
   game.worldsEverReached = {};
+  game.worldQuestProgress = {};
+  game.worldQuestsCompleted = {};
   game.dungeonTiersEntered = {};
   game.codexChaosSeen = false;
   game.codexRead = {};

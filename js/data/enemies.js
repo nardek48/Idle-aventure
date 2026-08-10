@@ -63,9 +63,9 @@ var ASSETS = {
     crown: "👑"
   },
   ui: {
-    gold: "💰",
-    essence: "🔮",
-    aether: "🌀",
+    gold: "images/Icons/gold_icon.png",
+    essence: "images/Icons/essence_icon.png",
+    aether: "images/Icons/aether_icon.png",
     tap: "⚔️",
     boss: "🔥",
     chest: "🎁",

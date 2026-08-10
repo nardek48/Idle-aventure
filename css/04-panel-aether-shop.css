@@ -51,6 +51,15 @@
   line-height: 1;
 }
 
+/* v2.83.10 : .prestige-icon accueille maintenant une vraie image
+   (aether_icon.png) via renderIconOrEmojiHTML — même empreinte que le
+   ⭐ emoji qu'elle remplace. */
+.prestige-icon-img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
 .prestige-title {
   font-size: 15px;
   font-weight: 700;
@@ -178,6 +187,11 @@
 
   .prestige-icon {
     font-size: 36px;
+  }
+
+  .prestige-icon-img {
+    width: 36px;
+    height: 36px;
   }
 
   .prestige-title {

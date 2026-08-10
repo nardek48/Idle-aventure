@@ -417,85 +417,13 @@
   line-height: 1.1;
 }
 
-/* ===== Barre des 3 sous-onglets (Héros / Amélioration / Stats) =====
-   Placée sous le contenu, comme sur la maquette : pilule dorée pour
-   le sous-onglet actif, pilules sombres (cadre doré, texte clair)
-   pour les inactifs. */
-
-/* Conteneur du panneau héros (occupant toute la zone du panel) */
-.pc-heros-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding-top: 3px; /* espace en haut */
-}
-
-/* Contenu scrollable qui prend la place disponible au-dessus de la barre */
-.pc-heros-content {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  padding-bottom: 4px;  /* espace réduit au-dessus de la barre */
-}
-
-/* Conteneur de la barre, collé en bas du panneau */
-.pc-heros-subtab-bar-wrapper {
-  flex: 0 0 auto;
-  padding-top: 4px;     /* plus léger */
-  padding-bottom: 0;    /* plus de “coussin” inutile en bas */
-}
-
-/* Barre des sous-onglets */
-.pc-subtab-bar {
-  display: flex;
-  gap: 2px;
-  margin-top: 0;
-}
-
-
-.pc-subtab-btn {
-  flex: 0 0 auto;                 /* le bouton ne s’étire plus pour remplir la ligne */
-  width: 110px;                   /* ajuste en fonction de la taille de ton image */
-  height: 58px;                   /* plus bas qu’avant → visuellement moins haut */
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 0;                     /* enlève le padding qui agrandissait le bouton */
-
-  border: none;
-  border-radius: 0;
-  background: url('../images/Buttons/boutonGlobal.png') center / contain no-repeat;
-
-  color: var(--nb-ink-inverse);
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-
-.pc-subtab-btn span {
-  white-space: nowrap;
-}
-
-.pc-subtab-btn:active {
-  transform: scale(0.97);
-}
-
-.pc-subtab-btn.is-active {
-  flex: 0 0 auto;  /* pour être sûr qu’il ne s’étire pas différemment */
-  width: 125px;    /* plus large que 120px, ajuste à l’œil */
-  height: 58px;    /* garde la même hauteur si ça te convient */
-
-  background: url('../images/Buttons/boutonActiverGlobal.png') center / contain no-repeat;
-  border-color: var(--nb-gold);
-  color: #241a00;
-}
+/* ===== Sous-onglets Héros/Amélioration/Stats =====
+   v2.83.5 : classes génériques .subtab-page / .subtab-page-content /
+   .subtab-bar-wrapper / .pc-subtab-bar / .pc-subtab-btn déplacées vers
+   css/00-components.css (réutilisées par Donjon et Boutique). Ne reste
+   ici que ce qui est propre à CET écran. */
 
 @media (prefers-reduced-motion: reduce) {
-  .pc-subtab-btn {
-    transition: none;
-  }
   .pc-bar-fill {
     transition: none;
   }

@@ -32,7 +32,7 @@ function showConfirmModal(title, text, icon, onConfirm) {
 
   if (titleEl) titleEl.textContent = title || "Confirmer";
   if (textEl) textEl.textContent = text || "";
-  if (iconEl) iconEl.textContent = icon || "🌀";
+  if (iconEl) iconEl.innerHTML = renderIconOrEmojiHTML(icon || "🌀", "confirm-icon-img", title || "");
 
   _confirmModalCallback = typeof onConfirm === "function" ? onConfirm : null;
   modal.classList.add("show");
@@ -75,8 +75,8 @@ function showOfflineModal(offline) {
   if (rewardsEl) {
     var rows = [];
     if (offline.gold > 0) rows.push('<div class="offline-reward-row">💰 +' + formatNumber(offline.gold) + ' or</div>');
-    if (offline.essence > 0) rows.push('<div class="offline-reward-row">🔮 +' + formatNumber(offline.essence) + ' essence</div>');
-    if (offline.aether > 0) rows.push('<div class="offline-reward-row">✨ +' + formatNumber(offline.aether) + ' Aether</div>');
+    if (offline.essence > 0) rows.push('<div class="offline-reward-row">' + renderIconOrEmojiHTML("images/Icons/essence_icon.png", "offline-reward-icon", "Essence") + ' +' + formatNumber(offline.essence) + ' essence</div>');
+    if (offline.aether > 0) rows.push('<div class="offline-reward-row">' + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "offline-reward-icon", "Aether") + ' +' + formatNumber(offline.aether) + ' Aether</div>');
     if (offline.kills > 0) rows.push('<div class="offline-reward-row">⚔️ ' + formatNumber(offline.kills) + ' ennemis vaincus par la Vigie</div>');
     if (offline.items && offline.items.length) {
       offline.items.forEach(function (name) {

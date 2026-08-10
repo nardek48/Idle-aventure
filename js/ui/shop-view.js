@@ -236,50 +236,52 @@ function buildUpgradeCardHTML(u, buyAmount) {
    via getUpgradePurchasePreview) et affiche soit le bouton d'achat
    normal, soit "MAX" si le niveau plafond est atteint, soit un
    verrou si le monde requis (unlockWorld) n'est pas encore débloqué. */
+function buildShopSubTabBarHTML() {
+  var h = '<div class="pc-subtab-bar">';
+  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "upgrades" ? ' is-active' : '') + '" onclick="setShopSubTab(\'upgrades\')">⬆️<span>Améliorations</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "potions" ? ' is-active' : '') + '" onclick="setShopSubTab(\'potions\')">🧪<span>Potions</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "equipshop" ? ' is-active' : '') + '" onclick="setShopSubTab(\'equipshop\')">🛡️<span>Équipement</span></button>';
+  h += '</div>';
+  return h;
+}
+
 function buildShopHTML() {
   var buyAmount = Number(game.shopBuyAmount || 1);
   if (![1, 10, 25, -1].includes(buyAmount)) buyAmount = 1;
 
   var modeLabel = buyAmount === -1 ? "MAX" : ("x" + buyAmount);
 
-
-  var h = '<div class="shop-shell">';
-
-  h += '<div class="shop-sub-tabs">';
-  h += '<button class="shop-sub-tab ' + (activeShopSubTab === "upgrades" ? "is-active" : "") + '" type="button" onclick="setShopSubTab(\'upgrades\')">⬆️ Améliorations</button>';
-  h += '<button class="shop-sub-tab ' + (activeShopSubTab === "potions" ? "is-active" : "") + '" type="button" onclick="setShopSubTab(\'potions\')">🧪 Potions</button>';
-  h += '<button class="shop-sub-tab ' + (activeShopSubTab === "equipshop" ? "is-active" : "") + '" type="button" onclick="setShopSubTab(\'equipshop\')">🛡️ Équipement</button>';
-  h += '</div>';
+  var h = '<div class="subtab-page">';
+  h += '<div class="subtab-page-content">';
 
   if (activeShopSubTab === "potions") {
     h += typeof buildPotionShopHTML === "function" ? buildPotionShopHTML() : "";
-    h += '</div>'; // ferme .shop-shell
-    return h;
-  }
-
-  if (activeShopSubTab === "equipshop") {
+  } else if (activeShopSubTab === "equipshop") {
     h += typeof buildEquipShopHTML === "function" ? buildEquipShopHTML() : "";
-    h += '</div>'; // ferme .shop-shell
-    return h;
+  } else {
+    h += '<div class="shop-buy-toolbar">';
+    h += '<button class="settings-btn ' + (buyAmount === 1 ? 'active' : '') + '" onclick="setShopBuyAmount(1)">x1</button>';
+    h += '<button class="settings-btn ' + (buyAmount === 10 ? 'active' : '') + '" onclick="setShopBuyAmount(10)">x10</button>';
+    h += '<button class="settings-btn ' + (buyAmount === 25 ? 'active' : '') + '" onclick="setShopBuyAmount(25)">x25</button>';
+    h += '<button class="settings-btn ' + (buyAmount === -1 ? 'active' : '') + '" onclick="setShopBuyAmount(-1)">MAX</button>';
+    h += '</div>';
+
+    h += '<div class="shop-mode-info" style="margin:0 0 12px 0;opacity:.85;width:100%;text-align:right;">Mode d’achat : <strong>' + modeLabel + '</strong></div>';
+
+    h += '<div class="shop-grid">';
+    (UPGRADES || []).forEach(function (u) {
+      h += buildUpgradeCardHTML(u, buyAmount);
+    });
+    h += '</div>';
   }
 
-  h += '<div class="shop-buy-toolbar">';
-  h += '<button class="settings-btn ' + (buyAmount === 1 ? 'active' : '') + '" onclick="setShopBuyAmount(1)">x1</button>';
-  h += '<button class="settings-btn ' + (buyAmount === 10 ? 'active' : '') + '" onclick="setShopBuyAmount(10)">x10</button>';
-  h += '<button class="settings-btn ' + (buyAmount === 25 ? 'active' : '') + '" onclick="setShopBuyAmount(25)">x25</button>';
-  h += '<button class="settings-btn ' + (buyAmount === -1 ? 'active' : '') + '" onclick="setShopBuyAmount(-1)">MAX</button>';
+  h += '</div>'; // fin .subtab-page-content
+
+  h += '<div class="subtab-bar-wrapper">';
+  h += buildShopSubTabBarHTML();
   h += '</div>';
 
-  h += '<div class="shop-mode-info" style="margin:0 0 12px 0;opacity:.85;width:100%;text-align:right;">Mode d’achat : <strong>' + modeLabel + '</strong></div>';
-
-  h += '<div class="shop-grid">';
-  (UPGRADES || []).forEach(function (u) {
-    h += buildUpgradeCardHTML(u, buyAmount);
-  });
-  h += '</div>';
-
-  h += '</div>'; // ferme .shop-grid
-  h += '</div>'; // ferme .shop-shell
+  h += '</div>'; // fin .subtab-page
 
   return h;
   

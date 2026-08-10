@@ -35,11 +35,10 @@
 }
 
 
-.shop-shell {
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-}
+/* v2.83.5 : .shop-shell / .shop-sub-tabs / .shop-sub-tab supprimées
+   (remplacées par les classes génériques .subtab-page/-content/
+   -bar-wrapper + .pc-subtab-bar/.pc-subtab-btn dans
+   css/00-components.css, partagées avec Personnage et Donjon). */
 
 .shop-buy-toolbar {
   display: flex;
@@ -49,38 +48,6 @@
   margin: 0 auto 10px;
   width: 100%;
   flex-wrap: wrap;
-}
-
-/* =========================
-   Sous-onglets Boutique (Améliorations / Potions)
-   ========================= */
-.shop-sub-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin: 0 auto 14px;
-  width: 100%;
-}
-
-.shop-sub-tab {
-  flex: 1;
-  max-width: 220px;
-  padding: 10px 12px;
-  background: var(--nb-cream);
-  border: 2px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  box-shadow: 0 3px 0 var(--nb-frame-light);
-  color: var(--nb-ink);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.shop-sub-tab.is-active {
-  border-color: var(--nb-gold-dark);
-  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
-  box-shadow: 0 3px 0 var(--nb-gold-deep);
-  color: #4a2f06;
 }
 
 /* =========================
@@ -165,10 +132,6 @@
 
 
 @media (max-width: 640px) {
-  .shop-shell {
-    max-width: 100%;
-  }
-
   .shop-grid {
     grid-template-columns: 1fr;
   }
