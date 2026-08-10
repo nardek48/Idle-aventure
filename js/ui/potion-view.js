@@ -5,13 +5,17 @@ Sous-onglet "Potions" de la Boutique (voir shop-view.js pour le
 bouton de bascule Améliorations/Potions).
 ============================================================ */
 
-/* Une carte potion : icône, description, compte à rebours si active,
-   bouton d'achat désactivé si trop cher. */
+/* Une carte potion : icône, description, stock possédé, compte à
+   rebours si active, bouton d'achat désactivé si trop cher. v2.83.45 :
+   "Acheter" ajoute au stock (ne consomme plus immédiatement) — voir
+   le sous-onglet "🧪 Potions" de l'écran Équipement pour boire une
+   potion du stock. */
 function buildPotionCardHTML(potion) {
   var remaining = (window.PotionManager && typeof PotionManager.getRemainingMs === "function")
     ? PotionManager.getRemainingMs(potion.id)
     : 0;
   var isActive = remaining > 0;
+  var stock = (window.PotionManager && typeof PotionManager.getStock === "function") ? PotionManager.getStock(potion.id) : 0;
   var cost = (window.PotionManager && typeof PotionManager.getCost === "function") ? PotionManager.getCost(potion) : potion.cost;
   var canBuy = (game.gold || 0) >= cost;
 
@@ -20,6 +24,7 @@ function buildPotionCardHTML(potion) {
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name">' + esc(potion.name) + '</div>';
   h += '<div class="nb-purchase-desc">' + esc(potion.desc) + '</div>';
+  h += '<div class="nb-purchase-meta">🎒 Stock : ' + stock + '</div>';
 
   if (isActive) {
     h += '<div class="nb-purchase-meta">⏳ ' + esc(formatTime(Math.ceil(remaining / 1000))) + ' restant</div>';
@@ -31,7 +36,7 @@ function buildPotionCardHTML(potion) {
   }
 
   h += '</div>';
-  h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buy(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
+  h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
   h += '</div>';
   return h;
 }

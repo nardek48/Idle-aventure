@@ -15,7 +15,6 @@ var activeShopSubTab = "upgrades";
 
 function setShopSubTab(tab) {
   if (tab === "potions") activeShopSubTab = "potions";
-  else if (tab === "equipshop") activeShopSubTab = "equipshop";
   else activeShopSubTab = "upgrades";
   if (typeof renderPanel === "function") renderPanel();
 }
@@ -222,7 +221,7 @@ function buildUpgradeCardHTML(u, buyAmount) {
       }
     }
 
-    h += '<div class="nb-purchase-buy-label">' + esc(modeLabel) + '</div>';
+    h += '<div class="nb-purchase-buy-label">' + (buyAmount === -1 && afford ? "x" + esc(preview.count) : esc(modeLabel)) + '</div>';
 
   h += '</div>'; // /nb-purchase-buy-col
 
@@ -238,9 +237,8 @@ function buildUpgradeCardHTML(u, buyAmount) {
    verrou si le monde requis (unlockWorld) n'est pas encore débloqué. */
 function buildShopSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "upgrades" ? ' is-active' : '') + '" onclick="setShopSubTab(\'upgrades\')">⬆️<span>Améliorations</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "upgrades" ? ' is-active' : '') + '" onclick="setShopSubTab(\'upgrades\')">💰<span>Économie</span></button>';
   h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "potions" ? ' is-active' : '') + '" onclick="setShopSubTab(\'potions\')">🧪<span>Potions</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "equipshop" ? ' is-active' : '') + '" onclick="setShopSubTab(\'equipshop\')">🛡️<span>Équipement</span></button>';
   h += '</div>';
   return h;
 }
@@ -253,11 +251,10 @@ function buildShopHTML() {
 
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
+  h += '<div class="nb-page-frame nb-page-frame-fill">'; // v2.83.44 : ouverte ici (pas ré-enveloppée après coup, voir CHANGELOG)
 
   if (activeShopSubTab === "potions") {
     h += typeof buildPotionShopHTML === "function" ? buildPotionShopHTML() : "";
-  } else if (activeShopSubTab === "equipshop") {
-    h += typeof buildEquipShopHTML === "function" ? buildEquipShopHTML() : "";
   } else {
     h += '<div class="shop-buy-toolbar">';
     h += '<button class="settings-btn ' + (buyAmount === 1 ? 'active' : '') + '" onclick="setShopBuyAmount(1)">x1</button>';
@@ -269,13 +266,20 @@ function buildShopHTML() {
     h += '<div class="shop-mode-info" style="margin:0 0 12px 0;opacity:.85;width:100%;text-align:right;">Mode d’achat : <strong>' + modeLabel + '</strong></div>';
 
     h += '<div class="shop-grid">';
+    // v2.83.41 : les 5 améliorations d'entraînement (Force/Célérité/
+    // Précision/Volonté/Endurance) sont retirées d'ici — doublon exact
+    // avec Personnage > Amélioration (voir HEROS_TRAINING_UPGRADE_IDS
+    // dans ui/heros-view.js). Ne restent que les 2 améliorations liées
+    // à l'or (Bourse lourde, Contrats lucratifs), d'où le renommage de
+    // cet onglet en "💰 Économie".
     (UPGRADES || []).forEach(function (u) {
+      if (typeof HEROS_TRAINING_UPGRADE_IDS !== "undefined" && HEROS_TRAINING_UPGRADE_IDS.indexOf(u.id) !== -1) return;
       h += buildUpgradeCardHTML(u, buyAmount);
     });
     h += '</div>';
   }
 
-  h = '<div class="nb-page-frame nb-page-frame-fill">' + h + '</div>'; // v2.83.28
+  h += '</div>'; // fin .nb-page-frame
 
   h += '</div>'; // fin .subtab-page-content
 

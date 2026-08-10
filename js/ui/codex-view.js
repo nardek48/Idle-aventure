@@ -127,7 +127,7 @@ function buildCodexHTML() {
     h += buildCodexListHTML();
   }
 
-  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
+  return h;
 }
 
 window.buildCodexHTML = buildCodexHTML;

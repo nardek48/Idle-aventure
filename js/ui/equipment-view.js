@@ -12,14 +12,22 @@ gauche ne montre plus que des icônes (clic = sélectionne), le détail
 de l'emplacement sélectionné (nom, stat, action) s'affiche à droite.
 Pas de bouton "Améliorer" (aucune mécanique de ce type dans le jeu) :
 remplacé par "Déséquiper", la vraie action disponible.
+
+v2.83.39 : 3e sous-onglet "Boutique" — la boutique d'achat
+d'équipement (contre or), avant sous-onglet de l'écran Boutique
+classique, a déménagé ici (voir ui/equip-shop-view.js pour son
+contenu, inchangé). Plus logique : on équipe/consulte/achète de
+l'équipement au même endroit.
 ============================================================ */
 
-var activeEquipSubTab = "equipment"; // "equipment" | "inventory"
+var activeEquipSubTab = "equipment"; // "equipment" | "inventory" | "shop" | "potions"
 var selectedEquipSlot = "weapon"; // slot réel ("weapon"/"armor"/"amulet") ou id verrouillé ("locked0".."locked3")
-var selectedInventoryUid = null; // uid de l'objet sélectionné dans le sac (v2.83.29)
+var selectedInventoryKey = null; // clé unifiée équipement("eq:uid")/potion("buff:id"/"heal:id") — v2.83.46
 
 function setEquipSubTab(tab) {
-  activeEquipSubTab = (tab === "inventory") ? "inventory" : "equipment";
+  if (tab === "inventory") activeEquipSubTab = "inventory";
+  else if (tab === "shop") activeEquipSubTab = "shop";
+  else activeEquipSubTab = "equipment";
   if (typeof renderPanel === "function") renderPanel();
 }
 window.setEquipSubTab = setEquipSubTab;
@@ -30,16 +38,26 @@ function selectEquipSlot(slotId) {
 }
 window.selectEquipSlot = selectEquipSlot;
 
-function selectInventoryItem(uid) {
-  selectedInventoryUid = uid;
+function selectInventoryKey(key) {
+  selectedInventoryKey = key;
   if (typeof renderPanel === "function") renderPanel();
 }
-window.selectInventoryItem = selectInventoryItem;
+window.selectInventoryKey = selectInventoryKey;
+
+var inventoryFilter = "all"; // "all" | "equipment" | "potions" — v2.83.46
+
+function setInventoryFilter(filter) {
+  inventoryFilter = filter;
+  selectedInventoryKey = null; // évite de garder sélectionné un objet qui sort du filtre
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setInventoryFilter = setInventoryFilter;
 
 function buildEquipSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
   h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "equipment" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'equipment\')">🛡️<span>Équipement</span></button>';
   h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "inventory" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'inventory\')">🎒<span>Inventaire</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "shop" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'shop\')">🛒<span>Boutique</span></button>';
   h += '</div>';
   return h;
 }
@@ -221,30 +239,72 @@ function buildCompactSetBonusHTML() {
   return h;
 }
 
-/* Une tuile d'objet dans la grille du sac (v2.83.29) — icône seule,
-   bordée par couleur de rareté, clic = sélectionne (le détail complet
-   s'affiche dans le panneau de droite, voir
-   buildInventoryDetailPanelHTML). Même principe que les emplacements
-   de l'onglet Équipement. */
-function buildInventoryGridTile(item) {
-  var isSelected = selectedInventoryUid === item.uid;
-  var h = '<button class="eq-bag-tile rarity-' + esc(item.rarity) + (isSelected ? ' is-selected' : '') + '" onclick="selectInventoryItem(\'' + esc(item.uid) + '\')" aria-label="' + esc(item.name) + '">';
-  h += buildEquipmentIconHTML(item, "eq-bag-tile-icon");
-  h += '</button>';
-  return h;
+/* v2.83.46 : Inventaire unifié (équipement + potions dans la même
+   grille), avec un filtre Tout/Équipement/Potions — remplace la
+   grille équipement seule (v2.83.29) et le 4e sous-onglet Potions
+   dédié (v2.83.45). Chaque entrée de la liste unifiée a un type
+   ("equipment" ou "potion") ; le panneau de détail bascule son
+   contenu et ses boutons d'action selon ce type. */
+
+/* Construit la liste affichée selon le filtre courant : objets
+   d'équipement (game.inventory) et/ou potions en stock (voir
+   getOwnedPotionsList). Équipement d'abord, potions ensuite — pas de
+   tri mélangé par rareté entre les deux types, pour rester lisible. */
+function getUnifiedInventoryEntries() {
+  var entries = [];
+
+  if (inventoryFilter !== "potions") {
+    (Array.isArray(game.inventory) ? game.inventory : []).forEach(function (item) {
+      entries.push({ key: "eq:" + item.uid, type: "equipment", item: item });
+    });
+  }
+
+  if (inventoryFilter !== "equipment") {
+    getOwnedPotionsList().forEach(function (p) {
+      entries.push({ key: p.key, type: "potion", potion: p.potion, isHealing: p.isHealing, stock: p.stock });
+    });
+  }
+
+  return entries;
 }
 
-/* Panneau de détail (colonne de droite) — objet actuellement
-   sélectionné dans la grille du sac. "Équiper" est l'action réelle du
-   jeu (pas d'"Utiliser" : ce sac ne contient que de l'équipement, les
-   potions ont leur propre écran dans la Boutique). v2.83.34 : ajout
-   d'une comparaison avec l'objet déjà équipé sur le même emplacement
-   (delta si même type de stat, sinon simple rappel côte à côte). */
-function buildInventoryDetailPanelHTML(inventory) {
-  var item = inventory.find(function (i) { return i.uid === selectedInventoryUid; });
+/* Une tuile dans la grille unifiée — icône seule, bordée par couleur
+   de rareté, badge de quantité pour les potions uniquement (jamais
+   plus d'un exemplaire pour l'équipement). Clic = sélectionne, le
+   détail complet s'affiche dans le panneau de droite. */
+function buildUnifiedTileHTML(entry) {
+  var isSelected = selectedInventoryKey === entry.key;
+
+  if (entry.type === "equipment") {
+    var item = entry.item;
+    var h = '<button class="eq-bag-tile rarity-' + esc(item.rarity) + (isSelected ? ' is-selected' : '') + '" onclick="selectInventoryKey(\'' + esc(entry.key) + '\')" aria-label="' + esc(item.name) + '">';
+    h += buildEquipmentIconHTML(item, "eq-bag-tile-icon");
+    h += '</button>';
+    return h;
+  }
+
+  var potion = entry.potion;
+  var h2 = '<button class="eq-bag-tile rarity-' + esc(potion.rarity || "common") + (isSelected ? ' is-selected' : '') + '" onclick="selectInventoryKey(\'' + esc(entry.key) + '\')" aria-label="' + esc(potion.name) + '">';
+  h2 += renderIconOrEmojiHTML(potion.icon, "eq-bag-tile-icon", potion.name);
+  h2 += '<span class="eq-bag-tile-stock">' + entry.stock + '</span>';
+  h2 += '</button>';
+  return h2;
+}
+
+/* Panneau de détail (colonne de droite) — bascule son contenu et ses
+   boutons selon le type de l'entrée sélectionnée : "Équiper"/"Vendre"
+   + comparaison avec l'équipé pour un objet d'équipement,
+   "Utiliser"/"Vendre" pour une potion. */
+function buildUnifiedDetailPanelHTML(entries) {
+  var entry = entries.find(function (e) { return e.key === selectedInventoryKey; });
   var h = '<div class="eq-detail-panel">';
 
-  if (item) {
+  if (!entry) {
+    h += '<div class="eq-detail-icon eq-detail-icon-empty">🎒</div>';
+    h += '<div class="eq-detail-name">Aucun objet sélectionné</div>';
+    h += '<div class="eq-detail-hint">Touche un objet dans le sac pour voir son détail ici.</div>';
+  } else if (entry.type === "equipment") {
+    var item = entry.item;
     h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img") + '</div>';
     h += '<div class="eq-detail-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
     h += '<div class="eq-detail-stat">' + esc(formatEquipmentStat(item)) + '</div>';
@@ -252,9 +312,22 @@ function buildInventoryDetailPanelHTML(inventory) {
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="confirmSellItem(\'' + esc(item.uid) + '\')">Vendre</button>';
     h += buildEquippedComparisonHTML(item);
   } else {
-    h += '<div class="eq-detail-icon eq-detail-icon-empty">🎒</div>';
-    h += '<div class="eq-detail-name">Aucun objet sélectionné</div>';
-    h += '<div class="eq-detail-hint">Touche un objet dans le sac pour voir son détail ici.</div>';
+    var potion = entry.potion;
+    var descText = entry.isHealing
+      ? "Restaure " + Math.round(potion.healPercent * 100) + "% des PV max."
+      : potion.desc;
+
+    h += '<div class="eq-detail-icon">' + renderIconOrEmojiHTML(potion.icon, "eq-detail-icon-img", potion.name) + '</div>';
+    h += '<div class="eq-detail-name">' + esc(potion.name) + '</div>';
+    h += '<div class="eq-detail-stat">' + esc(descText) + '</div>';
+    h += '<div class="eq-detail-hint">🎒 Stock : ' + entry.stock + '</div>';
+
+    if (entry.isHealing) {
+      h += '<button class="btn-buy eq-detail-action" type="button" onclick="PotionManager.useHealingPotion(\'' + esc(potion.id) + '\')">Utiliser</button>';
+    } else {
+      h += '<button class="btn-buy eq-detail-action" type="button" onclick="PotionManager.usePotion(\'' + esc(potion.id) + '\')">Utiliser</button>';
+    }
+    h += '<button class="btn-buy eq-detail-action" type="button" onclick="PotionManager.sellPotion(\'' + esc(potion.id) + '\')">Vendre</button>';
   }
 
   h += '</div>';
@@ -295,23 +368,6 @@ function buildEquippedComparisonHTML(item) {
   return h;
 }
 
-/* Une tuile d'objet dans le sac : cliquer sur l'objet l'équipe,
-   le bouton "Vendre" séparé le vend directement sans l'équiper.
-   v2.83.29 : conservée pour compatibilité mais plus utilisée par
-   buildInventoryTabContentHTML — voir buildInventoryGridTile /
-   buildInventoryDetailPanelHTML. */
-function buildInventoryTile(item) {
-  var h = '<div class="eq-bag-item rarity-' + esc(item.rarity) + '">';
-  h += '<button class="eq-bag-main" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">';
-  h += buildEquipmentIconHTML(item, "eq-bag-icon");
-  h += '<div class="eq-bag-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
-  h += '<div class="eq-bag-stat">' + esc(formatEquipmentStat(item)) + '</div>';
-  h += '</button>';
-  h += '<button class="eq-bag-sell" onclick="EquipmentManager.sell(\'' + esc(item.uid) + '\')">Vendre</button>';
-  h += '</div>';
-  return h;
-}
-
 /* Contenu du sous-onglet "Équipement" : les 3 emplacements réels +
    emplacements verrouillés réservés pour de futurs types d'objets.
    v2.83.23 : le bandeau "BONUS DE SET" pleine largeur (en haut) a été
@@ -326,7 +382,7 @@ function buildEquipmentTabContentHTML() {
   // v2.83.16 : grille d'icônes (gauche) + panneau de détail (droite),
   // façon maquette — voir buildEquipDetailPanelHTML.
   h += '<div class="eq-layout">';
-  h += '<div class="eq-hero-card nb-page-frame nb-page-frame-fill">';
+  h += '<div class="eq-hero-card">';
   h += '<div class="eq-hero-main eq-hero-main-slots-only">';
 
   h += '<div class="eq-hero-right">';
@@ -356,10 +412,6 @@ function buildEquipmentTabContentHTML() {
   return h;
 }
 
-/* Contenu du sous-onglet "Inventaire" : bascule d'autovente, outils
-   de tri/vente rapide, puis grille 3 colonnes (icônes seules) +
-   panneau de détail de l'objet sélectionné (v2.83.29, même principe
-   que l'onglet Équipement — voir buildInventoryDetailPanelHTML). */
 /* v2.83.31 : barre d'outils compacte du sac — remplace l'ancienne
    bascule d'autovente pleine largeur + les 3 boutons côte à côte.
    2 icônes seulement : "⇅ Trier" (petit menu déroulant, 2 options) et
@@ -396,6 +448,17 @@ function buildInventoryCompactToolbarHTML() {
 
   h += '<button class="inv-toolbar-btn" type="button" onclick="openInventorySettings()">⚙</button>';
 
+  h += '</div>';
+  return h;
+}
+
+/* v2.83.46 : rangée de filtre Tout/Équipement/Potions, sous la
+   toolbar. */
+function buildInventoryFilterRowHTML() {
+  var h = '<div class="inv-filter-row">';
+  h += '<button type="button" class="inv-filter-btn' + (inventoryFilter === "all" ? ' is-active' : '') + '" onclick="setInventoryFilter(\'all\')">Tout</button>';
+  h += '<button type="button" class="inv-filter-btn' + (inventoryFilter === "equipment" ? ' is-active' : '') + '" onclick="setInventoryFilter(\'equipment\')">🛡️ Équipement</button>';
+  h += '<button type="button" class="inv-filter-btn' + (inventoryFilter === "potions" ? ' is-active' : '') + '" onclick="setInventoryFilter(\'potions\')">🧪 Potions</button>';
   h += '</div>';
   return h;
 }
@@ -481,30 +544,66 @@ function confirmSellAllInventory() {
 }
 window.confirmSellAllInventory = confirmSellAllInventory;
 
+/* Liste de toutes les potions actuellement EN STOCK (des deux
+   catalogues), triée par rareté puis nom. */
+function getOwnedPotionsList() {
+  var order = (typeof RARITY_ORDER !== "undefined") ? RARITY_ORDER : ["common", "green", "rare", "epic", "legendary"];
+  var list = [];
+
+  (POTIONS_DB || []).forEach(function (p) {
+    var stock = PotionManager.getStock(p.id);
+    if (stock > 0) list.push({ key: "buff:" + p.id, potion: p, isHealing: false, stock: stock });
+  });
+  (HEALING_POTIONS_DB || []).forEach(function (p) {
+    var stock = PotionManager.getHealingStock(p.id);
+    if (stock > 0) list.push({ key: "heal:" + p.id, potion: p, isHealing: true, stock: stock });
+  });
+
+  list.sort(function (a, b) {
+    var ra = order.indexOf(a.potion.rarity || "common"), rb = order.indexOf(b.potion.rarity || "common");
+    if (ra !== rb) return rb - ra;
+    return String(a.potion.name || "").localeCompare(String(b.potion.name || ""));
+  });
+
+  return list;
+}
+
+/* Contenu du sous-onglet "Inventaire" : bascule d'autovente, outils
+   de tri/vente rapide, filtre Tout/Équipement/Potions, puis grille
+   3 colonnes (icônes seules) + panneau de détail de l'entrée
+   sélectionnée (v2.83.46, unifié équipement + potions). */
 function buildInventoryTabContentHTML() {
-  var inventory = Array.isArray(game.inventory) ? game.inventory : [];
   var h = '<div class="eq-bag-panel nb-page-frame nb-page-frame-fill">';
 
   h += buildInventoryCompactToolbarHTML();
+  h += buildInventoryFilterRowHTML();
 
-  h += '<div class="panel-title" style="margin:0 0 10px;">Sac (' + inventory.length + '/50)</div>';
+  var entries = getUnifiedInventoryEntries();
+  var equipCount = (Array.isArray(game.inventory) ? game.inventory.length : 0);
 
-  if (!inventory.length) {
-    h += '<div class="eq-empty">Sac vide, vainquez des boss pour obtenir du loot.</div>';
+  h += '<div class="panel-title" style="margin:0 0 10px;">Sac (' + equipCount + '/50)</div>';
+
+  if (!entries.length) {
+    var emptyMsg = inventoryFilter === "potions"
+      ? "Aucune potion en stock — achète-en depuis la Boutique."
+      : inventoryFilter === "equipment"
+        ? "Sac vide, vainquez des boss pour obtenir du loot."
+        : "Rien à afficher pour l\u2019instant.";
+    h += '<div class="eq-empty">' + emptyMsg + '</div>';
   } else {
-    // Si l'objet sélectionné a été vendu/équipé entre-temps (ou au
-    // tout premier rendu), on retombe sur le premier objet du sac.
-    if (!inventory.some(function (i) { return i.uid === selectedInventoryUid; })) {
-      selectedInventoryUid = inventory[0].uid;
+    // Si l'entrée sélectionnée a disparu (vendue/équipée/bue, ou
+    // filtre changé), on retombe sur la première de la liste actuelle.
+    if (!entries.some(function (e) { return e.key === selectedInventoryKey; })) {
+      selectedInventoryKey = entries[0].key;
     }
 
     h += '<div class="eq-bag-flex">';
     h += '<div class="eq-bag-inv-grid">';
-    inventory.forEach(function (item) {
-      h += buildInventoryGridTile(item);
+    entries.forEach(function (entry) {
+      h += buildUnifiedTileHTML(entry);
     });
     h += '</div>';
-    h += buildInventoryDetailPanelHTML(inventory);
+    h += buildUnifiedDetailPanelHTML(entries);
     h += '</div>';
   }
 
@@ -512,14 +611,23 @@ function buildInventoryTabContentHTML() {
   return h;
 }
 
-/* Assemble l'écran entier — 2 sous-onglets (Équipement/Inventaire),
-   même pattern que Personnage/Donjon/Boutique (voir
+
+/* Assemble l'écran entier — 4 sous-onglets (Équipement/Inventaire/
+   Boutique/Potions), même pattern que Personnage/Donjon (voir
    css/00-components.css : .subtab-page/-content/-bar-wrapper +
    .pc-subtab-bar/.pc-subtab-btn). */
 function buildEquipHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
-  h += (activeEquipSubTab === "inventory") ? buildInventoryTabContentHTML() : buildEquipmentTabContentHTML();
+  if (activeEquipSubTab === "inventory") {
+    h += buildInventoryTabContentHTML();
+  } else if (activeEquipSubTab === "shop") {
+    h += '<div class="nb-page-frame nb-page-frame-fill">';
+    h += (typeof buildEquipShopHTML === "function") ? buildEquipShopHTML() : "";
+    h += '</div>';
+  } else {
+    h += buildEquipmentTabContentHTML();
+  }
   h += '</div>';
 
   h += '<div class="subtab-bar-wrapper">';

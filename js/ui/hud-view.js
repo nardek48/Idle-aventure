@@ -46,8 +46,7 @@ var HUD_PAGE_TITLES = {
   bestiary: "Bestiaire",
   log: "Journal",
   settings: "Paramètres",
-  achievements: "Hauts faits",
-  codex: "Codex"
+  achievements: "Hauts faits"
 };
 
 function buildHudHTML() {
@@ -83,7 +82,10 @@ function buildHudHTML() {
     +       '<span class="nb-pill nb-pill-essence"><img class="nb-pill-icon" src="images/Icons/essence_icon.png" alt="Essence"><span id="hud-essence">0</span></span>'
     +       '<span class="nb-pill nb-pill-aether"><img class="nb-pill-icon" src="images/Icons/aether_icon.png" alt="Aether"><span id="hud-aether">0</span></span>'
     +     '</div>'
-    +     '<div id="hud-page-title" class="nb-hud-page-title"></div>'
+    +     '<div class="nb-hud-title-row">'
+    +       '<button type="button" class="nb-hud-bag-btn" onclick="openBagFromHud()" aria-label="Inventaire">🎒</button>'
+    +       '<div id="hud-page-title" class="nb-hud-page-title"></div>'
+    +     '</div>'
     +   '</div>'
     +   '<div id="combat-hero-mini" class="combat-hero-mini">'
     +     '<div class="combat-hero-mini-portrait">'
@@ -257,3 +259,14 @@ window.renderHeroHp = renderHeroHp;
 window.renderCombatHeroMini = renderCombatHeroMini;
 window.renderStats = renderStats;
 window.updateHudPageTitle = updateHudPageTitle;
+
+/* v2.83.52 : bouton sac dans le HUD (sous les ressources, à gauche du
+   portrait du héros) — accès direct à l'Inventaire depuis n'importe
+   quel écran, y compris en plein combat. Placé à côté (pas dans) du
+   titre de page, qui lui reste masqué sur Combat — le bouton reste
+   donc toujours visible peu importe l'écran. */
+function openBagFromHud() {
+  if (typeof activeEquipSubTab !== "undefined") activeEquipSubTab = "inventory";
+  if (typeof switchTab === "function") switchTab("equip");
+}
+window.openBagFromHud = openBagFromHud;

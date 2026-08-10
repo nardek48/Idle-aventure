@@ -3,9 +3,30 @@
 Quest Idle — ui/ascension-view.js
 Écran "Ascension" : bouton de prestige (voir ascendNow() en
 progression-system.js) + boutique d'amélioration Aether.
+
+v2.83.38 : séparé en 2 sous-onglets (Ascension / Boutique), même
+principe que Équipement/Inventaire et Donjon/Boutique — voir
+css/00-components.css pour .subtab-page/.pc-subtab-bar.
 ============================================================ */
 
-function buildAscensionHTML() {
+var activeAscensionSubTab = "ascension"; // "ascension" | "shop"
+
+function setAscensionSubTab(tab) {
+  activeAscensionSubTab = (tab === "shop") ? "shop" : "ascension";
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setAscensionSubTab = setAscensionSubTab;
+
+function buildAscensionSubTabBarHTML() {
+  var h = '<div class="pc-subtab-bar">';
+  h += '<button type="button" class="pc-subtab-btn' + (activeAscensionSubTab === "ascension" ? ' is-active' : '') + '" onclick="setAscensionSubTab(\'ascension\')">🌀<span>Ascension</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeAscensionSubTab === "shop" ? ' is-active' : '') + '" onclick="setAscensionSubTab(\'shop\')">🔷<span>Boutique</span></button>';
+  h += '</div>';
+  return h;
+}
+
+/* Contenu du sous-onglet "Ascension" : bouton de prestige + conditions. */
+function buildAscensionTabContentHTML() {
   var minKills = (typeof ASCENSION_CONFIG !== "undefined" && ASCENSION_CONFIG.minKillsToAscend != null)
     ? ASCENSION_CONFIG.minKillsToAscend
     : 50;
@@ -20,8 +41,7 @@ function buildAscensionHTML() {
     : false;
 
   var killsLeft = Math.max(0, minKills - currentKills);
-  var h = `<div class="panel-title aether-shop-title">Ascension</div>`;
-  h += (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("ascension") : "";
+  var h = (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("ascension") : "";
 
   h += `<div class="prestige-section">
     <div class="prestige-icon">${renderIconOrEmojiHTML("images/Icons/aether_icon.png", "prestige-icon-img", "Aether")}</div>
@@ -51,11 +71,15 @@ function buildAscensionHTML() {
     }
   </div>`;
 
-  h += `<div class="panel-title aether-shop-title">Boutique d’Aether</div>`;
+  return h;
+}
+
+/* Contenu du sous-onglet "Boutique" : liste des améliorations Aether. */
+function buildAscensionShopTabContentHTML() {
+  var h = "";
 
   if (typeof AETHER_SHOP === "undefined" || !Array.isArray(AETHER_SHOP) || !AETHER_SHOP.length) {
-    h += `<div class="ascension-conditions">Aucune amélioration d’Aether disponible.</div>`;
-    return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
+    return `<div class="ascension-conditions">Aucune amélioration d’Aether disponible.</div>`;
   }
 
   AETHER_SHOP.forEach(function (u) {
@@ -91,7 +115,23 @@ function buildAscensionHTML() {
     </div>`;
   });
 
-  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
+  return h;
+}
+
+function buildAscensionHTML() {
+  var h = '<div class="subtab-page">';
+  h += '<div class="subtab-page-content">';
+  h += '<div class="nb-page-frame nb-page-frame-fill">';
+  h += (activeAscensionSubTab === "shop") ? buildAscensionShopTabContentHTML() : buildAscensionTabContentHTML();
+  h += '</div>';
+  h += '</div>';
+
+  h += '<div class="subtab-bar-wrapper">';
+  h += buildAscensionSubTabBarHTML();
+  h += '</div>';
+
+  h += '</div>';
+  return h;
 }
 
 window.buildAscensionHTML = buildAscensionHTML;

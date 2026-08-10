@@ -653,6 +653,34 @@
   transform: scale(0.98);
 }
 
+/* v2.83.46 : rangée de filtre Tout/Équipement/Potions, sous la
+   toolbar — voir buildInventoryFilterRowHTML. */
+.inv-filter-row {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.inv-filter-btn {
+  flex: 1 1 auto;
+  min-height: 30px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink-dim);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.inv-filter-btn.is-active {
+  background: var(--nb-gold);
+  border-color: var(--nb-gold-dark);
+  color: #241a00;
+}
+
 /* Le bouton ⚙ n'a pas besoin de flex:1 1 auto (juste assez large
    pour l'icône) — .inv-toolbar-sort-wrap prend le reste. */
 .inv-toolbar > .inv-toolbar-btn {
@@ -916,6 +944,24 @@
 
 .eq-bag-tile:active {
   transform: scale(0.97);
+}
+
+/* v2.83.45 : badge de quantité en stock, coin bas-droit des tuiles de
+   potion (buildPotionTileHTML) — les tuiles d'équipement n'en ont pas
+   besoin (jamais plus d'un exemplaire par objet). */
+.eq-bag-tile-stock {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  min-width: 16px;
+  padding: 1px 3px;
+  border-radius: 8px;
+  background: var(--nb-gold-dark);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .eq-bag-tile.is-selected {

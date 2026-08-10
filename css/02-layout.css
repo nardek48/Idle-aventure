@@ -126,6 +126,34 @@
    Combat.
    v2.77 : remonté juste sous .nb-hud-resources (voir .nb-hud-left-col
    ci-dessus) — marge réduite, plus de largeur 100% du HUD entier. */
+/* v2.83.52 : rangée contenant le bouton sac + le titre de page, côte
+   à côte, sous les ressources — le bouton reste visible même quand le
+   titre est masqué sur Combat (display:none ne s'applique qu'à
+   #hud-page-title lui-même, pas à cette rangée). */
+.nb-hud-title-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nb-hud-bag-btn {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  margin-top: 2px;
+  border: none;
+  border-radius: 50%;
+  background: var(--nb-cream);
+  box-shadow: 0 2px 0 var(--nb-frame-light), inset 0 0 0 2px var(--nb-gold-dark);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.nb-hud-bag-btn:active {
+  transform: scale(0.94);
+}
+
 .nb-hud-page-title {
   width: 100%;
   margin-top: 2px;

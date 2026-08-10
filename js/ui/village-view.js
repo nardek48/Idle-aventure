@@ -111,7 +111,7 @@ function buildVillageHTML() {
     if (maxed) {
       h += '<button class="btn-buy is-maxed" disabled>Max</button>';
     } else {
-      h += '<button class="btn-buy" onclick="buyVillageUpgrade(\'' + id + '\')">Améliorer<br><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button>';
+      h += '<button class="btn-buy" onclick="buyVillageUpgrade(\'' + id + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button>';
     }
     h += '</div>'; // /nb-purchase-buy-col
 

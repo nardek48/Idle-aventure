@@ -11,6 +11,15 @@ Deux mécanismes distincts :
 Les effets réels sont appliqués dans StatsSystem.recalcStats() via
 PotionManager.getActiveEffects() — ce fichier ne touche jamais
 directement game.tapDamage/goldMult/etc.
+
+v2.83.45 : achat et activation DÉCOUPLÉS — acheter une potion
+l'ajoute maintenant à un stock (game.potionsOwned[id]), comme les
+potions de soin depuis toujours. L'activation réelle (démarrer le
+minuteur, ou ajouter à pendingPotionBonuses pour l'Élixir d'Aether)
+se fait à la demande via usePotion(id), depuis le nouveau sous-onglet
+"🧪 Potions" de l'écran Équipement (voir ui/equipment-view.js) —
+permet d'acheter à l'avance et de boire au bon moment plutôt que
+d'être forcé d'activer immédiatement à l'achat.
 ============================================================ */
 
 var PotionManager = {
@@ -21,10 +30,16 @@ var PotionManager = {
     }
     if (typeof game.pendingPotionBonuses.aetherNext !== "number") game.pendingPotionBonuses.aetherNext = 0;
     if (typeof game.aetherElixirStackCount !== "number") game.aetherElixirStackCount = 0;
+    if (!game.potionsOwned || typeof game.potionsOwned !== "object") game.potionsOwned = {};
   },
 
   getPotion: function (id) {
     return (POTIONS_DB || []).find(function (p) { return p.id === id; }) || null;
+  },
+
+  getStock: function (id) {
+    this.ensure();
+    return Number(game.potionsOwned[id] || 0);
   },
 
   /* Millisecondes restantes avant expiration d'une potion à durée
@@ -40,17 +55,15 @@ var PotionManager = {
     return this.getRemainingMs(id) > 0;
   },
 
-  /* Achète une potion : pour une potion à durée, (re)démarre son
-     minuteur à durationMin minutes à partir de maintenant (boire une
-     potion déjà active la RECHARGE, ne cumule pas son effet). Pour
-     l'Élixir d'Aether (pas de durationMin), additionne son bonus dans
-     pendingPotionBonuses.aetherNext, consommé à la prochaine ascension. */
   /* Coût réel d'une potion : fixe pour les potions à durée, mais
      CROISSANT pour l'Élixir d'Aether (potion.costMult) — chaque achat
      depuis la dernière ascension augmente le prix du suivant, ce qui
      empêche d'en empiler dix d'un coup pour un bonus disproportionné.
      Le compteur (game.aetherElixirStackCount) repart à 0 à chaque
-     ascension (voir progression-system.js, ascendNow()). */
+     ascension (voir progression-system.js, ascendNow()). Note
+     v2.83.45 : le coût croissant se déclenche maintenant à l'ACHAT
+     (mise en stock), pas à l'activation — cohérent avec le fait que
+     c'est l'achat qui est limité, pas l'usage. */
   getCost: function (potion) {
     this.ensure();
     if (!potion.costMult) return potion.cost;
@@ -58,7 +71,10 @@ var PotionManager = {
     return Math.floor(potion.cost * Math.pow(potion.costMult, stacks));
   },
 
-  buy: function (id) {
+  /* Achète UNE potion (ajoutée au stock, pas activée immédiatement —
+     voir usePotion pour l'activation). Même principe que
+     buyHealingPotion. */
+  buyPotion: function (id) {
     this.ensure();
     var potion = this.getPotion(id);
     if (!potion) return showToast("Potion introuvable", 1000);
@@ -67,25 +83,70 @@ var PotionManager = {
     if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
 
     game.gold -= cost;
+    game.potionsOwned[id] = this.getStock(id) + 1;
+    if (!potion.durationMin) game.aetherElixirStackCount = Number(game.aetherElixirStackCount || 0) + 1;
+
+    if (window.QuestManager && typeof QuestManager.track === "function") {
+      QuestManager.track("goldSpent", cost);
+    }
+
+    addLog("🧪 " + potion.name + " achetée (stock : " + game.potionsOwned[id] + ")", "event");
+    showToast(potion.name + " +1", 1300);
+    if (typeof renderAll === "function") renderAll();
+    saveGame();
+  },
+
+  /* Consomme UNE potion du stock et l'active réellement : redémarre
+     son minuteur (potions à durée — boire une potion déjà active la
+     RECHARGE, ne cumule pas son effet), ou ajoute son bonus à
+     pendingPotionBonuses.aetherNext (Élixir d'Aether). */
+  usePotion: function (id) {
+    this.ensure();
+    var potion = this.getPotion(id);
+    if (!potion) return showToast("Potion introuvable", 1000);
+
+    var stock = this.getStock(id);
+    if (stock <= 0) return showToast("Aucune potion en stock", 1000);
+
+    game.potionsOwned[id] = stock - 1;
 
     if (potion.durationMin) {
       game.activePotions[id] = Date.now() + potion.durationMin * 60000;
       addLog("🧪 " + potion.name + " bue (" + potion.durationMin + " min)", "event");
     } else {
       game.pendingPotionBonuses.aetherNext = Number(game.pendingPotionBonuses.aetherNext || 0) + potion.bonus;
-      game.aetherElixirStackCount = Number(game.aetherElixirStackCount || 0) + 1;
       addLog("🌀 " + potion.name + " bu — bonus prêt pour la prochaine ascension", "event");
-    }
-
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldSpent", cost);
     }
 
     if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
       StatsSystem.recalcStats();
     }
 
-    showToast(potion.name, 1500);
+    showToast(potion.name + " utilisée", 1500);
+    if (typeof renderAll === "function") renderAll();
+    saveGame();
+  },
+
+  /* Revend UNE potion du stock (effet ou soin) contre de l'or — la
+     moitié du prix d'achat de base, arrondi à l'inférieur. Fonctionne
+     pour les 2 catalogues (POTIONS_DB et HEALING_POTIONS_DB). */
+  sellPotion: function (id) {
+    this.ensure();
+    this.ensureHealing();
+    var potion = this.getPotion(id) || this.getHealingPotion(id);
+    if (!potion) return showToast("Potion introuvable", 1000);
+
+    var isHealing = !this.getPotion(id);
+    var stock = isHealing ? this.getHealingStock(id) : this.getStock(id);
+    if (stock <= 0) return showToast("Aucune potion à vendre", 1000);
+
+    var value = Math.floor((potion.cost || 0) / 2);
+    if (isHealing) game.healingPotionsOwned[id] = stock - 1;
+    else game.potionsOwned[id] = stock - 1;
+    game.gold += value;
+
+    addLog("💰 " + potion.name + " vendue (+" + formatNumber(value) + " or)", "event");
+    showToast("+" + formatNumber(value) + " or", 1300);
     if (typeof renderAll === "function") renderAll();
     saveGame();
   },
@@ -115,7 +176,10 @@ var PotionManager = {
 
   // ============================================================
   // Potions de soin (v2.16) — achat en stock, usage instantané
-  // depuis le bouton dédié de l'écran Combat (voir ui/combat-view.js).
+  // depuis le bouton dédié de l'écran Combat (voir ui/combat-view.js)
+  // ET depuis le sous-onglet "🧪 Potions" de l'écran Équipement
+  // (v2.83.45, voir ui/equipment-view.js) — même stock partagé entre
+  // les deux points d'accès.
   // ============================================================
 
   ensureHealing: function () {
@@ -188,6 +252,7 @@ var PotionManager = {
     if (typeof renderHeroHp === "function") renderHeroHp();
     if (typeof renderHud === "function") renderHud();
     if (typeof renderHealButtons === "function") renderHealButtons();
+    if (typeof renderPanel === "function") renderPanel();
     saveGame();
   },
 

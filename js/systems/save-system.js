@@ -214,6 +214,7 @@ function buildSaveData() {
     dungeonShards: Number(game.dungeonShards || 0),
     dungeonShopLevels: game.dungeonShopLevels || {},
     healingPotionsOwned: game.healingPotionsOwned || {},
+    potionsOwned: game.potionsOwned || {},
     lastHealUse: Number(game.lastHealUse || 0),
     autoSellEquipment: !!game.autoSellEquipment,
     autoSellRarityThreshold: game.autoSellRarityThreshold || "common",
@@ -344,6 +345,7 @@ function restoreBaseState(d) {
   game.dungeonShards = Number(d.dungeonShards || 0);
   game.dungeonShopLevels = d.dungeonShopLevels && typeof d.dungeonShopLevels === "object" ? d.dungeonShopLevels : {};
   game.healingPotionsOwned = d.healingPotionsOwned && typeof d.healingPotionsOwned === "object" ? d.healingPotionsOwned : {};
+  game.potionsOwned = d.potionsOwned && typeof d.potionsOwned === "object" ? d.potionsOwned : {};
   game.lastHealUse = Number(d.lastHealUse || 0);
   game.autoSellEquipment = !!d.autoSellEquipment;
   game.autoSellRarityThreshold = (typeof d.autoSellRarityThreshold === "string") ? d.autoSellRarityThreshold : "common";
@@ -509,6 +511,7 @@ function hardResetState() {
   game.pendingPotionBonuses = { aetherNext: 0 };
   game.aetherElixirStackCount = 0;
   game.healingPotionsOwned = {};
+  game.potionsOwned = {};
   game.lastHealUse = 0;
 
   game.dungeonTickets = keptDungeonTickets;
@@ -630,6 +633,7 @@ function fullResetState() {
   game.pendingPotionBonuses = { aetherNext: 0 };
   game.aetherElixirStackCount = 0;
   game.healingPotionsOwned = {};
+  game.potionsOwned = {};
   game.lastHealUse = 0;
 
   game.dungeonTickets = 1;

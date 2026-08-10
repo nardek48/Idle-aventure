@@ -16,7 +16,30 @@ grandissent avec ta progression (voir WorldManager.generateEnemy en
 progression-system.js). Les coefficients ci-dessous sont dupliqués
 depuis combat-engine.js/progression-system.js (valeurs locales à ces
 fichiers, pas exportées) — à garder synchronisés si jamais ils changent.
+
+v2.83.40 : fusionné avec le Codex (2 sous-onglets, même principe que
+Équipement/Inventaire/Boutique) — Bestiaire et Codex sont tous les
+deux de la "documentation" passive sur l'univers du jeu, regroupés
+pour désencombrer le menu ☰ (voir ui/menu-view.js). Le contenu du
+Codex lui-même (ui/codex-view.js) n'a pas changé, juste son
+emplacement dans la navigation.
 ============================================================ */
+
+var activeBestiaryCodexSubTab = "bestiary"; // "bestiary" | "codex"
+
+function setBestiaryCodexSubTab(tab) {
+  activeBestiaryCodexSubTab = (tab === "codex") ? "codex" : "bestiary";
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setBestiaryCodexSubTab = setBestiaryCodexSubTab;
+
+function buildBestiaryCodexSubTabBarHTML() {
+  var h = '<div class="pc-subtab-bar">';
+  h += '<button type="button" class="pc-subtab-btn' + (activeBestiaryCodexSubTab === "bestiary" ? ' is-active' : '') + '" onclick="setBestiaryCodexSubTab(\'bestiary\')">🐾<span>Bestiaire</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeBestiaryCodexSubTab === "codex" ? ' is-active' : '') + '" onclick="setBestiaryCodexSubTab(\'codex\')">📖<span>Codex</span></button>';
+  h += '</div>';
+  return h;
+}
 
 var BESTIARY_ENEMY_ENDURANCE_HP_COEF = 1.2;
 var BESTIARY_BOSS_ENDURANCE_HP_COEF = 2;
@@ -193,9 +216,26 @@ function buildBestiaryListHTML() {
 }
 
 function buildBestiaryHTML() {
-  var h = (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("bestiary") : "";
-  h += buildBestiaryListHTML();
-  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
+  var h = '<div class="subtab-page">';
+  h += '<div class="subtab-page-content">';
+  h += '<div class="nb-page-frame nb-page-frame-fill">';
+
+  if (activeBestiaryCodexSubTab === "codex") {
+    h += (typeof buildCodexHTML === "function") ? buildCodexHTML() : "";
+  } else {
+    h += (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("bestiary") : "";
+    h += buildBestiaryListHTML();
+  }
+
+  h += '</div>';
+  h += '</div>';
+
+  h += '<div class="subtab-bar-wrapper">';
+  h += buildBestiaryCodexSubTabBarHTML();
+  h += '</div>';
+
+  h += '</div>';
+  return h;
 }
 
 window.buildBestiaryHTML = buildBestiaryHTML;

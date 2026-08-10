@@ -125,17 +125,14 @@
 }
 
 .shop-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-
-
-@media (max-width: 640px) {
-  .shop-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* v2.83.42 : passé de grille 2 colonnes à liste 1 colonne (empilée),
+   comme tous les autres écrans d'achat du jeu — la media query
+   @media(max-width:640px) qui forçait 1 colonne sur mobile n'a donc
+   plus lieu d'être, retirée. */
 
 
 /* Ligne niveau + barre */

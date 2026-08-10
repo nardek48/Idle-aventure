@@ -242,9 +242,6 @@ function renderPanel() {
     case "achievements":
       container.innerHTML = buildAchievementsHTML();
       break;
-    case "codex":
-      container.innerHTML = buildCodexHTML();
-      break;
     default:
       container.innerHTML = "";
   }

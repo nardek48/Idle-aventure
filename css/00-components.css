@@ -396,6 +396,22 @@ img.nb-purchase-icon {
   gap: 2px;
 }
 
+/* v2.83.50 : largeur fixe pour le bouton d'achat dans une carte
+   (.nb-purchase-card, utilisée par Boutique/Ascension/Donjon/Village/
+   Potions/Équipement) — avant, le bouton s'étirait selon la longueur
+   du prix affiché (15 or vs 1.2M or), donnant un alignement
+   incohérent en faisant défiler une liste. Les nombres sont toujours
+   abrégés (K/M/B/T, voir formatNumber en core/utils.js), donc une
+   largeur fixe suffit sans risque de débordement — flex-wrap:wrap
+   sur .btn-buy reste en filet de sécurité au cas où. Les autres
+   usages de .btn-buy ailleurs (bouton pleine largeur, mini-bouton
+   compact) ont leurs propres réglages de largeur et ne sont pas
+   concernés par cette règle scoped. */
+.nb-purchase-buy-col .btn-buy {
+  width: 92px;
+  min-width: 92px;
+}
+
 /* Petits labels facultatifs au-dessus/dessous du bouton d'achat
    (ex. "COÛT" en haut, "x1"/"MAX" en bas — voir Amélioration). */
 .nb-purchase-buy-label {
@@ -756,6 +772,11 @@ button.nb-entry-card {
     width: 100px;
   }
 }
+
+/* v2.83.45 : variante compacte .has-4, retirée en v2.83.46 — le
+   sous-onglet Potions a fusionné dans Inventaire (filtre au lieu
+   d'un 4e bouton), plus que 3 boutons max sur cet écran comme les
+   autres à sous-onglets. */
 
 @media (prefers-reduced-motion: reduce) {
   .pc-subtab-btn {
