@@ -40,9 +40,7 @@ var DUNGEON_CONFIG = {
   shardsBossBonus: 10            // bonus supplémentaire si le boss tombe
 };
 
-/* Les 5 paliers de donjon, sur le même principe que le déblocage des
-   mondes (voir data/worlds.js) :
-   - requiredAscension  nombre d'ascensions pour débloquer ce palier
+/* Les 5 paliers de donjon :
    - maxRarity          rareté du butin GARANTI en fin de palier réussi
                          (et plafond des rareté possibles en cas
                          d'échec partiel) — un palier bas ne peut plus
@@ -51,25 +49,32 @@ var DUNGEON_CONFIG = {
    - worldPower          "niveau de monde" fixe utilisé pour calibrer
                          la difficulté (remplace l'ancien
                          WorldManager.worldIndex, qui variait) et pour
-                         choisir le pool d'ennemis (mondes 0..worldPower) */
-/* v2.17 : ajout de difficultyMult, un multiplicateur de difficulté
-   PROPRE à chaque palier (en plus de worldPower qui gère surtout le
-   pool d'ennemis) — pour que le saut d'un palier à l'autre soit
-   vraiment marqué, pas juste une progression linéaire douce. */
+                         choisir le pool d'ennemis (mondes 0..worldPower)
+
+   v2.90.9 : déblocage par ascension (requiredAscension) RETIRÉ, sur
+   demande explicite de l'utilisateur — remplacé par un déblocage
+   séquentiel : le palier N devient accessible dès que le palier N-1
+   a été COMPLÈTEMENT terminé (15 vagues + boss vaincu, en une seule
+   tentative sans jamais échouer — voir DungeonManager.isTierUnlocked
+   et game.dungeonTierCleared dans systems/dungeon-system.js). Le
+   palier 1 reste toujours débloqué d'office. Choix explicite de
+   l'utilisateur : cette règle repart de zéro pour toutes les parties
+   existantes (aucun palier déjà débloqué par ascension n'est
+   "regrandfathered" automatiquement). */
 var DUNGEON_TIERS = [
-  { id: 1, name: "Donjon I",   requiredAscension: 0,  maxRarity: "common",    worldPower: 0, difficultyMult: 1,
+  { id: 1, name: "Donjon I",   maxRarity: "common",    worldPower: 0, difficultyMult: 1,
     icon: "images/Dungeons/Icone_base/palier1.jpg", // v2.83.9 : icône générique de palier, partagée par tous les donjons
     story: "Les premières salles sentent la terre humide et la mousse. Des bruits de pas résonnent au loin — rien de bien effrayant, pour l'instant." },
-  { id: 2, name: "Donjon II",  requiredAscension: 2,  maxRarity: "green",     worldPower: 1, difficultyMult: 2.5,
+  { id: 2, name: "Donjon II",  maxRarity: "green",     worldPower: 1, difficultyMult: 2.5,
     icon: "images/Dungeons/Icone_base/palier2.jpg",
     story: "Les couloirs se resserrent. Des ombres inhabituelles glissent entre les pierres, et l'air se charge d'une tension nouvelle." },
-  { id: 3, name: "Donjon III", requiredAscension: 4,  maxRarity: "rare",      worldPower: 2, difficultyMult: 6,
+  { id: 3, name: "Donjon III", maxRarity: "rare",      worldPower: 2, difficultyMult: 6,
     icon: "images/Dungeons/Icone_base/palier3.jpg",
     story: "Un froid ancien s'infiltre jusque dans les os. Ces lieux ne sont pas laissés à l'abandon — quelque chose les garde, avec méthode." },
-  { id: 4, name: "Donjon IV",  requiredAscension: 8,  maxRarity: "epic",      worldPower: 3, difficultyMult: 14,
+  { id: 4, name: "Donjon IV",  maxRarity: "epic",      worldPower: 3, difficultyMult: 14,
     icon: "images/Dungeons/Icone_base/palier4.jpg",
     story: "Les murs eux-mêmes semblent respirer. Peu de ceux qui s'aventurent ici en ressortent sans égratignures — et encore moins sans butin." },
-  { id: 5, name: "Donjon V",   requiredAscension: 15, maxRarity: "legendary", worldPower: 5, difficultyMult: 30,
+  { id: 5, name: "Donjon V",   maxRarity: "legendary", worldPower: 5, difficultyMult: 30,
     icon: "images/Dungeons/Icone_base/palier5.jpg",
     story: "Le seuil du dernier palier. Une puissance oubliée sommeille dans l'obscurité — et elle sait déjà que tu es arrivé." }
 ];

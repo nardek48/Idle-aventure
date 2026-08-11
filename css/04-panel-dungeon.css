@@ -363,7 +363,7 @@
 .dungeon-ticket-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   margin-bottom: 10px;
   padding: 6px 12px;
   border-radius: 999px;
@@ -377,6 +377,34 @@
 
 .dungeon-ticket-badge:active {
   transform: scale(0.97);
+}
+
+/* v2.90.7 : icône + libellé "Achat de ticket" + pastille de compte,
+   voir buildDungeonTicketBadgeHTML() en ui/dungeon-view.js. */
+.dungeon-ticket-badge-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.dungeon-ticket-badge-label {
+  color: var(--nb-ink);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dungeon-ticket-badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--nb-gold);
+  color: #4a2f06;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .dungeon-list {

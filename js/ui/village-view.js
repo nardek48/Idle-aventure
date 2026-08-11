@@ -49,16 +49,20 @@ var VILLAGE_BUILDING_ICONS = {
   sanctuary: "🔨"
 };
 
-/* Nom affiché + image dédiée par bâtiment (voir images/Village/,
-   6 fichiers découpés depuis le visuel fourni par l'utilisateur,
-   sans les bannières de texte — le nom est réaffiché en HTML). */
+/* Nom affiché + visuel par bâtiment (voir images/Village/) :
+   v2.90.10 : chaque carte a maintenant un fond dédié (bg, scène de
+   sol/chemin illustrée par l'utilisateur) ET une illustration de
+   bâtiment détourée (image, PNG avec transparence) posée par-dessus
+   — avant, une seule image plate par bâtiment (découpe de la
+   première carte fournie). Le nom reste réaffiché en HTML, aucune
+   image n'embarque de texte. */
 var VILLAGE_BUILDING_MAP = {
-  watchtower: { label: "Hôtel de Ville", image: "images/Village/watchtower.jpg" },
-  barracks: { label: "Caserne", image: "images/Village/barracks.jpg" },
-  essenceWell: { label: "Hutte de l'Alchimiste", image: "images/Village/essenceWell.jpg" },
-  sanctuary: { label: "Atelier de Forgeron", image: "images/Village/sanctuary.jpg" },
-  timeRelay: { label: "Tour des Mages", image: "images/Village/timeRelay.jpg" },
-  goldMine: { label: "Mine d'Or", image: "images/Village/goldMine.jpg" }
+  watchtower: { label: "Hôtel de Ville", bg: "images/Village/bg_watchtower.jpg", image: "images/Village/watchtower.png" },
+  barracks: { label: "Caserne", bg: "images/Village/bg_barracks.jpg", image: "images/Village/barracks.png" },
+  essenceWell: { label: "Hutte de l'Alchimiste", bg: "images/Village/bg_essenceWell.jpg", image: "images/Village/essenceWell.png" },
+  sanctuary: { label: "Atelier de Forgeron", bg: "images/Village/bg_sanctuary.jpg", image: "images/Village/sanctuary.png" },
+  timeRelay: { label: "Tour des Mages", bg: "images/Village/bg_timeRelay.jpg", image: "images/Village/timeRelay.png" },
+  goldMine: { label: "Mine d'Or", bg: "images/Village/bg_goldMine.jpg", image: "images/Village/goldMine.png" }
 };
 
 /* Texte "Bonus actuel" pour UN bâtiment donné (même formules que
@@ -74,8 +78,9 @@ function getVillageBuildingBonusText(id, level) {
   return "";
 }
 
-/* Grille de 6 cartes uniformes (image + nom + niveau), même pattern
-   que la grille de paliers de donjon — carte entière cliquable. */
+/* Grille de 6 cartes uniformes (fond + bâtiment détouré en superposition
+   + nom + niveau), même pattern que la grille de paliers de donjon —
+   carte entière cliquable. */
 function buildVillageHTML() {
   var h = '<div class="nb-page-frame village-page-frame">';
   h += '<div class="village-building-grid">';
@@ -87,7 +92,10 @@ function buildVillageHTML() {
     var level = VillageManager.getLevel(id);
 
     h += '<button type="button" class="village-building-card" onclick="openVillageBuildingPopup(\'' + id + '\')">';
-    h += '<div class="village-building-image"><img src="' + esc(b.image) + '" alt="' + esc(b.label) + '" draggable="false"></div>';
+    h += '<div class="village-building-image">';
+    h += '<img class="village-building-bg" src="' + esc(b.bg) + '" alt="" draggable="false">';
+    h += '<img class="village-building-sprite" src="' + esc(b.image) + '" alt="' + esc(b.label) + '" draggable="false">';
+    h += '</div>';
     h += '<div class="village-building-name">' + esc(b.label) + '</div>';
     h += '<div class="village-building-level">Niv. ' + level + ' / ' + cfg.maxLevel + '</div>';
     h += '</button>';

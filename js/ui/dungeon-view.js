@@ -104,7 +104,16 @@ function buildDungeonTierCardHTML(tier, isLast) {
   h += '<div class="dungeon-tier-rarity" style="color:' + rarityColor + '">🎁 ' + esc(rarityLabel) + ' max</div>';
 
   if (!unlocked) {
-    h += '<div class="dungeon-tier-lock-text">' + (tier.requiredAscension) + ' ascension(s) requise(s)</div>';
+    // v2.90.9 : déblocage séquentiel — remplace le texte "X
+    // ascension(s) requise(s)" par le nom du palier précédent à
+    // terminer entièrement (voir DungeonManager.isTierUnlocked).
+    var tiers = DUNGEON_TIERS || [];
+    var idx = tiers.indexOf(tier);
+    var previousTier = idx > 0 ? tiers[idx - 1] : null;
+    var lockText = previousTier
+      ? 'Termine ' + esc(previousTier.name) + ' pour débloquer'
+      : 'Verrouillé';
+    h += '<div class="dungeon-tier-lock-text">' + lockText + '</div>';
   }
 
   h += '</div>';
@@ -158,11 +167,17 @@ function buildDungeonCardHTML(dungeon) {
 }
 
 /* Badge ticket compact en haut de la liste — remplace l'ancienne carte
-   pleine largeur, ouvre buildDungeonTicketOverlayHTML() au tap. */
+   pleine largeur, ouvre buildDungeonTicketOverlayHTML() au tap.
+   v2.90.7 : libellé "Achat de ticket" ajouté (avant : juste l'icône
+   🎟️ + le nombre, pas assez explicite sur ce que fait ce bouton —
+   retour utilisateur). Le nombre de tickets actuels reste affiché,
+   dans une pastille séparée pour rester lisible. */
 function buildDungeonTicketBadgeHTML() {
   var tickets = game.dungeonTickets || 0;
   var h = '<button type="button" class="dungeon-ticket-badge" onclick="openDungeonTicketOverlay()">';
-  h += '🎟️ <span>' + tickets + '</span>';
+  h += '<span class="dungeon-ticket-badge-icon">🎟️</span>';
+  h += '<span class="dungeon-ticket-badge-label">Achat de ticket</span>';
+  h += '<span class="dungeon-ticket-badge-count">' + tickets + '</span>';
   h += '</button>';
   return h;
 }

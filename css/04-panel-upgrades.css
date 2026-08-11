@@ -73,7 +73,10 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.3px;
-  color: var(--text-dim);
+  /* v2.90.7 : var(--text-dim), ancien thème sombre, remplacé par
+     var(--nb-ink-dim) — même bug de contraste que .log-entry (voir
+     css/04-panel-log.css), texte trop clair sur fond crème. */
+  color: var(--nb-ink-dim);
 }
 
 /* =========================
@@ -86,7 +89,8 @@
 .equip-shop-timer {
   text-align: center;
   font-size: 12px;
-  color: var(--text-dim);
+  /* v2.90.7 : idem .potion-section-label ci-dessus. */
+  color: var(--nb-ink-dim);
   margin-bottom: 12px;
 }
 

@@ -54,23 +54,52 @@
 }
 
 .village-building-image {
+  position: relative;
   width: 100%;
   min-width: 0;
-  aspect-ratio: 4 / 3;
+  /* v2.90.10 : 4/3 (paysage) -> 5/6 (portrait) — les nouveaux fonds
+     fournis (768×900~929) et bâtiments détourés sont tous plus hauts
+     que larges, contrairement à l'ancienne découpe unique. */
+  aspect-ratio: 5 / 6;
   border-radius: 10px;
   overflow: hidden;
   background: var(--nb-cream-deep);
   border: 1px solid var(--nb-frame);
 }
 
-.village-building-image img {
+/* Fond (scène de sol/chemin) : remplit toute la case, légèrement
+   rogné si besoin (cover) — les 6 fonds n'ont pas EXACTEMENT le même
+   ratio (900 à 929px de haut pour 768px de large), cover absorbe
+   l'écart sans bande vide. */
+.village-building-bg {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  max-width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+/* Bâtiment détouré (PNG, transparence) : posé PAR-DESSUS le fond,
+   centré horizontalement, ancré vers le bas (comme un bâtiment posé
+   sur le sol plutôt que flottant au centre) — contain pour ne jamais
+   déformer l'illustration, quel que soit son ratio d'origine (varie
+   d'un bâtiment à l'autre). */
+.village-building-sprite {
+  position: absolute;
+  left: 50%;
+  bottom: 3%;
+  transform: translateX(-50%);
+  width: 84%;
+  height: 92%;
+  object-fit: contain;
+  object-position: bottom center;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.4));
 }
 
 .village-building-name {

@@ -27,6 +27,66 @@
   opacity: 1;
 }
 
+/* v2.90.6 : voile de garde au tout premier lancement de la PWA
+   (voir js/main/pwa.js) — le temps que le service worker termine son
+   installation et prenne le contrôle de la page (quelques secondes,
+   uniquement au premier install, jamais aux lancements suivants où
+   il est déjà actif). Couvre tout l'écran, AU-DESSUS du reste (même
+   la bannière de mise à jour), pour éviter d'interagir avec une page
+   pas encore stabilisée pendant cette courte fenêtre — c'est
+   exactement le "quitte complètement puis relance" que faisait le
+   joueur manuellement avant, maintenant géré automatiquement.
+   Masqué par défaut : ne s'affiche QUE si js/main/pwa.js détecte
+   qu'il n'y a pas encore de service worker actif au chargement —
+   sur toutes les relances suivantes, il reste display:none, donc
+   strictement invisible et sans coût pour l'usage normal. */
+#pwa-boot-gate {
+  display: none;
+  position: fixed;
+  inset: 0;
+  /* Doit rester AU-DESSUS de tout le reste, y compris les plus
+     hauts z-index déjà utilisés dans le jeu (le sélecteur de héros
+     .hero-picker-overlay est à 3001, le plus élevé du projet à ce
+     jour) — sinon le voile se retrouve caché DERRIÈRE l'écran de
+     création de personnage bien qu'il ait display:flex (bug constaté
+     et corrigé : z-index: 400 ne suffisait pas). */
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  background: var(--nb-shell);
+}
+
+#pwa-boot-gate.show {
+  display: flex;
+}
+
+.pwa-boot-gate-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.pwa-boot-spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid rgba(240, 170, 62, 0.25);
+  border-top-color: var(--nb-gold);
+  animation: pwa-boot-spin 0.8s linear infinite;
+}
+
+@keyframes pwa-boot-spin {
+  to { transform: rotate(360deg); }
+}
+
+.pwa-boot-gate-text {
+  color: var(--nb-cream);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
 /* v2.90.5 : bannière PWA "nouvelle version disponible" (voir
    js/main/pwa.js) — contrairement à #toast, reste affichée tant que
    le joueur n'a pas cliqué "Recharger" (pas de disparition automatique,

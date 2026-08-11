@@ -732,7 +732,14 @@ button.nb-entry-card {
   border-radius: 0;
   background: url('../images/Buttons/boutonGlobal.png') center / contain no-repeat;
 
-  color: var(--nb-ink-inverse);
+  /* v2.90.8 : var(--nb-ink-inverse) (texte clair, pensé pour un fond
+     sombre) remplacé par var(--nb-ink) — boutonGlobal.png est un
+     bouton de teinte claire (crème/or pâle), le texte clair dessus
+     était quasi invisible (retour utilisateur, capture à l'appui).
+     Composant partagé par TOUS les écrans à sous-onglets du jeu
+     (Personnage/Ascension/Bestiaire-Codex/Donjon/Équipement/Boutique)
+     — un seul correctif ici les corrige tous d'un coup. */
+  color: var(--nb-ink);
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;

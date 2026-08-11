@@ -176,6 +176,18 @@
   border: 1px solid var(--nb-cream);
 }
 
+/* v2.90.7 : le badge "!" de point de talent disponible (portrait
+   héros du HUD) passe du coin haut-droit (position par défaut de
+   .nb-hud-bag-badge, partagée avec le badge du sac) au coin
+   bas-gauche, à la demande de l'utilisateur — override ciblé,
+   n'affecte PAS le badge du sac qui reste en haut-droite. */
+.hud-hero-levelup-badge {
+  top: auto;
+  right: auto;
+  bottom: -4px;
+  left: -4px;
+}
+
 .nb-hud-page-title {
   width: 100%;
   margin-top: 2px;

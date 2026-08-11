@@ -8,6 +8,12 @@
   border-radius: var(--nb-radius-md);
   background: var(--nb-cream);
   box-shadow: var(--nb-shadow-card);
+  /* v2.90.7 : couleur de texte explicite — sans ça, .log-entry
+     héritait de --text (#e2dce8, un lavande clair pensé pour
+     l'ancien thème sombre d'avant le passage au parchemin/or),
+     illisible sur le fond crème. Même token que partout ailleurs
+     dans le thème actuel (--nb-ink). */
+  color: var(--nb-ink);
   font-size: 13px;
   animation: logSlide 0.3s ease;
 }

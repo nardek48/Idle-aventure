@@ -92,7 +92,7 @@ function buildHudHTML() {
     +       '<img id="combat-hero-mini-img" class="combat-hero-mini-img" src="" alt="" style="display:none">'
     +       '<div id="combat-hero-mini-placeholder" class="combat-hero-mini-placeholder">?</div>'
     +       '<span class="combat-hero-mini-level" id="combat-hero-mini-level">Niv. 1</span>'
-    +       '<span id="hud-hero-levelup-badge" class="nb-hud-bag-badge" style="display:none;">!</span>'
+    +       '<span id="hud-hero-levelup-badge" class="nb-hud-bag-badge hud-hero-levelup-badge" style="display:none;">!</span>'
     +     '</div>'
     +     '<div class="combat-hero-mini-hp-bar">'
     +       '<div id="combat-hero-mini-hp-fill" class="combat-hero-mini-hp-fill" style="width:100%"></div>'

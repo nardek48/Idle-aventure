@@ -125,6 +125,24 @@
   </div>
 </div>
 
+<div id="pwa-boot-gate">
+  <div class="pwa-boot-gate-inner">
+    <div class="pwa-boot-spinner"></div>
+    <div class="pwa-boot-gate-text">Préparation du jeu…</div>
+  </div>
+</div>
+<script>
+  // Affichage synchrone IMMÉDIAT (avant même que le reste du body ne
+  // finisse de se parser/afficher) si ce chargement n'a pas encore de
+  // service worker actif — évite tout flash visuel du jeu "brut" avant
+  // que js/main/pwa.js (chargé beaucoup plus bas) ne prenne le relais
+  // pour la fermeture du voile. Volontairement minimal et autonome,
+  // sans dépendance au reste du jeu.
+  if (window.navigator && "serviceWorker" in navigator && !navigator.serviceWorker.controller) {
+    document.getElementById("pwa-boot-gate").classList.add("show");
+  }
+</script>
+
 <div id="toast"></div>
 <div id="pwa-update-banner">
   <span>Nouvelle version disponible.</span>

@@ -21,6 +21,11 @@ var DungeonManager = {
     if (typeof game.dungeonBossClears !== "number") game.dungeonBossClears = 0;
     if (typeof game.dungeonShards !== "number") game.dungeonShards = 0;
     if (!game.dungeonShopLevels || typeof game.dungeonShopLevels !== "object") game.dungeonShopLevels = {};
+    // v2.90.9 : déblocage séquentiel des paliers (voir isTierUnlocked
+    // ci-dessous) — {} par défaut, y compris pour une sauvegarde
+    // existante qui n'a pas encore ce champ (choix explicite de
+    // l'utilisateur : repart de zéro, aucun palier "regrandfathered").
+    if (!game.dungeonTierCleared || typeof game.dungeonTierCleared !== "object") game.dungeonTierCleared = {};
   },
 
   getTierById: function (tierId) {
@@ -54,12 +59,23 @@ var DungeonManager = {
     }
   },
 
-  /* Un palier se débloque par nombre d'ascensions, comme les mondes
-     (voir data/worlds.js) — indépendant de la progression de monde
-     en cours, donc pas de risque de reverrouillage rétroactif. */
+  /* v2.90.9 : un palier se débloque maintenant en terminant
+     ENTIÈREMENT le palier précédent (15 vagues + boss vaincu, sans
+     jamais échouer dans la même tentative — voir le marquage dans
+     finish() ci-dessous). Le palier 1 est toujours débloqué d'office.
+     Remplace l'ancien déblocage par nombre d'ascensions (retiré de
+     DUNGEON_TIERS, voir data/dungeon.js). */
   isTierUnlocked: function (tierId) {
-    var tier = this.getTierById(tierId);
-    return (game.ascensionCount || 0) >= (tier.requiredAscension || 0);
+    var tiers = DUNGEON_TIERS || [];
+    var index = -1;
+    for (var i = 0; i < tiers.length; i++) {
+      if (tiers[i].id === tierId) { index = i; break; }
+    }
+    if (index <= 0) return true; // palier 1 (ou id inconnu) : toujours ouvert
+
+    var previousTier = tiers[index - 1];
+    this.ensure();
+    return !!game.dungeonTierCleared[previousTier.id];
   },
 
   /* Comme les quêtes journalières : régénère les tickets gratuits une
@@ -308,6 +324,19 @@ var DungeonManager = {
       game.dungeonBossClears = Number(game.dungeonBossClears || 0) + 1;
       game.dungeonShards = Number(game.dungeonShards || 0) + (DUNGEON_CONFIG.shardsBossBonus || 10);
       game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) + (DUNGEON_CONFIG.shardsBossBonus || 10);
+
+      // v2.90.9 : marque CE palier comme terminé -> débloque le
+      // suivant (voir isTierUnlocked ci-dessus). "success" ici veut
+      // dire que le boss (vague 16) vient de tomber DANS CETTE MÊME
+      // tentative, donc sans jamais avoir échoué avant (une défaite
+      // ou un abandon en cours de route appelle finish(false, ...),
+      // jamais finish(true, ...) — voir onDefeat()/forfeit()).
+      if (!game.dungeonTierCleared || typeof game.dungeonTierCleared !== "object") game.dungeonTierCleared = {};
+      var wasAlreadyCleared = !!game.dungeonTierCleared[tier.id];
+      game.dungeonTierCleared[tier.id] = true;
+      if (!wasAlreadyCleared) {
+        addLog("🔓 " + esc(tier.name) + " entièrement terminé — palier suivant débloqué !", "event");
+      }
     } else {
       goldReward = Math.floor(DUNGEON_CONFIG.fullClearGoldBase * worldBonus * progress * 0.6);
       essenceReward = Math.floor(DUNGEON_CONFIG.fullClearEssenceBase * worldBonus * progress * 0.6);

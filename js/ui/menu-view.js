@@ -20,8 +20,8 @@ var MENU_ITEMS = [
   { tab: "quests", label: "Quêtes", img: "./images/Icons/menu_icons/quests_menu.png", badge: true },
   { tab: "ascension", label: "Ascension", img: "./images/Icons/menu_icons/aether_menu.png", badge: "ascension" },
   { tab: "map", label: "Carte du monde", img: "./images/Icons/menu_icons/map_menu.png" },
-  { tab: "achievements", label: "Hauts faits", img: "./images/Icons/menu_icons/achivment_menu.png" },
-  { tab: "bestiary", label: "Bestiaire", img: "./images/Icons/menu_icons/bestiaire_menu.png" },
+  { tab: "achievements", label: "Hauts faits", img: "./images/Icons/menu_icons/achivment_menu.png", badge: "achievement" },
+  { tab: "bestiary", label: "Bestiaire", img: "./images/Icons/menu_icons/bestiaire_menu.png", badge: "codex" },
   { tab: "settings", label: "Paramètres", img: "./images/Icons/menu_icons/settings_menu.png" }
 ];
 
