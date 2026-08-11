@@ -1,0 +1,146 @@
+/* =========================
+   Village — grille de 6 cartes illustrées uniformes (v2.90.2)
+   Remplace la carte unique + zones cliquables en % (v2.90/v2.90.1,
+   abandonnée : image en plein bord, hors cadre parchemin standard,
+   calage des zones fragile). Même langage visuel que la grille de
+   paliers de donjon (.dungeon-tier-card, voir css/04-panel-dungeon.css)
+   — carte entière cliquable, image en object-fit:contain dans une
+   case de taille FIXE (peu importe l'aspect ratio de la découpe
+   source, voir images/Village/), donc plus aucun calcul de
+   positionnement à maintenir.
+   Remplace aussi l'ancienne skyline emoji + liste de cartes d'achat
+   (voir css/04-panel-village-shop.css pour les classes .village-
+   skyline (astérisque) et .village-building (astérisque) d'AVANT
+   v2.90, désormais mortes).
+   ========================= */
+
+.village-building-grid {
+  display: grid;
+  /* v2.90.3 : minmax(0, 1fr) au lieu de 1fr tout court — sans le
+     "0" explicite, une grille CSS prend par défaut la taille
+     INTRINSÈQUE du contenu (ici les images sources, 480 à 640px de
+     large) comme largeur MINIMALE de chaque colonne, ce qui casse le
+     50/50 et fait déborder/grossir les cartes sur petit écran. Avec
+     minmax(0, 1fr), chaque colonne fait exactement 50% de la largeur
+     disponible, quelle que soit la taille des images. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.village-building-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 8px 10px;
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream-alt);
+  border: 1px solid var(--nb-frame);
+  /* Neutralise les styles par défaut du navigateur pour un <button>
+     (même technique que .dungeon-tier-card, voir css/04-panel-dungeon.css). */
+  margin: 0;
+  font: inherit;
+  text-align: center;
+  color: inherit;
+  width: 100%;
+  min-width: 0; /* autorise la carte à rétrécir sous la taille intrinsèque de l'image */
+  cursor: pointer;
+  transition: transform 0.08s ease, filter 0.08s ease;
+}
+
+.village-building-card:active {
+  transform: scale(0.97);
+  filter: brightness(0.96);
+}
+
+.village-building-image {
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--nb-cream-deep);
+  border: 1px solid var(--nb-frame);
+}
+
+.village-building-image img {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.village-building-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  margin-top: 4px;
+}
+
+.village-building-level {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--nb-ink-dim);
+}
+
+/* =========================
+   Popup de détail d'un bâtiment (#village-modal-root) — même
+   principe visuel que .dungeon-story-* (voir css/04-panel-dungeon.css),
+   classes propres pour rester dans le fichier dédié au Village.
+   ========================= */
+.village-popup-card {
+  padding: 24px 22px;
+  text-align: center;
+}
+
+.village-popup-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.village-popup-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  margin-bottom: 10px;
+}
+
+.village-popup-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(58, 44, 26, 0.83);
+  margin-bottom: 12px;
+}
+
+.village-popup-meta {
+  font-size: 12px;
+  color: rgba(58, 44, 26, 0.7);
+  margin-bottom: 6px;
+}
+
+.village-popup-meta strong {
+  color: var(--nb-gold-dark);
+}
+
+.village-popup-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.village-popup-actions .settings-btn {
+  margin-bottom: 0;
+}
+
+.village-popup-actions .settings-btn.is-maxed {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 380px) {
+  .village-popup-card {
+    padding: 18px 16px;
+  }
+}

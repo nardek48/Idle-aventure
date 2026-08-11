@@ -3,20 +3,39 @@
 Quest Idle — systems/loot-system.js
 Génération des drops d'objets (uniquement au kill d'un boss, voir
 CombatEngine.killEnemy en combat-engine.js).
+
+v2.83.55 : génération PROCÉDURALE — un objet est maintenant construit
+à la volée (type, nom, icône tirés dans les pools d'EQUIPMENT_SLOT_CONFIG,
+valeur tirée aléatoirement dans la plage bornée par la rareté), au
+lieu d'être choisi dans une liste de 51 objets écrits à la main.
 ============================================================ */
 
-/* Duplique un objet du catalogue (EQUIPMENT_DB) en une instance
-   possédée par le joueur, avec un identifiant unique (uid) pour
-   pouvoir la retrouver dans l'inventaire/l'équipé. */
-function cloneItem(template, slot) {
+/* Construit un objet d'équipement PROCÉDURAL pour un emplacement et
+   une rareté donnés : nom/icône tirés au hasard dans les pools du
+   slot (flavor uniquement), valeur tirée aléatoirement dans la plage
+   bornée par la rareté (voir EQUIPMENT_SLOT_CONFIG en data/equipment.js),
+   arrondie à config.decimals décimales. */
+function generateEquipmentItem(slot, rarity) {
+  var config = EQUIPMENT_SLOT_CONFIG[slot];
+  if (!config) return null;
+
+  var range = config.ranges[rarity] || config.ranges.common;
+  var raw = randFloat(range[0], range[1]);
+  var decimals = config.decimals || 0;
+  var factor = Math.pow(10, decimals);
+  var value = Math.round(raw * factor) / factor;
+
+  var icon = config.icons[randInt(0, config.icons.length - 1)];
+  var name = config.names[randInt(0, config.names.length - 1)];
+
   return {
     uid: "itm_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8),
     slot: slot,
-    name: template.name,
-    icon: template.icon,
-    rarity: template.rarity,
-    stat: template.stat,
-    value: template.value
+    name: name,
+    icon: icon,
+    rarity: rarity,
+    stat: config.stat,
+    value: value
   };
 }
 
@@ -45,14 +64,12 @@ function getAllowedRarities() {
 }
 
 var LootSystem = {
-  /* Tire un objet aléatoire : d'abord un emplacement (arme/armure/
-     amulette) au hasard, puis une rareté pondérée par RARITY_DROP_RATES
-     MAIS restreinte aux raretés débloquées (getAllowedRarities), puis un
-     objet au hasard parmi ceux du catalogue ayant cette rareté. */
+  /* Tire un objet aléatoire : un emplacement au hasard parmi les 7
+     (EQUIPMENT_SLOTS), une rareté pondérée par RARITY_DROP_RATES MAIS
+     restreinte aux raretés débloquées (getAllowedRarities), puis
+     génère l'objet procéduralement pour ce couple slot/rareté. */
   rollDrop: function () {
-    var slot = ["weapon", "armor", "amulet"][randInt(0, 2)];
-    var pool = EQUIPMENT_DB[slot] || [];
-    if (!pool.length) return null;
+    var slot = EQUIPMENT_SLOTS[randInt(0, EQUIPMENT_SLOTS.length - 1)];
 
     var allowed = getAllowedRarities();
     var weights = allowed.map(function (r) { return RARITY_DROP_RATES[r] || 0; });
@@ -77,38 +94,18 @@ var LootSystem = {
       }
     }
 
-    var candidates = pool.filter(function (item) {
-      return item.rarity === rarity;
-    });
-
-    // Filets de sécurité si jamais aucun objet de cette rareté exacte
-    // n'existe dans ce catalogue (ne devrait pas arriver en pratique).
-    if (!candidates.length) {
-      candidates = pool.filter(function (item) {
-        return allowed.indexOf(item.rarity) !== -1;
-      });
-    }
-    if (!candidates.length) candidates = pool;
-    return cloneItem(candidates[randInt(0, candidates.length - 1)], slot);
+    return generateEquipmentItem(slot, rarity);
   },
 
   /* Comme rollDrop(), mais avec une rareté imposée plutôt que tirée au
      sort — utilisé pour les récompenses garanties (voir
-     systems/dungeon-system.js). Repli sur "common" si la rareté
-     demandée n'a aucun objet dans le catalogue. */
+     systems/dungeon-system.js). */
   rollDropAtRarity: function (rarity) {
-    var slot = ["weapon", "armor", "amulet"][randInt(0, 2)];
-    var pool = EQUIPMENT_DB[slot] || [];
-    if (!pool.length) return null;
-
-    var candidates = pool.filter(function (item) { return item.rarity === rarity; });
-    if (!candidates.length) candidates = pool.filter(function (item) { return item.rarity === "common"; });
-    if (!candidates.length) candidates = pool;
-
-    return cloneItem(candidates[randInt(0, candidates.length - 1)], slot);
+    var slot = EQUIPMENT_SLOTS[randInt(0, EQUIPMENT_SLOTS.length - 1)];
+    return generateEquipmentItem(slot, rarity);
   }
 };
 
 window.LootSystem = LootSystem;
-window.cloneItem = cloneItem;
+window.generateEquipmentItem = generateEquipmentItem;
 window.getAllowedRarities = getAllowedRarities;

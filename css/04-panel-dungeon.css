@@ -113,10 +113,29 @@
   background: var(--nb-cream-alt);
   border: 1px solid var(--nb-frame);
   overflow: hidden;
+  /* v2.90 : la carte peut être un <button> (palier débloqué) —
+     on annule les styles par défaut du navigateur pour qu'elle
+     garde exactement le même rendu qu'avant (une simple div). */
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  width: 100%;
 }
 
 .dungeon-tier-card.is-locked {
   opacity: 0.6;
+}
+
+.dungeon-tier-card.is-tappable {
+  cursor: pointer;
+  transition: transform 0.08s ease, filter 0.08s ease;
+}
+
+.dungeon-tier-card.is-tappable:active {
+  transform: scale(0.97);
+  filter: brightness(0.96);
 }
 
 .dungeon-tier-card.is-full {
@@ -182,18 +201,6 @@
 .dungeon-tier-rarity {
   font-size: 10px;
   font-weight: 700;
-}
-
-.dungeon-tier-btn {
-  margin-top: 4px;
-  padding: 7px 10px;
-  border-radius: 10px;
-  border: none;
-  background: var(--nb-gold);
-  color: #241a00;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
 }
 
 .dungeon-tier-lock-text {

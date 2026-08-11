@@ -31,6 +31,7 @@ function buildCombatHTML() {
     // v2.58 : indicateur de résistance/point faible (#enemy-affinity)
     // retiré à la demande de l'utilisateur.
     + '<div id="enemy-display">'
+    +   '<div id="active-potions-bar" class="active-potions-bar"></div>'
     +   '<div id="enemy-name">Slime</div>'
     // v2.61 : le remplissage (#enemy-hp-bar) est maintenant dans un
     // sous-conteneur dédié (.enemy-hp-bar-track) qui porte le
@@ -99,7 +100,7 @@ function buildHealButtonHTML(index) {
   var onCooldown = PotionManager.getHealCooldownRemainingMs() > 0;
   var stock = PotionManager.getHealingStock(potion.id);
   var disabled = onCooldown || stock <= 0;
-  var keyLabel = String(index + 1); // touche "1" pour la 1ère potion, "2" pour la 2e...
+  var keyLabel = String(index + 3); // v2.90 : "3" pour la 1ère potion (mineure), "4" pour la 2e (majeure) — "1"/"2" repris par l'attaque/défense spéciale
 
   var h = '<div class="heal-quick-bar">';
   h += '<button class="heal-quick-btn' + (disabled ? ' disabled' : '') + '" type="button" '
@@ -129,6 +130,42 @@ function renderHealButtons() {
   if (left) left.innerHTML = buildHealButtonHTML(0);
   if (right) right.innerHTML = buildHealButtonHTML(1);
 }
+
+/* ============================================================
+   v2.90 : mini-icônes des potions à effet ACTUELLEMENT actives
+   (Force/Célérité/Précision/Endurance/Fortune — voir game.activePotions
+   dans systems/potion-system.js), affichées en haut de l'écran Combat
+   pour que le joueur sache d'un coup d'œil ce qui tourne, sans avoir
+   à aller les chercher dans l'Inventaire. L'Élixir d'Aether n'a pas
+   de minuteur (bonus consommé à l'ascension suivante) donc n'a pas sa
+   place ici. Barre vide (rien affiché) si aucune potion active.
+   Rafraîchie chaque seconde depuis la boucle de jeu, même rythme que
+   les autres compte-à-rebours (soin/attaque spéciale/défense). */
+function buildActivePotionsBarHTML() {
+  if (typeof POTIONS_DB === "undefined" || !window.PotionManager) return "";
+
+  var h = "";
+  POTIONS_DB.forEach(function (potion) {
+    if (!potion.durationMin) return; // Élixir d'Aether : pas de minuteur, ignoré ici
+    var remainingMs = PotionManager.getRemainingMs(potion.id);
+    if (remainingMs <= 0) return;
+
+    var remainingMin = Math.ceil(remainingMs / 60000);
+    h += '<div class="active-potion-icon" title="' + esc(potion.name) + ' — ' + remainingMin + ' min restantes">';
+    h += '<img src="' + esc(potion.icon) + '" alt="' + esc(potion.name) + '">';
+    h += '<span class="active-potion-timer">' + remainingMin + '</span>';
+    h += '</div>';
+  });
+  return h;
+}
+
+function renderActivePotionsBar() {
+  var host = document.getElementById("active-potions-bar");
+  if (!host) return;
+  host.innerHTML = buildActivePotionsBarHTML();
+}
+window.buildActivePotionsBarHTML = buildActivePotionsBarHTML;
+window.renderActivePotionsBar = renderActivePotionsBar;
 
 /* Met à jour tout l'affichage de l'ennemi courant : image (ou emoji
 /* v2.58 : nom du monstre, icône (image ou emoji de repli), compteur
@@ -193,21 +230,36 @@ window.renderHealButtons = renderHealButtons;
 
 /* ============================================================
    v2.19 : raccourcis clavier (version PC) pour les potions de soin —
-   touche "1" = 1ère potion (mineure), "2" = 2e (majeure), dans
-   l'ordre de HEALING_POTIONS_DB. Ignorés si le joueur est en train
-   de taper dans un champ texte (nom du joueur, code d'import de
-   sauvegarde, recherche...), pour ne pas interférer avec la saisie.
-   Fonctionne depuis n'importe quel écran, comme le bouton rapide. */
+   touche "1"/"2".
+   v2.90 : élargi aux 4 actions de combat rapide, à la demande de
+   l'utilisateur — "1" Attaque spéciale, "2" Défense spéciale (bouclier),
+   "3" Potion de soin mineure, "4" Potion de soin majeure (avant :
+   "1"/"2" réservés aux potions de soin, décalées en "3"/"4"). Ignorés
+   si le joueur est en train de taper dans un champ texte (nom du
+   joueur, code d'import de sauvegarde, recherche...), pour ne pas
+   interférer avec la saisie. Fonctionne depuis n'importe quel écran,
+   comme les boutons tactiles équivalents — chaque manager (Special/
+   Defense/Potion) gère déjà lui-même son cooldown/sa disponibilité,
+   aucune vérification supplémentaire nécessaire ici. */
 function initHealKeyboardShortcuts() {
   document.addEventListener("keydown", function (e) {
     var active = document.activeElement;
     var tag = active ? active.tagName : "";
     if (tag === "INPUT" || tag === "TEXTAREA" || (active && active.isContentEditable)) return;
-    if (typeof HEALING_POTIONS_DB === "undefined" || !window.PotionManager) return;
 
+    if (e.key === "1") {
+      if (window.SpecialAttackManager) SpecialAttackManager.use();
+      return;
+    }
+    if (e.key === "2") {
+      if (window.DefenseManager) DefenseManager.use();
+      return;
+    }
+
+    if (typeof HEALING_POTIONS_DB === "undefined" || !window.PotionManager) return;
     var index = -1;
-    if (e.key === "1") index = 0;
-    else if (e.key === "2") index = 1;
+    if (e.key === "3") index = 0;
+    else if (e.key === "4") index = 1;
     if (index === -1) return;
 
     var potion = HEALING_POTIONS_DB[index];
@@ -233,7 +285,8 @@ function buildSpecialAttackHTML() {
 
   var h = '<button class="combat-action-btn attack-action-btn' + (onCooldown ? ' on-cooldown' : '') + '" type="button" '
     + (onCooldown ? 'disabled' : '')
-    + ' onclick="SpecialAttackManager.use()" title="' + esc(special.desc) + '">';
+    + ' onclick="SpecialAttackManager.use()" title="' + esc(special.desc) + ' (touche 1 sur PC)">';
+  h += '<span class="combat-action-key">1</span>';
   h += '<span class="combat-action-icon">' + esc(special.icon) + '</span>';
   h += '<span class="combat-action-name">' + esc(special.name) + '</span>';
   if (onCooldown) {
@@ -266,7 +319,8 @@ function buildDefenseHTML() {
 
   var h = '<button class="combat-action-btn defense-action-btn' + (onCooldown ? ' on-cooldown' : '') + (active ? ' is-active' : '') + '" type="button" '
     + (onCooldown ? 'disabled' : '')
-    + ' onclick="DefenseManager.use()" title="' + esc(DEFENSE_ABILITY.desc) + '">';
+    + ' onclick="DefenseManager.use()" title="' + esc(DEFENSE_ABILITY.desc) + ' (touche 2 sur PC)">';
+  h += '<span class="combat-action-key">2</span>';
   h += '<span class="combat-action-icon">' + esc(DEFENSE_ABILITY.icon) + '</span>';
   h += '<span class="combat-action-name">' + esc(DEFENSE_ABILITY.name) + '</span>';
   if (onCooldown) {

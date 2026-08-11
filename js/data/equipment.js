@@ -92,63 +92,153 @@ var SET_BONUS_CONFIG = {
   }
 };
 
-/* Colle ici EQUIPMENT_DB exactement tel qu'il existe dans data.js */
-var EQUIPMENT_DB = {
-  weapon: [
-    { name: "Dague rouillée", icon: "sword", rarity: "common", stat: "tapDmg", value: 3 },
-    { name: "Épée de fer", icon: "sword", rarity: "common", stat: "tapDmg", value: 8 },
-    { name: "Massette ébréchée", icon: "axe", rarity: "common", stat: "tapDmg", value: 12 },
-    { name: "Bâton de bois", icon: "staff", rarity: "common", stat: "tapDmg", value: 5 },
-    { name: "Arc de chasseur", icon: "bow", rarity: "common", stat: "tapMult", value: 0.15 },
-    { name: "Poignard rouillé", icon: "sword", rarity: "common", stat: "tapDmg", value: 6 },
-    { name: "Épée de jade", icon: "sword", rarity: "green", stat: "tapDmg", value: 16 },
-    { name: "Hachette émeraude", icon: "axe", rarity: "green", stat: "tapDmg", value: 18 },
-    { name: "Arc sylvestre", icon: "bow", rarity: "green", stat: "tapMult", value: 0.30 },
-    { name: "Dague véloce", icon: "sword", rarity: "green", stat: "autoDps", value: 3 },
-    { name: "Hache de guerre", icon: "axe", rarity: "rare", stat: "tapDmg", value: 25 },
-    { name: "Épée runique", icon: "sword", rarity: "rare", stat: "tapDmg", value: 35 },
-    { name: "Arc elfe", icon: "bow", rarity: "rare", stat: "tapMult", value: 0.5 },
-    { name: "Lame vive-argent", icon: "sword", rarity: "rare", stat: "autoDps", value: 9 },
-    { name: "Lame envoûtée", icon: "sword", rarity: "epic", stat: "tapMult", value: 1.0 },
-    { name: "Bâton ardent", icon: "staff", rarity: "epic", stat: "tapDmg", value: 100 },
-    { name: "Griffe implacable", icon: "axe", rarity: "epic", stat: "autoDps", value: 22 },
-    { name: "Tranche-démon", icon: "sword", rarity: "legendary", stat: "tapMult", value: 2.0 },
-    { name: "Fléau éternel", icon: "axe", rarity: "legendary", stat: "autoDps", value: 45 }
-  ],
-  armor: [
-    { name: "Tunique usée", icon: "armor", rarity: "common", stat: "goldMult", value: 0.05 },
-    { name: "Armure de cuir", icon: "armor", rarity: "common", stat: "goldMult", value: 0.10 },
-    { name: "Vieille cape", icon: "robe", rarity: "common", stat: "goldMult", value: 0.08 },
-    { name: "Bouclier de bois", icon: "shield", rarity: "common", stat: "goldMult", value: 0.06 },
-    { name: "Armure de jade", icon: "armor", rarity: "green", stat: "goldMult", value: 0.16 },
-    { name: "Cape sylvestre", icon: "robe", rarity: "green", stat: "goldMult", value: 0.14 },
-    { name: "Manteau des bois", icon: "robe", rarity: "green", stat: "goldMult", value: 0.20 },
-    { name: "Cotte de mailles", icon: "shield", rarity: "rare", stat: "goldMult", value: 0.25 },
-    { name: "Armure renforcée", icon: "armor", rarity: "rare", stat: "goldMult", value: 0.30 },
-    { name: "Bouclier runique", icon: "shield", rarity: "rare", stat: "goldMult", value: 0.35 },
-    { name: "Cape des ombres", icon: "robe", rarity: "rare", stat: "autoDps", value: 10 },
-    { name: "Armure runique", icon: "armor", rarity: "epic", stat: "goldMult", value: 0.50 },
-    { name: "Plastron astral", icon: "armor", rarity: "epic", stat: "goldMult", value: 0.65 },
-    { name: "Plastron du gardien", icon: "armor", rarity: "epic", stat: "autoDps", value: 25 },
-    { name: "Bouclier légendaire", icon: "shield", rarity: "legendary", stat: "goldMult", value: 1.0 },
-    { name: "Égide immortelle", icon: "shield", rarity: "legendary", stat: "goldMult", value: 1.2 }
-  ],
-  amulet: [
-    { name: "Pendentif simple", icon: "amulet", rarity: "common", stat: "critChance", value: 2 },
-    { name: "Anneau de cuivre", icon: "ring", rarity: "common", stat: "critMult", value: 0.3 },
-    { name: "Charme fêlé", icon: "amulet", rarity: "common", stat: "critChance", value: 1 },
-    { name: "Perle terne", icon: "ring", rarity: "common", stat: "critMult", value: 0.2 },
-    { name: "Amulette de jade", icon: "amulet", rarity: "green", stat: "critChance", value: 3 },
-    { name: "Anneau émeraude", icon: "ring", rarity: "green", stat: "critMult", value: 0.45 },
-    { name: "Talisman des bois", icon: "amulet", rarity: "green", stat: "autoDps", value: 4 },
-    { name: "Amulette sombre", icon: "amulet", rarity: "rare", stat: "critChance", value: 5 },
-    { name: "Bague affûtée", icon: "ring", rarity: "rare", stat: "critMult", value: 0.6 },
-    { name: "Médaillon d'ombre", icon: "amulet", rarity: "rare", stat: "critChance", value: 7 },
-    { name: "Bague véloce", icon: "ring", rarity: "rare", stat: "autoDps", value: 11 },
-    { name: "Bague de sang", icon: "ring", rarity: "epic", stat: "critMult", value: 1.0 },
-    { name: "Pendentif des étoiles", icon: "amulet", rarity: "epic", stat: "critChance", value: 10 },
-    { name: "Cœur d'orage", icon: "amulet", rarity: "epic", stat: "autoDps", value: 26 },
-    { name: "Collier divin", icon: "amulet", rarity: "legendary", stat: "critChance", value: 15 },
-    { name: "Diadème infini", icon: "crown", rarity: "legendary", stat: "autoDps", value: 50 }
-  ]
+/* ============================================================
+v2.83.55 : passage à un système d'équipement PROCÉDURAL — remplace
+les 51 objets écrits à la main (repris ci-dessus dans l'historique
+Git si besoin) par 7 emplacements, chacun avec UN SEUL type de bonus
+et une VALEUR TIRÉE ALÉATOIREMENT dans une plage bornée par la
+rareté. Décidé avec l'utilisateur : les 51 objets fixes disparaissent
+entièrement (pourront revenir plus tard comme objets uniques, ex.
+butin garanti de donjon — voir data/dungeon.js, ça existe déjà pour
+les récompenses de palier).
+
+EQUIPMENT_SLOTS : ordre canonique des 7 emplacements.
+EQUIPMENT_SLOT_LABELS / _EMOJI : affichage (nom FR, emoji de repli).
+EQUIPMENT_SLOT_CONFIG[slot] :
+  - stat      : LA seule stat que ce type peut donner (voir
+                StatsSystem.recalcStats en systems/stats-system.js
+                pour la liste complète des stats reconnues)
+  - decimals  : 0 pour une valeur entière (dégâts, DPS, %crit),
+                2 pour une fraction (défense/dégâts%/or%/mult. crit)
+  - icons     : types d'icônes possibles (images/Icons/equipment_icon/
+                {icon}_{rareté}.png ou .jpg selon le type, voir
+                getEquipmentIconPath en systems/equipment-system.js),
+                tirés au hasard pour la variété
+                visuelle — "ring" est réutilisé tel quel (existait déjà
+                pour l'ancienne amulette, un anneau est un anneau)
+  - names     : noms possibles, tirés au hasard (flavor uniquement,
+                la rareté est déjà indiquée par la couleur/bordure)
+  - ranges    : { rareté: [min, max] } — voir LootSystem.generateEquipmentItem
+                en systems/loot-system.js pour le tirage réel
+============================================================ */
+
+var EQUIPMENT_SLOTS = ["weapon", "armor", "helmet", "gloves", "boots", "ring", "amulet"];
+
+var EQUIPMENT_SLOT_LABELS = {
+  weapon: "Arme",
+  armor: "Armure",
+  helmet: "Casque",
+  gloves: "Gants",
+  boots: "Bottes",
+  ring: "Anneau",
+  amulet: "Amulette"
 };
+
+var EQUIPMENT_SLOT_EMOJI = {
+  weapon: "⚔️",
+  armor: "🛡️",
+  helmet: "🪖",
+  gloves: "🧤",
+  boots: "👢",
+  ring: "💍",
+  amulet: "📿"
+};
+
+var EQUIPMENT_SLOT_CONFIG = {
+  weapon: {
+    stat: "tapDmg",
+    decimals: 0,
+    icons: ["sword", "axe", "staff", "bow"],
+    names: ["Épée", "Hache", "Bâton", "Arc", "Dague", "Lame"],
+    ranges: {
+      common: [10, 25],
+      green: [26, 35],
+      rare: [40, 60],
+      epic: [75, 110],
+      legendary: [140, 200]
+    }
+  },
+  armor: {
+    stat: "defense",
+    decimals: 2,
+    icons: ["armor", "robe", "shield"],
+    names: ["Armure", "Cuirasse", "Plastron", "Cape", "Bouclier"],
+    ranges: {
+      common: [0.01, 0.03],
+      green: [0.03, 0.05],
+      rare: [0.05, 0.08],
+      epic: [0.08, 0.12],
+      legendary: [0.12, 0.18]
+    }
+  },
+  helmet: {
+    stat: "critMult",
+    decimals: 2,
+    icons: ["casque"],
+    names: ["Casque", "Heaume", "Couronne", "Capuche"],
+    ranges: {
+      common: [0.10, 0.20],
+      green: [0.20, 0.35],
+      rare: [0.35, 0.55],
+      epic: [0.55, 0.85],
+      legendary: [0.85, 1.30]
+    }
+  },
+  gloves: {
+    stat: "tapMult",
+    decimals: 2,
+    icons: ["gants"],
+    names: ["Gants", "Mitaines", "Gantelets"],
+    ranges: {
+      common: [0.10, 0.20],
+      green: [0.20, 0.35],
+      rare: [0.35, 0.55],
+      epic: [0.55, 0.90],
+      legendary: [0.90, 1.50]
+    }
+  },
+  boots: {
+    stat: "autoDps",
+    decimals: 0,
+    icons: ["bottes"],
+    names: ["Bottes", "Sandales", "Chaussures"],
+    ranges: {
+      common: [2, 5],
+      green: [5, 9],
+      rare: [9, 15],
+      epic: [15, 28],
+      legendary: [28, 50]
+    }
+  },
+  ring: {
+    stat: "goldMult",
+    decimals: 2,
+    icons: ["ring"],
+    names: ["Anneau", "Bague", "Chevalière"],
+    ranges: {
+      common: [0.05, 0.10],
+      green: [0.10, 0.18],
+      rare: [0.18, 0.30],
+      epic: [0.30, 0.50],
+      legendary: [0.50, 0.80]
+    }
+  },
+  amulet: {
+    stat: "critChance",
+    decimals: 0,
+    icons: ["amulet", "crown"],
+    names: ["Amulette", "Pendentif", "Collier", "Talisman", "Médaillon"],
+    ranges: {
+      common: [1, 3],
+      green: [3, 5],
+      rare: [5, 8],
+      epic: [8, 13],
+      legendary: [13, 20]
+    }
+  }
+};
+
+window.EQUIPMENT_SLOTS = EQUIPMENT_SLOTS;
+window.EQUIPMENT_SLOT_LABELS = EQUIPMENT_SLOT_LABELS;
+window.EQUIPMENT_SLOT_EMOJI = EQUIPMENT_SLOT_EMOJI;
+window.EQUIPMENT_SLOT_CONFIG = EQUIPMENT_SLOT_CONFIG;

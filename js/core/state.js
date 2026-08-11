@@ -6,11 +6,17 @@ et ses valeurs par défaut. C'est LE fichier central : tous les
 autres systèmes lisent/modifient `game`.
 ============================================================ */
 
-/* Emplacements d'équipement du héros (arme/armure/amulette). */
+/* Emplacements d'équipement du héros. v2.83.55 : passé de 3
+   (arme/armure/amulette) à 7 (+ casque/gants/bottes/anneau) — voir
+   EQUIPMENT_SLOTS/EQUIPMENT_SLOT_CONFIG en data/equipment.js. */
 function createDefaultEquipped() {
   return {
     weapon: null,
     armor: null,
+    helmet: null,
+    gloves: null,
+    boots: null,
+    ring: null,
     amulet: null
   };
 }
@@ -172,6 +178,13 @@ function ensureGameStateDefaults() {
   if (game.equipped.weapon === undefined) game.equipped.weapon = null;
   if (game.equipped.armor === undefined) game.equipped.armor = null;
   if (game.equipped.amulet === undefined) game.equipped.amulet = null;
+  // v2.83.55 : 4 nouveaux emplacements — même filet de sécurité que
+  // les 3 historiques ci-dessus, pour les sauvegardes d'avant ce
+  // changement.
+  if (game.equipped.helmet === undefined) game.equipped.helmet = null;
+  if (game.equipped.gloves === undefined) game.equipped.gloves = null;
+  if (game.equipped.boots === undefined) game.equipped.boots = null;
+  if (game.equipped.ring === undefined) game.equipped.ring = null;
 
   if (!game.aetherUpgrades) game.aetherUpgrades = {};
   if (typeof game.totalAetherEarned !== "number") game.totalAetherEarned = Number(game.aether || 0);

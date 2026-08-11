@@ -124,6 +124,11 @@ var StatsSystem = {
     // multiplicateur x5, au lieu de rester +100 comme annoncé.
     game.equipFlatTapBonus = 0;
 
+    // v2.83.55 : accumulateur de défense venant de l'équipement
+    // (emplacement Armure), combiné avec la défense d'Endurance plus
+    // bas dans cette fonction — voir HERO_DEFENSE_CAP.
+    game.equipDefensePct = 0;
+
     game.essenceRegen = 0;
     game.bossEssenceMult = 1;
     game.essenceGlobalMult = 1;
@@ -170,9 +175,12 @@ var StatsSystem = {
     if (!game.heroHp || game.heroHp > game.heroMaxHp) game.heroHp = game.heroMaxHp;
 
     // NOUVEAU v1.8.5 : Endurance -> réduction des dégâts de riposte ennemie
+    // v2.83.55 : le calcul FINAL (avec la contribution de l'équipement)
+    // est plus bas, APRÈS la boucle d'équipement qui remplit
+    // game.equipDefensePct — sinon on additionnerait une valeur encore
+    // à 0 à ce stade. On garde juste les constantes ici.
     var HERO_DEFENSE_COEF = 0.002;
     var HERO_DEFENSE_CAP = 0.6;
-    game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, totalEndurance * HERO_DEFENSE_COEF);
 
     // NOUVEAU v1.8.5 : bonus passif de bestiaire (or/essence), cumulé sur toutes les créatures rencontrées
     var bestiaryTotal = getTotalBestiaryBonus();
@@ -196,8 +204,11 @@ var StatsSystem = {
     // Applique le bonus de CHAQUE pièce équipée (une seule fois chacune,
     // voir js/systems/stats-system.js dans l'historique du projet pour
     // le bug de triplement qui existait ici avant correction).
+    // v2.83.55 : 7 emplacements (EQUIPMENT_SLOTS) au lieu de 3.
     var equipped = game.equipped;
-    [equipped.weapon, equipped.armor, equipped.amulet].forEach(function(item) {
+    (typeof EQUIPMENT_SLOTS !== "undefined" ? EQUIPMENT_SLOTS : ["weapon", "armor", "amulet"])
+      .map(function (slot) { return equipped[slot]; })
+      .forEach(function(item) {
       if (!item) return;
       if (item.stat === "tapDmg") game.equipFlatTapBonus += item.value;
       else if (item.stat === "tapMult") game.tapMult += item.value;
@@ -205,7 +216,15 @@ var StatsSystem = {
       else if (item.stat === "critChance") game.critChance += item.value;
       else if (item.stat === "critMult") game.critMult += item.value;
       else if (item.stat === "autoDps") game.autoDps += item.value;
+      else if (item.stat === "defense") game.equipDefensePct += item.value;
     });
+
+    // v2.83.55 : calcul final de la défense — Endurance + équipement
+    // (game.equipDefensePct, rempli juste au-dessus), sans jamais
+    // toucher aux PV max (contrairement à Endurance qui augmente les
+    // deux). Même plafond partagé pour les 2 sources, afin de ne pas
+    // casser l'équilibrage existant.
+    game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, totalEndurance * HERO_DEFENSE_COEF + (game.equipDefensePct || 0));
 
     // Bonus de panoplie (3 pièces équipées de même rareté), voir
     // getSetBonus() plus bas et SET_BONUS_CONFIG dans data/equipment.js.
@@ -335,31 +354,49 @@ var StatsSystem = {
     return Math.max(1, game.goldMult);
   },
 
-  /* Détermine si les 3 pièces équipées partagent la même rareté et,
-     si oui, renvoie la config du bonus de panoplie correspondant
-     (voir SET_BONUS_CONFIG dans data/equipment.js). Renvoie
-     { rarity: null, config: null } si le bonus n'est pas actif. */
+  /* Détermine si au moins 3 (sameRarityCount) pièces équipées, parmi
+     les 7 emplacements, partagent la même rareté et, si oui, renvoie
+     la config du bonus de panoplie correspondant (voir
+     SET_BONUS_CONFIG dans data/equipment.js). Renvoie
+     { rarity: null, config: null } si le bonus n'est pas actif.
+     v2.83.55 : élargi de 3 emplacements fixes (arme/armure/amulette)
+     à "3 quelconques parmi les 7" — plus logique maintenant qu'il y a
+     7 emplacements indépendants, la version précédente aurait rendu
+     le bonus de panoplie quasi impossible à obtenir en pratique. */
   getSetBonus: function () {
-    var equipped = [
-      game.equipped.weapon,
-      game.equipped.armor,
-      game.equipped.amulet
-    ].filter(Boolean);
+    var slots = (typeof EQUIPMENT_SLOTS !== "undefined") ? EQUIPMENT_SLOTS : ["weapon", "armor", "amulet"];
+    var equipped = slots.map(function (slot) { return game.equipped[slot]; }).filter(Boolean);
 
     var required = (SET_BONUS_CONFIG && SET_BONUS_CONFIG.sameRarityCount) || 3;
 
-    if (equipped.length < required) {
-      return { rarity: null, config: null };
-    }
-
-    var rarity = equipped[0].rarity;
-    var same = equipped.every(function (item) {
-      return item.rarity === rarity;
+    // v2.83.55 : compte les pièces PAR RARETÉ (au lieu d'exiger que
+    // TOUTES les pièces équipées partagent la même rareté) — on
+    // cherche la rareté la mieux représentée, et le bonus s'active si
+    // elle atteint le seuil requis. Le reste de l'équipement (autres
+    // raretés) n'empêche pas le bonus, contrairement à avant.
+    var countByRarity = {};
+    equipped.forEach(function (item) {
+      countByRarity[item.rarity] = (countByRarity[item.rarity] || 0) + 1;
     });
 
-    if (!same) {
+    var bestRarity = null;
+    var bestCount = 0;
+    RARITY_ORDER.forEach(function (r) {
+      var count = countByRarity[r] || 0;
+      // À égalité, on privilégie la rareté la plus haute (RARITY_ORDER
+      // est du plus faible au plus fort) — meilleur bonus pour le joueur.
+      if (count >= bestCount) {
+        bestCount = count;
+        bestRarity = r;
+      }
+    });
+
+    if (!bestRarity || bestCount < required) {
       return { rarity: null, config: null };
     }
+
+    var rarity = bestRarity;
+    var matchingCount = bestCount;
 
     var baseConfig = (SET_BONUS_CONFIG.bonuses && SET_BONUS_CONFIG.bonuses[rarity]) || null;
     if (!baseConfig) {
@@ -372,7 +409,7 @@ var StatsSystem = {
       apply: baseConfig.apply,
       effect: effect,
       text: formatSetBonusEffect(effect),
-      pieces: equipped.length,
+      pieces: matchingCount,
       maxPieces: required
     };
 

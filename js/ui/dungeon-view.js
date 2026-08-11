@@ -89,20 +89,26 @@ function buildDungeonTierCardHTML(tier, isLast) {
     ? renderIconOrEmojiHTML(tier.icon, "dungeon-tier-img", tier.name)
     : '<span class="dungeon-tier-num">' + tier.id + '</span>';
 
-  var h = '<div class="dungeon-tier-card' + (unlocked ? '' : ' is-locked') + (isLast ? ' is-full' : '') + '">';
+  /* v2.90 : toute la carte devient cliquable pour lancer l'intro du
+     palier (avant : seul le bouton "Entrer" en bas de carte). Le
+     bouton est retiré, la carte entière porte l'action tactile. */
+  var cardTag = unlocked ? 'button' : 'div';
+  var cardAttrs = unlocked
+    ? ' type="button" onclick="openDungeonIntro(' + tier.id + ')"'
+    : '';
+
+  var h = '<' + cardTag + ' class="dungeon-tier-card' + (unlocked ? ' is-tappable' : ' is-locked') + (isLast ? ' is-full' : '') + '"' + cardAttrs + '>';
   h += '<div class="dungeon-tier-image">' + imageHTML + (unlocked ? '' : '<span class="dungeon-tier-image-lock">🔒</span>') + '</div>';
   h += '<div class="dungeon-tier-info">';
   h += '<div class="dungeon-tier-name">' + esc(tier.name) + '</div>';
   h += '<div class="dungeon-tier-rarity" style="color:' + rarityColor + '">🎁 ' + esc(rarityLabel) + ' max</div>';
 
-  if (unlocked) {
-    h += '<button class="dungeon-tier-btn" type="button" onclick="openDungeonIntro(' + tier.id + ')">Entrer</button>';
-  } else {
+  if (!unlocked) {
     h += '<div class="dungeon-tier-lock-text">' + (tier.requiredAscension) + ' ascension(s) requise(s)</div>';
   }
 
   h += '</div>';
-  h += '</div>';
+  h += '</' + cardTag + '>';
   return h;
 }
 

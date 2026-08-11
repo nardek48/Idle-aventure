@@ -164,6 +164,7 @@ function renderAll() {
   if (typeof renderHealButtons === "function") renderHealButtons();
   if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
   if (typeof renderDefenseButton === "function") renderDefenseButton();
+  if (typeof renderActivePotionsBar === "function") renderActivePotionsBar();
   if (typeof renderCombatHeroMini === "function") renderCombatHeroMini();
   if (needsHeroSetup()) {
     openHeroSelection();

@@ -21,7 +21,7 @@ l'équipement au même endroit.
 ============================================================ */
 
 var activeEquipSubTab = "equipment"; // "equipment" | "inventory" | "shop" | "potions"
-var selectedEquipSlot = "weapon"; // slot réel ("weapon"/"armor"/"amulet") ou id verrouillé ("locked0".."locked3")
+var selectedEquipSlot = "weapon"; // un des 7 slots réels (voir EQUIPMENT_SLOTS)
 var selectedInventoryKey = null; // clé unifiée équipement("eq:uid")/potion("buff:id"/"heal:id") — v2.83.46
 
 function setEquipSubTab(tab) {
@@ -73,6 +73,7 @@ function formatEquipmentStat(item) {
   if (item.stat === "critChance") return "+" + formatNumber(value) + "% critique";
   if (item.stat === "critMult") return "+" + formatNumber(value) + "x dégâts crit";
   if (item.stat === "autoDps") return "+" + formatNumber(value) + " auto DPS";
+  if (item.stat === "defense") return "+" + Math.round(value * 100) + "% défense";
 
   return "+" + formatNumber(value) + " " + esc(item.stat);
 }
@@ -100,18 +101,9 @@ function buildEquipmentSlot(slot, label, icon) {
   return h;
 }
 
-/* Emplacement RÉSERVÉ pour un futur type d'objet (casque, anneau,
-   bottes...) — pas encore défini côté données, donc pas de nom
-   inventé : juste un cadenas générique. Cliquable (contrairement à
-   v2.83.15) pour afficher l'explication dans le panneau de droite,
-   mais aucune action réelle possible tant que le type n'existe pas. */
-function buildLockedEquipmentSlot(slotId) {
-  var isSelected = selectedEquipSlot === slotId;
-  var h = '<button class="eq-orbit-slot locked' + (isSelected ? ' is-selected' : '') + '" onclick="selectEquipSlot(\'' + esc(slotId) + '\')" aria-label="Emplacement à venir">';
-  h += '<div class="eq-orbit-slot-icon eq-orbit-slot-placeholder">🔒</div>';
-  h += '</button>';
-  return h;
-}
+/* v2.83.55 : buildLockedEquipmentSlot() supprimée — les 7 emplacements
+   sont maintenant tous réels (casque/gants/bottes/anneau ajoutés),
+   plus aucun "à venir" à afficher. */
 
 /* v2.83.34 : compare deux objets du MÊME type de stat (renvoie null
    si les types diffèrent — pas de comparaison numérique honnête
@@ -124,7 +116,7 @@ function getEquipmentStatDelta(candidate, current) {
 
 function formatStatDelta(stat, delta) {
   var sign = delta > 0 ? "+" : "";
-  if (stat === "tapMult" || stat === "goldMult") return sign + Math.round(delta * 100) + "%";
+  if (stat === "tapMult" || stat === "goldMult" || stat === "defense") return sign + Math.round(delta * 100) + "%";
   if (stat === "critMult") return sign + formatNumber(delta) + "x";
   return sign + formatNumber(delta);
 }
@@ -181,38 +173,31 @@ function buildCompatibleItemsListHTML(slot) {
 }
 
 /* Panneau de détail (colonne de droite) — reflète l'emplacement
-   actuellement sélectionné dans la grille de gauche. 3 états
-   possibles : objet équipé (icône + nom + stat + bouton Déséquiper),
-   emplacement réel vide (juste une invite vers l'Inventaire), ou
-   emplacement verrouillé (explication, aucune action). v2.83.34 :
-   ajout d'une mini-liste des objets compatibles du sac (voir
+   actuellement sélectionné dans la grille de gauche. 2 états
+   possibles depuis v2.83.55 (les 7 emplacements sont tous réels,
+   plus aucun verrouillé) : objet équipé (icône + nom + stat + bouton
+   Déséquiper), ou emplacement vide (invite vers l'Inventaire). Ajout
+   d'une mini-liste des objets compatibles du sac (voir
    buildCompatibleItemsListHTML), pour équiper sans changer d'onglet. */
 function buildEquipDetailPanelHTML() {
-  var realSlots = { weapon: "Arme", armor: "Armure", amulet: "Amulette" };
+  var slot = selectedEquipSlot;
+  var label = EQUIPMENT_SLOT_LABELS[slot] || slot;
+  var emoji = EQUIPMENT_SLOT_EMOJI[slot] || "❔";
+  var item = game.equipped[slot];
   var h = '<div class="eq-detail-panel">';
 
-  if (realSlots[selectedEquipSlot]) {
-    var slot = selectedEquipSlot;
-    var item = game.equipped[slot];
-
-    if (item) {
-      h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img") + '</div>';
-      h += '<div class="eq-detail-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
-      h += '<div class="eq-detail-stat">' + esc(formatEquipmentStat(item)) + '</div>';
-      h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.unequip(\'' + esc(slot) + '\')">Déséquiper</button>';
-    } else {
-      h += '<div class="eq-detail-icon eq-detail-icon-empty">' + esc(realSlots[slot] === "Arme" ? "⚔️" : realSlots[slot] === "Armure" ? "🛡️" : "💍") + '</div>';
-      h += '<div class="eq-detail-name">' + esc(realSlots[slot]) + ' — Vide</div>';
-      h += '<div class="eq-detail-hint">Équipe un objet depuis l\u2019Inventaire pour remplir cet emplacement.</div>';
-    }
-
-    h += buildCompatibleItemsListHTML(slot);
+  if (item) {
+    h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img") + '</div>';
+    h += '<div class="eq-detail-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
+    h += '<div class="eq-detail-stat">' + esc(formatEquipmentStat(item)) + '</div>';
+    h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.unequip(\'' + esc(slot) + '\')">Déséquiper</button>';
   } else {
-    h += '<div class="eq-detail-icon eq-detail-icon-empty">🔒</div>';
-    h += '<div class="eq-detail-name">Emplacement à venir</div>';
-    h += '<div class="eq-detail-hint">Ce type d\u2019objet n\u2019existe pas encore dans le jeu — réservé pour une future mise à jour.</div>';
+    h += '<div class="eq-detail-icon eq-detail-icon-empty">' + esc(emoji) + '</div>';
+    h += '<div class="eq-detail-name">' + esc(label) + ' — Vide</div>';
+    h += '<div class="eq-detail-hint">Équipe un objet depuis l\u2019Inventaire pour remplir cet emplacement.</div>';
   }
 
+  h += buildCompatibleItemsListHTML(slot);
   h += buildCompactSetBonusHTML();
 
   h += '</div>';
@@ -381,25 +366,29 @@ function buildEquipmentTabContentHTML() {
   // montre plus que ce qui concerne l'ÉQUIPEMENT lui-même.
   // v2.83.16 : grille d'icônes (gauche) + panneau de détail (droite),
   // façon maquette — voir buildEquipDetailPanelHTML.
+  // v2.83.55 : les 7 emplacements sont maintenant tous réels (plus de
+  // "verrouillé", voir data/equipment.js pour EQUIPMENT_SLOTS) —
+  // répartition 4/3 sur 2 colonnes inchangée.
   h += '<div class="eq-layout">';
-  h += '<div class="eq-hero-card">';
+  // v2.90 : fond parchemin standard perdu en route — .eq-hero-card
+  // est censé porter .nb-page-frame/.nb-page-frame-fill depuis la
+  // v2.83.27 (voir commentaire CSS ci-contre, css/04-panel-equipment.css),
+  // exactement comme .eq-bag-panel juste à côté (sous-onglet
+  // Inventaire) qui, lui, les avait gardées.
+  h += '<div class="eq-hero-card nb-page-frame nb-page-frame-fill">';
   h += '<div class="eq-hero-main eq-hero-main-slots-only">';
 
   h += '<div class="eq-hero-right">';
   h += '<div class="eq-slot-col">';
-  h += buildEquipmentSlot("weapon", "Arme", "⚔️");
-  h += buildEquipmentSlot("armor", "Armure", "🛡️");
-  h += buildEquipmentSlot("amulet", "Amulette", "💍");
-  h += buildLockedEquipmentSlot("locked0");
+  h += buildEquipmentSlot("weapon", EQUIPMENT_SLOT_LABELS.weapon, EQUIPMENT_SLOT_EMOJI.weapon);
+  h += buildEquipmentSlot("armor", EQUIPMENT_SLOT_LABELS.armor, EQUIPMENT_SLOT_EMOJI.armor);
+  h += buildEquipmentSlot("helmet", EQUIPMENT_SLOT_LABELS.helmet, EQUIPMENT_SLOT_EMOJI.helmet);
+  h += buildEquipmentSlot("gloves", EQUIPMENT_SLOT_LABELS.gloves, EQUIPMENT_SLOT_EMOJI.gloves);
   h += '</div>';
   h += '<div class="eq-slot-col">';
-  // Emplacements réservés pour de futurs types d'objets (pas encore
-  // définis — voir buildLockedEquipmentSlot). 4 au total pour matcher
-  // la maquette (7 emplacements), répartis 4/3 sur 2 colonnes comme
-  // demandé.
-  h += buildLockedEquipmentSlot("locked1");
-  h += buildLockedEquipmentSlot("locked2");
-  h += buildLockedEquipmentSlot("locked3");
+  h += buildEquipmentSlot("boots", EQUIPMENT_SLOT_LABELS.boots, EQUIPMENT_SLOT_EMOJI.boots);
+  h += buildEquipmentSlot("ring", EQUIPMENT_SLOT_LABELS.ring, EQUIPMENT_SLOT_EMOJI.ring);
+  h += buildEquipmentSlot("amulet", EQUIPMENT_SLOT_LABELS.amulet, EQUIPMENT_SLOT_EMOJI.amulet);
   h += '</div>';
   h += '</div>';
 

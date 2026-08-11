@@ -106,6 +106,15 @@ function gameLoop() {
     }
   }
 
+  // v2.90 : barre de mini-icônes des potions actives (écran Combat).
+  if (window.PotionManager && typeof renderActivePotionsBar === "function") {
+    game._activePotionsUiTimer = (game._activePotionsUiTimer || 0) + dt;
+    if (game._activePotionsUiTimer >= 1) {
+      game._activePotionsUiTimer = 0;
+      renderActivePotionsBar();
+    }
+  }
+
   // Talent "Intérêt composé" : +0.05% de l'or actuel toutes les 10s
   // (accumulateur pour rester précis même avec des dt irréguliers).
   if (game.talents.t_interest) {

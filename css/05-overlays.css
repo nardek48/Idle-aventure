@@ -27,6 +27,44 @@
   opacity: 1;
 }
 
+/* v2.90.5 : bannière PWA "nouvelle version disponible" (voir
+   js/main/pwa.js) — contrairement à #toast, reste affichée tant que
+   le joueur n'a pas cliqué "Recharger" (pas de disparition automatique,
+   l'info reste utile jusqu'à l'action). */
+#pwa-update-banner {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 300;
+  padding: 8px 12px;
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  background: var(--nb-gold-dark);
+  color: var(--nb-ink-inverse);
+  font-size: 12px;
+  font-weight: 700;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+#pwa-update-banner.show {
+  display: flex;
+}
+
+#pwa-update-banner button {
+  border: none;
+  border-radius: 999px;
+  padding: 5px 14px;
+  background: var(--nb-ink);
+  color: var(--nb-gold);
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 /* =========================
    Modales système
    ========================= */

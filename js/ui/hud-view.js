@@ -83,15 +83,16 @@ function buildHudHTML() {
     +       '<span class="nb-pill nb-pill-aether"><img class="nb-pill-icon" src="images/Icons/aether_icon.png" alt="Aether"><span id="hud-aether">0</span></span>'
     +     '</div>'
     +     '<div class="nb-hud-title-row">'
-    +       '<button type="button" class="nb-hud-bag-btn" onclick="openBagFromHud()" aria-label="Inventaire">🎒</button>'
     +       '<div id="hud-page-title" class="nb-hud-page-title"></div>'
+    +       '<button type="button" class="nb-hud-bag-btn" onclick="openBagFromHud()" aria-label="Inventaire">🎒<span id="hud-bag-badge" class="nb-hud-bag-badge" style="display:none;">0</span></button>'
     +     '</div>'
     +   '</div>'
-    +   '<div id="combat-hero-mini" class="combat-hero-mini">'
+    +   '<div id="combat-hero-mini" class="combat-hero-mini" onclick="switchTab(\'talents\')" role="button" aria-label="Talents">'
     +     '<div class="combat-hero-mini-portrait">'
     +       '<img id="combat-hero-mini-img" class="combat-hero-mini-img" src="" alt="" style="display:none">'
     +       '<div id="combat-hero-mini-placeholder" class="combat-hero-mini-placeholder">?</div>'
     +       '<span class="combat-hero-mini-level" id="combat-hero-mini-level">Niv. 1</span>'
+    +       '<span id="hud-hero-levelup-badge" class="nb-hud-bag-badge" style="display:none;">!</span>'
     +     '</div>'
     +     '<div class="combat-hero-mini-hp-bar">'
     +       '<div id="combat-hero-mini-hp-fill" class="combat-hero-mini-hp-fill" style="width:100%"></div>'
@@ -137,7 +138,45 @@ function renderHud() {
   if (aether) aether.textContent = formatNumber(game.aether);
 
   renderHeroHp();
+  renderHudBagBadge();
+  renderHudLevelUpBadge();
 }
+
+/* v2.83.54 : indicateur "point de talent disponible" sur le portrait
+   du héros (HUD) — réutilise getTalentsAvailableCount() (déjà utilisée
+   pour le badge Talents du menu ☰, voir ui/quests-view.js), donc pas
+   de nouvelle logique de détection : même définition de "il y a
+   quelque chose à dépenser" partout dans le jeu. Le portrait devient
+   aussi cliquable (voir buildHudHTML) et amène directement sur
+   Talents. */
+function renderHudLevelUpBadge() {
+  var badge = document.getElementById("hud-hero-levelup-badge");
+  if (!badge) return;
+
+  var available = (typeof getTalentsAvailableCount === "function") ? getTalentsAvailableCount() : 0;
+  badge.style.display = available > 0 ? "flex" : "none";
+}
+window.renderHudLevelUpBadge = renderHudLevelUpBadge;
+
+/* v2.83.53 : badge sur le bouton sac du HUD — nombre d'objets
+   d'équipement actuellement dans le sac (game.inventory), pour
+   repérer un nouveau butin plus vite que le toast (très bref, facile
+   à rater). Même style que les badges du menu ☰ (Quêtes/Talents/...).
+   Se met à jour à chaque renderHud() (donc à chaque kill, achat,
+   vente, équipement...). */
+function renderHudBagBadge() {
+  var badge = document.getElementById("hud-bag-badge");
+  if (!badge) return;
+
+  var count = Array.isArray(game.inventory) ? game.inventory.length : 0;
+  if (count > 0) {
+    badge.textContent = count > 99 ? "99+" : String(count);
+    badge.style.display = "flex";
+  } else {
+    badge.style.display = "none";
+  }
+}
+window.renderHudBagBadge = renderHudBagBadge;
 
 /* ============================================================
    v1.8.5 : Barre de vie du héros. La classe "low" (PV <= 25%)

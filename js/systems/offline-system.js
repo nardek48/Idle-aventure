@@ -8,14 +8,23 @@ des gains hors-ligne) et le calcul des récompenses hors-ligne
 
 /* Catalogue des bâtiments du village. Chaque bâtiment n'affecte QUE le
    hors-ligne (jamais les gains en jeu actif) — voir
-   VillageManager.getOfflineBonuses() pour le détail de chaque effet. */
+   VillageManager.getOfflineBonuses() pour le détail de chaque effet.
+   v2.90 : noms affichés (name) remis au goût du nouveau visuel de
+   carte (voir ui/village-view.js) — IDs, coûts, effets et formules
+   STRICTEMENT inchangés, seul l'habillage textuel change :
+     goldMine     "Mine d'or"            -> "Mine d'Or"            (inchangé, casse mise à jour)
+     essenceWell  "Puits d'essence"      -> "Hutte de l'Alchimiste"
+     barracks     "Caserne"              -> "Caserne"              (inchangé)
+     timeRelay    "Relais du temps"      -> "Tour des Mages"
+     watchtower   "Vigie"                -> "Hôtel de Ville"
+     sanctuary    "Sanctuaire d'Aether"  -> "Atelier de Forgeron"  (l'utilisateur envisage de le retirer plus tard) */
 var VILLAGE_CONFIG = {
-  goldMine: { name: "Mine d'or", desc: "Augmente les gains d'or hors-ligne.", baseCost: 250, costMult: 1.65, maxLevel: 25 },
-  essenceWell: { name: "Puits d'essence", desc: "Ajoute de l'essence gagnée hors-ligne.", baseCost: 400, costMult: 1.75, maxLevel: 20 },
+  goldMine: { name: "Mine d'Or", desc: "Augmente les gains d'or hors-ligne.", baseCost: 250, costMult: 1.65, maxLevel: 25 },
+  essenceWell: { name: "Hutte de l'Alchimiste", desc: "Ajoute de l'essence gagnée hors-ligne.", baseCost: 400, costMult: 1.75, maxLevel: 20 },
   barracks: { name: "Caserne", desc: "Améliore l'efficacité hors-ligne.", baseCost: 600, costMult: 1.8, maxLevel: 20 },
-  timeRelay: { name: "Relais du temps", desc: "Augmente la durée maximale des gains hors-ligne.", baseCost: 900, costMult: 2, maxLevel: 10 },
-  watchtower: { name: "Vigie", desc: "Simule des combats pendant ton absence : kills, bestiaire, et chance de butin.", baseCost: 1200, costMult: 1.9, maxLevel: 20 },
-  sanctuary: { name: "Sanctuaire d'Aether", desc: "Génère un peu d'Aether pendant ton absence.", baseCost: 5000, costMult: 2.3, maxLevel: 10 }
+  timeRelay: { name: "Tour des Mages", desc: "Augmente la durée maximale des gains hors-ligne.", baseCost: 900, costMult: 2, maxLevel: 10 },
+  watchtower: { name: "Hôtel de Ville", desc: "Simule des combats pendant ton absence : kills, bestiaire, et chance de butin.", baseCost: 1200, costMult: 1.9, maxLevel: 20 },
+  sanctuary: { name: "Atelier de Forgeron", desc: "Génère un peu d'Aether pendant ton absence.", baseCost: 5000, costMult: 2.3, maxLevel: 10 }
 };
 
 var OFFLINE_MAX_SIMULATED_KILLS = 2000;   // garde-fou perf/économie, même sur une absence énorme

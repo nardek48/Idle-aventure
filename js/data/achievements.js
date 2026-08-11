@@ -20,9 +20,12 @@ function achievementBestiaryPercent() {
 }
 
 function achievementHasRarityOwned(rarity) {
-  var owned = (game.inventory || []).concat(
-    game.equipped ? [game.equipped.weapon, game.equipped.armor, game.equipped.amulet] : []
-  ).filter(Boolean);
+  var equippedList = [];
+  if (game.equipped) {
+    var slots = (typeof EQUIPMENT_SLOTS !== "undefined") ? EQUIPMENT_SLOTS : ["weapon", "armor", "amulet"];
+    equippedList = slots.map(function (slot) { return game.equipped[slot]; });
+  }
+  var owned = (game.inventory || []).concat(equippedList).filter(Boolean);
   return owned.some(function (item) { return item.rarity === rarity; });
 }
 

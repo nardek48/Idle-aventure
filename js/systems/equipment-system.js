@@ -22,12 +22,22 @@ function getEquipmentSellValue(item) {
 
 /* v2.23 : chemin de l'icône illustrée d'un objet (images/Icons/equipment_icon/),
    une image DIFFÉRENTE par type ET par rareté (avant, une seule
-   icône générique par type, ignorant la rareté). Le jeu de fichiers
-   fourni ne couvre pas la rareté "green" (Inhabituel) — on retombe
-   sur l'image "common" du même type en attendant un visuel dédié. */
-var EQUIPMENT_ICON_RARITY_FALLBACK = {
+   icône générique par type, ignorant la rareté).
+
+   v2.90 : passage en .png pour les 9 types qui ont désormais un
+   visuel dédié pour LES 5 raretés (dont "green"/Inhabituel, avant
+   en repli sur "common"). Les 3 types restés en .jpg (bow, crown,
+   shield — pas encore fournis en .png) n'ont toujours pas de visuel
+   "green" dédié : ils gardent le repli sur "common" pour cette
+   rareté en attendant. */
+var EQUIPMENT_ICON_PNG_TYPES = {
+  amulet: true, armor: true, axe: true, casque: true,
+  gants: true, ring: true, robe: true, staff: true, sword: true
+};
+
+var EQUIPMENT_ICON_JPG_RARITY_FALLBACK = {
   common: "common",
-  green: "common",   // pas d'asset dédié fourni, repli sur "common"
+  green: "common",   // pas d'asset "green" dédié pour ces types, repli sur "common"
   rare: "rare",
   epic: "epic",
   legendary: "legendary"
@@ -35,7 +45,14 @@ var EQUIPMENT_ICON_RARITY_FALLBACK = {
 
 function getEquipmentIconPath(item) {
   if (!item || !item.icon) return "";
-  var rarityFile = EQUIPMENT_ICON_RARITY_FALLBACK[item.rarity] || "common";
+
+  if (EQUIPMENT_ICON_PNG_TYPES[item.icon]) {
+    // Les 5 raretés existent en .png pour ces types, pas de repli nécessaire.
+    return "images/Icons/equipment_icon/" + item.icon + "_" + item.rarity + ".png";
+  }
+
+  // Types encore en .jpg (bow/crown/shield) : repli "green" -> "common".
+  var rarityFile = EQUIPMENT_ICON_JPG_RARITY_FALLBACK[item.rarity] || "common";
   return "images/Icons/equipment_icon/" + item.icon + "_" + rarityFile + ".jpg";
 }
 
@@ -201,7 +218,7 @@ var EquipmentSystem = {
     sortInventoryByType: function () {
     if (!Array.isArray(game.inventory)) game.inventory = [];
 
-    var slotOrder = ["weapon", "armor", "amulet"];
+    var slotOrder = (typeof EQUIPMENT_SLOTS !== "undefined") ? EQUIPMENT_SLOTS : ["weapon", "armor", "amulet"];
 
     game.inventory.sort(function (a, b) {
       var sa = slotOrder.indexOf(a.slot);

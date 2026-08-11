@@ -35,6 +35,54 @@
   -webkit-touch-callout: none;
 }
 
+/* v2.90 : mini-icônes des potions à effet actives (Force/Célérité/
+   Précision/Endurance/Fortune), en haut de la zone ennemi — voir
+   buildActivePotionsBarHTML() dans ui/combat-view.js. Vide (donc
+   invisible, hauteur 0) tant qu'aucune potion n'est active, pour ne
+   jamais grignoter d'espace inutilement sur cet écran très dense. */
+.active-potions-bar {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.active-potion-icon {
+  position: relative;
+  width: clamp(26px, 6vw, 30px);
+  height: clamp(26px, 6vw, 30px);
+  border-radius: 999px;
+  border: 1px solid var(--nb-gold-dark);
+  background: rgba(0, 0, 0, 0.25);
+  overflow: visible;
+}
+
+.active-potion-icon img {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+}
+
+.active-potion-timer {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #0f1420;
+  border: 1px solid var(--nb-gold-dark);
+  color: #4ade80;
+  font-size: 8.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 #enemy-emoji img,
 .enemy-image {
   -webkit-user-drag: none;
@@ -406,6 +454,35 @@
   color: #93c5fd;
 }
 
+/* v2.90 : petit indice de raccourci clavier ("1" attaque spéciale /
+   "2" défense spéciale), même principe que .heal-quick-key —
+   uniquement affiché sur les appareils à pointeur précis (souris),
+   inutile au doigt. */
+.combat-action-key {
+  display: none;
+}
+
+@media (pointer: fine) {
+  .combat-action-key {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    z-index: 1;
+    min-width: clamp(12.88px, calc(6.36px + 2.04vw), 15.12px);
+    height: clamp(12.88px, calc(6.36px + 2.04vw), 15.12px);
+    padding: 0 clamp(2.76px, calc(1.36px + 0.44vw), 3.24px);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(240, 170, 62, 0.5);
+    color: rgba(255, 255, 255, 0.75);
+    font-size: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .combat-action-btn:active {
     transform: none;
@@ -546,8 +623,10 @@
   justify-content: center;
 }
 
-/* Petit indice de raccourci clavier ("1"/"2") — uniquement affiché
-   sur les appareils à pointeur précis (souris), inutile au doigt. */
+/* Petit indice de raccourci clavier ("3"/"4" depuis la v2.90, "1"/"2"
+   avant — repris par l'attaque/défense spéciale) — uniquement
+   affiché sur les appareils à pointeur précis (souris), inutile au
+   doigt. */
 .heal-quick-key {
   display: none;
 }

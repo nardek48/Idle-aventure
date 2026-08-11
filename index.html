@@ -13,6 +13,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0d0a1a">
+  <!-- v2.90.5 : PWA — manifest + icônes, voir manifest.json et
+       js/main/pwa.js (enregistrement du service worker sw.js). -->
+  <meta name="apple-mobile-web-app-title" content="Quest Idle">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./images/icons/apple-touch-icon.png">
+  <link rel="icon" href="./images/icons/icon-192.png">
 
   <!-- Titre de la page / version -->
   <title>Quest Idle — Fantasy Clicker v2</title>
@@ -42,6 +48,7 @@
   <link rel="stylesheet" href="./css/04-panel-equipment.css">
   <link rel="stylesheet" href="./css/04-panel-hero-summary.css">
   <link rel="stylesheet" href="./css/04-panel-village-shop.css">
+  <link rel="stylesheet" href="./css/04-panel-village.css">
 
   <link rel="stylesheet" href="./css/05-overlays.css">
   <link rel="stylesheet" href="./css/06-map.css">
@@ -91,6 +98,7 @@
 <div id="export-text-root"></div>
 <div id="onboarding-root"></div>
 <div id="dungeon-modal-root"></div>
+<div id="village-modal-root"></div>
 <div id="cycle-modal-root"></div>
 <input type="file" id="import-save-file-input" accept=".json,application/json" style="display:none" onchange="importSaveFromFile(this)">
 
@@ -118,6 +126,10 @@
 </div>
 
 <div id="toast"></div>
+<div id="pwa-update-banner">
+  <span>Nouvelle version disponible.</span>
+  <button type="button" onclick="reloadForPwaUpdate()">Recharger</button>
+</div>
 <div id="hero-selection-root"></div>
 
 <!-- =========================================================
@@ -194,6 +206,7 @@
 
 <!-- MAIN RUNTIME -->
 <script src="js/main/game-loop.js"></script>
+<script src="js/main/pwa.js"></script>
 <script src="js/main/boot.js"></script>
 
 </body>

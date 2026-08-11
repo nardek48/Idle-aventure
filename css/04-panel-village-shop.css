@@ -2,85 +2,15 @@
    Boutique village
    ========================= */
 
-/* v1.9.2 : silhouette provisoire du village (emoji en attendant l'art dédié) */
-.village-skyline {
-  margin-bottom: 14px;
-  padding: 12px;
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream);
-  border: 1px solid var(--nb-frame);
-}
-
-.village-skyline-header {
-  text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  opacity: 0.9;
-}
-
-.village-skyline-row {
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-end;
-  gap: 6px;
-  min-height: 64px;
-}
-
-.village-building-visual {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  flex: 1;
-}
-
-.village-building-emoji {
-  font-size: 30px;
-  line-height: 1;
-  transition: transform 0.2s ease, filter 0.2s ease;
-}
-
-.village-building-visual.unbuilt .village-building-emoji {
-  filter: grayscale(1) opacity(0.35);
-}
-
-.village-building-level {
-  font-size: 10px;
-  font-weight: 700;
-  opacity: 0.75;
-}
-
-.village-bonus-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.village-bonus-row span {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 6px 8px;
-  border-radius: 10px;
-  background: var(--nb-cream-alt);
-  border: 1px solid rgba(194, 127, 31, 0.3);
-  color: var(--nb-ink);
-  font-size: 11px;
-  font-weight: 700;
-  text-align: center;
-
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-}
-
-/* v2.81 : ".shop-item.village-item" et ses enfants (".shop-main",
-   ".shop-title-row", ".shop-level", ".shop-desc", ".shop-meta") ont
-   été retirés d'ici — les cartes de bâtiment du Village utilisent
-   maintenant la classe partagée ".nb-purchase-card" (voir
-   css/00-components.css), comme toutes les autres cartes d'achat du
-   jeu. */
+/* v2.90 : ancienne skyline emoji (classes .village-skyline et
+   .village-building, préfixes) retirée — remplacée par la grille de
+   cartes illustrées cliquables, voir css/04-panel-village.css.
+   v2.90.4 : .village-bonus-row (résumé global des bonus hors-ligne
+   dans la popup de bâtiment) retiré à la demande de l'utilisateur —
+   redondant, l'info utile (bonus DE CE bâtiment) reste affichée via
+   .village-popup-meta. Plus aucune classe active dans ce fichier
+   pour le Village lui-même ; ne reste que Boutique classique
+   (Économie/Potions, ".shop-*" ci-dessous), toujours utilisée. */
 
 .shop-mode-info {
   font-size: 11px;
@@ -109,10 +39,4 @@
   background: rgba(91, 140, 255, 0.22);
   color: var(--nb-ink);
   box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.3) inset;
-}
-
-@media (max-width: 560px) {
-  .village-bonus-row {
-    grid-template-columns: 1fr;
-  }
 }

@@ -34,7 +34,7 @@ function getDefaultQuestProgress() {
 }
 
 function getDefaultEquipped() {
-  return { weapon: null, armor: null, amulet: null };
+  return { weapon: null, armor: null, helmet: null, gloves: null, boots: null, ring: null, amulet: null };
 }
 
 /* Fusionne un objet de progression chargé avec un objet de valeurs
@@ -298,6 +298,13 @@ function restoreBaseState(d) {
   if (game.equipped.weapon === undefined) game.equipped.weapon = null;
   if (game.equipped.armor === undefined) game.equipped.armor = null;
   if (game.equipped.amulet === undefined) game.equipped.amulet = null;
+  // v2.83.55 : 4 nouveaux emplacements — anciennes sauvegardes n'ont
+  // que weapon/armor/amulet, on comble le reste à null (même filet de
+  // sécurité que les 3 emplacements historiques ci-dessus).
+  if (game.equipped.helmet === undefined) game.equipped.helmet = null;
+  if (game.equipped.gloves === undefined) game.equipped.gloves = null;
+  if (game.equipped.boots === undefined) game.equipped.boots = null;
+  if (game.equipped.ring === undefined) game.equipped.ring = null;
 
   game.quests = Array.isArray(d.quests) ? d.quests : [];
   game.questProgress = normalizeProgressMap(d.questProgress, questDefaults);

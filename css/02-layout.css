@@ -137,6 +137,7 @@
 }
 
 .nb-hud-bag-btn {
+  position: relative;
   flex: 0 0 auto;
   width: 30px;
   height: 30px;
@@ -154,6 +155,27 @@
   transform: scale(0.94);
 }
 
+/* v2.83.53 : badge de compte sur le bouton sac — même style que
+   .full-menu-card-badge (menu ☰), voir css/05-overlays.css. */
+.nb-hud-bag-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  z-index: 4; /* v2.83.54 : au-dessus du cadre décoratif du portrait (::after, z-index:2) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  border: 1px solid var(--nb-cream);
+}
+
 .nb-hud-page-title {
   width: 100%;
   margin-top: 2px;
@@ -165,7 +187,7 @@
   color: #5a3518; /* brun foncé */
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 
-  background: url('../images/Borders/title.png') center / 50% 90% no-repeat;
+  background: url('../images/Borders/title.png') center / 100% 90% no-repeat;
 }
 
 /* =========================
@@ -190,6 +212,7 @@
   width: clamp(64.03px, calc(31.63px + 10.13vw), 75.17px);
   overflow: hidden;
   border-radius: var(--nb-radius-sm); /* même rayon que le cadre */
+  cursor: pointer; /* v2.83.54 : cliquable, amène sur Talents */
 }
 
 .combat-hero-mini-portrait {
