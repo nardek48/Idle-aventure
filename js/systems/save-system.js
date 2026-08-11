@@ -213,6 +213,11 @@ function buildSaveData() {
     dungeonBossClears: Number(game.dungeonBossClears || 0),
     dungeonShards: Number(game.dungeonShards || 0),
     dungeonShopLevels: game.dungeonShopLevels || {},
+    // v2.90.11 : oublié lors de l'ajout du déblocage séquentiel des
+    // paliers de donjon (v2.90.9) — sans ça, la progression de
+    // déblocage se perdait à chaque rechargement de page (jamais
+    // sauvegardée). Trouvé en auditant le code pour la doc.
+    dungeonTierCleared: game.dungeonTierCleared || {},
     healingPotionsOwned: game.healingPotionsOwned || {},
     potionsOwned: game.potionsOwned || {},
     lastHealUse: Number(game.lastHealUse || 0),
@@ -351,6 +356,8 @@ function restoreBaseState(d) {
   game.dungeonBossClears = Number(d.dungeonBossClears || 0);
   game.dungeonShards = Number(d.dungeonShards || 0);
   game.dungeonShopLevels = d.dungeonShopLevels && typeof d.dungeonShopLevels === "object" ? d.dungeonShopLevels : {};
+  // v2.90.11 : voir buildSaveData() ci-dessus, même correctif.
+  game.dungeonTierCleared = d.dungeonTierCleared && typeof d.dungeonTierCleared === "object" ? d.dungeonTierCleared : {};
   game.healingPotionsOwned = d.healingPotionsOwned && typeof d.healingPotionsOwned === "object" ? d.healingPotionsOwned : {};
   game.potionsOwned = d.potionsOwned && typeof d.potionsOwned === "object" ? d.potionsOwned : {};
   game.lastHealUse = Number(d.lastHealUse || 0);
@@ -450,6 +457,11 @@ function hardResetState() {
   var keptCodexChaosSeen = !!game.codexChaosSeen;
   var keptCodexRead = Object.assign({}, game.codexRead || {});
   var keptDungeonShopLevels = Object.assign({}, game.dungeonShopLevels || {});
+  // v2.90.11 : voir note dans buildSaveData() — la progression de
+  // déblocage séquentiel des paliers de donjon est une progression
+  // permanente au même titre que dungeonBossClears/dungeonShopLevels,
+  // doit survivre à l'ascension comme eux.
+  var keptDungeonTierCleared = Object.assign({}, game.dungeonTierCleared || {});
   var keptDungeonShards = Number(game.dungeonShards || 0);
   var keptDungeonBestWave = Number(game.dungeonBestWave || 0);
   var keptDungeonBossClears = Number(game.dungeonBossClears || 0);
@@ -529,6 +541,7 @@ function hardResetState() {
   game.dungeonBossClears = keptDungeonBossClears;
   game.dungeonShards = keptDungeonShards;
   game.dungeonShopLevels = keptDungeonShopLevels;
+  game.dungeonTierCleared = keptDungeonTierCleared;
 
   game.achievementsClaimed = keptAchievementsClaimed;
 
@@ -651,8 +664,9 @@ function fullResetState() {
   game.dungeonBossClears = 0;
   game.dungeonShards = 0;
   game.dungeonShopLevels = {};
-
-  game.achievementsClaimed = {};
+  // v2.90.11 : voir note dans buildSaveData() — repart bien à zéro
+  // sur un reset complet, comme dungeonBossClears/dungeonShopLevels.
+  game.dungeonTierCleared = {};
 
   game.worldsEverReached = {};
   game.worldQuestProgress = {};
