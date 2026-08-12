@@ -81,6 +81,13 @@ function getVillageBuildingBonusText(id, level) {
 /* Grille de 6 cartes uniformes (fond + bâtiment détouré en superposition
    + nom + niveau), même pattern que la grille de paliers de donjon —
    carte entière cliquable. */
+/* Grille de 6 cases SANS bordure ni espace entre elles : les 6 fonds
+   (images/Village/bg_*.jpg) sont en réalité UNE SEULE image découpée
+   en 2 colonnes × 3 lignes — mises bord à bord, elles se recollent en
+   un seul panorama continu (chemins/pavés qui se prolongent d'une
+   case à l'autre). Le nom + niveau, qui n'ont plus de zone dédiée en
+   dessous, sont affichés en étiquette superposée en bas de chaque
+   case (voir .village-building-tag). */
 function buildVillageHTML() {
   var h = '<div class="nb-page-frame village-page-frame">';
   h += '<div class="village-building-grid">';
@@ -92,12 +99,12 @@ function buildVillageHTML() {
     var level = VillageManager.getLevel(id);
 
     h += '<button type="button" class="village-building-card" onclick="openVillageBuildingPopup(\'' + id + '\')">';
-    h += '<div class="village-building-image">';
     h += '<img class="village-building-bg" src="' + esc(b.bg) + '" alt="" draggable="false">';
     h += '<img class="village-building-sprite" src="' + esc(b.image) + '" alt="' + esc(b.label) + '" draggable="false">';
+    h += '<div class="village-building-tag">';
+    h += '<span class="village-building-name">' + esc(b.label) + '</span>';
+    h += '<span class="village-building-level">Niv. ' + level + ' / ' + cfg.maxLevel + '</span>';
     h += '</div>';
-    h += '<div class="village-building-name">' + esc(b.label) + '</div>';
-    h += '<div class="village-building-level">Niv. ' + level + ' / ' + cfg.maxLevel + '</div>';
     h += '</button>';
   });
 

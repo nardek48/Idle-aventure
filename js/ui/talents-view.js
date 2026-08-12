@@ -37,14 +37,22 @@ function setTalentCategory(category) {
   renderPanel("talents");
 }
 
+// v2.90.13 : bascule des 3 arbres alignée sur le composant partagé
+// .pc-subtab-bar/.pc-subtab-btn (même pattern que Donjon/Équipement/
+// Ascension/Boutique), au lieu des pastilles bricolées d'avant —
+// cohérence visuelle + la barre passe en bas de l'écran comme
+// partout ailleurs (voir .subtab-page/.subtab-bar-wrapper dans
+// buildTalentsHTML plus bas), au lieu d'être fixée en haut.
+var TALENT_CATEGORY_ICONS = { combat: "⚔️", fortune: "💰", survival: "🛡️" };
+
 function buildTalentCategoryTabs() {
   var categories = ["combat", "fortune", "survival"];
-  var h = '<div class="talent-category-tabs">';
+  var h = '<div class="pc-subtab-bar">';
 
   categories.forEach(function (category) {
     var active = category === activeTalentCategory ? " is-active" : "";
-    h += '<button class="talent-category-tab' + active + '" type="button" onclick="window.setTalentCategory(\'' + category + '\')">' +
-         esc(getTalentCategoryLabel(category)) +
+    h += '<button type="button" class="pc-subtab-btn' + active + '" onclick="window.setTalentCategory(\'' + category + '\')">' +
+         TALENT_CATEGORY_ICONS[category] + '<span>' + esc(getTalentCategoryLabel(category)) + '</span>' +
          '</button>';
   });
 
@@ -113,11 +121,15 @@ function buildTalentBranchHTML(branchKey) {
     tiers[tierKey].push(node);
   });
 
+  // v2.90.13 : liste ordonnée des paliers RÉELLEMENT présents dans
+  // cette branche, avec lookahead nécessaire pour dessiner le
+  // connecteur ENTRE ce palier et le suivant (voir plus bas).
+  var presentTiers = TALENT_TIER_ORDER.filter(function (k) { return tiers[k] && tiers[k].length; });
+
   var h = '<div class="talent-board talent-board-' + esc(branchKey) + '">';
 
-  TALENT_TIER_ORDER.forEach(function (tierKey) {
+  presentTiers.forEach(function (tierKey, tierIndex) {
     var tierNodes = tiers[tierKey];
-    if (!tierNodes || !tierNodes.length) return;
 
     h += '<div class="talent-tier-label">' + esc(TALENT_TIER_LABELS[tierKey] || tierKey) + '</div>';
     h += '<div class="talent-tier-row' + (tierNodes.length === 1 ? " single" : "") + '">';
@@ -143,22 +155,61 @@ function buildTalentBranchHTML(branchKey) {
     });
 
     h += '</div>';
+
+    // v2.90.13 : connecteur visuel ENTRE ce palier et le suivant (pas
+    // après le dernier). "split" si on passe de 1 à 2 talents (palier
+    // 1 -> 2, toutes branches), "parallel" sinon (2 talents restent 2,
+    // chaque colonne reste sur SA propre branche jusqu'au bout — voir
+    // data/talents.js, chaque talent de palier N+1 ne dépend que du
+    // talent de MÊME CÔTÉ au palier N). Coloré en doré si le talent
+    // d'origine (palier courant, même colonne) est débloqué, pour
+    // matérialiser le chemin déjà emprunté.
+    var nextTierNodes = presentTiers[tierIndex + 1] ? tiers[presentTiers[tierIndex + 1]] : null;
+    if (nextTierNodes) {
+      var isSplit = tierNodes.length === 1 && nextTierNodes.length > 1;
+      var leftOwned = isTalentOwned(tierNodes[0].id);
+      var rightOwned = tierNodes.length > 1 ? isTalentOwned(tierNodes[1].id) : leftOwned;
+
+      h += '<div class="talent-connector ' + (isSplit ? "split" : "parallel") + '">';
+      h += '<div class="tc-stem-top' + (leftOwned ? " is-active" : "") + '"></div>';
+      h += '<div class="tc-bar' + (leftOwned ? " is-active" : "") + '"></div>';
+      h += '<div class="tc-stem-left' + (leftOwned ? " is-active" : "") + '"></div>';
+      h += '<div class="tc-stem-right' + (rightOwned ? " is-active" : "") + '"></div>';
+      h += '</div>';
+    }
   });
 
   h += '</div>';
   return h;
 }
 
-function buildActiveTalentBonusesHTML() {
+/* v2.90.13 : le résumé complet (liste des bonus actifs + bouton
+   Réinitialiser) n'est plus affiché en permanence en haut de l'écran
+   — remplacé par un résumé compact d'une ligne, qui ouvre une popup
+   au tap (même pattern que les popups Village/Donjon de cette
+   session : #talent-modal-root, .full-menu-overlay/.full-menu). */
+function buildTalentSummaryBarHTML() {
+  var tree = getTalentTree();
+  var all = [].concat(tree.combat || [], tree.fortune || [], tree.survival || []);
+  var ownedCount = all.filter(function (n) { return isTalentOwned(n.id); }).length;
+
+  var h = '<button type="button" class="talent-summary-bar" onclick="openTalentSummaryPopup()">';
+  h += '<span>✨ ' + ownedCount + ' bonus actif' + (ownedCount > 1 ? "s" : "") + '</span>';
+  h += '<span class="talent-summary-bar-points">' + (game.talentPoints || 0) + ' pt(s) disponible(s)</span>';
+  h += '<span class="talent-summary-bar-chevron">▸</span>';
+  h += '</button>';
+  return h;
+}
+
+function buildTalentSummaryPopupHTML() {
   var tree = getTalentTree();
   var all = [].concat(tree.combat || [], tree.fortune || [], tree.survival || []);
   var owned = all.filter(function (n) { return isTalentOwned(n.id); });
 
-  var h = '<div class="talent-summary">';
-  h += '<div class="talent-summary-header">';
-  h += '<span>✨ Bonus actifs (' + owned.length + ')</span>';
-  h += '<span>' + (game.talentPoints || 0) + ' pt(s) disponible(s)</span>';
-  h += '</div>';
+  var h = '<div class="full-menu-overlay">';
+  h += '  <div class="full-menu talent-popup-card">';
+  h += '    <div class="talent-popup-title">✨ Bonus de talents actifs</div>';
+  h += '    <div class="talent-popup-meta">' + (game.talentPoints || 0) + ' point(s) disponible(s)</div>';
 
   if (owned.length) {
     h += '<div class="talent-summary-list">';
@@ -179,16 +230,40 @@ function buildActiveTalentBonusesHTML() {
     h += '<div class="talent-summary-empty">Aucun talent débloqué pour l\'instant.</div>';
   }
 
+  h += '    <button class="settings-btn" type="button" onclick="closeTalentSummaryPopup()">Fermer</button>';
+  h += '  </div>';
   h += '</div>';
   return h;
 }
 
+function openTalentSummaryPopup() {
+  var host = document.getElementById("talent-modal-root");
+  if (host) host.innerHTML = buildTalentSummaryPopupHTML();
+}
+
+function closeTalentSummaryPopup() {
+  var host = document.getElementById("talent-modal-root");
+  if (host) host.innerHTML = "";
+}
+
 function buildTalentsHTML() {
-  var h = buildActiveTalentBonusesHTML();
-  h += buildTalentCategoryTabs();
+  var h = '<div class="subtab-page">';
+  h += '<div class="subtab-page-content">';
+  h += '<div class="nb-page-frame">';
+  h += buildTalentSummaryBarHTML();
   h += buildTalentBranchHTML(activeTalentCategory);
-  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
+  h += '</div>';
+  h += '</div>'; // fin .subtab-page-content
+
+  h += '<div class="subtab-bar-wrapper">';
+  h += buildTalentCategoryTabs();
+  h += '</div>';
+
+  h += '</div>'; // fin .subtab-page
+  return h;
 }
 
 window.buildTalentsHTML = buildTalentsHTML;
 window.setTalentCategory = setTalentCategory;
+window.openTalentSummaryPopup = openTalentSummaryPopup;
+window.closeTalentSummaryPopup = closeTalentSummaryPopup;

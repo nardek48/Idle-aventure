@@ -1,18 +1,24 @@
 "use strict";
 
 /* ============================================================
-   v1.9.4 — Refonte de l'écran carte.
-   Fini le gros fond unique + points scattered en % fragiles.
-   Chaque monde est une carte autonome (vignette biome + statut),
-   organisée en grille 2 colonnes. Le détail (aventures/monstres)
-   passe en liste compacte, plus de coordonnées à la main.
+   v2.90.14 — Carte du monde : chemin illustré (remplace la grille de
+   6 vignettes + panneau de détail permanent, v1.9.4 à v2.90.13).
+   La progression des mondes est LINÉAIRE (WorldManager.worldIndex,
+   toujours dans l'ordre WORLDS[0..5]) — contrairement aux talents
+   (branches), un chemin unique convient parfaitement ici. Chaque
+   monde est un nœud rond (vraie vignette illustrée, images/Worlds/
+   thumb_*.png — déjà de vraies illustrations, pas des placeholders),
+   relié au suivant par un tracé SVG. Le détail (lore/aventures/
+   questline) passe dans une popup au tap (#map-modal-root, même
+   pattern que Village/Donjon/Talents cette session) au lieu d'un
+   panneau permanent qui doublonnait l'info et laissait un grand vide
+   en bas d'écran sur les mondes sans beaucoup de contenu.
 ============================================================ */
 
-/* Quel monde est actuellement affiché en détail sur la carte (pas
-   forcément le monde où le joueur progresse réellement — on peut
-   consulter un autre monde sans y être). Stocké directement sur
-   `game` par simplicité, mais volontairement PAS sauvegardé (pas
-   dans buildSaveData) : juste un état d'UI temporaire. */
+/* Quel monde est actuellement consulté (popup ouverte) — pas
+   forcément le monde où le joueur progresse réellement. Stocké
+   directement sur `game` par simplicité, mais volontairement PAS
+   sauvegardé (pas dans buildSaveData) : juste un état d'UI temporaire. */
 function getMapSelectedWorldIndex() {
   if (typeof game.mapSelectedWorldIndex !== "number") {
     game.mapSelectedWorldIndex = WorldManager.worldIndex || 0;
@@ -22,13 +28,6 @@ function getMapSelectedWorldIndex() {
     game.mapSelectedWorldIndex = WORLDS.length - 1;
   }
   return game.mapSelectedWorldIndex;
-}
-
-/* Change le monde consulté en détail (clic sur une vignette). */
-function selectMapWorld(index) {
-  if (index < 0 || index >= WORLDS.length) return;
-  game.mapSelectedWorldIndex = index;
-  renderPanel();
 }
 
 /* Un monde n'est vraiment jouable que s'il est à portée séquentielle
@@ -162,72 +161,121 @@ function buildWorldLoreExcerptHTML(worldIndex) {
   return buildCodexExcerptHTML(codexId, "map-world-lore");
 }
 
-function buildMapHTML() {
-  var selectedIndex = getMapSelectedWorldIndex();
-  var selectedWorld = WORLDS[selectedIndex] || WORLDS[0];
+/* ============================================================
+   Chemin illustré (chaque monde = un nœud rond relié au suivant).
+============================================================ */
+
+/* Positions (%) des 6 nœuds dans .map-path-frame, en zigzag gauche/
+   droite — fixes, pas besoin d'être dynamiques puisque l'ordre et le
+   nombre de mondes sont stables (voir data/worlds.js). Si un 7e
+   monde est ajouté un jour, ajouter une entrée ici (et le chemin/
+   viewBox suivront automatiquement, voir buildMapPathSvgHTML). */
+var MAP_NODE_POSITIONS = [
+  { x: 24, y: 8 },
+  { x: 76, y: 24 },
+  { x: 24, y: 40 },
+  { x: 76, y: 56 },
+  { x: 24, y: 72 },
+  { x: 76, y: 88 }
+];
+var MAP_PATH_VIEWBOX_H = 183; // hauteur du viewBox pour 100 de large (ratio ~100/183)
+
+function buildMapPathSvgHTML(count) {
+  var pts = MAP_NODE_POSITIONS.slice(0, count).map(function (p) {
+    return { x: p.x, y: p.y * (MAP_PATH_VIEWBOX_H / 100) };
+  });
+  if (pts.length < 2) return "";
+
+  var d = "M " + pts[0].x + " " + pts[0].y;
+  for (var i = 1; i < pts.length; i++) {
+    var midY1 = pts[i - 1].y, midY2 = pts[i].y;
+    d += " C 50 " + midY1 + ", 50 " + midY2 + ", " + pts[i].x + " " + pts[i].y;
+  }
+
+  return '<svg class="map-path-svg" viewBox="0 0 100 ' + MAP_PATH_VIEWBOX_H + '" preserveAspectRatio="none">' +
+         '<path d="' + d + '" fill="none" stroke="#d9c48a" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.3 4" opacity="0.85"/>' +
+         '</svg>';
+}
+
+function buildMapNodeHTML(world, index) {
+  var pos = MAP_NODE_POSITIONS[index] || { x: 50, y: 50 };
   var currentWorldIndex = WorldManager.worldIndex || 0;
-  var currentAdventureIndex = WorldManager.adventureIndex || 0;
-  var total = Array.isArray(game.quests) ? game.quests.length : 0;
-  var done = Array.isArray(game.quests)
-    ? game.quests.filter(function (q) { return q.claimed; }).length
-    : 0;
-  var bosses = (game.questProgress && game.questProgress.bossKills) || 0;
+  var unlocked = isWorldUnlocked(index);
+  var isCurrent = index === currentWorldIndex;
+  var isDone = index < currentWorldIndex;
 
-  var h = '<div class="map-grid">';
-  h += '<div class="map-row"><span class="map-label">Monde actuel</span><span class="map-value">' + (currentWorldIndex + 1) + ' / ' + WORLDS.length + '</span></div>';
-  h += '<div class="map-row"><span class="map-label">Quêtes terminées</span><span class="map-value">' + done + '/' + total + '</span></div>';
-  h += '<div class="map-row"><span class="map-label">Boss vaincus</span><span class="map-value">' + bosses + '</span></div>';
-  h += '</div>';
+  var classes = ["map-node"];
+  if (isCurrent) classes.push("is-current");
+  if (!unlocked) classes.push("is-locked");
+  if (isDone) classes.push("is-done");
 
-  h += '<div class="map-world-grid">';
+  var h = '<button type="button" class="' + classes.join(" ") + '" style="left:' + pos.x + '%;top:' + pos.y + '%;" onclick="openWorldPopup(' + index + ')">';
+  h += '<span class="map-node-circle"><img src="' + esc(getWorldThumb(world)) + '" alt="' + esc(world.name) + '" draggable="false">';
+  if (isCurrent) h += '<span class="map-node-badge">Actuel</span>';
+  if (!unlocked) h += '<span class="map-node-lock">🔒</span>';
+  h += '</span>';
+  h += '<span class="map-node-name">' + esc(world.name) + '</span>';
+  h += '</button>';
+  return h;
+}
+
+/* v2.90.15 : résumé "Monde actuel / Quêtes terminées / Boss vaincus"
+   retiré à la demande de l'utilisateur — le monde actuel est déjà
+   visuellement évident sur le chemin (badge "Actuel" + halo doré du
+   nœud), "Monde X/6" est déjà affiché sur Personnage > Stats (info
+   dupliquée), et "Quêtes terminées" concernait les quêtes
+   journalières, sans rapport avec la navigation sur la carte —
+   l'écran va directement du titre au chemin illustré. */
+function buildMapHTML() {
+  var h = '<div class="nb-page-frame">';
+
+  h += '<div class="map-path-frame">';
+  h += buildMapPathSvgHTML(WORLDS.length);
   WORLDS.forEach(function (world, index) {
-    var unlocked = isWorldUnlocked(index);
-    var isCurrent = index === currentWorldIndex;
-    var isDone = index < currentWorldIndex;
-    var isSelected = index === selectedIndex;
-
-    var classes = ["map-world-card"];
-    if (isCurrent) classes.push("is-current");
-    if (isDone) classes.push("is-done");
-    if (!unlocked) classes.push("is-locked");
-    if (isSelected) classes.push("is-selected");
-
-    h += '<button class="' + classes.join(" ") + '" type="button" onclick="selectMapWorld(' + index + ')"';
-    h += ' style="background-image:url(\'' + esc(getWorldThumb(world)) + '\')">';
-    h += '<div class="map-world-card-overlay">';
-    if (isCurrent) h += '<span class="map-world-card-badge">Actuel</span>';
-    if (!unlocked) h += '<span class="map-world-card-lock">🔒</span>';
-    h += '<div class="map-world-card-name">' + esc(world.name) + '</div>';
-    h += '<div class="map-world-card-status status-' + (isDone ? "done" : isCurrent ? "current" : "locked") + '">' + getWorldProgressText(index) + '</div>';
-    h += '</div>';
-    h += '</button>';
+    h += buildMapNodeHTML(world, index);
   });
   h += '</div>';
 
-  h += '<div class="map-world-card-detail">';
-  h += '<div class="map-world-head">';
-  h += '<div>';
-  h += '<div class="map-world-kicker">Monde sélectionné</div>';
-  h += '<div class="map-world-title">' + esc(selectedWorld.name) + '</div>';
-  h += '<div class="map-world-status status-' + (selectedIndex < currentWorldIndex ? "done" : selectedIndex === currentWorldIndex ? "current" : "locked") + '">' + getWorldProgressText(selectedIndex) + '</div>';
   h += '</div>';
-  h += '</div>';
+  return h;
+}
 
-  h += buildWorldLoreExcerptHTML(selectedIndex);
+/* ============================================================
+   Popup de détail d'un monde (#map-modal-root) — même pattern que
+   les popups Village/Donjon/Talents de cette session
+   (.full-menu-overlay/.full-menu).
+============================================================ */
 
-  if (selectedIndex === currentWorldIndex) {
-    var currentAdventure = selectedWorld.adventures[currentAdventureIndex];
+function buildWorldPopupHTML(index) {
+  var world = WORLDS[index];
+  if (!world) return "";
+
+  var currentWorldIndex = WorldManager.worldIndex || 0;
+  var currentAdventureIndex = WorldManager.adventureIndex || 0;
+  var isCurrent = index === currentWorldIndex;
+  var statusClass = index < currentWorldIndex ? "done" : isCurrent ? "current" : "locked";
+
+  var h = '<div class="full-menu-overlay">';
+  h += '  <div class="full-menu map-popup-card">';
+  h += '    <img class="map-popup-thumb" src="' + esc(getWorldThumb(world)) + '" alt="' + esc(world.name) + '">';
+  h += '    <div class="map-popup-title">' + esc(world.name) + '</div>';
+  h += '    <div class="map-popup-status status-' + statusClass + '">' + esc(getWorldProgressText(index)) + '</div>';
+
+  h += buildWorldLoreExcerptHTML(index);
+
+  if (isCurrent) {
+    var currentAdventure = world.adventures[currentAdventureIndex];
     if (currentAdventure) {
       h += '<div class="map-current-adventure">';
       h += '<strong>Aventure actuelle :</strong> ' + esc(currentAdventure.name);
       h += ' <span>(' + ((WorldManager.enemyIndex || 0) + 1) + '/' + (currentAdventure.enemyCount || 1) + ')</span>';
       h += '</div>';
     }
-  } else if (!isWorldUnlocked(selectedIndex) && !WorldManager.meetsAscensionRequirement(selectedIndex)) {
-    h += buildWorldQuestHTML(selectedIndex);
+  } else if (!isWorldUnlocked(index) && !WorldManager.meetsAscensionRequirement(index)) {
+    h += buildWorldQuestHTML(index);
   }
 
-  var monsters = getWorldMonsterList(selectedWorld);
+  var monsters = getWorldMonsterList(world);
   if (monsters.length) {
     h += '<div class="map-monster-row">';
     monsters.forEach(function (m) {
@@ -244,12 +292,12 @@ function buildMapHTML() {
   }
 
   h += '<div class="map-adventure-list">';
-  selectedWorld.adventures.forEach(function (adv, advIndex) {
+  world.adventures.forEach(function (adv, advIndex) {
     var advClasses = ["map-adventure-item"];
 
-    if (selectedIndex < currentWorldIndex) {
+    if (index < currentWorldIndex) {
       advClasses.push("is-done");
-    } else if (selectedIndex > currentWorldIndex) {
+    } else if (index > currentWorldIndex) {
       advClasses.push("is-locked");
     } else {
       if (advIndex < currentAdventureIndex) advClasses.push("is-done");
@@ -265,14 +313,33 @@ function buildMapHTML() {
     }
     h += '</div>';
     h += '<div class="map-adventure-text">' + esc(adv.introText || "") + '</div>';
-    h += '<div class="map-adventure-meta">' + esc((adv.enemyCount || 0) + ' combats avant le boss') + '</div>';
+    h += '<div class="map-adventure-meta">' + esc((adv.enemyCount || 0) + " combats avant le boss") + '</div>';
     h += '</div>';
   });
   h += '</div>';
 
+  h += '    <button class="settings-btn" type="button" onclick="closeWorldPopup()">Fermer</button>';
+  h += '  </div>';
   h += '</div>';
-
   return h;
+}
+
+function openWorldPopup(index) {
+  if (index < 0 || index >= WORLDS.length) return;
+  game.mapSelectedWorldIndex = index;
+  var host = document.getElementById("map-modal-root");
+  if (host) host.innerHTML = buildWorldPopupHTML(index);
+}
+
+function closeWorldPopup() {
+  var host = document.getElementById("map-modal-root");
+  if (host) host.innerHTML = "";
+}
+
+/* Conservée pour compatibilité (ancien nom, ex. lien direct depuis
+   une autre vue) — équivaut maintenant à ouvrir la popup. */
+function selectMapWorld(index) {
+  openWorldPopup(index);
 }
 
 window.getMapSelectedWorldIndex = getMapSelectedWorldIndex;
@@ -280,3 +347,5 @@ window.selectMapWorld = selectMapWorld;
 window.getWorldMonsterList = getWorldMonsterList;
 window.buildWorldQuestHTML = buildWorldQuestHTML;
 window.buildMapHTML = buildMapHTML;
+window.openWorldPopup = openWorldPopup;
+window.closeWorldPopup = closeWorldPopup;
