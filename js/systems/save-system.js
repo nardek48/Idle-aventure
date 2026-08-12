@@ -162,6 +162,7 @@ function buildSaveData() {
     critChance: Number(game.critChance || 5),
     critMult: Number(game.critMult || 2),
     goldMult: Number(game.goldMult || 1),
+    bossGoldBonusPct: Number(game.bossGoldBonusPct || 0),
 
     trainedStats: game.trainedStats || {
       power: 0,
@@ -275,6 +276,7 @@ function restoreBaseState(d) {
   game.critChance = 5;
   game.critMult = 2;
   game.goldMult = 1;
+  game.bossGoldBonusPct = 0;
 
   game.trainedStats = (d.trainedStats && typeof d.trainedStats === "object") ? d.trainedStats : { power: 0, endurance: 0, celerity: 0, precision: 0, will: 0 };
 
@@ -391,6 +393,7 @@ function reapplyProgressEffects() {
   game.critChance = 5;
   game.critMult = 2;
   game.goldMult = 1;
+  game.bossGoldBonusPct = 0;
 
   if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
     StatsSystem.recalcStats();
@@ -488,6 +491,7 @@ function hardResetState() {
   game.critChance = 5;
   game.critMult = 2;
   game.goldMult = 1;
+  game.bossGoldBonusPct = 0;
   game.essenceGlobalMult = 1;
   game.heroDefensePct = 0;
 
@@ -608,6 +612,7 @@ function fullResetState() {
   game.critChance = 5;
   game.critMult = 2;
   game.goldMult = 1;
+  game.bossGoldBonusPct = 0;
   game.essenceGlobalMult = 1;
   game.heroDefensePct = 0;
 

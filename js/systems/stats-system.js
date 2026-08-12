@@ -129,6 +129,11 @@ var StatsSystem = {
     // bas dans cette fonction — voir HERO_DEFENSE_CAP.
     game.equipDefensePct = 0;
 
+    // v2.90.19 : bonus d'or spécifique aux boss ("Contrats lucratifs"),
+    // consommé uniquement dans CombatEngine.killEnemy() — jamais mélangé
+    // à game.goldMult (qui s'applique à TOUT gain d'or, boss ou non).
+    game.bossGoldBonusPct = 0;
+
     game.essenceRegen = 0;
     game.bossEssenceMult = 1;
     game.essenceGlobalMult = 1;

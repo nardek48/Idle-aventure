@@ -19,11 +19,11 @@ des gains hors-ligne) et le calcul des récompenses hors-ligne
      watchtower   "Vigie"                -> "Hôtel de Ville"
      sanctuary    "Sanctuaire d'Aether"  -> "Atelier de Forgeron"  (l'utilisateur envisage de le retirer plus tard) */
 var VILLAGE_CONFIG = {
-  goldMine: { name: "Mine d'Or", desc: "Augmente les gains d'or hors-ligne.", baseCost: 250, costMult: 1.65, maxLevel: 25 },
+  goldMine: { name: "Mine d'Or", desc: "Multiplie l'or gagné hors-ligne (kills simulés par l'Hôtel de Ville).", baseCost: 250, costMult: 1.65, maxLevel: 25 },
   essenceWell: { name: "Hutte de l'Alchimiste", desc: "Ajoute de l'essence gagnée hors-ligne.", baseCost: 400, costMult: 1.75, maxLevel: 20 },
   barracks: { name: "Caserne", desc: "Améliore l'efficacité hors-ligne.", baseCost: 600, costMult: 1.8, maxLevel: 20 },
   timeRelay: { name: "Tour des Mages", desc: "Augmente la durée maximale des gains hors-ligne.", baseCost: 900, costMult: 2, maxLevel: 10 },
-  watchtower: { name: "Hôtel de Ville", desc: "Simule des combats pendant ton absence : kills, bestiaire, et chance de butin.", baseCost: 1200, costMult: 1.9, maxLevel: 20 },
+  watchtower: { name: "Hôtel de Ville", desc: "Simule des combats pendant ton absence : kills (qui rapportent l'or hors-ligne via la Mine d'Or), bestiaire, et chance de butin.", baseCost: 1200, costMult: 1.9, maxLevel: 20 },
   sanctuary: { name: "Atelier de Forgeron", desc: "Génère un peu d'Aether pendant ton absence.", baseCost: 5000, costMult: 2.3, maxLevel: 10 }
 };
 
@@ -31,6 +31,23 @@ var OFFLINE_MAX_SIMULATED_KILLS = 2000;   // garde-fou perf/économie, même sur
 var OFFLINE_BOSS_CHECK_EVERY = 25;         // 1 "chance de butin" tous les 25 kills simulés
 var OFFLINE_BOSS_CHECK_CHANCE = 20;        // % de chance de loot à chaque vérification
 var OFFLINE_MAX_ITEMS = 3;                 // butin hors-ligne plafonné (évite d'inonder l'inventaire)
+
+/* v2.90.19 : l'or hors-ligne était un flat de 1 or/seconde totalement
+   déconnecté du monde atteint et des kills simulés (l'Hôtel de Ville ne
+   rapportait que du butin, jamais d'or) — voir doc d'équilibrage.
+   Remplacé par un or PAR KILL simulé, sur le même principe que
+   WorldManager.generateEnemy() (voir progression-system.js) : chaque
+   kill vaut (OFFLINE_GOLD_PER_KILL_BASE * scale + monde * OFFLINE_GOLD_PER_KILL_WORLD),
+   scale utilisant le monde/chapitre/cycle réels du joueur (index moyen
+   d'ennemi de 4.5, l'offline ne suit pas un index précis comme en
+   combat actif). OFFLINE_GOLD_KILL_MULT compense le fait que le débit
+   de kills hors-ligne (Vigie) est bien plus faible que le rythme d'un
+   combat actif — calibré pour ~25% de l'or actif en milieu de partie
+   (voir feuille de simulation d'équilibrage). */
+var OFFLINE_GOLD_PER_KILL_BASE = 6;
+var OFFLINE_GOLD_PER_KILL_WORLD = 3;
+var OFFLINE_AVG_ENEMY_INDEX = 4.5;
+var OFFLINE_GOLD_KILL_MULT = 4.1;
 
 var VillageManager = {
   /* Comble les niveaux de bâtiments manquants (0 par défaut) — utile
@@ -169,8 +186,6 @@ var OfflineManager = {
     var seconds = cappedMs / 1000;
     var hours = seconds / 3600;
 
-    var baseGoldPerSec = 1;
-    var gold = Math.floor(baseGoldPerSec * seconds * (1 + Number(bonuses.efficiencyBonus || 0)) * Number(bonuses.goldMult || 1));
     var essence = Math.floor(hours * Number(bonuses.essenceFlat || 0));
     var aether = Math.floor(hours * Number(bonuses.aetherPerHour || 0));
 
@@ -201,6 +216,16 @@ var OfflineManager = {
         }
       }
     }
+
+    // v2.90.19 : or hors-ligne dérivé des kills simulés (voir note au-dessus
+    // de OFFLINE_GOLD_KILL_MULT) — 0 or si aucun kill simulé (Hôtel de
+    // Ville non investi), au lieu de l'ancien flat indépendant.
+    var worldIndex = (window.WorldManager && WorldManager.worldIndex) || 0;
+    var adventureIndex = (window.WorldManager && WorldManager.adventureIndex) || 0;
+    var cycleCount = game.cycleCount || 0;
+    var offlineScale = 1 + worldIndex * 0.90 + adventureIndex * 0.30 + cycleCount * 0.45 + OFFLINE_AVG_ENEMY_INDEX * 0.05;
+    var goldPerKill = OFFLINE_GOLD_PER_KILL_BASE * offlineScale + worldIndex * OFFLINE_GOLD_PER_KILL_WORLD;
+    var gold = Math.floor(kills * goldPerKill * OFFLINE_GOLD_KILL_MULT * (1 + Number(bonuses.efficiencyBonus || 0)) * Number(bonuses.goldMult || 1));
 
     if (gold <= 0 && essence <= 0 && aether <= 0 && kills <= 0) return null;
 

@@ -298,6 +298,13 @@ var CombatEngine = {
       goldGain = Math.floor(goldGain * EquipmentManager.effectiveGoldMult());
     }
 
+    // v2.90.19 : "Contrats lucratifs" (boutique classique) ne bonifie QUE
+    // l'or de boss, séparément de game.goldMult — voir data/upgrades.js
+    // (u_bounty) et stats-system.js (game.bossGoldBonusPct).
+    if (enemy.isBoss) {
+      goldGain = Math.floor(goldGain * (1 + Number(game.bossGoldBonusPct || 0)));
+    }
+
     essenceGain = Math.ceil(essenceGain * Math.max(1, Number(game.essenceGlobalMult || 1)));
 
     if (enemy.isBoss) {
