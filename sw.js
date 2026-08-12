@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "2.90.15"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "2.90.20"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -142,6 +142,7 @@ var PRECACHE_APP_SHELL = [
   "./images/icons/icon-512.png",
   "./images/icons/icon-512-maskable.png",
   "./images/icons/apple-touch-icon.png",
+  "./images/icons/favicon-32.png",
 ];
 
 /* ============================================================

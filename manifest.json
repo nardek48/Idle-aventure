@@ -1,13 +1,13 @@
 {
-  "name": "Quest Idle",
-  "short_name": "Quest Idle",
+  "name": "Aethervale",
+  "short_name": "Aethervale",
   "description": "Idle RPG fantasy-médiéval — clique, équipe ton héros et laisse-le combattre même hors-ligne.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#171224",
-  "theme_color": "#0d0a1a",
+  "background_color": "#020312",
+  "theme_color": "#020312",
   "lang": "fr",
   "icons": [
     { "src": "images/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
