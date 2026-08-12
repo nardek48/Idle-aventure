@@ -14,63 +14,57 @@
    v2.90, désormais mortes).
    ========================= */
 
+/* =========================
+   Village — mosaïque de 6 tuiles SANS bordure ni espace (v2.90.12)
+   Les 6 fonds fournis (images/Village/bg_*.jpg, 768px de large
+   chacun) sont EN RÉALITÉ une seule image découpée en 2 colonnes ×
+   3 lignes — bord à bord (gap:0, pas de cadre par case), les chemins
+   et pavés se prolongent naturellement d'une case à l'autre en un
+   panorama continu. Remplace la grille de cartes bordées (v2.90.2 à
+   v2.90.10) — retour utilisateur : les fonds étaient prévus pour
+   toucher, la bordure/l'espace de chaque carte cassait cet effet.
+   Remplace aussi l'ancienne skyline emoji + liste de cartes d'achat
+   (voir css/04-panel-village-shop.css pour les classes .village-
+   skyline (astérisque) et .village-building (astérisque) d'AVANT
+   v2.90, désormais mortes).
+   ========================= */
+
 .village-building-grid {
   display: grid;
-  /* v2.90.3 : minmax(0, 1fr) au lieu de 1fr tout court — sans le
-     "0" explicite, une grille CSS prend par défaut la taille
-     INTRINSÈQUE du contenu (ici les images sources, 480 à 640px de
-     large) comme largeur MINIMALE de chaque colonne, ce qui casse le
-     50/50 et fait déborder/grossir les cartes sur petit écran. Avec
-     minmax(0, 1fr), chaque colonne fait exactement 50% de la largeur
-     disponible, quelle que soit la taille des images. */
+  /* minmax(0, 1fr) : sans le "0" explicite, une grille CSS prend par
+     défaut la taille INTRINSÈQUE du contenu comme largeur minimale
+     de chaque colonne, ce qui casserait le 50/50 (voir historique
+     v2.90.3). */
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 0; /* v2.90.12 : les fonds doivent se toucher, pas d'espace */
+  border-radius: var(--nb-radius-md);
+  overflow: hidden; /* coins arrondis de l'ensemble, pas par case */
+  border: 1px solid var(--nb-frame);
 }
 
 .village-building-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 8px 10px;
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream-alt);
-  border: 1px solid var(--nb-frame);
-  /* Neutralise les styles par défaut du navigateur pour un <button>
-     (même technique que .dungeon-tier-card, voir css/04-panel-dungeon.css). */
+  position: relative;
+  display: block;
+  min-width: 0;
+  /* v2.90.12 : 768×900~929 selon la case (voir commentaire ci-dessus)
+     — un seul ratio moyen pour les 6, l'écart entre cases (< 3%) est
+     imperceptible une fois recadré en cover, et garantit que les 2
+     colonnes d'une même ligne restent bien à la même hauteur. */
+  aspect-ratio: 768 / 910;
+  /* Neutralise les styles par défaut du navigateur pour un <button>. */
   margin: 0;
+  padding: 0;
+  border: none;
   font: inherit;
-  text-align: center;
   color: inherit;
-  width: 100%;
-  min-width: 0; /* autorise la carte à rétrécir sous la taille intrinsèque de l'image */
   cursor: pointer;
-  transition: transform 0.08s ease, filter 0.08s ease;
 }
 
 .village-building-card:active {
-  transform: scale(0.97);
-  filter: brightness(0.96);
+  filter: brightness(0.94);
 }
 
-.village-building-image {
-  position: relative;
-  width: 100%;
-  min-width: 0;
-  /* v2.90.10 : 4/3 (paysage) -> 5/6 (portrait) — les nouveaux fonds
-     fournis (768×900~929) et bâtiments détourés sont tous plus hauts
-     que larges, contrairement à l'ancienne découpe unique. */
-  aspect-ratio: 5 / 6;
-  border-radius: 10px;
-  overflow: hidden;
-  background: var(--nb-cream-deep);
-  border: 1px solid var(--nb-frame);
-}
-
-/* Fond (scène de sol/chemin) : remplit toute la case, légèrement
-   rogné si besoin (cover) — les 6 fonds n'ont pas EXACTEMENT le même
-   ratio (900 à 929px de haut pour 768px de large), cover absorbe
-   l'écart sans bande vide. */
+/* Fond (scène de sol/chemin) : remplit toute la case. */
 .village-building-bg {
   position: absolute;
   inset: 0;
@@ -93,7 +87,7 @@
   bottom: 3%;
   transform: translateX(-50%);
   width: 84%;
-  height: 92%;
+  height: 82%;
   object-fit: contain;
   object-position: bottom center;
   display: block;
@@ -102,17 +96,35 @@
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.4));
 }
 
+/* v2.90.12 : étiquette nom + niveau superposée en bas de la case
+   (avant : zone dédiée sous l'image, disparue avec le retrait des
+   bordures/cartes séparées). Fond sombre semi-transparent pour rester
+   lisible par-dessus n'importe quelle partie du panorama. */
+.village-building-tag {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 6px 5px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0));
+}
+
 .village-building-name {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 800;
-  color: var(--nb-ink);
-  margin-top: 4px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 .village-building-level {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
-  color: var(--nb-ink-dim);
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 /* =========================

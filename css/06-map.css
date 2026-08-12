@@ -1,140 +1,136 @@
 /* ============================================================
    06-map.css
-   Carte du monde (v1.9.4) + fonds dynamiques des panels
+   Carte du monde (v2.90.14 — chemin illustré + popup de détail,
+   remplace la grille de vignettes + panneau permanent de v1.9.4 à
+   v2.90.13). Les styles morts de l'ancienne grille (.map-world-grid,
+   .map-world-card*, .map-world-card-detail, .map-world-head/-kicker/
+   -title/-status, .map-lock-hint*) ont été retirés — plus référencés
+   par aucun JS (voir ui/map-view.js). .map-world-lore reste utilisée
+   (buildWorldLoreExcerptHTML en écrit dedans, appelée depuis la
+   nouvelle popup).
 ============================================================ */
 
 /* =========================
-   Résumé en haut d'écran
+   Chemin illustré (6 nœuds ronds reliés par un tracé SVG) — voir
+   MAP_NODE_POSITIONS/buildMapPathSvgHTML/buildMapNodeHTML en
+   ui/map-view.js.
    ========================= */
-.map-grid {
-  overflow: hidden;
-  background: var(--nb-cream);
-  border: 1px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  margin-bottom: 12px;
-}
-
-.map-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  font-size: 13px;
-  border-bottom: 1px solid var(--nb-frame);
-}
-
-.map-row:last-child {
-  border-bottom: none;
-}
-
-.map-label {
-  color: var(--nb-ink-dim);
-}
-
-.map-value {
-  font-weight: 700;
-  color: var(--nb-ink);
-}
-
-/* =========================
-   Grille des mondes (vignettes illustrées)
-   ========================= */
-.map-world-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.map-world-card {
+.map-path-frame {
   position: relative;
-  aspect-ratio: 3 / 2;
-  padding: 0;
-  overflow: hidden;
+  width: 100%;
+  /* ratio calé sur MAP_PATH_VIEWBOX_H (183 pour 100 de large) */
+  aspect-ratio: 100 / 183;
   border-radius: var(--nb-radius-md);
-  border: 1px solid var(--nb-frame);
-  background-color: #0f1220;
-  background-size: cover;
-  background-position: center;
-  cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+  border: 2px solid var(--nb-gold-dark);
+  background:
+    radial-gradient(circle at 30% 12%, rgba(255, 255, 255, 0.10), transparent 40%),
+    linear-gradient(160deg, #3f5a3a, #2c4426 45%, #1c2f1a 100%);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4);
 }
 
-.map-world-card:active {
-  transform: scale(0.97);
-}
-
-.map-world-card-overlay {
+.map-path-svg {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.map-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding: 8px 10px;
-  background: linear-gradient(180deg, rgba(10, 12, 20, 0.05) 40%, rgba(8, 9, 16, 0.88) 100%);
+  align-items: center;
+  gap: 4px;
+  width: 22%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  z-index: 1;
 }
 
-.map-world-card-badge {
+.map-node-circle {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #fff2d0;
+  outline: 3px solid var(--nb-gold-dark);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.45);
+}
+
+.map-node-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.map-node:active .map-node-circle {
+  transform: scale(0.94);
+}
+
+.map-node.is-current .map-node-circle {
+  animation: mapNodePulse 1.7s infinite;
+}
+
+@keyframes mapNodePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 170, 62, 0.55), 0 4px 8px rgba(0, 0, 0, 0.45); }
+  50% { box-shadow: 0 0 0 8px rgba(240, 170, 62, 0), 0 4px 8px rgba(0, 0, 0, 0.45); }
+}
+
+.map-node.is-locked .map-node-circle {
+  outline-color: #6b6555;
+  border-color: #8a8267;
+  filter: grayscale(0.75) brightness(0.55);
+}
+
+.map-node-badge {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 2px 9px;
-  border-radius: 999px;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
   background: var(--nb-gold);
-  color: #241a00;
-  font-size: 10px;
+  color: #4a2f06;
+  font-size: 8.5px;
   font-weight: 800;
+  border-radius: 999px;
+  padding: 1px 7px;
+  border: 2px solid #fff2d0;
+  white-space: nowrap;
 }
 
-.map-world-card-lock {
+.map-node-lock {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: -2px;
+  right: -2px;
   font-size: 15px;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
 
-.map-world-card-name {
-  font-size: 13px;
+.map-node-name {
+  font-size: 10px;
   font-weight: 800;
   color: #fff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
-}
-
-.map-world-card-status {
-  margin-top: 2px;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.map-world-card-status.status-current { color: #7dd3fc; }
-.map-world-card-status.status-done { color: var(--hp-green); }
-.map-world-card-status.status-locked { color: rgba(255, 255, 255, 0.55); }
-
-.map-world-card.is-current {
-  border-color: #7dd3fc;
-  box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.18), 0 0 18px rgba(125, 211, 252, 0.35);
-}
-
-.map-world-card.is-selected {
-  border-color: #c084fc;
-  box-shadow: 0 0 0 2px rgba(192, 132, 252, 0.25);
-}
-
-.map-world-card.is-locked {
-  filter: grayscale(0.7) brightness(0.55);
-}
-
-.map-world-card.is-done:not(.is-selected) {
-  border-color: rgba(74, 222, 128, 0.35);
+  text-align: center;
+  line-height: 1.15;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
 }
 
 /* =========================
-   Aperçu monstres (liste compacte, plus de coordonnées manuelles)
+   Aperçu monstres (dans la popup)
    ========================= */
 .map-monster-row {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
   margin-bottom: 12px;
 }
@@ -160,69 +156,62 @@
 }
 
 /* =========================
-   Carte détail du monde sélectionné
+   Popup de détail d'un monde (#map-modal-root)
    ========================= */
-.map-world-card-detail {
-  overflow: hidden;
-  background: var(--nb-cream);
-  border: 1px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  padding: 14px;
+.map-popup-card {
+  padding: 20px 18px;
+  text-align: center;
 }
 
-.map-world-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+.map-popup-thumb {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff2d0;
+  outline: 3px solid var(--nb-gold-dark);
   margin-bottom: 10px;
 }
 
-.map-world-kicker {
-  margin-bottom: 4px;
-  font-size: 11px;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: var(--nb-ink-dim);
-}
-
-.map-world-title {
-  font-size: 18px;
+.map-popup-title {
+  font-size: 17px;
   font-weight: 800;
-  line-height: 1.2;
   color: var(--nb-ink);
+  margin-bottom: 6px;
 }
 
-.map-world-status {
+.map-popup-status {
   display: inline-flex;
-  margin-top: 8px;
-  padding: 4px 10px;
+  margin-bottom: 8px;
+  padding: 4px 12px;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
 }
 
+.map-popup-status.status-current {
+  background: rgba(240, 170, 62, 0.15);
+  color: var(--nb-gold-deep);
+}
+
+.map-popup-status.status-done {
+  background: rgba(74, 222, 128, 0.15);
+  color: #2f8f4e;
+}
+
+.map-popup-status.status-locked {
+  background: var(--nb-cream-deep);
+  color: var(--nb-ink-dim);
+}
+
 .map-world-lore {
-  margin-top: 10px;
+  margin-top: 4px;
+  margin-bottom: 10px;
   font-size: 12px;
   font-style: italic;
   line-height: 1.5;
+  text-align: left;
   color: rgba(58, 44, 26, 0.75);
-}
-
-.map-world-status.status-current {
-  background: rgba(125, 211, 252, 0.12);
-  color: #7dd3fc;
-}
-
-.map-world-status.status-done {
-  background: rgba(74, 222, 128, 0.12);
-  color: var(--hp-green);
-}
-
-.map-world-status.status-locked {
-  background: var(--nb-cream-deep);
-  color: var(--nb-ink-dim);
 }
 
 .map-current-adventure {
@@ -232,47 +221,21 @@
   background: var(--nb-cream-alt);
   color: var(--nb-ink);
   font-size: 13px;
+  text-align: left;
 }
 
 .map-current-adventure span {
   color: var(--nb-ink-dim);
 }
 
-.map-lock-hint {
-  margin-bottom: 12px;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid var(--nb-frame);
-  background: rgba(125, 211, 252, 0.08);
-}
-
-.map-lock-hint-text {
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--nb-ink);
-  margin-bottom: 10px;
-}
-
-.map-lock-hint-btn {
-  width: 100%;
-  padding: 9px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--nb-frame);
-  background: rgba(125, 211, 252, 0.15);
-  color: #7dd3fc;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-/* v2.83 : questline de déblocage de monde (remplace .map-lock-hint,
-   conservée ci-dessus pour référence/historique CSS mais plus utilisée). */
+/* v2.83 : questline de déblocage de monde. */
 .map-quest-card {
   margin-bottom: 12px;
   padding: 12px;
   border-radius: 12px;
   border: 1px solid var(--nb-frame);
   background: var(--nb-cream-alt);
+  text-align: left;
 }
 
 .map-quest-head {
@@ -372,6 +335,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 14px;
 }
 
 .map-adventure-item {
@@ -379,6 +343,7 @@
   border-radius: 12px;
   border: 1px solid var(--nb-frame);
   background: var(--nb-cream-alt);
+  text-align: left;
 }
 
 .map-adventure-item.is-current {
