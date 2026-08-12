@@ -505,14 +505,17 @@ window.closeInventorySettings = closeInventorySettings;
 
 /* v2.83.31 : confirmation avant toute vente (objet seul + tout
    vendre), demandée explicitement — réutilise showConfirmModal(),
-   déjà utilisée pour l'ascension/le reset complet/le respec talents. */
+   déjà utilisée pour l'ascension/le reset complet/le respec talents.
+   v2.90.17 : prix de vente ajouté au texte de confirmation (retour
+   utilisateur). */
 function confirmSellItem(uid) {
   var item = (Array.isArray(game.inventory) ? game.inventory : []).find(function (i) { return i.uid === uid; });
   var itemName = item ? item.name : "cet objet";
+  var sellValue = (item && typeof getEquipmentSellValue === "function") ? getEquipmentSellValue(item) : 0;
   if (typeof showConfirmModal !== "function") { EquipmentManager.sell(uid); return; }
   showConfirmModal(
     "Vendre cet objet ?",
-    "Tu es sur le point de vendre " + itemName + ". Cette action est irréversible.",
+    "Tu es sur le point de vendre " + itemName + " pour " + formatNumber(sellValue) + " or. Cette action est irréversible.",
     "💰",
     function () { EquipmentManager.sell(uid); }
   );
@@ -520,13 +523,17 @@ function confirmSellItem(uid) {
 window.confirmSellItem = confirmSellItem;
 
 function confirmSellAllInventory() {
-  var count = Array.isArray(game.inventory) ? game.inventory.length : 0;
+  var inventory = Array.isArray(game.inventory) ? game.inventory : [];
+  var count = inventory.length;
   if (!count) { showToast("Aucun objet à vendre", 1200); return; }
+  var totalValue = (typeof getEquipmentSellValue === "function")
+    ? inventory.reduce(function (sum, item) { return sum + getEquipmentSellValue(item); }, 0)
+    : 0;
   if (typeof showConfirmModal !== "function") { sellAllInventory(); return; }
   closeInventorySettings();
   showConfirmModal(
     "Tout vendre ?",
-    "Tu es sur le point de vendre les " + count + " objets de ton sac. Cette action est irréversible.",
+    "Tu es sur le point de vendre les " + count + " objets de ton sac pour " + formatNumber(totalValue) + " or au total. Cette action est irréversible.",
     "🗑️",
     function () { sellAllInventory(); }
   );

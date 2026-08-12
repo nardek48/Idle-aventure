@@ -109,9 +109,15 @@ function buildWorldQuestHTML(worldIndex) {
 }
 
 /* Callback bouton "Réclamer" — voir WorldQuestManager.claim(). */
+/* v2.90.17 : rafraîchit aussi la popup ouverte après réclamation
+   (même pattern que buyDungeonTicketFromOverlay en ui/dungeon-view.js)
+   — sans ça, la popup restait figée sur l'ancien état "verrouillé/
+   questline en cours" puisqu'elle vit hors du cycle renderPanel()
+   habituel (#map-modal-root, séparé du panneau principal). */
 function claimWorldQuest(worldIndex) {
   if (window.WorldQuestManager) WorldQuestManager.claim(worldIndex);
   if (typeof renderPanel === "function") renderPanel();
+  if (typeof openWorldPopup === "function") openWorldPopup(worldIndex);
 }
 window.claimWorldQuest = claimWorldQuest;
 
@@ -165,20 +171,27 @@ function buildWorldLoreExcerptHTML(worldIndex) {
    Chemin illustré (chaque monde = un nœud rond relié au suivant).
 ============================================================ */
 
-/* Positions (%) des 6 nœuds dans .map-path-frame, en zigzag gauche/
-   droite — fixes, pas besoin d'être dynamiques puisque l'ordre et le
-   nombre de mondes sont stables (voir data/worlds.js). Si un 7e
-   monde est ajouté un jour, ajouter une entrée ici (et le chemin/
-   viewBox suivront automatiquement, voir buildMapPathSvgHTML). */
+/* Positions (%) des 6 nœuds, calées PRÉCISÉMENT sur les 6 zones de
+   images/Map/world_map.jpg (fournie par l'utilisateur — une seule
+   illustration continue, pas des tuiles séparées comme le Village).
+   Relevées à la main sur l'image réelle (grille de repérage) :
+     Forêt (arbre)         : 750,280   sur 1536×2752
+     Désert (oasis)        : 700,950
+     Ruines (cristal bleu) : 1080,1200
+     Crypte (temple violet): 280,1650
+     Montagne (volcan)     : 1000,1780
+     Tour (sur les nuages) : 1180,2200
+   Une 7e zone (grotte cristal en bas à gauche) reste décorative,
+   aucun monde ne lui correspond. */
 var MAP_NODE_POSITIONS = [
-  { x: 24, y: 8 },
-  { x: 76, y: 24 },
-  { x: 24, y: 40 },
-  { x: 76, y: 56 },
-  { x: 24, y: 72 },
-  { x: 76, y: 88 }
+  { x: 48.8, y: 10.2 },
+  { x: 45.6, y: 34.5 },
+  { x: 70.3, y: 43.6 },
+  { x: 18.2, y: 60.0 },
+  { x: 65.1, y: 64.7 },
+  { x: 76.8, y: 79.9 }
 ];
-var MAP_PATH_VIEWBOX_H = 183; // hauteur du viewBox pour 100 de large (ratio ~100/183)
+var MAP_PATH_VIEWBOX_H = 179.17; // ratio réel de world_map.jpg (2752/1536×100)
 
 function buildMapPathSvgHTML(count) {
   var pts = MAP_NODE_POSITIONS.slice(0, count).map(function (p) {
@@ -186,14 +199,21 @@ function buildMapPathSvgHTML(count) {
   });
   if (pts.length < 2) return "";
 
+  // v2.90.16 : coordonnées réelles (relevées sur images/Map/world_map.jpg)
+  // pas symétriques comme l'ancien zigzag générique — le point de
+  // contrôle de chaque courbe est maintenant calculé au milieu RÉEL
+  // de chaque segment (x ET y), pour une courbe fluide qui suit
+  // naturellement le tracé plutôt qu'un "50" fixe qui zigzaguerait
+  // trop large sur certains segments et pas assez sur d'autres.
   var d = "M " + pts[0].x + " " + pts[0].y;
   for (var i = 1; i < pts.length; i++) {
-    var midY1 = pts[i - 1].y, midY2 = pts[i].y;
-    d += " C 50 " + midY1 + ", 50 " + midY2 + ", " + pts[i].x + " " + pts[i].y;
+    var prev = pts[i - 1], cur = pts[i];
+    var midX = (prev.x + cur.x) / 2;
+    d += " C " + midX + " " + prev.y + ", " + midX + " " + cur.y + ", " + cur.x + " " + cur.y;
   }
 
   return '<svg class="map-path-svg" viewBox="0 0 100 ' + MAP_PATH_VIEWBOX_H + '" preserveAspectRatio="none">' +
-         '<path d="' + d + '" fill="none" stroke="#d9c48a" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.3 4" opacity="0.85"/>' +
+         '<path d="' + d + '" fill="none" stroke="#fff2d0" stroke-width="1.1" stroke-linecap="round" stroke-dasharray="0.2 2.6" opacity="0.9"/>' +
          '</svg>';
 }
 
@@ -226,16 +246,19 @@ function buildMapNodeHTML(world, index) {
    dupliquée), et "Quêtes terminées" concernait les quêtes
    journalières, sans rapport avec la navigation sur la carte —
    l'écran va directement du titre au chemin illustré. */
+/* v2.90.16 : plus de .nb-page-frame ici — images/Map/world_map.jpg
+   a déjà sa propre bordure ornée (griffons, boussole, échelle),
+   ajouter le cadre parchemin standard par-dessus aurait fait un
+   "cadre dans le cadre". Seul écran du jeu dans ce cas (décision
+   discutée avec l'utilisateur avant implémentation) — tous les
+   autres gardent .nb-page-frame. */
 function buildMapHTML() {
-  var h = '<div class="nb-page-frame">';
-
-  h += '<div class="map-path-frame">';
+  var h = '<div class="map-path-frame">';
+  h += '<img class="map-path-bg" src="images/Map/world_map.jpg" alt="Carte du monde" draggable="false">';
   h += buildMapPathSvgHTML(WORLDS.length);
   WORLDS.forEach(function (world, index) {
     h += buildMapNodeHTML(world, index);
   });
-  h += '</div>';
-
   h += '</div>';
   return h;
 }
