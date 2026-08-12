@@ -102,7 +102,12 @@ var UPGRADES = [
     costMult: 1.30,
     maxLevel: 50,
     unlockWorld: 2,
-    apply: function (lvl) { game.goldMult = (game.goldMult || 1) + lvl * 0.10; }
+    // v2.90.19 : appliquait avant un goldMult global identique à "Bourse
+    // lourde", contrairement à la description ("or DE BOSS uniquement").
+    // Corrigé : stocke un bonus séparé (game.bossGoldBonusPct), consommé
+    // uniquement à la mort d'un boss dans CombatEngine.killEnemy() —
+    // voir combat-engine.js.
+    apply: function (lvl) { game.bossGoldBonusPct = lvl * 0.10; }
   }
 ];
 

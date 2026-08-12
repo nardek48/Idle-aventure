@@ -20,37 +20,37 @@ var HEROES_DB = {
     id: "knight",
     name: "Chevalier",
     image: "./images/Heroes/knight.jpg",
-    stats: makeRpgStats(58, 74, 30, 38, 48)
+    stats: makeRpgStats(60, 76, 32, 40, 52)
   },
   ranger: {
     id: "ranger",
     name: "Rôdeur",
     image: "./images/Heroes/ranger.jpg",
-    stats: makeRpgStats(46, 38, 72, 68, 40)
+    stats: makeRpgStats(46, 38, 70, 66, 40)
   },
   mage: {
     id: "mage",
     name: "Mage",
     image: "./images/Heroes/mage.jpg",
-    stats: makeRpgStats(64, 34, 40, 50, 82)
+    stats: makeRpgStats(62, 34, 40, 48, 76)
   },
   chaosKnight: {
     id: "chaosKnight",
     name: "Chevalier du Chaos",
     image: "./images/Heroes/ChaosNight.jpg",
-    stats: makeRpgStats(72, 58, 44, 56, 46)
+    stats: makeRpgStats(66, 56, 42, 52, 44)
   },
   chaosRanger: {
     id: "chaosRanger",
     name: "Rôdeur du chaos",
     image: "./images/Heroes/ChaosRanger.jpg",
-    stats: makeRpgStats(52, 46, 64, 60, 44)
+    stats: makeRpgStats(50, 46, 62, 58, 44)
   },
   chaosMage: {
     id: "chaosMage",
     name: "Sorcier du Chaos",
     image: "./images/Heroes/ChaosSorcier.jpg",
-    stats: makeRpgStats(70, 36, 34, 48, 88)
+    stats: makeRpgStats(66, 36, 34, 46, 78)
   }
 };
 
