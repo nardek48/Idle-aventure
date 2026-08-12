@@ -110,7 +110,11 @@
   align-items: center;
   gap: 1px;
   padding: 4px 6px 5px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0));
+  /* v2.90.17 : dégradé sombre retiré — visible comme une "ombre" à
+     la jonction de chaque case de la mosaïque (retour utilisateur),
+     cassait l'effet panorama continu. Le text-shadow déjà présent
+     sur .village-building-name/-level (voir plus bas) suffit pour
+     la lisibilité, sans bande sombre en travers de l'image. */
 }
 
 .village-building-name {
