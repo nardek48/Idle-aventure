@@ -20,23 +20,18 @@ function getEquipmentSellValue(item) {
          item.rarity === "green" ? 25 : 10;
 }
 
-/* v2.23 : chemin de l'icône illustrée d'un objet (images/Icons/equipment_icon/).
+/* v2.23 : chemin de l'icône illustrée d'un objet (images/Icons/equipment_icon/),
+   une image DIFFÉRENTE par type ET par rareté (avant, une seule
+   icône générique par type, ignorant la rareté).
 
-   v2.90 : passage en .png pour les types qui ont un visuel dédié
-   pour LES 5 raretés (dont "green"/Inhabituel, avant en repli sur
-   "common"). Les types restés en .jpg n'ont pas de visuel "green"
-   dédié : ils gardent le repli sur "common" pour cette rareté.
-
-   v3.8 : simplification demandée — une seule illustration par TYPE
-   d'équipement désormais (la rareté reste communiquée par la bordure/
-   couleur de la carte, pas par un visuel dédié), SAUF l'arme qui
-   garde plusieurs variantes par rareté (la plus visible/excitante à
-   voir évoluer). Concrètement : la rareté utilisée pour construire le
-   NOM DE FICHIER est forcée à "common" pour tout ce qui n'est pas
-   item.slot === "weapon" — quel que soit le fichier réellement associé
-   à l'objet, un même type affiche donc toujours la même image. */
+   v2.90 : passage en .png pour les 9 types qui ont désormais un
+   visuel dédié pour LES 5 raretés (dont "green"/Inhabituel, avant
+   en repli sur "common"). Les 3 types restés en .jpg (bow, crown,
+   shield — pas encore fournis en .png) n'ont toujours pas de visuel
+   "green" dédié : ils gardent le repli sur "common" pour cette
+   rareté en attendant. */
 var EQUIPMENT_ICON_PNG_TYPES = {
-  amulet: true, armor: true, axe: true, bottes: true, bow: true, casque: true,
+  amulet: true, armor: true, axe: true, casque: true,
   gants: true, ring: true, robe: true, staff: true, sword: true
 };
 
@@ -51,16 +46,13 @@ var EQUIPMENT_ICON_JPG_RARITY_FALLBACK = {
 function getEquipmentIconPath(item) {
   if (!item || !item.icon) return "";
 
-  // v3.8 : seule l'arme (item.slot === "weapon") montre encore une
-  // variante par rareté — tout le reste retombe systématiquement sur
-  // "common", peu importe la vraie rareté de l'objet.
-  var effectiveRarity = item.slot === "weapon" ? item.rarity : "common";
-
   if (EQUIPMENT_ICON_PNG_TYPES[item.icon]) {
-    return "images/Icons/equipment_icon/" + item.icon + "_" + effectiveRarity + ".png";
+    // Les 5 raretés existent en .png pour ces types, pas de repli nécessaire.
+    return "images/Icons/equipment_icon/" + item.icon + "_" + item.rarity + ".png";
   }
 
-  var rarityFile = EQUIPMENT_ICON_JPG_RARITY_FALLBACK[effectiveRarity] || "common";
+  // Types encore en .jpg (bow/crown/shield) : repli "green" -> "common".
+  var rarityFile = EQUIPMENT_ICON_JPG_RARITY_FALLBACK[item.rarity] || "common";
   return "images/Icons/equipment_icon/" + item.icon + "_" + rarityFile + ".jpg";
 }
 
