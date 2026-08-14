@@ -77,7 +77,7 @@ function createInitialGameState() {
     shopBuyAmount: 1,        // mode d'achat boutique : 1 / 10 / 25 / -1 (MAX)
     talents: {},
     enemy: null,
-    activeTab: "combat",
+    activeTab: "campement", // v3.7 : Campement devient la page d'accueil par défaut (avant : "combat")
     totalGoldEarned: 0,
     totalDamageDealt: 0,
     playTime: 0,
@@ -258,6 +258,7 @@ function ensureGameStateDefaults() {
   if (typeof game.dungeonTicketResetTime !== "number") game.dungeonTicketResetTime = 0;
   if (typeof game.dungeonTicketsPurchasedToday !== "number") game.dungeonTicketsPurchasedToday = 0;
   if (!game.dungeonRun || typeof game.dungeonRun !== "object") game.dungeonRun = { active: false, wave: 0, tierId: 1 };
+  if (window.CampManager && typeof CampManager.ensureDefaults === "function") CampManager.ensureDefaults();
   if (typeof game.dungeonRun.tierId !== "number") game.dungeonRun.tierId = 1;
   if (typeof game.dungeonBestWave !== "number") game.dungeonBestWave = 0;
   if (typeof game.dungeonBossClears !== "number") game.dungeonBossClears = 0;

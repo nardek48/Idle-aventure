@@ -83,6 +83,16 @@ function init() {
 
   if (typeof renderAll === "function") renderAll();
 
+  // v3.7 : l'onglet par défaut au tout premier démarrage n'est plus
+  // forcément "combat" (voir game.activeTab, core/state.js — devenu
+  // "campement"). L'affichage initial de #game-area/#panel-container
+  // reposait jusqu'ici sur leur état CSS par défaut, qui ne
+  // correspondait qu'à l'onglet "combat" par coïncidence (switchTab()
+  // n'était jamais appelée explicitement au boot). switchTab() est
+  // idempotente (rappelable sans effet de bord) — s'assure que
+  // l'affichage colle bien à game.activeTab, peu importe lequel.
+  if (typeof switchTab === "function") switchTab(game.activeTab || "campement");
+
   lastTick = Date.now();
   syncAutoTapLoop();
   requestAnimationFrame(gameLoop);

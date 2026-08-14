@@ -635,3 +635,18 @@
   object-fit: contain;
   pointer-events: none;
 }
+
+/* v3.7 : bouton Campement — pas encore d'icône dédiée (comme les 3
+   icônes d'équipement en attente, voir Guide d'équilibrage section 8),
+   repli emoji en attendant. Même empreinte que .tab-icon-img pour ne
+   pas décaler la barre. */
+#tab-bar .tab-icon-emoji {
+  width: clamp(40px, calc(15px + 4vw), 50px);
+  height: clamp(40px, calc(15px + 4vw), 50px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(24px, calc(10px + 3vw), 30px);
+  line-height: 1;
+  pointer-events: none;
+}

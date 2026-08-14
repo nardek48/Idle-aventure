@@ -124,6 +124,13 @@ var CombatEngine = {
      délègue à dealDamage() pour l'appliquer réellement. */
   playerAttack: function () {
     if (!game.enemy || !window.EquipmentManager) return;
+    // v3.4 : garde défensive supplémentaire — un tap ne doit jamais
+    // faire progresser le combat tant qu'une fenêtre plein écran est
+    // ouverte (voir isBlockingModalOpen, main/game-loop.js). En
+    // temps normal le clic est déjà bloqué visuellement par la
+    // fenêtre elle-même ; ce garde couvre les cas où ce ne serait pas
+    // le cas (ex. autoTap() appelle aussi playerAttack()).
+    if (typeof isBlockingModalOpen === "function" && isBlockingModalOpen()) return;
 
     var dmg = Math.max(1, Math.floor(EquipmentManager.effectiveTapDamage()));
     var critChance = Math.max(0, EquipmentManager.effectiveCritChance() - getEnemyWillCritPenalty());

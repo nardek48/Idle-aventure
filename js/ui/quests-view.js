@@ -35,12 +35,15 @@ function getAscensionAvailableCount() {
 /* Pastille numérique sur le bouton Menu, agrégeant tout ce qui mérite
    l'attention du joueur. Appelée après quasiment chaque action de jeu
    (achat, kill, ascension...).
-   v2.70 : le ticket de donjon disponible a sa propre pastille dédiée
-   sur le bouton Donjon (#dungeon-tab-badge) depuis que Donjon a son
-   propre bouton dans la barre du bas — retiré du total agrégé du
-   Menu pour ne pas doublonner l'alerte. La bannière
-   "#dungeon-reminder-banner" est retirée du même coup (remplacée par
-   cette pastille). */
+   v3.7 : Donjon a rejoint la grille du Menu (retiré de la barre du
+   bas au profit du Campement) — son ticket disponible réintègre donc
+   le total agrégé ci-dessous, au même titre que Hauts faits/Talents/
+   Ascension/Codex (il avait été explicitement exclu en v2.70 tant
+   qu'il avait sa propre pastille dédiée sur son propre bouton ; cette
+   pastille séparée (#dungeon-tab-badge) n'existe plus). La pastille
+   individuelle sur la carte "Donjon" du Menu (voir MENU_ITEMS,
+   ui/menu-view.js) montre déjà ce même nombre, comme les autres
+   cartes. */
 function updateQuestBadge() {
   var badge = document.getElementById("quest-badge");
   if (!badge) return;
@@ -67,15 +70,9 @@ function updateQuestBadge() {
     ? CodexManager.getUnreadCount()
     : 0;
 
-  var total = questsReady + achievementsReady + talentsReady + ascensionReady + codexUnread;
+  var total = questsReady + achievementsReady + talentsReady + ascensionReady + codexUnread + dungeonTicketReady;
   badge.textContent = total > 0 ? String(total) : "";
   badge.style.display = total > 0 ? "inline-flex" : "none";
-
-  var dungeonBadge = document.getElementById("dungeon-tab-badge");
-  if (dungeonBadge) {
-    dungeonBadge.textContent = dungeonTicketReady > 0 ? String(game.dungeonTickets || 1) : "";
-    dungeonBadge.style.display = dungeonTicketReady > 0 ? "inline-flex" : "none";
-  }
 }
 
 function buildQuestsHTML() {
@@ -210,6 +207,53 @@ function claimWorldQuest(worldIndex) {
 }
 window.claimWorldQuest = claimWorldQuest;
 
+/* v3.5 : petite fenêtre narrative affichée UNE FOIS au clic sur
+   "Lancer" (immersion) — se ferme avant que le run de combat démarre
+   réellement, même pattern que buildDungeonIntroHTML/openDungeonIntro
+   (ui/dungeon-view.js). Texte au champ `story` de chaque quête (voir
+   data/adventure-quests.js). */
+var pendingAdventureQuestId = null;
+
+function buildAdventureQuestIntroHTML(questId) {
+  var quest = window.ADVENTURE_QUESTS ? ADVENTURE_QUESTS[questId] : null;
+  if (!quest) return "";
+
+  var h = '<div class="full-menu-overlay">';
+  h += '  <div class="full-menu dungeon-story-card">';
+  h += '    <div class="dungeon-story-icon">' + esc(quest.icon || "📜") + '</div>';
+  h += '    <div class="dungeon-story-title">' + esc(quest.name) + '</div>';
+  if (quest.story) h += '    <div class="dungeon-story-text">' + esc(quest.story) + '</div>';
+  h += '    <div class="dungeon-story-actions">';
+  h += '      <button class="settings-btn" type="button" onclick="closeAdventureQuestIntro()">Annuler</button>';
+  h += '      <button class="settings-btn primary" type="button" onclick="confirmAdventureQuestStart()">Commencer</button>';
+  h += '    </div>';
+  h += '  </div>';
+  h += '</div>';
+  return h;
+}
+
+function openAdventureQuestIntro(questId) {
+  pendingAdventureQuestId = questId;
+  var host = document.getElementById("adventure-quest-modal-root");
+  if (host) host.innerHTML = buildAdventureQuestIntroHTML(questId);
+}
+
+function closeAdventureQuestIntro() {
+  pendingAdventureQuestId = null;
+  var host = document.getElementById("adventure-quest-modal-root");
+  if (host) host.innerHTML = "";
+}
+
+function confirmAdventureQuestStart() {
+  var questId = pendingAdventureQuestId;
+  closeAdventureQuestIntro();
+  if (questId && window.AdventureQuestManager) AdventureQuestManager.start(questId);
+}
+
+window.openAdventureQuestIntro = openAdventureQuestIntro;
+window.closeAdventureQuestIntro = closeAdventureQuestIntro;
+window.confirmAdventureQuestStart = confirmAdventureQuestStart;
+
 /* v3.2 : quêtes d'aventure (data/adventure-quests.js) — déplacées ici
    depuis la popup Carte (v3.0). Lancement explicite d'un run de
    combat dédié (AdventureQuestManager.start(), même principe que le
@@ -224,12 +268,27 @@ function buildAdventureQuestsSectionHTML() {
 
   var runningQuest = AdventureQuestManager.getRunningQuest();
 
+  // v3.5 : groupées par monde (en-tête par monde), dans l'ordre des
+  // mondes (WORLDS) plutôt qu'une liste plate — plus lisible une fois
+  // qu'il y a des quêtes sur plusieurs mondes à la fois.
+  var questsByWorld = {};
+  quests.forEach(function (quest) {
+    if (!questsByWorld[quest.worldId]) questsByWorld[quest.worldId] = [];
+    questsByWorld[quest.worldId].push(quest);
+  });
+
   var h = '<div class="map-adventure-quests">';
   h += '<div class="map-adventure-quests-title">🧭 Quêtes d\'aventure';
   h += ' <span class="map-adventure-quests-resource">⛏️ Minerai rare : ' + esc(formatNumber((game.resources && game.resources.mineraiRare) || 0)) + '</span>';
   h += '</div>';
 
-  quests.forEach(function (quest) {
+  (WORLDS || []).forEach(function (world) {
+    var worldQuests = questsByWorld[world.id];
+    if (!worldQuests || !worldQuests.length) return;
+
+    h += '<div class="map-adventure-quests-world-header">' + esc(world.name) + '</div>';
+
+    worldQuests.forEach(function (quest) {
     var claimed = !!game.adventureQuestsCompleted[quest.id];
     var isRunning = !!(runningQuest && runningQuest.id === quest.id);
 
@@ -273,10 +332,11 @@ function buildAdventureQuestsSectionHTML() {
       // run possible à la fois, même règle que le Donjon).
       h += '<div class="map-quest-claimed-label">Termine ta quête en cours d\'abord</div>';
     } else {
-      h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="AdventureQuestManager.start(\'' + quest.id + '\')">Lancer</button>';
+      h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="openAdventureQuestIntro(\'' + quest.id + '\')">Lancer</button>';
     }
 
     h += '</div>';
+    });
   });
 
   h += '</div>';

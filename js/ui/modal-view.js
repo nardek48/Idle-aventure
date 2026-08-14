@@ -96,7 +96,12 @@ function confirmHeroSelection() {
   }
 
   closeHeroSelection();
-  switchTab("combat");
+  // v3.7 : au tout premier lancement (isFirstEverSetup), on atterrit
+  // sur le Campement — la nouvelle page de base — plutôt que Combat
+  // directement. Un changement de héros EN COURS DE PARTIE continue
+  // d'aller sur Combat (comportement inchangé, cohérent : on veut
+  // voir son nouveau héros se battre tout de suite).
+  switchTab(isFirstEverSetup ? "campement" : "combat");
   renderAll();
   saveGame();
   showToast("Héros sélectionné", 1200);

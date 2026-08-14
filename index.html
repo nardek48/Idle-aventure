@@ -39,6 +39,7 @@
   <link rel="stylesheet" href="./css/04-panel-zones.css">
   <link rel="stylesheet" href="./css/04-panel-adventures.css">
   <link rel="stylesheet" href="./css/04-panel-quests.css">
+  <link rel="stylesheet" href="./css/04-panel-camp.css">
   <link rel="stylesheet" href="./css/04-panel-bestiary.css">
   <link rel="stylesheet" href="./css/04-panel-dungeon.css">
   <link rel="stylesheet" href="./css/04-panel-achievements.css">
@@ -67,7 +68,12 @@
 <div id="panel-container"></div>
 
 <div id="tab-bar">
-  <button class="tab-btn active" data-tab="combat" onclick="switchTab('combat')">
+  <button class="tab-btn active" data-tab="campement" onclick="switchTab('campement')">
+    <span class="tab-icon-emoji">🏕️</span>
+    <span>Campement</span>
+  </button>
+
+  <button class="tab-btn" data-tab="combat" onclick="switchTab('combat')">
     <img src="./images/Icons/menu_icons/combat_menu.png" alt="" class="tab-icon-img">
     <span>Combat</span>
   </button>
@@ -75,12 +81,6 @@
   <button class="tab-btn" data-tab="village" onclick="switchTab('village')">
     <img src="./images/Icons/menu_icons/village_menu.png" alt="" class="tab-icon-img">
     <span>Village</span>
-  </button>
-
-  <button class="tab-btn" data-tab="dungeon" onclick="switchTab('dungeon')">
-    <img src="./images/Icons/menu_icons/donjon_menu.png" alt="" class="tab-icon-img">
-    <span>Donjon</span>
-    <span class="tab-badge" id="dungeon-tab-badge" style="display:none"></span>
   </button>
 
   <button class="tab-btn" data-tab="more" onclick="switchTab('more')">
@@ -101,6 +101,7 @@
 <div id="dungeon-modal-root"></div>
 <div id="village-modal-root"></div>
 <div id="talent-modal-root"></div>
+<div id="adventure-quest-modal-root"></div>
 <div id="map-modal-root"></div>
 <div id="cycle-modal-root"></div>
 <input type="file" id="import-save-file-input" accept=".json,application/json" style="display:none" onchange="importSaveFromFile(this)">
@@ -197,6 +198,7 @@
 <script src="js/systems/special-attack-system.js"></script>
 <script src="js/systems/progression-system.js"></script>
 <script src="js/systems/offline-system.js"></script>
+<script src="js/systems/camp-system.js"></script>
 <script src="js/systems/save-system.js"></script>
 <script src="js/systems/combat-engine.js"></script>
 
@@ -220,6 +222,7 @@
 <script src="js/ui/quests-view.js"></script>
 <script src="js/ui/ascension-view.js"></script>
 <script src="js/ui/village-view.js"></script>
+<script src="js/ui/camp-view.js"></script>
 <script src="js/ui/map-view.js"></script>
 <script src="js/ui/bestiary-view.js"></script>
 <script src="js/ui/log-view.js"></script>

@@ -129,11 +129,13 @@ function switchTab(tabName) {
 
   var combatMode = tabName === "combat";
 
-  // v2.38 : la barre du bas a maintenant 5 boutons dédiés (Combat,
-  // Village, Donjon, Héros, Menu). Si l'onglet actif a son propre
+  // v3.7 : la barre du bas a 5 boutons dédiés (Campement, Combat,
+  // Village, Héros, Menu) — Donjon n'a plus son propre bouton, déplacé
+  // dans la grille du Menu (voir MENU_ITEMS, ui/menu-view.js) pour
+  // faire de la place au Campement. Si l'onglet actif a son propre
   // bouton (data-tab correspondant), on l'allume directement ; sinon
-  // (Boutique, Talents, Quêtes, Ascension...) c'est forcément un
-  // écran ouvert depuis le menu principal, donc on allume "Menu".
+  // (Boutique, Talents, Quêtes, Donjon, Ascension...) c'est forcément
+  // un écran ouvert depuis le menu principal, donc on allume "Menu".
   var directBtn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
   if (directBtn) {
     directBtn.classList.add("active");
@@ -236,6 +238,9 @@ function renderPanel() {
       break;
     case "village":
       container.innerHTML = buildVillageHTML();
+      break;
+    case "campement":
+      container.innerHTML = buildCampHTML();
       break;
     case "dungeon":
       container.innerHTML = buildDungeonHTML();

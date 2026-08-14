@@ -238,6 +238,7 @@ function buildSaveData() {
     adventureQuestProgress: game.adventureQuestProgress || {},
     adventureQuestsCompleted: game.adventureQuestsCompleted || {},
     adventureQuestRun: game.adventureQuestRun || { active: false, questId: null },
+    campfireLastUsed: game.campfireLastUsed || 0, // v3.7 : cooldown du feu de camp, voir systems/camp-system.js
     dungeonTiersEntered: game.dungeonTiersEntered || {},
     codexChaosSeen: !!game.codexChaosSeen,
     codexRead: game.codexRead || {},
@@ -385,6 +386,7 @@ function restoreBaseState(d) {
   game.adventureQuestProgress = d.adventureQuestProgress && typeof d.adventureQuestProgress === "object" ? d.adventureQuestProgress : {};
   game.adventureQuestsCompleted = d.adventureQuestsCompleted && typeof d.adventureQuestsCompleted === "object" ? d.adventureQuestsCompleted : {};
   game.adventureQuestRun = d.adventureQuestRun && typeof d.adventureQuestRun === "object" ? d.adventureQuestRun : { active: false, questId: null };
+  game.campfireLastUsed = typeof d.campfireLastUsed === "number" ? d.campfireLastUsed : 0;
   game.dungeonTiersEntered = d.dungeonTiersEntered && typeof d.dungeonTiersEntered === "object" ? d.dungeonTiersEntered : {};
   game.codexChaosSeen = !!d.codexChaosSeen;
   game.codexRead = d.codexRead && typeof d.codexRead === "object" ? d.codexRead : {};
@@ -686,12 +688,9 @@ function fullResetState() {
   game.potionsOwned = {};
   game.lastHealUse = 0;
 
-  game.dungeonTickets = 1;
-  game.dungeonTicketResetTime = 0;
-  game.dungeonTicketsPurchasedToday = 0;
   game.dungeonRun = { active: false, wave: 0, tierId: 1 };
   game.adventureQuestRun = { active: false, questId: null };
-  game.dungeonBestWave = 0;
+  game.campfireLastUsed = 0; // v3.7 : repos gratuit du Campement — repart bien à zéro sur un reset complet
   game.dungeonBossClears = 0;
   game.dungeonShards = 0;
   game.dungeonShopLevels = {};
@@ -755,6 +754,14 @@ function resetGame() {
     }
 
     if (typeof renderAll === "function") renderAll();
+    // v3.7 : bug latent découvert en auditant les flux de bascule
+    // d'onglet pour le Campement — sans cet appel, l'affichage restait
+    // figé sur l'écran d'où le reset a été déclenché (typiquement
+    // Paramètres, hors combat) au lieu de refléter le nouvel
+    // activeTab="combat" fixé par fullResetState(). Même correctif que
+    // main/boot.js (switchTab() plutôt que de compter sur l'état CSS
+    // par défaut).
+    if (typeof switchTab === "function") switchTab(game.activeTab || "combat");
     if (typeof updateQuestBadge === "function") updateQuestBadge();
 
     saveGame();

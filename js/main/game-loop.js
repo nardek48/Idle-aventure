@@ -8,6 +8,29 @@ change avec un talent — pas besoin d'être dans la boucle à 60fps).
 
 var lastTick = Date.now();
 
+/* v3.4 : une fenêtre plein écran bloquante (résumé de cycle, popup
+   Carte, Village/Donjon/Talents) COUVRE visuellement tout l'écran,
+   mais rien n'empêchait jusqu'ici le combat de continuer à tourner
+   EN DESSOUS (auto-DPS, riposte) tant que game.activeTab === "combat"
+   — ce qui pouvait redéclencher une AUTRE ouverture de la même
+   fenêtre (ex. verrou de monde suivant) et reconstruire son contenu
+   PENDANT que le joueur essayait de cliquer dessus, rendant le
+   bouton "Continuer" en pratique inutilisable (bug remonté en test,
+   surtout visible depuis v3.3.0 : deux verrous peuvent maintenant se
+   suivre de près — Forêt→Désert puis Désert→Ruines). Cette fonction
+   vérifie si l'un des conteneurs de fenêtre plein écran contient
+   quelque chose, pour mettre en pause le combat automatique tant que
+   c'est le cas. */
+var BLOCKING_MODAL_IDS = ["cycle-modal-root", "map-modal-root", "dungeon-modal-root", "village-modal-root", "talent-modal-root", "adventure-quest-modal-root"];
+function isBlockingModalOpen() {
+  for (var i = 0; i < BLOCKING_MODAL_IDS.length; i++) {
+    var el = document.getElementById(BLOCKING_MODAL_IDS[i]);
+    if (el && el.innerHTML && el.innerHTML.length > 0) return true;
+  }
+  return false;
+}
+window.isBlockingModalOpen = isBlockingModalOpen;
+
 /* (Re)démarre l'intervalle d'auto-tap (talent Main spectrale) au bon
    rythme : 2s par défaut, ~1.79s avec Transe de bataille (+12% vitesse).
    À rappeler chaque fois qu'un talent qui affecte ce rythme change
@@ -24,6 +47,7 @@ function syncAutoTapLoop() {
   }
 
   autoTapInterval = setInterval(function () {
+    if (typeof isBlockingModalOpen === "function" && isBlockingModalOpen()) return;
     CombatEngine.autoTap();
   }, interval);
 }
@@ -49,6 +73,13 @@ function gameLoop() {
     QuestManager.track("combatTime", dt);
   }
 
+  // v3.4 : plus aucun combat automatique (auto-DPS, riposte) tant
+  // qu'une fenêtre plein écran bloquante est ouverte — voir
+  // isBlockingModalOpen() ci-dessus. La chasse ambiante du village,
+  // elle, n'est pas concernée (aucun risque de reconstruire une
+  // fenêtre pendant qu'elle tourne).
+  var modalOpen = isBlockingModalOpen();
+
   // v3.0 : l'auto-DPS du héros (Célérité) n'est plus une simulation de
   // fond permanente — elle ne s'applique QUE quand le joueur est
   // réellement sur l'écran Combat (aide active), même principe que la
@@ -56,7 +87,7 @@ function gameLoop() {
   // v2.10). La chasse ambiante indépendante de l'écran est désormais
   // portée par le village (Hôtel de Ville) — voir
   // VillageManager.tickAmbientHunting() juste après.
-  if (game.activeTab === "combat") {
+  if (game.activeTab === "combat" && !modalOpen) {
     CombatEngine.autoAttack(dt);
   }
 
@@ -78,7 +109,7 @@ function gameLoop() {
   // DPS, potions, régénération, intérêt composé...) continue de
   // tourner normalement en arrière-plan, seule la riposte est mise
   // en pause hors de l'écran Combat.
-  if (game.activeTab === "combat" && typeof CombatEngine.enemyAttackTick === "function") {
+  if (game.activeTab === "combat" && !modalOpen && typeof CombatEngine.enemyAttackTick === "function") {
     CombatEngine.enemyAttackTick(dt);
   }
 

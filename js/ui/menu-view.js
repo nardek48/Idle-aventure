@@ -1,19 +1,22 @@
 "use strict";
 /* ============================================================
 Quest Idle — ui/menu-view.js
-Le menu plein écran qui remplace l'ancienne barre à 9 icônes. La
-barre du bas n'a plus que "Combat" et "☰ Menu" (voir index.html et
-ui-root.js/switchTab) ; ce fichier construit l'écran de destinations
-(grille de cartes) ouvert par le bouton Menu, sur le même principe
-que l'overlay de sélection de héros (voir ui/modal-view.js).
+Le menu plein écran, ouvert par le bouton ☰ Menu de la barre du bas
+(voir index.html et ui-root.js/switchTab) ; ce fichier construit
+l'écran de destinations (grille de cartes), sur le même principe que
+l'overlay de sélection de héros (voir ui/modal-view.js).
 ============================================================ */
 
-/* Toutes les destinations sauf Combat, Village, Donjon et Héros, qui
-   ont chacun leur propre bouton dédié dans la barre du bas depuis la
-   v2.38 (voir index.html + ui-root.js/switchTab). img = icône dédiée
-   si elle existe, sinon repli sur un emoji (icon). badge = affiche le
+/* Toutes les destinations sauf Campement, Combat, Village et Héros,
+   qui ont chacun leur propre bouton dédié dans la barre du bas (voir
+   index.html + ui-root.js/switchTab). Donjon a rejoint cette grille en
+   v3.7 (remplacé dans la barre du bas par Campement) — son badge
+   "dungeon" existait déjà (ticket disponible), juste jamais utilisé
+   tant qu'il avait son propre bouton. img = icône dédiée si elle
+   existe, sinon repli sur un emoji (icon). badge = affiche le
    compteur de quêtes complétées non réclamées sur cette carte. */
 var MENU_ITEMS = [
+  { tab: "dungeon", label: "Donjon", img: "./images/Icons/menu_icons/donjon_menu.png", badge: "dungeon" },
   { tab: "shop", label: "Boutique", img: "./images/Icons/menu_icons/shop_menu.png" },
   { tab: "talents", label: "Talents", img: "./images/Icons/menu_icons/talents_menu.png", badge: "talents" },
   { tab: "equip", label: "Équipement", img: "./images/Icons/menu_icons/equip_menu.png" },

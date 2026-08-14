@@ -377,6 +377,24 @@
   color: var(--nb-gold);
 }
 
+/* v3.5 : en-tête de monde au-dessus des quêtes de ce monde (voir
+   buildAdventureQuestsSectionHTML, ui/quests-view.js) — pour
+   distinguer les groupes une fois qu'il y a des quêtes sur plusieurs
+   mondes. Discret, pas un titre de section (déjà géré par
+   .map-adventure-quests-title ci-dessus). */
+.map-adventure-quests-world-header {
+  margin: 14px 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nb-gold);
+  border-bottom: 1px solid var(--nb-border, rgba(212, 165, 74, 0.3));
+  padding-bottom: 4px;
+}
+
+.map-adventure-quests-world-header:first-of-type {
+  margin-top: 0;
+}
+
 .map-quest-card.is-claimed {
   opacity: 0.7;
 }
