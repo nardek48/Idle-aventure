@@ -69,11 +69,11 @@ var VILLAGE_BUILDING_MAP = {
    VillageManager.getOfflineBonuses(), juste reformatées en phrase —
    à garder synchronisé si un coefficient change là-bas). */
 function getVillageBuildingBonusText(id, level) {
-  if (id === "goldMine") return "Bonus actuel : +" + Math.round(level * 12) + "% or hors-ligne";
+  if (id === "goldMine") return "Bonus actuel : +" + Math.round(level * 12) + "% or de la chasse du village (hors-ligne et en continu)";
   if (id === "essenceWell") return "Bonus actuel : +" + level + " essence hors-ligne";
-  if (id === "barracks") return "Bonus actuel : +" + Math.round(level * 4) + "% efficacité hors-ligne";
+  if (id === "barracks") return "Bonus actuel : +" + Math.round(level * 4) + "% efficacité de la chasse du village (hors-ligne et en continu)";
   if (id === "timeRelay") return "Bonus actuel : +" + (level * 2).toFixed(1) + "h de cap hors-ligne";
-  if (id === "watchtower") return "Bonus actuel : " + (level * 3) + " kills simulés/h (bestiaire + chance de butin)";
+  if (id === "watchtower") return "Bonus actuel : " + (level * 3) + " kills simulés/h (bestiaire + chance de butin), hors-ligne et en continu";
   if (id === "sanctuary") return "Bonus actuel : +" + (level * 0.05).toFixed(2) + " Aether/h";
   return "";
 }

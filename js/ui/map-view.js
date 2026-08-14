@@ -61,65 +61,19 @@ function getWorldProgressText(index) {
   return "Verrouillé";
 }
 
-/* Bloc détaillé de la questline de déblocage d'un monde verrouillé :
-   narration + progression de chaque étape + bouton de réclamation
-   dès que tout est terminé. */
-function buildWorldQuestHTML(worldIndex) {
-  if (!window.WorldQuestManager) return "";
-  var quest = WorldQuestManager.getQuestForWorldIndex(worldIndex);
-  if (!quest) return "";
+/* v3.3 : la questline de déblocage d'un monde verrouillé (narration +
+   progression + réclamation) ne s'affiche plus ici — déplacée dans
+   l'onglet Quêtes (voir buildWorldUnlockQuestSectionHTML,
+   ui/quests-view.js), pour rassembler TOUTES les quêtes du jeu au
+   même endroit (questlines de monde + quêtes d'aventure, cf. v3.2).
+   Voir CHANGELOG v3.3.0. */
 
-  var h = '<div class="map-quest-card">';
-  h += '<div class="map-quest-head"><span class="map-quest-icon">' + esc(quest.icon || "🗺️") + '</span><span class="map-quest-name">' + esc(quest.name) + '</span></div>';
-
-  quest.steps.forEach(function (step) {
-    var progress = WorldQuestManager.getStepProgress(quest, step);
-    var done = progress >= step.target;
-    var pct = Math.min(100, Math.floor((progress / step.target) * 100));
-    var desc = String(step.desc || "").replace("{target}", step.target);
-
-    h += '<div class="map-quest-step' + (done ? " is-done" : "") + '">';
-    h += '<div class="map-quest-step-text">' + esc(step.text || "") + '</div>';
-    h += '<div class="map-quest-step-row">';
-    h += '<span class="map-quest-step-desc">' + (done ? "✔ " : "") + esc(desc) + '</span>';
-    h += '<span class="map-quest-step-count">' + esc(progress) + '/' + esc(step.target) + '</span>';
-    h += '</div>';
-    h += '<div class="map-quest-step-bar"><div class="map-quest-step-fill" style="width:' + pct + '%"></div></div>';
-    h += '</div>';
-  });
-
-  var reward = quest.reward || {};
-  h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Récompense</span>';
-  h += '<span class="map-quest-reward-value">';
-  if (reward.gold) h += esc(formatNumber(reward.gold)) + ' or · ';
-  if (reward.essence) h += esc(formatNumber(reward.essence)) + ' essence · ';
-  if (reward.equipmentRarity) h += '1 objet ' + esc(RARITY_LABELS[reward.equipmentRarity] || reward.equipmentRarity) + ' · ';
-  if (reward.aether) h += esc(reward.aether) + ' Aether';
-  h += '</span>';
-  h += '</div>';
-
-  if (WorldQuestManager.isReadyToClaim(quest)) {
-    var targetWorld = WORLDS[worldIndex];
-    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="claimWorldQuest(' + worldIndex + ')">🗺️ Réclamer et débloquer ' + esc(targetWorld ? targetWorld.name : "") + '</button>';
-  }
-
-  h += '</div>';
-  return h;
-}
-
-/* Callback bouton "Réclamer" — voir WorldQuestManager.claim(). */
-/* v2.90.17 : rafraîchit aussi la popup ouverte après réclamation
-   (même pattern que buyDungeonTicketFromOverlay en ui/dungeon-view.js)
-   — sans ça, la popup restait figée sur l'ancien état "verrouillé/
-   questline en cours" puisqu'elle vit hors du cycle renderPanel()
-   habituel (#map-modal-root, séparé du panneau principal). */
-function claimWorldQuest(worldIndex) {
-  if (window.WorldQuestManager) WorldQuestManager.claim(worldIndex);
-  if (typeof renderPanel === "function") renderPanel();
-  if (typeof openWorldPopup === "function") openWorldPopup(worldIndex);
-}
-window.claimWorldQuest = claimWorldQuest;
+/* v3.2 : les quêtes d'aventure (data/adventure-quests.js) ne
+   s'affichent plus ici — elles ont leur propre section dans l'onglet
+   Quêtes (voir buildAdventureQuestsSectionHTML, ui/quests-view.js),
+   avec un lancement explicite qui ouvre un run de combat dédié
+   (comme le Donjon) au lieu d'un suivi ambiant pendant le farm de
+   cette popup. Voir CHANGELOG v3.2.0. */
 
 /* Vignette illustrée par monde (découpée depuis la carte fantasy fournie).
    Fallback sur un dégradé neutre si l'image n'est pas trouvée. */
@@ -295,7 +249,7 @@ function buildWorldPopupHTML(index) {
       h += '</div>';
     }
   } else if (!isWorldUnlocked(index) && !WorldManager.meetsAscensionRequirement(index)) {
-    h += buildWorldQuestHTML(index);
+    h += '<div class="map-current-adventure">🗺️ Questline de déblocage en cours — voir l\'onglet Quêtes.</div>';
   }
 
   var monsters = getWorldMonsterList(world);
@@ -368,7 +322,6 @@ function selectMapWorld(index) {
 window.getMapSelectedWorldIndex = getMapSelectedWorldIndex;
 window.selectMapWorld = selectMapWorld;
 window.getWorldMonsterList = getWorldMonsterList;
-window.buildWorldQuestHTML = buildWorldQuestHTML;
 window.buildMapHTML = buildMapHTML;
 window.openWorldPopup = openWorldPopup;
 window.closeWorldPopup = closeWorldPopup;

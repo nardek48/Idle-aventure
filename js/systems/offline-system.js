@@ -23,7 +23,7 @@ var VILLAGE_CONFIG = {
   essenceWell: { name: "Hutte de l'Alchimiste", desc: "Ajoute de l'essence gagnée hors-ligne.", baseCost: 400, costMult: 1.75, maxLevel: 20 },
   barracks: { name: "Caserne", desc: "Améliore l'efficacité hors-ligne.", baseCost: 600, costMult: 1.8, maxLevel: 20 },
   timeRelay: { name: "Tour des Mages", desc: "Augmente la durée maximale des gains hors-ligne.", baseCost: 900, costMult: 2, maxLevel: 10 },
-  watchtower: { name: "Hôtel de Ville", desc: "Simule des combats pendant ton absence : kills (qui rapportent l'or hors-ligne via la Mine d'Or), bestiaire, et chance de butin.", baseCost: 1200, costMult: 1.9, maxLevel: 20 },
+  watchtower: { name: "Hôtel de Ville", desc: "Simule des combats en continu (hors-ligne ET en jeu, même hors de l'écran Combat) : kills (qui rapportent l'or via la Mine d'Or), bestiaire, et chance de butin.", baseCost: 1200, costMult: 1.9, maxLevel: 20 },
   sanctuary: { name: "Atelier de Forgeron", desc: "Génère un peu d'Aether pendant ton absence.", baseCost: 5000, costMult: 2.3, maxLevel: 10 }
 };
 
@@ -48,6 +48,7 @@ var OFFLINE_GOLD_PER_KILL_BASE = 6;
 var OFFLINE_GOLD_PER_KILL_WORLD = 3;
 var OFFLINE_AVG_ENEMY_INDEX = 4.5;
 var OFFLINE_GOLD_KILL_MULT = 4.1;
+var OFFLINE_BASE_GOLD_PER_SEC = 1; // v2.90.22 : plancher symbolique (ancien flat), voir calculate()
 
 var VillageManager = {
   /* Comble les niveaux de bâtiments manquants (0 par défaut) — utile
@@ -127,6 +128,105 @@ var VillageManager = {
     var total = 0;
     for (var i = 0; i < ids.length; i++) total += this.getLevel(ids[i]);
     return total;
+  },
+
+  /* Formule PARTAGÉE entre le calcul hors-ligne (calculate() ci-dessous,
+     un seul bloc au retour d'absence) et la chasse ambiante en continu
+     (tickAmbientHunting(), appelée à chaque frame par main/game-loop.js
+     depuis v3.0) — SOURCE UNIQUE pour éviter que les deux formules
+     divergent avec le temps (voir le bug "Contrats lucratifs" v2.90.20,
+     causé exactement par une logique dupliquée). `kills` et `seconds`
+     couvrent des kills simulés (Vigie/Hôtel de Ville) et un intervalle
+     de temps quelconques — l'appelant décide s'il s'agit d'heures
+     d'absence ou d'un dt de frame. Renvoie un montant d'or NON arrondi
+     (l'arrondi se fait chez l'appelant, qui gère sa propre précision :
+     Math.floor ponctuel hors-ligne, accumulateur fractionnaire en
+     continu). */
+  computeHuntingGold: function (kills, seconds, bonuses) {
+    var worldIndex = (window.WorldManager && WorldManager.worldIndex) || 0;
+    var adventureIndex = (window.WorldManager && WorldManager.adventureIndex) || 0;
+    var cycleCount = game.cycleCount || 0;
+    var scale = 1 + worldIndex * 0.90 + adventureIndex * 0.30 + cycleCount * 0.45 + OFFLINE_AVG_ENEMY_INDEX * 0.05;
+    var goldPerKill = OFFLINE_GOLD_PER_KILL_BASE * scale + worldIndex * OFFLINE_GOLD_PER_KILL_WORLD;
+    var killBasedGold = Number(kills || 0) * goldPerKill * OFFLINE_GOLD_KILL_MULT * (1 + Number(bonuses.efficiencyBonus || 0)) * Number(bonuses.goldMult || 1);
+
+    // Plancher symbolique (v2.90.22) : filet de sécurité pour les
+    // joueurs sans Hôtel de Ville (0 kill simulé) — voir calculate().
+    var floorGold = OFFLINE_BASE_GOLD_PER_SEC * Number(seconds || 0) * (1 + Number(bonuses.efficiencyBonus || 0)) * Number(bonuses.goldMult || 1);
+
+    return Math.max(killBasedGold, floorGold);
+  },
+
+  /* v3.0 : chasse ambiante EN CONTINU (que le joueur regarde l'écran
+     Combat ou non), appelée à chaque frame par main/game-loop.js —
+     avant, ce même principe (simuler des combats via l'Hôtel de
+     Ville) n'existait qu'au retour d'une absence (calculate()
+     ci-dessous, toujours utilisée pour le vrai hors-ligne app fermée).
+     Utilise EXACTEMENT les mêmes bonus/formule (computeHuntingGold
+     ci-dessus) qu'hors-ligne, appliqués en continu via deux
+     accumulateurs fractionnaires (kills et or) plutôt qu'en un seul
+     bloc — un dt de frame ne fait quasiment jamais un kill entier.
+     N'avance JAMAIS la progression des mondes/quêtes (comme
+     hors-ligne) : uniquement or, bestiaire (killCounts) et chance de
+     butin — les mondes/quêtes restent liés au combat RÉEL sur l'écran
+     Combat (ou, à partir de v3.0, aux runs de quête dédiés). */
+  tickAmbientHunting: function (dt) {
+    this.ensure();
+    dt = Math.max(0, Number(dt || 0));
+    if (dt <= 0) return;
+
+    var bonuses = this.getOfflineBonuses();
+
+    // --- Kills simulés (accumulateur fractionnaire) ---
+    var killsPerSecond = Number(bonuses.killsPerHour || 0) / 3600;
+    game._huntKillAccum = Number(game._huntKillAccum || 0) + killsPerSecond * dt;
+    var wholeKills = Math.floor(game._huntKillAccum);
+    game._huntKillAccum -= wholeKills;
+
+    // --- Or (accumulateur fractionnaire, même formule que hors-ligne) ---
+    game._huntGoldAccum = Number(game._huntGoldAccum || 0) + this.computeHuntingGold(wholeKills, dt, bonuses);
+    var wholeGold = Math.floor(game._huntGoldAccum);
+    game._huntGoldAccum -= wholeGold;
+
+    if (wholeGold > 0) {
+      game.gold += wholeGold;
+      game.totalGoldEarned += wholeGold;
+      if (window.QuestManager && typeof QuestManager.track === "function") {
+        QuestManager.track("goldEarned", wholeGold);
+      }
+    }
+
+    if (wholeKills <= 0) return;
+
+    // --- Bestiaire (killCounts) + chance de butin, même cadence que
+    //     hors-ligne (1 vérification tous les OFFLINE_BOSS_CHECK_EVERY
+    //     kills simulés) via un compteur cumulatif dédié. ---
+    game.totalKills = Number(game.totalKills || 0) + wholeKills;
+    game.killCounts = game.killCounts || {};
+
+    var pool = [];
+    if (window.WorldManager && typeof WorldManager.getAdventure === "function") {
+      var adventure = WorldManager.getAdventure();
+      if (adventure && adventure.enemyPool && adventure.enemyPool.length) pool = adventure.enemyPool;
+    }
+
+    if (pool.length) {
+      for (var i = 0; i < wholeKills; i++) {
+        var id = pool[randInt(0, pool.length - 1)];
+        game.killCounts[id] = (game.killCounts[id] || 0) + 1;
+      }
+    }
+
+    game._huntBossCheckAccum = Number(game._huntBossCheckAccum || 0) + wholeKills;
+    while (game._huntBossCheckAccum >= OFFLINE_BOSS_CHECK_EVERY) {
+      game._huntBossCheckAccum -= OFFLINE_BOSS_CHECK_EVERY;
+      if (chance(OFFLINE_BOSS_CHECK_CHANCE) && window.LootSystem && typeof LootSystem.rollDrop === "function") {
+        var drop = LootSystem.rollDrop();
+        if (drop && typeof addDropToInventory === "function" && addDropToInventory(drop)) {
+          addLog("🏘️ Chasse du village : " + drop.name + " (" + drop.rarity + ")", "event");
+        }
+      }
+    }
   },
 
   /* Regroupe TOUS les bonus hors-ligne actuels (village + talents +
@@ -220,12 +320,11 @@ var OfflineManager = {
     // v2.90.19 : or hors-ligne dérivé des kills simulés (voir note au-dessus
     // de OFFLINE_GOLD_KILL_MULT) — 0 or si aucun kill simulé (Hôtel de
     // Ville non investi), au lieu de l'ancien flat indépendant.
-    var worldIndex = (window.WorldManager && WorldManager.worldIndex) || 0;
-    var adventureIndex = (window.WorldManager && WorldManager.adventureIndex) || 0;
-    var cycleCount = game.cycleCount || 0;
-    var offlineScale = 1 + worldIndex * 0.90 + adventureIndex * 0.30 + cycleCount * 0.45 + OFFLINE_AVG_ENEMY_INDEX * 0.05;
-    var goldPerKill = OFFLINE_GOLD_PER_KILL_BASE * offlineScale + worldIndex * OFFLINE_GOLD_PER_KILL_WORLD;
-    var gold = Math.floor(kills * goldPerKill * OFFLINE_GOLD_KILL_MULT * (1 + Number(bonuses.efficiencyBonus || 0)) * Number(bonuses.goldMult || 1));
+    // v3.0 : formule déplacée dans VillageManager.computeHuntingGold()
+    // (partagée avec tickAmbientHunting, la chasse ambiante en continu)
+    // — inchangée, juste extraite pour éviter toute divergence entre
+    // hors-ligne et continu.
+    var gold = Math.floor(VillageManager.computeHuntingGold(kills, seconds, bonuses));
 
     if (gold <= 0 && essence <= 0 && aether <= 0 && kills <= 0) return null;
 

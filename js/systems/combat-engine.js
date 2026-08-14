@@ -160,6 +160,12 @@ var CombatEngine = {
 
   /* DPS automatique continu (stat Célérité + bonus), appelée chaque
      frame de la boucle de jeu avec le delta-temps écoulé. */
+  /* Auto-DPS du héros (stat Célérité). v3.0 : appelée uniquement quand
+     le joueur est SUR l'écran Combat (voir main/game-loop.js) — ce
+     n'est plus une simulation de fond permanente, c'est une aide
+     active. La chasse ambiante (que le joueur regarde l'écran ou non)
+     est désormais portée par le village (Hôtel de Ville), voir
+     VillageManager.tickAmbientHunting() dans systems/offline-system.js. */
   autoAttack: function (dt) {
     if (!game.enemy || !window.EquipmentManager) return;
 
@@ -173,9 +179,14 @@ var CombatEngine = {
 
   /* Talent "Main spectrale" : déclenche une vraie attaque (tap complet,
      avec chance de critique etc.) toutes les X secondes automatiquement.
-     Voir syncAutoTapLoop() dans main/game-loop.js pour le minuteur. */
+     Voir syncAutoTapLoop() dans main/game-loop.js pour le minuteur.
+     v3.0 : ne se déclenche plus que sur l'écran Combat — même principe
+     que autoAttack() ci-dessus (aide active, plus de simulation en
+     fond ; c'est désormais l'Hôtel de Ville qui simule la chasse
+     ambiante, voir VillageManager.tickAmbientHunting). */
   autoTap: function () {
     if (!game.enemy || !game.talents.t_auto_tap) return;
+    if (game.activeTab !== "combat") return;
     this.playerAttack();
   },
 
@@ -213,7 +224,13 @@ var CombatEngine = {
     var isCrit = chance(Math.min(40, precision * ENEMY_PRECISION_CRIT_COEF));
     if (isCrit) dmg = Math.floor(dmg * ENEMY_CRIT_MULT);
 
-    var defense = Math.min(0.6, Number(game.heroDefensePct || 0));
+    // v2.90.22 : le bouclier (posture défensive) vise un plafond de 85%
+    // dans stats-system.js (DEFENSE_ABILITY.maxTotalDefensePct), mais ce
+    // recap ici retombait TOUJOURS à 60% — le bonus du bouclier au-delà
+    // de 60% n'avait donc jamais d'effet réel sur les dégâts reçus.
+    var shieldActive = window.DefenseManager && typeof DefenseManager.isActive === "function" && DefenseManager.isActive();
+    var defenseCapNow = shieldActive ? ((typeof DEFENSE_ABILITY !== "undefined" && DEFENSE_ABILITY.maxTotalDefensePct) || 0.85) : 0.6;
+    var defense = Math.min(defenseCapNow, Number(game.heroDefensePct || 0));
     dmg = Math.max(1, Math.floor(dmg * (1 - defense)));
 
     game.heroHp = Math.max(0, Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1) - dmg);
@@ -232,6 +249,14 @@ var CombatEngine = {
     // DungeonManager.onDefeat) au lieu du malus léger habituel.
     if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
       DungeonManager.onDefeat();
+      return;
+    }
+
+    // v3.2 : même principe pour un run de quête d'aventure en cours —
+    // arrête le run (sans pénalité de récompense, la progression déjà
+    // enregistrée reste acquise, voir AdventureQuestManager.onDefeat).
+    if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active) {
+      AdventureQuestManager.onDefeat();
       return;
     }
 
@@ -398,9 +423,29 @@ var CombatEngine = {
       return;
     }
 
-    // v2.83 : progression des questlines de déblocage de monde (voir
+    // v3.2 : quêtes d'aventure (voir data/adventure-quests.js) — même
+    // principe que le Donjon juste au-dessus : un run dédié
+    // (game.adventureQuestRun.active), lancé explicitement depuis
+    // l'onglet Quêtes, PAS un suivi ambiant du farm classique. Avant
+    // v3.2, la progression se faisait en tâche de fond pendant le
+    // farm normal du monde (v3.0) ; ce n'est plus le cas — voir
+    // AdventureQuestManager.start()/onEnemyKilled() dans
+    // systems/adventure-quest-system.js pour le nouveau flux complet.
+    // Doit court-circuiter AVANT le tracking WorldQuestManager
+    // ci-dessous, même position que le donjon : un run de quête n'est
+    // pas du farm ambiant classique.
+    if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active) {
+      AdventureQuestManager.onEnemyKilled(enemy);
+      if (typeof renderAll === "function") renderAll();
+      restoreEquipBagScroll();
+      saveGame();
+      return;
+    }
+
+    // v3.0 : progression des questlines de déblocage de monde (voir
     // data/world-quests.js) — uniquement en combat classique, jamais
-    // en donjon (return plus haut avant d'arriver ici).
+    // en donjon ni en run de quête (return plus haut avant d'arriver
+    // ici).
     if (window.WorldQuestManager && currentWorld) {
       if (enemy.isBoss) WorldQuestManager.trackBossKill(enemy.id);
       else WorldQuestManager.trackKill(currentWorld.id);
@@ -422,6 +467,9 @@ var CombatEngine = {
       addLog("🔒 " + result.world.name + " est verrouillé (questline de déblocage incomplète, voir Carte). Le cycle recommence.", "zone");
       showToast("🔒 Termine la questline pour débloquer " + result.world.name, 2200);
       if (typeof openCycleSummary === "function") openCycleSummary(result.world);
+    } else if (result && result.type === "adventure_locked") {
+      addLog("🧭 Une quête d'Expédition attend d'être lancée pour explorer plus loin (voir l'onglet Quêtes).", "zone");
+      showToast("🧭 Lance la quête d'Expédition (onglet Quêtes) pour continuer", 2200);
     }
 
     // Second souffle / Bourse profonde : récompense de fin de chapitre

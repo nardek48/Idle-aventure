@@ -89,6 +89,9 @@ function buildQuestsHTML() {
   h += '<button class="quest-mode-btn" type="button" onclick="switchTab(\'dungeon\')">Donjon</button>';
   h += '</div>';
 
+  h += buildWorldUnlockQuestSectionHTML();
+  h += buildAdventureQuestsSectionHTML();
+
   h += '<div class="quest-timer">Reset dans ' + esc(QuestManager.timeUntilReset()) + '</div>';
 
   if (!game.quests || !game.quests.length) {
@@ -129,7 +132,160 @@ function buildQuestsHTML() {
   return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
+/* v3.3 : questline de déblocage du PROCHAIN monde verrouillé (voir
+   data/world-quests.js, WorldQuestManager) — déplacée ici depuis la
+   popup Carte (v2.83-v3.2), pour rassembler toutes les quêtes du jeu
+   au même endroit. On ne montre que la toute PROCHAINE questline
+   incomplète (peu importe où en est WorldManager.worldIndex dans le
+   run courant — worldIndex retombe à 0 à chaque ascension, mais
+   worldQuestsCompleted, lui, est permanent) : les questlines plus
+   lointaines (ex. Crypte avant même d'avoir fini celle de Ruines)
+   n'ont aucune valeur à afficher tant que la précédente n'est pas
+   terminée. */
+function getNextLockedWorldIndex() {
+  if (!window.WorldQuestManager || !window.WORLDS) return -1;
+  for (var i = 0; i < WORLDS.length; i++) {
+    if (!WorldQuestManager.isWorldUnlocked(i)) return i;
+  }
+  return -1;
+}
+
+function buildWorldUnlockQuestSectionHTML() {
+  if (!window.WorldQuestManager) return "";
+  var worldIndex = getNextLockedWorldIndex();
+  if (worldIndex === -1) return "";
+
+  var quest = WorldQuestManager.getQuestForWorldIndex(worldIndex);
+  if (!quest) return "";
+
+  var h = '<div class="map-adventure-quests">';
+  h += '<div class="map-adventure-quests-title">🗺️ Questline de déblocage</div>';
+
+  h += '<div class="map-quest-card">';
+  h += '<div class="map-quest-head"><span class="map-quest-icon">' + esc(quest.icon || "🗺️") + '</span><span class="map-quest-name">' + esc(quest.name) + '</span></div>';
+
+  quest.steps.forEach(function (step) {
+    var progress = WorldQuestManager.getStepProgress(quest, step);
+    var done = progress >= step.target;
+    var pct = Math.min(100, Math.floor((progress / step.target) * 100));
+    var desc = String(step.desc || "").replace("{target}", step.target);
+
+    h += '<div class="map-quest-step' + (done ? " is-done" : "") + '">';
+    h += '<div class="map-quest-step-text">' + esc(step.text || "") + '</div>';
+    h += '<div class="map-quest-step-row">';
+    h += '<span class="map-quest-step-desc">' + (done ? "✔ " : "") + esc(desc) + '</span>';
+    h += '<span class="map-quest-step-count">' + esc(progress) + '/' + esc(step.target) + '</span>';
+    h += '</div>';
+    h += '<div class="map-quest-step-bar"><div class="map-quest-step-fill" style="width:' + pct + '%"></div></div>';
+    h += '</div>';
+  });
+
+  var reward = quest.reward || {};
+  h += '<div class="map-quest-reward">';
+  h += '<span class="map-quest-reward-label">Récompense</span>';
+  h += '<span class="map-quest-reward-value">';
+  if (reward.gold) h += esc(formatNumber(reward.gold)) + ' or · ';
+  if (reward.essence) h += esc(formatNumber(reward.essence)) + ' essence · ';
+  if (reward.equipmentRarity) h += '1 objet ' + esc(RARITY_LABELS[reward.equipmentRarity] || reward.equipmentRarity) + ' · ';
+  if (reward.aether) h += esc(reward.aether) + ' Aether';
+  h += '</span>';
+  h += '</div>';
+
+  if (WorldQuestManager.isReadyToClaim(quest)) {
+    var targetWorld = WORLDS[worldIndex];
+    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="claimWorldQuest(' + worldIndex + ')">🗺️ Réclamer et débloquer ' + esc(targetWorld ? targetWorld.name : "") + '</button>';
+  }
+
+  h += '</div>';
+  h += '</div>';
+  return h;
+}
+
+/* Callback bouton "Réclamer" — voir WorldQuestManager.claim(). Déplacé
+   depuis ui/map-view.js en v3.3 (voir buildWorldUnlockQuestSectionHTML
+   ci-dessus) — rafraîchit l'onglet Quêtes après réclamation. */
+function claimWorldQuest(worldIndex) {
+  if (window.WorldQuestManager) WorldQuestManager.claim(worldIndex);
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.claimWorldQuest = claimWorldQuest;
+
+/* v3.2 : quêtes d'aventure (data/adventure-quests.js) — déplacées ici
+   depuis la popup Carte (v3.0). Lancement explicite d'un run de
+   combat dédié (AdventureQuestManager.start(), même principe que le
+   Donjon) plutôt qu'un suivi ambiant pendant le farm normal. Réutilise
+   le style .map-quest-card/.map-quest-step (css/06-map.css) qui gère
+   déjà l'affichage multi-étapes, pas besoin de nouveau CSS. */
+function buildAdventureQuestsSectionHTML() {
+  if (!window.AdventureQuestManager) return "";
+
+  var quests = AdventureQuestManager.getAllQuests();
+  if (!quests.length) return "";
+
+  var runningQuest = AdventureQuestManager.getRunningQuest();
+
+  var h = '<div class="map-adventure-quests">';
+  h += '<div class="map-adventure-quests-title">🧭 Quêtes d\'aventure';
+  h += ' <span class="map-adventure-quests-resource">⛏️ Minerai rare : ' + esc(formatNumber((game.resources && game.resources.mineraiRare) || 0)) + '</span>';
+  h += '</div>';
+
+  quests.forEach(function (quest) {
+    var claimed = !!game.adventureQuestsCompleted[quest.id];
+    var isRunning = !!(runningQuest && runningQuest.id === quest.id);
+
+    h += '<div class="map-quest-card' + (claimed ? " is-claimed" : isRunning ? " is-running" : "") + '">';
+    h += '<div class="map-quest-head"><span class="map-quest-icon">' + esc(quest.icon || "📜") + '</span><span class="map-quest-name">' + esc(quest.name) + '</span></div>';
+
+    quest.steps.forEach(function (step) {
+      var progress = AdventureQuestManager.getStepProgress(quest, step);
+      var done = progress >= step.target;
+      var pct = Math.min(100, Math.floor((progress / step.target) * 100));
+      var desc = String(step.desc || "").replace("{target}", step.target);
+
+      h += '<div class="map-quest-step' + (done ? " is-done" : "") + '">';
+      h += '<div class="map-quest-step-row">';
+      h += '<span class="map-quest-step-desc">' + (done ? "✔ " : "") + esc(desc) + '</span>';
+      h += '<span class="map-quest-step-count">' + esc(progress) + '/' + esc(step.target) + '</span>';
+      h += '</div>';
+      h += '<div class="map-quest-step-bar"><div class="map-quest-step-fill" style="width:' + pct + '%"></div></div>';
+      h += '</div>';
+    });
+
+    var reward = quest.reward || {};
+    h += '<div class="map-quest-reward">';
+    h += '<span class="map-quest-reward-label">Récompense</span>';
+    h += '<span class="map-quest-reward-value">';
+    if (reward.gold) h += esc(formatNumber(reward.gold)) + ' or';
+    if (reward.essence) h += ' · ' + esc(formatNumber(reward.essence)) + ' essence';
+    h += '</span>';
+    h += '</div>';
+
+    if (claimed) {
+      h += '<div class="map-quest-claimed-label">✔ Terminée</div>';
+    } else if (isRunning) {
+      h += '<div class="map-quest-run-actions">';
+      h += '<button class="settings-btn primary" type="button" onclick="switchTab(\'combat\')">Voir le combat</button>';
+      h += '<button class="settings-btn danger" type="button" onclick="AdventureQuestManager.forfeit(); if (typeof renderPanel === \'function\') renderPanel();">Abandonner</button>';
+      h += '</div>';
+    } else if (runningQuest) {
+      // Une AUTRE quête est déjà en cours de run — pas de bouton
+      // Lancer tant qu'elle n'est pas terminée/abandonnée (un seul
+      // run possible à la fois, même règle que le Donjon).
+      h += '<div class="map-quest-claimed-label">Termine ta quête en cours d\'abord</div>';
+    } else {
+      h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="AdventureQuestManager.start(\'' + quest.id + '\')">Lancer</button>';
+    }
+
+    h += '</div>';
+  });
+
+  h += '</div>';
+  return h;
+}
+
 window.updateQuestBadge = updateQuestBadge;
 window.getTalentsAvailableCount = getTalentsAvailableCount;
 window.getAscensionAvailableCount = getAscensionAvailableCount;
 window.buildQuestsHTML = buildQuestsHTML;
+window.buildWorldUnlockQuestSectionHTML = buildWorldUnlockQuestSectionHTML;
+window.buildAdventureQuestsSectionHTML = buildAdventureQuestsSectionHTML;

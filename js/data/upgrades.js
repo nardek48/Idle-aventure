@@ -24,7 +24,7 @@ var UPGRADES = [
     desc: "Augmente les dégâts de tap.",
     baseCost: 15,
     costMult: 1.15,
-    maxLevel: 400,
+    maxLevel: 150, // v2.90.22 : 400 -> 150 (dernier niveau à 400 coûtait ~25 septillions d'or, inatteignable)
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.power = lvl;
@@ -36,8 +36,8 @@ var UPGRADES = [
     icon: "./images/Icons/improvement_icons/celerity.png",
     desc: "Augmente l'auto DPS.",
     baseCost: 45,
-    costMult: 1.20,
-    maxLevel: 320,
+    costMult: 1.18, // v2.90.24 : 1.20 -> 1.18 (voir doc équilibrage)
+    maxLevel: 120, // v2.90.22 : 320 -> 120 (même raison, voir doc équilibrage)
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.celerity = lvl;
@@ -49,8 +49,8 @@ var UPGRADES = [
     icon: "./images/Icons/improvement_icons/accuracy.png",
     desc: "Augmente la chance de critique.",
     baseCost: 50,
-    costMult: 1.20,
-    maxLevel: 100,
+    costMult: 1.22, // v2.90.24 : 1.20 -> 1.22 (voir doc équilibrage)
+    maxLevel: 60, // v2.90.22 : 100 -> 60 (voir doc équilibrage)
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.precision = lvl;
@@ -62,8 +62,8 @@ var UPGRADES = [
     icon: "./images/Icons/improvement_icons/will.png",
     desc: "Améliore les critiques.",
     baseCost: 60,
-    costMult: 1.22,
-    maxLevel: 130,
+    costMult: 1.18, // v2.90.24 : 1.22 -> 1.18 (voir doc équilibrage)
+    maxLevel: 80, // v2.90.22 : 130 -> 80 (voir doc équilibrage)
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.will = lvl;
@@ -75,8 +75,8 @@ var UPGRADES = [
     icon: "./images/Icons/improvement_icons/endurance.png",
     desc: "Augmente les PV du héros.",
     baseCost: 60,
-    costMult: 1.22,
-    maxLevel: 200,
+    costMult: 1.14, // v2.90.24 : 1.22 -> 1.14 (voir doc équilibrage)
+    maxLevel: 150, // v2.90.22 : 200 -> 150 (voir doc équilibrage)
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.endurance = lvl;
@@ -88,7 +88,7 @@ var UPGRADES = [
     icon: "images/Icons/gold_icon.png",
     desc: "+3% or gagné par niveau.",
     baseCost: 55,
-    costMult: 1.20,
+    costMult: 1.10, // v2.90.24 : 1.20 -> 1.10 (voir doc équilibrage)
     maxLevel: 200,
     unlockWorld: 0,
     apply: function (lvl) { game.goldMult = 1 + lvl * 0.03; }
@@ -126,8 +126,11 @@ var AETHER_SHOP = [
     name: "Puissance ancestrale",
     icon: "images/Icons/ascension/puissance_ancestrale.png",
     desc: "+10% dégâts de tap globaux par niveau.",
-    baseCost: 1,
-    costMult: 1.9,
+    // v2.90.21 : coût cumulé pour maxer réduit de ~418k à ~2.2k Aether
+    // (ancien ×1.9/niv, niveau 20 seul coûtait ~198k Aether à lui seul —
+    // hors de portée à tout rythme d'ascension réaliste). Voir doc équilibrage.
+    baseCost: 15,
+    costMult: 1.18,
     maxLevel: 20
   },
   {
@@ -135,8 +138,8 @@ var AETHER_SHOP = [
     name: "Fortune astrale",
     icon: "images/Icons/ascension/fortune_astrale.png",
     desc: "+10% or global par niveau.",
-    baseCost: 1,
-    costMult: 1.9,
+    baseCost: 15,
+    costMult: 1.18,
     maxLevel: 20
   },
   {
@@ -144,8 +147,8 @@ var AETHER_SHOP = [
     name: "Main du destin",
     icon: "images/Icons/ascension/main_du_destin.png",
     desc: "+3% chance de loot boss par niveau.",
-    baseCost: 2,
-    costMult: 2.1,
+    baseCost: 20,
+    costMult: 1.15,
     maxLevel: 15
   },
   {
@@ -153,9 +156,22 @@ var AETHER_SHOP = [
     name: "Noyau d'essence",
     icon: "images/Icons/ascension/noyau_essence.png",
     desc: "+1 essence boss tous les 2 niveaux.",
-    baseCost: 2,
-    costMult: 2.2,
+    baseCost: 20,
+    costMult: 1.23,
     maxLevel: 12
+  },
+  {
+    id: "a_vitality",
+    name: "Vitalité éthérée",
+    icon: "images/Icons/ascension/vitalite_etheree.png",
+    desc: "+10% PV max globaux par niveau.",
+    // v2.90.22 : nouvel item, même poids que Puissance ancestrale/Fortune
+    // astrale (voir doc équilibrage — ajoute ~2 190 Aether au budget total,
+    // qui passe de ~6 277 à ~8 467 Aether, soit ~169 ascensions au lieu
+    // de ~125 pour tout maxer).
+    baseCost: 15,
+    costMult: 1.18,
+    maxLevel: 20
   }
 ];
 

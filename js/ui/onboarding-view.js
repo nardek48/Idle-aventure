@@ -13,7 +13,7 @@ var ONBOARDING_SLIDES = [
   {
     icon: "⚔️",
     title: "Tape pour attaquer",
-    text: "Appuie sur l'ennemi à l'écran pour lui infliger des dégâts. Ton héros attaque aussi tout seul grâce à l'auto DPS, même sans y toucher."
+    text: "Appuie sur l'ennemi à l'écran pour lui infliger des dégâts. Ton héros attaque aussi tout seul grâce à l'auto DPS tant que tu restes sur cet écran."
   },
   {
     icon: "📈",

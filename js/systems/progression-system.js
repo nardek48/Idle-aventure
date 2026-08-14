@@ -93,12 +93,23 @@ var WorldManager = {
      conservé tel quel (beaucoup d'appelants dans l'UI) même si elle
      ne regarde plus l'ascension — ça évite de renommer partout ;
      `requiredAscension` reste dans data/worlds.js pour référence/
-     historique mais n'est plus consulté ici. */
+     historique mais n'est plus consulté ici.
+     v3.3 : vérifie EN PLUS qu'aucune quête d'aventure du monde
+     PRÉCÉDENT ne verrouille explicitement ce passage (gatesNextWorld,
+     voir AdventureQuestManager.isWorldTransitionUnlocked) — un second
+     verrou possible, indépendant de la questline WorldQuestManager,
+     qui doit lui aussi être levé. Aucune quête gatesNextWorld définie
+     pour le monde précédent = ce second verrou reste toujours ouvert
+     (comportement inchangé pour tous les mondes sans contenu ici). */
   meetsAscensionRequirement: function (index) {
     var w = WORLDS[index];
     if (!w) return false;
-    if (!window.WorldQuestManager) return true;
-    return WorldQuestManager.isWorldUnlocked(index);
+    if (window.WorldQuestManager && !WorldQuestManager.isWorldUnlocked(index)) return false;
+    if (window.AdventureQuestManager) {
+      var precedingWorld = WORLDS[index - 1];
+      if (precedingWorld && !AdventureQuestManager.isWorldTransitionUnlocked(precedingWorld.id)) return false;
+    }
+    return true;
   },
 
   /* Appelée après chaque kill (voir CombatEngine.killEnemy). Fait
@@ -125,13 +136,25 @@ var WorldManager = {
     if (this.enemyIndex < (adventure.enemyCount || 1)) return { type: "enemy" };
 
     this.enemyIndex = 0;
-    this.adventureIndex += 1;
+    var justFinishedAdventureIndex = this.adventureIndex;
+    var nextAdventureIndex = this.adventureIndex + 1;
 
     if (window.QuestManager && typeof QuestManager.trackWorldCompletion === "function") {
       QuestManager.trackWorldCompletion(world.id);
     }
 
-    if (this.adventureIndex < world.adventures.length) {
+    if (nextAdventureIndex < world.adventures.length) {
+      // v3.0 : une quête d'Expédition (data/adventure-quests.js) peut
+      // verrouiller le passage vers l'aventure suivante d'un même
+      // monde — voir AdventureQuestManager.isTransitionUnlocked.
+      // Aucune quête définie pour cette transition = comportement
+      // inchangé (toujours débloqué, comme avant v3.0). Si verrouillé,
+      // adventureIndex ne bouge pas : le joueur reboucle sur la même
+      // aventure jusqu'à réclamation de la quête sur la Carte.
+      if (window.AdventureQuestManager && !AdventureQuestManager.isTransitionUnlocked(world.id, justFinishedAdventureIndex)) {
+        return { type: "adventure_locked", world: world, adventure: world.adventures[justFinishedAdventureIndex] };
+      }
+      this.adventureIndex = nextAdventureIndex;
       return { type: "adventure", world: world, adventure: world.adventures[this.adventureIndex] };
     }
 
@@ -436,6 +459,12 @@ function respecTalents() {
 
     addLog("🔄 Talents réinitialisés (-" + formatNumber(cost) + " or, " + owned.length + " point(s) rendu(s))", "event");
     showToast("Talents réinitialisés", 1500);
+    // v2.90.13 : la popup de résumé (#talent-modal-root) vit hors du
+    // cycle renderAll() habituel — sans ça, elle continuerait
+    // d'afficher les talents déjà réinitialisés jusqu'à ce qu'on la
+    // referme/rouvre manuellement (plus rien d'utile à y montrer une
+    // fois vidée, donc on la referme simplement).
+    if (typeof closeTalentSummaryPopup === "function") closeTalentSummaryPopup();
     if (typeof renderAll === "function") renderAll();
     saveGame();
   };

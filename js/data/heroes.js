@@ -38,7 +38,7 @@ var HEROES_DB = {
     id: "chaosKnight",
     name: "Chevalier du Chaos",
     image: "./images/Heroes/ChaosNight.jpg",
-    stats: makeRpgStats(66, 56, 42, 52, 44)
+    stats: makeRpgStats(63, 56, 42, 52, 47) // v2.90.22 : Puissance 66->63, Volonté 44->47 (voir doc équilibrage)
   },
   chaosRanger: {
     id: "chaosRanger",

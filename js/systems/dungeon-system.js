@@ -228,6 +228,7 @@ var DungeonManager = {
     if (!this.isTierUnlocked(tier.id)) return showToast("Palier verrouillé", 1200);
     if ((game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
     if (game.dungeonRun.active) return showToast("Donjon déjà en cours", 1200);
+    if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast("Termine ou abandonne ta quête en cours avant d'entrer en donjon", 1600);
 
     game.dungeonTickets -= 1;
     game.dungeonRun = { active: true, wave: 0, tierId: tier.id, shardsEarned: 0 };
@@ -434,7 +435,8 @@ var DungeonManager = {
     return {
       power: this.getShardShopLevel("d_power") * 0.02,
       gold: this.getShardShopLevel("d_gold") * 0.02,
-      essence: this.getShardShopLevel("d_essence") * 0.02
+      essence: this.getShardShopLevel("d_essence") * 0.02,
+      defense: this.getShardShopLevel("d_defense") * 0.01 // v2.90.23 : 0.02->0.01/niveau
     };
   }
 };

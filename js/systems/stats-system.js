@@ -25,7 +25,8 @@ function getAetherBonuses() {
     tapBonus: (levels.a_tap || 0) * 0.10,
     goldBonus: (levels.a_gold || 0) * 0.10,
     lootBonus: (levels.a_loot || 0) * 3,
-    essenceBonus: Math.floor((levels.a_essence || 0) / 2)
+    essenceBonus: Math.floor((levels.a_essence || 0) / 2),
+    vitalityBonus: (levels.a_vitality || 0) * 0.10 // v2.90.22
   };
 }
 
@@ -231,6 +232,16 @@ var StatsSystem = {
     // casser l'équilibrage existant.
     game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, totalEndurance * HERO_DEFENSE_COEF + (game.equipDefensePct || 0));
 
+    // v2.90.22 : bonus de PV max par ascension (+4%/asc, multiplicatif),
+    // en complément des bonus existants tapMult/goldMult par ascension
+    // (voir plus bas). Appliqué ici, juste après le calcul de base des
+    // PV max à partir de l'Endurance, avant tout autre bonus de PV
+    // (potions, etc. — voir plus bas).
+    if (game.ascensionCount > 0) {
+      game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + game.ascensionCount * 0.04)));
+      if (!game.heroHp || game.heroHp > game.heroMaxHp) game.heroHp = game.heroMaxHp;
+    }
+
     // Bonus de panoplie (3 pièces équipées de même rareté), voir
     // getSetBonus() plus bas et SET_BONUS_CONFIG dans data/equipment.js.
     var setBonus = this.getSetBonus();
@@ -272,6 +283,10 @@ var StatsSystem = {
     var aether = getAetherBonuses();
     game.tapMult += aether.tapBonus || 0;
     game.goldMult *= 1 + (aether.goldBonus || 0);
+    if (aether.vitalityBonus) {
+      game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + aether.vitalityBonus)));
+      if (!game.heroHp || game.heroHp > game.heroMaxHp) game.heroHp = game.heroMaxHp;
+    }
 
     // Potions temporaires actives (voir systems/potion-system.js) :
     // appliquées en dernier, par-dessus tout le reste, comme un boost
@@ -304,6 +319,9 @@ var StatsSystem = {
     if (dungeonShopBonus.power) game.tapMult += dungeonShopBonus.power;
     if (dungeonShopBonus.gold) game.goldMult += dungeonShopBonus.gold;
     if (dungeonShopBonus.essence) game.essenceGlobalMult += dungeonShopBonus.essence;
+    if (dungeonShopBonus.defense) {
+      game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, game.heroDefensePct + dungeonShopBonus.defense);
+    }
 
     // Bonus temporaire de l'attaque spéciale (ex: Fureur du Chaos),
     // voir systems/special-attack-system.js.

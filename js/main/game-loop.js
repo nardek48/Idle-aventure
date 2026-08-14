@@ -49,7 +49,27 @@ function gameLoop() {
     QuestManager.track("combatTime", dt);
   }
 
-  CombatEngine.autoAttack(dt);
+  // v3.0 : l'auto-DPS du héros (Célérité) n'est plus une simulation de
+  // fond permanente — elle ne s'applique QUE quand le joueur est
+  // réellement sur l'écran Combat (aide active), même principe que la
+  // riposte ennemie juste en dessous (déjà limitée à cet onglet depuis
+  // v2.10). La chasse ambiante indépendante de l'écran est désormais
+  // portée par le village (Hôtel de Ville) — voir
+  // VillageManager.tickAmbientHunting() juste après.
+  if (game.activeTab === "combat") {
+    CombatEngine.autoAttack(dt);
+  }
+
+  // v3.0 : chasse ambiante du village (Hôtel de Ville) — tourne EN
+  // CONTINU, peu importe l'onglet ouvert (y compris Combat, en plus
+  // de l'aide active du joueur). Même formule que le calcul hors-ligne
+  // (OfflineManager.calculate()), appliquée en continu plutôt qu'en un
+  // seul bloc au retour d'absence. 0 si l'Hôtel de Ville n'est pas
+  // investi (comme hors-ligne), hormis le plancher symbolique déjà
+  // existant.
+  if (window.VillageManager && typeof VillageManager.tickAmbientHunting === "function") {
+    VillageManager.tickAmbientHunting(dt);
+  }
 
   // v2.10 : la riposte ennemie ne s'applique QUE quand le joueur est
   // réellement sur l'écran Combat — avant, elle tournait en continu
@@ -115,12 +135,17 @@ function gameLoop() {
     }
   }
 
-  // Talent "Intérêt composé" : +0.05% de l'or actuel toutes les 10s
-  // (accumulateur pour rester précis même avec des dt irréguliers).
+  // v2.90.23 : "Intérêt composé" rapportait +0.05% de l'OR ACTUEL toutes les
+  // 10s, sans plafond — effet boule de neige disproportionné en fin de partie
+  // (plus tu es riche, plus ça rapporte, indépendamment de toute progression
+  // réelle). Remplacé par un flat indexé sur game.goldMult (la vraie
+  // progression du joueur) plutôt que sur son or accumulé : +2 or/seconde ×
+  // goldMult, versé toutes les 10s (accumulateur pour rester précis même
+  // avec des dt irréguliers).
   if (game.talents.t_interest) {
     game._interestTimer = (game._interestTimer || 0) + dt;
     while (game._interestTimer >= 10) {
-      var bonus = Math.floor(game.gold * 0.0005);
+      var bonus = Math.floor(10 * 2 * Number(game.goldMult || 1));
       if (bonus > 0) {
         game.gold += bonus;
         game.totalGoldEarned += bonus;

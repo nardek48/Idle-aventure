@@ -344,6 +344,70 @@
   margin-bottom: 0;
 }
 
+/* v3.0 : quêtes d'aventure — même carte que .map-quest-card ci-dessus,
+   avec juste un en-tête de section + le solde de ressource rare.
+   v3.2 : la section elle-même est désormais construite par
+   buildAdventureQuestsSectionHTML() dans ui/quests-view.js (onglet
+   Quêtes) plutôt que ui/map-view.js (popup Carte) — classes CSS
+   inchangées, gardées ici (déjà présentes, pas de raison de les
+   déplacer de fichier). */
+.map-adventure-quests {
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.map-adventure-quests-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--nb-ink-dim);
+}
+
+.map-adventure-quests-resource {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--nb-gold);
+}
+
+.map-quest-card.is-claimed {
+  opacity: 0.7;
+}
+
+/* v3.2 : carte de la quête actuellement en run (voir
+   AdventureQuestManager.getRunningQuest()) — léger halo doré pour la
+   distinguer des quêtes juste "disponibles". */
+.map-quest-card.is-running {
+  border-color: var(--nb-gold);
+  box-shadow: 0 0 0 2px rgba(212, 165, 74, 0.25);
+}
+
+.map-quest-run-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.map-quest-run-actions .settings-btn {
+  flex: 1;
+  margin: 0;
+}
+
+.map-quest-claimed-label {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4ade80;
+  text-align: center;
+}
+
 .map-adventure-list {
   display: flex;
   flex-direction: column;

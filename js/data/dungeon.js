@@ -84,9 +84,10 @@ var DUNGEON_TIERS = [
    niveau, coût croissant, bonus permanent appliqué dans
    StatsSystem.recalcStats(). */
 var DUNGEON_SHOP = [
-  { id: "d_power", name: "Lame du donjon", icon: "⚔️", desc: "+2% dégâts globaux par niveau.", baseCost: 5, costMult: 1.5, maxLevel: 20 },
-  { id: "d_gold", name: "Trésor du donjon", icon: "💰", desc: "+2% or global par niveau.", baseCost: 5, costMult: 1.5, maxLevel: 20 },
-  { id: "d_essence", name: "Essence du donjon", icon: "images/Icons/essence_icon.png", desc: "+2% essence globale par niveau.", baseCost: 5, costMult: 1.5, maxLevel: 20 }
+  { id: "d_power", name: "Lame du donjon", icon: "⚔️", desc: "+2% dégâts globaux par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 }, // v2.90.24 : 1.5 -> 1.30
+  { id: "d_gold", name: "Trésor du donjon", icon: "💰", desc: "+2% or global par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 }, // v2.90.24 : 1.5 -> 1.30
+  { id: "d_essence", name: "Essence du donjon", icon: "images/Icons/essence_icon.png", desc: "+2% essence globale par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 }, // v2.90.24 : 1.5 -> 1.30
+  { id: "d_defense", name: "Armure du donjon", icon: "🛡️", desc: "+1% défense par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 } // v2.90.23 : 2%->1%/niveau ; v2.90.24 : costMult 1.5 -> 1.30 (voir doc équilibrage)
 ];
 
 /* v2.83.6 : regroupement des paliers par DONJON, pour préparer l'ajout

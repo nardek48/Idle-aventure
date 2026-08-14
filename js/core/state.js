@@ -133,6 +133,19 @@ function createInitialGameState() {
     worldsEverReached: {},      // { indexMonde: true }, persiste même après ascension — voir data/codex.js
     worldQuestProgress: {},     // v2.83 : { idQuestline: { idEtape: nombre } }, persiste même après ascension — voir systems/world-quest-system.js
     worldQuestsCompleted: {},   // v2.83 : { idQuestline: true }, persiste même après ascension — c'est CE flag qui débloque le monde
+
+    // v3.0 : ressources rares (système Quêtes/Ressources/Territoire, voir
+    // Aethervale_Roadmap_Quetes_Ressources.md) — une seule ressource test
+    // pour démarrer (Minerai rare), persiste même après ascension comme
+    // l'Aether/le Village (voir hardResetState en save-system.js).
+    resources: { mineraiRare: 0 },
+    // v3.0 : quêtes d'aventure ({worldId, adventureIndex}, voir
+    // data/adventure-quests.js) — système séparé de worldQuestProgress
+    // ci-dessus, qui lui gère le déblocage des MONDES entiers.
+    adventureQuestProgress: {},  // { idQuête: { idÉtape: nombre } }, persiste même après ascension
+    adventureQuestsCompleted: {}, // { idQuête: true }, persiste même après ascension
+    adventureQuestRun: { active: false, questId: null }, // v3.2 : run de quête en cours (même traitement que dungeonRun — NE survit PAS à l'ascension ni au reset complet)
+
     dungeonTiersEntered: {},    // { idPalier: true }
     codexChaosSeen: false,      // vrai dès qu'un héros du Chaos a été choisi une fois
     codexRead: {},              // { idEntree: true }, voir systems/codex-system.js
@@ -275,6 +288,14 @@ function ensureGameStateDefaults() {
   // à v2.83 (un monde déjà atteint sous l'ancien système reste débloqué).
   if (window.WorldQuestManager && typeof WorldQuestManager.migrate === "function") {
     WorldQuestManager.migrate();
+  }
+
+  // v3.0 : filet de sécurité pour les sauvegardes antérieures au système
+  // Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
+  if (!game.resources || typeof game.resources !== "object") game.resources = { mineraiRare: 0 };
+  if (typeof game.resources.mineraiRare !== "number") game.resources.mineraiRare = 0;
+  if (window.AdventureQuestManager && typeof AdventureQuestManager.ensureDefaults === "function") {
+    AdventureQuestManager.ensureDefaults();
   }
 
   if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};

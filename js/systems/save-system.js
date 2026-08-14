@@ -233,6 +233,11 @@ function buildSaveData() {
     worldsEverReached: game.worldsEverReached || {},
     worldQuestProgress: game.worldQuestProgress || {},
     worldQuestsCompleted: game.worldQuestsCompleted || {},
+    // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
+    resources: game.resources || { mineraiRare: 0 },
+    adventureQuestProgress: game.adventureQuestProgress || {},
+    adventureQuestsCompleted: game.adventureQuestsCompleted || {},
+    adventureQuestRun: game.adventureQuestRun || { active: false, questId: null },
     dungeonTiersEntered: game.dungeonTiersEntered || {},
     codexChaosSeen: !!game.codexChaosSeen,
     codexRead: game.codexRead || {},
@@ -374,6 +379,12 @@ function restoreBaseState(d) {
   game.worldsEverReached = d.worldsEverReached && typeof d.worldsEverReached === "object" ? d.worldsEverReached : {};
   game.worldQuestProgress = d.worldQuestProgress && typeof d.worldQuestProgress === "object" ? d.worldQuestProgress : {};
   game.worldQuestsCompleted = d.worldQuestsCompleted && typeof d.worldQuestsCompleted === "object" ? d.worldQuestsCompleted : {};
+  // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
+  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { mineraiRare: 0 };
+  if (typeof game.resources.mineraiRare !== "number") game.resources.mineraiRare = 0;
+  game.adventureQuestProgress = d.adventureQuestProgress && typeof d.adventureQuestProgress === "object" ? d.adventureQuestProgress : {};
+  game.adventureQuestsCompleted = d.adventureQuestsCompleted && typeof d.adventureQuestsCompleted === "object" ? d.adventureQuestsCompleted : {};
+  game.adventureQuestRun = d.adventureQuestRun && typeof d.adventureQuestRun === "object" ? d.adventureQuestRun : { active: false, questId: null };
   game.dungeonTiersEntered = d.dungeonTiersEntered && typeof d.dungeonTiersEntered === "object" ? d.dungeonTiersEntered : {};
   game.codexChaosSeen = !!d.codexChaosSeen;
   game.codexRead = d.codexRead && typeof d.codexRead === "object" ? d.codexRead : {};
@@ -456,6 +467,12 @@ function hardResetState() {
   var keptWorldsEverReached = Object.assign({}, game.worldsEverReached || {});
   var keptWorldQuestProgress = Object.assign({}, game.worldQuestProgress || {});
   var keptWorldQuestsCompleted = Object.assign({}, game.worldQuestsCompleted || {});
+  // v3.0 : système Quêtes/Ressources/Territoire — les ressources rares
+  // et la progression des quêtes d'aventure sont une progression
+  // permanente au même titre que les questlines de monde ci-dessus.
+  var keptResources = Object.assign({ mineraiRare: 0 }, game.resources || {});
+  var keptAdventureQuestProgress = Object.assign({}, game.adventureQuestProgress || {});
+  var keptAdventureQuestsCompleted = Object.assign({}, game.adventureQuestsCompleted || {});
   var keptDungeonTiersEntered = Object.assign({}, game.dungeonTiersEntered || {});
   var keptCodexChaosSeen = !!game.codexChaosSeen;
   var keptCodexRead = Object.assign({}, game.codexRead || {});
@@ -541,6 +558,11 @@ function hardResetState() {
   game.dungeonTicketResetTime = keptDungeonTicketResetTime;
   game.dungeonTicketsPurchasedToday = keptDungeonTicketsPurchasedToday;
   game.dungeonRun = { active: false, wave: 0, tierId: 1 };
+  // v3.2 : le run de quête en cours ne survit pas à l'ascension, même
+  // traitement que dungeonRun juste au-dessus (la PROGRESSION déjà
+  // enregistrée sur les étapes, elle, est conservée séparément —
+  // keptAdventureQuestProgress/keptAdventureQuestsCompleted plus haut).
+  game.adventureQuestRun = { active: false, questId: null };
   game.dungeonBestWave = keptDungeonBestWave;
   game.dungeonBossClears = keptDungeonBossClears;
   game.dungeonShards = keptDungeonShards;
@@ -552,6 +574,9 @@ function hardResetState() {
   game.worldsEverReached = keptWorldsEverReached;
   game.worldQuestProgress = keptWorldQuestProgress;
   game.worldQuestsCompleted = keptWorldQuestsCompleted;
+  game.resources = keptResources;
+  game.adventureQuestProgress = keptAdventureQuestProgress;
+  game.adventureQuestsCompleted = keptAdventureQuestsCompleted;
   game.dungeonTiersEntered = keptDungeonTiersEntered;
   game.codexChaosSeen = keptCodexChaosSeen;
   game.codexRead = keptCodexRead;
@@ -665,6 +690,7 @@ function fullResetState() {
   game.dungeonTicketResetTime = 0;
   game.dungeonTicketsPurchasedToday = 0;
   game.dungeonRun = { active: false, wave: 0, tierId: 1 };
+  game.adventureQuestRun = { active: false, questId: null };
   game.dungeonBestWave = 0;
   game.dungeonBossClears = 0;
   game.dungeonShards = 0;
@@ -676,6 +702,11 @@ function fullResetState() {
   game.worldsEverReached = {};
   game.worldQuestProgress = {};
   game.worldQuestsCompleted = {};
+  // v3.0 : système Quêtes/Ressources/Territoire — repart bien à zéro
+  // sur un reset complet, comme worldQuestProgress ci-dessus.
+  game.resources = { mineraiRare: 0 };
+  game.adventureQuestProgress = {};
+  game.adventureQuestsCompleted = {};
   game.dungeonTiersEntered = {};
   game.codexChaosSeen = false;
   game.codexRead = {};

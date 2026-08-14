@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "2.90.20"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.3.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -93,6 +93,7 @@ var PRECACHE_APP_SHELL = [
   "./js/data/talents.js",
   "./js/data/upgrades.js",
   "./js/data/world-quests.js",
+  "./js/data/adventure-quests.js",
   "./js/data/worlds.js",
   "./js/main/boot.js",
   "./js/main/game-loop.js",
@@ -113,6 +114,7 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/special-attack-system.js",
   "./js/systems/stats-system.js",
   "./js/systems/world-quest-system.js",
+  "./js/systems/adventure-quest-system.js",
   "./js/ui/achievement-view.js",
   "./js/ui/ascension-view.js",
   "./js/ui/bestiary-view.js",
