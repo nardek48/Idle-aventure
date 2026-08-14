@@ -21,17 +21,24 @@ function getEquipmentSellValue(item) {
 }
 
 /* v2.23 : chemin de l'icône illustrée d'un objet (images/Icons/equipment_icon/),
-   une image DIFFÉRENTE par type ET par rareté (avant, une seule
-   icône générique par type, ignorant la rareté).
+   une image DIFFÉRENTE par type ET par rareté.
 
-   v2.90 : passage en .png pour les 9 types qui ont désormais un
-   visuel dédié pour LES 5 raretés (dont "green"/Inhabituel, avant
-   en repli sur "common"). Les 3 types restés en .jpg (bow, crown,
-   shield — pas encore fournis en .png) n'ont toujours pas de visuel
-   "green" dédié : ils gardent le repli sur "common" pour cette
-   rareté en attendant. */
+   v2.90 : passage en .png pour les types qui ont un visuel dédié
+   pour LES 5 raretés (dont "green"/Inhabituel, avant en repli sur
+   "common"). Les types restés en .jpg n'ont pas de visuel "green"
+   dédié : ils gardent le repli sur "common" pour cette rareté.
+
+   v3.8 : simplification temporaire — une seule illustration par TYPE
+   d'équipement (rareté forcée à "common"), le temps que Bottes reçoive
+   son visuel (seul type encore sans art à l'époque).
+
+   v3.11 : revert — Bottes a maintenant son visuel complet (5 raretés,
+   comme tous les autres types), donc plus aucune raison de forcer
+   "common" : CHAQUE emplacement affiche à nouveau une image différente
+   selon sa vraie rareté, arme comprise (qui varie aussi par flavor
+   bow/sword/axe/staff, voir data/equipment.js). */
 var EQUIPMENT_ICON_PNG_TYPES = {
-  amulet: true, armor: true, axe: true, casque: true,
+  amulet: true, armor: true, axe: true, bottes: true, bow: true, casque: true,
   gants: true, ring: true, robe: true, staff: true, sword: true
 };
 
@@ -51,7 +58,8 @@ function getEquipmentIconPath(item) {
     return "images/Icons/equipment_icon/" + item.icon + "_" + item.rarity + ".png";
   }
 
-  // Types encore en .jpg (bow/crown/shield) : repli "green" -> "common".
+  // Types encore en .jpg (non tirés actuellement — robe/crown/shield,
+  // retirés du pool en v3.8, laissés sur le disque) : repli "green" -> "common".
   var rarityFile = EQUIPMENT_ICON_JPG_RARITY_FALLBACK[item.rarity] || "common";
   return "images/Icons/equipment_icon/" + item.icon + "_" + rarityFile + ".jpg";
 }

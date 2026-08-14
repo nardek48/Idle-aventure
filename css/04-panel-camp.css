@@ -38,30 +38,57 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   text-align: left;
 }
 
+/* v3.14 : les deux cartes de repos (long/court) côte à côte plutôt
+   qu'une pleine largeur — voir buildCampHTML(), ui/camp-view.js. */
+.camp-fire-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.camp-fire-row .camp-fire-card {
+  flex: 1;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
 .camp-fire-card {
   padding-top: 20px;
 }
 
 .camp-fire-icon {
-  font-size: 40px;
+  font-size: 34px;
   margin-bottom: 4px;
 }
 
 .camp-fire-title {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--nb-ink);
   margin-bottom: 4px;
 }
 
 .camp-fire-desc {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--nb-ink-dim);
   margin-bottom: 14px;
 }
 
 .camp-fire-btn-cooldown {
   opacity: 0.6;
+}
+
+/* v3.14 : message affiché une fois après une mort (game.justDied),
+   voir buildCampHTML() plus haut. */
+.camp-death-banner {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: var(--nb-radius-md);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--nb-ink);
+  font-size: 13px;
+  text-align: center;
 }
 
 .camp-summary-row {

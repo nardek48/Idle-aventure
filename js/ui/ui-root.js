@@ -31,10 +31,17 @@ function buildEquipmentIconHTML(item, cssClass) {
 
   var path = (typeof getEquipmentIconPath === "function") ? getEquipmentIconPath(item) : "";
   var fallbackEmoji = renderIcon("equipment", item.icon);
+  // v3.14 : bordure de rareté ajoutée directement ici (classe
+  // "rarity-{rareté}") — buildEquipmentIconHTML() étant le point de
+  // rendu PARTAGÉ par tout le jeu (détail objet, emplacements équipés,
+  // boutique, comparaison, sac...), une seule modification ici
+  // s'applique partout d'un coup. Voir la règle .has-icon-img.rarity-*
+  // dans css/04-panel-equipment.css pour le style visuel réel.
+  var rarityClass = item.rarity ? (" rarity-" + item.rarity) : "";
 
-  if (!path) return '<div class="' + cls + '">' + fallbackEmoji + '</div>';
+  if (!path) return '<div class="' + cls + rarityClass + '">' + fallbackEmoji + '</div>';
 
-  return '<div class="' + cls + ' has-icon-img">'
+  return '<div class="' + cls + rarityClass + ' has-icon-img">'
     + '<img src="' + esc(path) + '" alt="' + esc(item.name || "") + '" '
     + 'onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">'
     + '<span class="icon-img-fallback">' + fallbackEmoji + '</span>'

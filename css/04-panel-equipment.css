@@ -181,6 +181,20 @@
   opacity: 0.5;
 }
 
+/* v3.14 : bordure de rareté générique, appliquée par
+   buildEquipmentIconHTML() (ui-root.js) — UNE SEULE règle pour tous
+   les endroits du jeu qui affichent une icône d'objet (détail, sac,
+   emplacements équipés, boutique, comparaison) : avant, seules les
+   tuiles du sac (.eq-bag-tile) avaient cette bordure. Cible
+   spécifiquement .has-icon-img (présent seulement quand une vraie
+   image a chargé, pas le repli emoji) pour ne pas dénaturer le style
+   des icônes sans visuel dédié. */
+.has-icon-img.rarity-common { box-shadow: inset 0 0 0 2px var(--rarity-common); }
+.has-icon-img.rarity-green { box-shadow: inset 0 0 0 2px var(--rarity-green); }
+.has-icon-img.rarity-rare { box-shadow: inset 0 0 0 2px var(--rarity-rare); }
+.has-icon-img.rarity-epic { box-shadow: inset 0 0 0 2px var(--rarity-epic); }
+.has-icon-img.rarity-legendary { box-shadow: inset 0 0 0 2px var(--rarity-legendary); }
+
 .eq-detail-icon-img {
   width: 100%;
   height: 100%;

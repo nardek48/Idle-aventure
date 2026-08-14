@@ -292,6 +292,20 @@
   animation: goldPop 1s ease forwards;
 }
 
+/* v3.14 : dégâts encaissés par le héros, en rouge — voir
+   showDamageTakenPopup(), systems/combat-engine.js. Même animation
+   que .gold-popup (goldPop), juste la couleur qui change. */
+.damage-taken-popup {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  font-size: clamp(14.72px, calc(7.27px + 2.33vw), 17.28px);
+  font-weight: 800;
+  color: #ef4444;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+  animation: goldPop 1s ease forwards;
+}
+
 
 
 /* =========================
@@ -344,12 +358,14 @@
 
   #enemy-emoji.hit-flash,
   .float-dmg,
-  .gold-popup {
+  .gold-popup,
+  .damage-taken-popup {
     animation: none;
   }
 
   .float-dmg,
-  .gold-popup {
+  .gold-popup,
+  .damage-taken-popup {
     opacity: 1;
     transform: translate(-50%, -12px);
   }

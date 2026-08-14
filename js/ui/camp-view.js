@@ -63,24 +63,55 @@ function buildCampQuestSummaryHTML() {
 function buildCampHTML() {
   if (window.CampManager) CampManager.ensureDefaults();
 
-  var ready = window.CampManager ? CampManager.isReady() : true;
-  var remainingMs = window.CampManager ? CampManager.getRemainingMs() : 0;
+  var longReady = window.CampManager ? CampManager.isLongReady() : true;
+  var longRemainingMs = window.CampManager ? CampManager.getLongRemainingMs() : 0;
+  var shortReady = window.CampManager ? CampManager.isShortReady() : true;
+  var shortRemainingMs = window.CampManager ? CampManager.getShortRemainingMs() : 0;
 
   var h = '<div class="nb-page-frame camp-page">';
 
   h += '<div class="camp-hero-title">🏕️ Campement</div>';
   h += '<div class="camp-hero-sub">Ton point de ralliement entre deux expéditions.</div>';
 
-  // --- Feu de camp ---
+  // v3.14 : message affiché UNE SEULE fois juste après une mort (voir
+  // game.justDied, mis à true par CombatEngine.onHeroDefeated() dans
+  // sa branche normale — pas en donjon/run de quête, qui ont déjà
+  // leur propre message dédié). Effacé immédiatement après lecture.
+  // v3.15 : les PV sont réellement à 0 à ce stade (plus une simple
+  // mise en scène) — le message reflète maintenant une vraie
+  // nécessité, pas juste une ambiance.
+  if (game.justDied) {
+    h += '<div class="camp-death-banner">💀 Tu es tombé au combat, PV à 0. Repose-toi avant de repartir à l\'aventure.</div>';
+    game.justDied = false;
+  }
+
+  // --- Feu de camp : long repos (30 min, 100% PV) vs repos court
+  //     (15 min, 50% PV) — v3.14, deux cooldowns indépendants, voir
+  //     systems/camp-system.js. ---
+  h += '<div class="camp-fire-row">';
+
   h += '<div class="camp-card camp-fire-card">';
   h += '<div class="camp-fire-icon">🔥</div>';
-  h += '<div class="camp-fire-title">Feu de camp</div>';
-  h += '<div class="camp-fire-desc">Restaure tes PV au maximum. Utilisable toutes les 30 minutes.</div>';
-  if (ready) {
-    h += '<button class="settings-btn primary" type="button" onclick="CampManager.useCampfire(); if (typeof renderPanel === \'function\') renderPanel();">Se reposer</button>';
+  h += '<div class="camp-fire-title">Long repos</div>';
+  h += '<div class="camp-fire-desc">PV au maximum. Toutes les 30 min.</div>';
+  if (longReady) {
+    h += '<button class="settings-btn primary" type="button" onclick="CampManager.useLongRest(); if (typeof renderPanel === \'function\') renderPanel();">Se reposer</button>';
   } else {
-    h += '<button class="settings-btn camp-fire-btn-cooldown" type="button" disabled>Disponible dans ' + esc(formatTime(Math.ceil(remainingMs / 1000))) + '</button>';
+    h += '<button class="settings-btn camp-fire-btn-cooldown" type="button" disabled>' + esc(formatTime(Math.ceil(longRemainingMs / 1000))) + '</button>';
   }
+  h += '</div>';
+
+  h += '<div class="camp-card camp-fire-card">';
+  h += '<div class="camp-fire-icon">🪵</div>';
+  h += '<div class="camp-fire-title">Repos court</div>';
+  h += '<div class="camp-fire-desc">50% des PV max. Toutes les 15 min.</div>';
+  if (shortReady) {
+    h += '<button class="settings-btn primary" type="button" onclick="CampManager.useShortRest(); if (typeof renderPanel === \'function\') renderPanel();">Se reposer</button>';
+  } else {
+    h += '<button class="settings-btn camp-fire-btn-cooldown" type="button" disabled>' + esc(formatTime(Math.ceil(shortRemainingMs / 1000))) + '</button>';
+  }
+  h += '</div>';
+
   h += '</div>';
 
   // --- Résumé des quêtes ---

@@ -238,7 +238,8 @@ function buildSaveData() {
     adventureQuestProgress: game.adventureQuestProgress || {},
     adventureQuestsCompleted: game.adventureQuestsCompleted || {},
     adventureQuestRun: game.adventureQuestRun || { active: false, questId: null },
-    campfireLastUsed: game.campfireLastUsed || 0, // v3.7 : cooldown du feu de camp, voir systems/camp-system.js
+    campfireLastUsed: game.campfireLastUsed || 0, // v3.7 : cooldown du feu de camp (long repos), voir systems/camp-system.js
+    campfireShortLastUsed: game.campfireShortLastUsed || 0, // v3.14 : cooldown du repos court
     dungeonTiersEntered: game.dungeonTiersEntered || {},
     codexChaosSeen: !!game.codexChaosSeen,
     codexRead: game.codexRead || {},
@@ -387,6 +388,7 @@ function restoreBaseState(d) {
   game.adventureQuestsCompleted = d.adventureQuestsCompleted && typeof d.adventureQuestsCompleted === "object" ? d.adventureQuestsCompleted : {};
   game.adventureQuestRun = d.adventureQuestRun && typeof d.adventureQuestRun === "object" ? d.adventureQuestRun : { active: false, questId: null };
   game.campfireLastUsed = typeof d.campfireLastUsed === "number" ? d.campfireLastUsed : 0;
+  game.campfireShortLastUsed = typeof d.campfireShortLastUsed === "number" ? d.campfireShortLastUsed : 0;
   game.dungeonTiersEntered = d.dungeonTiersEntered && typeof d.dungeonTiersEntered === "object" ? d.dungeonTiersEntered : {};
   game.codexChaosSeen = !!d.codexChaosSeen;
   game.codexRead = d.codexRead && typeof d.codexRead === "object" ? d.codexRead : {};
@@ -478,6 +480,14 @@ function hardResetState() {
   var keptDungeonTiersEntered = Object.assign({}, game.dungeonTiersEntered || {});
   var keptCodexChaosSeen = !!game.codexChaosSeen;
   var keptCodexRead = Object.assign({}, game.codexRead || {});
+  // v3.14 : les quêtes journalières ne doivent plus se réinitialiser à
+  // l'ascension (seulement au reset complet) — avant, elles étaient
+  // effacées comme le reste de la "run classique" (or, potions...),
+  // ce qui n'a pas vraiment de sens : rien dans la journée du joueur
+  // n'a changé juste parce qu'il a ascensionné.
+  var keptQuests = Array.isArray(game.quests) ? game.quests.slice() : [];
+  var keptQuestProgress = Object.assign({}, game.questProgress || {});
+  var keptQuestResetTime = game.questResetTime || 0;
   var keptDungeonShopLevels = Object.assign({}, game.dungeonShopLevels || {});
   // v2.90.11 : voir note dans buildSaveData() — la progression de
   // déblocage séquentiel des paliers de donjon est une progression
@@ -494,8 +504,12 @@ function hardResetState() {
   var keptEquipShopResetTime = Number(game.equipShopResetTime || 0);
   var keptEquipShopManualRefreshCount = Number(game.equipShopManualRefreshCount || 0);
   var keptVillage = Object.assign({ goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0, watchtower: 0, sanctuary: 0 }, game.village || {});
-  var keptAutoSellEquipment = !!game.autoSellEquipment;
-  var keptAutoSellRarityThreshold = game.autoSellRarityThreshold || "common";
+  // v3.14 : le réglage d'autovente n'est PLUS conservé à l'ascension —
+  // logique, puisque tout l'équipement équipé/en sac est perdu à
+  // l'ascension (game.inventory/equipped repartent à zéro juste en
+  // dessous) ; garder un seuil de rareté configuré sur un sac
+  // désormais vide n'avait pas de sens. Remis aux valeurs par défaut,
+  // comme le fait déjà fullResetState().
   var keptHasSeenOnboarding = !!game.hasSeenOnboarding;
 
   game.gold = 0;
@@ -536,9 +550,9 @@ function hardResetState() {
   game.aetherUpgrades = keptAetherUpgrades;
   game.inventory = [];
   game.equipped = getDefaultEquipped();
-  game.quests = [];
-  game.questProgress = Object.assign({}, questDefaults);
-  game.questResetTime = 0;
+  game.quests = keptQuests;
+  game.questProgress = keptQuestProgress;
+  game.questResetTime = keptQuestResetTime;
   game.activeTab = "combat";
   game.enemy = null;
   game.lastOnline = Date.now();
@@ -589,8 +603,8 @@ function hardResetState() {
   game.lastDefenseUse = 0;
   game.defenseBuffExpires = 0;
 
-  game.autoSellEquipment = keptAutoSellEquipment;
-  game.autoSellRarityThreshold = keptAutoSellRarityThreshold;
+  game.autoSellEquipment = false;
+  game.autoSellRarityThreshold = "common";
   game.hasSeenOnboarding = keptHasSeenOnboarding;
 
   WorldManager.worldIndex = 0;
@@ -602,11 +616,14 @@ function hardResetState() {
 
   if (typeof gameLog !== "undefined" && Array.isArray(gameLog)) gameLog.length = 0;
 
-  if (window.QuestManager && typeof QuestManager.generateDaily === "function") {
-    game.quests = QuestManager.generateDaily();
-    var resetHours = (typeof QUEST_CONFIG !== "undefined" && QUEST_CONFIG && QUEST_CONFIG.resetHours) ? QUEST_CONFIG.resetHours : 24;
-    game.questResetTime = Date.now() + resetHours * 3600 * 1000;
-  }
+  // v3.14 : PLUS de régénération forcée des quêtes journalières ici —
+  // ce bloc écrasait silencieusement le "kept" plus haut
+  // (game.quests/questProgress/questResetTime), qui avait beau les
+  // conserver, cette régénération inconditionnelle les remplaçait
+  // quand même juste avant la fin de la fonction. Les quêtes
+  // journalières ne doivent plus du tout être affectées par
+  // l'ascension — QuestManager gère déjà tout seul leur renouvellement
+  // normal via game.questResetTime (ailleurs, au fil du jeu).
 
   reapplyProgressEffects();
 
@@ -691,6 +708,7 @@ function fullResetState() {
   game.dungeonRun = { active: false, wave: 0, tierId: 1 };
   game.adventureQuestRun = { active: false, questId: null };
   game.campfireLastUsed = 0; // v3.7 : repos gratuit du Campement — repart bien à zéro sur un reset complet
+  game.campfireShortLastUsed = 0; // v3.14 : idem pour le repos court
   game.dungeonBossClears = 0;
   game.dungeonShards = 0;
   game.dungeonShopLevels = {};

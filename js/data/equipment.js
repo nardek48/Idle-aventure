@@ -114,26 +114,21 @@ EQUIPMENT_SLOT_CONFIG[slot] :
                 {icon}_{rareté}.png ou .jpg selon le type, voir
                 getEquipmentIconPath en systems/equipment-system.js),
                 tirés au hasard pour la variété visuelle.
-                v3.8 : simplification demandée — UNE SEULE illustration
-                par type d'équipement (la rareté reste communiquée par
-                la bordure/couleur de la carte, pas par un visuel dédié)
-                pour armor/helmet/gloves/boots/ring/amulet — leurs
-                tableaux `icons` ne contiennent qu'une seule entrée
-                chacun (robe/shield/crown restent sur le disque, non
-                supprimés, mais ne sont plus tirés).
-                v3.9 : l'arme (weapon), elle, garde PLUSIEURS flavors
-                (bow/sword/axe/staff) EN PLUS de sa variance par
-                rareté — c'est le seul emplacement avec plusieurs
-                illustrations possibles (voir getEquipmentIconPath, qui
-                force la rareté à "common" pour tout ce qui n'est pas
-                item.slot === "weapon", MAIS laisse le choix de flavor
-                intact pour tous). Chaque clé de flavor doit
-                correspondre au bon visuel sur le disque : axe -> hache,
-                sword -> épée, staff -> bâton, bow -> arc (vérifié).
-                Tous les emplacements ont désormais un visuel complet
-                sur le disque, y compris "bottes" (5 raretés, fourni
-                par Seb en v3.9 — auparavant le seul emplacement sans
-                aucune image).
+                v3.8 : simplification temporaire — une seule
+                illustration par type (rareté forcée à "common"), le
+                temps que Bottes reçoive son visuel.
+                v3.9 : icônes de Bottes fournies (5 raretés).
+                v3.11 : revert du forçage "common" — CHAQUE emplacement
+                affiche à nouveau une image différente selon sa vraie
+                rareté (tous ont désormais un set complet de 5 sur le
+                disque). L'arme (weapon) reste en plus le SEUL
+                emplacement avec plusieurs flavors possibles
+                (bow/sword/axe/staff, voir getEquipmentIconPath) —
+                chaque clé de flavor correspond au bon visuel sur le
+                disque : axe -> hache, sword -> épée, staff -> bâton,
+                bow -> arc (vérifié). Les autres flavors retirés du
+                tirage (robe/shield/crown) restent sur le disque, non
+                supprimés, juste plus tirés.
   - names     : noms possibles, tirés au hasard (flavor uniquement,
                 la rareté est déjà indiquée par la couleur/bordure)
   - ranges    : { rareté: [min, max] } — voir LootSystem.generateEquipmentItem

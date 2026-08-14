@@ -80,6 +80,14 @@ function gameLoop() {
   // fenêtre pendant qu'elle tourne).
   var modalOpen = isBlockingModalOpen();
 
+  // v3.15 : un héros à 0 PV (juste terrassé, pas encore reposé au
+  // Campement) ne participe plus du tout au combat — ni l'aide active
+  // (tap/auto-DPS), ni la riposte ennemie — le temps qu'il se soigne
+  // (voir CampManager.useLongRest()/useShortRest(), systems/camp-system.js).
+  // Sans ce garde, revenir sur l'écran Combat à 0 PV redéclencherait
+  // la défaite (et sa pénalité d'or) à chaque tick de riposte.
+  var heroDowned = (game.heroHp || 0) <= 0;
+
   // v3.0 : l'auto-DPS du héros (Célérité) n'est plus une simulation de
   // fond permanente — elle ne s'applique QUE quand le joueur est
   // réellement sur l'écran Combat (aide active), même principe que la
@@ -87,7 +95,7 @@ function gameLoop() {
   // v2.10). La chasse ambiante indépendante de l'écran est désormais
   // portée par le village (Hôtel de Ville) — voir
   // VillageManager.tickAmbientHunting() juste après.
-  if (game.activeTab === "combat" && !modalOpen) {
+  if (game.activeTab === "combat" && !modalOpen && !heroDowned) {
     CombatEngine.autoAttack(dt);
   }
 
@@ -109,7 +117,7 @@ function gameLoop() {
   // DPS, potions, régénération, intérêt composé...) continue de
   // tourner normalement en arrière-plan, seule la riposte est mise
   // en pause hors de l'écran Combat.
-  if (game.activeTab === "combat" && !modalOpen && typeof CombatEngine.enemyAttackTick === "function") {
+  if (game.activeTab === "combat" && !modalOpen && !heroDowned && typeof CombatEngine.enemyAttackTick === "function") {
     CombatEngine.enemyAttackTick(dt);
   }
 

@@ -110,6 +110,28 @@ function showGoldPopup(amount) {
   }, 1000);
 }
 
+/* v3.14 : dégâts encaissés par le héros affichés en rouge flottant,
+   même principe que showGoldPopup() ci-dessus mais ancré sur le mini
+   portrait du héros (#combat-hero-mini, HUD en haut de l'écran Combat
+   — voir ui/hud-view.js) plutôt que sur l'ennemi, pour bien distinguer
+   visuellement "dégâts infligés" (or vert, sur l'ennemi) de "dégâts
+   reçus" (rouge, sur le héros). */
+function showDamageTakenPopup(amount) {
+  var container = document.getElementById("combat-hero-mini");
+  if (!container) return;
+
+  var el = document.createElement("div");
+  el.className = "damage-taken-popup";
+  el.textContent = "-" + formatNumber(amount);
+  el.style.left = "50%";
+  el.style.top = "30%";
+  container.appendChild(el);
+
+  setTimeout(function () {
+    if (el.parentNode) el.parentNode.removeChild(el);
+  }, 1000);
+}
+
 var CombatEngine = {
   /* Fait apparaître un nouvel ennemi (via WorldManager.generateEnemy)
      et réinitialise le minuteur de riposte. Appelée au démarrage et
@@ -137,6 +159,13 @@ var CombatEngine = {
     // fenêtre elle-même ; ce garde couvre les cas où ce ne serait pas
     // le cas (ex. autoTap() appelle aussi playerAttack()).
     if (typeof isBlockingModalOpen === "function" && isBlockingModalOpen()) return;
+    // v3.15 : un héros à 0 PV ne peut plus taper du tout (couvre aussi
+    // autoTap(), qui appelle cette même fonction) — doit se reposer au
+    // Campement avant de continuer à se battre. Pas de toast ici
+    // (silencieux) pour éviter un spam de messages si autoTap()
+    // continue de se déclencher toutes les 2s pendant que le joueur
+    // reste sur l'écran Combat à 0 PV.
+    if ((game.heroHp || 0) <= 0) return;
 
     var dmg = Math.max(1, Math.floor(EquipmentManager.effectiveTapDamage()));
     var critChance = Math.max(0, EquipmentManager.effectiveCritChance() - getEnemyWillCritPenalty());
@@ -229,6 +258,14 @@ var CombatEngine = {
      défense du héros (issue de son Endurance). */
   enemyStrike: function () {
     if (!game.enemy || !game.enemy.stats) return;
+    // v3.15 : un héros déjà à 0 PV est "à terre" — ne doit plus
+    // pouvoir encaisser de dégâts supplémentaires (et donc plus
+    // redéclencher onHeroDefeated() en boucle, avec sa pénalité d'or,
+    // à chaque tick de riposte). En pratique ce cas ne devrait plus
+    // se produire du tout : le combat automatique est maintenant
+    // coupé dès que game.heroHp <= 0 (voir main/game-loop.js) — ce
+    // garde reste en dernier recours, défense en profondeur.
+    if ((game.heroHp || 0) <= 0) return;
 
     var power = Number(game.enemy.stats.power || 0);
     var precision = Number(game.enemy.stats.precision || 0);
@@ -247,6 +284,8 @@ var CombatEngine = {
     dmg = Math.max(1, Math.floor(dmg * (1 - defense)));
 
     game.heroHp = Math.max(0, Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1) - dmg);
+
+    showDamageTakenPopup(dmg);
 
     if (typeof renderHeroHp === "function") renderHeroHp();
 
@@ -275,11 +314,27 @@ var CombatEngine = {
 
     var lost = Math.floor((game.gold || 0) * DEFEAT_GOLD_PENALTY);
     game.gold = Math.max(0, game.gold - lost);
-    game.heroHp = game.heroMaxHp || 1;
+    // v3.15 : les PV tombent à 0 (au lieu d'être totalement restaurés)
+    // — un vrai repos au Campement (long ou court, voir
+    // systems/camp-system.js) est maintenant nécessaire avant de
+    // repartir au combat. Le combat automatique se coupe tant que
+    // game.heroHp <= 0 (voir main/game-loop.js), donc pas de risque de
+    // redéclencher la défaite en boucle en revenant sur l'écran Combat
+    // sans s'être soigné.
+    game.heroHp = 0;
 
-    addLog("💀 Vous avez été terrassé ! -" + formatNumber(lost) + " or, PV restaurés.", "event");
+    addLog("💀 Vous avez été terrassé ! -" + formatNumber(lost) + " or. Il faut te reposer avant de repartir au combat.", "event");
     showToast("💀 Terrassé ! -" + formatNumber(lost) + " or", 1800);
     vibrate([80, 40, 80]);
+
+    // v3.14 : renvoie au Campement avec un petit message.
+    // v3.15 : ce n'est plus une simple mise en scène — les PV sont
+    // vraiment à 0, le repos est désormais réellement nécessaire.
+    // game.justDied est un indicateur transitoire (pas sauvegardé) lu
+    // une seule fois par buildCampHTML() puis effacé, pour n'afficher
+    // le message qu'au tout premier rendu suivant la mort.
+    game.justDied = true;
+    if (typeof switchTab === "function") switchTab("campement");
 
     if (typeof renderHeroHp === "function") renderHeroHp();
     if (typeof renderHud === "function") renderHud();

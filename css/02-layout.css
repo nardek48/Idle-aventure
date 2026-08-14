@@ -139,8 +139,8 @@
 .nb-hud-bag-btn {
   position: relative;
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border: none;
   border-radius: 50%;
   line-height: 1;
@@ -153,10 +153,11 @@
 /* v3.9 : icône dédiée (même illustration que la carte "Équipement" du
    Menu ☰) à la place de l'emoji 🎒 générique. v3.10 : agrandie (20px ->
    30px, remplit tout le bouton) et le fond crème/liseré doré retirés
-   (bouton devenu icône pure, plus de cadre décoratif autour). */
+   (bouton devenu icône pure, plus de cadre décoratif autour). v3.12 :
+   encore agrandie (30px -> 40px, bouton et icône). */
 .nb-hud-bag-icon {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
   pointer-events: none;
 }
@@ -199,8 +200,8 @@
   bottom: -6px;
   left: -6px;
   z-index: 4;
-  width: 22px;
-  height: 22px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
 }
