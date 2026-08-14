@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.10.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.2.1"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -67,7 +67,6 @@ var PRECACHE_APP_SHELL = [
   "./css/04-panel-hero-summary.css",
   "./css/04-panel-log.css",
   "./css/04-panel-quests.css",
-  "./css/04-panel-camp.css",
   "./css/04-panel-settings.css",
   "./css/04-panel-talents.css",
   "./css/04-panel-upgrades.css",
@@ -109,7 +108,6 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/equipment-system.js",
   "./js/systems/loot-system.js",
   "./js/systems/offline-system.js",
-  "./js/systems/camp-system.js",
   "./js/systems/potion-system.js",
   "./js/systems/progression-system.js",
   "./js/systems/save-system.js",
@@ -142,7 +140,6 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/toast.js",
   "./js/ui/ui-root.js",
   "./js/ui/village-view.js",
-  "./js/ui/camp-view.js",
   "./images/icons/icon-192.png",
   "./images/icons/icon-512.png",
   "./images/icons/icon-512-maskable.png",
