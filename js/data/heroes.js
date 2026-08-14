@@ -20,36 +20,42 @@ var HEROES_DB = {
     id: "knight",
     name: "Chevalier",
     image: "./images/Heroes/knight.jpg",
+    weaponType: "sword", // v3.8 : voir note sur getPlayerDamageType(), combat-engine.js
     stats: makeRpgStats(60, 76, 32, 40, 52)
   },
   ranger: {
     id: "ranger",
     name: "Rôdeur",
     image: "./images/Heroes/ranger.jpg",
+    weaponType: "bow",
     stats: makeRpgStats(46, 38, 70, 66, 40)
   },
   mage: {
     id: "mage",
     name: "Mage",
     image: "./images/Heroes/mage.jpg",
+    weaponType: "magic",
     stats: makeRpgStats(62, 34, 40, 48, 76)
   },
   chaosKnight: {
     id: "chaosKnight",
     name: "Chevalier du Chaos",
     image: "./images/Heroes/ChaosNight.jpg",
+    weaponType: "sword",
     stats: makeRpgStats(63, 56, 42, 52, 47) // v2.90.22 : Puissance 66->63, Volonté 44->47 (voir doc équilibrage)
   },
   chaosRanger: {
     id: "chaosRanger",
     name: "Rôdeur du chaos",
     image: "./images/Heroes/ChaosRanger.jpg",
+    weaponType: "bow",
     stats: makeRpgStats(50, 46, 62, 58, 44)
   },
   chaosMage: {
     id: "chaosMage",
     name: "Sorcier du Chaos",
     image: "./images/Heroes/ChaosSorcier.jpg",
+    weaponType: "magic",
     stats: makeRpgStats(66, 36, 34, 46, 78)
   }
 };
@@ -80,14 +86,14 @@ Champs :
 var HERO_SPECIAL_ATTACKS = {
   knight: {
     name: "Coup fracassant",
-    icon: "💥",
+    icon: "./images/Icons/special_attacks/smashing_blow.png",
     desc: "Assène un coup titanesque à 6× tes dégâts de tap habituels.",
     multiplier: 6,
     cooldownMs: 10000
   },
   ranger: {
     name: "Tir groupé",
-    icon: "🏹",
+    icon: "./images/Icons/special_attacks/multishot.png",
     desc: "Décoche 3 flèches rapides, chacune à 2.5× tes dégâts de tap.",
     multiplier: 2.5,
     hits: 3,
@@ -95,7 +101,7 @@ var HERO_SPECIAL_ATTACKS = {
   },
   mage: {
     name: "Explosion arcanique",
-    icon: "🔮",
+    icon: "./images/Icons/special_attacks/arcane_blast.png",
     desc: "Libère une explosion de magie pure (8× dégâts) qui ignore toute résistance ou faiblesse d'arme.",
     multiplier: 8,
     ignoreAffinity: true,
@@ -103,7 +109,7 @@ var HERO_SPECIAL_ATTACKS = {
   },
   chaosKnight: {
     name: "Fureur du Chaos",
-    icon: "🔥",
+    icon: "./images/Icons/special_attacks/chaos_fury.png",
     desc: "Frappe à 6× tes dégâts, puis enrage ton héros (+10% dégâts) pendant 10 secondes.",
     multiplier: 6,
     buffPct: 0.10,
@@ -112,7 +118,7 @@ var HERO_SPECIAL_ATTACKS = {
   },
   chaosRanger: {
     name: "Tir chaotique",
-    icon: "🎲",
+    icon: "./images/Icons/special_attacks/chaotic_shot.png",
     desc: "Un tir à la puissance imprévisible : entre 3× et 12× tes dégâts de tap, au hasard.",
     minMult: 3,
     maxMult: 12,
@@ -120,7 +126,7 @@ var HERO_SPECIAL_ATTACKS = {
   },
   chaosMage: {
     name: "Cataclysme",
-    icon: "☄️",
+    icon: "./images/Icons/special_attacks/cataclysm.png",
     desc: "Déchaîne 10× tes dégâts de tap en un seul coup dévastateur — la capacité la plus puissante, mais qui recharge plus lentement.",
     multiplier: 10,
     cooldownMs: 16000
@@ -137,7 +143,7 @@ de donjon. Voir systems/special-attack-system.js (DefenseManager).
 ============================================================ */
 var DEFENSE_ABILITY = {
   name: "Posture défensive",
-  icon: "🛡️",
+  icon: "./images/Icons/special_attacks/defensive_stance.png",
   desc: "+35% de réduction des dégâts de riposte pendant 8 secondes.",
   defenseBonusPct: 0.35,
   durationMs: 8000,

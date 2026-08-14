@@ -159,7 +159,7 @@ function buildWorldUnlockQuestSectionHTML() {
   h += '<div class="map-adventure-quests-title">🗺️ Questline de déblocage</div>';
 
   h += '<div class="map-quest-card">';
-  h += '<div class="map-quest-head"><span class="map-quest-icon">' + esc(quest.icon || "🗺️") + '</span><span class="map-quest-name">' + esc(quest.name) + '</span></div>';
+  h += '<div class="map-quest-head"><span class="map-quest-icon">' + renderIconOrEmojiHTML(quest.icon || "🗺️", "map-quest-icon-img", quest.name) + '</span><span class="map-quest-name">' + esc(quest.name) + '</span></div>';
 
   quest.steps.forEach(function (step) {
     var progress = WorldQuestManager.getStepProgress(quest, step);
@@ -220,7 +220,7 @@ function buildAdventureQuestIntroHTML(questId) {
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card">';
-  h += '    <div class="dungeon-story-icon">' + esc(quest.icon || "📜") + '</div>';
+  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(quest.icon || "📜", "dungeon-story-icon-img", quest.name) + '</div>';
   h += '    <div class="dungeon-story-title">' + esc(quest.name) + '</div>';
   if (quest.story) h += '    <div class="dungeon-story-text">' + esc(quest.story) + '</div>';
   h += '    <div class="dungeon-story-actions">';
@@ -293,7 +293,7 @@ function buildAdventureQuestsSectionHTML() {
     var isRunning = !!(runningQuest && runningQuest.id === quest.id);
 
     h += '<div class="map-quest-card' + (claimed ? " is-claimed" : isRunning ? " is-running" : "") + '">';
-    h += '<div class="map-quest-head"><span class="map-quest-icon">' + esc(quest.icon || "📜") + '</span><span class="map-quest-name">' + esc(quest.name) + '</span></div>';
+    h += '<div class="map-quest-head"><span class="map-quest-icon">' + renderIconOrEmojiHTML(quest.icon || "📜", "map-quest-icon-img", quest.name) + '</span><span class="map-quest-name">' + esc(quest.name) + '</span></div>';
 
     quest.steps.forEach(function (step) {
       var progress = AdventureQuestManager.getStepProgress(quest, step);

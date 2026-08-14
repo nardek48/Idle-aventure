@@ -287,8 +287,7 @@ function buildSpecialAttackHTML() {
     + (onCooldown ? 'disabled' : '')
     + ' onclick="SpecialAttackManager.use()" title="' + esc(special.desc) + ' (touche 1 sur PC)">';
   h += '<span class="combat-action-key">1</span>';
-  h += '<span class="combat-action-icon">' + esc(special.icon) + '</span>';
-  h += '<span class="combat-action-name">' + esc(special.name) + '</span>';
+  h += renderIconOrEmojiHTML(special.icon, "combat-action-icon", special.name);
   if (onCooldown) {
     h += '<span class="combat-action-cooldown">' + Math.ceil(remainingMs / 1000) + 's</span>';
     h += '<span class="combat-action-cooldown-fill" style="width:' + cooldownPct + '%"></span>';
@@ -321,8 +320,7 @@ function buildDefenseHTML() {
     + (onCooldown ? 'disabled' : '')
     + ' onclick="DefenseManager.use()" title="' + esc(DEFENSE_ABILITY.desc) + ' (touche 2 sur PC)">';
   h += '<span class="combat-action-key">2</span>';
-  h += '<span class="combat-action-icon">' + esc(DEFENSE_ABILITY.icon) + '</span>';
-  h += '<span class="combat-action-name">' + esc(DEFENSE_ABILITY.name) + '</span>';
+  h += renderIconOrEmojiHTML(DEFENSE_ABILITY.icon, "combat-action-icon", DEFENSE_ABILITY.name);
   if (onCooldown) {
     h += '<span class="combat-action-cooldown">' + Math.ceil(remainingMs / 1000) + 's</span>';
     h += '<span class="combat-action-cooldown-fill" style="width:' + cooldownPct + '%"></span>';

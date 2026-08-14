@@ -9,23 +9,29 @@ riposte ennemie, mort d'un ennemi (récompenses, butin, avancée de la
 progression), et petits événements aléatoires entre deux combats.
 ============================================================ */
 
-/* Mappe l'icône d'arme équipée vers un type de dégâts (aligné sur
-   resists/weak des ennemis, qui utilisent "sword" / "bow" / "magic"). */
-var WEAPON_ICON_DAMAGE_TYPE = {
-  sword: "sword",
-  axe: "sword",
-  staff: "magic",
-  bow: "bow"
-};
-
+/* v3.8 : le type de dégâts vient désormais du HÉROS choisi
+   (HEROES_DB[heroId].weaponType), plus de l'icône de l'objet équipé
+   dans l'emplacement Arme. Avant v3.8, chaque objet d'arme tirait au
+   hasard une icône parmi sword/axe/staff/bow (voir
+   EQUIPMENT_SLOT_CONFIG.weapon.icons, data/equipment.js), ce qui
+   faisait varier le type de dégâts d'un joueur à l'autre selon la
+   chance du loot. Depuis la simplification des icônes d'équipement
+   (une seule illustration par type, l'arme ne montre plus plusieurs
+   flavors mais seulement des variantes de rareté), l'icône de l'arme
+   équipée ne varie plus assez pour porter cette mécanique — elle est
+   donc rattachée au héros à la place (Chevalier/Chevalier du Chaos =
+   épée, Rôdeur/Rôdeur du Chaos = arc, Mage/Sorcier du Chaos = magie),
+   un choix qui a l'avantage d'être stable et lisible plutôt que
+   dépendant d'un tirage aléatoire invisible pour le joueur. Aucune
+   arme équipée du tout = toujours "unarmed" (malus -20%), inchangé. */
 var RESIST_DMG_MULT = 0.7;   // Ennemi résistant au type d'arme -> -30% de dégâts infligés
 var WEAK_DMG_MULT = 1.3;     // Ennemi faible au type d'arme -> +30% de dégâts infligés
 var NO_WEAPON_MULT = 0.8;    // Aucune arme équipée -> -20% de dégâts infligés
 
 function getPlayerDamageType() {
-  var weapon = game.equipped && game.equipped.weapon;
-  if (!weapon || !weapon.icon) return null;
-  return WEAPON_ICON_DAMAGE_TYPE[weapon.icon] || null;
+  if (!game.equipped || !game.equipped.weapon) return null;
+  var hero = (window.HEROES_DB && game.heroId) ? HEROES_DB[game.heroId] : null;
+  return (hero && hero.weaponType) || null;
 }
 
 /* Retourne l'affinité de dégâts courante face à l'ennemi affiché.

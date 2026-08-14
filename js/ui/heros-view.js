@@ -58,7 +58,7 @@ function buildCharacterAbilityCardHTML(config, cssClass, remainingMs, cooldownMs
   var cdText = onCooldown ? Math.ceil(remainingMs / 1000) + "s" : Math.round(cooldownMs / 1000) + "s";
 
   var h = '<div class="ability-card ' + cssClass + '">';
-  h += '<div class="ability-icon-wrap">' + esc(config.icon) + '</div>';
+  h += '<div class="ability-icon-wrap">' + renderIconOrEmojiHTML(config.icon, "ability-icon", config.name) + '</div>';
   h += '<div class="ability-body">';
   h += '<div class="ability-name">' + esc(config.name) + '</div>';
   h += '<div class="ability-desc">' + esc(config.desc) + '</div>';

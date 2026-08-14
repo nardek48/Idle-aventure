@@ -336,6 +336,15 @@
   background: var(--nb-cream-alt);
 }
 
+/* v3.8 : illustration dédiée à la place de l'emoji (voir
+   renderIconOrEmojiHTML, appelé dans buildCharacterAbilityCardHTML,
+   ui/heros-view.js). */
+.ability-icon-wrap img.ability-icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
 .ability-body {
   flex: 1;
   min-width: 0;

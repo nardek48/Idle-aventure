@@ -265,6 +265,18 @@
   font-size: 18px;
 }
 
+/* v3.10 : variante image (voir buildAdventureQuestsSectionHTML/
+   buildWorldUnlockQuestSectionHTML, ui/quests-view.js) — les quêtes
+   utilisent maintenant des illustrations dédiées plutôt que des
+   emoji, même empreinte visuelle que l'emoji 18px qu'elle remplace. */
+.map-quest-icon-img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .map-quest-step {
   padding: 8px 0;
   border-top: 1px solid var(--nb-frame);

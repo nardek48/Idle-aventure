@@ -141,14 +141,24 @@
   flex: 0 0 auto;
   width: 30px;
   height: 30px;
-  margin-top: 2px;
   border: none;
   border-radius: 50%;
-  background: var(--nb-cream);
-  box-shadow: 0 2px 0 var(--nb-frame-light), inset 0 0 0 2px var(--nb-gold-dark);
-  font-size: 15px;
   line-height: 1;
   cursor: pointer;
+  display: flex;
+  align-items: center;       /* centrage vertical */
+  justify-content: flex-end; /* alignement à droite */
+}
+
+/* v3.9 : icône dédiée (même illustration que la carte "Équipement" du
+   Menu ☰) à la place de l'emoji 🎒 générique. v3.10 : agrandie (20px ->
+   30px, remplit tout le bouton) et le fond crème/liseré doré retirés
+   (bouton devenu icône pure, plus de cadre décoratif autour). */
+.nb-hud-bag-icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .nb-hud-bag-btn:active {
@@ -176,16 +186,23 @@
   border: 1px solid var(--nb-cream);
 }
 
-/* v2.90.7 : le badge "!" de point de talent disponible (portrait
-   héros du HUD) passe du coin haut-droit (position par défaut de
-   .nb-hud-bag-badge, partagée avec le badge du sac) au coin
-   bas-gauche, à la demande de l'utilisateur — override ciblé,
-   n'affecte PAS le badge du sac qui reste en haut-droite. */
+/* v2.90.7 : le badge de point de talent disponible (portrait héros
+   du HUD) est en bas-gauche du portrait, contrairement au badge du
+   sac (haut-droite, .nb-hud-bag-badge) — à la demande de l'utilisateur.
+   v3.8 : n'hérite plus de .nb-hud-bag-badge (c'est maintenant une
+   image dédiée, pas une pastille numérique) — porte donc son propre
+   positionnement complet ici plutôt qu'un simple override. */
 .hud-hero-levelup-badge {
+  position: absolute;
   top: auto;
   right: auto;
-  bottom: -4px;
-  left: -4px;
+  bottom: -6px;
+  left: -6px;
+  z-index: 4;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
 }
 
 .nb-hud-page-title {

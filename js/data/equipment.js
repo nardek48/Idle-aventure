@@ -113,9 +113,27 @@ EQUIPMENT_SLOT_CONFIG[slot] :
   - icons     : types d'icônes possibles (images/Icons/equipment_icon/
                 {icon}_{rareté}.png ou .jpg selon le type, voir
                 getEquipmentIconPath en systems/equipment-system.js),
-                tirés au hasard pour la variété
-                visuelle — "ring" est réutilisé tel quel (existait déjà
-                pour l'ancienne amulette, un anneau est un anneau)
+                tirés au hasard pour la variété visuelle.
+                v3.8 : simplification demandée — UNE SEULE illustration
+                par type d'équipement (la rareté reste communiquée par
+                la bordure/couleur de la carte, pas par un visuel dédié)
+                pour armor/helmet/gloves/boots/ring/amulet — leurs
+                tableaux `icons` ne contiennent qu'une seule entrée
+                chacun (robe/shield/crown restent sur le disque, non
+                supprimés, mais ne sont plus tirés).
+                v3.9 : l'arme (weapon), elle, garde PLUSIEURS flavors
+                (bow/sword/axe/staff) EN PLUS de sa variance par
+                rareté — c'est le seul emplacement avec plusieurs
+                illustrations possibles (voir getEquipmentIconPath, qui
+                force la rareté à "common" pour tout ce qui n'est pas
+                item.slot === "weapon", MAIS laisse le choix de flavor
+                intact pour tous). Chaque clé de flavor doit
+                correspondre au bon visuel sur le disque : axe -> hache,
+                sword -> épée, staff -> bâton, bow -> arc (vérifié).
+                Tous les emplacements ont désormais un visuel complet
+                sur le disque, y compris "bottes" (5 raretés, fourni
+                par Seb en v3.9 — auparavant le seul emplacement sans
+                aucune image).
   - names     : noms possibles, tirés au hasard (flavor uniquement,
                 la rareté est déjà indiquée par la couleur/bordure)
   - ranges    : { rareté: [min, max] } — voir LootSystem.generateEquipmentItem
@@ -148,7 +166,13 @@ var EQUIPMENT_SLOT_CONFIG = {
   weapon: {
     stat: "tapDmg",
     decimals: 0,
-    icons: ["sword", "axe", "staff", "bow"],
+    // v3.9 : réactivé à la demande de Seb — l'arme est le SEUL
+    // emplacement avec plusieurs illustrations (les autres n'en ont
+    // qu'une, voir armor/helmet/gloves/boots/ring/amulet plus bas).
+    // Chaque clé DOIT correspondre au bon visuel sur le disque
+    // (images/Icons/equipment_icon/{clé}_{rareté}.png) — vérifié :
+    // axe -> hache, sword -> épée, staff -> bâton, bow -> arc.
+    icons: ["bow", "sword", "axe", "staff"],
     names: ["Épée", "Hache", "Bâton", "Arc", "Dague", "Lame"],
     ranges: {
       common: [10, 25],
@@ -161,8 +185,8 @@ var EQUIPMENT_SLOT_CONFIG = {
   armor: {
     stat: "defense",
     decimals: 2,
-    icons: ["armor", "robe", "shield"],
-    names: ["Armure", "Cuirasse", "Plastron", "Cape", "Bouclier"],
+    icons: ["armor"], // v3.8 : une seule illustration par type (robe/shield retirés du tirage, voir note plus haut dans le fichier)
+    names: ["Armure", "Cuirasse", "Plastron"],
     ranges: {
       common: [0.01, 0.03],
       green: [0.03, 0.05],
@@ -175,7 +199,7 @@ var EQUIPMENT_SLOT_CONFIG = {
     stat: "critMult",
     decimals: 2,
     icons: ["casque"],
-    names: ["Casque", "Heaume", "Couronne", "Capuche"],
+    names: ["Casque", "Heaume"],
     ranges: {
       common: [0.10, 0.20],
       green: [0.20, 0.35],
@@ -188,7 +212,7 @@ var EQUIPMENT_SLOT_CONFIG = {
     stat: "tapMult",
     decimals: 2,
     icons: ["gants"],
-    names: ["Gants", "Mitaines", "Gantelets"],
+    names: ["Gants"],
     ranges: {
       common: [0.10, 0.20],
       green: [0.20, 0.35],
@@ -200,8 +224,8 @@ var EQUIPMENT_SLOT_CONFIG = {
   boots: {
     stat: "autoDps",
     decimals: 0,
-    icons: ["bottes"],
-    names: ["Bottes", "Sandales", "Chaussures"],
+    icons: ["bottes"], // v3.9 : visuel fourni par Seb (5 raretés), plus aucun emplacement sans illustration
+    names: ["Bottes"],
     ranges: {
       common: [2, 5],
       green: [5, 9],
@@ -226,7 +250,7 @@ var EQUIPMENT_SLOT_CONFIG = {
   amulet: {
     stat: "critChance",
     decimals: 0,
-    icons: ["amulet", "crown"],
+    icons: ["amulet"], // v3.8 : une seule illustration par type (crown retiré du tirage)
     names: ["Amulette", "Pendentif", "Collier", "Talisman", "Médaillon"],
     ranges: {
       common: [1, 3],

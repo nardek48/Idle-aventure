@@ -374,25 +374,30 @@
   margin-bottom: 0;
 }
 
+/* v3.9 : boutons d'attaque spéciale/bouclier simplifiés en icônes
+   pures (à la demande de Seb, "comme pour les potions" — voir
+   .heal-quick-btn plus bas dans ce fichier) : plus de carte
+   rectangulaire avec bordure/fond/nom en dessous, juste l'illustration
+   en rond, avec la clé et le compte à rebours en incrustation. */
 .combat-action-btn {
   position: relative;
   overflow: hidden;
   flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: clamp(1.84px, calc(0.91px + 0.29vw), 2.16px);
-  padding: clamp(6.44px, calc(3.18px + 1.02vw), 7.56px) clamp(3.68px, calc(1.82px + 0.58vw), 4.32px);
-  border-radius: var(--nb-radius-md);
-  border: 2px solid var(--nb-frame);
-  background: var(--nb-cream);
-  color: var(--nb-ink);
-  box-shadow: 0 3px 0 var(--nb-frame-light);
+  justify-content: center;
+  max-width: clamp(48px, calc(24px + 7vw), 70px); /* v3.10 : agrandi (58px -> 70px de plafond) */
+  margin: 0 auto;
+  padding: 0;
+  border-radius: 999px;
+  border: none;
+  background: none;
+  box-shadow: none;
   cursor: pointer;
 }
 
 .combat-action-btn:active {
-  transform: translateY(2px);
+  transform: scale(0.94);
   box-shadow: none;
 }
 
@@ -402,56 +407,71 @@
 }
 
 .attack-action-btn {
-  border-color: var(--nb-gold-dark);
-  background: linear-gradient(180deg, #fff3d6, var(--nb-cream));
+  /* v3.9 : plus de fond/bordure dédiés — bouton devenu icône pure */
 }
 
 /* v2.45 : bordure bleue par défaut retirée (uniformisation "bordures
    dorées partout") — le bouton hérite maintenant du gold par défaut
    de .combat-action-btn. Le halo bleu ci-dessous reste : il indique
    un état réel (bouclier actuellement actif), pas une couleur de
-   thème. */
+   thème. v3.9 : halo redessiné en cercle (le bouton n'est plus une
+   carte rectangulaire). */
 .defense-action-btn.is-active {
-  box-shadow: 0 0 0 3px rgba(79, 168, 232, 0.35), 0 3px 0 var(--nb-frame-light);
+  box-shadow: 0 0 0 3px rgba(79, 168, 232, 0.55);
 }
 
-/* v2.60 : boutons rétrécis à la demande de l'utilisateur (padding +
-   tailles de police réduites) — libère de la hauteur, voir aussi
-   #game-area plus bas (justify-content:center) qui utilise cet espace
-   récupéré pour redescendre le nom/PV du monstre vers le centre. */
+/* v3.9 : le bouton n'affiche plus que l'icône (voir buildSpecialAttackHTML/
+   buildDefenseHTML, ui/combat-view.js — le <span class="combat-action-name">
+   a été retiré). L'icône occupe maintenant TOUT le bouton, plus une
+   petite illustration au-dessus d'un nom. */
 .combat-action-icon {
-  font-size: clamp(16.56px, calc(8.18px + 2.62vw), 19.44px);
+  font-size: clamp(24px, calc(12px + 4vw), 30px); /* repli emoji uniquement */
 }
 
-.combat-action-name {
-  font-size: clamp(8.28px, calc(4.09px + 1.31vw), 9.72px);
-  font-weight: 800;
-  text-align: center;
-  line-height: 1.2;
-  color: var(--nb-ink);
+img.combat-action-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 999px;
 }
 
 .combat-action-cooldown {
-  position: relative;
-  z-index: 1;
-  font-size: clamp(10.12px, calc(5px + 1.6vw), 11.88px);
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(13px, calc(6px + 2.2vw), 16px);
   font-weight: 800;
-  color: var(--nb-ink);
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
 }
 
 .combat-action-cooldown-fill {
   position: absolute;
   inset: 0;
   right: auto;
-  background: rgba(58, 44, 26, 0.35);
+  z-index: 1;
+  background: rgba(20, 15, 8, 0.55);
   pointer-events: none;
 }
 
 .combat-action-active-tag {
-  font-size: clamp(8.28px, calc(4.09px + 1.31vw), 9.72px);
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: rgba(15, 20, 32, 0.85);
+  font-size: clamp(7px, calc(4px + 1vw), 8.5px);
   font-weight: 800;
   letter-spacing: 0.4px;
   color: #93c5fd;
+  white-space: nowrap;
 }
 
 /* v2.90 : petit indice de raccourci clavier ("1" attaque spéciale /

@@ -40,7 +40,7 @@ var WORLD_QUESTS = {
     worldId: "ruins",
     worldIndex: 2,
     name: "L'Appel des Ruines",
-    icon: "🏛️",
+    icon: "./images/Icons/quest_icons/chapter_end/chapter_end1.png", // v3.10 : bannière crâne, thème fin de chapitre
     steps: [
       {
         id: "kills_desert",
@@ -75,7 +75,7 @@ var WORLD_QUESTS = {
     worldId: "crypt",
     worldIndex: 3,
     name: "Le Repos Troublé",
-    icon: "⚰️",
+    icon: "./images/Icons/quest_icons/chapter_end/chapter_end1.png", // v3.10 : bannière crâne, thème fin de chapitre
     steps: [
       {
         id: "kills_ruins",
@@ -110,7 +110,7 @@ var WORLD_QUESTS = {
     worldId: "mountain",
     worldIndex: 4,
     name: "Le Froid avant les Flammes",
-    icon: "🗻",
+    icon: "./images/Icons/quest_icons/chapter_end/chapter_end2.png", // v3.10 : variante, thème fin de chapitre
     steps: [
       {
         id: "kills_crypt",
@@ -145,7 +145,7 @@ var WORLD_QUESTS = {
     worldId: "tower",
     worldIndex: 5,
     name: "L'Ascension Arcanique",
-    icon: "🗼",
+    icon: "./images/Icons/quest_icons/chapter_end/chapter_end2.png", // v3.10 : variante, thème fin de chapitre
     steps: [
       {
         id: "kills_mountain",

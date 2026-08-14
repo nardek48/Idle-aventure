@@ -47,7 +47,7 @@ var ADVENTURE_QUESTS = {
     adventureIndex: 0, // visible pendant "Lisière de la forêt"
     name: "Éclaireur de la Lisière",
     story: "La Lisière grouille de créatures curieuses, attirées par l'odeur de ton feu de camp. Le temps d'écarter quelques-unes d'entre elles avant qu'elles ne s'approchent davantage.",
-    icon: "🏹",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.png", // v3.10 : lunette + carte étoilée, thème repérage
     steps: [
       {
         id: "kills_forest",
@@ -68,7 +68,7 @@ var ADVENTURE_QUESTS = {
     gatesTransitionTo: 1, // complétion du run = déblocage du passage vers l'aventure 1 (Cœur de la forêt)
     name: "Prouver sa valeur",
     story: "Le Roi Slime géant règne sur la Lisière depuis des lunes, gardant jalousement le passage vers le cœur de la forêt. Pour qu'on te laisse poursuivre, il faudra d'abord montrer que tu n'es pas qu'un simple aventurier de passage.",
-    icon: "🧭",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.png", // v3.10 : clé + cadenas, thème déblocage de passage
     steps: [
       {
         id: "kills_expedition",
@@ -96,7 +96,7 @@ var ADVENTURE_QUESTS = {
     gatesNextWorld: true, // v3.3 : réclamation = déblocage du passage Forêt -> Désert (voir WorldManager.meetsAscensionRequirement)
     name: "Minerai des profondeurs",
     story: "Au-delà de la Lisière, l'air se fait plus lourd et les arbres plus anciens. On raconte qu'un minerai rare, teinté par l'Aether, affleure parfois sous les racines les plus profondes — à condition de survivre assez longtemps pour le trouver.",
-    icon: "⛏️",
+    icon: "./images/Icons/quest_icons/resource/resource1.png", // v3.10 : enclume + lingots, thème minerai/forge
     steps: [
       {
         id: "collect_minerai",

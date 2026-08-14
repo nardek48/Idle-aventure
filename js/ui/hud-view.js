@@ -84,7 +84,7 @@ function buildHudHTML() {
     +     '</div>'
     +     '<div class="nb-hud-title-row">'
     +       '<div id="hud-page-title" class="nb-hud-page-title"></div>'
-    +       '<button type="button" class="nb-hud-bag-btn" onclick="openBagFromHud()" aria-label="Inventaire">🎒<span id="hud-bag-badge" class="nb-hud-bag-badge" style="display:none;">0</span></button>'
+    +       '<button type="button" class="nb-hud-bag-btn" onclick="openBagFromHud()" aria-label="Inventaire"><img src="./images/Icons/menu_icons/equip_menu.png" alt="" class="nb-hud-bag-icon"><span id="hud-bag-badge" class="nb-hud-bag-badge" style="display:none;">0</span></button>'
     +     '</div>'
     +   '</div>'
     +   '<div id="combat-hero-mini" class="combat-hero-mini" onclick="switchTab(\'talents\')" role="button" aria-label="Talents">'
@@ -92,7 +92,7 @@ function buildHudHTML() {
     +       '<img id="combat-hero-mini-img" class="combat-hero-mini-img" src="" alt="" style="display:none">'
     +       '<div id="combat-hero-mini-placeholder" class="combat-hero-mini-placeholder">?</div>'
     +       '<span class="combat-hero-mini-level" id="combat-hero-mini-level">Niv. 1</span>'
-    +       '<span id="hud-hero-levelup-badge" class="nb-hud-bag-badge hud-hero-levelup-badge" style="display:none;">!</span>'
+    +       '<img id="hud-hero-levelup-badge" class="hud-hero-levelup-badge" src="./images/Icons/talents/up_icon.png" alt="Talent disponible" style="display:none;">'
     +     '</div>'
     +     '<div class="combat-hero-mini-hp-bar">'
     +       '<div id="combat-hero-mini-hp-fill" class="combat-hero-mini-hp-fill" style="width:100%"></div>'
@@ -154,7 +154,9 @@ function renderHudLevelUpBadge() {
   if (!badge) return;
 
   var available = (typeof getTalentsAvailableCount === "function") ? getTalentsAvailableCount() : 0;
-  badge.style.display = available > 0 ? "flex" : "none";
+  // v3.8 : "block" plutôt que "flex" — c'est maintenant une image
+  // directe (<img>), plus une pastille flex avec du texte dedans.
+  badge.style.display = available > 0 ? "block" : "none";
 }
 window.renderHudLevelUpBadge = renderHudLevelUpBadge;
 
