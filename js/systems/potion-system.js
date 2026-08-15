@@ -22,6 +22,10 @@ permet d'acheter à l'avance et de boire au bon moment plutôt que
 d'être forcé d'activer immédiatement à l'achat.
 ============================================================ */
 
+// v3.18 : hausse de prix composée par cycle (game.cycleCount) sur
+// TOUTES les potions — voir getCost() plus bas.
+var POTION_CYCLE_PRICE_GROWTH = 0.15; // +15% composé par cycle
+
 var PotionManager = {
   ensure: function () {
     if (!game.activePotions || typeof game.activePotions !== "object") game.activePotions = {};
@@ -63,12 +67,27 @@ var PotionManager = {
      ascension (voir progression-system.js, ascendNow()). Note
      v2.83.45 : le coût croissant se déclenche maintenant à l'ACHAT
      (mise en stock), pas à l'activation — cohérent avec le fait que
-     c'est l'achat qui est limité, pas l'usage. */
+     c'est l'achat qui est limité, pas l'usage.
+
+     v3.18 : un second multiplicateur s'ajoute, cette fois basé sur
+     game.cycleCount (nombre de boucles complètes à travers tous les
+     mondes, PAS remis à zéro par l'ascension — seulement par un reset
+     complet) — TOUTES les potions (soin comprises) coûtent
+     progressivement plus cher au fil des cycles. Objectif : préparer
+     un futur système de craft (rations/ressources) qui devrait
+     progressivement devenir plus intéressant que l'achat pur en or à
+     mesure que les cycles avancent. Taux choisi par défaut (+15%
+     composé par cycle, POTION_CYCLE_PRICE_GROWTH) — facile à ajuster
+     si le rythme ne convient pas une fois testé en jeu. */
   getCost: function (potion) {
     this.ensure();
-    if (!potion.costMult) return potion.cost;
-    var stacks = Number(game.aetherElixirStackCount || 0);
-    return Math.floor(potion.cost * Math.pow(potion.costMult, stacks));
+    var base = potion.cost;
+    if (potion.costMult) {
+      var stacks = Number(game.aetherElixirStackCount || 0);
+      base = base * Math.pow(potion.costMult, stacks);
+    }
+    var cycleMult = Math.pow(1 + POTION_CYCLE_PRICE_GROWTH, Number(game.cycleCount || 0));
+    return Math.floor(base * cycleMult);
   },
 
   /* Achète UNE potion (ajoutée au stock, pas activée immédiatement —
@@ -78,6 +97,12 @@ var PotionManager = {
     this.ensure();
     var potion = this.getPotion(id);
     if (!potion) return showToast("Potion introuvable", 1000);
+
+    // v3.20 : Ascétisme (affliction) interdit l'achat ET l'usage de
+    // potions — voir AfflictionManager.arePotionsForbidden().
+    if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
+      return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
+    }
 
     var cost = this.getCost(potion);
     if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
@@ -105,6 +130,14 @@ var PotionManager = {
     var potion = this.getPotion(id);
     if (!potion) return showToast("Potion introuvable", 1000);
 
+    // v3.20 : Ascétisme (affliction) — même blocage qu'à l'achat, au
+    // cas où une potion serait déjà en stock avant d'activer
+    // l'affliction (achetée avant, utilisable seulement après
+    // désactivation).
+    if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
+      return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
+    }
+
     var stock = this.getStock(id);
     if (stock <= 0) return showToast("Aucune potion en stock", 1000);
 
@@ -128,8 +161,12 @@ var PotionManager = {
   },
 
   /* Revend UNE potion du stock (effet ou soin) contre de l'or — la
-     moitié du prix d'achat de base, arrondi à l'inférieur. Fonctionne
-     pour les 2 catalogues (POTIONS_DB et HEALING_POTIONS_DB). */
+     moitié du prix d'achat ACTUEL (v3.18 : this.getCost(), qui
+     inclut désormais la hausse par cycle — avant, potion.cost brut,
+     ce qui aurait rendu le ratio de revente de moins en moins
+     avantageux à mesure que les cycles avancent), arrondi à
+     l'inférieur. Fonctionne pour les 2 catalogues (POTIONS_DB et
+     HEALING_POTIONS_DB). */
   sellPotion: function (id) {
     this.ensure();
     this.ensureHealing();
@@ -140,7 +177,7 @@ var PotionManager = {
     var stock = isHealing ? this.getHealingStock(id) : this.getStock(id);
     if (stock <= 0) return showToast("Aucune potion à vendre", 1000);
 
-    var value = Math.floor((potion.cost || 0) / 2);
+    var value = Math.floor(this.getCost(potion) / 2);
     if (isHealing) game.healingPotionsOwned[id] = stock - 1;
     else game.potionsOwned[id] = stock - 1;
     game.gold += value;
@@ -204,9 +241,22 @@ var PotionManager = {
     this.ensureHealing();
     var potion = this.getHealingPotion(id);
     if (!potion) return;
-    if ((game.gold || 0) < potion.cost) return showToast("Pas assez d'or", 1000);
 
-    game.gold -= potion.cost;
+    // v3.20 : Ascétisme (affliction) — même blocage que les potions à
+    // effet, voir AfflictionManager.arePotionsForbidden().
+    if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
+      return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
+    }
+
+    // v3.20 : bug trouvé au passage — cette fonction utilisait encore
+    // potion.cost BRUT au lieu de this.getCost(potion), donc la hausse
+    // de prix par cycle (v3.18) ne s'appliquait en réalité JAMAIS aux
+    // potions de soin à l'achat (seule sellPotion() avait été corrigée
+    // à l'époque). Corrigé — cohérent avec buyPotion() ci-dessus.
+    var cost = this.getCost(potion);
+    if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
+
+    game.gold -= cost;
     game.healingPotionsOwned[id] = this.getHealingStock(id) + 1;
 
     addLog("🩹 " + potion.name + " achetée (stock : " + game.healingPotionsOwned[id] + ")", "event");
@@ -230,6 +280,12 @@ var PotionManager = {
     this.ensureHealing();
     var potion = this.getHealingPotion(id);
     if (!potion) return;
+
+    // v3.20 : Ascétisme (affliction) — bloque aussi l'usage réel
+    // (pas seulement l'achat), voir AfflictionManager.arePotionsForbidden().
+    if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
+      return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
+    }
 
     if (this.getHealCooldownRemainingMs() > 0) {
       return showToast("⏳ Encore un instant...", 900);

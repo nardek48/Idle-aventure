@@ -240,6 +240,7 @@ function buildSaveData() {
     adventureQuestRun: game.adventureQuestRun || { active: false, questId: null },
     campfireLastUsed: game.campfireLastUsed || 0, // v3.7 : cooldown du feu de camp (long repos), voir systems/camp-system.js
     campfireShortLastUsed: game.campfireShortLastUsed || 0, // v3.14 : cooldown du repos court
+    activeAfflictions: Object.assign({}, game.activeAfflictions || {}), // v3.20 : voir data/afflictions.js
     dungeonTiersEntered: game.dungeonTiersEntered || {},
     codexChaosSeen: !!game.codexChaosSeen,
     codexRead: game.codexRead || {},
@@ -389,6 +390,7 @@ function restoreBaseState(d) {
   game.adventureQuestRun = d.adventureQuestRun && typeof d.adventureQuestRun === "object" ? d.adventureQuestRun : { active: false, questId: null };
   game.campfireLastUsed = typeof d.campfireLastUsed === "number" ? d.campfireLastUsed : 0;
   game.campfireShortLastUsed = typeof d.campfireShortLastUsed === "number" ? d.campfireShortLastUsed : 0;
+  game.activeAfflictions = (d.activeAfflictions && typeof d.activeAfflictions === "object") ? d.activeAfflictions : {};
   game.dungeonTiersEntered = d.dungeonTiersEntered && typeof d.dungeonTiersEntered === "object" ? d.dungeonTiersEntered : {};
   game.codexChaosSeen = !!d.codexChaosSeen;
   game.codexRead = d.codexRead && typeof d.codexRead === "object" ? d.codexRead : {};
@@ -709,6 +711,7 @@ function fullResetState() {
   game.adventureQuestRun = { active: false, questId: null };
   game.campfireLastUsed = 0; // v3.7 : repos gratuit du Campement — repart bien à zéro sur un reset complet
   game.campfireShortLastUsed = 0; // v3.14 : idem pour le repos court
+  game.activeAfflictions = {}; // v3.20 : remis à zéro sur un reset complet (conservé à l'ascension)
   game.dungeonBossClears = 0;
   game.dungeonShards = 0;
   game.dungeonShopLevels = {};

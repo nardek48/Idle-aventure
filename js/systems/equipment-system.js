@@ -367,6 +367,9 @@ sortInventoryByType: function () {
   },
   getSetBonus: function () {
     return StatsSystem.getSetBonus();
+  },
+  getActiveSetBonuses: function () {
+    return StatsSystem.getActiveSetBonuses();
   }
 };
 

@@ -46,7 +46,8 @@ var HUD_PAGE_TITLES = {
   bestiary: "Bestiaire",
   log: "Journal",
   settings: "Paramètres",
-  achievements: "Hauts faits"
+  achievements: "Hauts faits",
+  afflictions: "Afflictions"
 };
 
 function buildHudHTML() {
@@ -74,6 +75,10 @@ function buildHudHTML() {
   // la demande de l'utilisateur, pour coller le titre juste sous les
   // ressources, à côté du portrait, sans le grand espace vide qu'il
   // y avait avant.
+  // v3.17 : le raccourci Équipement (auparavant .nb-hud-bag-btn, niché
+  // dans .nb-hud-title-row à gauche) est déplacé ici — sa propre
+  // colonne, juste AVANT le portrait du héros, à droite de l'écran —
+  // et un raccourci Ascension l'accompagne, à la demande de Seb.
   return ''
     + '<div class="nb-hud-top-row">'
     +   '<div class="nb-hud-left-col">'
@@ -84,8 +89,11 @@ function buildHudHTML() {
     +     '</div>'
     +     '<div class="nb-hud-title-row">'
     +       '<div id="hud-page-title" class="nb-hud-page-title"></div>'
-    +       '<button type="button" class="nb-hud-bag-btn" onclick="openBagFromHud()" aria-label="Inventaire"><img src="./images/Icons/menu_icons/equip_menu.png" alt="" class="nb-hud-bag-icon"><span id="hud-bag-badge" class="nb-hud-bag-badge" style="display:none;">0</span></button>'
     +     '</div>'
+    +   '</div>'
+    +   '<div class="nb-hud-shortcuts">'
+    +     '<button type="button" class="nb-hud-bag-btn" onclick="openBagFromHud()" aria-label="Inventaire"><img src="./images/Icons/menu_icons/equip_menu.png" alt="" class="nb-hud-bag-icon"><span id="hud-bag-badge" class="nb-hud-bag-badge" style="display:none;">0</span></button>'
+    +     '<button type="button" class="nb-hud-bag-btn" onclick="switchTab(\'ascension\')" aria-label="Ascension"><img src="./images/Icons/menu_icons/aether_menu.png" alt="" class="nb-hud-bag-icon"></button>'
     +   '</div>'
     +   '<div id="combat-hero-mini" class="combat-hero-mini" onclick="switchTab(\'talents\')" role="button" aria-label="Talents">'
     +     '<div class="combat-hero-mini-portrait">'

@@ -75,7 +75,29 @@ function updateQuestBadge() {
   badge.style.display = total > 0 ? "inline-flex" : "none";
 }
 
-function buildQuestsHTML() {
+/* v3.17 : onglet Quêtes séparé en 2 sous-onglets (Général / Journalières),
+   même pattern que la fiche personnage (Héros/Amélioration/Stats) —
+   voir buildHerosSubTabBarHTML ci-dessus dans heros-view.js pour la
+   référence visuelle copiée ici. */
+var activeQuestsSubTab = "general"; // "general" | "daily"
+
+function setQuestsSubTab(tab) {
+  activeQuestsSubTab = (tab === "daily") ? "daily" : "general";
+  if (typeof renderPanel === "function") renderPanel();
+}
+
+function buildQuestsSubTabBarHTML() {
+  var h = '<div class="pc-subtab-bar">';
+  h += '<button type="button" class="pc-subtab-btn' + (activeQuestsSubTab === "general" ? ' is-active' : '') + '" onclick="setQuestsSubTab(\'general\')">🗺️<span>Général</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeQuestsSubTab === "daily" ? ' is-active' : '') + '" onclick="setQuestsSubTab(\'daily\')">📋<span>Journalières</span></button>';
+  h += '</div>';
+  return h;
+}
+
+/* Sous-onglet "Général" : Raid/Donjon + questline de déblocage de
+   monde + quêtes d'aventure — tout ce qui N'EST PAS renouvelé chaque
+   jour. */
+function buildQuestsGeneralSubTabHTML() {
   var h = '';
 
   // NB : "Raid" n'a toujours pas de onclick (aucun mode de jeu associé) —
@@ -89,11 +111,19 @@ function buildQuestsHTML() {
   h += buildWorldUnlockQuestSectionHTML();
   h += buildAdventureQuestsSectionHTML();
 
+  return h;
+}
+
+/* Sous-onglet "Journalières" : la liste des quêtes du jour (voir
+   QuestManager, systems/progression-system.js), inchangée par
+   rapport à avant — juste déplacée dans son propre sous-onglet. */
+function buildQuestsDailySubTabHTML() {
+  var h = '';
   h += '<div class="quest-timer">Reset dans ' + esc(QuestManager.timeUntilReset()) + '</div>';
 
   if (!game.quests || !game.quests.length) {
     h += '<div class="eq-empty">Aucune quête active.</div>';
-    return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
+    return h;
   }
 
   h += '<div class="quest-list">';
@@ -126,7 +156,34 @@ function buildQuestsHTML() {
   });
   h += '</div>';
 
-  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
+  return h;
+}
+
+function buildQuestsHTML() {
+  // v3.17 : structure en 2 sous-onglets (barre fixée en bas, comme la
+  // fiche personnage) — voir note "Layout trap" du projet : ne
+  // JAMAIS appliquer .nb-page-frame-fill directement sur
+  // .subtab-page-content, toujours un enfant imbriqué (ici
+  // .nb-page-frame, imbriqué normalement, pas de risque).
+  var h = '<div class="subtab-page">';
+  h += '<div class="subtab-page-content">';
+  h += '<div class="nb-page-frame">';
+
+  if (activeQuestsSubTab === "daily") {
+    h += buildQuestsDailySubTabHTML();
+  } else {
+    h += buildQuestsGeneralSubTabHTML();
+  }
+
+  h += '</div>'; // fin .nb-page-frame
+  h += '</div>'; // fin .subtab-page-content
+
+  h += '<div class="subtab-bar-wrapper">';
+  h += buildQuestsSubTabBarHTML();
+  h += '</div>';
+
+  h += '</div>'; // fin .subtab-page
+  return h;
 }
 
 /* v3.3 : questline de déblocage du PROCHAIN monde verrouillé (voir
@@ -347,5 +404,6 @@ window.updateQuestBadge = updateQuestBadge;
 window.getTalentsAvailableCount = getTalentsAvailableCount;
 window.getAscensionAvailableCount = getAscensionAvailableCount;
 window.buildQuestsHTML = buildQuestsHTML;
+window.setQuestsSubTab = setQuestsSubTab;
 window.buildWorldUnlockQuestSectionHTML = buildWorldUnlockQuestSectionHTML;
 window.buildAdventureQuestsSectionHTML = buildAdventureQuestsSectionHTML;

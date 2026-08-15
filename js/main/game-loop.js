@@ -8,6 +8,18 @@ change avec un talent — pas besoin d'être dans la boucle à 60fps).
 
 var lastTick = Date.now();
 
+// v3.16 : bug corrigé — la pastille "choses à faire" du bouton Menu
+// (#quest-badge, voir updateQuestBadge() dans ui/quests-view.js)
+// n'était rafraîchie que par renderAll(), donc uniquement après une
+// action explicite du joueur (achat, changement d'onglet...). Toute
+// progression AMBIANTE (quête journalière complétée pendant un farm
+// auto-DPS sans autre interaction, haut fait débloqué via la chasse
+// du village hors écran Combat, ticket de donjon qui redevient
+// disponible au fil du temps...) ne se reflétait donc jamais tant que
+// le joueur ne déclenchait pas une autre action. Throttlé à 1x/seconde
+// (pas besoin d'une précision à la frame pour un simple compteur).
+var questBadgeThrottleAccum = 0;
+
 /* v3.4 : une fenêtre plein écran bloquante (résumé de cycle, popup
    Carte, Village/Donjon/Talents) COUVRE visuellement tout l'écran,
    mais rien n'empêchait jusqu'ici le combat de continuer à tourner
@@ -202,6 +214,12 @@ function gameLoop() {
 
   if (typeof renderHud === "function") renderHud();
   if (typeof renderEnemyHp === "function") renderEnemyHp();
+
+  questBadgeThrottleAccum += dt;
+  if (questBadgeThrottleAccum >= 1) {
+    questBadgeThrottleAccum = 0;
+    if (typeof updateQuestBadge === "function") updateQuestBadge();
+  }
 
   requestAnimationFrame(gameLoop);
 }

@@ -270,6 +270,12 @@ var CombatEngine = {
     var power = Number(game.enemy.stats.power || 0);
     var precision = Number(game.enemy.stats.precision || 0);
 
+    // v3.20 : Fléau (affliction) augmente la puissance de riposte
+    // ennemie — voir AfflictionManager.getCombinedModifiers().enemyPowerMult.
+    if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
+      power *= AfflictionManager.getCombinedModifiers().enemyPowerMult;
+    }
+
     var dmg = Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF));
     var isCrit = chance(Math.min(40, precision * ENEMY_PRECISION_CRIT_COEF));
     if (isCrit) dmg = Math.floor(dmg * ENEMY_CRIT_MULT);
@@ -406,6 +412,13 @@ var CombatEngine = {
 
       if (game.talents.t_thick_skin) essenceGain = Math.ceil(essenceGain * 1.05);
       if (game.talents.t_vital_anchor) essenceGain = Math.ceil(essenceGain * 1.12);
+
+      // v3.20 : Colosses (affliction) — bonus d'essence de boss, même
+      // principe que game.bossGoldBonusPct juste au-dessus (voir
+      // stats-system.js recalcStats() pour où ce champ est rempli).
+      if (game.bossEssenceBonusPct) {
+        essenceGain = Math.ceil(essenceGain * (1 + Number(game.bossEssenceBonusPct || 0)));
+      }
     }
 
     // Volonté tenace : +10% or/essence dans les mondes autrefois verrouillés
@@ -455,6 +468,11 @@ var CombatEngine = {
 
       var bestiaryBonus = typeof getBestiaryBonus === "function" ? getBestiaryBonus(enemy.id) : { lootBonus: 0 };
       var lootChance = 50 + (getAetherBonuses().lootBonus || 0) + (bestiaryBonus.lootBonus || 0);
+      // v3.20 : Avarice (affliction) divise la chance de drop — voir
+      // AfflictionManager.getCombinedModifiers().lootChanceMult.
+      if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
+        lootChance *= AfflictionManager.getCombinedModifiers().lootChanceMult;
+      }
       var rolls = 1;
       // Prospection astrale : petite chance de doubler le butin gagné
       if (game.talents.t_astral_prospecting && chance(15)) rolls = 2;

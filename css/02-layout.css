@@ -136,6 +136,22 @@
   gap: 4px;
 }
 
+/* v3.17 : raccourcis Équipement + Ascension, sortis de
+   .nb-hud-title-row (où ils étaient nichés à gauche, sous les
+   ressources) — colonne dédiée entre .nb-hud-left-col et le portrait
+   du héros, empilée verticalement, centrée sur la hauteur du HUD pour
+   s'aligner avec le portrait juste à côté. */
+.nb-hud-shortcuts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  align-self: center;
+  margin-right: 8px;
+}
+
 .nb-hud-bag-btn {
   position: relative;
   flex: 0 0 auto;

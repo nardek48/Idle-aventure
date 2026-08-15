@@ -56,40 +56,39 @@ var WORLD_RARITY_UNLOCKS = [
 /* Bonus actif quand 3 (sameRarityCount) pièces équipées partagent la
    même rareté. apply() retourne un objet de bonus fusionné dans les
    stats du joueur (voir StatsSystem.getSetBonus en stats-system.js). */
+/* v3.18 : deuxième palier de panoplie — 7 pièces (l'équipement COMPLET,
+   tous les emplacements de la même rareté) en plus des 3 déjà
+   existantes. Les deux bonus SE CUMULENT (atteindre 7 donne le bonus
+   3-pièces ET le bonus 7-pièces en plus, pas l'un OU l'autre) — voir
+   getSetBonus() dans systems/stats-system.js, qui applique maintenant
+   les deux paliers atteints au lieu d'un seul. */
 var SET_BONUS_CONFIG = {
-  sameRarityCount: 3,
-  bonuses: {
-    common: {
-      name: "Panoplie commune",
-      apply: function () {
-        return { tapDamage: 2 };
+  tiers: [
+    {
+      count: 3,
+      bonuses: {
+        common: { name: "Panoplie commune (3)", apply: function () { return { tapDamage: 2 }; } },
+        green: { name: "Panoplie inhabituelle (3)", apply: function () { return { tapMult: 0.05, goldMult: 0.05 }; } },
+        rare: { name: "Panoplie rare (3)", apply: function () { return { tapMult: 0.10, goldMult: 0.10 }; } },
+        epic: { name: "Panoplie épique (3)", apply: function () { return { tapMult: 0.20, critChance: 5 }; } },
+        legendary: { name: "Panoplie légendaire (3)", apply: function () { return { tapMult: 0.35, critChance: 10, goldMult: 0.20 }; } }
       }
     },
-    green: {
-      name: "Panoplie inhabituelle",
-      apply: function () {
-        return { tapMult: 0.05, goldMult: 0.05 };
-      }
-    },
-    rare: {
-      name: "Panoplie rare",
-      apply: function () {
-        return { tapMult: 0.10, goldMult: 0.10 };
-      }
-    },
-    epic: {
-      name: "Panoplie épique",
-      apply: function () {
-        return { tapMult: 0.20, critChance: 5 };
-      }
-    },
-    legendary: {
-      name: "Panoplie légendaire",
-      apply: function () {
-        return { tapMult: 0.35, critChance: 10, goldMult: 0.20 };
+    {
+      count: 7,
+      bonuses: {
+        common: { name: "Panoplie commune complète (7)", apply: function () { return { tapDamage: 4, autoDps: 2 }; } },
+        green: { name: "Panoplie inhabituelle complète (7)", apply: function () { return { tapMult: 0.08, goldMult: 0.08, critChance: 3 }; } },
+        rare: { name: "Panoplie rare complète (7)", apply: function () { return { tapMult: 0.15, goldMult: 0.15, critChance: 5 }; } },
+        epic: { name: "Panoplie épique complète (7)", apply: function () { return { tapMult: 0.25, critChance: 8, critMult: 0.3 }; } },
+        legendary: { name: "Panoplie légendaire complète (7)", apply: function () { return { tapMult: 0.40, critChance: 15, critMult: 0.5, goldMult: 0.25 }; } }
       }
     }
-  }
+  ],
+  // v3.18 : conservé pour compatibilité — ancien code qui lirait
+  // encore SET_BONUS_CONFIG.sameRarityCount/bonuses directement (le
+  // seuil MINIMUM, 3 pièces, reste ici pour un éventuel repli).
+  sameRarityCount: 3
 };
 
 /* ============================================================
@@ -169,6 +168,20 @@ var EQUIPMENT_SLOT_CONFIG = {
     // axe -> hache, sword -> épée, staff -> bâton, bow -> arc.
     icons: ["bow", "sword", "axe", "staff"],
     names: ["Épée", "Hache", "Bâton", "Arc", "Dague", "Lame"],
+    // v3.16 : correctif d'un bug réel — nom et icône étaient tirés
+    // INDÉPENDAMMENT (deux randInt() séparés dans generateEquipmentItem,
+    // systems/loot-system.js), un objet pouvait donc s'appeler "Bâton"
+    // et afficher l'icône d'un arc. namesByIcon force maintenant un nom
+    // cohérent AVEC l'icône réellement tirée — voir loot-system.js, qui
+    // utilise ce champ en priorité pour les emplacements qui le
+    // définissent (repli sur `names` ci-dessus si absent, comme pour
+    // tous les autres emplacements à icône unique).
+    namesByIcon: {
+      bow: ["Arc"],
+      sword: ["Épée", "Lame", "Dague"],
+      axe: ["Hache"],
+      staff: ["Bâton"]
+    },
     ranges: {
       common: [10, 25],
       green: [26, 35],

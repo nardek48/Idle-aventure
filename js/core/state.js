@@ -259,6 +259,7 @@ function ensureGameStateDefaults() {
   if (typeof game.dungeonTicketsPurchasedToday !== "number") game.dungeonTicketsPurchasedToday = 0;
   if (!game.dungeonRun || typeof game.dungeonRun !== "object") game.dungeonRun = { active: false, wave: 0, tierId: 1 };
   if (window.CampManager && typeof CampManager.ensureDefaults === "function") CampManager.ensureDefaults();
+  if (window.AfflictionManager && typeof AfflictionManager.ensure === "function") AfflictionManager.ensure();
   if (typeof game.dungeonRun.tierId !== "number") game.dungeonRun.tierId = 1;
   if (typeof game.dungeonBestWave !== "number") game.dungeonBestWave = 0;
   if (typeof game.dungeonBossClears !== "number") game.dungeonBossClears = 0;

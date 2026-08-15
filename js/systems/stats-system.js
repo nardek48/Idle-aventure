@@ -178,7 +178,23 @@ var StatsSystem = {
     var trainedEndurance = (game.trainedStats && game.trainedStats.endurance) || 0;
     var totalEndurance = baseEndurance + trainedEndurance;
     game.heroMaxHp = Math.max(1, Math.floor(totalEndurance * ENDURANCE_HP_COEF));
-    if (!game.heroHp || game.heroHp > game.heroMaxHp) game.heroHp = game.heroMaxHp;
+    // v3.19 : le clamp "game.heroHp > game.heroMaxHp -> ramené au max"
+    // qui vivait ICI a été RETIRÉ — bug trouvé avec Seb (captures +
+    // repro confirmée) : à ce stade du calcul, game.heroMaxHp ne
+    // contient encore QUE la valeur de base (Endurance seule), AVANT
+    // les bonus qui l'augmentent plus loin dans cette même fonction
+    // (ascension +4%/asc, Vitalité éthérée, potion d'Endurance — voir
+    // plus bas). Si le joueur était à PV pleins SOUS le max déjà
+    // boosté (ex. 545 PV avec l'ascension), ce clamp intermédiaire le
+    // ramenait de force à la valeur de base non boostée (ex. 426) —
+    // et comme le clamp ne remonte JAMAIS heroHp (seulement à la
+    // baisse), il restait bloqué à 426 même une fois heroMaxHp
+    // recalculé correctement à 545 juste après. Symptôme observé :
+    // "les PV reviennent à leur valeur de base sans bonus" à chaque
+    // fois que recalcStats() est rappelée (changement de héros,
+    // attaque spéciale à buff, achat, etc.) alors que le joueur était
+    // à PV pleins. Un SEUL clamp final, après TOUS les bonus de PV
+    // max, suffit — voir tout en bas de cette fonction.
 
     // NOUVEAU v1.8.5 : Endurance -> réduction des dégâts de riposte ennemie
     // v2.83.55 : le calcul FINAL (avec la contribution de l'équipement)
@@ -237,23 +253,27 @@ var StatsSystem = {
     // (voir plus bas). Appliqué ici, juste après le calcul de base des
     // PV max à partir de l'Endurance, avant tout autre bonus de PV
     // (potions, etc. — voir plus bas).
+    // v3.19 : clamp intermédiaire retiré ici aussi (même bug que plus
+    // haut) — un seul clamp final suffit, tout en bas de la fonction.
     if (game.ascensionCount > 0) {
       game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + game.ascensionCount * 0.04)));
-      if (!game.heroHp || game.heroHp > game.heroMaxHp) game.heroHp = game.heroMaxHp;
     }
 
-    // Bonus de panoplie (3 pièces équipées de même rareté), voir
-    // getSetBonus() plus bas et SET_BONUS_CONFIG dans data/equipment.js.
-    var setBonus = this.getSetBonus();
-    if (setBonus && setBonus.config && typeof setBonus.config.apply === "function") {
-      var bonus = setBonus.config.apply() || {};
+    // Bonus de panoplie (3 pièces ET 7 pièces équipées de même
+    // rareté, v3.18 — les deux paliers se cumulent), voir
+    // getActiveSetBonuses() plus bas et SET_BONUS_CONFIG dans
+    // data/equipment.js.
+    var activeSetBonuses = this.getActiveSetBonuses();
+    activeSetBonuses.forEach(function (entry) {
+      if (!entry.config || typeof entry.config.apply !== "function") return;
+      var bonus = entry.config.apply() || {};
       if (bonus.tapMult != null) game.tapMult += bonus.tapMult;
       if (bonus.goldMult != null) game.goldMult += bonus.goldMult;
       if (bonus.critChance != null) game.critChance += bonus.critChance;
       if (bonus.critMult != null) game.critMult += bonus.critMult;
       if (bonus.autoDps != null) game.autoDps += bonus.autoDps;
       if (bonus.tapDamage != null) game.equipFlatTapBonus += bonus.tapDamage;
-    }
+    });
 
     // Talents actifs qui touchent directement les stats globales
     // (les autres talents — combat ponctuel, hors-ligne, événements —
@@ -285,7 +305,6 @@ var StatsSystem = {
     game.goldMult *= 1 + (aether.goldBonus || 0);
     if (aether.vitalityBonus) {
       game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + aether.vitalityBonus)));
-      if (!game.heroHp || game.heroHp > game.heroMaxHp) game.heroHp = game.heroMaxHp;
     }
 
     // Potions temporaires actives (voir systems/potion-system.js) :
@@ -300,9 +319,43 @@ var StatsSystem = {
     if (potionEffects.gold) game.goldMult *= (1 + potionEffects.gold);
     if (potionEffects.endurance) {
       game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + potionEffects.endurance)));
-      if (!game.heroHp || game.heroHp > game.heroMaxHp) game.heroHp = game.heroMaxHp;
       game.heroDefensePct = Math.min(0.6, game.heroDefensePct + potionEffects.endurance * 0.1);
     }
+
+    // v3.20 : Afflictions (voir data/afflictions.js, systems/affliction-system.js)
+    // — dernière source de bonus de PV max avant le clamp final, pour
+    // respecter la même règle que ci-dessus (jamais de clamp
+    // intermédiaire, voir la note v3.19). Le bonus de récompense qui
+    // scale avec le nombre d'afflictions actives (+10%/active) se
+    // cumule ici aussi, multiplicativement avec goldMult/essenceGlobalMult.
+    if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
+      var afflictionMods = AfflictionManager.getCombinedModifiers();
+      var stackRewardMult = AfflictionManager.getStackRewardMult();
+      if (afflictionMods.tapMult) game.tapMult += afflictionMods.tapMult;
+      if (afflictionMods.heroMaxHpMult !== 1) {
+        game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * afflictionMods.heroMaxHpMult));
+      }
+      if (afflictionMods.goldMult !== 1) game.goldMult *= afflictionMods.goldMult;
+      if (stackRewardMult !== 1) {
+        game.goldMult *= stackRewardMult;
+        game.essenceGlobalMult *= stackRewardMult;
+      }
+      if (afflictionMods.bossGoldBonusPct) game.bossGoldBonusPct += afflictionMods.bossGoldBonusPct;
+      if (afflictionMods.bossEssenceBonusPct) game.bossEssenceBonusPct = (game.bossEssenceBonusPct || 0) + afflictionMods.bossEssenceBonusPct;
+    }
+
+    // v3.19 : UN SEUL clamp de game.heroHp, ICI — après TOUS les bonus
+    // qui peuvent faire varier game.heroMaxHp (Endurance, ascension,
+    // Vitalité éthérée, potion d'Endurance ci-dessus). Bug corrigé :
+    // avant, ce clamp existait après CHAQUE étape intermédiaire — si le
+    // joueur était à PV pleins sous le max déjà boosté, la toute
+    // PREMIÈRE étape (Endurance seule, avant tout bonus) le ramenait de
+    // force à cette valeur de base, et il y restait bloqué pour de bon
+    // (le clamp ne remonte jamais heroHp, seulement à la baisse) même
+    // une fois heroMaxHp recalculé correctement juste après. Un seul
+    // clamp final, une fois la valeur DÉFINITIVE de heroMaxHp connue,
+    // élimine complètement ce risque.
+    if (!game.heroHp || game.heroHp > game.heroMaxHp) game.heroHp = game.heroMaxHp;
 
     // Bonus cumulés des hauts faits réclamés (voir systems/achievement-system.js).
     var achievementBonus = (window.AchievementManager && typeof AchievementManager.getTotalBonus === "function")
@@ -385,18 +438,18 @@ var StatsSystem = {
      v2.83.55 : élargi de 3 emplacements fixes (arme/armure/amulette)
      à "3 quelconques parmi les 7" — plus logique maintenant qu'il y a
      7 emplacements indépendants, la version précédente aurait rendu
-     le bonus de panoplie quasi impossible à obtenir en pratique. */
-  getSetBonus: function () {
+     le bonus de panoplie quasi impossible à obtenir en pratique.
+     v3.18 : renvoie maintenant TOUS les paliers atteints (3 ET 7 si
+     le joueur a bien 7 pièces de la même rareté), plus un seul —
+     getSetBonus() ci-dessous reste disponible pour compatibilité
+     (renvoie juste le palier le plus élevé atteint). */
+  getActiveSetBonuses: function () {
     var slots = (typeof EQUIPMENT_SLOTS !== "undefined") ? EQUIPMENT_SLOTS : ["weapon", "armor", "amulet"];
     var equipped = slots.map(function (slot) { return game.equipped[slot]; }).filter(Boolean);
 
-    var required = (SET_BONUS_CONFIG && SET_BONUS_CONFIG.sameRarityCount) || 3;
-
-    // v2.83.55 : compte les pièces PAR RARETÉ (au lieu d'exiger que
-    // TOUTES les pièces équipées partagent la même rareté) — on
-    // cherche la rareté la mieux représentée, et le bonus s'active si
-    // elle atteint le seuil requis. Le reste de l'équipement (autres
-    // raretés) n'empêche pas le bonus, contrairement à avant.
+    // Compte les pièces PAR RARETÉ (pas besoin que TOUT l'équipement
+    // partage la même rareté) — cherche la rareté la mieux
+    // représentée, les paliers s'activent selon CE nombre.
     var countByRarity = {};
     equipped.forEach(function (item) {
       countByRarity[item.rarity] = (countByRarity[item.rarity] || 0) + 1;
@@ -414,32 +467,42 @@ var StatsSystem = {
       }
     });
 
-    if (!bestRarity || bestCount < required) {
-      return { rarity: null, config: null };
-    }
+    if (!bestRarity) return [];
 
-    var rarity = bestRarity;
-    var matchingCount = bestCount;
+    var tiers = (SET_BONUS_CONFIG && SET_BONUS_CONFIG.tiers) || [];
+    var results = [];
 
-    var baseConfig = (SET_BONUS_CONFIG.bonuses && SET_BONUS_CONFIG.bonuses[rarity]) || null;
-    if (!baseConfig) {
-      return { rarity: null, config: null };
-    }
+    tiers.forEach(function (tier) {
+      if (bestCount < tier.count) return;
+      var baseConfig = (tier.bonuses && tier.bonuses[bestRarity]) || null;
+      if (!baseConfig) return;
 
-    var effect = typeof baseConfig.apply === "function" ? (baseConfig.apply() || {}) : {};
-    var config = {
-      name: baseConfig.name || ("Panoplie " + rarity),
-      apply: baseConfig.apply,
-      effect: effect,
-      text: formatSetBonusEffect(effect),
-      pieces: matchingCount,
-      maxPieces: required
-    };
+      var effect = typeof baseConfig.apply === "function" ? (baseConfig.apply() || {}) : {};
+      results.push({
+        rarity: bestRarity,
+        count: tier.count,
+        config: {
+          name: baseConfig.name || ("Panoplie " + bestRarity + " (" + tier.count + ")"),
+          apply: baseConfig.apply,
+          effect: effect,
+          text: formatSetBonusEffect(effect),
+          pieces: bestCount,
+          maxPieces: tier.count
+        }
+      });
+    });
 
-    return {
-      rarity: rarity,
-      config: config
-    };
+    return results;
+  },
+
+  /* Compatibilité : renvoie uniquement le MEILLEUR palier atteint
+     (le plus haut nombre de pièces), dans l'ancien format à un seul
+     résultat — utilisé là où un seul résumé suffit. */
+  getSetBonus: function () {
+    var active = this.getActiveSetBonuses();
+    if (!active.length) return { rarity: null, config: null };
+    var best = active[active.length - 1]; // les tiers sont dans l'ordre croissant (3 puis 7)
+    return { rarity: best.rarity, config: best.config };
   }
 };
 

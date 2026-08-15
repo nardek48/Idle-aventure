@@ -322,81 +322,133 @@
 }
 
 .hero-picker {
-  width: min(960px, 100%);
-  max-height: 90vh;
-  max-height: 90dvh;
+  width: min(430px, 100%);
+  max-height: 92vh;
+  max-height: 92dvh;
   overflow-y: auto;
-  padding: 0;
+  padding: 22px 18px 24px;
   color: var(--nb-ink);
   background: var(--nb-cream);
   border: 3px solid var(--nb-frame);
   border-radius: 22px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  position: relative;
+}
+
+.hero-picker-back-btn {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 1;
+  padding: 4px 10px;
+  border: none;
+  background: none;
+  color: var(--nb-ink-dim);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .hero-picker-header {
-  padding: 26px 24px 12px;
+  padding: 4px 6px 16px;
   text-align: center;
 }
 
 .hero-picker-header h2 {
-  margin: 0 0 8px;
-  font-size: 28px;
+  margin: 0 0 6px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--nb-ink);
 }
 
 .hero-picker-header p {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   color: var(--nb-ink-dim);
 }
 
-.hero-picker-body {
-  padding: 18px 20px 20px;
-}
-
 /* =========================
-   Champ nom joueur
+   Étape 1 — portrait + stats d'aperçu
    ========================= */
-#player-name-input {
-  width: 100%;
-  margin-bottom: 18px;
-  padding: 14px 16px;
-  background: var(--nb-cream-alt);
-  color: var(--nb-ink);
-  font-size: 16px;
-  border: 2px solid var(--nb-frame-light);
-  border-radius: var(--nb-radius-sm);
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s ease;
+.hero-picker-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
 }
 
-#player-name-input::placeholder {
+.hero-picker-portrait-frame {
+  flex-shrink: 0;
+  width: 118px;
+  height: 118px;
+  border-radius: var(--nb-radius-md);
+  border: 3px solid var(--nb-gold-dark);
+  background: linear-gradient(160deg, #eaf6ff, #cfe8ff);
+  box-shadow: 0 4px 0 var(--nb-frame-light);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-picker-portrait-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-picker-stats {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hero-picker-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
   color: var(--nb-ink-dim);
 }
 
-#player-name-input:focus {
-  border-color: var(--nb-blue);
-  box-shadow: 0 0 0 3px rgba(79, 168, 232, 0.25);
-  background: var(--nb-cream);
+.hero-picker-stat-icon {
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
 }
 
-#player-name-input:focus-visible {
-  outline: 2px solid var(--nb-blue);
-  outline-offset: 2px;
+.hero-picker-stat-label {
+  flex-shrink: 0;
+  width: 30px;
+  font-weight: 700;
+}
+
+.hero-picker-stat strong {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.hero-picker-name {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--nb-ink);
+  margin-bottom: 14px;
 }
 
 /* =========================
-   Cartes héros
+   Cartes héros (rangée des 3 classes de base)
    ========================= */
 .hero-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
 .hero-card {
@@ -404,19 +456,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
-  min-height: 126px;
-  gap: 10px;
-  padding: 14px 16px 12px;
-
+  gap: 6px;
+  padding: 10px 6px 8px;
   text-align: center;
   cursor: pointer;
-
   border-radius: var(--nb-radius-md);
   border: 2px solid var(--nb-frame);
   background: var(--nb-cream-alt);
   box-shadow: 0 3px 0 var(--nb-frame-light);
-
   transition:
     transform 0.15s ease,
     border-color 0.2s ease,
@@ -437,146 +484,108 @@
 
 .hero-card-image {
   display: block;
-  width: 74px;
-  height: 74px;
+  width: 56px;
+  height: 56px;
   object-fit: cover;
   border-radius: var(--nb-radius-sm);
   background: var(--nb-cream-deep);
 }
 
-.hero-card-name,
-.hero-card span {
-  font-size: 15px;
+.hero-card-name {
+  font-size: 12.5px;
   font-weight: 800;
   line-height: 1.2;
   color: var(--nb-ink);
   text-align: center;
 }
 
-.hero-card-content,
-.hero-card-stats,
-.hero-selected-stats,
-.hero-selected-stat {
-  display: none;
-}
-
 /* =========================
-   Actions hero picker
+   Bouton "Confirmer le héros" / "Valider le nom" — image fournie
    ========================= */
-.hero-picker-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding-top: 4px;
-}
-
-.hero-picker-actions .btn,
-.menu-action-btn {
-  appearance: none;
-  padding: 12px 18px;
-  border: 2px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    transform 0.15s ease,
-    opacity 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.hero-picker-actions .btn:active,
-.menu-action-btn:active {
-  transform: translateY(2px);
-}
-
-.hero-picker-actions .btn:hover,
-.menu-action-btn:hover {
-  transform: translateY(-1px);
-}
-
-.hero-picker-actions .primary {
-  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
-  border-color: var(--nb-gold-dark);
-  color: #4a2f06;
-}
-
-.hero-picker-actions .secondary {
-  background: var(--nb-cream-alt);
-  color: var(--nb-ink);
-}
-
-.menu-action-btn {
-  width: 100%;
-  margin-top: 10px;
-  background: var(--nb-cream-alt);
-  color: var(--nb-ink);
-  border: 2px solid var(--nb-frame);
-}
-
-/* =========================
-   Preview héros
-   ========================= */
-.hero-preview {
-  margin-top: 16px;
-  padding: 14px;
-  border: 2px solid var(--nb-frame-light);
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream-alt);
-}
-
-.hero-preview-lore {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--nb-frame-light);
-  font-size: 12px;
-  font-style: italic;
-  line-height: 1.5;
-  color: var(--nb-ink-dim);
-}
-
-.hero-preview-title {
-  margin-bottom: 12px;
-  text-align: center;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--nb-ink);
-}
-
-.hero-preview-stats {
-  display: grid;
-  gap: 8px;
-}
-
-.hero-stat {
+.hero-picker-confirm-btn {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 10px;
-  border-radius: var(--nb-radius-sm);
-  background: var(--nb-cream);
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  height: 54px;
 }
 
-.hero-stat span {
-  font-size: 13px;
+.hero-picker-confirm-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.hero-picker-confirm-btn span {
+  position: relative;
+  z-index: 1;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #4a2f06;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.hero-picker-confirm-btn:active {
+  transform: translateY(1px);
+}
+
+/* =========================
+   Étape 2 — champ de nom (image fournie, plume incluse dans l'asset)
+   ========================= */
+.hero-name-input-wrap {
+  position: relative;
+  width: 100%;
+  height: 58px;
+  margin-bottom: 22px;
+}
+
+.hero-name-input-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+
+#player-name-input {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: 0 46px 0 20px;
+  background: transparent;
+  color: var(--nb-ink);
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  box-sizing: border-box;
+}
+
+#player-name-input::placeholder {
   color: var(--nb-ink-dim);
 }
 
-.hero-stat strong {
-  font-size: 14px;
-  color: var(--nb-ink);
+#player-name-input:focus {
+  outline: none;
 }
 
 /* =========================
    Responsive
    ========================= */
 @media (max-width: 768px) {
-  .hero-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
+  /* v3.21 : la grille des 3 héros reste sur 3 colonnes (voir note
+     détaillée dans la media-query "Petit mobile" de css/07-responsive.css) —
+     avant, ce palier forçait 2 colonnes, ce qui écrasait ma règle
+     principale (mobile-first, toujours sous ce seuil de 768px). */
   .confirm-buttons {
     flex-direction: column;
   }
@@ -590,39 +599,26 @@
   }
 
   .hero-picker {
-    max-height: 92vh;
-    max-height: 92dvh;
+    max-height: 94vh;
+    max-height: 94dvh;
     border-radius: 18px;
+    padding: 18px 14px 20px;
   }
 
   .hero-picker-header {
-    padding: 22px 18px 10px;
+    padding: 4px 4px 12px;
   }
 
   .hero-picker-header h2 {
-    font-size: 24px;
+    font-size: 19px;
   }
 
   .hero-picker-header p {
-    font-size: 14px;
-  }
-
-  .hero-picker-body {
-    padding: 16px;
+    font-size: 13px;
   }
 
   .hero-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .hero-picker-actions {
-    flex-direction: column;
-  }
-
-  .hero-picker-actions .btn,
-  .menu-action-btn {
-    width: 100%;
+    gap: 8px;
   }
 }
 
@@ -869,14 +865,12 @@
   .offline-btn,
   #player-name-input,
   .hero-card,
-  .hero-picker-actions .btn,
-  .menu-action-btn {
+  .hero-picker-confirm-btn {
     transition: none;
   }
 
   .hero-card:hover,
-  .hero-picker-actions .btn:hover,
-  .menu-action-btn:hover {
+  .hero-picker-confirm-btn:active {
     transform: none;
   }
 }

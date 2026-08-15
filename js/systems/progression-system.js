@@ -36,7 +36,11 @@ var WorldManager = {
       return { id: "fallback", name: "Ennemi", asset: "slime", isBoss: false, hp: 10, maxHp: 10, goldReward: 1, essenceReward: 0, resists: [], weak: [], stats: makeRpgStats(5, 10, 10, 5, 5) };
     }
 
-    var isBoss = this.enemyIndex >= Math.max(0, (adventure.enemyCount || 1) - 1);
+    // v3.20 : Élite (affliction) force TOUS les ennemis à être des
+    // boss, pas seulement le dernier de la vague — voir
+    // AfflictionManager.shouldForceAllBosses(), systems/affliction-system.js.
+    var forceAllBosses = window.AfflictionManager && typeof AfflictionManager.shouldForceAllBosses === "function" && AfflictionManager.shouldForceAllBosses();
+    var isBoss = forceAllBosses || this.enemyIndex >= Math.max(0, (adventure.enemyCount || 1) - 1);
     var enemyId;
 
     if (isBoss) {
@@ -48,6 +52,12 @@ var WorldManager = {
       var BOSS_ENDURANCE_HP_COEF = 2;
       var bossEndurance = (bossData.stats && bossData.stats.endurance) || 58;
       var bossHp = Math.floor(bossEndurance * BOSS_ENDURANCE_HP_COEF * bossScale + (game.totalKills || 0) * 2);
+      // v3.20 : Colosses (affliction) double les PV de boss — voir
+      // AfflictionManager.getCombinedModifiers().bossHpMult.
+      if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
+        var bossHpMods = AfflictionManager.getCombinedModifiers();
+        if (bossHpMods.bossHpMult !== 1) bossHp = Math.floor(bossHp * bossHpMods.bossHpMult);
+      }
       return {
         id: enemyId,
         name: bossData.name,

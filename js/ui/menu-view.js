@@ -25,6 +25,7 @@ var MENU_ITEMS = [
   { tab: "map", label: "Carte du monde", img: "./images/Icons/menu_icons/map_menu.png" },
   { tab: "achievements", label: "Hauts faits", img: "./images/Icons/menu_icons/achivment_menu.png", badge: "achievement" },
   { tab: "bestiary", label: "Bestiaire", img: "./images/Icons/menu_icons/bestiaire_menu.png", badge: "codex" },
+  { tab: "afflictions", label: "Afflictions", icon: "🔥", badge: "afflictions" },
   { tab: "settings", label: "Paramètres", img: "./images/Icons/menu_icons/settings_menu.png" }
 ];
 
@@ -65,6 +66,13 @@ function buildFullMenuHTML() {
     } else if (item.badge === "codex") {
       badgeCount = (window.CodexManager && typeof CodexManager.getUnreadCount === "function")
         ? CodexManager.getUnreadCount()
+        : 0;
+    } else if (item.badge === "afflictions") {
+      // v3.20 : affiche le nombre d'afflictions actuellement actives
+      // (pas "quelque chose à réclamer", juste un rappel visuel que
+      // des modificateurs sont en cours).
+      badgeCount = (window.AfflictionManager && typeof AfflictionManager.getActiveCount === "function")
+        ? AfflictionManager.getActiveCount()
         : 0;
     } else if (item.badge) {
       badgeCount = getMenuQuestBadgeCount();

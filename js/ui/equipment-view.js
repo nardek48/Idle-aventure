@@ -207,21 +207,30 @@ function buildEquipDetailPanelHTML() {
 /* Version courte du bandeau "Bonus de set" (voir tout en haut de
    l'écran pour la version complète), affichée sous le panneau de
    détail — pratique pour vérifier l'état du bonus sans remonter en
-   haut de l'écran pendant qu'on équipe/déséquipe des objets. */
+   haut de l'écran pendant qu'on équipe/déséquipe des objets.
+   v3.18 : affiche maintenant CHAQUE palier actif (3 ET 7 pièces si
+   les deux sont atteints, ils se cumulent) au lieu d'un seul. */
 function buildCompactSetBonusHTML() {
-  var setBonus = EquipmentManager.getSetBonus();
-  var h = '<div class="eq-detail-setbonus' + (setBonus && setBonus.config ? ' is-active' : '') + '">';
+  var active = (window.EquipmentManager && typeof EquipmentManager.getActiveSetBonuses === "function")
+    ? EquipmentManager.getActiveSetBonuses()
+    : [];
 
-  if (setBonus && setBonus.config) {
-    h += '<span class="eq-detail-setbonus-icon">✨</span>';
-    h += '<span class="eq-detail-setbonus-text">' + esc(setBonus.config.name) + ' — ' + esc(setBonus.config.text) + '</span>';
-  } else {
+  if (!active.length) {
+    var h = '<div class="eq-detail-setbonus">';
     h += '<span class="eq-detail-setbonus-icon">✦</span>';
     h += '<span class="eq-detail-setbonus-text">Bonus de set inactif</span>';
+    h += '</div>';
+    return h;
   }
 
-  h += '</div>';
-  return h;
+  var out = '';
+  active.forEach(function (entry) {
+    out += '<div class="eq-detail-setbonus is-active">';
+    out += '<span class="eq-detail-setbonus-icon">✨</span>';
+    out += '<span class="eq-detail-setbonus-text">' + esc(entry.config.name) + ' — ' + esc(entry.config.text) + '</span>';
+    out += '</div>';
+  });
+  return out;
 }
 
 /* v2.83.46 : Inventaire unifié (équipement + potions dans la même

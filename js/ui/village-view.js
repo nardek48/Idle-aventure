@@ -143,8 +143,19 @@ function buildVillageBuildingPopupHTML(id) {
   if (maxed) {
     h += '      <button class="settings-btn primary is-maxed" type="button" disabled>Niveau max</button>';
   } else {
-    h += '      <button class="settings-btn primary" type="button" onclick="buyVillageUpgradeFromPopup(\'' + id + '\')">'
-      + '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button>';
+    // v3.17 : bouton grisé (ni cliquable, ni interactif) tant que l'or
+    // actuel ne couvre pas le coût — avant, le bouton restait actif et
+    // n'échouait qu'AU CLIC (VillageManager.buy() refuse déjà l'achat
+    // en interne), obligeant à essayer pour savoir. Même traitement
+    // visuel que "Niveau max" (opacité réduite, curseur "not-allowed").
+    var canAfford = Number(game.gold || 0) >= cost;
+    if (canAfford) {
+      h += '      <button class="settings-btn primary" type="button" onclick="buyVillageUpgradeFromPopup(\'' + id + '\')">'
+        + '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button>';
+    } else {
+      h += '      <button class="settings-btn primary is-unaffordable" type="button" disabled>'
+        + '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button>';
+    }
   }
   h += '    </div>';
 

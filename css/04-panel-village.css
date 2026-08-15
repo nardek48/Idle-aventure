@@ -184,6 +184,14 @@
   cursor: not-allowed;
 }
 
+/* v3.17 : grisé quand l'or actuel ne couvre pas le coût — même
+   traitement visuel que .is-maxed ci-dessus. */
+.village-popup-actions .settings-btn.is-unaffordable {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(40%);
+}
+
 @media (max-width: 380px) {
   .village-popup-card {
     padding: 18px 16px;

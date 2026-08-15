@@ -26,7 +26,13 @@ function generateEquipmentItem(slot, rarity) {
   var value = Math.round(raw * factor) / factor;
 
   var icon = config.icons[randInt(0, config.icons.length - 1)];
-  var name = config.names[randInt(0, config.names.length - 1)];
+  // v3.16 : si l'emplacement définit namesByIcon (voir data/equipment.js
+  // — seul "weapon" pour l'instant), le nom est tiré DANS le pool
+  // spécifique à l'icône réellement choisie, pour qu'un "Bâton" ne se
+  // retrouve plus jamais avec une icône d'arc. Repli sur `names`
+  // (pool unique) pour tous les autres emplacements, inchangé.
+  var namePool = (config.namesByIcon && config.namesByIcon[icon]) || config.names;
+  var name = namePool[randInt(0, namePool.length - 1)];
 
   return {
     uid: "itm_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8),

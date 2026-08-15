@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.15.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.22.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -64,6 +64,7 @@ var PRECACHE_APP_SHELL = [
   "./css/04-panel-codex.css",
   "./css/04-panel-dungeon.css",
   "./css/04-panel-equipment.css",
+  "./css/04-panel-afflictions.css",
   "./css/04-panel-hero-summary.css",
   "./css/04-panel-log.css",
   "./css/04-panel-quests.css",
@@ -88,6 +89,7 @@ var PRECACHE_APP_SHELL = [
   "./js/data/dungeon.js",
   "./js/data/enemies.js",
   "./js/data/equipment.js",
+  "./js/data/afflictions.js",
   "./js/data/heroes.js",
   "./js/data/potions.js",
   "./js/data/quests.js",
@@ -115,6 +117,7 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/save-system.js",
   "./js/systems/special-attack-system.js",
   "./js/systems/stats-system.js",
+  "./js/systems/affliction-system.js",
   "./js/systems/world-quest-system.js",
   "./js/systems/adventure-quest-system.js",
   "./js/ui/achievement-view.js",
@@ -126,6 +129,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/dungeon-view.js",
   "./js/ui/equip-shop-view.js",
   "./js/ui/equipment-view.js",
+  "./js/ui/afflictions-view.js",
   "./js/ui/heros-view.js",
   "./js/ui/hud-view.js",
   "./js/ui/log-view.js",
@@ -143,11 +147,11 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/ui-root.js",
   "./js/ui/village-view.js",
   "./js/ui/camp-view.js",
-  "./images/icons/icon-192.png",
-  "./images/icons/icon-512.png",
-  "./images/icons/icon-512-maskable.png",
-  "./images/icons/apple-touch-icon.png",
-  "./images/icons/favicon-32.png",
+  "./images/Icons/icon-192.png",
+  "./images/Icons/icon-512.png",
+  "./images/Icons/icon-512-maskable.png",
+  "./images/Icons/apple-touch-icon.png",
+  "./images/Icons/favicon-32.png",
 ];
 
 /* ============================================================

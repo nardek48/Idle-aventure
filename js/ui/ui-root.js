@@ -255,6 +255,9 @@ function renderPanel() {
     case "achievements":
       container.innerHTML = buildAchievementsHTML();
       break;
+    case "afflictions":
+      container.innerHTML = buildAfflictionsHTML();
+      break;
     default:
       container.innerHTML = "";
   }

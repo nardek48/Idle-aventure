@@ -1,0 +1,127 @@
+/* ============================================================
+Aethervale — css/04-panel-afflictions.css
+v3.20 : écran "Afflictions" (Menu ☰) — voir ui/afflictions-view.js.
+Le switch (.affliction-switch) reprend exactement le pattern déjà
+utilisé pour l'autovente (.auto-sell-switch, css/04-panel-equipment.css)
+pour rester visuellement cohérent, sans dupliquer les tokens.
+============================================================ */
+
+.affliction-intro {
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-card);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.affliction-intro-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  margin-bottom: 6px;
+}
+
+.affliction-intro-desc {
+  font-size: 12.5px;
+  color: var(--nb-ink-dim);
+  margin-bottom: 8px;
+}
+
+.affliction-intro-count {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--nb-ink);
+}
+
+.affliction-stack-bonus {
+  color: var(--nb-gold-dark);
+}
+
+.affliction-card {
+  margin-bottom: 10px;
+}
+
+.affliction-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--nb-radius-md);
+  border: 2px solid var(--nb-frame);
+  background: var(--nb-cream);
+  box-shadow: var(--nb-shadow-card);
+  cursor: pointer;
+  text-align: left;
+}
+
+.affliction-toggle.is-on {
+  border-color: var(--hp-green);
+  background: #eaf7ea;
+}
+
+.affliction-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.affliction-toggle-icon {
+  flex-shrink: 0;
+  font-size: 28px;
+  width: 40px;
+  text-align: center;
+}
+
+.affliction-toggle-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.affliction-toggle-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.affliction-toggle-desc {
+  font-size: 11.5px;
+  color: var(--nb-ink-dim);
+  line-height: 1.35;
+}
+
+/* Switch — identique à .auto-sell-switch (css/04-panel-equipment.css),
+   dupliqué ici volontairement pour que ce fichier reste autonome
+   (pas de dépendance d'ordre de chargement entre les deux CSS). */
+.affliction-switch {
+  flex-shrink: 0;
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--nb-cream-deep);
+  border: 1px solid var(--nb-frame-light);
+}
+
+.affliction-switch::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+
+.affliction-toggle.is-on .affliction-switch {
+  background: var(--hp-green);
+}
+
+.affliction-toggle.is-on .affliction-switch::before {
+  transform: translateX(16px);
+}
