@@ -386,7 +386,15 @@ var StatsSystem = {
     // une fois heroMaxHp recalculé correctement juste après. Un seul
     // clamp final, une fois la valeur DÉFINITIVE de heroMaxHp connue,
     // élimine complètement ce risque.
-    if (!game.heroHp || game.heroHp > game.heroMaxHp) game.heroHp = game.heroMaxHp;
+    // v3.29 : bug corrigé — "!game.heroHp" est VRAI quand heroHp vaut
+    // exactement 0 en JavaScript (0 est "falsy"), donc CE clamp
+    // soignait accidentellement un héros mort (0 PV, doit se reposer
+    // — voir v3.15) à chaque fois que recalcStats() était rappelée,
+    // par exemple après un simple achat en boutique ou de talent.
+    // "game.heroHp == null" ne vise QUE undefined/null (personnage
+    // neuf, jamais initialisé) — 0 est maintenant traité comme une
+    // valeur légitime, pas comme "non défini".
+    if (game.heroHp == null || game.heroHp > game.heroMaxHp) game.heroHp = game.heroMaxHp;
 
     // Bonus cumulés des hauts faits réclamés (voir systems/achievement-system.js).
     var achievementBonus = (window.AchievementManager && typeof AchievementManager.getTotalBonus === "function")

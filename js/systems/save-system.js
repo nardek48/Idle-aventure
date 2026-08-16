@@ -1122,9 +1122,45 @@ window.migrateHeroId = migrateHeroId;
 
 /* Génère le JSON de sauvegarde et déclenche son téléchargement comme
    fichier .json (le navigateur choisit où l'enregistrer). */
+/* v3.29 : construit le payload d'export COMPLET (tous les emplacements
+   de héros occupés), partagé par exportSaveToFile() et
+   showExportTextModal() ci-dessous — évite de dupliquer la logique de
+   collecte entre le fichier téléchargé et le code texte copié/collé. */
+function buildMultiSaveExportPayload() {
+  saveGame(); // l'emplacement actif doit être à jour avant de lire les autres
+
+  var slots = {};
+  var maxSlots = window.MAX_HERO_SLOTS || 3;
+  for (var i = 1; i <= maxSlots; i++) {
+    if (window.HeroSlotManager && HeroSlotManager.hasSlot(i)) {
+      try {
+        var raw = localStorage.getItem(getSlotKey(i));
+        if (raw) slots[i] = JSON.parse(raw);
+      } catch (e) {}
+    }
+  }
+
+  return {
+    aethervaleMultiSave: true,
+    exportVersion: 1,
+    activeSlot: getActiveSlot(),
+    slots: slots
+  };
+}
+
+/* Génère le JSON de sauvegarde et déclenche son téléchargement comme
+   fichier .json (le navigateur choisit où l'enregistrer). */
+/* v3.29 : bug corrigé — n'exportait QUE l'emplacement actif
+   (buildSaveData() ne lit que le `game` en mémoire), les 2 autres
+   héros (stockés dans leurs propres clés localStorage depuis le
+   système multi-héros, v3.25) n'étaient jamais inclus dans le
+   fichier. Exporte maintenant TOUS les emplacements occupés, dans un
+   nouveau format enveloppe ({ aethervaleMultiSave: true, slots: {...} }).
+   Reste capable d'IMPORTER l'ancien format à un seul héros (voir
+   applyImportedSave() plus bas) — juste l'export qui change. */
 function exportSaveToFile() {
-  var data = buildSaveData();
-  var json = JSON.stringify(data, null, 2);
+  var payload = buildMultiSaveExportPayload();
+  var json = JSON.stringify(payload, null, 2);
   var blob = new Blob([json], { type: "application/json" });
   var url = URL.createObjectURL(blob);
 
@@ -1137,7 +1173,8 @@ function exportSaveToFile() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  showToast("💾 Sauvegarde exportée", 1800);
+  var slotCount = Object.keys(payload.slots).length;
+  showToast("💾 Sauvegarde exportée (" + slotCount + " héros)", 1800);
 }
 
 /* Affiche le JSON de sauvegarde dans une modale texte, à copier
@@ -1146,7 +1183,9 @@ function exportSaveToFile() {
 function showExportTextModal() {
   var host = document.getElementById("export-text-root");
   if (!host) return;
-  var json = JSON.stringify(buildSaveData());
+  // v3.29 : même correctif que exportSaveToFile() — inclut maintenant
+  // tous les emplacements de héros occupés, pas seulement l'actif.
+  var json = JSON.stringify(buildMultiSaveExportPayload());
 
   host.innerHTML = ''
     + '<div class="full-menu-overlay" onclick="if (event.target === this) closeExportTextModal();">'
@@ -1214,43 +1253,100 @@ function looksLikeQuestIdleSave(d) {
     d.talents !== undefined);
 }
 
+/* v3.29 : détecte le NOUVEAU format d'export multi-héros (voir
+   buildMultiSaveExportPayload() plus haut) — { aethervaleMultiSave:
+   true, slots: {...} }, un ou plusieurs héros complets. */
+function looksLikeMultiSave(d) {
+  return !!(d && typeof d === "object" && d.aethervaleMultiSave === true &&
+    d.slots && typeof d.slots === "object" && Object.keys(d.slots).length > 0);
+}
+
 /* Applique une sauvegarde importée (objet déjà parsé), après
-   confirmation explicite — remplace TOUTE la progression actuelle. */
+   confirmation explicite — remplace TOUTE la progression actuelle.
+   v3.29 : reconnaît maintenant DEUX formats — le nouveau
+   (aethervaleMultiSave, plusieurs héros à la fois) ET l'ancien (un
+   seul héros, pour rester compatible avec les fichiers exportés
+   avant ce correctif) — voir looksLikeMultiSave()/looksLikeQuestIdleSave()
+   juste au-dessus. */
 function applyImportedSave(data) {
-  if (!looksLikeQuestIdleSave(data)) {
-    showToast("❌ Fichier invalide (pas une sauvegarde Quest Idle)", 2200);
+  var isMulti = looksLikeMultiSave(data);
+  var isSingle = !isMulti && looksLikeQuestIdleSave(data);
+
+  if (!isMulti && !isSingle) {
+    showToast("❌ Fichier invalide (pas une sauvegarde Aethervale)", 2200);
     return;
   }
 
   var doImport = function () {
-    restoreBaseState(data);
-    reapplyProgressEffects();
+    if (isMulti) {
+      // Écrit CHAQUE emplacement du fichier dans sa clé localStorage
+      // dédiée — remplace entièrement ce qui existait avant à ces
+      // emplacements (les emplacements NON présents dans le fichier,
+      // s'il y en a, restent inchangés).
+      var maxSlots = window.MAX_HERO_SLOTS || 3;
+      var importedCount = 0;
+      Object.keys(data.slots).forEach(function (slotKey) {
+        var slotNum = parseInt(slotKey, 10);
+        if (slotNum < 1 || slotNum > maxSlots) return;
+        var slotData = data.slots[slotKey];
+        if (!slotData) return;
+        try {
+          localStorage.setItem(getSlotKey(slotNum), JSON.stringify(slotData));
+          importedCount++;
+        } catch (e) {}
+      });
 
-    if (window.QuestManager && typeof QuestManager.checkReset === "function") {
-      QuestManager.checkReset();
-    }
-    if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
-      CombatEngine.spawnEnemy();
-    }
+      var targetSlot = (data.activeSlot && data.slots[data.activeSlot]) ? Number(data.activeSlot) : Number(Object.keys(data.slots)[0]);
+      setActiveSlot(targetSlot);
 
-    saveGame();
-    if (typeof renderAll === "function") renderAll();
-    showToast("✅ Sauvegarde importée", 1800);
-    addLog("📥 Sauvegarde importée.", "event");
+      // Repart d'un état neuf avant de charger l'emplacement importé
+      // (même précaution que HeroSlotManager.switchToSlot()).
+      if (typeof createInitialGameState === "function") {
+        var keptSaveSupported = game.saveSupported;
+        var fresh = createInitialGameState();
+        Object.keys(game).forEach(function (k) { delete game[k]; });
+        Object.assign(game, fresh);
+        game.saveSupported = keptSaveSupported;
+      }
+      loadGame();
+      if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
+      if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
+      if (typeof resumeCombatAfterSlotChange === "function") resumeCombatAfterSlotChange();
+
+      if (typeof renderAll === "function") renderAll();
+      showToast("✅ Sauvegarde importée (" + importedCount + " héros)", 2000);
+      addLog("📥 Sauvegarde multi-héros importée (" + importedCount + " héros).", "event");
+    } else {
+      // Ancien format (un seul héros) — importe dans l'EMPLACEMENT
+      // ACTIF uniquement, comportement identique à avant ce correctif.
+      restoreBaseState(data);
+      reapplyProgressEffects();
+
+      if (window.QuestManager && typeof QuestManager.checkReset === "function") {
+        QuestManager.checkReset();
+      }
+      if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
+        CombatEngine.spawnEnemy();
+      }
+
+      saveGame();
+      if (typeof renderAll === "function") renderAll();
+      showToast("✅ Sauvegarde importée", 1800);
+      addLog("📥 Sauvegarde importée.", "event");
+    }
   };
 
   // Ferme la modale d'import (copier/coller) AVANT d'ouvrir la
   // confirmation, sinon les deux se superposent et bloquent le clic.
   if (typeof closeExportTextModal === "function") closeExportTextModal();
 
+  var confirmMsg = isMulti
+    ? "Ceci va REMPLACER la progression des héros présents dans ce fichier (" + Object.keys(data.slots).length + "). Cette action est irréversible."
+    : "Ceci va REMPLACER toute la progression de l'emplacement ACTIF par celle importée. Cette action est irréversible.";
+
   if (typeof showConfirmModal === "function") {
-    showConfirmModal(
-      "Importer cette sauvegarde ?",
-      "Ceci va REMPLACER toute ta progression actuelle par celle importée. Cette action est irréversible.",
-      "📥",
-      doImport
-    );
-  } else if (window.confirm("Remplacer la progression actuelle par cette sauvegarde ?")) {
+    showConfirmModal("Importer cette sauvegarde ?", confirmMsg, "📥", doImport);
+  } else if (window.confirm(confirmMsg)) {
     doImport();
   }
 }

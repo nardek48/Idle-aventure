@@ -69,7 +69,13 @@ function buildPotionShopHTML() {
    Combat (voir ui/combat-view.js). */
 function buildHealingPotionCardHTML(potion) {
   var stock = PotionManager.getHealingStock(potion.id);
-  var canBuy = (game.gold || 0) >= potion.cost;
+  // v3.29 : bug corrigé — affichait potion.cost BRUT (prix de base
+  // figé) au lieu du prix RÉEL avec la hausse par cycle (+15%/cycle,
+  // voir PotionManager.getCost(), déjà correctement appliquée à
+  // l'achat depuis la v3.20 — seul l'AFFICHAGE ici n'avait jamais été
+  // mis à jour pour refléter cette hausse).
+  var cost = PotionManager.getCost(potion);
+  var canBuy = (game.gold || 0) >= cost;
 
   var h = '<div class="nb-purchase-card">';
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(potion.icon, "nb-purchase-icon", potion.name) + '</div></div>';
@@ -78,7 +84,7 @@ function buildHealingPotionCardHTML(potion) {
   h += '<div class="nb-purchase-desc">Restaure ' + Math.round(potion.healPercent * 100) + '% des PV max, à la demande depuis l\u2019écran Combat.</div>';
   h += '<div class="nb-purchase-meta">🩹 Stock : ' + stock + '</div>';
   h += '</div>';
-  h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(potion.cost) + '</button></div>';
+  h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
   h += '</div>';
   return h;
 }

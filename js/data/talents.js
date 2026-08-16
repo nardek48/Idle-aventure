@@ -63,7 +63,7 @@ var TALENTTREE = {
     { id: "t_assault_frenzy", name: "Frénésie d'assaut", icon: "💥", img: "images/Icons/talents/t_assault_frenzy.png", slot: "inner_right", tier: "inner", side: "right", requires: "t_battle_trance", maxLevel: 3, perLevel: 0.25, effect: "Tous les 20 taps, le prochain inflige +25% dégâts, par niveau.", capstone: true },
 
     { id: "t_bloodlust", name: "Soif de sang", icon: "🩸", img: "images/Icons/talents/t_bloodlust.png", slot: "lower_left", tier: "lower", side: "left", requires: "t_boss_slayer", maxLevel: 3, perLevel: 0.03, perLevelCap: 0.15, effect: "+3% dégâts contre les boss par ascension (plafond 15%), par niveau.", capstone: true },
-    { id: "t_perfect_execution", name: "Exécution parfaite", icon: "☠️", img: "images/Icons/talents/t_perfect_execution.png", slot: "lower_right", tier: "lower", side: "right", requires: "t_bloodlust", maxLevel: 3, perLevel: 0.15, effect: "Les boss sous 20% PV subissent +15% dégâts finaux, par niveau.", capstone: true }
+    { id: "t_perfect_execution", name: "Exécution parfaite", icon: "☠️", img: "images/Icons/talents/t_perfect_execution.png", slot: "lower_right", tier: "lower", side: "right", requires: "t_assault_frenzy", maxLevel: 3, perLevel: 0.15, effect: "Les boss sous 20% PV subissent +15% dégâts finaux, par niveau.", capstone: true }
   ],
 
   fortune: [
@@ -79,7 +79,7 @@ var TALENTTREE = {
     { id: "t_astral_prospecting", name: "Prospection astrale", icon: "🌠", img: "images/Icons/talents/t_astral_prospecting.png", slot: "inner_right", tier: "inner", side: "right", requires: "t_merchant_instinct", maxLevel: 3, perLevel: 5, effect: "+5% de chance de doubler un butin gagné, par niveau.", capstone: true },
 
     { id: "t_rich_ritual", name: "Rituel opulent", icon: "🏆", img: "images/Icons/talents/t_rich_ritual.png", slot: "lower_left", tier: "lower", side: "left", requires: "t_golden_touch", maxLevel: 3, perLevel: 1, effect: "+1 Aether supplémentaire lors des grosses ascensions, par niveau.", capstone: true },
-    { id: "t_sovereign_treasure", name: "Trésor souverain", icon: "👑", img: "images/Icons/talents/t_sovereign_treasure.png", slot: "lower_right", tier: "lower", side: "right", requires: "t_rich_ritual", maxLevel: 3, perLevel: 0.20, effect: "+20% or global et bonus sur les récompenses rares, par niveau.", capstone: true }
+    { id: "t_sovereign_treasure", name: "Trésor souverain", icon: "👑", img: "images/Icons/talents/t_sovereign_treasure.png", slot: "lower_right", tier: "lower", side: "right", requires: "t_astral_prospecting", maxLevel: 3, perLevel: 0.20, effect: "+20% or global et bonus sur les récompenses rares, par niveau.", capstone: true }
   ],
 
   /* v3.28 : branche entièrement rethématisée — défense/PV au lieu
@@ -101,7 +101,7 @@ var TALENTTREE = {
     { id: "t_vital_anchor", name: "Constitution de fer", icon: "⚓", img: "images/Icons/talents/t_vital_anchor.png", slot: "inner_right", tier: "inner", side: "right", requires: "t_tenacious_will", maxLevel: 3, perLevel: 0.05, effect: "+5% PV max ET +5% défense passive, par niveau.", capstone: true },
 
     { id: "t_last_stand", name: "Repos du guerrier", icon: "🕯️", img: "images/Icons/talents/t_last_stand.png", slot: "lower_left", tier: "lower", side: "left", requires: "t_essence_bloom", maxLevel: 3, perLevel: 0.10, effect: "-10% cooldown des repos (Campement), par niveau.", capstone: true },
-    { id: "t_immutable_guardian", name: "Gardien immuable", icon: "🌳", img: "images/Icons/talents/t_immutable_guardian.png", slot: "lower_right", tier: "lower", side: "right", requires: "t_last_stand", maxLevel: 3, perLevel: 0.10, effect: "+10% PV max et +5% défense passive, par niveau.", capstone: true }
+    { id: "t_immutable_guardian", name: "Gardien immuable", icon: "🌳", img: "images/Icons/talents/t_immutable_guardian.png", slot: "lower_right", tier: "lower", side: "right", requires: "t_vital_anchor", maxLevel: 3, perLevel: 0.10, effect: "+10% PV max et +5% défense passive, par niveau.", capstone: true }
   ]
 };
 
