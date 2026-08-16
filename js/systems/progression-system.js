@@ -36,6 +36,18 @@ var WorldManager = {
       return { id: "fallback", name: "Ennemi", asset: "slime", isBoss: false, hp: 10, maxHp: 10, goldReward: 1, essenceReward: 0, resists: [], weak: [], stats: makeRpgStats(5, 10, 10, 5, 5) };
     }
 
+    // v3.23 : palier de difficulté tous les 5 cycles — demandé, pour
+    // pousser encore plus à ascensionner une fois qu'on a tout
+    // débloqué (monde 6/Tour) plutôt que de juste farm indéfiniment.
+    // Ne touche QUE les PV et les dégâts (via stats.power, cloné plus
+    // bas pour ne jamais modifier ENEMY_DB/BOSS_DB partagés) des
+    // ENNEMIS — les améliorations du héros restent inchangées.
+    // L'augmentation NORMALE par cycle (déjà dans scale/bossScale plus
+    // bas) continue de s'appliquer à chaque cycle, sans exception —
+    // ce palier est un bonus EN PLUS, pas un remplacement. Voir
+    // getCycleMilestoneMult() plus bas dans ce fichier.
+    var milestoneMult = this.getCycleMilestoneMult();
+
     // v3.20 : Élite (affliction) force TOUS les ennemis à être des
     // boss, pas seulement le dernier de la vague — voir
     // AfflictionManager.shouldForceAllBosses(), systems/affliction-system.js.
@@ -51,12 +63,19 @@ var WorldManager = {
       var bossScale = 1 + this.worldIndex * 1.3 + this.adventureIndex * 0.4 + (game.cycleCount || 0) * 0.7;
       var BOSS_ENDURANCE_HP_COEF = 2;
       var bossEndurance = (bossData.stats && bossData.stats.endurance) || 58;
-      var bossHp = Math.floor(bossEndurance * BOSS_ENDURANCE_HP_COEF * bossScale + (game.totalKills || 0) * 2);
+      var bossHp = Math.floor(bossEndurance * BOSS_ENDURANCE_HP_COEF * bossScale * milestoneMult + (game.totalKills || 0) * 2);
       // v3.20 : Colosses (affliction) double les PV de boss — voir
       // AfflictionManager.getCombinedModifiers().bossHpMult.
       if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
         var bossHpMods = AfflictionManager.getCombinedModifiers();
         if (bossHpMods.bossHpMult !== 1) bossHp = Math.floor(bossHp * bossHpMods.bossHpMult);
+      }
+      // v3.23 : clone des stats du boss (JAMAIS l'objet partagé de
+      // BOSS_DB directement) pour pouvoir booster power (dégâts de
+      // riposte) sans corrompre la base de données pour toujours.
+      var bossStats = bossData.stats ? Object.assign({}, bossData.stats) : null;
+      if (bossStats && milestoneMult !== 1) {
+        bossStats.power = Math.floor(bossStats.power * milestoneMult);
       }
       return {
         id: enemyId,
@@ -69,7 +88,7 @@ var WorldManager = {
         essenceReward: 3 + this.worldIndex,
         resists: bossData.resists || [],
         weak: bossData.weak || [],
-        stats: bossData.stats || null
+        stats: bossStats
       };
     }
 
@@ -80,7 +99,14 @@ var WorldManager = {
     var scale = 1 + this.worldIndex * 0.90 + this.adventureIndex * 0.30 + (game.cycleCount || 0) * 0.45 + this.enemyIndex * 0.05;
     var ENEMY_ENDURANCE_HP_COEF = 1.2;
     var enemyEndurance = (enemyData.stats && enemyData.stats.endurance) || 18;
-    var hp = Math.floor(enemyEndurance * ENEMY_ENDURANCE_HP_COEF * scale + this.enemyIndex * 5);
+    var hp = Math.floor(enemyEndurance * ENEMY_ENDURANCE_HP_COEF * scale * milestoneMult + this.enemyIndex * 5);
+
+    // v3.23 : même clonage que pour le boss ci-dessus — jamais
+    // l'objet ENEMY_DB partagé directement.
+    var effectiveStats = enemyData.stats ? Object.assign({}, enemyData.stats) : null;
+    if (effectiveStats && milestoneMult !== 1) {
+      effectiveStats.power = Math.floor(effectiveStats.power * milestoneMult);
+    }
 
     return {
       id: enemyId,
@@ -93,8 +119,28 @@ var WorldManager = {
       essenceReward: 1,
       resists: enemyData.resists || [],
       weak: enemyData.weak || [],
-      stats: enemyData.stats || null
+      stats: effectiveStats
     };
+  },
+
+  // v3.23 : plus qu'une simple augmentation "normale" par cycle
+  // (scale/bossScale ci-dessus, inchangée, continue de s'appliquer à
+  // CHAQUE cycle sans exception) — un palier SUPPLÉMENTAIRE tous les
+  // 5 cycles (5, 10, 15...), MAIS seulement une fois le monde 6
+  // (Tour, index 5) débloqué. Objectif explicite : pousser encore
+  // plus à ascensionner une fois qu'on a tout débloqué plutôt que de
+  // juste farm indéfiniment sans y être incité.
+  // Valeur choisie par défaut (+25% de PV/dégâts par palier de 5
+  // cycles, additif) — pas de chiffre précisé dans la demande,
+  // facile à ajuster une fois testé en jeu réel.
+  CYCLE_MILESTONE_BONUS_PER_STEP: 0.25,
+  getCycleMilestoneMult: function () {
+    if (!window.WorldManager || typeof WorldManager.meetsAscensionRequirement !== "function") return 1;
+    if (!WorldManager.meetsAscensionRequirement(5)) return 1; // index 5 = Tour (6e monde)
+
+    var milestones = Math.floor((game.cycleCount || 0) / 5);
+    if (milestones <= 0) return 1;
+    return 1 + milestones * this.CYCLE_MILESTONE_BONUS_PER_STEP;
   },
 
   /* v2.83 : un monde n'est plus débloqué par un nombre d'ascensions

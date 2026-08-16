@@ -107,6 +107,18 @@ var PotionManager = {
     var cost = this.getCost(potion);
     if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
 
+    // v3.24 : plafond de stock à 1 par type pour les potions à effet
+    // TEMPORAIRE (durationMin) — demandé, en complément direct du
+    // "une seule active à la fois" de la v3.23 : inutile de pouvoir
+    // en stocker plusieurs qu'on ne pourra de toute façon jamais
+    // utiliser en même temps. Les potions de SOIN (fonction séparée,
+    // buyHealingPotion) et l'Élixir d'Aether (pas de durationMin, son
+    // propre mécanisme de coût croissant via costMult sert déjà à
+    // limiter l'empilement) restent librement stockables comme avant.
+    if (potion.durationMin && this.getStock(id) >= 1) {
+      return showToast("Déjà 1 en stock — utilise-la avant d'en racheter", 1600);
+    }
+
     game.gold -= cost;
     game.potionsOwned[id] = this.getStock(id) + 1;
     if (!potion.durationMin) game.aetherElixirStackCount = Number(game.aetherElixirStackCount || 0) + 1;
@@ -140,6 +152,24 @@ var PotionManager = {
 
     var stock = this.getStock(id);
     if (stock <= 0) return showToast("Aucune potion en stock", 1000);
+
+    // v3.23 : une SEULE potion à bonus temporaire active à la fois
+    // (demandé) — avant, Force/Célérité/Précision/Endurance/Fortune
+    // pouvaient toutes tourner simultanément. Reboire la MÊME potion
+    // pendant qu'elle est active reste permis (prolonge sa durée) ;
+    // essayer d'en activer une AUTRE pendant qu'une est en cours est
+    // bloqué. Ne concerne que les potions à durée (durationMin) — pas
+    // l'Élixir d'Aether, qui n'a pas de notion d'"active" (bonus mis
+    // en réserve pour la prochaine ascension).
+    if (potion.durationMin) {
+      var now = Date.now();
+      var hasOtherActive = Object.keys(game.activePotions).some(function (activeId) {
+        return activeId !== id && game.activePotions[activeId] > now;
+      });
+      if (hasOtherActive) {
+        return showToast("Une seule potion à bonus active à la fois", 1600);
+      }
+    }
 
     game.potionsOwned[id] = stock - 1;
 

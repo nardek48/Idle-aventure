@@ -88,27 +88,77 @@ function buildCharacterAbilitiesHTML() {
 }
 
 /* ============================================================
-   Carrousel inline des 6 héros (v2.73), inchangé en v2.75.
-============================================================ */
+   v3.25 : sélecteur des 3 EMPLACEMENTS de héros — remplace le
+   carrousel des 6 héros (v2.73), qui ne faisait que changer de
+   personnage au sein d'UNE SEULE partie. Chaque emplacement est
+   maintenant une PARTIE INDÉPENDANTE (voir HeroSlotManager,
+   systems/save-system.js) : cliquer sur un emplacement occupé
+   switche vers cette partie, cliquer sur un emplacement vide ouvre la
+   création d'un nouveau héros qui repart entièrement de zéro.
+   Phase 1 (mécanique) — réutilise les classes CSS existantes
+   (.hero-card) pour rester cohérent visuellement sans avoir encore
+   un habillage dédié ; l'affinage visuel est prévu dans un second
+   temps, une fois la mécanique testée. */
 function buildHeroCarouselHTML() {
-  if (typeof HEROES_DB === "undefined") return "";
+  if (!window.HeroSlotManager) return "";
 
-  var currentId = game.heroId || "";
+  var maxSlots = HeroSlotManager.getMaxSlots();
+  var activeSlot = HeroSlotManager.getActiveSlot();
   var h = '<div class="hero-carousel-row">';
 
-  Object.keys(HEROES_DB).forEach(function (key) {
-    var hero = HEROES_DB[key];
-    if (!hero) return;
-    var isActive = hero.id === currentId;
+  for (var i = 1; i <= maxSlots; i++) {
+    var isActive = i === activeSlot;
+    var summary = HeroSlotManager.getSlotSummary(i);
 
-    h += '<button type="button" class="hero-card hero-carousel-card' + (isActive ? ' active' : '') + '" onclick="selectHeroInline(\'' + esc(hero.id) + '\')">';
-    h += '<img src="' + esc(hero.image) + '" alt="' + esc(hero.name) + '" class="hero-card-image">';
-    h += '<div class="hero-card-name">' + esc(hero.name) + '</div>';
-    h += '</button>';
-  });
+    if (summary) {
+      h += '<button type="button" class="hero-card hero-carousel-card' + (isActive ? ' active' : '') + '" onclick="selectHeroSlot(' + i + ')">';
+      if (summary.heroImage) {
+        h += '<img src="' + esc(summary.heroImage) + '" alt="' + esc(summary.heroName) + '" class="hero-card-image">';
+      }
+      h += '<div class="hero-card-name">' + esc(summary.playerName || summary.heroName) + '</div>';
+      h += '<div class="hero-carousel-sub">Niv. ' + esc(summary.heroLevel) + (isActive ? ' · actif' : '') + '</div>';
+      h += '</button>';
+    } else {
+      h += '<button type="button" class="hero-card hero-carousel-card hero-carousel-empty" onclick="createNewHeroInSlot(' + i + ')">';
+      h += '<div class="hero-carousel-empty-icon">+</div>';
+      h += '<div class="hero-card-name">Nouveau héros</div>';
+      h += '</button>';
+    }
+  }
 
   h += '</div>';
   return h;
+}
+
+/* Bascule vers un AUTRE emplacement (partie indépendante) — ne fait
+   rien si déjà actif. Confirmé avant de switcher (changement de partie
+   complet, pas anodin). */
+function selectHeroSlot(slotNumber) {
+  if (!window.HeroSlotManager) return;
+  if (slotNumber === HeroSlotManager.getActiveSlot()) return;
+
+  var summary = HeroSlotManager.getSlotSummary(slotNumber);
+  var label = summary ? (summary.playerName || summary.heroName) : ("Héros " + slotNumber);
+
+  if (!window.confirm("Passer à " + label + " ? La partie actuelle est sauvegardée automatiquement.")) return;
+
+  var ok = HeroSlotManager.switchToSlot(slotNumber);
+  if (ok) {
+    if (typeof switchTab === "function") switchTab("campement");
+    if (typeof renderAll === "function") renderAll();
+    if (typeof showToast === "function") showToast("Héros changé : " + label, 1200);
+  }
+}
+
+/* Ouvre la création d'un nouveau héros dans un emplacement VIDE —
+   repart entièrement de zéro (nouvelle partie complète), confirmé
+   avant de quitter la partie active en cours. */
+function createNewHeroInSlot(slotNumber) {
+  if (!window.HeroSlotManager) return;
+
+  if (!window.confirm("Créer un nouveau héros dans cet emplacement ? La partie actuelle est sauvegardée automatiquement, tu pourras y revenir.")) return;
+
+  HeroSlotManager.createHeroInSlot(slotNumber);
 }
 
 /* ============================================================
@@ -354,5 +404,7 @@ function selectHeroInline(heroId) {
 
 window.buildHerosHTML = buildHerosHTML;
 window.buildHeroCarouselHTML = buildHeroCarouselHTML;
-window.selectHeroInline = selectHeroInline;
+window.selectHeroSlot = selectHeroSlot;
+window.createNewHeroInSlot = createNewHeroInSlot;
+window.selectHeroInline = selectHeroInline; // v3.25 : conservée pour compat, plus appelée par le carrousel
 window.setHerosSubTab = setHerosSubTab;

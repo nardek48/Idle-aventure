@@ -93,7 +93,7 @@ function buildHudHTML() {
     +   '</div>'
     +   '<div class="nb-hud-shortcuts">'
     +     '<button type="button" class="nb-hud-bag-btn" onclick="openBagFromHud()" aria-label="Inventaire"><img src="./images/Icons/menu_icons/equip_menu.png" alt="" class="nb-hud-bag-icon"><span id="hud-bag-badge" class="nb-hud-bag-badge" style="display:none;">0</span></button>'
-    +     '<button type="button" class="nb-hud-bag-btn" onclick="switchTab(\'ascension\')" aria-label="Ascension"><img src="./images/Icons/menu_icons/aether_menu.png" alt="" class="nb-hud-bag-icon"></button>'
+    +     '<button type="button" class="nb-hud-bag-btn" onclick="switchTab(\'ascension\')" aria-label="Ascension"><img src="./images/Icons/menu_icons/aether_menu.png" alt="" class="nb-hud-bag-icon"><span id="hud-ascension-badge" class="nb-hud-bag-badge" style="display:none;"></span></button>'
     +   '</div>'
     +   '<div id="combat-hero-mini" class="combat-hero-mini" onclick="switchTab(\'talents\')" role="button" aria-label="Talents">'
     +     '<div class="combat-hero-mini-portrait">'
@@ -148,6 +148,7 @@ function renderHud() {
   renderHeroHp();
   renderHudBagBadge();
   renderHudLevelUpBadge();
+  renderHudAscensionBadge();
 }
 
 /* v2.83.54 : indicateur "point de talent disponible" sur le portrait
@@ -187,6 +188,24 @@ function renderHudBagBadge() {
   }
 }
 window.renderHudBagBadge = renderHudBagBadge;
+
+/* v3.23 : pastille rouge sur le raccourci Ascension du HUD (icône
+   juste avant le portrait, ajoutée en v3.17) — bug corrigé : ce
+   raccourci n'avait jamais eu de pastille, contrairement à la carte
+   "Ascension" du Menu ☰ qui, elle, en a toujours eu une correctement
+   fonctionnelle (voir getAscensionAvailableCount(), ui/quests-view.js).
+   Même source de vérité que la carte du Menu — juste un second point
+   d'affichage. Pas de chiffre affiché (juste un point rouge) : une
+   ascension est soit possible, soit non, jamais "plusieurs en attente"
+   comme une quête ou un haut fait. */
+function renderHudAscensionBadge() {
+  var badge = document.getElementById("hud-ascension-badge");
+  if (!badge) return;
+
+  var available = (typeof getAscensionAvailableCount === "function") ? getAscensionAvailableCount() : 0;
+  badge.style.display = available > 0 ? "flex" : "none";
+}
+window.renderHudAscensionBadge = renderHudAscensionBadge;
 
 /* ============================================================
    v1.8.5 : Barre de vie du héros. La classe "low" (PV <= 25%)

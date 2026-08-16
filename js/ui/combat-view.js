@@ -25,13 +25,21 @@ function buildCombatHTML() {
     // ici en survol de la zone de jeu, maintenant visible en
     // permanence sur tous les écrans, pas seulement en combat.
 
+    // v3.23 : la barre des potions actives est sortie de #enemy-display
+    // (qui porte un margin-top:-100px pour remonter tout le bloc
+    // ennemi) — elle se retrouvait décalée avec lui, quasi collée au
+    // HUD et chevauchant visuellement le nom de l'ennemi au lieu
+    // d'être clairement au-dessus. Maintenant un sibling DIRECT de
+    // #enemy-display à l'intérieur de #game-area, avec son propre
+    // espacement normal (voir .active-potions-bar, css/03-combat.css).
+    + '<div id="active-potions-bar" class="active-potions-bar"></div>'
+
     // v2.40 : nom + PV de l'ennemi remontés AU-DESSUS de son
     // icône/image (avant : en dessous). Même id/class, juste
     // réordonné dans le flux (#enemy-display reste en colonne).
     // v2.58 : indicateur de résistance/point faible (#enemy-affinity)
     // retiré à la demande de l'utilisateur.
     + '<div id="enemy-display">'
-    +   '<div id="active-potions-bar" class="active-potions-bar"></div>'
     +   '<div id="enemy-name">Slime</div>'
     // v2.61 : le remplissage (#enemy-hp-bar) est maintenant dans un
     // sous-conteneur dédié (.enemy-hp-bar-track) qui porte le

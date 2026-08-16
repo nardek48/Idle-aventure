@@ -16,6 +16,257 @@ var SAVE_VERSION = 6;
 var AUTO_SAVE_INTERVAL_MS = 30000;
 var saveIntervalId = null;
 
+/* ============================================================
+v3.25 : PLUSIEURS HÉROS = PLUSIEURS PARTIES INDÉPENDANTES.
+Chaque "héros" (jusqu'à MAX_HERO_SLOTS) est une sauvegarde COMPLÈTE et
+autonome — or, essence, Aether, ascension, position sur la carte,
+quêtes, Village, Donjon, hauts faits, Codex, afflictions, inventaire,
+équipement, talents, niveau : absolument tout, pas seulement les
+stats du personnage. "Switcher" de héros = charger une autre partie
+en entier ; l'ancienne reste figée telle quelle jusqu'à ce qu'on y
+revienne.
+
+Implémentation : au lieu d'une seule clé localStorage fixe (SAVE_KEY
+ci-dessus, conservée telle quelle pour la clé de base), chaque
+emplacement a sa PROPRE clé (getSlotKey(1/2/3)), et une petite clé à
+part (ACTIVE_SLOT_KEY) retient quel emplacement est actif. saveGame()/
+loadGame()/clearSaveData() plus bas n'ont PAS changé de signature —
+seul ce que SAVE_KEY représente concrètement est devenu dynamique
+(voir getActiveSaveKey()), donc tous les appelants existants ailleurs
+dans le code (des dizaines, partout) continuent de fonctionner sans
+aucune modification.
+
+Migration automatique : si une ancienne sauvegarde "à plat" existe
+(clé SAVE_KEY brute, format d'avant les emplacements) et qu'aucun
+emplacement 1 n'existe encore, elle est copiée vers l'emplacement 1 —
+zéro action requise, la partie en cours au moment de cette mise à jour
+devient simplement "Héros 1". Voir migrateOldSaveToSlot1(), appelée
+une fois au boot (main/boot.js). */
+
+var MAX_HERO_SLOTS = 3;
+var ACTIVE_SLOT_KEY = "quest_idle_active_slot";
+
+function getSlotKey(slotNumber) {
+  return SAVE_KEY + "_slot" + slotNumber;
+}
+
+function getActiveSlot() {
+  try {
+    var raw = localStorage.getItem(ACTIVE_SLOT_KEY);
+    var n = parseInt(raw, 10);
+    if (n >= 1 && n <= MAX_HERO_SLOTS) return n;
+  } catch (e) {}
+  return 1;
+}
+
+function setActiveSlot(slotNumber) {
+  try {
+    localStorage.setItem(ACTIVE_SLOT_KEY, String(slotNumber));
+  } catch (e) {}
+}
+
+/* La clé RÉELLEMENT utilisée par saveGame()/loadGame()/clearSaveData()
+   ci-dessous — toujours celle de l'emplacement actif du moment. */
+function getActiveSaveKey() {
+  return getSlotKey(getActiveSlot());
+}
+
+/* Migration unique : ancienne sauvegarde à plat (avant les
+   emplacements) -> Emplacement 1. Ne fait rien si l'ancienne clé
+   n'existe pas, ou si l'emplacement 1 a déjà des données (déjà migré,
+   ou partie multi-héros déjà commencée). */
+function migrateOldSaveToSlot1() {
+  try {
+    var slot1Key = getSlotKey(1);
+    if (localStorage.getItem(slot1Key)) return; // déjà migré / déjà en place
+
+    var oldRaw = localStorage.getItem(SAVE_KEY);
+    if (!oldRaw) return; // rien à migrer (partie neuve)
+
+    localStorage.setItem(slot1Key, oldRaw);
+    setActiveSlot(1);
+  } catch (e) {}
+}
+
+/* ============================================================
+   HeroSlotManager : créer/switcher/supprimer un emplacement de héros.
+   Couche fine par-dessus saveGame()/loadGame() ci-dessous — ne
+   réinvente rien, orchestre juste QUAND sauvegarder/charger/reset.
+============================================================ */
+var HeroSlotManager = {
+  getMaxSlots: function () { return MAX_HERO_SLOTS; },
+  getActiveSlot: getActiveSlot,
+
+  hasSlot: function (slotNumber) {
+    if (!game.saveSupported) return false;
+    try {
+      return !!localStorage.getItem(getSlotKey(slotNumber));
+    } catch (e) {
+      return false;
+    }
+  },
+
+  /* Résumé léger pour l'affichage du sélecteur (nom, classe, niveau,
+     monde atteint) SANS charger cet emplacement dans `game` — lit et
+     parse directement sa clé localStorage. Renvoie null si vide ou
+     illisible. */
+  getSlotSummary: function (slotNumber) {
+    if (!this.hasSlot(slotNumber)) return null;
+    try {
+      var raw = localStorage.getItem(getSlotKey(slotNumber));
+      var d = JSON.parse(raw);
+      if (!d || typeof d !== "object") return null;
+
+      var hero = null;
+      if (typeof HEROES_DB !== "undefined" && d.heroId) {
+        Object.keys(HEROES_DB).forEach(function (key) {
+          if (HEROES_DB[key] && HEROES_DB[key].id === d.heroId) hero = HEROES_DB[key];
+        });
+      }
+
+      return {
+        playerName: d.playerName || "",
+        heroId: d.heroId || "",
+        heroName: hero ? hero.name : "",
+        heroImage: hero ? hero.image : "",
+        heroLevel: Number(d.heroLevel || 1),
+        worldIndex: Number(d.worldIndex || 0),
+        cycleCount: Number(d.cycleCount || 0),
+        ascensionCount: Number(d.ascensionCount || 0)
+      };
+    } catch (e) {
+      return null;
+    }
+  },
+
+  /* Bascule vers un AUTRE emplacement : sauvegarde l'emplacement
+     actif courant (pour ne rien perdre), puis charge l'emplacement
+     demandé dans `game`. Si l'emplacement demandé est vide, ne fait
+     rien de spécial ici — c'est createHeroInSlot() qui gère la
+     création (voir plus bas), appelée séparément par l'écran de
+     sélection de héros. */
+  switchToSlot: function (slotNumber) {
+    if (slotNumber === getActiveSlot()) return true;
+    if (!this.hasSlot(slotNumber)) return false;
+
+    // Sauvegarde l'emplacement qu'on quitte AVANT de changer la clé
+    // active, pour que saveGame() écrive encore au bon endroit.
+    saveGame();
+
+    setActiveSlot(slotNumber);
+
+    // Repart d'un état par défaut avant de charger, comme au tout
+    // premier boot — évite qu'un champ absent de la nouvelle
+    // sauvegarde garde par erreur une valeur de l'ancien héros
+    // (ensureGameStateDefaults() re-remplit tout juste après).
+    if (typeof createInitialGameState === "function") {
+      // v3.25 : game.saveSupported vient de la détection de
+      // fonctionnalité au boot (initSaveSystem()), PAS de l'état d'un
+      // héros précis — sans cette préservation explicite, le "wipe"
+      // ci-dessous le remet à false (valeur par défaut de
+      // createInitialGameState()) et saveGame() se met à échouer
+      // silencieusement juste après (son tout premier if la vérifie).
+      var keptSaveSupported = game.saveSupported;
+      var fresh = createInitialGameState();
+      Object.keys(game).forEach(function (k) { delete game[k]; });
+      Object.assign(game, fresh);
+      game.saveSupported = keptSaveSupported;
+    }
+
+    loadGame();
+    if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
+    if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
+
+    return true;
+  },
+
+  /* Crée un NOUVEAU héros dans un emplacement VIDE : sauvegarde
+     l'emplacement qu'on quitte, bascule la clé active vers le nouvel
+     emplacement, repart d'un état 100% neuf (fullResetState-like,
+     mais sans qu'il y ait quoi que ce soit à préserver puisque
+     l'emplacement est vide), puis ouvre le flux de création de héros
+     déjà existant (nom -> héros, voir ui/modal-view.js) pour CE
+     nouvel emplacement. */
+  createHeroInSlot: function (slotNumber) {
+    if (this.hasSlot(slotNumber)) return false; // emplacement déjà occupé, pas de recréation silencieuse
+    if (slotNumber < 1 || slotNumber > MAX_HERO_SLOTS) return false;
+
+    if (getActiveSlot() !== slotNumber) saveGame(); // préserve l'emplacement qu'on quitte
+
+    setActiveSlot(slotNumber);
+
+    if (typeof createInitialGameState === "function") {
+      // v3.25 : game.saveSupported vient de la détection de
+      // fonctionnalité au boot (initSaveSystem()), PAS de l'état d'un
+      // héros précis — sans cette préservation explicite, le "wipe"
+      // ci-dessous le remet à false (valeur par défaut de
+      // createInitialGameState()) et saveGame() se met à échouer
+      // silencieusement juste après (son tout premier if la vérifie).
+      var keptSaveSupported = game.saveSupported;
+      var fresh = createInitialGameState();
+      Object.keys(game).forEach(function (k) { delete game[k]; });
+      Object.assign(game, fresh);
+      game.saveSupported = keptSaveSupported;
+    }
+    if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
+
+    // Pas de saveGame() ici : le nouvel emplacement ne doit exister
+    // "pour de vrai" (hasSlot() === true) qu'une fois le flux de
+    // création de héros complété (confirmHeroSelection()), pas avant
+    // — sinon un emplacement "vide" abandonné en cours de création
+    // laisserait une coquille derrière lui.
+
+    if (typeof renderAll === "function") renderAll();
+    if (typeof openHeroSelection === "function") openHeroSelection();
+
+    return true;
+  },
+
+  /* Supprime un emplacement occupé (efface sa sauvegarde) pour
+     libérer la place — DESTRUCTIF, l'appelant (UI) doit confirmer
+     avant d'appeler ceci. Si c'était l'emplacement ACTIF, bascule
+     automatiquement vers le premier emplacement restant occupé (ou
+     ouvre la création si plus aucun emplacement n'est occupé). */
+  deleteSlot: function (slotNumber) {
+    if (!this.hasSlot(slotNumber)) return false;
+
+    var wasActive = getActiveSlot() === slotNumber;
+    try {
+      localStorage.removeItem(getSlotKey(slotNumber));
+    } catch (e) {
+      return false;
+    }
+
+    if (wasActive) {
+      var self = this;
+      var fallback = null;
+      for (var i = 1; i <= MAX_HERO_SLOTS; i++) {
+        if (i !== slotNumber && self.hasSlot(i)) { fallback = i; break; }
+      }
+      if (fallback) {
+        this.switchToSlot(fallback);
+      } else {
+        // Plus aucun emplacement occupé : repart sur un état neuf,
+        // needsHeroSetup() rouvrira naturellement la création.
+        setActiveSlot(1);
+        if (typeof createInitialGameState === "function") {
+          var keptSaveSupported2 = game.saveSupported;
+          var fresh = createInitialGameState();
+          Object.keys(game).forEach(function (k) { delete game[k]; });
+          Object.assign(game, fresh);
+          game.saveSupported = keptSaveSupported2;
+        }
+        if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
+        if (typeof renderAll === "function") renderAll();
+      }
+    }
+
+    return true;
+  }
+};
+window.HeroSlotManager = HeroSlotManager;
+window.MAX_HERO_SLOTS = MAX_HERO_SLOTS;
+
 function getDefaultQuestProgress() {
   if (typeof DEFAULT_QUEST_PROGRESS !== "undefined" && DEFAULT_QUEST_PROGRESS) {
     return Object.assign({}, DEFAULT_QUEST_PROGRESS);
@@ -123,6 +374,14 @@ function initSaveSystem() {
   } catch (e) {
     game.saveSupported = false;
   }
+
+  // v3.25 : migration unique de l'ancienne sauvegarde à plat (avant
+  // les 3 emplacements de héros) vers l'Emplacement 1 — voir
+  // migrateOldSaveToSlot1() plus haut dans ce fichier. Doit tourner
+  // AVANT le premier loadGame() de init() (main/boot.js), sinon ce
+  // loadGame() chercherait la clé du nouvel emplacement 1 (encore
+  // vide) plutôt que l'ancienne clé à plat.
+  if (game.saveSupported) migrateOldSaveToSlot1();
 
   if (saveIntervalId) {
     clearInterval(saveIntervalId);
@@ -254,7 +513,7 @@ function buildSaveData() {
 function saveGame() {
   if (!game.saveSupported) return false;
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(buildSaveData()));
+    localStorage.setItem(getActiveSaveKey(), JSON.stringify(buildSaveData()));
     game.lastSave = Date.now();
     game.lastOnline = game.lastSave;
     return true;
@@ -426,7 +685,7 @@ function loadGame() {
   if (!game.saveSupported) return false;
 
   try {
-    var raw = localStorage.getItem(SAVE_KEY);
+    var raw = localStorage.getItem(getActiveSaveKey());
     if (!raw) return false;
 
     var d = JSON.parse(raw);
@@ -448,7 +707,7 @@ function loadGame() {
 function clearSaveData() {
   if (!game.saveSupported) return;
   try {
-    localStorage.removeItem(SAVE_KEY);
+    localStorage.removeItem(getActiveSaveKey());
   } catch (e) {}
 }
 

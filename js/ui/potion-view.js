@@ -17,7 +17,13 @@ function buildPotionCardHTML(potion) {
   var isActive = remaining > 0;
   var stock = (window.PotionManager && typeof PotionManager.getStock === "function") ? PotionManager.getStock(potion.id) : 0;
   var cost = (window.PotionManager && typeof PotionManager.getCost === "function") ? PotionManager.getCost(potion) : potion.cost;
-  var canBuy = (game.gold || 0) >= cost;
+  // v3.24 : plafond de stock à 1 pour les potions à effet TEMPORAIRE
+  // (durationMin) — voir PotionManager.buyPotion(). Le bouton se grise
+  // et affiche "EN STOCK" au lieu du prix, cohérent avec le
+  // traitement déjà appliqué ailleurs (boutons du village grisés
+  // quand rien n'est achetable).
+  var isStockCapped = !!potion.durationMin && stock >= 1;
+  var canBuy = !isStockCapped && (game.gold || 0) >= cost;
 
   var h = '<div class="nb-purchase-card rarity-' + esc(potion.rarity) + (isActive ? ' is-active' : '') + '">';
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(potion.icon, "nb-purchase-icon", potion.name) + '</div></div>';
@@ -36,7 +42,11 @@ function buildPotionCardHTML(potion) {
   }
 
   h += '</div>';
-  h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
+  if (isStockCapped) {
+    h += '<div class="nb-purchase-buy-col"><button class="btn-buy cant-afford" type="button" disabled>EN STOCK</button></div>';
+  } else {
+    h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
+  }
   h += '</div>';
   return h;
 }

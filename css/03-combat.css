@@ -41,10 +41,21 @@
    invisible, hauteur 0) tant qu'aucune potion n'est active, pour ne
    jamais grignoter d'espace inutilement sur cet écran très dense. */
 .active-potions-bar {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  z-index: 5;
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 6px;
+  min-height: 0;
+  pointer-events: none;
+}
+
+.active-potions-bar .active-potion-icon {
+  pointer-events: auto;
 }
 
 .active-potion-icon {

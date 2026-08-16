@@ -426,6 +426,33 @@
   line-height: 1.1;
 }
 
+/* v3.25 : sélecteur des 3 emplacements de héros (phase 1, mécanique —
+   habillage définitif prévu dans un second temps). Emplacement vide
+   ("+ Nouveau héros") : contour en pointillés, plus discret qu'un
+   emplacement occupé. */
+.hero-carousel-sub {
+  font-size: 8px;
+  color: var(--nb-ink-dim);
+}
+
+.hero-carousel-empty {
+  border-style: dashed;
+  opacity: 0.75;
+}
+
+.hero-carousel-empty-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--nb-ink-dim);
+  background: var(--nb-cream-deep);
+  border-radius: var(--nb-radius-sm);
+}
+
 /* ===== Sous-onglets Héros/Amélioration/Stats =====
    v2.83.5 : classes génériques .subtab-page / .subtab-page-content /
    .subtab-bar-wrapper / .pc-subtab-bar / .pc-subtab-btn déplacées vers
