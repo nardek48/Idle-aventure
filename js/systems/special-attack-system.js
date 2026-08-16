@@ -112,9 +112,15 @@ var DefenseManager = {
   },
 
   /* Bonus de défense actif, lu par StatsSystem.recalcStats() comme
-     les autres bonus temporaires (potions, attaque spéciale...). */
+     les autres bonus temporaires (potions, attaque spéciale...).
+     v3.28 : talent "Riposte du bouclier" (t_calm_breath, branche
+     Survie) — +5%/niveau de réduction EN PLUS des 35% de base,
+     uniquement pendant que le bouclier est actif. */
   getActiveBonusPct: function () {
-    return this.isActive() ? DEFENSE_ABILITY.defenseBonusPct : 0;
+    if (!this.isActive()) return 0;
+    var base = DEFENSE_ABILITY.defenseBonusPct;
+    var talentBonus = (game.talents && game.talents.t_calm_breath) ? game.talents.t_calm_breath * 0.05 : 0;
+    return base + talentBonus;
   },
 
   use: function () {
@@ -124,13 +130,17 @@ var DefenseManager = {
     }
 
     game.lastDefenseUse = Date.now();
-    game.defenseBuffExpires = Date.now() + DEFENSE_ABILITY.durationMs;
+    // v3.28 : talent "Bouclier renforcé" (t_thick_skin, branche
+    // Survie) — +2s de durée par niveau investi.
+    var talentDurationBonusMs = (game.talents && game.talents.t_thick_skin) ? game.talents.t_thick_skin * 2000 : 0;
+    var effectiveDurationMs = DEFENSE_ABILITY.durationMs + talentDurationBonusMs;
+    game.defenseBuffExpires = Date.now() + effectiveDurationMs;
 
     if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
       StatsSystem.recalcStats();
     }
 
-    addLog("🛡️ " + DEFENSE_ABILITY.name + " activée (" + Math.round(DEFENSE_ABILITY.durationMs / 1000) + "s)", "event");
+    addLog("🛡️ " + DEFENSE_ABILITY.name + " activée (" + Math.round(effectiveDurationMs / 1000) + "s)", "event");
     showToast(DEFENSE_ABILITY.icon + " " + DEFENSE_ABILITY.name, 1400);
     if (typeof renderDefenseButton === "function") renderDefenseButton();
     saveGame();

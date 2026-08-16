@@ -489,23 +489,31 @@ function setShopBuyAmount(amount) {
 /* Coût pour réinitialiser tous les talents : 150 or par talent
    actuellement débloqué (donc plus cher si on a beaucoup investi). */
 function getTalentRespecCost() {
-  var owned = Object.keys(game.talents || {}).filter(function (id) { return game.talents[id]; });
-  return owned.length * 150;
+  // v3.28 : scale maintenant avec la SOMME des niveaux investis (0-3
+  // par talent), pas juste le nombre de talents distincts démarrés —
+  // cohérent avec le remboursement de respecTalents() ci-dessous.
+  var levels = Object.keys(game.talents || {}).map(function (id) { return Number(game.talents[id] || 0); });
+  var totalPoints = levels.reduce(function (sum, lvl) { return sum + lvl; }, 0);
+  return totalPoints * 150;
 }
 
 /* Réinitialise tous les talents contre de l'or : rend tous les points
    dépensés (utilisables ailleurs) et vide game.talents. Demande
    confirmation via showConfirmModal avant d'agir. */
 function respecTalents() {
-  var owned = Object.keys(game.talents || {}).filter(function (id) { return game.talents[id]; });
-  if (!owned.length) return showToast("Aucun talent à réinitialiser", 1200);
+  // v3.28 : chaque talent peut valoir 1, 2 ou 3 points investis
+  // maintenant (niveaux) — le remboursement doit compter la SOMME des
+  // niveaux, pas juste le nombre de talents distincts démarrés.
+  var levels = Object.keys(game.talents || {}).map(function (id) { return Number(game.talents[id] || 0); });
+  var totalPoints = levels.reduce(function (sum, lvl) { return sum + lvl; }, 0);
+  if (!totalPoints) return showToast("Aucun talent à réinitialiser", 1200);
 
   var cost = getTalentRespecCost();
   if ((game.gold || 0) < cost) return showToast("Pas assez d'or (" + formatNumber(cost) + " requis)", 1500);
 
   var doRespec = function () {
     game.gold -= cost;
-    game.talentPoints = Number(game.talentPoints || 0) + owned.length;
+    game.talentPoints = Number(game.talentPoints || 0) + totalPoints;
     game.talents = {};
     game._frenzyTapCount = 0;
     game._frenzyReady = false;
@@ -513,7 +521,7 @@ function respecTalents() {
     if (window.StatsSystem) StatsSystem.recalcStats();
     if (typeof syncAutoTapLoop === "function") syncAutoTapLoop();
 
-    addLog("🔄 Talents réinitialisés (-" + formatNumber(cost) + " or, " + owned.length + " point(s) rendu(s))", "event");
+    addLog("🔄 Talents réinitialisés (-" + formatNumber(cost) + " or, " + totalPoints + " point(s) rendu(s))", "event");
     showToast("Talents réinitialisés", 1500);
     // v2.90.13 : la popup de résumé (#talent-modal-root) vit hors du
     // cycle renderAll() habituel — sans ça, elle continuerait
@@ -528,7 +536,7 @@ function respecTalents() {
   if (typeof showConfirmModal === "function") {
     showConfirmModal(
       "Réinitialiser les talents ?",
-      "Coût : " + formatNumber(cost) + " or. Les " + owned.length + " point(s) dépensé(s) seront rendus.",
+      "Coût : " + formatNumber(cost) + " or. Les " + totalPoints + " point(s) dépensé(s) seront rendus.",
       "🔄",
       doRespec
     );
@@ -541,29 +549,55 @@ function respecTalents() {
    déjà appris, que son prérequis (node.requires) est rempli, et qu'il
    reste au moins 1 point de talent. Recherche le node dans les 3
    branches de l'arbre (l'id suffit, pas besoin de connaître la branche). */
+/* v3.28 : achète UN NIVEAU d'un talent (jusqu'à node.maxLevel, 3 par
+   défaut) — avant, un talent était acheté/pas acheté (booléen),
+   maintenant game.talents[id] est un NOMBRE de niveaux investis.
+   Vérifie : le talent existe, n'est pas déjà au niveau max, son
+   prérequis est acquis (≥1 niveau), il reste au moins 1 point de
+   talent, ET l'exclusivité par palier (voir tier/side, data/talents.js)
+   — investir dans un nœud dont le PALIER a déjà un point investi de
+   l'AUTRE côté est refusé, jusqu'à une réinitialisation. */
 function buyTalentNode(id) {
   var tree = getAllTalentNodes();
   var node = null;
+  var branchOfNode = null;
 
   Object.keys(tree).forEach(function (branch) {
     (tree[branch] || []).forEach(function (entry) {
-      if (entry.id === id) node = entry;
+      if (entry.id === id) { node = entry; branchOfNode = branch; }
     });
   });
 
   if (!node) return showToast("Talent introuvable", 1000);
-  if (game.talents[id]) return showToast("Talent déjà appris", 1000);
-  if (node.requires && !game.talents[node.requires]) return showToast("Talent précédent requis", 1200);
+
+  var maxLevel = node.maxLevel || 1;
+  var currentLevel = Number(game.talents[id] || 0);
+  if (currentLevel >= maxLevel) return showToast("Niveau maximum atteint", 1000);
+  if (node.requires && !(Number(game.talents[node.requires] || 0) > 0)) return showToast("Talent précédent requis", 1200);
   if ((game.talentPoints || 0) < 1) return showToast("Pas assez de points de talent", 1200);
 
+  // v3.28 : exclusivité par PALIER — si ce nœud a un tier/side (donc
+  // n'est pas le nœud "top" partagé), vérifie qu'aucun point n'est
+  // déjà investi dans le nœud OPPOSÉ du MÊME palier de la MÊME branche.
+  if (node.tier && node.side) {
+    var oppositeSide = node.side === "left" ? "right" : "left";
+    var blocked = (tree[branchOfNode] || []).some(function (entry) {
+      return entry.tier === node.tier && entry.side === oppositeSide && Number(game.talents[entry.id] || 0) > 0;
+    });
+    if (blocked) {
+      showToast("Choix déjà fait pour ce palier (" + (oppositeSide === "left" ? "Actif" : "Passif") + ") — réinitialise pour changer", 2000);
+      return;
+    }
+  }
+
   game.talentPoints -= 1;
-  game.talents[id] = true;
+  game.talents[id] = currentLevel + 1;
 
   if (window.StatsSystem) StatsSystem.recalcStats();
   if (typeof syncAutoTapLoop === "function") syncAutoTapLoop();
 
-  addLog("Talent débloqué : " + (node.name || id), "event");
-  showToast((node.name || id) + " débloqué", 1500);
+  addLog("Talent amélioré : " + (node.name || id) + " (niveau " + game.talents[id] + "/" + maxLevel + ")", "event");
+  showToast((node.name || id) + " niveau " + game.talents[id], 1500);
   vibrate([40, 20, 40]);
   if (typeof renderAll === "function") renderAll();
   saveGame();
@@ -683,7 +717,7 @@ function ensureDailyQuests() {
 var AscensionManager = {
   previewGain: function () {
     var gain = typeof ASCENSION_CONFIG.computeGain === "function" ? ASCENSION_CONFIG.computeGain() : 0;
-    if (game.talents.t_rich_ritual && gain >= 10) gain += 1;
+    if (game.talents.t_rich_ritual && gain >= 10) gain += game.talents.t_rich_ritual;
 
     var pendingAetherBonus = (game.pendingPotionBonuses && game.pendingPotionBonuses.aetherNext) || 0;
     if (pendingAetherBonus > 0) gain = Math.ceil(gain * (1 + pendingAetherBonus));
@@ -720,7 +754,7 @@ function ascendNow() {
   }
 
   var gain = typeof ASCENSION_CONFIG.computeGain === "function" ? ASCENSION_CONFIG.computeGain() : 0;
-  if (game.talents.t_rich_ritual && gain >= 10) gain += 1;
+  if (game.talents.t_rich_ritual && gain >= 10) gain += game.talents.t_rich_ritual;
 
   // Élixir d'Aether (potion sans minuteur) : bonus consommé ici, une seule fois.
   var pendingAetherBonus = (window.PotionManager && game.pendingPotionBonuses)

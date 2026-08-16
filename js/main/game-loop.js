@@ -53,9 +53,13 @@ function syncAutoTapLoop() {
     autoTapInterval = null;
   }
 
-  var interval = 2000;
+  var autoTapLevel = (game.talents && game.talents.t_auto_tap) || 0;
+  // v3.28 : l'intervalle de base dépend maintenant du NIVEAU de Main
+  // spectrale (2s au niveau 1, comme avant cette refonte ; 1.5s au
+  // niveau 2 ; 1s au niveau 3) — voir data/talents.js.
+  var interval = autoTapLevel >= 3 ? 1000 : autoTapLevel === 2 ? 1500 : 2000;
   if (game.talents && game.talents.t_battle_trance) {
-    interval = Math.floor(interval / 1.12);
+    interval = Math.floor(interval / (1 + 0.12 * game.talents.t_battle_trance));
   }
 
   autoTapInterval = setInterval(function () {

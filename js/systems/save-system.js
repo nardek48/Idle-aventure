@@ -93,6 +93,40 @@ function migrateOldSaveToSlot1() {
    Couche fine par-dessus saveGame()/loadGame() ci-dessous — ne
    réinvente rien, orchestre juste QUAND sauvegarder/charger/reset.
 ============================================================ */
+/* v3.26 : bug corrigé — après un changement/création de héros
+   (HeroSlotManager.switchToSlot()/createHeroInSlot() ci-dessous), le
+   joueur se retrouvait sur un écran Combat sans ennemi valide (il
+   fallait quitter et relancer le jeu pour pouvoir taper). Cause :
+   ces deux fonctions réimplémentent une partie de la séquence de
+   main/boot.js (createInitialGameState -> loadGame ->
+   ensureGameStateDefaults -> recalcStats) mais SANS l'étape qui fait
+   apparaître le premier ennemi (CombatEngine.spawnEnemy(), ou la
+   reprise de la vague en cours si un donjon était actif) — cette
+   étape n'existait QUE dans boot.js, jamais rappelée ailleurs.
+   Fonction partagée qui réplique fidèlement cette même séquence
+   (voir main/boot.js, function init(), juste après loadGame()) :
+   marque le monde courant "atteint" pour le Codex, génère les quêtes
+   journalières si absentes, puis fait apparaître un ennemi (ou
+   reprend la vague de donjon en cours). */
+function resumeCombatAfterSlotChange() {
+  if (window.WorldManager && typeof WorldManager.markWorldReached === "function") {
+    WorldManager.markWorldReached(WorldManager.worldIndex || 0);
+  }
+
+  if (typeof ensureDailyQuests === "function") ensureDailyQuests();
+
+  if (game.dungeonRun && game.dungeonRun.active && window.DungeonManager) {
+    if (typeof DungeonManager.applyDungeonTheme === "function") DungeonManager.applyDungeonTheme(game.dungeonRun.tierId);
+    if (typeof DungeonManager.spawnWave === "function") DungeonManager.spawnWave(game.dungeonRun.wave || 1);
+  } else if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
+    CombatEngine.spawnEnemy();
+  }
+
+  if (window.QuestManager && typeof QuestManager.checkReset === "function") {
+    QuestManager.checkReset();
+  }
+}
+
 var HeroSlotManager = {
   getMaxSlots: function () { return MAX_HERO_SLOTS; },
   getActiveSlot: getActiveSlot,
@@ -176,6 +210,7 @@ var HeroSlotManager = {
     loadGame();
     if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
     if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
+    resumeCombatAfterSlotChange();
 
     return true;
   },
@@ -209,6 +244,7 @@ var HeroSlotManager = {
       game.saveSupported = keptSaveSupported;
     }
     if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
+    resumeCombatAfterSlotChange(); // v3.26 : voir la fonction ci-dessus — sans ça, l'écran Combat n'avait aucun ennemi tant que le jeu n'était pas relancé
 
     // Pas de saveGame() ici : le nouvel emplacement ne doit exister
     // "pour de vrai" (hasSlot() === true) qu'une fois le flux de
@@ -257,6 +293,7 @@ var HeroSlotManager = {
           game.saveSupported = keptSaveSupported2;
         }
         if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
+        resumeCombatAfterSlotChange(); // v3.26 : même correctif que createHeroInSlot()/switchToSlot()
         if (typeof renderAll === "function") renderAll();
       }
     }

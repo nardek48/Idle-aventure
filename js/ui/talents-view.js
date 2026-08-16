@@ -16,11 +16,29 @@ function getTalentTree() {
 }
 
 function isTalentOwned(id) {
-  return !!(game.talents && game.talents[id]);
+  return Number(game.talents && game.talents[id] || 0) > 0;
+}
+
+/* v3.28 : niveau actuel d'un talent (0 à node.maxLevel) — remplace le
+   simple booléen d'avant cette refonte. */
+function getTalentLevel(id) {
+  return Number(game.talents && game.talents[id] || 0);
 }
 
 function hasTalentRequirement(node) {
-  return !node.requires || !!game.talents[node.requires];
+  return !node.requires || getTalentLevel(node.requires) > 0;
+}
+
+/* v3.28 : un nœud à palier (tier/side non null) est-il verrouillé
+   parce qu'un point a déjà été investi dans le nœud OPPOSÉ du MÊME
+   palier de la même branche ? Voir buyTalentNode(),
+   systems/progression-system.js, pour la même règle côté achat. */
+function isTierLockedByOpposite(node, nodes) {
+  if (!node.tier || !node.side) return false;
+  var oppositeSide = node.side === "left" ? "right" : "left";
+  return nodes.some(function (entry) {
+    return entry.tier === node.tier && entry.side === oppositeSide && getTalentLevel(entry.id) > 0;
+  });
 }
 
 function getTalentCategoryLabel(category) {
@@ -93,21 +111,52 @@ function renderTalentIconHTML(node) {
   return esc(node.icon || "✨");
 }
 
+/* v3.28 : reflète maintenant le NIVEAU (0-3) plutôt qu'un simple
+   acheté/pas acheté, ET l'exclusivité par palier (voir
+   isTierLockedByOpposite ci-dessus). */
 function buildTalentStatusHTML(node, nodes) {
-  var owned = isTalentOwned(node.id);
-  var canBuy = !owned && hasTalentRequirement(node) && (game.talentPoints || 0) >= 1;
+  var level = getTalentLevel(node.id);
+  var maxLevel = node.maxLevel || 1;
+  var tierLocked = isTierLockedByOpposite(node, nodes);
 
-  if (owned) {
-    return '<span class="talent-tier-status status-unlocked">✔ Débloqué</span>';
+  if (level >= maxLevel) {
+    return '<span class="talent-tier-status status-unlocked">✔ Niveau max (' + maxLevel + '/' + maxLevel + ')</span>';
   }
-  if (canBuy) {
-    return '<span class="talent-tier-status status-available">Disponible · 1 pt</span>';
+  if (tierLocked) {
+    var sideLabel = node.side === "left" ? "Passif" : "Actif";
+    return '<span class="talent-tier-status status-locked">🔒 Palier engagé côté ' + sideLabel + ' — réinitialise pour changer</span>';
   }
-  if (node.requires && !game.talents[node.requires]) {
+  if (node.requires && getTalentLevel(node.requires) === 0) {
     var reqNode = findTalentNodeInBranch(nodes, node.requires);
     return '<span class="talent-tier-status status-locked">🔒 Nécessite ' + esc(reqNode ? reqNode.name : "un talent précédent") + '</span>';
   }
-  return '<span class="talent-tier-status status-locked">🔒 Pas assez de points</span>';
+  if ((game.talentPoints || 0) < 1) {
+    return '<span class="talent-tier-status status-locked">🔒 Pas assez de points</span>';
+  }
+  var label = level > 0 ? ("Niveau " + level + "/" + maxLevel + " · Améliorer · 1 pt") : "Disponible · 1 pt";
+  return '<span class="talent-tier-status status-available">' + label + '</span>';
+}
+
+/* v3.28 : petites pastilles pleines/vides représentant le niveau
+   actuel (● ● ○ pour niveau 2/3), affichées sous le nom du talent. */
+function buildTalentLevelPipsHTML(node) {
+  var level = getTalentLevel(node.id);
+  var maxLevel = node.maxLevel || 1;
+  var h = '<div class="talent-tier-pips">';
+  for (var i = 1; i <= maxLevel; i++) {
+    h += '<span class="talent-pip' + (i <= level ? ' is-filled' : '') + '"></span>';
+  }
+  h += '</div>';
+  return h;
+}
+
+/* v3.28 : petite étiquette Actif (gauche)/Passif (droite) — le thème
+   demandé pour les 2 colonnes de chaque palier. Rien pour le nœud
+   "top" (partagé, ni gauche ni droite). */
+function buildTalentSideTagHTML(node) {
+  if (!node.side) return "";
+  var isLeft = node.side === "left";
+  return '<span class="talent-side-tag ' + (isLeft ? "side-active" : "side-passive") + '">' + (isLeft ? "⚔ Actif" : "🧘 Passif") + '</span>';
 }
 
 function buildTalentBranchHTML(branchKey) {
@@ -135,20 +184,29 @@ function buildTalentBranchHTML(branchKey) {
     h += '<div class="talent-tier-row' + (tierNodes.length === 1 ? " single" : "") + '">';
 
     tierNodes.forEach(function (node) {
-      var owned = isTalentOwned(node.id);
-      var canBuy = !owned && hasTalentRequirement(node) && (game.talentPoints || 0) >= 1;
+      var level = getTalentLevel(node.id);
+      var maxLevel = node.maxLevel || 1;
+      var owned = level > 0;
+      var atMax = level >= maxLevel;
+      var tierLocked = isTierLockedByOpposite(node, nodes);
+      var canBuy = !atMax && !tierLocked && hasTalentRequirement(node) && (game.talentPoints || 0) >= 1;
       var classes = ["talent-tier-card"];
 
-      if (owned) classes.push("unlocked");
+      if (atMax) classes.push("unlocked");
+      else if (owned) classes.push("in-progress");
       else if (canBuy) classes.push("available");
       else classes.push("locked");
+      if (tierLocked && !owned) classes.push("tier-locked");
       if (node.capstone) classes.push("capstone");
+      if (node.side) classes.push("side-" + node.side);
 
       var tooltipText = node.desc || node.effect || "";
 
       h += '<button class="' + classes.join(" ") + '" type="button" title="' + esc(tooltipText) + '" onclick="buyTalentNode(\'' + esc(node.id) + '\')">';
+      h += buildTalentSideTagHTML(node);
       h += '<div class="talent-tier-icon">' + renderTalentIconHTML(node) + '</div>';
       h += '<div class="talent-tier-name">' + esc(node.name) + '</div>';
+      h += buildTalentLevelPipsHTML(node);
       h += '<div class="talent-tier-effect">' + esc(node.effect || "") + '</div>';
       h += buildTalentStatusHTML(node, nodes);
       h += '</button>';
@@ -214,9 +272,11 @@ function buildTalentSummaryPopupHTML() {
   if (owned.length) {
     h += '<div class="talent-summary-list">';
     owned.forEach(function (n) {
+      var level = getTalentLevel(n.id);
+      var maxLevel = n.maxLevel || 1;
       h += '<div class="talent-summary-item">' +
            '<span class="talent-summary-icon">' + renderTalentIconHTML(n) + '</span>' +
-           '<span>' + esc(n.name) + ' — ' + esc(n.effect || "") + '</span>' +
+           '<span>' + esc(n.name) + ' (niv. ' + level + '/' + maxLevel + ') — ' + esc(n.effect || "") + '</span>' +
            '</div>';
     });
     h += '</div>';

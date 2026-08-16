@@ -149,6 +149,7 @@
 }
 
 .talent-tier-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -185,6 +186,25 @@
 .talent-tier-card.locked {
   opacity: 0.6;
   filter: grayscale(0.5);
+}
+
+/* v3.28 : talent partiellement amélioré (niveau 1-2 sur 3) — entre
+   "locked" et "unlocked", encore améliorable. Même famille visuelle
+   que .available (peut recevoir un point de plus) mais teinte
+   légèrement différente pour bien le distinguer d'un talent neuf. */
+.talent-tier-card.in-progress {
+  border-color: var(--nb-gold-dark);
+  background: #fff8e8;
+}
+
+/* v3.28 : verrouillé PAR EXCLUSIVITÉ DE PALIER (l'autre côté du même
+   palier a déjà un point investi) — distinct du verrouillage "pas
+   encore accessible" (.locked) : celui-ci ne se débloquera JAMAIS
+   sans réinitialiser, contrairement à .locked qui attend juste un
+   prérequis/des points. */
+.talent-tier-card.tier-locked {
+  opacity: 0.4;
+  filter: grayscale(0.8);
 }
 
 .talent-tier-card.capstone {
@@ -245,6 +265,48 @@
   margin-top: 4px;
   font-size: 10px;
   font-weight: 700;
+}
+
+/* v3.28 : pastilles de niveau (● ● ○ pour niveau 2/3) sous le nom. */
+.talent-tier-pips {
+  display: flex;
+  gap: 3px;
+  margin: 2px 0;
+}
+
+.talent-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--nb-gold-dark);
+  background: transparent;
+}
+
+.talent-pip.is-filled {
+  background: var(--nb-gold-dark);
+}
+
+/* v3.28 : étiquette Actif (gauche)/Passif (droite) en haut de la
+   carte — le thème demandé pour les 2 colonnes de chaque palier. */
+.talent-side-tag {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.talent-side-tag.side-active {
+  background: rgba(239, 68, 68, 0.18);
+  color: #b91c1c;
+}
+
+.talent-side-tag.side-passive {
+  background: rgba(59, 130, 246, 0.18);
+  color: #1d4ed8;
 }
 
 .talent-tier-status.status-unlocked {

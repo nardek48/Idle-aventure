@@ -76,6 +76,23 @@
   display: block;
 }
 
+/* v3.27 : icône d'affliction active — même cercle que les potions
+   (.active-potion-icon ci-dessus), mais un emoji centré au lieu d'une
+   image (data/afflictions.js n'a pas d'icône fichier dédiée). Pas de
+   minuteur (contrairement aux potions, une affliction reste active
+   tant qu'elle n'est pas désactivée manuellement). */
+.active-affliction-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(139, 94, 31, 0.35);
+}
+
+.active-affliction-emoji {
+  font-size: clamp(15px, 3.6vw, 18px);
+  line-height: 1;
+}
+
 .active-potion-timer {
   position: absolute;
   bottom: -4px;

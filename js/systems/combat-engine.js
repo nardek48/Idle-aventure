@@ -176,17 +176,21 @@ var CombatEngine = {
       if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("crits", 1);
     }
 
-    if (game.talents.t_sharpened_blades) dmg = Math.floor(dmg * 1.10);
-    if (game.enemy.isBoss && game.talents.t_war_instinct) dmg = Math.floor(dmg * 1.05);
-    if (game.enemy.isBoss && game.talents.t_boss_slayer) dmg = Math.floor(dmg * 1.20);
+    // v3.28 : chaque talent va maintenant jusqu'à 3 niveaux —
+    // game.talents.t_x est un NOMBRE (0-3). Chaque ligne convertie
+    // garde EXACTEMENT la magnitude par niveau qui existait avant
+    // cette refonte (niveau 1 = même puissance qu'avant).
+    if (game.talents.t_sharpened_blades) dmg = Math.floor(dmg * (1 + 0.10 * game.talents.t_sharpened_blades));
+    if (game.enemy.isBoss && game.talents.t_war_instinct) dmg = Math.floor(dmg * (1 + 0.05 * game.talents.t_war_instinct));
+    if (game.enemy.isBoss && game.talents.t_boss_slayer) dmg = Math.floor(dmg * (1 + 0.20 * game.talents.t_boss_slayer));
     if (game.talents.t_bloodlust) {
-      var ascBonus = Math.min(5 * (game.ascensionCount || 0), 25);
+      var ascBonus = Math.min(5 * (game.ascensionCount || 0) * game.talents.t_bloodlust, 25 * game.talents.t_bloodlust);
       dmg = Math.floor(dmg * (1 + ascBonus / 100));
     }
 
     if (game.talents.t_assault_frenzy) {
       if (game._frenzyReady) {
-        dmg = Math.floor(dmg * 1.25);
+        dmg = Math.floor(dmg * (1 + 0.25 * game.talents.t_assault_frenzy));
         game._frenzyReady = false;
         showToast("💥 Frénésie d'assaut !", 1000);
       }
@@ -318,7 +322,12 @@ var CombatEngine = {
       return;
     }
 
-    var lost = Math.floor((game.gold || 0) * DEFEAT_GOLD_PENALTY);
+    // v3.28 : talent "Sang-froid" (t_essence_bloom, branche Survie
+    // rethématisée) — réduit la pénalité de défaite de 10%/niveau
+    // (ex. niveau 3 = pénalité effective ×0.70 de sa valeur normale).
+    var talentPenaltyReduction = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
+    var effectivePenaltyPct = DEFEAT_GOLD_PENALTY * Math.max(0, 1 - talentPenaltyReduction);
+    var lost = Math.floor((game.gold || 0) * effectivePenaltyPct);
     game.gold = Math.max(0, game.gold - lost);
     // v3.15 : les PV tombent à 0 (au lieu d'être totalement restaurés)
     // — un vrai repos au Campement (long ou court, voir
@@ -362,7 +371,7 @@ var CombatEngine = {
     if (!ignoreAffinity) dmg *= getDamageAffinity().mult;
 
     if (game.enemy.isBoss && game.talents.t_perfect_execution && game.enemy.maxHp > 0 && (game.enemy.hp / game.enemy.maxHp) < 0.2) {
-      dmg *= 1.15;
+      dmg *= (1 + 0.15 * game.talents.t_perfect_execution);
     }
 
     game.enemy.hp -= dmg;
@@ -410,8 +419,9 @@ var CombatEngine = {
       var aetherBonuses = getAetherBonuses();
       essenceGain += aetherBonuses.essenceBonus || 0;
 
-      if (game.talents.t_thick_skin) essenceGain = Math.ceil(essenceGain * 1.05);
-      if (game.talents.t_vital_anchor) essenceGain = Math.ceil(essenceGain * 1.12);
+      // v3.28 : t_thick_skin et t_vital_anchor ont migré vers un thème
+      // défense/PV (branche Survie rethématisée) — leurs anciens
+      // bonus d'essence de boss ont donc été retirés d'ici.
 
       // v3.20 : Colosses (affliction) — bonus d'essence de boss, même
       // principe que game.bossGoldBonusPct juste au-dessus (voir
@@ -421,21 +431,14 @@ var CombatEngine = {
       }
     }
 
-    // Volonté tenace : +10% or/essence dans les mondes autrefois verrouillés
-    // par ascension (Ruines/Crypte/Montagne/Tour). v2.83 : le déblocage
-    // réel passe désormais par une questline (data/world-quests.js), mais
-    // requiredAscension reste un marqueur fiable de "monde avancé" pour
-    // ce talent — pas besoin de le faire dépendre de WorldQuestManager.
+    // v3.28 : t_tenacious_will a migré vers un thème PV max (branche
+    // Survie rethématisée) — cet ancien bonus or/essence "monde
+    // difficile" a été retiré.
     var currentWorld = (window.WORLDS && window.WorldManager) ? WORLDS[WorldManager.worldIndex] : null;
-    var isDifficultWorld = !!(currentWorld && (currentWorld.requiredAscension || 0) > 0);
-    if (game.talents.t_tenacious_will && isDifficultWorld) {
-      goldGain = Math.floor(goldGain * 1.10);
-      essenceGain = Math.ceil(essenceGain * 1.10);
-    }
 
     // Instinct marchand : petite chance de récompense bonus
     var merchantBonusGold = 0;
-    if (game.talents.t_merchant_instinct && chance(15)) {
+    if (game.talents.t_merchant_instinct && chance(5 * game.talents.t_merchant_instinct)) {
       merchantBonusGold = Math.floor(goldGain * 0.5);
       goldGain += merchantBonusGold;
     }
@@ -475,7 +478,7 @@ var CombatEngine = {
       }
       var rolls = 1;
       // Prospection astrale : petite chance de doubler le butin gagné
-      if (game.talents.t_astral_prospecting && chance(15)) rolls = 2;
+      if (game.talents.t_astral_prospecting && chance(5 * game.talents.t_astral_prospecting)) rolls = 2;
 
       for (var r = 0; r < rolls; r++) {
         if (window.LootSystem && typeof LootSystem.rollDrop === "function" && chance(lootChance)) {
@@ -558,17 +561,15 @@ var CombatEngine = {
       showToast("🧭 Lance la quête d'Expédition (onglet Quêtes) pour continuer", 2200);
     }
 
-    // Second souffle / Bourse profonde : récompense de fin de chapitre
+    // v3.28 : Bourse profonde (Fortune, inchangée) — récompense de fin
+    // de chapitre. Second souffle a migré vers un thème défense
+    // (branche Survie rethématisée), son ancien bonus ici a été retiré.
     if (result && (result.type === "adventure" || result.type === "world")) {
       var chapterGold = Math.floor(20 + (WorldManager.worldIndex || 0) * 15);
       var chapterEssence = 2 + (WorldManager.worldIndex || 0);
 
-      if (game.talents.t_second_wind) {
-        chapterGold = Math.floor(chapterGold * 1.08);
-        chapterEssence = Math.ceil(chapterEssence * 1.08);
-      }
       if (game.talents.t_deep_pockets) {
-        chapterGold = Math.floor(chapterGold * 1.10);
+        chapterGold = Math.floor(chapterGold * (1 + 0.10 * game.talents.t_deep_pockets));
       }
 
       game.gold += chapterGold;
@@ -597,13 +598,13 @@ var CombatEngine = {
     var events = [
       function () {
         var bonus = randInt(10, 50);
-        if (game.talents.t_deep_pockets) bonus = Math.floor(bonus * 1.10);
+        if (game.talents.t_deep_pockets) bonus = Math.floor(bonus * (1 + 0.10 * game.talents.t_deep_pockets));
         game.gold += bonus;
         game.totalGoldEarned += bonus;
         addLog("💰 Trésor trouvé ! +" + bonus + " or", "event");
         showToast("💰 +" + bonus + " or", 1400);
         if (window.QuestManager && typeof QuestManager.track === "function") {
-          QuestManager.track("treasures", game.talents.t_treasure_hunter ? 2 : 1);
+          QuestManager.track("treasures", 1 + (game.talents.t_treasure_hunter || 0));
           QuestManager.track("goldEarned", bonus);
         }
       },

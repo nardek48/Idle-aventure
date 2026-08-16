@@ -246,7 +246,14 @@ var StatsSystem = {
     // toucher aux PV max (contrairement à Endurance qui augmente les
     // deux). Même plafond partagé pour les 2 sources, afin de ne pas
     // casser l'équilibrage existant.
-    game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, totalEndurance * HERO_DEFENSE_COEF + (game.equipDefensePct || 0));
+    // v3.28 : talents de survie (Peau de pierre, Constitution de fer,
+    // Gardien immuable — +défense passive) ajoutés ICI, AVANT le
+    // plafond, comme toute autre source de défense.
+    var survivalDefenseBonus =
+      (game.talents.t_second_wind || 0) * 0.02 +
+      (game.talents.t_vital_anchor || 0) * 0.05 +
+      (game.talents.t_immutable_guardian || 0) * 0.05;
+    game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, totalEndurance * HERO_DEFENSE_COEF + (game.equipDefensePct || 0) + survivalDefenseBonus);
 
     // v2.90.22 : bonus de PV max par ascension (+4%/asc, multiplicatif),
     // en complément des bonus existants tapMult/goldMult par ascension
@@ -257,6 +264,20 @@ var StatsSystem = {
     // haut) — un seul clamp final suffit, tout en bas de la fonction.
     if (game.ascensionCount > 0) {
       game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + game.ascensionCount * 0.04)));
+    }
+
+    // v3.28 : talents de survie qui touchent aux PV max (Cœur
+    // vaillant, Vitalité tenace, Constitution de fer, Gardien
+    // immuable) — même principe que le bonus d'ascension juste
+    // au-dessus (multiplicatif sur la valeur courante), AVANT le
+    // clamp final (voir la note v3.19 plus bas dans cette fonction).
+    var survivalHpMult =
+      (game.talents.t_regenerate || 0) * 0.05 +
+      (game.talents.t_tenacious_will || 0) * 0.08 +
+      (game.talents.t_vital_anchor || 0) * 0.05 +
+      (game.talents.t_immutable_guardian || 0) * 0.10;
+    if (survivalHpMult) {
+      game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + survivalHpMult)));
     }
 
     // Bonus de panoplie (3 pièces ET 7 pièces équipées de même
@@ -278,15 +299,20 @@ var StatsSystem = {
     // Talents actifs qui touchent directement les stats globales
     // (les autres talents — combat ponctuel, hors-ligne, événements —
     // sont câblés ailleurs : voir combat-engine.js et offline-system.js).
-    if (game.talents.t_sharpened_blades) game.tapMult += 0.05;
-    if (game.talents.t_precise_strike) game.critChance += 6;
+    // v3.28 : chaque talent va maintenant jusqu'à 3 niveaux —
+    // game.talents.t_x est un NOMBRE (0-3), le bonus par niveau est
+    // celui qui existait avant cette refonte (niveau 1 = même
+    // puissance qu'avant, niveau 3 = 3× plus fort).
+    game.tapMult += (game.talents.t_sharpened_blades || 0) * 0.05;
+    game.critChance += (game.talents.t_precise_strike || 0) * 6;
 
-    if (game.talents.t_scavenger) game.goldMult += 0.08;
-    if (game.talents.t_golden_touch) game.goldMult += 0.12;
-    if (game.talents.t_sovereign_treasure) game.goldMult += 0.20;
+    game.goldMult += (game.talents.t_scavenger || 0) * 0.08;
+    game.goldMult += (game.talents.t_golden_touch || 0) * 0.12;
+    game.goldMult += (game.talents.t_sovereign_treasure || 0) * 0.20;
 
     if (game.talents.t_bloodlust) {
-      game.tapMult += Math.min((game.ascensionCount || 0) * 0.03, 0.15);
+      var bloodlustLevel = game.talents.t_bloodlust;
+      game.tapMult += Math.min((game.ascensionCount || 0) * 0.03 * bloodlustLevel, 0.15 * bloodlustLevel);
     }
 
     // Bonus automatique par ascension (indépendant des talents).
@@ -297,8 +323,13 @@ var StatsSystem = {
       game.goldMult += game.ascensionCount * 0.05;
     }
 
-    if (game.talents.t_essence_bloom) game.essenceGlobalMult += 0.15;
-    if (game.talents.t_immutable_guardian) game.essenceGlobalMult += 0.20;
+    // v3.28 : t_essence_bloom (Sang-froid) et t_immutable_guardian
+    // (Gardien immuable, essence) ont migré ailleurs — la branche
+    // Survie est maintenant entièrement défense/PV, plus essence.
+    // t_essence_bloom -> combat-engine.js (réduction pénalité de
+    // défaite). t_immutable_guardian -> PV max/défense, déjà appliqué
+    // plus haut dans cette même fonction (survivalHpMult/
+    // survivalDefenseBonus).
 
     var aether = getAetherBonuses();
     game.tapMult += aether.tapBonus || 0;

@@ -149,6 +149,13 @@ function renderHealButtons() {
    place ici. Barre vide (rien affiché) si aucune potion active.
    Rafraîchie chaque seconde depuis la boucle de jeu, même rythme que
    les autres compte-à-rebours (soin/attaque spéciale/défense). */
+/* v3.27 : affiche aussi les afflictions actuellement actives, dans la
+   même barre que les potions à effet — demandé, en complément direct
+   du plafond "une seule potion active à la fois" (v3.23) qui a
+   libéré de la place ici. Contrairement aux potions (durée limitée,
+   minuteur affiché), une affliction reste active tant qu'elle n'est
+   pas désactivée manuellement (Menu ☰ > Afflictions) — pas de
+   minuteur, juste l'icône avec son nom/effet en infobulle. */
 function buildActivePotionsBarHTML() {
   if (typeof POTIONS_DB === "undefined" || !window.PotionManager) return "";
 
@@ -164,6 +171,15 @@ function buildActivePotionsBarHTML() {
     h += '<span class="active-potion-timer">' + remainingMin + '</span>';
     h += '</div>';
   });
+
+  if (window.AfflictionManager && typeof AfflictionManager.getActiveList === "function") {
+    AfflictionManager.getActiveList().forEach(function (affliction) {
+      h += '<div class="active-potion-icon active-affliction-icon" title="' + esc(affliction.name) + ' — ' + esc(affliction.desc) + '">';
+      h += '<span class="active-affliction-emoji">' + esc(affliction.icon || "🔥") + '</span>';
+      h += '</div>';
+    });
+  }
+
   return h;
 }
 

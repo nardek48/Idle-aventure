@@ -29,12 +29,20 @@ var CampManager = {
     if (typeof game.campfireShortLastUsed !== "number") game.campfireShortLastUsed = 0;
   },
 
+  /* v3.28 : talent "Repos du guerrier" (t_last_stand, branche Survie
+     rethématisée) — réduit le cooldown des DEUX repos de 10%/niveau
+     (ex. niveau 3 = cooldown ×0.70 de sa valeur normale). */
+  getEffectiveCooldownMs: function (baseCooldownMs) {
+    var reduction = (game.talents && game.talents.t_last_stand) ? game.talents.t_last_stand * 0.10 : 0;
+    return Math.floor(baseCooldownMs * Math.max(0.1, 1 - reduction));
+  },
+
   /* --- Long repos (30 min, 100% PV) --- */
 
   getLongRemainingMs: function () {
     this.ensureDefaults();
     var elapsed = Date.now() - game.campfireLastUsed;
-    return Math.max(0, CAMPFIRE_LONG_COOLDOWN_MS - elapsed);
+    return Math.max(0, this.getEffectiveCooldownMs(CAMPFIRE_LONG_COOLDOWN_MS) - elapsed);
   },
 
   isLongReady: function () {
@@ -72,7 +80,7 @@ var CampManager = {
   getShortRemainingMs: function () {
     this.ensureDefaults();
     var elapsed = Date.now() - game.campfireShortLastUsed;
-    return Math.max(0, CAMPFIRE_SHORT_COOLDOWN_MS - elapsed);
+    return Math.max(0, this.getEffectiveCooldownMs(CAMPFIRE_SHORT_COOLDOWN_MS) - elapsed);
   },
 
   isShortReady: function () {

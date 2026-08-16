@@ -241,10 +241,11 @@ var VillageManager = {
   getOfflineBonuses: function () {
     this.ensure();
 
+    // v3.28 : t_calm_breath/t_last_stand/t_immutable_guardian ont
+    // tous migré vers un thème défense/PV/repos (branche Survie
+    // rethématisée) — plus aucun talent ne contribue directement à
+    // l'efficacité hors-ligne maintenant, ce bonus est retiré.
     var talentEfficiency = 0;
-    if (game.talents.t_calm_breath) talentEfficiency += 0.10;
-    if (game.talents.t_last_stand) talentEfficiency += 0.20;
-    if (game.talents.t_immutable_guardian) talentEfficiency += 0.10;
 
     // Synergie d'ascension (point 6) : le village reste pertinent en fin de partie,
     // sans bâtiment dédié -> +2% d'efficacité hors-ligne par ascension, plafonné à +40%.
