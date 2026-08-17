@@ -438,6 +438,39 @@
   text-align: center;
 }
 
+/* v3.29.7 : carte repliable (Journal de quête) — titre+icône au repos,
+   détail (étapes/récompense/actions) affiché au clic. Réutilise
+   .map-quest-card comme conteneur ; seul l'en-tête est cliquable. */
+.quest-card-collapsible {
+  cursor: default;
+}
+
+.quest-card-header {
+  cursor: pointer;
+  margin-bottom: 0;
+  user-select: none; /* header cliquable — pas de sélection accidentelle au tap */
+}
+
+.quest-card-collapsible.is-expanded .quest-card-header {
+  margin-bottom: 10px;
+}
+
+.quest-card-chevron {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--nb-ink-dim);
+  flex-shrink: 0;
+}
+
+.quest-card-detail {
+  animation: quest-card-detail-in 0.15s ease;
+}
+
+@keyframes quest-card-detail-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .map-adventure-list {
   display: flex;
   flex-direction: column;

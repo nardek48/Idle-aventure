@@ -1,14 +1,47 @@
 "use strict";
-/* Quest Idle — systems/save-system.js : sauvegarde/chargement (localStorage), autosave, migrations, hardResetState()/fullResetState().
-   Détail complet : voir save-system_notes.md #1. */
+/* ============================================================
+Quest Idle — systems/save-system.js
+Sauvegarde/chargement (localStorage), autosave, migrations
+d'anciennes sauvegardes, et les 2 types de "reset" :
+  - hardResetState()  reset d'ascension : garde l'Aether/les
+    ascensions/les améliorations Aether, remet tout le reste à zéro
+  - fullResetState()   reset complet (bouton "Réinitialiser tout"
+    des Paramètres) : efface absolument tout, y compris le héros
+Augmenter SAVE_VERSION quand la structure de sauvegarde change de
+façon significative (permet de détecter d'anciennes sauvegardes).
+============================================================ */
 
 var SAVE_KEY = "quest_idle_save_v6";
 var SAVE_VERSION = 6;
 var AUTO_SAVE_INTERVAL_MS = 30000;
 var saveIntervalId = null;
 
-/* v3.25 : plusieurs héros = plusieurs sauvegardes indépendantes, une clé localStorage par emplacement (getSlotKey), migration auto de l'ancien format.
-   Détail complet : voir save-system_notes.md #2. */
+/* ============================================================
+v3.25 : PLUSIEURS HÉROS = PLUSIEURS PARTIES INDÉPENDANTES.
+Chaque "héros" (jusqu'à MAX_HERO_SLOTS) est une sauvegarde COMPLÈTE et
+autonome — or, essence, Aether, ascension, position sur la carte,
+quêtes, Village, Donjon, hauts faits, Codex, afflictions, inventaire,
+équipement, talents, niveau : absolument tout, pas seulement les
+stats du personnage. "Switcher" de héros = charger une autre partie
+en entier ; l'ancienne reste figée telle quelle jusqu'à ce qu'on y
+revienne.
+
+Implémentation : au lieu d'une seule clé localStorage fixe (SAVE_KEY
+ci-dessus, conservée telle quelle pour la clé de base), chaque
+emplacement a sa PROPRE clé (getSlotKey(1/2/3)), et une petite clé à
+part (ACTIVE_SLOT_KEY) retient quel emplacement est actif. saveGame()/
+loadGame()/clearSaveData() plus bas n'ont PAS changé de signature —
+seul ce que SAVE_KEY représente concrètement est devenu dynamique
+(voir getActiveSaveKey()), donc tous les appelants existants ailleurs
+dans le code (des dizaines, partout) continuent de fonctionner sans
+aucune modification.
+
+Migration automatique : si une ancienne sauvegarde "à plat" existe
+(clé SAVE_KEY brute, format d'avant les emplacements) et qu'aucun
+emplacement 1 n'existe encore, elle est copiée vers l'emplacement 1 —
+zéro action requise, la partie en cours au moment de cette mise à jour
+devient simplement "Héros 1". Voir migrateOldSaveToSlot1(), appelée
+une fois au boot (main/boot.js). */
 
 var MAX_HERO_SLOTS = 3;
 var ACTIVE_SLOT_KEY = "quest_idle_active_slot";
@@ -38,8 +71,10 @@ function getActiveSaveKey() {
   return getSlotKey(getActiveSlot());
 }
 
-/* Migration unique : ancienne sauvegarde à plat -> Emplacement 1, si besoin.
-   Détail : save-system_notes.md #3. */
+/* Migration unique : ancienne sauvegarde à plat (avant les
+   emplacements) -> Emplacement 1. Ne fait rien si l'ancienne clé
+   n'existe pas, ou si l'emplacement 1 a déjà des données (déjà migré,
+   ou partie multi-héros déjà commencée). */
 function migrateOldSaveToSlot1() {
   try {
     var slot1Key = getSlotKey(1);
@@ -53,10 +88,26 @@ function migrateOldSaveToSlot1() {
   } catch (e) {}
 }
 
-/* HeroSlotManager : créer/switcher/supprimer un emplacement de héros (couche fine sur saveGame()/loadGame()).
-   Détail : save-system_notes.md #4. */
-/* v3.26 : réplique la séquence de boot.js après un switch/création de héros pour éviter un combat sans ennemi (spawnEnemy()).
-   Détail : save-system_notes.md #5. */
+/* ============================================================
+   HeroSlotManager : créer/switcher/supprimer un emplacement de héros.
+   Couche fine par-dessus saveGame()/loadGame() ci-dessous — ne
+   réinvente rien, orchestre juste QUAND sauvegarder/charger/reset.
+============================================================ */
+/* v3.26 : bug corrigé — après un changement/création de héros
+   (HeroSlotManager.switchToSlot()/createHeroInSlot() ci-dessous), le
+   joueur se retrouvait sur un écran Combat sans ennemi valide (il
+   fallait quitter et relancer le jeu pour pouvoir taper). Cause :
+   ces deux fonctions réimplémentent une partie de la séquence de
+   main/boot.js (createInitialGameState -> loadGame ->
+   ensureGameStateDefaults -> recalcStats) mais SANS l'étape qui fait
+   apparaître le premier ennemi (CombatEngine.spawnEnemy(), ou la
+   reprise de la vague en cours si un donjon était actif) — cette
+   étape n'existait QUE dans boot.js, jamais rappelée ailleurs.
+   Fonction partagée qui réplique fidèlement cette même séquence
+   (voir main/boot.js, function init(), juste après loadGame()) :
+   marque le monde courant "atteint" pour le Codex, génère les quêtes
+   journalières si absentes, puis fait apparaître un ennemi (ou
+   reprend la vague de donjon en cours). */
 function resumeCombatAfterSlotChange() {
   if (window.WorldManager && typeof WorldManager.markWorldReached === "function") {
     WorldManager.markWorldReached(WorldManager.worldIndex || 0);
@@ -89,8 +140,10 @@ var HeroSlotManager = {
     }
   },
 
-  /* Résumé léger pour le sélecteur (nom, classe, niveau, monde) sans charger l'emplacement dans `game`.
-     Détail : save-system_notes.md #6. */
+  /* Résumé léger pour l'affichage du sélecteur (nom, classe, niveau,
+     monde atteint) SANS charger cet emplacement dans `game` — lit et
+     parse directement sa clé localStorage. Renvoie null si vide ou
+     illisible. */
   getSlotSummary: function (slotNumber) {
     if (!this.hasSlot(slotNumber)) return null;
     try {
@@ -120,23 +173,33 @@ var HeroSlotManager = {
     }
   },
 
-  /* Bascule vers un autre emplacement : sauvegarde l'actif, charge le demandé. Emplacement vide géré par createHeroInSlot().
-     Détail : save-system_notes.md #7. */
-  // v3.29.5 : `skipSaveCurrent` évite de resauvegarder (et ressusciter) un emplacement qu'on vient de supprimer (deleteSlot()).
-  // Détail : save-system_notes.md #8.
-  switchToSlot: function (slotNumber, skipSaveCurrent) {
+  /* Bascule vers un AUTRE emplacement : sauvegarde l'emplacement
+     actif courant (pour ne rien perdre), puis charge l'emplacement
+     demandé dans `game`. Si l'emplacement demandé est vide, ne fait
+     rien de spécial ici — c'est createHeroInSlot() qui gère la
+     création (voir plus bas), appelée séparément par l'écran de
+     sélection de héros. */
+  switchToSlot: function (slotNumber) {
     if (slotNumber === getActiveSlot()) return true;
     if (!this.hasSlot(slotNumber)) return false;
 
-    // Sauvegarde l'emplacement qu'on quitte avant de changer la clé active (sauté si skipSaveCurrent).
-    if (!skipSaveCurrent) saveGame();
+    // Sauvegarde l'emplacement qu'on quitte AVANT de changer la clé
+    // active, pour que saveGame() écrive encore au bon endroit.
+    saveGame();
 
     setActiveSlot(slotNumber);
 
-    // Repart d'un état par défaut avant de charger, comme au premier boot (évite qu'un champ manquant garde l'ancien héros).
+    // Repart d'un état par défaut avant de charger, comme au tout
+    // premier boot — évite qu'un champ absent de la nouvelle
+    // sauvegarde garde par erreur une valeur de l'ancien héros
+    // (ensureGameStateDefaults() re-remplit tout juste après).
     if (typeof createInitialGameState === "function") {
-      // v3.25 : préserve game.saveSupported (détection au boot, pas propre à un héros) pendant le wipe de `game`, sinon saveGame() échoue.
-      // Détail : save-system_notes.md #11.
+      // v3.25 : game.saveSupported vient de la détection de
+      // fonctionnalité au boot (initSaveSystem()), PAS de l'état d'un
+      // héros précis — sans cette préservation explicite, le "wipe"
+      // ci-dessous le remet à false (valeur par défaut de
+      // createInitialGameState()) et saveGame() se met à échouer
+      // silencieusement juste après (son tout premier if la vérifie).
       var keptSaveSupported = game.saveSupported;
       var fresh = createInitialGameState();
       Object.keys(game).forEach(function (k) { delete game[k]; });
@@ -152,8 +215,13 @@ var HeroSlotManager = {
     return true;
   },
 
-  /* Crée un héros dans un emplacement vide : sauvegarde l'ancien, bascule la clé active, repart d'un état neuf, ouvre la création (modal-view.js).
-     Détail : save-system_notes.md #12. */
+  /* Crée un NOUVEAU héros dans un emplacement VIDE : sauvegarde
+     l'emplacement qu'on quitte, bascule la clé active vers le nouvel
+     emplacement, repart d'un état 100% neuf (fullResetState-like,
+     mais sans qu'il y ait quoi que ce soit à préserver puisque
+     l'emplacement est vide), puis ouvre le flux de création de héros
+     déjà existant (nom -> héros, voir ui/modal-view.js) pour CE
+     nouvel emplacement. */
   createHeroInSlot: function (slotNumber) {
     if (this.hasSlot(slotNumber)) return false; // emplacement déjà occupé, pas de recréation silencieuse
     if (slotNumber < 1 || slotNumber > MAX_HERO_SLOTS) return false;
@@ -167,7 +235,12 @@ var HeroSlotManager = {
     setActiveSlot(slotNumber);
 
     if (typeof createInitialGameState === "function") {
-      // v3.25 : préserve game.saveSupported pendant le wipe de `game` (voir save-system_notes.md #13).
+      // v3.25 : game.saveSupported vient de la détection de
+      // fonctionnalité au boot (initSaveSystem()), PAS de l'état d'un
+      // héros précis — sans cette préservation explicite, le "wipe"
+      // ci-dessous le remet à false (valeur par défaut de
+      // createInitialGameState()) et saveGame() se met à échouer
+      // silencieusement juste après (son tout premier if la vérifie).
       var keptSaveSupported = game.saveSupported;
       var fresh = createInitialGameState();
       Object.keys(game).forEach(function (k) { delete game[k]; });
@@ -177,7 +250,11 @@ var HeroSlotManager = {
     if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
     resumeCombatAfterSlotChange(); // v3.26 : voir la fonction ci-dessus — sans ça, l'écran Combat n'avait aucun ennemi tant que le jeu n'était pas relancé
 
-    // Pas de saveGame() ici : l'emplacement n'existe "pour de vrai" qu'une fois la création confirmée (confirmHeroSelection()).
+    // Pas de saveGame() ici : le nouvel emplacement ne doit exister
+    // "pour de vrai" (hasSlot() === true) qu'une fois le flux de
+    // création de héros complété (confirmHeroSelection()), pas avant
+    // — sinon un emplacement "vide" abandonné en cours de création
+    // laisserait une coquille derrière lui.
 
     if (typeof renderAll === "function") renderAll();
     if (typeof openHeroSelection === "function") openHeroSelection();
@@ -185,8 +262,11 @@ var HeroSlotManager = {
     return true;
   },
 
-  /* Supprime un emplacement occupé (DESTRUCTIF, confirmation à charge de l'UI). Bascule sur le 1er emplacement restant si c'était l'actif.
-     Détail : save-system_notes.md #15. */
+  /* Supprime un emplacement occupé (efface sa sauvegarde) pour
+     libérer la place — DESTRUCTIF, l'appelant (UI) doit confirmer
+     avant d'appeler ceci. Si c'était l'emplacement ACTIF, bascule
+     automatiquement vers le premier emplacement restant occupé (ou
+     ouvre la création si plus aucun emplacement n'est occupé). */
   deleteSlot: function (slotNumber) {
     if (!this.hasSlot(slotNumber)) return false;
 
@@ -204,7 +284,7 @@ var HeroSlotManager = {
         if (i !== slotNumber && self.hasSlot(i)) { fallback = i; break; }
       }
       if (fallback) {
-        this.switchToSlot(fallback, true); // true = ne pas resauvegarder le slot qu'on vient de supprimer
+        this.switchToSlot(fallback);
       } else {
         // Plus aucun emplacement occupé : repart sur un état neuf,
         // needsHeroSetup() rouvrira naturellement la création.
@@ -268,7 +348,9 @@ function normalizeProgressMap(obj, fallback) {
   return out;
 }
 
-/* Anciennes sauvegardes : id du héros du chaos sous un ancien format (ex "ChaosNight") — table de correspondance au chargement. */
+/* D'anciennes sauvegardes stockaient l'id du héros du chaos sous un
+   format différent (ex: "ChaosNight" au lieu de "chaosKnight") ;
+   cette table de correspondance répare ça au chargement. */
 function migrateHeroId(heroId) {
   var map = {
     ChaosNight: "chaosKnight",
@@ -278,8 +360,10 @@ function migrateHeroId(heroId) {
   return map[heroId] || heroId || "";
 }
 
-/* Répare game.upgrades/aetherUpgrades : renomme les vieux ids (upgradeKeyMap) et complète les upgrades manquantes à 0.
-   Détail : save-system_notes.md #17. */
+/* Répare game.upgrades/aetherUpgrades pour une sauvegarde chargée :
+   renomme les vieux ids d'upgrades (upgradeKeyMap, d'avant que les
+   terrains d'entraînement soient renommés en "utrain_*"), puis
+   pré-remplit à 0 toute amélioration connue qui manquerait encore. */
 function ensureUpgradeDefaults() {
   if (!game.upgrades || typeof game.upgrades !== "object") game.upgrades = {};
   if (!game.aetherUpgrades || typeof game.aetherUpgrades !== "object") game.aetherUpgrades = {};
@@ -319,7 +403,10 @@ function ensureUpgradeDefaults() {
   }
 }
 
-/* À appeler une fois au boot : détecte si localStorage marche, lance l'autosave périodique et sauvegarde au blur/fermeture d'onglet. */
+/* À appeler une fois au boot : détecte si localStorage est utilisable
+   (peut échouer en navigation privée sur certains navigateurs), met en
+   place l'autosave périodique, et sauvegarde aussi quand l'onglet perd
+   le focus ou se ferme (pour ne jamais perdre de progression). */
 function initSaveSystem() {
   try {
     localStorage.setItem("__quest_idle_test__", "1");
@@ -329,8 +416,12 @@ function initSaveSystem() {
     game.saveSupported = false;
   }
 
-  // v3.25 : migration de l'ancienne sauvegarde à plat vers l'Emplacement 1 — doit tourner AVANT le premier loadGame() de boot.js.
-  // Détail : save-system_notes.md #19.
+  // v3.25 : migration unique de l'ancienne sauvegarde à plat (avant
+  // les 3 emplacements de héros) vers l'Emplacement 1 — voir
+  // migrateOldSaveToSlot1() plus haut dans ce fichier. Doit tourner
+  // AVANT le premier loadGame() de init() (main/boot.js), sinon ce
+  // loadGame() chercherait la clé du nouvel emplacement 1 (encore
+  // vide) plutôt que l'ancienne clé à plat.
   if (game.saveSupported) migrateOldSaveToSlot1();
 
   if (saveIntervalId) {
@@ -351,7 +442,10 @@ function initSaveSystem() {
   });
 }
 
-/* Construit l'objet JSON stocké dans localStorage. Tout champ persistant de `game` doit être repris ici (voir restoreBaseState pour l'inverse). */
+/* Construit l'objet JSON exact qui sera stocké dans localStorage.
+   TOUT champ persistant de `game` doit être repris ici, sinon il ne
+   survivra pas à un rechargement de page. Voir restoreBaseState plus
+   bas pour le chemin inverse (lecture). */
 function buildSaveData() {
   return {
     version: SAVE_VERSION,
@@ -420,8 +514,10 @@ function buildSaveData() {
     dungeonBossClears: Number(game.dungeonBossClears || 0),
     dungeonShards: Number(game.dungeonShards || 0),
     dungeonShopLevels: game.dungeonShopLevels || {},
-    // v2.90.11 : dungeonTierCleared oublié lors de l'ajout du déblocage séquentiel (v2.90.9) — se perdait à chaque rechargement.
-    // Détail : save-system_notes.md #21.
+    // v2.90.11 : oublié lors de l'ajout du déblocage séquentiel des
+    // paliers de donjon (v2.90.9) — sans ça, la progression de
+    // déblocage se perdait à chaque rechargement de page (jamais
+    // sauvegardée). Trouvé en auditant le code pour la doc.
     dungeonTierCleared: game.dungeonTierCleared || {},
     healingPotionsOwned: game.healingPotionsOwned || {},
     potionsOwned: game.potionsOwned || {},
@@ -452,7 +548,9 @@ function buildSaveData() {
   };
 }
 
-/* Écrit la sauvegarde dans localStorage ; renvoie false silencieusement si le stockage échoue (quota...), sans planter le jeu. */
+/* Écrit la sauvegarde dans localStorage. Renvoie false silencieusement
+   si le stockage n'est pas dispo ou en erreur (quota dépassé...) plutôt
+   que de faire planter le jeu. */
 function saveGame() {
   if (!game.saveSupported) return false;
   try {
@@ -465,7 +563,9 @@ function saveGame() {
   }
 }
 
-/* Recharge une sauvegarde dans `game`. Aucun recalcul de stats dérivées ici — rôle de StatsSystem.recalcStats(), appelé après. */
+/* Recharge une sauvegarde (objet `d` = JSON.parse du localStorage)
+   dans `game`. Ne fait AUCUN recalcul de stats dérivées (ça, c'est le
+   rôle de StatsSystem.recalcStats(), appelé séparément après). */
 function restoreBaseState(d) {
   var questDefaults = getDefaultQuestProgress();
 
@@ -513,7 +613,9 @@ function restoreBaseState(d) {
   if (game.equipped.weapon === undefined) game.equipped.weapon = null;
   if (game.equipped.armor === undefined) game.equipped.armor = null;
   if (game.equipped.amulet === undefined) game.equipped.amulet = null;
-  // v2.83.55 : 4 nouveaux emplacements — anciennes sauvegardes n'ont que weapon/armor/amulet, le reste est comblé à null.
+  // v2.83.55 : 4 nouveaux emplacements — anciennes sauvegardes n'ont
+  // que weapon/armor/amulet, on comble le reste à null (même filet de
+  // sécurité que les 3 emplacements historiques ci-dessus).
   if (game.equipped.helmet === undefined) game.equipped.helmet = null;
   if (game.equipped.gloves === undefined) game.equipped.gloves = null;
   if (game.equipped.boots === undefined) game.equipped.boots = null;
@@ -597,7 +699,9 @@ function restoreBaseState(d) {
   ensureUpgradeDefaults();
 }
 
-/* Remet les stats de base avant que StatsSystem.recalcStats() reconstruise tout — évite d'accumuler d'anciennes valeurs si rappelée. */
+/* Remet les stats de base avant de laisser StatsSystem.recalcStats()
+   reconstruire tout par-dessus — évite d'accumuler d'anciennes
+   valeurs si cette fonction est appelée plusieurs fois. */
 function reapplyProgressEffects() {
   game.tapDamage = 1;
   game.tapMult = 1;
@@ -613,8 +717,11 @@ function reapplyProgressEffects() {
   }
 }
 
-/* Point d'entrée principal pour charger la partie au démarrage : lit le JSON, restaure l'état, recalcule les stats, vérifie les quêtes du jour.
-   Détail : save-system_notes.md #26. */
+/* Point d'entrée principal pour charger la partie au démarrage :
+   lit le JSON de localStorage, restaure l'état, recalcule les stats,
+   et vérifie si les quêtes journalières doivent être régénérées.
+   Renvoie false (sans planter) si rien n'est sauvegardé ou en cas
+   d'erreur de parsing. */
 function loadGame() {
   if (!game.saveSupported) return false;
 
@@ -645,7 +752,10 @@ function clearSaveData() {
   } catch (e) {}
 }
 
-/* Reset "ascension" : réinitialise la run classique mais conserve l'Aether/les ascensions/les améliorations Aether. Appelée par ascendNow(). */
+/* Reset "ascension" : réinitialise la progression classique (or, dégâts,
+   monde, inventaire, talents, niveau du héros...) mais CONSERVE l'Aether,
+   le nombre d'ascensions et les améliorations Aether (kept* ci-dessous).
+   Appelée par ascendNow() en progression-system.js. */
 function hardResetState() {
   var questDefaults = getDefaultQuestProgress();
   var keptAether = game.aether || 0;
@@ -653,27 +763,38 @@ function hardResetState() {
   var keptAscensions = game.ascensionCount || 0;
   var keptAetherUpgrades = Object.assign({}, game.aetherUpgrades || {});
 
-  // v2.26 : la progression VRAIMENT permanente (Codex, hauts faits, boutique du donjon...) doit survivre à l'ascension comme l'Aether.
-  // Détail : save-system_notes.md #28.
+  // v2.26 : la progression VRAIMENT permanente (indépendante de la
+  // run en cours) doit survivre à l'ascension, comme l'Aether et sa
+  // boutique le faisaient déjà — sinon chaque ascension effaçait
+  // silencieusement le Codex, les hauts faits, la boutique du
+  // donjon, etc. Ce qui reste lié à la run "classique" (or, potions,
+  // stock de soin...) continue de repartir à zéro normalement.
   var keptAchievementsClaimed = Object.assign({}, game.achievementsClaimed || {});
   var keptWorldsEverReached = Object.assign({}, game.worldsEverReached || {});
   var keptWorldQuestProgress = Object.assign({}, game.worldQuestProgress || {});
   var keptWorldQuestsCompleted = Object.assign({}, game.worldQuestsCompleted || {});
-  // v3.0 : ressources rares et progression des quêtes d'aventure = progression permanente, comme les questlines de monde.
+  // v3.0 : système Quêtes/Ressources/Territoire — les ressources rares
+  // et la progression des quêtes d'aventure sont une progression
+  // permanente au même titre que les questlines de monde ci-dessus.
   var keptResources = Object.assign({ mineraiRare: 0 }, game.resources || {});
   var keptAdventureQuestProgress = Object.assign({}, game.adventureQuestProgress || {});
   var keptAdventureQuestsCompleted = Object.assign({}, game.adventureQuestsCompleted || {});
   var keptDungeonTiersEntered = Object.assign({}, game.dungeonTiersEntered || {});
   var keptCodexChaosSeen = !!game.codexChaosSeen;
   var keptCodexRead = Object.assign({}, game.codexRead || {});
-  // v3.14 : les quêtes journalières ne se réinitialisent plus à l'ascension (seulement au reset complet) — rien ne change dans la journée.
-  // Détail : save-system_notes.md #30.
+  // v3.14 : les quêtes journalières ne doivent plus se réinitialiser à
+  // l'ascension (seulement au reset complet) — avant, elles étaient
+  // effacées comme le reste de la "run classique" (or, potions...),
+  // ce qui n'a pas vraiment de sens : rien dans la journée du joueur
+  // n'a changé juste parce qu'il a ascensionné.
   var keptQuests = Array.isArray(game.quests) ? game.quests.slice() : [];
   var keptQuestProgress = Object.assign({}, game.questProgress || {});
   var keptQuestResetTime = game.questResetTime || 0;
   var keptDungeonShopLevels = Object.assign({}, game.dungeonShopLevels || {});
-  // v2.90.11 : le déblocage séquentiel des paliers de donjon est une progression permanente, doit survivre à l'ascension.
-  // Détail : save-system_notes.md #31.
+  // v2.90.11 : voir note dans buildSaveData() — la progression de
+  // déblocage séquentiel des paliers de donjon est une progression
+  // permanente au même titre que dungeonBossClears/dungeonShopLevels,
+  // doit survivre à l'ascension comme eux.
   var keptDungeonTierCleared = Object.assign({}, game.dungeonTierCleared || {});
   var keptDungeonShards = Number(game.dungeonShards || 0);
   var keptDungeonBestWave = Number(game.dungeonBestWave || 0);
@@ -685,8 +806,12 @@ function hardResetState() {
   var keptEquipShopResetTime = Number(game.equipShopResetTime || 0);
   var keptEquipShopManualRefreshCount = Number(game.equipShopManualRefreshCount || 0);
   var keptVillage = Object.assign({ goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0, watchtower: 0, sanctuary: 0 }, game.village || {});
-  // v3.14 : le réglage d'autovente n'est plus conservé à l'ascension — logique puisque tout l'équipement est perdu à l'ascension.
-  // Détail : save-system_notes.md #32.
+  // v3.14 : le réglage d'autovente n'est PLUS conservé à l'ascension —
+  // logique, puisque tout l'équipement équipé/en sac est perdu à
+  // l'ascension (game.inventory/equipped repartent à zéro juste en
+  // dessous) ; garder un seuil de rareté configuré sur un sac
+  // désormais vide n'avait pas de sens. Remis aux valeurs par défaut,
+  // comme le fait déjà fullResetState().
   var keptHasSeenOnboarding = !!game.hasSeenOnboarding;
 
   game.gold = 0;
@@ -751,8 +876,10 @@ function hardResetState() {
   game.dungeonTicketResetTime = keptDungeonTicketResetTime;
   game.dungeonTicketsPurchasedToday = keptDungeonTicketsPurchasedToday;
   game.dungeonRun = { active: false, wave: 0, tierId: 1 };
-  // v3.2 : le run de quête en cours ne survit pas à l'ascension (la progression déjà enregistrée, elle, est conservée séparément).
-  // Détail : save-system_notes.md #33.
+  // v3.2 : le run de quête en cours ne survit pas à l'ascension, même
+  // traitement que dungeonRun juste au-dessus (la PROGRESSION déjà
+  // enregistrée sur les étapes, elle, est conservée séparément —
+  // keptAdventureQuestProgress/keptAdventureQuestsCompleted plus haut).
   game.adventureQuestRun = { active: false, questId: null };
   game.dungeonBestWave = keptDungeonBestWave;
   game.dungeonBossClears = keptDungeonBossClears;
@@ -791,8 +918,14 @@ function hardResetState() {
 
   if (typeof gameLog !== "undefined" && Array.isArray(gameLog)) gameLog.length = 0;
 
-  // v3.14 : plus de régénération forcée des quêtes journalières ici — ça écrasait le "kept" plus haut ; QuestManager gère déjà leur renouvellement.
-  // Détail : save-system_notes.md #34.
+  // v3.14 : PLUS de régénération forcée des quêtes journalières ici —
+  // ce bloc écrasait silencieusement le "kept" plus haut
+  // (game.quests/questProgress/questResetTime), qui avait beau les
+  // conserver, cette régénération inconditionnelle les remplaçait
+  // quand même juste avant la fin de la fonction. Les quêtes
+  // journalières ne doivent plus du tout être affectées par
+  // l'ascension — QuestManager gère déjà tout seul leur renouvellement
+  // normal via game.questResetTime (ailleurs, au fil du jeu).
 
   reapplyProgressEffects();
 
@@ -801,8 +934,11 @@ function hardResetState() {
 
 }
 
-/* Reset "complet" (bouton Paramètres) : efface VRAIMENT tout, y compris l'Aether et le héros. Redonne 1M d'or de départ (réglage debug à surveiller).
-   Détail : save-system_notes.md #35. */
+/* Reset "complet" (bouton "Réinitialiser tout" des Paramètres) : efface
+   VRAIMENT tout, y compris l'Aether et le choix de héros — c'est
+   repartir d'une partie neuve. Contrairement à hardResetState, rien
+   n'est conservé. Note : redonne 1 000 000 d'or de départ (probablement
+   un réglage de debug/confort, à surveiller si le jeu est publié tel quel). */
 function fullResetState() {
   var questDefaults = getDefaultQuestProgress();
 
@@ -857,7 +993,9 @@ function fullResetState() {
   game.lastSave = 0;
   game.village = { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0, watchtower: 0, sanctuary: 0 };
 
-  // v2.26 : tous les systèmes ajoutés depuis la 1ère version de fullResetState() — oubliés jusqu'ici, un reset "complet" ne l'était pas vraiment.
+  // v2.26 : tous les systèmes ajoutés depuis la première version de
+  // fullResetState() — oubliés jusqu'ici, un reset "complet" ne
+  // l'était donc pas vraiment.
   game.equipShopStock = [];
   game.equipShopResetTime = 0;
   game.equipShopManualRefreshCount = 0;
@@ -924,7 +1062,9 @@ function fullResetState() {
   game.heroHp = game.heroMaxHp;
 }
 
-/* Bouton "Réinitialiser tout" des Paramètres : demande confirmation (irréversible) puis efface la sauvegarde et appelle fullResetState(). */
+/* Bouton "Réinitialiser tout" des Paramètres : demande confirmation
+   (action irréversible) puis efface la sauvegarde et appelle
+   fullResetState(). */
 function resetGame() {
   var doReset = function () {
     clearSaveData();
@@ -935,8 +1075,13 @@ function resetGame() {
     }
 
     if (typeof renderAll === "function") renderAll();
-    // v3.7 : sans cet appel switchTab(), l'affichage restait figé sur l'écran d'où le reset a été déclenché au lieu de refléter activeTab="combat".
-    // Détail : save-system_notes.md #38.
+    // v3.7 : bug latent découvert en auditant les flux de bascule
+    // d'onglet pour le Campement — sans cet appel, l'affichage restait
+    // figé sur l'écran d'où le reset a été déclenché (typiquement
+    // Paramètres, hors combat) au lieu de refléter le nouvel
+    // activeTab="combat" fixé par fullResetState(). Même correctif que
+    // main/boot.js (switchTab() plutôt que de compter sur l'état CSS
+    // par défaut).
     if (typeof switchTab === "function") switchTab(game.activeTab || "combat");
     if (typeof updateQuestBadge === "function") updateQuestBadge();
 
@@ -969,12 +1114,22 @@ window.reapplyProgressEffects = reapplyProgressEffects;
 window.ensureUpgradeDefaults = ensureUpgradeDefaults;
 window.migrateHeroId = migrateHeroId;
 
-/* v2.9 : export/import de sauvegarde (tout repose sur localStorage, rien côté serveur) — fichier JSON téléchargé ou code texte à copier/coller.
-   Détail : save-system_notes.md #39. */
+/* ============================================================
+   v2.9 : export/import de sauvegarde. Toute la partie repose sur le
+   localStorage du navigateur (rien côté serveur) — un simple export
+   en fichier JSON sert de filet de sécurité en cas de changement
+   d'appareil, de nettoyage du cache, etc. Deux façons d'exporter/
+   importer : fichier téléchargé (le plus simple) ou code texte à
+   copier/coller (repli si le téléchargement de fichier ne convient
+   pas dans le contexte où tourne le jeu).
+============================================================ */
 
 /* Génère le JSON de sauvegarde et déclenche son téléchargement comme
    fichier .json (le navigateur choisit où l'enregistrer). */
-/* v3.29 : construit le payload d'export COMPLET (tous les emplacements occupés), partagé par exportSaveToFile() et showExportTextModal(). */
+/* v3.29 : construit le payload d'export COMPLET (tous les emplacements
+   de héros occupés), partagé par exportSaveToFile() et
+   showExportTextModal() ci-dessous — évite de dupliquer la logique de
+   collecte entre le fichier téléchargé et le code texte copié/collé. */
 function buildMultiSaveExportPayload() {
   saveGame(); // l'emplacement actif doit être à jour avant de lire les autres
 
@@ -999,8 +1154,14 @@ function buildMultiSaveExportPayload() {
 
 /* Génère le JSON de sauvegarde et déclenche son téléchargement comme
    fichier .json (le navigateur choisit où l'enregistrer). */
-/* v3.29 : bug corrigé — l'export n'incluait que l'emplacement actif ; exporte maintenant TOUS les emplacements occupés (nouveau format enveloppe).
-   Détail : save-system_notes.md #41. */
+/* v3.29 : bug corrigé — n'exportait QUE l'emplacement actif
+   (buildSaveData() ne lit que le `game` en mémoire), les 2 autres
+   héros (stockés dans leurs propres clés localStorage depuis le
+   système multi-héros, v3.25) n'étaient jamais inclus dans le
+   fichier. Exporte maintenant TOUS les emplacements occupés, dans un
+   nouveau format enveloppe ({ aethervaleMultiSave: true, slots: {...} }).
+   Reste capable d'IMPORTER l'ancien format à un seul héros (voir
+   applyImportedSave() plus bas) — juste l'export qui change. */
 function exportSaveToFile() {
   var payload = buildMultiSaveExportPayload();
   var json = JSON.stringify(payload, null, 2);
@@ -1020,7 +1181,9 @@ function exportSaveToFile() {
   showToast("💾 Sauvegarde exportée (" + slotCount + " héros)", 1800);
 }
 
-/* Affiche le JSON de sauvegarde dans une modale texte à copier manuellement — repli si le téléchargement de fichier ne convient pas. */
+/* Affiche le JSON de sauvegarde dans une modale texte, à copier
+   manuellement — repli pratique si le téléchargement de fichier ne
+   convient pas. */
 function showExportTextModal() {
   var host = document.getElementById("export-text-root");
   if (!host) return;
@@ -1083,7 +1246,9 @@ function copyExportText() {
   }
 }
 
-/* Vérifie grossièrement qu'un objet ressemble à une sauvegarde Aethervale avant de l'appliquer, pour éviter d'écraser la partie par erreur. */
+/* Vérifie grossièrement qu'un objet ressemble à une sauvegarde Quest
+   Idle avant de l'appliquer — évite d'écraser la partie avec un
+   fichier/texte quelconque collé par erreur. */
 function looksLikeQuestIdleSave(d) {
   return !!(d && typeof d === "object" &&
     typeof d.gold === "number" &&
@@ -1092,14 +1257,21 @@ function looksLikeQuestIdleSave(d) {
     d.talents !== undefined);
 }
 
-/* v3.29 : détecte le nouveau format d'export multi-héros ({ aethervaleMultiSave: true, slots: {...} }), un ou plusieurs héros complets. */
+/* v3.29 : détecte le NOUVEAU format d'export multi-héros (voir
+   buildMultiSaveExportPayload() plus haut) — { aethervaleMultiSave:
+   true, slots: {...} }, un ou plusieurs héros complets. */
 function looksLikeMultiSave(d) {
   return !!(d && typeof d === "object" && d.aethervaleMultiSave === true &&
     d.slots && typeof d.slots === "object" && Object.keys(d.slots).length > 0);
 }
 
-/* Applique une sauvegarde importée après confirmation — reconnaît le nouveau format multi-héros ET l'ancien format à un seul héros.
-   Détail : save-system_notes.md #45. */
+/* Applique une sauvegarde importée (objet déjà parsé), après
+   confirmation explicite — remplace TOUTE la progression actuelle.
+   v3.29 : reconnaît maintenant DEUX formats — le nouveau
+   (aethervaleMultiSave, plusieurs héros à la fois) ET l'ancien (un
+   seul héros, pour rester compatible avec les fichiers exportés
+   avant ce correctif) — voir looksLikeMultiSave()/looksLikeQuestIdleSave()
+   juste au-dessus. */
 function applyImportedSave(data) {
   var isMulti = looksLikeMultiSave(data);
   var isSingle = !isMulti && looksLikeQuestIdleSave(data);
@@ -1111,7 +1283,10 @@ function applyImportedSave(data) {
 
   var doImport = function () {
     if (isMulti) {
-      // Écrit chaque emplacement du fichier dans sa clé localStorage dédiée ; les emplacements absents du fichier restent inchangés.
+      // Écrit CHAQUE emplacement du fichier dans sa clé localStorage
+      // dédiée — remplace entièrement ce qui existait avant à ces
+      // emplacements (les emplacements NON présents dans le fichier,
+      // s'il y en a, restent inchangés).
       var maxSlots = window.MAX_HERO_SLOTS || 3;
       var importedCount = 0;
       Object.keys(data.slots).forEach(function (slotKey) {

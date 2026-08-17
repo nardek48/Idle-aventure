@@ -349,6 +349,24 @@
   cursor: pointer;
 }
 
+/* v3.29 : croix ✕ pour annuler la création d'un héros dans un emplacement vide — jamais affichée au tout premier lancement (voir buildHeroPickerCloseButtonHTML, modal-view.js). */
+.hero-picker-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink-dim);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .hero-picker-header {
   padding: 4px 6px 16px;
   text-align: center;
@@ -568,6 +586,7 @@
   font-weight: 600;
   border: none;
   box-sizing: border-box;
+  text-align: center; /* v3.29 : demandé par Seb, était à gauche par défaut */
 }
 
 #player-name-input::placeholder {

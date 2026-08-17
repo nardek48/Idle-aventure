@@ -87,9 +87,8 @@ var CampManager = {
     return this.getShortRemainingMs() <= 0;
   },
 
-  /* Bouton "Repos court" de l'écran Campement — restaure à 50% des PV
-     max, jamais moins que les PV actuels (un joueur déjà à 70% ne
-     redescend pas à 50% en l'utilisant par erreur). */
+  /* Bouton "Repos court" de l'écran Campement — soigne 50% des PV max
+     (montant fixe ajouté aux PV actuels), pas "jusqu'à" 50%. */
   useShortRest: function () {
     this.ensureDefaults();
 
@@ -98,17 +97,18 @@ var CampManager = {
       return false;
     }
 
-    var target = Math.floor((game.heroMaxHp || 1) * CAMPFIRE_SHORT_HEAL_PCT);
-    if ((game.heroHp || 0) >= target) {
-      showToast("PV déjà au-dessus de 50%", 1200);
+    var maxHp = game.heroMaxHp || 1;
+    if ((game.heroHp || 0) >= maxHp) {
+      showToast("PV déjà au maximum", 1200);
       return false;
     }
 
-    game.heroHp = target;
+    var healAmount = Math.floor(maxHp * CAMPFIRE_SHORT_HEAL_PCT);
+    game.heroHp = Math.min(maxHp, (game.heroHp || 0) + healAmount);
     game.campfireShortLastUsed = Date.now();
 
-    addLog("🔥 Repos court au feu de camp — PV restaurés à 50%.", "event");
-    showToast("🔥 PV restaurés à 50% !", 1600);
+    addLog("🔥 Repos court au feu de camp — +50% des PV max soignés.", "event");
+    showToast("🔥 +50% des PV max soignés !", 1600);
 
     if (typeof renderAll === "function") renderAll();
     if (typeof saveGame === "function") saveGame();

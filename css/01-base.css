@@ -80,11 +80,22 @@ select {
 /* =========================
    Sélection de texte
    ========================= */
-button,
-.icon,
-.card-action {
+/* v3.29.6 : désactivée PARTOUT par défaut (demande explicite — l'appui
+   long sur mobile déclenchait la sélection/le menu contextuel au lieu
+   du tap de jeu). Réactivée uniquement sur les champs de saisie et sur
+   .selectable-text (opt-in explicite si un texte doit rester copiable,
+   ex: code de sauvegarde déjà en <textarea> donc déjà couvert ici). */
+html, body {
   -webkit-user-select: none;
-  user-select: none; /* Désactive la sélection seulement sur les éléments interactifs ciblés */
+  user-select: none;
+}
+
+input,
+textarea,
+[contenteditable="true"],
+.selectable-text {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* =========================

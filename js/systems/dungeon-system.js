@@ -226,6 +226,7 @@ var DungeonManager = {
 
     var tier = this.getTierById(tierId);
     if (!this.isTierUnlocked(tier.id)) return showToast("Palier verrouillé", 1200);
+    if ((game.heroHp || 0) <= 0) return showToast("Héros à terre — repose-toi au Campement d'abord", 1600);
     if ((game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
     if (game.dungeonRun.active) return showToast("Donjon déjà en cours", 1200);
     if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast("Termine ou abandonne ta quête en cours avant d'entrer en donjon", 1600);

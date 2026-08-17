@@ -261,6 +261,15 @@
   line-height: 1.3;
 }
 
+/* v3.29.6 : bonus total au niveau actuel, affiché sous l'effet de base
+   quand le talent a au moins 1 point investi. */
+.talent-tier-current {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--nb-gold-dark);
+  margin-top: 2px;
+}
+
 .talent-tier-status {
   margin-top: 4px;
   font-size: 10px;

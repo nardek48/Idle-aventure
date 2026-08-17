@@ -94,22 +94,53 @@ function buildQuestsSubTabBarHTML() {
   return h;
 }
 
-/* Sous-onglet "Général" : Raid/Donjon + questline de déblocage de
-   monde + quêtes d'aventure — tout ce qui N'EST PAS renouvelé chaque
-   jour. */
+/* v3.29.7 : REFONTE — les boutons Raid/Donjon (décoratif/lien externe)
+   sont remplacés par un filtre "Quête active" / "Quête terminée" qui
+   unifie questline de déblocage + quêtes d'aventure dans une seule
+   liste filtrée. Périmètre confirmé avec Seb : ne couvre PAS les
+   quêtes journalières (restent dans leur propre sous-onglet). */
+var activeQuestsFilter = "active"; // "active" | "completed"
+
+/* Repliage inline (titre+icône -> détail complet au clic) — état en
+   mémoire seulement, pas persisté en sauvegarde (pas nécessaire). */
+var expandedQuestCardIds = {};
+
+function setQuestsFilter(filter) {
+  activeQuestsFilter = (filter === "completed") ? "completed" : "active";
+  if (typeof renderPanel === "function") renderPanel();
+}
+
+function toggleQuestCardExpand(cardId) {
+  expandedQuestCardIds[cardId] = !expandedQuestCardIds[cardId];
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setQuestsFilter = setQuestsFilter;
+window.toggleQuestCardExpand = toggleQuestCardExpand;
+
+function buildQuestsFilterBarHTML() {
+  var h = '<div class="quest-top-actions">';
+  h += '<button class="quest-mode-btn' + (activeQuestsFilter === "active" ? ' is-active' : '') + '" type="button" onclick="setQuestsFilter(\'active\')">Quête active</button>';
+  h += '<button class="quest-mode-btn' + (activeQuestsFilter === "completed" ? ' is-active' : '') + '" type="button" onclick="setQuestsFilter(\'completed\')">Quête terminée</button>';
+  h += '</div>';
+  return h;
+}
+
+/* Sous-onglet "Général" : questline de déblocage de monde + quêtes
+   d'aventure, filtrées Active/Terminée — tout ce qui N'EST PAS
+   renouvelé chaque jour. */
 function buildQuestsGeneralSubTabHTML() {
   var h = '';
+  h += buildQuestsFilterBarHTML();
 
-  // NB : "Raid" n'a toujours pas de onclick (aucun mode de jeu associé) —
-  // purement décoratif pour l'instant. "Donjon" navigue vers le nouvel
-  // écran Donjon (voir ui/dungeon-view.js).
-  h += '<div class="quest-top-actions">';
-  h += '<button class="quest-mode-btn" type="button">Raid</button>';
-  h += '<button class="quest-mode-btn" type="button" onclick="switchTab(\'dungeon\')">Donjon</button>';
-  h += '</div>';
+  var cardsHTML = (activeQuestsFilter === "completed")
+    ? buildCompletedQuestCardsHTML()
+    : buildActiveQuestCardsHTML();
 
-  h += buildWorldUnlockQuestSectionHTML();
-  h += buildAdventureQuestsSectionHTML();
+  h += cardsHTML
+    ? '<div class="quest-list">' + cardsHTML + '</div>'
+    : '<div class="eq-empty">' +
+      (activeQuestsFilter === "completed" ? "Aucune quête terminée pour l'instant." : "Aucune quête active pour l'instant.") +
+      '</div>';
 
   return h;
 }
@@ -204,20 +235,11 @@ function getNextLockedWorldIndex() {
   return -1;
 }
 
-function buildWorldUnlockQuestSectionHTML() {
-  if (!window.WorldQuestManager) return "";
-  var worldIndex = getNextLockedWorldIndex();
-  if (worldIndex === -1) return "";
-
-  var quest = WorldQuestManager.getQuestForWorldIndex(worldIndex);
-  if (!quest) return "";
-
-  var h = '<div class="map-adventure-quests">';
-  h += '<div class="map-adventure-quests-title">🗺️ Questline de déblocage</div>';
-
-  h += '<div class="map-quest-card">';
-  h += '<div class="map-quest-head"><span class="map-quest-icon">' + renderIconOrEmojiHTML(quest.icon || "🗺️", "map-quest-icon-img", quest.name) + '</span><span class="map-quest-name">' + esc(quest.name) + '</span></div>';
-
+/* v3.29.7 : contenu détaillé (étapes + récompense + bouton) d'une
+   questline de monde — extrait de l'ancienne buildWorldUnlockQuestSectionHTML
+   pour être réutilisable dans la carte repliable générique. */
+function buildWorldUnlockQuestDetailHTML(quest, worldIndex) {
+  var h = '';
   quest.steps.forEach(function (step) {
     var progress = WorldQuestManager.getStepProgress(quest, step);
     var done = progress >= step.target;
@@ -247,11 +269,9 @@ function buildWorldUnlockQuestSectionHTML() {
 
   if (WorldQuestManager.isReadyToClaim(quest)) {
     var targetWorld = WORLDS[worldIndex];
-    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="claimWorldQuest(' + worldIndex + ')">🗺️ Réclamer et débloquer ' + esc(targetWorld ? targetWorld.name : "") + '</button>';
+    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); claimWorldQuest(' + worldIndex + ')">🗺️ Réclamer et débloquer ' + esc(targetWorld ? targetWorld.name : "") + '</button>';
   }
 
-  h += '</div>';
-  h += '</div>';
   return h;
 }
 
@@ -263,6 +283,7 @@ function claimWorldQuest(worldIndex) {
   if (typeof renderPanel === "function") renderPanel();
 }
 window.claimWorldQuest = claimWorldQuest;
+
 
 /* v3.5 : petite fenêtre narrative affichée UNE FOIS au clic sur
    "Lancer" (immersion) — se ferme avant que le run de combat démarre
@@ -311,93 +332,212 @@ window.openAdventureQuestIntro = openAdventureQuestIntro;
 window.closeAdventureQuestIntro = closeAdventureQuestIntro;
 window.confirmAdventureQuestStart = confirmAdventureQuestStart;
 
-/* v3.2 : quêtes d'aventure (data/adventure-quests.js) — déplacées ici
-   depuis la popup Carte (v3.0). Lancement explicite d'un run de
-   combat dédié (AdventureQuestManager.start(), même principe que le
-   Donjon) plutôt qu'un suivi ambiant pendant le farm normal. Réutilise
-   le style .map-quest-card/.map-quest-step (css/06-map.css) qui gère
-   déjà l'affichage multi-étapes, pas besoin de nouveau CSS. */
-function buildAdventureQuestsSectionHTML() {
-  if (!window.AdventureQuestManager) return "";
+/* v3.29.7 : contenu détaillé (étapes + récompense + actions) d'une
+   quête d'aventure — extrait de l'ancienne buildAdventureQuestsSectionHTML
+   pour être réutilisable dans la carte repliable générique. */
+function buildAdventureQuestDetailHTML(quest, claimed, runningQuest) {
+  var isRunning = !!(runningQuest && runningQuest.id === quest.id);
+  var h = '';
 
-  var quests = AdventureQuestManager.getAllQuests();
-  if (!quests.length) return "";
+  quest.steps.forEach(function (step) {
+    var progress = AdventureQuestManager.getStepProgress(quest, step);
+    var done = progress >= step.target;
+    var pct = Math.min(100, Math.floor((progress / step.target) * 100));
+    var desc = String(step.desc || "").replace("{target}", step.target);
 
-  var runningQuest = AdventureQuestManager.getRunningQuest();
-
-  // v3.5 : groupées par monde (en-tête par monde), dans l'ordre des
-  // mondes (WORLDS) plutôt qu'une liste plate — plus lisible une fois
-  // qu'il y a des quêtes sur plusieurs mondes à la fois.
-  var questsByWorld = {};
-  quests.forEach(function (quest) {
-    if (!questsByWorld[quest.worldId]) questsByWorld[quest.worldId] = [];
-    questsByWorld[quest.worldId].push(quest);
+    h += '<div class="map-quest-step' + (done ? " is-done" : "") + '">';
+    h += '<div class="map-quest-step-row">';
+    h += '<span class="map-quest-step-desc">' + (done ? "✔ " : "") + esc(desc) + '</span>';
+    h += '<span class="map-quest-step-count">' + esc(progress) + '/' + esc(step.target) + '</span>';
+    h += '</div>';
+    h += '<div class="map-quest-step-bar"><div class="map-quest-step-fill" style="width:' + pct + '%"></div></div>';
+    h += '</div>';
   });
 
-  var h = '<div class="map-adventure-quests">';
-  h += '<div class="map-adventure-quests-title">🧭 Quêtes d\'aventure';
-  h += ' <span class="map-adventure-quests-resource">⛏️ Minerai rare : ' + esc(formatNumber((game.resources && game.resources.mineraiRare) || 0)) + '</span>';
+  var reward = quest.reward || {};
+  h += '<div class="map-quest-reward">';
+  h += '<span class="map-quest-reward-label">Récompense</span>';
+  h += '<span class="map-quest-reward-value">';
+  if (reward.gold) h += esc(formatNumber(reward.gold)) + ' or';
+  if (reward.essence) h += ' · ' + esc(formatNumber(reward.essence)) + ' essence';
+  h += '</span>';
   h += '</div>';
 
-  (WORLDS || []).forEach(function (world) {
-    var worldQuests = questsByWorld[world.id];
-    if (!worldQuests || !worldQuests.length) return;
-
-    h += '<div class="map-adventure-quests-world-header">' + esc(world.name) + '</div>';
-
-    worldQuests.forEach(function (quest) {
-    var claimed = !!game.adventureQuestsCompleted[quest.id];
-    var isRunning = !!(runningQuest && runningQuest.id === quest.id);
-
-    h += '<div class="map-quest-card' + (claimed ? " is-claimed" : isRunning ? " is-running" : "") + '">';
-    h += '<div class="map-quest-head"><span class="map-quest-icon">' + renderIconOrEmojiHTML(quest.icon || "📜", "map-quest-icon-img", quest.name) + '</span><span class="map-quest-name">' + esc(quest.name) + '</span></div>';
-
-    quest.steps.forEach(function (step) {
-      var progress = AdventureQuestManager.getStepProgress(quest, step);
-      var done = progress >= step.target;
-      var pct = Math.min(100, Math.floor((progress / step.target) * 100));
-      var desc = String(step.desc || "").replace("{target}", step.target);
-
-      h += '<div class="map-quest-step' + (done ? " is-done" : "") + '">';
-      h += '<div class="map-quest-step-row">';
-      h += '<span class="map-quest-step-desc">' + (done ? "✔ " : "") + esc(desc) + '</span>';
-      h += '<span class="map-quest-step-count">' + esc(progress) + '/' + esc(step.target) + '</span>';
-      h += '</div>';
-      h += '<div class="map-quest-step-bar"><div class="map-quest-step-fill" style="width:' + pct + '%"></div></div>';
-      h += '</div>';
-    });
-
-    var reward = quest.reward || {};
-    h += '<div class="map-quest-reward">';
-    h += '<span class="map-quest-reward-label">Récompense</span>';
-    h += '<span class="map-quest-reward-value">';
-    if (reward.gold) h += esc(formatNumber(reward.gold)) + ' or';
-    if (reward.essence) h += ' · ' + esc(formatNumber(reward.essence)) + ' essence';
-    h += '</span>';
+  if (claimed) {
+    h += '<div class="map-quest-claimed-label">✔ Terminée</div>';
+  } else if (isRunning) {
+    h += '<div class="map-quest-run-actions">';
+    h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); switchTab(\'combat\')">Voir le combat</button>';
+    h += '<button class="settings-btn danger" type="button" onclick="event.stopPropagation(); AdventureQuestManager.forfeit(); if (typeof renderPanel === \'function\') renderPanel();">Abandonner</button>';
     h += '</div>';
+  } else if (runningQuest) {
+    // Une AUTRE quête est déjà en cours de run — pas de bouton
+    // Lancer tant qu'elle n'est pas terminée/abandonnée (un seul
+    // run possible à la fois, même règle que le Donjon).
+    h += '<div class="map-quest-claimed-label">Termine ta quête en cours d\'abord</div>';
+  } else {
+    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openAdventureQuestIntro(\'' + quest.id + '\')">Lancer</button>';
+  }
 
-    if (claimed) {
-      h += '<div class="map-quest-claimed-label">✔ Terminée</div>';
-    } else if (isRunning) {
-      h += '<div class="map-quest-run-actions">';
-      h += '<button class="settings-btn primary" type="button" onclick="switchTab(\'combat\')">Voir le combat</button>';
-      h += '<button class="settings-btn danger" type="button" onclick="AdventureQuestManager.forfeit(); if (typeof renderPanel === \'function\') renderPanel();">Abandonner</button>';
-      h += '</div>';
-    } else if (runningQuest) {
-      // Une AUTRE quête est déjà en cours de run — pas de bouton
-      // Lancer tant qu'elle n'est pas terminée/abandonnée (un seul
-      // run possible à la fois, même règle que le Donjon).
-      h += '<div class="map-quest-claimed-label">Termine ta quête en cours d\'abord</div>';
-    } else {
-      h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="openAdventureQuestIntro(\'' + quest.id + '\')">Lancer</button>';
-    }
+  return h;
+}
 
-    h += '</div>';
-    });
-  });
-
+/* v3.29.7 : carte repliable générique — titre+icône seuls au repos,
+   détail complet affiché au clic (voir toggleQuestCardExpand). Utilisée
+   pour les 2 types de quêtes (monde + aventure) dans les listes
+   Active/Terminée. `extraClass` reprend is-claimed/is-running pour le
+   liseré visuel déjà existant. */
+function buildCollapsibleQuestCardHTML(cardId, icon, name, detailHTML, extraClass) {
+  var expanded = !!expandedQuestCardIds[cardId];
+  var h = '<div class="map-quest-card quest-card-collapsible' + (expanded ? ' is-expanded' : '') + (extraClass ? ' ' + extraClass : '') + '">';
+  h += '<div class="map-quest-head quest-card-header" onclick="toggleQuestCardExpand(\'' + esc(cardId) + '\')">';
+  h += '<span class="map-quest-icon">' + renderIconOrEmojiHTML(icon, "map-quest-icon-img", name) + '</span>';
+  h += '<span class="map-quest-name">' + esc(name) + '</span>';
+  h += '<span class="quest-card-chevron">' + (expanded ? '▾' : '▸') + '</span>';
+  h += '</div>';
+  if (expanded) {
+    h += '<div class="quest-card-detail">' + detailHTML + '</div>';
+  }
   h += '</div>';
   return h;
+}
+
+/* v3.29.8 : liste "Quête active" — la prochaine questline de monde non
+   terminée (s'il y en a une) + toutes les quêtes d'aventure non
+   réclamées (disponibles ou en cours de run). Retourne une liste
+   d'entrées {worldId, html} plutôt qu'une chaîne concaténée — le
+   groupement par monde est fait par buildQuestCardsGroupedByWorldHTML(). */
+function collectActiveQuestCardEntries() {
+  var entries = [];
+
+  if (window.WorldQuestManager) {
+    var worldIndex = getNextLockedWorldIndex();
+    if (worldIndex !== -1) {
+      var worldQuest = WorldQuestManager.getQuestForWorldIndex(worldIndex);
+      if (worldQuest) {
+        entries.push({
+          worldId: worldQuest.worldId,
+          html: buildCollapsibleQuestCardHTML(
+            'world_' + worldQuest.id,
+            worldQuest.icon || "🗺️",
+            worldQuest.name,
+            buildWorldUnlockQuestDetailHTML(worldQuest, worldIndex),
+            ""
+          )
+        });
+      }
+    }
+  }
+
+  if (window.AdventureQuestManager) {
+    var quests = AdventureQuestManager.getAllQuests();
+    var runningQuest = AdventureQuestManager.getRunningQuest();
+    quests.forEach(function (quest) {
+      if (game.adventureQuestsCompleted[quest.id]) return; // -> liste Terminée
+      var isRunning = !!(runningQuest && runningQuest.id === quest.id);
+      entries.push({
+        worldId: quest.worldId,
+        html: buildCollapsibleQuestCardHTML(
+          'adv_' + quest.id,
+          quest.icon || "📜",
+          quest.name,
+          buildAdventureQuestDetailHTML(quest, false, runningQuest),
+          isRunning ? "is-running" : ""
+        )
+      });
+    });
+  }
+
+  return entries;
+}
+
+/* v3.29.8 : liste "Quête terminée" — toutes les questlines de monde
+   déjà réclamées + toutes les quêtes d'aventure déjà réclamées. Même
+   forme {worldId, html} que collectActiveQuestCardEntries(). */
+function collectCompletedQuestCardEntries() {
+  var entries = [];
+
+  if (window.WorldQuestManager && window.WORLD_QUESTS) {
+    Object.keys(WORLD_QUESTS).forEach(function (key) {
+      var quest = WORLD_QUESTS[key];
+      if (!game.worldQuestsCompleted || !game.worldQuestsCompleted[quest.id]) return;
+      entries.push({
+        worldId: quest.worldId,
+        html: buildCollapsibleQuestCardHTML(
+          'world_' + quest.id,
+          quest.icon || "🗺️",
+          quest.name,
+          buildWorldUnlockQuestDetailHTML(quest, quest.worldIndex),
+          "is-claimed"
+        )
+      });
+    });
+  }
+
+  if (window.AdventureQuestManager) {
+    var quests = AdventureQuestManager.getAllQuests();
+    quests.forEach(function (quest) {
+      if (!game.adventureQuestsCompleted[quest.id]) return;
+      entries.push({
+        worldId: quest.worldId,
+        html: buildCollapsibleQuestCardHTML(
+          'adv_' + quest.id,
+          quest.icon || "📜",
+          quest.name,
+          buildAdventureQuestDetailHTML(quest, true, null),
+          "is-claimed"
+        )
+      });
+    });
+  }
+
+  return entries;
+}
+
+/* v3.29.8 : regroupe les entrées {worldId, html} en sections par
+   monde, dans l'ordre de WORLDS (Forêt -> Désert -> ... -> Tour).
+   Une entrée sans worldId reconnu (ne devrait pas arriver avec les
+   données actuelles) atterrit dans une section "Autres" en fin de
+   liste plutôt que d'être perdue silencieusement. */
+function buildQuestCardsGroupedByWorldHTML(entries) {
+  if (!entries.length) return "";
+
+  var byWorld = {};
+  entries.forEach(function (entry) {
+    var key = entry.worldId || "_other";
+    if (!byWorld[key]) byWorld[key] = [];
+    byWorld[key].push(entry.html);
+  });
+
+  var h = "";
+  (WORLDS || []).forEach(function (world) {
+    var cards = byWorld[world.id];
+    if (!cards || !cards.length) return;
+    h += '<div class="quest-world-section">';
+    h += '<div class="quest-world-section-title">' + esc(world.name) + '</div>';
+    h += cards.join("");
+    h += '</div>';
+    delete byWorld[world.id];
+  });
+
+  // Monde(s) non reconnu(s) éventuel(s) — filet de sécurité, pas de
+  // section visible pour ça normalement.
+  Object.keys(byWorld).forEach(function (key) {
+    h += '<div class="quest-world-section">';
+    h += '<div class="quest-world-section-title">Autres</div>';
+    h += byWorld[key].join("");
+    h += '</div>';
+  });
+
+  return h;
+}
+
+function buildActiveQuestCardsHTML() {
+  return buildQuestCardsGroupedByWorldHTML(collectActiveQuestCardEntries());
+}
+
+function buildCompletedQuestCardsHTML() {
+  return buildQuestCardsGroupedByWorldHTML(collectCompletedQuestCardEntries());
 }
 
 window.updateQuestBadge = updateQuestBadge;
@@ -405,5 +545,6 @@ window.getTalentsAvailableCount = getTalentsAvailableCount;
 window.getAscensionAvailableCount = getAscensionAvailableCount;
 window.buildQuestsHTML = buildQuestsHTML;
 window.setQuestsSubTab = setQuestsSubTab;
-window.buildWorldUnlockQuestSectionHTML = buildWorldUnlockQuestSectionHTML;
-window.buildAdventureQuestsSectionHTML = buildAdventureQuestsSectionHTML;
+window.buildActiveQuestCardsHTML = buildActiveQuestCardsHTML;
+window.buildCompletedQuestCardsHTML = buildCompletedQuestCardsHTML;
+

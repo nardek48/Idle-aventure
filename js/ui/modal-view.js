@@ -41,6 +41,7 @@ var pendingPlayerName = ""; // v3.22 : saisi à l'étape "name", gardé en
                              // n'existe plus une fois qu'on a changé
                              // d'étape).
 var heroSelectionStep = "name"; // v3.22 : "name" d'abord | "hero" ensuite
+var heroAttackPreviewExpanded = false; // v3.29 : bandeau dépliable de l'attaque spéciale, étape "hero"
 
 /* v3.22 : les 6 héros (3 classes de base + 3 variantes du Chaos),
    dans l'ordre d'affichage — avant (v3.21), seules les 3 classes de
@@ -138,6 +139,49 @@ function closeHeroSelection() {
   var host = document.getElementById("hero-selection-root");
   if (host) host.innerHTML = "";
   heroSelectionStep = "name";
+  heroAttackPreviewExpanded = false;
+}
+
+/* v3.29 : bouton ✕ — annule une création de héros en cours dans un emplacement vide et revient à l'emplacement précédent (jamais sauvegardé, rien à écraser). N'affiche rien au tout premier lancement (pendingHeroCreationOrigin null, needsHeroSetup() rouvrirait de toute façon). */
+function cancelHeroSelection() {
+  var origin = window.pendingHeroCreationOrigin;
+  window.pendingHeroCreationOrigin = null;
+  pendingHeroId = "";
+  pendingPlayerName = "";
+
+  closeHeroSelection();
+
+  if (origin && window.HeroSlotManager && HeroSlotManager.hasSlot(origin)) {
+    setActiveSlot(origin);
+
+    if (typeof createInitialGameState === "function") {
+      var keptSaveSupported = game.saveSupported;
+      var fresh = createInitialGameState();
+      Object.keys(game).forEach(function (k) { delete game[k]; });
+      Object.assign(game, fresh);
+      game.saveSupported = keptSaveSupported;
+    }
+    loadGame();
+    if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
+    if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
+    if (typeof resumeCombatAfterSlotChange === "function") resumeCombatAfterSlotChange();
+  } else {
+    console.warn("[Aethervale] cancelHeroSelection: pas d'emplacement d'origine valide (origin=" + origin + ") — la fenêtre va se rouvrir via needsHeroSetup(). Si ça se reproduit alors que save-system.js est à jour, remonte ce message à Claude."); // v3.29.4 : TEMPORAIRE, diagnostic
+  }
+
+  if (typeof renderAll === "function") renderAll();
+}
+
+/* v3.29 : markup de la croix ✕, partagé entre les 2 étapes — vide si rien où annuler (tout premier lancement). */
+function buildHeroPickerCloseButtonHTML() {
+  if (!window.pendingHeroCreationOrigin) return "";
+  return '<button type="button" class="hero-picker-close-btn" aria-label="Annuler" onclick="cancelHeroSelection()">✕</button>';
+}
+
+/* Déplie/replie le bandeau d'aperçu de l'attaque spéciale — étape "hero" uniquement, ré-affiche juste ce step. */
+function toggleHeroAttackPreview() {
+  heroAttackPreviewExpanded = !heroAttackPreviewExpanded;
+  openHeroSelection();
 }
 
 /* ============================================================
@@ -170,6 +214,7 @@ function confirmHeroSelection() {
     game.codexChaosSeen = true;
   }
   game.playerName = name;
+  window.pendingHeroCreationOrigin = null; // v3.29 : création confirmée, la croix ✕ n'a plus lieu d'être pour cet emplacement
 
   if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
     StatsSystem.recalcStats();
@@ -237,6 +282,7 @@ function buildHeroStepHTML(selectedHero) {
 
   var html = '<div class="hero-picker-overlay">';
   html += '  <div class="hero-picker">';
+  html += buildHeroPickerCloseButtonHTML();
   html += '    <button type="button" class="hero-picker-back-btn" onclick="backToNameStep()">‹ Retour</button>';
   html += '    <div class="hero-picker-header">';
   html += '      <h2>Choisissez votre héros</h2>';
@@ -278,8 +324,32 @@ function buildHeroStepHTML(selectedHero) {
   html += '      <span>CONFIRMER LE HÉROS</span>';
   html += '    </button>';
 
+  html += buildHeroAttackPreviewBandeauHTML(selectedHero);
+
   html += '  </div>';
   html += '</div>';
+  return html;
+}
+
+/* v3.29 : bandeau dépliable sous le bouton Confirmer, attaque spéciale du héros actuellement survolé/sélectionné (pas encore choisi définitivement). */
+function buildHeroAttackPreviewBandeauHTML(selectedHero) {
+  var special = (typeof HERO_SPECIAL_ATTACKS !== "undefined" && selectedHero) ? HERO_SPECIAL_ATTACKS[selectedHero.id] : null;
+  if (!special) return "";
+
+  var html = '<button type="button" class="hero-attack-preview-toggle" onclick="toggleHeroAttackPreview()">';
+  html += '⚔️ Attaque spéciale <span class="hero-attack-preview-chevron">' + (heroAttackPreviewExpanded ? '▴' : '▾') + '</span>';
+  html += '</button>';
+
+  if (heroAttackPreviewExpanded) {
+    html += '<div class="hero-attack-preview-card">';
+    html += '  <div class="hero-attack-preview-icon-wrap">' + renderIconOrEmojiHTML(special.icon, "hero-attack-preview-icon", special.name) + '</div>';
+    html += '  <div class="hero-attack-preview-body">';
+    html += '    <div class="hero-attack-preview-name">' + esc(special.name) + '</div>';
+    html += '    <div class="hero-attack-preview-desc">' + esc(special.desc) + '</div>';
+    html += '  </div>';
+    html += '</div>';
+  }
+
   return html;
 }
 
@@ -294,6 +364,7 @@ function buildNameStepHTML() {
 
   var html = '<div class="hero-picker-overlay">';
   html += '  <div class="hero-picker">';
+  html += buildHeroPickerCloseButtonHTML();
   html += '    <div class="hero-picker-header">';
   html += '      <h2>Votre légende commence</h2>';
   html += '      <p>Choisissez votre nom</p>';
@@ -322,3 +393,5 @@ window.backToNameStep = backToNameStep;
 window.closeHeroSelection = closeHeroSelection;
 window.confirmHeroSelection = confirmHeroSelection;
 window.openHeroSelection = openHeroSelection;
+window.toggleHeroAttackPreview = toggleHeroAttackPreview;
+window.cancelHeroSelection = cancelHeroSelection;

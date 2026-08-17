@@ -111,6 +111,8 @@ function buildHeroCarouselHTML() {
     var summary = HeroSlotManager.getSlotSummary(i);
 
     if (summary) {
+      // v3.29 : bouton suppression séparé (pas nesté dans la carte, sinon bouton-dans-bouton) + stopPropagation pour ne pas déclencher selectHeroSlot().
+      h += '<div class="hero-carousel-slot">';
       h += '<button type="button" class="hero-card hero-carousel-card' + (isActive ? ' active' : '') + '" onclick="selectHeroSlot(' + i + ')">';
       if (summary.heroImage) {
         h += '<img src="' + esc(summary.heroImage) + '" alt="' + esc(summary.heroName) + '" class="hero-card-image">';
@@ -118,6 +120,8 @@ function buildHeroCarouselHTML() {
       h += '<div class="hero-card-name">' + esc(summary.playerName || summary.heroName) + '</div>';
       h += '<div class="hero-carousel-sub">Niv. ' + esc(summary.heroLevel) + (isActive ? ' · actif' : '') + '</div>';
       h += '</button>';
+      h += '<button type="button" class="hero-carousel-delete-btn" aria-label="Supprimer ce héros" onclick="deleteHeroSlot(' + i + ', event)">🗑️</button>';
+      h += '</div>';
     } else {
       h += '<button type="button" class="hero-card hero-carousel-card hero-carousel-empty" onclick="createNewHeroInSlot(' + i + ')">';
       h += '<div class="hero-carousel-empty-icon">+</div>';
@@ -159,6 +163,30 @@ function createNewHeroInSlot(slotNumber) {
   if (!window.confirm("Créer un nouveau héros dans cet emplacement ? La partie actuelle est sauvegardée automatiquement, tu pourras y revenir.")) return;
 
   HeroSlotManager.createHeroInSlot(slotNumber);
+}
+
+/* Supprime définitivement un emplacement occupé — confirmation obligatoire, deleteSlot() gère déjà le basculement si c'était l'actif. */
+function deleteHeroSlot(slotNumber, event) {
+  if (event) event.stopPropagation();
+  if (!window.HeroSlotManager) return;
+
+  var summary = HeroSlotManager.getSlotSummary(slotNumber);
+  var label = summary ? (summary.playerName || summary.heroName) : ("Héros " + slotNumber);
+
+  var doDelete = function () {
+    var ok = HeroSlotManager.deleteSlot(slotNumber);
+    if (ok) {
+      if (typeof renderAll === "function") renderAll();
+      if (typeof showToast === "function") showToast("Héros supprimé : " + label, 1500);
+    }
+  };
+
+  var msg = "Supprimer définitivement " + label + " ? Toute sa progression sera perdue. Cette action est irréversible.";
+  if (typeof showConfirmModal === "function") {
+    showConfirmModal("Supprimer ce héros ?", msg, "🗑️", doDelete);
+  } else if (window.confirm(msg)) {
+    doDelete();
+  }
 }
 
 /* ============================================================
@@ -203,6 +231,7 @@ function buildHeroFicheHTML() {
   h += '<div class="pc-card-top">';
 
   h += '<div class="pc-portrait-col">';
+  h += '<div class="pc-hero-name-label">' + esc(game.playerName || (hero ? hero.name : "")) + '</div>';
   h += '<div class="pc-portrait-frame">';
   if (hero && hero.image) {
     h += '<img src="' + esc(hero.image) + '" alt="' + esc(hero.name) + '">';
@@ -406,5 +435,6 @@ window.buildHerosHTML = buildHerosHTML;
 window.buildHeroCarouselHTML = buildHeroCarouselHTML;
 window.selectHeroSlot = selectHeroSlot;
 window.createNewHeroInSlot = createNewHeroInSlot;
+window.deleteHeroSlot = deleteHeroSlot;
 window.selectHeroInline = selectHeroInline; // v3.25 : conservée pour compat, plus appelée par le carrousel
 window.setHerosSubTab = setHerosSubTab;

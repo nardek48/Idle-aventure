@@ -200,7 +200,9 @@ function gameLoop() {
   if (game.talents.t_interest) {
     game._interestTimer = (game._interestTimer || 0) + dt;
     while (game._interestTimer >= 10) {
-      var bonus = Math.floor(10 * 2 * Number(game.goldMult || 1));
+      // v3.29.6 : bonus scalé par le NIVEAU du talent — avant, identique
+      // niveau 1/2/3 malgré le texte "augmente par niveau" (bug).
+      var bonus = Math.floor(10 * 2 * game.talents.t_interest * Number(game.goldMult || 1));
       if (bonus > 0) {
         game.gold += bonus;
         game.totalGoldEarned += bonus;

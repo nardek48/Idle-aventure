@@ -128,6 +128,14 @@
   opacity: 0.6;
 }
 
+/* v3.29.9 : héros à 0 PV — donjon visuellement accessible (pas
+   "verrouillé" au sens progression) mais grisé, même logique que les
+   boutons du Village inabordables (v3.17). */
+.dungeon-tier-card.is-downed {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
 .dungeon-tier-card.is-tappable {
   cursor: pointer;
   transition: transform 0.08s ease, filter 0.08s ease;

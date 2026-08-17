@@ -114,6 +114,53 @@ function renderTalentIconHTML(node) {
 /* v3.28 : reflète maintenant le NIVEAU (0-3) plutôt qu'un simple
    acheté/pas acheté, ET l'exclusivité par palier (voir
    isTierLockedByOpposite ci-dessus). */
+/* v3.29.6 : texte du bonus TOTAL au niveau actuel — les taux ci-dessous
+   sont revérifiés contre le code réel de chaque système consommateur
+   (pas seulement recopiés depuis node.perLevel), suite à l'audit qui a
+   aussi corrigé les bugs t_sharpened_blades/t_bloodlust (doublons) et
+   t_interest/t_boss_slayer (désync texte/code) — voir CHANGELOG. */
+var TALENT_CURRENT_VALUE_OVERRIDES = {
+  t_auto_tap: function (level) {
+    var vals = { 1: "2s", 2: "1.5s", 3: "1s" };
+    return "Auto-tap actuel : toutes les " + vals[level];
+  },
+  t_interest: function (level) {
+    return "Gain d'or passif actuel : ×" + level + " le taux de base";
+  },
+  t_bloodlust: function (node, level) {
+    var rate = Math.round(node.perLevel * 100 * level);
+    var cap = Math.round(node.perLevelCap * 100 * level);
+    return "Taux actuel : " + rate + "%/ascension (plafond " + cap + "%)";
+  },
+  t_thick_skin: function (node, level) {
+    return "Bonus actuel : +" + ((node.perLevel * level) / 1000) + "s";
+  },
+  t_treasure_hunter: function (node, level) {
+    return "Bonus actuel : +" + (node.perLevel * level);
+  },
+  t_rich_ritual: function (node, level) {
+    return "Bonus actuel : +" + (node.perLevel * level);
+  }
+};
+
+function buildTalentCurrentValueText(node, level) {
+  if (level <= 0 || node.perLevel === undefined) return "";
+
+  var override = TALENT_CURRENT_VALUE_OVERRIDES[node.id];
+  if (override) return override.length === 1 ? override(level) : override(node, level);
+  if (node.perLevel >= 1) {
+    // Déjà en points de %/unité entière (ex: merchant_instinct 5 -> +5%/niveau)
+    return "Bonus actuel : +" + (node.perLevel * level) + "%";
+  }
+  // Fraction (0.05 = 5%) -> pourcentage
+  return "Bonus actuel : +" + Math.round(node.perLevel * 100 * level) + "%";
+}
+
+function buildTalentCurrentValueHTML(node, level) {
+  var text = buildTalentCurrentValueText(node, level);
+  return text ? '<div class="talent-tier-current">' + esc(text) + '</div>' : "";
+}
+
 function buildTalentStatusHTML(node, nodes) {
   var level = getTalentLevel(node.id);
   var maxLevel = node.maxLevel || 1;
@@ -208,6 +255,7 @@ function buildTalentBranchHTML(branchKey) {
       h += '<div class="talent-tier-name">' + esc(node.name) + '</div>';
       h += buildTalentLevelPipsHTML(node);
       h += '<div class="talent-tier-effect">' + esc(node.effect || "") + '</div>';
+      h += buildTalentCurrentValueHTML(node, level);
       h += buildTalentStatusHTML(node, nodes);
       h += '</button>';
     });
@@ -274,9 +322,12 @@ function buildTalentSummaryPopupHTML() {
     owned.forEach(function (n) {
       var level = getTalentLevel(n.id);
       var maxLevel = n.maxLevel || 1;
+      var currentValueText = buildTalentCurrentValueText(n, level);
       h += '<div class="talent-summary-item">' +
            '<span class="talent-summary-icon">' + renderTalentIconHTML(n) + '</span>' +
-           '<span>' + esc(n.name) + ' (niv. ' + level + '/' + maxLevel + ') — ' + esc(n.effect || "") + '</span>' +
+           '<span>' + esc(n.name) + ' (niv. ' + level + '/' + maxLevel + ') — ' + esc(n.effect || "") +
+           (currentValueText ? ' <em>(' + esc(currentValueText) + ')</em>' : '') +
+           '</span>' +
            '</div>';
     });
     h += '</div>';

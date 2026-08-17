@@ -180,13 +180,11 @@ var CombatEngine = {
     // game.talents.t_x est un NOMBRE (0-3). Chaque ligne convertie
     // garde EXACTEMENT la magnitude par niveau qui existait avant
     // cette refonte (niveau 1 = même puissance qu'avant).
-    if (game.talents.t_sharpened_blades) dmg = Math.floor(dmg * (1 + 0.10 * game.talents.t_sharpened_blades));
+    // v3.29.6 : t_sharpened_blades et t_bloodlust retirés d'ici — déjà
+    // appliqués via game.tapMult dans effectiveTapDamage() (stats-system.js),
+    // les réappliquer ici les comptait deux fois (bug, voir CHANGELOG).
     if (game.enemy.isBoss && game.talents.t_war_instinct) dmg = Math.floor(dmg * (1 + 0.05 * game.talents.t_war_instinct));
-    if (game.enemy.isBoss && game.talents.t_boss_slayer) dmg = Math.floor(dmg * (1 + 0.20 * game.talents.t_boss_slayer));
-    if (game.talents.t_bloodlust) {
-      var ascBonus = Math.min(5 * (game.ascensionCount || 0) * game.talents.t_bloodlust, 25 * game.talents.t_bloodlust);
-      dmg = Math.floor(dmg * (1 + ascBonus / 100));
-    }
+    if (game.enemy.isBoss && game.talents.t_boss_slayer) dmg = Math.floor(dmg * (1 + 0.08 * game.talents.t_boss_slayer));
 
     if (game.talents.t_assault_frenzy) {
       if (game._frenzyReady) {

@@ -35,8 +35,21 @@
   justify-content: flex-start; /* contenu en haut */
 
   flex: 0 0 35%;
-   margin-top: 25px;            /* force la barre d'XP à se coller en bas de la colonne */
+   margin-top: 6px;            /* réduit vs 25px : le nom (v3.29) ci-dessous occupe désormais une partie de cet espace */
 
+}
+
+/* v3.29 : nom au-dessus du portrait, dans l'onglet Héros. */
+.pc-hero-name-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  text-align: center;
+  max-width: 130px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pc-portrait-frame {
@@ -438,6 +451,87 @@
 .hero-carousel-empty {
   border-style: dashed;
   opacity: 0.75;
+}
+
+/* v3.29 : bandeau dépliable "attaque spéciale" — étape "hero" du picker de création.
+   ⚠️ Styles ici par défaut faute d'accès à css/05-overlays.css (où vivent .hero-picker-*) —
+   à déplacer là-bas si tu préfères garder tout le picker regroupé, aucune dépendance ne casse si tu le fais. */
+.hero-attack-preview-toggle {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--nb-frame);
+  border-radius: 10px;
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.hero-attack-preview-chevron {
+  float: right;
+}
+
+.hero-attack-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame);
+}
+
+.hero-attack-preview-icon-wrap {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-attack-preview-icon-wrap img.hero-attack-preview-icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.hero-attack-preview-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.hero-attack-preview-desc {
+  font-size: 11px;
+  color: var(--nb-ink-dim);
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+/* v3.29 : conteneur du bouton suppression (voir deleteHeroSlot, ui/heros-view.js) — évite un bouton nesté dans .hero-carousel-card. */
+.hero-carousel-slot {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.hero-carousel-delete-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  font-size: 10px;
+  line-height: 18px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  z-index: 2;
 }
 
 .hero-carousel-empty-icon {

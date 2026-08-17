@@ -82,6 +82,7 @@ function buildDungeonActiveHTML() {
    automatiquement, aucun changement de code nécessaire. */
 function buildDungeonTierCardHTML(tier, isLast) {
   var unlocked = DungeonManager.isTierUnlocked(tier.id);
+  var heroDowned = (game.heroHp || 0) <= 0;
   var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[tier.maxRarity]) || tier.maxRarity;
   var rarityColor = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[tier.maxRarity]) || "#9ca3af";
 
@@ -91,14 +92,17 @@ function buildDungeonTierCardHTML(tier, isLast) {
 
   /* v2.90 : toute la carte devient cliquable pour lancer l'intro du
      palier (avant : seul le bouton "Entrer" en bas de carte). Le
-     bouton est retiré, la carte entière porte l'action tactile. */
+     bouton est retiré, la carte entière porte l'action tactile.
+     v3.29.9 : reste cliquable même à terre (heroDowned) pour afficher
+     le toast explicatif — seul DungeonManager.start()/openDungeonIntro()
+     bloquent réellement l'entrée (voir systems/dungeon-system.js). */
   var cardTag = unlocked ? 'button' : 'div';
   var cardAttrs = unlocked
     ? ' type="button" onclick="openDungeonIntro(' + tier.id + ')"'
     : '';
 
-  var h = '<' + cardTag + ' class="dungeon-tier-card' + (unlocked ? ' is-tappable' : ' is-locked') + (isLast ? ' is-full' : '') + '"' + cardAttrs + '>';
-  h += '<div class="dungeon-tier-image">' + imageHTML + (unlocked ? '' : '<span class="dungeon-tier-image-lock">🔒</span>') + '</div>';
+  var h = '<' + cardTag + ' class="dungeon-tier-card' + (unlocked ? ' is-tappable' : ' is-locked') + (unlocked && heroDowned ? ' is-downed' : '') + (isLast ? ' is-full' : '') + '"' + cardAttrs + '>';
+  h += '<div class="dungeon-tier-image">' + imageHTML + (unlocked ? '' : '<span class="dungeon-tier-image-lock">🔒</span>') + (unlocked && heroDowned ? '<span class="dungeon-tier-image-lock">💀</span>' : '') + '</div>';
   h += '<div class="dungeon-tier-info">';
   h += '<div class="dungeon-tier-name">' + esc(tier.name) + '</div>';
   h += '<div class="dungeon-tier-rarity" style="color:' + rarityColor + '">🎁 ' + esc(rarityLabel) + ' max</div>';
@@ -114,6 +118,8 @@ function buildDungeonTierCardHTML(tier, isLast) {
       ? 'Termine ' + esc(previousTier.name) + ' pour débloquer'
       : 'Verrouillé';
     h += '<div class="dungeon-tier-lock-text">' + lockText + '</div>';
+  } else if (heroDowned) {
+    h += '<div class="dungeon-tier-lock-text">Héros à terre — repos requis</div>';
   }
 
   h += '</div>';
@@ -310,6 +316,7 @@ function buildDungeonSceauLoreHTML(tierId) {
 
 function openDungeonIntro(tierId) {
   if (!DungeonManager.isTierUnlocked(tierId)) return showToast("Palier verrouillé", 1200);
+  if ((game.heroHp || 0) <= 0) return showToast("Héros à terre — repose-toi au Campement d'abord", 1600);
   if ((game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
 
   pendingDungeonTierId = tierId;
