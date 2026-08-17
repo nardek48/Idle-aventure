@@ -438,10 +438,19 @@ function buildSaveData() {
     worldQuestProgress: game.worldQuestProgress || {},
     worldQuestsCompleted: game.worldQuestsCompleted || {},
     // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
-    resources: game.resources || { mineraiRare: 0 },
+    resources: game.resources || { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0 },
     adventureQuestProgress: game.adventureQuestProgress || {},
     adventureQuestsCompleted: game.adventureQuestsCompleted || {},
     adventureQuestRun: game.adventureQuestRun || { active: false, questId: null },
+    // v3.30 : Chasse en boucle (voir data/hunt-quests.js) — huntStats
+    // est purement informatif (compteur de lots), persiste comme
+    // adventureQuestProgress ; huntRun NE survit PAS (comme dungeonRun).
+    huntStats: game.huntStats || {},
+    huntRun: game.huntRun || { active: false, questId: null, killsInLot: 0 },
+    // v3.31 : bâtiments de production (voir data/production-buildings.js)
+    // — niveau/stock persistent TOUJOURS (comme le Village), lastTick
+    // sert au rattrapage hors-ligne (voir ProductionManager.catchUpOffline()).
+    production: game.production || {},
     campfireLastUsed: game.campfireLastUsed || 0, // v3.7 : cooldown du feu de camp (long repos), voir systems/camp-system.js
     campfireShortLastUsed: game.campfireShortLastUsed || 0, // v3.14 : cooldown du repos court
     activeAfflictions: Object.assign({}, game.activeAfflictions || {}), // v3.20 : voir data/afflictions.js
@@ -581,11 +590,24 @@ function restoreBaseState(d) {
   game.worldQuestProgress = d.worldQuestProgress && typeof d.worldQuestProgress === "object" ? d.worldQuestProgress : {};
   game.worldQuestsCompleted = d.worldQuestsCompleted && typeof d.worldQuestsCompleted === "object" ? d.worldQuestsCompleted : {};
   // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
-  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { mineraiRare: 0 };
+  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0 };
   if (typeof game.resources.mineraiRare !== "number") game.resources.mineraiRare = 0;
+  if (typeof game.resources.viande !== "number") game.resources.viande = 0;
+  if (typeof game.resources.ble !== "number") game.resources.ble = 0;
+  if (typeof game.resources.bois !== "number") game.resources.bois = 0;
+  if (typeof game.resources.fer !== "number") game.resources.fer = 0;
   game.adventureQuestProgress = d.adventureQuestProgress && typeof d.adventureQuestProgress === "object" ? d.adventureQuestProgress : {};
   game.adventureQuestsCompleted = d.adventureQuestsCompleted && typeof d.adventureQuestsCompleted === "object" ? d.adventureQuestsCompleted : {};
   game.adventureQuestRun = d.adventureQuestRun && typeof d.adventureQuestRun === "object" ? d.adventureQuestRun : { active: false, questId: null };
+  // v3.30 : Chasse en boucle (voir data/hunt-quests.js).
+  game.huntStats = d.huntStats && typeof d.huntStats === "object" ? d.huntStats : {};
+  game.huntRun = d.huntRun && typeof d.huntRun === "object" ? d.huntRun : { active: false, questId: null, killsInLot: 0 };
+  // v3.31 : bâtiments de production (voir data/production-buildings.js)
+  // — migration douce : une vieille sauvegarde sans `production` (ou
+  // avec un bâtiment manquant, ex. ajout d'un 5e bâtiment plus tard)
+  // repart avec {} ici, ProductionManager.ensure() complète le reste
+  // au premier accès (voir boot.js, appelé juste après loadGame()).
+  game.production = d.production && typeof d.production === "object" ? d.production : {};
   game.campfireLastUsed = typeof d.campfireLastUsed === "number" ? d.campfireLastUsed : 0;
   game.campfireShortLastUsed = typeof d.campfireShortLastUsed === "number" ? d.campfireShortLastUsed : 0;
   game.activeAfflictions = (d.activeAfflictions && typeof d.activeAfflictions === "object") ? d.activeAfflictions : {};
@@ -660,9 +682,16 @@ function hardResetState() {
   var keptWorldQuestProgress = Object.assign({}, game.worldQuestProgress || {});
   var keptWorldQuestsCompleted = Object.assign({}, game.worldQuestsCompleted || {});
   // v3.0 : ressources rares et progression des quêtes d'aventure = progression permanente, comme les questlines de monde.
-  var keptResources = Object.assign({ mineraiRare: 0 }, game.resources || {});
+  var keptResources = Object.assign({ mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0 }, game.resources || {});
   var keptAdventureQuestProgress = Object.assign({}, game.adventureQuestProgress || {});
   var keptAdventureQuestsCompleted = Object.assign({}, game.adventureQuestsCompleted || {});
+  // v3.30 : huntStats (compteur de lots) = progression permanente, comme adventureQuestProgress.
+  var keptHuntStats = Object.assign({}, game.huntStats || {});
+  // v3.31 : bâtiments de production (niveau + stock local) = progression
+  // permanente, comme le Village (VILLAGE_CONFIG) — un joueur qui a
+  // investi dans sa Chasse/Champs/Scierie/Mine ne perd pas ces niveaux
+  // à l'ascension. deep-copy nécessaire (objet imbriqué par bâtiment).
+  var keptProduction = JSON.parse(JSON.stringify(game.production || {}));
   var keptDungeonTiersEntered = Object.assign({}, game.dungeonTiersEntered || {});
   var keptCodexChaosSeen = !!game.codexChaosSeen;
   var keptCodexRead = Object.assign({}, game.codexRead || {});
@@ -754,6 +783,9 @@ function hardResetState() {
   // v3.2 : le run de quête en cours ne survit pas à l'ascension (la progression déjà enregistrée, elle, est conservée séparément).
   // Détail : save-system_notes.md #33.
   game.adventureQuestRun = { active: false, questId: null };
+  // v3.30 : même traitement que adventureQuestRun juste au-dessus — le
+  // run de chasse en cours ne survit pas à l'ascension.
+  game.huntRun = { active: false, questId: null, killsInLot: 0 };
   game.dungeonBestWave = keptDungeonBestWave;
   game.dungeonBossClears = keptDungeonBossClears;
   game.dungeonShards = keptDungeonShards;
@@ -768,6 +800,17 @@ function hardResetState() {
   game.resources = keptResources;
   game.adventureQuestProgress = keptAdventureQuestProgress;
   game.adventureQuestsCompleted = keptAdventureQuestsCompleted;
+  game.huntStats = keptHuntStats;
+  game.production = keptProduction;
+  // v3.31 : lastTick de chaque bâtiment doit repartir de "maintenant"
+  // à l'ascension (sinon le premier tick/boot suivant croirait à une
+  // absence de plusieurs secondes égale au temps écoulé DANS
+  // l'ancienne run, et créditerait à tort du stock rattrapé).
+  Object.keys(game.production).forEach(function (id) {
+    if (game.production[id] && typeof game.production[id] === "object") {
+      game.production[id].lastTick = Date.now();
+    }
+  });
   game.dungeonTiersEntered = keptDungeonTiersEntered;
   game.codexChaosSeen = keptCodexChaosSeen;
   game.codexRead = keptCodexRead;
@@ -871,6 +914,7 @@ function fullResetState() {
 
   game.dungeonRun = { active: false, wave: 0, tierId: 1 };
   game.adventureQuestRun = { active: false, questId: null };
+  game.huntRun = { active: false, questId: null, killsInLot: 0 }; // v3.30
   game.campfireLastUsed = 0; // v3.7 : repos gratuit du Campement — repart bien à zéro sur un reset complet
   game.campfireShortLastUsed = 0; // v3.14 : idem pour le repos court
   game.activeAfflictions = {}; // v3.20 : remis à zéro sur un reset complet (conservé à l'ascension)
@@ -886,9 +930,11 @@ function fullResetState() {
   game.worldQuestsCompleted = {};
   // v3.0 : système Quêtes/Ressources/Territoire — repart bien à zéro
   // sur un reset complet, comme worldQuestProgress ci-dessus.
-  game.resources = { mineraiRare: 0 };
+  game.resources = { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0 };
   game.adventureQuestProgress = {};
   game.adventureQuestsCompleted = {};
+  game.huntStats = {}; // v3.30
+  game.production = {}; // v3.31 : repart à zéro, ProductionManager.ensure() recrée les 4 bâtiments au niveau 1
   game.dungeonTiersEntered = {};
   game.codexChaosSeen = false;
   game.codexRead = {};

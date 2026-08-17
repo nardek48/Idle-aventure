@@ -39,6 +39,16 @@ function init() {
 
   var loaded = loadGame();
 
+  // v3.31 : rattrapage de production hors-ligne (voir
+  // ProductionManager.catchUpOffline()) — indépendant du flux
+  // OfflineManager (or/essence/Aether, plus bas) : chaque bâtiment
+  // utilise son propre lastTick, pas game.lastOnline. Silencieux
+  // (pas de modale dédiée), doit tourner AVANT le premier rendu pour
+  // que l'écran Production affiche déjà le stock rattrapé.
+  if (window.ProductionManager && typeof ProductionManager.catchUpOffline === "function") {
+    ProductionManager.catchUpOffline();
+  }
+
   ensureDailyQuests();
 
   // Marque le monde courant comme "déjà atteint" pour le Codex, y

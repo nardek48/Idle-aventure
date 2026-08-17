@@ -320,6 +320,14 @@ var CombatEngine = {
       return;
     }
 
+    // v3.30 : même principe pour une Chasse en cours (voir
+    // HuntQuestManager.onDefeat) — arrête le lot en cours, la viande
+    // déjà stockée reste acquise.
+    if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
+      HuntQuestManager.onDefeat();
+      return;
+    }
+
     // v3.28 : talent "Sang-froid" (t_essence_bloom, branche Survie
     // rethématisée) — réduit la pénalité de défaite de 10%/niveau
     // (ex. niveau 3 = pénalité effective ×0.70 de sa valeur normale).
@@ -523,6 +531,17 @@ var CombatEngine = {
     // pas du farm ambiant classique.
     if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active) {
       AdventureQuestManager.onEnemyKilled(enemy);
+      if (typeof renderAll === "function") renderAll();
+      restoreEquipBagScroll();
+      saveGame();
+      return;
+    }
+
+    // v3.30 : Chasse en boucle (voir data/hunt-quests.js) — même
+    // position que Donjon/Quête d'aventure juste au-dessus, un run de
+    // chasse n'est pas du farm ambiant classique.
+    if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
+      HuntQuestManager.onEnemyKilled();
       if (typeof renderAll === "function") renderAll();
       restoreEquipBagScroll();
       saveGame();

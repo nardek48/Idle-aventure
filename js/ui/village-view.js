@@ -88,9 +88,36 @@ function getVillageBuildingBonusText(id, level) {
    case à l'autre). Le nom + niveau, qui n'ont plus de zone dédiée en
    dessous, sont affichés en étiquette superposée en bas de chaque
    case (voir .village-building-tag). */
-function buildVillageHTML() {
-  var h = '<div class="nb-page-frame village-page-frame">';
-  h += '<div class="village-building-grid">';
+/* v3.31 : 3e sous-onglet Production (voir data/production-buildings.js,
+   systems/production-system.js, ui/production-view.js) — même pattern
+   à 3 boutons que Héros (Héros/Amélioration/Stats). */
+var activeVillageSubTab = "village"; // "village" | "entrepot" | "production"
+
+function setVillageSubTab(tab) {
+  activeVillageSubTab = (tab === "entrepot") ? "entrepot" : (tab === "production") ? "production" : "village";
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setVillageSubTab = setVillageSubTab;
+
+/* Exposé pour systems/production-system.js (tick()) — évite qu'un
+   fichier système lise directement une variable d'écran, voir la
+   note dans ProductionManager.tick(). */
+function isProductionScreenVisible() {
+  return game.activeTab === "village" && activeVillageSubTab === "production";
+}
+window.isProductionScreenVisible = isProductionScreenVisible;
+
+function buildVillageSubTabBarHTML() {
+  var h = '<div class="pc-subtab-bar">';
+  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "village" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'village\')">🏘️<span>Village</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "entrepot" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'entrepot\')">📦<span>Entrepôt</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "production" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'production\')">🌾<span>Production</span></button>';
+  h += '</div>';
+  return h;
+}
+
+function buildVillageMainSubTabHTML() {
+  var h = '<div class="village-building-grid">';
 
   Object.keys(VILLAGE_BUILDING_MAP).forEach(function (id) {
     var b = VILLAGE_BUILDING_MAP[id];
@@ -109,7 +136,35 @@ function buildVillageHTML() {
   });
 
   h += '</div>';
+  return h;
+}
+
+/* v3.31 : structure à 3 sous-onglets, même squelette que buildHerosHTML/
+   buildQuestsHTML (.subtab-page / .subtab-page-content / .subtab-bar-wrapper)
+   — voir le "Layout trap" documenté : ne JAMAIS merger .nb-page-frame-fill
+   directement sur .subtab-page-content, toujours un enfant imbriqué
+   (ici .nb-page-frame ci-dessous, imbriqué normalement). */
+function buildVillageHTML() {
+  var h = '<div class="subtab-page">';
+  h += '<div class="subtab-page-content">';
+  h += '<div class="nb-page-frame village-page-frame">';
+
+  if (activeVillageSubTab === "entrepot") {
+    h += buildWarehouseHTML();
+  } else if (activeVillageSubTab === "production") {
+    h += buildProductionHTML();
+  } else {
+    h += buildVillageMainSubTabHTML();
+  }
+
+  h += '</div>'; // fin .nb-page-frame
+  h += '</div>'; // fin .subtab-page-content
+
+  h += '<div class="subtab-bar-wrapper">';
+  h += buildVillageSubTabBarHTML();
   h += '</div>';
+
+  h += '</div>'; // fin .subtab-page
   return h;
 }
 

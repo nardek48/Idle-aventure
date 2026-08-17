@@ -230,6 +230,10 @@ var DungeonManager = {
     if ((game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
     if (game.dungeonRun.active) return showToast("Donjon déjà en cours", 1200);
     if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast("Termine ou abandonne ta quête en cours avant d'entrer en donjon", 1600);
+    // v3.30 : même garde-fou pour une Chasse en cours (voir
+    // HuntQuestManager) — évite qu'un donjon écrase game.enemy pendant
+    // qu'un lot de chasse est en cours de suivi.
+    if (game.huntRun && game.huntRun.active) return showToast("Termine ou arrête ta chasse en cours avant d'entrer en donjon", 1600);
 
     game.dungeonTickets -= 1;
     game.dungeonRun = { active: true, wave: 0, tierId: tier.id, shardsEarned: 0 };

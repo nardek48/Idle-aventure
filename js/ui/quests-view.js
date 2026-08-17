@@ -448,6 +448,27 @@ function collectActiveQuestCardEntries() {
     });
   }
 
+  // v3.30 : Chasses (voir data/hunt-quests.js) — pas de notion de
+  // complétion, toujours dans la liste "active" tant que le catalogue
+  // en contient (jamais dans "Terminée", voir collectCompletedQuestCardEntries).
+  if (window.HuntQuestManager) {
+    var huntQuests = HuntQuestManager.getAllQuests();
+    var runningHunt = HuntQuestManager.getRunningQuest();
+    huntQuests.forEach(function (quest) {
+      var isRunning = !!(runningHunt && runningHunt.id === quest.id);
+      entries.push({
+        worldId: quest.worldId,
+        html: buildCollapsibleQuestCardHTML(
+          'hunt_' + quest.id,
+          quest.icon || "🏹",
+          quest.name,
+          buildHuntQuestDetailHTML(quest, runningHunt),
+          isRunning ? "is-running" : ""
+        )
+      });
+    });
+  }
+
   return entries;
 }
 
@@ -539,6 +560,100 @@ function buildActiveQuestCardsHTML() {
 function buildCompletedQuestCardsHTML() {
   return buildQuestCardsGroupedByWorldHTML(collectCompletedQuestCardEntries());
 }
+
+/* ============================================================
+   v3.30 : Chasses (data/hunt-quests.js) — carte détail + intro + boutons
+   Chasser/Arrêter. Même squelette que buildAdventureQuestDetailHTML/
+   openAdventureQuestIntro juste au-dessus, adapté à la boucle
+   (progression = kills du LOT en cours, pas d'étapes/récompense finale).
+============================================================ */
+
+function buildHuntQuestDetailHTML(quest, runningHunt) {
+  var isRunning = !!(runningHunt && runningHunt.id === quest.id);
+  var stock = Number((game.resources || {})[quest.resourceKey] || 0);
+  var resDef = (window.WAREHOUSE_RESOURCES && WAREHOUSE_RESOURCES[quest.resourceKey]) || null;
+
+  var h = '';
+  h += '<div class="map-quest-step">';
+  h += '<div class="map-quest-step-row">';
+  h += '<span class="map-quest-step-desc">' + (resDef ? esc(resDef.icon + " " + resDef.name) : "Ressource") + ' en Entrepôt</span>';
+  h += '<span class="map-quest-step-count">' + formatNumber(stock) + '</span>';
+  h += '</div>';
+  h += '</div>';
+
+  if (isRunning) {
+    var inLot = Number((game.huntRun && game.huntRun.killsInLot) || 0);
+    var pct = Math.min(100, Math.floor((inLot / quest.lotSize) * 100));
+    h += '<div class="map-quest-step is-done">';
+    h += '<div class="map-quest-step-row">';
+    h += '<span class="map-quest-step-desc">Lot en cours</span>';
+    h += '<span class="map-quest-step-count">' + inLot + '/' + quest.lotSize + '</span>';
+    h += '</div>';
+    h += '<div class="map-quest-step-bar"><div class="map-quest-step-fill" style="width:' + pct + '%"></div></div>';
+    h += '</div>';
+  }
+
+  h += '<div class="map-quest-reward">';
+  h += '<span class="map-quest-reward-label">Chance par kill</span>';
+  h += '<span class="map-quest-reward-value">' + quest.dropChancePct + '% · lot de ' + quest.lotSize + '</span>';
+  h += '</div>';
+
+  if (isRunning) {
+    h += '<div class="map-quest-run-actions">';
+    h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); switchTab(\'combat\')">Voir le combat</button>';
+    h += '<button class="settings-btn danger" type="button" onclick="event.stopPropagation(); HuntQuestManager.stop(); if (typeof renderPanel === \'function\') renderPanel();">Arrêter la chasse</button>';
+    h += '</div>';
+  } else if (runningHunt) {
+    h += '<div class="map-quest-claimed-label">Termine ta chasse en cours d\'abord</div>';
+  } else {
+    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openHuntQuestIntro(\'' + quest.id + '\')">Chasser</button>';
+  }
+
+  return h;
+}
+
+var pendingHuntQuestId = null;
+
+function buildHuntQuestIntroHTML(questId) {
+  var quest = window.HUNT_QUESTS ? HUNT_QUESTS[questId] : null;
+  if (!quest) return "";
+
+  var h = '<div class="full-menu-overlay">';
+  h += '  <div class="full-menu dungeon-story-card">';
+  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(quest.icon || "🏹", "dungeon-story-icon-img", quest.name) + '</div>';
+  h += '    <div class="dungeon-story-title">' + esc(quest.name) + '</div>';
+  if (quest.story) h += '    <div class="dungeon-story-text">' + esc(quest.story) + '</div>';
+  h += '    <div class="dungeon-story-actions">';
+  h += '      <button class="settings-btn" type="button" onclick="closeHuntQuestIntro()">Annuler</button>';
+  h += '      <button class="settings-btn primary" type="button" onclick="confirmHuntQuestStart()">Commencer</button>';
+  h += '    </div>';
+  h += '  </div>';
+  h += '</div>';
+  return h;
+}
+
+function openHuntQuestIntro(questId) {
+  pendingHuntQuestId = questId;
+  var host = document.getElementById("adventure-quest-modal-root");
+  if (host) host.innerHTML = buildHuntQuestIntroHTML(questId);
+}
+
+function closeHuntQuestIntro() {
+  pendingHuntQuestId = null;
+  var host = document.getElementById("adventure-quest-modal-root");
+  if (host) host.innerHTML = "";
+}
+
+function confirmHuntQuestStart() {
+  var questId = pendingHuntQuestId;
+  closeHuntQuestIntro();
+  if (questId && window.HuntQuestManager) HuntQuestManager.start(questId);
+}
+
+window.openHuntQuestIntro = openHuntQuestIntro;
+window.closeHuntQuestIntro = closeHuntQuestIntro;
+window.confirmHuntQuestStart = confirmHuntQuestStart;
+window.buildHuntQuestDetailHTML = buildHuntQuestDetailHTML;
 
 window.updateQuestBadge = updateQuestBadge;
 window.getTalentsAvailableCount = getTalentsAvailableCount;

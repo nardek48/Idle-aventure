@@ -224,6 +224,12 @@ var AdventureQuestManager = {
     if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
       return showToast("Termine ou abandonne ton donjon avant de lancer une quête", 1600);
     }
+    // v3.30 : même garde-fou pour une Chasse en cours (voir
+    // HuntQuestManager) — cohérence bidirectionnelle avec le garde-fou
+    // symétrique déjà posé côté HuntQuestManager.start().
+    if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
+      return showToast("Termine ou arrête ta chasse en cours avant de lancer une quête", 1600);
+    }
 
     game.adventureQuestRun = { active: true, questId: questId };
     addLog("📜 Départ en quête : " + quest.name, "event");

@@ -126,6 +126,15 @@ function gameLoop() {
     VillageManager.tickAmbientHunting(dt);
   }
 
+  // v3.31 : bâtiments de production (Chasse/Champs/Scierie/Mine, voir
+  // data/production-buildings.js) — tourne EN CONTINU comme la chasse
+  // ambiante du village juste au-dessus, indépendamment de l'onglet
+  // ouvert. Chaque bâtiment a son propre plafond de stock local (voir
+  // ProductionManager.tick()), distinct des bonus % du Village.
+  if (window.ProductionManager && typeof ProductionManager.tick === "function") {
+    ProductionManager.tick(dt);
+  }
+
   // v2.10 : la riposte ennemie ne s'applique QUE quand le joueur est
   // réellement sur l'écran Combat — avant, elle tournait en continu
   // même en naviguant dans les autres onglets, faisant baisser les PV

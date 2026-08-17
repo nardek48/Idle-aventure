@@ -138,13 +138,23 @@ function createInitialGameState() {
     // Aethervale_Roadmap_Quetes_Ressources.md) — une seule ressource test
     // pour démarrer (Minerai rare), persiste même après ascension comme
     // l'Aether/le Village (voir hardResetState en save-system.js).
-    resources: { mineraiRare: 0 },
+    // v3.31 : Blé/Bois/Fer (bâtiments de production, voir
+    // data/production-buildings.js) — même principe, stockés dans
+    // l'Entrepôt.
+    resources: { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0 },
     // v3.0 : quêtes d'aventure ({worldId, adventureIndex}, voir
     // data/adventure-quests.js) — système séparé de worldQuestProgress
     // ci-dessus, qui lui gère le déblocage des MONDES entiers.
     adventureQuestProgress: {},  // { idQuête: { idÉtape: nombre } }, persiste même après ascension
     adventureQuestsCompleted: {}, // { idQuête: true }, persiste même après ascension
     adventureQuestRun: { active: false, questId: null }, // v3.2 : run de quête en cours (même traitement que dungeonRun — NE survit PAS à l'ascension ni au reset complet)
+
+    // v3.31 : bâtiments de production (voir data/production-buildings.js,
+    // systems/production-system.js) — { idBâtiment: { level, stock, lastTick } }.
+    // level/stock persistent TOUJOURS (comme le Village, jamais effacés
+    // par l'ascension) ; lastTick (ms epoch) sert au calcul de rattrapage
+    // hors-ligne, régénéré au besoin si absent (voir ProductionManager.ensure()).
+    production: {},
 
     dungeonTiersEntered: {},    // { idPalier: true }
     codexChaosSeen: false,      // vrai dès qu'un héros du Chaos a été choisi une fois
