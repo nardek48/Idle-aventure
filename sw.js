@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.33.1"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.33.9"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -65,6 +65,7 @@ var PRECACHE_APP_SHELL = [
   "./css/04-panel-dungeon.css",
   "./css/04-panel-equipment.css",
   "./css/04-panel-afflictions.css",
+  "./css/04-panel-combat-sandbox.css",
   "./css/04-panel-hero-summary.css",
   "./css/04-panel-log.css",
   "./css/04-panel-quests.css",
@@ -85,6 +86,8 @@ var PRECACHE_APP_SHELL = [
   "./js/data/achievements.js",
   "./js/data/ascension.js",
   "./js/data/bosses.js",
+  "./js/data/class-skills.js",
+  "./js/data/classes.js",
   "./js/data/codex.js",
   "./js/data/dungeon.js",
   "./js/data/enemies.js",
@@ -106,6 +109,9 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/achievement-system.js",
   "./js/systems/codex-system.js",
   "./js/systems/combat-engine.js",
+  "./js/systems/combat-resource-system.js",
+  "./js/systems/combat-cooldown-system.js",
+  "./js/systems/combat-sandbox-system.js",
   "./js/systems/dungeon-system.js",
   "./js/systems/equip-shop-system.js",
   "./js/systems/equipment-system.js",
@@ -141,6 +147,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/potion-view.js",
   "./js/ui/quests-view.js",
   "./js/ui/settings-view.js",
+  "./js/ui/combat-sandbox-view.js",
   "./js/ui/shop-view.js",
   "./js/ui/talents-view.js",
   "./js/ui/toast.js",

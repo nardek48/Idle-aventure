@@ -20,6 +20,13 @@ function buildSettingsHTML() {
   h += '</div>';
 
   h += '<button class="settings-btn danger" onclick="resetGame()">Réinitialiser tout</button>';
+
+  h += '<div class="panel-card">';
+  h += '<h3>🧪 Développement</h3>';
+  h += '<p class="panel-sub">Outil de test, sans effet sur ta partie (pas de sauvegarde, pas de récompense).</p>';
+  h += '<button class="settings-btn" onclick="switchTab(\'combat-sandbox\')">🧪 Bac à sable de combat</button>';
+  h += '</div>';
+
   h += '<div class="settings-info">';
   h += '<strong>Aethervale</strong><br><br>';
   h += 'Sauvegarde : ' + (game.saveSupported ? 'locale navigateur' : 'indisponible') + '.<br>';

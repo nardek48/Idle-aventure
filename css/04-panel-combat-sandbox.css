@@ -1,0 +1,504 @@
+/* ============================================================
+Aethervale — css/04-panel-combat-sandbox.css
+v3.33.4 : écran "Bac à sable de combat" (voir ui/combat-sandbox-view.js).
+Classes préfixées .sandbox-* pour éviter tout risque de collision
+avec les styles historiques du combat réel (css/03-combat.css).
+Reprend les tokens existants (--nb-*), aucun nouveau token créé.
+============================================================ */
+
+.sandbox-intro {
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-card);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.sandbox-intro-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  margin-bottom: 6px;
+}
+
+.sandbox-intro-desc {
+  font-size: 12.5px;
+  color: var(--nb-ink-dim);
+}
+
+.sandbox-card {
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-card);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.sandbox-card-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  margin: 10px 0 8px;
+}
+
+.sandbox-card-title:first-child {
+  margin-top: 0;
+}
+
+.sandbox-class-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.sandbox-choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--nb-radius-pill);
+  border: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sandbox-choice-btn.is-active {
+  background: var(--nb-gold);
+  border-color: var(--nb-gold-dark);
+  color: var(--nb-ink);
+}
+
+.sandbox-choice-icon {
+  font-size: 15px;
+}
+
+.sandbox-enemy-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--nb-radius-sm);
+  border: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  font-size: 13.5px;
+  margin-bottom: 10px;
+}
+
+.sandbox-launch-btn,
+.sandbox-reset-btn {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.sandbox-combat-card {
+  margin-top: 0;
+}
+
+.sandbox-status-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.sandbox-combatant {
+  flex: 1;
+  min-width: 0;
+}
+
+.sandbox-combatant-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sandbox-hp-bar {
+  height: 10px;
+  border-radius: var(--nb-radius-pill);
+  background: var(--nb-cream-deep);
+  border: 1px solid var(--nb-frame-light);
+  overflow: hidden;
+}
+
+.sandbox-hp-bar-fill {
+  height: 100%;
+  background: #c0392b;
+  transition: width 0.2s ease;
+}
+
+.sandbox-combatant-enemy .sandbox-hp-bar-fill {
+  background: #6d4aa8;
+}
+
+.sandbox-hp-value {
+  font-size: 11px;
+  color: var(--nb-ink-dim);
+  margin-top: 3px;
+}
+
+.sandbox-resource-bar-wrap {
+  margin-bottom: 12px;
+}
+
+.sandbox-resource-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  margin-bottom: 4px;
+}
+
+.sandbox-resource-bar {
+  height: 10px;
+  border-radius: var(--nb-radius-pill);
+  background: var(--nb-cream-deep);
+  border: 1px solid var(--nb-frame-light);
+  overflow: hidden;
+}
+
+.sandbox-resource-bar-fill {
+  height: 100%;
+  background: var(--nb-blue);
+  transition: width 0.2s ease;
+}
+
+.sandbox-result {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 8px;
+  border-radius: var(--nb-radius-sm);
+  margin-bottom: 12px;
+}
+
+.sandbox-result-victory {
+  background: rgba(76, 175, 80, 0.18);
+  color: #2e7d32;
+}
+
+.sandbox-result-defeat {
+  background: rgba(192, 57, 43, 0.18);
+  color: #a53125;
+}
+
+.sandbox-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.sandbox-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--nb-radius-sm);
+  border: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.sandbox-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sandbox-action-btn.is-ready {
+  border-color: var(--nb-gold-dark);
+}
+
+.sandbox-action-btn.is-cooldown {
+  background: var(--nb-cream-deep);
+}
+
+.sandbox-action-btn.is-unaffordable,
+.sandbox-action-btn.is-blocked {
+  background: rgba(192, 57, 43, 0.08);
+}
+
+.sandbox-action-label {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.sandbox-action-cost {
+  font-size: 11px;
+  color: var(--nb-ink-dim);
+}
+
+.sandbox-action-state {
+  font-size: 10.5px;
+  color: var(--nb-ink-dim);
+  font-style: italic;
+}
+
+.sandbox-log-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  margin-bottom: 6px;
+}
+
+.sandbox-log {
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--nb-cream-alt);
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-sm);
+  padding: 8px 10px;
+}
+
+.sandbox-log-line {
+  font-size: 11.5px;
+  color: var(--nb-ink);
+  padding: 3px 0;
+  border-bottom: 1px solid var(--nb-frame-light);
+}
+
+.sandbox-log-line:last-child {
+  border-bottom: none;
+}
+
+.sandbox-log-empty {
+  color: var(--nb-ink-dim);
+  font-style: italic;
+}
+
+/* ============================================================
+   v3.33.5 — Mode Run : composition de file, persistance, progression.
+============================================================ */
+
+.sandbox-add-btn {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.sandbox-queue-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  margin: 8px 0 6px;
+}
+
+.sandbox-queue-empty {
+  font-size: 11.5px;
+  color: var(--nb-ink-dim);
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+.sandbox-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.sandbox-queue-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream-alt);
+  border: 1px solid var(--nb-frame-light);
+  font-size: 12px;
+}
+
+.sandbox-queue-item.is-boss {
+  border-color: #a53125;
+  background: rgba(192, 57, 43, 0.10);
+}
+
+.sandbox-queue-item-index {
+  font-weight: 800;
+  color: var(--nb-ink-dim);
+  min-width: 16px;
+}
+
+.sandbox-queue-item-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--nb-ink);
+}
+
+.sandbox-boss-tag {
+  display: inline-block;
+  background: #a53125;
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: var(--nb-radius-pill);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.sandbox-queue-item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.sandbox-queue-move-btn,
+.sandbox-queue-remove-btn {
+  border: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream);
+  border-radius: var(--nb-radius-sm);
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--nb-ink);
+}
+
+.sandbox-persistence-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.sandbox-persistence-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  min-width: 90px;
+}
+
+.sandbox-persistence-select {
+  flex: 1;
+  min-width: 140px;
+  padding: 6px 8px;
+  border-radius: var(--nb-radius-sm);
+  border: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  font-size: 12px;
+}
+
+.sandbox-persistence-percent {
+  width: 56px;
+  padding: 6px 8px;
+  border-radius: var(--nb-radius-sm);
+  border: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  font-size: 12px;
+}
+
+.sandbox-run-progress {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  margin-bottom: 10px;
+}
+
+.sandbox-result-stopped {
+  background: rgba(138, 122, 92, 0.18);
+  color: var(--nb-ink-dim);
+}
+
+.sandbox-stop-run-btn {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+/* ============================================================
+   v3.33.6 — Panneau de stats du héros de test + cooldown de base.
+============================================================ */
+
+.sandbox-collapsible-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sandbox-modified-tag {
+  display: inline-block;
+  background: var(--nb-gold);
+  color: var(--nb-ink);
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: var(--nb-radius-pill);
+}
+
+.sandbox-collapse-caret {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--nb-ink-dim);
+}
+
+.sandbox-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.sandbox-stat-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sandbox-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-ink-dim);
+}
+
+.sandbox-stat-input {
+  padding: 7px 8px;
+  border-radius: var(--nb-radius-sm);
+  border: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  font-size: 13px;
+}
+
+.sandbox-reset-stats-btn {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.sandbox-cooldown-input {
+  width: 80px;
+}
+
+.sandbox-hint {
+  font-size: 10.5px;
+  color: var(--nb-ink-dim);
+  font-style: italic;
+  margin-bottom: 12px;
+}
+
+/* ============================================================
+   v3.33.9 — Mode infini : compteur d'ennemis vaincus, étiquette de
+   boucle (réutilise .sandbox-boss-tag comme base, couleur distincte).
+============================================================ */
+
+.sandbox-infinite-counter {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  margin-bottom: 10px;
+}
+
+.sandbox-loop-tag {
+  background: var(--nb-blue);
+}

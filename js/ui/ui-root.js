@@ -240,6 +240,9 @@ function renderPanel() {
     case "settings":
       container.innerHTML = buildSettingsHTML();
       break;
+    case "combat-sandbox":
+      container.innerHTML = buildCombatSandboxHTML();
+      break;
     case "more":
       container.innerHTML = buildHerosHTML();
       break;
