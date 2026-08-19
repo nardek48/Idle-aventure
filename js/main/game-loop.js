@@ -115,6 +115,16 @@ function gameLoop() {
     CombatEngine.autoAttack(dt);
   }
 
+  // v3.34.3 : décompte du cooldown de l'attaque de base (tap manuel),
+  // déclenche automatiquement le coup en file d'attente à expiration
+  // (voir CombatEngine.tickBasicAttackCooldown()). Mêmes conditions
+  // que l'auto-DPS juste au-dessus — pas de raison de laisser courir
+  // ce cooldown si le joueur ne peut de toute façon pas taper
+  // (héros à terre, modale ouverte, autre onglet).
+  if (game.activeTab === "combat" && !modalOpen && !heroDowned && typeof CombatEngine.tickBasicAttackCooldown === "function") {
+    CombatEngine.tickBasicAttackCooldown(dt);
+  }
+
   // v3.0 : chasse ambiante du village (Hôtel de Ville) — tourne EN
   // CONTINU, peu importe l'onglet ouvert (y compris Combat, en plus
   // de l'aide active du joueur). Même formule que le calcul hors-ligne
@@ -172,21 +182,26 @@ function gameLoop() {
     }
   }
 
-  // Idem pour le bouton d'attaque spéciale (compte à rebours du cooldown).
-  if (window.SpecialAttackManager && typeof renderSpecialAttackButton === "function") {
-    game._specialUiTimer = (game._specialUiTimer || 0) + dt;
-    if (game._specialUiTimer >= 1) {
-      game._specialUiTimer = 0;
-      renderSpecialAttackButton();
-    }
+  // v3.34.0 : décompte des cooldowns + régénération passive de la
+  // ressource de classe (Mana) — voir ClassCombatManager.tick(),
+  // systems/class-combat-system.js. Se fige d'elle-même hors combat
+  // actif (géré en interne par isCombatActive()), donc appelée sans
+  // garde supplémentaire ici, comme les autres systèmes tick() du
+  // fichier (Production/PotionManager...).
+  // v3.34.1 : tick() décompte aussi le DoT actif sur l'ennemi affiché
+  // (Brûlure arcanique) — mêmes conditions de combat actif.
+  if (window.ClassCombatManager && typeof ClassCombatManager.tick === "function") {
+    ClassCombatManager.tick(dt);
   }
 
-  // Idem pour le bouton de défense.
-  if (window.DefenseManager && typeof renderDefenseButton === "function") {
-    game._defenseUiTimer = (game._defenseUiTimer || 0) + dt;
-    if (game._defenseUiTimer >= 1) {
-      game._defenseUiTimer = 0;
-      renderDefenseButton();
+  // Rafraîchit les 4 boutons d'action de classe (compte à rebours des
+  // cooldowns + jauge de ressource) — même throttle 1×/seconde que les
+  // autres compteurs de cette boucle.
+  if (window.ClassCombatManager && typeof renderClassSkillButtons === "function") {
+    game._classSkillsUiTimer = (game._classSkillsUiTimer || 0) + dt;
+    if (game._classSkillsUiTimer >= 1) {
+      game._classSkillsUiTimer = 0;
+      renderClassSkillButtons();
     }
   }
 

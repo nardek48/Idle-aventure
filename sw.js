@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.33.9"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.34.3"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -85,6 +85,7 @@ var PRECACHE_APP_SHELL = [
   "./js/core/utils.js",
   "./js/data/achievements.js",
   "./js/data/ascension.js",
+  "./js/data/auto-policy-defaults.js",
   "./js/data/bosses.js",
   "./js/data/class-skills.js",
   "./js/data/classes.js",
@@ -112,6 +113,8 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/combat-resource-system.js",
   "./js/systems/combat-cooldown-system.js",
   "./js/systems/combat-sandbox-system.js",
+  "./js/systems/combat-auto-policy-system.js",
+  "./js/systems/combat-batch-sim-system.js",
   "./js/systems/dungeon-system.js",
   "./js/systems/equip-shop-system.js",
   "./js/systems/equipment-system.js",

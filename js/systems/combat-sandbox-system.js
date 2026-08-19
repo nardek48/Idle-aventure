@@ -69,7 +69,18 @@ RIPOSTE ENNEMIE — cadence choisie :
 ============================================================ */
 
 /* Coefficients de base repris de stats-system.js (lecture seule,
-   jamais appliqués à game.* ici) — voir StatsSystem.recalcStats(). */
+   jamais appliqués à game.* ici) — voir StatsSystem.recalcStats().
+   v3.33.14 — CORRECTIF : BASE_CRIT_CHANCE était à 0.05 (fraction)
+   alors que le jeu réel exprime critChance en POINTS DE POURCENTAGE
+   (game.critChance = 5, voir stats-system.js recalcStats() ; comparé
+   via chance(percent) => Math.random()*100 < percent, core/utils.js).
+   Avec l'ancienne valeur, critChance dans buildSandboxHeroStats()
+   dépassait systématiquement 1.0 dès quelques points de Précision
+   (ex. Précision 66 -> "401%"), donc Math.random() < critChance était
+   TOUJOURS vrai — un héros de test critiquait 100% du temps, quelle
+   que soit sa Précision réelle. Corrigé à 5 (même échelle que le jeu
+   réel) ; voir buildSandboxHeroStats() pour la conversion en fraction
+   0-1 ET le plafond à 1.0 ajoutés au même correctif. */
 var SANDBOX_HERO_BASE_COEFS = {
   FORCE_TAP_COEF: 0.2,
   PRECISION_CRIT_COEF: 0.06,
@@ -77,14 +88,19 @@ var SANDBOX_HERO_BASE_COEFS = {
   ENDURANCE_HP_COEF: 6,
   HERO_DEFENSE_COEF: 0.002,
   BASE_TAP_DAMAGE: 1,
-  BASE_CRIT_CHANCE: 0.05,
+  BASE_CRIT_CHANCE: 5, // v3.33.14 : 0.05 -> 5 (points de %, comme game.critChance)
   BASE_CRIT_MULT: 2
 };
 
 /* Coefficients d'ennemi repris de progression-system.js/combat-engine.js
-   (lecture seule, échelle neutre — voir note d'en-tête). */
+   (lecture seule, échelle neutre — voir note d'en-tête). v3.33.12 :
+   BOSS_ENDURANCE_HP_COEF ajouté ici (était codé en dur "2" dans
+   buildSandboxEnemyStats()) pour que TOUS les coefficients ennemis
+   soient réglables depuis un seul objet — voir overrideEnemyCoefs
+   plus bas. */
 var SANDBOX_ENEMY_COEFS = {
   ENDURANCE_HP_COEF: 1.2,
+  BOSS_ENDURANCE_HP_COEF: 2,
   POWER_DMG_COEF: 0.5,
   ATTACK_BASE_INTERVAL_S: 3,
   RESIST_DMG_MULT: 0.7,
@@ -102,6 +118,56 @@ var SANDBOX_ENEMY_COEFS = {
    reste librement modifiable ensuite, formule et plafond de réduction
    par Célérité inchangés (voir computeEffectiveCooldownMs()). */
 var SANDBOX_DEFAULT_BASE_COOLDOWN_MS = 1000;
+
+/* SANDBOX_WILL_COOLDOWN_MIN_RATIO (v3.33.15)
+   Plafond de réduction du cooldown des SKILLS (skill1/skill2/skill3/
+   defense) par la Volonté du héros de test — voir applySandboxAction().
+   Même principe et même formule que Célérité pour l'attaque de base
+   (computeEffectiveCooldownMs, combat-cooldown-system.js), mais
+   appliqué aux 4 autres slots, jamais "basic" qui garde son propre
+   traitement Célérité existant (v3.33.6, inchangé).
+
+   Contexte : avant ce correctif, la Volonté n'avait qu'un seul effet
+   dans TOUT le jeu (réel et bac à sable) — +critMult, un bonus
+   conditionnel qui ne s'applique qu'au moment d'un critique (~5-15%
+   des coups avec les taux réels, voir correctif critChance v3.33.14
+   ci-dessous). Comparée aux 4 autres stats (Force/Célérité/Précision/
+   Endurance, chacune avec un effet permanent appliqué à 100% des
+   actions), la Volonté avait donc un rendement structurellement plus
+   faible — repéré par Seb en observant que le Mage (Volonté la plus
+   haute des 3 classes, 76) n'en tirait presque aucun bénéfice mesurable.
+
+   Choix retenu (option B, sur 2 proposées) : donner à la Volonté un
+   second rôle UNIVERSEL aux 3 classes (pas seulement au Mage) —
+   accélérer l'accès aux compétences spéciales, symétrique à ce que
+   fait déjà Célérité pour l'attaque de base. Testé en simulation avant
+   adoption : effet progressif et proportionné à la Volonté de chaque
+   classe (peu de changement pour le Chevalier à Volonté modeste,
+   effet plus visible pour le Mage à Volonté élevée), contrairement à
+   l'option alternée testée (Volonté -> régénération de ressource) qui
+   avantageait davantage le Chevalier que le Mage — voir notes de
+   session, non reproduites ici. */
+var SANDBOX_WILL_COOLDOWN_MIN_RATIO = 0.5; // -50% de réduction maximum, comme Célérité
+
+/* SANDBOX_DEFENSE_EFFECTS (v3.33.13)
+   Table de correspondance action defense -> réduction de dégâts
+   APPLIQUÉE dans ce bac à sable. data/class-skills.js déclare ces 3
+   effets ("damageReduction"/"evasion"/"damageAbsorption") mais aucun
+   n'était branché au moteur avant cette version — voir demande de
+   Seb. Deux des trois ont une valeur déjà fixée dans la donnée
+   (reprise ici telle quelle) ; la troisième (Esquive de l'Archer) a
+   value:null dans data/class-skills.js ("réservé", non fixé) — valeur
+   0.70 choisie par Seb pour ce bac à sable UNIQUEMENT (réduction
+   forte mais partielle, plus efficace que Garde/Barrière), documentée
+   ici plutôt que dans data/class-skills.js qui reste inchangé. Ne
+   modifie ni ne remplace le vrai combat (combat-engine.js n'a pas non
+   plus de réduction liée à ces compétences — ce système n'existe que
+   dans le bac à sable). Clé = action.id (data/class-skills.js). */
+var SANDBOX_DEFENSE_EFFECTS = {
+  knight_guard: { reductionPct: 0.50, durationMs: 2000 },   // damageReduction 0.50, valeur reprise de class-skills.js
+  archer_evasion: { reductionPct: 0.70, durationMs: 1000 }, // evasion value:null dans la donnée -> 0.70 fixé pour ce bac à sable (choix Seb) ; durationMs 2000->1000 v3.33.17, synchronisé avec data/class-skills.js
+  mage_arcane_barrier: { reductionPct: 0.40, durationMs: 3000 } // damageAbsorption 0.40, valeur reprise de class-skills.js
+};
 
 /* getSandboxHeroBaseStats(heroId)
    Retourne une COPIE des stats de base RÉELLES du héros
@@ -136,7 +202,13 @@ function buildSandboxHeroStats(heroId, overrideStats) {
   var c = SANDBOX_HERO_BASE_COEFS;
 
   var tapDamage = c.BASE_TAP_DAMAGE + (s.power || 0) * c.FORCE_TAP_COEF;
-  var critChance = c.BASE_CRIT_CHANCE + (s.precision || 0) * c.PRECISION_CRIT_COEF;
+  // v3.33.14 : formule en points de % (comme game.critChance), puis
+  // convertie en fraction 0-1 ET plafonnée à 1.0 (100%) — avant ce
+  // correctif, critChance dépassait 1.0 dès quelques points de
+  // Précision et Math.random() < critChance était toujours vrai (voir
+  // note de SANDBOX_HERO_BASE_COEFS ci-dessus).
+  var critChancePercent = c.BASE_CRIT_CHANCE + (s.precision || 0) * c.PRECISION_CRIT_COEF;
+  var critChance = Math.min(1, Math.max(0, critChancePercent / 100));
   var critMult = c.BASE_CRIT_MULT + (s.will || 0) * c.WILL_CRIT_MULT_COEF;
   var maxHp = Math.max(1, Math.floor((s.endurance || 0) * c.ENDURANCE_HP_COEF));
   var defensePct = Math.min(0.60, (s.endurance || 0) * c.HERO_DEFENSE_COEF);
@@ -156,15 +228,22 @@ function buildSandboxHeroStats(heroId, overrideStats) {
   };
 }
 
-/* buildSandboxEnemyStats(enemyId)
+/* buildSandboxEnemyStats(enemyId, overrideCoefs)
    Calcule un jeu de PV/dégâts de test pour un ennemi OU un boss, à
    partir de ses stats BRUTES (clonées) et d'une échelle fixe/neutre
    (voir note d'en-tête). Cherche d'abord dans ENEMY_DB, puis dans
    BOSS_DB si absent (voir note "IDENTIFICATION D'UN BOSS" en tête de
    fichier) — le résultat porte un champ isBoss reflétant l'origine
    réelle. Retourne null si enemyId est invalide/inconnu dans les deux
-   bases. Ne modifie jamais ENEMY_DB ni BOSS_DB. */
-function buildSandboxEnemyStats(enemyId) {
+   bases. Ne modifie jamais ENEMY_DB ni BOSS_DB.
+
+   v3.33.12 — overrideCoefs (optionnel) : objet PARTIEL avec les mêmes
+   clés que SANDBOX_ENEMY_COEFS (voir panneau de réglage,
+   ui/combat-sandbox-view.js), pour surcharger les coefficients de
+   PV/vitesse d'ennemi sans toucher à ce fichier. Clés absentes de
+   overrideCoefs retombent sur SANDBOX_ENEMY_COEFS (valeurs "réelles"
+   du jeu). Ne mute jamais overrideCoefs. */
+function buildSandboxEnemyStats(enemyId, overrideCoefs) {
   if (!enemyId) return null;
   var isBoss = false;
   var source = null;
@@ -179,13 +258,13 @@ function buildSandboxEnemyStats(enemyId) {
 
   var enemy = structuredClone(source);
   var s = enemy.stats || {};
-  var c = SANDBOX_ENEMY_COEFS;
+  var c = Object.assign({}, SANDBOX_ENEMY_COEFS, overrideCoefs || {});
 
-  // v3.33.5 : un boss de test utilise le même coefficient de PV que
-  // BOSS_ENDURANCE_HP_COEF (progression-system.js, = 2, contre 1.2
-  // pour un ennemi normal) — même échelle neutre (scale=1) que le
-  // reste de ce fichier, voir note d'en-tête.
-  var hpCoef = isBoss ? 2 : c.ENDURANCE_HP_COEF;
+  // v3.33.5 : un boss de test utilise BOSS_ENDURANCE_HP_COEF (=2 par
+  // défaut, contre 1.2 pour un ennemi normal) — même échelle neutre
+  // (scale=1) que le reste de ce fichier, voir note d'en-tête.
+  // v3.33.12 : lu depuis c (réglable) au lieu d'un "2" codé en dur.
+  var hpCoef = isBoss ? c.BOSS_ENDURANCE_HP_COEF : c.ENDURANCE_HP_COEF;
   var maxHp = Math.max(1, Math.floor((s.endurance || 0) * hpCoef));
   var attackIntervalS = c.ATTACK_BASE_INTERVAL_S / (1 + (s.celerity || 0) / 40);
 
@@ -317,11 +396,13 @@ function buildSandboxQueueFromZone(worldId, adventureId) {
 
 
 
-/* getDamageAffinityMult(weaponType, resists, weak)
+/* getDamageAffinityMult(weaponType, resists, weak, overrideCoefs)
    Même convention que CombatEngine (RESIST_DMG_MULT/WEAK_DMG_MULT/
-   NO_WEAPON_MULT), dupliquée ici en lecture seule. */
-function getDamageAffinityMult(weaponType, resists, weak) {
-  var c = SANDBOX_ENEMY_COEFS;
+   NO_WEAPON_MULT), dupliquée ici en lecture seule. v3.33.12 :
+   overrideCoefs (optionnel, PARTIEL) surcharge SANDBOX_ENEMY_COEFS —
+   voir buildSandboxEnemyStats() pour la même convention. */
+function getDamageAffinityMult(weaponType, resists, weak, overrideCoefs) {
+  var c = Object.assign({}, SANDBOX_ENEMY_COEFS, overrideCoefs || {});
   if (!weaponType) return c.NO_WEAPON_MULT;
   if ((resists || []).indexOf(weaponType) !== -1) return c.RESIST_DMG_MULT;
   if ((weak || []).indexOf(weaponType) !== -1) return c.WEAK_DMG_MULT;
@@ -350,7 +431,44 @@ function getDamageAffinityMult(weaponType, resists, weak) {
      dans le state (baseCooldownMs) pour rester accessible à chaque
      applySandboxAction()/tickSandboxTime() sans le repasser à chaque
      appel. */
-function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseCooldownMs) {
+/* createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseCooldownMs, overrideEnemyCoefs)
+   Initialise un NOUVEL état de combat de test complet : stats héros/
+   ennemi (clonées, voir ci-dessus), ressource de classe à sa valeur
+   initiale (createCombatResourceState, combat-resource-system.js),
+   cooldowns à zéro (createCooldownState, combat-cooldown-system.js),
+   PV au maximum des deux côtés, journal vide. Retourne null si
+   classId/heroId/enemyId est invalide, si heroId n'appartient pas à
+   la classe (getClassByHeroId), ou si l'un des modules requis est
+   absent. Ne modifie aucune donnée source.
+
+   v3.33.6 :
+   - overrideStats (optionnel) — objet {power, endurance, celerity,
+     precision, will} PARTIEL, voir buildSandboxHeroStats() ; permet
+     au panneau d'édition de stats du bac à sable de tester un héros
+     "amélioré" sans toucher HEROES_DB.
+   - baseCooldownMs (optionnel) — cooldown de base de l'attaque de
+     test AVANT réduction de Célérité (voir
+     computeEffectiveCooldownMs(), combat-cooldown-system.js) ;
+     défaut SANDBOX_DEFAULT_BASE_COOLDOWN_MS (600ms) si omis. Stocké
+     dans le state (baseCooldownMs) pour rester accessible à chaque
+     applySandboxAction()/tickSandboxTime() sans le repasser à chaque
+     appel.
+
+   v3.33.12 :
+   - overrideEnemyCoefs (optionnel) — objet PARTIEL, mêmes clés que
+     SANDBOX_ENEMY_COEFS (ENDURANCE_HP_COEF, BOSS_ENDURANCE_HP_COEF,
+     POWER_DMG_COEF, ATTACK_BASE_INTERVAL_S, RESIST_DMG_MULT,
+     WEAK_DMG_MULT, NO_WEAPON_MULT) ; permet au panneau de réglage du
+     bac à sable de tester un ennemi "plus fort/rapide" sans toucher
+     à ce fichier ni à progression-system.js/combat-engine.js (jeu
+     réel inchangé, ces coefficients ne sont dupliqués qu'ici). Stocké
+     dans state.enemyCoefs, relu par computeSandboxActionDamage()/
+     resolveSandboxEnemyStrike() à CHAQUE action/tick — donc un
+     réglage modifié en cours de combat s'applique dès la prochaine
+     action (contrairement à overrideStats/baseCooldownMs qui ne
+     s'appliquent qu'au combat SUIVANT, voir
+     ui/combat-sandbox-view.js). */
+function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseCooldownMs, overrideEnemyCoefs) {
   if (typeof getClassByHeroId !== "function" || typeof getClassSkills !== "function") return null;
   if (typeof createCombatResourceState !== "function" || typeof createCooldownState !== "function") return null;
 
@@ -361,7 +479,7 @@ function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseC
   if (!kit) return null;
 
   var heroStats = buildSandboxHeroStats(heroId, overrideStats);
-  var enemyStats = buildSandboxEnemyStats(enemyId);
+  var enemyStats = buildSandboxEnemyStats(enemyId, overrideEnemyCoefs);
   if (!heroStats || !enemyStats) return null;
 
   var resourceState = createCombatResourceState(classId);
@@ -377,6 +495,7 @@ function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseC
     enemyId: enemyId,
     hero: heroStats,
     enemy: enemyStats,
+    enemyCoefs: (overrideEnemyCoefs && typeof overrideEnemyCoefs === "object") ? structuredClone(overrideEnemyCoefs) : null, // v3.33.12
     resourceState: resourceState,
     cooldownState: createCooldownState(),
     baseCooldownMs: effectiveBaseCooldownMs, // v3.33.6, bac à sable uniquement
@@ -386,6 +505,16 @@ function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseC
     // buildSandboxEnemyStats()) : l'ennemi n'attaque pas à la toute
     // première milliseconde du combat, comme en jeu réel.
     enemyAttackTimerMs: enemyStats.attackIntervalS * 1000,
+    // v3.33.13 : effet défensif temporaire actif (Garde/Esquive/
+    // Barrière arcanique), ou null si aucun. Voir SANDBOX_DEFENSE_EFFECTS
+    // et resolveSandboxEnemyStrike() plus bas. Forme :
+    // { reductionPct: number (0-1), expiresAtMs: number, sourceLabel: string }
+    activeDefense: null,
+    // v3.33.13 : compteurs cumulés pour le tableau de résultats
+    // (PV restants/dégâts évités calculables a posteriori, mais ces
+    // deux-là nécessitent un cumul au fil du combat) — voir note
+    // d'en-tête "SUIVI DÉGÂTS ÉVITÉS" et resolveSandboxEnemyStrike().
+    totalDamageAvoided: 0,
     status: "ongoing", // "ongoing" | "victory" | "defeat"
     elapsedMs: 0,        // horloge de SIMULATION (pas Date.now())
     actionsUsed: 0,
@@ -416,7 +545,7 @@ function computeSandboxActionDamage(state, action) {
   }
   var hero = state.hero;
   var enemy = state.enemy;
-  var affinityMult = getDamageAffinityMult(hero.weaponType, enemy.resists, enemy.weak);
+  var affinityMult = getDamageAffinityMult(hero.weaponType, enemy.resists, enemy.weak, state.enemyCoefs);
   var hits = Math.max(1, action.hits || 1);
   var hitsDamage = [];
   var anyCritical = false;
@@ -437,14 +566,37 @@ function computeSandboxActionDamage(state, action) {
    Calcule les dégâts de riposte de l'ennemi de test contre le héros
    de test, même convention que CombatEngine.enemyStrike() (power ×
    POWER_DMG_COEF, réduit par hero.defensePct), dupliquée ici en
-   lecture seule. Retourne { damage }. Ne modifie rien. */
+   lecture seule. v3.33.12 : POWER_DMG_COEF lu depuis state.enemyCoefs
+   si réglé (voir createSandboxCombatState()), sinon SANDBOX_ENEMY_COEFS
+   par défaut.
+
+   v3.33.13 : applique EN PLUS la réduction de state.activeDefense
+   (Garde/Esquive/Barrière arcanique, voir SANDBOX_DEFENSE_EFFECTS) si
+   encore valide (state.elapsedMs < activeDefense.expiresAtMs) — un
+   effet expiré est ignoré ici sans avoir besoin d'être purgé au
+   préalable (tickSandboxTime() le purge aussi, par cohérence de
+   l'état, mais cette fonction ne DÉPEND pas de cette purge). Les deux
+   réductions (defensePct fixe + activeDefense temporaire) sont
+   multiplicatives, pas additives — cohérent avec la convention déjà
+   en place pour defensePct seul. Retourne { damage, avoided } —
+   avoided = delta entre les dégâts SANS activeDefense et le résultat
+   final, pour alimenter state.totalDamageAvoided (voir
+   triggerSandboxEnemyStrike()). Ne modifie rien. */
 function resolveSandboxEnemyStrike(state) {
-  if (!state) return { damage: 0 };
-  var c = SANDBOX_ENEMY_COEFS;
+  if (!state) return { damage: 0, avoided: 0 };
+  var c = Object.assign({}, SANDBOX_ENEMY_COEFS, state.enemyCoefs || {});
   var raw = state.enemy.power * c.POWER_DMG_COEF;
-  var mitigated = raw * (1 - state.hero.defensePct);
+  var afterDefensePct = raw * (1 - state.hero.defensePct);
+
+  var activeDefense = state.activeDefense;
+  var isDefenseActive = !!(activeDefense && state.elapsedMs < activeDefense.expiresAtMs);
+  var mitigated = isDefenseActive ? afterDefensePct * (1 - activeDefense.reductionPct) : afterDefensePct;
+
+  var damageWithoutActiveDefense = Math.max(1, Math.floor(afterDefensePct));
   var damage = Math.max(1, Math.floor(mitigated));
-  return { damage: damage };
+  var avoided = isDefenseActive ? Math.max(0, damageWithoutActiveDefense - damage) : 0;
+
+  return { damage: damage, avoided: avoided };
 }
 
 /* triggerSandboxEnemyStrike(state)
@@ -454,15 +606,23 @@ function resolveSandboxEnemyStrike(state) {
    fois que enemyAttackTimerMs atteint 0 (minuteur propre à l'ennemi,
    indépendant du rythme du joueur — voir note "CADENCE DE RIPOSTE"
    en tête de fichier). N'est plus jamais appelé directement par
-   applySandboxAction(). Retourne un NOUVEL état, jamais de mutation. */
+   applySandboxAction(). Retourne un NOUVEL état, jamais de mutation.
+   v3.33.13 : cumule strike.avoided dans next.totalDamageAvoided, et
+   mentionne la réduction dans le log si un effet défensif était actif
+   au moment de la riposte. */
 function triggerSandboxEnemyStrike(state) {
   var strike = resolveSandboxEnemyStrike(state);
   var next = Object.assign({}, state, {
     hero: Object.assign({}, state.hero, {
       hp: Math.max(0, state.hero.hp - strike.damage)
-    })
+    }),
+    totalDamageAvoided: (state.totalDamageAvoided || 0) + strike.avoided
   });
-  next = appendSandboxLog(next, next.enemy.name + " attaque → " + strike.damage + " dégâts au héros de test.");
+  var logLine = next.enemy.name + " attaque → " + strike.damage + " dégâts au héros de test.";
+  if (strike.avoided > 0) {
+    logLine += " (" + strike.avoided + " dégâts évités grâce à " + state.activeDefense.sourceLabel + ")";
+  }
+  next = appendSandboxLog(next, logLine);
 
   if (next.hero.hp <= 0) {
     next.status = "defeat";
@@ -539,6 +699,22 @@ function applySandboxAction(state, actionSlot) {
     next.cooldownState = startCooldown(next.cooldownState, action.id, effectiveBasicCooldownMs);
   }
 
+  // 1ter. v3.33.15 — cooldown des SKILLS (skill1/skill2/skill3/
+  // defense), BAC À SABLE UNIQUEMENT : réduit par la Volonté du héros
+  // de test, même formule et même plafond que Célérité pour l'attaque
+  // de base ci-dessus (computeEffectiveCooldownMs, plafond
+  // SANDBOX_WILL_COOLDOWN_MIN_RATIO = -50% max). Écrase le cooldown
+  // déjà posé par useAction() (action.cooldownMs brut, voir
+  // data/class-skills.js) — jamais "basic", qui garde son propre
+  // traitement Célérité juste au-dessus. Donne un second rôle,
+  // universel aux 3 classes, à une stat qui n'avait auparavant qu'un
+  // effet conditionnel faible (+critMult, voir SANDBOX_HERO_BASE_COEFS
+  // et note d'en-tête de SANDBOX_WILL_COOLDOWN_MIN_RATIO).
+  if (actionSlot !== "basic" && action.cooldownMs > 0 && typeof computeEffectiveCooldownMs === "function") {
+    var reducedSkillCooldownMs = computeEffectiveCooldownMs(action.cooldownMs, next.hero.stats.will, { minRatio: SANDBOX_WILL_COOLDOWN_MIN_RATIO });
+    next.cooldownState = startCooldown(next.cooldownState, action.id, reducedSkillCooldownMs);
+  }
+
   var logLine = action.label;
   var isCritical = false;
   var damageDealt = 0;
@@ -553,7 +729,22 @@ function applySandboxAction(state, actionSlot) {
     });
     logLine += " → " + damageDealt + " dégâts" + (isCritical ? " (critique)" : "");
   } else if (action.type === "defense") {
-    logLine += " → posture défensive activée";
+    // v3.33.13 : pose un effet défensif temporaire (voir
+    // SANDBOX_DEFENSE_EFFECTS) consulté par resolveSandboxEnemyStrike()
+    // pour la PROCHAINE riposte tant qu'il n'a pas expiré (elapsedMs
+    // absolu, purgé aussi par tickSandboxTime()). Rejouer l'action
+    // pendant qu'un effet est déjà actif le REMPLACE (pas de cumul).
+    var defenseEffect = SANDBOX_DEFENSE_EFFECTS[action.id];
+    if (defenseEffect) {
+      next.activeDefense = {
+        reductionPct: defenseEffect.reductionPct,
+        expiresAtMs: next.elapsedMs + defenseEffect.durationMs,
+        sourceLabel: action.label
+      };
+      logLine += " → posture défensive activée (" + Math.round(defenseEffect.reductionPct * 100) + "% de réduction, " + (defenseEffect.durationMs / 1000) + "s)";
+    } else {
+      logLine += " → posture défensive activée";
+    }
   }
 
   // 3. Gain de ressource dérivé de resource.generation (distinct du
@@ -631,6 +822,14 @@ function tickSandboxTime(state, elapsedMs) {
     next.resourceState = tickResourceRegen(state.resourceState, resourceDef.generation, elapsed);
   }
 
+  // v3.33.13 : purge l'effet défensif temporaire expiré (voir
+  // SANDBOX_DEFENSE_EFFECTS/resolveSandboxEnemyStrike()) — n'affecte
+  // pas le résultat d'une riposte déjà résolue avant ce tick, juste
+  // la cohérence de l'état pour la suite.
+  if (next.activeDefense && next.elapsedMs >= next.activeDefense.expiresAtMs) {
+    next.activeDefense = null;
+  }
+
   // Minuteur de riposte ennemie — indépendant des actions du joueur.
   var remaining = (typeof next.enemyAttackTimerMs === "number") ? next.enemyAttackTimerMs - elapsed : -1;
   var fullIntervalMs = next.enemy.attackIntervalS * 1000;
@@ -691,7 +890,7 @@ function createDefaultSandboxPersistence() {
   };
 }
 
-/* createSandboxRunState(classId, heroId, queue, persistence, overrideStats, baseCooldownMs)
+/* createSandboxRunState(classId, heroId, queue, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs)
    Initialise un NOUVEL état de run : premier combat de la file démarré
    via createSandboxCombatState() (INCHANGÉ), compteurs à zéro. Retourne
    null si classId/heroId est invalide, ou si queue est vide/invalide,
@@ -703,10 +902,14 @@ function createDefaultSandboxPersistence() {
    (overrideStats/baseCooldownMs) pour être réappliqués identiquement
    à CHAQUE nouveau combat de la file lors des transitions — voir
    applySandboxRunAction(), qui les repasse à createSandboxCombatState()
-   au lieu de repartir des stats de base à chaque combat. */
-function createSandboxRunState(classId, heroId, queue, persistence, overrideStats, baseCooldownMs) {
+   au lieu de repartir des stats de base à chaque combat.
+
+   v3.33.12 : overrideEnemyCoefs (optionnel, même format que
+   createSandboxCombatState()) suit la même logique — conservé dans le
+   runState, réappliqué à chaque nouveau combat de la file. */
+function createSandboxRunState(classId, heroId, queue, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs) {
   if (!Array.isArray(queue) || queue.length === 0) return null;
-  var firstCombat = createSandboxCombatState(classId, heroId, queue[0], overrideStats, baseCooldownMs);
+  var firstCombat = createSandboxCombatState(classId, heroId, queue[0], overrideStats, baseCooldownMs, overrideEnemyCoefs);
   if (!firstCombat) return null;
 
   var pers = persistence || createDefaultSandboxPersistence();
@@ -716,6 +919,7 @@ function createSandboxRunState(classId, heroId, queue, persistence, overrideStat
     heroId: heroId,
     overrideStats: overrideStats || null,
     baseCooldownMs: firstCombat.baseCooldownMs,
+    overrideEnemyCoefs: overrideEnemyCoefs || null,
     queue: queue.slice(),
     currentIndex: 0,
     currentCombat: firstCombat,
@@ -724,6 +928,7 @@ function createSandboxRunState(classId, heroId, queue, persistence, overrideStat
     victories: 0,
     totalDamageDealt: 0,
     totalDamageTaken: 0,
+    totalDamageAvoided: 0, // v3.33.13 — voir SANDBOX_DEFENSE_EFFECTS
     actionCounts: {},
     elapsedMs: 0,
     deathAt: null,
@@ -821,6 +1026,7 @@ function applySandboxRunAction(runState, actionSlot) {
     var diff = diffSandboxHp(prevCombat, nextCombat);
     next.totalDamageDealt = runState.totalDamageDealt + diff.dealt;
     next.totalDamageTaken = runState.totalDamageTaken + diff.taken;
+    next.totalDamageAvoided = (runState.totalDamageAvoided || 0) + ((nextCombat.totalDamageAvoided || 0) - (prevCombat.totalDamageAvoided || 0)); // v3.33.13
   }
 
   // Copier les nouvelles lignes de journal du combat courant dans le
@@ -850,7 +1056,7 @@ function applySandboxRunAction(runState, actionSlot) {
 
     var nextIndex = runState.currentIndex + 1;
     var nextEnemyId = runState.queue[nextIndex];
-    var freshCombat = createSandboxCombatState(runState.classId, runState.heroId, nextEnemyId, runState.overrideStats, runState.baseCooldownMs);
+    var freshCombat = createSandboxCombatState(runState.classId, runState.heroId, nextEnemyId, runState.overrideStats, runState.baseCooldownMs, runState.overrideEnemyCoefs);
     if (!freshCombat) {
       next.status = "stopped";
       next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Run arrêté : ennemi suivant invalide (" + nextEnemyId + ") ---")]);
@@ -897,6 +1103,7 @@ function tickSandboxRunTime(runState, elapsedMs) {
 
   var diff = diffSandboxHp(prevCombat, nextCombat);
   next.totalDamageTaken = runState.totalDamageTaken + diff.taken;
+  next.totalDamageAvoided = (runState.totalDamageAvoided || 0) + ((nextCombat.totalDamageAvoided || 0) - (prevCombat.totalDamageAvoided || 0)); // v3.33.13
 
   var newLines = nextCombat.log.slice(prevCombat.log.length);
   next.log = runState.log.concat(newLines.map(function (entry) {
@@ -989,18 +1196,23 @@ function finalizeSandboxRun(runState) {
    }
 ============================================================ */
 
-/* createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs)
+/* createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs)
    Initialise un NOUVEL état de mode infini : liste complète des
    ennemis via listSandboxAllEnemiesInOrder(), premier combat démarré
    via createSandboxCombatState() (INCHANGÉE). Retourne null si
    classId/heroId est invalide, si la liste d'ennemis est vide, ou si
    le premier combat ne peut pas être créé. Ne modifie aucune donnée
-   source. */
-function createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs) {
+   source.
+
+   v3.33.12 : overrideEnemyCoefs (optionnel, même format que
+   createSandboxCombatState()) — conservé dans l'état, réappliqué à
+   chaque nouveau combat de la boucle (voir
+   advanceSandboxInfiniteToNextEnemy()). */
+function createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs) {
   var enemyOrder = listSandboxAllEnemiesInOrder();
   if (!enemyOrder.length) return null;
 
-  var firstCombat = createSandboxCombatState(classId, heroId, enemyOrder[0], overrideStats, baseCooldownMs);
+  var firstCombat = createSandboxCombatState(classId, heroId, enemyOrder[0], overrideStats, baseCooldownMs, overrideEnemyCoefs);
   if (!firstCombat) return null;
 
   var pers = persistence || createDefaultSandboxPersistence();
@@ -1010,6 +1222,7 @@ function createSandboxInfiniteState(classId, heroId, persistence, overrideStats,
     heroId: heroId,
     overrideStats: overrideStats || null,
     baseCooldownMs: firstCombat.baseCooldownMs,
+    overrideEnemyCoefs: overrideEnemyCoefs || null,
     persistence: pers,
     enemyOrder: enemyOrder,
     currentPosition: 0,
@@ -1019,6 +1232,7 @@ function createSandboxInfiniteState(classId, heroId, persistence, overrideStats,
     defeatedCount: 0,
     totalDamageDealt: 0,
     totalDamageTaken: 0,
+    totalDamageAvoided: 0, // v3.33.13 — voir SANDBOX_DEFENSE_EFFECTS
     actionCounts: {},
     elapsedMs: 0,
     deathAt: null,
@@ -1048,7 +1262,7 @@ function advanceSandboxInfiniteToNextEnemy(infiniteState, nextCombatFromCurrent)
   }
 
   var nextEnemyId = infiniteState.enemyOrder[nextPosition];
-  var freshCombat = createSandboxCombatState(infiniteState.classId, infiniteState.heroId, nextEnemyId, infiniteState.overrideStats, infiniteState.baseCooldownMs);
+  var freshCombat = createSandboxCombatState(infiniteState.classId, infiniteState.heroId, nextEnemyId, infiniteState.overrideStats, infiniteState.baseCooldownMs, infiniteState.overrideEnemyCoefs);
   if (!freshCombat) return { status: "invalid" };
 
   var carried = applySandboxPersistence(Object.assign({}, freshCombat, {
@@ -1094,6 +1308,7 @@ function applySandboxInfiniteAction(infiniteState, actionSlot) {
     var diff = diffSandboxHp(prevCombat, nextCombat);
     next.totalDamageDealt = infiniteState.totalDamageDealt + diff.dealt;
     next.totalDamageTaken = infiniteState.totalDamageTaken + diff.taken;
+    next.totalDamageAvoided = (infiniteState.totalDamageAvoided || 0) + ((nextCombat.totalDamageAvoided || 0) - (prevCombat.totalDamageAvoided || 0)); // v3.33.13
   }
 
   var newLines = nextCombat.log.slice(prevCombat.log.length);
@@ -1149,6 +1364,7 @@ function tickSandboxInfiniteTime(infiniteState, elapsedMs) {
 
   var diff = diffSandboxHp(prevCombat, nextCombat);
   next.totalDamageTaken = infiniteState.totalDamageTaken + diff.taken;
+  next.totalDamageAvoided = (infiniteState.totalDamageAvoided || 0) + ((nextCombat.totalDamageAvoided || 0) - (prevCombat.totalDamageAvoided || 0)); // v3.33.13
 
   var newLines = nextCombat.log.slice(prevCombat.log.length);
   next.log = infiniteState.log.concat(newLines.map(function (entry) {

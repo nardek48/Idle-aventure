@@ -7,15 +7,34 @@ héros -> classe). Les 2 héros d'une même classe partagent EXACTEMENT
 le même kit de 5 actions ; leurs différences restent leurs stats,
 équipement, talents, etc. (data/heroes.js).
 
-IMPORTANT — ce fichier ne fait QUE déclarer des données. Rien ici
-n'est exécuté ni branché au combat actuel :
-  - systems/combat-engine.js n'est pas modifié et ne lit pas ce
-    fichier ;
-  - aucun cooldown n'est réellement décompté, aucune ressource
-    (rage/focus/mana) n'existe dans game.* ;
-  - les valeurs (damageMultiplier, resourceCost, cooldownMs...) sont
-    des coefficients de PROTOTYPE, à ajuster ici même le jour où une
-    vraie implémentation sera décidée.
+v3.34.0 : BRANCHÉ au combat réel (voir systems/class-combat-system.js,
+l'adaptateur qui relie ces données à game.*). Ce fichier reste une
+couche de DONNÉES pure ; toute la logique d'exécution (dépense/gain de
+ressource, cooldowns, application des effets) vit dans
+class-combat-system.js + combat-resource-system.js/combat-cooldown-
+system.js (toujours purs, non modifiés). Les valeurs ci-dessous sont
+désormais les valeurs RÉELLES du jeu, plus des coefficients de
+prototype — ajuster ici les affecte directement en jeu.
+
+v3.34.1 : les 5 effets restés non branchés en v3.34.0 sont réglés —
+2 branchés tels quels, 2 remplacés par un mécanisme existant plus
+adapté (les ennemis n'ont AUCUNE stat de défense dans le moteur
+actuel), 1 retiré (pas pertinent pour ce jeu) :
+  - knight_guard_break.effects[0] : enemyDefenseReduction -> BRANCHÉ,
+    remplacé par enemyVulnerability (+20% dégâts subis de TOUS les
+    coups pendant 5s, voir CombatEngine.dealDamage()).
+  - archer_precise_shot : criticalChanceBonus RETIRÉ (pas retenu).
+  - archer_piercing_shot : ignoreDefense -> BRANCHÉ, remplacé par le
+    champ ignoreAffinity: true sur l'action elle-même (même mécanisme
+    que l'ancienne "Explosion arcanique" du Mage historique).
+  - mage_arcane_burn.effects[0] : damageOverTime -> BRANCHÉ tel quel
+    (tick réel 1s, voir ClassCombatManager.tickDoT()).
+  - mage_arcane_nova : areaOfEffect RETIRÉ (un seul ennemi affiché à
+    la fois, pas de vraie zone possible dans ce jeu).
+Les 3 effets "defense" (knight_guard, archer_evasion,
+mage_arcane_barrier) restent appliqués comme depuis v3.34.0
+(réduction/évasion/absorption des dégâts de riposte pendant leur
+durée).
 
 Structure par action (voir chaque kit ci-dessous) :
   - id                identifiant unique sur TOUT le catalogue
@@ -42,9 +61,8 @@ window.CLASS_SKILLS = {
   knight: {
     classId: "knight",
 
-    // Rage : gagnée uniquement en infligeant des dégâts, jamais en en
-    // recevant. "damageDealtPercent" = fraction du multiplicateur de
-    // dégâts de l'action convertie en Rage (donnée non branchée).
+    // Rage : gagnée en infligeant des dégâts (jamais en recevant).
+    // v3.33.15 : 0.10 -> 0.40 (équilibrage, voir NOTE_v3.33.15_rage_chevalier.md).
     resource: {
       id: "rage",
       label: "Rage",
@@ -52,7 +70,7 @@ window.CLASS_SKILLS = {
       initial: 0,
       generation: {
         type: "damageDealtPercent",
-        value: 0.10
+        value: 0.40
       }
     },
 
@@ -89,7 +107,7 @@ window.CLASS_SKILLS = {
         id: "knight_guard_break",
         slot: "skill2",
         label: "Brise-garde",
-        description: "Inflige 110% des dégâts. Coûte 55 Rage. Réduit la défense ennemie de 20% pendant 5 000 ms.",
+        description: "Inflige 110% des dégâts. Coûte 55 Rage. Rend l'ennemi vulnérable (+20% dégâts subis de TOUS les coups) pendant 5 000 ms.",
         type: "damage",
         damageMultiplier: 1.10,
         hits: 1,
@@ -99,7 +117,13 @@ window.CLASS_SKILLS = {
         conditions: {},
         effects: [
           {
-            type: "enemyDefenseReduction",
+            // v3.34.1 : remplace enemyDefenseReduction (les ennemis
+            // n'ont aucune stat de défense dans le moteur actuel, cet
+            // effet n'avait rien à réduire) — vulnérabilité appliquée
+            // à TOUS les dégâts encaissés par l'ennemi pendant la
+            // durée (tap, auto-DPS, autres skills), voir
+            // CombatEngine.dealDamage(), pas seulement ce coup-ci.
+            type: "enemyVulnerability",
             value: 0.20,
             durationMs: 5000
           }
@@ -157,8 +181,8 @@ window.CLASS_SKILLS = {
       initial: 0,
       generation: {
         type: "successfulBasicAttack",
-        value: 20,
-        criticalBonus: 10
+        value: 10,
+        criticalBonus: 5
       }
     },
 
@@ -167,12 +191,12 @@ window.CLASS_SKILLS = {
         id: "archer_basic",
         slot: "basic",
         label: "Attaque de base",
-        description: "Inflige 85% des dégâts. +20 Concentration sur réussite, +10 supplémentaire sur coup critique.",
+        description: "Inflige 85% des dégâts. +10 Concentration sur réussite, +5 supplémentaire sur coup critique.",
         type: "damage",
         damageMultiplier: 0.85,
         hits: 1,
         resourceCost: 0,
-        resourceGain: 20, // valeur de base ; +criticalBonus (resource.generation) sur critique
+        resourceGain: 10, // valeur de base ; +criticalBonus (resource.generation) sur critique
         cooldownMs: 0,
         conditions: {},
         effects: []
@@ -189,14 +213,10 @@ window.CLASS_SKILLS = {
         resourceGain: 0,
         cooldownMs: 2000,
         conditions: {},
-        effects: [
-          {
-            // Bonus de critique déclaré en donnée, pas encore appliqué :
-            // valeur ajoutée à la chance de critique le temps du coup.
-            type: "criticalChanceBonus",
-            value: 0.15
-          }
-        ]
+        // v3.34.1 : criticalChanceBonus retiré (pas retenu pour ce
+        // jeu, voir NOTE_v3.34.1_effets_non_branches.md) — action
+        // purement offensive, sans effet secondaire.
+        effects: []
       },
       skill2: {
         id: "archer_volley",
@@ -216,39 +236,44 @@ window.CLASS_SKILLS = {
         id: "archer_piercing_shot",
         slot: "skill3",
         label: "Tir perforant",
-        description: "Inflige 200% des dégâts. Coûte 100 Concentration.",
+        description: "Inflige 200% des dégâts. Ignore la résistance/faiblesse d'arme de l'ennemi. Coûte 100 Concentration.",
         type: "damage",
         damageMultiplier: 2.00,
         hits: 1,
+        // v3.34.1 : remplace ignoreDefense (les ennemis n'ont aucune
+        // stat de défense dans le moteur actuel) — reprend le même
+        // mécanisme que l'ancienne "Explosion arcanique" du Mage
+        // (dégâts qui ignorent complètement l'affinité d'arme), voir
+        // CombatEngine.dealDamage()/getDamageAffinity(). Champ lu
+        // directement sur l'action par ClassCombatManager.applyDamageAction(),
+        // pas via effects[] (ce n'est pas un effet à durée, il ne
+        // s'applique qu'à CE coup).
+        ignoreAffinity: true,
         resourceCost: 100,
         resourceGain: 0,
         cooldownMs: 8000,
         conditions: {},
-        effects: [
-          {
-            // Réservé pour un futur ignore-défense — pas appliqué.
-            type: "ignoreDefense",
-            value: null
-          }
-        ]
+        effects: []
       },
       defense: {
         id: "archer_evasion",
         slot: "defense",
         label: "Esquive",
-        description: "Évite ou réduit fortement la prochaine attaque ennemie pendant 2 000 ms.",
+        description: "Évite ou réduit fortement la prochaine attaque ennemie pendant 1 000 ms.",
         type: "defense",
         damageMultiplier: null,
         hits: 0,
-        resourceCost: 0,
+        resourceCost: 10,
         resourceGain: 0,
         cooldownMs: 8000,
         conditions: {},
         effects: [
           {
+            // v3.34.0 : valeur fixée au branchement réel (70%, choix
+            // de Seb pour le bac à sable — voir NOTE_v3.33.17).
             type: "evasion",
-            value: null, // taux d'évitement/réduction non fixé, réservé
-            durationMs: 2000
+            value: 0.70,
+            durationMs: 1000
           }
         ]
       }
@@ -307,7 +332,7 @@ window.CLASS_SKILLS = {
         id: "mage_arcane_burn",
         slot: "skill2",
         label: "Brûlure arcanique",
-        description: "Inflige 90% des dégâts. Coûte 55 Mana. Réserve un effet de dégâts sur la durée (20% des dégâts par seconde pendant 5 000 ms).",
+        description: "Inflige 90% des dégâts. Coûte 55 Mana. Applique un effet de dégâts sur la durée (20% des dégâts de ce coup par seconde pendant 5 000 ms).",
         type: "damage",
         damageMultiplier: 0.90,
         hits: 1,
@@ -317,6 +342,12 @@ window.CLASS_SKILLS = {
         conditions: {},
         effects: [
           {
+            // v3.34.1 : branché — voir ClassCombatManager.applyDoT()/
+            // tickDoT() (systems/class-combat-system.js), game.enemyDot.
+            // percentPerSecond s'applique au dégât DIRECT de ce coup
+            // (avant multiplicateur de vulnérabilité/affinité), pas au
+            // damageMultiplier brut de l'action — voir le calcul exact
+            // dans applyDoT().
             type: "damageOverTime",
             percentPerSecond: 0.20,
             durationMs: 5000
@@ -327,7 +358,7 @@ window.CLASS_SKILLS = {
         id: "mage_arcane_nova",
         slot: "skill3",
         label: "Déflagration",
-        description: "Inflige 240% des dégâts. Coûte 100 Mana. Réserve un champ pour de futurs dégâts de zone.",
+        description: "Inflige 240% des dégâts. Coûte 100 Mana — le coup le plus puissant du Mage.",
         type: "damage",
         damageMultiplier: 2.40,
         hits: 1,
@@ -335,13 +366,11 @@ window.CLASS_SKILLS = {
         resourceGain: 0,
         cooldownMs: 8000,
         conditions: {},
-        effects: [
-          {
-            // Réservé pour de futurs dégâts de zone — pas appliqué.
-            type: "areaOfEffect",
-            value: null
-          }
-        ]
+        // v3.34.1 : areaOfEffect retiré (pas retenu pour ce jeu — un
+        // seul ennemi affiché à la fois, pas de vraie zone possible,
+        // voir NOTE_v3.34.1_effets_non_branches.md) — action purement
+        // offensive à un coup, sans effet secondaire.
+        effects: []
       },
       defense: {
         id: "mage_arcane_barrier",

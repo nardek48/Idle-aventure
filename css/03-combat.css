@@ -25,6 +25,66 @@
   margin-top: -100px; /* remonte de 100 px, ajuste la valeur */
 }
 
+/* v3.34.2 : badge de statuts actifs sur l'ennemi (vulnérabilité de
+   Brise-garde, DoT de Brûlure arcanique) — ancré en haut à droite de
+   #enemy-display (position:relative), même pattern que
+   .active-potion-icon (cercle + minuteur en incrustation). Vide/
+   invisible tant qu'aucun statut n'est actif — voir
+   buildEnemyStatusBarHTML(), ui/combat-view.js. */
+.enemy-status-bar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.enemy-status-icon {
+  position: relative;
+  width: clamp(22px, 5vw, 26px);
+  height: clamp(22px, 5vw, 26px);
+  border-radius: 999px;
+  border: 1px solid var(--nb-gold-dark);
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.enemy-status-emoji {
+  font-size: clamp(11px, 2.8vw, 13px);
+  line-height: 1;
+}
+
+.enemy-status-vulnerability {
+  border-color: #fbbf24;
+}
+
+.enemy-status-dot {
+  border-color: #f87171;
+}
+
+.enemy-status-timer {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #0f1420;
+  border: 1px solid var(--nb-gold-dark);
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 #enemy-display,
 #enemy-emoji,
 #enemy-emoji img,
@@ -418,6 +478,25 @@
   margin-bottom: 0;
 }
 
+/* v3.34.0 : #class-skills-root (voir ui/combat-view.js) est un
+   wrapper INTERMÉDIAIRE entre .combat-action-row et les 4 boutons
+   (permet de tout re-render en un seul innerHTML depuis
+   renderClassSkillButtons(), sans dépendre de 4 conteneurs séparés)
+   — doit donc porter lui-même le flex row, sinon les 4 boutons
+   s'empilent en colonne (comportement par défaut d'un <div>). */
+#class-skills-root {
+  display: flex;
+  justify-content: center;
+  gap: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
+  width: 100%;
+}
+
+/* v3.34.0 : 4 boutons au lieu de 2 — plafond de largeur resserré pour
+   que la rangée reste compacte (avant : 48-70px pensé pour 2). */
+.class-skill-btn {
+  max-width: clamp(38px, calc(20px + 5vw), 56px) !important;
+}
+
 /* v3.9 : boutons d'attaque spéciale/bouclier simplifiés en icônes
    pures (à la demande de Seb, "comme pour les potions" — voir
    .heal-quick-btn plus bas dans ce fichier) : plus de carte
@@ -609,12 +688,14 @@ img.combat-action-icon {
    au reste de l'interface : ratio de l'image (426×127) conservé pour
    ne jamais la déformer. */
 .combat-attack-btn {
+  position: relative; /* v3.34.3 : ancre #basic-attack-cooldown-overlay */
   flex-shrink: 0;
   width: 168px;
   height: 50px;
   border: none;
   background: url('../images/Buttons/bouton-attaque.png') center / 100% 100% no-repeat;
   cursor: pointer;
+  overflow: hidden; /* v3.34.3 : la jauge de cooldown respecte les coins de l'image */
 }
 
 .combat-attack-btn:active {
@@ -626,6 +707,28 @@ img.combat-action-icon {
   .combat-attack-btn:active {
     transform: none;
   }
+}
+
+/* v3.34.3 : cooldown de l'attaque de base (tap manuel) — le bouton
+   reste TOUJOURS cliquable pendant le cooldown (voir
+   CombatEngine.requestPlayerAttack(), le coup est mis en file
+   d'attente), donc pas d'opacité réduite façon .combat-action-btn.on-
+   cooldown (qui elle a `cursor: not-allowed` sur des boutons
+   réellement désactivés) — juste la jauge de remplissage + le texte
+   du compte à rebours, réutilisant .combat-action-cooldown/-fill déjà
+   stylées plus haut dans ce fichier pour les 4 boutons de classe. */
+#basic-attack-cooldown-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Grisage léger du sprite ennemi pendant le cooldown — reste
+   cliquable (le clic met en file d'attente), juste un indice visuel
+   discret plutôt qu'un état "verrouillé". */
+#enemy-emoji.on-cooldown {
+  filter: grayscale(0.5) brightness(0.75) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 }
 
 /* =========================
@@ -713,4 +816,79 @@ img.combat-action-icon {
     align-items: center;
     justify-content: center;
   }
+}
+
+/* ============================================================
+   v3.34.0 : jauge de ressource de classe (Rage/Concentration/Mana) —
+   voir #class-resource-root, ui/combat-view.js. Placée juste au-dessus
+   de la rangée des 4 boutons d'action, même largeur maximale que la
+   barre de PV ennemi pour rester visuellement cohérente. Couleur du
+   remplissage pilotée par une classe dédiée par ressource
+   (.class-resource-rage/-focus/-mana), pas par un style inline, pour
+   rester modifiable depuis ce seul fichier CSS.
+============================================================ */
+.class-resource-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* v3.34.0 : positionnée juste au-dessus de .combat-action-row
+     (bottom:80px, boutons ~70px de haut max) — calc() plutôt qu'un
+     bottom fixe séparé, pour rester synchronisée si la hauteur des
+     boutons est retouchée plus tard (un seul nombre à ajuster : la
+     marge de 12px entre les deux, pas une position absolue recalculée
+     à la main). */
+  bottom: calc(80px + clamp(48px, calc(24px + 7vw), 70px) + 12px);
+  display: flex;
+  justify-content: center;
+  padding: 0 clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
+  pointer-events: none;
+}
+
+.class-resource-track {
+  position: relative;
+  width: min(75%, 320px);
+  max-width: 320px;
+  height: clamp(16px, calc(8px + 2.4vw), 19px);
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--nb-cream-deep);
+  box-shadow: var(--nb-shadow-card);
+  border: 1px solid rgba(120, 90, 40, 0.35);
+}
+
+.class-resource-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.15s ease;
+  background: linear-gradient(180deg, #f0aa3e, #c97f1c); /* repli neutre si la classe n'est pas résolue */
+}
+
+/* Rage (Chevalier) : rouge/orangé — cohérent avec l'ancienne icône
+   d'attaque spéciale du Chevalier. */
+.class-resource-rage .class-resource-fill {
+  background: linear-gradient(180deg, #ef7355, #b8351f);
+}
+
+/* Concentration (Rôdeur) : vert — cohérent avec le thème arc/nature. */
+.class-resource-focus .class-resource-fill {
+  background: linear-gradient(180deg, #6fd17a, #2f8f3d);
+}
+
+/* Mana (Mage) : bleu/violet — cohérent avec le thème magie. */
+.class-resource-mana .class-resource-fill {
+  background: linear-gradient(180deg, #8f7ff0, #5340c9);
+}
+
+.class-resource-text {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(9px, calc(4.5px + 1.4vw), 10.5px);
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
 }

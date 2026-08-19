@@ -415,22 +415,15 @@ var StatsSystem = {
       game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, game.heroDefensePct + dungeonShopBonus.defense);
     }
 
-    // Bonus temporaire de l'attaque spéciale (ex: Fureur du Chaos),
-    // voir systems/special-attack-system.js.
-    var specialBuff = (window.SpecialAttackManager && typeof SpecialAttackManager.getActiveBuffPct === "function")
-      ? SpecialAttackManager.getActiveBuffPct()
-      : 0;
-    if (specialBuff) game.tapMult += specialBuff;
-
-    // Bouclier temporaire (v2.21) : plafond de défense relevé pendant
-    // qu'il est actif, voir DEFENSE_ABILITY dans data/heroes.js.
-    var defenseBuff = (window.DefenseManager && typeof DefenseManager.getActiveBonusPct === "function")
-      ? DefenseManager.getActiveBonusPct()
-      : 0;
-    if (defenseBuff) {
-      var defenseCap = (typeof DEFENSE_ABILITY !== "undefined" && DEFENSE_ABILITY.maxTotalDefensePct) || 0.85;
-      game.heroDefensePct = Math.min(defenseCap, game.heroDefensePct + defenseBuff);
-    }
+    // v3.34.0 : l'ancien bonus temporaire d'attaque spéciale (Fureur
+    // du Chaos, SpecialAttackManager) et l'ancien bouclier universel
+    // (DefenseManager/DEFENSE_ABILITY) ont été retirés — remplacés par
+    // le système de classes (voir systems/class-combat-system.js). Le
+    // plafond de défense pendant une action defense de classe est
+    // maintenant géré directement dans CombatEngine.enemyStrike(),
+    // pas ici (recalcStats() ne connaît pas la durée d'un effet
+    // temporaire de combat, contrairement à game.tapMult/goldMult qui
+    // sont recalculés à chaque changement d'état, pas en continu).
 
     // Bonus passif : Aether cumulé à vie -> dégâts + or globaux (ne diminue jamais, même dépensé)
     var AETHER_LIFETIME_MULT_COEF = 0.005;

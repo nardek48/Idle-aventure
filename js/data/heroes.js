@@ -69,89 +69,11 @@ var HERO_LEVELING = {
 };
 
 /* ============================================================
-v2.20 : attaque spéciale propre à chaque héros — bouton dédié sur
-l'écran de combat (voir ui/combat-view.js), temps de recharge commun
-de 10s sauf mention contraire. Voir systems/special-attack-system.js
-pour la logique d'utilisation.
-
-Champs :
-  - multiplier      dégâts = tapDamage effectif × multiplier, en un
-                     seul coup (absent si hits>1 ou minMult/maxMult utilisés)
-  - hits             nombre de coups (chacun à `multiplier`) — Rôdeur
-  - minMult/maxMult  dégâts aléatoires entre les deux — Rôdeur du Chaos
-  - ignoreAffinity   ignore résistance/faiblesse d'arme — Mage
-  - buffPct/buffDurationMs  bonus de dégâts temporaire après le coup — Chevalier du Chaos
-  - cooldownMs       temps de recharge avant réutilisation
+v3.34.0 : HERO_SPECIAL_ATTACKS et DEFENSE_ABILITY (attaque spéciale
+par héros + bouclier universel) ont été retirés — remplacés par le
+système de classes (voir data/classes.js, data/class-skills.js,
+systems/class-combat-system.js). Chaque classe (Chevalier/Rôdeur/
+Mage) partage désormais 5 actions communes (basic/skill1/skill2/
+skill3/defense) entre ses 2 héros (ex. Chevalier + Chevalier du
+Chaos), au lieu d'une capacité unique par héros.
 ============================================================ */
-var HERO_SPECIAL_ATTACKS = {
-  knight: {
-    name: "Coup fracassant",
-    icon: "./images/Icons/special_attacks/smashing_blow.png",
-    desc: "Assène un coup titanesque à 6× tes dégâts de tap habituels.",
-    multiplier: 6,
-    cooldownMs: 10000
-  },
-  ranger: {
-    name: "Tir groupé",
-    icon: "./images/Icons/special_attacks/multishot.png",
-    desc: "Décoche 3 flèches rapides, chacune à 2.5× tes dégâts de tap.",
-    multiplier: 2.5,
-    hits: 3,
-    cooldownMs: 10000
-  },
-  mage: {
-    name: "Explosion arcanique",
-    icon: "./images/Icons/special_attacks/arcane_blast.png",
-    desc: "Libère une explosion de magie pure (8× dégâts) qui ignore toute résistance ou faiblesse d'arme.",
-    multiplier: 8,
-    ignoreAffinity: true,
-    cooldownMs: 10000
-  },
-  chaosKnight: {
-    name: "Fureur du Chaos",
-    icon: "./images/Icons/special_attacks/chaos_fury.png",
-    desc: "Frappe à 6× tes dégâts, puis enrage ton héros (+10% dégâts) pendant 10 secondes.",
-    multiplier: 6,
-    buffPct: 0.10,
-    buffDurationMs: 10000,
-    cooldownMs: 10000
-  },
-  chaosRanger: {
-    name: "Tir chaotique",
-    icon: "./images/Icons/special_attacks/chaotic_shot.png",
-    desc: "Un tir à la puissance imprévisible : entre 3× et 12× tes dégâts de tap, au hasard.",
-    minMult: 3,
-    maxMult: 12,
-    cooldownMs: 10000
-  },
-  chaosMage: {
-    name: "Cataclysme",
-    icon: "./images/Icons/special_attacks/cataclysm.png",
-    desc: "Déchaîne 10× tes dégâts de tap en un seul coup dévastateur — la capacité la plus puissante, mais qui recharge plus lentement.",
-    multiplier: 10,
-    cooldownMs: 16000
-  }
-};
-
-window.HERO_SPECIAL_ATTACKS = HERO_SPECIAL_ATTACKS;
-
-/* ============================================================
-v2.21 : capacité défensive, universelle (pas propre à un héros,
-contrairement à l'attaque spéciale) — un vrai bouton "panique" pour
-encaisser un pic de riposte, notamment utile dans les hauts paliers
-de donjon. Voir systems/special-attack-system.js (DefenseManager).
-============================================================ */
-var DEFENSE_ABILITY = {
-  name: "Posture défensive",
-  icon: "./images/Icons/special_attacks/defensive_stance.png",
-  desc: "+35% de réduction des dégâts de riposte pendant 8 secondes.",
-  defenseBonusPct: 0.35,
-  durationMs: 8000,
-  cooldownMs: 15000,
-  // Plafond de défense TOTALE pendant que le bouclier est actif (plus
-  // haut que le plafond normal de 60%, pour que le bonus reste utile
-  // même avec beaucoup d'Endurance déjà investie).
-  maxTotalDefensePct: 0.85
-};
-
-window.DEFENSE_ABILITY = DEFENSE_ABILITY;

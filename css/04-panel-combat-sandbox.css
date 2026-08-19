@@ -502,3 +502,86 @@ Reprend les tokens existants (--nb-*), aucun nouveau token créé.
 .sandbox-loop-tag {
   background: var(--nb-blue);
 }
+
+/* ============================================================
+   v3.33.10 — MODE LARGE ÉCRAN (desktop uniquement). L'écran Bac à
+   sable est un outil de développement consulté depuis un PC en
+   pratique (tests répétés, plusieurs rafales de simulation à
+   surveiller) — cette media query l'élargit AU-DELÀ des 390px
+   habituels du jeu, mais UNIQUEMENT sur #panel-container.sandbox-wide-mode
+   (classe posée par renderPanel() SEULEMENT quand game.activeTab ===
+   "combat-sandbox", voir ui/ui-root.js) et UNIQUEMENT au-dessus de
+   900px de large — en dessous, même sur PC (fenêtre réduite), le jeu
+   garde son rendu mobile normal. AUCUN autre écran ni le mode mobile
+   (téléphone/tablette portrait) n'est affecté : #panel-container
+   reste à max-width: 390px partout ailleurs (css/02-layout.css,
+   INCHANGÉ).
+============================================================ */
+@media (min-width: 900px) {
+  #panel-container.sandbox-wide-mode {
+    max-width: min(1400px, 96vw);
+  }
+
+  /* Les cartes (.sandbox-card) restent en pile verticale (ordre de
+     lecture logique : mode -> classe/héros -> config -> résultats),
+     mais chacune profite de la largeur dispo au lieu de rester
+     comprimée à 390px de contenu. */
+  #panel-container.sandbox-wide-mode .sandbox-actions-grid {
+    grid-template-columns: repeat(5, 1fr); /* 5 actions sur une seule rangée au lieu de 2 colonnes */
+  }
+
+  #panel-container.sandbox-wide-mode .sandbox-stats-grid {
+    grid-template-columns: repeat(5, 1fr); /* 5 stats (Puissance..Volonté) sur une rangée */
+  }
+
+  #panel-container.sandbox-wide-mode .sandbox-status-row {
+    max-width: 640px;
+    margin: 0 auto 14px;
+  }
+
+  #panel-container.sandbox-wide-mode .sandbox-compare-table {
+    max-width: 900px;
+    margin: 8px auto 0;
+  }
+
+  #panel-container.sandbox-wide-mode .sandbox-log {
+    max-height: 320px; /* plus de lignes visibles sans scroller, écran plus haut dispo */
+  }
+}
+
+
+/* ============================================================
+   v3.33.10 — Mode Simulation auto : tableau de comparaison des
+   classes (1 colonne par classe déjà testée, 1 ligne par métrique).
+   Réutilise les tokens --nb-* existants, mêmes bordures/fond que
+   .sandbox-queue-item pour rester dans le style déjà établi.
+============================================================ */
+
+.sandbox-compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 11.5px;
+}
+
+.sandbox-compare-table th,
+.sandbox-compare-table td {
+  border: 1px solid var(--nb-frame-light);
+  padding: 6px 8px;
+  text-align: center;
+  color: var(--nb-ink); /* v3.33.12 : valeurs de résultat en texte foncé (héritaient d'un gris clair peu lisible) */
+}
+
+.sandbox-compare-table th {
+  background: var(--nb-cream-alt);
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.sandbox-compare-row-label {
+  text-align: left !important;
+  font-weight: 700;
+  color: var(--nb-ink-dim);
+  white-space: nowrap;
+}
+

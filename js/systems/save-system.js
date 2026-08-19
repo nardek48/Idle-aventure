@@ -428,11 +428,12 @@ function buildSaveData() {
     lastHealUse: Number(game.lastHealUse || 0),
     autoSellEquipment: !!game.autoSellEquipment,
     autoSellRarityThreshold: game.autoSellRarityThreshold || "common",
-    lastSpecialUse: Number(game.lastSpecialUse || 0),
-    specialBuffExpires: Number(game.specialBuffExpires || 0),
-    specialBuffPct: Number(game.specialBuffPct || 0),
-    lastDefenseUse: Number(game.lastDefenseUse || 0),
-    defenseBuffExpires: Number(game.defenseBuffExpires || 0),
+    // v3.34.0 : lastSpecialUse/specialBuffExpires/specialBuffPct/
+    // lastDefenseUse/defenseBuffExpires retirés (ancien système), voir
+    // classResource/classCooldowns/classActiveDefense ci-dessous.
+    classResource: game.classResource || null,
+    classCooldowns: game.classCooldowns || {},
+    classActiveDefense: game.classActiveDefense || null,
     achievementsClaimed: game.achievementsClaimed || {},
     worldsEverReached: game.worldsEverReached || {},
     worldQuestProgress: game.worldQuestProgress || {},
@@ -580,11 +581,13 @@ function restoreBaseState(d) {
   game.lastHealUse = Number(d.lastHealUse || 0);
   game.autoSellEquipment = !!d.autoSellEquipment;
   game.autoSellRarityThreshold = (typeof d.autoSellRarityThreshold === "string") ? d.autoSellRarityThreshold : "common";
-  game.lastSpecialUse = Number(d.lastSpecialUse || 0);
-  game.specialBuffExpires = Number(d.specialBuffExpires || 0);
-  game.specialBuffPct = Number(d.specialBuffPct || 0);
-  game.lastDefenseUse = Number(d.lastDefenseUse || 0);
-  game.defenseBuffExpires = Number(d.defenseBuffExpires || 0);
+  // v3.34.0 : classResource absent (sauvegarde d'avant ce système, ou
+  // valeur invalide) -> null, régénéré automatiquement au premier
+  // besoin par ClassCombatManager.ensureForCurrentClass() (voir
+  // systems/class-combat-system.js), pas une perte de données.
+  game.classResource = (d.classResource && typeof d.classResource === "object") ? d.classResource : null;
+  game.classCooldowns = (d.classCooldowns && typeof d.classCooldowns === "object") ? d.classCooldowns : {};
+  game.classActiveDefense = (d.classActiveDefense && typeof d.classActiveDefense === "object") ? d.classActiveDefense : null;
   game.achievementsClaimed = d.achievementsClaimed && typeof d.achievementsClaimed === "object" ? d.achievementsClaimed : {};
   game.worldsEverReached = d.worldsEverReached && typeof d.worldsEverReached === "object" ? d.worldsEverReached : {};
   game.worldQuestProgress = d.worldQuestProgress && typeof d.worldQuestProgress === "object" ? d.worldQuestProgress : {};
@@ -815,11 +818,13 @@ function hardResetState() {
   game.codexChaosSeen = keptCodexChaosSeen;
   game.codexRead = keptCodexRead;
 
-  game.lastSpecialUse = 0;
-  game.specialBuffExpires = 0;
-  game.specialBuffPct = 0;
-  game.lastDefenseUse = 0;
-  game.defenseBuffExpires = 0;
+  // v3.34.0 : ressource/cooldowns de classe effacés à l'ascension —
+  // même principe que les potions ("liées à la run", voir guide
+  // d'équilibrage section 19), pas de Rage/Concentration/Mana ni de
+  // cooldown de skill reportés d'une run à l'autre.
+  game.classResource = null;
+  game.classCooldowns = {};
+  game.classActiveDefense = null;
 
   game.autoSellEquipment = false;
   game.autoSellRarityThreshold = "common";
@@ -939,11 +944,10 @@ function fullResetState() {
   game.codexChaosSeen = false;
   game.codexRead = {};
 
-  game.lastSpecialUse = 0;
-  game.specialBuffExpires = 0;
-  game.specialBuffPct = 0;
-  game.lastDefenseUse = 0;
-  game.defenseBuffExpires = 0;
+  // v3.34.0 : reset complet -> ressource/cooldowns de classe effacés.
+  game.classResource = null;
+  game.classCooldowns = {};
+  game.classActiveDefense = null;
 
   game.autoSellEquipment = false;
   game.autoSellRarityThreshold = "common";

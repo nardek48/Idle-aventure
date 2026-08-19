@@ -121,12 +121,23 @@ function createInitialGameState() {
     autoSellEquipment: false,   // v2.26 : autovente du butin ≤ au seuil de rareté choisi
     autoSellRarityThreshold: "common", // v2.83.31 : seuil réglable (voir addDropToInventory)
 
-    lastSpecialUse: 0,          // voir systems/special-attack-system.js
-    specialBuffExpires: 0,
-    specialBuffPct: 0,
+    // v3.34.0 : lastSpecialUse/specialBuffExpires/specialBuffPct/
+    // lastDefenseUse/defenseBuffExpires (ancienne attaque spéciale par
+    // héros + bouclier universel) retirés — voir classResource/
+    // classCooldowns/classActiveDefense plus bas (systèmes de classes,
+    // systems/class-combat-system.js).
+    classResource: null,        // { classId, resourceId, current, max } — recréé au besoin
+    classCooldowns: {},         // { [actionId]: remainingMs }, voir systems/combat-cooldown-system.js
+    classActiveDefense: null,   // { actionId, effectType, value, expiresAt } ou null
 
-    lastDefenseUse: 0,           // bouclier temporaire, voir DefenseManager
-    defenseBuffExpires: 0,
+    // v3.34.3 : cooldown de l'attaque de base (tap manuel) — voir
+    // CombatEngine.requestPlayerAttack()/playerAttack()/tickBasicAttackCooldown(),
+    // systems/combat-engine.js. Éphémère comme le reste de l'état
+    // combat (game.enemy...), PAS sauvegardé (voir save-system.js) —
+    // repart toujours à 0 au chargement, cohérent avec le fait qu'un
+    // cooldown de combat n'a pas de sens de persister entre 2 sessions.
+    basicAttackCooldownMs: 0,
+    basicAttackPending: false,
 
     achievementsClaimed: {},   // { idHautFait: true }, voir systems/achievement-system.js
 
@@ -252,6 +263,19 @@ function ensureGameStateDefaults() {
   if (typeof game.village.timeRelay !== "number") game.village.timeRelay = 0;
   if (typeof game.village.watchtower !== "number") game.village.watchtower = 0;
   if (typeof game.village.sanctuary !== "number") game.village.sanctuary = 0;
+
+  // v3.34.0 : système de classes (voir systems/class-combat-system.js)
+  // — mêmes garde-fous que le reste de cette fonction pour les
+  // anciennes sauvegardes (champs absents avant cette version).
+  if (!game.classCooldowns || typeof game.classCooldowns !== "object") game.classCooldowns = {};
+  if (typeof game.classResource === "undefined") game.classResource = null;
+  if (typeof game.classActiveDefense === "undefined") game.classActiveDefense = null;
+
+  // v3.34.3 : cooldown de l'attaque de base — jamais persisté (voir
+  // save-system.js), mais garde-fou quand même au cas où une valeur
+  // corrompue/absente traînerait (cohérent avec le reste du fichier).
+  if (typeof game.basicAttackCooldownMs !== "number") game.basicAttackCooldownMs = 0;
+  if (typeof game.basicAttackPending !== "boolean") game.basicAttackPending = false;
 
   if (!game.activePotions || typeof game.activePotions !== "object") game.activePotions = {};
   if (!game.pendingPotionBonuses || typeof game.pendingPotionBonuses !== "object") {

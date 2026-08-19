@@ -212,6 +212,13 @@ function renderPanel() {
   var innerScroll = sameTab ? container.querySelector(".subtab-page-content") : null;
   var savedInnerScrollTop = innerScroll ? innerScroll.scrollTop : null;
 
+  // v3.33.10 : écran Bac à sable de combat UNIQUEMENT — largeur pleine
+  // sur desktop (voir .sandbox-wide-mode, css/04-panel-combat-sandbox.css,
+  // media query desktop-only). N'affecte jamais les autres onglets ni
+  // le mobile réel (390px inchangé partout ailleurs, voir #panel-container
+  // dans css/02-layout.css).
+  container.classList.toggle("sandbox-wide-mode", game.activeTab === "combat-sandbox");
+
   switch (game.activeTab) {
     case "shop":
       container.innerHTML = buildShopHTML();

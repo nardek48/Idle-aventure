@@ -40,6 +40,12 @@ function buildCombatHTML() {
     // v2.58 : indicateur de résistance/point faible (#enemy-affinity)
     // retiré à la demande de l'utilisateur.
     + '<div id="enemy-display">'
+    // v3.34.2 : badge de statuts actifs sur l'ennemi (vulnérabilité
+    // posée par Brise-garde, DoT de Brûlure arcanique) — ancré en haut
+    // à droite du bloc ennemi, même logique que .active-potions-bar
+    // (absolu, vide/invisible tant qu'aucun statut n'est actif). Voir
+    // buildEnemyStatusBarHTML().
+    +   '<div id="enemy-status-bar" class="enemy-status-bar"></div>'
     +   '<div id="enemy-name">Slime</div>'
     // v2.61 : le remplissage (#enemy-hp-bar) est maintenant dans un
     // sous-conteneur dédié (.enemy-hp-bar-track) qui porte le
@@ -55,10 +61,18 @@ function buildCombatHTML() {
     +   '<div id="enemy-emoji" onclick="playerAttack()">🟢</div>'
     // v2.60 : compteur "Kills X" retiré à la demande de l'utilisateur.
     + '</div>'
+    // v3.34.0 : jauge de ressource de classe (Rage/Concentration/Mana)
+    // au-dessus des 4 boutons d'action — voir buildClassResourceBarHTML().
+    + '<div id="class-resource-root"></div>'
 
+    // v3.34.0 : les 2 anciens boutons (attaque spéciale par héros,
+    // bouclier universel) sont remplacés par les 4 actions de la
+    // classe du héros choisi (skill1/skill2/skill3/defense) — voir
+    // buildClassSkillButtonsHTML(). L'attaque de BASE de la classe
+    // reste le tap normal (#combat-attack-btn, ci-dessous), pas un
+    // 5e bouton ici.
     + '<div class="combat-action-row">'
-    +   '<div id="special-attack-root"></div>'
-    +   '<div id="defense-root"></div>'
+    +   '<div id="class-skills-root"></div>'
     + '</div>'
 
     // v2.40 : nouveau bouton ATTAQUE explicite (en plus du tap direct
@@ -73,9 +87,15 @@ function buildCombatHTML() {
     // v2.67 : une potion de chaque côté (#heal-quick-root-left et
     // #heal-quick-root) pour un centrage parfait du bouton, voir
     // renderHealButtons() plus bas.
+    // v3.34.3 : ajout d'un overlay de recharge à l'intérieur du bouton
+    // (#basic-attack-cooldown-overlay) — cooldown de l'attaque de base,
+    // voir buildBasicAttackCooldownOverlayHTML()/renderBasicAttackCooldown().
+    // Vide/invisible tant qu'aucun cooldown n'est en cours.
     + '<div class="combat-attack-row">'
     +   '<div id="heal-quick-root-left"></div>'
-    +   '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="playerAttack()" aria-label="Attaque"></button>'
+    +   '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="playerAttack()" aria-label="Attaque">'
+    +     '<div id="basic-attack-cooldown-overlay"></div>'
+    +   '</button>'
     +   '<div id="heal-quick-root"></div>'
     + '</div>';
 }
@@ -108,7 +128,7 @@ function buildHealButtonHTML(index) {
   var onCooldown = PotionManager.getHealCooldownRemainingMs() > 0;
   var stock = PotionManager.getHealingStock(potion.id);
   var disabled = onCooldown || stock <= 0;
-  var keyLabel = String(index + 3); // v2.90 : "3" pour la 1ère potion (mineure), "4" pour la 2e (majeure) — "1"/"2" repris par l'attaque/défense spéciale
+  var keyLabel = String(index + 5); // v3.34.0 : "5"/"6" (avant v2.90 : "3"/"4") — "1"à"4" repris par les 4 actions de classe (skill1/2/3/defense)
 
   var h = '<div class="heal-quick-bar">';
   h += '<button class="heal-quick-btn' + (disabled ? ' disabled' : '') + '" type="button" '
@@ -192,6 +212,92 @@ window.buildActivePotionsBarHTML = buildActivePotionsBarHTML;
 window.renderActivePotionsBar = renderActivePotionsBar;
 
 /* Met à jour tout l'affichage de l'ennemi courant : image (ou emoji
+/* ============================================================
+   v3.34.2 : badge de statuts actifs sur l'ennemi (vulnérabilité posée
+   par Brise-garde, DoT de Brûlure arcanique — voir
+   systems/class-combat-system.js, champs game.enemy.vulnerableUntil/
+   vulnerableMult et game.enemy.dot). Vide (invisible) si aucun statut
+   actif, même principe que .active-potions-bar. Emoji simple en
+   attendant de vraies icônes dédiées (⚡ vulnérabilité, 🔥 DoT).
+============================================================ */
+function buildEnemyStatusBarHTML() {
+  if (!game.enemy) return "";
+
+  var h = "";
+
+  if (game.enemy.vulnerableUntil && Date.now() < game.enemy.vulnerableUntil) {
+    var vulnRemainingMs = game.enemy.vulnerableUntil - Date.now();
+    var vulnPct = Math.round((game.enemy.vulnerableMult || 0) * 100);
+    h += '<div class="enemy-status-icon enemy-status-vulnerability" title="Vulnérable : +' + vulnPct + '% dégâts subis">';
+    h += '<span class="enemy-status-emoji">⚡</span>';
+    h += '<span class="enemy-status-timer">' + Math.ceil(vulnRemainingMs / 1000) + '</span>';
+    h += '</div>';
+  }
+
+  if (game.enemy.dot && game.enemy.dot.remainingMs > 0) {
+    h += '<div class="enemy-status-icon enemy-status-dot" title="Brûlure arcanique : dégâts sur la durée">';
+    h += '<span class="enemy-status-emoji">🔥</span>';
+    h += '<span class="enemy-status-timer">' + Math.ceil(game.enemy.dot.remainingMs / 1000) + '</span>';
+    h += '</div>';
+  }
+
+  return h;
+}
+
+function renderEnemyStatusBar() {
+  var host = document.getElementById("enemy-status-bar");
+  if (host) host.innerHTML = buildEnemyStatusBarHTML();
+}
+
+window.buildEnemyStatusBarHTML = buildEnemyStatusBarHTML;
+window.renderEnemyStatusBar = renderEnemyStatusBar;
+
+/* ============================================================
+   v3.34.3 : rendu du cooldown de l'attaque de base (tap manuel) — 2
+   points concernés, le bouton ATTAQUE dédié (#combat-attack-btn, via
+   un overlay de remplissage à l'intérieur, même principe que les
+   boutons de skill) et le sprite ennemi (#enemy-emoji, via une classe
+   CSS de grisage). Les 2 restent cliquables pendant le cooldown (le
+   clic met le coup en file d'attente, voir
+   CombatEngine.requestPlayerAttack()) — seul l'aspect visuel change,
+   jamais l'attribut disabled.
+============================================================ */
+function buildBasicAttackCooldownOverlayHTML() {
+  var remainingMs = game.basicAttackCooldownMs || 0;
+  if (remainingMs <= 0) return "";
+
+  // v3.34.3 : le pourcentage de remplissage a besoin du cooldown total
+  // (pas seulement du restant) pour animer la jauge — recalculé ici à
+  // partir de la Célérité courante (même formule que
+  // CombatEngine.playerAttack(), légèrement redondant mais évite de
+  // stocker un 2e champ game.basicAttackCooldownTotalMs juste pour ça).
+  var totalCelerity = (window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function") ? CombatEngine.getTotalCelerity() : 0;
+  var totalMs = (typeof computeEffectiveCooldownMs === "function")
+    ? computeEffectiveCooldownMs(BASIC_ATTACK_BASE_COOLDOWN_MS, totalCelerity)
+    : BASIC_ATTACK_BASE_COOLDOWN_MS;
+  var pct = totalMs > 0 ? Math.round((remainingMs / totalMs) * 100) : 0;
+
+  var h = '<span class="combat-action-cooldown">' + Math.ceil(remainingMs / 1000) + 's</span>';
+  h += '<span class="combat-action-cooldown-fill" style="width:' + pct + '%"></span>';
+  return h;
+}
+
+function renderBasicAttackCooldown() {
+  var onCooldown = (game.basicAttackCooldownMs || 0) > 0;
+
+  var overlay = document.getElementById("basic-attack-cooldown-overlay");
+  if (overlay) overlay.innerHTML = buildBasicAttackCooldownOverlayHTML();
+
+  var attackBtn = document.getElementById("combat-attack-btn");
+  if (attackBtn) attackBtn.classList.toggle("on-cooldown", onCooldown);
+
+  var emoji = document.getElementById("enemy-emoji");
+  if (emoji) emoji.classList.toggle("on-cooldown", onCooldown);
+}
+
+window.buildBasicAttackCooldownOverlayHTML = buildBasicAttackCooldownOverlayHTML;
+window.renderBasicAttackCooldown = renderBasicAttackCooldown;
+
 /* v2.58 : nom du monstre, icône (image ou emoji de repli), compteur
    de kills et PV — la bannière de zone (#zone-banner) et l'indicateur
    de résistance/point faible (#enemy-affinity, voir
@@ -226,6 +332,9 @@ function renderEnemy() {
 
   if (name) name.textContent = game.enemy.name + (game.enemy.isBoss ? " [BOSS]" : "");
 
+  // v3.34.2 : nouvel ennemi -> aucun statut hérité de l'ancien (un
+  // spawn remplace intégralement game.enemy, voir CombatEngine.spawnEnemy()).
+  renderEnemyStatusBar();
   renderEnemyHp();
 }
 
@@ -243,6 +352,10 @@ function renderEnemyHp() {
     text.textContent =
       formatNumber(Math.max(0, Math.ceil(game.enemy.hp))) + " / " + formatNumber(game.enemy.maxHp);
   }
+  // v3.34.2 : rafraîchi ici aussi (pas seulement au spawn) — les
+  // compte-à-rebours affichés changent à chaque coup porté, comme le
+  // reste de cette fonction.
+  renderEnemyStatusBar();
 }
 
 window.renderEnemy = renderEnemy;
@@ -255,35 +368,34 @@ window.renderHealButtons = renderHealButtons;
 /* ============================================================
    v2.19 : raccourcis clavier (version PC) pour les potions de soin —
    touche "1"/"2".
-   v2.90 : élargi aux 4 actions de combat rapide, à la demande de
-   l'utilisateur — "1" Attaque spéciale, "2" Défense spéciale (bouclier),
-   "3" Potion de soin mineure, "4" Potion de soin majeure (avant :
-   "1"/"2" réservés aux potions de soin, décalées en "3"/"4"). Ignorés
-   si le joueur est en train de taper dans un champ texte (nom du
-   joueur, code d'import de sauvegarde, recherche...), pour ne pas
-   interférer avec la saisie. Fonctionne depuis n'importe quel écran,
-   comme les boutons tactiles équivalents — chaque manager (Special/
-   Defense/Potion) gère déjà lui-même son cooldown/sa disponibilité,
-   aucune vérification supplémentaire nécessaire ici. */
+   v2.90 : élargi aux 4 actions de combat rapide — "1" Attaque
+   spéciale, "2" Défense spéciale (bouclier), "3"/"4" potions de soin.
+   v3.34.0 : "1"/"2"/"3" -> skill1/skill2/skill3 de classe, "4" ->
+   defense de classe (remplace l'ancien système, voir
+   ClassCombatManager.useSkill()) — les potions de soin sont donc
+   décalées en "5"/"6". Ignorés si le joueur est en train de taper
+   dans un champ texte (nom du joueur, code d'import de sauvegarde,
+   recherche...), pour ne pas interférer avec la saisie. Fonctionne
+   depuis n'importe quel écran, comme les boutons tactiles
+   équivalents — chaque manager (ClassCombat/Potion) gère déjà
+   lui-même son cooldown/sa disponibilité, aucune vérification
+   supplémentaire nécessaire ici. */
 function initHealKeyboardShortcuts() {
   document.addEventListener("keydown", function (e) {
     var active = document.activeElement;
     var tag = active ? active.tagName : "";
     if (tag === "INPUT" || tag === "TEXTAREA" || (active && active.isContentEditable)) return;
 
-    if (e.key === "1") {
-      if (window.SpecialAttackManager) SpecialAttackManager.use();
-      return;
-    }
-    if (e.key === "2") {
-      if (window.DefenseManager) DefenseManager.use();
+    var classSlotByKey = { "1": "skill1", "2": "skill2", "3": "skill3", "4": "defense" };
+    if (classSlotByKey[e.key]) {
+      if (window.ClassCombatManager) ClassCombatManager.useSkill(classSlotByKey[e.key]);
       return;
     }
 
     if (typeof HEALING_POTIONS_DB === "undefined" || !window.PotionManager) return;
     var index = -1;
-    if (e.key === "3") index = 0;
-    else if (e.key === "4") index = 1;
+    if (e.key === "5") index = 0;
+    else if (e.key === "6") index = 1;
     if (index === -1) return;
 
     var potion = HEALING_POTIONS_DB[index];
@@ -294,71 +406,106 @@ function initHealKeyboardShortcuts() {
 window.initHealKeyboardShortcuts = initHealKeyboardShortcuts;
 
 /* ============================================================
-   v2.20 : bouton d'attaque spéciale, propre au héros choisi (voir
-   HERO_SPECIAL_ATTACKS dans data/heroes.js), affiché juste sous
-   l'ennemi sur l'écran Combat — fonctionne aussi en plein donjon.
+   v3.34.0 : 4 boutons d'action de la classe du héros choisi
+   (skill1/skill2/skill3/defense — voir data/class-skills.js et
+   systems/class-combat-system.js), affichés sous l'ennemi sur l'écran
+   Combat — fonctionne aussi en plein donjon. Remplace les 2 anciens
+   boutons (attaque spéciale par héros + bouclier universel, voir
+   data/heroes.js pour la note de suppression).
+   Touches PC : 1/2/3 pour skill1/2/3, 4 pour defense — décale les
+   anciennes touches 3/4 des potions de soin, reprises en 5/6
+   (voir initHealKeyboardShortcuts() plus haut dans ce fichier).
 ============================================================ */
-function buildSpecialAttackHTML() {
-  if (!window.SpecialAttackManager) return "";
-  var special = SpecialAttackManager.getCurrentSpecial();
-  if (!special) return "";
+var CLASS_SKILL_SLOTS = ["skill1", "skill2", "skill3", "defense"];
+var CLASS_SKILL_KEY_LABELS = { skill1: "1", skill2: "2", skill3: "3", defense: "4" };
 
-  var remainingMs = SpecialAttackManager.getCooldownRemainingMs();
-  var onCooldown = remainingMs > 0;
-  var cooldownPct = onCooldown ? Math.round((remainingMs / special.cooldownMs) * 100) : 0;
+function buildClassSkillButtonHTML(slot) {
+  if (!window.ClassCombatManager || typeof ClassCombatManager.getAction !== "function") return "";
+  var action = ClassCombatManager.getAction(slot);
+  if (!action) return "";
 
-  var h = '<button class="combat-action-btn attack-action-btn' + (onCooldown ? ' on-cooldown' : '') + '" type="button" '
-    + (onCooldown ? 'disabled' : '')
-    + ' onclick="SpecialAttackManager.use()" title="' + esc(special.desc) + ' (touche 1 sur PC)">';
-  h += '<span class="combat-action-key">1</span>';
-  h += renderIconOrEmojiHTML(special.icon, "combat-action-icon", special.name);
+  var resourceState = (typeof ClassCombatManager.ensureForCurrentClass === "function")
+    ? ClassCombatManager.ensureForCurrentClass()
+    : null;
+  var cooldownRemainingMs = (game.classCooldowns && typeof game.classCooldowns[action.id] === "number")
+    ? game.classCooldowns[action.id]
+    : 0;
+  var onCooldown = cooldownRemainingMs > 0;
+  var cooldownPct = onCooldown ? Math.round((cooldownRemainingMs / action.cooldownMs) * 100) : 0;
+
+  var affordable = !resourceState || resourceState.current >= (action.resourceCost || 0);
+  var disabled = onCooldown || !affordable;
+
+  var activeDefense = (action.type === "defense" && window.ClassCombatManager && typeof ClassCombatManager.getActiveDefenseEffect === "function")
+    ? ClassCombatManager.getActiveDefenseEffect()
+    : null;
+  var isActiveNow = !!(activeDefense && activeDefense.actionId === action.id);
+
+  var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "🛡️" : "✨");
+  var keyLabel = CLASS_SKILL_KEY_LABELS[action.slot] || "";
+
+  var h = '<button class="combat-action-btn class-skill-btn' + (action.type === "defense" ? " defense-action-btn" : " attack-action-btn")
+    + (onCooldown ? ' on-cooldown' : '') + (isActiveNow ? ' is-active' : '') + (!affordable && !onCooldown ? ' not-affordable' : '') + '" type="button" '
+    + (disabled ? 'disabled' : '')
+    + ' onclick="ClassCombatManager.useSkill(\'' + esc(slot) + '\')" title="' + esc(action.description) + (keyLabel ? ' (touche ' + keyLabel + ' sur PC)' : '') + '">';
+  h += '<span class="combat-action-key">' + esc(keyLabel) + '</span>';
+  h += renderIconOrEmojiHTML(icon, "combat-action-icon", action.label);
   if (onCooldown) {
-    h += '<span class="combat-action-cooldown">' + Math.ceil(remainingMs / 1000) + 's</span>';
+    h += '<span class="combat-action-cooldown">' + Math.ceil(cooldownRemainingMs / 1000) + 's</span>';
     h += '<span class="combat-action-cooldown-fill" style="width:' + cooldownPct + '%"></span>';
-  }
-  h += '</button>';
-  return h;
-}
-
-function renderSpecialAttackButton() {
-  var host = document.getElementById("special-attack-root");
-  if (host) host.innerHTML = buildSpecialAttackHTML();
-}
-
-window.buildSpecialAttackHTML = buildSpecialAttackHTML;
-window.renderSpecialAttackButton = renderSpecialAttackButton;
-
-/* ============================================================
-   v2.21 : bouton de bouclier temporaire (voir DEFENSE_ABILITY dans
-   data/heroes.js), universel — juste à côté du bouton d'attaque.
-============================================================ */
-function buildDefenseHTML() {
-  if (typeof DEFENSE_ABILITY === "undefined" || !window.DefenseManager) return "";
-
-  var remainingMs = DefenseManager.getCooldownRemainingMs();
-  var onCooldown = remainingMs > 0;
-  var cooldownPct = onCooldown ? Math.round((remainingMs / DEFENSE_ABILITY.cooldownMs) * 100) : 0;
-  var active = DefenseManager.isActive();
-
-  var h = '<button class="combat-action-btn defense-action-btn' + (onCooldown ? ' on-cooldown' : '') + (active ? ' is-active' : '') + '" type="button" '
-    + (onCooldown ? 'disabled' : '')
-    + ' onclick="DefenseManager.use()" title="' + esc(DEFENSE_ABILITY.desc) + ' (touche 2 sur PC)">';
-  h += '<span class="combat-action-key">2</span>';
-  h += renderIconOrEmojiHTML(DEFENSE_ABILITY.icon, "combat-action-icon", DEFENSE_ABILITY.name);
-  if (onCooldown) {
-    h += '<span class="combat-action-cooldown">' + Math.ceil(remainingMs / 1000) + 's</span>';
-    h += '<span class="combat-action-cooldown-fill" style="width:' + cooldownPct + '%"></span>';
-  } else if (active) {
+  } else if (isActiveNow) {
     h += '<span class="combat-action-active-tag">ACTIF</span>';
   }
   h += '</button>';
   return h;
 }
 
-function renderDefenseButton() {
-  var host = document.getElementById("defense-root");
-  if (host) host.innerHTML = buildDefenseHTML();
+function buildClassSkillButtonsHTML() {
+  if (!window.ClassCombatManager) return "";
+  var h = "";
+  CLASS_SKILL_SLOTS.forEach(function (slot) {
+    h += buildClassSkillButtonHTML(slot);
+  });
+  return h;
 }
 
-window.buildDefenseHTML = buildDefenseHTML;
-window.renderDefenseButton = renderDefenseButton;
+function renderClassSkillButtons() {
+  var host = document.getElementById("class-skills-root");
+  if (host) host.innerHTML = buildClassSkillButtonsHTML();
+  renderClassResourceBar();
+}
+
+window.buildClassSkillButtonsHTML = buildClassSkillButtonsHTML;
+window.renderClassSkillButtons = renderClassSkillButtons;
+
+/* ============================================================
+   v3.34.0 : jauge de ressource de classe (Rage/Concentration/Mana),
+   affichée au-dessus des 4 boutons d'action. Vide (rien affiché) si
+   aucune classe résolue (ne devrait pas arriver en jeu normal).
+============================================================ */
+function buildClassResourceBarHTML() {
+  if (!window.ClassCombatManager || typeof ClassCombatManager.ensureForCurrentClass !== "function") return "";
+  var state = ClassCombatManager.ensureForCurrentClass();
+  if (!state || !state.max) return "";
+
+  var pct = Math.max(0, Math.min(100, Math.round((state.current / state.max) * 100)));
+  var classId = typeof ClassCombatManager.getCurrentClassId === "function" ? ClassCombatManager.getCurrentClassId() : null;
+  var resourceDef = (classId && typeof getClassResource === "function") ? getClassResource(classId) : null;
+  var label = resourceDef ? resourceDef.label : "";
+
+  var h = '<div class="class-resource-bar class-resource-' + esc(state.resourceId || "") + '">';
+  h +=   '<div class="class-resource-track">';
+  h +=     '<div class="class-resource-fill" style="width:' + pct + '%"></div>';
+  h +=     '<span class="class-resource-text">' + esc(label) + ' — ' + Math.floor(state.current) + ' / ' + state.max + '</span>';
+  h +=   '</div>';
+  h += '</div>';
+  return h;
+}
+
+function renderClassResourceBar() {
+  var host = document.getElementById("class-resource-root");
+  if (host) host.innerHTML = buildClassResourceBarHTML();
+}
+
+window.buildClassResourceBarHTML = buildClassResourceBarHTML;
+window.renderClassResourceBar = renderClassResourceBar;

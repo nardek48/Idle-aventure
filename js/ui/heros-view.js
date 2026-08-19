@@ -68,21 +68,26 @@ function buildCharacterAbilityCardHTML(config, cssClass, remainingMs, cooldownMs
   return h;
 }
 
+/* v3.34.0 : les 3 skills offensifs + l'action defense de la classe du
+   héros choisi (voir data/class-skills.js, systems/class-combat-
+   system.js), à la place de l'ancienne attaque spéciale/bouclier
+   unique par héros (HERO_SPECIAL_ATTACKS/DEFENSE_ABILITY, retirés de
+   data/heroes.js). */
 function buildCharacterAbilitiesHTML() {
+  if (!window.ClassCombatManager || typeof ClassCombatManager.getAction !== "function") return "";
+
   var h = '';
-  var special = (window.SpecialAttackManager && typeof SpecialAttackManager.getCurrentSpecial === "function")
-    ? SpecialAttackManager.getCurrentSpecial()
-    : null;
+  var slots = ["skill1", "skill2", "skill3", "defense"];
+  slots.forEach(function (slot) {
+    var action = ClassCombatManager.getAction(slot);
+    if (!action) return;
 
-  if (special) {
-    var specialRemaining = SpecialAttackManager.getCooldownRemainingMs();
-    h += buildCharacterAbilityCardHTML(special, "attack", specialRemaining, special.cooldownMs);
-  }
-
-  if (typeof DEFENSE_ABILITY !== "undefined" && window.DefenseManager) {
-    var defenseRemaining = DefenseManager.getCooldownRemainingMs();
-    h += buildCharacterAbilityCardHTML(DEFENSE_ABILITY, "defense", defenseRemaining, DEFENSE_ABILITY.cooldownMs);
-  }
+    var remainingMs = (game.classCooldowns && typeof game.classCooldowns[action.id] === "number") ? game.classCooldowns[action.id] : 0;
+    var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "🛡️" : "✨");
+    var config = { icon: icon, name: action.label, desc: action.description };
+    var cssClass = action.type === "defense" ? "defense" : "attack";
+    h += buildCharacterAbilityCardHTML(config, cssClass, remainingMs, action.cooldownMs);
+  });
 
   return h;
 }
@@ -406,8 +411,8 @@ function buildHerosHTML() {
    game.heroId (pas de ré-saisie du nom, contrairement à l'ancien
    flux via modal-view.js confirmHeroSelection), recalcule les stats
    et sauvegarde. Ne touche ni au niveau/XP, ni à l'équipement, ni aux
-   talents : seuls les stats RPG de base et l'attaque spéciale du
-   héros changent (voir stats-system.js et special-attack-system.js).
+   talents : seuls les stats RPG de base et le kit de classe changent
+   (voir stats-system.js et systems/class-combat-system.js).
 ============================================================ */
 function selectHeroInline(heroId) {
   if (!heroId || heroId === game.heroId) return;
@@ -421,6 +426,11 @@ function selectHeroInline(heroId) {
 
   game.heroId = heroId;
   if (heroId.indexOf("chaos") === 0) game.codexChaosSeen = true;
+
+  // v3.34.0 : voir même note dans ui/modal-view.js (confirmHeroSelection).
+  if (window.ClassCombatManager && typeof ClassCombatManager.resetForNewHero === "function") {
+    ClassCombatManager.resetForNewHero();
+  }
 
   if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
     StatsSystem.recalcStats();

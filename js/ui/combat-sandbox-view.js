@@ -45,9 +45,25 @@ rien n'est envoyé à combat-engine.js.
    null). combat/run/infinite ne sont jamais actifs simultanément — un
    seul des trois est non-null à la fois. Le mode Infini réutilise
    getSandboxPersistence()/statsOverride/baseCooldownMs déjà en place
-   pour le mode Run — aucun nouvel état de configuration inventé. */
+   pour le mode Run — aucun nouvel état de configuration inventé.
+
+   v3.33.10 : ajout du mode "Simulation auto" (mode: "single" | "run" |
+   "infinite" | "auto"). État dédié autoPolicy (liste ordonnée de
+   slots, initialisée depuis data/auto-policy-defaults.js au premier
+   choix de classe — voir selectSandboxClass()), autoRunsRequested
+   (nombre de runs à lancer, défaut 20), autoBatch (résultat en cours/
+   terminé d'une rafale, ou null), autoBatchRunning (bool, évite un
+   double-lancement pendant l'exécution asynchrone), autoResultsByClass
+   (objet { classId: rapport agrégé }, CONSERVÉ entre les rafales
+   successives pour le tableau de comparaison 3 classes — vidé
+   uniquement par resetSandboxAutoResults() ou en quittant l'écran).
+   Ce mode ne crée ni ne touche à _sandboxUiState.combat/run/infinite —
+   toute la simulation d'une rafale passe par
+   systems/combat-batch-sim-system.js (runSingleAutoRun), en boucle
+   SYNCHRONE par run (voir launchSandboxAutoBatch() plus bas), jamais
+   par startSandboxClock()/tickSandbox*Time() piloté depuis l'écran. */
 var _sandboxUiState = {
-  mode: "single", // "single" | "run" | "infinite"
+  mode: "single", // "single" | "run" | "infinite" | "auto"
   classId: null,
   heroId: null,
   enemyId: null,       // combat unique
@@ -58,10 +74,17 @@ var _sandboxUiState = {
   persistence: null,     // objet créé au premier accès, voir getSandboxPersistence()
   statsOverride: null,    // {power, endurance, celerity, precision, will} partiel, ou null = stats de base
   statsPanelOpen: false,
+  enemyCoefsOverride: null, // v3.33.12 : {ENDURANCE_HP_COEF, BOSS_ENDURANCE_HP_COEF, POWER_DMG_COEF, ATTACK_BASE_INTERVAL_S, RESIST_DMG_MULT, WEAK_DMG_MULT, NO_WEAPON_MULT} partiel, ou null = coefficients par défaut
+  enemyCoefsPanelOpen: false,
   baseCooldownMs: null,   // null = valeur par défaut du système (SANDBOX_DEFAULT_BASE_COOLDOWN_MS)
   combat: null, // objet retourné par createSandboxCombatState(), ou null
   run: null,    // objet retourné par createSandboxRunState(), ou null
-  infinite: null // objet retourné par createSandboxInfiniteState(), ou null
+  infinite: null, // objet retourné par createSandboxInfiniteState(), ou null
+  autoPolicy: null,          // tableau de slots ordonné, ou null tant qu'aucune classe n'est choisie
+  autoRunsRequested: 20,      // nombre de runs à lancer dans la prochaine rafale
+  autoBatch: null,            // { runsDone, runsTotal, reports: [...] } pendant/après une rafale
+  autoBatchRunning: false,    // true entre le clic "Lancer" et la fin de la rafale (asynchrone)
+  autoResultsByClass: {}      // { classId: rapport agrégé (aggregateAutoRuns()) }, conservé entre rafales
 };
 
 function getSandboxPersistence() {
@@ -260,6 +283,9 @@ function buildCombatSandboxHTML() {
   if (_sandboxUiState.mode === "infinite" && _sandboxUiState.infinite) {
     h += buildSandboxInfiniteHTML(_sandboxUiState.infinite);
   }
+  if (_sandboxUiState.mode === "auto") {
+    h += buildSandboxAutoResultsHTML();
+  }
 
   h += '</div>';
   return h;
@@ -275,6 +301,7 @@ function buildSandboxModeSelectorHTML() {
   h += '<button class="sandbox-choice-btn' + (_sandboxUiState.mode === "single" ? ' is-active' : '') + '" onclick="selectSandboxMode(\'single\')"><span>⚔️ Combat unique</span></button>';
   h += '<button class="sandbox-choice-btn' + (_sandboxUiState.mode === "run" ? ' is-active' : '') + '" onclick="selectSandboxMode(\'run\')"><span>🏃 Run</span></button>';
   h += '<button class="sandbox-choice-btn' + (_sandboxUiState.mode === "infinite" ? ' is-active' : '') + '" onclick="selectSandboxMode(\'infinite\')"><span>♾️ Mode infini</span></button>';
+  h += '<button class="sandbox-choice-btn' + (_sandboxUiState.mode === "auto" ? ' is-active' : '') + '" onclick="selectSandboxMode(\'auto\')"><span>🤖 Simulation auto</span></button>';
   h += '</div>';
   h += '</div>';
   return h;
@@ -317,12 +344,15 @@ function buildSandboxSetupHTML() {
   if (_sandboxUiState.heroId) {
     h += buildSandboxStatsPanelHTML();
     h += buildSandboxBaseCooldownSettingHTML();
+    h += buildSandboxEnemyCoefsPanelHTML();
   }
 
   if (_sandboxUiState.mode === "run") {
     h += buildSandboxRunSetupHTML();
   } else if (_sandboxUiState.mode === "infinite") {
     h += buildSandboxInfiniteSetupHTML();
+  } else if (_sandboxUiState.mode === "auto") {
+    h += buildSandboxAutoSetupHTML();
   } else {
     h += buildSandboxSingleSetupHTML();
   }
@@ -388,6 +418,58 @@ function buildSandboxBaseCooldownSettingHTML() {
   h += '<input type="number" class="sandbox-persistence-percent sandbox-cooldown-input" min="0" step="50" value="' + value + '" onchange="setSandboxBaseCooldownMs(this.value)"> ms';
   h += '</div>';
   h += '<div class="sandbox-hint">Réduit par la Célérité au combat (jusqu\'à -50%). N\'affecte jamais le jeu réel, ni les compétences 1/2/3/défense.</div>';
+  return h;
+}
+
+/* v3.33.12 — Panneau d'édition des coefficients d'ennemi de test.
+   Même pattern que buildSandboxStatsPanelHTML() (repliable, tag
+   "modifiés", bouton de réinitialisation) mais pour SANDBOX_ENEMY_COEFS
+   (systems/combat-sandbox-system.js) au lieu des stats du héros.
+   N'affecte QUE ce bac à sable — ne touche jamais progression-system.js
+   ni combat-engine.js (formules dupliquées en lecture seule dans le
+   bac à sable, voir note d'en-tête de combat-sandbox-system.js).
+
+   Note affichée à l'écran : ATTACK_BASE_INTERVAL_S (vitesse d'attaque
+   ennemie) n'est appliqué qu'à la CRÉATION d'un combat — un réglage
+   changé pendant un combat en cours ne modifie donc pas son rythme
+   déjà figé, contrairement aux coefficients de dégâts (POWER_DMG_COEF,
+   RESIST/WEAK/NO_WEAPON_MULT) qui s'appliquent dès l'action suivante
+   (voir state.enemyCoefs, combat-sandbox-system.js). */
+function buildSandboxEnemyCoefsPanelHTML() {
+  var base = window.SANDBOX_ENEMY_COEFS;
+  if (!base) return '';
+  var current = Object.assign({}, base, _sandboxUiState.enemyCoefsOverride || {});
+  var isOverridden = !!_sandboxUiState.enemyCoefsOverride;
+
+  var h = '<div class="sandbox-card-title sandbox-collapsible-title" onclick="toggleSandboxEnemyCoefsPanel()">';
+  h += '👹 Coefficients d\'ennemi (bac à sable)' + (isOverridden ? ' <span class="sandbox-modified-tag">modifiés</span>' : '');
+  h += ' <span class="sandbox-collapse-caret">' + (_sandboxUiState.enemyCoefsPanelOpen ? '▲' : '▼') + '</span>';
+  h += '</div>';
+
+  if (!_sandboxUiState.enemyCoefsPanelOpen) return h;
+
+  var fields = [
+    { key: "ENDURANCE_HP_COEF", label: "PV — ennemi normal (× Endurance)", step: "0.05" },
+    { key: "BOSS_ENDURANCE_HP_COEF", label: "PV — boss (× Endurance)", step: "0.05" },
+    { key: "POWER_DMG_COEF", label: "Dégâts de riposte (× Puissance)", step: "0.05" },
+    { key: "ATTACK_BASE_INTERVAL_S", label: "Intervalle d'attaque de base (s)", step: "0.1" },
+    { key: "RESIST_DMG_MULT", label: "Multiplicateur résistance", step: "0.05" },
+    { key: "WEAK_DMG_MULT", label: "Multiplicateur faiblesse", step: "0.05" },
+    { key: "NO_WEAPON_MULT", label: "Multiplicateur sans affinité d'arme", step: "0.05" }
+  ];
+
+  h += '<div class="sandbox-stats-grid">';
+  fields.forEach(function (f) {
+    h += '<div class="sandbox-stat-field">';
+    h += '<label class="sandbox-stat-label">' + esc(f.label) + '</label>';
+    h += '<input type="number" step="' + f.step + '" class="sandbox-stat-input" value="' + current[f.key] + '" onchange="setSandboxEnemyCoefField(\'' + f.key + '\', this.value)">';
+    h += '</div>';
+  });
+  h += '</div>';
+
+  h += '<div class="sandbox-hint">La vitesse d\'attaque (intervalle) ne s\'applique qu\'au lancement d\'un nouveau combat/run/simulation — les autres réglages (dégâts, PV) s\'appliquent immédiatement, y compris en cours de combat.</div>';
+  h += '<button class="settings-btn sandbox-reset-stats-btn" onclick="resetSandboxEnemyCoefs()">↺ Coefficients par défaut (valeurs réelles du jeu)</button>';
+
   return h;
 }
 
@@ -461,6 +543,202 @@ function buildSandboxInfiniteSetupHTML() {
     h += '<button class="settings-btn sandbox-reset-btn" onclick="resetSandboxInfinite()">🔄 Réinitialiser</button>';
   }
   return h;
+}
+
+/* ============================================================
+   v3.33.10 — MODE SIMULATION AUTO. Panneau de configuration (liste
+   de priorité éditable + nombre de runs) et affichage des résultats
+   agrégés (rafale en cours/terminée + tableau de comparaison des
+   classes déjà testées). Aucune fonction ici ne pilote un tick de
+   combat : tout passe par systems/combat-batch-sim-system.js
+   (runSingleAutoRun/aggregateAutoRuns), appelé depuis
+   launchSandboxAutoBatch() (handlers plus bas).
+============================================================ */
+
+/* buildSandboxAutoSetupHTML()
+   Section "3. Simulation auto" : liste de priorité réordonnable
+   (réutilise le style visuel .sandbox-queue-* du mode Run, monter/
+   descendre/retirer — voir buildSandboxRunQueuePreviewHTML pour le
+   même pattern), champ nombre de runs, bouton de lancement. */
+function buildSandboxAutoSetupHTML() {
+  var h = '<div class="sandbox-card-title">3. Simulation auto</div>';
+  h += '<div class="sandbox-hint">Le héros joue seul : à chaque tick, il utilise la première action DISPONIBLE de cette liste, dans l\'ordre. Enchaîne les ennemis de data/enemies.js comme le mode infini, sur plusieurs runs à la suite.</div>';
+
+  if (!_sandboxUiState.classId || !_sandboxUiState.heroId) {
+    h += '<div class="sandbox-hint">Choisis une classe et un héros ci-dessus pour configurer la priorité.</div>';
+    return h;
+  }
+
+  h += buildSandboxAutoPolicyListHTML();
+
+  h += '<div class="sandbox-persistence-row">';
+  h += '<span class="sandbox-persistence-label">Nombre de runs</span>';
+  h += '<input type="number" class="sandbox-persistence-percent sandbox-cooldown-input" min="1" step="1" value="' + _sandboxUiState.autoRunsRequested + '" onchange="setSandboxAutoRunsRequested(this.value)">';
+  h += '</div>';
+
+  var running = _sandboxUiState.autoBatchRunning;
+  var canLaunch = !!(_sandboxUiState.classId && _sandboxUiState.heroId && _sandboxUiState.autoPolicy && _sandboxUiState.autoPolicy.length && !running);
+  h += '<button class="settings-btn primary sandbox-launch-btn" ' + (canLaunch ? '' : 'disabled') + ' onclick="launchSandboxAutoBatch()">' + (running ? '⏳ Simulation en cours…' : '▶️ Lancer une simulation') + '</button>';
+
+  if (Object.keys(_sandboxUiState.autoResultsByClass).length) {
+    h += '<button class="settings-btn sandbox-reset-btn" ' + (running ? 'disabled' : '') + ' onclick="resetSandboxAutoResults()">🗑️ Effacer les résultats de comparaison</button>';
+  }
+
+  return h;
+}
+
+/* buildSandboxAutoPolicyListHTML()
+   Liste ordonnée des 5 slots pour la classe active, avec libellé réel
+   (kit.actions[slot].label — jamais un nom inventé) et boutons
+   monter/descendre, même pattern que buildSandboxRunQueuePreviewHTML
+   pour rester dans le style déjà établi de l'écran. */
+function buildSandboxAutoPolicyListHTML() {
+  var policy = _sandboxUiState.autoPolicy || [];
+  var kit = getClassSkills(_sandboxUiState.classId);
+  if (!kit) return '';
+
+  var h = '<div class="sandbox-queue-title">Ordre de priorité</div>';
+  h += '<div class="sandbox-queue-list">';
+  policy.forEach(function (slot, index) {
+    var action = kit.actions[slot];
+    var label = action ? action.label : slot;
+    h += '<div class="sandbox-queue-item">';
+    h += '<span class="sandbox-queue-item-index">' + (index + 1) + '</span>';
+    h += '<span class="sandbox-queue-item-name">' + esc(label) + '</span>';
+    h += '<span class="sandbox-queue-item-actions">';
+    if (index > 0) h += '<button class="sandbox-queue-move-btn" onclick="moveSandboxAutoPolicyEntry(' + index + ', -1)">↑</button>';
+    if (index < policy.length - 1) h += '<button class="sandbox-queue-move-btn" onclick="moveSandboxAutoPolicyEntry(' + index + ', 1)">↓</button>';
+    h += '</span>';
+    h += '</div>';
+  });
+  h += '</div>';
+  h += '<button class="settings-btn sandbox-reset-stats-btn" onclick="resetSandboxAutoPolicy()">↺ Priorité par défaut</button>';
+  return h;
+}
+
+/* buildSandboxAutoResultsHTML()
+   Affiche, dans l'ordre : la progression de la rafale en cours (si
+   autoBatchRunning), le résumé de la dernière rafale terminée pour la
+   classe active, PUIS le tableau de comparaison (une colonne par
+   classe déjà testée, conservé entre les rafales — voir
+   _sandboxUiState.autoResultsByClass). */
+function buildSandboxAutoResultsHTML() {
+  var h = '';
+
+  if (_sandboxUiState.autoBatch && _sandboxUiState.autoBatchRunning) {
+    h += '<div class="sandbox-card">';
+    h += '<div class="sandbox-card-title">Simulation en cours</div>';
+    h += '<div class="sandbox-hint" id="sandbox-auto-progress">Run ' + _sandboxUiState.autoBatch.runsDone + ' / ' + _sandboxUiState.autoBatch.runsTotal + '</div>';
+    h += '</div>';
+  }
+
+  var classesWithResults = Object.keys(_sandboxUiState.autoResultsByClass);
+  if (classesWithResults.length) {
+    h += buildSandboxAutoComparisonTableHTML();
+  }
+
+  return h;
+}
+
+/* Libellés des métriques agrégées, dans l'ordre d'affichage demandé —
+   factorisé pour être réutilisé identiquement par chaque colonne du
+   tableau de comparaison. */
+var SANDBOX_AUTO_METRIC_ROWS = [
+  { key: "runsCount", label: "Runs simulés", format: "int" },
+  { key: "defeatedAvg", label: "Ennemis vaincus (moy.)", format: "int" },
+  { key: "defeatedMinMax", label: "Ennemis vaincus (min / max)", format: "raw" },
+  { key: "bossRate", label: "Taux de runs ayant atteint un boss", format: "percent" },
+  { key: "durationAvgS", label: "Durée moyenne (s)", format: "int" },
+  { key: "heroMaxHp", label: "PV max", format: "int" },
+  { key: "heroFinalHpAvg", label: "PV restants (moy. en fin de run)", format: "int" },
+  { key: "damageDealtAvg", label: "Dégâts infligés (moy.)", format: "int" },
+  { key: "damageTakenAvg", label: "Dégâts reçus (moy.)", format: "int" },
+  { key: "damageAvoidedAvg", label: "Dégâts évités (moy., Garde/Esquive/Barrière)", format: "int" },
+  { key: "deathRate", label: "Mort(s) — taux de runs terminés en défaite", format: "percent" },
+  { key: "topAction", label: "Action la plus utilisée (moy./run)", format: "raw" },
+  { key: "resourceWastedAvg", label: "Ressource gaspillée en fin de run (moy.)", format: "float" }
+];
+
+/* buildSandboxAutoComparisonTableHTML()
+   Tableau HTML natif (pas de <select>), 1 colonne par classe déjà
+   testée (dans l'ordre de window.CLASSES, pas l'ordre de test), 1
+   ligne par métrique — lisible avec les 3 classes comme demandé.
+   reachedBoss vaut toujours 0% ici : le mode infini réutilisé
+   (listSandboxAllEnemiesInOrder(), voir combat-sandbox-system.js) ne
+   contient QUE des ennemis normaux, jamais de boss — affiché tel
+   quel plutôt que masqué, pour ne rien laisser croire de faux. */
+function buildSandboxAutoComparisonTableHTML() {
+  var classIds = (window.CLASSES || []).map(function (c) { return c.id; })
+    .filter(function (id) { return _sandboxUiState.autoResultsByClass[id]; });
+  if (!classIds.length) return '';
+
+  var h = '<div class="sandbox-card">';
+  h += '<div class="sandbox-card-title">Comparaison des classes</div>';
+  h += '<div class="sandbox-hint">Le mode infini n\'affronte jamais de boss (uniquement les ennemis normaux de data/enemies.js) — le taux ci-dessous reflète cette limite, pas un défaut de la classe.</div>';
+
+  h += '<table class="sandbox-compare-table"><thead><tr><th></th>';
+  classIds.forEach(function (id) {
+    var cls = getClassById(id);
+    h += '<th>' + esc(cls ? cls.icon + ' ' + cls.label : id) + '</th>';
+  });
+  h += '</tr></thead><tbody>';
+
+  SANDBOX_AUTO_METRIC_ROWS.forEach(function (row) {
+    h += '<tr><td class="sandbox-compare-row-label">' + esc(row.label) + '</td>';
+    classIds.forEach(function (id) {
+      h += '<td>' + esc(formatSandboxAutoMetric(_sandboxUiState.autoResultsByClass[id], row)) + '</td>';
+    });
+    h += '</tr>';
+  });
+
+  h += '</tbody></table>';
+  h += '</div>';
+  return h;
+}
+
+/* formatSandboxAutoMetric(agg, row)
+   Lit la métrique demandée dans un objet retourné par
+   aggregateAutoRuns() (systems/combat-batch-sim-system.js) et la met
+   en forme lisible. Ne recalcule aucune moyenne ici — uniquement de
+   la mise en forme d'un résultat déjà agrégé. */
+function formatSandboxAutoMetric(agg, row) {
+  if (!agg) return "—";
+  switch (row.key) {
+    case "runsCount":
+      return String(agg.runsCount);
+    case "defeatedAvg":
+      return String(Math.round(agg.defeatedCount.avg));
+    case "defeatedMinMax":
+      return agg.defeatedCount.min + " / " + agg.defeatedCount.max;
+    case "bossRate":
+      return Math.round(agg.bossRate * 100) + "%";
+    case "durationAvgS":
+      return String(Math.round(agg.durationMsAvg / 1000));
+    case "heroMaxHp":
+      return String(Math.round(agg.heroMaxHp));
+    case "heroFinalHpAvg":
+      return String(Math.round(agg.heroFinalHpAvg));
+    case "damageDealtAvg":
+      return String(Math.round(agg.damageDealtAvg));
+    case "damageTakenAvg":
+      return String(Math.round(agg.damageTakenAvg));
+    case "damageAvoidedAvg":
+      return String(Math.round(agg.damageAvoidedAvg));
+    case "deathRate":
+      return Math.round(agg.deathRate * 100) + "%";
+    case "topAction": {
+      var freq = agg.actionFrequencyAvg || {};
+      var bestId = null, bestVal = 0;
+      Object.keys(freq).forEach(function (id) {
+        if (freq[id] > bestVal) { bestVal = freq[id]; bestId = id; }
+      });
+      return bestId ? (bestId + " (" + (Math.round(bestVal * 10) / 10) + "/run)") : "—";
+    }
+    case "resourceWastedAvg":
+      return String(Math.round(agg.resourceWastedAvg * 100) / 100);
+    default:
+      return "—";
+  }
 }
 
 /* Sélection manuelle : ajout d'un ennemi (dont boss) en fin de file,
@@ -809,6 +1087,13 @@ function selectSandboxClass(classId) {
   if (!cls.heroIds.includes(_sandboxUiState.heroId)) {
     _sandboxUiState.heroId = null;
   }
+  // v3.33.10 : la priorité de simulation auto appartient à une classe
+  // (les slots skill1/2/3 ne désignent pas la même compétence d'une
+  // classe à l'autre) — repart des valeurs par défaut de
+  // data/auto-policy-defaults.js à chaque changement de classe, même
+  // logique que statsOverride réinitialisé au changement de héros
+  // ci-dessous.
+  _sandboxUiState.autoPolicy = (typeof getAutoPolicyDefault === "function") ? getAutoPolicyDefault(classId) : null;
   renderCombatSandboxScreen();
 }
 
@@ -831,7 +1116,7 @@ function selectSandboxEnemy(enemyId) {
 function launchSandboxCombat() {
   var s = _sandboxUiState;
   if (!s.classId || !s.heroId || !s.enemyId) return;
-  var combat = createSandboxCombatState(s.classId, s.heroId, s.enemyId, s.statsOverride, s.baseCooldownMs);
+  var combat = createSandboxCombatState(s.classId, s.heroId, s.enemyId, s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride);
   if (!combat) {
     if (typeof showToast === "function") showToast("Impossible de démarrer le combat de test.");
     return;
@@ -853,7 +1138,7 @@ function triggerSandboxAction(slot) {
 function resetSandboxCombat() {
   var s = _sandboxUiState;
   if (s.classId && s.heroId && s.enemyId) {
-    _sandboxUiState.combat = createSandboxCombatState(s.classId, s.heroId, s.enemyId, s.statsOverride, s.baseCooldownMs);
+    _sandboxUiState.combat = createSandboxCombatState(s.classId, s.heroId, s.enemyId, s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride);
     startSandboxClock();
   } else {
     _sandboxUiState.combat = null;
@@ -868,11 +1153,13 @@ function resetSandboxCombat() {
 ============================================================ */
 
 function selectSandboxMode(mode) {
-  if (mode !== "single" && mode !== "run" && mode !== "infinite") return;
+  if (mode !== "single" && mode !== "run" && mode !== "infinite" && mode !== "auto") return;
   _sandboxUiState.mode = mode;
   // Changer de mode arrête l'horloge : le combat/run/infini resté en
   // mémoire dans l'autre mode ne doit pas continuer à décompter en
-  // arrière-plan.
+  // arrière-plan. Le mode auto n'utilise jamais l'horloge (boucle
+  // synchrone par run, voir launchSandboxAutoBatch()) — arrêt sans
+  // effet si elle n'était pas démarrée.
   stopSandboxClock();
   renderCombatSandboxScreen();
 }
@@ -957,7 +1244,7 @@ function setSandboxPersistenceField(field, rawValue) {
 function launchSandboxRun() {
   var s = _sandboxUiState;
   if (!s.classId || !s.heroId || !s.runQueue.length) return;
-  var run = createSandboxRunState(s.classId, s.heroId, s.runQueue, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs);
+  var run = createSandboxRunState(s.classId, s.heroId, s.runQueue, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride);
   if (!run) {
     if (typeof showToast === "function") showToast("Impossible de démarrer le run de test.");
     return;
@@ -986,7 +1273,7 @@ function stopSandboxRunFromUi() {
 function resetSandboxRun() {
   var s = _sandboxUiState;
   if (s.classId && s.heroId && s.runQueue.length) {
-    _sandboxUiState.run = createSandboxRunState(s.classId, s.heroId, s.runQueue, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs);
+    _sandboxUiState.run = createSandboxRunState(s.classId, s.heroId, s.runQueue, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride);
     startSandboxClock();
   } else {
     _sandboxUiState.run = null;
@@ -1007,7 +1294,7 @@ function resetSandboxRun() {
 function launchSandboxInfinite() {
   var s = _sandboxUiState;
   if (!s.classId || !s.heroId) return;
-  var infinite = createSandboxInfiniteState(s.classId, s.heroId, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs);
+  var infinite = createSandboxInfiniteState(s.classId, s.heroId, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride);
   if (!infinite) {
     if (typeof showToast === "function") showToast("Impossible de démarrer le mode infini.");
     return;
@@ -1036,12 +1323,124 @@ function stopSandboxInfiniteFromUi() {
 function resetSandboxInfinite() {
   var s = _sandboxUiState;
   if (s.classId && s.heroId) {
-    _sandboxUiState.infinite = createSandboxInfiniteState(s.classId, s.heroId, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs);
+    _sandboxUiState.infinite = createSandboxInfiniteState(s.classId, s.heroId, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride);
     startSandboxClock();
   } else {
     _sandboxUiState.infinite = null;
     stopSandboxClock();
   }
+  renderCombatSandboxScreen();
+}
+
+/* ============================================================
+   Handlers — MODE SIMULATION AUTO (v3.33.10). Réordonnancement de
+   priorité (même pattern que moveSandboxRunQueueEntry), lancement
+   d'une rafale en boucle ASYNCHRONE par RUN (pas par tick — un run
+   entier est joué en synchrone via runSingleAutoRun(), voir
+   systems/combat-batch-sim-system.js), agrégation, comparaison.
+
+   N'appelle jamais startSandboxClock()/stopSandboxClock() : ce mode
+   ne dépend d'aucun timer d'affichage, contrairement à Combat unique/
+   Run/Infini — voir note d'en-tête de _sandboxUiState.
+============================================================ */
+
+function moveSandboxAutoPolicyEntry(index, direction) {
+  var policy = (_sandboxUiState.autoPolicy || []).slice();
+  var target = index + direction;
+  if (index < 0 || index >= policy.length || target < 0 || target >= policy.length) return;
+  var tmp = policy[index];
+  policy[index] = policy[target];
+  policy[target] = tmp;
+  _sandboxUiState.autoPolicy = policy;
+  renderCombatSandboxScreen();
+}
+
+/* Restaure la priorité par défaut de la classe active (voir
+   data/auto-policy-defaults.js) — n'affecte jamais ce fichier lui-même,
+   uniquement la copie locale _sandboxUiState.autoPolicy. */
+function resetSandboxAutoPolicy() {
+  if (!_sandboxUiState.classId) return;
+  _sandboxUiState.autoPolicy = (typeof getAutoPolicyDefault === "function") ? getAutoPolicyDefault(_sandboxUiState.classId) : [];
+  renderCombatSandboxScreen();
+}
+
+function setSandboxAutoRunsRequested(rawValue) {
+  var num = parseInt(rawValue, 10);
+  if (isNaN(num) || num < 1) num = 1;
+  _sandboxUiState.autoRunsRequested = num;
+  renderCombatSandboxScreen();
+}
+
+/* launchSandboxAutoBatch()
+   Lance une rafale de _sandboxUiState.autoRunsRequested runs pour la
+   classe/héros actifs, avec la priorité éditée à l'écran (nettoyée
+   via sanitizeAutoPolicyList() avant tout usage, pour ne jamais
+   transmettre un slot invalide au moteur). Chaque RUN est simulé en
+   synchrone (runSingleAutoRun(), aucun accès DOM pendant son
+   exécution), mais l'enchaînement des runs entre eux passe par
+   setTimeout(..., 0) pour rendre la main au navigateur après chaque
+   run — l'écran reste réactif et le compteur "Run n/N" se met à jour
+   même sur une rafale de plusieurs centaines de runs. N'appelle
+   jamais killEnemy(), la sauvegarde réelle, ni un système de
+   progression réel (délégué entièrement à combat-batch-sim-system.js,
+   qui ne réutilise que createSandboxInfiniteState()/
+   applySandboxInfiniteAction()/tickSandboxInfiniteTime()). */
+function launchSandboxAutoBatch() {
+  var s = _sandboxUiState;
+  if (!s.classId || !s.heroId || s.autoBatchRunning) return;
+
+  var kit = getClassSkills(s.classId);
+  var cleanedPolicy = (typeof sanitizeAutoPolicyList === "function") ? sanitizeAutoPolicyList(s.autoPolicy, kit) : (s.autoPolicy || []);
+  if (!cleanedPolicy.length) {
+    if (typeof showToast === "function") showToast("Priorité de simulation vide ou invalide.");
+    return;
+  }
+
+  var runsTotal = Math.max(1, s.autoRunsRequested || 1);
+  s.autoBatchRunning = true;
+  s.autoBatch = { runsDone: 0, runsTotal: runsTotal, reports: [] };
+  renderCombatSandboxScreen();
+
+  var classId = s.classId;
+  var heroId = s.heroId;
+  var statsOverride = s.statsOverride;
+  var baseCooldownMs = s.baseCooldownMs;
+  var enemyCoefsOverride = s.enemyCoefsOverride;
+
+  function runOne() {
+    // L'utilisateur a pu quitter l'écran ou changer de classe pendant
+    // la rafale — on arrête proprement plutôt que d'écrire dans un
+    // état qui ne correspond plus à ce qui est affiché.
+    if (!_sandboxUiState.autoBatchRunning || !_sandboxUiState.autoBatch) return;
+
+    var report = runSingleAutoRun(classId, heroId, cleanedPolicy, statsOverride, baseCooldownMs, null, enemyCoefsOverride);
+    if (report) _sandboxUiState.autoBatch.reports.push(report);
+    _sandboxUiState.autoBatch.runsDone++;
+
+    var progressLine = document.getElementById("sandbox-auto-progress");
+    if (progressLine) {
+      progressLine.textContent = "Run " + _sandboxUiState.autoBatch.runsDone + " / " + _sandboxUiState.autoBatch.runsTotal;
+    }
+
+    if (_sandboxUiState.autoBatch.runsDone < _sandboxUiState.autoBatch.runsTotal) {
+      setTimeout(runOne, 0);
+    } else {
+      var aggregated = aggregateAutoRuns(_sandboxUiState.autoBatch.reports);
+      _sandboxUiState.autoResultsByClass = Object.assign({}, _sandboxUiState.autoResultsByClass);
+      _sandboxUiState.autoResultsByClass[classId] = aggregated;
+      _sandboxUiState.autoBatchRunning = false;
+      renderCombatSandboxScreen();
+    }
+  }
+  setTimeout(runOne, 0);
+}
+
+/* Efface le tableau de comparaison (toutes classes) — n'affecte
+   jamais la partie réelle, uniquement _sandboxUiState. */
+function resetSandboxAutoResults() {
+  if (_sandboxUiState.autoBatchRunning) return;
+  _sandboxUiState.autoResultsByClass = {};
+  _sandboxUiState.autoBatch = null;
   renderCombatSandboxScreen();
 }
 
@@ -1094,6 +1493,90 @@ function setSandboxBaseCooldownMs(rawValue) {
   renderCombatSandboxScreen();
 }
 
+/* ============================================================
+   Handlers — v3.33.12 : panneau de coefficients d'ennemi.
+   Même pattern que les handlers de stats du héros ci-dessus.
+============================================================ */
+
+function toggleSandboxEnemyCoefsPanel() {
+  _sandboxUiState.enemyCoefsPanelOpen = !_sandboxUiState.enemyCoefsPanelOpen;
+  renderCombatSandboxScreen();
+}
+
+/* setSandboxEnemyCoefField(field, rawValue)
+   Modifie UN coefficient surchargé (ENDURANCE_HP_COEF/
+   BOSS_ENDURANCE_HP_COEF/POWER_DMG_COEF/ATTACK_BASE_INTERVAL_S/
+   RESIST_DMG_MULT/WEAK_DMG_MULT/NO_WEAPON_MULT) sur une COPIE locale
+   (_sandboxUiState.enemyCoefsOverride) — n'écrit jamais dans
+   SANDBOX_ENEMY_COEFS ni dans progression-system.js/combat-engine.js
+   (jeu réel intact). "Application au prochain combat/run/simulation
+   lancé" pour ATTACK_BASE_INTERVAL_S (vitesse figée à la création,
+   voir buildSandboxEnemyStats()), mais "application immédiate" pour
+   les autres coefficients (lus depuis state.enemyCoefs à chaque
+   action/tick — voir computeSandboxActionDamage()/
+   resolveSandboxEnemyStrike(), combat-sandbox-system.js) : un combat
+   déjà en cours répercute donc un changement de POWER_DMG_COEF ou
+   des multiplicateurs de résistance/faiblesse dès l'action suivante. */
+function setSandboxEnemyCoefField(field, rawValue) {
+  var validFields = ["ENDURANCE_HP_COEF", "BOSS_ENDURANCE_HP_COEF", "POWER_DMG_COEF", "ATTACK_BASE_INTERVAL_S", "RESIST_DMG_MULT", "WEAK_DMG_MULT", "NO_WEAPON_MULT"];
+  if (validFields.indexOf(field) === -1) return;
+  var num = parseFloat(rawValue);
+  if (isNaN(num)) return;
+
+  var next = Object.assign({}, _sandboxUiState.enemyCoefsOverride || {});
+  next[field] = num;
+  _sandboxUiState.enemyCoefsOverride = next;
+
+  // Répercuter IMMÉDIATEMENT sur un combat/run/infini déjà en cours
+  // (voir note ci-dessus) — écrit dans .enemyCoefs de chaque state
+  // actif, jamais dans SANDBOX_ENEMY_COEFS. ATTACK_BASE_INTERVAL_S
+  // n'a pas d'effet rétroactif ici : la vitesse déjà calculée
+  // (enemy.attackIntervalS, enemyAttackTimerMs) n'est pas retouchée
+  // pour ne pas fausser un minuteur de riposte déjà en cours.
+  if (_sandboxUiState.combat) {
+    _sandboxUiState.combat = Object.assign({}, _sandboxUiState.combat, { enemyCoefs: next });
+  }
+  if (_sandboxUiState.run && _sandboxUiState.run.currentCombat) {
+    _sandboxUiState.run = Object.assign({}, _sandboxUiState.run, {
+      overrideEnemyCoefs: next,
+      currentCombat: Object.assign({}, _sandboxUiState.run.currentCombat, { enemyCoefs: next })
+    });
+  }
+  if (_sandboxUiState.infinite && _sandboxUiState.infinite.currentCombat) {
+    _sandboxUiState.infinite = Object.assign({}, _sandboxUiState.infinite, {
+      overrideEnemyCoefs: next,
+      currentCombat: Object.assign({}, _sandboxUiState.infinite.currentCombat, { enemyCoefs: next })
+    });
+  }
+
+  renderCombatSandboxScreen();
+}
+
+/* resetSandboxEnemyCoefs()
+   Restaure les coefficients par défaut (valeurs RÉELLES du jeu, voir
+   SANDBOX_ENEMY_COEFS) en effaçant toute surcharge — enemyCoefsOverride
+   redevient null. Répercute aussi sur un combat/run/infini en cours,
+   même logique que setSandboxEnemyCoefField(). */
+function resetSandboxEnemyCoefs() {
+  _sandboxUiState.enemyCoefsOverride = null;
+  if (_sandboxUiState.combat) {
+    _sandboxUiState.combat = Object.assign({}, _sandboxUiState.combat, { enemyCoefs: null });
+  }
+  if (_sandboxUiState.run && _sandboxUiState.run.currentCombat) {
+    _sandboxUiState.run = Object.assign({}, _sandboxUiState.run, {
+      overrideEnemyCoefs: null,
+      currentCombat: Object.assign({}, _sandboxUiState.run.currentCombat, { enemyCoefs: null })
+    });
+  }
+  if (_sandboxUiState.infinite && _sandboxUiState.infinite.currentCombat) {
+    _sandboxUiState.infinite = Object.assign({}, _sandboxUiState.infinite, {
+      overrideEnemyCoefs: null,
+      currentCombat: Object.assign({}, _sandboxUiState.infinite.currentCombat, { enemyCoefs: null })
+    });
+  }
+  renderCombatSandboxScreen();
+}
+
 window.buildCombatSandboxHTML = buildCombatSandboxHTML;
 window.selectSandboxClass = selectSandboxClass;
 window.selectSandboxHero = selectSandboxHero;
@@ -1122,3 +1605,8 @@ window.launchSandboxInfinite = launchSandboxInfinite;
 window.triggerSandboxInfiniteAction = triggerSandboxInfiniteAction;
 window.stopSandboxInfiniteFromUi = stopSandboxInfiniteFromUi;
 window.resetSandboxInfinite = resetSandboxInfinite;
+window.moveSandboxAutoPolicyEntry = moveSandboxAutoPolicyEntry;
+window.resetSandboxAutoPolicy = resetSandboxAutoPolicy;
+window.setSandboxAutoRunsRequested = setSandboxAutoRunsRequested;
+window.launchSandboxAutoBatch = launchSandboxAutoBatch;
+window.resetSandboxAutoResults = resetSandboxAutoResults;

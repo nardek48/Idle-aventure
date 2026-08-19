@@ -61,6 +61,18 @@ var ENEMY_CRIT_MULT = 1.5;             // multiplicateur sur un coup critique en
 var WILL_CRIT_RESIST_COEF = 0.05;      // réduction de la chance de critique du joueur par point de volonté ennemie
 var DEFEAT_GOLD_PENALTY = 0.10;        // % d'or perdu quand le héros tombe à 0 PV
 
+/* v3.34.3 : cooldown sur l'attaque de base (tap manuel) — repris du
+   bac à sable (SANDBOX_DEFAULT_BASE_COOLDOWN_MS, systems/combat-
+   sandbox-system.js), qui l'avait validé par simulation comme donnant
+   un ressenti correct (ajusté 600ms -> 1000ms en v3.33.9, "trop proche
+   du spam de clics" en dessous). Réduit par la Célérité totale du
+   héros (base + entraînée) via computeEffectiveCooldownMs(), même
+   formule et même plafond (-50% max) que les skills de classe — voir
+   systems/combat-cooldown-system.js. Contrairement au bac à sable,
+   cette valeur n'est pas réglable en jeu (pas d'écran de test),
+   directement la constante ci-dessous. */
+var BASIC_ATTACK_BASE_COOLDOWN_MS = 1000;
+
 function getEnemyWillCritPenalty() {
   var stats = game.enemy && game.enemy.stats;
   if (!stats) return 0;
@@ -146,6 +158,70 @@ var CombatEngine = {
     if (typeof renderHud === "function") renderHud();
   },
 
+  /* v3.34.3 : point d'entrée pour un tap HUMAIN (clic/tap sur le
+     bouton ATTAQUE ou le sprite ennemi) — playerAttack() reste la
+     fonction qui exécute réellement un coup (appelée directement par
+     autoTap(), qui gère son propre rythme et n'a pas besoin de file
+     d'attente). Si le cooldown de l'attaque de base est déjà écoulé,
+     exécute immédiatement. Sinon, met le coup en FILE D'ATTENTE
+     (profondeur 1 — un seul coup en attente, les clics suivants
+     pendant le même cooldown sont ignorés) : il se déclenche
+     automatiquement dès la fin du cooldown, voir tickBasicAttackCooldown()
+     appelée depuis main/game-loop.js. */
+  requestPlayerAttack: function () {
+    if (!game.enemy || !window.EquipmentManager) return;
+    if (typeof isBlockingModalOpen === "function" && isBlockingModalOpen()) return;
+    if ((game.heroHp || 0) <= 0) return;
+
+    if ((game.basicAttackCooldownMs || 0) > 0) {
+      game.basicAttackPending = true;
+      return;
+    }
+
+    this.playerAttack();
+  },
+
+  /* Célérité TOTALE du héros (base + entraînée), même source que
+     game.autoDps (voir StatsSystem.recalcStats(), systems/stats-system.js)
+     mais ce total brut n'est stocké nulle part ailleurs dans game.* —
+     recalculé ici à la volée, même pattern que ui/heros-view.js et
+     ui/shop-view.js qui font déjà ce calcul pour l'affichage. */
+  getTotalCelerity: function () {
+    var hero = typeof getHeroByGameId === "function" ? getHeroByGameId(game.heroId) : null;
+    var baseCelerity = (hero && hero.stats) ? Number(hero.stats.celerity) || 0 : 0;
+    var trainedCelerity = (game.trainedStats && game.trainedStats.celerity) || 0;
+    return baseCelerity + trainedCelerity;
+  },
+
+  /* Décompte du cooldown de l'attaque de base — appelée depuis
+     main/game-loop.js à chaque frame avec le dt réel (secondes).
+     Déclenche automatiquement le coup en attente (game.basicAttackPending)
+     dès que le cooldown atteint 0. */
+  tickBasicAttackCooldown: function (dt) {
+    if ((game.basicAttackCooldownMs || 0) <= 0) return;
+
+    game.basicAttackCooldownMs -= Math.max(0, Number(dt || 0)) * 1000;
+
+    if (game.basicAttackCooldownMs > 0) {
+      // v3.34.3 : rafraîchi À CHAQUE FRAME tant que le cooldown court
+      // (même rythme que renderEnemyHp(), pas throttlé) — le compte à
+      // rebours affiché doit défiler sans attendre le prochain coup.
+      if (typeof renderBasicAttackCooldown === "function") renderBasicAttackCooldown();
+      return;
+    }
+
+    game.basicAttackCooldownMs = 0;
+    if (game.basicAttackPending) {
+      game.basicAttackPending = false;
+      this.playerAttack(); // relance elle-même un nouveau cooldown + son propre rendu, voir plus bas
+    } else if (typeof renderBasicAttackCooldown === "function") {
+      // Cooldown terminé SANS coup en attente : il faut quand même
+      // retirer le grisage visuel, playerAttack() ne sera pas appelée
+      // ici pour le faire à notre place.
+      renderBasicAttackCooldown();
+    }
+  },
+
   /* Une attaque "tap" (clic manuel, ou déclenchée par le talent
      Main spectrale via autoTap). Calcule les dégâts avec critique
      éventuel, applique les bonus de talents pertinents, puis
@@ -167,7 +243,17 @@ var CombatEngine = {
     // reste sur l'écran Combat à 0 PV.
     if ((game.heroHp || 0) <= 0) return;
 
-    var dmg = Math.max(1, Math.floor(EquipmentManager.effectiveTapDamage()));
+    // v3.34.0 : le tap manuel EST désormais l'attaque de base de la
+    // classe du héros choisi (voir data/classes.js/class-skills.js et
+    // systems/class-combat-system.js) — damageMultiplier appliqué ici
+    // (knight 1.00 / archer 0.85 / mage 0.70), avant tout autre bonus.
+    // window.ClassCombatManager peut être absent en théorie (ordre de
+    // script) : repli à 1 (comportement identique à avant v3.34.0).
+    var classBasicMult = (window.ClassCombatManager && typeof ClassCombatManager.getBasicAttackMultiplier === "function")
+      ? ClassCombatManager.getBasicAttackMultiplier()
+      : 1;
+
+    var dmg = Math.max(1, Math.floor(EquipmentManager.effectiveTapDamage() * classBasicMult));
     var critChance = Math.max(0, EquipmentManager.effectiveCritChance() - getEnemyWillCritPenalty());
     var isCrit = chance(critChance);
 
@@ -200,6 +286,30 @@ var CombatEngine = {
     }
 
     this.dealDamage(dmg, isCrit, true);
+
+    // v3.34.0 : gain de ressource de classe (Rage/Concentration/Mana)
+    // sur ce tap — voir ClassCombatManager.onBasicAttackDealt() pour
+    // la règle exacte par classe (resource.generation). dmg est le
+    // montant AVANT affinité d'arme (même base que le bac à sable) —
+    // volontaire, l'affinité ne doit pas pénaliser la génération de
+    // ressource d'un joueur mal équipé face à un ennemi résistant.
+    if (window.ClassCombatManager && typeof ClassCombatManager.onBasicAttackDealt === "function") {
+      ClassCombatManager.onBasicAttackDealt(dmg, isCrit);
+    }
+
+    // v3.34.3 : démarre le cooldown de l'attaque de base — voir
+    // BASIC_ATTACK_BASE_COOLDOWN_MS en tête de fichier. Réduit par la
+    // Célérité totale (computeEffectiveCooldownMs(), systems/combat-
+    // cooldown-system.js — même formule que les skills de classe).
+    // Démarré ICI (fin de playerAttack, pas de requestPlayerAttack) :
+    // autoTap() appelle playerAttack() directement et doit aussi
+    // relancer ce cooldown, sinon un tap Main spectrale pourrait
+    // s'enchaîner avec un tap manuel sans délai.
+    var totalCelerity = this.getTotalCelerity();
+    game.basicAttackCooldownMs = (typeof computeEffectiveCooldownMs === "function")
+      ? computeEffectiveCooldownMs(BASIC_ATTACK_BASE_COOLDOWN_MS, totalCelerity)
+      : BASIC_ATTACK_BASE_COOLDOWN_MS;
+    if (typeof renderBasicAttackCooldown === "function") renderBasicAttackCooldown();
   },
 
   /* DPS automatique continu (stat Célérité + bonus), appelée chaque
@@ -227,10 +337,15 @@ var CombatEngine = {
      v3.0 : ne se déclenche plus que sur l'écran Combat — même principe
      que autoAttack() ci-dessus (aide active, plus de simulation en
      fond ; c'est désormais l'Hôtel de Ville qui simule la chasse
-     ambiante, voir VillageManager.tickAmbientHunting). */
+     ambiante, voir VillageManager.tickAmbientHunting).
+     v3.34.3 : respecte aussi le cooldown de l'attaque de base — sans
+     ce garde, Main spectrale contournerait le cooldown du tap manuel
+     (silencieux, pas de mise en file : l'auto-tap se redéclenchera de
+     lui-même au prochain intervalle, inutile d'empiler une attente). */
   autoTap: function () {
     if (!game.enemy || !game.talents.t_auto_tap) return;
     if (game.activeTab !== "combat") return;
+    if ((game.basicAttackCooldownMs || 0) > 0) return;
     this.playerAttack();
   },
 
@@ -282,14 +397,35 @@ var CombatEngine = {
     var isCrit = chance(Math.min(40, precision * ENEMY_PRECISION_CRIT_COEF));
     if (isCrit) dmg = Math.floor(dmg * ENEMY_CRIT_MULT);
 
-    // v2.90.22 : le bouclier (posture défensive) vise un plafond de 85%
-    // dans stats-system.js (DEFENSE_ABILITY.maxTotalDefensePct), mais ce
-    // recap ici retombait TOUJOURS à 60% — le bonus du bouclier au-delà
-    // de 60% n'avait donc jamais d'effet réel sur les dégâts reçus.
-    var shieldActive = window.DefenseManager && typeof DefenseManager.isActive === "function" && DefenseManager.isActive();
-    var defenseCapNow = shieldActive ? ((typeof DEFENSE_ABILITY !== "undefined" && DEFENSE_ABILITY.maxTotalDefensePct) || 0.85) : 0.6;
+    // v3.34.0 : l'ancien bouclier universel (DefenseManager/
+    // DEFENSE_ABILITY, data/heroes.js) est remplacé par l'action
+    // "defense" propre à la classe du héros (Garde/Esquive/Barrière,
+    // voir data/class-skills.js + systems/class-combat-system.js).
+    // Plafond de défense normal (Endurance + équipement) toujours 60%,
+    // relevé à 85% pendant qu'une action défensive de classe est
+    // active — même principe que l'ancien bouclier, juste sa source.
+    var activeDefense = window.ClassCombatManager && typeof ClassCombatManager.getActiveDefenseEffect === "function"
+      ? ClassCombatManager.getActiveDefenseEffect()
+      : null;
+    var defenseCapNow = activeDefense ? 0.85 : 0.6;
     var defense = Math.min(defenseCapNow, Number(game.heroDefensePct || 0));
     dmg = Math.max(1, Math.floor(dmg * (1 - defense)));
+
+    // Effet de l'action défensive de classe, EN PLUS de la réduction
+    // de défense classique ci-dessus (les deux se cumulent, dans cet
+    // ordre — cohérent avec le bac à sable) :
+    //   - damageReduction (Garde)    : réduit dmg de X%
+    //   - damageAbsorption (Barrière) : réduit dmg de X% (même calcul,
+    //     nom différent pour rester fidèle au texte de l'action)
+    //   - evasion (Esquive)          : X% de chance d'ignorer TOUT le
+    //     coup (dmg mis à 0), sinon dégâts inchangés par cet effet
+    if (activeDefense) {
+      if (activeDefense.effectType === "damageReduction" || activeDefense.effectType === "damageAbsorption") {
+        dmg = Math.max(0, Math.floor(dmg * (1 - activeDefense.value)));
+      } else if (activeDefense.effectType === "evasion") {
+        if (chance(activeDefense.value * 100)) dmg = 0;
+      }
+    }
 
     game.heroHp = Math.max(0, Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1) - dmg);
 
@@ -375,6 +511,16 @@ var CombatEngine = {
 
     dmg = Math.max(0, Number(dmg || 0));
     if (!ignoreAffinity) dmg *= getDamageAffinity().mult;
+
+    // v3.34.1 : vulnérabilité posée par Brise-garde (Chevalier, voir
+    // data/class-skills.js) — stockée sur game.enemy lui-même (pas
+    // game.classActiveDefense, qui ne concerne que les effets DÉFENSIFS
+    // du héros) car liée à CET ennemi précis : si l'ennemi meurt avant
+    // expiration, spawnEnemy() fait apparaître un nouvel objet enemy
+    // sans ce champ, l'effet disparaît donc naturellement avec lui.
+    if (game.enemy.vulnerableUntil && Date.now() < game.enemy.vulnerableUntil) {
+      dmg *= (1 + Number(game.enemy.vulnerableMult || 0));
+    }
 
     if (game.enemy.isBoss && game.talents.t_perfect_execution && game.enemy.maxHp > 0 && (game.enemy.hp / game.enemy.maxHp) < 0.2) {
       dmg *= (1 + 0.15 * game.talents.t_perfect_execution);
@@ -656,7 +802,12 @@ var CombatEngine = {
 
 // Alias globaux pour les onclick="..." générés dans le HTML (voir
 // index.html, le bouton d'attaque appelle playerAttack() directement).
-function playerAttack() { CombatEngine.playerAttack(); }
+// v3.34.3 : l'alias global playerAttack() (appelé par les onclick="..."
+// dans le HTML, voir ui/combat-view.js) pointe maintenant vers
+// requestPlayerAttack() (garde de cooldown + file d'attente) plutôt
+// que playerAttack() directement — le nom de l'alias global reste
+// inchangé pour ne pas casser le HTML existant, seul son contenu change.
+function playerAttack() { CombatEngine.requestPlayerAttack(); }
 function autoAttack() { CombatEngine.autoAttack(0.1); }
 function autoTap() { CombatEngine.autoTap(); }
 

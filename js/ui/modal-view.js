@@ -213,6 +213,12 @@ function confirmHeroSelection() {
   if (game.heroId && game.heroId.indexOf("chaos") === 0) {
     game.codexChaosSeen = true;
   }
+  // v3.34.0 : ressource/cooldowns de classe repartent toujours de zéro
+  // à la sélection d'un héros (confirmé : sécurité, même si la classe
+  // reste identique à l'ancien héros) — voir systems/class-combat-system.js.
+  if (window.ClassCombatManager && typeof ClassCombatManager.resetForNewHero === "function") {
+    ClassCombatManager.resetForNewHero();
+  }
   game.playerName = name;
   window.pendingHeroCreationOrigin = null; // v3.29 : création confirmée, la croix ✕ n'a plus lieu d'être pour cet emplacement
 
@@ -331,23 +337,40 @@ function buildHeroStepHTML(selectedHero) {
   return html;
 }
 
-/* v3.29 : bandeau dépliable sous le bouton Confirmer, attaque spéciale du héros actuellement survolé/sélectionné (pas encore choisi définitivement). */
+/* v3.29 : bandeau dépliable sous le bouton Confirmer, aperçu du kit
+   de combat du héros actuellement survolé/sélectionné (pas encore
+   choisi définitivement).
+   v3.34.0 : montre désormais les 3 skills + l'action defense de la
+   CLASSE du héros (voir data/classes.js/class-skills.js) — remplace
+   l'aperçu de l'ancienne attaque spéciale unique par héros. Les 2
+   héros d'une même classe (ex. Chevalier/Chevalier du Chaos) ont donc
+   le même aperçu ici, cohérent avec le fait qu'ils partagent
+   réellement le même kit en combat. */
 function buildHeroAttackPreviewBandeauHTML(selectedHero) {
-  var special = (typeof HERO_SPECIAL_ATTACKS !== "undefined" && selectedHero) ? HERO_SPECIAL_ATTACKS[selectedHero.id] : null;
-  if (!special) return "";
+  if (!selectedHero || typeof getClassForHero !== "function") return "";
+  var cls = getClassForHero(selectedHero);
+  var kit = (cls && typeof getClassSkills === "function") ? getClassSkills(cls.id) : null;
+  if (!kit) return "";
 
   var html = '<button type="button" class="hero-attack-preview-toggle" onclick="toggleHeroAttackPreview()">';
-  html += '⚔️ Attaque spéciale <span class="hero-attack-preview-chevron">' + (heroAttackPreviewExpanded ? '▴' : '▾') + '</span>';
+  html += '⚔️ Compétences de classe <span class="hero-attack-preview-chevron">' + (heroAttackPreviewExpanded ? '▴' : '▾') + '</span>';
   html += '</button>';
 
   if (heroAttackPreviewExpanded) {
-    html += '<div class="hero-attack-preview-card">';
-    html += '  <div class="hero-attack-preview-icon-wrap">' + renderIconOrEmojiHTML(special.icon, "hero-attack-preview-icon", special.name) + '</div>';
-    html += '  <div class="hero-attack-preview-body">';
-    html += '    <div class="hero-attack-preview-name">' + esc(special.name) + '</div>';
-    html += '    <div class="hero-attack-preview-desc">' + esc(special.desc) + '</div>';
-    html += '  </div>';
-    html += '</div>';
+    var slots = ["skill1", "skill2", "skill3", "defense"];
+    slots.forEach(function (slot) {
+      var action = kit.actions[slot];
+      if (!action) return;
+      var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "🛡️" : "✨");
+
+      html += '<div class="hero-attack-preview-card">';
+      html += '  <div class="hero-attack-preview-icon-wrap">' + renderIconOrEmojiHTML(icon, "hero-attack-preview-icon", action.label) + '</div>';
+      html += '  <div class="hero-attack-preview-body">';
+      html += '    <div class="hero-attack-preview-name">' + esc(action.label) + '</div>';
+      html += '    <div class="hero-attack-preview-desc">' + esc(action.description) + '</div>';
+      html += '  </div>';
+      html += '</div>';
+    });
   }
 
   return html;
