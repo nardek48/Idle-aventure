@@ -91,10 +91,10 @@ var TALENTTREE = {
   survival: [
     { id: "t_regenerate", name: "Cœur vaillant", icon: "❤️", img: "images/Icons/talents/t_regenerate.png", slot: "top", tier: null, side: null, maxLevel: 3, perLevel: 0.05, effect: "+5% PV max, par niveau." },
 
-    { id: "t_thick_skin", name: "Bouclier renforcé", icon: "🛡️", img: "images/Icons/talents/t_thick_skin.png", slot: "upper_left", tier: "upper", side: "left", requires: "t_regenerate", maxLevel: 3, perLevel: 2000, effect: "La posture défensive dure +2s, par niveau." },
-    { id: "t_second_wind", name: "Peau de pierre", icon: "🪨", img: "images/Icons/talents/t_second_wind.png", slot: "upper_right", tier: "upper", side: "right", requires: "t_regenerate", maxLevel: 3, perLevel: 0.02, effect: "+2% défense passive (hors bouclier), par niveau." },
+    { id: "t_thick_skin", name: "Bouclier renforcé", icon: "🛡️", img: "images/Icons/talents/t_thick_skin.png", slot: "upper_left", tier: "upper", side: "left", requires: "t_regenerate", maxLevel: 3, perLevel: 2000, effect: "L'action defense de ta classe (Garde/Esquive/Barrière) dure +2s, par niveau." },
+    { id: "t_second_wind", name: "Peau de pierre", icon: "🪨", img: "images/Icons/talents/t_second_wind.png", slot: "upper_right", tier: "upper", side: "right", requires: "t_regenerate", maxLevel: 3, perLevel: 0.02, effect: "+2% défense passive (hors action defense de classe), par niveau." },
 
-    { id: "t_calm_breath", name: "Riposte du bouclier", icon: "🍃", img: "images/Icons/talents/t_calm_breath.png", slot: "mid_left", tier: "mid", side: "left", requires: "t_thick_skin", maxLevel: 3, perLevel: 0.05, effect: "+5% réduction de dégâts pendant la posture défensive, par niveau (en plus des 35% de base)." },
+    { id: "t_calm_breath", name: "Riposte du bouclier", icon: "🍃", img: "images/Icons/talents/t_calm_breath.png", slot: "mid_left", tier: "mid", side: "left", requires: "t_thick_skin", maxLevel: 3, perLevel: 0.05, effect: "+5% de réduction/absorption/évasion supplémentaire pendant l'action defense de ta classe, par niveau (en plus de sa valeur de base)." },
     { id: "t_tenacious_will", name: "Vitalité tenace", icon: "🌬️", img: "images/Icons/talents/t_tenacious_will.png", slot: "mid_right", tier: "mid", side: "right", requires: "t_second_wind", maxLevel: 3, perLevel: 0.08, effect: "+8% PV max, par niveau." },
 
     { id: "t_essence_bloom", name: "Sang-froid", icon: "🔮", img: "images/Icons/talents/t_essence_bloom.png", slot: "inner_left", tier: "inner", side: "left", requires: "t_calm_breath", maxLevel: 3, perLevel: 0.10, effect: "-10% de pénalité d'or à la défaite, par niveau.", capstone: true },

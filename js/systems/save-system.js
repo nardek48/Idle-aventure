@@ -439,7 +439,9 @@ function buildSaveData() {
     worldQuestProgress: game.worldQuestProgress || {},
     worldQuestsCompleted: game.worldQuestsCompleted || {},
     // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
-    resources: game.resources || { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0 },
+    // v3.35 : planche/lingot (artisanat tier 1, voir data/recipes.js) ajoutés ici.
+    // v3.36 : pierre (brute, Carrière) / farine (tier 1, Blé→Farine) ajoutées ici.
+    resources: game.resources || { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, planche: 0, lingot: 0, pierre: 0, farine: 0 },
     adventureQuestProgress: game.adventureQuestProgress || {},
     adventureQuestsCompleted: game.adventureQuestsCompleted || {},
     adventureQuestRun: game.adventureQuestRun || { active: false, questId: null },
@@ -593,12 +595,20 @@ function restoreBaseState(d) {
   game.worldQuestProgress = d.worldQuestProgress && typeof d.worldQuestProgress === "object" ? d.worldQuestProgress : {};
   game.worldQuestsCompleted = d.worldQuestsCompleted && typeof d.worldQuestsCompleted === "object" ? d.worldQuestsCompleted : {};
   // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
-  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0 };
+  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, planche: 0, lingot: 0, pierre: 0, farine: 0 };
   if (typeof game.resources.mineraiRare !== "number") game.resources.mineraiRare = 0;
   if (typeof game.resources.viande !== "number") game.resources.viande = 0;
   if (typeof game.resources.ble !== "number") game.resources.ble = 0;
   if (typeof game.resources.bois !== "number") game.resources.bois = 0;
   if (typeof game.resources.fer !== "number") game.resources.fer = 0;
+  // v3.35 : artisanat tier 1 (voir data/recipes.js).
+  if (typeof game.resources.planche !== "number") game.resources.planche = 0;
+  if (typeof game.resources.lingot !== "number") game.resources.lingot = 0;
+  // v3.36 : Pierre (Carrière) / Farine (tier 1, Blé→Farine) — une
+  // ancienne sauvegarde n'a ni l'une ni l'autre, doit charger à 0
+  // sans planter (critère de validation explicite de Seb).
+  if (typeof game.resources.pierre !== "number") game.resources.pierre = 0;
+  if (typeof game.resources.farine !== "number") game.resources.farine = 0;
   game.adventureQuestProgress = d.adventureQuestProgress && typeof d.adventureQuestProgress === "object" ? d.adventureQuestProgress : {};
   game.adventureQuestsCompleted = d.adventureQuestsCompleted && typeof d.adventureQuestsCompleted === "object" ? d.adventureQuestsCompleted : {};
   game.adventureQuestRun = d.adventureQuestRun && typeof d.adventureQuestRun === "object" ? d.adventureQuestRun : { active: false, questId: null };
@@ -685,7 +695,9 @@ function hardResetState() {
   var keptWorldQuestProgress = Object.assign({}, game.worldQuestProgress || {});
   var keptWorldQuestsCompleted = Object.assign({}, game.worldQuestsCompleted || {});
   // v3.0 : ressources rares et progression des quêtes d'aventure = progression permanente, comme les questlines de monde.
-  var keptResources = Object.assign({ mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0 }, game.resources || {});
+  // v3.35 : planche/lingot suivent la même règle (conservés à l'ascension, comme Bois/Fer).
+  // v3.36 : pierre/farine idem.
+  var keptResources = Object.assign({ mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, planche: 0, lingot: 0, pierre: 0, farine: 0 }, game.resources || {});
   var keptAdventureQuestProgress = Object.assign({}, game.adventureQuestProgress || {});
   var keptAdventureQuestsCompleted = Object.assign({}, game.adventureQuestsCompleted || {});
   // v3.30 : huntStats (compteur de lots) = progression permanente, comme adventureQuestProgress.
@@ -935,7 +947,9 @@ function fullResetState() {
   game.worldQuestsCompleted = {};
   // v3.0 : système Quêtes/Ressources/Territoire — repart bien à zéro
   // sur un reset complet, comme worldQuestProgress ci-dessus.
-  game.resources = { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0 };
+  // v3.35 : planche/lingot repartent aussi à zéro (artisanat tier 1).
+  // v3.36 : pierre/farine idem.
+  game.resources = { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, planche: 0, lingot: 0, pierre: 0, farine: 0 };
   game.adventureQuestProgress = {};
   game.adventureQuestsCompleted = {};
   game.huntStats = {}; // v3.30

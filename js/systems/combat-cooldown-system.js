@@ -167,13 +167,17 @@ function useAction(resourceState, cooldownState, action, combatContext) {
 }
 
 /* computeEffectiveCooldownMs(baseCooldownMs, celerity, options)
-   v3.33.6 : ajoutée pour le bac à sable UNIQUEMENT — calcule un
-   cooldown effectif pour l'attaque de base, dérivé de la Célérité du
-   héros de test (voir systems/combat-sandbox-system.js). N'est
-   JAMAIS appelée par data/class-skills.js ni par le moteur de combat
-   réel : dans le jeu réel, l'attaque de base garde cooldownMs: 0
-   (comportement inchangé), cette formule ne s'applique que dans le
-   bac à sable.
+   v3.33.6 : ajoutée initialement pour le bac à sable UNIQUEMENT —
+   calcule un cooldown effectif pour l'attaque de base, dérivé de la
+   Célérité du héros de test (voir systems/combat-sandbox-system.js).
+   v3.34.3 : BRANCHÉE au jeu réel — CombatEngine.playerAttack()
+   (systems/combat-engine.js) l'appelle désormais aussi pour le
+   cooldown réel de l'attaque de base (BASIC_ATTACK_BASE_COOLDOWN_MS =
+   1000ms), avec la Célérité totale réelle du héros
+   (CombatEngine.getTotalCelerity()). Cette fonction elle-même n'a pas
+   changé (toujours pure, aucune dépendance à game.*) — c'est son
+   usage ailleurs dans le projet qui s'est étendu au-delà du bac à
+   sable, pas son contenu.
 
    Choix d'emplacement : ajoutée ici plutôt que dans un nouveau
    fichier systems/combat-cooldown-formulas.js — c'est une formule de

@@ -283,3 +283,37 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* v3.35 : bloc Fabriquer (artisanat tier 1) — au-dessus du bloc
+   Vendre dans le panneau détail. Réutilise .warehouse-qty-stepper/
+   .warehouse-qty-btn/.warehouse-qty-max-btn/.btn-buy tels quels, seul
+   le titre + la recette sont propres à ce bloc. */
+.warehouse-craft-block {
+  width: 100%;
+  margin: 8px 0 4px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--nb-frame);
+}
+
+.warehouse-craft-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.warehouse-craft-title-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.warehouse-craft-recipe {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: rgba(58, 44, 26, 0.75);
+  text-align: center;
+}
