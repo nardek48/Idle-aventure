@@ -37,16 +37,26 @@ même principe de génération d'ennemi que les quêtes d'aventure
    sellPrice réel (7/10 or) — volontairement inférieur à la valeur de
    revente des 5 intrants bruts nécessaires (Bois×5=10, Fer×5=15),
    pour que le craft reste motivé par la progression et non par
-   l'arbitrage revente brute vs revente transformée. */
+   l'arbitrage revente brute vs revente transformée.
+   v3.45 : Eau (brute, bâtiment Puits — voir data/production-buildings.js),
+   ressource la moins chère du jeu (1 or). Pain et Ration (tier 1,
+   premières recettes CROISÉES multi-intrants et premières à utiliser
+   station: "workshop" — voir data/recipes.js) : sellPrice choisi sous
+   la valeur de revente brute des intrants, même règle anti-arbitrage
+   que Planche/Lingot/Farine (Pain 19 or vs 5 Eau + 3 Farine = 26 or ;
+   Ration 36 or vs 10 Viande + 1 Pain = 49 or). */
 var WAREHOUSE_RESOURCES = {
   viande: { id: "viande", name: "Viande", icon: "images/Icons/resources/meat_icon.png", desc: "Butin de chasse, obtenu en Forêt ou au bâtiment Chasse.", sellPrice: 3, tier: "raw" },
   ble: { id: "ble", name: "Blé", icon: "images/Icons/resources/wheat_icon.png", desc: "Récolté au bâtiment Champs.", sellPrice: 2, tier: "raw" },
   bois: { id: "bois", name: "Bois", icon: "images/Icons/resources/wood_icon.png", desc: "Coupé à la Scierie — réservé aux futures constructions.", sellPrice: 2, tier: "raw" },
   fer: { id: "fer", name: "Fer", icon: "images/Icons/resources/iron_icon.png", desc: "Extrait à la Mine — réservé aux futures améliorations.", sellPrice: 5, tier: "raw" },
   pierre: { id: "pierre", name: "Pierre", icon: "images/Icons/resources/stone_icon.png", desc: "Extraite à la Carrière — réservée aux futures constructions.", sellPrice: 2, tier: "raw" },
+  eau: { id: "eau", name: "Eau", icon: "images/Icons/resources/water_icon.png", desc: "Puisée au Puits — ressource la moins chère du village.", sellPrice: 1, tier: "raw" },
   planche: { id: "planche", name: "Planche", icon: "images/Icons/resources/plank_icon.png", desc: "Fabriquée à partir de Bois.", sellPrice: 7, tier: "crafted", cap: 999 },
   lingot: { id: "lingot", name: "Lingot", icon: "images/Icons/resources/ingot_icon.png", desc: "Fabriqué à partir de Fer.", sellPrice: 10, tier: "crafted", cap: 999 },
-  farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.png", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 }
+  farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.png", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 },
+  pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.png", desc: "Cuit à l'Atelier de Construction à partir d'Eau et de Farine.", sellPrice: 19, tier: "crafted", cap: 999 },
+  ration: { id: "ration", name: "Ration", icon: "images/Icons/resources/ration_icon.png", desc: "Préparée à l'Atelier de Construction à partir de Viande et de Pain.", sellPrice: 36, tier: "crafted", cap: 999 }
 };
 
 var HUNT_QUESTS = {

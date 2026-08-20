@@ -54,6 +54,7 @@ var CONSTRUCTION_BUILDINGS = {
     id: "workshop",
     name: "Atelier de Construction",
     desc: "Améliore l'Atelier pour augmenter le prix de vente de toutes les ressources de l'Entrepôt.",
+    icon: "images/Icons/construction_icon.png",
     maxLevel: 10,
 
     /* v3.40 : structure par paliers — minLevel/maxLevel EXCLUSIFS du

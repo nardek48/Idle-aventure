@@ -317,3 +317,70 @@
   color: rgba(58, 44, 26, 0.75);
   text-align: center;
 }
+
+/* v3.43 : file d'attente de craft — même bordure pointillée que
+   .warehouse-craft-block juste au-dessus, pour marquer une section
+   distincte sans dupliquer le style de carte complet. */
+.warehouse-craft-queue {
+  width: 100%;
+  margin: 8px 0 4px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--nb-frame);
+}
+
+.warehouse-craft-queue-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.warehouse-craft-queue-row {
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  background: rgba(58, 44, 26, 0.05);
+}
+
+.warehouse-craft-queue-row.is-current {
+  background: rgba(139, 94, 31, 0.12);
+}
+
+.warehouse-craft-queue-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.warehouse-craft-queue-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nb-ink);
+}
+
+.warehouse-craft-queue-time {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(58, 44, 26, 0.75);
+  white-space: nowrap;
+}
+
+.warehouse-craft-queue-cancel {
+  border: none;
+  background: rgba(180, 40, 40, 0.12);
+  color: #a02020;
+  font-size: 12px;
+  font-weight: 800;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.warehouse-craft-queue-row .map-quest-step-bar {
+  margin-top: 6px;
+}
+

@@ -146,6 +146,18 @@
   flex: 0 0 auto;
 }
 
+/* v3.45 : version image (images/Icons/construction_icon.png fournie
+   par Seb) — remplace l'emoji 🏗️ générique par une illustration
+   dédiée à l'Atelier, via renderIconOrEmojiHTML() (voir
+   ui/warehouse-view.js). L'emoji reste le repli automatique si
+   CONSTRUCTION_BUILDINGS[id].icon est absent. */
+.construction-entry-icon-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
 .construction-entry-info {
   flex: 1 1 auto;
   min-width: 0;

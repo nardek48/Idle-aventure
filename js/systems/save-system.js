@@ -448,7 +448,7 @@ function buildSaveData() {
     // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
     // v3.35 : planche/lingot (artisanat tier 1, voir data/recipes.js) ajoutés ici.
     // v3.36 : pierre (brute, Carrière) / farine (tier 1, Blé→Farine) ajoutées ici.
-    resources: game.resources || { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, planche: 0, lingot: 0, pierre: 0, farine: 0 },
+    resources: game.resources || { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0 },
     adventureQuestProgress: game.adventureQuestProgress || {},
     adventureQuestsCompleted: game.adventureQuestsCompleted || {},
     adventureQuestRun: game.adventureQuestRun || { active: false, questId: null },
@@ -457,6 +457,12 @@ function buildSaveData() {
     // adventureQuestProgress ; huntRun NE survit PAS (comme dungeonRun).
     huntStats: game.huntStats || {},
     huntRun: game.huntRun || { active: false, questId: null, killsInLot: 0 },
+    // v3.43 : file d'attente de craft de l'Entrepôt (voir
+    // WarehouseManager.enqueueCraft()/tickCraftQueue()) — survit à un
+    // rechargement de page (SANS rattrapage hors-ligne, contrairement
+    // à production.lastTick : la file reprend là où elle était, sans
+    // compenser le temps écoulé pendant que l'app était fermée).
+    craftQueue: Array.isArray(game.craftQueue) ? game.craftQueue : [],
     // v3.31 : bâtiments de production (voir data/production-buildings.js)
     // — niveau/stock persistent TOUJOURS (comme le Village), lastTick
     // sert au rattrapage hors-ligne (voir ProductionManager.catchUpOffline()).
@@ -612,7 +618,7 @@ function restoreBaseState(d) {
   game.worldQuestProgress = d.worldQuestProgress && typeof d.worldQuestProgress === "object" ? d.worldQuestProgress : {};
   game.worldQuestsCompleted = d.worldQuestsCompleted && typeof d.worldQuestsCompleted === "object" ? d.worldQuestsCompleted : {};
   // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
-  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, planche: 0, lingot: 0, pierre: 0, farine: 0 };
+  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0 };
   if (typeof game.resources.mineraiRare !== "number") game.resources.mineraiRare = 0;
   if (typeof game.resources.viande !== "number") game.resources.viande = 0;
   if (typeof game.resources.ble !== "number") game.resources.ble = 0;
@@ -632,6 +638,10 @@ function restoreBaseState(d) {
   // v3.30 : Chasse en boucle (voir data/hunt-quests.js).
   game.huntStats = d.huntStats && typeof d.huntStats === "object" ? d.huntStats : {};
   game.huntRun = d.huntRun && typeof d.huntRun === "object" ? d.huntRun : { active: false, questId: null, killsInLot: 0 };
+  // v3.43 : file d'attente de craft — migration douce, une ancienne
+  // sauvegarde sans `craftQueue` repart avec [] (WarehouseManager.ensure()
+  // le recrée de toute façon au premier accès).
+  game.craftQueue = Array.isArray(d.craftQueue) ? d.craftQueue : [];
   // v3.31 : bâtiments de production (voir data/production-buildings.js)
   // — migration douce : une vieille sauvegarde sans `production` (ou
   // avec un bâtiment manquant, ex. ajout d'un 5e bâtiment plus tard)
@@ -711,6 +721,16 @@ function clearSaveData() {
 
 /* Reset "ascension" : réinitialise la run classique mais conserve l'Aether/les ascensions/les améliorations Aether. Appelée par ascendNow(). */
 function hardResetState() {
+  // v3.43 : rembourse intégralement toute commande de craft en cours
+  // (y compris celle déjà démarrée) AVANT de figer keptResources
+  // juste en dessous — décision explicite de Seb : contrairement à
+  // huntRun/dungeonRun/adventureQuestRun (progression en cours perdue
+  // sans remboursement), une ascension ne doit pas faire perdre des
+  // ressources déjà déduites pour un craft jamais livré.
+  if (window.WarehouseManager && typeof WarehouseManager.refundAndClearCraftQueue === "function") {
+    WarehouseManager.refundAndClearCraftQueue();
+  }
+
   var questDefaults = getDefaultQuestProgress();
   var keptAether = game.aether || 0;
   var keptTotalAetherEarned = game.totalAetherEarned || 0;
@@ -726,7 +746,8 @@ function hardResetState() {
   // v3.0 : ressources rares et progression des quêtes d'aventure = progression permanente, comme les questlines de monde.
   // v3.35 : planche/lingot suivent la même règle (conservés à l'ascension, comme Bois/Fer).
   // v3.36 : pierre/farine idem.
-  var keptResources = Object.assign({ mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, planche: 0, lingot: 0, pierre: 0, farine: 0 }, game.resources || {});
+  // v3.45 : eau/pain/ration idem (6e bâtiment Puits + recettes croisées).
+  var keptResources = Object.assign({ mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0 }, game.resources || {});
   var keptAdventureQuestProgress = Object.assign({}, game.adventureQuestProgress || {});
   var keptAdventureQuestsCompleted = Object.assign({}, game.adventureQuestsCompleted || {});
   // v3.30 : huntStats (compteur de lots) = progression permanente, comme adventureQuestProgress.
@@ -988,10 +1009,11 @@ function fullResetState() {
   // sur un reset complet, comme worldQuestProgress ci-dessus.
   // v3.35 : planche/lingot repartent aussi à zéro (artisanat tier 1).
   // v3.36 : pierre/farine idem.
-  game.resources = { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, planche: 0, lingot: 0, pierre: 0, farine: 0 };
+  game.resources = { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0 };
   game.adventureQuestProgress = {};
   game.adventureQuestsCompleted = {};
   game.huntStats = {}; // v3.30
+  game.craftQueue = []; // v3.43 : repart à zéro, aucun remboursement à faire sur un reset complet (tout repart de zéro de toute façon)
   game.production = {}; // v3.31 : repart à zéro, ProductionManager.ensure() recrée les 4 bâtiments au niveau 1
   game.construction = {}; // v3.37 : repart à zéro, ConstructionManager.ensure() recrée workshop au niveau 0
   game.workshopUnlock = {}; // v3.38 : repart à zéro, WorkshopUnlockManager.ensure() recrée l'état initial (currentStep 0)

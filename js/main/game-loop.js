@@ -145,6 +145,14 @@ function gameLoop() {
     ProductionManager.tick(dt);
   }
 
+  // v3.43 : file d'attente de craft de l'Entrepôt (voir
+  // WarehouseManager.tickCraftQueue()) — tourne EN CONTINU comme
+  // Production juste au-dessus, indépendamment de l'onglet ouvert,
+  // SANS rattrapage hors-ligne (pas d'appel dans main/boot.js).
+  if (window.WarehouseManager && typeof WarehouseManager.tickCraftQueue === "function") {
+    WarehouseManager.tickCraftQueue(dt);
+  }
+
   // v2.10 : la riposte ennemie ne s'applique QUE quand le joueur est
   // réellement sur l'écran Combat — avant, elle tournait en continu
   // même en naviguant dans les autres onglets, faisant baisser les PV

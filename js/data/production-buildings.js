@@ -50,13 +50,19 @@ var PRODUCTION_CONFIG = {
    PRODUCTION_CONFIG que les 4 autres (décision explicite, pas de
    config par-bâtiment séparée). Aucune modification requise ailleurs :
    ui/production-view.js et systems/production-system.js itèrent déjà
-   Object.keys(PRODUCTION_BUILDINGS) sans rien coder en dur. */
+   Object.keys(PRODUCTION_BUILDINGS) sans rien coder en dur.
+
+   v3.45 : Puits (6e bâtiment, produit Eau) — même principe EXACT,
+   aucune formule spéciale (PRODUCTION_CONFIG partagé, décision
+   explicite). Accessible dès le départ comme les 5 autres, pas de
+   gate par quête. */
 var PRODUCTION_BUILDINGS = {
   hunt: { id: "hunt", name: "Chasse", resourceKey: "viande", icon: "images/Icons/resources/meat_icon.png", buildingImage: "images/Production/hunt.png", desc: "Produit de la viande en continu." },
   farm: { id: "farm", name: "Champs", resourceKey: "ble", icon: "images/Icons/resources/wheat_icon.png", buildingImage: "images/Production/farm.png", desc: "Produit du blé en continu." },
   sawmill: { id: "sawmill", name: "Scierie", resourceKey: "bois", icon: "images/Icons/resources/wood_icon.png", buildingImage: "images/Production/sawmill.png", desc: "Produit du bois en continu." },
   mine: { id: "mine", name: "Mine", resourceKey: "fer", icon: "images/Icons/resources/iron_icon.png", buildingImage: "images/Production/mine.png", desc: "Produit du fer en continu." },
-  quarry: { id: "quarry", name: "Carrière", resourceKey: "pierre", icon: "images/Icons/resources/stone_icon.png", buildingImage: "images/Production/quarry.png", desc: "Produit de la pierre en continu." }
+  quarry: { id: "quarry", name: "Carrière", resourceKey: "pierre", icon: "images/Icons/resources/stone_icon.png", buildingImage: "images/Production/quarry.png", desc: "Produit de la pierre en continu." },
+  well: { id: "well", name: "Puits", resourceKey: "eau", icon: "images/Icons/resources/water_icon.png", buildingImage: "images/Production/well.png", desc: "Produit de l'eau en continu." }
 };
 
 window.PRODUCTION_CONFIG = PRODUCTION_CONFIG;

@@ -78,23 +78,53 @@ function adjustWarehouseCraftQty(delta) {
 }
 window.adjustWarehouseCraftQty = adjustWarehouseCraftQty;
 
-/* Nombre maximum de crafts réalisables avec le stock actuel de
-   l'unique input de la recette (pas de recette croisée en V1, donc un
-   seul input à considérer — voir data/recipes.js). */
+/* Nombre maximum de crafts réalisables avec le stock actuel — le
+   MINIMUM sur TOUS les intrants de la recette (v3.45 : généralisé
+   pour les recettes croisées type Pain/Ration, qui ont plusieurs
+   intrants différents ; les recettes single-input restent correctes,
+   Math.min sur un seul élément = cet élément).
+   v3.43 : renvoie 0 si recipe.station est défini et non construit
+   (même condition que WarehouseManager.canCraft()) — masque le bloc
+   Fabriquer plutôt que d'afficher un stepper inutilisable. Sans effet
+   sur les 3 recettes single-input existantes (station: null). */
 function getMaxCraftTimes(recipe) {
-  var input = recipe.inputs[0];
-  var available = WarehouseManager.getAmount(input.resourceId);
-  return Math.floor(available / input.quantity);
+  if (recipe.station) {
+    var stationLevel = (game.construction && game.construction[recipe.station] && game.construction[recipe.station].level) || 0;
+    if (stationLevel < 1) return 0;
+  }
+  return recipe.inputs.reduce(function (min, input) {
+    var possible = Math.floor(WarehouseManager.getAmount(input.resourceId) / input.quantity);
+    return Math.min(min, possible);
+  }, Infinity);
 }
 
 function confirmCraftWarehouseResource() {
   if (!selectedWarehouseKey) return;
   var recipe = (typeof RECIPE_BY_INPUT !== "undefined") ? RECIPE_BY_INPUT[selectedWarehouseKey] : null;
   if (!recipe) return;
-  WarehouseManager.craft(recipe, warehouseCraftQty);
-  warehouseCraftQty = 1; // repart à 1 après craft (le stock restant a changé)
+  WarehouseManager.enqueueCraft(recipe, warehouseCraftQty);
+  warehouseCraftQty = 1; // repart à 1 après mise en file (le stock restant a changé)
 }
 window.confirmCraftWarehouseResource = confirmCraftWarehouseResource;
+
+/* v3.43 : annule une commande en attente (bouton ✕ dans le bloc file
+   d'attente ci-dessous) — pas de confirmation supplémentaire, le
+   remboursement est intégral et immédiat (voir
+   WarehouseManager.cancelCraft()). */
+function cancelWarehouseCraft(queueId) {
+  if (window.WarehouseManager && typeof WarehouseManager.cancelCraft === "function") {
+    WarehouseManager.cancelCraft(queueId);
+  }
+}
+window.cancelWarehouseCraft = cancelWarehouseCraft;
+
+/* v3.43 : même principe EXACT que isProductionScreenVisible()
+   (ui/village-view.js) — throttle du re-rendu pendant que le tick de
+   la file de craft tourne, voir WarehouseManager._maybeRenderWarehouse(). */
+function isWarehouseScreenVisible() {
+  return game.activeTab === "village" && activeVillageSubTab === "entrepot";
+}
+window.isWarehouseScreenVisible = isWarehouseScreenVisible;
 
 /* delta : +1/-1 (boutons du stepper) ou la chaîne "max". Toujours
    borné à [1, stock actuel] — jamais 0 (rien à vendre) ni au-delà du
@@ -134,15 +164,23 @@ function buildWarehouseTileHTML(key) {
 
 /* v3.35 : bloc Fabriquer — affiché UNIQUEMENT si la ressource
    sélectionnée est l'input d'une recette (RECIPE_BY_INPUT). Placé
-   au-dessus du bloc Vendre dans le panneau détail. */
+   au-dessus du bloc Vendre dans le panneau détail.
+   v3.45 : généralisé pour afficher TOUS les intrants (recettes
+   croisées type Pain/Ration), pas juste inputs[0] — le texte de
+   recette devient "5 Eau + 3 Farine → 1 Pain" au lieu de tronquer aux
+   Eau uniquement. Les 3 recettes single-input restent affichées à
+   l'identique (un seul terme avant la flèche). */
 function buildWarehouseCraftBlockHTML(inputKey) {
   var recipe = (typeof RECIPE_BY_INPUT !== "undefined") ? RECIPE_BY_INPUT[inputKey] : null;
   if (!recipe) return "";
 
-  var input = recipe.inputs[0];
-  var inputDef = WAREHOUSE_RESOURCES[input.resourceId];
   var outputDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
   var maxCrafts = getMaxCraftTimes(recipe);
+
+  var inputsText = recipe.inputs.map(function (input) {
+    var d = WAREHOUSE_RESOURCES[input.resourceId];
+    return formatNumber(input.quantity) + ' ' + esc(d ? d.name : input.resourceId);
+  }).join(' + ');
 
   // Le stock a pu changer depuis la dernière sélection — reborne pour
   // ne jamais proposer de fabriquer plus que le stock ne le permet.
@@ -150,10 +188,27 @@ function buildWarehouseCraftBlockHTML(inputKey) {
 
   var h = '<div class="warehouse-craft-block">';
   h += '<div class="warehouse-craft-title">' + renderIconOrEmojiHTML(outputDef.icon, "warehouse-craft-title-icon", outputDef.name) + esc(outputDef.name) + '</div>';
-  h += '<div class="warehouse-craft-recipe">' + formatNumber(input.quantity) + ' ' + esc(inputDef.name) + ' → ' + formatNumber(recipe.outputs[0].quantity) + ' ' + esc(outputDef.name) + '</div>';
+  h += '<div class="warehouse-craft-recipe">' + inputsText + ' → ' + formatNumber(recipe.outputs[0].quantity) + ' ' + esc(outputDef.name) + '</div>';
+
+  if (recipe.station && maxCrafts <= 0) {
+    var stationLevel = (game.construction && game.construction[recipe.station] && game.construction[recipe.station].level) || 0;
+    if (stationLevel < 1) {
+      var stationDef = (typeof CONSTRUCTION_BUILDINGS !== "undefined") ? CONSTRUCTION_BUILDINGS[recipe.station] : null;
+      h += '<div class="warehouse-empty-hint">Nécessite ' + esc(stationDef ? stationDef.name : recipe.station) + ' (niveau 1).</div>';
+      h += '</div>';
+      return h;
+    }
+  }
 
   if (maxCrafts <= 0) {
-    h += '<div class="warehouse-empty-hint">Pas assez de ' + esc(inputDef.name) + ' pour fabriquer.</div>';
+    // v3.45 : identifie le PREMIER intrant manquant pour un message
+    // ciblé, même principe que ConstructionManager.buy() (message sur
+    // la première ressource insuffisante) plutôt qu'un message générique.
+    var missing = recipe.inputs.find(function (input) {
+      return WarehouseManager.getAmount(input.resourceId) < input.quantity;
+    });
+    var missingDef = missing ? WAREHOUSE_RESOURCES[missing.resourceId] : null;
+    h += '<div class="warehouse-empty-hint">Pas assez de ' + esc(missingDef ? missingDef.name : "") + ' pour fabriquer.</div>';
   } else {
     h += '<div class="warehouse-qty-stepper">';
     h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWarehouseCraftQty(-1)"' + (warehouseCraftQty <= 1 ? ' disabled' : '') + '>−</button>';
@@ -169,6 +224,52 @@ function buildWarehouseCraftBlockHTML(inputKey) {
   return h;
 }
 
+/* v3.43 : file d'attente de craft (game.craftQueue) — GLOBALE, pas
+   filtrée par ressource sélectionnée (une file peut mélanger
+   plusieurs recettes). Commande en tête = en cours (barre de
+   progression + temps restant, pas annulable) ; les suivantes
+   attendent (bouton ✕ = remboursement intégral, voir
+   WarehouseManager.cancelCraft()). Réutilise .map-quest-step-bar/
+   .map-quest-step-fill (ui/quests-view.js) plutôt qu'inventer un
+   nouveau style de barre de progression. */
+function buildWarehouseCraftQueueHTML() {
+  var queue = Array.isArray(game.craftQueue) ? game.craftQueue : [];
+  if (!queue.length) return "";
+
+  var h = '<div class="warehouse-craft-queue">';
+  h += '<div class="warehouse-craft-queue-title">File de fabrication</div>';
+
+  queue.forEach(function (entry, index) {
+    var recipe = (typeof RECIPES !== "undefined") ? RECIPES[entry.recipeId] : null;
+    var outputDef = recipe ? WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId] : null;
+    var label = outputDef ? outputDef.name : (recipe ? recipe.label : "?");
+    var isCurrent = index === 0;
+
+    h += '<div class="warehouse-craft-queue-row' + (isCurrent ? ' is-current' : '') + '">';
+    h += '<div class="warehouse-craft-queue-row-top">';
+    h += '<span class="warehouse-craft-queue-label">' + esc(label) + ' ×' + formatNumber(entry.times) + '</span>';
+
+    if (isCurrent) {
+      var totalMs = Number(recipe ? recipe.craftTimeMs : 0) * entry.times;
+      var remainingSec = Math.max(0, entry.msRemaining / 1000);
+      h += '<span class="warehouse-craft-queue-time">' + remainingSec.toFixed(1) + ' s</span>';
+    } else {
+      h += '<button class="warehouse-craft-queue-cancel" type="button" onclick="cancelWarehouseCraft(\'' + esc(entry.id) + '\')" aria-label="Annuler">✕</button>';
+    }
+    h += '</div>';
+
+    if (isCurrent) {
+      var pct = totalMs > 0 ? Math.min(100, Math.max(0, Math.floor(100 - (entry.msRemaining / totalMs) * 100))) : 100;
+      h += '<div class="map-quest-step-bar"><div class="map-quest-step-fill" style="width:' + pct + '%"></div></div>';
+    }
+
+    h += '</div>';
+  });
+
+  h += '</div>';
+  return h;
+}
+
 function buildWarehouseDetailPanelHTML() {
   var h = '<div class="eq-detail-panel">';
 
@@ -179,6 +280,9 @@ function buildWarehouseDetailPanelHTML() {
     h += '<div class="eq-detail-icon eq-detail-icon-empty">📦</div>';
     h += '<div class="eq-detail-name">Aucune ressource sélectionnée</div>';
     h += '<div class="eq-detail-hint">Touche une ressource dans l\'Entrepôt pour voir son détail ici.</div>';
+    // v3.43 : la file de craft est globale (pas liée à la sélection)
+    // — reste visible même sans ressource sélectionnée.
+    h += buildWarehouseCraftQueueHTML();
     h += '</div>';
     return h;
   }
@@ -195,6 +299,11 @@ function buildWarehouseDetailPanelHTML() {
 
   // v3.35 : bloc Fabriquer, au-dessus du bloc Vendre (demande explicite).
   h += buildWarehouseCraftBlockHTML(selectedWarehouseKey);
+
+  // v3.43 : file d'attente, globale — affichée que la ressource
+  // sélectionnée ait une recette ou non (ex. le joueur regarde le
+  // stock de Fer pendant qu'une Planche est en cours de fabrication).
+  h += buildWarehouseCraftQueueHTML();
 
   // v3.35 : les ressources fabriquées ont sellPrice: 0 (pas encore de
   // débouché de revente définie) — pas de bloc Vendre dans ce cas,
@@ -315,7 +424,7 @@ function buildConstructionEntryCardHTML() {
   var maxed = ConstructionManager.isMaxLevel(id);
 
   var h = '<div class="construction-entry-card' + (questPending ? ' is-quest-pending' : '') + '" onclick="openConstructionModal(\'' + id + '\')">';
-  h += '<div class="construction-entry-icon">🏗️</div>';
+  h += '<div class="construction-entry-icon">' + renderIconOrEmojiHTML(def.icon || "🏗️", "construction-entry-icon-img", def.name) + '</div>';
   h += '<div class="construction-entry-info">';
   h += '<div class="construction-entry-name">' + esc(def.name) + (questPending ? ' <span class="construction-quest-badge">🎯 Quête</span>' : '') + '</div>';
   h += '<div class="construction-entry-level">' + (maxed ? 'Niveau maximum' : 'Niveau ' + level + ' / ' + def.maxLevel) + '</div>';
