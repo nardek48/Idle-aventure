@@ -91,6 +91,19 @@ function init() {
     EquipmentManager.recalcStats();
   }
 
+  // v3.38 : chaîne de déblocage de l'Atelier (voir
+  // systems/workshop-unlock-system.js) — une seule fois au boot,
+  // APRÈS loadGame()/rattrapage offline (game.resources et
+  // game.construction sont déjà à jour à ce stade), AVANT le premier
+  // renderAll() pour que l'écran initial reflète déjà l'état correct
+  // (bandeau, carte Atelier visible ou non). ensure() d'abord pour
+  // qu'une sauvegarde toute neuve ait bien game.workshopUnlock avant
+  // la vérification.
+  if (window.WorkshopUnlockManager) {
+    if (typeof WorkshopUnlockManager.ensure === "function") WorkshopUnlockManager.ensure();
+    if (typeof WorkshopUnlockManager.runRetroactiveCheck === "function") WorkshopUnlockManager.runRetroactiveCheck();
+  }
+
   if (typeof renderAll === "function") renderAll();
 
   // v3.7 : l'onglet par défaut au tout premier démarrage n'est plus

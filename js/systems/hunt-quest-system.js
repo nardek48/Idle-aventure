@@ -4,10 +4,15 @@ Aethervale — systems/hunt-quest-system.js
 v3.30 : gestion des Chasses (data/hunt-quests.js) — même squelette de
 run dédié qu'AdventureQuestManager (bascule sur Combat, un ennemi
 généré à la fois via WorldManager.generateEnemy() sur un contexte
-temporaire), mais SANS notion de complétion finale : au bout d'un lot
-de `lotSize` kills, le lot suivant démarre automatiquement (voir
-onEnemyKilled ci-dessous) tant que le joueur n'a pas appuyé sur
-"Arrêter la chasse" (stop()) ou n'a pas été vaincu (onDefeat()).
+temporaire).
+
+v3.42 : au bout d'un lot de `lotSize` kills, le run s'ARRÊTE et un
+popup de fin de chasse s'ouvre (voir ui/quests-view.js,
+openHuntLotComplete()) — le joueur relance manuellement (avant v3.42,
+le lot suivant démarrait automatiquement, en boucle infinie). Seule la
+viande (via drop) est gagnée pendant une chasse : pas d'or, d'essence,
+d'XP ni d'équipement — voir le court-circuit tout en haut de
+CombatEngine.killEnemy() (systems/combat-engine.js).
 
 game.huntRun = { active, questId, killsInLot } — killsInLot repart à 0
 à chaque nouveau lot, NE survit PAS à l'ascension ni au reset complet
@@ -147,16 +152,23 @@ var HuntQuestManager = {
     this.spawnRunEnemy(quest);
   },
 
-  /* Fin d'un lot RÉUSSI (lotSize kills atteints) : petit log/toast
-     informatif, incrémente le compteur de lots (purement cosmétique,
-     voir game.huntStats) puis relance IMMÉDIATEMENT un nouveau lot —
-     c'est ça, la "boucle". Le joueur doit appeler stop() pour sortir. */
+  /* Fin d'un lot RÉUSSI (lotSize kills atteints) : incrémente le
+     compteur de lots (purement cosmétique, voir game.huntStats), ARRÊTE
+     le run (contrairement à avant v3.42 où le lot suivant démarrait
+     automatiquement) et ouvre un popup de fin de chasse. Le joueur doit
+     relancer manuellement via le bouton "Chasser". */
   finishLot: function (quest) {
     game.huntStats[quest.id] = Number(game.huntStats[quest.id] || 0) + 1;
-    showToast("🏹 Lot de chasse terminé (" + quest.lotSize + "/" + quest.lotSize + ")", 1500);
-    game.huntRun.killsInLot = 0;
-    this.spawnRunEnemy(quest);
+    addLog("🏹 Chasse terminée : " + quest.name + " (" + quest.lotSize + "/" + quest.lotSize + ")", "event");
+    game.huntRun = { active: false, questId: null, killsInLot: 0 };
+
+    if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
+      CombatEngine.spawnEnemy();
+    }
+    if (typeof renderAll === "function") renderAll();
     saveGame();
+
+    if (typeof openHuntLotComplete === "function") openHuntLotComplete(quest);
   },
 
   /* Arrêt volontaire (bouton "Arrêter la chasse"). La viande déjà

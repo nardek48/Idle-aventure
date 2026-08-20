@@ -1,0 +1,240 @@
+/* =========================
+   Construction — modale du bâtiment (#construction-modal-root, voir
+   ui/construction-view.js) — même principe visuel que
+   .village-popup-* (css/04-panel-village.css), classes propres pour
+   rester dans un fichier dédié au système Construction.
+   ========================= */
+.construction-popup-card {
+  padding: 24px 22px;
+  text-align: center;
+}
+
+.construction-popup-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.construction-popup-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  margin-bottom: 10px;
+}
+
+.construction-popup-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(58, 44, 26, 0.83);
+  margin-bottom: 12px;
+}
+
+.construction-popup-meta {
+  font-size: 12px;
+  color: rgba(58, 44, 26, 0.7);
+  margin-bottom: 6px;
+}
+
+.construction-popup-meta strong {
+  color: var(--nb-gold-dark);
+}
+
+.construction-popup-delta {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+/* Liste des 3 coûts (Or/Planche/Pierre) du prochain niveau, une ligne
+   par ressource avec icône + montant + indicateur ✅/❌. */
+.construction-cost-list {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream-alt);
+}
+
+.construction-cost-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.construction-cost-row + .construction-cost-row {
+  border-top: 1px dashed rgba(58, 44, 26, 0.15);
+}
+
+.construction-cost-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.construction-cost-label {
+  flex: 1 1 auto;
+  text-align: left;
+  color: var(--nb-ink);
+}
+
+.construction-cost-amount {
+  font-weight: 700;
+  color: var(--nb-ink);
+}
+
+.construction-cost-check {
+  flex: 0 0 auto;
+  font-size: 13px;
+}
+
+.construction-cost-row.is-missing .construction-cost-amount {
+  color: #b91c1c;
+}
+
+.construction-popup-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.construction-popup-actions .settings-btn {
+  margin-bottom: 0;
+}
+
+.construction-popup-actions .settings-btn.is-maxed {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.construction-popup-actions .settings-btn.is-unaffordable {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(40%);
+}
+
+@media (max-width: 380px) {
+  .construction-popup-card {
+    padding: 18px 16px;
+  }
+}
+
+/* v3.37.1 : carte d'accès à la modale de Construction (voir
+   ui/construction-view.js), déplacée depuis css/04-panel-production.css
+   — cohérent avec le déplacement du point d'entrée vers
+   ui/warehouse-view.js (Construction consomme/modifie exclusivement
+   l'Entrepôt). Volontairement distincte des tuiles de ressources
+   (.warehouse-grid) : pas de sélection, pas de panneau détail, juste
+   un clic vers une popup dédiée. */
+.construction-entry-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px dashed var(--nb-gold-dark);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  cursor: pointer;
+}
+
+.construction-entry-card:active {
+  transform: scale(0.98);
+}
+
+.construction-entry-icon {
+  font-size: 26px;
+  flex: 0 0 auto;
+}
+
+.construction-entry-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.construction-entry-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.construction-entry-level {
+  font-size: 11px;
+  color: rgba(58, 44, 26, 0.7);
+  margin-top: 2px;
+}
+
+.construction-entry-arrow {
+  flex: 0 0 auto;
+  font-size: 20px;
+  color: var(--nb-gold-dark);
+}
+
+/* v3.38 : état "objectif de quête" de la carte d'accès — entre
+   l'étape 3 validée (Récolter 15 Pierre) et l'étape 4 complétée
+   (construire le niveau 1), voir WorkshopUnlockManager.isWorkshopQuestPending()
+   en systems/workshop-unlock-system.js. Reste cliquable comme une
+   carte normale ; seul le style change pour signaler "objectif de
+   tutoriel", pas un bâtiment ordinaire. */
+.construction-entry-card.is-quest-pending {
+  border-style: solid;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.25);
+}
+
+.construction-quest-badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #16a34a;
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 800;
+  vertical-align: middle;
+}
+
+/* v3.39 : popup d'objectif (non-bloquant) — voir
+   ui/workshop-quest-modal.js, buildWorkshopStepPopupHTML(). Même
+   principe visuel que .construction-popup-*/.village-popup-*
+   ci-dessus, classes propres pour ce popup précis. */
+.workshop-step-popup-card {
+  padding: 24px 22px;
+  text-align: center;
+}
+
+.workshop-step-popup-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  margin-bottom: 10px;
+}
+
+.workshop-step-popup-text {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: rgba(58, 44, 26, 0.85);
+  font-style: italic;
+  margin-bottom: 14px;
+}
+
+.workshop-step-popup-condition {
+  display: inline-block;
+  padding: 6px 14px;
+  margin-bottom: 16px;
+  border-radius: 999px;
+  background: var(--nb-cream-alt);
+  border: 1px solid var(--nb-gold-dark);
+  color: var(--nb-gold-deep);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.workshop-step-popup-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.workshop-step-popup-actions .settings-btn {
+  min-width: 140px;
+  margin-bottom: 0;
+}

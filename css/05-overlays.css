@@ -152,6 +152,26 @@
   display: flex;
 }
 
+/* v3.39 : popup de complétion d'étape (chaîne de déblocage de
+   l'Atelier, voir ui/workshop-quest-modal.js) — même principe que
+   #offline-modal/#confirm-modal ci-dessus : bloquant, fond plein
+   écran opaque, fermable UNIQUEMENT via le bouton Continuer. z-index
+   au-dessus de #confirm-modal. */
+#workshop-completion-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 260;
+}
+
+#workshop-completion-modal.show {
+  display: flex;
+}
+
 .offline-card,
 .confirm-card {
   width: 100%;
@@ -233,6 +253,52 @@
 
 .offline-btn:active {
   transform: scale(0.96);
+}
+
+/* v3.39 : carte du popup de complétion — même structure que
+   .offline-card, classes propres. Bouton "Continuer" réutilise
+   .offline-btn directement dans le HTML (index.html), pas dupliqué
+   ici. */
+.workshop-completion-card {
+  width: 100%;
+  max-width: 340px;
+  padding: 24px;
+  text-align: center;
+  background: var(--nb-cream-alt);
+  border-radius: var(--nb-radius-lg);
+  box-shadow: var(--nb-shadow-card);
+  color: var(--nb-ink);
+  border: 1px solid var(--nb-frame);
+}
+
+.workshop-completion-icon {
+  margin-bottom: 8px;
+  font-size: 44px;
+}
+
+.workshop-completion-title {
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #16a34a;
+}
+
+.workshop-completion-text {
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream);
+  font-size: 13.5px;
+  line-height: 1.6;
+  font-style: italic;
+  color: rgba(58, 44, 26, 0.85);
+}
+
+.workshop-completion-next {
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--nb-gold-deep);
 }
 
 .confirm-icon {

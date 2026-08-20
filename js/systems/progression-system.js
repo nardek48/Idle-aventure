@@ -234,6 +234,15 @@ var WorldManager = {
     return { type: "cycle" };
   },
 
+  /* v3.41 : repositionne au tout début du cycle (monde 1, 1er ennemi),
+     sans toucher cycleCount. Utilisé au switch/création de héros et à
+     la mort — indépendant de la progression déjà atteinte. */
+  resetToCycleStart: function () {
+    this.worldIndex = 0;
+    this.adventureIndex = 0;
+    this.enemyIndex = 0;
+  },
+
   /* Met à jour les variables CSS --world-bg/--world-combat-map pour
      que le fond de l'écran de combat corresponde au monde courant. */
   applyWorldTheme: function () {

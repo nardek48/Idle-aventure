@@ -107,7 +107,17 @@ function buildHudHTML() {
     +       '<span class="combat-hero-mini-hp-text" id="combat-hero-mini-hp-text">10 / 10</span>'
     +     '</div>'
     +   '</div>'
-    + '</div>';
+    + '</div>'
+    // v3.38 : bandeau de progression de la chaîne de déblocage de
+    // l'Atelier (voir systems/workshop-unlock-system.js) — ligne à
+    // part sous .nb-hud-top-row (pas dedans : structure existante à
+    // 3 colonnes fixes, pas conçue pour une bannière pleine largeur).
+    // Vide/masqué par défaut, rempli par renderWorkshopUnlockBanner()
+    // ci-dessous ; disparaît définitivement une fois la chaîne
+    // terminée (getBannerText() renvoie alors null).
+    // v3.39 : cliquable — ouvre le popup d'objectif (voir
+    // ui/workshop-quest-modal.js, openWorkshopStepPopup()).
+    + '<div id="workshop-unlock-banner" class="workshop-unlock-banner" style="display:none;" onclick="openWorkshopStepPopup()"></div>';
 }
 
 function buildStatsBarHTML() {
@@ -149,6 +159,35 @@ function renderHud() {
   renderHudBagBadge();
   renderHudLevelUpBadge();
   renderHudAscensionBadge();
+  renderWorkshopUnlockBanner();
+}
+
+/* v3.38 : bandeau de progression de la chaîne de déblocage de
+   l'Atelier (voir systems/workshop-unlock-system.js) — texte mis à
+   jour à chaque renderHud() (déjà appelée après quasiment toute
+   action pertinente : récolte, craft, construction). Masqué
+   entièrement (display:none) une fois la chaîne terminée
+   (getBannerText() renvoie alors null) — pas de réapparition
+   possible ensuite, WorkshopUnlockManager ne repasse jamais
+   completed=true à false. */
+function renderWorkshopUnlockBanner() {
+  var host = document.getElementById("workshop-unlock-banner");
+  if (!host) return;
+
+  if (!window.WorkshopUnlockManager || typeof WorkshopUnlockManager.getBannerText !== "function") {
+    host.style.display = "none";
+    return;
+  }
+
+  var text = WorkshopUnlockManager.getBannerText();
+  if (!text) {
+    host.style.display = "none";
+    host.textContent = "";
+    return;
+  }
+
+  host.textContent = text;
+  host.style.display = "block";
 }
 
 /* v2.83.54 : indicateur "point de talent disponible" sur le portrait

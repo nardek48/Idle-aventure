@@ -54,7 +54,54 @@ var WarehouseManager = {
       addLog(def.name + " +" + formatNumber(applied) + " (Entrepôt)", "event");
     }
 
+    // v3.39 : hook optionnel pour la chaîne de déblocage de l'Atelier
+    // (voir systems/workshop-unlock-system.js) — DÉCOUPLÉ du flag
+    // `silent` ci-dessus (qui ne contrôle que le LOG de cette
+    // fonction) : ProductionManager.harvest() appelle addResource()
+    // en silent=true (un seul log groupé côté production-system.js),
+    // mais la progression de la chaîne doit quand même être notifiée.
+    // Filtré sur "bois" uniquement (seule ressource brute suivie par
+    // l'étape 1 de la chaîne) ; ignoré silencieusement si le manager
+    // n'est pas chargé.
+    if (key === "bois" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.checkCurrentStep === "function") {
+      WorkshopUnlockManager.checkCurrentStep();
+    }
+
     return applied;
+  },
+
+  /* v3.37 : chemin de SORTIE symétrique à addResource(), mais SANS
+     conversion en or (contrairement à sellResource() ci-dessous) —
+     utilisé par tout système qui doit consommer un coût en ressource
+     d'Entrepôt sans rien recevoir en retour (ex. ConstructionManager,
+     voir systems/construction-system.js). Ne mute rien et renvoie
+     false si le stock est insuffisant (jamais de solde négatif). */
+  removeResource: function (key, amount) {
+    this.ensure();
+    amount = Math.floor(Number(amount || 0));
+    if (amount <= 0) return true; // rien à retirer : succès trivial
+    if (typeof WAREHOUSE_RESOURCES === "undefined" || !WAREHOUSE_RESOURCES[key]) return false;
+
+    var current = Number(game.resources[key] || 0);
+    if (current < amount) return false;
+
+    game.resources[key] = current - amount;
+    return true;
+  },
+
+  /* v3.37 : point d'extension unique pour un bonus multiplicatif sur
+     TOUTES les ventes de l'Entrepôt — lu par sellResource() ci-dessous.
+     Ce fichier ne connaît PAS ConstructionManager directement (évite
+     une dépendance data/systems inversée) : hook global optionnel,
+     même principe que les `window.QuestManager &&` déjà utilisés plus
+     bas. Renvoie 1 (neutre) si aucun système n'a encore été chargé ou
+     n'a pas encore été investi — comportement IDENTIQUE à avant
+     l'ajout de cette fonction. */
+  getSellPriceMultiplier: function () {
+    if (window.ConstructionManager && typeof ConstructionManager.getSellBonus === "function") {
+      return ConstructionManager.getSellBonus();
+    }
+    return 1;
   },
 
   /* v3.32 : vend `amount` unités de `key` contre de l'or (voir
@@ -76,7 +123,10 @@ var WarehouseManager = {
 
     var def = WAREHOUSE_RESOURCES[key];
     var price = Number(def.sellPrice || 0);
-    var goldGain = qty * price;
+    // v3.37 : bonus de vente de l'Atelier de Construction (voir
+    // getSellPriceMultiplier() ci-dessus) — 1 (neutre) tant qu'aucun
+    // niveau n'est investi, comportement inchangé sinon.
+    var goldGain = Math.floor(qty * price * this.getSellPriceMultiplier());
 
     game.resources[key] = available - qty;
     game.gold += goldGain;
@@ -128,6 +178,19 @@ var WarehouseManager = {
 
     recipe.outputs.forEach(function (output) {
       WarehouseManager.addResource(output.resourceId, output.quantity * times, true);
+    });
+
+    // v3.38 : hook optionnel pour la chaîne de déblocage de l'Atelier
+    // (voir systems/workshop-unlock-system.js) — ce fichier ne connaît
+    // pas WorkshopUnlockManager au-delà de ce hook générique, même
+    // principe que les `window.QuestManager &&` déjà utilisés ailleurs
+    // dans le projet. Ne notifie QUE pour la planche (seule ressource
+    // suivie par l'étape 2 de la chaîne) ; ignoré silencieusement si
+    // le manager n'est pas chargé.
+    recipe.outputs.forEach(function (output) {
+      if (output.resourceId === "planche" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.notifyPlanchesCrafted === "function") {
+        WorkshopUnlockManager.notifyPlanchesCrafted(output.quantity * times);
+      }
     });
 
     var outDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];

@@ -650,6 +650,55 @@ function confirmHuntQuestStart() {
   if (questId && window.HuntQuestManager) HuntQuestManager.start(questId);
 }
 
+/* v3.42 : popup de fin de chasse — déclenché par
+   HuntQuestManager.finishLot() une fois `lotSize` kills atteints. Le
+   run est déjà arrêté à ce stade (game.huntRun.active = false) ;
+   "Chasser à nouveau" relance directement un nouveau run sur la même
+   quête (pas besoin de repasser par l'intro narrative). */
+function buildHuntLotCompleteHTML(quest) {
+  if (!quest) return "";
+  var stock = Number((game.resources && game.resources[quest.resourceKey]) || 0);
+  var resource = window.WAREHOUSE_RESOURCES ? WAREHOUSE_RESOURCES[quest.resourceKey] : null;
+
+  var h = '<div class="full-menu-overlay">';
+  h += '  <div class="full-menu dungeon-story-card is-success">';
+  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(quest.icon || "🏹", "dungeon-story-icon-img", quest.name) + '</div>';
+  h += '    <div class="dungeon-story-title">Chasse terminée !</div>';
+  h += '    <div class="dungeon-story-text">' + esc(quest.lotSize) + ' bêtes abattues. Le gibier se fait plus rare pour l\u2019instant — reviens plus tard, ou relance une nouvelle chasse tout de suite.</div>';
+
+  h += '    <div class="dungeon-summary-rewards">';
+  h += '      <div class="dungeon-summary-row"><span>' + esc(resource ? resource.name : quest.resourceKey) + ' en stock</span><span>' + esc(formatNumber(stock)) + '</span></div>';
+  h += '    </div>';
+
+  h += '    <div class="dungeon-story-actions">';
+  h += '      <button class="settings-btn" type="button" onclick="closeHuntLotComplete()">Fermer</button>';
+  h += '      <button class="settings-btn primary" type="button" onclick="restartHuntQuest(\'' + esc(quest.id) + '\')">Chasser à nouveau</button>';
+  h += '    </div>';
+  h += '  </div>';
+  h += '</div>';
+  return h;
+}
+
+function openHuntLotComplete(quest) {
+  var host = document.getElementById("adventure-quest-modal-root");
+  if (host) host.innerHTML = buildHuntLotCompleteHTML(quest);
+}
+
+function closeHuntLotComplete() {
+  var host = document.getElementById("adventure-quest-modal-root");
+  if (host) host.innerHTML = "";
+}
+
+function restartHuntQuest(questId) {
+  closeHuntLotComplete();
+  if (questId && window.HuntQuestManager) HuntQuestManager.start(questId);
+}
+
+window.openHuntLotComplete = openHuntLotComplete;
+window.closeHuntLotComplete = closeHuntLotComplete;
+window.restartHuntQuest = restartHuntQuest;
+window.buildHuntLotCompleteHTML = buildHuntLotCompleteHTML;
+
 window.openHuntQuestIntro = openHuntQuestIntro;
 window.closeHuntQuestIntro = closeHuntQuestIntro;
 window.confirmHuntQuestStart = confirmHuntQuestStart;

@@ -54,6 +54,7 @@
   <link rel="stylesheet" href="./css/04-panel-village-shop.css">
   <link rel="stylesheet" href="./css/04-panel-village.css">
   <link rel="stylesheet" href="./css/04-panel-production.css">
+  <link rel="stylesheet" href="./css/04-panel-construction.css">
 
   <link rel="stylesheet" href="./css/05-overlays.css">
   <link rel="stylesheet" href="./css/06-map.css">
@@ -103,6 +104,8 @@
 <div id="onboarding-root"></div>
 <div id="dungeon-modal-root"></div>
 <div id="village-modal-root"></div>
+<div id="construction-modal-root"></div>
+<div id="workshop-step-modal-root"></div>
 <div id="talent-modal-root"></div>
 <div id="adventure-quest-modal-root"></div>
 <div id="map-modal-root"></div>
@@ -129,6 +132,23 @@
       <button class="confirm-btn cancel" onclick="closeConfirmModal(false)">Annuler</button>
       <button class="confirm-btn ok" onclick="closeConfirmModal(true)">Confirmer</button>
     </div>
+  </div>
+</div>
+
+<!-- v3.39 : popup de complétion d'étape (chaîne de déblocage de
+     l'Atelier, voir ui/workshop-quest-modal.js) — même pattern que
+     #offline-modal/#confirm-modal ci-dessus : HTML statique, classe
+     .show pour afficher, fond plein écran opaque, VRAIMENT bloquant
+     (aucun bouton "fermer en cliquant à côté" ici, contrairement au
+     popup d'objectif non-bloquant). Fermé uniquement via le bouton
+     "Continuer" -> closeWorkshopCompletionPopup(). -->
+<div id="workshop-completion-modal">
+  <div class="workshop-completion-card">
+    <div class="workshop-completion-icon">✅</div>
+    <div class="workshop-completion-title" id="workshop-completion-title">Étape terminée</div>
+    <div class="workshop-completion-text" id="workshop-completion-text"></div>
+    <div class="workshop-completion-next" id="workshop-completion-next"></div>
+    <button class="offline-btn" onclick="closeWorkshopCompletionPopup()">Continuer</button>
   </div>
 </div>
 
@@ -189,6 +209,8 @@
 <script src="js/data/hunt-quests.js"></script>
 <script src="js/data/production-buildings.js"></script>
 <script src="js/data/recipes.js"></script>
+<script src="js/data/construction.js"></script>
+<script src="js/data/workshop-unlock.js"></script>
 
 
 <!-- SHARED MAIN SERVICES -->
@@ -199,6 +221,8 @@
 <script src="js/systems/affliction-system.js"></script>
 <script src="js/systems/equipment-system.js"></script>
 <script src="js/systems/warehouse-system.js"></script>
+<script src="js/systems/construction-system.js"></script>
+<script src="js/systems/workshop-unlock-system.js"></script>
 <script src="js/systems/loot-system.js"></script>
 <script src="js/systems/world-quest-system.js"></script>
 <script src="js/systems/adventure-quest-system.js"></script>
@@ -224,6 +248,7 @@
 <!-- UI -->
 <script src="js/ui/toast.js"></script>
 <script src="js/ui/modal.js"></script>
+<script src="js/ui/workshop-quest-modal.js"></script>
 <script src="js/ui/modal-view.js"></script>
 <script src="js/ui/onboarding-view.js"></script>
 <script src="js/ui/hud-view.js"></script>
@@ -244,6 +269,7 @@
 <script src="js/ui/village-view.js"></script>
 <script src="js/ui/warehouse-view.js"></script>
 <script src="js/ui/production-view.js"></script>
+<script src="js/ui/construction-view.js"></script>
 <script src="js/ui/camp-view.js"></script>
 <script src="js/ui/map-view.js"></script>
 <script src="js/ui/bestiary-view.js"></script>

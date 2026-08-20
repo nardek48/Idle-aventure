@@ -58,6 +58,13 @@ function migrateOldSaveToSlot1() {
 /* v3.26 : réplique la séquence de boot.js après un switch/création de héros pour éviter un combat sans ennemi (spawnEnemy()).
    Détail : save-system_notes.md #5. */
 function resumeCombatAfterSlotChange() {
+  // v3.41 : switch/création de héros repart toujours au tout début du
+  // cycle (monde 1, 1er ennemi), quelle que soit la progression déjà
+  // atteinte par ce héros — voir WorldManager.resetToCycleStart().
+  if (window.WorldManager && typeof WorldManager.resetToCycleStart === "function") {
+    WorldManager.resetToCycleStart();
+  }
+
   if (window.WorldManager && typeof WorldManager.markWorldReached === "function") {
     WorldManager.markWorldReached(WorldManager.worldIndex || 0);
   }
@@ -454,6 +461,16 @@ function buildSaveData() {
     // — niveau/stock persistent TOUJOURS (comme le Village), lastTick
     // sert au rattrapage hors-ligne (voir ProductionManager.catchUpOffline()).
     production: game.production || {},
+    // v3.37 : bâtiments de Construction (voir data/construction.js) —
+    // niveau persistant, même principe que production (pas de champ
+    // temporel à rattraper ici, contrairement à production.lastTick :
+    // pas de stock local qui s'accumule tout seul pour ce système).
+    construction: game.construction || {},
+    // v3.38 : chaîne de déblocage de l'Atelier (voir
+    // data/workshop-unlock.js, systems/workshop-unlock-system.js) —
+    // même principe que construction ci-dessus, état simple sans
+    // champ temporel à rattraper.
+    workshopUnlock: game.workshopUnlock || {},
     campfireLastUsed: game.campfireLastUsed || 0, // v3.7 : cooldown du feu de camp (long repos), voir systems/camp-system.js
     campfireShortLastUsed: game.campfireShortLastUsed || 0, // v3.14 : cooldown du repos court
     activeAfflictions: Object.assign({}, game.activeAfflictions || {}), // v3.20 : voir data/afflictions.js
@@ -621,6 +638,18 @@ function restoreBaseState(d) {
   // repart avec {} ici, ProductionManager.ensure() complète le reste
   // au premier accès (voir boot.js, appelé juste après loadGame()).
   game.production = d.production && typeof d.production === "object" ? d.production : {};
+  // v3.37 : bâtiments de Construction (voir data/construction.js) —
+  // même migration douce que production ci-dessus : une ancienne
+  // sauvegarde (ou toute nouvelle entrée future de CONSTRUCTION_BUILDINGS)
+  // repart avec {} ici, ConstructionManager.ensure() complète le reste
+  // au premier accès.
+  game.construction = d.construction && typeof d.construction === "object" ? d.construction : {};
+  // v3.38 : chaîne de déblocage de l'Atelier — migration douce, même
+  // principe que construction ci-dessus. WorkshopUnlockManager.ensure()
+  // complète les champs manquants au premier accès ; la validation
+  // rétroactive (runRetroactiveCheck()) tourne une fois au boot, voir
+  // main/boot.js, APRÈS ce chargement.
+  game.workshopUnlock = d.workshopUnlock && typeof d.workshopUnlock === "object" ? d.workshopUnlock : {};
   game.campfireLastUsed = typeof d.campfireLastUsed === "number" ? d.campfireLastUsed : 0;
   game.campfireShortLastUsed = typeof d.campfireShortLastUsed === "number" ? d.campfireShortLastUsed : 0;
   game.activeAfflictions = (d.activeAfflictions && typeof d.activeAfflictions === "object") ? d.activeAfflictions : {};
@@ -707,6 +736,14 @@ function hardResetState() {
   // investi dans sa Chasse/Champs/Scierie/Mine ne perd pas ces niveaux
   // à l'ascension. deep-copy nécessaire (objet imbriqué par bâtiment).
   var keptProduction = JSON.parse(JSON.stringify(game.production || {}));
+  // v3.37 : bâtiments de Construction = progression permanente,
+  // même règle que Production (deep-copy pour la même raison : objet
+  // imbriqué par bâtiment).
+  var keptConstruction = JSON.parse(JSON.stringify(game.construction || {}));
+  // v3.38 : progression de déblocage de l'Atelier = permanente,
+  // même règle que Construction (une fois débloqué, jamais reverrouillé,
+  // y compris à l'ascension).
+  var keptWorkshopUnlock = JSON.parse(JSON.stringify(game.workshopUnlock || {}));
   var keptDungeonTiersEntered = Object.assign({}, game.dungeonTiersEntered || {});
   var keptCodexChaosSeen = !!game.codexChaosSeen;
   var keptCodexRead = Object.assign({}, game.codexRead || {});
@@ -817,6 +854,8 @@ function hardResetState() {
   game.adventureQuestsCompleted = keptAdventureQuestsCompleted;
   game.huntStats = keptHuntStats;
   game.production = keptProduction;
+  game.construction = keptConstruction;
+  game.workshopUnlock = keptWorkshopUnlock;
   // v3.31 : lastTick de chaque bâtiment doit repartir de "maintenant"
   // à l'ascension (sinon le premier tick/boot suivant croirait à une
   // absence de plusieurs secondes égale au temps écoulé DANS
@@ -954,6 +993,8 @@ function fullResetState() {
   game.adventureQuestsCompleted = {};
   game.huntStats = {}; // v3.30
   game.production = {}; // v3.31 : repart à zéro, ProductionManager.ensure() recrée les 4 bâtiments au niveau 1
+  game.construction = {}; // v3.37 : repart à zéro, ConstructionManager.ensure() recrée workshop au niveau 0
+  game.workshopUnlock = {}; // v3.38 : repart à zéro, WorkshopUnlockManager.ensure() recrée l'état initial (currentStep 0)
   game.dungeonTiersEntered = {};
   game.codexChaosSeen = false;
   game.codexRead = {};

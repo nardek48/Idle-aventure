@@ -225,6 +225,11 @@ function confirmHeroSelection() {
   if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
     StatsSystem.recalcStats();
   }
+  // v3.41 : recalcStats() ne remonte JAMAIS heroHp au-dessus de sa
+  // valeur courante (clamp volontaire, voir stats-system.js #v3.29 —
+  // ne pas ressusciter un héros à 0 PV). Un héros neuf part donc à
+  // pleine vie explicitement ici, après que heroMaxHp soit connu.
+  game.heroHp = game.heroMaxHp;
 
   closeHeroSelection();
   // v3.7 : au tout premier lancement (isFirstEverSetup), on atterrit

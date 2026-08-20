@@ -236,6 +236,27 @@
   background: url('../images/Borders/title.png') center / 100% 90% no-repeat;
 }
 
+/* v3.38 : bandeau de progression de la chaîne de déblocage de
+   l'Atelier (voir #workshop-unlock-banner, ui/hud-view.js) — ligne
+   fine sous .nb-hud-top-row, visible sur TOUS les écrans tant que la
+   chaîne n'est pas terminée (masqué en display:none sinon, jamais
+   réaffiché ensuite). Style volontairement discret (pas une modale,
+   pas une notification) : un simple rappel persistant de l'objectif
+   en cours. */
+.workshop-unlock-banner {
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px 14px;
+  text-align: center;
+  border-radius: var(--nb-radius-sm, 8px);
+  background: rgba(139, 94, 31, 0.12);
+  border: 1px dashed var(--nb-gold-dark);
+  color: var(--nb-gold-deep);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer; /* v3.39 : cliquable, ouvre le popup d'objectif */
+}
+
 /* =========================
    Mini-carte héros (v2.40 — portrait + niveau + PV réduits).
    v2.61 : agrandi d'environ 20% (portrait + mini-barre de PV) à la

@@ -270,6 +270,58 @@ function buildWarehouseHTML() {
   h += buildWarehouseDetailPanelHTML();
   h += '</div>';
 
+  // v3.37.1 : point d'entrée vers la modale de Construction (voir
+  // ui/construction-view.js), déplacé depuis ui/production-view.js —
+  // Construction consomme et modifie exclusivement des mécaniques de
+  // l'Entrepôt (WarehouseManager.removeResource()/sellResource()),
+  // donc son point d'accès vit maintenant ici pour rester cohérent
+  // avec CE que le système touche réellement, pas avec l'écran où il
+  // se trouvait avant. Carte distincte des tuiles de ressources — pas
+  // de sélection, pas de panneau détail, juste un clic vers la modale.
+  // Purement un déplacement de couche UI : ConstructionManager,
+  // WarehouseManager et les 4 emplacements de sauvegarde sont
+  // INCHANGÉS (voir CHANGELOG_v3.37.1.md).
+  if (typeof ConstructionManager !== "undefined") {
+    ConstructionManager.ensure();
+    if (typeof WorkshopUnlockManager !== "undefined") WorkshopUnlockManager.ensure();
+    h += buildConstructionEntryCardHTML();
+  }
+
+  return h;
+}
+
+/* Carte d'accès (pas une tuile de ressource : pas de sélection, pas
+   de panneau détail — juste un résumé + un clic vers la modale, voir
+   ui/construction-view.js).
+   v3.38 : gatée par WorkshopUnlockManager (voir
+   systems/workshop-unlock-system.js) — invisible avant l'étape 3
+   ("Récolter 15 Pierre") validée, affichée avec un badge "Quête"
+   entre l'étape 3 et l'étape 4, identique à l'état actuel une fois
+   la chaîne terminée (déblocage permanent, jamais de re-verrouillage :
+   isWorkshopVisible()/isWorkshopQuestPending() renvoient toujours true/
+   false respectivement une fois completed=true). */
+function buildConstructionEntryCardHTML() {
+  var id = "workshop";
+  var def = CONSTRUCTION_BUILDINGS[id];
+  if (!def) return "";
+
+  if (window.WorkshopUnlockManager && typeof WorkshopUnlockManager.isWorkshopVisible === "function") {
+    if (!WorkshopUnlockManager.isWorkshopVisible()) return ""; // pas encore débloqué : totalement invisible
+  }
+
+  var questPending = window.WorkshopUnlockManager && typeof WorkshopUnlockManager.isWorkshopQuestPending === "function" && WorkshopUnlockManager.isWorkshopQuestPending();
+
+  var level = ConstructionManager.getLevel(id);
+  var maxed = ConstructionManager.isMaxLevel(id);
+
+  var h = '<div class="construction-entry-card' + (questPending ? ' is-quest-pending' : '') + '" onclick="openConstructionModal(\'' + id + '\')">';
+  h += '<div class="construction-entry-icon">🏗️</div>';
+  h += '<div class="construction-entry-info">';
+  h += '<div class="construction-entry-name">' + esc(def.name) + (questPending ? ' <span class="construction-quest-badge">🎯 Quête</span>' : '') + '</div>';
+  h += '<div class="construction-entry-level">' + (maxed ? 'Niveau maximum' : 'Niveau ' + level + ' / ' + def.maxLevel) + '</div>';
+  h += '</div>';
+  h += '<div class="construction-entry-arrow">›</div>';
+  h += '</div>';
   return h;
 }
 

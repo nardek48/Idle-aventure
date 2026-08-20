@@ -480,6 +480,21 @@ var CombatEngine = {
     // sans s'être soigné.
     game.heroHp = 0;
 
+    // v3.41 : une défaite renvoie aussi au tout début du cycle (monde
+    // 1, 1er ennemi) — même position que switch/création de héros,
+    // sans incrémenter cycleCount (ce n'est pas un cycle bouclé).
+    if (window.WorldManager && typeof WorldManager.resetToCycleStart === "function") {
+      WorldManager.resetToCycleStart();
+      if (typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
+      // game.enemy pointait encore sur l'ancien monde : régénéré tout
+      // de suite pour que le repos au Campement reprenne bien au 1er
+      // ennemi du monde 1 (les PV du héros restent à 0, spawnEnemy()
+      // ne touche pas au combat automatique).
+      if (typeof WorldManager.generateEnemy === "function") {
+        game.enemy = WorldManager.generateEnemy();
+      }
+    }
+
     addLog("💀 Vous avez été terrassé ! -" + formatNumber(lost) + " or. Il faut te reposer avant de repartir au combat.", "event");
     showToast("💀 Terrassé ! -" + formatNumber(lost) + " or", 1800);
     vibrate([80, 40, 80]);
@@ -549,6 +564,21 @@ var CombatEngine = {
      6) XP du héros, puis fait apparaître le prochain ennemi. */
   killEnemy: function () {
     if (!game.enemy) return;
+
+    // v3.42 : Chasse (voir data/hunt-quests.js) — ne rapporte QUE la
+    // viande (gérée par HuntQuestManager.onEnemyKilled()), jamais
+    // d'or/essence/XP/équipement/événement aléatoire du kill normal.
+    // Court-circuite ICI, avant tout calcul de récompense, contrairement
+    // à Donjon/Quête d'aventure plus bas qui gardent l'or/essence/XP de
+    // base et ne différent que sur la suite (vague/chapitre).
+    if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
+      game.totalKills += 1;
+      game.killCounts[game.enemy.id] = (game.killCounts[game.enemy.id] || 0) + 1;
+      HuntQuestManager.onEnemyKilled();
+      if (typeof renderAll === "function") renderAll();
+      saveGame();
+      return;
+    }
 
     var enemy = game.enemy;
     var goldGain = Number(enemy.goldReward || 0);
@@ -683,16 +713,9 @@ var CombatEngine = {
       return;
     }
 
-    // v3.30 : Chasse en boucle (voir data/hunt-quests.js) — même
-    // position que Donjon/Quête d'aventure juste au-dessus, un run de
-    // chasse n'est pas du farm ambiant classique.
-    if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
-      HuntQuestManager.onEnemyKilled();
-      if (typeof renderAll === "function") renderAll();
-      restoreEquipBagScroll();
-      saveGame();
-      return;
-    }
+    // v3.42 : le court-circuit Chasse est désormais tout en haut de
+    // killEnemy() (avant même le calcul or/essence) — voir plus haut.
+    // Ce bloc n'est jamais atteint pour un run de chasse actif.
 
     // v3.0 : progression des questlines de déblocage de monde (voir
     // data/world-quests.js) — uniquement en combat classique, jamais
