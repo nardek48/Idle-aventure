@@ -44,8 +44,13 @@ var RARITY_DROP_RATES = {
    Cumulatif : chaque palier ajoute une rareté à celles déjà débloquées.
    Si le joueur est en plein cycle (a déjà bouclé tous les mondes une fois),
    toutes les raretés sont disponibles dès le premier monde. */
+// v3.46.0 : "green" retiré du monde 0 — aligne "1 monde = 1 palier de
+// rareté visé" avec la nouvelle courbe de difficulté (voir ENEMY_PV_MULT/
+// ENEMY_PV_WORLD_EXP, progression-system.js) : avant, Forêt et Désert
+// partageaient le même palier de rareté disponible alors que la
+// difficulté, elle, progresse dès le premier saut de monde.
 var WORLD_RARITY_UNLOCKS = [
-  ["common", "green"],                                // Forêt (monde 0) — v2.83.2 : ajout Inhabituel (était [common] seul)
+  ["common"],                                          // Forêt (monde 0) — v3.46.0 : "green" retiré (était [common, green])
   ["common", "green"],                                // Désert (monde 1)
   ["common", "green", "rare"],                        // Ruines (monde 2)
   ["common", "green", "rare", "epic"],                // Crypte (monde 3)

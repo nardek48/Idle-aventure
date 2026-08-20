@@ -74,6 +74,7 @@ var _sandboxUiState = {
   persistence: null,     // objet créé au premier accès, voir getSandboxPersistence()
   statsOverride: null,    // {power, endurance, celerity, precision, will} partiel, ou null = stats de base
   statsPanelOpen: false,
+  equipmentRarity: null,   // v3.46.0 : "common"/"green"/"rare"/"epic"/"legendary", ou null = pas d'équipement simulé
   enemyCoefsOverride: null, // v3.33.12 : {ENDURANCE_HP_COEF, BOSS_ENDURANCE_HP_COEF, POWER_DMG_COEF, ATTACK_BASE_INTERVAL_S, RESIST_DMG_MULT, WEAK_DMG_MULT, NO_WEAPON_MULT} partiel, ou null = coefficients par défaut
   enemyCoefsPanelOpen: false,
   baseCooldownMs: null,   // null = valeur par défaut du système (SANDBOX_DEFAULT_BASE_COOLDOWN_MS)
@@ -343,6 +344,7 @@ function buildSandboxSetupHTML() {
 
   if (_sandboxUiState.heroId) {
     h += buildSandboxStatsPanelHTML();
+    h += buildSandboxEquipmentPanelHTML();
     h += buildSandboxBaseCooldownSettingHTML();
     h += buildSandboxEnemyCoefsPanelHTML();
   }
@@ -406,6 +408,29 @@ function buildSandboxStatsPanelHTML() {
   return h;
 }
 
+/* v3.46.0 — Sélecteur de rareté d'équipement simulé sur le héros de
+   test. Un set COMPLET (7 emplacements) de la rareté choisie est
+   appliqué EN PLUS des stats RPG (voir applySandboxEquipmentBonus(),
+   combat-sandbox-system.js) — "Aucun" (null) = comportement identique
+   à avant cette version (pas d'équipement). Même pattern que les
+   autres panneaux (tag "actif", pas de repli/dépli ici car un seul
+   sélecteur, pas une grille de champs). */
+function buildSandboxEquipmentPanelHTML() {
+  if (typeof RARITY_ORDER === "undefined" || typeof RARITY_LABELS === "undefined") return '';
+  var current = _sandboxUiState.equipmentRarity;
+
+  var h = '<div class="sandbox-card-title">🎽 Équipement simulé (bac à sable)' + (current ? ' <span class="sandbox-modified-tag">' + esc(RARITY_LABELS[current] || current) + '</span>' : '') + '</div>';
+  h += '<div class="sandbox-class-row">';
+  h += '<button class="sandbox-choice-btn' + (!current ? ' is-active' : '') + '" onclick="setSandboxEquipmentRarity(null)"><span>Aucun</span></button>';
+  RARITY_ORDER.forEach(function (r) {
+    h += '<button class="sandbox-choice-btn' + (current === r ? ' is-active' : '') + '" onclick="setSandboxEquipmentRarity(\'' + r + '\')"><span>' + esc(RARITY_LABELS[r] || r) + '</span></button>';
+  });
+  h += '</div>';
+  h += '<div class="sandbox-hint">Applique la MOYENNE du range de chaque emplacement (7 emplacements, EQUIPMENT_SLOT_CONFIG) + les bonus de panoplie 3 et 7 pièces de cette rareté — pas un tirage aléatoire, pour un résultat reproductible. N\'affecte ni l\'auto-DPS ni l\'or (non simulés dans ce bac à sable). Appliqué au lancement du combat/run/simulation, comme les stats du héros.</div>';
+
+  return h;
+}
+
 /* v3.33.6 — Réglage du cooldown de base de l'attaque de test (voir
    computeEffectiveCooldownMs(), combat-cooldown-system.js). Bac à
    sable UNIQUEMENT — n'a aucun effet sur data/class-skills.js ni sur
@@ -449,13 +474,18 @@ function buildSandboxEnemyCoefsPanelHTML() {
   if (!_sandboxUiState.enemyCoefsPanelOpen) return h;
 
   var fields = [
-    { key: "ENDURANCE_HP_COEF", label: "PV — ennemi normal (× Endurance)", step: "0.05" },
-    { key: "BOSS_ENDURANCE_HP_COEF", label: "PV — boss (× Endurance)", step: "0.05" },
+    { key: "ENDURANCE_HP_COEF", label: "PV — ennemi normal (× Endurance × échelle)", step: "0.05" },
+    { key: "BOSS_ENDURANCE_HP_COEF", label: "PV — boss (× Endurance × échelle)", step: "0.05" },
+    { key: "PV_WORLD_EXP", label: "Exposant PV — terme monde uniquement", step: "0.05" },
+    { key: "POWER_SCALE_EXP", label: "Exposant Puissance de riposte (× échelle)", step: "0.05" },
     { key: "POWER_DMG_COEF", label: "Dégâts de riposte (× Puissance)", step: "0.05" },
     { key: "ATTACK_BASE_INTERVAL_S", label: "Intervalle d'attaque de base (s)", step: "0.1" },
     { key: "RESIST_DMG_MULT", label: "Multiplicateur résistance", step: "0.05" },
     { key: "WEAK_DMG_MULT", label: "Multiplicateur faiblesse", step: "0.05" },
-    { key: "NO_WEAPON_MULT", label: "Multiplicateur sans affinité d'arme", step: "0.05" }
+    { key: "NO_WEAPON_MULT", label: "Multiplicateur sans affinité d'arme", step: "0.05" },
+    { key: "WORLD_INDEX", label: "Monde simulé (0 = Forêt … 5 = Tour)", step: "1" },
+    { key: "ADVENTURE_INDEX", label: "Aventure simulée (dans le monde)", step: "1" },
+    { key: "CYCLE_COUNT", label: "Cycles bouclés simulés", step: "1" }
   ];
 
   h += '<div class="sandbox-stats-grid">';
@@ -467,7 +497,7 @@ function buildSandboxEnemyCoefsPanelHTML() {
   });
   h += '</div>';
 
-  h += '<div class="sandbox-hint">La vitesse d\'attaque (intervalle) ne s\'applique qu\'au lancement d\'un nouveau combat/run/simulation — les autres réglages (dégâts, PV) s\'appliquent immédiatement, y compris en cours de combat.</div>';
+  h += '<div class="sandbox-hint">La vitesse d\'attaque (intervalle), les PV (Endurance/exposant monde) et le monde/aventure/cycle simulés ne s\'appliquent qu\'au lancement d\'un nouveau combat/run/simulation (l\'ennemi affiché garde ses PV déjà calculés). Les autres réglages (dégâts de riposte, résistance/faiblesse) s\'appliquent immédiatement, y compris en cours de combat.</div>';
   h += '<button class="settings-btn sandbox-reset-stats-btn" onclick="resetSandboxEnemyCoefs()">↺ Coefficients par défaut (valeurs réelles du jeu)</button>';
 
   return h;
@@ -1116,7 +1146,7 @@ function selectSandboxEnemy(enemyId) {
 function launchSandboxCombat() {
   var s = _sandboxUiState;
   if (!s.classId || !s.heroId || !s.enemyId) return;
-  var combat = createSandboxCombatState(s.classId, s.heroId, s.enemyId, s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride);
+  var combat = createSandboxCombatState(s.classId, s.heroId, s.enemyId, s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity);
   if (!combat) {
     if (typeof showToast === "function") showToast("Impossible de démarrer le combat de test.");
     return;
@@ -1244,7 +1274,7 @@ function setSandboxPersistenceField(field, rawValue) {
 function launchSandboxRun() {
   var s = _sandboxUiState;
   if (!s.classId || !s.heroId || !s.runQueue.length) return;
-  var run = createSandboxRunState(s.classId, s.heroId, s.runQueue, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride);
+  var run = createSandboxRunState(s.classId, s.heroId, s.runQueue, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity);
   if (!run) {
     if (typeof showToast === "function") showToast("Impossible de démarrer le run de test.");
     return;
@@ -1273,7 +1303,7 @@ function stopSandboxRunFromUi() {
 function resetSandboxRun() {
   var s = _sandboxUiState;
   if (s.classId && s.heroId && s.runQueue.length) {
-    _sandboxUiState.run = createSandboxRunState(s.classId, s.heroId, s.runQueue, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride);
+    _sandboxUiState.run = createSandboxRunState(s.classId, s.heroId, s.runQueue, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity);
     startSandboxClock();
   } else {
     _sandboxUiState.run = null;
@@ -1294,7 +1324,7 @@ function resetSandboxRun() {
 function launchSandboxInfinite() {
   var s = _sandboxUiState;
   if (!s.classId || !s.heroId) return;
-  var infinite = createSandboxInfiniteState(s.classId, s.heroId, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride);
+  var infinite = createSandboxInfiniteState(s.classId, s.heroId, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity);
   if (!infinite) {
     if (typeof showToast === "function") showToast("Impossible de démarrer le mode infini.");
     return;
@@ -1323,7 +1353,7 @@ function stopSandboxInfiniteFromUi() {
 function resetSandboxInfinite() {
   var s = _sandboxUiState;
   if (s.classId && s.heroId) {
-    _sandboxUiState.infinite = createSandboxInfiniteState(s.classId, s.heroId, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride);
+    _sandboxUiState.infinite = createSandboxInfiniteState(s.classId, s.heroId, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity);
     startSandboxClock();
   } else {
     _sandboxUiState.infinite = null;
@@ -1406,6 +1436,7 @@ function launchSandboxAutoBatch() {
   var statsOverride = s.statsOverride;
   var baseCooldownMs = s.baseCooldownMs;
   var enemyCoefsOverride = s.enemyCoefsOverride;
+  var equipmentRarity = s.equipmentRarity; // v3.46.0
 
   function runOne() {
     // L'utilisateur a pu quitter l'écran ou changer de classe pendant
@@ -1413,7 +1444,7 @@ function launchSandboxAutoBatch() {
     // état qui ne correspond plus à ce qui est affiché.
     if (!_sandboxUiState.autoBatchRunning || !_sandboxUiState.autoBatch) return;
 
-    var report = runSingleAutoRun(classId, heroId, cleanedPolicy, statsOverride, baseCooldownMs, null, enemyCoefsOverride);
+    var report = runSingleAutoRun(classId, heroId, cleanedPolicy, statsOverride, baseCooldownMs, null, enemyCoefsOverride, equipmentRarity);
     if (report) _sandboxUiState.autoBatch.reports.push(report);
     _sandboxUiState.autoBatch.runsDone++;
 
@@ -1483,6 +1514,18 @@ function resetSandboxStats() {
   renderCombatSandboxScreen();
 }
 
+/* setSandboxEquipmentRarity(rarity)
+   v3.46.0 : change la rareté d'équipement simulée ("common"/"green"/
+   "rare"/"epic"/"legendary", ou null pour "Aucun"). Comme statsOverride,
+   n'affecte QUE le prochain combat/run/simulation lancé — un combat déjà
+   en cours garde le héros déjà construit (pas de rétroactivité, voir
+   note d'en-tête de applySandboxEquipmentBonus()). */
+function setSandboxEquipmentRarity(rarity) {
+  if (typeof RARITY_ORDER === "undefined" || (rarity && RARITY_ORDER.indexOf(rarity) === -1)) return;
+  _sandboxUiState.equipmentRarity = rarity || null;
+  renderCombatSandboxScreen();
+}
+
 /* setSandboxBaseCooldownMs(rawValue)
    Modifie le réglage baseCooldownMs (bac à sable uniquement, voir
    computeEffectiveCooldownMs()). Valeur négative ramenée à 0. */
@@ -1505,20 +1548,28 @@ function toggleSandboxEnemyCoefsPanel() {
 
 /* setSandboxEnemyCoefField(field, rawValue)
    Modifie UN coefficient surchargé (ENDURANCE_HP_COEF/
-   BOSS_ENDURANCE_HP_COEF/POWER_DMG_COEF/ATTACK_BASE_INTERVAL_S/
-   RESIST_DMG_MULT/WEAK_DMG_MULT/NO_WEAPON_MULT) sur une COPIE locale
+   BOSS_ENDURANCE_HP_COEF/PV_WORLD_EXP/POWER_SCALE_EXP/POWER_DMG_COEF/
+   ATTACK_BASE_INTERVAL_S/RESIST_DMG_MULT/WEAK_DMG_MULT/NO_WEAPON_MULT/
+   WORLD_INDEX/ADVENTURE_INDEX/CYCLE_COUNT) sur une COPIE locale
    (_sandboxUiState.enemyCoefsOverride) — n'écrit jamais dans
    SANDBOX_ENEMY_COEFS ni dans progression-system.js/combat-engine.js
    (jeu réel intact). "Application au prochain combat/run/simulation
-   lancé" pour ATTACK_BASE_INTERVAL_S (vitesse figée à la création,
-   voir buildSandboxEnemyStats()), mais "application immédiate" pour
-   les autres coefficients (lus depuis state.enemyCoefs à chaque
-   action/tick — voir computeSandboxActionDamage()/
-   resolveSandboxEnemyStrike(), combat-sandbox-system.js) : un combat
-   déjà en cours répercute donc un changement de POWER_DMG_COEF ou
-   des multiplicateurs de résistance/faiblesse dès l'action suivante. */
+   lancé" pour ATTACK_BASE_INTERVAL_S, ENDURANCE_HP_COEF/
+   BOSS_ENDURANCE_HP_COEF, PV_WORLD_EXP, POWER_SCALE_EXP et
+   WORLD_INDEX/ADVENTURE_INDEX/CYCLE_COUNT (v3.46.0 : tous figés dans
+   enemy.maxHp/enemy.power à la création par buildSandboxEnemyStats(),
+   comme la vitesse d'attaque), mais "application immédiate" pour
+   POWER_DMG_COEF et les multiplicateurs de résistance/faiblesse (lus
+   depuis state.enemyCoefs à chaque action/tick — voir
+   computeSandboxActionDamage()/resolveSandboxEnemyStrike(),
+   combat-sandbox-system.js) : un combat déjà en cours répercute donc
+   un changement de POWER_DMG_COEF dès l'action suivante. */
 function setSandboxEnemyCoefField(field, rawValue) {
-  var validFields = ["ENDURANCE_HP_COEF", "BOSS_ENDURANCE_HP_COEF", "POWER_DMG_COEF", "ATTACK_BASE_INTERVAL_S", "RESIST_DMG_MULT", "WEAK_DMG_MULT", "NO_WEAPON_MULT"];
+  // v3.46.0 : PV_WORLD_EXP/POWER_SCALE_EXP (nouveaux exposants) et
+  // WORLD_INDEX/ADVENTURE_INDEX/CYCLE_COUNT (position simulée sur la
+  // progression réelle) ajoutés à la liste des champs valides — voir
+  // buildSandboxEnemyStats(), combat-sandbox-system.js.
+  var validFields = ["ENDURANCE_HP_COEF", "BOSS_ENDURANCE_HP_COEF", "PV_WORLD_EXP", "POWER_SCALE_EXP", "POWER_DMG_COEF", "ATTACK_BASE_INTERVAL_S", "RESIST_DMG_MULT", "WEAK_DMG_MULT", "NO_WEAPON_MULT", "WORLD_INDEX", "ADVENTURE_INDEX", "CYCLE_COUNT"];
   if (validFields.indexOf(field) === -1) return;
   var num = parseFloat(rawValue);
   if (isNaN(num)) return;

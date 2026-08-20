@@ -55,6 +55,10 @@ Structure par action (voir chaque kit ci-dessous) :
 Champ "generation" de resource : décrit COMMENT la ressource serait
 gagnée si le système était câblé (dégâts infligés / attaque de base
 réussie+critique / passif+attaque de base) — voir chaque classe.
+v3.46.0 : maxGainPerHit (Chevalier uniquement) — plafonne le gain d'UN
+SEUL coup pour le type "damageDealtPercent", voir applyResourceGain(),
+combat-resource-system.js, et le commentaire sur resource.generation
+du Chevalier ci-dessous pour le contexte complet.
 ============================================================ */
 
 window.CLASS_SKILLS = {
@@ -63,6 +67,22 @@ window.CLASS_SKILLS = {
 
     // Rage : gagnée en infligeant des dégâts (jamais en recevant).
     // v3.33.15 : 0.10 -> 0.40 (équilibrage, voir NOTE_v3.33.15_rage_chevalier.md).
+    // v3.46.0 : maxGainPerHit ajouté (20) — sans lui, un gros tapDamage
+    // (bonus d'équipement) crée une boucle de rétroaction avec le kit du
+    // Chevalier (aucune des 2 autres classes n'a ce problème, leur
+    // ressource est gagnée par montant FIXE, pas proportionnel aux
+    // dégâts) : dégâts d'équipement élevés -> Rage pleine en 1-2 coups
+    // -> skills quasi ininterrompus -> encore plus de dégâts. Repéré par
+    // batch-sim (héros de test légendaire) : le Chevalier survivait
+    // 2 à 9× plus longtemps que Rôdeur/Mage selon le monde simulé, un
+    // écart totalement absent sans équipement (référence v3.33.17 :
+    // Chevalier 62.7 / Rôdeur 60.6 / Mage 65.4, écart < 8 kills).
+    // 20 choisi comme valeur légèrement AU-DESSUS du plus gros gain
+    // naturel SANS équipement (Exécution, 230% mult, ~12 Rage à stats
+    // de base) — donc AUCUN changement de comportement pour un
+    // Chevalier sans/peu équipé (le plafond ne s'active quasiment
+    // jamais), mais casse la boucle une fois le tapDamage boosté par de
+    // l'équipement. Voir applyResourceGain(), combat-resource-system.js.
     resource: {
       id: "rage",
       label: "Rage",
@@ -70,7 +90,8 @@ window.CLASS_SKILLS = {
       initial: 0,
       generation: {
         type: "damageDealtPercent",
-        value: 0.40
+        value: 0.40,
+        maxGainPerHit: 20
       }
     },
 

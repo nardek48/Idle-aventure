@@ -41,8 +41,19 @@ function buildBestiaryCodexSubTabBarHTML() {
   return h;
 }
 
-var BESTIARY_ENEMY_ENDURANCE_HP_COEF = 1.2;
-var BESTIARY_BOSS_ENDURANCE_HP_COEF = 2;
+/* v3.46.0 : les coefficients LOCAUX (BESTIARY_ENEMY_ENDURANCE_HP_COEF
+   etc.) ont été retirés — ce fichier réutilise désormais directement
+   les VRAIES constantes exportées par progression-system.js
+   (ENEMY_PV_MULT/ENEMY_PV_WORLD_EXP/BOSS_PV_MULT/ENEMY_POWER_SCALE_EXP,
+   voir window.* en fin de ce fichier), au lieu de dupliquer une
+   estimation qui pouvait dériver de la vraie formule sans qu'on s'en
+   rende compte (c'était déjà le cas avant cette version : les poids
+   monde/aventure utilisés ici, 0.60/0.22, ne correspondaient déjà plus
+   aux vrais poids de generateEnemy(), 0.90/0.30, depuis le
+   rééquilibrage v2.11). BESTIARY_ENEMY_POWER_DMG_COEF/
+   BESTIARY_ENEMY_PRECISION_CRIT_COEF restent dupliqués : ce sont des
+   coefficients de COMBAT-ENGINE.JS (pas de progression-system.js),
+   jamais retouchés dans le cadre de la présente livraison. */
 var BESTIARY_ENEMY_POWER_DMG_COEF = 0.5;
 var BESTIARY_ENEMY_PRECISION_CRIT_COEF = 0.3;
 
@@ -65,8 +76,14 @@ function findCreatureLocation(id, isBoss) {
   return null;
 }
 
-/* Estimation des PV/dégâts/critique "à la première rencontre" (mêmes
-   formules que WorldManager.generateEnemy, avec cycle 0). */
+/* Estimation des PV/dégâts/critique "à la première rencontre" — MÊMES
+   formules que WorldManager.generateEnemy() (progression-system.js),
+   avec cycleCount=0 et enemyIndex=0 (première rencontre, pas encore
+   avancé dans l'aventure). v3.46.0 : suit désormais la nouvelle courbe
+   (exposant PV_WORLD_EXP limité au terme monde, Puissance de riposte
+   mise à l'échelle) — resynchronisé avec generateEnemy() après avoir
+   dérivé de la vraie formule sur plusieurs rééquilibrages successifs
+   (voir note au-dessus des constantes). */
 function estimateCreatureCombatStats(id, data, isBoss) {
   var stats = data && data.stats;
   if (!stats) return null;
@@ -75,16 +92,27 @@ function estimateCreatureCombatStats(id, data, isBoss) {
   var worldIndex = location ? location.worldIndex : 0;
   var adventureIndex = location ? location.adventureIndex : 0;
 
-  var hp;
+  var pvMult = (typeof window.ENEMY_PV_MULT === "number") ? window.ENEMY_PV_MULT : 4.0;
+  var bossPvMult = (typeof window.BOSS_PV_MULT === "number") ? window.BOSS_PV_MULT : 6.7;
+  var worldExp = (typeof window.ENEMY_PV_WORLD_EXP === "number") ? window.ENEMY_PV_WORLD_EXP : 1.45;
+  var powerExp = (typeof window.ENEMY_POWER_SCALE_EXP === "number") ? window.ENEMY_POWER_SCALE_EXP : 0.9;
+
+  var hp, scale;
   if (isBoss) {
-    var bossScale = 1 + worldIndex * 0.90 + adventureIndex * 0.30;
-    hp = Math.floor((stats.endurance || 0) * BESTIARY_BOSS_ENDURANCE_HP_COEF * bossScale);
+    var bossWorldComponent = Math.pow(1 + worldIndex * 1.3, worldExp);
+    scale = bossWorldComponent + adventureIndex * 0.4;
+    hp = Math.floor((stats.endurance || 0) * bossPvMult * scale);
   } else {
-    var scale = 1 + worldIndex * 0.60 + adventureIndex * 0.22;
-    hp = Math.floor((stats.endurance || 0) * BESTIARY_ENEMY_ENDURANCE_HP_COEF * scale);
+    var worldComponent = Math.pow(1 + worldIndex * 0.90, worldExp);
+    scale = worldComponent + adventureIndex * 0.30;
+    hp = Math.floor((stats.endurance || 0) * pvMult * scale);
   }
 
-  var dmg = Math.max(1, Math.floor((stats.power || 0) * BESTIARY_ENEMY_POWER_DMG_COEF));
+  // v3.46.0 : dmg suit désormais aussi l'échelle (ENEMY_POWER_SCALE_EXP),
+  // comme la vraie Puissance de riposte de generateEnemy() — avant,
+  // seuls les PV grandissaient dans cette estimation.
+  var scaledPower = (stats.power || 0) * Math.pow(scale, powerExp);
+  var dmg = Math.max(1, Math.floor(scaledPower * BESTIARY_ENEMY_POWER_DMG_COEF));
   var critChance = Math.min(40, (stats.precision || 0) * BESTIARY_ENEMY_PRECISION_CRIT_COEF);
 
   return { hp: Math.max(1, hp), dmg: dmg, critChance: critChance };

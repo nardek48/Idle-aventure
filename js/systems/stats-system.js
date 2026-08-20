@@ -173,11 +173,30 @@ var StatsSystem = {
     game.critMult += (baseWill + trainedWill) * WILL_CRIT_MULT_COEF;
 
      // NOUVEAU v1.8 : Endurance -> PV du héros
-    var ENDURANCE_HP_COEF = 6;
+    // v3.46.0 : conversion NON LINÉAIRE (exposant < 1) — avant, un
+    // calcul purement linéaire (endurance × 6) donnait un ratio de PV
+    // de ×2.24 entre le Chevalier (Endurance 76) et le Mage (Endurance
+    // 34), une correspondance directe et non amortie de l'écart de
+    // stat de base. Ce ratio ne posait pas de problème visible tant
+    // que les combats étaient courts (avant la nouvelle courbe de PV
+    // ennemis, v3.46.0) ; une fois les combats allongés, il se
+    // traduisait directement en écart de kills en simulation (batch-
+    // sim : Chevalier survivant 2 à 9× plus longtemps que Rôdeur/Mage
+    // selon le monde). ENDURANCE_HP_EXP resserre l'écart SANS toucher
+    // aux stats de base ni au kit d'aucune classe — ENDURANCE_HP_COEF
+    // recalé pour que le Chevalier (Endurance la plus haute, 76)
+    // conserve EXACTEMENT ses PV d'avant cette version (456), tout le
+    // reste de l'équilibrage riposte/PV déjà calibré sur cette
+    // référence reste donc valide. Nouveau ratio Chevalier/Mage : 1.83
+    // (au lieu de 2.24) — resserré sans être aplati (l'Endurance reste
+    // clairement utile à investir, ce n'est pas un plafond).
+    var ENDURANCE_HP_EXP = 0.75;
+    var ENDURANCE_HP_COEF = 17.716;
     var baseEndurance = (hero && hero.stats) ? Number(hero.stats.endurance) || 0 : 0;
     var trainedEndurance = (game.trainedStats && game.trainedStats.endurance) || 0;
     var totalEndurance = baseEndurance + trainedEndurance;
-    game.heroMaxHp = Math.max(1, Math.floor(totalEndurance * ENDURANCE_HP_COEF));
+    var effectiveEndurance = Math.pow(Math.max(0, totalEndurance), ENDURANCE_HP_EXP);
+    game.heroMaxHp = Math.max(1, Math.floor(effectiveEndurance * ENDURANCE_HP_COEF));
     // v3.19 : le clamp "game.heroHp > game.heroMaxHp -> ramené au max"
     // qui vivait ICI a été RETIRÉ — bug trouvé avec Seb (captures +
     // repro confirmée) : à ce stade du calcul, game.heroMaxHp ne

@@ -92,7 +92,20 @@ function spendResource(state, amount) {
      - damageDealt   (number)  dégâts infligés par l'action en cours
      - isCritical    (boolean) coup critique ou non
      - isBasicAttack (boolean) l'action en cours est-elle l'attaque de
-                                base de la classe */
+                                base de la classe
+
+   v3.46.0 : gainRule.maxGainPerHit (optionnel, uniquement pertinent
+   pour "damageDealtPercent") — plafonne le gain d'UN SEUL coup, avant
+   application à state.current. Corrige un déséquilibre découvert par
+   batch-sim (v3.46.0, nouvelle courbe de PV + héros équipé) : sans
+   plafond, un gros tapDamage (bonus d'équipement) crée une boucle de
+   rétroaction — dégâts d'équipement élevés -> Rage remplie en 1-2 coups
+   -> skills quasi ininterrompus -> encore plus de dégâts — qui n'existe
+   pour AUCUNE des 2 autres classes (Concentration/Mana gagnées par
+   montant FIXE, indépendant de la puissance du héros, voir
+   "successfulBasicAttack"/"passiveAndBasicAttack" ci-dessous). Absent
+   ou <= 0 = aucun plafond, comportement identique à avant cette
+   version (rétrocompatible avec toute donnée existante). */
 function applyResourceGain(state, gainRule, context) {
   if (!state) return state;
   if (!gainRule || typeof gainRule.type !== "string") {
@@ -105,6 +118,9 @@ function applyResourceGain(state, gainRule, context) {
     case "damageDealtPercent": {
       var damageDealt = (typeof ctx.damageDealt === "number" && ctx.damageDealt > 0) ? ctx.damageDealt : 0;
       gain = damageDealt * (gainRule.value || 0);
+      if (typeof gainRule.maxGainPerHit === "number" && gainRule.maxGainPerHit > 0) {
+        gain = Math.min(gain, gainRule.maxGainPerHit);
+      }
       break;
     }
     case "successfulBasicAttack": {

@@ -35,7 +35,7 @@ var SIM_TICK_MS = 100; // pas de simulation interne à un run (pas affiché)
 var DEFAULT_MAX_CONSECUTIVE_KILLS = 500; // garde-fou anti-boucle infinie réelle
 var DEFAULT_MAX_SIM_MS_PER_RUN = 10 * 60 * 1000; // 10 min simulées, filet de sécurité additionnel
 
-/* runSingleAutoRun(classId, heroId, priorityList, overrideStats, baseCooldownMs, options, overrideEnemyCoefs)
+/* runSingleAutoRun(classId, heroId, priorityList, overrideStats, baseCooldownMs, options, overrideEnemyCoefs, equipmentRarity)
    Simule UN run complet en mode infini automatique, du début jusqu'à
    la défaite, un arrêt de sécurité (maxConsecutiveKills atteint) ou
    maxSimMs dépassé. Pilotage entièrement délégué à
@@ -60,8 +60,14 @@ var DEFAULT_MAX_SIM_MS_PER_RUN = 10 * 60 * 1000; // 10 min simulées, filet de s
    Ne modifie aucune donnée source, n'appelle jamais killEnemy() ni
    la sauvegarde réelle — délègue entièrement à
    createSandboxInfiniteState()/applySandboxInfiniteAction()/
-   tickSandboxInfiniteTime(), déjà garanties isolées. */
-function runSingleAutoRun(classId, heroId, priorityList, overrideStats, baseCooldownMs, options, overrideEnemyCoefs) {
+   tickSandboxInfiniteTime(), déjà garanties isolées.
+
+   v3.46.0 : equipmentRarity (optionnel, même format que
+   createSandboxCombatState()) — transmis tel quel à
+   createSandboxInfiniteState(), pour tester l'alignement gear/monde
+   sur une rafale complète (validation de la nouvelle courbe de PV,
+   voir progression-system.js). */
+function runSingleAutoRun(classId, heroId, priorityList, overrideStats, baseCooldownMs, options, overrideEnemyCoefs, equipmentRarity) {
   var opts = options || {};
   var maxConsecutiveKills = (typeof opts.maxConsecutiveKills === "number" && opts.maxConsecutiveKills > 0)
     ? opts.maxConsecutiveKills : DEFAULT_MAX_CONSECUTIVE_KILLS;
@@ -72,7 +78,7 @@ function runSingleAutoRun(classId, heroId, priorityList, overrideStats, baseCool
     ? createDefaultSandboxPersistence() : null;
 
   var infiniteState = (typeof createSandboxInfiniteState === "function")
-    ? createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs)
+    ? createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity)
     : null;
   if (!infiniteState) {
     return { endReason: "invalid", defeatedCount: 0, elapsedMs: 0, totalDamageDealt: 0, totalDamageTaken: 0, actionCounts: {}, resourceWasted: 0, heroMaxHp: 0, reachedBoss: false };

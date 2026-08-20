@@ -7,6 +7,36 @@ Le plus gros fichier du projet : progression dans les mondes
 héros, et ascension (AscensionManager + ascendNow).
 ============================================================ */
 
+// v3.46.0 : nouvelle courbe de PV ennemis, validée par simulation
+// externe (spreadsheet Seb, hors-jeu) — voir NOTE_v3.46.0_formule_pv.md.
+// L'exposant ne s'applique QU'au terme lié au monde (1 + worldIndex*0.90),
+// jamais à adventureIndex/cycleCount/enemyIndex : appliquer l'exposant à
+// l'échelle entière durcit excessivement la progression À L'INTÉRIEUR
+// d'un même monde, pas seulement le saut entre mondes (testé et écarté).
+var ENEMY_PV_MULT = 4.0;       // remplace le 1.2 fixe (ENEMY_ENDURANCE_HP_COEF)
+var ENEMY_PV_WORLD_EXP = 1.45;  // exposant sur (1 + worldIndex*0.90) uniquement
+// BOSS_PV_MULT dérivé du même ratio que l'existant (ENEMY_ENDURANCE_HP_COEF
+// 1.2 / BOSS_ENDURANCE_HP_COEF 2.0) appliqué à ENEMY_PV_MULT — valeur à
+// confirmer par le batch-sim (section 4 du prompt) avant un ajustement.
+var BOSS_PV_MULT = 6.7;
+// v3.46.0 : Puissance ennemie (dégâts de riposte) évolutive avec l'échelle
+// — sans ça, augmenter les PV seuls n'a aucun effet sur le danger perçu
+// une fois que le DPS du joueur tue en moins d'un intervalle de riposte
+// (le nombre de coups reçus par combat plafonne à 1, quel que soit le
+// palier de PV). 0.9 (quasi linéaire) initialement choisi puis RÉVISÉ à
+// 0.3 après validation batch-sim en conditions réalistes (gear "en
+// retard d'un palier" — le cas d'un joueur qui vient d'entrer dans un
+// monde sans avoir encore looté son équipement) : à 0.9, le ratio
+// temps-pour-tuer-un-ennemi / temps-avant-de-mourir tombait sous 1.0 dès
+// le monde 3 pour toutes les classes (le joueur meurt plus vite qu'il ne
+// tue), avec un pire cas observé à 1 seul kill avant KO au monde 5
+// (Mage). À 0.3, le pire cas remonte à ≥6 kills sur toute la
+// progression, sans changement notable en tout début de partie (scale≈1
+// au monde 0 quel que soit l'exposant) ni sur l'écart entre classes
+// (ratio Chevalier/Mage resté dans la même fourchette ~×2.5-4.5, voir
+// section équilibrage des classes plus haut).
+var ENEMY_POWER_SCALE_EXP = 0.3;
+
 var WorldManager = {
   worldIndex: 0,      // index du monde courant dans WORLDS
   adventureIndex: 0,   // index du chapitre courant dans world.adventures
@@ -26,10 +56,16 @@ var WorldManager = {
      dernier cran de l'aventure). Les PV de l'ennemi dérivent de sa
      stat d'endurance de base (ENEMY_DB/BOSS_DB), multipliée par un
      facteur d'échelle qui grandit avec :
-       - le monde atteint (worldIndex)
-       - le chapitre dans ce monde (adventureIndex)
-       - le nombre de cycles bouclés sans ascensionner (game.cycleCount)
-     Les boss ont aussi un bonus supplémentaire lié à game.totalKills. */
+       - le monde atteint (worldIndex) — v3.46.0 : élevé à la puissance
+         ENEMY_PV_WORLD_EXP, UNIQUEMENT ce terme (voir note en tête de
+         fichier) — un saut de monde pèse donc plus lourd qu'avant
+       - le chapitre dans ce monde (adventureIndex) — additif, inchangé
+       - le nombre de cycles bouclés sans ascensionner (game.cycleCount) — additif, inchangé
+     Les boss ont aussi un bonus supplémentaire lié à game.totalKills.
+     v3.46.0 : la Puissance de riposte (dégâts) suit désormais la même
+     échelle (scale/bossScale) via ENEMY_POWER_SCALE_EXP — avant, seuls
+     les PV grandissaient, ce qui rendait un ennemi "plus gros" sans le
+     rendre plus dangereux une fois le DPS du joueur suffisant. */
   generateEnemy: function () {
     var adventure = this.getAdventure();
     if (!adventure) {
@@ -60,10 +96,13 @@ var WorldManager = {
       var bossData = BOSS_DB[enemyId] || { name: "Boss", asset: "slimeking" };
       // v2.11 : coefficients augmentés (0.90/0.30/0.35 -> 1.3/0.4/0.7)
       // pour suivre la croissance multiplicative de la puissance du joueur.
-      var bossScale = 1 + this.worldIndex * 1.3 + this.adventureIndex * 0.4 + (game.cycleCount || 0) * 0.7;
-      var BOSS_ENDURANCE_HP_COEF = 2;
+      // v3.46.0 : exposant ENEMY_PV_WORLD_EXP appliqué UNIQUEMENT au
+      // terme lié au monde (voir note en tête de fichier) — adventureIndex
+      // et cycleCount restent additifs comme avant.
+      var bossWorldComponent = Math.pow(1 + this.worldIndex * 1.3, ENEMY_PV_WORLD_EXP);
+      var bossScale = bossWorldComponent + this.adventureIndex * 0.4 + (game.cycleCount || 0) * 0.7;
       var bossEndurance = (bossData.stats && bossData.stats.endurance) || 58;
-      var bossHp = Math.floor(bossEndurance * BOSS_ENDURANCE_HP_COEF * bossScale * milestoneMult + (game.totalKills || 0) * 2);
+      var bossHp = Math.floor(bossEndurance * BOSS_PV_MULT * bossScale * milestoneMult + (game.totalKills || 0) * 2);
       // v3.20 : Colosses (affliction) double les PV de boss — voir
       // AfflictionManager.getCombinedModifiers().bossHpMult.
       if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
@@ -76,6 +115,13 @@ var WorldManager = {
       var bossStats = bossData.stats ? Object.assign({}, bossData.stats) : null;
       if (bossStats && milestoneMult !== 1) {
         bossStats.power = Math.floor(bossStats.power * milestoneMult);
+      }
+      // v3.46.0 : Puissance de riposte du boss mise à l'échelle avec
+      // bossScale (voir note ENEMY_POWER_SCALE_EXP en tête de fichier) —
+      // appliquée APRÈS milestoneMult, sur le power déjà (éventuellement)
+      // boosté ci-dessus, jamais sur bossData.stats.power d'origine.
+      if (bossStats) {
+        bossStats.power = Math.floor(bossStats.power * Math.pow(bossScale, ENEMY_POWER_SCALE_EXP));
       }
       return {
         id: enemyId,
@@ -96,16 +142,29 @@ var WorldManager = {
     var enemyData = ENEMY_DB[enemyId] || { name: "Ennemi", asset: "slime" };
     // v2.11 : coefficients augmentés (0.60/0.22/0.20 -> 0.90/0.30/0.45)
     // pour suivre la croissance multiplicative de la puissance du joueur.
-    var scale = 1 + this.worldIndex * 0.90 + this.adventureIndex * 0.30 + (game.cycleCount || 0) * 0.45 + this.enemyIndex * 0.05;
-    var ENEMY_ENDURANCE_HP_COEF = 1.2;
+    // v3.46.0 : exposant ENEMY_PV_WORLD_EXP appliqué UNIQUEMENT au terme
+    // lié au monde (voir note en tête de fichier) — adventureIndex,
+    // cycleCount et enemyIndex restent additifs comme avant (appliquer
+    // l'exposant à l'échelle entière durcirait aussi la progression à
+    // L'INTÉRIEUR d'un même monde, effet de bord écarté par simulation).
+    var worldComponent = Math.pow(1 + this.worldIndex * 0.90, ENEMY_PV_WORLD_EXP);
+    var scale = worldComponent + this.adventureIndex * 0.30 + (game.cycleCount || 0) * 0.45 + this.enemyIndex * 0.05;
     var enemyEndurance = (enemyData.stats && enemyData.stats.endurance) || 18;
-    var hp = Math.floor(enemyEndurance * ENEMY_ENDURANCE_HP_COEF * scale * milestoneMult + this.enemyIndex * 5);
+    var hp = Math.floor(enemyEndurance * ENEMY_PV_MULT * scale * milestoneMult + this.enemyIndex * 5);
 
     // v3.23 : même clonage que pour le boss ci-dessus — jamais
     // l'objet ENEMY_DB partagé directement.
     var effectiveStats = enemyData.stats ? Object.assign({}, enemyData.stats) : null;
     if (effectiveStats && milestoneMult !== 1) {
       effectiveStats.power = Math.floor(effectiveStats.power * milestoneMult);
+    }
+    // v3.46.0 : Puissance de riposte mise à l'échelle avec scale (voir
+    // note ENEMY_POWER_SCALE_EXP en tête de fichier) — sans ça,
+    // augmenter les PV seuls n'a aucun effet sur le danger perçu une
+    // fois le DPS du joueur suffisant pour tuer en moins d'un intervalle
+    // de riposte (nombre de coups reçus par combat plafonné à 1).
+    if (effectiveStats) {
+      effectiveStats.power = Math.floor(effectiveStats.power * Math.pow(scale, ENEMY_POWER_SCALE_EXP));
     }
 
     return {
@@ -826,4 +885,11 @@ window.ascendNow = ascendNow;
 window.setShopBuyAmount = setShopBuyAmount;
 window.getUpgradePurchasePreview = getUpgradePurchasePreview;
 window.doAscend = function () { AscensionManager.doAscend(); };
+// v3.46.0 : exportées pour que ui/bestiary-view.js (estimation "à la
+// première rencontre") réutilise les VRAIES constantes au lieu de les
+// dupliquer une deuxième fois — voir estimateCreatureCombatStats().
+window.ENEMY_PV_MULT = ENEMY_PV_MULT;
+window.ENEMY_PV_WORLD_EXP = ENEMY_PV_WORLD_EXP;
+window.BOSS_PV_MULT = BOSS_PV_MULT;
+window.ENEMY_POWER_SCALE_EXP = ENEMY_POWER_SCALE_EXP;
 

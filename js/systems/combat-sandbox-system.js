@@ -31,16 +31,27 @@ STATS DU HÉROS DE TEST — simplification documentée :
   de talents, d'entraînement ni d'ascension. C'est un jeu de stats de
   base raisonnable, pas les stats réelles du joueur.
 
-ÉCHELLE ENNEMI — simplification documentée :
+ÉCHELLE ENNEMI — simplification documentée, ÉTENDUE en v3.46.0 :
   WorldManager.generateEnemy() (le vrai calcul de PV/dégâts ennemi)
   dépend de game.cycleCount, de la position sur la carte (monde/
   aventure) et du nombre de kills — tout ça appartient à l'état réel
   de la partie. ENEMY_DB ne contient d'ailleurs aucun champ PV/dégâts
   direct, ni de regroupement par zone (uniquement des stats RPG à 5
-  axes). Ce bac à sable applique donc une échelle FIXE et neutre
-  (scale = 1, aucun bonus de monde/cycle) sur les mêmes coefficients
-  que progression-system.js — un ennemi de test représentatif de son
-  "monde 1, cycle 0", pas de la difficulté réelle actuelle du joueur.
+  axes).
+  Jusqu'à v3.45.0, ce bac à sable appliquait une échelle FIXE et
+  neutre (scale = 1, aucun bonus de monde/cycle) — un ennemi de test
+  représentatif de son "monde 1, cycle 0" uniquement.
+  v3.46.0 : WORLD_INDEX/ADVENTURE_INDEX/CYCLE_COUNT (dans
+  SANDBOX_ENEMY_COEFS, réglables via le panneau de coefficients d'ennemi,
+  voir ui/combat-sandbox-view.js) permettent de recalculer scale/
+  bossScale avec les VRAIES formules de progression-system.js (même
+  poids 0.90/1.3, 0.30/0.4, 0.45/0.7, même exposant PV_WORLD_EXP limité
+  au terme monde) — un ennemi de test peut donc représenter n'importe
+  quel point de la progression, pas seulement le tout début. Valeurs par
+  défaut = 0 (comportement neutre, identique à avant cette version).
+  enemyIndex (progression DANS une même aventure) reste volontairement
+  absent — poids négligeable (0.05/ennemi) et ce bac à sable n'a pas de
+  notion de "position dans l'aventure courante", juste un ennemi isolé.
 
 IDENTIFICATION D'UN BOSS (v3.33.5, mode Run) :
   data/enemies.js (ENEMY_DB) n'a AUCUN champ boss. Les boss réels du
@@ -85,7 +96,14 @@ var SANDBOX_HERO_BASE_COEFS = {
   FORCE_TAP_COEF: 0.2,
   PRECISION_CRIT_COEF: 0.06,
   WILL_CRIT_MULT_COEF: 0.01,
-  ENDURANCE_HP_COEF: 6,
+  // v3.46.0 : conversion Endurance->PV NON LINÉAIRE, alignée sur le jeu
+  // réel (voir stats-system.js recalcStats()) — ENDURANCE_HP_EXP < 1
+  // resserre l'écart de PV entre héros à haute/basse Endurance (ex.
+  // Chevalier 76 vs Mage 34), sans changer les stats de base ni le kit
+  // d'aucune classe. COEF recalé pour garder le Chevalier à ~456 PV
+  // (référence inchangée), comme dans stats-system.js.
+  ENDURANCE_HP_EXP: 0.75,
+  ENDURANCE_HP_COEF: 17.716,
   HERO_DEFENSE_COEF: 0.002,
   BASE_TAP_DAMAGE: 1,
   BASE_CRIT_CHANCE: 5, // v3.33.14 : 0.05 -> 5 (points de %, comme game.critChance)
@@ -98,14 +116,30 @@ var SANDBOX_HERO_BASE_COEFS = {
    buildSandboxEnemyStats()) pour que TOUS les coefficients ennemis
    soient réglables depuis un seul objet — voir overrideEnemyCoefs
    plus bas. */
+// v3.46.0 : coefficients par défaut alignés sur la nouvelle courbe RÉELLE
+// du jeu (ENEMY_PV_MULT/ENEMY_PV_WORLD_EXP/BOSS_PV_MULT/
+// ENEMY_POWER_SCALE_EXP, progression-system.js) — avant, ce bac à sable
+// ne pouvait tester qu'une échelle NEUTRE fixe (worldIndex/cycleCount
+// figés à 0, voir note d'en-tête du fichier). ENDURANCE_HP_COEF/
+// BOSS_ENDURANCE_HP_COEF renommés en *_PV_MULT pour matcher les noms
+// réels du jeu (ancien "1.2 fixe" devient un multiplicateur d'échelle,
+// pas d'endurance seule) — la valeur par défaut suit la même migration
+// (1.2 -> 4.0, 2 -> 6.7). worldIndex/cycleCount/adventureIndex ajoutés
+// ici comme nouveaux coefficients réglables (0 par défaut = comportement
+// neutre identique à avant, rétrocompatible avec tout state existant).
 var SANDBOX_ENEMY_COEFS = {
-  ENDURANCE_HP_COEF: 1.2,
-  BOSS_ENDURANCE_HP_COEF: 2,
+  ENDURANCE_HP_COEF: 4.0,        // v3.46.0 : 1.2 -> 4.0 (ENEMY_PV_MULT réel)
+  BOSS_ENDURANCE_HP_COEF: 6.7,    // v3.46.0 : 2 -> 6.7 (BOSS_PV_MULT réel)
+  PV_WORLD_EXP: 1.45,              // v3.46.0 : ENEMY_PV_WORLD_EXP réel — exposant sur le terme monde uniquement
+  POWER_SCALE_EXP: 0.3,            // v3.46.0 : ENEMY_POWER_SCALE_EXP réel — puissance de riposte mise à l'échelle (0.9 initial, révisé à 0.3 après validation batch-sim, voir progression-system.js)
   POWER_DMG_COEF: 0.5,
   ATTACK_BASE_INTERVAL_S: 3,
   RESIST_DMG_MULT: 0.7,
   WEAK_DMG_MULT: 1.3,
-  NO_WEAPON_MULT: 0.8
+  NO_WEAPON_MULT: 0.8,
+  WORLD_INDEX: 0,      // v3.46.0 : 0 = monde 1 (Forêt), même convention que WorldManager.worldIndex
+  ADVENTURE_INDEX: 0,  // v3.46.0 : simplifié à 0 par défaut, réglable comme demandé (pas de vraie liste d'aventures ici)
+  CYCLE_COUNT: 0        // v3.46.0 : nombre de cycles bouclés simulés
 };
 
 /* Cooldown de base par défaut de l'attaque de base DANS LE BAC À
@@ -210,7 +244,7 @@ function buildSandboxHeroStats(heroId, overrideStats) {
   var critChancePercent = c.BASE_CRIT_CHANCE + (s.precision || 0) * c.PRECISION_CRIT_COEF;
   var critChance = Math.min(1, Math.max(0, critChancePercent / 100));
   var critMult = c.BASE_CRIT_MULT + (s.will || 0) * c.WILL_CRIT_MULT_COEF;
-  var maxHp = Math.max(1, Math.floor((s.endurance || 0) * c.ENDURANCE_HP_COEF));
+  var maxHp = Math.max(1, Math.floor(Math.pow(Math.max(0, s.endurance || 0), c.ENDURANCE_HP_EXP) * c.ENDURANCE_HP_COEF));
   var defensePct = Math.min(0.60, (s.endurance || 0) * c.HERO_DEFENSE_COEF);
 
   return {
@@ -226,6 +260,86 @@ function buildSandboxHeroStats(heroId, overrideStats) {
     hp: maxHp,
     defensePct: defensePct
   };
+}
+
+/* applySandboxEquipmentBonus(heroStats, rarity)
+   v3.46.0 : simule un set COMPLET (7 emplacements, EQUIPMENT_SLOTS) de
+   la rareté donnée sur un héros de test déjà construit par
+   buildSandboxHeroStats() — pour tester l'alignement gear/monde de la
+   nouvelle courbe de PV (voir section "Pourquoi ces valeurs" du prompt
+   de livraison). Valeur de CHAQUE emplacement = MOYENNE de son range
+   (EQUIPMENT_SLOT_CONFIG[slot].ranges[rarity], data/equipment.js), pas
+   un tirage aléatoire — un résultat déterministe et reproductible est
+   plus utile pour comparer deux réglages que percentage de chance.
+   Ajoute aussi le bonus de panoplie 7 pièces (SET_BONUS_CONFIG, la
+   panoplie 3 pièces est un sous-ensemble strict de 7 pièces de même
+   rareté donc toujours actif en même temps — les DEUX bonus se
+   cumulent, comme en jeu réel, voir getActiveSetBonuses() dans
+   stats-system.js).
+   Retourne un NOUVEL objet heroStats (ne mute jamais celui reçu).
+   rarity absent/null/invalide = heroStats renvoyé tel quel (pas
+   d'équipement simulé, comportement identique à avant cette version).
+   Champs affectés : tapDamage (+ tapDmg plat, × tapMult), critChance
+   (+ plat, replafonné à 1.0 comme buildSandboxHeroStats), critMult
+   (+ plat), maxHp/defensePct (+ defense, même plafond 0.60 que le jeu
+   réel). autoDps/goldMult calculés pour référence (affichage) mais
+   SANS EFFET sur le combat simulé — ce bac à sable ne modélise ni
+   l'auto-DPS ni les gains d'or, voir note d'en-tête du fichier. */
+function applySandboxEquipmentBonus(heroStats, rarity) {
+  if (!heroStats) return heroStats;
+  if (!rarity || typeof rarity !== "string") return Object.assign({}, heroStats);
+  if (typeof EQUIPMENT_SLOTS === "undefined" || typeof EQUIPMENT_SLOT_CONFIG === "undefined") return Object.assign({}, heroStats);
+
+  var totals = { tapDmg: 0, tapMult: 0, goldMult: 0, critChance: 0, critMult: 0, autoDps: 0, defense: 0 };
+
+  EQUIPMENT_SLOTS.forEach(function (slot) {
+    var config = EQUIPMENT_SLOT_CONFIG[slot];
+    if (!config || !config.ranges || !config.ranges[rarity]) return;
+    var range = config.ranges[rarity];
+    var avgValue = (Number(range[0]) + Number(range[1])) / 2;
+    if (totals.hasOwnProperty(config.stat)) totals[config.stat] += avgValue;
+  });
+
+  // Bonus de panoplie — 3 pièces ET 7 pièces (les deux actifs
+  // simultanément avec un set complet de 7, voir note ci-dessus).
+  if (typeof SET_BONUS_CONFIG !== "undefined" && SET_BONUS_CONFIG.tiers) {
+    SET_BONUS_CONFIG.tiers.forEach(function (tier) {
+      var tierBonus = tier.bonuses && tier.bonuses[rarity];
+      if (!tierBonus || typeof tierBonus.apply !== "function") return;
+      var effect = tierBonus.apply() || {};
+      if (effect.tapDamage != null) totals.tapDmg += effect.tapDamage;
+      if (effect.tapMult != null) totals.tapMult += effect.tapMult;
+      if (effect.goldMult != null) totals.goldMult += effect.goldMult;
+      if (effect.critChance != null) totals.critChance += effect.critChance;
+      if (effect.critMult != null) totals.critMult += effect.critMult;
+      if (effect.autoDps != null) totals.autoDps += effect.autoDps;
+    });
+  }
+
+  // v2.29 (jeu réel) : (base × tapMult) PUIS + bonus plat — même ordre
+  // reproduit ici pour rester cohérent avec effectiveTapDamage().
+  var tapMultTotal = 1 + totals.tapMult;
+  var newTapDamage = heroStats.tapDamage * tapMultTotal + totals.tapDmg;
+
+  // critChance stockée en FRACTION 0-1 dans ce bac à sable (voir
+  // buildSandboxHeroStats() — correctif v3.33.14) ; les bonus
+  // d'équipement réels sont en POINTS DE % (comme game.critChance) —
+  // conversion /100 avant d'additionner, puis replafonnage à 1.0.
+  var newCritChance = Math.min(1, Math.max(0, heroStats.critChance + totals.critChance / 100));
+  var newCritMult = heroStats.critMult + totals.critMult;
+  var newDefensePct = Math.min(0.60, heroStats.defensePct + totals.defense);
+
+  return Object.assign({}, heroStats, {
+    tapDamage: newTapDamage,
+    critChance: newCritChance,
+    critMult: newCritMult,
+    defensePct: newDefensePct,
+    // Champs de référence uniquement (affichage) — voir note d'en-tête,
+    // ce bac à sable ne simule ni l'auto-DPS ni l'or.
+    equipmentAutoDpsRef: totals.autoDps,
+    equipmentGoldMultRef: 1 + totals.goldMult,
+    equipmentRarity: rarity
+  });
 }
 
 /* buildSandboxEnemyStats(enemyId, overrideCoefs)
@@ -260,12 +374,43 @@ function buildSandboxEnemyStats(enemyId, overrideCoefs) {
   var s = enemy.stats || {};
   var c = Object.assign({}, SANDBOX_ENEMY_COEFS, overrideCoefs || {});
 
-  // v3.33.5 : un boss de test utilise BOSS_ENDURANCE_HP_COEF (=2 par
-  // défaut, contre 1.2 pour un ennemi normal) — même échelle neutre
-  // (scale=1) que le reste de ce fichier, voir note d'en-tête.
+  // v3.33.5 : un boss de test utilise BOSS_ENDURANCE_HP_COEF (=6.7 par
+  // défaut depuis v3.46.0, contre 4.0 pour un ennemi normal).
   // v3.33.12 : lu depuis c (réglable) au lieu d'un "2" codé en dur.
-  var hpCoef = isBoss ? c.BOSS_ENDURANCE_HP_COEF : c.ENDURANCE_HP_COEF;
-  var maxHp = Math.max(1, Math.floor((s.endurance || 0) * hpCoef));
+  // v3.46.0 : WORLD_INDEX/ADVENTURE_INDEX/CYCLE_COUNT (0 par défaut =
+  // comportement NEUTRE identique à avant cette version, voir note
+  // d'en-tête du fichier sur pourquoi ce bac à sable utilisait jusqu'ici
+  // une échelle fixe) permettent de recalculer un vrai `scale`/`bossScale`
+  // avec les FORMULES RÉELLES du jeu (mêmes poids 0.90/1.3, 0.30/0.4,
+  // 0.45/0.7 que progression-system.js) au lieu d'une valeur figée à 1 —
+  // PV_WORLD_EXP appliqué UNIQUEMENT au terme monde, jamais à
+  // adventureIndex/cycleCount (même règle que le jeu réel).
+  var worldIndex = Number(c.WORLD_INDEX || 0);
+  var adventureIndex = Number(c.ADVENTURE_INDEX || 0);
+  var cycleCount = Number(c.CYCLE_COUNT || 0);
+  var worldExp = (typeof c.PV_WORLD_EXP === "number") ? c.PV_WORLD_EXP : 1;
+
+  var scale, hpCoef;
+  if (isBoss) {
+    var bossWorldComponent = Math.pow(1 + worldIndex * 1.3, worldExp);
+    scale = bossWorldComponent + adventureIndex * 0.4 + cycleCount * 0.7;
+    hpCoef = c.BOSS_ENDURANCE_HP_COEF;
+  } else {
+    var worldComponent = Math.pow(1 + worldIndex * 0.90, worldExp);
+    scale = worldComponent + adventureIndex * 0.30 + cycleCount * 0.45;
+    hpCoef = c.ENDURANCE_HP_COEF;
+  }
+
+  var maxHp = Math.max(1, Math.floor((s.endurance || 0) * hpCoef * scale));
+
+  // v3.46.0 : Puissance de riposte mise à l'échelle avec scale, comme le
+  // jeu réel (ENEMY_POWER_SCALE_EXP) — POWER_SCALE_EXP à 0 revient à un
+  // exposant neutre (Math.pow(scale, 0) === 1), donc AUCUN changement si
+  // ce coefficient n'est pas explicitement réglé au-delà de sa valeur
+  // par défaut (0.9, alignée sur le jeu réel).
+  var powerExp = (typeof c.POWER_SCALE_EXP === "number") ? c.POWER_SCALE_EXP : 0;
+  var scaledPower = (s.power || 0) * Math.pow(scale, powerExp);
+
   var attackIntervalS = c.ATTACK_BASE_INTERVAL_S / (1 + (s.celerity || 0) / 40);
 
   return {
@@ -275,7 +420,7 @@ function buildSandboxEnemyStats(enemyId, overrideCoefs) {
     isBoss: isBoss,
     resists: enemy.resists || [],
     weak: enemy.weak || [],
-    power: s.power || 0,
+    power: scaledPower,
     maxHp: maxHp,
     hp: maxHp,
     attackIntervalS: attackIntervalS
@@ -467,8 +612,16 @@ function getDamageAffinityMult(weaponType, resists, weak, overrideCoefs) {
      réglage modifié en cours de combat s'applique dès la prochaine
      action (contrairement à overrideStats/baseCooldownMs qui ne
      s'appliquent qu'au combat SUIVANT, voir
-     ui/combat-sandbox-view.js). */
-function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseCooldownMs, overrideEnemyCoefs) {
+     ui/combat-sandbox-view.js).
+
+   v3.46.0 :
+   - equipmentRarity (optionnel) — "common"/"green"/"rare"/"epic"/
+     "legendary", ou null/absent = aucun équipement simulé (comportement
+     identique à avant cette version). Voir applySandboxEquipmentBonus() :
+     appliqué APRÈS overrideStats, comme le jeu réel applique l'équipement
+     après les stats RPG du héros dans StatsSystem.recalcStats(). Figé au
+     lancement du combat, comme overrideStats/baseCooldownMs. */
+function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity) {
   if (typeof getClassByHeroId !== "function" || typeof getClassSkills !== "function") return null;
   if (typeof createCombatResourceState !== "function" || typeof createCooldownState !== "function") return null;
 
@@ -479,6 +632,7 @@ function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseC
   if (!kit) return null;
 
   var heroStats = buildSandboxHeroStats(heroId, overrideStats);
+  if (heroStats && equipmentRarity) heroStats = applySandboxEquipmentBonus(heroStats, equipmentRarity);
   var enemyStats = buildSandboxEnemyStats(enemyId, overrideEnemyCoefs);
   if (!heroStats || !enemyStats) return null;
 
@@ -906,10 +1060,14 @@ function createDefaultSandboxPersistence() {
 
    v3.33.12 : overrideEnemyCoefs (optionnel, même format que
    createSandboxCombatState()) suit la même logique — conservé dans le
+   runState, réappliqué à chaque nouveau combat de la file.
+
+   v3.46.0 : equipmentRarity (optionnel, même format que
+   createSandboxCombatState()) suit la même logique — conservé dans le
    runState, réappliqué à chaque nouveau combat de la file. */
-function createSandboxRunState(classId, heroId, queue, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs) {
+function createSandboxRunState(classId, heroId, queue, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity) {
   if (!Array.isArray(queue) || queue.length === 0) return null;
-  var firstCombat = createSandboxCombatState(classId, heroId, queue[0], overrideStats, baseCooldownMs, overrideEnemyCoefs);
+  var firstCombat = createSandboxCombatState(classId, heroId, queue[0], overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity);
   if (!firstCombat) return null;
 
   var pers = persistence || createDefaultSandboxPersistence();
@@ -920,6 +1078,7 @@ function createSandboxRunState(classId, heroId, queue, persistence, overrideStat
     overrideStats: overrideStats || null,
     baseCooldownMs: firstCombat.baseCooldownMs,
     overrideEnemyCoefs: overrideEnemyCoefs || null,
+    equipmentRarity: equipmentRarity || null,
     queue: queue.slice(),
     currentIndex: 0,
     currentCombat: firstCombat,
@@ -1056,7 +1215,7 @@ function applySandboxRunAction(runState, actionSlot) {
 
     var nextIndex = runState.currentIndex + 1;
     var nextEnemyId = runState.queue[nextIndex];
-    var freshCombat = createSandboxCombatState(runState.classId, runState.heroId, nextEnemyId, runState.overrideStats, runState.baseCooldownMs, runState.overrideEnemyCoefs);
+    var freshCombat = createSandboxCombatState(runState.classId, runState.heroId, nextEnemyId, runState.overrideStats, runState.baseCooldownMs, runState.overrideEnemyCoefs, runState.equipmentRarity);
     if (!freshCombat) {
       next.status = "stopped";
       next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Run arrêté : ennemi suivant invalide (" + nextEnemyId + ") ---")]);
@@ -1207,12 +1366,16 @@ function finalizeSandboxRun(runState) {
    v3.33.12 : overrideEnemyCoefs (optionnel, même format que
    createSandboxCombatState()) — conservé dans l'état, réappliqué à
    chaque nouveau combat de la boucle (voir
-   advanceSandboxInfiniteToNextEnemy()). */
-function createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs) {
+   advanceSandboxInfiniteToNextEnemy()).
+
+   v3.46.0 : equipmentRarity (optionnel, même format que
+   createSandboxCombatState()) — conservé dans l'état, réappliqué à
+   chaque nouveau combat de la boucle. */
+function createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity) {
   var enemyOrder = listSandboxAllEnemiesInOrder();
   if (!enemyOrder.length) return null;
 
-  var firstCombat = createSandboxCombatState(classId, heroId, enemyOrder[0], overrideStats, baseCooldownMs, overrideEnemyCoefs);
+  var firstCombat = createSandboxCombatState(classId, heroId, enemyOrder[0], overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity);
   if (!firstCombat) return null;
 
   var pers = persistence || createDefaultSandboxPersistence();
@@ -1223,6 +1386,7 @@ function createSandboxInfiniteState(classId, heroId, persistence, overrideStats,
     overrideStats: overrideStats || null,
     baseCooldownMs: firstCombat.baseCooldownMs,
     overrideEnemyCoefs: overrideEnemyCoefs || null,
+    equipmentRarity: equipmentRarity || null,
     persistence: pers,
     enemyOrder: enemyOrder,
     currentPosition: 0,
@@ -1262,7 +1426,7 @@ function advanceSandboxInfiniteToNextEnemy(infiniteState, nextCombatFromCurrent)
   }
 
   var nextEnemyId = infiniteState.enemyOrder[nextPosition];
-  var freshCombat = createSandboxCombatState(infiniteState.classId, infiniteState.heroId, nextEnemyId, infiniteState.overrideStats, infiniteState.baseCooldownMs, infiniteState.overrideEnemyCoefs);
+  var freshCombat = createSandboxCombatState(infiniteState.classId, infiniteState.heroId, nextEnemyId, infiniteState.overrideStats, infiniteState.baseCooldownMs, infiniteState.overrideEnemyCoefs, infiniteState.equipmentRarity);
   if (!freshCombat) return { status: "invalid" };
 
   var carried = applySandboxPersistence(Object.assign({}, freshCombat, {
@@ -1434,6 +1598,7 @@ window.SANDBOX_HERO_BASE_COEFS = SANDBOX_HERO_BASE_COEFS;
 window.SANDBOX_ENEMY_COEFS = SANDBOX_ENEMY_COEFS;
 window.buildSandboxHeroStats = buildSandboxHeroStats;
 window.getSandboxHeroBaseStats = getSandboxHeroBaseStats;
+window.applySandboxEquipmentBonus = applySandboxEquipmentBonus; // v3.46.0
 window.SANDBOX_DEFAULT_BASE_COOLDOWN_MS = SANDBOX_DEFAULT_BASE_COOLDOWN_MS;
 window.buildSandboxEnemyStats = buildSandboxEnemyStats;
 window.listSandboxEnemies = listSandboxEnemies;
