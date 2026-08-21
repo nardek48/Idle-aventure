@@ -19,6 +19,16 @@ function buildSettingsHTML() {
   h += '<button class="settings-btn" onclick="showImportTextModal()">📋 Importer un code</button>';
   h += '</div>';
 
+  h += '<div class="panel-card">';
+  h += '<h3>⚔️ Combat</h3>';
+  h += '<label class="settings-toggle-row">';
+  h += '<span>Compétences automatiques</span>';
+  h += '<input type="checkbox" id="auto-skills-toggle"' + (game.autoSkillsEnabled ? ' checked' : '') + ' onchange="toggleAutoSkills(this.checked)">';
+  h += '</label>';
+  h += '<p class="panel-sub">Le héros utilise seul ses compétences de classe (1/2/3/Défense) selon la priorité par défaut, ou selon tes règles du Grimoire si tu en as configuré. Désactive pour reprendre la main manuellement.</p>';
+  h += '<button class="settings-btn" onclick="switchTab(\'grimoire\')">📖 Grimoire de tactiques</button>';
+  h += '</div>';
+
   h += '<button class="settings-btn danger" onclick="resetGame()">Réinitialiser tout</button>';
 
   h += '<div class="panel-card">';
@@ -35,4 +45,16 @@ function buildSettingsHTML() {
   return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
+/* v3.47.0 : toggle du combat auto de base (Paramètres > Combat) —
+   met à jour game.autoSkillsEnabled, sauvegarde, et rafraîchit les
+   boutons de compétence de classe (désactivés visuellement tant que
+   le mode auto est actif, voir buildClassSkillButtonHTML(),
+   ui/combat-view.js). */
+function toggleAutoSkills(enabled) {
+  game.autoSkillsEnabled = !!enabled;
+  if (typeof renderClassSkillButtons === "function") renderClassSkillButtons();
+  saveGame();
+}
+
 window.buildSettingsHTML = buildSettingsHTML;
+window.toggleAutoSkills = toggleAutoSkills;

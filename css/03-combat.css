@@ -67,6 +67,51 @@
   border-color: #f87171;
 }
 
+/* v3.48.0 : télégraphe de Charge — pulsation rouge pour bien
+   distinguer "danger imminent" (1.5s pour réagir) des 2 statuts
+   ci-dessus (effets déjà appliqués, pas d'urgence à percevoir). */
+.enemy-status-charge {
+  border-color: #ef4444;
+  animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes chargeTelegraphPulse {
+  from { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+  to   { box-shadow: 0 0 6px 2px rgba(239, 68, 68, 0.55); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enemy-status-charge {
+    animation: none;
+  }
+}
+
+/* v3.49.0 : patterns de boss — Bouclier (télégraphe + actif,
+   distincts) et Soin (télégraphe). Même pulsation que la Charge pour
+   le télégraphe (danger imminent, cohérence visuelle), couleurs
+   dédiées par pattern pour rester lisible en un coup d'œil. */
+.enemy-status-shield-telegraph {
+  border-color: #60a5fa;
+  animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
+}
+
+.enemy-status-shield-active {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.25);
+}
+
+.enemy-status-heal-telegraph {
+  border-color: #4ade80;
+  animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enemy-status-shield-telegraph,
+  .enemy-status-heal-telegraph {
+    animation: none;
+  }
+}
+
 .enemy-status-timer {
   position: absolute;
   bottom: -4px;
@@ -527,6 +572,16 @@
 .combat-action-btn.on-cooldown {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* v3.47.0 : combat auto actif — bouton géré par ClassCombatManager.
+   tickAutoSkills(), tap manuel désactivé (voir Paramètres > Combat).
+   Distinct visuellement de .on-cooldown (grisé plus neutre, pas de
+   décompte) : ce n'est pas indisponible temporairement, c'est délégué. */
+.combat-action-btn.auto-mode {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+  cursor: default;
 }
 
 .attack-action-btn {

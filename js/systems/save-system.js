@@ -435,6 +435,15 @@ function buildSaveData() {
     lastHealUse: Number(game.lastHealUse || 0),
     autoSellEquipment: !!game.autoSellEquipment,
     autoSellRarityThreshold: game.autoSellRarityThreshold || "common",
+    // v3.47.0 : combat auto de base (skill1/skill2/skill3/defense +
+    // attaque de base), voir ClassCombatManager.tickAutoSkills() —
+    // actif par défaut, réglable dans Paramètres.
+    autoSkillsEnabled: game.autoSkillsEnabled !== false,
+    // v3.50.0 : Grimoire de tactiques (étape 4a) — tableau de règles
+    // { conditionId, actionSlot }, voir data/grimoire-conditions.js et
+    // ClassCombatManager.tickAutoSkills(). Array.isArray() garde
+    // contre un état corrompu plutôt que de planter la sauvegarde.
+    grimoireRules: Array.isArray(game.grimoireRules) ? game.grimoireRules : [],
     // v3.34.0 : lastSpecialUse/specialBuffExpires/specialBuffPct/
     // lastDefenseUse/defenseBuffExpires retirés (ancien système), voir
     // classResource/classCooldowns/classActiveDefense ci-dessous.
@@ -606,6 +615,23 @@ function restoreBaseState(d) {
   game.lastHealUse = Number(d.lastHealUse || 0);
   game.autoSellEquipment = !!d.autoSellEquipment;
   game.autoSellRarityThreshold = (typeof d.autoSellRarityThreshold === "string") ? d.autoSellRarityThreshold : "common";
+  // v3.47.0 : absent d'une ancienne sauvegarde = true (comportement
+  // par défaut souhaité), pas false — seul un false explicite désactive.
+  game.autoSkillsEnabled = d.autoSkillsEnabled !== false;
+  // v3.50.0 : Grimoire — absent d'une ancienne sauvegarde (avant
+  // v3.50.0) = tableau vide (aucune règle configurée, comportement
+  // identique à avant cette version). sanitizeGrimoireRules() filtre
+  // toute entrée corrompue/obsolète (ex. conditionId retiré d'une
+  // future version) — kit: null ici, la classe courante n'est pas
+  // encore forcément connue à ce point du chargement (heroId vient
+  // d'être posé juste au-dessus, mais recalcStats()/le kit réel ne
+  // sont garantis qu'après tout restoreBaseState()) ; une validation
+  // plus stricte par classe aura de toute façon lieu à la volée dans
+  // chooseGrimoireAction() à chaque tick (canUseAction() y échoue déjà
+  // proprement si l'action n'existe pas dans le kit courant).
+  game.grimoireRules = (typeof sanitizeGrimoireRules === "function")
+    ? sanitizeGrimoireRules(d.grimoireRules, null)
+    : (Array.isArray(d.grimoireRules) ? d.grimoireRules : []);
   // v3.34.0 : classResource absent (sauvegarde d'avant ce système, ou
   // valeur invalide) -> null, régénéré automatiquement au premier
   // besoin par ClassCombatManager.ensureForCurrentClass() (voir
@@ -1028,6 +1054,17 @@ function fullResetState() {
 
   game.autoSellEquipment = false;
   game.autoSellRarityThreshold = "common";
+  // v3.47.0 : préférence de confort (pas un état de run) — remise à
+  // sa valeur par défaut (true) sur un reset complet uniquement,
+  // volontairement PRÉSERVÉE à l'ascension (hardResetState, plus haut
+  // dans ce fichier) : contrairement à autoSellEquipment/classResource,
+  // rien ne justifie de forcer le joueur à la réactiver à chaque run.
+  game.autoSkillsEnabled = true;
+  // v3.50.0 : même principe que autoSkillsEnabled juste au-dessus —
+  // configuration stratégique du joueur (pas un état de run), donc
+  // volontairement PRÉSERVÉE à l'ascension (hardResetState, plus haut
+  // dans ce fichier), remise à vide seulement sur un reset complet ici.
+  game.grimoireRules = [];
   game.hasSeenOnboarding = false;
 
   WorldManager.worldIndex = 0;

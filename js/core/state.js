@@ -121,6 +121,17 @@ function createInitialGameState() {
     autoSellEquipment: false,   // v2.26 : autovente du butin ≤ au seuil de rareté choisi
     autoSellRarityThreshold: "common", // v2.83.31 : seuil réglable (voir addDropToInventory)
 
+    autoSkillsEnabled: true,    // v3.47.0 : combat auto de base (skill1/2/3/defense + attaque de base), réglable dans Paramètres
+
+    // v3.50.0 : Grimoire de tactiques (étape 4a) — 2 slots fixes,
+    // chacun { conditionId, actionSlot }. null/null = slot vide (pas
+    // encore configuré). Complété/validé à la demande par
+    // ensureGrimoireRules()/sanitizeGrimoireRules() (ui/grimoire-view.js,
+    // systems/combat-auto-policy-system.js) plutôt que figé ici avec
+    // un nombre d'entrées codé en dur — évite une 3e source de vérité
+    // sur GRIMOIRE_SLOT_COUNT.
+    grimoireRules: [],
+
     // v3.34.0 : lastSpecialUse/specialBuffExpires/specialBuffPct/
     // lastDefenseUse/defenseBuffExpires (ancienne attaque spéciale par
     // héros + bouclier universel) retirés — voir classResource/
@@ -306,6 +317,20 @@ function ensureGameStateDefaults() {
   if (typeof game.autoSellEquipment !== "boolean") game.autoSellEquipment = false;
   if (typeof game.autoSellRarityThreshold !== "string" || (typeof RARITY_ORDER !== "undefined" && RARITY_ORDER.indexOf(game.autoSellRarityThreshold) === -1)) {
     game.autoSellRarityThreshold = "common";
+  }
+  if (typeof game.autoSkillsEnabled !== "boolean") game.autoSkillsEnabled = true;
+
+  // v3.50.0 : Grimoire — validé via sanitizeGrimoireRules() si
+  // disponible (filtre conditionId/actionSlot invalides, ex. après un
+  // changement de version qui aurait retiré une condition), sinon
+  // simple garde de forme (tableau vide si absent/corrompu). Le
+  // nombre d'entrées (2 slots fixes) est complété séparément par
+  // ensureGrimoireRules() au premier accès à l'écran Grimoire, pas
+  // ici — ce garde ne fait que s'assurer que c'est un tableau propre.
+  if (!Array.isArray(game.grimoireRules)) {
+    game.grimoireRules = [];
+  } else if (typeof sanitizeGrimoireRules === "function") {
+    game.grimoireRules = sanitizeGrimoireRules(game.grimoireRules, null);
   }
 
   if (typeof game.lastSpecialUse !== "number") game.lastSpecialUse = 0;

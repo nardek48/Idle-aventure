@@ -140,6 +140,32 @@ var ClassCombatManager = {
     };
   },
 
+  /* v3.50.0 : contexte ÉTENDU pour le Grimoire de tactiques —
+     sur-ensemble de getCombatContext() ci-dessus (mêmes champs
+     enemyHp/enemyMaxHp, toujours utiles à Exécution même via une
+     règle du Grimoire) + les champs lus par evaluateGrimoireCondition()
+     (systems/combat-auto-policy-system.js). C'est ICI, et seulement
+     ici, que les horodatages posés sur game.enemy par les patterns
+     (chargeTelegraphUntil/shieldTelegraphUntil/healTelegraphUntil,
+     voir combat-engine.js v3.48.0/v3.49.0) sont convertis en simples
+     booléens — le moteur de règles pur ne lit jamais Date.now()
+     lui-même. Séparée de getCombatContext() (pas fusionnée dedans)
+     pour ne rien changer au contrat existant de checkActionConditions()/
+     canUseAction(), déjà utilisé ailleurs avec la forme minimale. */
+  getGrimoireCombatContext: function () {
+    var base = this.getCombatContext();
+    var now = Date.now();
+
+    base.chargeIncoming = !!(game.enemy && game.enemy.chargeTelegraphUntil && now < game.enemy.chargeTelegraphUntil);
+    base.shieldIncoming = !!(game.enemy && game.enemy.shieldTelegraphUntil && now < game.enemy.shieldTelegraphUntil);
+    base.healIncoming = !!(game.enemy && game.enemy.healTelegraphUntil && now < game.enemy.healTelegraphUntil);
+
+    var heroMaxHp = Number(game.heroMaxHp || 0);
+    base.heroHpPercent = heroMaxHp > 0 ? Number(game.heroHp || 0) / heroMaxHp : null;
+
+    return base;
+  },
+
   /* Réduction/évitement/absorption actuellement actif sur la riposte
      ennemie, ou null si rien n'est actif ou si l'effet a expiré.
      Appelée par CombatEngine.enemyStrike() (systems/combat-engine.js)
@@ -399,7 +425,105 @@ var ClassCombatManager = {
     if (resourceDef && resourceDef.generation && resourceDef.generation.type === "passiveAndBasicAttack") {
       game.classResource = tickResourceRegen(game.classResource, resourceDef.generation, elapsedMs);
     }
+  },
+
+  /* v3.47.0 : combat auto de base — remplace le tap manuel sur
+     skill1/skill2/skill3/defense tant que game.autoSkillsEnabled est
+     vrai (réglable dans Paramètres, actif par défaut).
+     v3.50.0 : essaie D'ABORD les règles du Grimoire de tactiques
+     (game.grimoireRules, voir chooseGrimoireAction()) — si aucune
+     règle ne matche (condition fausse partout, ou action indisponible
+     pour toutes les règles qui matchent), retombe sur
+     chooseAutoAction() + getAutoPolicyDefault() comme avant v3.50.0.
+     Réponse explicite de Seb : le Grimoire s'AJOUTE à la priorité par
+     défaut, ne la remplace jamais — un joueur qui n'a configuré aucune
+     règle (game.grimoireRules vide) retrouve EXACTEMENT le
+     comportement de v3.47.0-v3.49.0, aucune régression.
+
+     Cadencée par un accumulateur (AUTO_SKILLS_DECISION_INTERVAL_MS,
+     pas chaque frame) — une décision toutes les 300ms suffit largement
+     (les cooldowns/ressources réels évoluent bien plus lentement) et
+     évite d'appeler useSkill() en boucle serrée pour rien la plupart
+     du temps. Ne fait rien si l'attaque de base n'est pas non plus
+     câblée en auto (voir tryAutoBasicAttack() plus bas, appelée
+     séparément) — cette méthode ne gère QUE skill1/skill2/skill3/
+     defense, jamais "basic". "basic" est délibérément EXCLU des slots
+     assignables dans l'écran Grimoire (voir ui/grimoire-view.js) :
+     useSkill("basic") existerait mécaniquement (kit.actions.basic est
+     une entrée valide) mais court-circuiterait onBasicAttackDealt()
+     (gain de ressource propre à l'attaque de base, normalement
+     déclenché uniquement par CombatEngine.playerAttack()), créant une
+     incohérence silencieuse avec le tap manuel — plutôt que complexifier
+     useSkill() pour ce cas, "basic" reste hors périmètre des règles. */
+  tickAutoSkills: function (dt) {
+    if (!game.autoSkillsEnabled) return;
+    if (!this.isCombatActive()) return;
+    if (!game.enemy) return;
+
+    game._autoSkillsAccumMs = Number(game._autoSkillsAccumMs || 0) + Math.max(0, Number(dt || 0)) * 1000;
+    if (game._autoSkillsAccumMs < AUTO_SKILLS_DECISION_INTERVAL_MS) return;
+    game._autoSkillsAccumMs = 0;
+
+    var classId = this.getCurrentClassId();
+    if (!classId || typeof getClassSkills !== "function") return;
+
+    var kit = getClassSkills(classId);
+    if (!kit) return;
+
+    var resourceState = this.ensureForCurrentClass();
+    if (!resourceState) return;
+
+    // v3.50.0 : Grimoire d'abord (règles configurées par le joueur),
+    // repli sur la priorité par défaut si rien ne matche.
+    var grimoireContext = this.getGrimoireCombatContext();
+    var slot = null;
+
+    if (Array.isArray(game.grimoireRules) && game.grimoireRules.length && typeof chooseGrimoireAction === "function") {
+      slot = chooseGrimoireAction(game.grimoireRules, kit, resourceState, game.classCooldowns, grimoireContext);
+    }
+
+    if (!slot) {
+      var priorityList = (typeof getAutoPolicyDefault === "function") ? getAutoPolicyDefault(classId) : null;
+      if (!priorityList) return;
+      slot = (typeof chooseAutoAction === "function")
+        ? chooseAutoAction(priorityList, kit, resourceState, game.classCooldowns, grimoireContext)
+        : null;
+    }
+
+    // "basic" ne peut venir QUE du repli par défaut ici (jamais d'une
+    // règle du Grimoire, voir note ci-dessus et la validation côté UI/
+    // sanitizeGrimoireRules()) — sert de filler pour la simulation du
+    // bac à sable ; en jeu réel, l'attaque de base auto est déjà
+    // couverte séparément par tryAutoBasicAttack(). On évite donc un
+    // 2e chemin de code pour "basic" ici.
+    if (!slot || slot === "basic") return;
+
+    this.useSkill(slot);
+  },
+
+  /* v3.47.0 : équivalent automatique de CombatEngine.requestPlayerAttack()
+     pour l'attaque de base — déclenche playerAttack() dès que le
+     cooldown de base est écoulé, tant que le mode auto est actif.
+     Contrairement au tap manuel, pas de file d'attente nécessaire ici
+     (on ne "rate" jamais une fenêtre : appelée chaque frame comme
+     tickBasicAttackCooldown()). Reste silencieuse si aucune classe
+     n'est résolue (repli identique au mode manuel, damageMultiplier=1). */
+  tryAutoBasicAttack: function () {
+    if (!game.autoSkillsEnabled) return;
+    if (!this.isCombatActive()) return;
+    if (!game.enemy) return;
+    if ((game.basicAttackCooldownMs || 0) > 0) return;
+    if (typeof CombatEngine === "undefined" || typeof CombatEngine.playerAttack !== "function") return;
+    CombatEngine.playerAttack();
   }
 };
+
+/* Cadence de décision du combat auto (skill1/skill2/skill3/defense) —
+   volontairement plus lente que le rythme frame (60fps) : les
+   cooldowns/ressources réels évoluent sur des centaines de ms au
+   minimum (le plus rapide, Frappe lourde, a un cooldown de 1500ms),
+   300ms est largement suffisant pour ne rater aucune fenêtre
+   d'opportunité tout en restant léger. */
+var AUTO_SKILLS_DECISION_INTERVAL_MS = 300;
 
 window.ClassCombatManager = ClassCombatManager;

@@ -37,6 +37,27 @@
   border-color: #b3261e;
 }
 
+/* v3.47.0 : ligne à bascule (checkbox) — combat auto de base */
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  cursor: pointer;
+}
+
+.settings-toggle-row input[type="checkbox"] {
+  width: 40px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--nb-gold);
+}
+
 .settings-info {
   margin-top: 12px;
   padding: 12px 14px;

@@ -26,6 +26,7 @@ var MENU_ITEMS = [
   { tab: "achievements", label: "Hauts faits", img: "./images/Icons/menu_icons/achivment_menu.png", badge: "achievement" },
   { tab: "bestiary", label: "Bestiaire", img: "./images/Icons/menu_icons/bestiaire_menu.png", badge: "codex" },
   { tab: "afflictions", label: "Afflictions", icon: "🔥", badge: "afflictions" },
+  { tab: "grimoire", label: "Grimoire", icon: "📖" },
   { tab: "settings", label: "Paramètres", img: "./images/Icons/menu_icons/settings_menu.png" }
 ];
 

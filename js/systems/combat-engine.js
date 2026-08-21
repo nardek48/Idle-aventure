@@ -61,6 +61,45 @@ var ENEMY_CRIT_MULT = 1.5;             // multiplicateur sur un coup critique en
 var WILL_CRIT_RESIST_COEF = 0.05;      // réduction de la chance de critique du joueur par point de volonté ennemie
 var DEFEAT_GOLD_PENALTY = 0.10;        // % d'or perdu quand le héros tombe à 0 PV
 
+/* v3.48.0 : Charge — 1er pattern ennemi (étape 2 du Grimoire de
+   tactiques, voir résumé de session). Un seul pattern, sur TOUS les
+   ennemis normaux (pas les boss, voir enemyChargeTick() plus bas),
+   sur un minuteur INDÉPENDANT de la riposte normale (n'y touche pas).
+   Effet MODÉRÉ tant qu'aucun contre n'est disponible côté joueur (le
+   Grimoire/les contres arrivent aux étapes 3-4) — réponse explicite de
+   Seb : ne pas casser l'équilibrage v3.46.0 déjà calibré serré (pire
+   cas ~6 kills avant KO). ×1.3 sur les dégâts de riposte de base,
+   modéré par design, pas un nouveau palier de danger. */
+var ENEMY_CHARGE_MIN_INTERVAL_S = 8;    // minuteur aléatoire 8-12s entre 2 Charges
+var ENEMY_CHARGE_MAX_INTERVAL_S = 12;
+var ENEMY_CHARGE_TELEGRAPH_MS = 1500;   // délai fixe entre l'avertissement visuel et l'impact — "déclenché tôt"
+var ENEMY_CHARGE_DMG_MULT = 1.3;        // modéré, voir note ci-dessus
+
+/* v3.49.0 : patterns de BOSS (étape 3 du Grimoire de tactiques) —
+   Bouclier et Soin, TOTALEMENT distincts de la Charge ci-dessus
+   (réservée aux ennemis normaux, inchangée). Réponse explicite de
+   Seb : les 2 patterns peuvent être actifs SIMULTANÉMENT sur un même
+   boss (2 minuteurs indépendants l'un de l'autre ET de la riposte
+   normale), et s'appliquent identiquement en farm classique et en
+   Donjon — le seul critère est game.enemy.isBoss === true, déjà posé
+   par WorldManager.generateEnemy() ET DungeonManager.buildWaveEnemy()
+   (même forme d'objet ennemi dans les 2 cas, voir data/bosses.js).
+   Timings "longs" (10-25s de rencontre, catégorie élite-boss de la
+   conception actée) — volontairement plus espacés que la Charge
+   (8-12s) : un boss qui cumule 2 patterns sur des intervalles courts
+   deviendrait illisible sans aucun contre disponible (le Grimoire
+   n'existe pas encore, étape 4). */
+var BOSS_SHIELD_MIN_INTERVAL_S = 10;
+var BOSS_SHIELD_MAX_INTERVAL_S = 15;
+var BOSS_SHIELD_TELEGRAPH_MS = 1500;
+var BOSS_SHIELD_DURATION_MS = 4000;
+var BOSS_SHIELD_REDUCTION = 0.5;        // -50% dégâts subis par le boss pendant BOSS_SHIELD_DURATION_MS
+
+var BOSS_HEAL_MIN_INTERVAL_S = 10;
+var BOSS_HEAL_MAX_INTERVAL_S = 15;
+var BOSS_HEAL_TELEGRAPH_MS = 1500;
+var BOSS_HEAL_PERCENT = 0.15;           // +15% des PV ACTUELS du boss au moment du soin (pas des PV max)
+
 /* v3.34.3 : cooldown sur l'attaque de base (tap manuel) — repris du
    bac à sable (SANDBOX_DEFAULT_BASE_COOLDOWN_MS, systems/combat-
    sandbox-system.js), qui l'avait validé par simulation comme donnant
@@ -370,10 +409,193 @@ var CombatEngine = {
     }
   },
 
+  /* v3.48.0 : minuteur INDÉPENDANT de la Charge — n'accumule/ne
+     déclenche jamais rien via game._enemyAttackTimer (riposte normale
+     ci-dessus), pour ne pas modifier sa cadence existante. Stocké sur
+     game.enemy lui-même (game.enemy._chargeTimer/chargeTelegraphUntil),
+     comme vulnerableUntil/dot — disparaît naturellement si l'ennemi
+     meurt/est remplacé par spawnEnemy(), aucun nettoyage manuel requis.
+     Deux phases :
+       1) accumulation jusqu'à un intervalle aléatoire 8-12s -> pose
+          chargeTelegraphUntil (Date.now() + 1500ms), log + toast,
+          rafraîchit la barre de statut (badge visuel, voir
+          buildEnemyStatusBarHTML(), ui/combat-view.js) ;
+       2) une fois chargeTelegraphUntil dépassé -> résout l'impact
+          (resolveEnemyCharge()) et reprogramme le prochain minuteur.
+     Uniquement les ennemis NORMAUX (jamais un boss, réponse explicite
+     de Seb — les patterns de boss sont l'étape 3, potentiellement
+     plusieurs patterns cumulés, pas de raison de préempter ce
+     territoire avec la Charge ici). */
+  enemyChargeTick: function (dt) {
+    if (!game.enemy || !game.enemy.stats || game.enemy.isBoss) return;
+    if ((game.heroHp || 0) <= 0) return;
+
+    // Phase 2 : télégraphe en cours, vérifie l'expiration.
+    if (game.enemy.chargeTelegraphUntil) {
+      if (Date.now() >= game.enemy.chargeTelegraphUntil) {
+        this.resolveEnemyCharge();
+      }
+      return; // rien d'autre à faire tant que le télégraphe est actif
+    }
+
+    // Phase 1 : accumulation vers le prochain déclenchement.
+    if (!game.enemy._chargeNextAt) {
+      game.enemy._chargeNextAt = randFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
+    }
+    game.enemy._chargeTimer = Number(game.enemy._chargeTimer || 0) + Math.max(0, Number(dt || 0));
+
+    if (game.enemy._chargeTimer >= game.enemy._chargeNextAt) {
+      game.enemy._chargeTimer = 0;
+      game.enemy._chargeNextAt = 0; // reprogrammé après résolution (resolveEnemyCharge)
+      game.enemy.chargeTelegraphUntil = Date.now() + ENEMY_CHARGE_TELEGRAPH_MS;
+
+      addLog("⚠️ " + game.enemy.name + " prépare une charge !", "event");
+      showToast("⚠️ Charge imminente !", 1200);
+      if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+    }
+  },
+
+  /* Impact de la Charge, une fois le télégraphe écoulé — réutilise
+     enemyStrike(dmgMult) pour tout le reste du pipeline (défense
+     passive/active, critique, popup rouge, mort du héros...), sans
+     dupliquer cette logique. Reprogramme immédiatement le prochain
+     minuteur (nouvel intervalle aléatoire), pour que la Charge se
+     répète tant que ce même ennemi reste affiché. */
+  resolveEnemyCharge: function () {
+    if (!game.enemy) return;
+    game.enemy.chargeTelegraphUntil = 0;
+    game.enemy._chargeNextAt = randFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
+
+    this.enemyStrike(ENEMY_CHARGE_DMG_MULT);
+
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+  },
+
+  /* v3.49.0 : orchestre les 2 minuteurs de pattern boss (Bouclier,
+     Soin) — appelée depuis main/game-loop.js à côté de
+     enemyChargeTick(), même conditions de garde. Chacun des 2 tourne
+     sur son propre minuteur INDÉPENDANT (voir en-tête des constantes
+     BOSS_SHIELD_ et BOSS_HEAL_ ci-dessus), sans interaction entre eux — les 2
+     peuvent donc se télégraphier/résoudre au même moment sur le même
+     boss (cumul voulu, réponse explicite de Seb). Ne fait rien si
+     l'ennemi affiché n'est pas un boss (ni les 2 sous-fonctions, mais
+     un seul garde ici évite de le répéter 2 fois). */
+  bossPatternTick: function (dt) {
+    if (!game.enemy || !game.enemy.stats || !game.enemy.isBoss) return;
+    if ((game.heroHp || 0) <= 0) return;
+
+    this.bossShieldTick(dt);
+    this.bossHealTick(dt);
+  },
+
+  /* Bouclier — même structure à 2 phases que enemyChargeTick() ci-
+     dessus (accumulation -> télégraphe -> résolution), mais SANS
+     réutiliser son code : minuteur/champs dédiés
+     (game.enemy._shieldTimer/_shieldNextAt/shieldTelegraphUntil),
+     Charge reste totalement inchangée par cette étape. Une fois
+     résolu, pose game.enemy.shieldActiveUntil (lu par dealDamage()
+     pour réduire les dégâts subis par le boss pendant
+     BOSS_SHIELD_DURATION_MS) — PAS un simple flag booléen, pour que
+     l'effet expire de lui-même sans action de tick dédiée (même
+     principe que vulnerableUntil, déjà en place pour la vulnérabilité
+     posée par Brise-garde). */
+  bossShieldTick: function (dt) {
+    if (game.enemy.shieldTelegraphUntil) {
+      if (Date.now() >= game.enemy.shieldTelegraphUntil) {
+        this.resolveBossShield();
+      }
+      return;
+    }
+
+    if (!game.enemy._shieldNextAt) {
+      game.enemy._shieldNextAt = randFloat(BOSS_SHIELD_MIN_INTERVAL_S, BOSS_SHIELD_MAX_INTERVAL_S);
+    }
+    game.enemy._shieldTimer = Number(game.enemy._shieldTimer || 0) + Math.max(0, Number(dt || 0));
+
+    if (game.enemy._shieldTimer >= game.enemy._shieldNextAt) {
+      game.enemy._shieldTimer = 0;
+      game.enemy._shieldNextAt = 0; // reprogrammé après résolution (resolveBossShield)
+      game.enemy.shieldTelegraphUntil = Date.now() + BOSS_SHIELD_TELEGRAPH_MS;
+
+      addLog("🛡️ " + game.enemy.name + " invoque un bouclier !", "event");
+      showToast("🛡️ Bouclier imminent !", 1200);
+      if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+    }
+  },
+
+  /* Active l'effet du Bouclier (lu par dealDamage()) et reprogramme
+     le prochain minuteur — le bouclier lui-même expire de lui-même
+     via shieldActiveUntil, pas de résolution "d'impact" comme la
+     Charge (rien à infliger ici, c'est un effet PASSIF sur les
+     prochains coups reçus, pas un coup porté). */
+  resolveBossShield: function () {
+    if (!game.enemy) return;
+    game.enemy.shieldTelegraphUntil = 0;
+    game.enemy._shieldNextAt = randFloat(BOSS_SHIELD_MIN_INTERVAL_S, BOSS_SHIELD_MAX_INTERVAL_S);
+    game.enemy.shieldActiveUntil = Date.now() + BOSS_SHIELD_DURATION_MS;
+
+    addLog("🛡️ Le bouclier se referme !", "event");
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+  },
+
+  /* Soin périodique — même structure à 2 phases, champs dédiés
+     (game.enemy._healTimer/_healNextAt/healTelegraphUntil). +15% des
+     PV ACTUELS du boss au moment du soin (pas des PV max, réponse
+     explicite de Seb — impact plus faible si le boss est déjà bas),
+     plafonné à maxHp (jamais de sur-soin visible côté barre de vie). */
+  bossHealTick: function (dt) {
+    if (game.enemy.healTelegraphUntil) {
+      if (Date.now() >= game.enemy.healTelegraphUntil) {
+        this.resolveBossHeal();
+      }
+      return;
+    }
+
+    if (!game.enemy._healNextAt) {
+      game.enemy._healNextAt = randFloat(BOSS_HEAL_MIN_INTERVAL_S, BOSS_HEAL_MAX_INTERVAL_S);
+    }
+    game.enemy._healTimer = Number(game.enemy._healTimer || 0) + Math.max(0, Number(dt || 0));
+
+    if (game.enemy._healTimer >= game.enemy._healNextAt) {
+      game.enemy._healTimer = 0;
+      game.enemy._healNextAt = 0; // reprogrammé après résolution (resolveBossHeal)
+      game.enemy.healTelegraphUntil = Date.now() + BOSS_HEAL_TELEGRAPH_MS;
+
+      addLog("💚 " + game.enemy.name + " se prépare à se soigner !", "event");
+      showToast("💚 Soin imminent !", 1200);
+      if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+    }
+  },
+
+  /* Applique le soin (+15% des PV actuels, plafonné à maxHp) et
+     reprogramme le prochain minuteur. Ne déclenche jamais killEnemy()
+     (un soin ne peut évidemment pas faire tomber les PV à 0) —
+     rafraîchit juste la barre de vie affichée. */
+  resolveBossHeal: function () {
+    if (!game.enemy) return;
+    game.enemy.healTelegraphUntil = 0;
+    game.enemy._healNextAt = randFloat(BOSS_HEAL_MIN_INTERVAL_S, BOSS_HEAL_MAX_INTERVAL_S);
+
+    var healAmount = Math.max(1, Math.floor(Number(game.enemy.hp || 0) * BOSS_HEAL_PERCENT));
+    game.enemy.hp = Math.min(game.enemy.maxHp, game.enemy.hp + healAmount);
+
+    addLog("💚 " + game.enemy.name + " récupère " + formatNumber(healAmount) + " PV !", "event");
+    showToast("💚 +" + formatNumber(healAmount) + " PV boss", 1200);
+
+    if (typeof renderEnemyHp === "function") renderEnemyHp();
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+  },
+
   /* Une frappe de riposte ennemie : dégâts basés sur sa Puissance,
      chance de critique basée sur sa Précision, réduits par la
-     défense du héros (issue de son Endurance). */
-  enemyStrike: function () {
+     défense du héros (issue de son Endurance).
+     v3.48.0 : paramètre optionnel dmgMult (defaut 1) — réutilisée par
+     resolveEnemyCharge() (Charge, voir plus bas) pour appliquer un
+     multiplicateur modéré SANS dupliquer tout le pipeline (défense
+     passive/active, critique, popup, mort du héros...). Un appel
+     enemyStrike() sans argument reste identique au comportement
+     d'avant v3.48.0 (dmgMult replié à 1). */
+  enemyStrike: function (dmgMult) {
     if (!game.enemy || !game.enemy.stats) return;
     // v3.15 : un héros déjà à 0 PV est "à terre" — ne doit plus
     // pouvoir encaisser de dégâts supplémentaires (et donc plus
@@ -394,6 +616,12 @@ var CombatEngine = {
     }
 
     var dmg = Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF));
+    // v3.48.0 : multiplicateur de pattern (Charge) — appliqué sur les
+    // dégâts DE BASE, avant critique/défense, comme un coup "plus
+    // fort" ordinaire plutôt qu'un mécanisme séparé.
+    var patternMult = (typeof dmgMult === "number" && dmgMult > 0) ? dmgMult : 1;
+    if (patternMult !== 1) dmg = Math.max(1, Math.floor(dmg * patternMult));
+
     var isCrit = chance(Math.min(40, precision * ENEMY_PRECISION_CRIT_COEF));
     if (isCrit) dmg = Math.floor(dmg * ENEMY_CRIT_MULT);
 
@@ -535,6 +763,18 @@ var CombatEngine = {
     // sans ce champ, l'effet disparaît donc naturellement avec lui.
     if (game.enemy.vulnerableUntil && Date.now() < game.enemy.vulnerableUntil) {
       dmg *= (1 + Number(game.enemy.vulnerableMult || 0));
+    }
+
+    // v3.49.0 : Bouclier de boss (voir CombatEngine.resolveBossShield())
+    // — réduit les dégâts subis PENDANT shieldActiveUntil. Appliqué
+    // APRÈS la vulnérabilité ci-dessus (les 2 peuvent coexister sur un
+    // même coup en théorie — vulnérabilité vient du joueur, bouclier
+    // du boss, chacun garde son propre effet indépendamment) et AVANT
+    // Exécution parfaite ci-dessous (le bonus de dégâts sous 20% PV
+    // doit continuer de s'appliquer sur le montant déjà réduit par le
+    // bouclier, pas le contourner).
+    if (game.enemy.isBoss && game.enemy.shieldActiveUntil && Date.now() < game.enemy.shieldActiveUntil) {
+      dmg *= (1 - BOSS_SHIELD_REDUCTION);
     }
 
     if (game.enemy.isBoss && game.talents.t_perfect_execution && game.enemy.maxHp > 0 && (game.enemy.hp / game.enemy.maxHp) < 0.2) {

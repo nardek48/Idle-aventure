@@ -241,6 +241,52 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
+  // v3.48.0 : télégraphe de Charge — visible UNIQUEMENT pendant la
+  // fenêtre d'avertissement (chargeTelegraphUntil posé par
+  // CombatEngine.enemyChargeTick()), disparaît dès l'impact résolu
+  // (resolveEnemyCharge() remet ce champ à 0). Icône distincte des 2
+  // statuts ci-dessus (danger imminent, pas un effet déjà appliqué).
+  if (game.enemy.chargeTelegraphUntil && Date.now() < game.enemy.chargeTelegraphUntil) {
+    var chargeRemainingMs = game.enemy.chargeTelegraphUntil - Date.now();
+    h += '<div class="enemy-status-icon enemy-status-charge" title="Charge imminente !">';
+    h += '<span class="enemy-status-emoji">💢</span>';
+    h += '<span class="enemy-status-timer">' + Math.max(0, (chargeRemainingMs / 1000).toFixed(1)) + '</span>';
+    h += '</div>';
+  }
+
+  // v3.49.0 : télégraphe de Bouclier (boss uniquement) — même
+  // principe que le télégraphe de Charge ci-dessus (visible seulement
+  // pendant la fenêtre d'avertissement).
+  if (game.enemy.shieldTelegraphUntil && Date.now() < game.enemy.shieldTelegraphUntil) {
+    var shieldTelegraphRemainingMs = game.enemy.shieldTelegraphUntil - Date.now();
+    h += '<div class="enemy-status-icon enemy-status-shield-telegraph" title="Bouclier imminent !">';
+    h += '<span class="enemy-status-emoji">🛡️</span>';
+    h += '<span class="enemy-status-timer">' + Math.max(0, (shieldTelegraphRemainingMs / 1000).toFixed(1)) + '</span>';
+    h += '</div>';
+  }
+
+  // v3.49.0 : Bouclier ACTIF (dégâts réduits en cours, voir
+  // CombatEngine.dealDamage()) — badge distinct du télégraphe
+  // ci-dessus (état "en cours" vs "va arriver"), pas de superposition
+  // possible (shieldTelegraphUntil est effacé avant que
+  // shieldActiveUntil ne soit posé, voir resolveBossShield()).
+  if (game.enemy.shieldActiveUntil && Date.now() < game.enemy.shieldActiveUntil) {
+    var shieldActiveRemainingMs = game.enemy.shieldActiveUntil - Date.now();
+    h += '<div class="enemy-status-icon enemy-status-shield-active" title="Bouclier actif : -50% dégâts subis">';
+    h += '<span class="enemy-status-emoji">🛡️</span>';
+    h += '<span class="enemy-status-timer">' + Math.ceil(shieldActiveRemainingMs / 1000) + '</span>';
+    h += '</div>';
+  }
+
+  // v3.49.0 : télégraphe de Soin (boss uniquement).
+  if (game.enemy.healTelegraphUntil && Date.now() < game.enemy.healTelegraphUntil) {
+    var healTelegraphRemainingMs = game.enemy.healTelegraphUntil - Date.now();
+    h += '<div class="enemy-status-icon enemy-status-heal-telegraph" title="Soin imminent !">';
+    h += '<span class="enemy-status-emoji">💚</span>';
+    h += '<span class="enemy-status-timer">' + Math.max(0, (healTelegraphRemainingMs / 1000).toFixed(1)) + '</span>';
+    h += '</div>';
+  }
+
   return h;
 }
 
@@ -388,7 +434,10 @@ function initHealKeyboardShortcuts() {
 
     var classSlotByKey = { "1": "skill1", "2": "skill2", "3": "skill3", "4": "defense" };
     if (classSlotByKey[e.key]) {
-      if (window.ClassCombatManager) ClassCombatManager.useSkill(classSlotByKey[e.key]);
+      // v3.47.0 : mêmes touches ignorées si le combat auto est actif
+      // — cohérent avec les boutons tactiles équivalents (disabled),
+      // sinon le raccourci clavier contournerait le remplacement total.
+      if (window.ClassCombatManager && !game.autoSkillsEnabled) ClassCombatManager.useSkill(classSlotByKey[e.key]);
       return;
     }
 
@@ -434,7 +483,12 @@ function buildClassSkillButtonHTML(slot) {
   var cooldownPct = onCooldown ? Math.round((cooldownRemainingMs / action.cooldownMs) * 100) : 0;
 
   var affordable = !resourceState || resourceState.current >= (action.resourceCost || 0);
-  var disabled = onCooldown || !affordable;
+  // v3.47.0 : combat auto de base — remplacement TOTAL du tap manuel
+  // sur ces 4 boutons tant que game.autoSkillsEnabled est vrai (voir
+  // ClassCombatManager.tickAutoSkills(), systems/class-combat-system.js).
+  // Réponse explicite de Seb : pas de coexistence pour cette 1ère étape.
+  var autoModeActive = !!game.autoSkillsEnabled;
+  var disabled = onCooldown || !affordable || autoModeActive;
 
   var activeDefense = (action.type === "defense" && window.ClassCombatManager && typeof ClassCombatManager.getActiveDefenseEffect === "function")
     ? ClassCombatManager.getActiveDefenseEffect()
@@ -445,9 +499,9 @@ function buildClassSkillButtonHTML(slot) {
   var keyLabel = CLASS_SKILL_KEY_LABELS[action.slot] || "";
 
   var h = '<button class="combat-action-btn class-skill-btn' + (action.type === "defense" ? " defense-action-btn" : " attack-action-btn")
-    + (onCooldown ? ' on-cooldown' : '') + (isActiveNow ? ' is-active' : '') + (!affordable && !onCooldown ? ' not-affordable' : '') + '" type="button" '
+    + (onCooldown ? ' on-cooldown' : '') + (isActiveNow ? ' is-active' : '') + (!affordable && !onCooldown ? ' not-affordable' : '') + (autoModeActive ? ' auto-mode' : '') + '" type="button" '
     + (disabled ? 'disabled' : '')
-    + ' onclick="ClassCombatManager.useSkill(\'' + esc(slot) + '\')" title="' + esc(action.description) + (keyLabel ? ' (touche ' + keyLabel + ' sur PC)' : '') + '">';
+    + ' onclick="ClassCombatManager.useSkill(\'' + esc(slot) + '\')" title="' + (autoModeActive ? 'Combat automatique actif (voir Paramètres)' : esc(action.description) + (keyLabel ? ' (touche ' + keyLabel + ' sur PC)' : '')) + '">';
   h += '<span class="combat-action-key">' + esc(keyLabel) + '</span>';
   h += renderIconOrEmojiHTML(icon, "combat-action-icon", action.label);
   if (onCooldown) {

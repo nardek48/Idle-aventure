@@ -1,0 +1,51 @@
+/* =========================
+   Grimoire de tactiques (v3.50.0)
+   ========================= */
+
+.grimoire-rule-card {
+  /* hérite de .panel-card (04-panels-common.css) — pas de surcharge
+     de la carte elle-même, juste les champs internes ci-dessous */
+}
+
+.grimoire-field-label {
+  display: block;
+  margin: 10px 0 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.grimoire-field-label:first-of-type {
+  margin-top: 0;
+}
+
+.grimoire-select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: var(--nb-cream);
+  color: var(--nb-ink);
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.grimoire-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.grimoire-condition-desc,
+.grimoire-action-desc {
+  margin-top: 4px;
+  margin-bottom: 0;
+  font-style: italic;
+}
+
+.grimoire-warning-card {
+  border-color: #b3261e;
+}

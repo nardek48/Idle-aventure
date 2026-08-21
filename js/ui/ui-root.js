@@ -247,6 +247,9 @@ function renderPanel() {
     case "settings":
       container.innerHTML = buildSettingsHTML();
       break;
+    case "grimoire":
+      container.innerHTML = buildGrimoireHTML();
+      break;
     case "combat-sandbox":
       container.innerHTML = buildCombatSandboxHTML();
       break;

@@ -164,6 +164,21 @@ function gameLoop() {
     CombatEngine.enemyAttackTick(dt);
   }
 
+  // v3.48.0 : Charge — minuteur indépendant de la riposte normale
+  // ci-dessus (voir CombatEngine.enemyChargeTick()), mêmes conditions
+  // de garde (écran Combat actif, pas de modale, héros pas à terre).
+  if (game.activeTab === "combat" && !modalOpen && !heroDowned && typeof CombatEngine.enemyChargeTick === "function") {
+    CombatEngine.enemyChargeTick(dt);
+  }
+
+  // v3.49.0 : patterns de boss (Bouclier + Soin) — minuteurs
+  // indépendants de la Charge ci-dessus et l'un de l'autre (voir
+  // CombatEngine.bossPatternTick()), mêmes conditions de garde. Ne
+  // fait rien si l'ennemi affiché n'est pas un boss (garde interne).
+  if (game.activeTab === "combat" && !modalOpen && !heroDowned && typeof CombatEngine.bossPatternTick === "function") {
+    CombatEngine.bossPatternTick(dt);
+  }
+
   // Potions temporaires : purge celles qui viennent d'expirer, et
   // rafraîchit le compte à rebours affiché si l'onglet Boutique est
   // ouvert (pas besoin de redessiner ailleurs, personne ne le voit).
@@ -200,6 +215,18 @@ function gameLoop() {
   // (Brûlure arcanique) — mêmes conditions de combat actif.
   if (window.ClassCombatManager && typeof ClassCombatManager.tick === "function") {
     ClassCombatManager.tick(dt);
+  }
+
+  // v3.47.0 : combat auto de base (skill1/skill2/skill3/defense +
+  // attaque de base) — remplace le tap manuel tant que
+  // game.autoSkillsEnabled est vrai (Paramètres, actif par défaut).
+  // Mêmes conditions de garde que tick() ci-dessus (combat actif),
+  // vérifiées en interne par ClassCombatManager.
+  if (window.ClassCombatManager && typeof ClassCombatManager.tickAutoSkills === "function") {
+    ClassCombatManager.tickAutoSkills(dt);
+  }
+  if (window.ClassCombatManager && typeof ClassCombatManager.tryAutoBasicAttack === "function") {
+    ClassCombatManager.tryAutoBasicAttack();
   }
 
   // Rafraîchit les 4 boutons d'action de classe (compte à rebours des
