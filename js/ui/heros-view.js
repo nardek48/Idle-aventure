@@ -62,6 +62,16 @@ function buildCharacterAbilityCardHTML(config, cssClass, remainingMs, cooldownMs
   h += '<div class="ability-body">';
   h += '<div class="ability-name">' + esc(config.name) + '</div>';
   h += '<div class="ability-desc">' + esc(config.desc) + '</div>';
+  // v3.53.0 : ligne dédiée si cette action contre un pattern ennemi
+  // (voir action.counters, data/class-skills.js, et
+  // getGrimoireCounterLabels(), data/grimoire-conditions.js) —
+  // visible directement sur la fiche, sans manipulation, contrairement
+  // à l'indice du Grimoire qui dépendait d'avoir déjà choisi une
+  // condition. Rappelle aussi que le contre n'agit QUE via une règle
+  // du Grimoire configurée (voir ui/grimoire-view.js pour l'y faire).
+  if (config.counterLabels && config.counterLabels.length) {
+    h += '<div class="ability-counter">⚡ Contre : ' + esc(config.counterLabels.join(", ")) + '</div>';
+  }
   h += '</div>';
   h += '<div class="ability-cd' + (onCooldown ? ' is-active' : '') + '">' + esc(cdText) + '</div>';
   h += '</div>';
@@ -84,7 +94,8 @@ function buildCharacterAbilitiesHTML() {
 
     var remainingMs = (game.classCooldowns && typeof game.classCooldowns[action.id] === "number") ? game.classCooldowns[action.id] : 0;
     var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "🛡️" : "✨");
-    var config = { icon: icon, name: action.label, desc: action.description };
+    var counterLabels = (typeof getGrimoireCounterLabels === "function") ? getGrimoireCounterLabels(action) : [];
+    var config = { icon: icon, name: action.label, desc: action.description, counterLabels: counterLabels };
     var cssClass = action.type === "defense" ? "defense" : "attack";
     h += buildCharacterAbilityCardHTML(config, cssClass, remainingMs, action.cooldownMs);
   });

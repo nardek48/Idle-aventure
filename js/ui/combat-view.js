@@ -287,6 +287,21 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
+  // v3.57.0 : badge de CONFIRMATION d'un contre réussi (voir
+  // ClassCombatManager.applyGrimoireCounterIfApplicable(), systems/
+  // class-combat-system.js, qui pose ce champ) — apparaît à la place
+  // du badge de télégraphe qui vient de disparaître (Charge/Bouclier/
+  // Soin s'effacent au MÊME rendu que l'annulation, sans fenêtre pour
+  // animer une transition dessus). Durée courte (voir
+  // COUNTER_CONFIRMATION_MS, combat-engine.js), disparaît de lui-même.
+  if (game.enemy.counteredUntil && Date.now() < game.enemy.counteredUntil) {
+    var counteredRemainingMs = game.enemy.counteredUntil - Date.now();
+    h += '<div class="enemy-status-icon enemy-status-countered" title="Attaque contrée !">';
+    h += '<span class="enemy-status-emoji">⚡</span>';
+    h += '<span class="enemy-status-timer">' + Math.ceil(counteredRemainingMs / 1000) + '</span>';
+    h += '</div>';
+  }
+
   return h;
 }
 
@@ -418,7 +433,7 @@ window.renderHealButtons = renderHealButtons;
    spéciale, "2" Défense spéciale (bouclier), "3"/"4" potions de soin.
    v3.34.0 : "1"/"2"/"3" -> skill1/skill2/skill3 de classe, "4" ->
    defense de classe (remplace l'ancien système, voir
-   ClassCombatManager.useSkill()) — les potions de soin sont donc
+   ClassCombatManager.useSkillManual()) — les potions de soin sont donc
    décalées en "5"/"6". Ignorés si le joueur est en train de taper
    dans un champ texte (nom du joueur, code d'import de sauvegarde,
    recherche...), pour ne pas interférer avec la saisie. Fonctionne
@@ -437,7 +452,7 @@ function initHealKeyboardShortcuts() {
       // v3.47.0 : mêmes touches ignorées si le combat auto est actif
       // — cohérent avec les boutons tactiles équivalents (disabled),
       // sinon le raccourci clavier contournerait le remplacement total.
-      if (window.ClassCombatManager && !game.autoSkillsEnabled) ClassCombatManager.useSkill(classSlotByKey[e.key]);
+      if (window.ClassCombatManager && !game.autoSkillsEnabled) ClassCombatManager.useSkillManual(classSlotByKey[e.key]);
       return;
     }
 
@@ -501,7 +516,7 @@ function buildClassSkillButtonHTML(slot) {
   var h = '<button class="combat-action-btn class-skill-btn' + (action.type === "defense" ? " defense-action-btn" : " attack-action-btn")
     + (onCooldown ? ' on-cooldown' : '') + (isActiveNow ? ' is-active' : '') + (!affordable && !onCooldown ? ' not-affordable' : '') + (autoModeActive ? ' auto-mode' : '') + '" type="button" '
     + (disabled ? 'disabled' : '')
-    + ' onclick="ClassCombatManager.useSkill(\'' + esc(slot) + '\')" title="' + (autoModeActive ? 'Combat automatique actif (voir Paramètres)' : esc(action.description) + (keyLabel ? ' (touche ' + keyLabel + ' sur PC)' : '')) + '">';
+    + ' onclick="ClassCombatManager.useSkillManual(\'' + esc(slot) + '\')" title="' + (autoModeActive ? 'Combat automatique actif (voir Paramètres)' : esc(action.description) + (keyLabel ? ' (touche ' + keyLabel + ' sur PC)' : '')) + '">';
   h += '<span class="combat-action-key">' + esc(keyLabel) + '</span>';
   h += renderIconOrEmojiHTML(icon, "combat-action-icon", action.label);
   if (onCooldown) {

@@ -71,6 +71,34 @@ function getGrimoireCondition(conditionId) {
   return GRIMOIRE_CONDITIONS[conditionId] || null;
 }
 
+/* v3.53.0 : getGrimoireCounterLabels(action) — renvoie un tableau des
+   LIBELLÉS (pas les ids) des conditions que cette action contre (voir
+   action.counters, data/class-skills.js, et le mécanisme réel dans
+   ClassCombatManager.applyGrimoireCounterIfApplicable(), systems/
+   class-combat-system.js). Fonction PARTAGÉE entre 2 écrans qui ont
+   besoin d'afficher la même info sans la dupliquer :
+     - ui/heros-view.js (fiche Personnage > Stats) — affichée
+       directement sur chaque carte de capacité, sans manipulation.
+     - ui/grimoire-view.js (écran Grimoire) — affichée sur l'action
+       déjà assignée à une règle, même avant que la condition ne soit
+       choisie dans le sélecteur (l'ancien indice ⚡ dans le menu
+       déroulant "Alors..." dépendait d'avoir déjà choisi "Si...",
+       cette fonction ne dépend de rien d'autre que l'action elle-même).
+   Retourne [] si action.counters est absent/vide, ou si un id qu'il
+   contient est inconnu de GRIMOIRE_CONDITIONS (silencieusement
+   ignoré — jamais d'erreur pour une donnée mal formée). Ne mute rien. */
+function getGrimoireCounterLabels(action) {
+  if (!action || !Array.isArray(action.counters) || !action.counters.length) return [];
+
+  var labels = [];
+  action.counters.forEach(function (conditionId) {
+    var cond = getGrimoireCondition(conditionId);
+    if (cond) labels.push(cond.label);
+  });
+  return labels;
+}
+
 window.GRIMOIRE_CONDITIONS = GRIMOIRE_CONDITIONS;
 window.GRIMOIRE_CONDITION_ORDER = GRIMOIRE_CONDITION_ORDER;
 window.getGrimoireCondition = getGrimoireCondition;
+window.getGrimoireCounterLabels = getGrimoireCounterLabels;

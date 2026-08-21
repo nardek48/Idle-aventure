@@ -46,6 +46,36 @@
   font-style: italic;
 }
 
+/* v3.52.0 : message informatif quand la règle en cours d'édition est
+   un contre valide (action.counters inclut la condition choisie) —
+   distinct des descriptions italiques ci-dessus (fond teinté, texte
+   en gras) pour bien attirer l'œil sur cette info importante. */
+.grimoire-counter-active {
+  margin-top: 8px;
+  margin-bottom: 0;
+  padding: 8px 10px;
+  background: rgba(250, 204, 21, 0.18);
+  border: 1px solid var(--nb-gold-dark);
+  border-radius: var(--nb-radius-sm);
+  font-weight: 700;
+  font-style: normal;
+  color: var(--nb-ink);
+}
+
 .grimoire-warning-card {
   border-color: #b3261e;
+}
+
+/* v3.51.0 : carte de règle pas encore débloquée (jalon de monde non
+   atteint, voir getGrimoireSlotCount()) — grisée mais TOUJOURS
+   visible (jamais masquée), pour montrer au joueur ce qui l'attend.
+   Les 2 sélecteurs internes portent déjà leur propre grisage via
+   .grimoire-select:disabled ci-dessus ; cette classe grise la carte
+   entière (titre, texte de déblocage compris) pour un effet cohérent. */
+.grimoire-rule-locked {
+  opacity: 0.55;
+}
+
+.grimoire-rule-locked h3 {
+  color: var(--nb-ink-dim);
 }

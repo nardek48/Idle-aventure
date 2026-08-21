@@ -36,6 +36,52 @@ mage_arcane_barrier) restent appliqués comme depuis v3.34.0
 (réduction/évasion/absorption des dégâts de riposte pendant leur
 durée).
 
+v3.52.0 : champ "counters" (tableau d'ids de condition du Grimoire,
+voir data/grimoire-conditions.js) ajouté sur 9 actions — 3 par classe,
+1 par pattern (Charge/Bouclier/Soin). Décision actée par Seb : le
+contre n'agit QUE si l'action est déclenchée par une règle du Grimoire
+dont la condition correspond exactement à une entrée de counters
+(jamais via un tap manuel ou le repli automatique par défaut, même
+avec la même action au même moment) — voir
+ClassCombatManager.useSkill()/applyGrimoireCounter(), systems/class-
+combat-system.js, pour le mécanisme exact. Effet : annulation TOTALE
+du pattern en cours de télégraphe (le bouclier ne se pose pas, le soin
+ne rend aucun PV, la charge n'inflige aucun dégât) — pas de
+neutralisation partielle. Mapping D'ORIGINE (v3.52.0, remplacé par
+celui de v3.60.0 ci-dessous) : Bouclier sur skill3, Soin sur skill3,
+Charge sur defense.
+
+v3.60.0 : mapping des counters DÉPLACÉ de skill3 vers skill1 pour
+Bouclier et Soin (skill2/defense inchangés) — demande explicite de
+Seb en jeu réel : skill3 coûte systématiquement 100 (le max de la
+barre), rendant le contre très lent à devenir disponible même une
+fois exclu du repli (v3.58.0-v3.59.0) — il faut accumuler la TOTALITÉ
+de la ressource avant de pouvoir contrer. skill1 coûte 2 à 3× moins
+cher (35-40 selon la classe), disponible bien plus vite après un
+combat qui vient de commencer ou une dépense récente. Nouveau mapping
+(skill1 et skill2 seulement, PLUS JAMAIS skill3) :
+  - Bouclier (shieldIncoming)  : knight_guard_break (skill2, INCHANGÉ)
+    / archer_precise_shot (skill1, NOUVEAU — était archer_piercing_shot
+    skill3) / mage_arcane_blast (skill1, NOUVEAU — était mage_arcane_
+    nova skill3)
+  - Soin (healIncoming)        : knight_heavy_strike (skill1, NOUVEAU
+    — était knight_execute skill3) / archer_volley (skill2, INCHANGÉ)
+    / mage_arcane_burn (skill2, INCHANGÉ)
+  - Charge (chargeIncoming)    : INCHANGÉ — les 3 actions "defense"
+    (Garde/Esquive/Barrière arcanique), déjà à coût 0-30
+Coûts de ressource RÉDUITS DE MOITIÉ sur TOUTES les actions skill1/
+skill2/skill3 des 3 classes (pas seulement celles qui contrent) —
+demande explicite de Seb : "on meurt très vite [...] avoir un peu
+plus de puissance est cohérent [...] l'équilibrage n'est pas une
+priorité [tant que le système de contre] ne marche pas". Skill3 passe
+systématiquement de 100 à 50 (jamais un contre, mais rendu plus
+accessible en jeu normal), skill1/skill2 réduits dans la même
+proportion (÷2). Rebalancing volontairement GROSSIER (division par 2
+partout, pas de nouveau calibrage fin par batch-sim) — un futur
+passage d'équilibrage est prévu une fois le système de contre validé
+en jeu réel par Seb, cohérent avec sa décision de prioriser le
+fonctionnement avant l'équilibrage précis pour cette itération.
+
 Structure par action (voir chaque kit ci-dessous) :
   - id                identifiant unique sur TOUT le catalogue
   - slot               "basic" | "skill1" | "skill2" | "skill3" | "defense"
@@ -114,28 +160,37 @@ window.CLASS_SKILLS = {
         id: "knight_heavy_strike",
         slot: "skill1",
         label: "Frappe lourde",
-        description: "Inflige 165% des dégâts. Coûte 35 Rage.",
+        description: "Inflige 165% des dégâts. Coûte 18 Rage.",
         type: "damage",
         damageMultiplier: 1.65,
         hits: 1,
-        resourceCost: 35,
+        resourceCost: 18,
         resourceGain: 0,
         cooldownMs: 1500,
         conditions: {},
+        // v3.60.0 : contre du Soin de boss — déplacé depuis
+        // knight_execute (skill3), voir en-tête de fichier pour la
+        // raison exacte (skill3 coûte toujours 100, trop lent à
+        // accumuler même une fois exclu du repli).
+        counters: ["healIncoming"],
         effects: []
       },
       skill2: {
         id: "knight_guard_break",
         slot: "skill2",
         label: "Brise-garde",
-        description: "Inflige 110% des dégâts. Coûte 55 Rage. Rend l'ennemi vulnérable (+20% dégâts subis de TOUS les coups) pendant 5 000 ms.",
+        description: "Inflige 110% des dégâts. Coûte 28 Rage. Rend l'ennemi vulnérable (+20% dégâts subis de TOUS les coups) pendant 5 000 ms.",
         type: "damage",
         damageMultiplier: 1.10,
         hits: 1,
-        resourceCost: 55,
+        resourceCost: 28,
         resourceGain: 0,
         cooldownMs: 4000,
         conditions: {},
+        // v3.52.0 : contre du Bouclier de boss — n'agit QUE via une
+        // règle du Grimoire dont la condition est "shieldIncoming",
+        // voir en-tête de fichier.
+        counters: ["shieldIncoming"],
         effects: [
           {
             // v3.34.1 : remplace enemyDefenseReduction (les ennemis
@@ -154,16 +209,20 @@ window.CLASS_SKILLS = {
         id: "knight_execute",
         slot: "skill3",
         label: "Exécution",
-        description: "Inflige 230% des dégâts. Coûte 100 Rage. Utilisable seulement si l'ennemi est à 35% PV ou moins.",
+        description: "Inflige 230% des dégâts. Coûte 50 Rage. Utilisable seulement si l'ennemi est à 35% PV ou moins.",
         type: "damage",
         damageMultiplier: 2.30,
         hits: 1,
-        resourceCost: 100,
+        resourceCost: 50,
         resourceGain: 0,
         cooldownMs: 8000,
         conditions: {
           enemyHpPercentBelowOrEqual: 0.35
         },
+        // v3.60.0 : n'est PLUS un contre — déplacé vers knight_heavy_
+        // strike (skill1), voir en-tête de fichier. skill3 ne contre
+        // plus jamais rien, quelle que soit la classe (demande
+        // explicite de Seb).
         effects: []
       },
       defense: {
@@ -178,6 +237,10 @@ window.CLASS_SKILLS = {
         resourceGain: 0,
         cooldownMs: 7000,
         conditions: {},
+        // v3.52.0 : contre de la Charge d'ennemi normal — n'agit QUE
+        // via une règle du Grimoire dont la condition est
+        // "chargeIncoming", voir en-tête de fichier.
+        counters: ["chargeIncoming"],
         effects: [
           {
             type: "damageReduction",
@@ -226,38 +289,43 @@ window.CLASS_SKILLS = {
         id: "archer_precise_shot",
         slot: "skill1",
         label: "Tir précis",
-        description: "Inflige 170% des dégâts. Coûte 40 Concentration.",
+        description: "Inflige 170% des dégâts. Coûte 20 Concentration.",
         type: "damage",
         damageMultiplier: 1.70,
         hits: 1,
-        resourceCost: 40,
+        resourceCost: 20,
         resourceGain: 0,
         cooldownMs: 2000,
         conditions: {},
+        // v3.60.0 : contre du Bouclier de boss — déplacé depuis
+        // archer_piercing_shot (skill3), voir en-tête de fichier.
         // v3.34.1 : criticalChanceBonus retiré (pas retenu pour ce
         // jeu, voir NOTE_v3.34.1_effets_non_branches.md) — action
         // purement offensive, sans effet secondaire.
+        counters: ["shieldIncoming"],
         effects: []
       },
       skill2: {
         id: "archer_volley",
         slot: "skill2",
         label: "Rafale",
-        description: "3 coups de 60% des dégâts chacun. Coûte 70 Concentration.",
+        description: "3 coups de 60% des dégâts chacun. Coûte 35 Concentration.",
         type: "damage",
         damageMultiplier: 0.60,
         hits: 3,
-        resourceCost: 70,
+        resourceCost: 35,
         resourceGain: 0,
         cooldownMs: 5000,
         conditions: {},
+        // v3.52.0 : contre du Soin de boss — voir en-tête de fichier.
+        counters: ["healIncoming"],
         effects: []
       },
       skill3: {
         id: "archer_piercing_shot",
         slot: "skill3",
         label: "Tir perforant",
-        description: "Inflige 200% des dégâts. Ignore la résistance/faiblesse d'arme de l'ennemi. Coûte 100 Concentration.",
+        description: "Inflige 200% des dégâts. Ignore la résistance/faiblesse d'arme de l'ennemi. Coûte 50 Concentration.",
         type: "damage",
         damageMultiplier: 2.00,
         hits: 1,
@@ -270,10 +338,12 @@ window.CLASS_SKILLS = {
         // pas via effects[] (ce n'est pas un effet à durée, il ne
         // s'applique qu'à CE coup).
         ignoreAffinity: true,
-        resourceCost: 100,
+        resourceCost: 50,
         resourceGain: 0,
         cooldownMs: 8000,
         conditions: {},
+        // v3.60.0 : n'est PLUS un contre — déplacé vers archer_precise_
+        // shot (skill1), voir en-tête de fichier.
         effects: []
       },
       defense: {
@@ -288,6 +358,9 @@ window.CLASS_SKILLS = {
         resourceGain: 0,
         cooldownMs: 8000,
         conditions: {},
+        // v3.52.0 : contre de la Charge d'ennemi normal — voir en-tête
+        // de fichier.
+        counters: ["chargeIncoming"],
         effects: [
           {
             // v3.34.0 : valeur fixée au branchement réel (70%, choix
@@ -339,28 +412,33 @@ window.CLASS_SKILLS = {
         id: "mage_arcane_blast",
         slot: "skill1",
         label: "Éclair arcanique",
-        description: "Inflige 180% des dégâts. Coûte 35 Mana.",
+        description: "Inflige 180% des dégâts. Coûte 18 Mana.",
         type: "damage",
         damageMultiplier: 1.80,
         hits: 1,
-        resourceCost: 35,
+        resourceCost: 18,
         resourceGain: 0,
         cooldownMs: 2000,
         conditions: {},
+        // v3.60.0 : contre du Bouclier de boss — déplacé depuis
+        // mage_arcane_nova (skill3), voir en-tête de fichier.
+        counters: ["shieldIncoming"],
         effects: []
       },
       skill2: {
         id: "mage_arcane_burn",
         slot: "skill2",
         label: "Brûlure arcanique",
-        description: "Inflige 90% des dégâts. Coûte 55 Mana. Applique un effet de dégâts sur la durée (20% des dégâts de ce coup par seconde pendant 5 000 ms).",
+        description: "Inflige 90% des dégâts. Coûte 28 Mana. Applique un effet de dégâts sur la durée (20% des dégâts de ce coup par seconde pendant 5 000 ms).",
         type: "damage",
         damageMultiplier: 0.90,
         hits: 1,
-        resourceCost: 55,
+        resourceCost: 28,
         resourceGain: 0,
         cooldownMs: 5000,
         conditions: {},
+        // v3.52.0 : contre du Soin de boss — voir en-tête de fichier.
+        counters: ["healIncoming"],
         effects: [
           {
             // v3.34.1 : branché — voir ClassCombatManager.applyDoT()/
@@ -379,14 +457,16 @@ window.CLASS_SKILLS = {
         id: "mage_arcane_nova",
         slot: "skill3",
         label: "Déflagration",
-        description: "Inflige 240% des dégâts. Coûte 100 Mana — le coup le plus puissant du Mage.",
+        description: "Inflige 240% des dégâts. Coûte 50 Mana — le coup le plus puissant du Mage.",
         type: "damage",
         damageMultiplier: 2.40,
         hits: 1,
-        resourceCost: 100,
+        resourceCost: 50,
         resourceGain: 0,
         cooldownMs: 8000,
         conditions: {},
+        // v3.60.0 : n'est PLUS un contre — déplacé vers mage_arcane_
+        // blast (skill1), voir en-tête de fichier.
         // v3.34.1 : areaOfEffect retiré (pas retenu pour ce jeu — un
         // seul ennemi affiché à la fois, pas de vraie zone possible,
         // voir NOTE_v3.34.1_effets_non_branches.md) — action purement
@@ -405,6 +485,9 @@ window.CLASS_SKILLS = {
         resourceGain: 0,
         cooldownMs: 8000,
         conditions: {},
+        // v3.52.0 : contre de la Charge d'ennemi normal — voir en-tête
+        // de fichier.
+        counters: ["chargeIncoming"],
         effects: [
           {
             type: "damageAbsorption",

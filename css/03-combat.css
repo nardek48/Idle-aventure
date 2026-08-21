@@ -105,9 +105,27 @@
   animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
 }
 
+/* v3.57.0 : badge de CONFIRMATION d'un contre réussi — couleur
+   électrique cyan (cohérente avec .counter-success-popup), animation
+   de "pop" ponctuelle plutôt que la pulsation continue des badges de
+   danger ci-dessus (c'est une bonne nouvelle, pas un avertissement à
+   surveiller). */
+.enemy-status-countered {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.25);
+  animation: counterBadgePop 0.3s ease-out;
+}
+
+@keyframes counterBadgePop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .enemy-status-shield-telegraph,
-  .enemy-status-heal-telegraph {
+  .enemy-status-heal-telegraph,
+  .enemy-status-countered {
     animation: none;
   }
 }
@@ -411,6 +429,30 @@
     0 0 8px rgba(251, 191, 36, 0.5);
 }
 
+/* v3.57.0 : popup "⚡ CONTRÉ !" — distinct des dégâts/critiques
+   ci-dessus (couleur électrique bleu/cyan, pas blanc/or) pour ne
+   jamais être confondu avec un simple coup, même critique. Durée plus
+   longue (1400ms, voir showCounterSuccessPopup(), combat-engine.js)
+   qu'un popup de dégâts ordinaire — un contre réussi est un événement
+   plus rare et plus important à remarquer. */
+.counter-success-popup {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  pointer-events: none;
+  font-size: clamp(18px, calc(9px + 2.8vw), 22px);
+  font-weight: 900;
+  color: #7dd3fc;
+  text-shadow:
+    2px 2px 4px rgba(0, 0, 0, 0.9),
+    0 0 10px rgba(56, 189, 248, 0.7);
+  animation: counterFloatUp 1.4s ease-out forwards;
+}
+
+#enemy-emoji.counter-flash {
+  animation: counterFlash 0.4s ease;
+}
+
 /* =========================
    Gain d’or flottant
    ========================= */
@@ -480,6 +522,25 @@
   100% { opacity: 0; transform: translate(-50%, -30px); }
 }
 
+/* v3.57.0 : "⚡ CONTRÉ !" — flotte plus longtemps et plus haut qu'un
+   popup de dégâts ordinaire (floatUp, 0.8s), cohérent avec sa durée
+   d'affichage étendue (1400ms). */
+@keyframes counterFloatUp {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(0.6); }
+  15% { opacity: 1; transform: translate(-50%, -8px) scale(1.2); }
+  85% { opacity: 1; transform: translate(-50%, -50px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -70px) scale(1); }
+}
+
+/* v3.57.0 : flash bleu/électrique sur l'ennemi au moment du contre —
+   distinct de hitFlash (blanc/doré, coup normal) pour bien marquer
+   l'événement comme différent d'une frappe ordinaire. */
+@keyframes counterFlash {
+  0% { transform: scale(1); filter: brightness(1) saturate(1); }
+  40% { transform: scale(0.92); filter: brightness(1.8) saturate(0.4) hue-rotate(150deg); }
+  100% { transform: scale(1); filter: brightness(1) saturate(1); }
+}
+
 /* =========================
    Accessibilité : réduction des animations
    ========================= */
@@ -490,13 +551,16 @@
   }
 
   #enemy-emoji.hit-flash,
+  #enemy-emoji.counter-flash,
   .float-dmg,
+  .counter-success-popup,
   .gold-popup,
   .damage-taken-popup {
     animation: none;
   }
 
   .float-dmg,
+  .counter-success-popup,
   .gold-popup,
   .damage-taken-popup {
     opacity: 1;

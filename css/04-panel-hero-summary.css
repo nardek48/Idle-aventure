@@ -376,6 +376,17 @@
   margin-top: 2px;
 }
 
+/* v3.53.0 : ligne "⚡ Contre : ..." sur une capacité qui contre un
+   pattern ennemi (voir action.counters, data/class-skills.js) —
+   distincte de .ability-desc (couleur dorée, poids fort) pour
+   ressortir immédiatement sur la carte. */
+.ability-counter {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-gold-dark);
+  margin-top: 4px;
+}
+
 .ability-cd {
   flex-shrink: 0;
   font-size: 10px;

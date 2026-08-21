@@ -100,6 +100,15 @@ var BOSS_HEAL_MAX_INTERVAL_S = 15;
 var BOSS_HEAL_TELEGRAPH_MS = 1500;
 var BOSS_HEAL_PERCENT = 0.15;           // +15% des PV ACTUELS du boss au moment du soin (pas des PV max)
 
+/* v3.57.0 : durée d'affichage du badge de CONFIRMATION visuelle d'un
+   contre réussi (voir ClassCombatManager.applyGrimoireCounterIfApplicable(),
+   systems/class-combat-system.js, qui pose game.enemy.counteredUntil,
+   et buildEnemyStatusBarHTML(), ui/combat-view.js, qui l'affiche) —
+   plus courte que les télégraphes eux-mêmes (1500ms), volontairement
+   brève : c'est une simple CONFIRMATION, pas un état de jeu à
+   proprement parler. */
+var COUNTER_CONFIRMATION_MS = 800;
+
 /* v3.34.3 : cooldown sur l'attaque de base (tap manuel) — repris du
    bac à sable (SANDBOX_DEFAULT_BASE_COOLDOWN_MS, systems/combat-
    sandbox-system.js), qui l'avait validé par simulation comme donnant
@@ -181,6 +190,44 @@ function showDamageTakenPopup(amount) {
   setTimeout(function () {
     if (el.parentNode) el.parentNode.removeChild(el);
   }, 1000);
+}
+
+/* v3.57.0 : popup flottant "⚡ CONTRÉ !" sur l'ennemi — appelée par
+   ClassCombatManager.applyGrimoireCounterIfApplicable() (systems/
+   class-combat-system.js) quand un contre du Grimoire réussit
+   réellement. Problème signalé par Seb : sans jouer avec l'écran
+   Grimoire ouvert, aucun retour visuel clair ne distinguait "le
+   pattern a été contré" de "le pattern s'est simplement résolu
+   normalement" — le badge de statut (voir buildEnemyStatusBarHTML(),
+   ui/combat-view.js) disparaît dans les deux cas de façon identique.
+   Même principe que showFloatingDamage() ci-dessus (DOM créé/détruit
+   après un court délai, positionné sur #enemy-display), mais texte et
+   couleur DÉDIÉS (pas un montant de dégâts) pour rester bien
+   distinguable des popups de dégâts/or déjà existants. Durée un peu
+   plus longue (1400ms) que les popups de dégâts (800ms) — un contre
+   réussi est un événement plus rare et plus important à remarquer
+   qu'un coup ordinaire. Purement visuel, aucun impact sur game.* */
+function showCounterSuccessPopup() {
+  var container = document.getElementById("enemy-display");
+  if (!container) return;
+
+  var el = document.createElement("div");
+  el.className = "counter-success-popup";
+  el.textContent = "⚡ CONTRÉ !";
+  el.style.left = "50%";
+  el.style.top = "18%";
+  container.appendChild(el);
+
+  setTimeout(function () {
+    if (el.parentNode) el.parentNode.removeChild(el);
+  }, 1400);
+
+  var emoji = document.getElementById("enemy-emoji");
+  if (emoji) {
+    emoji.classList.remove("counter-flash");
+    void emoji.offsetWidth;
+    emoji.classList.add("counter-flash");
+  }
 }
 
 var CombatEngine = {
@@ -975,6 +1022,21 @@ var CombatEngine = {
     } else if (result && result.type === "world" && result.world) {
       addLog("Nouveau monde débloqué : " + result.world.name, "zone");
       showToast(result.world.name, 2200);
+
+      // v3.51.0 : jalon narratif du Grimoire (étape 4b) — WorldManager.
+      // worldIndex a déjà été mis à jour au nouvel index par advance()
+      // AVANT de retourner ce result (voir progression-system.js), donc
+      // il reflète déjà le monde qu'on vient d'atteindre. Un second
+      // message DISTINCT du "Nouveau monde débloqué" ci-dessus, pour ne
+      // pas noyer l'annonce du Grimoire dans celle, plus générale, du
+      // monde — seulement si CE monde fait partie des jalons connus
+      // (Forêt/Désert, déjà accessibles dès le début, n'en font jamais
+      // partie, voir isGrimoireWorldUnlockMilestone()).
+      if (window.WorldManager && typeof isGrimoireWorldUnlockMilestone === "function"
+        && isGrimoireWorldUnlockMilestone(WorldManager.worldIndex)) {
+        addLog("📖 Une nouvelle règle de Grimoire est disponible !", "event");
+        showToast("📖 Nouvelle règle de Grimoire débloquée !", 2200);
+      }
     } else if (result && result.type === "cycle") {
       addLog("Le cycle recommence, les ennemis deviennent plus forts.", "zone");
       if (typeof openCycleSummary === "function") openCycleSummary();
@@ -1080,6 +1142,7 @@ window.autoAttack = autoAttack;
 window.autoTap = autoTap;
 window.showFloatingDamage = showFloatingDamage;
 window.showGoldPopup = showGoldPopup;
+window.showCounterSuccessPopup = showCounterSuccessPopup;
 window.getDamageAffinity = getDamageAffinity;
 window.getPlayerDamageType = getPlayerDamageType;
 window.getEnemyWillCritPenalty = getEnemyWillCritPenalty;
