@@ -61,6 +61,38 @@ var CLASS_ACTION_ICON_FALLBACK = {
   mage_arcane_barrier: "./images/Icons/special_attacks/chaos_fury.png"
 };
 
+/* v3.70.0 : correspondance entre le type d'effet d'archétype déclaré
+   sur une action (voir action.effects, data/class-skills.js) et l'id
+   de condition du Grimoire qui doit le déclencher — table PARALLÈLE à
+   action.counters (jamais fusionnée dedans : Enragé/Corrupteur ne
+   sont pas de vrais contres qui ANNULENT un événement, voir en-tête
+   de data/grimoire-conditions.js). */
+var ARCHETYPE_EFFECT_TO_CONDITION_ID = {
+  enemyRageSuppression: "enemyEnraged",
+  enemyCorruptionPurge: "enemyCorrupted"
+};
+
+/* getArchetypeEffectConditionId(action)
+   Retourne l'id de condition du Grimoire associé au 1er effet
+   d'archétype déclaré sur cette action (enemyRageSuppression ->
+   enemyEnraged, enemyCorruptionPurge -> enemyCorrupted), ou null si
+   l'action n'en déclare aucun. Fonction PURE (lecture seule de
+   action.effects), utilisée par useSkillManual() (tap manuel) et
+   ClassCombatManager.applyActionEffects() (filtre avant application
+   réelle) — voir leurs notes respectives. Ne mute rien. */
+function getArchetypeEffectConditionId(action) {
+  if (!action || !Array.isArray(action.effects)) return null;
+  for (var i = 0; i < action.effects.length; i++) {
+    var effect = action.effects[i];
+    if (effect && ARCHETYPE_EFFECT_TO_CONDITION_ID[effect.type]) {
+      return ARCHETYPE_EFFECT_TO_CONDITION_ID[effect.type];
+    }
+  }
+  return null;
+}
+
+window.getArchetypeEffectConditionId = getArchetypeEffectConditionId;
+
 var ClassCombatManager = {
   /* Garantit l'existence de game.classResource/game.classCooldowns/
      game.classActiveDefense, sans jamais écraser un état déjà présent
@@ -163,7 +195,40 @@ var ClassCombatManager = {
     var heroMaxHp = Number(game.heroMaxHp || 0);
     base.heroHpPercent = heroMaxHp > 0 ? Number(game.heroHp || 0) / heroMaxHp : null;
 
+    // v3.67.0 : temps restant avant la PROCHAINE riposte normale — lu
+    // ici (pas via getSecondsUntilPatternTrigger(), qui ne couvre que
+    // les patterns "spéciaux" avec _XNextAt/_XTimer sur game.enemy) et
+    // exposé directement comme un nombre, la comparaison au seuil se
+    // faisant dans evaluateGrimoireCondition() (combat-auto-policy-
+    // system.js). Voir sa note pour la raison exacte de cette
+    // différence de mécanisme avec les 3 patterns existants.
+    base.secondsUntilEnemyAttack = this.getSecondsUntilNextEnemyAttack();
+
+    // v3.70.0 : archétype de l'ennemi affiché, transmis TEL QUEL (voir
+    // evaluateGrimoireCondition(), combat-auto-policy-system.js, qui
+    // compare directement à "enraged"/"corrupted" — pas de résolution
+    // en booléen ici comme chargeIncoming/etc., un seul champ suffit
+    // pour les 2 conditions enemyEnraged/enemyCorrupted).
+    base.enemyArchetype = game.enemy ? (game.enemy.archetype || null) : null;
+
     return base;
+  },
+
+  /* v3.67.0 : temps restant (secondes) avant la PROCHAINE riposte
+     NORMALE (pas un pattern spécial) — dérivé des mêmes valeurs que
+     CombatEngine.enemyAttackTick() (game._enemyAttackTimer, intervalle
+     recalculé depuis la Célérité de l'ennemi affiché), SANS dupliquer
+     sa boucle de déclenchement (lecture seule ici, aucune mutation).
+     Retourne null si aucun ennemi affiché ou si ses stats sont absentes
+     (même garde que enemyAttackTick() lui-même). Ne mute rien. */
+  getSecondsUntilNextEnemyAttack: function () {
+    if (!game.enemy || !game.enemy.stats) return null;
+
+    var celerity = Number(game.enemy.stats.celerity || 0);
+    var interval = (typeof ENEMY_ATTACK_BASE_INTERVAL === "number" ? ENEMY_ATTACK_BASE_INTERVAL : 3) / (1 + celerity / 40);
+    var elapsed = Number(game._enemyAttackTimer || 0);
+    var remaining = interval - elapsed;
+    return remaining > 0 ? remaining : 0;
   },
 
   /* v3.55.0 : secondes restantes avant le PROCHAIN déclenchement du
@@ -178,8 +243,10 @@ var ClassCombatManager = {
          "imminent" — la fenêtre d'anticipation n'a plus de sens ici,
          voir chargeIncoming/etc. dans getGrimoireCombatContext()) ;
        - le minuteur n'a pas encore démarré (_XNextAt absent/0) ;
-       - conditionId est inconnu ou "heroLowHp" (pas un pattern
-         ennemi, aucun minuteur à lire pour cette condition). */
+       - conditionId est inconnu, "heroLowHp" ou "enemyAttackIncoming"
+         (v3.67.0 : la riposte normale a son PROPRE calcul, voir
+         getSecondsUntilNextEnemyAttack() ci-dessus — pas de _XNextAt/
+         _XTimer sur game.enemy pour elle, mécanisme différent). */
   getSecondsUntilPatternTrigger: function (conditionId) {
     if (!game.enemy) return null;
 
@@ -233,8 +300,9 @@ var ClassCombatManager = {
   useSkillManual: function (slot) {
     var action = this.getAction(slot);
     var matchedConditionId = null;
+    var hasCounters = !!(action && Array.isArray(action.counters) && action.counters.length);
 
-    if (action && Array.isArray(action.counters) && action.counters.length && game.enemy) {
+    if (hasCounters && game.enemy) {
       var context = this.getGrimoireCombatContext();
       for (var i = 0; i < action.counters.length; i++) {
         var conditionId = action.counters[i];
@@ -242,6 +310,52 @@ var ClassCombatManager = {
           matchedConditionId = conditionId;
           break;
         }
+      }
+    }
+
+    // v3.70.0 : même principe que la boucle counters ci-dessus, mais
+    // pour les conditions d'ARCHÉTYPE (enemyEnraged/enemyCorrupted) —
+    // PAS un vrai contre (rien n'est annulé), donc PAS dans
+    // action.counters, mais le même besoin de matchedConditionId pour
+    // que useSkill()/applyActionEffects() sache si l'effet
+    // enemyRageSuppression/enemyCorruptionPurge doit s'appliquer (voir
+    // getArchetypeEffectConditionId() ci-dessous). Ne remplace
+    // matchedConditionId que s'il n'a pas déjà été résolu par un VRAI
+    // contre ci-dessus — une action ne peut de toute façon jamais avoir
+    // à la fois un counter classique et un effet d'archétype dans le
+    // kit actuel, mais l'ordre reste défini pour rester robuste. */
+    if (!matchedConditionId && action && game.enemy) {
+      var archetypeConditionId = (typeof getArchetypeEffectConditionId === "function")
+        ? getArchetypeEffectConditionId(action)
+        : null;
+      if (archetypeConditionId && typeof evaluateGrimoireCondition === "function"
+        && evaluateGrimoireCondition(archetypeConditionId, this.getGrimoireCombatContext())) {
+        matchedConditionId = archetypeConditionId;
+      }
+    }
+
+    // v3.61.0 : rapport post-combat (étape 4.1) — échecs explicites
+    // (ressource/cooldown) et "contre raté par mauvais timing"
+    // (action avec counters jouée mais aucun télégraphe actif) ne
+    // peuvent être diagnostiqués QUE depuis un tap manuel : le
+    // Grimoire/le repli auto ne "tentent" jamais une action
+    // indisponible (canUseAction() les filtre déjà en amont), et le
+    // Grimoire ne choisit une action de contre QUE si sa condition
+    // matche déjà (jamais de contre "à vide" possible côté auto).
+    if (window.CombatReportManager && CombatReportManager.isTrackedSlot(slot)) {
+      var resourceStateCheck = this.ensureForCurrentClass();
+      var combatContextCheck = this.getCombatContext();
+      if (action && resourceStateCheck && typeof canUseAction === "function"
+        && !canUseAction(resourceStateCheck, game.classCooldowns, action, combatContextCheck)) {
+        var cooldownRemaining = (game.classCooldowns && game.classCooldowns[action.id]) || 0;
+        var affordable = resourceStateCheck.current >= (action.resourceCost || 0);
+        if (cooldownRemaining > 0) {
+          CombatReportManager.logFailedAttempt(slot, "cooldown");
+        } else if (!affordable) {
+          CombatReportManager.logFailedAttempt(slot, "resource");
+        }
+      } else if (hasCounters && !matchedConditionId) {
+        CombatReportManager.logCounterMissed(slot);
       }
     }
 
@@ -295,20 +409,27 @@ var ClassCombatManager = {
     game.classResource = result.resourceState;
     game.classCooldowns = result.cooldownState;
 
+    // v3.61.0 : rapport post-combat (étape 4.1) — une utilisation
+    // RÉUSSIE, quel que soit le déclencheur (Grimoire, repli auto,
+    // tap manuel). Comptée AVANT le contre ci-dessous : "utilisations
+    // réelles" doit inclure les coups qui n'ont contré aucun
+    // télégraphe (usage normal de l'action), pas seulement les contres.
+    if (window.CombatReportManager) CombatReportManager.logUsage(slot);
+
     // v3.52.0 : contre d'un pattern (Charge/Bouclier/Soin) — appliqué
     // AVANT les dégâts/l'effet défensif normal ci-dessous, pour que le
     // télégraphe soit déjà annulé au moment où applyDamageAction()/
     // activateDefenseEffect() s'exécutent (ordre sans importance réelle
     // ici puisque les 2 opèrent sur des champs game.enemy distincts,
     // mais plus lisible de "résoudre le contre" avant "jouer l'action").
-    this.applyGrimoireCounterIfApplicable(action, matchedConditionId);
+    this.applyGrimoireCounterIfApplicable(action, matchedConditionId, slot);
 
     if (action.type === "defense") {
       this.activateDefenseEffect(action);
       addLog("🛡️ " + action.label + " !", "event");
       showToast((action.icon || "🛡️") + " " + action.label, 1400);
     } else {
-      this.applyDamageAction(action);
+      this.applyDamageAction(action, matchedConditionId);
       addLog("✨ " + action.label + " !", "event");
       showToast((action.icon || "✨") + " " + action.label, 1400);
     }
@@ -340,8 +461,11 @@ var ClassCombatManager = {
      intervalle aléatoire dès le tick suivant). Ne fait rien
      silencieusement si matchedConditionId est absent, si l'action n'a
      pas de counters, ou si aucun télégraphe correspondant n'est
-     actuellement actif (contre "à vide", sans effet ni erreur). */
-  applyGrimoireCounterIfApplicable: function (action, matchedConditionId) {
+     actuellement actif (contre "à vide", sans effet ni erreur).
+     v3.61.0 : paramètre slot (optionnel, ajouté pour le rapport
+     post-combat) — sert UNIQUEMENT à CombatReportManager.logCounterSuccess(),
+     aucun impact sur la logique de contre elle-même. */
+  applyGrimoireCounterIfApplicable: function (action, matchedConditionId, slot) {
     if (!matchedConditionId || !game.enemy) return;
     if (!Array.isArray(action.counters) || action.counters.indexOf(matchedConditionId) === -1) return;
 
@@ -359,6 +483,18 @@ var ClassCombatManager = {
     }
 
     if (countered) {
+      // v3.61.0 : rapport post-combat (étape 4.1) — valeur estimée du
+      // contre, voir CombatEngine.estimateCounterValue() pour le
+      // détail du calcul par condition (approximation simple basée
+      // sur les dégâts de riposte moyens de l'ennemi, décision actée
+      // avec Seb : pas la peine de rejouer tout le pipeline réel de
+      // dealDamage()/enemyStrike() pour un chiffre indicatif).
+      if (window.CombatReportManager) {
+        var estimatedValue = (typeof CombatEngine !== "undefined" && typeof CombatEngine.estimateCounterValue === "function")
+          ? CombatEngine.estimateCounterValue(matchedConditionId)
+          : 0;
+        CombatReportManager.logCounterSuccess(slot, matchedConditionId, estimatedValue);
+      }
       addLog("⚡ Contre réussi : " + (action.label || "l'action") + " annule l'attaque adverse !", "event");
       showToast("⚡ Contré !", 1600);
       // v3.57.0 : popup flottant "⚡ CONTRÉ !" + badge de confirmation
@@ -391,7 +527,7 @@ var ClassCombatManager = {
      démarre un DoT (voir applyDoT()). ignoreAffinity (Tir perforant)
      est lu directement sur l'action, pas sur ses effects[] (voir
      data/class-skills.js), et transmis à dealDamage(). */
-  applyDamageAction: function (action) {
+  applyDamageAction: function (action, matchedConditionId) {
     var baseDamage = (window.EquipmentManager && typeof EquipmentManager.effectiveTapDamage === "function")
       ? EquipmentManager.effectiveTapDamage()
       : Math.max(1, Math.floor(game.tapDamage * game.tapMult) + Math.floor(game.equipFlatTapBonus || 0));
@@ -408,14 +544,25 @@ var ClassCombatManager = {
       CombatEngine.dealDamage(dmg, isCrit, true, !!action.ignoreAffinity);
     }
 
-    if (game.enemy) this.applyActionEffects(action, lastHitDmg);
+    if (game.enemy) this.applyActionEffects(action, lastHitDmg, matchedConditionId);
   },
 
   /* Applique les effets déclaratifs d'une action offensive (voir
      action.effects, data/class-skills.js) une fois le(s) coup(s)
      porté(s) — ignore silencieusement tout type d'effet inconnu ou
-     non géré ici (aucune erreur, cohérent avec le reste du fichier). */
-  applyActionEffects: function (action, lastHitDmg) {
+     non géré ici (aucune erreur, cohérent avec le reste du fichier).
+     v3.70.0 : matchedConditionId (optionnel) — pour enemyRageSuppression/
+     enemyCorruptionPurge UNIQUEMENT (enemyVulnerability/damageOverTime
+     restent inconditionnels, comme avant) : l'effet ne s'applique QUE
+     si matchedConditionId correspond à la condition d'archétype de CET
+     effet (voir getArchetypeEffectConditionId()) — cohérent avec la
+     correction demandée par Seb : "comment on configure le contre ? il
+     n'est pas dans le Grimoire" — désormais skill3/skill1 n'activent
+     plus Enragé/Corrupteur QUE si déclenchés par une règle du Grimoire
+     dont la condition correspond, ou par un tap manuel au bon moment
+     (même principe exact que applyGrimoireCounterIfApplicable() pour
+     les contres classiques, voir sa note). */
+  applyActionEffects: function (action, lastHitDmg, matchedConditionId) {
     var effects = action.effects || [];
     for (var i = 0; i < effects.length; i++) {
       var effect = effects[i];
@@ -431,8 +578,66 @@ var ClassCombatManager = {
         game.enemy.vulnerableMult = Number(effect.value || 0);
       } else if (effect.type === "damageOverTime") {
         this.applyDoT(effect, lastHitDmg);
+      } else if (effect.type === "enemyRageSuppression") {
+        if (matchedConditionId === "enemyEnraged") this.applyEnemyRageSuppression();
+      } else if (effect.type === "enemyCorruptionPurge") {
+        if (matchedConditionId === "enemyCorrupted") this.applyEnemyCorruptionPurge();
       }
     }
+  },
+
+  /* v3.68.0 : effet du contre skill3 sur l'archétype Enragé (Phase 9)
+     — voir data/class-skills.js (les 3 skill3 déclarent maintenant
+     { type: "enemyRageSuppression" } dans leurs effects[]). Ne fait
+     RIEN silencieusement si l'ennemi affiché n'est pas Enragé (skill3
+     reste une simple attaque normale dans ce cas, comportement
+     identique à avant v3.68.0). Combine RÉDUCTION IMMÉDIATE (le ratio
+     de PV perdus "effectif" recule de ENRAGED_SUPPRESSION_REDUCTION_PCT,
+     jamais sous 0) ET GEL de la progression pendant
+     ENRAGED_FREEZE_DURATION_MS (voir CombatEngine.
+     getEnragedEffectivePctHpLost(), qui lit game.enemy.rageFreezeUntil/
+     rageFrozenPct posés ici) — décision actée avec Seb : "un vrai
+     soulagement immédiat ET visible", pas seulement un plafond qui
+     empêche d'empirer. Chaque nouvelle activation ÉCRASE le gel
+     précédent (pas de cumul, cohérent avec activateDefenseEffect()
+     qui a le même comportement pour les effets défensifs). */
+  applyEnemyRageSuppression: function () {
+    if (!game.enemy || game.enemy.archetype !== "enraged") return;
+    if (!(game.enemy.maxHp > 0)) return;
+
+    var currentPct = 1 - (Number(game.enemy.hp || 0) / Number(game.enemy.maxHp || 1));
+    var reduction = (typeof ENRAGED_SUPPRESSION_REDUCTION_PCT === "number") ? ENRAGED_SUPPRESSION_REDUCTION_PCT : 0.20;
+    var reducedPct = Math.max(0, currentPct - reduction);
+    var freezeDurationMs = (typeof ENRAGED_FREEZE_DURATION_MS === "number") ? ENRAGED_FREEZE_DURATION_MS : 4000;
+
+    game.enemy.rageFrozenPct = reducedPct;
+    game.enemy.rageFreezeUntil = Date.now() + freezeDurationMs;
+
+    addLog("😤 La rage de " + game.enemy.name + " retombe temporairement !", "event");
+    showToast("😤 Rage apaisée !", 1400);
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+  },
+
+  /* v3.69.0 : effet du contre skill1 sur l'archétype Corrupteur (Phase
+     9) — voir data/class-skills.js (les 3 skill1 déclarent maintenant
+     { type: "enemyCorruptionPurge" } dans leurs effects[]). Ne fait
+     RIEN silencieusement si l'ennemi affiché n'est pas Corrupteur
+     (skill1 reste une simple attaque normale dans ce cas, comportement
+     identique à avant v3.69.0 — y compris son propre contre existant
+     sur shieldIncoming/healIncoming, totalement indépendant de cet
+     effet). Purge TOTALE (pas partielle comme Enragé) — décision
+     actée avec Seb : la corruption est un ensemble de STACKS discrets
+     (pas une jauge continue), plus simple et plus lisible de tout
+     retirer d'un coup qu'un pourcentage partiel. */
+  applyEnemyCorruptionPurge: function () {
+    if (!game.enemy || game.enemy.archetype !== "corrupted") return;
+    if (!(Number(game.enemy.corruptedStacks || 0) > 0)) return; // rien à purger, silencieux
+
+    game.enemy.corruptedStacks = 0;
+
+    addLog("✨ La corruption de " + game.enemy.name + " est purgée !", "event");
+    showToast("✨ Corruption purgée !", 1400);
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
   /* Démarre/rafraîchit le DoT de Brûlure arcanique sur game.enemy —
@@ -585,7 +790,12 @@ var ClassCombatManager = {
   /* v3.55.0 : décide si la réserve de ressource (v3.54.0) doit être
      ACTIVE maintenant, pour la règle de contre la plus prioritaire du
      Grimoire. Conditions cumulatives :
-       1) une règle de contre est configurée (getPrioritaryCounterRule) ;
+       1) une règle de contre est configurée (getPrioritaryCounterRule)
+          ET dont la condition est POSSIBLE pour l'ennemi affiché
+          (v3.63.0, voir isConditionPossibleForEnemy(),
+          combat-auto-policy-system.js — une règle "Garde contre
+          Charge" ne réserve plus rien face à un boss, qui ne fait
+          jamais de Charge) ;
        2) son pattern est en fenêtre d'approche — reste ≤ la fenêtre
           calculée pour CETTE action précise (getGrimoireApproachWindowSeconds(),
           v3.56.0 : proportionnelle au coût de l'action, plus une
@@ -599,14 +809,22 @@ var ClassCombatManager = {
           estimée sur le temps restant, voir estimateResourceGainOverWindow())
           atteint le coût de l'action de contre — sinon, pas la peine
           de brider le repli pour un contre qui n'a statistiquement
-          aucune chance d'être payé à temps.
-     Décision explicite de Seb : l'estimation reste OPTIMISTE (peut
-     échouer en pratique) — un vrai enjeu plutôt qu'un calcul garanti. */
+          aucune chance d'être payé à temps ;
+       4) v3.64.0 — LIBÉRATION PRÉDICTIVE (fin de l'étape 4.2, feuille
+          de route combat) : même si les 3 conditions ci-dessus sont
+          vraies, la réserve reste malgré tout INUTILE si l'action est
+          déjà PRÊTE (ressource actuelle suffisante SANS attendre de
+          régénération, ET cooldown restant qui aura le temps de
+          s'écouler avant le télégraphe, avec une marge de sécurité —
+          voir isCounterActionAlreadyOnTrack() plus bas). Dans ce cas
+          précis, réserver ne fait que priver le repli d'actions sans
+          aucun bénéfice réel : l'action de contre sera de toute façon
+          disponible à temps, réservée ou non. */
   shouldActivateGrimoireReserve: function (activeRules, kit, resourceState) {
     if (!activeRules || !kit || !resourceState) return false;
     if (typeof getPrioritaryCounterRule !== "function") return false;
 
-    var rule = getPrioritaryCounterRule(activeRules, kit);
+    var rule = getPrioritaryCounterRule(activeRules, kit, game.enemy);
     if (!rule) return false;
 
     var action = kit.actions[rule.actionSlot];
@@ -619,6 +837,12 @@ var ClassCombatManager = {
     var secondsRemaining = this.getSecondsUntilPatternTrigger(rule.conditionId);
     if (secondsRemaining === null) return false;
     if (secondsRemaining > approachWindowSeconds) return false; // pattern encore loin, pas la peine de brider
+
+    // v3.64.0 : libération prédictive — voir note ci-dessus. Vérifiée
+    // AVANT le calcul plus coûteux d'estimation de régénération
+    // (étape 3) : si l'action est déjà "sur les rails" pour être
+    // prête à temps SANS réserve, inutile d'aller plus loin.
+    if (this.isCounterActionAlreadyOnTrack(action, resourceState, secondsRemaining)) return false;
 
     var resourceDef = (typeof getClassResource === "function") ? getClassResource(kit.classId) : null;
     if (!resourceDef) return false;
@@ -640,6 +864,38 @@ var ClassCombatManager = {
 
     var predictedTotal = Number(resourceState.current || 0) + estimatedGain;
     return predictedTotal >= action.resourceCost;
+  },
+
+  /* v3.64.0 : libération prédictive de la réserve — retourne true si
+     l'action de contre sera de toute façon PRÊTE (ressource + cooldown)
+     bien avant le télégraphe réel, SANS avoir besoin de la réserve
+     pour ça. Conditions cumulatives :
+       1) la ressource ACTUELLE (resourceState.current, sans compter
+          sur une régénération future) suffit déjà à payer l'action —
+          si elle ne suffit pas encore, la réserve peut légitimement
+          aider à ne pas la dépenser ailleurs avant que la régénération
+          ne l'amène au niveau requis, donc pas de libération ici ;
+       2) le cooldown RESTANT de l'action (game.classCooldowns[action.id],
+          0 si absent/déjà écoulé) aura le temps de s'écouler avant le
+          télégraphe, avec une marge de sécurité fixe
+          (GRIMOIRE_RESERVE_RELEASE_SAFETY_MARGIN_MS) pour absorber le
+          délai du prochain tick de décision (300ms, voir
+          AUTO_SKILLS_DECISION_INTERVAL_MS) — sans cette marge, un
+          cooldown qui s'écoule à peu près en même temps que le
+          télégraphe pourrait manquer sa fenêtre d'un tick.
+     Une action GRATUITE (resourceCost 0) n'a de toute façon jamais
+     besoin de réserve (déjà filtré en amont par shouldActivateGrimoireReserve,
+     "!(action.resourceCost > 0)"), donc pas re-testé ici. */
+  isCounterActionAlreadyOnTrack: function (action, resourceState, secondsRemaining) {
+    if (!action || !resourceState) return false;
+    if (Number(resourceState.current || 0) < Number(action.resourceCost || 0)) return false;
+
+    var cooldownRemainingMs = (game.classCooldowns && typeof game.classCooldowns[action.id] === "number")
+      ? game.classCooldowns[action.id]
+      : 0;
+    var secondsRemainingMs = Number(secondsRemaining || 0) * 1000;
+
+    return (cooldownRemainingMs + GRIMOIRE_RESERVE_RELEASE_SAFETY_MARGIN_MS) < secondsRemainingMs;
   },
 
   /* v3.54.0 : construit une COPIE de resourceState avec current
@@ -771,8 +1027,14 @@ var ClassCombatManager = {
       // contre la PLUS PRIORITAIRE (décision v3.54.0 inchangée) — la
       // réserve ne s'applique QU'AU repli, jamais aux autres règles du
       // Grimoire elles-mêmes.
+      // v3.63.0 : réserve désormais filtrée par compatibilité
+      // ennemi/condition (voir isConditionPossibleForEnemy(),
+      // combat-auto-policy-system.js) — getGrimoireCounterReserveAmount()
+      // ignore une règle de contre dont le pattern ne peut de toute
+      // façon jamais survenir sur l'ennemi COURAMMENT affiché (ex.
+      // Garde contre Charge face à un boss).
       var reserveAmount = this.shouldActivateGrimoireReserve(activeRules, kit, resourceState)
-        ? ((typeof getGrimoireCounterReserveAmount === "function") ? getGrimoireCounterReserveAmount(activeRules, kit) : 0)
+        ? ((typeof getGrimoireCounterReserveAmount === "function") ? getGrimoireCounterReserveAmount(activeRules, kit, game.enemy) : 0)
         : 0;
       var resourceStateForFallback = this.buildReservedResourceState(resourceState, reserveAmount);
 
@@ -799,12 +1061,35 @@ var ClassCombatManager = {
       // pas couvert par le filtrage initial (getPrioritaryCounterRule()
       // ne retournait qu'UNE règle). getAllCounterActionSlots() (voir
       // combat-auto-policy-system.js) couvre maintenant l'ensemble.
+      // v3.63.0 : exclusion désormais filtrée par compatibilité
+      // ennemi/condition, même principe que la réserve ci-dessus —
+      // getAllCounterActionSlots() n'exclut plus du repli une action
+      // dont TOUTES ses conditions de contre configurées sont
+      // impossibles pour l'ennemi courant.
       var counterSlots = (activeRules && typeof getAllCounterActionSlots === "function")
-        ? getAllCounterActionSlots(activeRules, kit)
+        ? getAllCounterActionSlots(activeRules, kit, game.enemy)
         : [];
       var priorityListForFallback = counterSlots.length
         ? priorityList.filter(function (s) { return counterSlots.indexOf(s) === -1; })
         : priorityList;
+
+      // v3.61.0 : rapport post-combat (étape 4.1) — un slot exclu du
+      // repli (réservé à une règle de contre) alors qu'il aurait été
+      // JOUABLE à cet instant précis (ressource/cooldown ok SANS la
+      // réserve appliquée) compte comme "utilisation empêchée par la
+      // réserve" pour CE tick de décision (300ms). Vérifié sur l'état
+      // RÉEL de ressource (resourceState, pas resourceStateForFallback)
+      // pour ne compter que les cas où l'exclusion a un effet concret
+      // — un slot déjà en cooldown de toute façon n'aurait de toute
+      // façon pas pu être joué, l'exclusion ne lui "coûte" donc rien.
+      if (counterSlots.length && window.CombatReportManager && typeof canUseAction === "function") {
+        counterSlots.forEach(function (excludedSlot) {
+          var excludedAction = kit.actions[excludedSlot];
+          if (excludedAction && canUseAction(resourceState, game.classCooldowns, excludedAction, grimoireContext)) {
+            CombatReportManager.logBlockedByReserve(excludedSlot);
+          }
+        });
+      }
 
       slot = (typeof chooseAutoAction === "function")
         ? chooseAutoAction(priorityListForFallback, kit, resourceStateForFallback, game.classCooldowns, grimoireContext)
@@ -847,5 +1132,14 @@ var ClassCombatManager = {
    300ms est largement suffisant pour ne rater aucune fenêtre
    d'opportunité tout en restant léger. */
 var AUTO_SKILLS_DECISION_INTERVAL_MS = 300;
+
+/* v3.64.0 : marge de sécurité pour la libération prédictive de la
+   réserve du Grimoire (voir ClassCombatManager.isCounterActionAlreadyOnTrack()) —
+   un cooldown restant qui s'écoulerait à peu près EN MÊME TEMPS que le
+   télégraphe pourrait manquer sa fenêtre d'un seul tick de décision
+   (AUTO_SKILLS_DECISION_INTERVAL_MS, 300ms) : cette marge (2x ce délai)
+   absorbe ce cas limite, cohérent avec l'esprit "prédiction optimiste
+   mais pas suicidaire" du reste du système de réserve. */
+var GRIMOIRE_RESERVE_RELEASE_SAFETY_MARGIN_MS = 600;
 
 window.ClassCombatManager = ClassCombatManager;

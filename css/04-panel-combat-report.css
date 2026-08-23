@@ -1,0 +1,64 @@
+/* =========================
+   v3.61.0 : Rapport post-combat (étape 4.1)
+   v3.62.0 : rapport rendu CUMULATIF — le bouton permanent est déplacé
+   de l'écran Combat vers l'écran Grimoire (réutilise .settings-btn,
+   voir css/04-panel-settings.css, aucun style dédié nécessaire ici) ;
+   ajout du bouton "Réinitialiser" DANS la modale (voir en-tête de
+   ui/combat-report-view.js pour le détail des changements).
+   La carte principale réutilise .full-menu-overlay / .full-menu /
+   .dungeon-story-card / .dungeon-story-icon / .dungeon-story-title /
+   .dungeon-story-meta / .dungeon-story-close (voir css/05-overlays.css
+   et css/04-panel-dungeon.css) — seuls les éléments PROPRES à ce
+   rapport sont définis ici : les fiches par capacité (réutilisent
+   .panel-card/.panel-sub, voir css/04-panels-common.css).
+   ========================= */
+
+.combat-report-card {
+  text-align: left;
+}
+
+.combat-report-card .dungeon-story-icon,
+.combat-report-card .dungeon-story-title,
+.combat-report-card .dungeon-story-meta {
+  text-align: center;
+}
+
+/* Vue d'ensemble (dégâts évités/soin empêché/boucliers retirés) —
+   mise en avant AVANT le détail par capacité, cohérent avec la
+   question "les contres obtenus compensent-ils leur coût ?". */
+.combat-report-summary {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--nb-cream-alt);
+  border-left: 2px solid var(--nb-gold);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--nb-ink);
+}
+
+.combat-report-slot-card {
+  margin-bottom: 10px;
+}
+
+.combat-report-slot-line {
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.combat-report-verdict {
+  margin-top: 4px;
+  margin-bottom: 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--nb-gold-dark);
+}
+
+/* v3.62.0 : bouton de reset — distinct visuellement du bouton
+   "Continuer" (primary) pour ne pas donner l'impression d'une action
+   anodine, même position/format que .settings-btn de base sinon. */
+.combat-report-reset-btn {
+  color: #b23b3b;
+  border-color: #b23b3b;
+}

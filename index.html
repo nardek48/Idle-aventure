@@ -47,6 +47,7 @@
   <link rel="stylesheet" href="./css/04-panel-log.css">
   <link rel="stylesheet" href="./css/04-panel-settings.css">
   <link rel="stylesheet" href="./css/04-panel-grimoire.css">
+  <link rel="stylesheet" href="./css/04-panel-combat-report.css">
   <link rel="stylesheet" href="./css/04-panel-aether-shop.css">
   <link rel="stylesheet" href="./css/04-panel-equipment.css">
   <link rel="stylesheet" href="./css/04-panel-afflictions.css">
@@ -111,6 +112,7 @@
 <div id="adventure-quest-modal-root"></div>
 <div id="map-modal-root"></div>
 <div id="cycle-modal-root"></div>
+<div id="combat-report-modal-root"></div>
 <input type="file" id="import-save-file-input" accept=".json,application/json" style="display:none" onchange="importSaveFromFile(this)">
 
 
@@ -190,6 +192,7 @@
 <!-- DATA -->
 <script src="js/data/enemies.js"></script>
 <script src="js/data/bosses.js"></script>
+<script src="js/data/enemy-archetypes.js"></script>
 <script src="js/data/heroes.js"></script>
 <script src="js/data/classes.js"></script>
 <script src="js/data/class-skills.js"></script>
@@ -239,6 +242,7 @@
 <script src="js/systems/offline-system.js"></script>
 <script src="js/systems/camp-system.js"></script>
 <script src="js/systems/save-system.js"></script>
+<script src="js/systems/combat-report-system.js"></script>
 <script src="js/systems/combat-engine.js"></script>
 <script src="js/systems/combat-resource-system.js"></script>
 <script src="js/systems/combat-cooldown-system.js"></script>
@@ -255,6 +259,7 @@
 <script src="js/ui/onboarding-view.js"></script>
 <script src="js/ui/hud-view.js"></script>
 <script src="js/ui/combat-view.js"></script>
+<script src="js/ui/combat-report-view.js"></script>
 <script src="js/ui/potion-view.js"></script>
 <script src="js/ui/equip-shop-view.js"></script>
 <script src="js/ui/dungeon-view.js"></script>

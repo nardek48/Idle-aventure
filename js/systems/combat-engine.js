@@ -207,6 +207,65 @@ function showDamageTakenPopup(amount) {
    plus longue (1400ms) que les popups de dégâts (800ms) — un contre
    réussi est un événement plus rare et plus important à remarquer
    qu'un coup ordinaire. Purement visuel, aucun impact sur game.* */
+/* v3.61.0 : rapport post-combat (étape 4.1) — trouve, dans le
+   Grimoire ACTUEL du joueur, le(s) slot(s) dont l'action assignée
+   contre conditionId (voir data/class-skills.js, action.counters).
+   Utilisée à la fois pour compter "télégraphes compatibles vus" (à
+   l'apparition) et "contres expirés" (à la résolution sans contre) —
+   même filtre dans les 2 cas : SEULES les règles RÉELLEMENT actives
+   (tronquées aux slots débloqués, comme ClassCombatManager.
+   tickAutoSkills()) comptent, une règle sur un slot pas encore
+   débloqué n'est pas "un contre manqué" puisqu'elle n'existe pas
+   encore pour le joueur. Retourne un tableau (0, 1 ou plusieurs slots
+   — rien n'empêche 2 règles différentes de viser la même condition
+   avec 2 actions distinctes). Ne mute rien. */
+function getConfiguredCounterSlotsForCondition(conditionId) {
+  if (!window.ClassCombatManager || typeof ClassCombatManager.getCurrentClassId !== "function") return [];
+  var classId = ClassCombatManager.getCurrentClassId();
+  if (!classId || typeof getClassSkills !== "function") return [];
+  var kit = getClassSkills(classId);
+  if (!kit || !kit.actions) return [];
+
+  var unlockedSlotCount = (typeof getGrimoireSlotCount === "function")
+    ? getGrimoireSlotCount(game.worldsEverReached)
+    : 2;
+  var activeRules = (Array.isArray(game.grimoireRules) && game.grimoireRules.length)
+    ? game.grimoireRules.slice(0, unlockedSlotCount)
+    : [];
+
+  var slots = [];
+  activeRules.forEach(function (rule) {
+    if (!rule || rule.conditionId !== conditionId || !rule.actionSlot) return;
+    var action = kit.actions[rule.actionSlot];
+    if (action && Array.isArray(action.counters) && action.counters.indexOf(conditionId) !== -1) {
+      slots.push(rule.actionSlot);
+    }
+  });
+  return slots;
+}
+
+/* v3.61.0 : valeur ESTIMÉE (dégâts évités/soin empêché) d'un contre
+   réussi, pour le rapport post-combat — approximation SIMPLE, décidée
+   avec Seb : basée sur les dégâts de riposte MOYENS de l'ennemi
+   affiché plutôt que de rejouer tout le pipeline réel de dealDamage()/
+   enemyStrike() (défense, critique, bouclier actif...), qui donnerait
+   un chiffre plus précis mais coûterait bien plus de code pour un
+   simple indicateur de tendance dans un rapport, pas une valeur
+   comptable exacte.
+     - chargeIncoming : dégâts qu'aurait infligés l'impact de la
+       Charge (même formule que enemyStrike(ENEMY_CHARGE_DMG_MULT),
+       SANS défense/critique — juste power * coef * multiplicateur de
+       pattern, cohérent avec "dégâts de riposte moyens").
+     - shieldIncoming : dégâts de riposte NORMALE moyens (le Bouclier
+       n'inflige rien lui-même, il RÉDUIT les dégâts que le joueur
+       inflige au boss pendant sa durée — la valeur retournée ici
+       représente donc plutôt "l'avantage retiré au boss", exprimée en
+       équivalent dégâts de riposte pour rester sur une échelle
+       lisible et cohérente avec les 2 autres cas).
+     - healIncoming : montant de PV qu'aurait récupéré le boss (15%
+       de ses PV actuels, même formule que resolveBossHeal()).
+   Retourne 0 si game.enemy est absent ou pour une condition inconnue
+   (heroLowHp n'est pas un pattern ennemi, jamais de valeur ici). */
 function showCounterSuccessPopup() {
   var container = document.getElementById("enemy-display");
   if (!container) return;
@@ -231,15 +290,86 @@ function showCounterSuccessPopup() {
 }
 
 var CombatEngine = {
+  /* v3.61.0 : valeur ESTIMÉE (dégâts évités/soin empêché) d'un contre
+     réussi, pour le rapport post-combat — approximation SIMPLE,
+     décidée avec Seb : basée sur les dégâts de riposte MOYENS de
+     l'ennemi affiché plutôt que de rejouer tout le pipeline réel de
+     dealDamage()/enemyStrike() (défense, critique, bouclier actif...),
+     qui donnerait un chiffre plus précis mais coûterait bien plus de
+     code pour un simple indicateur de tendance dans un rapport, pas
+     une valeur comptable exacte.
+       - chargeIncoming : dégâts qu'aurait infligés l'impact de la
+         Charge (même formule que enemyStrike(ENEMY_CHARGE_DMG_MULT),
+         SANS défense/critique — juste power * coef * multiplicateur
+         de pattern, cohérent avec "dégâts de riposte moyens").
+       - shieldIncoming : dégâts de riposte NORMALE moyens (le
+         Bouclier n'inflige rien lui-même, il RÉDUIT les dégâts que le
+         joueur inflige au boss pendant sa durée — la valeur retournée
+         ici représente donc plutôt "l'avantage retiré au boss",
+         exprimée en équivalent dégâts de riposte pour rester sur une
+         échelle lisible et cohérente avec les 2 autres cas).
+       - healIncoming : montant de PV qu'aurait récupéré le boss (15%
+         de ses PV actuels, même formule que resolveBossHeal()).
+     Retourne 0 si game.enemy est absent ou pour une condition
+     inconnue (heroLowHp n'est pas un pattern ennemi, jamais de valeur
+     ici). */
+  estimateCounterValue: function (conditionId) {
+    if (!game.enemy || !game.enemy.stats) return 0;
+
+    var power = Number(game.enemy.stats.power || 0);
+    if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
+      power *= AfflictionManager.getCombinedModifiers().enemyPowerMult;
+    }
+
+    if (conditionId === "chargeIncoming") {
+      return Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF * ENEMY_CHARGE_DMG_MULT));
+    }
+    if (conditionId === "shieldIncoming") {
+      return Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF));
+    }
+    if (conditionId === "healIncoming") {
+      return Math.max(1, Math.floor(Number(game.enemy.hp || 0) * BOSS_HEAL_PERCENT));
+    }
+    return 0;
+  },
+
+  /* v3.68.0 : ratio EFFECTIF de PV perdus par le boss Enragé, utilisé
+     par getEnragedDamageMultiplier() (data/enemy-archetypes.js) —
+     tient compte du gel/de la réduction posés par le contre skill3
+     (voir CLASS_SKILLS, data/class-skills.js, effet "enemyRageSuppression"
+     appliqué par ClassCombatManager.applyActionEffects()) :
+       - game.enemy.rageFreezeUntil (timestamp) : tant qu'actif, le
+         ratio RÉEL (PV perdus / PV max) n'est PAS utilisé — retourne
+         à la place game.enemy.rageFrozenPct (valeur figée au moment
+         de l'activation du contre, déjà réduite de
+         ENRAGED_SUPPRESSION_REDUCTION_PCT).
+       - Sinon (pas de gel actif, ou jamais posé) : ratio réel calculé
+         à la volée depuis game.enemy.hp/maxHp, comme avant tout contre.
+     Retourne 0 si aucun ennemi ou hp/maxHp invalides (aucun bonus). */
+  getEnragedEffectivePctHpLost: function () {
+    if (!game.enemy || !(game.enemy.maxHp > 0)) return 0;
+
+    if (game.enemy.rageFreezeUntil && Date.now() < game.enemy.rageFreezeUntil) {
+      return Number(game.enemy.rageFrozenPct || 0);
+    }
+
+    return 1 - (Number(game.enemy.hp || 0) / Number(game.enemy.maxHp || 1));
+  },
+
   /* Fait apparaître un nouvel ennemi (via WorldManager.generateEnemy)
      et réinitialise le minuteur de riposte. Appelée au démarrage et
-     après chaque kill. */
+     après chaque kill.
+     v3.62.0 : le reset conditionnel du rapport post-combat (v3.61.0,
+     au changement de boss) a été retiré ici — le rapport est
+     désormais CUMULATIF (voir en-tête de combat-report-system.js),
+     spawnEnemy() ne touche donc plus jamais à game.combatReport. */
   spawnEnemy: function () {
     if (!window.WorldManager || typeof WorldManager.generateEnemy !== "function") return;
 
     game.enemy = WorldManager.generateEnemy();
     game._enemyAttackTimer = 0;
     if (typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
+
     if (typeof renderEnemy === "function") renderEnemy();
     if (typeof renderHud === "function") renderHud();
   },
@@ -499,6 +629,15 @@ var CombatEngine = {
       addLog("⚠️ " + game.enemy.name + " prépare une charge !", "event");
       showToast("⚠️ Charge imminente !", 1200);
       if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+
+      // v3.61.0 : rapport post-combat (étape 4.1) — "télégraphe
+      // compatible vu", une fois par apparition, pour chaque slot du
+      // Grimoire actuellement configuré pour contrer cette condition.
+      if (window.CombatReportManager) {
+        getConfiguredCounterSlotsForCondition("chargeIncoming").forEach(function (s) {
+          CombatReportManager.logTelegraphSeen(s);
+        });
+      }
     }
   },
 
@@ -510,6 +649,19 @@ var CombatEngine = {
      répète tant que ce même ennemi reste affiché. */
   resolveEnemyCharge: function () {
     if (!game.enemy) return;
+
+    // v3.61.0 : rapport post-combat — ce point n'est atteint QUE si le
+    // télégraphe n'a PAS été contré entretemps (un contre réussi
+    // remet chargeTelegraphUntil à 0 directement, voir
+    // ClassCombatManager.applyGrimoireCounterIfApplicable(), donc ce
+    // tick de résolution normale ne se déclenche alors plus jamais
+    // pour CE télégraphe) — "expiré sans contre" est donc fiable ici.
+    if (window.CombatReportManager) {
+      getConfiguredCounterSlotsForCondition("chargeIncoming").forEach(function (s) {
+        CombatReportManager.logCounterExpired(s);
+      });
+    }
+
     game.enemy.chargeTelegraphUntil = 0;
     game.enemy._chargeNextAt = randFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
 
@@ -567,6 +719,14 @@ var CombatEngine = {
       addLog("🛡️ " + game.enemy.name + " invoque un bouclier !", "event");
       showToast("🛡️ Bouclier imminent !", 1200);
       if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+
+      // v3.61.0 : rapport post-combat — voir la note équivalente dans
+      // enemyChargeTick() plus haut, même principe.
+      if (window.CombatReportManager) {
+        getConfiguredCounterSlotsForCondition("shieldIncoming").forEach(function (s) {
+          CombatReportManager.logTelegraphSeen(s);
+        });
+      }
     }
   },
 
@@ -577,6 +737,16 @@ var CombatEngine = {
      prochains coups reçus, pas un coup porté). */
   resolveBossShield: function () {
     if (!game.enemy) return;
+
+    // v3.61.0 : rapport post-combat — voir la note équivalente dans
+    // resolveEnemyCharge() plus haut, même principe (jamais atteint
+    // si un contre a déjà remis shieldTelegraphUntil à 0 entretemps).
+    if (window.CombatReportManager) {
+      getConfiguredCounterSlotsForCondition("shieldIncoming").forEach(function (s) {
+        CombatReportManager.logCounterExpired(s);
+      });
+    }
+
     game.enemy.shieldTelegraphUntil = 0;
     game.enemy._shieldNextAt = randFloat(BOSS_SHIELD_MIN_INTERVAL_S, BOSS_SHIELD_MAX_INTERVAL_S);
     game.enemy.shieldActiveUntil = Date.now() + BOSS_SHIELD_DURATION_MS;
@@ -611,6 +781,14 @@ var CombatEngine = {
       addLog("💚 " + game.enemy.name + " se prépare à se soigner !", "event");
       showToast("💚 Soin imminent !", 1200);
       if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+
+      // v3.61.0 : rapport post-combat — voir la note équivalente dans
+      // enemyChargeTick() plus haut, même principe.
+      if (window.CombatReportManager) {
+        getConfiguredCounterSlotsForCondition("healIncoming").forEach(function (s) {
+          CombatReportManager.logTelegraphSeen(s);
+        });
+      }
     }
   },
 
@@ -620,6 +798,16 @@ var CombatEngine = {
      rafraîchit juste la barre de vie affichée. */
   resolveBossHeal: function () {
     if (!game.enemy) return;
+
+    // v3.61.0 : rapport post-combat — voir la note équivalente dans
+    // resolveEnemyCharge() plus haut, même principe (jamais atteint
+    // si un contre a déjà remis healTelegraphUntil à 0 entretemps).
+    if (window.CombatReportManager) {
+      getConfiguredCounterSlotsForCondition("healIncoming").forEach(function (s) {
+        CombatReportManager.logCounterExpired(s);
+      });
+    }
+
     game.enemy.healTelegraphUntil = 0;
     game.enemy._healNextAt = randFloat(BOSS_HEAL_MIN_INTERVAL_S, BOSS_HEAL_MAX_INTERVAL_S);
 
@@ -669,6 +857,20 @@ var CombatEngine = {
     var patternMult = (typeof dmgMult === "number" && dmgMult > 0) ? dmgMult : 1;
     if (patternMult !== 1) dmg = Math.max(1, Math.floor(dmg * patternMult));
 
+    // v3.68.0 : archétype Enragé (Phase 9) — multiplicateur croissant
+    // avec les PV perdus par le boss, voir CombatEngine.
+    // getEnragedEffectivePctHpLost() pour le détail du gel/réduction
+    // posés par skill3 (contre, voir data/class-skills.js). Appliqué
+    // APRÈS patternMult (Charge n'existe de toute façon jamais sur un
+    // boss, aucun chevauchement réel possible entre les 2 dans l'état
+    // actuel du jeu — mais l'ordre reste défini pour rester robuste à
+    // un futur changement).
+    if (game.enemy.archetype === "enraged" && typeof getEnragedDamageMultiplier === "function") {
+      var effectivePct = this.getEnragedEffectivePctHpLost();
+      var enragedMult = getEnragedDamageMultiplier(effectivePct);
+      if (enragedMult !== 1) dmg = Math.max(1, Math.floor(dmg * enragedMult));
+    }
+
     var isCrit = chance(Math.min(40, precision * ENEMY_PRECISION_CRIT_COEF));
     if (isCrit) dmg = Math.floor(dmg * ENEMY_CRIT_MULT);
 
@@ -703,6 +905,24 @@ var CombatEngine = {
     }
 
     game.heroHp = Math.max(0, Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1) - dmg);
+
+    // v3.69.0 : archétype Corrupteur (Phase 9) — chaque riposte REÇUE
+    // (n'importe laquelle : normale, Charge...) ajoute 1 stack de
+    // corruption, plafonné à CORRUPTED_MAX_STACKS. Stocké sur
+    // game.enemy (pas game.* directement) comme vulnerableUntil/dot :
+    // disparaît naturellement si l'ennemi meurt/change (spawnEnemy()),
+    // aucun nettoyage manuel requis. Lu par getDamageAffinity()-like
+    // usage dans dealDamage() ci-dessous (voir getCorruptedDamageMultiplier(),
+    // data/enemy-archetypes.js) — appliqué aux dégâts DU HÉROS, pas de
+    // l'ennemi, donc ce n'est PAS ici mais dans dealDamage() que le
+    // multiplicateur est réellement utilisé.
+    if (game.enemy.archetype === "corrupted") {
+      game.enemy.corruptedStacks = Math.min(
+        (typeof CORRUPTED_MAX_STACKS === "number" ? CORRUPTED_MAX_STACKS : 5),
+        Number(game.enemy.corruptedStacks || 0) + 1
+      );
+      if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+    }
 
     showDamageTakenPopup(dmg);
 
@@ -755,6 +975,17 @@ var CombatEngine = {
     // sans s'être soigné.
     game.heroHp = 0;
 
+    // v3.62.0 : rapport post-combat — affichage auto après une
+    // défaite, décision inchangée depuis v3.61.0 ("juste avant de se
+    // retrouver au camp"). Capturé ICI (avant WorldManager.resetToCycleStart()/
+    // generateEnemy() plus bas) pour que le rapport affiché reflète
+    // bien l'état au moment de la défaite. Le rapport est désormais
+    // CUMULATIF (voir en-tête de combat-report-system.js) : PLUS DE
+    // RESET automatique ici après l'ouverture (contrairement à
+    // v3.61.0) — seul un reset EXPLICITE du joueur (bouton
+    // "Réinitialiser" dans la modale) vide le rapport.
+    if (typeof openCombatReport === "function") openCombatReport("defeat", game.enemy ? game.enemy.name : null);
+
     // v3.41 : une défaite renvoie aussi au tout début du cycle (monde
     // 1, 1er ennemi) — même position que switch/création de héros,
     // sans incrémenter cycleCount (ce n'est pas un cycle bouclé).
@@ -801,6 +1032,18 @@ var CombatEngine = {
 
     dmg = Math.max(0, Number(dmg || 0));
     if (!ignoreAffinity) dmg *= getDamageAffinity().mult;
+
+    // v3.69.0 : archétype Corrupteur (Phase 9) — réduit les dégâts
+    // INFLIGÉS PAR LE HÉROS selon le nombre de stacks accumulés (voir
+    // CombatEngine.enemyStrike(), qui les ajoute à chaque riposte
+    // reçue). Appliqué ICI (avant vulnérabilité/bouclier/Exécution
+    // parfaite ci-dessous) car c'est un affaiblissement DE LA SOURCE du
+    // coup, pas une résistance ponctuelle de l'ennemi — cohérent avec
+    // le fait qu'il touche TOUS les dégâts du héros (tap, auto-DPS,
+    // skills de classe), pas seulement ce coup précis.
+    if (game.enemy.archetype === "corrupted" && typeof getCorruptedDamageMultiplier === "function") {
+      dmg *= getCorruptedDamageMultiplier(game.enemy.corruptedStacks || 0);
+    }
 
     // v3.34.1 : vulnérabilité posée par Brise-garde (Chevalier, voir
     // data/class-skills.js) — stockée sur game.enemy lui-même (pas
@@ -937,6 +1180,14 @@ var CombatEngine = {
 
     if (enemy.isBoss) {
       vibrate([50, 30, 50, 30, 100]);
+
+      // v3.62.0 : l'auto-popup du rapport post-combat après un boss
+      // vaincu (v3.61.0) a été retirée — décision affinée avec Seb :
+      // le rapport est désormais CUMULATIF (voir en-tête de
+      // combat-report-system.js), l'auto-popup à chaque boss n'a plus
+      // de sens. Le rapport reste accessible via le Grimoire (bouton
+      // dédié, voir ui/grimoire-view.js) et s'affiche encore
+      // automatiquement à la mort (voir onHeroDefeated() plus bas).
 
       var bestiaryBonus = typeof getBestiaryBonus === "function" ? getBestiaryBonus(enemy.id) : { lootBonus: 0 };
       var lootChance = 50 + (getAetherBonuses().lootBonus || 0) + (bestiaryBonus.lootBonus || 0);
@@ -1146,3 +1397,4 @@ window.showCounterSuccessPopup = showCounterSuccessPopup;
 window.getDamageAffinity = getDamageAffinity;
 window.getPlayerDamageType = getPlayerDamageType;
 window.getEnemyWillCritPenalty = getEnemyWillCritPenalty;
+window.getConfiguredCounterSlotsForCondition = getConfiguredCounterSlotsForCondition;

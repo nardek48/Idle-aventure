@@ -102,6 +102,19 @@ fonction elle-même ne connaît PAS la priorité par défaut.
    une situation vraiment critique. */
 var HERO_LOW_HP_THRESHOLD_PCT = 0.40;
 
+/* v3.67.0 : fenêtre d'anticipation de la carte "L'ennemi va bientôt
+   attaquer" (enemyAttackIncoming, voir data/grimoire-conditions.js) —
+   0.5s fixe, décision explicite de Seb ("très serré, cadencé comme
+   une vraie parade"). Contrairement aux autres cartes, ceci ne
+   protège PAS un budget de ressource (comme GRIMOIRE_APPROACH_WINDOW_*
+   pour la réserve, voir plus bas dans ce fichier) — c'est directement
+   le seuil de evaluateGrimoireCondition() ci-dessous : la condition
+   devient vraie quand il reste ≤ 0.5s avant le prochain coup de
+   riposte normale calculé (voir ClassCombatManager.
+   getSecondsUntilPatternTrigger(), qui lit game._enemyAttackTimer et
+   l'intervalle réel de CombatEngine.enemyAttackTick()). */
+var ENEMY_ATTACK_ANTICIPATION_THRESHOLD_S = 0.5;
+
 /* evaluateGrimoireCondition(conditionId, combatContext)
    Vérifie si une carte de condition (voir data/grimoire-conditions.js)
    est vraie MAINTENANT, à partir de combatContext — jamais de lecture
@@ -114,7 +127,26 @@ var HERO_LOW_HP_THRESHOLD_PCT = 0.40;
        chargeIncoming: bool,          // game.enemy.chargeTelegraphUntil actif
        shieldIncoming: bool,          // game.enemy.shieldTelegraphUntil actif
        healIncoming: bool,            // game.enemy.healTelegraphUntil actif
-       heroHpPercent: number|null }   // game.heroHp / game.heroMaxHp, 0-1
+       heroHpPercent: number|null,    // game.heroHp / game.heroMaxHp, 0-1
+       secondsUntilEnemyAttack: number|null, // v3.67.0 — voir ci-dessous
+       enemyArchetype: string|null }  // v3.70.0 — game.enemy.archetype tel quel
+
+   v3.67.0 : secondsUntilEnemyAttack — temps restant (en secondes)
+   avant la PROCHAINE riposte normale, ou null si non calculable
+   (aucun ennemi affiché, minuteur pas encore démarré). Contrairement
+   à chargeIncoming/shieldIncoming/healIncoming (déjà des booléens
+   résolus), c'est ICI, dans evaluateGrimoireCondition(), que le
+   nombre est comparé au seuil — la riposte normale n'a jamais de
+   *TelegraphUntil booléen à lire (voir en-tête de data/grimoire-
+   conditions.js pour la raison exacte : pas de vrai télégraphe visible
+   pour ne pas changer le rythme des combats simples).
+
+   v3.70.0 : enemyArchetype — transmis TEL QUEL (pas de comparaison de
+   seuil ici, contrairement aux autres cas) : enemyEnraged/
+   enemyCorrupted sont vraies dès que l'archétype correspond,
+   PERMANENTES tant que l'ennemi porte cet archétype (pas un événement
+   ponctuel à anticiper, voir en-tête de data/grimoire-conditions.js —
+   option A retenue par Seb, pas de seuil de stacks pour l'instant).
 
    Un conditionId inconnu retourne false (jamais vrai par défaut — une
    règle mal configurée ne doit jamais agir "par erreur"). Ne mute
@@ -131,10 +163,119 @@ function evaluateGrimoireCondition(conditionId, combatContext) {
       return !!ctx.healIncoming;
     case "heroLowHp":
       return typeof ctx.heroHpPercent === "number" && ctx.heroHpPercent <= HERO_LOW_HP_THRESHOLD_PCT;
+    case "enemyAttackIncoming":
+      return typeof ctx.secondsUntilEnemyAttack === "number" && ctx.secondsUntilEnemyAttack <= ENEMY_ATTACK_ANTICIPATION_THRESHOLD_S;
+    case "enemyEnraged":
+      return ctx.enemyArchetype === "enraged";
+    case "enemyCorrupted":
+      return ctx.enemyArchetype === "corrupted";
     default:
       return false;
   }
 }
+
+window.HERO_LOW_HP_THRESHOLD_PCT = HERO_LOW_HP_THRESHOLD_PCT;
+window.ENEMY_ATTACK_ANTICIPATION_THRESHOLD_S = ENEMY_ATTACK_ANTICIPATION_THRESHOLD_S;
+window.evaluateGrimoireCondition = evaluateGrimoireCondition;
+
+/* ============================================================
+v3.66.0 : diagnostic de statut d'une règle du Grimoire — Phase 6
+(Mode Expert) de la feuille de route combat. Extension du même
+fichier, même contrat de pureté (aucun accès à game.* / DOM, tout est
+fourni en paramètre par l'appelant — voir ClassCombatManager.
+getGrimoireCombatContext() pour combatContext et
+ClassCombatManager.getSecondsUntilPatternTrigger() pour
+secondsUntilTrigger, tous deux DÉJÀ existants et déjà utilisés
+ailleurs, aucune nouvelle lecture de game.* introduite ici).
+
+Réutilise EXCLUSIVEMENT les briques pures déjà en place
+(canAfford()/isCooldownReady()/checkActionConditions(), systems/
+combat-resource-system.js et combat-cooldown-system.js) pour ne
+JAMAIS dupliquer la logique réelle de canUseAction() — un statut
+affiché doit toujours refléter EXACTEMENT ce que fait le moteur, pas
+une approximation recalculée séparément.
+============================================================ */
+
+/* explainGrimoireRuleStatus(rule, kit, resourceState, cooldownState, combatContext, secondsUntilTrigger)
+   Retourne un diagnostic structuré pour UNE règle { conditionId,
+   actionSlot } :
+     {
+       code: "no_condition" | "no_action" | "unknown_action"
+           | "condition_false" | "resource_insufficient"
+           | "on_cooldown" | "action_condition_unmet" | "ready",
+       conditionMet: bool,
+       resourceOk: bool,
+       cooldownOk: bool,
+       actionConditionsOk: bool,
+       resourceCurrent: number|null,   // ressource ACTUELLE (resourceState.current), null si non applicable
+       resourceCost: number|null,      // coût réel de l'action, null si non applicable
+       cooldownRemainingMs: number|null,
+       secondsUntilTrigger: number|null  // transmis tel quel, voir ci-dessous
+     }
+   "code" est TOUJOURS la MEILLEURE explication disponible pour le
+   joueur, dans cet ordre de priorité (la 1ère raison qui bloque) :
+     1) règle incomplète (pas de condition ou pas d'action assignée) ;
+     2) action assignée introuvable dans le kit (ex. après un
+        changement de version) ;
+     3) condition actuellement FAUSSE — c'est la raison la plus
+        fréquente en jeu normal (pas de télégraphe/PV bas actuellement) ;
+     4) condition VRAIE mais ressource insuffisante ;
+     5) condition VRAIE, ressource suffisante, mais en cooldown ;
+     6) condition VRAIE, ressource/cooldown ok, mais une condition
+        déclarative propre à l'action (ex. Exécution, PV ennemi ≤ 35%)
+        n'est pas remplie ;
+     7) "ready" — tout est réuni, cette règle SE DÉCLENCHERAIT
+        maintenant si elle est atteinte dans l'ordre de priorité (ne
+        garantit pas qu'elle soit RÉELLEMENT jouée : une règle plus
+        prioritaire peut la devancer, voir chooseGrimoireAction()).
+   secondsUntilTrigger : transmis par l'appelant (résultat de
+   ClassCombatManager.getSecondsUntilPatternTrigger(rule.conditionId)),
+   jamais recalculé ici (pas de Date.now() dans ce fichier). Toujours
+   inclus dans le retour tel quel, y compris quand code !== "condition_false"
+   (utile même une fois la condition remplie, pour savoir depuis
+   combien de temps elle l'est — reste simplement souvent null une
+   fois le télégraphe déjà actif, voir sa note d'origine).
+   Ne mute rien, ne lit aucun état externe. */
+function explainGrimoireRuleStatus(rule, kit, resourceState, cooldownState, combatContext, secondsUntilTrigger) {
+  var base = {
+    code: "no_condition",
+    conditionMet: false,
+    resourceOk: false,
+    cooldownOk: false,
+    actionConditionsOk: false,
+    resourceCurrent: null,
+    resourceCost: null,
+    cooldownRemainingMs: null,
+    secondsUntilTrigger: (typeof secondsUntilTrigger === "number") ? secondsUntilTrigger : null
+  };
+
+  if (!rule || typeof rule.conditionId !== "string") return base;
+  if (typeof rule.actionSlot !== "string") { base.code = "no_action"; return base; }
+
+  var action = (kit && kit.actions) ? kit.actions[rule.actionSlot] : null;
+  if (!action) { base.code = "unknown_action"; return base; }
+
+  base.conditionMet = evaluateGrimoireCondition(rule.conditionId, combatContext);
+  base.resourceCost = (typeof action.resourceCost === "number") ? action.resourceCost : 0;
+  base.resourceCurrent = (resourceState && typeof resourceState.current === "number") ? resourceState.current : null;
+  base.resourceOk = (typeof canAfford === "function") ? canAfford(resourceState, action.resourceCost) : true;
+
+  var remaining = (cooldownState && typeof cooldownState[action.id] === "number") ? cooldownState[action.id] : 0;
+  base.cooldownRemainingMs = remaining > 0 ? remaining : 0;
+  base.cooldownOk = (typeof isCooldownReady === "function") ? isCooldownReady(cooldownState, action.id) : (remaining <= 0);
+
+  base.actionConditionsOk = (typeof checkActionConditions === "function") ? checkActionConditions(action.conditions, combatContext) : true;
+
+  if (!base.conditionMet) { base.code = "condition_false"; return base; }
+  if (!base.resourceOk) { base.code = "resource_insufficient"; return base; }
+  if (!base.cooldownOk) { base.code = "on_cooldown"; return base; }
+  if (!base.actionConditionsOk) { base.code = "action_condition_unmet"; return base; }
+
+  base.code = "ready";
+  return base;
+}
+
+window.explainGrimoireRuleStatus = explainGrimoireRuleStatus;
 
 /* chooseGrimoireAction(rules, kit, resourceState, cooldownState, combatContext)
    Parcourt rules (tableau de { conditionId, actionSlot }, voir
@@ -203,8 +344,6 @@ function chooseGrimoireAction(rules, kit, resourceState, cooldownState, combatCo
   return null;
 }
 
-window.HERO_LOW_HP_THRESHOLD_PCT = HERO_LOW_HP_THRESHOLD_PCT;
-window.evaluateGrimoireCondition = evaluateGrimoireCondition;
 window.chooseGrimoireAction = chooseGrimoireAction;
 
 /* v3.50.0 : slots assignables dans une règle du Grimoire — "basic"
@@ -314,6 +453,77 @@ window.getGrimoireSlotCount = getGrimoireSlotCount;
 window.isGrimoireWorldUnlockMilestone = isGrimoireWorldUnlockMilestone;
 
 /* ============================================================
+v3.63.0 : filtre de COMPATIBILITÉ ennemi/condition — étape 4.2 de la
+feuille de route combat, extension du même fichier, même contrat de
+pureté (aucun accès à game.*, l'ennemi est fourni en paramètre par
+l'appelant, jamais relu ici). Problème signalé par Seb : la réserve de
+ressource (v3.54.0+) et l'exclusion du repli (v3.58.0-v3.59.0) bridaient
+le combat automatique dès qu'une règle de contre était configurée dans
+le Grimoire, MÊME quand l'ennemi affiché ne peut structurellement
+jamais déclencher le pattern visé — ex. "Garde contre Charge" bridait
+le repli face à un boss (qui ne fait jamais de Charge, réservée aux
+ennemis normaux), et "Brise-garde contre Bouclier" bridait le repli
+face à un ennemi normal (Bouclier/Soin réservés aux boss). Le joueur
+perdait du DPS pour un contre qui n'avait de toute façon aucune chance
+de survenir sur CET ennemi précis.
+
+isConditionPossibleForEnemy() encode cette règle de compatibilité —
+source unique de vérité, réutilisée par getPrioritaryCounterRule()/
+getAllCounterActionSlots() ci-dessous (réserve + exclusion) pour
+qu'elles ignorent silencieusement une règle dont la condition est
+IMPOSSIBLE pour l'ennemi courant. N'affecte QUE la phase de
+réservation/exclusion ANTICIPÉE du repli : le comportement pendant un
+télégraphe RÉELLEMENT actif (chooseGrimoireAction(), le contre
+lui-même) ne change pas — il ne peut de toute façon déjà jamais
+matcher une condition impossible pour l'ennemi affiché (chargeIncoming/
+shieldIncoming/healIncoming ne deviennent vrais que si le champ
+*TelegraphUntil correspondant est posé sur CET ennemi précis, voir
+CombatEngine.enemyChargeTick()/bossShieldTick()/bossHealTick()).
+
+heroLowHp n'est liée à aucun pattern ennemi (condition côté héros) :
+toujours considérée possible, quel que soit l'ennemi affiché.
+============================================================ */
+
+/* isConditionPossibleForEnemy(conditionId, enemy)
+   Reflète EXACTEMENT les gardes déjà en place dans combat-engine.js :
+     - chargeIncoming : enemy existe ET !enemy.isBoss (voir
+       CombatEngine.enemyChargeTick(), garde "|| game.enemy.isBoss").
+     - shieldIncoming / healIncoming : enemy existe ET enemy.isBoss
+       (voir CombatEngine.bossPatternTick(), garde "!game.enemy.isBoss").
+     - enemyAttackIncoming (v3.67.0) : enemy existe — la riposte
+       normale n'a AUCUNE restriction boss/normal (voir CombatEngine.
+       enemyAttackTick(), aucune garde sur enemy.isBoss), possible dès
+       qu'un ennemi est affiché, quel qu'il soit.
+     - enemyEnraged / enemyCorrupted (v3.70.0) : enemy existe ET
+       enemy.archetype correspond EXACTEMENT — contrairement aux
+       patterns ci-dessus (possibles/impossibles selon isBoss, un
+       critère STABLE pour toute la durée du combat), l'archétype est
+       tiré une seule fois à la génération de CET ennemi précis (voir
+       WorldManager.generateEnemy()) : un ennemi normal ou un boss non
+       Enragé ne DEVIENDRA jamais Enragé en cours de combat, la réserve
+       n'a donc jamais lieu d'être face à lui.
+     - heroLowHp : toujours true (pas un pattern ennemi).
+     - conditionId inconnu : false (jamais possible par défaut, même
+       principe de prudence que evaluateGrimoireCondition() plus haut).
+   enemy absent/null : false pour toute condition liée à un pattern
+   ennemi (rien n'est "possible" sans ennemi affiché), true pour
+   heroLowHp (indépendante de l'ennemi). Ne mute rien. */
+function isConditionPossibleForEnemy(conditionId, enemy) {
+  if (conditionId === "heroLowHp") return true;
+  if (!enemy) return false;
+
+  if (conditionId === "chargeIncoming") return !enemy.isBoss;
+  if (conditionId === "shieldIncoming" || conditionId === "healIncoming") return !!enemy.isBoss;
+  if (conditionId === "enemyAttackIncoming") return true;
+  if (conditionId === "enemyEnraged") return enemy.archetype === "enraged";
+  if (conditionId === "enemyCorrupted") return enemy.archetype === "corrupted";
+
+  return false;
+}
+
+window.isConditionPossibleForEnemy = isConditionPossibleForEnemy;
+
+/* ============================================================
 v3.54.0 : réserve de ressource pour le repli par défaut — extension du
 même fichier, même contrat de pureté. Problème signalé par Seb : le
 repli par défaut (chooseAutoAction(), priorité fixe) dépense la
@@ -329,7 +539,7 @@ du Grimoire (contre ou non) continuent de se déclencher normalement
 sans se soucier de cette réserve.
 ============================================================ */
 
-/* getPrioritaryCounterRule(rules, kit)
+/* getPrioritaryCounterRule(rules, kit, enemy)
    Parcourt rules (déjà tronquées aux slots débloqués par l'appelant)
    DANS L'ORDRE et retourne la PREMIÈRE règle { conditionId, actionSlot }
    dont l'action assignée a un champ counters non vide (voir data/
@@ -338,8 +548,16 @@ sans se soucier de cette réserve.
    configurée n'est un contre. Ne mute rien. Extraite de
    getGrimoireCounterReserveAmount() (v3.54.0) pour être réutilisée
    par le calcul de prédiction (v3.55.0, voir plus bas) sans dupliquer
-   la boucle de recherche. */
-function getPrioritaryCounterRule(rules, kit) {
+   la boucle de recherche.
+   v3.63.0 : paramètre enemy (optionnel) — si fourni, une règle dont
+   la condition est IMPOSSIBLE pour cet ennemi (voir
+   isConditionPossibleForEnemy() ci-dessus) est SAUTÉE, comme si elle
+   n'existait pas, exactement comme une condition non déclarée
+   l'aurait été avant. enemy omis (undefined) : comportement
+   STRICTEMENT identique à avant v3.63.0 (aucun filtrage) — la
+   compatibilité ascendante est préservée pour tout appelant qui ne
+   fournirait pas ce paramètre (ex. code de test existant). */
+function getPrioritaryCounterRule(rules, kit, enemy) {
   if (!rules || !Array.isArray(rules) || !kit || !kit.actions) return null;
 
   for (var i = 0; i < rules.length; i++) {
@@ -349,12 +567,14 @@ function getPrioritaryCounterRule(rules, kit) {
     var action = kit.actions[rule.actionSlot];
     if (!action || !Array.isArray(action.counters) || !action.counters.length) continue;
 
+    if (enemy !== undefined && !isConditionPossibleForEnemy(rule.conditionId, enemy)) continue;
+
     return rule;
   }
   return null;
 }
 
-/* getGrimoireCounterReserveAmount(rules, kit)
+/* getGrimoireCounterReserveAmount(rules, kit, enemy)
    Parcourt rules (déjà tronquées aux slots débloqués par l'appelant,
    voir ClassCombatManager.tickAutoSkills()) DANS L'ORDRE et retourne
    le resourceCost de l'action assignée à la PREMIÈRE règle dont
@@ -366,9 +586,11 @@ function getPrioritaryCounterRule(rules, kit) {
    à avant v3.54.0). Ne mute rien, ne lit aucun état externe.
    v3.55.0 : réécrite pour réutiliser getPrioritaryCounterRule()
    ci-dessus, comportement externe strictement inchangé (mêmes entrées
-   -> même sortie qu'avant, vérifié par test de non-régression). */
-function getGrimoireCounterReserveAmount(rules, kit) {
-  var rule = getPrioritaryCounterRule(rules, kit);
+   -> même sortie qu'avant, vérifié par test de non-régression).
+   v3.63.0 : paramètre enemy transmis tel quel à getPrioritaryCounterRule()
+   ci-dessus — voir sa note pour le détail du filtrage. */
+function getGrimoireCounterReserveAmount(rules, kit, enemy) {
+  var rule = getPrioritaryCounterRule(rules, kit, enemy);
   if (!rule) return 0;
 
   var action = kit.actions[rule.actionSlot];
@@ -378,10 +600,10 @@ function getGrimoireCounterReserveAmount(rules, kit) {
 window.getPrioritaryCounterRule = getPrioritaryCounterRule;
 window.getGrimoireCounterReserveAmount = getGrimoireCounterReserveAmount;
 
-/* v3.59.0 : getAllCounterActionSlots(rules, kit) — retourne TOUS les
-   actionSlot (dédoublonnés) des règles configurées dont l'action a un
-   champ counters non vide, PAS SEULEMENT la première (contrairement à
-   getPrioritaryCounterRule() ci-dessus, toujours utilisée telle
+/* v3.59.0 : getAllCounterActionSlots(rules, kit, enemy) — retourne TOUS
+   les actionSlot (dédoublonnés) des règles configurées dont l'action a
+   un champ counters non vide, PAS SEULEMENT la première (contrairement
+   à getPrioritaryCounterRule() ci-dessus, toujours utilisée telle
    quelle pour la réserve de ressource — décision inchangée depuis
    v3.54.0, seule la règle la plus prioritaire mérite une réserve de
    ressource). Corrige un bug distinct signalé par Seb : le repli par
@@ -392,8 +614,12 @@ window.getGrimoireCounterReserveAmount = getGrimoireCounterReserveAmount;
    leur cooldown était prêt (souvent le cas pour une action "defense"
    gratuite et à cooldown court), les rendant indisponibles au moment
    où le Grimoire en aurait besoin. Retourne [] si rules/kit est
-   absent/invalide. Ne mute rien. */
-function getAllCounterActionSlots(rules, kit) {
+   absent/invalide. Ne mute rien.
+   v3.63.0 : paramètre enemy (optionnel) — même filtrage que
+   getPrioritaryCounterRule() (voir sa note), une règle dont la
+   condition est impossible pour CET ennemi n'exclut plus son action
+   du repli. enemy omis : comportement inchangé (aucun filtrage). */
+function getAllCounterActionSlots(rules, kit, enemy) {
   if (!rules || !Array.isArray(rules) || !kit || !kit.actions) return [];
 
   var seen = {};
@@ -404,6 +630,8 @@ function getAllCounterActionSlots(rules, kit) {
 
     var action = kit.actions[rule.actionSlot];
     if (!action || !Array.isArray(action.counters) || !action.counters.length) continue;
+
+    if (enemy !== undefined && !isConditionPossibleForEnemy(rule.conditionId, enemy)) continue;
 
     if (!seen[rule.actionSlot]) {
       seen[rule.actionSlot] = true;

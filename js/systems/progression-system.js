@@ -123,11 +123,25 @@ var WorldManager = {
       if (bossStats) {
         bossStats.power = Math.floor(bossStats.power * Math.pow(bossScale, ENEMY_POWER_SCALE_EXP));
       }
+
+      // v3.68.0 / v3.69.0 : archétype (Phase 9, "enraged"/"corrupted"
+      // pour ces 2 premières livraisons) — décidé ICI, une seule fois
+      // à la génération, PAS recalculé à chaque frame. 2 tirages
+      // indépendants (spawnRoll/archetypeRoll) transmis à
+      // decideEnemyArchetype() (data/enemy-archetypes.js, reste pur,
+      // ne tire jamais les nombres lui-même) — voir sa note pour le
+      // détail du tirage à 2 niveaux (25% d'avoir un archétype DU
+      // TOUT, puis 50/50 lequel).
+      var archetype = (typeof decideEnemyArchetype === "function")
+        ? decideEnemyArchetype(this.worldIndex, true, randInt(1, 100), randInt(1, 100))
+        : null;
+
       return {
         id: enemyId,
         name: bossData.name,
         asset: bossData.asset,
         isBoss: true,
+        archetype: archetype, // v3.68.0/v3.69.0 — null, "enraged" ou "corrupted"
         hp: bossHp,
         maxHp: bossHp,
         goldReward: Math.floor(40 * bossScale),

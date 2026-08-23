@@ -123,6 +123,15 @@ function createInitialGameState() {
 
     autoSkillsEnabled: true,    // v3.47.0 : combat auto de base (skill1/2/3/defense + attaque de base), réglable dans Paramètres
 
+    // v3.66.0 : Mode Expert du Grimoire (Phase 6) — affiche les seuils
+    // chiffrés réels (ressource, cooldown, temps avant télégraphe) et
+    // le diagnostic détaillé de non-déclenchement, en plus de l'indice
+    // simple toujours visible. Réglable directement dans l'écran
+    // Grimoire (voir toggleGrimoireExpertMode(), ui/grimoire-view.js)
+    // — n'affecte JAMAIS le comportement du combat automatique, purement
+    // un réglage d'affichage.
+    expertModeEnabled: false,
+
     // v3.50.0 : Grimoire de tactiques (étape 4a) — 2 slots fixes,
     // chacun { conditionId, actionSlot }. null/null = slot vide (pas
     // encore configuré). Complété/validé à la demande par
@@ -131,6 +140,13 @@ function createInitialGameState() {
     // un nombre d'entrées codé en dur — évite une 3e source de vérité
     // sur GRIMOIRE_SLOT_COUNT.
     grimoireRules: [],
+
+    // v3.65.0 : PRESETS nommés du Grimoire (Phase 5) — collection de
+    // profils sauvegardés { id, name, icon, rules, lastModified },
+    // distincte de grimoireRules ci-dessus (qui reste l'unique
+    // config ACTIVE). Voir ensureGrimoirePresets()/saveGrimoirePreset()/
+    // loadGrimoirePreset() dans ui/grimoire-view.js.
+    grimoirePresets: [],
 
     // v3.34.0 : lastSpecialUse/specialBuffExpires/specialBuffPct/
     // lastDefenseUse/defenseBuffExpires (ancienne attaque spéciale par
@@ -319,6 +335,7 @@ function ensureGameStateDefaults() {
     game.autoSellRarityThreshold = "common";
   }
   if (typeof game.autoSkillsEnabled !== "boolean") game.autoSkillsEnabled = true;
+  if (typeof game.expertModeEnabled !== "boolean") game.expertModeEnabled = false;
 
   // v3.50.0 : Grimoire — validé via sanitizeGrimoireRules() si
   // disponible (filtre conditionId/actionSlot invalides, ex. après un
@@ -331,6 +348,28 @@ function ensureGameStateDefaults() {
     game.grimoireRules = [];
   } else if (typeof sanitizeGrimoireRules === "function") {
     game.grimoireRules = sanitizeGrimoireRules(game.grimoireRules, null);
+  }
+
+  // v3.65.0 : presets du Grimoire — même esprit de validation que
+  // grimoireRules ci-dessus, mais par ENTRÉE de la collection (chaque
+  // preset a son propre tableau "rules" interne, validé avec la même
+  // sanitizeGrimoireRules()). Une entrée malformée (pas un objet, nom
+  // manquant, rules pas un tableau) est silencieusement retirée de la
+  // collection plutôt que de faire planter l'écran Grimoire.
+  if (!Array.isArray(game.grimoirePresets)) {
+    game.grimoirePresets = [];
+  } else {
+    game.grimoirePresets = game.grimoirePresets.filter(function (p) {
+      return p && typeof p === "object" && typeof p.id === "string" && typeof p.name === "string" && Array.isArray(p.rules);
+    }).map(function (p) {
+      return {
+        id: p.id,
+        name: p.name,
+        icon: typeof p.icon === "string" ? p.icon : "📖",
+        rules: (typeof sanitizeGrimoireRules === "function") ? sanitizeGrimoireRules(p.rules, null) : p.rules,
+        lastModified: typeof p.lastModified === "number" ? p.lastModified : 0
+      };
+    });
   }
 
   if (typeof game.lastSpecialUse !== "number") game.lastSpecialUse = 0;

@@ -144,7 +144,7 @@
 }
 
 #confirm-modal {
-  z-index: 250;
+  z-index: 3250;
 }
 
 #offline-modal.show,

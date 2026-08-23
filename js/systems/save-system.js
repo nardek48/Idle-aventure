@@ -439,11 +439,17 @@ function buildSaveData() {
     // attaque de base), voir ClassCombatManager.tickAutoSkills() —
     // actif par défaut, réglable dans Paramètres.
     autoSkillsEnabled: game.autoSkillsEnabled !== false,
+    // v3.66.0 : Mode Expert du Grimoire (Phase 6) — préférence
+    // d'affichage pure, réglable directement dans l'écran Grimoire.
+    expertModeEnabled: !!game.expertModeEnabled,
     // v3.50.0 : Grimoire de tactiques (étape 4a) — tableau de règles
     // { conditionId, actionSlot }, voir data/grimoire-conditions.js et
     // ClassCombatManager.tickAutoSkills(). Array.isArray() garde
     // contre un état corrompu plutôt que de planter la sauvegarde.
     grimoireRules: Array.isArray(game.grimoireRules) ? game.grimoireRules : [],
+    // v3.65.0 : presets nommés du Grimoire (Phase 5) — voir
+    // ui/grimoire-view.js (ensureGrimoirePresets()/saveGrimoirePreset()).
+    grimoirePresets: Array.isArray(game.grimoirePresets) ? game.grimoirePresets : [],
     // v3.34.0 : lastSpecialUse/specialBuffExpires/specialBuffPct/
     // lastDefenseUse/defenseBuffExpires retirés (ancien système), voir
     // classResource/classCooldowns/classActiveDefense ci-dessous.
@@ -618,6 +624,9 @@ function restoreBaseState(d) {
   // v3.47.0 : absent d'une ancienne sauvegarde = true (comportement
   // par défaut souhaité), pas false — seul un false explicite désactive.
   game.autoSkillsEnabled = d.autoSkillsEnabled !== false;
+  // v3.66.0 : Mode Expert — absent d'une ancienne sauvegarde = false
+  // (off par défaut, cohérent avec l'état initial createInitialGameState()).
+  game.expertModeEnabled = !!d.expertModeEnabled;
   // v3.50.0 : Grimoire — absent d'une ancienne sauvegarde (avant
   // v3.50.0) = tableau vide (aucune règle configurée, comportement
   // identique à avant cette version). sanitizeGrimoireRules() filtre
@@ -632,6 +641,24 @@ function restoreBaseState(d) {
   game.grimoireRules = (typeof sanitizeGrimoireRules === "function")
     ? sanitizeGrimoireRules(d.grimoireRules, null)
     : (Array.isArray(d.grimoireRules) ? d.grimoireRules : []);
+  // v3.65.0 : presets nommés du Grimoire (Phase 5) — même filtre de
+  // validation par entrée que restoreBaseState() (core/state.js),
+  // dupliqué ici volontairement : loadGame() ne passe pas forcément
+  // par restoreBaseState() selon le chemin de chargement (voir plus
+  // haut dans ce fichier pour le contexte des 2 chemins existants).
+  game.grimoirePresets = Array.isArray(d.grimoirePresets)
+    ? d.grimoirePresets.filter(function (p) {
+        return p && typeof p === "object" && typeof p.id === "string" && typeof p.name === "string" && Array.isArray(p.rules);
+      }).map(function (p) {
+        return {
+          id: p.id,
+          name: p.name,
+          icon: typeof p.icon === "string" ? p.icon : "📖",
+          rules: (typeof sanitizeGrimoireRules === "function") ? sanitizeGrimoireRules(p.rules, null) : p.rules,
+          lastModified: typeof p.lastModified === "number" ? p.lastModified : 0
+        };
+      })
+    : [];
   // v3.34.0 : classResource absent (sauvegarde d'avant ce système, ou
   // valeur invalide) -> null, régénéré automatiquement au premier
   // besoin par ClassCombatManager.ensureForCurrentClass() (voir
@@ -1060,11 +1087,19 @@ function fullResetState() {
   // dans ce fichier) : contrairement à autoSellEquipment/classResource,
   // rien ne justifie de forcer le joueur à la réactiver à chaque run.
   game.autoSkillsEnabled = true;
+  // v3.66.0 : Mode Expert — même principe que autoSkillsEnabled
+  // juste au-dessus (préférence d'affichage, préservée à l'ascension),
+  // remise à sa valeur par défaut (off) seulement sur un reset complet.
+  game.expertModeEnabled = false;
   // v3.50.0 : même principe que autoSkillsEnabled juste au-dessus —
   // configuration stratégique du joueur (pas un état de run), donc
   // volontairement PRÉSERVÉE à l'ascension (hardResetState, plus haut
   // dans ce fichier), remise à vide seulement sur un reset complet ici.
   game.grimoireRules = [];
+  // v3.65.0 : même principe — les presets sont eux aussi une
+  // configuration stratégique du joueur, préservée à l'ascension (rien
+  // ne les touche dans hardResetState), remise à vide seulement ici.
+  game.grimoirePresets = [];
   game.hasSeenOnboarding = false;
 
   WorldManager.worldIndex = 0;

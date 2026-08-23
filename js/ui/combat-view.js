@@ -225,6 +225,41 @@ function buildEnemyStatusBarHTML() {
 
   var h = "";
 
+  // v3.68.0 : archétype Enragé (Phase 9) — badge PERMANENT tant que
+  // l'ennemi est affiché (contrairement aux télégraphes ci-dessous,
+  // pas de fenêtre temporaire : c'est un état de l'ennemi, pas un
+  // événement ponctuel). Affiche aussi le gel actif éventuel (voir
+  // ClassCombatManager.applyEnemyRageSuppression()), pour que le
+  // joueur voie que son contre a bien pris effet. Placé EN PREMIER
+  // (avant vulnérabilité/DoT/télégraphes) : c'est l'information la
+  // plus stable de la barre de statut.
+  if (game.enemy.archetype === "enraged") {
+    var rageFrozen = !!(game.enemy.rageFreezeUntil && Date.now() < game.enemy.rageFreezeUntil);
+    h += '<div class="enemy-status-icon enemy-status-enraged' + (rageFrozen ? ' is-suppressed' : '') + '" title="'
+      + (rageFrozen ? 'Enragé (rage apaisée temporairement)' : 'Enragé : plus dangereux à mesure qu\u2019il perd des PV') + '">';
+    h += '<span class="enemy-status-emoji">' + (rageFrozen ? '😮\u200d💨' : '😡') + '</span>';
+    h += '</div>';
+  }
+
+  // v3.69.0 : archétype Corrupteur (Phase 9) — même principe permanent
+  // qu'Enragé ci-dessus (badge tant que l'ennemi est affiché), avec un
+  // compteur de stacks visible (0 à CORRUPTED_MAX_STACKS) — contrairement
+  // à Enragé (pas de compteur, juste "plus ou moins enragé"), Corrupteur
+  // affecte le HÉROS via des stacks discrets, un chiffre exact est donc
+  // plus lisible qu'une simple icône. Affiché même à 0 stack tant que
+  // l'archétype est actif (le joueur sait "cet ennemi PEUT corrompre",
+  // même s'il n'a pas encore frappé) — cohérent avec le badge Enragé,
+  // toujours visible dès l'apparition de l'ennemi.
+  if (game.enemy.archetype === "corrupted") {
+    var corruptedStacks = Number(game.enemy.corruptedStacks || 0);
+    h += '<div class="enemy-status-icon enemy-status-corrupted" title="Corrupteur : chaque coup reçu réduit tes dégâts (' + corruptedStacks + '/' + (typeof CORRUPTED_MAX_STACKS === "number" ? CORRUPTED_MAX_STACKS : 5) + ' stacks)">';
+    h += '<span class="enemy-status-emoji">☠️</span>';
+    if (corruptedStacks > 0) {
+      h += '<span class="enemy-status-timer">' + corruptedStacks + '</span>';
+    }
+    h += '</div>';
+  }
+
   if (game.enemy.vulnerableUntil && Date.now() < game.enemy.vulnerableUntil) {
     var vulnRemainingMs = game.enemy.vulnerableUntil - Date.now();
     var vulnPct = Math.round((game.enemy.vulnerableMult || 0) * 100);

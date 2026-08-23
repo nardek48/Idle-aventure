@@ -1011,3 +1011,34 @@ img.combat-action-icon {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
   pointer-events: none;
 }
+
+/* =========================
+   v3.68.0 : archétype Enragé (Phase 9)
+   Badge PERMANENT (pas de pulsation "urgence" comme les télégraphes
+   ci-dessus — c'est un état stable de l'ennemi, pas un danger imminent
+   ponctuel), contour orange/rouge distinct. Variante .is-suppressed
+   (gel actif suite au contre skill3) : contour bleuté pour signaler
+   visuellement "apaisé pour l'instant", cohérent avec l'emoji dédié
+   (😮‍💨 vs 😡, voir buildEnemyStatusBarHTML(), ui/combat-view.js).
+   ========================= */
+.enemy-status-enraged {
+  border-color: #dc2626;
+  background: rgba(80, 10, 10, 0.5);
+}
+
+.enemy-status-enraged.is-suppressed {
+  border-color: #60a5fa;
+  background: rgba(10, 30, 80, 0.4);
+}
+
+/* =========================
+   v3.69.0 : archétype Corrupteur (Phase 9)
+   Badge PERMANENT avec compteur de stacks (contrairement à Enragé,
+   affiche un chiffre — Corrupteur agit par stacks discrets, un
+   compteur exact est plus lisible qu'une simple icône). Teinte
+   violette/sombre pour se distinguer visuellement d'Enragé (rouge).
+   ========================= */
+.enemy-status-corrupted {
+  border-color: #7c3aed;
+  background: rgba(40, 10, 70, 0.5);
+}

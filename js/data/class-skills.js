@@ -173,7 +173,16 @@ window.CLASS_SKILLS = {
         // raison exacte (skill3 coûte toujours 100, trop lent à
         // accumuler même une fois exclu du repli).
         counters: ["healIncoming"],
-        effects: []
+        // v3.69.0 : effet AJOUTÉ (Phase 9, Corrupteur) — indépendant du
+        // mécanisme de contre ci-dessus (counters/applyGrimoireCounterIfApplicable) :
+        // si l'ennemi affiché porte l'archétype "corrupted", ce coup
+        // purge TOUS les stacks de corruption accumulés, en PLUS de ses
+        // dégâts normaux et de son contre existant sur healIncoming. Voir
+        // ClassCombatManager.applyActionEffects()/applyEnemyCorruptionPurge().
+        // Sans effet (silencieusement ignoré) si l'ennemi n'est pas Corrupteur.
+        effects: [
+          { type: "enemyCorruptionPurge" }
+        ]
       },
       skill2: {
         id: "knight_guard_break",
@@ -223,7 +232,19 @@ window.CLASS_SKILLS = {
         // strike (skill1), voir en-tête de fichier. skill3 ne contre
         // plus jamais rien, quelle que soit la classe (demande
         // explicite de Seb).
-        effects: []
+        // v3.68.0 : effet AJOUTÉ (pas un contre au sens counters/
+        // applyGrimoireCounterIfApplicable) — si l'ennemi porte
+        // l'archétype "enraged" (Phase 9, data/enemy-archetypes.js),
+        // ce coup réduit ET gèle temporairement sa montée en rage, en
+        // PLUS de ses dégâts normaux. Voir ClassCombatManager.
+        // applyActionEffects() pour l'application réelle, et
+        // CombatEngine.getEnragedEffectivePctHpLost() pour comment ce
+        // gel est lu au moment de la riposte suivante. Sans effet
+        // (silencieusement ignoré) si l'ennemi affiché n'est pas
+        // Enragé — reste une simple Exécution normale dans ce cas.
+        effects: [
+          { type: "enemyRageSuppression" }
+        ]
       },
       defense: {
         id: "knight_guard",
@@ -303,7 +324,11 @@ window.CLASS_SKILLS = {
         // jeu, voir NOTE_v3.34.1_effets_non_branches.md) — action
         // purement offensive, sans effet secondaire.
         counters: ["shieldIncoming"],
-        effects: []
+        // v3.69.0 : effet AJOUTÉ (Phase 9, Corrupteur) — voir la note
+        // équivalente sur knight_heavy_strike (skill1 Chevalier).
+        effects: [
+          { type: "enemyCorruptionPurge" }
+        ]
       },
       skill2: {
         id: "archer_volley",
@@ -344,7 +369,12 @@ window.CLASS_SKILLS = {
         conditions: {},
         // v3.60.0 : n'est PLUS un contre — déplacé vers archer_precise_
         // shot (skill1), voir en-tête de fichier.
-        effects: []
+        // v3.68.0 : effet AJOUTÉ (Phase 9, Enragé) — voir la note
+        // équivalente sur knight_execute (skill3 Chevalier) ci-dessus,
+        // même principe exact pour les 3 classes.
+        effects: [
+          { type: "enemyRageSuppression" }
+        ]
       },
       defense: {
         id: "archer_evasion",
@@ -423,7 +453,11 @@ window.CLASS_SKILLS = {
         // v3.60.0 : contre du Bouclier de boss — déplacé depuis
         // mage_arcane_nova (skill3), voir en-tête de fichier.
         counters: ["shieldIncoming"],
-        effects: []
+        // v3.69.0 : effet AJOUTÉ (Phase 9, Corrupteur) — voir la note
+        // équivalente sur knight_heavy_strike (skill1 Chevalier).
+        effects: [
+          { type: "enemyCorruptionPurge" }
+        ]
       },
       skill2: {
         id: "mage_arcane_burn",
@@ -471,7 +505,12 @@ window.CLASS_SKILLS = {
         // seul ennemi affiché à la fois, pas de vraie zone possible,
         // voir NOTE_v3.34.1_effets_non_branches.md) — action purement
         // offensive à un coup, sans effet secondaire.
-        effects: []
+        // v3.68.0 : effet AJOUTÉ (Phase 9, Enragé) — voir la note
+        // équivalente sur knight_execute (skill3 Chevalier), même
+        // principe exact pour les 3 classes.
+        effects: [
+          { type: "enemyRageSuppression" }
+        ]
       },
       defense: {
         id: "mage_arcane_barrier",
