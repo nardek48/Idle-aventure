@@ -260,6 +260,31 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
+  // v3.72.0 : archétype Vampirique (Phase 9) — même principe permanent
+  // qu'Enragé/Corrupteur ci-dessus. Affiche le blocage temporaire du
+  // vol de vie (contre skill2, voir ClassCombatManager.
+  // applyVampiricLifestealSuppression()) via une variante visuelle,
+  // même pattern exact que .is-suppressed pour Enragé.
+  if (game.enemy.archetype === "vampiric") {
+    var lifestealSuppressed = !!(game.enemy.vampiricSuppressedUntil && Date.now() < game.enemy.vampiricSuppressedUntil);
+    h += '<div class="enemy-status-icon enemy-status-vampiric' + (lifestealSuppressed ? ' is-suppressed' : '') + '" title="'
+      + (lifestealSuppressed ? 'Vampirique (vol de vie bloqué temporairement)' : 'Vampirique : se soigne à chaque coup qu\u2019il te porte') + '">';
+    h += '<span class="enemy-status-emoji">🧛</span>';
+    h += '</div>';
+  }
+
+  // v3.73.0 : archétype Blindé (Phase 9) — même principe permanent que
+  // les 3 précédents archétypes de boss. Affiche le blindage
+  // temporairement fissuré (contre defense, voir ClassCombatManager.
+  // applyArmorSuppression()) via une variante visuelle.
+  if (game.enemy.archetype === "armored") {
+    var armorSuppressed = !!(game.enemy.armorSuppressedUntil && Date.now() < game.enemy.armorSuppressedUntil);
+    h += '<div class="enemy-status-icon enemy-status-armored' + (armorSuppressed ? ' is-suppressed' : '') + '" title="'
+      + (armorSuppressed ? 'Blindé (blindage fissuré temporairement)' : 'Blindé : subit un peu moins de dégâts en permanence') + '">';
+    h += '<span class="enemy-status-emoji">🛡️‍🩹</span>';
+    h += '</div>';
+  }
+
   if (game.enemy.vulnerableUntil && Date.now() < game.enemy.vulnerableUntil) {
     var vulnRemainingMs = game.enemy.vulnerableUntil - Date.now();
     var vulnPct = Math.round((game.enemy.vulnerableMult || 0) * 100);
@@ -286,6 +311,34 @@ function buildEnemyStatusBarHTML() {
     h += '<div class="enemy-status-icon enemy-status-charge" title="Charge imminente !">';
     h += '<span class="enemy-status-emoji">💢</span>';
     h += '<span class="enemy-status-timer">' + Math.max(0, (chargeRemainingMs / 1000).toFixed(1)) + '</span>';
+    h += '</div>';
+  }
+
+  // v3.71.0 : télégraphe de Silencieux (3e archétype, Phase 9) — même
+  // principe exact que le télégraphe de Charge ci-dessus (visible
+  // seulement pendant la fenêtre d'avertissement, mutuellement
+  // exclusif avec Charge sur un même ennemi donc jamais affiché en
+  // même temps que le badge précédent en pratique).
+  if (game.enemy.silenceTelegraphUntil && Date.now() < game.enemy.silenceTelegraphUntil) {
+    var silenceTelegraphRemainingMs = game.enemy.silenceTelegraphUntil - Date.now();
+    h += '<div class="enemy-status-icon enemy-status-silence-telegraph" title="Silence imminent !">';
+    h += '<span class="enemy-status-emoji">🔇</span>';
+    h += '<span class="enemy-status-timer">' + Math.max(0, (silenceTelegraphRemainingMs / 1000).toFixed(1)) + '</span>';
+    h += '</div>';
+  }
+
+  // v3.71.0 : Silence ACTIF sur le HÉROS (game.silencedUntil, PAS
+  // game.enemy.* — voir CombatEngine.resolveSilenceCast()) — badge
+  // distinct du télégraphe ci-dessus (état "en cours" vs "va arriver"),
+  // même emplacement que les autres badges de statut ennemi pour rester
+  // visible au même endroit, même si l'état concerne le héros cette
+  // fois (cohérent avec Bouclier/Soin qui affichent déjà des états
+  // "actifs" ici, pas seulement des télégraphes).
+  if (game.silencedUntil && Date.now() < game.silencedUntil) {
+    var silenceActiveRemainingMs = game.silencedUntil - Date.now();
+    h += '<div class="enemy-status-icon enemy-status-silenced-active" title="Tu es silencié : tes techniques sont bloquées">';
+    h += '<span class="enemy-status-emoji">🔇</span>';
+    h += '<span class="enemy-status-timer">' + Math.max(0, (silenceActiveRemainingMs / 1000).toFixed(1)) + '</span>';
     h += '</div>';
   }
 
@@ -349,14 +402,16 @@ window.buildEnemyStatusBarHTML = buildEnemyStatusBarHTML;
 window.renderEnemyStatusBar = renderEnemyStatusBar;
 
 /* ============================================================
-   v3.34.3 : rendu du cooldown de l'attaque de base (tap manuel) — 2
-   points concernés, le bouton ATTAQUE dédié (#combat-attack-btn, via
-   un overlay de remplissage à l'intérieur, même principe que les
-   boutons de skill) et le sprite ennemi (#enemy-emoji, via une classe
-   CSS de grisage). Les 2 restent cliquables pendant le cooldown (le
-   clic met le coup en file d'attente, voir
-   CombatEngine.requestPlayerAttack()) — seul l'aspect visuel change,
-   jamais l'attribut disabled.
+   v3.34.3 : rendu du cooldown de l'attaque de base (tap manuel) — le
+   bouton ATTAQUE dédié (#combat-attack-btn, via un overlay de
+   remplissage à l'intérieur, même principe que les boutons de skill).
+   Reste cliquable pendant le cooldown (le clic met le coup en file
+   d'attente, voir CombatEngine.requestPlayerAttack()) — seul l'aspect
+   visuel du bouton change, jamais l'attribut disabled.
+   v3.73.0 : le grisage du sprite ennemi (#enemy-emoji) pendant le
+   cooldown a été RETIRÉ à la demande de Seb — l'image de l'ennemi
+   reste nette en permanence, l'indice de cooldown se limite désormais
+   au bouton ATTAQUE.
 ============================================================ */
 function buildBasicAttackCooldownOverlayHTML() {
   var remainingMs = game.basicAttackCooldownMs || 0;
@@ -387,8 +442,13 @@ function renderBasicAttackCooldown() {
   var attackBtn = document.getElementById("combat-attack-btn");
   if (attackBtn) attackBtn.classList.toggle("on-cooldown", onCooldown);
 
-  var emoji = document.getElementById("enemy-emoji");
-  if (emoji) emoji.classList.toggle("on-cooldown", onCooldown);
+  // v3.73.0 : grisage du sprite ennemi RETIRÉ à la demande de Seb — le
+  // sprite reste net en permanence, seul le bouton ATTAQUE (ci-dessus)
+  // garde son indice visuel de cooldown. #enemy-emoji.on-cooldown
+  // (filter: grayscale/brightness, css/03-combat.css) n'est donc plus
+  // jamais posé ici — la classe CSS reste définie dans la feuille de
+  // style au cas où elle serait réutilisée ailleurs, mais plus
+  // appliquée par ce code.
 }
 
 window.buildBasicAttackCooldownOverlayHTML = buildBasicAttackCooldownOverlayHTML;
@@ -538,7 +598,14 @@ function buildClassSkillButtonHTML(slot) {
   // ClassCombatManager.tickAutoSkills(), systems/class-combat-system.js).
   // Réponse explicite de Seb : pas de coexistence pour cette 1ère étape.
   var autoModeActive = !!game.autoSkillsEnabled;
-  var disabled = onCooldown || !affordable || autoModeActive;
+  // v3.71.0 : Silencieux (3e archétype, Phase 9) — les 3 skills
+  // offensifs (jamais defense) sont bloqués visuellement pendant
+  // game.silencedUntil, cohérent avec le blocage réel côté logique
+  // (canUseAction(), systems/combat-cooldown-system.js, lit
+  // combatContext.isSilenced) — sans ce blocage visuel, le joueur en
+  // mode manuel verrait un bouton cliquable qui ne ferait rien.
+  var isSilenced = !!(game.silencedUntil && Date.now() < game.silencedUntil && action.slot !== "defense");
+  var disabled = onCooldown || !affordable || autoModeActive || isSilenced;
 
   var activeDefense = (action.type === "defense" && window.ClassCombatManager && typeof ClassCombatManager.getActiveDefenseEffect === "function")
     ? ClassCombatManager.getActiveDefenseEffect()
@@ -549,9 +616,11 @@ function buildClassSkillButtonHTML(slot) {
   var keyLabel = CLASS_SKILL_KEY_LABELS[action.slot] || "";
 
   var h = '<button class="combat-action-btn class-skill-btn' + (action.type === "defense" ? " defense-action-btn" : " attack-action-btn")
-    + (onCooldown ? ' on-cooldown' : '') + (isActiveNow ? ' is-active' : '') + (!affordable && !onCooldown ? ' not-affordable' : '') + (autoModeActive ? ' auto-mode' : '') + '" type="button" '
+    + (onCooldown ? ' on-cooldown' : '') + (isActiveNow ? ' is-active' : '') + (!affordable && !onCooldown ? ' not-affordable' : '') + (autoModeActive ? ' auto-mode' : '') + (isSilenced ? ' is-silenced' : '') + '" type="button" '
     + (disabled ? 'disabled' : '')
-    + ' onclick="ClassCombatManager.useSkillManual(\'' + esc(slot) + '\')" title="' + (autoModeActive ? 'Combat automatique actif (voir Paramètres)' : esc(action.description) + (keyLabel ? ' (touche ' + keyLabel + ' sur PC)' : '')) + '">';
+    + ' onclick="ClassCombatManager.useSkillManual(\'' + esc(slot) + '\')" title="'
+    + (autoModeActive ? 'Combat automatique actif (voir Paramètres)' : (isSilenced ? 'Silencié : cette technique est bloquée un instant' : esc(action.description) + (keyLabel ? ' (touche ' + keyLabel + ' sur PC)' : '')))
+    + '">';
   h += '<span class="combat-action-key">' + esc(keyLabel) + '</span>';
   h += renderIconOrEmojiHTML(icon, "combat-action-icon", action.label);
   if (onCooldown) {

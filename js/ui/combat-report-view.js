@@ -148,6 +148,7 @@ function buildCombatReportHTML(trigger, enemyName) {
       if (report.damageAvoidedTotal > 0) summaryParts.push('🛡️ ~' + formatNumber(Math.floor(report.damageAvoidedTotal)) + ' dégâts évités');
       if (report.healPreventedTotal > 0) summaryParts.push('💚 ~' + formatNumber(Math.floor(report.healPreventedTotal)) + ' PV de soin empêchés');
       if (report.shieldsRemovedCount > 0) summaryParts.push('⚡ ' + report.shieldsRemovedCount + ' bouclier' + (report.shieldsRemovedCount !== 1 ? 's' : '') + ' retiré' + (report.shieldsRemovedCount !== 1 ? 's' : ''));
+      if (report.silencesAvoidedCount > 0) summaryParts.push('🔇 ' + report.silencesAvoidedCount + ' silence' + (report.silencesAvoidedCount !== 1 ? 's' : '') + ' évité' + (report.silencesAvoidedCount !== 1 ? 's' : ''));
       if (summaryParts.length) {
         h += '    <div class="combat-report-summary">' + summaryParts.map(function (p) { return esc(p); }).join('<br>') + '</div>';
       }

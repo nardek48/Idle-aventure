@@ -211,7 +211,15 @@ window.CLASS_SKILLS = {
             type: "enemyVulnerability",
             value: 0.20,
             durationMs: 5000
-          }
+          },
+          // v3.72.0 : effet AJOUTÉ (Phase 9, Vampirique) — si l'ennemi
+          // affiché porte l'archétype "vampiric", ce coup bloque
+          // temporairement son vol de vie, EN PLUS de ses dégâts
+          // normaux et de son contre existant sur shieldIncoming. Voir
+          // ClassCombatManager.applyActionEffects()/
+          // applyVampiricLifestealSuppression(). Sans effet
+          // (silencieusement ignoré) si l'ennemi n'est pas Vampirique.
+          { type: "enemyLifestealSuppression" }
         ]
       },
       skill3: {
@@ -261,13 +269,28 @@ window.CLASS_SKILLS = {
         // v3.52.0 : contre de la Charge d'ennemi normal — n'agit QUE
         // via une règle du Grimoire dont la condition est
         // "chargeIncoming", voir en-tête de fichier.
-        counters: ["chargeIncoming"],
+        // v3.71.0 : contre AUSSI le Silence (3e archétype, Phase 9) —
+        // mutuellement exclusif avec Charge sur un même ennemi (voir
+        // data/enemy-archetypes.js), donc jamais les 2 en simultané
+        // dans la pratique, mais les 2 conditions restent déclarées
+        // pour que Garde reste utile quel que soit le type d'ennemi
+        // normal affiché.
+        counters: ["chargeIncoming", "enemySilenceIncoming"],
         effects: [
           {
             type: "damageReduction",
             value: 0.50,
             durationMs: 2000
-          }
+          },
+          // v3.73.0 : effet AJOUTÉ (Phase 9, Blindé) — si l'ennemi
+          // affiché porte l'archétype "armored", cette action (utilisée
+          // comme une contre-attaque/riposte, pas juste une défense
+          // passive) fissure temporairement son blindage, en PLUS de
+          // son effet défensif normal et de son contre existant sur
+          // chargeIncoming/enemySilenceIncoming. Voir ClassCombatManager.
+          // applyActionEffects()/applyArmorSuppression(). Sans effet
+          // (silencieusement ignoré) si l'ennemi n'est pas Blindé.
+          { type: "enemyArmorSuppression" }
         ]
       }
     }
@@ -344,7 +367,11 @@ window.CLASS_SKILLS = {
         conditions: {},
         // v3.52.0 : contre du Soin de boss — voir en-tête de fichier.
         counters: ["healIncoming"],
-        effects: []
+        // v3.72.0 : effet AJOUTÉ (Phase 9, Vampirique) — voir la note
+        // équivalente sur knight_guard_break (skill2 Chevalier).
+        effects: [
+          { type: "enemyLifestealSuppression" }
+        ]
       },
       skill3: {
         id: "archer_piercing_shot",
@@ -390,7 +417,9 @@ window.CLASS_SKILLS = {
         conditions: {},
         // v3.52.0 : contre de la Charge d'ennemi normal — voir en-tête
         // de fichier.
-        counters: ["chargeIncoming"],
+        // v3.71.0 : contre AUSSI le Silence (3e archétype, Phase 9) —
+        // voir la note équivalente sur knight_guard (defense Chevalier).
+        counters: ["chargeIncoming", "enemySilenceIncoming"],
         effects: [
           {
             // v3.34.0 : valeur fixée au branchement réel (70%, choix
@@ -398,7 +427,10 @@ window.CLASS_SKILLS = {
             type: "evasion",
             value: 0.70,
             durationMs: 1000
-          }
+          },
+          // v3.73.0 : effet AJOUTÉ (Phase 9, Blindé) — voir la note
+          // équivalente sur knight_guard (defense Chevalier).
+          { type: "enemyArmorSuppression" }
         ]
       }
     }
@@ -484,7 +516,10 @@ window.CLASS_SKILLS = {
             type: "damageOverTime",
             percentPerSecond: 0.20,
             durationMs: 5000
-          }
+          },
+          // v3.72.0 : effet AJOUTÉ (Phase 9, Vampirique) — voir la note
+          // équivalente sur knight_guard_break (skill2 Chevalier).
+          { type: "enemyLifestealSuppression" }
         ]
       },
       skill3: {
@@ -526,13 +561,18 @@ window.CLASS_SKILLS = {
         conditions: {},
         // v3.52.0 : contre de la Charge d'ennemi normal — voir en-tête
         // de fichier.
-        counters: ["chargeIncoming"],
+        // v3.71.0 : contre AUSSI le Silence (3e archétype, Phase 9) —
+        // voir la note équivalente sur knight_guard (defense Chevalier).
+        counters: ["chargeIncoming", "enemySilenceIncoming"],
         effects: [
           {
             type: "damageAbsorption",
             value: 0.40,
             durationMs: 3000
-          }
+          },
+          // v3.73.0 : effet AJOUTÉ (Phase 9, Blindé) — voir la note
+          // équivalente sur knight_guard (defense Chevalier).
+          { type: "enemyArmorSuppression" }
         ]
       }
     }

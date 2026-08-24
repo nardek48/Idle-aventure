@@ -69,7 +69,9 @@ var CLASS_ACTION_ICON_FALLBACK = {
    de data/grimoire-conditions.js). */
 var ARCHETYPE_EFFECT_TO_CONDITION_ID = {
   enemyRageSuppression: "enemyEnraged",
-  enemyCorruptionPurge: "enemyCorrupted"
+  enemyCorruptionPurge: "enemyCorrupted",
+  enemyLifestealSuppression: "enemyVampiric",
+  enemyArmorSuppression: "enemyArmored"
 };
 
 /* getArchetypeEffectConditionId(action)
@@ -164,11 +166,16 @@ var ClassCombatManager = {
   },
 
   /* Contexte combat pour checkActionConditions() (Exécution du
-     Chevalier). */
+     Chevalier).
+     v3.71.0 : isSilenced (archétype Silencieux, Phase 9) — lu ici pour
+     que canUseAction() (systems/combat-cooldown-system.js, module PUR)
+     puisse bloquer les actions offensives sans jamais lire game.*
+     lui-même, même principe que les autres champs de contexte. */
   getCombatContext: function () {
     return {
       enemyHp: game.enemy ? game.enemy.hp : null,
-      enemyMaxHp: game.enemy ? game.enemy.maxHp : null
+      enemyMaxHp: game.enemy ? game.enemy.maxHp : null,
+      isSilenced: !!(game.silencedUntil && Date.now() < game.silencedUntil)
     };
   },
 
@@ -191,6 +198,9 @@ var ClassCombatManager = {
     base.chargeIncoming = !!(game.enemy && game.enemy.chargeTelegraphUntil && now < game.enemy.chargeTelegraphUntil);
     base.shieldIncoming = !!(game.enemy && game.enemy.shieldTelegraphUntil && now < game.enemy.shieldTelegraphUntil);
     base.healIncoming = !!(game.enemy && game.enemy.healTelegraphUntil && now < game.enemy.healTelegraphUntil);
+    // v3.71.0 : télégraphe de Silencieux (3e archétype, Phase 9) — même
+    // principe exact que les 3 champs ci-dessus.
+    base.enemySilenceIncoming = !!(game.enemy && game.enemy.silenceTelegraphUntil && now < game.enemy.silenceTelegraphUntil);
 
     var heroMaxHp = Number(game.heroMaxHp || 0);
     base.heroHpPercent = heroMaxHp > 0 ? Number(game.heroHp || 0) / heroMaxHp : null;
@@ -253,7 +263,8 @@ var ClassCombatManager = {
     var fieldMap = {
       chargeIncoming: { telegraph: "chargeTelegraphUntil", nextAt: "_chargeNextAt", timer: "_chargeTimer" },
       shieldIncoming: { telegraph: "shieldTelegraphUntil", nextAt: "_shieldNextAt", timer: "_shieldTimer" },
-      healIncoming: { telegraph: "healTelegraphUntil", nextAt: "_healNextAt", timer: "_healTimer" }
+      healIncoming: { telegraph: "healTelegraphUntil", nextAt: "_healNextAt", timer: "_healTimer" },
+      enemySilenceIncoming: { telegraph: "silenceTelegraphUntil", nextAt: "_silenceNextAt", timer: "_silenceTimer" }
     };
     var fields = fieldMap[conditionId];
     if (!fields) return null;
@@ -426,6 +437,19 @@ var ClassCombatManager = {
 
     if (action.type === "defense") {
       this.activateDefenseEffect(action);
+      // v3.73.0 : archétype Blindé (Phase 9) — activateDefenseEffect()
+      // ci-dessus ne lit QUE action.effects[0] (l'effet défensif normal
+      // du héros : damageReduction/evasion/damageAbsorption). Les
+      // effets d'ARCHÉTYPE (enemyArmorSuppression, ajoutés en 2e
+      // position dans le tableau, voir data/class-skills.js) doivent
+      // donc être traités séparément ici via applyActionEffects(),
+      // avec la même garde matchedConditionId que les 3 autres
+      // archétypes (aucun impact sur enemyVulnerability/damageOverTime,
+      // qui ne sont de toute façon jamais déclarés sur une action
+      // "defense"). lastHitDmg à 0 : defense n'inflige jamais de
+      // dégâts directs, damageOverTime n'aurait de toute façon rien à
+      // calculer ici.
+      if (game.enemy) this.applyActionEffects(action, 0, matchedConditionId);
       addLog("🛡️ " + action.label + " !", "event");
       showToast((action.icon || "🛡️") + " " + action.label, 1400);
     } else {
@@ -479,6 +503,11 @@ var ClassCombatManager = {
       countered = true;
     } else if (matchedConditionId === "healIncoming" && game.enemy.healTelegraphUntil) {
       game.enemy.healTelegraphUntil = 0;
+      countered = true;
+    } else if (matchedConditionId === "enemySilenceIncoming" && game.enemy.silenceTelegraphUntil) {
+      // v3.71.0 : contre du Silence (3e archétype, Phase 9) — même
+      // principe exact que les 3 cas ci-dessus.
+      game.enemy.silenceTelegraphUntil = 0;
       countered = true;
     }
 
@@ -582,6 +611,10 @@ var ClassCombatManager = {
         if (matchedConditionId === "enemyEnraged") this.applyEnemyRageSuppression();
       } else if (effect.type === "enemyCorruptionPurge") {
         if (matchedConditionId === "enemyCorrupted") this.applyEnemyCorruptionPurge();
+      } else if (effect.type === "enemyLifestealSuppression") {
+        if (matchedConditionId === "enemyVampiric") this.applyVampiricLifestealSuppression();
+      } else if (effect.type === "enemyArmorSuppression") {
+        if (matchedConditionId === "enemyArmored") this.applyArmorSuppression();
       }
     }
   },
@@ -637,6 +670,57 @@ var ClassCombatManager = {
 
     addLog("✨ La corruption de " + game.enemy.name + " est purgée !", "event");
     showToast("✨ Corruption purgée !", 1400);
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+  },
+
+  /* v3.72.0 : effet du contre skill2 sur l'archétype Vampirique (Phase
+     9) — voir data/class-skills.js (les 3 skill2 déclarent maintenant
+     { type: "enemyLifestealSuppression" } dans leurs effects[]). Ne
+     fait RIEN silencieusement si l'ennemi affiché n'est pas Vampirique
+     (skill2 reste une simple attaque normale, comportement identique
+     à avant v3.72.0 — y compris son propre contre existant sur
+     shieldIncoming/healIncoming, totalement indépendant de cet effet).
+     Pose game.enemy.vampiricSuppressedUntil (lu par CombatEngine.
+     enemyStrike(), qui bloque TOTALEMENT le vol de vie pendant cette
+     fenêtre — le boss continue de taper normalement, mais ne se soigne
+     plus). Chaque nouvelle activation ÉCRASE le blocage précédent (pas
+     de cumul, même principe que applyEnemyRageSuppression()). */
+  applyVampiricLifestealSuppression: function () {
+    if (!game.enemy || game.enemy.archetype !== "vampiric") return;
+
+    var suppressionDurationMs = (typeof VAMPIRIC_SUPPRESSION_DURATION_MS === "number") ? VAMPIRIC_SUPPRESSION_DURATION_MS : 4000;
+    game.enemy.vampiricSuppressedUntil = Date.now() + suppressionDurationMs;
+
+    addLog("🧛 Le vol de vie de " + game.enemy.name + " est bloqué temporairement !", "event");
+    showToast("🧛 Vol de vie bloqué !", 1400);
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+  },
+
+  /* v3.73.0 : effet du contre defense sur l'archétype Blindé (Phase 9)
+     — voir data/class-skills.js (les 3 actions defense déclarent
+     maintenant { type: "enemyArmorSuppression" } dans leurs effects[]).
+     Ne fait RIEN silencieusement si l'ennemi affiché n'est pas Blindé
+     (defense reste un effet défensif normal, comportement identique à
+     avant v3.73.0 — y compris son propre contre existant sur
+     chargeIncoming/enemySilenceIncoming, totalement indépendant de cet
+     effet). Réduit PARTIELLEMENT le blindage (ARMORED_SUPPRESSION_
+     REDUCTION_PCT, 5%, au lieu du taux normal ARMORED_DAMAGE_REDUCTION_PCT,
+     10%) pendant ARMORED_SUPPRESSION_DURATION_MS — décision actée avec
+     Seb : pas une annulation totale, cohérent avec la réduction
+     partielle d'Enragé. Chaque nouvelle activation ÉCRASE le blocage
+     précédent (pas de cumul, même principe que les 3 autres effets
+     d'archétype). */
+  applyArmorSuppression: function () {
+    if (!game.enemy || game.enemy.archetype !== "armored") return;
+
+    var suppressionDurationMs = (typeof ARMORED_SUPPRESSION_DURATION_MS === "number") ? ARMORED_SUPPRESSION_DURATION_MS : 4000;
+    var suppressedReduction = (typeof ARMORED_SUPPRESSION_REDUCTION_PCT === "number") ? ARMORED_SUPPRESSION_REDUCTION_PCT : 0.05;
+
+    game.enemy.armorSuppressedReduction = suppressedReduction;
+    game.enemy.armorSuppressedUntil = Date.now() + suppressionDurationMs;
+
+    addLog("🛡️‍🩹 Le blindage de " + game.enemy.name + " se fissure temporairement !", "event");
+    showToast("🛡️‍🩹 Blindage fissuré !", 1400);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 

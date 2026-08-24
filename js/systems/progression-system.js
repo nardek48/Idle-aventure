@@ -181,11 +181,23 @@ var WorldManager = {
       effectiveStats.power = Math.floor(effectiveStats.power * Math.pow(scale, ENEMY_POWER_SCALE_EXP));
     }
 
+    // v3.71.0 : archétype "silenced" (Phase 9) pour un ennemi NORMAL —
+    // mutuellement exclusif avec Charge (voir enemyChargeTick(), désormais
+    // filtrée par archetype !== "silenced", systems/combat-engine.js).
+    // Tiré une seule fois à la génération, PAS recalculé en boucle.
+    // decideNormalEnemyArchetype() retourne null AVANT le monde minimum
+    // (SILENCED_MIN_WORLD_INDEX) — l'ennemi reste alors soumis au
+    // comportement Charge standard, exactement comme avant v3.71.0.
+    var normalArchetype = (typeof decideNormalEnemyArchetype === "function")
+      ? decideNormalEnemyArchetype(this.worldIndex, false, randInt(1, 100))
+      : null;
+
     return {
       id: enemyId,
       name: enemyData.name,
       asset: enemyData.asset,
       isBoss: false,
+      archetype: normalArchetype, // v3.71.0 — null ou "silenced"
       hp: hp,
       maxHp: hp,
       goldReward: Math.floor(6 * scale + this.worldIndex * 3),

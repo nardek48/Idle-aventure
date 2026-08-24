@@ -70,7 +70,37 @@ applyEnemyCorruptionPurge() (matchedConditionId requis, même principe
 exact que les contres classiques).
 
 STATUT — donnée déclarative pure, comme data/auto-policy-defaults.js :
-aucune fonction ici, aucun accès à game.*. */
+aucune fonction ici, aucun accès à game.*.
+
+v3.71.0 : 8e carte — enemySilenceIncoming, 3e archétype de la Phase 9
+(feuille de route combat). Contrairement à enemyEnraged/enemyCorrupted
+(états permanents, v3.70.0), Silencieux est un VRAI PATTERN À
+TÉLÉGRAPHE (comme chargeIncoming/shieldIncoming/healIncoming) — annoncé
+à l'avance (game.enemy.silenceTelegraphUntil, voir CombatEngine.
+enemySilenceTick()), et un VRAI contre au sens classique (annulation,
+counters/applyGrimoireCounterIfApplicable(), voir data/class-skills.js
+— defense des 3 classes le déclare désormais dans counters). Réservé
+aux ennemis NORMAUX (jamais un boss), mutuellement exclusif avec
+chargeIncoming sur un même ennemi (décision actée avec Seb : "le plus
+simple" — un ennemi normal EST soit du type Charge, soit du type
+Silencieux, jamais les deux, tiré une seule fois à la génération, voir
+decideNormalEnemyArchetype(), data/enemy-archetypes.js).
+
+v3.72.0 : 9e carte — enemyVampiric, 4e archétype de la Phase 9. Même
+principe EXACT que enemyEnraged/enemyCorrupted (v3.70.0) : état
+PERMANENT (game.enemy.archetype === "vampiric"), PAS un contre au sens
+annulation — un effet ajouté (skill2 des 3 classes, voir data/class-
+skills.js "enemyLifestealSuppression") qui bloque temporairement le vol
+de vie du boss, en plus de ses dégâts normaux.
+
+v3.73.0 : 10e et dernière carte de cette 1ère extension d'archétypes —
+enemyArmored, 5e archétype de la Phase 9. Même principe permanent que
+les 3 précédentes cartes d'archétype de boss, mais son contre utilise
+DEFENSE (voir data/class-skills.js "enemyArmorSuppression" sur les 3
+actions defense) — seul slot encore libre sur un boss (skill1/2/3
+déjà occupés par Corrupteur/Vampirique/Enragé). Histoire retenue avec
+Seb : ce n'est pas "je me protège", c'est une contre-attaque/riposte
+qui fissure temporairement le blindage passif et permanent du boss. */
 
 var GRIMOIRE_CONDITIONS = {
   chargeIncoming: {
@@ -114,6 +144,24 @@ var GRIMOIRE_CONDITIONS = {
     label: "L'ennemi est corrompu",
     description: "Chaque coup reçu réduit un peu tes dégâts.",
     icon: "☠️"
+  },
+  enemySilenceIncoming: {
+    id: "enemySilenceIncoming",
+    label: "L'ennemi va te réduire au silence",
+    description: "Un ennemi normal s'apprête à bloquer tes techniques.",
+    icon: "🔇"
+  },
+  enemyVampiric: {
+    id: "enemyVampiric",
+    label: "L'ennemi est vampirique",
+    description: "Il se soigne à chaque coup qu'il te porte.",
+    icon: "🧛"
+  },
+  enemyArmored: {
+    id: "enemyArmored",
+    label: "L'ennemi est blindé",
+    description: "Il subit un peu moins de dégâts en permanence.",
+    icon: "🛡️‍🩹"
   }
 };
 
@@ -121,7 +169,7 @@ var GRIMOIRE_CONDITIONS = {
    — un tableau séparé plutôt que de dépendre de l'ordre d'énumération
    des clés de l'objet ci-dessus (non garanti historiquement fiable
    pour tout moteur JS, même si V8 le respecte en pratique). */
-var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "heroLowHp", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted"];
+var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "heroLowHp", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
 
 /* getGrimoireCondition(conditionId) — renvoie une carte de condition,
    ou null si conditionId est absent/invalide/inconnu. Ne modifie

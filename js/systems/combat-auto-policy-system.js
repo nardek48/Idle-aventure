@@ -169,6 +169,12 @@ function evaluateGrimoireCondition(conditionId, combatContext) {
       return ctx.enemyArchetype === "enraged";
     case "enemyCorrupted":
       return ctx.enemyArchetype === "corrupted";
+    case "enemySilenceIncoming":
+      return !!ctx.enemySilenceIncoming;
+    case "enemyVampiric":
+      return ctx.enemyArchetype === "vampiric";
+    case "enemyArmored":
+      return ctx.enemyArchetype === "armored";
     default:
       return false;
   }
@@ -517,6 +523,9 @@ function isConditionPossibleForEnemy(conditionId, enemy) {
   if (conditionId === "enemyAttackIncoming") return true;
   if (conditionId === "enemyEnraged") return enemy.archetype === "enraged";
   if (conditionId === "enemyCorrupted") return enemy.archetype === "corrupted";
+  if (conditionId === "enemySilenceIncoming") return !enemy.isBoss && enemy.archetype === "silenced";
+  if (conditionId === "enemyVampiric") return enemy.archetype === "vampiric";
+  if (conditionId === "enemyArmored") return enemy.archetype === "armored";
 
   return false;
 }

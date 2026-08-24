@@ -1042,3 +1042,68 @@ img.combat-action-icon {
   border-color: #7c3aed;
   background: rgba(40, 10, 70, 0.5);
 }
+
+/* =========================
+   v3.71.0 : archétype Silencieux (Phase 9)
+   Télégraphe (danger imminent, même pulsation que Charge/Bouclier/
+   Soin) puis état ACTIF sur le HÉROS (game.silencedUntil) une fois
+   résolu sans contre — teinte grise/violette distincte, cohérente
+   avec l'idée de "voix étouffée" plutôt qu'un danger physique classique
+   (rouge/bleu déjà pris par Charge/Bouclier).
+   ========================= */
+.enemy-status-silence-telegraph {
+  border-color: #a78bfa;
+  animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
+}
+
+.enemy-status-silenced-active {
+  border-color: #6b7280;
+  background: rgba(60, 60, 70, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enemy-status-silence-telegraph {
+    animation: none;
+  }
+}
+
+/* Bouton skill1/2/3 bloqué pendant le silence — grisé/désaturé,
+   distinct de .not-affordable (pas un problème de ressource) et de
+   .on-cooldown (pas un problème de recharge). */
+.combat-action-btn.is-silenced {
+  filter: grayscale(0.8);
+  opacity: 0.55;
+}
+
+/* =========================
+   v3.72.0 : archétype Vampirique (Phase 9)
+   Badge PERMANENT (comme Enragé/Corrupteur), teinte bordeaux/violette
+   sombre distincte. Variante .is-suppressed (blocage du vol de vie
+   suite au contre skill2) — même pattern que .enemy-status-enraged.is-
+   suppressed.
+   ========================= */
+.enemy-status-vampiric {
+  border-color: #991b1b;
+  background: rgba(60, 5, 20, 0.5);
+}
+
+.enemy-status-vampiric.is-suppressed {
+  border-color: #60a5fa;
+  background: rgba(10, 30, 80, 0.4);
+}
+
+/* =========================
+   v3.73.0 : archétype Blindé (Phase 9)
+   Badge PERMANENT (comme Enragé/Corrupteur/Vampirique), teinte
+   grise/métallique distincte. Variante .is-suppressed (blindage
+   fissuré suite au contre defense).
+   ========================= */
+.enemy-status-armored {
+  border-color: #78716c;
+  background: rgba(50, 45, 40, 0.5);
+}
+
+.enemy-status-armored.is-suppressed {
+  border-color: #60a5fa;
+  background: rgba(10, 30, 80, 0.4);
+}

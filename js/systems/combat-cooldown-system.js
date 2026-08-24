@@ -112,14 +112,23 @@ function checkActionConditions(conditions, combatContext) {
 /* canUseAction(resourceState, cooldownState, action, combatContext)
    Vérification COMBINÉE avant utilisation : ressource suffisante
    (canAfford, voir combat-resource-system.js) + cooldown terminé
-   (isCooldownReady) + conditions spécifiques (checkActionConditions).
-   Retourne false proprement si action ou ses champs requis
-   (id/resourceCost/conditions) sont absents/invalides. Ne mute rien. */
+   (isCooldownReady) + conditions spécifiques (checkActionConditions)
+   + v3.71.0 : pas de silence actif pour les actions offensives (voir
+   ci-dessous). Retourne false proprement si action ou ses champs
+   requis (id/resourceCost/conditions) sont absents/invalides. Ne mute
+   rien.
+   v3.71.0 : archétype Silencieux (Phase 9) — si combatContext.
+   isSilenced est vrai (voir ClassCombatManager.getCombatContext(),
+   qui lit game.silencedUntil), toute action dont slot !== "defense"
+   est BLOQUÉE (retourne false ici, même si ressource/cooldown seraient
+   par ailleurs disponibles) — decision actée avec Seb : "defense reste
+   utilisable", les 3 skills offensifs (skill1/2/3) sont bloqués. */
 function canUseAction(resourceState, cooldownState, action, combatContext) {
   if (!action || typeof action.id !== "string") return false;
   if (typeof canAfford === "function" && !canAfford(resourceState, action.resourceCost)) return false;
   if (!isCooldownReady(cooldownState, action.id)) return false;
   if (!checkActionConditions(action.conditions, combatContext)) return false;
+  if (combatContext && combatContext.isSilenced && action.slot !== "defense") return false;
   return true;
 }
 

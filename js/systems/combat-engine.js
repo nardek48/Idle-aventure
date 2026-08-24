@@ -330,6 +330,16 @@ var CombatEngine = {
     if (conditionId === "healIncoming") {
       return Math.max(1, Math.floor(Number(game.enemy.hp || 0) * BOSS_HEAL_PERCENT));
     }
+    if (conditionId === "enemySilenceIncoming") {
+      // v3.71.0 : contrairement aux 3 cas ci-dessus (dégâts évités),
+      // Silencieux n'inflige aucun dégât — la valeur "évitée" est un
+      // temps de blocage (SILENCE_DURATION_MS, data/enemy-archetypes.js),
+      // pas un montant de PV. Retournée en MILLISECONDES : l'appelant
+      // (CombatReportManager.logCounterSuccess()) doit l'additionner
+      // dans un total DISTINCT de damageAvoidedTotal (voir systems/
+      // combat-report-system.js), pas mélangé aux dégâts.
+      return (typeof SILENCE_DURATION_MS === "number") ? SILENCE_DURATION_MS : 4000;
+    }
     return 0;
   },
 
@@ -605,6 +615,7 @@ var CombatEngine = {
      territoire avec la Charge ici). */
   enemyChargeTick: function (dt) {
     if (!game.enemy || !game.enemy.stats || game.enemy.isBoss) return;
+    if (game.enemy.archetype === "silenced") return; // v3.71.0 : mutuellement exclusif avec Silencieux
     if ((game.heroHp || 0) <= 0) return;
 
     // Phase 2 : télégraphe en cours, vérifie l'expiration.
@@ -668,6 +679,89 @@ var CombatEngine = {
     this.enemyStrike(ENEMY_CHARGE_DMG_MULT);
 
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+  },
+
+  /* v3.71.0 : Silencieux — 3e archétype (Phase 9), réservé aux ennemis
+     NORMAUX, mutuellement exclusif avec Charge (voir enemyChargeTick(),
+     désormais filtrée par archetype !== "silenced"). MÊME structure à
+     2 phases que enemyChargeTick()/resolveEnemyCharge() ci-dessus,
+     MÊME rythme d'accumulation (ENEMY_CHARGE_MIN/MAX_INTERVAL_S/
+     TELEGRAPH_MS réutilisées telles quelles — cohérent avec "l'ennemi
+     normal classique que le joueur connaît déjà", seul l'EFFET de la
+     résolution change) — stocké sur game.enemy.silenceTelegraphUntil/
+     _silenceNextAt/_silenceTimer (mêmes noms de champs que Charge,
+     préfixe différent, même contrat : disparaissent naturellement à
+     spawnEnemy()). Ne fait rien si l'ennemi n'est pas Silencieux (garde
+     interne, comme enemyChargeTick() filtre déjà sur !isBoss). */
+  enemySilenceTick: function (dt) {
+    if (!game.enemy || !game.enemy.stats || game.enemy.archetype !== "silenced") return;
+    if ((game.heroHp || 0) <= 0) return;
+
+    // Phase 2 : télégraphe en cours, vérifie l'expiration.
+    if (game.enemy.silenceTelegraphUntil) {
+      if (Date.now() >= game.enemy.silenceTelegraphUntil) {
+        this.resolveSilenceCast();
+      }
+      return;
+    }
+
+    // Phase 1 : accumulation vers le prochain déclenchement (même
+    // intervalle aléatoire que Charge, voir en-tête de fonction).
+    if (!game.enemy._silenceNextAt) {
+      game.enemy._silenceNextAt = randFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
+    }
+    game.enemy._silenceTimer = Number(game.enemy._silenceTimer || 0) + Math.max(0, Number(dt || 0));
+
+    if (game.enemy._silenceTimer >= game.enemy._silenceNextAt) {
+      game.enemy._silenceTimer = 0;
+      game.enemy._silenceNextAt = 0;
+      game.enemy.silenceTelegraphUntil = Date.now() + ENEMY_CHARGE_TELEGRAPH_MS;
+
+      addLog("🔇 " + game.enemy.name + " se prépare à te réduire au silence !", "event");
+      showToast("🔇 Silence imminent !", 1200);
+      if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+
+      // v3.71.0 : rapport post-combat (étape 4.1) — même principe que
+      // Charge/Bouclier/Soin, voir getConfiguredCounterSlotsForCondition().
+      if (window.CombatReportManager) {
+        getConfiguredCounterSlotsForCondition("enemySilenceIncoming").forEach(function (s) {
+          CombatReportManager.logTelegraphSeen(s);
+        });
+      }
+    }
+  },
+
+  /* Résolution du Silence, une fois le télégraphe écoulé SANS contre —
+     contrairement à resolveEnemyCharge() (inflige des dégâts via
+     enemyStrike()), applique un BLOCAGE des 3 skills offensifs pendant
+     SILENCE_DURATION_MS (data/enemy-archetypes.js). defense reste
+     TOUJOURS utilisable pendant le silence (décision actée avec Seb).
+     Stocké sur game.silencedUntil (PAS sur game.enemy — le silence est
+     un état DU HÉROS, pas de l'ennemi, contrairement au télégraphe qui
+     précède ; survit donc à un changement d'ennemi si jamais le joueur
+     tue l'ennemi silencieux juste après, cohérent avec "c'est bien le
+     héros qui est réduit au silence"). Lu par canUseAction() (systems/
+     combat-resource-system.js) pour bloquer skill1/2/3, JAMAIS
+     defense — voir sa note pour le détail du filtre par slot. */
+  resolveSilenceCast: function () {
+    if (!game.enemy) return;
+
+    if (window.CombatReportManager) {
+      getConfiguredCounterSlotsForCondition("enemySilenceIncoming").forEach(function (s) {
+        CombatReportManager.logCounterExpired(s);
+      });
+    }
+
+    game.enemy.silenceTelegraphUntil = 0;
+    game.enemy._silenceNextAt = randFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
+
+    var durationMs = (typeof SILENCE_DURATION_MS === "number") ? SILENCE_DURATION_MS : 4000;
+    game.silencedUntil = Date.now() + durationMs;
+
+    addLog("🔇 Tu es réduit au silence ! Tes techniques sont bloquées un instant.", "event");
+    showToast("🔇 Silencié !", 1400);
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+    if (typeof renderClassSkillButtons === "function") renderClassSkillButtons();
   },
 
   /* v3.49.0 : orchestre les 2 minuteurs de pattern boss (Bouclier,
@@ -906,6 +1000,27 @@ var CombatEngine = {
 
     game.heroHp = Math.max(0, Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1) - dmg);
 
+    // v3.72.0 : archétype Vampirique (Phase 9) — récupère un % des
+    // dégâts RÉELLEMENT infligés (dmg, après tous les modificateurs
+    // ci-dessus — défense, action défensive active, critique...) en
+    // PV, plafonné à maxHp. Voir getVampiricLifestealAmount() (data/
+    // enemy-archetypes.js) pour le calcul du montant brut — le
+    // plafonnement à maxHp reste ici (l'appelant, qui seul connaît
+    // maxHp). game.enemy.vampiricSuppressedUntil (posé par le contre
+    // skill2, voir ClassCombatManager.applyVampiricLifestealSuppression())
+    // bloque TOTALEMENT le vol de vie pendant sa fenêtre — le boss
+    // continue de taper normalement, mais ne se soigne plus.
+    if (game.enemy.archetype === "vampiric" && dmg > 0 && typeof getVampiricLifestealAmount === "function") {
+      var lifestealSuppressed = !!(game.enemy.vampiricSuppressedUntil && Date.now() < game.enemy.vampiricSuppressedUntil);
+      if (!lifestealSuppressed) {
+        var healed = getVampiricLifestealAmount(dmg);
+        if (healed > 0) {
+          game.enemy.hp = Math.min(game.enemy.maxHp, Number(game.enemy.hp || 0) + healed);
+          if (typeof renderEnemyHp === "function") renderEnemyHp();
+        }
+      }
+    }
+
     // v3.69.0 : archétype Corrupteur (Phase 9) — chaque riposte REÇUE
     // (n'importe laquelle : normale, Charge...) ajoute 1 stack de
     // corruption, plafonné à CORRUPTED_MAX_STACKS. Stocké sur
@@ -1065,6 +1180,19 @@ var CombatEngine = {
     // bouclier, pas le contourner).
     if (game.enemy.isBoss && game.enemy.shieldActiveUntil && Date.now() < game.enemy.shieldActiveUntil) {
       dmg *= (1 - BOSS_SHIELD_REDUCTION);
+    }
+
+    // v3.73.0 : archétype Blindé (Phase 9) — réduction PASSIVE et
+    // PERMANENTE (pas un télégraphe temporaire comme le Bouclier
+    // ci-dessus) de TOUS les dégâts subis par le boss. Appliquée APRÈS
+    // le Bouclier (les 2 peuvent en théorie coexister, même si aucun
+    // boss n'a actuellement à la fois shieldActiveUntil ET
+    // archetype === "armored" dans les archétypes déjà livrés — l'ordre
+    // reste défini pour rester robuste). Voir getArmoredEffectiveDamageReduction()
+    // (data/enemy-archetypes.js) pour le détail du blindage
+    // temporairement réduit par le contre defense.
+    if (game.enemy.archetype === "armored" && typeof getArmoredEffectiveDamageReduction === "function") {
+      dmg *= (1 - getArmoredEffectiveDamageReduction(game.enemy));
     }
 
     if (game.enemy.isBoss && game.talents.t_perfect_execution && game.enemy.maxHp > 0 && (game.enemy.hp / game.enemy.maxHp) < 0.2) {

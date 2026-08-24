@@ -61,7 +61,10 @@ var CombatReportManager = {
       },
       damageAvoidedTotal: 0,
       healPreventedTotal: 0,
-      shieldsRemovedCount: 0
+      shieldsRemovedCount: 0,
+      // v3.71.0 : compteur simple pour Silencieux (Phase 9) — voir
+      // logCounterSuccess() pour la raison (pas une somme de ms).
+      silencesAvoidedCount: 0
     };
   },
 
@@ -150,6 +153,11 @@ var CombatReportManager = {
       game.combatReport.shieldsRemovedCount++;
     } else if (conditionId === "healIncoming") {
       game.combatReport.healPreventedTotal += value;
+    } else if (conditionId === "enemySilenceIncoming") {
+      // v3.71.0 : Silencieux n'inflige pas de dégâts — un simple
+      // COMPTEUR ("combien de fois évité"), pas une somme de ms
+      // (moins lisible pour le joueur qu'un total de dégâts/soin).
+      game.combatReport.silencesAvoidedCount++;
     }
   },
 

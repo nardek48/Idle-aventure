@@ -171,6 +171,17 @@ function gameLoop() {
     CombatEngine.enemyChargeTick(dt);
   }
 
+  // v3.71.0 : Silencieux (3e archétype, Phase 9) — minuteur INDÉPENDANT
+  // de Charge ci-dessus (voir CombatEngine.enemySilenceTick()), même
+  // structure et mêmes conditions de garde. Mutuellement exclusif avec
+  // Charge sur un même ennemi (garde interne sur archetype), donc les
+  // 2 ticks ne s'activent jamais en même temps pour un même ennemi,
+  // mais les 2 appels restent inconditionnels ici (chacun a sa propre
+  // garde, comme bossPatternTick() ci-dessous).
+  if (game.activeTab === "combat" && !modalOpen && !heroDowned && typeof CombatEngine.enemySilenceTick === "function") {
+    CombatEngine.enemySilenceTick(dt);
+  }
+
   // v3.49.0 : patterns de boss (Bouclier + Soin) — minuteurs
   // indépendants de la Charge ci-dessus et l'un de l'autre (voir
   // CombatEngine.bossPatternTick()), mêmes conditions de garde. Ne
