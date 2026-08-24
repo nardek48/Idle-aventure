@@ -1,18 +1,10 @@
 "use strict";
-/* ============================================================
-QUEST IDLE — data/ascension.js
-Configuration d'ascension (le "prestige" du jeu : le joueur réinitialise
-sa progression classique contre de l'Aether, une monnaie permanente).
-============================================================ */
+/* data/ascension.js — configuration du prestige (réinitialisation contre Aether). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var ASCENSION_CONFIG = {
-  minWorldToAscend: 0,     // désormais sans effet, gardé pour compat (voir minKillsToAscend)
-  minKillsToAscend: 200,   // v2.11 : 50 -> 200 (rééquilibrage, voir doc d'équilibrage)
+  minWorldToAscend: 0,
+  minKillsToAscend: 200,
 
-  /* Calcule combien d'Aether l'ascension rapporterait maintenant.
-     Formule : 1 Aether tous les 50 kills, + 1 par monde déjà atteint.
-     Utilisée à la fois pour l'aperçu (AscensionManager.previewGain)
-     et pour le gain réel au moment d'ascensionner. */
   computeGain: function () {
     var kills = Number(game.totalKills || 0);
     var worlds = Number((window.WorldManager && WorldManager.worldIndex) || 0);

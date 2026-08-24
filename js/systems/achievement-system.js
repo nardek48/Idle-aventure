@@ -1,11 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — systems/achievement-system.js
-Progression, réclamation et bonus cumulés des hauts faits (voir
-data/achievements.js pour le catalogue). Les bonus réclamés sont
-appliqués dans StatsSystem.recalcStats(), sur le même principe que
-le bonus de bestiaire.
-============================================================ */
+/* systems/achievement-system.js — progression/réclamation/bonus des hauts faits (data/achievements.js). Bonus appliqués dans StatsSystem.recalcStats(). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var AchievementManager = {
   ensure: function () {
@@ -35,7 +29,6 @@ var AchievementManager = {
     return !!game.achievementsClaimed[id];
   },
 
-  /* Réclame la récompense d'un haut fait terminé (une seule fois). */
   claim: function (id) {
     this.ensure();
     var ach = this.getById(id);
@@ -58,8 +51,6 @@ var AchievementManager = {
     return Object.keys(game.achievementsClaimed).filter(function (k) { return game.achievementsClaimed[k]; }).length;
   },
 
-  /* Nombre de hauts faits terminés mais pas encore réclamés — sert au
-     badge de notification (menu + carte Hauts faits). */
   getAvailableToClaimCount: function () {
     var self = this;
     return (ACHIEVEMENTS_DB || []).filter(function (a) {
@@ -67,8 +58,6 @@ var AchievementManager = {
     }).length;
   },
 
-  /* Agrège les bonus de TOUS les hauts faits réclamés, par clé de
-     stat (goldMult/tapMult/essenceGlobalMult). */
   getTotalBonus: function () {
     this.ensure();
     var bonus = {};

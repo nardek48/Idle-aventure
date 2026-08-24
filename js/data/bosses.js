@@ -1,9 +1,5 @@
 "use strict";
-/* ============================================================
-QUEST IDLE — data/bosses.js
-Boss (un par monde, voir data/worlds.js -> adventures[].boss) et
-finalisation des bonus de bestiaire.
-============================================================ */
+/* data/bosses.js — boss par monde (voir worlds.js) + config bonus bestiaire. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var BOSS_DB = {
   slimeking: {
@@ -12,57 +8,55 @@ var BOSS_DB = {
     image: "./images/Boss/Lord_Slim.jpg",
     resists: ["magic"],
     weak: ["sword"],
-    stats: makeRpgStats(32, 58, 16, 18, 22)
+    stats: makeRpgStats(30, 58, 16, 18, 22)
   },
+
   djinn: {
     name: "Djinn des dunes",
     asset: "djinn",
     image: "./images/Boss/Lord_Djinn.jpg",
     resists: ["magic", "bow"],
     weak: ["sword"],
-    stats: makeRpgStats(58, 48, 54, 46, 72)
+    stats: makeRpgStats(44, 66, 42, 30, 46)
   },
+
   skeletonlord: {
     name: "Seigneur squelette",
     asset: "skeletonlord",
     image: "./images/Boss/Lord_Skelette.jpg",
     resists: ["sword"],
     weak: ["magic"],
-    stats: makeRpgStats(44, 72, 14, 26, 34)
+    stats: makeRpgStats(54, 82, 18, 26, 36)
   },
+
   necrosupreme: {
     name: "Nécromancien suprême",
     asset: "necrosupreme",
     image: "./images/Boss/Lord_Necro.jpg",
     resists: ["magic"],
     weak: ["sword", "bow"],
-    stats: makeRpgStats(42, 34, 28, 46, 86)
+    stats: makeRpgStats(62, 76, 30, 40, 62)
   },
+
   ancientdragon: {
     name: "Dragon ancien",
     asset: "ancientdragon",
     image: "./images/Boss/Lord_Dragon.jpg",
     resists: ["bow"],
     weak: ["magic"],
-    stats: makeRpgStats(68, 78, 26, 40, 48)
+    stats: makeRpgStats(74, 96, 28, 38, 50)
   },
+
   archmage: {
     name: "Archimage",
     asset: "archmage",
     image: "./images/Boss/Lord_Archimage.jpg",
     resists: ["magic"],
     weak: ["sword", "bow"],
-    stats: makeRpgStats(48, 32, 30, 52, 90)
+    stats: makeRpgStats(84, 92, 34, 48, 74)
   }
 };
 
-/* Se charge après ENEMY_DB (enemies.js) et BOSS_DB ci-dessus : construit
-   automatiquement BESTIARY_BONUS_CONFIG pour CHAQUE créature du jeu
-   (ennemis normaux ET boss), avec des paliers de bonus qui augmentent
-   avec le nombre de kills. Les boss ont des paliers plus généreux et
-   un bonus "lootBonus" supplémentaire (chance de butin en plus).
-   getBestiaryBonus(id) en systems/stats-system.js lit cette config en
-   comparant aux kills réels stockés dans game.killCounts[id]. */
 (function () {
   var allIds = Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB));
   allIds.forEach(function (id) {

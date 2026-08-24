@@ -1,15 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — data/achievements.js
-Catalogue des hauts faits : 5 catégories (Combat/Ascension/Bestiaire/
-Équipement/Donjon), plusieurs paliers chacune. Chaque haut fait a une
-fonction track() qui lit l'état courant du jeu, et un bonus permanent
-minime accordé une fois réclamé (voir systems/achievement-system.js
-pour l'agrégation des bonus, appliquée dans StatsSystem.recalcStats).
-Volontairement de petits bonus cumulables plutôt qu'une grosse
-récompense isolée — l'idée est de donner une raison de "cocher toutes
-les cases" sur la durée, comme le bonus de bestiaire.
-============================================================ */
+/* data/achievements.js — hauts faits (5 catégories), bonus permanents cumulables. Agrégation : systems/achievement-system.js. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 function achievementBestiaryPercent() {
   if (typeof getAllBestiaryIds !== "function") return 0;
@@ -30,7 +20,6 @@ function achievementHasRarityOwned(rarity) {
 }
 
 var ACHIEVEMENTS_DB = [
-  // ---- Combat ----
   {
     id: "ach_kills_1",
     category: "combat",
@@ -82,8 +71,6 @@ var ACHIEVEMENTS_DB = [
     reward: { tapMult: 0.02 }
   },
 
-
-  // ---- Ascension ----
   {
     id: "ach_ascend_1",
     category: "ascension",
@@ -115,8 +102,6 @@ var ACHIEVEMENTS_DB = [
     reward: { tapMult: 0.05, goldMult: 0.05 }
   },
 
-
-  // ---- Bestiaire ----
   {
     id: "ach_bestiary_25",
     category: "bestiary",
@@ -148,8 +133,6 @@ var ACHIEVEMENTS_DB = [
     reward: { essenceGlobalMult: 0.05 }
   },
 
-
-  // ---- Équipement ----
   {
     id: "ach_equip_epic",
     category: "equipment",
@@ -183,8 +166,6 @@ var ACHIEVEMENTS_DB = [
     reward: { tapMult: 0.02 }
   },
 
-
-  // ---- Donjon ----
   {
     id: "ach_dungeon_wave1",
     category: "dungeon",

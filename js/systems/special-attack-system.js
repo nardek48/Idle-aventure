@@ -1,10 +1,7 @@
 "use strict";
-/* ============================================================
-Quest Idle — systems/special-attack-system.js
-Attaque spéciale propre au héros choisi (voir HERO_SPECIAL_ATTACKS
-dans data/heroes.js). Un temps de recharge commun par capacité,
-utilisable depuis l'écran Combat (fonctionne aussi en donjon).
-============================================================ */
+/* systems/special-attack-system.js — attaque spéciale + bouclier universel par HÉROS (pré-système de classes).
+   NOTE : dépend de HERO_SPECIAL_ATTACKS/DEFENSE_ABILITY, retirés de data/heroes.js depuis v3.34.0 (système de classes) —
+   possible code legacy/mort, à vérifier avec Seb. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var SpecialAttackManager = {
   ensure: function () {
@@ -13,8 +10,6 @@ var SpecialAttackManager = {
     if (typeof game.specialBuffPct !== "number") game.specialBuffPct = 0;
   },
 
-  /* La config de capacité du héros actuellement sélectionné, ou null
-     si aucun héros choisi (ne devrait pas arriver en jeu normal). */
   getCurrentSpecial: function () {
     if (typeof HERO_SPECIAL_ATTACKS === "undefined" || !game.heroId) return null;
     return HERO_SPECIAL_ATTACKS[game.heroId] || null;
@@ -28,18 +23,12 @@ var SpecialAttackManager = {
     return Math.max(0, special.cooldownMs - elapsed);
   },
 
-  /* Bonus de dégâts temporaire actif (Fureur du Chaos), lu par
-     StatsSystem.recalcStats() comme les autres bonus de boutique. */
   getActiveBuffPct: function () {
     this.ensure();
     if (game.specialBuffExpires > Date.now()) return game.specialBuffPct || 0;
     return 0;
   },
 
-  /* Déclenche l'attaque spéciale du héros courant : vérifie le
-     cooldown et la présence d'un ennemi, calcule les dégâts selon la
-     capacité (coup unique, plusieurs coups, ou plage aléatoire),
-     applique un éventuel buff temporaire, puis relance le cooldown. */
   use: function () {
     this.ensure();
     var special = this.getCurrentSpecial();
@@ -57,14 +46,11 @@ var SpecialAttackManager = {
     game.lastSpecialUse = Date.now();
 
     if (special.hits && special.hits > 1) {
-      // Rôdeur : plusieurs coups d'affilée, s'arrête si l'ennemi meurt
-      // avant la fin de la salve (un nouvel ennemi apparaît sinon).
       for (var i = 0; i < special.hits; i++) {
         if (!game.enemy) break;
         CombatEngine.dealDamage(baseDamage * special.multiplier, false, true, !!special.ignoreAffinity);
       }
     } else if (special.minMult != null && special.maxMult != null) {
-      // Rôdeur du Chaos : multiplicateur aléatoire dans la plage.
       var roll = special.minMult + Math.random() * (special.maxMult - special.minMult);
       CombatEngine.dealDamage(baseDamage * roll, false, true, !!special.ignoreAffinity);
     } else {
@@ -90,10 +76,6 @@ var SpecialAttackManager = {
 
 window.SpecialAttackManager = SpecialAttackManager;
 
-/* ============================================================
-   v2.21 : bouclier temporaire, universel (pas propre à un héros).
-   Voir DEFENSE_ABILITY dans data/heroes.js.
-============================================================ */
 var DefenseManager = {
   ensure: function () {
     if (typeof game.lastDefenseUse !== "number") game.lastDefenseUse = 0;
@@ -111,11 +93,6 @@ var DefenseManager = {
     return game.defenseBuffExpires > Date.now();
   },
 
-  /* Bonus de défense actif, lu par StatsSystem.recalcStats() comme
-     les autres bonus temporaires (potions, attaque spéciale...).
-     v3.28 : talent "Riposte du bouclier" (t_calm_breath, branche
-     Survie) — +5%/niveau de réduction EN PLUS des 35% de base,
-     uniquement pendant que le bouclier est actif. */
   getActiveBonusPct: function () {
     if (!this.isActive()) return 0;
     var base = DEFENSE_ABILITY.defenseBonusPct;
@@ -130,8 +107,6 @@ var DefenseManager = {
     }
 
     game.lastDefenseUse = Date.now();
-    // v3.28 : talent "Bouclier renforcé" (t_thick_skin, branche
-    // Survie) — +2s de durée par niveau investi.
     var talentDurationBonusMs = (game.talents && game.talents.t_thick_skin) ? game.talents.t_thick_skin * 2000 : 0;
     var effectiveDurationMs = DEFENSE_ABILITY.durationMs + talentDurationBonusMs;
     game.defenseBuffExpires = Date.now() + effectiveDurationMs;

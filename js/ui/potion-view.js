@@ -1,15 +1,6 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/potion-view.js
-Sous-onglet "Potions" de la Boutique (voir shop-view.js pour le
-bouton de bascule Améliorations/Potions).
-============================================================ */
+/* ui/potion-view.js — sous-onglet Potions de la Boutique. Achat ajoute au stock (activation séparée, voir equipment-view.js). Détail : COMMENTAIRES_ORIGINAUX.md */
 
-/* Une carte potion : icône, description, stock possédé, compte à
-   rebours si active, bouton d'achat désactivé si trop cher. v2.83.45 :
-   "Acheter" ajoute au stock (ne consomme plus immédiatement) — voir
-   le sous-onglet "🧪 Potions" de l'écran Équipement pour boire une
-   potion du stock. */
 function buildPotionCardHTML(potion) {
   var remaining = (window.PotionManager && typeof PotionManager.getRemainingMs === "function")
     ? PotionManager.getRemainingMs(potion.id)
@@ -17,11 +8,6 @@ function buildPotionCardHTML(potion) {
   var isActive = remaining > 0;
   var stock = (window.PotionManager && typeof PotionManager.getStock === "function") ? PotionManager.getStock(potion.id) : 0;
   var cost = (window.PotionManager && typeof PotionManager.getCost === "function") ? PotionManager.getCost(potion) : potion.cost;
-  // v3.24 : plafond de stock à 1 pour les potions à effet TEMPORAIRE
-  // (durationMin) — voir PotionManager.buyPotion(). Le bouton se grise
-  // et affiche "EN STOCK" au lieu du prix, cohérent avec le
-  // traitement déjà appliqué ailleurs (boutons du village grisés
-  // quand rien n'est achetable).
   var isStockCapped = !!potion.durationMin && stock >= 1;
   var canBuy = !isStockCapped && (game.gold || 0) >= cost;
 
@@ -51,7 +37,6 @@ function buildPotionCardHTML(potion) {
   return h;
 }
 
-/* Grille des 6 potions du catalogue (POTIONS_DB, voir data/potions.js). */
 function buildPotionShopHTML() {
   var h = '<div class="potion-grid">';
   (POTIONS_DB || []).forEach(function (potion) {
@@ -64,16 +49,8 @@ function buildPotionShopHTML() {
   return h;
 }
 
-/* Carte d'une potion de soin : achetée en stock (pas activée
-   immédiatement), à consommer depuis le bouton dédié de l'écran
-   Combat (voir ui/combat-view.js). */
 function buildHealingPotionCardHTML(potion) {
   var stock = PotionManager.getHealingStock(potion.id);
-  // v3.29 : bug corrigé — affichait potion.cost BRUT (prix de base
-  // figé) au lieu du prix RÉEL avec la hausse par cycle (+15%/cycle,
-  // voir PotionManager.getCost(), déjà correctement appliquée à
-  // l'achat depuis la v3.20 — seul l'AFFICHAGE ici n'avait jamais été
-  // mis à jour pour refléter cette hausse).
   var cost = PotionManager.getCost(potion);
   var canBuy = (game.gold || 0) >= cost;
 

@@ -1,23 +1,7 @@
 "use strict";
-/* ============================================================
-Aethervale — ui/combat-sandbox-view.js
-v3.33.4 : écran "Bac à sable de combat" (Paramètres > Bac à sable de
-combat) — outil de développement pour tester manuellement les 3
-classes (data/classes.js, data/class-skills.js) contre un ennemi réel
-(data/enemies.js), via systems/combat-sandbox-system.js.
-
-État isolé : _sandboxUiState (variable de module ci-dessous), JAMAIS
-game.*. Ce fichier ne fait qu'orchestrer l'affichage autour des
-fonctions PURES de combat-sandbox-system.js — il ne recalcule aucune
-règle de combat ici. Rien n'est sauvegardé (pas de champ save-system),
-rien n'est envoyé à combat-engine.js.
-============================================================ */
-
-/* État d'écran (sélections en cours + état de combat actif, ou null
-   avant "Lancer le combat"). Réinitialisé par resetSandboxSelection()/
-   au chargement de l'écran (buildCombatSandboxHTML() ne réinitialise
-   PAS automatiquement pour permettre de revenir sur l'écran sans
-   perdre un combat en cours, ex. après une navigation accidentelle). */
+/* systems/combat-sandbox-view.js — écran "Bac à sable de combat" (Paramètres). État isolé (_sandboxUiState), jamais game.*.
+   NOTE : header interne dit "ui/combat-sandbox-view.js" — possible ancienne version prototype, à vérifier si encore chargée
+   (coexiste avec ui/combat-sandbox-view.js, bien plus volumineux). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 var _sandboxUiState = {
   classId: null,
   heroId: null,
@@ -25,8 +9,6 @@ var _sandboxUiState = {
   combat: null // objet retourné par createSandboxCombatState(), ou null
 };
 
-/* Rafraîchit uniquement le contenu de l'écran (pas tout le panel) —
-   évite de perdre le scroll/focus des sélecteurs à chaque clic. */
 function renderCombatSandboxScreen() {
   var container = document.getElementById("panel-container");
   if (!container) return;
@@ -50,7 +32,6 @@ function buildCombatSandboxHTML() {
   return h;
 }
 
-/* Section de configuration : classe -> héros -> ennemi -> Lancer. */
 function buildSandboxSetupHTML() {
   var h = '<div class="sandbox-card">';
   h += '<div class="sandbox-card-title">1. Classe</div>';
@@ -100,7 +81,6 @@ function buildSandboxSetupHTML() {
   return h;
 }
 
-/* Section combat actif : PV, ressource, boutons d'action, journal. */
 function buildSandboxCombatHTML(state) {
   var resourceDef = getClassResource(state.classId);
   var kit = getClassSkills(state.classId);
@@ -156,11 +136,6 @@ function buildSandboxCombatantHTML(name, hp, maxHp, side) {
   return h;
 }
 
-/* État visuel d'un bouton d'action : disponible / cooldown (avec
-   temps restant) / ressource insuffisante / condition non remplie —
-   dérivé des mêmes fonctions pures que la simulation elle-même
-   (canAfford/isCooldownReady/checkActionConditions), jamais recalculé
-   indépendamment ici. */
 function buildSandboxActionButtonHTML(state, action, slot) {
   if (!action) return '';
   var combatContext = { enemyHp: state.enemy.hp, enemyMaxHp: state.enemy.maxHp };
@@ -193,17 +168,10 @@ function buildSandboxActionButtonHTML(state, action, slot) {
   return h;
 }
 
-/* ============================================================
-   Handlers — appelés depuis les onclick ci-dessus. Chacun mute
-   UNIQUEMENT _sandboxUiState (variable de module isolée), jamais
-   game.*, puis redessine l'écran.
-============================================================ */
-
 function selectSandboxClass(classId) {
   var cls = getClassById(classId);
   if (!cls) return;
   _sandboxUiState.classId = classId;
-  // Changer de classe invalide le héros sélectionné s'il n'y appartient plus.
   if (!cls.heroIds.includes(_sandboxUiState.heroId)) {
     _sandboxUiState.heroId = null;
   }
@@ -239,8 +207,6 @@ function triggerSandboxAction(slot) {
   renderCombatSandboxScreen();
 }
 
-/* Relance un combat neuf avec la même sélection classe/héros/ennemi
-   (ne recharge pas la page, comme demandé). */
 function resetSandboxCombat() {
   var s = _sandboxUiState;
   if (s.classId && s.heroId && s.enemyId) {

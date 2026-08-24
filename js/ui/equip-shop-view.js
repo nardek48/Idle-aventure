@@ -1,9 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/equip-shop-view.js
-Sous-onglet "Équipement" de la Boutique (voir shop-view.js pour la
-bascule entre Améliorations/Potions/Équipement).
-============================================================ */
+/* ui/equip-shop-view.js — sous-onglet Équipement de la Boutique (voir shop-view.js pour la bascule d'onglets). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 function buildEquipShopCardHTML(item) {
   var statText = typeof formatEquipmentStat === "function" ? formatEquipmentStat(item) : "";

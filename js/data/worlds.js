@@ -1,23 +1,7 @@
 "use strict";
-/* ============================================================
-QUEST IDLE — data/worlds.js
-Mondes, chapitres, ambiance et fonds de panneaux.
+/* data/worlds.js — mondes, chapitres, ambiance et fonds de panneaux. Ordre = progression linéaire (WorldManager.worldIndex).
+   Note : requiredAscension potentiellement vestigial depuis v2.83 (world-quests.js), à vérifier. Détail : COMMENTAIRES_ORIGINAUX.md */
 
-Structure d'un monde (WORLDS[i]) :
-  - requiredAscension  nombre d'ascensions nécessaires pour le débloquer
-                        (voir WorldManager.meetsAscensionRequirement en
-                        progression-system.js) ; 0 = accessible directement
-  - assetKey            sert à retrouver l'image/vignette du monde
-                        (images/Worlds/thumb_<assetKey>.png sur la carte)
-  - adventures[]         chapitres du monde, parcourus dans l'ordre ;
-                        chacun a son pool d'ennemis, un nombre de combats
-                        avant le boss, et l'id du boss (voir data/bosses.js)
-Ordre des mondes = ordre de progression linéaire (WorldManager.worldIndex).
-============================================================ */
-
-/* v2.74 : les fonds de panel par onglet ont été retirés (voir
-   js/ui/ui-root.js) — cette table n'est plus utilisée nulle part,
-   conservée telle quelle au cas où elle resservirait plus tard. */
 var WORLD_PANEL_BACKGROUNDS = {
   forest: "../images/Worlds/World_Forest.jpg",
   ruins: "../images/Worlds/World_Ruins.jpg",

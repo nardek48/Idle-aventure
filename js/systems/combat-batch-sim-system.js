@@ -1,72 +1,11 @@
 "use strict";
-/* ============================================================
-Aethervale — systems/combat-batch-sim-system.js
-v3.33.10 : orchestration d'une RAFALE de runs "Simulation auto" pour
-le bac à sable (voir ui/combat-sandbox-view.js).
+/* systems/combat-batch-sim-system.js — orchestration d'une rafale de runs "Simulation auto" (bac à sable), module PUR.
+   Boucle synchrone par run, aucun accès game.*, délègue tout à combat-sandbox-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-STATUT — logique pure, mêmes garanties que les autres modules du bac
-à sable :
-  - N'appelle jamais killEnemy(), la sauvegarde réelle, ni aucune
-    fonction de progression réelle.
-  - Ne lit/modifie jamais game.*.
-  - Réutilise EXCLUSIVEMENT createSandboxInfiniteState(),
-    applySandboxInfiniteAction(), tickSandboxInfiniteTime()
-    (systems/combat-sandbox-system.js, INCHANGÉES) pour la simulation
-    d'un run — ce module n'orchestre QUE l'enchaînement de plusieurs
-    runs et l'agrégation, aucune règle de combat n'est dupliquée ici.
-  - Chaque run est joué en boucle SYNCHRONE (pas de setInterval/
-    setTimeout par tick, contrairement au mode infini manuel de
-    l'écran) : rien n'est affiché tick par tick pendant une rafale,
-    seul le résultat agrégé compte (voir demande, fonctionnalité 2.4).
-    L'asynchrone (setTimeout) est géré UNIQUEMENT entre deux RUNS,
-    côté ui/combat-sandbox-view.js, pour garder l'interface réactive
-    et mettre à jour "Run n/N" — pas ici.
+var SIM_TICK_MS = 100;
+var DEFAULT_MAX_CONSECUTIVE_KILLS = 500;
+var DEFAULT_MAX_SIM_MS_PER_RUN = 10 * 60 * 1000;
 
-PAS DE COMBAT à l'intérieur d'un run : tickSandboxInfiniteTime()
-avance le temps par pas fixe (SIM_TICK_MS) que la policy ait pu
-jouer une action ou non — indispensable pour que la riposte ennemie
-(minuteur propre, voir combat-sandbox-system.js) continue de
-progresser même quand aucune action n'est disponible (cooldown en
-attente), sinon un run pourrait boucler indéfiniment sans jamais
-avancer le combat.
-============================================================ */
-
-var SIM_TICK_MS = 100; // pas de simulation interne à un run (pas affiché)
-var DEFAULT_MAX_CONSECUTIVE_KILLS = 500; // garde-fou anti-boucle infinie réelle
-var DEFAULT_MAX_SIM_MS_PER_RUN = 10 * 60 * 1000; // 10 min simulées, filet de sécurité additionnel
-
-/* runSingleAutoRun(classId, heroId, priorityList, overrideStats, baseCooldownMs, options, overrideEnemyCoefs, equipmentRarity)
-   Simule UN run complet en mode infini automatique, du début jusqu'à
-   la défaite, un arrêt de sécurité (maxConsecutiveKills atteint) ou
-   maxSimMs dépassé. Pilotage entièrement délégué à
-   chooseAutoAction() (combat-auto-policy-system.js) à chaque tick où
-   aucune action n'est en cours de résolution.
-
-   v3.33.12 : overrideEnemyCoefs (optionnel, même format que
-   createSandboxCombatState()/SANDBOX_ENEMY_COEFS) — transmis tel quel
-   à createSandboxInfiniteState(), pour que le panneau "Coefficients
-   d'ennemi" du bac à sable s'applique aussi à une rafale de
-   simulation auto.
-
-   Retourne un rapport agrégé pour CE run :
-   {
-     endReason: "defeat" | "safetyStop" | "timeCap" | "invalid",
-     defeatedCount, elapsedMs,
-     totalDamageDealt, totalDamageTaken,
-     actionCounts: { actionId: count, ... },
-     resourceWasted, heroMaxHp,
-     reachedBoss: bool   // au moins un combat contre un isBoss gagné
-   }
-   Ne modifie aucune donnée source, n'appelle jamais killEnemy() ni
-   la sauvegarde réelle — délègue entièrement à
-   createSandboxInfiniteState()/applySandboxInfiniteAction()/
-   tickSandboxInfiniteTime(), déjà garanties isolées.
-
-   v3.46.0 : equipmentRarity (optionnel, même format que
-   createSandboxCombatState()) — transmis tel quel à
-   createSandboxInfiniteState(), pour tester l'alignement gear/monde
-   sur une rafale complète (validation de la nouvelle courbe de PV,
-   voir progression-system.js). */
 function runSingleAutoRun(classId, heroId, priorityList, overrideStats, baseCooldownMs, options, overrideEnemyCoefs, equipmentRarity) {
   var opts = options || {};
   var maxConsecutiveKills = (typeof opts.maxConsecutiveKills === "number" && opts.maxConsecutiveKills > 0)
@@ -126,34 +65,16 @@ function runSingleAutoRun(classId, heroId, priorityList, overrideStats, baseCool
     elapsedMs: infiniteState.elapsedMs,
     totalDamageDealt: infiniteState.totalDamageDealt,
     totalDamageTaken: infiniteState.totalDamageTaken,
-    totalDamageAvoided: infiniteState.totalDamageAvoided || 0, // v3.33.13
+    totalDamageAvoided: infiniteState.totalDamageAvoided || 0,
     actionCounts: infiniteState.actionCounts,
     resourceWasted: infiniteState.currentCombat.resourceState.current || 0,
     heroMaxHp: infiniteState.currentCombat.hero.maxHp,
-    heroFinalHp: infiniteState.currentCombat.hero.hp, // v3.33.13 — PV restants en fin de run (0 si mort)
-    died: endReason === "defeat", // v3.33.13 — un run individuel ne peut mourir qu'une fois (il s'arrête à la 1ère défaite)
+    heroFinalHp: infiniteState.currentCombat.hero.hp,
+    died: endReason === "defeat",
     reachedBoss: reachedBoss
   };
 }
 
-/* aggregateAutoRuns(runReports)
-   Agrège un tableau de rapports runSingleAutoRun() en statistiques
-   de rafale : { runsCount, defeatedCount: {avg,min,max}, bossRate,
-   durationMsAvg, damageDealtAvg, damageTakenAvg, actionFrequency:
-   { actionId: fractionOfRuns... en moyenne d'occurrences par run },
-   resourceWastedAvg, heroMaxHp, heroFinalHpAvg, damageAvoidedAvg,
-   deathRate }. Retourne un objet à zéros si runReports est
-   vide/absent — jamais d'exception, jamais de division par zéro.
-
-   v3.33.13 — heroMaxHp : identique sur tous les runs d'une même
-   rafale (même héros/stats), donc pris du premier rapport plutôt que
-   moyenné (une moyenne serait trompeuse si elle affichait une valeur
-   à virgule pour une constante). heroFinalHpAvg/damageAvoidedAvg/
-   deathRate : voir demande de Seb (tableau PV max/PV restants/
-   dégâts reçus/dégâts évités/mort(s)). deathRate est un TAUX de runs
-   terminés en défaite sur la rafale (0-1), pas un décompte de morts
-   par run — un run individuel ne meurt qu'une fois avant de s'arrêter
-   (voir "died" dans runSingleAutoRun()). */
 function aggregateAutoRuns(runReports) {
   var empty = {
     runsCount: 0,

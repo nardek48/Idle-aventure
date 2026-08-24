@@ -1,16 +1,6 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/ui-root.js
-Le "chef d'orchestre" de l'UI : navigation entre onglets (switchTab),
-routeur qui appelle le bon builder HTML par onglet (renderPanel),
-rendu global (renderAll), et quelques helpers transversaux utilisés
-par plusieurs écrans (esc, accès aux héros, labels de stats).
-============================================================ */
+/* ui/ui-root.js — chef d'orchestre UI : switchTab (navigation), renderPanel (routeur par onglet), renderAll (rendu global), helpers transversaux (esc, héros, stats). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-/* Échappe le HTML dangereux avant insertion dans une chaîne — TOUT
-   texte d'origine utilisateur ou de donnée externe (nom d'objet,
-   nom du joueur...) doit passer par esc() avant d'être concaténé
-   dans du HTML, pour éviter l'injection. */
 function esc(value) {
   return String(value == null ? "" : value)
     .replace(/&/g, "&amp;")
@@ -20,23 +10,12 @@ function esc(value) {
     .replace(/'/g, "&#39;");
 }
 
-/* v2.23 : icône illustrée d'un objet d'équipement (une image par
-   type ET par rareté, voir getEquipmentIconPath en
-   systems/equipment-system.js), avec repli sur l'emoji générique si
-   jamais l'image ne charge pas. Utilisé par l'inventaire, les
-   emplacements équipés et l'échoppe. */
 function buildEquipmentIconHTML(item, cssClass) {
   var cls = cssClass || "";
   if (!item) return '<div class="' + cls + '">' + renderIcon("equipment", "") + '</div>';
 
   var path = (typeof getEquipmentIconPath === "function") ? getEquipmentIconPath(item) : "";
   var fallbackEmoji = renderIcon("equipment", item.icon);
-  // v3.14 : bordure de rareté ajoutée directement ici (classe
-  // "rarity-{rareté}") — buildEquipmentIconHTML() étant le point de
-  // rendu PARTAGÉ par tout le jeu (détail objet, emplacements équipés,
-  // boutique, comparaison, sac...), une seule modification ici
-  // s'applique partout d'un coup. Voir la règle .has-icon-img.rarity-*
-  // dans css/04-panel-equipment.css pour le style visuel réel.
   var rarityClass = item.rarity ? (" rarity-" + item.rarity) : "";
 
   if (!path) return '<div class="' + cls + rarityClass + '">' + fallbackEmoji + '</div>';
@@ -48,15 +27,11 @@ function buildEquipmentIconHTML(item, cssClass) {
     + '</div>';
 }
 
-/* Récupère un héros par sa clé d'objet dans HEROES_DB (ex: "knight"),
-   pas son `id` (voir getHeroByGameId ci-dessous pour l'inverse). */
 function getHeroByKey(heroKey) {
   if (typeof HEROES_DB === "undefined" || !heroKey) return null;
   return HEROES_DB[heroKey] || null;
 }
 
-/* Récupère un héros par son `id` (celui stocké dans game.heroId),
-   en cherchant dans toutes les entrées de HEROES_DB. */
 function getHeroByGameId(heroId) {
   if (typeof HEROES_DB === "undefined") return null;
   var keys = Object.keys(HEROES_DB);
@@ -67,9 +42,6 @@ function getHeroByGameId(heroId) {
   return null;
 }
 
-/* Libellé français d'une clé de stat RPG (ex: "power" -> "Puissance").
-   Utilisé par le bestiaire (les cartes héros/ennemi dédiées ont été
-   retirées, voir historique du projet). */
 function getStatLabel(statKey) {
   if (typeof RPG_STAT_LABELS !== "undefined" && RPG_STAT_LABELS[statKey]) {
     return RPG_STAT_LABELS[statKey];
@@ -77,18 +49,11 @@ function getStatLabel(statKey) {
   return statKey;
 }
 
-/* Convertit une valeur de stat brute en pourcentage 0-100 pour une
-   barre de progression visuelle (les stats RPG n'ont pas de max
-   "naturel", donc c'est une échelle purement indicative). */
 function clampStatValue(value) {
   var n = Number(value) || 0;
   return Math.max(0, Math.min(100, n));
 }
 
-/* Mémorise/restaure la position de scroll du sac d'objets lors d'un
-   re-rendu (killEnemy() peut redessiner tout l'écran équipement en
-   plein milieu du scroll du joueur — sans ça, il reviendrait en haut
-   à chaque kill). */
 window.__equipBagScrollTop = 0;
 
 function saveEquipBagScroll() {
@@ -105,23 +70,6 @@ function restoreEquipBagScroll() {
   });
 }
 
-/* Change l'onglet actif : bascule l'affichage combat/panel, met à
-   jour le fond et redessine le contenu du panel. tabMap fait
-   correspondre chaque onglet logique au bouton visuel qu'il faut
-   surligner dans la barre du bas — remarque que bestiary/log/settings
-   partagent le même bouton que "more" (index 8) car on y accède
-   depuis l'écran Plus, pas directement depuis la barre. */
-/* Change l'onglet actif : bascule l'affichage combat/panel, met à
-   jour le fond et redessine le contenu du panel. Depuis la refonte
-   du menu (v2.4), la barre du bas n'a plus que 2 boutons (Combat et
-   Menu) : le bouton Combat s'allume sur l'écran de combat, le bouton
-   Menu s'allume pour TOUT le reste (indique juste "tu es dans un
-   sous-écran", plus besoin de mapper un index par onglet).
-   v2.74 : les images de fond par onglet (Worlds/*.png sur les
-   panels hors-combat) ont été retirées à la demande de l'utilisateur
-   — voir l'ancienne getCurrentWorldPanelBackground()/updatePanelBackground()
-   supprimées de ce fichier. Le fond de zone de combat (WorldManager.
-   applyWorldTheme, peint sur <html>/body) n'est pas concerné. */
 function switchTab(tabName) {
   game.activeTab = tabName;
 
@@ -136,13 +84,6 @@ function switchTab(tabName) {
 
   var combatMode = tabName === "combat";
 
-  // v3.7 : la barre du bas a 5 boutons dédiés (Campement, Combat,
-  // Village, Héros, Menu) — Donjon n'a plus son propre bouton, déplacé
-  // dans la grille du Menu (voir MENU_ITEMS, ui/menu-view.js) pour
-  // faire de la place au Campement. Si l'onglet actif a son propre
-  // bouton (data-tab correspondant), on l'allume directement ; sinon
-  // (Boutique, Talents, Quêtes, Donjon, Ascension...) c'est forcément
-  // un écran ouvert depuis le menu principal, donc on allume "Menu".
   var directBtn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
   if (directBtn) {
     directBtn.classList.add("active");
@@ -159,10 +100,6 @@ function switchTab(tabName) {
   renderPanel();
 }
 
-/* Rafraîchit TOUT l'affichage (HUD, ennemi, stats, panel actif) —
-   la fonction "brute force" appelée après la plupart des actions de
-   jeu. Ouvre aussi le sélecteur de héros si aucun n'est encore
-   choisi (première visite). */
 function renderAll() {
   renderHud();
   renderEnemy();
@@ -180,29 +117,8 @@ function renderAll() {
   }
 }
 
-/* Mémorise le dernier onglet réellement rendu, pour que
-   renderPanel() (ci-dessous) sache s'il s'agit d'un vrai changement
-   d'onglet (scroll remis à zéro, normal) ou d'un simple re-rendu du
-   même onglet suite à une action de jeu (scroll à conserver). */
 var lastRenderedTab = null;
 
-/* Redessine UNIQUEMENT le contenu du panel selon l'onglet actif
-   (game.activeTab). C'est ici qu'il faut ajouter une entrée si un
-   nouvel onglet est créé un jour.
-
-   v2.83.14 : conserve la position de scroll à travers le re-rendu,
-   MAIS seulement quand l'onglet actif n'a pas changé depuis le
-   dernier rendu (voir lastRenderedTab). renderPanel() est appelée
-   très souvent (à chaque kill, via renderAll() — l'auto-attaque
-   continue même si le joueur regarde un autre onglet que Combat), et
-   remplaçait tout le innerHTML du panel à chaque fois, ramenant le
-   scroll en haut à chaque mort d'ennemi — gênant en pleine
-   Boutique/Équipement/etc. En revanche, un VRAI changement d'onglet
-   (via switchTab()) doit toujours réouvrir en haut, comme avant.
-   Deux conteneurs possibles selon l'écran : #panel-container
-   lui-même (la plupart des onglets), ou .subtab-page-content à
-   l'intérieur (Boutique, Donjon, Personnage — voir
-   css/00-components.css, pattern des sous-onglets en pilules). */
 function renderPanel() {
   var container = document.getElementById("panel-container");
   if (!container) return;
@@ -212,11 +128,6 @@ function renderPanel() {
   var innerScroll = sameTab ? container.querySelector(".subtab-page-content") : null;
   var savedInnerScrollTop = innerScroll ? innerScroll.scrollTop : null;
 
-  // v3.33.10 : écran Bac à sable de combat UNIQUEMENT — largeur pleine
-  // sur desktop (voir .sandbox-wide-mode, css/04-panel-combat-sandbox.css,
-  // media query desktop-only). N'affecte jamais les autres onglets ni
-  // le mobile réel (390px inchangé partout ailleurs, voir #panel-container
-  // dans css/02-layout.css).
   container.classList.toggle("sandbox-wide-mode", game.activeTab === "combat-sandbox");
 
   switch (game.activeTab) {

@@ -1,18 +1,7 @@
 "use strict";
-/* ============================================================
-Quest Idle — core/constants.js
-Petites constantes globales chargées tout au début du jeu,
-avant tous les autres fichiers data/systems/ui.
-============================================================ */
+/* core/constants.js — constantes globales, chargé en premier.
+   ATTENTION : DEFAULT_QUEST_PROGRESS est redéclaré (et écrasé) par data/quests.js qui charge après — c'est CETTE version-ci (quests.js) qui fait foi. Garder les deux synchronisés à la main. Détail : COMMENTAIRES_ORIGINAUX.md */
 
-/* Valeurs de progression de quête par défaut (utilisées pour
-   initialiser game.questProgress). 
-   ATTENTION : js/data/quests.js déclare aussi une variable
-   DEFAULT_QUEST_PROGRESS qui se charge après celle-ci et qui
-   l'écrase (comportement normal de `var` en JS). C'est donc la
-   version de quests.js qui fait foi en pratique. Les deux sont
-   maintenues synchronisées à la main, donc si tu ajoutes un champ
-   de progression de quête ici, ajoute-le aussi dans quests.js. */
 var DEFAULT_QUEST_PROGRESS = {
   kills: 0,
   treasures: 0,
@@ -20,9 +9,9 @@ var DEFAULT_QUEST_PROGRESS = {
   goldEarned: 0,
   goldSpent: 0,
   crits: 0,
-  swordKills: 0,   // kills réalisés avec une épée/hache (maîtrise d'arme)
-  bowKills: 0,     // kills réalisés à l'arc
-  magicKills: 0,   // kills réalisés au bâton
+  swordKills: 0,
+  bowKills: 0,
+  magicKills: 0,
   combatTime: 0,
   forestChaptersDone: 0,
   ruinsChaptersDone: 0

@@ -1,9 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/settings-view.js
-Écran "Paramètres" : sauvegarde manuelle et reset complet (voir
-resetGame() dans systems/save-system.js pour la confirmation).
-============================================================ */
+/* ui/settings-view.js — écran Paramètres : sauvegarde/export/import, toggle combat auto, reset complet. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 function buildSettingsHTML() {
   var h = '<button class="settings-btn" onclick="saveGame()">Sauvegarder</button>';
@@ -42,14 +38,9 @@ function buildSettingsHTML() {
   h += 'Sauvegarde : ' + (game.saveSupported ? 'locale navigateur' : 'indisponible') + '.<br>';
   h += 'La progression hors-ligne, l\'équipement et les quêtes sont activés.';
   h += '</div>';
-  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
+  return '<div class="nb-page-frame">' + h + '</div>';
 }
 
-/* v3.47.0 : toggle du combat auto de base (Paramètres > Combat) —
-   met à jour game.autoSkillsEnabled, sauvegarde, et rafraîchit les
-   boutons de compétence de classe (désactivés visuellement tant que
-   le mode auto est actif, voir buildClassSkillButtonHTML(),
-   ui/combat-view.js). */
 function toggleAutoSkills(enabled) {
   game.autoSkillsEnabled = !!enabled;
   if (typeof renderClassSkillButtons === "function") renderClassSkillButtons();

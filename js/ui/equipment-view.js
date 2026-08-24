@@ -1,24 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/equipment-view.js
-Écran "Équipement" : fiche héros + 3 emplacements (arme/armure/
-amulette) et le sac d'inventaire. Note : le titre du sac affiche
-"/50" comme limite mais rien dans le code n'empêche réellement de
-dépasser 50 objets (LootSystem ne vérifie pas la taille de
-l'inventaire) — purement indicatif pour l'instant.
-
-v2.83.16 : ajout du panneau de détail façon maquette — la grille de
-gauche ne montre plus que des icônes (clic = sélectionne), le détail
-de l'emplacement sélectionné (nom, stat, action) s'affiche à droite.
-Pas de bouton "Améliorer" (aucune mécanique de ce type dans le jeu) :
-remplacé par "Déséquiper", la vraie action disponible.
-
-v2.83.39 : 3e sous-onglet "Boutique" — la boutique d'achat
-d'équipement (contre or), avant sous-onglet de l'écran Boutique
-classique, a déménagé ici (voir ui/equip-shop-view.js pour son
-contenu, inchangé). Plus logique : on équipe/consulte/achète de
-l'équipement au même endroit.
-============================================================ */
+/* ui/equipment-view.js — écran Équipement, 3 sous-onglets Équipement/Inventaire/Boutique. Panneau détail unifié équipement+potions (v2.83.46), comparaison avec équipé, bonus de set. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var activeEquipSubTab = "equipment"; // "equipment" | "inventory" | "shop" | "potions"
 var selectedEquipSlot = "weapon"; // un des 7 slots réels (voir EQUIPMENT_SLOTS)
@@ -62,7 +43,6 @@ function buildEquipSubTabBarHTML() {
   return h;
 }
 
-/* Texte lisible du bonus d'un objet, ex: "+10% dégâts". */
 function formatEquipmentStat(item) {
   if (!item) return "";
   var value = Number(item.value || 0);
@@ -85,11 +65,6 @@ function getCurrentHeroForEquipmentView() {
   return null;
 }
 
-/* Un des 3 emplacements équipés (arme/armure/amulette), version
-   "icône seule" (v2.83.16) — le détail complet (nom, stat, action)
-   est maintenant dans le panneau de droite, voir
-   buildEquipDetailPanelHTML. Cliquer sélectionne l'emplacement,
-   qu'il soit rempli ou vide. */
 function buildEquipmentSlot(slot, label, icon) {
   var item = game.equipped[slot];
   var isSelected = selectedEquipSlot === slot;
@@ -101,13 +76,6 @@ function buildEquipmentSlot(slot, label, icon) {
   return h;
 }
 
-/* v2.83.55 : buildLockedEquipmentSlot() supprimée — les 7 emplacements
-   sont maintenant tous réels (casque/gants/bottes/anneau ajoutés),
-   plus aucun "à venir" à afficher. */
-
-/* v2.83.34 : compare deux objets du MÊME type de stat (renvoie null
-   si les types diffèrent — pas de comparaison numérique honnête
-   entre par ex. +dégâts/tap et +%or). Renvoie le delta signé. */
 function getEquipmentStatDelta(candidate, current) {
   if (!candidate || !current) return null;
   if (candidate.stat !== current.stat) return null;
@@ -121,9 +89,6 @@ function formatStatDelta(stat, delta) {
   return sign + formatNumber(delta);
 }
 
-/* Objets du sac compatibles avec un emplacement donné, triés par
-   rareté (décroissante) puis nom — utilisé par la mini-liste "Objets
-   du sac compatibles" côté Équipement (v2.83.34). */
 function getInventoryItemsForSlot(slot) {
   var inventory = Array.isArray(game.inventory) ? game.inventory : [];
   var order = (typeof RARITY_ORDER !== "undefined") ? RARITY_ORDER : ["common", "green", "rare", "epic", "legendary"];
@@ -136,10 +101,6 @@ function getInventoryItemsForSlot(slot) {
     });
 }
 
-/* Mini-liste des objets du sac compatibles avec l'emplacement
-   sélectionné, avec un bouton "Équiper" direct sur chacun — évite
-   d'avoir à changer d'onglet pour équiper (v2.83.34). Plafonnée à 5
-   objets affichés (au-delà, direction vers l'Inventaire complet). */
 function buildCompatibleItemsListHTML(slot) {
   var items = getInventoryItemsForSlot(slot);
   if (!items.length) return "";
@@ -172,13 +133,6 @@ function buildCompatibleItemsListHTML(slot) {
   return h;
 }
 
-/* Panneau de détail (colonne de droite) — reflète l'emplacement
-   actuellement sélectionné dans la grille de gauche. 2 états
-   possibles depuis v2.83.55 (les 7 emplacements sont tous réels,
-   plus aucun verrouillé) : objet équipé (icône + nom + stat + bouton
-   Déséquiper), ou emplacement vide (invite vers l'Inventaire). Ajout
-   d'une mini-liste des objets compatibles du sac (voir
-   buildCompatibleItemsListHTML), pour équiper sans changer d'onglet. */
 function buildEquipDetailPanelHTML() {
   var slot = selectedEquipSlot;
   var label = EQUIPMENT_SLOT_LABELS[slot] || slot;
@@ -204,12 +158,6 @@ function buildEquipDetailPanelHTML() {
   return h;
 }
 
-/* Version courte du bandeau "Bonus de set" (voir tout en haut de
-   l'écran pour la version complète), affichée sous le panneau de
-   détail — pratique pour vérifier l'état du bonus sans remonter en
-   haut de l'écran pendant qu'on équipe/déséquipe des objets.
-   v3.18 : affiche maintenant CHAQUE palier actif (3 ET 7 pièces si
-   les deux sont atteints, ils se cumulent) au lieu d'un seul. */
 function buildCompactSetBonusHTML() {
   var active = (window.EquipmentManager && typeof EquipmentManager.getActiveSetBonuses === "function")
     ? EquipmentManager.getActiveSetBonuses()
@@ -233,17 +181,6 @@ function buildCompactSetBonusHTML() {
   return out;
 }
 
-/* v2.83.46 : Inventaire unifié (équipement + potions dans la même
-   grille), avec un filtre Tout/Équipement/Potions — remplace la
-   grille équipement seule (v2.83.29) et le 4e sous-onglet Potions
-   dédié (v2.83.45). Chaque entrée de la liste unifiée a un type
-   ("equipment" ou "potion") ; le panneau de détail bascule son
-   contenu et ses boutons d'action selon ce type. */
-
-/* Construit la liste affichée selon le filtre courant : objets
-   d'équipement (game.inventory) et/ou potions en stock (voir
-   getOwnedPotionsList). Équipement d'abord, potions ensuite — pas de
-   tri mélangé par rareté entre les deux types, pour rester lisible. */
 function getUnifiedInventoryEntries() {
   var entries = [];
 
@@ -262,10 +199,6 @@ function getUnifiedInventoryEntries() {
   return entries;
 }
 
-/* Une tuile dans la grille unifiée — icône seule, bordée par couleur
-   de rareté, badge de quantité pour les potions uniquement (jamais
-   plus d'un exemplaire pour l'équipement). Clic = sélectionne, le
-   détail complet s'affiche dans le panneau de droite. */
 function buildUnifiedTileHTML(entry) {
   var isSelected = selectedInventoryKey === entry.key;
 
@@ -285,10 +218,6 @@ function buildUnifiedTileHTML(entry) {
   return h2;
 }
 
-/* Panneau de détail (colonne de droite) — bascule son contenu et ses
-   boutons selon le type de l'entrée sélectionnée : "Équiper"/"Vendre"
-   + comparaison avec l'équipé pour un objet d'équipement,
-   "Utiliser"/"Vendre" pour une potion. */
 function buildUnifiedDetailPanelHTML(entries) {
   var entry = entries.find(function (e) { return e.key === selectedInventoryKey; });
   var h = '<div class="eq-detail-panel">';
@@ -328,9 +257,6 @@ function buildUnifiedDetailPanelHTML(entries) {
   return h;
 }
 
-/* Comparaison avec l'objet déjà équipé sur le même emplacement que
-   l'objet sélectionné dans le sac (v2.83.34) — même logique de
-   delta que buildCompatibleItemsListHTML côté Équipement. */
 function buildEquippedComparisonHTML(item) {
   var equipped = game.equipped ? game.equipped[item.slot] : null;
   var h = '<div class="eq-compare-box">';
@@ -362,28 +288,10 @@ function buildEquippedComparisonHTML(item) {
   return h;
 }
 
-/* Contenu du sous-onglet "Équipement" : les 3 emplacements réels +
-   emplacements verrouillés réservés pour de futurs types d'objets.
-   v2.83.23 : le bandeau "BONUS DE SET" pleine largeur (en haut) a été
-   retiré — le rappel compact sous le panneau de détail (voir
-   buildCompactSetBonusHTML, v2.83.22) suffit maintenant à lui seul. */
 function buildEquipmentTabContentHTML() {
   var h = '';
 
-  // v2.24 : le portrait/nom/niveau/mini-stats du héros a été retiré
-  // d'ici (doublon exact de l'écran Personnage) — cet écran ne
-  // montre plus que ce qui concerne l'ÉQUIPEMENT lui-même.
-  // v2.83.16 : grille d'icônes (gauche) + panneau de détail (droite),
-  // façon maquette — voir buildEquipDetailPanelHTML.
-  // v2.83.55 : les 7 emplacements sont maintenant tous réels (plus de
-  // "verrouillé", voir data/equipment.js pour EQUIPMENT_SLOTS) —
-  // répartition 4/3 sur 2 colonnes inchangée.
   h += '<div class="eq-layout">';
-  // v2.90 : fond parchemin standard perdu en route — .eq-hero-card
-  // est censé porter .nb-page-frame/.nb-page-frame-fill depuis la
-  // v2.83.27 (voir commentaire CSS ci-contre, css/04-panel-equipment.css),
-  // exactement comme .eq-bag-panel juste à côté (sous-onglet
-  // Inventaire) qui, lui, les avait gardées.
   h += '<div class="eq-hero-card nb-page-frame nb-page-frame-fill">';
   h += '<div class="eq-hero-main eq-hero-main-slots-only">';
 
@@ -410,10 +318,6 @@ function buildEquipmentTabContentHTML() {
   return h;
 }
 
-/* v2.83.31 : barre d'outils compacte du sac — remplace l'ancienne
-   bascule d'autovente pleine largeur + les 3 boutons côte à côte.
-   2 icônes seulement : "⇅ Trier" (petit menu déroulant, 2 options) et
-   "⚙" (panneau de réglages complet, voir buildInventorySettingsHTML). */
 var showInventorySortMenu = false;
 
 function toggleInventorySortMenu() {
@@ -426,8 +330,6 @@ function applyInventorySort(kind) {
   showInventorySortMenu = false;
   if (kind === "type") sortInventoryByType();
   else sortInventoryByRarity();
-  // sortInventoryByX() appellent déjà renderPanel()/saveGame(), pas
-  // besoin de le refaire ici.
 }
 window.applyInventorySort = applyInventorySort;
 
@@ -450,8 +352,6 @@ function buildInventoryCompactToolbarHTML() {
   return h;
 }
 
-/* v2.83.46 : rangée de filtre Tout/Équipement/Potions, sous la
-   toolbar. */
 function buildInventoryFilterRowHTML() {
   var h = '<div class="inv-filter-row">';
   h += '<button type="button" class="inv-filter-btn' + (inventoryFilter === "all" ? ' is-active' : '') + '" onclick="setInventoryFilter(\'all\')">Tout</button>';
@@ -461,9 +361,6 @@ function buildInventoryFilterRowHTML() {
   return h;
 }
 
-/* Panneau de réglages complet (overlay, réutilise #full-menu-root —
-   même conteneur générique que le menu ☰) : autovente + son seuil de
-   rareté réglable, et "Tout vendre" tout en bas en rouge discret. */
 function buildInventorySettingsHTML() {
   var threshold = game.autoSellRarityThreshold || "common";
   var rarities = (typeof RARITY_ORDER !== "undefined") ? RARITY_ORDER : ["common", "green", "rare", "epic", "legendary"];
@@ -512,11 +409,6 @@ function closeInventorySettings() {
 window.openInventorySettings = openInventorySettings;
 window.closeInventorySettings = closeInventorySettings;
 
-/* v2.83.31 : confirmation avant toute vente (objet seul + tout
-   vendre), demandée explicitement — réutilise showConfirmModal(),
-   déjà utilisée pour l'ascension/le reset complet/le respec talents.
-   v2.90.17 : prix de vente ajouté au texte de confirmation (retour
-   utilisateur). */
 function confirmSellItem(uid) {
   var item = (Array.isArray(game.inventory) ? game.inventory : []).find(function (i) { return i.uid === uid; });
   var itemName = item ? item.name : "cet objet";
@@ -549,8 +441,6 @@ function confirmSellAllInventory() {
 }
 window.confirmSellAllInventory = confirmSellAllInventory;
 
-/* Liste de toutes les potions actuellement EN STOCK (des deux
-   catalogues), triée par rareté puis nom. */
 function getOwnedPotionsList() {
   var order = (typeof RARITY_ORDER !== "undefined") ? RARITY_ORDER : ["common", "green", "rare", "epic", "legendary"];
   var list = [];
@@ -573,10 +463,6 @@ function getOwnedPotionsList() {
   return list;
 }
 
-/* Contenu du sous-onglet "Inventaire" : bascule d'autovente, outils
-   de tri/vente rapide, filtre Tout/Équipement/Potions, puis grille
-   3 colonnes (icônes seules) + panneau de détail de l'entrée
-   sélectionnée (v2.83.46, unifié équipement + potions). */
 function buildInventoryTabContentHTML() {
   var h = '<div class="eq-bag-panel nb-page-frame nb-page-frame-fill">';
 
@@ -596,8 +482,6 @@ function buildInventoryTabContentHTML() {
         : "Rien à afficher pour l\u2019instant.";
     h += '<div class="eq-empty">' + emptyMsg + '</div>';
   } else {
-    // Si l'entrée sélectionnée a disparu (vendue/équipée/bue, ou
-    // filtre changé), on retombe sur la première de la liste actuelle.
     if (!entries.some(function (e) { return e.key === selectedInventoryKey; })) {
       selectedInventoryKey = entries[0].key;
     }
@@ -616,11 +500,6 @@ function buildInventoryTabContentHTML() {
   return h;
 }
 
-
-/* Assemble l'écran entier — 4 sous-onglets (Équipement/Inventaire/
-   Boutique/Potions), même pattern que Personnage/Donjon (voir
-   css/00-components.css : .subtab-page/-content/-bar-wrapper +
-   .pc-subtab-bar/.pc-subtab-btn). */
 function buildEquipHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';

@@ -1,67 +1,6 @@
 "use strict";
-/* ============================================================
-Aethervale — ui/combat-sandbox-view.js
-v3.33.4 : écran "Bac à sable de combat" (Paramètres > Bac à sable de
-combat) — outil de développement pour tester manuellement les 3
-classes (data/classes.js, data/class-skills.js) contre un ennemi réel
-(data/enemies.js), via systems/combat-sandbox-system.js.
+/* ui/combat-sandbox-view.js — écran Bac à sable de combat (Paramètres). 4 modes : Combat unique/Run/Infini/Simulation auto (v3.33.4-12). Etat isolé _sandboxUiState, JAMAIS game.*. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-État isolé : _sandboxUiState (variable de module ci-dessous), JAMAIS
-game.*. Ce fichier ne fait qu'orchestrer l'affichage autour des
-fonctions PURES de combat-sandbox-system.js — il ne recalcule aucune
-règle de combat ici. Rien n'est sauvegardé (pas de champ save-system),
-rien n'est envoyé à combat-engine.js.
-============================================================ */
-
-/* État d'écran (sélections en cours + état de combat/run actif, ou
-   null avant "Lancer"). Réinitialisé par resetSandboxSelection()/
-   au chargement de l'écran (buildCombatSandboxHTML() ne réinitialise
-   PAS automatiquement pour permettre de revenir sur l'écran sans
-   perdre un combat en cours, ex. après une navigation accidentelle).
-
-   v3.33.5 : ajout du mode Run (mode: "single" | "run"), de la
-   composition de file (runQueue, runZoneChoice) et du réglage de
-   persistance (persistence, valeurs par défaut via
-   createDefaultSandboxPersistence()). combat/run ne sont jamais
-   actifs simultanément — un seul des deux est non-null à la fois.
-
-   v3.33.6 : ajout du panneau d'édition de stats (statsOverride,
-   statsPanelOpen) et du réglage baseCooldownMs (cooldown de l'attaque
-   de base, bac à sable uniquement — voir
-   systems/combat-cooldown-system.js: computeEffectiveCooldownMs()).
-   statsOverride est réinitialisé (null) au changement de héros, pour
-   ne jamais appliquer par erreur les stats d'un autre héros — voir
-   selectSandboxHero(). "Application au prochain combat lancé" (pas en
-   cours de combat déjà démarré) : voir launchSandboxCombat()/
-   launchSandboxRun(), qui lisent statsOverride/baseCooldownMs au
-   moment du lancement — un combat déjà en cours garde les stats
-   figées à l'instant où il a été créé (choix documenté, voir
-   rapport de livraison : trivial à faire pour un nouveau lancement,
-   nettement plus risqué en cours de combat car cela changerait maxHp
-   pendant qu'un ratio hp/maxHp est affiché).
-
-   v3.33.9 : ajout du mode Infini (mode: "single" | "run" | "infinite"),
-   état infinite (objet retourné par createSandboxInfiniteState(), ou
-   null). combat/run/infinite ne sont jamais actifs simultanément — un
-   seul des trois est non-null à la fois. Le mode Infini réutilise
-   getSandboxPersistence()/statsOverride/baseCooldownMs déjà en place
-   pour le mode Run — aucun nouvel état de configuration inventé.
-
-   v3.33.10 : ajout du mode "Simulation auto" (mode: "single" | "run" |
-   "infinite" | "auto"). État dédié autoPolicy (liste ordonnée de
-   slots, initialisée depuis data/auto-policy-defaults.js au premier
-   choix de classe — voir selectSandboxClass()), autoRunsRequested
-   (nombre de runs à lancer, défaut 20), autoBatch (résultat en cours/
-   terminé d'une rafale, ou null), autoBatchRunning (bool, évite un
-   double-lancement pendant l'exécution asynchrone), autoResultsByClass
-   (objet { classId: rapport agrégé }, CONSERVÉ entre les rafales
-   successives pour le tableau de comparaison 3 classes — vidé
-   uniquement par resetSandboxAutoResults() ou en quittant l'écran).
-   Ce mode ne crée ni ne touche à _sandboxUiState.combat/run/infinite —
-   toute la simulation d'une rafale passe par
-   systems/combat-batch-sim-system.js (runSingleAutoRun), en boucle
-   SYNCHRONE par run (voir launchSandboxAutoBatch() plus bas), jamais
-   par startSandboxClock()/tickSandbox*Time() piloté depuis l'écran. */
 var _sandboxUiState = {
   mode: "single", // "single" | "run" | "infinite" | "auto"
   classId: null,
@@ -95,67 +34,9 @@ function getSandboxPersistence() {
   return _sandboxUiState.persistence;
 }
 
-/* ============================================================
-   v3.33.7 — Horloge du bac à sable. BUG CORRIGÉ : jusqu'ici, aucun
-   appel à tickSandboxTime()/tickSandboxRunTime() n'était jamais
-   déclenché depuis l'UI — les cooldowns (attaque de base incluse,
-   voir v3.33.6) ne décomptaient donc JAMAIS tant que le joueur ne
-   déclenchait pas un autre événement, ce qui bloquait un bouton en
-   cooldown indéfiniment plutôt que pendant la durée annoncée.
-
-   v3.33.8 — CORRECTIF DE SUIVI : la première version de ce timer
-   appelait renderCombatSandboxScreen() (redessine TOUT l'écran, donc
-   recrée tous les boutons/sélecteurs du DOM) toutes les 100ms — assez
-   rapide et assez destructeur du DOM pour qu'un clic en cours soit
-   parfois "perdu" (l'élément cliqué disparaît et est remplacé avant
-   que le navigateur n'ait fini de traiter le clic). Corrigé par deux
-   changements :
-     1. Intervalle ralenti à 500ms (_sandboxClockIntervalMs) — largement
-        suffisant pour un décompte lisible, beaucoup moins agressif.
-     2. Le tick ne redessine plus TOUT l'écran : il reconstruit
-        UNIQUEMENT des zones ciblées via leur id (voir
-        refreshSandboxLiveUI() plus bas) — jamais les sélecteurs de
-        classe/héros/ennemi, le panneau de stats, la composition de
-        file, etc.
-
-   v3.33.9 — la riposte ennemie est désormais pilotée par son propre
-   minuteur (voir tickSandboxTime(), combat-sandbox-system.js) et peut
-   donc modifier les PV du héros/le journal EN DEHORS de toute action
-   du joueur. refreshSandboxActionButtons() (v3.33.8, ne rafraîchissait
-   que la grille de boutons) est remplacée par refreshSandboxLiveUI()
-   (PV, ressource, journal, ligne de progression, ET boutons), tout en
-   conservant le même principe de rafraîchissement CIBLÉ par id — voir
-   sa documentation plus bas.
-
-   Démarré par startSandboxClock() (après tout lancement de combat/
-   run/mode infini), arrêté par stopSandboxClock() (terminé,
-   réinitialisé, ou écran quitté) pour ne jamais laisser un intervalle
-   tourner dans le vide. N'affecte que _sandboxUiState — toujours
-   aucun accès à game.* en écriture (lecture seule de game.activeTab
-   pour détecter que l'écran a été quitté). */
 var _sandboxClockIntervalMs = 500;
 var _sandboxClockHandle = null;
 
-/* refreshSandboxLiveUI()
-   Reconstruit UNIQUEMENT le contenu de #sandbox-actions-grid à partir
-   de l'état courant (combat ou run selon _sandboxUiState.mode) — ne
-   touche à aucun autre élément du DOM. Sans effet si l'élément est
-   absent (écran pas sur la vue combat/run) ou si aucun combat/run
-   n'est actif. */
-/* refreshSandboxLiveUI()
-   v3.33.9 — Remplace refreshSandboxActionButtons() (v3.33.8) : ne
-   rafraîchit plus SEULEMENT la grille de boutons, mais aussi les PV/
-   ressource/journal/ligne de progression — nécessaire depuis que la
-   riposte ennemie (et donc les PV du héros) peut changer en dehors
-   de toute action du joueur (minuteur propre à l'ennemi, voir
-   combat-sandbox-system.js). Reste un rafraîchissement CIBLÉ (jamais
-   renderCombatSandboxScreen() complet) : chaque zone est retrouvée
-   par son id et reconstruite via les mêmes fonctions de build que le
-   rendu initial (buildSandboxResourceBarHTML, buildSandboxLogLinesHTML,
-   etc.) — aucune règle de combat recalculée ici, uniquement de
-   l'affichage. Les sélecteurs de classe/héros/ennemi, le panneau de
-   stats, la composition de file, etc. ne sont TOUJOURS jamais
-   touchés par le timer. */
 function refreshSandboxLiveUI() {
   var state = null;
   var onClickFn = "triggerSandboxAction";
@@ -219,10 +100,6 @@ function refreshSandboxLiveUI() {
 function startSandboxClock() {
   if (_sandboxClockHandle !== null) return; // déjà démarré
   _sandboxClockHandle = setInterval(function () {
-    // Si le joueur a quitté l'écran bac à sable (autre onglet actif),
-    // on arrête le timer plutôt que de continuer à travailler dans le
-    // vide. Lecture seule de game.activeTab (navigation UI), jamais
-    // d'écriture.
     if (typeof game !== "undefined" && game && game.activeTab !== "combat-sandbox") {
       stopSandboxClock();
       return;
@@ -240,12 +117,8 @@ function startSandboxClock() {
       tickedSomething = true;
     }
     if (tickedSomething) {
-      // v3.33.8 : rafraîchissement CIBLÉ, plus renderCombatSandboxScreen()
-      // complet — voir note d'en-tête.
       refreshSandboxLiveUI();
     } else {
-      // Plus rien à faire avancer (combat/run terminé ou absent) —
-      // le timer s'arrête de lui-même plutôt que de tourner à vide.
       stopSandboxClock();
     }
   }, _sandboxClockIntervalMs);
@@ -257,8 +130,6 @@ function stopSandboxClock() {
   _sandboxClockHandle = null;
 }
 
-/* Rafraîchit uniquement le contenu de l'écran (pas tout le panel) —
-   évite de perdre le scroll/focus des sélecteurs à chaque clic. */
 function renderCombatSandboxScreen() {
   var container = document.getElementById("panel-container");
   if (!container) return;
@@ -292,9 +163,6 @@ function buildCombatSandboxHTML() {
   return h;
 }
 
-/* Sélecteur "Combat unique" / "Run" / "Mode infini" — change
-   UNIQUEMENT _sandboxUiState.mode, ne touche à aucun état de combat/
-   run/infini existant (repris tel quel si on revient sur le mode). */
 function buildSandboxModeSelectorHTML() {
   var h = '<div class="sandbox-card">';
   h += '<div class="sandbox-card-title">Mode</div>';
@@ -308,12 +176,6 @@ function buildSandboxModeSelectorHTML() {
   return h;
 }
 
-/* Section de configuration : classe -> héros -> (ennemi | file de run).
-   v3.33.5 : la classe/héros restent communs aux deux modes (mêmes
-   boutons, mêmes handlers). Le bloc "3. Ennemi" ci-dessous est
-   INCHANGÉ en mode "single" (même code qu'avant l'ajout du mode Run)
-   — voir buildSandboxSetupHTML() qui bifurque vers
-   buildSandboxRunSetupHTML() uniquement pour le mode "run". */
 function buildSandboxSetupHTML() {
   var h = '<div class="sandbox-card">';
   h += '<div class="sandbox-card-title">1. Classe</div>';
@@ -363,15 +225,6 @@ function buildSandboxSetupHTML() {
   return h;
 }
 
-/* v3.33.6 — Panneau d'édition des stats du héros de test. Repliable
-   (statsPanelOpen) pour ne pas surcharger l'écran par défaut. Les 5
-   champs utilisent les noms RÉELS de data/heroes.js (power/endurance/
-   celerity/precision/will, voir makeRpgStats()), affichés avec leurs
-   libellés français (Puissance/Endurance/Célérité/Précision/Volonté).
-   Objectif explicite : simuler un héros amélioré sans toucher aux
-   vraies améliorations/talents — aucun plafond artificiel sur les
-   valeurs saisies (limite technique : Number() JS, largement
-   suffisante pour ce cas d'usage). */
 function buildSandboxStatsPanelHTML() {
   var heroId = _sandboxUiState.heroId;
   var baseStats = getSandboxHeroBaseStats(heroId);
@@ -408,13 +261,6 @@ function buildSandboxStatsPanelHTML() {
   return h;
 }
 
-/* v3.46.0 — Sélecteur de rareté d'équipement simulé sur le héros de
-   test. Un set COMPLET (7 emplacements) de la rareté choisie est
-   appliqué EN PLUS des stats RPG (voir applySandboxEquipmentBonus(),
-   combat-sandbox-system.js) — "Aucun" (null) = comportement identique
-   à avant cette version (pas d'équipement). Même pattern que les
-   autres panneaux (tag "actif", pas de repli/dépli ici car un seul
-   sélecteur, pas une grille de champs). */
 function buildSandboxEquipmentPanelHTML() {
   if (typeof RARITY_ORDER === "undefined" || typeof RARITY_LABELS === "undefined") return '';
   var current = _sandboxUiState.equipmentRarity;
@@ -431,10 +277,6 @@ function buildSandboxEquipmentPanelHTML() {
   return h;
 }
 
-/* v3.33.6 — Réglage du cooldown de base de l'attaque de test (voir
-   computeEffectiveCooldownMs(), combat-cooldown-system.js). Bac à
-   sable UNIQUEMENT — n'a aucun effet sur data/class-skills.js ni sur
-   le jeu réel. */
 function buildSandboxBaseCooldownSettingHTML() {
   var value = (_sandboxUiState.baseCooldownMs != null) ? _sandboxUiState.baseCooldownMs : SANDBOX_DEFAULT_BASE_COOLDOWN_MS;
   var h = '<div class="sandbox-card-title">⏱️ Cooldown de l\'attaque de base (bac à sable)</div>';
@@ -446,20 +288,6 @@ function buildSandboxBaseCooldownSettingHTML() {
   return h;
 }
 
-/* v3.33.12 — Panneau d'édition des coefficients d'ennemi de test.
-   Même pattern que buildSandboxStatsPanelHTML() (repliable, tag
-   "modifiés", bouton de réinitialisation) mais pour SANDBOX_ENEMY_COEFS
-   (systems/combat-sandbox-system.js) au lieu des stats du héros.
-   N'affecte QUE ce bac à sable — ne touche jamais progression-system.js
-   ni combat-engine.js (formules dupliquées en lecture seule dans le
-   bac à sable, voir note d'en-tête de combat-sandbox-system.js).
-
-   Note affichée à l'écran : ATTACK_BASE_INTERVAL_S (vitesse d'attaque
-   ennemie) n'est appliqué qu'à la CRÉATION d'un combat — un réglage
-   changé pendant un combat en cours ne modifie donc pas son rythme
-   déjà figé, contrairement aux coefficients de dégâts (POWER_DMG_COEF,
-   RESIST/WEAK/NO_WEAPON_MULT) qui s'appliquent dès l'action suivante
-   (voir state.enemyCoefs, combat-sandbox-system.js). */
 function buildSandboxEnemyCoefsPanelHTML() {
   var base = window.SANDBOX_ENEMY_COEFS;
   if (!base) return '';
@@ -503,8 +331,6 @@ function buildSandboxEnemyCoefsPanelHTML() {
   return h;
 }
 
-/* Section "3. Ennemi" + bouton de lancement du mode Combat unique —
-   comportement STRICTEMENT identique à avant l'ajout du mode Run. */
 function buildSandboxSingleSetupHTML() {
   var h = '<div class="sandbox-card-title">3. Ennemi</div>';
   h += '<select class="sandbox-enemy-select" onchange="selectSandboxEnemy(this.value)">';
@@ -525,8 +351,6 @@ function buildSandboxSingleSetupHTML() {
   return h;
 }
 
-/* Section "3. File d'ennemis" (mode Run) : composition manuelle OU
-   sélection de zone, + réglages de persistance, + bouton de lancement. */
 function buildSandboxRunSetupHTML() {
   var h = '<div class="sandbox-card-title">3. File d\'ennemis</div>';
 
@@ -553,12 +377,6 @@ function buildSandboxRunSetupHTML() {
   return h;
 }
 
-/* v3.33.9 — Section de lancement du mode Infini : pas de composition
-   de file (la liste est TOUJOURS listSandboxAllEnemiesInOrder(), voir
-   note d'en-tête de combat-sandbox-system.js), juste le réglage de
-   persistance RÉUTILISÉ tel quel (buildSandboxPersistenceSettingsHTML,
-   même fonction que le mode Run — aucun nouveau réglage inventé) et
-   le bouton de lancement. */
 function buildSandboxInfiniteSetupHTML() {
   var h = '<div class="sandbox-card-title">3. Mode infini</div>';
   var totalEnemies = (typeof listSandboxAllEnemiesInOrder === "function") ? listSandboxAllEnemiesInOrder().length : 0;
@@ -575,21 +393,6 @@ function buildSandboxInfiniteSetupHTML() {
   return h;
 }
 
-/* ============================================================
-   v3.33.10 — MODE SIMULATION AUTO. Panneau de configuration (liste
-   de priorité éditable + nombre de runs) et affichage des résultats
-   agrégés (rafale en cours/terminée + tableau de comparaison des
-   classes déjà testées). Aucune fonction ici ne pilote un tick de
-   combat : tout passe par systems/combat-batch-sim-system.js
-   (runSingleAutoRun/aggregateAutoRuns), appelé depuis
-   launchSandboxAutoBatch() (handlers plus bas).
-============================================================ */
-
-/* buildSandboxAutoSetupHTML()
-   Section "3. Simulation auto" : liste de priorité réordonnable
-   (réutilise le style visuel .sandbox-queue-* du mode Run, monter/
-   descendre/retirer — voir buildSandboxRunQueuePreviewHTML pour le
-   même pattern), champ nombre de runs, bouton de lancement. */
 function buildSandboxAutoSetupHTML() {
   var h = '<div class="sandbox-card-title">3. Simulation auto</div>';
   h += '<div class="sandbox-hint">Le héros joue seul : à chaque tick, il utilise la première action DISPONIBLE de cette liste, dans l\'ordre. Enchaîne les ennemis de data/enemies.js comme le mode infini, sur plusieurs runs à la suite.</div>';
@@ -617,11 +420,6 @@ function buildSandboxAutoSetupHTML() {
   return h;
 }
 
-/* buildSandboxAutoPolicyListHTML()
-   Liste ordonnée des 5 slots pour la classe active, avec libellé réel
-   (kit.actions[slot].label — jamais un nom inventé) et boutons
-   monter/descendre, même pattern que buildSandboxRunQueuePreviewHTML
-   pour rester dans le style déjà établi de l'écran. */
 function buildSandboxAutoPolicyListHTML() {
   var policy = _sandboxUiState.autoPolicy || [];
   var kit = getClassSkills(_sandboxUiState.classId);
@@ -646,12 +444,6 @@ function buildSandboxAutoPolicyListHTML() {
   return h;
 }
 
-/* buildSandboxAutoResultsHTML()
-   Affiche, dans l'ordre : la progression de la rafale en cours (si
-   autoBatchRunning), le résumé de la dernière rafale terminée pour la
-   classe active, PUIS le tableau de comparaison (une colonne par
-   classe déjà testée, conservé entre les rafales — voir
-   _sandboxUiState.autoResultsByClass). */
 function buildSandboxAutoResultsHTML() {
   var h = '';
 
@@ -670,9 +462,6 @@ function buildSandboxAutoResultsHTML() {
   return h;
 }
 
-/* Libellés des métriques agrégées, dans l'ordre d'affichage demandé —
-   factorisé pour être réutilisé identiquement par chaque colonne du
-   tableau de comparaison. */
 var SANDBOX_AUTO_METRIC_ROWS = [
   { key: "runsCount", label: "Runs simulés", format: "int" },
   { key: "defeatedAvg", label: "Ennemis vaincus (moy.)", format: "int" },
@@ -689,14 +478,6 @@ var SANDBOX_AUTO_METRIC_ROWS = [
   { key: "resourceWastedAvg", label: "Ressource gaspillée en fin de run (moy.)", format: "float" }
 ];
 
-/* buildSandboxAutoComparisonTableHTML()
-   Tableau HTML natif (pas de <select>), 1 colonne par classe déjà
-   testée (dans l'ordre de window.CLASSES, pas l'ordre de test), 1
-   ligne par métrique — lisible avec les 3 classes comme demandé.
-   reachedBoss vaut toujours 0% ici : le mode infini réutilisé
-   (listSandboxAllEnemiesInOrder(), voir combat-sandbox-system.js) ne
-   contient QUE des ennemis normaux, jamais de boss — affiché tel
-   quel plutôt que masqué, pour ne rien laisser croire de faux. */
 function buildSandboxAutoComparisonTableHTML() {
   var classIds = (window.CLASSES || []).map(function (c) { return c.id; })
     .filter(function (id) { return _sandboxUiState.autoResultsByClass[id]; });
@@ -726,11 +507,6 @@ function buildSandboxAutoComparisonTableHTML() {
   return h;
 }
 
-/* formatSandboxAutoMetric(agg, row)
-   Lit la métrique demandée dans un objet retourné par
-   aggregateAutoRuns() (systems/combat-batch-sim-system.js) et la met
-   en forme lisible. Ne recalcule aucune moyenne ici — uniquement de
-   la mise en forme d'un résultat déjà agrégé. */
 function formatSandboxAutoMetric(agg, row) {
   if (!agg) return "—";
   switch (row.key) {
@@ -771,9 +547,6 @@ function formatSandboxAutoMetric(agg, row) {
   }
 }
 
-/* Sélection manuelle : ajout d'un ennemi (dont boss) en fin de file,
-   retrait, réordonnancement (monter/descendre) — voir aperçu de file
-   ci-dessous (buildSandboxRunQueuePreviewHTML). */
 function buildSandboxRunManualPickerHTML() {
   var h = '<select class="sandbox-enemy-select" id="sandbox-run-add-select">';
   h += '<option value="">— Ajouter un ennemi à la file —</option>';
@@ -786,8 +559,6 @@ function buildSandboxRunManualPickerHTML() {
   return h;
 }
 
-/* Sélection automatique par zone (data/worlds.js) : enemyPool dans
-   l'ordre + boss en dernière position, voir buildSandboxQueueFromZone(). */
 function buildSandboxRunZonePickerHTML() {
   var zones = (typeof listSandboxZones === "function") ? listSandboxZones() : [];
   var h = '<select class="sandbox-enemy-select" onchange="selectSandboxRunZone(this.value)">';
@@ -801,10 +572,6 @@ function buildSandboxRunZonePickerHTML() {
   return h;
 }
 
-/* Aperçu de la file en cours de composition, avec retrait/réorganisation
-   (mode manuel) ou lecture seule (mode zone, la file suit exactement
-   enemyPool + boss). Le boss (dernière position résolue via BOSS_DB)
-   porte une étiquette dédiée. */
 function buildSandboxRunQueuePreviewHTML() {
   var queue = _sandboxUiState.runQueue;
   var h = '<div class="sandbox-queue-title">File (' + queue.length + ' combat' + (queue.length > 1 ? 's' : '') + ')</div>';
@@ -833,8 +600,6 @@ function buildSandboxRunQueuePreviewHTML() {
   return h;
 }
 
-/* Réglages de persistance entre deux combats du run — 3 réglages
-   demandés (PV/ressource/cooldowns), chacun avec ses options. */
 function buildSandboxPersistenceSettingsHTML() {
   var p = getSandboxPersistence();
   var h = '<div class="sandbox-card-title">4. Persistance entre combats</div>';
@@ -876,7 +641,6 @@ function buildSandboxPersistenceSettingsHTML() {
   return h;
 }
 
-/* Section combat actif : PV, ressource, boutons d'action, journal. */
 function buildSandboxCombatHTML(state) {
   var resourceDef = getClassResource(state.classId);
   var kit = getClassSkills(state.classId);
@@ -909,9 +673,6 @@ function buildSandboxCombatHTML(state) {
   return h;
 }
 
-/* v3.33.9 — Factorisé pour être reconstruit à l'identique lors d'un
-   rafraîchissement CIBLÉ (voir refreshSandboxLiveUI()) sans redessiner
-   tout l'écran. */
 function buildSandboxResourceBarHTML(state, resourceDef) {
   if (!resourceDef) return '';
   var pct = Math.round((state.resourceState.current / state.resourceState.max) * 100);
@@ -922,7 +683,6 @@ function buildSandboxResourceBarHTML(state, resourceDef) {
   return h;
 }
 
-/* v3.33.9 — Idem, factorisé pour le journal. */
 function buildSandboxLogLinesHTML(log) {
   var lines = log.slice(-60).slice().reverse();
   if (!lines.length) return '<div class="sandbox-log-line sandbox-log-empty">Aucune action pour l\'instant.</div>';
@@ -933,11 +693,6 @@ function buildSandboxLogLinesHTML(log) {
   return h;
 }
 
-/* Section run actif : combat en cours dans la file, étiquette Boss,
-   PV/ressource, boutons d'action (routés vers triggerSandboxRunAction),
-   contrôles Arrêter/Réinitialiser, résumé de fin, journal PARTAGÉ du
-   run (transitions + lignes de chaque combat, voir
-   applySandboxRunAction() dans combat-sandbox-system.js). */
 function buildSandboxRunHTML(run) {
   var combat = run.currentCombat;
   var resourceDef = getClassResource(run.classId);
@@ -980,7 +735,6 @@ function buildSandboxRunHTML(run) {
   return h;
 }
 
-/* v3.33.9 — Factorisé pour le rafraîchissement ciblé. */
 function buildSandboxRunProgressLineHTML(run) {
   var combat = run.currentCombat;
   var h = 'Combat ' + (run.currentIndex + 1) + ' / ' + run.queue.length;
@@ -989,12 +743,6 @@ function buildSandboxRunProgressLineHTML(run) {
   return h;
 }
 
-/* v3.33.9 — Section mode infini actif : position dans la liste
-   ("Ennemi X / total"), nombre d'ennemis vaincus consécutivement,
-   indicateur de boucle, PV/ressource, boutons d'action (routés vers
-   triggerSandboxInfiniteAction), contrôle Arrêter/Réinitialiser,
-   résumé de fin, journal PARTAGÉ (mêmes conventions que le mode Run,
-   voir buildSandboxRunHTML ci-dessus). */
 function buildSandboxInfiniteHTML(infinite) {
   var combat = infinite.currentCombat;
   var resourceDef = getClassResource(infinite.classId);
@@ -1038,7 +786,6 @@ function buildSandboxInfiniteHTML(infinite) {
   return h;
 }
 
-/* v3.33.9 — Factorisés pour le rafraîchissement ciblé. */
 function buildSandboxInfiniteProgressLineHTML(infinite) {
   var combat = infinite.currentCombat;
   var h = 'Ennemi ' + (infinite.currentPosition + 1) + ' / ' + infinite.enemyOrder.length;
@@ -1061,15 +808,6 @@ function buildSandboxCombatantHTML(name, hp, maxHp, side) {
   return h;
 }
 
-/* État visuel d'un bouton d'action : disponible / cooldown (avec
-   temps restant) / ressource insuffisante / condition non remplie —
-   dérivé des mêmes fonctions pures que la simulation elle-même
-   (canAfford/isCooldownReady/checkActionConditions), jamais recalculé
-   indépendamment ici.
-   v3.33.5 : onClickFn (nom de fonction JS globale) permet de router
-   le clic vers triggerSandboxAction (combat unique, comportement
-   INCHANGÉ — c'est la valeur par défaut) ou triggerSandboxRunAction
-   (mode Run). */
 function buildSandboxActionButtonHTML(state, action, slot, onClickFn) {
   if (!action) return '';
   var fnName = onClickFn || 'triggerSandboxAction';
@@ -1103,26 +841,13 @@ function buildSandboxActionButtonHTML(state, action, slot, onClickFn) {
   return h;
 }
 
-/* ============================================================
-   Handlers — appelés depuis les onclick ci-dessus. Chacun mute
-   UNIQUEMENT _sandboxUiState (variable de module isolée), jamais
-   game.*, puis redessine l'écran.
-============================================================ */
-
 function selectSandboxClass(classId) {
   var cls = getClassById(classId);
   if (!cls) return;
   _sandboxUiState.classId = classId;
-  // Changer de classe invalide le héros sélectionné s'il n'y appartient plus.
   if (!cls.heroIds.includes(_sandboxUiState.heroId)) {
     _sandboxUiState.heroId = null;
   }
-  // v3.33.10 : la priorité de simulation auto appartient à une classe
-  // (les slots skill1/2/3 ne désignent pas la même compétence d'une
-  // classe à l'autre) — repart des valeurs par défaut de
-  // data/auto-policy-defaults.js à chaque changement de classe, même
-  // logique que statsOverride réinitialisé au changement de héros
-  // ci-dessous.
   _sandboxUiState.autoPolicy = (typeof getAutoPolicyDefault === "function") ? getAutoPolicyDefault(classId) : null;
   renderCombatSandboxScreen();
 }
@@ -1130,10 +855,6 @@ function selectSandboxClass(classId) {
 function selectSandboxHero(heroId) {
   if (!HEROES_DB[heroId]) return;
   _sandboxUiState.heroId = heroId;
-  // v3.33.6 : changer de héros invalide toute stat surchargée
-  // précédente — elle appartenait à un autre héros, l'appliquer au
-  // nouveau serait trompeur (ex. Endurance élevée d'un tank sur un
-  // mage). Repart des vraies stats de base du héros sélectionné.
   _sandboxUiState.statsOverride = null;
   renderCombatSandboxScreen();
 }
@@ -1163,8 +884,6 @@ function triggerSandboxAction(slot) {
   renderCombatSandboxScreen();
 }
 
-/* Relance un combat neuf avec la même sélection classe/héros/ennemi
-   (ne recharge pas la page, comme demandé). */
 function resetSandboxCombat() {
   var s = _sandboxUiState;
   if (s.classId && s.heroId && s.enemyId) {
@@ -1177,19 +896,9 @@ function resetSandboxCombat() {
   renderCombatSandboxScreen();
 }
 
-/* ============================================================
-   Handlers — MODE RUN (v3.33.5). Mêmes garanties que les handlers
-   ci-dessus : mutent uniquement _sandboxUiState, jamais game.*.
-============================================================ */
-
 function selectSandboxMode(mode) {
   if (mode !== "single" && mode !== "run" && mode !== "infinite" && mode !== "auto") return;
   _sandboxUiState.mode = mode;
-  // Changer de mode arrête l'horloge : le combat/run/infini resté en
-  // mémoire dans l'autre mode ne doit pas continuer à décompter en
-  // arrière-plan. Le mode auto n'utilise jamais l'horloge (boucle
-  // synchrone par run, voir launchSandboxAutoBatch()) — arrêt sans
-  // effet si elle n'était pas démarrée.
   stopSandboxClock();
   renderCombatSandboxScreen();
 }
@@ -1197,16 +906,12 @@ function selectSandboxMode(mode) {
 function selectSandboxRunQueueMode(queueMode) {
   if (queueMode !== "manual" && queueMode !== "zone") return;
   _sandboxUiState.runQueueMode = queueMode;
-  // Changer de mode de composition repart d'une file vide pour éviter
-  // toute confusion entre une file manuelle et une file de zone.
   _sandboxUiState.runQueue = [];
   _sandboxUiState.runZoneWorldId = null;
   _sandboxUiState.runZoneAdventureId = null;
   renderCombatSandboxScreen();
 }
 
-/* Ajoute l'ennemi choisi dans le <select> d'ajout à la fin de la file
-   manuelle en cours de composition. */
 function addSandboxRunQueueEntryFromSelect() {
   var select = document.getElementById("sandbox-run-add-select");
   if (!select || !select.value) return;
@@ -1233,10 +938,6 @@ function moveSandboxRunQueueEntry(index, direction) {
   renderCombatSandboxScreen();
 }
 
-/* Sélection d'une zone (data/worlds.js) : reconstruit la file en
-   entier via buildSandboxQueueFromZone() (enemyPool + boss en
-   dernier) — la file de zone n'est pas éditable à la main (voir
-   buildSandboxRunQueuePreviewHTML, isManual=false dans ce mode). */
 function selectSandboxRunZone(value) {
   if (!value) {
     _sandboxUiState.runZoneWorldId = null;
@@ -1254,10 +955,6 @@ function selectSandboxRunZone(value) {
   renderCombatSandboxScreen();
 }
 
-/* setSandboxPersistenceField(field, rawValue)
-   Met à jour un champ du réglage de persistance (voir
-   buildSandboxPersistenceSettingsHTML). Les champs "*Percent" sont
-   numériques et bornés [0, 100] ; les autres sont des chaînes de mode. */
 function setSandboxPersistenceField(field, rawValue) {
   var p = getSandboxPersistence();
   var next = Object.assign({}, p);
@@ -1298,8 +995,6 @@ function stopSandboxRunFromUi() {
   renderCombatSandboxScreen();
 }
 
-/* Relance un run neuf avec la même file et le même réglage de
-   persistance (ne recharge pas la page, comme demandé). */
 function resetSandboxRun() {
   var s = _sandboxUiState;
   if (s.classId && s.heroId && s.runQueue.length) {
@@ -1311,15 +1006,6 @@ function resetSandboxRun() {
   }
   renderCombatSandboxScreen();
 }
-
-/* ============================================================
-   Handlers — MODE INFINI (v3.33.9). Mêmes garanties que les handlers
-   Run ci-dessus : mutent uniquement _sandboxUiState.infinite, jamais
-   game.*. Pas de composition de file (toujours
-   listSandboxAllEnemiesInOrder() — voir combat-sandbox-system.js),
-   réutilise getSandboxPersistence()/statsOverride/baseCooldownMs déjà
-   en place pour le mode Run.
-============================================================ */
 
 function launchSandboxInfinite() {
   var s = _sandboxUiState;
@@ -1348,8 +1034,6 @@ function stopSandboxInfiniteFromUi() {
   renderCombatSandboxScreen();
 }
 
-/* Relance un mode infini neuf avec le même réglage de persistance
-   (ne recharge pas la page, comme demandé). */
 function resetSandboxInfinite() {
   var s = _sandboxUiState;
   if (s.classId && s.heroId) {
@@ -1362,18 +1046,6 @@ function resetSandboxInfinite() {
   renderCombatSandboxScreen();
 }
 
-/* ============================================================
-   Handlers — MODE SIMULATION AUTO (v3.33.10). Réordonnancement de
-   priorité (même pattern que moveSandboxRunQueueEntry), lancement
-   d'une rafale en boucle ASYNCHRONE par RUN (pas par tick — un run
-   entier est joué en synchrone via runSingleAutoRun(), voir
-   systems/combat-batch-sim-system.js), agrégation, comparaison.
-
-   N'appelle jamais startSandboxClock()/stopSandboxClock() : ce mode
-   ne dépend d'aucun timer d'affichage, contrairement à Combat unique/
-   Run/Infini — voir note d'en-tête de _sandboxUiState.
-============================================================ */
-
 function moveSandboxAutoPolicyEntry(index, direction) {
   var policy = (_sandboxUiState.autoPolicy || []).slice();
   var target = index + direction;
@@ -1385,9 +1057,6 @@ function moveSandboxAutoPolicyEntry(index, direction) {
   renderCombatSandboxScreen();
 }
 
-/* Restaure la priorité par défaut de la classe active (voir
-   data/auto-policy-defaults.js) — n'affecte jamais ce fichier lui-même,
-   uniquement la copie locale _sandboxUiState.autoPolicy. */
 function resetSandboxAutoPolicy() {
   if (!_sandboxUiState.classId) return;
   _sandboxUiState.autoPolicy = (typeof getAutoPolicyDefault === "function") ? getAutoPolicyDefault(_sandboxUiState.classId) : [];
@@ -1401,20 +1070,6 @@ function setSandboxAutoRunsRequested(rawValue) {
   renderCombatSandboxScreen();
 }
 
-/* launchSandboxAutoBatch()
-   Lance une rafale de _sandboxUiState.autoRunsRequested runs pour la
-   classe/héros actifs, avec la priorité éditée à l'écran (nettoyée
-   via sanitizeAutoPolicyList() avant tout usage, pour ne jamais
-   transmettre un slot invalide au moteur). Chaque RUN est simulé en
-   synchrone (runSingleAutoRun(), aucun accès DOM pendant son
-   exécution), mais l'enchaînement des runs entre eux passe par
-   setTimeout(..., 0) pour rendre la main au navigateur après chaque
-   run — l'écran reste réactif et le compteur "Run n/N" se met à jour
-   même sur une rafale de plusieurs centaines de runs. N'appelle
-   jamais killEnemy(), la sauvegarde réelle, ni un système de
-   progression réel (délégué entièrement à combat-batch-sim-system.js,
-   qui ne réutilise que createSandboxInfiniteState()/
-   applySandboxInfiniteAction()/tickSandboxInfiniteTime()). */
 function launchSandboxAutoBatch() {
   var s = _sandboxUiState;
   if (!s.classId || !s.heroId || s.autoBatchRunning) return;
@@ -1439,9 +1094,6 @@ function launchSandboxAutoBatch() {
   var equipmentRarity = s.equipmentRarity; // v3.46.0
 
   function runOne() {
-    // L'utilisateur a pu quitter l'écran ou changer de classe pendant
-    // la rafale — on arrête proprement plutôt que d'écrire dans un
-    // état qui ne correspond plus à ce qui est affiché.
     if (!_sandboxUiState.autoBatchRunning || !_sandboxUiState.autoBatch) return;
 
     var report = runSingleAutoRun(classId, heroId, cleanedPolicy, statsOverride, baseCooldownMs, null, enemyCoefsOverride, equipmentRarity);
@@ -1466,8 +1118,6 @@ function launchSandboxAutoBatch() {
   setTimeout(runOne, 0);
 }
 
-/* Efface le tableau de comparaison (toutes classes) — n'affecte
-   jamais la partie réelle, uniquement _sandboxUiState. */
 function resetSandboxAutoResults() {
   if (_sandboxUiState.autoBatchRunning) return;
   _sandboxUiState.autoResultsByClass = {};
@@ -1475,23 +1125,11 @@ function resetSandboxAutoResults() {
   renderCombatSandboxScreen();
 }
 
-/* ============================================================
-   Handlers — v3.33.6 : panneau de stats + cooldown de base.
-============================================================ */
-
 function toggleSandboxStatsPanel() {
   _sandboxUiState.statsPanelOpen = !_sandboxUiState.statsPanelOpen;
   renderCombatSandboxScreen();
 }
 
-/* setSandboxStatField(field, rawValue)
-   Modifie UNE stat surchargée (power/endurance/celerity/precision/
-   will) sur une COPIE locale (_sandboxUiState.statsOverride) —
-   n'écrit jamais dans HEROES_DB. "Application immédiate sur le
-   prochain combat lancé" (voir note d'en-tête) : ne touche pas
-   _sandboxUiState.combat/run déjà actifs, seulement les futurs
-   lancements. Pas de plafond artificiel autre que la conversion
-   numérique JS elle-même. */
 function setSandboxStatField(field, rawValue) {
   var validFields = ["power", "endurance", "celerity", "precision", "will"];
   if (validFields.indexOf(field) === -1) return;
@@ -1504,31 +1142,17 @@ function setSandboxStatField(field, rawValue) {
   renderCombatSandboxScreen();
 }
 
-/* resetSandboxStats()
-   Restaure exactement les stats de base RÉELLES du héros sélectionné
-   (getSandboxHeroBaseStats(), lit HEROES_DB en lecture seule) en
-   effaçant toute surcharge — statsOverride redevient null. N'affecte
-   pas un combat/run déjà en cours (voir note d'en-tête). */
 function resetSandboxStats() {
   _sandboxUiState.statsOverride = null;
   renderCombatSandboxScreen();
 }
 
-/* setSandboxEquipmentRarity(rarity)
-   v3.46.0 : change la rareté d'équipement simulée ("common"/"green"/
-   "rare"/"epic"/"legendary", ou null pour "Aucun"). Comme statsOverride,
-   n'affecte QUE le prochain combat/run/simulation lancé — un combat déjà
-   en cours garde le héros déjà construit (pas de rétroactivité, voir
-   note d'en-tête de applySandboxEquipmentBonus()). */
 function setSandboxEquipmentRarity(rarity) {
   if (typeof RARITY_ORDER === "undefined" || (rarity && RARITY_ORDER.indexOf(rarity) === -1)) return;
   _sandboxUiState.equipmentRarity = rarity || null;
   renderCombatSandboxScreen();
 }
 
-/* setSandboxBaseCooldownMs(rawValue)
-   Modifie le réglage baseCooldownMs (bac à sable uniquement, voir
-   computeEffectiveCooldownMs()). Valeur négative ramenée à 0. */
 function setSandboxBaseCooldownMs(rawValue) {
   var num = parseFloat(rawValue);
   if (isNaN(num) || num < 0) num = 0;
@@ -1536,39 +1160,12 @@ function setSandboxBaseCooldownMs(rawValue) {
   renderCombatSandboxScreen();
 }
 
-/* ============================================================
-   Handlers — v3.33.12 : panneau de coefficients d'ennemi.
-   Même pattern que les handlers de stats du héros ci-dessus.
-============================================================ */
-
 function toggleSandboxEnemyCoefsPanel() {
   _sandboxUiState.enemyCoefsPanelOpen = !_sandboxUiState.enemyCoefsPanelOpen;
   renderCombatSandboxScreen();
 }
 
-/* setSandboxEnemyCoefField(field, rawValue)
-   Modifie UN coefficient surchargé (ENDURANCE_HP_COEF/
-   BOSS_ENDURANCE_HP_COEF/PV_WORLD_EXP/POWER_SCALE_EXP/POWER_DMG_COEF/
-   ATTACK_BASE_INTERVAL_S/RESIST_DMG_MULT/WEAK_DMG_MULT/NO_WEAPON_MULT/
-   WORLD_INDEX/ADVENTURE_INDEX/CYCLE_COUNT) sur une COPIE locale
-   (_sandboxUiState.enemyCoefsOverride) — n'écrit jamais dans
-   SANDBOX_ENEMY_COEFS ni dans progression-system.js/combat-engine.js
-   (jeu réel intact). "Application au prochain combat/run/simulation
-   lancé" pour ATTACK_BASE_INTERVAL_S, ENDURANCE_HP_COEF/
-   BOSS_ENDURANCE_HP_COEF, PV_WORLD_EXP, POWER_SCALE_EXP et
-   WORLD_INDEX/ADVENTURE_INDEX/CYCLE_COUNT (v3.46.0 : tous figés dans
-   enemy.maxHp/enemy.power à la création par buildSandboxEnemyStats(),
-   comme la vitesse d'attaque), mais "application immédiate" pour
-   POWER_DMG_COEF et les multiplicateurs de résistance/faiblesse (lus
-   depuis state.enemyCoefs à chaque action/tick — voir
-   computeSandboxActionDamage()/resolveSandboxEnemyStrike(),
-   combat-sandbox-system.js) : un combat déjà en cours répercute donc
-   un changement de POWER_DMG_COEF dès l'action suivante. */
 function setSandboxEnemyCoefField(field, rawValue) {
-  // v3.46.0 : PV_WORLD_EXP/POWER_SCALE_EXP (nouveaux exposants) et
-  // WORLD_INDEX/ADVENTURE_INDEX/CYCLE_COUNT (position simulée sur la
-  // progression réelle) ajoutés à la liste des champs valides — voir
-  // buildSandboxEnemyStats(), combat-sandbox-system.js.
   var validFields = ["ENDURANCE_HP_COEF", "BOSS_ENDURANCE_HP_COEF", "PV_WORLD_EXP", "POWER_SCALE_EXP", "POWER_DMG_COEF", "ATTACK_BASE_INTERVAL_S", "RESIST_DMG_MULT", "WEAK_DMG_MULT", "NO_WEAPON_MULT", "WORLD_INDEX", "ADVENTURE_INDEX", "CYCLE_COUNT"];
   if (validFields.indexOf(field) === -1) return;
   var num = parseFloat(rawValue);
@@ -1578,12 +1175,6 @@ function setSandboxEnemyCoefField(field, rawValue) {
   next[field] = num;
   _sandboxUiState.enemyCoefsOverride = next;
 
-  // Répercuter IMMÉDIATEMENT sur un combat/run/infini déjà en cours
-  // (voir note ci-dessus) — écrit dans .enemyCoefs de chaque state
-  // actif, jamais dans SANDBOX_ENEMY_COEFS. ATTACK_BASE_INTERVAL_S
-  // n'a pas d'effet rétroactif ici : la vitesse déjà calculée
-  // (enemy.attackIntervalS, enemyAttackTimerMs) n'est pas retouchée
-  // pour ne pas fausser un minuteur de riposte déjà en cours.
   if (_sandboxUiState.combat) {
     _sandboxUiState.combat = Object.assign({}, _sandboxUiState.combat, { enemyCoefs: next });
   }
@@ -1603,11 +1194,6 @@ function setSandboxEnemyCoefField(field, rawValue) {
   renderCombatSandboxScreen();
 }
 
-/* resetSandboxEnemyCoefs()
-   Restaure les coefficients par défaut (valeurs RÉELLES du jeu, voir
-   SANDBOX_ENEMY_COEFS) en effaçant toute surcharge — enemyCoefsOverride
-   redevient null. Répercute aussi sur un combat/run/infini en cours,
-   même logique que setSandboxEnemyCoefField(). */
 function resetSandboxEnemyCoefs() {
   _sandboxUiState.enemyCoefsOverride = null;
   if (_sandboxUiState.combat) {

@@ -1,21 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — data/codex.js
-Le Codex : l'histoire du jeu ("L'Éveil de l'Aether"), débloquée
-progressivement à la première rencontre de chaque monde/système
-(comme les hauts faits). Voir systems/codex-system.js pour le suivi
-de déblocage/lecture, et ui/codex-view.js pour l'écran dédié.
-
-Chaque entrée :
-  - id            identifiant stable
-  - title         titre affiché
-  - icon          emoji d'illustration
-  - category      groupe d'affichage (intro/monde/système)
-  - text          le texte complet (peut contenir plusieurs paragraphes
-                   séparés par \n\n)
-  - isUnlocked()  fonction lisant l'état du jeu ; tant qu'elle renvoie
-                  faux, l'entrée apparaît verrouillée dans le Codex
-============================================================ */
+/* data/codex.js — histoire du jeu, déblocage progressif par isUnlocked(). Voir codex-system.js / codex-view.js. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var CODEX_ENTRIES = [
   {

@@ -1,45 +1,6 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/village-view.js
-Écran "Village" — v2.90.2 : grille de 6 cartes illustrées uniformes
-(une image découpée par bâtiment dans images/Village/, voir plus bas),
-remplace la carte unique v2.90 (une seule grande image + zones
-cliquables en %) — abandonnée après retour utilisateur : l'image
-touchait les bords, ne respectait pas le cadre parchemin standard des
-autres écrans, et le calage des zones/pastilles à la main était
-fragile à maintenir. La grille de cartes reprend le même langage
-visuel que la grille de paliers de donjon (voir .dungeon-tier-card en
-ui/dungeon-view.js) : plus aucune coordonnée en % à caler, chaque
-carte est un bloc normal (titre, niveau, image en object-fit:contain
-dans une case de taille fixe) — intrinsèquement indépendant de la
-résolution, sans calcul.
+/* ui/village-view.js — écran Village : grille de 6 cartes illustrées + sous-onglets Village/Entrepôt/Production. Popup détail/montée de niveau hors cycle renderPanel(). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-Les 6 bâtiments (VILLAGE_CONFIG dans systems/offline-system.js,
-mécaniques et IDs internes INCHANGÉS) sont représentés par le nouveau
-visuel fourni par l'utilisateur (découpé en 6 images individuelles,
-une par bâtiment, cadrées pour exclure les bannières de texte de
-l'image source — le nom est réaffiché en HTML, pas embarqué dans
-l'image), avec une correspondance ID -> bâtiment illustré différente
-des anciens noms :
-  - goldMine     -> Mine d'Or             (inchangé)
-  - essenceWell  -> Hutte de l'Alchimiste (avant "Puits d'essence")
-  - barracks     -> Caserne               (inchangé)
-  - timeRelay    -> Tour des Mages        (avant "Relais du temps")
-  - watchtower   -> Hôtel de Ville        (avant "Vigie")
-  - sanctuary    -> Atelier de Forgeron   (avant "Sanctuaire d'Aether"
-                     — l'utilisateur envisage de le retirer plus tard)
-Seuls le nom affiché et le visuel changent : coûts, effets, formules
-et IDs de sauvegarde restent strictement identiques.
-
-Chaque carte ouvre une fenêtre (#village-modal-root, même pattern que
-l'intro de donjon — voir buildDungeonIntroHTML en ui/dungeon-view.js)
-avec le détail du bâtiment ET le résumé global des bonus hors-ligne
-actuels de TOUT le village (décision utilisateur : plus de bloc
-résumé permanent sur l'écran, il vit dans chaque popup).
-============================================================ */
-
-/* Petit emoji décoratif dans l'en-tête de la popup (aucune image
-   dédiée nécessaire : le bâtiment est déjà illustré sur sa carte). */
 var VILLAGE_BUILDING_ICONS = {
   goldMine: "⛏️",
   essenceWell: "🧪",
@@ -49,13 +10,6 @@ var VILLAGE_BUILDING_ICONS = {
   sanctuary: "🔨"
 };
 
-/* Nom affiché + visuel par bâtiment (voir images/Village/) :
-   v2.90.10 : chaque carte a maintenant un fond dédié (bg, scène de
-   sol/chemin illustrée par l'utilisateur) ET une illustration de
-   bâtiment détourée (image, PNG avec transparence) posée par-dessus
-   — avant, une seule image plate par bâtiment (découpe de la
-   première carte fournie). Le nom reste réaffiché en HTML, aucune
-   image n'embarque de texte. */
 var VILLAGE_BUILDING_MAP = {
   watchtower: { label: "Hôtel de Ville", bg: "images/Village/bg_watchtower.jpg", image: "images/Village/watchtower.png" },
   barracks: { label: "Caserne", bg: "images/Village/bg_barracks.jpg", image: "images/Village/barracks.png" },
@@ -65,9 +19,6 @@ var VILLAGE_BUILDING_MAP = {
   goldMine: { label: "Mine d'Or", bg: "images/Village/bg_goldMine.jpg", image: "images/Village/goldMine.png" }
 };
 
-/* Texte "Bonus actuel" pour UN bâtiment donné (même formules que
-   VillageManager.getOfflineBonuses(), juste reformatées en phrase —
-   à garder synchronisé si un coefficient change là-bas). */
 function getVillageBuildingBonusText(id, level) {
   if (id === "goldMine") return "Bonus actuel : +" + Math.round(level * 12) + "% or de la chasse du village (hors-ligne et en continu)";
   if (id === "essenceWell") return "Bonus actuel : +" + level + " essence hors-ligne";
@@ -78,19 +29,6 @@ function getVillageBuildingBonusText(id, level) {
   return "";
 }
 
-/* Grille de 6 cartes uniformes (fond + bâtiment détouré en superposition
-   + nom + niveau), même pattern que la grille de paliers de donjon —
-   carte entière cliquable. */
-/* Grille de 6 cases SANS bordure ni espace entre elles : les 6 fonds
-   (images/Village/bg_*.jpg) sont en réalité UNE SEULE image découpée
-   en 2 colonnes × 3 lignes — mises bord à bord, elles se recollent en
-   un seul panorama continu (chemins/pavés qui se prolongent d'une
-   case à l'autre). Le nom + niveau, qui n'ont plus de zone dédiée en
-   dessous, sont affichés en étiquette superposée en bas de chaque
-   case (voir .village-building-tag). */
-/* v3.31 : 3e sous-onglet Production (voir data/production-buildings.js,
-   systems/production-system.js, ui/production-view.js) — même pattern
-   à 3 boutons que Héros (Héros/Amélioration/Stats). */
 var activeVillageSubTab = "village"; // "village" | "entrepot" | "production"
 
 function setVillageSubTab(tab) {
@@ -99,9 +37,6 @@ function setVillageSubTab(tab) {
 }
 window.setVillageSubTab = setVillageSubTab;
 
-/* Exposé pour systems/production-system.js (tick()) — évite qu'un
-   fichier système lise directement une variable d'écran, voir la
-   note dans ProductionManager.tick(). */
 function isProductionScreenVisible() {
   return game.activeTab === "village" && activeVillageSubTab === "production";
 }
@@ -139,11 +74,6 @@ function buildVillageMainSubTabHTML() {
   return h;
 }
 
-/* v3.31 : structure à 3 sous-onglets, même squelette que buildHerosHTML/
-   buildQuestsHTML (.subtab-page / .subtab-page-content / .subtab-bar-wrapper)
-   — voir le "Layout trap" documenté : ne JAMAIS merger .nb-page-frame-fill
-   directement sur .subtab-page-content, toujours un enfant imbriqué
-   (ici .nb-page-frame ci-dessous, imbriqué normalement). */
 function buildVillageHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
@@ -167,12 +97,6 @@ function buildVillageHTML() {
   h += '</div>'; // fin .subtab-page
   return h;
 }
-
-/* ============================================================
-   Popup de détail/montée de niveau d'UN bâtiment (voir
-   #village-modal-root dans index.html), même pattern que l'intro de
-   donjon (.full-menu-overlay/.full-menu, voir ui/dungeon-view.js).
-============================================================ */
 
 var openVillageBuildingId = null;
 
@@ -198,11 +122,6 @@ function buildVillageBuildingPopupHTML(id) {
   if (maxed) {
     h += '      <button class="settings-btn primary is-maxed" type="button" disabled>Niveau max</button>';
   } else {
-    // v3.17 : bouton grisé (ni cliquable, ni interactif) tant que l'or
-    // actuel ne couvre pas le coût — avant, le bouton restait actif et
-    // n'échouait qu'AU CLIC (VillageManager.buy() refuse déjà l'achat
-    // en interne), obligeant à essayer pour savoir. Même traitement
-    // visuel que "Niveau max" (opacité réduite, curseur "not-allowed").
     var canAfford = Number(game.gold || 0) >= cost;
     if (canAfford) {
       h += '      <button class="settings-btn primary" type="button" onclick="buyVillageUpgradeFromPopup(\'' + id + '\')">'
@@ -232,23 +151,10 @@ function closeVillageBuildingPopup() {
   if (host) host.innerHTML = "";
 }
 
-/* La popup vit dans #village-modal-root, en dehors du cycle
-   renderAll()/renderPanel() habituel — sans ce wrapper dédié, le
-   niveau/coût affichés dans la popup resteraient figés après achat
-   tant qu'elle n'est pas refermée puis rouverte (même remarque que
-   buyDungeonTicketFromOverlay, voir ui/dungeon-view.js). La carte
-   elle-même (pastilles de niveau) est rafraîchie normalement via
-   VillageManager.buy() -> renderAll() -> renderPanel(). */
 function buyVillageUpgradeFromPopup(id) {
   buyVillageUpgrade(id);
   if (openVillageBuildingId === id) openVillageBuildingPopup(id);
 }
-
-/* ============================================================
-   Utilisé par les boutons HTML (achat direct, hors popup — gardé
-   pour compatibilité, la popup passe maintenant par
-   buyVillageUpgradeFromPopup ci-dessus).
-============================================================ */
 
 function buyVillageUpgrade(id) {
   if (window.VillageManager && typeof VillageManager.buy === "function") {

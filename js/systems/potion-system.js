@@ -1,30 +1,8 @@
 "use strict";
-/* ============================================================
-Quest Idle — systems/potion-system.js
-Achat et gestion des potions temporaires (voir data/potions.js).
-Deux mécanismes distincts :
-  - game.activePotions      { id: timestamp d'expiration } pour les
-    potions à durée (Force/Célérité/Précision/Endurance/Fortune)
-  - game.pendingPotionBonuses  bonus en attente sans minuteur
-    (Élixir d'Aether), consommé par ascendNow() en
-    progression-system.js puis remis à zéro
-Les effets réels sont appliqués dans StatsSystem.recalcStats() via
-PotionManager.getActiveEffects() — ce fichier ne touche jamais
-directement game.tapDamage/goldMult/etc.
+/* systems/potion-system.js — potions temporaires (data/potions.js) : achat/stock découplés de l'activation, effets lus par StatsSystem.recalcStats().
+   activePotions = {id: expiry} ; pendingPotionBonuses = bonus sans minuteur (Élixir d'Aether). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-v2.83.45 : achat et activation DÉCOUPLÉS — acheter une potion
-l'ajoute maintenant à un stock (game.potionsOwned[id]), comme les
-potions de soin depuis toujours. L'activation réelle (démarrer le
-minuteur, ou ajouter à pendingPotionBonuses pour l'Élixir d'Aether)
-se fait à la demande via usePotion(id), depuis le nouveau sous-onglet
-"🧪 Potions" de l'écran Équipement (voir ui/equipment-view.js) —
-permet d'acheter à l'avance et de boire au bon moment plutôt que
-d'être forcé d'activer immédiatement à l'achat.
-============================================================ */
-
-// v3.18 : hausse de prix composée par cycle (game.cycleCount) sur
-// TOUTES les potions — voir getCost() plus bas.
-var POTION_CYCLE_PRICE_GROWTH = 0.15; // +15% composé par cycle
+var POTION_CYCLE_PRICE_GROWTH = 0.15;
 
 var PotionManager = {
   ensure: function () {
@@ -46,8 +24,6 @@ var PotionManager = {
     return Number(game.potionsOwned[id] || 0);
   },
 
-  /* Millisecondes restantes avant expiration d'une potion à durée
-     (0 si inactive ou déjà expirée). */
   getRemainingMs: function (id) {
     this.ensure();
     var expires = game.activePotions[id];
@@ -59,26 +35,6 @@ var PotionManager = {
     return this.getRemainingMs(id) > 0;
   },
 
-  /* Coût réel d'une potion : fixe pour les potions à durée, mais
-     CROISSANT pour l'Élixir d'Aether (potion.costMult) — chaque achat
-     depuis la dernière ascension augmente le prix du suivant, ce qui
-     empêche d'en empiler dix d'un coup pour un bonus disproportionné.
-     Le compteur (game.aetherElixirStackCount) repart à 0 à chaque
-     ascension (voir progression-system.js, ascendNow()). Note
-     v2.83.45 : le coût croissant se déclenche maintenant à l'ACHAT
-     (mise en stock), pas à l'activation — cohérent avec le fait que
-     c'est l'achat qui est limité, pas l'usage.
-
-     v3.18 : un second multiplicateur s'ajoute, cette fois basé sur
-     game.cycleCount (nombre de boucles complètes à travers tous les
-     mondes, PAS remis à zéro par l'ascension — seulement par un reset
-     complet) — TOUTES les potions (soin comprises) coûtent
-     progressivement plus cher au fil des cycles. Objectif : préparer
-     un futur système de craft (rations/ressources) qui devrait
-     progressivement devenir plus intéressant que l'achat pur en or à
-     mesure que les cycles avancent. Taux choisi par défaut (+15%
-     composé par cycle, POTION_CYCLE_PRICE_GROWTH) — facile à ajuster
-     si le rythme ne convient pas une fois testé en jeu. */
   getCost: function (potion) {
     this.ensure();
     var base = potion.cost;
@@ -90,16 +46,11 @@ var PotionManager = {
     return Math.floor(base * cycleMult);
   },
 
-  /* Achète UNE potion (ajoutée au stock, pas activée immédiatement —
-     voir usePotion pour l'activation). Même principe que
-     buyHealingPotion. */
   buyPotion: function (id) {
     this.ensure();
     var potion = this.getPotion(id);
     if (!potion) return showToast("Potion introuvable", 1000);
 
-    // v3.20 : Ascétisme (affliction) interdit l'achat ET l'usage de
-    // potions — voir AfflictionManager.arePotionsForbidden().
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
       return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
     }
@@ -107,14 +58,6 @@ var PotionManager = {
     var cost = this.getCost(potion);
     if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
 
-    // v3.24 : plafond de stock à 1 par type pour les potions à effet
-    // TEMPORAIRE (durationMin) — demandé, en complément direct du
-    // "une seule active à la fois" de la v3.23 : inutile de pouvoir
-    // en stocker plusieurs qu'on ne pourra de toute façon jamais
-    // utiliser en même temps. Les potions de SOIN (fonction séparée,
-    // buyHealingPotion) et l'Élixir d'Aether (pas de durationMin, son
-    // propre mécanisme de coût croissant via costMult sert déjà à
-    // limiter l'empilement) restent librement stockables comme avant.
     if (potion.durationMin && this.getStock(id) >= 1) {
       return showToast("Déjà 1 en stock — utilise-la avant d'en racheter", 1600);
     }
@@ -133,19 +76,11 @@ var PotionManager = {
     saveGame();
   },
 
-  /* Consomme UNE potion du stock et l'active réellement : redémarre
-     son minuteur (potions à durée — boire une potion déjà active la
-     RECHARGE, ne cumule pas son effet), ou ajoute son bonus à
-     pendingPotionBonuses.aetherNext (Élixir d'Aether). */
   usePotion: function (id) {
     this.ensure();
     var potion = this.getPotion(id);
     if (!potion) return showToast("Potion introuvable", 1000);
 
-    // v3.20 : Ascétisme (affliction) — même blocage qu'à l'achat, au
-    // cas où une potion serait déjà en stock avant d'activer
-    // l'affliction (achetée avant, utilisable seulement après
-    // désactivation).
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
       return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
     }
@@ -153,14 +88,6 @@ var PotionManager = {
     var stock = this.getStock(id);
     if (stock <= 0) return showToast("Aucune potion en stock", 1000);
 
-    // v3.23 : une SEULE potion à bonus temporaire active à la fois
-    // (demandé) — avant, Force/Célérité/Précision/Endurance/Fortune
-    // pouvaient toutes tourner simultanément. Reboire la MÊME potion
-    // pendant qu'elle est active reste permis (prolonge sa durée) ;
-    // essayer d'en activer une AUTRE pendant qu'une est en cours est
-    // bloqué. Ne concerne que les potions à durée (durationMin) — pas
-    // l'Élixir d'Aether, qui n'a pas de notion d'"active" (bonus mis
-    // en réserve pour la prochaine ascension).
     if (potion.durationMin) {
       var now = Date.now();
       var hasOtherActive = Object.keys(game.activePotions).some(function (activeId) {
@@ -190,13 +117,6 @@ var PotionManager = {
     saveGame();
   },
 
-  /* Revend UNE potion du stock (effet ou soin) contre de l'or — la
-     moitié du prix d'achat ACTUEL (v3.18 : this.getCost(), qui
-     inclut désormais la hausse par cycle — avant, potion.cost brut,
-     ce qui aurait rendu le ratio de revente de moins en moins
-     avantageux à mesure que les cycles avancent), arrondi à
-     l'inférieur. Fonctionne pour les 2 catalogues (POTIONS_DB et
-     HEALING_POTIONS_DB). */
   sellPotion: function (id) {
     this.ensure();
     this.ensureHealing();
@@ -218,10 +138,6 @@ var PotionManager = {
     saveGame();
   },
 
-  /* Purge les potions à durée expirées. Renvoie true si au moins une
-     a expiré (pour savoir s'il faut recalculer les stats/redessiner).
-     Appelée à chaque frame de la boucle de jeu (voir main/game-loop.js) —
-     le coût est négligeable (juste un parcours de quelques clés). */
   tick: function () {
     this.ensure();
     var now = Date.now();
@@ -241,14 +157,6 @@ var PotionManager = {
     return changed;
   },
 
-  // ============================================================
-  // Potions de soin (v2.16) — achat en stock, usage instantané
-  // depuis le bouton dédié de l'écran Combat (voir ui/combat-view.js)
-  // ET depuis le sous-onglet "🧪 Potions" de l'écran Équipement
-  // (v2.83.45, voir ui/equipment-view.js) — même stock partagé entre
-  // les deux points d'accès.
-  // ============================================================
-
   ensureHealing: function () {
     if (!game.healingPotionsOwned || typeof game.healingPotionsOwned !== "object") {
       game.healingPotionsOwned = {};
@@ -265,24 +173,15 @@ var PotionManager = {
     return Number(game.healingPotionsOwned[id] || 0);
   },
 
-  /* Achète UNE potion de soin (ajoutée au stock, pas consommée
-     immédiatement — voir useHealingPotion pour l'usage). */
   buyHealingPotion: function (id) {
     this.ensureHealing();
     var potion = this.getHealingPotion(id);
     if (!potion) return;
 
-    // v3.20 : Ascétisme (affliction) — même blocage que les potions à
-    // effet, voir AfflictionManager.arePotionsForbidden().
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
       return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
     }
 
-    // v3.20 : bug trouvé au passage — cette fonction utilisait encore
-    // potion.cost BRUT au lieu de this.getCost(potion), donc la hausse
-    // de prix par cycle (v3.18) ne s'appliquait en réalité JAMAIS aux
-    // potions de soin à l'achat (seule sellPotion() avait été corrigée
-    // à l'époque). Corrigé — cohérent avec buyPotion() ci-dessus.
     var cost = this.getCost(potion);
     if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
 
@@ -295,24 +194,17 @@ var PotionManager = {
     saveGame();
   },
 
-  /* Millisecondes restantes avant de pouvoir réutiliser une potion de
-     soin (cooldown commun à toutes, pour éviter le spam). */
   getHealCooldownRemainingMs: function () {
     this.ensureHealing();
     var elapsed = Date.now() - (game.lastHealUse || 0);
     return Math.max(0, HEALING_POTION_COOLDOWN_MS - elapsed);
   },
 
-  /* Consomme une potion de soin du stock et restaure des PV
-     immédiatement (plafonnés aux PV max). Respecte le cooldown
-     commun. Utilisable à tout moment, y compris en plein donjon. */
   useHealingPotion: function (id) {
     this.ensureHealing();
     var potion = this.getHealingPotion(id);
     if (!potion) return;
 
-    // v3.20 : Ascétisme (affliction) — bloque aussi l'usage réel
-    // (pas seulement l'achat), voir AfflictionManager.arePotionsForbidden().
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
       return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
     }
@@ -342,10 +234,6 @@ var PotionManager = {
     saveGame();
   },
 
-  /* Agrège les bonus de TOUTES les potions à durée actuellement
-     actives, par clé de stat (voir StatsSystem.recalcStats). Les
-     potions n'ayant pas de durée (Élixir d'Aether) n'apparaissent
-     jamais ici — elles passent par pendingPotionBonuses. */
   getActiveEffects: function () {
     this.ensure();
     var now = Date.now();

@@ -1,12 +1,5 @@
 "use strict";
-/* ============================================================
-Aethervale — ui/afflictions-view.js
-v3.20 : écran "Afflictions" (Menu ☰) — liste des modificateurs
-optionnels et cumulables (voir data/afflictions.js,
-systems/affliction-system.js), chacun avec un interrupteur, même
-pattern visuel que le toggle d'autovente (ui/equipment-view.js).
-Activation/désactivation IMMÉDIATE, pas de "confirmer" séparé.
-============================================================ */
+/* ui/afflictions-view.js — écran Afflictions (Menu), interrupteurs à activation immédiate. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 function buildAfflictionsHTML() {
   if (window.AfflictionManager) AfflictionManager.ensure();

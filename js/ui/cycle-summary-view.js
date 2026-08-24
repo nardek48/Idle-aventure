@@ -1,14 +1,6 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/cycle-summary-view.js
-Fenêtre affichée quand le joueur reboucle à la Forêt — que ce soit
-un cycle COMPLET (les 6 mondes traversés) ou un "mini-cycle" plus
-précoce (verrouillé faute d'ascensions suffisantes). Même principe
-que le résumé de fin de donjon, pour que le joueur comprenne
-clairement qu'il recommence, et surtout combien il lui manque pour
-avancer. Voir WorldManager.advance() en systems/progression-system.js
-(result.type === "cycle" ou "locked") pour le déclenchement.
-============================================================ */
+/* ui/cycle-summary-view.js — fenêtre au bouclage vers la Forêt (cycle complet ou mini-cycle verrouillé).
+   Déclenchée par WorldManager.advance() (result.type "cycle"/"locked"). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 function buildCycleSummaryHTML(lockedWorld) {
   var cycleNumber = game.cycleCount || 0;
@@ -22,8 +14,6 @@ function buildCycleSummaryHTML(lockedWorld) {
   h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "dungeon-story-icon-img", "Cycle") + '</div>';
 
   if (isLocked) {
-    // v2.83 : le monde se débloque désormais via une questline (voir
-    // data/world-quests.js), plus par nombre d'ascensions.
     var lockedWorldIndex = WORLDS.indexOf(lockedWorld);
     var quest = window.WorldQuestManager ? WorldQuestManager.getQuestForWorldIndex(lockedWorldIndex) : null;
     var questStepsDone = quest ? quest.steps.filter(function (s) { return WorldQuestManager.isStepComplete(quest, s); }).length : 0;
@@ -56,8 +46,6 @@ function buildCycleSummaryHTML(lockedWorld) {
   return h;
 }
 
-/* lockedWorld : passer le monde bloquant pour un "mini-cycle" précoce,
-   ou rien/null pour un vrai cycle complet (les 6 mondes traversés). */
 function openCycleSummary(lockedWorld) {
   var host = document.getElementById("cycle-modal-root");
   if (host) host.innerHTML = buildCycleSummaryHTML(lockedWorld || null);

@@ -1,23 +1,9 @@
 "use strict";
-/* ============================================================
-Aethervale — ui/camp-view.js
-v3.7 : écran "Campement" — nouvelle page d'accueil du jeu (premier
-bouton de la barre du bas, onglet actif par défaut à l'ouverture).
-Point de ralliement entre deux sessions actives : feu de camp (soin
-gratuit, voir systems/camp-system.js), résumé condensé des quêtes en
-cours (les 3 systèmes de quêtes du jeu : questline de déblocage de
-monde, quêtes d'aventure, quêtes journalières — le détail complet de
-chacune reste dans l'onglet Quêtes, ce résumé ne fait que pointer
-vers lui), et accès rapides à Personnage/Équipement/Quêtes.
-============================================================ */
+/* ui/camp-view.js — écran Campement (page d'accueil, v3.7) : feu de camp (repos long/court), résumé des 3 systèmes de quêtes, accès rapides. Détail : COMMENTAIRES_ORIGINAUX.md */
 
-/* Condensé des 3 systèmes de quêtes — une ligne par système avec du
-   contenu à signaler, rien s'il n'y a vraiment rien en cours. */
 function buildCampQuestSummaryHTML() {
   var h = "";
 
-  // 1) Questline de déblocage de monde (la toute prochaine, voir
-  //    getNextLockedWorldIndex(), ui/quests-view.js).
   if (window.WorldQuestManager && typeof getNextLockedWorldIndex === "function") {
     var idx = getNextLockedWorldIndex();
     if (idx !== -1) {
@@ -29,8 +15,6 @@ function buildCampQuestSummaryHTML() {
     }
   }
 
-  // 2) Quêtes d'aventure (run en cours en priorité, sinon combien de
-  //    dispo).
   if (window.AdventureQuestManager) {
     var runningQuest = AdventureQuestManager.getRunningQuest();
     if (runningQuest) {
@@ -44,7 +28,6 @@ function buildCampQuestSummaryHTML() {
     }
   }
 
-  // 3) Quêtes journalières.
   if (Array.isArray(game.quests) && window.QuestManager) {
     var readyToClaim = game.quests.filter(function (q) { return !q.claimed && QuestManager.isComplete(q); }).length;
     var stillActive = game.quests.filter(function (q) { return !q.claimed && !QuestManager.isComplete(q); }).length;
@@ -73,21 +56,11 @@ function buildCampHTML() {
   h += '<div class="camp-hero-title">🏕️ Campement</div>';
   h += '<div class="camp-hero-sub">Ton point de ralliement entre deux expéditions.</div>';
 
-  // v3.14 : message affiché UNE SEULE fois juste après une mort (voir
-  // game.justDied, mis à true par CombatEngine.onHeroDefeated() dans
-  // sa branche normale — pas en donjon/run de quête, qui ont déjà
-  // leur propre message dédié). Effacé immédiatement après lecture.
-  // v3.15 : les PV sont réellement à 0 à ce stade (plus une simple
-  // mise en scène) — le message reflète maintenant une vraie
-  // nécessité, pas juste une ambiance.
   if (game.justDied) {
     h += '<div class="camp-death-banner">💀 Tu es tombé au combat, PV à 0. Repose-toi avant de repartir à l\'aventure.</div>';
     game.justDied = false;
   }
 
-  // --- Feu de camp : long repos (30 min, 100% PV) vs repos court
-  //     (15 min, 50% PV) — v3.14, deux cooldowns indépendants, voir
-  //     systems/camp-system.js. ---
   h += '<div class="camp-fire-row">';
 
   h += '<div class="camp-card camp-fire-card">';
@@ -114,14 +87,12 @@ function buildCampHTML() {
 
   h += '</div>';
 
-  // --- Résumé des quêtes ---
   h += '<div class="camp-card">';
   h += '<div class="camp-card-title">📜 Résumé des quêtes</div>';
   h += buildCampQuestSummaryHTML();
   h += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">Voir toutes les quêtes</button>';
   h += '</div>';
 
-  // --- Accès rapides ---
   h += '<div class="camp-card">';
   h += '<div class="camp-card-title">Accès rapide</div>';
   h += '<div class="camp-quick-access">';

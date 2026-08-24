@@ -1,50 +1,7 @@
 "use strict";
-/* ============================================================
-Aethervale — data/hunt-quests.js
-v3.30 : première ressource d'Entrepôt "de boucle" — contrairement aux
-quêtes d'aventure (data/adventure-quests.js, complétées UNE FOIS puis
-game.adventureQuestsCompleted[id]=true pour toujours), une "Chasse"
-(HUNT_QUESTS) n'a pas de fin : chaque run traite un LOT fixe de kills
-(voir lotSize) puis relance automatiquement un nouveau lot tant que le
-joueur ne quitte pas explicitement (bouton Arrêter) — voir
-systems/hunt-quest-system.js (HuntQuestManager, système séparé
-d'AdventureQuestManager).
+/* data/hunt-quests.js — chasses "de boucle" (lots de kills relancés automatiquement) + catalogue ressources Entrepôt.
+   Logique : systems/hunt-quest-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-Chaque entrée décrit une chasse ciblée sur {worldId, adventureIndex},
-même principe de génération d'ennemi que les quêtes d'aventure
-(WorldManager.generateEnemy() sur un contexte temporaire).
-============================================================ */
-
-/* Catalogue des ressources d'Entrepôt (voir ui/warehouse-view.js) —
-   séparé de RARITY_ORDER/equipment.js, ce ne sont pas des objets
-   procéduraux mais des stacks simples (game.resources[key], un
-   nombre). v3.31 : icônes dédiées fournies (images/Icons/resources/) —
-   viande n'est plus en emoji 🍖 (placeholder v3.30). Blé/Bois/Fer
-   ajoutés pour les bâtiments de production (voir
-   data/production-buildings.js) — Bois/Fer réservés à de futures
-   constructions/améliorations, Blé/Viande conservés en Entrepôt même
-   sans usage immédiat (demande explicite).
-   v3.35 : cap (capacité max de stock, optionnel — absent/undefined =
-   illimité, comme avant pour les 4 ressources brutes). Générique et
-   réutilisable pour N'IMPORTE QUELLE ressource de ce catalogue, pas
-   seulement les ressources d'artisanat (voir data/recipes.js) —
-   WarehouseManager.addResource() le respecte pour toute clé qui le
-   définit. tier: "raw" | "crafted", sert uniquement au filtre
-   Bruts/Tier 1 de ui/warehouse-view.js.
-   v3.36 : Pierre (brute, bâtiment Carrière — voir
-   data/production-buildings.js) et Farine (tier 1, recette Blé →
-   Farine — voir data/recipes.js). Planche/Lingot ont maintenant un
-   sellPrice réel (7/10 or) — volontairement inférieur à la valeur de
-   revente des 5 intrants bruts nécessaires (Bois×5=10, Fer×5=15),
-   pour que le craft reste motivé par la progression et non par
-   l'arbitrage revente brute vs revente transformée.
-   v3.45 : Eau (brute, bâtiment Puits — voir data/production-buildings.js),
-   ressource la moins chère du jeu (1 or). Pain et Ration (tier 1,
-   premières recettes CROISÉES multi-intrants et premières à utiliser
-   station: "workshop" — voir data/recipes.js) : sellPrice choisi sous
-   la valeur de revente brute des intrants, même règle anti-arbitrage
-   que Planche/Lingot/Farine (Pain 19 or vs 5 Eau + 3 Farine = 26 or ;
-   Ration 36 or vs 10 Viande + 1 Pain = 49 or). */
 var WAREHOUSE_RESOURCES = {
   viande: { id: "viande", name: "Viande", icon: "images/Icons/resources/meat_icon.png", desc: "Butin de chasse, obtenu en Forêt ou au bâtiment Chasse.", sellPrice: 3, tier: "raw" },
   ble: { id: "ble", name: "Blé", icon: "images/Icons/resources/wheat_icon.png", desc: "Récolté au bâtiment Champs.", sellPrice: 2, tier: "raw" },
@@ -63,13 +20,13 @@ var HUNT_QUESTS = {
   hq_forest_boar: {
     id: "hq_forest_boar",
     worldId: "forest",
-    adventureIndex: 0, // cible "Lisière de la forêt", même zone que aq_forest_scout
+    adventureIndex: 0,
     name: "Chasse en Forêt",
     story: "Le gibier ne manque pas à la Lisière. Chaque bête abattue rapporte de la viande à stocker à l'Entrepôt — une chasse peut se répéter indéfiniment.",
     icon: "🍖",
     resourceKey: "viande",
-    dropChancePct: 20,   // même taux que le Minerai rare (aq_forest_collect)
-    lotSize: 10           // kills avant relance automatique du lot suivant
+    dropChancePct: 20,
+    lotSize: 10
   }
 };
 

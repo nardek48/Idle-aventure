@@ -1,38 +1,6 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/hud-view.js
-Barre du haut, toujours visible quel que soit l'onglet : ressources
-(or/essence/Aether), zone/aventure en cours, XP + PV du héros, et la
-barre de stats sous la zone de combat.
+/* ui/hud-view.js — barre du haut (ressources, titre de page, mini-portrait héros) + barre de stats sous combat. Injectés une fois au boot. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-v2.8 : le HUD et la barre de stats étaient codés en dur dans
-index.html (seul le PANEL central passait par un buildXxxHTML()
-comme tous les autres écrans). buildHudHTML()/buildStatsBarHTML()
-ci-dessous génèrent exactement le même marquage (mêmes id/class),
-injecté une seule fois au boot (voir main/boot.js) — aucune fonction
-de rendu (renderHud, renderStats...) n'a eu besoin de changer, elles
-continuent de faire de simples getElementById.
-
-v2.76 : titre de page centralisé dans le HUD, sous la ligne de
-ressources — à la demande de l'utilisateur, pour libérer de la place
-en haut de chaque panel (avant : chaque écran avait son propre
-".panel-title" sticky en haut du panel, retiré des ~11 fichiers
-ui/*.js concernés — voir HUD_PAGE_TITLES et updateHudPageTitle()
-ci-dessous). Exceptions qui GARDENT un titre dans le panel lui-même
-(pas dans le HUD) :
-  - Combat : jamais de titre (écran principal, l'espace y est le
-    plus précieux).
-  - Ascension : 2 "panel-title" internes ("Ascension" au-dessus du
-    bouton prestige, "Boutique d'Aether" plus bas) sont en réalité
-    des séparateurs de section dans UN SEUL écran, pas un titre de
-    page — laissés tels quels. Le HUD affiche juste "Ascension".
-  - Équipement : le titre "Sac (X/50)" au-dessus de l'inventaire est
-    aussi un séparateur de section, laissé tel quel. Seul le titre
-    principal "Équipement" part dans le HUD. */
-
-/* Titre affiché dans le HUD pour chaque onglet. "combat" est absent
-   exprès : updateHudPageTitle() masque complètement la zone titre
-   sur cet écran (voir plus bas). */
 var HUD_PAGE_TITLES = {
   village: "Village",
   dungeon: "Donjon",
@@ -51,34 +19,6 @@ var HUD_PAGE_TITLES = {
 };
 
 function buildHudHTML() {
-  // v2.38 : le HUD n'affiche plus que les 3 ressources (or/essence/
-  // Aether). Le bloc zone/aventure en cours + niveau/XP du héros
-  // (anciennement ".nb-hud-lower") a été retiré à la demande de
-  // l'utilisateur. Les styles CSS associés ont aussi été supprimés
-  // (voir css/02-layout.css) et les lookups DOM correspondants dans
-  // renderHud() ci-dessous.
-  // v2.72 : mini-portrait du héros (#combat-hero-mini) déplacé ici,
-  // à côté des ressources, à la demande de l'utilisateur — avant, il
-  // flottait en survol de la zone de jeu (écran Combat uniquement,
-  // voir css/03-combat.css pour l'historique). Il garde exactement la
-  // même taille, structure et IDs qu'avant : renderHeroHp() et
-  // renderCombatHeroMini() (dans ui/combat-view.js et ui/hud-view.js)
-  // n'ont besoin d'aucun changement, elles ciblent les mêmes IDs peu
-  // importe où ils se trouvent dans le DOM. Visible sur tous les
-  // écrans maintenant, pas seulement en combat.
-  // v2.76 : ligne de titre de page ajoutée sous nb-hud-top-row (voir
-  // updateHudPageTitle()) — vide/masquée par défaut, remplie au
-  // premier rendu par renderAll()/switchTab().
-  // v2.77 : le titre est remonté DANS .nb-hud-top-row, empilé sous
-  // .nb-hud-resources dans une colonne commune (.nb-hud-left-col),
-  // au lieu d'être une ligne à part sur toute la largeur du HUD — à
-  // la demande de l'utilisateur, pour coller le titre juste sous les
-  // ressources, à côté du portrait, sans le grand espace vide qu'il
-  // y avait avant.
-  // v3.17 : le raccourci Équipement (auparavant .nb-hud-bag-btn, niché
-  // dans .nb-hud-title-row à gauche) est déplacé ici — sa propre
-  // colonne, juste AVANT le portrait du héros, à droite de l'écran —
-  // et un raccourci Ascension l'accompagne, à la demande de Seb.
   return ''
     + '<div class="nb-hud-top-row">'
     +   '<div class="nb-hud-left-col">'
@@ -108,24 +48,10 @@ function buildHudHTML() {
     +     '</div>'
     +   '</div>'
     + '</div>'
-    // v3.38 : bandeau de progression de la chaîne de déblocage de
-    // l'Atelier (voir systems/workshop-unlock-system.js) — ligne à
-    // part sous .nb-hud-top-row (pas dedans : structure existante à
-    // 3 colonnes fixes, pas conçue pour une bannière pleine largeur).
-    // Vide/masqué par défaut, rempli par renderWorkshopUnlockBanner()
-    // ci-dessous ; disparaît définitivement une fois la chaîne
-    // terminée (getBannerText() renvoie alors null).
-    // v3.39 : cliquable — ouvre le popup d'objectif (voir
-    // ui/workshop-quest-modal.js, openWorkshopStepPopup()).
     + '<div id="workshop-unlock-banner" class="workshop-unlock-banner" style="display:none;" onclick="openWorkshopStepPopup()"></div>';
 }
 
 function buildStatsBarHTML() {
-  // v2.83.11 : indicateur "Aether" retiré de la barre de stats de
-  // Combat (demande explicite — pas besoin d'afficher ce chiffre en
-  // continu). La mécanique elle-même (getAetherBonuses().tapBonus,
-  // voir systems/stats-system.js) reste inchangée et toujours
-  // appliquée à game.tapMult — seul l'affichage disparaît.
   return ''
     + '<div class="stat-item"><span class="stat-label">⚡ Dégâts/Tap</span><span class="stat-value" id="stat-tap-dmg">1</span></div>'
     + '<div class="stat-item"><span class="stat-label">🔁 Auto DPS</span><span class="stat-value" id="stat-auto-dps">0</span></div>'
@@ -134,8 +60,6 @@ function buildStatsBarHTML() {
     + '<div class="stat-item"><span class="stat-label"><img class="stat-label-icon" src="images/Icons/gold_icon.png" alt="Or"> Or</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>';
 }
 
-/* Injecte le HUD et la barre de stats une seule fois au boot (voir
-   main/boot.js), avant le tout premier rendu. */
 function mountHudAndStatsBar() {
   var hud = document.getElementById("hud");
   var statsBar = document.getElementById("stats-bar");
@@ -143,9 +67,6 @@ function mountHudAndStatsBar() {
   if (statsBar) statsBar.innerHTML = buildStatsBarHTML();
 }
 
-/* Rafraîchit tout le HUD principal (ressources, nom de zone/aventure,
-   XP du héros). Appelée très souvent (après quasiment chaque action
-   qui change une valeur affichée). */
 function renderHud() {
   var gold = document.getElementById("hud-gold");
   var essence = document.getElementById("hud-essence");
@@ -162,14 +83,6 @@ function renderHud() {
   renderWorkshopUnlockBanner();
 }
 
-/* v3.38 : bandeau de progression de la chaîne de déblocage de
-   l'Atelier (voir systems/workshop-unlock-system.js) — texte mis à
-   jour à chaque renderHud() (déjà appelée après quasiment toute
-   action pertinente : récolte, craft, construction). Masqué
-   entièrement (display:none) une fois la chaîne terminée
-   (getBannerText() renvoie alors null) — pas de réapparition
-   possible ensuite, WorkshopUnlockManager ne repasse jamais
-   completed=true à false. */
 function renderWorkshopUnlockBanner() {
   var host = document.getElementById("workshop-unlock-banner");
   if (!host) return;
@@ -190,30 +103,15 @@ function renderWorkshopUnlockBanner() {
   host.style.display = "block";
 }
 
-/* v2.83.54 : indicateur "point de talent disponible" sur le portrait
-   du héros (HUD) — réutilise getTalentsAvailableCount() (déjà utilisée
-   pour le badge Talents du menu ☰, voir ui/quests-view.js), donc pas
-   de nouvelle logique de détection : même définition de "il y a
-   quelque chose à dépenser" partout dans le jeu. Le portrait devient
-   aussi cliquable (voir buildHudHTML) et amène directement sur
-   Talents. */
 function renderHudLevelUpBadge() {
   var badge = document.getElementById("hud-hero-levelup-badge");
   if (!badge) return;
 
   var available = (typeof getTalentsAvailableCount === "function") ? getTalentsAvailableCount() : 0;
-  // v3.8 : "block" plutôt que "flex" — c'est maintenant une image
-  // directe (<img>), plus une pastille flex avec du texte dedans.
   badge.style.display = available > 0 ? "block" : "none";
 }
 window.renderHudLevelUpBadge = renderHudLevelUpBadge;
 
-/* v2.83.53 : badge sur le bouton sac du HUD — nombre d'objets
-   d'équipement actuellement dans le sac (game.inventory), pour
-   repérer un nouveau butin plus vite que le toast (très bref, facile
-   à rater). Même style que les badges du menu ☰ (Quêtes/Talents/...).
-   Se met à jour à chaque renderHud() (donc à chaque kill, achat,
-   vente, équipement...). */
 function renderHudBagBadge() {
   var badge = document.getElementById("hud-bag-badge");
   if (!badge) return;
@@ -228,15 +126,6 @@ function renderHudBagBadge() {
 }
 window.renderHudBagBadge = renderHudBagBadge;
 
-/* v3.23 : pastille rouge sur le raccourci Ascension du HUD (icône
-   juste avant le portrait, ajoutée en v3.17) — bug corrigé : ce
-   raccourci n'avait jamais eu de pastille, contrairement à la carte
-   "Ascension" du Menu ☰ qui, elle, en a toujours eu une correctement
-   fonctionnelle (voir getAscensionAvailableCount(), ui/quests-view.js).
-   Même source de vérité que la carte du Menu — juste un second point
-   d'affichage. Pas de chiffre affiché (juste un point rouge) : une
-   ascension est soit possible, soit non, jamais "plusieurs en attente"
-   comme une quête ou un haut fait. */
 function renderHudAscensionBadge() {
   var badge = document.getElementById("hud-ascension-badge");
   if (!badge) return;
@@ -245,21 +134,6 @@ function renderHudAscensionBadge() {
   badge.style.display = available > 0 ? "flex" : "none";
 }
 window.renderHudAscensionBadge = renderHudAscensionBadge;
-
-/* ============================================================
-   v1.8.5 : Barre de vie du héros. La classe "low" (PV <= 25%)
-   permet au CSS de la faire clignoter/rougir davantage.
-   v2.26 : synchronise AUSSI la barre dupliquée sous les boutons
-   d'attaque spéciale/bouclier de l'écran Combat (mêmes PV, deux
-   affichages) — voir ui/combat-view.js.
-   v2.38 : la barre du HUD (#hud-hero-hp-text/#hud-hero-hp-fill) a été
-   retirée avec le bloc zone/XP — plus de lookup ici.
-   v2.40 : synchronise aussi la mini-barre sous le portrait du héros
-   en haut à gauche de l'écran Combat (#combat-hero-mini-hp-*).
-   v2.41 : la carte "❤️ Points de vie" (#combat-hero-hp-text/-fill)
-   sous le bouton Attaque a été retirée, redondante avec la mini-barre
-   — c'est maintenant la SEULE barre de PV du héros affichée en jeu.
-============================================================ */
 
 function renderHeroHp() {
   var miniText = document.getElementById("combat-hero-mini-hp-text");
@@ -277,14 +151,6 @@ function renderHeroHp() {
     miniFill.classList.toggle("low", pct <= 25);
   }
 }
-
-/* ============================================================
-   v2.40 : portrait + niveau du héros dans la mini-carte en haut à
-   gauche de l'écran Combat (#combat-hero-mini). Contrairement à la
-   barre de PV (renderHeroHp, appelée très souvent), le portrait ne
-   change que si le héros change — appelée depuis renderAll() et
-   après confirmHeroSelection(), coût négligeable de toute façon.
-============================================================ */
 
 function renderCombatHeroMini() {
   var img = document.getElementById("combat-hero-mini-img");
@@ -308,14 +174,6 @@ function renderCombatHeroMini() {
 
   if (levelEl) levelEl.textContent = "Niv. " + Number(game.heroLevel || 1);
 }
-/* ============================================================
-   Barre de stats sous la zone de combat : dégâts/tap, auto DPS,
-   critique, multiplicateur d'or — tous lus via les getters
-   "effective*" de StatsSystem (jamais game.tapDamage etc.
-   directement, pour être sûr d'avoir des valeurs propres).
-   v2.83.11 : ligne "Aether — Tap +X%" retirée (redondante, le joueur
-   n'a pas besoin de ce détail en continu pendant le combat).
-============================================================ */
 
 function renderStats() {
   var tap = document.getElementById("stat-tap-dmg");
@@ -335,14 +193,6 @@ function renderStats() {
   if (gold) gold.textContent = "x" + fmt2(EquipmentManager.effectiveGoldMult());
 }
 
-/* ============================================================
-   v2.76 : titre de page dans le HUD (voir HUD_PAGE_TITLES plus haut).
-   Masqué entièrement sur Combat (display:none) pour ne pas grignoter
-   d'espace là où c'est le plus précieux ; affiché pour tous les
-   autres onglets. Appelée depuis switchTab() ET renderAll() (voir
-   ui/ui-root.js) pour être sûre d'être à jour au premier rendu comme
-   à chaque changement d'onglet.
-============================================================ */
 function updateHudPageTitle() {
   var el = document.getElementById("hud-page-title");
   if (!el) return;
@@ -367,11 +217,6 @@ window.renderCombatHeroMini = renderCombatHeroMini;
 window.renderStats = renderStats;
 window.updateHudPageTitle = updateHudPageTitle;
 
-/* v2.83.52 : bouton sac dans le HUD (sous les ressources, à gauche du
-   portrait du héros) — accès direct à l'Inventaire depuis n'importe
-   quel écran, y compris en plein combat. Placé à côté (pas dans) du
-   titre de page, qui lui reste masqué sur Combat — le bouton reste
-   donc toujours visible peu importe l'écran. */
 function openBagFromHud() {
   if (typeof activeEquipSubTab !== "undefined") activeEquipSubTab = "inventory";
   if (typeof switchTab === "function") switchTab("equip");

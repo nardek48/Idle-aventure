@@ -1,17 +1,7 @@
 "use strict";
-/* ============================================================
-Quest Idle — systems/equipment-system.js
-Actions sur l'inventaire : équiper/déséquiper/vendre, tri.
-Deux objets exposés :
-  - EquipmentSystem  contient la vraie logique (ci-dessous)
-  - EquipmentManager façade utilisée par le reste du code (UI +
-    ce fichier lui-même) : ajoute les méthodes "effective*" qui
-    délèguent à StatsSystem. Les deux existent pour historique,
-    garder les deux pour ne rien casser ailleurs dans le code.
-============================================================ */
+/* systems/equipment-system.js — actions sur l'inventaire (équiper/déséquiper/vendre/trier).
+   EquipmentSystem = logique réelle ; EquipmentManager = façade legacy déléguant à StatsSystem pour les "effective*". Détail : COMMENTAIRES_ORIGINAUX.md */
 
-/* Prix de revente d'un objet selon sa rareté (fixe, ne dépend pas
-   de son stat/valeur). */
 function getEquipmentSellValue(item) {
   if (!item) return 0;
   return item.rarity === "legendary" ? 1000 :
@@ -20,23 +10,6 @@ function getEquipmentSellValue(item) {
          item.rarity === "green" ? 25 : 10;
 }
 
-/* v2.23 : chemin de l'icône illustrée d'un objet (images/Icons/equipment_icon/),
-   une image DIFFÉRENTE par type ET par rareté.
-
-   v2.90 : passage en .png pour les types qui ont un visuel dédié
-   pour LES 5 raretés (dont "green"/Inhabituel, avant en repli sur
-   "common"). Les types restés en .jpg n'ont pas de visuel "green"
-   dédié : ils gardent le repli sur "common" pour cette rareté.
-
-   v3.8 : simplification temporaire — une seule illustration par TYPE
-   d'équipement (rareté forcée à "common"), le temps que Bottes reçoive
-   son visuel (seul type encore sans art à l'époque).
-
-   v3.11 : revert — Bottes a maintenant son visuel complet (5 raretés,
-   comme tous les autres types), donc plus aucune raison de forcer
-   "common" : CHAQUE emplacement affiche à nouveau une image différente
-   selon sa vraie rareté, arme comprise (qui varie aussi par flavor
-   bow/sword/axe/staff, voir data/equipment.js). */
 var EQUIPMENT_ICON_PNG_TYPES = {
   amulet: true, armor: true, axe: true, bottes: true, bow: true, casque: true,
   gants: true, ring: true, robe: true, staff: true, sword: true
@@ -44,7 +17,7 @@ var EQUIPMENT_ICON_PNG_TYPES = {
 
 var EQUIPMENT_ICON_JPG_RARITY_FALLBACK = {
   common: "common",
-  green: "common",   // pas d'asset "green" dédié pour ces types, repli sur "common"
+  green: "common",
   rare: "rare",
   epic: "epic",
   legendary: "legendary"
@@ -54,26 +27,15 @@ function getEquipmentIconPath(item) {
   if (!item || !item.icon) return "";
 
   if (EQUIPMENT_ICON_PNG_TYPES[item.icon]) {
-    // Les 5 raretés existent en .png pour ces types, pas de repli nécessaire.
     return "images/Icons/equipment_icon/" + item.icon + "_" + item.rarity + ".png";
   }
 
-  // Types encore en .jpg (non tirés actuellement — robe/crown/shield,
-  // retirés du pool en v3.8, laissés sur le disque) : repli "green" -> "common".
   var rarityFile = EQUIPMENT_ICON_JPG_RARITY_FALLBACK[item.rarity] || "common";
   return "images/Icons/equipment_icon/" + item.icon + "_" + rarityFile + ".jpg";
 }
 
-/* Capacité maximale du sac (voir l'affichage "Sac (X/50)" dans
-   equipment-view.js). Utilisé UNIQUEMENT quand un objet entre pour
-   la première fois dans l'inventaire (butin trouvé) — équiper/
-   déséquiper ne fait jamais perdre un objet à cause de ça, seul un
-   NOUVEAU butin peut être refusé si le sac est plein. */
 var MAX_INVENTORY_SIZE = 50;
 
-/* Ajoute un objet de butin à l'inventaire si la place le permet.
-   Renvoie true si l'objet a bien été ajouté, false si le sac est
-   plein (avec un message clair pour le joueur). */
 function addLootToInventory(item) {
   if (!item) return false;
   if (!Array.isArray(game.inventory)) game.inventory = [];
@@ -88,21 +50,9 @@ function addLootToInventory(item) {
   return true;
 }
 
-/* v2.26 : autovente. v2.83.31 : la règle est passée d'une comparaison
-   à l'objet déjà équipé à un SEUIL DE RARETÉ réglable
-   (game.autoSellRarityThreshold) — tout nouveau BUTIN (pas les achats
-   à l'échoppe, qui passent directement par addLootToInventory) dont
-   la rareté est INFÉRIEURE OU ÉGALE au seuil choisi est vendu
-   automatiquement au lieu d'encombrer le sac, quel que soit ce qui
-   est équipé. Renvoie true si l'objet a été traité d'une façon ou
-   d'une autre (ajouté ou vendu), false seulement si le sac est plein
-   ET qu'il n'a pas été vendu. */
 function addDropToInventory(item) {
   if (!item) return false;
 
-  // v2.83 : progression des objectifs "loot" des questlines de monde
-  // (voir data/world-quests.js) — compte tout vrai butin trouvé, même
-  // auto-vendu juste après (l'objet a bien été récupéré un instant).
   if (window.WorldQuestManager && typeof WorldQuestManager.trackLoot === "function") {
     WorldQuestManager.trackLoot(item.rarity);
   }
@@ -124,8 +74,6 @@ function addDropToInventory(item) {
 }
 
 var EquipmentSystem = {
-  /* Équipe un objet de l'inventaire par son uid. Si un objet occupait
-     déjà cet emplacement, il retourne dans l'inventaire (pas de perte). */
   equip: function (uid) {
     var index = (game.inventory || []).findIndex(function (item) {
       return item.uid === uid;
@@ -153,7 +101,6 @@ var EquipmentSystem = {
     saveGame();
   },
 
-  /* Retire l'objet d'un emplacement et le remet dans l'inventaire. */
   unequip: function (slot) {
     if (!game.equipped || !game.equipped[slot]) return;
 
@@ -170,8 +117,6 @@ var EquipmentSystem = {
     saveGame();
   },
 
-  /* Vend un objet précis de l'inventaire pour de l'or (voir
-     getEquipmentSellValue pour le prix). */
   sell: function (uid) {
     var index = (game.inventory || []).findIndex(function (item) {
       return item.uid === uid;
@@ -196,8 +141,6 @@ var EquipmentSystem = {
     saveGame();
   },
 
-  /* Trie l'inventaire par rareté (décroissante), puis emplacement,
-     puis nom. Utilisé par le bouton de tri de l'écran équipement. */
   sortInventoryByRarity: function () {
     if (!Array.isArray(game.inventory)) game.inventory = [];
 
@@ -221,8 +164,6 @@ var EquipmentSystem = {
     saveGame();
   },
 
-  /* Trie l'inventaire par emplacement (arme/armure/amulette) d'abord,
-     puis par rareté. */
     sortInventoryByType: function () {
     if (!Array.isArray(game.inventory)) game.inventory = [];
 
@@ -252,7 +193,6 @@ var EquipmentSystem = {
     saveGame();
   },
 
-  /* Vend l'inventaire entier d'un coup (bouton "Tout vendre"). */
   sellAllInventory: function () {
     if (!Array.isArray(game.inventory) || !game.inventory.length) {
       showToast("Aucun objet à vendre", 1200);
@@ -283,8 +223,6 @@ var EquipmentSystem = {
     saveGame();
   },
 
-  /* Vend tous les objets d'une rareté donnée (boutons de vente rapide
-     par rareté sur l'écran équipement). */
   sellInventoryByRarity: function (rarity) {
     var items = (game.inventory || []).filter(function (item) {
       return item.rarity === rarity;
@@ -378,8 +316,6 @@ window.getEquipmentIconPath = getEquipmentIconPath;
 window.addLootToInventory = addLootToInventory;
 window.addDropToInventory = addDropToInventory;
 
-/* Bascule l'autovente et redessine l'écran Équipement pour refléter
-   le nouvel état du bouton. */
 function toggleAutoSellEquipment() {
   game.autoSellEquipment = !game.autoSellEquipment;
   addLog(game.autoSellEquipment ? "🤖 Autovente activée" : "🤖 Autovente désactivée", "event");
@@ -389,9 +325,6 @@ function toggleAutoSellEquipment() {
 }
 window.toggleAutoSellEquipment = toggleAutoSellEquipment;
 
-/* v2.83.31 : seuil de rareté réglable pour l'autovente (voir
-   addDropToInventory) — remplace l'ancienne règle fixe basée sur
-   l'objet équipé. */
 function setAutoSellRarityThreshold(rarity) {
   if (typeof RARITY_ORDER === "undefined" || RARITY_ORDER.indexOf(rarity) === -1) return;
   game.autoSellRarityThreshold = rarity;

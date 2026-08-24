@@ -1,15 +1,7 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/ascension-view.js
-Écran "Ascension" : bouton de prestige (voir ascendNow() en
-progression-system.js) + boutique d'amélioration Aether.
+/* ui/ascension-view.js — écran Ascension : sous-onglets Ascension (bouton prestige) / Boutique Aether. Détail : COMMENTAIRES_ORIGINAUX.md */
 
-v2.83.38 : séparé en 2 sous-onglets (Ascension / Boutique), même
-principe que Équipement/Inventaire et Donjon/Boutique — voir
-css/00-components.css pour .subtab-page/.pc-subtab-bar.
-============================================================ */
-
-var activeAscensionSubTab = "ascension"; // "ascension" | "shop"
+var activeAscensionSubTab = "ascension";
 
 function setAscensionSubTab(tab) {
   activeAscensionSubTab = (tab === "shop") ? "shop" : "ascension";
@@ -25,7 +17,6 @@ function buildAscensionSubTabBarHTML() {
   return h;
 }
 
-/* Contenu du sous-onglet "Ascension" : bouton de prestige + conditions. */
 function buildAscensionTabContentHTML() {
   var minKills = (typeof ASCENSION_CONFIG !== "undefined" && ASCENSION_CONFIG.minKillsToAscend != null)
     ? ASCENSION_CONFIG.minKillsToAscend
@@ -74,7 +65,6 @@ function buildAscensionTabContentHTML() {
   return h;
 }
 
-/* Contenu du sous-onglet "Boutique" : liste des améliorations Aether. */
 function buildAscensionShopTabContentHTML() {
   var h = "";
 

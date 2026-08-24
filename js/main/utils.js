@@ -1,7 +1,2 @@
 "use strict";
-/* ============================================================
-Quest Idle — main/utils.js
-Fichier actuellement vide (réservé pour d'éventuels utilitaires
-spécifiques au démarrage/boucle de jeu). Les vrais utilitaires
-génériques sont dans core/utils.js.
-============================================================ */
+/* main/utils.js — vide, réservé pour utilitaires de boot/boucle de jeu. Utilitaires génériques : core/utils.js. Détail : COMMENTAIRES_ORIGINAUX.md */

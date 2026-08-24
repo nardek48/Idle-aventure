@@ -1,22 +1,7 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/achievement-view.js
-Écran "Hauts faits".
+/* ui/achievement-view.js — écran Hauts faits, liste par catégories en accordéon (repliées par défaut). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-v2.82 : passage d'une grille d'icônes + un seul détail affiché en
-dessous à une liste complète (une carte par haut fait, toutes les
-infos visibles directement), même principe que Quêtes/Bestiaire —
-voir css/00-components.css pour le composant partagé ".nb-entry-card".
-
-v2.83.36 : les catégories (Combat/Ascension/Bestiaire/Équipement/
-Donjon — déjà présentes dans les données via ACHIEVEMENTS_DB[].category
-et ACHIEVEMENT_CATEGORY_LABELS) passent en accordéon, repliées par
-défaut, avec un compteur "X/Y réclamés" par section — même principe
-que la liste de donjons (voir ui/dungeon-view.js). Rien n'est inventé
-côté données, juste un nouvel affichage sur ce qui existait déjà.
-============================================================ */
-
-var expandedAchievementCategory = null; // repliées par défaut
+var expandedAchievementCategory = null;
 
 function toggleAchievementCategory(cat) {
   expandedAchievementCategory = (expandedAchievementCategory === cat) ? null : cat;
@@ -32,9 +17,6 @@ function formatAchievementRewardText(reward) {
   return parts.join(" • ");
 }
 
-/* Une carte de haut fait : icône, nom, description, barre de
-   progression, récompense, et un statut à droite (bouton "Réclamer"
-   si complet, "✔ Réclamé" si déjà pris, "En cours" sinon). */
 function buildAchievementCardHTML(ach) {
   var progress = AchievementManager.getProgress(ach);
   var target = ach.target;
@@ -65,8 +47,6 @@ function buildAchievementCardHTML(ach) {
   return h;
 }
 
-/* En-tête cliquable d'une section (accordéon) — nom de catégorie +
-   compteur "X/Y réclamés", chevron d'état. */
 function buildAchievementCategoryHeaderHTML(cat, items, isExpanded) {
   var claimedInCat = items.filter(function (a) { return AchievementManager.isClaimed(a.id); }).length;
   var h = '<button type="button" class="nb-accordion-head' + (isExpanded ? ' is-expanded' : '') + '" onclick="toggleAchievementCategory(\'' + esc(cat) + '\')">';
@@ -109,7 +89,7 @@ function buildAchievementsHTML() {
   var h = '<div class="achievement-summary">' + claimedCount + ' / ' + total + ' réclamés</div>';
   h += buildAchievementListHTML();
 
-  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
+  return '<div class="nb-page-frame">' + h + '</div>';
 }
 
 window.buildAchievementsHTML = buildAchievementsHTML;

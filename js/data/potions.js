@@ -1,22 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — data/potions.js
-Catalogue des potions achetables en or, dans le sous-onglet
-"Potions" de la Boutique. Chaque potion a un effet TEMPORAIRE
-(durationMin minutes), sauf l'Élixir d'Aether qui n'a pas de
-minuteur : son bonus se consomme à la prochaine ascension.
-
-Champs :
-  - stat         clé d'effet lue par PotionManager.getActiveEffects()
-                 (power/celerity/critChance/endurance/gold/aetherNext)
-  - bonus        magnitude de l'effet (fraction, ex: 0.20 = +20%,
-                 sauf critChance qui est en points de % directs)
-  - durationMin  durée en minutes, ou null pour l'Élixir d'Aether
-                 (pas de minuteur, consommé à l'ascension suivante)
-Boire une potion déjà active prolonge sa durée (repart à zéro),
-elle ne se cumule pas avec elle-même. Des potions DIFFÉRENTES
-peuvent en revanche être actives en même temps.
-============================================================ */
+/* data/potions.js — potions temporaires (Boutique) + potions de soin consommables en combat. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var POTIONS_DB = [
   {
@@ -90,14 +73,6 @@ var POTIONS_DB = [
 
 window.POTIONS_DB = POTIONS_DB;
 
-/* ============================================================
-v2.16 : potions de SOIN — mécanique différente des potions ci-dessus
-(qui s'activent immédiatement à l'achat). Celles-ci s'achètent en
-stock (game.healingPotionsOwned[id] = quantité) et se consomment à la
-demande depuis le bouton dédié en bas d'écran (voir
-ui/combat-view.js), avec un petit cooldown entre deux usages pour
-éviter le spam pendant un donjon corsé.
-============================================================ */
 const HEALING_POTIONS_DB = [
   {
     id: "potion_soin_mineur",

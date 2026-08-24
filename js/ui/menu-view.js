@@ -1,20 +1,6 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/menu-view.js
-Le menu plein écran, ouvert par le bouton ☰ Menu de la barre du bas
-(voir index.html et ui-root.js/switchTab) ; ce fichier construit
-l'écran de destinations (grille de cartes), sur le même principe que
-l'overlay de sélection de héros (voir ui/modal-view.js).
-============================================================ */
+/* ui/menu-view.js — menu plein écran (bouton ☰), grille de destinations non couvertes par la barre du bas. Détail : COMMENTAIRES_ORIGINAUX.md */
 
-/* Toutes les destinations sauf Campement, Combat, Village et Héros,
-   qui ont chacun leur propre bouton dédié dans la barre du bas (voir
-   index.html + ui-root.js/switchTab). Donjon a rejoint cette grille en
-   v3.7 (remplacé dans la barre du bas par Campement) — son badge
-   "dungeon" existait déjà (ticket disponible), juste jamais utilisé
-   tant qu'il avait son propre bouton. img = icône dédiée si elle
-   existe, sinon repli sur un emoji (icon). badge = affiche le
-   compteur de quêtes complétées non réclamées sur cette carte. */
 var MENU_ITEMS = [
   { tab: "dungeon", label: "Donjon", img: "./images/Icons/menu_icons/donjon_menu.png", badge: "dungeon" },
   { tab: "shop", label: "Boutique", img: "./images/Icons/menu_icons/shop_menu.png" },
@@ -30,9 +16,6 @@ var MENU_ITEMS = [
   { tab: "settings", label: "Paramètres", img: "./images/Icons/menu_icons/settings_menu.png" }
 ];
 
-/* Nombre de quêtes complétées mais pas encore réclamées (même calcul
-   que updateQuestBadge() dans ui/quests-view.js, dupliqué ici pour
-   ne pas dépendre de l'ordre de chargement des deux fichiers). */
 function getMenuQuestBadgeCount() {
   if (!Array.isArray(game.quests) || !window.QuestManager) return 0;
   return game.quests.filter(function (q) {
@@ -69,9 +52,6 @@ function buildFullMenuHTML() {
         ? CodexManager.getUnreadCount()
         : 0;
     } else if (item.badge === "afflictions") {
-      // v3.20 : affiche le nombre d'afflictions actuellement actives
-      // (pas "quelque chose à réclamer", juste un rappel visuel que
-      // des modificateurs sont en cours).
       badgeCount = (window.AfflictionManager && typeof AfflictionManager.getActiveCount === "function")
         ? AfflictionManager.getActiveCount()
         : 0;
@@ -98,7 +78,6 @@ function buildFullMenuHTML() {
   return h;
 }
 
-/* Ouvre le menu (overlay plein écran, par-dessus tout le reste). */
 function openFullMenu() {
   var host = document.getElementById("full-menu-root");
   if (!host) return;
@@ -110,8 +89,6 @@ function closeFullMenu() {
   if (host) host.innerHTML = "";
 }
 
-/* Choix d'une destination depuis le menu : ferme l'overlay puis
-   navigue, comme un clic sur l'ancienne barre à 9 icônes. */
 function selectMenuTab(tab) {
   closeFullMenu();
   if (typeof switchTab === "function") switchTab(tab);

@@ -1,21 +1,8 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/more-view.js
-Écran "Personnage" : tout ce qui touche à l'identité du héros —
-portrait, capacités actives (attaque spéciale + bouclier), stats RPG
-en grille, changement de héros, statistiques cumulées de la partie.
+/* ui/more-view.js — écran Personnage : portrait, capacités actives, stats RPG, changement de héros, stats cumulées.
+   NOTE : buildCharacterAbilitiesHTML() lit encore SpecialAttackManager/DEFENSE_ABILITY, potentiellement legacy (v3.34.0 système de classes).
+   Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-v2.25 : refonte visuelle façon "fiche de personnage" (en-tête avec
-portrait + XP/PV, cartes de capacités actives avec cooldown, stats en
-grille avec barres proportionnelles à un vrai plafond théorique —
-voir CHARACTER_STAT_MAX ci-dessous) — inspirée d'une référence
-fournie par l'utilisateur (écran de compétences d'un autre jeu).
-============================================================ */
-
-/* Plafond indicatif de chaque stat RPG, pour calibrer la longueur des
-   barres : base la plus haute parmi tous les héros + niveau maximum
-   du terrain d'entraînement correspondant (voir data/upgrades.js).
-   Purement visuel — ne plafonne rien dans le vrai calcul de stats. */
 var CHARACTER_STAT_MAX = {
   power: 500,
   endurance: 300,
@@ -40,9 +27,6 @@ var CHARACTER_STAT_ICONS = {
   will: "🔮"
 };
 
-/* Une carte de capacité active (attaque spéciale ou bouclier), avec
-   son cooldown en temps réel — même contenu que les boutons de
-   l'écran Combat, ici en mode "résumé" (pas cliquable). */
 function buildCharacterAbilityCardHTML(config, cssClass, remainingMs, cooldownMs) {
   var onCooldown = remainingMs > 0;
   var cdText = onCooldown ? Math.ceil(remainingMs / 1000) + "s" : Math.round(cooldownMs / 1000) + "s";
@@ -105,7 +89,6 @@ function buildMoreHTML() {
 
   var h = '<div class="panel-title">Personnage</div>';
 
-  // ===== En-tête façon fiche de personnage =====
   h += '<div class="char-header">';
   h += '<div class="char-portrait-wrap">';
   if (hero && hero.image) {
@@ -124,14 +107,12 @@ function buildMoreHTML() {
   h += '</div>';
   h += '</div>';
 
-  // ===== Capacités actives =====
   var abilitiesHTML = buildCharacterAbilitiesHTML();
   if (abilitiesHTML) {
     h += '<div class="section-label">⚔️ Capacités actives</div>';
     h += abilitiesHTML;
   }
 
-  // ===== Stats en grille =====
   if (stats) {
     h += '<div class="section-label">📊 Statistiques</div>';
     h += '<div class="stat-grid">';

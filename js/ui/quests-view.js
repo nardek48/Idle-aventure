@@ -1,19 +1,6 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/quests-view.js
-Écran "Quêtes" + badge de notification unifié sur le bouton Menu
-(pastille numérique, hors du panneau lui-même).
+/* ui/quests-view.js — écran Quêtes : badge agrégé (Menu), sous-onglets Général/Journalières, filtre Active/Terminée unifiant questlines de monde + quêtes d'aventure + chasses en cartes repliables groupées par monde. Détail : COMMENTAIRES_ORIGINAUX.md */
 
-v2.14 : le badge (toujours nommé updateQuestBadge pour ne pas casser
-tous ses appels existants) agrège plusieurs sources d'attention :
-quêtes prêtes à réclamer + hauts faits prêts à réclamer + ticket de
-donjon disponible et non utilisé — plutôt que les quêtes seules.
-v2.21 : + talents à dépenser + ascension disponible.
-============================================================ */
-
-/* 1 si au moins un point de talent est disponible ET dépensable dans
-   au moins une branche (évite de signaler "disponible" si le joueur
-   a des points mais que tous les talents accessibles sont déjà pris). */
 function getTalentsAvailableCount() {
   if ((game.talentPoints || 0) <= 0) return 0;
   if (typeof getAllTalentNodes !== "function") return (game.talentPoints > 0) ? 1 : 0;
@@ -27,23 +14,10 @@ function getTalentsAvailableCount() {
   return hasPurchasable ? 1 : 0;
 }
 
-/* 1 si une ascension est possible dès maintenant. */
 function getAscensionAvailableCount() {
   return (window.AscensionManager && typeof AscensionManager.canAscend === "function" && AscensionManager.canAscend()) ? 1 : 0;
 }
 
-/* Pastille numérique sur le bouton Menu, agrégeant tout ce qui mérite
-   l'attention du joueur. Appelée après quasiment chaque action de jeu
-   (achat, kill, ascension...).
-   v3.7 : Donjon a rejoint la grille du Menu (retiré de la barre du
-   bas au profit du Campement) — son ticket disponible réintègre donc
-   le total agrégé ci-dessous, au même titre que Hauts faits/Talents/
-   Ascension/Codex (il avait été explicitement exclu en v2.70 tant
-   qu'il avait sa propre pastille dédiée sur son propre bouton ; cette
-   pastille séparée (#dungeon-tab-badge) n'existe plus). La pastille
-   individuelle sur la carte "Donjon" du Menu (voir MENU_ITEMS,
-   ui/menu-view.js) montre déjà ce même nombre, comme les autres
-   cartes. */
 function updateQuestBadge() {
   var badge = document.getElementById("quest-badge");
   if (!badge) return;
@@ -75,10 +49,6 @@ function updateQuestBadge() {
   badge.style.display = total > 0 ? "inline-flex" : "none";
 }
 
-/* v3.17 : onglet Quêtes séparé en 2 sous-onglets (Général / Journalières),
-   même pattern que la fiche personnage (Héros/Amélioration/Stats) —
-   voir buildHerosSubTabBarHTML ci-dessus dans heros-view.js pour la
-   référence visuelle copiée ici. */
 var activeQuestsSubTab = "general"; // "general" | "daily"
 
 function setQuestsSubTab(tab) {
@@ -94,15 +64,8 @@ function buildQuestsSubTabBarHTML() {
   return h;
 }
 
-/* v3.29.7 : REFONTE — les boutons Raid/Donjon (décoratif/lien externe)
-   sont remplacés par un filtre "Quête active" / "Quête terminée" qui
-   unifie questline de déblocage + quêtes d'aventure dans une seule
-   liste filtrée. Périmètre confirmé avec Seb : ne couvre PAS les
-   quêtes journalières (restent dans leur propre sous-onglet). */
 var activeQuestsFilter = "active"; // "active" | "completed"
 
-/* Repliage inline (titre+icône -> détail complet au clic) — état en
-   mémoire seulement, pas persisté en sauvegarde (pas nécessaire). */
 var expandedQuestCardIds = {};
 
 function setQuestsFilter(filter) {
@@ -125,9 +88,6 @@ function buildQuestsFilterBarHTML() {
   return h;
 }
 
-/* Sous-onglet "Général" : questline de déblocage de monde + quêtes
-   d'aventure, filtrées Active/Terminée — tout ce qui N'EST PAS
-   renouvelé chaque jour. */
 function buildQuestsGeneralSubTabHTML() {
   var h = '';
   h += buildQuestsFilterBarHTML();
@@ -145,9 +105,6 @@ function buildQuestsGeneralSubTabHTML() {
   return h;
 }
 
-/* Sous-onglet "Journalières" : la liste des quêtes du jour (voir
-   QuestManager, systems/progression-system.js), inchangée par
-   rapport à avant — juste déplacée dans son propre sous-onglet. */
 function buildQuestsDailySubTabHTML() {
   var h = '';
   h += '<div class="quest-timer">Reset dans ' + esc(QuestManager.timeUntilReset()) + '</div>';
@@ -191,11 +148,6 @@ function buildQuestsDailySubTabHTML() {
 }
 
 function buildQuestsHTML() {
-  // v3.17 : structure en 2 sous-onglets (barre fixée en bas, comme la
-  // fiche personnage) — voir note "Layout trap" du projet : ne
-  // JAMAIS appliquer .nb-page-frame-fill directement sur
-  // .subtab-page-content, toujours un enfant imbriqué (ici
-  // .nb-page-frame, imbriqué normalement, pas de risque).
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
   h += '<div class="nb-page-frame">';
@@ -217,16 +169,6 @@ function buildQuestsHTML() {
   return h;
 }
 
-/* v3.3 : questline de déblocage du PROCHAIN monde verrouillé (voir
-   data/world-quests.js, WorldQuestManager) — déplacée ici depuis la
-   popup Carte (v2.83-v3.2), pour rassembler toutes les quêtes du jeu
-   au même endroit. On ne montre que la toute PROCHAINE questline
-   incomplète (peu importe où en est WorldManager.worldIndex dans le
-   run courant — worldIndex retombe à 0 à chaque ascension, mais
-   worldQuestsCompleted, lui, est permanent) : les questlines plus
-   lointaines (ex. Crypte avant même d'avoir fini celle de Ruines)
-   n'ont aucune valeur à afficher tant que la précédente n'est pas
-   terminée. */
 function getNextLockedWorldIndex() {
   if (!window.WorldQuestManager || !window.WORLDS) return -1;
   for (var i = 0; i < WORLDS.length; i++) {
@@ -235,9 +177,6 @@ function getNextLockedWorldIndex() {
   return -1;
 }
 
-/* v3.29.7 : contenu détaillé (étapes + récompense + bouton) d'une
-   questline de monde — extrait de l'ancienne buildWorldUnlockQuestSectionHTML
-   pour être réutilisable dans la carte repliable générique. */
 function buildWorldUnlockQuestDetailHTML(quest, worldIndex) {
   var h = '';
   quest.steps.forEach(function (step) {
@@ -275,21 +214,12 @@ function buildWorldUnlockQuestDetailHTML(quest, worldIndex) {
   return h;
 }
 
-/* Callback bouton "Réclamer" — voir WorldQuestManager.claim(). Déplacé
-   depuis ui/map-view.js en v3.3 (voir buildWorldUnlockQuestSectionHTML
-   ci-dessus) — rafraîchit l'onglet Quêtes après réclamation. */
 function claimWorldQuest(worldIndex) {
   if (window.WorldQuestManager) WorldQuestManager.claim(worldIndex);
   if (typeof renderPanel === "function") renderPanel();
 }
 window.claimWorldQuest = claimWorldQuest;
 
-
-/* v3.5 : petite fenêtre narrative affichée UNE FOIS au clic sur
-   "Lancer" (immersion) — se ferme avant que le run de combat démarre
-   réellement, même pattern que buildDungeonIntroHTML/openDungeonIntro
-   (ui/dungeon-view.js). Texte au champ `story` de chaque quête (voir
-   data/adventure-quests.js). */
 var pendingAdventureQuestId = null;
 
 function buildAdventureQuestIntroHTML(questId) {
@@ -332,9 +262,6 @@ window.openAdventureQuestIntro = openAdventureQuestIntro;
 window.closeAdventureQuestIntro = closeAdventureQuestIntro;
 window.confirmAdventureQuestStart = confirmAdventureQuestStart;
 
-/* v3.29.7 : contenu détaillé (étapes + récompense + actions) d'une
-   quête d'aventure — extrait de l'ancienne buildAdventureQuestsSectionHTML
-   pour être réutilisable dans la carte repliable générique. */
 function buildAdventureQuestDetailHTML(quest, claimed, runningQuest) {
   var isRunning = !!(runningQuest && runningQuest.id === quest.id);
   var h = '';
@@ -371,9 +298,6 @@ function buildAdventureQuestDetailHTML(quest, claimed, runningQuest) {
     h += '<button class="settings-btn danger" type="button" onclick="event.stopPropagation(); AdventureQuestManager.forfeit(); if (typeof renderPanel === \'function\') renderPanel();">Abandonner</button>';
     h += '</div>';
   } else if (runningQuest) {
-    // Une AUTRE quête est déjà en cours de run — pas de bouton
-    // Lancer tant qu'elle n'est pas terminée/abandonnée (un seul
-    // run possible à la fois, même règle que le Donjon).
     h += '<div class="map-quest-claimed-label">Termine ta quête en cours d\'abord</div>';
   } else {
     h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openAdventureQuestIntro(\'' + quest.id + '\')">Lancer</button>';
@@ -382,11 +306,6 @@ function buildAdventureQuestDetailHTML(quest, claimed, runningQuest) {
   return h;
 }
 
-/* v3.29.7 : carte repliable générique — titre+icône seuls au repos,
-   détail complet affiché au clic (voir toggleQuestCardExpand). Utilisée
-   pour les 2 types de quêtes (monde + aventure) dans les listes
-   Active/Terminée. `extraClass` reprend is-claimed/is-running pour le
-   liseré visuel déjà existant. */
 function buildCollapsibleQuestCardHTML(cardId, icon, name, detailHTML, extraClass) {
   var expanded = !!expandedQuestCardIds[cardId];
   var h = '<div class="map-quest-card quest-card-collapsible' + (expanded ? ' is-expanded' : '') + (extraClass ? ' ' + extraClass : '') + '">';
@@ -402,11 +321,6 @@ function buildCollapsibleQuestCardHTML(cardId, icon, name, detailHTML, extraClas
   return h;
 }
 
-/* v3.29.8 : liste "Quête active" — la prochaine questline de monde non
-   terminée (s'il y en a une) + toutes les quêtes d'aventure non
-   réclamées (disponibles ou en cours de run). Retourne une liste
-   d'entrées {worldId, html} plutôt qu'une chaîne concaténée — le
-   groupement par monde est fait par buildQuestCardsGroupedByWorldHTML(). */
 function collectActiveQuestCardEntries() {
   var entries = [];
 
@@ -448,9 +362,6 @@ function collectActiveQuestCardEntries() {
     });
   }
 
-  // v3.30 : Chasses (voir data/hunt-quests.js) — pas de notion de
-  // complétion, toujours dans la liste "active" tant que le catalogue
-  // en contient (jamais dans "Terminée", voir collectCompletedQuestCardEntries).
   if (window.HuntQuestManager) {
     var huntQuests = HuntQuestManager.getAllQuests();
     var runningHunt = HuntQuestManager.getRunningQuest();
@@ -472,9 +383,6 @@ function collectActiveQuestCardEntries() {
   return entries;
 }
 
-/* v3.29.8 : liste "Quête terminée" — toutes les questlines de monde
-   déjà réclamées + toutes les quêtes d'aventure déjà réclamées. Même
-   forme {worldId, html} que collectActiveQuestCardEntries(). */
 function collectCompletedQuestCardEntries() {
   var entries = [];
 
@@ -515,11 +423,6 @@ function collectCompletedQuestCardEntries() {
   return entries;
 }
 
-/* v3.29.8 : regroupe les entrées {worldId, html} en sections par
-   monde, dans l'ordre de WORLDS (Forêt -> Désert -> ... -> Tour).
-   Une entrée sans worldId reconnu (ne devrait pas arriver avec les
-   données actuelles) atterrit dans une section "Autres" en fin de
-   liste plutôt que d'être perdue silencieusement. */
 function buildQuestCardsGroupedByWorldHTML(entries) {
   if (!entries.length) return "";
 
@@ -541,8 +444,6 @@ function buildQuestCardsGroupedByWorldHTML(entries) {
     delete byWorld[world.id];
   });
 
-  // Monde(s) non reconnu(s) éventuel(s) — filet de sécurité, pas de
-  // section visible pour ça normalement.
   Object.keys(byWorld).forEach(function (key) {
     h += '<div class="quest-world-section">';
     h += '<div class="quest-world-section-title">Autres</div>';
@@ -560,13 +461,6 @@ function buildActiveQuestCardsHTML() {
 function buildCompletedQuestCardsHTML() {
   return buildQuestCardsGroupedByWorldHTML(collectCompletedQuestCardEntries());
 }
-
-/* ============================================================
-   v3.30 : Chasses (data/hunt-quests.js) — carte détail + intro + boutons
-   Chasser/Arrêter. Même squelette que buildAdventureQuestDetailHTML/
-   openAdventureQuestIntro juste au-dessus, adapté à la boucle
-   (progression = kills du LOT en cours, pas d'étapes/récompense finale).
-============================================================ */
 
 function buildHuntQuestDetailHTML(quest, runningHunt) {
   var isRunning = !!(runningHunt && runningHunt.id === quest.id);
@@ -650,11 +544,6 @@ function confirmHuntQuestStart() {
   if (questId && window.HuntQuestManager) HuntQuestManager.start(questId);
 }
 
-/* v3.42 : popup de fin de chasse — déclenché par
-   HuntQuestManager.finishLot() une fois `lotSize` kills atteints. Le
-   run est déjà arrêté à ce stade (game.huntRun.active = false) ;
-   "Chasser à nouveau" relance directement un nouveau run sur la même
-   quête (pas besoin de repasser par l'intro narrative). */
 function buildHuntLotCompleteHTML(quest) {
   if (!quest) return "";
   var stock = Number((game.resources && game.resources[quest.resourceKey]) || 0);

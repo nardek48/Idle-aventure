@@ -1,25 +1,11 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/modal.js
-Deux modales génériques pilotées ici : confirmation (oui/non avec
-callback) et retour hors-ligne (résumé des gains à l'ouverture).
-============================================================ */
-
-/* ============================================================
-   Modale de confirmation générique.
-   Le HTML (#confirm-modal) et le CSS (.show) existaient déjà,
-   mais aucune fonction ne les pilotait : showConfirmModal() était
-   appelée à 3 endroits (ascension, reset complet, respec talents)
-   sans jamais être définie, et retombait silencieusement sur le
-   confirm() natif du navigateur.
-============================================================ */
+/* ui/modal.js — 2 modales génériques : confirmation (oui/non+callback) et retour hors-ligne (résumé des gains). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var _confirmModalCallback = null;
 
 function showConfirmModal(title, text, icon, onConfirm) {
   var modal = document.getElementById("confirm-modal");
   if (!modal) {
-    // Filet de sécurité si le HTML venait à manquer.
     if (window.confirm((title ? title + "\n\n" : "") + (text || ""))) {
       if (typeof onConfirm === "function") onConfirm();
     }
@@ -50,14 +36,6 @@ function closeConfirmModal(confirmed) {
 
 window.showConfirmModal = showConfirmModal;
 window.closeConfirmModal = closeConfirmModal;
-
-/* ============================================================
-   Modale de retour hors-ligne.
-   Même situation que #confirm-modal : le HTML/CSS existait déjà
-   (#offline-modal, closeOfflineModal() référencé en onclick) mais
-   rien ne l'affichait — OfflineManager.show() se contentait d'un
-   toast de 1.8s.
-============================================================ */
 
 function showOfflineModal(offline) {
   var modal = document.getElementById("offline-modal");

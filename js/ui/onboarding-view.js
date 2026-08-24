@@ -1,11 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/onboarding-view.js
-Petit tutoriel d'accueil (4 diapositives), affiché automatiquement
-une seule fois après la toute première création de personnage (voir
-confirmHeroSelection en modal-view.js). Peut être revu à tout moment
-depuis les Paramètres ("Revoir le tutoriel").
-============================================================ */
+/* ui/onboarding-view.js — tutoriel d'accueil 4 slides, affiché 1× après la 1ère création de perso, revoyable depuis Paramètres. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var onboardingStep = 0;
 
@@ -62,9 +56,6 @@ function buildOnboardingHTML() {
   return h;
 }
 
-/* Ouvre le tutoriel. `force` = true permet de le rouvrir manuellement
-   (bouton "Revoir le tutoriel" des Paramètres) même s'il a déjà été
-   vu — sans ce paramètre, ne s'affiche qu'une seule fois par partie. */
 function openOnboarding(force) {
   if (!force && game.hasSeenOnboarding) return;
   onboardingStep = 0;

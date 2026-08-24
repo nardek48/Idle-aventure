@@ -1,17 +1,6 @@
 "use strict";
-/* ============================================================
-Aethervale — systems/affliction-system.js
-v3.20 : gère l'activation/désactivation des afflictions (voir
-data/afflictions.js) et centralise le calcul de leurs effets combinés
-— chaque système consommateur (stats-system.js, combat-engine.js,
-progression-system.js, potion-system.js, loot-system.js) appelle une
-méthode dédiée ici plutôt que de relire game.activeAfflictions
-directement, pour garder toute la logique de cumul à un seul endroit.
-
-Activation/désactivation IMMÉDIATE (pas besoin d'attendre le prochain
-cycle) — un simple interrupteur, comme un réglage. Voir
-ui/afflictions-view.js pour l'écran dédié (Menu ☰).
-============================================================ */
+/* systems/affliction-system.js — activation/désactivation des afflictions (data/afflictions.js) + calcul centralisé de leurs effets cumulés.
+   Interrupteur immédiat. Écran dédié : ui/afflictions-view.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var AfflictionManager = {
   ensure: function () {
@@ -35,11 +24,6 @@ var AfflictionManager = {
     return (AFFLICTIONS || []).filter(function (a) { return game.activeAfflictions[a.id]; });
   },
 
-  /* Active/désactive UNE affliction. Refuse d'en activer une
-     nouvelle si AFFLICTION_MAX_ACTIVE est déjà atteint (désactiver
-     reste toujours possible, même au plafond). Recalcule les stats
-     immédiatement (les afflictions touchent tapMult/heroMaxHp/etc.,
-     au même titre que talents/équipement). */
   toggle: function (id) {
     this.ensure();
     var def = (AFFLICTIONS || []).find(function (a) { return a.id === id; });
@@ -61,15 +45,6 @@ var AfflictionManager = {
     return true;
   },
 
-  /* Fusionne les `modifiers` de TOUTES les afflictions actives —
-     chaque champ additif s'additionne, chaque champ multiplicatif se
-     multiplie, les booléens (forbidPotions/forceAllBosses) passent à
-     true si N'IMPORTE QUELLE affliction active le demande. Lu par
-     StatsSystem.recalcStats() pour les champs qui touchent les stats
-     globales (tapMult/heroMaxHp/goldMult/essenceGlobalMult/bonus
-     boss) — les autres champs (lootChanceMult, enemyPowerMult,
-     forbidPotions, forceAllBosses) sont lus directement par leurs
-     systèmes concernés via les méthodes dédiées plus bas. */
   getCombinedModifiers: function () {
     var out = {
       tapMult: 0,
@@ -101,24 +76,15 @@ var AfflictionManager = {
     return out;
   },
 
-  /* +10% (AFFLICTION_STACK_REWARD_BONUS) à TOUTES les récompenses
-     par affliction active, cumulé — récompense le cumul en lui-même,
-     en plus de l'effet propre à chaque affliction. Multiplicatif,
-     combiné avec goldMult/essenceGlobalMult dans recalcStats(). */
   getStackRewardMult: function () {
     var count = this.getActiveCount();
     return 1 + count * (window.AFFLICTION_STACK_REWARD_BONUS || 0);
   },
 
-  /* Un ennemi doit-il être forcé "boss" à la génération (Élite) ?
-     Lu par WorldManager.generateEnemy(), systems/progression-system.js. */
   shouldForceAllBosses: function () {
     return this.getCombinedModifiers().forceAllBosses;
   },
 
-  /* Les potions sont-elles interdites (Ascétisme) ? Lu par
-     PotionManager.buyPotion()/buyHealingPotion()/usePotion(),
-     systems/potion-system.js. */
   arePotionsForbidden: function () {
     return this.getCombinedModifiers().forbidPotions;
   }

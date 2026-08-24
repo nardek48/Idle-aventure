@@ -1,11 +1,5 @@
 "use strict";
-
-/* ============================================================
-   v2.1 — Refonte de l'écran talents.
-   Fini les cercles positionnés à la main (2 jeux de coordonnées
-   desktop/mobile) sur une image de fond fixe. Chaque talent est
-   une carte, organisée par palier, dans une grille CSS standard.
-============================================================ */
+/* ui/talents-view.js — écran Talents (v2.1, cartes en grille par palier au lieu de positions fixes). Niveaux 0-3 par talent (v3.28), exclusivité par palier (côté gauche/droite). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var activeTalentCategory = "combat";
 
@@ -19,8 +13,6 @@ function isTalentOwned(id) {
   return Number(game.talents && game.talents[id] || 0) > 0;
 }
 
-/* v3.28 : niveau actuel d'un talent (0 à node.maxLevel) — remplace le
-   simple booléen d'avant cette refonte. */
 function getTalentLevel(id) {
   return Number(game.talents && game.talents[id] || 0);
 }
@@ -29,10 +21,6 @@ function hasTalentRequirement(node) {
   return !node.requires || getTalentLevel(node.requires) > 0;
 }
 
-/* v3.28 : un nœud à palier (tier/side non null) est-il verrouillé
-   parce qu'un point a déjà été investi dans le nœud OPPOSÉ du MÊME
-   palier de la même branche ? Voir buyTalentNode(),
-   systems/progression-system.js, pour la même règle côté achat. */
 function isTierLockedByOpposite(node, nodes) {
   if (!node.tier || !node.side) return false;
   var oppositeSide = node.side === "left" ? "right" : "left";
@@ -55,12 +43,6 @@ function setTalentCategory(category) {
   renderPanel("talents");
 }
 
-// v2.90.13 : bascule des 3 arbres alignée sur le composant partagé
-// .pc-subtab-bar/.pc-subtab-btn (même pattern que Donjon/Équipement/
-// Ascension/Boutique), au lieu des pastilles bricolées d'avant —
-// cohérence visuelle + la barre passe en bas de l'écran comme
-// partout ailleurs (voir .subtab-page/.subtab-bar-wrapper dans
-// buildTalentsHTML plus bas), au lieu d'être fixée en haut.
 var TALENT_CATEGORY_ICONS = { combat: "⚔️", fortune: "💰", survival: "🛡️" };
 
 function buildTalentCategoryTabs() {
@@ -78,9 +60,6 @@ function buildTalentCategoryTabs() {
   return h;
 }
 
-/* Un talent a un "slot" hérité de l'ancien positionnement en croix
-   (top / upper_left / mid_right / ...). On s'en sert juste pour
-   déduire son palier, plus pour le positionner à l'écran. */
 var TALENT_TIER_ORDER = ["top", "upper", "mid", "inner", "lower", "bottom"];
 var TALENT_TIER_LABELS = {
   top: "Palier 1",
@@ -111,14 +90,6 @@ function renderTalentIconHTML(node) {
   return esc(node.icon || "✨");
 }
 
-/* v3.28 : reflète maintenant le NIVEAU (0-3) plutôt qu'un simple
-   acheté/pas acheté, ET l'exclusivité par palier (voir
-   isTierLockedByOpposite ci-dessus). */
-/* v3.29.6 : texte du bonus TOTAL au niveau actuel — les taux ci-dessous
-   sont revérifiés contre le code réel de chaque système consommateur
-   (pas seulement recopiés depuis node.perLevel), suite à l'audit qui a
-   aussi corrigé les bugs t_sharpened_blades/t_bloodlust (doublons) et
-   t_interest/t_boss_slayer (désync texte/code) — voir CHANGELOG. */
 var TALENT_CURRENT_VALUE_OVERRIDES = {
   t_auto_tap: function (level) {
     var vals = { 1: "2s", 2: "1.5s", 3: "1s" };
@@ -149,10 +120,8 @@ function buildTalentCurrentValueText(node, level) {
   var override = TALENT_CURRENT_VALUE_OVERRIDES[node.id];
   if (override) return override.length === 1 ? override(level) : override(node, level);
   if (node.perLevel >= 1) {
-    // Déjà en points de %/unité entière (ex: merchant_instinct 5 -> +5%/niveau)
     return "Bonus actuel : +" + (node.perLevel * level) + "%";
   }
-  // Fraction (0.05 = 5%) -> pourcentage
   return "Bonus actuel : +" + Math.round(node.perLevel * 100 * level) + "%";
 }
 
@@ -184,8 +153,6 @@ function buildTalentStatusHTML(node, nodes) {
   return '<span class="talent-tier-status status-available">' + label + '</span>';
 }
 
-/* v3.28 : petites pastilles pleines/vides représentant le niveau
-   actuel (● ● ○ pour niveau 2/3), affichées sous le nom du talent. */
 function buildTalentLevelPipsHTML(node) {
   var level = getTalentLevel(node.id);
   var maxLevel = node.maxLevel || 1;
@@ -197,9 +164,6 @@ function buildTalentLevelPipsHTML(node) {
   return h;
 }
 
-/* v3.28 : petite étiquette Actif (gauche)/Passif (droite) — le thème
-   demandé pour les 2 colonnes de chaque palier. Rien pour le nœud
-   "top" (partagé, ni gauche ni droite). */
 function buildTalentSideTagHTML(node) {
   if (!node.side) return "";
   var isLeft = node.side === "left";
@@ -217,9 +181,6 @@ function buildTalentBranchHTML(branchKey) {
     tiers[tierKey].push(node);
   });
 
-  // v2.90.13 : liste ordonnée des paliers RÉELLEMENT présents dans
-  // cette branche, avec lookahead nécessaire pour dessiner le
-  // connecteur ENTRE ce palier et le suivant (voir plus bas).
   var presentTiers = TALENT_TIER_ORDER.filter(function (k) { return tiers[k] && tiers[k].length; });
 
   var h = '<div class="talent-board talent-board-' + esc(branchKey) + '">';
@@ -262,14 +223,6 @@ function buildTalentBranchHTML(branchKey) {
 
     h += '</div>';
 
-    // v2.90.13 : connecteur visuel ENTRE ce palier et le suivant (pas
-    // après le dernier). "split" si on passe de 1 à 2 talents (palier
-    // 1 -> 2, toutes branches), "parallel" sinon (2 talents restent 2,
-    // chaque colonne reste sur SA propre branche jusqu'au bout — voir
-    // data/talents.js, chaque talent de palier N+1 ne dépend que du
-    // talent de MÊME CÔTÉ au palier N). Coloré en doré si le talent
-    // d'origine (palier courant, même colonne) est débloqué, pour
-    // matérialiser le chemin déjà emprunté.
     var nextTierNodes = presentTiers[tierIndex + 1] ? tiers[presentTiers[tierIndex + 1]] : null;
     if (nextTierNodes) {
       var isSplit = tierNodes.length === 1 && nextTierNodes.length > 1;
@@ -289,11 +242,6 @@ function buildTalentBranchHTML(branchKey) {
   return h;
 }
 
-/* v2.90.13 : le résumé complet (liste des bonus actifs + bouton
-   Réinitialiser) n'est plus affiché en permanence en haut de l'écran
-   — remplacé par un résumé compact d'une ligne, qui ouvre une popup
-   au tap (même pattern que les popups Village/Donjon de cette
-   session : #talent-modal-root, .full-menu-overlay/.full-menu). */
 function buildTalentSummaryBarHTML() {
   var tree = getTalentTree();
   var all = [].concat(tree.combat || [], tree.fortune || [], tree.survival || []);

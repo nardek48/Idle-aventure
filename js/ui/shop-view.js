@@ -1,15 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/shop-view.js
-Écran "Boutique" : les upgrades classiques (data/upgrades.js). Ce
-fichier duplique volontairement les coefficients de recalcStats
-(stats-system.js) pour pouvoir afficher un aperçu "avant → après"
-sans avoir à réellement recalculer les stats du joueur — à garder
-synchronisé si un coefficient change côté stats-system.js.
-
-Depuis v2.3, la Boutique a 2 sous-onglets : Améliorations (permanent,
-en or) et Potions (temporaire, voir data/potions.js + ui/potion-view.js).
-============================================================ */
+/* ui/shop-view.js — écran Boutique, sous-onglets Économie (upgrades or)/Potions. Duplique volontairement les coeffs stats-system.js pour preview "avant→après". Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var activeShopSubTab = "upgrades";
 
@@ -19,8 +9,6 @@ function setShopSubTab(tab) {
   if (typeof renderPanel === "function") renderPanel();
 }
 
-/* Icône/couleur/étiquette de catégorie affichées sur chaque carte
-   d'upgrade, selon son id. */
 function getUpgradePreviewMeta(upgrade) {
   if (!upgrade) return { cls: "neutral", icon: "", label: "Bonus" };
 
@@ -36,9 +24,6 @@ function getUpgradePreviewMeta(upgrade) {
   return { cls: "neutral", icon: "", label: "Bonus" };
 }
 
-/* Texte "avant → après" affiché sous chaque upgrade de stat RPG
-   (ex: "Force 58 → 59 (+11.6 → +11.8 dgts)"), pour que le joueur
-   voie concrètement l'effet avant d'acheter. */
 function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
   if (!upgrade) return "";
 
@@ -124,11 +109,6 @@ function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
   return "";
 }
 
-/* v2.75 : rendu d'une carte d'upgrade extrait en fonction réutilisable
-   (appelée par buildShopHTML ci-dessous ET par le sous-onglet
-   "Amélioration" de l'écran Héros, voir ui/heros-view.js) — évite de
-   dupliquer cette logique (calcul preview, verrouillage, affordabilité)
-   à deux endroits. */
 function buildUpgradeCardHTML(u, buyAmount) {
   var level     = game.upgrades[u.id] || 0;
   var maxLevel  = u.maxLevel || Infinity;
@@ -155,24 +135,18 @@ function buildUpgradeCardHTML(u, buyAmount) {
   var maxLevelText    = maxLevel >= 999 ? "∞" : maxLevel;
   var levelPct        = maxLevel > 0 && maxLevel !== Infinity ? (level / maxLevel) * 100 : 0;
 
-  // === Carte d'amélioration : 3 colonnes (icône / infos / bouton) ===
   var h  = '<div class="nb-purchase-card ' + (afford ? 'affordable ' : '') + (locked ? 'locked' : '') + '">';
 
-  // Colonne icône
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">';
     if (u.icon) {
-      // v2.79 : détection emoji/image centralisée, voir
-      // renderIconOrEmojiHTML() dans core/utils.js.
       h += renderIconOrEmojiHTML(u.icon, "nb-purchase-icon", u.name);
     }
   h += '</div></div>';
 
-  // Colonne infos
   h += '<div class="nb-purchase-info-col">';
     h += '<div class="nb-purchase-name">' + esc(u.name) + '</div>';
     h += '<div class="nb-purchase-desc">' + esc(u.desc) + '</div>';
 
-    // Badge de niveau + barre de progression
     h += '<div class="nb-purchase-level-row">';
       h += '<div class="nb-purchase-level-badge">' + esc(level) + '</div>';
       h += '<div class="nb-purchase-level-bar">';
@@ -181,16 +155,13 @@ function buildUpgradeCardHTML(u, buyAmount) {
       h += '</div>';
     h += '</div>';
 
-    // Preview des effets (Force 58 → 59, etc.)
     //    if (canBuy) {
     //      var previewText = getUpgradePreviewText(u, level, preview.nextLevel);
-    //      if (previewText) {
     //        h += '<div class="upgrade-preview" style="opacity:.9;font-size:12px;margin-top:4px;">' + esc(previewText) + '</div>';
     //      }
     //    }
   h += '</div>'; // /nb-purchase-info-col
 
-  // Colonne bouton d'achat
   h += '<div class="nb-purchase-buy-col">';
 
     h += '<div class="nb-purchase-buy-label">COÛT</div>';
@@ -230,11 +201,6 @@ function buildUpgradeCardHTML(u, buyAmount) {
   return h;
 }
 
-/* Construit toute la grille d'upgrades. Pour chaque upgrade : calcule
-   combien de niveaux seraient achetés au mode courant (x1/x10/x25/MAX,
-   via getUpgradePurchasePreview) et affiche soit le bouton d'achat
-   normal, soit "MAX" si le niveau plafond est atteint, soit un
-   verrou si le monde requis (unlockWorld) n'est pas encore débloqué. */
 function buildShopSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
   h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "upgrades" ? ' is-active' : '') + '" onclick="setShopSubTab(\'upgrades\')">💰<span>Économie</span></button>';
@@ -266,12 +232,6 @@ function buildShopHTML() {
     h += '<div class="shop-mode-info" style="margin:0 0 12px 0;opacity:.85;width:100%;text-align:right;">Mode d’achat : <strong>' + modeLabel + '</strong></div>';
 
     h += '<div class="shop-grid">';
-    // v2.83.41 : les 5 améliorations d'entraînement (Force/Célérité/
-    // Précision/Volonté/Endurance) sont retirées d'ici — doublon exact
-    // avec Personnage > Amélioration (voir HEROS_TRAINING_UPGRADE_IDS
-    // dans ui/heros-view.js). Ne restent que les 2 améliorations liées
-    // à l'or (Bourse lourde, Contrats lucratifs), d'où le renommage de
-    // cet onglet en "💰 Économie".
     (UPGRADES || []).forEach(function (u) {
       if (typeof HEROS_TRAINING_UPGRADE_IDS !== "undefined" && HEROS_TRAINING_UPGRADE_IDS.indexOf(u.id) !== -1) return;
       h += buildUpgradeCardHTML(u, buyAmount);

@@ -1,43 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/heros-view.js  (anciennement more-view.js, renommé
-en v2.73 pour correspondre au bouton "Héros" de la barre du bas)
-Écran "Personnage".
-
-v2.75 : refonte complète façon "fiche de personnage" à partir d'une
-maquette fournie par l'utilisateur (thème doré/parchemin sur fond
-illustré — premier écran à adopter ce nouveau thème, qui a vocation
-à être étendu au reste du jeu plus tard, par un chantier séparé).
-
-Structure à 3 sous-onglets (voir activeHerosSubTab / setHerosSubTab) :
-  - "hero"        fiche du héros : portrait, niveau, XP, stats
-                   PV/ATK/DEF/VIT/CRIT, carrousel de sélection.
-  - "amelioration" entraînement de stats contre or (réutilise les
-                   upgrades utrain_* de data/upgrades.js, via
-                   buildUpgradeCardHTML exposée par ui/shop-view.js).
-  - "stats"       capacités actives (attaque spéciale + bouclier
-                   universel) — anciennement toujours visibles, voir
-                   buildCharacterAbilitiesHTML ci-dessous.
-
-Mapping des stats PV/ATK/DEF/VIT/CRIT de la maquette vers les
-valeurs réelles du jeu (qui n'utilise pas ces noms en interne) :
-  PV   -> game.heroMaxHp
-  ATK  -> EquipmentManager.effectiveTapDamage() (dégâts/tap effectifs)
-  DEF  -> game.heroDefensePct (% de réduction de dégâts de riposte)
-  VIT  -> Célérité brute (base héros + entraînée) — le jeu n'a pas de
-          stat "vitesse" isolée, la Célérité est ce qui s'en rapproche
-          le plus (alimente l'auto DPS)
-  CRIT -> EquipmentManager.effectiveCritChance()
-
-v2.25 (historique) : première refonte visuelle façon "fiche de
-personnage", remplacée par la structure ci-dessus en v2.75.
-v2.73 : le bouton "Changer de héros" (overlay plein écran) est
-remplacé par un carrousel inline des 6 héros — voir
-buildHeroCarouselHTML() et selectHeroInline() ci-dessous. L'overlay
-plein écran (modal-view.js) reste utilisé UNIQUEMENT pour la toute
-première création de personnage (choix du héros + saisie du nom),
-voir needsHeroSetup() dans modal-view.js.
-============================================================ */
+/* ui/heros-view.js — écran Personnage (v2.75, fiche façon jeu de rôle), 3 sous-onglets Héros/Amélioration/Stats. Carrousel de 3 emplacements de héros indépendants (v3.25). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var activeHerosSubTab = "hero"; // "hero" | "amelioration" | "stats"
 
@@ -48,11 +10,6 @@ function setHerosSubTab(tab) {
   if (typeof renderPanel === "function") renderPanel();
 }
 
-/* ============================================================
-   Capacités actives (attaque spéciale + bouclier universel) — sous-
-   onglet "Stats" de la fiche personnage (v2.75). Contenu identique à
-   l'ancien bloc "toujours visible" d'avant v2.75, juste déplacé.
-============================================================ */
 function buildCharacterAbilityCardHTML(config, cssClass, remainingMs, cooldownMs) {
   var onCooldown = remainingMs > 0;
   var cdText = onCooldown ? Math.ceil(remainingMs / 1000) + "s" : Math.round(cooldownMs / 1000) + "s";
@@ -62,13 +19,6 @@ function buildCharacterAbilityCardHTML(config, cssClass, remainingMs, cooldownMs
   h += '<div class="ability-body">';
   h += '<div class="ability-name">' + esc(config.name) + '</div>';
   h += '<div class="ability-desc">' + esc(config.desc) + '</div>';
-  // v3.53.0 : ligne dédiée si cette action contre un pattern ennemi
-  // (voir action.counters, data/class-skills.js, et
-  // getGrimoireCounterLabels(), data/grimoire-conditions.js) —
-  // visible directement sur la fiche, sans manipulation, contrairement
-  // à l'indice du Grimoire qui dépendait d'avoir déjà choisi une
-  // condition. Rappelle aussi que le contre n'agit QUE via une règle
-  // du Grimoire configurée (voir ui/grimoire-view.js pour l'y faire).
   if (config.counterLabels && config.counterLabels.length) {
     h += '<div class="ability-counter">⚡ Contre : ' + esc(config.counterLabels.join(", ")) + '</div>';
   }
@@ -78,11 +28,6 @@ function buildCharacterAbilityCardHTML(config, cssClass, remainingMs, cooldownMs
   return h;
 }
 
-/* v3.34.0 : les 3 skills offensifs + l'action defense de la classe du
-   héros choisi (voir data/class-skills.js, systems/class-combat-
-   system.js), à la place de l'ancienne attaque spéciale/bouclier
-   unique par héros (HERO_SPECIAL_ATTACKS/DEFENSE_ABILITY, retirés de
-   data/heroes.js). */
 function buildCharacterAbilitiesHTML() {
   if (!window.ClassCombatManager || typeof ClassCombatManager.getAction !== "function") return "";
 
@@ -103,18 +48,6 @@ function buildCharacterAbilitiesHTML() {
   return h;
 }
 
-/* ============================================================
-   v3.25 : sélecteur des 3 EMPLACEMENTS de héros — remplace le
-   carrousel des 6 héros (v2.73), qui ne faisait que changer de
-   personnage au sein d'UNE SEULE partie. Chaque emplacement est
-   maintenant une PARTIE INDÉPENDANTE (voir HeroSlotManager,
-   systems/save-system.js) : cliquer sur un emplacement occupé
-   switche vers cette partie, cliquer sur un emplacement vide ouvre la
-   création d'un nouveau héros qui repart entièrement de zéro.
-   Phase 1 (mécanique) — réutilise les classes CSS existantes
-   (.hero-card) pour rester cohérent visuellement sans avoir encore
-   un habillage dédié ; l'affinage visuel est prévu dans un second
-   temps, une fois la mécanique testée. */
 function buildHeroCarouselHTML() {
   if (!window.HeroSlotManager) return "";
 
@@ -127,7 +60,6 @@ function buildHeroCarouselHTML() {
     var summary = HeroSlotManager.getSlotSummary(i);
 
     if (summary) {
-      // v3.29 : bouton suppression séparé (pas nesté dans la carte, sinon bouton-dans-bouton) + stopPropagation pour ne pas déclencher selectHeroSlot().
       h += '<div class="hero-carousel-slot">';
       h += '<button type="button" class="hero-card hero-carousel-card' + (isActive ? ' active' : '') + '" onclick="selectHeroSlot(' + i + ')">';
       if (summary.heroImage) {
@@ -150,9 +82,6 @@ function buildHeroCarouselHTML() {
   return h;
 }
 
-/* Bascule vers un AUTRE emplacement (partie indépendante) — ne fait
-   rien si déjà actif. Confirmé avant de switcher (changement de partie
-   complet, pas anodin). */
 function selectHeroSlot(slotNumber) {
   if (!window.HeroSlotManager) return;
   if (slotNumber === HeroSlotManager.getActiveSlot()) return;
@@ -170,9 +99,6 @@ function selectHeroSlot(slotNumber) {
   }
 }
 
-/* Ouvre la création d'un nouveau héros dans un emplacement VIDE —
-   repart entièrement de zéro (nouvelle partie complète), confirmé
-   avant de quitter la partie active en cours. */
 function createNewHeroInSlot(slotNumber) {
   if (!window.HeroSlotManager) return;
 
@@ -181,7 +107,6 @@ function createNewHeroInSlot(slotNumber) {
   HeroSlotManager.createHeroInSlot(slotNumber);
 }
 
-/* Supprime définitivement un emplacement occupé — confirmation obligatoire, deleteSlot() gère déjà le basculement si c'était l'actif. */
 function deleteHeroSlot(slotNumber, event) {
   if (event) event.stopPropagation();
   if (!window.HeroSlotManager) return;
@@ -205,9 +130,6 @@ function deleteHeroSlot(slotNumber, event) {
   }
 }
 
-/* ============================================================
-   v2.75 : une ligne de stat PV/ATK/DEF/VIT/CRIT dans la fiche.
-============================================================ */
 function buildPcStatRowHTML(icon, label, value) {
   return ''
     + '<div class="pc-stat-row">'
@@ -217,11 +139,6 @@ function buildPcStatRowHTML(icon, label, value) {
     + '</div>';
 }
 
-/* ============================================================
-   v2.75 : sous-onglet "Héros" — fiche principale (portrait, niveau,
-   XP, stats PV/ATK/DEF/VIT/CRIT), carrousel de sélection, puis les
-   statistiques cumulées de la partie.
-============================================================ */
 function buildHeroFicheHTML() {
   var hero = getSelectedHero();
   var heroLevel = Number(game.heroLevel || 1);
@@ -241,7 +158,6 @@ function buildHeroFicheHTML() {
 
   var h = '';
 
-  // ===== Carte fiche de personnage =====
   h += '<div class="pc-card">';
 
   h += '<div class="pc-card-top">';
@@ -279,20 +195,11 @@ h += '</div>';   // /pc-info-wrapper
 
   h += '</div>'; // /pc-card
 
-  // ===== Carrousel de sélection de héros =====
   h += buildHeroCarouselHTML();
 
   return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
 }
 
-/* ============================================================
-   v2.75 : sous-onglet "Amélioration" — entraînement de stats contre
-   or (utrain_power/celerity/precision/will/endurance), extrait tel
-   quel de la Boutique (mêmes cartes, mêmes coûts, même bouton x1/x10/
-   x25/MAX partagé via game.shopBuyAmount) pour ne pas dupliquer la
-   logique d'achat/preview — voir buildUpgradeCardHTML dans
-   ui/shop-view.js.
-============================================================ */
 var HEROS_TRAINING_UPGRADE_IDS = [
   "utrain_power",
   "utrain_endurance",
@@ -312,9 +219,7 @@ function buildHerosAmeliorationHTML() {
 
   var h = '';
 
-  // === Conteneur global de la section Héro / Améliorations ===
   h += '<div class="pc-heros-train-section nb-page-frame">';
-    // --- Toolbar de mode d’achat (x1, x10, x25, MAX) ---
     h += '<div class="pc-heros-train-toolbar">';
       h += '<div class="shop-buy-toolbar">';
         h += '<button class="settings-btn ' + (buyAmount === 1 ? 'active' : '') + '" onclick="setShopBuyAmount(1)">x1</button>';
@@ -326,7 +231,6 @@ function buildHerosAmeliorationHTML() {
       //h += '<div class="shop-mode-info">Mode d’achat : <strong>' + esc(modeLabel) + '</strong></div>';
     h += '</div>'; // /pc-hero-train-toolbar
 
-    // --- Liste de cartes d’entraînement (Force, Célérité, etc.) ---
     h += '<div class="pc-heros-train-list">';
       h += '<div class="shop-grid">';
         UPGRADES.forEach(function (u) {
@@ -341,11 +245,6 @@ function buildHerosAmeliorationHTML() {
   return h;
 }
 
-/* ============================================================
-   v2.75 : sous-onglet "Stats" — pour le moment, uniquement les
-   capacités actives (attaque spéciale + bouclier). Pourra accueillir
-   d'autres contenus plus tard (détail des stats RPG brutes, etc.).
-============================================================ */
 function buildHerosStatsHTML() {
   var abilitiesHTML = buildCharacterAbilitiesHTML();
   var h = '';
@@ -356,7 +255,6 @@ function buildHerosStatsHTML() {
     h += abilitiesHTML;
   }
 
-  // Ajout des statistiques cumulées sous les capacités
   h += buildHerosCumulativeStatsHTML();
 
   return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
@@ -377,11 +275,6 @@ function buildHerosCumulativeStatsHTML() {
   return h;
 }
 
-/* ============================================================
-   v2.75 : les 3 boutons de sous-onglets (Héros / Amélioration /
-   Stats), placés sous le contenu, comme sur la maquette fournie par
-   l'utilisateur.
-============================================================ */
 function buildHerosSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
   h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "hero" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'hero\')">🛡️<span>Héros</span></button>';
@@ -394,7 +287,6 @@ function buildHerosSubTabBarHTML() {
 function buildHerosHTML() {
   var h = '<div class="subtab-page">';
 
-  // zone principale scrollable
   h += '<div class="subtab-page-content">';
 
   if (activeHerosSubTab === "amelioration") {
@@ -407,7 +299,6 @@ function buildHerosHTML() {
 
   h += '</div>'; // fin .subtab-page-content
 
-  // barre de sous-onglets fixée en bas
   h += '<div class="subtab-bar-wrapper">';
   h +=   buildHerosSubTabBarHTML();
   h += '</div>';
@@ -417,14 +308,6 @@ function buildHerosHTML() {
   return h;
 }
 
-/* ============================================================
-   v2.73 : callback du carrousel inline. Change directement
-   game.heroId (pas de ré-saisie du nom, contrairement à l'ancien
-   flux via modal-view.js confirmHeroSelection), recalcule les stats
-   et sauvegarde. Ne touche ni au niveau/XP, ni à l'équipement, ni aux
-   talents : seuls les stats RPG de base et le kit de classe changent
-   (voir stats-system.js et systems/class-combat-system.js).
-============================================================ */
 function selectHeroInline(heroId) {
   if (!heroId || heroId === game.heroId) return;
   if (typeof HEROES_DB === "undefined") return;
@@ -438,7 +321,6 @@ function selectHeroInline(heroId) {
   game.heroId = heroId;
   if (heroId.indexOf("chaos") === 0) game.codexChaosSeen = true;
 
-  // v3.34.0 : voir même note dans ui/modal-view.js (confirmHeroSelection).
   if (window.ClassCombatManager && typeof ClassCombatManager.resetForNewHero === "function") {
     ClassCombatManager.resetForNewHero();
   }

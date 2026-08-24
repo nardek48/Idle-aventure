@@ -1,33 +1,8 @@
 "use strict";
-/* ============================================================
-Aethervale — systems/production-system.js
-v3.31 : ProductionManager — 4 bâtiments (voir data/production-buildings.js)
-qui accumulent un STOCK LOCAL plafonné en continu, à récolter
-manuellement vers l'Entrepôt (WarehouseManager.addResource(), voir
-systems/warehouse-system.js — SEUL chemin d'écriture vers game.resources).
-
-Distinct de VillageManager (offline-system.js) : le Village donne des
-bonus passifs en %, sans aucun stock à gérer ; ici chaque bâtiment a
-son propre stock local (game.production[id].stock), plafonné à
-getCapacity(id), qui s'arrête de grossir une fois plein — le joueur
-doit "Récolter" pour transférer ce stock vers l'Entrepôt et laisser la
-production reprendre.
-
-Deux mécanismes de calcul, même principe que Village/Offline :
-  - tick(dt) : appelé à chaque frame par main/game-loop.js, tant que
-    le jeu est ouvert (accumulateur fractionnaire par bâtiment).
-  - catchUpOffline() : appelé une fois au boot (main/boot.js), calcule
-    en un seul bloc la production accumulée pendant l'absence, à
-    partir de game.production[id].lastTick (PAS game.lastOnline —
-    indépendant du flux de la modale hors-ligne classique, qui ne
-    concerne que Village/or/essence/Aether).
-============================================================ */
+/* systems/production-system.js — ProductionManager, 4+ bâtiments à stock local plafonné (distinct de VillageManager, bonus % sans stock).
+   tick(dt) en continu + catchUpOffline() au boot (lastTick propre, indépendant de game.lastOnline). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var ProductionManager = {
-  /* Comble les bâtiments manquants (sauvegarde ancienne ou tout
-     premier lancement) — chaque bâtiment démarre au niveau 1, stock
-     vide, lastTick = maintenant (pas de rattrapage rétroactif sur une
-     création fraîche). */
   ensure: function () {
     if (!game.production || typeof game.production !== "object") game.production = {};
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
@@ -51,24 +26,11 @@ var ProductionManager = {
     return Number((game.production[id] || {}).stock || 0);
   },
 
-  /* Rendement en unités/minute au niveau actuel. */
   getRatePerMin: function (id) {
     var level = this.getLevel(id);
     return PRODUCTION_CONFIG.baseRatePerMin * Math.pow(PRODUCTION_CONFIG.rateGrowthPerLevel, level - 1);
   },
 
-  /* Capacité de stock local au niveau actuel. v3.31 : la capacité
-     évolue AVEC le niveau du bâtiment (même amélioration que le
-     rendement, décision validée avec Seb) — progression volontairement
-     plus lente que le rendement (+10%/niveau additif simple, contre
-     +25%/niveau composé pour le rendement) pour que le temps de
-     remplissage reste proche de 20-30 min à tous les niveaux plutôt
-     que de s'effondrer. Pas d'aménagement d'entrepôt séparé pour
-     l'instant — si un jour on veut découpler capacité et niveau (ex.
-     une extension achetée à part), remplacer cette formule par une
-     lecture d'un futur game.production[id].capacityLevel séparé, le
-     reste du système (tick/catchUpOffline/harvest) n'a pas besoin de
-     changer, il ne fait que lire getCapacity(id). */
   getCapacity: function (id) {
     var level = this.getLevel(id);
     return Math.floor(PRODUCTION_CONFIG.baseCapacity * (1 + PRODUCTION_CONFIG.capacityGrowthPerLevel * (level - 1)));
@@ -87,8 +49,6 @@ var ProductionManager = {
     return this.getLevel(id) >= PRODUCTION_CONFIG.maxLevel;
   },
 
-  /* Temps restant estimé avant stock plein, en secondes (Infinity si
-     déjà plein ou si le rendement est nul). */
   getSecondsUntilFull: function (id) {
     var stock = this.getStock(id);
     var capacity = this.getCapacity(id);
@@ -97,21 +57,6 @@ var ProductionManager = {
     return ((capacity - stock) / ratePerMin) * 60;
   },
 
-  /* Avance la production de TOUS les bâtiments de dt secondes —
-     appelée à chaque frame par main/game-loop.js, même principe que
-     VillageManager.tickAmbientHunting() (accumulateur fractionnaire
-     par bâtiment pour ne pas perdre de fraction d'unité entre deux
-     frames). Tourne en continu quel que soit l'onglet ouvert (pas
-     besoin d'être sur l'écran Production).
-
-     v3.31.1 : le re-rendu de l'écran (renderPanel(), qui remplace TOUT
-     le innerHTML du panel) est throttlé à ~1×/seconde au lieu d'à
-     chaque frame — sinon, avec le stock qui change à quasi chaque frame
-     tant qu'un bâtiment n'est pas plein, le panel se faisait détruire/
-     recréer ~60×/seconde pendant que l'écran Production était ouvert,
-     rendant les boutons (Récolter/Améliorer/sous-onglets) pratiquement
-     impossibles à cliquer (le clic tombait sur un élément qui venait
-     d'être remplacé sous le curseur). Bug remonté par Seb. */
   tick: function (dt) {
     this.ensure();
     dt = Math.max(0, Number(dt || 0));
@@ -125,7 +70,7 @@ var ProductionManager = {
       var capacity = self.getCapacity(id);
       if (b.stock >= capacity) {
         b.lastTick = Date.now();
-        return; // stock plein : production à l'arrêt, pas d'accumulateur qui déborde en silence
+        return;
       }
 
       var ratePerSec = self.getRatePerMin(id) / 60;
@@ -142,19 +87,12 @@ var ProductionManager = {
     if (typeof isProductionScreenVisible !== "function" || !isProductionScreenVisible()) return;
 
     this._renderAccum = Number(this._renderAccum || 0) + dt;
-    if (this._renderAccum < 1) return; // throttle : 1 re-rendu/seconde max
+    if (this._renderAccum < 1) return;
     this._renderAccum = 0;
 
     if (typeof renderPanel === "function") renderPanel();
   },
 
-  /* Calcule ET applique en un seul bloc la production accumulée
-     pendant l'absence — appelée une fois au boot (voir main/boot.js),
-     AVANT le premier tick continu. Utilise game.production[id].lastTick
-     (indépendant de game.lastOnline, qui ne sert qu'au flux
-     or/essence/Aether de OfflineManager). Silencieuse (pas de toast) :
-     le joueur découvre le stock rempli en ouvrant Production, pas
-     besoin d'une modale dédiée pour un simple stock local plafonné. */
   catchUpOffline: function () {
     this.ensure();
     var now = Date.now();
@@ -178,9 +116,6 @@ var ProductionManager = {
     });
   },
 
-  /* Transfère TOUT le stock local vers l'Entrepôt (WarehouseManager,
-     seul point d'entrée — voir systems/warehouse-system.js) et vide
-     le stock local du bâtiment, qui reprend aussitôt sa production. */
   harvest: function (id) {
     this.ensure();
     var b = game.production[id];
@@ -193,8 +128,8 @@ var ProductionManager = {
       return;
     }
 
-    WarehouseManager.addResource(def.resourceKey, amount, true); // silent : on log un seul message groupé ci-dessous
-    b.stock -= amount; // conserve la fraction éventuelle (production continue entre deux récoltes)
+    WarehouseManager.addResource(def.resourceKey, amount, true);
+    b.stock -= amount;
     b.lastTick = Date.now();
 
     var resDef = WAREHOUSE_RESOURCES[def.resourceKey];
@@ -205,9 +140,6 @@ var ProductionManager = {
     saveGame();
   },
 
-  /* Améliore un bâtiment d'un niveau (coût en or, voir getCost()) —
-     augmente le rendement ET la capacité (même amélioration, voir
-     getCapacity()). */
   buy: function (id) {
     this.ensure();
     var b = game.production[id];

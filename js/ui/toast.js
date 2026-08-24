@@ -1,18 +1,7 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/toast.js
-Petit message temporaire en bas d'écran (2s par défaut).
-============================================================ */
-
-/* ============================================================
-  Variable interne du toast. 
-============================================================ */
+/* ui/toast.js — message temporaire en bas d'écran (2s par défaut), utilisé partout. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var toastTimer = null;
-
-/* ============================================================
-  Utilisée partout par les clics et confirmations.
-============================================================ */
 
 function showToast(message, duration) {
   var el = document.getElementById("toast");

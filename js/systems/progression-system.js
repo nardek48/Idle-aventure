@@ -1,46 +1,16 @@
 "use strict";
-/* ============================================================
-Quest Idle — systems/progression-system.js
-Le plus gros fichier du projet : progression dans les mondes
-(WorldManager), quêtes journalières (QuestManager), achats
-(upgrades classiques, talents, améliorations Aether), XP/niveau du
-héros, et ascension (AscensionManager + ascendNow).
-============================================================ */
-
-// v3.46.0 : nouvelle courbe de PV ennemis, validée par simulation
-// externe (spreadsheet Seb, hors-jeu) — voir NOTE_v3.46.0_formule_pv.md.
-// L'exposant ne s'applique QU'au terme lié au monde (1 + worldIndex*0.90),
-// jamais à adventureIndex/cycleCount/enemyIndex : appliquer l'exposant à
-// l'échelle entière durcit excessivement la progression À L'INTÉRIEUR
-// d'un même monde, pas seulement le saut entre mondes (testé et écarté).
-var ENEMY_PV_MULT = 4.0;       // remplace le 1.2 fixe (ENEMY_ENDURANCE_HP_COEF)
-var ENEMY_PV_WORLD_EXP = 1.45;  // exposant sur (1 + worldIndex*0.90) uniquement
-// BOSS_PV_MULT dérivé du même ratio que l'existant (ENEMY_ENDURANCE_HP_COEF
-// 1.2 / BOSS_ENDURANCE_HP_COEF 2.0) appliqué à ENEMY_PV_MULT — valeur à
-// confirmer par le batch-sim (section 4 du prompt) avant un ajustement.
+/* systems/progression-system.js — le plus gros fichier du projet : WorldManager (progression mondes + génération ennemis),
+   QuestManager (quêtes journalières), achats (upgrades/talents/Aether), XP héros, AscensionManager + ascendNow().
+   Détail complet (constantes de balance ENEMY_PV_*, historique des exposants) : COMMENTAIRES_ORIGINAUX.md */
+var ENEMY_PV_MULT = 4.0;
+var ENEMY_PV_WORLD_EXP = 1.45;
 var BOSS_PV_MULT = 6.7;
-// v3.46.0 : Puissance ennemie (dégâts de riposte) évolutive avec l'échelle
-// — sans ça, augmenter les PV seuls n'a aucun effet sur le danger perçu
-// une fois que le DPS du joueur tue en moins d'un intervalle de riposte
-// (le nombre de coups reçus par combat plafonne à 1, quel que soit le
-// palier de PV). 0.9 (quasi linéaire) initialement choisi puis RÉVISÉ à
-// 0.3 après validation batch-sim en conditions réalistes (gear "en
-// retard d'un palier" — le cas d'un joueur qui vient d'entrer dans un
-// monde sans avoir encore looté son équipement) : à 0.9, le ratio
-// temps-pour-tuer-un-ennemi / temps-avant-de-mourir tombait sous 1.0 dès
-// le monde 3 pour toutes les classes (le joueur meurt plus vite qu'il ne
-// tue), avec un pire cas observé à 1 seul kill avant KO au monde 5
-// (Mage). À 0.3, le pire cas remonte à ≥6 kills sur toute la
-// progression, sans changement notable en tout début de partie (scale≈1
-// au monde 0 quel que soit l'exposant) ni sur l'écart entre classes
-// (ratio Chevalier/Mage resté dans la même fourchette ~×2.5-4.5, voir
-// section équilibrage des classes plus haut).
 var ENEMY_POWER_SCALE_EXP = 0.3;
 
 var WorldManager = {
-  worldIndex: 0,      // index du monde courant dans WORLDS
-  adventureIndex: 0,   // index du chapitre courant dans world.adventures
-  enemyIndex: 0,        // combien d'ennemis vaincus dans le chapitre courant
+  worldIndex: 0,
+  adventureIndex: 0,
+  enemyIndex: 0,
 
   getWorld: function () {
     return WORLDS[this.worldIndex] || WORLDS[0];
@@ -52,41 +22,14 @@ var WorldManager = {
     return world.adventures[this.adventureIndex] || world.adventures[0];
   },
 
-  /* Génère le prochain ennemi (ou le boss si enemyIndex a atteint le
-     dernier cran de l'aventure). Les PV de l'ennemi dérivent de sa
-     stat d'endurance de base (ENEMY_DB/BOSS_DB), multipliée par un
-     facteur d'échelle qui grandit avec :
-       - le monde atteint (worldIndex) — v3.46.0 : élevé à la puissance
-         ENEMY_PV_WORLD_EXP, UNIQUEMENT ce terme (voir note en tête de
-         fichier) — un saut de monde pèse donc plus lourd qu'avant
-       - le chapitre dans ce monde (adventureIndex) — additif, inchangé
-       - le nombre de cycles bouclés sans ascensionner (game.cycleCount) — additif, inchangé
-     Les boss ont aussi un bonus supplémentaire lié à game.totalKills.
-     v3.46.0 : la Puissance de riposte (dégâts) suit désormais la même
-     échelle (scale/bossScale) via ENEMY_POWER_SCALE_EXP — avant, seuls
-     les PV grandissaient, ce qui rendait un ennemi "plus gros" sans le
-     rendre plus dangereux une fois le DPS du joueur suffisant. */
-  generateEnemy: function () {
+    generateEnemy: function () {
     var adventure = this.getAdventure();
     if (!adventure) {
       return { id: "fallback", name: "Ennemi", asset: "slime", isBoss: false, hp: 10, maxHp: 10, goldReward: 1, essenceReward: 0, resists: [], weak: [], stats: makeRpgStats(5, 10, 10, 5, 5) };
     }
 
-    // v3.23 : palier de difficulté tous les 5 cycles — demandé, pour
-    // pousser encore plus à ascensionner une fois qu'on a tout
-    // débloqué (monde 6/Tour) plutôt que de juste farm indéfiniment.
-    // Ne touche QUE les PV et les dégâts (via stats.power, cloné plus
-    // bas pour ne jamais modifier ENEMY_DB/BOSS_DB partagés) des
-    // ENNEMIS — les améliorations du héros restent inchangées.
-    // L'augmentation NORMALE par cycle (déjà dans scale/bossScale plus
-    // bas) continue de s'appliquer à chaque cycle, sans exception —
-    // ce palier est un bonus EN PLUS, pas un remplacement. Voir
-    // getCycleMilestoneMult() plus bas dans ce fichier.
     var milestoneMult = this.getCycleMilestoneMult();
 
-    // v3.20 : Élite (affliction) force TOUS les ennemis à être des
-    // boss, pas seulement le dernier de la vague — voir
-    // AfflictionManager.shouldForceAllBosses(), systems/affliction-system.js.
     var forceAllBosses = window.AfflictionManager && typeof AfflictionManager.shouldForceAllBosses === "function" && AfflictionManager.shouldForceAllBosses();
     var isBoss = forceAllBosses || this.enemyIndex >= Math.max(0, (adventure.enemyCount || 1) - 1);
     var enemyId;
@@ -94,44 +37,22 @@ var WorldManager = {
     if (isBoss) {
       enemyId = adventure.boss;
       var bossData = BOSS_DB[enemyId] || { name: "Boss", asset: "slimeking" };
-      // v2.11 : coefficients augmentés (0.90/0.30/0.35 -> 1.3/0.4/0.7)
-      // pour suivre la croissance multiplicative de la puissance du joueur.
-      // v3.46.0 : exposant ENEMY_PV_WORLD_EXP appliqué UNIQUEMENT au
-      // terme lié au monde (voir note en tête de fichier) — adventureIndex
-      // et cycleCount restent additifs comme avant.
       var bossWorldComponent = Math.pow(1 + this.worldIndex * 1.3, ENEMY_PV_WORLD_EXP);
       var bossScale = bossWorldComponent + this.adventureIndex * 0.4 + (game.cycleCount || 0) * 0.7;
       var bossEndurance = (bossData.stats && bossData.stats.endurance) || 58;
       var bossHp = Math.floor(bossEndurance * BOSS_PV_MULT * bossScale * milestoneMult + (game.totalKills || 0) * 2);
-      // v3.20 : Colosses (affliction) double les PV de boss — voir
-      // AfflictionManager.getCombinedModifiers().bossHpMult.
       if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
         var bossHpMods = AfflictionManager.getCombinedModifiers();
         if (bossHpMods.bossHpMult !== 1) bossHp = Math.floor(bossHp * bossHpMods.bossHpMult);
       }
-      // v3.23 : clone des stats du boss (JAMAIS l'objet partagé de
-      // BOSS_DB directement) pour pouvoir booster power (dégâts de
-      // riposte) sans corrompre la base de données pour toujours.
       var bossStats = bossData.stats ? Object.assign({}, bossData.stats) : null;
       if (bossStats && milestoneMult !== 1) {
         bossStats.power = Math.floor(bossStats.power * milestoneMult);
       }
-      // v3.46.0 : Puissance de riposte du boss mise à l'échelle avec
-      // bossScale (voir note ENEMY_POWER_SCALE_EXP en tête de fichier) —
-      // appliquée APRÈS milestoneMult, sur le power déjà (éventuellement)
-      // boosté ci-dessus, jamais sur bossData.stats.power d'origine.
       if (bossStats) {
         bossStats.power = Math.floor(bossStats.power * Math.pow(bossScale, ENEMY_POWER_SCALE_EXP));
       }
 
-      // v3.68.0 / v3.69.0 : archétype (Phase 9, "enraged"/"corrupted"
-      // pour ces 2 premières livraisons) — décidé ICI, une seule fois
-      // à la génération, PAS recalculé à chaque frame. 2 tirages
-      // indépendants (spawnRoll/archetypeRoll) transmis à
-      // decideEnemyArchetype() (data/enemy-archetypes.js, reste pur,
-      // ne tire jamais les nombres lui-même) — voir sa note pour le
-      // détail du tirage à 2 niveaux (25% d'avoir un archétype DU
-      // TOUT, puis 50/50 lequel).
       var archetype = (typeof decideEnemyArchetype === "function")
         ? decideEnemyArchetype(this.worldIndex, true, randInt(1, 100), randInt(1, 100))
         : null;
@@ -141,7 +62,7 @@ var WorldManager = {
         name: bossData.name,
         asset: bossData.asset,
         isBoss: true,
-        archetype: archetype, // v3.68.0/v3.69.0 — null, "enraged" ou "corrupted"
+        archetype: archetype,
         hp: bossHp,
         maxHp: bossHp,
         goldReward: Math.floor(40 * bossScale),
@@ -154,40 +75,19 @@ var WorldManager = {
 
     enemyId = adventure.enemyPool[randInt(0, adventure.enemyPool.length - 1)];
     var enemyData = ENEMY_DB[enemyId] || { name: "Ennemi", asset: "slime" };
-    // v2.11 : coefficients augmentés (0.60/0.22/0.20 -> 0.90/0.30/0.45)
-    // pour suivre la croissance multiplicative de la puissance du joueur.
-    // v3.46.0 : exposant ENEMY_PV_WORLD_EXP appliqué UNIQUEMENT au terme
-    // lié au monde (voir note en tête de fichier) — adventureIndex,
-    // cycleCount et enemyIndex restent additifs comme avant (appliquer
-    // l'exposant à l'échelle entière durcirait aussi la progression à
-    // L'INTÉRIEUR d'un même monde, effet de bord écarté par simulation).
     var worldComponent = Math.pow(1 + this.worldIndex * 0.90, ENEMY_PV_WORLD_EXP);
     var scale = worldComponent + this.adventureIndex * 0.30 + (game.cycleCount || 0) * 0.45 + this.enemyIndex * 0.05;
     var enemyEndurance = (enemyData.stats && enemyData.stats.endurance) || 18;
     var hp = Math.floor(enemyEndurance * ENEMY_PV_MULT * scale * milestoneMult + this.enemyIndex * 5);
 
-    // v3.23 : même clonage que pour le boss ci-dessus — jamais
-    // l'objet ENEMY_DB partagé directement.
     var effectiveStats = enemyData.stats ? Object.assign({}, enemyData.stats) : null;
     if (effectiveStats && milestoneMult !== 1) {
       effectiveStats.power = Math.floor(effectiveStats.power * milestoneMult);
     }
-    // v3.46.0 : Puissance de riposte mise à l'échelle avec scale (voir
-    // note ENEMY_POWER_SCALE_EXP en tête de fichier) — sans ça,
-    // augmenter les PV seuls n'a aucun effet sur le danger perçu une
-    // fois le DPS du joueur suffisant pour tuer en moins d'un intervalle
-    // de riposte (nombre de coups reçus par combat plafonné à 1).
     if (effectiveStats) {
       effectiveStats.power = Math.floor(effectiveStats.power * Math.pow(scale, ENEMY_POWER_SCALE_EXP));
     }
 
-    // v3.71.0 : archétype "silenced" (Phase 9) pour un ennemi NORMAL —
-    // mutuellement exclusif avec Charge (voir enemyChargeTick(), désormais
-    // filtrée par archetype !== "silenced", systems/combat-engine.js).
-    // Tiré une seule fois à la génération, PAS recalculé en boucle.
-    // decideNormalEnemyArchetype() retourne null AVANT le monde minimum
-    // (SILENCED_MIN_WORLD_INDEX) — l'ennemi reste alors soumis au
-    // comportement Charge standard, exactement comme avant v3.71.0.
     var normalArchetype = (typeof decideNormalEnemyArchetype === "function")
       ? decideNormalEnemyArchetype(this.worldIndex, false, randInt(1, 100))
       : null;
@@ -197,7 +97,7 @@ var WorldManager = {
       name: enemyData.name,
       asset: enemyData.asset,
       isBoss: false,
-      archetype: normalArchetype, // v3.71.0 — null ou "silenced"
+      archetype: normalArchetype,
       hp: hp,
       maxHp: hp,
       goldReward: Math.floor(6 * scale + this.worldIndex * 3),
@@ -208,41 +108,17 @@ var WorldManager = {
     };
   },
 
-  // v3.23 : plus qu'une simple augmentation "normale" par cycle
-  // (scale/bossScale ci-dessus, inchangée, continue de s'appliquer à
-  // CHAQUE cycle sans exception) — un palier SUPPLÉMENTAIRE tous les
-  // 5 cycles (5, 10, 15...), MAIS seulement une fois le monde 6
-  // (Tour, index 5) débloqué. Objectif explicite : pousser encore
-  // plus à ascensionner une fois qu'on a tout débloqué plutôt que de
-  // juste farm indéfiniment sans y être incité.
-  // Valeur choisie par défaut (+25% de PV/dégâts par palier de 5
-  // cycles, additif) — pas de chiffre précisé dans la demande,
-  // facile à ajuster une fois testé en jeu réel.
   CYCLE_MILESTONE_BONUS_PER_STEP: 0.25,
   getCycleMilestoneMult: function () {
     if (!window.WorldManager || typeof WorldManager.meetsAscensionRequirement !== "function") return 1;
-    if (!WorldManager.meetsAscensionRequirement(5)) return 1; // index 5 = Tour (6e monde)
+    if (!WorldManager.meetsAscensionRequirement(5)) return 1;
 
     var milestones = Math.floor((game.cycleCount || 0) / 5);
     if (milestones <= 0) return 1;
     return 1 + milestones * this.CYCLE_MILESTONE_BONUS_PER_STEP;
   },
 
-  /* v2.83 : un monde n'est plus débloqué par un nombre d'ascensions
-     mais par la questline associée (voir data/world-quests.js et
-     WorldQuestManager.isWorldUnlocked). Le nom de la fonction est
-     conservé tel quel (beaucoup d'appelants dans l'UI) même si elle
-     ne regarde plus l'ascension — ça évite de renommer partout ;
-     `requiredAscension` reste dans data/worlds.js pour référence/
-     historique mais n'est plus consulté ici.
-     v3.3 : vérifie EN PLUS qu'aucune quête d'aventure du monde
-     PRÉCÉDENT ne verrouille explicitement ce passage (gatesNextWorld,
-     voir AdventureQuestManager.isWorldTransitionUnlocked) — un second
-     verrou possible, indépendant de la questline WorldQuestManager,
-     qui doit lui aussi être levé. Aucune quête gatesNextWorld définie
-     pour le monde précédent = ce second verrou reste toujours ouvert
-     (comportement inchangé pour tous les mondes sans contenu ici). */
-  meetsAscensionRequirement: function (index) {
+    meetsAscensionRequirement: function (index) {
     var w = WORLDS[index];
     if (!w) return false;
     if (window.WorldQuestManager && !WorldQuestManager.isWorldUnlocked(index)) return false;
@@ -253,17 +129,7 @@ var WorldManager = {
     return true;
   },
 
-  /* Appelée après chaque kill (voir CombatEngine.killEnemy). Fait
-     progresser enemyIndex -> adventureIndex -> worldIndex dans cet
-     ordre, et renvoie un objet décrivant ce qui vient de se passer
-     ({ type: "enemy" | "adventure" | "world" | "locked" | "cycle" }),
-     lu par killEnemy() pour afficher le bon message. Si le monde
-     suivant est verrouillé (ascension insuffisante), boucle au
-     monde 0 et incrémente game.cycleCount au lieu d'avancer. */
-  /* Marque un monde comme "déjà atteint au moins une fois" — pour le
-     Codex (data/codex.js), qui doit rester débloqué même après une
-     ascension (worldIndex, lui, retombe à 0 à chaque ascension). */
-  markWorldReached: function (index) {
+      markWorldReached: function (index) {
     if (!game.worldsEverReached || typeof game.worldsEverReached !== "object") game.worldsEverReached = {};
     game.worldsEverReached[index] = true;
   },
@@ -285,13 +151,6 @@ var WorldManager = {
     }
 
     if (nextAdventureIndex < world.adventures.length) {
-      // v3.0 : une quête d'Expédition (data/adventure-quests.js) peut
-      // verrouiller le passage vers l'aventure suivante d'un même
-      // monde — voir AdventureQuestManager.isTransitionUnlocked.
-      // Aucune quête définie pour cette transition = comportement
-      // inchangé (toujours débloqué, comme avant v3.0). Si verrouillé,
-      // adventureIndex ne bouge pas : le joueur reboucle sur la même
-      // aventure jusqu'à réclamation de la quête sur la Carte.
       if (window.AdventureQuestManager && !AdventureQuestManager.isTransitionUnlocked(world.id, justFinishedAdventureIndex)) {
         return { type: "adventure_locked", world: world, adventure: world.adventures[justFinishedAdventureIndex] };
       }
@@ -319,18 +178,13 @@ var WorldManager = {
     return { type: "cycle" };
   },
 
-  /* v3.41 : repositionne au tout début du cycle (monde 1, 1er ennemi),
-     sans toucher cycleCount. Utilisé au switch/création de héros et à
-     la mort — indépendant de la progression déjà atteinte. */
-  resetToCycleStart: function () {
+    resetToCycleStart: function () {
     this.worldIndex = 0;
     this.adventureIndex = 0;
     this.enemyIndex = 0;
   },
 
-  /* Met à jour les variables CSS --world-bg/--world-combat-map pour
-     que le fond de l'écran de combat corresponde au monde courant. */
-  applyWorldTheme: function () {
+    applyWorldTheme: function () {
     var root = document.documentElement;
     var world = this.getWorld();
     if (!root || !world) return;
@@ -341,9 +195,7 @@ var WorldManager = {
 };
 
 var QuestManager = {
-  /* Tire QUEST_CONFIG.count quêtes au hasard (sans doublon) dans
-     QUEST_TEMPLATES pour former le lot du jour. */
-  generateDaily: function () {
+    generateDaily: function () {
     var templates = Array.isArray(QUEST_TEMPLATES) ? QUEST_TEMPLATES.slice() : [];
     var picked = [];
     var maxCount = (QUEST_CONFIG && QUEST_CONFIG.count) || 3;
@@ -369,9 +221,7 @@ var QuestManager = {
     return (QUEST_TEMPLATES || []).find(function (q) { return q.id === id; }) || null;
   },
 
-  /* Progression actuelle d'une quête, en appelant le tracker() de son
-     template (qui lit game.questProgress). */
-  getProgress: function (quest) {
+    getProgress: function (quest) {
     var tpl = this.getTemplate(quest.id);
     if (!tpl) return 0;
     if (typeof tpl.tracker === "function") return Math.floor(Number(tpl.tracker()) || 0);
@@ -382,9 +232,7 @@ var QuestManager = {
     return this.getProgress(quest) >= Number(quest.target || 0);
   },
 
-  /* Réclame la récompense d'une quête complétée (une seule fois, via
-     quest.claimed). */
-  claim: function (id) {
+    claim: function (id) {
     var quest = (game.quests || []).find(function (q) { return q.id === id; });
     if (!quest || quest.claimed || !this.isComplete(quest)) return;
 
@@ -399,10 +247,7 @@ var QuestManager = {
     saveGame();
   },
 
-  /* Incrémente un compteur de progression de quête (ex:
-     QuestManager.track("kills", 1)). Utilisé un peu partout dans le
-     code à chaque fois qu'une action pertinente se produit. */
-  track: function (key, amount) {
+    track: function (key, amount) {
     if (!game.questProgress) game.questProgress = {};
     if (typeof game.questProgress[key] !== "number") game.questProgress[key] = 0;
     game.questProgress[key] += Number(amount || 0);
@@ -413,10 +258,7 @@ var QuestManager = {
     if (worldId === "ruins") this.track("ruinsChaptersDone", 1);
   },
 
-  /* Vérifie si le délai de reset (24h par défaut) est écoulé et, si
-     oui, régénère un nouveau lot de quêtes avec une progression
-     remise à zéro. Appelée régulièrement (boot + boucle de jeu). */
-  checkReset: function () {
+    checkReset: function () {
     if (!game.questResetTime || Date.now() >= game.questResetTime) {
       game.quests = this.generateDaily();
       game.questProgress = Object.assign({}, DEFAULT_QUEST_PROGRESS);
@@ -426,8 +268,7 @@ var QuestManager = {
     }
   },
 
-  /* Texte "Xh Ym" du temps restant avant le prochain reset de quêtes. */
-  timeUntilReset: function () {
+    timeUntilReset: function () {
     var diff = Math.max(0, (game.questResetTime || 0) - Date.now());
     var h = Math.floor(diff / 3600000);
     var m = Math.floor((diff % 3600000) / 60000);
@@ -435,20 +276,12 @@ var QuestManager = {
   }
 };
 
-/* Renvoie l'arbre de talents complet ({combat:[...], fortune:[...],
-   survival:[...]}), utilisée par buyTalentNode ci-dessous. Le résumé
-   des bonus actifs (talents-view.js) a sa propre fonction getTalentTree()
-   qui fait la même chose — gardées séparées pour ne pas coupler les
-   deux fichiers. */
 function getAllTalentNodes() {
   if (typeof TALENTTREE !== "undefined") return TALENTTREE;
   if (typeof TALENT_TREE !== "undefined") return TALENT_TREE;
   return {};
 }
 
-/* Coût du prochain niveau d'une upgrade classique. `atLevel` permet de
-   simuler un niveau différent du niveau actuel (utilisé par
-   getUpgradePurchasePreview pour calculer un achat multiple). */
 function getUpgradeCost(upgrade, atLevel) {
   if (!upgrade) return Infinity;
   var level = (atLevel === undefined || atLevel === null)
@@ -458,12 +291,6 @@ function getUpgradeCost(upgrade, atLevel) {
   return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, level));
 }
 
-
-
-/* Achète une upgrade classique. `amount` peut être 1/10/25 ou -1
-   (signifie "MAX", achète tant qu'il reste de l'or et que le niveau
-   max n'est pas atteint). Achète les niveaux un par un dans une
-   boucle pour respecter le coût croissant à chaque palier. */
 function buyUpgrade(id, amount) {
   var upgrade = (UPGRADES || []).find(function (u) { return u.id === id; });
   if (!upgrade) return showToast("Amélioration introuvable", 1000);
@@ -520,9 +347,6 @@ function buyUpgrade(id, amount) {
   saveGame();
 }
 
-/* Simule un achat (sans le réaliser) pour afficher un aperçu dans
-   l'UI : combien de niveaux seraient achetés et pour quel coût total,
-   selon le mode d'achat (x1/x10/x25/MAX) et l'or actuel. */
 function getUpgradePurchasePreview(upgrade, amount) {
   if (!upgrade) {
     return {
@@ -565,8 +389,6 @@ function getUpgradePurchasePreview(upgrade, amount) {
   };
 }
 
-
-/* Change le mode d'achat de la boutique (boutons x1/x10/x25/MAX). */
 function setShopBuyAmount(amount) {
   amount = Number(amount || 1);
 
@@ -580,24 +402,13 @@ function setShopBuyAmount(amount) {
   saveGame();
 }
 
-/* Coût pour réinitialiser tous les talents : 150 or par talent
-   actuellement débloqué (donc plus cher si on a beaucoup investi). */
 function getTalentRespecCost() {
-  // v3.28 : scale maintenant avec la SOMME des niveaux investis (0-3
-  // par talent), pas juste le nombre de talents distincts démarrés —
-  // cohérent avec le remboursement de respecTalents() ci-dessous.
   var levels = Object.keys(game.talents || {}).map(function (id) { return Number(game.talents[id] || 0); });
   var totalPoints = levels.reduce(function (sum, lvl) { return sum + lvl; }, 0);
   return totalPoints * 150;
 }
 
-/* Réinitialise tous les talents contre de l'or : rend tous les points
-   dépensés (utilisables ailleurs) et vide game.talents. Demande
-   confirmation via showConfirmModal avant d'agir. */
 function respecTalents() {
-  // v3.28 : chaque talent peut valoir 1, 2 ou 3 points investis
-  // maintenant (niveaux) — le remboursement doit compter la SOMME des
-  // niveaux, pas juste le nombre de talents distincts démarrés.
   var levels = Object.keys(game.talents || {}).map(function (id) { return Number(game.talents[id] || 0); });
   var totalPoints = levels.reduce(function (sum, lvl) { return sum + lvl; }, 0);
   if (!totalPoints) return showToast("Aucun talent à réinitialiser", 1200);
@@ -617,11 +428,6 @@ function respecTalents() {
 
     addLog("🔄 Talents réinitialisés (-" + formatNumber(cost) + " or, " + totalPoints + " point(s) rendu(s))", "event");
     showToast("Talents réinitialisés", 1500);
-    // v2.90.13 : la popup de résumé (#talent-modal-root) vit hors du
-    // cycle renderAll() habituel — sans ça, elle continuerait
-    // d'afficher les talents déjà réinitialisés jusqu'à ce qu'on la
-    // referme/rouvre manuellement (plus rien d'utile à y montrer une
-    // fois vidée, donc on la referme simplement).
     if (typeof closeTalentSummaryPopup === "function") closeTalentSummaryPopup();
     if (typeof renderAll === "function") renderAll();
     saveGame();
@@ -639,18 +445,6 @@ function respecTalents() {
   }
 }
 
-/* Débloque un talent précis : vérifie qu'il existe, qu'il n'est pas
-   déjà appris, que son prérequis (node.requires) est rempli, et qu'il
-   reste au moins 1 point de talent. Recherche le node dans les 3
-   branches de l'arbre (l'id suffit, pas besoin de connaître la branche). */
-/* v3.28 : achète UN NIVEAU d'un talent (jusqu'à node.maxLevel, 3 par
-   défaut) — avant, un talent était acheté/pas acheté (booléen),
-   maintenant game.talents[id] est un NOMBRE de niveaux investis.
-   Vérifie : le talent existe, n'est pas déjà au niveau max, son
-   prérequis est acquis (≥1 niveau), il reste au moins 1 point de
-   talent, ET l'exclusivité par palier (voir tier/side, data/talents.js)
-   — investir dans un nœud dont le PALIER a déjà un point investi de
-   l'AUTRE côté est refusé, jusqu'à une réinitialisation. */
 function buyTalentNode(id) {
   var tree = getAllTalentNodes();
   var node = null;
@@ -670,9 +464,6 @@ function buyTalentNode(id) {
   if (node.requires && !(Number(game.talents[node.requires] || 0) > 0)) return showToast("Talent précédent requis", 1200);
   if ((game.talentPoints || 0) < 1) return showToast("Pas assez de points de talent", 1200);
 
-  // v3.28 : exclusivité par PALIER — si ce nœud a un tier/side (donc
-  // n'est pas le nœud "top" partagé), vérifie qu'aucun point n'est
-  // déjà investi dans le nœud OPPOSÉ du MÊME palier de la MÊME branche.
   if (node.tier && node.side) {
     var oppositeSide = node.side === "left" ? "right" : "left";
     var blocked = (tree[branchOfNode] || []).some(function (entry) {
@@ -697,8 +488,6 @@ function buyTalentNode(id) {
   saveGame();
 }
 
-/* Achète UN niveau d'une amélioration de la Boutique d'Aether
-   (contrairement à buyUpgrade, pas d'achat multiple ici). */
 function buyAetherUpgrade(id) {
   var upgrade = (AETHER_SHOP || []).find(function (u) { return u.id === id; });
   if (!upgrade) return showToast("Amélioration astrale introuvable", 1000);
@@ -722,22 +511,11 @@ function buyAetherUpgrade(id) {
   saveGame();
 }
 
-/* XP nécessaire pour passer du niveau `level` au suivant (voir
-   HERO_LEVELING dans data/heroes.js pour les 2 constantes utilisées). */
-/* XP nécessaire pour passer du niveau `level` au suivant. v2.11 :
-   base 10->20, croissance 1.25->1.35, terme linéaire 5->10 (chaque
-   niveau donne 1 point de talent, c'était trop rapide à obtenir).
-   Voir HERO_LEVELING dans data/heroes.js — cette donnée existe mais
-   n'est PAS branchée ici, les valeurs sont en dur ci-dessous ; les
-   deux devraient être fusionnées un jour pour éviter la confusion. */
 function getHeroXpRequiredForLevel(level) {
   level = Math.max(1, Number(level || 1));
   return Math.floor(20 * Math.pow(1.35, level - 1) + (level - 1) * 10);
 }
 
-/* Ajoute de l'XP au héros et gère la montée de niveau (potentiellement
-   plusieurs d'un coup si amount est gros, via la boucle while). Chaque
-   niveau donne 1 point de talent. Retourne le nombre de niveaux gagnés. */
 function grantHeroXp(amount, source) {
   amount = Math.max(0, Number(amount || 0));
   source = source || "generic";
@@ -781,9 +559,6 @@ function grantHeroXp(amount, source) {
   return levelsGained;
 }
 
-/* Filet de sécurité appelé au boot : s'assure qu'il existe bien un
-   lot de quêtes et un questProgress valides, même sur une toute
-   première partie ou une sauvegarde corrompue/ancienne. */
 function ensureDailyQuests() {
   if (!window.QuestManager || typeof QuestManager.generateDaily !== "function") return;
 
@@ -804,10 +579,6 @@ function ensureDailyQuests() {
   if (typeof updateQuestBadge === "function") updateQuestBadge();
 }
 
-/* Petite façade utilisée par l'UI (ascension-view.js) pour savoir si
-   le bouton d'ascension doit être actif et combien il rapporterait.
-   La vraie logique d'ascension est dans ascendNow() ci-dessous (les
-   deux gardent le même calcul de gain, à garder synchronisés). */
 var AscensionManager = {
   previewGain: function () {
     var gain = typeof ASCENSION_CONFIG.computeGain === "function" ? ASCENSION_CONFIG.computeGain() : 0;
@@ -833,12 +604,6 @@ var AscensionManager = {
   }
 };
 
-/* Le vrai processus d'ascension, avec confirmation de l'utilisateur :
-   calcule le gain d'Aether, puis (après confirmation) l'ajoute,
-   incrémente le compteur d'ascensions, réinitialise la progression
-   classique (hardResetState, voir save-system.js) tout en conservant
-   l'Aether/les talents Aether/les ascensions, régénère les quêtes et
-   redémarre un combat depuis le monde 0. */
 function ascendNow() {
   if (typeof ASCENSION_CONFIG === "undefined") return;
   var minKills = ASCENSION_CONFIG.minKillsToAscend || 0;
@@ -850,7 +615,6 @@ function ascendNow() {
   var gain = typeof ASCENSION_CONFIG.computeGain === "function" ? ASCENSION_CONFIG.computeGain() : 0;
   if (game.talents.t_rich_ritual && gain >= 10) gain += game.talents.t_rich_ritual;
 
-  // Élixir d'Aether (potion sans minuteur) : bonus consommé ici, une seule fois.
   var pendingAetherBonus = (window.PotionManager && game.pendingPotionBonuses)
     ? Number(game.pendingPotionBonuses.aetherNext || 0)
     : 0;
@@ -911,9 +675,6 @@ window.ascendNow = ascendNow;
 window.setShopBuyAmount = setShopBuyAmount;
 window.getUpgradePurchasePreview = getUpgradePurchasePreview;
 window.doAscend = function () { AscensionManager.doAscend(); };
-// v3.46.0 : exportées pour que ui/bestiary-view.js (estimation "à la
-// première rencontre") réutilise les VRAIES constantes au lieu de les
-// dupliquer une deuxième fois — voir estimateCreatureCombatStats().
 window.ENEMY_PV_MULT = ENEMY_PV_MULT;
 window.ENEMY_PV_WORLD_EXP = ENEMY_PV_WORLD_EXP;
 window.BOSS_PV_MULT = BOSS_PV_MULT;

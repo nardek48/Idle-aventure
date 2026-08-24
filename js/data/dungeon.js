@@ -1,69 +1,29 @@
 "use strict";
-/* ============================================================
-Quest Idle — data/dungeon.js
-Configuration du donjon : un gauntlet de 15 vagues + un boss final,
-séparé de la progression normale des mondes. Voir
-systems/dungeon-system.js pour la logique.
-
-v2.16 : le donjon est maintenant découpé en 5 PALIERS choisis par le
-joueur (DUNGEON_TIERS ci-dessous), chacun à difficulté FIXE et à
-rareté de butin garantie plafonnée. Avant, la difficulté se calait
-sur WorldManager.worldIndex (le monde COURANT) — un problème, car ce
-compteur retombe à 0 à chaque ascension alors que la puissance du
-joueur (bonus d'ascension, boutique du donjon, talents...) ne
-redescend jamais : le donjon redevenait trivial après quelques
-ascensions. Les paliers fixes corrigent ça.
-============================================================ */
+/* data/dungeon.js — donjon : 15 vagues + boss, 5 paliers à difficulté fixe. Logique : systems/dungeon-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var DUNGEON_CONFIG = {
-  waveCount: 15,              // vagues normales avant le boss (vague 16)
+  waveCount: 15,
   freeTicketsPerDay: 1,
   ticketResetHours: 24,
-  ticketCostEssence: 100,      // prix du premier ticket supplémentaire de la journée (valable pour n'importe quel palier)
-  ticketCostGrowth: 1.2,        // v2.30 : le prix grimpe ×1.2 à chaque achat depuis le début de la journée
-  maxTicketPurchasesPerDay: 20, // v2.30 : 10 -> 20 achats par jour max (au-delà, seul le ticket gratuit du lendemain compte)
+  ticketCostEssence: 100,
+  ticketCostGrowth: 1.2,
+  maxTicketPurchasesPerDay: 20,
 
-  // Multiplicateurs de difficulté, appliqués par-dessus la difficulté
-  // de base du palier choisi (voir DUNGEON_TIERS.worldPower ci-dessous).
-  basePremiumMult: 1.3,        // le donjon est TOUJOURS plus dur qu'un combat normal au même "niveau de monde"
-  waveRampMult: 1,             // v2.30 : 1.5 -> 1, intensité additionnelle entre la vague 1 et la vague 15
-  bossPremiumMult: 1.8,        // le boss de donjon est nettement plus fort qu'un boss de monde
+  basePremiumMult: 1.3,
+  waveRampMult: 1,
+  bossPremiumMult: 1.8,
 
-  // Récompenses
-  fullClearGoldBase: 500,      // + bonus par palier/vague, voir DungeonManager.finish
+  fullClearGoldBase: 500,
   fullClearEssenceBase: 40,
-  partialLootChance: 40,        // % de chance de butin quand même en cas d'échec
+  partialLootChance: 40,
 
-  // Monnaie exclusive au donjon (Éclats), gagnée en jouant, dépensable
-  // UNIQUEMENT à la boutique du donjon ci-dessous.
-  shardsPerWaveCleared: 1,       // gagné à chaque vague passée, succès ou échec
-  shardsBossBonus: 10            // bonus supplémentaire si le boss tombe
+  shardsPerWaveCleared: 1,
+  shardsBossBonus: 10
 };
 
-/* Les 5 paliers de donjon :
-   - maxRarity          rareté du butin GARANTI en fin de palier réussi
-                         (et plafond des rareté possibles en cas
-                         d'échec partiel) — un palier bas ne peut plus
-                         donner de butin au-dessus de sa rareté, même
-                         si le joueur a débloqué mieux ailleurs
-   - worldPower          "niveau de monde" fixe utilisé pour calibrer
-                         la difficulté (remplace l'ancien
-                         WorldManager.worldIndex, qui variait) et pour
-                         choisir le pool d'ennemis (mondes 0..worldPower)
-
-   v2.90.9 : déblocage par ascension (requiredAscension) RETIRÉ, sur
-   demande explicite de l'utilisateur — remplacé par un déblocage
-   séquentiel : le palier N devient accessible dès que le palier N-1
-   a été COMPLÈTEMENT terminé (15 vagues + boss vaincu, en une seule
-   tentative sans jamais échouer — voir DungeonManager.isTierUnlocked
-   et game.dungeonTierCleared dans systems/dungeon-system.js). Le
-   palier 1 reste toujours débloqué d'office. Choix explicite de
-   l'utilisateur : cette règle repart de zéro pour toutes les parties
-   existantes (aucun palier déjà débloqué par ascension n'est
-   "regrandfathered" automatiquement). */
 var DUNGEON_TIERS = [
   { id: 1, name: "Donjon I",   maxRarity: "common",    worldPower: 0, difficultyMult: 1,
-    icon: "images/Dungeons/Icone_base/palier1.jpg", // v2.83.9 : icône générique de palier, partagée par tous les donjons
+    icon: "images/Dungeons/Icone_base/palier1.jpg",
     story: "Les premières salles sentent la terre humide et la mousse. Des bruits de pas résonnent au loin — rien de bien effrayant, pour l'instant." },
   { id: 2, name: "Donjon II",  maxRarity: "green",     worldPower: 1, difficultyMult: 2.5,
     icon: "images/Dungeons/Icone_base/palier2.jpg",
@@ -79,31 +39,20 @@ var DUNGEON_TIERS = [
     story: "Le seuil du dernier palier. Une puissance oubliée sommeille dans l'obscurité — et elle sait déjà que tu es arrivé." }
 ];
 
-/* Boutique exclusive du donjon, payée en Éclats (game.dungeonShards).
-   Mêmes principes que AETHER_SHOP (data/upgrades.js) : achats par
-   niveau, coût croissant, bonus permanent appliqué dans
-   StatsSystem.recalcStats(). */
 var DUNGEON_SHOP = [
-  { id: "d_power", name: "Lame du donjon", icon: "⚔️", desc: "+2% dégâts globaux par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 }, // v2.90.24 : 1.5 -> 1.30
-  { id: "d_gold", name: "Trésor du donjon", icon: "💰", desc: "+2% or global par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 }, // v2.90.24 : 1.5 -> 1.30
-  { id: "d_essence", name: "Essence du donjon", icon: "images/Icons/essence_icon.png", desc: "+2% essence globale par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 }, // v2.90.24 : 1.5 -> 1.30
-  { id: "d_defense", name: "Armure du donjon", icon: "🛡️", desc: "+1% défense par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 } // v2.90.23 : 2%->1%/niveau ; v2.90.24 : costMult 1.5 -> 1.30 (voir doc équilibrage)
+  { id: "d_power", name: "Lame du donjon", icon: "⚔️", desc: "+2% dégâts globaux par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 },
+  { id: "d_gold", name: "Trésor du donjon", icon: "💰", desc: "+2% or global par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 },
+  { id: "d_essence", name: "Essence du donjon", icon: "images/Icons/essence_icon.png", desc: "+2% essence globale par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 },
+  { id: "d_defense", name: "Armure du donjon", icon: "🛡️", desc: "+1% défense par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 }
 ];
 
-/* v2.83.6 : regroupement des paliers par DONJON, pour préparer l'ajout
-   de futurs donjons distincts (chacun avec ses 5 paliers). Ne fait que
-   RÉFÉRENCER les paliers existants par id (tierIds) — DUNGEON_TIERS
-   reste la seule source de vérité pour le contenu des paliers,
-   DungeonManager n'a besoin d'aucune modification. `locked` : condition
-   d'affichage uniquement (pas encore de vrai déblocage multi-donjon
-   tant qu'il n'y en a qu'un — à définir quand un 2e donjon arrive). */
 var DUNGEONS = [
   {
     id: "basilic",
     name: "Tanière du Basilic",
     icon: "images/Dungeons/donjon_poison/donjon_poison.jpg",
     banner: "images/Dungeons/donjon_poison/donjon_poison_baniere.jpg",
-    combatMap: "../images/Dungeons/donjon_poison/donjon_poison.jpg", // v2.83.12 : fond affiché pendant les tentatives dans ce donjon (voir DungeonManager.applyDungeonTheme) — "../" nécessaire ici, cf. combatMap des mondes dans data/worlds.js (résolu depuis css/01-base.css, pas depuis index.html)
+    combatMap: "../images/Dungeons/donjon_poison/donjon_poison.jpg",
     desc: "Un antre reptilien tapi sous la roche — cinq paliers de danger croissante, jusqu'au repaire du Basilic lui-même.",
     tierIds: [1, 2, 3, 4, 5],
     locked: false

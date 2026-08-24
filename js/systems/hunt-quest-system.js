@@ -1,34 +1,13 @@
 "use strict";
-/* ============================================================
-Aethervale — systems/hunt-quest-system.js
-v3.30 : gestion des Chasses (data/hunt-quests.js) — même squelette de
-run dédié qu'AdventureQuestManager (bascule sur Combat, un ennemi
-généré à la fois via WorldManager.generateEnemy() sur un contexte
-temporaire).
-
-v3.42 : au bout d'un lot de `lotSize` kills, le run s'ARRÊTE et un
-popup de fin de chasse s'ouvre (voir ui/quests-view.js,
-openHuntLotComplete()) — le joueur relance manuellement (avant v3.42,
-le lot suivant démarrait automatiquement, en boucle infinie). Seule la
-viande (via drop) est gagnée pendant une chasse : pas d'or, d'essence,
-d'XP ni d'équipement — voir le court-circuit tout en haut de
-CombatEngine.killEnemy() (systems/combat-engine.js).
-
-game.huntRun = { active, questId, killsInLot } — killsInLot repart à 0
-à chaque nouveau lot, NE survit PAS à l'ascension ni au reset complet
-(même traitement que dungeonRun/adventureQuestRun). La viande
-accumulée (game.resources.viande), elle, persiste comme mineraiRare.
-============================================================ */
+/* systems/hunt-quest-system.js — Chasses (data/hunt-quests.js), run dédié par lots de kills, s'arrête à la fin du lot (popup, relance manuelle).
+   Seule la viande est gagnée pendant une chasse (pas d'or/essence/XP/équipement). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var HuntQuestManager = {
   ensureDefaults: function () {
-    // v3.31 : l'initialisation de game.resources est désormais
-    // centralisée dans WarehouseManager.ensure() (voir
-    // systems/warehouse-system.js) — plus de duplication ici.
     if (window.WarehouseManager) WarehouseManager.ensure();
     if (!game.huntStats || typeof game.huntStats !== "object") game.huntStats = {};
     Object.keys(HUNT_QUESTS).forEach(function (key) {
-      if (typeof game.huntStats[key] !== "number") game.huntStats[key] = 0; // total de lots complétés, purement informatif
+      if (typeof game.huntStats[key] !== "number") game.huntStats[key] = 0;
     });
     this.ensureRun();
   },
@@ -49,9 +28,6 @@ var HuntQuestManager = {
     return HUNT_QUESTS[game.huntRun.questId] || null;
   },
 
-  /* Réutilise TEL QUEL le même mécanisme d'échange de contexte
-     temporaire qu'AdventureQuestManager.buildQuestEnemy() — voir ce
-     fichier pour le détail du principe (synchrone, sans risque). */
   buildQuestEnemy: function (quest) {
     if (!window.WorldManager) return null;
     var worldIdx = (WORLDS || []).findIndex(function (w) { return w.id === quest.worldId; });
@@ -65,7 +41,7 @@ var HuntQuestManager = {
     WorldManager.adventureIndex = quest.adventureIndex;
     var adventure = WorldManager.getAdventure();
     var enemyCount = (adventure && adventure.enemyCount) || 1;
-    WorldManager.enemyIndex = 0; // jamais de boss forcé en Chasse, uniquement du gibier normal
+    WorldManager.enemyIndex = 0;
 
     var enemy = WorldManager.generateEnemy();
 
@@ -98,9 +74,6 @@ var HuntQuestManager = {
     if (typeof renderHud === "function") renderHud();
   },
 
-  /* Lance (ou relance un lot de) la chasse — bouton "Chasser" de
-     l'onglet Quêtes. Mêmes garde-fous que les autres runs dédiés
-     (donjon/quête d'aventure) : un seul run actif à la fois. */
   start: function (questId) {
     this.ensureDefaults();
 
@@ -121,11 +94,6 @@ var HuntQuestManager = {
     saveGame();
   },
 
-  /* Appelée par CombatEngine.killEnemy() pendant un run de chasse
-     actif. Chance de drop de viande à CHAQUE kill (jamais de boss en
-     Chasse) ; au lotSize-ième kill du lot, celui-ci se conclut et un
-     nouveau démarre immédiatement (pas d'écran intermédiaire — voir
-     finishLot ci-dessous). */
   onEnemyKilled: function () {
     this.ensureRun();
     var quest = HUNT_QUESTS[game.huntRun.questId];
@@ -135,10 +103,6 @@ var HuntQuestManager = {
     }
 
     if (chance(quest.dropChancePct)) {
-      // v3.31 : passe désormais par WarehouseManager.addResource() —
-      // source de vérité unique pour créditer l'Entrepôt (voir
-      // systems/warehouse-system.js), plus d'accès direct à
-      // game.resources[key] ici.
       WarehouseManager.addResource(quest.resourceKey, 1);
     }
 
@@ -152,11 +116,6 @@ var HuntQuestManager = {
     this.spawnRunEnemy(quest);
   },
 
-  /* Fin d'un lot RÉUSSI (lotSize kills atteints) : incrémente le
-     compteur de lots (purement cosmétique, voir game.huntStats), ARRÊTE
-     le run (contrairement à avant v3.42 où le lot suivant démarrait
-     automatiquement) et ouvre un popup de fin de chasse. Le joueur doit
-     relancer manuellement via le bouton "Chasser". */
   finishLot: function (quest) {
     game.huntStats[quest.id] = Number(game.huntStats[quest.id] || 0) + 1;
     addLog("🏹 Chasse terminée : " + quest.name + " (" + quest.lotSize + "/" + quest.lotSize + ")", "event");
@@ -171,11 +130,6 @@ var HuntQuestManager = {
     if (typeof openHuntLotComplete === "function") openHuntLotComplete(quest);
   },
 
-  /* Arrêt volontaire (bouton "Arrêter la chasse"). La viande déjà
-     obtenue reste acquise (elle est ajoutée à game.resources kill par
-     kill, jamais reprise à l'arrêt), seule la progression du lot EN
-     COURS (killsInLot) est perdue — cohérent avec le fait qu'un lot
-     inachevé n'a rien à "réclamer". */
   stop: function () {
     this.ensureRun();
     if (!game.huntRun.active) return;
@@ -190,9 +144,6 @@ var HuntQuestManager = {
     saveGame();
   },
 
-  /* Défaite pendant une chasse : arrête le run (progression du lot en
-     cours perdue, viande déjà stockée conservée), PV restaurés — même
-     traitement que DungeonManager.onDefeat()/AdventureQuestManager.onDefeat(). */
   onDefeat: function () {
     this.ensureRun();
     var quest = HUNT_QUESTS[game.huntRun.questId];

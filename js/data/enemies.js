@@ -1,12 +1,6 @@
 "use strict";
-/* ============================================================
-QUEST IDLE — data/enemies.js
-Assets globaux, helpers d'icônes, stats RPG, ennemis et bonus bestiaire.
-============================================================ */
+/* data/enemies.js — assets, helpers d'icônes, stats RPG, ennemis normaux (hors boss). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-/* Table d'emoji utilisée comme repli visuel partout où une vraie image
-   pourrait manquer (voir renderIcon ci-dessous). Organisée par
-   catégorie : enemies/bosses/worlds/equipment/ui. */
 var ASSETS = {
   enemies: {
     slime: "🟢",
@@ -73,16 +67,10 @@ var ASSETS = {
   }
 };
 
-/* Renvoie l'emoji associé à (catégorie, id), ou un "❓" de secours si
-   la combinaison n'existe pas dans ASSETS. Utilisé notamment par le
-   bestiaire et l'aperçu de monstres de la carte du monde. */
 function renderIcon(cat, id) {
   return (ASSETS[cat] && ASSETS[cat][id]) || "❓";
 }
 
-/* Construit un objet de stats RPG à 5 axes, dans un ordre fixe et
-   positionnel (voir data/heroes.js pour le détail de ce que fait
-   chaque stat côté héros/ennemi). */
 function makeRpgStats(power, endurance, celerity, precision, will) {
   return {
     power: power,
@@ -101,14 +89,6 @@ var RPG_STAT_LABELS = {
   will: "Volonté"
 };
 
-/* Base de tous les ennemis normaux (hors boss, voir data/bosses.js).
-   - resists/weak : types de dégâts ("sword"/"bow"/"magic", voir
-     WEAPON_ICON_DAMAGE_TYPE dans combat-engine.js) qui infligent
-     respectivement -30% / +30% de dégâts contre cet ennemi
-   - stats.endurance pilote directement les PV de l'ennemi
-     (voir WorldManager.generateEnemy en progression-system.js)
-   - stats.power/celerity/precision/will pilotent sa riposte
-     (voir CombatEngine.enemyStrike en combat-engine.js) */
 var ENEMY_DB = {
   slime: {
     name: "Slime",
@@ -304,8 +284,4 @@ var ENEMY_DB = {
   }
 };
 
-/* Rempli dynamiquement par l'IIFE en fin de data/bosses.js (une fois
-   ENEMY_DB et BOSS_DB tous les deux chargés), avec des paliers de
-   bonus or/essence/butin par nombre de kills sur chaque créature. Lu
-   par getBestiaryBonus()/getTotalBestiaryBonus() en systems/stats-system.js. */
 var BESTIARY_BONUS_CONFIG = {};

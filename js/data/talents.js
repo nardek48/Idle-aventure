@@ -1,53 +1,6 @@
 "use strict";
-/* ============================================================
-QUEST IDLE — data/talents.js
-v3.28 : REFONTE de l'arbre de talents, sur demande explicite —
-  1. Chaque talent va maintenant jusqu'à 3 NIVEAUX (au lieu
-     d'acheté/pas acheté) — game.talents[id] est désormais un NOMBRE
-     (0 à maxLevel), plus un booléen. Le bonus par niveau est
-     directement le bonus qui existait avant (niveau 1 = même
-     puissance qu'avant cette refonte, niveau 3 = 3× plus fort).
-  2. EXCLUSIVITÉ PAR PALIER (pas par branche entière) : à chaque
-     palier (upper/mid/inner/lower), investir un point dans le nœud
-     GAUCHE verrouille le nœud DROIT de CE MÊME palier (et
-     inversement) — jusqu'à une réinitialisation. Les autres paliers
-     de la branche restent libres de choisir gauche OU droite,
-     indépendamment. Voir tier (nouveau champ) + buyTalentNode() dans
-     systems/progression-system.js pour l'application réelle.
-  3. Thème gauche = ACTIF (bénéficie au jeu actif : tap, critique,
-     combat de boss) / droite = PASSIF (bénéficie au jeu passif :
-     auto-tap, défense de fond, hors-ligne) — appliqué du mieux
-     possible ; la branche Fortune reste principalement économique des
-     deux côtés (le thème actif/passif s'y prête moins).
-  4. Branche Survie ENTIÈREMENT rethématisée vers la défense/les PV
-     (avant : centrée sur l'essence/le hors-ligne) — réutilise des
-     accroches déjà existantes (PV max, % défense, durée/puissance du
-     bouclier, pénalité de défaite, cooldown de repos) plutôt que
-     d'inventer de nouveaux mécanismes.
-  5. Réinitialisation TOUJOURS globale (tous les talents d'un coup,
-     voir respecTalents()) — pas de reset par nœud individuel.
-  6. Arbre GÉNÉRIQUE, partagé par tous les héros pour l'instant — un
-     arbre par héros/classe est noté comme bonne idée pour plus tard,
-     mais pas dans cette itération. Chaque héros (voir le système
-     multi-héros, v3.25) a de toute façon déjà SES PROPRES points
-     dépensés dans CET arbre commun, puisque game.talents fait partie
-     de la sauvegarde individuelle de chaque emplacement.
-
-Champs de chaque talent :
-  - id          identifiant unique, lu par game.talents[id] (0-maxLevel)
-  - name/icon/img/effect  affichage
-  - slot        palier d'affichage (top/upper_left/.../lower_right)
-  - tier        NOUVEAU — "upper"/"mid"/"inner"/"lower"/null (top) :
-                sert à l'exclusivité gauche/droite PAR PALIER
-  - side        NOUVEAU — "left"/"right"/null (top) : thème actif/passif
-  - requires    id du talent prérequis (même branche)
-  - maxLevel    NOUVEAU — 3 pour tous les nœuds
-  - perLevel    NOUVEAU — valeur du bonus À CHAQUE niveau (le total
-                appliqué = perLevel × niveau actuel)
-  - capstone    talent de fin de branche (style visuel différent)
-L'EFFET RÉEL de chaque talent est câblé à la main dans les systems
-concernés : chercher `game.talents.<id>` dans js/systems/*.js.
-============================================================ */
+/* data/talents.js — arbre de talents à 3 niveaux/nœud, exclusivité gauche/droite par palier (tier), reset global uniquement.
+   Effets réels câblés à la main dans js/systems/*.js (game.talents.<id>). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var TALENTTREE = {
   combat: [
@@ -82,12 +35,6 @@ var TALENTTREE = {
     { id: "t_sovereign_treasure", name: "Trésor souverain", icon: "👑", img: "images/Icons/talents/t_sovereign_treasure.png", slot: "lower_right", tier: "lower", side: "right", requires: "t_astral_prospecting", maxLevel: 3, perLevel: 0.20, effect: "+20% or global et bonus sur les récompenses rares, par niveau.", capstone: true }
   ],
 
-  /* v3.28 : branche entièrement rethématisée — défense/PV au lieu
-     d'essence/hors-ligne. Réutilise heroMaxHp/heroDefensePct
-     (stats-system.js), la durée/le bonus du bouclier
-     (special-attack-system.js, DEFENSE_ABILITY), la pénalité de
-     défaite (combat-engine.js, DEFEAT_GOLD_PENALTY) et les cooldowns
-     de repos (camp-system.js). */
   survival: [
     { id: "t_regenerate", name: "Cœur vaillant", icon: "❤️", img: "images/Icons/talents/t_regenerate.png", slot: "top", tier: null, side: null, maxLevel: 3, perLevel: 0.05, effect: "+5% PV max, par niveau." },
 
@@ -105,6 +52,4 @@ var TALENTTREE = {
   ]
 };
 
-/* getAllTalentNodes() est définie dans systems/progression-system.js
-   (elle y retourne l'arbre complet, utilisé par buyTalentNode). */
 var TALENT_TREE = TALENTTREE;

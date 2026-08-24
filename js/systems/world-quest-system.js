@@ -1,18 +1,8 @@
 "use strict";
-/* ============================================================
-Quest Idle — systems/world-quest-system.js
-v2.83 : suivi et réclamation des questlines de déblocage des mondes
-(voir data/world-quests.js pour le contenu). Progression et
-complétion sont PERMANENTES (survivent à l'ascension, voir
-hardResetState en save-system.js), remises à zéro uniquement par
-le reset complet.
-============================================================ */
+/* systems/world-quest-system.js — suivi/réclamation des questlines de déblocage des mondes (data/world-quests.js).
+   Progression/complétion PERMANENTES (survivent à l'ascension). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var WorldQuestManager = {
-  /* S'assure que game.worldQuestProgress / game.worldQuestsCompleted
-     existent et couvrent toutes les questlines connues — appelée au
-     boot et après chargement d'une sauvegarde, filet de sécurité pour
-     les sauvegardes antérieures à v2.83 (voir aussi migrate() plus bas). */
   ensureDefaults: function () {
     if (!game.worldQuestProgress || typeof game.worldQuestProgress !== "object") {
       game.worldQuestProgress = {};
@@ -35,12 +25,6 @@ var WorldQuestManager = {
     });
   },
 
-  /* Migration ponctuelle pour les parties déjà en cours avant v2.83 :
-     un monde déjà atteint sous l'ancien système (game.worldsEverReached,
-     qui existait déjà pour le Codex) voit sa questline de déblocage
-     marquée complète automatiquement — personne ne se retrouve avec
-     un monde reverrouillé après la mise à jour. Aucune récompense
-     n'est distribuée rétroactivement (déjà obtenue via le jeu normal). */
   migrate: function () {
     this.ensureDefaults();
     Object.keys(WORLD_QUESTS).forEach(function (key) {
@@ -59,7 +43,6 @@ var WorldQuestManager = {
     return WORLD_QUESTS_BY_INDEX[index] || null;
   },
 
-  /* Un monde sans questline (Forêt/Désert) est toujours "rempli". */
   isWorldUnlocked: function (index) {
     var quest = this.getQuestForWorldIndex(index);
     if (!quest) return true;
@@ -82,9 +65,6 @@ var WorldQuestManager = {
     return quest.steps.every(function (step) { return self.isStepComplete(quest, step); });
   },
 
-  /* Incrémente tous les objectifs "kill" concernant ce monde, tous
-     mondes/questlines confondus (appelée depuis CombatEngine.killEnemy,
-     hors donjon). */
   trackKill: function (worldId) {
     if (!worldId) return;
     this.ensureDefaults();
@@ -101,7 +81,6 @@ var WorldQuestManager = {
     });
   },
 
-  /* Incrémente tous les objectifs "bossKill" pour ce boss précis. */
   trackBossKill: function (bossId) {
     if (!bossId) return;
     this.ensureDefaults();
@@ -117,8 +96,6 @@ var WorldQuestManager = {
     });
   },
 
-  /* Incrémente tous les objectifs "loot" dont le seuil de rareté est
-     atteint ou dépassé par l'objet trouvé (RARITY_ORDER pour comparer). */
   trackLoot: function (rarity) {
     if (!rarity) return;
     this.ensureDefaults();
@@ -138,9 +115,6 @@ var WorldQuestManager = {
     });
   },
 
-  /* Réclame la récompense d'une questline terminée : c'est CET appel
-     qui débloque réellement le monde (game.worldQuestsCompleted true),
-     pas la simple complétion des objectifs. */
   claim: function (worldIndex) {
     var quest = this.getQuestForWorldIndex(worldIndex);
     if (!quest) return false;

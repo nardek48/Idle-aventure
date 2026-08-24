@@ -1,32 +1,9 @@
 "use strict";
-/* ============================================================
-Aethervale — ui/construction-view.js
-v3.37 : modale du bâtiment de Construction (#construction-modal-root,
-voir index.html) — même principe que #village-modal-root
-(ui/village-view.js) : la popup vit HORS du cycle renderPanel()
-habituel, réécrite directement en innerHTML après un achat pour un
-rafraîchissement immédiat sans fermer/rouvrir. Point d'entrée : un
-bouton dédié en bas de l'écran Production (voir buildProductionHTML,
-ui/production-view.js) — décision explicite (pas de 4e sous-onglet,
-pas de grille de bâtiments de construction, un seul bâtiment pour
-cette session).
-
-v3.40 : liste de coût généralisée pour un NOMBRE VARIABLE de
-ressources selon le palier en cours (voir CONSTRUCTION_BUILDINGS.workshop.costTiers,
-data/construction.js) — avant, 3 lignes fixes (Or/Planche/Pierre) ;
-maintenant une boucle sur les clés réellement présentes dans
-getNextCost(id), qui varient déjà tout seules selon le palier
-(3 ressources niveaux 1-5, 4 avec le Lingot niveaux 6-10). Aucun
-changement de structure visuelle par ailleurs.
-============================================================ */
+/* ui/construction-view.js — modale du bâtiment de Construction (#construction-modal-root, hors cycle renderPanel()).
+   Coût généralisé à un nombre variable de ressources selon le palier (v3.40). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var openConstructionId = null;
 
-/* Métadonnées d'affichage pour une clé de coût (label + icône) — l'or
-   est un cas à part (pas dans WAREHOUSE_RESOURCES), toute autre clé
-   est résolue dynamiquement dans ce catalogue. Un futur palier 3 avec
-   une nouvelle ressource n'a besoin d'AUCUNE modification ici tant
-   que cette ressource existe dans WAREHOUSE_RESOURCES (data/hunt-quests.js). */
 function getConstructionCostMeta(key) {
   if (key === "gold") {
     return { label: "Or", iconHTML: '<img class="construction-cost-icon" src="images/Icons/gold_icon.png" alt="">' };
@@ -36,8 +13,6 @@ function getConstructionCostMeta(key) {
   return { label: def.name, iconHTML: renderIconOrEmojiHTML(def.icon, "construction-cost-icon", def.name) };
 }
 
-/* Une ligne de coût pour UNE ressource du prix du prochain niveau,
-   avec indicateur ✅/❌ selon l'affordability. */
 function buildConstructionCostRowHTML(label, iconHTML, amount, ok) {
   var h = '<div class="construction-cost-row' + (ok ? '' : ' is-missing') + '">';
   h += iconHTML;
@@ -78,11 +53,6 @@ function buildConstructionModalHTML(id) {
     h += '    <div class="construction-popup-meta">Prochain niveau : +' + nextBonusPct + '% <span class="construction-popup-delta">(+' + (nextBonusPct - currentBonusPct) + ')</span></div>';
 
     h += '    <div class="construction-cost-list">';
-    // v3.40 : boucle générique sur les clés RÉELLES du coût — "gold"
-    // toujours affiché en premier (cohérent avec l'ordre historique
-    // Or/Planche/Pierre), puis le reste dans l'ordre naturel des clés
-    // de l'objet renvoyé par costPerLevel() (qui suit lui-même l'ordre
-    // de tier.resources dans data/construction.js).
     var costKeys = Object.keys(cost);
     costKeys.sort(function (a, b) {
       if (a === "gold") return -1;
@@ -126,9 +96,6 @@ function closeConstructionModal() {
 }
 window.closeConstructionModal = closeConstructionModal;
 
-/* Rachète puis réécrit immédiatement la modale (même principe que
-   buyVillageUpgradeFromPopup, ui/village-view.js) — sans ça, niveau/
-   coût/bonus affichés resteraient figés jusqu'à fermeture/réouverture. */
 function buyConstructionFromModal(id) {
   ConstructionManager.buy(id);
   if (openConstructionId === id) openConstructionModal(id);

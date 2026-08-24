@@ -1,33 +1,6 @@
 "use strict";
-/* ============================================================
-Aethervale — data/classes.js
-v3.33.2 : couche de données "classes", introduite pour REGROUPER les 6
-héros existants (data/heroes.js) sans toucher à leur comportement. Ne
-fait QUE déclarer des données — aucune classe n'est encore consommée
-par le combat, les stats ou l'UI.
-
-Chaque héros garde ses propres stats/weaponType/attaque spéciale
-(voir data/heroes.js) ; cette table ajoute juste une correspondance
-héros -> classe, utile pour de futures mécaniques partagées par
-classe (jauge de ressource, compétences communes...).
-
-Champs par classe :
-  - id/label/icon       identité affichage
-  - weaponType           doit correspondre au weaponType des héros
-                          membres (voir data/heroes.js)
-  - heroIds               IDs réels de data/heroes.js, PAS inventés
-  - resource               jauge dédiée à la classe (déclarée mais pas
-                            encore utilisée en jeu — voir game.* pour
-                            un futur câblage)
-  - combat                 réservé aux futures mécaniques communes de
-                            classe (attaque de base, compétences,
-                            défense, comportements auto). Vide pour
-                            cette première livraison : le combat
-                            actuel (combat-engine.js, stats-system.js,
-                            special-attack-system.js) n'est PAS
-                            modifié et continue de fonctionner par
-                            héros, pas par classe.
-============================================================ */
+/* data/classes.js — regroupement héros -> classe (Chevalier/Archer/Mage). Détail complet : COMMENTAIRES_ORIGINAUX.md
+   Note : champ combat{} déclaré vide à l'origine (v3.33.2) — vérifier s'il est encore utilisé, class-skills.js a pris ce rôle depuis v3.34.0. */
 
 var CLASSES = [
   {
@@ -86,8 +59,6 @@ var CLASSES = [
   }
 ];
 
-/* getClassById(classId) — renvoie l'objet classe ou null si absent/
-   introuvable. N'accepte que des chaînes valides. */
 function getClassById(classId) {
   if (!classId || typeof classId !== "string") return null;
   for (var i = 0; i < CLASSES.length; i++) {
@@ -96,10 +67,6 @@ function getClassById(classId) {
   return null;
 }
 
-/* getClassByHeroId(heroId) — résout la classe à partir d'un ID héros
-   (chaîne). Renvoie null proprement si l'ID est absent, invalide, ou
-   ne correspond à aucun héros répertorié dans une classe. Ne modifie
-   jamais data/heroes.js ni l'objet héros. */
 function getClassByHeroId(heroId) {
   if (!heroId || typeof heroId !== "string") return null;
   for (var i = 0; i < CLASSES.length; i++) {
@@ -111,10 +78,6 @@ function getClassByHeroId(heroId) {
   return null;
 }
 
-/* getClassForHero(hero) — même résolution que getClassByHeroId(), mais
-   à partir d'un objet héros (typiquement un objet de HEROES_DB). Ne
-   lit que hero.id, ne modifie jamais l'objet reçu. Renvoie null si
-   hero est absent, invalide, ou sans id exploitable. */
 function getClassForHero(hero) {
   if (!hero || typeof hero !== "object") return null;
   return getClassByHeroId(hero.id);

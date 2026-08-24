@@ -1,36 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/dungeon-view.js
-Écran "Donjon" v2.16 : sélection d'un palier (comme la Carte du
-monde) si aucune tentative n'est en cours, ou état de la vague
-actuelle sinon (voir systems/dungeon-system.js).
-
-v2.83.3 : séparation Donjon / Boutique en 2 sous-onglets. Première
-étape vers plusieurs donjons distincts à terme (voir discussion) :
-chaque futur donjon aura sa propre grille de 5 paliers, affichée dans
-ce même sous-onglet "Donjon".
-
-v2.83.4 : sous-onglets restylés pour reprendre EXACTEMENT le pattern
-visuel de l'onglet Personnage (pc-subtab-bar / pc-subtab-btn, voir
-heros-view.js + css/04-panel-hero-summary.css) — pilules collées en
-bas du panel, juste au-dessus de la nav — plutôt que le style
-shop-sub-tabs utilisé en v2.83.3.
-
-v2.83.5 : le pattern est devenu générique (voir css/00-components.css)
-et partagé avec Personnage + Boutique — classes renommées ici
-pc-donjon-panel/-content/-subtab-bar-wrapper -> subtab-page/-content/
--bar-wrapper (pc-subtab-bar/pc-subtab-btn inchangés, déjà génériques).
-
-v2.83.6 : liste de donjons en accordéon (voir DUNGEONS dans
-data/dungeon.js) — un seul déplié à la fois (expandedDungeonId), la
-grille des 5 paliers d'un donjon apparaît sous sa carte au tap. Avec
-un seul donjon existant, il est déplié par défaut (comportement
-inchangé visuellement). La carte "Tickets" pleine largeur est
-remplacée par un badge compact (🎟️ N) en haut de la liste, qui ouvre
-désormais une fenêtre dédiée (buildDungeonTicketOverlayHTML) au tap —
-même overlay que l'intro/résumé de donjon. Le compte de tickets
-restants apparaît aussi dans la fenêtre "Entrer" d'un palier.
-============================================================ */
+/* ui/dungeon-view.js — écran Donjon (v2.16), sous-onglets Donjon/Boutique. Liste en accordéon (v2.83.6), overlay tickets, intro/résumé de palier. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var activeDungeonSubTab = "tiers"; // "tiers" | "shop"
 var expandedDungeonId = null; // v2.83.30 : replié par défaut (demande explicite — on veut voir la liste complète des donjons directement)
@@ -72,14 +41,6 @@ function buildDungeonActiveHTML() {
   return h;
 }
 
-/* Une carte de palier dans le sélecteur, en grille 2 colonnes (voir
-   .dungeon-tier-grid) — le 5e palier (Cauchemar) prend toute la
-   largeur via .is-full, mis en page à l'horizontale plutôt qu'en
-   carré. Emplacement d'image réservé (tier.icon, vide pour l'instant
-   → repli sur un numéro stylisé) pour une future illustration par
-   palier, même principe que renderIconOrEmojiHTML ailleurs : dès que
-   tier.icon pointe vers un fichier, l'image prend le dessus
-   automatiquement, aucun changement de code nécessaire. */
 function buildDungeonTierCardHTML(tier, isLast) {
   var unlocked = DungeonManager.isTierUnlocked(tier.id);
   var heroDowned = (game.heroHp || 0) <= 0;
@@ -90,12 +51,7 @@ function buildDungeonTierCardHTML(tier, isLast) {
     ? renderIconOrEmojiHTML(tier.icon, "dungeon-tier-img", tier.name)
     : '<span class="dungeon-tier-num">' + tier.id + '</span>';
 
-  /* v2.90 : toute la carte devient cliquable pour lancer l'intro du
-     palier (avant : seul le bouton "Entrer" en bas de carte). Le
-     bouton est retiré, la carte entière porte l'action tactile.
-     v3.29.9 : reste cliquable même à terre (heroDowned) pour afficher
-     le toast explicatif — seul DungeonManager.start()/openDungeonIntro()
-     bloquent réellement l'entrée (voir systems/dungeon-system.js). */
+  
   var cardTag = unlocked ? 'button' : 'div';
   var cardAttrs = unlocked
     ? ' type="button" onclick="openDungeonIntro(' + tier.id + ')"'
@@ -108,9 +64,6 @@ function buildDungeonTierCardHTML(tier, isLast) {
   h += '<div class="dungeon-tier-rarity" style="color:' + rarityColor + '">🎁 ' + esc(rarityLabel) + ' max</div>';
 
   if (!unlocked) {
-    // v2.90.9 : déblocage séquentiel — remplace le texte "X
-    // ascension(s) requise(s)" par le nom du palier précédent à
-    // terminer entièrement (voir DungeonManager.isTierUnlocked).
     var tiers = DUNGEON_TIERS || [];
     var idx = tiers.indexOf(tier);
     var previousTier = idx > 0 ? tiers[idx - 1] : null;
@@ -127,16 +80,6 @@ function buildDungeonTierCardHTML(tier, isLast) {
   return h;
 }
 
-/* Carte d'un DONJON dans la liste en accordéon (voir DUNGEONS dans
-   data/dungeon.js). v2.83.12 : le bandeau (dungeon.banner) sert
-   désormais de FOND à l'en-tête cliquable lui-même (nom en
-   surimpression), remplaçant la petite icône carrée + la colonne
-   texte d'avant. La description, elle, apparaît maintenant dans la
-   section dépliée (avant : c'était le bandeau qui s'y trouvait, en
-   double avec l'en-tête — plus la peine). dungeon.icon ne sert plus
-   du tout ici : voir buildDungeonHTML/DungeonManager.start(), c'est
-   maintenant le fond de COMBAT affiché quand on joue ce donjon
-   (comme WorldManager.applyWorldTheme pour les mondes classiques). */
 function buildDungeonCardHTML(dungeon) {
   var isExpanded = expandedDungeonId === dungeon.id;
   var isLocked = !!dungeon.locked;
@@ -172,12 +115,6 @@ function buildDungeonCardHTML(dungeon) {
   return h;
 }
 
-/* Badge ticket compact en haut de la liste — remplace l'ancienne carte
-   pleine largeur, ouvre buildDungeonTicketOverlayHTML() au tap.
-   v2.90.7 : libellé "Achat de ticket" ajouté (avant : juste l'icône
-   🎟️ + le nombre, pas assez explicite sur ce que fait ce bouton —
-   retour utilisateur). Le nombre de tickets actuels reste affiché,
-   dans une pastille séparée pour rester lisible. */
 function buildDungeonTicketBadgeHTML() {
   var tickets = game.dungeonTickets || 0;
   var h = '<button type="button" class="dungeon-ticket-badge" onclick="openDungeonTicketOverlay()">';
@@ -207,9 +144,6 @@ function buildDungeonLobbyHTML() {
   return '<div class="nb-page-frame nb-page-frame-fill">' + h + '</div>'; // v2.83.28
 }
 
-/* Boutique exclusive du donjon (voir DUNGEON_SHOP dans data/dungeon.js) :
-   3 bonus permanents achetables en Éclats, la monnaie gagnée en
-   passant des vagues — indépendante de l'or/essence classiques. */
 function buildDungeonShopHTML() {
   var shards = game.dungeonShards || 0;
 
@@ -259,8 +193,6 @@ function buildDungeonHTML() {
   h += isActive ? buildDungeonActiveHTML() : buildDungeonLobbyHTML();
   h += '</div>'; // fin .subtab-page-content
 
-  // Sous-onglets masqués pendant une tentative en cours (voir
-  // buildDungeonActiveHTML) — pas de bascule Boutique en plein combat.
   if (!isActive) {
     h += '<div class="subtab-bar-wrapper">';
     h += buildDungeonSubTabBarHTML();
@@ -272,12 +204,6 @@ function buildDungeonHTML() {
 }
 
 window.buildDungeonHTML = buildDungeonHTML;
-
-/* ============================================================
-   v2.18 : petite fenêtre narrative avant d'entrer dans un palier, et
-   fenêtre de résumé à la fin d'une tentative (succès ou échec).
-   Réutilisent le même overlay que le Menu/le tutoriel (.full-menu-*).
-============================================================ */
 
 var pendingDungeonTierId = null;
 
@@ -303,10 +229,6 @@ function buildDungeonIntroHTML(tierId) {
   return h;
 }
 
-/* Citation du Codex sur ce Sceau précis (data/codex.js), en
-   complément du texte d'ambiance existant — affichée même si
-   l'entrée n'a pas encore été "lue" au sens du Codex, puisque cette
-   fenêtre EST le moment de la découverte. */
 function buildDungeonSceauLoreHTML(tierId) {
   if (typeof CodexManager === "undefined") return "";
   var entry = CodexManager.getById("dungeon_tier_" + tierId);
@@ -336,8 +258,6 @@ function confirmDungeonStart() {
   if (tierId) DungeonManager.start(tierId);
 }
 
-/* Résumé de fin de tentative (succès ou échec), affiché par
-   DungeonManager.finish() en plus du toast/journal habituels. */
 function buildDungeonSummaryHTML(result) {
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card' + (result.success ? ' is-success' : ' is-failure') + '">';
@@ -378,14 +298,6 @@ window.closeDungeonIntro = closeDungeonIntro;
 window.confirmDungeonStart = confirmDungeonStart;
 window.openDungeonSummary = openDungeonSummary;
 window.closeDungeonSummary = closeDungeonSummary;
-
-/* ============================================================
-   v2.83.6 : fenêtre dédiée aux tickets (ouverte depuis le badge
-   compact en haut de la liste de donjons, voir
-   buildDungeonTicketBadgeHTML) — reprend le contenu de l'ancienne
-   carte "Tickets de donjon" pleine largeur, juste déplacé dans le
-   même système d'overlay que l'intro/résumé de palier.
-============================================================ */
 
 function buildDungeonTicketOverlayHTML() {
   var tickets = game.dungeonTickets || 0;
@@ -428,10 +340,6 @@ function closeDungeonTicketOverlay() {
   if (host) host.innerHTML = "";
 }
 
-/* La fenêtre ticket vit dans #dungeon-modal-root, en dehors du cycle
-   renderAll()/renderPanel() habituel (voir ui-root.js) — sans ce
-   wrapper, le compteur/prix affichés resteraient figés après achat
-   tant que la fenêtre n'est pas refermée puis rouverte. */
 function buyDungeonTicketFromOverlay() {
   DungeonManager.buyTicket();
   openDungeonTicketOverlay();

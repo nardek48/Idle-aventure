@@ -1,14 +1,8 @@
 "use strict";
-/* ============================================================
-Quest Idle — core/state.js
-Définit l'objet `game` global (toute la partie vivante en mémoire)
-et ses valeurs par défaut. C'est LE fichier central : tous les
-autres systèmes lisent/modifient `game`.
-============================================================ */
+/* core/state.js — objet `game` global et ses valeurs par défaut. Fichier central, lu/modifié par tous les systèmes.
+   Toute nouvelle donnée persistante : l'ajouter ici ET dans ensureGameStateDefaults() (migration des vieilles sauvegardes).
+   Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-/* Emplacements d'équipement du héros. v2.83.55 : passé de 3
-   (arme/armure/amulette) à 7 (+ casque/gants/bottes/anneau) — voir
-   EQUIPMENT_SLOTS/EQUIPMENT_SLOT_CONFIG en data/equipment.js. */
 function createDefaultEquipped() {
   return {
     weapon: null,
@@ -21,10 +15,6 @@ function createDefaultEquipped() {
   };
 }
 
-/* Niveaux des bâtiments du village (VillageManager en systems/offline-system.js).
-   watchtower (Vigie) et sanctuary (Sanctuaire d'Aether) ont été ajoutés
-   en v1.9.2 ; VillageManager.ensure() les recrée aussi au runtime si absents
-   d'une ancienne sauvegarde, donc les avoir ici est surtout pour la cohérence. */
 function createDefaultVillage() {
   return {
     goldMine: 0,
@@ -45,7 +35,7 @@ function createInitialGameState() {
     gold: 0,
     essence: 0,
     aether: 0,
-    totalAetherEarned: 0,   // cumul à vie, ne diminue jamais même dépensé (bonus passif)
+    totalAetherEarned: 0,
 
     tapDamage: 1,
     tapMult: 1,
@@ -54,7 +44,6 @@ function createInitialGameState() {
     critChance: 5,
     critMult: 2,
     goldMult: 1,
-    // NOUVEAU v1.8 : progression des stats RPG via le shop (Force/Endurance/...)
     trainedStats: {
       power: 0,
       endurance: 0,
@@ -67,21 +56,21 @@ function createInitialGameState() {
     heroXp: 0,
     heroXpToNext: 20,
     talentPoints: 0,
-    heroHp: 10,             // PV courants (recalculés/plafonnés dans StatsSystem.recalcStats)
-    heroMaxHp: 10,           // PV max, dérivés de l'endurance (voir stats-system.js)
-    heroDefensePct: 0,       // % de réduction des dégâts de riposte ennemie
+    heroHp: 10,
+    heroMaxHp: 10,
+    heroDefensePct: 0,
 
     totalKills: 0,
-    killCounts: {},          // { idEnnemi: nombre de fois tué } -> bestiaire + bonus
+    killCounts: {},
     upgrades: {},
-    shopBuyAmount: 1,        // mode d'achat boutique : 1 / 10 / 25 / -1 (MAX)
+    shopBuyAmount: 1,
     talents: {},
     enemy: null,
-    activeTab: "campement", // v3.7 : Campement devient la page d'accueil par défaut (avant : "combat")
+    activeTab: "campement",
     totalGoldEarned: 0,
     totalDamageDealt: 0,
     playTime: 0,
-    cycleCount: 0,           // nombre de fois où tous les mondes ont été bouclés sans ascensionner
+    cycleCount: 0,
     ascensionCount: 0,
 
     inventory: [],
@@ -94,111 +83,66 @@ function createInitialGameState() {
 
     saveSupported: false,
     lastSave: 0,
-    lastOnline: 0,            // timestamp du dernier moment "en ligne", sert au calcul hors-ligne
+    lastOnline: 0,
 
     village: createDefaultVillage(),
 
-    activePotions: {},                        // { idPotion: timestamp d'expiration }
-    pendingPotionBonuses: { aetherNext: 0 },    // bonus sans minuteur (Élixir d'Aether)
-    aetherElixirStackCount: 0,                  // v2.26 : nombre d'Élixirs d'Aether achetés depuis la dernière ascension (coût croissant)
+    activePotions: {},
+    pendingPotionBonuses: { aetherNext: 0 },
+    aetherElixirStackCount: 0,
 
-    equipShopStock: [],          // 6 objets en vente à l'échoppe, voir systems/equip-shop-system.js
-    equipShopResetTime: 0,        // prochain renouvellement du stock
-    equipShopManualRefreshCount: 0,  // v2.27 : nombre de renouvellements payants depuis le dernier renouvellement
+    equipShopStock: [],
+    equipShopResetTime: 0,
+    equipShopManualRefreshCount: 0,
 
-    dungeonTickets: 1,             // voir systems/dungeon-system.js
+    dungeonTickets: 1,
     dungeonTicketResetTime: 0,
     dungeonTicketsPurchasedToday: 0,
     dungeonRun: { active: false, wave: 0, tierId: 1 },
     dungeonBestWave: 0,
     dungeonBossClears: 0,
-    dungeonShards: 0,           // monnaie exclusive au donjon, voir data/dungeon.js DUNGEON_SHOP
+    dungeonShards: 0,
     dungeonShopLevels: {},
 
-    healingPotionsOwned: {},   // { idPotionSoin: quantité en stock }, voir systems/potion-system.js
-    lastHealUse: 0,             // timestamp du dernier usage (cooldown commun)
+    healingPotionsOwned: {},
+    lastHealUse: 0,
 
-    autoSellEquipment: false,   // v2.26 : autovente du butin ≤ au seuil de rareté choisi
-    autoSellRarityThreshold: "common", // v2.83.31 : seuil réglable (voir addDropToInventory)
+    autoSellEquipment: false,
+    autoSellRarityThreshold: "common",
 
-    autoSkillsEnabled: true,    // v3.47.0 : combat auto de base (skill1/2/3/defense + attaque de base), réglable dans Paramètres
+    autoSkillsEnabled: true,
 
-    // v3.66.0 : Mode Expert du Grimoire (Phase 6) — affiche les seuils
-    // chiffrés réels (ressource, cooldown, temps avant télégraphe) et
-    // le diagnostic détaillé de non-déclenchement, en plus de l'indice
-    // simple toujours visible. Réglable directement dans l'écran
-    // Grimoire (voir toggleGrimoireExpertMode(), ui/grimoire-view.js)
-    // — n'affecte JAMAIS le comportement du combat automatique, purement
-    // un réglage d'affichage.
     expertModeEnabled: false,
 
-    // v3.50.0 : Grimoire de tactiques (étape 4a) — 2 slots fixes,
-    // chacun { conditionId, actionSlot }. null/null = slot vide (pas
-    // encore configuré). Complété/validé à la demande par
-    // ensureGrimoireRules()/sanitizeGrimoireRules() (ui/grimoire-view.js,
-    // systems/combat-auto-policy-system.js) plutôt que figé ici avec
-    // un nombre d'entrées codé en dur — évite une 3e source de vérité
-    // sur GRIMOIRE_SLOT_COUNT.
     grimoireRules: [],
 
-    // v3.65.0 : PRESETS nommés du Grimoire (Phase 5) — collection de
-    // profils sauvegardés { id, name, icon, rules, lastModified },
-    // distincte de grimoireRules ci-dessus (qui reste l'unique
-    // config ACTIVE). Voir ensureGrimoirePresets()/saveGrimoirePreset()/
-    // loadGrimoirePreset() dans ui/grimoire-view.js.
     grimoirePresets: [],
 
-    // v3.34.0 : lastSpecialUse/specialBuffExpires/specialBuffPct/
-    // lastDefenseUse/defenseBuffExpires (ancienne attaque spéciale par
-    // héros + bouclier universel) retirés — voir classResource/
-    // classCooldowns/classActiveDefense plus bas (systèmes de classes,
-    // systems/class-combat-system.js).
-    classResource: null,        // { classId, resourceId, current, max } — recréé au besoin
-    classCooldowns: {},         // { [actionId]: remainingMs }, voir systems/combat-cooldown-system.js
-    classActiveDefense: null,   // { actionId, effectType, value, expiresAt } ou null
+    classResource: null,
+    classCooldowns: {},
+    classActiveDefense: null,
 
-    // v3.34.3 : cooldown de l'attaque de base (tap manuel) — voir
-    // CombatEngine.requestPlayerAttack()/playerAttack()/tickBasicAttackCooldown(),
-    // systems/combat-engine.js. Éphémère comme le reste de l'état
-    // combat (game.enemy...), PAS sauvegardé (voir save-system.js) —
-    // repart toujours à 0 au chargement, cohérent avec le fait qu'un
-    // cooldown de combat n'a pas de sens de persister entre 2 sessions.
     basicAttackCooldownMs: 0,
     basicAttackPending: false,
 
-    achievementsClaimed: {},   // { idHautFait: true }, voir systems/achievement-system.js
+    achievementsClaimed: {},
 
-    worldsEverReached: {},      // { indexMonde: true }, persiste même après ascension — voir data/codex.js
-    worldQuestProgress: {},     // v2.83 : { idQuestline: { idEtape: nombre } }, persiste même après ascension — voir systems/world-quest-system.js
-    worldQuestsCompleted: {},   // v2.83 : { idQuestline: true }, persiste même après ascension — c'est CE flag qui débloque le monde
+    worldsEverReached: {},
+    worldQuestProgress: {},
+    worldQuestsCompleted: {},
 
-    // v3.0 : ressources rares (système Quêtes/Ressources/Territoire, voir
-    // Aethervale_Roadmap_Quetes_Ressources.md) — une seule ressource test
-    // pour démarrer (Minerai rare), persiste même après ascension comme
-    // l'Aether/le Village (voir hardResetState en save-system.js).
-    // v3.31 : Blé/Bois/Fer (bâtiments de production, voir
-    // data/production-buildings.js) — même principe, stockés dans
-    // l'Entrepôt.
     resources: { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0 },
-    // v3.0 : quêtes d'aventure ({worldId, adventureIndex}, voir
-    // data/adventure-quests.js) — système séparé de worldQuestProgress
-    // ci-dessus, qui lui gère le déblocage des MONDES entiers.
-    adventureQuestProgress: {},  // { idQuête: { idÉtape: nombre } }, persiste même après ascension
-    adventureQuestsCompleted: {}, // { idQuête: true }, persiste même après ascension
-    adventureQuestRun: { active: false, questId: null }, // v3.2 : run de quête en cours (même traitement que dungeonRun — NE survit PAS à l'ascension ni au reset complet)
+    adventureQuestProgress: {},
+    adventureQuestsCompleted: {},
+    adventureQuestRun: { active: false, questId: null },
 
-    // v3.31 : bâtiments de production (voir data/production-buildings.js,
-    // systems/production-system.js) — { idBâtiment: { level, stock, lastTick } }.
-    // level/stock persistent TOUJOURS (comme le Village, jamais effacés
-    // par l'ascension) ; lastTick (ms epoch) sert au calcul de rattrapage
-    // hors-ligne, régénéré au besoin si absent (voir ProductionManager.ensure()).
     production: {},
 
-    dungeonTiersEntered: {},    // { idPalier: true }
-    codexChaosSeen: false,      // vrai dès qu'un héros du Chaos a été choisi une fois
-    codexRead: {},              // { idEntree: true }, voir systems/codex-system.js
+    dungeonTiersEntered: {},
+    codexChaosSeen: false,
+    codexRead: {},
 
-    hasSeenOnboarding: false,   // tutoriel d'accueil, voir ui/onboarding-view.js
+    hasSeenOnboarding: false,
 
     playerName: "",
     heroId: ""
@@ -207,18 +151,11 @@ function createInitialGameState() {
 
 var game = createInitialGameState();
 
-/* Répare un objet `game` chargé depuis une sauvegarde (potentiellement
-   ancienne) en comblant tous les champs manquants avec des valeurs par
-   défaut sûres. Appelée au boot juste après le chargement, et de
-   nouveau après un reset/ascension. Ne doit jamais écraser une valeur
-   déjà présente et valide. */
 function ensureGameStateDefaults() {
   if (!game.killCounts) game.killCounts = {};
   if (!game.upgrades) game.upgrades = {};
   if (!game.talents) game.talents = {};
 
-  // NOUVEAU v1.8 : init + migration trainedStats (anciennes sauvegardes
-  // avaient un simple compteur "utap" pour la Force, récupéré ici)
   if (!game.trainedStats || typeof game.trainedStats !== "object") {
     game.trainedStats = { power: 0, endurance: 0, celerity: 0, precision: 0, will: 0 };
     if (game.upgrades && game.upgrades.utap) {
@@ -239,9 +176,6 @@ function ensureGameStateDefaults() {
   if (game.equipped.weapon === undefined) game.equipped.weapon = null;
   if (game.equipped.armor === undefined) game.equipped.armor = null;
   if (game.equipped.amulet === undefined) game.equipped.amulet = null;
-  // v2.83.55 : 4 nouveaux emplacements — même filet de sécurité que
-  // les 3 historiques ci-dessus, pour les sauvegardes d'avant ce
-  // changement.
   if (game.equipped.helmet === undefined) game.equipped.helmet = null;
   if (game.equipped.gloves === undefined) game.equipped.gloves = null;
   if (game.equipped.boots === undefined) game.equipped.boots = null;
@@ -255,17 +189,12 @@ function ensureGameStateDefaults() {
     game.questProgress = {};
   }
 
-  // Comble les compteurs de quête manquants (ex: swordKills/bowKills/magicKills
-  // ajoutés après coup) sans toucher à ceux déjà en cours.
   Object.keys(DEFAULT_QUEST_PROGRESS).forEach(function (key) {
     if (typeof game.questProgress[key] !== "number") {
       game.questProgress[key] = DEFAULT_QUEST_PROGRESS[key];
     }
   });
 
-  // Pré-remplit game.upgrades/aetherUpgrades à 0 pour chaque amélioration
-  // connue, pour que le reste du code puisse toujours lire une valeur
-  // numérique sans avoir à vérifier `undefined` partout.
   if (typeof UPGRADES !== "undefined" && Array.isArray(UPGRADES)) {
     UPGRADES.forEach(function (u) {
       if (u && u.id != null && game.upgrades[u.id] === undefined) {
@@ -291,16 +220,10 @@ function ensureGameStateDefaults() {
   if (typeof game.village.watchtower !== "number") game.village.watchtower = 0;
   if (typeof game.village.sanctuary !== "number") game.village.sanctuary = 0;
 
-  // v3.34.0 : système de classes (voir systems/class-combat-system.js)
-  // — mêmes garde-fous que le reste de cette fonction pour les
-  // anciennes sauvegardes (champs absents avant cette version).
   if (!game.classCooldowns || typeof game.classCooldowns !== "object") game.classCooldowns = {};
   if (typeof game.classResource === "undefined") game.classResource = null;
   if (typeof game.classActiveDefense === "undefined") game.classActiveDefense = null;
 
-  // v3.34.3 : cooldown de l'attaque de base — jamais persisté (voir
-  // save-system.js), mais garde-fou quand même au cas où une valeur
-  // corrompue/absente traînerait (cohérent avec le reste du fichier).
   if (typeof game.basicAttackCooldownMs !== "number") game.basicAttackCooldownMs = 0;
   if (typeof game.basicAttackPending !== "boolean") game.basicAttackPending = false;
 
@@ -337,25 +260,12 @@ function ensureGameStateDefaults() {
   if (typeof game.autoSkillsEnabled !== "boolean") game.autoSkillsEnabled = true;
   if (typeof game.expertModeEnabled !== "boolean") game.expertModeEnabled = false;
 
-  // v3.50.0 : Grimoire — validé via sanitizeGrimoireRules() si
-  // disponible (filtre conditionId/actionSlot invalides, ex. après un
-  // changement de version qui aurait retiré une condition), sinon
-  // simple garde de forme (tableau vide si absent/corrompu). Le
-  // nombre d'entrées (2 slots fixes) est complété séparément par
-  // ensureGrimoireRules() au premier accès à l'écran Grimoire, pas
-  // ici — ce garde ne fait que s'assurer que c'est un tableau propre.
   if (!Array.isArray(game.grimoireRules)) {
     game.grimoireRules = [];
   } else if (typeof sanitizeGrimoireRules === "function") {
     game.grimoireRules = sanitizeGrimoireRules(game.grimoireRules, null);
   }
 
-  // v3.65.0 : presets du Grimoire — même esprit de validation que
-  // grimoireRules ci-dessus, mais par ENTRÉE de la collection (chaque
-  // preset a son propre tableau "rules" interne, validé avec la même
-  // sanitizeGrimoireRules()). Une entrée malformée (pas un objet, nom
-  // manquant, rules pas un tableau) est silencieusement retirée de la
-  // collection plutôt que de faire planter l'écran Grimoire.
   if (!Array.isArray(game.grimoirePresets)) {
     game.grimoirePresets = [];
   } else {
@@ -383,15 +293,10 @@ function ensureGameStateDefaults() {
 
   if (!game.worldsEverReached || typeof game.worldsEverReached !== "object") game.worldsEverReached = {};
 
-  // v2.83 : questlines de déblocage des mondes — ensureDefaults() crée
-  // les compteurs manquants, migrate() rattrape les parties antérieures
-  // à v2.83 (un monde déjà atteint sous l'ancien système reste débloqué).
   if (window.WorldQuestManager && typeof WorldQuestManager.migrate === "function") {
     WorldQuestManager.migrate();
   }
 
-  // v3.0 : filet de sécurité pour les sauvegardes antérieures au système
-  // Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
   if (!game.resources || typeof game.resources !== "object") game.resources = { mineraiRare: 0 };
   if (typeof game.resources.mineraiRare !== "number") game.resources.mineraiRare = 0;
   if (window.AdventureQuestManager && typeof AdventureQuestManager.ensureDefaults === "function") {
@@ -414,7 +319,6 @@ function ensureGameStateDefaults() {
   if (typeof game.playerName !== "string") game.playerName = "";
   if (typeof game.heroId !== "string") game.heroId = "";
 
-  // Le mode d'achat doit être l'une de ces 4 valeurs ; sinon on revient à x1.
   if (![1, 10, 25, -1].includes(Number(game.shopBuyAmount))) {
     game.shopBuyAmount = 1;
   }

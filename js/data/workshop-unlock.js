@@ -1,38 +1,6 @@
 "use strict";
-/* ============================================================
-Aethervale — data/workshop-unlock.js
-v3.38 : chaîne de 4 étapes, LINÉAIRE et STRICTE, dont le seul rôle est
-de servir de tutoriel + gate d'accès à l'Atelier de Construction
-(ConstructionManager, id "workshop"). Ne gate RIEN d'autre : les 5
-bâtiments de Production restent accessibles dès le départ comme avant.
-
-Nom volontairement distinct de data/quests.js / QuestManager (système
-DÉJÀ existant, quêtes journalières rotatives, complètement différent)
-pour éviter toute collision — voir systems/workshop-unlock-system.js
-(WorkshopUnlockManager).
-
-Chaque étape expose :
-  - id            identifiant stable (utilisé dans les logs)
-  - label         texte affiché dans le bandeau HUD
-  - check(game)   renvoie true si la condition est remplie EN CE
-                   MOMENT — lu par WorkshopUnlockManager, jamais
-                   appelé directement ailleurs
-  - progress(game) texte de progression (ex. "7/10"), pour le bandeau
-
-L'étape 1 (planches fabriquées) est volontairement backée par un
-COMPTEUR DÉDIÉ (game.workshopUnlock.planchesCrafted, alimenté par un
-hook dans WarehouseManager.craft(), voir systems/warehouse-system.js)
-et non par le stock actuel de planche — un joueur qui recevrait des
-planches par un autre moyen futur (drop, achat...) ne doit pas
-valider cette étape sans avoir réellement crafté. Décision explicite,
-pas un oubli.
-
-v3.39 : `narrative` ajouté par étape — `objective` (texte affiché dans
-le popup d'objectif, voir ui/workshop-quest-modal.js) et `completion`
-(texte affiché dans le popup de complétion bloquant, déclenché
-uniquement en temps réel — jamais lors de la validation rétroactive
-du boot, voir WorkshopUnlockManager._advanceOneStepIfReady()). Textes
-fournis mot pour mot par Seb. */
+/* data/workshop-unlock.js — chaîne de 4 étapes linéaire, tutoriel + gate d'accès à l'Atelier de Construction uniquement.
+   Logique : systems/workshop-unlock-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var WORKSHOP_UNLOCK_STEPS = [
   {
@@ -82,8 +50,6 @@ var WORKSHOP_UNLOCK_STEPS = [
     label: "Construire l'Atelier de Construction (niveau 1)",
     narrative: {
       objective: "Planches et pierre attendent d'être assemblées. C'est le moment de bâtir le premier édifice du village : l'Atelier.",
-      // Texte de CLÔTURE (dernière étape) — pas d'aperçu de suite
-      // affiché avec, voir buildWorkshopCompletionModalHTML().
       completion: "L'Atelier se dresse enfin. Le village vient de faire son premier vrai pas vers quelque chose de plus grand."
     },
     check: function (game) {

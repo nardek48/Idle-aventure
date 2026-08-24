@@ -1,11 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — systems/codex-system.js
-Suivi du déblocage et de la lecture des entrées du Codex (voir
-data/codex.js pour le contenu). Même principe que les hauts faits :
-une entrée "débloquée" quand sa condition est remplie, et un badge
-de notification tant qu'elle n'a pas été ouverte au moins une fois.
-============================================================ */
+/* systems/codex-system.js — suivi déblocage/lecture des entrées Codex (data/codex.js). Même principe que les hauts faits. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var CodexManager = {
   ensure: function () {
@@ -32,8 +26,6 @@ var CodexManager = {
     return !!game.codexRead[id];
   },
 
-  /* Marque une entrée comme lue (appelée à l'ouverture de son détail
-     dans l'écran Codex). */
   markRead: function (id) {
     this.ensure();
     if (game.codexRead[id]) return;
@@ -46,8 +38,6 @@ var CodexManager = {
     return (CODEX_ENTRIES || []).filter(function (e) { return self.isUnlocked(e); });
   },
 
-  /* Nombre d'entrées débloquées mais pas encore lues — sert au badge
-     de notification (menu). */
   getUnreadCount: function () {
     var self = this;
     return this.getUnlockedEntries().filter(function (e) { return !self.isRead(e.id); }).length;

@@ -1,96 +1,26 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/combat-view.js
-Rendu de la zone de combat (écran "Combat") : image/nom/PV de
-l'ennemi affiché, et indicateur de résistance/faiblesse de l'arme
-équipée face à lui.
-
-v2.8 : buildCombatHTML() génère le marquage de #game-area (mêmes
-id/class que l'ancien HTML statique d'index.html), injecté une seule
-fois au boot par mountCombatArea() — voir main/boot.js.
-============================================================ */
+/* ui/combat-view.js — écran Combat : zone ennemi (PV, statuts/télégraphes par archétype v3.68-73), 4 boutons de classe (skill1-3/defense, v3.34.0), bouton attaque + soin rapide, raccourcis clavier. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 function buildCombatHTML() {
   return ''
-    // v2.58 : bannière "Tappe l'ennemi pour attaquer !" (#zone-banner)
-    // retirée à la demande de l'utilisateur — le bouton ATTAQUE et le
-    // tap direct sur le monstre sont déjà assez explicites sans elle.
-    // v2.70 : bannière "Ticket de donjon disponible" (#dungeon-
-    // reminder-banner) retirée aussi — remplacée par une pastille
-    // dédiée sur le bouton Donjon de la barre du bas (voir
-    // #dungeon-tab-badge dans index.html et updateQuestBadge() dans
-    // ui/quests-view.js).
-    // v2.72 : mini-portrait du héros (#combat-hero-mini) déplacé dans
-    // le HUD (voir ui/hud-view.js), à côté des ressources — il était
-    // ici en survol de la zone de jeu, maintenant visible en
-    // permanence sur tous les écrans, pas seulement en combat.
 
-    // v3.23 : la barre des potions actives est sortie de #enemy-display
-    // (qui porte un margin-top:-100px pour remonter tout le bloc
-    // ennemi) — elle se retrouvait décalée avec lui, quasi collée au
-    // HUD et chevauchant visuellement le nom de l'ennemi au lieu
-    // d'être clairement au-dessus. Maintenant un sibling DIRECT de
-    // #enemy-display à l'intérieur de #game-area, avec son propre
-    // espacement normal (voir .active-potions-bar, css/03-combat.css).
     + '<div id="active-potions-bar" class="active-potions-bar"></div>'
 
-    // v2.40 : nom + PV de l'ennemi remontés AU-DESSUS de son
-    // icône/image (avant : en dessous). Même id/class, juste
-    // réordonné dans le flux (#enemy-display reste en colonne).
-    // v2.58 : indicateur de résistance/point faible (#enemy-affinity)
-    // retiré à la demande de l'utilisateur.
     + '<div id="enemy-display">'
-    // v3.34.2 : badge de statuts actifs sur l'ennemi (vulnérabilité
-    // posée par Brise-garde, DoT de Brûlure arcanique) — ancré en haut
-    // à droite du bloc ennemi, même logique que .active-potions-bar
-    // (absolu, vide/invisible tant qu'aucun statut n'est actif). Voir
-    // buildEnemyStatusBarHTML().
     +   '<div id="enemy-status-bar" class="enemy-status-bar"></div>'
     +   '<div id="enemy-name">Slime</div>'
-    // v2.61 : le remplissage (#enemy-hp-bar) est maintenant dans un
-    // sous-conteneur dédié (.enemy-hp-bar-track) qui porte le
-    // découpage arrondi — avant, ce découpage était sur
-    // #enemy-hp-bar-wrapper lui-même et rognait au passage les pointes
-    // décoratives du cadre image, qui dépassaient légèrement de chaque
-    // côté. Le cadre (::after sur le wrapper, voir css/03-combat.css)
-    // n'est plus découpé, seul le remplissage rouge l'est.
     +   '<div id="enemy-hp-bar-wrapper">'
     +     '<div class="enemy-hp-bar-track"><div id="enemy-hp-bar" style="width:100%"></div></div>'
     +     '<div id="enemy-hp-text">10 / 10</div>'
     +   '</div>'
     +   '<div id="enemy-emoji" onclick="playerAttack()">🟢</div>'
-    // v2.60 : compteur "Kills X" retiré à la demande de l'utilisateur.
     + '</div>'
-    // v3.34.0 : jauge de ressource de classe (Rage/Concentration/Mana)
-    // au-dessus des 4 boutons d'action — voir buildClassResourceBarHTML().
     + '<div id="class-resource-root"></div>'
 
-    // v3.34.0 : les 2 anciens boutons (attaque spéciale par héros,
-    // bouclier universel) sont remplacés par les 4 actions de la
-    // classe du héros choisi (skill1/skill2/skill3/defense) — voir
-    // buildClassSkillButtonsHTML(). L'attaque de BASE de la classe
-    // reste le tap normal (#combat-attack-btn, ci-dessous), pas un
-    // 5e bouton ici.
     + '<div class="combat-action-row">'
     +   '<div id="class-skills-root"></div>'
     + '</div>'
 
-    // v2.40 : nouveau bouton ATTAQUE explicite (en plus du tap direct
-    // sur #enemy-emoji, toujours actif) — les potions de soin
-    // rapides sont passées à côté de CE bouton (avant : à côté de
-    // l'attaque spéciale/défense juste au-dessus).
-    // v2.41 : la carte "❤️ Points de vie" qui suivait ce bloc a été
-    // retirée (redondante avec la mini-barre de PV sous le portrait
-    // du héros en haut à gauche, ajoutée en v2.40). Voir
-    // renderHeroHp() dans ui/hud-view.js, qui ne cible plus que
-    // #combat-hero-mini-hp-text/-fill désormais.
-    // v2.67 : une potion de chaque côté (#heal-quick-root-left et
-    // #heal-quick-root) pour un centrage parfait du bouton, voir
-    // renderHealButtons() plus bas.
-    // v3.34.3 : ajout d'un overlay de recharge à l'intérieur du bouton
-    // (#basic-attack-cooldown-overlay) — cooldown de l'attaque de base,
-    // voir buildBasicAttackCooldownOverlayHTML()/renderBasicAttackCooldown().
-    // Vide/invisible tant qu'aucun cooldown n'est en cours.
     + '<div class="combat-attack-row">'
     +   '<div id="heal-quick-root-left"></div>'
     +   '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="playerAttack()" aria-label="Attaque">'
@@ -100,26 +30,11 @@ function buildCombatHTML() {
     + '</div>';
 }
 
-/* Injecte la zone de combat une seule fois au boot, avant le tout
-   premier spawnEnemy()/renderEnemy(). */
 function mountCombatArea() {
   var gameArea = document.getElementById("game-area");
   if (gameArea) gameArea.innerHTML = buildCombatHTML();
 }
 
-/* ============================================================
-   v2.16 : bouton de soin rapide. Une icône par potion de soin
-   possédée, avec son stock ; grisée pendant le cooldown commun ou si
-   le stock est à 0.
-   v2.38 : déplacé de la barre du bas (#tab-bar-special-slot,
-   supprimée) vers la rangée d'actions de combat (#heal-quick-root,
-   juste à côté des boutons d'attaque spéciale et de défense) — la
-   barre du bas accueille maintenant la navigation principale
-   (Combat/Village/Donjon/Héros/Menu). Toujours visible pendant un
-   donjon : DungeonManager bascule sur l'onglet "combat" pour
-   combattre les vagues (voir switchTab("combat") dans
-   dungeon-system.js), donc #heal-quick-root reste affiché.
-============================================================ */
 function buildHealButtonHTML(index) {
   if (typeof HEALING_POTIONS_DB === "undefined" || !window.PotionManager) return "";
   var potion = HEALING_POTIONS_DB[index];
@@ -142,16 +57,6 @@ function buildHealButtonHTML(index) {
   return h;
 }
 
-/* Rafraîchit les boutons de soin rapide (stock + état du cooldown).
-   v2.67 : une potion de chaque côté du bouton ATTAQUE (#heal-quick-
-   root-left et #heal-quick-root) au lieu des deux groupées à droite —
-   ça permet au bouton, de taille fixe, d'être PARFAITEMENT centré
-   (les deux côtés ont désormais le même contenu, donc la même
-   largeur), sans le compromis de centrage approximatif qu'il fallait
-   avant pour ne pas chevaucher 2 potions groupées à droite.
-   Appelée au boot, après achat/usage, et régulièrement depuis la
-   boucle de jeu pour que le cooldown se débloque visuellement tout
-   seul sans action du joueur. */
 function renderHealButtons() {
   var left = document.getElementById("heal-quick-root-left");
   var right = document.getElementById("heal-quick-root");
@@ -159,23 +64,6 @@ function renderHealButtons() {
   if (right) right.innerHTML = buildHealButtonHTML(1);
 }
 
-/* ============================================================
-   v2.90 : mini-icônes des potions à effet ACTUELLEMENT actives
-   (Force/Célérité/Précision/Endurance/Fortune — voir game.activePotions
-   dans systems/potion-system.js), affichées en haut de l'écran Combat
-   pour que le joueur sache d'un coup d'œil ce qui tourne, sans avoir
-   à aller les chercher dans l'Inventaire. L'Élixir d'Aether n'a pas
-   de minuteur (bonus consommé à l'ascension suivante) donc n'a pas sa
-   place ici. Barre vide (rien affiché) si aucune potion active.
-   Rafraîchie chaque seconde depuis la boucle de jeu, même rythme que
-   les autres compte-à-rebours (soin/attaque spéciale/défense). */
-/* v3.27 : affiche aussi les afflictions actuellement actives, dans la
-   même barre que les potions à effet — demandé, en complément direct
-   du plafond "une seule potion active à la fois" (v3.23) qui a
-   libéré de la place ici. Contrairement aux potions (durée limitée,
-   minuteur affiché), une affliction reste active tant qu'elle n'est
-   pas désactivée manuellement (Menu ☰ > Afflictions) — pas de
-   minuteur, juste l'icône avec son nom/effet en infobulle. */
 function buildActivePotionsBarHTML() {
   if (typeof POTIONS_DB === "undefined" || !window.PotionManager) return "";
 
@@ -211,28 +99,11 @@ function renderActivePotionsBar() {
 window.buildActivePotionsBarHTML = buildActivePotionsBarHTML;
 window.renderActivePotionsBar = renderActivePotionsBar;
 
-/* Met à jour tout l'affichage de l'ennemi courant : image (ou emoji
-/* ============================================================
-   v3.34.2 : badge de statuts actifs sur l'ennemi (vulnérabilité posée
-   par Brise-garde, DoT de Brûlure arcanique — voir
-   systems/class-combat-system.js, champs game.enemy.vulnerableUntil/
-   vulnerableMult et game.enemy.dot). Vide (invisible) si aucun statut
-   actif, même principe que .active-potions-bar. Emoji simple en
-   attendant de vraies icônes dédiées (⚡ vulnérabilité, 🔥 DoT).
-============================================================ */
 function buildEnemyStatusBarHTML() {
   if (!game.enemy) return "";
 
   var h = "";
 
-  // v3.68.0 : archétype Enragé (Phase 9) — badge PERMANENT tant que
-  // l'ennemi est affiché (contrairement aux télégraphes ci-dessous,
-  // pas de fenêtre temporaire : c'est un état de l'ennemi, pas un
-  // événement ponctuel). Affiche aussi le gel actif éventuel (voir
-  // ClassCombatManager.applyEnemyRageSuppression()), pour que le
-  // joueur voie que son contre a bien pris effet. Placé EN PREMIER
-  // (avant vulnérabilité/DoT/télégraphes) : c'est l'information la
-  // plus stable de la barre de statut.
   if (game.enemy.archetype === "enraged") {
     var rageFrozen = !!(game.enemy.rageFreezeUntil && Date.now() < game.enemy.rageFreezeUntil);
     h += '<div class="enemy-status-icon enemy-status-enraged' + (rageFrozen ? ' is-suppressed' : '') + '" title="'
@@ -241,15 +112,6 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
-  // v3.69.0 : archétype Corrupteur (Phase 9) — même principe permanent
-  // qu'Enragé ci-dessus (badge tant que l'ennemi est affiché), avec un
-  // compteur de stacks visible (0 à CORRUPTED_MAX_STACKS) — contrairement
-  // à Enragé (pas de compteur, juste "plus ou moins enragé"), Corrupteur
-  // affecte le HÉROS via des stacks discrets, un chiffre exact est donc
-  // plus lisible qu'une simple icône. Affiché même à 0 stack tant que
-  // l'archétype est actif (le joueur sait "cet ennemi PEUT corrompre",
-  // même s'il n'a pas encore frappé) — cohérent avec le badge Enragé,
-  // toujours visible dès l'apparition de l'ennemi.
   if (game.enemy.archetype === "corrupted") {
     var corruptedStacks = Number(game.enemy.corruptedStacks || 0);
     h += '<div class="enemy-status-icon enemy-status-corrupted" title="Corrupteur : chaque coup reçu réduit tes dégâts (' + corruptedStacks + '/' + (typeof CORRUPTED_MAX_STACKS === "number" ? CORRUPTED_MAX_STACKS : 5) + ' stacks)">';
@@ -260,11 +122,6 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
-  // v3.72.0 : archétype Vampirique (Phase 9) — même principe permanent
-  // qu'Enragé/Corrupteur ci-dessus. Affiche le blocage temporaire du
-  // vol de vie (contre skill2, voir ClassCombatManager.
-  // applyVampiricLifestealSuppression()) via une variante visuelle,
-  // même pattern exact que .is-suppressed pour Enragé.
   if (game.enemy.archetype === "vampiric") {
     var lifestealSuppressed = !!(game.enemy.vampiricSuppressedUntil && Date.now() < game.enemy.vampiricSuppressedUntil);
     h += '<div class="enemy-status-icon enemy-status-vampiric' + (lifestealSuppressed ? ' is-suppressed' : '') + '" title="'
@@ -273,10 +130,6 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
-  // v3.73.0 : archétype Blindé (Phase 9) — même principe permanent que
-  // les 3 précédents archétypes de boss. Affiche le blindage
-  // temporairement fissuré (contre defense, voir ClassCombatManager.
-  // applyArmorSuppression()) via une variante visuelle.
   if (game.enemy.archetype === "armored") {
     var armorSuppressed = !!(game.enemy.armorSuppressedUntil && Date.now() < game.enemy.armorSuppressedUntil);
     h += '<div class="enemy-status-icon enemy-status-armored' + (armorSuppressed ? ' is-suppressed' : '') + '" title="'
@@ -301,11 +154,6 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
-  // v3.48.0 : télégraphe de Charge — visible UNIQUEMENT pendant la
-  // fenêtre d'avertissement (chargeTelegraphUntil posé par
-  // CombatEngine.enemyChargeTick()), disparaît dès l'impact résolu
-  // (resolveEnemyCharge() remet ce champ à 0). Icône distincte des 2
-  // statuts ci-dessus (danger imminent, pas un effet déjà appliqué).
   if (game.enemy.chargeTelegraphUntil && Date.now() < game.enemy.chargeTelegraphUntil) {
     var chargeRemainingMs = game.enemy.chargeTelegraphUntil - Date.now();
     h += '<div class="enemy-status-icon enemy-status-charge" title="Charge imminente !">';
@@ -314,11 +162,6 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
-  // v3.71.0 : télégraphe de Silencieux (3e archétype, Phase 9) — même
-  // principe exact que le télégraphe de Charge ci-dessus (visible
-  // seulement pendant la fenêtre d'avertissement, mutuellement
-  // exclusif avec Charge sur un même ennemi donc jamais affiché en
-  // même temps que le badge précédent en pratique).
   if (game.enemy.silenceTelegraphUntil && Date.now() < game.enemy.silenceTelegraphUntil) {
     var silenceTelegraphRemainingMs = game.enemy.silenceTelegraphUntil - Date.now();
     h += '<div class="enemy-status-icon enemy-status-silence-telegraph" title="Silence imminent !">';
@@ -327,13 +170,6 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
-  // v3.71.0 : Silence ACTIF sur le HÉROS (game.silencedUntil, PAS
-  // game.enemy.* — voir CombatEngine.resolveSilenceCast()) — badge
-  // distinct du télégraphe ci-dessus (état "en cours" vs "va arriver"),
-  // même emplacement que les autres badges de statut ennemi pour rester
-  // visible au même endroit, même si l'état concerne le héros cette
-  // fois (cohérent avec Bouclier/Soin qui affichent déjà des états
-  // "actifs" ici, pas seulement des télégraphes).
   if (game.silencedUntil && Date.now() < game.silencedUntil) {
     var silenceActiveRemainingMs = game.silencedUntil - Date.now();
     h += '<div class="enemy-status-icon enemy-status-silenced-active" title="Tu es silencié : tes techniques sont bloquées">';
@@ -342,9 +178,6 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
-  // v3.49.0 : télégraphe de Bouclier (boss uniquement) — même
-  // principe que le télégraphe de Charge ci-dessus (visible seulement
-  // pendant la fenêtre d'avertissement).
   if (game.enemy.shieldTelegraphUntil && Date.now() < game.enemy.shieldTelegraphUntil) {
     var shieldTelegraphRemainingMs = game.enemy.shieldTelegraphUntil - Date.now();
     h += '<div class="enemy-status-icon enemy-status-shield-telegraph" title="Bouclier imminent !">';
@@ -353,11 +186,6 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
-  // v3.49.0 : Bouclier ACTIF (dégâts réduits en cours, voir
-  // CombatEngine.dealDamage()) — badge distinct du télégraphe
-  // ci-dessus (état "en cours" vs "va arriver"), pas de superposition
-  // possible (shieldTelegraphUntil est effacé avant que
-  // shieldActiveUntil ne soit posé, voir resolveBossShield()).
   if (game.enemy.shieldActiveUntil && Date.now() < game.enemy.shieldActiveUntil) {
     var shieldActiveRemainingMs = game.enemy.shieldActiveUntil - Date.now();
     h += '<div class="enemy-status-icon enemy-status-shield-active" title="Bouclier actif : -50% dégâts subis">';
@@ -366,7 +194,6 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
-  // v3.49.0 : télégraphe de Soin (boss uniquement).
   if (game.enemy.healTelegraphUntil && Date.now() < game.enemy.healTelegraphUntil) {
     var healTelegraphRemainingMs = game.enemy.healTelegraphUntil - Date.now();
     h += '<div class="enemy-status-icon enemy-status-heal-telegraph" title="Soin imminent !">';
@@ -375,13 +202,6 @@ function buildEnemyStatusBarHTML() {
     h += '</div>';
   }
 
-  // v3.57.0 : badge de CONFIRMATION d'un contre réussi (voir
-  // ClassCombatManager.applyGrimoireCounterIfApplicable(), systems/
-  // class-combat-system.js, qui pose ce champ) — apparaît à la place
-  // du badge de télégraphe qui vient de disparaître (Charge/Bouclier/
-  // Soin s'effacent au MÊME rendu que l'annulation, sans fenêtre pour
-  // animer une transition dessus). Durée courte (voir
-  // COUNTER_CONFIRMATION_MS, combat-engine.js), disparaît de lui-même.
   if (game.enemy.counteredUntil && Date.now() < game.enemy.counteredUntil) {
     var counteredRemainingMs = game.enemy.counteredUntil - Date.now();
     h += '<div class="enemy-status-icon enemy-status-countered" title="Attaque contrée !">';
@@ -401,27 +221,10 @@ function renderEnemyStatusBar() {
 window.buildEnemyStatusBarHTML = buildEnemyStatusBarHTML;
 window.renderEnemyStatusBar = renderEnemyStatusBar;
 
-/* ============================================================
-   v3.34.3 : rendu du cooldown de l'attaque de base (tap manuel) — le
-   bouton ATTAQUE dédié (#combat-attack-btn, via un overlay de
-   remplissage à l'intérieur, même principe que les boutons de skill).
-   Reste cliquable pendant le cooldown (le clic met le coup en file
-   d'attente, voir CombatEngine.requestPlayerAttack()) — seul l'aspect
-   visuel du bouton change, jamais l'attribut disabled.
-   v3.73.0 : le grisage du sprite ennemi (#enemy-emoji) pendant le
-   cooldown a été RETIRÉ à la demande de Seb — l'image de l'ennemi
-   reste nette en permanence, l'indice de cooldown se limite désormais
-   au bouton ATTAQUE.
-============================================================ */
 function buildBasicAttackCooldownOverlayHTML() {
   var remainingMs = game.basicAttackCooldownMs || 0;
   if (remainingMs <= 0) return "";
 
-  // v3.34.3 : le pourcentage de remplissage a besoin du cooldown total
-  // (pas seulement du restant) pour animer la jauge — recalculé ici à
-  // partir de la Célérité courante (même formule que
-  // CombatEngine.playerAttack(), légèrement redondant mais évite de
-  // stocker un 2e champ game.basicAttackCooldownTotalMs juste pour ça).
   var totalCelerity = (window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function") ? CombatEngine.getTotalCelerity() : 0;
   var totalMs = (typeof computeEffectiveCooldownMs === "function")
     ? computeEffectiveCooldownMs(BASIC_ATTACK_BASE_COOLDOWN_MS, totalCelerity)
@@ -442,24 +245,11 @@ function renderBasicAttackCooldown() {
   var attackBtn = document.getElementById("combat-attack-btn");
   if (attackBtn) attackBtn.classList.toggle("on-cooldown", onCooldown);
 
-  // v3.73.0 : grisage du sprite ennemi RETIRÉ à la demande de Seb — le
-  // sprite reste net en permanence, seul le bouton ATTAQUE (ci-dessus)
-  // garde son indice visuel de cooldown. #enemy-emoji.on-cooldown
-  // (filter: grayscale/brightness, css/03-combat.css) n'est donc plus
-  // jamais posé ici — la classe CSS reste définie dans la feuille de
-  // style au cas où elle serait réutilisée ailleurs, mais plus
-  // appliquée par ce code.
 }
 
 window.buildBasicAttackCooldownOverlayHTML = buildBasicAttackCooldownOverlayHTML;
 window.renderBasicAttackCooldown = renderBasicAttackCooldown;
 
-/* v2.58 : nom du monstre, icône (image ou emoji de repli), compteur
-   de kills et PV — la bannière de zone (#zone-banner) et l'indicateur
-   de résistance/point faible (#enemy-affinity, voir
-   renderEnemyAffinity ci-dessous) ont été retirés à la demande de
-   l'utilisateur. Appelée à chaque spawn d'ennemi et après chaque
-   coup porté. */
 function renderEnemy() {
   if (!game.enemy) return;
 
@@ -488,15 +278,9 @@ function renderEnemy() {
 
   if (name) name.textContent = game.enemy.name + (game.enemy.isBoss ? " [BOSS]" : "");
 
-  // v3.34.2 : nouvel ennemi -> aucun statut hérité de l'ancien (un
-  // spawn remplace intégralement game.enemy, voir CombatEngine.spawnEnemy()).
   renderEnemyStatusBar();
   renderEnemyHp();
 }
-
-/* ============================================================
-   Barre de vie. 
-============================================================ */
 
 function renderEnemyHp() {
   if (!game.enemy) return;
@@ -508,9 +292,6 @@ function renderEnemyHp() {
     text.textContent =
       formatNumber(Math.max(0, Math.ceil(game.enemy.hp))) + " / " + formatNumber(game.enemy.maxHp);
   }
-  // v3.34.2 : rafraîchi ici aussi (pas seulement au spawn) — les
-  // compte-à-rebours affichés changent à chaque coup porté, comme le
-  // reste de cette fonction.
   renderEnemyStatusBar();
 }
 
@@ -521,21 +302,6 @@ window.mountCombatArea = mountCombatArea;
 window.buildHealButtonHTML = buildHealButtonHTML;
 window.renderHealButtons = renderHealButtons;
 
-/* ============================================================
-   v2.19 : raccourcis clavier (version PC) pour les potions de soin —
-   touche "1"/"2".
-   v2.90 : élargi aux 4 actions de combat rapide — "1" Attaque
-   spéciale, "2" Défense spéciale (bouclier), "3"/"4" potions de soin.
-   v3.34.0 : "1"/"2"/"3" -> skill1/skill2/skill3 de classe, "4" ->
-   defense de classe (remplace l'ancien système, voir
-   ClassCombatManager.useSkillManual()) — les potions de soin sont donc
-   décalées en "5"/"6". Ignorés si le joueur est en train de taper
-   dans un champ texte (nom du joueur, code d'import de sauvegarde,
-   recherche...), pour ne pas interférer avec la saisie. Fonctionne
-   depuis n'importe quel écran, comme les boutons tactiles
-   équivalents — chaque manager (ClassCombat/Potion) gère déjà
-   lui-même son cooldown/sa disponibilité, aucune vérification
-   supplémentaire nécessaire ici. */
 function initHealKeyboardShortcuts() {
   document.addEventListener("keydown", function (e) {
     var active = document.activeElement;
@@ -544,9 +310,6 @@ function initHealKeyboardShortcuts() {
 
     var classSlotByKey = { "1": "skill1", "2": "skill2", "3": "skill3", "4": "defense" };
     if (classSlotByKey[e.key]) {
-      // v3.47.0 : mêmes touches ignorées si le combat auto est actif
-      // — cohérent avec les boutons tactiles équivalents (disabled),
-      // sinon le raccourci clavier contournerait le remplacement total.
       if (window.ClassCombatManager && !game.autoSkillsEnabled) ClassCombatManager.useSkillManual(classSlotByKey[e.key]);
       return;
     }
@@ -564,17 +327,6 @@ function initHealKeyboardShortcuts() {
 
 window.initHealKeyboardShortcuts = initHealKeyboardShortcuts;
 
-/* ============================================================
-   v3.34.0 : 4 boutons d'action de la classe du héros choisi
-   (skill1/skill2/skill3/defense — voir data/class-skills.js et
-   systems/class-combat-system.js), affichés sous l'ennemi sur l'écran
-   Combat — fonctionne aussi en plein donjon. Remplace les 2 anciens
-   boutons (attaque spéciale par héros + bouclier universel, voir
-   data/heroes.js pour la note de suppression).
-   Touches PC : 1/2/3 pour skill1/2/3, 4 pour defense — décale les
-   anciennes touches 3/4 des potions de soin, reprises en 5/6
-   (voir initHealKeyboardShortcuts() plus haut dans ce fichier).
-============================================================ */
 var CLASS_SKILL_SLOTS = ["skill1", "skill2", "skill3", "defense"];
 var CLASS_SKILL_KEY_LABELS = { skill1: "1", skill2: "2", skill3: "3", defense: "4" };
 
@@ -593,17 +345,7 @@ function buildClassSkillButtonHTML(slot) {
   var cooldownPct = onCooldown ? Math.round((cooldownRemainingMs / action.cooldownMs) * 100) : 0;
 
   var affordable = !resourceState || resourceState.current >= (action.resourceCost || 0);
-  // v3.47.0 : combat auto de base — remplacement TOTAL du tap manuel
-  // sur ces 4 boutons tant que game.autoSkillsEnabled est vrai (voir
-  // ClassCombatManager.tickAutoSkills(), systems/class-combat-system.js).
-  // Réponse explicite de Seb : pas de coexistence pour cette 1ère étape.
   var autoModeActive = !!game.autoSkillsEnabled;
-  // v3.71.0 : Silencieux (3e archétype, Phase 9) — les 3 skills
-  // offensifs (jamais defense) sont bloqués visuellement pendant
-  // game.silencedUntil, cohérent avec le blocage réel côté logique
-  // (canUseAction(), systems/combat-cooldown-system.js, lit
-  // combatContext.isSilenced) — sans ce blocage visuel, le joueur en
-  // mode manuel verrait un bouton cliquable qui ne ferait rien.
   var isSilenced = !!(game.silencedUntil && Date.now() < game.silencedUntil && action.slot !== "defense");
   var disabled = onCooldown || !affordable || autoModeActive || isSilenced;
 
@@ -651,11 +393,6 @@ function renderClassSkillButtons() {
 window.buildClassSkillButtonsHTML = buildClassSkillButtonsHTML;
 window.renderClassSkillButtons = renderClassSkillButtons;
 
-/* ============================================================
-   v3.34.0 : jauge de ressource de classe (Rage/Concentration/Mana),
-   affichée au-dessus des 4 boutons d'action. Vide (rien affiché) si
-   aucune classe résolue (ne devrait pas arriver en jeu normal).
-============================================================ */
 function buildClassResourceBarHTML() {
   if (!window.ClassCombatManager || typeof ClassCombatManager.ensureForCurrentClass !== "function") return "";
   var state = ClassCombatManager.ensureForCurrentClass();

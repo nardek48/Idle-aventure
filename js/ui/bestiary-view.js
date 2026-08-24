@@ -1,29 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/bestiary-view.js
-Écran "Bestiaire" — liste complète (une carte par créature), même
-principe que Quêtes/Hauts faits/Codex, voir css/00-components.css
-pour le composant partagé ".nb-entry-card".
-
-v2.82 : abandon du principe grille d'icônes + un seul détail affiché
-en haut (v2.5) au profit d'une liste complète — chaque créature
-affiche directement ses PV/dégâts/critique estimés et ses
-résistances/faiblesses, plus besoin de taper dessus.
-
-Les PV/dégâts affichés sont une ESTIMATION "à la première rencontre"
-(monde où la créature apparaît, cycle 0) : les vraies valeurs en jeu
-grandissent avec ta progression (voir WorldManager.generateEnemy en
-progression-system.js). Les coefficients ci-dessous sont dupliqués
-depuis combat-engine.js/progression-system.js (valeurs locales à ces
-fichiers, pas exportées) — à garder synchronisés si jamais ils changent.
-
-v2.83.40 : fusionné avec le Codex (2 sous-onglets, même principe que
-Équipement/Inventaire/Boutique) — Bestiaire et Codex sont tous les
-deux de la "documentation" passive sur l'univers du jeu, regroupés
-pour désencombrer le menu ☰ (voir ui/menu-view.js). Le contenu du
-Codex lui-même (ui/codex-view.js) n'a pas changé, juste son
-emplacement dans la navigation.
-============================================================ */
+/* ui/bestiary-view.js — écran Bestiaire (liste par monde, accordéon) fusionné avec Codex (2 sous-onglets, v2.83.40). Estimation combat resynchronisée sur progression-system.js (v3.46.0). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var activeBestiaryCodexSubTab = "bestiary"; // "bestiary" | "codex"
 
@@ -41,27 +17,9 @@ function buildBestiaryCodexSubTabBarHTML() {
   return h;
 }
 
-/* v3.46.0 : les coefficients LOCAUX (BESTIARY_ENEMY_ENDURANCE_HP_COEF
-   etc.) ont été retirés — ce fichier réutilise désormais directement
-   les VRAIES constantes exportées par progression-system.js
-   (ENEMY_PV_MULT/ENEMY_PV_WORLD_EXP/BOSS_PV_MULT/ENEMY_POWER_SCALE_EXP,
-   voir window.* en fin de ce fichier), au lieu de dupliquer une
-   estimation qui pouvait dériver de la vraie formule sans qu'on s'en
-   rende compte (c'était déjà le cas avant cette version : les poids
-   monde/aventure utilisés ici, 0.60/0.22, ne correspondaient déjà plus
-   aux vrais poids de generateEnemy(), 0.90/0.30, depuis le
-   rééquilibrage v2.11). BESTIARY_ENEMY_POWER_DMG_COEF/
-   BESTIARY_ENEMY_PRECISION_CRIT_COEF restent dupliqués : ce sont des
-   coefficients de COMBAT-ENGINE.JS (pas de progression-system.js),
-   jamais retouchés dans le cadre de la présente livraison. */
 var BESTIARY_ENEMY_POWER_DMG_COEF = 0.5;
 var BESTIARY_ENEMY_PRECISION_CRIT_COEF = 0.3;
 
-/* Trouve le premier monde/aventure où cette créature apparaît (pool
-   d'ennemis normaux, ou boss d'une aventure). Renvoie
-   { worldIndex, adventureIndex } ou null si jamais utilisée nulle
-   part (ne devrait pas arriver pour une entrée de ENEMY_DB/BOSS_DB
-   réellement utilisée). */
 function findCreatureLocation(id, isBoss) {
   for (var w = 0; w < WORLDS.length; w++) {
     var adventures = WORLDS[w].adventures || [];
@@ -76,14 +34,6 @@ function findCreatureLocation(id, isBoss) {
   return null;
 }
 
-/* Estimation des PV/dégâts/critique "à la première rencontre" — MÊMES
-   formules que WorldManager.generateEnemy() (progression-system.js),
-   avec cycleCount=0 et enemyIndex=0 (première rencontre, pas encore
-   avancé dans l'aventure). v3.46.0 : suit désormais la nouvelle courbe
-   (exposant PV_WORLD_EXP limité au terme monde, Puissance de riposte
-   mise à l'échelle) — resynchronisé avec generateEnemy() après avoir
-   dérivé de la vraie formule sur plusieurs rééquilibrages successifs
-   (voir note au-dessus des constantes). */
 function estimateCreatureCombatStats(id, data, isBoss) {
   var stats = data && data.stats;
   if (!stats) return null;
@@ -108,9 +58,6 @@ function estimateCreatureCombatStats(id, data, isBoss) {
     hp = Math.floor((stats.endurance || 0) * pvMult * scale);
   }
 
-  // v3.46.0 : dmg suit désormais aussi l'échelle (ENEMY_POWER_SCALE_EXP),
-  // comme la vraie Puissance de riposte de generateEnemy() — avant,
-  // seuls les PV grandissaient dans cette estimation.
   var scaledPower = (stats.power || 0) * Math.pow(scale, powerExp);
   var dmg = Math.max(1, Math.floor(scaledPower * BESTIARY_ENEMY_POWER_DMG_COEF));
   var critChance = Math.min(40, (stats.precision || 0) * BESTIARY_ENEMY_PRECISION_CRIT_COEF);
@@ -118,10 +65,6 @@ function estimateCreatureCombatStats(id, data, isBoss) {
   return { hp: Math.max(1, hp), dmg: dmg, critChance: critChance };
 }
 
-/* Une carte de créature : icône, nom, kills, résistances/faiblesses,
-   et le nombre de kills en statut à droite (grand nombre, plus
-   parlant qu'un badge "En cours"/"Terminé" puisque les kills
-   s'accumulent sans plafond réel). */
 function getAllBestiaryIds() {
   return Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB));
 }
@@ -185,10 +128,6 @@ function toggleBestiaryWorld(worldIndex) {
 }
 window.toggleBestiaryWorld = toggleBestiaryWorld;
 
-/* Regroupe toutes les créatures (ennemis normaux + boss) par monde
-   d'origine — déduit via findCreatureLocation (v2.83.37), sans rien
-   ajouter aux données : { worldIndex: [id, id, ...] }, dans l'ordre
-   des mondes (WORLDS[0..n]). */
 function getBestiaryGroupedByWorld() {
   var ids = getAllBestiaryIds();
   var groups = {};
@@ -198,15 +137,12 @@ function getBestiaryGroupedByWorld() {
     var location = findCreatureLocation(id, isBoss);
     var worldIndex = location ? location.worldIndex : 0;
     if (!groups[worldIndex]) groups[worldIndex] = [];
-    // Boss en dernier dans sa section, ennemis normaux avant.
     if (isBoss) groups[worldIndex].push(id); else groups[worldIndex].unshift(id);
   });
 
   return groups;
 }
 
-/* En-tête cliquable d'une section-monde (accordéon) — nom du monde +
-   compteur "X/Y rencontrées". */
 function buildBestiaryWorldHeaderHTML(worldIndex, ids, isExpanded) {
   var world = WORLDS[worldIndex];
   var metCount = ids.filter(function (id) { return (game.killCounts[id] || 0) > 0; }).length;

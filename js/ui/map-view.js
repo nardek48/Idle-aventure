@@ -1,24 +1,6 @@
 "use strict";
+/* ui/map-view.js — Carte du monde v2.90.14 : chemin illustré (nœuds ronds + tracé SVG), popup détail par monde (#map-modal-root). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-/* ============================================================
-   v2.90.14 — Carte du monde : chemin illustré (remplace la grille de
-   6 vignettes + panneau de détail permanent, v1.9.4 à v2.90.13).
-   La progression des mondes est LINÉAIRE (WorldManager.worldIndex,
-   toujours dans l'ordre WORLDS[0..5]) — contrairement aux talents
-   (branches), un chemin unique convient parfaitement ici. Chaque
-   monde est un nœud rond (vraie vignette illustrée, images/Worlds/
-   thumb_*.png — déjà de vraies illustrations, pas des placeholders),
-   relié au suivant par un tracé SVG. Le détail (lore/aventures/
-   questline) passe dans une popup au tap (#map-modal-root, même
-   pattern que Village/Donjon/Talents cette session) au lieu d'un
-   panneau permanent qui doublonnait l'info et laissait un grand vide
-   en bas d'écran sur les mondes sans beaucoup de contenu.
-============================================================ */
-
-/* Quel monde est actuellement consulté (popup ouverte) — pas
-   forcément le monde où le joueur progresse réellement. Stocké
-   directement sur `game` par simplicité, mais volontairement PAS
-   sauvegardé (pas dans buildSaveData) : juste un état d'UI temporaire. */
 function getMapSelectedWorldIndex() {
   if (typeof game.mapSelectedWorldIndex !== "number") {
     game.mapSelectedWorldIndex = WorldManager.worldIndex || 0;
@@ -30,25 +12,10 @@ function getMapSelectedWorldIndex() {
   return game.mapSelectedWorldIndex;
 }
 
-/* Un monde n'est vraiment jouable que s'il est à portée séquentielle
-   (index <= monde courant) ET que la condition d'ascension est
-   remplie — un monde "sauté" par manque d'ascension reste verrouillé
-   même si le joueur a dépassé son index (ne devrait pas arriver vu
-   WorldManager.advance(), mais gardé en sécurité). */
-/* Un monde déjà atteint reste débloqué pour toujours, même si son
-   requiredAscension est relevé plus tard par un patch d'équilibrage
-   (sinon un joueur en cours de route dans ce monde le verrait
-   affiché "verrouillé" alors qu'il y joue activement — c'est
-   exactement ce bug qui a été corrigé ici en v2.12 : avant, la
-   condition vérifiait meetsAscensionRequirement() à chaque affichage,
-   qui pouvait échouer rétroactivement pour un monde déjà en cours). */
 function isWorldUnlocked(index) {
   return index <= (WorldManager.worldIndex || 0);
 }
 
-/* Texte de statut affiché sur chaque vignette/en-tête de monde.
-   v2.83 : le verrou n'est plus lié à l'ascension mais à une questline
-   (voir data/world-quests.js) — le texte reflète sa progression. */
 function getWorldProgressText(index) {
   if (index < (WorldManager.worldIndex || 0)) return "Terminé";
   if (index === (WorldManager.worldIndex || 0)) return "En cours";
@@ -61,28 +28,10 @@ function getWorldProgressText(index) {
   return "Verrouillé";
 }
 
-/* v3.3 : la questline de déblocage d'un monde verrouillé (narration +
-   progression + réclamation) ne s'affiche plus ici — déplacée dans
-   l'onglet Quêtes (voir buildWorldUnlockQuestSectionHTML,
-   ui/quests-view.js), pour rassembler TOUTES les quêtes du jeu au
-   même endroit (questlines de monde + quêtes d'aventure, cf. v3.2).
-   Voir CHANGELOG v3.3.0. */
-
-/* v3.2 : les quêtes d'aventure (data/adventure-quests.js) ne
-   s'affichent plus ici — elles ont leur propre section dans l'onglet
-   Quêtes (voir buildAdventureQuestsSectionHTML, ui/quests-view.js),
-   avec un lancement explicite qui ouvre un run de combat dédié
-   (comme le Donjon) au lieu d'un suivi ambiant pendant le farm de
-   cette popup. Voir CHANGELOG v3.2.0. */
-
-/* Vignette illustrée par monde (découpée depuis la carte fantasy fournie).
-   Fallback sur un dégradé neutre si l'image n'est pas trouvée. */
 function getWorldThumb(world) {
   return "images/Worlds/thumb_" + (world.assetKey || "forest") + ".png";
 }
 
-/* Liste des ennemis + boss d'un monde, pour l'aperçu compact (plus de
-   positionnement en % sur la carte). */
 function getWorldMonsterList(world) {
   var ids = [];
   var bossId = null;
@@ -107,12 +56,6 @@ function getWorldMonsterList(world) {
   return monsters;
 }
 
-/* Assemble l'écran carte : résumé en haut, grille des 6 vignettes de
-   monde, puis le détail du monde sélectionné (aventures, monstres,
-   ou message d'aide si verrouillé par ascension). */
-/* Courte citation du Codex pour le monde sélectionné, si l'entrée
-   correspondante est débloquée — un avant-goût qui donne envie
-   d'aller lire l'entrée complète dans le Codex. */
 var MAP_WORLD_CODEX_IDS = ["world_forest", "world_desert", "world_ruins", "world_crypt", "world_mountain", "world_tower"];
 
 function buildWorldLoreExcerptHTML(worldIndex) {
@@ -121,22 +64,6 @@ function buildWorldLoreExcerptHTML(worldIndex) {
   return buildCodexExcerptHTML(codexId, "map-world-lore");
 }
 
-/* ============================================================
-   Chemin illustré (chaque monde = un nœud rond relié au suivant).
-============================================================ */
-
-/* Positions (%) des 6 nœuds, calées PRÉCISÉMENT sur les 6 zones de
-   images/Map/world_map.jpg (fournie par l'utilisateur — une seule
-   illustration continue, pas des tuiles séparées comme le Village).
-   Relevées à la main sur l'image réelle (grille de repérage) :
-     Forêt (arbre)         : 750,280   sur 1536×2752
-     Désert (oasis)        : 700,950
-     Ruines (cristal bleu) : 1080,1200
-     Crypte (temple violet): 280,1650
-     Montagne (volcan)     : 1000,1780
-     Tour (sur les nuages) : 1180,2200
-   Une 7e zone (grotte cristal en bas à gauche) reste décorative,
-   aucun monde ne lui correspond. */
 var MAP_NODE_POSITIONS = [
   { x: 48.8, y: 10.2 },
   { x: 45.6, y: 34.5 },
@@ -153,12 +80,6 @@ function buildMapPathSvgHTML(count) {
   });
   if (pts.length < 2) return "";
 
-  // v2.90.16 : coordonnées réelles (relevées sur images/Map/world_map.jpg)
-  // pas symétriques comme l'ancien zigzag générique — le point de
-  // contrôle de chaque courbe est maintenant calculé au milieu RÉEL
-  // de chaque segment (x ET y), pour une courbe fluide qui suit
-  // naturellement le tracé plutôt qu'un "50" fixe qui zigzaguerait
-  // trop large sur certains segments et pas assez sur d'autres.
   var d = "M " + pts[0].x + " " + pts[0].y;
   for (var i = 1; i < pts.length; i++) {
     var prev = pts[i - 1], cur = pts[i];
@@ -193,19 +114,6 @@ function buildMapNodeHTML(world, index) {
   return h;
 }
 
-/* v2.90.15 : résumé "Monde actuel / Quêtes terminées / Boss vaincus"
-   retiré à la demande de l'utilisateur — le monde actuel est déjà
-   visuellement évident sur le chemin (badge "Actuel" + halo doré du
-   nœud), "Monde X/6" est déjà affiché sur Personnage > Stats (info
-   dupliquée), et "Quêtes terminées" concernait les quêtes
-   journalières, sans rapport avec la navigation sur la carte —
-   l'écran va directement du titre au chemin illustré. */
-/* v2.90.16 : plus de .nb-page-frame ici — images/Map/world_map.jpg
-   a déjà sa propre bordure ornée (griffons, boussole, échelle),
-   ajouter le cadre parchemin standard par-dessus aurait fait un
-   "cadre dans le cadre". Seul écran du jeu dans ce cas (décision
-   discutée avec l'utilisateur avant implémentation) — tous les
-   autres gardent .nb-page-frame. */
 function buildMapHTML() {
   var h = '<div class="map-path-frame">';
   h += '<img class="map-path-bg" src="images/Map/world_map.jpg" alt="Carte du monde" draggable="false">';
@@ -216,12 +124,6 @@ function buildMapHTML() {
   h += '</div>';
   return h;
 }
-
-/* ============================================================
-   Popup de détail d'un monde (#map-modal-root) — même pattern que
-   les popups Village/Donjon/Talents de cette session
-   (.full-menu-overlay/.full-menu).
-============================================================ */
 
 function buildWorldPopupHTML(index) {
   var world = WORLDS[index];
@@ -313,8 +215,6 @@ function closeWorldPopup() {
   if (host) host.innerHTML = "";
 }
 
-/* Conservée pour compatibilité (ancien nom, ex. lien direct depuis
-   une autre vue) — équivaut maintenant à ouvrir la popup. */
 function selectMapWorld(index) {
   openWorldPopup(index);
 }

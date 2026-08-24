@@ -1,11 +1,5 @@
 "use strict";
-/* ============================================================
-Quest Idle — ui/codex-view.js
-Écran "Codex" : liste des entrées de lore (groupées par catégorie),
-et un mode "lecture" plein texte quand une entrée est ouverte — pas
-le même principe que le Bestiaire/Hauts faits (détail figé + grille),
-car le contenu ici est du texte long, pas des stats compactes.
-============================================================ */
+/* ui/codex-view.js — écran Codex : liste par catégorie (accordéon) + mode lecture plein texte. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var CODEX_CATEGORY_LABELS = {
   intro: "Prologue",
@@ -13,7 +7,7 @@ var CODEX_CATEGORY_LABELS = {
   system: "Le Cycle"
 };
 
-var expandedCodexCategory = null; // v2.83.37 : accordéon replié par défaut
+var expandedCodexCategory = null;
 
 function toggleCodexCategory(cat) {
   expandedCodexCategory = (expandedCodexCategory === cat) ? null : cat;
@@ -35,7 +29,6 @@ function closeCodexReading() {
   if (typeof renderPanel === "function") renderPanel();
 }
 
-/* Mode lecture : texte complet d'une entrée, avec retour à la liste. */
 function buildCodexReadingHTML(id) {
   var entry = CodexManager.getById(id);
   if (!entry) return "";
@@ -53,7 +46,6 @@ function buildCodexReadingHTML(id) {
   return h;
 }
 
-/* Une ligne de la liste : icône, titre, statut (verrouillé / nouveau / lu). */
 function buildCodexListItemHTML(entry) {
   var unlocked = CodexManager.isUnlocked(entry);
   var read = CodexManager.isRead(entry.id);
@@ -77,8 +69,6 @@ function buildCodexListItemHTML(entry) {
   return h;
 }
 
-/* En-tête cliquable d'une section (accordéon) — nom de catégorie +
-   compteur "X/Y découvertes". */
 function buildCodexCategoryHeaderHTML(cat, items, isExpanded) {
   var unlockedInCat = items.filter(function (e) { return CodexManager.isUnlocked(e); }).length;
   var h = '<button type="button" class="nb-accordion-head' + (isExpanded ? ' is-expanded' : '') + '" onclick="toggleCodexCategory(\'' + esc(cat) + '\')">';
@@ -134,10 +124,6 @@ window.buildCodexHTML = buildCodexHTML;
 window.selectCodexEntry = selectCodexEntry;
 window.closeCodexReading = closeCodexReading;
 
-/* Helper réutilisable par d'autres écrans (Carte, Ascension, Village,
-   Bestiaire...) pour afficher un court extrait d'une entrée du Codex
-   quand elle est débloquée — silencieux (chaîne vide) sinon, pour ne
-   jamais rien spoiler avant l'heure. */
 function buildCodexExcerptHTML(codexId, cssClass) {
   if (typeof CodexManager === "undefined") return "";
   var entry = CodexManager.getById(codexId);

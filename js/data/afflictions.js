@@ -1,31 +1,8 @@
 "use strict";
-/* ============================================================
-Aethervale — data/afflictions.js
-v3.20 : "Afflictions" — modificateurs optionnels, cumulables (jusqu'à
-AFFLICTION_MAX_ACTIVE en même temps), qui altèrent le farm NORMAL
-(mondes classiques) pendant qu'ils sont actifs. Toujours un vrai
-compromis (jamais du pur malus ou du pur bonus) — l'idée est de
-proposer des styles de jeu différents, pas juste "plus dur = plus de
-loot" à plat.
-
-Séparé du Donjon (activité à part, ses propres paliers) et du futur
-mode Survie (activité à part elle aussi, voir roadmap) — les
-afflictions ne touchent QUE la boucle de farm des 6 mondes.
-
-Chaque entrée :
-  - id      identifiant unique, lu par game.activeAfflictions[id] === true
-  - name/icon/desc   affichage (voir ui/afflictions-view.js)
-  - modifiers   effets réels, lus par AfflictionManager (voir
-                systems/affliction-system.js) — PAS appliqués
-                directement ici, cette table ne fait que déclarer les
-                valeurs.
-============================================================ */
+/* data/afflictions.js — modificateurs optionnels cumulables (farm normal uniquement, pas Donjon/Survie). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var AFFLICTION_MAX_ACTIVE = 4;
 
-// +10% à TOUTES les récompenses (or + essence) par affliction active,
-// cumulé — récompense le cumul en lui-même, en plus de l'effet propre
-// à chaque affliction. Voir AfflictionManager.getStackBonusMult().
 var AFFLICTION_STACK_REWARD_BONUS = 0.10;
 
 var AFFLICTIONS = [
