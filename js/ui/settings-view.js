@@ -30,7 +30,7 @@ function buildSettingsHTML() {
   h += '<div class="panel-card">';
   h += '<h3>🧪 Développement</h3>';
   h += '<p class="panel-sub">Outil de test, sans effet sur ta partie (pas de sauvegarde, pas de récompense).</p>';
-  h += '<button class="settings-btn" onclick="switchTab(\'combat-sandbox\')">🧪 Bac à sable de combat</button>';
+  h += '<button class="settings-btn" onclick="switchTab(\'admin\')">🛠️ Admin</button>';
   h += '</div>';
 
   h += '<div class="settings-info">';

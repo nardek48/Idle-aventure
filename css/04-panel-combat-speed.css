@@ -1,0 +1,33 @@
+/* ============================================================
+Aethervale — css/04-panel-combat-speed.css
+Barre x1/x2/x4 (voir ui/combat-speed-view.js). Visible uniquement en
+combat/Donjon, juste sous #stats-bar. Réutilise les tokens --nb-*.
+============================================================ */
+
+#combat-speed-bar {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  width: min(400px, 95%);
+  margin: 0 auto 1%;
+}
+
+.combat-speed-btn {
+  flex: 0 0 auto;
+  min-width: 44px;
+  padding: 4px 10px;
+  border-radius: var(--nb-radius-pill);
+  border: 2px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink-dim);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.combat-speed-btn.active {
+  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
+  color: var(--nb-ink);
+  box-shadow: var(--nb-shadow-btn);
+}

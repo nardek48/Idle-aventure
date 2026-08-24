@@ -125,6 +125,8 @@ function createInitialGameState() {
     basicAttackCooldownMs: 0,
     basicAttackPending: false,
 
+    combatSpeed: 1,
+
     achievementsClaimed: {},
 
     worldsEverReached: {},
@@ -226,6 +228,8 @@ function ensureGameStateDefaults() {
 
   if (typeof game.basicAttackCooldownMs !== "number") game.basicAttackCooldownMs = 0;
   if (typeof game.basicAttackPending !== "boolean") game.basicAttackPending = false;
+
+  if ([1, 2, 4].indexOf(Number(game.combatSpeed)) === -1) game.combatSpeed = 1;
 
   if (!game.activePotions || typeof game.activePotions !== "object") game.activePotions = {};
   if (!game.pendingPotionBonuses || typeof game.pendingPotionBonuses !== "object") {

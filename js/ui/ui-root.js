@@ -71,10 +71,17 @@ function restoreEquipBagScroll() {
 }
 
 function switchTab(tabName) {
+  var leavingCombat = game.activeTab === "combat" && tabName !== "combat";
   game.activeTab = tabName;
+
+  if (leavingCombat && game.combatSpeed !== 1) {
+    game.combatSpeed = 1;
+    if (typeof syncAutoTapLoop === "function") syncAutoTapLoop();
+  }
 
   var gameArea = document.getElementById("game-area");
   var statsBar = document.getElementById("stats-bar");
+  var speedBar = document.getElementById("combat-speed-bar");
   var panel = document.getElementById("panel-container");
   var buttons = document.querySelectorAll(".tab-btn");
 
@@ -94,6 +101,10 @@ function switchTab(tabName) {
 
   if (gameArea) gameArea.style.display = combatMode ? "flex" : "none";
   if (statsBar) statsBar.style.display = combatMode ? "flex" : "none";
+  if (speedBar) {
+    speedBar.style.display = combatMode ? "flex" : "none";
+    if (combatMode && typeof renderCombatSpeedBar === "function") renderCombatSpeedBar();
+  }
   if (panel) panel.classList.toggle("active", !combatMode);
   document.body.classList.toggle("combat-active", combatMode);
   if (typeof updateHudPageTitle === "function") updateHudPageTitle();
@@ -128,7 +139,7 @@ function renderPanel() {
   var innerScroll = sameTab ? container.querySelector(".subtab-page-content") : null;
   var savedInnerScrollTop = innerScroll ? innerScroll.scrollTop : null;
 
-  container.classList.toggle("sandbox-wide-mode", game.activeTab === "combat-sandbox");
+  container.classList.toggle("sandbox-wide-mode", game.activeTab === "combat-sandbox" || game.activeTab === "admin");
 
   switch (game.activeTab) {
     case "shop":
@@ -163,6 +174,9 @@ function renderPanel() {
       break;
     case "combat-sandbox":
       container.innerHTML = buildCombatSandboxHTML();
+      break;
+    case "admin":
+      container.innerHTML = buildAdminHTML();
       break;
     case "more":
       container.innerHTML = buildHerosHTML();

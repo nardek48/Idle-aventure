@@ -28,11 +28,23 @@ function syncAutoTapLoop() {
     interval = Math.floor(interval / (1 + 0.12 * game.talents.t_battle_trance));
   }
 
+  // Vitesse de combat (game.combatSpeed) accélère aussi l'auto-tap.
+  interval = Math.max(1, Math.floor(interval / getCombatSpeedMult()));
+
   autoTapInterval = setInterval(function () {
     if (typeof isBlockingModalOpen === "function" && isBlockingModalOpen()) return;
     CombatEngine.autoTap();
   }, interval);
 }
+
+// Multiplicateur de vitesse de combat (x1/x2/x4) — UNIQUEMENT pour les
+// ticks de combat actif/Donjon et l'auto-tap. Ne touche jamais la
+// production du village ni la progression monde/cycle (voir Changelog).
+function getCombatSpeedMult() {
+  var s = Number(game.combatSpeed || 1);
+  return (s === 2 || s === 4) ? s : 1;
+}
+window.getCombatSpeedMult = getCombatSpeedMult;
 
 function gameLoop() {
   var now = Date.now();
@@ -52,12 +64,15 @@ function gameLoop() {
 
   var heroDowned = (game.heroHp || 0) <= 0;
 
-  if (game.activeTab === "combat" && !modalOpen && !heroDowned) {
-    CombatEngine.autoAttack(dt);
+  var inCombatScreen = game.activeTab === "combat" && !modalOpen && !heroDowned;
+  var combatDt = inCombatScreen ? dt * getCombatSpeedMult() : dt;
+
+  if (inCombatScreen) {
+    CombatEngine.autoAttack(combatDt);
   }
 
-  if (game.activeTab === "combat" && !modalOpen && !heroDowned && typeof CombatEngine.tickBasicAttackCooldown === "function") {
-    CombatEngine.tickBasicAttackCooldown(dt);
+  if (inCombatScreen && typeof CombatEngine.tickBasicAttackCooldown === "function") {
+    CombatEngine.tickBasicAttackCooldown(combatDt);
   }
 
   if (window.VillageManager && typeof VillageManager.tickAmbientHunting === "function") {
@@ -72,20 +87,20 @@ function gameLoop() {
     WarehouseManager.tickCraftQueue(dt);
   }
 
-  if (game.activeTab === "combat" && !modalOpen && !heroDowned && typeof CombatEngine.enemyAttackTick === "function") {
-    CombatEngine.enemyAttackTick(dt);
+  if (inCombatScreen && typeof CombatEngine.enemyAttackTick === "function") {
+    CombatEngine.enemyAttackTick(combatDt);
   }
 
-  if (game.activeTab === "combat" && !modalOpen && !heroDowned && typeof CombatEngine.enemyChargeTick === "function") {
-    CombatEngine.enemyChargeTick(dt);
+  if (inCombatScreen && typeof CombatEngine.enemyChargeTick === "function") {
+    CombatEngine.enemyChargeTick(combatDt);
   }
 
-  if (game.activeTab === "combat" && !modalOpen && !heroDowned && typeof CombatEngine.enemySilenceTick === "function") {
-    CombatEngine.enemySilenceTick(dt);
+  if (inCombatScreen && typeof CombatEngine.enemySilenceTick === "function") {
+    CombatEngine.enemySilenceTick(combatDt);
   }
 
-  if (game.activeTab === "combat" && !modalOpen && !heroDowned && typeof CombatEngine.bossPatternTick === "function") {
-    CombatEngine.bossPatternTick(dt);
+  if (inCombatScreen && typeof CombatEngine.bossPatternTick === "function") {
+    CombatEngine.bossPatternTick(combatDt);
   }
 
   if (window.PotionManager && typeof PotionManager.tick === "function") {
@@ -110,11 +125,11 @@ function gameLoop() {
   }
 
   if (window.ClassCombatManager && typeof ClassCombatManager.tick === "function") {
-    ClassCombatManager.tick(dt);
+    ClassCombatManager.tick(combatDt);
   }
 
   if (window.ClassCombatManager && typeof ClassCombatManager.tickAutoSkills === "function") {
-    ClassCombatManager.tickAutoSkills(dt);
+    ClassCombatManager.tickAutoSkills(combatDt);
   }
   if (window.ClassCombatManager && typeof ClassCombatManager.tryAutoBasicAttack === "function") {
     ClassCombatManager.tryAutoBasicAttack();

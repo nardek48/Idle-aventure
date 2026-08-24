@@ -1,0 +1,87 @@
+/* ============================================================
+Aethervale — css/04-panel-admin.css
+Écran "Admin/Debug" (voir ui/admin-view.js). Outil de développement
+uniquement : style volontairement basique, distinct du thème parchemin
+du jeu (fond sombre semi-transparent, texte clair, champs compacts).
+============================================================ */
+
+.admin-root {
+  background: rgba(20, 18, 24, 0.92);
+  border-radius: var(--nb-radius-md);
+  padding: 10px;
+}
+
+.admin-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-card {
+  background: rgba(40, 38, 46, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
+.admin-card h3 {
+  color: #f0e6ff;
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+
+.admin-card .panel-sub {
+  color: #b8aec4;
+  font-size: 11.5px;
+}
+
+.admin-warn {
+  color: #e0a95c !important;
+}
+
+.admin-field-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.admin-field-row label {
+  flex: 1 1 auto;
+  color: #d8cee6;
+  font-size: 12px;
+}
+
+.admin-input {
+  flex: 0 0 90px;
+  width: 90px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 8px;
+}
+
+.admin-apply-btn {
+  flex: 0 0 auto;
+  padding: 6px 10px !important;
+  font-size: 11.5px !important;
+}
+
+.admin-quick-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.admin-btn {
+  background: rgba(90, 70, 120, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: #f0e6ff !important;
+}
+
+.admin-btn:active {
+  background: rgba(120, 95, 160, 0.75) !important;
+}

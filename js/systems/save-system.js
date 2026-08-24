@@ -388,6 +388,7 @@ function buildSaveData() {
     worldIndex: Number((window.WorldManager && WorldManager.worldIndex) || 0),
     adventureIndex: Number((window.WorldManager && WorldManager.adventureIndex) || 0),
     enemyIndex: Number((window.WorldManager && WorldManager.enemyIndex) || 0),
+    combatSpeed: Number(game.combatSpeed || 1),
     totalKills: Number(game.totalKills || 0),
     totalGoldEarned: Number(game.totalGoldEarned || 0),
     totalDamageDealt: Number(game.totalDamageDealt || 0),
@@ -580,6 +581,8 @@ function restoreBaseState(d) {
   WorldManager.worldIndex = Math.max(0, Number(d.worldIndex || 0));
   WorldManager.adventureIndex = Math.max(0, Number(d.adventureIndex || 0));
   WorldManager.enemyIndex = Math.max(0, Number(d.enemyIndex || 0));
+
+  game.combatSpeed = [1, 2, 4].indexOf(Number(d.combatSpeed)) !== -1 ? Number(d.combatSpeed) : 1;
 
   game.village = d.village && typeof d.village === "object"
     ? d.village
