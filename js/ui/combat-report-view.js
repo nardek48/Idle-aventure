@@ -61,6 +61,24 @@ function buildCombatReportSlotCardHTML(slot, stats) {
   return h;
 }
 
+function buildCombatReportArchetypeCardHTML(impact) {
+  if (!impact) return "";
+
+  var lines = [];
+  if (impact.enragedBonusDamageTaken > 0) lines.push('😡 ~' + formatNumber(Math.floor(impact.enragedBonusDamageTaken)) + ' dégâts bonus subis (Enragé)');
+  if (impact.vampiricHealStolen > 0) lines.push('🧛 ~' + formatNumber(Math.floor(impact.vampiricHealStolen)) + ' PV volés par l\'ennemi (Vampirique)');
+  if (impact.corruptedDamageLost > 0) lines.push('☠️ ~' + formatNumber(Math.floor(impact.corruptedDamageLost)) + ' dégâts perdus (Corrompu)');
+  if (impact.armoredDamageLost > 0) lines.push('🛡️‍🩹 ~' + formatNumber(Math.floor(impact.armoredDamageLost)) + ' dégâts perdus (Blindé)');
+
+  if (!lines.length) return "";
+
+  var h = '<div class="panel-card combat-report-slot-card">';
+  h += '<h3>Archétypes rencontrés</h3>';
+  h += '<p class="panel-sub combat-report-slot-line">' + lines.map(function (l) { return esc(l); }).join('<br>') + '</p>';
+  h += '</div>';
+  return h;
+}
+
 function buildCombatReportHTML(trigger, enemyName) {
   var report = (window.CombatReportManager) ? CombatReportManager.getSnapshot() : null;
 
@@ -83,12 +101,14 @@ function buildCombatReportHTML(trigger, enemyName) {
     var hasAnyActivity = Object.keys(report.perSlot).some(function (slot) {
       var s = report.perSlot[slot];
       return s.uses || s.blockedByReserve || s.telegraphsSeen || s.countersSucceeded || s.countersMissed || s.countersExpired || s.failedNoResource || s.failedOnCooldown;
-    });
+    }) || report.totalDamageDealt > 0;
 
     if (!hasAnyActivity) {
       h += '    <p class="panel-sub">Pas encore assez d\'activité sur ce combat pour établir un rapport détaillé.</p>';
     } else {
       var summaryParts = [];
+      var avgDps = (window.CombatReportManager && typeof CombatReportManager.getAverageDps === "function") ? CombatReportManager.getAverageDps() : 0;
+      if (avgDps > 0) summaryParts.push('⚔️ ~' + formatNumber(Math.round(avgDps)) + ' DPS moyen');
       if (report.damageAvoidedTotal > 0) summaryParts.push('🛡️ ~' + formatNumber(Math.floor(report.damageAvoidedTotal)) + ' dégâts évités');
       if (report.healPreventedTotal > 0) summaryParts.push('💚 ~' + formatNumber(Math.floor(report.healPreventedTotal)) + ' PV de soin empêchés');
       if (report.shieldsRemovedCount > 0) summaryParts.push('⚡ ' + report.shieldsRemovedCount + ' bouclier' + (report.shieldsRemovedCount !== 1 ? 's' : '') + ' retiré' + (report.shieldsRemovedCount !== 1 ? 's' : ''));
@@ -96,6 +116,8 @@ function buildCombatReportHTML(trigger, enemyName) {
       if (summaryParts.length) {
         h += '    <div class="combat-report-summary">' + summaryParts.map(function (p) { return esc(p); }).join('<br>') + '</div>';
       }
+
+      h += buildCombatReportArchetypeCardHTML(report.archetypeImpact);
 
       ["skill1", "skill2", "skill3", "defense"].forEach(function (slot) {
         h += buildCombatReportSlotCardHTML(slot, report.perSlot[slot]);

@@ -700,6 +700,13 @@ img.combat-action-icon {
   pointer-events: none;
 }
 
+/* v3.77.0 : combat auto (autoSkillsEnabled) — pas de décompte précis
+   utile puisque le joueur ne clique pas, juste une légère opacité. */
+.combat-action-cooldown-fill-auto {
+  right: 0;
+  background: rgba(20, 15, 8, 0.22);
+}
+
 .combat-action-active-tag {
   position: absolute;
   bottom: -2px;

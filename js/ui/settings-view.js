@@ -44,6 +44,7 @@ function buildSettingsHTML() {
 function toggleAutoSkills(enabled) {
   game.autoSkillsEnabled = !!enabled;
   if (typeof renderClassSkillButtons === "function") renderClassSkillButtons();
+  if (typeof renderBasicAttackCooldown === "function") renderBasicAttackCooldown();
   saveGame();
 }
 

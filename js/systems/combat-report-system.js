@@ -22,7 +22,14 @@ var CombatReportManager = {
       damageAvoidedTotal: 0,
       healPreventedTotal: 0,
       shieldsRemovedCount: 0,
-      silencesAvoidedCount: 0
+      silencesAvoidedCount: 0,
+      totalDamageDealt: 0,
+      archetypeImpact: {
+        enragedBonusDamageTaken: 0,
+        corruptedDamageLost: 0,
+        vampiricHealStolen: 0,
+        armoredDamageLost: 0
+      }
     };
   },
 
@@ -100,6 +107,25 @@ var CombatReportManager = {
     if (!this.isTrackedSlot(slot)) return;
     if (reason === "resource") game.combatReport.perSlot[slot].failedNoResource++;
     else if (reason === "cooldown") game.combatReport.perSlot[slot].failedOnCooldown++;
+  },
+
+  logDamageDealt: function (amount) {
+    this.ensure();
+    var v = Math.max(0, Number(amount || 0));
+    game.combatReport.totalDamageDealt += v;
+  },
+
+  logArchetypeImpact: function (key, amount) {
+    this.ensure();
+    if (!game.combatReport.archetypeImpact.hasOwnProperty(key)) return;
+    game.combatReport.archetypeImpact[key] += Math.max(0, Number(amount || 0));
+  },
+
+  getAverageDps: function () {
+    this.ensure();
+    var elapsedS = (Date.now() - game.combatReport.startedAt) / 1000;
+    if (elapsedS < 1) return 0;
+    return game.combatReport.totalDamageDealt / elapsedS;
   },
 
   getSnapshot: function () {

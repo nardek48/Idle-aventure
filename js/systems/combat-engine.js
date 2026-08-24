@@ -561,7 +561,11 @@ var CombatEngine = {
     if (game.enemy.archetype === "enraged" && typeof getEnragedDamageMultiplier === "function") {
       var effectivePct = this.getEnragedEffectivePctHpLost();
       var enragedMult = getEnragedDamageMultiplier(effectivePct);
-      if (enragedMult !== 1) dmg = Math.max(1, Math.floor(dmg * enragedMult));
+      if (enragedMult !== 1) {
+        var preEnragedDmg = dmg;
+        dmg = Math.max(1, Math.floor(dmg * enragedMult));
+        if (window.CombatReportManager) CombatReportManager.logArchetypeImpact("enragedBonusDamageTaken", dmg - preEnragedDmg);
+      }
     }
 
     var isCrit = chance(Math.min(40, precision * ENEMY_PRECISION_CRIT_COEF));
@@ -590,6 +594,7 @@ var CombatEngine = {
         var healed = getVampiricLifestealAmount(dmg);
         if (healed > 0) {
           game.enemy.hp = Math.min(game.enemy.maxHp, Number(game.enemy.hp || 0) + healed);
+          if (window.CombatReportManager) CombatReportManager.logArchetypeImpact("vampiricHealStolen", healed);
           if (typeof renderEnemyHp === "function") renderEnemyHp();
         }
       }
@@ -661,7 +666,9 @@ var CombatEngine = {
     if (!ignoreAffinity) dmg *= getDamageAffinity().mult;
 
     if (game.enemy.archetype === "corrupted" && typeof getCorruptedDamageMultiplier === "function") {
+      var preCorruptedDmg = dmg;
       dmg *= getCorruptedDamageMultiplier(game.enemy.corruptedStacks || 0);
+      if (window.CombatReportManager) CombatReportManager.logArchetypeImpact("corruptedDamageLost", preCorruptedDmg - dmg);
     }
 
     if (game.enemy.vulnerableUntil && Date.now() < game.enemy.vulnerableUntil) {
@@ -673,7 +680,9 @@ var CombatEngine = {
     }
 
     if (game.enemy.archetype === "armored" && typeof getArmoredEffectiveDamageReduction === "function") {
+      var preArmoredDmg = dmg;
       dmg *= (1 - getArmoredEffectiveDamageReduction(game.enemy));
+      if (window.CombatReportManager) CombatReportManager.logArchetypeImpact("armoredDamageLost", preArmoredDmg - dmg);
     }
 
     if (game.enemy.isBoss && game.talents.t_perfect_execution && game.enemy.maxHp > 0 && (game.enemy.hp / game.enemy.maxHp) < 0.2) {
@@ -682,6 +691,7 @@ var CombatEngine = {
 
     game.enemy.hp -= dmg;
     game.totalDamageDealt += dmg;
+    if (window.CombatReportManager) CombatReportManager.logDamageDealt(dmg);
 
     if (fromTap) {
       showFloatingDamage(Math.floor(dmg), !!isCrit);

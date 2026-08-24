@@ -224,6 +224,7 @@ window.renderEnemyStatusBar = renderEnemyStatusBar;
 function buildBasicAttackCooldownOverlayHTML() {
   var remainingMs = game.basicAttackCooldownMs || 0;
   if (remainingMs <= 0) return "";
+  if (game.autoSkillsEnabled) return '<span class="combat-action-cooldown-fill combat-action-cooldown-fill-auto"></span>';
 
   var totalCelerity = (window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function") ? CombatEngine.getTotalCelerity() : 0;
   var totalMs = (typeof computeEffectiveCooldownMs === "function")
@@ -243,8 +244,7 @@ function renderBasicAttackCooldown() {
   if (overlay) overlay.innerHTML = buildBasicAttackCooldownOverlayHTML();
 
   var attackBtn = document.getElementById("combat-attack-btn");
-  if (attackBtn) attackBtn.classList.toggle("on-cooldown", onCooldown);
-
+  if (attackBtn) attackBtn.classList.toggle("on-cooldown", onCooldown && !game.autoSkillsEnabled);
 }
 
 window.buildBasicAttackCooldownOverlayHTML = buildBasicAttackCooldownOverlayHTML;
