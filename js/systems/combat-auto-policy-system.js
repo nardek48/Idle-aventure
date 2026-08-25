@@ -299,3 +299,43 @@ window.GRIMOIRE_APPROACH_WINDOW_MIN_S = GRIMOIRE_APPROACH_WINDOW_MIN_S;
 window.GRIMOIRE_APPROACH_WINDOW_FIXED_S = GRIMOIRE_APPROACH_WINDOW_FIXED_S;
 window.getGrimoireApproachWindowSeconds = getGrimoireApproachWindowSeconds;
 window.estimateResourceGainOverWindow = estimateResourceGainOverWindow;
+
+// Affinité d'arme en version pure (getDamageAffinity réel dépend de game.equipped/
+// game.heroId) — mêmes constantes globales que combat-engine.js, aucune dupliquée.
+function getPureDamageAffinityMult(weaponType, enemyResists, enemyWeak) {
+  if (!weaponType) return (typeof NO_WEAPON_MULT === "number") ? NO_WEAPON_MULT : 0.8;
+  var resists = enemyResists || [];
+  var weak = enemyWeak || [];
+  if (resists.indexOf(weaponType) !== -1) return (typeof RESIST_DMG_MULT === "number") ? RESIST_DMG_MULT : 0.7;
+  if (weak.indexOf(weaponType) !== -1) return (typeof WEAK_DMG_MULT === "number") ? WEAK_DMG_MULT : 1.3;
+  return 1;
+}
+
+// Jumelle pure de estimateResourceGainOverWindow : estimation optimiste du temps
+// restant avant la mort de l'ennemi, à partir des stats ACTUELLES du héros (pas
+// d'historique de dégâts réels) — tap + auto-DPS, affinité d'arme, crit moyen.
+// heroStats.critChance attendu en fraction 0-1 (pas en pourcentage).
+function estimateTimeToKillMs(heroStats, enemyStats) {
+  if (!heroStats || !enemyStats) return Infinity;
+  var enemyHp = Number(enemyStats.hp || 0);
+  if (enemyHp <= 0) return 0;
+
+  var affinityMult = getPureDamageAffinityMult(heroStats.weaponType, enemyStats.resists, enemyStats.weak);
+  var critChance = Math.max(0, Math.min(1, Number(heroStats.critChance || 0)));
+  var critMult = Number(heroStats.critMult || 1);
+  var avgCritFactor = 1 + critChance * (critMult - 1);
+
+  var effectiveCooldownMs = Number(heroStats.effectiveBasicCooldownMs || 0);
+  var tapDamage = Number(heroStats.tapDamage || 0);
+  var tapDps = effectiveCooldownMs > 0 ? (tapDamage * avgCritFactor * affinityMult) / (effectiveCooldownMs / 1000) : 0;
+
+  var autoDps = Number(heroStats.autoDps || 0) * affinityMult;
+
+  var totalDps = tapDps + autoDps;
+  if (totalDps <= 0) return Infinity;
+
+  return (enemyHp / totalDps) * 1000;
+}
+
+window.getPureDamageAffinityMult = getPureDamageAffinityMult;
+window.estimateTimeToKillMs = estimateTimeToKillMs;

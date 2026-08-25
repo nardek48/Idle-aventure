@@ -16,6 +16,8 @@ var _sandboxUiState = {
   equipmentRarity: null,   // v3.46.0 : "common"/"green"/"rare"/"epic"/"legendary", ou null = pas d'équipement simulé
   enemyCoefsOverride: null, // v3.33.12 : {ENDURANCE_HP_COEF, BOSS_ENDURANCE_HP_COEF, POWER_DMG_COEF, ATTACK_BASE_INTERVAL_S, RESIST_DMG_MULT, WEAK_DMG_MULT, NO_WEAPON_MULT} partiel, ou null = coefficients par défaut
   enemyCoefsPanelOpen: false,
+  archetypeOverride: "random", // v3.78.0 : "random" (tirage réaliste) | "none" | "enraged"/"corrupted"/"vampiric"/"armored"/"silenced" forcé
+  bossEveryNKills: 0, // v3.78.0 : Simulation auto uniquement — 0 = désactivé, sinon 1 boss inséré tous les N ennemis vaincus
   baseCooldownMs: null,   // null = valeur par défaut du système (SANDBOX_DEFAULT_BASE_COOLDOWN_MS)
   combat: null, // objet retourné par createSandboxCombatState(), ou null
   run: null,    // objet retourné par createSandboxRunState(), ou null
@@ -24,7 +26,9 @@ var _sandboxUiState = {
   autoRunsRequested: 20,      // nombre de runs à lancer dans la prochaine rafale
   autoBatch: null,            // { runsDone, runsTotal, reports: [...] } pendant/après une rafale
   autoBatchRunning: false,    // true entre le clic "Lancer" et la fin de la rafale (asynchrone)
-  autoResultsByClass: {}      // { classId: rapport agrégé (aggregateAutoRuns()) }, conservé entre rafales
+  autoResultsByClass: {},      // { classId: rapport agrégé (aggregateAutoRuns()) }, conservé entre rafales
+  grimoireEnabled: false, // v3.79.0 : active le Grimoire + rapport local dans la Simulation auto uniquement
+  grimoireRules: null      // tableau de 6 { conditionId, actionSlot } — recréé au premier besoin, voir ensureSandboxGrimoireRules()
 };
 
 function getSandboxPersistence() {
@@ -325,9 +329,35 @@ function buildSandboxEnemyCoefsPanelHTML() {
   });
   h += '</div>';
 
+  h += buildSandboxArchetypeSelectorHTML();
+
   h += '<div class="sandbox-hint">La vitesse d\'attaque (intervalle), les PV (Endurance/exposant monde) et le monde/aventure/cycle simulés ne s\'appliquent qu\'au lancement d\'un nouveau combat/run/simulation (l\'ennemi affiché garde ses PV déjà calculés). Les autres réglages (dégâts de riposte, résistance/faiblesse) s\'appliquent immédiatement, y compris en cours de combat.</div>';
   h += '<button class="settings-btn sandbox-reset-stats-btn" onclick="resetSandboxEnemyCoefs()">↺ Coefficients par défaut (valeurs réelles du jeu)</button>';
 
+  return h;
+}
+
+var SANDBOX_ARCHETYPE_LABELS = {
+  random: "🎲 Aléatoire (comme en jeu)",
+  none: "— Aucun",
+  enraged: "😡 Enragé (boss uniquement)",
+  corrupted: "☠️ Corrompu (boss uniquement)",
+  vampiric: "🧛 Vampirique (boss uniquement)",
+  armored: "🛡️ Blindé (boss uniquement)",
+  silenced: "🔇 Silencié (ennemi normal uniquement)"
+};
+
+function buildSandboxArchetypeSelectorHTML() {
+  var current = _sandboxUiState.archetypeOverride || "random";
+  var h = '<div class="sandbox-stat-field sandbox-archetype-field">';
+  h += '<label class="sandbox-stat-label">Archétype ennemi (prochain lancement)</label>';
+  h += '<select class="sandbox-persistence-select" onchange="setSandboxArchetypeOverride(this.value)">';
+  ["random", "none", "enraged", "corrupted", "vampiric", "armored", "silenced"].forEach(function (key) {
+    h += '<option value="' + key + '"' + (current === key ? ' selected' : '') + '>' + esc(SANDBOX_ARCHETYPE_LABELS[key]) + '</option>';
+  });
+  h += '</select>';
+  h += '<div class="sandbox-hint">Les archétypes marqués « boss uniquement »/« ennemi normal uniquement » n\'ont aucun effet s\'ils sont forcés sur le mauvais type d\'ennemi — comme en jeu réel. Contrairement au jeu réel, le seuil de monde minimum n\'est pas appliqué ici quand un archétype est forcé (utile pour tester son impact avant son monde d\'apparition normal).</div>';
+  h += '</div>';
   return h;
 }
 
@@ -383,6 +413,7 @@ function buildSandboxInfiniteSetupHTML() {
   h += '<div class="sandbox-hint">Enchaîne les ' + totalEnemies + ' ennemis de data/enemies.js dans l\'ordre de progression du jeu, en boucle, jusqu\'à la mort du héros ou un arrêt manuel.</div>';
 
   h += buildSandboxPersistenceSettingsHTML();
+  h += buildSandboxBossEveryNKillsFieldHTML();
 
   var canLaunch = !!(_sandboxUiState.classId && _sandboxUiState.heroId && totalEnemies > 0);
   h += '<button class="settings-btn primary sandbox-launch-btn" ' + (canLaunch ? '' : 'disabled') + ' onclick="launchSandboxInfinite()">▶️ Lancer le mode infini</button>';
@@ -390,6 +421,94 @@ function buildSandboxInfiniteSetupHTML() {
   if (_sandboxUiState.infinite) {
     h += '<button class="settings-btn sandbox-reset-btn" onclick="resetSandboxInfinite()">🔄 Réinitialiser</button>';
   }
+  return h;
+}
+
+function buildSandboxBossEveryNKillsFieldHTML() {
+  var h = '<div class="sandbox-persistence-row">';
+  h += '<span class="sandbox-persistence-label">Boss tous les N ennemis vaincus</span>';
+  h += '<input type="number" class="sandbox-persistence-percent sandbox-cooldown-input" min="0" step="1" value="' + (_sandboxUiState.bossEveryNKills || 0) + '" onchange="setSandboxBossEveryNKills(this.value)">';
+  h += '</div>';
+  h += '<div class="sandbox-hint">0 = désactivé (comportement par défaut, aucun boss). Le boss inséré est celui de la 1ʳᵉ aventure du monde simulé (voir Coefficients d\'ennemi), avec archétype tiré selon le réglage ci-dessus.</div>';
+  return h;
+}
+
+var SANDBOX_GRIMOIRE_SLOT_COUNT = 6; // v3.79.0 : toujours le maximum en Simulation auto (pas de déblocage progressif)
+
+// État Grimoire indépendant de game.grimoireRules (validé avec Seb : from scratch, pas
+// de chargement des règles de la vraie partie). Actif uniquement en Simulation auto.
+function ensureSandboxGrimoireRules() {
+  if (!Array.isArray(_sandboxUiState.grimoireRules)) _sandboxUiState.grimoireRules = [];
+  while (_sandboxUiState.grimoireRules.length < SANDBOX_GRIMOIRE_SLOT_COUNT) {
+    _sandboxUiState.grimoireRules.push({ conditionId: null, actionSlot: null });
+  }
+  if (_sandboxUiState.grimoireRules.length > SANDBOX_GRIMOIRE_SLOT_COUNT) {
+    _sandboxUiState.grimoireRules = _sandboxUiState.grimoireRules.slice(0, SANDBOX_GRIMOIRE_SLOT_COUNT);
+  }
+  return _sandboxUiState.grimoireRules;
+}
+
+function toggleSandboxGrimoireEnabled() {
+  _sandboxUiState.grimoireEnabled = !_sandboxUiState.grimoireEnabled;
+  if (_sandboxUiState.grimoireEnabled) ensureSandboxGrimoireRules();
+  renderCombatSandboxScreen();
+}
+
+function setSandboxGrimoireRuleCondition(index, conditionId) {
+  var rules = ensureSandboxGrimoireRules();
+  if (!rules[index]) return;
+  rules[index].conditionId = conditionId || null;
+  renderCombatSandboxScreen();
+}
+
+function setSandboxGrimoireRuleAction(index, actionSlot) {
+  var rules = ensureSandboxGrimoireRules();
+  if (!rules[index]) return;
+  rules[index].actionSlot = actionSlot || null;
+  renderCombatSandboxScreen();
+}
+
+function buildSandboxGrimoireRuleCardHTML(index, rule, kit) {
+  var cond = (typeof getGrimoireCondition === "function") ? getGrimoireCondition(rule.conditionId) : null;
+  var action = (kit && kit.actions && rule.actionSlot) ? kit.actions[rule.actionSlot] : null;
+  var isActiveCounter = !!(action && rule.conditionId && Array.isArray(action.counters) && action.counters.indexOf(rule.conditionId) !== -1);
+
+  var h = '<div class="panel-card grimoire-rule-card">';
+  h += '<h3>Règle ' + (index + 1) + '</h3>';
+
+  h += '<label class="grimoire-field-label">Si...</label>';
+  h += '<select class="grimoire-select" onchange="setSandboxGrimoireRuleCondition(' + index + ', this.value)">';
+  h += (typeof buildGrimoireConditionOptionsHTML === "function") ? buildGrimoireConditionOptionsHTML(rule.conditionId) : '';
+  h += '</select>';
+  if (cond) h += '<p class="panel-sub grimoire-condition-desc">' + esc(cond.description) + '</p>';
+
+  h += '<label class="grimoire-field-label">Alors...</label>';
+  h += '<select class="grimoire-select" onchange="setSandboxGrimoireRuleAction(' + index + ', this.value)"' + (!kit ? ' disabled' : '') + '>';
+  h += (typeof buildGrimoireActionOptionsHTML === "function") ? buildGrimoireActionOptionsHTML(kit, rule.actionSlot, rule.conditionId) : '';
+  h += '</select>';
+  if (action) h += '<p class="panel-sub grimoire-action-desc">' + esc(action.description) + '</p>';
+  if (isActiveCounter) {
+    h += '<p class="panel-sub grimoire-counter-active">⚡ Cette action CONTRE la situation choisie : elle annulera complètement l\'attaque adverse si elle est utilisée à temps.</p>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function buildSandboxGrimoireSectionHTML() {
+  var h = '<div class="sandbox-card-title sandbox-collapsible-title" onclick="toggleSandboxGrimoireEnabled()">';
+  h += '📖 Grimoire de tactiques' + (_sandboxUiState.grimoireEnabled ? ' <span class="sandbox-modified-tag">activé</span>' : '');
+  h += '</div>';
+  h += '<div class="sandbox-hint">Indépendant du Grimoire de ta vraie partie — 6 règles toujours disponibles ici, testées avant le repli sur la priorité par défaut ci-dessus. Active un rapport de combat local (contres réussis, dégâts évités, DPS moyen) affiché dans le tableau de comparaison.</div>';
+
+  if (!_sandboxUiState.grimoireEnabled) return h;
+
+  var kit = getClassSkills(_sandboxUiState.classId);
+  var rules = ensureSandboxGrimoireRules();
+  rules.forEach(function (rule, index) {
+    h += buildSandboxGrimoireRuleCardHTML(index, rule, kit);
+  });
+
   return h;
 }
 
@@ -403,11 +522,14 @@ function buildSandboxAutoSetupHTML() {
   }
 
   h += buildSandboxAutoPolicyListHTML();
+  h += buildSandboxGrimoireSectionHTML();
 
   h += '<div class="sandbox-persistence-row">';
   h += '<span class="sandbox-persistence-label">Nombre de runs</span>';
   h += '<input type="number" class="sandbox-persistence-percent sandbox-cooldown-input" min="1" step="1" value="' + _sandboxUiState.autoRunsRequested + '" onchange="setSandboxAutoRunsRequested(this.value)">';
   h += '</div>';
+
+  h += buildSandboxBossEveryNKillsFieldHTML();
 
   var running = _sandboxUiState.autoBatchRunning;
   var canLaunch = !!(_sandboxUiState.classId && _sandboxUiState.heroId && _sandboxUiState.autoPolicy && _sandboxUiState.autoPolicy.length && !running);
@@ -467,6 +589,7 @@ var SANDBOX_AUTO_METRIC_ROWS = [
   { key: "defeatedAvg", label: "Ennemis vaincus (moy.)", format: "int" },
   { key: "defeatedMinMax", label: "Ennemis vaincus (min / max)", format: "raw" },
   { key: "bossRate", label: "Taux de runs ayant atteint un boss", format: "percent" },
+  { key: "bossEncounteredAvg", label: "Boss affrontés (moy./run)", format: "float" },
   { key: "durationAvgS", label: "Durée moyenne (s)", format: "int" },
   { key: "heroMaxHp", label: "PV max", format: "int" },
   { key: "heroFinalHpAvg", label: "PV restants (moy. en fin de run)", format: "int" },
@@ -475,7 +598,18 @@ var SANDBOX_AUTO_METRIC_ROWS = [
   { key: "damageAvoidedAvg", label: "Dégâts évités (moy., Garde/Esquive/Barrière)", format: "int" },
   { key: "deathRate", label: "Mort(s) — taux de runs terminés en défaite", format: "percent" },
   { key: "topAction", label: "Action la plus utilisée (moy./run)", format: "raw" },
-  { key: "resourceWastedAvg", label: "Ressource gaspillée en fin de run (moy.)", format: "float" }
+  { key: "resourceWastedAvg", label: "Ressource gaspillée en fin de run (moy.)", format: "float" },
+  { key: "archetypeEnraged", label: "😡 Enragé — dégâts bonus subis (moy./run)", format: "int" },
+  { key: "archetypeVampiric", label: "🧛 Vampirique — PV volés (moy./run)", format: "int" },
+  { key: "archetypeCorrupted", label: "☠️ Corrompu — dégâts perdus (moy./run)", format: "int" },
+  { key: "archetypeArmored", label: "🛡️ Blindé — dégâts perdus (moy./run)", format: "int" },
+  { key: "archetypeEncounters", label: "Rencontres par archétype (total)", format: "raw" },
+  { key: "averageDpsAvg", label: "📖 DPS moyen (Grimoire actif)", format: "float" },
+  { key: "grimoireDamageAvoidedAvg", label: "📖 Dégâts évités par contre (moy./run)", format: "int" },
+  { key: "grimoireHealPreventedAvg", label: "📖 Soin ennemi empêché (moy./run)", format: "int" },
+  { key: "grimoireShieldsRemovedAvg", label: "📖 Boucliers retirés (moy./run)", format: "float" },
+  { key: "grimoireSilencesAvoidedAvg", label: "📖 Silences évités (moy./run)", format: "float" },
+  { key: "grimoireCounterSuccessByCondition", label: "📖 Contres réussis par règle (total)", format: "raw" }
 ];
 
 function buildSandboxAutoComparisonTableHTML() {
@@ -485,7 +619,7 @@ function buildSandboxAutoComparisonTableHTML() {
 
   var h = '<div class="sandbox-card">';
   h += '<div class="sandbox-card-title">Comparaison des classes</div>';
-  h += '<div class="sandbox-hint">Le mode infini n\'affronte jamais de boss (uniquement les ennemis normaux de data/enemies.js) — le taux ci-dessous reflète cette limite, pas un défaut de la classe.</div>';
+  h += '<div class="sandbox-hint">Le mode infini n\'affronte que des ennemis normaux (data/enemies.js), sauf si "Boss tous les N ennemis vaincus" est activé — le taux de boss ci-dessous reflète ce réglage, pas un défaut de la classe.</div>';
 
   h += '<table class="sandbox-compare-table"><thead><tr><th></th>';
   classIds.forEach(function (id) {
@@ -542,6 +676,38 @@ function formatSandboxAutoMetric(agg, row) {
     }
     case "resourceWastedAvg":
       return String(Math.round(agg.resourceWastedAvg * 100) / 100);
+    case "bossEncounteredAvg":
+      return String(Math.round((agg.bossEncounteredAvg || 0) * 100) / 100);
+    case "archetypeEnraged":
+      return String(Math.round((agg.archetypeImpactAvg && agg.archetypeImpactAvg.enragedBonusDamageTaken) || 0));
+    case "archetypeVampiric":
+      return String(Math.round((agg.archetypeImpactAvg && agg.archetypeImpactAvg.vampiricHealStolen) || 0));
+    case "archetypeCorrupted":
+      return String(Math.round((agg.archetypeImpactAvg && agg.archetypeImpactAvg.corruptedDamageLost) || 0));
+    case "archetypeArmored":
+      return String(Math.round((agg.archetypeImpactAvg && agg.archetypeImpactAvg.armoredDamageLost) || 0));
+    case "archetypeEncounters": {
+      var enc = agg.archetypeEncountersTotal || {};
+      var keys = Object.keys(enc);
+      if (!keys.length) return "—";
+      return keys.map(function (k) { return k + ": " + enc[k]; }).join(", ");
+    }
+    case "averageDpsAvg":
+      return agg.hasGrimoireData ? String(Math.round(agg.averageDpsAvg * 10) / 10) : "—";
+    case "grimoireDamageAvoidedAvg":
+      return agg.hasGrimoireData ? String(Math.round(agg.grimoireDamageAvoidedAvg || 0)) : "—";
+    case "grimoireHealPreventedAvg":
+      return agg.hasGrimoireData ? String(Math.round(agg.grimoireHealPreventedAvg || 0)) : "—";
+    case "grimoireShieldsRemovedAvg":
+      return agg.hasGrimoireData ? String(Math.round((agg.grimoireShieldsRemovedAvg || 0) * 100) / 100) : "—";
+    case "grimoireSilencesAvoidedAvg":
+      return agg.hasGrimoireData ? String(Math.round((agg.grimoireSilencesAvoidedAvg || 0) * 100) / 100) : "—";
+    case "grimoireCounterSuccessByCondition": {
+      var byCond = agg.grimoireCounterSuccessTotalByCondition || {};
+      var condKeys = Object.keys(byCond);
+      if (!condKeys.length) return "—";
+      return condKeys.map(function (k) { return k + ": " + byCond[k]; }).join(", ");
+    }
     default:
       return "—";
   }
@@ -867,7 +1033,7 @@ function selectSandboxEnemy(enemyId) {
 function launchSandboxCombat() {
   var s = _sandboxUiState;
   if (!s.classId || !s.heroId || !s.enemyId) return;
-  var combat = createSandboxCombatState(s.classId, s.heroId, s.enemyId, s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity);
+  var combat = createSandboxCombatState(s.classId, s.heroId, s.enemyId, s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity, s.archetypeOverride);
   if (!combat) {
     if (typeof showToast === "function") showToast("Impossible de démarrer le combat de test.");
     return;
@@ -887,7 +1053,7 @@ function triggerSandboxAction(slot) {
 function resetSandboxCombat() {
   var s = _sandboxUiState;
   if (s.classId && s.heroId && s.enemyId) {
-    _sandboxUiState.combat = createSandboxCombatState(s.classId, s.heroId, s.enemyId, s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride);
+    _sandboxUiState.combat = createSandboxCombatState(s.classId, s.heroId, s.enemyId, s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity, s.archetypeOverride);
     startSandboxClock();
   } else {
     _sandboxUiState.combat = null;
@@ -971,7 +1137,7 @@ function setSandboxPersistenceField(field, rawValue) {
 function launchSandboxRun() {
   var s = _sandboxUiState;
   if (!s.classId || !s.heroId || !s.runQueue.length) return;
-  var run = createSandboxRunState(s.classId, s.heroId, s.runQueue, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity);
+  var run = createSandboxRunState(s.classId, s.heroId, s.runQueue, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity, s.archetypeOverride);
   if (!run) {
     if (typeof showToast === "function") showToast("Impossible de démarrer le run de test.");
     return;
@@ -998,7 +1164,7 @@ function stopSandboxRunFromUi() {
 function resetSandboxRun() {
   var s = _sandboxUiState;
   if (s.classId && s.heroId && s.runQueue.length) {
-    _sandboxUiState.run = createSandboxRunState(s.classId, s.heroId, s.runQueue, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity);
+    _sandboxUiState.run = createSandboxRunState(s.classId, s.heroId, s.runQueue, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity, s.archetypeOverride);
     startSandboxClock();
   } else {
     _sandboxUiState.run = null;
@@ -1010,7 +1176,7 @@ function resetSandboxRun() {
 function launchSandboxInfinite() {
   var s = _sandboxUiState;
   if (!s.classId || !s.heroId) return;
-  var infinite = createSandboxInfiniteState(s.classId, s.heroId, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity);
+  var infinite = createSandboxInfiniteState(s.classId, s.heroId, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity, s.archetypeOverride, s.bossEveryNKills);
   if (!infinite) {
     if (typeof showToast === "function") showToast("Impossible de démarrer le mode infini.");
     return;
@@ -1037,7 +1203,7 @@ function stopSandboxInfiniteFromUi() {
 function resetSandboxInfinite() {
   var s = _sandboxUiState;
   if (s.classId && s.heroId) {
-    _sandboxUiState.infinite = createSandboxInfiniteState(s.classId, s.heroId, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity);
+    _sandboxUiState.infinite = createSandboxInfiniteState(s.classId, s.heroId, getSandboxPersistence(), s.statsOverride, s.baseCooldownMs, s.enemyCoefsOverride, s.equipmentRarity, s.archetypeOverride, s.bossEveryNKills);
     startSandboxClock();
   } else {
     _sandboxUiState.infinite = null;
@@ -1092,11 +1258,14 @@ function launchSandboxAutoBatch() {
   var baseCooldownMs = s.baseCooldownMs;
   var enemyCoefsOverride = s.enemyCoefsOverride;
   var equipmentRarity = s.equipmentRarity; // v3.46.0
+  var archetypeOverride = s.archetypeOverride; // v3.78.0
+  var bossEveryNKills = s.bossEveryNKills; // v3.78.0
+  var grimoireRules = (s.grimoireEnabled && Array.isArray(s.grimoireRules)) ? s.grimoireRules.slice() : null; // v3.79.0
 
   function runOne() {
     if (!_sandboxUiState.autoBatchRunning || !_sandboxUiState.autoBatch) return;
 
-    var report = runSingleAutoRun(classId, heroId, cleanedPolicy, statsOverride, baseCooldownMs, null, enemyCoefsOverride, equipmentRarity);
+    var report = runSingleAutoRun(classId, heroId, cleanedPolicy, statsOverride, baseCooldownMs, null, enemyCoefsOverride, equipmentRarity, archetypeOverride, bossEveryNKills, grimoireRules);
     if (report) _sandboxUiState.autoBatch.reports.push(report);
     _sandboxUiState.autoBatch.runsDone++;
 
@@ -1214,6 +1383,22 @@ function resetSandboxEnemyCoefs() {
   renderCombatSandboxScreen();
 }
 
+// v3.78.0 : contrairement à setSandboxEnemyCoefField, ne s'applique qu'au
+// prochain lancement/reset — changer l'archétype d'un ennemi déjà engagé
+// (stacks/PV déjà en cours) n'a pas de sens, donc pas de mise à jour live.
+function setSandboxArchetypeOverride(value) {
+  if (SANDBOX_ARCHETYPE_CHOICES.indexOf(value) === -1) return;
+  _sandboxUiState.archetypeOverride = value;
+  renderCombatSandboxScreen();
+}
+
+function setSandboxBossEveryNKills(rawValue) {
+  var num = parseInt(rawValue, 10);
+  if (isNaN(num) || num < 0) num = 0;
+  _sandboxUiState.bossEveryNKills = num;
+  renderCombatSandboxScreen();
+}
+
 window.buildCombatSandboxHTML = buildCombatSandboxHTML;
 window.selectSandboxClass = selectSandboxClass;
 window.selectSandboxHero = selectSandboxHero;
@@ -1247,3 +1432,8 @@ window.resetSandboxAutoPolicy = resetSandboxAutoPolicy;
 window.setSandboxAutoRunsRequested = setSandboxAutoRunsRequested;
 window.launchSandboxAutoBatch = launchSandboxAutoBatch;
 window.resetSandboxAutoResults = resetSandboxAutoResults;
+window.setSandboxArchetypeOverride = setSandboxArchetypeOverride;
+window.setSandboxBossEveryNKills = setSandboxBossEveryNKills;
+window.toggleSandboxGrimoireEnabled = toggleSandboxGrimoireEnabled;
+window.setSandboxGrimoireRuleCondition = setSandboxGrimoireRuleCondition;
+window.setSandboxGrimoireRuleAction = setSandboxGrimoireRuleAction;

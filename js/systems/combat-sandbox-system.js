@@ -34,12 +34,6 @@ var SANDBOX_DEFAULT_BASE_COOLDOWN_MS = 1000;
 
 var SANDBOX_WILL_COOLDOWN_MIN_RATIO = 0.5;
 
-var SANDBOX_DEFENSE_EFFECTS = {
-  knight_guard: { reductionPct: 0.50, durationMs: 2000 },
-  archer_evasion: { reductionPct: 0.70, durationMs: 1000 },
-  mage_arcane_barrier: { reductionPct: 0.40, durationMs: 3000 }
-};
-
 function getSandboxHeroBaseStats(heroId) {
   if (typeof HEROES_DB === "undefined" || !HEROES_DB || !heroId || !HEROES_DB[heroId]) return null;
   return structuredClone(HEROES_DB[heroId].stats || {});
@@ -122,7 +116,7 @@ function applySandboxEquipmentBonus(heroStats, rarity) {
   });
 }
 
-function buildSandboxEnemyStats(enemyId, overrideCoefs) {
+function buildSandboxEnemyStats(enemyId, overrideCoefs, archetypeOverride) {
   if (!enemyId) return null;
   var isBoss = false;
   var source = null;
@@ -162,18 +156,47 @@ function buildSandboxEnemyStats(enemyId, overrideCoefs) {
 
   var attackIntervalS = c.ATTACK_BASE_INTERVAL_S / (1 + (s.celerity || 0) / 40);
 
+  var archetype = resolveSandboxEnemyArchetype(isBoss, worldIndex, archetypeOverride);
+
   return {
     enemyId: enemyId,
     name: enemy.name,
     asset: enemy.asset,
     isBoss: isBoss,
+    archetype: archetype,
+    corruptedStacks: 0,
     resists: enemy.resists || [],
     weak: enemy.weak || [],
+    stats: s,
     power: scaledPower,
     maxHp: maxHp,
     hp: maxHp,
     attackIntervalS: attackIntervalS
   };
+}
+
+var SANDBOX_ARCHETYPE_CHOICES = ["none", "random", "enraged", "corrupted", "vampiric", "armored", "silenced"];
+var SANDBOX_BOSS_ONLY_ARCHETYPES = ["enraged", "corrupted", "vampiric", "armored"];
+
+// "random" reproduit le tirage réel (decideEnemyArchetype/decideNormalEnemyArchetype).
+// Une valeur forcée respecte la même contrainte boss/normal que le vrai jeu (sinon null).
+function resolveSandboxEnemyArchetype(isBoss, worldIndex, archetypeOverride) {
+  if (archetypeOverride === "none") return null;
+
+  if (archetypeOverride && SANDBOX_ARCHETYPE_CHOICES.indexOf(archetypeOverride) !== -1 && archetypeOverride !== "random") {
+    var isBossOnly = SANDBOX_BOSS_ONLY_ARCHETYPES.indexOf(archetypeOverride) !== -1;
+    if (isBossOnly && !isBoss) return null;
+    if (!isBossOnly && isBoss) return null; // silenced = ennemi normal uniquement
+    return archetypeOverride;
+  }
+
+  if (isBoss && typeof decideEnemyArchetype === "function") {
+    return decideEnemyArchetype(worldIndex, true, Math.floor(Math.random() * 100) + 1, Math.floor(Math.random() * 100) + 1);
+  }
+  if (!isBoss && typeof decideNormalEnemyArchetype === "function") {
+    return decideNormalEnemyArchetype(worldIndex, false, Math.floor(Math.random() * 100) + 1);
+  }
+  return null;
 }
 
 function listSandboxEnemies() {
@@ -259,7 +282,7 @@ function getDamageAffinityMult(weaponType, resists, weak, overrideCoefs) {
   return 1;
 }
 
-function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity) {
+function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride) {
   if (typeof getClassByHeroId !== "function" || typeof getClassSkills !== "function") return null;
   if (typeof createCombatResourceState !== "function" || typeof createCooldownState !== "function") return null;
 
@@ -271,7 +294,7 @@ function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseC
 
   var heroStats = buildSandboxHeroStats(heroId, overrideStats);
   if (heroStats && equipmentRarity) heroStats = applySandboxEquipmentBonus(heroStats, equipmentRarity);
-  var enemyStats = buildSandboxEnemyStats(enemyId, overrideEnemyCoefs);
+  var enemyStats = buildSandboxEnemyStats(enemyId, overrideEnemyCoefs, archetypeOverride);
   if (!heroStats || !enemyStats) return null;
 
   var resourceState = createCombatResourceState(classId);
@@ -293,7 +316,14 @@ function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseC
     baseCooldownMs: effectiveBaseCooldownMs,
     enemyAttackTimerMs: enemyStats.attackIntervalS * 1000,
     activeDefense: null,
+    heroSilencedUntilMs: 0,
     totalDamageAvoided: 0,
+    archetypeImpact: {
+      enragedBonusDamageTaken: 0,
+      vampiricHealStolen: 0,
+      corruptedDamageLost: 0,
+      armoredDamageLost: 0
+    },
     status: "ongoing",
     elapsedMs: 0,
     actionsUsed: 0,
@@ -309,57 +339,161 @@ function appendSandboxLog(state, message) {
 
 function computeSandboxActionDamage(state, action) {
   if (!state || !action || action.type !== "damage" || typeof action.damageMultiplier !== "number") {
-    return { totalDamage: 0, anyCritical: false, hitsDamage: [] };
+    return { totalDamage: 0, anyCritical: false, hitsDamage: [], lastHitDmg: 0, archetypeImpact: {} };
   }
   var hero = state.hero;
   var enemy = state.enemy;
-  var affinityMult = getDamageAffinityMult(hero.weaponType, enemy.resists, enemy.weak, state.enemyCoefs);
+  var affinityMult = action.ignoreAffinity ? 1 : getDamageAffinityMult(hero.weaponType, enemy.resists, enemy.weak, state.enemyCoefs);
   var hits = Math.max(1, action.hits || 1);
   var hitsDamage = [];
   var anyCritical = false;
+  var corruptedLost = 0;
+  var armoredLost = 0;
+  var lastHitDmg = 0;
+
+  // Pénalité de critique du héros liée à la Volonté ennemie — WILL_CRIT_RESIST_COEF,
+  // identique à getEnemyWillCritPenalty() du vrai moteur (combat-engine.js).
+  var willCritResistCoef = (typeof WILL_CRIT_RESIST_COEF === "number") ? WILL_CRIT_RESIST_COEF : 0.05;
+  var enemyWillCritPenaltyPct = Number((enemy.stats && enemy.stats.will) || 0) * willCritResistCoef;
+  var effectiveCritChancePct = Math.max(0, (hero.critChance * 100) - enemyWillCritPenaltyPct);
 
   for (var i = 0; i < hits; i++) {
-    var isCritical = Math.random() < hero.critChance;
+    var isCritical = (typeof chance === "function") ? chance(effectiveCritChancePct) : Math.random() < hero.critChance;
     if (isCritical) anyCritical = true;
     var base = hero.tapDamage * action.damageMultiplier * affinityMult;
     var dmg = Math.max(1, Math.floor(isCritical ? base * hero.critMult : base));
+
+    if (enemy.vulnerableUntilMs && state.elapsedMs < enemy.vulnerableUntilMs) {
+      dmg = Math.max(1, Math.floor(dmg * (1 + Number(enemy.vulnerableMult || 0))));
+    }
+
+    if (enemy.isBoss && enemy.shieldActiveUntilMs && state.elapsedMs < enemy.shieldActiveUntilMs && typeof BOSS_SHIELD_REDUCTION === "number") {
+      dmg = Math.max(1, Math.floor(dmg * (1 - BOSS_SHIELD_REDUCTION)));
+    }
+
+    if (enemy.archetype === "corrupted" && typeof getCorruptedDamageMultiplier === "function") {
+      var preCorrupted = dmg;
+      dmg = Math.max(1, Math.floor(dmg * getCorruptedDamageMultiplier(enemy.corruptedStacks || 0)));
+      corruptedLost += preCorrupted - dmg;
+    }
+    if (enemy.archetype === "armored") {
+      var preArmored = dmg;
+      dmg = Math.max(1, Math.floor(dmg * (1 - getSandboxArmoredEffectiveDamageReduction(enemy, state.elapsedMs))));
+      armoredLost += preArmored - dmg;
+    }
+
     hitsDamage.push(dmg);
+    lastHitDmg = dmg;
   }
 
   var totalDamage = hitsDamage.reduce(function (sum, d) { return sum + d; }, 0);
-  return { totalDamage: totalDamage, anyCritical: anyCritical, hitsDamage: hitsDamage };
+  return {
+    totalDamage: totalDamage,
+    anyCritical: anyCritical,
+    hitsDamage: hitsDamage,
+    lastHitDmg: lastHitDmg,
+    archetypeImpact: { corruptedDamageLost: corruptedLost, armoredDamageLost: armoredLost }
+  };
 }
 
-function resolveSandboxEnemyStrike(state) {
-  if (!state) return { damage: 0, avoided: 0 };
+// Cap de défense du héros : 60% normalement, 85% avec une défense active en cours
+// (identique à defenseCapNow du vrai moteur, combat-engine.js/enemyStrike).
+var SANDBOX_HERO_DEFENSE_CAP_BASE = 0.6;
+var SANDBOX_HERO_DEFENSE_CAP_WITH_ACTIVE_DEFENSE = 0.85;
+
+function resolveSandboxEnemyStrike(state, dmgMult) {
+  if (!state) return { damage: 0, avoided: 0, enragedBonusDamageTaken: 0 };
   var c = Object.assign({}, SANDBOX_ENEMY_COEFS, state.enemyCoefs || {});
-  var raw = state.enemy.power * c.POWER_DMG_COEF;
-  var afterDefensePct = raw * (1 - state.hero.defensePct);
+  var raw = state.enemy.power * c.POWER_DMG_COEF * (typeof dmgMult === "number" ? dmgMult : 1);
+
+  var enragedBonus = 0;
+  if (state.enemy.archetype === "enraged" && typeof getEnragedDamageMultiplier === "function" && state.enemy.maxHp > 0) {
+    var isRageFrozen = !!(state.enemy.rageFreezeUntilMs && state.elapsedMs < state.enemy.rageFreezeUntilMs);
+    var pctHpLost = isRageFrozen ? Number(state.enemy.rageFrozenPct || 0) : (1 - (state.enemy.hp / state.enemy.maxHp));
+    var enragedMult = getEnragedDamageMultiplier(pctHpLost);
+    if (enragedMult !== 1) {
+      var preEnraged = raw;
+      raw = raw * enragedMult;
+      enragedBonus = raw - preEnraged;
+    }
+  }
+
+  // Critique de l'ennemi (Précision, plafonné à 40%, multiplicateur fixe) — identique
+  // au vrai moteur, absent du sandbox jusqu'ici.
+  var precisionCritCoef = (typeof ENEMY_PRECISION_CRIT_COEF === "number") ? ENEMY_PRECISION_CRIT_COEF : 0.3;
+  var enemyCritMult = (typeof ENEMY_CRIT_MULT === "number") ? ENEMY_CRIT_MULT : 1.5;
+  var enemyCritChancePct = Math.min(40, Number((state.enemy.stats && state.enemy.stats.precision) || 0) * precisionCritCoef);
+  var isEnemyCrit = (typeof chance === "function") ? chance(enemyCritChancePct) : false;
+  if (isEnemyCrit) raw = raw * enemyCritMult;
 
   var activeDefense = state.activeDefense;
   var isDefenseActive = !!(activeDefense && state.elapsedMs < activeDefense.expiresAtMs);
-  var mitigated = isDefenseActive ? afterDefensePct * (1 - activeDefense.reductionPct) : afterDefensePct;
+  var defenseCap = isDefenseActive ? SANDBOX_HERO_DEFENSE_CAP_WITH_ACTIVE_DEFENSE : SANDBOX_HERO_DEFENSE_CAP_BASE;
+  var effectiveDefensePct = Math.min(defenseCap, state.hero.defensePct);
+  var afterDefensePct = Math.max(1, Math.floor(raw * (1 - effectiveDefensePct)));
 
-  var damageWithoutActiveDefense = Math.max(1, Math.floor(afterDefensePct));
-  var damage = Math.max(1, Math.floor(mitigated));
-  var avoided = isDefenseActive ? Math.max(0, damageWithoutActiveDefense - damage) : 0;
+  var damageWithoutActiveDefense = afterDefensePct;
+  var damage = afterDefensePct;
+  var avoided = 0;
 
-  return { damage: damage, avoided: avoided };
+  if (isDefenseActive) {
+    if (activeDefense.effectType === "damageReduction" || activeDefense.effectType === "damageAbsorption") {
+      damage = Math.max(0, Math.floor(afterDefensePct * (1 - activeDefense.value)));
+      avoided = Math.max(0, damageWithoutActiveDefense - damage);
+    } else if (activeDefense.effectType === "evasion") {
+      if ((typeof chance === "function") ? chance(activeDefense.value * 100) : false) {
+        damage = 0;
+        avoided = damageWithoutActiveDefense;
+      }
+    }
+  }
+  damage = Math.max(damage > 0 ? 1 : 0, damage);
+
+  return { damage: damage, avoided: avoided, enragedBonusDamageTaken: Math.max(0, Math.floor(enragedBonus * (1 - effectiveDefensePct))) };
 }
 
-function triggerSandboxEnemyStrike(state) {
-  var strike = resolveSandboxEnemyStrike(state);
+function triggerSandboxEnemyStrike(state, dmgMult) {
+  var strike = resolveSandboxEnemyStrike(state, dmgMult);
+  var nextEnemy = Object.assign({}, state.enemy);
+
+  var isVampiricSuppressed = !!(nextEnemy.vampiricSuppressedUntilMs && state.elapsedMs < nextEnemy.vampiricSuppressedUntilMs);
+  if (nextEnemy.archetype === "vampiric" && !isVampiricSuppressed && strike.damage > 0 && typeof getVampiricLifestealAmount === "function") {
+    var healed = getVampiricLifestealAmount(strike.damage);
+    if (healed > 0) nextEnemy.hp = Math.min(nextEnemy.maxHp, nextEnemy.hp + healed);
+    strike.vampiricHealStolen = healed;
+  }
+
+  if (nextEnemy.archetype === "corrupted") {
+    var maxStacks = (typeof CORRUPTED_MAX_STACKS === "number") ? CORRUPTED_MAX_STACKS : 5;
+    nextEnemy.corruptedStacks = Math.min(maxStacks, (nextEnemy.corruptedStacks || 0) + 1);
+  }
+
   var next = Object.assign({}, state, {
     hero: Object.assign({}, state.hero, {
       hp: Math.max(0, state.hero.hp - strike.damage)
     }),
-    totalDamageAvoided: (state.totalDamageAvoided || 0) + strike.avoided
+    enemy: nextEnemy,
+    totalDamageAvoided: (state.totalDamageAvoided || 0) + strike.avoided,
+    archetypeImpact: {
+      enragedBonusDamageTaken: (state.archetypeImpact ? state.archetypeImpact.enragedBonusDamageTaken : 0) + (strike.enragedBonusDamageTaken || 0),
+      vampiricHealStolen: (state.archetypeImpact ? state.archetypeImpact.vampiricHealStolen : 0) + (strike.vampiricHealStolen || 0),
+      corruptedDamageLost: (state.archetypeImpact ? state.archetypeImpact.corruptedDamageLost : 0),
+      armoredDamageLost: (state.archetypeImpact ? state.archetypeImpact.armoredDamageLost : 0)
+    }
   });
   var logLine = next.enemy.name + " attaque → " + strike.damage + " dégâts au héros de test.";
   if (strike.avoided > 0) {
     logLine += " (" + strike.avoided + " dégâts évités grâce à " + state.activeDefense.sourceLabel + ")";
   }
+  if (strike.vampiricHealStolen > 0) {
+    logLine += " (🧛 " + strike.vampiricHealStolen + " PV volés)";
+  }
   next = appendSandboxLog(next, logLine);
+
+  if (window.SandboxReportManager) {
+    if (strike.enragedBonusDamageTaken > 0) next = SandboxReportManager.logArchetypeImpact(next, "enragedBonusDamageTaken", strike.enragedBonusDamageTaken);
+    if (strike.vampiricHealStolen > 0) next = SandboxReportManager.logArchetypeImpact(next, "vampiricHealStolen", strike.vampiricHealStolen);
+  }
 
   if (next.hero.hp <= 0) {
     next.status = "defeat";
@@ -369,7 +503,27 @@ function triggerSandboxEnemyStrike(state) {
   return next;
 }
 
-function applySandboxAction(state, actionSlot) {
+// Équivalent pur de ClassCombatManager.getGrimoireCombatContext() (combat-engine.js/
+// class-combat-system.js), construit depuis le state sandbox au lieu de game.*.
+function buildSandboxCombatContext(state) {
+  var enemy = state.enemy || {};
+  var heroMaxHp = Number(state.hero.maxHp || 0);
+
+  return {
+    enemyHp: enemy.hp,
+    enemyMaxHp: enemy.maxHp,
+    isSilenced: !!(state.heroSilencedUntilMs && state.elapsedMs < state.heroSilencedUntilMs),
+    chargeIncoming: !!(enemy.chargeTelegraphUntilMs && state.elapsedMs < enemy.chargeTelegraphUntilMs),
+    shieldIncoming: !!(enemy.shieldTelegraphUntilMs && state.elapsedMs < enemy.shieldTelegraphUntilMs),
+    healIncoming: !!(enemy.healTelegraphUntilMs && state.elapsedMs < enemy.healTelegraphUntilMs),
+    enemySilenceIncoming: !!(enemy.silenceTelegraphUntilMs && state.elapsedMs < enemy.silenceTelegraphUntilMs),
+    heroHpPercent: heroMaxHp > 0 ? Number(state.hero.hp || 0) / heroMaxHp : null,
+    secondsUntilEnemyAttack: (typeof state.enemyAttackTimerMs === "number") ? Math.max(0, state.enemyAttackTimerMs / 1000) : null,
+    enemyArchetype: enemy.archetype || null
+  };
+}
+
+function applySandboxAction(state, actionSlot, matchedConditionId) {
   if (!state) return state;
   if (state.status !== "ongoing") {
     return appendSandboxLog(state, "Combat déjà terminé — relance un combat pour continuer.");
@@ -381,15 +535,13 @@ function applySandboxAction(state, actionSlot) {
     return appendSandboxLog(state, "Action inconnue (" + actionSlot + ").");
   }
 
-  var combatContext = {
-    enemyHp: state.enemy.hp,
-    enemyMaxHp: state.enemy.maxHp
-  };
+  var combatContext = buildSandboxCombatContext(state);
 
   if (!canUseAction(state.resourceState, state.cooldownState, action, combatContext)) {
     var reason = "indisponible";
     if (!canAfford(state.resourceState, action.resourceCost)) reason = "ressource insuffisante";
     else if (!isCooldownReady(state.cooldownState, action.id)) reason = "en recharge";
+    else if (combatContext.isSilenced && action.slot !== "defense") reason = "héros silencié";
     else if (!checkActionConditions(action.conditions, combatContext)) reason = "condition non remplie";
     return appendSandboxLog(state, action.label + " refusé (" + reason + ").");
   }
@@ -415,6 +567,9 @@ function applySandboxAction(state, actionSlot) {
   var isCritical = false;
   var damageDealt = 0;
 
+  if (window.SandboxReportManager) next = SandboxReportManager.logUsage(next, actionSlot);
+  next = applySandboxGrimoireCounterIfApplicable(next, action, matchedConditionId, actionSlot);
+
   if (action.type === "damage") {
     var dmgResult = computeSandboxActionDamage(next, action);
     isCritical = dmgResult.anyCritical;
@@ -422,19 +577,34 @@ function applySandboxAction(state, actionSlot) {
     next.enemy = Object.assign({}, next.enemy, {
       hp: Math.max(0, next.enemy.hp - damageDealt)
     });
+    next.archetypeImpact = {
+      enragedBonusDamageTaken: next.archetypeImpact ? next.archetypeImpact.enragedBonusDamageTaken : 0,
+      vampiricHealStolen: next.archetypeImpact ? next.archetypeImpact.vampiricHealStolen : 0,
+      corruptedDamageLost: (next.archetypeImpact ? next.archetypeImpact.corruptedDamageLost : 0) + dmgResult.archetypeImpact.corruptedDamageLost,
+      armoredDamageLost: (next.archetypeImpact ? next.archetypeImpact.armoredDamageLost : 0) + dmgResult.archetypeImpact.armoredDamageLost
+    };
+    if (window.SandboxReportManager) {
+      next = SandboxReportManager.logDamageDealt(next, damageDealt);
+      if (dmgResult.archetypeImpact.corruptedDamageLost > 0) next = SandboxReportManager.logArchetypeImpact(next, "corruptedDamageLost", dmgResult.archetypeImpact.corruptedDamageLost);
+      if (dmgResult.archetypeImpact.armoredDamageLost > 0) next = SandboxReportManager.logArchetypeImpact(next, "armoredDamageLost", dmgResult.archetypeImpact.armoredDamageLost);
+    }
     logLine += " → " + damageDealt + " dégâts" + (isCritical ? " (critique)" : "");
+    next = applySandboxActionEffects(next, action, dmgResult.lastHitDmg, matchedConditionId);
   } else if (action.type === "defense") {
-    var defenseEffect = SANDBOX_DEFENSE_EFFECTS[action.id];
-    if (defenseEffect) {
+    var defenseEffect = (action.effects && action.effects[0]) || null;
+    if (defenseEffect && defenseEffect.durationMs) {
       next.activeDefense = {
-        reductionPct: defenseEffect.reductionPct,
-        expiresAtMs: next.elapsedMs + defenseEffect.durationMs,
-        sourceLabel: action.label
+        effectType: defenseEffect.type, // "damageReduction" | "evasion" | "damageAbsorption"
+        value: Math.min(1, Number(defenseEffect.value || 0)),
+        expiresAtMs: next.elapsedMs + Number(defenseEffect.durationMs || 0),
+        sourceLabel: action.label,
+        sourceSlot: actionSlot
       };
-      logLine += " → posture défensive activée (" + Math.round(defenseEffect.reductionPct * 100) + "% de réduction, " + (defenseEffect.durationMs / 1000) + "s)";
+      logLine += " → posture défensive activée (" + Math.round(defenseEffect.value * 100) + "% " + (defenseEffect.type === "evasion" ? "de chance d'esquive totale" : "de réduction") + ", " + (defenseEffect.durationMs / 1000) + "s)";
     } else {
       logLine += " → posture défensive activée";
     }
+    next = applySandboxActionEffects(next, action, 0, matchedConditionId);
   }
 
   var resourceDef = getClassResource(state.classId);
@@ -489,6 +659,12 @@ function tickSandboxTime(state, elapsedMs) {
     next.activeDefense = null;
   }
 
+  next = tickSandboxDoT(next, elapsed);
+  if (next.status !== "ongoing") return next;
+
+  next = tickSandboxEnemyPatterns(next, elapsed);
+  if (next.status !== "ongoing") return next;
+
   var remaining = (typeof next.enemyAttackTimerMs === "number") ? next.enemyAttackTimerMs - elapsed : -1;
   var fullIntervalMs = next.enemy.attackIntervalS * 1000;
   var guard = 0;
@@ -504,6 +680,445 @@ function tickSandboxTime(state, elapsedMs) {
   return next;
 }
 
+// Équivalent de ClassCombatManager.tickDoT() — tick toutes les 1000ms accumulées
+// (pas à chaque frame), peut tuer l'ennemi comme un dégât normal (dealDamage réel).
+function tickSandboxDoT(state, elapsedMs) {
+  if (!state.enemy || !state.enemy.dot) return state;
+
+  var dot = Object.assign({}, state.enemy.dot);
+  dot.accumMs = Number(dot.accumMs || 0) + elapsedMs;
+  dot.remainingMs = Number(dot.remainingMs || 0) - elapsedMs;
+
+  var next = Object.assign({}, state, { enemy: Object.assign({}, state.enemy, { dot: dot }) });
+  var guard = 0;
+  while (dot.accumMs >= 1000 && guard < 10 && next.status === "ongoing") {
+    dot.accumMs -= 1000;
+    guard++;
+    var dmg = Math.max(0, Math.floor(dot.perTickDamage));
+    if (dmg > 0) {
+      next = Object.assign({}, next, { enemy: Object.assign({}, next.enemy, { hp: Math.max(0, next.enemy.hp - dmg) }) });
+      if (window.SandboxReportManager) next = SandboxReportManager.logDamageDealt(next, dmg);
+      next = appendSandboxLog(next, "🔥 Brûlure sur " + next.enemy.name + " → " + dmg + " dégâts.");
+    }
+    if (next.enemy.hp <= 0) {
+      next.status = "victory";
+      next = appendSandboxLog(next, "🏆 Victoire — l'ennemi de test succombe à la brûlure.");
+      return finalizeSandboxCombat(next);
+    }
+  }
+
+  if (dot.remainingMs <= 0) {
+    next = Object.assign({}, next, { enemy: Object.assign({}, next.enemy) });
+    delete next.enemy.dot;
+  } else {
+    next = Object.assign({}, next, { enemy: Object.assign({}, next.enemy, { dot: dot }) });
+  }
+
+  return next;
+}
+
+// Réplique des 4 patterns télégraphés du vrai moteur (Charge/Bouclier/Soin/Silence,
+// combat-engine.js), adaptés au temps simulé (state.elapsedMs) plutôt qu'à Date.now().
+// Charge = ennemi normal, Bouclier+Soin = boss, Silence = ennemi normal Silencié.
+function tickSandboxEnemyPatterns(state, elapsedS) {
+  var next = state;
+  if (!next.enemy) return next;
+
+  if (!next.enemy.isBoss && next.enemy.archetype !== "silenced") {
+    next = tickSandboxChargePattern(next, elapsedS);
+  }
+  if (!next.enemy.isBoss && next.enemy.archetype === "silenced") {
+    next = tickSandboxSilencePattern(next, elapsedS);
+  }
+  if (next.enemy.isBoss) {
+    next = tickSandboxShieldPattern(next, elapsedS);
+    if (next.status === "ongoing") next = tickSandboxHealPattern(next, elapsedS);
+  }
+  return next;
+}
+
+function tickSandboxChargePattern(state, elapsedS) {
+  var enemy = Object.assign({}, state.enemy);
+  var next = Object.assign({}, state, { enemy: enemy });
+
+  if (enemy.chargeTelegraphUntilMs) {
+    if (next.elapsedMs >= enemy.chargeTelegraphUntilMs) {
+      enemy.chargeTelegraphUntilMs = 0;
+      enemy._chargeNextAt = randSandboxFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
+      enemy._chargeTimer = 0;
+      if (window.SandboxReportManager) next = SandboxReportManager.logCounterExpired(next, "chargeIncoming");
+      return triggerSandboxEnemyStrike(next, ENEMY_CHARGE_DMG_MULT);
+    }
+    return next;
+  }
+
+  if (!enemy._chargeNextAt) enemy._chargeNextAt = randSandboxFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
+  enemy._chargeTimer = Number(enemy._chargeTimer || 0) + elapsedS / 1000;
+
+  if (enemy._chargeTimer >= enemy._chargeNextAt) {
+    enemy._chargeTimer = 0;
+    enemy._chargeNextAt = 0;
+    enemy.chargeTelegraphUntilMs = next.elapsedMs + ENEMY_CHARGE_TELEGRAPH_MS;
+    next = appendSandboxLog(next, "⚠️ " + enemy.name + " prépare une charge !");
+    if (window.SandboxReportManager) next = SandboxReportManager.logTelegraphSeen(next, "chargeIncoming");
+  }
+  return next;
+}
+
+function tickSandboxSilencePattern(state, elapsedS) {
+  var enemy = Object.assign({}, state.enemy);
+  var next = Object.assign({}, state, { enemy: enemy });
+
+  if (enemy.silenceTelegraphUntilMs) {
+    if (next.elapsedMs >= enemy.silenceTelegraphUntilMs) {
+      enemy.silenceTelegraphUntilMs = 0;
+      enemy._silenceNextAt = randSandboxFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
+      next.heroSilencedUntilMs = next.elapsedMs + (typeof SILENCE_DURATION_MS === "number" ? SILENCE_DURATION_MS : 4000);
+      next = appendSandboxLog(next, "🔇 Le héros de test est réduit au silence !");
+      if (window.SandboxReportManager) next = SandboxReportManager.logCounterExpired(next, "enemySilenceIncoming");
+    }
+    return next;
+  }
+
+  if (!enemy._silenceNextAt) enemy._silenceNextAt = randSandboxFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
+  enemy._silenceTimer = Number(enemy._silenceTimer || 0) + elapsedS / 1000;
+
+  if (enemy._silenceTimer >= enemy._silenceNextAt) {
+    enemy._silenceTimer = 0;
+    enemy._silenceNextAt = 0;
+    enemy.silenceTelegraphUntilMs = next.elapsedMs + ENEMY_CHARGE_TELEGRAPH_MS;
+    next = appendSandboxLog(next, "🔇 " + enemy.name + " se prépare à réduire le héros de test au silence !");
+    if (window.SandboxReportManager) next = SandboxReportManager.logTelegraphSeen(next, "enemySilenceIncoming");
+  }
+  return next;
+}
+
+function tickSandboxShieldPattern(state, elapsedS) {
+  var enemy = Object.assign({}, state.enemy);
+  var next = Object.assign({}, state, { enemy: enemy });
+
+  if (enemy.shieldTelegraphUntilMs) {
+    if (next.elapsedMs >= enemy.shieldTelegraphUntilMs) {
+      enemy.shieldTelegraphUntilMs = 0;
+      enemy._shieldNextAt = randSandboxFloat(BOSS_SHIELD_MIN_INTERVAL_S, BOSS_SHIELD_MAX_INTERVAL_S);
+      enemy.shieldActiveUntilMs = next.elapsedMs + BOSS_SHIELD_DURATION_MS;
+      next = appendSandboxLog(next, "🛡️ Le bouclier de " + enemy.name + " se referme !");
+      if (window.SandboxReportManager) next = SandboxReportManager.logCounterExpired(next, "shieldIncoming");
+    }
+    return next;
+  }
+
+  if (!enemy._shieldNextAt) enemy._shieldNextAt = randSandboxFloat(BOSS_SHIELD_MIN_INTERVAL_S, BOSS_SHIELD_MAX_INTERVAL_S);
+  enemy._shieldTimer = Number(enemy._shieldTimer || 0) + elapsedS / 1000;
+
+  if (enemy._shieldTimer >= enemy._shieldNextAt) {
+    enemy._shieldTimer = 0;
+    enemy._shieldNextAt = 0;
+    enemy.shieldTelegraphUntilMs = next.elapsedMs + BOSS_SHIELD_TELEGRAPH_MS;
+    next = appendSandboxLog(next, "🛡️ " + enemy.name + " invoque un bouclier !");
+    if (window.SandboxReportManager) next = SandboxReportManager.logTelegraphSeen(next, "shieldIncoming");
+  }
+  return next;
+}
+
+function tickSandboxHealPattern(state, elapsedS) {
+  var enemy = Object.assign({}, state.enemy);
+  var next = Object.assign({}, state, { enemy: enemy });
+
+  if (enemy.healTelegraphUntilMs) {
+    if (next.elapsedMs >= enemy.healTelegraphUntilMs) {
+      enemy.healTelegraphUntilMs = 0;
+      enemy._healNextAt = randSandboxFloat(BOSS_HEAL_MIN_INTERVAL_S, BOSS_HEAL_MAX_INTERVAL_S);
+      var healAmount = Math.max(1, Math.floor(Number(enemy.hp || 0) * BOSS_HEAL_PERCENT));
+      enemy.hp = Math.min(enemy.maxHp, enemy.hp + healAmount);
+      next = appendSandboxLog(next, "💚 " + enemy.name + " récupère " + healAmount + " PV !");
+      if (window.SandboxReportManager) next = SandboxReportManager.logCounterExpired(next, "healIncoming");
+    }
+    return next;
+  }
+
+  if (!enemy._healNextAt) enemy._healNextAt = randSandboxFloat(BOSS_HEAL_MIN_INTERVAL_S, BOSS_HEAL_MAX_INTERVAL_S);
+  enemy._healTimer = Number(enemy._healTimer || 0) + elapsedS / 1000;
+
+  if (enemy._healTimer >= enemy._healNextAt) {
+    enemy._healTimer = 0;
+    enemy._healNextAt = 0;
+    enemy.healTelegraphUntilMs = next.elapsedMs + BOSS_HEAL_TELEGRAPH_MS;
+    next = appendSandboxLog(next, "💚 " + enemy.name + " se prépare à se soigner !");
+    if (window.SandboxReportManager) next = SandboxReportManager.logTelegraphSeen(next, "healIncoming");
+  }
+  return next;
+}
+
+function randSandboxFloat(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+// Équivalent de ClassCombatManager.applyActionEffects() — vulnérabilité, DoT, et les
+// 4 suppressions d'archétype (uniquement si matchedConditionId correspond exactement
+// à l'archétype visé, comme en jeu réel : ce sont des conditions Grimoire sur l'état
+// permanent de l'ennemi, pas les patterns télégraphés).
+function applySandboxActionEffects(state, action, lastHitDmg, matchedConditionId) {
+  var effects = action.effects || [];
+  if (!effects.length || !state.enemy) return state;
+
+  var next = state;
+  effects.forEach(function (effect) {
+    if (!effect || !next.enemy) return;
+
+    if (effect.type === "enemyVulnerability") {
+      next = Object.assign({}, next, {
+        enemy: Object.assign({}, next.enemy, {
+          vulnerableUntilMs: next.elapsedMs + Number(effect.durationMs || 0),
+          vulnerableMult: Number(effect.value || 0)
+        })
+      });
+    } else if (effect.type === "damageOverTime") {
+      var perTick = Math.max(0, Number(lastHitDmg || 0) * Number(effect.percentPerSecond || 0));
+      next = Object.assign({}, next, {
+        enemy: Object.assign({}, next.enemy, {
+          dot: { perTickDamage: perTick, remainingMs: Number(effect.durationMs || 0), accumMs: 0 }
+        })
+      });
+    } else if (effect.type === "enemyRageSuppression" && matchedConditionId === "enemyEnraged") {
+      next = applySandboxRageSuppression(next);
+    } else if (effect.type === "enemyCorruptionPurge" && matchedConditionId === "enemyCorrupted") {
+      next = Object.assign({}, next, { enemy: Object.assign({}, next.enemy, { corruptedStacks: 0 }) });
+    } else if (effect.type === "enemyLifestealSuppression" && matchedConditionId === "enemyVampiric") {
+      next = Object.assign({}, next, {
+        enemy: Object.assign({}, next.enemy, { vampiricSuppressedUntilMs: next.elapsedMs + (typeof VAMPIRIC_SUPPRESSION_DURATION_MS === "number" ? VAMPIRIC_SUPPRESSION_DURATION_MS : 4000) })
+      });
+    } else if (effect.type === "enemyArmorSuppression" && matchedConditionId === "enemyArmored") {
+      next = Object.assign({}, next, {
+        enemy: Object.assign({}, next.enemy, {
+          armorSuppressedUntilMs: next.elapsedMs + (typeof ARMORED_SUPPRESSION_DURATION_MS === "number" ? ARMORED_SUPPRESSION_DURATION_MS : 4000),
+          armorSuppressedReduction: (typeof ARMORED_SUPPRESSION_REDUCTION_PCT === "number") ? ARMORED_SUPPRESSION_REDUCTION_PCT : 0.05
+        })
+      });
+    }
+  });
+  return next;
+}
+
+// Variante temps-simulé de getArmoredEffectiveDamageReduction (data/enemy-archetypes.js),
+// qui compare à Date.now() — ici on compare à state.elapsedMs comme le reste du fichier.
+function getSandboxArmoredEffectiveDamageReduction(enemy, elapsedMs) {
+  if (!enemy || enemy.archetype !== "armored") return 0;
+  if (enemy.armorSuppressedUntilMs && elapsedMs < enemy.armorSuppressedUntilMs) {
+    return Math.max(0, Number(enemy.armorSuppressedReduction || 0));
+  }
+  return (typeof ARMORED_DAMAGE_REDUCTION_PCT === "number") ? ARMORED_DAMAGE_REDUCTION_PCT : 0.10;
+}
+
+function applySandboxRageSuppression(state) {
+  if (!state.enemy || state.enemy.archetype !== "enraged" || !(state.enemy.maxHp > 0)) return state;
+  var currentPct = 1 - (Number(state.enemy.hp || 0) / Number(state.enemy.maxHp || 1));
+  var reduction = (typeof ENRAGED_SUPPRESSION_REDUCTION_PCT === "number") ? ENRAGED_SUPPRESSION_REDUCTION_PCT : 0.20;
+  var reducedPct = Math.max(0, currentPct - reduction);
+  var freezeDurationMs = (typeof ENRAGED_FREEZE_DURATION_MS === "number") ? ENRAGED_FREEZE_DURATION_MS : 4000;
+  return Object.assign({}, state, {
+    enemy: Object.assign({}, state.enemy, {
+      rageFrozenPct: reducedPct,
+      rageFreezeUntilMs: state.elapsedMs + freezeDurationMs
+    })
+  });
+}
+
+// Équivalent de CombatEngine.estimateCounterValue() — estimation affichée en rapport,
+// pas un montant réellement appliqué (le pattern est juste annulé, pas simulé puis défait).
+function estimateSandboxCounterValue(state, conditionId) {
+  if (!state.enemy) return 0;
+  var c = Object.assign({}, SANDBOX_ENEMY_COEFS, state.enemyCoefs || {});
+  var power = Number(state.enemy.power || 0);
+
+  if (conditionId === "chargeIncoming") {
+    return Math.max(1, Math.floor(power * c.POWER_DMG_COEF * ENEMY_CHARGE_DMG_MULT));
+  }
+  if (conditionId === "shieldIncoming") {
+    return Math.max(1, Math.floor(power * c.POWER_DMG_COEF));
+  }
+  if (conditionId === "healIncoming") {
+    return Math.max(1, Math.floor(Number(state.enemy.hp || 0) * BOSS_HEAL_PERCENT));
+  }
+  if (conditionId === "enemySilenceIncoming") {
+    return (typeof SILENCE_DURATION_MS === "number") ? SILENCE_DURATION_MS : 4000;
+  }
+  return 0;
+}
+
+// Équivalent de ClassCombatManager.applyGrimoireCounterIfApplicable() — n'agit que si le
+// slot utilisé est bien configuré en contre (action.counters) pour la condition qui l'a
+// déclenché, et que le télégraphe correspondant est encore actif au moment de l'action.
+function applySandboxGrimoireCounterIfApplicable(state, action, matchedConditionId, slot) {
+  if (!matchedConditionId || !state.enemy) return state;
+  if (!Array.isArray(action.counters) || action.counters.indexOf(matchedConditionId) === -1) return state;
+
+  var enemy = Object.assign({}, state.enemy);
+  var countered = false;
+
+  if (matchedConditionId === "chargeIncoming" && enemy.chargeTelegraphUntilMs) {
+    enemy.chargeTelegraphUntilMs = 0;
+    countered = true;
+  } else if (matchedConditionId === "shieldIncoming" && enemy.shieldTelegraphUntilMs) {
+    enemy.shieldTelegraphUntilMs = 0;
+    countered = true;
+  } else if (matchedConditionId === "healIncoming" && enemy.healTelegraphUntilMs) {
+    enemy.healTelegraphUntilMs = 0;
+    countered = true;
+  } else if (matchedConditionId === "enemySilenceIncoming" && enemy.silenceTelegraphUntilMs) {
+    enemy.silenceTelegraphUntilMs = 0;
+    countered = true;
+  }
+
+  if (!countered) return state;
+
+  var next = Object.assign({}, state, { enemy: enemy });
+  next = appendSandboxLog(next, "⚡ Contre réussi : " + (action.label || "l'action") + " annule l'attaque adverse !");
+  if (window.SandboxReportManager) {
+    var estimatedValue = estimateSandboxCounterValue(next, matchedConditionId);
+    next = SandboxReportManager.logCounterSuccess(next, slot, matchedConditionId, estimatedValue);
+  }
+  return next;
+}
+
+// Équivalent du CombatReportManager réel (combat-report-system.js), mais en style
+// PUR (retourne l'objet combatReport mis à jour, ne mute jamais game.* ni le state)
+// pour rester cohérent avec le reste de ce fichier. Porté par state.combatReport,
+// jamais persisté (comme game.combatReport), reset uniquement via createSandboxCombatReport().
+var SandboxReportManager = {
+  createEmptyReport: function () {
+    return {
+      startedAt: 0,
+      perSlot: {
+        skill1: this.createEmptySlotStats(),
+        skill2: this.createEmptySlotStats(),
+        skill3: this.createEmptySlotStats(),
+        defense: this.createEmptySlotStats()
+      },
+      damageAvoidedTotal: 0,
+      healPreventedTotal: 0,
+      shieldsRemovedCount: 0,
+      silencesAvoidedCount: 0,
+      totalDamageDealt: 0,
+      archetypeImpact: {
+        enragedBonusDamageTaken: 0,
+        corruptedDamageLost: 0,
+        vampiricHealStolen: 0,
+        armoredDamageLost: 0
+      }
+    };
+  },
+
+  createEmptySlotStats: function () {
+    return { uses: 0, telegraphsSeen: 0, countersSucceeded: 0, countersExpired: 0 };
+  },
+
+  isTrackedSlot: function (slot) {
+    return slot === "skill1" || slot === "skill2" || slot === "skill3" || slot === "defense";
+  },
+
+  cloneReport: function (report) {
+    return {
+      startedAt: report.startedAt,
+      perSlot: {
+        skill1: Object.assign({}, report.perSlot.skill1),
+        skill2: Object.assign({}, report.perSlot.skill2),
+        skill3: Object.assign({}, report.perSlot.skill3),
+        defense: Object.assign({}, report.perSlot.defense)
+      },
+      damageAvoidedTotal: report.damageAvoidedTotal,
+      healPreventedTotal: report.healPreventedTotal,
+      shieldsRemovedCount: report.shieldsRemovedCount,
+      silencesAvoidedCount: report.silencesAvoidedCount,
+      totalDamageDealt: report.totalDamageDealt,
+      archetypeImpact: Object.assign({}, report.archetypeImpact)
+    };
+  },
+
+  // logX(state, ...) retourne un NOUVEAU state avec combatReport mis à jour —
+  // ne mute jamais l'argument reçu, à réassigner par l'appelant (next = SandboxReportManager.logX(next, ...)).
+  logUsage: function (state, slot) {
+    if (!state.combatReport || !this.isTrackedSlot(slot)) return state;
+    var report = this.cloneReport(state.combatReport);
+    report.perSlot[slot].uses++;
+    return Object.assign({}, state, { combatReport: report });
+  },
+
+  logTelegraphSeen: function (state, conditionId) {
+    if (!state.combatReport) return state;
+    var report = this.cloneReport(state.combatReport);
+    this.getConfiguredSlotsForCondition(state, conditionId).forEach(function (slot) {
+      if (report.perSlot[slot]) report.perSlot[slot].telegraphsSeen++;
+    });
+    return Object.assign({}, state, { combatReport: report });
+  },
+
+  logCounterExpired: function (state, conditionId) {
+    if (!state.combatReport) return state;
+    var report = this.cloneReport(state.combatReport);
+    this.getConfiguredSlotsForCondition(state, conditionId).forEach(function (slot) {
+      if (report.perSlot[slot]) report.perSlot[slot].countersExpired++;
+    });
+    return Object.assign({}, state, { combatReport: report });
+  },
+
+  logCounterSuccess: function (state, slot, conditionId, estimatedValue) {
+    if (!state.combatReport) return state;
+    var report = this.cloneReport(state.combatReport);
+    if (this.isTrackedSlot(slot) && report.perSlot[slot]) report.perSlot[slot].countersSucceeded++;
+    var value = Math.max(0, Number(estimatedValue || 0));
+    if (conditionId === "chargeIncoming") {
+      report.damageAvoidedTotal += value;
+    } else if (conditionId === "shieldIncoming") {
+      report.damageAvoidedTotal += value;
+      report.shieldsRemovedCount++;
+    } else if (conditionId === "healIncoming") {
+      report.healPreventedTotal += value;
+    } else if (conditionId === "enemySilenceIncoming") {
+      report.silencesAvoidedCount++;
+    }
+    return Object.assign({}, state, { combatReport: report });
+  },
+
+  logDamageDealt: function (state, amount) {
+    if (!state.combatReport) return state;
+    var report = this.cloneReport(state.combatReport);
+    report.totalDamageDealt += Math.max(0, Number(amount || 0));
+    return Object.assign({}, state, { combatReport: report });
+  },
+
+  logArchetypeImpact: function (state, key, amount) {
+    if (!state.combatReport || !state.combatReport.archetypeImpact.hasOwnProperty(key)) return state;
+    var report = this.cloneReport(state.combatReport);
+    report.archetypeImpact[key] += Math.max(0, Number(amount || 0));
+    return Object.assign({}, state, { combatReport: report });
+  },
+
+  // Slots du Grimoire (state.grimoireRules) configurés sur cette condition — utilisé
+  // pour savoir quel(s) slot(s) créditer d'un "télégraphe vu"/"contre expiré".
+  getConfiguredSlotsForCondition: function (state, conditionId) {
+    var rules = Array.isArray(state.grimoireRules) ? state.grimoireRules : [];
+    var seen = {};
+    var slots = [];
+    rules.forEach(function (rule) {
+      if (rule && rule.conditionId === conditionId && rule.actionSlot && !seen[rule.actionSlot]) {
+        seen[rule.actionSlot] = true;
+        slots.push(rule.actionSlot);
+      }
+    });
+    return slots;
+  },
+
+  getAverageDps: function (state, totalElapsedMs) {
+    if (!state.combatReport) return 0;
+    var effectiveElapsedMs = (typeof totalElapsedMs === "number") ? totalElapsedMs : state.elapsedMs;
+    var elapsedS = (effectiveElapsedMs - state.combatReport.startedAt) / 1000;
+    if (elapsedS < 1) return 0;
+    return state.combatReport.totalDamageDealt / elapsedS;
+  }
+};
+window.SandboxReportManager = SandboxReportManager;
+
 function createDefaultSandboxPersistence() {
   return {
     hpMode: "keep",
@@ -514,9 +1129,9 @@ function createDefaultSandboxPersistence() {
   };
 }
 
-function createSandboxRunState(classId, heroId, queue, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity) {
+function createSandboxRunState(classId, heroId, queue, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride) {
   if (!Array.isArray(queue) || queue.length === 0) return null;
-  var firstCombat = createSandboxCombatState(classId, heroId, queue[0], overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity);
+  var firstCombat = createSandboxCombatState(classId, heroId, queue[0], overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride);
   if (!firstCombat) return null;
 
   var pers = persistence || createDefaultSandboxPersistence();
@@ -528,6 +1143,7 @@ function createSandboxRunState(classId, heroId, queue, persistence, overrideStat
     baseCooldownMs: firstCombat.baseCooldownMs,
     overrideEnemyCoefs: overrideEnemyCoefs || null,
     equipmentRarity: equipmentRarity || null,
+    archetypeOverride: archetypeOverride || null,
     queue: queue.slice(),
     currentIndex: 0,
     currentCombat: firstCombat,
@@ -577,6 +1193,40 @@ function applySandboxPersistence(combat, persistence) {
   return next;
 }
 
+// Factorisé (comme handleSandboxInfiniteVictory) : gestion d'une victoire en mode Run —
+// déclenchable par une action ou par un tick de temps (DoT).
+function handleSandboxRunVictory(runState, next, nextCombat) {
+  next.victories = runState.victories + 1;
+  next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Fin du combat contre " + nextCombat.enemy.name + ", victoire (" + next.victories + "/" + runState.queue.length + ") ---")]);
+
+  var isLast = runState.currentIndex >= runState.queue.length - 1;
+  if (isLast) {
+    next.status = "victory";
+    next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "🏆 Run terminé — tous les combats remportés.")]);
+    return finalizeSandboxRun(next);
+  }
+
+  var nextIndex = runState.currentIndex + 1;
+  var nextEnemyId = runState.queue[nextIndex];
+  var freshCombat = createSandboxCombatState(runState.classId, runState.heroId, nextEnemyId, runState.overrideStats, runState.baseCooldownMs, runState.overrideEnemyCoefs, runState.equipmentRarity, runState.archetypeOverride);
+  if (!freshCombat) {
+    next.status = "stopped";
+    next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Run arrêté : ennemi suivant invalide (" + nextEnemyId + ") ---")]);
+    return next;
+  }
+  var carried = applySandboxPersistence(Object.assign({}, freshCombat, {
+    hero: Object.assign({}, freshCombat.hero, { hp: nextCombat.hero.hp }),
+    resourceState: nextCombat.resourceState,
+    cooldownState: nextCombat.cooldownState
+  }), runState.persistence);
+
+  next.currentIndex = nextIndex;
+  next.currentCombat = carried;
+  next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Début du combat contre " + carried.enemy.name + (carried.enemy.isBoss ? " (BOSS)" : "") + " (" + (nextIndex + 1) + "/" + runState.queue.length + ") ---")]);
+
+  return next;
+}
+
 function applySandboxRunAction(runState, actionSlot) {
   if (!runState) return runState;
   if (runState.status !== "ongoing") return runState;
@@ -614,33 +1264,7 @@ function applySandboxRunAction(runState, actionSlot) {
   }
 
   if (nextCombat.status === "victory") {
-    next.victories = runState.victories + 1;
-    next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Fin du combat contre " + nextCombat.enemy.name + ", victoire (" + next.victories + "/" + runState.queue.length + ") ---")]);
-
-    var isLast = runState.currentIndex >= runState.queue.length - 1;
-    if (isLast) {
-      next.status = "victory";
-      next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "🏆 Run terminé — tous les combats remportés.")]);
-      return finalizeSandboxRun(next);
-    }
-
-    var nextIndex = runState.currentIndex + 1;
-    var nextEnemyId = runState.queue[nextIndex];
-    var freshCombat = createSandboxCombatState(runState.classId, runState.heroId, nextEnemyId, runState.overrideStats, runState.baseCooldownMs, runState.overrideEnemyCoefs, runState.equipmentRarity);
-    if (!freshCombat) {
-      next.status = "stopped";
-      next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Run arrêté : ennemi suivant invalide (" + nextEnemyId + ") ---")]);
-      return next;
-    }
-    var carried = applySandboxPersistence(Object.assign({}, freshCombat, {
-      hero: Object.assign({}, freshCombat.hero, { hp: nextCombat.hero.hp }),
-      resourceState: nextCombat.resourceState,
-      cooldownState: nextCombat.cooldownState
-    }), runState.persistence);
-
-    next.currentIndex = nextIndex;
-    next.currentCombat = carried;
-    next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Début du combat contre " + carried.enemy.name + (carried.enemy.isBoss ? " (BOSS)" : "") + " (" + (nextIndex + 1) + "/" + runState.queue.length + ") ---")]);
+    next = handleSandboxRunVictory(runState, next, nextCombat);
   }
 
   return next;
@@ -657,6 +1281,7 @@ function tickSandboxRunTime(runState, elapsedMs) {
   next.elapsedMs = runState.elapsedMs + elapsed;
 
   var diff = diffSandboxHp(prevCombat, nextCombat);
+  next.totalDamageDealt = runState.totalDamageDealt + diff.dealt;
   next.totalDamageTaken = runState.totalDamageTaken + diff.taken;
   next.totalDamageAvoided = (runState.totalDamageAvoided || 0) + ((nextCombat.totalDamageAvoided || 0) - (prevCombat.totalDamageAvoided || 0));
 
@@ -670,6 +1295,11 @@ function tickSandboxRunTime(runState, elapsedMs) {
     next.deathAt = { index: runState.currentIndex, enemyId: runState.queue[runState.currentIndex] };
     next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Run interrompu : défaite au combat " + (runState.currentIndex + 1) + "/" + runState.queue.length + " contre " + nextCombat.enemy.name + " ---")]);
     return finalizeSandboxRun(next);
+  }
+
+  // v3.81.0 : voir la note équivalente dans tickSandboxInfiniteTime.
+  if (nextCombat.status === "victory") {
+    next = handleSandboxRunVictory(runState, next, nextCombat);
   }
 
   return next;
@@ -710,11 +1340,11 @@ function finalizeSandboxRun(runState) {
   });
 }
 
-function createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity) {
+function createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride, bossEveryNKills) {
   var enemyOrder = listSandboxAllEnemiesInOrder();
   if (!enemyOrder.length) return null;
 
-  var firstCombat = createSandboxCombatState(classId, heroId, enemyOrder[0], overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity);
+  var firstCombat = createSandboxCombatState(classId, heroId, enemyOrder[0], overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride);
   if (!firstCombat) return null;
 
   var pers = persistence || createDefaultSandboxPersistence();
@@ -726,6 +1356,8 @@ function createSandboxInfiniteState(classId, heroId, persistence, overrideStats,
     baseCooldownMs: firstCombat.baseCooldownMs,
     overrideEnemyCoefs: overrideEnemyCoefs || null,
     equipmentRarity: equipmentRarity || null,
+    archetypeOverride: archetypeOverride || null,
+    bossEveryNKills: (typeof bossEveryNKills === "number" && bossEveryNKills > 0) ? Math.floor(bossEveryNKills) : 0,
     persistence: pers,
     enemyOrder: enemyOrder,
     currentPosition: 0,
@@ -733,6 +1365,14 @@ function createSandboxInfiniteState(classId, heroId, persistence, overrideStats,
     currentCombat: firstCombat,
     status: "ongoing",
     defeatedCount: 0,
+    bossEncounteredCount: 0,
+    archetypeImpact: {
+      enragedBonusDamageTaken: 0,
+      vampiricHealStolen: 0,
+      corruptedDamageLost: 0,
+      armoredDamageLost: 0
+    },
+    archetypeEncounters: {},
     totalDamageDealt: 0,
     totalDamageTaken: 0,
     totalDamageAvoided: 0,
@@ -741,6 +1381,15 @@ function createSandboxInfiniteState(classId, heroId, persistence, overrideStats,
     deathAt: null,
     log: [appendRunLogEntry(0, "--- Début du combat contre " + firstCombat.enemy.name + " (Ennemi 1/" + enemyOrder.length + ", Boucle 1) ---")]
   };
+}
+
+// Boss de la 1ère aventure du monde simulé (WORLD_INDEX des coefs actifs) — insertion
+// périodique en Simulation auto (bossEveryNKills), indépendante de la file d'ennemis normaux.
+function getSandboxBossIdForWorldIndex(worldIndex) {
+  if (typeof WORLDS === "undefined" || !WORLDS || !WORLDS[worldIndex]) return null;
+  var adventures = WORLDS[worldIndex].adventures || [];
+  var withBoss = adventures.filter(function (a) { return !!a.boss; })[0];
+  return withBoss ? withBoss.boss : null;
 }
 
 function advanceSandboxInfiniteToNextEnemy(infiniteState, nextCombatFromCurrent) {
@@ -753,25 +1402,72 @@ function advanceSandboxInfiniteToNextEnemy(infiniteState, nextCombatFromCurrent)
     loopedThisStep = true;
   }
 
-  var nextEnemyId = infiniteState.enemyOrder[nextPosition];
-  var freshCombat = createSandboxCombatState(infiniteState.classId, infiniteState.heroId, nextEnemyId, infiniteState.overrideStats, infiniteState.baseCooldownMs, infiniteState.overrideEnemyCoefs, infiniteState.equipmentRarity);
+  var forceBoss = infiniteState.bossEveryNKills > 0
+    && infiniteState.defeatedCount > 0
+    && infiniteState.defeatedCount % infiniteState.bossEveryNKills === 0;
+
+  var worldIndex = Number((infiniteState.overrideEnemyCoefs && infiniteState.overrideEnemyCoefs.WORLD_INDEX) || 0);
+  var bossId = forceBoss ? getSandboxBossIdForWorldIndex(worldIndex) : null;
+  var nextEnemyId = bossId || infiniteState.enemyOrder[nextPosition];
+
+  var freshCombat = createSandboxCombatState(infiniteState.classId, infiniteState.heroId, nextEnemyId, infiniteState.overrideStats, infiniteState.baseCooldownMs, infiniteState.overrideEnemyCoefs, infiniteState.equipmentRarity, infiniteState.archetypeOverride);
   if (!freshCombat) return { status: "invalid" };
 
   var carried = applySandboxPersistence(Object.assign({}, freshCombat, {
     hero: Object.assign({}, freshCombat.hero, { hp: nextCombatFromCurrent.hero.hp }),
     resourceState: nextCombatFromCurrent.resourceState,
-    cooldownState: nextCombatFromCurrent.cooldownState
+    cooldownState: nextCombatFromCurrent.cooldownState,
+    combatReport: nextCombatFromCurrent.combatReport || freshCombat.combatReport,
+    heroSilencedUntilMs: 0
   }), infiniteState.persistence);
 
-  return { status: "ok", position: nextPosition, loopCount: loopCount, loopedThisStep: loopedThisStep, combat: carried };
+  return { status: "ok", position: bossId ? infiniteState.currentPosition : nextPosition, loopCount: loopCount, loopedThisStep: bossId ? false : loopedThisStep, combat: carried, wasBoss: !!bossId };
 }
 
-function applySandboxInfiniteAction(infiniteState, actionSlot) {
+// Factorisé : gestion d'une victoire (compta archétypes, avance vers l'ennemi suivant,
+// gestion boss) — déclenchable soit par une action du joueur (applySandboxInfiniteAction),
+// soit par un DoT qui tue l'ennemi pendant un simple tick de temps (tickSandboxInfiniteTime).
+function handleSandboxInfiniteVictory(infiniteState, next, nextCombat) {
+  next.defeatedCount = infiniteState.defeatedCount + 1;
+  next.archetypeImpact = {
+    enragedBonusDamageTaken: (infiniteState.archetypeImpact ? infiniteState.archetypeImpact.enragedBonusDamageTaken : 0) + (nextCombat.archetypeImpact ? nextCombat.archetypeImpact.enragedBonusDamageTaken : 0),
+    vampiricHealStolen: (infiniteState.archetypeImpact ? infiniteState.archetypeImpact.vampiricHealStolen : 0) + (nextCombat.archetypeImpact ? nextCombat.archetypeImpact.vampiricHealStolen : 0),
+    corruptedDamageLost: (infiniteState.archetypeImpact ? infiniteState.archetypeImpact.corruptedDamageLost : 0) + (nextCombat.archetypeImpact ? nextCombat.archetypeImpact.corruptedDamageLost : 0),
+    armoredDamageLost: (infiniteState.archetypeImpact ? infiniteState.archetypeImpact.armoredDamageLost : 0) + (nextCombat.archetypeImpact ? nextCombat.archetypeImpact.armoredDamageLost : 0)
+  };
+  next.archetypeEncounters = Object.assign({}, infiniteState.archetypeEncounters);
+  if (nextCombat.enemy.archetype) {
+    next.archetypeEncounters[nextCombat.enemy.archetype] = (next.archetypeEncounters[nextCombat.enemy.archetype] || 0) + 1;
+  }
+  next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Fin du combat contre " + nextCombat.enemy.name + ", victoire (" + next.defeatedCount + " vaincu(s) au total) ---")]);
+
+  var advance = advanceSandboxInfiniteToNextEnemy(Object.assign({}, infiniteState, { defeatedCount: next.defeatedCount }), nextCombat);
+  if (advance.status === "invalid") {
+    next.status = "stopped";
+    next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Mode infini arrêté : ennemi suivant invalide ---")]);
+    return next;
+  }
+
+  next.currentPosition = advance.position;
+  next.loopCount = advance.loopCount;
+  next.currentCombat = advance.combat;
+  if (advance.wasBoss) {
+    next.bossEncounteredCount = (infiniteState.bossEncounteredCount || 0) + 1;
+  }
+  if (advance.loopedThisStep) {
+    next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "🔁 Liste complète parcourue — Boucle " + advance.loopCount + " commence.")]);
+  }
+  next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Début du combat contre " + advance.combat.enemy.name + (advance.wasBoss ? " (BOSS)" : "") + " (Ennemi " + (advance.position + 1) + "/" + infiniteState.enemyOrder.length + ", Boucle " + advance.loopCount + ") ---")]);
+
+  return next;
+}
+
+function applySandboxInfiniteAction(infiniteState, actionSlot, matchedConditionId) {
   if (!infiniteState) return infiniteState;
   if (infiniteState.status !== "ongoing") return infiniteState;
 
   var prevCombat = infiniteState.currentCombat;
-  var nextCombat = applySandboxAction(prevCombat, actionSlot);
+  var nextCombat = applySandboxAction(prevCombat, actionSlot, matchedConditionId);
 
   var next = Object.assign({}, infiniteState);
   next.currentCombat = nextCombat;
@@ -803,23 +1499,7 @@ function applySandboxInfiniteAction(infiniteState, actionSlot) {
   }
 
   if (nextCombat.status === "victory") {
-    next.defeatedCount = infiniteState.defeatedCount + 1;
-    next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Fin du combat contre " + nextCombat.enemy.name + ", victoire (" + next.defeatedCount + " vaincu(s) au total) ---")]);
-
-    var advance = advanceSandboxInfiniteToNextEnemy(infiniteState, nextCombat);
-    if (advance.status === "invalid") {
-      next.status = "stopped";
-      next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Mode infini arrêté : ennemi suivant invalide ---")]);
-      return next;
-    }
-
-    next.currentPosition = advance.position;
-    next.loopCount = advance.loopCount;
-    next.currentCombat = advance.combat;
-    if (advance.loopedThisStep) {
-      next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "🔁 Liste complète parcourue — Boucle " + advance.loopCount + " commence.")]);
-    }
-    next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Début du combat contre " + advance.combat.enemy.name + " (Ennemi " + (advance.position + 1) + "/" + infiniteState.enemyOrder.length + ", Boucle " + advance.loopCount + ") ---")]);
+    next = handleSandboxInfiniteVictory(infiniteState, next, nextCombat);
   }
 
   return next;
@@ -836,6 +1516,7 @@ function tickSandboxInfiniteTime(infiniteState, elapsedMs) {
   next.elapsedMs = infiniteState.elapsedMs + elapsed;
 
   var diff = diffSandboxHp(prevCombat, nextCombat);
+  next.totalDamageDealt = infiniteState.totalDamageDealt + diff.dealt;
   next.totalDamageTaken = infiniteState.totalDamageTaken + diff.taken;
   next.totalDamageAvoided = (infiniteState.totalDamageAvoided || 0) + ((nextCombat.totalDamageAvoided || 0) - (prevCombat.totalDamageAvoided || 0));
 
@@ -849,6 +1530,13 @@ function tickSandboxInfiniteTime(infiniteState, elapsedMs) {
     next.deathAt = { enemyId: infiniteState.enemyOrder[infiniteState.currentPosition], position: infiniteState.currentPosition, loopCount: infiniteState.loopCount };
     next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Mode infini interrompu : défaite contre " + nextCombat.enemy.name + " (Ennemi " + (infiniteState.currentPosition + 1) + "/" + infiniteState.enemyOrder.length + ", Boucle " + infiniteState.loopCount + ") ---")]);
     return finalizeSandboxInfinite(next);
+  }
+
+  // v3.81.0 : une victoire peut désormais survenir pendant un simple tick de temps
+  // (DoT qui achève l'ennemi), pas seulement suite à une action du joueur — sans cette
+  // gestion, le combat restait bloqué sur un ennemi déjà à 0 PV indéfiniment.
+  if (nextCombat.status === "victory") {
+    next = handleSandboxInfiniteVictory(infiniteState, next, nextCombat);
   }
 
   return next;
@@ -921,3 +1609,35 @@ window.applySandboxInfiniteAction = applySandboxInfiniteAction;
 window.tickSandboxInfiniteTime = tickSandboxInfiniteTime;
 window.stopSandboxInfinite = stopSandboxInfinite;
 window.finalizeSandboxInfinite = finalizeSandboxInfinite;
+
+// Équivalent de ClassCombatManager.tickAutoSkills() (sans le throttle par décision
+// toutes les 300ms — la boucle batch décide déjà à chaque tick) : Grimoire d'abord
+// (chooseGrimoireAction, module pur réutilisé tel quel), repli sur la priorité par
+// défaut sinon, en excluant les slots réservés à un contre pour ne pas les gâcher.
+function chooseSandboxAutoOrGrimoireAction(state, priorityList, grimoireRules, kit) {
+  if (!kit || !state.enemy) return { slot: null, matchedConditionId: null };
+
+  var combatContext = buildSandboxCombatContext(state);
+  var activeRules = (Array.isArray(grimoireRules) && grimoireRules.length) ? grimoireRules : null;
+
+  if (activeRules && typeof chooseGrimoireAction === "function") {
+    var grimoireResult = chooseGrimoireAction(activeRules, kit, state.resourceState, state.cooldownState, combatContext);
+    if (grimoireResult) {
+      return { slot: grimoireResult.actionSlot, matchedConditionId: grimoireResult.matchedConditionId };
+    }
+  }
+
+  var counterSlots = (activeRules && typeof getAllCounterActionSlots === "function")
+    ? getAllCounterActionSlots(activeRules, kit, state.enemy)
+    : [];
+  var priorityListForFallback = counterSlots.length
+    ? priorityList.filter(function (s) { return counterSlots.indexOf(s) === -1; })
+    : priorityList;
+
+  var slot = (typeof chooseAutoAction === "function")
+    ? chooseAutoAction(priorityListForFallback, kit, state.resourceState, state.cooldownState, combatContext)
+    : null;
+
+  return { slot: slot, matchedConditionId: null }; // jamais de contre depuis le repli par défaut
+}
+window.chooseSandboxAutoOrGrimoireAction = chooseSandboxAutoOrGrimoireAction;

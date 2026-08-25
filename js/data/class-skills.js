@@ -125,8 +125,8 @@ window.CLASS_SKILLS = {
       initial: 0,
       generation: {
         type: "successfulBasicAttack",
-        value: 10,
-        criticalBonus: 5
+        value: 7,
+        criticalBonus: 4
       }
     },
 
@@ -135,12 +135,12 @@ window.CLASS_SKILLS = {
         id: "archer_basic",
         slot: "basic",
         label: "Attaque de base",
-        description: "Inflige 85% des dégâts. +10 Concentration sur réussite, +5 supplémentaire sur coup critique.",
+        description: "Inflige 85% des dégâts. +7 Concentration sur réussite, +4 supplémentaire sur coup critique.",
         type: "damage",
         damageMultiplier: 1,
         hits: 1,
         resourceCost: 0,
-        resourceGain: 10,
+        resourceGain: 7,
         cooldownMs: 0,
         conditions: {},
         effects: []

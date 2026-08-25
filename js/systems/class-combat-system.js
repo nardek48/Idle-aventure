@@ -504,7 +504,23 @@ var ClassCombatManager = {
       : 0;
 
     var predictedTotal = Number(resourceState.current || 0) + estimatedGain;
-    return predictedTotal >= action.resourceCost;
+    if (predictedTotal < action.resourceCost) return false;
+
+    if (typeof estimateTimeToKillMs === "function" && game.enemy) {
+      var heroStats = {
+        weaponType: (window.HEROES_DB && game.heroId) ? (HEROES_DB[game.heroId] && HEROES_DB[game.heroId].weaponType) : null,
+        tapDamage: basicDamageEstimate,
+        effectiveBasicCooldownMs: effectiveCooldownMs,
+        autoDps: (window.EquipmentManager && typeof EquipmentManager.effectiveAutoDps === "function") ? EquipmentManager.effectiveAutoDps() : 0,
+        critChance: ((window.EquipmentManager && typeof EquipmentManager.effectiveCritChance === "function") ? EquipmentManager.effectiveCritChance() : 0) / 100,
+        critMult: (window.EquipmentManager && typeof EquipmentManager.effectiveCritMult === "function") ? EquipmentManager.effectiveCritMult() : 1
+      };
+      var enemyStats = { hp: game.enemy.hp, resists: game.enemy.resists, weak: game.enemy.weak };
+      var estimatedTtkMs = estimateTimeToKillMs(heroStats, enemyStats);
+      if (estimatedTtkMs <= approachWindowSeconds * 1000) return false; // ennemi mourra probablement avant la fenêtre, laisser le repli taper
+    }
+
+    return true;
   },
 
     isCounterActionAlreadyOnTrack: function (action, resourceState, secondsRemaining) {

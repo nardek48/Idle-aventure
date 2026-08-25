@@ -8,7 +8,7 @@ var HEROES_DB = {
     name: "Chevalier",
     image: "./images/Heroes/knight.jpg",
     weaponType: "sword",
-    stats: makeRpgStats(60, 76, 32, 40, 52)
+    stats: makeRpgStats(60, 62, 32, 40, 52)
   },
   ranger: {
     id: "ranger",
