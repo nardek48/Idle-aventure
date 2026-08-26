@@ -7,6 +7,15 @@ var ENEMY_PV_WORLD_EXP = 1.45;
 var BOSS_PV_MULT = 6.7;
 var ENEMY_POWER_SCALE_EXP = 0.3;
 
+// Coefficient WORLD_MULT par monde (session équilibrage "scie", cf. CHANGELOG_v3.87.0.md) :
+// remplace l'ancien coefficient unique 0.90 partagé par tous les mondes. Valeurs trouvées par
+// dichotomie visant ~55% de deathRate à adventureIndex=0, sur les nouvelles stats joueur
+// (post-nerf talents/équipement de v3.87.0). Index = WorldManager.worldIndex (0-based, ordre
+// réel de WORLDS : forest, desert, ruins, crypt, mountain, tower).
+var WORLD_MULT_BY_WORLD = [1.264, 1.637, 1.917, 2.757, 5.418, 7.892];
+// Ratio boss/normal préservé identique à l'original (1.3 / 0.90 ≈ 1.444).
+var BOSS_WORLD_MULT_RATIO = 1.3 / 0.90;
+
 var WorldManager = {
   worldIndex: 0,
   adventureIndex: 0,
@@ -37,7 +46,10 @@ var WorldManager = {
     if (isBoss) {
       enemyId = adventure.boss;
       var bossData = BOSS_DB[enemyId] || { name: "Boss", asset: "slimeking" };
-      var bossWorldComponent = Math.pow(1 + this.worldIndex * 1.3, ENEMY_PV_WORLD_EXP);
+      var bossWorldMult = WORLD_MULT_BY_WORLD[this.worldIndex] != null
+        ? WORLD_MULT_BY_WORLD[this.worldIndex] * BOSS_WORLD_MULT_RATIO
+        : 1.3;
+      var bossWorldComponent = Math.pow(1 + this.worldIndex * bossWorldMult, ENEMY_PV_WORLD_EXP);
       var bossScale = bossWorldComponent + this.adventureIndex * 0.4 + (game.cycleCount || 0) * 0.7;
       var bossEndurance = (bossData.stats && bossData.stats.endurance) || 58;
       var bossHp = Math.floor(bossEndurance * BOSS_PV_MULT * bossScale * milestoneMult + (game.totalKills || 0) * 2);
@@ -75,7 +87,8 @@ var WorldManager = {
 
     enemyId = adventure.enemyPool[randInt(0, adventure.enemyPool.length - 1)];
     var enemyData = ENEMY_DB[enemyId] || { name: "Ennemi", asset: "slime" };
-    var worldComponent = Math.pow(1 + this.worldIndex * 0.90, ENEMY_PV_WORLD_EXP);
+    var worldMult = WORLD_MULT_BY_WORLD[this.worldIndex] != null ? WORLD_MULT_BY_WORLD[this.worldIndex] : 0.90;
+    var worldComponent = Math.pow(1 + this.worldIndex * worldMult, ENEMY_PV_WORLD_EXP);
     var scale = worldComponent + this.adventureIndex * 0.30 + (game.cycleCount || 0) * 0.45 + this.enemyIndex * 0.05;
     var enemyEndurance = (enemyData.stats && enemyData.stats.endurance) || 18;
     var hp = Math.floor(enemyEndurance * ENEMY_PV_MULT * scale * milestoneMult + this.enemyIndex * 5);

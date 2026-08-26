@@ -31,6 +31,13 @@ var SANDBOX_ENEMY_COEFS = {
   CYCLE_COUNT: 0
 };
 
+// Coefficient WORLD_MULT par monde (session équilibrage "scie", cf. CHANGELOG_v3.87.0.md).
+// Copie volontairement dupliquée de WORLD_MULT_BY_WORLD (progression-system.js) : ce fichier
+// est un module pur (aucun accès game.*), il ne doit pas dépendre d'un autre système pour
+// une simple constante de balance. Garder les deux tableaux synchronisés en cas de retouche.
+var SANDBOX_WORLD_MULT_BY_WORLD = [1.264, 1.637, 1.917, 2.757, 5.418, 7.892];
+var SANDBOX_BOSS_WORLD_MULT_RATIO = 1.3 / 0.90;
+
 var SANDBOX_DEFAULT_BASE_COOLDOWN_MS = 1000;
 
 var SANDBOX_WILL_COOLDOWN_MIN_RATIO = 0.5;
@@ -190,13 +197,17 @@ function buildSandboxEnemyStats(enemyId, overrideCoefs, archetypeOverride) {
   var cycleCount = Number(c.CYCLE_COUNT || 0);
   var worldExp = (typeof c.PV_WORLD_EXP === "number") ? c.PV_WORLD_EXP : 1;
 
+  var defaultWorldMult = SANDBOX_WORLD_MULT_BY_WORLD[worldIndex] != null ? SANDBOX_WORLD_MULT_BY_WORLD[worldIndex] : 0.90;
+  var worldMult = (typeof c.WORLD_MULT === "number") ? c.WORLD_MULT : defaultWorldMult;
+  var bossWorldMult = (typeof c.BOSS_WORLD_MULT === "number") ? c.BOSS_WORLD_MULT : defaultWorldMult * SANDBOX_BOSS_WORLD_MULT_RATIO;
+
   var scale, hpCoef;
   if (isBoss) {
-    var bossWorldComponent = Math.pow(1 + worldIndex * 1.3, worldExp);
+    var bossWorldComponent = Math.pow(1 + worldIndex * bossWorldMult, worldExp);
     scale = bossWorldComponent + adventureIndex * 0.4 + cycleCount * 0.7;
     hpCoef = c.BOSS_ENDURANCE_HP_COEF;
   } else {
-    var worldComponent = Math.pow(1 + worldIndex * 0.90, worldExp);
+    var worldComponent = Math.pow(1 + worldIndex * worldMult, worldExp);
     scale = worldComponent + adventureIndex * 0.30 + cycleCount * 0.45;
     hpCoef = c.ENDURANCE_HP_COEF;
   }
