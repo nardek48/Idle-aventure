@@ -97,11 +97,12 @@ var EQUIPMENT_SLOT_CONFIG = {
       staff: ["Bâton"]
     },
     ranges: {
+      // Ranges réduites (session équilibrage "scie") : desserre l'écart de DPS entre paliers hauts, cf. rapport.
       common: [10, 25],
-      green: [26, 35],
-      rare: [40, 60],
-      epic: [75, 110],
-      legendary: [140, 200]
+      green: [23, 32],
+      rare: [32, 48],
+      epic: [49, 72],
+      legendary: [59, 84]
     }
   },
   armor: {
@@ -110,11 +111,12 @@ var EQUIPMENT_SLOT_CONFIG = {
     icons: ["armor"],
     names: ["Armure", "Cuirasse", "Plastron"],
     ranges: {
+      // Ranges réduites (session équilibrage "scie") : évite la saturation prématurée du plafond 60%, cf. rapport.
       common: [0.01, 0.03],
-      green: [0.03, 0.05],
-      rare: [0.05, 0.08],
-      epic: [0.08, 0.12],
-      legendary: [0.12, 0.18]
+      green: [0.027, 0.045],
+      rare: [0.038, 0.06],
+      epic: [0.044, 0.066],
+      legendary: [0.046, 0.068]
     }
   },
   helmet: {
@@ -149,11 +151,12 @@ var EQUIPMENT_SLOT_CONFIG = {
     icons: ["bottes"],
     names: ["Bottes"],
     ranges: {
+      // Ranges réduites (session équilibrage "scie") : réduit autoDps en fin de jeu, cf. rapport.
       common: [2, 5],
-      green: [5, 9],
-      rare: [9, 15],
-      epic: [15, 28],
-      legendary: [28, 50]
+      green: [4, 8],
+      rare: [7, 12],
+      epic: [9, 17],
+      legendary: [11, 19]
     }
   },
   ring: {

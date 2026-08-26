@@ -588,20 +588,18 @@ var ClassCombatManager = {
       var priorityList = (typeof getAutoPolicyDefault === "function") ? getAutoPolicyDefault(classId) : null;
       if (!priorityList) return;
 
-      var counterSlots = (activeRules && typeof getAllCounterActionSlots === "function")
-        ? getAllCounterActionSlots(activeRules, kit, game.enemy)
-        : [];
-      var priorityListForFallback = counterSlots.length
-        ? priorityList.filter(function (s) { return counterSlots.indexOf(s) === -1; })
+      var priorityRule = (activeRules && typeof getPrioritaryCounterRule === "function")
+        ? getPrioritaryCounterRule(activeRules, kit, game.enemy)
+        : null;
+      var priorityListForFallback = priorityRule
+        ? priorityList.filter(function (s) { return s !== priorityRule.actionSlot; })
         : priorityList;
 
-      if (counterSlots.length && window.CombatReportManager && typeof canUseAction === "function") {
-        counterSlots.forEach(function (excludedSlot) {
-          var excludedAction = kit.actions[excludedSlot];
-          if (excludedAction && canUseAction(resourceState, game.classCooldowns, excludedAction, grimoireContext)) {
-            CombatReportManager.logBlockedByReserve(excludedSlot);
-          }
-        });
+      if (priorityRule && window.CombatReportManager && typeof canUseAction === "function") {
+        var excludedAction = kit.actions[priorityRule.actionSlot];
+        if (excludedAction && canUseAction(resourceState, game.classCooldowns, excludedAction, grimoireContext)) {
+          CombatReportManager.logBlockedByReserve(priorityRule.actionSlot);
+        }
       }
 
       slot = (typeof chooseAutoAction === "function")

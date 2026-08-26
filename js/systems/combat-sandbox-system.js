@@ -10,6 +10,7 @@ var SANDBOX_HERO_BASE_COEFS = {
   ENDURANCE_HP_EXP: 0.75,
   ENDURANCE_HP_COEF: 17.716,
   HERO_DEFENSE_COEF: 0.002,
+  CELERITY_DPS_COEF: 0.03,
   BASE_TAP_DAMAGE: 1,
   BASE_CRIT_CHANCE: 5,
   BASE_CRIT_MULT: 2
@@ -39,20 +40,49 @@ function getSandboxHeroBaseStats(heroId) {
   return structuredClone(HEROES_DB[heroId].stats || {});
 }
 
-function buildSandboxHeroStats(heroId, overrideStats) {
+// tapMultBonus (optionnel, défaut 0) : somme ADDITIVE des bonus de tapMult hors équipement
+// (maîtrise d'arme + talents + ascension + Aether cumulé), au même format que les composantes
+// internes de tapMult déjà sommées par recalcStats() — PAS un multiplicateur prêt à l'emploi
+// (0.36 pour +36%, jamais 1.36), sous peine de compter deux fois l'équipement une fois combiné
+// avec le tapMult calculé plus bas par applySandboxEquipmentBonus().
+// perfectExecutionLevel (optionnel, défaut 0) : niveau du talent t_perfect_execution (0-3),
+// répercuté à l'identique dans computeSandboxActionDamage() et applySandboxAutoDpsTick().
+// survivalBonus (optionnel, objet {ascensionCount, hpMultBonus, defenseBonus, aetherVitalityLevel})
+// : reproduit EXACTEMENT la chaîne multiplicative de recalcStats() (stats-system.js) sur les PV
+// — base -> ×(1+ascension×0.04) -> ×(1+talents de survie) -> ×(1+Aether vitalité×0.10), chaque
+// étape avec son propre Math.floor(), pour ne pas diverger d'un arrondi cumulé différent.
+// defenseBonus est additif, même formule que recalcStats() (t_second_wind/t_vital_anchor/
+// t_immutable_guardian).
+function buildSandboxHeroStats(heroId, overrideStats, tapMultBonus, perfectExecutionLevel, survivalBonus) {
   if (typeof HEROES_DB === "undefined" || !HEROES_DB || !heroId || !HEROES_DB[heroId]) return null;
   var hero = structuredClone(HEROES_DB[heroId]);
   var baseStats = hero.stats || {};
   var override = (overrideStats && typeof overrideStats === "object") ? structuredClone(overrideStats) : null;
   var s = override ? Object.assign({}, baseStats, override) : baseStats;
   var c = SANDBOX_HERO_BASE_COEFS;
+  var sv = (survivalBonus && typeof survivalBonus === "object") ? survivalBonus : {};
 
   var tapDamage = c.BASE_TAP_DAMAGE + (s.power || 0) * c.FORCE_TAP_COEF;
   var critChancePercent = c.BASE_CRIT_CHANCE + (s.precision || 0) * c.PRECISION_CRIT_COEF;
   var critChance = Math.min(1, Math.max(0, critChancePercent / 100));
   var critMult = c.BASE_CRIT_MULT + (s.will || 0) * c.WILL_CRIT_MULT_COEF;
+  var autoDps = Math.max(0, (s.celerity || 0) * c.CELERITY_DPS_COEF);
+
   var maxHp = Math.max(1, Math.floor(Math.pow(Math.max(0, s.endurance || 0), c.ENDURANCE_HP_EXP) * c.ENDURANCE_HP_COEF));
-  var defensePct = Math.min(0.60, (s.endurance || 0) * c.HERO_DEFENSE_COEF);
+  var ascCount = Math.max(0, Math.floor(Number(sv.ascensionCount) || 0));
+  if (ascCount > 0) {
+    maxHp = Math.max(1, Math.floor(maxHp * (1 + ascCount * 0.04)));
+  }
+  var hpMultBonus = Math.max(0, Number(sv.hpMultBonus) || 0);
+  if (hpMultBonus) {
+    maxHp = Math.max(1, Math.floor(maxHp * (1 + hpMultBonus)));
+  }
+  var aVitLevel = Math.max(0, Math.floor(Number(sv.aetherVitalityLevel) || 0));
+  if (aVitLevel) {
+    maxHp = Math.max(1, Math.floor(maxHp * (1 + aVitLevel * 0.10)));
+  }
+
+  var defensePct = (s.endurance || 0) * c.HERO_DEFENSE_COEF + Math.max(0, Number(sv.defenseBonus) || 0);
 
   return {
     heroId: heroId,
@@ -65,14 +95,34 @@ function buildSandboxHeroStats(heroId, overrideStats) {
     critMult: critMult,
     maxHp: maxHp,
     hp: maxHp,
-    defensePct: defensePct
+    defensePct: defensePct,
+    autoDps: autoDps,
+    nonEquipmentTapMultBonus: Math.max(0, Number(tapMultBonus) || 0),
+    perfectExecutionLevel: Math.max(0, Math.min(3, Number(perfectExecutionLevel) || 0))
   };
 }
 
+// IMPORTANT : cette fonction doit etre appelee MEME sans equipement, sinon le
+// nonEquipmentTapMultBonus (talents/ascension/Aether/maitrise) serait silencieusement perdu —
+// il n'est consomme qu'ici. Avec rarity nulle, les totaux d'equipement restent a zero et seul
+// le bonus hors equipement s'applique. La multiplication reste UNIQUE (1 + equip + horsEquip),
+// comme recalcStats() qui somme toutes les sources avant de multiplier une seule fois.
 function applySandboxEquipmentBonus(heroStats, rarity) {
   if (!heroStats) return heroStats;
-  if (!rarity || typeof rarity !== "string") return Object.assign({}, heroStats);
-  if (typeof EQUIPMENT_SLOTS === "undefined" || typeof EQUIPMENT_SLOT_CONFIG === "undefined") return Object.assign({}, heroStats);
+
+  var hasRarity = !!(rarity && typeof rarity === "string")
+    && typeof EQUIPMENT_SLOTS !== "undefined" && typeof EQUIPMENT_SLOT_CONFIG !== "undefined";
+
+  if (!hasRarity) {
+    var baseTapMult = 1 + (heroStats.nonEquipmentTapMultBonus || 0);
+    return Object.assign({}, heroStats, {
+      tapDamage: heroStats.tapDamage * baseTapMult,
+      defensePct: Math.min(0.60, heroStats.defensePct),
+      equipmentAutoDpsRef: 0,
+      equipmentGoldMultRef: 1,
+      equipmentRarity: null
+    });
+  }
 
   var totals = { tapDmg: 0, tapMult: 0, goldMult: 0, critChance: 0, critMult: 0, autoDps: 0, defense: 0 };
 
@@ -98,18 +148,20 @@ function applySandboxEquipmentBonus(heroStats, rarity) {
     });
   }
 
-  var tapMultTotal = 1 + totals.tapMult;
+  var tapMultTotal = 1 + totals.tapMult + (heroStats.nonEquipmentTapMultBonus || 0);
   var newTapDamage = heroStats.tapDamage * tapMultTotal + totals.tapDmg;
 
   var newCritChance = Math.min(1, Math.max(0, heroStats.critChance + totals.critChance / 100));
   var newCritMult = heroStats.critMult + totals.critMult;
   var newDefensePct = Math.min(0.60, heroStats.defensePct + totals.defense);
+  var newAutoDps = Math.max(0, (heroStats.autoDps || 0) + totals.autoDps);
 
   return Object.assign({}, heroStats, {
     tapDamage: newTapDamage,
     critChance: newCritChance,
     critMult: newCritMult,
     defensePct: newDefensePct,
+    autoDps: newAutoDps,
     equipmentAutoDpsRef: totals.autoDps,
     equipmentGoldMultRef: 1 + totals.goldMult,
     equipmentRarity: rarity
@@ -282,7 +334,7 @@ function getDamageAffinityMult(weaponType, resists, weak, overrideCoefs) {
   return 1;
 }
 
-function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride) {
+function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride, tapMultBonus, perfectExecutionLevel, survivalBonus) {
   if (typeof getClassByHeroId !== "function" || typeof getClassSkills !== "function") return null;
   if (typeof createCombatResourceState !== "function" || typeof createCooldownState !== "function") return null;
 
@@ -292,8 +344,8 @@ function createSandboxCombatState(classId, heroId, enemyId, overrideStats, baseC
   var kit = getClassSkills(classId);
   if (!kit) return null;
 
-  var heroStats = buildSandboxHeroStats(heroId, overrideStats);
-  if (heroStats && equipmentRarity) heroStats = applySandboxEquipmentBonus(heroStats, equipmentRarity);
+  var heroStats = buildSandboxHeroStats(heroId, overrideStats, tapMultBonus, perfectExecutionLevel, survivalBonus);
+  if (heroStats) heroStats = applySandboxEquipmentBonus(heroStats, equipmentRarity);
   var enemyStats = buildSandboxEnemyStats(enemyId, overrideEnemyCoefs, archetypeOverride);
   if (!heroStats || !enemyStats) return null;
 
@@ -380,6 +432,10 @@ function computeSandboxActionDamage(state, action) {
       var preArmored = dmg;
       dmg = Math.max(1, Math.floor(dmg * (1 - getSandboxArmoredEffectiveDamageReduction(enemy, state.elapsedMs))));
       armoredLost += preArmored - dmg;
+    }
+
+    if (hero.perfectExecutionLevel > 0 && enemy.isBoss && enemy.maxHp > 0 && (enemy.hp / enemy.maxHp) < 0.2) {
+      dmg = Math.max(1, Math.floor(dmg * (1 + 0.15 * hero.perfectExecutionLevel)));
     }
 
     hitsDamage.push(dmg);
@@ -642,6 +698,72 @@ function finalizeSandboxCombat(state) {
   return appendSandboxLog(state, summary);
 }
 
+// Équivalent de CombatEngine.autoAttack() + dealDamage() (systems/combat-engine.js) : dégâts
+// continus proportionnels au temps écoulé, MÊME chemin de modificateurs et MÊME ordre que
+// dealDamage() — affinité d'arme, réduction de Corruption, vulnérabilité, bouclier de boss,
+// armure, puis talent Exécution parfaite. Peut tuer l'ennemi, comme un dégât normal.
+function applySandboxAutoDpsTick(state, elapsedMs) {
+  if (!state.enemy || !state.hero) return state;
+  var dps = Number(state.hero.autoDps || 0);
+  if (dps <= 0) return state;
+
+  var dmg = dps * (elapsedMs / 1000);
+  if (dmg <= 0) return state;
+
+  dmg *= getDamageAffinityMult(state.hero.weaponType, state.enemy.resists, state.enemy.weak, state.enemyCoefs);
+
+  var corruptedLost = 0;
+  if (state.enemy.archetype === "corrupted" && typeof getCorruptedDamageMultiplier === "function") {
+    var preCorrupted = dmg;
+    dmg *= getCorruptedDamageMultiplier(state.enemy.corruptedStacks || 0);
+    corruptedLost = preCorrupted - dmg;
+  }
+
+  if (state.enemy.vulnerableUntilMs && state.elapsedMs < state.enemy.vulnerableUntilMs) {
+    dmg *= (1 + Number(state.enemy.vulnerableMult || 0));
+  }
+
+  if (state.enemy.isBoss && state.enemy.shieldActiveUntilMs && state.elapsedMs < state.enemy.shieldActiveUntilMs && typeof BOSS_SHIELD_REDUCTION === "number") {
+    dmg *= (1 - BOSS_SHIELD_REDUCTION);
+  }
+
+  var armoredLost = 0;
+  if (state.enemy.archetype === "armored") {
+    var preArmored = dmg;
+    dmg *= (1 - getSandboxArmoredEffectiveDamageReduction(state.enemy, state.elapsedMs));
+    armoredLost = preArmored - dmg;
+  }
+
+  if (state.hero.perfectExecutionLevel > 0 && state.enemy.isBoss && state.enemy.maxHp > 0 && (state.enemy.hp / state.enemy.maxHp) < 0.2) {
+    dmg *= (1 + 0.15 * state.hero.perfectExecutionLevel);
+  }
+
+  dmg = Math.max(0, Math.floor(dmg));
+  if (dmg <= 0) return state;
+
+  var next = Object.assign({}, state, {
+    enemy: Object.assign({}, state.enemy, { hp: Math.max(0, state.enemy.hp - dmg) })
+  });
+  next.archetypeImpact = {
+    enragedBonusDamageTaken: next.archetypeImpact ? next.archetypeImpact.enragedBonusDamageTaken : 0,
+    vampiricHealStolen: next.archetypeImpact ? next.archetypeImpact.vampiricHealStolen : 0,
+    corruptedDamageLost: (next.archetypeImpact ? next.archetypeImpact.corruptedDamageLost : 0) + corruptedLost,
+    armoredDamageLost: (next.archetypeImpact ? next.archetypeImpact.armoredDamageLost : 0) + armoredLost
+  };
+  if (window.SandboxReportManager) {
+    next = SandboxReportManager.logDamageDealt(next, dmg);
+    if (corruptedLost > 0) next = SandboxReportManager.logArchetypeImpact(next, "corruptedDamageLost", corruptedLost);
+    if (armoredLost > 0) next = SandboxReportManager.logArchetypeImpact(next, "armoredDamageLost", armoredLost);
+  }
+
+  if (next.enemy.hp <= 0) {
+    next.status = "victory";
+    next = appendSandboxLog(next, "🏆 Victoire — l'ennemi de test succombe à l'auto-DPS.");
+    return finalizeSandboxCombat(next);
+  }
+  return next;
+}
+
 function tickSandboxTime(state, elapsedMs) {
   if (!state || state.status !== "ongoing") return state;
   var elapsed = (typeof elapsedMs === "number" && elapsedMs > 0) ? elapsedMs : 0;
@@ -658,6 +780,9 @@ function tickSandboxTime(state, elapsedMs) {
   if (next.activeDefense && next.elapsedMs >= next.activeDefense.expiresAtMs) {
     next.activeDefense = null;
   }
+
+  next = applySandboxAutoDpsTick(next, elapsed);
+  if (next.status !== "ongoing") return next;
 
   next = tickSandboxDoT(next, elapsed);
   if (next.status !== "ongoing") return next;
@@ -1129,9 +1254,9 @@ function createDefaultSandboxPersistence() {
   };
 }
 
-function createSandboxRunState(classId, heroId, queue, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride) {
+function createSandboxRunState(classId, heroId, queue, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride, tapMultBonus, perfectExecutionLevel, survivalBonus) {
   if (!Array.isArray(queue) || queue.length === 0) return null;
-  var firstCombat = createSandboxCombatState(classId, heroId, queue[0], overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride);
+  var firstCombat = createSandboxCombatState(classId, heroId, queue[0], overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride, tapMultBonus, perfectExecutionLevel, survivalBonus);
   if (!firstCombat) return null;
 
   var pers = persistence || createDefaultSandboxPersistence();
@@ -1144,6 +1269,9 @@ function createSandboxRunState(classId, heroId, queue, persistence, overrideStat
     overrideEnemyCoefs: overrideEnemyCoefs || null,
     equipmentRarity: equipmentRarity || null,
     archetypeOverride: archetypeOverride || null,
+    tapMultBonus: tapMultBonus || 0,
+    perfectExecutionLevel: perfectExecutionLevel || 0,
+    survivalBonus: survivalBonus || null,
     queue: queue.slice(),
     currentIndex: 0,
     currentCombat: firstCombat,
@@ -1208,7 +1336,7 @@ function handleSandboxRunVictory(runState, next, nextCombat) {
 
   var nextIndex = runState.currentIndex + 1;
   var nextEnemyId = runState.queue[nextIndex];
-  var freshCombat = createSandboxCombatState(runState.classId, runState.heroId, nextEnemyId, runState.overrideStats, runState.baseCooldownMs, runState.overrideEnemyCoefs, runState.equipmentRarity, runState.archetypeOverride);
+  var freshCombat = createSandboxCombatState(runState.classId, runState.heroId, nextEnemyId, runState.overrideStats, runState.baseCooldownMs, runState.overrideEnemyCoefs, runState.equipmentRarity, runState.archetypeOverride, runState.tapMultBonus, runState.perfectExecutionLevel, runState.survivalBonus);
   if (!freshCombat) {
     next.status = "stopped";
     next.log = next.log.concat([appendRunLogEntry(next.elapsedMs, "--- Run arrêté : ennemi suivant invalide (" + nextEnemyId + ") ---")]);
@@ -1340,11 +1468,11 @@ function finalizeSandboxRun(runState) {
   });
 }
 
-function createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride, bossEveryNKills) {
+function createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride, bossEveryNKills, tapMultBonus, perfectExecutionLevel, survivalBonus) {
   var enemyOrder = listSandboxAllEnemiesInOrder();
   if (!enemyOrder.length) return null;
 
-  var firstCombat = createSandboxCombatState(classId, heroId, enemyOrder[0], overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride);
+  var firstCombat = createSandboxCombatState(classId, heroId, enemyOrder[0], overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride, tapMultBonus, perfectExecutionLevel, survivalBonus);
   if (!firstCombat) return null;
 
   var pers = persistence || createDefaultSandboxPersistence();
@@ -1357,6 +1485,9 @@ function createSandboxInfiniteState(classId, heroId, persistence, overrideStats,
     overrideEnemyCoefs: overrideEnemyCoefs || null,
     equipmentRarity: equipmentRarity || null,
     archetypeOverride: archetypeOverride || null,
+    tapMultBonus: tapMultBonus || 0,
+    perfectExecutionLevel: perfectExecutionLevel || 0,
+    survivalBonus: survivalBonus || null,
     bossEveryNKills: (typeof bossEveryNKills === "number" && bossEveryNKills > 0) ? Math.floor(bossEveryNKills) : 0,
     persistence: pers,
     enemyOrder: enemyOrder,
@@ -1410,7 +1541,7 @@ function advanceSandboxInfiniteToNextEnemy(infiniteState, nextCombatFromCurrent)
   var bossId = forceBoss ? getSandboxBossIdForWorldIndex(worldIndex) : null;
   var nextEnemyId = bossId || infiniteState.enemyOrder[nextPosition];
 
-  var freshCombat = createSandboxCombatState(infiniteState.classId, infiniteState.heroId, nextEnemyId, infiniteState.overrideStats, infiniteState.baseCooldownMs, infiniteState.overrideEnemyCoefs, infiniteState.equipmentRarity, infiniteState.archetypeOverride);
+  var freshCombat = createSandboxCombatState(infiniteState.classId, infiniteState.heroId, nextEnemyId, infiniteState.overrideStats, infiniteState.baseCooldownMs, infiniteState.overrideEnemyCoefs, infiniteState.equipmentRarity, infiniteState.archetypeOverride, infiniteState.tapMultBonus, infiniteState.perfectExecutionLevel, infiniteState.survivalBonus);
   if (!freshCombat) return { status: "invalid" };
 
   var carried = applySandboxPersistence(Object.assign({}, freshCombat, {
@@ -1418,6 +1549,7 @@ function advanceSandboxInfiniteToNextEnemy(infiniteState, nextCombatFromCurrent)
     resourceState: nextCombatFromCurrent.resourceState,
     cooldownState: nextCombatFromCurrent.cooldownState,
     combatReport: nextCombatFromCurrent.combatReport || freshCombat.combatReport,
+    grimoireRules: nextCombatFromCurrent.grimoireRules,
     heroSilencedUntilMs: 0
   }), infiniteState.persistence);
 
@@ -1627,11 +1759,11 @@ function chooseSandboxAutoOrGrimoireAction(state, priorityList, grimoireRules, k
     }
   }
 
-  var counterSlots = (activeRules && typeof getAllCounterActionSlots === "function")
-    ? getAllCounterActionSlots(activeRules, kit, state.enemy)
-    : [];
-  var priorityListForFallback = counterSlots.length
-    ? priorityList.filter(function (s) { return counterSlots.indexOf(s) === -1; })
+  var priorityRule = (activeRules && typeof getPrioritaryCounterRule === "function")
+    ? getPrioritaryCounterRule(activeRules, kit, state.enemy)
+    : null;
+  var priorityListForFallback = priorityRule
+    ? priorityList.filter(function (s) { return s !== priorityRule.actionSlot; })
     : priorityList;
 
   var slot = (typeof chooseAutoAction === "function")

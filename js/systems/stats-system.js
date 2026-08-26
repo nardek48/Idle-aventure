@@ -166,10 +166,13 @@ var StatsSystem = {
       else if (item.stat === "defense") game.equipDefensePct += item.value;
     });
 
-    var survivalDefenseBonus =
+    // Facteur validé session équilibrage "scie" (×0.35) : évite la saturation du plafond 60% dès le monde 4.
+    var SURVIVAL_DEFENSE_FACTOR = 0.35;
+    var survivalDefenseBonus = (
       (game.talents.t_second_wind || 0) * 0.02 +
       (game.talents.t_vital_anchor || 0) * 0.05 +
-      (game.talents.t_immutable_guardian || 0) * 0.05;
+      (game.talents.t_immutable_guardian || 0) * 0.05
+    ) * SURVIVAL_DEFENSE_FACTOR;
     game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, totalEndurance * HERO_DEFENSE_COEF + (game.equipDefensePct || 0) + survivalDefenseBonus);
 
     if (game.ascensionCount > 0) {

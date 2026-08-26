@@ -6,7 +6,7 @@ var SIM_TICK_MS = 100;
 var DEFAULT_MAX_CONSECUTIVE_KILLS = 500;
 var DEFAULT_MAX_SIM_MS_PER_RUN = 10 * 60 * 1000;
 
-function runSingleAutoRun(classId, heroId, priorityList, overrideStats, baseCooldownMs, options, overrideEnemyCoefs, equipmentRarity, archetypeOverride, bossEveryNKills, grimoireRules) {
+function runSingleAutoRun(classId, heroId, priorityList, overrideStats, baseCooldownMs, options, overrideEnemyCoefs, equipmentRarity, archetypeOverride, bossEveryNKills, grimoireRules, tapMultBonus, perfectExecutionLevel, survivalBonus) {
   var opts = options || {};
   var maxConsecutiveKills = (typeof opts.maxConsecutiveKills === "number" && opts.maxConsecutiveKills > 0)
     ? opts.maxConsecutiveKills : DEFAULT_MAX_CONSECUTIVE_KILLS;
@@ -19,7 +19,7 @@ function runSingleAutoRun(classId, heroId, priorityList, overrideStats, baseCool
     ? createDefaultSandboxPersistence() : null;
 
   var infiniteState = (typeof createSandboxInfiniteState === "function")
-    ? createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride, bossEveryNKills)
+    ? createSandboxInfiniteState(classId, heroId, persistence, overrideStats, baseCooldownMs, overrideEnemyCoefs, equipmentRarity, archetypeOverride, bossEveryNKills, tapMultBonus, perfectExecutionLevel, survivalBonus)
     : null;
   if (!infiniteState) {
     return { endReason: "invalid", defeatedCount: 0, elapsedMs: 0, totalDamageDealt: 0, totalDamageTaken: 0, actionCounts: {}, resourceWasted: 0, heroMaxHp: 0, reachedBoss: false, bossEncounteredCount: 0, archetypeImpact: {}, archetypeEncounters: {}, combatReport: null, averageDps: 0 };

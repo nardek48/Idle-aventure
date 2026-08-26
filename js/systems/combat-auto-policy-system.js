@@ -230,30 +230,6 @@ function getGrimoireCounterReserveAmount(rules, kit, enemy) {
 window.getPrioritaryCounterRule = getPrioritaryCounterRule;
 window.getGrimoireCounterReserveAmount = getGrimoireCounterReserveAmount;
 
-function getAllCounterActionSlots(rules, kit, enemy) {
-  if (!rules || !Array.isArray(rules) || !kit || !kit.actions) return [];
-
-  var seen = {};
-  var slots = [];
-  for (var i = 0; i < rules.length; i++) {
-    var rule = rules[i];
-    if (!rule || typeof rule !== "object" || typeof rule.actionSlot !== "string") continue;
-
-    var action = kit.actions[rule.actionSlot];
-    if (!action || !Array.isArray(action.counters) || !action.counters.length) continue;
-
-    if (enemy !== undefined && !isConditionPossibleForEnemy(rule.conditionId, enemy)) continue;
-
-    if (!seen[rule.actionSlot]) {
-      seen[rule.actionSlot] = true;
-      slots.push(rule.actionSlot);
-    }
-  }
-  return slots;
-}
-
-window.getAllCounterActionSlots = getAllCounterActionSlots;
-
 var GRIMOIRE_APPROACH_WINDOW_FACTOR_S_PER_COST = 0.10;
 var GRIMOIRE_APPROACH_WINDOW_MIN_S = 3;
 
