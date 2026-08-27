@@ -16,6 +16,7 @@
 
 .production-card {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   border: 1px solid var(--nb-frame);
@@ -27,6 +28,13 @@
 .production-card.is-full {
   border-color: var(--nb-gold-dark);
   box-shadow: 0 0 0 1px rgba(194, 127, 31, 0.25);
+}
+
+/* v3.95.1 : ligne pleine largeur DANS la carte (pas un second cadre séparé) — utilisée
+   pour le panneau "Parcelles et améliorations" des Champs. width:100% force le passage
+   à la ligne suivante dans le flex-wrap parent. */
+.production-card-full-row {
+  width: 100%;
 }
 
 /* Illustration ronde du bâtiment — occupe toute la hauteur de la
@@ -366,6 +374,16 @@
   cursor: pointer;
 }
 
+/* v3.95.4 : parcelle sélectionnée mais pas encore validée — distincte de .is-eligible
+   (bordure pointillée dorée + fond, pour bien montrer que rien n'est encore appliqué). */
+.farm-plot.is-selected {
+  border-style: dashed;
+  border-width: 2px;
+  border-color: var(--nb-gold-dark);
+  background: rgba(194, 127, 31, 0.18);
+  box-shadow: 0 0 0 2px rgba(194, 127, 31, 0.45);
+}
+
 .farm-plots-bottom {
   margin-top: 8px;
   padding-top: 8px;
@@ -405,6 +423,20 @@
   font-weight: 700;
   text-decoration: underline;
   font-size: 11px;
+}
+
+/* v3.95.4 : rangée des 2 boutons "Choisir une autre parcelle" / "Valider" une fois une
+   parcelle sélectionnée mais pas encore appliquée. */
+.farm-upgrade-confirm-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.farm-upgrade-validate-btn {
+  flex: 1 1 auto;
+  min-height: 38px;
 }
 
 .farm-upgrade-button {

@@ -6,7 +6,8 @@
 
 var FARM_PLOTS_CONFIG = {
   totalPlots: 9,
-  startingOpenPlots: 4, // cohérent avec le prototype (4/9 actives au départ)
+  startingOpenPlots: 1, // démarrage progressif, les 8 autres à débloquer via choix d'évolution
+  baseBonusPerOpenPlot: 0.03, // v3.95.3 : chaque parcelle ouverte donne ce bonus de base, cumulable avec les améliorations
   bonusPerImprovement: {
     fertile: 0.08,
     irrigated: 0.10
@@ -17,7 +18,7 @@ var FARM_PLOTS_CONFIG = {
    "fertile"/"irrigated"/"enriched" ciblent une parcelle déjà open n'ayant pas encore
    cette amélioration précise (cumulable avec les 2 autres). */
 var FARM_UPGRADE_CHOICES = {
-  open: { id: "open", icon: "🌱", label: "Préparer un sillon", desc: "Débloque une nouvelle parcelle cultivable." },
+  open: { id: "open", icon: "🌱", label: "Préparer un sillon", desc: "Débloque une nouvelle parcelle cultivable (+" + Math.round(FARM_PLOTS_CONFIG.baseBonusPerOpenPlot * 100) + "% Blé)." },
   fertile: { id: "fertile", icon: "🌿", label: "Enrichir la terre", desc: "Augmente durablement le rendement d'une parcelle (+" + Math.round(FARM_PLOTS_CONFIG.bonusPerImprovement.fertile * 100) + "% Blé)." },
   irrigated: { id: "irrigated", icon: "💧", label: "Creuser une rigole", desc: "Irrigue une parcelle grâce au Puits (+" + Math.round(FARM_PLOTS_CONFIG.bonusPerImprovement.irrigated * 100) + "% Blé)." }
 };

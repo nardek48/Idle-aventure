@@ -6,6 +6,7 @@
 
 var farmPlotsPanelExpanded = false; // état d'affichage local à cet écran, pas mêlé aux cartes de quête
 var pendingFarmUpgradeAction = null; // action choisie (open/fertile/irrigated), en attente de sélection de parcelle
+var selectedFarmPlotIndex = null; // parcelle sélectionnée pour cette action, en attente de VALIDATION explicite
 
 function buildProductionCardHTML(id) {
   var def = PRODUCTION_BUILDINGS[id];
@@ -64,11 +65,13 @@ function buildProductionCardHTML(id) {
   }
   h += '</div>';
 
-  h += '</div>';
-
   if (id === "farm" && window.FarmPlotsSystem) {
+    h += '<div class="production-card-full-row">';
     h += buildFarmPlotsToggleHTML();
+    h += '</div>';
   }
+
+  h += '</div>';
 
   return h;
 }
@@ -99,11 +102,13 @@ window.toggleFarmPlotsPanel = toggleFarmPlotsPanel;
    repliables), + le panneau lui-même quand ouvert : grille 3×3 des parcelles, effet
    cumulé actuel, et popup de choix si un palier vient d'être atteint. */
 function buildFarmPlotsToggleHTML() {
-  var hasPending = FarmPlotsSystem.hasPendingChoice();
+  // v3.95.2 : le badge affiche le nombre TOTAL de choix dus (getOutstandingChoicesCount()
+  // compte déjà celui actuellement affiché s'il y en a un — pas d'addition en double).
+  var outstandingCount = FarmPlotsSystem.getOutstandingChoicesCount();
 
   var h = '<button class="farm-plots-toggle" type="button" onclick="toggleFarmPlotsPanel()">';
   h += '<span>🌾 Parcelles et améliorations</span>';
-  if (hasPending) h += '<span class="farm-plots-badge">1</span>';
+  if (outstandingCount > 0) h += '<span class="farm-plots-badge">' + outstandingCount + '</span>';
   h += '<span class="farm-plots-chevron">' + (farmPlotsPanelExpanded ? '▴' : '▾') + '</span>';
   h += '</button>';
 
@@ -164,16 +169,20 @@ function buildFarmPlotCellHTML(plot, index) {
     }
   }
 
-  // v3.95.0 : si une action est en cours de sélection (pendingFarmUpgradeAction) et que
-  // cette parcelle y est éligible, la case devient elle-même cliquable (surlignée +
-  // onclick injecté dans le HTML, cohérent avec le reste du projet — jamais de handler
-  // attaché après-coup sur le DOM, qui serait perdu au prochain renderPanel()).
+  // v3.95.4 : si une action est en cours de sélection (pendingFarmUpgradeAction), les
+  // parcelles éligibles se surlignent et deviennent cliquables — le clic ne fait
+  // désormais qu'une SÉLECTION (selectFarmPlot), pas d'application immédiate. La case
+  // sélectionnée reçoit sa propre classe .is-selected, distincte de .is-eligible.
   var onclickAttr = "";
   if (pendingFarmUpgradeAction) {
     var eligible = FarmPlotsSystem.getEligiblePlotIndexes(pendingFarmUpgradeAction);
     if (eligible.indexOf(index) !== -1) {
       classNames += " is-eligible";
-      onclickAttr = ' onclick="confirmFarmUpgradeChoice(' + index + ')"';
+      if (selectedFarmPlotIndex === index) {
+        classNames += " is-selected";
+      } else {
+        onclickAttr = ' onclick="selectFarmPlot(' + index + ')"';
+      }
     }
   }
 
@@ -191,14 +200,25 @@ function buildFarmUpgradeChoiceHTML() {
 
   if (pendingFarmUpgradeAction && available.indexOf(pendingFarmUpgradeAction) !== -1) {
     var choiceDef = FARM_UPGRADE_CHOICES[pendingFarmUpgradeAction];
-    h += '<p class="farm-upgrade-hint">' + esc(choiceDef.icon) + ' Sélectionnez une parcelle éligible (en surbrillance) ci-dessus, ou <button type="button" class="farm-upgrade-cancel" onclick="cancelFarmUpgradeChoice()">annuler</button>.</p>';
+
+    if (selectedFarmPlotIndex !== null) {
+      // v3.95.4 : parcelle sélectionnée mais PAS encore appliquée — le joueur doit
+      // explicitement valider, ou peut changer d'avis sans conséquence.
+      h += '<p class="farm-upgrade-hint">' + esc(choiceDef.icon) + ' Parcelle ' + (selectedFarmPlotIndex + 1) + ' sélectionnée pour « ' + esc(choiceDef.label) + ' ».</p>';
+      h += '<div class="farm-upgrade-confirm-actions">';
+      h += '<button type="button" class="farm-upgrade-cancel" onclick="deselectFarmPlot()">Choisir une autre parcelle</button>';
+      h += '<button type="button" class="settings-btn primary farm-upgrade-validate-btn" onclick="validateFarmUpgradeChoice()">✔ Valider</button>';
+      h += '</div>';
+    } else {
+      h += '<p class="farm-upgrade-hint">' + esc(choiceDef.icon) + ' Sélectionnez une parcelle éligible (en surbrillance) ci-dessus, ou <button type="button" class="farm-upgrade-cancel" onclick="cancelFarmUpgradeChoice()">annuler</button>.</p>';
+    }
   } else {
     available.forEach(function (action) {
-      var choiceDef = FARM_UPGRADE_CHOICES[action];
-      if (!choiceDef) return;
+      var actionChoiceDef = FARM_UPGRADE_CHOICES[action];
+      if (!actionChoiceDef) return;
       h += '<button class="farm-upgrade-button" type="button" onclick="selectFarmUpgradeAction(\'' + action + '\')">';
-      h += '<span class="farm-upgrade-icon">' + esc(choiceDef.icon) + '</span>';
-      h += '<span><strong>' + esc(choiceDef.label) + '</strong><small>' + esc(choiceDef.desc) + '</small></span>';
+      h += '<span class="farm-upgrade-icon">' + esc(actionChoiceDef.icon) + '</span>';
+      h += '<span><strong>' + esc(actionChoiceDef.label) + '</strong><small>' + esc(actionChoiceDef.desc) + '</small></span>';
       h += '</button>';
     });
   }
@@ -209,27 +229,59 @@ function buildFarmUpgradeChoiceHTML() {
 
 function selectFarmUpgradeAction(action) {
   pendingFarmUpgradeAction = action;
+  selectedFarmPlotIndex = null;
   if (typeof renderPanel === "function") renderPanel();
 }
 window.selectFarmUpgradeAction = selectFarmUpgradeAction;
 
 function cancelFarmUpgradeChoice() {
   pendingFarmUpgradeAction = null;
+  selectedFarmPlotIndex = null;
   if (typeof renderPanel === "function") renderPanel();
 }
 window.cancelFarmUpgradeChoice = cancelFarmUpgradeChoice;
 
-function confirmFarmUpgradeChoice(plotIndex) {
+/* v3.95.4 : clic sur une case éligible = SÉLECTION uniquement, rien n'est encore
+   appliqué ni sauvegardé — l'application réelle attend validateFarmUpgradeChoice(). */
+function selectFarmPlot(plotIndex) {
   if (!pendingFarmUpgradeAction) return;
-  var result = FarmPlotsSystem.applyChoice(pendingFarmUpgradeAction, plotIndex);
+  selectedFarmPlotIndex = plotIndex;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.selectFarmPlot = selectFarmPlot;
+
+/* Revient à l'étape "sélectionnez une parcelle" sans perdre l'action choisie — permet de
+   changer de parcelle sans tout recommencer depuis le choix d'action. */
+function deselectFarmPlot() {
+  selectedFarmPlotIndex = null;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.deselectFarmPlot = deselectFarmPlot;
+
+/* Application réelle et définitive du choix — seule fonction qui appelle
+   FarmPlotsSystem.applyChoice() (donc la seule qui sauvegarde et consomme le palier). */
+function validateFarmUpgradeChoice() {
+  if (!pendingFarmUpgradeAction || selectedFarmPlotIndex === null) return;
+  var action = pendingFarmUpgradeAction;
+  var plotIndex = selectedFarmPlotIndex;
+
+  // v3.95.5 : réinitialisé AVANT l'appel — applyChoice() déclenche son propre
+  // renderPanel() en interne (synchrone), qui reconstruit le HTML en lisant ces 2
+  // variables. Les remettre à null après coup laissait ce rendu intermédiaire afficher
+  // encore l'ancien popup de validation (déjà appliqué), sans qu'aucun second rendu ne
+  // vienne jamais le corriger — l'écran restait figé, bloqué sur "Valider".
   pendingFarmUpgradeAction = null;
+  selectedFarmPlotIndex = null;
+
+  var result = FarmPlotsSystem.applyChoice(action, plotIndex);
   if (!result.ok) {
     showToast(result.reason, 1400);
     if (typeof renderPanel === "function") renderPanel(); // retire le surlignage même en cas d'échec
   }
-  // En cas de succès, FarmPlotsSystem.applyChoice() a déjà appelé renderPanel()/saveGame().
+  // En cas de succès, FarmPlotsSystem.applyChoice() a déjà appelé renderPanel()/saveGame(),
+  // avec les 2 variables déjà à null -> le HTML régénéré est correct du premier coup.
 }
-window.confirmFarmUpgradeChoice = confirmFarmUpgradeChoice;
+window.validateFarmUpgradeChoice = validateFarmUpgradeChoice;
 
 function buildProductionHTML() {
   ProductionManager.ensure();
