@@ -295,6 +295,30 @@
   border-top: 1px dashed var(--nb-frame);
 }
 
+.warehouse-craft-recipe-tabs {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.warehouse-craft-recipe-tab {
+  padding: 4px 10px;
+  border-radius: var(--nb-radius-sm);
+  border: 2px solid var(--nb-gold-dark);
+  background: transparent;
+  color: var(--nb-gold-deep);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.warehouse-craft-recipe-tab.is-active {
+  background: var(--nb-gold-dark);
+  color: var(--nb-cream);
+}
+
 .warehouse-craft-title {
   display: flex;
   align-items: center;

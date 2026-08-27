@@ -464,7 +464,7 @@ function buildSaveData() {
     // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
     // v3.35 : planche/lingot (artisanat tier 1, voir data/recipes.js) ajoutés ici.
     // v3.36 : pierre (brute, Carrière) / farine (tier 1, Blé→Farine) ajoutées ici.
-    resources: game.resources || { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0 },
+    resources: game.resources || { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0 },
     adventureQuestProgress: game.adventureQuestProgress || {},
     adventureQuestsCompleted: game.adventureQuestsCompleted || {},
     adventureQuestRun: game.adventureQuestRun || { active: false, questId: null },
@@ -473,6 +473,16 @@ function buildSaveData() {
     // adventureQuestProgress ; huntRun NE survit PAS (comme dungeonRun).
     huntStats: game.huntStats || {},
     huntRun: game.huntRun || { active: false, questId: null, killsInLot: 0 },
+    // v3.90.0 : Expéditions non-combat (voir systems/exploration-engine.js) — même règle
+    // que huntRun/dungeonRun/adventureQuestRun : le run éphémère survit à un simple
+    // rechargement de page (pour reprendre exactement où on en était), mais NE survit PAS
+    // à une ascension (hardResetState) ; explorationProgression (déblocages) est permanent.
+    explorationRun: game.explorationRun || null,
+    explorationProgression: game.explorationProgression || { blockedPathCompleted: false, forgottenClearingUnlocked: false, unstableVeinDiscoveryCompleted: false, quarryUnlocked: false, huntBuildingUnlocked: false, driedSpringDiscoveryCompleted: false, wellUnlocked: false },
+    // v3.92.0 : session de minijeu de minage (quête "La Veine Instable" ou activité bonus
+    // Carrière) — même règle de persistance que explorationRun (survit au rechargement).
+    // v3.94.0 : bloc "well" ajouté pour le minijeu du Puits (systems/well-system.js).
+    gatheringActivity: game.gatheringActivity || { quarry: { cooldownEndsAt: 0, activeSession: null }, well: { cooldownEndsAt: 0, activeSession: null } },
     // v3.43 : file d'attente de craft de l'Entrepôt (voir
     // WarehouseManager.enqueueCraft()/tickCraftQueue()) — survit à un
     // rechargement de page (SANS rattrapage hors-ligne, contrairement
@@ -674,8 +684,7 @@ function restoreBaseState(d) {
   game.worldQuestProgress = d.worldQuestProgress && typeof d.worldQuestProgress === "object" ? d.worldQuestProgress : {};
   game.worldQuestsCompleted = d.worldQuestsCompleted && typeof d.worldQuestsCompleted === "object" ? d.worldQuestsCompleted : {};
   // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
-  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0 };
-  if (typeof game.resources.mineraiRare !== "number") game.resources.mineraiRare = 0;
+  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0 };
   if (typeof game.resources.viande !== "number") game.resources.viande = 0;
   if (typeof game.resources.ble !== "number") game.resources.ble = 0;
   if (typeof game.resources.bois !== "number") game.resources.bois = 0;
@@ -694,6 +703,61 @@ function restoreBaseState(d) {
   // v3.30 : Chasse en boucle (voir data/hunt-quests.js).
   game.huntStats = d.huntStats && typeof d.huntStats === "object" ? d.huntStats : {};
   game.huntRun = d.huntRun && typeof d.huntRun === "object" ? d.huntRun : { active: false, questId: null, killsInLot: 0 };
+  // v3.90.0 : Expéditions non-combat — ancienne sauvegarde sans ces champs = valeurs par
+  // défaut sûres (aucun run à reprendre, aucun déblocage perdu). ensureGameStateDefaults()
+  // (core/state.js) revalide ensuite la forme exacte de explorationProgression.
+  game.explorationRun = d.explorationRun && typeof d.explorationRun === "object" ? d.explorationRun : null;
+  game.explorationProgression = d.explorationProgression && typeof d.explorationProgression === "object"
+    ? d.explorationProgression
+    : { blockedPathCompleted: false, forgottenClearingUnlocked: false, unstableVeinDiscoveryCompleted: false, quarryUnlocked: false, huntBuildingUnlocked: false, driedSpringDiscoveryCompleted: false, wellUnlocked: false };
+  // v3.92.0 : migration "Veine Instable" — la Carrière était débloquée nativement pour
+  // TOUTE sauvegarde antérieure à cette version (aucun verrou n'a jamais existé avant),
+  // qu'elle ait ou non déjà un explorationProgression (les sauvegardes très anciennes,
+  // d'avant v3.90.0, n'en ont aucun du tout). Toute sauvegarde RÉELLE (d présent, on est
+  // bien dans un chargement, pas une nouvelle partie) dont quarryUnlocked n'était pas déjà
+  // explicitement défini = ancienne sauvegarde -> migrée à true d'office, une seule fois.
+  // Une fois le champ présent (même à false, ex. une partie créée après cette version), on
+  // ne le retouche plus ici.
+  if (d && typeof (d.explorationProgression && d.explorationProgression.quarryUnlocked) !== "boolean") {
+    game.explorationProgression.quarryUnlocked = true;
+  }
+  // v3.93.0 : même migration pour la Chasse (hunt) — même raisonnement exact que quarryUnlocked
+  // ci-dessus, le bâtiment Chasse était lui aussi débloqué nativement pour toute sauvegarde
+  // antérieure à cette version (voir data/adventure-quests.js: hq_wolf_pack).
+  if (d && typeof (d.explorationProgression && d.explorationProgression.huntBuildingUnlocked) !== "boolean") {
+    game.explorationProgression.huntBuildingUnlocked = true;
+  }
+  // v3.94.0 : même migration pour le Puits (well) — même raisonnement exact, le bâtiment
+  // Puits était lui aussi débloqué nativement pour toute sauvegarde antérieure à cette
+  // version (voir data/exploration-quests.js: driedSpring).
+  if (d && typeof (d.explorationProgression && d.explorationProgression.wellUnlocked) !== "boolean") {
+    game.explorationProgression.wellUnlocked = true;
+  }
+  if (typeof game.explorationProgression.unstableVeinDiscoveryCompleted !== "boolean") {
+    game.explorationProgression.unstableVeinDiscoveryCompleted = false;
+  }
+  if (typeof game.explorationProgression.quarryUnlocked !== "boolean") {
+    game.explorationProgression.quarryUnlocked = false;
+  }
+  if (typeof game.explorationProgression.huntBuildingUnlocked !== "boolean") {
+    game.explorationProgression.huntBuildingUnlocked = false;
+  }
+  if (typeof game.explorationProgression.driedSpringDiscoveryCompleted !== "boolean") {
+    game.explorationProgression.driedSpringDiscoveryCompleted = false;
+  }
+  if (typeof game.explorationProgression.wellUnlocked !== "boolean") {
+    game.explorationProgression.wellUnlocked = false;
+  }
+  // v3.92.0 : session de minijeu de minage (quête ou activité bonus Carrière) — même
+  // règle que explorationRun (run éphémère non trouvé -> valeurs par défaut sûres).
+  // v3.94.0 : bloc "well" ajouté avec garde de forme séparée (une sauvegarde v3.92.x/
+  // v3.93.x a déjà gatheringActivity mais sans la clé "well").
+  game.gatheringActivity = d.gatheringActivity && typeof d.gatheringActivity === "object"
+    ? d.gatheringActivity
+    : { quarry: { cooldownEndsAt: 0, activeSession: null }, well: { cooldownEndsAt: 0, activeSession: null } };
+  if (!game.gatheringActivity.well || typeof game.gatheringActivity.well !== "object") {
+    game.gatheringActivity.well = { cooldownEndsAt: 0, activeSession: null };
+  }
   // v3.43 : file d'attente de craft — migration douce, une ancienne
   // sauvegarde sans `craftQueue` repart avec [] (WarehouseManager.ensure()
   // le recrée de toute façon au premier accès).
@@ -803,11 +867,20 @@ function hardResetState() {
   // v3.35 : planche/lingot suivent la même règle (conservés à l'ascension, comme Bois/Fer).
   // v3.36 : pierre/farine idem.
   // v3.45 : eau/pain/ration idem (6e bâtiment Puits + recettes croisées).
-  var keptResources = Object.assign({ mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0 }, game.resources || {});
+  var keptResources = Object.assign({ viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0 }, game.resources || {});
   var keptAdventureQuestProgress = Object.assign({}, game.adventureQuestProgress || {});
   var keptAdventureQuestsCompleted = Object.assign({}, game.adventureQuestsCompleted || {});
   // v3.30 : huntStats (compteur de lots) = progression permanente, comme adventureQuestProgress.
   var keptHuntStats = Object.assign({}, game.huntStats || {});
+  // v3.90.0 : Expéditions non-combat — explorationProgression (déblocages, ex. Clairière
+  // oubliée) = progression permanente, même règle que adventureQuestsCompleted/huntStats.
+  // explorationRun (le run éphémère lui-même), lui, ne survit PAS à l'ascension, comme
+  // huntRun/dungeonRun/adventureQuestRun — décision explicite : pas de remboursement des
+  // rations déjà consommées dans ce cas (même traitement que les 3 runs existants).
+  var keptExplorationProgression = Object.assign(
+    { blockedPathCompleted: false, forgottenClearingUnlocked: false, unstableVeinDiscoveryCompleted: false, quarryUnlocked: false, huntBuildingUnlocked: false, driedSpringDiscoveryCompleted: false, wellUnlocked: false },
+    game.explorationProgression || {}
+  );
   // v3.31 : bâtiments de production (niveau + stock local) = progression
   // permanente, comme le Village (VILLAGE_CONFIG) — un joueur qui a
   // investi dans sa Chasse/Champs/Scierie/Mine ne perd pas ces niveaux
@@ -915,6 +988,14 @@ function hardResetState() {
   // v3.30 : même traitement que adventureQuestRun juste au-dessus — le
   // run de chasse en cours ne survit pas à l'ascension.
   game.huntRun = { active: false, questId: null, killsInLot: 0 };
+  // v3.90.0 : même traitement — le run d'Expédition en cours ne survit pas à l'ascension
+  // (pas de remboursement des rations déjà consommées, cohérent avec huntRun/adventureQuestRun).
+  game.explorationRun = null;
+  // v3.92.0 : même règle pour la session de minijeu de minage — ne survit pas à l'ascension.
+  // Le cooldown de l'activité bonus Carrière est aussi remis à zéro (pas de sens de le
+  // faire survivre à un reset de la run classique) ; quarryUnlocked, lui, reste permanent
+  // (voir keptExplorationProgression ci-dessus). v3.94.0 : même règle pour le Puits.
+  game.gatheringActivity = { quarry: { cooldownEndsAt: 0, activeSession: null }, well: { cooldownEndsAt: 0, activeSession: null } };
   game.dungeonBestWave = keptDungeonBestWave;
   game.dungeonBossClears = keptDungeonBossClears;
   game.dungeonShards = keptDungeonShards;
@@ -930,6 +1011,8 @@ function hardResetState() {
   game.adventureQuestProgress = keptAdventureQuestProgress;
   game.adventureQuestsCompleted = keptAdventureQuestsCompleted;
   game.huntStats = keptHuntStats;
+  // v3.90.0 : progression permanente d'Expédition (déblocages) conservée à l'ascension.
+  game.explorationProgression = keptExplorationProgression;
   game.production = keptProduction;
   game.construction = keptConstruction;
   game.workshopUnlock = keptWorkshopUnlock;
@@ -1048,6 +1131,8 @@ function fullResetState() {
   game.dungeonRun = { active: false, wave: 0, tierId: 1 };
   game.adventureQuestRun = { active: false, questId: null };
   game.huntRun = { active: false, questId: null, killsInLot: 0 }; // v3.30
+  game.explorationRun = null; // v3.90.0 : reset complet, tout repart de zéro
+  game.gatheringActivity = { quarry: { cooldownEndsAt: 0, activeSession: null }, well: { cooldownEndsAt: 0, activeSession: null } }; // v3.92.0/v3.94.0
   game.campfireLastUsed = 0; // v3.7 : repos gratuit du Campement — repart bien à zéro sur un reset complet
   game.campfireShortLastUsed = 0; // v3.14 : idem pour le repos court
   game.activeAfflictions = {}; // v3.20 : remis à zéro sur un reset complet (conservé à l'ascension)
@@ -1065,10 +1150,11 @@ function fullResetState() {
   // sur un reset complet, comme worldQuestProgress ci-dessus.
   // v3.35 : planche/lingot repartent aussi à zéro (artisanat tier 1).
   // v3.36 : pierre/farine idem.
-  game.resources = { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0 };
+  game.resources = { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0 };
   game.adventureQuestProgress = {};
   game.adventureQuestsCompleted = {};
   game.huntStats = {}; // v3.30
+  game.explorationProgression = { blockedPathCompleted: false, forgottenClearingUnlocked: false, unstableVeinDiscoveryCompleted: false, quarryUnlocked: false, huntBuildingUnlocked: false, driedSpringDiscoveryCompleted: false, wellUnlocked: false }; // v3.90.0/v3.92.0/v3.93.0/v3.94.0
   game.craftQueue = []; // v3.43 : repart à zéro, aucun remboursement à faire sur un reset complet (tout repart de zéro de toute façon)
   game.production = {}; // v3.31 : repart à zéro, ProductionManager.ensure() recrée les 4 bâtiments au niveau 1
   game.construction = {}; // v3.37 : repart à zéro, ConstructionManager.ensure() recrée workshop au niveau 0

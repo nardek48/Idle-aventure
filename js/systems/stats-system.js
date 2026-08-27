@@ -109,6 +109,9 @@ var StatsSystem = {
     var trainedPower = (game.trainedStats && game.trainedStats.power) || 0;
     var totalPower = basePower + trainedPower;
     game.tapDamage += totalPower * FORCE_TAP_COEF;
+    // v3.90.0 : Puissance brute finale exposée pour le moteur d'Expéditions non-combat
+    // (exploration-engine.js) — source de vérité unique, jamais recalculée ailleurs.
+    game.heroPowerRaw = totalPower;
 
     var CELERITY_DPS_COEF = 0.03;
     var baseCelerity = (hero && hero.stats) ? Number(hero.stats.celerity) || 0 : 0;
@@ -119,6 +122,8 @@ var StatsSystem = {
     var basePrecision = (hero && hero.stats) ? Number(hero.stats.precision) || 0 : 0;
     var trainedPrecision = (game.trainedStats && game.trainedStats.precision) || 0;
     game.critChance += (basePrecision + trainedPrecision) * PRECISION_CRIT_COEF;
+    // v3.90.0 : Précision brute finale exposée, même raison que heroPowerRaw ci-dessus.
+    game.heroPrecisionRaw = basePrecision + trainedPrecision;
 
     var WILL_CRIT_MULT_COEF = 0.01;
     var baseWill = (hero && hero.stats) ? Number(hero.stats.will) || 0 : 0;
@@ -132,6 +137,10 @@ var StatsSystem = {
     var totalEndurance = baseEndurance + trainedEndurance;
     var effectiveEndurance = Math.pow(Math.max(0, totalEndurance), ENDURANCE_HP_EXP);
     game.heroMaxHp = Math.max(1, Math.floor(effectiveEndurance * ENDURANCE_HP_COEF));
+    // v3.94.0 : Endurance brute finale exposée pour le moteur du minijeu "Puits"
+    // (systems/well-system.js) — même raison que heroPowerRaw/heroPrecisionRaw (v3.90.0) :
+    // source de vérité unique, jamais recalculée ailleurs.
+    game.heroEnduranceRaw = totalEndurance;
 
     var HERO_DEFENSE_COEF = 0.002;
     var HERO_DEFENSE_CAP = 0.6;

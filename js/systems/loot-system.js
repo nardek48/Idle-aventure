@@ -11,7 +11,14 @@ function generateEquipmentItem(slot, rarity) {
   var factor = Math.pow(10, decimals);
   var value = Math.round(raw * factor) / factor;
 
-  var icon = config.icons[randInt(0, config.icons.length - 1)];
+  // Arme : restreint l'icône aux types compatibles avec la classe du héros actif (un archer ne trouve pas de bâton).
+  var iconPool = config.icons;
+  if (slot === "weapon" && typeof getAllowedWeaponIconsForCurrentHero === "function") {
+    var allowedIcons = getAllowedWeaponIconsForCurrentHero();
+    if (Array.isArray(allowedIcons) && allowedIcons.length) iconPool = allowedIcons;
+  }
+
+  var icon = iconPool[randInt(0, iconPool.length - 1)];
   var namePool = (config.namesByIcon && config.namesByIcon[icon]) || config.names;
   var name = namePool[randInt(0, namePool.length - 1)];
 

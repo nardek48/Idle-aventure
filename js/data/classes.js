@@ -8,6 +8,7 @@ var CLASSES = [
     label: "Chevalier",
     icon: "⚔️",
     weaponType: "sword",
+    weaponIcons: ["sword", "axe"],
     heroIds: ["knight", "chaosKnight"],
     resource: {
       id: "rage",
@@ -26,6 +27,7 @@ var CLASSES = [
     label: "Archer",
     icon: "🏹",
     weaponType: "bow",
+    weaponIcons: ["bow"],
     heroIds: ["ranger", "chaosRanger"],
     resource: {
       id: "focus",
@@ -44,6 +46,7 @@ var CLASSES = [
     label: "Mage",
     icon: "🔮",
     weaponType: "magic",
+    weaponIcons: ["staff"],
     heroIds: ["mage", "chaosMage"],
     resource: {
       id: "mana",
@@ -83,7 +86,19 @@ function getClassForHero(hero) {
   return getClassByHeroId(hero.id);
 }
 
+/* Icônes d'arme autorisées pour le héros courant (game.heroId). Fallback : toutes les icônes (pas de restriction si classe inconnue). */
+function getAllowedWeaponIconsForCurrentHero() {
+  var cls = getClassByHeroId(window.game ? game.heroId : null);
+  if (!cls || !Array.isArray(cls.weaponIcons) || !cls.weaponIcons.length) {
+    return (typeof EQUIPMENT_SLOT_CONFIG !== "undefined" && EQUIPMENT_SLOT_CONFIG.weapon)
+      ? EQUIPMENT_SLOT_CONFIG.weapon.icons
+      : null;
+  }
+  return cls.weaponIcons;
+}
+
 window.CLASSES = CLASSES;
 window.getClassById = getClassById;
 window.getClassByHeroId = getClassByHeroId;
 window.getClassForHero = getClassForHero;
+window.getAllowedWeaponIconsForCurrentHero = getAllowedWeaponIconsForCurrentHero;

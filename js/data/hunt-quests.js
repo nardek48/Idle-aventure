@@ -13,12 +13,18 @@ var WAREHOUSE_RESOURCES = {
   lingot: { id: "lingot", name: "Lingot", icon: "images/Icons/resources/ingot_icon.png", desc: "Fabriqué à partir de Fer.", sellPrice: 10, tier: "crafted", cap: 999 },
   farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.png", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 },
   pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.png", desc: "Cuit à l'Atelier de Construction à partir d'Eau et de Farine.", sellPrice: 19, tier: "crafted", cap: 999 },
-  ration: { id: "ration", name: "Ration", icon: "images/Icons/resources/ration_icon.png", desc: "Préparée à l'Atelier de Construction à partir de Viande et de Pain.", sellPrice: 36, tier: "crafted", cap: 999 }
+  ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.png", desc: "Préparée à l'Atelier de Construction à partir de Viande et de Pain — pour les expéditions les plus exigeantes.", sellPrice: 36, tier: "crafted", cap: 999 },
+  petite_ration: { id: "petite_ration", name: "Petite ration", icon: "images/Icons/resources/ration_icon.png", desc: "Préparée directement à l'Entrepôt à partir de Viande et d'Eau, sans Atelier — pour les expéditions simples de début de monde.", sellPrice: 18, tier: "crafted", cap: 999 }
 };
 
 var HUNT_QUESTS = {
   hq_forest_boar: {
     id: "hq_forest_boar",
+    type: "resource",
+    section: "resource",
+    difficulty: "easy",
+    progressionStage: "world_start",
+    category: "side",
     worldId: "forest",
     adventureIndex: 0,
     name: "Chasse en Forêt",

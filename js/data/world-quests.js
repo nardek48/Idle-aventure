@@ -7,6 +7,10 @@ var WORLD_QUESTS = {
     id: "wq_ruins",
     worldId: "ruins",
     worldIndex: 2,
+    section: "worldexpedition",
+    difficulty: "easy",
+    progressionStage: "world_start",
+    category: "main",
     name: "L'Appel des Ruines",
     icon: "./images/Icons/quest_icons/chapter_end/chapter_end1.png",
     steps: [
@@ -42,6 +46,10 @@ var WORLD_QUESTS = {
     id: "wq_crypt",
     worldId: "crypt",
     worldIndex: 3,
+    section: "worldexpedition",
+    difficulty: "medium",
+    progressionStage: "world_mid",
+    category: "main",
     name: "Le Repos Troublé",
     icon: "./images/Icons/quest_icons/chapter_end/chapter_end1.png",
     steps: [
@@ -77,6 +85,10 @@ var WORLD_QUESTS = {
     id: "wq_mountain",
     worldId: "mountain",
     worldIndex: 4,
+    section: "worldexpedition",
+    difficulty: "medium",
+    progressionStage: "world_mid",
+    category: "main",
     name: "Le Froid avant les Flammes",
     icon: "./images/Icons/quest_icons/chapter_end/chapter_end2.png",
     steps: [
@@ -112,6 +124,10 @@ var WORLD_QUESTS = {
     id: "wq_tower",
     worldId: "tower",
     worldIndex: 5,
+    section: "worldexpedition",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "main",
     name: "L'Ascension Arcanique",
     icon: "./images/Icons/quest_icons/chapter_end/chapter_end2.png",
     steps: [

@@ -325,6 +325,12 @@ function selectHeroInline(heroId) {
     ClassCombatManager.resetForNewHero();
   }
 
+  // Arme de l'ancienne classe potentiellement incompatible avec la nouvelle -> retour inventaire.
+  if (typeof unequipIncompatibleWeapon === "function") unequipIncompatibleWeapon();
+  if ((!game.equipped || !game.equipped.weapon) && typeof equipStarterWeapon === "function") {
+    equipStarterWeapon();
+  }
+
   if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
     StatsSystem.recalcStats();
   }

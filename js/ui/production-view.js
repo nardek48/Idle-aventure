@@ -58,6 +58,7 @@ function buildProductionCardHTML(id) {
   h += '</div>';
 
   h += '</div>';
+
   return h;
 }
 
@@ -66,6 +67,7 @@ function buildProductionHTML() {
 
   var h = '<div class="production-grid">';
   Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
+    if (!ProductionManager.isBuildingUnlocked(id)) return; // v3.92.0 : Carrière verrouillée -> invisible
     h += buildProductionCardHTML(id);
   });
   h += '</div>';

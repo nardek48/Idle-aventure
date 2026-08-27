@@ -10,10 +10,6 @@ var AdventureQuestManager = {
     if (!game.adventureQuestsCompleted || typeof game.adventureQuestsCompleted !== "object") {
       game.adventureQuestsCompleted = {};
     }
-    if (!game.resources || typeof game.resources !== "object") {
-      game.resources = { mineraiRare: 0 };
-    }
-    if (typeof game.resources.mineraiRare !== "number") game.resources.mineraiRare = 0;
 
     Object.keys(ADVENTURE_QUESTS).forEach(function (key) {
       var quest = ADVENTURE_QUESTS[key];
@@ -69,7 +65,7 @@ var AdventureQuestManager = {
     var gateQuest = null;
     Object.keys(ADVENTURE_QUESTS).some(function (key) {
       var quest = ADVENTURE_QUESTS[key];
-      if (quest.type === "expedition" && quest.worldId === worldId && quest.gatesTransitionTo === targetIndex) {
+      if (quest.type === "transition" && quest.worldId === worldId && quest.gatesTransitionTo === targetIndex) {
         gateQuest = quest;
         return true;
       }
@@ -190,17 +186,6 @@ var AdventureQuestManager = {
       }
     });
 
-    if (!enemy.isBoss) {
-      quest.steps.forEach(function (step) {
-        if (step.type === "collect" && chance(20)) {
-          if (!game.resources || typeof game.resources !== "object") game.resources = {};
-          game.resources[step.resourceKey] = Number(game.resources[step.resourceKey] || 0) + 1;
-          addLog("⛏️ " + (step.resourceKey === "mineraiRare" ? "Minerai rare" : step.resourceKey) + " trouvé (+1)", "event");
-          if (progress[step.id] < step.target) progress[step.id] += 1;
-        }
-      });
-    }
-
     if (this.isReadyToClaim(quest)) {
       this.finish(quest, true);
       return;
@@ -223,6 +208,19 @@ var AdventureQuestManager = {
 
       addLog("📜 Quête terminée : " + quest.name + " (+" + formatNumber(reward.gold || 0) + " or, +" + formatNumber(reward.essence || 0) + " essence)", "event");
       showToast("📜 " + quest.name + " terminée !", 2200);
+
+      if (typeof openQuestCompletePopup === "function") {
+        var rewardRows = [];
+        if (reward.gold) rewardRows.push({ label: "Or", value: formatNumber(reward.gold) });
+        if (reward.essence) rewardRows.push({ label: "Essence", value: formatNumber(reward.essence) });
+        openQuestCompletePopup({
+          icon: quest.icon || "📜",
+          title: "Quête terminée !",
+          text: quest.name,
+          rewardRows: rewardRows,
+          closeLabel: "Fermer"
+        });
+      }
     }
 
     if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {

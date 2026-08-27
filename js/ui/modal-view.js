@@ -137,6 +137,10 @@ function confirmHeroSelection() {
   game.playerName = name;
   window.pendingHeroCreationOrigin = null; // v3.29 : création confirmée, la croix ✕ n'a plus lieu d'être pour cet emplacement
 
+  if (!game.equipped || !game.equipped.weapon) {
+    if (typeof equipStarterWeapon === "function") equipStarterWeapon();
+  }
+
   if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
     StatsSystem.recalcStats();
   }

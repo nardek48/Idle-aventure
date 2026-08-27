@@ -1,11 +1,33 @@
 "use strict";
 /* systems/production-system.js — ProductionManager, 4+ bâtiments à stock local plafonné (distinct de VillageManager, bonus % sans stock).
-   tick(dt) en continu + catchUpOffline() au boot (lastTick propre, indépendant de game.lastOnline). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   tick(dt) en continu + catchUpOffline() au boot (lastTick propre, indépendant de game.lastOnline).
+   v3.92.0 : la Carrière (quarry) est le premier bâtiment soumis à un verrou de déblocage réel
+   (voir isBuildingUnlocked/unlockBuilding) — aucune production tant que non débloquée.
+   v3.93.0 : la Chasse (hunt) suit le même principe, débloquée par la quête "La Meute Affamée"
+   (data/adventure-quests.js, AdventureQuestManager existant, aucune nouvelle mécanique de
+   combat créée). v3.94.0 : le Puits (well) suit le même principe, débloqué par la quête
+   "La Source Tarie" (systems/well-system.js). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+
+var PRODUCTION_UNLOCK_FLAGS = {
+  quarry: "quarryUnlocked",
+  hunt: "huntBuildingUnlocked",
+  well: "wellUnlocked"
+};
 
 var ProductionManager = {
+  /* v3.93.0/v3.94.0 : généralisé à tout bâtiment listé dans PRODUCTION_UNLOCK_FLAGS
+     (quarry, hunt, well) — retourne toujours true pour tout bâtiment non soumis à un verrou. */
+  isBuildingUnlocked: function (id) {
+    var flagName = PRODUCTION_UNLOCK_FLAGS[id];
+    if (!flagName) return true;
+    return !!(game.explorationProgression && game.explorationProgression[flagName]);
+  },
+
   ensure: function () {
     if (!game.production || typeof game.production !== "object") game.production = {};
+    var self = this;
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
+      if (!self.isBuildingUnlocked(id)) return; // pas d'initialisation tant que verrouillé
       if (!game.production[id] || typeof game.production[id] !== "object") {
         game.production[id] = { level: 1, stock: 0, lastTick: Date.now() };
       }
@@ -14,6 +36,16 @@ var ProductionManager = {
       if (typeof b.stock !== "number" || b.stock < 0) b.stock = 0;
       if (typeof b.lastTick !== "number") b.lastTick = Date.now();
     });
+  },
+
+  /* Initialisation rétroactive au moment du déblocage de n'importe quel bâtiment verrouillable
+     (appelée par MiningManager.settle() pour quarry, par openQuestCompletePopup() pour hunt).
+     Idempotent : ne réinitialise pas un bâtiment déjà présent (ex. migration). */
+  unlockBuilding: function (id) {
+    if (!game.production || typeof game.production !== "object") game.production = {};
+    if (!game.production[id] || typeof game.production[id] !== "object") {
+      game.production[id] = { level: 1, stock: 0, lastTick: Date.now() };
+    }
   },
 
   getLevel: function (id) {
@@ -66,7 +98,9 @@ var ProductionManager = {
     var changed = false;
 
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
+      if (!self.isBuildingUnlocked(id)) return; // v3.92.0 : Carrière verrouillée -> aucune production
       var b = game.production[id];
+      if (!b) return; // garde défensive (ne devrait pas arriver après ensure(), mais sécurise tick())
       var capacity = self.getCapacity(id);
       if (b.stock >= capacity) {
         b.lastTick = Date.now();
@@ -99,7 +133,9 @@ var ProductionManager = {
     var self = this;
 
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
+      if (!self.isBuildingUnlocked(id)) return; // v3.92.0 : Carrière verrouillée -> aucun rattrapage
       var b = game.production[id];
+      if (!b) return; // garde défensive, même raison que tick() ci-dessus
       var elapsedMs = now - Number(b.lastTick || now);
       if (elapsedMs <= 1000) {
         b.lastTick = now;
@@ -118,6 +154,7 @@ var ProductionManager = {
 
   harvest: function (id) {
     this.ensure();
+    if (!this.isBuildingUnlocked(id)) return; // v3.92.0 : garde défensive
     var b = game.production[id];
     var def = PRODUCTION_BUILDINGS[id];
     if (!b || !def) return;
@@ -142,6 +179,7 @@ var ProductionManager = {
 
   buy: function (id) {
     this.ensure();
+    if (!this.isBuildingUnlocked(id)) return; // v3.92.0 : garde défensive
     var b = game.production[id];
     var def = PRODUCTION_BUILDINGS[id];
     if (!b || !def) return;

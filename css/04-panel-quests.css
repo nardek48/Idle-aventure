@@ -88,3 +88,147 @@
 .quest-world-section:first-child .quest-world-section-title {
   margin-top: 0;
 }
+
+/* v3.89 : carte-catégorie repliable (Histoire/Ressources/Aventure/Expéditions),
+   au-dessus du regroupement par monde existant (.quest-world-section ci-dessus).
+   Pattern inspiré de .dungeon-card (même famille visuelle, sans bannière image
+   puisqu'aucune illustration dédiée par catégorie n'existe). */
+.quest-section-list {
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quest-section-card {
+  border-radius: var(--nb-radius-md);
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream-alt);
+  overflow: hidden;
+}
+
+.quest-section-card.is-expanded {
+  border-color: var(--nb-gold-dark);
+}
+
+.quest-section-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--nb-cream-deep);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.quest-section-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.quest-section-icon-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: inline-block;
+}
+
+.quest-section-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.quest-section-count {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--nb-gold);
+  color: #3a2a12;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.quest-section-chevron {
+  font-size: 11px;
+  color: var(--nb-ink-dim);
+  flex-shrink: 0;
+}
+
+.quest-section-body {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: quest-card-detail-in 0.15s ease;
+}
+
+/* Badges difficulté/principal-secondaire dans l'en-tête d'une carte-quête
+   (buildQuestBadgesHTML, ui/quests-view.js). */
+.quest-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.quest-badge-difficulty {
+  margin-left: 6px;
+}
+
+.quest-badge-main {
+  margin-left: 4px;
+  color: var(--nb-gold-dark);
+  border-color: var(--nb-gold-dark);
+}
+
+.quest-badge-side {
+  margin-left: 4px;
+  color: var(--nb-ink-dim);
+  border-color: var(--nb-frame);
+}
+
+/* v3.90.0 : popups du moteur d'Expéditions (ui/exploration-view.js) — liste d'options
+   empilée (provisions/approche/choix d'événement), réutilise .settings-btn tel quel pour
+   la base du bouton, juste le layout interne (label + coût/estimation sur 2 lignes). */
+.exploration-option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+  width: 100%;
+}
+
+.exploration-option-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+}
+
+.exploration-option-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.exploration-option-cost,
+.exploration-option-estimate {
+  font-size: 11px;
+  color: var(--nb-ink-dim);
+  font-weight: 400;
+}
+
+.exploration-prep-card .dungeon-summary-rewards {
+  width: 100%;
+}

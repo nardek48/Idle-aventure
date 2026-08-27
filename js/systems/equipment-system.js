@@ -34,6 +34,51 @@ function getEquipmentIconPath(item) {
   return "images/Icons/equipment_icon/" + item.icon + "_" + rarityFile + ".jpg";
 }
 
+function isWeaponIconAllowedForCurrentHero(icon) {
+  if (typeof getAllowedWeaponIconsForCurrentHero !== "function") return true;
+  var allowed = getAllowedWeaponIconsForCurrentHero();
+  if (!Array.isArray(allowed) || !allowed.length) return true;
+  return allowed.indexOf(icon) !== -1;
+}
+
+/* Génère et équipe directement (sans passer par l'inventaire) une arme de départ à 1 dégât tap, liée à la classe du héros actif. */
+function equipStarterWeapon() {
+  if (typeof getAllowedWeaponIconsForCurrentHero !== "function" || typeof generateEquipmentItem !== "function") return null;
+  if (!game.equipped) return null;
+
+  var allowedIcons = getAllowedWeaponIconsForCurrentHero();
+  var icon = (Array.isArray(allowedIcons) && allowedIcons.length) ? allowedIcons[0] : null;
+
+  var item = generateEquipmentItem("weapon", "common");
+  if (!item) return null;
+  if (icon) {
+    item.icon = icon;
+    var config = (typeof EQUIPMENT_SLOT_CONFIG !== "undefined") ? EQUIPMENT_SLOT_CONFIG.weapon : null;
+    var namePool = config && config.namesByIcon && config.namesByIcon[icon];
+    if (namePool && namePool.length) item.name = namePool[0];
+  }
+  item.value = 1;
+
+  game.equipped.weapon = item;
+  return item;
+}
+window.equipStarterWeapon = equipStarterWeapon;
+
+/* Déséquipe l'arme active si elle n'est plus compatible avec la classe du héros actif (ex. après changement de héros). Renvoie l'arme retirée vers l'inventaire. */
+function unequipIncompatibleWeapon() {
+  if (!game.equipped || !game.equipped.weapon) return false;
+  if (isWeaponIconAllowedForCurrentHero(game.equipped.weapon.icon)) return false;
+
+  var item = game.equipped.weapon;
+  game.inventory.push(item);
+  game.equipped.weapon = null;
+
+  addLog("⚔️ " + item.name + " retirée (incompatible avec la nouvelle classe)", "event");
+  return true;
+}
+window.unequipIncompatibleWeapon = unequipIncompatibleWeapon;
+window.isWeaponIconAllowedForCurrentHero = isWeaponIconAllowedForCurrentHero;
+
 var MAX_INVENTORY_SIZE = 50;
 
 function addLootToInventory(item) {
@@ -83,6 +128,11 @@ var EquipmentSystem = {
 
     var item = game.inventory[index];
     if (!item || !item.slot || !game.equipped) return;
+
+    if (item.slot === "weapon" && !isWeaponIconAllowedForCurrentHero(item.icon)) {
+      showToast("⚔️ Cette arme ne convient pas à ta classe", 1600);
+      return;
+    }
 
     var previous = game.equipped[item.slot];
     if (previous) {

@@ -2,6 +2,7 @@
 /* ui/warehouse-view.js — sous-onglet Entrepôt (Village) : grille+panneau détail (v3.32), vente, artisanat tier 1 + file de craft (v3.35/v3.43), entrée vers modale Construction (v3.37.1). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var selectedWarehouseKey = null;
+var selectedWarehouseRecipeId = null;
 
 var warehouseSellQty = 1;
 
@@ -12,21 +13,40 @@ var warehouseCraftQty = 1;
 function setWarehouseFilter(tier) {
   warehouseFilter = (tier === "crafted") ? "crafted" : "raw";
   selectedWarehouseKey = null;
+  selectedWarehouseRecipeId = null;
   if (typeof renderPanel === "function") renderPanel();
 }
 window.setWarehouseFilter = setWarehouseFilter;
 
 function selectWarehouseKey(key) {
   selectedWarehouseKey = key;
+  var recipes = (typeof RECIPES_BY_INPUT !== "undefined") ? (RECIPES_BY_INPUT[key] || []) : [];
+  selectedWarehouseRecipeId = recipes.length ? recipes[0].id : null;
   warehouseSellQty = 1;
   warehouseCraftQty = 1;
   if (typeof renderPanel === "function") renderPanel();
 }
 window.selectWarehouseKey = selectWarehouseKey;
 
+function selectWarehouseRecipe(recipeId) {
+  if (!recipeId || (typeof RECIPES === "undefined") || !RECIPES[recipeId]) return;
+  selectedWarehouseRecipeId = recipeId;
+  warehouseCraftQty = 1;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.selectWarehouseRecipe = selectWarehouseRecipe;
+
+function getSelectedWarehouseRecipe() {
+  if (selectedWarehouseRecipeId && typeof RECIPES !== "undefined" && RECIPES[selectedWarehouseRecipeId]) {
+    return RECIPES[selectedWarehouseRecipeId];
+  }
+  // Fallback rétrocompatible si aucune sélection explicite (1ère recette disponible pour cette ressource).
+  return (typeof RECIPE_BY_INPUT !== "undefined") ? (RECIPE_BY_INPUT[selectedWarehouseKey] || null) : null;
+}
+
 function adjustWarehouseCraftQty(delta) {
   if (!selectedWarehouseKey) return;
-  var recipe = (typeof RECIPE_BY_INPUT !== "undefined") ? RECIPE_BY_INPUT[selectedWarehouseKey] : null;
+  var recipe = getSelectedWarehouseRecipe();
   if (!recipe) return;
 
   var maxCrafts = getMaxCraftTimes(recipe);
@@ -54,7 +74,7 @@ function getMaxCraftTimes(recipe) {
 
 function confirmCraftWarehouseResource() {
   if (!selectedWarehouseKey) return;
-  var recipe = (typeof RECIPE_BY_INPUT !== "undefined") ? RECIPE_BY_INPUT[selectedWarehouseKey] : null;
+  var recipe = getSelectedWarehouseRecipe();
   if (!recipe) return;
   WarehouseManager.enqueueCraft(recipe, warehouseCraftQty);
   warehouseCraftQty = 1; // repart à 1 après mise en file (le stock restant a changé)
@@ -107,8 +127,10 @@ function buildWarehouseTileHTML(key) {
 }
 
 function buildWarehouseCraftBlockHTML(inputKey) {
-  var recipe = (typeof RECIPE_BY_INPUT !== "undefined") ? RECIPE_BY_INPUT[inputKey] : null;
-  if (!recipe) return "";
+  var recipes = (typeof RECIPES_BY_INPUT !== "undefined") ? (RECIPES_BY_INPUT[inputKey] || []) : [];
+  if (!recipes.length) return "";
+
+  var recipe = getSelectedWarehouseRecipe() || recipes[0];
 
   var outputDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
   var maxCrafts = getMaxCraftTimes(recipe);
@@ -121,6 +143,17 @@ function buildWarehouseCraftBlockHTML(inputKey) {
   warehouseCraftQty = Math.max(1, Math.min(maxCrafts || 1, warehouseCraftQty));
 
   var h = '<div class="warehouse-craft-block">';
+
+  if (recipes.length > 1) {
+    h += '<div class="warehouse-craft-recipe-tabs">';
+    recipes.forEach(function (r) {
+      var out = WAREHOUSE_RESOURCES[r.outputs[0].resourceId];
+      var isActive = r.id === recipe.id;
+      h += '<button type="button" class="warehouse-craft-recipe-tab' + (isActive ? ' is-active' : '') + '" onclick="selectWarehouseRecipe(\'' + esc(r.id) + '\')">' + esc(out ? out.name : r.label) + '</button>';
+    });
+    h += '</div>';
+  }
+
   h += '<div class="warehouse-craft-title">' + renderIconOrEmojiHTML(outputDef.icon, "warehouse-craft-title-icon", outputDef.name) + esc(outputDef.name) + '</div>';
   h += '<div class="warehouse-craft-recipe">' + inputsText + ' → ' + formatNumber(recipe.outputs[0].quantity) + ' ' + esc(outputDef.name) + '</div>';
 
@@ -222,7 +255,7 @@ function buildWarehouseDetailPanelHTML() {
   var canSell = Number(def.sellPrice || 0) > 0;
 
   if (!canSell) {
-    if (!RECIPE_BY_INPUT[selectedWarehouseKey]) {
+    if (!(RECIPES_BY_INPUT[selectedWarehouseKey] || []).length) {
       h += '<div class="warehouse-empty-hint">Rien à faire pour l\'instant.</div>';
     }
   } else if (stock <= 0) {

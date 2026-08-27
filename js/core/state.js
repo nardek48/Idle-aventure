@@ -26,6 +26,40 @@ function createDefaultVillage() {
   };
 }
 
+function createDefaultExplorationProgression() {
+  return {
+    blockedPathCompleted: false,
+    forgottenClearingUnlocked: false,
+    // v3.92.0 : "La Veine Instable" (Jalon B) — découverte du minijeu de minage +
+    // déblocage définitif de la Carrière (data/exploration-quests.js: unstableVein).
+    unstableVeinDiscoveryCompleted: false,
+    quarryUnlocked: false,
+    // v3.93.0 : "La Meute Affamée" (data/adventure-quests.js: hq_wolf_pack) — déblocage
+    // définitif du bâtiment Chasse en Production, via AdventureQuestManager existant
+    // (vrai combat), pas un nouveau moteur. Détecté et appliqué depuis quests-view.js
+    // (openQuestCompletePopup) au moment où cette quête précise se termine.
+    huntBuildingUnlocked: false,
+    // v3.94.0 : "La Source Tarie" (data/exploration-quests.js: driedSpring) — minijeu
+    // maintenir/relâcher (systems/well-system.js) + déblocage définitif du Puits.
+    driedSpringDiscoveryCompleted: false,
+    wellUnlocked: false
+  };
+}
+
+function createDefaultGatheringActivity() {
+  return {
+    quarry: {
+      cooldownEndsAt: 0,
+      activeSession: null
+    },
+    // v3.94.0 : même structure que quarry, dédiée à l'activité bonus du Puits.
+    well: {
+      cooldownEndsAt: 0,
+      activeSession: null
+    }
+  };
+}
+
 /* État complet d'une nouvelle partie. Toute nouvelle donnée de jeu
    persistante doit être ajoutée ici ET dans ensureGameStateDefaults()
    ci-dessous (pour réparer les sauvegardes plus anciennes qui ne
@@ -133,7 +167,7 @@ function createInitialGameState() {
     worldQuestProgress: {},
     worldQuestsCompleted: {},
 
-    resources: { mineraiRare: 0, viande: 0, ble: 0, bois: 0, fer: 0 },
+    resources: { viande: 0, ble: 0, bois: 0, fer: 0 },
     adventureQuestProgress: {},
     adventureQuestsCompleted: {},
     adventureQuestRun: { active: false, questId: null },
@@ -145,6 +179,15 @@ function createInitialGameState() {
     codexRead: {},
 
     hasSeenOnboarding: false,
+
+    // v3.90.0 : moteur d'Expéditions non-combat (systems/exploration-engine.js) — jamais
+    // de CombatEngine. explorationRun = run éphémère actif (null si aucun), voir la forme
+    // complète dans exploration-engine.js. explorationProgression = déblocages persistants.
+    explorationRun: null,
+    explorationProgression: createDefaultExplorationProgression(),
+    // v3.92.0 : session active du minijeu de minage (quête OU activité bonus Carrière,
+    // voir systems/mining-system.js), séparée de explorationRun (moteur indépendant).
+    gatheringActivity: createDefaultGatheringActivity(),
 
     playerName: "",
     heroId: ""
@@ -301,8 +344,7 @@ function ensureGameStateDefaults() {
     WorldQuestManager.migrate();
   }
 
-  if (!game.resources || typeof game.resources !== "object") game.resources = { mineraiRare: 0 };
-  if (typeof game.resources.mineraiRare !== "number") game.resources.mineraiRare = 0;
+  if (!game.resources || typeof game.resources !== "object") game.resources = {};
   if (window.AdventureQuestManager && typeof AdventureQuestManager.ensureDefaults === "function") {
     AdventureQuestManager.ensureDefaults();
   }
@@ -312,6 +354,40 @@ function ensureGameStateDefaults() {
   if (!game.codexRead || typeof game.codexRead !== "object") game.codexRead = {};
 
   if (typeof game.hasSeenOnboarding !== "boolean") game.hasSeenOnboarding = false;
+
+  // v3.90.0 : migration Expéditions — sauvegarde ancienne sans ces champs = valeurs par
+  // défaut sûres (run absent, aucun déblocage). Ne recrée jamais un run à partir de rien.
+  if (game.explorationRun !== null && typeof game.explorationRun !== "object") {
+    game.explorationRun = null;
+  }
+  if (!game.explorationProgression || typeof game.explorationProgression !== "object") {
+    game.explorationProgression = createDefaultExplorationProgression();
+  }
+  if (typeof game.explorationProgression.blockedPathCompleted !== "boolean") {
+    game.explorationProgression.blockedPathCompleted = false;
+  }
+  if (typeof game.explorationProgression.forgottenClearingUnlocked !== "boolean") {
+    game.explorationProgression.forgottenClearingUnlocked = false;
+  }
+  // v3.93.0 : garde de forme uniquement (valeur par défaut sûre) — la vraie logique de
+  // migration (sauvegarde existante -> true d'office) vit dans save-system.js/loadGame(),
+  // même pattern que quarryUnlocked.
+  if (typeof game.explorationProgression.huntBuildingUnlocked !== "boolean") {
+    game.explorationProgression.huntBuildingUnlocked = false;
+  }
+  // v3.94.0 : même garde de forme pour le Puits — vraie migration dans save-system.js.
+  if (typeof game.explorationProgression.driedSpringDiscoveryCompleted !== "boolean") {
+    game.explorationProgression.driedSpringDiscoveryCompleted = false;
+  }
+  if (typeof game.explorationProgression.wellUnlocked !== "boolean") {
+    game.explorationProgression.wellUnlocked = false;
+  }
+  if (!game.gatheringActivity || typeof game.gatheringActivity !== "object") {
+    game.gatheringActivity = createDefaultGatheringActivity();
+  }
+  if (!game.gatheringActivity.well || typeof game.gatheringActivity.well !== "object") {
+    game.gatheringActivity.well = { cooldownEndsAt: 0, activeSession: null };
+  }
 
   if (typeof game.heroLevel !== "number") game.heroLevel = 1;
   if (typeof game.heroXp !== "number") game.heroXp = 0;
@@ -333,5 +409,6 @@ ensureGameStateDefaults();
 window.game = game;
 window.createDefaultEquipped = createDefaultEquipped;
 window.createDefaultVillage = createDefaultVillage;
+window.createDefaultExplorationProgression = createDefaultExplorationProgression;
 window.createInitialGameState = createInitialGameState;
 window.ensureGameStateDefaults = ensureGameStateDefaults;

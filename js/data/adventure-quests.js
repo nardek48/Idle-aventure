@@ -6,6 +6,10 @@ var ADVENTURE_QUESTS = {
   aq_forest_scout: {
     id: "aq_forest_scout",
     type: "kill",
+    section: "adventure",
+    difficulty: "easy",
+    progressionStage: "world_start",
+    category: "side",
     worldId: "forest",
     adventureIndex: 0,
     name: "Éclaireur de la Lisière",
@@ -25,7 +29,11 @@ var ADVENTURE_QUESTS = {
 
   aq_forest_expedition: {
     id: "aq_forest_expedition",
-    type: "expedition",
+    type: "transition",
+    section: "adventure",
+    difficulty: "easy",
+    progressionStage: "world_start",
+    category: "main",
     worldId: "forest",
     adventureIndex: 0,
     gatesTransitionTo: 1,
@@ -51,25 +59,53 @@ var ADVENTURE_QUESTS = {
     reward: { gold: 800, essence: 15 }
   },
 
-  aq_forest_collect: {
-    id: "aq_forest_collect",
-    type: "collect",
+  aq_forest_depths: {
+    id: "aq_forest_depths",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_end",
+    category: "main",
     worldId: "forest",
     adventureIndex: 1,
     gatesNextWorld: true,
-    name: "Minerai des profondeurs",
-    story: "Au-delà de la Lisière, l'air se fait plus lourd et les arbres plus anciens. On raconte qu'un minerai rare, teinté par l'Aether, affleure parfois sous les racines les plus profondes — à condition de survivre assez longtemps pour le trouver.",
-    icon: "./images/Icons/quest_icons/resource/resource1.png",
+    name: "Le Cœur de la Forêt",
+    story: "Au-delà de la Lisière, l'air se fait plus lourd et les arbres plus anciens. Il faudra s'enfoncer plus profondément et faire ses preuves avant que le passage vers le Désert ne s'ouvre.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
     steps: [
       {
-        id: "collect_minerai",
-        type: "collect",
-        resourceKey: "mineraiRare",
-        target: 5,
-        desc: "Récupérer {target} Minerai rare en Cœur de la forêt"
+        id: "kills_depths",
+        type: "kill",
+        worldId: "forest",
+        target: 20,
+        desc: "Vaincre {target} ennemis en Cœur de la forêt"
       }
     ],
     reward: { gold: 600, essence: 12 }
+  },
+
+  hq_wolf_pack: {
+    id: "hq_wolf_pack",
+    type: "kill",
+    section: "adventure",
+    difficulty: "easy",
+    progressionStage: "world_start",
+    category: "main", // débloque un bâtiment de Production -> structurellement principale
+    worldId: "forest",
+    adventureIndex: 0,
+    name: "La Meute Affamée",
+    story: "Des loups rôdent près du campement. Il faut réduire leur nombre avant d'envisager d'installer un poste de chasse permanent.",
+    icon: "🐺",
+    steps: [
+      {
+        id: "kills_wolfpack",
+        type: "kill",
+        worldId: "forest",
+        target: 10,
+        desc: "Tuer {target} ennemis en Forêt"
+      }
+    ],
+    reward: { gold: 400, essence: 8, unlockBuildingId: "hunt" }
   }
 };
 

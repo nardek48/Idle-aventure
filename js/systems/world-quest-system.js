@@ -148,6 +148,21 @@ var WorldQuestManager = {
       addLog("🎁 Récompense de questline : " + item.name + " (" + item.rarity + ")", "event");
     });
 
+    if (typeof openQuestCompletePopup === "function") {
+      var rewardRows = [];
+      if (reward.gold) rewardRows.push({ label: "Or", value: formatNumber(reward.gold) });
+      if (reward.essence) rewardRows.push({ label: "Essence", value: formatNumber(reward.essence) });
+      if (reward.aether) rewardRows.push({ label: "Aether", value: formatNumber(reward.aether) });
+      if (grantedItems.length) rewardRows.push({ label: "Objets obtenus", value: grantedItems.length + " (" + reward.equipmentRarity + ")" });
+      openQuestCompletePopup({
+        icon: quest.icon || "🗺️",
+        title: "Questline terminée !",
+        text: quest.name,
+        rewardRows: rewardRows,
+        closeLabel: "Fermer"
+      });
+    }
+
     if (typeof renderAll === "function") renderAll();
     if (typeof saveGame === "function") saveGame();
     return true;
