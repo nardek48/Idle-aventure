@@ -1,5 +1,11 @@
 "use strict";
-/* ui/production-view.js — sous-onglet Production du Village. Carte horizontale (portrait+infos+actions), logique dans ProductionManager. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/production-view.js — sous-onglet Production du Village. Carte horizontale (portrait+infos+actions), logique dans ProductionManager.
+   v3.95.0 : coût d'amélioration multi-ressources (voir ProductionManager.getNextCost/getAffordability)
+   + panneau dépliable "Parcelles et améliorations" pour les Champs uniquement (voir
+   systems/farm-plots-system.js), inspiré du prototype fourni par Seb. Détail : COMMENTAIRES_ORIGINAUX.md */
+
+var farmPlotsPanelExpanded = false; // état d'affichage local à cet écran, pas mêlé aux cartes de quête
+var pendingFarmUpgradeAction = null; // action choisie (open/fertile/irrigated), en attente de sélection de parcelle
 
 function buildProductionCardHTML(id) {
   var def = PRODUCTION_BUILDINGS[id];
@@ -49,18 +55,181 @@ function buildProductionCardHTML(id) {
   if (ProductionManager.isMaxLevel(id)) {
     h += '<button class="production-action-btn production-upgrade-btn is-disabled" type="button" disabled>Niveau max</button>';
   } else {
-    var cost = ProductionManager.getCost(id);
-    var canAfford = (game.gold || 0) >= cost;
-    h += '<button class="production-action-btn production-upgrade-btn' + (canAfford ? '' : ' is-disabled') + '" type="button" ' + (canAfford ? '' : 'disabled') + ' onclick="ProductionManager.buy(\'' + id + '\')">';
-    h += 'Améliorer<br><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost);
+    var cost = ProductionManager.getNextCost(id);
+    var afford = ProductionManager.getAffordability(id);
+    h += '<button class="production-action-btn production-upgrade-btn' + (afford.all ? '' : ' is-disabled') + '" type="button" ' + (afford.all ? '' : 'disabled') + ' onclick="ProductionManager.buy(\'' + id + '\')">';
+    h += 'Améliorer<br>';
+    h += buildProductionCostRowHTML(cost, afford);
     h += '</button>';
   }
   h += '</div>';
 
   h += '</div>';
 
+  if (id === "farm" && window.FarmPlotsSystem) {
+    h += buildFarmPlotsToggleHTML();
+  }
+
   return h;
 }
+
+/* v3.95.0 : coût multi-ressources compact (or + jusqu'à 2 ressources), une icône+montant
+   par ressource, chacune en rouge si le joueur n'a pas assez de cette ressource précise. */
+function buildProductionCostRowHTML(cost, afford) {
+  if (!cost) return "";
+  var h = '<span class="production-cost-row">';
+  Object.keys(cost).forEach(function (key) {
+    var iconSrc = key === "gold" ? "images/Icons/gold_icon.png" : (WAREHOUSE_RESOURCES[key] ? WAREHOUSE_RESOURCES[key].icon : "");
+    var canAffordThis = afford[key] !== false;
+    h += '<span class="production-cost-item' + (canAffordThis ? '' : ' is-missing') + '">';
+    h += '<img class="btn-buy-icon" src="' + esc(iconSrc) + '" alt="">' + formatNumber(cost[key]);
+    h += '</span>';
+  });
+  h += '</span>';
+  return h;
+}
+
+function toggleFarmPlotsPanel() {
+  farmPlotsPanelExpanded = !farmPlotsPanelExpanded;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.toggleFarmPlotsPanel = toggleFarmPlotsPanel;
+
+/* v3.95.0 : bouton dépliable sous la carte Champs (pattern repris des cartes de quête
+   repliables), + le panneau lui-même quand ouvert : grille 3×3 des parcelles, effet
+   cumulé actuel, et popup de choix si un palier vient d'être atteint. */
+function buildFarmPlotsToggleHTML() {
+  var hasPending = FarmPlotsSystem.hasPendingChoice();
+
+  var h = '<button class="farm-plots-toggle" type="button" onclick="toggleFarmPlotsPanel()">';
+  h += '<span>🌾 Parcelles et améliorations</span>';
+  if (hasPending) h += '<span class="farm-plots-badge">1</span>';
+  h += '<span class="farm-plots-chevron">' + (farmPlotsPanelExpanded ? '▴' : '▾') + '</span>';
+  h += '</button>';
+
+  if (farmPlotsPanelExpanded) {
+    h += buildFarmPlotsPanelHTML();
+  }
+
+  return h;
+}
+
+function buildFarmPlotsPanelHTML() {
+  var plots = FarmPlotsSystem.getPlots();
+  var openCount = FarmPlotsSystem.getOpenPlotsCount();
+  var bonusPct = Math.round(FarmPlotsSystem.getBonusPct() * 100);
+  var hasPending = FarmPlotsSystem.hasPendingChoice();
+
+  var h = '<div class="farm-plots-panel">';
+
+  h += '<div class="farm-plots-top">';
+  h += '<h3>Domaine agricole</h3>';
+  h += '<small>' + openCount + ' / ' + FARM_PLOTS_CONFIG.totalPlots + ' parcelles actives</small>';
+  h += '</div>';
+
+  h += '<div class="farm-plots-grid">';
+  plots.forEach(function (plot, index) {
+    h += buildFarmPlotCellHTML(plot, index);
+  });
+  h += '</div>';
+  h += '<div class="farm-plots-bottom">';
+  h += '<span>Effet actuel : <strong>+' + bonusPct + '% Blé</strong></span>';
+  h += '</div>';
+
+  if (hasPending) {
+    h += buildFarmUpgradeChoiceHTML();
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function buildFarmPlotCellHTML(plot, index) {
+  var icon = "🔒";
+  var label = "À développer";
+  var classNames = "farm-plot locked-plot";
+
+  if (plot.state === "open") {
+    var hasFertile = plot.improvements.indexOf("fertile") !== -1;
+    var hasIrrigated = plot.improvements.indexOf("irrigated") !== -1;
+
+    if (hasFertile && hasIrrigated) {
+      icon = "🌿💧"; label = "Fertile & irriguée"; classNames = "farm-plot fertile irrigated";
+    } else if (hasFertile) {
+      icon = "🌿"; label = "Terre fertile"; classNames = "farm-plot fertile";
+    } else if (hasIrrigated) {
+      icon = "💧"; label = "Sillon irrigué"; classNames = "farm-plot irrigated";
+    } else {
+      icon = "🌱"; label = "Cultivé"; classNames = "farm-plot normal";
+    }
+  }
+
+  // v3.95.0 : si une action est en cours de sélection (pendingFarmUpgradeAction) et que
+  // cette parcelle y est éligible, la case devient elle-même cliquable (surlignée +
+  // onclick injecté dans le HTML, cohérent avec le reste du projet — jamais de handler
+  // attaché après-coup sur le DOM, qui serait perdu au prochain renderPanel()).
+  var onclickAttr = "";
+  if (pendingFarmUpgradeAction) {
+    var eligible = FarmPlotsSystem.getEligiblePlotIndexes(pendingFarmUpgradeAction);
+    if (eligible.indexOf(index) !== -1) {
+      classNames += " is-eligible";
+      onclickAttr = ' onclick="confirmFarmUpgradeChoice(' + index + ')"';
+    }
+  }
+
+  return '<div class="' + classNames + '"' + onclickAttr + '><span>' + icon + '</span><small>' + esc(label) + '</small></div>';
+}
+
+/* v3.95.0 : popup de choix (bouton d'action, puis sélection directe de la parcelle sur
+   la grille — pas de second popup). pendingFarmUpgradeAction mémorise l'action choisie
+   en attendant que le joueur tape une case éligible. */
+function buildFarmUpgradeChoiceHTML() {
+  var available = FarmPlotsSystem.getAvailableChoices();
+
+  var h = '<div class="farm-upgrade-area">';
+  h += '<p class="farm-upgrade-title">Évolution disponible — choisissez une amélioration permanente</p>';
+
+  if (pendingFarmUpgradeAction && available.indexOf(pendingFarmUpgradeAction) !== -1) {
+    var choiceDef = FARM_UPGRADE_CHOICES[pendingFarmUpgradeAction];
+    h += '<p class="farm-upgrade-hint">' + esc(choiceDef.icon) + ' Sélectionnez une parcelle éligible (en surbrillance) ci-dessus, ou <button type="button" class="farm-upgrade-cancel" onclick="cancelFarmUpgradeChoice()">annuler</button>.</p>';
+  } else {
+    available.forEach(function (action) {
+      var choiceDef = FARM_UPGRADE_CHOICES[action];
+      if (!choiceDef) return;
+      h += '<button class="farm-upgrade-button" type="button" onclick="selectFarmUpgradeAction(\'' + action + '\')">';
+      h += '<span class="farm-upgrade-icon">' + esc(choiceDef.icon) + '</span>';
+      h += '<span><strong>' + esc(choiceDef.label) + '</strong><small>' + esc(choiceDef.desc) + '</small></span>';
+      h += '</button>';
+    });
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function selectFarmUpgradeAction(action) {
+  pendingFarmUpgradeAction = action;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.selectFarmUpgradeAction = selectFarmUpgradeAction;
+
+function cancelFarmUpgradeChoice() {
+  pendingFarmUpgradeAction = null;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.cancelFarmUpgradeChoice = cancelFarmUpgradeChoice;
+
+function confirmFarmUpgradeChoice(plotIndex) {
+  if (!pendingFarmUpgradeAction) return;
+  var result = FarmPlotsSystem.applyChoice(pendingFarmUpgradeAction, plotIndex);
+  pendingFarmUpgradeAction = null;
+  if (!result.ok) {
+    showToast(result.reason, 1400);
+    if (typeof renderPanel === "function") renderPanel(); // retire le surlignage même en cas d'échec
+  }
+  // En cas de succès, FarmPlotsSystem.applyChoice() a déjà appelé renderPanel()/saveGame().
+}
+window.confirmFarmUpgradeChoice = confirmFarmUpgradeChoice;
 
 function buildProductionHTML() {
   ProductionManager.ensure();

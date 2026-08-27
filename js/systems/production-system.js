@@ -60,7 +60,13 @@ var ProductionManager = {
 
   getRatePerMin: function (id) {
     var level = this.getLevel(id);
-    return PRODUCTION_CONFIG.baseRatePerMin * Math.pow(PRODUCTION_CONFIG.rateGrowthPerLevel, level - 1);
+    var base = PRODUCTION_CONFIG.baseRatePerMin * Math.pow(PRODUCTION_CONFIG.rateGrowthPerLevel, level - 1);
+    // v3.95.0 : Champs uniquement — bonus cumulé des parcelles (fertile/irriguée/enrichie),
+    // voir farm-plots-system.js. Aucun effet sur les 5 autres bâtiments.
+    if (id === "farm" && window.FarmPlotsSystem && typeof FarmPlotsSystem.getBonusPct === "function") {
+      base *= (1 + FarmPlotsSystem.getBonusPct());
+    }
+    return base;
   },
 
   getCapacity: function (id) {
@@ -72,9 +78,29 @@ var ProductionManager = {
     return this.getStock(id) >= this.getCapacity(id);
   },
 
-  getCost: function (id) {
+  /* v3.95.0 : coût multi-ressources par bâtiment (voir getProductionBuildingCost dans
+     production-buildings.js). Retourne { gold, <ressource1>, <ressource2> } — remplace
+     l'ancien getCost() en or seul, appelé désormais getNextCost() par cohérence de nom
+     avec ConstructionManager.getNextCost() (même pattern). */
+  getNextCost: function (id) {
+    if (this.isMaxLevel(id)) return null;
     var level = this.getLevel(id);
-    return Math.floor(PRODUCTION_CONFIG.baseCost * Math.pow(PRODUCTION_CONFIG.costMult, level - 1));
+    return getProductionBuildingCost(id, level);
+  },
+
+  /* Vérifie si le joueur peut payer le prochain palier (or + toutes les ressources
+     requises). Même pattern que ConstructionManager.getAffordability(). */
+  getAffordability: function (id) {
+    var cost = this.getNextCost(id);
+    if (!cost) return { all: false };
+
+    var result = { gold: Number(game.gold || 0) >= cost.gold };
+    Object.keys(cost).forEach(function (key) {
+      if (key === "gold") return;
+      result[key] = WarehouseManager.getAmount(key) >= cost[key];
+    });
+    result.all = Object.keys(result).every(function (k) { return result[k]; });
+    return result;
   },
 
   isMaxLevel: function (id) {
@@ -189,17 +215,34 @@ var ProductionManager = {
       return;
     }
 
-    var cost = this.getCost(id);
-    if ((game.gold || 0) < cost) {
-      showToast("Pas assez d'or", 1000);
+    var cost = this.getNextCost(id);
+    var afford = this.getAffordability(id);
+
+    var missingKey = Object.keys(afford).find(function (key) {
+      return key !== "all" && afford[key] === false;
+    });
+    if (missingKey) {
+      var missingLabel = missingKey === "gold" ? "or" : (WAREHOUSE_RESOURCES[missingKey] ? WAREHOUSE_RESOURCES[missingKey].name : missingKey);
+      showToast("Pas assez de " + missingLabel, 1000);
       return;
     }
 
-    game.gold -= cost;
+    game.gold -= cost.gold;
+    Object.keys(cost).forEach(function (key) {
+      if (key === "gold") return;
+      WarehouseManager.removeResource(key, cost[key]);
+    });
+
     b.level += 1;
 
     if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldSpent", cost);
+      QuestManager.track("goldSpent", cost.gold);
+    }
+
+    // v3.95.0 : Champs uniquement — un choix d'évolution de parcelle devient disponible
+    // à chaque niveau atteint, indépendamment de ce palier de coût (voir farm-plots-system.js).
+    if (id === "farm" && window.FarmPlotsSystem && typeof FarmPlotsSystem.markChoicePending === "function") {
+      FarmPlotsSystem.markChoicePending();
     }
 
     addLog(def.name + " amélioré (niv. " + b.level + ")", "event");
