@@ -28,6 +28,14 @@ var ProductionManager = {
     var self = this;
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
       if (!self.isBuildingUnlocked(id)) return; // pas d'initialisation tant que verrouillé
+      // v3.96.0 : Champs n'a plus de niveau/stock de bâtiment — délégué en totalité à
+      // FarmPlotsSystem (9 parcelles indépendantes), voir FarmPlotsSystem.ensurePlots().
+      if (id === "farm") {
+        if (window.FarmPlotsSystem && typeof FarmPlotsSystem.ensurePlots === "function") {
+          FarmPlotsSystem.ensurePlots();
+        }
+        return;
+      }
       if (!game.production[id] || typeof game.production[id] !== "object") {
         game.production[id] = { level: 1, stock: 0, lastTick: Date.now() };
       }
@@ -48,28 +56,35 @@ var ProductionManager = {
     }
   },
 
+  /* v3.96.0 : Champs n'a plus de niveau de bâtiment unique (9 parcelles indépendantes,
+     chacune son niveau) — retourne 1 par convention pour tout appelant externe qui
+     lirait encore getLevel("farm") (aucun connu actuellement, gardé par sécurité). */
   getLevel: function (id) {
+    if (id === "farm") return 1;
     this.ensure();
     return Number((game.production[id] || {}).level || 1);
   },
 
   getStock: function (id) {
     this.ensure();
+    if (id === "farm") {
+      return window.FarmPlotsSystem ? FarmPlotsSystem.getTotalStock() : 0;
+    }
     return Number((game.production[id] || {}).stock || 0);
   },
 
   getRatePerMin: function (id) {
-    var level = this.getLevel(id);
-    var base = PRODUCTION_CONFIG.baseRatePerMin * Math.pow(PRODUCTION_CONFIG.rateGrowthPerLevel, level - 1);
-    // v3.95.0 : Champs uniquement — bonus cumulé des parcelles (fertile/irriguée/enrichie),
-    // voir farm-plots-system.js. Aucun effet sur les 5 autres bâtiments.
-    if (id === "farm" && window.FarmPlotsSystem && typeof FarmPlotsSystem.getBonusPct === "function") {
-      base *= (1 + FarmPlotsSystem.getBonusPct());
+    if (id === "farm") {
+      return window.FarmPlotsSystem ? FarmPlotsSystem.getTotalRatePerMin() : 0;
     }
-    return base;
+    var level = this.getLevel(id);
+    return PRODUCTION_CONFIG.baseRatePerMin * Math.pow(PRODUCTION_CONFIG.rateGrowthPerLevel, level - 1);
   },
 
   getCapacity: function (id) {
+    if (id === "farm") {
+      return window.FarmPlotsSystem ? FarmPlotsSystem.getTotalCapacity() : 0;
+    }
     var level = this.getLevel(id);
     return Math.floor(PRODUCTION_CONFIG.baseCapacity * (1 + PRODUCTION_CONFIG.capacityGrowthPerLevel * (level - 1)));
   },
@@ -123,7 +138,14 @@ var ProductionManager = {
     var self = this;
     var changed = false;
 
+    // v3.96.0 : Champs délégué en totalité à FarmPlotsSystem (tick propre par parcelle).
+    if (window.FarmPlotsSystem && typeof FarmPlotsSystem.tick === "function") {
+      FarmPlotsSystem.tick(dt);
+      changed = true;
+    }
+
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
+      if (id === "farm") return; // géré ci-dessus
       if (!self.isBuildingUnlocked(id)) return; // v3.92.0 : Carrière verrouillée -> aucune production
       var b = game.production[id];
       if (!b) return; // garde défensive (ne devrait pas arriver après ensure(), mais sécurise tick())
@@ -158,7 +180,13 @@ var ProductionManager = {
     var now = Date.now();
     var self = this;
 
+    // v3.96.0 : Champs délégué en totalité à FarmPlotsSystem (rattrapage propre par parcelle).
+    if (window.FarmPlotsSystem && typeof FarmPlotsSystem.catchUpOffline === "function") {
+      FarmPlotsSystem.catchUpOffline();
+    }
+
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
+      if (id === "farm") return; // géré ci-dessus
       if (!self.isBuildingUnlocked(id)) return; // v3.92.0 : Carrière verrouillée -> aucun rattrapage
       var b = game.production[id];
       if (!b) return; // garde défensive, même raison que tick() ci-dessus
@@ -178,22 +206,32 @@ var ProductionManager = {
     });
   },
 
+  /* v3.96.0 : Champs récolte désormais via FarmPlotsSystem.harvestAll() (somme de toutes
+     les parcelles ouvertes), plutôt qu'un stock unique de bâtiment. */
   harvest: function (id) {
     this.ensure();
     if (!this.isBuildingUnlocked(id)) return; // v3.92.0 : garde défensive
-    var b = game.production[id];
     var def = PRODUCTION_BUILDINGS[id];
-    if (!b || !def) return;
+    if (!def) return;
 
-    var amount = Math.floor(b.stock);
+    var amount;
+    if (id === "farm") {
+      if (!window.FarmPlotsSystem) return;
+      amount = FarmPlotsSystem.harvestAll();
+    } else {
+      var b = game.production[id];
+      if (!b) return;
+      amount = Math.floor(b.stock);
+      if (amount > 0) b.stock -= amount;
+    }
+
     if (amount <= 0) {
       showToast("Rien à récolter", 1000);
       return;
     }
 
     WarehouseManager.addResource(def.resourceKey, amount, true);
-    b.stock -= amount;
-    b.lastTick = Date.now();
+    if (id !== "farm") game.production[id].lastTick = Date.now();
 
     var resDef = WAREHOUSE_RESOURCES[def.resourceKey];
     addLog("🌾 " + def.name + " récoltée : +" + formatNumber(amount) + " " + (resDef ? resDef.name : def.resourceKey), "event");
@@ -203,7 +241,12 @@ var ProductionManager = {
     saveGame();
   },
 
+  /* v3.96.0 : Champs n'a plus de niveau de bâtiment ni de bouton "Améliorer" global —
+     ses parcelles s'améliorent individuellement via FarmPlotsSystem.unlockPlot()/
+     upgradePlot()/toggleImprovement(), appelées directement depuis l'UI. buy() reste donc
+     réservé aux 5 autres bâtiments (garde défensive ci-dessous si jamais appelée sur "farm"). */
   buy: function (id) {
+    if (id === "farm") return; // plus de niveau de bâtiment unique, voir FarmPlotsSystem
     this.ensure();
     if (!this.isBuildingUnlocked(id)) return; // v3.92.0 : garde défensive
     var b = game.production[id];
@@ -237,12 +280,6 @@ var ProductionManager = {
 
     if (window.QuestManager && typeof QuestManager.track === "function") {
       QuestManager.track("goldSpent", cost.gold);
-    }
-
-    // v3.95.0 : Champs uniquement — un choix d'évolution de parcelle devient disponible
-    // à chaque niveau atteint, indépendamment de ce palier de coût (voir farm-plots-system.js).
-    if (id === "farm" && window.FarmPlotsSystem && typeof FarmPlotsSystem.markChoicePending === "function") {
-      FarmPlotsSystem.markChoicePending();
     }
 
     addLog(def.name + " amélioré (niv. " + b.level + ")", "event");

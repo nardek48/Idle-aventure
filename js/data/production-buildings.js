@@ -29,6 +29,11 @@ var PRODUCTION_BUILDINGS = {
     id: "farm", name: "Champs", resourceKey: "ble",
     icon: "images/Icons/resources/wheat_icon.png", buildingImage: "images/Production/farm.png",
     desc: "Produit du blé en continu.",
+    // v3.96.0 : costTiers/niveau de bâtiment devenus INUTILISÉS pour Champs — remplacés
+    // par 9 parcelles indépendantes, chacune son niveau/coût propre (voir
+    // data/farm-plots.js, getFarmPlotUnlockCost/getFarmPlotUpgradeCost). Laissé en place
+    // pour ne pas casser getProductionBuildingCost("farm", n) si jamais appelé ailleurs,
+    // mais ProductionManager.buy("farm") est désormais un no-op (voir production-system.js).
     costTiers: [
       { minLevel: 1, maxLevel: 15, resources: ["gold", "bois", "eau"], baseCost: { gold: 80, bois: 8, eau: 6 }, costMult: 1.45 }
     ]

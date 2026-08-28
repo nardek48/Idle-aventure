@@ -17,7 +17,7 @@
 .production-card {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   border: 1px solid var(--nb-frame);
   border-radius: var(--nb-radius-md);
@@ -28,6 +28,21 @@
 .production-card.is-full {
   border-color: var(--nb-gold-dark);
   box-shadow: 0 0 0 1px rgba(194, 127, 31, 0.25);
+}
+
+/* v3.95.6 : rangée principale (portrait + infos + actions), toujours sur une seule
+   ligne — corrige un bug où .production-card-actions (Récolter/Améliorer) pouvait
+   passer sur sa propre ligne quand le texte de statut (ex. "Plein dans 1m 28s") ou le
+   nom du bâtiment poussait la largeur totale au-delà de l'espace disponible, séparant
+   visuellement les 2 boutons d'action l'un de l'autre. width:100% pour permettre à
+   .production-card-full-row (Parcelles) de passer dessous dans le flex-wrap parent,
+   flex-wrap:nowrap en interne pour ne jamais éclater portrait/infos/actions entre eux. */
+.production-card-main-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 /* v3.95.1 : ligne pleine largeur DANS la carte (pas un second cadre séparé) — utilisée
@@ -128,6 +143,9 @@
   font-size: 10.5px;
   font-weight: 700;
   color: rgba(58, 44, 26, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .production-card-status.is-full {
@@ -201,6 +219,12 @@
   box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.45);
 }
 
+/* v3.96.0 : Champs n'a plus de bouton "Améliorer" de bâtiment — le bouton Récolter
+   occupe alors toute la largeur de la colonne actions (au lieu de 2 boutons empilés). */
+.production-action-btn.full-width {
+  width: 100%;
+}
+
 @media (max-width: 360px) {
   .production-card {
     gap: 6px;
@@ -259,10 +283,10 @@
 }
 
 /* =========================
-   v3.95.0 : panneau "Parcelles et améliorations" (Champs uniquement), sous la carte
-   Production existante — pattern dépliable inspiré des cartes de quête repliables déjà
-   en place ailleurs, adapté aux tokens de ce panneau. Grille 3×3, inspirée du prototype
-   fourni par Seb (aethervale-production-champs-ameliorations.html).
+   v3.96.0 : refonte du panneau "Parcelles" (Champs uniquement) — parcelles désormais
+   INDÉPENDANTES (chacune son niveau/stock/actions propres), remplace l'ancien système à
+   choix de palier global (.farm-plot / .farm-upgrade-*, supprimées). Toggle dépliable
+   inchangé, grille 3×3 de mini-cartes à la place de la grille d'icônes précédente.
    ========================= */
 .farm-plots-toggle {
   display: flex;
@@ -280,17 +304,14 @@
   font-weight: 700;
 }
 
-.farm-plots-badge {
-  min-width: 18px;
-  padding: 1px 5px;
-  border-radius: 999px;
-  background: #d54232;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
-  text-align: center;
+/* v3.96.1 : badge "3 / 9" déplacé ici depuis le titre de la carte (débordait le nom du
+   bâtiment quand le nom était long, ex. "Champs" tronqué en "C..."). */
+.farm-plots-count {
   margin-left: auto;
   margin-right: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-gold-deep);
 }
 
 .farm-plots-chevron {
@@ -306,173 +327,192 @@
   background: var(--nb-cream-alt);
 }
 
-.farm-plots-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.farm-plots-top h3 {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--nb-ink);
-}
-
-.farm-plots-top small {
-  font-size: 10.5px;
-  color: var(--nb-ink-dim);
-}
-
 .farm-plots-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
 }
 
-.farm-plot {
-  position: relative;
-  min-height: 52px;
-  border-radius: var(--nb-radius-sm);
-  border: 1px solid var(--nb-frame);
+/* v3.96.1 : mini-carte ALLÉGÉE — plus de bouton avec coût empilé dedans (cause du
+   débordement hors cadre signalé en v3.96.0). Toute la carte est tapable pour
+   sélectionner la parcelle ; les actions et coûts s'affichent désormais dans
+   .farm-plot-actions, une zone commune sous la grille (voir plus bas). */
+.farm-plot-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  font-size: 1.3rem;
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.farm-plot small {
-  font-size: 8px;
-  color: var(--nb-ink-dim);
-  text-align: center;
-  padding: 0 2px;
-}
-
-.farm-plot.locked-plot {
-  opacity: 0.55;
-}
-
-.farm-plot.fertile {
-  background: rgba(74, 222, 128, 0.18);
-}
-
-.farm-plot.irrigated {
-  background: rgba(79, 168, 232, 0.18);
-}
-
-.farm-plot.fertile.irrigated {
-  background: linear-gradient(135deg, rgba(74, 222, 128, 0.18), rgba(79, 168, 232, 0.18));
-}
-
-.farm-plot.is-eligible {
-  border-color: var(--nb-gold-dark);
-  box-shadow: 0 0 0 2px rgba(194, 127, 31, 0.35);
+  min-height: 92px;
+  padding: 7px;
+  border-radius: var(--nb-radius-sm);
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream);
+  gap: 3px;
   cursor: pointer;
 }
 
-/* v3.95.4 : parcelle sélectionnée mais pas encore validée — distincte de .is-eligible
-   (bordure pointillée dorée + fond, pour bien montrer que rien n'est encore appliqué). */
-.farm-plot.is-selected {
+.farm-plot-card:active {
+  transform: scale(0.97);
+}
+
+.farm-plot-card.is-locked {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  min-height: 72px;
+  background: rgba(0, 0, 0, 0.05);
   border-style: dashed;
-  border-width: 2px;
+}
+
+.farm-plot-card.is-selected {
   border-color: var(--nb-gold-dark);
-  background: rgba(194, 127, 31, 0.18);
-  box-shadow: 0 0 0 2px rgba(194, 127, 31, 0.45);
+  border-width: 2px;
+  box-shadow: 0 0 0 2px rgba(194, 127, 31, 0.35);
 }
 
-.farm-plots-bottom {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  font-size: 11px;
-  color: var(--nb-ink-dim);
+.farm-plot-card-lock-icon {
+  font-size: 1.1rem;
+  opacity: 0.6;
 }
 
-.farm-plots-bottom strong {
+.farm-plot-card-name {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.farm-plot-card-top {
+  display: flex;
+  align-items: center;
+}
+
+.farm-plot-card-level-badge {
+  font-size: 9px;
+  font-weight: 700;
   color: var(--nb-gold-deep);
+  border: 1px solid var(--nb-gold-dark);
+  border-radius: 999px;
+  padding: 0 5px;
+  background: var(--nb-cream-alt);
+  white-space: nowrap;
 }
 
-.farm-upgrade-area {
+.farm-plot-card-profile {
+  font-size: 8.5px;
+  color: var(--nb-ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.farm-plot-card-bar {
+  height: 6px;
+  margin: 2px 0 0;
+}
+
+.farm-plot-card-bar .nb-entry-progress-text {
+  display: none;
+}
+
+.farm-plot-card-stock-label {
+  font-size: 8.5px;
+  color: rgba(58, 44, 26, 0.7);
+}
+
+.farm-plot-card-improvements {
+  display: flex;
+  gap: 5px;
+  margin-top: 1px;
+}
+
+.farm-plot-improvement-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+  opacity: 0.3;
+  filter: grayscale(100%);
+}
+
+.farm-plot-improvement-icon.is-applied {
+  opacity: 1;
+  filter: none;
+}
+
+/* v3.96.1 : zone commune d'actions pour la parcelle sélectionnée — remplace le bouton
+   individuel par mini-carte. Apparaît sous la grille quand une parcelle est sélectionnée,
+   empile jusqu'à 3 boutons (Améliorer/Fertile/Irriguée) avec leur coût, ou 1 seul
+   (Défricher) si la parcelle est verrouillée. */
+.farm-plot-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin-top: 10px;
   padding-top: 9px;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.farm-upgrade-title {
-  margin: 0 0 7px;
+.farm-plot-actions-title {
   font-size: 11px;
   font-weight: 700;
   color: var(--nb-ink);
+  margin-bottom: 2px;
 }
 
-.farm-upgrade-hint {
-  margin: 0;
-  font-size: 11px;
-  color: var(--nb-ink-dim);
-}
-
-.farm-upgrade-cancel {
-  border: none;
-  background: none;
-  padding: 0;
-  color: var(--nb-gold-deep);
-  font-weight: 700;
-  text-decoration: underline;
-  font-size: 11px;
-}
-
-/* v3.95.4 : rangée des 2 boutons "Choisir une autre parcelle" / "Valider" une fois une
-   parcelle sélectionnée mais pas encore appliquée. */
-.farm-upgrade-confirm-actions {
+.farm-plot-action-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.farm-upgrade-validate-btn {
-  flex: 1 1 auto;
-  min-height: 38px;
-}
-
-.farm-upgrade-button {
-  display: flex;
-  align-items: center;
-  gap: 9px;
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
-  min-height: 46px;
-  margin-top: 7px;
-  padding: 7px 9px;
-  text-align: left;
-  border: 1px solid var(--nb-frame);
+  min-height: 44px;
+  border: 1px solid var(--nb-gold-dark);
   border-radius: var(--nb-radius-sm);
-  background: var(--nb-cream);
-}
-
-.farm-upgrade-icon {
-  display: grid;
-  place-items: center;
-  flex: 0 0 30px;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  font-size: 1.1rem;
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.farm-upgrade-button strong {
-  display: block;
-  font-size: 11.5px;
+  background: var(--nb-cream-deep);
   color: var(--nb-ink);
+  line-height: 1.25;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: left;
 }
 
-.farm-upgrade-button small {
-  display: block;
-  margin-top: 2px;
-  font-size: 10px;
+.farm-plot-action-btn:active {
+  transform: scale(0.98);
+}
+
+/* v3.96.3 : libellé + courte description d'effet empilés à gauche du bouton (retour Seb :
+   l'effet des améliorations fertile/irriguée n'était pas clair sans texte). Regroupés dans
+   un conteneur dédié pour ne pas entrer en conflit avec .production-cost-row (coût, à
+   droite, géré séparément par justify-content:space-between du parent). */
+.farm-plot-action-btn-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.farm-plot-action-label {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.farm-plot-action-desc {
+  font-size: 9px;
+  font-weight: 400;
   color: var(--nb-ink-dim);
+  white-space: normal;
+}
+
+.farm-plot-action-btn.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(35%);
+}
+
+/* v3.96.0 : .production-cost-item.is-missing (#ffb4b4) est calibré pour du texte blanc
+   sur bouton à fond image sombre — trop peu lisible sur le fond clair des mini-cartes de
+   parcelle. Surcharge locale en rouge foncé lisible sur --nb-cream-deep. */
+.farm-plot-action-btn .production-cost-item.is-missing {
+  color: #b3261e;
 }
