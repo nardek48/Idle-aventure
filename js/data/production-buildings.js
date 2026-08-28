@@ -2,11 +2,13 @@
 /* data/production-buildings.js — bâtiments à STOCK LOCAL plafonné (distinct de VILLAGE_CONFIG, bonus passifs sans stock).
    Récolte manuelle vers l'Entrepôt. v3.95.0 : coût d'amélioration multi-ressources par bâtiment
    (costTiers, même pattern que CONSTRUCTION_BUILDINGS.workshop dans data/construction.js) —
-   remplace l'ancien coût en or pur partagé (PRODUCTION_CONFIG.baseCost/costMult). Un seul
-   palier par bâtiment pour l'instant (niveaux 1-15), volontairement simple : d'autres paliers
-   pourront être ajoutés plus tard (ex. liés à la progression de monde) sans migration de
-   sauvegarde nécessaire, costPerLevel() étant recalculé à la volée à partir du seul niveau
-   stocké. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   remplace l'ancien coût en or pur partagé (PRODUCTION_CONFIG.baseCost/costMult).
+   v3.97.0 : costTiers/niveau de bâtiment unique devenus INUTILISÉS pour les 6 bâtiments
+   ci-dessous — tous délégués à ProductionPlotsSystem (9 zones indépendantes chacune son
+   niveau/coût propre, voir data/production-plots.js). Laissés en place pour ne pas casser
+   getProductionBuildingCost(id, n) si jamais appelé ailleurs, mais ProductionManager.buy(id)
+   est désormais un no-op pour ces 6 bâtiments (voir production-system.js).
+   Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var PRODUCTION_CONFIG = {
   baseRatePerMin: 1,
@@ -29,11 +31,6 @@ var PRODUCTION_BUILDINGS = {
     id: "farm", name: "Champs", resourceKey: "ble",
     icon: "images/Icons/resources/wheat_icon.png", buildingImage: "images/Production/farm.png",
     desc: "Produit du blé en continu.",
-    // v3.96.0 : costTiers/niveau de bâtiment devenus INUTILISÉS pour Champs — remplacés
-    // par 9 parcelles indépendantes, chacune son niveau/coût propre (voir
-    // data/farm-plots.js, getFarmPlotUnlockCost/getFarmPlotUpgradeCost). Laissé en place
-    // pour ne pas casser getProductionBuildingCost("farm", n) si jamais appelé ailleurs,
-    // mais ProductionManager.buy("farm") est désormais un no-op (voir production-system.js).
     costTiers: [
       { minLevel: 1, maxLevel: 15, resources: ["gold", "bois", "eau"], baseCost: { gold: 80, bois: 8, eau: 6 }, costMult: 1.45 }
     ]

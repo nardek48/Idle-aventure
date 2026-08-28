@@ -28,12 +28,12 @@ var ProductionManager = {
     var self = this;
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
       if (!self.isBuildingUnlocked(id)) return; // pas d'initialisation tant que verrouillé
-      // v3.96.0 : Champs n'a plus de niveau/stock de bâtiment — délégué en totalité à
-      // FarmPlotsSystem (9 parcelles indépendantes), voir FarmPlotsSystem.ensurePlots().
-      if (id === "farm") {
-        if (window.FarmPlotsSystem && typeof FarmPlotsSystem.ensurePlots === "function") {
-          FarmPlotsSystem.ensurePlots();
-        }
+      // v3.97.0 : tout bâtiment listé dans PRODUCTION_PLOTS_BUILDINGS (les 6 : Chasse,
+      // Champs, Scierie, Mine, Carrière, Puits) n'a plus de niveau/stock de bâtiment —
+      // délégué en totalité à ProductionPlotsSystem (9 zones indépendantes). Généralise
+      // ce qui était câblé sur "farm" en dur depuis v3.96.0.
+      if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
+        ProductionPlotsSystem.ensurePlots(id);
         return;
       }
       if (!game.production[id] || typeof game.production[id] !== "object") {
@@ -56,34 +56,34 @@ var ProductionManager = {
     }
   },
 
-  /* v3.96.0 : Champs n'a plus de niveau de bâtiment unique (9 parcelles indépendantes,
-     chacune son niveau) — retourne 1 par convention pour tout appelant externe qui
-     lirait encore getLevel("farm") (aucun connu actuellement, gardé par sécurité). */
+  /* v3.97.0 : tout bâtiment géré par ProductionPlotsSystem (9 zones indépendantes) n'a
+     plus de niveau de bâtiment unique — retourne 1 par convention pour tout appelant
+     externe (aucun connu actuellement, gardé par sécurité). Généralisé depuis "farm". */
   getLevel: function (id) {
-    if (id === "farm") return 1;
+    if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) return 1;
     this.ensure();
     return Number((game.production[id] || {}).level || 1);
   },
 
   getStock: function (id) {
     this.ensure();
-    if (id === "farm") {
-      return window.FarmPlotsSystem ? FarmPlotsSystem.getTotalStock() : 0;
+    if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
+      return ProductionPlotsSystem.getTotalStock(id);
     }
     return Number((game.production[id] || {}).stock || 0);
   },
 
   getRatePerMin: function (id) {
-    if (id === "farm") {
-      return window.FarmPlotsSystem ? FarmPlotsSystem.getTotalRatePerMin() : 0;
+    if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
+      return ProductionPlotsSystem.getTotalRatePerMin(id);
     }
     var level = this.getLevel(id);
     return PRODUCTION_CONFIG.baseRatePerMin * Math.pow(PRODUCTION_CONFIG.rateGrowthPerLevel, level - 1);
   },
 
   getCapacity: function (id) {
-    if (id === "farm") {
-      return window.FarmPlotsSystem ? FarmPlotsSystem.getTotalCapacity() : 0;
+    if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
+      return ProductionPlotsSystem.getTotalCapacity(id);
     }
     var level = this.getLevel(id);
     return Math.floor(PRODUCTION_CONFIG.baseCapacity * (1 + PRODUCTION_CONFIG.capacityGrowthPerLevel * (level - 1)));
@@ -138,14 +138,16 @@ var ProductionManager = {
     var self = this;
     var changed = false;
 
-    // v3.96.0 : Champs délégué en totalité à FarmPlotsSystem (tick propre par parcelle).
-    if (window.FarmPlotsSystem && typeof FarmPlotsSystem.tick === "function") {
-      FarmPlotsSystem.tick(dt);
+    // v3.97.0 : tous les bâtiments gérés par ProductionPlotsSystem (les 6) délégués en
+    // totalité — tick propre par zone. Généralisé depuis "farm" seul.
+    ProductionPlotsSystem.getManagedBuildingIds().forEach(function (id) {
+      if (!self.isBuildingUnlocked(id)) return;
+      ProductionPlotsSystem.tick(id, dt);
       changed = true;
-    }
+    });
 
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
-      if (id === "farm") return; // géré ci-dessus
+      if (ProductionPlotsSystem.isManaged(id)) return; // géré ci-dessus
       if (!self.isBuildingUnlocked(id)) return; // v3.92.0 : Carrière verrouillée -> aucune production
       var b = game.production[id];
       if (!b) return; // garde défensive (ne devrait pas arriver après ensure(), mais sécurise tick())
@@ -180,13 +182,15 @@ var ProductionManager = {
     var now = Date.now();
     var self = this;
 
-    // v3.96.0 : Champs délégué en totalité à FarmPlotsSystem (rattrapage propre par parcelle).
-    if (window.FarmPlotsSystem && typeof FarmPlotsSystem.catchUpOffline === "function") {
-      FarmPlotsSystem.catchUpOffline();
-    }
+    // v3.97.0 : tous les bâtiments gérés par ProductionPlotsSystem délégués en totalité —
+    // rattrapage propre par zone. Généralisé depuis "farm" seul.
+    ProductionPlotsSystem.getManagedBuildingIds().forEach(function (id) {
+      if (!self.isBuildingUnlocked(id)) return;
+      ProductionPlotsSystem.catchUpOffline(id);
+    });
 
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
-      if (id === "farm") return; // géré ci-dessus
+      if (ProductionPlotsSystem.isManaged(id)) return; // géré ci-dessus
       if (!self.isBuildingUnlocked(id)) return; // v3.92.0 : Carrière verrouillée -> aucun rattrapage
       var b = game.production[id];
       if (!b) return; // garde défensive, même raison que tick() ci-dessus
@@ -206,8 +210,8 @@ var ProductionManager = {
     });
   },
 
-  /* v3.96.0 : Champs récolte désormais via FarmPlotsSystem.harvestAll() (somme de toutes
-     les parcelles ouvertes), plutôt qu'un stock unique de bâtiment. */
+  /* v3.97.0 : tout bâtiment géré par ProductionPlotsSystem récolte via harvestAll(id)
+     (somme de toutes les zones ouvertes), généralisé depuis "farm" seul. */
   harvest: function (id) {
     this.ensure();
     if (!this.isBuildingUnlocked(id)) return; // v3.92.0 : garde défensive
@@ -215,9 +219,8 @@ var ProductionManager = {
     if (!def) return;
 
     var amount;
-    if (id === "farm") {
-      if (!window.FarmPlotsSystem) return;
-      amount = FarmPlotsSystem.harvestAll();
+    if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
+      amount = ProductionPlotsSystem.harvestAll(id);
     } else {
       var b = game.production[id];
       if (!b) return;
@@ -231,7 +234,7 @@ var ProductionManager = {
     }
 
     WarehouseManager.addResource(def.resourceKey, amount, true);
-    if (id !== "farm") game.production[id].lastTick = Date.now();
+    if (!(window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id))) game.production[id].lastTick = Date.now();
 
     var resDef = WAREHOUSE_RESOURCES[def.resourceKey];
     addLog("🌾 " + def.name + " récoltée : +" + formatNumber(amount) + " " + (resDef ? resDef.name : def.resourceKey), "event");
@@ -241,12 +244,13 @@ var ProductionManager = {
     saveGame();
   },
 
-  /* v3.96.0 : Champs n'a plus de niveau de bâtiment ni de bouton "Améliorer" global —
-     ses parcelles s'améliorent individuellement via FarmPlotsSystem.unlockPlot()/
-     upgradePlot()/toggleImprovement(), appelées directement depuis l'UI. buy() reste donc
-     réservé aux 5 autres bâtiments (garde défensive ci-dessous si jamais appelée sur "farm"). */
+  /* v3.97.0 : tout bâtiment géré par ProductionPlotsSystem n'a plus de niveau de bâtiment
+     ni de bouton "Améliorer" global — ses zones s'améliorent individuellement via
+     ProductionPlotsSystem.unlockPlot()/upgradePlot()/toggleImprovement(), appelées
+     directement depuis l'UI. buy() reste réservé aux bâtiments non gérés (garde défensive
+     ci-dessous si jamais appelée sur un bâtiment à zones). Généralisé depuis "farm" seul. */
   buy: function (id) {
-    if (id === "farm") return; // plus de niveau de bâtiment unique, voir FarmPlotsSystem
+    if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) return; // plus de niveau de bâtiment unique
     this.ensure();
     if (!this.isBuildingUnlocked(id)) return; // v3.92.0 : garde défensive
     var b = game.production[id];
