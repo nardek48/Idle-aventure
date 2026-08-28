@@ -564,6 +564,27 @@
   color: var(--nb-ink);
 }
 
+/* v3.98.2 : badge "File : X" à côté du nom (agencement repris du prototype fourni par
+   Seb, style propre au thème du jeu — pas de CSS importé du prototype). */
+.workshop-card-queue-badge {
+  margin-left: auto;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--nb-gold-deep);
+  border: 1px solid var(--nb-gold-dark);
+  border-radius: 999px;
+  padding: 1px 7px;
+  background: var(--nb-cream-alt);
+  white-space: nowrap;
+}
+
+.workshop-recipe-detail {
+  margin: -6px 0 8px;
+  font-size: 9.5px;
+  color: var(--nb-ink-dim);
+  text-align: center;
+}
+
 .workshop-card-soon {
   margin-left: auto;
   font-size: 10px;
@@ -592,4 +613,25 @@
   height: 16px;
   object-fit: contain;
   flex-shrink: 0;
+}
+
+/* v3.98.3 : bouton "Améliorer" sur les ateliers actifs — emplacement repris du
+   prototype fourni par Seb, mais désactivé ("Bientôt") : le système de niveau/vitesse
+   d'atelier reste différé (décision v3.98.0), seule la place est réservée pour l'instant. */
+.workshop-upgrade-btn {
+  width: 100%;
+  margin-top: 8px;
+  min-height: 36px;
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink-dim);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 10px;
+}
+
+.workshop-upgrade-btn.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

@@ -1,1 +1,0 @@
-js/data/recipes.js  (supprimé — remplacé par js/data/workshops.js)

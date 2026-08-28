@@ -471,6 +471,7 @@ function buildWorkshopCardHTML(workshop) {
   h += '<div class="workshop-card-top">';
   h += '<div class="workshop-card-icon">' + workshop.icon + '</div>';
   h += '<div class="workshop-card-name">' + esc(workshop.name) + '</div>';
+  h += '<span class="workshop-card-queue-badge">File : ' + WorkshopsSystem.getQueue(workshop.id).length + '</span>';
   h += '</div>';
 
   if (recipes.length > 1) {
@@ -484,6 +485,7 @@ function buildWorkshopCardHTML(workshop) {
   }
 
   h += '<div class="workshop-recipe-line">' + renderIconOrEmojiHTML(outputDef.icon, "workshop-recipe-icon", outputDef.name) + inputsText + ' → ' + formatNumber(recipe.outputs[0].quantity) + ' ' + esc(outputDef.name) + '</div>';
+  h += '<div class="workshop-recipe-detail">' + (Number(recipe.craftTimeMs || 0) / 1000).toFixed(1) + ' s par lot</div>';
 
   h += buildWorkshopQueueHTML(workshop.id);
 
@@ -502,6 +504,8 @@ function buildWorkshopCardHTML(workshop) {
     h += '</div>';
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="confirmCraftWorkshop(\'' + workshop.id + '\')">Fabriquer ×' + formatNumber(qty) + '</button>';
   }
+
+  h += '<button class="workshop-upgrade-btn is-disabled" type="button" disabled>⬆️ Améliorer · Bientôt</button>';
 
   h += '</div>';
   return h;
