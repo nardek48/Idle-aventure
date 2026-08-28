@@ -516,3 +516,80 @@
 .farm-plot-action-btn .production-cost-item.is-missing {
   color: #b3261e;
 }
+
+/* =========================
+   v3.98.0 : section "⚙️ Production" (ateliers de craft locaux au bâtiment) — même
+   toggle dépliable que "🌾 Parcelles" (.farm-plots-toggle/.farm-plots-panel réutilisés
+   tels quels). Cartes d'atelier empilées verticalement (pas de grille 3×3 comme les
+   zones — 2 ateliers par bâtiment, contenu plus riche par carte).
+   ========================= */
+.workshop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workshop-card {
+  border-radius: var(--nb-radius-sm);
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream);
+  padding: 9px 10px;
+}
+
+.workshop-card.is-inactive {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.65;
+  background: rgba(0, 0, 0, 0.04);
+  border-style: dashed;
+}
+
+.workshop-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.workshop-card-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.workshop-card-name {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.workshop-card-soon {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--nb-ink-dim);
+  border: 1px solid var(--nb-frame);
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: var(--nb-cream-alt);
+  white-space: nowrap;
+}
+
+.workshop-recipe-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 4px 0 8px;
+  font-size: 11.5px;
+  color: rgba(58, 44, 26, 0.8);
+  text-align: center;
+  justify-content: center;
+}
+
+.workshop-recipe-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}

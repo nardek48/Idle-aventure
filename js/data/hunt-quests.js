@@ -4,6 +4,7 @@
 
 var WAREHOUSE_RESOURCES = {
   viande: { id: "viande", name: "Viande", icon: "images/Icons/resources/meat_icon.png", desc: "Butin de chasse, obtenu en Forêt ou au bâtiment Chasse.", sellPrice: 3, tier: "raw" },
+  viande_sechee: { id: "viande_sechee", name: "Viande séchée", icon: "images/Icons/resources/meat_icon.png", desc: "Séchée au Séchoir (atelier de Chasse) à partir de Viande.", sellPrice: 8, tier: "crafted", cap: 999 },
   ble: { id: "ble", name: "Blé", icon: "images/Icons/resources/wheat_icon.png", desc: "Récolté au bâtiment Champs.", sellPrice: 2, tier: "raw" },
   bois: { id: "bois", name: "Bois", icon: "images/Icons/resources/wood_icon.png", desc: "Coupé à la Scierie — réservé aux futures constructions.", sellPrice: 2, tier: "raw" },
   fer: { id: "fer", name: "Fer", icon: "images/Icons/resources/iron_icon.png", desc: "Extrait à la Mine — réservé aux futures améliorations.", sellPrice: 5, tier: "raw" },

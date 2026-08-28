@@ -1,3 +1,1 @@
---- Fichiers supprimés (à supprimer manuellement dans le projet Seb) ---
-js/data/farm-plots.js  (remplacé par js/data/production-plots.js)
-js/systems/farm-plots-system.js  (remplacé par js/systems/production-plots-system.js)
+js/data/recipes.js  (supprimé — remplacé par js/data/workshops.js)

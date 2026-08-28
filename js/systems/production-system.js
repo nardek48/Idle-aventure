@@ -14,6 +14,21 @@ var PRODUCTION_UNLOCK_FLAGS = {
   well: "wellUnlocked"
 };
 
+/* v3.98.1 : petits helpers DOM pour la mise à jour ciblée du tick (voir
+   ProductionManager.updateDOM()) — gardes défensives sur `typeof document` pour rester
+   compatible avec le harnais de test Node (pas de DOM disponible en vm). */
+function setElementWidth(id, pct) {
+  if (typeof document === "undefined") return;
+  var el = document.getElementById(id);
+  if (el) el.style.width = pct + "%";
+}
+
+function setElementText(id, text) {
+  if (typeof document === "undefined") return;
+  var el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
 var ProductionManager = {
   /* v3.93.0/v3.94.0 : généralisé à tout bâtiment listé dans PRODUCTION_UNLOCK_FLAGS
      (quarry, hunt, well) — retourne toujours true pour tout bâtiment non soumis à un verrou. */
@@ -146,6 +161,15 @@ var ProductionManager = {
       changed = true;
     });
 
+    // v3.98.0 : ateliers de craft locaux (voir WorkshopsSystem) — un atelier ne tourne
+    // que si son bâtiment parent est débloqué (ex. Séchoir ne tick pas tant que la Chasse
+    // elle-même est verrouillée).
+    Object.keys(WORKSHOPS_CONFIG).forEach(function (workshopId) {
+      var workshopDef = WORKSHOPS_CONFIG[workshopId];
+      if (!self.isBuildingUnlocked(workshopDef.buildingId)) return;
+      WorkshopsSystem.tickWorkshop(workshopId, dt);
+    });
+
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
       if (ProductionPlotsSystem.isManaged(id)) return; // géré ci-dessus
       if (!self.isBuildingUnlocked(id)) return; // v3.92.0 : Carrière verrouillée -> aucune production
@@ -174,7 +198,82 @@ var ProductionManager = {
     if (this._renderAccum < 1) return;
     this._renderAccum = 0;
 
-    if (typeof renderPanel === "function") renderPanel();
+    // v3.98.1 : mise à jour DOM CIBLÉE (pas de renderPanel()/innerHTML complet) — corrige
+    // les saccades sur mobile signalées par Seb, dues à la reconstruction de tout l'écran
+    // Village à chaque tick. Ne touche que les éléments qui changent réellement au fil du
+    // temps (jauges, labels, statuts, bouton Récolter) via leurs id prévisibles posés dans
+    // production-view.js (prod-*). Un ajout/suppression de zone ou d'entrée de file (qui
+    // change la STRUCTURE du DOM, pas juste des valeurs) continue de passer par
+    // renderPanel() classique, déclenché directement par l'action du joueur concernée
+    // (harvest/buy/unlockPlot/enqueueCraft/etc.), comme sur les autres écrans du jeu.
+    this.updateDOM();
+  },
+
+  /* Met à jour les valeurs qui changent au tick (jauges, labels, statuts, compte à
+     rebours de craft) directement dans le DOM existant, sans reconstruire le HTML. */
+  updateDOM: function () {
+    if (typeof document === "undefined") return; // garde défensive (harnais de test Node, pas de DOM)
+    var self = this;
+
+    Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
+      if (!self.isBuildingUnlocked(id)) return;
+
+      var stock = self.getStock(id);
+      var capacity = self.getCapacity(id);
+      var isFull = capacity > 0 && stock >= capacity;
+      var pct = capacity > 0 ? Math.min(100, (stock / capacity) * 100) : 0;
+      var resDef = WAREHOUSE_RESOURCES[(PRODUCTION_BUILDINGS[id] || {}).resourceKey] || {};
+      var hasStock = Math.floor(stock) > 0;
+
+      setElementWidth("prod-bar-" + id, pct);
+      setElementText("prod-stock-label-" + id, formatNumber(Math.floor(stock)) + " / " + formatNumber(capacity) + " " + (resDef.name || ""));
+
+      var statusEl = document.getElementById("prod-status-" + id);
+      if (statusEl) {
+        if (isFull) {
+          statusEl.textContent = "✅ Stock plein";
+          statusEl.classList.add("is-full");
+        } else {
+          var ratePerMin = self.getRatePerMin(id);
+          var secondsUntilFull = ratePerMin > 0 ? ((capacity - stock) / ratePerMin) * 60 : 0;
+          statusEl.textContent = ratePerMin > 0 ? "⏳ Plein dans " + formatTime(secondsUntilFull) : "";
+          statusEl.classList.remove("is-full");
+        }
+      }
+
+      var harvestBtn = document.getElementById("prod-harvest-btn-" + id);
+      if (harvestBtn) {
+        harvestBtn.disabled = !hasStock;
+        harvestBtn.classList.toggle("is-ready", hasStock);
+        harvestBtn.classList.toggle("is-disabled", !hasStock);
+        var harvestIcon = harvestBtn.querySelector("img");
+        harvestBtn.innerHTML = (harvestIcon ? harvestIcon.outerHTML : '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">') + "Récolter" + (hasStock ? " · " + formatNumber(Math.floor(stock)) : "");
+      }
+
+      if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
+        ProductionPlotsSystem.getPlots(id).forEach(function (plot, index) {
+          if (plot.state !== "open") return;
+          var plotCapacity = ProductionPlotsSystem.getPlotCapacity(index, plot);
+          var plotPct = plotCapacity > 0 ? Math.min(100, (plot.stock / plotCapacity) * 100) : 0;
+          setElementWidth("prod-plot-bar-" + id + "-" + index, plotPct);
+          setElementText("prod-plot-stock-" + id + "-" + index, formatNumber(Math.floor(plot.stock)) + "/" + formatNumber(plotCapacity));
+        });
+      }
+    });
+
+    Object.keys(WORKSHOPS_CONFIG).forEach(function (workshopId) {
+      var workshopDef = WORKSHOPS_CONFIG[workshopId];
+      if (!workshopDef.active || !self.isBuildingUnlocked(workshopDef.buildingId)) return;
+      var queue = WorkshopsSystem.getQueue(workshopId);
+      if (!queue.length) return;
+      var entry = queue[0];
+      var recipe = WorkshopsSystem.getRecipe(workshopId, entry.recipeId);
+      var totalMs = Number(recipe ? recipe.craftTimeMs : 0) * entry.times;
+      var remainingSec = Math.max(0, entry.msRemaining / 1000);
+      setElementText("prod-workshop-time-" + workshopId, remainingSec.toFixed(1) + " s");
+      var pct = totalMs > 0 ? Math.min(100, Math.max(0, Math.floor(100 - (entry.msRemaining / totalMs) * 100))) : 100;
+      setElementWidth("prod-workshop-bar-" + workshopId, pct);
+    });
   },
 
   catchUpOffline: function () {

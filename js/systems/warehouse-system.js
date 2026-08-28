@@ -1,6 +1,10 @@
 "use strict";
 /* systems/warehouse-system.js — Entrepôt : SEUL point d'écriture sur game.resources (addResource/removeResource/sellResource).
-   Craft via file FIFO (game.craftQueue) : intrants déduits à la mise en file, outputs crédités à la fin. Détail : COMMENTAIRES_ORIGINAUX.md */
+   v3.98.0 : le craft n'est plus géré ici — remplacé par des ateliers locaux par bâtiment
+   (voir WorkshopsSystem, systems/workshops-system.js). game.craftQueue reste initialisé
+   ci-dessous en tableau vide pour rester compatible avec save-system.js (fichier protégé,
+   non modifié, qui lit/écrit encore ce champ) — plus jamais rempli ni lu par le jeu.
+   Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var WarehouseManager = {
   ensure: function () {
@@ -95,126 +99,21 @@ var WarehouseManager = {
     return goldGain;
   },
 
-  canCraft: function (recipe, times) {
-    this.ensure();
-    times = Math.floor(Number(times || 1));
-    if (times <= 0 || !recipe || !recipe.inputs) return false;
-    if (recipe.station) {
-      var stationLevel = (game.construction && game.construction[recipe.station] && game.construction[recipe.station].level) || 0;
-      if (stationLevel < 1) return false;
-    }
-    return recipe.inputs.every(function (input) {
-      return WarehouseManager.getAmount(input.resourceId) >= input.quantity * times;
-    });
-  },
-
-  enqueueCraft: function (recipe, times) {
-    this.ensure();
-    times = Math.floor(Number(times || 1));
-    if (!this.canCraft(recipe, times)) return false;
-
-    recipe.inputs.forEach(function (input) {
-      game.resources[input.resourceId] = Number(game.resources[input.resourceId] || 0) - input.quantity * times;
-    });
-
-    var entry = {
-      id: "cq_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
-      recipeId: recipe.id,
-      times: times,
-      msRemaining: Number(recipe.craftTimeMs || 0) * times
-    };
-    game.craftQueue.push(entry);
-
-    addLog((WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId] || {}).name + " ×" + formatNumber(times) + " mis en file (Entrepôt)", "event");
-
-    if (typeof renderPanel === "function") renderPanel();
-    if (typeof renderHud === "function") renderHud();
-    saveGame();
-
-    return true;
-  },
-
-  tickCraftQueue: function (dt) {
-    this.ensure();
-    dt = Math.max(0, Number(dt || 0));
-    if (dt <= 0 || !game.craftQueue.length) return;
-
-    var entry = game.craftQueue[0];
-    entry.msRemaining -= dt * 1000;
-
-    if (entry.msRemaining > 0) {
-      if (typeof this._maybeRenderWarehouse === "function") this._maybeRenderWarehouse(dt);
-      return;
-    }
-
-    game.craftQueue.shift();
-
-    var recipe = (typeof RECIPES !== "undefined") ? RECIPES[entry.recipeId] : null;
-    if (recipe) {
-      recipe.outputs.forEach(function (output) {
-        WarehouseManager.addResource(output.resourceId, output.quantity * entry.times, true);
-      });
-
-      recipe.outputs.forEach(function (output) {
-        if (output.resourceId === "planche" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.notifyPlanchesCrafted === "function") {
-          WorkshopUnlockManager.notifyPlanchesCrafted(output.quantity * entry.times);
-        }
-      });
-
-      var outDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
-      addLog((outDef ? outDef.name : recipe.label) + " fabriquée ×" + formatNumber(entry.times) + " (Entrepôt)", "event");
-    }
-
-    if (typeof renderPanel === "function") renderPanel();
-    if (typeof renderHud === "function") renderHud();
-    saveGame();
-
-    var leftoverMs = -entry.msRemaining;
-    if (leftoverMs > 0 && game.craftQueue.length) {
-      this.tickCraftQueue(leftoverMs / 1000);
-    }
-  },
-
-  _maybeRenderWarehouse: function (dt) {
-    if (typeof isWarehouseScreenVisible !== "function" || !isWarehouseScreenVisible()) return;
-    this._renderAccum = Number(this._renderAccum || 0) + dt;
-    if (this._renderAccum < 1) return;
-    this._renderAccum = 0;
-    if (typeof renderPanel === "function") renderPanel();
-  },
-
-  cancelCraft: function (queueId) {
-    this.ensure();
-    var index = game.craftQueue.findIndex(function (e) { return e.id === queueId; });
-    if (index <= 0) return false;
-
-    var entry = game.craftQueue[index];
-    var recipe = (typeof RECIPES !== "undefined") ? RECIPES[entry.recipeId] : null;
-    if (recipe) {
-      recipe.inputs.forEach(function (input) {
-        game.resources[input.resourceId] = Number(game.resources[input.resourceId] || 0) + input.quantity * entry.times;
-      });
-    }
-
-    game.craftQueue.splice(index, 1);
-    addLog("Commande de craft annulée, ressources remboursées", "event");
-
-    if (typeof renderPanel === "function") renderPanel();
-    saveGame();
-
-    return true;
-  },
-
+  /* v3.98.0 : le craft générique de l'Entrepôt (RECIPES/game.craftQueue/enqueueCraft/
+     tickCraftQueue/canCraft/cancelCraft) est retiré — remplacé par des ateliers locaux à
+     chaque bâtiment de Production, chacun sa propre file (voir WorkshopsSystem,
+     systems/workshops-system.js). Seul refundAndClearCraftQueue() est conservé ci-dessous
+     comme point d'entrée générique : save-system.js:hardResetState() (fichier protégé)
+     l'appelle par son nom sans connaître son implémentation interne — délègue maintenant
+     au remboursement de TOUTES les files d'ateliers plutôt qu'à l'ancienne file unique.
+     game-loop.js (protégé) vérifie typeof WarehouseManager.tickCraftQueue === "function"
+     avant d'appeler — cette méthode n'existant plus, l'appel est simplement sauté, sans
+     erreur (le tick des ateliers passe désormais par ProductionManager.tick(), lui-même
+     déjà appelé par game-loop.js). */
   refundAndClearCraftQueue: function () {
-    this.ensure();
-    game.craftQueue.forEach(function (entry) {
-      var recipe = (typeof RECIPES !== "undefined") ? RECIPES[entry.recipeId] : null;
-      if (!recipe) return;
-      recipe.inputs.forEach(function (input) {
-        game.resources[input.resourceId] = Number(game.resources[input.resourceId] || 0) + input.quantity * entry.times;
-      });
-    });
-    game.craftQueue = [];
+    if (window.WorkshopsSystem && typeof WorkshopsSystem.refundAndClearAll === "function") {
+      WorkshopsSystem.refundAndClearAll();
+    }
   }
 };
 

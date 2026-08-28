@@ -45,19 +45,19 @@ function buildProductionCardHTML(id) {
   h += '<div class="production-card-rate">' + renderIconOrEmojiHTML(resDef.icon, "production-rate-icon", resDef.name) + '<span>+' + formatNumber(ratePerMin) + ' ' + esc(resDef.name || def.name) + ' / min</span></div>';
 
   h += '<div class="nb-entry-progress-bar production-stock-bar">';
-  h += '<div class="nb-entry-progress-fill' + (isFull ? ' done' : '') + '" style="width:' + pct + '%"></div>';
+  h += '<div class="nb-entry-progress-fill' + (isFull ? ' done' : '') + '" id="prod-bar-' + id + '" style="width:' + pct + '%"></div>';
   h += '</div>';
-  h += '<div class="production-card-stock-label">' + formatNumber(Math.floor(stock)) + ' / ' + formatNumber(capacity) + ' ' + esc(resDef.name || '') + '</div>';
+  h += '<div class="production-card-stock-label" id="prod-stock-label-' + id + '">' + formatNumber(Math.floor(stock)) + ' / ' + formatNumber(capacity) + ' ' + esc(resDef.name || '') + '</div>';
 
   if (isFull) {
-    h += '<div class="production-card-status is-full">✅ Stock plein</div>';
+    h += '<div class="production-card-status is-full" id="prod-status-' + id + '">✅ Stock plein</div>';
   } else {
-    h += '<div class="production-card-status">⏳ Plein dans ' + esc(formatTime(secondsUntilFull)) + '</div>';
+    h += '<div class="production-card-status" id="prod-status-' + id + '">⏳ Plein dans ' + esc(formatTime(secondsUntilFull)) + '</div>';
   }
   h += '</div>';
 
   h += '<div class="production-card-actions">';
-  h += '<button class="production-action-btn production-harvest-btn' + (hasStock ? ' is-ready' : ' is-disabled') + '" type="button" ' + (hasStock ? '' : 'disabled') + ' onclick="ProductionManager.harvest(\'' + id + '\')">';
+  h += '<button class="production-action-btn production-harvest-btn' + (hasStock ? ' is-ready' : ' is-disabled') + '" id="prod-harvest-btn-' + id + '" type="button" ' + (hasStock ? '' : 'disabled') + ' onclick="ProductionManager.harvest(\'' + id + '\')">';
   h += '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">Récolter' + (hasStock ? ' · ' + formatNumber(Math.floor(stock)) : '');
   h += '</button>';
 
@@ -128,22 +128,24 @@ function buildPlotsCardHTML(buildingId, def) {
   h += '<div class="production-card-rate">' + renderIconOrEmojiHTML(resDef.icon, "production-rate-icon", resDef.name) + '<span>+' + formatNumber(ratePerMin) + ' ' + esc(resDef.name || def.name) + ' / min</span></div>';
 
   h += '<div class="nb-entry-progress-bar production-stock-bar">';
-  h += '<div class="nb-entry-progress-fill' + (isFull ? ' done' : '') + '" style="width:' + pct + '%"></div>';
+  h += '<div class="nb-entry-progress-fill' + (isFull ? ' done' : '') + '" id="prod-bar-' + buildingId + '" style="width:' + pct + '%"></div>';
   h += '</div>';
-  h += '<div class="production-card-stock-label">' + formatNumber(Math.floor(stock)) + ' / ' + formatNumber(capacity) + ' ' + esc(resDef.name || '') + '</div>';
+  h += '<div class="production-card-stock-label" id="prod-stock-label-' + buildingId + '">' + formatNumber(Math.floor(stock)) + ' / ' + formatNumber(capacity) + ' ' + esc(resDef.name || '') + '</div>';
 
   if (isFull) {
-    h += '<div class="production-card-status is-full">✅ Stock plein</div>';
+    h += '<div class="production-card-status is-full" id="prod-status-' + buildingId + '">✅ Stock plein</div>';
   } else if (ratePerMin > 0) {
     var secondsUntilFull = ((capacity - stock) / ratePerMin) * 60;
-    h += '<div class="production-card-status">⏳ Plein dans ' + esc(formatTime(secondsUntilFull)) + '</div>';
+    h += '<div class="production-card-status" id="prod-status-' + buildingId + '">⏳ Plein dans ' + esc(formatTime(secondsUntilFull)) + '</div>';
+  } else {
+    h += '<div class="production-card-status" id="prod-status-' + buildingId + '"></div>';
   }
   h += '</div>';
 
   // Plus de bouton "Améliorer" de bâtiment — juste la récolte globale, qui additionne
   // toutes les zones ouvertes (voir ProductionPlotsSystem.harvestAll()).
   h += '<div class="production-card-actions">';
-  h += '<button class="production-action-btn production-harvest-btn full-width' + (hasStock ? ' is-ready' : ' is-disabled') + '" type="button" ' + (hasStock ? '' : 'disabled') + ' onclick="ProductionManager.harvest(\'' + buildingId + '\')">';
+  h += '<button class="production-action-btn production-harvest-btn full-width' + (hasStock ? ' is-ready' : ' is-disabled') + '" id="prod-harvest-btn-' + buildingId + '" type="button" ' + (hasStock ? '' : 'disabled') + ' onclick="ProductionManager.harvest(\'' + buildingId + '\')">';
   h += '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">Récolter' + (hasStock ? ' · ' + formatNumber(Math.floor(stock)) : '');
   h += '</button>';
   h += '</div>';
@@ -152,6 +154,7 @@ function buildPlotsCardHTML(buildingId, def) {
 
   h += '<div class="production-card-full-row">';
   h += buildPlotsToggleHTML(buildingId);
+  h += buildWorkshopsToggleHTML(buildingId);
   h += '</div>';
 
   h += '</div>';
@@ -236,9 +239,9 @@ function buildPlotCardHTML(buildingId, plot, index, selectedIndex) {
   h += '<div class="farm-plot-card-profile">' + esc(profile.label) + '</div>';
 
   h += '<div class="nb-entry-progress-bar farm-plot-card-bar">';
-  h += '<div class="nb-entry-progress-fill" style="width:' + pct + '%"></div>';
+  h += '<div class="nb-entry-progress-fill" id="prod-plot-bar-' + buildingId + '-' + index + '" style="width:' + pct + '%"></div>';
   h += '</div>';
-  h += '<div class="farm-plot-card-stock-label">' + formatNumber(Math.floor(plot.stock)) + '/' + formatNumber(capacity) + '</div>';
+  h += '<div class="farm-plot-card-stock-label" id="prod-plot-stock-' + buildingId + '-' + index + '">' + formatNumber(Math.floor(plot.stock)) + '/' + formatNumber(capacity) + '</div>';
 
   h += '<div class="farm-plot-card-improvements">';
   h += buildPlotImprovementIconHTML(buildingCfg, plot, "fertile");
@@ -395,6 +398,187 @@ function productionPlotToggleImprovement(buildingId, plotIndex, kind) {
   if (!result.ok) showToast(result.reason, 1200);
 }
 window.productionPlotToggleImprovement = productionPlotToggleImprovement;
+
+/* ============================================================
+   Section "⚙️ Production" — ateliers de craft locaux au bâtiment
+   (voir WorkshopsSystem, data/workshops.js). Toggle dépliable au même
+   niveau que "🌾 Parcelles" etc., état indépendant par bâtiment.
+   ============================================================ */
+
+var workshopsPanelExpanded = {}; // { [buildingId]: bool }
+var selectedWorkshopRecipe = {}; // { [workshopId]: recipeId } — mémorise le choix de recette par atelier
+var workshopCraftQty = {};       // { [workshopId]: number } — quantité en cours de saisie par atelier
+
+function toggleWorkshopsPanel(buildingId) {
+  workshopsPanelExpanded[buildingId] = !workshopsPanelExpanded[buildingId];
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.toggleWorkshopsPanel = toggleWorkshopsPanel;
+
+function buildWorkshopsToggleHTML(buildingId) {
+  var workshops = getWorkshopsForBuilding(buildingId);
+  if (!workshops.length) return "";
+
+  var activeCount = workshops.filter(function (w) { return w.active; }).length;
+  var isExpanded = !!workshopsPanelExpanded[buildingId];
+
+  var h = '<button class="farm-plots-toggle" type="button" onclick="toggleWorkshopsPanel(\'' + buildingId + '\')">';
+  h += '<span>⚙️ Production</span>';
+  h += '<span class="farm-plots-count">' + activeCount + ' / ' + workshops.length + '</span>';
+  h += '<span class="farm-plots-chevron">' + (isExpanded ? '▴' : '▾') + '</span>';
+  h += '</button>';
+
+  if (isExpanded) {
+    h += '<div class="farm-plots-panel">';
+    h += '<div class="workshop-list">';
+    workshops.forEach(function (w) {
+      h += buildWorkshopCardHTML(w);
+    });
+    h += '</div>';
+    h += '</div>';
+  }
+
+  return h;
+}
+
+/* Carte d'un atelier : verrouillée ("bientôt", aucune action) ou active (recette(s),
+   file de craft, stepper de quantité, bouton Fabriquer). Reprend le pattern déjà en place
+   pour le craft de l'ancien Entrepôt (stepper -/+/Max), adapté à une recette locale. */
+function buildWorkshopCardHTML(workshop) {
+  if (!workshop.active) {
+    var h0 = '<div class="workshop-card is-inactive">';
+    h0 += '<div class="workshop-card-icon">' + workshop.icon + '</div>';
+    h0 += '<div class="workshop-card-name">' + esc(workshop.name) + '</div>';
+    h0 += '<div class="workshop-card-soon">Bientôt</div>';
+    h0 += '</div>';
+    return h0;
+  }
+
+  var recipes = workshop.recipes;
+  var selectedRecipeId = selectedWorkshopRecipe[workshop.id] || recipes[0].id;
+  var recipe = recipes.find(function (r) { return r.id === selectedRecipeId; }) || recipes[0];
+  var outputDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
+  var maxCrafts = WorkshopsSystem.getMaxCraftTimes(workshop.id, recipe.id);
+  var qty = Math.max(1, Math.min(maxCrafts || 1, workshopCraftQty[workshop.id] || 1));
+  workshopCraftQty[workshop.id] = qty;
+
+  var inputsText = recipe.inputs.map(function (input) {
+    var d = WAREHOUSE_RESOURCES[input.resourceId];
+    return formatNumber(input.quantity) + ' ' + esc(d ? d.name : input.resourceId);
+  }).join(' + ');
+
+  var h = '<div class="workshop-card is-active">';
+  h += '<div class="workshop-card-top">';
+  h += '<div class="workshop-card-icon">' + workshop.icon + '</div>';
+  h += '<div class="workshop-card-name">' + esc(workshop.name) + '</div>';
+  h += '</div>';
+
+  if (recipes.length > 1) {
+    h += '<div class="warehouse-craft-recipe-tabs">';
+    recipes.forEach(function (r) {
+      var out = WAREHOUSE_RESOURCES[r.outputs[0].resourceId];
+      var isActiveTab = r.id === recipe.id;
+      h += '<button type="button" class="warehouse-craft-recipe-tab' + (isActiveTab ? ' is-active' : '') + '" onclick="selectWorkshopRecipe(\'' + workshop.id + '\', \'' + r.id + '\')">' + esc(out ? out.name : r.id) + '</button>';
+    });
+    h += '</div>';
+  }
+
+  h += '<div class="workshop-recipe-line">' + renderIconOrEmojiHTML(outputDef.icon, "workshop-recipe-icon", outputDef.name) + inputsText + ' → ' + formatNumber(recipe.outputs[0].quantity) + ' ' + esc(outputDef.name) + '</div>';
+
+  h += buildWorkshopQueueHTML(workshop.id);
+
+  if (maxCrafts <= 0) {
+    var missing = recipe.inputs.find(function (input) {
+      return WarehouseManager.getAmount(input.resourceId) < input.quantity;
+    });
+    var missingDef = missing ? WAREHOUSE_RESOURCES[missing.resourceId] : null;
+    h += '<div class="warehouse-empty-hint">Pas assez de ' + esc(missingDef ? missingDef.name : "") + ' pour fabriquer.</div>';
+  } else {
+    h += '<div class="warehouse-qty-stepper">';
+    h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWorkshopCraftQty(\'' + workshop.id + '\', -1)"' + (qty <= 1 ? ' disabled' : '') + '>−</button>';
+    h += '<span class="warehouse-qty-value">' + formatNumber(qty) + '</span>';
+    h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWorkshopCraftQty(\'' + workshop.id + '\', 1)"' + (qty >= maxCrafts ? ' disabled' : '') + '>+</button>';
+    h += '<button class="warehouse-qty-max-btn" type="button" onclick="adjustWorkshopCraftQty(\'' + workshop.id + '\', \'max\')"' + (qty >= maxCrafts ? ' disabled' : '') + '>Max</button>';
+    h += '</div>';
+    h += '<button class="btn-buy eq-detail-action" type="button" onclick="confirmCraftWorkshop(\'' + workshop.id + '\')">Fabriquer ×' + formatNumber(qty) + '</button>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function buildWorkshopQueueHTML(workshopId) {
+  var queue = WorkshopsSystem.getQueue(workshopId);
+  if (!queue.length) return "";
+
+  var h = '<div class="warehouse-craft-queue">';
+  h += '<div class="warehouse-craft-queue-title">File de fabrication</div>';
+
+  queue.forEach(function (entry, index) {
+    var recipe = WorkshopsSystem.getRecipe(workshopId, entry.recipeId);
+    var outputDef = recipe ? WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId] : null;
+    var label = outputDef ? outputDef.name : (recipe ? recipe.id : "?");
+    var isCurrent = index === 0;
+
+    h += '<div class="warehouse-craft-queue-row' + (isCurrent ? ' is-current' : '') + '">';
+    h += '<div class="warehouse-craft-queue-row-top">';
+    h += '<span class="warehouse-craft-queue-label">' + esc(label) + ' ×' + formatNumber(entry.times) + '</span>';
+
+    if (isCurrent) {
+      var totalMs = Number(recipe ? recipe.craftTimeMs : 0) * entry.times;
+      var remainingSec = Math.max(0, entry.msRemaining / 1000);
+      h += '<span class="warehouse-craft-queue-time" id="prod-workshop-time-' + workshopId + '">' + remainingSec.toFixed(1) + ' s</span>';
+    } else {
+      h += '<button class="warehouse-craft-queue-cancel" type="button" onclick="cancelWorkshopCraft(\'' + workshopId + '\', \'' + esc(entry.id) + '\')" aria-label="Annuler">✕</button>';
+    }
+    h += '</div>';
+
+    if (isCurrent) {
+      var pct = totalMs > 0 ? Math.min(100, Math.max(0, Math.floor(100 - (entry.msRemaining / totalMs) * 100))) : 100;
+      h += '<div class="map-quest-step-bar"><div class="map-quest-step-fill" id="prod-workshop-bar-' + workshopId + '" style="width:' + pct + '%"></div></div>';
+    }
+
+    h += '</div>';
+  });
+
+  h += '</div>';
+  return h;
+}
+
+function selectWorkshopRecipe(workshopId, recipeId) {
+  selectedWorkshopRecipe[workshopId] = recipeId;
+  workshopCraftQty[workshopId] = 1;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.selectWorkshopRecipe = selectWorkshopRecipe;
+
+function adjustWorkshopCraftQty(workshopId, delta) {
+  var recipeId = selectedWorkshopRecipe[workshopId];
+  var maxCrafts = WorkshopsSystem.getMaxCraftTimes(workshopId, recipeId);
+  if (maxCrafts <= 0) return;
+
+  var current = workshopCraftQty[workshopId] || 1;
+  if (delta === "max") {
+    workshopCraftQty[workshopId] = maxCrafts;
+  } else {
+    workshopCraftQty[workshopId] = Math.max(1, Math.min(maxCrafts, current + Number(delta || 0)));
+  }
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.adjustWorkshopCraftQty = adjustWorkshopCraftQty;
+
+function confirmCraftWorkshop(workshopId) {
+  var recipeId = selectedWorkshopRecipe[workshopId];
+  var qty = workshopCraftQty[workshopId] || 1;
+  WorkshopsSystem.enqueueCraft(workshopId, recipeId, qty);
+  workshopCraftQty[workshopId] = 1;
+}
+window.confirmCraftWorkshop = confirmCraftWorkshop;
+
+function cancelWorkshopCraft(workshopId, queueId) {
+  WorkshopsSystem.cancelCraft(workshopId, queueId);
+}
+window.cancelWorkshopCraft = cancelWorkshopCraft;
 
 function buildProductionHTML() {
   ProductionManager.ensure();
