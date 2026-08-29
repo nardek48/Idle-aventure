@@ -196,7 +196,7 @@ var ProductionPlotsSystem = {
     if (!plot || plot.state !== "open") return { ok: false, reason: "Zone invalide" };
     if (this.isPlotMaxLevel(plot)) return { ok: false, reason: "Niveau maximum" };
 
-    var cost = getProductionPlotUpgradeCost(buildingId, plot.level);
+    var cost = getProductionPlotUpgradeCost(buildingId, plot.level, plotIndex);
     var canAfford = Object.keys(cost).every(function (key) {
       return WarehouseManager.getAmount(key) >= cost[key];
     });

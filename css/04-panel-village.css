@@ -228,6 +228,50 @@
   text-align: center;
 }
 
+/* v3.98.13 : bloc "Réserve protégée" — seuil que le chaînage auto des ateliers ne
+   consommera jamais (voir ResourceReserveManager, ui/warehouse-view.js). */
+.warehouse-reserve-block {
+  width: 100%;
+  margin: 10px 0;
+  padding: 8px 10px;
+  border: 1px dashed var(--nb-frame);
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream-alt);
+  text-align: center;
+}
+
+.warehouse-reserve-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  margin-bottom: 2px;
+}
+
+.warehouse-reserve-hint {
+  font-size: 9.5px;
+  color: var(--nb-ink-dim);
+  margin-bottom: 6px;
+}
+
+.warehouse-reserve-input {
+  width: 100px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream);
+  padding: 5px 6px;
+  -moz-appearance: textfield;
+}
+
+.warehouse-reserve-input::-webkit-outer-spin-button,
+.warehouse-reserve-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 /* Stepper -/valeur/+/Max, sous le stock dans le panneau détail. */
 .warehouse-qty-stepper {
   display: flex;
@@ -258,13 +302,33 @@
   cursor: not-allowed;
 }
 
+/* v3.98.16 : <input type="number"> plutôt qu'un <span> — éditable directement au clic
+   (retour Seb : corriger un clic accidentel sur "Max" sans repasser par -/+). Bordure et
+   fond neutralisés pour garder l'apparence visuelle d'origine (texte centré, pas de
+   cadre de champ de saisie visible), les flèches natives du navigateur masquées. */
 .warehouse-qty-value {
   flex-shrink: 0;
+  width: 34px;
   min-width: 28px;
   text-align: center;
   font-size: 14px;
   font-weight: 800;
   color: var(--nb-ink);
+  border: none;
+  background: transparent;
+  padding: 0;
+  -moz-appearance: textfield;
+}
+
+.warehouse-qty-value::-webkit-outer-spin-button,
+.warehouse-qty-value::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.warehouse-qty-value:focus {
+  outline: none;
+  border-bottom: 1px solid var(--nb-gold-dark);
 }
 
 .warehouse-qty-max-btn {
@@ -317,6 +381,19 @@
 .warehouse-craft-recipe-tab.is-active {
   background: var(--nb-gold-dark);
   color: var(--nb-cream);
+}
+
+/* v3.98.13 : tab de recette avec le chaînage auto actif dessus (peut être combiné avec
+   .is-active si c'est aussi la recette affichée). Léger liseré vert distinct du fond
+   doré "sélectionné", pour rester lisible même quand la tab n'est pas la sélection
+   courante (l'auto peut tourner sur une recette qu'on ne regarde pas actuellement). */
+.warehouse-craft-recipe-tab.is-auto {
+  border-color: #2f9e44;
+}
+
+.warehouse-craft-recipe-tab.is-auto.is-active {
+  background: #2f9e44;
+  border-color: #2f9e44;
 }
 
 .warehouse-craft-title {

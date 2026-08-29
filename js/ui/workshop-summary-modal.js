@@ -19,7 +19,12 @@
    ProductionManager.updateDOM() : refreshWorkshopSummaryModal() régénère le bloc
    #workshop-summary-body à chaque tick où la popup est ouverte (appelé depuis
    ProductionManager.tick(), au même rythme ~1x/s que le reste de la page Production),
-   sans reconstruire tout le wrapper overlay pour ne pas perdre la position de scroll. */
+   sans reconstruire tout le wrapper overlay pour ne pas perdre la position de scroll.
+
+   v3.98.17 : badge "🔁 auto" sur chaque ligne dont le lot EN COURS (entry.auto, posé par
+   WorkshopsSystem.enqueueCraft) a été poussé par le chaînage automatique — vue
+   d'ensemble demandée par Seb (jusque-là aucun moyen de savoir quels ateliers
+   tournaient en auto sans ouvrir chaque carte une par une). */
 
 var _workshopSummaryModalOpen = false;
 
@@ -48,6 +53,7 @@ function buildWorkshopSummaryBodyHTML() {
     h += '<div class="workshop-summary-row-body">';
     h += '<div class="workshop-summary-row-top">';
     h += '<span class="workshop-summary-row-name">' + esc(def.name) + '</span>';
+    if (entry.auto) h += '<span class="workshop-summary-row-auto-badge">🔁 auto</span>';
     h += '<span class="workshop-summary-row-building">' + esc(buildingDef ? buildingDef.name : def.buildingId) + '</span>';
     h += '</div>';
     h += '<div class="workshop-summary-row-recipe">' + esc(outputDef ? outputDef.name : (recipe ? recipe.id : "?")) + ' ×' + formatNumber(entry.times) + '</div>';

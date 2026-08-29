@@ -3,25 +3,36 @@
    indépendante par atelier, pas une seule file partagée). Remplace le craft générique de
    l'Entrepôt (WarehouseManager.enqueueCraft/tickCraftQueue/canCraft/cancelCraft — retirés,
    voir warehouse-system.js). Persistance dans game.production[buildingId].workshops[workshopId]
-   = { queue: [...], lastTick, level } — même bloc opaque déjà traité par save-system.js
-   pour game.production, aucune modification de ce fichier protégé nécessaire.
+   = { queue: [...], lastTick, level, autoRecipeId } — même bloc opaque déjà traité par
+   save-system.js pour game.production, aucune modification de ce fichier protégé
+   nécessaire.
    Tick appelé depuis ProductionManager.tick() (lui-même déjà appelé par game-loop.js,
    fichier protégé non modifié) — voir production-system.js.
 
-   v3.98.4 : lastTick + catchUpOffline() : le craft continue hors ligne, MAIS uniquement
-   sur les lots déjà en file au moment de la fermeture — décision validée avec Seb, aucun
-   nouveau lot n'est ajouté automatiquement pendant l'absence (à distinguer d'une
-   éventuelle automatisation future qui, elle, pousserait de nouvelles entrées dans la
-   queue ; le rattrapage en cascade ci-dessous les consommerait alors nativement sans
-   modification).
+   v3.98.4 : lastTick + catchUpOffline() : le craft continue hors ligne, sur les lots déjà
+   en file au moment de la fermeture.
 
    v3.98.6 : niveau d'atelier (1 à WORKSHOP_LEVEL_CONFIG.maxLevel), INDÉPENDANT par
-   atelier (voir data/workshops.js pour la config complète des décisions validées avec
-   Seb). Remplace l'ancienne constante globale WORKSHOP_MAX_QUEUE_LENGTH (posée en
-   v3.98.4) : la taille de file max devient getMaxQueueLength(workshopId) = niveau actuel
-   de l'atelier (niveau 1 -> 1 entrée, niveau max -> WORKSHOP_LEVEL_CONFIG.maxLevel
-   entrées). La vitesse effective (getEffectiveCraftTimeMs) réduit linéairement le
-   craftTimeMs de base de la recette de speedBonusPerLevel par niveau au-delà du niveau 1.
+   atelier. getMaxQueueLength(workshopId) = niveau actuel de l'atelier.
+
+   v3.98.13 : CHAÎNAGE AUTOMATIQUE — décisions validées avec Seb :
+   - Un toggle auto PAR RECETTE (pas par atelier), mais une seule recette auto-active à la
+     fois par atelier (autoRecipeId, null si aucune) : activer une recette désactive
+     automatiquement l'autre sur le même atelier — sinon deux recettes se disputeraient la
+     même file.
+   - La quantité ×N utilisée par le chaînage réutilise le stepper existant
+     (workshopCraftQty, voir ui/production-view.js), y compris "Max" — recalculé à CHAQUE
+     déclenchement du chaînage (pas figé), toujours borné par
+     ResourceReserveManager.getAvailableForAutoCraft() plutôt que le stock brut.
+   - Le craft MANUEL (enqueueCraft, appelé par le bouton "Fabriquer") n'est JAMAIS limité
+     par la réserve protégée — seul le chaînage auto la respecte. Idem pour les
+     améliorations (upgradeWorkshop) : jamais concernées.
+   - Le chaînage se déclenche à chaque fin de lot, en tick normal ET en rattrapage hors
+     ligne (cohérent avec le craft normal déjà hors-ligne) : dès qu'une entrée se termine,
+     _tryAutoEnqueue() est appelée avant de passer à l'entrée suivante de la cascade — si
+     la file a de la place ET que la quantité voulue (bornée par la réserve) est >= 1, un
+     nouveau lot est poussé, qui participera lui-même à cette même cascade s'il reste du
+     temps écoulé à consommer (rattrapage hors ligne).
    Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var WorkshopsSystem = {
@@ -33,12 +44,14 @@ var WorkshopsSystem = {
     var bucket = game.production[buildingId];
     if (!bucket.workshops || typeof bucket.workshops !== "object") bucket.workshops = {};
     if (!bucket.workshops[workshopId] || typeof bucket.workshops[workshopId] !== "object") {
-      bucket.workshops[workshopId] = { queue: [], lastTick: Date.now(), level: 1 };
+      bucket.workshops[workshopId] = { queue: [], lastTick: Date.now(), level: 1, autoRecipeId: null };
     }
-    if (!Array.isArray(bucket.workshops[workshopId].queue)) bucket.workshops[workshopId].queue = [];
-    if (typeof bucket.workshops[workshopId].lastTick !== "number") bucket.workshops[workshopId].lastTick = Date.now();
-    if (typeof bucket.workshops[workshopId].level !== "number") bucket.workshops[workshopId].level = 1;
-    return bucket.workshops[workshopId];
+    var w = bucket.workshops[workshopId];
+    if (!Array.isArray(w.queue)) w.queue = [];
+    if (typeof w.lastTick !== "number") w.lastTick = Date.now();
+    if (typeof w.level !== "number") w.level = 1;
+    if (typeof w.autoRecipeId === "undefined") w.autoRecipeId = null;
+    return w;
   },
 
   getLevel: function (workshopId) {
@@ -59,9 +72,13 @@ var WorkshopsSystem = {
 
   /* craftTimeMs effectif de la recette, réduit linéairement selon le niveau de
      l'atelier (-speedBonusPerLevel par niveau au-delà du niveau 1). */
-  getEffectiveCraftTimeMs: function (workshopId, recipe) {
+  /* craftTimeMs effectif de la recette, réduit linéairement selon le niveau de
+     l'atelier (-speedBonusPerLevel par niveau au-delà du niveau 1). `levelOverride`
+     optionnel (v3.98.16) permet de calculer l'effet à un AUTRE niveau que l'actuel —
+     utilisé pour afficher l'aperçu "au niveau suivant" sur le bouton Améliorer. */
+  getEffectiveCraftTimeMs: function (workshopId, recipe, levelOverride) {
     if (!recipe) return 0;
-    var level = this.getLevel(workshopId);
+    var level = typeof levelOverride === "number" ? levelOverride : this.getLevel(workshopId);
     var reduction = Math.min(0.95, WORKSHOP_LEVEL_CONFIG.speedBonusPerLevel * (level - 1));
     return Math.max(1, Math.round(Number(recipe.craftTimeMs || 0) * (1 - reduction)));
   },
@@ -88,10 +105,53 @@ var WorkshopsSystem = {
     }, Infinity);
   },
 
+  /* v3.98.13 : équivalent de getMaxCraftTimes, mais borné par
+     ResourceReserveManager.getAvailableForAutoCraft() plutôt que le stock brut — utilisé
+     UNIQUEMENT par le chaînage auto, jamais par le craft manuel. */
+  getMaxAutoCraftTimes: function (workshopId, recipeId) {
+    var recipe = this.getRecipe(workshopId, recipeId);
+    if (!recipe) return 0;
+    if (!window.ResourceReserveManager) return this.getMaxCraftTimes(workshopId, recipeId);
+    return recipe.inputs.reduce(function (min, input) {
+      var possible = Math.floor(ResourceReserveManager.getAvailableForAutoCraft(input.resourceId) / input.quantity);
+      return Math.min(min, possible);
+    }, Infinity);
+  },
+
   canCraft: function (workshopId, recipeId, times) {
     times = Math.floor(Number(times || 1));
     if (times <= 0) return false;
     return this.getMaxCraftTimes(workshopId, recipeId) >= times;
+  },
+
+  /* Recette actuellement auto-active sur cet atelier, ou null. */
+  getAutoRecipeId: function (workshopId) {
+    var def = WORKSHOPS_CONFIG[workshopId];
+    if (!def) return null;
+    return this.ensureWorkshop(def.buildingId, workshopId).autoRecipeId || null;
+  },
+
+  /* Active/désactive le chaînage auto sur `recipeId`. Une seule recette auto-active à la
+     fois par atelier (règle validée avec Seb) : appeler avec une recette différente de
+     celle déjà active la REMPLACE (pas de cumul) ; appeler avec la même recette déjà
+     active la DÉSACTIVE (toggle). */
+  setAutoRecipe: function (workshopId, recipeId) {
+    var def = WORKSHOPS_CONFIG[workshopId];
+    if (!def || !def.active) return;
+    var workshop = this.ensureWorkshop(def.buildingId, workshopId);
+
+    if (workshop.autoRecipeId === recipeId) {
+      workshop.autoRecipeId = null;
+      if (typeof showToast === "function") showToast("Production automatique désactivée", 1200);
+    } else {
+      workshop.autoRecipeId = recipeId;
+      var recipe = this.getRecipe(workshopId, recipeId);
+      var outDef = recipe ? WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId] : null;
+      if (typeof showToast === "function") showToast("Auto : " + (outDef ? outDef.name : recipeId), 1200);
+    }
+
+    if (typeof renderPanel === "function") renderPanel();
+    saveGame();
   },
 
   /* Coût pour améliorer l'atelier à son niveau suivant, null si déjà au niveau max. */
@@ -114,7 +174,8 @@ var WorkshopsSystem = {
   /* Améliore l'atelier d'un niveau — coût en Planche+Lingot (voir data/workshops.js),
      jamais la propre PRODUCTION BRUTE du bâtiment (règle des zones), mais peut inclure
      l'extrant propre de l'atelier lui-même (Scierie fine/Fonderie) : accepté
-     explicitement par Seb, décision différente de celle des zones. */
+     explicitement par Seb, décision différente de celle des zones. JAMAIS limité par la
+     réserve protégée (règle du chaînage auto, sans rapport avec les améliorations). */
   upgradeWorkshop: function (workshopId) {
     var def = WORKSHOPS_CONFIG[workshopId];
     if (!def || !def.active) return { ok: false, reason: "Atelier invalide" };
@@ -142,10 +203,13 @@ var WorkshopsSystem = {
 
   /* Met en file `times` lots de `recipeId` dans l'atelier `workshopId`. Intrants déduits
      immédiatement (comme l'ancien système), outputs crédités à la fin du craft.
-     v3.98.6 : refuse au-delà de getMaxQueueLength(workshopId) entrées — dépend
-     désormais du niveau de l'atelier plutôt que d'une constante globale (le nombre
-     d'ENTRÉES, pas la somme des ×N — un lot ×20 compte pour 1 entrée comme un lot ×1). */
-  enqueueCraft: function (workshopId, recipeId, times) {
+     v3.98.6 : refuse au-delà de getMaxQueueLength(workshopId) entrées.
+     v3.98.13 : CRAFT MANUEL — n'utilise JAMAIS ResourceReserveManager, seul le stock brut
+     (via canCraft/getMaxCraftTimes) limite ce qui est possible ; la réserve protégée ne
+     s'applique qu'au chaînage auto (voir _tryAutoEnqueue). `fromAuto` (interne, non
+     exposé côté UI) évite de spammer logs/toasts lors d'un enqueue déclenché par le
+     chaînage plutôt que par un clic joueur. */
+  enqueueCraft: function (workshopId, recipeId, times, fromAuto) {
     var def = WORKSHOPS_CONFIG[workshopId];
     if (!def || !def.active) return false;
     var recipe = this.getRecipe(workshopId, recipeId);
@@ -156,7 +220,7 @@ var WorkshopsSystem = {
     var workshop = this.ensureWorkshop(def.buildingId, workshopId);
     var maxQueueLength = this.getMaxQueueLength(workshopId);
     if (workshop.queue.length >= maxQueueLength) {
-      if (typeof showToast === "function") showToast("File pleine (max " + maxQueueLength + ")", 1200);
+      if (!fromAuto && typeof showToast === "function") showToast("File pleine (max " + maxQueueLength + ")", 1200);
       return false;
     }
 
@@ -168,16 +232,55 @@ var WorkshopsSystem = {
       id: "wq_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
       recipeId: recipe.id,
       times: times,
-      msRemaining: this.getEffectiveCraftTimeMs(workshopId, recipe) * times
+      msRemaining: this.getEffectiveCraftTimeMs(workshopId, recipe) * times,
+      auto: !!fromAuto
     });
 
     var outDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
-    addLog((outDef ? outDef.name : recipe.id) + " mise en file (" + def.name + ")", "event");
+    addLog((outDef ? outDef.name : recipe.id) + (fromAuto ? " remise en file automatiquement (" : " mise en file (") + def.name + ")", "event");
 
-    if (typeof renderPanel === "function") renderPanel();
-    if (typeof renderHud === "function") renderHud();
-    saveGame();
+    if (!fromAuto) {
+      if (typeof renderPanel === "function") renderPanel();
+      if (typeof renderHud === "function") renderHud();
+      saveGame();
+    }
     return true;
+  },
+
+  /* v3.98.13 : tente de pousser un nouveau lot automatique dans la file, si une recette
+     est auto-active sur cet atelier. Appelée après CHAQUE complétion de lot (tick normal
+     et rattrapage hors ligne), avant de passer à la suite de la cascade. Quantité = le
+     réglage stepper du joueur pour cette recette (workshopCraftQty, ui/production-view.js
+     — "Max" y est déjà résolu au moment de l'appel par l'appelant si besoin, voir
+     resolveAutoCraftQty), bornée par getMaxAutoCraftTimes (respecte la réserve). Ne fait
+     RIEN silencieusement si la file est pleine ou si la réserve ne laisse pas de quoi
+     faire un lot complet — pas de blocage, juste une attente au prochain lot. */
+  /* v3.98.13 : tente de pousser un nouveau lot automatique dans la file, si une recette
+     est auto-active sur cet atelier. Appelée après CHAQUE complétion de lot (tick normal
+     et rattrapage hors ligne), avant de passer à la suite de la cascade. Quantité = le
+     réglage stepper du joueur pour cette recette (workshopCraftQty, ui/production-view.js
+     — "Max" y est déjà résolu au moment de l'appel par l'appelant si besoin, voir
+     resolveAutoCraftQty), bornée par getMaxAutoCraftTimes (respecte la réserve). Ne fait
+     RIEN silencieusement si la file est pleine ou si la réserve ne laisse pas de quoi
+     faire un lot complet — pas de blocage, juste une attente au prochain lot.
+     v3.98.18 : retourne true/false selon qu'un lot a été poussé — utilisé par
+     tickWorkshop pour re-tenter PÉRIODIQUEMENT même quand la file est vide (voir plus
+     bas), sans déclencher de re-render/save à chaque tick "rien ne s'est passé". */
+  _tryAutoEnqueue: function (workshopId) {
+    var def = WORKSHOPS_CONFIG[workshopId];
+    if (!def || !def.active) return false;
+    var workshop = this.ensureWorkshop(def.buildingId, workshopId);
+    var recipeId = workshop.autoRecipeId;
+    if (!recipeId) return false;
+
+    var maxAuto = this.getMaxAutoCraftTimes(workshopId, recipeId);
+    if (maxAuto <= 0) return false;
+
+    var desiredQty = (typeof resolveAutoCraftQty === "function") ? resolveAutoCraftQty(workshopId, recipeId, maxAuto) : maxAuto;
+    var qty = Math.max(0, Math.min(maxAuto, Math.floor(Number(desiredQty) || 0)));
+    if (qty <= 0) return false;
+
+    return this.enqueueCraft(workshopId, recipeId, qty, true);
   },
 
   cancelCraft: function (workshopId, queueId) {
@@ -203,15 +306,37 @@ var WorkshopsSystem = {
   },
 
   /* Tick d'UN atelier : avance le lot en tête de file, le complète si son temps est
-     écoulé, enchaîne sur le suivant avec le temps restant (même logique que l'ancien
-     tickCraftQueue). Appelé par tickAll() pour chaque atelier actif. */
+     écoulé, tente le chaînage auto, enchaîne sur le suivant avec le temps restant (même
+     logique que l'ancien tickCraftQueue). Appelé par tickAll() pour chaque atelier actif.
+     v3.98.18 : si la file est VIDE mais qu'une recette auto est active, retente
+     PÉRIODIQUEMENT _tryAutoEnqueue (throttlé à ~1x/s via _autoRetryAccum, indépendant du
+     rythme du tick appelant) — jusque-là, un chaînage bloqué par la réserve protégée ne
+     se relançait JAMAIS tout seul une fois la file vidée : plus aucune complétion de lot
+     ne pouvait redéclencher _tryAutoEnqueue (elle n'était appelée qu'après une
+     complétion). Si le joueur libère de la ressource entre-temps (vente, dépense
+     ailleurs), l'auto repart de lui-même au prochain check plutôt que de rester bloqué
+     indéfiniment tant que personne ne relance manuellement un lot. */
   tickWorkshop: function (workshopId, dt) {
     var def = WORKSHOPS_CONFIG[workshopId];
     if (!def || !def.active) return;
     var workshop = this.ensureWorkshop(def.buildingId, workshopId);
     workshop.lastTick = Date.now();
     var queue = workshop.queue;
-    if (!queue.length) return;
+
+    if (!queue.length) {
+      if (!workshop.autoRecipeId) return;
+      workshop._autoRetryAccum = Number(workshop._autoRetryAccum || 0) + dt;
+      if (workshop._autoRetryAccum < 1) return;
+      workshop._autoRetryAccum = 0;
+
+      var pushed = this._tryAutoEnqueue(workshopId);
+      if (pushed) {
+        if (typeof renderPanel === "function") renderPanel();
+        if (typeof renderHud === "function") renderHud();
+        saveGame();
+      }
+      return;
+    }
 
     var entry = queue[0];
     entry.msRemaining -= dt * 1000;
@@ -237,6 +362,8 @@ var WorkshopsSystem = {
       addLog((outDef ? outDef.name : recipe.id) + " fabriquée ×" + formatNumber(entry.times) + " (" + def.name + ")", "event");
     }
 
+    this._tryAutoEnqueue(workshopId);
+
     if (typeof renderPanel === "function") renderPanel();
     if (typeof renderHud === "function") renderHud();
     saveGame();
@@ -248,12 +375,13 @@ var WorkshopsSystem = {
   },
 
   /* Rattrapage hors ligne d'UN atelier : consomme le temps écoulé en cascade sur les
-     entrées DÉJÀ en file (option B validée avec Seb — aucun nouveau lot ajouté
-     automatiquement, contrairement à un futur système d'automatisation qui pousserait
-     lui-même de nouvelles entrées avant ce rattrapage). Même logique de complétion que
-     tickWorkshop (outputs crédités, hook Planches, log), sans renderPanel/renderHud à
-     chaque étape (pas encore de premier rendu à ce stade du boot) — un seul saveGame()
-     à la fin, déclenché par l'appelant (ProductionManager.catchUpOffline()). */
+     entrées en file (celles déjà présentes + celles ajoutées par le chaînage auto en
+     cours de cascade, v3.98.13 — le chaînage hors ligne est cohérent avec le rattrapage
+     déjà en place pour le craft normal, décision validée avec Seb). Même logique de
+     complétion que tickWorkshop (outputs crédités, hook Planches, log), sans
+     renderPanel/renderHud à chaque étape (pas encore de premier rendu à ce stade du
+     boot) — un seul saveGame() à la fin, déclenché par l'appelant
+     (ProductionManager.catchUpOffline()). */
   catchUpOffline: function (workshopId) {
     var def = WORKSHOPS_CONFIG[workshopId];
     if (!def || !def.active) return;
@@ -286,6 +414,8 @@ var WorkshopsSystem = {
         var outDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
         addLog((outDef ? outDef.name : recipe.id) + " fabriquée ×" + formatNumber(entry.times) + " (" + def.name + ", hors ligne)", "event");
       }
+
+      this._tryAutoEnqueue(workshopId);
     }
   },
 

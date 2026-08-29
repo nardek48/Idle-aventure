@@ -209,11 +209,12 @@ function buildPlotsPanelHTML(buildingId) {
 /* Mini-carte de zone allégée : niveau (au-dessus du nom), jauge, icônes d'améliorations
    (propres à chaque bâtiment) en état visuel seul. Toute la carte est cliquable pour
    SÉLECTIONNER la zone ; les actions et leurs coûts s'affichent dans une zone commune
-   sous la grille (voir buildPlotActionsHTML). Le libellé de zone utilise le préfixe propre
-   au bâtiment (Parcelle/Territoire/Bosquet/Galerie/Filon/Point d'eau). */
+   sous la grille (voir buildPlotActionsHTML).
+   v3.98.19 : nom de lieu dédié par zone (getProductionZoneName, ex. "Bois d'Aeswyn")
+   remplace l'ancien "Préfixe + numéro" générique (ex. "Territoire 7") — retour Seb. */
 function buildPlotCardHTML(buildingId, plot, index, selectedIndex) {
   var buildingCfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
-  var zoneNamePrefix = buildingCfg ? buildingCfg.zoneNamePrefix : "Zone";
+  var zoneName = getProductionZoneName(buildingId, index);
   var isSelected = selectedIndex === index;
   var classNames = "farm-plot-card" + (isSelected ? " is-selected" : "");
 
@@ -221,7 +222,7 @@ function buildPlotCardHTML(buildingId, plot, index, selectedIndex) {
     classNames += " is-locked";
     var h0 = '<div class="' + classNames + '" onclick="selectProductionPlot(\'' + buildingId + '\', ' + index + ')">';
     h0 += '<div class="farm-plot-card-lock-icon">🔒</div>';
-    h0 += '<div class="farm-plot-card-name">' + esc(zoneNamePrefix) + ' ' + (index + 1) + '</div>';
+    h0 += '<div class="farm-plot-card-name">' + esc(zoneName) + '</div>';
     h0 += '</div>';
     return h0;
   }
@@ -235,7 +236,7 @@ function buildPlotCardHTML(buildingId, plot, index, selectedIndex) {
   h += '<div class="farm-plot-card-top">';
   h += '<span class="farm-plot-card-level-badge">Niv. ' + plot.level + '</span>';
   h += '</div>';
-  h += '<div class="farm-plot-card-name">' + esc(zoneNamePrefix) + ' ' + (index + 1) + '</div>';
+  h += '<div class="farm-plot-card-name">' + esc(zoneName) + '</div>';
   h += '<div class="farm-plot-card-profile">' + esc(profile.label) + '</div>';
 
   h += '<div class="nb-entry-progress-bar farm-plot-card-bar">';
@@ -272,12 +273,12 @@ function buildPlotImprovementIconHTML(buildingCfg, plot, kind) {
    noms et icônes thématiques par bâtiment, remplace "Fertile"/"Irriguée" génériques). */
 function buildPlotActionsHTML(buildingId, plot, index) {
   var buildingCfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
-  var zoneNamePrefix = buildingCfg ? buildingCfg.zoneNamePrefix : "Zone";
+  var zoneName = getProductionZoneName(buildingId, index);
   var resDef = WAREHOUSE_RESOURCES[(PRODUCTION_BUILDINGS[buildingId] || {}).resourceKey] || {};
   var resName = resDef.name || "";
 
   var h = '<div class="farm-plot-actions">';
-  h += '<div class="farm-plot-actions-title">' + esc(zoneNamePrefix) + ' ' + (index + 1) + '</div>';
+  h += '<div class="farm-plot-actions-title">' + esc(zoneName) + '</div>';
 
   if (plot.state === "locked") {
     var unlockCost = getProductionPlotUnlockCost(buildingId, index);
@@ -299,7 +300,7 @@ function buildPlotActionsHTML(buildingId, plot, index) {
   if (isMaxLevel) {
     h += '<div class="farm-plot-action-btn is-disabled"><span class="farm-plot-action-label">Niveau max</span></div>';
   } else {
-    var upgradeCost = getProductionPlotUpgradeCost(buildingId, plot.level);
+    var upgradeCost = getProductionPlotUpgradeCost(buildingId, plot.level, index);
     var canAffordUpgrade = Object.keys(upgradeCost).every(function (key) {
       return WarehouseManager.getAmount(key) >= upgradeCost[key];
     });
@@ -407,7 +408,12 @@ window.productionPlotToggleImprovement = productionPlotToggleImprovement;
 
 var workshopsPanelExpanded = {}; // { [buildingId]: bool }
 var selectedWorkshopRecipe = {}; // { [workshopId]: recipeId } — mémorise le choix de recette par atelier
-var workshopCraftQty = {};       // { [workshopId]: number } — quantité en cours de saisie par atelier
+var workshopCraftQty = {};       // { [workshopId]: number } — quantité du CRAFT MANUEL (bouton Fabriquer)
+var workshopAutoQty = {};        // { [workshopId]: number } — v3.98.15 : quantité du CHAÎNAGE AUTO, un
+                                  // champ dédié et SÉPARÉ du stepper manuel (retour Seb : les deux champs
+                                  // se confondaient auparavant). Démarre à 1 à chaque activation de l'auto
+                                  // sur une recette, ajustable ensuite indépendamment du stepper manuel.
+                                  // Une seule recette auto par atelier -> clé par workshopId suffit.
 
 function toggleWorkshopsPanel(buildingId) {
   workshopsPanelExpanded[buildingId] = !workshopsPanelExpanded[buildingId];
@@ -487,13 +493,19 @@ function buildWorkshopCardHTML(workshop) {
     recipes.forEach(function (r) {
       var out = WAREHOUSE_RESOURCES[r.outputs[0].resourceId];
       var isActiveTab = r.id === recipe.id;
-      h += '<button type="button" class="warehouse-craft-recipe-tab' + (isActiveTab ? ' is-active' : '') + '" onclick="selectWorkshopRecipe(\'' + workshop.id + '\', \'' + r.id + '\')">' + esc(out ? out.name : r.id) + '</button>';
+      var isAutoOnThis = WorkshopsSystem.getAutoRecipeId(workshop.id) === r.id;
+      h += '<button type="button" class="warehouse-craft-recipe-tab' + (isActiveTab ? ' is-active' : '') + (isAutoOnThis ? ' is-auto' : '') + '" onclick="selectWorkshopRecipe(\'' + workshop.id + '\', \'' + r.id + '\')">';
+      if (isAutoOnThis) h += '🔁 ';
+      h += esc(out ? out.name : r.id);
+      h += '</button>';
     });
     h += '</div>';
   }
 
   h += '<div class="workshop-recipe-line">' + renderIconOrEmojiHTML(outputDef.icon, "workshop-recipe-icon", outputDef.name) + inputsText + ' → ' + formatNumber(recipe.outputs[0].quantity) + ' ' + esc(outputDef.name) + '</div>';
   h += '<div class="workshop-recipe-detail">' + formatCraftDuration(effectiveCraftTimeMs) + ' par lot</div>';
+
+  h += buildWorkshopAutoToggleHTML(workshop.id, recipe.id, recipes.length > 1);
 
   h += buildWorkshopQueueHTML(workshop.id);
 
@@ -511,7 +523,7 @@ function buildWorkshopCardHTML(workshop) {
     h += '<div class="workshop-craft-row">';
     h += '<div class="warehouse-qty-stepper workshop-qty-stepper-compact">';
     h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWorkshopCraftQty(\'' + workshop.id + '\', -1)"' + (qty <= 1 ? ' disabled' : '') + '>−</button>';
-    h += '<span class="warehouse-qty-value">' + formatNumber(qty) + '</span>';
+    h += '<input class="warehouse-qty-value" type="number" min="1" max="' + maxCrafts + '" step="1" value="' + qty + '" onchange="setWorkshopCraftQty(\'' + workshop.id + '\', this.value)">';
     h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWorkshopCraftQty(\'' + workshop.id + '\', 1)"' + (qty >= maxCrafts ? ' disabled' : '') + '>+</button>';
     h += '<button class="warehouse-qty-max-btn" type="button" onclick="adjustWorkshopCraftQty(\'' + workshop.id + '\', \'max\')"' + (qty >= maxCrafts ? ' disabled' : '') + '>Max</button>';
     h += '</div>';
@@ -519,7 +531,7 @@ function buildWorkshopCardHTML(workshop) {
     h += '</div>';
   }
 
-  h += buildWorkshopUpgradeButtonHTML(workshop.id);
+  h += buildWorkshopUpgradeButtonHTML(workshop.id, recipe);
 
   h += '</div>';
   return h;
@@ -527,17 +539,92 @@ function buildWorkshopCardHTML(workshop) {
 
 /* v3.98.6 : bouton "Améliorer" pleine largeur sous Fabriquer — remplace l'ancien bouton
    désactivé "Bientôt". Coût affiché comme sur les zones (buildProductionCostRowHTML,
-   icône+montant par ressource, rouge si insuffisant). */
-function buildWorkshopUpgradeButtonHTML(workshopId) {
+   icône+montant par ressource, rouge si insuffisant).
+   v3.98.16 : ajout d'une ligne d'EFFET (retour Seb — le bouton ne disait jusque-là que
+   le coût, jamais ce que le niveau suivant apporte), sur le modèle de celui des zones
+   (buildPlotActionButtonHTML) : vitesse actuelle -> suivante ET file actuelle ->
+   suivante, les 2 effets d'un niveau d'atelier (voir data/workshops.js). `recipe` = la
+   recette actuellement affichée sur la carte, pour calculer le temps de craft effectif
+   avant/après. */
+function buildWorkshopUpgradeButtonHTML(workshopId, recipe) {
   if (WorkshopsSystem.isMaxLevel(workshopId)) {
     return '<button class="workshop-upgrade-btn is-disabled" type="button" disabled>Niveau maximum</button>';
   }
   var cost = WorkshopsSystem.getUpgradeCost(workshopId);
   var afford = WorkshopsSystem.getUpgradeAffordability(workshopId);
+  var level = WorkshopsSystem.getLevel(workshopId);
+  var maxQueueNow = WorkshopsSystem.getMaxQueueLength(workshopId);
+
   var h = '<button class="workshop-upgrade-btn' + (afford.all ? '' : ' is-disabled') + '" type="button" ' + (afford.all ? '' : 'disabled') + ' onclick="upgradeWorkshop(\'' + workshopId + '\')">';
-  h += '⬆️ Améliorer<br>';
+  h += '<span class="workshop-upgrade-label">⬆️ Améliorer (niv. ' + (level + 1) + ')</span>';
+
+  if (recipe) {
+    var timeNow = WorkshopsSystem.getEffectiveCraftTimeMs(workshopId, recipe, level);
+    var timeNext = WorkshopsSystem.getEffectiveCraftTimeMs(workshopId, recipe, level + 1);
+    h += '<span class="workshop-upgrade-effect">' + formatCraftDuration(timeNow) + ' → ' + formatCraftDuration(timeNext) + ' · File ' + maxQueueNow + ' → ' + (maxQueueNow + 1) + '</span>';
+  }
+
   h += buildProductionCostRowHTML(cost, afford);
   h += '</button>';
+  return h;
+}
+
+/* v3.98.13 : toggle "Production automatique" pour LA recette actuellement affichée
+   (recipeId). Une seule recette auto-active à la fois par atelier — si une AUTRE
+   recette de ce même atelier a déjà l'auto activé, le bouton l'indique clairement au
+   lieu de simplement proposer d'activer (ce qui la remplacerait silencieusement).
+   v3.98.15 : stepper dédié à la quantité auto (workshop-auto-qty-row), affiché
+   uniquement quand l'auto est actif SUR CETTE recette — séparé du stepper manuel
+   (retour Seb : les deux se confondaient), démarre à 1 à chaque activation.
+   v3.98.17 : indicateur "⏸️ En attente" quand la RÉSERVE PROTÉGÉE (pas un manque réel
+   de stock) empêche le chaînage de continuer — jusque-là un blocage par réserve était
+   silencieux, indiscernable d'un simple manque de ressources. */
+function buildWorkshopAutoToggleHTML(workshopId, recipeId, hasMultipleRecipes) {
+  var activeAutoId = WorkshopsSystem.getAutoRecipeId(workshopId);
+  var isActiveHere = activeAutoId === recipeId;
+  var otherActive = hasMultipleRecipes && activeAutoId && !isActiveHere;
+
+  var h = '<button class="workshop-auto-toggle' + (isActiveHere ? ' is-active' : '') + '" type="button" onclick="setWorkshopAutoRecipe(\'' + workshopId + '\', \'' + esc(recipeId) + '\')">';
+  h += '🔁 <span>' + (isActiveHere ? 'Production automatique activée' : 'Activer la production automatique') + '</span>';
+  h += '</button>';
+
+  if (otherActive) {
+    var otherRecipe = WorkshopsSystem.getRecipe(workshopId, activeAutoId);
+    var otherDef = otherRecipe ? WAREHOUSE_RESOURCES[otherRecipe.outputs[0].resourceId] : null;
+    h += '<div class="workshop-auto-hint">Déjà activée sur ' + esc(otherDef ? otherDef.name : activeAutoId) + ' — l\'activer ici la remplacera.</div>';
+  }
+
+  if (isActiveHere) {
+    var maxAutoNow = WorkshopsSystem.getMaxAutoCraftTimes(workshopId, recipeId);
+    var autoQty = Math.max(1, Math.min(maxAutoNow || 1, workshopAutoQty[workshopId] || 1));
+    workshopAutoQty[workshopId] = autoQty;
+
+    // v3.98.17 : signale quand c'est la RÉSERVE PROTÉGÉE (pas un manque réel de
+    // ressources) qui empêche le chaînage de continuer — jusque-là rien ne le
+    // distinguait d'un silence normal, le joueur ne pouvait pas savoir pourquoi
+    // l'auto s'était arrêté. Distingué en comparant au stock BRUT (getMaxCraftTimes,
+    // qui ignore la réserve) : si le brut permettrait un lot mais pas la version
+    // "moins réserve", c'est bien elle la cause.
+    if (maxAutoNow <= 0 && WorkshopsSystem.getMaxCraftTimes(workshopId, recipeId) > 0) {
+      var blockingRecipe = WorkshopsSystem.getRecipe(workshopId, recipeId);
+      var blockingInput = blockingRecipe ? blockingRecipe.inputs.find(function (input) {
+        return window.ResourceReserveManager && ResourceReserveManager.getAvailableForAutoCraft(input.resourceId) < input.quantity;
+      }) : null;
+      var blockingDef = blockingInput ? WAREHOUSE_RESOURCES[blockingInput.resourceId] : null;
+      h += '<div class="workshop-auto-blocked-hint">⏸️ En attente : la réserve protégée' + (blockingDef ? ' de ' + esc(blockingDef.name) : '') + ' empêche un nouveau lot. Ajustable dans l\'Entrepôt.</div>';
+    }
+
+    h += '<div class="workshop-auto-qty-row">';
+    h += '<span class="workshop-auto-qty-label">Quantité par lot auto</span>';
+    h += '<div class="warehouse-qty-stepper workshop-qty-stepper-compact">';
+    h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWorkshopAutoQty(\'' + workshopId + '\', -1)"' + (autoQty <= 1 ? ' disabled' : '') + '>−</button>';
+    h += '<input class="warehouse-qty-value" type="number" min="1" max="' + (maxAutoNow || 1) + '" step="1" value="' + autoQty + '" onchange="setWorkshopAutoQty(\'' + workshopId + '\', this.value)">';
+    h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWorkshopAutoQty(\'' + workshopId + '\', 1)"' + (autoQty >= maxAutoNow ? ' disabled' : '') + '>+</button>';
+    h += '<button class="warehouse-qty-max-btn" type="button" onclick="adjustWorkshopAutoQty(\'' + workshopId + '\', \'max\')"' + (autoQty >= maxAutoNow ? ' disabled' : '') + '>Max</button>';
+    h += '</div>';
+    h += '</div>';
+  }
+
   return h;
 }
 
@@ -600,6 +687,22 @@ function adjustWorkshopCraftQty(workshopId, delta) {
 }
 window.adjustWorkshopCraftQty = adjustWorkshopCraftQty;
 
+/* v3.98.16 : saisie directe dans le champ de quantité (retour Seb — un clic accidentel
+   sur "Max" doit pouvoir se corriger en tapant le chiffre voulu, pas juste via -/+).
+   Valeur hors limites (NaN, <1, >max) corrigée SILENCIEUSEMENT vers la borne valide la
+   plus proche, décision validée avec Seb. */
+function setWorkshopCraftQty(workshopId, rawValue) {
+  var recipeId = selectedWorkshopRecipe[workshopId];
+  var maxCrafts = WorkshopsSystem.getMaxCraftTimes(workshopId, recipeId);
+  if (maxCrafts <= 0) return;
+
+  var parsed = Math.floor(Number(rawValue));
+  if (!isFinite(parsed)) parsed = 1;
+  workshopCraftQty[workshopId] = Math.max(1, Math.min(maxCrafts, parsed));
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setWorkshopCraftQty = setWorkshopCraftQty;
+
 function confirmCraftWorkshop(workshopId) {
   var recipeId = selectedWorkshopRecipe[workshopId];
   var qty = workshopCraftQty[workshopId] || 1;
@@ -608,10 +711,67 @@ function confirmCraftWorkshop(workshopId) {
 }
 window.confirmCraftWorkshop = confirmCraftWorkshop;
 
+/* v3.98.15 : stepper DÉDIÉ à la quantité du chaînage auto, séparé du stepper manuel
+   (retour Seb — les deux se confondaient auparavant). Borné par
+   WorkshopsSystem.getMaxAutoCraftTimes (respecte la réserve protégée), pas par le stock
+   brut. `max` ici recalcule le max ACTUEL (pas figé) mais reste une valeur numérique
+   normale ensuite — contrairement à l'ancien système, il n'y a plus de mode "Max
+   dynamique" à part : le joueur ajuste ce chiffre comme il veut, tout simplement. */
+function adjustWorkshopAutoQty(workshopId, delta) {
+  var recipeId = WorkshopsSystem.getAutoRecipeId(workshopId);
+  if (!recipeId) return;
+  var maxAuto = WorkshopsSystem.getMaxAutoCraftTimes(workshopId, recipeId);
+  if (maxAuto <= 0) maxAuto = 1; // permet quand même d'ajuster le réglage même si rien n'est dispo là maintenant
+
+  var current = workshopAutoQty[workshopId] || 1;
+  if (delta === "max") {
+    workshopAutoQty[workshopId] = maxAuto;
+  } else {
+    workshopAutoQty[workshopId] = Math.max(1, Math.min(maxAuto, current + Number(delta || 0)));
+  }
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.adjustWorkshopAutoQty = adjustWorkshopAutoQty;
+
+/* v3.98.16 : saisie directe pour le stepper auto — même logique de correction
+   silencieuse que setWorkshopCraftQty. */
+function setWorkshopAutoQty(workshopId, rawValue) {
+  var recipeId = WorkshopsSystem.getAutoRecipeId(workshopId);
+  if (!recipeId) return;
+  var maxAuto = WorkshopsSystem.getMaxAutoCraftTimes(workshopId, recipeId);
+  if (maxAuto <= 0) maxAuto = 1;
+
+  var parsed = Math.floor(Number(rawValue));
+  if (!isFinite(parsed)) parsed = 1;
+  workshopAutoQty[workshopId] = Math.max(1, Math.min(maxAuto, parsed));
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setWorkshopAutoQty = setWorkshopAutoQty;
+
+/* Appelée par WorkshopsSystem._tryAutoEnqueue() pour déterminer la quantité voulue par
+   le chaînage auto — le réglage dédié ci-dessus, borné par `maxAuto` (déjà limité par la
+   réserve protégée côté appelant, peut avoir changé depuis le dernier réglage manuel). */
+function resolveAutoCraftQty(workshopId, recipeId, maxAuto) {
+  var qty = workshopAutoQty[workshopId] || 1;
+  return Math.min(qty, maxAuto);
+}
+window.resolveAutoCraftQty = resolveAutoCraftQty;
+
 function upgradeWorkshop(workshopId) {
   WorkshopsSystem.upgradeWorkshop(workshopId);
 }
 window.upgradeWorkshop = upgradeWorkshop;
+
+/* v3.98.15 : réinitialise le stepper auto dédié à 1 à chaque ACTIVATION (pas à la
+   désactivation, ni au remplacement où on repart aussi à 1 — cohérent avec "valeur de
+   base à 1" demandé, peu importe ce qui était réglé pour une éventuelle recette
+   précédente sur ce même atelier). */
+function setWorkshopAutoRecipe(workshopId, recipeId) {
+  var wasActive = WorkshopsSystem.getAutoRecipeId(workshopId) === recipeId;
+  WorkshopsSystem.setAutoRecipe(workshopId, recipeId);
+  if (!wasActive) workshopAutoQty[workshopId] = 1; // vient d'être ACTIVÉE (ou remplacée)
+}
+window.setWorkshopAutoRecipe = setWorkshopAutoRecipe;
 
 function cancelWorkshopCraft(workshopId, queueId) {
   WorkshopsSystem.cancelCraft(workshopId, queueId);
@@ -623,7 +783,13 @@ window.cancelWorkshopCraft = cancelWorkshopCraft;
    à droite plutôt que pleine largeur (retour Seb : trop imposant en .btn-buy).
    v3.98.8 : bouton "Voir les files" ajouté à côté, ouvre le résumé de toutes les
    fabrications en cours (voir ui/workshop-summary-modal.js) — badge = nombre
-   d'ateliers ayant actuellement une file active. */
+   d'ateliers ayant actuellement une file active.
+   v3.98.17 : badge secondaire "X auto" (retour Seb — aucune vue d'ensemble du
+   chaînage auto n'existait, il fallait ouvrir chaque carte une par une pour savoir
+   quels ateliers tournaient en automatique). Compte les ateliers actifs/débloqués
+   ayant une recette auto-active (WorkshopsSystem.getAutoRecipeId), indépendamment de
+   l'état de leur file (un atelier peut avoir l'auto activé mais une file
+   momentanément vide, ex. juste après avoir été bloqué par la réserve). */
 function buildHarvestAllButtonHTML() {
   var hasAnyStock = Object.keys(PRODUCTION_BUILDINGS).some(function (id) {
     return ProductionManager.isBuildingUnlocked(id) && Math.floor(ProductionManager.getStock(id)) > 0;
@@ -634,10 +800,16 @@ function buildHarvestAllButtonHTML() {
     return def.active && ProductionManager.isBuildingUnlocked(def.buildingId) && WorkshopsSystem.getQueue(workshopId).length > 0;
   }).length;
 
+  var activeAutoCount = Object.keys(WORKSHOPS_CONFIG).filter(function (workshopId) {
+    var def = WORKSHOPS_CONFIG[workshopId];
+    return def.active && ProductionManager.isBuildingUnlocked(def.buildingId) && !!WorkshopsSystem.getAutoRecipeId(workshopId);
+  }).length;
+
   var h = '<div class="production-harvest-all-row">';
   h += '<button class="production-action-btn production-harvest-btn production-queues-btn" id="prod-queues-btn" type="button" onclick="openWorkshopSummaryModal()">';
   h += '📋 Files';
   if (activeQueueCount > 0) h += '<span class="production-queues-badge">' + activeQueueCount + '</span>';
+  if (activeAutoCount > 0) h += '<span class="production-queues-badge production-auto-badge">🔁 ' + activeAutoCount + '</span>';
   h += '</button>';
   h += '<button class="production-action-btn production-harvest-btn production-harvest-all-btn' + (hasAnyStock ? ' is-ready' : ' is-disabled') + '" id="prod-harvest-all-btn" type="button" ' + (hasAnyStock ? '' : 'disabled') + ' onclick="ProductionManager.harvestAll()">';
   h += '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">Tout récolter';

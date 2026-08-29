@@ -44,12 +44,47 @@ function adjustWarehouseSellQty(delta) {
 }
 window.adjustWarehouseSellQty = adjustWarehouseSellQty;
 
+/* v3.98.16 : saisie directe dans le champ de quantité à vendre — mêmes règles que les
+   steppers de craft (correction silencieuse vers la borne valide la plus proche). */
+function setWarehouseSellQty(rawValue) {
+  if (!selectedWarehouseKey) return;
+  var stock = Math.floor(WarehouseManager.getAmount(selectedWarehouseKey));
+  if (stock <= 0) return;
+
+  var parsed = Math.floor(Number(rawValue));
+  if (!isFinite(parsed)) parsed = 1;
+  warehouseSellQty = Math.max(1, Math.min(stock, parsed));
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setWarehouseSellQty = setWarehouseSellQty;
+
 function confirmSellWarehouseResource() {
   if (!selectedWarehouseKey) return;
   WarehouseManager.sellResource(selectedWarehouseKey, warehouseSellQty);
   warehouseSellQty = 1; // repart à 1 après vente (le stock restant a changé)
 }
 window.confirmSellWarehouseResource = confirmSellWarehouseResource;
+
+/* v3.98.13 : réserve protégée — seuil que le CHAÎNAGE AUTO des ateliers (voir
+   WorkshopsSystem/ResourceReserveManager) ne consommera jamais. Un input numérique
+   directement modifiable (pas un stepper -/+ : les seuils utiles peuvent être élevés,
+   ex. "garder 500 Blé", un stepper serait fastidieux). Validé au blur/Entrée plutôt qu'à
+   chaque frappe pour ne pas re-render toute la page à chaque chiffre tapé. */
+function commitWarehouseReserve(key, rawValue) {
+  if (!key) return;
+  ResourceReserveManager.setReserve(key, rawValue);
+}
+window.commitWarehouseReserve = commitWarehouseReserve;
+
+function buildWarehouseReserveHTML(key) {
+  var reserve = ResourceReserveManager.getReserve(key);
+  var h = '<div class="warehouse-reserve-block">';
+  h += '<div class="warehouse-reserve-label">🔒 Réserve protégée</div>';
+  h += '<div class="warehouse-reserve-hint">Jamais consommée par la production automatique des ateliers.</div>';
+  h += '<input class="warehouse-reserve-input" type="number" min="0" step="1" value="' + (reserve > 0 ? reserve : '') + '" placeholder="0" onchange="commitWarehouseReserve(\'' + esc(key) + '\', this.value)">';
+  h += '</div>';
+  return h;
+}
 
 function buildWarehouseTileHTML(key) {
   var def = WAREHOUSE_RESOURCES[key];
@@ -84,6 +119,8 @@ function buildWarehouseDetailPanelHTML() {
   h += '<div class="eq-detail-hint">' + esc(def.desc || "") + '</div>';
   h += '<div class="eq-detail-hint">🎒 Stock : ' + formatNumber(stock) + '</div>';
 
+  h += buildWarehouseReserveHTML(selectedWarehouseKey);
+
   var canSell = Number(def.sellPrice || 0) > 0;
 
   if (!canSell) {
@@ -93,7 +130,7 @@ function buildWarehouseDetailPanelHTML() {
   } else {
     h += '<div class="warehouse-qty-stepper">';
     h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWarehouseSellQty(-1)"' + (warehouseSellQty <= 1 ? ' disabled' : '') + '>−</button>';
-    h += '<span class="warehouse-qty-value">' + formatNumber(warehouseSellQty) + '</span>';
+    h += '<input class="warehouse-qty-value" type="number" min="1" max="' + stock + '" step="1" value="' + warehouseSellQty + '" onchange="setWarehouseSellQty(this.value)">';
     h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWarehouseSellQty(1)"' + (warehouseSellQty >= stock ? ' disabled' : '') + '>+</button>';
     h += '<button class="warehouse-qty-max-btn" type="button" onclick="adjustWarehouseSellQty(\'max\')"' + (warehouseSellQty >= stock ? ' disabled' : '') + '>Max</button>';
     h += '</div>';
