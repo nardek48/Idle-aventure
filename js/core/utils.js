@@ -34,6 +34,23 @@ function formatTime(totalSeconds) {
   return sec + "s";
 }
 
+/* v3.98.9 : temps de craft (atelier/production) — garde la précision décimale en
+   dessous de 60s (ex. "3.2 s", utile vu les durées courtes des recettes), mais bascule
+   en minutes au-delà (ex. "1m 05s") plutôt que d'afficher "125.0 s" comme avant.
+   Distinct de formatTime() (qui n'a jamais de décimale et sert à des affichages plus
+   longs comme "Plein dans Xm Ys") pour ne rien changer aux usages existants de
+   formatTime() ailleurs dans le jeu. Prend des MILLISECONDES en entrée. */
+function formatCraftDuration(ms) {
+  var totalSeconds = Math.max(0, Number(ms) || 0) / 1000;
+  var roundedToTenth = Math.round(totalSeconds * 10) / 10;
+  if (roundedToTenth < 60) return roundedToTenth.toFixed(1) + " s";
+
+  var totalSecondsFloor = Math.floor(totalSeconds);
+  var m = Math.floor(totalSecondsFloor / 60);
+  var sec = totalSecondsFloor % 60;
+  return m + "m " + (sec < 10 ? "0" : "") + sec + "s";
+}
+
 function chance(percent) {
   return Math.random() * 100 < Number(percent || 0);
 }
@@ -55,6 +72,7 @@ function vibrate(pattern) {
 window.cloneQuestProgress = cloneQuestProgress;
 window.formatNumber = formatNumber;
 window.formatTime = formatTime;
+window.formatCraftDuration = formatCraftDuration;
 window.chance = chance;
 window.randInt = randInt;
 window.randFloat = randFloat;

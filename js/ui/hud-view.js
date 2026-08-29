@@ -25,7 +25,6 @@ function buildHudHTML() {
     +     '<div class="nb-hud-resources">'
     +       '<span class="nb-pill nb-pill-gold"><img class="nb-pill-icon" src="images/Icons/gold_icon.png" alt="Or"><span id="hud-gold">0</span></span>'
     +       '<span class="nb-pill nb-pill-essence"><img class="nb-pill-icon" src="images/Icons/essence_icon.png" alt="Essence"><span id="hud-essence">0</span></span>'
-    +       '<span class="nb-pill nb-pill-aether"><img class="nb-pill-icon" src="images/Icons/aether_icon.png" alt="Aether"><span id="hud-aether">0</span></span>'
     +     '</div>'
     +     '<div class="nb-hud-title-row">'
     +       '<div id="hud-page-title" class="nb-hud-page-title"></div>'
@@ -70,11 +69,9 @@ function mountHudAndStatsBar() {
 function renderHud() {
   var gold = document.getElementById("hud-gold");
   var essence = document.getElementById("hud-essence");
-  var aether = document.getElementById("hud-aether");
 
   if (gold) gold.textContent = formatNumber(game.gold);
   if (essence) essence.textContent = formatNumber(game.essence);
-  if (aether) aether.textContent = formatNumber(game.aether);
 
   renderHeroHp();
   renderHudBagBadge();

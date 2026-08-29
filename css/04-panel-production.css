@@ -213,11 +213,8 @@
   filter: grayscale(35%);
 }
 
-/* Léger halo doré quand du stock est prêt à récolter (demande déjà
-   validée en v3.31, conservée sur le nouveau visuel). */
-.production-harvest-btn.is-ready {
-  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.45);
-}
+/* v3.98.7 : halo doré retiré (retour Seb) — .is-ready reste utilisé pour la logique
+   (hasStock) mais n'a plus d'effet visuel de son propre chef. */
 
 /* v3.96.0 : Champs n'a plus de bouton "Améliorer" de bâtiment — le bouton Récolter
    occupe alors toute la largeur de la colonne actions (au lieu de 2 boutons empilés). */
@@ -564,6 +561,19 @@
   color: var(--nb-ink);
 }
 
+/* v3.98.6 : badge "Niv. X" juste après le nom (comme la maquette fournie par Seb) —
+   même style que .production-card-level-badge (cartes de bâtiment). */
+.workshop-card-level-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--nb-gold-deep);
+  border: 1px solid var(--nb-gold-dark);
+  border-radius: 999px;
+  padding: 1px 7px;
+  background: var(--nb-cream);
+  white-space: nowrap;
+}
+
 /* v3.98.2 : badge "File : X" à côté du nom (agencement repris du prototype fourni par
    Seb, style propre au thème du jeu — pas de CSS importé du prototype). */
 .workshop-card-queue-badge {
@@ -615,23 +625,222 @@
   flex-shrink: 0;
 }
 
-/* v3.98.3 : bouton "Améliorer" sur les ateliers actifs — emplacement repris du
-   prototype fourni par Seb, mais désactivé ("Bientôt") : le système de niveau/vitesse
-   d'atelier reste différé (décision v3.98.0), seule la place est réservée pour l'instant. */
+/* v3.98.6 : bouton "Améliorer" fonctionnel — remplace l'ancien bouton "Bientôt"
+   désactivé (v3.98.3). Style repris de .production-upgrade-btn (doré, cliquable) au
+   lieu du gris neutre précédent, cohérent avec le bouton Améliorer des zones. */
 .workshop-upgrade-btn {
   width: 100%;
   margin-top: 8px;
   min-height: 36px;
-  border: 1px solid var(--nb-frame);
+  border: 1px solid var(--nb-gold-dark);
   border-radius: var(--nb-radius-sm);
   background: var(--nb-cream-alt);
-  color: var(--nb-ink-dim);
+  color: var(--nb-gold-deep);
   font-size: 11px;
   font-weight: 700;
   padding: 6px 10px;
+  cursor: pointer;
+}
+
+.workshop-upgrade-btn:not(.is-disabled):active {
+  transform: scale(0.98);
 }
 
 .workshop-upgrade-btn.is-disabled {
   opacity: 0.55;
   cursor: not-allowed;
+  color: var(--nb-ink-dim);
+}
+
+/* v3.98.4 : stepper + bouton Fabriquer sur UNE SEULE ligne (maquette fournie par Seb),
+   au lieu du stepper centré puis bouton pleine largeur en dessous. Stepper compacté
+   (boutons ronds réduits) pour laisser assez de place au bouton Fabriquer, qui reprend
+   le visuel fond-image de .production-harvest-btn plutôt que .btn-buy. */
+.workshop-craft-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.workshop-qty-stepper-compact {
+  margin: 0;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.workshop-qty-stepper-compact .warehouse-qty-btn {
+  width: 24px;
+  height: 24px;
+  font-size: 13px;
+}
+
+.workshop-qty-stepper-compact .warehouse-qty-value {
+  min-width: 20px;
+  font-size: 12.5px;
+}
+
+.workshop-qty-stepper-compact .warehouse-qty-max-btn {
+  padding: 4px 6px;
+  font-size: 9.5px;
+}
+
+.workshop-craft-btn {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 34px;
+  font-size: 11px;
+}
+
+@media (max-width: 360px) {
+  .workshop-craft-row {
+    gap: 5px;
+  }
+
+  .workshop-qty-stepper-compact {
+    gap: 3px;
+  }
+
+  .workshop-qty-stepper-compact .warehouse-qty-btn {
+    width: 21px;
+    height: 21px;
+    font-size: 12px;
+  }
+
+  .workshop-qty-stepper-compact .warehouse-qty-max-btn {
+    padding: 3px 5px;
+    font-size: 9px;
+  }
+
+  .workshop-craft-btn {
+    font-size: 9.5px;
+    min-height: 30px;
+    padding: 3px 5px;
+  }
+}
+
+/* v3.98.5 : bouton "Tout récolter" en tête de page Production — même style que
+   .production-harvest-btn (fond image), taille compacte alignée à droite plutôt que
+   pleine largeur .btn-buy (retour Seb).
+   v3.98.8 : bouton "Files" ajouté à côté, gap entre les deux, row toujours alignée à
+   droite. */
+.production-harvest-all-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.production-harvest-all-btn {
+  width: 108px;
+}
+
+.production-queues-btn {
+  position: relative;
+  width: 88px;
+}
+
+.production-queues-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--nb-gold-dark);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--nb-cream);
+}
+
+/* =========================
+   v3.98.8 : popup "Voir les files" (ui/workshop-summary-modal.js) — réutilise
+   .full-menu-overlay/.full-menu (voir css/05-overlays.css), seul le contenu interne
+   (liste des lignes) est propre à ce panneau.
+   ========================= */
+.workshop-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 20px 24px;
+}
+
+.workshop-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream-alt);
+  padding: 9px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workshop-summary-row:active {
+  transform: scale(0.98);
+}
+
+.workshop-summary-row-icon {
+  flex-shrink: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.workshop-summary-row-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.workshop-summary-row-top {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.workshop-summary-row-name {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.workshop-summary-row-building {
+  font-size: 10px;
+  color: var(--nb-ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workshop-summary-row-recipe {
+  font-size: 11px;
+  color: rgba(58, 44, 26, 0.8);
+  margin-bottom: 4px;
+}
+
+.workshop-summary-row-bar {
+  margin-bottom: 4px;
+}
+
+.workshop-summary-row-bottom {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--nb-ink-dim);
+}
+
+.workshop-summary-empty {
+  padding: 24px 20px 32px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--nb-ink-dim);
 }

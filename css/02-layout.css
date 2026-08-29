@@ -91,7 +91,6 @@
 
 .nb-pill-gold .nb-pill-icon { color: var(--nb-gold-deep); }
 .nb-pill-essence .nb-pill-icon { color: var(--nb-blue-dark); }
-.nb-pill-aether .nb-pill-icon { color: #6d3fd1; }
 
 /* v2.72 : ligne du haut du HUD — contient les ressources ET la
    mini-carte héros côte à côte (voir ci-dessous), à la demande de

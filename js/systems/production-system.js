@@ -269,11 +269,51 @@ var ProductionManager = {
       var entry = queue[0];
       var recipe = WorkshopsSystem.getRecipe(workshopId, entry.recipeId);
       var totalMs = Number(recipe ? recipe.craftTimeMs : 0) * entry.times;
-      var remainingSec = Math.max(0, entry.msRemaining / 1000);
-      setElementText("prod-workshop-time-" + workshopId, remainingSec.toFixed(1) + " s");
+      setElementText("prod-workshop-time-" + workshopId, formatCraftDuration(entry.msRemaining));
       var pct = totalMs > 0 ? Math.min(100, Math.max(0, Math.floor(100 - (entry.msRemaining / totalMs) * 100))) : 100;
       setElementWidth("prod-workshop-bar-" + workshopId, pct);
     });
+
+    // v3.98.10 : bouton "Tout récolter" tenu à jour au même tick que les boutons
+    // Récolter individuels (retour Seb — jusque-là figé tant qu'aucun renderPanel()
+    // complet n'était déclenché par une action manuelle).
+    var hasAnyStock = Object.keys(PRODUCTION_BUILDINGS).some(function (id) {
+      return self.isBuildingUnlocked(id) && Math.floor(self.getStock(id)) > 0;
+    });
+    var harvestAllBtn = document.getElementById("prod-harvest-all-btn");
+    if (harvestAllBtn) {
+      harvestAllBtn.disabled = !hasAnyStock;
+      harvestAllBtn.classList.toggle("is-ready", hasAnyStock);
+      harvestAllBtn.classList.toggle("is-disabled", !hasAnyStock);
+    }
+
+    // Badge du bouton "Files" — nombre d'ateliers ayant une file active.
+    var activeQueueCount = Object.keys(WORKSHOPS_CONFIG).filter(function (workshopId) {
+      var def = WORKSHOPS_CONFIG[workshopId];
+      return def.active && self.isBuildingUnlocked(def.buildingId) && WorkshopsSystem.getQueue(workshopId).length > 0;
+    }).length;
+    var queuesBtn = document.getElementById("prod-queues-btn");
+    if (queuesBtn) {
+      var existingBadge = queuesBtn.querySelector(".production-queues-badge");
+      if (activeQueueCount > 0) {
+        if (!existingBadge) {
+          existingBadge = document.createElement("span");
+          existingBadge.className = "production-queues-badge";
+          queuesBtn.appendChild(existingBadge);
+        }
+        existingBadge.textContent = activeQueueCount;
+      } else if (existingBadge) {
+        existingBadge.remove();
+      }
+    }
+
+    // v3.98.10 : si la popup "Voir les files" est ouverte, la reconstruit au même tick
+    // (voir ui/workshop-summary-modal.js) — sa structure change en continu (barre de
+    // progression, ligne qui disparaît quand une file se vide), contrairement aux
+    // autres éléments de cette fonction qui ne font que des mises à jour de valeurs.
+    if (typeof isWorkshopSummaryModalOpen === "function" && isWorkshopSummaryModalOpen()) {
+      if (typeof refreshWorkshopSummaryModal === "function") refreshWorkshopSummaryModal();
+    }
   },
 
   catchUpOffline: function () {
@@ -307,6 +347,66 @@ var ProductionManager = {
       }
       b.lastTick = now;
     });
+
+    // v3.98.4 : rattrapage hors ligne des ateliers de craft locaux (voir
+    // WorkshopsSystem.catchUpOffline) — jusque-là seules les zones de production
+    // (ci-dessus) rattrapaient le temps écoulé, le craft restait figé à la fermeture.
+    Object.keys(WORKSHOPS_CONFIG).forEach(function (workshopId) {
+      var workshopDef = WORKSHOPS_CONFIG[workshopId];
+      if (!self.isBuildingUnlocked(workshopDef.buildingId)) return;
+      WorkshopsSystem.catchUpOffline(workshopId);
+    });
+  },
+
+  /* v3.98.4 : récolte en une fois tous les bâtiments débloqués ayant du stock —
+     bouton "Tout récolter" en haut de la page Production. Réutilise harvest(id) par
+     bâtiment (même règles de crédit Entrepôt/log/quête que la récolte individuelle),
+     un seul renderPanel()/saveGame() global au lieu d'un par bâtiment. */
+  harvestAll: function () {
+    this.ensure();
+    var self = this;
+    var anyHarvested = false;
+
+    Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
+      if (!self.isBuildingUnlocked(id)) return;
+      if (Math.floor(self.getStock(id)) <= 0) return;
+      if (self._harvestSilent(id)) anyHarvested = true;
+    });
+
+    if (!anyHarvested) {
+      showToast("Rien à récolter", 1000);
+      return;
+    }
+
+    showToast("Tout récolté", 1300);
+    if (typeof renderPanel === "function") renderPanel();
+    saveGame();
+  },
+
+  /* Récolte un bâtiment sans re-render/save individuel (utilisé par harvestAll pour ne
+     déclencher renderPanel()/saveGame() qu'une seule fois au total, plutôt qu'une fois
+     par bâtiment). Retourne true si une récolte a effectivement eu lieu. */
+  _harvestSilent: function (id) {
+    var def = PRODUCTION_BUILDINGS[id];
+    if (!def) return false;
+
+    var amount;
+    if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
+      amount = ProductionPlotsSystem.harvestAll(id);
+    } else {
+      var b = game.production[id];
+      if (!b) return false;
+      amount = Math.floor(b.stock);
+      if (amount > 0) b.stock -= amount;
+    }
+    if (amount <= 0) return false;
+
+    WarehouseManager.addResource(def.resourceKey, amount, true);
+    if (!(window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id))) game.production[id].lastTick = Date.now();
+
+    var resDef = WAREHOUSE_RESOURCES[def.resourceKey];
+    addLog("🌾 " + def.name + " récoltée : +" + formatNumber(amount) + " " + (resDef ? resDef.name : def.resourceKey), "event");
+    return true;
   },
 
   /* v3.97.0 : tout bâtiment géré par ProductionPlotsSystem récolte via harvestAll(id)

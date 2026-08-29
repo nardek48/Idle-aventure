@@ -442,8 +442,13 @@ function buildWorkshopsToggleHTML(buildingId) {
 }
 
 /* Carte d'un atelier : verrouillée ("bientôt", aucune action) ou active (recette(s),
-   file de craft, stepper de quantité, bouton Fabriquer). Reprend le pattern déjà en place
-   pour le craft de l'ancien Entrepôt (stepper -/+/Max), adapté à une recette locale. */
+   file de craft, stepper de quantité, bouton Fabriquer, bouton Améliorer). Reprend le
+   pattern déjà en place pour le craft de l'ancien Entrepôt (stepper -/+/Max), adapté à
+   une recette locale.
+   v3.98.6 : badge "Niv. X" à côté du nom (comme la maquette fournie par Seb), temps de
+   craft affiché = temps EFFECTIF (réduit par le niveau, voir
+   WorkshopsSystem.getEffectiveCraftTimeMs), bouton Améliorer fonctionnel remplaçant
+   l'ancien bouton "Bientôt" désactivé. */
 function buildWorkshopCardHTML(workshop) {
   if (!workshop.active) {
     var h0 = '<div class="workshop-card is-inactive">';
@@ -454,6 +459,7 @@ function buildWorkshopCardHTML(workshop) {
     return h0;
   }
 
+  var level = WorkshopsSystem.getLevel(workshop.id);
   var recipes = workshop.recipes;
   var selectedRecipeId = selectedWorkshopRecipe[workshop.id] || recipes[0].id;
   var recipe = recipes.find(function (r) { return r.id === selectedRecipeId; }) || recipes[0];
@@ -461,6 +467,7 @@ function buildWorkshopCardHTML(workshop) {
   var maxCrafts = WorkshopsSystem.getMaxCraftTimes(workshop.id, recipe.id);
   var qty = Math.max(1, Math.min(maxCrafts || 1, workshopCraftQty[workshop.id] || 1));
   workshopCraftQty[workshop.id] = qty;
+  var effectiveCraftTimeMs = WorkshopsSystem.getEffectiveCraftTimeMs(workshop.id, recipe);
 
   var inputsText = recipe.inputs.map(function (input) {
     var d = WAREHOUSE_RESOURCES[input.resourceId];
@@ -471,7 +478,8 @@ function buildWorkshopCardHTML(workshop) {
   h += '<div class="workshop-card-top">';
   h += '<div class="workshop-card-icon">' + workshop.icon + '</div>';
   h += '<div class="workshop-card-name">' + esc(workshop.name) + '</div>';
-  h += '<span class="workshop-card-queue-badge">File : ' + WorkshopsSystem.getQueue(workshop.id).length + '</span>';
+  h += '<span class="workshop-card-level-badge">Niv. ' + level + '</span>';
+  h += '<span class="workshop-card-queue-badge">File : ' + WorkshopsSystem.getQueue(workshop.id).length + ' / ' + WorkshopsSystem.getMaxQueueLength(workshop.id) + '</span>';
   h += '</div>';
 
   if (recipes.length > 1) {
@@ -485,7 +493,7 @@ function buildWorkshopCardHTML(workshop) {
   }
 
   h += '<div class="workshop-recipe-line">' + renderIconOrEmojiHTML(outputDef.icon, "workshop-recipe-icon", outputDef.name) + inputsText + ' → ' + formatNumber(recipe.outputs[0].quantity) + ' ' + esc(outputDef.name) + '</div>';
-  h += '<div class="workshop-recipe-detail">' + (Number(recipe.craftTimeMs || 0) / 1000).toFixed(1) + ' s par lot</div>';
+  h += '<div class="workshop-recipe-detail">' + formatCraftDuration(effectiveCraftTimeMs) + ' par lot</div>';
 
   h += buildWorkshopQueueHTML(workshop.id);
 
@@ -496,18 +504,40 @@ function buildWorkshopCardHTML(workshop) {
     var missingDef = missing ? WAREHOUSE_RESOURCES[missing.resourceId] : null;
     h += '<div class="warehouse-empty-hint">Pas assez de ' + esc(missingDef ? missingDef.name : "") + ' pour fabriquer.</div>';
   } else {
-    h += '<div class="warehouse-qty-stepper">';
+    // v3.98.4 : stepper + bouton Fabriquer sur UNE seule ligne (maquette fournie par
+    // Seb) — conteneur dédié .workshop-craft-row, stepper compacté (boutons ronds plus
+    // petits) à gauche, bouton Fabriquer à droite. Le bouton reprend le visuel de
+    // .production-harvest-btn (fond image) au lieu de .btn-buy, comme demandé.
+    h += '<div class="workshop-craft-row">';
+    h += '<div class="warehouse-qty-stepper workshop-qty-stepper-compact">';
     h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWorkshopCraftQty(\'' + workshop.id + '\', -1)"' + (qty <= 1 ? ' disabled' : '') + '>−</button>';
     h += '<span class="warehouse-qty-value">' + formatNumber(qty) + '</span>';
     h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWorkshopCraftQty(\'' + workshop.id + '\', 1)"' + (qty >= maxCrafts ? ' disabled' : '') + '>+</button>';
     h += '<button class="warehouse-qty-max-btn" type="button" onclick="adjustWorkshopCraftQty(\'' + workshop.id + '\', \'max\')"' + (qty >= maxCrafts ? ' disabled' : '') + '>Max</button>';
     h += '</div>';
-    h += '<button class="btn-buy eq-detail-action" type="button" onclick="confirmCraftWorkshop(\'' + workshop.id + '\')">Fabriquer ×' + formatNumber(qty) + '</button>';
+    h += '<button class="production-action-btn production-harvest-btn workshop-craft-btn" type="button" onclick="confirmCraftWorkshop(\'' + workshop.id + '\')">Fabriquer ×' + formatNumber(qty) + '</button>';
+    h += '</div>';
   }
 
-  h += '<button class="workshop-upgrade-btn is-disabled" type="button" disabled>⬆️ Améliorer · Bientôt</button>';
+  h += buildWorkshopUpgradeButtonHTML(workshop.id);
 
   h += '</div>';
+  return h;
+}
+
+/* v3.98.6 : bouton "Améliorer" pleine largeur sous Fabriquer — remplace l'ancien bouton
+   désactivé "Bientôt". Coût affiché comme sur les zones (buildProductionCostRowHTML,
+   icône+montant par ressource, rouge si insuffisant). */
+function buildWorkshopUpgradeButtonHTML(workshopId) {
+  if (WorkshopsSystem.isMaxLevel(workshopId)) {
+    return '<button class="workshop-upgrade-btn is-disabled" type="button" disabled>Niveau maximum</button>';
+  }
+  var cost = WorkshopsSystem.getUpgradeCost(workshopId);
+  var afford = WorkshopsSystem.getUpgradeAffordability(workshopId);
+  var h = '<button class="workshop-upgrade-btn' + (afford.all ? '' : ' is-disabled') + '" type="button" ' + (afford.all ? '' : 'disabled') + ' onclick="upgradeWorkshop(\'' + workshopId + '\')">';
+  h += '⬆️ Améliorer<br>';
+  h += buildProductionCostRowHTML(cost, afford);
+  h += '</button>';
   return h;
 }
 
@@ -530,8 +560,7 @@ function buildWorkshopQueueHTML(workshopId) {
 
     if (isCurrent) {
       var totalMs = Number(recipe ? recipe.craftTimeMs : 0) * entry.times;
-      var remainingSec = Math.max(0, entry.msRemaining / 1000);
-      h += '<span class="warehouse-craft-queue-time" id="prod-workshop-time-' + workshopId + '">' + remainingSec.toFixed(1) + ' s</span>';
+      h += '<span class="warehouse-craft-queue-time" id="prod-workshop-time-' + workshopId + '">' + formatCraftDuration(entry.msRemaining) + '</span>';
     } else {
       h += '<button class="warehouse-craft-queue-cancel" type="button" onclick="cancelWorkshopCraft(\'' + workshopId + '\', \'' + esc(entry.id) + '\')" aria-label="Annuler">✕</button>';
     }
@@ -579,15 +608,49 @@ function confirmCraftWorkshop(workshopId) {
 }
 window.confirmCraftWorkshop = confirmCraftWorkshop;
 
+function upgradeWorkshop(workshopId) {
+  WorkshopsSystem.upgradeWorkshop(workshopId);
+}
+window.upgradeWorkshop = upgradeWorkshop;
+
 function cancelWorkshopCraft(workshopId, queueId) {
   WorkshopsSystem.cancelCraft(workshopId, queueId);
 }
 window.cancelWorkshopCraft = cancelWorkshopCraft;
 
+/* v3.98.5 : bouton "Tout récolter" en tête de page — même visuel que le bouton
+   Récolter individuel (.production-harvest-btn, fond image), taille naturelle alignée
+   à droite plutôt que pleine largeur (retour Seb : trop imposant en .btn-buy).
+   v3.98.8 : bouton "Voir les files" ajouté à côté, ouvre le résumé de toutes les
+   fabrications en cours (voir ui/workshop-summary-modal.js) — badge = nombre
+   d'ateliers ayant actuellement une file active. */
+function buildHarvestAllButtonHTML() {
+  var hasAnyStock = Object.keys(PRODUCTION_BUILDINGS).some(function (id) {
+    return ProductionManager.isBuildingUnlocked(id) && Math.floor(ProductionManager.getStock(id)) > 0;
+  });
+
+  var activeQueueCount = Object.keys(WORKSHOPS_CONFIG).filter(function (workshopId) {
+    var def = WORKSHOPS_CONFIG[workshopId];
+    return def.active && ProductionManager.isBuildingUnlocked(def.buildingId) && WorkshopsSystem.getQueue(workshopId).length > 0;
+  }).length;
+
+  var h = '<div class="production-harvest-all-row">';
+  h += '<button class="production-action-btn production-harvest-btn production-queues-btn" id="prod-queues-btn" type="button" onclick="openWorkshopSummaryModal()">';
+  h += '📋 Files';
+  if (activeQueueCount > 0) h += '<span class="production-queues-badge">' + activeQueueCount + '</span>';
+  h += '</button>';
+  h += '<button class="production-action-btn production-harvest-btn production-harvest-all-btn' + (hasAnyStock ? ' is-ready' : ' is-disabled') + '" id="prod-harvest-all-btn" type="button" ' + (hasAnyStock ? '' : 'disabled') + ' onclick="ProductionManager.harvestAll()">';
+  h += '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">Tout récolter';
+  h += '</button>';
+  h += '</div>';
+  return h;
+}
+
 function buildProductionHTML() {
   ProductionManager.ensure();
 
-  var h = '<div class="production-grid">';
+  var h = buildHarvestAllButtonHTML();
+  h += '<div class="production-grid">';
   Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
     if (!ProductionManager.isBuildingUnlocked(id)) return; // v3.92.0 : Carrière verrouillée -> invisible
     h += buildProductionCardHTML(id);
