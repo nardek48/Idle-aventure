@@ -264,6 +264,12 @@ var ProductionManager = {
     Object.keys(WORKSHOPS_CONFIG).forEach(function (workshopId) {
       var workshopDef = WORKSHOPS_CONFIG[workshopId];
       if (!workshopDef.active || !self.isBuildingUnlocked(workshopDef.buildingId)) return;
+
+      // v3.98.21 : badge "File : X / Y" tenu à jour ici (simple texte, id stable) même
+      // quand la file est vide — auparavant seul un renderPanel() complet (retiré du
+      // tick d'atelier, voir workshops-system.js) le faisait.
+      setElementText("prod-workshop-queue-badge-" + workshopId, "File : " + WorkshopsSystem.getQueue(workshopId).length + " / " + WorkshopsSystem.getMaxQueueLength(workshopId));
+
       var queue = WorkshopsSystem.getQueue(workshopId);
       if (!queue.length) return;
       var entry = queue[0];

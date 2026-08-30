@@ -485,7 +485,7 @@ function buildWorkshopCardHTML(workshop) {
   h += '<div class="workshop-card-icon">' + workshop.icon + '</div>';
   h += '<div class="workshop-card-name">' + esc(workshop.name) + '</div>';
   h += '<span class="workshop-card-level-badge">Niv. ' + level + '</span>';
-  h += '<span class="workshop-card-queue-badge">File : ' + WorkshopsSystem.getQueue(workshop.id).length + ' / ' + WorkshopsSystem.getMaxQueueLength(workshop.id) + '</span>';
+  h += '<span class="workshop-card-queue-badge" id="prod-workshop-queue-badge-' + workshop.id + '">File : ' + WorkshopsSystem.getQueue(workshop.id).length + ' / ' + WorkshopsSystem.getMaxQueueLength(workshop.id) + '</span>';
   h += '</div>';
 
   if (recipes.length > 1) {
@@ -628,11 +628,19 @@ function buildWorkshopAutoToggleHTML(workshopId, recipeId, hasMultipleRecipes) {
   return h;
 }
 
+/* v3.98.21 : id "workshop-queue-{workshopId}" sur le conteneur — permet un
+   rafraîchissement CIBLÉ de ce seul bloc (refreshWorkshopQueueDOM ci-dessous) sans
+   renderPanel() complet à chaque complétion de lot, qui cassait le scroll de la page
+   Production en cours d'auto-craft (retour Seb : "scroll qui bloque toutes les 2-3
+   secondes"). La file change de STRUCTURE (nombre/ordre d'entrées) à chaque complétion
+   ou ajout auto, donc un simple setElementText/Width ne suffit pas ici comme pour le
+   reste de ProductionManager.updateDOM() — on régénère juste ce sous-bloc via
+   innerHTML, portée bien plus petite qu'un renderPanel() de toute la page. */
 function buildWorkshopQueueHTML(workshopId) {
   var queue = WorkshopsSystem.getQueue(workshopId);
-  if (!queue.length) return "";
+  if (!queue.length) return '<div class="warehouse-craft-queue" id="workshop-queue-' + workshopId + '"></div>';
 
-  var h = '<div class="warehouse-craft-queue">';
+  var h = '<div class="warehouse-craft-queue" id="workshop-queue-' + workshopId + '">';
   h += '<div class="warehouse-craft-queue-title">File de fabrication</div>';
 
   queue.forEach(function (entry, index) {
@@ -664,6 +672,20 @@ function buildWorkshopQueueHTML(workshopId) {
   h += '</div>';
   return h;
 }
+
+/* v3.98.21 : régénère UNIQUEMENT le bloc file d'un atelier (id ci-dessus), sans toucher
+   au reste du DOM de la page — appelée à la place de renderPanel() par
+   WorkshopsSystem.tickWorkshop()/_tryAutoEnqueue() lors d'une complétion/ajout auto de
+   lot. Si l'élément n'existe pas (carte pas dépliée, ou pas sur cette page), ne fait
+   rien : le prochain renderPanel() normal (déclenché par une vraie action du joueur, ou
+   au retour sur cette page) affichera l'état à jour de toute façon. */
+function refreshWorkshopQueueDOM(workshopId) {
+  if (typeof document === "undefined") return; // garde défensive (harnais de test Node)
+  var container = document.getElementById("workshop-queue-" + workshopId);
+  if (!container) return;
+  container.outerHTML = buildWorkshopQueueHTML(workshopId);
+}
+window.refreshWorkshopQueueDOM = refreshWorkshopQueueDOM;
 
 function selectWorkshopRecipe(workshopId, recipeId) {
   selectedWorkshopRecipe[workshopId] = recipeId;

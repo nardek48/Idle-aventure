@@ -107,15 +107,36 @@ var WorkshopsSystem = {
 
   /* v3.98.13 : équivalent de getMaxCraftTimes, mais borné par
      ResourceReserveManager.getAvailableForAutoCraft() plutôt que le stock brut — utilisé
-     UNIQUEMENT par le chaînage auto, jamais par le craft manuel. */
+     UNIQUEMENT par le chaînage auto, jamais par le craft manuel.
+     v3.98.21 : ajoute aussi une borne sur la marge disponible avant le PLAFOND (cap) de
+     chaque ressource PRODUITE par la recette (retour Seb — le chaînage continuait de
+     consommer des intrants et d'occuper la file même quand la sortie était déjà pleine,
+     gaspillant intrants/temps de craft pour un résultat qui aurait été silencieusement
+     écrêté par WarehouseManager.addResource au moment du crédit). Le craft MANUEL n'est
+     jamais concerné par cette borne non plus (cohérent avec la réserve : le joueur reste
+     libre de lancer un craft "à perte" s'il le décide lui-même). */
   getMaxAutoCraftTimes: function (workshopId, recipeId) {
     var recipe = this.getRecipe(workshopId, recipeId);
     if (!recipe) return 0;
-    if (!window.ResourceReserveManager) return this.getMaxCraftTimes(workshopId, recipeId);
-    return recipe.inputs.reduce(function (min, input) {
-      var possible = Math.floor(ResourceReserveManager.getAvailableForAutoCraft(input.resourceId) / input.quantity);
+
+    var maxFromInputs = (!window.ResourceReserveManager)
+      ? this.getMaxCraftTimes(workshopId, recipeId)
+      : recipe.inputs.reduce(function (min, input) {
+          var possible = Math.floor(ResourceReserveManager.getAvailableForAutoCraft(input.resourceId) / input.quantity);
+          return Math.min(min, possible);
+        }, Infinity);
+
+    var maxFromOutputCaps = recipe.outputs.reduce(function (min, output) {
+      var def = WAREHOUSE_RESOURCES[output.resourceId];
+      var cap = def && typeof def.cap === "number" ? def.cap : Infinity;
+      if (cap === Infinity) return min;
+      var current = WarehouseManager.getAmount(output.resourceId);
+      var remainingRoom = Math.max(0, cap - current);
+      var possible = Math.floor(remainingRoom / output.quantity);
       return Math.min(min, possible);
     }, Infinity);
+
+    return Math.min(maxFromInputs, maxFromOutputCaps);
   },
 
   canCraft: function (workshopId, recipeId, times) {
@@ -331,7 +352,9 @@ var WorkshopsSystem = {
 
       var pushed = this._tryAutoEnqueue(workshopId);
       if (pushed) {
-        if (typeof renderPanel === "function") renderPanel();
+        // v3.98.21 : même correctif que plus bas — rafraîchissement ciblé au lieu d'un
+        // renderPanel() complet, pour ne pas casser le scroll de la page Production.
+        if (typeof refreshWorkshopQueueDOM === "function") refreshWorkshopQueueDOM(workshopId);
         if (typeof renderHud === "function") renderHud();
         saveGame();
       }
@@ -364,7 +387,14 @@ var WorkshopsSystem = {
 
     this._tryAutoEnqueue(workshopId);
 
-    if (typeof renderPanel === "function") renderPanel();
+    // v3.98.21 : renderPanel() complet retiré ici (retour Seb — cassait le scroll de la
+    // page Production, jank toutes les quelques secondes dès qu'un auto-craft à cycle
+    // court tournait). Remplacé par un rafraîchissement CIBLÉ du seul bloc file de cet
+    // atelier (garde la structure de la file à jour : entrée qui disparaît, nouvelle
+    // entrée auto qui apparaît) + renderHud (léger, pas de reconstruction de page).
+    // Le badge "File : X/Y" et le reste (temps, barre) restent couverts par
+    // ProductionManager.updateDOM(), déjà appelée chaque seconde indépendamment.
+    if (typeof refreshWorkshopQueueDOM === "function") refreshWorkshopQueueDOM(workshopId);
     if (typeof renderHud === "function") renderHud();
     saveGame();
 
