@@ -107,10 +107,21 @@ if (gameRoot) {
   });
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
+// v3.99.0 : écran titre (Nouvelle Partie / Charger la Partie, voir
+// ui/title-screen-view.js) affiché AVANT init() — le joueur choisit ou crée un
+// emplacement de héros, puis openTitleScreen() appelle init() en callback une
+// fois résolu. Contrairement à avant (init() direct au chargement), le jeu ne
+// démarre plus tant que ce choix n'a pas été fait.
+function startGame() {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+      openTitleScreen(init);
+    });
+  } else {
+    openTitleScreen(init);
+  }
 }
+
+startGame();
 
 window.init = init;

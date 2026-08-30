@@ -79,6 +79,17 @@ function cancelHeroSelection() {
   pendingHeroId = "";
   pendingPlayerName = "";
 
+  // v3.99.0 : création lancée depuis l'écran titre (Nouvelle Partie / slot vide dans
+  // Charger la Partie), donc AVANT le premier init() du jeu — le DOM du jeu (hud,
+  // combat, panels...) n'existe pas encore, renderAll() planterait. On rouvre
+  // simplement l'écran titre plutôt que de suivre le chemin "annulation en jeu".
+  if (window.titleScreenSlotBeingCreated) {
+    window.titleScreenSlotBeingCreated = null;
+    closeHeroSelection();
+    if (typeof titleScreenBackToMain === "function") titleScreenBackToMain();
+    return;
+  }
+
   closeHeroSelection();
 
   if (origin && window.HeroSlotManager && HeroSlotManager.hasSlot(origin)) {
@@ -147,6 +158,17 @@ function confirmHeroSelection() {
   game.heroHp = game.heroMaxHp;
 
   closeHeroSelection();
+
+  // v3.99.0 : création lancée depuis l'écran titre (Nouvelle Partie / slot vide dans
+  // Charger la Partie) -> le jeu n'a pas encore été initialisé (init() jamais appelé).
+  // On résout l'écran titre en premier : ça déclenche init() qui monte tout le DOM
+  // du jeu (hud, combat, panels...) AVANT switchTab()/renderAll() ci-dessous, sinon
+  // ces derniers agiraient sur des éléments encore inexistants.
+  if (window.titleScreenSlotBeingCreated) {
+    window.titleScreenSlotBeingCreated = null;
+    if (typeof resolveTitleScreen === "function") resolveTitleScreen();
+  }
+
   switchTab(isFirstEverSetup ? "campement" : "combat");
   renderAll();
   saveGame();

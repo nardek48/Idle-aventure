@@ -10,7 +10,7 @@ var saveIntervalId = null;
 /* v3.25 : plusieurs héros = plusieurs sauvegardes indépendantes, une clé localStorage par emplacement (getSlotKey), migration auto de l'ancien format.
    Détail complet : voir save-system_notes.md #2. */
 
-var MAX_HERO_SLOTS = 3;
+var MAX_HERO_SLOTS = 6;
 var ACTIVE_SLOT_KEY = "quest_idle_active_slot";
 
 function getSlotKey(slotNumber) {
@@ -120,7 +120,9 @@ var HeroSlotManager = {
         heroLevel: Number(d.heroLevel || 1),
         worldIndex: Number(d.worldIndex || 0),
         cycleCount: Number(d.cycleCount || 0),
-        ascensionCount: Number(d.ascensionCount || 0)
+        ascensionCount: Number(d.ascensionCount || 0),
+        playTime: Number(d.playTime || 0), // secondes, voir main/game-loop.js
+        savedAt: Number(d.savedAt || d.lastOnline || 0) // ms epoch, dernière sauvegarde
       };
     } catch (e) {
       return null;
