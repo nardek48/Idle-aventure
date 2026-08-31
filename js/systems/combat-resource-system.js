@@ -1,6 +1,6 @@
 "use strict";
 /* systems/combat-resource-system.js — ressource de classe (Rage/Concentration/Mana), module PUR (aucun accès game.* ni DOM, pas de mutation).
-   État = { classId, resourceId, current, max }. Règles de gain lues depuis resource.generation. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   État = { classId, resourceId, current, max }. Règles de gain lues depuis resource.generation. v3.102.0 (P2) : régén passive par ROUND. */
 
 function createCombatResourceState(classId) {
   var resourceDef = (typeof getClassResource === "function") ? getClassResource(classId) : null;
@@ -68,14 +68,13 @@ function applyResourceGain(state, gainRule, context) {
   });
 }
 
-function tickResourceRegen(state, gainRule, elapsedMs) {
+function tickResourceRegen(state, gainRule, elapsedRounds) {
   if (!state) return state;
-  var elapsed = (typeof elapsedMs === "number" && elapsedMs > 0) ? elapsedMs : 0;
-  if (elapsed <= 0 || !gainRule || gainRule.type !== "passiveAndBasicAttack") {
+  var rounds = (typeof elapsedRounds === "number" && elapsedRounds > 0) ? elapsedRounds : 0;
+  if (rounds <= 0 || !gainRule || gainRule.type !== "passiveAndBasicAttack") {
     return Object.assign({}, state);
   }
-  var perSecond = gainRule.passivePerSecond || 0;
-  var gain = perSecond * (elapsed / 1000);
+  var gain = (gainRule.passivePerRound || 0) * rounds;
   if (gain <= 0) return Object.assign({}, state);
 
   return Object.assign({}, state, {

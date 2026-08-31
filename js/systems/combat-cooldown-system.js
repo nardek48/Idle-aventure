@@ -1,6 +1,6 @@
 "use strict";
 /* systems/combat-cooldown-system.js — cooldowns d'action de classe + vérification conditions/coûts, module PUR (aucun accès game.* ni DOM, pas de mutation).
-   cooldownState = { [actionId]: remainingMs }, absent = disponible. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   v3.102.0 (P2) : cooldownState = { [actionId]: roundsRestants }, absent = disponible ; tickCooldowns(state, 1) = fin de round. */
 
 function createCooldownState() {
   return {};
@@ -13,11 +13,11 @@ function isCooldownReady(cooldownState, actionId) {
   return !(typeof remaining === "number" && remaining > 0);
 }
 
-function startCooldown(cooldownState, actionId, durationMs) {
+function startCooldown(cooldownState, actionId, durationRounds) {
   var base = (cooldownState && typeof cooldownState === "object") ? cooldownState : {};
   if (!actionId || typeof actionId !== "string") return Object.assign({}, base);
 
-  var duration = (typeof durationMs === "number" && durationMs > 0) ? durationMs : 0;
+  var duration = (typeof durationRounds === "number" && durationRounds > 0) ? durationRounds : 0;
   var next = Object.assign({}, base);
   if (duration > 0) {
     next[actionId] = duration;
@@ -27,9 +27,9 @@ function startCooldown(cooldownState, actionId, durationMs) {
   return next;
 }
 
-function tickCooldowns(cooldownState, elapsedMs) {
+function tickCooldowns(cooldownState, elapsedRounds) {
   var base = (cooldownState && typeof cooldownState === "object") ? cooldownState : {};
-  var elapsed = (typeof elapsedMs === "number" && elapsedMs > 0) ? elapsedMs : 0;
+  var elapsed = (typeof elapsedRounds === "number" && elapsedRounds > 0) ? elapsedRounds : 0;
   if (elapsed <= 0) return Object.assign({}, base);
 
   var next = {};
@@ -85,28 +85,13 @@ function useAction(resourceState, cooldownState, action, combatContext) {
     });
   }
 
-  var nextCooldownState = startCooldown(cooldownState, action.id, action.cooldownMs);
+  var nextCooldownState = startCooldown(cooldownState, action.id, action.cooldownRounds);
 
   return {
     success: true,
     resourceState: nextResourceState,
     cooldownState: nextCooldownState
   };
-}
-
-function computeEffectiveCooldownMs(baseCooldownMs, celerity, options) {
-  var base = (typeof baseCooldownMs === "number" && baseCooldownMs > 0) ? baseCooldownMs : 0;
-  if (base <= 0) return 0;
-
-  var cel = (typeof celerity === "number" && celerity > 0) ? celerity : 0;
-  if (cel <= 0) return base;
-
-  var opts = options || {};
-  var minRatio = (typeof opts.minRatio === "number" && opts.minRatio > 0 && opts.minRatio <= 1) ? opts.minRatio : 0.5;
-
-  var effective = base / (1 + cel / 100);
-  var floor = base * minRatio;
-  return Math.max(floor, effective);
 }
 
 window.createCooldownState = createCooldownState;
@@ -116,4 +101,3 @@ window.tickCooldowns = tickCooldowns;
 window.checkActionConditions = checkActionConditions;
 window.canUseAction = canUseAction;
 window.useAction = useAction;
-window.computeEffectiveCooldownMs = computeEffectiveCooldownMs;

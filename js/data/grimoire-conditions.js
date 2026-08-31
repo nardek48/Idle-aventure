@@ -29,8 +29,8 @@ var GRIMOIRE_CONDITIONS = {
   },
   enemyAttackIncoming: {
     id: "enemyAttackIncoming",
-    label: "L'ennemi va bientôt attaquer",
-    description: "Une attaque ordinaire arrive dans un instant.",
+    label: "L'ennemi va frapper deux fois",
+    description: "Sa jauge de célérité sera pleine au prochain tour : il enchaînera deux coups.",
     icon: "⚔️"
   },
   enemyEnraged: {

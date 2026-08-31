@@ -1,7 +1,7 @@
 "use strict";
 /* ui/combat-speed-view.js — 3 boutons x1/x2/x4 (game.combatSpeed), visibles
    uniquement en combat/Donjon (#combat-speed-bar, toggle dans switchTab).
-   Logique d'accélération réelle : main/game-loop.js (getCombatSpeedMult). */
+   v3.102.0 : accélère l'horloge des rounds automatiques (mode Grimoire / Continuer), voir game-loop.js. */
 
 var COMBAT_SPEED_OPTIONS = [1, 2, 4];
 
@@ -31,7 +31,6 @@ function setCombatSpeed(speed) {
   if (COMBAT_SPEED_OPTIONS.indexOf(speed) === -1) return;
 
   game.combatSpeed = speed;
-  if (typeof syncAutoTapLoop === "function") syncAutoTapLoop();
   renderCombatSpeedBar();
   saveGame();
 }

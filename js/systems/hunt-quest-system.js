@@ -68,7 +68,7 @@ var HuntQuestManager = {
       return;
     }
     game.enemy = enemy;
-    game._enemyAttackTimer = 0;
+    if (window.CombatEngine && typeof CombatEngine.prepareEnemy === "function") CombatEngine.prepareEnemy(game.enemy);
     this.applyQuestTheme(quest);
     if (typeof renderEnemy === "function") renderEnemy();
     if (typeof renderHud === "function") renderHud();
@@ -147,10 +147,14 @@ var HuntQuestManager = {
   onDefeat: function () {
     this.ensureRun();
     var quest = HUNT_QUESTS[game.huntRun.questId];
-    game.heroHp = game.heroMaxHp || 1;
-    addLog("💀 Chasse interrompue" + (quest ? " : " + quest.name : "") + " — viande déjà obtenue conservée.", "event");
+    // v3.102.0 (P2) : même règle de mort qu'ailleurs (PV 0, Sang-froid, retour Campement)
+    var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
+    game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
+    addLog("💀 Chasse interrompue" + (quest ? " : " + quest.name : "") + " — viande déjà obtenue conservée. Retour au Campement.", "event");
     vibrate([80, 40, 80]);
     this.stop();
+    game.justDied = true;
+    if (typeof switchTab === "function") switchTab("campement");
   }
 };
 

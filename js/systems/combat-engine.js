@@ -1,13 +1,11 @@
 "use strict";
-/* systems/combat-engine.js — cœur de la boucle de combat : attaque joueur (tap/auto-DPS/auto-tap), riposte ennemie,
-   patterns (Charge/Silencieux ennemis normaux ; Bouclier/Soin boss), mort d'un ennemi (récompenses/butin/progression).
-   NOTE : contenait un doublon de commentaire (getConfiguredCounterSlotsForCondition/estimateCounterValue expliqués 2×).
-   Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* systems/combat-engine.js — v3.102.0 (P2) : moteur de combat PAR ROUNDS (LIGNE_DIRECTRICE §5, sim P1 combat-round-sim.js).
+   Round = tour du héros (Attaque / compétence / Défense / Objet) → frappe bonus si jauge de célérité ≥ 100 → tour de l'ennemi
+   (frappe, ou impact d'un pattern télégraphié au round précédent) → fin de round (cooldowns, statuts, DoT, mana passif).
+   Deux modes : Tactique (attend le choix) et Grimoire (1 round / ROUND_INTERVAL_MS, l'auto-pilote choisit). Plus de tap ni d'auto-DPS. */
 
-var autoTapInterval = null;
-
-var RESIST_DMG_MULT = 0.7;
-var WEAK_DMG_MULT = 1.3;
+var RESIST_DMG_MULT = 0.85;   // v3.102.0 : 0,7 → 0,85 (P1 §D, résistances adoucies)
+var WEAK_DMG_MULT = 1.15;     // v3.102.0 : 1,3 → 1,15
 var NO_WEAPON_MULT = 0.8;
 
 function getPlayerDamageType() {
@@ -22,40 +20,44 @@ function getDamageAffinity() {
   var type = getPlayerDamageType();
   if (!type) return { type: null, status: "unarmed", mult: NO_WEAPON_MULT };
 
-  var resists = game.enemy.resists || [];
-  var weak = game.enemy.weak || [];
+  // v3.102.0 : les boss sont neutres (étalon de kit, décision §11) — ni résistance ni faiblesse.
+  var resists = game.enemy.isBoss ? [] : (game.enemy.resists || []);
+  var weak = game.enemy.isBoss ? [] : (game.enemy.weak || []);
 
   if (resists.indexOf(type) !== -1) return { type: type, status: "resist", mult: RESIST_DMG_MULT };
   if (weak.indexOf(type) !== -1) return { type: type, status: "weak", mult: WEAK_DMG_MULT };
   return { type: type, status: "neutral", mult: 1 };
 }
 
-var ENEMY_ATTACK_BASE_INTERVAL = 3;
+
 var ENEMY_POWER_DMG_COEF = 0.5;
+var BOSS_DMG_MULT = 1.5;      // v3.102.0 : dégâts des boss × 1,5 (calibration P1)
 var ENEMY_PRECISION_CRIT_COEF = 0.3;
 var ENEMY_CRIT_MULT = 1.5;
 var WILL_CRIT_RESIST_COEF = 0.05;
-var DEFEAT_GOLD_PENALTY = 0.10;
+var DEFEAT_GOLD_PENALTY = 0; // v3.101.0 (P3-lite) : la mort ne coûte plus d'or (LIGNE_DIRECTRICE §4) — le butin de sortie arrive en P2.1
 
-var ENEMY_CHARGE_MIN_INTERVAL_S = 8;
-var ENEMY_CHARGE_MAX_INTERVAL_S = 12;
-var ENEMY_CHARGE_TELEGRAPH_MS = 1500;
+var ROUND_INTERVAL_MS = 1500;         // tempo du mode Grimoire / « Continuer l'attaque » (× vitesse de combat)
+var CELERITY_GAUGE_MAX = 100;
+var CELERITY_GAUGE_PER_ACTION = 1.0;  // jauge héros += célérité × coef par action offensive
+var ENEMY_CELERITY_GAUGE_COEF = 1.0;  // idem côté ennemi (le loup mord deux fois)
+var FRENZY_ATTACKS_REQUIRED = 8;      // Frénésie d'assaut : toutes les 8 Attaques (ex 20 taps)
+
+var ENEMY_CHARGE_ROUNDS_MIN = 3;      // ex 8-12 s → 3-5 rounds
+var ENEMY_CHARGE_ROUNDS_MAX = 5;
 var ENEMY_CHARGE_DMG_MULT = 1.3;
 
-var BOSS_SHIELD_MIN_INTERVAL_S = 10;
-var BOSS_SHIELD_MAX_INTERVAL_S = 15;
-var BOSS_SHIELD_TELEGRAPH_MS = 1500;
-var BOSS_SHIELD_DURATION_MS = 4000;
+var BOSS_SHIELD_ROUNDS_MIN = 4;       // ex 10-15 s → 4-6 rounds
+var BOSS_SHIELD_ROUNDS_MAX = 6;
+var BOSS_SHIELD_DURATION_ROUNDS = 2;  // ex 4 000 ms
 var BOSS_SHIELD_REDUCTION = 0.5;
 
-var BOSS_HEAL_MIN_INTERVAL_S = 10;
-var BOSS_HEAL_MAX_INTERVAL_S = 15;
-var BOSS_HEAL_TELEGRAPH_MS = 1500;
+var BOSS_HEAL_ROUNDS = 5;             // fixe, comme le sim P1
 var BOSS_HEAL_PERCENT = 0.15;
 
-var COUNTER_CONFIRMATION_MS = 800;
+var COUNTER_CONFIRMATION_ROUNDS = 1;
 
-var BASIC_ATTACK_BASE_COOLDOWN_MS = 1000;
+var COMBAT_MODES = ["tactique", "grimoire"];
 
 function getEnemyWillCritPenalty() {
   var stats = game.enemy && game.enemy.stats;
@@ -167,99 +169,176 @@ function showCounterSuccessPopup() {
 }
 
 var CombatEngine = {
-    estimateCounterValue: function (conditionId) {
-    if (!game.enemy || !game.enemy.stats) return 0;
-
-    var power = Number(game.enemy.stats.power || 0);
-    if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
-      power *= AfflictionManager.getCombinedModifiers().enemyPowerMult;
+  /* ---------- État de round ---------- */
+  ensureState: function () {
+    if (COMBAT_MODES.indexOf(game.combatMode) === -1) game.combatMode = "tactique";
+    if (!game.combatRound || typeof game.combatRound !== "object") {
+      game.combatRound = { number: 0, busy: false, continueAttack: false, clockMs: 0 };
     }
-
-    if (conditionId === "chargeIncoming") {
-      return Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF * ENEMY_CHARGE_DMG_MULT));
-    }
-    if (conditionId === "shieldIncoming") {
-      return Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF));
-    }
-    if (conditionId === "healIncoming") {
-      return Math.max(1, Math.floor(Number(game.enemy.hp || 0) * BOSS_HEAL_PERCENT));
-    }
-    if (conditionId === "enemySilenceIncoming") {
-      return (typeof SILENCE_DURATION_MS === "number") ? SILENCE_DURATION_MS : 4000;
-    }
-    return 0;
+    if (typeof game.heroGauge !== "number" || !isFinite(game.heroGauge)) game.heroGauge = 0;
+    if (typeof game.silencedRounds !== "number") game.silencedRounds = 0;
   },
 
-    getEnragedEffectivePctHpLost: function () {
-    if (!game.enemy || !(game.enemy.maxHp > 0)) return 0;
+  /* Initialise les compteurs de round d'un ennemi (paresseux : appelé au spawn et au premier tour). */
+  prepareEnemy: function (enemy) {
+    if (!enemy || enemy._roundReady) return enemy;
+    enemy._roundReady = true;
+    enemy.gauge = 0;
+    enemy.roundsAlive = 0;
+    enemy.chargeIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX);
+    enemy.chargeTelegraphed = false;
+    enemy.silenceIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX);
+    enemy.silenceTelegraphed = false;
+    enemy.shieldIn = randInt(BOSS_SHIELD_ROUNDS_MIN, BOSS_SHIELD_ROUNDS_MAX);
+    enemy.shieldTelegraphed = false;
+    enemy.shieldRounds = 0;
+    enemy.healIn = BOSS_HEAL_ROUNDS;
+    enemy.healTelegraphed = false;
+    enemy.vulnerableRounds = 0;
+    enemy.vulnerableMult = 0;
+    enemy.counteredRounds = 0;
+    enemy.rageFreezeRounds = 0;
+    enemy.vampiricSuppressedRounds = 0;
+    enemy.armorSuppressedRounds = 0;
+    enemy.corruptedStacks = 0;
+    enemy.dot = null;
+    return enemy;
+  },
 
-    if (game.enemy.rageFreezeUntil && Date.now() < game.enemy.rageFreezeUntil) {
-      return Number(game.enemy.rageFrozenPct || 0);
+  setCombatMode: function (mode) {
+    this.ensureState();
+    if (COMBAT_MODES.indexOf(mode) === -1) return false;
+    if (mode === "grimoire" && typeof isTabUnlocked === "function" && !isTabUnlocked("grimoire")) return false;
+    game.combatMode = mode;
+    game.combatRound.clockMs = 0;
+    game.combatRound.continueAttack = false;
+    game.autoSkillsEnabled = (mode === "grimoire"); // champ hérité, gardé en lecture pour les vues
+    if (typeof renderCombatControls === "function") renderCombatControls();
+    saveGame();
+    return true;
+  },
+
+  toggleContinueAttack: function (force) {
+    this.ensureState();
+    var next = (typeof force === "boolean") ? force : !game.combatRound.continueAttack;
+    game.combatRound.continueAttack = next;
+    game.combatRound.clockMs = ROUND_INTERVAL_MS; // premier round immédiat
+    game.combatRound._continueEnemyRef = next ? game.enemy : null;
+    if (typeof renderCombatControls === "function") renderCombatControls();
+    return next;
+  },
+
+  isHeroTurnAvailable: function () {
+    this.ensureState();
+    if (!game.enemy || !window.EquipmentManager) return false;
+    if (game.activeTab !== "combat") return false;
+    if (typeof isBlockingModalOpen === "function" && isBlockingModalOpen()) return false;
+    if ((game.heroHp || 0) <= 0) return false;
+    if (game.combatRound.busy) return false;
+    return true;
+  },
+
+  /* Action suggérée par le Grimoire en mode Tactique (bouton surligné). */
+  suggestAction: function () {
+    if (!window.ClassCombatManager || typeof ClassCombatManager.chooseRoundAction !== "function") return "basic";
+    if (!game.enemy || (game.heroHp || 0) <= 0) return "basic";
+    var decision = ClassCombatManager.chooseRoundAction(false);
+    return (decision && decision.slot) ? decision.slot : "basic";
+  },
+
+  /* ---------- Un round complet ---------- */
+  /* slot : "basic" | "skill1".."skill3" | "defense" | "potion" (arg = id de potion). source "auto" = Grimoire/Continuer.
+     Retourne true si le round a été joué (l'action était valide). */
+  heroAction: function (slot, arg, source) {
+    if (!this.isHeroTurnAvailable()) return false;
+    if (game.combatMode === "grimoire" && source !== "auto" && slot !== "potion") return false;
+
+    var round = game.combatRound;
+    round.busy = true;
+    round.number += 1;
+    var enemyRef = game.enemy;
+
+    var played = this.performHeroAction(slot, arg, source);
+    if (!played) {
+      round.number -= 1;
+      round.busy = false;
+      return false;
     }
 
-    return 1 - (Number(game.enemy.hp || 0) / Number(game.enemy.maxHp || 1));
-  },
-
-    spawnEnemy: function () {
-    if (!window.WorldManager || typeof WorldManager.generateEnemy !== "function") return;
-
-    game.enemy = WorldManager.generateEnemy();
-    game._enemyAttackTimer = 0;
-    if (typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
-
-    if (typeof renderEnemy === "function") renderEnemy();
-    if (typeof renderHud === "function") renderHud();
-  },
-
-    requestPlayerAttack: function () {
-    if (!game.enemy || !window.EquipmentManager) return;
-    if (typeof isBlockingModalOpen === "function" && isBlockingModalOpen()) return;
-    if ((game.heroHp || 0) <= 0) return;
-
-    if ((game.basicAttackCooldownMs || 0) > 0) {
-      game.basicAttackPending = true;
-      return;
+    if (game.enemy === enemyRef && game.enemy && game.enemy.hp > 0 && (game.heroHp || 0) > 0) {
+      this.enemyTurn();
     }
 
-    this.playerAttack();
+    this.endRound(enemyRef);
+    round.busy = false;
+    round.clockMs = 0;
+
+    if (typeof renderClassSkillButtons === "function") renderClassSkillButtons();
+    if (typeof renderCombatControls === "function") renderCombatControls();
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+    if (typeof renderHealButtons === "function") renderHealButtons();
+    return true;
   },
 
-    getTotalCelerity: function () {
+  performHeroAction: function (slot, arg, source) {
+    if (slot === "basic") {
+      this.playerAttack(false);
+      this.afterOffensiveAction();
+      return true;
+    }
+    if (slot === "skill1" || slot === "skill2" || slot === "skill3" || slot === "defense") {
+      if (!window.ClassCombatManager) return false;
+      var action = ClassCombatManager.getAction(slot);
+      var ok = (source === "auto")
+        ? ClassCombatManager.useSkill(slot, arg && arg.matchedConditionId ? arg.matchedConditionId : null)
+        : ClassCombatManager.useSkillManual(slot);
+      if (!ok) return false;
+      if (action && action.type === "damage") this.afterOffensiveAction();
+      return true;
+    }
+    if (slot === "potion") {
+      if (!window.PotionManager || typeof PotionManager.useHealingPotion !== "function") return false;
+      return PotionManager.useHealingPotion(arg) === true; // consomme le tour (décision §10 n°10)
+    }
+    return false;
+  },
+
+  /* Jauge de célérité : chaque action offensive la remplit ; à 100, frappe bonus avant le tour ennemi. */
+  getTotalCelerity: function () {
     var hero = typeof getHeroByGameId === "function" ? getHeroByGameId(game.heroId) : null;
     var baseCelerity = (hero && hero.stats) ? Number(hero.stats.celerity) || 0 : 0;
     var trainedCelerity = (game.trainedStats && game.trainedStats.celerity) || 0;
-    return baseCelerity + trainedCelerity;
+    return (baseCelerity + trainedCelerity + Number(game.bonusCelerity || 0)) * Number(game.celerityMult || 1);
   },
 
-    tickBasicAttackCooldown: function (dt) {
-    if ((game.basicAttackCooldownMs || 0) <= 0) return;
+  getGaugeGainPerAction: function () {
+    var talentMult = 1 + 0.15 * Number((game.talents && game.talents.t_auto_tap) || 0); // Main spectrale reconvertie
+    return this.getTotalCelerity() * CELERITY_GAUGE_PER_ACTION * talentMult;
+  },
 
-    game.basicAttackCooldownMs -= Math.max(0, Number(dt || 0)) * 1000;
-
-    if (game.basicAttackCooldownMs > 0) {
-      if (typeof renderBasicAttackCooldown === "function") renderBasicAttackCooldown();
-      return;
-    }
-
-    game.basicAttackCooldownMs = 0;
-    if (game.basicAttackPending) {
-      game.basicAttackPending = false;
-      this.playerAttack();
-    } else if (typeof renderBasicAttackCooldown === "function") {
-      renderBasicAttackCooldown();
+  afterOffensiveAction: function () {
+    this.ensureState();
+    game.heroGauge += this.getGaugeGainPerAction();
+    if (game.heroGauge >= CELERITY_GAUGE_MAX) {
+      game.heroGauge -= CELERITY_GAUGE_MAX;
+      if (game.enemy && game.enemy.hp > 0) {
+        var bonusMult = 1 + 0.12 * Number((game.talents && game.talents.t_battle_trance) || 0); // Transe de bataille reconvertie
+        this.playerAttack(true, bonusMult);
+        addLog("⚡ Frappe bonus (jauge de célérité pleine) !", "event");
+      }
     }
   },
 
-    playerAttack: function () {
+  /* Attaque de base : formule inchangée (dégâts d'arme + classe + talents + crit), sans cooldown. */
+  playerAttack: function (isBonus, extraMult) {
     if (!game.enemy || !window.EquipmentManager) return;
-    if (typeof isBlockingModalOpen === "function" && isBlockingModalOpen()) return;
     if ((game.heroHp || 0) <= 0) return;
 
     var classBasicMult = (window.ClassCombatManager && typeof ClassCombatManager.getBasicAttackMultiplier === "function")
       ? ClassCombatManager.getBasicAttackMultiplier()
       : 1;
 
-    var dmg = Math.max(1, Math.floor(EquipmentManager.effectiveTapDamage() * classBasicMult));
+    var dmg = Math.max(1, Math.floor(EquipmentManager.effectiveTapDamage() * classBasicMult * (extraMult || 1)));
     var critChance = Math.max(0, EquipmentManager.effectiveCritChance() - getEnemyWillCritPenalty());
     var isCrit = chance(critChance);
 
@@ -271,14 +350,14 @@ var CombatEngine = {
     if (game.enemy.isBoss && game.talents.t_war_instinct) dmg = Math.floor(dmg * (1 + 0.05 * game.talents.t_war_instinct));
     if (game.enemy.isBoss && game.talents.t_boss_slayer) dmg = Math.floor(dmg * (1 + 0.08 * game.talents.t_boss_slayer));
 
-    if (game.talents.t_assault_frenzy) {
+    if (game.talents.t_assault_frenzy && !isBonus) {
       if (game._frenzyReady) {
         dmg = Math.floor(dmg * (1 + 0.25 * game.talents.t_assault_frenzy));
         game._frenzyReady = false;
         showToast("💥 Frénésie d'assaut !", 1000);
       }
       game._frenzyTapCount = (game._frenzyTapCount || 0) + 1;
-      if (game._frenzyTapCount >= 20) {
+      if (game._frenzyTapCount >= FRENZY_ATTACKS_REQUIRED) {
         game._frenzyTapCount = 0;
         game._frenzyReady = true;
       }
@@ -289,278 +368,176 @@ var CombatEngine = {
     if (window.ClassCombatManager && typeof ClassCombatManager.onBasicAttackDealt === "function") {
       ClassCombatManager.onBasicAttackDealt(dmg, isCrit);
     }
-
-    var totalCelerity = this.getTotalCelerity();
-    game.basicAttackCooldownMs = (typeof computeEffectiveCooldownMs === "function")
-      ? computeEffectiveCooldownMs(BASIC_ATTACK_BASE_COOLDOWN_MS, totalCelerity)
-      : BASIC_ATTACK_BASE_COOLDOWN_MS;
-    if (typeof renderBasicAttackCooldown === "function") renderBasicAttackCooldown();
   },
 
-      autoAttack: function (dt) {
-    if (!game.enemy || !window.EquipmentManager) return;
-
-    var dps = EquipmentManager.effectiveAutoDps();
-    if (dps <= 0) return;
-
-    var damage = dps * Math.max(0, Number(dt || 0));
-    if (damage <= 0) return;
-    this.dealDamage(damage, false, false);
-  },
-
-    autoTap: function () {
-    if (!game.enemy || !game.talents.t_auto_tap) return;
-    if (game.activeTab !== "combat") return;
-    if ((game.basicAttackCooldownMs || 0) > 0) return;
-    this.playerAttack();
-  },
-
-    enemyAttackTick: function (dt) {
-    if (!game.enemy || !game.enemy.stats) return;
-
-    var celerity = Number(game.enemy.stats.celerity || 0);
-    var interval = ENEMY_ATTACK_BASE_INTERVAL / (1 + celerity / 40);
-
-    game._enemyAttackTimer = Number(game._enemyAttackTimer || 0) + Math.max(0, Number(dt || 0));
-
-    var guard = 0;
-    while (game._enemyAttackTimer >= interval && guard < 10) {
-      game._enemyAttackTimer -= interval;
-      this.enemyStrike();
-      guard++;
-    }
-  },
-
-    enemyChargeTick: function (dt) {
-    if (!game.enemy || !game.enemy.stats || game.enemy.isBoss) return;
-    if (game.enemy.archetype === "silenced") return;
+  /* ---------- Tour de l'ennemi ---------- */
+  enemyTurn: function () {
+    var e = game.enemy;
+    if (!e || !e.stats) return;
     if ((game.heroHp || 0) <= 0) return;
+    this.prepareEnemy(e);
+    e.roundsAlive += 1;
 
-    if (game.enemy.chargeTelegraphUntil) {
-      if (Date.now() >= game.enemy.chargeTelegraphUntil) {
-        this.resolveEnemyCharge();
-      }
+    // Statuts posés PENDANT un tour ennemi (bouclier, silence) : décomptés ici, au tour ennemi suivant,
+    // pour couvrir exactement N tours du héros (le décompte de fin de round les rognerait d'un round).
+    if (e.shieldRounds > 0) e.shieldRounds -= 1;
+    if (game.silencedRounds > 0) game.silencedRounds -= 1;
+
+    var impact = false;
+    if (e.isBoss) {
+      if (e.healTelegraphed) { this.resolveBossHeal(); impact = true; }
+      else if (e.shieldTelegraphed) { this.resolveBossShield(); impact = true; }
+    } else if (e.archetype === "silenced") {
+      if (e.silenceTelegraphed) { this.resolveSilenceCast(); impact = true; }
+    } else if (e.chargeTelegraphed) {
+      this.resolveEnemyCharge(); impact = true;
+    }
+
+    if (impact) return; // le compte à rebours relancé démarre au round suivant
+    this.enemyStrike(1, false);
+    if ((game.heroHp || 0) <= 0 || game.enemy !== e) return;
+
+    this.tickEnemyTelegraphs(e);
+  },
+
+  /* Compte à rebours des patterns : télégraphe au round N (badge + log), impact au round N+1 (remplace la frappe). */
+  tickEnemyTelegraphs: function (e) {
+    if (e.isBoss) {
+      if (e.healTelegraphed || e.shieldTelegraphed) return; // un seul télégraphe à la fois
+      e.healIn -= 1;
+      e.shieldIn -= 1;
+      if (e.healIn <= 0) this.telegraphPattern(e, "heal");
+      else if (e.shieldIn <= 0) this.telegraphPattern(e, "shield");
       return;
     }
-
-    if (!game.enemy._chargeNextAt) {
-      game.enemy._chargeNextAt = randFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
+    if (e.archetype === "silenced") {
+      if (e.silenceTelegraphed) return;
+      e.silenceIn -= 1;
+      if (e.silenceIn <= 0) this.telegraphPattern(e, "silence");
+      return;
     }
-    game.enemy._chargeTimer = Number(game.enemy._chargeTimer || 0) + Math.max(0, Number(dt || 0));
+    if (e.chargeTelegraphed) return;
+    e.chargeIn -= 1;
+    if (e.chargeIn <= 0) this.telegraphPattern(e, "charge");
+  },
 
-    if (game.enemy._chargeTimer >= game.enemy._chargeNextAt) {
-      game.enemy._chargeTimer = 0;
-      game.enemy._chargeNextAt = 0;
-      game.enemy.chargeTelegraphUntil = Date.now() + ENEMY_CHARGE_TELEGRAPH_MS;
-
-      addLog("⚠️ " + game.enemy.name + " prépare une charge !", "event");
-      showToast("⚠️ Charge imminente !", 1200);
-      if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
-
-      if (window.CombatReportManager) {
-        getConfiguredCounterSlotsForCondition("chargeIncoming").forEach(function (s) {
-          CombatReportManager.logTelegraphSeen(s);
-        });
-      }
+  telegraphPattern: function (e, kind) {
+    var info = {
+      charge: { flag: "chargeTelegraphed", cond: "chargeIncoming", log: "⚠️ " + e.name + " prépare une charge !", toast: "⚠️ Charge au prochain tour !" },
+      silence: { flag: "silenceTelegraphed", cond: "enemySilenceIncoming", log: "🔇 " + e.name + " se prépare à te réduire au silence !", toast: "🔇 Silence au prochain tour !" },
+      shield: { flag: "shieldTelegraphed", cond: "shieldIncoming", log: "🛡️ " + e.name + " invoque un bouclier !", toast: "🛡️ Bouclier au prochain tour !" },
+      heal: { flag: "healTelegraphed", cond: "healIncoming", log: "💚 " + e.name + " se prépare à se soigner !", toast: "💚 Soin au prochain tour !" }
+    }[kind];
+    if (!info) return;
+    e[info.flag] = true;
+    addLog(info.log, "event");
+    showToast(info.toast, 1200);
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+    if (window.CombatReportManager) {
+      getConfiguredCounterSlotsForCondition(info.cond).forEach(function (s) {
+        CombatReportManager.logTelegraphSeen(s);
+      });
     }
   },
 
-    resolveEnemyCharge: function () {
-    if (!game.enemy) return;
+  /* Après un contre réussi (ClassCombatManager) : le pattern est annulé et son compte à rebours repart. */
+  rescheduleCounteredPattern: function (conditionId) {
+    var e = game.enemy;
+    if (!e) return;
+    if (conditionId === "chargeIncoming") { e.chargeTelegraphed = false; e.chargeIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX); }
+    else if (conditionId === "enemySilenceIncoming") { e.silenceTelegraphed = false; e.silenceIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX); }
+    else if (conditionId === "shieldIncoming") { e.shieldTelegraphed = false; e.shieldIn = randInt(BOSS_SHIELD_ROUNDS_MIN, BOSS_SHIELD_ROUNDS_MAX); }
+    else if (conditionId === "healIncoming") { e.healTelegraphed = false; e.healIn = BOSS_HEAL_ROUNDS; }
+    e.counteredRounds = COUNTER_CONFIRMATION_ROUNDS;
+  },
 
+  resolveEnemyCharge: function () {
+    var e = game.enemy;
+    if (!e) return;
     if (window.CombatReportManager) {
-      getConfiguredCounterSlotsForCondition("chargeIncoming").forEach(function (s) {
-        CombatReportManager.logCounterExpired(s);
-      });
+      getConfiguredCounterSlotsForCondition("chargeIncoming").forEach(function (s) { CombatReportManager.logCounterExpired(s); });
     }
-
-    game.enemy.chargeTelegraphUntil = 0;
-    game.enemy._chargeNextAt = randFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
-
-    this.enemyStrike(ENEMY_CHARGE_DMG_MULT);
-
+    e.chargeTelegraphed = false;
+    e.chargeIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX);
+    addLog("💢 " + e.name + " charge !", "event");
+    this.enemyStrike(ENEMY_CHARGE_DMG_MULT, true);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
-    enemySilenceTick: function (dt) {
-    if (!game.enemy || !game.enemy.stats || game.enemy.archetype !== "silenced") return;
-    if ((game.heroHp || 0) <= 0) return;
-
-    if (game.enemy.silenceTelegraphUntil) {
-      if (Date.now() >= game.enemy.silenceTelegraphUntil) {
-        this.resolveSilenceCast();
-      }
-      return;
-    }
-
-    if (!game.enemy._silenceNextAt) {
-      game.enemy._silenceNextAt = randFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
-    }
-    game.enemy._silenceTimer = Number(game.enemy._silenceTimer || 0) + Math.max(0, Number(dt || 0));
-
-    if (game.enemy._silenceTimer >= game.enemy._silenceNextAt) {
-      game.enemy._silenceTimer = 0;
-      game.enemy._silenceNextAt = 0;
-      game.enemy.silenceTelegraphUntil = Date.now() + ENEMY_CHARGE_TELEGRAPH_MS;
-
-      addLog("🔇 " + game.enemy.name + " se prépare à te réduire au silence !", "event");
-      showToast("🔇 Silence imminent !", 1200);
-      if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
-
-      if (window.CombatReportManager) {
-        getConfiguredCounterSlotsForCondition("enemySilenceIncoming").forEach(function (s) {
-          CombatReportManager.logTelegraphSeen(s);
-        });
-      }
-    }
-  },
-
-    resolveSilenceCast: function () {
-    if (!game.enemy) return;
-
+  resolveSilenceCast: function () {
+    var e = game.enemy;
+    if (!e) return;
     if (window.CombatReportManager) {
-      getConfiguredCounterSlotsForCondition("enemySilenceIncoming").forEach(function (s) {
-        CombatReportManager.logCounterExpired(s);
-      });
+      getConfiguredCounterSlotsForCondition("enemySilenceIncoming").forEach(function (s) { CombatReportManager.logCounterExpired(s); });
     }
-
-    game.enemy.silenceTelegraphUntil = 0;
-    game.enemy._silenceNextAt = randFloat(ENEMY_CHARGE_MIN_INTERVAL_S, ENEMY_CHARGE_MAX_INTERVAL_S);
-
-    var durationMs = (typeof SILENCE_DURATION_MS === "number") ? SILENCE_DURATION_MS : 4000;
-    game.silencedUntil = Date.now() + durationMs;
-
-    addLog("🔇 Tu es réduit au silence ! Tes techniques sont bloquées un instant.", "event");
+    e.silenceTelegraphed = false;
+    e.silenceIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX);
+    game.silencedRounds = (typeof SILENCE_DURATION_ROUNDS === "number") ? SILENCE_DURATION_ROUNDS : 2;
+    addLog("🔇 Tu es réduit au silence ! Tes techniques sont bloquées " + game.silencedRounds + " rounds.", "event");
     showToast("🔇 Silencié !", 1400);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
-    if (typeof renderClassSkillButtons === "function") renderClassSkillButtons();
   },
 
-    bossPatternTick: function (dt) {
-    if (!game.enemy || !game.enemy.stats || !game.enemy.isBoss) return;
-    if ((game.heroHp || 0) <= 0) return;
-
-    this.bossShieldTick(dt);
-    this.bossHealTick(dt);
-  },
-
-    bossShieldTick: function (dt) {
-    if (game.enemy.shieldTelegraphUntil) {
-      if (Date.now() >= game.enemy.shieldTelegraphUntil) {
-        this.resolveBossShield();
-      }
-      return;
-    }
-
-    if (!game.enemy._shieldNextAt) {
-      game.enemy._shieldNextAt = randFloat(BOSS_SHIELD_MIN_INTERVAL_S, BOSS_SHIELD_MAX_INTERVAL_S);
-    }
-    game.enemy._shieldTimer = Number(game.enemy._shieldTimer || 0) + Math.max(0, Number(dt || 0));
-
-    if (game.enemy._shieldTimer >= game.enemy._shieldNextAt) {
-      game.enemy._shieldTimer = 0;
-      game.enemy._shieldNextAt = 0;
-      game.enemy.shieldTelegraphUntil = Date.now() + BOSS_SHIELD_TELEGRAPH_MS;
-
-      addLog("🛡️ " + game.enemy.name + " invoque un bouclier !", "event");
-      showToast("🛡️ Bouclier imminent !", 1200);
-      if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
-
-      if (window.CombatReportManager) {
-        getConfiguredCounterSlotsForCondition("shieldIncoming").forEach(function (s) {
-          CombatReportManager.logTelegraphSeen(s);
-        });
-      }
-    }
-  },
-
-    resolveBossShield: function () {
-    if (!game.enemy) return;
-
+  resolveBossShield: function () {
+    var e = game.enemy;
+    if (!e) return;
     if (window.CombatReportManager) {
-      getConfiguredCounterSlotsForCondition("shieldIncoming").forEach(function (s) {
-        CombatReportManager.logCounterExpired(s);
-      });
+      getConfiguredCounterSlotsForCondition("shieldIncoming").forEach(function (s) { CombatReportManager.logCounterExpired(s); });
     }
-
-    game.enemy.shieldTelegraphUntil = 0;
-    game.enemy._shieldNextAt = randFloat(BOSS_SHIELD_MIN_INTERVAL_S, BOSS_SHIELD_MAX_INTERVAL_S);
-    game.enemy.shieldActiveUntil = Date.now() + BOSS_SHIELD_DURATION_MS;
-
-    addLog("🛡️ Le bouclier se referme !", "event");
+    e.shieldTelegraphed = false;
+    e.shieldIn = randInt(BOSS_SHIELD_ROUNDS_MIN, BOSS_SHIELD_ROUNDS_MAX);
+    e.shieldRounds = BOSS_SHIELD_DURATION_ROUNDS;
+    addLog("🛡️ Le bouclier se referme (" + BOSS_SHIELD_DURATION_ROUNDS + " rounds) !", "event");
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
-    bossHealTick: function (dt) {
-    if (game.enemy.healTelegraphUntil) {
-      if (Date.now() >= game.enemy.healTelegraphUntil) {
-        this.resolveBossHeal();
-      }
-      return;
-    }
-
-    if (!game.enemy._healNextAt) {
-      game.enemy._healNextAt = randFloat(BOSS_HEAL_MIN_INTERVAL_S, BOSS_HEAL_MAX_INTERVAL_S);
-    }
-    game.enemy._healTimer = Number(game.enemy._healTimer || 0) + Math.max(0, Number(dt || 0));
-
-    if (game.enemy._healTimer >= game.enemy._healNextAt) {
-      game.enemy._healTimer = 0;
-      game.enemy._healNextAt = 0;
-      game.enemy.healTelegraphUntil = Date.now() + BOSS_HEAL_TELEGRAPH_MS;
-
-      addLog("💚 " + game.enemy.name + " se prépare à se soigner !", "event");
-      showToast("💚 Soin imminent !", 1200);
-      if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
-
-      if (window.CombatReportManager) {
-        getConfiguredCounterSlotsForCondition("healIncoming").forEach(function (s) {
-          CombatReportManager.logTelegraphSeen(s);
-        });
-      }
-    }
-  },
-
-    resolveBossHeal: function () {
-    if (!game.enemy) return;
-
+  resolveBossHeal: function () {
+    var e = game.enemy;
+    if (!e) return;
     if (window.CombatReportManager) {
-      getConfiguredCounterSlotsForCondition("healIncoming").forEach(function (s) {
-        CombatReportManager.logCounterExpired(s);
-      });
+      getConfiguredCounterSlotsForCondition("healIncoming").forEach(function (s) { CombatReportManager.logCounterExpired(s); });
     }
-
-    game.enemy.healTelegraphUntil = 0;
-    game.enemy._healNextAt = randFloat(BOSS_HEAL_MIN_INTERVAL_S, BOSS_HEAL_MAX_INTERVAL_S);
-
-    var healAmount = Math.max(1, Math.floor(Number(game.enemy.hp || 0) * BOSS_HEAL_PERCENT));
-    game.enemy.hp = Math.min(game.enemy.maxHp, game.enemy.hp + healAmount);
-
-    addLog("💚 " + game.enemy.name + " récupère " + formatNumber(healAmount) + " PV !", "event");
+    e.healTelegraphed = false;
+    e.healIn = BOSS_HEAL_ROUNDS;
+    var healAmount = Math.max(1, Math.floor(Number(e.hp || 0) * BOSS_HEAL_PERCENT));
+    e.hp = Math.min(e.maxHp, e.hp + healAmount);
+    addLog("💚 " + e.name + " récupère " + formatNumber(healAmount) + " PV !", "event");
     showToast("💚 +" + formatNumber(healAmount) + " PV boss", 1200);
-
     if (typeof renderEnemyHp === "function") renderEnemyHp();
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
-    enemyStrike: function (dmgMult) {
-    if (!game.enemy || !game.enemy.stats) return;
-    if ((game.heroHp || 0) <= 0) return;
+  getEnemyGaugeGain: function (e) {
+    return Number((e && e.stats && e.stats.celerity) || 0) * ENEMY_CELERITY_GAUGE_COEF;
+  },
 
-    var power = Number(game.enemy.stats.power || 0);
-    var precision = Number(game.enemy.stats.precision || 0);
+  /* Condition Grimoire « enemyAttackIncoming » : la prochaine frappe ennemie sera doublée (jauge pleine). */
+  enemyDoubleStrikeNext: function () {
+    var e = game.enemy;
+    if (!e) return false;
+    this.prepareEnemy(e);
+    return (Number(e.gauge || 0) + this.getEnemyGaugeGain(e)) >= CELERITY_GAUGE_MAX;
+  },
+
+  enemyStrike: function (dmgMult, isPatternOrBonus) {
+    var e = game.enemy;
+    if (!e || !e.stats) return;
+    if ((game.heroHp || 0) <= 0) return;
+    this.prepareEnemy(e);
+
+    var power = Number(e.stats.power || 0);
+    var precision = Number(e.stats.precision || 0);
 
     if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
       power *= AfflictionManager.getCombinedModifiers().enemyPowerMult;
     }
 
-    var dmg = Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF));
+    var dmg = Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF * (e.isBoss ? BOSS_DMG_MULT : 1)));
     var patternMult = (typeof dmgMult === "number" && dmgMult > 0) ? dmgMult : 1;
     if (patternMult !== 1) dmg = Math.max(1, Math.floor(dmg * patternMult));
 
-    if (game.enemy.archetype === "enraged" && typeof getEnragedDamageMultiplier === "function") {
-      var effectivePct = this.getEnragedEffectivePctHpLost();
-      var enragedMult = getEnragedDamageMultiplier(effectivePct);
+    if (e.archetype === "enraged" && typeof getEnragedDamageMultiplier === "function") {
+      var enragedMult = getEnragedDamageMultiplier(this.getEnragedEffectivePctHpLost());
       if (enragedMult !== 1) {
         var preEnragedDmg = dmg;
         dmg = Math.max(1, Math.floor(dmg * enragedMult));
@@ -588,34 +565,152 @@ var CombatEngine = {
 
     game.heroHp = Math.max(0, Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1) - dmg);
 
-    if (game.enemy.archetype === "vampiric" && dmg > 0 && typeof getVampiricLifestealAmount === "function") {
-      var lifestealSuppressed = !!(game.enemy.vampiricSuppressedUntil && Date.now() < game.enemy.vampiricSuppressedUntil);
-      if (!lifestealSuppressed) {
+    if (e.archetype === "vampiric" && dmg > 0 && typeof getVampiricLifestealAmount === "function") {
+      if (!(Number(e.vampiricSuppressedRounds || 0) > 0)) {
         var healed = getVampiricLifestealAmount(dmg);
         if (healed > 0) {
-          game.enemy.hp = Math.min(game.enemy.maxHp, Number(game.enemy.hp || 0) + healed);
+          e.hp = Math.min(e.maxHp, Number(e.hp || 0) + healed);
           if (window.CombatReportManager) CombatReportManager.logArchetypeImpact("vampiricHealStolen", healed);
           if (typeof renderEnemyHp === "function") renderEnemyHp();
         }
       }
     }
 
-    if (game.enemy.archetype === "corrupted") {
-      game.enemy.corruptedStacks = Math.min(
+    if (e.archetype === "corrupted") {
+      e.corruptedStacks = Math.min(
         (typeof CORRUPTED_MAX_STACKS === "number" ? CORRUPTED_MAX_STACKS : 5),
-        Number(game.enemy.corruptedStacks || 0) + 1
+        Number(e.corruptedStacks || 0) + 1
       );
       if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
     }
 
     showDamageTakenPopup(dmg);
-
     if (typeof renderHeroHp === "function") renderHeroHp();
 
-    if (game.heroHp <= 0) this.onHeroDefeated();
+    if (game.heroHp <= 0) { this.onHeroDefeated(); return; }
+
+    // Jauge de célérité ennemie : une frappe ordinaire la remplit ; pleine → seconde frappe immédiate.
+    if (!isPatternOrBonus) {
+      e.gauge = Number(e.gauge || 0) + this.getEnemyGaugeGain(e);
+      if (e.gauge >= CELERITY_GAUGE_MAX) {
+        e.gauge -= CELERITY_GAUGE_MAX;
+        addLog("⚡ " + e.name + " enchaîne une seconde frappe !", "event");
+        this.enemyStrike(1, true);
+      }
+    }
   },
 
-    onHeroDefeated: function () {
+  /* ---------- Fin de round ---------- */
+  endRound: function (enemyRef) {
+    this.ensureState();
+    if (window.ClassCombatManager && typeof ClassCombatManager.onRoundEnd === "function") ClassCombatManager.onRoundEnd();
+
+    var e = game.enemy;
+    if (!e || e !== enemyRef || e.hp <= 0) return;
+    this.prepareEnemy(e);
+
+    // DoT (Brûlure arcanique) : peut tuer → killEnemy → nouvel ennemi, on s'arrête là.
+    if (window.ClassCombatManager && typeof ClassCombatManager.tickDoTRound === "function") ClassCombatManager.tickDoTRound();
+    if (game.enemy !== e) return;
+
+    if (e.vulnerableRounds > 0) e.vulnerableRounds -= 1;
+    if (e.counteredRounds > 0) e.counteredRounds -= 1;
+    if (e.rageFreezeRounds > 0) e.rageFreezeRounds -= 1;
+    if (e.vampiricSuppressedRounds > 0) e.vampiricSuppressedRounds -= 1;
+    if (e.armorSuppressedRounds > 0) e.armorSuppressedRounds -= 1;
+  },
+
+  /* ---------- Horloge des modes automatiques (appelée par game-loop, dt déjà × vitesse) ---------- */
+  tickRoundClock: function (dt) {
+    this.ensureState();
+    var round = game.combatRound;
+    var auto = game.combatMode === "grimoire";
+    if (!auto && !round.continueAttack) return;
+    if (!this.isHeroTurnAvailable()) return;
+
+    round.clockMs += Math.max(0, Number(dt || 0)) * 1000;
+    if (round.clockMs < ROUND_INTERVAL_MS) return;
+    round.clockMs = 0;
+
+    if (round.continueAttack) {
+      if (this.shouldStopContinueAttack()) {
+        round.continueAttack = false;
+        showToast("⏸️ Attaque interrompue : un choix s'impose", 1200);
+        if (typeof renderCombatControls === "function") renderCombatControls();
+        return;
+      }
+      this.heroAction("basic", null, "auto");
+      return;
+    }
+
+    var decision = (window.ClassCombatManager && typeof ClassCombatManager.chooseRoundAction === "function")
+      ? ClassCombatManager.chooseRoundAction(true)
+      : null;
+    if (decision && decision.slot && decision.slot !== "basic") {
+      if (this.heroAction(decision.slot, { matchedConditionId: decision.matchedConditionId || null }, "auto")) return;
+    }
+    this.heroAction("basic", null, "auto");
+  },
+
+  /* « Continuer l'attaque » s'arrête sur : PV < 50 %, télégraphe ennemi, double frappe annoncée, nouvel ennemi. */
+  shouldStopContinueAttack: function () {
+    var e = game.enemy;
+    if (!e) return true;
+    if (game.combatRound._continueEnemyRef && game.combatRound._continueEnemyRef !== e) return true;
+    if ((game.heroHp || 0) / (game.heroMaxHp || 1) < 0.5) return true;
+    if (e.chargeTelegraphed || e.silenceTelegraphed || e.shieldTelegraphed || e.healTelegraphed) return true;
+    if (this.enemyDoubleStrikeNext()) return true;
+    return false;
+  },
+
+  /* ---------- Divers ---------- */
+  estimateCounterValue: function (conditionId) {
+    if (!game.enemy || !game.enemy.stats) return 0;
+
+    var power = Number(game.enemy.stats.power || 0);
+    if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
+      power *= AfflictionManager.getCombinedModifiers().enemyPowerMult;
+    }
+    var bossMult = game.enemy.isBoss ? BOSS_DMG_MULT : 1;
+
+    if (conditionId === "chargeIncoming") {
+      return Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF * bossMult * ENEMY_CHARGE_DMG_MULT));
+    }
+    if (conditionId === "shieldIncoming") {
+      return Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF * bossMult));
+    }
+    if (conditionId === "healIncoming") {
+      return Math.max(1, Math.floor(Number(game.enemy.hp || 0) * BOSS_HEAL_PERCENT));
+    }
+    if (conditionId === "enemySilenceIncoming") {
+      return (typeof SILENCE_DURATION_ROUNDS === "number") ? SILENCE_DURATION_ROUNDS : 2;
+    }
+    return 0;
+  },
+
+  getEnragedEffectivePctHpLost: function () {
+    if (!game.enemy || !(game.enemy.maxHp > 0)) return 0;
+    if (Number(game.enemy.rageFreezeRounds || 0) > 0) {
+      return Number(game.enemy.rageFrozenPct || 0);
+    }
+    return 1 - (Number(game.enemy.hp || 0) / Number(game.enemy.maxHp || 1));
+  },
+
+  spawnEnemy: function () {
+    if (!window.WorldManager || typeof WorldManager.generateEnemy !== "function") return;
+
+    game.enemy = this.prepareEnemy(WorldManager.generateEnemy());
+    if (typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
+
+    if (typeof renderEnemy === "function") renderEnemy();
+    if (typeof renderHud === "function") renderHud();
+  },
+
+  onHeroDefeated: function () {
+    this.ensureState();
+    game.combatRound.continueAttack = false;
+    game.silencedRounds = 0;
+
     if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
       DungeonManager.onDefeat();
       return;
@@ -631,11 +726,9 @@ var CombatEngine = {
       return;
     }
 
-    var talentPenaltyReduction = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
-    var effectivePenaltyPct = DEFEAT_GOLD_PENALTY * Math.max(0, 1 - talentPenaltyReduction);
-    var lost = Math.floor((game.gold || 0) * effectivePenaltyPct);
-    game.gold = Math.max(0, game.gold - lost);
-    game.heroHp = 0;
+    // v3.101.0 : t_essence_bloom « Sang-froid » = 10 % PV max conservés par niveau à la défaite (au lieu de -pénalité d'or)
+    var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
+    game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
 
     if (typeof openCombatReport === "function") openCombatReport("defeat", game.enemy ? game.enemy.name : null);
 
@@ -643,12 +736,12 @@ var CombatEngine = {
       WorldManager.resetToCycleStart();
       if (typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
       if (typeof WorldManager.generateEnemy === "function") {
-        game.enemy = WorldManager.generateEnemy();
+        game.enemy = this.prepareEnemy(WorldManager.generateEnemy());
       }
     }
 
-    addLog("💀 Vous avez été terrassé ! -" + formatNumber(lost) + " or. Il faut te reposer avant de repartir au combat.", "event");
-    showToast("💀 Terrassé ! -" + formatNumber(lost) + " or", 1800);
+    addLog("💀 Vous avez été terrassé ! Retour au Campement : mange ou laisse le feu te remettre debout.", "event");
+    showToast("💀 Terrassé !", 1800);
     vibrate([80, 40, 80]);
 
     game.justDied = true;
@@ -659,8 +752,9 @@ var CombatEngine = {
     saveGame();
   },
 
-      dealDamage: function (dmg, isCrit, fromTap, ignoreAffinity) {
+  dealDamage: function (dmg, isCrit, fromTap, ignoreAffinity) {
     if (!game.enemy) return;
+    this.prepareEnemy(game.enemy);
 
     dmg = Math.max(0, Number(dmg || 0));
     if (!ignoreAffinity) dmg *= getDamageAffinity().mult;
@@ -671,11 +765,11 @@ var CombatEngine = {
       if (window.CombatReportManager) CombatReportManager.logArchetypeImpact("corruptedDamageLost", preCorruptedDmg - dmg);
     }
 
-    if (game.enemy.vulnerableUntil && Date.now() < game.enemy.vulnerableUntil) {
+    if (Number(game.enemy.vulnerableRounds || 0) > 0) {
       dmg *= (1 + Number(game.enemy.vulnerableMult || 0));
     }
 
-    if (game.enemy.isBoss && game.enemy.shieldActiveUntil && Date.now() < game.enemy.shieldActiveUntil) {
+    if (game.enemy.isBoss && Number(game.enemy.shieldRounds || 0) > 0) {
       dmg *= (1 - BOSS_SHIELD_REDUCTION);
     }
 
@@ -916,14 +1010,10 @@ var CombatEngine = {
   }
 };
 
-function playerAttack() { CombatEngine.requestPlayerAttack(); }
-function autoAttack() { CombatEngine.autoAttack(0.1); }
-function autoTap() { CombatEngine.autoTap(); }
+function heroBasicAttack() { CombatEngine.heroAction("basic"); }
 
 window.CombatEngine = CombatEngine;
-window.playerAttack = playerAttack;
-window.autoAttack = autoAttack;
-window.autoTap = autoTap;
+window.heroBasicAttack = heroBasicAttack;
 window.showFloatingDamage = showFloatingDamage;
 window.showGoldPopup = showGoldPopup;
 window.showCounterSuccessPopup = showCounterSuccessPopup;
@@ -931,3 +1021,8 @@ window.getDamageAffinity = getDamageAffinity;
 window.getPlayerDamageType = getPlayerDamageType;
 window.getEnemyWillCritPenalty = getEnemyWillCritPenalty;
 window.getConfiguredCounterSlotsForCondition = getConfiguredCounterSlotsForCondition;
+window.ROUND_INTERVAL_MS = ROUND_INTERVAL_MS;
+window.CELERITY_GAUGE_MAX = CELERITY_GAUGE_MAX;
+window.BOSS_DMG_MULT = BOSS_DMG_MULT;
+window.ENEMY_POWER_DMG_COEF = ENEMY_POWER_DMG_COEF;
+window.COMBAT_MODES = COMBAT_MODES;

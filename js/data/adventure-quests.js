@@ -33,10 +33,10 @@ var ADVENTURE_QUESTS = {
     section: "adventure",
     difficulty: "easy",
     progressionStage: "world_start",
-    category: "main",
+    category: "side",
     worldId: "forest",
     adventureIndex: 0,
-    gatesTransitionTo: 1,
+    gatesTransitionTo: 1, // v3.100.0 : category "side" — seule la chaîne Histoire (story-quests.js) est « Principale »
     name: "Prouver sa valeur",
     story: "Le Roi Slime géant règne sur la Lisière depuis des lunes, gardant jalousement le passage vers le cœur de la forêt. Pour qu'on te laisse poursuivre, il faudra d'abord montrer que tu n'es pas qu'un simple aventurier de passage.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.png",
@@ -65,7 +65,7 @@ var ADVENTURE_QUESTS = {
     section: "adventure",
     difficulty: "medium",
     progressionStage: "world_end",
-    category: "main",
+    category: "side", // v3.100.1 : « Principale » réservée à la chaîne Histoire
     worldId: "forest",
     adventureIndex: 1,
     gatesNextWorld: true,
@@ -90,7 +90,7 @@ var ADVENTURE_QUESTS = {
     section: "adventure",
     difficulty: "easy",
     progressionStage: "world_start",
-    category: "main", // débloque un bâtiment de Production -> structurellement principale
+    category: "side", // v3.100.1 : « Principale » réservée à la chaîne Histoire (story-quests.js)
     worldId: "forest",
     adventureIndex: 0,
     name: "La Meute Affamée",

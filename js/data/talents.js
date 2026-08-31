@@ -4,16 +4,16 @@
 
 var TALENTTREE = {
   combat: [
-    { id: "t_sharpened_blades", name: "Lames affûtées", icon: "🗡️", img: "images/Icons/talents/t_sharpened_blades.png", slot: "top", tier: null, side: null, maxLevel: 3, perLevel: 0.05, effect: "+5% dégâts de tap finaux, par niveau." },
+    { id: "t_sharpened_blades", name: "Lames affûtées", icon: "🗡️", img: "images/Icons/talents/t_sharpened_blades.png", slot: "top", tier: null, side: null, maxLevel: 3, perLevel: 0.05, effect: "+5% dégâts d'Attaque finaux, par niveau." },
 
     { id: "t_war_instinct", name: "Instinct de guerre", icon: "🔥", img: "images/Icons/talents/t_war_instinct.png", slot: "upper_left", tier: "upper", side: "left", requires: "t_sharpened_blades", maxLevel: 3, perLevel: 0.05, effect: "+5% dégâts contre les boss, par niveau." },
-    { id: "t_auto_tap", name: "Main spectrale", icon: "👆", img: "images/Icons/talents/t_auto_tap.png", slot: "upper_right", tier: "upper", side: "right", requires: "t_sharpened_blades", maxLevel: 3, perLevel: 1, effect: "Auto-tap automatique — toutes les 2s / 1.5s / 1s selon le niveau." },
+    { id: "t_auto_tap", name: "Main spectrale", icon: "👆", img: "images/Icons/talents/t_auto_tap.png", slot: "upper_right", tier: "upper", side: "right", requires: "t_sharpened_blades", maxLevel: 3, perLevel: 0.15, effect: "+15% de remplissage de la jauge de célérité par niveau (frappes bonus plus fréquentes)." },
 
-    { id: "t_precise_strike", name: "Frappe précise", icon: "🎯", img: "images/Icons/talents/t_precise_strike.png", slot: "mid_left", tier: "mid", side: "left", requires: "t_war_instinct", maxLevel: 3, perLevel: 0.06, effect: "+6% chance de critique sur les taps, par niveau." },
-    { id: "t_battle_trance", name: "Transe de bataille", icon: "⚡", img: "images/Icons/talents/t_battle_trance.png", slot: "mid_right", tier: "mid", side: "right", requires: "t_auto_tap", maxLevel: 3, perLevel: 0.12, effect: "+12% vitesse d'attaque de l'auto-tap, par niveau." },
+    { id: "t_precise_strike", name: "Frappe précise", icon: "🎯", img: "images/Icons/talents/t_precise_strike.png", slot: "mid_left", tier: "mid", side: "left", requires: "t_war_instinct", maxLevel: 3, perLevel: 0.06, effect: "+6% chance de critique sur tes attaques, par niveau." },
+    { id: "t_battle_trance", name: "Transe de bataille", icon: "⚡", img: "images/Icons/talents/t_battle_trance.png", slot: "mid_right", tier: "mid", side: "right", requires: "t_auto_tap", maxLevel: 3, perLevel: 0.12, effect: "Les frappes bonus (jauge de célérité pleine) infligent +12% dégâts, par niveau." },
 
     { id: "t_boss_slayer", name: "Tueur de boss", icon: "👑", img: "images/Icons/talents/t_boss_slayer.png", slot: "inner_left", tier: "inner", side: "left", requires: "t_precise_strike", maxLevel: 3, perLevel: 0.08, effect: "+8% dégâts finaux contre les boss, par niveau.", capstone: true },
-    { id: "t_assault_frenzy", name: "Frénésie d'assaut", icon: "💥", img: "images/Icons/talents/t_assault_frenzy.png", slot: "inner_right", tier: "inner", side: "right", requires: "t_battle_trance", maxLevel: 3, perLevel: 0.25, effect: "Tous les 20 taps, le prochain inflige +25% dégâts, par niveau.", capstone: true },
+    { id: "t_assault_frenzy", name: "Frénésie d'assaut", icon: "💥", img: "images/Icons/talents/t_assault_frenzy.png", slot: "inner_right", tier: "inner", side: "right", requires: "t_battle_trance", maxLevel: 3, perLevel: 0.25, effect: "Toutes les 8 Attaques, la suivante inflige +25% dégâts, par niveau.", capstone: true },
 
     { id: "t_bloodlust", name: "Soif de sang", icon: "🩸", img: "images/Icons/talents/t_bloodlust.png", slot: "lower_left", tier: "lower", side: "left", requires: "t_boss_slayer", maxLevel: 3, perLevel: 0.03, perLevelCap: 0.15, effect: "+3% dégâts contre les boss par ascension (plafond 15%), par niveau.", capstone: true },
     { id: "t_perfect_execution", name: "Exécution parfaite", icon: "☠️", img: "images/Icons/talents/t_perfect_execution.png", slot: "lower_right", tier: "lower", side: "right", requires: "t_assault_frenzy", maxLevel: 3, perLevel: 0.15, effect: "Les boss sous 20% PV subissent +15% dégâts finaux, par niveau.", capstone: true }
@@ -38,16 +38,16 @@ var TALENTTREE = {
   survival: [
     { id: "t_regenerate", name: "Cœur vaillant", icon: "❤️", img: "images/Icons/talents/t_regenerate.png", slot: "top", tier: null, side: null, maxLevel: 3, perLevel: 0.05, effect: "+5% PV max, par niveau." },
 
-    { id: "t_thick_skin", name: "Bouclier renforcé", icon: "🛡️", img: "images/Icons/talents/t_thick_skin.png", slot: "upper_left", tier: "upper", side: "left", requires: "t_regenerate", maxLevel: 3, perLevel: 2000, effect: "L'action defense de ta classe (Garde/Esquive/Barrière) dure +2s, par niveau." },
+    { id: "t_thick_skin", name: "Bouclier renforcé", icon: "🛡️", img: "images/Icons/talents/t_thick_skin.png", slot: "upper_left", tier: "upper", side: "left", requires: "t_regenerate", maxLevel: 3, perLevel: 1, effect: "L'action defense de ta classe (Garde/Esquive/Barrière) dure +1 round, par niveau." },
     { id: "t_second_wind", name: "Peau de pierre", icon: "🪨", img: "images/Icons/talents/t_second_wind.png", slot: "upper_right", tier: "upper", side: "right", requires: "t_regenerate", maxLevel: 3, perLevel: 0.02, effect: "+2% défense passive (hors action defense de classe), par niveau." },
 
     { id: "t_calm_breath", name: "Riposte du bouclier", icon: "🍃", img: "images/Icons/talents/t_calm_breath.png", slot: "mid_left", tier: "mid", side: "left", requires: "t_thick_skin", maxLevel: 3, perLevel: 0.05, effect: "+5% de réduction/absorption/évasion supplémentaire pendant l'action defense de ta classe, par niveau (en plus de sa valeur de base)." },
     { id: "t_tenacious_will", name: "Vitalité tenace", icon: "🌬️", img: "images/Icons/talents/t_tenacious_will.png", slot: "mid_right", tier: "mid", side: "right", requires: "t_second_wind", maxLevel: 3, perLevel: 0.08, effect: "+8% PV max, par niveau." },
 
-    { id: "t_essence_bloom", name: "Sang-froid", icon: "🔮", img: "images/Icons/talents/t_essence_bloom.png", slot: "inner_left", tier: "inner", side: "left", requires: "t_calm_breath", maxLevel: 3, perLevel: 0.10, effect: "-10% de pénalité d'or à la défaite, par niveau.", capstone: true },
+    { id: "t_essence_bloom", name: "Sang-froid", icon: "🔮", img: "images/Icons/talents/t_essence_bloom.png", slot: "inner_left", tier: "inner", side: "left", requires: "t_calm_breath", maxLevel: 3, perLevel: 0.10, effect: "Tu te relèves avec 10% de tes PV max après une défaite, par niveau." /* v3.101.0 : plus de pénalité d'or */, capstone: true },
     { id: "t_vital_anchor", name: "Constitution de fer", icon: "⚓", img: "images/Icons/talents/t_vital_anchor.png", slot: "inner_right", tier: "inner", side: "right", requires: "t_tenacious_will", maxLevel: 3, perLevel: 0.05, effect: "+5% PV max ET +5% défense passive, par niveau.", capstone: true },
 
-    { id: "t_last_stand", name: "Repos du guerrier", icon: "🕯️", img: "images/Icons/talents/t_last_stand.png", slot: "lower_left", tier: "lower", side: "left", requires: "t_essence_bloom", maxLevel: 3, perLevel: 0.10, effect: "-10% cooldown des repos (Campement), par niveau.", capstone: true },
+    { id: "t_last_stand", name: "Repos du guerrier", icon: "🕯️", img: "images/Icons/talents/t_last_stand.png", slot: "lower_left", tier: "lower", side: "left", requires: "t_essence_bloom", maxLevel: 3, perLevel: 0.10, effect: "+25% de vitesse de régénération au Campement, par niveau." /* v3.101.0 : plus de repos à horloge */, capstone: true },
     { id: "t_immutable_guardian", name: "Gardien immuable", icon: "🌳", img: "images/Icons/talents/t_immutable_guardian.png", slot: "lower_right", tier: "lower", side: "right", requires: "t_vital_anchor", maxLevel: 3, perLevel: 0.10, effect: "+10% PV max et +5% défense passive, par niveau.", capstone: true }
   ]
 };

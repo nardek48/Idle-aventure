@@ -275,8 +275,9 @@
   font-size: 0;
 }
 
-#enemy-emoji:active {
-  transform: scale(0.94);
+/* v3.102.0 (P2) : plus de tap sur l'ennemi — l'Attaque est une action de round (bouton dédié). */
+#enemy-emoji {
+  cursor: default;
 }
 
 #enemy-emoji.hit-flash {
@@ -1113,4 +1114,125 @@ img.combat-action-icon {
 .enemy-status-armored.is-suppressed {
   border-color: #60a5fa;
   background: rgba(10, 30, 80, 0.4);
+}
+
+/* =========================
+   v3.102.0 (P2) — combat par rounds : barre de round (n°, jauge de
+   célérité, mode Tactique/Grimoire, Continuer l'attaque), suggestion
+   du Grimoire sur un bouton de compétence, badge double frappe.
+   Positionnée juste au-dessus de .class-resource-bar (même calc()).
+   ========================= */
+.combat-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(80px + clamp(48px, calc(24px + 7vw), 70px) + 12px + 30px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
+  pointer-events: none;
+}
+
+.combat-controls > * {
+  pointer-events: auto;
+}
+
+.combat-round-pill {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.55);
+  background: rgba(15, 20, 32, 0.78);
+  color: #f3e6c4;
+  font-size: clamp(10px, calc(6px + 1.2vw), 12px);
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.combat-gauge {
+  position: relative;
+  flex: 1 1 auto;
+  max-width: 120px;
+  height: 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: rgba(15, 20, 32, 0.78);
+  overflow: hidden;
+}
+
+.combat-gauge-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, #f59e0b, #fde68a);
+  transition: width 0.25s ease;
+}
+
+.combat-gauge-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(9px, calc(5px + 1.2vw), 11px);
+  font-weight: 800;
+  color: #fff7e0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.combat-mode-btn,
+.combat-continue-btn {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.6);
+  background: rgba(15, 20, 32, 0.85);
+  color: #f3e6c4;
+  font-size: clamp(10px, calc(6px + 1.2vw), 12px);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.combat-mode-btn.is-auto {
+  border-color: rgba(147, 197, 253, 0.8);
+  color: #bfdbfe;
+}
+
+.combat-continue-btn.is-active {
+  border-color: rgba(253, 230, 138, 0.9);
+  background: rgba(120, 80, 10, 0.85);
+}
+
+.combat-continue-btn:disabled,
+.combat-mode-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Bouton de compétence suggéré par le Grimoire (mode Tactique) */
+.combat-action-btn.is-suggested {
+  box-shadow: 0 0 0 3px rgba(253, 230, 138, 0.75), 0 0 12px rgba(253, 230, 138, 0.6);
+}
+
+.combat-action-suggest-tag {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  z-index: 2;
+  font-size: clamp(9px, calc(5px + 1.2vw), 11px);
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+
+/* Bouton Attaque verrouillé (mode Grimoire / Continuer) */
+.combat-attack-btn.auto-mode {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+  cursor: default;
+}
+
+.enemy-status-double-strike {
+  border-color: rgba(253, 230, 138, 0.8);
 }

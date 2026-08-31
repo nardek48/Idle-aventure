@@ -1,7 +1,7 @@
 "use strict";
 /* systems/class-combat-system.js — ADAPTATEUR classes (data/class-skills.js) <-> game.* et combat-engine.js.
-   useSkill() = point d'entrée UI ; tickAutoSkills() = combat auto (Grimoire d'abord, repli par défaut sinon) ; tick() = cooldowns+régén passive.
-   Détail complet (logique de réserve/exclusion Grimoire, contres d'archétypes, etc.) : COMMENTAIRES_ORIGINAUX.md */
+   v3.102.0 (P2) : tout en ROUNDS. useSkill() = une action de round ; chooseRoundAction() = décision Grimoire/repli
+   (exécutée par CombatEngine.tickRoundClock en mode Grimoire, suggérée en Tactique) ; onRoundEnd() = cooldowns + mana passif + défense. */
 var CLASS_ACTION_ICON_FALLBACK = {
   knight_heavy_strike: "./images/Icons/special_attacks/smashing_blow.png",
   knight_guard_break: "./images/Icons/special_attacks/attack6.png",
@@ -46,7 +46,7 @@ var ClassCombatManager = {
       game.classCooldowns = (typeof createCooldownState === "function") ? createCooldownState() : {};
     }
     if (typeof game.classActiveDefense === "undefined") {
-      game.classActiveDefense = null; // { actionId, effectType, value, expiresAt } ou null
+      game.classActiveDefense = null; // { actionId, effectType, value, roundsLeft } ou null
     }
   },
 
@@ -93,66 +93,61 @@ var ClassCombatManager = {
     return {
       enemyHp: game.enemy ? game.enemy.hp : null,
       enemyMaxHp: game.enemy ? game.enemy.maxHp : null,
-      isSilenced: !!(game.silencedUntil && Date.now() < game.silencedUntil)
+      isSilenced: Number(game.silencedRounds || 0) > 0
     };
   },
 
     getGrimoireCombatContext: function () {
     var base = this.getCombatContext();
-    var now = Date.now();
+    var e = game.enemy;
 
-    base.chargeIncoming = !!(game.enemy && game.enemy.chargeTelegraphUntil && now < game.enemy.chargeTelegraphUntil);
-    base.shieldIncoming = !!(game.enemy && game.enemy.shieldTelegraphUntil && now < game.enemy.shieldTelegraphUntil);
-    base.healIncoming = !!(game.enemy && game.enemy.healTelegraphUntil && now < game.enemy.healTelegraphUntil);
-    base.enemySilenceIncoming = !!(game.enemy && game.enemy.silenceTelegraphUntil && now < game.enemy.silenceTelegraphUntil);
+    base.chargeIncoming = !!(e && e.chargeTelegraphed);
+    base.shieldIncoming = !!(e && e.shieldTelegraphed);
+    base.healIncoming = !!(e && e.healTelegraphed);
+    base.enemySilenceIncoming = !!(e && e.silenceTelegraphed);
 
     var heroMaxHp = Number(game.heroMaxHp || 0);
     base.heroHpPercent = heroMaxHp > 0 ? Number(game.heroHp || 0) / heroMaxHp : null;
 
-    base.secondsUntilEnemyAttack = this.getSecondsUntilNextEnemyAttack();
+    // v3.102.0 : « enemyAttackIncoming » = double frappe ennemie au prochain tour (jauge de célérité pleine)
+    base.enemyDoubleStrikeNext = !!(e && window.CombatEngine && typeof CombatEngine.enemyDoubleStrikeNext === "function"
+      && CombatEngine.enemyDoubleStrikeNext());
 
-    base.enemyArchetype = game.enemy ? (game.enemy.archetype || null) : null;
+    base.enemyArchetype = e ? (e.archetype || null) : null;
 
     return base;
   },
 
-    getSecondsUntilNextEnemyAttack: function () {
-    if (!game.enemy || !game.enemy.stats) return null;
+  /* Rounds avant le prochain télégraphe d'un pattern (null si déjà télégraphié ou sans objet). */
+  getRoundsUntilPatternTrigger: function (conditionId) {
+    var e = game.enemy;
+    if (!e) return null;
+    if (window.CombatEngine && typeof CombatEngine.prepareEnemy === "function") CombatEngine.prepareEnemy(e);
 
-    var celerity = Number(game.enemy.stats.celerity || 0);
-    var interval = (typeof ENEMY_ATTACK_BASE_INTERVAL === "number" ? ENEMY_ATTACK_BASE_INTERVAL : 3) / (1 + celerity / 40);
-    var elapsed = Number(game._enemyAttackTimer || 0);
-    var remaining = interval - elapsed;
-    return remaining > 0 ? remaining : 0;
-  },
-
-    getSecondsUntilPatternTrigger: function (conditionId) {
-    if (!game.enemy) return null;
+    if (conditionId === "enemyAttackIncoming") {
+      var gain = (window.CombatEngine && typeof CombatEngine.getEnemyGaugeGain === "function") ? CombatEngine.getEnemyGaugeGain(e) : 0;
+      if (gain <= 0) return null;
+      var max = (typeof CELERITY_GAUGE_MAX === "number") ? CELERITY_GAUGE_MAX : 100;
+      return Math.max(0, Math.ceil((max - Number(e.gauge || 0)) / gain) - 1);
+    }
 
     var fieldMap = {
-      chargeIncoming: { telegraph: "chargeTelegraphUntil", nextAt: "_chargeNextAt", timer: "_chargeTimer" },
-      shieldIncoming: { telegraph: "shieldTelegraphUntil", nextAt: "_shieldNextAt", timer: "_shieldTimer" },
-      healIncoming: { telegraph: "healTelegraphUntil", nextAt: "_healNextAt", timer: "_healTimer" },
-      enemySilenceIncoming: { telegraph: "silenceTelegraphUntil", nextAt: "_silenceNextAt", timer: "_silenceTimer" }
+      chargeIncoming: { flag: "chargeTelegraphed", counter: "chargeIn" },
+      shieldIncoming: { flag: "shieldTelegraphed", counter: "shieldIn" },
+      healIncoming: { flag: "healTelegraphed", counter: "healIn" },
+      enemySilenceIncoming: { flag: "silenceTelegraphed", counter: "silenceIn" }
     };
     var fields = fieldMap[conditionId];
     if (!fields) return null;
-
-    if (game.enemy[fields.telegraph]) return null; // déjà télégraphié, plus en phase d'approche
-
-    var nextAt = Number(game.enemy[fields.nextAt] || 0);
-    if (nextAt <= 0) return null; // minuteur pas encore démarré
-
-    var elapsed = Number(game.enemy[fields.timer] || 0);
-    var remaining = nextAt - elapsed;
-    return remaining > 0 ? remaining : 0;
+    if (e[fields.flag]) return null; // déjà télégraphié, impact au prochain tour
+    return Math.max(0, Number(e[fields.counter] || 0));
   },
 
     getActiveDefenseEffect: function () {
     this.ensure();
     var active = game.classActiveDefense;
     if (!active) return null;
-    if (Date.now() >= active.expiresAt) {
+    if (!(Number(active.roundsLeft || 0) > 0)) {
       game.classActiveDefense = null;
       return null;
     }
@@ -190,7 +185,7 @@ var ClassCombatManager = {
       var combatContextCheck = this.getCombatContext();
       if (action && resourceStateCheck && typeof canUseAction === "function"
         && !canUseAction(resourceStateCheck, game.classCooldowns, action, combatContextCheck)) {
-        var cooldownRemaining = (game.classCooldowns && game.classCooldowns[action.id]) || 0;
+        var cooldownRemaining = (game.classCooldowns && game.classCooldowns[action.id]) || 0; // en rounds
         var affordable = resourceStateCheck.current >= (action.resourceCost || 0);
         if (cooldownRemaining > 0) {
           CombatReportManager.logFailedAttempt(slot, "cooldown");
@@ -243,8 +238,6 @@ var ClassCombatManager = {
       showToast((action.icon || "✨") + " " + action.label, 1400);
     }
 
-    if (typeof renderClassSkillButtons === "function") renderClassSkillButtons();
-    saveGame();
     return true;
   },
 
@@ -252,21 +245,13 @@ var ClassCombatManager = {
     if (!matchedConditionId || !game.enemy) return;
     if (!Array.isArray(action.counters) || action.counters.indexOf(matchedConditionId) === -1) return;
 
-    var countered = false;
-
-    if (matchedConditionId === "chargeIncoming" && game.enemy.chargeTelegraphUntil) {
-      game.enemy.chargeTelegraphUntil = 0;
-      countered = true;
-    } else if (matchedConditionId === "shieldIncoming" && game.enemy.shieldTelegraphUntil) {
-      game.enemy.shieldTelegraphUntil = 0;
-      countered = true;
-    } else if (matchedConditionId === "healIncoming" && game.enemy.healTelegraphUntil) {
-      game.enemy.healTelegraphUntil = 0;
-      countered = true;
-    } else if (matchedConditionId === "enemySilenceIncoming" && game.enemy.silenceTelegraphUntil) {
-      game.enemy.silenceTelegraphUntil = 0;
-      countered = true;
-    }
+    var flagByCondition = {
+      chargeIncoming: "chargeTelegraphed",
+      shieldIncoming: "shieldTelegraphed",
+      healIncoming: "healTelegraphed",
+      enemySilenceIncoming: "silenceTelegraphed"
+    };
+    var countered = !!(flagByCondition[matchedConditionId] && game.enemy[flagByCondition[matchedConditionId]]);
 
     if (countered) {
       if (window.CombatReportManager) {
@@ -277,7 +262,9 @@ var ClassCombatManager = {
       }
       addLog("⚡ Contre réussi : " + (action.label || "l'action") + " annule l'attaque adverse !", "event");
       showToast("⚡ Contré !", 1600);
-      game.enemy.counteredUntil = Date.now() + (typeof COUNTER_CONFIRMATION_MS === "number" ? COUNTER_CONFIRMATION_MS : 800);
+      if (window.CombatEngine && typeof CombatEngine.rescheduleCounteredPattern === "function") {
+        CombatEngine.rescheduleCounteredPattern(matchedConditionId); // annule le pattern, relance son compte à rebours
+      }
       if (typeof showCounterSuccessPopup === "function") showCounterSuccessPopup();
       if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
     }
@@ -290,8 +277,9 @@ var ClassCombatManager = {
 
     var hits = Math.max(1, Number(action.hits || 1));
     var lastHitDmg = 0;
+    var target = game.enemy;
     for (var i = 0; i < hits; i++) {
-      if (!game.enemy) break;
+      if (!game.enemy || game.enemy !== target) break; // v3.102.0 : l'ennemi est mort, les coups restants sont perdus
       var dmg = baseDamage * Number(action.damageMultiplier || 1);
       var critChance = Math.max(0, EquipmentManager.effectiveCritChance() - getEnemyWillCritPenalty());
       var isCrit = chance(critChance);
@@ -300,7 +288,7 @@ var ClassCombatManager = {
       CombatEngine.dealDamage(dmg, isCrit, true, !!action.ignoreAffinity);
     }
 
-    if (game.enemy) this.applyActionEffects(action, lastHitDmg, matchedConditionId);
+    if (game.enemy && game.enemy === target) this.applyActionEffects(action, lastHitDmg, matchedConditionId);
   },
 
     applyActionEffects: function (action, lastHitDmg, matchedConditionId) {
@@ -310,7 +298,7 @@ var ClassCombatManager = {
       if (!effect || !game.enemy) continue;
 
       if (effect.type === "enemyVulnerability") {
-        game.enemy.vulnerableUntil = Date.now() + Number(effect.durationMs || 0);
+        game.enemy.vulnerableRounds = Math.max(1, Number(effect.durationRounds || 1));
         game.enemy.vulnerableMult = Number(effect.value || 0);
       } else if (effect.type === "damageOverTime") {
         this.applyDoT(effect, lastHitDmg);
@@ -333,10 +321,8 @@ var ClassCombatManager = {
     var currentPct = 1 - (Number(game.enemy.hp || 0) / Number(game.enemy.maxHp || 1));
     var reduction = (typeof ENRAGED_SUPPRESSION_REDUCTION_PCT === "number") ? ENRAGED_SUPPRESSION_REDUCTION_PCT : 0.20;
     var reducedPct = Math.max(0, currentPct - reduction);
-    var freezeDurationMs = (typeof ENRAGED_FREEZE_DURATION_MS === "number") ? ENRAGED_FREEZE_DURATION_MS : 4000;
-
     game.enemy.rageFrozenPct = reducedPct;
-    game.enemy.rageFreezeUntil = Date.now() + freezeDurationMs;
+    game.enemy.rageFreezeRounds = (typeof ENRAGED_FREEZE_DURATION_ROUNDS === "number") ? ENRAGED_FREEZE_DURATION_ROUNDS : 2;
 
     addLog("😤 La rage de " + game.enemy.name + " retombe temporairement !", "event");
     showToast("😤 Rage apaisée !", 1400);
@@ -357,8 +343,7 @@ var ClassCombatManager = {
     applyVampiricLifestealSuppression: function () {
     if (!game.enemy || game.enemy.archetype !== "vampiric") return;
 
-    var suppressionDurationMs = (typeof VAMPIRIC_SUPPRESSION_DURATION_MS === "number") ? VAMPIRIC_SUPPRESSION_DURATION_MS : 4000;
-    game.enemy.vampiricSuppressedUntil = Date.now() + suppressionDurationMs;
+    game.enemy.vampiricSuppressedRounds = (typeof VAMPIRIC_SUPPRESSION_DURATION_ROUNDS === "number") ? VAMPIRIC_SUPPRESSION_DURATION_ROUNDS : 2;
 
     addLog("🧛 Le vol de vie de " + game.enemy.name + " est bloqué temporairement !", "event");
     showToast("🧛 Vol de vie bloqué !", 1400);
@@ -368,11 +353,10 @@ var ClassCombatManager = {
     applyArmorSuppression: function () {
     if (!game.enemy || game.enemy.archetype !== "armored") return;
 
-    var suppressionDurationMs = (typeof ARMORED_SUPPRESSION_DURATION_MS === "number") ? ARMORED_SUPPRESSION_DURATION_MS : 4000;
     var suppressedReduction = (typeof ARMORED_SUPPRESSION_REDUCTION_PCT === "number") ? ARMORED_SUPPRESSION_REDUCTION_PCT : 0.05;
 
     game.enemy.armorSuppressedReduction = suppressedReduction;
-    game.enemy.armorSuppressedUntil = Date.now() + suppressionDurationMs;
+    game.enemy.armorSuppressedRounds = (typeof ARMORED_SUPPRESSION_DURATION_ROUNDS === "number") ? ARMORED_SUPPRESSION_DURATION_ROUNDS : 2;
 
     addLog("🛡️‍🩹 Le blindage de " + game.enemy.name + " se fissure temporairement !", "event");
     showToast("🛡️‍🩹 Blindage fissuré !", 1400);
@@ -380,46 +364,37 @@ var ClassCombatManager = {
   },
 
     applyDoT: function (effect, lastHitDmg) {
-    var perTick = Math.max(0, Number(lastHitDmg || 0) * Number(effect.percentPerSecond || 0));
     game.enemy.dot = {
-      perTickDamage: perTick,
-      remainingMs: Number(effect.durationMs || 0),
-      accumMs: 0 // accumulateur pour ticker toutes les 1000ms même avec un dt irrégulier
+      perRound: Math.max(0, Math.floor(Number(lastHitDmg || 0) * Number(effect.percentPerRound || 0))),
+      rounds: Math.max(1, Number(effect.durationRounds || 1))
     };
   },
 
-    tickDoT: function (elapsedMs) {
+  /* Un tick de DoT en fin de round (appelé par CombatEngine.endRound). */
+  tickDoTRound: function () {
     if (!game.enemy || !game.enemy.dot) return;
-
     var dot = game.enemy.dot;
-    dot.accumMs += elapsedMs;
-    dot.remainingMs -= elapsedMs;
-
-    var guard = 0;
-    while (dot.accumMs >= 1000 && guard < 10) {
-      dot.accumMs -= 1000;
-      guard++;
-      if (!game.enemy || !game.enemy.dot) return; // l'ennemi a pu mourir sur un tick précédent de cette boucle
-      CombatEngine.dealDamage(dot.perTickDamage, false, false, true); // ignoreAffinity: true, dégâts déjà calculés sur le coup d'origine
+    var target = game.enemy;
+    if (dot.perRound > 0) {
+      CombatEngine.dealDamage(dot.perRound, false, false, true); // ignoreAffinity : déjà appliquée sur le coup d'origine
     }
-
-    if (game.enemy && game.enemy.dot && game.enemy.dot.remainingMs <= 0) {
-      delete game.enemy.dot;
-    }
+    if (game.enemy !== target || !game.enemy.dot) return;
+    dot.rounds -= 1;
+    if (dot.rounds <= 0) delete game.enemy.dot;
   },
 
     activateDefenseEffect: function (action) {
     var effect = (action.effects && action.effects[0]) || null;
     if (!effect) return;
 
-    var talentDurationBonusMs = (game.talents && game.talents.t_thick_skin) ? game.talents.t_thick_skin * 2000 : 0;
+    var talentDurationBonusRounds = (game.talents && game.talents.t_thick_skin) ? game.talents.t_thick_skin : 0; // +1 round/niveau
     var talentValueBonus = (game.talents && game.talents.t_calm_breath) ? game.talents.t_calm_breath * 0.05 : 0;
 
     game.classActiveDefense = {
       actionId: action.id,
       effectType: effect.type, // "damageReduction" | "evasion" | "damageAbsorption"
       value: Math.min(1, Number(effect.value || 0) + talentValueBonus),
-      expiresAt: Date.now() + Number(effect.durationMs || 0) + talentDurationBonusMs
+      roundsLeft: Math.max(1, Number(effect.durationRounds || 1)) + talentDurationBonusRounds
     };
   },
 
@@ -443,29 +418,29 @@ var ClassCombatManager = {
     });
   },
 
-    tick: function (dt) {
+    /* Fin de round côté héros : cooldowns -1, mana passif, défense active -1 round. */
+  onRoundEnd: function () {
     this.ensure();
-    if (!this.isCombatActive()) return;
-
-    var elapsedMs = Math.max(0, Number(dt || 0)) * 1000;
-    if (elapsedMs <= 0) return;
-
-    this.tickDoT(elapsedMs);
-
     var classId = this.getCurrentClassId();
     if (!classId) return;
-
     this.ensureForCurrentClass();
 
-    game.classCooldowns = tickCooldowns(game.classCooldowns, elapsedMs);
+    game.classCooldowns = tickCooldowns(game.classCooldowns, 1);
 
     var resourceDef = (typeof getClassResource === "function") ? getClassResource(classId) : null;
     if (resourceDef && resourceDef.generation && resourceDef.generation.type === "passiveAndBasicAttack") {
-      game.classResource = tickResourceRegen(game.classResource, resourceDef.generation, elapsedMs);
+      game.classResource = tickResourceRegen(game.classResource, resourceDef.generation, 1);
+    }
+
+    if (game.classActiveDefense) {
+      game.classActiveDefense.roundsLeft = Number(game.classActiveDefense.roundsLeft || 0) - 1;
+      if (game.classActiveDefense.roundsLeft <= 0) game.classActiveDefense = null;
     }
   },
 
-    shouldActivateGrimoireReserve: function (activeRules, kit, resourceState) {
+    /* Réserve : si le télégraphe de la règle de contre prioritaire est à ≤ GRIMOIRE_APPROACH_WINDOW_ROUNDS,
+     le repli garde le coût de l'action de contre — sauf si elle est déjà prête ou si l'ennemi mourra avant. */
+  shouldActivateGrimoireReserve: function (activeRules, kit, resourceState) {
     if (!activeRules || !kit || !resourceState) return false;
     if (typeof getPrioritaryCounterRule !== "function") return false;
 
@@ -475,64 +450,52 @@ var ClassCombatManager = {
     var action = kit.actions[rule.actionSlot];
     if (!action || !(action.resourceCost > 0)) return false;
 
-    var approachWindowSeconds = (typeof getGrimoireApproachWindowSeconds === "function")
-      ? getGrimoireApproachWindowSeconds(action.resourceCost)
-      : 0;
+    var windowRounds = (typeof getGrimoireApproachWindowRounds === "function")
+      ? getGrimoireApproachWindowRounds(action.resourceCost)
+      : 3;
 
-    var secondsRemaining = this.getSecondsUntilPatternTrigger(rule.conditionId);
-    if (secondsRemaining === null) return false;
-    if (secondsRemaining > approachWindowSeconds) return false; // pattern encore loin, pas la peine de brider
+    var roundsRemaining = this.getRoundsUntilPatternTrigger(rule.conditionId);
+    if (roundsRemaining === null) return false;
+    if (roundsRemaining > windowRounds) return false;
 
-    if (this.isCounterActionAlreadyOnTrack(action, resourceState, secondsRemaining)) return false;
+    if (this.isCounterActionAlreadyOnTrack(action, resourceState, roundsRemaining)) return false;
 
     var resourceDef = (typeof getClassResource === "function") ? getClassResource(kit.classId) : null;
     if (!resourceDef) return false;
-
-    var totalCelerity = (window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function")
-      ? CombatEngine.getTotalCelerity()
-      : 0;
-    var effectiveCooldownMs = (typeof computeEffectiveCooldownMs === "function")
-      ? computeEffectiveCooldownMs(BASIC_ATTACK_BASE_COOLDOWN_MS, totalCelerity)
-      : BASIC_ATTACK_BASE_COOLDOWN_MS;
 
     var basicDamageEstimate = (window.EquipmentManager && typeof EquipmentManager.effectiveTapDamage === "function")
       ? EquipmentManager.effectiveTapDamage()
       : 0;
 
     var estimatedGain = (typeof estimateResourceGainOverWindow === "function")
-      ? estimateResourceGainOverWindow(resourceDef, secondsRemaining, effectiveCooldownMs, basicDamageEstimate)
+      ? estimateResourceGainOverWindow(resourceDef, roundsRemaining, basicDamageEstimate)
       : 0;
 
-    var predictedTotal = Number(resourceState.current || 0) + estimatedGain;
-    if (predictedTotal < action.resourceCost) return false;
+    if (Number(resourceState.current || 0) + estimatedGain < action.resourceCost) return false;
 
-    if (typeof estimateTimeToKillMs === "function" && game.enemy) {
+    if (typeof estimateRoundsToKill === "function" && game.enemy) {
       var heroStats = {
         weaponType: (window.HEROES_DB && game.heroId) ? (HEROES_DB[game.heroId] && HEROES_DB[game.heroId].weaponType) : null,
-        tapDamage: basicDamageEstimate,
-        effectiveBasicCooldownMs: effectiveCooldownMs,
-        autoDps: (window.EquipmentManager && typeof EquipmentManager.effectiveAutoDps === "function") ? EquipmentManager.effectiveAutoDps() : 0,
+        attackDamage: basicDamageEstimate,
+        celerity: (window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function") ? CombatEngine.getTotalCelerity() : 0,
         critChance: ((window.EquipmentManager && typeof EquipmentManager.effectiveCritChance === "function") ? EquipmentManager.effectiveCritChance() : 0) / 100,
         critMult: (window.EquipmentManager && typeof EquipmentManager.effectiveCritMult === "function") ? EquipmentManager.effectiveCritMult() : 1
       };
-      var enemyStats = { hp: game.enemy.hp, resists: game.enemy.resists, weak: game.enemy.weak };
-      var estimatedTtkMs = estimateTimeToKillMs(heroStats, enemyStats);
-      if (estimatedTtkMs <= approachWindowSeconds * 1000) return false; // ennemi mourra probablement avant la fenêtre, laisser le repli taper
+      var enemyStats = { hp: game.enemy.hp, resists: game.enemy.isBoss ? [] : game.enemy.resists, weak: game.enemy.isBoss ? [] : game.enemy.weak };
+      if (estimateRoundsToKill(heroStats, enemyStats) <= roundsRemaining + 1) return false; // l'ennemi mourra avant, on tape
     }
 
     return true;
   },
 
-    isCounterActionAlreadyOnTrack: function (action, resourceState, secondsRemaining) {
+  isCounterActionAlreadyOnTrack: function (action, resourceState, roundsRemaining) {
     if (!action || !resourceState) return false;
     if (Number(resourceState.current || 0) < Number(action.resourceCost || 0)) return false;
 
-    var cooldownRemainingMs = (game.classCooldowns && typeof game.classCooldowns[action.id] === "number")
+    var cooldownRemaining = (game.classCooldowns && typeof game.classCooldowns[action.id] === "number")
       ? game.classCooldowns[action.id]
       : 0;
-    var secondsRemainingMs = Number(secondsRemaining || 0) * 1000;
-
-    return (cooldownRemainingMs + GRIMOIRE_RESERVE_RELEASE_SAFETY_MARGIN_MS) < secondsRemainingMs;
+    return cooldownRemaining <= Number(roundsRemaining || 0);
   },
 
     buildReservedResourceState: function (resourceState, reserveAmount) {
@@ -542,27 +505,22 @@ var ClassCombatManager = {
     });
   },
 
-    tickAutoSkills: function (dt) {
-    if (!game.autoSkillsEnabled) return;
-    if (!this.isCombatActive()) return;
-    if (!game.enemy) return;
-
-    game._autoSkillsAccumMs = Number(game._autoSkillsAccumMs || 0) + Math.max(0, Number(dt || 0)) * 1000;
-    if (game._autoSkillsAccumMs < AUTO_SKILLS_DECISION_INTERVAL_MS) return;
-    game._autoSkillsAccumMs = 0;
+    /* Décision de round de l'auto-pilote : règle du Grimoire applicable d'abord, sinon repli par défaut (avec réserve).
+     Retourne { slot, matchedConditionId } ou null (= Attaque). forExecution=false : suggestion sans effet de bord. */
+  chooseRoundAction: function (forExecution) {
+    if (!game.enemy) return null;
+    if ((game.heroHp || 0) <= 0) return null;
 
     var classId = this.getCurrentClassId();
-    if (!classId || typeof getClassSkills !== "function") return;
+    if (!classId || typeof getClassSkills !== "function") return null;
 
     var kit = getClassSkills(classId);
-    if (!kit) return;
+    if (!kit) return null;
 
     var resourceState = this.ensureForCurrentClass();
-    if (!resourceState) return;
+    if (!resourceState) return null;
 
     var grimoireContext = this.getGrimoireCombatContext();
-    var slot = null;
-    var matchedConditionId = null;
 
     var unlockedSlotCount = (typeof getGrimoireSlotCount === "function")
       ? getGrimoireSlotCount(game.worldsEverReached)
@@ -573,58 +531,37 @@ var ClassCombatManager = {
 
     if (activeRules && activeRules.length && typeof chooseGrimoireAction === "function") {
       var grimoireResult = chooseGrimoireAction(activeRules, kit, resourceState, game.classCooldowns, grimoireContext);
-      if (grimoireResult) {
-        slot = grimoireResult.actionSlot;
-        matchedConditionId = grimoireResult.matchedConditionId;
+      if (grimoireResult) return { slot: grimoireResult.actionSlot, matchedConditionId: grimoireResult.matchedConditionId };
+    }
+
+    var reserveAmount = this.shouldActivateGrimoireReserve(activeRules, kit, resourceState)
+      ? ((typeof getGrimoireCounterReserveAmount === "function") ? getGrimoireCounterReserveAmount(activeRules, kit, game.enemy) : 0)
+      : 0;
+    var resourceStateForFallback = this.buildReservedResourceState(resourceState, reserveAmount);
+
+    var priorityList = (typeof getAutoPolicyDefault === "function") ? getAutoPolicyDefault(classId) : null;
+    if (!priorityList) return null;
+
+    var priorityRule = (activeRules && typeof getPrioritaryCounterRule === "function")
+      ? getPrioritaryCounterRule(activeRules, kit, game.enemy)
+      : null;
+    var priorityListForFallback = priorityRule
+      ? priorityList.filter(function (s) { return s !== priorityRule.actionSlot; })
+      : priorityList;
+
+    if (forExecution && priorityRule && window.CombatReportManager && typeof canUseAction === "function") {
+      var excludedAction = kit.actions[priorityRule.actionSlot];
+      if (excludedAction && canUseAction(resourceState, game.classCooldowns, excludedAction, grimoireContext)) {
+        CombatReportManager.logBlockedByReserve(priorityRule.actionSlot);
       }
     }
 
-    if (!slot) {
-      var reserveAmount = this.shouldActivateGrimoireReserve(activeRules, kit, resourceState)
-        ? ((typeof getGrimoireCounterReserveAmount === "function") ? getGrimoireCounterReserveAmount(activeRules, kit, game.enemy) : 0)
-        : 0;
-      var resourceStateForFallback = this.buildReservedResourceState(resourceState, reserveAmount);
-
-      var priorityList = (typeof getAutoPolicyDefault === "function") ? getAutoPolicyDefault(classId) : null;
-      if (!priorityList) return;
-
-      var priorityRule = (activeRules && typeof getPrioritaryCounterRule === "function")
-        ? getPrioritaryCounterRule(activeRules, kit, game.enemy)
-        : null;
-      var priorityListForFallback = priorityRule
-        ? priorityList.filter(function (s) { return s !== priorityRule.actionSlot; })
-        : priorityList;
-
-      if (priorityRule && window.CombatReportManager && typeof canUseAction === "function") {
-        var excludedAction = kit.actions[priorityRule.actionSlot];
-        if (excludedAction && canUseAction(resourceState, game.classCooldowns, excludedAction, grimoireContext)) {
-          CombatReportManager.logBlockedByReserve(priorityRule.actionSlot);
-        }
-      }
-
-      slot = (typeof chooseAutoAction === "function")
-        ? chooseAutoAction(priorityListForFallback, kit, resourceStateForFallback, game.classCooldowns, grimoireContext)
-        : null;
-      matchedConditionId = null; // jamais de contre depuis le repli par défaut, voir note ci-dessus
-    }
-
-    if (!slot || slot === "basic") return;
-
-    this.useSkill(slot, matchedConditionId);
-  },
-
-    tryAutoBasicAttack: function () {
-    if (!game.autoSkillsEnabled) return;
-    if (!this.isCombatActive()) return;
-    if (!game.enemy) return;
-    if ((game.basicAttackCooldownMs || 0) > 0) return;
-    if (typeof CombatEngine === "undefined" || typeof CombatEngine.playerAttack !== "function") return;
-    CombatEngine.playerAttack();
+    var slot = (typeof chooseAutoAction === "function")
+      ? chooseAutoAction(priorityListForFallback, kit, resourceStateForFallback, game.classCooldowns, grimoireContext)
+      : null;
+    if (!slot || slot === "basic") return null;
+    return { slot: slot, matchedConditionId: null }; // jamais de contre depuis le repli par défaut
   }
 };
-
-var AUTO_SKILLS_DECISION_INTERVAL_MS = 300;
-
-var GRIMOIRE_RESERVE_RELEASE_SAFETY_MARGIN_MS = 600;
 
 window.ClassCombatManager = ClassCombatManager;

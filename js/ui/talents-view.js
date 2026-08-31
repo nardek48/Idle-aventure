@@ -91,9 +91,8 @@ function renderTalentIconHTML(node) {
 }
 
 var TALENT_CURRENT_VALUE_OVERRIDES = {
-  t_auto_tap: function (level) {
-    var vals = { 1: "2s", 2: "1.5s", 3: "1s" };
-    return "Auto-tap actuel : toutes les " + vals[level];
+  t_auto_tap: function (node, level) {
+    return "Jauge de célérité actuelle : +" + Math.round(node.perLevel * level * 100) + "% de remplissage";
   },
   t_interest: function (level) {
     return "Gain d'or passif actuel : ×" + level + " le taux de base";
@@ -104,7 +103,7 @@ var TALENT_CURRENT_VALUE_OVERRIDES = {
     return "Taux actuel : " + rate + "%/ascension (plafond " + cap + "%)";
   },
   t_thick_skin: function (node, level) {
-    return "Bonus actuel : +" + ((node.perLevel * level) / 1000) + "s";
+    return "Bonus actuel : +" + (node.perLevel * level) + " round(s)";
   },
   t_treasure_hunter: function (node, level) {
     return "Bonus actuel : +" + (node.perLevel * level);

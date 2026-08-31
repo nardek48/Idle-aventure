@@ -198,13 +198,11 @@ function buildGrimoireRuleStatusHTML(rule, kit, locked) {
     ? ClassCombatManager.getGrimoireCombatContext()
     : {};
 
-  var secondsUntilTrigger = (rule.conditionId === "enemyAttackIncoming")
-    ? (typeof combatContext.secondsUntilEnemyAttack === "number" ? combatContext.secondsUntilEnemyAttack : null)
-    : ((typeof ClassCombatManager.getSecondsUntilPatternTrigger === "function")
-      ? ClassCombatManager.getSecondsUntilPatternTrigger(rule.conditionId)
-      : null);
+  var roundsUntilTrigger = (typeof ClassCombatManager.getRoundsUntilPatternTrigger === "function")
+    ? ClassCombatManager.getRoundsUntilPatternTrigger(rule.conditionId)
+    : null;
 
-  var status = explainGrimoireRuleStatus(rule, kit, resourceState, game.classCooldowns, combatContext, secondsUntilTrigger);
+  var status = explainGrimoireRuleStatus(rule, kit, resourceState, game.classCooldowns, combatContext, roundsUntilTrigger);
   if (status.code === "no_condition" || status.code === "no_action") return "";
 
   var labelInfo = GRIMOIRE_RULE_STATUS_LABELS[status.code] || { icon: "❔", text: status.code };
@@ -218,20 +216,20 @@ function buildGrimoireRuleStatusHTML(rule, kit, locked) {
     if (rule.conditionId === "heroLowHp") {
       detailParts.push("Seuil : PV ≤ " + Math.round((typeof HERO_LOW_HP_THRESHOLD_PCT === "number" ? HERO_LOW_HP_THRESHOLD_PCT : 0.40) * 100) + "%");
     } else if (rule.conditionId === "enemyAttackIncoming") {
-      detailParts.push("Seuil : ≤ " + ENEMY_ATTACK_ANTICIPATION_THRESHOLD_S + "s avant l'attaque");
-      if (status.secondsUntilTrigger !== null) {
-        detailParts.push("Prochaine attaque dans ~" + status.secondsUntilTrigger.toFixed(1) + "s");
+      detailParts.push("Se déclenche quand la jauge ennemie sera pleine au prochain tour");
+      if (status.roundsUntilTrigger !== null) {
+        detailParts.push("Double frappe dans ~" + status.roundsUntilTrigger + " round(s)");
       }
-    } else if (status.secondsUntilTrigger !== null) {
-      detailParts.push("Prochain télégraphe dans ~" + status.secondsUntilTrigger.toFixed(1) + "s");
+    } else if (status.roundsUntilTrigger !== null) {
+      detailParts.push("Prochain télégraphe dans ~" + status.roundsUntilTrigger + " round(s)");
     }
 
     if (status.resourceCost !== null && status.resourceCost > 0) {
       detailParts.push("Ressource : " + Math.floor(status.resourceCurrent != null ? status.resourceCurrent : 0) + " / " + status.resourceCost + " requis");
     }
 
-    if (status.cooldownRemainingMs !== null && status.cooldownRemainingMs > 0) {
-      detailParts.push("Recharge : " + (status.cooldownRemainingMs / 1000).toFixed(1) + "s restantes");
+    if (status.cooldownRemainingRounds !== null && status.cooldownRemainingRounds > 0) {
+      detailParts.push("Recharge : " + status.cooldownRemainingRounds + " round(s) restant(s)");
     }
 
     if (detailParts.length) {
@@ -419,9 +417,9 @@ function buildGrimoireHTML() {
 
   h += '</div>';
 
-  if (!game.autoSkillsEnabled) {
+  if (game.combatMode !== "grimoire") {
     h += '<div class="panel-card grimoire-warning-card">';
-    h += '<p class="panel-sub">⚠️ Le combat automatique est désactivé (voir Paramètres) — les règles ci-dessous seront ignorées tant qu\'il ne l\'est pas.</p>';
+    h += '<p class="panel-sub">🎯 Mode Tactique actif : les règles ci-dessous ne font que <strong>suggérer</strong> une action (bouton surligné en combat). Passe en mode Grimoire (écran Combat ou Paramètres) pour qu\'elles jouent seules.</p>';
     h += '</div>';
   }
 

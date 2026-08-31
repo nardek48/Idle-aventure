@@ -1,6 +1,6 @@
 "use strict";
-/* data/class-skills.js — kits de compétences par classe (2 héros/classe partagent le même kit).
-   Branché au combat réel via systems/class-combat-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* data/class-skills.js — kits de compétences par classe (2 héros/classe partagent le même kit). v3.102.0 (P2) : toutes les
+   durées en ROUNDS (cooldownRounds/durationRounds, ex-ms ÷ 2 500 arrondi sup.), Concentration 15/attaque, Mana 8/round. */
 
 window.CLASS_SKILLS = {
   knight: {
@@ -29,7 +29,7 @@ window.CLASS_SKILLS = {
         hits: 1,
         resourceCost: 0,
         resourceGain: 0,
-        cooldownMs: 0,
+        cooldownRounds: 0,
         conditions: {},
         effects: []
       },
@@ -43,7 +43,7 @@ window.CLASS_SKILLS = {
         hits: 1,
         resourceCost: 18,
         resourceGain: 0,
-        cooldownMs: 1500,
+        cooldownRounds: 1,
         conditions: {},
         counters: ["healIncoming"],
         effects: [
@@ -54,20 +54,20 @@ window.CLASS_SKILLS = {
         id: "knight_guard_break",
         slot: "skill2",
         label: "Brise-garde",
-        description: "Inflige 110% des dégâts. Coûte 28 Rage. Rend l'ennemi vulnérable (+20% dégâts subis de TOUS les coups) pendant 5 000 ms.",
+        description: "Inflige 110% des dégâts. Coûte 28 Rage. Rend l'ennemi vulnérable (+20% dégâts subis de TOUS les coups) pendant 2 rounds.",
         type: "damage",
         damageMultiplier: 1.10,
         hits: 1,
         resourceCost: 28,
         resourceGain: 0,
-        cooldownMs: 4000,
+        cooldownRounds: 2,
         conditions: {},
         counters: ["shieldIncoming"],
         effects: [
           {
             type: "enemyVulnerability",
             value: 0.20,
-            durationMs: 5000
+            durationRounds: 2
           },
           { type: "enemyLifestealSuppression" }
         ]
@@ -82,7 +82,7 @@ window.CLASS_SKILLS = {
         hits: 1,
         resourceCost: 50,
         resourceGain: 0,
-        cooldownMs: 8000,
+        cooldownRounds: 4,
         conditions: {
           enemyHpPercentBelowOrEqual: 0.35
         },
@@ -94,20 +94,20 @@ window.CLASS_SKILLS = {
         id: "knight_guard",
         slot: "defense",
         label: "Garde",
-        description: "Réduit les dégâts reçus de 50% pendant 2 000 ms.",
+        description: "Réduit les dégâts reçus de 50% pendant 1 round.",
         type: "defense",
         damageMultiplier: null,
         hits: 0,
         resourceCost: 0,
         resourceGain: 0,
-        cooldownMs: 7000,
+        cooldownRounds: 3,
         conditions: {},
         counters: ["chargeIncoming", "enemySilenceIncoming"],
         effects: [
           {
             type: "damageReduction",
             value: 0.50,
-            durationMs: 2000
+            durationRounds: 1
           },
           { type: "enemyArmorSuppression" }
         ]
@@ -125,7 +125,7 @@ window.CLASS_SKILLS = {
       initial: 0,
       generation: {
         type: "successfulBasicAttack",
-        value: 7,
+        value: 15,
         criticalBonus: 4
       }
     },
@@ -135,13 +135,13 @@ window.CLASS_SKILLS = {
         id: "archer_basic",
         slot: "basic",
         label: "Attaque de base",
-        description: "Inflige 85% des dégâts. +7 Concentration sur réussite, +4 supplémentaire sur coup critique.",
+        description: "Inflige 85% des dégâts. +15 Concentration sur réussite, +4 supplémentaire sur coup critique.",
         type: "damage",
         damageMultiplier: 1,
         hits: 1,
         resourceCost: 0,
         resourceGain: 7,
-        cooldownMs: 0,
+        cooldownRounds: 0,
         conditions: {},
         effects: []
       },
@@ -155,7 +155,7 @@ window.CLASS_SKILLS = {
         hits: 1,
         resourceCost: 20,
         resourceGain: 0,
-        cooldownMs: 2000,
+        cooldownRounds: 1,
         conditions: {},
         counters: ["shieldIncoming"],
         effects: [
@@ -172,7 +172,7 @@ window.CLASS_SKILLS = {
         hits: 3,
         resourceCost: 35,
         resourceGain: 0,
-        cooldownMs: 5000,
+        cooldownRounds: 2,
         conditions: {},
         counters: ["healIncoming"],
         effects: [
@@ -190,7 +190,7 @@ window.CLASS_SKILLS = {
         ignoreAffinity: true,
         resourceCost: 50,
         resourceGain: 0,
-        cooldownMs: 8000,
+        cooldownRounds: 4,
         conditions: {},
         effects: [
           { type: "enemyRageSuppression" }
@@ -200,20 +200,20 @@ window.CLASS_SKILLS = {
         id: "archer_evasion",
         slot: "defense",
         label: "Esquive",
-        description: "Évite ou réduit fortement la prochaine attaque ennemie pendant 1 000 ms.",
+        description: "Évite ou réduit fortement la prochaine attaque ennemie pendant 1 round.",
         type: "defense",
         damageMultiplier: null,
         hits: 0,
         resourceCost: 10,
         resourceGain: 0,
-        cooldownMs: 8000,
+        cooldownRounds: 4,
         conditions: {},
         counters: ["chargeIncoming", "enemySilenceIncoming"],
         effects: [
           {
             type: "evasion",
             value: 0.70,
-            durationMs: 1000
+            durationRounds: 1
           },
           { type: "enemyArmorSuppression" }
         ]
@@ -231,7 +231,7 @@ window.CLASS_SKILLS = {
       initial: 100,
       generation: {
         type: "passiveAndBasicAttack",
-        passivePerSecond: 4,
+        passivePerRound: 8,
         basicAttackGain: 8
       }
     },
@@ -247,7 +247,7 @@ window.CLASS_SKILLS = {
         hits: 1,
         resourceCost: 0,
         resourceGain: 8,
-        cooldownMs: 0,
+        cooldownRounds: 0,
         conditions: {},
         effects: []
       },
@@ -261,7 +261,7 @@ window.CLASS_SKILLS = {
         hits: 1,
         resourceCost: 18,
         resourceGain: 0,
-        cooldownMs: 2000,
+        cooldownRounds: 1,
         conditions: {},
         counters: ["shieldIncoming"],
         effects: [
@@ -272,20 +272,20 @@ window.CLASS_SKILLS = {
         id: "mage_arcane_burn",
         slot: "skill2",
         label: "Brûlure arcanique",
-        description: "Inflige 90% des dégâts. Coûte 28 Mana. Applique un effet de dégâts sur la durée (20% des dégâts de ce coup par seconde pendant 5 000 ms).",
+        description: "Inflige 90% des dégâts. Coûte 28 Mana. Applique un effet de dégâts sur la durée (50% des dégâts de ce coup par round pendant 2 rounds).",
         type: "damage",
         damageMultiplier: 0.90,
         hits: 1,
         resourceCost: 28,
         resourceGain: 0,
-        cooldownMs: 5000,
+        cooldownRounds: 2,
         conditions: {},
         counters: ["healIncoming"],
         effects: [
           {
             type: "damageOverTime",
-            percentPerSecond: 0.20,
-            durationMs: 5000
+            percentPerRound: 0.50,
+            durationRounds: 2
           },
           { type: "enemyLifestealSuppression" }
         ]
@@ -300,7 +300,7 @@ window.CLASS_SKILLS = {
         hits: 1,
         resourceCost: 50,
         resourceGain: 0,
-        cooldownMs: 8000,
+        cooldownRounds: 4,
         conditions: {},
         effects: [
           { type: "enemyRageSuppression" }
@@ -310,20 +310,20 @@ window.CLASS_SKILLS = {
         id: "mage_arcane_barrier",
         slot: "defense",
         label: "Barrière arcanique",
-        description: "Absorbe 40% des dégâts reçus pendant 3 000 ms. Coûte 30 Mana.",
+        description: "Absorbe 40% des dégâts reçus pendant 2 rounds. Coûte 30 Mana.",
         type: "defense",
         damageMultiplier: null,
         hits: 0,
         resourceCost: 30,
         resourceGain: 0,
-        cooldownMs: 8000,
+        cooldownRounds: 4,
         conditions: {},
         counters: ["chargeIncoming", "enemySilenceIncoming"],
         effects: [
           {
             type: "damageAbsorption",
             value: 0.40,
-            durationMs: 3000
+            durationRounds: 2
           },
           { type: "enemyArmorSuppression" }
         ]

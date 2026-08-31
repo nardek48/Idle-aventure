@@ -141,7 +141,7 @@ var AdventureQuestManager = {
     }
 
     game.enemy = enemy;
-    game._enemyAttackTimer = 0;
+    if (window.CombatEngine && typeof CombatEngine.prepareEnemy === "function") CombatEngine.prepareEnemy(enemy);
     this.applyQuestTheme(quest);
     if (typeof renderEnemy === "function") renderEnemy();
     if (typeof renderHud === "function") renderHud();
@@ -227,6 +227,9 @@ var AdventureQuestManager = {
       CombatEngine.spawnEnemy();
     }
 
+    // v3.100.3 : quête réussie -> retour au Campement (décision Seb). Échec/abandon : on reste en combat.
+    if (success && typeof switchTab === "function") switchTab("campement");
+
     if (typeof renderAll === "function") renderAll();
     saveGame();
   },
@@ -234,10 +237,14 @@ var AdventureQuestManager = {
   onDefeat: function () {
     this.ensureRun();
     var quest = ADVENTURE_QUESTS[game.adventureQuestRun.questId];
-    game.heroHp = game.heroMaxHp || 1;
-    addLog("💀 Quête interrompue" + (quest ? " : " + quest.name : "") + " — progression conservée.", "event");
+    // v3.102.0 (P2) : mort en quête = même règle qu'ailleurs (PV 0, Sang-froid, retour Campement) — plus de soin complet gratuit
+    var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
+    game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
+    addLog("💀 Quête interrompue" + (quest ? " : " + quest.name : "") + " — progression conservée. Retour au Campement.", "event");
     vibrate([80, 40, 80]);
     this.finish(quest, false);
+    game.justDied = true;
+    if (typeof switchTab === "function") switchTab("campement");
   },
 
   forfeit: function () {

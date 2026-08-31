@@ -161,7 +161,7 @@ var DungeonManager = {
     this.ensure();
     game.dungeonRun.wave = wave;
     game.enemy = this.buildWaveEnemy(wave);
-    game._enemyAttackTimer = 0;
+    if (window.CombatEngine && typeof CombatEngine.prepareEnemy === "function") CombatEngine.prepareEnemy(game.enemy);
     if (typeof renderEnemy === "function") renderEnemy();
     if (typeof renderHud === "function") renderHud();
   },
@@ -216,11 +216,15 @@ var DungeonManager = {
     var clearedWave = Math.max(0, (game.dungeonRun.wave || 1) - 1);
     if (clearedWave > (game.dungeonBestWave || 0)) game.dungeonBestWave = clearedWave;
 
-    game.heroHp = game.heroMaxHp || 1;
-    addLog("💀 Tentative de donjon interrompue à la vague " + (game.dungeonRun.wave || 1) + " !", "event");
+    // v3.102.0 (P2) : même règle de mort qu'ailleurs (PV 0, Sang-froid, retour Campement)
+    var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
+    game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
+    addLog("💀 Tentative de donjon interrompue à la vague " + (game.dungeonRun.wave || 1) + " ! Retour au Campement.", "event");
     vibrate([80, 40, 80]);
 
     this.finish(false, clearedWave);
+    game.justDied = true;
+    if (typeof switchTab === "function") switchTab("campement");
   },
 
   forfeit: function () {

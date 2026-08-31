@@ -78,6 +78,18 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   opacity: 0.6;
 }
 
+/* v3.101.0 : ligne d'état sous la description (PV courants, garde-manger) */
+.camp-fire-hp {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nb-gold-dark);
+  margin: -8px 0 10px 0;
+}
+
+.camp-fire-hp.is-short {
+  color: var(--nb-ink-dim);
+}
+
 /* v3.14 : message affiché une fois après une mort (game.justDied),
    voir buildCampHTML() plus haut. */
 .camp-death-banner {

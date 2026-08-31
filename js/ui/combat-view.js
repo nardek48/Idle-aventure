@@ -1,5 +1,6 @@
 "use strict";
-/* ui/combat-view.js — écran Combat : zone ennemi (PV, statuts/télégraphes par archétype v3.68-73), 4 boutons de classe (skill1-3/defense, v3.34.0), bouton attaque + soin rapide, raccourcis clavier. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* ui/combat-view.js — écran Combat par rounds (v3.102.0, P2) : zone ennemi (PV, statuts/télégraphes en rounds), barre de round
+   (n°, mode Tactique/Grimoire, Continuer l'attaque, jauge de célérité), 4 boutons de classe, bouton Attaque, potions (= action Objet). */
 
 function buildCombatHTML() {
   return ''
@@ -13,9 +14,10 @@ function buildCombatHTML() {
     +     '<div class="enemy-hp-bar-track"><div id="enemy-hp-bar" style="width:100%"></div></div>'
     +     '<div id="enemy-hp-text">10 / 10</div>'
     +   '</div>'
-    +   '<div id="enemy-emoji" onclick="playerAttack()">🟢</div>'
+    +   '<div id="enemy-emoji">🟢</div>'
     + '</div>'
     + '<div id="class-resource-root"></div>'
+    + '<div id="combat-controls-root" class="combat-controls"></div>'
 
     + '<div class="combat-action-row">'
     +   '<div id="class-skills-root"></div>'
@@ -23,9 +25,7 @@ function buildCombatHTML() {
 
     + '<div class="combat-attack-row">'
     +   '<div id="heal-quick-root-left"></div>'
-    +   '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="playerAttack()" aria-label="Attaque">'
-    +     '<div id="basic-attack-cooldown-overlay"></div>'
-    +   '</button>'
+    +   '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="heroBasicAttack()" aria-label="Attaque"></button>'
     +   '<div id="heal-quick-root"></div>'
     + '</div>';
 }
@@ -40,15 +40,15 @@ function buildHealButtonHTML(index) {
   var potion = HEALING_POTIONS_DB[index];
   if (!potion) return "";
 
-  var onCooldown = PotionManager.getHealCooldownRemainingMs() > 0;
   var stock = PotionManager.getHealingStock(potion.id);
-  var disabled = onCooldown || stock <= 0;
+  var busy = !!(game.combatRound && game.combatRound.busy);
+  var disabled = stock <= 0 || busy || (game.heroHp || 0) <= 0;
   var keyLabel = String(index + 5); // v3.34.0 : "5"/"6" (avant v2.90 : "3"/"4") — "1"à"4" repris par les 4 actions de classe (skill1/2/3/defense)
 
   var h = '<div class="heal-quick-bar">';
   h += '<button class="heal-quick-btn' + (disabled ? ' disabled' : '') + '" type="button" '
     + (disabled ? 'disabled' : '')
-    + ' onclick="PotionManager.useHealingPotion(\'' + esc(potion.id) + '\')" title="' + esc(potion.name) + ' (touche ' + keyLabel + ' sur PC)">';
+    + ' onclick="CombatEngine.heroAction(\'potion\', \'' + esc(potion.id) + '\')" title="' + esc(potion.name) + ' — consomme le tour (touche ' + keyLabel + ' sur PC)">';
   h += '<span class="heal-quick-icon">' + '<img src="' + esc(potion.icon) + '" alt="" draggable="false">' + '</span>';
   h += '<span class="heal-quick-count">' + stock + '</span>';
   h += '<span class="heal-quick-key">' + keyLabel + '</span>';
@@ -105,7 +105,7 @@ function buildEnemyStatusBarHTML() {
   var h = "";
 
   if (game.enemy.archetype === "enraged") {
-    var rageFrozen = !!(game.enemy.rageFreezeUntil && Date.now() < game.enemy.rageFreezeUntil);
+    var rageFrozen = Number(game.enemy.rageFreezeRounds || 0) > 0;
     h += '<div class="enemy-status-icon enemy-status-enraged' + (rageFrozen ? ' is-suppressed' : '') + '" title="'
       + (rageFrozen ? 'Enragé (rage apaisée temporairement)' : 'Enragé : plus dangereux à mesure qu\u2019il perd des PV') + '">';
     h += '<span class="enemy-status-emoji">' + (rageFrozen ? '😮\u200d💨' : '😡') + '</span>';
@@ -123,7 +123,7 @@ function buildEnemyStatusBarHTML() {
   }
 
   if (game.enemy.archetype === "vampiric") {
-    var lifestealSuppressed = !!(game.enemy.vampiricSuppressedUntil && Date.now() < game.enemy.vampiricSuppressedUntil);
+    var lifestealSuppressed = Number(game.enemy.vampiricSuppressedRounds || 0) > 0;
     h += '<div class="enemy-status-icon enemy-status-vampiric' + (lifestealSuppressed ? ' is-suppressed' : '') + '" title="'
       + (lifestealSuppressed ? 'Vampirique (vol de vie bloqué temporairement)' : 'Vampirique : se soigne à chaque coup qu\u2019il te porte') + '">';
     h += '<span class="enemy-status-emoji">🧛</span>';
@@ -131,82 +131,76 @@ function buildEnemyStatusBarHTML() {
   }
 
   if (game.enemy.archetype === "armored") {
-    var armorSuppressed = !!(game.enemy.armorSuppressedUntil && Date.now() < game.enemy.armorSuppressedUntil);
+    var armorSuppressed = Number(game.enemy.armorSuppressedRounds || 0) > 0;
     h += '<div class="enemy-status-icon enemy-status-armored' + (armorSuppressed ? ' is-suppressed' : '') + '" title="'
       + (armorSuppressed ? 'Blindé (blindage fissuré temporairement)' : 'Blindé : subit un peu moins de dégâts en permanence') + '">';
     h += '<span class="enemy-status-emoji">🛡️‍🩹</span>';
     h += '</div>';
   }
 
-  if (game.enemy.vulnerableUntil && Date.now() < game.enemy.vulnerableUntil) {
-    var vulnRemainingMs = game.enemy.vulnerableUntil - Date.now();
+  if (Number(game.enemy.vulnerableRounds || 0) > 0) {
     var vulnPct = Math.round((game.enemy.vulnerableMult || 0) * 100);
     h += '<div class="enemy-status-icon enemy-status-vulnerability" title="Vulnérable : +' + vulnPct + '% dégâts subis">';
     h += '<span class="enemy-status-emoji">⚡</span>';
-    h += '<span class="enemy-status-timer">' + Math.ceil(vulnRemainingMs / 1000) + '</span>';
+    h += '<span class="enemy-status-timer">' + game.enemy.vulnerableRounds + '</span>';
     h += '</div>';
   }
 
-  if (game.enemy.dot && game.enemy.dot.remainingMs > 0) {
-    h += '<div class="enemy-status-icon enemy-status-dot" title="Brûlure arcanique : dégâts sur la durée">';
+  if (game.enemy.dot && game.enemy.dot.rounds > 0) {
+    h += '<div class="enemy-status-icon enemy-status-dot" title="Brûlure arcanique : ' + formatNumber(game.enemy.dot.perRound) + ' dégâts par round">';
     h += '<span class="enemy-status-emoji">🔥</span>';
-    h += '<span class="enemy-status-timer">' + Math.ceil(game.enemy.dot.remainingMs / 1000) + '</span>';
+    h += '<span class="enemy-status-timer">' + game.enemy.dot.rounds + '</span>';
     h += '</div>';
   }
 
-  if (game.enemy.chargeTelegraphUntil && Date.now() < game.enemy.chargeTelegraphUntil) {
-    var chargeRemainingMs = game.enemy.chargeTelegraphUntil - Date.now();
-    h += '<div class="enemy-status-icon enemy-status-charge" title="Charge imminente !">';
+  if (game.enemy.chargeTelegraphed) {
+    h += '<div class="enemy-status-icon enemy-status-charge" title="Charge au prochain tour !">';
     h += '<span class="enemy-status-emoji">💢</span>';
-    h += '<span class="enemy-status-timer">' + Math.max(0, (chargeRemainingMs / 1000).toFixed(1)) + '</span>';
     h += '</div>';
   }
 
-  if (game.enemy.silenceTelegraphUntil && Date.now() < game.enemy.silenceTelegraphUntil) {
-    var silenceTelegraphRemainingMs = game.enemy.silenceTelegraphUntil - Date.now();
-    h += '<div class="enemy-status-icon enemy-status-silence-telegraph" title="Silence imminent !">';
+  if (game.enemy.silenceTelegraphed) {
+    h += '<div class="enemy-status-icon enemy-status-silence-telegraph" title="Silence au prochain tour !">';
     h += '<span class="enemy-status-emoji">🔇</span>';
-    h += '<span class="enemy-status-timer">' + Math.max(0, (silenceTelegraphRemainingMs / 1000).toFixed(1)) + '</span>';
     h += '</div>';
   }
 
-  if (game.silencedUntil && Date.now() < game.silencedUntil) {
-    var silenceActiveRemainingMs = game.silencedUntil - Date.now();
+  if (Number(game.silencedRounds || 0) > 0) {
     h += '<div class="enemy-status-icon enemy-status-silenced-active" title="Tu es silencié : tes techniques sont bloquées">';
     h += '<span class="enemy-status-emoji">🔇</span>';
-    h += '<span class="enemy-status-timer">' + Math.max(0, (silenceActiveRemainingMs / 1000).toFixed(1)) + '</span>';
+    h += '<span class="enemy-status-timer">' + game.silencedRounds + '</span>';
     h += '</div>';
   }
 
-  if (game.enemy.shieldTelegraphUntil && Date.now() < game.enemy.shieldTelegraphUntil) {
-    var shieldTelegraphRemainingMs = game.enemy.shieldTelegraphUntil - Date.now();
-    h += '<div class="enemy-status-icon enemy-status-shield-telegraph" title="Bouclier imminent !">';
+  if (game.enemy.shieldTelegraphed) {
+    h += '<div class="enemy-status-icon enemy-status-shield-telegraph" title="Bouclier au prochain tour !">';
     h += '<span class="enemy-status-emoji">🛡️</span>';
-    h += '<span class="enemy-status-timer">' + Math.max(0, (shieldTelegraphRemainingMs / 1000).toFixed(1)) + '</span>';
     h += '</div>';
   }
 
-  if (game.enemy.shieldActiveUntil && Date.now() < game.enemy.shieldActiveUntil) {
-    var shieldActiveRemainingMs = game.enemy.shieldActiveUntil - Date.now();
+  if (Number(game.enemy.shieldRounds || 0) > 0) {
     h += '<div class="enemy-status-icon enemy-status-shield-active" title="Bouclier actif : -50% dégâts subis">';
     h += '<span class="enemy-status-emoji">🛡️</span>';
-    h += '<span class="enemy-status-timer">' + Math.ceil(shieldActiveRemainingMs / 1000) + '</span>';
+    h += '<span class="enemy-status-timer">' + game.enemy.shieldRounds + '</span>';
     h += '</div>';
   }
 
-  if (game.enemy.healTelegraphUntil && Date.now() < game.enemy.healTelegraphUntil) {
-    var healTelegraphRemainingMs = game.enemy.healTelegraphUntil - Date.now();
-    h += '<div class="enemy-status-icon enemy-status-heal-telegraph" title="Soin imminent !">';
+  if (game.enemy.healTelegraphed) {
+    h += '<div class="enemy-status-icon enemy-status-heal-telegraph" title="Soin au prochain tour !">';
     h += '<span class="enemy-status-emoji">💚</span>';
-    h += '<span class="enemy-status-timer">' + Math.max(0, (healTelegraphRemainingMs / 1000).toFixed(1)) + '</span>';
     h += '</div>';
   }
 
-  if (game.enemy.counteredUntil && Date.now() < game.enemy.counteredUntil) {
-    var counteredRemainingMs = game.enemy.counteredUntil - Date.now();
+  if (window.CombatEngine && typeof CombatEngine.enemyDoubleStrikeNext === "function" && CombatEngine.enemyDoubleStrikeNext()) {
+    h += '<div class="enemy-status-icon enemy-status-double-strike" title="Jauge pleine : il frappera deux fois au prochain tour">';
+    h += '<span class="enemy-status-emoji">⚡</span>';
+    h += '<span class="enemy-status-timer">×2</span>';
+    h += '</div>';
+  }
+
+  if (Number(game.enemy.counteredRounds || 0) > 0) {
     h += '<div class="enemy-status-icon enemy-status-countered" title="Attaque contrée !">';
     h += '<span class="enemy-status-emoji">⚡</span>';
-    h += '<span class="enemy-status-timer">' + Math.ceil(counteredRemainingMs / 1000) + '</span>';
     h += '</div>';
   }
 
@@ -221,34 +215,52 @@ function renderEnemyStatusBar() {
 window.buildEnemyStatusBarHTML = buildEnemyStatusBarHTML;
 window.renderEnemyStatusBar = renderEnemyStatusBar;
 
-function buildBasicAttackCooldownOverlayHTML() {
-  var remainingMs = game.basicAttackCooldownMs || 0;
-  if (remainingMs <= 0) return "";
-  if (game.autoSkillsEnabled) return '<span class="combat-action-cooldown-fill combat-action-cooldown-fill-auto"></span>';
+/* Barre de round : n° du round, mode Tactique/Grimoire (bascule si le Grimoire est débloqué), Continuer l'attaque, jauge de célérité. */
+function buildCombatControlsHTML() {
+  if (!window.CombatEngine || typeof CombatEngine.ensureState !== "function") return "";
+  CombatEngine.ensureState();
+  var round = game.combatRound;
+  var mode = game.combatMode;
+  var grimoireUnlocked = (typeof isTabUnlocked === "function") ? isTabUnlocked("grimoire") : true;
+  var gaugeMax = (typeof CELERITY_GAUGE_MAX === "number") ? CELERITY_GAUGE_MAX : 100;
+  var gaugePct = Math.max(0, Math.min(100, Math.round((Number(game.heroGauge || 0) / gaugeMax) * 100)));
+  var downed = (game.heroHp || 0) <= 0;
 
-  var totalCelerity = (window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function") ? CombatEngine.getTotalCelerity() : 0;
-  var totalMs = (typeof computeEffectiveCooldownMs === "function")
-    ? computeEffectiveCooldownMs(BASIC_ATTACK_BASE_COOLDOWN_MS, totalCelerity)
-    : BASIC_ATTACK_BASE_COOLDOWN_MS;
-  var pct = totalMs > 0 ? Math.round((remainingMs / totalMs) * 100) : 0;
+  var h = '<div class="combat-round-pill" title="Round en cours">R' + (round.number || 0) + '</div>';
+  h += '<div class="combat-gauge" title="Jauge de célérité : à 100 %, une frappe bonus suit ta prochaine attaque">';
+  h += '<div class="combat-gauge-fill" style="width:' + gaugePct + '%"></div>';
+  h += '<span class="combat-gauge-text">⚡ ' + gaugePct + '%</span>';
+  h += '</div>';
 
-  var h = '<span class="combat-action-cooldown">' + Math.ceil(remainingMs / 1000) + 's</span>';
-  h += '<span class="combat-action-cooldown-fill" style="width:' + pct + '%"></span>';
+  if (grimoireUnlocked) {
+    h += '<button type="button" class="combat-mode-btn' + (mode === "grimoire" ? ' is-auto' : '') + '" onclick="CombatEngine.setCombatMode(\'' + (mode === "grimoire" ? "tactique" : "grimoire") + '\')" title="'
+      + (mode === "grimoire" ? "Mode Grimoire : les rounds s\u2019enchaînent, le Grimoire choisit. Toucher pour repasser en Tactique." : "Mode Tactique : chaque round attend ton choix. Toucher pour laisser le Grimoire jouer.") + '">';
+    h += (mode === "grimoire" ? "📖 Grimoire" : "🎯 Tactique");
+    h += '</button>';
+  }
+
+  if (mode !== "grimoire") {
+    h += '<button type="button" class="combat-continue-btn' + (round.continueAttack ? ' is-active' : '') + '"' + (downed ? ' disabled' : '')
+      + ' onclick="CombatEngine.toggleContinueAttack()" title="Répète l\u2019Attaque jusqu\u2019au prochain événement (PV < 50 %, télégraphe, double frappe, nouvel ennemi)">';
+    h += round.continueAttack ? "⏸️ Stop" : "⟳ Continuer";
+    h += '</button>';
+  }
   return h;
 }
 
-function renderBasicAttackCooldown() {
-  var onCooldown = (game.basicAttackCooldownMs || 0) > 0;
-
-  var overlay = document.getElementById("basic-attack-cooldown-overlay");
-  if (overlay) overlay.innerHTML = buildBasicAttackCooldownOverlayHTML();
-
+function renderCombatControls() {
+  var host = document.getElementById("combat-controls-root");
+  if (host) host.innerHTML = buildCombatControlsHTML();
   var attackBtn = document.getElementById("combat-attack-btn");
-  if (attackBtn) attackBtn.classList.toggle("on-cooldown", onCooldown && !game.autoSkillsEnabled);
+  if (attackBtn) {
+    var locked = game.combatMode === "grimoire" || !!(game.combatRound && game.combatRound.continueAttack) || (game.heroHp || 0) <= 0;
+    attackBtn.classList.toggle("auto-mode", locked);
+    attackBtn.disabled = locked;
+  }
 }
 
-window.buildBasicAttackCooldownOverlayHTML = buildBasicAttackCooldownOverlayHTML;
-window.renderBasicAttackCooldown = renderBasicAttackCooldown;
+window.buildCombatControlsHTML = buildCombatControlsHTML;
+window.renderCombatControls = renderCombatControls;
 
 function renderEnemy() {
   if (!game.enemy) return;
@@ -308,20 +320,28 @@ function initHealKeyboardShortcuts() {
     var tag = active ? active.tagName : "";
     if (tag === "INPUT" || tag === "TEXTAREA" || (active && active.isContentEditable)) return;
 
-    var classSlotByKey = { "1": "skill1", "2": "skill2", "3": "skill3", "4": "defense" };
-    if (classSlotByKey[e.key]) {
-      if (window.ClassCombatManager && !game.autoSkillsEnabled) ClassCombatManager.useSkillManual(classSlotByKey[e.key]);
+    if (game.activeTab !== "combat" || !window.CombatEngine) return;
+
+    if (e.key === " " || e.key === "Enter" || e.key === "a" || e.key === "A") {
+      e.preventDefault();
+      CombatEngine.heroAction("basic");
       return;
     }
 
-    if (typeof HEALING_POTIONS_DB === "undefined" || !window.PotionManager) return;
+    var classSlotByKey = { "1": "skill1", "2": "skill2", "3": "skill3", "4": "defense" };
+    if (classSlotByKey[e.key]) {
+      CombatEngine.heroAction(classSlotByKey[e.key]);
+      return;
+    }
+
+    if (typeof HEALING_POTIONS_DB === "undefined") return;
     var index = -1;
     if (e.key === "5") index = 0;
     else if (e.key === "6") index = 1;
     if (index === -1) return;
 
     var potion = HEALING_POTIONS_DB[index];
-    if (potion) PotionManager.useHealingPotion(potion.id);
+    if (potion) CombatEngine.heroAction("potion", potion.id);
   });
 }
 
@@ -330,7 +350,7 @@ window.initHealKeyboardShortcuts = initHealKeyboardShortcuts;
 var CLASS_SKILL_SLOTS = ["skill1", "skill2", "skill3", "defense"];
 var CLASS_SKILL_KEY_LABELS = { skill1: "1", skill2: "2", skill3: "3", defense: "4" };
 
-function buildClassSkillButtonHTML(slot) {
+function buildClassSkillButtonHTML(slot, suggestedSlot) {
   if (!window.ClassCombatManager || typeof ClassCombatManager.getAction !== "function") return "";
   var action = ClassCombatManager.getAction(slot);
   if (!action) return "";
@@ -338,16 +358,20 @@ function buildClassSkillButtonHTML(slot) {
   var resourceState = (typeof ClassCombatManager.ensureForCurrentClass === "function")
     ? ClassCombatManager.ensureForCurrentClass()
     : null;
-  var cooldownRemainingMs = (game.classCooldowns && typeof game.classCooldowns[action.id] === "number")
+  var cooldownRemaining = (game.classCooldowns && typeof game.classCooldowns[action.id] === "number")
     ? game.classCooldowns[action.id]
     : 0;
-  var onCooldown = cooldownRemainingMs > 0;
-  var cooldownPct = onCooldown ? Math.round((cooldownRemainingMs / action.cooldownMs) * 100) : 0;
+  var onCooldown = cooldownRemaining > 0;
+  var cooldownPct = onCooldown && action.cooldownRounds > 0 ? Math.round((cooldownRemaining / action.cooldownRounds) * 100) : 0;
 
   var affordable = !resourceState || resourceState.current >= (action.resourceCost || 0);
-  var autoModeActive = !!game.autoSkillsEnabled;
-  var isSilenced = !!(game.silencedUntil && Date.now() < game.silencedUntil && action.slot !== "defense");
-  var disabled = onCooldown || !affordable || autoModeActive || isSilenced;
+  var autoModeActive = game.combatMode === "grimoire" || !!(game.combatRound && game.combatRound.continueAttack);
+  var isSilenced = Number(game.silencedRounds || 0) > 0 && action.slot !== "defense";
+  var conditionOk = (typeof checkActionConditions !== "function") || checkActionConditions(action.conditions, {
+    enemyHp: game.enemy ? game.enemy.hp : null, enemyMaxHp: game.enemy ? game.enemy.maxHp : null
+  });
+  var disabled = onCooldown || !affordable || autoModeActive || isSilenced || !conditionOk || (game.heroHp || 0) <= 0;
+  var isSuggested = !autoModeActive && !disabled && suggestedSlot === slot;
 
   var activeDefense = (action.type === "defense" && window.ClassCombatManager && typeof ClassCombatManager.getActiveDefenseEffect === "function")
     ? ClassCombatManager.getActiveDefenseEffect()
@@ -357,19 +381,26 @@ function buildClassSkillButtonHTML(slot) {
   var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "🛡️" : "✨");
   var keyLabel = CLASS_SKILL_KEY_LABELS[action.slot] || "";
 
+  var title = autoModeActive
+    ? "Combat automatique actif (mode Grimoire / Continuer)"
+    : (isSilenced ? "Silencié : cette technique est bloquée un instant"
+      : (!conditionOk ? "Condition non remplie : " + esc(action.description)
+        : esc(action.description) + (action.cooldownRounds ? " Recharge : " + action.cooldownRounds + " round(s)." : "") + (keyLabel ? " (touche " + keyLabel + " sur PC)" : "")));
+
   var h = '<button class="combat-action-btn class-skill-btn' + (action.type === "defense" ? " defense-action-btn" : " attack-action-btn")
-    + (onCooldown ? ' on-cooldown' : '') + (isActiveNow ? ' is-active' : '') + (!affordable && !onCooldown ? ' not-affordable' : '') + (autoModeActive ? ' auto-mode' : '') + (isSilenced ? ' is-silenced' : '') + '" type="button" '
+    + (onCooldown ? ' on-cooldown' : '') + (isActiveNow ? ' is-active' : '') + (!affordable && !onCooldown ? ' not-affordable' : '')
+    + (autoModeActive ? ' auto-mode' : '') + (isSilenced ? ' is-silenced' : '') + (isSuggested ? ' is-suggested' : '') + '" type="button" '
     + (disabled ? 'disabled' : '')
-    + ' onclick="ClassCombatManager.useSkillManual(\'' + esc(slot) + '\')" title="'
-    + (autoModeActive ? 'Combat automatique actif (voir Paramètres)' : (isSilenced ? 'Silencié : cette technique est bloquée un instant' : esc(action.description) + (keyLabel ? ' (touche ' + keyLabel + ' sur PC)' : '')))
-    + '">';
+    + ' onclick="CombatEngine.heroAction(\'' + esc(slot) + '\')" title="' + title + '">';
   h += '<span class="combat-action-key">' + esc(keyLabel) + '</span>';
   h += renderIconOrEmojiHTML(icon, "combat-action-icon", action.label);
   if (onCooldown) {
-    h += '<span class="combat-action-cooldown">' + Math.ceil(cooldownRemainingMs / 1000) + 's</span>';
+    h += '<span class="combat-action-cooldown">' + cooldownRemaining + 'r</span>';
     h += '<span class="combat-action-cooldown-fill" style="width:' + cooldownPct + '%"></span>';
   } else if (isActiveNow) {
     h += '<span class="combat-action-active-tag">ACTIF</span>';
+  } else if (isSuggested) {
+    h += '<span class="combat-action-suggest-tag">📖</span>';
   }
   h += '</button>';
   return h;
@@ -377,9 +408,13 @@ function buildClassSkillButtonHTML(slot) {
 
 function buildClassSkillButtonsHTML() {
   if (!window.ClassCombatManager) return "";
+  // v3.102.0 : en Tactique, le Grimoire suggère l'action qu'il aurait jouée (bouton surligné)
+  var suggested = (game.combatMode !== "grimoire" && window.CombatEngine && typeof CombatEngine.suggestAction === "function")
+    ? CombatEngine.suggestAction()
+    : null;
   var h = "";
   CLASS_SKILL_SLOTS.forEach(function (slot) {
-    h += buildClassSkillButtonHTML(slot);
+    h += buildClassSkillButtonHTML(slot, suggested);
   });
   return h;
 }
@@ -388,6 +423,7 @@ function renderClassSkillButtons() {
   var host = document.getElementById("class-skills-root");
   if (host) host.innerHTML = buildClassSkillButtonsHTML();
   renderClassResourceBar();
+  if (typeof renderCombatControls === "function") renderCombatControls();
 }
 
 window.buildClassSkillButtonsHTML = buildClassSkillButtonsHTML;

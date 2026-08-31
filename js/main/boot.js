@@ -60,6 +60,8 @@ function init() {
         OfflineManager.show(offline);
       }
     }
+    // v3.101.0 : régénération au camp accumulée hors ligne (plafond 50 % PV max), voir systems/camp-system.js
+    if (window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(true);
   } else {
     addLog("Bienvenue, héros ! Tape l'ennemi pour commencer.", "event");
   }
@@ -71,6 +73,11 @@ function init() {
   if (window.WorkshopUnlockManager) {
     if (typeof WorkshopUnlockManager.ensure === "function") WorkshopUnlockManager.ensure();
     if (typeof WorkshopUnlockManager.runRetroactiveCheck === "function") WorkshopUnlockManager.runRetroactiveCheck();
+  }
+
+  // v3.100.0 : chaîne Histoire — état garanti + rattrapage d'un objectif atteint hors ligne.
+  if (window.StoryQuestManager && typeof StoryQuestManager.runRetroactiveCheck === "function") {
+    StoryQuestManager.runRetroactiveCheck();
   }
 
   if (typeof renderAll === "function") renderAll();
@@ -96,7 +103,6 @@ function init() {
   if (typeof switchTab === "function") switchTab(game.activeTab || "campement");
 
   lastTick = Date.now();
-  syncAutoTapLoop();
   requestAnimationFrame(gameLoop);
 }
 

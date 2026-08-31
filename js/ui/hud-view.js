@@ -52,8 +52,8 @@ function buildHudHTML() {
 
 function buildStatsBarHTML() {
   return ''
-    + '<div class="stat-item"><span class="stat-label">⚡ Dégâts/Tap</span><span class="stat-value" id="stat-tap-dmg">1</span></div>'
-    + '<div class="stat-item"><span class="stat-label">🔁 Auto DPS</span><span class="stat-value" id="stat-auto-dps">0</span></div>'
+    + '<div class="stat-item"><span class="stat-label">⚔️ Attaque</span><span class="stat-value" id="stat-tap-dmg">1</span></div>'
+    + '<div class="stat-item"><span class="stat-label">⚡ Célérité</span><span class="stat-value" id="stat-auto-dps">0</span></div>'
     + '<div class="stat-item"><span class="stat-label">🎯 Critique</span><span class="stat-value" id="stat-crit">5%</span></div>'
     + '<div class="stat-item"><span class="stat-label">🎯 Dégâts crit.</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>'
     + '<div class="stat-item"><span class="stat-label"><img class="stat-label-icon" src="images/Icons/gold_icon.png" alt="Or"> Or</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>';
@@ -67,6 +67,8 @@ function mountHudAndStatsBar() {
 }
 
 function renderHud() {
+  // v3.101.0 : régénération au camp (accrual paresseux, voir systems/camp-system.js)
+  if (window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(false);
   var gold = document.getElementById("hud-gold");
   var essence = document.getElementById("hud-essence");
 
@@ -184,7 +186,7 @@ function renderStats() {
   }
 
   if (tap) tap.textContent = fmt2(EquipmentManager.effectiveTapDamage());
-  if (auto) auto.textContent = fmt2(EquipmentManager.effectiveAutoDps());
+  if (auto) auto.textContent = String(Math.round((window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function") ? CombatEngine.getTotalCelerity() : 0));
   if (crit) crit.textContent = fmt2(EquipmentManager.effectiveCritChance()) + "%";
   if (critPercent) critPercent.textContent = "x" + fmt2(EquipmentManager.effectiveCritMult());
   if (gold) gold.textContent = "x" + fmt2(EquipmentManager.effectiveGoldMult());

@@ -46,7 +46,11 @@ function updateQuestBadge() {
     ? CodexManager.getUnreadCount()
     : 0;
 
-  var total = questsReady + achievementsReady + talentsReady + ascensionReady + codexUnread + dungeonTicketReady;
+  var storyReady = (window.StoryQuestManager && typeof StoryQuestManager.getClaimableCount === "function")
+    ? StoryQuestManager.getClaimableCount()
+    : 0;
+
+  var total = questsReady + achievementsReady + talentsReady + ascensionReady + codexUnread + dungeonTicketReady + storyReady;
   badge.textContent = total > 0 ? String(total) : "";
   badge.style.display = total > 0 ? "inline-flex" : "none";
 }
@@ -648,8 +652,12 @@ function buildQuestCardsGroupedByWorldHTML(entries) {
 /* v3.89 : carte-catégorie repliable (Histoire/Ressources/Aventure/Expéditions), pattern
    inspiré de buildDungeonCardHTML — repliée par défaut, affiche un compte au repos. */
 function buildQuestSectionCardHTML(sectionDef, entriesForSection) {
+  // v3.100.0 : la chaîne Histoire (StoryQuestManager) vit dans la section « Histoire », en tête ;
+  // la section s'ouvre d'elle-même tant que la chaîne est active (jamais explicitement repliée).
+  var storyHTML = (sectionDef.key === "worldexpedition") ? buildStoryChainHTML() : "";
+  if (storyHTML && expandedQuestSectionIds[sectionDef.key] === undefined) expandedQuestSectionIds[sectionDef.key] = true;
   var expanded = !!expandedQuestSectionIds[sectionDef.key];
-  var count = entriesForSection.length;
+  var count = entriesForSection.length + (storyHTML ? 1 : 0);
 
   var h = '<div class="quest-section-card' + (expanded ? ' is-expanded' : '') + '">';
   h += '<button type="button" class="quest-section-head" onclick="toggleQuestSectionExpand(\'' + esc(sectionDef.key) + '\')">';
@@ -661,9 +669,10 @@ function buildQuestSectionCardHTML(sectionDef, entriesForSection) {
 
   if (expanded) {
     h += '<div class="quest-section-body">';
+    if (storyHTML) h += storyHTML;
     if (count > 0) {
       h += buildQuestCardsGroupedByWorldHTML(entriesForSection);
-    } else {
+    } else if (!storyHTML) {
       h += '<div class="eq-empty">' + esc(sectionDef.emptyText) + '</div>';
     }
     h += '</div>';
@@ -688,6 +697,130 @@ function buildQuestCardsGroupedBySectionHTML(entries) {
   h += '</div>';
   return h;
 }
+
+/* v3.100.0 : chaîne Histoire « Les Braises d'Aeswyn » (data/story-quests.js). Étape courante mise en
+   avant (Accepter → objectif → Réclamer), étapes réclamées repliées en une ligne. Filtre Terminée :
+   uniquement les étapes réclamées. Retourne "" si aucun chapitre à afficher (skipped, ou rien réclamé en mode Terminée). */
+function buildStoryStepRewardText(reward) {
+  var parts = [];
+  reward = reward || {};
+  if (reward.gold) parts.push(formatNumber(reward.gold) + " or");
+  if (reward.essence) parts.push(formatNumber(reward.essence) + " essence");
+  if (reward.healingPotion) {
+    var potion = (window.PotionManager && typeof PotionManager.getHealingPotion === "function") ? PotionManager.getHealingPotion(reward.healingPotion.id) : null;
+    parts.push((reward.healingPotion.count || 1) + " " + (potion ? potion.name : "potion"));
+  }
+  if (reward.resources && typeof reward.resources === "object") {
+    Object.keys(reward.resources).forEach(function (key) {
+      var def = (window.WAREHOUSE_RESOURCES || {})[key];
+      parts.push(formatNumber(reward.resources[key]) + " " + (def ? def.name : key));
+    });
+  }
+  if (reward.equipmentRarity) parts.push((reward.equipmentCount || 1) + " objet " + ((window.RARITY_LABELS || {})[reward.equipmentRarity] || reward.equipmentRarity));
+  return parts.join(" · ") || "—";
+}
+
+function buildStoryStepUnlockText(step) {
+  var labels = window.STORY_TAB_LABELS || {};
+  return (step.unlockTabs || []).map(function (t) { return labels[t] || t; }).join(", ");
+}
+
+function buildStoryClaimedStepHTML(chapterId, step, index) {
+  var cardId = "story_" + step.id;
+  var expanded = !!expandedQuestCardIds[cardId];
+  var h = '<div class="story-step story-step-claimed' + (expanded ? ' is-expanded' : '') + '" onclick="toggleQuestCardExpand(\'' + esc(cardId) + '\')">';
+  h += '<div class="story-step-row"><span class="story-step-num">✔ ' + (index + 1) + '</span><span class="story-step-title">' + esc(step.title) + '</span><span class="quest-card-chevron">' + (expanded ? '▾' : '▸') + '</span></div>';
+  if (expanded) h += '<div class="story-step-text">' + esc(step.narrative.completion) + '</div>';
+  h += '</div>';
+  return h;
+}
+
+function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
+  var accepted = StoryQuestManager.isCurrentStepAccepted(chapterId);
+  var ready = StoryQuestManager.isCurrentStepReady(chapterId);
+  var unlockText = buildStoryStepUnlockText(step);
+
+  var h = '<div class="story-step story-step-current' + (ready ? ' is-ready' : accepted ? ' is-accepted' : '') + '">';
+  if (step.act) h += '<div class="story-step-act">' + esc(step.act) + '</div>';
+  h += '<div class="story-step-row"><span class="story-step-num">' + (index + 1) + '/' + chapter.steps.length + '</span><span class="story-step-title">' + esc(step.title) + '</span><span class="quest-badge quest-badge-main">Principale</span></div>';
+  h += '<div class="story-step-text">' + esc(step.narrative.objective) + '</div>';
+
+  h += '<div class="map-quest-step">';
+  h += '<div class="map-quest-step-row"><span class="map-quest-step-desc">' + (ready ? "✔ " : "") + esc(step.objectiveLabel || "") + '</span></div>';
+  var progressText = accepted ? step.progress(game) : "";
+  if (progressText) h += '<div class="story-step-progress">' + esc(progressText) + '</div>';
+  h += '</div>';
+
+  if (unlockText) h += '<div class="story-step-unlock">🔓 Débloque : ' + esc(unlockText) + '</div>';
+  h += '<div class="map-quest-reward"><span class="map-quest-reward-label">Récompense</span><span class="map-quest-reward-value">' + esc(buildStoryStepRewardText(step.reward)) + '</span></div>';
+
+  h += '<div class="story-step-actions">';
+  if (!accepted) {
+    h += '<button class="settings-btn primary" type="button" onclick="StoryQuestManager.acceptStep(\'' + esc(chapterId) + '\')">Accepter</button>';
+  } else if (ready) {
+    h += '<button class="settings-btn primary" type="button" onclick="StoryQuestManager.claimStep(\'' + esc(chapterId) + '\')">🎁 Réclamer</button>';
+  } else if (step.linkTo) {
+    h += '<button class="settings-btn" type="button" onclick="StoryQuestManager.goToLink(\'' + esc(chapterId) + '\')">➜ Aller à la quête</button>';
+  }
+  h += '</div>';
+  h += '</div>';
+  return h;
+}
+
+function buildStoryChainHTML() {
+  if (!window.StoryQuestManager || !window.STORY_QUESTS) return "";
+  var h = "";
+
+  Object.keys(STORY_QUESTS).forEach(function (chapterId) {
+    var chapter = STORY_QUESTS[chapterId];
+    var st = StoryQuestManager.getState(chapterId);
+    if (st.skipped) return;
+
+    var claimed = chapter.steps.filter(function (s) { return !!st.claimedSteps[s.id]; });
+    var current = StoryQuestManager.getCurrentStep(chapterId);
+    var completedMode = activeQuestsFilter === "completed";
+    if (completedMode && !claimed.length) return;
+
+    h += '<div class="story-chain">';
+    h += '<div class="story-chain-head"><span class="story-chain-icon">' + esc(chapter.icon || "📖") + '</span><span class="story-chain-title">' + esc(chapter.title) + '</span><span class="story-chain-progress">' + claimed.length + '/' + chapter.steps.length + '</span></div>';
+    if (chapter.subtitle) h += '<div class="story-chain-sub">' + esc(chapter.subtitle) + '</div>';
+
+    if (completedMode) {
+      claimed.forEach(function (step) { h += buildStoryClaimedStepHTML(chapterId, step, chapter.steps.indexOf(step)); });
+    } else {
+      if (claimed.length) {
+        // Étapes passées derrière une seule ligne repliable (jusqu'à 14 lignes sinon).
+        var listId = "story_claimed_" + chapterId;
+        var listOpen = !!expandedQuestCardIds[listId];
+        h += '<div class="story-claimed-toggle" onclick="toggleQuestCardExpand(\'' + esc(listId) + '\')"><span>✔ ' + claimed.length + ' étape' + (claimed.length > 1 ? 's' : '') + ' terminée' + (claimed.length > 1 ? 's' : '') + '</span><span class="quest-card-chevron">' + (listOpen ? '▾' : '▸') + '</span></div>';
+        if (listOpen) {
+          h += '<div class="story-claimed-list">';
+          claimed.forEach(function (step) { h += buildStoryClaimedStepHTML(chapterId, step, chapter.steps.indexOf(step)); });
+          h += '</div>';
+        }
+      }
+      if (current) {
+        h += buildStoryCurrentStepHTML(chapterId, chapter, current, st.currentStep);
+      } else {
+        h += '<div class="story-step story-step-end">' + (StoryQuestManager.isChapterCompleted(chapterId) ? "Chapitre terminé — le Désert t'attend." : "La suite de l'histoire arrive bientôt…") + '</div>';
+      }
+    }
+    h += '</div>';
+  });
+
+  return h;
+}
+
+/* Ouvre l'écran Quêtes (Général, filtre Active) sur une section et une carte données — cible du bouton « Aller à la quête ». */
+function openQuestsAt(sectionKey, cardId) {
+  activeQuestsSubTab = "general";
+  activeQuestsFilter = "active";
+  if (sectionKey) expandedQuestSectionIds[sectionKey] = true;
+  if (cardId) expandedQuestCardIds[cardId] = true;
+  if (typeof switchTab === "function") switchTab("quests");
+}
+window.buildStoryChainHTML = buildStoryChainHTML;
+window.openQuestsAt = openQuestsAt;
 
 function buildExplorationQuestDetailHTML(quest, run) {
   var isRunning = !!(run && run.questId === quest.id && run.status !== "completed");
@@ -993,8 +1126,46 @@ function buildQuestCompleteHTML(config) {
 }
 window.buildQuestCompleteHTML = buildQuestCompleteHTML;
 
+/* v3.100.4 : prochaine quête d'aventure proposable depuis le popup de fin — première non terminée du
+   monde courant (WorldManager), triée par adventureIndex puis world_start avant world_end. Null si une
+   quête/chasse/donjon est en cours. */
+function getNextAdventureQuestId() {
+  if (!window.AdventureQuestManager || !window.ADVENTURE_QUESTS) return null;
+  if (game.adventureQuestRun && game.adventureQuestRun.active) return null;
+  if (game.huntRun && game.huntRun.active) return null;
+  if (game.dungeonRun && game.dungeonRun.active) return null;
+  var world = (window.WorldManager && typeof WorldManager.getWorld === "function") ? WorldManager.getWorld() : null;
+  var worldId = world ? world.id : null;
+  var stageRank = { world_start: 0, world_end: 1 };
+  var candidates = AdventureQuestManager.getAllQuests().filter(function (q) {
+    return !game.adventureQuestsCompleted[q.id] && (!worldId || q.worldId === worldId);
+  });
+  candidates.sort(function (a, b) {
+    var d = Number(a.adventureIndex || 0) - Number(b.adventureIndex || 0);
+    if (d) return d;
+    return (stageRank[a.progressionStage] || 0) - (stageRank[b.progressionStage] || 0);
+  });
+  return candidates.length ? candidates[0].id : null;
+}
+
+function startNextAdventureQuestFromPopup() {
+  var questId = getNextAdventureQuestId();
+  closeQuestCompletePopup();
+  if (questId && typeof openAdventureQuestIntro === "function") openAdventureQuestIntro(questId);
+}
+window.getNextAdventureQuestId = getNextAdventureQuestId;
+window.startNextAdventureQuestFromPopup = startNextAdventureQuestFromPopup;
+
 function openQuestCompletePopup(config) {
   applyQuestUnlockSideEffects();
+  // v3.100.4 : bouton « Quête suivante » (sauf si l'appelant fournit déjà une action ou le refuse — chaîne Histoire).
+  if (config && !config.extraActionLabel && config.suggestNextQuest !== false) {
+    var nextId = getNextAdventureQuestId();
+    if (nextId) {
+      config.extraActionLabel = "➜ Quête suivante : " + (ADVENTURE_QUESTS[nextId].name || "");
+      config.extraActionOnclick = "startNextAdventureQuestFromPopup()";
+    }
+  }
   var host = document.getElementById("adventure-quest-modal-root");
   if (host) host.innerHTML = buildQuestCompleteHTML(config);
 }

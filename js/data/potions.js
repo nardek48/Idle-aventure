@@ -78,8 +78,8 @@ const HEALING_POTIONS_DB = [
     id: "potion_soin_mineur",
     name: "Potion de soin mineur",
     icon: "images/Icons/potions/potion_soin_mineur_icone.png",
-    healPercent: 0.25,
-    cost: 1000
+    healPercent: 0.35, // v3.101.0 : 25 → 35 % (LIGNE_DIRECTRICE §10 n°10)
+    cost: 150 // v3.101.0 : 1000 → 150, accessible dès l'Acte I (le soin complet reste le Repas)
   },
   {
     id: "potion_soin_majeur",

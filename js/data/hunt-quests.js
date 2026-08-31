@@ -32,7 +32,7 @@ var HUNT_QUESTS = {
     story: "Le gibier ne manque pas à la Lisière. Chaque bête abattue rapporte de la viande à stocker à l'Entrepôt — une chasse peut se répéter indéfiniment.",
     icon: "🍖",
     resourceKey: "viande",
-    dropChancePct: 20,
+    dropChancePct: 50, // v3.100.3 : 20 -> 50 (chasse active = vraie source de viande en Acte II, décision Seb)
     lotSize: 10
   }
 };

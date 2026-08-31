@@ -101,6 +101,14 @@ function createInitialGameState() {
     talents: {},
     enemy: null,
     activeTab: "campement",
+    // v3.99.15 : onglets débloqués par défaut à la création d'un héros — le reste
+    // (combat, village, more/héros, et tout le menu ☰ sauf quêtes/paramètres) reste
+    // caché tant que non débloqué. Voir ui/ui-root.js (isTabUnlocked) et
+    // ui/menu-view.js (filtrage de MENU_ITEMS). Pas de condition de déblocage
+    // automatique pour l'instant (viendra plus tard via les quêtes) — seul un
+    // bouton dédié dans Paramètres permet de tout débloquer en une fois.
+    unlockedTabs: { campement: true, quests: true, settings: true },
+    storyQuests: {}, // v3.100.0 : chaîne Histoire, rempli par StoryQuestManager.ensure() (systems/story-quest-system.js)
     totalGoldEarned: 0,
     totalDamageDealt: 0,
     playTime: 0,
@@ -144,7 +152,8 @@ function createInitialGameState() {
     autoSellEquipment: false,
     autoSellRarityThreshold: "common",
 
-    autoSkillsEnabled: true,
+    autoSkillsEnabled: false,
+    combatMode: "tactique", // v3.102.0 (P2) : "tactique" | "grimoire" (autoSkillsEnabled = miroir hérité)
 
     expertModeEnabled: false,
 
@@ -156,9 +165,6 @@ function createInitialGameState() {
     classCooldowns: {},
     classActiveDefense: null,
 
-    basicAttackCooldownMs: 0,
-    basicAttackPending: false,
-
     combatSpeed: 1,
 
     achievementsClaimed: {},
@@ -167,7 +173,7 @@ function createInitialGameState() {
     worldQuestProgress: {},
     worldQuestsCompleted: {},
 
-    resources: { viande: 0, ble: 0, bois: 0, fer: 0 },
+    resources: { viande: 10, eau: 6, ble: 0, bois: 0, fer: 0 }, // v3.101.0 : 3 repas de départ (« les cendres d'Aeswyn ont laissé quelque chose »)
     adventureQuestProgress: {},
     adventureQuestsCompleted: {},
     adventureQuestRun: { active: false, questId: null },
@@ -230,6 +236,14 @@ function ensureGameStateDefaults() {
   if (typeof game.totalAetherEarned !== "number") game.totalAetherEarned = Number(game.aether || 0);
   if (!Array.isArray(game.quests)) game.quests = [];
 
+  // v3.99.15 : garde-fou minimal — la vraie migration pour les sauvegardes
+  // antérieures se fait dans systems/save-system.js:restoreBaseState() (après le
+  // chargement réel, donc avec le bon contexte playerName/etc.). Ici, on couvre
+  // seulement le cas où unlockedTabs serait devenu invalide en cours de partie.
+  if (!game.unlockedTabs || typeof game.unlockedTabs !== "object") {
+    game.unlockedTabs = { campement: true, quests: true, settings: true };
+  }
+
   if (!game.questProgress || typeof game.questProgress !== "object") {
     game.questProgress = {};
   }
@@ -269,8 +283,7 @@ function ensureGameStateDefaults() {
   if (typeof game.classResource === "undefined") game.classResource = null;
   if (typeof game.classActiveDefense === "undefined") game.classActiveDefense = null;
 
-  if (typeof game.basicAttackCooldownMs !== "number") game.basicAttackCooldownMs = 0;
-  if (typeof game.basicAttackPending !== "boolean") game.basicAttackPending = false;
+  if (game.combatMode !== "tactique" && game.combatMode !== "grimoire") game.combatMode = "tactique";
 
   if ([1, 2, 4].indexOf(Number(game.combatSpeed)) === -1) game.combatSpeed = 1;
 
@@ -304,7 +317,7 @@ function ensureGameStateDefaults() {
   if (typeof game.autoSellRarityThreshold !== "string" || (typeof RARITY_ORDER !== "undefined" && RARITY_ORDER.indexOf(game.autoSellRarityThreshold) === -1)) {
     game.autoSellRarityThreshold = "common";
   }
-  if (typeof game.autoSkillsEnabled !== "boolean") game.autoSkillsEnabled = true;
+  if (typeof game.autoSkillsEnabled !== "boolean") game.autoSkillsEnabled = (game.combatMode === "grimoire");
   if (typeof game.expertModeEnabled !== "boolean") game.expertModeEnabled = false;
 
   if (!Array.isArray(game.grimoireRules)) {

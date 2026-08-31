@@ -52,7 +52,7 @@ function formatEquipmentStat(item) {
   if (item.stat === "goldMult") return "+" + Math.round(value * 100) + "% or";
   if (item.stat === "critChance") return "+" + formatNumber(value) + "% critique";
   if (item.stat === "critMult") return "+" + formatNumber(value) + "x dégâts crit";
-  if (item.stat === "autoDps") return "+" + formatNumber(value) + " auto DPS";
+  if (item.stat === "autoDps") return "+" + formatNumber(value) + " célérité";
   if (item.stat === "defense") return "+" + Math.round(value * 100) + "% défense";
 
   return "+" + formatNumber(value) + " " + esc(item.stat);

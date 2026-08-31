@@ -4,6 +4,19 @@
 function buildCampQuestSummaryHTML() {
   var h = "";
 
+  // v3.100.0 : étape Histoire courante en premier, avec accès direct (StoryQuestManager)
+  if (window.StoryQuestManager && window.STORY_QUESTS) {
+    Object.keys(STORY_QUESTS).forEach(function (chapterId) {
+      var step = StoryQuestManager.getCurrentStep(chapterId);
+      if (!step) return;
+      var status = !StoryQuestManager.isCurrentStepAccepted(chapterId) ? "À accepter"
+        : StoryQuestManager.isCurrentStepReady(chapterId) ? "Prête à réclamer"
+        : (step.progress(game) || "En cours");
+      var highlight = status === "À accepter" || status === "Prête à réclamer";
+      h += '<div class="camp-summary-row camp-summary-story" onclick="openQuestsAt(\'worldexpedition\')"><span>📖 ' + esc(step.title) + '</span><span' + (highlight ? ' class="camp-summary-highlight"' : '') + '>' + esc(status) + ' ›</span></div>';
+    });
+  }
+
   if (window.WorldQuestManager && typeof getNextLockedWorldIndex === "function") {
     var idx = getNextLockedWorldIndex();
     if (idx !== -1) {
@@ -46,10 +59,17 @@ function buildCampQuestSummaryHTML() {
 function buildCampHTML() {
   if (window.CampManager) CampManager.ensureDefaults();
 
-  var longReady = window.CampManager ? CampManager.isLongReady() : true;
-  var longRemainingMs = window.CampManager ? CampManager.getLongRemainingMs() : 0;
-  var shortReady = window.CampManager ? CampManager.isShortReady() : true;
-  var shortRemainingMs = window.CampManager ? CampManager.getShortRemainingMs() : 0;
+  // v3.101.0 (P3-lite) : régénération lente + Repas, plus de repos à horloge.
+  if (window.CampManager) CampManager.applyRegen(false);
+  var maxHp = game.heroMaxHp || 1;
+  var hp = game.heroHp != null ? game.heroHp : maxHp;
+  var hpFull = hp >= maxHp;
+  var regenPct = window.CampManager ? Math.round(CampManager.getRegenPctPerMin() * 100) : 5;
+  var minutesToFull = window.CampManager ? CampManager.getMinutesToFull() : 0;
+  var mealCost = window.CampManager ? CampManager.getMealCost() : { viande: 5, eau: 2 };
+  var canEat = window.CampManager ? CampManager.canEat() : false;
+  var viandeStock = window.WarehouseManager ? WarehouseManager.getAmount("viande") : 0;
+  var eauStock = window.WarehouseManager ? WarehouseManager.getAmount("eau") : 0;
 
   var h = '<div class="nb-page-frame camp-page">';
 
@@ -57,7 +77,7 @@ function buildCampHTML() {
   h += '<div class="camp-hero-sub">Ton point de ralliement entre deux expéditions.</div>';
 
   if (game.justDied) {
-    h += '<div class="camp-death-banner">💀 Tu es tombé au combat, PV à 0. Repose-toi avant de repartir à l\'aventure.</div>';
+    h += '<div class="camp-death-banner">💀 Tu es tombé au combat. Mange, ou laisse le feu faire son œuvre, avant de repartir.</div>';
     game.justDied = false;
   }
 
@@ -65,23 +85,23 @@ function buildCampHTML() {
 
   h += '<div class="camp-card camp-fire-card">';
   h += '<div class="camp-fire-icon">🔥</div>';
-  h += '<div class="camp-fire-title">Long repos</div>';
-  h += '<div class="camp-fire-desc">PV au maximum. Toutes les 30 min.</div>';
-  if (longReady) {
-    h += '<button class="settings-btn primary" type="button" onclick="CampManager.useLongRest(); if (typeof renderPanel === \'function\') renderPanel();">Se reposer</button>';
-  } else {
-    h += '<button class="settings-btn camp-fire-btn-cooldown" type="button" disabled>' + esc(formatTime(Math.ceil(longRemainingMs / 1000))) + '</button>';
-  }
+  h += '<div class="camp-fire-title">Feu de camp</div>';
+  h += '<div class="camp-fire-desc">+' + regenPct + ' % PV par minute hors combat.</div>';
+  h += '<div class="camp-fire-hp" id="camp-fire-hp-value">' + formatNumber(Math.floor(hp)) + ' / ' + formatNumber(maxHp) + ' PV</div>';
+  h += '<button class="settings-btn camp-fire-btn-cooldown" id="camp-fire-eta" type="button" disabled>' + (hpFull ? 'PV au maximum' : esc('Max dans ' + formatTime(Math.ceil(minutesToFull * 60)))) + '</button>';
   h += '</div>';
 
   h += '<div class="camp-card camp-fire-card">';
-  h += '<div class="camp-fire-icon">🪵</div>';
-  h += '<div class="camp-fire-title">Repos court</div>';
-  h += '<div class="camp-fire-desc">50% des PV max. Toutes les 15 min.</div>';
-  if (shortReady) {
-    h += '<button class="settings-btn primary" type="button" onclick="CampManager.useShortRest(); if (typeof renderPanel === \'function\') renderPanel();">Se reposer</button>';
+  h += '<div class="camp-fire-icon">🍖</div>';
+  h += '<div class="camp-fire-title">Repas</div>';
+  h += '<div class="camp-fire-desc">PV au maximum. ' + mealCost.viande + ' viande + ' + mealCost.eau + ' eau.</div>';
+  h += '<div class="camp-fire-hp' + (canEat ? '' : ' is-short') + '">' + formatNumber(viandeStock) + ' viande · ' + formatNumber(eauStock) + ' eau</div>';
+  if (hpFull) {
+    h += '<button class="settings-btn camp-fire-btn-cooldown" type="button" disabled>Pas faim</button>';
+  } else if (canEat) {
+    h += '<button class="settings-btn primary" type="button" onclick="CampManager.eat();">Manger</button>';
   } else {
-    h += '<button class="settings-btn camp-fire-btn-cooldown" type="button" disabled>' + esc(formatTime(Math.ceil(shortRemainingMs / 1000))) + '</button>';
+    h += '<button class="settings-btn camp-fire-btn-cooldown" type="button" disabled>Garde-manger vide</button>';
   }
   h += '</div>';
 

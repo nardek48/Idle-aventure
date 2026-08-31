@@ -1,7 +1,7 @@
 "use strict";
 /* systems/combat-auto-policy-system.js — moteur PUR de décision auto (bac à sable + combat auto) : priorité par défaut,
    Grimoire de tactiques (règles/réserve/exclusion/fenêtre d'anticipation), diagnostic Mode Expert. Aucun accès à game.* ni au DOM.
-   Détail complet (historique de calibrage v3.50-v3.67) : COMMENTAIRES_ORIGINAUX.md */
+   v3.102.0 (P2) : toutes les fenêtres en ROUNDS ; « enemyAttackIncoming » = double frappe ennemie au prochain tour. */
 function chooseAutoAction(priorityList, kit, resourceState, cooldownState, combatContext) {
   if (!priorityList || !Array.isArray(priorityList) || !kit || !kit.actions) return null;
   if (typeof canUseAction !== "function") return null;
@@ -36,8 +36,6 @@ window.sanitizeAutoPolicyList = sanitizeAutoPolicyList;
 
 var HERO_LOW_HP_THRESHOLD_PCT = 0.40;
 
-var ENEMY_ATTACK_ANTICIPATION_THRESHOLD_S = 0.5;
-
 function evaluateGrimoireCondition(conditionId, combatContext) {
   var ctx = combatContext || {};
 
@@ -51,7 +49,7 @@ function evaluateGrimoireCondition(conditionId, combatContext) {
     case "heroLowHp":
       return typeof ctx.heroHpPercent === "number" && ctx.heroHpPercent <= HERO_LOW_HP_THRESHOLD_PCT;
     case "enemyAttackIncoming":
-      return typeof ctx.secondsUntilEnemyAttack === "number" && ctx.secondsUntilEnemyAttack <= ENEMY_ATTACK_ANTICIPATION_THRESHOLD_S;
+      return !!ctx.enemyDoubleStrikeNext;
     case "enemyEnraged":
       return ctx.enemyArchetype === "enraged";
     case "enemyCorrupted":
@@ -68,10 +66,9 @@ function evaluateGrimoireCondition(conditionId, combatContext) {
 }
 
 window.HERO_LOW_HP_THRESHOLD_PCT = HERO_LOW_HP_THRESHOLD_PCT;
-window.ENEMY_ATTACK_ANTICIPATION_THRESHOLD_S = ENEMY_ATTACK_ANTICIPATION_THRESHOLD_S;
 window.evaluateGrimoireCondition = evaluateGrimoireCondition;
 
-function explainGrimoireRuleStatus(rule, kit, resourceState, cooldownState, combatContext, secondsUntilTrigger) {
+function explainGrimoireRuleStatus(rule, kit, resourceState, cooldownState, combatContext, roundsUntilTrigger) {
   var base = {
     code: "no_condition",
     conditionMet: false,
@@ -80,8 +77,8 @@ function explainGrimoireRuleStatus(rule, kit, resourceState, cooldownState, comb
     actionConditionsOk: false,
     resourceCurrent: null,
     resourceCost: null,
-    cooldownRemainingMs: null,
-    secondsUntilTrigger: (typeof secondsUntilTrigger === "number") ? secondsUntilTrigger : null
+    cooldownRemainingRounds: null,
+    roundsUntilTrigger: (typeof roundsUntilTrigger === "number") ? roundsUntilTrigger : null
   };
 
   if (!rule || typeof rule.conditionId !== "string") return base;
@@ -96,7 +93,7 @@ function explainGrimoireRuleStatus(rule, kit, resourceState, cooldownState, comb
   base.resourceOk = (typeof canAfford === "function") ? canAfford(resourceState, action.resourceCost) : true;
 
   var remaining = (cooldownState && typeof cooldownState[action.id] === "number") ? cooldownState[action.id] : 0;
-  base.cooldownRemainingMs = remaining > 0 ? remaining : 0;
+  base.cooldownRemainingRounds = remaining > 0 ? remaining : 0;
   base.cooldownOk = (typeof isCooldownReady === "function") ? isCooldownReady(cooldownState, action.id) : (remaining <= 0);
 
   base.actionConditionsOk = (typeof checkActionConditions === "function") ? checkActionConditions(action.conditions, combatContext) : true;
@@ -190,7 +187,7 @@ function isConditionPossibleForEnemy(conditionId, enemy) {
 
   if (conditionId === "chargeIncoming") return !enemy.isBoss;
   if (conditionId === "shieldIncoming" || conditionId === "healIncoming") return !!enemy.isBoss;
-  if (conditionId === "enemyAttackIncoming") return true;
+  if (conditionId === "enemyAttackIncoming") return Number((enemy.stats && enemy.stats.celerity) || 0) > 0;
   if (conditionId === "enemyEnraged") return enemy.archetype === "enraged";
   if (conditionId === "enemyCorrupted") return enemy.archetype === "corrupted";
   if (conditionId === "enemySilenceIncoming") return !enemy.isBoss && enemy.archetype === "silenced";
@@ -230,50 +227,41 @@ function getGrimoireCounterReserveAmount(rules, kit, enemy) {
 window.getPrioritaryCounterRule = getPrioritaryCounterRule;
 window.getGrimoireCounterReserveAmount = getGrimoireCounterReserveAmount;
 
-var GRIMOIRE_APPROACH_WINDOW_FACTOR_S_PER_COST = 0.10;
-var GRIMOIRE_APPROACH_WINDOW_MIN_S = 3;
+/* Fenêtre d'approche (rounds) : quand le télégraphe d'une règle de contre est à ≤ N rounds,
+   le repli par défaut réserve le coût de l'action de contre (voir ClassCombatManager). */
+var GRIMOIRE_APPROACH_WINDOW_ROUNDS = 3;
 
-var GRIMOIRE_APPROACH_WINDOW_FIXED_S = 10;
-
-function getGrimoireApproachWindowSeconds(actionResourceCost) {
-  return GRIMOIRE_APPROACH_WINDOW_FIXED_S;
+function getGrimoireApproachWindowRounds(actionResourceCost) {
+  return GRIMOIRE_APPROACH_WINDOW_ROUNDS;
 }
 
-function estimateResourceGainOverWindow(resourceDef, windowSeconds, effectiveBasicCooldownMs, basicDamageEstimate) {
+/* Gain de ressource estimé sur `windowRounds` rounds d'Attaque (1 attaque/round, jauge ignorée = borne basse). */
+function estimateResourceGainOverWindow(resourceDef, windowRounds, basicDamageEstimate) {
   if (!resourceDef || !resourceDef.generation || typeof resourceDef.generation.type !== "string") return 0;
-  var window = (typeof windowSeconds === "number" && windowSeconds > 0) ? windowSeconds : 0;
-  if (window <= 0) return 0;
-
-  var cooldownMs = (typeof effectiveBasicCooldownMs === "number" && effectiveBasicCooldownMs > 0) ? effectiveBasicCooldownMs : 0;
-  var estimatedHits = cooldownMs > 0 ? Math.floor((window * 1000) / cooldownMs) : 0;
+  var rounds = (typeof windowRounds === "number" && windowRounds > 0) ? Math.floor(windowRounds) : 0;
+  if (rounds <= 0) return 0;
 
   var gen = resourceDef.generation;
   switch (gen.type) {
-    case "passiveAndBasicAttack": {
-      var passiveGain = (gen.passivePerSecond || 0) * window;
-      var basicGain = estimatedHits * (gen.basicAttackGain || 0);
-      return passiveGain + basicGain;
-    }
-    case "successfulBasicAttack": {
-      return estimatedHits * (gen.value || 0);
-    }
+    case "passiveAndBasicAttack":
+      return rounds * ((gen.passivePerRound || 0) + (gen.basicAttackGain || 0));
+    case "successfulBasicAttack":
+      return rounds * (gen.value || 0);
     case "damageDealtPercent": {
       var dmg = (typeof basicDamageEstimate === "number" && basicDamageEstimate > 0) ? basicDamageEstimate : 0;
       var perHit = dmg * (gen.value || 0);
       if (typeof gen.maxGainPerHit === "number" && gen.maxGainPerHit > 0) {
         perHit = Math.min(perHit, gen.maxGainPerHit);
       }
-      return estimatedHits * perHit;
+      return rounds * perHit;
     }
     default:
       return 0;
   }
 }
 
-window.GRIMOIRE_APPROACH_WINDOW_FACTOR_S_PER_COST = GRIMOIRE_APPROACH_WINDOW_FACTOR_S_PER_COST;
-window.GRIMOIRE_APPROACH_WINDOW_MIN_S = GRIMOIRE_APPROACH_WINDOW_MIN_S;
-window.GRIMOIRE_APPROACH_WINDOW_FIXED_S = GRIMOIRE_APPROACH_WINDOW_FIXED_S;
-window.getGrimoireApproachWindowSeconds = getGrimoireApproachWindowSeconds;
+window.GRIMOIRE_APPROACH_WINDOW_ROUNDS = GRIMOIRE_APPROACH_WINDOW_ROUNDS;
+window.getGrimoireApproachWindowRounds = getGrimoireApproachWindowRounds;
 window.estimateResourceGainOverWindow = estimateResourceGainOverWindow;
 
 // Affinité d'arme en version pure (getDamageAffinity réel dépend de game.equipped/
@@ -282,16 +270,14 @@ function getPureDamageAffinityMult(weaponType, enemyResists, enemyWeak) {
   if (!weaponType) return (typeof NO_WEAPON_MULT === "number") ? NO_WEAPON_MULT : 0.8;
   var resists = enemyResists || [];
   var weak = enemyWeak || [];
-  if (resists.indexOf(weaponType) !== -1) return (typeof RESIST_DMG_MULT === "number") ? RESIST_DMG_MULT : 0.7;
-  if (weak.indexOf(weaponType) !== -1) return (typeof WEAK_DMG_MULT === "number") ? WEAK_DMG_MULT : 1.3;
+  if (resists.indexOf(weaponType) !== -1) return (typeof RESIST_DMG_MULT === "number") ? RESIST_DMG_MULT : 0.85;
+  if (weak.indexOf(weaponType) !== -1) return (typeof WEAK_DMG_MULT === "number") ? WEAK_DMG_MULT : 1.15;
   return 1;
 }
 
-// Jumelle pure de estimateResourceGainOverWindow : estimation optimiste du temps
-// restant avant la mort de l'ennemi, à partir des stats ACTUELLES du héros (pas
-// d'historique de dégâts réels) — tap + auto-DPS, affinité d'arme, crit moyen.
-// heroStats.critChance attendu en fraction 0-1 (pas en pourcentage).
-function estimateTimeToKillMs(heroStats, enemyStats) {
+/* Estimation optimiste des rounds nécessaires pour tuer l'ennemi à l'Attaque seule : dégâts moyens
+   (affinité, crit moyen) × (1 + célérité/100) pour la frappe bonus. heroStats.critChance en fraction 0-1. */
+function estimateRoundsToKill(heroStats, enemyStats) {
   if (!heroStats || !enemyStats) return Infinity;
   var enemyHp = Number(enemyStats.hp || 0);
   if (enemyHp <= 0) return 0;
@@ -300,18 +286,10 @@ function estimateTimeToKillMs(heroStats, enemyStats) {
   var critChance = Math.max(0, Math.min(1, Number(heroStats.critChance || 0)));
   var critMult = Number(heroStats.critMult || 1);
   var avgCritFactor = 1 + critChance * (critMult - 1);
-
-  var effectiveCooldownMs = Number(heroStats.effectiveBasicCooldownMs || 0);
-  var tapDamage = Number(heroStats.tapDamage || 0);
-  var tapDps = effectiveCooldownMs > 0 ? (tapDamage * avgCritFactor * affinityMult) / (effectiveCooldownMs / 1000) : 0;
-
-  var autoDps = Number(heroStats.autoDps || 0) * affinityMult;
-
-  var totalDps = tapDps + autoDps;
-  if (totalDps <= 0) return Infinity;
-
-  return (enemyHp / totalDps) * 1000;
+  var perRound = Number(heroStats.attackDamage || 0) * avgCritFactor * affinityMult * (1 + Math.max(0, Number(heroStats.celerity || 0)) / 100);
+  if (perRound <= 0) return Infinity;
+  return enemyHp / perRound;
 }
 
 window.getPureDamageAffinityMult = getPureDamageAffinityMult;
-window.estimateTimeToKillMs = estimateTimeToKillMs;
+window.estimateRoundsToKill = estimateRoundsToKill;

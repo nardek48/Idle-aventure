@@ -10,9 +10,9 @@ function setHerosSubTab(tab) {
   if (typeof renderPanel === "function") renderPanel();
 }
 
-function buildCharacterAbilityCardHTML(config, cssClass, remainingMs, cooldownMs) {
-  var onCooldown = remainingMs > 0;
-  var cdText = onCooldown ? Math.ceil(remainingMs / 1000) + "s" : Math.round(cooldownMs / 1000) + "s";
+function buildCharacterAbilityCardHTML(config, cssClass, remainingRounds, cooldownRounds) {
+  var onCooldown = remainingRounds > 0;
+  var cdText = onCooldown ? remainingRounds + " r" : (cooldownRounds || 0) + " r"; // v3.102.0 : en rounds
 
   var h = '<div class="ability-card ' + cssClass + '">';
   h += '<div class="ability-icon-wrap">' + renderIconOrEmojiHTML(config.icon, "ability-icon", config.name) + '</div>';
@@ -37,12 +37,12 @@ function buildCharacterAbilitiesHTML() {
     var action = ClassCombatManager.getAction(slot);
     if (!action) return;
 
-    var remainingMs = (game.classCooldowns && typeof game.classCooldowns[action.id] === "number") ? game.classCooldowns[action.id] : 0;
+    var remainingRounds = (game.classCooldowns && typeof game.classCooldowns[action.id] === "number") ? game.classCooldowns[action.id] : 0;
     var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "🛡️" : "✨");
     var counterLabels = (typeof getGrimoireCounterLabels === "function") ? getGrimoireCounterLabels(action) : [];
     var config = { icon: icon, name: action.label, desc: action.description, counterLabels: counterLabels };
     var cssClass = action.type === "defense" ? "defense" : "attack";
-    h += buildCharacterAbilityCardHTML(config, cssClass, remainingMs, action.cooldownMs);
+    h += buildCharacterAbilityCardHTML(config, cssClass, remainingRounds, action.cooldownRounds);
   });
 
   return h;
@@ -149,9 +149,7 @@ function buildHeroFicheHTML() {
   var heroMaxHp = Math.max(1, Math.floor(Number(game.heroMaxHp || 1)));
   var atk = typeof EquipmentManager !== "undefined" ? EquipmentManager.effectiveTapDamage() : 0;
   var defPct = Math.round(Number(game.heroDefensePct || 0) * 100);
-  var baseCelerity = (hero && hero.stats) ? Number(hero.stats.celerity) || 0 : 0;
-  var trainedCelerity = (game.trainedStats && game.trainedStats.celerity) || 0;
-  var vit = Math.round(baseCelerity + trainedCelerity);
+  var vit = Math.round((window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function") ? CombatEngine.getTotalCelerity() : 0);
   var critPct = typeof EquipmentManager !== "undefined"
     ? (Math.round(EquipmentManager.effectiveCritChance() * 10) / 10)
     : 0;

@@ -68,12 +68,12 @@ function formatSetBonusEffect(effect) {
 
   var parts = [];
 
-  if (effect.tapDamage != null) parts.push("+" + formatNumber(effect.tapDamage) + " dégâts/tap");
+  if (effect.tapDamage != null) parts.push("+" + formatNumber(effect.tapDamage) + " dégâts d'Attaque");
   if (effect.tapMult != null) parts.push("+" + Math.round(effect.tapMult * 100) + "% dégâts");
   if (effect.goldMult != null) parts.push("+" + Math.round(effect.goldMult * 100) + "% or");
   if (effect.critChance != null) parts.push("+" + formatNumber(effect.critChance) + "% critique");
   if (effect.critMult != null) parts.push("+" + formatNumber(effect.critMult) + "x dégâts crit");
-  if (effect.autoDps != null) parts.push("+" + formatNumber(effect.autoDps) + " auto DPS");
+  if (effect.autoDps != null) parts.push("+" + formatNumber(effect.autoDps) + " célérité");
 
   return parts.join(" • ");
 }
@@ -82,7 +82,9 @@ var StatsSystem = {
     recalcStats: function () {
     game.tapDamage = 1;
     game.tapMult = 1;
-    game.autoDps = 0;
+    game.autoDps = 0; // v3.102.0 (P2) : plus d'auto-DPS ; champ conservé (save) mais toujours 0
+    game.bonusCelerity = 0; // v3.102.0 : célérité d'équipement (ex-stat autoDps) → jauge de célérité (CombatEngine.getTotalCelerity)
+    game.celerityMult = 1;  // v3.102.0 : potion de célérité
     game.critChance = 5;
     game.critMult = 2;
     game.goldMult = 1;
@@ -113,10 +115,6 @@ var StatsSystem = {
     // (exploration-engine.js) — source de vérité unique, jamais recalculée ailleurs.
     game.heroPowerRaw = totalPower;
 
-    var CELERITY_DPS_COEF = 0.03;
-    var baseCelerity = (hero && hero.stats) ? Number(hero.stats.celerity) || 0 : 0;
-    var trainedCelerity = (game.trainedStats && game.trainedStats.celerity) || 0;
-    game.autoDps += (baseCelerity + trainedCelerity) * CELERITY_DPS_COEF;
 
     var PRECISION_CRIT_COEF = 0.06;
     var basePrecision = (hero && hero.stats) ? Number(hero.stats.precision) || 0 : 0;
@@ -171,7 +169,7 @@ var StatsSystem = {
       else if (item.stat === "goldMult") game.goldMult += item.value;
       else if (item.stat === "critChance") game.critChance += item.value;
       else if (item.stat === "critMult") game.critMult += item.value;
-      else if (item.stat === "autoDps") game.autoDps += item.value;
+      else if (item.stat === "autoDps") game.bonusCelerity += item.value; // v3.102.0 : bottes = célérité
       else if (item.stat === "defense") game.equipDefensePct += item.value;
     });
 
@@ -205,7 +203,7 @@ var StatsSystem = {
       if (bonus.goldMult != null) game.goldMult += bonus.goldMult;
       if (bonus.critChance != null) game.critChance += bonus.critChance;
       if (bonus.critMult != null) game.critMult += bonus.critMult;
-      if (bonus.autoDps != null) game.autoDps += bonus.autoDps;
+      if (bonus.autoDps != null) game.bonusCelerity += bonus.autoDps;
       if (bonus.tapDamage != null) game.equipFlatTapBonus += bonus.tapDamage;
     });
 
@@ -237,7 +235,7 @@ var StatsSystem = {
       ? PotionManager.getActiveEffects()
       : {};
     if (potionEffects.power) game.tapDamage *= (1 + potionEffects.power);
-    if (potionEffects.celerity) game.autoDps *= (1 + potionEffects.celerity);
+    if (potionEffects.celerity) game.celerityMult *= (1 + potionEffects.celerity);
     if (potionEffects.critChance) game.critChance += potionEffects.critChance;
     if (potionEffects.gold) game.goldMult *= (1 + potionEffects.gold);
     if (potionEffects.endurance) {

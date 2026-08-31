@@ -10,6 +10,30 @@ function esc(value) {
     .replace(/'/g, "&#39;");
 }
 
+/* v3.99.15 : onglets cachés par défaut (voir core/state.js:unlockedTabs). "campement"
+   est TOUJOURS considéré débloqué (forcé en dur) même si l'état ne le contient pas,
+   pour ne jamais se retrouver avec un écran totalement vide en cas de bug/save
+   corrompue — c'est l'écran de départ, il doit rester une porte de sortie sûre. */
+function isTabUnlocked(tabName) {
+  if (tabName === "campement") return true;
+  if (!game.unlockedTabs || typeof game.unlockedTabs !== "object") return false;
+  return !!game.unlockedTabs[tabName];
+}
+
+/* Masque/affiche les boutons de la tab-bar du bas selon isTabUnlocked(). Le bouton
+   "Menu" (☰) reste toujours visible : il donne accès à Quêtes et Paramètres, débloqués
+   par défaut, et à la grille filtrée (voir ui/menu-view.js) pour le reste. */
+function refreshTabBarVisibility() {
+  var buttons = document.querySelectorAll(".tab-btn[data-tab]");
+  buttons.forEach(function (btn) {
+    var tab = btn.getAttribute("data-tab");
+    if (tab === "menu") return; // toujours visible
+    btn.style.display = isTabUnlocked(tab) ? "" : "none";
+  });
+}
+window.isTabUnlocked = isTabUnlocked;
+window.refreshTabBarVisibility = refreshTabBarVisibility;
+
 function buildEquipmentIconHTML(item, cssClass) {
   var cls = cssClass || "";
   if (!item) return '<div class="' + cls + '">' + renderIcon("equipment", "") + '</div>';
@@ -71,12 +95,22 @@ function restoreEquipBagScroll() {
 }
 
 function switchTab(tabName) {
+  // v3.99.15 : sécurité — un onglet verrouillé ne doit jamais devenir l'onglet actif
+  // (état sauvegardé corrompu, bouton resté dans le DOM avant un refreshTabBarVisibility(),
+  // etc.). Retombe sur campement, toujours débloqué.
+  if (!isTabUnlocked(tabName)) {
+    tabName = "campement";
+  }
+
   var leavingCombat = game.activeTab === "combat" && tabName !== "combat";
   game.activeTab = tabName;
 
   if (leavingCombat && game.combatSpeed !== 1) {
     game.combatSpeed = 1;
-    if (typeof syncAutoTapLoop === "function") syncAutoTapLoop();
+  }
+  // v3.102.0 : quitter l'écran Combat coupe « Continuer l'attaque »
+  if (leavingCombat && game.combatRound && game.combatRound.continueAttack) {
+    game.combatRound.continueAttack = false;
   }
 
   var gameArea = document.getElementById("game-area");
@@ -108,6 +142,7 @@ function switchTab(tabName) {
   if (panel) panel.classList.toggle("active", !combatMode);
   document.body.classList.toggle("combat-active", combatMode);
   if (typeof updateHudPageTitle === "function") updateHudPageTitle();
+  refreshTabBarVisibility();
   renderPanel();
 }
 
@@ -123,6 +158,7 @@ function renderAll() {
   if (typeof renderDefenseButton === "function") renderDefenseButton();
   if (typeof renderActivePotionsBar === "function") renderActivePotionsBar();
   if (typeof renderCombatHeroMini === "function") renderCombatHeroMini();
+  refreshTabBarVisibility();
   if (needsHeroSetup()) {
     openHeroSelection();
   }
@@ -140,6 +176,12 @@ function renderPanel() {
   var savedInnerScrollTop = innerScroll ? innerScroll.scrollTop : null;
 
   container.classList.toggle("sandbox-wide-mode", game.activeTab === "combat-sandbox" || game.activeTab === "admin");
+
+  // v3.100.0 : vérification opportuniste de l'étape Histoire (throttlée 1/s dans le manager,
+  // ne déclenche jamais de rendu — en combat renderPanel tourne à chaque kill).
+  if (window.StoryQuestManager && typeof StoryQuestManager.checkCurrentStep === "function") {
+    StoryQuestManager.checkCurrentStep(false);
+  }
 
   switch (game.activeTab) {
     case "shop":
@@ -173,7 +215,10 @@ function renderPanel() {
       container.innerHTML = buildGrimoireHTML();
       break;
     case "combat-sandbox":
-      container.innerHTML = buildCombatSandboxHTML();
+      // v3.102.0 : l'ancien bac à sable simule le moteur temps réel retiré en P2 — refonte sur CombatRoundSim en 3.102.2
+      container.innerHTML = '<div class="nb-page-frame"><div class="panel-card"><h3>🧪 Bac à sable de combat</h3>'
+        + '<p class="panel-sub">Indisponible : il simulait l\'ancien moteur temps réel. Il sera reconstruit sur le simulateur de rounds (v3.102.2).</p>'
+        + '<button class="settings-btn" onclick="switchTab(\'admin\')">← Retour</button></div></div>';
       break;
     case "admin":
       container.innerHTML = buildAdminHTML();

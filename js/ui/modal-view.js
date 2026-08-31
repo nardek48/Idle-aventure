@@ -173,10 +173,6 @@ function confirmHeroSelection() {
   renderAll();
   saveGame();
   showToast("Héros sélectionné", 1200);
-
-  if (isFirstEverSetup && typeof openOnboarding === "function") {
-    openOnboarding();
-  }
 }
 
 function openHeroSelection() {

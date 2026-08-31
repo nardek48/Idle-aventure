@@ -17,8 +17,12 @@ var MENU_ITEMS = [
 ];
 
 function getMenuQuestBadgeCount() {
-  if (!Array.isArray(game.quests) || !window.QuestManager) return 0;
-  return game.quests.filter(function (q) {
+  // v3.100.0 : + étapes Histoire réclamables (StoryQuestManager)
+  var storyReady = (window.StoryQuestManager && typeof StoryQuestManager.getClaimableCount === "function")
+    ? StoryQuestManager.getClaimableCount()
+    : 0;
+  if (!Array.isArray(game.quests) || !window.QuestManager) return storyReady;
+  return storyReady + game.quests.filter(function (q) {
     return !q.claimed && QuestManager.isComplete(q);
   }).length;
 }
@@ -33,6 +37,10 @@ function buildFullMenuHTML() {
   h += '    <div class="full-menu-grid">';
 
   MENU_ITEMS.forEach(function (item) {
+    // v3.99.15 : items verrouillés (onglets cachés, voir core/state.js:unlockedTabs)
+    // simplement absents de la grille, plutôt que grisés — comportement demandé par Seb.
+    if (typeof isTabUnlocked === "function" && !isTabUnlocked(item.tab)) return;
+
     var badgeCount = 0;
     if (item.badge === "achievement") {
       badgeCount = (window.AchievementManager && typeof AchievementManager.getAvailableToClaimCount === "function")

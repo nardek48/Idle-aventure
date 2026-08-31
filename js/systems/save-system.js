@@ -400,6 +400,7 @@ function buildSaveData() {
     killCounts: game.killCounts || {},
     upgrades: game.upgrades || {},
     talents: game.talents || {},
+    unlockedTabs: game.unlockedTabs || {}, // v3.99.15 : onglets débloqués, voir core/state.js
     inventory: Array.isArray(game.inventory) ? game.inventory : [],
     equipped: game.equipped || getDefaultEquipped(),
     quests: Array.isArray(game.quests) ? game.quests : [],
@@ -441,7 +442,9 @@ function buildSaveData() {
     // v3.47.0 : combat auto de base (skill1/skill2/skill3/defense +
     // attaque de base), voir ClassCombatManager.tickAutoSkills() —
     // actif par défaut, réglable dans Paramètres.
-    autoSkillsEnabled: game.autoSkillsEnabled !== false,
+    autoSkillsEnabled: game.autoSkillsEnabled === true,
+    // v3.102.0 (P2) : mode de combat par rounds ("tactique" | "grimoire")
+    combatMode: game.combatMode === "grimoire" ? "grimoire" : "tactique",
     // v3.66.0 : Mode Expert du Grimoire (Phase 6) — préférence
     // d'affichage pure, réglable directement dans l'écran Grimoire.
     expertModeEnabled: !!game.expertModeEnabled,
@@ -505,8 +508,10 @@ function buildSaveData() {
     // même principe que construction ci-dessus, état simple sans
     // champ temporel à rattraper.
     workshopUnlock: game.workshopUnlock || {},
+    storyQuests: game.storyQuests || {}, // v3.100.0 : chaîne Histoire (data/story-quests.js, systems/story-quest-system.js)
     campfireLastUsed: game.campfireLastUsed || 0, // v3.7 : cooldown du feu de camp (long repos), voir systems/camp-system.js
     campfireShortLastUsed: game.campfireShortLastUsed || 0, // v3.14 : cooldown du repos court
+    campRegenLastAt: game.campRegenLastAt || 0, // v3.101.0 : repère de régénération au camp (systems/camp-system.js)
     activeAfflictions: Object.assign({}, game.activeAfflictions || {}), // v3.20 : voir data/afflictions.js
     dungeonTiersEntered: game.dungeonTiersEntered || {},
     codexChaosSeen: !!game.codexChaosSeen,
@@ -570,6 +575,22 @@ function restoreBaseState(d) {
   game.upgrades = d.upgrades && typeof d.upgrades === "object" ? d.upgrades : {};
   game.talents = d.talents && typeof d.talents === "object" ? d.talents : {};
   game.aetherUpgrades = d.aetherUpgrades && typeof d.aetherUpgrades === "object" ? d.aetherUpgrades : {};
+  // v3.99.15 : onglets débloqués (voir core/state.js). Migration pour les sauvegardes
+  // antérieures à cette version (d.unlockedTabs absent) : une partie déjà entamée
+  // (playerName déjà rempli à ce stade du chargement) débloque tout directement plutôt
+  // que de se retrouver limitée aux 3 onglets de départ après une mise à jour.
+  if (d.unlockedTabs && typeof d.unlockedTabs === "object") {
+    game.unlockedTabs = d.unlockedTabs;
+  } else if (d.playerName) {
+    game.unlockedTabs = {
+      campement: true, combat: true, village: true, more: true,
+      dungeon: true, shop: true, talents: true, equip: true, quests: true,
+      ascension: true, map: true, achievements: true, bestiary: true,
+      afflictions: true, grimoire: true, settings: true
+    };
+  } else {
+    game.unlockedTabs = { campement: true, quests: true, settings: true };
+  }
 
   game.inventory = Array.isArray(d.inventory) ? d.inventory : [];
   game.equipped = d.equipped && typeof d.equipped === "object" ? d.equipped : getDefaultEquipped();
@@ -588,6 +609,10 @@ function restoreBaseState(d) {
 
   game.activeTab = d.activeTab || "combat";
   game.enemy = null;
+  // v3.102.0 (P2) : l'état de round est transitoire (l'ennemi ne l'est pas non plus) — repart de zéro au chargement
+  game.combatRound = { number: 0, busy: false, continueAttack: false, clockMs: 0 };
+  game.heroGauge = 0;
+  game.silencedRounds = 0;
   game.lastOnline = Number(d.lastOnline || d.savedAt || 0);
 
   WorldManager.worldIndex = Math.max(0, Number(d.worldIndex || 0));
@@ -638,7 +663,16 @@ function restoreBaseState(d) {
   game.autoSellRarityThreshold = (typeof d.autoSellRarityThreshold === "string") ? d.autoSellRarityThreshold : "common";
   // v3.47.0 : absent d'une ancienne sauvegarde = true (comportement
   // par défaut souhaité), pas false — seul un false explicite désactive.
-  game.autoSkillsEnabled = d.autoSkillsEnabled !== false;
+  // v3.102.0 (P2) : combatMode ; migration d'une save d'avant P2 (autoSkillsEnabled true par défaut) → Grimoire
+  // seulement si l'onglet Grimoire est débloqué (étape 12 de l'Histoire), sinon Tactique.
+  if (d.combatMode === "grimoire" || d.combatMode === "tactique") {
+    game.combatMode = d.combatMode;
+  } else {
+    var legacyAuto = d.autoSkillsEnabled !== false;
+    var grimoireTabUnlocked = !!(d.unlockedTabs && d.unlockedTabs.grimoire);
+    game.combatMode = (legacyAuto && grimoireTabUnlocked) ? "grimoire" : "tactique";
+  }
+  game.autoSkillsEnabled = (game.combatMode === "grimoire");
   // v3.66.0 : Mode Expert — absent d'une ancienne sauvegarde = false
   // (off par défaut, cohérent avec l'état initial createInitialGameState()).
   game.expertModeEnabled = !!d.expertModeEnabled;
@@ -679,8 +713,17 @@ function restoreBaseState(d) {
   // besoin par ClassCombatManager.ensureForCurrentClass() (voir
   // systems/class-combat-system.js), pas une perte de données.
   game.classResource = (d.classResource && typeof d.classResource === "object") ? d.classResource : null;
-  game.classCooldowns = (d.classCooldowns && typeof d.classCooldowns === "object") ? d.classCooldowns : {};
-  game.classActiveDefense = (d.classActiveDefense && typeof d.classActiveDefense === "object") ? d.classActiveDefense : null;
+  // v3.102.0 (P2) : cooldowns en ROUNDS (entiers ≤ 20) — une save d'avant P2 les stockait en ms : on les purge.
+  game.classCooldowns = {};
+  if (d.classCooldowns && typeof d.classCooldowns === "object") {
+    Object.keys(d.classCooldowns).forEach(function (k) {
+      var v = Number(d.classCooldowns[k]);
+      if (isFinite(v) && v > 0 && v <= 20 && v === Math.floor(v)) game.classCooldowns[k] = v;
+    });
+  }
+  game.classActiveDefense = (d.classActiveDefense && typeof d.classActiveDefense === "object" && typeof d.classActiveDefense.roundsLeft === "number")
+    ? d.classActiveDefense
+    : null;
   game.achievementsClaimed = d.achievementsClaimed && typeof d.achievementsClaimed === "object" ? d.achievementsClaimed : {};
   game.worldsEverReached = d.worldsEverReached && typeof d.worldsEverReached === "object" ? d.worldsEverReached : {};
   game.worldQuestProgress = d.worldQuestProgress && typeof d.worldQuestProgress === "object" ? d.worldQuestProgress : {};
@@ -782,8 +825,22 @@ function restoreBaseState(d) {
   // rétroactive (runRetroactiveCheck()) tourne une fois au boot, voir
   // main/boot.js, APRÈS ce chargement.
   game.workshopUnlock = d.workshopUnlock && typeof d.workshopUnlock === "object" ? d.workshopUnlock : {};
+  // v3.100.0 : chaîne Histoire. Migration : save antérieure (d.storyQuests absent) d'une
+  // partie entamée dont tous les onglets sont déjà débloqués (legacy < v3.99.15, ou bouton
+  // Paramètres) → chapitre court-circuité (skipped). Sinon la chaîne démarre à l'étape 1.
+  if (d.storyQuests && typeof d.storyQuests === "object") {
+    game.storyQuests = d.storyQuests;
+  } else {
+    game.storyQuests = {};
+    if (d.playerName) {
+      var storyTabs = ["combat", "village", "more", "dungeon", "shop", "talents", "equip", "ascension", "map", "achievements", "bestiary", "afflictions", "grimoire"];
+      var allUnlocked = !d.unlockedTabs || storyTabs.every(function (t) { return !!game.unlockedTabs[t]; });
+      if (allUnlocked) game.storyQuests.forest = { currentStep: 0, accepted: false, claimedSteps: {}, readyNotified: false, skipped: true };
+    }
+  }
   game.campfireLastUsed = typeof d.campfireLastUsed === "number" ? d.campfireLastUsed : 0;
   game.campfireShortLastUsed = typeof d.campfireShortLastUsed === "number" ? d.campfireShortLastUsed : 0;
+  game.campRegenLastAt = typeof d.campRegenLastAt === "number" && d.campRegenLastAt > 0 ? d.campRegenLastAt : Date.now(); // v3.101.0
   game.activeAfflictions = (d.activeAfflictions && typeof d.activeAfflictions === "object") ? d.activeAfflictions : {};
   game.dungeonTiersEntered = d.dungeonTiersEntered && typeof d.dungeonTiersEntered === "object" ? d.dungeonTiersEntered : {};
   game.codexChaosSeen = !!d.codexChaosSeen;
@@ -896,6 +953,8 @@ function hardResetState() {
   // même règle que Construction (une fois débloqué, jamais reverrouillé,
   // y compris à l'ascension).
   var keptWorkshopUnlock = JSON.parse(JSON.stringify(game.workshopUnlock || {}));
+  // v3.100.0 : chaîne Histoire = permanente à l'ascension, comme unlockedTabs (jamais reverrouillé).
+  var keptStoryQuests = JSON.parse(JSON.stringify(game.storyQuests || {}));
   var keptDungeonTiersEntered = Object.assign({}, game.dungeonTiersEntered || {});
   var keptCodexChaosSeen = !!game.codexChaosSeen;
   var keptCodexRead = Object.assign({}, game.codexRead || {});
@@ -1010,6 +1069,7 @@ function hardResetState() {
   game.worldQuestProgress = keptWorldQuestProgress;
   game.worldQuestsCompleted = keptWorldQuestsCompleted;
   game.resources = keptResources;
+  game.campRegenLastAt = Date.now(); // v3.101.0 : ascension = pas d'accrual
   game.adventureQuestProgress = keptAdventureQuestProgress;
   game.adventureQuestsCompleted = keptAdventureQuestsCompleted;
   game.huntStats = keptHuntStats;
@@ -1018,6 +1078,7 @@ function hardResetState() {
   game.production = keptProduction;
   game.construction = keptConstruction;
   game.workshopUnlock = keptWorkshopUnlock;
+  game.storyQuests = keptStoryQuests;
   // v3.31 : lastTick de chaque bâtiment doit repartir de "maintenant"
   // à l'ascension (sinon le premier tick/boot suivant croirait à une
   // absence de plusieurs secondes égale au temps écoulé DANS
@@ -1038,6 +1099,11 @@ function hardResetState() {
   game.classResource = null;
   game.classCooldowns = {};
   game.classActiveDefense = null;
+  // v3.102.0 (P2) : combatMode = préférence, PRÉSERVÉE à l'ascension (comme autoSkillsEnabled avant) ; état de round remis à zéro
+  if (game.combatMode !== "grimoire") game.combatMode = "tactique";
+  game.combatRound = { number: 0, busy: false, continueAttack: false, clockMs: 0 };
+  game.heroGauge = 0;
+  game.silencedRounds = 0;
 
   game.autoSellEquipment = false;
   game.autoSellRarityThreshold = "common";
@@ -1107,6 +1173,7 @@ function fullResetState() {
   game.upgrades = {};
   game.talents = {};
   game.aetherUpgrades = {};
+  game.unlockedTabs = { campement: true, quests: true, settings: true }; // v3.99.15
   game.inventory = [];
   game.equipped = getDefaultEquipped();
   game.quests = [];
@@ -1137,6 +1204,7 @@ function fullResetState() {
   game.gatheringActivity = { quarry: { cooldownEndsAt: 0, activeSession: null }, well: { cooldownEndsAt: 0, activeSession: null } }; // v3.92.0/v3.94.0
   game.campfireLastUsed = 0; // v3.7 : repos gratuit du Campement — repart bien à zéro sur un reset complet
   game.campfireShortLastUsed = 0; // v3.14 : idem pour le repos court
+  game.campRegenLastAt = Date.now(); // v3.101.0
   game.activeAfflictions = {}; // v3.20 : remis à zéro sur un reset complet (conservé à l'ascension)
   game.dungeonBossClears = 0;
   game.dungeonShards = 0;
@@ -1152,7 +1220,7 @@ function fullResetState() {
   // sur un reset complet, comme worldQuestProgress ci-dessus.
   // v3.35 : planche/lingot repartent aussi à zéro (artisanat tier 1).
   // v3.36 : pierre/farine idem.
-  game.resources = { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0 };
+  game.resources = { viande: 10, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 6, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0 }; // v3.101.0 : 3 repas de départ
   game.adventureQuestProgress = {};
   game.adventureQuestsCompleted = {};
   game.huntStats = {}; // v3.30
@@ -1161,6 +1229,7 @@ function fullResetState() {
   game.production = {}; // v3.31 : repart à zéro, ProductionManager.ensure() recrée les 4 bâtiments au niveau 1
   game.construction = {}; // v3.37 : repart à zéro, ConstructionManager.ensure() recrée workshop au niveau 0
   game.workshopUnlock = {}; // v3.38 : repart à zéro, WorkshopUnlockManager.ensure() recrée l'état initial (currentStep 0)
+  game.storyQuests = {}; // v3.100.0 : repart à zéro, StoryQuestManager.ensure() recrée l'état initial (étape 1)
   game.dungeonTiersEntered = {};
   game.codexChaosSeen = false;
   game.codexRead = {};
@@ -1177,7 +1246,12 @@ function fullResetState() {
   // volontairement PRÉSERVÉE à l'ascension (hardResetState, plus haut
   // dans ce fichier) : contrairement à autoSellEquipment/classResource,
   // rien ne justifie de forcer le joueur à la réactiver à chaque run.
-  game.autoSkillsEnabled = true;
+  game.autoSkillsEnabled = false;
+  // v3.102.0 (P2) : nouvelle partie = mode Tactique (décision §10 n°2) ; état de round vierge
+  game.combatMode = "tactique";
+  game.combatRound = { number: 0, busy: false, continueAttack: false, clockMs: 0 };
+  game.heroGauge = 0;
+  game.silencedRounds = 0;
   // v3.66.0 : Mode Expert — même principe que autoSkillsEnabled
   // juste au-dessus (préférence d'affichage, préservée à l'ascension),
   // remise à sa valeur par défaut (off) seulement sur un reset complet.

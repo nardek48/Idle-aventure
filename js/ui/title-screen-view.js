@@ -59,6 +59,24 @@ function resolveTitleScreen() {
 }
 
 /* Nouvelle Partie : 1er slot vide -> création de héros direct. Tous pleins -> vers Charger. */
+/* v3.99.16 : s'assure que `game` reflète bien le CONTENU RÉEL du slot actif avant
+   tout changement de slot depuis l'écran titre. Sans ça : si le joueur clique
+   "Nouvelle Partie" ou "Charger la Partie" alors que `game` est encore l'état par
+   défaut vierge (jamais chargé dans cette session, ce qui est le cas normal sur
+   l'écran titre puisque init()/loadGame() n'a pas encore tourné), HeroSlotManager.
+   createHeroInSlot()/switchToSlot() (systems/save-system.js) sauvegardent ce game
+   vide PAR-DESSUS le slot qu'on quitte avant de le vider pour de bon — la partie
+   réelle du slot actif est alors écrasée et perdue. Bug remonté par Seb : "créer
+   une nouvelle partie écrase la première partie enregistrée". Corrigé en chargeant
+   explicitement le slot actif avant tout changement, si ce n'est pas déjà fait. */
+function ensureActiveSlotLoadedBeforeSwitch() {
+  if (!window.HeroSlotManager || typeof loadGame !== "function") return;
+  var active = HeroSlotManager.getActiveSlot();
+  if (HeroSlotManager.hasSlot(active) && !game.playerName) {
+    loadGame();
+  }
+}
+
 function titleScreenNewGame() {
   if (!window.HeroSlotManager) return;
 
@@ -74,6 +92,8 @@ function titleScreenNewGame() {
     renderTitleScreen();
     return;
   }
+
+  ensureActiveSlotLoadedBeforeSwitch();
 
   // Crée l'emplacement (repart d'un état neuf) puis ouvre le sélecteur nom -> héros.
   // resolveTitleScreen() est branché sur confirmHeroSelection() ci-dessous, pas ici :
@@ -116,6 +136,7 @@ function titleScreenConfirmLoad(slotNumber) {
   if (!window.HeroSlotManager || !target || !HeroSlotManager.hasSlot(target)) return;
 
   if (HeroSlotManager.getActiveSlot() !== target) {
+    ensureActiveSlotLoadedBeforeSwitch(); // v3.99.16 : voir commentaire au-dessus de titleScreenNewGame()
     HeroSlotManager.switchToSlot(target);
   }
 
@@ -149,6 +170,8 @@ function titleScreenConfirmDelete() {
 /* Clic sur un emplacement vide depuis la liste "Charger" : redirige vers la création (plus fluide qu'un slot désactivé). */
 function titleScreenCreateInSlot(slotNumber) {
   if (!window.HeroSlotManager || HeroSlotManager.hasSlot(slotNumber)) return;
+
+  ensureActiveSlotLoadedBeforeSwitch(); // v3.99.16 : voir commentaire au-dessus de titleScreenNewGame()
 
   window.titleScreenSlotBeingCreated = slotNumber;
   HeroSlotManager.createHeroInSlot(slotNumber);
@@ -269,7 +292,7 @@ function buildTitleScreenMainHTML() {
   html += '          <span>Charger la Partie</span>';
   html += '        </button>';
   html += '      </div>';
-  html += '      <div class="title-screen-version">v3.99.14</div>';
+  html += '      <div class="title-screen-version">v3.99.16</div>';
   html += '    </div>';
   html += '  </div>';
   html += '</div>';

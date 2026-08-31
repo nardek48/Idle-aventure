@@ -2,9 +2,9 @@
 /* systems/progression-system.js — le plus gros fichier du projet : WorldManager (progression mondes + génération ennemis),
    QuestManager (quêtes journalières), achats (upgrades/talents/Aether), XP héros, AscensionManager + ascendNow().
    Détail complet (constantes de balance ENEMY_PV_*, historique des exposants) : COMMENTAIRES_ORIGINAUX.md */
-var ENEMY_PV_MULT = 4.0;
+var ENEMY_PV_MULT = 3.33; // v3.102.0 (P2) : 4,0 → 3,33, calibration par rounds (P1_Budgets_Foret.md §B)
 var ENEMY_PV_WORLD_EXP = 1.45;
-var BOSS_PV_MULT = 6.7;
+var BOSS_PV_MULT = 3.1;   // v3.102.0 (P2) : 6,7 → 3,1 ; les dégâts de boss passent ×1,5 (BOSS_DMG_MULT, combat-engine.js)
 var ENEMY_POWER_SCALE_EXP = 0.3;
 
 // Coefficient WORLD_MULT par monde (session équilibrage "scie", cf. CHANGELOG_v3.87.0.md) :
@@ -437,7 +437,6 @@ function respecTalents() {
     game._frenzyReady = false;
 
     if (window.StatsSystem) StatsSystem.recalcStats();
-    if (typeof syncAutoTapLoop === "function") syncAutoTapLoop();
 
     addLog("🔄 Talents réinitialisés (-" + formatNumber(cost) + " or, " + totalPoints + " point(s) rendu(s))", "event");
     showToast("Talents réinitialisés", 1500);
@@ -492,7 +491,6 @@ function buyTalentNode(id) {
   game.talents[id] = currentLevel + 1;
 
   if (window.StatsSystem) StatsSystem.recalcStats();
-  if (typeof syncAutoTapLoop === "function") syncAutoTapLoop();
 
   addLog("Talent amélioré : " + (node.name || id) + " (niveau " + game.talents[id] + "/" + maxLevel + ")", "event");
   showToast((node.name || id) + " niveau " + game.talents[id], 1500);

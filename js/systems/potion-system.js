@@ -194,31 +194,34 @@ var PotionManager = {
     saveGame();
   },
 
-  getHealCooldownRemainingMs: function () {
+  getHealCooldownRemainingMs: function () { // v3.102.0 : conservé pour compatibilité (toujours 0, le tour de round remplace le cooldown)
+    return 0;
+  },
+
+  _legacyHealCooldownRemainingMs: function () {
     this.ensureHealing();
     var elapsed = Date.now() - (game.lastHealUse || 0);
     return Math.max(0, HEALING_POTION_COOLDOWN_MS - elapsed);
   },
 
+  /* v3.102.0 (P2) : la potion est l'action « Objet » d'un round (elle consomme le tour, voir CombatEngine.heroAction) —
+     plus de cooldown d'horloge. Retourne true si une potion a été bue. */
   useHealingPotion: function (id) {
     this.ensureHealing();
     var potion = this.getHealingPotion(id);
-    if (!potion) return;
+    if (!potion) return false;
 
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
-      return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
-    }
-
-    if (this.getHealCooldownRemainingMs() > 0) {
-      return showToast("⏳ Encore un instant...", 900);
+      showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
+      return false;
     }
 
     var stock = this.getHealingStock(id);
-    if (stock <= 0) return showToast("Aucune potion en stock", 1000);
+    if (stock <= 0) { showToast("Aucune potion en stock", 1000); return false; }
 
     var maxHp = Number(game.heroMaxHp || 1);
     var currentHp = Number(game.heroHp != null ? game.heroHp : maxHp);
-    if (currentHp >= maxHp) return showToast("PV déjà au maximum", 1000);
+    if (currentHp >= maxHp) { showToast("PV déjà au maximum", 1000); return false; }
 
     game.healingPotionsOwned[id] = stock - 1;
     var healed = Math.floor(maxHp * potion.healPercent);
@@ -230,8 +233,9 @@ var PotionManager = {
     if (typeof renderHeroHp === "function") renderHeroHp();
     if (typeof renderHud === "function") renderHud();
     if (typeof renderHealButtons === "function") renderHealButtons();
-    if (typeof renderPanel === "function") renderPanel();
+    if (game.activeTab !== "combat" && typeof renderPanel === "function") renderPanel();
     saveGame();
+    return true;
   },
 
   getActiveEffects: function () {
