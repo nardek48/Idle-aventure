@@ -185,8 +185,9 @@ function isConditionPossibleForEnemy(conditionId, enemy) {
   if (conditionId === "heroLowHp") return true;
   if (!enemy) return false;
 
-  if (conditionId === "chargeIncoming") return !enemy.isBoss;
-  if (conditionId === "shieldIncoming" || conditionId === "healIncoming") return !!enemy.isBoss;
+  if (conditionId === "chargeIncoming") return !enemy.isBoss && enemy.archetype !== "shielded" && enemy.archetype !== "silenced";
+  if (conditionId === "shieldIncoming") return !!enemy.isBoss || enemy.archetype === "shielded";
+  if (conditionId === "healIncoming") return !!enemy.isBoss;
   if (conditionId === "enemyAttackIncoming") return Number((enemy.stats && enemy.stats.celerity) || 0) > 0;
   if (conditionId === "enemyEnraged") return enemy.archetype === "enraged";
   if (conditionId === "enemyCorrupted") return enemy.archetype === "corrupted";

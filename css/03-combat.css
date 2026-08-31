@@ -1296,3 +1296,9 @@ img.combat-action-icon {
   opacity: 0.5;
   cursor: default;
 }
+
+/* v3.105.0 : approche (distance) — l'ennemi n'est pas encore au contact. Statut calme (pas un
+   danger imminent : il ne frappe pas), teinte terre pour le distinguer des télégraphes. */
+.enemy-status-approaching {
+  border-color: #a78b5f;
+}

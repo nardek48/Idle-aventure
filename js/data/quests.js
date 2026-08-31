@@ -2,7 +2,7 @@
 /* data/quests.js — quêtes journalières (config + templates). DEFAULT_QUEST_PROGRESS ici fait foi (chargé après constants.js). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var QUEST_CONFIG = {
-  count: 3,
+  count: 1, // v3.103.2 (P4, décision §10 n°7) : journalières → 1 contrat du jour (au lieu de 3)
   resetHours: 24
 };
 

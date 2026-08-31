@@ -15,13 +15,14 @@ var SortieManager = {
 
   ensure: function () {
     if (!game.sortie || typeof game.sortie !== "object") {
-      game.sortie = { active: false, context: null, startedAt: 0, loot: this.emptyLoot(), potionsUsed: 0, kills: 0 };
+      game.sortie = { active: false, context: null, startedAt: 0, loot: this.emptyLoot(), potionsUsed: 0, kills: 0, killedBoss: false };
     }
     if (!game.sortie.loot || typeof game.sortie.loot !== "object") game.sortie.loot = this.emptyLoot();
     if (!Array.isArray(game.sortie.loot.items)) game.sortie.loot.items = [];
     if (!game.sortie.loot.resources || typeof game.sortie.loot.resources !== "object") game.sortie.loot.resources = {};
     if (typeof game.sortie.potionsUsed !== "number") game.sortie.potionsUsed = 0;
     if (typeof game.sortie.kills !== "number") game.sortie.kills = 0;
+    if (typeof game.sortie.killedBoss !== "boolean") game.sortie.killedBoss = false;
     return game.sortie;
   },
 
@@ -64,7 +65,11 @@ var SortieManager = {
     var s = this.ensure();
     s.loot.resources[key] = Number(s.loot.resources[key] || 0) + Math.max(0, Number(n) || 0);
   },
-  noteKill: function () { this.ensure().kills += 1; },
+  noteKill: function (isBoss) {
+    var s = this.ensure();
+    s.kills += 1;
+    if (isBoss) s.killedBoss = true;
+  },
 
   canUsePotion: function () {
     var s = this.ensure();
@@ -109,6 +114,7 @@ var SortieManager = {
     });
 
     this.bank(kept);
+    if (outcome === "success") this.grantMissionXp(s);
 
     var summary = { outcome: outcome, context: s.context, kept: kept, lost: lost, kills: s.kills, potionsUsed: s.potionsUsed };
     var label = SORTIE_CONTEXT_LABELS[s.context] || s.context;
@@ -128,6 +134,17 @@ var SortieManager = {
     game.lastSortieSummary = summary;
     if (typeof renderCombatControls === "function") renderCombatControls();
     return summary;
+  },
+
+  /* XP par mission (décision §10 n°6, LIGNE_DIRECTRICE §4) : 10 pour une mission de combat réussie,
+     5 si elle s'est conclue sur un boss vaincu (remplace le 10, pas cumulé) — jamais par kill.
+     L'étape Histoire a sa propre récompense (15), gérée par StoryQuestManager, pas ici. Le farm
+     (context "farm", Rentrer) n'est pas une mission au sens de la ligne directrice : pas d'XP. */
+  grantMissionXp: function (s) {
+    if (s.context === "farm" || !s.context) return;
+    if (typeof grantHeroXp !== "function") return;
+    var xp = s.killedBoss ? 5 : 10;
+    grantHeroXp(xp, s.killedBoss ? "boss" : "mission");
   },
 
   /* Verse le butin conservé dans la bourse / l'inventaire / l'entrepôt (WarehouseManager, jamais game.resources). */

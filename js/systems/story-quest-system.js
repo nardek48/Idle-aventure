@@ -27,7 +27,7 @@ var StoryQuestManager = {
     if (typeof st.counters.coeurKills !== "number") st.counters.coeurKills = 0;
     if (typeof st.counters.coeurBossKills !== "number") st.counters.coeurBossKills = 0;
     if (typeof st.lastSeenTotalKills !== "number") st.lastSeenTotalKills = Number(game.totalKills || 0);
-    if (typeof st.lastSeenBossKills !== "number") st.lastSeenBossKills = Number((game.killCounts || {}).slimeking || 0);
+    if (typeof st.lastSeenBossKills !== "number") st.lastSeenBossKills = Number((game.killCounts || {}).orcwarlord || 0); // v3.104.0 (P5) : ex-slimeking
     return st;
   },
 
@@ -112,15 +112,16 @@ var StoryQuestManager = {
 
   /* v3.100.1 : compte les victoires au Cœur de la forêt sans toucher combat-engine.js (protégé) :
      combat-engine appelle renderAll() après chaque kill, donc le delta de game.totalKills (et de
-     killCounts.slimeking pour le boss) entre deux appels = kills récents. Attribué au Cœur si
-     worldIndex 0 / adventureIndex 1, hors runs de Chasse/Donjon. Limite connue : les kills de chasse
-     ambiante (OfflineManager.tickAmbientHunting) au Cœur comptent aussi — accepté. */
+     killCounts.orcwarlord pour le boss, v3.104.0/P5 : nouveau boss du Cœur, ex-slimeking) entre deux
+     appels = kills récents. Attribué au Cœur si worldIndex 0 / adventureIndex 1, hors runs de
+     Chasse/Donjon. Limite connue : les kills de chasse ambiante (OfflineManager.tickAmbientHunting)
+     au Cœur comptent aussi — accepté. */
   _trackKills: function () {
     this.ensure();
     var st = game.storyQuests.forest;
     if (!st) return;
     var total = Number(game.totalKills || 0);
-    var bossTotal = Number((game.killCounts || {}).slimeking || 0);
+    var bossTotal = Number((game.killCounts || {}).orcwarlord || 0);
     var delta = total - st.lastSeenTotalKills;
     var bossDelta = bossTotal - st.lastSeenBossKills;
     st.lastSeenTotalKills = total;
@@ -188,6 +189,8 @@ var StoryQuestManager = {
      équipement via LootSystem.rollDropAtRarity (pattern world-quest-system). */
   _grantReward: function (reward) {
     var rows = [];
+    // v3.103.3 (P4, décision §10 n°6) : chaque étape réclamée donne 15 XP, indépendamment du contenu de `reward`.
+    if (typeof grantHeroXp === "function") grantHeroXp(15, "story");
     if (reward.gold) {
       game.gold += Number(reward.gold);
       rows.push({ label: "Or", value: formatNumber(reward.gold) });
@@ -243,7 +246,7 @@ var StoryQuestManager = {
     // Resynchronise le repère de kills au boot : les kills hors ligne (OfflineManager) ne sont pas
     // localisables, ils ne comptent pas comme victoires au Cœur.
     game.storyQuests.forest.lastSeenTotalKills = Number(game.totalKills || 0);
-    game.storyQuests.forest.lastSeenBossKills = Number((game.killCounts || {}).slimeking || 0);
+    game.storyQuests.forest.lastSeenBossKills = Number((game.killCounts || {}).orcwarlord || 0);
     this._checkNow(true);
   },
 

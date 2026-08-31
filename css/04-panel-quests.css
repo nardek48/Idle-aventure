@@ -379,3 +379,13 @@
 .camp-summary-story {
   cursor: pointer;
 }
+
+/* ============================================================
+   v3.103.2 (P4) — tableau de missions : liste simple de cartes
+   (.camp-mission-card, voir css/04-panel-camp.css), plus de
+   catégories repliables ni de groupement par monde ici.
+   ============================================================ */
+.quest-board-list {
+  display: flex;
+  flex-direction: column;
+}

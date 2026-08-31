@@ -11,6 +11,19 @@ var BOSS_DB = {
     stats: makeRpgStats(30, 58, 16, 18, 22)
   },
 
+  orcwarlord: {
+    // v3.104.0 (P5) : boss du Cœur de la forêt (forest_2) — profil martial/brutal plutôt que visqueux : moins
+    // d'endurance que le Roi Slime (40 vs 58) mais plus offensif (RPM plus court). Calibré via sim/combat-round-sim.js
+    // sur le pool Cœur à 6 (avec Troll/Ronce), profil Acte III : Chevalier/Mage 100 %, Rôdeur 73 % (jouable, cf. P1 §C
+    // où le Rôdeur est déjà structurellement le point faible face aux boss).
+    name: "Seigneur de guerre orc",
+    asset: "orcwarlord",
+    image: "./images/Boss/Lord_OrcWarlord.jpg",
+    resists: ["sword"],
+    weak: ["magic"],
+    stats: makeRpgStats(26, 40, 20, 24, 26)
+  },
+
   djinn: {
     name: "Djinn des dunes",
     asset: "djinn",

@@ -30,7 +30,12 @@ function rsbLiveCoefs() {
     resistMult: (typeof RESIST_DMG_MULT === "number") ? RESIST_DMG_MULT : 0.85,
     weakMult: (typeof WEAK_DMG_MULT === "number") ? WEAK_DMG_MULT : 1.15,
     bossNeutral: true,
-    potionHealPct: 0.35
+    potionHealPct: 0.35,
+    // v3.105.0 (distance) : approche câblée sur les constantes réelles (enemy-archetypes.js)
+    engageEnabled: true,
+    engageDefaultRounds: (typeof ENGAGE_DEFAULT_ROUNDS === "number") ? ENGAGE_DEFAULT_ROUNDS : 1,
+    engageBossRounds: (typeof ENGAGE_BOSS_ROUNDS === "number") ? ENGAGE_BOSS_ROUNDS : 1,
+    engageTable: (window.ENEMY_ENGAGE_ROUNDS && typeof ENEMY_ENGAGE_ROUNDS === "object") ? ENEMY_ENGAGE_ROUNDS : {}
   };
 }
 

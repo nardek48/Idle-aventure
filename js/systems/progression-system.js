@@ -102,7 +102,7 @@ var WorldManager = {
     }
 
     var normalArchetype = (typeof decideNormalEnemyArchetype === "function")
-      ? decideNormalEnemyArchetype(this.worldIndex, false, randInt(1, 100))
+      ? decideNormalEnemyArchetype(this.worldIndex, false, randInt(1, 100), enemyId)
       : null;
 
     return {

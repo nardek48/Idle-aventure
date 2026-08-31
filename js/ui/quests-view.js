@@ -55,20 +55,9 @@ function updateQuestBadge() {
   badge.style.display = total > 0 ? "inline-flex" : "none";
 }
 
-var activeQuestsSubTab = "general"; // "general" | "daily"
-
-function setQuestsSubTab(tab) {
-  activeQuestsSubTab = (tab === "daily") ? "daily" : "general";
-  if (typeof renderPanel === "function") renderPanel();
-}
-
-function buildQuestsSubTabBarHTML() {
-  var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeQuestsSubTab === "general" ? ' is-active' : '') + '" onclick="setQuestsSubTab(\'general\')">🗺️<span>Général</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeQuestsSubTab === "daily" ? ' is-active' : '') + '" onclick="setQuestsSubTab(\'daily\')">📋<span>Journalières</span></button>';
-  h += '</div>';
-  return h;
-}
+/* v3.103.3 (P4) : plus de sous-onglet Journalières — le contrat du jour est déjà une carte du tableau
+   (MissionBoard, sourceKind "contract"), l'onglet séparé était un doublon pur. buildQuestsDailySubTabHTML()
+   reste dispo (inutilisée pour l'instant) si un jour on veut un raccourci dédié. */
 
 var activeQuestsFilter = "active"; // "active" | "completed"
 
@@ -111,54 +100,69 @@ function buildQuestsFilterBarHTML() {
   return h;
 }
 
+/* v3.103.2 (P4) : le tableau de missions remplace les 4 catégories repliables. La chaîne Histoire
+   (buildStoryChainHTML, plus détaillée qu'une carte de mission) reste affichée à part, en tête ;
+   le reste vient de MissionBoard.list() (LIGNE_DIRECTRICE §3) — mêmes cartes que sur le Campement. */
 function buildQuestsGeneralSubTabHTML() {
   var h = '';
   h += buildQuestsFilterBarHTML();
 
-  h += (activeQuestsFilter === "completed")
-    ? buildCompletedQuestCardsHTML()
-    : buildActiveQuestCardsHTML();
+  if (activeQuestsFilter === "completed") {
+    h += buildCompletedQuestCardsHTML();
+    return h;
+  }
+
+  h += buildStoryChainHTML();
+
+  if (window.MissionBoard) {
+    var missions = MissionBoard.list().filter(function (m) { return m.sourceKind !== "story"; });
+    if (missions.length) {
+      h += '<div class="quest-board-list">' + missions.map(buildCampMissionCardHTML).join("") + '</div>';
+    } else if (!buildStoryChainHTML()) {
+      h += '<div class="eq-empty">Aucune mission disponible pour le moment.</div>';
+    }
+  }
 
   return h;
 }
 
+/* v3.103.2 (P4, décision §10 n°7) : 1 contrat du jour (QUEST_CONFIG.count = 1, data/quests.js).
+   game.quests peut encore contenir 3 entrées le temps qu'une save existante atteigne son reset :
+   on n'affiche que la première, les autres restent en mémoire sans effet jusqu'au prochain tirage. */
 function buildQuestsDailySubTabHTML() {
   var h = '';
-  h += '<div class="quest-timer">Reset dans ' + esc(QuestManager.timeUntilReset()) + '</div>';
+  h += '<div class="quest-timer">Contrat du jour — reset dans ' + esc(QuestManager.timeUntilReset()) + '</div>';
 
-  if (!game.quests || !game.quests.length) {
-    h += '<div class="eq-empty">Aucune quête active.</div>';
+  var q = (game.quests || [])[0];
+  if (!q) {
+    h += '<div class="eq-empty">Aucun contrat actif.</div>';
     return h;
   }
 
-  h += '<div class="quest-list">';
-  game.quests.forEach(function (q) {
-    var progress = QuestManager.getProgress(q);
-    var done = QuestManager.isComplete(q);
-    var claimed = !!q.claimed;
-    var pct = Math.min(100, (progress / q.target) * 100);
+  var progress = QuestManager.getProgress(q);
+  var done = QuestManager.isComplete(q);
+  var claimed = !!q.claimed;
+  var pct = Math.min(100, (progress / q.target) * 100);
 
-    h += '<div class="nb-entry-card' + (claimed ? ' is-claimed' : done ? ' is-complete' : '') + '">';
-    h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame">' + renderIconOrEmojiHTML(q.icon, "nb-entry-icon", q.name) + '</div></div>';
-    h += '<div class="nb-entry-info-col">';
-    h += '<div class="nb-entry-name">' + esc(q.name) + '</div>';
-    h += '<div class="nb-entry-desc">' + esc(q.desc) + '</div>';
-    h += '<div class="nb-entry-progress-bar"><div class="nb-entry-progress-fill' + (done ? ' done' : '') + '" style="width:' + pct + '%"></div><span class="nb-entry-progress-text">' + Math.min(progress, q.target) + ' / ' + q.target + '</span></div>';
-    h += '<div class="nb-entry-meta">🎁 ' + formatNumber(q.rewardGold || 0) + ' or · ' + formatNumber(q.rewardEssence || 0) + ' essence</div>';
-    h += '</div>';
+  h += '<div class="nb-entry-card' + (claimed ? ' is-claimed' : done ? ' is-complete' : '') + '">';
+  h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame">' + renderIconOrEmojiHTML(q.icon, "nb-entry-icon", q.name) + '</div></div>';
+  h += '<div class="nb-entry-info-col">';
+  h += '<div class="nb-entry-name">' + esc(q.name) + '</div>';
+  h += '<div class="nb-entry-desc">' + esc(q.desc) + '</div>';
+  h += '<div class="nb-entry-progress-bar"><div class="nb-entry-progress-fill' + (done ? ' done' : '') + '" style="width:' + pct + '%"></div><span class="nb-entry-progress-text">' + Math.min(progress, q.target) + ' / ' + q.target + '</span></div>';
+  h += '<div class="nb-entry-meta">🎁 ' + formatNumber(q.rewardGold || 0) + ' or · ' + formatNumber(q.rewardEssence || 0) + ' essence</div>';
+  h += '</div>';
 
-    h += '<div class="nb-entry-status-col">';
-    if (claimed) {
-      h += '<span class="nb-entry-status-label is-complete">✔ Reçue</span>';
-    } else if (done) {
-      h += '<button class="btn-buy" onclick="QuestManager.claim(\'' + esc(q.id) + '\')">Réclamer</button>';
-    } else {
-      h += '<span class="nb-entry-status-label">En cours</span>';
-    }
-    h += '</div>';
+  h += '<div class="nb-entry-status-col">';
+  if (claimed) {
+    h += '<span class="nb-entry-status-label is-complete">✔ Reçue</span>';
+  } else if (done) {
+    h += '<button class="btn-buy" onclick="QuestManager.claim(\'' + esc(q.id) + '\')">Réclamer</button>';
+  } else {
+    h += '<span class="nb-entry-status-label">En cours</span>';
+  }
+  h += '</div>';
 
-    h += '</div>';
-  });
   h += '</div>';
 
   return h;
@@ -169,19 +173,10 @@ function buildQuestsHTML() {
   h += '<div class="subtab-page-content">';
   h += '<div class="nb-page-frame">';
 
-  if (activeQuestsSubTab === "daily") {
-    h += buildQuestsDailySubTabHTML();
-  } else {
-    h += buildQuestsGeneralSubTabHTML();
-  }
+  h += buildQuestsGeneralSubTabHTML();
 
   h += '</div>'; // fin .nb-page-frame
   h += '</div>'; // fin .subtab-page-content
-
-  h += '<div class="subtab-bar-wrapper">';
-  h += buildQuestsSubTabBarHTML();
-  h += '</div>';
-
   h += '</div>'; // fin .subtab-page
   return h;
 }
@@ -350,176 +345,6 @@ function buildCollapsibleQuestCardHTML(cardId, icon, name, detailHTML, extraClas
   }
   h += '</div>';
   return h;
-}
-
-function collectActiveQuestCardEntries() {
-  var entries = [];
-
-  if (window.WorldQuestManager) {
-    var worldIndex = getNextLockedWorldIndex();
-    if (worldIndex !== -1) {
-      var worldQuest = WorldQuestManager.getQuestForWorldIndex(worldIndex);
-      if (worldQuest) {
-        entries.push({
-          worldId: worldQuest.worldId,
-          section: worldQuest.section || "worldexpedition",
-          html: buildCollapsibleQuestCardHTML(
-            'world_' + worldQuest.id,
-            worldQuest.icon || "🗺️",
-            worldQuest.name,
-            buildWorldUnlockQuestDetailHTML(worldQuest, worldIndex),
-            "",
-            worldQuest
-          )
-        });
-      }
-    }
-  }
-
-  if (window.AdventureQuestManager) {
-    var quests = AdventureQuestManager.getAllQuests();
-    var runningQuest = AdventureQuestManager.getRunningQuest();
-    quests.forEach(function (quest) {
-      if (game.adventureQuestsCompleted[quest.id]) return; // -> liste Terminée
-      var isRunning = !!(runningQuest && runningQuest.id === quest.id);
-      entries.push({
-        worldId: quest.worldId,
-        section: quest.section || "adventure",
-        html: buildCollapsibleQuestCardHTML(
-          'adv_' + quest.id,
-          quest.icon || "📜",
-          quest.name,
-          buildAdventureQuestDetailHTML(quest, false, runningQuest),
-          isRunning ? "is-running" : "",
-          quest
-        )
-      });
-    });
-  }
-
-  if (window.HuntQuestManager) {
-    var huntQuests = HuntQuestManager.getAllQuests();
-    var runningHunt = HuntQuestManager.getRunningQuest();
-    huntQuests.forEach(function (quest) {
-      // v3.93.0 : la Chasse répétable n'est visible/lançable qu'une fois le bâtiment
-      // Chasse débloqué (voir data/adventure-quests.js: hq_wolf_pack) — filtrage à
-      // l'affichage uniquement, hunt-quest-system.js (protégé) reste inchangé.
-      if (quest.id === "hq_forest_boar" && !(game.explorationProgression && game.explorationProgression.huntBuildingUnlocked)) {
-        return;
-      }
-      var isRunning = !!(runningHunt && runningHunt.id === quest.id);
-      entries.push({
-        worldId: quest.worldId,
-        section: quest.section || "resource",
-        html: buildCollapsibleQuestCardHTML(
-          'hunt_' + quest.id,
-          quest.icon || "🏹",
-          quest.name,
-          buildHuntQuestDetailHTML(quest, runningHunt),
-          isRunning ? "is-running" : "",
-          quest
-        )
-      });
-    });
-  }
-
-  if (window.MiningManager && MiningManager.isQuarryUnlocked()) {
-    var quarrySession = MiningManager.getActiveSession();
-    var isQuarryRunning = !!(quarrySession && quarrySession.source === "quarry_bonus" && quarrySession.status !== "completed");
-    entries.push({
-      worldId: null,
-      section: "resource",
-      html: buildCollapsibleQuestCardHTML(
-        'quarry_bonus_vein',
-        "⛏️",
-        "Veine Instable",
-        buildQuarryBonusQuestDetailHTML(quarrySession),
-        isQuarryRunning ? "is-running" : "",
-        { difficulty: "easy", category: "side" }
-      )
-    });
-  }
-
-  if (window.WellManager && WellManager.isWellUnlocked()) {
-    var wellBonusSession = WellManager.getActiveSession();
-    var isWellBonusRunning = !!(wellBonusSession && wellBonusSession.source === "well_bonus" && wellBonusSession.status !== "completed");
-    entries.push({
-      worldId: null,
-      section: "resource",
-      html: buildCollapsibleQuestCardHTML(
-        'well_bonus_spring',
-        "💧",
-        "Source Claire",
-        buildWellBonusQuestDetailHTML(wellBonusSession),
-        isWellBonusRunning ? "is-running" : "",
-        { difficulty: "easy", category: "side" }
-      )
-    });
-  }
-
-  if (window.ExplorationManager && window.EXPLORATION_QUESTS) {
-    Object.keys(EXPLORATION_QUESTS).forEach(function (key) {
-      var quest = EXPLORATION_QUESTS[key];
-      if (quest.id === "unstableVein" || quest.id === "driedSpring") return; // routées séparément (MiningManager/WellManager)
-      if (ExplorationManager.isQuestCompleted(quest.id)) return; // -> liste Terminée
-      var run = ExplorationManager.getRun();
-      var isRunning = !!(run && run.questId === quest.id && run.status !== "completed");
-      entries.push({
-        worldId: null,
-        section: quest.section || "expedition",
-        html: buildCollapsibleQuestCardHTML(
-          'exploration_' + quest.id,
-          quest.icon || "🧭",
-          quest.title,
-          buildExplorationQuestDetailHTML(quest, run),
-          isRunning ? "is-running" : "",
-          quest
-        )
-      });
-    });
-  }
-
-  if (window.MiningManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.unstableVein) {
-    var veinQuest = EXPLORATION_QUESTS.unstableVein;
-    if (!MiningManager.isQuestCompleted()) { // -> liste Terminée
-      var veinSession = MiningManager.getActiveSession();
-      var isVeinRunning = !!(veinSession && veinSession.source === "quest" && veinSession.status !== "completed");
-      entries.push({
-        worldId: null,
-        section: veinQuest.section || "expedition",
-        html: buildCollapsibleQuestCardHTML(
-          'exploration_' + veinQuest.id,
-          veinQuest.icon || "⛏️",
-          veinQuest.title,
-          buildUnstableVeinQuestDetailHTML(veinQuest, veinSession),
-          isVeinRunning ? "is-running" : "",
-          veinQuest
-        )
-      });
-    }
-  }
-
-  if (window.WellManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.driedSpring) {
-    var springQuest = EXPLORATION_QUESTS.driedSpring;
-    if (!WellManager.isQuestCompleted()) { // -> liste Terminée
-      var springSession = WellManager.getActiveSession();
-      var isSpringRunning = !!(springSession && springSession.source === "quest" && springSession.status !== "completed");
-      entries.push({
-        worldId: null,
-        section: springQuest.section || "expedition",
-        html: buildCollapsibleQuestCardHTML(
-          'exploration_' + springQuest.id,
-          springQuest.icon || "💧",
-          springQuest.title,
-          buildDriedSpringQuestDetailHTML(springQuest, springSession),
-          isSpringRunning ? "is-running" : "",
-          springQuest
-        )
-      });
-    }
-  }
-
-  return entries;
 }
 
 function collectCompletedQuestCardEntries() {
@@ -698,7 +523,11 @@ function buildQuestCardsGroupedBySectionHTML(entries) {
   return h;
 }
 
-/* v3.100.0 : chaîne Histoire « Les Braises d'Aeswyn » (data/story-quests.js). Étape courante mise en
+/* v3.103.2 (P4) : collectActiveQuestCardEntries()/buildActiveQuestCardsHTML() retirées — remplacées
+   par MissionBoard.list() (systems/mission-board-system.js), même façade que le Campement. La collecte
+   « Terminée » (ci-dessus) reste inchangée, MissionBoard ne couvrant que les missions actives/proposables.
+
+   v3.100.0 : chaîne Histoire « Les Braises d'Aeswyn » (data/story-quests.js). Étape courante mise en
    avant (Accepter → objectif → Réclamer), étapes réclamées repliées en une ligne. Filtre Terminée :
    uniquement les étapes réclamées. Retourne "" si aucun chapitre à afficher (skipped, ou rien réclamé en mode Terminée). */
 function buildStoryStepRewardText(reward) {
@@ -812,10 +641,11 @@ function buildStoryChainHTML() {
 }
 
 /* Ouvre l'écran Quêtes (Général, filtre Active) sur une section et une carte données — cible du bouton « Aller à la quête ». */
+/* v3.103.2 (P4) : sectionKey ne pilote plus de repli de catégorie (le tableau MissionBoard n'en a plus) —
+   conservé en signature pour ne pas casser les appelants existants (mini-jeux d'exploration, etc.).
+   cardId reste utile pour déplier une carte précise dans le filtre Terminée (encore par section). */
 function openQuestsAt(sectionKey, cardId) {
-  activeQuestsSubTab = "general";
   activeQuestsFilter = "active";
-  if (sectionKey) expandedQuestSectionIds[sectionKey] = true;
   if (cardId) expandedQuestCardIds[cardId] = true;
   if (typeof switchTab === "function") switchTab("quests");
 }
@@ -1000,10 +830,6 @@ function buildWellBonusQuestDetailHTML(session) {
   }
 
   return h;
-}
-
-function buildActiveQuestCardsHTML() {
-  return buildQuestCardsGroupedBySectionHTML(collectActiveQuestCardEntries());
 }
 
 function buildCompletedQuestCardsHTML() {
@@ -1245,8 +1071,6 @@ window.updateQuestBadge = updateQuestBadge;
 window.getTalentsAvailableCount = getTalentsAvailableCount;
 window.getAscensionAvailableCount = getAscensionAvailableCount;
 window.buildQuestsHTML = buildQuestsHTML;
-window.setQuestsSubTab = setQuestsSubTab;
-window.buildActiveQuestCardsHTML = buildActiveQuestCardsHTML;
 window.buildCompletedQuestCardsHTML = buildCompletedQuestCardsHTML;
 window.buildQuestCardsGroupedBySectionHTML = buildQuestCardsGroupedBySectionHTML;
 window.buildExplorationQuestDetailHTML = buildExplorationQuestDetailHTML;

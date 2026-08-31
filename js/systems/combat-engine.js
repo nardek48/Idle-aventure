@@ -197,6 +197,10 @@ var CombatEngine = {
     enemy.vulnerableRounds = 0;
     enemy.vulnerableMult = 0;
     enemy.counteredRounds = 0;
+    // v3.105.0 : distance — face à un héros arc/magie, l'ennemi met engageIn rounds à arriver (épée = contact direct)
+    var heroDef = (window.HEROES_DB && game.heroId) ? HEROES_DB[game.heroId] : null;
+    var heroRanged = !!(heroDef && heroDef.weaponType && heroDef.weaponType !== "sword");
+    enemy.engageIn = (heroRanged && typeof getEnemyEngageRounds === "function") ? getEnemyEngageRounds(enemy.id, !!enemy.isBoss) : 0;
     enemy.rageFreezeRounds = 0;
     enemy.vampiricSuppressedRounds = 0;
     enemy.armorSuppressedRounds = 0;
@@ -426,11 +430,27 @@ var CombatEngine = {
       else if (e.shieldTelegraphed) { this.resolveBossShield(); impact = true; }
     } else if (e.archetype === "silenced") {
       if (e.silenceTelegraphed) { this.resolveSilenceCast(); impact = true; }
+    } else if (e.archetype === "shielded") {
+      // v3.104.1 (P5) : bouclier réutilisé sur un ennemi normal (identité, pas seulement boss) — mêmes champs/résolveur.
+      if (e.shieldTelegraphed) { this.resolveBossShield(); impact = true; }
     } else if (e.chargeTelegraphed) {
       this.resolveEnemyCharge(); impact = true;
     }
 
     if (impact) return; // le compte à rebours relancé démarre au round suivant
+
+    // v3.105.0 : approche — l'ennemi avance au lieu de frapper ; sa jauge se remplit (il arrive « lancé »)
+    // et ses compte à rebours de pattern tournent (un télégraphe peut tomber pendant l'approche).
+    if (Number(e.engageIn || 0) > 0) {
+      e.engageIn -= 1;
+      e.gauge = Number(e.gauge || 0) + this.getEnemyGaugeGain(e);
+      if (e.engageIn > 0) addLog("👣 " + e.name + " avance vers toi… (contact dans " + e.engageIn + " round" + (e.engageIn > 1 ? "s" : "") + ")", "event");
+      else addLog("👣 " + e.name + " arrive au contact !", "event");
+      this.tickEnemyTelegraphs(e);
+      if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+      return;
+    }
+
     this.enemyStrike(1, false);
     if ((game.heroHp || 0) <= 0 || game.enemy !== e) return;
 
@@ -451,6 +471,13 @@ var CombatEngine = {
       if (e.silenceTelegraphed) return;
       e.silenceIn -= 1;
       if (e.silenceIn <= 0) this.telegraphPattern(e, "silence");
+      return;
+    }
+    if (e.archetype === "shielded") {
+      // v3.104.1 (P5) : Troll des forêts — bouclier au lieu de charge, mêmes champs que le bouclier boss.
+      if (e.shieldTelegraphed) return;
+      e.shieldIn -= 1;
+      if (e.shieldIn <= 0) this.telegraphPattern(e, "shield");
       return;
     }
     if (e.chargeTelegraphed) return;
@@ -496,6 +523,7 @@ var CombatEngine = {
     }
     e.chargeTelegraphed = false;
     e.chargeIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX);
+    e.engageIn = 0; // v3.105.0 : la charge le porte au contact
     addLog("💢 " + e.name + " charge !", "event");
     this.enemyStrike(ENEMY_CHARGE_DMG_MULT, true);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
@@ -807,7 +835,7 @@ var CombatEngine = {
       dmg *= (1 + Number(game.enemy.vulnerableMult || 0));
     }
 
-    if (game.enemy.isBoss && Number(game.enemy.shieldRounds || 0) > 0) {
+    if ((game.enemy.isBoss || game.enemy.archetype === "shielded") && Number(game.enemy.shieldRounds || 0) > 0) {
       dmg *= (1 - BOSS_SHIELD_REDUCTION);
     }
 
@@ -840,6 +868,7 @@ var CombatEngine = {
     if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
       game.totalKills += 1;
       game.killCounts[game.enemy.id] = (game.killCounts[game.enemy.id] || 0) + 1;
+      if (window.SortieManager) SortieManager.noteKill(false); // la chasse n'a pas de boss (branche séparée avant grantGold/grantMissionXp)
       HuntQuestManager.onEnemyKilled();
       if (typeof renderAll === "function") renderAll();
       saveGame();
@@ -881,7 +910,7 @@ var CombatEngine = {
     this.grantEssence(essenceGain);
     game.totalKills += 1;
     game.killCounts[enemy.id] = (game.killCounts[enemy.id] || 0) + 1;
-    if (window.SortieManager) SortieManager.noteKill();
+    if (window.SortieManager) SortieManager.noteKill(enemy.isBoss);
 
     if (window.QuestManager && typeof QuestManager.track === "function") {
       QuestManager.track("kills", 1);
@@ -926,10 +955,7 @@ var CombatEngine = {
     saveEquipBagScroll();
 
     if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
-      var dungeonXpBonus = game.cycleCount || 0;
-      var dungeonXpGain = enemy.isBoss ? (3 + dungeonXpBonus * 0.5) : (1 + dungeonXpBonus * 0.1);
-      if (typeof grantHeroXp === "function") grantHeroXp(dungeonXpGain, enemy.isBoss ? "boss" : "enemy");
-
+      // v3.103.3 (P4, décision §10 n°6) : XP par mission, plus par kill (SortieManager.grantMissionXp à la fin du donjon)
       DungeonManager.onEnemyKilled();
       if (typeof renderAll === "function") renderAll();
       restoreEquipBagScroll();
@@ -990,12 +1016,8 @@ var CombatEngine = {
       addLog("🎉 Récompense de chapitre : +" + formatNumber(chapterGold) + " or, +" + chapterEssence + " essence", "event");
     }
 
-    var cycleXpBonus = game.cycleCount || 0;
-    var xpGain = enemy.isBoss ? (3 + cycleXpBonus * 0.5) : (1 + cycleXpBonus * 0.1);
-
-    if (typeof grantHeroXp === "function") {
-      grantHeroXp(xpGain, enemy.isBoss ? "boss" : "enemy");
-    }
+    // v3.103.3 (P4, décision §10 n°6) : XP par mission, plus par kill. Le farm classique (context "farm")
+    // n'est pas une mission au sens de la ligne directrice §4 : il ne donne pas d'XP (grantMissionXp l'exclut).
 
     this.spawnEnemy();
     if (typeof renderAll === "function") renderAll();

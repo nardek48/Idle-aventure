@@ -11,8 +11,8 @@ var GRIMOIRE_CONDITIONS = {
   },
   shieldIncoming: {
     id: "shieldIncoming",
-    label: "Le boss invoque un bouclier",
-    description: "Le boss va bientôt réduire les dégâts qu'il subit.",
+    label: "L'ennemi invoque un bouclier",
+    description: "Il va bientôt réduire les dégâts qu'il subit.",
     icon: "🛡️"
   },
   healIncoming: {

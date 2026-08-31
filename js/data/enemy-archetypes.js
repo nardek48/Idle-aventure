@@ -22,8 +22,36 @@ var SILENCED_MIN_WORLD_INDEX = 1;
 var SILENCED_VS_CHARGE_CHANCE_PCT = 50;
 var SILENCE_DURATION_ROUNDS = 2;
 
-function decideNormalEnemyArchetype(worldIndex, isBoss, silenceRoll) {
+// v3.104.1 (P5) : identité FIXE par ennemi (LIGNE_DIRECTRICE §8, profils de round distincts). Prioritaire sur le
+// tirage aléatoire ci-dessous. Le Troll des forêts encaisse (bouclier), la Ronce animée bloque (silence) — cohérent
+// avec leurs stats (tanky/lent vs agressive/rapide, décision Seb) et disponible dès la Forêt (worldIndex 0), sans
+// attendre SILENCED_MIN_WORLD_INDEX qui ne régit que le tirage aléatoire du reste du pool.
+var FIXED_ENEMY_ARCHETYPES = {
+  foresttroll: "shielded",
+  bramble: "silenced"
+};
+
+// v3.105.0 : distance d'approche — rounds avant le contact face à un héros À DISTANCE (arc/magie). 0 = frappe
+// immédiatement (l'ennemi attaque lui-même à distance) ; le Chevalier (épée) est toujours au contact direct.
+var ENGAGE_DEFAULT_ROUNDS = 1;
+var ENGAGE_BOSS_ROUNDS = 1;
+var ENEMY_ENGAGE_ROUNDS = {
+  spider: 0,      // cracheuse
+  goblin: 0,      // frondeur
+  bramble: 0,     // lianes-fouets
+  foresttroll: 2  // lourd et lent
+};
+
+/* Rounds d'approche pour un ennemi donné (héros à distance uniquement — l'appelant gère le cas mêlée). */
+function getEnemyEngageRounds(enemyId, isBoss) {
+  if (isBoss) return ENGAGE_BOSS_ROUNDS;
+  if (enemyId && ENEMY_ENGAGE_ROUNDS.hasOwnProperty(enemyId)) return ENEMY_ENGAGE_ROUNDS[enemyId];
+  return ENGAGE_DEFAULT_ROUNDS;
+}
+
+function decideNormalEnemyArchetype(worldIndex, isBoss, silenceRoll, enemyId) {
   if (isBoss) return null;
+  if (enemyId && FIXED_ENEMY_ARCHETYPES.hasOwnProperty(enemyId)) return FIXED_ENEMY_ARCHETYPES[enemyId];
   if (typeof worldIndex !== "number" || worldIndex < SILENCED_MIN_WORLD_INDEX) return null;
   if (typeof silenceRoll !== "number" || silenceRoll > SILENCED_VS_CHARGE_CHANCE_PCT) return null;
   return "silenced";
@@ -96,6 +124,11 @@ window.ARMORED_SUPPRESSION_DURATION_ROUNDS = ARMORED_SUPPRESSION_DURATION_ROUNDS
 window.SILENCED_MIN_WORLD_INDEX = SILENCED_MIN_WORLD_INDEX;
 window.SILENCED_VS_CHARGE_CHANCE_PCT = SILENCED_VS_CHARGE_CHANCE_PCT;
 window.SILENCE_DURATION_ROUNDS = SILENCE_DURATION_ROUNDS;
+window.FIXED_ENEMY_ARCHETYPES = FIXED_ENEMY_ARCHETYPES;
+window.ENGAGE_DEFAULT_ROUNDS = ENGAGE_DEFAULT_ROUNDS;
+window.ENGAGE_BOSS_ROUNDS = ENGAGE_BOSS_ROUNDS;
+window.ENEMY_ENGAGE_ROUNDS = ENEMY_ENGAGE_ROUNDS;
+window.getEnemyEngageRounds = getEnemyEngageRounds;
 window.decideEnemyArchetype = decideEnemyArchetype;
 window.decideNormalEnemyArchetype = decideNormalEnemyArchetype;
 window.getEnragedDamageMultiplier = getEnragedDamageMultiplier;

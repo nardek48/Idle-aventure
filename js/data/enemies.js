@@ -26,7 +26,9 @@ var ASSETS = {
     scarab: "🪲",
     scorpion: "🦂",
     sandworm: "🪱",
-    sandwarrior: "⚔️"
+    sandwarrior: "⚔️",
+    foresttroll: "🌳",
+    bramble: "🥀"
   },
   bosses: {
     slimeking: "🟢",
@@ -34,7 +36,8 @@ var ASSETS = {
     necrosupreme: "🧙",
     ancientdragon: "🐉",
     archmage: "🧙",
-    djinn: "🧞"
+    djinn: "🧞",
+    orcwarlord: "🪓"
   },
   worlds: {
     forest: "🌲",
@@ -281,6 +284,25 @@ var ENEMY_DB = {
     resists: ["sword", "bow"],
     weak: ["magic"],
     stats: makeRpgStats(38, 40, 28, 32, 20)
+  },
+  foresttroll: {
+    // v3.104.0 (P5) : tanky/lent — endurance au-dessus de la moyenne du pool, faible célérité (thème mousse/champignons,
+    // encaisse au contact). Calibré via sim/combat-round-sim.js : RPT moy. 3,9 (cible 3,5-4), sortie Lisière 100/94/100 %.
+    name: "Troll des forêts",
+    asset: "foresttroll",
+    image: "./images/Enemies/foresttroll.jpg",
+    resists: ["sword"],
+    weak: ["magic"],
+    stats: makeRpgStats(30, 22, 14, 20, 16)
+  },
+  bramble: {
+    // v3.104.0 (P5) : agressive/rapide — grosse célérité et précision, faible endurance (buissonneuse, griffes-lianes)
+    name: "Ronce animée",
+    asset: "bramble",
+    image: "./images/Enemies/bramble.jpg",
+    resists: ["bow"],
+    weak: ["sword"],
+    stats: makeRpgStats(26, 16, 50, 40, 12)
   }
 };
 

@@ -351,7 +351,7 @@ var STORY_QUESTS = {
           objective: "La braise sous Aeswyn ne s'éteint plus. Elle demande quelque chose. Un jour tu devras tout rendre à la forêt pour renaître plus fort — pas aujourd'hui, mais la porte est ouverte.",
           completion: "Tu sais désormais ce qu'est l'Aether. Le désert t'attend. Reviens quand la forêt te l'ordonnera."
         },
-        objectiveLabel: "Vaincre 200 ennemis, terrasser 3 fois le Roi Slime au Cœur et atteindre le niveau 5",
+        objectiveLabel: "Vaincre 200 ennemis, terrasser 3 fois le Seigneur de guerre orc au Cœur et atteindre le niveau 5",
         unlockTabs: ["ascension"],
         reward: STORY_REWARDS.forest_15,
         linkTo: { tab: "combat" },
@@ -362,7 +362,7 @@ var STORY_QUESTS = {
         progress: function (game) {
           var c = STORY_STEP15_PROVISIONAL;
           return "Kills " + Math.min(c.totalKills, Math.floor(game.totalKills || 0)) + "/" + c.totalKills
-            + " · Roi Slime " + Math.min(c.coeurBossKills, storyCounter(game, "coeurBossKills")) + "/" + c.coeurBossKills
+            + " · Seigneur de guerre orc " + Math.min(c.coeurBossKills, storyCounter(game, "coeurBossKills")) + "/" + c.coeurBossKills
             + " · Niveau " + Math.min(c.heroLevel, Number(game.heroLevel || 1)) + "/" + c.heroLevel;
         }
       }

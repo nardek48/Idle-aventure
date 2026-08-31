@@ -105,6 +105,15 @@ function buildEnemyStatusBarHTML() {
 
   var h = "";
 
+  // v3.105.0 : approche — l'ennemi n'est pas encore au contact (héros à distance), il ne frappe pas ce temps-là
+  var engageIn = Number(game.enemy.engageIn || 0);
+  if (engageIn > 0) {
+    h += '<div class="enemy-status-icon enemy-status-approaching" title="À distance : il ne frappe pas encore, mais il approche (et arrive lancé)">';
+    h += '<span class="enemy-status-emoji">👣</span>';
+    h += '<span class="enemy-status-timer">' + engageIn + '</span>';
+    h += '</div>';
+  }
+
   if (game.enemy.archetype === "enraged") {
     var rageFrozen = Number(game.enemy.rageFreezeRounds || 0) > 0;
     h += '<div class="enemy-status-icon enemy-status-enraged' + (rageFrozen ? ' is-suppressed' : '') + '" title="'

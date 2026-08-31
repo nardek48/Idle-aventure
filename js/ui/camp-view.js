@@ -1,60 +1,61 @@
 "use strict";
-/* ui/camp-view.js — écran Campement (page d'accueil, v3.7) : feu de camp (repos long/court), résumé des 3 systèmes de quêtes, accès rapides. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/camp-view.js — écran Campement (page d'accueil, v3.7 ; hub v3.103.1) : feu de camp (repos long/court), tableau de
+   missions (MissionBoard.top(3), LIGNE_DIRECTRICE §3), accès rapides. Détail : COMMENTAIRES_ORIGINAUX.md */
 
-function buildCampQuestSummaryHTML() {
-  var h = "";
+var CAMP_MISSION_TYPE_LABEL = { combat: "Combat", expedition: "Expédition", chasse: "Chasse", donjon: "Donjon" };
+var CAMP_MISSION_STATUS_CLASS = { claimable: "is-claimable", running: "is-running", accepted: "is-running", available: "" };
 
-  // v3.100.0 : étape Histoire courante en premier, avec accès direct (StoryQuestManager)
-  if (window.StoryQuestManager && window.STORY_QUESTS) {
-    Object.keys(STORY_QUESTS).forEach(function (chapterId) {
-      var step = StoryQuestManager.getCurrentStep(chapterId);
-      if (!step) return;
-      var status = !StoryQuestManager.isCurrentStepAccepted(chapterId) ? "À accepter"
-        : StoryQuestManager.isCurrentStepReady(chapterId) ? "Prête à réclamer"
-        : (step.progress(game) || "En cours");
-      var highlight = status === "À accepter" || status === "Prête à réclamer";
-      h += '<div class="camp-summary-row camp-summary-story" onclick="openQuestsAt(\'worldexpedition\')"><span>📖 ' + esc(step.title) + '</span><span' + (highlight ? ' class="camp-summary-highlight"' : '') + '>' + esc(status) + ' ›</span></div>';
-    });
+function buildCampMissionActionHTML(m) {
+  if (m.claim) return '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'claim\')">🎁 Réclamer</button>';
+  if (m.status === "running" || m.status === "accepted") {
+    var h = '<div class="camp-mission-actions">';
+    if (m.launch) h += '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'launch\')">▶ Continuer</button>';
+    if (m.abandon) h += '<button class="settings-btn danger camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'abandon\')">Abandonner</button>';
+    h += '</div>';
+    return h;
   }
+  if (m.accept) return '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'accept\')">🚩 Partir</button>';
+  return "";
+}
 
-  if (window.WorldQuestManager && typeof getNextLockedWorldIndex === "function") {
-    var idx = getNextLockedWorldIndex();
-    if (idx !== -1) {
-      var worldQuest = WorldQuestManager.getQuestForWorldIndex(idx);
-      if (worldQuest) {
-        var stepsDone = worldQuest.steps.filter(function (s) { return WorldQuestManager.isStepComplete(worldQuest, s); }).length;
-        h += '<div class="camp-summary-row"><span>🗺️ ' + esc(worldQuest.name) + '</span><span>' + stepsDone + '/' + worldQuest.steps.length + ' étapes</span></div>';
-      }
-    }
-  }
-
-  if (window.AdventureQuestManager) {
-    var runningQuest = AdventureQuestManager.getRunningQuest();
-    if (runningQuest) {
-      h += '<div class="camp-summary-row"><span>🧭 ' + esc(runningQuest.name) + '</span><span class="camp-summary-highlight">En cours</span></div>';
-    } else {
-      var allQuests = AdventureQuestManager.getAllQuests();
-      var availableCount = allQuests.filter(function (q) { return !game.adventureQuestsCompleted[q.id]; }).length;
-      if (availableCount > 0) {
-        h += '<div class="camp-summary-row"><span>🧭 Quêtes d\'aventure</span><span>' + availableCount + ' disponible' + (availableCount > 1 ? "s" : "") + '</span></div>';
-      }
-    }
-  }
-
-  if (Array.isArray(game.quests) && window.QuestManager) {
-    var readyToClaim = game.quests.filter(function (q) { return !q.claimed && QuestManager.isComplete(q); }).length;
-    var stillActive = game.quests.filter(function (q) { return !q.claimed && !QuestManager.isComplete(q); }).length;
-    if (readyToClaim > 0) {
-      h += '<div class="camp-summary-row"><span>📋 Quêtes journalières</span><span class="camp-summary-highlight">' + readyToClaim + ' prête' + (readyToClaim > 1 ? "s" : "") + ' à réclamer</span></div>';
-    } else if (stillActive > 0) {
-      h += '<div class="camp-summary-row"><span>📋 Quêtes journalières</span><span>' + stillActive + ' en cours</span></div>';
-    }
-  }
-
-  if (!h) h = '<div class="camp-summary-row camp-summary-empty">Rien à signaler pour l\'instant.</div>';
-
+function buildCampMissionCardHTML(m) {
+  var cls = CAMP_MISSION_STATUS_CLASS[m.status] || "";
+  var h = '<div class="camp-mission-card ' + cls + (m.isMain ? ' is-main' : '') + '">';
+  h += '<div class="camp-mission-head">';
+  h += '<span class="camp-mission-icon">' + renderIconOrEmojiHTML(MissionBoard.typeIcon(m.type), "camp-mission-icon-img", m.title) + '</span>';
+  h += '<div class="camp-mission-title-col">';
+  h += '<div class="camp-mission-title-row">';
+  h += '<span class="camp-mission-title">' + esc(m.title) + '</span>';
+  h += '<span class="camp-mission-badge camp-mission-badge-' + esc(m.badge) + '">' + (m.badge === "story" ? "Histoire" : "Contrat") + '</span>';
+  h += '</div>';
+  if (m.place) h += '<div class="camp-mission-place">' + esc(m.place) + '</div>';
+  h += '</div>';
+  h += '</div>';
+  var objective = m.status === "running" || m.status === "accepted" ? (m.progressLabel || m.objectiveLabel) : m.objectiveLabel;
+  if (objective) h += '<div class="camp-mission-objective">' + esc(objective) + '</div>';
+  if (m.rewardSummary) h += '<div class="camp-mission-reward">🎁 ' + esc(m.rewardSummary) + '</div>';
+  h += buildCampMissionActionHTML(m);
+  h += '</div>';
   return h;
 }
+
+function buildCampMissionBoardHTML() {
+  if (!window.MissionBoard) return '<div class="camp-summary-row camp-summary-empty">Tableau de missions indisponible.</div>';
+  var top = MissionBoard.top(3);
+  if (!top.length) return '<div class="camp-summary-row camp-summary-empty">Rien à signaler pour l\'instant.</div>';
+  return top.map(buildCampMissionCardHTML).join("");
+}
+
+/* Point d'entrée unique des boutons de mission (évite d'inliner 4 managers différents dans le HTML). */
+function campMissionAction(missionId, action) {
+  var m = window.MissionBoard ? MissionBoard.getById(missionId) : null;
+  if (!m || typeof m[action] !== "function") return;
+  m[action]();
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.campMissionAction = campMissionAction;
+window.buildCampMissionBoardHTML = buildCampMissionBoardHTML;
+window.buildCampMissionCardHTML = buildCampMissionCardHTML;
 
 function buildCampHTML() {
   if (window.CampManager) CampManager.ensureDefaults();
@@ -107,10 +108,10 @@ function buildCampHTML() {
 
   h += '</div>';
 
-  h += '<div class="camp-card">';
-  h += '<div class="camp-card-title">📜 Résumé des quêtes</div>';
-  h += buildCampQuestSummaryHTML();
-  h += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">Voir toutes les quêtes</button>';
+  h += '<div class="camp-card camp-missions-card">';
+  h += '<div class="camp-card-title">📋 Tableau de missions</div>';
+  h += buildCampMissionBoardHTML();
+  h += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">Voir le tableau complet</button>';
   h += '</div>';
 
   h += '<div class="camp-card">';
@@ -127,4 +128,4 @@ function buildCampHTML() {
 }
 
 window.buildCampHTML = buildCampHTML;
-window.buildCampQuestSummaryHTML = buildCampQuestSummaryHTML;
+

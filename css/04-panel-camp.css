@@ -162,3 +162,123 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   font-weight: 600;
   color: var(--nb-ink);
 }
+
+/* ============================================================
+   v3.103.1 — tableau de missions (MissionBoard.top(3), écran hub).
+   Cartes pleines à la place de l'ancien résumé texte (.camp-summary-*
+   ci-dessus, conservé pour compat visuelle si réutilisé ailleurs).
+   ============================================================ */
+.camp-missions-card {
+  text-align: left;
+}
+
+.camp-mission-card {
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream-alt);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.camp-mission-card:last-of-type {
+  margin-bottom: 0;
+}
+
+.camp-mission-card.is-main {
+  border-color: var(--nb-gold-dark);
+  box-shadow: 0 0 0 1px rgba(184, 134, 11, 0.25);
+}
+
+.camp-mission-card.is-claimable {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.camp-mission-card.is-running {
+  border-color: #f0b429;
+}
+
+.camp-mission-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.camp-mission-icon {
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.camp-mission-icon-img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.camp-mission-title-col {
+  min-width: 0;
+  flex: 1;
+}
+
+.camp-mission-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.camp-mission-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--nb-ink);
+}
+
+.camp-mission-place {
+  font-size: 10.5px;
+  color: var(--nb-ink-dim);
+  margin-top: 1px;
+}
+
+.camp-mission-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+
+.camp-mission-badge-story {
+  color: var(--nb-gold-dark);
+}
+
+.camp-mission-badge-contract {
+  color: var(--nb-ink-dim);
+}
+
+.camp-mission-objective {
+  font-size: 12px;
+  color: var(--nb-ink);
+  margin-bottom: 4px;
+}
+
+.camp-mission-reward {
+  font-size: 11px;
+  color: var(--nb-gold-dark);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.camp-mission-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.camp-mission-btn {
+  margin: 0;
+  flex: 1;
+  padding: 7px 10px;
+  font-size: 12px;
+}

@@ -40,6 +40,10 @@ var ROUND_MODEL_DEFAULTS = {
   patternsEnabled: true,      // false = modèle P1 d'origine (frappe simple, soin boss seul)
   potionHealPct: 0.35,        // décision §10 n°10
   potionsPerSortie: 2,
+  engageEnabled: true,        // v3.105.0 (distance) : face à un héros arc/magie, l'ennemi met engageIn rounds à arriver
+  engageDefaultRounds: 1,     // défaut si absent de engageTable ; 0 = il frappe lui-même à distance
+  engageBossRounds: 1,
+  engageTable: {},            // par id d'ennemi — injecter ENEMY_ENGAGE_ROUNDS pour coller au jeu
   manaPassivePerRound: 8,     // passivePerSecond 4 × ~2 s par round
   msPerRound: 2500            // conversion des cooldowns/durées ms → rounds (ceil)
 };
@@ -99,6 +103,7 @@ function buildHero(heroDef, kit, cfg) {
   });
   return {
     classId: heroDef.classId, weaponType: heroDef.weaponType,
+    ranged: heroDef.weaponType !== "sword", // v3.105.0 : arc/magie profitent de l'approche, l'épée est au contact
     power: power, endurance: endurance, celerity: celerity, precision: precision, will: will,
     attack: Math.max(1, Math.floor(1 + power * cfg.heroPowerCoef)),
     critChance: cfg.heroCritBase + precision * cfg.precisionCritCoef + (heroDef.bonusCritChance || 0),
@@ -127,7 +132,7 @@ function buildEnemy(def, isBoss, scale, cfg) {
     maxHp: hp, hp: hp,
     dmg: Math.max(1, Math.floor(power * cfg.enemyDmgCoef * (isBoss ? cfg.bossDmgMult : 1))),
     critChance: Math.min(40, s.precision * cfg.enemyPrecisionCritCoef),
-    gauge: 0, dot: null, vulnerableRounds: 0, roundsAlive: 0,
+    gauge: 0, dot: null, vulnerableRounds: 0, roundsAlive: 0, engageIn: 0,
     chargeIn: 0, chargeTelegraphed: false, shieldIn: 0, shieldTelegraphed: false, shieldRounds: 0, healIn: cfg.bossHealEveryRounds, healTelegraphed: false
   };
 }
@@ -285,6 +290,12 @@ function simulateFight(hero, enemy, cfg, opts) {
     if (!enemy.isBoss && !enemy.chargeIn) enemy.chargeIn = randRange(rng, cfg.chargeRoundsMin, cfg.chargeRoundsMax);
     if (enemy.isBoss && !enemy.shieldIn) enemy.shieldIn = randRange(rng, cfg.shieldRoundsMin, cfg.shieldRoundsMax);
   }
+  // v3.105.0 (distance) : face à un héros arc/magie, l'ennemi met engageIn rounds à arriver (table fixe, défaut cfg)
+  if (cfg.engageEnabled && hero.ranged) {
+    var eng = cfg.engageTable.hasOwnProperty(enemy.id) ? cfg.engageTable[enemy.id] : cfg.engageDefaultRounds;
+    if (enemy.isBoss) eng = cfg.engageBossRounds;
+    enemy.engageIn = Math.max(0, eng);
+  }
 
   while (hero.hp > 0 && enemy.hp > 0 && log.rounds < maxRounds) {
     log.rounds += 1;
@@ -314,6 +325,7 @@ function simulateFight(hero, enemy, cfg, opts) {
         enemy.shieldTelegraphed = false; enemy.shieldIn = randRange(rng, cfg.shieldRoundsMin, cfg.shieldRoundsMax); impact = true;
       } else if (enemy.chargeTelegraphed) {
         enemyStrike(hero, enemy, rng, det, cfg, log, cfg.chargeDmgMult);
+        enemy.engageIn = 0; // la charge le porte au contact
         enemy.chargeTelegraphed = false; enemy.chargeIn = randRange(rng, cfg.chargeRoundsMin, cfg.chargeRoundsMax); impact = true;
       }
       if (impact) log.patternImpacts += 1;
@@ -322,8 +334,15 @@ function simulateFight(hero, enemy, cfg, opts) {
       impact = true;
     }
     if (!impact) {
-      enemyStrike(hero, enemy, rng, det, cfg, log);
-      if (cfg.patternsEnabled && hero.hp > 0) {
+      var approaching = enemy.engageIn > 0;
+      if (approaching) {
+        // approche : il avance au lieu de frapper, sa jauge se remplit (il arrive « lancé »)
+        enemy.engageIn -= 1;
+        enemy.gauge += enemy.stats.celerity * cfg.enemyCelerityGaugeCoef;
+      } else {
+        enemyStrike(hero, enemy, rng, det, cfg, log);
+      }
+      if (cfg.patternsEnabled && hero.hp > 0) { // les compte à rebours tournent même pendant l'approche
         if (enemy.isBoss) {
           if (!enemy.healTelegraphed && !enemy.shieldTelegraphed) {
             enemy.healIn -= 1; enemy.shieldIn -= 1;
@@ -378,8 +397,13 @@ function duelBudget(heroDef, kit, enemyDef, isBoss, cfg, scale) {
   var enemy = buildEnemy(enemyDef, isBoss, scale || 1, cfg);
   var dmgPerRound = heroHitDamage(hero, enemy, 1, null, true, cfg) * (1 + hero.celerity * cfg.celerityGaugePerAction / 100);
   var rpt = enemy.maxHp / dmgPerRound;
+  // v3.105.0 (distance) : E rounds d'approche — l'ennemi ne frappe pas, le RPM est décalé d'autant (RPT inchangé)
+  var eng = 0;
+  if (cfg.engageEnabled && hero.ranged) {
+    eng = enemy.isBoss ? cfg.engageBossRounds : (cfg.engageTable.hasOwnProperty(enemy.id) ? cfg.engageTable[enemy.id] : cfg.engageDefaultRounds);
+  }
   var enemyPerRound = Math.max(0, enemy.dmg * (1 + enemy.critChance / 100 * (cfg.enemyCritMult - 1)) * (1 - Math.min(cfg.heroDefenseCap, hero.defense))) * (1 + enemy.stats.celerity * cfg.enemyCelerityGaugeCoef / 100);
-  var rpm = enemyPerRound > 0 ? hero.maxHp / enemyPerRound : Infinity;
+  var rpm = enemyPerRound > 0 ? eng + hero.maxHp / enemyPerRound : Infinity;
   return { rpt: rpt, rpm: rpm, heroHp: hero.maxHp, heroDmg: dmgPerRound, enemyHp: enemy.maxHp, enemyDmg: enemyPerRound };
 }
 

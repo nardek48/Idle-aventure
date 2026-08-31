@@ -24,7 +24,7 @@ var WORLDS = [
         id: "forest_1",
         name: "Lisière de la forêt",
         introText: "L'air est frais et plein de mystères...",
-        enemyPool: ["slime", "wolf", "goblin", "spider"],
+        enemyPool: ["slime", "wolf", "goblin", "spider", "foresttroll", "bramble"], // v3.104.0 (P5) : +Troll des forêts, +Ronce animée
         enemyCount: 10,
         boss: "slimeking"
       },
@@ -32,9 +32,9 @@ var WORLDS = [
         id: "forest_2",
         name: "Cœur de la forêt",
         introText: "Les arbres semblent chuchoter votre nom...",
-        enemyPool: ["wolf", "spider", "goblin", "slime"],
+        enemyPool: ["wolf", "spider", "goblin", "slime", "foresttroll", "bramble"], // v3.104.0 (P5) : +Troll des forêts, +Ronce animée
         enemyCount: 10,
-        boss: "slimeking"
+        boss: "orcwarlord" // v3.104.0 (P5) : nouveau boss du Cœur (le Roi Slime reste le boss de Lisière, forest_1)
       }
     ]
   },
