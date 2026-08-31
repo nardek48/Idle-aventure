@@ -17,6 +17,7 @@ function buildCombatHTML() {
     +   '<div id="enemy-emoji">🟢</div>'
     + '</div>'
     + '<div id="class-resource-root"></div>'
+    + '<div id="combat-sortie-root" class="combat-sortie-row"></div>'
     + '<div id="combat-controls-root" class="combat-controls"></div>'
 
     + '<div class="combat-action-row">'
@@ -248,9 +249,36 @@ function buildCombatControlsHTML() {
   return h;
 }
 
+/* Rangée de sortie (v3.102.1) : butin en cours + Rentrer (exploration) ou Fuir (mission, 50 % du butin). */
+function buildCombatSortieHTML() {
+  if (!window.SortieManager) return "";
+  var s = SortieManager.ensure();
+  var downed = (game.heroHp || 0) <= 0;
+  var h = "";
+  if (s.active) {
+    h += '<div class="combat-loot-pill" title="Butin de la sortie — banqué au retour, perdu si tu tombes">🎒 ' + esc(SortieManager.getLootSummary()) + '</div>';
+    h += '<div class="combat-loot-pill combat-potion-pill" title="Potions restantes pour cette sortie">🧪 ' + SortieManager.getPotionsLeft() + '</div>';
+  }
+  if (s.active && SortieManager.isMission()) {
+    h += '<button type="button" class="combat-sortie-btn is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()" title="Fuir : la mission n\u2019est pas validée, tu rapportes 50 % du butin">🏳️ Fuir</button>';
+  } else {
+    h += '<button type="button" class="combat-sortie-btn"' + (downed ? ' disabled' : '') + ' onclick="SortieManager.returnToCamp()" title="Rentrer au Campement avec tout le butin">🏕️ Rentrer</button>';
+  }
+  return h;
+}
+
+function confirmFlee() {
+  if (!window.SortieManager || !SortieManager.isActive()) return;
+  if (confirm("Fuir ? La mission ne sera pas validée et tu ne rapporteras que 50 % du butin de la sortie.")) SortieManager.flee();
+}
+window.buildCombatSortieHTML = buildCombatSortieHTML;
+window.confirmFlee = confirmFlee;
+
 function renderCombatControls() {
   var host = document.getElementById("combat-controls-root");
   if (host) host.innerHTML = buildCombatControlsHTML();
+  var sortieHost = document.getElementById("combat-sortie-root");
+  if (sortieHost) sortieHost.innerHTML = buildCombatSortieHTML();
   var attackBtn = document.getElementById("combat-attack-btn");
   if (attackBtn) {
     var locked = game.combatMode === "grimoire" || !!(game.combatRound && game.combatRound.continueAttack) || (game.heroHp || 0) <= 0;

@@ -445,6 +445,8 @@ function buildSaveData() {
     autoSkillsEnabled: game.autoSkillsEnabled === true,
     // v3.102.0 (P2) : mode de combat par rounds ("tactique" | "grimoire")
     combatMode: game.combatMode === "grimoire" ? "grimoire" : "tactique",
+    // v3.102.1 : sortie en cours (butin non banqué) — survit à un rechargement
+    sortie: (game.sortie && typeof game.sortie === "object") ? game.sortie : null,
     // v3.66.0 : Mode Expert du Grimoire (Phase 6) — préférence
     // d'affichage pure, réglable directement dans l'écran Grimoire.
     expertModeEnabled: !!game.expertModeEnabled,
@@ -673,6 +675,7 @@ function restoreBaseState(d) {
     game.combatMode = (legacyAuto && grimoireTabUnlocked) ? "grimoire" : "tactique";
   }
   game.autoSkillsEnabled = (game.combatMode === "grimoire");
+  game.sortie = (d.sortie && typeof d.sortie === "object") ? d.sortie : null; // v3.102.1 (normalisé par SortieManager.ensure)
   // v3.66.0 : Mode Expert — absent d'une ancienne sauvegarde = false
   // (off par défaut, cohérent avec l'état initial createInitialGameState()).
   game.expertModeEnabled = !!d.expertModeEnabled;
@@ -1104,6 +1107,7 @@ function hardResetState() {
   game.combatRound = { number: 0, busy: false, continueAttack: false, clockMs: 0 };
   game.heroGauge = 0;
   game.silencedRounds = 0;
+  game.sortie = null; // v3.102.1 : l'ascension part du camp, aucune sortie en cours
 
   game.autoSellEquipment = false;
   game.autoSellRarityThreshold = "common";
@@ -1252,6 +1256,7 @@ function fullResetState() {
   game.combatRound = { number: 0, busy: false, continueAttack: false, clockMs: 0 };
   game.heroGauge = 0;
   game.silencedRounds = 0;
+  game.sortie = null; // v3.102.1
   // v3.66.0 : Mode Expert — même principe que autoSkillsEnabled
   // juste au-dessus (préférence d'affichage, préservée à l'ascension),
   // remise à sa valeur par défaut (off) seulement sur un reset complet.

@@ -246,12 +246,43 @@ var CombatEngine = {
     return (decision && decision.slot) ? decision.slot : "basic";
   },
 
+  /* ---------- Butin de sortie (v3.102.1) : en sortie, les gains vont dans game.sortie.loot, sinon directement dans la bourse ---------- */
+  inSortie: function () {
+    return !!(window.SortieManager && SortieManager.isActive());
+  },
+
+  grantGold: function (amount) {
+    amount = Math.max(0, Math.floor(Number(amount) || 0));
+    if (amount <= 0) return;
+    if (this.inSortie()) { SortieManager.addGold(amount); return; }
+    game.gold += amount;
+    game.totalGoldEarned += amount;
+    if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("goldEarned", amount);
+  },
+
+  grantEssence: function (amount) {
+    amount = Math.max(0, Number(amount) || 0);
+    if (amount <= 0) return;
+    if (this.inSortie()) SortieManager.addEssence(amount);
+    else game.essence += amount;
+  },
+
+  /* Objet trouvé : rangé dans le butin de sortie (inventaire au retour) ou directement dans le sac. Retourne true si gardé. */
+  grantDrop: function (drop) {
+    if (!drop) return false;
+    if (this.inSortie()) { SortieManager.addItem(drop); return true; }
+    return typeof addDropToInventory === "function" ? addDropToInventory(drop) : false;
+  },
+
   /* ---------- Un round complet ---------- */
   /* slot : "basic" | "skill1".."skill3" | "defense" | "potion" (arg = id de potion). source "auto" = Grimoire/Continuer.
      Retourne true si le round a été joué (l'action était valide). */
   heroAction: function (slot, arg, source) {
     if (!this.isHeroTurnAvailable()) return false;
     if (game.combatMode === "grimoire" && source !== "auto" && slot !== "potion") return false;
+
+    // v3.102.1 : le premier round hors mission ouvre une sortie d'exploration (décision 1a)
+    if (window.SortieManager && !SortieManager.isActive()) SortieManager.start(null);
 
     var round = game.combatRound;
     round.busy = true;
@@ -298,7 +329,13 @@ var CombatEngine = {
     }
     if (slot === "potion") {
       if (!window.PotionManager || typeof PotionManager.useHealingPotion !== "function") return false;
-      return PotionManager.useHealingPotion(arg) === true; // consomme le tour (décision §10 n°10)
+      if (window.SortieManager && !SortieManager.canUsePotion()) {
+        showToast("🧪 Plus de potion pour cette sortie (" + SORTIE_POTION_CAP + " max)", 1500);
+        return false;
+      }
+      if (PotionManager.useHealingPotion(arg) !== true) return false; // consomme le tour (décision §10 n°10)
+      if (window.SortieManager) SortieManager.notePotion();
+      return true;
     }
     return false;
   },
@@ -710,6 +747,7 @@ var CombatEngine = {
     this.ensureState();
     game.combatRound.continueAttack = false;
     game.silencedRounds = 0;
+    if (window.SortieManager) SortieManager.end("death"); // v3.102.1 : le butin de la sortie est perdu
 
     if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
       DungeonManager.onDefeat();
@@ -839,15 +877,14 @@ var CombatEngine = {
       goldGain += merchantBonusGold;
     }
 
-    game.gold += goldGain;
-    game.essence += essenceGain;
-    game.totalGoldEarned += goldGain;
+    this.grantGold(goldGain);
+    this.grantEssence(essenceGain);
     game.totalKills += 1;
     game.killCounts[enemy.id] = (game.killCounts[enemy.id] || 0) + 1;
+    if (window.SortieManager) SortieManager.noteKill();
 
     if (window.QuestManager && typeof QuestManager.track === "function") {
       QuestManager.track("kills", 1);
-      QuestManager.track("goldEarned", goldGain);
       if (enemy.isBoss) QuestManager.track("bossKills", 1);
 
       var masteryType = typeof getPlayerDamageType === "function" ? getPlayerDamageType() : null;
@@ -876,8 +913,8 @@ var CombatEngine = {
       for (var r = 0; r < rolls; r++) {
         if (window.LootSystem && typeof LootSystem.rollDrop === "function" && chance(lootChance)) {
           var drop = LootSystem.rollDrop();
-          if (drop && addDropToInventory(drop)) {
-            addLog("🎁 Objet trouvé : " + drop.name + " (" + drop.rarity + ")", "event");
+          if (this.grantDrop(drop)) {
+            addLog("🎁 Objet trouvé : " + drop.name + " (" + drop.rarity + ")" + (this.inSortie() ? " — dans le butin de sortie" : ""), "event");
             showToast("🎁 " + drop.name, 1800);
           }
         }
@@ -948,9 +985,8 @@ var CombatEngine = {
         chapterGold = Math.floor(chapterGold * (1 + 0.10 * game.talents.t_deep_pockets));
       }
 
-      game.gold += chapterGold;
-      game.essence += chapterEssence;
-      game.totalGoldEarned += chapterGold;
+      this.grantGold(chapterGold);
+      this.grantEssence(chapterEssence);
       addLog("🎉 Récompense de chapitre : +" + formatNumber(chapterGold) + " or, +" + chapterEssence + " essence", "event");
     }
 
@@ -972,31 +1008,25 @@ var CombatEngine = {
       function () {
         var bonus = randInt(10, 50);
         if (game.talents.t_deep_pockets) bonus = Math.floor(bonus * (1 + 0.10 * game.talents.t_deep_pockets));
-        game.gold += bonus;
-        game.totalGoldEarned += bonus;
+        CombatEngine.grantGold(bonus);
         addLog("💰 Trésor trouvé ! +" + bonus + " or", "event");
         showToast("💰 +" + bonus + " or", 1400);
         if (window.QuestManager && typeof QuestManager.track === "function") {
           QuestManager.track("treasures", 1 + (game.talents.t_treasure_hunter || 0));
-          QuestManager.track("goldEarned", bonus);
         }
       },
       function () {
         var bonus = randInt(1, 3);
-        game.essence += bonus;
+        CombatEngine.grantEssence(bonus);
         addLog("🔮 Fontaine d'essence ! +" + bonus + " essence", "event");
         showToast("🔮 +" + bonus + " essence", 1400);
       },
       function () {
         var bonus = Math.floor(game.gold * 0.05);
         if (bonus > 0) {
-          game.gold += bonus;
-          game.totalGoldEarned += bonus;
+          CombatEngine.grantGold(bonus);
           addLog("✨ Bénédiction ! +" + formatNumber(bonus) + " or", "event");
           showToast("✨ +" + formatNumber(bonus) + " or", 1400);
-          if (window.QuestManager && typeof QuestManager.track === "function") {
-            QuestManager.track("goldEarned", bonus);
-          }
         }
       },
       function () {

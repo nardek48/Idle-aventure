@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.102.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.102.3"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -111,12 +111,12 @@ var PRECACHE_APP_SHELL = [
   "./js/main/utils.js",
   "./js/systems/achievement-system.js",
   "./js/systems/codex-system.js",
+  "./js/sim/combat-round-sim.js",
   "./js/systems/combat-engine.js",
+  "./js/systems/sortie-system.js",
   "./js/systems/combat-resource-system.js",
   "./js/systems/combat-cooldown-system.js",
-  "./js/systems/combat-sandbox-system.js",
   "./js/systems/combat-auto-policy-system.js",
-  "./js/systems/combat-batch-sim-system.js",
   "./js/systems/dungeon-system.js",
   "./js/systems/equip-shop-system.js",
   "./js/systems/equipment-system.js",
@@ -126,7 +126,6 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/potion-system.js",
   "./js/systems/progression-system.js",
   "./js/systems/save-system.js",
-  "./js/systems/special-attack-system.js",
   "./js/systems/stats-system.js",
   "./js/systems/affliction-system.js",
   "./js/systems/world-quest-system.js",
@@ -152,7 +151,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/potion-view.js",
   "./js/ui/quests-view.js",
   "./js/ui/settings-view.js",
-  "./js/ui/combat-sandbox-view.js",
+  "./js/ui/combat-round-sandbox-view.js",
   "./js/ui/shop-view.js",
   "./js/ui/talents-view.js",
   "./js/ui/title-screen-view.js",

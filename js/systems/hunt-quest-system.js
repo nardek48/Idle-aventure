@@ -88,6 +88,7 @@ var HuntQuestManager = {
     }
 
     game.huntRun = { active: true, questId: questId, killsInLot: 0 };
+    if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("hunt"); } // v3.102.1 : la chasse est une sortie
     addLog("🏹 Départ en chasse : " + quest.name, "event");
     this.spawnRunEnemy(quest);
     if (typeof switchTab === "function") switchTab("combat");
@@ -103,7 +104,9 @@ var HuntQuestManager = {
     }
 
     if (chance(quest.dropChancePct)) {
-      WarehouseManager.addResource(quest.resourceKey, 1);
+      // v3.102.1 : la viande est du butin de sortie (banqué à la fin du lot, perdu à la mort, 50 % en arrêt manuel)
+      if (window.SortieManager && SortieManager.isActive()) SortieManager.addResource(quest.resourceKey, 1);
+      else WarehouseManager.addResource(quest.resourceKey, 1);
     }
 
     game.huntRun.killsInLot += 1;
@@ -120,6 +123,7 @@ var HuntQuestManager = {
     game.huntStats[quest.id] = Number(game.huntStats[quest.id] || 0) + 1;
     addLog("🏹 Chasse terminée : " + quest.name + " (" + quest.lotSize + "/" + quest.lotSize + ")", "event");
     game.huntRun = { active: false, questId: null, killsInLot: 0 };
+    if (window.SortieManager) SortieManager.end("success");
 
     if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
       CombatEngine.spawnEnemy();
@@ -134,6 +138,7 @@ var HuntQuestManager = {
     this.ensureRun();
     if (!game.huntRun.active) return;
     var quest = HUNT_QUESTS[game.huntRun.questId];
+    if (window.SortieManager) SortieManager.end("flee"); // v3.102.1 : arrêt volontaire = fuite (50 % de la viande) ; après une mort, déjà clos
     addLog("🏹 Chasse arrêtée" + (quest ? " : " + quest.name : ""), "event");
     game.huntRun = { active: false, questId: null, killsInLot: 0 };
 
@@ -150,7 +155,7 @@ var HuntQuestManager = {
     // v3.102.0 (P2) : même règle de mort qu'ailleurs (PV 0, Sang-froid, retour Campement)
     var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
     game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
-    addLog("💀 Chasse interrompue" + (quest ? " : " + quest.name : "") + " — viande déjà obtenue conservée. Retour au Campement.", "event");
+    addLog("💀 Chasse interrompue" + (quest ? " : " + quest.name : "") + " — la viande de la sortie est perdue. Retour au Campement.", "event");
     vibrate([80, 40, 80]);
     this.stop();
     game.justDied = true;

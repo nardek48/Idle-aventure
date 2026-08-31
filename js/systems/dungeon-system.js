@@ -183,6 +183,7 @@ var DungeonManager = {
     if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
     game.dungeonTiersEntered[tier.id] = true;
     game.heroHp = game.heroMaxHp || 1;
+    if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("dungeon"); } // v3.102.1 : le donjon est une sortie
     addLog("🏰 Entrée dans " + tier.name + " !", "event");
     this.applyDungeonTheme(tier.id);
     this.spawnWave(1);
@@ -222,7 +223,7 @@ var DungeonManager = {
     addLog("💀 Tentative de donjon interrompue à la vague " + (game.dungeonRun.wave || 1) + " ! Retour au Campement.", "event");
     vibrate([80, 40, 80]);
 
-    this.finish(false, clearedWave);
+    this.finish(false, clearedWave, "death");
     game.justDied = true;
     if (typeof switchTab === "function") switchTab("campement");
   },
@@ -234,12 +235,15 @@ var DungeonManager = {
     var clearedWave = Math.max(0, (game.dungeonRun.wave || 1) - 1);
     if (clearedWave > (game.dungeonBestWave || 0)) game.dungeonBestWave = clearedWave;
 
+    if (window.SortieManager) SortieManager.end("flee"); // v3.102.1 : abandon = fuite, 50 % du butin
     addLog("🏳️ Donjon abandonné à la vague " + (game.dungeonRun.wave || 1) + ".", "event");
-    this.finish(false, clearedWave);
+    this.finish(false, clearedWave, "flee");
   },
 
-  finish: function (success, clearedWave) {
+  /* outcome (échec) : "flee" = récompense partielle ÷ 2 ; "death" = aucune récompense partielle (v3.102.1, la mort coûte le butin) */
+  finish: function (success, clearedWave, outcome) {
     this.ensure();
+    if (success && window.SortieManager) SortieManager.end("success");
     var tier = this.getTierById(game.dungeonRun.tierId);
     var wavesTotal = DUNGEON_CONFIG.waveCount;
     var progress = Math.max(0, Math.min(1, clearedWave / wavesTotal));
@@ -266,10 +270,16 @@ var DungeonManager = {
       if (!wasAlreadyCleared) {
         addLog("🔓 " + esc(tier.name) + " entièrement terminé — palier suivant débloqué !", "event");
       }
+    } else if (outcome === "death") {
+      goldReward = 0;
+      essenceReward = 0;
+      grantLoot = false;
+      lootRarity = null;
     } else {
-      goldReward = Math.floor(DUNGEON_CONFIG.fullClearGoldBase * worldBonus * progress * 0.6);
-      essenceReward = Math.floor(DUNGEON_CONFIG.fullClearEssenceBase * worldBonus * progress * 0.6);
-      grantLoot = chance(DUNGEON_CONFIG.partialLootChance);
+      var fleeKeep = (typeof SORTIE_FLEE_KEEP_PCT === "number") ? SORTIE_FLEE_KEEP_PCT : 0.5;
+      goldReward = Math.floor(DUNGEON_CONFIG.fullClearGoldBase * worldBonus * progress * 0.6 * fleeKeep);
+      essenceReward = Math.floor(DUNGEON_CONFIG.fullClearEssenceBase * worldBonus * progress * 0.6 * fleeKeep);
+      grantLoot = chance(DUNGEON_CONFIG.partialLootChance * fleeKeep);
       lootRarity = allowedForTier[randInt(0, allowedForTier.length - 1)];
     }
 
@@ -288,7 +298,9 @@ var DungeonManager = {
 
     var msg = success
       ? "🏆 " + tier.name + " terminé ! +" + formatNumber(goldReward) + " or, +" + essenceReward + " essence"
-      : "🏰 " + tier.name + " interrompu (vague " + clearedWave + "/" + wavesTotal + ") : +" + formatNumber(goldReward) + " or, +" + essenceReward + " essence";
+      : (outcome === "death"
+        ? "🏰 " + tier.name + " : terrassé à la vague " + (clearedWave + 1) + "/" + wavesTotal + " — aucune récompense, le butin reste dans le donjon."
+        : "🏰 " + tier.name + " abandonné (vague " + clearedWave + "/" + wavesTotal + ") : +" + formatNumber(goldReward) + " or, +" + essenceReward + " essence (moitié)");
     if (lootedItem) msg += " + " + lootedItem.name;
 
     addLog(msg, success ? "boss" : "event");

@@ -162,6 +162,7 @@ var AdventureQuestManager = {
     }
 
     game.adventureQuestRun = { active: true, questId: questId };
+    if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("adventure"); } // v3.102.1 : la quête est une sortie
     addLog("📜 Départ en quête : " + quest.name, "event");
     this.spawnRunEnemy(quest);
     if (typeof switchTab === "function") switchTab("combat");
@@ -197,6 +198,7 @@ var AdventureQuestManager = {
   finish: function (quest, success) {
     this.ensureRun();
     game.adventureQuestRun = { active: false, questId: null };
+    if (success && window.SortieManager) SortieManager.end("success"); // v3.102.1 : mission réussie = butin banqué
 
     if (success && quest) {
       game.adventureQuestsCompleted[quest.id] = true;
@@ -251,6 +253,7 @@ var AdventureQuestManager = {
     this.ensureRun();
     if (!game.adventureQuestRun.active) return;
     var quest = ADVENTURE_QUESTS[game.adventureQuestRun.questId];
+    if (window.SortieManager) SortieManager.end("flee"); // v3.102.1 : abandon = fuite, 50 % du butin
     addLog("🏳️ Quête abandonnée" + (quest ? " : " + quest.name : "") + " — progression conservée.", "event");
     this.finish(quest, false);
   }

@@ -54,8 +54,8 @@ function buildAdminHTML() {
 
   h += '<div class="panel-card admin-card">';
   h += '<h3>🧪 Bac à sable de combat</h3>';
-  h += '<p class="panel-sub">Interface complète déjà existante, ouverte directement depuis ici.</p>';
-  h += '<button class="settings-btn admin-btn" onclick="switchTab(\'combat-sandbox\')">🧪 Bac à sable (ancien moteur — refonte v3.102.2)</button>';
+  h += '<p class="panel-sub">Simulateur de rounds sur les vraies données (budgets RPT/RPM, sorties Monte-Carlo, export Markdown) — sans effet sur ta partie.</p>';
+  h += '<button class="settings-btn admin-btn" onclick="switchTab(\'combat-sandbox\')">🧪 Ouvrir le bac à sable</button>';
   h += '</div>';
 
   h += '<button class="settings-btn admin-btn" onclick="switchTab(\'settings\')">← Retour aux Paramètres</button>';

@@ -154,6 +154,7 @@ function createInitialGameState() {
 
     autoSkillsEnabled: false,
     combatMode: "tactique", // v3.102.0 (P2) : "tactique" | "grimoire" (autoSkillsEnabled = miroir hérité)
+    sortie: null, // v3.102.1 : sortie en cours { active, context, loot, potionsUsed, kills } — voir SortieManager.ensure()
 
     expertModeEnabled: false,
 

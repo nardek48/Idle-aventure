@@ -704,3 +704,33 @@
   line-height: 1;
   pointer-events: none;
 }
+/* =========================
+   v3.102.2 — combat plein écran (décision Seb) : pendant une sortie on ne
+   navigue pas, on rentre (Rentrer / Fuir / mort). Le menu du bas, les
+   ressources, le titre et les raccourcis du HUD disparaissent ; seul le
+   mini-héros (portrait + PV) reste, non cliquable. La zone de jeu
+   récupère toute la hauteur : les rangées d'action (ancrées en bas de
+   #game-area) descendent et l'ennemi respire.
+   ========================= */
+body.combat-active #tab-bar {
+  display: none;
+}
+
+body.combat-active #hud .nb-hud-left-col,
+body.combat-active #hud .nb-hud-shortcuts,
+body.combat-active #hud #workshop-unlock-banner {
+  display: none !important;
+}
+
+body.combat-active #hud .nb-hud-top-row {
+  justify-content: flex-end;
+}
+
+body.combat-active #combat-hero-mini {
+  pointer-events: none;
+  cursor: default;
+}
+
+body.combat-active #game-area {
+  padding-bottom: var(--safe-bottom);
+}

@@ -104,6 +104,8 @@ function switchTab(tabName) {
 
   var leavingCombat = game.activeTab === "combat" && tabName !== "combat";
   game.activeTab = tabName;
+  // v3.102.1 : revenir au Campement pendant une exploration = rentrer (butin banqué)
+  if (window.SortieManager && typeof SortieManager.onTabChange === "function") SortieManager.onTabChange(tabName);
 
   if (leavingCombat && game.combatSpeed !== 1) {
     game.combatSpeed = 1;
@@ -134,7 +136,7 @@ function switchTab(tabName) {
   }
 
   if (gameArea) gameArea.style.display = combatMode ? "flex" : "none";
-  if (statsBar) statsBar.style.display = combatMode ? "flex" : "none";
+  if (statsBar) statsBar.style.display = "none"; // v3.102.2 : combat plein écran, plus de barre de stats (voir fiche Héros)
   if (speedBar) {
     speedBar.style.display = combatMode ? "flex" : "none";
     if (combatMode && typeof renderCombatSpeedBar === "function") renderCombatSpeedBar();
@@ -215,10 +217,7 @@ function renderPanel() {
       container.innerHTML = buildGrimoireHTML();
       break;
     case "combat-sandbox":
-      // v3.102.0 : l'ancien bac à sable simule le moteur temps réel retiré en P2 — refonte sur CombatRoundSim en 3.102.2
-      container.innerHTML = '<div class="nb-page-frame"><div class="panel-card"><h3>🧪 Bac à sable de combat</h3>'
-        + '<p class="panel-sub">Indisponible : il simulait l\'ancien moteur temps réel. Il sera reconstruit sur le simulateur de rounds (v3.102.2).</p>'
-        + '<button class="settings-btn" onclick="switchTab(\'admin\')">← Retour</button></div></div>';
+      container.innerHTML = buildCombatSandboxHTML(); // v3.102.3 : ui/combat-round-sandbox-view.js (simulateur de rounds)
       break;
     case "admin":
       container.innerHTML = buildAdminHTML();
