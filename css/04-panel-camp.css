@@ -282,3 +282,16 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   padding: 7px 10px;
   font-size: 12px;
 }
+
+/* v3.106.0 : liste des rations (Campement) — un bouton par type possédé, empilés verticalement
+   dans la carte Rations (remplace l'ancien bouton unique "Manger"). */
+.camp-ration-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.camp-ration-btn {
+  font-size: 12px;
+  padding: 8px 10px;
+}

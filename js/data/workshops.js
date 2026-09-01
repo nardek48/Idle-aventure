@@ -68,8 +68,10 @@ var WORKSHOPS_CONFIG = {
     // moyenne migre elle aussi vers Viande séchée pour rester cohérente avec la nouvelle
     // chaîne (ancienne recette : Viande brute ×10 + Pain ×1, voir COMMENTAIRES_ORIGINAUX.md).
     recipes: [
-      { id: "petite_ration", inputs: [{ resourceId: "viande_sechee", quantity: 5 }, { resourceId: "eau", quantity: 2 }], outputs: [{ resourceId: "petite_ration", quantity: 1 }], craftTimeMs: 3000 },
-      { id: "ration", inputs: [{ resourceId: "viande_sechee", quantity: 10 }, { resourceId: "pain", quantity: 1 }], outputs: [{ resourceId: "ration", quantity: 1 }], craftTimeMs: 8000 }
+      { id: "petite_ration", inputs: [{ resourceId: "viande", quantity: 8 }, { resourceId: "eau", quantity: 4 }], outputs: [{ resourceId: "petite_ration", quantity: 1 }], craftTimeMs: 3000 },
+      { id: "ration", inputs: [{ resourceId: "viande", quantity: 16 }, { resourceId: "eau", quantity: 8 }], outputs: [{ resourceId: "ration", quantity: 1 }], craftTimeMs: 8000 }
+      // v3.106.0 : recettes ramenées à Viande + Eau brutes (au lieu de viande_séchée/pain) — les rations
+      // remplacent le Repas dès l'Acte II, la chaîne Séchoir/Four est trop tardive pour cet usage.
     ]
   },
 

@@ -732,7 +732,8 @@ function restoreBaseState(d) {
   game.worldQuestProgress = d.worldQuestProgress && typeof d.worldQuestProgress === "object" ? d.worldQuestProgress : {};
   game.worldQuestsCompleted = d.worldQuestsCompleted && typeof d.worldQuestsCompleted === "object" ? d.worldQuestsCompleted : {};
   // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
-  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0 };
+  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0, grande_ration: 0 };
+  if (typeof game.resources.grande_ration !== "number") game.resources.grande_ration = 0; // v3.106.0 : migration saves antérieures
   if (typeof game.resources.viande !== "number") game.resources.viande = 0;
   if (typeof game.resources.ble !== "number") game.resources.ble = 0;
   if (typeof game.resources.bois !== "number") game.resources.bois = 0;
@@ -929,7 +930,7 @@ function hardResetState() {
   // v3.35 : planche/lingot suivent la même règle (conservés à l'ascension, comme Bois/Fer).
   // v3.36 : pierre/farine idem.
   // v3.45 : eau/pain/ration idem (6e bâtiment Puits + recettes croisées).
-  var keptResources = Object.assign({ viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0 }, game.resources || {});
+  var keptResources = Object.assign({ viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0, grande_ration: 0 }, game.resources || {});
   var keptAdventureQuestProgress = Object.assign({}, game.adventureQuestProgress || {});
   var keptAdventureQuestsCompleted = Object.assign({}, game.adventureQuestsCompleted || {});
   // v3.30 : huntStats (compteur de lots) = progression permanente, comme adventureQuestProgress.
@@ -1224,7 +1225,7 @@ function fullResetState() {
   // sur un reset complet, comme worldQuestProgress ci-dessus.
   // v3.35 : planche/lingot repartent aussi à zéro (artisanat tier 1).
   // v3.36 : pierre/farine idem.
-  game.resources = { viande: 10, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 6, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0 }; // v3.101.0 : 3 repas de départ
+  game.resources = { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 4, petite_ration: 0, grande_ration: 0 }; // v3.106.0 : 4 rations moyennes de départ (repas), remplace viande/eau brutes
   game.adventureQuestProgress = {};
   game.adventureQuestsCompleted = {};
   game.huntStats = {}; // v3.30

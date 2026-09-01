@@ -8,6 +8,7 @@ function buildCombatHTML() {
     + '<div id="active-potions-bar" class="active-potions-bar"></div>'
 
     + '<div id="enemy-display">'
+    +   '<div id="combat-mission-progress" class="combat-mission-progress"></div>'
     +   '<div id="enemy-status-bar" class="enemy-status-bar"></div>'
     +   '<div id="enemy-name">Slime</div>'
     +   '<div id="enemy-hp-bar-wrapper">'
@@ -299,8 +300,43 @@ function renderCombatControls() {
 window.buildCombatControlsHTML = buildCombatControlsHTML;
 window.renderCombatControls = renderCombatControls;
 
+/* v3.106.0 : progression "X/Y" de la mission de combat en cours (aventure/chasse/donjon), affichée en tête de l'écran Combat. */
+function getCombatMissionProgressLabel() {
+  if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active) {
+    var aq = AdventureQuestManager.getRunningQuest();
+    if (aq) {
+      var step = aq.steps[0];
+      if (step && step.type === "kill") {
+        return aq.name + " · " + AdventureQuestManager.getStepProgress(aq, step) + "/" + step.target;
+      }
+    }
+  }
+  if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
+    var hq = HUNT_QUESTS[game.huntRun.questId];
+    if (hq) return hq.name + " · " + Math.min(hq.lotSize, Number(game.huntRun.killsInLot || 0)) + "/" + hq.lotSize;
+  }
+  if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
+    var waveCount = (typeof DUNGEON_CONFIG !== "undefined") ? DUNGEON_CONFIG.waveCount : 0;
+    var wave = Math.min(waveCount, Number(game.dungeonRun.wave || 0));
+    return "Donjon · Vague " + wave + "/" + waveCount;
+  }
+  return "";
+}
+
+function renderCombatMissionProgress() {
+  var host = document.getElementById("combat-mission-progress");
+  if (!host) return;
+  var label = getCombatMissionProgressLabel();
+  host.textContent = label;
+  host.style.display = label ? "" : "none";
+}
+window.getCombatMissionProgressLabel = getCombatMissionProgressLabel;
+window.renderCombatMissionProgress = renderCombatMissionProgress;
+
 function renderEnemy() {
   if (!game.enemy) return;
+
+  renderCombatMissionProgress();
 
   var emoji = document.getElementById("enemy-emoji");
   var name = document.getElementById("enemy-name");

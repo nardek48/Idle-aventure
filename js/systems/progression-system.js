@@ -52,7 +52,11 @@ var WorldManager = {
       var bossWorldComponent = Math.pow(1 + this.worldIndex * bossWorldMult, ENEMY_PV_WORLD_EXP);
       var bossScale = bossWorldComponent + this.adventureIndex * 0.4 + (game.cycleCount || 0) * 0.7;
       var bossEndurance = (bossData.stats && bossData.stats.endurance) || 58;
-      var bossHp = Math.floor(bossEndurance * BOSS_PV_MULT * bossScale * milestoneMult + (game.totalKills || 0) * 2);
+      // v3.106.1 : terme totalKills retiré — grandissait indéfiniment sans plafond avec le nombre de kills
+      // GLOBAL du joueur (toutes zones confondues), rendant les boss plus durs à mesure qu'on progresse
+      // normalement dans le jeu (+111 % de PV à seulement 100 kills). Le boss suit désormais la même
+      // logique que les ennemis normaux (monde/aventure/cycle uniquement, cf. plus bas dans ce fichier).
+      var bossHp = Math.floor(bossEndurance * BOSS_PV_MULT * bossScale * milestoneMult);
       if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
         var bossHpMods = AfflictionManager.getCombinedModifiers();
         if (bossHpMods.bossHpMult !== 1) bossHp = Math.floor(bossHp * bossHpMods.bossHpMult);
@@ -89,9 +93,13 @@ var WorldManager = {
     var enemyData = ENEMY_DB[enemyId] || { name: "Ennemi", asset: "slime" };
     var worldMult = WORLD_MULT_BY_WORLD[this.worldIndex] != null ? WORLD_MULT_BY_WORLD[this.worldIndex] : 0.90;
     var worldComponent = Math.pow(1 + this.worldIndex * worldMult, ENEMY_PV_WORLD_EXP);
-    var scale = worldComponent + this.adventureIndex * 0.30 + (game.cycleCount || 0) * 0.45 + this.enemyIndex * 0.05;
+    // v3.106.1 : enemyIndex neutralisé en Forêt (worldIndex 0) — c'est un monde d'apprentissage, pas de
+    // ressaut de difficulté voulu à l'intérieur d'une même aventure. Ailleurs, worldComponent domine déjà
+    // largement (Désert et +) et ce terme y reste un petit à-côté (+1 à +11 % du 1er au 10e ennemi).
+    var enemyIndexFactor = this.worldIndex === 0 ? 0 : this.enemyIndex;
+    var scale = worldComponent + this.adventureIndex * 0.30 + (game.cycleCount || 0) * 0.45 + enemyIndexFactor * 0.05;
     var enemyEndurance = (enemyData.stats && enemyData.stats.endurance) || 18;
-    var hp = Math.floor(enemyEndurance * ENEMY_PV_MULT * scale * milestoneMult + this.enemyIndex * 5);
+    var hp = Math.floor(enemyEndurance * ENEMY_PV_MULT * scale * milestoneMult + enemyIndexFactor * 5);
 
     var effectiveStats = enemyData.stats ? Object.assign({}, enemyData.stats) : null;
     if (effectiveStats && milestoneMult !== 1) {

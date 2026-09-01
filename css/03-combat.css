@@ -1302,3 +1302,20 @@ img.combat-action-icon {
 .enemy-status-approaching {
   border-color: #a78b5f;
 }
+
+/* v3.106.0 : bandeau de progression de mission (aventure/chasse/donjon), ancré en haut à gauche de
+   #enemy-display, symétrique du badge de statuts à droite. Vide/masqué hors mission de type kill. */
+.combat-mission-progress {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 6;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-gold-dark);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--nb-gold-dark);
+  border-radius: 999px;
+  padding: 3px 10px;
+  pointer-events: none;
+}

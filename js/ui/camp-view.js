@@ -60,17 +60,14 @@ window.buildCampMissionCardHTML = buildCampMissionCardHTML;
 function buildCampHTML() {
   if (window.CampManager) CampManager.ensureDefaults();
 
-  // v3.101.0 (P3-lite) : régénération lente + Repas, plus de repos à horloge.
+  // v3.101.0 (P3-lite) : régénération lente + Rations (v3.106.0), plus de repos à horloge.
   if (window.CampManager) CampManager.applyRegen(false);
   var maxHp = game.heroMaxHp || 1;
   var hp = game.heroHp != null ? game.heroHp : maxHp;
   var hpFull = hp >= maxHp;
   var regenPct = window.CampManager ? Math.round(CampManager.getRegenPctPerMin() * 100) : 5;
   var minutesToFull = window.CampManager ? CampManager.getMinutesToFull() : 0;
-  var mealCost = window.CampManager ? CampManager.getMealCost() : { viande: 5, eau: 2 };
-  var canEat = window.CampManager ? CampManager.canEat() : false;
-  var viandeStock = window.WarehouseManager ? WarehouseManager.getAmount("viande") : 0;
-  var eauStock = window.WarehouseManager ? WarehouseManager.getAmount("eau") : 0;
+  var rationOptions = window.CampManager ? CampManager.getRationOptions() : [];
 
   var h = '<div class="nb-page-frame camp-page">';
 
@@ -78,7 +75,7 @@ function buildCampHTML() {
   h += '<div class="camp-hero-sub">Ton point de ralliement entre deux expéditions.</div>';
 
   if (game.justDied) {
-    h += '<div class="camp-death-banner">💀 Tu es tombé au combat. Mange, ou laisse le feu faire son œuvre, avant de repartir.</div>';
+    h += '<div class="camp-death-banner">💀 Tu es tombé au combat. Mange une ration, ou laisse le feu faire son œuvre, avant de repartir.</div>';
     game.justDied = false;
   }
 
@@ -92,17 +89,21 @@ function buildCampHTML() {
   h += '<button class="settings-btn camp-fire-btn-cooldown" id="camp-fire-eta" type="button" disabled>' + (hpFull ? 'PV au maximum' : esc('Max dans ' + formatTime(Math.ceil(minutesToFull * 60)))) + '</button>';
   h += '</div>';
 
-  h += '<div class="camp-card camp-fire-card">';
+  h += '<div class="camp-card camp-fire-card camp-rations-card">';
   h += '<div class="camp-fire-icon">🍖</div>';
-  h += '<div class="camp-fire-title">Repas</div>';
-  h += '<div class="camp-fire-desc">PV au maximum. ' + mealCost.viande + ' viande + ' + mealCost.eau + ' eau.</div>';
-  h += '<div class="camp-fire-hp' + (canEat ? '' : ' is-short') + '">' + formatNumber(viandeStock) + ' viande · ' + formatNumber(eauStock) + ' eau</div>';
+  h += '<div class="camp-fire-title">Rations</div>';
+  h += '<div class="camp-fire-desc">Restaurent un % de tes PV max.</div>';
   if (hpFull) {
     h += '<button class="settings-btn camp-fire-btn-cooldown" type="button" disabled>Pas faim</button>';
-  } else if (canEat) {
-    h += '<button class="settings-btn primary" type="button" onclick="CampManager.eat();">Manger</button>';
   } else {
-    h += '<button class="settings-btn camp-fire-btn-cooldown" type="button" disabled>Garde-manger vide</button>';
+    h += '<div class="camp-ration-list">';
+    rationOptions.forEach(function (r) {
+      var canEat = r.amount >= 1;
+      h += '<button class="settings-btn camp-ration-btn' + (canEat ? '' : ' camp-fire-btn-cooldown') + '" type="button"' + (canEat ? ' onclick="CampManager.eatRation(\'' + esc(r.id) + '\');"' : ' disabled') + '>';
+      h += esc(r.name) + ' (+' + Math.round(r.healPct * 100) + ' %) · ' + formatNumber(r.amount);
+      h += '</button>';
+    });
+    h += '</div>';
   }
   h += '</div>';
 

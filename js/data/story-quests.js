@@ -192,14 +192,15 @@ var STORY_QUESTS = {
           objective: "Les loups tournent autour du camp. Chasse-les, et rapporte de quoi nourrir plus que toi.",
           completion: "Le gibier s'entasse. Un camp qui stocke est déjà un village."
         },
-        objectiveLabel: "Terminer « La Meute Affamée » et stocker 20 Viande",
+        objectiveLabel: "Terminer « La Meute Affamée »",
         unlockTabs: ["village"],
         reward: STORY_REWARDS.forest_06,
         linkTo: { section: "adventure", cardId: "adv_hq_wolf_pack" },
-        // v3.101.0 : 20 (et non 10) — le stock de départ de 10 viande est fait pour être mangé, pas pour valider l'étape.
-        check: function (game) { return !!(game.adventureQuestsCompleted || {}).hq_wolf_pack && storyResourceAmount("viande") >= 20; },
+        // v3.105.1 : condition viande retirée — le bâtiment Chasse (seule vraie source) est débloqué PAR cette
+        // quête, verrou de progression impossible à lever (20 viande inatteignable avant sa propre récompense).
+        check: function (game) { return !!(game.adventureQuestsCompleted || {}).hq_wolf_pack; },
         progress: function (game) {
-          return "Meute " + ((game.adventureQuestsCompleted || {}).hq_wolf_pack ? "1/1" : "0/1") + " · Viande " + Math.min(20, Math.floor(storyResourceAmount("viande"))) + "/20";
+          return "Meute " + ((game.adventureQuestsCompleted || {}).hq_wolf_pack ? "1/1" : "0/1");
         }
       },
       {

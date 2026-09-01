@@ -1,19 +1,15 @@
 "use strict";
-/* systems/camp-system.js — v3.101.0 (P3-lite) : plus de repos à horloge. Régénération lente au Campement
-   (5 % PV max / min, plafonnée à 50 % hors ligne) + Repas (5 viande + 2 eau → PV max). Détail : LIGNE_DIRECTRICE §4, §10. */
+/* systems/camp-system.js — v3.106.0 : plus de repos à horloge. Régénération lente au Campement
+   (5 % PV max / min, plafonnée à 50 % hors ligne) + Rations (v3.106.0 : remplace Repas viande/eau).
+   Chaque ration restaure un % fixe de PV max (WAREHOUSE_RESOURCES[id].healPct). Détail : LIGNE_DIRECTRICE §4, §10. */
 
 var CAMP_REGEN_PCT_PER_MIN = 0.05;
 var CAMP_OFFLINE_REGEN_CAP_PCT = 0.50;
-var CAMP_MEAL_COST = { viande: 5, eau: 2 };
 var CAMP_REGEN_TALENT_BONUS_PER_LEVEL = 0.25; // t_last_stand « Repos du guerrier » : +25 % de vitesse par niveau
 
 var CampManager = {
   ensureDefaults: function () {
     if (typeof game.campRegenLastAt !== "number" || game.campRegenLastAt <= 0) game.campRegenLastAt = Date.now();
-  },
-
-  getMealCost: function () {
-    return CAMP_MEAL_COST;
   },
 
   getRegenPctPerMin: function () {
@@ -66,7 +62,7 @@ var CampManager = {
     if (eta) {
       var full = (game.heroHp || 0) >= maxHp;
       eta.textContent = full ? "PV au maximum" : "Max dans " + formatTime(Math.ceil(this.getMinutesToFull() * 60));
-      if (full && typeof renderPanel === "function") renderPanel(); // ré-évalue le bouton Repas (« Pas faim »)
+      if (full && typeof renderPanel === "function") renderPanel(); // ré-évalue les boutons de ration (grisés si PV pleins)
     }
   },
 
@@ -78,25 +74,33 @@ var CampManager = {
     return missing / (maxHp * this.getRegenPctPerMin());
   },
 
-  canEat: function () {
-    if (!window.WarehouseManager) return false;
-    var cost = this.getMealCost();
-    return Object.keys(cost).every(function (k) { return WarehouseManager.getAmount(k) >= cost[k]; });
+  /* Liste des rations avec stock courant et % de soin, dans l'ordre d'affichage (petite -> grande). */
+  getRationOptions: function () {
+    var ids = (typeof RATION_IDS !== "undefined") ? RATION_IDS : ["petite_ration", "ration", "grande_ration"];
+    return ids.map(function (id) {
+      var def = (window.WAREHOUSE_RESOURCES || {})[id] || {};
+      return { id: id, name: def.name || id, healPct: Number(def.healPct || 0), amount: window.WarehouseManager ? WarehouseManager.getAmount(id) : 0 };
+    });
   },
 
-  /* Repas : consomme 5 viande + 2 eau (via WarehouseManager, jamais game.resources en direct), PV max. */
-  eat: function () {
+  canEatRation: function (rationId) {
+    if (!window.WarehouseManager) return false;
+    return WarehouseManager.getAmount(rationId) >= 1;
+  },
+
+  /* Ration : consomme 1 unité (via WarehouseManager), restaure healPct % des PV max. */
+  eatRation: function (rationId) {
+    var def = (window.WAREHOUSE_RESOURCES || {})[rationId];
+    if (!def || !def.healPct) return false;
     var maxHp = game.heroMaxHp || 1;
     if ((game.heroHp || 0) >= maxHp) { showToast("PV déjà au maximum", 1200); return false; }
-    if (!this.canEat()) { showToast("Il manque de quoi cuisiner (5 viande, 2 eau)", 1600); return false; }
+    if (!this.canEatRation(rationId)) { showToast("Aucune " + def.name.toLowerCase() + " en stock", 1600); return false; }
+    if (!WarehouseManager.removeResource(rationId, 1)) return false;
 
-    var cost = this.getMealCost();
-    var ok = Object.keys(cost).every(function (k) { return WarehouseManager.removeResource(k, cost[k]); });
-    if (!ok) return false;
-
-    game.heroHp = maxHp;
-    addLog("🍖 Repas au feu de camp — PV entièrement restaurés.", "event");
-    showToast("🍖 PV restaurés !", 1600);
+    var healed = Math.min(maxHp - (game.heroHp || 0), Math.floor(maxHp * def.healPct));
+    game.heroHp = (game.heroHp || 0) + healed;
+    addLog("🍖 " + def.name + " — +" + formatNumber(healed) + " PV.", "event");
+    showToast("🍖 +" + formatNumber(healed) + " PV", 1600);
     if (typeof renderAll === "function") renderAll();
     if (typeof saveGame === "function") saveGame();
     return true;
@@ -104,5 +108,4 @@ var CampManager = {
 };
 
 window.CampManager = CampManager;
-window.CAMP_MEAL_COST = CAMP_MEAL_COST;
 window.CAMP_REGEN_PCT_PER_MIN = CAMP_REGEN_PCT_PER_MIN;
