@@ -3,7 +3,14 @@
    la quête "La Veine Instable" (source: "quest") ET l'activité bonus répétable de la Carrière
    (source: "quarry_bonus"). Indépendant d'ExplorationManager (mécanique trop différente d'un
    test de stat à résultat unique). Ne charge JAMAIS CombatEngine, n'écrit jamais dans
-   game.resources directement (uniquement via WarehouseManager). Détail : COMMENTAIRES_ORIGINAUX.md */
+   game.resources directement (uniquement via WarehouseManager).
+   v3.110.0 : généralisé à toute quête de minage déclarée dans EXPLORATION_QUESTS (questId en
+   paramètre, défaut "unstableVein" pour tous les appelants historiques) — ressources
+   principale/bonus par quête (minigame.primaryResourceId/bonusResourceId, défauts
+   pierre/fer), déblocage lu depuis les données (unlockBuildingId/unlockFlag/completionFlag).
+   Les champs de session totalStone/ironOre gardent leurs noms historiques (= ressource
+   principale/bonus) pour ne pas casser une session active en cours de migration.
+   1re nouvelle quête : "L'Éboulis Ferreux" (ironLode, Mine). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var MINING_QUARRY_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes, activité bonus uniquement
 
@@ -26,16 +33,17 @@ var MiningManager = {
     return !!(session && session.status === "active");
   },
 
-  isQuestCompleted: function () {
+  isQuestCompleted: function (questId) {
     this.ensureDefaults();
-    // v3.92.2 : une sauvegarde migrée (Carrière déjà débloquée nativement avant l'existence
-    // de cette quête, voir save-system.js) a quarryUnlocked=true mais
-    // unstableVeinDiscoveryCompleted=false (elle n'a jamais "vraiment" joué/gagné la
-    // quête). Dans les deux cas, la Carrière est acquise -> la carte doit être traitée
-    // comme terminée à l'affichage, jamais laissée verrouillée dans la liste active.
+    // v3.92.2 : une sauvegarde migrée (bâtiment déjà débloqué nativement avant l'existence
+    // de sa quête) a le flag de bâtiment à true mais pas le completionFlag — dans les deux
+    // cas le bâtiment est acquis -> la carte est traitée comme terminée à l'affichage.
+    // v3.110.0 : générique par questId (défaut unstableVein pour les appelants historiques).
+    var quest = this.getQuest(questId || "unstableVein");
+    if (!quest) return false;
     return !!(game.explorationProgression && (
-      game.explorationProgression.unstableVeinDiscoveryCompleted ||
-      game.explorationProgression.quarryUnlocked
+      game.explorationProgression[quest.completionFlag] ||
+      (quest.unlockFlag && game.explorationProgression[quest.unlockFlag])
     ));
   },
 
@@ -57,20 +65,27 @@ var MiningManager = {
     return Math.max(0, this.getCooldownEndsAt() - Date.now());
   },
 
-  /* Prérequis d'accès à la quête "La Veine Instable" (pas l'activité bonus). */
-  checkQuestRequirements: function () {
+  /* Prérequis d'accès à une quête de minage (pas l'activité bonus). v3.110.0 : questId
+     en paramètre (défaut unstableVein), verrous lus dans les données de la quête. */
+  checkQuestRequirements: function (questId) {
     this.ensureDefaults();
-    var quest = this.getQuest("unstableVein");
+    questId = questId || "unstableVein";
+    var quest = this.getQuest(questId);
     if (!quest) return { ok: false, reason: "Expédition introuvable" };
 
-    if (this.isQuestCompleted()) {
+    if (this.isQuestCompleted(questId)) {
       return { ok: false, reason: "Expédition déjà terminée" };
     }
-    if (this.isQuarryUnlocked()) {
-      return { ok: false, reason: "La Carrière est déjà déverrouillée" };
+    if (quest.unlockFlag && game.explorationProgression && game.explorationProgression[quest.unlockFlag]) {
+      return { ok: false, reason: "Ce bâtiment est déjà déverrouillé" };
     }
     if (quest.requirements.heroSelected && !game.heroId) {
       return { ok: false, reason: "Aucun héros sélectionné" };
+    }
+    // v3.110.0 : verrou générique sur un flag de progression (ironLode exige quarryUnlocked).
+    var progressFlag = quest.requirements.requiresProgressFlag;
+    if (progressFlag && !(game.explorationProgression && game.explorationProgression[progressFlag])) {
+      return { ok: false, reason: quest.requirements.lockedReason || "Condition de progression non remplie" };
     }
     var requiredQuestId = quest.requirements.requiresQuestCompleted;
     if (requiredQuestId && window.ExplorationManager && !ExplorationManager.isQuestCompleted(requiredQuestId)) {
@@ -118,11 +133,11 @@ var MiningManager = {
     };
   },
 
-  _createSession: function (source) {
+  _createSession: function (source, questId) {
     return {
       id: "mining_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
       source: source,
-      questId: source === "quest" ? "unstableVein" : null,
+      questId: source === "quest" ? (questId || "unstableVein") : null,
       status: "active",
 
       heroSnapshot: this.buildHeroSnapshot(),
@@ -143,19 +158,20 @@ var MiningManager = {
     };
   },
 
-  /* Démarre une session pour la quête "La Veine Instable". Retire 1 petite ration via
-     WarehouseManager. Retourne { ok, reason, session }. */
-  startQuestSession: function () {
+  /* Démarre une session pour une quête de minage (défaut : "La Veine Instable"). Retire
+     le coût en petites rations via WarehouseManager. Retourne { ok, reason, session }. */
+  startQuestSession: function (questId) {
     this.ensureDefaults();
+    questId = questId || "unstableVein";
 
     if (this.isSessionActive()) {
       return { ok: false, reason: "Une session de minage est déjà en cours", session: null };
     }
 
-    var req = this.checkQuestRequirements();
+    var req = this.checkQuestRequirements(questId);
     if (!req.ok) return { ok: false, reason: req.reason, session: null };
 
-    var quest = this.getQuest("unstableVein");
+    var quest = this.getQuest(questId);
     var cost = Number(quest.cost.petiteRation || 0);
 
     if (!window.WarehouseManager || typeof WarehouseManager.removeResource !== "function") {
@@ -169,7 +185,7 @@ var MiningManager = {
       return { ok: false, reason: "Échec du retrait de la ration", session: null };
     }
 
-    var session = this._createSession("quest");
+    var session = this._createSession("quest", questId);
     game.gatheringActivity.quarry.activeSession = session;
     if (typeof saveGame === "function") saveGame();
 
@@ -203,7 +219,11 @@ var MiningManager = {
     var quest = session.questId ? this.getQuest(session.questId) : null;
     var hitCount = quest ? quest.minigame.hitCount : 3;
     var rewardsByResult = quest ? quest.minigame.rewardsByResult : { miss: { stone: 0 }, correct: { stone: 1 }, perfect: { stone: 3 } };
-    var perfectIronOreChancePct = quest ? quest.minigame.perfectIronOreChancePct : 20;
+    // v3.110.0 : chance de bonus sur coup parfait — nouveau nom générique perfectBonusChancePct,
+    // repli sur l'historique perfectIronOreChancePct (unstableVein) puis 20.
+    var perfectIronOreChancePct = quest
+      ? Number(quest.minigame.perfectBonusChancePct !== undefined ? quest.minigame.perfectBonusChancePct : quest.minigame.perfectIronOreChancePct)
+      : 20;
 
     if (session.minigame.currentHit >= hitCount) {
       return { ok: false, reason: "Tous les coups ont déjà été joués" }; // idempotence anti double-clic
@@ -214,7 +234,9 @@ var MiningManager = {
       hitPositionPct: hitPositionPct
     });
 
-    var stoneGain = Number((rewardsByResult[checkOutcome.result] || {}).stone || 0);
+    // v3.110.0 : montant générique "amount", repli sur "stone" (données historiques d'unstableVein).
+    var rewardEntry = rewardsByResult[checkOutcome.result] || {};
+    var stoneGain = Number(rewardEntry.amount !== undefined ? rewardEntry.amount : (rewardEntry.stone || 0));
     var ironOreGain = 0;
     var ironOreRandomValue = null;
 
@@ -262,18 +284,25 @@ var MiningManager = {
     var atLeastOneHit = session.minigame.hits.some(function (h) { return h.result !== "miss"; });
 
     if (!session.settlement.rewardsGranted) {
+      // v3.110.0 : ressources principale/bonus lues dans la quête (défauts pierre/fer =
+      // comportement historique d'unstableVein et de l'activité bonus Carrière).
+      var settleQuest = session.questId ? this.getQuest(session.questId) : null;
+      var primaryResourceId = (settleQuest && settleQuest.minigame.primaryResourceId) || "pierre";
+      var bonusResourceId = (settleQuest && settleQuest.minigame.bonusResourceId) || "fer";
       if (session.minigame.totalStone > 0 && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
-        WarehouseManager.addResource("pierre", session.minigame.totalStone);
+        WarehouseManager.addResource(primaryResourceId, session.minigame.totalStone);
       }
       if (session.minigame.totalIronOre > 0 && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
-        WarehouseManager.addResource("fer", session.minigame.totalIronOre);
+        WarehouseManager.addResource(bonusResourceId, session.minigame.totalIronOre);
       }
 
-      if (session.source === "quest" && atLeastOneHit) {
-        game.explorationProgression.unstableVeinDiscoveryCompleted = true;
-        game.explorationProgression.quarryUnlocked = true;
-        if (window.ProductionManager && typeof ProductionManager.unlockBuilding === "function") {
-          ProductionManager.unlockBuilding("quarry");
+      // v3.110.0 : déblocage lu dans les données (unstableVein -> Carrière inchangé,
+      // ironLode -> Mine), plus de câblage en dur.
+      if (session.source === "quest" && atLeastOneHit && settleQuest) {
+        if (settleQuest.completionFlag) game.explorationProgression[settleQuest.completionFlag] = true;
+        if (settleQuest.unlockFlag) game.explorationProgression[settleQuest.unlockFlag] = true;
+        if (settleQuest.unlockBuildingId && window.ProductionManager && typeof ProductionManager.unlockBuilding === "function") {
+          ProductionManager.unlockBuilding(settleQuest.unlockBuildingId);
         }
       }
 

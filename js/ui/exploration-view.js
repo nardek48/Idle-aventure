@@ -100,8 +100,10 @@ function buildExplorationPrepHTML() {
         + (canAfford ? ' onclick="selectExplorationProvision(\'' + esc(opt.id) + '\')"' : ' disabled')
         + '>';
       h += '<span class="exploration-option-label">' + esc(opt.label) + '</span>';
-      h += '<span class="exploration-option-cost">' + opt.startingRations + ' petite ration' + (opt.startingRations > 1 ? 's' : '')
-        + (opt.reserveRations > 0 ? ' (dont 1 en réserve)' : '') + '</span>';
+      // v3.110.0 : option gratuite (silentGrove) — libellé explicite plutôt que "0 petite ration".
+      h += '<span class="exploration-option-cost">' + (opt.startingRations > 0
+        ? (opt.startingRations + ' petite ration' + (opt.startingRations > 1 ? 's' : '') + (opt.reserveRations > 0 ? ' (dont 1 en réserve)' : ''))
+        : 'Aucune ration nécessaire') + '</span>';
       h += '</button>';
     });
     h += '    </div>';
@@ -189,7 +191,7 @@ function buildExplorationEventHTML() {
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card">';
-  h += '    <div class="dungeon-story-icon">🌳</div>';
+  h += '    <div class="dungeon-story-icon">' + esc(event.icon || "🌳") + '</div>'; // v3.110.0 : icône par quête
   h += '    <div class="dungeon-story-title">' + esc(event.title) + '</div>';
   h += '    <div class="dungeon-story-text">' + esc(event.text) + '</div>';
 
@@ -205,14 +207,18 @@ function buildExplorationEventHTML() {
     h += '</button>';
   });
 
+  // v3.110.0 : le choix de contournement est optionnel (silentGrove n'en a pas — aucune
+  // réserve possible avant le Puits) — rendu seulement s'il est défini dans les données.
   var bypass = event.choices.bypass;
-  var canBypass = run.loadout.reserveRations > 0;
-  h += '<button type="button" class="settings-btn exploration-option-btn' + (canBypass ? '' : ' disabled') + '"'
-    + (canBypass ? ' onclick="resolveExplorationEventChoice(\'bypass\')"' : ' disabled')
-    + '>';
-  h += '<span class="exploration-option-label">' + esc(bypass.label) + '</span>';
-  h += '<span class="exploration-option-estimate">' + (canBypass ? 'Réussite garantie' : 'Une ration de réserve est nécessaire') + '</span>';
-  h += '</button>';
+  if (bypass) {
+    var canBypass = run.loadout.reserveRations > 0;
+    h += '<button type="button" class="settings-btn exploration-option-btn' + (canBypass ? '' : ' disabled') + '"'
+      + (canBypass ? ' onclick="resolveExplorationEventChoice(\'bypass\')"' : ' disabled')
+      + '>';
+    h += '<span class="exploration-option-label">' + esc(bypass.label) + '</span>';
+    h += '<span class="exploration-option-estimate">' + (canBypass ? 'Réussite garantie' : 'Une ration de réserve est nécessaire') + '</span>';
+    h += '</button>';
+  }
 
   h += '    </div>';
   h += '  </div>';
@@ -272,14 +278,17 @@ function buildExplorationFallbackHTML() {
 
   h += '    <div class="exploration-option-list">';
 
+  // v3.110.0 : optionnel — silentGrove n'a qu'une retraite (aucune réserve possible).
   var bypassChoice = fallback.choices.bypassWithReserve;
-  var canBypass = run.loadout.reserveRations > 0;
-  h += '<button type="button" class="settings-btn exploration-option-btn' + (canBypass ? '' : ' disabled') + '"'
-    + (canBypass ? ' onclick="resolveExplorationFallbackChoice(\'bypassWithReserve\')"' : ' disabled')
-    + '>';
-  h += '<span class="exploration-option-label">' + esc(bypassChoice.label) + '</span>';
-  if (!canBypass) h += '<span class="exploration-option-estimate">Une ration de réserve est nécessaire.</span>';
-  h += '</button>';
+  if (bypassChoice) {
+    var canBypass = run.loadout.reserveRations > 0;
+    h += '<button type="button" class="settings-btn exploration-option-btn' + (canBypass ? '' : ' disabled') + '"'
+      + (canBypass ? ' onclick="resolveExplorationFallbackChoice(\'bypassWithReserve\')"' : ' disabled')
+      + '>';
+    h += '<span class="exploration-option-label">' + esc(bypassChoice.label) + '</span>';
+    if (!canBypass) h += '<span class="exploration-option-estimate">Une ration de réserve est nécessaire.</span>';
+    h += '</button>';
+  }
 
   var retreatChoice = fallback.choices.retreat;
   h += '<button type="button" class="settings-btn exploration-option-btn" onclick="resolveExplorationFallbackChoice(\'retreat\')">';
@@ -340,29 +349,52 @@ function buildExplorationCompleteHTML(run) {
   else if (run.event.choiceId === "bypassWithReserve") title = "Contournement";
   else title = "Retour prudent";
 
-  var isFailureVisual = !run.rewards.clearingUnlocked;
+  // v3.110.0 : le succès matériel est la Clairière (blockedPath) OU un bâtiment débloqué
+  // (silentGrove/fallowField) — le visuel et les lignes de bilan suivent la forme de la quête.
+  var hasBuildingReward = !!quest.unlockBuildingId;
+  var mainRewardWon = hasBuildingReward ? run.rewards.buildingUnlocked : run.rewards.clearingUnlocked;
+  var isFailureVisual = !mainRewardWon;
+  var questUi = quest.ui || {};
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card' + (isFailureVisual ? '' : ' is-success') + '">';
-  h += '    <div class="dungeon-story-icon">' + (run.rewards.clearingUnlocked ? '🌿' : '🏕️') + '</div>';
+  h += '    <div class="dungeon-story-icon">' + (mainRewardWon ? esc(questUi.successIcon || '🌿') : '🏕️') + '</div>';
   h += '    <div class="dungeon-story-title">' + esc(title) + '</div>';
 
   h += '    <div class="dungeon-summary-rewards">';
-  h += '      <div class="dungeon-summary-row"><span>🪵 Bois obtenu</span><span>+' + formatNumber(run.rewards.wood) + '</span></div>';
-  h += '      <div class="dungeon-summary-row"><span>🌿 Clairière oubliée</span><span>' + (run.rewards.clearingUnlocked ? 'Débloquée' : 'Non débloquée') + '</span></div>';
-
-  var reserveLabel;
-  if (run.loadout.reserveRations > 0 && run.settlement.reserveRefunded) {
-    reserveLabel = "Rendue";
-  } else if (run.loadout.startingRations >= 2) {
-    reserveLabel = "Utilisée";
+  if (run.rewards.resources) {
+    // v3.110.0 : récompenses génériques (map resourceId -> quantité), noms via WAREHOUSE_RESOURCES.
+    for (var resKey in run.rewards.resources) {
+      if (Object.prototype.hasOwnProperty.call(run.rewards.resources, resKey)) {
+        var resDef = (window.WAREHOUSE_RESOURCES || {})[resKey];
+        h += '      <div class="dungeon-summary-row"><span>' + esc((resDef && resDef.name) || resKey) + ' obtenu</span><span>+' + formatNumber(run.rewards.resources[resKey]) + '</span></div>';
+      }
+    }
   } else {
-    reserveLabel = "Absente";
+    h += '      <div class="dungeon-summary-row"><span>🪵 Bois obtenu</span><span>+' + formatNumber(run.rewards.wood) + '</span></div>';
   }
-  h += '      <div class="dungeon-summary-row"><span>🎒 Ration de réserve</span><span>' + reserveLabel + '</span></div>';
+  if (hasBuildingReward) {
+    h += '      <div class="dungeon-summary-row"><span>' + esc(questUi.successRowLabel || 'Bâtiment') + '</span><span>' + (mainRewardWon ? 'Déverrouillé' : 'Non déverrouillé') + '</span></div>';
+  } else {
+    h += '      <div class="dungeon-summary-row"><span>🌿 Clairière oubliée</span><span>' + (run.rewards.clearingUnlocked ? 'Débloquée' : 'Non débloquée') + '</span></div>';
+  }
+
+  // v3.110.0 : ligne masquée quand la quête est sans rations (silentGrove — provision unique à 0).
+  var questOffersRations = (quest.provisionOptions || []).some(function (p) { return (p.startingRations || 0) > 0 || (p.reserveRations || 0) > 0; });
+  if (questOffersRations) {
+    var reserveLabel;
+    if (run.loadout.reserveRations > 0 && run.settlement.reserveRefunded) {
+      reserveLabel = "Rendue";
+    } else if (run.loadout.startingRations >= 2) {
+      reserveLabel = "Utilisée";
+    } else {
+      reserveLabel = "Absente";
+    }
+    h += '      <div class="dungeon-summary-row"><span>🎒 Ration de réserve</span><span>' + reserveLabel + '</span></div>';
+  }
   h += '    </div>';
 
-  if (!run.rewards.clearingUnlocked) {
+  if (isFailureVisual) {
     h += '    <div class="dungeon-story-text">L\u2019expédition reste inachevée — tu pourras la retenter plus tard.</div>';
   }
 

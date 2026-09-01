@@ -28,7 +28,11 @@ var ExplorationManager = {
     this.ensureDefaults();
     var quest = this.getQuest(questId);
     if (!quest) return false;
-    return !!(game.explorationProgression && game.explorationProgression[quest.completionFlag]);
+    if (game.explorationProgression && game.explorationProgression[quest.completionFlag]) return true;
+    // v3.110.0 : même principe que MiningManager (v3.92.2) — un bâtiment déjà acquis
+    // (migration "déjà en jeu = acquis") rend sa quête de déblocage caduque/terminée.
+    if (quest.unlockBuildingId && quest.unlockFlag && game.explorationProgression && game.explorationProgression[quest.unlockFlag]) return true;
+    return false;
   },
 
   /* Prérequis d'accès (avant même d'ouvrir le popup de préparation). */
@@ -39,6 +43,12 @@ var ExplorationManager = {
 
     if (quest.requirements.heroSelected && !game.heroId) {
       return { ok: false, reason: "Aucun héros sélectionné" };
+    }
+    // v3.110.0 : verrou générique sur un flag d'explorationProgression (ex. fallowField
+    // exige wellUnlocked), message porté par les données (requirements.lockedReason).
+    var progressFlag = quest.requirements.requiresProgressFlag;
+    if (progressFlag && !(game.explorationProgression && game.explorationProgression[progressFlag])) {
+      return { ok: false, reason: quest.requirements.lockedReason || "Condition de progression non remplie" };
     }
     var minRation = Number(quest.requirements.minPetiteRation || 0);
     var available = (window.WarehouseManager && typeof WarehouseManager.getAmount === "function")
@@ -128,7 +138,11 @@ var ExplorationManager = {
 
       rewards: {
         wood: 0,
-        clearingUnlocked: false
+        clearingUnlocked: false,
+        // v3.110.0 : forme générique — map resourceId -> quantité (créditée par settle()
+        // via WarehouseManager) et déblocage de bâtiment (quest.unlockBuildingId).
+        resources: null,
+        buildingUnlocked: false
       },
 
       settlement: {
@@ -245,6 +259,18 @@ var ExplorationManager = {
     if (!rewardConfig) return;
     run.rewards.wood = Number(rewardConfig.wood || 0);
     run.rewards.clearingUnlocked = !!rewardConfig.unlockClearing;
+    // v3.110.0 : récompenses génériques (silentGrove/fallowField) — copie défensive de la
+    // map (le run est persisté), jamais de référence directe aux données de quête.
+    run.rewards.resources = null;
+    if (rewardConfig.resources && typeof rewardConfig.resources === "object") {
+      run.rewards.resources = {};
+      for (var key in rewardConfig.resources) {
+        if (Object.prototype.hasOwnProperty.call(rewardConfig.resources, key)) {
+          run.rewards.resources[key] = Number(rewardConfig.resources[key] || 0);
+        }
+      }
+    }
+    run.rewards.buildingUnlocked = !!rewardConfig.unlockBuilding;
   },
 
   /* Finalise le run : crédite le Bois (WarehouseManager uniquement), débloque la Clairière
@@ -263,12 +289,32 @@ var ExplorationManager = {
       if (run.rewards.wood > 0 && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
         WarehouseManager.addResource("bois", run.rewards.wood);
       }
+      // v3.110.0 : récompenses génériques (map resourceId -> quantité), toujours via WarehouseManager.
+      if (run.rewards.resources && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
+        for (var resKey in run.rewards.resources) {
+          if (Object.prototype.hasOwnProperty.call(run.rewards.resources, resKey) && run.rewards.resources[resKey] > 0) {
+            WarehouseManager.addResource(resKey, run.rewards.resources[resKey]);
+          }
+        }
+      }
 
       var quest = this.getQuest(run.questId);
       if (run.rewards.clearingUnlocked && quest) {
         game.explorationProgression[quest.unlockFlag] = true;
         if (!run._questRemainsIncomplete) {
           game.explorationProgression[quest.completionFlag] = true;
+        }
+      }
+      // v3.110.0 : déblocage de bâtiment de Production (silentGrove -> Scierie,
+      // fallowField -> Champs) — flags + initialisation rétroactive, même chemin que
+      // MiningManager.settle()/WellManager (quarry/well).
+      if (run.rewards.buildingUnlocked && quest && quest.unlockBuildingId) {
+        if (quest.unlockFlag) game.explorationProgression[quest.unlockFlag] = true;
+        if (quest.completionFlag && !run._questRemainsIncomplete) {
+          game.explorationProgression[quest.completionFlag] = true;
+        }
+        if (window.ProductionManager && typeof ProductionManager.unlockBuilding === "function") {
+          ProductionManager.unlockBuilding(quest.unlockBuildingId);
         }
       }
 

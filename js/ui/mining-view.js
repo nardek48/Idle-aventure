@@ -17,17 +17,28 @@ function closeMiningModal() {
 }
 window.closeMiningModal = closeMiningModal;
 
-/* --- Point d'entrée : quête "La Veine Instable" (depuis la carte Expéditions) --- */
+/* --- Points d'entrée : quêtes de minage (depuis les cartes Expéditions) --- */
+/* v3.110.0 : questId générique — "La Veine Instable" (Carrière, historique) et
+   "L'Éboulis Ferreux" (Mine), même minijeu, libellés lus dans quest.ui. */
 
-function openUnstableVeinQuest() {
-  var req = MiningManager.checkQuestRequirements();
+function openMiningQuest(questId) {
+  var req = MiningManager.checkQuestRequirements(questId);
   if (!req.ok) {
     showToast(req.reason, 1600);
     return;
   }
-  openMiningIntro("quest");
+  openMiningIntro("quest", questId);
+}
+
+function openUnstableVeinQuest() {
+  openMiningQuest("unstableVein");
 }
 window.openUnstableVeinQuest = openUnstableVeinQuest;
+
+function openIronLodeQuest() {
+  openMiningQuest("ironLode");
+}
+window.openIronLodeQuest = openIronLodeQuest;
 
 /* --- Point d'entrée : activité bonus répétable (depuis le panneau Carrière) --- */
 
@@ -44,10 +55,12 @@ window.openQuarryBonusMining = openQuarryBonusMining;
 /* --- Popup d'intro (bloquant), commun aux deux sources --- */
 
 var pendingMiningSource = null;
+var pendingMiningQuestId = null; // v3.110.0 : quête visée par l'intro (source "quest" uniquement)
 var miningStartBusy = false; // anti double-clic sur "Partir"/"Miner"
 
-function openMiningIntro(source) {
+function openMiningIntro(source, questId) {
   pendingMiningSource = source;
+  pendingMiningQuestId = (source === "quest") ? (questId || "unstableVein") : null;
   miningStartBusy = false;
   var host = getMiningModalHost();
   if (host) host.innerHTML = buildMiningIntroHTML(source);
@@ -55,7 +68,7 @@ function openMiningIntro(source) {
 
 function buildMiningIntroHTML(source) {
   var isQuest = source === "quest";
-  var quest = isQuest ? MiningManager.getQuest("unstableVein") : null;
+  var quest = isQuest ? MiningManager.getQuest(pendingMiningQuestId || "unstableVein") : null;
   var precisionPreview = (function () {
     if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
     return Number(game.heroPrecisionRaw || 0);
@@ -76,7 +89,8 @@ function buildMiningIntroHTML(source) {
   h += '    <div class="dungeon-story-meta">Bonus : fenêtre parfaite élargie</div>';
 
   if (isQuest) {
-    h += '    <div class="dungeon-story-meta">Coût : <strong>1 petite ration</strong></div>';
+    var rationCost = Number((quest.cost && quest.cost.petiteRation) || 0); // v3.110.0 : lu dans les données
+    if (rationCost > 0) h += '    <div class="dungeon-story-meta">Coût : <strong>' + rationCost + ' petite ration' + (rationCost > 1 ? 's' : '') + '</strong></div>';
   }
 
   h += '    <div class="dungeon-story-actions">';
@@ -90,6 +104,7 @@ function buildMiningIntroHTML(source) {
 
 function closeMiningIntro() {
   pendingMiningSource = null;
+  pendingMiningQuestId = null;
   closeMiningModal();
 }
 window.closeMiningIntro = closeMiningIntro;
@@ -102,7 +117,7 @@ function confirmMiningStart() {
   if (host) host.innerHTML = buildMiningIntroHTML(pendingMiningSource);
 
   var result = (pendingMiningSource === "quest")
-    ? MiningManager.startQuestSession()
+    ? MiningManager.startQuestSession(pendingMiningQuestId || "unstableVein")
     : MiningManager.startQuarryBonusSession();
 
   if (!result.ok) {
@@ -114,6 +129,7 @@ function confirmMiningStart() {
   }
 
   pendingMiningSource = null;
+  pendingMiningQuestId = null;
   miningStartBusy = false;
   openMiningSession();
 }
@@ -177,11 +193,16 @@ function buildMiningGaugeHTML(session) {
 
 function buildMiningHitsHistoryHTML(session) {
   var labels = { perfect: "Parfait", correct: "Correct", miss: "Manqué" };
+  // v3.110.0 : icônes principale/bonus par quête (défauts = Pierre/Minerai, historique).
+  var quest = session.questId ? MiningManager.getQuest(session.questId) : null;
+  var questUi = (quest && quest.ui) || {};
+  var primaryIcon = questUi.primaryIcon || "🪨";
+  var bonusIcon = questUi.bonusIcon || "⚙️";
   var h = '<div class="mining-hits-history">';
   session.minigame.hits.forEach(function (hit) {
     h += '<span class="mining-hit-badge mining-hit-badge-' + esc(hit.result) + '">' + esc(labels[hit.result] || hit.result);
-    if (hit.stoneGain > 0) h += ' +' + hit.stoneGain + ' 🪨';
-    if (hit.ironOreGain > 0) h += ' +' + hit.ironOreGain + ' ⚙️';
+    if (hit.stoneGain > 0) h += ' +' + hit.stoneGain + ' ' + primaryIcon;
+    if (hit.ironOreGain > 0) h += ' +' + hit.ironOreGain + ' ' + bonusIcon;
     h += '</span>';
   });
   h += '</div>';
@@ -275,24 +296,34 @@ function buildMiningCompleteHTML(session, questSucceeded) {
 
   var isFailureVisual = isQuest && !atLeastOneHit;
 
+  // v3.110.0 : libellés par quête (quest.ui), défauts = textes historiques d'unstableVein.
+  var questUi = (quest && quest.ui) || {};
+  var successTitle = questUi.successTitle || "Carrière déverrouillée !";
+  var successText = questUi.successText || "Une Veine instable peut maintenant être exploitée depuis la Carrière.";
+  var failTitle = questUi.failTitle || "Veine refermée";
+  var successIcon = questUi.successIcon || "🌿";
+  var primaryRowLabel = questUi.primaryRowLabel || "🪨 Pierre obtenue";
+  var bonusRowLabel = questUi.bonusRowLabel || "⚙️ Minerai de fer";
+  var buildingRowLabel = questUi.buildingRowLabel || "🏛️ Carrière";
+
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card' + (isFailureVisual ? '' : ' is-success') + '">';
-  h += '    <div class="dungeon-story-icon">' + (isFailureVisual ? '🏕️' : (isQuest ? '🌿' : '🪨')) + '</div>';
-  h += '    <div class="dungeon-story-title">' + (isFailureVisual ? "Veine refermée" : (isQuest ? "Carrière déverrouillée !" : "Récolte terminée")) + '</div>';
+  h += '    <div class="dungeon-story-icon">' + (isFailureVisual ? '🏕️' : (isQuest ? successIcon : '🪨')) + '</div>';
+  h += '    <div class="dungeon-story-title">' + (isFailureVisual ? esc(failTitle) : (isQuest ? esc(successTitle) : "Récolte terminée")) + '</div>';
 
   if (isFailureVisual && quest) {
     h += '    <div class="dungeon-story-text">' + esc(quest.failureText) + '</div>';
   } else if (isQuest) {
-    h += '    <div class="dungeon-story-text">Une Veine instable peut maintenant être exploitée depuis la Carrière.</div>';
+    h += '    <div class="dungeon-story-text">' + esc(successText) + '</div>';
   }
 
   h += '    <div class="dungeon-summary-rewards">';
-  h += '      <div class="dungeon-summary-row"><span>🪨 Pierre obtenue</span><span>+' + formatNumber(session.minigame.totalStone) + '</span></div>';
+  h += '      <div class="dungeon-summary-row"><span>' + esc(primaryRowLabel) + '</span><span>+' + formatNumber(session.minigame.totalStone) + '</span></div>';
   if (session.minigame.totalIronOre > 0) {
-    h += '      <div class="dungeon-summary-row"><span>⚙️ Minerai de fer</span><span>+' + formatNumber(session.minigame.totalIronOre) + '</span></div>';
+    h += '      <div class="dungeon-summary-row"><span>' + esc(bonusRowLabel) + '</span><span>+' + formatNumber(session.minigame.totalIronOre) + '</span></div>';
   }
   if (isQuest) {
-    h += '      <div class="dungeon-summary-row"><span>🏛️ Carrière</span><span>' + (atLeastOneHit ? 'Déverrouillée' : 'Non déverrouillée') + '</span></div>';
+    h += '      <div class="dungeon-summary-row"><span>' + esc(buildingRowLabel) + '</span><span>' + (atLeastOneHit ? 'Déverrouillée' : 'Non déverrouillée') + '</span></div>';
   }
   h += '    </div>';
 

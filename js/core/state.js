@@ -42,7 +42,17 @@ function createDefaultExplorationProgression() {
     // v3.94.0 : "La Source Tarie" (data/exploration-quests.js: driedSpring) — minijeu
     // maintenir/relâcher (systems/well-system.js) + déblocage définitif du Puits.
     driedSpringDiscoveryCompleted: false,
-    wellUnlocked: false
+    wellUnlocked: false,
+    // v3.110.0 : Champs/Scierie/Mine passent derrière un verrou de quête comme les 3 autres
+    // bâtiments (décision Seb). silentGrove (Scierie, moteur Expéditions), ironLode (Mine,
+    // minijeu de minage généralisé), fallowField (Champs, moteur Expéditions). Migration
+    // "déjà en jeu = acquis" : ProductionManager._migrateLegacyUnlocks() (production-system.js).
+    silentGroveDiscoveryCompleted: false,
+    sawmillUnlocked: false,
+    ironLodeDiscoveryCompleted: false,
+    mineUnlocked: false,
+    fallowFieldDiscoveryCompleted: false,
+    farmUnlocked: false
   };
 }
 
@@ -395,6 +405,24 @@ function ensureGameStateDefaults() {
   }
   if (typeof game.explorationProgression.wellUnlocked !== "boolean") {
     game.explorationProgression.wellUnlocked = false;
+  }
+  if (typeof game.explorationProgression.silentGroveDiscoveryCompleted !== "boolean") {
+    game.explorationProgression.silentGroveDiscoveryCompleted = false;
+  }
+  if (typeof game.explorationProgression.sawmillUnlocked !== "boolean") {
+    game.explorationProgression.sawmillUnlocked = false;
+  }
+  if (typeof game.explorationProgression.ironLodeDiscoveryCompleted !== "boolean") {
+    game.explorationProgression.ironLodeDiscoveryCompleted = false;
+  }
+  if (typeof game.explorationProgression.mineUnlocked !== "boolean") {
+    game.explorationProgression.mineUnlocked = false;
+  }
+  if (typeof game.explorationProgression.fallowFieldDiscoveryCompleted !== "boolean") {
+    game.explorationProgression.fallowFieldDiscoveryCompleted = false;
+  }
+  if (typeof game.explorationProgression.farmUnlocked !== "boolean") {
+    game.explorationProgression.farmUnlocked = false;
   }
   if (!game.gatheringActivity || typeof game.gatheringActivity !== "object") {
     game.gatheringActivity = createDefaultGatheringActivity();

@@ -203,13 +203,27 @@ var MissionBoard = {
     return out;
   },
 
-  /* ---------- Expéditions à mini-jeu (Sentier Obstrué, Veine Instable, Source Tarie) ---------- */
+  /* ---------- Expéditions à mini-jeu (Sentier Obstrué, Veine Instable, Source Tarie,
+     et v3.110.0 : Bosquet Silencieux, Éboulis Ferreux, Terre en Friche) ---------- */
+  /* v3.110.0 : gating d'AFFICHAGE d'une expédition au tableau (quest.boardRequires) —
+     distinct des requirements de lancement. Sans boardRequires, visible (historique). */
+  _isExplorationQuestBoardVisible: function (quest) {
+    var req = quest.boardRequires;
+    if (!req) return true;
+    if (req.tabUnlocked && !(game.unlockedTabs && game.unlockedTabs[req.tabUnlocked])) return false;
+    if (req.progressFlag && !(game.explorationProgression && game.explorationProgression[req.progressFlag])) return false;
+    return true;
+  },
+
   _explorationMissions: function () {
     var out = [];
+    var self = this;
     if (window.ExplorationManager && window.EXPLORATION_QUESTS) {
       Object.keys(EXPLORATION_QUESTS).forEach(function (key) {
         var quest = EXPLORATION_QUESTS[key];
         if (quest.id === "unstableVein" || quest.id === "driedSpring") return; // routées ci-dessous (MiningManager/WellManager)
+        if (quest.minigame) return; // v3.110.0 : quête de minage (ironLode) routée ci-dessous (MiningManager)
+        if (!self._isExplorationQuestBoardVisible(quest)) return;
         if (ExplorationManager.isQuestCompleted(quest.id)) return;
         var run = ExplorationManager.getRun();
         var isRunning = !!(run && run.questId === quest.id && run.status !== "completed");
@@ -231,7 +245,8 @@ var MissionBoard = {
     if (window.MiningManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.unstableVein && !MiningManager.isQuarryUnlocked() && !MiningManager.isQuestCompleted()) {
       var veinQuest = EXPLORATION_QUESTS.unstableVein;
       var veinSession = MiningManager.getActiveSession();
-      var veinRunning = !!(veinSession && veinSession.source === "quest" && veinSession.status !== "completed");
+      // v3.110.0 : questId vérifié — un run d'Éboulis Ferreux ne doit pas marquer cette carte "En cours".
+      var veinRunning = !!(veinSession && veinSession.source === "quest" && veinSession.questId === "unstableVein" && veinSession.status !== "completed");
       out.push({
         id: "exploration_" + veinQuest.id, sourceKind: "exploration", worldId: null,
         title: veinQuest.title, blurb: "", type: "expedition", place: "", objectiveLabel: "", progressLabel: veinRunning ? "En cours" : "",
@@ -239,6 +254,25 @@ var MissionBoard = {
         launch: function () {
           if (typeof openUnstableVeinQuest === "function") openUnstableVeinQuest();
           else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + veinQuest.id);
+        }
+      });
+    }
+    // v3.110.0 : "L'Éboulis Ferreux" (Mine) — même routage MiningManager que la Veine
+    // Instable, gating d'affichage : Carrière débloquée, Mine pas encore acquise.
+    if (window.MiningManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.ironLode
+      && this._isExplorationQuestBoardVisible(EXPLORATION_QUESTS.ironLode)
+      && !(game.explorationProgression && game.explorationProgression.mineUnlocked)
+      && !MiningManager.isQuestCompleted("ironLode")) {
+      var lodeQuest = EXPLORATION_QUESTS.ironLode;
+      var lodeSession = MiningManager.getActiveSession();
+      var lodeRunning = !!(lodeSession && lodeSession.source === "quest" && lodeSession.questId === "ironLode" && lodeSession.status !== "completed");
+      out.push({
+        id: "exploration_" + lodeQuest.id, sourceKind: "exploration", worldId: null,
+        title: lodeQuest.title, blurb: "", type: "expedition", place: "", objectiveLabel: "", progressLabel: lodeRunning ? "En cours" : "",
+        rewardSummary: "", badge: "contract", status: lodeRunning ? "running" : "available", isMain: false,
+        launch: function () {
+          if (typeof openIronLodeQuest === "function") openIronLodeQuest();
+          else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + lodeQuest.id);
         }
       });
     }

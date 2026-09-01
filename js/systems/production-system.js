@@ -11,7 +11,13 @@
 var PRODUCTION_UNLOCK_FLAGS = {
   quarry: "quarryUnlocked",
   hunt: "huntBuildingUnlocked",
-  well: "wellUnlocked"
+  well: "wellUnlocked",
+  // v3.110.0 : les 3 derniers bâtiments passent derrière un verrou de quête (décision Seb) —
+  // Scierie (silentGrove), Mine (ironLode), Champs (fallowField), voir data/exploration-quests.js.
+  // Sauvegardes antérieures : _migrateLegacyUnlocks() ci-dessous ("déjà en jeu = acquis").
+  sawmill: "sawmillUnlocked",
+  mine: "mineUnlocked",
+  farm: "farmUnlocked"
 };
 
 /* v3.98.1 : petits helpers DOM pour la mise à jour ciblée du tick (voir
@@ -38,8 +44,28 @@ var ProductionManager = {
     return !!(game.explorationProgression && game.explorationProgression[flagName]);
   },
 
+  /* v3.110.0 : migration "déjà en jeu = acquis" — un bucket game.production[id] ne peut
+     exister que si le bâtiment a déjà été actif (ensure/unlockBuilding ne créent rien pour
+     un bâtiment verrouillé) : sa présence prouve une sauvegarde d'avant le verrou -> flag
+     accordé. Un nouveau joueur n'a jamais de bucket avant sa quête, donc jamais d'auto-don.
+     Idempotent et sans marqueur one-shot : dès les 3 flags posés, court-circuite. */
+  _migrateLegacyUnlocks: function () {
+    if (!game.explorationProgression || typeof game.explorationProgression !== "object") return;
+    var prog = game.explorationProgression;
+    if (prog.sawmillUnlocked && prog.mineUnlocked && prog.farmUnlocked) return;
+    if (!game.production || typeof game.production !== "object") return;
+    ["sawmill", "mine", "farm"].forEach(function (id) {
+      var flagName = PRODUCTION_UNLOCK_FLAGS[id];
+      if (prog[flagName]) return;
+      if (game.production[id] && typeof game.production[id] === "object") {
+        prog[flagName] = true;
+      }
+    });
+  },
+
   ensure: function () {
     if (!game.production || typeof game.production !== "object") game.production = {};
+    this._migrateLegacyUnlocks();
     var self = this;
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
       if (!self.isBuildingUnlocked(id)) return; // pas d'initialisation tant que verrouillé

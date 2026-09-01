@@ -392,6 +392,7 @@ function collectCompletedQuestCardEntries() {
     Object.keys(EXPLORATION_QUESTS).forEach(function (key) {
       var quest = EXPLORATION_QUESTS[key];
       if (quest.id === "unstableVein" || quest.id === "driedSpring") return; // routées séparément (MiningManager/WellManager)
+      if (quest.minigame) return; // v3.110.0 : quête de minage (ironLode) routée séparément (MiningManager)
       if (!ExplorationManager.isQuestCompleted(quest.id)) return;
       entries.push({
         worldId: null,
@@ -420,6 +421,23 @@ function collectCompletedQuestCardEntries() {
         buildUnstableVeinQuestDetailHTML(veinQuestDone, null),
         "is-claimed",
         veinQuestDone
+      )
+    });
+  }
+
+  // v3.110.0 : carte "Terminée" de L'Éboulis Ferreux (même routage MiningManager que la Veine).
+  if (window.MiningManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.ironLode && MiningManager.isQuestCompleted("ironLode")) {
+    var lodeQuestDone = EXPLORATION_QUESTS.ironLode;
+    entries.push({
+      worldId: null,
+      section: lodeQuestDone.section || "expedition",
+      html: buildCollapsibleQuestCardHTML(
+        'exploration_' + lodeQuestDone.id,
+        lodeQuestDone.icon || "⛏️",
+        lodeQuestDone.title,
+        buildMiningQuestDetailHTML(lodeQuestDone, null, "ironLode"),
+        "is-claimed",
+        lodeQuestDone
       )
     });
   }
@@ -668,17 +686,20 @@ function buildExplorationQuestDetailHTML(quest, run) {
   h += '</div>';
   h += '</div>';
 
+  // v3.110.0 : libellés par quête (silentGrove/fallowField), repli = textes historiques (blockedPath).
   h += '<div class="map-quest-reward">';
   h += '<span class="map-quest-reward-label">Récompense principale</span>';
-  h += '<span class="map-quest-reward-value">🌿 Clairière oubliée</span>';
+  h += '<span class="map-quest-reward-value">' + esc(quest.rewardMainLabel || '🌿 Clairière oubliée') + '</span>';
   h += '</div>';
   h += '<div class="map-quest-reward">';
   h += '<span class="map-quest-reward-label">Récompenses possibles</span>';
-  h += '<span class="map-quest-reward-value">🪵 Bois</span>';
+  h += '<span class="map-quest-reward-value">' + esc(quest.rewardPossibleLabel || '🪵 Bois') + '</span>';
   h += '</div>';
 
   if (isCompleted) {
-    h += '<div class="map-quest-claimed-label">✔ Terminée</div>';
+    var doneLabel = (quest.ui && quest.ui.completedLabel) || '✔ Terminée';
+    h += '<div class="map-quest-claimed-label">' + esc(doneLabel) + '</div>';
+    if (quest.ui && quest.ui.completedText) h += '<div class="map-quest-step-text">' + esc(quest.ui.completedText) + '</div>';
   } else if (isRunning) {
     h += '<div class="map-quest-run-actions">';
     h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); resumeExplorationRun();">Reprendre l\'expédition</button>';
@@ -694,11 +715,16 @@ function buildExplorationQuestDetailHTML(quest, run) {
 
 /* v3.92.0 : détail de la carte "La Veine Instable" — pas de popup préparation/approche
    comme Le Sentier Obstrué (coût fixe 1 ration, aucun choix de réserve), route directement
-   vers MiningManager/mining-view.js plutôt qu'ExplorationManager. */
-function buildUnstableVeinQuestDetailHTML(quest, session) {
-  var isRunning = !!(session && session.source === "quest" && session.status !== "completed");
-  var isCompleted = window.MiningManager && MiningManager.isQuestCompleted();
-  var req = window.MiningManager ? MiningManager.checkQuestRequirements() : { ok: false, reason: "Indisponible" };
+   vers MiningManager/mining-view.js plutôt qu'ExplorationManager.
+   v3.110.0 : générique par questId (libellés via quest.ui, défauts = textes historiques
+   d'unstableVein) — réutilisé pour "L'Éboulis Ferreux" (ironLode, Mine). */
+function buildMiningQuestDetailHTML(quest, session, questId) {
+  questId = questId || "unstableVein";
+  var isRunning = !!(session && session.source === "quest" && session.questId === questId && session.status !== "completed");
+  var isCompleted = window.MiningManager && MiningManager.isQuestCompleted(questId);
+  var req = window.MiningManager ? MiningManager.checkQuestRequirements(questId) : { ok: false, reason: "Indisponible" };
+  var questUi = quest.ui || {};
+  var openFn = (questId === "ironLode") ? "openIronLodeQuest" : "openUnstableVeinQuest";
 
   var h = '';
   h += '<div class="map-quest-step">';
@@ -709,16 +735,16 @@ function buildUnstableVeinQuestDetailHTML(quest, session) {
 
   h += '<div class="map-quest-reward">';
   h += '<span class="map-quest-reward-label">Récompense principale</span>';
-  h += '<span class="map-quest-reward-value">🏛️ Carrière déverrouillée</span>';
+  h += '<span class="map-quest-reward-value">' + esc(quest.rewardMainLabel || '🏛️ Carrière déverrouillée') + '</span>';
   h += '</div>';
   h += '<div class="map-quest-reward">';
   h += '<span class="map-quest-reward-label">Récompenses possibles</span>';
-  h += '<span class="map-quest-reward-value">🪨 Pierre · ⚙️ Minerai de fer</span>';
+  h += '<span class="map-quest-reward-value">' + esc(quest.rewardPossibleLabel || '🪨 Pierre · ⚙️ Minerai de fer') + '</span>';
   h += '</div>';
 
   if (isCompleted) {
-    h += '<div class="map-quest-claimed-label">✔ Carrière déverrouillée</div>';
-    h += '<div class="map-quest-step-text">Une Veine instable peut maintenant être exploitée depuis la Carrière.</div>';
+    h += '<div class="map-quest-claimed-label">' + esc(questUi.completedLabel || '✔ Carrière déverrouillée') + '</div>';
+    h += '<div class="map-quest-step-text">' + esc(questUi.completedText || 'Une Veine instable peut maintenant être exploitée depuis la Carrière.') + '</div>';
   } else if (isRunning) {
     h += '<div class="map-quest-run-actions">';
     h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); resumeMiningSession();">Reprendre l\'expédition</button>';
@@ -726,10 +752,15 @@ function buildUnstableVeinQuestDetailHTML(quest, session) {
   } else if (!req.ok) {
     h += '<div class="map-quest-claimed-label">🔒 ' + esc(req.reason) + '</div>';
   } else {
-    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openUnstableVeinQuest();">Partir explorer</button>';
+    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); ' + openFn + '();">Partir explorer</button>';
   }
 
   return h;
+}
+
+/* Alias de compatibilité (appelants historiques + window export). */
+function buildUnstableVeinQuestDetailHTML(quest, session) {
+  return buildMiningQuestDetailHTML(quest, session, "unstableVein");
 }
 
 /* v3.94.0 : détail de la carte "La Source Tarie" — même pattern que
@@ -1043,6 +1074,7 @@ window.buildCompletedQuestCardsHTML = buildCompletedQuestCardsHTML;
 window.buildQuestCardsGroupedBySectionHTML = buildQuestCardsGroupedBySectionHTML;
 window.buildExplorationQuestDetailHTML = buildExplorationQuestDetailHTML;
 window.buildUnstableVeinQuestDetailHTML = buildUnstableVeinQuestDetailHTML;
+window.buildMiningQuestDetailHTML = buildMiningQuestDetailHTML; // v3.110.0
 window.buildQuarryBonusQuestDetailHTML = buildQuarryBonusQuestDetailHTML;
 window.buildDriedSpringQuestDetailHTML = buildDriedSpringQuestDetailHTML;
 window.buildWellBonusQuestDetailHTML = buildWellBonusQuestDetailHTML;
