@@ -1,10 +1,10 @@
 "use strict";
-/* data/story-quests.js — questline « Les Braises d'Aeswyn » (chapitre 1, Forêt) : 15 étapes séquentielles.
+/* data/story-quests.js — questline « Les Braises d'Aeswyn » (chapitre 1, Forêt) : 15 étapes séquentielles (v3.107.8 : « Les fondations » sortie ; v3.109.0 : « Franchir la Lisière » ajoutée).
    Accepter une étape débloque ses onglets ; l'objectif enseigne la mécanique ; réclamer donne la récompense. Logique : systems/story-quest-system.js */
 
-/* Récompenses placeholder, regroupées ici pour le passage d'équilibrage or ultérieur (15 lignes).
-   Formats : gold, essence, healingPotion {id,count}, equipmentRarity + equipmentCount, resources {clé Entrepôt: qté}.
-   v3.100.3 : viande/eau sur 6/7 pour rendre la Petite ration (25 viande + 2 eau) craftable dès l'étape 8. */
+/* Récompenses placeholder, regroupées ici pour le passage d'équilibrage or ultérieur. forest_10 (« Les fondations »)
+   reste ici : réclamée via MissionBoard._workshopMissions (v3.107.8). Formats : gold, essence, healingPotion {id,count},
+   equipmentRarity + equipmentCount, resources {clé Entrepôt: qté}. Viande/eau sur 6/7 : Petite ration (8 viande + 4 eau) craftable dès l'étape 8. */
 var STORY_REWARDS = {
   forest_01: { gold: 50 },
   forest_02: { gold: 100, essence: 5 },
@@ -15,6 +15,7 @@ var STORY_REWARDS = {
   forest_07: { gold: 150, essence: 5, resources: { eau: 5 } },
   forest_08: { gold: 200, essence: 5 },
   forest_09: { gold: 200, essence: 5 },
+  forest_crossing: { gold: 250, essence: 10 }, // v3.109.0 : Franchir la Lisière (placeholder, même échelle que 08/09)
   forest_10: { gold: 500, essence: 15 },
   forest_11: { gold: 300, essence: 10 },
   forest_12: { gold: 400, essence: 10 },
@@ -31,9 +32,10 @@ var STORY_TAB_LABELS = {
   bestiary: "Bestiaire", afflictions: "Afflictions", grimoire: "Grimoire"
 };
 
-/* Étape 15, condition PROVISOIRE (à remplacer par le halo, voir ROADMAP §7). Niveau 5 ≈ 192 XP ≈ 200 kills
-   à 1 XP/kill (niveau 10 ≈ 1250 kills aurait été hors échelle). ASCENSION_CONFIG.computeGain() ≥ 4 à 200 kills. */
-var STORY_STEP15_PROVISIONAL = { totalKills: 200, coeurBossKills: 3, heroLevel: 5 };
+/* Étape 15, condition PROVISOIRE (à remplacer par le halo, voir ROADMAP §7) : 200 kills, ASCENSION_CONFIG.computeGain() ≥ 4.
+   v3.109.0 : « 3 boss du Cœur » et « niveau 5 » retirés — le boss passe par la quête « Le Cœur de la Forêt » (run dédié,
+   le farm libre relançait un cycle à chaque kill), et l'XP Histoire (15/étape) atteint le niveau 5 avant cette étape. */
+var STORY_STEP15_PROVISIONAL = { totalKills: 200 };
 
 /* Kills en Forêt : les 2 aventures partagent le même enemyPool, donc somme de killCounts sur ce pool. */
 function storyCountForestKills(game) {
@@ -66,10 +68,19 @@ function storyHasShopPurchase(game) {
 }
 
 /* Compteurs Histoire tenus par StoryQuestManager (delta de game.totalKills à chaque rendu, voir
-   systems/story-quest-system.js:_trackKills) : coeurKills, coeurBossKills. */
+   systems/story-quest-system.js:_trackKills) : coeurKills, coeurReached (v3.109.0, persistant : survit à une mort). */
 function storyCounter(game, key) {
   var st = (game.storyQuests || {}).forest;
   return Number(((st && st.counters) || {})[key] || 0);
+}
+
+/* v3.109.0 : progression de la traversée de la Lisière pour le compteur de mission (enemyIndex 0..9, 10 = Cœur atteint). */
+function storyLisiereCrossingProgress(game) {
+  if (storyCounter(game, "coeurReached") >= 1) return 10;
+  var wm = window.WorldManager;
+  if (!wm || Number(wm.worldIndex || 0) !== 0) return 0;
+  if (Number(wm.adventureIndex || 0) >= 1) return 10;
+  return Math.min(9, Number(wm.enemyIndex || 0));
 }
 
 function storyExplorationDone(questId) {
@@ -170,7 +181,7 @@ var STORY_QUESTS = {
           objective: "Chaque combat t'endurcit. Apprends à lire ce que ton corps devient, et à le forger.",
           completion: "Tu connais tes forces. Reste à savoir quoi en faire."
         },
-        objectiveLabel: "Atteindre le niveau 2 et acheter 1 amélioration d'entraînement",
+        objectiveLabel: "Acheter 1 amélioration d'entraînement",
         unlockTabs: ["more"],
         reward: STORY_REWARDS.forest_03,
         linkTo: { tab: "more", subTab: "amelioration" }, // v3.107.1 : direct sur le sous-onglet Amélioration (décision Seb)
@@ -188,10 +199,11 @@ var STORY_QUESTS = {
             { icon: "⚡", text: "Célérité — remplit ta jauge de combat plus vite (frappe bonus plus fréquente)." }
           ]
         },
-        // v3.100.1 : niveau 2 (≈20 kills) et non 3 (≈57 kills, hors séquence entre les étapes 2 et 5).
-        check: function (game) { return Number(game.heroLevel || 1) >= 2 && storyCountTrainingUpgrades(game) >= 1; },
+        // v3.109.0 : condition « niveau 2 » retirée — l'XP est par mission depuis P4 (15/étape Histoire), le niveau 2
+        // (20 XP) est atteint en réclamant forest_02, avant même d'accepter celle-ci : condition morte, libellé trompeur.
+        check: function (game) { return storyCountTrainingUpgrades(game) >= 1; },
         progress: function (game) {
-          return "Niveau " + Math.min(2, Number(game.heroLevel || 1)) + "/2 · Entraînement " + Math.min(1, storyCountTrainingUpgrades(game)) + "/1";
+          return "Entraînement " + Math.min(1, storyCountTrainingUpgrades(game)) + "/1";
         }
       },
       {
@@ -286,6 +298,19 @@ var STORY_QUESTS = {
         unlockTabs: [],
         reward: STORY_REWARDS.forest_08,
         linkTo: { section: "expedition", cardId: "exploration_blockedPath" },
+        // v3.107.12 : popup déclenché sur Village (là où se trouve l'atelier Cuisine de camp),
+        // pas sur l'écran de l'expédition elle-même — le craft doit se faire AVANT de lancer.
+        tutorial: {
+          tab: "village",
+          icon: "🎒",
+          title: "Fabriquer une ration",
+          points: [
+            { icon: "🎒", text: "Cette expédition consomme une Petite ration — il faut d'abord la fabriquer avant de partir." },
+            { icon: "🔨", text: "Rends-toi au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
+            { icon: "🥩", text: "Choisis la recette Petite ration (8 Viande + 4 Eau) et clique sur Fabriquer." },
+            { icon: "🧭", text: "Une fois la ration en stock, reviens sur ce tableau et lance l'expédition — elle la consommera automatiquement." }
+          ]
+        },
         // La ration est consommée par l'expédition : « en stock OU sentier terminé » évite un faux 0/1 après coup.
         check: function () { return storyExplorationDone("blockedPath"); },
         progress: function () {
@@ -311,6 +336,24 @@ var STORY_QUESTS = {
 
       /* ---------- Acte III — Le héros s'affirme ---------- */
       {
+        // v3.109.0 : après « Prouver sa valeur », le joueur reste positionné en Lisière (spawnFor restaure les index) ;
+        // rien ne lui disait d'enchaîner le farm libre jusqu'au Roi Slime pour atteindre le Cœur (forest_12 restait à 0/10).
+        id: "forest_crossing",
+        title: "Franchir la Lisière",
+        act: "Acte III — Le héros s'affirme",
+        narrative: {
+          objective: "Le Roi des marais est tombé, mais la Lisière n'a pas fini de te tester. Traverse-la une dernière fois, et ne t'arrête plus avant le Cœur.",
+          completion: "Les arbres se referment derrière toi. Ici, la forêt ne chuchote plus : elle observe."
+        },
+        objectiveLabel: "Atteindre le Cœur de la forêt (enchaîner la Lisière jusqu'au Roi Slime)",
+        unlockTabs: [],
+        reward: STORY_REWARDS.forest_crossing,
+        linkTo: { tab: "combat" },
+        killTarget: { label: "Vers le Cœur", counter: storyLisiereCrossingProgress, target: 10, autoReturn: true },
+        check: function (game) { return storyCounter(game, "coeurReached") >= 1; },
+        progress: function (game) { return "Lisière " + storyLisiereCrossingProgress(game) + "/10"; }
+      },
+      {
         id: "forest_11",
         title: "L'éveil des talents",
         act: "Acte III — Le héros s'affirme",
@@ -318,8 +361,9 @@ var STORY_QUESTS = {
           objective: "Chaque niveau franchi laisse une trace en toi. Il est temps de choisir quoi en faire.",
           completion: "Un talent gravé. Il y en aura d'autres."
         },
-        // Niveau ≥ 3 déplacé ici depuis l'étape 3 (décision Seb, v3.100.1) : au moins 2 points quand l'arbre s'ouvre.
-        objectiveLabel: "Atteindre le niveau 3 et dépenser 1 point de talent",
+        // v3.109.0 : condition « niveau 3 » retirée (morte) — à cette étape l'XP Histoire seule (≥ 150 XP) donne le niveau 4,
+        // soit 3 points de talent disponibles.
+        objectiveLabel: "Dépenser 1 point de talent",
         unlockTabs: ["talents"],
         reward: STORY_REWARDS.forest_11,
         linkTo: { tab: "talents" },
@@ -334,9 +378,9 @@ var STORY_QUESTS = {
             { icon: "🔄", text: "Rien n'est figé : tu peux réinitialiser tous tes talents contre de l'or (150 or par point déjà investi) si tu changes d'avis sur ta répartition." }
           ]
         },
-        check: function (game) { return Number(game.heroLevel || 1) >= 3 && storyCountTalentsBought(game) >= 1; },
+        check: function (game) { return storyCountTalentsBought(game) >= 1; },
         progress: function (game) {
-          return "Niveau " + Math.min(3, Number(game.heroLevel || 1)) + "/3 · Talent " + Math.min(1, storyCountTalentsBought(game)) + "/1";
+          return "Talent " + Math.min(1, storyCountTalentsBought(game)) + "/1";
         }
       },
       {
@@ -411,19 +455,19 @@ var STORY_QUESTS = {
           objective: "La braise sous Aeswyn ne s'éteint plus. Elle demande quelque chose. Un jour tu devras tout rendre à la forêt pour renaître plus fort — pas aujourd'hui, mais la porte est ouverte.",
           completion: "Tu sais désormais ce qu'est l'Aether. Le désert t'attend. Reviens quand la forêt te l'ordonnera."
         },
-        objectiveLabel: "Vaincre 200 ennemis, terrasser 3 fois le Seigneur de guerre orc au Cœur et atteindre le niveau 5",
+        // v3.109.0 : le Seigneur de guerre orc se vainc dans la quête « Le Cœur de la Forêt » (aq_forest_depths, run dédié,
+        // liée ici comme « Prouver sa valeur » l'est à forest_05) — elle est aussi la porte du Désert (gatesNextWorld).
+        objectiveLabel: "Vaincre 200 ennemis et terminer la quête « Le Cœur de la Forêt » (Seigneur de guerre orc)",
         unlockTabs: ["ascension"],
         reward: STORY_REWARDS.forest_15,
-        linkTo: { tab: "combat" },
+        linkTo: { section: "adventure", cardId: "adv_aq_forest_depths" },
         check: function (game) {
-          var c = STORY_STEP15_PROVISIONAL;
-          return Number(game.totalKills || 0) >= c.totalKills && storyCounter(game, "coeurBossKills") >= c.coeurBossKills && Number(game.heroLevel || 1) >= c.heroLevel;
+          return Number(game.totalKills || 0) >= STORY_STEP15_PROVISIONAL.totalKills && !!(game.adventureQuestsCompleted || {}).aq_forest_depths;
         },
         progress: function (game) {
           var c = STORY_STEP15_PROVISIONAL;
           return "Kills " + Math.min(c.totalKills, Math.floor(game.totalKills || 0)) + "/" + c.totalKills
-            + " · Seigneur de guerre orc " + Math.min(c.coeurBossKills, storyCounter(game, "coeurBossKills")) + "/" + c.coeurBossKills
-            + " · Niveau " + Math.min(c.heroLevel, Number(game.heroLevel || 1)) + "/" + c.heroLevel;
+            + " · Seigneur de guerre orc " + ((game.adventureQuestsCompleted || {}).aq_forest_depths ? "1/1" : "0/1");
         }
       }
     ]
@@ -433,10 +477,10 @@ var STORY_QUESTS = {
 window.STORY_REWARDS = STORY_REWARDS;
 window.STORY_TAB_LABELS = STORY_TAB_LABELS;
 window.STORY_STEP15_PROVISIONAL = STORY_STEP15_PROVISIONAL;
-// v3.107.4 : Troll des forêts + Ronce animée réapparaissent au Cœur dès l'Acte III (forest_11 acceptée) —
+// v3.107.4 : Troll des forêts + Ronce animée réapparaissent au Cœur dès l'Acte III (v3.109.0 : dès « Franchir la Lisière ») —
 // pool de base réduit (slime/goblin/spider, voir data/worlds.js), synchronisé dynamiquement par
 // StoryQuestManager._trackKills() (systems/story-quest-system.js) selon l'étape Histoire en cours.
-var STORY_COEUR_ACT3_STEP_ID = "forest_11";
+var STORY_COEUR_ACT3_STEP_ID = "forest_crossing";
 var STORY_COEUR_BASE_POOL = ["slime", "goblin", "spider"];
 var STORY_COEUR_ACT3_POOL = ["slime", "goblin", "spider", "foresttroll", "bramble"];
 

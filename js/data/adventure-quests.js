@@ -3,30 +3,7 @@
    Logique : systems/adventure-quest-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var ADVENTURE_QUESTS = {
-  aq_forest_scout: {
-    id: "aq_forest_scout",
-    type: "kill",
-    section: "adventure",
-    difficulty: "easy",
-    progressionStage: "world_start",
-    category: "side",
-    worldId: "forest",
-    adventureIndex: 0,
-    name: "Éclaireur de la Lisière",
-    story: "La Lisière grouille de créatures curieuses, attirées par l'odeur de ton feu de camp. Le temps d'écarter quelques-unes d'entre elles avant qu'elles ne s'approchent davantage.",
-    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
-    steps: [
-      {
-        id: "kills_forest",
-        type: "kill",
-        worldId: "forest",
-        target: 10,
-        desc: "Vaincre {target} ennemis en Forêt"
-      }
-    ],
-    reward: { gold: 400, essence: 8 }
-  },
-
+  // v3.109.0 : aq_forest_scout (« Éclaireur de la Lisière ») supprimée — jamais liée à l'Histoire, donc invisible depuis 3.107.4.
   aq_forest_expedition: {
     id: "aq_forest_expedition",
     type: "transition",
@@ -70,8 +47,10 @@ var ADVENTURE_QUESTS = {
     worldId: "forest",
     adventureIndex: 1,
     gatesNextWorld: true,
+    // v3.109.0 : + étape boss (Seigneur de guerre orc), liée à forest_15 — même patron que « Prouver sa valeur ».
+    // Run dédié (spawnFor restaure les index) : plus de kill du boss en farm libre, qui relançait un cycle (+45 % de scale).
     name: "Le Cœur de la Forêt",
-    story: "Au-delà de la Lisière, l'air se fait plus lourd et les arbres plus anciens. Il faudra s'enfoncer plus profondément et faire ses preuves avant que le passage vers le Désert ne s'ouvre.",
+    story: "Au-delà de la Lisière, l'air se fait plus lourd et les arbres plus anciens. Le Seigneur de guerre orc tient le Cœur : il faudra s'enfoncer, faire ses preuves, puis l'abattre pour que le passage vers le Désert s'ouvre.",
     icon: "./images/Icons/quest_icons/exploration/exploration3.png",
     steps: [
       {
@@ -80,9 +59,16 @@ var ADVENTURE_QUESTS = {
         worldId: "forest",
         target: 20,
         desc: "Vaincre {target} ennemis en Cœur de la forêt"
+      },
+      {
+        id: "boss_orcwarlord",
+        type: "bossKill",
+        bossId: "orcwarlord",
+        target: 1,
+        desc: "Vaincre le Seigneur de guerre orc {target} fois"
       }
     ],
-    reward: { gold: 600, essence: 12 }
+    reward: { gold: 800, essence: 15 } // aligné sur « Prouver sa valeur » (kills + boss)
   },
 
   hq_wolf_pack: {
@@ -104,7 +90,7 @@ var ADVENTURE_QUESTS = {
         type: "kill",
         worldId: "forest",
         target: 10,
-        desc: "Tuer {target} ennemis en Forêt"
+        desc: "Tuer {target} loups en Forêt" // v3.108.0 : aligné sur enemyFilter
       }
     ],
     reward: { gold: 400, essence: 8, unlockBuildingId: "hunt" }

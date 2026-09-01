@@ -130,7 +130,7 @@ var SortieManager = {
       }
     }
 
-    game.sortie = { active: false, context: null, startedAt: 0, loot: this.emptyLoot(), potionsUsed: 0, kills: 0 };
+    game.sortie = { active: false, context: null, startedAt: 0, loot: this.emptyLoot(), potionsUsed: 0, kills: 0, killedBoss: false }; // v3.108.0 : reset complet
     game.lastSortieSummary = summary;
     if (typeof renderCombatControls === "function") renderCombatControls();
     return summary;

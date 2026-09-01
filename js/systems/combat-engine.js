@@ -798,8 +798,10 @@ var CombatEngine = {
 
     if (typeof openCombatReport === "function") openCombatReport("defeat", game.enemy ? game.enemy.name : null);
 
-    if (window.WorldManager && typeof WorldManager.resetToCycleStart === "function") {
-      WorldManager.resetToCycleStart();
+    // v3.109.1 (scope validé Seb) : mort en farm libre -> début de l'aventure en cours (resetToAdventureStart),
+    // plus resetToCycleStart (une mort au Cœur renvoyait en Lisière, re-traversée complète).
+    if (window.WorldManager && typeof WorldManager.resetToAdventureStart === "function") {
+      WorldManager.resetToAdventureStart();
       if (typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
       if (typeof WorldManager.generateEnemy === "function") {
         game.enemy = this.prepareEnemy(WorldManager.generateEnemy());
@@ -998,6 +1000,11 @@ var CombatEngine = {
       addLog("🔒 " + result.world.name + " est verrouillé (questline de déblocage incomplète, voir Carte). Le cycle recommence.", "zone");
       showToast("🔒 Termine la questline pour débloquer " + result.world.name, 2200);
       if (typeof openCycleSummary === "function") openCycleSummary(result.world);
+    } else if (result && result.type === "world_gate_locked") {
+      // v3.109.1 : porte de monde (gatesNextWorld) non franchie — on reste sur place, pas de cycle.
+      var gateName = result.gateQuest ? result.gateQuest.name : "la quête de passage";
+      addLog("🗺️ Le passage vers le monde suivant est gardé — termine « " + gateName + " » (tableau de missions). Tu restes au " + (result.adventure ? result.adventure.name : "même endroit") + ".", "zone");
+      showToast("🗺️ Termine « " + gateName + " » pour ouvrir la suite", 2200);
     } else if (result && result.type === "adventure_locked") {
       addLog("🧭 Une quête d'Expédition attend d'être lancée pour explorer plus loin (voir l'onglet Quêtes).", "zone");
       showToast("🧭 Lance la quête d'Expédition (onglet Quêtes) pour continuer", 2200);

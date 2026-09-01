@@ -189,6 +189,20 @@ var WorldManager = {
       return { type: "world", world: nextWorld };
     }
 
+    // v3.109.1 (scope validé Seb) : porte d'aventure (gatesNextWorld) non franchie -> on RESTE sur la dernière
+    // aventure du monde, sans cycle ni retour au début (le boss du Cœur relançait un cycle +45 % en plein Acte III).
+    // Le verrou de questline de monde (WorldQuestManager, Ruines et +) garde le comportement cycle ci-dessous.
+    if (nextWorld && window.AdventureQuestManager && !AdventureQuestManager.isWorldTransitionUnlocked(world.id)) {
+      this.adventureIndex = justFinishedAdventureIndex;
+      var gateQuest = null;
+      Object.keys(window.ADVENTURE_QUESTS || {}).some(function (k) {
+        var q = ADVENTURE_QUESTS[k];
+        if (q.worldId === world.id && q.gatesNextWorld === true) { gateQuest = q; return true; }
+        return false;
+      });
+      return { type: "world_gate_locked", world: world, adventure: adventure, gateQuest: gateQuest };
+    }
+
     this.worldIndex = 0;
     game.cycleCount = (game.cycleCount || 0) + 1;
 
@@ -202,6 +216,12 @@ var WorldManager = {
     resetToCycleStart: function () {
     this.worldIndex = 0;
     this.adventureIndex = 0;
+    this.enemyIndex = 0;
+  },
+
+  /* v3.109.1 (scope validé Seb) : repart au début de l'AVENTURE en cours (mort en farm libre) —
+     une mort au Cœur ne renvoie plus en Lisière (re-traversée complète), seulement au 1er ennemi du Cœur. */
+  resetToAdventureStart: function () {
     this.enemyIndex = 0;
   },
 

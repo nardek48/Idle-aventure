@@ -23,13 +23,27 @@ var StoryQuestManager = {
     if (typeof st.readyNotified !== "boolean") st.readyNotified = false;
     // skipped : chapitre court-circuité (save migrée déjà tout débloquée, ou bouton Paramètres).
     if (typeof st.skipped !== "boolean") st.skipped = false;
-    // v3.100.1 : compteurs Histoire (victoires au Cœur) alimentés par _trackKills.
+    // v3.100.1 : compteurs Histoire (victoires au Cœur) alimentés par _trackKills. v3.109.0 : coeurBossKills retiré
+    // (le boss du Cœur passe par aq_forest_depths) ; coeurReached (0/1) = le Cœur a été atteint au moins une fois.
     if (!st.counters || typeof st.counters !== "object") st.counters = {};
     if (typeof st.counters.coeurKills !== "number") st.counters.coeurKills = 0;
-    if (typeof st.counters.coeurBossKills !== "number") st.counters.coeurBossKills = 0;
+    if (typeof st.counters.coeurReached !== "number") st.counters.coeurReached = 0;
     if (typeof st.lastSeenTotalKills !== "number") st.lastSeenTotalKills = Number(game.totalKills || 0);
-    if (typeof st.lastSeenBossKills !== "number") st.lastSeenBossKills = Number((game.killCounts || {}).orcwarlord || 0); // v3.104.0 (P5) : ex-slimeking
+    this._migrateV3109(chapterId, st);
     return st;
+  },
+
+  /* v3.109.0 : « Franchir la Lisière » insérée à l'index 9 (avant forest_11). currentStep est un index : une save
+     déjà à l'Acte III ou au-delà doit être décalée d'un cran, une seule fois (même modèle que migratedV31078). */
+  _migrateV3109: function (chapterId, st) {
+    if (st.migratedV3109) return;
+    var chapter = STORY_QUESTS[chapterId];
+    var idx = chapter ? chapter.steps.findIndex(function (s) { return s.id === "forest_crossing"; }) : -1;
+    if (idx !== -1 && typeof st.currentStep === "number" && st.currentStep >= idx) {
+      st.currentStep += 1;
+      st.counters.coeurReached = 1; // déjà au-delà : la traversée est considérée faite
+    }
+    st.migratedV3109 = true;
   },
 
   getChapter: function (chapterId) {
@@ -112,11 +126,11 @@ var StoryQuestManager = {
   },
 
   /* v3.100.1 : compte les victoires au Cœur de la forêt sans toucher combat-engine.js (protégé) :
-     combat-engine appelle renderAll() après chaque kill, donc le delta de game.totalKills (et de
-     killCounts.orcwarlord pour le boss, v3.104.0/P5 : nouveau boss du Cœur, ex-slimeking) entre deux
+     combat-engine appelle renderAll() après chaque kill, donc le delta de game.totalKills entre deux
      appels = kills récents. Attribué au Cœur si worldIndex 0 / adventureIndex 1, hors runs de
-     Chasse/Donjon. Limite connue : les kills de chasse ambiante (OfflineManager.tickAmbientHunting)
-     au Cœur comptent aussi — accepté. */
+     Chasse/Donjon/Quête d'aventure (v3.109.0 : la quête n'était pas exclue — ses kills sont ceux de son
+     propre run, pas de la position WorldManager). Limite connue : les kills de chasse ambiante
+     (OfflineManager.tickAmbientHunting) au Cœur comptent aussi — accepté. */
   /* v3.107.4 : synchronise le pool d'ennemis du Cœur (Troll/Ronce dès l'Acte III) sur l'objet WORLDS
      réel (référence directe, mutable en place) — évite de toucher combat-engine.js/progression-system.js
      (protégés). Appelé à chaque round (comme _trackKills, non throttlé) : toujours frais avant le
@@ -141,19 +155,21 @@ var StoryQuestManager = {
     this._syncCoeurEnemyPool();
     var st = game.storyQuests.forest;
     if (!st) return;
+    var wm = window.WorldManager;
+    var atCoeur = !!wm && Number(wm.worldIndex || 0) === 0 && Number(wm.adventureIndex || 0) === 1;
+    // v3.109.0 : « Franchir la Lisière » — drapeau persistant (une mort en farm libre renvoie en Lisière via resetToCycleStart).
+    if (atCoeur && !(game.adventureQuestRun && game.adventureQuestRun.active) && !(game.huntRun && game.huntRun.active) && !(game.dungeonRun && game.dungeonRun.active)) {
+      st.counters.coeurReached = 1;
+    }
     var total = Number(game.totalKills || 0);
-    var bossTotal = Number((game.killCounts || {}).orcwarlord || 0);
     var delta = total - st.lastSeenTotalKills;
-    var bossDelta = bossTotal - st.lastSeenBossKills;
     st.lastSeenTotalKills = total;
-    st.lastSeenBossKills = bossTotal;
-    if (delta <= 0 && bossDelta <= 0) return; // reset/ascension : on resynchronise sans compter
+    if (delta <= 0) return; // reset/ascension : on resynchronise sans compter
     if (game.huntRun && game.huntRun.active) return;
     if (game.dungeonRun && game.dungeonRun.active) return;
-    var wm = window.WorldManager;
-    if (!wm || Number(wm.worldIndex || 0) !== 0 || Number(wm.adventureIndex || 0) !== 1) return;
-    if (delta > 0) st.counters.coeurKills += delta;
-    if (bossDelta > 0) st.counters.coeurBossKills += bossDelta;
+    if (game.adventureQuestRun && game.adventureQuestRun.active) return;
+    if (!atCoeur) return;
+    st.counters.coeurKills += delta;
   },
 
   _checkNow: function (silent) {
@@ -203,7 +219,7 @@ var StoryQuestManager = {
         text: step.narrative.completion,
         rewardRows: rewardRows,
         closeLabel: "Continuer",
-        suggestNextQuest: false // v3.100.4 : pas de « Quête suivante » sur les étapes Histoire
+        suggestNextQuest: false // v3.100.4 ; sans effet depuis v3.109.0 (bouton retiré partout), conservé pour lisibilité
       });
     }
 
@@ -273,7 +289,6 @@ var StoryQuestManager = {
     // Resynchronise le repère de kills au boot : les kills hors ligne (OfflineManager) ne sont pas
     // localisables, ils ne comptent pas comme victoires au Cœur.
     game.storyQuests.forest.lastSeenTotalKills = Number(game.totalKills || 0);
-    game.storyQuests.forest.lastSeenBossKills = Number((game.killCounts || {}).orcwarlord || 0);
     this._checkNow(true);
   },
 

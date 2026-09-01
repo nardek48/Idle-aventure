@@ -21,7 +21,7 @@ var AFFLICTIONS = [
     id: "aff_asceticism",
     name: "Ascétisme",
     icon: "🚫",
-    desc: "Potions interdites (achat et usage bloqués), +15% dégâts de tap en compensation.",
+    desc: "Potions interdites (achat et usage bloqués), +15% dégâts en compensation.",
     modifiers: {
       tapMult: 0.15,
       forbidPotions: true
@@ -31,7 +31,7 @@ var AFFLICTIONS = [
     id: "aff_fragility",
     name: "Fragilité",
     icon: "💔",
-    desc: "-30% PV max, +30% dégâts de tap — glass cannon.",
+    desc: "-30% PV max, +30% dégâts — glass cannon.",
     modifiers: {
       heroMaxHpMult: 0.70,
       tapMult: 0.30

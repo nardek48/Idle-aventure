@@ -64,14 +64,12 @@ var WORKSHOPS_CONFIG = {
   cuisine_de_camp: {
     buildingId: "hunt", name: "Cuisine de camp", icon: "🎒", active: true,
     upgradeCostBase: { planche: 4, lingot: 3 },
-    // v3.98.0 : 2 recettes au choix dans le même atelier (décision Seb) — la Ration
-    // moyenne migre elle aussi vers Viande séchée pour rester cohérente avec la nouvelle
-    // chaîne (ancienne recette : Viande brute ×10 + Pain ×1, voir COMMENTAIRES_ORIGINAUX.md).
+    // v3.107.13 : Ration moyenne restaurée sur viande séchée + pain (recette d'origine, retour arrière
+    // du passage v3.106.0 sur viande+eau brutes — non voulu pour cette recette précise, décision Seb).
+    // Petite ration reste sur viande+eau brutes (accessible dès le début de l'Acte II, décision confirmée).
     recipes: [
       { id: "petite_ration", inputs: [{ resourceId: "viande", quantity: 8 }, { resourceId: "eau", quantity: 4 }], outputs: [{ resourceId: "petite_ration", quantity: 1 }], craftTimeMs: 3000 },
-      { id: "ration", inputs: [{ resourceId: "viande", quantity: 16 }, { resourceId: "eau", quantity: 8 }], outputs: [{ resourceId: "ration", quantity: 1 }], craftTimeMs: 8000 }
-      // v3.106.0 : recettes ramenées à Viande + Eau brutes (au lieu de viande_séchée/pain) — les rations
-      // remplacent le Repas dès l'Acte II, la chaîne Séchoir/Four est trop tardive pour cet usage.
+      { id: "ration", inputs: [{ resourceId: "viande_sechee", quantity: 10 }, { resourceId: "pain", quantity: 1 }], outputs: [{ resourceId: "ration", quantity: 1 }], craftTimeMs: 8000 }
     ]
   },
 

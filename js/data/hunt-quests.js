@@ -14,7 +14,7 @@ var WAREHOUSE_RESOURCES = {
   lingot: { id: "lingot", name: "Lingot", icon: "images/Icons/resources/ingot_icon.png", desc: "Fabriqué à partir de Fer.", sellPrice: 10, tier: "crafted", cap: 999 },
   farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.png", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 },
   pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.png", desc: "Cuit à l'Atelier de Construction à partir d'Eau et de Farine.", sellPrice: 19, tier: "crafted", cap: 999 },
-  ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.png", desc: "Repas au Campement : restaure 60 % des PV max. Crafté à la Cuisine de camp à partir de Viande et d'Eau.", sellPrice: 36, tier: "crafted", cap: 999, healPct: 0.60 },
+  ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.png", desc: "Repas au Campement : restaure 60 % des PV max. Crafté à la Cuisine de camp à partir de Viande séchée et de Pain.", sellPrice: 36, tier: "crafted", cap: 999, healPct: 0.60 },
   petite_ration: { id: "petite_ration", name: "Petite ration", icon: "images/Icons/resources/petite_ration_icon.png", desc: "Repas au Campement : restaure 35 % des PV max. Crafté à la Cuisine de camp à partir de Viande et d'Eau.", sellPrice: 18, tier: "crafted", cap: 999, healPct: 0.35 },
   // v3.107.10 : Grande ration — icône dédiée fournie (Seb), toujours pas de recette de craft (décision antérieure).
   grande_ration: { id: "grande_ration", name: "Grande ration", icon: "images/Icons/resources/grande_ration_icon.png", desc: "Repas au Campement : restaure 100 % des PV max. Recette de craft à venir.", sellPrice: 60, tier: "crafted", cap: 999, healPct: 1.00 }
@@ -33,6 +33,7 @@ var HUNT_QUESTS = {
     name: "Chasse en Forêt",
     story: "Le gibier ne manque pas à la Lisière. Chaque bête abattue rapporte de la viande à stocker à l'Entrepôt — une chasse peut se répéter indéfiniment.",
     icon: "🍖",
+    enemyFilter: ["wolf"], // v3.108.0 : le gibier, c'est le Loup (sorti du pool libre en 3.107.4) — plus de viande de slime
     resourceKey: "viande",
     dropChancePct: 50, // v3.100.3 : 20 -> 50 (chasse active = vraie source de viande en Acte II, décision Seb)
     lotSize: 10

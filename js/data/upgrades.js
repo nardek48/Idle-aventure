@@ -7,7 +7,7 @@ var UPGRADES = [
     id: "utrain_power",
     name: "AMELIORATION DE FORCE",
     icon: "./images/Icons/improvement_icons/power.png",
-    desc: "Augmente les dégâts de tap.",
+    desc: "Augmente les dégâts de ton attaque de base.",
     baseCost: 15,
     costMult: 1.15,
     maxLevel: 150,
@@ -104,7 +104,7 @@ var AETHER_SHOP = [
     id: "a_tap",
     name: "Puissance ancestrale",
     icon: "images/Icons/ascension/puissance_ancestrale.png",
-    desc: "+10% dégâts de tap globaux par niveau.",
+    desc: "+10% dégâts globaux par niveau.",
     baseCost: 15,
     costMult: 1.18,
     maxLevel: 20

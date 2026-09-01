@@ -12,15 +12,23 @@ var CampManager = {
     if (typeof game.campRegenLastAt !== "number" || game.campRegenLastAt <= 0) game.campRegenLastAt = Date.now();
   },
 
+  /* Run à sortie en cours (donjon / chasse / quête d'aventure) : pas de repos au camp tant qu'il n'est pas clos. */
+  _hasActiveRun: function () {
+    if (game.dungeonRun && game.dungeonRun.active) return true;
+    if (game.huntRun && game.huntRun.active) return true;
+    if (game.adventureQuestRun && game.adventureQuestRun.active) return true;
+    return false;
+  },
+
   getRegenPctPerMin: function () {
     var lvl = (game.talents && game.talents.t_last_stand) || 0;
     return CAMP_REGEN_PCT_PER_MIN * (1 + lvl * CAMP_REGEN_TALENT_BONUS_PER_LEVEL);
   },
 
-  /* La régénération court hors combat (héros à terre inclus) : jamais pendant un combat actif. */
+  /* La régénération court hors combat (héros à terre inclus) : jamais pendant un combat actif ni pendant
+     une sortie à run (donjon, chasse, quête d'aventure — v3.108.0 : la quête n'était pas exclue). */
   isRegenActive: function () {
-    if (game.dungeonRun && game.dungeonRun.active) return false;
-    if (game.huntRun && game.huntRun.active) return false;
+    if (this._hasActiveRun()) return false;
     return game.activeTab !== "combat" || (game.heroHp || 0) <= 0;
   },
 
@@ -33,7 +41,7 @@ var CampManager = {
     game.campRegenLastAt = now;
     if (elapsedMin <= 0) return 0;
     // Hors ligne : le joueur était absent, on régénère quel que soit l'onglet restauré (sauf run en cours).
-    if (offline ? ((game.dungeonRun && game.dungeonRun.active) || (game.huntRun && game.huntRun.active)) : !this.isRegenActive()) return 0;
+    if (offline ? this._hasActiveRun() : !this.isRegenActive()) return 0;
 
     var maxHp = game.heroMaxHp || 1;
     var hp = game.heroHp != null ? game.heroHp : maxHp;

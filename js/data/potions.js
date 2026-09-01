@@ -6,7 +6,7 @@ var POTIONS_DB = [
     id: "potion_power",
     name: "Potion de Force",
     icon: "images/Icons/potions/potion_force.png",
-    desc: "+20% Force (dégâts de tap) pendant 30 min.",
+    desc: "+20% Force (dégâts de l'attaque de base) pendant 30 min.",
     stat: "power",
     bonus: 0.20,
     durationMin: 30,

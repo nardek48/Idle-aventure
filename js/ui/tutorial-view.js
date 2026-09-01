@@ -94,6 +94,7 @@ var GENERIC_TUTORIALS = {
 window.GENERIC_TUTORIALS = GENERIC_TUTORIALS;
 
 function maybeShowGenericTutorial(tabName) {
+  if (pendingTutorial) return; // v3.107.12 : ne jamais écraser un popup déjà ouvert (même conteneur DOM)
   var id = Object.keys(GENERIC_TUTORIALS).find(function (key) { return GENERIC_TUTORIALS[key].tab === tabName; });
   if (!id) return;
   var tut = GENERIC_TUTORIALS[id];

@@ -9,7 +9,7 @@
      badge, status, isMain, worldId,
      accept, launch, claim, abandon (fonctions présentes seulement si l'action a un sens pour ce statut) } */
 
-var MISSION_TYPE_ICON = { combat: "⚔️", expedition: "🧭", chasse: "🐗", donjon: "🏰" };
+var MISSION_TYPE_ICON = { combat: "⚔️", expedition: "🧭", chasse: "🐗", donjon: "🏰", production: "🔨" }; // v3.108.0 : production (Les fondations)
 var MISSION_STATUS_LABEL = {
   locked: "Verrouillée", available: "Disponible", accepted: "Acceptée",
   running: "En cours", ready: "Objectif atteint", claimable: "Prête à réclamer"
@@ -203,7 +203,7 @@ var MissionBoard = {
     return out;
   },
 
-  /* ---------- Expéditions à mini-jeu (Sentier Obstrué, Veine Instable, Source Claire) ---------- */
+  /* ---------- Expéditions à mini-jeu (Sentier Obstrué, Veine Instable, Source Tarie) ---------- */
   _explorationMissions: function () {
     var out = [];
     if (window.ExplorationManager && window.EXPLORATION_QUESTS) {

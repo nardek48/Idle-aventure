@@ -57,11 +57,12 @@ function migrateOldSaveToSlot1() {
    Détail : save-system_notes.md #4. */
 /* v3.26 : réplique la séquence de boot.js après un switch/création de héros pour éviter un combat sans ennemi (spawnEnemy()).
    Détail : save-system_notes.md #5. */
-function resumeCombatAfterSlotChange() {
-  // v3.41 : switch/création de héros repart toujours au tout début du
-  // cycle (monde 1, 1er ennemi), quelle que soit la progression déjà
-  // atteinte par ce héros — voir WorldManager.resetToCycleStart().
-  if (window.WorldManager && typeof WorldManager.resetToCycleStart === "function") {
+function resumeCombatAfterSlotChange(freshState) {
+  // v3.109.2 (scope validé Seb, remplace la règle v3.41 « toujours monde 1 ») : la position est dans la save
+  // (worldIndex/adventureIndex/enemyIndex, restaurée par loadGame comme au boot) — on ne la jette plus au switch.
+  // freshState=true (création de héros, suppression du dernier slot) : état neuf SANS loadGame, or WorldManager
+  // ne vit pas dans `game` — le reset reste indispensable pour purger la position de l'ancien héros.
+  if (freshState && window.WorldManager && typeof WorldManager.resetToCycleStart === "function") {
     WorldManager.resetToCycleStart();
   }
 
@@ -184,7 +185,7 @@ var HeroSlotManager = {
       game.saveSupported = keptSaveSupported;
     }
     if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
-    resumeCombatAfterSlotChange(); // v3.26 : voir la fonction ci-dessus — sans ça, l'écran Combat n'avait aucun ennemi tant que le jeu n'était pas relancé
+    resumeCombatAfterSlotChange(true); // v3.26 (spawn) ; v3.109.2 : true = état neuf, purge la position de l'ancien héros
 
     // Pas de saveGame() ici : l'emplacement n'existe "pour de vrai" qu'une fois la création confirmée (confirmHeroSelection()).
 
@@ -226,7 +227,7 @@ var HeroSlotManager = {
           game.saveSupported = keptSaveSupported2;
         }
         if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
-        resumeCombatAfterSlotChange(); // v3.26 : même correctif que createHeroInSlot()/switchToSlot()
+        resumeCombatAfterSlotChange(true); // v3.26 ; v3.109.2 : true = état neuf (plus aucun emplacement), position purgée
         if (typeof renderAll === "function") renderAll();
       }
     }

@@ -956,46 +956,10 @@ function buildQuestCompleteHTML(config) {
 }
 window.buildQuestCompleteHTML = buildQuestCompleteHTML;
 
-/* v3.100.4 : prochaine quête d'aventure proposable depuis le popup de fin — première non terminée du
-   monde courant (WorldManager), triée par adventureIndex puis world_start avant world_end. Null si une
-   quête/chasse/donjon est en cours. */
-function getNextAdventureQuestId() {
-  if (!window.AdventureQuestManager || !window.ADVENTURE_QUESTS) return null;
-  if (game.adventureQuestRun && game.adventureQuestRun.active) return null;
-  if (game.huntRun && game.huntRun.active) return null;
-  if (game.dungeonRun && game.dungeonRun.active) return null;
-  var world = (window.WorldManager && typeof WorldManager.getWorld === "function") ? WorldManager.getWorld() : null;
-  var worldId = world ? world.id : null;
-  var stageRank = { world_start: 0, world_end: 1 };
-  var candidates = AdventureQuestManager.getAllQuests().filter(function (q) {
-    return !game.adventureQuestsCompleted[q.id] && (!worldId || q.worldId === worldId);
-  });
-  candidates.sort(function (a, b) {
-    var d = Number(a.adventureIndex || 0) - Number(b.adventureIndex || 0);
-    if (d) return d;
-    return (stageRank[a.progressionStage] || 0) - (stageRank[b.progressionStage] || 0);
-  });
-  return candidates.length ? candidates[0].id : null;
-}
-
-function startNextAdventureQuestFromPopup() {
-  var questId = getNextAdventureQuestId();
-  closeQuestCompletePopup();
-  if (questId && typeof openAdventureQuestIntro === "function") openAdventureQuestIntro(questId);
-}
-window.getNextAdventureQuestId = getNextAdventureQuestId;
-window.startNextAdventureQuestFromPopup = startNextAdventureQuestFromPopup;
-
+// v3.109.0 : bouton « Quête suivante » du popup de fin retiré (décision Seb) — il proposait des quêtes
+// masquées par le tableau de missions (aq_forest_scout, depuis supprimée) : c'est le tableau qui guide.
 function openQuestCompletePopup(config) {
   applyQuestUnlockSideEffects();
-  // v3.100.4 : bouton « Quête suivante » (sauf si l'appelant fournit déjà une action ou le refuse — chaîne Histoire).
-  if (config && !config.extraActionLabel && config.suggestNextQuest !== false) {
-    var nextId = getNextAdventureQuestId();
-    if (nextId) {
-      config.extraActionLabel = "➜ Quête suivante : " + (ADVENTURE_QUESTS[nextId].name || "");
-      config.extraActionOnclick = "startNextAdventureQuestFromPopup()";
-    }
-  }
   var host = document.getElementById("adventure-quest-modal-root");
   if (host) host.innerHTML = buildQuestCompleteHTML(config);
 }
