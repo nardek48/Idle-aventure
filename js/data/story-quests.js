@@ -113,6 +113,18 @@ var STORY_QUESTS = {
         objectiveLabel: "Accepter la quête",
         unlockTabs: ["combat"],
         reward: STORY_REWARDS.forest_01,
+        // v3.107.9 : popup d'accueil, à l'arrivée sur le Campement (premier écran du jeu).
+        tutorial: {
+          tab: "campement",
+          icon: "🏕️",
+          title: "Le Campement",
+          points: [
+            { icon: "🏕️", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
+            { icon: "🍖", text: "Repos et rations — hors combat, tu récupères 5 % de tes PV max par minute (jusqu'à 50 % si tu es hors ligne). Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre." },
+            { icon: "📋", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Principale ») est toujours en tête, suivie de contrats secondaires. Une quête secondaire liée à l'étape en cours se démarque avec un cadre brillant." },
+            { icon: "📋", text: "Retourne au tableau de missions et clique sur « Partir » pour ta prochaine quête — c'est elle qui te mènera au combat avec un vrai objectif, plutôt que d'explorer seul sans but." }
+          ]
+        },
         check: function () { return true; },
         progress: function () { return ""; }
       },
@@ -128,6 +140,23 @@ var STORY_QUESTS = {
         unlockTabs: ["equip"],
         reward: STORY_REWARDS.forest_02,
         linkTo: { tab: "combat" },
+        // v3.107.7 : tutorial déclaratif — popup pédagogique affiché une seule fois, à la première
+        // arrivée sur l'onglet cible (tab) une fois l'étape acceptée. Voir switchTab() (ui-root.js)
+        // pour le déclenchement, ui/tutorial-view.js pour le rendu.
+        tutorial: {
+          tab: "combat",
+          icon: "⚔️",
+          title: "Le combat",
+          points: [
+            { icon: "⚔️", text: "Attaque de base — frappe l'ennemi sans coûter de ressource. Toujours disponible." },
+            { icon: "✨", text: "Compétences (1/2/3) — coûtent de la ressource de ta classe (Rage, Concentration ou Mana selon ton héros), pour plus de dégâts ou un effet spécial." },
+            { icon: "🛡️", text: "Défense — réduit ou évite le prochain coup. Utile quand un badge comme celui-ci apparaît au-dessus de l'ennemi : il prépare une attaque plus forte.", preview: "charge" },
+            { icon: "⚡", text: "Jauge de célérité — se remplit à chaque round. Une fois pleine, tu frappes deux fois d'affilée." }
+          ]
+        },
+        // v3.107.1 : killTarget déclaratif — affiché comme compteur de mission en combat (combat-view.js)
+        // et déclenche un retour auto au Campement une fois check() vrai (story-quest-system.js).
+        killTarget: { label: "Premier sang", counter: storyCountForestKills, target: 5, autoReturn: true },
         check: function (game) { return storyCountForestKills(game) >= 5 && storyHasEquippedItem(game); },
         progress: function (game) {
           return "Kills " + Math.min(5, storyCountForestKills(game)) + "/5 · Équipé " + (storyHasEquippedItem(game) ? "1/1" : "0/1");
@@ -144,7 +173,21 @@ var STORY_QUESTS = {
         objectiveLabel: "Atteindre le niveau 2 et acheter 1 amélioration d'entraînement",
         unlockTabs: ["more"],
         reward: STORY_REWARDS.forest_03,
-        linkTo: { tab: "more" },
+        linkTo: { tab: "more", subTab: "amelioration" }, // v3.107.1 : direct sur le sous-onglet Amélioration (décision Seb)
+        // v3.107.9 : chaque stat détaillée (décision Seb).
+        tutorial: {
+          tab: "more",
+          icon: "⬆️",
+          title: "L'Amélioration",
+          points: [
+            { icon: "⬆️", text: "Chaque amélioration augmente une statistique de façon permanente contre de l'or. Le prix grimpe à chaque achat — étale tes investissements plutôt que de tout miser sur une seule stat." },
+            { icon: "💪", text: "Puissance — dégâts de ton attaque de base." },
+            { icon: "🎯", text: "Précision — chance de coup critique." },
+            { icon: "✨", text: "Volonté — dégâts bonus en cas de critique." },
+            { icon: "❤️", text: "Endurance — PV maximum et une partie de ta défense." },
+            { icon: "⚡", text: "Célérité — remplit ta jauge de combat plus vite (frappe bonus plus fréquente)." }
+          ]
+        },
         // v3.100.1 : niveau 2 (≈20 kills) et non 3 (≈57 kills, hors séquence entre les étapes 2 et 5).
         check: function (game) { return Number(game.heroLevel || 1) >= 2 && storyCountTrainingUpgrades(game) >= 1; },
         progress: function (game) {
@@ -159,13 +202,26 @@ var STORY_QUESTS = {
           objective: "Un colporteur a planté sa carriole à la Lisière. Il vend cher, mais il vend ce qu'on ne trouve pas dans la forêt.",
           completion: "L'or a un usage. Le colporteur reviendra tant que tu paieras."
         },
-        objectiveLabel: "Gagner 300 or au total et faire 1 achat (Économie ou Potion)",
+        objectiveLabel: "Faire 1 achat en boutique (Économie ou Potion)",
         unlockTabs: ["shop"],
         reward: STORY_REWARDS.forest_04,
         linkTo: { tab: "shop" },
-        check: function (game) { return Number(game.totalGoldEarned || 0) >= 300 && storyHasShopPurchase(game); },
+        // v3.107.9 : potions détaillées (décision Seb).
+        tutorial: {
+          tab: "shop",
+          icon: "🛒",
+          title: "La Boutique",
+          points: [
+            { icon: "🛒", text: "La Boutique vend des potions et des améliorations d'Économie contre de l'or." },
+            { icon: "🧪", text: "Potions de soin — sur le 2e onglet de la Boutique. Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 3000 or). Utilisables en combat comme une action à part entière — elles consomment ton tour." },
+            { icon: "⚠️", text: "Maximum 2 potions par sortie — pense à te ménager pour la suite du combat." }
+          ]
+        },
+        // v3.107.1 : condition « 300 or gagné » retirée (décision Seb) — pur temps d'attente passive,
+        // le joueur gagne l'or de toute façon en jouant. Seul l'achat compte désormais.
+        check: function (game) { return storyHasShopPurchase(game); },
         progress: function (game) {
-          return "Or " + formatNumber(Math.min(300, Math.floor(game.totalGoldEarned || 0))) + "/300 · Achat " + (storyHasShopPurchase(game) ? "1/1" : "0/1");
+          return "Achat " + (storyHasShopPurchase(game) ? "1/1" : "0/1");
         }
       },
       {
@@ -252,25 +308,6 @@ var STORY_QUESTS = {
         check: function () { return !!(window.MiningManager && MiningManager.isQuestCompleted()); },
         progress: function () { return (window.MiningManager && MiningManager.isQuestCompleted()) ? "1/1" : "0/1"; }
       },
-      {
-        id: "forest_10",
-        title: "Les fondations",
-        act: "Acte II — Le campement devient village",
-        narrative: {
-          objective: "Bois, planches, pierre. Assemble-les, et Aeswyn aura son premier mur.",
-          completion: "L'Atelier se dresse. Ce n'est plus un camp."
-        },
-        objectiveLabel: "Construire l'Atelier de Construction (chaîne de 4 objectifs)",
-        unlockTabs: [],
-        reward: STORY_REWARDS.forest_10,
-        linkTo: { tab: "village" },
-        check: function (game) { return !!((game.workshopUnlock || {}).completed); },
-        progress: function (game) {
-          var wu = game.workshopUnlock || {};
-          var total = (window.WORKSHOP_UNLOCK_STEPS || []).length || 4;
-          return (wu.completed ? total : Math.min(total, Number(wu.currentStep || 0))) + "/" + total;
-        }
-      },
 
       /* ---------- Acte III — Le héros s'affirme ---------- */
       {
@@ -286,6 +323,17 @@ var STORY_QUESTS = {
         unlockTabs: ["talents"],
         reward: STORY_REWARDS.forest_11,
         linkTo: { tab: "talents" },
+        // v3.107.9 : talents détaillés, réversibilité vérifiée dans le code (respecTalents).
+        tutorial: {
+          tab: "talents",
+          icon: "🌟",
+          title: "Les Talents",
+          points: [
+            { icon: "🌟", text: "Chaque niveau franchi te donne un point de talent à dépenser." },
+            { icon: "🌳", text: "Les talents sont propres à ta classe et améliorent tes mécaniques de combat (ex. durée de ta Défense, vitesse de ta jauge de célérité, sang-froid en cas de mort...)." },
+            { icon: "🔄", text: "Rien n'est figé : tu peux réinitialiser tous tes talents contre de l'or (150 or par point déjà investi) si tu changes d'avis sur ta répartition." }
+          ]
+        },
         check: function (game) { return Number(game.heroLevel || 1) >= 3 && storyCountTalentsBought(game) >= 1; },
         progress: function (game) {
           return "Niveau " + Math.min(3, Number(game.heroLevel || 1)) + "/3 · Talent " + Math.min(1, storyCountTalentsBought(game)) + "/1";
@@ -303,6 +351,17 @@ var STORY_QUESTS = {
         unlockTabs: ["grimoire"],
         reward: STORY_REWARDS.forest_12,
         linkTo: { tab: "grimoire" },
+        // v3.107.9 : Grimoire détaillé (nombre de règles vérifié dans le code).
+        tutorial: {
+          tab: "grimoire",
+          icon: "📖",
+          title: "Le Grimoire",
+          points: [
+            { icon: "📖", text: "Le Grimoire automatise tes actions en combat selon des règles conditionnelles que tu définis (ex. « si une charge est annoncée → Défense »)." },
+            { icon: "🎚️", text: "Tu commences avec 2 règles disponibles, et tu en débloqueras d'autres au fil de ta progression dans le jeu." },
+            { icon: "🔀", text: "Bascule entre mode Tactique (manuel, tu joues chaque round) et mode Grimoire (automatique, tes règles décident) à tout moment depuis l'écran Combat." }
+          ]
+        },
         check: function (game) { return storyCounter(game, "coeurKills") >= 10 && storyCountActiveGrimoireRules(game) >= 1; },
         progress: function (game) {
           return "Cœur " + Math.min(10, storyCounter(game, "coeurKills")) + "/10 · Règle " + Math.min(1, storyCountActiveGrimoireRules(game)) + "/1";
@@ -374,4 +433,14 @@ var STORY_QUESTS = {
 window.STORY_REWARDS = STORY_REWARDS;
 window.STORY_TAB_LABELS = STORY_TAB_LABELS;
 window.STORY_STEP15_PROVISIONAL = STORY_STEP15_PROVISIONAL;
+// v3.107.4 : Troll des forêts + Ronce animée réapparaissent au Cœur dès l'Acte III (forest_11 acceptée) —
+// pool de base réduit (slime/goblin/spider, voir data/worlds.js), synchronisé dynamiquement par
+// StoryQuestManager._trackKills() (systems/story-quest-system.js) selon l'étape Histoire en cours.
+var STORY_COEUR_ACT3_STEP_ID = "forest_11";
+var STORY_COEUR_BASE_POOL = ["slime", "goblin", "spider"];
+var STORY_COEUR_ACT3_POOL = ["slime", "goblin", "spider", "foresttroll", "bramble"];
+
+window.STORY_COEUR_ACT3_STEP_ID = STORY_COEUR_ACT3_STEP_ID;
+window.STORY_COEUR_BASE_POOL = STORY_COEUR_BASE_POOL;
+window.STORY_COEUR_ACT3_POOL = STORY_COEUR_ACT3_POOL;
 window.STORY_QUESTS = STORY_QUESTS;

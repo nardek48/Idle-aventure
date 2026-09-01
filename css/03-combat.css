@@ -1305,11 +1305,10 @@ img.combat-action-icon {
 
 /* v3.106.0 : bandeau de progression de mission (aventure/chasse/donjon), ancré en haut à gauche de
    #enemy-display, symétrique du badge de statuts à droite. Vide/masqué hors mission de type kill. */
+/* v3.107.6 : #enemy-name (et enemy-hp-bar-wrapper, enemy-emoji) ont un translateY(-25px) qui les fait
+   remonter PAR-DESSUS ce qui les précède dans le flex-column, indépendamment du flux — sans marge
+   compensatoire, le compteur se retrouvait quasi recouvert par le nom malgré l'ordre DOM correct. */
 .combat-mission-progress {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  z-index: 6;
   font-size: 11px;
   font-weight: 700;
   color: var(--nb-gold-dark);
@@ -1317,5 +1316,5 @@ img.combat-action-icon {
   border: 1px solid var(--nb-gold-dark);
   border-radius: 999px;
   padding: 3px 10px;
-  pointer-events: none;
+  margin-bottom: 28px;
 }

@@ -100,27 +100,9 @@ var AdventureQuestManager = {
   },
 
   buildQuestEnemy: function (quest, forceBoss) {
-    if (!window.WorldManager) return null;
-    var worldIdx = (WORLDS || []).findIndex(function (w) { return w.id === quest.worldId; });
-    if (worldIdx === -1) return null;
-
-    var savedWorldIndex = WorldManager.worldIndex;
-    var savedAdventureIndex = WorldManager.adventureIndex;
-    var savedEnemyIndex = WorldManager.enemyIndex;
-
-    WorldManager.worldIndex = worldIdx;
-    WorldManager.adventureIndex = quest.adventureIndex;
-    var adventure = WorldManager.getAdventure();
-    var enemyCount = (adventure && adventure.enemyCount) || 1;
-    WorldManager.enemyIndex = forceBoss ? Math.max(0, enemyCount - 1) : 0;
-
-    var enemy = WorldManager.generateEnemy();
-
-    WorldManager.worldIndex = savedWorldIndex;
-    WorldManager.adventureIndex = savedAdventureIndex;
-    WorldManager.enemyIndex = savedEnemyIndex;
-
-    return enemy;
+    // v3.107.0 : délègue au module partagé (systems/quest-enemy-system.js), qui gère aussi le
+    // filtre d'ennemis optionnel de la quête (quest.enemyFilter).
+    return window.QuestEnemyManager ? QuestEnemyManager.spawnFor(quest, forceBoss) : null;
   },
 
   nextSpawnIsBoss: function (quest) {

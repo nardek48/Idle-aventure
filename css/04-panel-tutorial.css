@@ -1,0 +1,41 @@
+/* css/04-panel-tutorial.css — popup pédagogique par étape Histoire (v3.107.7, décision Seb).
+   Réutilise .full-menu-overlay/.dungeon-story-card/.dungeon-story-icon/.dungeon-story-title/
+   .dungeon-story-actions (css/05-overlays.css, css/04-panel-dungeon.css) — seules les classes
+   propres au contenu (liste de points) sont définies ici. */
+
+.tutorial-points {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.tutorial-point {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--nb-cream-alt);
+  border-left: 2px solid var(--nb-gold);
+}
+
+.tutorial-point-icon {
+  font-size: 20px;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.tutorial-point-text {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(58, 44, 26, 0.85);
+}
+
+.tutorial-preview-badge {
+  display: inline-flex;
+  position: static;
+  vertical-align: middle;
+  margin-left: 2px;
+}

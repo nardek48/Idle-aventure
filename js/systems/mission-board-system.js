@@ -15,6 +15,17 @@ var MISSION_STATUS_LABEL = {
   running: "En cours", ready: "Objectif atteint", claimable: "Prête à réclamer"
 };
 
+/* v3.107.1 : une quête secondaire (aventure/chasse) référencée par l'étape Histoire COURANTE et
+   ACCEPTÉE (linkTo.section "adventure", cardId "adv_"+questId) est mise en évidence sur le tableau
+   de missions — décision Seb : c'est la donnée (linkTo) qui pilote, pas une liste codée en dur. */
+function isStoryLinkedQuest(questId) {
+  if (!window.StoryQuestManager) return false;
+  var step = StoryQuestManager.getCurrentStep("forest");
+  if (!step || !StoryQuestManager.isCurrentStepAccepted("forest")) return false;
+  var link = step.linkTo;
+  return !!(link && link.section === "adventure" && link.cardId === "adv_" + questId);
+}
+
 function missionRewardSummary(reward) {
   if (!reward) return "";
   var parts = [];
@@ -71,6 +82,15 @@ var MissionBoard = {
     if (!window.WorldQuestManager || typeof getNextLockedWorldIndex !== "function") return [];
     var idx = getNextLockedWorldIndex();
     if (idx === -1) return [];
+    // v3.107.4 : n'afficher la quête de déblocage QUE si le monde immédiatement précédent est
+    // « terminé » (joueur dans sa DERNIÈRE aventure) — pas juste atteint. Sans ça, une quête de
+    // monde 2+ pouvait apparaître alors que le joueur est encore tout au début du monde 0.
+    if (idx > 0 && window.WorldManager && window.WORLDS) {
+      var prevWorld = WORLDS[idx - 1];
+      var lastAdvIndex = prevWorld && prevWorld.adventures ? prevWorld.adventures.length - 1 : 0;
+      var reachedFinalAdventure = WorldManager.worldIndex === (idx - 1) && WorldManager.adventureIndex >= lastAdvIndex;
+      if (!reachedFinalAdventure) return [];
+    }
     var quest = WorldQuestManager.getQuestForWorldIndex(idx);
     if (!quest) return [];
     var self = this;
@@ -96,6 +116,10 @@ var MissionBoard = {
     quests.forEach(function (quest) {
       if (game.adventureQuestsCompleted[quest.id]) return;
       var isRunning = !!(running && running.id === quest.id);
+      // v3.107.4 : décision Seb — tutoriel, pas de surcharge. Une quête secondaire NON LIÉE à
+      // l'étape Histoire courante est masquée tant qu'elle n'est pas encore lancée (available) ;
+      // une fois en cours (running), elle reste toujours visible (le joueur doit pouvoir la finir).
+      if (!isRunning && quest.category !== "main" && !isStoryLinkedQuest(quest.id)) return;
       var stepsDone = quest.steps.filter(function (s) { return AdventureQuestManager.isStepComplete(quest, s); }).length;
       var status = isRunning ? "running" : (running ? "locked" : "available");
       var m = {
@@ -103,7 +127,7 @@ var MissionBoard = {
         title: quest.name, blurb: quest.story || "",
         type: "combat", place: missionWorldName(quest.worldId) || "",
         objectiveLabel: stepsDone + "/" + quest.steps.length + " objectifs", progressLabel: "",
-        rewardSummary: missionRewardSummary(quest.reward), badge: "contract", status: status, isMain: quest.category === "main"
+        rewardSummary: missionRewardSummary(quest.reward), badge: "contract", status: status, isMain: quest.category === "main" || isStoryLinkedQuest(quest.id)
       };
       if (status === "available") m.accept = function () { if (typeof openAdventureQuestIntro === "function") openAdventureQuestIntro(quest.id); };
       if (status === "running") {
@@ -195,11 +219,16 @@ var MissionBoard = {
           type: "expedition", place: "", objectiveLabel: "", progressLabel: isRunning ? "En cours" : "",
           rewardSummary: "", badge: "contract", status: isRunning ? "running" : "available", isMain: false
         };
-        m.launch = function () { if (typeof openQuestsAt === "function") openQuestsAt(quest.section || "expedition", "exploration_" + quest.id); };
+        m.launch = function () {
+          // v3.107.6 : openQuestsAt() ne fait que changer d'onglet (ne lance rien) — appelle le vrai
+          // point d'entrée du mini-jeu si disponible, avec repli sur l'ancien comportement sinon.
+          if (typeof openExplorationPrep === "function") openExplorationPrep(quest.id);
+          else if (typeof openQuestsAt === "function") openQuestsAt(quest.section || "expedition", "exploration_" + quest.id);
+        };
         out.push(m);
       });
     }
-    if (window.MiningManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.unstableVein && MiningManager.isQuarryUnlocked && MiningManager.isQuarryUnlocked() && !MiningManager.isQuestCompleted()) {
+    if (window.MiningManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.unstableVein && !MiningManager.isQuarryUnlocked() && !MiningManager.isQuestCompleted()) {
       var veinQuest = EXPLORATION_QUESTS.unstableVein;
       var veinSession = MiningManager.getActiveSession();
       var veinRunning = !!(veinSession && veinSession.source === "quest" && veinSession.status !== "completed");
@@ -207,10 +236,13 @@ var MissionBoard = {
         id: "exploration_" + veinQuest.id, sourceKind: "exploration", worldId: null,
         title: veinQuest.title, blurb: "", type: "expedition", place: "", objectiveLabel: "", progressLabel: veinRunning ? "En cours" : "",
         rewardSummary: "", badge: "contract", status: veinRunning ? "running" : "available", isMain: false,
-        launch: function () { if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + veinQuest.id); }
+        launch: function () {
+          if (typeof openUnstableVeinQuest === "function") openUnstableVeinQuest();
+          else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + veinQuest.id);
+        }
       });
     }
-    if (window.WellManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.driedSpring && WellManager.isWellUnlocked && WellManager.isWellUnlocked() && !WellManager.isQuestCompleted()) {
+    if (window.WellManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.driedSpring && !WellManager.isWellUnlocked() && !WellManager.isQuestCompleted()) {
       var springQuest = EXPLORATION_QUESTS.driedSpring;
       var springSession = WellManager.getActiveSession();
       var springRunning = !!(springSession && springSession.source === "quest" && springSession.status !== "completed");
@@ -218,10 +250,41 @@ var MissionBoard = {
         id: "exploration_" + springQuest.id, sourceKind: "exploration", worldId: null,
         title: springQuest.title, blurb: "", type: "expedition", place: "", objectiveLabel: "", progressLabel: springRunning ? "En cours" : "",
         rewardSummary: "", badge: "contract", status: springRunning ? "running" : "available", isMain: false,
-        launch: function () { if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + springQuest.id); }
+        launch: function () {
+          if (typeof openDriedSpringQuest === "function") openDriedSpringQuest();
+          else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + springQuest.id);
+        }
       });
     }
     return out;
+  },
+
+  /* ---------- Les fondations (v3.107.8, décision Seb) : sortie de la chaîne Histoire pour tourner
+     en parallèle de « L'éveil des talents » (combat) — une piste production, une piste combat. */
+  _workshopMissions: function () {
+    if (!window.WorkshopUnlockSystem && typeof game.workshopUnlock === "undefined") return [];
+    if (!window.MiningManager || !MiningManager.isQuestCompleted()) return []; // dispo dès La veine instable terminée
+    if (game.workshopFoundationsCompleted) return [];
+    var wu = game.workshopUnlock || {};
+    var total = (window.WORKSHOP_UNLOCK_STEPS || []).length || 4;
+    var done = wu.completed ? total : Math.min(total, Number(wu.currentStep || 0));
+    var ready = !!wu.completed;
+    return [{
+      id: "workshop_foundations", sourceKind: "workshop", worldId: null,
+      title: "Les fondations", blurb: "Bois, planches, pierre. Assemble-les, et Aeswyn aura son premier mur.",
+      type: "production", place: "", objectiveLabel: "Construire l'Atelier de Construction (chaîne de 4 objectifs)",
+      progressLabel: done + "/" + total,
+      rewardSummary: missionRewardSummary(STORY_REWARDS.forest_10), badge: "contract",
+      status: ready ? "claimable" : "available", isMain: false,
+      launch: function () { if (typeof switchTab === "function") switchTab("village"); },
+      claim: ready ? function () {
+        if (!window.StoryQuestManager) return;
+        StoryQuestManager._grantReward(STORY_REWARDS.forest_10); // même récompense qu'avant (500 or, 15 essence, +15 XP)
+        game.workshopFoundationsCompleted = true;
+        addLog("📖 Étape terminée : Les fondations", "event");
+        if (typeof showToast === "function") showToast("🔓 Les fondations terminées", 2000);
+      } : null
+    }];
   },
 
   /* ---------- Contrat du jour (journalières -> 1 tirage, décision §10 n°7) ---------- */
@@ -247,7 +310,7 @@ var MissionBoard = {
   list: function () {
     var self = this;
     var groups = [this._storyMissions(), this._worldExpeditionMissions(), this._contractMissions(),
-      this._adventureMissions(), this._huntMissions(), this._dungeonMissions(), this._explorationMissions()];
+      this._adventureMissions(), this._huntMissions(), this._dungeonMissions(), this._explorationMissions(), this._workshopMissions()];
     var all = [].concat.apply([], groups);
     var rank = { story: 0 }; // l'Histoire garde toujours le rang 0 (colonne vertébrale, LIGNE_DIRECTRICE §3)
     var statusRank = { claimable: 0, ready: 0, running: 1, accepted: 1, available: 2, locked: 3 };

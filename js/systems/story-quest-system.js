@@ -19,6 +19,7 @@ var StoryQuestManager = {
     if (typeof st.currentStep !== "number" || st.currentStep < 0) st.currentStep = 0;
     if (typeof st.accepted !== "boolean") st.accepted = false;
     if (!st.claimedSteps || typeof st.claimedSteps !== "object") st.claimedSteps = {};
+    if (!st.tutorialsSeen || typeof st.tutorialsSeen !== "object") st.tutorialsSeen = {}; // v3.107.7 : popups pédagogiques déjà vus
     if (typeof st.readyNotified !== "boolean") st.readyNotified = false;
     // skipped : chapitre court-circuité (save migrée déjà tout débloquée, ou bouton Paramètres).
     if (typeof st.skipped !== "boolean") st.skipped = false;
@@ -116,8 +117,28 @@ var StoryQuestManager = {
      appels = kills récents. Attribué au Cœur si worldIndex 0 / adventureIndex 1, hors runs de
      Chasse/Donjon. Limite connue : les kills de chasse ambiante (OfflineManager.tickAmbientHunting)
      au Cœur comptent aussi — accepté. */
+  /* v3.107.4 : synchronise le pool d'ennemis du Cœur (Troll/Ronce dès l'Acte III) sur l'objet WORLDS
+     réel (référence directe, mutable en place) — évite de toucher combat-engine.js/progression-system.js
+     (protégés). Appelé à chaque round (comme _trackKills, non throttlé) : toujours frais avant le
+     prochain generateEnemy(), y compris juste après le chargement d'une save. */
+  _syncCoeurEnemyPool: function () {
+    if (!window.WORLDS || !window.STORY_COEUR_BASE_POOL) return;
+    var forestWorld = WORLDS.find(function (w) { return w.id === "forest"; });
+    var coeur = forestWorld && forestWorld.adventures[1];
+    if (!coeur) return;
+    // v3.107.8 : comparaison par id d'étape (pas un index numérique en dur) — reste correct même
+    // si la chaîne Histoire change de longueur (ex. forest_10 retirée, décision Seb).
+    var chapter = STORY_QUESTS.forest;
+    var currentIdx = (game.storyQuests && game.storyQuests.forest) ? game.storyQuests.forest.currentStep : 0;
+    var targetIdx = chapter.steps.findIndex(function (s) { return s.id === (window.STORY_COEUR_ACT3_STEP_ID || "forest_11"); });
+    var act3Reached = targetIdx !== -1 && currentIdx >= targetIdx;
+    var wantedPool = act3Reached ? STORY_COEUR_ACT3_POOL : STORY_COEUR_BASE_POOL;
+    coeur.enemyPool = wantedPool;
+  },
+
   _trackKills: function () {
     this.ensure();
+    this._syncCoeurEnemyPool();
     var st = game.storyQuests.forest;
     if (!st) return;
     var total = Number(game.totalKills || 0);
@@ -143,10 +164,15 @@ var StoryQuestManager = {
       if (!self.isCurrentStepReady(chapterId) || st.readyNotified) return;
       st.readyNotified = true;
       anyNew = true;
+      var step = self.getCurrentStep(chapterId);
       if (!silent) {
-        var step = self.getCurrentStep(chapterId);
         addLog("✅ Objectif atteint : " + step.title + " — réclame ta récompense dans Quêtes.", "event");
         if (typeof showToast === "function") showToast("✅ " + step.title + " — récompense prête", 2000);
+      }
+      // v3.107.1 : killTarget.autoReturn — dès l'objectif atteint (ex. forest_02 « Premier sang »), retour
+      // au Campement pour que le joueur voie tout de suite qu'il peut réclamer, sans continuer à farmer inutilement.
+      if (step && step.killTarget && step.killTarget.autoReturn && game.activeTab === "combat") {
+        if (typeof switchTab === "function") switchTab("campement");
       }
     });
     if (anyNew && typeof updateQuestBadge === "function") updateQuestBadge();
@@ -243,6 +269,7 @@ var StoryQuestManager = {
   /* Boot : garantit l'état et rattrape un objectif déjà atteint hors ligne (sans toast, le log suffit). */
   runRetroactiveCheck: function () {
     this.ensure();
+    this._syncCoeurEnemyPool();
     // Resynchronise le repère de kills au boot : les kills hors ligne (OfflineManager) ne sont pas
     // localisables, ils ne comptent pas comme victoires au Cœur.
     game.storyQuests.forest.lastSeenTotalKills = Number(game.totalKills || 0);
@@ -256,8 +283,17 @@ var StoryQuestManager = {
     if (!step || !step.linkTo) return;
     if (step.linkTo.tab) {
       if (typeof switchTab === "function") switchTab(step.linkTo.tab);
+      // v3.107.1 : sous-onglet optionnel (ex. forest_03 -> Menu > Amélioration directement, décision Seb).
+      if (step.linkTo.subTab && typeof setHerosSubTab === "function") setHerosSubTab(step.linkTo.subTab);
       return;
     }
+    // v3.107.6 : les 3 expéditions à mini-jeu (Sentier Obstrué, Veine Instable, Source Tarie)
+    // ont un vrai point d'entrée dédié — openQuestsAt() seul ne fait que changer d'onglet
+    // sans rien déclencher (bug remonté par Seb : bouton « Aller à la quête » inerte).
+    var cardId = step.linkTo.cardId || "";
+    if (cardId === "exploration_driedSpring" && typeof openDriedSpringQuest === "function") { openDriedSpringQuest(); return; }
+    if (cardId === "exploration_unstableVein" && typeof openUnstableVeinQuest === "function") { openUnstableVeinQuest(); return; }
+    if (cardId.indexOf("exploration_") === 0 && typeof openExplorationPrep === "function") { openExplorationPrep(cardId.replace("exploration_", "")); return; }
     if (typeof openQuestsAt === "function") openQuestsAt(step.linkTo.section, step.linkTo.cardId);
   }
 };

@@ -29,27 +29,9 @@ var HuntQuestManager = {
   },
 
   buildQuestEnemy: function (quest) {
-    if (!window.WorldManager) return null;
-    var worldIdx = (WORLDS || []).findIndex(function (w) { return w.id === quest.worldId; });
-    if (worldIdx === -1) return null;
-
-    var savedWorldIndex = WorldManager.worldIndex;
-    var savedAdventureIndex = WorldManager.adventureIndex;
-    var savedEnemyIndex = WorldManager.enemyIndex;
-
-    WorldManager.worldIndex = worldIdx;
-    WorldManager.adventureIndex = quest.adventureIndex;
-    var adventure = WorldManager.getAdventure();
-    var enemyCount = (adventure && adventure.enemyCount) || 1;
-    WorldManager.enemyIndex = 0;
-
-    var enemy = WorldManager.generateEnemy();
-
-    WorldManager.worldIndex = savedWorldIndex;
-    WorldManager.adventureIndex = savedAdventureIndex;
-    WorldManager.enemyIndex = savedEnemyIndex;
-
-    return enemy;
+    // v3.107.0 : délègue au module partagé (systems/quest-enemy-system.js), qui gère aussi le
+    // filtre d'ennemis optionnel de la quête (quest.enemyFilter). Les chasses n'ont pas de boss.
+    return window.QuestEnemyManager ? QuestEnemyManager.spawnFor(quest, false) : null;
   },
 
   applyQuestTheme: function (quest) {

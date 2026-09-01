@@ -320,6 +320,15 @@ function getCombatMissionProgressLabel() {
     var wave = Math.min(waveCount, Number(game.dungeonRun.wave || 0));
     return "Donjon · Vague " + wave + "/" + waveCount;
   }
+  // v3.107.1 : étape Histoire en farm libre avec killTarget déclaratif (ex. forest_02 « Premier sang »).
+  if (window.StoryQuestManager) {
+    var storyStep = StoryQuestManager.getCurrentStep("forest");
+    if (storyStep && storyStep.killTarget && StoryQuestManager.isCurrentStepAccepted("forest")) {
+      var kt = storyStep.killTarget;
+      var count = Math.min(kt.target, kt.counter(game));
+      return kt.label + " · " + count + "/" + kt.target;
+    }
+  }
   return "";
 }
 

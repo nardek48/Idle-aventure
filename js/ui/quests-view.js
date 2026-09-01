@@ -648,6 +648,10 @@ function openQuestsAt(sectionKey, cardId) {
   activeQuestsFilter = "active";
   if (cardId) expandedQuestCardIds[cardId] = true;
   if (typeof switchTab === "function") switchTab("quests");
+  // v3.107.6 : switchTab() seul ne re-render pas toujours immédiatement le panneau selon le
+  // point d'appel (bouton "Aller à la quête" depuis le Campement) — force le rendu pour être
+  // sûr que le joueur voit bien l'écran Quêtes à jour, pas un état visuellement figé.
+  if (typeof renderPanel === "function") renderPanel();
 }
 window.buildStoryChainHTML = buildStoryChainHTML;
 window.openQuestsAt = openQuestsAt;

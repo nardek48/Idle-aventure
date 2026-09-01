@@ -37,6 +37,7 @@ var ADVENTURE_QUESTS = {
     worldId: "forest",
     adventureIndex: 0,
     gatesTransitionTo: 1, // v3.100.0 : category "side" — seule la chaîne Histoire (story-quests.js) est « Principale »
+    enemyFilter: ["slime", "goblin", "spider"], // v3.107.4 : uniquement les ennemis génériques (décision Seb)
     name: "Prouver sa valeur",
     story: "Le Roi Slime géant règne sur la Lisière depuis des lunes, gardant jalousement le passage vers le cœur de la forêt. Pour qu'on te laisse poursuivre, il faudra d'abord montrer que tu n'es pas qu'un simple aventurier de passage.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.png",
@@ -45,7 +46,7 @@ var ADVENTURE_QUESTS = {
         id: "kills_expedition",
         type: "kill",
         worldId: "forest",
-        target: 15,
+        target: 9, // v3.107.2 : 15 -> 9 (décision Seb, trop dur — 9 kills + boss = 10 combats au total)
         desc: "Vaincre {target} ennemis en Forêt"
       },
       {
@@ -93,6 +94,7 @@ var ADVENTURE_QUESTS = {
     category: "side", // v3.100.1 : « Principale » réservée à la chaîne Histoire (story-quests.js)
     worldId: "forest",
     adventureIndex: 0,
+    enemyFilter: ["wolf"], // v3.107.0 : la Meute affamée ne fait combattre que des loups (cohérence narrative)
     name: "La Meute Affamée",
     story: "Des loups rôdent près du campement. Il faut réduire leur nombre avant d'envisager d'installer un poste de chasse permanent.",
     icon: "🐺",

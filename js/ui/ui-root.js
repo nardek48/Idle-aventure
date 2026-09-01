@@ -102,6 +102,14 @@ function switchTab(tabName) {
     tabName = "campement";
   }
 
+  // v3.107.3 : impossible d'entrer sur l'écran Combat à 0 PV — aucune action n'y était possible
+  // (isHeroTurnAvailable() refuse tout, y compris le bouton Attaque), ce qui donnait l'impression
+  // d'un jeu figé sans qu'aucun message n'explique qu'il fallait repasser par le Campement.
+  if (tabName === "combat" && (game.heroHp || 0) <= 0) {
+    tabName = "campement";
+    if (typeof showToast === "function") showToast("💀 Tu es à terre — soigne-toi au Campement avant de repartir.", 2000);
+  }
+
   var leavingCombat = game.activeTab === "combat" && tabName !== "combat";
   game.activeTab = tabName;
   // v3.102.1 : revenir au Campement pendant une exploration = rentrer (butin banqué)
@@ -146,6 +154,11 @@ function switchTab(tabName) {
   if (typeof updateHudPageTitle === "function") updateHudPageTitle();
   refreshTabBarVisibility();
   renderPanel();
+
+  // v3.107.7 : popup pédagogique par étape Histoire, à la première arrivée sur l'onglet concerné.
+  if (typeof maybeShowStepTutorial === "function") maybeShowStepTutorial("forest", tabName);
+  // v3.107.9 : popup pédagogique générique (non lié à une étape Histoire, ex. Village/Production).
+  if (typeof maybeShowGenericTutorial === "function") maybeShowGenericTutorial(tabName);
 }
 
 function renderAll() {

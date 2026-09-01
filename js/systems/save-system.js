@@ -510,6 +510,7 @@ function buildSaveData() {
     // même principe que construction ci-dessus, état simple sans
     // champ temporel à rattraper.
     workshopUnlock: game.workshopUnlock || {},
+    workshopFoundationsCompleted: !!game.workshopFoundationsCompleted,
     storyQuests: game.storyQuests || {}, // v3.100.0 : chaîne Histoire (data/story-quests.js, systems/story-quest-system.js)
     campfireLastUsed: game.campfireLastUsed || 0, // v3.7 : cooldown du feu de camp (long repos), voir systems/camp-system.js
     campfireShortLastUsed: game.campfireShortLastUsed || 0, // v3.14 : cooldown du repos court
@@ -518,7 +519,8 @@ function buildSaveData() {
     dungeonTiersEntered: game.dungeonTiersEntered || {},
     codexChaosSeen: !!game.codexChaosSeen,
     codexRead: game.codexRead || {},
-    hasSeenOnboarding: !!game.hasSeenOnboarding
+    hasSeenOnboarding: !!game.hasSeenOnboarding,
+    genericTutorialsSeen: game.genericTutorialsSeen || {}
   };
 }
 
@@ -610,6 +612,12 @@ function restoreBaseState(d) {
   game.questResetTime = Number(d.questResetTime || 0);
 
   game.activeTab = d.activeTab || "combat";
+  // v3.107.3 : une save enregistrée avec activeTab="combat" ET heroHp<=0 (ex. autosave juste après une
+  // mort, avant que switchTab("campement") n'ait fini de s'exécuter) recréait le blocage au rechargement
+  // — l'écran Combat n'offre aucune action possible à 0 PV, sans message l'expliquant.
+  if (game.activeTab === "combat" && (game.heroHp || 0) <= 0) {
+    game.activeTab = "campement";
+  }
   game.enemy = null;
   // v3.102.0 (P2) : l'état de round est transitoire (l'ennemi ne l'est pas non plus) — repart de zéro au chargement
   game.combatRound = { number: 0, busy: false, continueAttack: false, clockMs: 0 };
@@ -829,11 +837,26 @@ function restoreBaseState(d) {
   // rétroactive (runRetroactiveCheck()) tourne une fois au boot, voir
   // main/boot.js, APRÈS ce chargement.
   game.workshopUnlock = d.workshopUnlock && typeof d.workshopUnlock === "object" ? d.workshopUnlock : {};
+  // v3.107.8 : « Les fondations » sortie de la chaîne Histoire (quête secondaire indépendante).
+  // Migration : une save ayant déjà dépassé cette étape (steps réclamées avant le retrait, ou
+  // Atelier déjà terminé) ne doit pas se retrouver avec la mission encore active sur le tableau.
+  game.workshopFoundationsCompleted = !!d.workshopFoundationsCompleted || !!(game.workshopUnlock && game.workshopUnlock.completed);
   // v3.100.0 : chaîne Histoire. Migration : save antérieure (d.storyQuests absent) d'une
   // partie entamée dont tous les onglets sont déjà débloqués (legacy < v3.99.15, ou bouton
   // Paramètres) → chapitre court-circuité (skipped). Sinon la chaîne démarre à l'étape 1.
   if (d.storyQuests && typeof d.storyQuests === "object") {
     game.storyQuests = d.storyQuests;
+    // v3.107.8 : « Les fondations » (ex-forest_10, ancien index 9) retirée de la chaîne Histoire.
+    // Une save antérieure à cette version dont currentStep avait déjà dépassé cet index pointerait
+    // sinon vers la mauvaise étape (décalée d'un cran) une fois le tableau raccourci de 15 à 14
+    // entrées. Migration one-shot : abaisse currentStep de 1 si > 9, marquée pour ne jouer qu'une fois.
+    var forestState = game.storyQuests.forest;
+    if (forestState && !forestState.migratedV31078) {
+      if (typeof forestState.currentStep === "number" && forestState.currentStep > 9) {
+        forestState.currentStep -= 1;
+      }
+      forestState.migratedV31078 = true;
+    }
   } else {
     game.storyQuests = {};
     if (d.playerName) {
@@ -850,6 +873,7 @@ function restoreBaseState(d) {
   game.codexChaosSeen = !!d.codexChaosSeen;
   game.codexRead = d.codexRead && typeof d.codexRead === "object" ? d.codexRead : {};
   game.hasSeenOnboarding = !!d.hasSeenOnboarding;
+  game.genericTutorialsSeen = d.genericTutorialsSeen && typeof d.genericTutorialsSeen === "object" ? d.genericTutorialsSeen : {};
 
   ensureUpgradeDefaults();
 }
@@ -957,6 +981,7 @@ function hardResetState() {
   // même règle que Construction (une fois débloqué, jamais reverrouillé,
   // y compris à l'ascension).
   var keptWorkshopUnlock = JSON.parse(JSON.stringify(game.workshopUnlock || {}));
+  var keptWorkshopFoundationsCompleted = !!game.workshopFoundationsCompleted;
   // v3.100.0 : chaîne Histoire = permanente à l'ascension, comme unlockedTabs (jamais reverrouillé).
   var keptStoryQuests = JSON.parse(JSON.stringify(game.storyQuests || {}));
   var keptDungeonTiersEntered = Object.assign({}, game.dungeonTiersEntered || {});
@@ -984,6 +1009,7 @@ function hardResetState() {
   // v3.14 : le réglage d'autovente n'est plus conservé à l'ascension — logique puisque tout l'équipement est perdu à l'ascension.
   // Détail : save-system_notes.md #32.
   var keptHasSeenOnboarding = !!game.hasSeenOnboarding;
+  var keptGenericTutorialsSeen = Object.assign({}, game.genericTutorialsSeen || {});
 
   game.gold = 0;
   game.essence = 0;
@@ -1082,6 +1108,7 @@ function hardResetState() {
   game.production = keptProduction;
   game.construction = keptConstruction;
   game.workshopUnlock = keptWorkshopUnlock;
+  game.workshopFoundationsCompleted = keptWorkshopFoundationsCompleted;
   game.storyQuests = keptStoryQuests;
   // v3.31 : lastTick de chaque bâtiment doit repartir de "maintenant"
   // à l'ascension (sinon le premier tick/boot suivant croirait à une
@@ -1113,6 +1140,7 @@ function hardResetState() {
   game.autoSellEquipment = false;
   game.autoSellRarityThreshold = "common";
   game.hasSeenOnboarding = keptHasSeenOnboarding;
+  game.genericTutorialsSeen = keptGenericTutorialsSeen;
 
   WorldManager.worldIndex = 0;
   WorldManager.adventureIndex = 0;
@@ -1225,7 +1253,7 @@ function fullResetState() {
   // sur un reset complet, comme worldQuestProgress ci-dessus.
   // v3.35 : planche/lingot repartent aussi à zéro (artisanat tier 1).
   // v3.36 : pierre/farine idem.
-  game.resources = { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 4, petite_ration: 0, grande_ration: 0 }; // v3.106.0 : 4 rations moyennes de départ (repas), remplace viande/eau brutes
+  game.resources = { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 3, petite_ration: 0, grande_ration: 0 }; // v3.107.1 : 3 rations de départ (4 -> 3, décision Seb après test)
   game.adventureQuestProgress = {};
   game.adventureQuestsCompleted = {};
   game.huntStats = {}; // v3.30
@@ -1234,6 +1262,7 @@ function fullResetState() {
   game.production = {}; // v3.31 : repart à zéro, ProductionManager.ensure() recrée les 4 bâtiments au niveau 1
   game.construction = {}; // v3.37 : repart à zéro, ConstructionManager.ensure() recrée workshop au niveau 0
   game.workshopUnlock = {}; // v3.38 : repart à zéro, WorkshopUnlockManager.ensure() recrée l'état initial (currentStep 0)
+  game.workshopFoundationsCompleted = false; // v3.107.8
   game.storyQuests = {}; // v3.100.0 : repart à zéro, StoryQuestManager.ensure() recrée l'état initial (étape 1)
   game.dungeonTiersEntered = {};
   game.codexChaosSeen = false;
@@ -1272,6 +1301,7 @@ function fullResetState() {
   // ne les touche dans hardResetState), remise à vide seulement ici.
   game.grimoirePresets = [];
   game.hasSeenOnboarding = false;
+  game.genericTutorialsSeen = {}; // v3.107.9
 
   WorldManager.worldIndex = 0;
   WorldManager.adventureIndex = 0;

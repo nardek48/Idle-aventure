@@ -186,7 +186,8 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 
 .camp-mission-card.is-main {
   border-color: var(--nb-gold-dark);
-  box-shadow: 0 0 0 1px rgba(184, 134, 11, 0.25);
+  border-width: 2px;
+  box-shadow: 0 0 10px 1px rgba(212, 175, 55, 0.55);
 }
 
 .camp-mission-card.is-claimable {

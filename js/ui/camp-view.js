@@ -15,6 +15,12 @@ function buildCampMissionActionHTML(m) {
     return h;
   }
   if (m.accept) return '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'accept\')">🚩 Partir</button>';
+  // v3.107.6 : les expéditions à mini-jeu (Sentier Obstrué, Veine Instable, Source Tarie) sont
+  // status="available" avec SEULEMENT launch (pas d'accept) — aucun des 3 cas ci-dessus ne
+  // matchait, la carte n'affichait donc AUCUN bouton (bug : mission visible mais impossible à
+  // lancer depuis cette carte, seul "Aller à la quête" de l'étape Histoire y menait — et lui-même
+  // ne faisait que changer d'onglet sans rien déclencher, cf. openQuestsAt).
+  if (m.status === "available" && m.launch) return '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'launch\')">▶ Partir</button>';
   return "";
 }
 

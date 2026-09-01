@@ -64,6 +64,13 @@ function init() {
     if (window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(true);
   } else {
     addLog("Bienvenue, héros ! Tape l'ennemi pour commencer.", "event");
+    // v3.107.2 : bug préexistant — game.resources ne recevait aucune valeur de départ pour une TOUTE
+    // première visite (avant même l'échec de loadGame() faute de save). fullResetState() ne s'exécute
+    // que via le bouton "Réinitialiser tout", jamais ici. Sans ce correctif, un nouveau joueur n'avait
+    // jamais ses 3 rations de départ. Valeurs alignées sur fullResetState() (save-system.js).
+    if (game.resources && typeof game.resources.ration !== "number") {
+      game.resources.ration = 3;
+    }
   }
 
   if (window.EquipmentManager && typeof EquipmentManager.recalcStats === "function") {

@@ -24,7 +24,10 @@ var WORLDS = [
         id: "forest_1",
         name: "Lisière de la forêt",
         introText: "L'air est frais et plein de mystères...",
-        enemyPool: ["slime", "wolf", "goblin", "spider", "foresttroll", "bramble"], // v3.104.0 (P5) : +Troll des forêts, +Ronce animée
+        // v3.107.4 : pool de base réduit aux 3 ennemis génériques (décision Seb — tutoriel, pas de
+        // surcharge). Loup, Troll, Ronce restent dans ENEMY_DB mais ne sortent plus du farm libre :
+        // ils n'apparaissent que via enemyFilter sur leur quête dédiée (hq_wolf_pack pour le Loup).
+        enemyPool: ["slime", "goblin", "spider"],
         enemyCount: 10,
         boss: "slimeking"
       },
@@ -32,7 +35,7 @@ var WORLDS = [
         id: "forest_2",
         name: "Cœur de la forêt",
         introText: "Les arbres semblent chuchoter votre nom...",
-        enemyPool: ["wolf", "spider", "goblin", "slime", "foresttroll", "bramble"], // v3.104.0 (P5) : +Troll des forêts, +Ronce animée
+        enemyPool: ["slime", "goblin", "spider"], // v3.107.4 : voir note Lisière ci-dessus, même logique
         enemyCount: 10,
         boss: "orcwarlord" // v3.104.0 (P5) : nouveau boss du Cœur (le Roi Slime reste le boss de Lisière, forest_1)
       }
