@@ -1318,3 +1318,6 @@ img.combat-action-icon {
   padding: 3px 10px;
   margin-bottom: 28px;
 }
+
+/* v3.115.0 — potion per-run armée mais dormante (hors mission) : légèrement estompée. */
+.active-potion-icon.is-armed-idle { opacity: 0.55; filter: grayscale(0.35); }

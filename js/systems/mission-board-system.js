@@ -321,6 +321,27 @@ var MissionBoard = {
     }];
   },
 
+  /* ---------- Quêtes tutorielles du Village (v3.111.0, Lot B) : chaîne séquentielle
+     ciblée Champs (data/village-quests.js) — une seule carte à la fois (quête courante),
+     progression stateless lue en direct, réclamable au tableau comme « Les fondations ». */
+  _villageMissions: function () {
+    if (!window.VillageQuestManager) return [];
+    var quest = VillageQuestManager.getCurrentQuest();
+    if (!quest) return [];
+    if (!VillageQuestManager.isQuestAvailable(quest)) return []; // v3.112.0 : chaîne en pause (prérequis)
+    var ready = VillageQuestManager.isQuestReady(quest);
+    return [{
+      id: "village_" + quest.id, sourceKind: "village", worldId: null,
+      title: quest.title, blurb: (quest.narrative && quest.narrative.objective) || "",
+      type: "production", place: "", objectiveLabel: quest.objectiveLabel || "",
+      progressLabel: (typeof quest.progress === "function") ? quest.progress() : "",
+      rewardSummary: missionRewardSummary(quest.reward || {}), badge: "contract",
+      status: ready ? "claimable" : "available", isMain: false,
+      launch: function () { if (typeof switchTab === "function") switchTab("village"); },
+      claim: ready ? function () { return VillageQuestManager.claim(quest.id); } : null
+    }];
+  },
+
   /* ---------- Contrat du jour (journalières -> 1 tirage, décision §10 n°7) ---------- */
   _contractMissions: function () {
     if (!window.QuestManager || !Array.isArray(game.quests) || !game.quests.length) return [];
@@ -344,7 +365,8 @@ var MissionBoard = {
   list: function () {
     var self = this;
     var groups = [this._storyMissions(), this._worldExpeditionMissions(), this._contractMissions(),
-      this._adventureMissions(), this._huntMissions(), this._dungeonMissions(), this._explorationMissions(), this._workshopMissions()];
+      this._adventureMissions(), this._huntMissions(), this._dungeonMissions(), this._explorationMissions(), this._workshopMissions(),
+      this._villageMissions()]; // v3.111.0 (Lot B)
     var all = [].concat.apply([], groups);
     var rank = { story: 0 }; // l'Histoire garde toujours le rang 0 (colonne vertébrale, LIGNE_DIRECTRICE §3)
     var statusRank = { claimable: 0, ready: 0, running: 1, accepted: 1, available: 2, locked: 3 };

@@ -485,3 +485,66 @@
   margin-top: 6px;
 }
 
+
+/* ============================================================
+   v3.113.0 — Sous-onglet Village : cartes teaser du futur bourg
+   (les styles .village-building-* ci-dessus sont conservés pour
+   le futur contenu, plus référencés par village-view.js).
+   ============================================================ */
+
+.village-teaser-intro {
+  font-style: italic;
+  text-align: center;
+  color: var(--nb-ink-soft, #6b5a44);
+  padding: 10px 14px 4px;
+  line-height: 1.4;
+}
+
+.village-teaser-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 10px;
+}
+
+.village-teaser-card {
+  position: relative;
+  border: 1px dashed var(--nb-frame, #8a6f4d);
+  border-radius: var(--nb-radius-md, 10px);
+  padding: 18px 10px 14px;
+  text-align: center;
+  opacity: 0.62;
+  filter: grayscale(0.55);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.village-teaser-icon {
+  font-size: 34px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.village-teaser-label {
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.village-teaser-desc {
+  font-size: 12px;
+  color: var(--nb-ink-soft, #6b5a44);
+  line-height: 1.3;
+}
+
+.village-teaser-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--nb-frame, #8a6f4d);
+  background: rgba(255, 255, 255, 0.55);
+}

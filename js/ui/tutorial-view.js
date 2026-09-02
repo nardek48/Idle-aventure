@@ -117,3 +117,29 @@ function closeGenericTutorialModal(id) {
   if (typeof saveGame === "function") saveGame();
 }
 window.closeGenericTutorialModal = closeGenericTutorialModal;
+
+/* v3.111.0 (Lot B) : popups pédagogiques des quêtes tutorielles du Village — même rendu
+   (buildTutorialModalHTML), déclaré par quête dans data/village-quests.js (quest.tutorial),
+   affiché à la première arrivée sur l'onglet cible pendant que la quête est la courante
+   non réclamée. Persistance via VillageQuestManager (explorationProgression.villageQuests). */
+function maybeShowVillageQuestTutorial(tabName) {
+  if (pendingTutorial) return; // ne jamais écraser un popup déjà ouvert (même conteneur DOM)
+  if (!window.VillageQuestManager) return;
+  var quest = VillageQuestManager.getCurrentQuest();
+  if (!quest || !quest.tutorial || quest.tutorial.tab !== tabName) return;
+  if (!VillageQuestManager.isQuestAvailable(quest)) return; // v3.112.0 : chaîne en pause (prérequis)
+  if (VillageQuestManager.isTutorialSeen(quest.id)) return;
+
+  pendingTutorial = { villageQuestId: quest.id, tutorial: quest.tutorial };
+  var host = document.getElementById("tutorial-modal-root");
+  if (host) host.innerHTML = buildTutorialModalHTML("closeVillageQuestTutorialModal('" + esc(quest.id) + "')", quest.tutorial);
+}
+window.maybeShowVillageQuestTutorial = maybeShowVillageQuestTutorial;
+
+function closeVillageQuestTutorialModal(questId) {
+  if (window.VillageQuestManager) VillageQuestManager.markTutorialSeen(questId);
+  pendingTutorial = null;
+  var host = document.getElementById("tutorial-modal-root");
+  if (host) host.innerHTML = "";
+}
+window.closeVillageQuestTutorialModal = closeVillageQuestTutorialModal;

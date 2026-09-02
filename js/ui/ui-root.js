@@ -159,6 +159,7 @@ function switchTab(tabName) {
   if (typeof maybeShowStepTutorial === "function") maybeShowStepTutorial("forest", tabName);
   // v3.107.9 : popup pédagogique générique (non lié à une étape Histoire, ex. Village/Production).
   if (typeof maybeShowGenericTutorial === "function") maybeShowGenericTutorial(tabName);
+  if (typeof maybeShowVillageQuestTutorial === "function") maybeShowVillageQuestTutorial(tabName); // v3.111.0 (Lot B)
 }
 
 function renderAll() {

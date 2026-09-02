@@ -50,9 +50,8 @@ function gameLoop() {
     CombatEngine.tickRoundClock(combatDt);
   }
 
-  if (window.VillageManager && typeof VillageManager.tickAmbientHunting === "function") {
-    VillageManager.tickAmbientHunting(dt);
-  }
+  // v3.113.0 : chasse ambiante du village (VillageManager.tickAmbientHunting) supprimée —
+  // plus aucun or/kill passif en continu, l'or est désormais 100 % actif.
 
   if (window.ProductionManager && typeof ProductionManager.tick === "function") {
     ProductionManager.tick(dt);

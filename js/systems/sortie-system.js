@@ -48,6 +48,13 @@ var SortieManager = {
     s.potionsUsed = 0;
     s.kills = 0;
     addLog("🎒 Départ en sortie (" + (SORTIE_CONTEXT_LABELS[s.context] || s.context) + ") — le butin sera banqué au retour.", "event");
+    // v3.115.0 : potions per-run — leurs effets ne vivent que pendant une mission (jamais le
+    // farm libre), le recalc les applique à l'entrée. Voir potion-system.js.
+    if (s.context !== "farm" && window.PotionManager && window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
+      StatsSystem.recalcStats();
+      var armed = Object.keys(game.activePotions || {});
+      if (armed.length) addLog("🧪 " + armed.length + " potion" + (armed.length > 1 ? "s" : "") + " active" + (armed.length > 1 ? "s" : "") + " pour ce run.", "event");
+    }
     if (typeof renderCombatControls === "function") renderCombatControls();
     return true;
   },
@@ -132,6 +139,14 @@ var SortieManager = {
 
     game.sortie = { active: false, context: null, startedAt: 0, loot: this.emptyLoot(), potionsUsed: 0, kills: 0, killedBoss: false }; // v3.108.0 : reset complet
     game.lastSortieSummary = summary;
+    // v3.115.0 : fin d'un run de MISSION -> les potions per-run armées sont consommées (quelle
+    // que soit l'issue). Le farm libre ne consomme jamais (elles restent armées). recalcStats
+    // inclus dans consumeRunPotions (retire aussi les effets dormants via isEffectLive).
+    if (s.context !== "farm" && window.PotionManager && typeof PotionManager.consumeRunPotions === "function") {
+      PotionManager.consumeRunPotions();
+    } else if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
+      StatsSystem.recalcStats(); // sortie farm close : désarme les effets éventuels (isEffectLive redevient false)
+    }
     if (typeof renderCombatControls === "function") renderCombatControls();
     return summary;
   },

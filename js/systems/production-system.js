@@ -95,6 +95,11 @@ var ProductionManager = {
     if (!game.production[id] || typeof game.production[id] !== "object") {
       game.production[id] = { level: 1, stock: 0, lastTick: Date.now() };
     }
+    // v3.111.0 : bâtiment à zones -> initialise les parcelles immédiatement (zone 0 ouverte)
+    // plutôt qu'au tick suivant — les checks des quêtes de village lisent l'état en direct.
+    if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
+      ProductionPlotsSystem.ensurePlots(id);
+    }
   },
 
   /* v3.97.0 : tout bâtiment géré par ProductionPlotsSystem (9 zones indépendantes) n'a

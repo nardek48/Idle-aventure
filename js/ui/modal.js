@@ -37,6 +37,8 @@ function closeConfirmModal(confirmed) {
 window.showConfirmModal = showConfirmModal;
 window.closeConfirmModal = closeConfirmModal;
 
+/* v3.113.0 : la modale de retour affiche désormais la PRODUCTION accumulée pendant
+   l'absence (zones + ateliers), plus aucun or/essence/kill de village — voir OfflineManager. */
 function showOfflineModal(offline) {
   var modal = document.getElementById("offline-modal");
   if (!modal || !offline) return;
@@ -52,15 +54,24 @@ function showOfflineModal(offline) {
 
   if (rewardsEl) {
     var rows = [];
-    if (offline.gold > 0) rows.push('<div class="offline-reward-row">💰 +' + formatNumber(offline.gold) + ' or</div>');
-    if (offline.essence > 0) rows.push('<div class="offline-reward-row">' + renderIconOrEmojiHTML("images/Icons/essence_icon.png", "offline-reward-icon", "Essence") + ' +' + formatNumber(offline.essence) + ' essence</div>');
-    if (offline.aether > 0) rows.push('<div class="offline-reward-row">' + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "offline-reward-icon", "Aether") + ' +' + formatNumber(offline.aether) + ' Aether</div>');
-    if (offline.kills > 0) rows.push('<div class="offline-reward-row">⚔️ ' + formatNumber(offline.kills) + ' ennemis vaincus par la Vigie</div>');
-    if (offline.items && offline.items.length) {
-      offline.items.forEach(function (name) {
-        rows.push('<div class="offline-reward-row">🎁 ' + esc(name) + ' trouvé</div>');
-      });
+
+    var pushResourceRow = function (key, amount, suffix) {
+      var def = typeof WAREHOUSE_RESOURCES !== "undefined" ? WAREHOUSE_RESOURCES[key] : null;
+      var iconHTML = def && def.icon ? renderIconOrEmojiHTML(def.icon, "offline-reward-icon", def.name) : "📦";
+      rows.push('<div class="offline-reward-row">' + iconHTML + ' +' + formatNumber(amount) + ' ' + esc(def ? def.name : key) + (suffix || "") + '</div>');
+    };
+
+    Object.keys(offline.produced || {}).forEach(function (key) {
+      pushResourceRow(key, offline.produced[key], "");
+    });
+    Object.keys(offline.crafted || {}).forEach(function (key) {
+      pushResourceRow(key, offline.crafted[key], " (atelier)");
+    });
+
+    if (offline.fullPlots > 0) {
+      rows.push('<div class="offline-reward-row">⚠️ ' + offline.fullPlots + ' zone' + (offline.fullPlots > 1 ? 's' : '') + ' pleine' + (offline.fullPlots > 1 ? 's' : '') + ' sur ' + offline.openPlots + ' — pense à récolter !</div>');
     }
+
     rewardsEl.innerHTML = rows.join("");
   }
 

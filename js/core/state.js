@@ -15,16 +15,8 @@ function createDefaultEquipped() {
   };
 }
 
-function createDefaultVillage() {
-  return {
-    goldMine: 0,
-    essenceWell: 0,
-    barracks: 0,
-    timeRelay: 0,
-    watchtower: 0,
-    sanctuary: 0
-  };
-}
+/* v3.113.0 : createDefaultVillage() supprimée — les 6 bâtiments hors-ligne du village
+   n'existent plus (voir offline-system.js), game.village n'est plus persisté. */
 
 function createDefaultExplorationProgression() {
   return {
@@ -52,7 +44,12 @@ function createDefaultExplorationProgression() {
     ironLodeDiscoveryCompleted: false,
     mineUnlocked: false,
     fallowFieldDiscoveryCompleted: false,
-    farmUnlocked: false
+    farmUnlocked: false,
+    // v3.111.0 (Lot B) : état des quêtes tutorielles du Village (réclamées + popups vus).
+    // Rangé ICI (et non en champ racine) car save-system.js (protégé) est une liste
+    // blanche de champs mais persiste explorationProgression comme objet entier — et ce
+    // bloc doit être permanent (survit à l'ascension), comme les déblocages.
+    villageQuests: { claimed: {}, tutorialsSeen: {}, craftCounts: {} }
   };
 }
 
@@ -136,8 +133,6 @@ function createInitialGameState() {
     saveSupported: false,
     lastSave: 0,
     lastOnline: 0,
-
-    village: createDefaultVillage(),
 
     activePotions: {},
     pendingPotionBonuses: { aetherNext: 0 },
@@ -280,15 +275,7 @@ function ensureGameStateDefaults() {
       }
     });
   }
-  if (!game.village || typeof game.village !== "object") {
-    game.village = createDefaultVillage();
-  }
-  if (typeof game.village.goldMine !== "number") game.village.goldMine = 0;
-  if (typeof game.village.essenceWell !== "number") game.village.essenceWell = 0;
-  if (typeof game.village.barracks !== "number") game.village.barracks = 0;
-  if (typeof game.village.timeRelay !== "number") game.village.timeRelay = 0;
-  if (typeof game.village.watchtower !== "number") game.village.watchtower = 0;
-  if (typeof game.village.sanctuary !== "number") game.village.sanctuary = 0;
+  // v3.113.0 : plus aucun défaut game.village — champ abandonné (bâtiments supprimés).
 
   if (!game.classCooldowns || typeof game.classCooldowns !== "object") game.classCooldowns = {};
   if (typeof game.classResource === "undefined") game.classResource = null;
@@ -424,6 +411,9 @@ function ensureGameStateDefaults() {
   if (typeof game.explorationProgression.farmUnlocked !== "boolean") {
     game.explorationProgression.farmUnlocked = false;
   }
+  if (!game.explorationProgression.villageQuests || typeof game.explorationProgression.villageQuests !== "object") {
+    game.explorationProgression.villageQuests = { claimed: {}, tutorialsSeen: {} };
+  }
   if (!game.gatheringActivity || typeof game.gatheringActivity !== "object") {
     game.gatheringActivity = createDefaultGatheringActivity();
   }
@@ -450,7 +440,6 @@ ensureGameStateDefaults();
 
 window.game = game;
 window.createDefaultEquipped = createDefaultEquipped;
-window.createDefaultVillage = createDefaultVillage;
 window.createDefaultExplorationProgression = createDefaultExplorationProgression;
 window.createInitialGameState = createInitialGameState;
 window.ensureGameStateDefaults = ensureGameStateDefaults;

@@ -388,6 +388,25 @@ function collectCompletedQuestCardEntries() {
     });
   }
 
+  // v3.111.0 (Lot B) : quêtes tutorielles du Village réclamées (chaîne Champs).
+  if (window.VillageQuestManager && window.VILLAGE_QUESTS) {
+    VILLAGE_QUESTS.forEach(function (quest) {
+      if (!VillageQuestManager.isClaimed(quest.id)) return;
+      entries.push({
+        worldId: null,
+        section: quest.section || "resource",
+        html: buildCollapsibleQuestCardHTML(
+          'village_' + quest.id,
+          quest.icon || "🏡",
+          quest.title,
+          buildVillageQuestDetailHTML(quest),
+          "is-claimed",
+          quest
+        )
+      });
+    });
+  }
+
   if (window.ExplorationManager && window.EXPLORATION_QUESTS) {
     Object.keys(EXPLORATION_QUESTS).forEach(function (key) {
       var quest = EXPLORATION_QUESTS[key];
@@ -673,6 +692,35 @@ function openQuestsAt(sectionKey, cardId) {
 }
 window.buildStoryChainHTML = buildStoryChainHTML;
 window.openQuestsAt = openQuestsAt;
+
+/* v3.111.0 (Lot B) : détail d'une quête tutorielle du Village réclamée — narratif de
+   conclusion + récompense (le suivi de la quête courante vit au tableau de missions). */
+function buildVillageQuestDetailHTML(quest) {
+  var h = '';
+  h += '<div class="map-quest-step">';
+  h += '<div class="map-quest-step-row">';
+  h += '<span class="map-quest-step-desc">' + esc((quest.narrative && quest.narrative.completion) || quest.objectiveLabel || '') + '</span>';
+  h += '</div>';
+  h += '</div>';
+
+  var reward = quest.reward || {};
+  var parts = [];
+  if (reward.gold) parts.push(formatNumber(reward.gold) + ' or');
+  if (reward.essence) parts.push(formatNumber(reward.essence) + ' essence');
+  if (reward.resources && typeof reward.resources === 'object') {
+    Object.keys(reward.resources).forEach(function (key) {
+      var def = (window.WAREHOUSE_RESOURCES || {})[key];
+      parts.push(formatNumber(reward.resources[key]) + ' ' + (def ? def.name : key));
+    });
+  }
+  h += '<div class="map-quest-reward">';
+  h += '<span class="map-quest-reward-label">Récompense</span>';
+  h += '<span class="map-quest-reward-value">' + esc(parts.join(' · ') || '—') + '</span>';
+  h += '</div>';
+
+  h += '<div class="map-quest-claimed-label">✔ Terminée</div>';
+  return h;
+}
 
 function buildExplorationQuestDetailHTML(quest, run) {
   var isRunning = !!(run && run.questId === quest.id && run.status !== "completed");

@@ -417,7 +417,7 @@ function buildSaveData() {
     talentPoints: Number(game.talentPoints || 0),
     heroHp: Number(game.heroHp != null ? game.heroHp : (game.heroMaxHp || 10)),
     heroMaxHp: Number(game.heroMaxHp || 10),
-    village: game.village || { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 },
+    // v3.113.0 : game.village n'est plus persisté (bâtiments hors-ligne supprimés).
     activePotions: game.activePotions || {},
     pendingPotionBonuses: game.pendingPotionBonuses || { aetherNext: 0 },
     aetherElixirStackCount: Number(game.aetherElixirStackCount || 0),
@@ -632,18 +632,9 @@ function restoreBaseState(d) {
 
   game.combatSpeed = [1, 2, 4].indexOf(Number(d.combatSpeed)) !== -1 ? Number(d.combatSpeed) : 1;
 
-  game.village = d.village && typeof d.village === "object"
-    ? d.village
-    : { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0 };
-
-  if (window.VillageManager && typeof VillageManager.ensure === "function") {
-    VillageManager.ensure();
-  }
-
-  if (typeof game.village.goldMine !== "number") game.village.goldMine = 0;
-  if (typeof game.village.essenceWell !== "number") game.village.essenceWell = 0;
-  if (typeof game.village.barracks !== "number") game.village.barracks = 0;
-  if (typeof game.village.timeRelay !== "number") game.village.timeRelay = 0;
+  // v3.113.0 : d.village (anciens bâtiments hors-ligne) est ignoré au chargement —
+  // reset définitif du village validé avec Seb, aucun remboursement.
+  if (typeof game.village !== "undefined") delete game.village;
 
   game.activePotions = d.activePotions && typeof d.activePotions === "object" ? d.activePotions : {};
   game.pendingPotionBonuses = d.pendingPotionBonuses && typeof d.pendingPotionBonuses === "object"
@@ -970,8 +961,8 @@ function hardResetState() {
     game.explorationProgression || {}
   );
   // v3.31 : bâtiments de production (niveau + stock local) = progression
-  // permanente, comme le Village (VILLAGE_CONFIG) — un joueur qui a
-  // investi dans sa Chasse/Champs/Scierie/Mine ne perd pas ces niveaux
+  // permanente (v3.113.0 : l'ancien Village hors-ligne a disparu) — un joueur
+  // qui a investi dans sa Chasse/Champs/Scierie/Mine ne perd pas ces niveaux
   // à l'ascension. deep-copy nécessaire (objet imbriqué par bâtiment).
   var keptProduction = JSON.parse(JSON.stringify(game.production || {}));
   // v3.37 : bâtiments de Construction = progression permanente,
@@ -1006,7 +997,6 @@ function hardResetState() {
   var keptEquipShopStock = game.equipShopStock || [];
   var keptEquipShopResetTime = Number(game.equipShopResetTime || 0);
   var keptEquipShopManualRefreshCount = Number(game.equipShopManualRefreshCount || 0);
-  var keptVillage = Object.assign({ goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0, watchtower: 0, sanctuary: 0 }, game.village || {});
   // v3.14 : le réglage d'autovente n'est plus conservé à l'ascension — logique puisque tout l'équipement est perdu à l'ascension.
   // Détail : save-system_notes.md #32.
   var keptHasSeenOnboarding = !!game.hasSeenOnboarding;
@@ -1057,8 +1047,6 @@ function hardResetState() {
   game.enemy = null;
   game.lastOnline = Date.now();
   game.lastSave = 0;
-  game.village = keptVillage;
-
   game.equipShopStock = keptEquipShopStock;
   game.equipShopResetTime = keptEquipShopResetTime;
   game.equipShopManualRefreshCount = keptEquipShopManualRefreshCount;
@@ -1217,8 +1205,6 @@ function fullResetState() {
   game.enemy = null;
   game.lastOnline = Date.now();
   game.lastSave = 0;
-  game.village = { goldMine: 0, essenceWell: 0, barracks: 0, timeRelay: 0, watchtower: 0, sanctuary: 0 };
-
   // v2.26 : tous les systèmes ajoutés depuis la 1ère version de fullResetState() — oubliés jusqu'ici, un reset "complet" ne l'était pas vraiment.
   game.equipShopStock = [];
   game.equipShopResetTime = 0;

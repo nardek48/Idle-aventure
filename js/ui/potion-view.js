@@ -2,25 +2,28 @@
 /* ui/potion-view.js — sous-onglet Potions de la Boutique. Achat ajoute au stock (activation séparée, voir equipment-view.js). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 function buildPotionCardHTML(potion) {
-  var remaining = (window.PotionManager && typeof PotionManager.getRemainingMs === "function")
-    ? PotionManager.getRemainingMs(potion.id)
-    : 0;
-  var isActive = remaining > 0;
+  // v3.115.0 : per-run — plus de minuteur. États : armée (bue, en attente d'une mission),
+  // active (mission en cours), sinon stock/achat. Cap de stock POTION_STOCK_CAP.
+  var isArmed = potion.perRun && window.PotionManager && typeof PotionManager.isArmed === "function" && PotionManager.isArmed(potion.id);
+  var isLive = isArmed && PotionManager.isEffectLive();
   var stock = (window.PotionManager && typeof PotionManager.getStock === "function") ? PotionManager.getStock(potion.id) : 0;
   var cost = (window.PotionManager && typeof PotionManager.getCost === "function") ? PotionManager.getCost(potion) : potion.cost;
-  var isStockCapped = !!potion.durationMin && stock >= 1;
+  var cap = typeof POTION_STOCK_CAP === "number" ? POTION_STOCK_CAP : 9;
+  var isStockCapped = !!potion.perRun && stock >= cap;
   var canBuy = !isStockCapped && (game.gold || 0) >= cost;
 
-  var h = '<div class="nb-purchase-card rarity-' + esc(potion.rarity) + (isActive ? ' is-active' : '') + '">';
+  var h = '<div class="nb-purchase-card rarity-' + esc(potion.rarity) + (isLive ? ' is-active' : '') + '">';
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(potion.icon, "nb-purchase-icon", potion.name) + '</div></div>';
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name">' + esc(potion.name) + '</div>';
   h += '<div class="nb-purchase-desc">' + esc(potion.desc) + '</div>';
-  h += '<div class="nb-purchase-meta">🎒 Stock : ' + stock + '</div>';
+  h += '<div class="nb-purchase-meta">🎒 Stock : ' + stock + (potion.perRun ? ' / ' + cap : '') + '</div>';
 
-  if (isActive) {
-    h += '<div class="nb-purchase-meta">⏳ ' + esc(formatTime(Math.ceil(remaining / 1000))) + ' restant</div>';
-  } else if (!potion.durationMin) {
+  if (isLive) {
+    h += '<div class="nb-purchase-meta">⚗️ Active — mission en cours</div>';
+  } else if (isArmed) {
+    h += '<div class="nb-purchase-meta">🧪 Armée pour la prochaine mission</div>';
+  } else if (!potion.perRun) {
     var pending = (game.pendingPotionBonuses && game.pendingPotionBonuses.aetherNext) || 0;
     if (pending > 0) {
       h += '<div class="nb-purchase-meta">' + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "nb-purchase-cost-icon", "Aether") + ' Bonus prêt : +' + Math.round(pending * 100) + '% à la prochaine ascension</div>';
@@ -29,7 +32,7 @@ function buildPotionCardHTML(potion) {
 
   h += '</div>';
   if (isStockCapped) {
-    h += '<div class="nb-purchase-buy-col"><button class="btn-buy cant-afford" type="button" disabled>EN STOCK</button></div>';
+    h += '<div class="nb-purchase-buy-col"><button class="btn-buy cant-afford" type="button" disabled>STOCK PLEIN</button></div>';
   } else {
     h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
   }

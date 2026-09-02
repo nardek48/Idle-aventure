@@ -92,9 +92,10 @@ var CODEX_ENTRIES = [
     icon: "🏘️",
     category: "system",
     text: "Entre deux incursions, le héros n'est pas seul. Un village s'est formé en marge du Cycle, peuplé de ceux qui ont choisi de ne pas Ascensionner — pas par lâcheté, mais parce que quelqu'un doit rester pour entretenir les relais, cultiver les réserves, et veiller sur ceux qui reviennent blessés. C'est grâce à eux que le temps continue de produire des ressources même quand le héros n'est pas présent : ils ne combattent pas la Rupture, ils s'assurent simplement qu'elle ne consume pas tout pendant qu'on n'y prête pas attention.",
+    /* v3.113.0 : les bâtiments hors-ligne du village n'existent plus — débloqué dès
+       qu'un bâtiment de Production a été actif (bucket game.production existant). */
     isUnlocked: function () {
-      if (!game.village) return false;
-      return Object.keys(game.village).some(function (key) { return (game.village[key] || 0) > 0; });
+      return !!(game.production && Object.keys(game.production).length);
     }
   },
 

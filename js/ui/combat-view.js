@@ -69,16 +69,18 @@ function renderHealButtons() {
 function buildActivePotionsBarHTML() {
   if (typeof POTIONS_DB === "undefined" || !window.PotionManager) return "";
 
+  // v3.115.0 : per-run — icônes des potions armées, sans minuteur. ⚔ = effet vivant
+  // (mission en cours), sinon armée en attente du prochain run.
+  var live = typeof PotionManager.isEffectLive === "function" && PotionManager.isEffectLive();
   var h = "";
   POTIONS_DB.forEach(function (potion) {
-    if (!potion.durationMin) return; // Élixir d'Aether : pas de minuteur, ignoré ici
-    var remainingMs = PotionManager.getRemainingMs(potion.id);
-    if (remainingMs <= 0) return;
+    if (!potion.perRun) return; // Élixir d'Aether : hors runs, ignoré ici
+    if (!PotionManager.isArmed(potion.id)) return;
 
-    var remainingMin = Math.ceil(remainingMs / 60000);
-    h += '<div class="active-potion-icon" title="' + esc(potion.name) + ' — ' + remainingMin + ' min restantes">';
+    var title = potion.name + (live ? " — active pour ce run" : " — armée pour la prochaine mission");
+    h += '<div class="active-potion-icon' + (live ? '' : ' is-armed-idle') + '" title="' + esc(title) + '">';
     h += '<img src="' + esc(potion.icon) + '" alt="' + esc(potion.name) + '">';
-    h += '<span class="active-potion-timer">' + remainingMin + '</span>';
+    if (live) h += '<span class="active-potion-timer">⚔</span>';
     h += '</div>';
   });
 

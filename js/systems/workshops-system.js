@@ -379,6 +379,10 @@ var WorkshopsSystem = {
         if (output.resourceId === "planche" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.notifyPlanchesCrafted === "function") {
           WorkshopUnlockManager.notifyPlanchesCrafted(output.quantity * entry.times);
         }
+        // v3.112.0 (Lot C) : compteur générique par ressource produite (quêtes d'atelier).
+        if (window.VillageQuestManager && typeof VillageQuestManager.notifyRecipeCrafted === "function") {
+          VillageQuestManager.notifyRecipeCrafted(output.resourceId, output.quantity * entry.times);
+        }
       });
 
       var outDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
@@ -438,6 +442,10 @@ var WorkshopsSystem = {
         recipe.outputs.forEach(function (output) {
           if (output.resourceId === "planche" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.notifyPlanchesCrafted === "function") {
             WorkshopUnlockManager.notifyPlanchesCrafted(output.quantity * entry.times);
+          }
+          // v3.112.0 (Lot C) : compteur générique par ressource produite (quêtes d'atelier).
+          if (window.VillageQuestManager && typeof VillageQuestManager.notifyRecipeCrafted === "function") {
+            VillageQuestManager.notifyRecipeCrafted(output.resourceId, output.quantity * entry.times);
           }
         });
 

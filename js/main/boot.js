@@ -29,6 +29,12 @@ function init() {
   // catchUpOffline() pour que le rattrapage de production tienne compte du déblocage.
   if (typeof applyQuestUnlockSideEffects === "function") applyQuestUnlockSideEffects();
 
+  // v3.113.0 : photographie l'état de la Production AVANT le rattrapage — le delta après
+  // catchUpOffline() alimente la modale de retour d'absence (voir OfflineManager).
+  if (window.OfflineManager && typeof OfflineManager.snapshot === "function") {
+    OfflineManager.snapshot();
+  }
+
   if (window.ProductionManager && typeof ProductionManager.catchUpOffline === "function") {
     ProductionManager.catchUpOffline();
   }
@@ -54,8 +60,10 @@ function init() {
     addLog("Partie chargée", "event");
     showToast("Partie chargée", 1400);
 
-    if (window.OfflineManager && typeof OfflineManager.calculate === "function") {
-      var offline = OfflineManager.calculate();
+    // v3.113.0 : résumé de retour d'absence basé sur la Production (delta du snapshot
+    // pris avant catchUpOffline) — remplace l'ancien calcul or/essence/kills du village.
+    if (window.OfflineManager && typeof OfflineManager.summarize === "function") {
+      var offline = OfflineManager.summarize();
       if (offline && typeof OfflineManager.show === "function") {
         OfflineManager.show(offline);
       }

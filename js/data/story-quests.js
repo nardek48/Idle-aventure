@@ -10,13 +10,13 @@ var STORY_REWARDS = {
   forest_02: { gold: 100, essence: 5 },
   forest_03: { gold: 150, essence: 5 },
   forest_04: { healingPotion: { id: "potion_soin_mineur", count: 1 } },
-  forest_05: { gold: 400, essence: 10 },
+  forest_05: { gold: 400, essence: 10, potions: { potion_power: 1 } }, // v3.115.0 : découverte des potions per-run
   forest_06: { gold: 200, resources: { viande: 15 } },
   forest_07: { gold: 150, essence: 5, resources: { eau: 5 } },
   forest_08: { gold: 200, essence: 5 },
   forest_09: { gold: 200, essence: 5 },
   forest_crossing: { gold: 250, essence: 10 }, // v3.109.0 : Franchir la Lisière (placeholder, même échelle que 08/09)
-  forest_10: { gold: 500, essence: 15 },
+  forest_10: { gold: 500, essence: 15, potions: { potion_endurance: 1, potion_power: 1 } }, // v3.115.0 : kit avant le Cœur
   forest_11: { gold: 300, essence: 10 },
   forest_12: { gold: 400, essence: 10 },
   forest_13: { gold: 500, essence: 15 },

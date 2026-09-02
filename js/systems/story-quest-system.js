@@ -129,8 +129,8 @@ var StoryQuestManager = {
      combat-engine appelle renderAll() après chaque kill, donc le delta de game.totalKills entre deux
      appels = kills récents. Attribué au Cœur si worldIndex 0 / adventureIndex 1, hors runs de
      Chasse/Donjon/Quête d'aventure (v3.109.0 : la quête n'était pas exclue — ses kills sont ceux de son
-     propre run, pas de la position WorldManager). Limite connue : les kills de chasse ambiante
-     (OfflineManager.tickAmbientHunting) au Cœur comptent aussi — accepté. */
+     propre run, pas de la position WorldManager). v3.113.0 : la chasse ambiante du village
+     est supprimée — tous les kills comptés ici sont désormais des kills réels. */
   /* v3.107.4 : synchronise le pool d'ennemis du Cœur (Troll/Ronce dès l'Acte III) sur l'objet WORLDS
      réel (référence directe, mutable en place) — évite de toucher combat-engine.js/progression-system.js
      (protégés). Appelé à chaque round (comme _trackKills, non throttlé) : toujours frais avant le
@@ -249,6 +249,21 @@ var StoryQuestManager = {
       var potion = (window.PotionManager && typeof PotionManager.getHealingPotion === "function") ? PotionManager.getHealingPotion(reward.healingPotion.id) : null;
       rows.push({ label: potion ? potion.name : "Potion", value: "×" + count });
     }
+    /* v3.115.0 : potions per-run en récompense — reward.potions = {potionId: n}, ajoutées au
+       stock (potionsOwned, plafond POTION_STOCK_CAP), même porte pour les quêtes de village. */
+    if (reward.potions && typeof reward.potions === "object" && window.PotionManager) {
+      PotionManager.ensure();
+      var potionCap = typeof POTION_STOCK_CAP === "number" ? POTION_STOCK_CAP : 9;
+      Object.keys(reward.potions).forEach(function (pid) {
+        var pdef = PotionManager.getPotion(pid);
+        if (!pdef || !pdef.perRun) return; // seules les potions per-run sont distribuables
+        var have = Number(game.potionsOwned[pid] || 0);
+        var granted = Math.max(0, Math.min(potionCap - have, Number(reward.potions[pid] || 0)));
+        if (granted <= 0) return;
+        game.potionsOwned[pid] = have + granted;
+        rows.push({ label: pdef.name, value: "×" + granted });
+      });
+    }
     if (reward.resources && typeof reward.resources === "object" && window.WarehouseManager) {
       Object.keys(reward.resources).forEach(function (key) {
         var applied = WarehouseManager.addResource(key, reward.resources[key], true);
@@ -286,8 +301,8 @@ var StoryQuestManager = {
   runRetroactiveCheck: function () {
     this.ensure();
     this._syncCoeurEnemyPool();
-    // Resynchronise le repère de kills au boot : les kills hors ligne (OfflineManager) ne sont pas
-    // localisables, ils ne comptent pas comme victoires au Cœur.
+    // Resynchronise le repère de kills au boot — garde-fou conservé (v3.113.0 : plus de
+    // kills hors ligne, mais la resync reste un filet contre toute dérive du compteur).
     game.storyQuests.forest.lastSeenTotalKills = Number(game.totalKills || 0);
     this._checkNow(true);
   },

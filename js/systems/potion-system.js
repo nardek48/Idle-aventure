@@ -1,6 +1,11 @@
 "use strict";
-/* systems/potion-system.js — potions temporaires (data/potions.js) : achat/stock découplés de l'activation, effets lus par StatsSystem.recalcStats().
-   activePotions = {id: expiry} ; pendingPotionBonuses = bonus sans minuteur (Élixir d'Aether). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* systems/potion-system.js — v3.115.0 : potions PER-RUN (décision Seb). activePotions = {id: true}
+   (armées — plus de minuteur) ; l'effet ne s'applique que pendant un run de MISSION
+   (SortieManager.isMission(), jamais le farm libre) et les potions armées sont consommées à la
+   fin du run (voir hooks dans sortie-system.js). Cumulables : 1 de chaque type par run. Une
+   potion bue au camp reste armée indéfiniment jusqu'au prochain run. Élixir d'Aether inchangé
+   (pendingPotionBonuses, hors runs). Anciennes saves : timestamps normalisés en booléens à
+   ensure(). Ancien système 30 min : COMMENTAIRES_ORIGINAUX.md */
 
 var POTION_CYCLE_PRICE_GROWTH = 0.15;
 
@@ -13,6 +18,40 @@ var PotionManager = {
     if (typeof game.pendingPotionBonuses.aetherNext !== "number") game.pendingPotionBonuses.aetherNext = 0;
     if (typeof game.aetherElixirStackCount !== "number") game.aetherElixirStackCount = 0;
     if (!game.potionsOwned || typeof game.potionsOwned !== "object") game.potionsOwned = {};
+    // v3.115.0 : normalise l'ancien format {id: timestampExpiry} en {id: true} — une potion
+    // encore minutée à la migration devient simplement armée pour le prochain run (généreux).
+    Object.keys(game.activePotions).forEach(function (id) {
+      var v = game.activePotions[id];
+      if (v === true) return;
+      if (typeof v === "number" && v > Date.now()) game.activePotions[id] = true;
+      else delete game.activePotions[id];
+    });
+  },
+
+  /* Une potion est « armée » dès qu'elle est bue ; son effet n'est VIVANT que pendant une mission. */
+  isArmed: function (id) {
+    this.ensure();
+    return game.activePotions[id] === true;
+  },
+
+  isEffectLive: function () {
+    // Lecture PASSIVE de game.sortie (jamais SortieManager.isMission() qui passe par ensure()
+    // et recréerait l'objet — hardResetState/fullResetState mettent game.sortie à null et
+    // recalcStats() passe par ici).
+    var s = game.sortie;
+    return !!(s && s.active && s.context && s.context !== "farm");
+  },
+
+  /* Consomme toutes les potions armées — appelé par SortieManager à la fin d'un run de
+     MISSION (quelle que soit l'issue : bues, elles sont bues). Jamais appelé pour le farm. */
+  consumeRunPotions: function () {
+    this.ensure();
+    var ids = Object.keys(game.activePotions);
+    if (!ids.length) return false;
+    game.activePotions = {};
+    if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
+    addLog("🧪 Effets de potions dissipés (fin du run).", "event");
+    return true;
   },
 
   getPotion: function (id) {
@@ -22,17 +61,6 @@ var PotionManager = {
   getStock: function (id) {
     this.ensure();
     return Number(game.potionsOwned[id] || 0);
-  },
-
-  getRemainingMs: function (id) {
-    this.ensure();
-    var expires = game.activePotions[id];
-    if (!expires) return 0;
-    return Math.max(0, expires - Date.now());
-  },
-
-  isActive: function (id) {
-    return this.getRemainingMs(id) > 0;
   },
 
   getCost: function (potion) {
@@ -58,13 +86,14 @@ var PotionManager = {
     var cost = this.getCost(potion);
     if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
 
-    if (potion.durationMin && this.getStock(id) >= 1) {
-      return showToast("Déjà 1 en stock — utilise-la avant d'en racheter", 1600);
+    var cap = typeof POTION_STOCK_CAP === "number" ? POTION_STOCK_CAP : 9;
+    if (potion.perRun && this.getStock(id) >= cap) {
+      return showToast("Stock plein (" + cap + " max)", 1400);
     }
 
     game.gold -= cost;
     game.potionsOwned[id] = this.getStock(id) + 1;
-    if (!potion.durationMin) game.aetherElixirStackCount = Number(game.aetherElixirStackCount || 0) + 1;
+    if (!potion.perRun) game.aetherElixirStackCount = Number(game.aetherElixirStackCount || 0) + 1;
 
     if (window.QuestManager && typeof QuestManager.track === "function") {
       QuestManager.track("goldSpent", cost);
@@ -88,21 +117,19 @@ var PotionManager = {
     var stock = this.getStock(id);
     if (stock <= 0) return showToast("Aucune potion en stock", 1000);
 
-    if (potion.durationMin) {
-      var now = Date.now();
-      var hasOtherActive = Object.keys(game.activePotions).some(function (activeId) {
-        return activeId !== id && game.activePotions[activeId] > now;
-      });
-      if (hasOtherActive) {
-        return showToast("Une seule potion à bonus active à la fois", 1600);
-      }
+    if (potion.perRun && this.isArmed(id)) {
+      return showToast("Déjà armée pour ce run — 1 par type et par run", 1600);
     }
 
     game.potionsOwned[id] = stock - 1;
 
-    if (potion.durationMin) {
-      game.activePotions[id] = Date.now() + potion.durationMin * 60000;
-      addLog("🧪 " + potion.name + " bue (" + potion.durationMin + " min)", "event");
+    if (potion.perRun) {
+      game.activePotions[id] = true;
+      if (this.isEffectLive()) {
+        addLog("🧪 " + potion.name + " bue — active pour la mission en cours.", "event");
+      } else {
+        addLog("🧪 " + potion.name + " bue — armée pour la prochaine mission.", "event");
+      }
     } else {
       game.pendingPotionBonuses.aetherNext = Number(game.pendingPotionBonuses.aetherNext || 0) + potion.bonus;
       addLog("🌀 " + potion.name + " bu — bonus prêt pour la prochaine ascension", "event");
@@ -138,26 +165,13 @@ var PotionManager = {
     saveGame();
   },
 
+  /* v3.115.0 : plus de minuteur — expiration événementielle (fin de run, consumeRunPotions).
+     Signature conservée pour l'appel existant de game-loop.js (protégé, non modifié). */
   tick: function () {
-    this.ensure();
-    var now = Date.now();
-    var changed = false;
-
-    Object.keys(game.activePotions).forEach(function (id) {
-      if (game.activePotions[id] <= now) {
-        delete game.activePotions[id];
-        changed = true;
-      }
-    });
-
-    if (changed && window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
-      StatsSystem.recalcStats();
-    }
-
-    return changed;
+    return false;
   },
 
-  ensureHealing: function () {
+    ensureHealing: function () {
     if (!game.healingPotionsOwned || typeof game.healingPotionsOwned !== "object") {
       game.healingPotionsOwned = {};
     }
@@ -240,13 +254,12 @@ var PotionManager = {
 
   getActiveEffects: function () {
     this.ensure();
-    var now = Date.now();
     var effects = {};
+    if (!this.isEffectLive()) return effects; // armées mais dormantes hors mission (jamais de boost du farm libre)
 
     (POTIONS_DB || []).forEach(function (potion) {
-      if (!potion.durationMin) return;
-      var expires = game.activePotions[potion.id];
-      if (expires && expires > now) {
+      if (!potion.perRun) return;
+      if (game.activePotions[potion.id] === true) {
         effects[potion.stat] = (effects[potion.stat] || 0) + potion.bonus;
       }
     });
