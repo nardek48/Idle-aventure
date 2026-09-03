@@ -92,25 +92,18 @@ function init() {
 
   if (typeof renderAll === "function") renderAll();
 
-  // v3.90.0 : reprise d'une expédition en cours (rechargement de page en plein milieu)
-  // — jamais de nouveau tirage aléatoire, l'état est déjà figé dans game.explorationRun.
-  if (window.ExplorationManager && typeof ExplorationManager.isRunActive === "function" && ExplorationManager.isRunActive()) {
-    if (typeof resumeExplorationRun === "function") resumeExplorationRun();
+  // v3.120.0 (Lot S1) : reprise d'une expédition scene-engine en cours (rechargement de page
+  // en plein milieu) — jamais de nouveau tirage aléatoire, l'état est déjà figé dans game.sceneRun.
+  // resumeSceneRun() gère elle-même la navigation (switchTab("scene"), l'écran étant un onglet
+  // plein cadre et non une popup) : on saute l'appel générique switchTab() du bas dans ce cas.
+  // v3.124.0 (retrait ancien moteur) : les blocs resumeExplorationRun/resumeMiningSession/
+  // resumeWellSession retirés — ExplorationManager/MiningManager/WellManager n'existent plus.
+  var sceneRunResumed = false;
+  if (window.SceneRunManager && typeof SceneRunManager.isRunActive === "function" && SceneRunManager.isRunActive()) {
+    if (typeof resumeSceneRun === "function") { resumeSceneRun(); sceneRunResumed = true; }
   }
 
-  // v3.92.0 : reprise d'une session de minage en cours (quête "La Veine Instable" ou
-  // activité bonus Carrière) — même règle, jamais de reroll après rechargement.
-  if (window.MiningManager && typeof MiningManager.getActiveSession === "function" && MiningManager.getActiveSession()) {
-    if (typeof resumeMiningSession === "function") resumeMiningSession();
-  }
-
-  // v3.94.0 : reprise d'une session de puisage en cours (quête "La Source Tarie" ou
-  // activité bonus du Puits) — même règle.
-  if (window.WellManager && typeof WellManager.getActiveSession === "function" && WellManager.getActiveSession()) {
-    if (typeof resumeWellSession === "function") resumeWellSession();
-  }
-
-  if (typeof switchTab === "function") switchTab(game.activeTab || "campement");
+  if (!sceneRunResumed && typeof switchTab === "function") switchTab(game.activeTab || "campement");
 
   lastTick = Date.now();
   requestAnimationFrame(gameLoop);

@@ -110,6 +110,29 @@ function switchTab(tabName) {
     if (typeof showToast === "function") showToast("💀 Tu es à terre — soigne-toi au Campement avant de repartir.", 2000);
   }
 
+  // v3.120.0 (Lot S1) : l'expédition (scene-engine) est une activité engageante exclusive,
+  // comme le combat — décision Seb 03/09/2026 : "soit on abandonne prématurément, soit on va
+  // au bout, le joueur doit être concentré sur la quête en cours". Toute tentative de quitter
+  // l'onglet "scene" en pleine expédition ouvre une confirmation (perte de 50% du loot non
+  // sécurisé, comme une fuite — SortieManager.end("flee")) au lieu de naviguer directement.
+  if (game.activeTab === "scene" && tabName !== "scene"
+      && window.SceneRunManager && typeof SceneRunManager.isRunActive === "function" && SceneRunManager.isRunActive()) {
+    var targetTab = tabName;
+    if (typeof showConfirmModal === "function") {
+      showConfirmModal(
+        "Abandonner l'expédition ?",
+        "Tu perds la moitié du butin non sécurisé. Le reste sera rapporté au village.",
+        "⚠️",
+        function () {
+          if (window.SceneRunManager && typeof SceneRunManager.abandon === "function") SceneRunManager.abandon();
+          if (typeof closeSceneModal === "function") closeSceneModal();
+          switchTab(targetTab);
+        }
+      );
+    }
+    return; // navigation bloquée tant que la confirmation n'est pas résolue
+  }
+
   var leavingCombat = game.activeTab === "combat" && tabName !== "combat";
   game.activeTab = tabName;
   // v3.102.1 : revenir au Campement pendant une exploration = rentrer (butin banqué)
@@ -151,6 +174,9 @@ function switchTab(tabName) {
   }
   if (panel) panel.classList.toggle("active", !combatMode);
   document.body.classList.toggle("combat-active", combatMode);
+  // v3.120.0 (Lot S1) : même traitement que combat-active — l'expédition est une activité
+  // engageante exclusive (décision Seb), le menu du bas disparaît pendant qu'elle est active.
+  document.body.classList.toggle("scene-active", tabName === "scene");
   if (typeof updateHudPageTitle === "function") updateHudPageTitle();
   refreshTabBarVisibility();
   renderPanel();
@@ -244,6 +270,9 @@ function renderPanel() {
       break;
     case "campement":
       container.innerHTML = buildCampHTML();
+      break;
+    case "scene": // v3.120.0 (Lot S1) : scene-engine générique, écran plein cadre exclusif (comme combat)
+      container.innerHTML = buildSceneScreenHTML();
       break;
     case "dungeon":
       container.innerHTML = buildDungeonHTML();

@@ -120,7 +120,7 @@ function createInitialGameState() {
     // ui/menu-view.js (filtrage de MENU_ITEMS). Pas de condition de déblocage
     // automatique pour l'instant (viendra plus tard via les quêtes) — seul un
     // bouton dédié dans Paramètres permet de tout débloquer en une fois.
-    unlockedTabs: { campement: true, quests: true, settings: true },
+    unlockedTabs: { campement: true, quests: true, settings: true, scene: true }, // v3.120.0 (Lot S1) : "scene" débloqué par défaut (sandbox de test, à retirer/conditionner au vrai narratif en S2)
     storyQuests: {}, // v3.100.0 : chaîne Histoire, rempli par StoryQuestManager.ensure() (systems/story-quest-system.js)
     totalGoldEarned: 0,
     totalDamageDealt: 0,

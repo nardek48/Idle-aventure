@@ -6,7 +6,7 @@
 var SORTIE_POTION_CAP = 2;        // décision §10 n°10 : 2 potions par sortie (calibration P1)
 var SORTIE_FLEE_KEEP_PCT = 0.5;   // décision §10 n°3 : fuir = 50 % du butin
 
-var SORTIE_CONTEXT_LABELS = { farm: "exploration", adventure: "quête", hunt: "chasse", dungeon: "donjon" };
+var SORTIE_CONTEXT_LABELS = { farm: "exploration", adventure: "quête", hunt: "chasse", dungeon: "donjon", scene: "expédition" }; // v3.120.0 (Lot S1) : scene-engine générique
 
 var SortieManager = {
   emptyLoot: function () {
@@ -35,6 +35,8 @@ var SortieManager = {
     if (game.dungeonRun && game.dungeonRun.active) return "dungeon";
     if (game.adventureQuestRun && game.adventureQuestRun.active) return "adventure";
     if (game.huntRun && game.huntRun.active) return "hunt";
+    // v3.120.0 (Lot S1) : scene-engine générique — un sceneRun non "completed" est une sortie en cours.
+    if (game.sceneRun && game.sceneRun.status !== "completed") return "scene";
     return "farm";
   },
 

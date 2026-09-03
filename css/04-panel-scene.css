@@ -1,0 +1,232 @@
+/* =========================
+   Scene-engine générique (DESIGN_Scene_Engine_v1.md, Lot S1)
+   Écran plein cadre (#panel-container, onglet "scene" hors tab-bar — accès via le menu ☰).
+   Structure reprise du prototype HTML validé par Seb (aethervale-expedition-v2.html) :
+   bandeau de pilules d'état, grille de cartes de choix, journal encadré, écran de fin en
+   overlay — adaptée à la palette parchemin --nb-* du jeu (le proto utilisait un thème
+   nuit/ardoise, remplacé ici par cohérence avec le reste de l'UI).
+   ========================= */
+
+.scene-screen {
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-card);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+/* ---------- Bandeau d'état (profondeur / loot / blessures / torche) ---------- */
+.scene-status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.scene-status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  background: var(--nb-cream-alt);
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-pill);
+  padding: 4px 11px;
+}
+
+.scene-status-loot { color: var(--nb-gold-dark); }
+.scene-status-injury { color: var(--danger); }
+.scene-status-depth { color: var(--nb-blue-dark); }
+
+/* ---------- Barre de progression segmentée (une pastille par profondeur) ---------- */
+.scene-progress {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.scene-progress-seg {
+  flex: 1;
+  height: 7px;
+  border-radius: 6px;
+  background: var(--nb-cream-deep);
+}
+
+.scene-progress-seg.is-done {
+  background: var(--nb-gold);
+}
+
+.scene-progress-seg.is-current {
+  background: var(--nb-blue);
+}
+
+/* ---------- Bouton "Rentrer" (toujours accessible tant que le run est engagé) ---------- */
+.scene-actions-leave {
+  margin-top: 8px;
+  justify-content: flex-start;
+}
+
+.scene-btn-leave {
+  background: var(--nb-cream-deep);
+  color: var(--nb-ink);
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+/* ---------- Écran d'accueil ---------- */
+.scene-landing {
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-card);
+  padding: 28px 8px;
+  text-align: center;
+}
+
+.scene-landing-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.scene-landing-text {
+  font-size: 13px;
+  color: var(--nb-ink-dim);
+  line-height: 1.55;
+  margin-bottom: 18px;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---------- En-tête de scène (titre + sous-texte narratif) ---------- */
+.scene-heading {
+  margin-bottom: 10px;
+}
+
+.scene-heading-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  margin-bottom: 3px;
+}
+
+.scene-heading-text {
+  font-size: 12.5px;
+  color: var(--nb-ink-dim);
+  line-height: 1.5;
+}
+
+/* ---------- Grille de cartes de choix (portes, objets, obstacles) ---------- */
+.scene-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.scene-card {
+  background: var(--nb-cream-alt);
+  border: 2px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  padding: 12px;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--nb-ink);
+  transition: border-color .12s, background .12s;
+}
+
+.scene-card:hover {
+  border-color: var(--nb-gold);
+}
+
+.scene-card:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.scene-card.is-selected {
+  border-color: var(--nb-gold);
+  background: var(--nb-cream-deep);
+}
+
+.scene-card-icon {
+  font-size: 20px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.scene-card-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  display: block;
+  margin-bottom: 3px;
+}
+
+.scene-card-sub {
+  font-size: 11px;
+  color: var(--nb-ink-dim);
+  line-height: 1.4;
+  display: block;
+}
+
+.scene-card-sub.is-good { color: #3f7d42; }
+.scene-card-sub.is-medium { color: var(--nb-gold-dark); }
+.scene-card-sub.is-low { color: var(--danger); }
+
+/* ---------- Actions (pleine largeur, sous la grille) ---------- */
+.scene-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+/* ---------- Journal de run ---------- */
+.scene-log {
+  width: 100%;
+  max-height: 120px;
+  overflow-y: auto;
+  margin-top: 14px;
+  padding: 9px 12px;
+  background: var(--nb-cream-deep);
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-sm);
+  font-size: 11px;
+  color: var(--nb-ink-dim);
+}
+
+.scene-log-line {
+  padding: 2px 0;
+  line-height: 1.45;
+}
+
+/* ---------- Écran de fin (overlay léger dans le flux, pas une popup modale) ---------- */
+.scene-end-card {
+  text-align: center;
+  padding: 24px 10px;
+}
+
+.scene-end-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.scene-end-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--nb-gold-dark);
+  margin-bottom: 4px;
+}
+
+.scene-end-card.is-failure .scene-end-title {
+  color: var(--danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-card { transition: none; }
+}

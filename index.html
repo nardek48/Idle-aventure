@@ -40,8 +40,7 @@
   <link rel="stylesheet" href="./css/04-panel-zones.css">
   <link rel="stylesheet" href="./css/04-panel-adventures.css">
   <link rel="stylesheet" href="./css/04-panel-quests.css">
-  <link rel="stylesheet" href="./css/04-panel-mining.css">
-  <link rel="stylesheet" href="./css/04-panel-well.css">
+  <link rel="stylesheet" href="./css/04-panel-scene.css">
   <link rel="stylesheet" href="./css/04-panel-camp.css">
   <link rel="stylesheet" href="./css/04-panel-bestiary.css">
   <link rel="stylesheet" href="./css/04-panel-dungeon.css">
@@ -221,7 +220,8 @@
 <script src="js/data/world-quests.js"></script>
 <script src="js/data/adventure-quests.js"></script>
 <script src="js/data/hunt-quests.js"></script>
-<script src="js/data/exploration-quests.js"></script>
+<script src="js/data/scene-nodes.js"></script> <!-- v3.120.0 (Lot S1) : scene-engine générique -->
+<script src="js/data/scene-templates.js"></script>
 <script src="js/data/production-buildings.js"></script>
 <script src="js/data/production-plots.js"></script>
 <script src="js/data/workshops.js"></script>
@@ -248,12 +248,10 @@
 <script src="js/systems/world-quest-system.js"></script>
 <script src="js/systems/adventure-quest-system.js"></script>
 <script src="js/systems/hunt-quest-system.js"></script>
-<script src="js/systems/exploration-check-system.js"></script>
-<script src="js/systems/exploration-engine.js"></script>
-<script src="js/systems/mining-check-system.js"></script>
-<script src="js/systems/mining-system.js"></script>
-<script src="js/systems/well-check-system.js"></script>
-<script src="js/systems/well-system.js"></script>
+<!-- v3.120.0 (Lot S1) : scene-engine générique — moteur pur, chargé avant sortie-system.js
+     (scene-run-system.js, plus bas, en dépend en runtime seulement, pas au chargement). -->
+<script src="js/systems/scene-check-system.js"></script>
+<script src="js/systems/scene-engine.js"></script>
 <script src="js/systems/production-system.js"></script>
 <script src="js/systems/resource-reserve-system.js"></script>
 <script src="js/systems/production-plots-system.js"></script>
@@ -271,6 +269,7 @@
 <script src="js/systems/combat-report-system.js"></script>
 <script src="js/systems/combat-engine.js"></script>
 <script src="js/systems/sortie-system.js"></script>
+<script src="js/systems/scene-run-system.js"></script> <!-- v3.120.0 (Lot S1) : dépend de SortieManager, WarehouseManager, StatsSystem -->
 <script src="js/systems/combat-resource-system.js"></script>
 <script src="js/systems/combat-cooldown-system.js"></script>
 <script src="js/systems/class-combat-system.js"></script>
@@ -297,9 +296,7 @@
 <script src="js/ui/talents-view.js"></script>
 <script src="js/ui/equipment-view.js"></script>
 <script src="js/ui/afflictions-view.js"></script>
-<script src="js/ui/exploration-view.js"></script>
-<script src="js/ui/mining-view.js"></script>
-<script src="js/ui/well-view.js"></script>
+<script src="js/ui/scene-view.js"></script> <!-- v3.120.0 (Lot S1) : scene-engine générique -->
 <script src="js/ui/quests-view.js"></script>
 <script src="js/ui/ascension-view.js"></script>
 <script src="js/ui/village-view.js"></script>

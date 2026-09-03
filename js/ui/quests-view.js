@@ -59,7 +59,7 @@ var activeQuestCategory = "histoire"; // histoire | secondaires | chasse | avent
 
 var QUEST_BOARD_CATEGORIES = [
   { key: "histoire", label: "Histoire", icon: "📜", kinds: ["story", "worldExpedition"], emptyText: "Aucune quête d'histoire pour le moment." },
-  { key: "secondaires", label: "Secondaires", icon: "⭐", kinds: ["village", "workshop", "exploration"], emptyText: "Aucune quête secondaire disponible pour le moment." },
+  { key: "secondaires", label: "Secondaires", icon: "⭐", kinds: ["village", "workshop", "exploration", "scene"], emptyText: "Aucune quête secondaire disponible pour le moment." }, // v3.122.0 (Lot S2a) : "scene" ajouté (quêtes migrées vers le scene-engine)
   { key: "chasse", label: "Chasse", icon: "🐾", kinds: ["hunt"], emptyText: "Aucune chasse disponible pour le moment." },
   { key: "aventure", label: "Aventure", icon: "🧭", kinds: ["adventure", "dungeon"], emptyText: "Aucune aventure disponible pour le moment." }
 ];
@@ -447,73 +447,30 @@ function collectCompletedQuestCardEntries() {
     });
   }
 
-  if (window.ExplorationManager && window.EXPLORATION_QUESTS) {
-    Object.keys(EXPLORATION_QUESTS).forEach(function (key) {
-      var quest = EXPLORATION_QUESTS[key];
-      if (quest.id === "unstableVein" || quest.id === "driedSpring") return; // routées séparément (MiningManager/WellManager)
-      if (quest.minigame) return; // v3.110.0 : quête de minage (ironLode) routée séparément (MiningManager)
-      if (!ExplorationManager.isQuestCompleted(quest.id)) return;
+  /* v3.124.0 (retrait ancien moteur) : historique des 6 quêtes de déblocage migrées vers le
+     scene-engine — lecture directe depuis SCENE_TEMPLATES + game.explorationProgression, sans
+     dépendance à ExplorationManager/MiningManager/WellManager (retirés). Une seule fonction
+     générique remplace les anciennes buildExplorationQuestDetailHTML/buildMiningQuestDetailHTML/
+     buildDriedSpringQuestDetailHTML/buildUnstableVeinQuestDetailHTML — elles ne géraient plus
+     que le cas "terminée" en pratique (le lancement passe uniquement par MissionBoard désormais). */
+  if (window.SceneRunManager && window.SCENE_TEMPLATES) {
+    SceneRunManager._SCENE_QUEST_LEGACY_IDS_FOR_HISTORY = SceneRunManager._SCENE_QUEST_LEGACY_IDS_FOR_HISTORY
+      || ["sentier_obstrue", "bosquet_silencieux", "terre_en_friche", "veine_instable", "eboulis_ferreux", "source_tarie"];
+    SceneRunManager._SCENE_QUEST_LEGACY_IDS_FOR_HISTORY.forEach(function (templateId) {
+      var template = SCENE_TEMPLATES[templateId];
+      if (!template || !SceneRunManager.isQuestCompleted(templateId)) return;
       entries.push({
         worldId: null,
-        section: quest.section || "expedition",
+        section: "expedition",
         html: buildCollapsibleQuestCardHTML(
-          'exploration_' + quest.id,
-          quest.icon || "🧭",
-          quest.title,
-          buildExplorationQuestDetailHTML(quest, null),
+          'scene_' + templateId,
+          template.icon || "🧭",
+          template.title,
+          buildSceneQuestCompletedDetailHTML(template),
           "is-claimed",
-          quest
+          template
         )
       });
-    });
-  }
-
-  if (window.MiningManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.unstableVein && MiningManager.isQuestCompleted()) {
-    var veinQuestDone = EXPLORATION_QUESTS.unstableVein;
-    entries.push({
-      worldId: null,
-      section: veinQuestDone.section || "expedition",
-      html: buildCollapsibleQuestCardHTML(
-        'exploration_' + veinQuestDone.id,
-        veinQuestDone.icon || "⛏️",
-        veinQuestDone.title,
-        buildUnstableVeinQuestDetailHTML(veinQuestDone, null),
-        "is-claimed",
-        veinQuestDone
-      )
-    });
-  }
-
-  // v3.110.0 : carte "Terminée" de L'Éboulis Ferreux (même routage MiningManager que la Veine).
-  if (window.MiningManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.ironLode && MiningManager.isQuestCompleted("ironLode")) {
-    var lodeQuestDone = EXPLORATION_QUESTS.ironLode;
-    entries.push({
-      worldId: null,
-      section: lodeQuestDone.section || "expedition",
-      html: buildCollapsibleQuestCardHTML(
-        'exploration_' + lodeQuestDone.id,
-        lodeQuestDone.icon || "⛏️",
-        lodeQuestDone.title,
-        buildMiningQuestDetailHTML(lodeQuestDone, null, "ironLode"),
-        "is-claimed",
-        lodeQuestDone
-      )
-    });
-  }
-
-  if (window.WellManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.driedSpring && WellManager.isQuestCompleted()) {
-    var springQuestDone = EXPLORATION_QUESTS.driedSpring;
-    entries.push({
-      worldId: null,
-      section: springQuestDone.section || "expedition",
-      html: buildCollapsibleQuestCardHTML(
-        'exploration_' + springQuestDone.id,
-        springQuestDone.icon || "💧",
-        springQuestDone.title,
-        buildDriedSpringQuestDetailHTML(springQuestDone, null),
-        "is-claimed",
-        springQuestDone
-      )
     });
   }
 
@@ -765,196 +722,21 @@ function buildVillageQuestDetailHTML(quest) {
   return h;
 }
 
-function buildExplorationQuestDetailHTML(quest, run) {
-  var isRunning = !!(run && run.questId === quest.id && run.status !== "completed");
-  var isCompleted = window.ExplorationManager && ExplorationManager.isQuestCompleted(quest.id);
-  var req = window.ExplorationManager ? ExplorationManager.checkRequirements(quest.id) : { ok: false, reason: "Indisponible" };
-
+function buildSceneQuestCompletedDetailHTML(template) {
   var h = '';
   h += '<div class="map-quest-step">';
   h += '<div class="map-quest-step-row">';
-  h += '<span class="map-quest-step-desc">' + esc(quest.description) + '</span>';
+  h += '<span class="map-quest-step-desc">' + esc(template.title) + '</span>';
   h += '</div>';
   h += '</div>';
 
-  // v3.110.0 : libellés par quête (silentGrove/fallowField), repli = textes historiques (blockedPath).
+  var resDef = (window.WAREHOUSE_RESOURCES || {})[template.lootResource];
   h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Récompense principale</span>';
-  h += '<span class="map-quest-reward-value">' + esc(quest.rewardMainLabel || '🌿 Clairière oubliée') + '</span>';
-  h += '</div>';
-  h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Récompenses possibles</span>';
-  h += '<span class="map-quest-reward-value">' + esc(quest.rewardPossibleLabel || '🪵 Bois') + '</span>';
+  h += '<span class="map-quest-reward-label">Ressource</span>';
+  h += '<span class="map-quest-reward-value">' + esc((resDef && resDef.name) || template.lootResource) + '</span>';
   h += '</div>';
 
-  if (isCompleted) {
-    var doneLabel = (quest.ui && quest.ui.completedLabel) || '✔ Terminée';
-    h += '<div class="map-quest-claimed-label">' + esc(doneLabel) + '</div>';
-    if (quest.ui && quest.ui.completedText) h += '<div class="map-quest-step-text">' + esc(quest.ui.completedText) + '</div>';
-  } else if (isRunning) {
-    h += '<div class="map-quest-run-actions">';
-    h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); resumeExplorationRun();">Reprendre l\'expédition</button>';
-    h += '</div>';
-  } else if (!req.ok) {
-    h += '<div class="map-quest-claimed-label">🔒 ' + esc(req.reason) + '</div>';
-  } else {
-    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openExplorationPrep(\'' + esc(quest.id) + '\')">Préparer l\'expédition</button>';
-  }
-
-  return h;
-}
-
-/* v3.92.0 : détail de la carte "La Veine Instable" — pas de popup préparation/approche
-   comme Le Sentier Obstrué (coût fixe 1 ration, aucun choix de réserve), route directement
-   vers MiningManager/mining-view.js plutôt qu'ExplorationManager.
-   v3.110.0 : générique par questId (libellés via quest.ui, défauts = textes historiques
-   d'unstableVein) — réutilisé pour "L'Éboulis Ferreux" (ironLode, Mine). */
-function buildMiningQuestDetailHTML(quest, session, questId) {
-  questId = questId || "unstableVein";
-  var isRunning = !!(session && session.source === "quest" && session.questId === questId && session.status !== "completed");
-  var isCompleted = window.MiningManager && MiningManager.isQuestCompleted(questId);
-  var req = window.MiningManager ? MiningManager.checkQuestRequirements(questId) : { ok: false, reason: "Indisponible" };
-  var questUi = quest.ui || {};
-  var openFn = (questId === "ironLode") ? "openIronLodeQuest" : "openUnstableVeinQuest";
-
-  var h = '';
-  h += '<div class="map-quest-step">';
-  h += '<div class="map-quest-step-row">';
-  h += '<span class="map-quest-step-desc">' + esc(quest.description) + '</span>';
-  h += '</div>';
-  h += '</div>';
-
-  h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Récompense principale</span>';
-  h += '<span class="map-quest-reward-value">' + esc(quest.rewardMainLabel || '🏛️ Carrière déverrouillée') + '</span>';
-  h += '</div>';
-  h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Récompenses possibles</span>';
-  h += '<span class="map-quest-reward-value">' + esc(quest.rewardPossibleLabel || '🪨 Pierre · ⚙️ Minerai de fer') + '</span>';
-  h += '</div>';
-
-  if (isCompleted) {
-    h += '<div class="map-quest-claimed-label">' + esc(questUi.completedLabel || '✔ Carrière déverrouillée') + '</div>';
-    h += '<div class="map-quest-step-text">' + esc(questUi.completedText || 'Une Veine instable peut maintenant être exploitée depuis la Carrière.') + '</div>';
-  } else if (isRunning) {
-    h += '<div class="map-quest-run-actions">';
-    h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); resumeMiningSession();">Reprendre l\'expédition</button>';
-    h += '</div>';
-  } else if (!req.ok) {
-    h += '<div class="map-quest-claimed-label">🔒 ' + esc(req.reason) + '</div>';
-  } else {
-    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); ' + openFn + '();">Partir explorer</button>';
-  }
-
-  return h;
-}
-
-/* Alias de compatibilité (appelants historiques + window export). */
-function buildUnstableVeinQuestDetailHTML(quest, session) {
-  return buildMiningQuestDetailHTML(quest, session, "unstableVein");
-}
-
-/* v3.94.0 : détail de la carte "La Source Tarie" — même pattern que
-   buildUnstableVeinQuestDetailHTML, routé vers WellManager/well-view.js. */
-function buildDriedSpringQuestDetailHTML(quest, session) {
-  var isRunning = !!(session && session.source === "quest" && session.status !== "completed");
-  var isCompleted = window.WellManager && WellManager.isQuestCompleted();
-  var req = window.WellManager ? WellManager.checkQuestRequirements() : { ok: false, reason: "Indisponible" };
-
-  var h = '';
-  h += '<div class="map-quest-step">';
-  h += '<div class="map-quest-step-row">';
-  h += '<span class="map-quest-step-desc">' + esc(quest.description) + '</span>';
-  h += '</div>';
-  h += '</div>';
-
-  h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Récompense principale</span>';
-  h += '<span class="map-quest-reward-value">🏛️ Puits déverrouillé</span>';
-  h += '</div>';
-  h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Récompenses possibles</span>';
-  h += '<span class="map-quest-reward-value">💧 Eau</span>';
-  h += '</div>';
-
-  if (isCompleted) {
-    h += '<div class="map-quest-claimed-label">✔ Puits déverrouillé</div>';
-    h += '<div class="map-quest-step-text">Une Source claire peut maintenant être exploitée depuis le Puits.</div>';
-  } else if (isRunning) {
-    h += '<div class="map-quest-run-actions">';
-    h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); resumeWellSession();">Reprendre l\'expédition</button>';
-    h += '</div>';
-  } else if (!req.ok) {
-    h += '<div class="map-quest-claimed-label">🔒 ' + esc(req.reason) + '</div>';
-  } else {
-    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openDriedSpringQuest();">Partir explorer</button>';
-  }
-
-  return h;
-}
-
-/* v3.92.1 : "Veine Instable" — activité de récolte active répétable, déplacée de l'écran
-   Production vers la catégorie Ressources de l'écran Quêtes (retour Seb). Visible en
-   permanence tant que la Carrière est débloquée (pas de notion de "terminée" ici). */
-function buildQuarryBonusQuestDetailHTML(session) {
-  var isCooldown = MiningManager.isCooldownActive();
-  var isSessionActive = !!(session && session.source === "quarry_bonus" && session.status !== "completed");
-  var remainingMs = MiningManager.getCooldownRemainingMs();
-
-  var h = '';
-  h += '<div class="map-quest-step">';
-  h += '<div class="map-quest-step-row">';
-  h += '<span class="map-quest-step-desc">Une courte session de récolte peut fournir un petit bonus de Pierre.</span>';
-  h += '</div>';
-  h += '</div>';
-
-  h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Récompenses possibles</span>';
-  h += '<span class="map-quest-reward-value">🪨 Pierre · ⚙️ Minerai de fer</span>';
-  h += '</div>';
-
-  if (isSessionActive) {
-    h += '<div class="map-quest-run-actions">';
-    h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); resumeMiningSession();">Reprendre la récolte</button>';
-    h += '</div>';
-  } else if (isCooldown) {
-    h += '<div class="map-quest-claimed-label">⏳ Recharge dans ' + esc(formatTime(remainingMs / 1000)) + '</div>';
-  } else {
-    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openQuarryBonusMining();">Miner la veine</button>';
-  }
-
-  return h;
-}
-
-/* v3.94.0 : détail de la carte activité répétable "Source Claire" (Puits) — même pattern
-   que buildQuarryBonusQuestDetailHTML, routé vers WellManager/well-view.js. */
-function buildWellBonusQuestDetailHTML(session) {
-  var isCooldown = WellManager.isCooldownActive();
-  var isSessionActive = !!(session && session.source === "well_bonus" && session.status !== "completed");
-  var remainingMs = WellManager.getCooldownRemainingMs();
-
-  var h = '';
-  h += '<div class="map-quest-step">';
-  h += '<div class="map-quest-step-row">';
-  h += '<span class="map-quest-step-desc">Une courte session de puisage peut fournir un petit bonus d\'Eau.</span>';
-  h += '</div>';
-  h += '</div>';
-
-  h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Récompenses possibles</span>';
-  h += '<span class="map-quest-reward-value">💧 Eau</span>';
-  h += '</div>';
-
-  if (isSessionActive) {
-    h += '<div class="map-quest-run-actions">';
-    h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); resumeWellSession();">Reprendre le puisage</button>';
-    h += '</div>';
-  } else if (isCooldown) {
-    h += '<div class="map-quest-claimed-label">⏳ Recharge dans ' + esc(formatTime(remainingMs / 1000)) + '</div>';
-  } else {
-    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openWellBonusMining();">Puiser l\'eau</button>';
-  }
-
+  h += '<div class="map-quest-claimed-label">✔ Terminée</div>';
   return h;
 }
 
@@ -1163,10 +945,5 @@ window.getAscensionAvailableCount = getAscensionAvailableCount;
 window.buildQuestsHTML = buildQuestsHTML;
 window.buildCompletedQuestCardsHTML = buildCompletedQuestCardsHTML;
 window.buildQuestCardsGroupedBySectionHTML = buildQuestCardsGroupedBySectionHTML;
-window.buildExplorationQuestDetailHTML = buildExplorationQuestDetailHTML;
-window.buildUnstableVeinQuestDetailHTML = buildUnstableVeinQuestDetailHTML;
-window.buildMiningQuestDetailHTML = buildMiningQuestDetailHTML; // v3.110.0
-window.buildQuarryBonusQuestDetailHTML = buildQuarryBonusQuestDetailHTML;
-window.buildDriedSpringQuestDetailHTML = buildDriedSpringQuestDetailHTML;
-window.buildWellBonusQuestDetailHTML = buildWellBonusQuestDetailHTML;
+window.buildSceneQuestCompletedDetailHTML = buildSceneQuestCompletedDetailHTML; // v3.124.0 (retrait ancien moteur)
 

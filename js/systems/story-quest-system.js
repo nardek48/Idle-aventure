@@ -317,12 +317,18 @@ var StoryQuestManager = {
       if (step.linkTo.subTab && typeof setHerosSubTab === "function") setHerosSubTab(step.linkTo.subTab);
       return;
     }
-    // v3.107.6 : les 3 expéditions à mini-jeu (Sentier Obstrué, Veine Instable, Source Tarie)
-    // ont un vrai point d'entrée dédié — openQuestsAt() seul ne fait que changer d'onglet
-    // sans rien déclencher (bug remonté par Seb : bouton « Aller à la quête » inerte).
+    // v3.107.6 : les expéditions à mini-jeu ont un vrai point d'entrée dédié — openQuestsAt()
+    // seul ne fait que changer d'onglet sans rien déclencher (bug remonté par Seb : bouton
+    // « Aller à la quête » inerte).
+    // v3.122.0/v3.123.0 (Lots S2a/S2b) : les 6 quêtes de déblocage migrées vers le scene-engine
+    // ont pour cardId "scene_<templateId>" — routées vers openSceneQuestEntry(), qui gère la
+    // navigation elle-même (switchTab("scene") inclus).
     var cardId = step.linkTo.cardId || "";
-    if (cardId === "exploration_driedSpring" && typeof openDriedSpringQuest === "function") { openDriedSpringQuest(); return; }
-    if (cardId === "exploration_unstableVein" && typeof openUnstableVeinQuest === "function") { openUnstableVeinQuest(); return; }
+    if (cardId.indexOf("scene_") === 0 && typeof openSceneQuestEntry === "function") {
+      if (typeof switchTab === "function") switchTab("scene");
+      openSceneQuestEntry(cardId.replace("scene_", ""));
+      return;
+    }
     if (cardId.indexOf("exploration_") === 0 && typeof openExplorationPrep === "function") { openExplorationPrep(cardId.replace("exploration_", "")); return; }
     if (typeof openQuestsAt === "function") openQuestsAt(step.linkTo.section, step.linkTo.cardId);
   }

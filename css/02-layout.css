@@ -734,3 +734,16 @@ body.combat-active #combat-hero-mini {
 body.combat-active #game-area {
   padding-bottom: var(--safe-bottom);
 }
+
+/* =========================
+   v3.120.0 (Lot S1) — scene-engine plein écran (même principe que combat-active) : pendant
+   une expédition on ne navigue pas, on rentre ou on abandonne (garde dans ui-root.js). Le
+   menu du bas disparaît, #panel-container récupère toute la hauteur disponible.
+   ========================= */
+body.scene-active #tab-bar {
+  display: none;
+}
+
+body.scene-active #panel-container {
+  padding-bottom: var(--safe-bottom);
+}

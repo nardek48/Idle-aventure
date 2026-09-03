@@ -88,8 +88,9 @@ var ProductionManager = {
   },
 
   /* Initialisation rétroactive au moment du déblocage de n'importe quel bâtiment verrouillable
-     (appelée par MiningManager.settle() pour quarry, par openQuestCompletePopup() pour hunt).
-     Idempotent : ne réinitialise pas un bâtiment déjà présent (ex. migration). */
+     (appelée par SceneRunManager._applyUnlock() pour quarry/mine/sawmill/farm/well, par
+     openQuestCompletePopup() pour hunt). Idempotent : ne réinitialise pas un bâtiment déjà
+     présent (ex. migration). */
   unlockBuilding: function (id) {
     if (!game.production || typeof game.production !== "object") game.production = {};
     if (!game.production[id] || typeof game.production[id] !== "object") {

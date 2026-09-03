@@ -487,6 +487,9 @@ function buildSaveData() {
     // à une ascension (hardResetState) ; explorationProgression (déblocages) est permanent.
     explorationRun: game.explorationRun || null,
     explorationProgression: game.explorationProgression || { blockedPathCompleted: false, forgottenClearingUnlocked: false, unstableVeinDiscoveryCompleted: false, quarryUnlocked: false, huntBuildingUnlocked: false, driedSpringDiscoveryCompleted: false, wellUnlocked: false },
+    // v3.120.0 (Lot S1) : scene-engine générique (voir systems/scene-run-system.js) — même règle
+    // de persistance que explorationRun (survit à un rechargement de page, PAS à une ascension).
+    sceneRun: game.sceneRun || null,
     // v3.92.0 : session de minijeu de minage (quête "La Veine Instable" ou activité bonus
     // Carrière) — même règle de persistance que explorationRun (survit au rechargement).
     // v3.94.0 : bloc "well" ajouté pour le minijeu du Puits (systems/well-system.js).
@@ -596,6 +599,9 @@ function restoreBaseState(d) {
   } else {
     game.unlockedTabs = { campement: true, quests: true, settings: true };
   }
+  // v3.120.0 (Lot S1) : "scene" (sandbox scene-engine) débloqué d'office pour toute save
+  // existante — feature de test, pas de vrai narratif de déblocage encore défini (S2).
+  game.unlockedTabs.scene = true;
 
   game.inventory = Array.isArray(d.inventory) ? d.inventory : [];
   game.equipped = d.equipped && typeof d.equipped === "object" ? d.equipped : getDefaultEquipped();
@@ -756,6 +762,8 @@ function restoreBaseState(d) {
   // défaut sûres (aucun run à reprendre, aucun déblocage perdu). ensureGameStateDefaults()
   // (core/state.js) revalide ensuite la forme exacte de explorationProgression.
   game.explorationRun = d.explorationRun && typeof d.explorationRun === "object" ? d.explorationRun : null;
+  // v3.120.0 (Lot S1) : scene-engine générique — ancienne sauvegarde sans ce champ = aucun run à reprendre.
+  game.sceneRun = d.sceneRun && typeof d.sceneRun === "object" ? d.sceneRun : null;
   game.explorationProgression = d.explorationProgression && typeof d.explorationProgression === "object"
     ? d.explorationProgression
     : { blockedPathCompleted: false, forgottenClearingUnlocked: false, unstableVeinDiscoveryCompleted: false, quarryUnlocked: false, huntBuildingUnlocked: false, driedSpringDiscoveryCompleted: false, wellUnlocked: false };
@@ -1071,6 +1079,8 @@ function hardResetState() {
   // v3.90.0 : même traitement — le run d'Expédition en cours ne survit pas à l'ascension
   // (pas de remboursement des rations déjà consommées, cohérent avec huntRun/adventureQuestRun).
   game.explorationRun = null;
+  // v3.120.0 : même règle pour le scene-engine générique — ne survit pas à l'ascension.
+  game.sceneRun = null;
   // v3.92.0 : même règle pour la session de minijeu de minage — ne survit pas à l'ascension.
   // Le cooldown de l'activité bonus Carrière est aussi remis à zéro (pas de sens de le
   // faire survivre à un reset de la run classique) ; quarryUnlocked, lui, reste permanent
@@ -1195,7 +1205,7 @@ function fullResetState() {
   game.upgrades = {};
   game.talents = {};
   game.aetherUpgrades = {};
-  game.unlockedTabs = { campement: true, quests: true, settings: true }; // v3.99.15
+  game.unlockedTabs = { campement: true, quests: true, settings: true, scene: true }; // v3.99.15 / v3.122.0 : "scene" toujours débloqué (infrastructure d'affichage des runs, pas un onglet narratif — même statut que quests/settings)
   game.inventory = [];
   game.equipped = getDefaultEquipped();
   game.quests = [];
@@ -1221,6 +1231,7 @@ function fullResetState() {
   game.adventureQuestRun = { active: false, questId: null };
   game.huntRun = { active: false, questId: null, killsInLot: 0 }; // v3.30
   game.explorationRun = null; // v3.90.0 : reset complet, tout repart de zéro
+  game.sceneRun = null; // v3.120.0 : idem
   game.gatheringActivity = { quarry: { cooldownEndsAt: 0, activeSession: null }, well: { cooldownEndsAt: 0, activeSession: null } }; // v3.92.0/v3.94.0
   game.campfireLastUsed = 0; // v3.7 : repos gratuit du Campement — repart bien à zéro sur un reset complet
   game.campfireShortLastUsed = 0; // v3.14 : idem pour le repos court

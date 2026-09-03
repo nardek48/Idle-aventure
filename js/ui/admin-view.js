@@ -58,6 +58,18 @@ function buildAdminHTML() {
   h += '<button class="settings-btn admin-btn" onclick="switchTab(\'combat-sandbox\')">🧪 Ouvrir le bac à sable</button>';
   h += '</div>';
 
+  // v3.122.0 (Lot S2a) : expedition_faille (canevas génératif du scene-engine) n'est plus
+  // accessible depuis le menu ☰ (décision Seb : l'onglet Expédition sert uniquement à
+  // afficher un run en cours, lancé depuis le tableau de missions) — conservé ici comme outil
+  // de test/démo du moteur, réserve pour une future feature répétable (Petites Aventures).
+  if (window.SceneRunManager && window.SCENE_TEMPLATES && SCENE_TEMPLATES.expedition_faille) {
+    h += '<div class="panel-card admin-card">';
+    h += '<h3>🕳️ Bac à sable d\'expédition</h3>';
+    h += '<p class="panel-sub">Canevas génératif du scene-engine (8 profondeurs, push-your-luck) — hors catalogue de quêtes, réserve pour une future feature.</p>';
+    h += '<button class="settings-btn admin-btn" onclick="adminStartSandboxExpedition()">🕳️ Lancer l\'expédition sandbox</button>';
+    h += '</div>';
+  }
+
   h += '<button class="settings-btn admin-btn" onclick="switchTab(\'settings\')">← Retour aux Paramètres</button>';
 
   h += '</div>';
@@ -167,6 +179,18 @@ function adminApplyCycleCount() {
   adminRefresh();
 }
 
+/* v3.122.0 (Lot S2a) : lance expedition_faille (scene-engine générique) directement, sans
+   passer par le tableau de missions (le canevas n'y figure plus). Réutilise startSceneExpedition()
+   de scene-view.js (fixée sur "expedition_faille"). */
+function adminStartSandboxExpedition() {
+  if (window.SceneRunManager && SceneRunManager.isRunActive()) {
+    showToast("Une expédition est déjà en cours", 1600);
+    return;
+  }
+  if (typeof switchTab === "function") switchTab("scene");
+  if (typeof startSceneExpedition === "function") startSceneExpedition();
+}
+
 window.buildAdminHTML = buildAdminHTML;
 window.adminApplyGold = adminApplyGold;
 window.adminApplyEssence = adminApplyEssence;
@@ -179,3 +203,4 @@ window.adminHeroHpMax = adminHeroHpMax;
 window.adminKillEnemy = adminKillEnemy;
 window.adminApplyWorldIndex = adminApplyWorldIndex;
 window.adminApplyCycleCount = adminApplyCycleCount;
+window.adminStartSandboxExpedition = adminStartSandboxExpedition;

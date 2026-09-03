@@ -252,111 +252,15 @@ var MissionBoard = {
     if (typeof saveGame === "function") saveGame();
   },
 
-  _explorationMissions: function () {
-    var out = [];
-    var self = this;
-    if (window.ExplorationManager && window.EXPLORATION_QUESTS) {
-      Object.keys(EXPLORATION_QUESTS).forEach(function (key) {
-        var quest = EXPLORATION_QUESTS[key];
-        if (quest.id === "unstableVein" || quest.id === "driedSpring") return; // routées ci-dessous (MiningManager/WellManager)
-        if (quest.minigame) return; // v3.110.0 : quête de minage (ironLode) routée ci-dessous (MiningManager)
-        if (!self._isExplorationQuestBoardVisible(quest)) return;
-        if (ExplorationManager.isQuestCompleted(quest.id)) return;
-        var run = ExplorationManager.getRun();
-        var isRunning = !!(run && run.questId === quest.id && run.status !== "completed");
-        var accepted = isRunning || self._isBoardAccepted(quest.id); // v3.117.0
-        var m = {
-          id: "exploration_" + quest.id, sourceKind: "exploration", worldId: null,
-          title: quest.title, blurb: EXPLORATION_BOARD_BLURBS[quest.id] || "",
-          type: "expedition", place: "", objectiveLabel: "", progressLabel: isRunning ? "En cours" : "",
-          rewardSummary: "", badge: "contract", status: isRunning ? "running" : (accepted ? "accepted" : "available"), isMain: false
-        };
-        var launchFn = function () {
-          // v3.107.6 : openQuestsAt() ne fait que changer d'onglet (ne lance rien) — appelle le vrai
-          // point d'entrée du mini-jeu si disponible, avec repli sur l'ancien comportement sinon.
-          if (typeof openExplorationPrep === "function") openExplorationPrep(quest.id);
-          else if (typeof openQuestsAt === "function") openQuestsAt(quest.section || "expedition", "exploration_" + quest.id);
-        };
-        if (accepted) m.launch = launchFn;
-        else m.accept = function () { return self.acceptBoardQuest(quest.id); };
-        out.push(m);
-      });
-    }
-    // v3.118.0 : la Veine Instable exige déjà "forgottenClearingUnlocked" (Sentier Obstrué
-    // terminé) comme prérequis de LANCEMENT (data/exploration-quests.js, requirements) — cette
-    // condition n'était pas appliquée à l'AFFICHAGE, la carte apparaissait donc dès le boot,
-    // avant même d'avoir de quoi la lancer (retour Seb). Alignée ici.
-    if (window.MiningManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.unstableVein
-      && !!(game.explorationProgression && game.explorationProgression.forgottenClearingUnlocked)
-      && !MiningManager.isQuarryUnlocked() && !MiningManager.isQuestCompleted()) {
-      var veinQuest = EXPLORATION_QUESTS.unstableVein;
-      var veinSession = MiningManager.getActiveSession();
-      // v3.110.0 : questId vérifié — un run d'Éboulis Ferreux ne doit pas marquer cette carte "En cours".
-      var veinRunning = !!(veinSession && veinSession.source === "quest" && veinSession.questId === "unstableVein" && veinSession.status !== "completed");
-      var veinAccepted = veinRunning || self._isBoardAccepted(veinQuest.id); // v3.117.0
-      var veinLaunch = function () {
-        if (typeof openUnstableVeinQuest === "function") openUnstableVeinQuest();
-        else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + veinQuest.id);
-      };
-      var veinMission = {
-        id: "exploration_" + veinQuest.id, sourceKind: "exploration", worldId: null,
-        // v3.118.0 : description orientée objectif (ce que ça débloque), pas le lore — décision Seb.
-        title: veinQuest.title, blurb: EXPLORATION_BOARD_BLURBS.unstableVein, type: "expedition", place: "", objectiveLabel: "", progressLabel: veinRunning ? "En cours" : "",
-        rewardSummary: "", badge: "contract", status: veinRunning ? "running" : (veinAccepted ? "accepted" : "available"), isMain: false
-      };
-      if (veinAccepted) veinMission.launch = veinLaunch;
-      else veinMission.accept = function () { return self.acceptBoardQuest(veinQuest.id); };
-      out.push(veinMission);
-    }
-    // v3.110.0 : "L'Éboulis Ferreux" (Mine) — même routage MiningManager que la Veine
-    // Instable, gating d'affichage : Carrière débloquée, Mine pas encore acquise.
-    if (window.MiningManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.ironLode
-      && this._isExplorationQuestBoardVisible(EXPLORATION_QUESTS.ironLode)
-      && !(game.explorationProgression && game.explorationProgression.mineUnlocked)
-      && !MiningManager.isQuestCompleted("ironLode")) {
-      var lodeQuest = EXPLORATION_QUESTS.ironLode;
-      var lodeSession = MiningManager.getActiveSession();
-      var lodeRunning = !!(lodeSession && lodeSession.source === "quest" && lodeSession.questId === "ironLode" && lodeSession.status !== "completed");
-      var lodeAccepted = lodeRunning || self._isBoardAccepted(lodeQuest.id); // v3.117.0
-      var lodeLaunch = function () {
-        if (typeof openIronLodeQuest === "function") openIronLodeQuest();
-        else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + lodeQuest.id);
-      };
-      var lodeMission = {
-        id: "exploration_" + lodeQuest.id, sourceKind: "exploration", worldId: null,
-        title: lodeQuest.title, blurb: EXPLORATION_BOARD_BLURBS.ironLode, type: "expedition", place: "", objectiveLabel: "", progressLabel: lodeRunning ? "En cours" : "",
-        rewardSummary: "", badge: "contract", status: lodeRunning ? "running" : (lodeAccepted ? "accepted" : "available"), isMain: false
-      };
-      if (lodeAccepted) lodeMission.launch = lodeLaunch;
-      else lodeMission.accept = function () { return self.acceptBoardQuest(lodeQuest.id); };
-      out.push(lodeMission);
-    }
-    if (window.WellManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.driedSpring && !WellManager.isWellUnlocked() && !WellManager.isQuestCompleted()) {
-      var springQuest = EXPLORATION_QUESTS.driedSpring;
-      var springSession = WellManager.getActiveSession();
-      var springRunning = !!(springSession && springSession.source === "quest" && springSession.status !== "completed");
-      var springAccepted = springRunning || self._isBoardAccepted(springQuest.id); // v3.117.0
-      var springLaunch = function () {
-        if (typeof openDriedSpringQuest === "function") openDriedSpringQuest();
-        else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + springQuest.id);
-      };
-      var springMission = {
-        id: "exploration_" + springQuest.id, sourceKind: "exploration", worldId: null,
-        title: springQuest.title, blurb: EXPLORATION_BOARD_BLURBS.driedSpring, type: "expedition", place: "", objectiveLabel: "", progressLabel: springRunning ? "En cours" : "",
-        rewardSummary: "", badge: "contract", status: springRunning ? "running" : (springAccepted ? "accepted" : "available"), isMain: false
-      };
-      if (springAccepted) springMission.launch = springLaunch;
-      else springMission.accept = function () { return self.acceptBoardQuest(springQuest.id); };
-      out.push(springMission);
-    }
-    return out;
-  },
+  /* v3.124.0 (retrait ancien moteur) : _explorationMissions() retirée — les 6 quêtes
+     d'EXPLORATION_QUESTS étaient toutes déjà filtrées par cette fonction (migrées vers
+     _sceneMissions(), voir Lots S2a/S2b), elle ne produisait plus jamais aucune mission. */
 
   /* ---------- Les fondations (v3.107.8, décision Seb) : sortie de la chaîne Histoire pour tourner
      en parallèle de « L'éveil des talents » (combat) — une piste production, une piste combat. */
   _workshopMissions: function () {
     if (!window.WorkshopUnlockSystem && typeof game.workshopUnlock === "undefined") return [];
-    if (!window.MiningManager || !MiningManager.isQuestCompleted()) return []; // dispo dès La veine instable terminée
+    if (!(game.explorationProgression && (game.explorationProgression.unstableVeinDiscoveryCompleted || game.explorationProgression.quarryUnlocked))) return []; // dispo dès La veine instable terminée (v3.124.0 : lecture directe du flag, sans MiningManager)
     if (game.workshopFoundationsCompleted) return [];
     var self = this;
     var wu = game.workshopUnlock || {};
@@ -415,12 +319,62 @@ var MissionBoard = {
     return [m];
   },
 
+  /* ---------- Quêtes de déblocage sur le scene-engine (v3.122.0 Lot S2a, v3.123.0 Lot S2b) --- */
+  /* Sentier Obstrué, Bosquet Silencieux, Terre en Friche (S2a) + Veine Instable, Éboulis
+     Ferreux, Source Tarie (S2b) — toutes migrées vers SceneRunManager (mécanique paliers/
+     push-your-luck, voir scene-run-system.js). Même pattern accept/launch (boardAccepted,
+     EXPLORATION_BOARD_BLURBS réutilisés tels quels — mêmes clés questId que les anciennes
+     quêtes, avant leur retrait). v3.124.0 (retrait ancien moteur) : boardRequires est
+     désormais déclaré directement sur chaque SCENE_TEMPLATES[templateId] (rapatrié depuis
+     exploration-quests.js, supprimé) — _isExplorationQuestBoardVisible() lit la même forme
+     générique {boardRequires}, sans dépendance à un fichier de données externe. */
+  _SCENE_QUEST_TEMPLATE_IDS: ["sentier_obstrue", "bosquet_silencieux", "terre_en_friche", "veine_instable", "eboulis_ferreux", "source_tarie"],
+  _SCENE_QUEST_LEGACY_ID: {
+    sentier_obstrue: "blockedPath", bosquet_silencieux: "silentGrove", terre_en_friche: "fallowField",
+    veine_instable: "unstableVein", eboulis_ferreux: "ironLode", source_tarie: "driedSpring"
+  },
+
+  _sceneMissions: function () {
+    if (!window.SceneRunManager || !window.SCENE_TEMPLATES) return [];
+    var self = this;
+    var out = [];
+    var activeRun = game.sceneRun;
+
+    this._SCENE_QUEST_TEMPLATE_IDS.forEach(function (templateId) {
+      var template = SCENE_TEMPLATES[templateId];
+      if (!template) return;
+      // v3.124.0 (retrait ancien moteur) : boardRequires lu directement sur le template
+      // (rapatrié depuis exploration-quests.js, supprimé) — même méthode générique
+      // _isExplorationQuestBoardVisible(), qui ne lit que la forme {boardRequires}.
+      if (!self._isExplorationQuestBoardVisible(template)) return;
+      if (SceneRunManager.isQuestCompleted(templateId)) return;
+
+      var legacyId = self._SCENE_QUEST_LEGACY_ID[templateId];
+      var isRunning = !!(activeRun && activeRun.templateId === templateId && activeRun.status !== "completed");
+      var accepted = isRunning || self._isBoardAccepted(templateId);
+      var m = {
+        id: "scene_" + templateId, sourceKind: "scene", worldId: null,
+        title: template.title, blurb: EXPLORATION_BOARD_BLURBS[legacyId] || "",
+        type: "expedition", place: "", objectiveLabel: "", progressLabel: isRunning ? "En cours" : "",
+        rewardSummary: "", badge: "contract", status: isRunning ? "running" : (accepted ? "accepted" : "available"), isMain: false
+      };
+      var launchFn = function () {
+        if (typeof switchTab === "function") switchTab("scene");
+        if (typeof openSceneQuestEntry === "function") openSceneQuestEntry(templateId);
+      };
+      if (accepted) m.launch = launchFn;
+      else m.accept = function () { return self.acceptBoardQuest(templateId); };
+      out.push(m);
+    });
+    return out;
+  },
+
   /* ---------- Agrégation ---------- */
   /* Toutes les missions actives/proposables, Histoire en tête, triées par priorité (isMain, puis claimable > running > available). */
   list: function () {
     var self = this;
     var groups = [this._storyMissions(), this._worldExpeditionMissions(),
-      this._adventureMissions(), this._huntMissions(), this._dungeonMissions(), this._explorationMissions(), this._workshopMissions(),
+      this._adventureMissions(), this._huntMissions(), this._dungeonMissions(), this._sceneMissions(), this._workshopMissions(),
       this._villageMissions()]; // v3.116.0 : _contractMissions (journalières) retirées
     var all = [].concat.apply([], groups);
     var rank = { story: 0 }; // l'Histoire garde toujours le rang 0 (colonne vertébrale, LIGNE_DIRECTRICE §3)

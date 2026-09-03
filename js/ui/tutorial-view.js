@@ -93,7 +93,7 @@ var GENERIC_TUTORIALS = {
     tab: "village",
     // Condition d'affichage : seulement une fois la mission "Les fondations" accessible (La veine
     // instable terminée) — avant, le joueur n'a pas encore vraiment de quoi produire à comprendre.
-    condition: function () { return !!(window.MiningManager && MiningManager.isQuestCompleted()); },
+    condition: function () { return !!(game.explorationProgression && (game.explorationProgression.unstableVeinDiscoveryCompleted || game.explorationProgression.quarryUnlocked)); }, // v3.124.0 (retrait ancien moteur) : lecture directe du flag, sans MiningManager
     icon: "🌾",
     title: "Village & Production",
     points: [

@@ -83,8 +83,23 @@ function storyLisiereCrossingProgress(game) {
   return Math.min(9, Number(wm.enemyIndex || 0));
 }
 
+/* v3.124.0 (retrait ancien moteur) : lecture directe des flags de progression, sans passer par
+   un manager (ExplorationManager retiré). completionFlag/unlockFlag connus par questId — même
+   contrat que SceneRunManager.isQuestCompleted(), juste indexé par l'ancien nom de quête plutôt
+   que par templateId (ces flags sont partagés, écrits par le scene-engine désormais). */
+var STORY_EXPLORATION_FLAGS = {
+  blockedPath: { completionFlag: "blockedPathCompleted", unlockFlag: "forgottenClearingUnlocked" },
+  unstableVein: { completionFlag: "unstableVeinDiscoveryCompleted", unlockFlag: "quarryUnlocked" },
+  driedSpring: { completionFlag: "driedSpringDiscoveryCompleted", unlockFlag: "wellUnlocked" },
+  ironLode: { completionFlag: "ironLodeDiscoveryCompleted", unlockFlag: "mineUnlocked" },
+  silentGrove: { completionFlag: "silentGroveDiscoveryCompleted", unlockFlag: "sawmillUnlocked" },
+  fallowField: { completionFlag: "fallowFieldDiscoveryCompleted", unlockFlag: "farmUnlocked" }
+};
+
 function storyExplorationDone(questId) {
-  return !!(window.ExplorationManager && typeof ExplorationManager.isQuestCompleted === "function" && ExplorationManager.isQuestCompleted(questId));
+  var flags = STORY_EXPLORATION_FLAGS[questId];
+  if (!flags || !game.explorationProgression) return false;
+  return !!(game.explorationProgression[flags.completionFlag] || game.explorationProgression[flags.unlockFlag]);
 }
 
 function storyResourceAmount(key) {
@@ -272,9 +287,9 @@ var STORY_QUESTS = {
         objectiveLabel: "Terminer l'expédition « La source tarie » (Puits)",
         unlockTabs: [],
         reward: STORY_REWARDS.forest_07,
-        linkTo: { section: "expedition", cardId: "exploration_driedSpring" },
-        check: function () { return !!(window.WellManager && WellManager.isQuestCompleted()); },
-        progress: function () { return (window.WellManager && WellManager.isQuestCompleted()) ? "1/1" : "0/1"; }
+        linkTo: { section: "expedition", cardId: "scene_source_tarie" }, // v3.123.0 (Lot S2b) : migrée vers le scene-engine
+        check: function () { return storyExplorationDone("driedSpring"); },
+        progress: function () { return storyExplorationDone("driedSpring") ? "1/1" : "0/1"; }
       },
       {
         id: "forest_08",
@@ -287,7 +302,7 @@ var STORY_QUESTS = {
         objectiveLabel: "Fabriquer 1 Petite ration et terminer l'expédition « Le sentier obstrué »",
         unlockTabs: [],
         reward: STORY_REWARDS.forest_08,
-        linkTo: { section: "expedition", cardId: "exploration_blockedPath" },
+        linkTo: { section: "expedition", cardId: "scene_sentier_obstrue" }, // v3.122.0 (Lot S2a) : migrée vers le scene-engine
         // v3.107.12 : popup déclenché sur Village (là où se trouve l'atelier Cuisine de camp),
         // pas sur l'écran de l'expédition elle-même — le craft doit se faire AVANT de lancer.
         tutorial: {
@@ -319,9 +334,9 @@ var STORY_QUESTS = {
         objectiveLabel: "Terminer l'expédition « La veine instable » (Carrière)",
         unlockTabs: [],
         reward: STORY_REWARDS.forest_09,
-        linkTo: { section: "expedition", cardId: "exploration_unstableVein" },
-        check: function () { return !!(window.MiningManager && MiningManager.isQuestCompleted()); },
-        progress: function () { return (window.MiningManager && MiningManager.isQuestCompleted()) ? "1/1" : "0/1"; }
+        linkTo: { section: "expedition", cardId: "scene_veine_instable" }, // v3.123.0 (Lot S2b) : migrée vers le scene-engine
+        check: function () { return storyExplorationDone("unstableVein"); },
+        progress: function () { return storyExplorationDone("unstableVein") ? "1/1" : "0/1"; }
       },
 
       /* ---------- Acte III — Le héros s'affirme ---------- */
