@@ -302,6 +302,102 @@ var SCENE_TEMPLATES = {
       unlockFlag: "wellUnlocked",
       completionFlag: "driedSpringDiscoveryCompleted"
     }
+  },
+
+  /* ================= v3.125.0 (Petites Aventures, Lot PA1/PA2) =================
+     Concept Seb (Aethervale_Concept_Petites_Aventures.docx, 01/09/2026) : quête répétable
+     à profil (Bourrin/Prudent), parcours à points 5-10, butin final IDENTIQUE entre profils
+     (la différence se joue sur le chemin, pas la récompense — décision actée §2), drops
+     exclusifs au mode (Lot PA3). Contrairement aux canevas de déblocage (Lot S2a/b), pas de
+     unlockOnSuccess : mission répétable, gating par cap journalier (voir
+     PetiteAventureManager.canStartToday(), village-quest-system.js pour le pattern de cap).
+     mode "generative" comme expedition_faille (depthMax fixe à 8, dans la plage 5-10 visée —
+     gatesPerDepth [1,1] : contrairement à expedition_faille, pas de choix de PORTE par palier,
+     le profil choisi en amont détermine déjà la nature du parcours ; le "choix" du concept
+     (§3) se joue aux nœuds obstacle eux-mêmes (options power/precision/endurance), comme les
+     canevas Lot S2. */
+  petite_aventure_foret: {
+    id: "petite_aventure_foret",
+    mode: "generative",
+    title: "Petite aventure — Forêt",
+    icon: "🍃",
+
+    depthMax: 8,
+    firstDepthType: "obstacle",
+    gatesPerDepth: [1, 1],
+
+    // v3.125.0 : profileWeights remplace slotWeights à la génération (voir SceneEngine.buildCard
+    // slotWeightsOverride) — Bourrin : plus de combats (Lot PA2), aucun bloqueur (concept §2,
+    // "aucun bloqueur de temps"). Prudent : peu/pas de combat, 1-2 bloqueurs sur les 8 paliers
+    // (≈15% de poids sur 8 tirages ≈ 1-2 attendus, calibré à ajuster au harness si besoin).
+    slotWeights: { obstacle: 56, autel: 10, decouverte: 12, source: 8, mystere: 14 }, // repli si profil absent (ne devrait pas arriver, run toujours profilé avant génération)
+    profileWeights: {
+      bourrin: { obstacle: 38, combat: 32, autel: 6, decouverte: 10, source: 4, mystere: 10 },
+      prudent: { obstacle: 46, combat: 4, autel: 10, decouverte: 14, source: 10, bloqueur: 16 }
+    },
+
+    pools: {
+      obstacle: ["eboulis", "gouffre", "porte_scellee", "paroi", "riviere", "racines"],
+      // v3.125.0 (Lot PA2) : gabaritId d'un slot combat pointe ici, pas dans SCENE_NODES —
+      // groupes d'ennemis de la Forêt (world "forest"), résolus par QuestEnemyManager.spawnFor
+      // via un enemyFilter. "boss" absent : pas de boss en Petite Aventure (réservé Donjon/Histoire).
+      combat: ["gobelins_foret", "loups_foret", "araignees_foret"]
+    },
+    riskModRange: [0.6, 1.5],
+
+    // Durée d'un nœud bloqueur (Prudent uniquement) — concept §2 : "1 à 2 points avec un
+    // bloqueur de temps réel de 5 à 10 minutes". Tourne en fond (timestamp readyAt comparé à
+    // Date.now() à l'affichage, PAS un setInterval/hook game-loop — voir scene-run-system.js).
+    blockerDurationRange: [300000, 600000], // 5-10 min en ms
+
+    loadoutOffer: ["torche", "corde", "provisions", "provisions", "amulette"],
+    loadoutSlots: 3,
+
+    items: {
+      torche: { id: "torche", name: "🔥 Torche", desc: "Révèle le détail des portes du niveau courant (3 charges).", charges: 3 },
+      corde: { id: "corde", name: "🪢 Corde", desc: "Approche sûre sur les obstacles compatibles (réutilisable, gain réduit).", },
+      provisions: { id: "provisions", name: "🥖 Provisions", desc: "Soigne 1 blessure (consommable).", },
+      amulette: { id: "amulette", name: "🧿 Amulette", desc: "Relance automatiquement le premier jet raté (1 fois).", }
+    },
+
+    entryCost: { resourceId: "petite_ration", amount: 1 },
+
+    // Toujours visible au tableau dès le Village ouvert (pas de progressFlag additionnel —
+    // c'est le cap journalier, pas boardRequires, qui limite le lancement répété).
+    boardRequires: { tabUnlocked: "village" },
+
+    lootResource: "gold",
+    lootRanges: {
+      obstacleSuccess: [6, 14],
+      obstacleRope: [3, 7],
+      obstacleSetback: [1, 3],
+      decouverte: [8, 16],
+      finalSafe: [20, 20],
+      finalRiskyBase: [0, 0]
+    },
+    autelCostRatio: 0.2,
+
+    // v3.125.0 (Lot PA3, à peupler) : table de drop exclusive par profil — ingrédients rares
+    // + équipement dédié (décision Seb), résolue à la chambre finale, en plus du loot chiffré
+    // identique entre profils (§4 du concept). Vide en PA1/PA2 : aucun tirage tant que non défini.
+    // v3.127.0 (Lot PA3) : Sève d'Aeswyn (data/hunt-quests.js:WAREHOUSE_RESOURCES) — décision
+    // affinée en cours de lot : ressource COMMUNE aux deux profils (pas un drop exclusif par
+    // profil comme envisagé au départ, voir exclusiveLoot ci-dessous à l'état d'origine),
+    // seul le TAUX de drop varie. Bourrin > Prudent (compense le risque du combat, décision
+    // Seb 03/09/2026). Deux points de tirage (voir SceneRunManager._rollSeveAeswyn) :
+    // - chance faible à chaque nœud résolu (obstacle/combat/autel/découverte/source/bloqueur)
+    // - 1 garantie à la résolution de la chambre finale, quel que soit le choix de coffre
+    seveAeswyn: {
+      resourceId: "seve_aeswyn",
+      perNodeChancePct: { bourrin: 6, prudent: 3 }, // à calibrer (run_sim.js) avant fixation définitive
+      perNodeAmount: [1, 1],
+      finaleGuaranteedAmount: { bourrin: 2, prudent: 1 } // à calibrer
+    },
+
+    // v3.125.0 (Lot PA3, à peupler) : table de drop exclusive par profil — ingrédients rares
+    // + équipement dédié (décision Seb), résolue à la chambre finale, en plus du loot chiffré
+    // identique entre profils (§4 du concept). Vide en PA1/PA2 : aucun tirage tant que non défini.
+    exclusiveLoot: { bourrin: [], prudent: [] }
   }
 };
 

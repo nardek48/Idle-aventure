@@ -198,6 +198,13 @@ var SortieManager = {
     if (s.context === "dungeon" && window.DungeonManager) DungeonManager.forfeit();
     else if (s.context === "adventure" && window.AdventureQuestManager) AdventureQuestManager.forfeit();
     else if (s.context === "hunt" && window.HuntQuestManager) HuntQuestManager.stop();
+    // v3.126.0 (Petites Aventures, Lot PA2) : fuir un combat de nœud scene-engine (profil
+    // Bourrin) doit passer par SceneRunManager.abandon() — même règle de fuite que partout
+    // (end("flee"), 50% du butin) ET termine proprement game.sceneRun (sinon le run resterait
+    // bloqué en status "combat" avec un ennemi orphelin). abandon() appelle déjà
+    // SortieManager.end("flee") lui-même : pas de double appel, on ne tombe PAS dans le else
+    // générique ci-dessous pour ce contexte.
+    else if (s.context === "scene" && window.SceneRunManager) SceneRunManager.abandon();
     else this.end("return");
     if (typeof switchTab === "function") switchTab("campement");
   },

@@ -43,9 +43,11 @@ function buildSceneScreenHTML() {
   if (!run || run.status === "completed") {
     return buildSceneLandingHTML();
   }
+  if (run.status === "profile") return buildSceneProfileChoiceHTML(); // v3.125.0 (Petites Aventures)
   if (run.status === "preparation") return buildScenePreparationHTML();
   if (run.status === "gate") return buildSceneGateChoiceHTML();
   if (run.status === "node") return buildSceneNodeHTML();
+  if (run.status === "combat") return buildSceneCombatPendingHTML(run); // v3.126.0 (Lot PA2)
   if (run.status === "finale") return buildSceneFinaleHTML(run);
   return buildSceneLandingHTML();
 }
@@ -155,6 +157,50 @@ function buildSceneStatusBarHTML(run, opts) {
   }
   return h;
 }
+
+/* --- Choix de profil (Petites Aventures uniquement, v3.125.0) --- */
+/* Concept §2 : Bourrin (rapide, plus de combats, aucun bloqueur) vs Prudent (plus long,
+   peu/pas de combat, 1-2 bloqueurs "carotte"). Choisi une seule fois, avant la préparation
+   — génère réellement la carte (voir SceneRunManager.chooseProfile). */
+
+function buildSceneProfileChoiceHTML() {
+  var run = SceneRunManager.getRun();
+  if (!run) return "";
+  var template = SceneEngine.getTemplate(run.templateId);
+
+  var h = '<div class="panel-title">' + esc(template.title) + '</div>';
+  h += '<div class="scene-screen">';
+  h += '  <div class="scene-heading">';
+  h += '    <div class="scene-heading-title">Choisis ton approche</div>';
+  h += '    <div class="scene-heading-text">Le butin final est identique quel que soit ton choix — seul le chemin change.</div>';
+  h += '  </div>';
+
+  h += '  <div class="scene-card-grid">';
+  h += '<button type="button" class="scene-card" onclick="chooseSceneProfile(\'bourrin\')">';
+  h += '<span class="scene-card-icon">⚔️</span>';
+  h += '<span class="scene-card-label">Bourrin</span>';
+  h += '<span class="scene-card-sub">Rapide, plus de combats, aucune attente.</span>';
+  h += '</button>';
+  h += '<button type="button" class="scene-card" onclick="chooseSceneProfile(\'prudent\')">';
+  h += '<span class="scene-card-icon">🛡️</span>';
+  h += '<span class="scene-card-label">Prudent</span>';
+  h += '<span class="scene-card-sub">Plus long, peu de combats, quelques attentes à faire pendant que tu vaques à autre chose.</span>';
+  h += '</button>';
+  h += '  </div>';
+  h += '</div>';
+  return h;
+}
+
+function chooseSceneProfile(profileId) {
+  var result = SceneRunManager.chooseProfile(profileId);
+  if (!result.ok) {
+    showToast(result.reason, 1600);
+    return;
+  }
+  sceneLog(profileId === "bourrin" ? "Tu pars en terrain conquérant." : "Tu pars à pas mesurés.");
+  refreshSceneScreen();
+}
+window.chooseSceneProfile = chooseSceneProfile;
 
 /* --- Préparation : choix de 3 objets --- */
 
@@ -336,6 +382,7 @@ function buildSceneNodeHTML() {
   if (type === "autel") return buildSceneAutelHTML(run);
   if (type === "decouverte") return buildSceneDecouverteHTML(run);
   if (type === "source") return buildSceneSourceHTML(run);
+  if (type === "bloqueur") return buildSceneBloqueurHTML(run); // v3.125.0 (Petites Aventures)
   return buildSceneGateChoiceHTML();
 }
 
@@ -457,6 +504,78 @@ function resolveSceneSource() {
   refreshSceneScreen();
 }
 window.resolveSceneSource = resolveSceneSource;
+
+/* --- Nœud bloqueur (Petites Aventures, profil Prudent, v3.125.0) --- */
+/* Concept §2 "fonction du bloqueur" : pensé comme une carotte, pas une attente morte —
+   pendant ces 5-10 min le joueur est encouragé à faire autre chose au village. Le minuteur
+   tourne en fond (timestamp, voir SceneRunManager.isBlockerReady) : rien n'empêche de quitter
+   l'écran, changer d'onglet, revenir plus tard — cet écran affiche juste où en est l'attente
+   si le joueur reste dessus, sans setInterval ni polling forcé (refreshSceneScreen suffit à
+   chaque retour sur l'onglet "scene", voir switchTab). */
+
+/* mm:ss simple — pas de dépendance à un formateur global (aucun formatDuration* dans le
+   codebase à ce jour, voir grep effectué avant écriture). */
+function sceneFormatRemaining(ms) {
+  var totalSec = Math.max(0, Math.ceil(ms / 1000));
+  var min = Math.floor(totalSec / 60);
+  var sec = totalSec % 60;
+  return min + ":" + (sec < 10 ? "0" : "") + sec;
+}
+
+function buildSceneBloqueurHTML(run) {
+  var ready = SceneRunManager.isBlockerReady();
+  var remainingMs = SceneRunManager.blockerRemainingMs();
+  var remainingLabel = sceneFormatRemaining(remainingMs);
+
+  var h = '<div class="panel-title">Chemin long</div>';
+  h += '<div class="scene-screen">';
+  h += buildSceneStatusBarHTML(run, { hideLeave: true }); // v3.125.0 : Rentrer masqué ici, voir note ci-dessous
+  h += '  <div class="scene-heading">';
+  h += '    <div class="scene-heading-title">' + (ready ? "Le chemin est dégagé." : "Le chemin est long.") + '</div>';
+  h += '    <div class="scene-heading-text">' + (ready
+    ? "Tu peux continuer ta route."
+    : "Encore " + esc(remainingLabel) + " (mm:ss) — profites-en pour avancer au village, la route t\u2019attendra.") + '</div>';
+  h += '  </div>';
+  h += '  <div class="scene-actions">';
+  if (ready) {
+    h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneBloqueur()">Continuer</button>';
+  } else {
+    h += '    <button class="settings-btn primary" type="button" onclick="switchTab(\'village\')">Aller au village</button>';
+  }
+  h += '  </div>';
+  h += '</div>';
+  return h;
+}
+
+/* Rentrer masqué pendant un bloqueur : l'expédition est engagée, le joueur PEUT quitter
+   l'onglet (aucun blocage réel), mais "Rentrer au camp" abandonnerait le run et perdrait la
+   position — cohérent avec le hideLeave déjà utilisé pour la chambre finale/préparation. Le
+   joueur revient simplement sur l'onglet "scene" plus tard, le bloqueur l'y attend. */
+
+function resolveSceneBloqueur() {
+  var result = SceneRunManager.resolveBloqueur();
+  if (!result.ok) { showToast(result.reason, 1600); return; }
+  sceneLog("Le chemin est enfin dégagé. +" + result.gainAmount);
+  refreshSceneScreen();
+}
+window.resolveSceneBloqueur = resolveSceneBloqueur;
+
+/* --- Combat en cours (Petites Aventures, profil Bourrin, v3.126.0) --- */
+/* Écran affiché seulement si le joueur revient sur l'onglet "scene" pendant un combat en
+   cours (enterGate a déjà fait switchTab("combat") — ce cas est donc rare, ex. navigation
+   arrière). Aucune action ici : le combat doit être résolu ou fui depuis l'onglet Combat lui-même. */
+function buildSceneCombatPendingHTML(run) {
+  var h = '<div class="panel-title">Combat en cours</div>';
+  h += '<div class="scene-screen">';
+  h += '  <div class="scene-heading">';
+  h += '    <div class="scene-heading-text">Un affrontement t\u2019attend.</div>';
+  h += '  </div>';
+  h += '  <div class="scene-actions">';
+  h += '    <button class="settings-btn primary" type="button" onclick="switchTab(\'combat\')">Reprendre le combat</button>';
+  h += '  </div>';
+  h += '</div>';
+  return h;
+}
 
 /* --- Chambre finale --- */
 

@@ -55,7 +55,11 @@ function createDefaultExplorationProgression() {
     // aucune notion d'acceptation (juste un launch direct). Clé = questId, true une fois acceptée ;
     // remis à false quand la quête est terminée (ExplorationManager/MiningManager/WellManager).
     boardAccepted: {},
-    villageQuests: { claimed: {}, tutorialsSeen: {}, craftCounts: {} }
+    villageQuests: { claimed: {}, tutorialsSeen: {}, craftCounts: {} },
+    // v3.125.0 (Petites Aventures, Lot PA1) : cap journalier léger, même règle de
+    // permanence que boardAccepted/villageQuests ci-dessus (rangé ici pour la même raison :
+    // save-system.js persiste explorationProgression comme bloc entier).
+    petiteAventure: { day: "", count: 0 }
   };
 }
 
@@ -423,6 +427,13 @@ function ensureGameStateDefaults() {
   }
   if (!game.explorationProgression.villageQuests || typeof game.explorationProgression.villageQuests !== "object") {
     game.explorationProgression.villageQuests = { claimed: {}, tutorialsSeen: {} };
+  }
+  // v3.125.0 (Petites Aventures, Lot PA1) : cap journalier léger (SceneRunManager.
+  // canStartPetiteAventureToday) — même garde canonique que boardAccepted/villageQuests
+  // ci-dessus, pour que toute save (ancienne ou neuve) ait la forme correcte dès le boot,
+  // pas seulement après le premier appel à SceneRunManager.ensureDefaults().
+  if (!game.explorationProgression.petiteAventure || typeof game.explorationProgression.petiteAventure !== "object") {
+    game.explorationProgression.petiteAventure = { day: "", count: 0 };
   }
   if (!game.gatheringActivity || typeof game.gatheringActivity !== "object") {
     game.gatheringActivity = createDefaultGatheringActivity();

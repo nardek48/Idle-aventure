@@ -42,7 +42,8 @@ var SceneEngine = {
   },
 
   /* ---------- Génération d'une carte (mode "generative"/"semi") ---------- */
-  /* buildCard(template, randomValues) -> tableau de niveaux [ [ {type, gabaritId?, riskMod?}, ... ], ... ]
+  /* buildCard(template, randomValues, slotWeightsOverride?) -> tableau de niveaux
+     [ [ {type, gabaritId?, riskMod?}, ... ], ... ]
      randomValues : tableau plat de nombres [0,1[ fourni par l'appelant (un par tirage), pour
      un générateur 100% pur et testable (aucun Math.random ici). L'appelant (scene-run-system)
      est responsable de fournir assez de valeurs et de les consommer dans l'ordre.
@@ -50,8 +51,12 @@ var SceneEngine = {
      riskMod (0.6-1.6, voir template.riskModRange) qui multiplie SA PROPRE difficulté ET son
      gain — deux portes d'un même palier peuvent donc avoir des profils risque/récompense très
      différents, au lieu de la même difficulté de base pour toutes (ce qui rendait le choix
-     mécanique : toujours prendre la porte annoncée "aisée"). */
-  buildCard: function (template, randomValues) {
+     mécanique : toujours prendre la porte annoncée "aisée").
+     v3.125.0 (Petites Aventures, Lot PA1) : slotWeightsOverride remplace template.slotWeights
+     UNIQUEMENT pour ce build — permet à un même canevas de générer une carte différente selon
+     le profil choisi (Bourrin/Prudent, voir template.profileWeights). Absent : comportement
+     inchangé (template.slotWeights). */
+  buildCard: function (template, randomValues, slotWeightsOverride) {
     if (!template) return [];
     var self = this;
     var cursor = 0;
@@ -61,6 +66,7 @@ var SceneEngine = {
       return v;
     }
 
+    var slotWeights = slotWeightsOverride || template.slotWeights;
     var depthMax = Number(template.depthMax || 1);
     var gatesMin = (template.gatesPerDepth && template.gatesPerDepth[0]) || 2;
     var gatesMax = (template.gatesPerDepth && template.gatesPerDepth[1]) || 2;
@@ -77,12 +83,23 @@ var SceneEngine = {
         if (d === 0 && template.firstDepthType) {
           type = template.firstDepthType; // v1 : premier palier toujours lisible (obstacle)
         } else {
-          type = this.weightedPick(template.slotWeights, nextRandom());
+          type = this.weightedPick(slotWeights, nextRandom());
         }
         var slot = { type: type };
         if (type === "obstacle" && template.pools && template.pools.obstacle) {
           slot.gabaritId = this.pickFromArray(template.pools.obstacle, nextRandom());
           slot.riskMod = riskMin + nextRandom() * (riskMax - riskMin);
+        } else if (type === "combat" && template.pools && template.pools.combat) {
+          // v3.125.0 (Lot PA2) : slot combat, gabaritId pointe vers un enemyFilter groupé
+          // (template.pools.combat), pas vers SCENE_NODES.obstacles — résolu par CombatEngine,
+          // pas par SceneEngine.resolveObstacle().
+          slot.gabaritId = this.pickFromArray(template.pools.combat, nextRandom());
+        } else if (type === "bloqueur") {
+          // v3.125.0 (Lot PA1) : durée tirée dans template.blockerDurationRange (ms), pas de
+          // gabarit — le nœud est purement temporel, résolu par un timestamp (readyAt).
+          var durMin = (template.blockerDurationRange && template.blockerDurationRange[0]) || 300000;
+          var durMax = (template.blockerDurationRange && template.blockerDurationRange[1]) || 600000;
+          slot.durationMs = Math.round(durMin + nextRandom() * (durMax - durMin));
         }
         level.push(slot);
       }

@@ -115,7 +115,13 @@ function switchTab(tabName) {
   // au bout, le joueur doit être concentré sur la quête en cours". Toute tentative de quitter
   // l'onglet "scene" en pleine expédition ouvre une confirmation (perte de 50% du loot non
   // sécurisé, comme une fuite — SortieManager.end("flee")) au lieu de naviguer directement.
+  // v3.126.0 (Petites Aventures, Lot PA2) : EXCEPTION pour tabName === "combat" quand
+  // game.sceneRun.status === "combat" — c'est SceneRunManager.enterCombatNode() lui-même qui
+  // vient de basculer vers l'onglet Combat pour un nœud combat légitime (profil Bourrin), pas
+  // un abandon du joueur. Sans cette exception, la modale d'abandon interromprait le
+  // basculement et le combat ne démarrerait jamais.
   if (game.activeTab === "scene" && tabName !== "scene"
+      && !(tabName === "combat" && game.sceneRun && game.sceneRun.status === "combat")
       && window.SceneRunManager && typeof SceneRunManager.isRunActive === "function" && SceneRunManager.isRunActive()) {
     var targetTab = tabName;
     if (typeof showConfirmModal === "function") {

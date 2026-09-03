@@ -181,13 +181,19 @@ var SCENE_NODES = {
     }
   },
 
-  /* Textes d'ambiance courts pour les silhouettes (portes non révélées, sans torche). */
+  /* Textes d'ambiance courts pour les silhouettes (portes non révélées, sans torche).
+     v3.125.0 (Petites Aventures, Lot PA1/PA2) : combat et bloqueur ajoutés — ces deux types
+     n'existent que dans petite_aventure_foret (profil Bourrin/Prudent), jamais en mystère
+     (non tirés par _revealMystery, voir scene-run-system.js), silhouette non utilisée en
+     pratique mais fournie pour cohérence du contrat SCENE_NODES.*[type]. */
   silhouettes: {
     obstacle: "Un passage difficile",
     autel: "Une lueur étrange",
     decouverte: "Un reflet brillant",
     source: "Un bruit d'eau",
-    mystere: "Une ombre indistincte"
+    mystere: "Une ombre indistincte",
+    combat: "Des bruits de pas",
+    bloqueur: "Un obstacle qui prendra du temps"
   },
 
   /* Indices qualitatifs affichés SANS torche (décision Seb 03/09/2026 : un "???" pur sur
@@ -197,7 +203,9 @@ var SCENE_NODES = {
     obstacle: { low: "Semble périlleux", medium: "Praticable", high: "Semble aisé" },
     autel: "Une présence recueillie",
     decouverte: "Prometteur",
-    source: "Apaisant"
+    source: "Apaisant",
+    combat: "Une présence hostile",
+    bloqueur: "Une attente s'annonce"
   },
 
   /* Indice de gain relatif d'un obstacle (v3.121.0, recalibrage Seb "le choix est trop
@@ -215,11 +223,24 @@ var SCENE_NODES = {
     autel: "Autel oublié",
     decouverte: "Découverte",
     source: "Source claire",
-    mystere: "Zone inconnue"
+    mystere: "Zone inconnue",
+    combat: "Rencontre",
+    bloqueur: "Chemin long"
   },
 
   icons: {
-    obstacle: "⛰", autel: "🕯", decouverte: "✨", source: "💧", mystere: "❓"
+    obstacle: "⛰", autel: "🕯", decouverte: "✨", source: "💧", mystere: "❓",
+    combat: "⚔️", bloqueur: "⏳"
+  },
+
+  /* v3.125.0 (Lot PA2) : groupes d'ennemis exploitables par un slot combat de scene-engine
+     (template.pools.combat -> gabaritId ici). enemyFilter passé tel quel à
+     QuestEnemyManager.spawnFor() — mêmes ids que ENEMY_DB (world "forest"). Purement des
+     données : aucune logique, cohérent avec le reste de ce fichier. */
+  combatGroups: {
+    gobelins_foret: { name: "Une bande de gobelins", enemyFilter: ["goblin"] },
+    loups_foret: { name: "Une meute de loups", enemyFilter: ["wolf"] },
+    araignees_foret: { name: "Un nid d'araignées", enemyFilter: ["spider"] }
   }
 };
 

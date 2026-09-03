@@ -792,6 +792,15 @@ var CombatEngine = {
       return;
     }
 
+    // v3.126.0 (Petites Aventures, Lot PA2) : mort en nœud combat du scene-engine = perte
+    // totale du run (SortieManager.end("death") déjà appelé ci-dessus, universel) — décision
+    // Seb confirmée avant ce lot : pas d'échec "doux" à 50% ici, réservé à l'évacuation
+    // (3 blessures) et à l'abandon volontaire. Termine le run proprement (écran de bilan).
+    if (window.SceneRunManager && game.sceneRun && game.sceneRun.status === "combat") {
+      SceneRunManager.onCombatDefeat();
+      return;
+    }
+
     // v3.101.0 : t_essence_bloom « Sang-froid » = 10 % PV max conservés par niveau à la défaite (au lieu de -pénalité d'or)
     var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
     game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
@@ -967,6 +976,20 @@ var CombatEngine = {
 
     if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active) {
       AdventureQuestManager.onEnemyKilled(enemy);
+      if (typeof renderAll === "function") renderAll();
+      restoreEquipBagScroll();
+      saveGame();
+      return;
+    }
+
+    // v3.126.0 (Petites Aventures, Lot PA2) : nœud combat du scene-engine (profil Bourrin,
+    // voir js/data/scene-templates.js petite_aventure_foret). Le gold/essence de ce kill a
+    // déjà été routé vers SortieManager par grantGold()/grantEssence() ci-dessus (inSortie()
+    // vrai, contexte "scene" actif depuis SceneRunManager.startRun) — rien à faire de spécial
+    // pour le butin, seulement router la suite du combat vers le run plutôt que vers le farm
+    // libre (WorldQuestManager/WorldManager.advance ci-dessous, qui ne concernent pas Scene).
+    if (window.SceneRunManager && game.sceneRun && game.sceneRun.status === "combat") {
+      SceneRunManager.onCombatWon();
       if (typeof renderAll === "function") renderAll();
       restoreEquipBagScroll();
       saveGame();

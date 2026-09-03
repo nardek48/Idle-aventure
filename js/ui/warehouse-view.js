@@ -12,7 +12,7 @@ var warehouseSellQty = 1;
 var warehouseFilter = "raw";
 
 function setWarehouseFilter(tier) {
-  warehouseFilter = (tier === "crafted") ? "crafted" : "raw";
+  warehouseFilter = (tier === "crafted" || tier === "special") ? tier : "raw";
   selectedWarehouseKey = null;
   if (typeof renderPanel === "function") renderPanel();
 }
@@ -149,6 +149,15 @@ function buildWarehouseFilterRowHTML() {
   var h = '<div class="inv-filter-row">';
   h += '<button type="button" class="inv-filter-btn' + (warehouseFilter === "raw" ? ' is-active' : '') + '" onclick="setWarehouseFilter(\'raw\')">Bruts</button>';
   h += '<button type="button" class="inv-filter-btn' + (warehouseFilter === "crafted" ? ' is-active' : '') + '" onclick="setWarehouseFilter(\'crafted\')">🔨 Tier 1</button>';
+  // v3.128.0 : 3e filtre "Rares" (tier "special") — Sève d'Aeswyn (Petites Aventures, Lot PA3)
+  // et toute future ressource de collection hors circuit vente/craft classique. N'apparaît que
+  // si au moins une ressource special existe dans WAREHOUSE_RESOURCES (évite un onglet vide
+  // sur une save qui n'aurait jamais lancé de Petite Aventure — le filtre reste utile même à 0
+  // Sève en stock, contrairement à sa présence : ici on masque seulement si la DÉFINITION
+  // n'existe pas du tout, pas si le stock est à 0).
+  if (Object.keys(WAREHOUSE_RESOURCES).some(function (k) { return WAREHOUSE_RESOURCES[k].tier === "special"; })) {
+    h += '<button type="button" class="inv-filter-btn' + (warehouseFilter === "special" ? ' is-active' : '') + '" onclick="setWarehouseFilter(\'special\')">✨ Rares</button>';
+  }
   h += '</div>';
   return h;
 }

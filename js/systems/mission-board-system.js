@@ -369,13 +369,52 @@ var MissionBoard = {
     return out;
   },
 
+  /* ---------- Petite Aventure (v3.125.0, Petites Aventures Lot PA1) ---------- */
+  /* Distincte de _sceneMissions() : canevas répétable (mode generative + profileWeights),
+     pas de unlockOnSuccess/isQuestCompleted — le seul gate est le cap journalier
+     (SceneRunManager.canStartPetiteAventureToday). Pas de flux accept/launch classique non
+     plus : lancement direct comme startSceneExpedition(), le tableau affiche juste le
+     compteur restant du jour. */
+  _petiteAventureMissions: function () {
+    if (!window.SceneRunManager || !window.SCENE_TEMPLATES || !SCENE_TEMPLATES.petite_aventure_foret) return [];
+    if (!(game.unlockedTabs && game.unlockedTabs.village)) return []; // même boardRequires que le template
+    var template = SCENE_TEMPLATES.petite_aventure_foret;
+    var activeRun = game.sceneRun;
+    var isRunning = !!(activeRun && activeRun.templateId === "petite_aventure_foret" && activeRun.status !== "completed");
+    var remaining = SceneRunManager.PETITE_AVENTURE_DAILY_CAP - SceneRunManager.petiteAventureCountToday();
+    var canStart = SceneRunManager.canStartPetiteAventureToday();
+
+    var blurb = "Un parcours court, choisis ton style : rapide et risqué, ou lent et sûr.";
+    if (!isRunning && !canStart) blurb += " Plus de tentative aujourd'hui, reviens demain.";
+    var m = {
+      id: "petite_aventure_foret", sourceKind: "scene", worldId: null,
+      title: template.title, blurb: blurb,
+      type: "expedition", place: "", objectiveLabel: "",
+      // v3.125.0 : progressLabel n'est affiché par la vue que pour running/accepted — le
+      // compteur "X/3 aujourd'hui" est donc porté par blurb quand indisponible (voir ci-dessus),
+      // et ici seulement pour le cas running (cohérent avec le pattern des autres missions).
+      progressLabel: isRunning ? "En cours" : "",
+      rewardSummary: (canStart && !isRunning) ? (remaining + "/" + SceneRunManager.PETITE_AVENTURE_DAILY_CAP + " aujourd'hui") : "",
+      badge: "contract",
+      status: isRunning ? "running" : (canStart ? "available" : "unavailable"),
+      isMain: false
+    };
+    var launchFn = function () {
+      if (typeof switchTab === "function") switchTab("scene");
+      if (typeof openSceneQuestEntry === "function") openSceneQuestEntry("petite_aventure_foret");
+    };
+    if (isRunning) m.launch = launchFn;
+    else if (canStart) m.accept = launchFn; // pas d'étape "accepter" séparée : accepter = lancer directement
+    return [m];
+  },
+
   /* ---------- Agrégation ---------- */
   /* Toutes les missions actives/proposables, Histoire en tête, triées par priorité (isMain, puis claimable > running > available). */
   list: function () {
     var self = this;
     var groups = [this._storyMissions(), this._worldExpeditionMissions(),
       this._adventureMissions(), this._huntMissions(), this._dungeonMissions(), this._sceneMissions(), this._workshopMissions(),
-      this._villageMissions()]; // v3.116.0 : _contractMissions (journalières) retirées
+      this._villageMissions(), this._petiteAventureMissions()]; // v3.116.0 : _contractMissions (journalières) retirées
     var all = [].concat.apply([], groups);
     var rank = { story: 0 }; // l'Histoire garde toujours le rang 0 (colonne vertébrale, LIGNE_DIRECTRICE §3)
     var statusRank = { claimable: 0, ready: 0, running: 1, accepted: 1, available: 2, locked: 3 };
