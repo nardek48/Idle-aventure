@@ -17,14 +17,10 @@ var MENU_ITEMS = [
 ];
 
 function getMenuQuestBadgeCount() {
-  // v3.100.0 : + étapes Histoire réclamables (StoryQuestManager)
-  var storyReady = (window.StoryQuestManager && typeof StoryQuestManager.getClaimableCount === "function")
+  // v3.116.0 : journalières retirées — seules les étapes Histoire réclamables comptent ici.
+  return (window.StoryQuestManager && typeof StoryQuestManager.getClaimableCount === "function")
     ? StoryQuestManager.getClaimableCount()
     : 0;
-  if (!Array.isArray(game.quests) || !window.QuestManager) return storyReady;
-  return storyReady + game.quests.filter(function (q) {
-    return !q.claimed && QuestManager.isComplete(q);
-  }).length;
 }
 
 function buildFullMenuHTML() {

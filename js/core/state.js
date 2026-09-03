@@ -49,6 +49,12 @@ function createDefaultExplorationProgression() {
     // Rangé ICI (et non en champ racine) car save-system.js (protégé) est une liste
     // blanche de champs mais persiste explorationProgression comme objet entier — et ce
     // bloc doit être permanent (survit à l'ascension), comme les déblocages.
+    // v3.117.0 : acceptation explicite des expéditions à mini-jeu au tableau de missions
+    // (Sentier Obstrué, Veine Instable, Éboulis Ferreux, Source Tarie) — décision Seb : le
+    // Campement ne doit montrer que ce qui est accepté, ces 4 expéditions n'avaient jusqu'ici
+    // aucune notion d'acceptation (juste un launch direct). Clé = questId, true une fois acceptée ;
+    // remis à false quand la quête est terminée (ExplorationManager/MiningManager/WellManager).
+    boardAccepted: {},
     villageQuests: { claimed: {}, tutorialsSeen: {}, craftCounts: {} }
   };
 }
@@ -410,6 +416,10 @@ function ensureGameStateDefaults() {
   }
   if (typeof game.explorationProgression.farmUnlocked !== "boolean") {
     game.explorationProgression.farmUnlocked = false;
+  }
+  // v3.117.0 : garde de forme pour l'acceptation du tableau de missions (expéditions mini-jeu).
+  if (!game.explorationProgression.boardAccepted || typeof game.explorationProgression.boardAccepted !== "object") {
+    game.explorationProgression.boardAccepted = {};
   }
   if (!game.explorationProgression.villageQuests || typeof game.explorationProgression.villageQuests !== "object") {
     game.explorationProgression.villageQuests = { claimed: {}, tutorialsSeen: {} };

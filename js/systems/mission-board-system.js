@@ -9,6 +9,18 @@
      badge, status, isMain, worldId,
      accept, launch, claim, abandon (fonctions présentes seulement si l'action a un sens pour ce statut) } */
 
+/* v3.118.0 (retour Seb) : sur le tableau de missions, ce qui manque avant d'accepter c'est "à quoi
+   ça sert", pas le lore (déjà présent ailleurs, ex. popup de préparation). Texte orienté objectif,
+   par questId — distinct de quest.description (narratif) utilisé lui dans le popup de préparation. */
+var EXPLORATION_BOARD_BLURBS = {
+  blockedPath: "Ouvre l'accès à la Clairière oubliée (mène à la Carrière).",
+  unstableVein: "Débloque la Carrière (pierre).",
+  ironLode: "Débloque la Mine (fer).",
+  driedSpring: "Débloque le Puits (eau).",
+  silentGrove: "Débloque la Scierie (planches).",
+  fallowField: "Débloque les Champs (blé)."
+};
+
 var MISSION_TYPE_ICON = { combat: "⚔️", expedition: "🧭", chasse: "🐗", donjon: "🏰", production: "🔨" }; // v3.108.0 : production (Les fondations)
 var MISSION_STATUS_LABEL = {
   locked: "Verrouillée", available: "Disponible", accepted: "Acceptée",
@@ -170,6 +182,11 @@ var MissionBoard = {
   /* ---------- Donjon (paliers à ticket) ---------- */
   _dungeonMissions: function () {
     if (!window.DungeonManager || !window.DUNGEONS) return [];
+    // v3.118.0 (retour Seb) : le palier 1 est TOUJOURS "isTierUnlocked" en soi (mécanique de
+    // donjon), mais narrativement le Donjon n'a de sens qu'après forest_14 (Acte III, avant-
+    // dernière étape, unlockTabs: ["dungeon"]) — sans ce filtre, "Tanière du Basilic" apparaissait
+    // dès le boot, bien avant que le joueur en ait la moindre idée.
+    if (!(game.unlockedTabs && game.unlockedTabs.dungeon)) return [];
     var out = [];
     var isRunning = !!(game.dungeonRun && game.dungeonRun.active);
     DungeonManager.checkTicketReset();
@@ -212,7 +229,27 @@ var MissionBoard = {
     if (!req) return true;
     if (req.tabUnlocked && !(game.unlockedTabs && game.unlockedTabs[req.tabUnlocked])) return false;
     if (req.progressFlag && !(game.explorationProgression && game.explorationProgression[req.progressFlag])) return false;
+    // v3.119.0 (retour Seb) : plusieurs conditions cumulées (ex. Terre en Friche exige à la fois
+    // le Puits ET la Cuisine de camp/petite ration) — progressFlags (pluriel), toutes requises.
+    if (req.progressFlags && !req.progressFlags.every(function (flag) { return !!(game.explorationProgression && game.explorationProgression[flag]); })) return false;
     return true;
+  },
+
+  /* v3.117.0 : les expéditions à mini-jeu (Sentier Obstrué, Veine Instable, Éboulis Ferreux,
+     Source Tarie) n'ont pas de notion d'acceptation dans leur moteur d'origine (juste un launch
+     direct) — on l'ajoute ICI, côté façade uniquement, pour que le Campement (n'affichant que
+     les missions acceptées, décision Seb) puisse les traiter comme les autres. */
+  _isBoardAccepted: function (questId) {
+    return !!(game.explorationProgression && game.explorationProgression.boardAccepted && game.explorationProgression.boardAccepted[questId]);
+  },
+  acceptBoardQuest: function (questId) {
+    if (!game.explorationProgression) return;
+    if (!game.explorationProgression.boardAccepted || typeof game.explorationProgression.boardAccepted !== "object") {
+      game.explorationProgression.boardAccepted = {};
+    }
+    game.explorationProgression.boardAccepted[questId] = true;
+    if (typeof renderPanel === "function") renderPanel();
+    if (typeof saveGame === "function") saveGame();
   },
 
   _explorationMissions: function () {
@@ -227,35 +264,49 @@ var MissionBoard = {
         if (ExplorationManager.isQuestCompleted(quest.id)) return;
         var run = ExplorationManager.getRun();
         var isRunning = !!(run && run.questId === quest.id && run.status !== "completed");
+        var accepted = isRunning || self._isBoardAccepted(quest.id); // v3.117.0
         var m = {
           id: "exploration_" + quest.id, sourceKind: "exploration", worldId: null,
-          title: quest.title, blurb: "",
+          title: quest.title, blurb: EXPLORATION_BOARD_BLURBS[quest.id] || "",
           type: "expedition", place: "", objectiveLabel: "", progressLabel: isRunning ? "En cours" : "",
-          rewardSummary: "", badge: "contract", status: isRunning ? "running" : "available", isMain: false
+          rewardSummary: "", badge: "contract", status: isRunning ? "running" : (accepted ? "accepted" : "available"), isMain: false
         };
-        m.launch = function () {
+        var launchFn = function () {
           // v3.107.6 : openQuestsAt() ne fait que changer d'onglet (ne lance rien) — appelle le vrai
           // point d'entrée du mini-jeu si disponible, avec repli sur l'ancien comportement sinon.
           if (typeof openExplorationPrep === "function") openExplorationPrep(quest.id);
           else if (typeof openQuestsAt === "function") openQuestsAt(quest.section || "expedition", "exploration_" + quest.id);
         };
+        if (accepted) m.launch = launchFn;
+        else m.accept = function () { return self.acceptBoardQuest(quest.id); };
         out.push(m);
       });
     }
-    if (window.MiningManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.unstableVein && !MiningManager.isQuarryUnlocked() && !MiningManager.isQuestCompleted()) {
+    // v3.118.0 : la Veine Instable exige déjà "forgottenClearingUnlocked" (Sentier Obstrué
+    // terminé) comme prérequis de LANCEMENT (data/exploration-quests.js, requirements) — cette
+    // condition n'était pas appliquée à l'AFFICHAGE, la carte apparaissait donc dès le boot,
+    // avant même d'avoir de quoi la lancer (retour Seb). Alignée ici.
+    if (window.MiningManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.unstableVein
+      && !!(game.explorationProgression && game.explorationProgression.forgottenClearingUnlocked)
+      && !MiningManager.isQuarryUnlocked() && !MiningManager.isQuestCompleted()) {
       var veinQuest = EXPLORATION_QUESTS.unstableVein;
       var veinSession = MiningManager.getActiveSession();
       // v3.110.0 : questId vérifié — un run d'Éboulis Ferreux ne doit pas marquer cette carte "En cours".
       var veinRunning = !!(veinSession && veinSession.source === "quest" && veinSession.questId === "unstableVein" && veinSession.status !== "completed");
-      out.push({
+      var veinAccepted = veinRunning || self._isBoardAccepted(veinQuest.id); // v3.117.0
+      var veinLaunch = function () {
+        if (typeof openUnstableVeinQuest === "function") openUnstableVeinQuest();
+        else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + veinQuest.id);
+      };
+      var veinMission = {
         id: "exploration_" + veinQuest.id, sourceKind: "exploration", worldId: null,
-        title: veinQuest.title, blurb: "", type: "expedition", place: "", objectiveLabel: "", progressLabel: veinRunning ? "En cours" : "",
-        rewardSummary: "", badge: "contract", status: veinRunning ? "running" : "available", isMain: false,
-        launch: function () {
-          if (typeof openUnstableVeinQuest === "function") openUnstableVeinQuest();
-          else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + veinQuest.id);
-        }
-      });
+        // v3.118.0 : description orientée objectif (ce que ça débloque), pas le lore — décision Seb.
+        title: veinQuest.title, blurb: EXPLORATION_BOARD_BLURBS.unstableVein, type: "expedition", place: "", objectiveLabel: "", progressLabel: veinRunning ? "En cours" : "",
+        rewardSummary: "", badge: "contract", status: veinRunning ? "running" : (veinAccepted ? "accepted" : "available"), isMain: false
+      };
+      if (veinAccepted) veinMission.launch = veinLaunch;
+      else veinMission.accept = function () { return self.acceptBoardQuest(veinQuest.id); };
+      out.push(veinMission);
     }
     // v3.110.0 : "L'Éboulis Ferreux" (Mine) — même routage MiningManager que la Veine
     // Instable, gating d'affichage : Carrière débloquée, Mine pas encore acquise.
@@ -266,29 +317,37 @@ var MissionBoard = {
       var lodeQuest = EXPLORATION_QUESTS.ironLode;
       var lodeSession = MiningManager.getActiveSession();
       var lodeRunning = !!(lodeSession && lodeSession.source === "quest" && lodeSession.questId === "ironLode" && lodeSession.status !== "completed");
-      out.push({
+      var lodeAccepted = lodeRunning || self._isBoardAccepted(lodeQuest.id); // v3.117.0
+      var lodeLaunch = function () {
+        if (typeof openIronLodeQuest === "function") openIronLodeQuest();
+        else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + lodeQuest.id);
+      };
+      var lodeMission = {
         id: "exploration_" + lodeQuest.id, sourceKind: "exploration", worldId: null,
-        title: lodeQuest.title, blurb: "", type: "expedition", place: "", objectiveLabel: "", progressLabel: lodeRunning ? "En cours" : "",
-        rewardSummary: "", badge: "contract", status: lodeRunning ? "running" : "available", isMain: false,
-        launch: function () {
-          if (typeof openIronLodeQuest === "function") openIronLodeQuest();
-          else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + lodeQuest.id);
-        }
-      });
+        title: lodeQuest.title, blurb: EXPLORATION_BOARD_BLURBS.ironLode, type: "expedition", place: "", objectiveLabel: "", progressLabel: lodeRunning ? "En cours" : "",
+        rewardSummary: "", badge: "contract", status: lodeRunning ? "running" : (lodeAccepted ? "accepted" : "available"), isMain: false
+      };
+      if (lodeAccepted) lodeMission.launch = lodeLaunch;
+      else lodeMission.accept = function () { return self.acceptBoardQuest(lodeQuest.id); };
+      out.push(lodeMission);
     }
     if (window.WellManager && window.EXPLORATION_QUESTS && EXPLORATION_QUESTS.driedSpring && !WellManager.isWellUnlocked() && !WellManager.isQuestCompleted()) {
       var springQuest = EXPLORATION_QUESTS.driedSpring;
       var springSession = WellManager.getActiveSession();
       var springRunning = !!(springSession && springSession.source === "quest" && springSession.status !== "completed");
-      out.push({
+      var springAccepted = springRunning || self._isBoardAccepted(springQuest.id); // v3.117.0
+      var springLaunch = function () {
+        if (typeof openDriedSpringQuest === "function") openDriedSpringQuest();
+        else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + springQuest.id);
+      };
+      var springMission = {
         id: "exploration_" + springQuest.id, sourceKind: "exploration", worldId: null,
-        title: springQuest.title, blurb: "", type: "expedition", place: "", objectiveLabel: "", progressLabel: springRunning ? "En cours" : "",
-        rewardSummary: "", badge: "contract", status: springRunning ? "running" : "available", isMain: false,
-        launch: function () {
-          if (typeof openDriedSpringQuest === "function") openDriedSpringQuest();
-          else if (typeof openQuestsAt === "function") openQuestsAt("expedition", "exploration_" + springQuest.id);
-        }
-      });
+        title: springQuest.title, blurb: EXPLORATION_BOARD_BLURBS.driedSpring, type: "expedition", place: "", objectiveLabel: "", progressLabel: springRunning ? "En cours" : "",
+        rewardSummary: "", badge: "contract", status: springRunning ? "running" : (springAccepted ? "accepted" : "available"), isMain: false
+      };
+      if (springAccepted) springMission.launch = springLaunch;
+      else springMission.accept = function () { return self.acceptBoardQuest(springQuest.id); };
+      out.push(springMission);
     }
     return out;
   },
@@ -299,18 +358,23 @@ var MissionBoard = {
     if (!window.WorkshopUnlockSystem && typeof game.workshopUnlock === "undefined") return [];
     if (!window.MiningManager || !MiningManager.isQuestCompleted()) return []; // dispo dès La veine instable terminée
     if (game.workshopFoundationsCompleted) return [];
+    var self = this;
     var wu = game.workshopUnlock || {};
     var total = (window.WORKSHOP_UNLOCK_STEPS || []).length || 4;
     var done = wu.completed ? total : Math.min(total, Number(wu.currentStep || 0));
     var ready = !!wu.completed;
-    return [{
+    // v3.117.0 (décision Seb) : même flux accept/launch que les expéditions à mini-jeu — le
+    // Campement ne montre que l'engagé. Une chaîne déjà commencée (currentStep > 0) est
+    // considérée acceptée d'office (le joueur a déjà agi, pas besoin de reconfirmer).
+    var accepted = ready || done > 0 || self._isBoardAccepted("workshop_foundations");
+    var launchFn = function () { if (typeof switchTab === "function") switchTab("village"); };
+    var m = {
       id: "workshop_foundations", sourceKind: "workshop", worldId: null,
       title: "Les fondations", blurb: "Bois, planches, pierre. Assemble-les, et Aeswyn aura son premier mur.",
       type: "production", place: "", objectiveLabel: "Construire l'Atelier de Construction (chaîne de 4 objectifs)",
       progressLabel: done + "/" + total,
       rewardSummary: missionRewardSummary(STORY_REWARDS.forest_10), badge: "contract",
-      status: ready ? "claimable" : "available", isMain: false,
-      launch: function () { if (typeof switchTab === "function") switchTab("village"); },
+      status: ready ? "claimable" : (accepted ? "accepted" : "available"), isMain: false,
       claim: ready ? function () {
         if (!window.StoryQuestManager) return;
         StoryQuestManager._grantReward(STORY_REWARDS.forest_10); // même récompense qu'avant (500 or, 15 essence, +15 XP)
@@ -318,7 +382,10 @@ var MissionBoard = {
         addLog("📖 Étape terminée : Les fondations", "event");
         if (typeof showToast === "function") showToast("🔓 Les fondations terminées", 2000);
       } : null
-    }];
+    };
+    if (accepted) m.launch = launchFn;
+    else m.accept = function () { return self.acceptBoardQuest("workshop_foundations"); };
+    return [m];
   },
 
   /* ---------- Quêtes tutorielles du Village (v3.111.0, Lot B) : chaîne séquentielle
@@ -329,34 +396,22 @@ var MissionBoard = {
     var quest = VillageQuestManager.getCurrentQuest();
     if (!quest) return [];
     if (!VillageQuestManager.isQuestAvailable(quest)) return []; // v3.112.0 : chaîne en pause (prérequis)
+    var self = this;
     var ready = VillageQuestManager.isQuestReady(quest);
-    return [{
+    // v3.117.0 (décision Seb, cohérence totale) : même flux accept/launch que les autres missions
+    // sans vraie étape d'acceptation dans leur système d'origine.
+    var accepted = ready || self._isBoardAccepted("village_" + quest.id);
+    var m = {
       id: "village_" + quest.id, sourceKind: "village", worldId: null,
       title: quest.title, blurb: (quest.narrative && quest.narrative.objective) || "",
       type: "production", place: "", objectiveLabel: quest.objectiveLabel || "",
       progressLabel: (typeof quest.progress === "function") ? quest.progress() : "",
       rewardSummary: missionRewardSummary(quest.reward || {}), badge: "contract",
-      status: ready ? "claimable" : "available", isMain: false,
-      launch: function () { if (typeof switchTab === "function") switchTab("village"); },
+      status: ready ? "claimable" : (accepted ? "accepted" : "available"), isMain: false,
       claim: ready ? function () { return VillageQuestManager.claim(quest.id); } : null
-    }];
-  },
-
-  /* ---------- Contrat du jour (journalières -> 1 tirage, décision §10 n°7) ---------- */
-  _contractMissions: function () {
-    if (!window.QuestManager || !Array.isArray(game.quests) || !game.quests.length) return [];
-    var quest = game.quests[0]; // v3.103.0 : un seul contrat actif (voir 3.103.2 pour réduire generateDaily à 1 tirage)
-    var progress = QuestManager.getProgress(quest);
-    var ready = !quest.claimed && QuestManager.isComplete(quest);
-    var m = {
-      id: "contract_" + quest.id, sourceKind: "contract", worldId: null,
-      title: quest.name, blurb: quest.desc || "",
-      type: "combat", place: "", objectiveLabel: quest.desc || "", progressLabel: Math.min(progress, quest.target) + "/" + quest.target,
-      rewardSummary: missionRewardSummary({ gold: quest.rewardGold, essence: quest.rewardEssence }),
-      badge: "contract", status: quest.claimed ? "claimable_done" : (ready ? "claimable" : "running"), isMain: false
     };
-    if (quest.claimed) return [];
-    if (ready) m.claim = function () { return QuestManager.claim(quest.id); };
+    if (accepted) m.launch = function () { if (typeof switchTab === "function") switchTab("village"); };
+    else m.accept = function () { return self.acceptBoardQuest("village_" + quest.id); };
     return [m];
   },
 
@@ -364,9 +419,9 @@ var MissionBoard = {
   /* Toutes les missions actives/proposables, Histoire en tête, triées par priorité (isMain, puis claimable > running > available). */
   list: function () {
     var self = this;
-    var groups = [this._storyMissions(), this._worldExpeditionMissions(), this._contractMissions(),
+    var groups = [this._storyMissions(), this._worldExpeditionMissions(),
       this._adventureMissions(), this._huntMissions(), this._dungeonMissions(), this._explorationMissions(), this._workshopMissions(),
-      this._villageMissions()]; // v3.111.0 (Lot B)
+      this._villageMissions()]; // v3.116.0 : _contractMissions (journalières) retirées
     var all = [].concat.apply([], groups);
     var rank = { story: 0 }; // l'Histoire garde toujours le rang 0 (colonne vertébrale, LIGNE_DIRECTRICE §3)
     var statusRank = { claimable: 0, ready: 0, running: 1, accepted: 1, available: 2, locked: 3 };
@@ -381,9 +436,17 @@ var MissionBoard = {
     return all;
   },
 
-  /* Les N premières missions (Campement, aperçu). */
+  /* Les N premières missions (Campement, aperçu). v3.117.0 (décision Seb) : le Campement est
+     un résumé de ce qu'on FAIT, pas un catalogue de tout ce qu'on POURRAIT accepter — filtre
+     aux missions déjà engagées (running/accepted/claimable). L'Histoire reste toujours visible
+     même non acceptée (colonne vertébrale, ne doit jamais disparaître du Campement). Le tableau
+     complet (écran Quêtes, onglets de catégorie) continue lui d'afficher aussi les "available". */
   top: function (n) {
-    return this.list().slice(0, n || 3);
+    var engagedStatus = { running: 1, accepted: 1, claimable: 1 };
+    var visible = this.list().filter(function (m) {
+      return m.sourceKind === "story" || engagedStatus[m.status];
+    });
+    return visible.slice(0, n || 3);
   },
 
   getById: function (id) {

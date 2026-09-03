@@ -23,6 +23,11 @@ var EXPLORATION_QUESTS = {
       minPetiteRation: 1
     },
 
+    // v3.119.0 (retour Seb) : cette quête exige déjà 1 petite ration pour être LANCÉE (ci-dessus),
+    // mais rien n'empêchait son AFFICHAGE avant même que la petite ration soit fabricable (Cuisine
+    // de camp, bâtiment Chasse) — elle traînait au tableau sans qu'on puisse jamais la lancer.
+    boardRequires: { progressFlag: "huntBuildingUnlocked" },
+
     // Provisions proposées à l'étape A du popup de préparation.
     provisionOptions: [
       { id: "light", label: "Voyage léger", startingRations: 1, reserveRations: 0 },
@@ -378,7 +383,10 @@ var EXPLORATION_QUESTS = {
       lockedReason: "Débloque d'abord le Puits (La Source Tarie)"
     },
 
-    boardRequires: { progressFlag: "wellUnlocked" },
+    // v3.119.0 (retour Seb) : ajout de huntBuildingUnlocked — cette quête exige aussi 1 petite
+    // ration pour être lancée (ci-dessus), mais ne restait masquée que sur le Puits ; elle pouvait
+    // réapparaître au tableau avant même que la petite ration soit fabricable (Cuisine de camp).
+    boardRequires: { progressFlags: ["wellUnlocked", "huntBuildingUnlocked"] },
 
     // Même parcours de préparation que le Sentier Obstrué (léger/préparé + réserve).
     provisionOptions: [

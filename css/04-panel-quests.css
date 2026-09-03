@@ -388,4 +388,209 @@
 .quest-board-list {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+}
+
+/* ============================================================
+   v3.116.0 (Lot B) — onglets de catégorie façon maquette
+   (Histoire/Secondaires/Chasse/Aventure) + cartes bannière.
+   ============================================================ */
+.qb-tabs {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  max-width: 720px;
+  margin: 4px auto 14px;
+}
+
+.qb-tab {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 4px 8px;
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  color: var(--nb-ink-dim);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: var(--nb-shadow-card);
+}
+
+.qb-tab-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.qb-tab.is-active {
+  background: var(--nb-gold);
+  border-color: var(--nb-gold-dark);
+  color: #3a2a12;
+  transform: translateY(1px);
+}
+
+/* Pastille "réclamable" sur l'onglet */
+.qb-tab-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 1px solid #7f1d1d;
+}
+
+/* Carte de mission façon maquette : bannière à gauche, contenu à droite */
+.qb-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  box-shadow: var(--nb-shadow-card);
+  text-align: left;
+}
+
+.qb-card.is-main {
+  border-color: var(--nb-gold-dark);
+  box-shadow: 0 0 0 1px var(--nb-gold), var(--nb-shadow-card);
+}
+
+.qb-card.is-claimable {
+  border-color: #4ade80;
+}
+
+.qb-card.is-locked {
+  opacity: 0.6;
+}
+
+/* Bannière-icône (écusson) — teinte par type de mission */
+.qb-card-banner {
+  flex: 0 0 52px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  border-radius: 6px 6px 12px 12px;
+  border: 2px solid var(--nb-gold-dark);
+  background: linear-gradient(180deg, #3b4a6b, #232c42);
+  clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%);
+}
+
+.qb-banner-chasse { background: linear-gradient(180deg, #4b5e35, #2c3a1e); }
+.qb-banner-expedition { background: linear-gradient(180deg, #5b3f6e, #3a2749); }
+.qb-banner-donjon { background: linear-gradient(180deg, #6e3a3a, #442020); }
+.qb-banner-production { background: linear-gradient(180deg, #6e5a2f, #453818); }
+
+.qb-card-banner-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.qb-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qb-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.qb-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.qb-card-desc {
+  font-size: 12px;
+  color: var(--nb-ink-dim);
+  line-height: 1.35;
+}
+
+.qb-card-progress {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nb-gold-dark);
+}
+
+.qb-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.qb-card-rewards {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.qb-reward-chip {
+  padding: 3px 8px;
+  border: 1px solid var(--nb-frame-light);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-ink);
+  white-space: nowrap;
+}
+
+.qb-card-action {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.qb-card-btn {
+  padding: 8px 14px;
+  font-size: 12px;
+}
+
+.qb-card-locked {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-ink-dim);
+}
+
+/* Lien discret vers les quêtes terminées (remplace le filtre pleine largeur) */
+.qb-completed-bar {
+  width: 100%;
+  max-width: 720px;
+  margin: 12px auto 0;
+  text-align: center;
+}
+
+.qb-completed-link {
+  border: none;
+  background: none;
+  color: var(--nb-ink-dim);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
 }

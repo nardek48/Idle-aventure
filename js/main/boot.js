@@ -39,7 +39,6 @@ function init() {
     ProductionManager.catchUpOffline();
   }
 
-  ensureDailyQuests();
 
   if (window.WorldManager && typeof WorldManager.markWorldReached === "function") {
     WorldManager.markWorldReached(WorldManager.worldIndex || 0);
@@ -50,10 +49,6 @@ function init() {
     DungeonManager.spawnWave(game.dungeonRun.wave || 1);
   } else {
     CombatEngine.spawnEnemy();
-  }
-
-  if (window.QuestManager && typeof QuestManager.checkReset === "function") {
-    QuestManager.checkReset();
   }
 
   if (loaded) {

@@ -65,11 +65,18 @@ var CampManager = {
     var v = document.getElementById("camp-fire-hp-value");
     if (!v) return;
     var maxHp = game.heroMaxHp || 1;
-    v.textContent = formatNumber(Math.floor(game.heroHp || 0)) + " / " + formatNumber(maxHp) + " PV";
+    var hp = Math.floor(game.heroHp || 0);
+    // v3.116.0 (Lot C) : maj des barres PV/régénération en plus des textes (nouveau rendu Campement).
+    v.innerHTML = '<span class="camp-hp-current">' + formatNumber(hp) + '</span> / ' + formatNumber(maxHp);
+    var pct = Math.max(0, Math.min(100, (hp / maxHp) * 100)) + "%";
+    var hpFill = document.getElementById("camp-hp-fill");
+    if (hpFill) hpFill.style.width = pct;
+    var regenFill = document.getElementById("camp-regen-fill");
+    if (regenFill) regenFill.style.width = pct;
     var eta = document.getElementById("camp-fire-eta");
     if (eta) {
       var full = (game.heroHp || 0) >= maxHp;
-      eta.textContent = full ? "PV au maximum" : "Max dans " + formatTime(Math.ceil(this.getMinutesToFull() * 60));
+      eta.textContent = full ? "✔ PV au maximum" : "⏳ Max dans " + formatTime(Math.ceil(this.getMinutesToFull() * 60));
       if (full && typeof renderPanel === "function") renderPanel(); // ré-évalue les boutons de ration (grisés si PV pleins)
     }
   },

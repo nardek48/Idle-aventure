@@ -124,18 +124,8 @@ var STORY_QUESTS = {
         objectiveLabel: "Accepter la quête",
         unlockTabs: ["combat"],
         reward: STORY_REWARDS.forest_01,
-        // v3.107.9 : popup d'accueil, à l'arrivée sur le Campement (premier écran du jeu).
-        tutorial: {
-          tab: "campement",
-          icon: "🏕️",
-          title: "Le Campement",
-          points: [
-            { icon: "🏕️", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
-            { icon: "🍖", text: "Repos et rations — hors combat, tu récupères 5 % de tes PV max par minute (jusqu'à 50 % si tu es hors ligne). Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre." },
-            { icon: "📋", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Principale ») est toujours en tête, suivie de contrats secondaires. Une quête secondaire liée à l'étape en cours se démarque avec un cadre brillant." },
-            { icon: "📋", text: "Retourne au tableau de missions et clique sur « Partir » pour ta prochaine quête — c'est elle qui te mènera au combat avec un vrai objectif, plutôt que d'explorer seul sans but." }
-          ]
-        },
+        // v3.116.0 : tutoriel migré vers GENERIC_TUTORIALS.camp_welcome (ui/tutorial-view.js) —
+        // ici il exigeait l'étape acceptée, or l'arrivée au Campement précède toujours l'acceptation.
         check: function () { return true; },
         progress: function () { return ""; }
       },

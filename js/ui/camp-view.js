@@ -9,18 +9,15 @@ function buildCampMissionActionHTML(m) {
   if (m.claim) return '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'claim\')">🎁 Réclamer</button>';
   if (m.status === "running" || m.status === "accepted") {
     var h = '<div class="camp-mission-actions">';
-    if (m.launch) h += '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'launch\')">▶ Continuer</button>';
+    // v3.117.0 : "accepted" = acceptée mais pas encore lancée (ex. expédition à mini-jeu juste
+    // acceptée) -> "Partir" ; "running" = déjà en cours -> "Continuer". Même bouton launch.
+    var launchLabel = m.status === "running" ? "▶ Continuer" : "🚩 Partir";
+    if (m.launch) h += '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'launch\')">' + launchLabel + '</button>';
     if (m.abandon) h += '<button class="settings-btn danger camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'abandon\')">Abandonner</button>';
     h += '</div>';
     return h;
   }
-  if (m.accept) return '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'accept\')">🚩 Partir</button>';
-  // v3.107.6 : les expéditions à mini-jeu (Sentier Obstrué, Veine Instable, Source Tarie) sont
-  // status="available" avec SEULEMENT launch (pas d'accept) — aucun des 3 cas ci-dessus ne
-  // matchait, la carte n'affichait donc AUCUN bouton (bug : mission visible mais impossible à
-  // lancer depuis cette carte, seul "Aller à la quête" de l'étape Histoire y menait — et lui-même
-  // ne faisait que changer d'onglet sans rien déclencher, cf. openQuestsAt).
-  if (m.status === "available" && m.launch) return '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'launch\')">▶ Partir</button>';
+  if (m.accept) return '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'accept\')">Accepter</button>';
   return "";
 }
 
@@ -85,35 +82,40 @@ function buildCampHTML() {
     game.justDied = false;
   }
 
-  h += '<div class="camp-fire-row">';
+  var hpPct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
 
-  h += '<div class="camp-card camp-fire-card">';
-  h += '<div class="camp-fire-icon">🔥</div>';
-  h += '<div class="camp-fire-title">Feu de camp</div>';
-  h += '<div class="camp-fire-desc">+' + regenPct + ' % PV par minute hors combat.</div>';
-  h += '<div class="camp-fire-hp" id="camp-fire-hp-value">' + formatNumber(Math.floor(hp)) + ' / ' + formatNumber(maxHp) + ' PV</div>';
-  h += '<button class="settings-btn camp-fire-btn-cooldown" id="camp-fire-eta" type="button" disabled>' + (hpFull ? 'PV au maximum' : esc('Max dans ' + formatTime(Math.ceil(minutesToFull * 60)))) + '</button>';
-  h += '</div>';
+  // v3.116.0 (Lot C, maquette Seb) : bloc Santé du Héros — barre de PV pleine largeur.
+  h += '<div class="camp-card camp-health-card">';
+  h += '<div class="camp-section-title">❤️ Santé du Héros</div>';
+  h += '<div class="camp-hp-bar"><div class="camp-hp-fill" id="camp-hp-fill" style="width:' + hpPct + '%"></div></div>';
+  h += '<div class="camp-hp-value" id="camp-fire-hp-value"><span class="camp-hp-current">' + formatNumber(Math.floor(hp)) + '</span> / ' + formatNumber(maxHp) + '</div>';
 
-  h += '<div class="camp-card camp-fire-card camp-rations-card">';
-  h += '<div class="camp-fire-icon">🍖</div>';
-  h += '<div class="camp-fire-title">Rations</div>';
-  h += '<div class="camp-fire-desc">Restaurent un % de tes PV max.</div>';
-  if (hpFull) {
-    h += '<button class="settings-btn camp-fire-btn-cooldown" type="button" disabled>Pas faim</button>';
-  } else {
-    h += '<div class="camp-ration-list">';
-    rationOptions.forEach(function (r) {
-      var canEat = r.amount >= 1;
-      h += '<button class="settings-btn camp-ration-btn' + (canEat ? '' : ' camp-fire-btn-cooldown') + '" type="button"' + (canEat ? ' onclick="CampManager.eatRation(\'' + esc(r.id) + '\');"' : ' disabled') + '>';
-      h += esc(r.name) + ' (+' + Math.round(r.healPct * 100) + ' %) · ' + formatNumber(r.amount);
-      h += '</button>';
-    });
+  // Bloc Rations — 3 cartes côte à côte (icône, soin, stock, bouton Manger).
+  h += '<div class="camp-section-title camp-section-sub">🍖 Rations</div>';
+  h += '<div class="camp-ration-grid">';
+  rationOptions.forEach(function (r) {
+    var def = (window.WAREHOUSE_RESOURCES || {})[r.id] || {};
+    var healValue = Math.floor(maxHp * r.healPct);
+    var canEat = r.amount >= 1 && !hpFull;
+    h += '<div class="camp-ration-item' + (r.amount < 1 ? ' is-empty' : '') + '">';
+    h += '<div class="camp-ration-icon">' + renderIconOrEmojiHTML(def.icon || "🍞", "camp-ration-icon-img", r.name) + '</div>';
+    h += '<div class="camp-ration-heal">❤️ +' + formatNumber(healValue) + '</div>';
+    h += '<div class="camp-ration-stock">×' + formatNumber(r.amount) + ' · ' + Math.round(r.healPct * 100) + ' %</div>';
+    h += '<button class="settings-btn primary camp-ration-btn" type="button"' + (canEat ? ' onclick="CampManager.eatRation(\'' + esc(r.id) + '\');"' : ' disabled') + '>Manger</button>';
     h += '</div>';
-  }
+  });
   h += '</div>';
 
+  // Bloc Régénération — barre verte + rythme + temps restant.
+  h += '<div class="camp-section-title camp-section-sub">✚ Régénération</div>';
+  h += '<div class="camp-regen-desc">Récupère des PV automatiquement au fil du temps, hors combat.</div>';
+  h += '<div class="camp-regen-bar"><div class="camp-regen-fill" id="camp-regen-fill" style="width:' + hpPct + '%"></div></div>';
+  h += '<div class="camp-regen-meta">';
+  h += '<span class="camp-regen-rate">+' + regenPct + ' % PV par minute</span>';
+  h += '<span class="camp-regen-eta" id="camp-fire-eta">' + (hpFull ? '✔ PV au maximum' : esc('⏳ Max dans ' + formatTime(Math.ceil(minutesToFull * 60)))) + '</span>';
   h += '</div>';
+
+  h += '</div>'; // fin .camp-health-card
 
   h += '<div class="camp-card camp-missions-card">';
   h += '<div class="camp-card-title">📋 Tableau de missions</div>';

@@ -38,56 +38,148 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   text-align: left;
 }
 
-/* v3.14 : les deux cartes de repos (long/court) côte à côte plutôt
-   qu'une pleine largeur — voir buildCampHTML(), ui/camp-view.js. */
-.camp-fire-row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 14px;
+/* ============================================================
+   v3.116.0 (Lot C, maquette Seb) : carte unique Santé du Héros —
+   barre de PV, grille de 3 rations, bloc Régénération.
+   Remplace .camp-fire-row / .camp-fire-card (repos long/court).
+   ============================================================ */
+.camp-health-card {
+  text-align: center;
 }
 
-.camp-fire-row .camp-fire-card {
-  flex: 1;
-  margin-bottom: 0;
-  min-width: 0;
-}
-
-.camp-fire-card {
-  padding-top: 20px;
-}
-
-.camp-fire-icon {
-  font-size: 34px;
-  margin-bottom: 4px;
-}
-
-.camp-fire-title {
+.camp-section-title {
   font-size: 15px;
   font-weight: 800;
   color: var(--nb-ink);
-  margin-bottom: 4px;
+  letter-spacing: 0.03em;
+  margin-bottom: 10px;
 }
 
-.camp-fire-desc {
+.camp-section-sub {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--nb-frame-light);
+}
+
+/* Barre de PV (rouge) */
+.camp-hp-bar {
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid var(--nb-gold-dark);
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.camp-hp-fill {
+  height: 100%;
+  background: linear-gradient(180deg, #ef4444, #b91c1c);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.camp-hp-value {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.camp-hp-current {
+  color: #b91c1c;
+}
+
+/* Grille de rations (3 colonnes) */
+.camp-ration-grid {
+  display: flex;
+  gap: 8px;
+}
+
+.camp-ration-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.camp-ration-item.is-empty {
+  opacity: 0.55;
+}
+
+.camp-ration-icon-img,
+.camp-ration-icon {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  font-size: 32px;
+  line-height: 44px;
+}
+
+.camp-ration-heal {
+  font-size: 13px;
+  font-weight: 800;
+  color: #15803d;
+}
+
+.camp-ration-stock {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-ink-dim);
+}
+
+.camp-ration-btn {
+  width: 100%;
+  padding: 7px 4px;
+  font-size: 12px;
+}
+
+/* Bloc Régénération */
+.camp-regen-desc {
   font-size: 11px;
   color: var(--nb-ink-dim);
-  margin-bottom: 14px;
+  margin-bottom: 8px;
+}
+
+.camp-regen-bar {
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid var(--nb-gold-dark);
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.camp-regen-fill {
+  height: 100%;
+  background: linear-gradient(180deg, #4ade80, #15803d);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.camp-regen-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.camp-regen-rate {
+  color: #15803d;
+}
+
+.camp-regen-eta {
+  color: var(--nb-ink-dim);
 }
 
 .camp-fire-btn-cooldown {
   opacity: 0.6;
-}
-
-/* v3.101.0 : ligne d'état sous la description (PV courants, garde-manger) */
-.camp-fire-hp {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-gold-dark);
-  margin: -8px 0 10px 0;
-}
-
-.camp-fire-hp.is-short {
-  color: var(--nb-ink-dim);
 }
 
 /* v3.14 : message affiché une fois après une mort (game.justDied),
@@ -284,15 +376,4 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   font-size: 12px;
 }
 
-/* v3.106.0 : liste des rations (Campement) — un bouton par type possédé, empilés verticalement
-   dans la carte Rations (remplace l'ancien bouton unique "Manger"). */
-.camp-ration-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.camp-ration-btn {
-  font-size: 12px;
-  padding: 8px 10px;
-}
+/* v3.116.0 : .camp-ration-list retirée — remplacée par .camp-ration-grid (voir plus haut). */

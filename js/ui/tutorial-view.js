@@ -75,6 +75,20 @@ window.closeTutorialModal = closeTutorialModal;
    ci-dessous — même rendu visuel (buildTutorialModalHTML), persistance dans
    game.genericTutorialsSeen (flag par id, indépendant de tout chapitre Histoire). */
 var GENERIC_TUTORIALS = {
+  /* v3.116.0 : accueil Campement — migré depuis forest_01.tutorial (jamais affiché : il exigeait
+     l'étape acceptée alors que l'arrivée au Campement précède toujours l'acceptation). Sans
+     condition : affiché une seule fois, dès la toute première arrivée (y compris au boot). */
+  camp_welcome: {
+    tab: "campement",
+    icon: "🏕️",
+    title: "Le Campement",
+    points: [
+      { icon: "🏕️", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
+      { icon: "❤️", text: "Ta santé — hors combat, tu récupères 5 % de tes PV max par minute (jusqu'à 50 % si tu es hors ligne). Suis ta barre de vie et la régénération en bas de l'écran." },
+      { icon: "🍖", text: "Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre." },
+      { icon: "📋", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Principale ») est toujours en tête. Clique sur « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
+    ]
+  },
   village_production: {
     tab: "village",
     // Condition d'affichage : seulement une fois la mission "Les fondations" accessible (La veine

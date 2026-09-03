@@ -24,10 +24,6 @@ function updateQuestBadge() {
   var badge = document.getElementById("quest-badge");
   if (!badge) return;
 
-  var questsReady = Array.isArray(game.quests)
-    ? game.quests.filter(function (q) { return !q.claimed && QuestManager.isComplete(q); }).length
-    : 0;
-
   var achievementsReady = (window.AchievementManager && typeof AchievementManager.getAvailableToClaimCount === "function")
     ? AchievementManager.getAvailableToClaimCount()
     : 0;
@@ -50,16 +46,30 @@ function updateQuestBadge() {
     ? StoryQuestManager.getClaimableCount()
     : 0;
 
-  var total = questsReady + achievementsReady + talentsReady + ascensionReady + codexUnread + dungeonTicketReady + storyReady;
+  var total = achievementsReady + talentsReady + ascensionReady + codexUnread + dungeonTicketReady + storyReady; // v3.116.0 : plus de journalières
   badge.textContent = total > 0 ? String(total) : "";
   badge.style.display = total > 0 ? "inline-flex" : "none";
 }
 
-/* v3.103.3 (P4) : plus de sous-onglet Journalières — le contrat du jour est déjà une carte du tableau
-   (MissionBoard, sourceKind "contract"), l'onglet séparé était un doublon pur. buildQuestsDailySubTabHTML()
-   reste dispo (inutilisée pour l'instant) si un jour on veut un raccourci dédié. */
+/* v3.116.0 (Lot B) : onglets de catégorie en tête du tableau (Histoire/Secondaires/Chasse/Aventure),
+   mapping par sourceKind des missions du MissionBoard. « Terminées » devient un lien discret. */
 
 var activeQuestsFilter = "active"; // "active" | "completed"
+var activeQuestCategory = "histoire"; // histoire | secondaires | chasse | aventure
+
+var QUEST_BOARD_CATEGORIES = [
+  { key: "histoire", label: "Histoire", icon: "📜", kinds: ["story", "worldExpedition"], emptyText: "Aucune quête d'histoire pour le moment." },
+  { key: "secondaires", label: "Secondaires", icon: "⭐", kinds: ["village", "workshop", "exploration"], emptyText: "Aucune quête secondaire disponible pour le moment." },
+  { key: "chasse", label: "Chasse", icon: "🐾", kinds: ["hunt"], emptyText: "Aucune chasse disponible pour le moment." },
+  { key: "aventure", label: "Aventure", icon: "🧭", kinds: ["adventure", "dungeon"], emptyText: "Aucune aventure disponible pour le moment." }
+];
+
+function setQuestCategory(key) {
+  activeQuestCategory = key;
+  activeQuestsFilter = "active";
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setQuestCategory = setQuestCategory;
 
 var expandedQuestCardIds = {};
 var expandedQuestSectionIds = {}; // v3.89 : cartes-catégories (Histoire/Ressources/Aventure/Expéditions), repliées par défaut
@@ -92,79 +102,109 @@ function toggleQuestCardExpand(cardId) {
 window.setQuestsFilter = setQuestsFilter;
 window.toggleQuestCardExpand = toggleQuestCardExpand;
 
-function buildQuestsFilterBarHTML() {
-  var h = '<div class="quest-top-actions">';
-  h += '<button class="quest-mode-btn' + (activeQuestsFilter === "active" ? ' is-active' : '') + '" type="button" onclick="setQuestsFilter(\'active\')">Quête active</button>';
-  h += '<button class="quest-mode-btn' + (activeQuestsFilter === "completed" ? ' is-active' : '') + '" type="button" onclick="setQuestsFilter(\'completed\')">Quête terminée</button>';
+/* v3.116.0 (Lot B) : barre d'onglets de catégorie façon maquette — bannière parchemin, icône
+   au-dessus du libellé, pastille si une mission de la catégorie est réclamable. */
+function buildQuestCategoryTabsHTML(missions) {
+  var claimableByCat = {};
+  QUEST_BOARD_CATEGORIES.forEach(function (cat) {
+    claimableByCat[cat.key] = missions.some(function (m) {
+      return cat.kinds.indexOf(m.sourceKind) !== -1 && (m.status === "claimable" || m.status === "ready");
+    });
+  });
+  // La chaîne Histoire (hors MissionBoard côté onglet) compte aussi pour la pastille Histoire.
+  if (window.StoryQuestManager && typeof StoryQuestManager.getClaimableCount === "function" && StoryQuestManager.getClaimableCount() > 0) {
+    claimableByCat.histoire = true;
+  }
+
+  var h = '<div class="qb-tabs">';
+  QUEST_BOARD_CATEGORIES.forEach(function (cat) {
+    h += '<button type="button" class="qb-tab' + (activeQuestCategory === cat.key ? ' is-active' : '') + '" onclick="setQuestCategory(\'' + cat.key + '\')">';
+    h += '<span class="qb-tab-icon">' + cat.icon + '</span>';
+    h += '<span class="qb-tab-label">' + esc(cat.label) + '</span>';
+    if (claimableByCat[cat.key]) h += '<span class="qb-tab-dot"></span>';
+    h += '</button>';
+  });
   h += '</div>';
   return h;
 }
 
-/* v3.103.2 (P4) : le tableau de missions remplace les 4 catégories repliables. La chaîne Histoire
-   (buildStoryChainHTML, plus détaillée qu'une carte de mission) reste affichée à part, en tête ;
-   le reste vient de MissionBoard.list() (LIGNE_DIRECTRICE §3) — mêmes cartes que sur le Campement. */
+/* Bouton d'action d'une carte du tableau — mêmes verbes que le Campement (campMissionAction). */
+function buildQuestBoardActionHTML(m) {
+  if (m.claim) return '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'claim\')">🎁 Réclamer</button>';
+  if (m.status === "running" || m.status === "accepted") {
+    var h = '';
+    // v3.117.0 : "accepted" (pas encore lancée) -> Partir ; "running" (déjà en cours) -> Continuer.
+    var launchLabel = m.status === "running" ? "▶ Continuer" : "🚩 Partir";
+    if (m.launch) h += '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'launch\')">' + launchLabel + '</button>';
+    if (m.abandon) h += '<button class="settings-btn danger qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'abandon\')">Abandonner</button>';
+    return h;
+  }
+  if (m.accept) return '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'accept\')">Accepter</button>';
+  if (m.status === "locked") return '<span class="qb-card-locked">Occupé ailleurs</span>';
+  return "";
+}
+
+/* Carte façon maquette : bannière-icône à gauche, titre + description, chips récompenses, action. */
+function buildQuestBoardCardHTML(m) {
+  var statusCls = m.status === "claimable" || m.status === "ready" ? " is-claimable"
+    : (m.status === "running" || m.status === "accepted") ? " is-running"
+    : m.status === "locked" ? " is-locked" : "";
+  var h = '<div class="qb-card' + statusCls + (m.isMain ? ' is-main' : '') + '">';
+  h += '<div class="qb-card-banner qb-banner-' + esc(m.type || "combat") + '">' + renderIconOrEmojiHTML(MissionBoard.typeIcon(m.type), "qb-card-banner-img", m.title) + '</div>';
+  h += '<div class="qb-card-body">';
+  h += '<div class="qb-card-title-row"><span class="qb-card-title">' + esc(m.title) + '</span>';
+  if (m.isMain) h += '<span class="quest-badge quest-badge-main">Principale</span>';
+  h += '</div>';
+  var desc = m.blurb || m.objectiveLabel || "";
+  if (desc) h += '<div class="qb-card-desc">' + esc(desc) + '</div>';
+  if ((m.status === "running" || m.status === "accepted") && m.progressLabel) {
+    h += '<div class="qb-card-progress">' + esc(m.progressLabel) + '</div>';
+  }
+  h += '<div class="qb-card-footer">';
+  if (m.rewardSummary) {
+    h += '<div class="qb-card-rewards">';
+    m.rewardSummary.split(" · ").forEach(function (chip) {
+      h += '<span class="qb-reward-chip">' + esc(chip) + '</span>';
+    });
+    h += '</div>';
+  } else {
+    h += '<div class="qb-card-rewards"></div>';
+  }
+  h += '<div class="qb-card-action">' + buildQuestBoardActionHTML(m) + '</div>';
+  h += '</div>'; // fin .qb-card-footer
+  h += '</div>'; // fin .qb-card-body
+  h += '</div>';
+  return h;
+}
+
+/* v3.116.0 (Lot B) : vue par catégorie — Histoire garde la chaîne détaillée (buildStoryChainHTML)
+   suivie des questlines de monde ; les autres onglets listent leurs missions en cartes bannière. */
 function buildQuestsGeneralSubTabHTML() {
+  var missions = window.MissionBoard ? MissionBoard.list() : [];
   var h = '';
-  h += buildQuestsFilterBarHTML();
+  h += buildQuestCategoryTabsHTML(missions);
 
   if (activeQuestsFilter === "completed") {
+    h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'active\')">◂ Retour aux quêtes actives</button></div>';
     h += buildCompletedQuestCardsHTML();
     return h;
   }
 
-  h += buildStoryChainHTML();
+  var cat = QUEST_BOARD_CATEGORIES.find(function (c) { return c.key === activeQuestCategory; }) || QUEST_BOARD_CATEGORIES[0];
+  var catMissions = missions.filter(function (m) {
+    return cat.kinds.indexOf(m.sourceKind) !== -1 && m.sourceKind !== "story";
+  });
 
-  if (window.MissionBoard) {
-    var missions = MissionBoard.list().filter(function (m) { return m.sourceKind !== "story"; });
-    if (missions.length) {
-      h += '<div class="quest-board-list">' + missions.map(buildCampMissionCardHTML).join("") + '</div>';
-    } else if (!buildStoryChainHTML()) {
-      h += '<div class="eq-empty">Aucune mission disponible pour le moment.</div>';
-    }
+  var storyHTML = (cat.key === "histoire") ? buildStoryChainHTML() : "";
+  h += storyHTML;
+
+  if (catMissions.length) {
+    h += '<div class="quest-board-list">' + catMissions.map(buildQuestBoardCardHTML).join("") + '</div>';
+  } else if (!storyHTML) {
+    h += '<div class="eq-empty">' + esc(cat.emptyText) + '</div>';
   }
 
-  return h;
-}
-
-/* v3.103.2 (P4, décision §10 n°7) : 1 contrat du jour (QUEST_CONFIG.count = 1, data/quests.js).
-   game.quests peut encore contenir 3 entrées le temps qu'une save existante atteigne son reset :
-   on n'affiche que la première, les autres restent en mémoire sans effet jusqu'au prochain tirage. */
-function buildQuestsDailySubTabHTML() {
-  var h = '';
-  h += '<div class="quest-timer">Contrat du jour — reset dans ' + esc(QuestManager.timeUntilReset()) + '</div>';
-
-  var q = (game.quests || [])[0];
-  if (!q) {
-    h += '<div class="eq-empty">Aucun contrat actif.</div>';
-    return h;
-  }
-
-  var progress = QuestManager.getProgress(q);
-  var done = QuestManager.isComplete(q);
-  var claimed = !!q.claimed;
-  var pct = Math.min(100, (progress / q.target) * 100);
-
-  h += '<div class="nb-entry-card' + (claimed ? ' is-claimed' : done ? ' is-complete' : '') + '">';
-  h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame">' + renderIconOrEmojiHTML(q.icon, "nb-entry-icon", q.name) + '</div></div>';
-  h += '<div class="nb-entry-info-col">';
-  h += '<div class="nb-entry-name">' + esc(q.name) + '</div>';
-  h += '<div class="nb-entry-desc">' + esc(q.desc) + '</div>';
-  h += '<div class="nb-entry-progress-bar"><div class="nb-entry-progress-fill' + (done ? ' done' : '') + '" style="width:' + pct + '%"></div><span class="nb-entry-progress-text">' + Math.min(progress, q.target) + ' / ' + q.target + '</span></div>';
-  h += '<div class="nb-entry-meta">🎁 ' + formatNumber(q.rewardGold || 0) + ' or · ' + formatNumber(q.rewardEssence || 0) + ' essence</div>';
-  h += '</div>';
-
-  h += '<div class="nb-entry-status-col">';
-  if (claimed) {
-    h += '<span class="nb-entry-status-label is-complete">✔ Reçue</span>';
-  } else if (done) {
-    h += '<button class="btn-buy" onclick="QuestManager.claim(\'' + esc(q.id) + '\')">Réclamer</button>';
-  } else {
-    h += '<span class="nb-entry-status-label">En cours</span>';
-  }
-  h += '</div>';
-
-  h += '</div>';
-
+  h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'completed\')">Voir les quêtes terminées ▸</button></div>';
   return h;
 }
 
@@ -683,6 +723,9 @@ function buildStoryChainHTML() {
    cardId reste utile pour déplier une carte précise dans le filtre Terminée (encore par section). */
 function openQuestsAt(sectionKey, cardId) {
   activeQuestsFilter = "active";
+  // v3.116.0 (Lot B) : anciennes sections -> nouveaux onglets de catégorie.
+  var sectionToCategory = { worldexpedition: "histoire", resource: "secondaires", expedition: "secondaires", adventure: "aventure" };
+  if (sectionKey && sectionToCategory[sectionKey]) activeQuestCategory = sectionToCategory[sectionKey];
   if (cardId) expandedQuestCardIds[cardId] = true;
   if (typeof switchTab === "function") switchTab("quests");
   // v3.107.6 : switchTab() seul ne re-render pas toujours immédiatement le panneau selon le

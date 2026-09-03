@@ -1,6 +1,6 @@
 "use strict";
 /* systems/progression-system.js — le plus gros fichier du projet : WorldManager (progression mondes + génération ennemis),
-   QuestManager (quêtes journalières), achats (upgrades/talents/Aether), XP héros, AscensionManager + ascendNow().
+   achats (upgrades/talents/Aether), XP héros, AscensionManager + ascendNow(). Journalières retirées en v3.116.0.
    Détail complet (constantes de balance ENEMY_PV_*, historique des exposants) : COMMENTAIRES_ORIGINAUX.md */
 var ENEMY_PV_MULT = 3.33; // v3.102.0 (P2) : 4,0 → 3,33, calibration par rounds (P1_Budgets_Foret.md §B)
 var ENEMY_PV_WORLD_EXP = 1.45;
@@ -167,10 +167,6 @@ var WorldManager = {
     var justFinishedAdventureIndex = this.adventureIndex;
     var nextAdventureIndex = this.adventureIndex + 1;
 
-    if (window.QuestManager && typeof QuestManager.trackWorldCompletion === "function") {
-      QuestManager.trackWorldCompletion(world.id);
-    }
-
     if (nextAdventureIndex < world.adventures.length) {
       if (window.AdventureQuestManager && !AdventureQuestManager.isTransitionUnlocked(world.id, justFinishedAdventureIndex)) {
         return { type: "adventure_locked", world: world, adventure: world.adventures[justFinishedAdventureIndex] };
@@ -235,88 +231,6 @@ var WorldManager = {
   }
 };
 
-var QuestManager = {
-    generateDaily: function () {
-    var templates = Array.isArray(QUEST_TEMPLATES) ? QUEST_TEMPLATES.slice() : [];
-    var picked = [];
-    var maxCount = (QUEST_CONFIG && QUEST_CONFIG.count) || 3;
-
-    while (templates.length && picked.length < maxCount) {
-      var idx = randInt(0, templates.length - 1);
-      var t = templates.splice(idx, 1)[0];
-      picked.push({
-        id: t.id,
-        icon: t.icon || "📜",
-        name: t.name || "Quête",
-        desc: String(t.desc || "").replace("{target}", t.target),
-        target: Number(t.target || 0),
-        rewardGold: Number(t.rewardGold || 0),
-        rewardEssence: Number(t.rewardEssence || 0),
-        claimed: false
-      });
-    }
-    return picked;
-  },
-
-  getTemplate: function (id) {
-    return (QUEST_TEMPLATES || []).find(function (q) { return q.id === id; }) || null;
-  },
-
-    getProgress: function (quest) {
-    var tpl = this.getTemplate(quest.id);
-    if (!tpl) return 0;
-    if (typeof tpl.tracker === "function") return Math.floor(Number(tpl.tracker()) || 0);
-    return 0;
-  },
-
-  isComplete: function (quest) {
-    return this.getProgress(quest) >= Number(quest.target || 0);
-  },
-
-    claim: function (id) {
-    var quest = (game.quests || []).find(function (q) { return q.id === id; });
-    if (!quest || quest.claimed || !this.isComplete(quest)) return;
-
-    quest.claimed = true;
-    game.gold += Number(quest.rewardGold || 0);
-    game.essence += Number(quest.rewardEssence || 0);
-    game.totalGoldEarned += Number(quest.rewardGold || 0);
-
-    addLog("Quête accomplie : " + quest.name, "event");
-    showToast("Quête réclamée", 1400);
-    if (typeof renderAll === "function") renderAll();
-    saveGame();
-  },
-
-    track: function (key, amount) {
-    if (!game.questProgress) game.questProgress = {};
-    if (typeof game.questProgress[key] !== "number") game.questProgress[key] = 0;
-    game.questProgress[key] += Number(amount || 0);
-  },
-
-  trackWorldCompletion: function (worldId) {
-    if (worldId === "forest") this.track("forestChaptersDone", 1);
-    if (worldId === "ruins") this.track("ruinsChaptersDone", 1);
-  },
-
-    checkReset: function () {
-    if (!game.questResetTime || Date.now() >= game.questResetTime) {
-      game.quests = this.generateDaily();
-      game.questProgress = Object.assign({}, DEFAULT_QUEST_PROGRESS);
-      game.questResetTime = Date.now() + (((QUEST_CONFIG && QUEST_CONFIG.resetHours) || 24) * 3600 * 1000);
-      if (typeof updateQuestBadge === "function") updateQuestBadge();
-      if (typeof renderAll === "function") renderAll();
-    }
-  },
-
-    timeUntilReset: function () {
-    var diff = Math.max(0, (game.questResetTime || 0) - Date.now());
-    var h = Math.floor(diff / 3600000);
-    var m = Math.floor((diff % 3600000) / 60000);
-    return h + "h " + m + "m";
-  }
-};
-
 function getAllTalentNodes() {
   if (typeof TALENTTREE !== "undefined") return TALENTTREE;
   if (typeof TALENT_TREE !== "undefined") return TALENT_TREE;
@@ -366,10 +280,6 @@ function buyUpgrade(id, amount) {
       return showToast("Niveau maximum", 1200);
     }
     return showToast("Pas assez d'or", 1000);
-  }
-
-  if (window.QuestManager && typeof QuestManager.track === "function") {
-    QuestManager.track("goldSpent", totalSpent);
   }
 
   if (typeof upgrade.apply === "function") {
@@ -598,26 +508,6 @@ function grantHeroXp(amount, source) {
   return levelsGained;
 }
 
-function ensureDailyQuests() {
-  if (!window.QuestManager || typeof QuestManager.generateDaily !== "function") return;
-
-  if (!game.quests || game.quests.length === 0) {
-    game.quests = QuestManager.generateDaily();
-    var hours = (typeof QUEST_CONFIG !== "undefined" && QUEST_CONFIG.resetHours) ? QUEST_CONFIG.resetHours : 24;
-    game.questResetTime = Date.now() + hours * 3600 * 1000;
-  }
-
-  if (!game.questProgress || typeof game.questProgress !== "object") {
-    if (typeof DEFAULT_QUEST_PROGRESS !== "undefined" && DEFAULT_QUEST_PROGRESS) {
-      game.questProgress = Object.assign({}, DEFAULT_QUEST_PROGRESS);
-    } else {
-      game.questProgress = {};
-    }
-  }
-
-  if (typeof updateQuestBadge === "function") updateQuestBadge();
-}
-
 var AscensionManager = {
   previewGain: function () {
     var gain = typeof ASCENSION_CONFIG.computeGain === "function" ? ASCENSION_CONFIG.computeGain() : 0;
@@ -677,7 +567,6 @@ function ascendNow() {
       hardResetState();
     }
 
-    if (typeof ensureDailyQuests === "function") ensureDailyQuests();
     if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") CombatEngine.spawnEnemy();
     if (typeof switchTab === "function") switchTab("combat");
     if (typeof renderAll === "function") renderAll();
@@ -699,7 +588,6 @@ function ascendNow() {
 }
 
 window.WorldManager = WorldManager;
-window.QuestManager = QuestManager;
 window.AscensionManager = AscensionManager;
 window.getUpgradeCost = getUpgradeCost;
 window.getAllTalentNodes = getAllTalentNodes;
@@ -709,7 +597,6 @@ window.respecTalents = respecTalents;
 window.getTalentRespecCost = getTalentRespecCost;
 window.buyAetherUpgrade = buyAetherUpgrade;
 window.grantHeroXp = grantHeroXp;
-window.ensureDailyQuests = ensureDailyQuests;
 window.ascendNow = ascendNow;
 window.setShopBuyAmount = setShopBuyAmount;
 window.getUpgradePurchasePreview = getUpgradePurchasePreview;
