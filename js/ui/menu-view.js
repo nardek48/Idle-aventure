@@ -2,11 +2,14 @@
 /* ui/menu-view.js — menu plein écran (bouton ☰), grille de destinations non couvertes par la barre du bas. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var MENU_ITEMS = [
+  // v3.131.0 (décision Seb) : Combat/Quêtes permutés — Quêtes est la base du jeu, passe dans
+  // la tab-bar principale (index.html) ; Combat (accédé indirectement via les quêtes/expéditions
+  // la plupart du temps) rejoint la grille du menu complet, à l'ancienne place de Quêtes.
+  { tab: "combat", label: "Combat", img: "./images/Icons/menu_icons/combat_menu.png" },
   { tab: "dungeon", label: "Donjon", img: "./images/Icons/menu_icons/donjon_menu.png", badge: "dungeon" },
   { tab: "shop", label: "Boutique", img: "./images/Icons/menu_icons/shop_menu.png" },
   { tab: "talents", label: "Talents", img: "./images/Icons/menu_icons/talents_menu.png", badge: "talents" },
   { tab: "equip", label: "Équipement", img: "./images/Icons/menu_icons/equip_menu.png" },
-  { tab: "quests", label: "Quêtes", img: "./images/Icons/menu_icons/quests_menu.png", badge: true },
   { tab: "ascension", label: "Ascension", img: "./images/Icons/menu_icons/aether_menu.png", badge: "ascension" },
   { tab: "map", label: "Carte du monde", img: "./images/Icons/menu_icons/map_menu.png" },
   { tab: "achievements", label: "Hauts faits", img: "./images/Icons/menu_icons/achivment_menu.png", badge: "achievement" },

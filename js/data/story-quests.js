@@ -397,9 +397,39 @@ var STORY_QUESTS = {
           completion: "Le Grimoire agit à ta place quand tu ne regardes pas. Apprends à lui faire confiance."
         },
         objectiveLabel: "Remporter 10 victoires au Cœur de la forêt et activer 1 règle du Grimoire",
+        // v3.131.0 : pas de killTarget ici (check combine coeurKills + règle active) — autoReturn
+        // générique pour quand même ramener au Campement dès l'objectif atteint, comme forest_02/forest_11.
+        autoReturn: true,
         unlockTabs: ["grimoire"],
         reward: STORY_REWARDS.forest_12,
-        linkTo: { tab: "grimoire" },
+        // v3.131.2 (retour Seb) : tant qu'aucune règle n'est configurée, le lien mène au
+        // Grimoire (il faut d'abord aller le configurer). Dès qu'au moins 1 règle est active,
+        // il mène directement au combat — beforeGo repositionne le joueur au Cœur de la forêt
+        // (worldIndex 0 / adventureIndex 1) et régénère un ennemi cohérent à cette position,
+        // au cas où le joueur ait bougé ailleurs entre-temps (autre aventure, donjon...).
+        linkTo: {
+          tab: function (g) { return storyCountActiveGrimoireRules(g) >= 1 ? "combat" : "grimoire"; },
+          beforeGo: function (g) {
+            if (storyCountActiveGrimoireRules(g) < 1) return; // pas encore de règle -> pas de repositionnement, direction Grimoire normale
+            if (!window.WorldManager) return;
+            // v3.131.2 : ne repositionne pas si une autre activité de combat dédiée est en cours
+            // (donjon/aventure/chasse/scene) — le joueur y est engagé volontairement, le
+            // repositionnement au Cœur ne doit pas l'interrompre silencieusement.
+            if (g.dungeonRun && g.dungeonRun.active) return;
+            if (g.adventureQuestRun && g.adventureQuestRun.active) return;
+            if (g.huntRun && g.huntRun.active) return;
+            if (g.sceneRun && g.sceneRun.status && g.sceneRun.status !== "completed") return;
+            var alreadyAtCoeur = WorldManager.worldIndex === 0 && WorldManager.adventureIndex === 1;
+            WorldManager.worldIndex = 0;
+            WorldManager.adventureIndex = 1;
+            // v3.131.2 : ne régénère PAS l'ennemi si le joueur est déjà au Cœur (un combat y est
+            // peut-être déjà engagé) — seul le repositionnement lui-même est idempotent ici.
+            if (!alreadyAtCoeur) {
+              WorldManager.enemyIndex = 0;
+              if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") CombatEngine.spawnEnemy();
+            }
+          }
+        },
         // v3.107.9 : Grimoire détaillé (nombre de règles vérifié dans le code).
         tutorial: {
           tab: "grimoire",

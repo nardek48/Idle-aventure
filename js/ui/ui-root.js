@@ -293,6 +293,12 @@ function renderPanel() {
       container.innerHTML = "";
   }
 
+  // v3.131.0 (retour Seb, mobile) : neutralise le padding-bottom du panel pour les écrans à
+  // sous-onglets (.subtab-page) — voir css/02-layout.css #panel-container.has-subtab-page,
+  // évite le double compte de safe-bottom qui créait un espace vide visible entre la barre de
+  // sous-onglets (Équipement/Inventaire/Boutique, etc.) et la barre de navigation du bas.
+  container.classList.toggle("has-subtab-page", !!container.querySelector(".subtab-page"));
+
   if (sameTab) {
     container.scrollTop = savedScrollTop;
     if (savedInnerScrollTop !== null) {

@@ -276,6 +276,11 @@ var SCENE_TEMPLATES = {
     firstDepthType: "obstacle",
     gatesPerDepth: [1, 1],
 
+    // v3.131.0 : seul canevas sans boardRequires (oubli) — disponible dès le lancement d'une
+    // nouvelle partie, avant même Le Bosquet Silencieux. Gate désormais sur sawmillUnlocked
+    // (débloqué par bosquet_silencieux), pour arriver après la toute première petite quête.
+    boardRequires: { progressFlag: "sawmillUnlocked" },
+
     slotWeights: { obstacle: 100 },
     pools: { obstacle: ["source_irreguliere", "bassin_trouble"] },
     riskModRange: [0.7, 1.3],

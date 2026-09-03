@@ -27,6 +27,13 @@ var MISSION_STATUS_LABEL = {
   running: "En cours", ready: "Objectif atteint", claimable: "Prête à réclamer"
 };
 
+/* v3.131.0 (retour Seb) : cap de 3 quêtes actives simultanées, toutes sources non-Histoire
+   confondues (village/workshop/scene/adventure/hunt) — Donjon et Petite Aventure exclus
+   (activités courtes à lancement direct, pas des quêtes qu'on "garde en attente"), worldExpedition
+   exclue aussi (jamais d'étape d'acceptation, toujours active dès son apparition, comme l'Histoire). */
+var ACTIVE_QUEST_CAP = 3;
+var ACTIVE_QUEST_CAP_SOURCE_KINDS = ["village", "workshop", "scene", "adventure", "hunt"];
+
 /* v3.107.1 : une quête secondaire (aventure/chasse) référencée par l'étape Histoire COURANTE et
    ACCEPTÉE (linkTo.section "adventure", cardId "adv_"+questId) est mise en évidence sur le tableau
    de missions — décision Seb : c'est la donnée (linkTo) qui pilote, pas une liste codée en dur. */
@@ -122,6 +129,7 @@ var MissionBoard = {
   /* ---------- Quêtes d'aventure (kill/transition scopées à une aventure) ---------- */
   _adventureMissions: function () {
     if (!window.AdventureQuestManager) return [];
+    var self = this;
     var quests = AdventureQuestManager.getAllQuests();
     var running = AdventureQuestManager.getRunningQuest();
     var out = [];
@@ -141,7 +149,15 @@ var MissionBoard = {
         objectiveLabel: stepsDone + "/" + quest.steps.length + " objectifs", progressLabel: "",
         rewardSummary: missionRewardSummary(quest.reward), badge: "contract", status: status, isMain: quest.category === "main" || isStoryLinkedQuest(quest.id)
       };
-      if (status === "available") m.accept = function () { if (typeof openAdventureQuestIntro === "function") openAdventureQuestIntro(quest.id); };
+      if (status === "available") {
+        m.accept = function () {
+          if (self.isActiveQuestCapReached()) {
+            if (typeof showToast === "function") showToast("⛔ 3 quêtes actives max — abandonnes-en une avant d'en accepter une nouvelle", 2200);
+            return;
+          }
+          if (typeof openAdventureQuestIntro === "function") openAdventureQuestIntro(quest.id);
+        };
+      }
       if (status === "running") {
         m.launch = function () { if (typeof switchTab === "function") switchTab("combat"); };
         m.abandon = function () { return AdventureQuestManager.forfeit(); };
@@ -154,6 +170,7 @@ var MissionBoard = {
   /* ---------- Chasse (lots répétables) ---------- */
   _huntMissions: function () {
     if (!window.HuntQuestManager) return [];
+    var self = this;
     var quests = HuntQuestManager.getAllQuests();
     var running = HuntQuestManager.getRunningQuest();
     var out = [];
@@ -169,7 +186,15 @@ var MissionBoard = {
         objectiveLabel: "Lot de " + quest.lotSize, progressLabel: isRunning ? (inLot + "/" + quest.lotSize) : "",
         rewardSummary: quest.dropChancePct + " % par kill", badge: "contract", status: status, isMain: false
       };
-      if (status === "available") m.accept = function () { if (typeof openHuntQuestIntro === "function") openHuntQuestIntro(quest.id); };
+      if (status === "available") {
+        m.accept = function () {
+          if (self.isActiveQuestCapReached()) {
+            if (typeof showToast === "function") showToast("⛔ 3 quêtes actives max — abandonnes-en une avant d'en accepter une nouvelle", 2200);
+            return;
+          }
+          if (typeof openHuntQuestIntro === "function") openHuntQuestIntro(quest.id);
+        };
+      }
       if (status === "running") {
         m.launch = function () { if (typeof switchTab === "function") switchTab("combat"); };
         m.abandon = function () { return HuntQuestManager.stop(); };
@@ -244,12 +269,44 @@ var MissionBoard = {
   },
   acceptBoardQuest: function (questId) {
     if (!game.explorationProgression) return;
+    if (this.isActiveQuestCapReached()) {
+      if (typeof showToast === "function") showToast("⛔ 3 quêtes actives max — abandonnes-en une avant d'en accepter une nouvelle", 2200);
+      return;
+    }
     if (!game.explorationProgression.boardAccepted || typeof game.explorationProgression.boardAccepted !== "object") {
       game.explorationProgression.boardAccepted = {};
     }
     game.explorationProgression.boardAccepted[questId] = true;
     if (typeof renderPanel === "function") renderPanel();
     if (typeof saveGame === "function") saveGame();
+  },
+  /* v3.131.0 : abandon générique pour les quêtes acceptées via boardAccepted (scene/village/
+     workshop) — remet le flag à false, la quête redevient "available" et réapparaît au tableau
+     pour être reprise plus tard. Ne touche à aucun état de run en cours (une quête "scene"
+     acceptée mais pas encore lancée n'a pas de run actif ; si un run scene est en cours pour ce
+     templateId, l'abandon de run se fait depuis l'écran d'expédition lui-même, pas ici). */
+  abandonBoardQuest: function (questId) {
+    if (!game.explorationProgression || !game.explorationProgression.boardAccepted) return;
+    delete game.explorationProgression.boardAccepted[questId];
+    if (typeof addLog === "function") addLog("🗂️ Quête abandonnée — elle reste disponible pour plus tard.", "event");
+    if (typeof renderPanel === "function") renderPanel();
+    if (typeof saveGame === "function") saveGame();
+  },
+
+  /* v3.131.0 : compte les quêtes actives (accepted/running/claimable — une quête prête à
+     réclamer occupe toujours son slot tant qu'elle n'est pas réclamée) dans le périmètre du
+     cap. Recalculé en direct à chaque appel (pas de compteur stocké, cohérent avec le reste
+     du MissionBoard — aucune mutation ici). */
+  getActiveQuestCount: function () {
+    var activeStatus = { accepted: 1, running: 1, claimable: 1 };
+    return this.list().filter(function (m) {
+      return ACTIVE_QUEST_CAP_SOURCE_KINDS.indexOf(m.sourceKind) !== -1
+        && m.id !== "petite_aventure_foret"
+        && activeStatus[m.status];
+    }).length;
+  },
+  isActiveQuestCapReached: function () {
+    return this.getActiveQuestCount() >= ACTIVE_QUEST_CAP;
   },
 
   /* v3.124.0 (retrait ancien moteur) : _explorationMissions() retirée — les 6 quêtes
@@ -272,11 +329,33 @@ var MissionBoard = {
     // considérée acceptée d'office (le joueur a déjà agi, pas besoin de reconfirmer).
     var accepted = ready || done > 0 || self._isBoardAccepted("workshop_foundations");
     var launchFn = function () { if (typeof switchTab === "function") switchTab("village"); };
+    // v3.131.0 (retour Seb : "pas très claire") : détail des 4 étapes pour la carte de quête
+    // (voir buildQuestBoardCardHTML, qb-card-steps) — chaque étape avec son statut fait/en
+    // cours/à venir et sa progression chiffrée pour l'étape en cours uniquement.
+    var currentStep = Number(wu.currentStep || 0);
+    var stepsDetail = (window.WORKSHOP_UNLOCK_STEPS || []).map(function (step, idx) {
+      var isDone = ready || idx < currentStep;
+      var isCurrent = !ready && idx === currentStep;
+      return {
+        label: step.label,
+        done: isDone,
+        current: isCurrent,
+        progress: isCurrent ? step.progress(game) : ""
+      };
+    });
+    var currentStepData = (window.WORKSHOP_UNLOCK_STEPS || [])[currentStep];
+    // v3.131.3 (retour Seb : "juste ce qu'on doit faire, pas des 0/1") : progressLabel devient le
+    // libellé concret de l'étape en cours (ex. "Récolter 15 Pierre (2/15)") au lieu du compteur
+    // brut d'étapes "2/4" — plus lisible sur le résumé compact du Campement, qui n'a pas la place
+    // pour le détail complet des 4 étapes (réservé à la carte de l'écran Quêtes, stepsDetail).
+    var stepProgressLabel = ready ? "Prête à réclamer"
+      : (currentStepData ? currentStepData.label + " (" + currentStepData.progress(game) + ")" : (done + "/" + total));
     var m = {
       id: "workshop_foundations", sourceKind: "workshop", worldId: null,
       title: "Les fondations", blurb: "Bois, planches, pierre. Assemble-les, et Aeswyn aura son premier mur.",
       type: "production", place: "", objectiveLabel: "Construire l'Atelier de Construction (chaîne de 4 objectifs)",
-      progressLabel: done + "/" + total,
+      progressLabel: stepProgressLabel,
+      stepsDetail: stepsDetail,
       rewardSummary: missionRewardSummary(STORY_REWARDS.forest_10), badge: "contract",
       status: ready ? "claimable" : (accepted ? "accepted" : "available"), isMain: false,
       claim: ready ? function () {
@@ -289,6 +368,12 @@ var MissionBoard = {
     };
     if (accepted) m.launch = launchFn;
     else m.accept = function () { return self.acceptBoardQuest("workshop_foundations"); };
+    // v3.131.0 : abandon possible uniquement si accepté via le tableau ET aucune progression
+    // réelle encore entamée (done === 0) — au-delà, la ressource/le bâtiment sont déjà acquis,
+    // "abandonner" n'aurait aucun effet visible et serait trompeur.
+    if (self._isBoardAccepted("workshop_foundations") && done === 0 && !ready) {
+      m.abandon = function () { return self.abandonBoardQuest("workshop_foundations"); };
+    }
     return [m];
   },
 
@@ -316,6 +401,15 @@ var MissionBoard = {
     };
     if (accepted) m.launch = function () { if (typeof switchTab === "function") switchTab("village"); };
     else m.accept = function () { return self.acceptBoardQuest("village_" + quest.id); };
+    // v3.131.0 : abandon possible uniquement si accepté via le tableau ET aucune progression
+    // réelle encore entamée (numérateur de progress() à 0) — même garde-fou que Les fondations,
+    // pour ne jamais proposer un abandon qui n'annulerait rien de visible (ex. un plot déjà
+    // ouvert avant même l'acceptation resterait acquis).
+    var progressLabelRaw = (typeof quest.progress === "function") ? quest.progress() : "";
+    var progressNumerator = parseInt(progressLabelRaw, 10) || 0;
+    if (self._isBoardAccepted("village_" + quest.id) && progressNumerator === 0 && !ready) {
+      m.abandon = function () { return self.abandonBoardQuest("village_" + quest.id); };
+    }
     return [m];
   },
 
@@ -364,6 +458,11 @@ var MissionBoard = {
       };
       if (accepted) m.launch = launchFn;
       else m.accept = function () { return self.acceptBoardQuest(templateId); };
+      // v3.131.0 : abandon possible uniquement accepté-sans-run (pas de progression à perdre) —
+      // un run déjà lancé se gère depuis l'écran d'expédition (abandon = perte de butin partiel).
+      if (accepted && !isRunning) {
+        m.abandon = function () { return self.abandonBoardQuest(templateId); };
+      }
       out.push(m);
     });
     return out;

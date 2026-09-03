@@ -235,26 +235,9 @@
   background: url('../images/Borders/title.png') center / 100% 90% no-repeat;
 }
 
-/* v3.38 : bandeau de progression de la chaîne de déblocage de
-   l'Atelier (voir #workshop-unlock-banner, ui/hud-view.js) — ligne
-   fine sous .nb-hud-top-row, visible sur TOUS les écrans tant que la
-   chaîne n'est pas terminée (masqué en display:none sinon, jamais
-   réaffiché ensuite). Style volontairement discret (pas une modale,
-   pas une notification) : un simple rappel persistant de l'objectif
-   en cours. */
-.workshop-unlock-banner {
-  width: 100%;
-  margin-top: 4px;
-  padding: 6px 14px;
-  text-align: center;
-  border-radius: var(--nb-radius-sm, 8px);
-  background: rgba(139, 94, 31, 0.12);
-  border: 1px dashed var(--nb-gold-dark);
-  color: var(--nb-gold-deep);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer; /* v3.39 : cliquable, ouvre le popup d'objectif */
-}
+/* v3.131.0 : .workshop-unlock-banner retiré (bandeau HUD "Les fondations", jugé inutile —
+   voir hud-view.js). Règle CSS supprimée avec lui ; le détail vit maintenant dans la carte
+   de quête (qb-card-steps, css/04-panel-quests.css). */
 
 /* =========================
    Mini-carte héros (v2.40 — portrait + niveau + PV réduits).
@@ -648,6 +631,18 @@
   padding: 0px 12px calc(2px + var(--safe-bottom));
 }
 
+/* v3.131.0 (retour Seb, mobile) : sur les écrans à sous-onglets (.subtab-page, hauteur 100%
+   flex column — Équipement, Personnage, Donjon, Boutique...), le padding-bottom du panel
+   s'ajoutait EN PLUS de l'espace déjà réservé par .subtab-bar-wrapper/.subtab-page-content,
+   créant un vide visible entre la barre de sous-onglets et la barre de navigation du bas —
+   absent sur les écrans sans sous-onglets (ex. Campement) où le contenu suit le flux normal.
+   .subtab-page gère lui-même sa zone basse, donc pas besoin d'un padding-bottom supplémentaire
+   ici. Classe posée par JS (voir ui-root.js switchTab) plutôt qu'un sélecteur :has() — meilleure
+   compatibilité mobile garantie sans dépendre du support navigateur de :has(). */
+#panel-container.has-subtab-page {
+  padding-bottom: 0px;
+}
+
 #panel-container.active {
   display: block;
 }
@@ -717,8 +712,7 @@ body.combat-active #tab-bar {
 }
 
 body.combat-active #hud .nb-hud-left-col,
-body.combat-active #hud .nb-hud-shortcuts,
-body.combat-active #hud #workshop-unlock-banner {
+body.combat-active #hud .nb-hud-shortcuts {
   display: none !important;
 }
 

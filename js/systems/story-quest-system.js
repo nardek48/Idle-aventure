@@ -187,7 +187,9 @@ var StoryQuestManager = {
       }
       // v3.107.1 : killTarget.autoReturn — dès l'objectif atteint (ex. forest_02 « Premier sang »), retour
       // au Campement pour que le joueur voie tout de suite qu'il peut réclamer, sans continuer à farmer inutilement.
-      if (step && step.killTarget && step.killTarget.autoReturn && game.activeTab === "combat") {
+      // v3.131.0 : step.autoReturn générique — même comportement pour les étapes dont le check ne passe pas
+      // par killTarget (ex. forest_12 « Le grimoire du veilleur », qui combine coeurKills + règle Grimoire active).
+      if (step && game.activeTab === "combat" && ((step.killTarget && step.killTarget.autoReturn) || step.autoReturn)) {
         if (typeof switchTab === "function") switchTab("campement");
       }
     });
@@ -311,8 +313,14 @@ var StoryQuestManager = {
   goToLink: function (chapterId) {
     var step = this.getCurrentStep(chapterId);
     if (!step || !step.linkTo) return;
-    if (step.linkTo.tab) {
-      if (typeof switchTab === "function") switchTab(step.linkTo.tab);
+    // v3.131.2 (retour Seb) : linkTo.beforeGo, hook optionnel exécuté juste avant la navigation
+    // — utilisé par forest_12 (Grimoire) pour repositionner le joueur au Cœur de la forêt et
+    // relancer un combat cohérent une fois qu'une règle est déjà configurée, plutôt que de
+    // renvoyer indéfiniment vers l'écran Grimoire une fois la config faite.
+    if (typeof step.linkTo.beforeGo === "function") step.linkTo.beforeGo(game);
+    var targetTab = (typeof step.linkTo.tab === "function") ? step.linkTo.tab(game) : step.linkTo.tab;
+    if (targetTab) {
+      if (typeof switchTab === "function") switchTab(targetTab);
       // v3.107.1 : sous-onglet optionnel (ex. forest_03 -> Menu > Amélioration directement, décision Seb).
       if (step.linkTo.subTab && typeof setHerosSubTab === "function") setHerosSubTab(step.linkTo.subTab);
       return;

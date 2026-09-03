@@ -46,8 +46,10 @@ function buildHudHTML() {
     +       '<span class="combat-hero-mini-hp-text" id="combat-hero-mini-hp-text">10 / 10</span>'
     +     '</div>'
     +   '</div>'
-    + '</div>'
-    + '<div id="workshop-unlock-banner" class="workshop-unlock-banner" style="display:none;" onclick="openWorkshopStepPopup()"></div>';
+    + '</div>';
+    // v3.131.0 (retour Seb : "inutile, il faut que ce soit propre") : bandeau
+    // #workshop-unlock-banner retiré du HUD — le détail des 4 étapes des Fondations vit
+    // maintenant directement dans la carte de quête (qb-card-steps, quests-view.js).
 }
 
 function buildStatsBarHTML() {
@@ -79,27 +81,6 @@ function renderHud() {
   renderHudBagBadge();
   renderHudLevelUpBadge();
   renderHudAscensionBadge();
-  renderWorkshopUnlockBanner();
-}
-
-function renderWorkshopUnlockBanner() {
-  var host = document.getElementById("workshop-unlock-banner");
-  if (!host) return;
-
-  if (!window.WorkshopUnlockManager || typeof WorkshopUnlockManager.getBannerText !== "function") {
-    host.style.display = "none";
-    return;
-  }
-
-  var text = WorkshopUnlockManager.getBannerText();
-  if (!text) {
-    host.style.display = "none";
-    host.textContent = "";
-    return;
-  }
-
-  host.textContent = text;
-  host.style.display = "block";
 }
 
 function renderHudLevelUpBadge() {

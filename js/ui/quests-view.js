@@ -157,8 +157,26 @@ function buildQuestBoardCardHTML(m) {
   h += '</div>';
   var desc = m.blurb || m.objectiveLabel || "";
   if (desc) h += '<div class="qb-card-desc">' + esc(desc) + '</div>';
-  if ((m.status === "running" || m.status === "accepted") && m.progressLabel) {
+  var hasStepsDetail = Array.isArray(m.stepsDetail) && m.stepsDetail.length > 0;
+  // v3.131.3 : progressLabel masqué ici quand stepsDetail est présent — le détail par étape
+  // (juste en dessous) couvre déjà cette info avec plus de contexte, éviter la redondance.
+  if ((m.status === "running" || m.status === "accepted") && m.progressLabel && !hasStepsDetail) {
     h += '<div class="qb-card-progress">' + esc(m.progressLabel) + '</div>';
+  }
+  // v3.131.0 : détail des étapes (m.stepsDetail, optionnel, générique — voir _workshopMissions()
+  // pour "Les fondations") — visible tant que la mission est acceptée/en cours, pas avant.
+  if ((m.status === "running" || m.status === "accepted") && hasStepsDetail) {
+    h += '<div class="qb-card-steps">';
+    m.stepsDetail.forEach(function (s) {
+      var stateCls = s.done ? "is-done" : s.current ? "is-current" : "is-pending";
+      var icon = s.done ? "✔" : s.current ? "▶" : "○";
+      h += '<div class="qb-card-step ' + stateCls + '">';
+      h += '<span class="qb-card-step-icon">' + icon + '</span>';
+      h += '<span class="qb-card-step-label">' + esc(s.label) + '</span>';
+      if (s.current && s.progress) h += '<span class="qb-card-step-progress">' + esc(s.progress) + '</span>';
+      h += '</div>';
+    });
+    h += '</div>';
   }
   h += '<div class="qb-card-footer">';
   if (m.rewardSummary) {
@@ -177,12 +195,26 @@ function buildQuestBoardCardHTML(m) {
   return h;
 }
 
+/* v3.131.0 (retour Seb) : indicateur permanent du cap de 3 quêtes actives (village/workshop/
+   scene/adventure/hunt confondus — voir MissionBoard.ACTIVE_QUEST_CAP). Discret quand il reste
+   de la marge, en alerte visuelle quand le cap est atteint (couleur + icône). */
+function buildActiveQuestCapIndicatorHTML() {
+  if (!window.MissionBoard || typeof MissionBoard.getActiveQuestCount !== "function") return "";
+  var count = MissionBoard.getActiveQuestCount();
+  var cap = (typeof ACTIVE_QUEST_CAP === "number") ? ACTIVE_QUEST_CAP : 3;
+  var atCap = count >= cap;
+  return '<div class="qb-cap-indicator' + (atCap ? ' is-full' : '') + '">'
+    + (atCap ? '⛔' : '🗂️') + ' Quêtes actives : ' + count + '/' + cap
+    + '</div>';
+}
+
 /* v3.116.0 (Lot B) : vue par catégorie — Histoire garde la chaîne détaillée (buildStoryChainHTML)
    suivie des questlines de monde ; les autres onglets listent leurs missions en cartes bannière. */
 function buildQuestsGeneralSubTabHTML() {
   var missions = window.MissionBoard ? MissionBoard.list() : [];
   var h = '';
   h += buildQuestCategoryTabsHTML(missions);
+  h += buildActiveQuestCapIndicatorHTML();
 
   if (activeQuestsFilter === "completed") {
     h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'active\')">◂ Retour aux quêtes actives</button></div>';

@@ -310,6 +310,11 @@ var DungeonManager = {
       CombatEngine.spawnEnemy();
     }
 
+    // v3.131.0 : succès/fuite ne repassaient jamais par switchTab (seul onDefeat() le faisait
+    // pour la mort) — le joueur restait sur l'onglet Combat avec un ennemi normal déjà respawné,
+    // donnant l'impression fausse de repartir directement en combat après un donjon.
+    if (typeof switchTab === "function") switchTab("campement");
+
     if (typeof renderAll === "function") renderAll();
 
     if (typeof openDungeonSummary === "function") {

@@ -403,7 +403,29 @@
   gap: 6px;
   width: 100%;
   max-width: 720px;
-  margin: 4px auto 14px;
+  margin: 4px auto 8px;
+}
+
+/* v3.131.0 (retour Seb) : indicateur du cap de 3 quêtes actives — discret par défaut,
+   passe en alerte (couleur danger) une fois le cap atteint. */
+.qb-cap-indicator {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto 12px;
+  padding: 5px 10px;
+  border-radius: var(--nb-radius-sm, 8px);
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--nb-frame-light);
+  color: var(--nb-ink-dim);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.qb-cap-indicator.is-full {
+  background: rgba(200, 60, 60, 0.12);
+  border-color: var(--danger, #c83c3c);
+  color: var(--danger, #c83c3c);
 }
 
 .qb-tab {
@@ -531,6 +553,68 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--nb-gold-dark);
+}
+
+/* v3.131.0 : détail des étapes d'une mission à chaîne (ex. "Les fondations") — voir
+   buildQuestBoardCardHTML() dans quests-view.js. */
+.qb-card-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 2px 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid var(--nb-frame-light);
+}
+
+.qb-card-step {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11.5px;
+  line-height: 1.3;
+}
+
+.qb-card-step-icon {
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+}
+
+.qb-card-step.is-done {
+  color: var(--nb-ink-dim);
+  text-decoration: line-through;
+}
+
+.qb-card-step.is-done .qb-card-step-icon {
+  color: var(--nb-success, #3a7d44);
+}
+
+.qb-card-step.is-current {
+  color: var(--nb-ink);
+  font-weight: 700;
+}
+
+.qb-card-step.is-current .qb-card-step-icon {
+  color: var(--nb-gold-dark);
+}
+
+.qb-card-step.is-pending {
+  color: var(--nb-ink-dim);
+  opacity: 0.7;
+}
+
+.qb-card-step-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.qb-card-step-progress {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  color: var(--nb-gold-dark);
+  font-weight: 700;
 }
 
 .qb-card-footer {
