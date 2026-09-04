@@ -17,18 +17,20 @@ var WAREHOUSE_RESOURCES = {
   planche: { id: "planche", name: "Planche", icon: "images/Icons/resources/plank_icon.png", desc: "Fabriquée à partir de Bois.", sellPrice: 7, tier: "crafted", cap: 999 },
   lingot: { id: "lingot", name: "Lingot", icon: "images/Icons/resources/ingot_icon.png", desc: "Fabriqué à partir de Fer.", sellPrice: 10, tier: "crafted", cap: 999 },
   farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.png", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 },
-  pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.png", desc: "Cuit à l'Atelier de Construction à partir d'Eau et de Farine.", sellPrice: 19, tier: "crafted", cap: 999 },
+  // v3.137.0 : desc corrigée — la Boulangerie (Champs), pas l'Atelier de Construction, cuit le Pain.
+  pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.png", desc: "Cuit à la Boulangerie (Champs) à partir d'Eau et de Farine.", sellPrice: 19, tier: "crafted", cap: 999 },
   ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.png", desc: "Repas au Campement : restaure 60 % des PV max. Crafté à la Cuisine de camp à partir de Viande séchée et de Pain.", sellPrice: 36, tier: "crafted", cap: 999, healPct: 0.60 },
   petite_ration: { id: "petite_ration", name: "Petite ration", icon: "images/Icons/resources/petite_ration_icon.png", desc: "Repas au Campement : restaure 35 % des PV max. Crafté à la Cuisine de camp à partir de Viande et d'Eau.", sellPrice: 18, tier: "crafted", cap: 999, healPct: 0.35 },
-  // v3.107.10 : Grande ration — icône dédiée fournie (Seb), toujours pas de recette de craft (décision antérieure).
-  grande_ration: { id: "grande_ration", name: "Grande ration", icon: "images/Icons/resources/grande_ration_icon.png", desc: "Repas au Campement : restaure 100 % des PV max. Recette de craft à venir.", sellPrice: 60, tier: "crafted", cap: 999, healPct: 1.00 },
+  // v3.137.0 : recette de craft ajoutée (Cuisine de camp : Ration moyenne + 3 Sève d'Aeswyn) — desc mise à jour.
+  grande_ration: { id: "grande_ration", name: "Grande ration", icon: "images/Icons/resources/grande_ration_icon.png", desc: "Repas au Campement : restaure 100 % des PV max. Cuisine de camp (Chasse) : 1 Ration moyenne + 3 Sève d'Aeswyn → 1.", sellPrice: 60, tier: "crafted", cap: 999, healPct: 1.00 },
   // v3.127.0 (Petites Aventures, Lot PA3) : butin exclusif du scene-engine petite_aventure_foret
   // (voir data/scene-templates.js, exclusiveLoot) — nom + icône validés Seb 03/09/2026.
   // Ressource de collection (tier "special", distinct de raw/crafted) : pas de sellPrice
   // significatif (0, on ne veut pas encourager à la vendre), pas de cap (comme les ressources
-  // brutes non plafonnées). Usage de craft prévu plus tard (ex. future recette de la Grande
-  // ration, voir résumé de session) — n'existe pas encore, desc mise à jour le moment venu.
-  seve_aeswyn: { id: "seve_aeswyn", name: "Sève d'Aeswyn", icon: "images/Icons/resources/seve_aeswyn_icon.png", desc: "Résine runique rare, trouvée en Petite Aventure. Un usage de craft viendra plus tard.", sellPrice: 0, tier: "special" }
+  // brutes non plafonnées). v3.137.0 : premier usage de craft (Grande ration) — desc mise à jour.
+  // D'autres usages plus marquants (gemmes, enchantement, upgrade d'arme) restent envisagés
+  // pour plus tard (décision Seb 04/09/2026, non actée).
+  seve_aeswyn: { id: "seve_aeswyn", name: "Sève d'Aeswyn", icon: "images/Icons/resources/seve_aeswyn_icon.png", desc: "Résine runique rare, trouvée en Petite Aventure. Sert à cuisiner la Grande ration.", sellPrice: 0, tier: "special" }
 };
 
 var HUNT_QUESTS = {

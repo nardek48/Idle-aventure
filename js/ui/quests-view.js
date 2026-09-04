@@ -141,6 +141,11 @@ function buildQuestBoardActionHTML(m) {
   }
   if (m.accept) return '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'accept\')">Accepter</button>';
   if (m.status === "locked") return '<span class="qb-card-locked">Occupé ailleurs</span>';
+  // v3.141.0 (audit Forêt, cap journalier de la Petite Aventure) : sans ce cas, une carte
+  // "unavailable" (cap des 3 runs/jour atteint) retombait dans le "" final — ni bouton ni texte,
+  // la carte semblait inerte plutôt que clairement indisponible pour aujourd'hui. Réutilise le
+  // même habillage visuel que "locked" (qb-card-locked, is-locked sur la carte).
+  if (m.status === "unavailable") return '<span class="qb-card-locked">⏳ Revenez demain</span>';
   return "";
 }
 
@@ -148,7 +153,10 @@ function buildQuestBoardActionHTML(m) {
 function buildQuestBoardCardHTML(m) {
   var statusCls = m.status === "claimable" || m.status === "ready" ? " is-claimable"
     : (m.status === "running" || m.status === "accepted") ? " is-running"
-    : m.status === "locked" ? " is-locked" : "";
+    // v3.141.0 : "unavailable" (cap journalier PA atteint) même style estompé que "locked" —
+    // la carte reste visible et lisible (titre, description, comment ça marche) mais son statut
+    // "pas aujourd'hui" saute aux yeux au lieu de ressembler à une mission normale sans action.
+    : (m.status === "locked" || m.status === "unavailable") ? " is-locked" : "";
   var h = '<div class="qb-card' + statusCls + (m.isMain ? ' is-main' : '') + '">';
   h += '<div class="qb-card-banner qb-banner-' + esc(m.type || "combat") + '">' + renderIconOrEmojiHTML(MissionBoard.typeIcon(m.type), "qb-card-banner-img", m.title) + '</div>';
   h += '<div class="qb-card-body">';

@@ -219,14 +219,17 @@ function buildTitleScreenLoadListHTML() {
       var heroImage = summary.heroImage || "";
       var isSelected = titleScreenSelectedSlot === i;
       var selectedClass = isSelected ? " selected" : "";
-      var cardBgImage = isSelected ? "carte_active.png" : "carte_inactive.png";
       var worldName = getWorldNameByIndex(summary.worldIndex);
 
+      /* v3.145.0 : cadre cadre_slot.png (Seb) — parchemin clair avec médaillon
+         rond DÉCOUPÉ EN TRANSPARENCE (pas un cercle blanc opaque) : le
+         portrait est posé DERRIÈRE en position identique, le cadre par-dessus
+         masque tout sauf le disque. Remplace la carte 100% CSS de v3.144.0. */
       html += '<div class="title-slot-card occupied' + selectedClass + '" onclick="titleScreenSelectSlot(' + i + ')">';
-      html += '  <img src="images/TitleScreen/' + cardBgImage + '" alt="" class="title-slot-card-bg">';
       html += '  <div class="title-slot-portrait">';
       if (heroImage) html += '<img src="' + esc(heroImage) + '" alt="">';
       html += '  </div>';
+      html += '  <img src="images/TitleScreen/cadre_slot.png" alt="" class="title-slot-card-bg">';
       html += '  <div class="title-slot-body">';
       html += '    <div class="title-slot-name">' + esc(summary.playerName || ("Emplacement " + i)) + '</div>';
       html += '    <div class="title-slot-stat"><span class="title-slot-stat-icon">♛</span>Niveau ' + esc(formatNumber(summary.heroLevel)) + (worldName ? ' · ' + esc(worldName) : '') + '</div>';
@@ -237,16 +240,19 @@ function buildTitleScreenLoadListHTML() {
       html += '  </div>';
       html += '  <div class="title-slot-actions">';
       html += '    <button type="button" class="title-slot-load-btn" onclick="event.stopPropagation(); titleScreenConfirmLoad(' + i + ')">';
-      html += '      <img src="images/TitleScreen/btn_charger_base.png" alt="" class="title-slot-load-btn-bg">';
+      html += '      <img src="images/TitleScreen/bouton_charger.png" alt="" class="title-slot-load-btn-bg">';
       html += '      <span>Charger</span>';
       html += '    </button>';
-      html += '    <button type="button" class="title-slot-delete-btn" aria-label="Supprimer" onclick="titleScreenAskDeleteSlot(' + i + ', event)">🗑</button>';
+      html += '    <button type="button" class="title-slot-delete-btn" aria-label="Supprimer" onclick="titleScreenAskDeleteSlot(' + i + ', event)">';
+      html += '      <img src="images/TitleScreen/bouton_supprimer.png" alt="">';
+      html += '    </button>';
       html += '  </div>';
       html += '</div>';
     } else {
       html += '<button type="button" class="title-slot-card empty" onclick="titleScreenCreateInSlot(' + i + ')">';
+      html += '  <img src="images/TitleScreen/cadre_slot.png" alt="" class="title-slot-card-bg">';
       html += '  <div class="title-slot-portrait title-slot-portrait-empty">+</div>';
-      html += '  <div class="title-slot-body">';
+      html += '  <div class="title-slot-body title-slot-body-empty">';
       html += '    <div class="title-slot-name">Emplacement vide</div>';
       html += '    <div class="title-slot-stat">Toucher pour créer une nouvelle partie</div>';
       html += '  </div>';
@@ -279,20 +285,20 @@ function buildTitleScreenDeleteConfirmHTML() {
 function buildTitleScreenMainHTML() {
   var html = '<div class="title-screen-overlay">';
   html += '  <div class="title-screen-stage">';
-  html += '    <img src="images/TitleScreen/title_background.jpg" alt="" class="title-screen-bg">';
-  html += '    <h1 class="title-screen-logo">Aethervale</h1>';
+  html += '    <img src="images/TitleScreen/title_background_new.png" alt="" class="title-screen-bg">';
+  html += '    <img src="images/TitleScreen/titre_logo.png" alt="Aethervale" class="title-screen-logo-img">';
   html += '    <div class="title-screen-frame">';
   html += '      <div class="title-screen-buttons">';
-  html += '        <button type="button" class="title-screen-img-btn title-screen-img-btn-newgame" onclick="titleScreenNewGame()">';
-  html += '          <img src="images/TitleScreen/btn_nouvelle_partie.png" alt="" class="title-screen-img-btn-bg">';
+  html += '        <button type="button" class="title-screen-img-btn" onclick="titleScreenNewGame()">';
+  html += '          <img src="images/TitleScreen/bouton_titre.png" alt="" class="title-screen-img-btn-bg">';
   html += '          <span>Nouvelle Partie</span>';
   html += '        </button>';
-  html += '        <button type="button" class="title-screen-img-btn title-screen-img-btn-load" onclick="titleScreenShowLoad()">';
-  html += '          <img src="images/TitleScreen/btn_charger_partie.png" alt="" class="title-screen-img-btn-bg">';
+  html += '        <button type="button" class="title-screen-img-btn" onclick="titleScreenShowLoad()">';
+  html += '          <img src="images/TitleScreen/bouton_titre.png" alt="" class="title-screen-img-btn-bg">';
   html += '          <span>Charger la Partie</span>';
   html += '        </button>';
   html += '      </div>';
-  html += '      <div class="title-screen-version">v3.99.16</div>';
+  html += '      <div class="title-screen-version">v3.145.0</div>';
   html += '    </div>';
   html += '  </div>';
   html += '</div>';
@@ -302,16 +308,16 @@ function buildTitleScreenMainHTML() {
 function buildTitleScreenLoadHTML() {
   var html = '<div class="title-screen-overlay">';
   html += '  <div class="title-screen-stage">';
-  html += '    <img src="images/TitleScreen/title_background.jpg" alt="" class="title-screen-bg">';
+  html += '    <img src="images/TitleScreen/title_background_new.png" alt="" class="title-screen-bg">';
   html += '  </div>';
   html += '  <div class="title-screen-frame title-screen-frame-load">';
-  html += '    <button type="button" class="title-screen-back-btn" onclick="titleScreenBackToMain()"><img src="images/TitleScreen/bouton_retour.png" alt="Retour"></button>';
-  html += '    <h2 class="title-screen-load-heading">Charger une partie</h2>';
+  html += '    <button type="button" class="title-screen-back-btn" onclick="titleScreenBackToMain()"><img src="images/TitleScreen/bouton_retour_new.png" alt="Retour"></button>';
+  html += '    <img src="images/TitleScreen/titre_charger.png" alt="Charger une partie" class="title-screen-load-heading-img">';
   html += '    <div class="title-screen-load-subheading">Sélectionnez une sauvegarde</div>';
   html += buildTitleScreenLoadListHTML();
   var loadDisabled = titleScreenSelectedSlot ? '' : ' disabled';
   html += '    <button type="button" class="title-screen-confirm-load-btn"' + loadDisabled + ' onclick="titleScreenConfirmLoad()">';
-  html += '      <img src="images/TitleScreen/btn_charger_base.png" alt="" class="title-screen-confirm-load-btn-bg">';
+  html += '      <img src="images/TitleScreen/bouton_charger.png" alt="" class="title-screen-confirm-load-btn-bg">';
   html += '      <span>Charger</span>';
   html += '    </button>';
   html += '    <button type="button" class="title-screen-newgame-link" onclick="titleScreenNewGame()">Nouvelle Partie</button>';

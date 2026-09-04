@@ -69,7 +69,11 @@ var WORKSHOPS_CONFIG = {
     // Petite ration reste sur viande+eau brutes (accessible dès le début de l'Acte II, décision confirmée).
     recipes: [
       { id: "petite_ration", inputs: [{ resourceId: "viande", quantity: 8 }, { resourceId: "eau", quantity: 4 }], outputs: [{ resourceId: "petite_ration", quantity: 1 }], craftTimeMs: 3000 },
-      { id: "ration", inputs: [{ resourceId: "viande_sechee", quantity: 10 }, { resourceId: "pain", quantity: 1 }], outputs: [{ resourceId: "ration", quantity: 1 }], craftTimeMs: 8000 }
+      { id: "ration", inputs: [{ resourceId: "viande_sechee", quantity: 10 }, { resourceId: "pain", quantity: 1 }], outputs: [{ resourceId: "ration", quantity: 1 }], craftTimeMs: 8000 },
+      // v3.137.0 (option B validée Seb) : Grande ration = Ration moyenne + 3 Sève d'Aeswyn — escalade
+      // visible sur la chaîne plutôt qu'un doublon des intrants de la Ration moyenne (option A).
+      // Premier débouché de craft de la Sève (jusqu'ici uniquement l'offrande forest_15, ponctuelle).
+      { id: "grande_ration", inputs: [{ resourceId: "ration", quantity: 1 }, { resourceId: "seve_aeswyn", quantity: 3 }], outputs: [{ resourceId: "grande_ration", quantity: 1 }], craftTimeMs: 12000 }
     ]
   },
 

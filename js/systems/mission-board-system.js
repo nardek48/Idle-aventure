@@ -152,7 +152,7 @@ var MissionBoard = {
       if (status === "available") {
         m.accept = function () {
           if (self.isActiveQuestCapReached()) {
-            if (typeof showToast === "function") showToast("⛔ 3 quêtes actives max — abandonnes-en une avant d'en accepter une nouvelle", 2200);
+            self.showActiveQuestCapToast();
             return;
           }
           if (typeof openAdventureQuestIntro === "function") openAdventureQuestIntro(quest.id);
@@ -189,7 +189,7 @@ var MissionBoard = {
       if (status === "available") {
         m.accept = function () {
           if (self.isActiveQuestCapReached()) {
-            if (typeof showToast === "function") showToast("⛔ 3 quêtes actives max — abandonnes-en une avant d'en accepter une nouvelle", 2200);
+            self.showActiveQuestCapToast();
             return;
           }
           if (typeof openHuntQuestIntro === "function") openHuntQuestIntro(quest.id);
@@ -270,7 +270,7 @@ var MissionBoard = {
   acceptBoardQuest: function (questId) {
     if (!game.explorationProgression) return;
     if (this.isActiveQuestCapReached()) {
-      if (typeof showToast === "function") showToast("⛔ 3 quêtes actives max — abandonnes-en une avant d'en accepter une nouvelle", 2200);
+      this.showActiveQuestCapToast();
       return;
     }
     if (!game.explorationProgression.boardAccepted || typeof game.explorationProgression.boardAccepted !== "object") {
@@ -307,6 +307,30 @@ var MissionBoard = {
   },
   isActiveQuestCapReached: function () {
     return this.getActiveQuestCount() >= ACTIVE_QUEST_CAP;
+  },
+
+  /* v3.138.0 (retour Seb) : le refus muet ("⛔ 3 quêtes actives max — abandonnes-en une...") ne
+     disait pas LESQUELLES sont actives — sur l'écran Quêtes le compteur (buildActiveQuestCapIndicatorHTML)
+     est visible, mais pas depuis une carte "Chasse en Forêt" verrouillée par exemple. Réutilise le
+     même filtre que getActiveQuestCount() (même périmètre, même exclusion Petite Aventure) pour
+     lister les titres sans risque de divergence entre le compte et le détail. */
+  getActiveQuestTitles: function () {
+    var activeStatus = { accepted: 1, running: 1, claimable: 1 };
+    return this.list().filter(function (m) {
+      return ACTIVE_QUEST_CAP_SOURCE_KINDS.indexOf(m.sourceKind) !== -1
+        && m.id !== "petite_aventure_foret"
+        && activeStatus[m.status];
+    }).map(function (m) { return m.title; });
+  },
+
+  /* v3.138.0 : toast unique pour les 3 sites de refus (adventure/hunt inline, acceptBoardQuest) —
+     message générique + jusqu'à 3 titres réels ("Chasse en Forêt, La Meute Affamée, Les fondations")
+     plutôt qu'un renvoi vers l'écran Quêtes que le joueur devrait aller consulter lui-même. */
+  showActiveQuestCapToast: function () {
+    if (typeof showToast !== "function") return;
+    var titles = this.getActiveQuestTitles();
+    var detail = titles.length ? " (" + titles.join(", ") + ")" : "";
+    showToast("⛔ 3 quêtes actives max" + detail + " — abandonnes-en une avant d'en accepter une nouvelle", 3200);
   },
 
   /* v3.124.0 (retrait ancien moteur) : _explorationMissions() retirée — les 6 quêtes

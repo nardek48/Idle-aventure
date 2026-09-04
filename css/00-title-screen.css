@@ -4,9 +4,11 @@
    Affiché AVANT init() du jeu, par-dessus tout (sauf le voile
    PWA #pwa-boot-gate, z-index 9999, qui reste le plus prioritaire
    le temps que le service worker se règle au tout premier lancement).
-   Palette propre (violet nuit / or), indépendante des tokens du
-   thème "parchemin" actuel du jeu — nouvelle direction visuelle.
-   v3.99.0
+   Palette propre, indépendante des tokens du thème "parchemin"
+   actuel du jeu — nouvelle direction visuelle.
+   v3.99.0 (violet nuit / or) -> v3.144.0 (bascule or/bronze crépuscule,
+   maquette Seb visuel_attendu.png — nouveaux assets titre_logo.png,
+   bouton_titre.png, title_background_new.png).
    ========================================================= */
 
 #title-screen-root:empty {
@@ -18,27 +20,26 @@
   inset: 0;
   z-index: 9000;
   overflow: hidden;
-  background: #05040d;
+  background: #1a1006;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* v3.99.5 : conteneur au ratio FIXE de l'image de fond (864:1821, voir
-   title_background.jpg) — plus jamais de "cover" qui recadre différemment
-   selon l'écran. Le titre et les boutons ci-dessous sont positionnés en %
-   PAR RAPPORT À CE CONTENEUR (pas à la fenêtre), donc ils restent alignés
-   sur les éléments décoratifs du fond (cadre du titre, cristal central...)
-   quel que soit l'appareil. Contrepartie assumée : des bandes vides
-   peuvent apparaître sur les écrans dont le ratio diffère de celui de
-   l'image (large/étroit), comblées par le fond uni #05040d de l'overlay. */
+/* v3.144.0 : conteneur au ratio FIXE de la nouvelle image de fond
+   (1536:2752, voir title_background_new.png — charte or/bronze crépuscule,
+   remplace la palette violet nuit v3.99.x). Même logique qu'avant : le logo
+   et les boutons sont positionnés en % PAR RAPPORT À CE CONTENEUR, donc ils
+   restent alignés sur les éléments décoratifs du fond (cadre du titre,
+   sanctuaire...) quel que soit l'appareil. Bandes vides possibles sur les
+   écrans au ratio différent, comblées par le fond uni de l'overlay. */
 .title-screen-stage {
   position: relative;
   width: 100%;
   height: 100%;
-  max-width: calc(100vh * 864 / 1821);
-  max-height: calc(100vw * 1821 / 864);
-  aspect-ratio: 864 / 1821;
+  max-width: calc(100vh * 1536 / 2752);
+  max-height: calc(100vw * 2752 / 1536);
+  aspect-ratio: 1536 / 2752;
   margin: 0 auto;
 }
 
@@ -53,7 +54,7 @@
 .title-screen-frame {
   position: absolute;
   left: 50%;
-  top: 63%;
+  top: 64%;
   transform: translate(-50%, 0);
   z-index: 1;
   width: 100%;
@@ -66,22 +67,19 @@
   gap: 14px;
 }
 
-.title-screen-logo {
+/* v3.144.0 : logo image (titre_logo.png) remplace le texte HTML — mesuré sur la
+   maquette Seb (visuel_attendu.png) : bandeau centré, ~5% à 27% en hauteur du
+   stage, quasi pleine largeur. Ratio réel du fichier 1319/644. */
+.title-screen-logo-img {
   position: absolute;
-  left: 50%; /* mesuré : centre du cadre (entre les 2 pointes latérales) à 46.5%, pas 50% */
-  top: 24%;
+  left: 50%;
+  top: 15%;
   transform: translate(-50%, -50%);
-  width: 100%;
-  margin: 0;
-  padding: 0 40px;
-  box-sizing: border-box;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: #f0dfa8;
-  text-shadow: 0 0 18px rgba(199, 168, 255, 0.55), 0 2px 6px rgba(0, 0, 0, 0.8);
-  text-align: center;
+  width: 92%;
+  max-width: 480px;
+  height: auto;
+  z-index: 1;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6));
 }
 
 .title-screen-buttons {
@@ -91,31 +89,21 @@
   gap: 12px;
 }
 
+/* v3.144.0 : cadre unique bouton_titre.png (1200/405) partagé par les 2
+   boutons, même taille pour les deux (alignement sur visuel_attendu.png —
+   avant v3.144.0, "Charger" était volontairement plus petit à 80%, décision
+   abandonnée). */
 .title-screen-img-btn {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
+  aspect-ratio: 1200 / 405;
   padding: 0;
   border: none;
   background: none;
   cursor: pointer;
-}
-
-/* v3.99.9 : nouvelles images fournies par Seb (non recadrées cette fois —
-   il a lui-même rééquilibré les ornements haut/bas pour qu'ils débordent
-   moins), remplacent les versions _crop de v3.99.8. Ratio réel de chaque
-   fichier (900/215 et 900/201 — toujours légèrement différents l'un de
-   l'autre, les deux cadres n'ont pas exactement la même épaisseur). */
-.title-screen-img-btn-newgame {
-  aspect-ratio: 900 / 215;
-}
-
-.title-screen-img-btn-load {
-  aspect-ratio: 900 / 201;
-  width: 80%; /* rendu plus petit que Nouvelle Partie, à la demande de Seb */
-  align-self: center;
 }
 
 .title-screen-img-btn:active {
@@ -137,30 +125,25 @@
    fin (quelques px). Si un jour tu changes à nouveau les images, modifie
    SEULEMENT CES 2 LIGNES (positif = descend le texte, négatif = remonte) :
    =========================================================== */
+/* v3.144.0 : fond parchemin clair (bouton_titre.png) -> texte foncé, plus
+   clair comme avec les anciens cadres sombres violet/or. */
 .title-screen-img-btn span {
   position: relative;
   z-index: 1;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
-  letter-spacing: 0.8px;
-  color: #f3e8c8;
-  text-shadow: 0 0 10px rgba(139, 92, 246, 0.6), 0 2px 4px rgba(0, 0, 0, 0.85);
-}
-
-.title-screen-img-btn-newgame span {
-  transform: translateY(-1px); /* léger réajustement, bande pleine centrée à 49.3% */
-}
-
-.title-screen-img-btn-load span {
-  transform: translateY(-2px); /* léger réajustement, bande pleine centrée à 46.8% */
+  letter-spacing: 0.6px;
+  color: #3a2410;
+  text-shadow: 0 1px 1px rgba(255, 244, 214, 0.5);
 }
 
 .title-screen-version {
   margin-top: 4px;
   font-size: 11px;
-  color: rgba(230, 220, 245, 0.5);
+  color: rgba(60, 40, 15, 0.65);
   letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(255, 240, 200, 0.4);
 }
 
 /* ---------------------------------------------------------
@@ -192,8 +175,8 @@
   position: absolute;
   top: 4px;
   left: 4px;
-  width: 44px;
-  aspect-ratio: 233 / 259; /* ratio réel de images/TitleScreen/bouton_retour.png */
+  width: 50px;
+  aspect-ratio: 306 / 337; /* ratio réel de images/TitleScreen/bouton_retour_new.png */
   padding: 0;
   border: none;
   background: none;
@@ -211,23 +194,23 @@
   transform: scale(0.93);
 }
 
-.title-screen-load-heading {
-  margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 21px;
-  font-weight: 700;
-  color: #f0dfa8;
-  text-align: center;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+/* v3.145.0 : bandeau image titre_charger.png (Seb) remplace le <h2> texte. */
+.title-screen-load-heading-img {
+  display: block;
+  width: 78%;
+  max-width: 340px;
+  height: auto;
+  margin: 0 auto;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.6));
 }
 
 .title-screen-load-subheading {
   margin: 0 0 8px;
   font-size: 12px;
-  color: rgba(230, 220, 245, 0.65);
+  color: rgba(240, 224, 190, 0.7);
   text-align: center;
   letter-spacing: 0.3px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
 }
 
 .title-screen-load-list {
@@ -243,22 +226,32 @@
   width: 100%;
   padding: 0;
   border: none;
-  background: none;
   cursor: pointer;
   text-align: left;
   overflow: visible;
 }
 
-/* v3.99.13 : cadre fourni par Seb (occupied.png), garde son ratio natif (pas
-   d'étirement — voir échec précédent avec un cadre au ratio trop compact).
-   .selected utilise directement l'image "active" (avec pointeur argenté intégré)
-   plutôt qu'un halo CSS ajouté par-dessus. */
-.title-slot-card.occupied {
-  aspect-ratio: 900 / 419;
+/* v3.145.0 : cadre cadre_slot.png (Seb, ratio 2503/784), parchemin clair avec
+   médaillon rond découpé en TRANSPARENCE (mesuré : centre à 16.9%/50.3%,
+   diamètre 20.1% largeur / 68.9% hauteur de l'image). Remplace la carte
+   100% CSS de v3.144.0 (dégradés bronze, faute d'asset à l'époque). Le
+   portrait est posé dans le DOM avant le cadre (z-index inférieur) à la
+   même position que le trou, pour apparaître au travers. */
+.title-slot-card.occupied,
+.title-slot-card.empty {
+  aspect-ratio: 2503 / 784;
+  min-height: 0;
 }
 
+.title-slot-card.occupied:active,
+.title-slot-card.empty:active {
+  transform: scale(0.99);
+}
+
+/* .selected : léger glow doré superposé (le cadre n'a pas de variante
+   "active" dédiée fournie par Seb pour cet asset). */
 .title-slot-card.occupied.selected {
-  aspect-ratio: 900 / 438;
+  filter: drop-shadow(0 0 10px rgba(224, 178, 92, 0.65));
 }
 
 .title-slot-card-bg {
@@ -266,40 +259,22 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: fill; /* étirement acceptable ici : ratio image proche du ratio carte réel */
-  z-index: 0;
+  object-fit: fill;
+  z-index: 1;
   pointer-events: none;
 }
 
-.title-slot-card.occupied:active {
-  transform: scale(0.99);
-}
-
-.title-slot-card.empty {
-  aspect-ratio: 900 / 419;
-  display: flex;
-  align-items: center;
-  border: 1.5px dashed rgba(240, 200, 130, 0.4);
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(50, 38, 85, 0.5), rgba(22, 16, 42, 0.6));
-  opacity: 0.75;
-  padding: 12px 16px;
-  gap: 12px;
-}
-
-/* Portrait positionné dans le médaillon rond du cadre (mesuré : cercle intérieur
-   à 8%-39% en largeur, 9%-89% en hauteur du conteneur — même position sur les 2
-   cadres occupied/selected, seul le pointeur latéral change). Occupe toute la
-   carte en position absolue, seul le portrait lui-même est positionné dedans. */
+/* Portrait positionné exactement sous le trou transparent du cadre (mesures
+   ci-dessus). z-index 0 : reste SOUS title-slot-card-bg (z-index 1). */
 .title-slot-portrait {
   position: absolute;
-  left: 8%;
-  top: 9%;
-  width: 31%;
-  height: 80%;
+  left: 6.9%;
+  top: 15.8%;
+  width: 20.1%;
+  height: 68.9%;
   border-radius: 50%;
   overflow: hidden;
-  z-index: 1;
+  z-index: 0;
 }
 
 .title-slot-portrait img {
@@ -314,42 +289,44 @@
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  color: rgba(240, 223, 168, 0.7);
-  flex: 0 0 auto;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  border: 1.5px dashed rgba(240, 200, 130, 0.5);
+  color: rgba(150, 110, 60, 0.7);
+  z-index: 2; /* au-dessus du cadre : le "+" doit rester visible dans le trou */
 }
 
-/* Corps de texte poussé à droite du médaillon (zone libre à partir de ~45%,
-   s'arrête avant la zone des actions Charger/poubelle à droite). */
+/* Corps de texte à droite du médaillon (zone libre après le cercle, avant
+   la colonne d'actions Charger/Suppression). */
 .title-slot-body {
   position: absolute;
-  left: 45%;
-  top: 6%;
-  right: 5%;
-  bottom: 30%; /* laisse la place aux actions (Charger/poubelle) sous le texte */
-  z-index: 1;
+  left: 30%;
+  top: 8%;
+  right: 24%;
+  bottom: 8%;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  min-width: 0;
+}
+
+.title-slot-body-empty {
+  left: 30%;
+  right: 5%;
 }
 
 .title-slot-name {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  color: #f3e8c8;
-  margin-bottom: 6px;
+  color: #3a2410;
+  margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .title-slot-stat {
-  font-size: 11px;
-  color: rgba(230, 220, 245, 0.75);
-  line-height: 1.6;
+  font-size: 10px;
+  color: rgba(58, 36, 16, 0.85);
+  line-height: 1.5;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -357,23 +334,24 @@
 
 .title-slot-stat-icon {
   display: inline-block;
-  width: 14px;
-  color: #d8b45c;
+  width: 13px;
+  color: #8a5a1e;
   margin-right: 3px;
 }
 
-/* Boutons Charger/Poubelle repositionnés en absolu, coin bas-droit de la carte
-   (la zone de texte à droite du médaillon est large mais pas infinie, ces
-   actions restent compactes et discrètes plutôt que de prendre une colonne
-   dédiée comme dans l'ancienne mise en page). */
+/* Boutons Charger/Poubelle, colonne à droite de la carte (alignement sur
+   Ecran_final.png : Charger en haut, poubelle ronde centrée dessous). */
 .title-slot-actions {
   position: absolute;
-  right: 5%;
-  bottom: 8%;
-  z-index: 1;
+  right: 3%;
+  top: 12%;
+  bottom: 12%;
+  z-index: 2;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
 }
 
 .title-slot-load-btn {
@@ -381,8 +359,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 76px;
-  aspect-ratio: 700 / 304;
+  width: 84px;
+  aspect-ratio: 718 / 271;
   padding: 0;
   border: none;
   background: none;
@@ -403,7 +381,7 @@
   z-index: 1;
   font-size: 11px;
   font-weight: 700;
-  color: #f3e8c8;
+  color: #f3e0b0;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
@@ -412,14 +390,18 @@
 }
 
 .title-slot-delete-btn {
-  padding: 5px;
-  border-radius: 999px;
-  border: 1px solid rgba(230, 220, 245, 0.25);
-  background: rgba(0, 0, 0, 0.25);
-  color: rgba(230, 220, 245, 0.6);
-  font-size: 13px;
+  width: 26px;
+  aspect-ratio: 175 / 192;
+  padding: 0;
+  border: none;
+  background: none;
   cursor: pointer;
-  align-self: center;
+}
+
+.title-slot-delete-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .title-slot-delete-btn:active {
@@ -428,15 +410,17 @@
 
 /* Bouton CHARGER global — confirme le slot sélectionné (même action que le
    bouton "Charger" individuel de la carte sélectionnée). Désactivé (attribut
-   HTML natif) tant qu'aucune carte n'est sélectionnée. Cadre fourni par Seb
-   (BoutonBase.png), bande pleine déjà centrée à 50% -> pas de translateY requis. */
+   HTML natif) tant qu'aucune carte n'est sélectionnée. Cadre bouton_charger.png
+   (Seb), même asset que les boutons "Charger" par carte, en plus grand. */
 .title-screen-confirm-load-btn {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  aspect-ratio: 700 / 304;
+  width: 60%;
+  max-width: 220px;
+  aspect-ratio: 718 / 271;
+  margin: 4px auto 0;
   padding: 0;
   border: none;
   background: none;
@@ -459,8 +443,8 @@
   font-size: 17px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #f3e8c8;
-  text-shadow: 0 0 10px rgba(139, 92, 246, 0.6), 0 2px 4px rgba(0, 0, 0, 0.85);
+  color: #f3e0b0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
 .title-screen-confirm-load-btn:active {
@@ -510,8 +494,8 @@
   max-width: 340px;
   padding: 22px 20px;
   border-radius: 18px;
-  border: 1.5px solid rgba(240, 200, 130, 0.6);
-  background: linear-gradient(180deg, #2a2148, #150f28);
+  border: 1.5px solid rgba(216, 168, 90, 0.55);
+  background: linear-gradient(180deg, #3d2a14, #1a1006);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   text-align: center;
 }
@@ -520,13 +504,13 @@
   font-family: Georgia, "Times New Roman", serif;
   font-size: 17px;
   font-weight: 700;
-  color: #f0dfa8;
+  color: #f3e0b0;
   margin-bottom: 10px;
 }
 
 .title-screen-delete-text {
   font-size: 13px;
-  color: rgba(230, 220, 245, 0.75);
+  color: rgba(240, 224, 190, 0.8);
   line-height: 1.5;
   margin-bottom: 18px;
 }
@@ -547,9 +531,9 @@
 }
 
 .title-screen-delete-cancel {
-  border: 1px solid rgba(230, 220, 245, 0.3);
+  border: 1px solid rgba(240, 224, 190, 0.3);
   background: rgba(255, 255, 255, 0.05);
-  color: #e6dcf5;
+  color: #f0e4c8;
 }
 
 .title-screen-delete-confirm {

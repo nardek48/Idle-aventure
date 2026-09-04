@@ -40,6 +40,8 @@
 .scene-status-depth { color: var(--nb-blue-dark); }
 
 /* ---------- Barre de progression segmentée (une pastille par profondeur) ---------- */
+/* v3.139.0 (horizon de visibilité) : les segments dans l'horizon (is-upcoming) affichent
+   l'icône réelle du type de palier ; hors horizon (is-hidden), un segment neutre estompé. */
 .scene-progress {
   display: flex;
   gap: 4px;
@@ -49,9 +51,15 @@
 
 .scene-progress-seg {
   flex: 1;
-  height: 7px;
+  height: 20px;
+  min-width: 20px;
   border-radius: 6px;
   background: var(--nb-cream-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
 }
 
 .scene-progress-seg.is-done {
@@ -60,7 +68,153 @@
 
 .scene-progress-seg.is-current {
   background: var(--nb-blue);
+  color: var(--nb-cream);
+  box-shadow: 0 0 0 2px var(--nb-blue-dark);
+  transform: scale(1.15);
 }
+
+.scene-progress-seg.is-upcoming {
+  background: var(--nb-cream-alt);
+  border: 1px solid var(--nb-frame-light);
+}
+
+.scene-progress-seg.is-hidden {
+  background: var(--nb-cream-deep);
+  opacity: 0.5;
+}
+
+.scene-progress-seg.scene-progress-finale {
+  border-radius: 50%;
+  font-size: 13px;
+}
+
+.scene-progress-seg.scene-progress-finale.is-upcoming {
+  border-color: var(--nb-gold);
+}
+
+/* ---------- Chemin illustré à nœuds cliquables (v3.142.0, Petite Aventure) ----------
+   Même pattern que la carte du monde (voir css/06-map.css, sélecteurs .map-path- et
+   .map-node-) — positions fixes en %, tracé SVG en Bézier, nœuds ronds. Fond en dur
+   (--nb-cream-deep) pour l'instant ; .scene-path-bg-img (non utilisée tant qu'aucune image
+   n'est fournie) est prête à accueillir une illustration plus tard sans changer la structure,
+   sur le modèle de .map-path-bg. */
+.scene-path-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 100 / 70; /* SCENE_PATH_VIEWBOX_H — portrait modéré, tient sous la barre d'état sur mobile.
+    Même pattern que .map-path-frame (css/06-map.css, aspect-ratio 100/179.17), déjà en prod. */
+  border-radius: var(--nb-radius-md);
+  overflow: hidden;
+  margin-bottom: 12px;
+  background: linear-gradient(180deg, var(--nb-cream-deep), var(--nb-cream-alt));
+  border: 1px solid var(--nb-frame-light);
+}
+
+.scene-path-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.scene-path-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.scene-path-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 10%;
+  aspect-ratio: 1 / 1;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  z-index: 1;
+}
+
+.scene-path-node-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  font-size: 16px;
+  background: var(--nb-cream);
+  border: 2px solid var(--nb-frame-light);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+button.scene-path-node {
+  cursor: pointer;
+}
+
+button.scene-path-node .scene-path-node-circle {
+  border-color: var(--nb-gold);
+}
+
+button.scene-path-node:active .scene-path-node-circle {
+  transform: scale(0.92);
+}
+
+.scene-path-node.is-done .scene-path-node-circle {
+  background: var(--nb-gold);
+  border-color: var(--nb-gold-dark);
+}
+
+.scene-path-node.is-current .scene-path-node-circle {
+  background: var(--nb-blue);
+  border-color: var(--nb-blue-dark);
+  box-shadow: 0 0 0 3px rgba(79, 168, 232, 0.35), 0 2px 5px rgba(0, 0, 0, 0.3);
+  animation: scenePathNodePulse 1.7s infinite;
+}
+
+@keyframes scenePathNodePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(79, 168, 232, 0.55), 0 2px 5px rgba(0, 0, 0, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(79, 168, 232, 0), 0 2px 5px rgba(0, 0, 0, 0.3); }
+}
+
+.scene-path-node.is-upcoming .scene-path-node-circle {
+  background: var(--nb-cream-alt);
+}
+
+.scene-path-node.is-hidden .scene-path-node-circle {
+  background: var(--nb-cream-deep);
+  opacity: 0.5;
+  border-style: dashed;
+}
+
+.scene-path-node-finale .scene-path-node-circle {
+  border-color: var(--nb-gold-dark);
+}
+
+.scene-path-node-finale.is-upcoming .scene-path-node-circle,
+.scene-path-node-finale.is-current .scene-path-node-circle {
+  border-color: var(--nb-gold);
+}
+
+/* Fiche unique en lecture seule (canevas à 1 porte/palier, remplace la grille de boutons —
+   l'action se fait par clic sur le nœud courant du chemin, pas sur cette fiche). */
+.scene-card-solo {
+  cursor: default;
+}
+
+.scene-card-solo-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 10.5px;
+  font-style: italic;
+  color: var(--nb-ink-dim);
+}
+
 
 /* ---------- Bouton "Rentrer" (toujours accessible tant que le run est engagé) ---------- */
 .scene-actions-leave {

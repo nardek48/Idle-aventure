@@ -354,7 +354,11 @@ var SCENE_TEMPLATES = {
     // obstacle, SceneEngine.buildCard) et vagues de 4-6 ennemis (finale incluse, + boss).
     // Sim Monte-Carlo (Acte II, Lisière) : 3 vagues 6-10 = 0-5 % de réussite ; 2 vagues 4-6
     // = 97-100 %. Bourrin garde ~8× plus de combat que Prudent (32 % vs 4 % de poids).
-    maxSlotsPerRun: { combat: 2 },
+    // v3.143.0 (variance des runs, audit Forêt) : bloqueur plafonné à 2 aussi, même mécanisme
+    // — sim 3000 runs Prudent : sans plafond, 9.9 % des runs cumulaient ≥3 bloqueurs (jusqu'à
+    // 45 min d'attente cumulée observés), largement au-delà du concept d'origine ("1 à 2
+    // bloqueurs"). Décision Seb 04/09/2026 : plafond 2 (≤ 15 min cumulées typique).
+    maxSlotsPerRun: { combat: 2, bloqueur: 2 },
     combatWaveRange: [4, 6],
 
     // Durée d'un nœud bloqueur (Prudent uniquement) — concept §2 : "1 à 2 points avec un

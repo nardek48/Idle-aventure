@@ -120,8 +120,17 @@ function switchTab(tabName) {
   // vient de basculer vers l'onglet Combat pour un nœud combat légitime (profil Bourrin), pas
   // un abandon du joueur. Sans cette exception, la modale d'abandon interromprait le
   // basculement et le combat ne démarrerait jamais.
+  // v3.140.0 (bug remonté Seb) : EXCEPTION pour un nœud bloqueur pas encore prêt — le bouton
+  // "Aller au village" de buildSceneBloqueurHTML() (v3.125.0) déclenchait l'abandon complet au
+  // lieu du simple changement d'onglet documenté dans son propre commentaire ("rien n'empêche
+  // de quitter l'écran, changer d'onglet, revenir plus tard" — le minuteur tourne sur un
+  // timestamp, jamais interrompu par la navigation). Symétrique de l'exception combat : identifie
+  // le nœud bloqueur non prêt via isBlockerReady() === false plutôt que de lister tabName, pour
+  // couvrir tout onglet cible (village, campement, menu...), pas seulement "village".
   if (game.activeTab === "scene" && tabName !== "scene"
       && !(tabName === "combat" && game.sceneRun && game.sceneRun.status === "combat")
+      && !(game.sceneRun && game.sceneRun.pendingNode && game.sceneRun.pendingNode.type === "bloqueur"
+        && window.SceneRunManager && typeof SceneRunManager.isBlockerReady === "function" && !SceneRunManager.isBlockerReady())
       && window.SceneRunManager && typeof SceneRunManager.isRunActive === "function" && SceneRunManager.isRunActive()) {
     var targetTab = tabName;
     if (typeof showConfirmModal === "function") {

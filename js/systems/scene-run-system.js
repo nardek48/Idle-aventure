@@ -186,6 +186,32 @@ var SceneRunManager = {
      RÉELLEMENT la carte avec les poids du profil (SceneEngine.buildCard slotWeightsOverride).
      Concept §2 : le profil détermine la NATURE du parcours — décidé une fois, jamais recalculé
      ensuite (run.profile figé, comme heroSnapshot). */
+  /* v3.143.0 (variance des runs, audit Forêt) : garantit AU MOINS 1 palier combat pour le
+     profil BOURRIN spécifiquement (pas "tout profil avec un poids combat > 0" — Prudent a un
+     poids combat de 4 % non nul mais volontairement rare, pas garanti ; forcer un combat sur
+     Prudent aurait dérivé sa promesse "peu/pas de combat"). Sim 3000 runs : sans cette
+     garantie, 6.7 % des runs Bourrin n'avaient AUCUN combat, contredisant la promesse du
+     profil ("run qui se déroule activement"). Convertit un palier tiré au hasard PARMI CEUX
+     QUI NE SONT PAS le palier 0 (respecte firstDepthType, toujours lisible) — écrase le type
+     qui y était, cohérent avec le principe déjà en place de maxSlotsPerRun (un slot peut
+     retomber à un autre type que celui tiré). */
+  _ensureMinCombat: function (run, template, profileId) {
+    if (profileId !== "bourrin") return;
+    if (!template.pools || !template.pools.combat || !template.pools.combat.length) return;
+    var hasCombat = run.card.some(function (level) {
+      return level.some(function (slot) { return slot.type === "combat"; });
+    });
+    if (hasCombat) return;
+
+    var eligibleDepths = [];
+    for (var d = 1; d < run.card.length; d++) eligibleDepths.push(d); // jamais le palier 0 (firstDepthType)
+    if (!eligibleDepths.length) return;
+    var pickedDepth = eligibleDepths[Math.floor(Math.random() * eligibleDepths.length)];
+    var pickedGate = Math.floor(Math.random() * run.card[pickedDepth].length);
+    var gabaritId = template.pools.combat[Math.floor(Math.random() * template.pools.combat.length)];
+    run.card[pickedDepth][pickedGate] = { type: "combat", gabaritId: gabaritId };
+  },
+
   chooseProfile: function (profileId) {
     var run = this.getRun();
     if (!run || run.status !== "profile") return { ok: false, reason: "Aucun choix de profil en cours" };
@@ -198,6 +224,7 @@ var SceneRunManager = {
     var randomValues = [];
     for (var i = 0; i < randCount; i++) randomValues.push(Math.random());
     run.card = SceneEngine.buildCard(template, randomValues, weights);
+    this._ensureMinCombat(run, template, profileId);
     run.profile = profileId;
 
     var hasLoadout = Number(template.loadoutSlots || 0) > 0;
