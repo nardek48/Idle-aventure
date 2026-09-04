@@ -12,7 +12,7 @@ function buildAfflictionsHTML() {
 
   h += '<div class="affliction-intro">';
   h += '<div class="affliction-intro-title">🔥 Afflictions</div>';
-  h += '<div class="affliction-intro-desc">Des modificateurs optionnels pour ton farm dans les mondes — jamais un pur malus, toujours un vrai compromis. Cumulables jusqu\'à ' + maxActive + ' à la fois.</div>';
+  h += '<div class="affliction-intro-desc">Des modificateurs optionnels pour ton farm dans les mondes — jamais un pur malus, toujours un vrai compromis. Cumulables jusqu\'à ' + maxActive + ' à la fois. Farm libre uniquement : elles se taisent en donjon, en quête et en Petite Aventure.</div>';
   h += '<div class="affliction-intro-count">' + activeCount + ' / ' + maxActive + ' actives';
   if (activeCount > 0) {
     h += ' — <span class="affliction-stack-bonus">+' + Math.round((stackMult - 1) * 100) + '% à toutes les récompenses (bonus de cumul)</span>';

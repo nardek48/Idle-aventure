@@ -45,7 +45,17 @@ var AfflictionManager = {
     return true;
   },
 
+  /* v3.136.0 (audit Forêt) : les afflictions ne s'appliquent QU'AU FARM LIBRE (data/afflictions.js l'annonçait, le code
+     ne le faisait pas : donjon, quêtes, chasse et Petite Aventure les subissaient aussi). Contexte lu sur la sortie
+     (SortieManager) : hors sortie ou sortie « farm » = actives ; toute mission (dungeon/adventure/hunt/scene) = neutres.
+     Les toggles restent visibles/actifs à l'écran Afflictions (getActiveList/getActiveCount ne filtrent pas). */
+  isContextActive: function () {
+    var s = game.sortie;
+    return !(s && s.active && s.context && s.context !== "farm");
+  },
+
   getCombinedModifiers: function () {
+    var contextActive = this.isContextActive();
     var out = {
       tapMult: 0,
       heroMaxHpMult: 1,
@@ -58,6 +68,8 @@ var AfflictionManager = {
       forbidPotions: false,
       forceAllBosses: false
     };
+
+    if (!contextActive) return out; // v3.136.0 : mission en cours -> modificateurs neutres
 
     this.getActiveList().forEach(function (a) {
       var m = a.modifiers || {};
@@ -77,6 +89,7 @@ var AfflictionManager = {
   },
 
   getStackRewardMult: function () {
+    if (!this.isContextActive()) return 1; // v3.136.0 : pas de bonus de cumul hors farm libre
     var count = this.getActiveCount();
     return 1 + count * (window.AFFLICTION_STACK_REWARD_BONUS || 0);
   },

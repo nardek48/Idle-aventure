@@ -219,7 +219,12 @@ function buildDungeonIntroHTML(tierId) {
   h += '    <div class="dungeon-story-text">' + esc(tier.story) + '</div>';
   h += buildDungeonSceauLoreHTML(tierId);
   h += '    <div class="dungeon-story-meta">🎁 Butin garanti jusqu\u2019à : <strong>' + esc(rarityLabel) + '</strong> · ⚔️ ' + DUNGEON_CONFIG.waveCount + ' vagues + boss</div>';
-  h += '    <div class="dungeon-story-meta">🎟️ Tickets restants : <strong>' + tickets + '</strong>' + (tickets <= 0 ? ' · <a href="javascript:void(0)" onclick="closeDungeonIntro();openDungeonTicketOverlay();">en acheter</a>' : '') + '</div>';
+  // v3.136.0 : ticket offert par l'Histoire (forest_14 en cours) — pas de décompte, pas d'achat à proposer.
+  if (typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(tierId)) {
+    h += '    <div class="dungeon-story-meta">🎟️ <strong>Entrée offerte</strong> — les braises te guident, aucun ticket consommé tant que « La tanière du Basilic » est en cours</div>';
+  } else {
+    h += '    <div class="dungeon-story-meta">🎟️ Tickets restants : <strong>' + tickets + '</strong>' + (tickets <= 0 ? ' · <a href="javascript:void(0)" onclick="closeDungeonIntro();openDungeonTicketOverlay();">en acheter</a>' : '') + '</div>';
+  }
   h += '    <div class="dungeon-story-actions">';
   h += '      <button class="settings-btn" type="button" onclick="closeDungeonIntro()">Annuler</button>';
   h += '      <button class="settings-btn primary" type="button" onclick="confirmDungeonStart()">Entrer</button>';
@@ -239,7 +244,8 @@ function buildDungeonSceauLoreHTML(tierId) {
 function openDungeonIntro(tierId) {
   if (!DungeonManager.isTierUnlocked(tierId)) return showToast("Palier verrouillé", 1200);
   if ((game.heroHp || 0) <= 0) return showToast("Héros à terre — repose-toi au Campement d'abord", 1600);
-  if ((game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
+  var storyFree = typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(tierId); // v3.136.0
+  if (!storyFree && (game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
 
   pendingDungeonTierId = tierId;
   var host = document.getElementById("dungeon-modal-root");

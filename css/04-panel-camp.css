@@ -377,3 +377,33 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 }
 
 /* v3.116.0 : .camp-ration-list retirée — remplacée par .camp-ration-grid (voir plus haut). */
+
+/* ============================================================
+   v3.133.0 : bloc « Les braises » (offrande de l'étape forest_15)
+   ============================================================ */
+.camp-embers-card { text-align: center; }
+.camp-embers-desc {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--nb-ink);
+  opacity: 0.85;
+  margin-bottom: 12px;
+}
+.camp-embers-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.camp-embers-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  background: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+  text-align: left;
+}
+.camp-embers-item.is-ready { border-color: rgba(34, 197, 94, 0.5); background: rgba(34, 197, 94, 0.08); }
+.camp-embers-icon { flex: 0 0 auto; display: inline-flex; }
+.camp-embers-icon-img { width: 22px; height: 22px; }
+.camp-embers-name { flex: 1; min-width: 0; font-weight: 700; color: var(--nb-ink); }
+.camp-embers-count { flex: 0 0 auto; font-weight: 800; color: var(--nb-ink); }
+.camp-embers-btn { width: 100%; }

@@ -1,5 +1,6 @@
 "use strict";
-/* data/afflictions.js — modificateurs optionnels cumulables (farm normal uniquement, pas Donjon/Survie). Détail : COMMENTAIRES_ORIGINAUX.md */
+/* data/afflictions.js — modificateurs optionnels cumulables, FARM LIBRE uniquement (v3.136.0 : enfin appliqué dans le code,
+   voir AfflictionManager.isContextActive — neutres en donjon/quête/chasse/Petite Aventure). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var AFFLICTION_MAX_ACTIVE = 4;
 

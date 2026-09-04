@@ -166,6 +166,15 @@ var DungeonManager = {
     if (typeof renderHud === "function") renderHud();
   },
 
+  /* v3.136.0 (audit Forêt §3.4) : ticket OFFERT par l'Histoire sur le Donjon I tant que l'étape forest_14
+     « La tanière du Basilic » est en cours (acceptée, non réclamée) — un échec ne bloque plus la chaîne
+     principale 24 h (1 ticket gratuit/jour) ni ne coûte l'essence du joueur. Sans effet sur les autres paliers. */
+  isStoryTicketFree: function (tierId) {
+    if (Number(tierId) !== 1 || !window.StoryQuestManager) return false;
+    var step = StoryQuestManager.getCurrentStep("forest");
+    return !!(step && step.id === "forest_14" && StoryQuestManager.isCurrentStepAccepted("forest"));
+  },
+
   start: function (tierId) {
     this.ensure();
     this.checkTicketReset();
@@ -173,12 +182,13 @@ var DungeonManager = {
     var tier = this.getTierById(tierId);
     if (!this.isTierUnlocked(tier.id)) return showToast("Palier verrouillé", 1200);
     if ((game.heroHp || 0) <= 0) return showToast("Héros à terre — repose-toi au Campement d'abord", 1600);
-    if ((game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
+    var storyFree = this.isStoryTicketFree(tier.id); // v3.136.0
+    if (!storyFree && (game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
     if (game.dungeonRun.active) return showToast("Donjon déjà en cours", 1200);
     if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast("Termine ou abandonne ta quête en cours avant d'entrer en donjon", 1600);
     if (game.huntRun && game.huntRun.active) return showToast("Termine ou arrête ta chasse en cours avant d'entrer en donjon", 1600);
 
-    game.dungeonTickets -= 1;
+    if (!storyFree) game.dungeonTickets -= 1; // v3.136.0 : ticket Histoire, rien à décompter
     game.dungeonRun = { active: true, wave: 0, tierId: tier.id, shardsEarned: 0 };
     if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
     game.dungeonTiersEntered[tier.id] = true;

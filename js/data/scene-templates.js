@@ -350,6 +350,13 @@ var SCENE_TEMPLATES = {
     },
     riskModRange: [0.6, 1.5],
 
+    // v3.132.0 (audit Forêt) : au plus 2 nœuds combat par run (les slots au-delà retombent en
+    // obstacle, SceneEngine.buildCard) et vagues de 4-6 ennemis (finale incluse, + boss).
+    // Sim Monte-Carlo (Acte II, Lisière) : 3 vagues 6-10 = 0-5 % de réussite ; 2 vagues 4-6
+    // = 97-100 %. Bourrin garde ~8× plus de combat que Prudent (32 % vs 4 % de poids).
+    maxSlotsPerRun: { combat: 2 },
+    combatWaveRange: [4, 6],
+
     // Durée d'un nœud bloqueur (Prudent uniquement) — concept §2 : "1 à 2 points avec un
     // bloqueur de temps réel de 5 à 10 minutes". Tourne en fond (timestamp readyAt comparé à
     // Date.now() à l'affichage, PAS un setInterval/hook game-loop — voir scene-run-system.js).

@@ -28,6 +28,8 @@ var StoryQuestManager = {
     if (!st.counters || typeof st.counters !== "object") st.counters = {};
     if (typeof st.counters.coeurKills !== "number") st.counters.coeurKills = 0;
     if (typeof st.counters.coeurReached !== "number") st.counters.coeurReached = 0;
+    if (typeof st.counters.offeringDone !== "number") st.counters.offeringDone = 0; // v3.133.0 : offrande aux braises (forest_15)
+    if (typeof st.counters.coeurKillsMarked !== "number") st.counters.coeurKillsMarked = 0; // v3.134.0 : kills au Cœur sous ≥ 2 afflictions (forest_13)
     if (typeof st.lastSeenTotalKills !== "number") st.lastSeenTotalKills = Number(game.totalKills || 0);
     this._migrateV3109(chapterId, st);
     return st;
@@ -170,6 +172,10 @@ var StoryQuestManager = {
     if (game.adventureQuestRun && game.adventureQuestRun.active) return;
     if (!atCoeur) return;
     st.counters.coeurKills += delta;
+    // v3.134.0 : les afflictions ne s'appliquent qu'au farm libre (déjà exclu ci-dessus pour donjon/quête/chasse) —
+    // le compteur « sous marque » n'avance que si ≥ 2 sont actives à l'instant du rendu qui suit le kill.
+    var aff = (window.AfflictionManager && typeof AfflictionManager.getActiveCount === "function") ? AfflictionManager.getActiveCount() : 0;
+    if (aff >= 2) st.counters.coeurKillsMarked += delta;
   },
 
   _checkNow: function (silent) {
@@ -310,6 +316,44 @@ var StoryQuestManager = {
   },
 
   /* Navigation « Aller à la quête » : onglet direct, ou section/carte de l'écran Quêtes. */
+  /* v3.133.0 : offrande aux braises (étape à champ `offering`, ex. forest_15). getOfferingInfo() -> null si aucune
+     étape acceptée n'en demande (ou déjà faite), sinon { step, items:[{id,name,icon,need,have}], canOffer }. */
+  getOfferingInfo: function (chapterId) {
+    chapterId = chapterId || "forest";
+    var step = this.getCurrentStep(chapterId);
+    var st = this.getState(chapterId);
+    if (!step || !step.offering || !st.accepted || Number(st.counters.offeringDone || 0) >= 1) return null;
+    var canOffer = true;
+    var items = Object.keys(step.offering).map(function (key) {
+      var def = (window.WAREHOUSE_RESOURCES || {})[key] || {};
+      var have = (window.WarehouseManager && typeof WarehouseManager.getAmount === "function") ? Number(WarehouseManager.getAmount(key) || 0) : 0;
+      var need = Number(step.offering[key] || 0);
+      if (have < need) canOffer = false;
+      return { id: key, name: def.name || key, icon: def.icon || "", need: need, have: have };
+    });
+    return { step: step, items: items, canOffer: canOffer };
+  },
+
+  /* Consomme les ressources de l'offrande (WarehouseManager, jamais game.resources) et pose counters.offeringDone = 1.
+     Tout-ou-rien : rien n'est retiré si une seule ressource manque. */
+  offerToEmbers: function (chapterId) {
+    chapterId = chapterId || "forest";
+    var info = this.getOfferingInfo(chapterId);
+    if (!info) return false;
+    if (!info.canOffer) { if (typeof showToast === "function") showToast("Il manque encore de quoi nourrir les braises", 1600); return false; }
+    if (!window.WarehouseManager) return false;
+    for (var i = 0; i < info.items.length; i++) {
+      if (!WarehouseManager.removeResource(info.items[i].id, info.items[i].need)) return false;
+    }
+    this.getState(chapterId).counters.offeringDone = 1;
+    addLog("🔥 Offrande aux braises : " + info.items.map(function (it) { return it.need + " " + it.name; }).join(", ") + ". Les braises rougeoient.", "event");
+    if (typeof showToast === "function") showToast("🔥 Les braises s'éveillent", 1800);
+    if (typeof vibrate === "function") vibrate([40, 30, 80]);
+    if (typeof renderAll === "function") renderAll();
+    if (typeof saveGame === "function") saveGame();
+    return true;
+  },
+
   goToLink: function (chapterId) {
     var step = this.getCurrentStep(chapterId);
     if (!step || !step.linkTo) return;

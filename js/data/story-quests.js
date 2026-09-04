@@ -32,14 +32,22 @@ var STORY_TAB_LABELS = {
   bestiary: "Bestiaire", afflictions: "Afflictions", grimoire: "Grimoire"
 };
 
-/* Étape 15, condition PROVISOIRE (à remplacer par le halo, voir ROADMAP §7) : 200 kills, ASCENSION_CONFIG.computeGain() ≥ 4.
-   v3.109.0 : « 3 boss du Cœur » et « niveau 5 » retirés — le boss passe par la quête « Le Cœur de la Forêt » (run dédié,
-   le farm libre relançait un cycle à chaque kill), et l'XP Histoire (15/étape) atteint le niveau 5 avant cette étape. */
-var STORY_STEP15_PROVISIONAL = { totalKills: 200 };
+/* Étape 15 — v3.133.0 (audit Forêt, décision Seb) : les 200 kills (pur temps d'attente, ~100 kills de farm libre non guidé)
+   sont remplacés par une OFFRANDE aux braises au Campement : 3 Sève d'Aeswyn (Petite Aventure) + 1 Ration moyenne (chaîne
+   Village). L'Ascension elle-même reste gatée à 200 kills (ASCENSION_CONFIG.minKillsToAscend) — « pas aujourd'hui ».
+   Consommée par StoryQuestManager.offerToEmbers(), compteur counters.offeringDone (0/1). */
+var STORY_STEP15_OFFERING = { seve_aeswyn: 3, ration: 1 };
+
+/* v3.133.0 : ressources encore à réunir pour l'offrande (0 si tout est là). */
+function storyOfferingMissing(offering) {
+  var missing = 0;
+  Object.keys(offering || {}).forEach(function (key) { missing += Math.max(0, Number(offering[key]) - storyResourceAmount(key)); });
+  return missing;
+}
 
 /* Kills en Forêt : les 2 aventures partagent le même enemyPool, donc somme de killCounts sur ce pool. */
 function storyCountForestKills(game) {
-  var pool = (window.WORLDS && WORLDS[0] && WORLDS[0].adventures[0]) ? WORLDS[0].adventures[0].enemyPool : ["slime", "wolf", "goblin", "spider"];
+  var pool = (window.WORLDS && WORLDS[0] && WORLDS[0].adventures[0]) ? WORLDS[0].adventures[0].enemyPool : (window.STORY_COEUR_BASE_POOL || ["slime", "goblin", "spider"]); // v3.135.0 : repli aligné sur le pool réel
   var total = 0;
   pool.forEach(function (id) { total += Number((game.killCounts || {})[id] || 0); });
   return total;
@@ -113,6 +121,25 @@ function storyCountTalentsBought(game) {
 
 function storyCountActiveGrimoireRules(game) {
   return (game.grimoireRules || []).filter(function (r) { return r && r.conditionId && r.actionSlot; }).length;
+}
+
+/* v3.131.2 (forest_12), factorisé v3.134.0 (réutilisé par forest_13) : repositionne le joueur au Cœur de la forêt
+   (worldIndex 0 / adventureIndex 1) et régénère un ennemi cohérent. Ne fait rien si une activité de combat dédiée
+   (donjon/aventure/chasse/scene) est en cours — le joueur y est engagé volontairement. Idempotent si déjà au Cœur
+   (l'ennemi en cours n'est pas remplacé). */
+function storyGoToCoeur(g) {
+  if (!window.WorldManager) return;
+  if (g.dungeonRun && g.dungeonRun.active) return;
+  if (g.adventureQuestRun && g.adventureQuestRun.active) return;
+  if (g.huntRun && g.huntRun.active) return;
+  if (g.sceneRun && g.sceneRun.status && g.sceneRun.status !== "completed") return;
+  var alreadyAtCoeur = WorldManager.worldIndex === 0 && WorldManager.adventureIndex === 1;
+  WorldManager.worldIndex = 0;
+  WorldManager.adventureIndex = 1;
+  if (!alreadyAtCoeur) {
+    WorldManager.enemyIndex = 0;
+    if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") CombatEngine.spawnEnemy();
+  }
 }
 
 function storyActiveAfflictions() {
@@ -409,26 +436,8 @@ var STORY_QUESTS = {
         // au cas où le joueur ait bougé ailleurs entre-temps (autre aventure, donjon...).
         linkTo: {
           tab: function (g) { return storyCountActiveGrimoireRules(g) >= 1 ? "combat" : "grimoire"; },
-          beforeGo: function (g) {
-            if (storyCountActiveGrimoireRules(g) < 1) return; // pas encore de règle -> pas de repositionnement, direction Grimoire normale
-            if (!window.WorldManager) return;
-            // v3.131.2 : ne repositionne pas si une autre activité de combat dédiée est en cours
-            // (donjon/aventure/chasse/scene) — le joueur y est engagé volontairement, le
-            // repositionnement au Cœur ne doit pas l'interrompre silencieusement.
-            if (g.dungeonRun && g.dungeonRun.active) return;
-            if (g.adventureQuestRun && g.adventureQuestRun.active) return;
-            if (g.huntRun && g.huntRun.active) return;
-            if (g.sceneRun && g.sceneRun.status && g.sceneRun.status !== "completed") return;
-            var alreadyAtCoeur = WorldManager.worldIndex === 0 && WorldManager.adventureIndex === 1;
-            WorldManager.worldIndex = 0;
-            WorldManager.adventureIndex = 1;
-            // v3.131.2 : ne régénère PAS l'ennemi si le joueur est déjà au Cœur (un combat y est
-            // peut-être déjà engagé) — seul le repositionnement lui-même est idempotent ici.
-            if (!alreadyAtCoeur) {
-              WorldManager.enemyIndex = 0;
-              if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") CombatEngine.spawnEnemy();
-            }
-          }
+          // pas encore de règle -> pas de repositionnement, direction Grimoire normale
+          beforeGo: function (g) { if (storyCountActiveGrimoireRules(g) >= 1) storyGoToCoeur(g); }
         },
         // v3.107.9 : Grimoire détaillé (nombre de règles vérifié dans le code).
         tutorial: {
@@ -454,15 +463,32 @@ var STORY_QUESTS = {
           objective: "Certaines bêtes portent une marque. Provoque-la, et vois ce qu'elle t'apporte. Un jour elles viendront sans qu'on les appelle.",
           completion: "La marque pique, mais elle paie. Souviens-t'en."
         },
-        // Variante B (décision Seb) : 2 afflictions actives simultanément + 10 victoires au Cœur (compteur global,
-        // pas de comptage « sous affliction »). Les victoires de l'étape 12 comptent déjà : la marque n'exige que l'activation.
-        objectiveLabel: "Activer 2 afflictions en même temps et compter 10 victoires au Cœur",
+        // v3.134.0 (audit Forêt §3.3) : l'ancienne variante B (2 afflictions + coeurKills ≥ 10, déjà acquis par forest_12)
+        // se réclamait sans un seul combat sous marque. Désormais compteur dédié coeurKillsMarked : victoires au Cœur en
+        // farm libre avec ≥ 2 afflictions actives au moment du kill (StoryQuestManager._trackKills). Cible 5.
+        objectiveLabel: "Activer 2 afflictions en même temps et remporter 5 victoires au Cœur sous leur marque",
         unlockTabs: ["afflictions"],
         reward: STORY_REWARDS.forest_13,
-        linkTo: { tab: "afflictions" },
-        check: function (game) { return storyActiveAfflictions() >= 2 && storyCounter(game, "coeurKills") >= 10; },
+        // Moins de 2 afflictions actives -> écran Afflictions (il faut d'abord les activer) ; sinon -> combat au Cœur.
+        linkTo: {
+          tab: function () { return storyActiveAfflictions() >= 2 ? "combat" : "afflictions"; },
+          beforeGo: function (g) { if (storyActiveAfflictions() >= 2) storyGoToCoeur(g); }
+        },
+        tutorial: {
+          tab: "afflictions",
+          icon: "☣️",
+          title: "Les Afflictions",
+          points: [
+            { icon: "☣️", text: "Une affliction est un handicap volontaire pour le farm libre (ennemis plus durs, potions interdites, PV réduits...) en échange d'un gain d'or, d'essence ou de butin." },
+            { icon: "➕", text: "Jusqu'à 4 afflictions actives en même temps. Chaque affliction cumulée ajoute +10 % aux récompenses, en plus de ses effets propres." },
+            { icon: "🔁", text: "Active-les ou désactive-les à tout moment ici, entre deux sorties — rien n'est définitif." },
+            { icon: "⚔️", text: "Pour cette étape : 2 afflictions actives, puis 5 victoires au Cœur de la forêt en farm libre." }
+          ]
+        },
+        killTarget: { label: "Sous la marque", counter: function (g) { return storyCounter(g, "coeurKillsMarked"); }, target: 5, autoReturn: true },
+        check: function (game) { return storyCounter(game, "coeurKillsMarked") >= 5; },
         progress: function (game) {
-          return "Afflictions " + Math.min(2, storyActiveAfflictions()) + "/2 · Cœur " + Math.min(10, storyCounter(game, "coeurKills")) + "/10";
+          return "Afflictions " + Math.min(2, storyActiveAfflictions()) + "/2 · Marqués " + Math.min(5, storyCounter(game, "coeurKillsMarked")) + "/5";
         }
       },
       {
@@ -487,22 +513,39 @@ var STORY_QUESTS = {
         title: "Les braises s'éveillent",
         act: "Acte IV — L'Aether",
         narrative: {
-          objective: "La braise sous Aeswyn ne s'éteint plus. Elle demande quelque chose. Un jour tu devras tout rendre à la forêt pour renaître plus fort — pas aujourd'hui, mais la porte est ouverte.",
+          objective: "La braise sous Aeswyn ne s'éteint plus. Elle demande quelque chose : la sève de la forêt, et le pain du village. Un jour tu devras tout lui rendre pour renaître plus fort — pas aujourd'hui, mais la porte est ouverte.",
           completion: "Tu sais désormais ce qu'est l'Aether. Le désert t'attend. Reviens quand la forêt te l'ordonnera."
         },
         // v3.109.0 : le Seigneur de guerre orc se vainc dans la quête « Le Cœur de la Forêt » (aq_forest_depths, run dédié,
         // liée ici comme « Prouver sa valeur » l'est à forest_05) — elle est aussi la porte du Désert (gatesNextWorld).
-        objectiveLabel: "Vaincre 200 ennemis et terminer la quête « Le Cœur de la Forêt » (Seigneur de guerre orc)",
+        // v3.133.0 : + offrande aux braises (voir STORY_STEP15_OFFERING) à la place des 200 kills.
+        objectiveLabel: "Terminer « Le Cœur de la Forêt » (Seigneur de guerre orc) et offrir aux braises 3 Sève d'Aeswyn + 1 Ration moyenne",
         unlockTabs: ["ascension"],
         reward: STORY_REWARDS.forest_15,
-        linkTo: { section: "adventure", cardId: "adv_aq_forest_depths" },
+        offering: STORY_STEP15_OFFERING,
+        // Tant que l'Orc tient, le lien mène à la quête d'aventure ; ensuite au Campement (bloc « Les braises »).
+        linkTo: {
+          tab: function (g) { return (g.adventureQuestsCompleted || {}).aq_forest_depths ? "campement" : null; },
+          section: "adventure", cardId: "adv_aq_forest_depths"
+        },
+        tutorial: {
+          tab: "campement",
+          icon: "🔥",
+          title: "Les braises d'Aeswyn",
+          points: [
+            { icon: "🍃", text: "La Sève d'Aeswyn se trouve en Petite Aventure (tableau de missions, 3 par jour) — 1 à 2 par parcours, davantage en profil Bourrin." },
+            { icon: "🥩", text: "La Ration moyenne se cuisine à la Cuisine de camp (bâtiment Chasse) : 10 Viande séchée (Séchoir) + 1 Pain (Moulin puis Boulangerie du Champs)." },
+            { icon: "🔥", text: "Quand tout est réuni, reviens au Campement : le bloc « Les braises » te laisse faire l'offrande." }
+          ]
+        },
         check: function (game) {
-          return Number(game.totalKills || 0) >= STORY_STEP15_PROVISIONAL.totalKills && !!(game.adventureQuestsCompleted || {}).aq_forest_depths;
+          return !!(game.adventureQuestsCompleted || {}).aq_forest_depths && storyCounter(game, "offeringDone") >= 1;
         },
         progress: function (game) {
-          var c = STORY_STEP15_PROVISIONAL;
-          return "Kills " + Math.min(c.totalKills, Math.floor(game.totalKills || 0)) + "/" + c.totalKills
-            + " · Seigneur de guerre orc " + ((game.adventureQuestsCompleted || {}).aq_forest_depths ? "1/1" : "0/1");
+          var done = storyCounter(game, "offeringDone") >= 1;
+          var detail = done ? "" : " (Sève " + Math.min(3, storyResourceAmount("seve_aeswyn")) + "/3 · Ration " + Math.min(1, storyResourceAmount("ration")) + "/1)";
+          return "Seigneur de guerre orc " + ((game.adventureQuestsCompleted || {}).aq_forest_depths ? "1/1" : "0/1")
+            + " · Offrande " + (done ? "1/1" : "0/1") + detail;
         }
       }
     ]
@@ -511,7 +554,8 @@ var STORY_QUESTS = {
 
 window.STORY_REWARDS = STORY_REWARDS;
 window.STORY_TAB_LABELS = STORY_TAB_LABELS;
-window.STORY_STEP15_PROVISIONAL = STORY_STEP15_PROVISIONAL;
+window.STORY_STEP15_OFFERING = STORY_STEP15_OFFERING;
+window.storyOfferingMissing = storyOfferingMissing;
 // v3.107.4 : Troll des forêts + Ronce animée réapparaissent au Cœur dès l'Acte III (v3.109.0 : dès « Franchir la Lisière ») —
 // pool de base réduit (slime/goblin/spider, voir data/worlds.js), synchronisé dynamiquement par
 // StoryQuestManager._trackKills() (systems/story-quest-system.js) selon l'étape Histoire en cours.

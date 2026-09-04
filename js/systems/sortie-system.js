@@ -53,7 +53,11 @@ var SortieManager = {
     // v3.115.0 : potions per-run — leurs effets ne vivent que pendant une mission (jamais le
     // farm libre), le recalc les applique à l'entrée. Voir potion-system.js.
     if (s.context !== "farm" && window.PotionManager && window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
+      // v3.136.0 : les afflictions deviennent neutres en mission (AfflictionManager.isContextActive) — le recalc ci-dessous
+      // les retire aussi ; on garde le même ratio de PV pour que Fragilité (-30 % PV max) ne fasse pas entrer à 70 %.
+      var hpRatioIn = (game.heroMaxHp > 0) ? Math.min(1, (game.heroHp || 0) / game.heroMaxHp) : 1;
       StatsSystem.recalcStats();
+      game.heroHp = Math.max(0, Math.min(game.heroMaxHp, Math.floor(game.heroMaxHp * hpRatioIn)));
       var armed = Object.keys(game.activePotions || {});
       if (armed.length) addLog("🧪 " + armed.length + " potion" + (armed.length > 1 ? "s" : "") + " active" + (armed.length > 1 ? "s" : "") + " pour ce run.", "event");
     }
@@ -145,7 +149,11 @@ var SortieManager = {
     // que soit l'issue). Le farm libre ne consomme jamais (elles restent armées). recalcStats
     // inclus dans consumeRunPotions (retire aussi les effets dormants via isEffectLive).
     if (s.context !== "farm" && window.PotionManager && typeof PotionManager.consumeRunPotions === "function") {
-      PotionManager.consumeRunPotions();
+      // v3.136.0 : retour du farm libre -> les afflictions se réappliquent (Fragilité), même ratio de PV conservé.
+      var hpRatioOut = (game.heroMaxHp > 0) ? Math.min(1, (game.heroHp || 0) / game.heroMaxHp) : 1;
+      PotionManager.consumeRunPotions(); // ne recalcule que si une potion était armée
+      if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats(); // v3.136.0 : recalc systématique (afflictions)
+      game.heroHp = Math.max(0, Math.min(game.heroMaxHp, Math.floor(game.heroMaxHp * hpRatioOut)));
     } else if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
       StatsSystem.recalcStats(); // sortie farm close : désarme les effets éventuels (isEffectLive redevient false)
     }

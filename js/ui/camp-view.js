@@ -117,6 +117,27 @@ function buildCampHTML() {
 
   h += '</div>'; // fin .camp-health-card
 
+  // v3.133.0 : bloc « Les braises » — offrande de l'étape Histoire courante (forest_15), affiché
+  // seulement pendant l'étape acceptée et tant que l'offrande n'est pas faite (StoryQuestManager.getOfferingInfo).
+  var offering = (window.StoryQuestManager && typeof StoryQuestManager.getOfferingInfo === "function") ? StoryQuestManager.getOfferingInfo("forest") : null;
+  if (offering) {
+    h += '<div class="camp-card camp-embers-card">';
+    h += '<div class="camp-section-title">🔥 Les braises</div>';
+    h += '<div class="camp-embers-desc">' + esc(offering.step.narrative.objective) + '</div>';
+    h += '<div class="camp-embers-list">';
+    offering.items.forEach(function (it) {
+      var okItem = it.have >= it.need;
+      h += '<div class="camp-embers-item' + (okItem ? ' is-ready' : '') + '">';
+      h += '<span class="camp-embers-icon">' + renderIconOrEmojiHTML(it.icon || "🍃", "camp-embers-icon-img", it.name) + '</span>';
+      h += '<span class="camp-embers-name">' + esc(it.name) + '</span>';
+      h += '<span class="camp-embers-count">' + (okItem ? '✔ ' : '') + formatNumber(Math.min(it.have, it.need)) + '/' + formatNumber(it.need) + '</span>';
+      h += '</div>';
+    });
+    h += '</div>';
+    h += '<button class="settings-btn primary camp-embers-btn" type="button"' + (offering.canOffer ? ' onclick="StoryQuestManager.offerToEmbers(\'forest\');"' : ' disabled') + '>🔥 Offrir aux braises</button>';
+    h += '</div>';
+  }
+
   h += '<div class="camp-card camp-missions-card">';
   h += '<div class="camp-card-title">📋 Tableau de missions</div>';
   h += buildCampMissionBoardHTML();

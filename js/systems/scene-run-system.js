@@ -735,7 +735,11 @@ var SceneRunManager = {
     if (!group || !window.QuestEnemyManager || !window.WorldManager || !window.WORLDS) return { ok: false, reason: "Groupe d'ennemis introuvable" };
 
     run._combatGroupId = run.pendingNode.gabaritId;
-    run._combatWaveTarget = 6 + Math.floor(Math.random() * 5); // 6 à 10 inclus
+    // v3.132.0 : taille de vague lue sur le canevas (template.combatWaveRange, défaut 6-10 historique) —
+    // Petite Aventure calibrée à 4-6 (audit Forêt, sim Monte-Carlo : 12 + boss = pire cas jouable).
+    var template = SceneEngine.getTemplate(run.templateId);
+    var wr = (template && template.combatWaveRange) || [6, 10];
+    run._combatWaveTarget = wr[0] + Math.floor(Math.random() * (wr[1] - wr[0] + 1));
     run._combatWaveKills = 0;
     run._combatIsFinalWave = this._isLastCombatNodeOfRun(run);
 

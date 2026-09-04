@@ -67,6 +67,10 @@ var SceneEngine = {
     }
 
     var slotWeights = slotWeightsOverride || template.slotWeights;
+    // v3.132.0 : plafond par type de slot sur tout le run (template.maxSlotsPerRun, ex. {combat: 2}) —
+    // au-delà, le slot retombe en obstacle (audit Forêt : 3+ vagues en une sortie = mort quasi certaine).
+    var maxPerRun = template.maxSlotsPerRun || null;
+    var typeCounts = {};
     var depthMax = Number(template.depthMax || 1);
     var gatesMin = (template.gatesPerDepth && template.gatesPerDepth[0]) || 2;
     var gatesMax = (template.gatesPerDepth && template.gatesPerDepth[1]) || 2;
@@ -85,6 +89,8 @@ var SceneEngine = {
         } else {
           type = this.weightedPick(slotWeights, nextRandom());
         }
+        if (maxPerRun && maxPerRun[type] != null && (typeCounts[type] || 0) >= Number(maxPerRun[type])) type = "obstacle";
+        typeCounts[type] = (typeCounts[type] || 0) + 1;
         var slot = { type: type };
         if (type === "obstacle" && template.pools && template.pools.obstacle) {
           slot.gabaritId = this.pickFromArray(template.pools.obstacle, nextRandom());
