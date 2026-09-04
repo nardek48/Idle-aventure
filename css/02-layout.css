@@ -268,48 +268,22 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: var(--nb-radius-sm);
   border: none;
-  background: var(--nb-cream-alt);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
   overflow: visible;
 }
 
-/* v2.64 : cadre doré fourni par l'utilisateur
-   (images/Borders/cadre-hero.png) posé en surcouche par-dessus le
-   portrait (image ou placeholder "?") — centre transparent, donc le
-   portrait reste visible au travers, seul le cadre recouvre les
-   bords.
-   v2.69 : transform: scale(1.05, 1.11) ajouté par l'utilisateur pour
-   ajuster le cadre au bon endroit sur le portrait. */
-.combat-hero-mini-portrait::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background: url('../images/Borders/cadre-hero.png') center / 100% 100% no-repeat;
-  transform: scale(1.05, 1.11);
-  transform-origin: center;
-  pointer-events: none;
-}
+/* v3.151.0 : cadre-hero.png retiré — nouveaux portraits (Seb) déjà en
+   médaillon rond avec cadre doré peint dans l'image (voir
+   css/00-hero-creation.css), un 2e cadre carré aurait fait doublon,
+   surtout visible à ce très petit format (~64-75px). */
 
-/* v2.66 : fond ajouté sur .combat-hero-mini-portrait — l'image étant
-   maintenant en retrait (inset, voir v2.65 ci-dessous), l'espace
-   entre elle et la fenêtre du cadre était transparent et laissait
-   voir le décor du monde derrière (effet d'ombre/tache irrégulière).
-   v2.65 : image inset (au lieu de 100%/100%) pour que le portrait
-   tienne DANS la fenêtre visible du cadre au lieu de déborder dessous
-   — le cadre a une bordure épaisse + un losange qui empiète en haut,
-   donc un portrait plein cadre se faisait rogner par-dessus.
-   v2.69 : inset retiré sur .combat-hero-mini-img par l'utilisateur
-   (repositionnement manuel). */
 .combat-hero-mini-img {
   position: absolute;
-  width: auto;
-  height: auto;
-  object-fit: cover;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   display: block;
-  border-radius: calc(var(--nb-radius-sm) - 4px);
 }
 
 .combat-hero-mini-placeholder {

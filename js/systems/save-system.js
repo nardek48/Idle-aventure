@@ -117,7 +117,11 @@ var HeroSlotManager = {
         playerName: d.playerName || "",
         heroId: d.heroId || "",
         heroName: hero ? hero.name : "",
-        heroImage: hero ? hero.image : "",
+        // v3.151.0 : lit heroGender DU SLOT résumé (d.heroGender), pas game.heroGender
+        // (celui de la partie active en mémoire, potentiellement différente) — sinon
+        // le portrait affiché sur l'écran "Charger la partie" pouvait montrer le
+        // mauvais genre. hero.image (getter, data/heroes.js) ne convient pas ici.
+        heroImage: hero ? ((d.heroGender === "f" ? hero.imageF : hero.imageM) || hero.imageM || hero.imageF || "") : "",
         heroLevel: Number(d.heroLevel || 1),
         worldIndex: Number(d.worldIndex || 0),
         cycleCount: Number(d.cycleCount || 0),
@@ -411,6 +415,7 @@ function buildSaveData() {
     activeTab: game.activeTab || "combat",
     playerName: game.playerName,
     heroId: game.heroId,
+    heroGender: game.heroGender || "m", // v3.151.0 : skin cosmétique du portrait
     heroLevel: Number(game.heroLevel || 1),
     heroXp: Number(game.heroXp || 0),
     heroXpToNext: Number(game.heroXpToNext || 10),
@@ -552,6 +557,7 @@ function restoreBaseState(d) {
 
   game.playerName = d.playerName || "";
   game.heroId = migrateHeroId(d.heroId);
+  game.heroGender = (d.heroGender === "f") ? "f" : "m"; // v3.151.0 : absent sur les vieilles saves -> "m"
 
   game.tapDamage = 1;
   game.tapMult = 1;
@@ -1173,6 +1179,7 @@ function fullResetState() {
   game.totalAetherEarned = 0;
   game.playerName = "";
   game.heroId = "";
+  game.heroGender = "m"; // v3.151.0
 
   game.tapDamage = 1;
   game.tapMult = 1;

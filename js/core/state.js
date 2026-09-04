@@ -212,7 +212,8 @@ function createInitialGameState() {
     gatheringActivity: createDefaultGatheringActivity(),
 
     playerName: "",
-    heroId: ""
+    heroId: "",
+    heroGender: "m" // v3.151.0 : skin cosmétique du portrait, "m" | "f" — voir data/heroes.js
   };
 }
 
@@ -220,6 +221,7 @@ var game = createInitialGameState();
 
 function ensureGameStateDefaults() {
   if (!game.killCounts) game.killCounts = {};
+  if (game.heroGender !== "f" && game.heroGender !== "m") game.heroGender = "m"; // v3.151.0 : migration vieilles saves
   if (!game.upgrades) game.upgrades = {};
   if (!game.talents) game.talents = {};
 

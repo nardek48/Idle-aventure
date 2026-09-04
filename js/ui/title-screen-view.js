@@ -298,7 +298,7 @@ function buildTitleScreenMainHTML() {
   html += '          <span>Charger la Partie</span>';
   html += '        </button>';
   html += '      </div>';
-  html += '      <div class="title-screen-version">v3.148.0</div>';
+  html += '      <div class="title-screen-version">v3.151.0</div>';
   html += '    </div>';
   html += '  </div>';
   html += '</div>';
