@@ -491,24 +491,20 @@
 }
 
 /* =========================
-   Barre d’onglets
+   Barre d'onglets — v3.152.0 : cadre menu-bar-gold.png (Seb, ratio réel
+   4064/971), remplace menu-principal.png. Les 5 emplacements de bouton
+   sont positionnés dans la zone "ardoise" du cadre (hors bordure dorée et
+   têtes de dragon), mesurée par scan de pixels sur l'asset réel :
+   left 4.43% / right 4.04% / top 27.81% / bottom 8.86% du bandeau.
+   Maquette validée par Seb avant intégration (menu_bas_maquette.html).
    ========================= */
 #tab-bar {
+  position: relative; /* ancre #tab-bar-row (position:absolute) — sans ça, la rangée de boutons se positionnait par rapport à un ancêtre plus haut dans l'arbre (probablement body), d'où le flottement au milieu de l'écran constaté */
   flex-shrink: 0;
-  display: flex;
-  align-items: stretch;
-  width: min(400px, 99%);
+  width: min(430px, 99%);
   margin: 0 auto;
-  /* v2.56 : fond crème de secours retiré (il dépassait aux coins
-     arrondis de l'image — un rectangle plein derrière une image aux
-     coins ronds/transparents finit forcément par déborder un peu).
-     Plus besoin ici puisque l'image a déjà son propre remplissage
-     opaque. Marge réduite à ~0.5% de chaque côté (au lieu de 5%).
-     v2.55 : cadre doré fourni par l'utilisateur
-     (images/Borders/menu-principal.png), même traitement que
-     #stats-bar — largeur plafonnée pour laisser voir le fond du monde
-     de chaque côté. */
-  background: url('../images/Borders/menu-principal.png') center / 100% 100% no-repeat;
+  aspect-ratio: 4064 / 971;
+  background: url('../images/Borders/menu-bar-gold.png') center / 100% 100% no-repeat;
   border-top: none;
   padding-bottom: var(--safe-bottom);
 }
@@ -518,48 +514,58 @@
    navigation (5 boutons fixes). Les potions de soin rapides sont
    passées dans la rangée d'action de combat, voir css/03-combat.css. */
 
+/* Rangée des 5 boutons, calée sur la zone ardoise mesurée ci-dessus. */
+/* v3.153.0 (fix bug remonté par Seb) : margin en % pour top/bottom se
+   calcule TOUJOURS par rapport à la LARGEUR du conteneur en CSS (règle de
+   spec, contre-intuitive) — jamais sa hauteur. La v3.152.0 utilisait
+   `margin: 27.81% 4.04% 8.86% 4.43%`, donc le "27.81%" du haut était
+   calculé sur la largeur du bandeau (~430px) au lieu de sa hauteur réelle
+   (~103px) : ça poussait la rangée de boutons ~90px trop bas, hors de la
+   zone ardoise, d'où les cases qui débordaient du cadre et semblaient mal
+   positionnées. Fix : position absolute avec top/bottom/left/right, qui eux
+   se calculent chacun sur la bonne dimension (top/bottom -> hauteur,
+   left/right -> largeur) du plus proche ancêtre positionné (#tab-bar). */
+#tab-bar-row {
+  position: absolute;
+  top: 27.81%;
+  bottom: 8.86%;
+  left: 4.43%;
+  right: 4.04%;
+  display: flex;
+  align-items: stretch;
+  gap: 1.5%;
+}
+
 .tab-btn {
   position: relative;
-  flex: 1 0 52px;
-  min-height: clamp(51.52px, calc(25.45px + 8.14vw), 60.48px);
-  padding: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px) clamp(3.68px, calc(1.82px + 0.58vw), 4.32px) clamp(5.52px, calc(2.73px + 0.87vw), 6.48px);
+  flex: 1 0 0;
+  min-width: 0;
+  padding: 0;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(3.68px, calc(1.82px + 0.58vw), 4.32px);
+  align-items: stretch;
 
   border: none;
   background: none;
-  color: var(--nb-ink-dim);
-  font-size: clamp(10.12px, calc(5px + 1.6vw), 11.88px);
-  font-weight: 700;
   cursor: pointer;
 
-  transition:
-    color 0.2s ease,
-    opacity 0.2s ease,
-    transform 0.08s ease;
+  transition: transform 0.08s ease;
 }
 
-.tab-btn .tab-icon {
-  font-size: clamp(16.56px, calc(8.18px + 2.62vw), 19.44px);
-  width: clamp(31.28px, calc(15.46px + 4.95vw), 36.72px);
-  height: clamp(31.28px, calc(15.46px + 4.95vw), 36.72px);
+/* Porte le fond actif/inactif (image carrée étirée sur l'emplacement,
+   légèrement rectangulaire — écart mineur assumé, cf. maquette validée) et
+   sert de repère de positionnement pour l'icône et le libellé superposés. */
+.tab-icon-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--nb-radius-sm);
+  background: url('../images/Icons/menu_icons/tab-slot-inactive.png') center / 100% 100% no-repeat;
 }
 
-.tab-btn.active {
-  color: var(--nb-gold-deep);
-}
-
-.tab-btn.active .tab-icon {
-  background: #fff3d6;
-  border: 2px solid var(--nb-gold-dark);
-  box-shadow: 0 2px 0 var(--nb-gold-deep);
+.tab-btn.active .tab-icon-frame {
+  background-image: url('../images/Icons/menu_icons/tab-slot-active.png');
 }
 
 .tab-btn:active {
@@ -568,9 +574,9 @@
 
 .tab-badge {
   position: absolute;
-  top: 2px;
-  right: 50%;
-  margin-right: -22px;
+  top: -4%;
+  right: -2%;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -640,38 +646,38 @@
 }
 
 /* =========================
-   barre menu
+   barre menu — icône + libellé superposés dans le cadre (v3.152.0)
    ========================= */
 
-#tab-bar .tab-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(1.84px, calc(0.91px + 0.29vw), 2.16px);
-}
-
+/* v3.152.0 : .tab-icon-emoji (repli emoji, plus utilisé — Campement a son
+   icône dédiée depuis longtemps) et l'ancien .tab-icon (fond crème au
+   survol, jamais référencé dans le HTML actuel) retirés, morts. */
 #tab-bar .tab-icon-img {
-  width: clamp(40px, calc(15px + 4vw), 50px);
-  height: clamp(40px, calc(15px + 4vw), 50px);
+  width: 50%;
+  height: 50%;
+  margin-top: -8%; /* laisse la place au libellé en dessous, dans le cadre */
   display: block;
   object-fit: contain;
   pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
 
-/* v3.7 : bouton Campement — pas encore d'icône dédiée (comme les 3
-   icônes d'équipement en attente, voir Guide d'équilibrage section 8),
-   repli emoji en attendant. Même empreinte que .tab-icon-img pour ne
-   pas décaler la barre. */
-#tab-bar .tab-icon-emoji {
-  width: clamp(40px, calc(15px + 4vw), 50px);
-  height: clamp(40px, calc(15px + 4vw), 50px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(24px, calc(10px + 3vw), 30px);
-  line-height: 1;
+.tab-label {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 8%;
+  text-align: center;
+  font-size: clamp(8.5px, calc(4px + 1.4vw), 10px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: rgba(230, 210, 170, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   pointer-events: none;
+}
+
+.tab-btn.active .tab-label {
+  color: #bfe6ff; /* reprend la teinte glacée du cadre actif (tab-slot-active.png) */
 }
 /* =========================
    v3.102.2 — combat plein écran (décision Seb) : pendant une sortie on ne

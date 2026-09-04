@@ -82,31 +82,43 @@
 <div id="panel-container"></div>
 
 <div id="tab-bar">
-  <button class="tab-btn active" data-tab="campement" onclick="switchTab('campement')">
-    <img src="./images/Icons/menu_icons/camp_menu.png" alt="" class="tab-icon-img">
-    <span>Campement</span>
-  </button>
+  <div id="tab-bar-row">
+    <button class="tab-btn active" data-tab="campement" onclick="switchTab('campement')">
+      <div class="tab-icon-frame">
+        <img src="./images/Icons/menu_icons/camp_menu.png" alt="" class="tab-icon-img">
+        <span class="tab-label">Campement</span>
+      </div>
+    </button>
 
-  <button class="tab-btn" data-tab="quests" onclick="switchTab('quests')">
-    <img src="./images/Icons/menu_icons/quests_menu.png" alt="" class="tab-icon-img">
-    <span>Quêtes</span>
-  </button>
+    <button class="tab-btn" data-tab="quests" onclick="switchTab('quests')">
+      <div class="tab-icon-frame">
+        <img src="./images/Icons/menu_icons/quests_menu.png" alt="" class="tab-icon-img">
+        <span class="tab-label">Quêtes</span>
+      </div>
+    </button>
 
-  <button class="tab-btn" data-tab="village" onclick="switchTab('village')">
-    <img src="./images/Icons/menu_icons/village_menu.png" alt="" class="tab-icon-img">
-    <span>Village</span>
-  </button>
+    <button class="tab-btn" data-tab="village" onclick="switchTab('village')">
+      <div class="tab-icon-frame">
+        <img src="./images/Icons/menu_icons/village_menu.png" alt="" class="tab-icon-img">
+        <span class="tab-label">Village</span>
+      </div>
+    </button>
 
-  <button class="tab-btn" data-tab="more" onclick="switchTab('more')">
-    <img src="./images/Icons/menu_icons/heroes_menu.png" alt="" class="tab-icon-img">
-    <span>Héros</span>
-  </button>
+    <button class="tab-btn" data-tab="more" onclick="switchTab('more')">
+      <div class="tab-icon-frame">
+        <img src="./images/Icons/menu_icons/heroes_menu.png" alt="" class="tab-icon-img">
+        <span class="tab-label">Héros</span>
+      </div>
+    </button>
 
-  <button class="tab-btn" data-tab="menu" onclick="openFullMenu()">
-    <img src="./images/Icons/menu_icons/menu_menu.png" alt="" class="tab-icon-img">
-    <span>Menu</span>
-    <span class="tab-badge" id="quest-badge" style="display:none"></span>
-  </button>
+    <button class="tab-btn" data-tab="menu" onclick="openFullMenu()">
+      <div class="tab-icon-frame">
+        <img src="./images/Icons/menu_icons/menu_menu.png" alt="" class="tab-icon-img">
+        <span class="tab-label">Menu</span>
+        <span class="tab-badge" id="quest-badge" style="display:none"></span>
+      </div>
+    </button>
+  </div>
 </div>
 
 <div id="full-menu-root"></div>
