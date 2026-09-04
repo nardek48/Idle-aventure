@@ -26,20 +26,18 @@
   justify-content: center;
 }
 
-/* v3.144.0 : conteneur au ratio FIXE de la nouvelle image de fond
-   (1536:2752, voir title_background_new.png — charte or/bronze crépuscule,
-   remplace la palette violet nuit v3.99.x). Même logique qu'avant : le logo
-   et les boutons sont positionnés en % PAR RAPPORT À CE CONTENEUR, donc ils
-   restent alignés sur les éléments décoratifs du fond (cadre du titre,
-   sanctuaire...) quel que soit l'appareil. Bandes vides possibles sur les
-   écrans au ratio différent, comblées par le fond uni de l'overlay. */
+/* v3.146.0 : object-fit COVER remplace CONTAIN — sur les écrans étroits et
+   hauts (ratio < ratio image, ex iPhone 12 Pro 390×844 = 0.462 vs image
+   0.558), "contain" laissait une bande vide en bas (bug remonté par Seb,
+   capture d'écran). Contrepartie assumée : l'image peut être recadrée sur
+   les bords selon l'appareil, pas de bande vide en échange. Le stage n'a
+   plus de ratio fixe : il occupe tout l'espace disponible, l'image de fond
+   remplit et recadre pour combler. */
 .title-screen-stage {
   position: relative;
   width: 100%;
   height: 100%;
-  max-width: calc(100vh * 1536 / 2752);
-  max-height: calc(100vw * 2752 / 1536);
-  aspect-ratio: 1536 / 2752;
+  max-width: 430px;
   margin: 0 auto;
 }
 
@@ -48,7 +46,8 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center center;
 }
 
 .title-screen-frame {
@@ -151,6 +150,11 @@
    selon maquette Seb — sélection + bouton Charger par carte + bouton
    CHARGER global + suppression avec confirmation dédiée)
    --------------------------------------------------------- */
+/* v3.146.0 : overflow-y retiré d'ici, déplacé sur .title-screen-load-list —
+   seule la liste scrolle désormais, le header (retour/titre/sous-titre)
+   reste figé en haut de l'écran. display:flex hérité de .title-screen-frame
+   (column) : c'est ce qui permet à .title-screen-load-list de prendre tout
+   l'espace restant via flex:1 (voir plus bas) sans que le header ne bouge. */
 .title-screen-frame-load {
   position: fixed;
   top: 0;
@@ -162,19 +166,31 @@
   transform: none;
   margin: 0 auto;
   align-items: stretch;
-  padding: 56px 20px calc(20px + var(--safe-bottom, 0px));
+  padding: 18px 20px calc(16px + var(--safe-bottom, 0px));
   max-height: 100vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
   z-index: 2;
   gap: 10px;
 }
 
+/* v3.147.0 : bouton retour + titre dans un wrapper commun (voir
+   buildTitleScreenLoadHTML) -> le bouton est en absolute PAR RAPPORT À CE
+   WRAPPER (pas à tout l'écran comme avant), et le wrapper prend la hauteur
+   du titre (élément normal du flux) -> le bouton reste automatiquement
+   aligné sur le centre vertical du titre quelle que soit sa hauteur réelle,
+   sans calcul de position en dur (fragile — cause du bug remonté par Seb,
+   capture annotée : bouton collé en haut, trop loin du bandeau titre). */
+.title-screen-load-header-row {
+  position: relative;
+  width: 100%;
+  flex: 0 0 auto;
+}
+
 .title-screen-back-btn {
   position: absolute;
-  top: 4px;
-  left: 4px;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   width: 50px;
   aspect-ratio: 306 / 337; /* ratio réel de images/TitleScreen/bouton_retour_new.png */
   padding: 0;
@@ -191,17 +207,43 @@
 }
 
 .title-screen-back-btn:active {
-  transform: scale(0.93);
+  transform: translateY(-50%) scale(0.93);
 }
 
-/* v3.145.0 : bandeau image titre_charger.png (Seb) remplace le <h2> texte. */
-.title-screen-load-heading-img {
-  display: block;
+/* v3.148.0 : titre_charger.png confirmé être un cadre VIDE (vérifié en
+   ouvrant le fichier hors du jeu, à la demande de Seb) -> texte HTML
+   "Charger une partie" superposé au cadre plutôt qu'attendre un nouvel
+   asset. .title-screen-load-heading-wrap sert de conteneur relatif commun
+   pour l'image (fond) et le <h2> (superposé en absolute, centré). */
+.title-screen-load-heading-wrap {
+  position: relative;
   width: 78%;
   max-width: 340px;
-  height: auto;
   margin: 0 auto;
-  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.6));
+}
+
+.title-screen-load-heading-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.title-screen-load-heading-text {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18%; /* laisse la place aux ornements/losanges latéraux du cadre */
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #f3e0b0;
+  text-align: center;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  line-height: 1.1;
 }
 
 .title-screen-load-subheading {
@@ -211,21 +253,37 @@
   text-align: center;
   letter-spacing: 0.3px;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  flex: 0 0 auto;
 }
 
+/* v3.146.0 : la liste devient la SEULE zone scrollable (voir
+   .title-screen-frame-load ci-dessus, overflow-y déplacé ici) — le titre,
+   sous-titre et bouton retour restent figés visuellement en haut. */
 .title-screen-load-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-bottom: 14px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
+/* v3.148.0 : background:transparent explicite — élément de base partagé par
+   <div class="occupied"> ET <button class="empty">. Sans ça, le <button>
+   hérite du style natif "buttonface" (souvent blanc) du navigateur, visible
+   à travers les zones semi-transparentes de cadre_slot.png -> c'était la
+   VRAIE cause du fond blanc sur "Emplacement vide" (bug remonté 2 fois par
+   Seb ; le fix v3.147.0 sur .title-slot-portrait-empty ne suffisait pas
+   car le blanc venait du bouton entier, pas juste du médaillon). */
 .title-slot-card {
   position: relative;
   display: block;
   width: 100%;
   padding: 0;
   border: none;
+  background: transparent;
   cursor: pointer;
   text-align: left;
   overflow: visible;
@@ -274,20 +332,32 @@
   height: 68.9%;
   border-radius: 50%;
   overflow: hidden;
+  background: transparent;
   z-index: 0;
 }
 
+/* v3.148.0 : object-position top -> center. "top" cadrait sur le haut de
+   l'image (casque/ciel selon la génération du portrait), coupant le visage
+   du héros hors du médaillon (bug remonté par Seb, capture d'écran : on ne
+   voyait qu'un flou bleu). "center" est plus sûr par défaut pour des
+   portraits de personnages sans connaître le cadrage exact de chaque image. */
 .title-slot-portrait img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center top;
+  object-position: center center;
 }
 
+/* v3.147.0 : background:transparent explicite — sans ça, cet élément
+   hérite d'un fond blanc opaque (probablement un style global du jeu sur
+   les div/boutons), masquant le cadre_slot.png en dessous (bug remonté par
+   Seb, capture d'écran). Le médaillon vide doit laisser voir le cadre à
+   travers, comme le fait le portrait d'un héros réel. */
 .title-slot-portrait-empty {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
   font-size: 22px;
   color: rgba(150, 110, 60, 0.7);
   z-index: 2; /* au-dessus du cadre : le "+" doit rester visible dans le trou */
@@ -408,70 +478,10 @@
   transform: scale(0.9);
 }
 
-/* Bouton CHARGER global — confirme le slot sélectionné (même action que le
-   bouton "Charger" individuel de la carte sélectionnée). Désactivé (attribut
-   HTML natif) tant qu'aucune carte n'est sélectionnée. Cadre bouton_charger.png
-   (Seb), même asset que les boutons "Charger" par carte, en plus grand. */
-.title-screen-confirm-load-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60%;
-  max-width: 220px;
-  aspect-ratio: 718 / 271;
-  margin: 4px auto 0;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
-.title-screen-confirm-load-btn-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  pointer-events: none;
-}
-
-.title-screen-confirm-load-btn span {
-  position: relative;
-  z-index: 1;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #f3e0b0;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
-}
-
-.title-screen-confirm-load-btn:active {
-  transform: scale(0.98);
-}
-
-.title-screen-confirm-load-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.title-screen-confirm-load-btn:disabled:active {
-  transform: none;
-}
-
-.title-screen-newgame-link {
-  margin-top: 12px;
-  padding: 6px;
-  border: none;
-  background: transparent;
-  color: rgba(240, 223, 168, 0.75);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 14px;
-  letter-spacing: 1px;
-  text-align: center;
-  cursor: pointer;
-}
+/* v3.146.0 : bouton CHARGER global et lien "Nouvelle Partie" retirés de
+   l'écran Charger (demande Seb — le bouton "Charger" par carte suffit,
+   "Nouvelle Partie" reste accessible via le bouton retour + écran
+   principal). Règles CSS supprimées avec eux. */
 
 /* ---------------------------------------------------------
    Confirmation de suppression — dédiée à l'écran titre (pas le
