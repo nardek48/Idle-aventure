@@ -168,18 +168,29 @@ les classes de l'ancien thème pendant la migration progressive.
   text-align: center;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 
-  background: url('../images/Buttons/bouton_achat.png') center / 100% 100% no-repeat;
+  /* v3.169.0 (décision Seb) : l'ancien asset bleu (bouton_achat.png +
+     bouton_achat_max.png, sessions Firefly d'avant le kit) est remplacé
+     par le cadre or du kit — même principe que les boutons du jeu
+     (css/00-kbtn.css). Texte BLANC (choix validé v3.168) plutôt que
+     l'or clair du .primary : un prix doré sur cadre doré se lirait
+     mal. Les 2 anciens PNG deviennent des vestiges inutilisés.
+     Vigilance : aux petites tailles (92×28 dans les cartes d'achat),
+     le cadre est nettement aplati — à contrôler en jeu ; export
+     « plat » de l'asset possible plus tard si besoin. */
+  background: url('../images/UI/buttons/btn-rect-normal.png') center / 100% 100% no-repeat;
+  text-shadow: 0 1px 2px rgba(30, 15, 0, 0.75);
   cursor: pointer;
 }
 
-/* Bouton visible mais non achetable/déjà acheté/au niveau max */
+/* Bouton visible mais non achetable/déjà acheté/au niveau max — même
+   variante « filtre » que l'état verrouillé des boutons du jeu. */
 .btn-buy:disabled,
 .btn-buy.locked,
 .btn-buy.cant-afford,
 .btn-buy.is-maxed,
 .btn-buy.is-bought {
-  background: url('../images/Buttons/bouton_achat_max.png') center / 100% 100% no-repeat;
-  opacity: 1;
+  filter: grayscale(0.85) brightness(0.85);
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
@@ -189,6 +200,7 @@ les classes de l'ancien thème pendant la migration progressive.
 }
 
 .btn-buy:not(:disabled):active {
+  background-image: url('../images/UI/buttons/btn-rect-pressed.png');
   transform: translateY(1px);
 }
 

@@ -1,42 +1,11 @@
 /* =========================
    Settings
    ========================= */
-.settings-btn {
-  display: block;
-  width: 100%;
-  min-height: 48px;
-  margin-bottom: 8px;
-  padding: 14px;
-
-  background: var(--nb-cream);
-  color: var(--nb-ink);
-  border: 2px solid var(--nb-frame);
-  border-radius: var(--nb-radius-sm);
-  box-shadow: 0 3px 0 var(--nb-frame-light);
-  opacity: 1;
-  filter: none;
-
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-
-  transition:
-    transform 0.08s ease,
-    box-shadow 0.08s ease,
-    opacity 0.2s ease,
-    filter 0.2s ease;
-}
-
-.settings-btn:active {
-  transform: translateY(2px);
-  box-shadow: none;
-}
-
-.settings-btn.danger {
-  color: #b3261e;
-  border-color: #b3261e;
-}
-
+/* v3.168.0 : la base .settings-btn (+ :active/.danger/.primary/
+   :disabled) vit maintenant dans css/00-kbtn.css (bouton du kit
+   or/bronze, choix figés par Seb dans l'atelier) — l'ancien style
+   parchemin est retiré d'ici. Ne restent que les éléments propres à
+   l'écran Paramètres. */
 /* v3.47.0 : ligne à bascule (checkbox) — combat auto de base */
 .settings-toggle-row {
   display: flex;
@@ -72,20 +41,6 @@
 /* =========================
    Réduction des animations
    ========================= */
-.settings-btn.primary {
-  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
-  color: #4a2f06;
-  border-color: var(--nb-gold-dark);
-  box-shadow: 0 3px 0 var(--nb-gold-deep);
-  font-weight: 800;
-}
-
-.settings-btn.disabled,
-.settings-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .settings-btn {
     transition: none;

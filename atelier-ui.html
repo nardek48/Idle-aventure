@@ -29,6 +29,7 @@
 <link rel="stylesheet" href="./css/00-tokens.css">
 <link rel="stylesheet" href="./css/00-components.css">
 <link rel="stylesheet" href="./css/00-rframe.css">
+<link rel="stylesheet" href="./css/00-kbtn.css">
 <link rel="stylesheet" href="./css/00-title-screen.css">
 <link rel="stylesheet" href="./css/00-hero-creation.css">
 <link rel="stylesheet" href="./css/01-base.css">
@@ -157,6 +158,12 @@ body.atl-body {
   margin-top: 2px;
   color: #f4e9d0;
   opacity: 0.75;
+}
+
+/* État pressé forcé (contrôle statique — dans le jeu c'est :active) */
+.atl-pressed {
+  background-image: url('./images/UI/buttons/btn-rect-pressed.png') !important;
+  transform: translateY(1px);
 }
 
 /* Fond parchemin derrière les composants qui vivent sur .nb-page-frame
@@ -419,6 +426,41 @@ function buildFrameSection() {
   );
 }
 
+/* --- 9. Boutons rectangulaires du kit (.kbtn, css/00-kbtn.css) -------
+   PAS ENCORE UTILISÉ PAR LE JEU : variantes à trancher par Seb ici,
+   la bascule des 102 usages de .settings-btn viendra après. */
+function buildKbtnSection() {
+  /* v3.168.0 : choix figés (blanc / 260px / filtre / texte rouge) et
+     BASCULE FAITE — .settings-btn du jeu utilise maintenant le kit
+     (css/00-kbtn.css). Cette section montre les états FINAUX avec la
+     vraie classe du jeu. */
+  var html = '<div class="atl-on-parchment">'
+    + '<button class="settings-btn">Normal</button>'
+    + '<button class="settings-btn atl-pressed">Pressé (statique — maintenir un autre bouton pour le vrai :active)</button>'
+    + '<button class="settings-btn" disabled>Verrouillé</button>'
+    + '<button class="settings-btn danger">Réinitialiser tout (danger)</button>'
+    + '<button class="settings-btn primary">Descendre dans la faille (primary — À CONFIRMER)</button>'
+    + '<hr style="border:none;border-top:1px dashed #b09a6a;margin:12px 0">'
+    + '<p class="atl-label" style="text-align:left;color:#5a4a2a;opacity:1">Achat / vente (v3.169 : .btn-buy sur le kit, taille réelle des cartes)</p>'
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
+    + '<button class="btn-buy" style="width:92px"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">1 250</button>'
+    + '<button class="btn-buy cant-afford" style="width:92px"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">9 999</button>'
+    + '<button class="btn-buy is-bought" style="width:92px" disabled>Acheté</button>'
+    + '<button class="btn-buy">Équiper</button>'
+    + '</div>'
+    + '<button class="inv-sell-all-btn">🗑️ Tout vendre</button>'
+    + '<hr style="border:none;border-top:1px dashed #b09a6a;margin:12px 0">'
+    + '<p class="atl-label" style="text-align:left;color:#5a4a2a;opacity:1">Contextes redimensionnés (surcharges d\'écran conservées)</p>'
+    + '<div class="equip-toolbar"><button class="settings-btn">⇅ Trier</button><button class="settings-btn">Filtrer</button><button class="settings-btn">⚙ Réglages</button></div>'
+    + '</div>';
+  return section(
+    "9. Boutons du kit — EN JEU (.settings-btn v3.168, .btn-buy v3.169)",
+    "css/00-kbtn.css · btn-rect-normal/pressed.png",
+    html,
+    "Le variant primary (texte or clair + léger boost) est une proposition — à confirmer ou ajuster. Les surcharges par écran (barres d\'outils, popups) ne touchent que le layout, vérifiées à l\'audit v3.168.0."
+  );
+}
+
 /* --- Assemblage ------------------------------------------------------ */
 document.getElementById("atl-root").innerHTML =
   buildOrbitSection()
@@ -428,7 +470,8 @@ document.getElementById("atl-root").innerHTML =
   + buildShopSection()
   + buildSubtabSection()
   + buildTabBarSection()
-  + buildFrameSection();
+  + buildFrameSection()
+  + buildKbtnSection();
 
 /* --- Interactions de la galerie -------------------------------------- */
 function atlToggleSelect(el) { el.classList.toggle("is-selected"); }

@@ -8,11 +8,8 @@
    css/00-components.css (partagées avec Personnage et Boutique) —
    plus rien de spécifique à garder ici. */
 
-.settings-btn:disabled,
-.settings-btn.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+/* v3.168.0 : le bloc local .settings-btn:disabled/.disabled est retiré
+   — l'état désactivé est couvert par la source unique css/00-kbtn.css. */
 
 .dungeon-ticket-row {
   display: flex;

@@ -58,7 +58,6 @@
 /* v3.62.0 : bouton de reset — distinct visuellement du bouton
    "Continuer" (primary) pour ne pas donner l'impression d'une action
    anodine, même position/format que .settings-btn de base sinon. */
-.combat-report-reset-btn {
-  color: #b23b3b;
-  border-color: #b23b3b;
-}
+/* v3.168.0 : aligné sur la variante danger du kit (css/00-kbtn.css,
+   qui cible aussi cette classe) — la bordure rouge n'existe plus
+   (border:none sur le composant). */

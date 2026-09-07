@@ -34,9 +34,11 @@
   font-size: 11px;
 }
 
+/* v3.168.0 : l'ancien fond plat bleu écraserait l'image du cadre du
+   kit (raccourci background:) -> état actif = asset pressé + anneau
+   bleu, texte inchangé (blanc du composant). */
 .shop-buy-toolbar .settings-btn.active {
-  border-color: var(--accent);
-  background: rgba(91, 140, 255, 0.22);
-  color: var(--nb-ink);
-  box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.3) inset;
+  background-image: url('../images/UI/buttons/btn-rect-pressed.png');
+  box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.55);
+  border-radius: 8px;
 }

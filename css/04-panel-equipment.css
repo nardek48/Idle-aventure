@@ -769,21 +769,30 @@
   text-align: left;
 }
 
+/* v3.169.0 : « Tout vendre » aligné sur la variante danger du kit
+   (cadre or + texte rouge, mêmes valeurs que .settings-btn.danger de
+   css/00-kbtn.css) — remplace l'ancien style CSS rouge à bordure. */
 .inv-sell-all-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  margin-top: 18px;
+  max-width: 260px;
+  min-height: 40px;
+  margin: 18px auto 0;
   padding: 10px 12px;
-  border-radius: var(--nb-radius-sm);
-  border: 1px solid rgba(220, 38, 38, 0.4);
-  background: rgba(220, 38, 38, 0.08);
-  color: #b91c1c;
+  border: none;
+  background: url('../images/UI/buttons/btn-rect-normal.png') center / 100% 100% no-repeat;
+  color: #ffb0a6;
+  text-shadow: 0 1px 2px rgba(60, 8, 0, 0.85);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
 }
 
 .inv-sell-all-btn:active {
-  background: rgba(220, 38, 38, 0.16);
+  background-image: url('../images/UI/buttons/btn-rect-pressed.png');
+  transform: translateY(1px);
 }
 
 /* v3.164.0 : le bloc mort .eq-bag-grid/.eq-bag-item/.eq-bag-main/

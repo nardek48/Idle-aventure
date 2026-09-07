@@ -179,18 +179,9 @@
   margin-bottom: 0;
 }
 
-.village-popup-actions .settings-btn.is-maxed {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* v3.17 : grisé quand l'or actuel ne couvre pas le coût — même
-   traitement visuel que .is-maxed ci-dessus. */
-.village-popup-actions .settings-btn.is-unaffordable {
-  opacity: 0.5;
-  cursor: not-allowed;
-  filter: grayscale(40%);
-}
+/* v3.168.0 : .is-maxed / .is-unaffordable locaux retirés — couverts
+   par l'état désactivé unique de css/00-kbtn.css (variante filtre,
+   choix Seb). */
 
 @media (max-width: 380px) {
   .village-popup-card {
