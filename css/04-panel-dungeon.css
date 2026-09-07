@@ -398,18 +398,11 @@
   white-space: nowrap;
 }
 
+/* v3.178.0 : compteur sur le badge rond du kit (markup dungeon-view.js)
+   — ne reste que la taille. */
 .dungeon-ticket-badge-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--nb-gold);
-  color: #4a2f06;
-  font-size: 12px;
-  font-weight: 800;
+  width: 26px;
+  font-size: 11px;
 }
 
 .dungeon-list {

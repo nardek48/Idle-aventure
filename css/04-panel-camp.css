@@ -47,6 +47,8 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   text-align: center;
 }
 
+/* v3.179.0 : banderoles retirées (retour Seb — nouvel asset à venir),
+   retour au titre texte d'avant v3.178. */
 .camp-section-title {
   font-size: 15px;
   font-weight: 800;
@@ -56,9 +58,8 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 }
 
 .camp-section-sub {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid var(--nb-frame-light);
+  font-size: 13px;
+  margin-top: 14px;
 }
 
 /* Barre de PV (rouge) */

@@ -398,15 +398,11 @@ img.nb-purchase-icon {
   margin-top: 2px;
 }
 
+/* v3.178.0 : pilule remplacée par l'écu du kit (markup shop-view.js).
+   NB : ce fichier charge AVANT 00-kbtn.css -> pas de conflit de couleur. */
 .nb-purchase-level-badge {
-  min-width: 2px;
-  padding: 2px 4px;
-  border-radius: 999px;
-  background: #3b2a1a;
-  color: #f9f1dd;
+  width: 26px;
   font-size: 10px;
-  font-weight: 700;
-  text-align: center;
 }
 
 /* v3.173.0 : barre de niveau des améliorations migrée sur la jauge
