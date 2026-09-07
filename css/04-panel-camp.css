@@ -193,37 +193,8 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   border-bottom: none;
 }
 
-.camp-quick-access {
-  display: flex;
-  gap: 10px;
-  justify-content: space-between;
-}
-
-.camp-quick-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  background: var(--nb-cream-alt);
-  border: 1px solid var(--nb-frame-light);
-  border-radius: var(--nb-radius-sm);
-  padding: 12px 6px;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.camp-quick-btn img {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-}
-
-.camp-quick-btn span {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--nb-ink);
-}
+/* v3.181.0 : famille .camp-quick-* supprimée (carte « Accès rapide »
+   retirée du Camp, décision Seb — redondante avec la nav du bas). */
 
 /* ============================================================
    v3.103.1 — tableau de missions (MissionBoard.top(3), écran hub).

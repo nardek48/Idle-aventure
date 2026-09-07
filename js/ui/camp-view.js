@@ -1,6 +1,6 @@
 "use strict";
 /* ui/camp-view.js — écran Campement (page d'accueil, v3.7 ; hub v3.103.1) : feu de camp (repos long/court), tableau de
-   missions (MissionBoard.top(3), LIGNE_DIRECTRICE §3), accès rapides. Détail : COMMENTAIRES_ORIGINAUX.md */
+   missions (MissionBoard.top(3), LIGNE_DIRECTRICE §3). Accès rapides supprimés v3.181.0. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var CAMP_MISSION_TYPE_LABEL = { combat: "Combat", expedition: "Expédition", chasse: "Chasse", donjon: "Donjon" };
 var CAMP_MISSION_STATUS_CLASS = { claimable: "is-claimable", running: "is-running", accepted: "is-running", available: "" };
@@ -149,14 +149,8 @@ function buildCampHTML() {
   h += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">Voir le tableau complet</button>';
   h += '</div>';
 
-  h += '<div class="camp-card">';
-  h += '<div class="camp-card-title">Accès rapide</div>';
-  h += '<div class="camp-quick-access">';
-  h += '<button class="camp-quick-btn" type="button" onclick="switchTab(\'more\')"><img src="./images/Icons/menu_icons/heroes_menu.png" alt=""><span>Personnage</span></button>';
-  h += '<button class="camp-quick-btn" type="button" onclick="switchTab(\'equip\')"><img src="./images/Icons/menu_icons/equip_menu.png" alt=""><span>Équipement</span></button>';
-  h += '<button class="camp-quick-btn" type="button" onclick="switchTab(\'quests\')"><img src="./images/Icons/menu_icons/quests_menu.png" alt=""><span>Quêtes</span></button>';
-  h += '</div>';
-  h += '</div>';
+  // v3.181.0 (décision Seb) : carte « Accès rapide » supprimée — la nav du
+  // bas couvre ces raccourcis depuis la refonte.
 
   h += '</div>';
   return h;

@@ -204,6 +204,15 @@
   width: 100%;
 }
 
+/* v3.180.0 : quand le wrapper .eq-detail-icon porte lui-même un cadre
+   (rframe-neutral, Entrepôt), l'icône interne se réduit à la variable
+   partagée pour rester dans la cavité. */
+.eq-detail-icon.rframe > .eq-detail-icon-img {
+  width: var(--rframe-icon, 64%);
+  height: var(--rframe-icon, 64%);
+  object-fit: contain;
+}
+
 .eq-detail-name {
   font-size: 14px;
   font-weight: 800;
@@ -634,21 +643,18 @@
   flex: 1 1 auto;
 }
 
+/* v3.184.0 : mystère du "bouton bleu" résolu — Seb désignait le bouton
+   du KIT (btn-rect-normal.png, plaque bleue à liseré or, celui de tous
+   les .settings-btn/.btn-buy depuis v3.168-169). .inv-toolbar-btn avait
+   été oublié par cette bascule ; il rejoint la source unique
+   css/00-kbtn.css. Ne restent ici que les ajustements de la barre
+   d'outils (hauteur compacte, pas de marge basse ni de centrage). */
 .inv-toolbar-btn {
-  width: 100%;
   min-height: 36px;
+  max-width: none;
+  margin-bottom: 0;
   padding: 8px 12px;
-  border-radius: var(--nb-radius-sm);
-  border: 1px solid var(--nb-frame);
-  background: var(--nb-cream-alt);
-  color: var(--nb-ink);
   font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.inv-toolbar-btn:active {
-  transform: scale(0.98);
 }
 
 /* v2.83.46 : rangée de filtre Tout/Équipement/Potions, sous la
@@ -659,24 +665,33 @@
   margin: 0 0 12px;
 }
 
+/* v3.182.0 : pilules de filtre (inventaire + Entrepôt) alignées sur le
+   composant sous-onglet du kit — famille oubliée par le chantier
+   v3.154. */
 .inv-filter-btn {
-  flex: 1 1 auto;
-  min-height: 30px;
-  padding: 6px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--nb-frame);
-  background: var(--nb-cream-alt);
-  color: var(--nb-ink-dim);
+  flex: 1 1 0;
+  min-width: 0;
+  aspect-ratio: 592 / 224;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: url('../images/UI/buttons/btn-subtab-normal.png') center / 100% 100% no-repeat;
+  color: #e8d9b5;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .inv-filter-btn.is-active {
-  background: var(--nb-gold);
-  border-color: var(--nb-gold-dark);
-  color: #241a00;
+  background-image: url('../images/UI/buttons/btn-subtab-selected.png');
+  color: #2a1a08;
+  text-shadow: none;
 }
 
 /* Le bouton ⚙ n'a pas besoin de flex:1 1 auto (juste assez large
@@ -853,6 +868,16 @@
   padding: 0;
   border: none;
   border-radius: 0;
+  /* v3.180.0 : background explicite pour tuer le buttonface natif des
+     <button> (le "carré gris" de la capture de Seb).
+     v3.183.0 (RÉGRESSION corrigée, vérifiée sous Playwright) : le
+     raccourci `background: none` réinitialisait AUSSI size/position
+     posés par .rframe (chargé avant) -> les PNG de cadre se peignaient
+     à leur taille NATURELLE (299px) dans des tuiles de ~50px, d'où le
+     "crop de cadre géant" derrière les icônes (capture Seb v3.182).
+     LEÇON : sur un composant qui reçoit son image d'une autre classe,
+     ne jamais utiliser le raccourci `background:` — longhand only. */
+  background-color: transparent;
   cursor: pointer;
 }
 

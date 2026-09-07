@@ -428,36 +428,59 @@
   color: var(--danger, #c83c3c);
 }
 
+/* v3.182.0 : les 4 onglets de catégorie passent sur le composant
+   sous-onglet du kit (btn-subtab-normal/selected.png, mêmes assets et
+   conventions que .pc-subtab-btn, 00-components.css) — famille oubliée
+   par le chantier v3.154. Icône emoji réduite et posée EN LIGNE avec le
+   libellé (l'ancienne pile verticale déborde du cadre à ce ratio) ;
+   pastille "réclamable" conservée. CSS uniquement, markup inchangé. */
 .qb-tab {
   position: relative;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  aspect-ratio: 592 / 224;
+  height: auto;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 3px;
-  padding: 10px 4px 8px;
-  border: 1px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream);
-  color: var(--nb-ink-dim);
-  font-size: 11px;
+  justify-content: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: url('../images/UI/buttons/btn-subtab-normal.png') center / 100% 100% no-repeat;
+  color: #e8d9b5;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  font-size: 10.5px;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: var(--nb-shadow-card);
+  transition: transform 0.15s ease;
+}
+
+.qb-tab:active {
+  transform: scale(0.97);
 }
 
 .qb-tab-icon {
-  font-size: 20px;
+  font-size: 13px;
   line-height: 1;
 }
 
+.qb-tab-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .qb-tab.is-active {
-  background: var(--nb-gold);
-  border-color: var(--nb-gold-dark);
-  color: #3a2a12;
-  transform: translateY(1px);
+  flex: 1.15 1 0;
+  background-image: url('../images/UI/buttons/btn-subtab-selected.png');
+  color: #2a1a08;
+  text-shadow: none;
+  transform: none;
 }
 
 /* Pastille "réclamable" sur l'onglet */

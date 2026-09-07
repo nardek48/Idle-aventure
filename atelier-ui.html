@@ -298,6 +298,11 @@ function buildBagSection() {
   tiles += '<button class="eq-bag-tile rframe rarity-rare is-selected" aria-label="sélectionnée" onclick="atlToggleSelect(this)">'
     + iconHTML("eq-bag-tile-icon", "rare", armorPath("rare"), "🛡️")
     + '</button>';
+  /* v3.180 : tuile RESSOURCE (cadre neutre, Entrepôt) */
+  tiles += '<button class="eq-bag-tile rframe rframe-neutral" aria-label="ressource" onclick="atlToggleSelect(this)">'
+    + '<img class="eq-bag-tile-icon" src="images/Icons/resources/meat_icon.png" alt="">'
+    + '<span class="eq-bag-tile-stock">5.13K</span>'
+    + '</button>';
   /* tuile potion avec badge de stock (renderIconOrEmojiHTML ne pose pas rarity-* sur l'icône) */
   tiles += '<button class="eq-bag-tile rframe rarity-common" aria-label="potion" onclick="atlToggleSelect(this)">'
     + '<div class="eq-bag-tile-icon">🧪</div>'
@@ -387,7 +392,7 @@ function buildSubtabSection() {
     + '<button type="button" class="pc-subtab-btn" onclick="atlOnlyActive(this)">🏪<span>Boutique</span></button>'
     + '</div>';
   return section(
-    "6. Sous-onglets (composant partagé, 18 boutons / 8 écrans)",
+    "6. Sous-onglets (pc-subtab + qb-tab Quêtes + filtres inv./Entrepôt depuis v3.182)",
     "css/00-components.css (.pc-subtab-btn) · assets btn-subtab-normal/selected.png",
     html,
     "Cliquer pour changer l'onglet actif."

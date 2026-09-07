@@ -91,7 +91,10 @@ function buildWarehouseTileHTML(key) {
   var stock = Number((game.resources || {})[key] || 0);
   var isSelected = selectedWarehouseKey === key;
 
-  var h = '<button class="eq-bag-tile warehouse-tile' + (isSelected ? ' is-selected' : '') + '" type="button" onclick="selectWarehouseKey(\'' + esc(key) + '\')" aria-label="' + esc(def.name) + '">';
+  // v3.180.0 : cadre neutre du kit sur la tuile (pas de rareté pour les
+  // ressources) — même architecture que le sac d'équipement (le cadre
+  // EST la tuile, voir css/00-rframe.css).
+  var h = '<button class="eq-bag-tile warehouse-tile rframe rframe-neutral' + (isSelected ? ' is-selected' : '') + '" type="button" onclick="selectWarehouseKey(\'' + esc(key) + '\')" aria-label="' + esc(def.name) + '">';
   h += renderIconOrEmojiHTML(def.icon, "eq-bag-tile-icon", def.name);
   h += '<span class="eq-bag-tile-stock">' + formatNumber(stock) + '</span>';
   h += '</button>';
@@ -114,7 +117,7 @@ function buildWarehouseDetailPanelHTML() {
 
   warehouseSellQty = Math.max(1, Math.min(stock || 1, warehouseSellQty));
 
-  h += '<div class="eq-detail-icon">' + renderIconOrEmojiHTML(def.icon, "eq-detail-icon-img", def.name) + '</div>';
+  h += '<div class="eq-detail-icon rframe rframe-neutral">' + renderIconOrEmojiHTML(def.icon, "eq-detail-icon-img", def.name) + '</div>';
   h += '<div class="eq-detail-name">' + esc(def.name) + '</div>';
   h += '<div class="eq-detail-hint">' + esc(def.desc || "") + '</div>';
   h += '<div class="eq-detail-hint">🎒 Stock : ' + formatNumber(stock) + '</div>';

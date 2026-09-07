@@ -20,7 +20,8 @@
    04-panel-village.css sont retirés), .danger, .primary. */
 
 .kbtn,
-.settings-btn {
+.settings-btn,
+.inv-toolbar-btn { /* v3.184.0 : Trier/⚙ de l'inventaire — classe oubliée par la bascule v3.168 (repérée par Seb) */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,7 +49,8 @@
 }
 
 .kbtn:not(:disabled):active,
-.settings-btn:not(:disabled):active {
+.settings-btn:not(:disabled):active,
+.inv-toolbar-btn:not(:disabled):active {
   background-image: url('../images/UI/buttons/btn-rect-pressed.png');
   transform: translateY(1px);
   box-shadow: none;
@@ -189,6 +191,10 @@
   aspect-ratio: 152 / 165;
   background-image: url('../images/UI/badges/badge-round.png');
   --kb-l: 20%; --kb-r: 20%; --kb-t: 32%; --kb-b: 36%;   /* centre 48 % (mesuré) */
+  /* v3.183.0 (retour Seb, tickets Donjon) : texte NOIR sur la plaque,
+     comme l'écu. */
+  color: #1c1006;
+  text-shadow: 0 1px 0 rgba(255, 235, 190, 0.35);
 }
 
 .kbadge-shield {

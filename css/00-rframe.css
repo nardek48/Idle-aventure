@@ -55,6 +55,14 @@
   background: center / contain no-repeat;
 }
 
+/* v3.180.0 : variante NEUTRE (sans rareté) — cadre d'icône simple du
+   kit (frame-icon-simple.png, 329×335, cavité mesurée 71,7 % × 69 %) :
+   ressources de l'Entrepôt et autres icônes non classées par rareté. */
+.rframe.rframe-neutral {
+  aspect-ratio: 329 / 335;
+  background-image: url('../images/UI/frames/frame-icon-simple.png');
+}
+
 .rframe.rarity-common { background-image: url('../images/UI/slots/slot-common.png'); }
 .rframe.rarity-green { background-image: url('../images/UI/slots/slot-green.png'); }
 .rframe.rarity-rare { background-image: url('../images/UI/slots/slot-rare.png'); }
