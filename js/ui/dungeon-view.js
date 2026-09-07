@@ -120,7 +120,7 @@ function buildDungeonTicketBadgeHTML() {
   var h = '<button type="button" class="dungeon-ticket-badge" onclick="openDungeonTicketOverlay()">';
   h += '<span class="dungeon-ticket-badge-icon">🎟️</span>';
   h += '<span class="dungeon-ticket-badge-label">Achat de ticket</span>';
-  h += '<span class="dungeon-ticket-badge-count">' + tickets + '</span>';
+  h += '<span class="dungeon-ticket-badge-count kbadge kbadge-round"><span>' + tickets + '</span></span>';
   h += '</button>';
   return h;
 }

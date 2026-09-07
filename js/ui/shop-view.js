@@ -148,7 +148,7 @@ function buildUpgradeCardHTML(u, buyAmount) {
     h += '<div class="nb-purchase-desc">' + esc(u.desc) + '</div>';
 
     h += '<div class="nb-purchase-level-row">';
-      h += '<div class="nb-purchase-level-badge">' + esc(level) + '</div>';
+      h += '<div class="nb-purchase-level-badge kbadge kbadge-shield"><span>' + esc(level) + '</span></div>';
       // v3.173.0 : jauge fine du kit (la classe locale ne garde que flex:1).
       h += '<div class="nb-purchase-level-bar kgauge kgauge-thin kgauge-xp">';
         h += '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + levelPct + '%;"></div></div>';

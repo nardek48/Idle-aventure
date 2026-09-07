@@ -39,7 +39,7 @@ function buildProductionCardHTML(id) {
   h += '<div class="production-card-info">';
   h += '<div class="production-card-title-row">';
   h += '<span class="production-card-name">' + esc(def.name) + '</span>';
-  h += '<span class="production-card-level-badge">Niv. ' + level + '</span>';
+  h += '<span class="production-card-level-badge kbadge kbadge-shield"><span>Niv. ' + level + '</span></span>';
   h += '</div>';
 
   h += '<div class="production-card-rate">' + renderIconOrEmojiHTML(resDef.icon, "production-rate-icon", resDef.name) + '<span>+' + formatNumber(ratePerMin) + ' ' + esc(resDef.name || def.name) + ' / min</span></div>';
@@ -484,7 +484,7 @@ function buildWorkshopCardHTML(workshop) {
   h += '<div class="workshop-card-top">';
   h += '<div class="workshop-card-icon">' + workshop.icon + '</div>';
   h += '<div class="workshop-card-name">' + esc(workshop.name) + '</div>';
-  h += '<span class="workshop-card-level-badge">Niv. ' + level + '</span>';
+  h += '<span class="workshop-card-level-badge kbadge kbadge-shield"><span>Niv. ' + level + '</span></span>';
   h += '<span class="workshop-card-queue-badge" id="prod-workshop-queue-badge-' + workshop.id + '">File : ' + WorkshopsSystem.getQueue(workshop.id).length + ' / ' + WorkshopsSystem.getMaxQueueLength(workshop.id) + '</span>';
   h += '</div>';
 

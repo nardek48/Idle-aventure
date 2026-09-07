@@ -508,6 +508,32 @@ function buildKgaugeSection() {
   );
 }
 
+/* --- 11. Badges & banderoles du kit (.kbadge) ------------------------
+   ATELIER UNIQUEMENT : correspondance asset <-> usage à valider. */
+function buildKbadgeSection() {
+  var html = '<div class="atl-on-parchment">'
+    + '<p class="atl-label" style="text-align:left;color:#5a4a2a;opacity:1">Banderole — RETIRÉE du jeu (v3.179, nouvel asset Seb à venir) — spécimen conservé pour la prochaine version</p>'
+    + '<div class="kbadge kbadge-ribbon" style="width:220px"><span>⛺ Santé du Héros</span></div>'
+    + '<div class="kbadge kbadge-ribbon" style="width:160px;font-size:12px"><span>Rations</span></div>'
+    + '<p class="atl-label" style="text-align:left;color:#5a4a2a;opacity:1">Écu — proposition : badges de niveau (cartes Amélioration/Production/Atelier)</p>'
+    + '<div style="display:flex;gap:10px;align-items:flex-end">'
+    + '<div class="kbadge kbadge-shield" style="width:44px;font-size:12px"><span>12</span></div>'
+    + '<div class="kbadge kbadge-shield" style="width:56px;font-size:13px"><span>Niv. 8</span></div>'
+    + '</div>'
+    + '<p class="atl-label" style="text-align:left;color:#5a4a2a;opacity:1">Badge rond — proposition : compteurs (tickets de donjon, files d\'atelier...)</p>'
+    + '<div style="display:flex;gap:10px;align-items:flex-end">'
+    + '<div class="kbadge kbadge-round" style="width:40px;font-size:13px"><span>3</span></div>'
+    + '<div class="kbadge kbadge-round" style="width:52px;font-size:12px"><span>×10</span></div>'
+    + '</div>'
+    + '</div>';
+  return section(
+    "11. Badges & banderoles — EN JEU depuis v3.178.0 (pilote)",
+    "css/00-kbtn.css (.kbadge) · images/UI/badges/*.png",
+    html,
+    "v3.179 : \u00e9cus (texte noir) + rond restent en jeu ; banderoles retir\u00e9es en attendant le nouvel asset de Seb (le sp\u00e9cimen ci-dessus servira \u00e0 le valider)."
+  );
+}
+
 /* --- Assemblage ------------------------------------------------------ */
 document.getElementById("atl-root").innerHTML =
   buildOrbitSection()
@@ -519,7 +545,8 @@ document.getElementById("atl-root").innerHTML =
   + buildTabBarSection()
   + buildFrameSection()
   + buildKbtnSection()
-  + buildKgaugeSection();
+  + buildKgaugeSection()
+  + buildKbadgeSection();
 
 /* --- Interactions de la galerie -------------------------------------- */
 function atlToggleSelect(el) { el.classList.toggle("is-selected"); }
