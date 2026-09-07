@@ -11,9 +11,12 @@ function buildCombatHTML() {
     +   '<div id="combat-mission-progress" class="combat-mission-progress"></div>'
     +   '<div id="enemy-status-bar" class="enemy-status-bar"></div>'
     +   '<div id="enemy-name">Slime</div>'
-    +   '<div id="enemy-hp-bar-wrapper">'
-    +     '<div class="enemy-hp-bar-track"><div id="enemy-hp-bar" style="width:100%"></div></div>'
-    +     '<div id="enemy-hp-text">10 / 10</div>'
+    // v3.172.0 : PV ennemi sur le composant jauge du kit (css/00-kgauge.css) —
+    // dragon-claw pour un ennemi normal, boss (œil) pour un boss (classe basculée
+    // par renderEnemy selon game.enemy.isBoss). Ids conservés (renderEnemyHp).
+    +   '<div id="enemy-hp-bar-wrapper" class="kgauge kgauge-dragon-claw kgauge-hp-enemy">'
+    +     '<div class="kgauge-track"><div id="enemy-hp-bar" class="kgauge-fill" style="width:100%"></div></div>'
+    +     '<div id="enemy-hp-text" class="kgauge-text">10 / 10</div>'
     +   '</div>'
     +   '<div id="enemy-emoji">🟢</div>'
     + '</div>'
@@ -240,9 +243,11 @@ function buildCombatControlsHTML() {
   var downed = (game.heroHp || 0) <= 0;
 
   var h = '<div class="combat-round-pill" title="Round en cours">R' + (round.number || 0) + '</div>';
-  h += '<div class="combat-gauge" title="Jauge de célérité : à 100 %, une frappe bonus suit ta prochaine attaque">';
-  h += '<div class="combat-gauge-fill" style="width:' + gaugePct + '%"></div>';
-  h += '<span class="combat-gauge-text">⚡ ' + gaugePct + '%</span>';
+  // v3.172.0 : célérité sur la jauge fine du kit (structure kgauge, la classe
+  // .combat-gauge ne garde que le dimensionnement dans la barre de round).
+  h += '<div class="combat-gauge kgauge kgauge-thin" title="Jauge de célérité : à 100 %, une frappe bonus suit ta prochaine attaque">';
+  h += '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + gaugePct + '%"></div></div>';
+  h += '<span class="kgauge-text">⚡ ' + gaugePct + '%</span>';
   h += '</div>';
 
   if (grimoireUnlocked) {
@@ -373,6 +378,14 @@ function renderEnemy() {
   }
 
   if (name) name.textContent = game.enemy.name + (game.enemy.isBoss ? " [BOSS]" : "");
+
+  // v3.172.0 : cadre de jauge selon le type d'ennemi (kit) — le cadre élite
+  // rejoindra ce choix quand les quêtes Élite seront implémentées.
+  var hpWrap = document.getElementById("enemy-hp-bar-wrapper");
+  if (hpWrap) {
+    hpWrap.classList.toggle("kgauge-boss", !!game.enemy.isBoss);
+    hpWrap.classList.toggle("kgauge-dragon-claw", !game.enemy.isBoss);
+  }
 
   renderEnemyStatusBar();
   renderEnemyHp();
@@ -523,10 +536,13 @@ function buildClassResourceBarHTML() {
   var resourceDef = (classId && typeof getClassResource === "function") ? getClassResource(classId) : null;
   var label = resourceDef ? resourceDef.label : "";
 
+  // v3.172.0 : ressource de classe sur la jauge fine du kit — kgauge-rage/
+  // kgauge-focus/kgauge-mana (00-kgauge.css) correspondent exactement aux
+  // resourceId des 3 classes. .class-resource-bar garde le positionnement.
   var h = '<div class="class-resource-bar class-resource-' + esc(state.resourceId || "") + '">';
-  h +=   '<div class="class-resource-track">';
-  h +=     '<div class="class-resource-fill" style="width:' + pct + '%"></div>';
-  h +=     '<span class="class-resource-text">' + esc(label) + ' — ' + Math.floor(state.current) + ' / ' + state.max + '</span>';
+  h +=   '<div class="class-resource-track kgauge kgauge-thin kgauge-' + esc(state.resourceId || "rage") + '">';
+  h +=     '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct + '%"></div></div>';
+  h +=     '<span class="kgauge-text">' + esc(label) + ' — ' + Math.floor(state.current) + ' / ' + state.max + '</span>';
   h +=   '</div>';
   h += '</div>';
   return h;

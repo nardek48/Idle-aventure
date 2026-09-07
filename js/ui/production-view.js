@@ -44,8 +44,8 @@ function buildProductionCardHTML(id) {
 
   h += '<div class="production-card-rate">' + renderIconOrEmojiHTML(resDef.icon, "production-rate-icon", resDef.name) + '<span>+' + formatNumber(ratePerMin) + ' ' + esc(resDef.name || def.name) + ' / min</span></div>';
 
-  h += '<div class="nb-entry-progress-bar production-stock-bar">';
-  h += '<div class="nb-entry-progress-fill' + (isFull ? ' done' : '') + '" id="prod-bar-' + id + '" style="width:' + pct + '%"></div>';
+  h += '<div class="production-stock-bar kgauge kgauge-thin kgauge-xp">';
+  h += '<div class="kgauge-track"><div class="kgauge-fill nb-entry-progress-fill' + (isFull ? ' done' : '') + '" id="prod-bar-' + id + '" style="width:' + pct + '%"></div></div>';
   h += '</div>';
   h += '<div class="production-card-stock-label" id="prod-stock-label-' + id + '">' + formatNumber(Math.floor(stock)) + ' / ' + formatNumber(capacity) + ' ' + esc(resDef.name || '') + '</div>';
 
@@ -127,8 +127,8 @@ function buildPlotsCardHTML(buildingId, def) {
 
   h += '<div class="production-card-rate">' + renderIconOrEmojiHTML(resDef.icon, "production-rate-icon", resDef.name) + '<span>+' + formatNumber(ratePerMin) + ' ' + esc(resDef.name || def.name) + ' / min</span></div>';
 
-  h += '<div class="nb-entry-progress-bar production-stock-bar">';
-  h += '<div class="nb-entry-progress-fill' + (isFull ? ' done' : '') + '" id="prod-bar-' + buildingId + '" style="width:' + pct + '%"></div>';
+  h += '<div class="production-stock-bar kgauge kgauge-thin kgauge-xp">';
+  h += '<div class="kgauge-track"><div class="kgauge-fill nb-entry-progress-fill' + (isFull ? ' done' : '') + '" id="prod-bar-' + buildingId + '" style="width:' + pct + '%"></div></div>';
   h += '</div>';
   h += '<div class="production-card-stock-label" id="prod-stock-label-' + buildingId + '">' + formatNumber(Math.floor(stock)) + ' / ' + formatNumber(capacity) + ' ' + esc(resDef.name || '') + '</div>';
 
@@ -239,8 +239,8 @@ function buildPlotCardHTML(buildingId, plot, index, selectedIndex) {
   h += '<div class="farm-plot-card-name">' + esc(zoneName) + '</div>';
   h += '<div class="farm-plot-card-profile">' + esc(profile.label) + '</div>';
 
-  h += '<div class="nb-entry-progress-bar farm-plot-card-bar">';
-  h += '<div class="nb-entry-progress-fill" id="prod-plot-bar-' + buildingId + '-' + index + '" style="width:' + pct + '%"></div>';
+  h += '<div class="farm-plot-card-bar kgauge kgauge-thin kgauge-xp">';
+  h += '<div class="kgauge-track"><div class="kgauge-fill nb-entry-progress-fill" id="prod-plot-bar-' + buildingId + '-' + index + '" style="width:' + pct + '%"></div></div>';
   h += '</div>';
   h += '<div class="farm-plot-card-stock-label" id="prod-plot-stock-' + buildingId + '-' + index + '">' + formatNumber(Math.floor(plot.stock)) + '/' + formatNumber(capacity) + '</div>';
 

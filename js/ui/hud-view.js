@@ -41,9 +41,11 @@ function buildHudHTML() {
     +       '<span class="combat-hero-mini-level" id="combat-hero-mini-level">Niv. 1</span>'
     +       '<img id="hud-hero-levelup-badge" class="hud-hero-levelup-badge" src="./images/Icons/talents/up_icon.png" alt="Talent disponible" style="display:none;">'
     +     '</div>'
-    +     '<div class="combat-hero-mini-hp-bar">'
-    +       '<div id="combat-hero-mini-hp-fill" class="combat-hero-mini-hp-fill" style="width:100%"></div>'
-    +       '<span class="combat-hero-mini-hp-text" id="combat-hero-mini-hp-text">10 / 10</span>'
+    // v3.172.0 : PV du héros sur la jauge dragon du kit (la plus ornée, tête
+    // à gauche côté portrait — décision Seb). Ids conservés (updateHeroHpHud).
+    +     '<div class="combat-hero-mini-hp-bar kgauge kgauge-dragon kgauge-hp">'
+    +       '<div class="kgauge-track"><div id="combat-hero-mini-hp-fill" class="combat-hero-mini-hp-fill kgauge-fill" style="width:100%"></div></div>'
+    +       '<span class="kgauge-text" id="combat-hero-mini-hp-text">10 / 10</span>'
     +     '</div>'
     +   '</div>'
     + '</div>';

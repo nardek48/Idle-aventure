@@ -30,6 +30,7 @@
 <link rel="stylesheet" href="./css/00-components.css">
 <link rel="stylesheet" href="./css/00-rframe.css">
 <link rel="stylesheet" href="./css/00-kbtn.css">
+<link rel="stylesheet" href="./css/00-kgauge.css">
 <link rel="stylesheet" href="./css/00-title-screen.css">
 <link rel="stylesheet" href="./css/00-hero-creation.css">
 <link rel="stylesheet" href="./css/01-base.css">
@@ -158,6 +159,12 @@ body.atl-body {
   margin-top: 2px;
   color: #f4e9d0;
   opacity: 0.75;
+}
+
+/* État pressé forcé des boutons ronds (contrôle statique) */
+.atl-round-pressed {
+  background-image: url('./images/UI/buttons/btn-round-close-pressed.png') !important;
+  transform: scale(0.92);
 }
 
 /* État pressé forcé (contrôle statique — dans le jeu c'est :active) */
@@ -398,7 +405,7 @@ function buildTabBarSection() {
       + '</div></button>';
   }
   var html = '<div id="tab-bar"><div id="tab-bar-row">'
-    + tab("camp_menu.png", "Campement", true)
+    + tab("camp_menu.png", "Camp", true)
     + tab("quests_menu.png", "Quêtes")
     + tab("village_menu.png", "Village")
     + tab("heroes_menu.png", "Héros")
@@ -450,6 +457,15 @@ function buildKbtnSection() {
     + '</div>'
     + '<button class="inv-sell-all-btn">🗑️ Tout vendre</button>'
     + '<hr style="border:none;border-top:1px dashed #b09a6a;margin:12px 0">'
+    + '<p class="atl-label" style="text-align:left;color:#5a4a2a;opacity:1">Boutons ronds (v3.175 : fermer EN JEU — .full-menu-close/.hc-close-btn ; retour/plus en réserve)</p>'
+    + '<div style="display:flex;gap:10px;align-items:center">'
+    + '<button class="full-menu-close">✕</button>'
+    + '<button class="krbtn krbtn-close atl-round-pressed">✕</button>'
+    + '<button class="krbtn krbtn-back">Retour</button>'
+    + '<button class="krbtn krbtn-plus">+</button>'
+    + '</div>'
+    + '<p class="atl-label" style="text-align:left;color:#5a4a2a;opacity:1">(2e = état pressé forcé ; maintenir les autres pour le vrai :active)</p>'
+    + '<hr style="border:none;border-top:1px dashed #b09a6a;margin:12px 0">'
     + '<p class="atl-label" style="text-align:left;color:#5a4a2a;opacity:1">Contextes redimensionnés (surcharges d\'écran conservées)</p>'
     + '<div class="equip-toolbar"><button class="settings-btn">⇅ Trier</button><button class="settings-btn">Filtrer</button><button class="settings-btn">⚙ Réglages</button></div>'
     + '</div>';
@@ -458,6 +474,37 @@ function buildKbtnSection() {
     "css/00-kbtn.css · btn-rect-normal/pressed.png",
     html,
     "Le variant primary (texte or clair + léger boost) est une proposition — à confirmer ou ajuster. Les surcharges par écran (barres d\'outils, popups) ne touchent que le layout, vérifiées à l\'audit v3.168.0."
+  );
+}
+
+/* --- 10. Jauges du kit (.kgauge, css/00-kgauge.css) ------------------
+   ATELIER UNIQUEMENT : correspondance cadre <-> usage à valider par
+   Seb avant toute bascule des barres du jeu. */
+function buildKgaugeSection() {
+  function g(variant, fillClass, label, pct, text) {
+    return '<p class="atl-label" style="text-align:left;color:#5a4a2a;opacity:1;margin:10px 0 2px">' + label + '</p>'
+      + '<div class="kgauge ' + variant + ' ' + fillClass + '">'
+      + '<div class="kgauge-track"><div class="kgauge-fill atl-gfill" style="width:' + pct + '%"></div></div>'
+      + '<span class="kgauge-text">' + text + '</span>'
+      + '</div>';
+  }
+  var html = '<div class="atl-on-parchment">'
+    + '<label style="display:block;font-size:11px;color:#5a4a2a;font-weight:700;margin-bottom:6px">Remplissage : <input type="range" id="atl-gauge-pct" min="0" max="100" value="72" style="vertical-align:middle;width:160px"> <span id="atl-gauge-pct-val">72%</span></label>'
+    + g('kgauge-dragon', 'kgauge-hp', 'dragon — proposition : PV du HÉROS (la plus ornée, tête à gauche côté portrait)', 72, 'PV 720/1000')
+    + g('kgauge-dragon-claw', 'kgauge-hp-enemy', 'dragon-claw — PV ennemi NORMAL (décision v3.171 : cohérent avec élite/boss)', 72, '720/1000')
+    + g('kgauge-elite', 'kgauge-hp-enemy', 'elite — proposition : PV ennemi ÉLITE', 72, '720/1000')
+    + g('kgauge-boss', 'kgauge-hp-enemy', 'boss (œil) — proposition : PV de BOSS', 72, '720/1000')
+    + g('kgauge-thin', 'kgauge-rage', 'thin — proposition : ressources de classe (ici Rage)...', 72, '72/100')
+    + g('kgauge-thin', 'kgauge-mana', '...Mana...', 72, '72/100')
+    + g('kgauge-thin', 'kgauge-focus', '...Concentration...', 72, '72/100')
+    + g('kgauge-thin', '', '...et célérité (jauge ⚡ du combat)', 72, '⚡ 72%')
+    + g('kgauge-thin', 'kgauge-xp', 'thin — aussi proposé pour l\'XP et les progressions hors combat', 72, 'Niv. 12 — 72%')
+    + '</div>';
+  return section(
+    "10. Jauges du kit — EN JEU depuis v3.172.0 (combat)",
+    "css/00-kgauge.css · images/UI/gauges/*.png (fenêtres mesurées au pixel)",
+    html,
+    "v3.172 : bascul\u00e9 en jeu (PV ennemi = dragon-claw/boss selon le type, PV h\u00e9ros = dragon, ressource de classe + c\u00e9l\u00e9rit\u00e9 = thin) ; flat retir\u00e9e (d\u00e9cision). Les hauteurs suivent maintenant le RATIO des cadres : barres plus hautes qu\u2019avant, \u00e0 v\u00e9rifier dans le layout combat r\u00e9el."
   );
 }
 
@@ -471,7 +518,8 @@ document.getElementById("atl-root").innerHTML =
   + buildSubtabSection()
   + buildTabBarSection()
   + buildFrameSection()
-  + buildKbtnSection();
+  + buildKbtnSection()
+  + buildKgaugeSection();
 
 /* --- Interactions de la galerie -------------------------------------- */
 function atlToggleSelect(el) { el.classList.toggle("is-selected"); }
@@ -494,6 +542,13 @@ function atlTabActive(el) {
    (choix Seb, v3.165). Au-delà de ~65 %, l'icône touche le nouveau
    cadre légendaire (cavité mesurée la plus serrée des 5) — le curseur
    monte à 70 % exprès pour pouvoir VOIR cette limite. */
+/* Curseur des jauges (section 10) */
+document.getElementById("atl-gauge-pct").addEventListener("input", function () {
+  var v = this.value;
+  document.getElementById("atl-gauge-pct-val").textContent = v + "%";
+  document.querySelectorAll(".atl-gfill").forEach(function (f) { f.style.width = v + "%"; });
+});
+
 document.getElementById("atl-icon-size").addEventListener("input", function () {
   document.documentElement.style.setProperty("--rframe-icon", this.value + "%");
   document.getElementById("atl-icon-size-val").textContent = this.value + "%";

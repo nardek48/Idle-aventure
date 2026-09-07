@@ -409,34 +409,15 @@ img.nb-purchase-icon {
   text-align: center;
 }
 
+/* v3.173.0 : barre de niveau des améliorations migrée sur la jauge
+   fine du kit (structure kgauge posée par shop-view.js) — ne reste que
+   sa place dans la rangée ; texte réduit (barre étroite). */
 .nb-purchase-level-bar {
-  position: relative;
   flex: 1;
-  height: 16px;
-  border-radius: 999px;
-  background: #2b1f18;
-  border: 1px solid #c89b4a;
-  overflow: hidden;
 }
 
-.nb-purchase-level-fill {
-  height: 100%;
-  width: 0; /* remplacé par style="width: xx%;" en JS */
-  background: linear-gradient(to bottom, #60a5fa, #2563eb);
-  border-radius: inherit;
-  transition: width 0.3s ease;
-}
-
-.nb-purchase-level-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+.nb-purchase-level-bar .kgauge-text {
+  font-size: 10px;
 }
 
 .nb-purchase-buy-col {
@@ -720,11 +701,7 @@ button.nb-entry-card {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .nb-purchase-level-fill {
-    transition: none;
-  }
-}
+/* v3.173.0 : règle reduced-motion de l'ancienne .nb-purchase-level-fill retirée (couvert par 00-kgauge.css). */
 
 /* =========================
    v2.83.5 : sous-onglets génériques (pilules collées en bas du panel)

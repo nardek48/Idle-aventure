@@ -158,79 +158,25 @@
   border-radius: 6px;              /* léger arrondi interne */
 }
 
-/* ===== Barres à cadre sombre (niveau/XP) ===== */
+/* ===== Barres niveau/XP =====
+   v3.173.0 : migrées sur la jauge fine du kit (structure kgauge posée
+   par heros-view.js, couleur kgauge-xp) — anciens styles locaux
+   supprimés, y compris le réemploi du cadre barre-pv-ennemi.png sur
+   .pc-bar-exp (vestige). Ne restent que les dimensionnements. */
 .pc-bar {
-  position: relative;
   width: 100%;
-  height: 18px;
-  border-radius: var(--nb-radius-pill);
-  background: var(--nb-shell);
-  border: 1px solid var(--nb-gold-dark);
-  overflow: hidden;
 }
 
-/* Variante compacte générique (pour les autres barres) */
 .pc-bar-compact {
-  height: 10px;
   margin-bottom: 10px;
 }
 
-/* Remplissage générique */
-.pc-bar-fill {
-  height: 100%;
-  border-radius: var(--nb-radius-pill);
-  transition: width 0.3s ease;
-}
-
-/* ===== XP : cadre image + fond interne ===== */
 .pc-bar-exp {
-  position: relative;
-  width: 130px;  /* mets ici la largeur de ton PNG barre-pv-ennemi.png (à ajuster à l’œil) */
-  height: 24px;  /* mets ici la hauteur de ton PNG */
-  background: url('../images/Borders/barre-pv-ennemi.png') center / 100% 100% no-repeat;
-  border: none;
-  padding: 3px 4px; /* espace intérieur pour que le remplissage ne déborde pas le cadre doré */
-  overflow: hidden;  
+  width: 130px;
 }
 
-/* fond sombre sous la barre (partie non remplie) */
-.pc-bar-exp::before {
-  content: "";
-  position: absolute;
-  inset: 3px 4px;         /* même valeurs que le padding pour coller à l’intérieur du cadre */
-  background: #22141c;    /* fond noir/brun comme sur ta capture */
-  border-radius: 999px;
-  z-index: 0;
-}
-
-/* remplissage XP, en pourcentage de la largeur interne */
-.pc-bar-exp .pc-bar-fill {
-  position: relative;
-  z-index: 1;             /* au-dessus du fond sombre, mais sous le texte */
-    background: linear-gradient(to bottom, #c3d7f0, #08235e); /* bleu clair en haut, bleu foncé en bas */
-  height: 100%;
-  border-radius: 999px;   /* pill bien arrondi */
-}
-
-/* barre de niveau (utilise le même fond interne sombre si tu l'appliques à pc-bar-level) */
-.pc-bar-level .pc-bar-fill {
-  
-  background: linear-gradient(to bottom, #a2eebe, #063f1b); /* bleu clair en haut, bleu foncé en bas */
-
-}
-
-/* texte centré par-dessus la barre (24 / 37, etc.) */
-.pc-bar-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.pc-bar .kgauge-text {
   font-size: 10px;
-  font-weight: 800;
-  color: var(--nb-ink-inverse);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-  z-index: 2;             /* au-dessus du bleu et du fond sombre */
 }
 
 /* ===== Liste de stats PV/ATK/DEF/VIT/CRIT ===== */

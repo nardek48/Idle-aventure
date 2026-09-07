@@ -121,16 +121,14 @@
   object-fit: contain;
 }
 
+/* v3.173.0 : barre migrée sur la jauge fine du kit (structure kgauge,
+   production-view.js) — height fixe RETIRÉE (elle écraserait le ratio
+   du cadre, même piège que l'étirement des slots v3.162) ; la règle
+   anti-texte n'a plus d'objet (plus de nb-entry-progress-text dans le
+   markup). L'état .done (stock plein, vert) continue de fonctionner
+   via la classe nb-entry-progress-fill conservée sur le remplissage. */
 .production-stock-bar {
-  height: 10px;
   margin: 0 0 3px;
-}
-
-/* Pas de texte superposé dans la barre elle-même sur ce design (la
-   valeur est affichée juste en dessous, .production-card-stock-label)
-   — contrairement à .nb-entry-progress-text utilisé ailleurs. */
-.production-stock-bar .nb-entry-progress-text {
-  display: none;
 }
 
 .production-card-stock-label {
@@ -404,13 +402,9 @@
   text-overflow: ellipsis;
 }
 
+/* v3.173.0 : idem barre de stock — height fixe retirée (ratio kgauge). */
 .farm-plot-card-bar {
-  height: 6px;
   margin: 2px 0 0;
-}
-
-.farm-plot-card-bar .nb-entry-progress-text {
-  display: none;
 }
 
 .farm-plot-card-stock-label {

@@ -322,55 +322,30 @@
   white-space: nowrap;
 }
 
+/* v3.172.0 : PV du héros migrés sur la jauge dragon du kit (structure
+   kgauge posée par hud-view.js) — l'ancienne piste locale + surcouche
+   v2.63 (::after pv-hero.png) sont retirées, pv-hero.png devient un
+   vestige. La hauteur vient du RATIO du cadre. */
 .combat-hero-mini-hp-bar {
-  position: relative;
   width: 100%;
-  height: clamp(15.46px, calc(7.63px + 2.45vw), 18.14px);
   margin-top: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.55);
-  border: none;
 }
 
-/* v2.63 : cadre doré fourni par l'utilisateur
-   (images/Borders/pv-hero.png) posé en surcouche par-dessus le
-   remplissage — centre transparent, donc le dégradé de PV et le texte
-   restent visibles au travers, seul l'anneau doré recouvre. Pas de
-   pointes décoratives qui dépassent ici (contrairement au cadre de PV
-   ennemi), donc pas besoin de sous-conteneur séparé pour le découpage. */
-.combat-hero-mini-hp-bar::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background: url('../images/Borders/pv-hero.png') center / 100% 100% no-repeat;
-  pointer-events: none;
+.combat-hero-mini-hp-bar .kgauge-text {
+  font-size: clamp(9px, calc(4.5px + 1.4vw), 10.5px);
 }
 
-.combat-hero-mini-hp-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--hp-red), var(--hp-yellow), var(--hp-green));
-  transition: width 0.2s ease, background 0.2s ease;
-}
+/* v3.172.0 : base du remplissage portée par .kgauge-fill (+ couleur
+   kgauge-hp) — la classe historique ne sert plus qu'à l'état .low
+   ci-dessous (pulsation PV bas, togglée par hud-view.js), qui prime
+   sur la couleur kgauge par spécificité. */
 
 .combat-hero-mini-hp-fill.low {
   background: var(--hp-red);
   animation: hpLowPulse 1.2s ease-in-out infinite;
 }
 
-.combat-hero-mini-hp-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(8.83px, calc(4.37px + 1.39vw), 10.37px);
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-}
+/* v3.172.0 : .combat-hero-mini-hp-text supprimé — centrage/typo portés par .kgauge-text (+ override de taille plus haut). */
 
 /* v2.38 : le bloc "zone + XP" (.nb-hud-lower et ses enfants
    .nb-hud-zone/.nb-zone-name/.nb-zone-adventure/.nb-hud-xp...) a été

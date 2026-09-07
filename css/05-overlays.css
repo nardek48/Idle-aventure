@@ -766,15 +766,11 @@
   color: var(--nb-ink);
 }
 
+/* v3.175.0 : visuel porté par le bouton rond du kit (css/00-kbtn.css,
+   btn-round-close.png + état pressé) — ne reste que la taille. */
 .full-menu-close {
   width: 36px;
   height: 36px;
-  border-radius: 999px;
-  border: 2px solid var(--nb-frame);
-  background: var(--nb-cream-alt);
-  color: var(--nb-ink);
-  font-size: 16px;
-  cursor: pointer;
 }
 
 .full-menu-grid {

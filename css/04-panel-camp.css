@@ -62,31 +62,12 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 }
 
 /* Barre de PV (rouge) */
-.camp-hp-bar {
-  height: 18px;
-  border-radius: 999px;
-  border: 2px solid var(--nb-gold-dark);
-  background: rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-}
+/* v3.173.0 : .camp-hp-bar/.camp-hp-fill migrées sur la jauge fine du
+   kit (structure kgauge posée par camp-view.js, vert kgauge-hp aligné
+   sur les PV héros du combat — avant : rouge local). */
 
-.camp-hp-fill {
-  height: 100%;
-  background: linear-gradient(180deg, #ef4444, #b91c1c);
-  border-radius: 999px;
-  transition: width 0.4s ease;
-}
-
-.camp-hp-value {
-  margin-top: 6px;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--nb-ink);
-}
-
-.camp-hp-current {
-  color: #b91c1c;
-}
+/* v3.174.0 : .camp-hp-value/.camp-hp-current supprimées — les PV
+   s'affichent dans la jauge elle-même (kgauge-text). */
 
 /* Grille de rations (3 colonnes) */
 .camp-ration-grid {
@@ -145,20 +126,8 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   margin-bottom: 8px;
 }
 
-.camp-regen-bar {
-  height: 14px;
-  border-radius: 999px;
-  border: 2px solid var(--nb-gold-dark);
-  background: rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-}
-
-.camp-regen-fill {
-  height: 100%;
-  background: linear-gradient(180deg, #4ade80, #15803d);
-  border-radius: 999px;
-  transition: width 0.4s ease;
-}
+/* v3.173.0 : .camp-regen-bar/.camp-regen-fill migrées (kgauge-focus,
+   sarcelle, pour la distinguer de la barre de PV verte au-dessus). */
 
 .camp-regen-meta {
   display: flex;

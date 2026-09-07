@@ -42,6 +42,8 @@
   gap: 8px;
 }
 
+/* v3.175.0 : visuel porté par le bouton rond du kit (css/00-kbtn.css)
+   — ne restent que le positionnement et la taille. */
 .hc-close-btn {
   position: absolute;
   top: 8px;
@@ -49,17 +51,6 @@
   z-index: 3;
   width: 34px;
   height: 34px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(216, 168, 90, 0.6);
-  background: rgba(26, 16, 6, 0.75);
-  color: #f3e0b0;
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.hc-close-btn:active {
-  transform: scale(0.92);
 }
 
 .hc-logo {

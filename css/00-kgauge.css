@@ -1,0 +1,141 @@
+/* =====================================================================
+   v3.170.0 : .kgauge — jauges du kit or/bronze (6 cadres).
+
+   STATUT : ATELIER UNIQUEMENT — aucun écran du jeu ne référence encore
+   ces classes. La bascule des barres du jeu (PV, ressources de classe,
+   célérité, XP...) se fera par livraisons dédiées après validation par
+   Seb de la correspondance cadre <-> usage (section 10 de l'atelier).
+
+   Principe : 3 couches —
+     .kgauge        conteneur (ratio de l'asset, via aspect-ratio)
+       .kgauge-track  la piste sombre, calée sur la FENÊTRE transparente
+                      du cadre (mesurée au pixel sur chaque PNG, insets
+                      en % via variables --kg-*)
+         .kgauge-fill   le remplissage (largeur en %, couleur via
+                        --kgauge-fill)
+       ::after        le cadre PNG par-dessus (la fenêtre transparente
+                      laisse voir la piste)
+       .kgauge-text   texte optionnel centré dans la fenêtre
+
+   Fenêtres mesurées (scan alpha<40 depuis la médiane, v3.170.0) :
+     thin        989×111  L 8.1  R 7.7   T 27.0  B 29.7
+     flat        987×152  L 5.0  R 4.5   T 19.7  B 18.4
+     elite      1085×177  L 12.5 R 12.4  T 33.9  B 29.9
+     boss (œil) 1089×149  L 16.8 R 16.3  T 34.9  B 26.8
+     dragon     1091×215  L 21.6 R 10.5  T 38.6  B 31.2  (asymétrique :
+                tête de dragon à gauche)
+     dragon-claw 1086×163 L 11.2 R 11.0  T 35.0  B 26.4
+   ===================================================================== */
+
+.kgauge {
+  --kgauge-fill: linear-gradient(90deg, #f59e0b, #fde68a);
+
+  position: relative;
+  width: 100%;
+}
+
+/* v3.171.0 (retour Seb) : la piste DÉBORDE de la fenêtre pour que ses
+   extrémités se cachent sous la partie opaque du cadre (comme le rendu
+   élite qui plaisait) — débord par jauge (--kg-tl/--kg-tr), calibré au
+   pixel : min(4 %, 60 % de l'épaisseur opaque mesurée de chaque côté).
+   Le cadre est opaque dès le bord de sa fenêtre (écart ≤0,2 % mesuré),
+   donc le débord est invisible. Plus de bout arrondi (le 999px créait
+   le petit jour visible aux extrémités) ; --kg-l/r restent la fenêtre
+   VISIBLE, utilisée par le texte. */
+.kgauge-track {
+  position: absolute;
+  left: var(--kg-tl, var(--kg-l));
+  right: var(--kg-tr, var(--kg-r));
+  top: var(--kg-t);
+  bottom: var(--kg-b);
+  background: rgba(15, 20, 32, 0.82);
+  overflow: hidden;
+}
+
+.kgauge-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 100%;
+  background: var(--kgauge-fill);
+  transition: width 0.25s ease;
+}
+
+.kgauge::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: center / 100% 100% no-repeat;
+  background-image: var(--kg-frame);
+  pointer-events: none;
+}
+
+.kgauge-text {
+  position: absolute;
+  left: var(--kg-l);
+  right: var(--kg-r);
+  top: var(--kg-t);
+  bottom: var(--kg-b);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff7e0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+  line-height: 1;
+}
+
+/* ----- Les 6 cadres (ratio + fenêtre + image) ----- */
+.kgauge.kgauge-thin {
+  aspect-ratio: 989 / 111;
+  --kg-frame: url('../images/UI/gauges/gauge-thin-frame.png');
+  --kg-l: 8.1%; --kg-r: 7.7%; --kg-t: 27%; --kg-b: 29.7%;
+  --kg-tl: 4.1%; --kg-tr: 3.7%;
+}
+
+/* v3.172.0 : variante flat SUPPRIMÉE (décision Seb — seule jauge dont
+   la piste débordait visiblement, bordure trop fine). L'asset
+   gauge-flat-frame.png devient un vestige. */
+
+.kgauge.kgauge-elite {
+  aspect-ratio: 1085 / 177;
+  --kg-frame: url('../images/UI/gauges/gauge-elite-frame.png');
+  --kg-l: 12.5%; --kg-r: 12.4%; --kg-t: 33.9%; --kg-b: 29.9%;
+  --kg-tl: 8.5%; --kg-tr: 8.4%;
+}
+
+.kgauge.kgauge-boss {
+  aspect-ratio: 1089 / 149;
+  --kg-frame: url('../images/UI/gauges/gauge-boss-frame.png');
+  --kg-l: 16.8%; --kg-r: 16.3%; --kg-t: 34.9%; --kg-b: 26.8%;
+  --kg-tl: 12.8%; --kg-tr: 12.3%;
+}
+
+.kgauge.kgauge-dragon {
+  aspect-ratio: 1091 / 215;
+  --kg-frame: url('../images/UI/gauges/gauge-dragon-frame.png');
+  --kg-l: 21.6%; --kg-r: 10.5%; --kg-t: 38.6%; --kg-b: 31.2%;
+  --kg-tl: 17.6%; --kg-tr: 6.5%;
+}
+
+.kgauge.kgauge-dragon-claw {
+  aspect-ratio: 1086 / 163;
+  --kg-frame: url('../images/UI/gauges/gauge-dragon-claw-frame.png');
+  --kg-l: 11.2%; --kg-r: 11%; --kg-t: 35%; --kg-b: 26.4%;
+  --kg-tl: 7.2%; --kg-tr: 7%;
+}
+
+/* ----- Couleurs de remplissage usuelles ----- */
+.kgauge.kgauge-hp { --kgauge-fill: linear-gradient(90deg, #15803d, #4ade80); }
+.kgauge.kgauge-hp-enemy { --kgauge-fill: linear-gradient(90deg, #991b1b, #ef4444); }
+.kgauge.kgauge-rage { --kgauge-fill: linear-gradient(90deg, #b91c1c, #f97316); }
+.kgauge.kgauge-mana { --kgauge-fill: linear-gradient(90deg, #1d4ed8, #60a5fa); }
+.kgauge.kgauge-focus { --kgauge-fill: linear-gradient(90deg, #0f766e, #2dd4bf); }
+.kgauge.kgauge-xp { --kgauge-fill: linear-gradient(90deg, #b45309, #fbbf24); }
+
+@media (prefers-reduced-motion: reduce) {
+  .kgauge-fill {
+    transition: none;
+  }
+}

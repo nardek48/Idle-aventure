@@ -170,13 +170,15 @@ function buildHeroFicheHTML() {
   }
   h += '</div>';
   h += '<div class="pc-exp-label">EXP</div>';
-  h += '<div class="pc-bar pc-bar-exp"><div class="pc-bar-fill" style="width:' + xpPct + '%"></div><span class="pc-bar-text">' + formatNumber(heroXp) + ' / ' + formatNumber(heroXpToNext) + '</span></div>';
+  // v3.173.0 : XP sur la jauge fine du kit (remplace l'ancien cadre barre-pv-ennemi.png réutilisé ici).
+  h += '<div class="pc-bar pc-bar-exp kgauge kgauge-thin kgauge-xp"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + xpPct + '%"></div></div><span class="kgauge-text">' + formatNumber(heroXp) + ' / ' + formatNumber(heroXpToNext) + '</span></div>';
   h += '</div>'; // /pc-portrait-col
 
 h += '<div class="pc-info-wrapper">';
   h += '<div class="pc-info-col">';
     h += '<div class="pc-level-pill"><span class="pc-level-badge">Niv.</span><span>Niveau ' + esc(heroLevel) + '</span></div>';
-    h += '<div class="pc-bar pc-bar-level pc-bar-compact"><div class="pc-bar-fill" style="width:' + xpPct + '%"></div></div>';
+    // v3.174.0 (retour Seb) : barre d'XP compacte retirée — doublon avec celle
+    // sous le portrait du héros, une seule suffit.
 
     h += '<div class="pc-stat-list">';
       h += buildPcStatRowHTML("❤️", "PV", formatNumber(heroMaxHp));

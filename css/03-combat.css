@@ -350,55 +350,30 @@
    les pointes décoratives du cadre image sur les côtés) — déplacés
    sur .enemy-hp-bar-track ci-dessous, qui ne contient que le
    remplissage rouge. */
+/* v3.172.0 : PV ennemi migrés sur le composant jauge du kit
+   (css/00-kgauge.css — dragon-claw normal / boss, classes posées par
+   combat-view.js). L'ancienne technique v2.58 (piste locale + cadre
+   barre-pv-ennemi.png en ::after) est retirée plus bas ; la hauteur
+   vient maintenant du RATIO du cadre (plus de height fixe) ;
+   barre-pv-ennemi.png devient un vestige. */
 #enemy-hp-bar-wrapper {
-  position: relative;
   width: min(75%, 320px);
   max-width: 320px;
-  height: clamp(26px, calc(13px + 4vw), 30px);
   margin-top: 0;
   margin-bottom: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
   border: none;
   transform: translateY(-25px);
 }
 
-.enemy-hp-bar-track {
-  position: absolute;
-  inset: 3px 10px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--nb-cream-deep);
-  box-shadow: var(--nb-shadow-card);
-}
+/* v3.172.0 : .enemy-hp-bar-track supprimée (remplacée par .kgauge-track). */
 
-/* v2.58 : cadre doré fourni par l'utilisateur
-   (images/Borders/barre-pv-ennemi.png) posé en surcouche par-dessus
-   le remplissage — son centre est transparent, donc le dégradé rouge
-   (#enemy-hp-bar, largeur pilotée par le JS selon les PV restants) et
-   le texte "X / Y" restent visibles au travers, seul l'anneau doré
-   recouvre. pointer-events:none pour ne jamais bloquer un clic. */
-#enemy-hp-bar-wrapper::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background: url('../images/Borders/barre-pv-ennemi.png') center / 100% 100% no-repeat;
-  pointer-events: none;
-}
+/* v3.172.0 : surcouche v2.58 (::after barre-pv-ennemi.png) supprimée — le cadre vient de .kgauge::after. */
 
-#enemy-hp-bar {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ef5555, #c62828);
-  transition: width 0.12s ease;
-}
+/* v3.172.0 : #enemy-hp-bar (remplissage) supprimé — .kgauge-fill + kgauge-hp-enemy. */
 
+/* v3.172.0 : positionnement/centrage retirés (portés par .kgauge-text),
+   seuls les réglages typographiques locaux restent. */
 #enemy-hp-text {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: clamp(10.12px, calc(5px + 1.6vw), 11.88px);
   font-weight: 800;
   color: #fff;
@@ -971,54 +946,19 @@ img.combat-action-icon {
   pointer-events: none;
 }
 
+/* v3.172.0 : piste et couleurs locales (rage/focus/mana) remplacées par
+   la jauge fine du kit — combat-view.js pose kgauge-thin +
+   kgauge-{rage|focus|mana} (couleurs dans 00-kgauge.css).
+   .class-resource-track ne garde que sa largeur ; texte réduit. */
 .class-resource-track {
-  position: relative;
   width: min(75%, 320px);
   max-width: 320px;
-  height: clamp(16px, calc(8px + 2.4vw), 19px);
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--nb-cream-deep);
-  box-shadow: var(--nb-shadow-card);
-  border: 1px solid rgba(120, 90, 40, 0.35);
 }
 
-.class-resource-fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.15s ease;
-  background: linear-gradient(180deg, #f0aa3e, #c97f1c); /* repli neutre si la classe n'est pas résolue */
-}
-
-/* Rage (Chevalier) : rouge/orangé — cohérent avec l'ancienne icône
-   d'attaque spéciale du Chevalier. */
-.class-resource-rage .class-resource-fill {
-  background: linear-gradient(180deg, #ef7355, #b8351f);
-}
-
-/* Concentration (Rôdeur) : vert — cohérent avec le thème arc/nature. */
-.class-resource-focus .class-resource-fill {
-  background: linear-gradient(180deg, #6fd17a, #2f8f3d);
-}
-
-/* Mana (Mage) : bleu/violet — cohérent avec le thème magie. */
-.class-resource-mana .class-resource-fill {
-  background: linear-gradient(180deg, #8f7ff0, #5340c9);
-}
-
-.class-resource-text {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.class-resource-track .kgauge-text {
   font-size: clamp(9px, calc(4.5px + 1.4vw), 10.5px);
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
-  pointer-events: none;
 }
+
 
 /* =========================
    v3.68.0 : archétype Enragé (Phase 9)
@@ -1151,35 +1091,18 @@ img.combat-action-icon {
   letter-spacing: 0.3px;
 }
 
+/* v3.172.0 : célérité migrée sur la jauge fine du kit (structure kgauge
+   posée par combat-view.js) — .combat-gauge ne garde que sa place dans
+   la barre de round ; piste/remplissage/cadre/texte via 00-kgauge.css. */
 .combat-gauge {
-  position: relative;
   flex: 1 1 auto;
   max-width: 120px;
-  height: 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(212, 175, 55, 0.45);
-  background: rgba(15, 20, 32, 0.78);
-  overflow: hidden;
 }
 
-.combat-gauge-fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: linear-gradient(90deg, #f59e0b, #fde68a);
-  transition: width 0.25s ease;
-}
-
-.combat-gauge-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.combat-gauge .kgauge-text {
   font-size: clamp(9px, calc(5px + 1.2vw), 11px);
-  font-weight: 800;
-  color: #fff7e0;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
+
 
 .combat-mode-btn,
 .combat-continue-btn {

@@ -96,3 +96,50 @@
     transform: none;
   }
 }
+
+/* =====================================================================
+   v3.175.0 : boutons RONDS du kit (btn-round-close/back/plus + états
+   pressés — le glyphe est PEINT dans l'asset).
+
+   Usages en jeu basculés par CSS UNIQUEMENT (aucune modification JS) :
+   .full-menu-close (4 usages, dont 2 dans save-system.js — fichier
+   protégé, donc pas touché : c'est la raison du choix "restylage de la
+   classe existante") et .hc-close-btn (création de héros). Leur glyphe
+   texte "✕" est masqué (font-size:0) puisque l'asset le peint déjà —
+   le texte reste dans le DOM.
+   Les boutons RETOUR du titre/création gardent leur asset déjà validé
+   (bouton_retour_new.png) ; .krbtn-back/-plus restent disponibles pour
+   de futurs usages (spécimens dans l'atelier, section 9). */
+
+.krbtn,
+.full-menu-close,
+.hc-close-btn {
+  border: none;
+  border-radius: 0;
+  background: center / contain no-repeat;
+  font-size: 0;        /* masque le glyphe texte (peint dans l'asset) */
+  color: transparent;
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+
+.krbtn:active,
+.full-menu-close:active,
+.hc-close-btn:active {
+  transform: scale(0.92);
+}
+
+.krbtn { width: 40px; aspect-ratio: 1 / 1; }
+
+.krbtn-close,
+.full-menu-close,
+.hc-close-btn { background-image: url('../images/UI/buttons/btn-round-close.png'); }
+
+.krbtn-close:active,
+.full-menu-close:active,
+.hc-close-btn:active { background-image: url('../images/UI/buttons/btn-round-close-pressed.png'); }
+
+.krbtn-back { background-image: url('../images/UI/buttons/btn-round-back.png'); }
+.krbtn-back:active { background-image: url('../images/UI/buttons/btn-round-back-pressed.png'); }
+.krbtn-plus { background-image: url('../images/UI/buttons/btn-round-plus.png'); }
+.krbtn-plus:active { background-image: url('../images/UI/buttons/btn-round-plus-pressed.png'); }

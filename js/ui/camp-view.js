@@ -87,8 +87,12 @@ function buildCampHTML() {
   // v3.116.0 (Lot C, maquette Seb) : bloc Santé du Héros — barre de PV pleine largeur.
   h += '<div class="camp-card camp-health-card">';
   h += '<div class="camp-section-title">❤️ Santé du Héros</div>';
-  h += '<div class="camp-hp-bar"><div class="camp-hp-fill" id="camp-hp-fill" style="width:' + hpPct + '%"></div></div>';
-  h += '<div class="camp-hp-value" id="camp-fire-hp-value"><span class="camp-hp-current">' + formatNumber(Math.floor(hp)) + '</span> / ' + formatNumber(maxHp) + '</div>';
+  // v3.173.0 : jauge fine du kit (vert, aligné sur les PV héros du combat — avant : rouge).
+  // v3.174.0 (retour Seb) : PV courants/max affichés DANS la barre (kgauge-text)
+  // au lieu d'une ligne séparée dessous — l'id camp-fire-hp-value migre sur le
+  // texte de la jauge (camp-system.js le met à jour tel quel).
+  h += '<div class="camp-hp-bar kgauge kgauge-thin kgauge-hp"><div class="kgauge-track"><div class="kgauge-fill" id="camp-hp-fill" style="width:' + hpPct + '%"></div></div>'
+    + '<span class="kgauge-text" id="camp-fire-hp-value">' + formatNumber(Math.floor(hp)) + ' / ' + formatNumber(maxHp) + '</span></div>';
 
   // Bloc Rations — 3 cartes côte à côte (icône, soin, stock, bouton Manger).
   h += '<div class="camp-section-title camp-section-sub">🍖 Rations</div>';
@@ -109,7 +113,8 @@ function buildCampHTML() {
   // Bloc Régénération — barre verte + rythme + temps restant.
   h += '<div class="camp-section-title camp-section-sub">✚ Régénération</div>';
   h += '<div class="camp-regen-desc">Récupère des PV automatiquement au fil du temps, hors combat.</div>';
-  h += '<div class="camp-regen-bar"><div class="camp-regen-fill" id="camp-regen-fill" style="width:' + hpPct + '%"></div></div>';
+  // v3.173.0 : jauge fine du kit, teinte sarcelle (kgauge-focus) pour la distinguer de la barre de PV verte juste au-dessus.
+  h += '<div class="camp-regen-bar kgauge kgauge-thin kgauge-focus"><div class="kgauge-track"><div class="kgauge-fill" id="camp-regen-fill" style="width:' + hpPct + '%"></div></div></div>';
   h += '<div class="camp-regen-meta">';
   h += '<span class="camp-regen-rate">+' + regenPct + ' % PV par minute</span>';
   h += '<span class="camp-regen-eta" id="camp-fire-eta">' + (hpFull ? '✔ PV au maximum' : esc('⏳ Max dans ' + formatTime(Math.ceil(minutesToFull * 60)))) + '</span>';
