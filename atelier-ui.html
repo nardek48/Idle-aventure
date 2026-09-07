@@ -539,6 +539,40 @@ function buildKbadgeSection() {
   );
 }
 
+/* --- 12. Cadre principal v2 (.kframe, nouveaux assets Seb) ----------- */
+function buildKframeSection() {
+  /* v3.186 : structure 3 rangées (kf-top / kf-mid / kf-bot) — rails du
+     milieu raccourcis par construction (retour Seb). */
+  function frame(extra, label, inner) {
+    return '<p class="atl-label" style="text-align:left;color:#f4e9d0;opacity:.85">' + label + '</p>'
+      + '<div class="kframe ' + extra + '">'
+      + '<div class="kf-top"></div>'
+      + '<div class="kf-mid">' + inner + '</div>'
+      + '<div class="kf-bot"></div>'
+      + '</div>';
+  }
+  var innerShort = '<h3 style="margin:0 0 6px;color:inherit">Camp</h3>'
+    + '<p style="margin:0;font-size:12px;opacity:.85">Contenu court — le cadre suit la hauteur.</p>';
+  var innerTall = '<h3 style="margin:0 0 6px;color:inherit">Équipement</h3>'
+    + '<p style="margin:0 0 8px;font-size:12px;opacity:.85">Contenu long : seul le milieu s\'étire.</p>'
+    + '<button class="settings-btn">Un bouton du kit</button>'
+    + '<div style="height:140px"></div>'
+    + '<p style="margin:0;font-size:12px;opacity:.85">Bas du contenu.</p>';
+  var html = '<div>'
+    + frame('kframe-texture', 'Texture Seb (pierre moussue) — écran court', innerShort)
+    + frame('kframe-texture', 'Texture Seb — écran long', innerTall)
+    + frame('kframe-court kframe-texture', 'Milieu COURT (nouvel asset) — même cadre court, à comparer avec le 1er', innerShort)
+    + frame('kframe-parchment', 'Variante parchemin (réserve)', innerShort)
+    + frame('kframe-dark', 'Intérieur sombre uni', innerShort)
+    + '</div>';
+  return section(
+    "12. Cadre principal v2 — MAQUETTE (pas encore en jeu)",
+    "css/00-kbtn.css (.kframe 3 rangées) · Cadre_{Haut,Milieux,Bas}.png · bg-moss-stone.png",
+    html,
+    "D\u00c9CID\u00c9 v3.189 : texture moussue par d\u00e9faut, milieu LONG pour le grand cadre (court = petites fen\u00eatres), bascule limit\u00e9e au cadre principal (cadres int\u00e9rieurs = chantier ult\u00e9rieur avec frame-content-*). Prochaine \u00e9tape : bascule des 17 \u00e9crans sur le ZIP complet \u00e0 jour."
+  );
+}
+
 /* --- Assemblage ------------------------------------------------------ */
 document.getElementById("atl-root").innerHTML =
   buildOrbitSection()
@@ -551,7 +585,8 @@ document.getElementById("atl-root").innerHTML =
   + buildFrameSection()
   + buildKbtnSection()
   + buildKgaugeSection()
-  + buildKbadgeSection();
+  + buildKbadgeSection()
+  + buildKframeSection();
 
 /* --- Interactions de la galerie -------------------------------------- */
 function atlToggleSelect(el) { el.classList.toggle("is-selected"); }

@@ -213,3 +213,142 @@
   background-image: url('../images/UI/badges/title-ribbon-small.png');
   --kb-l: 16%; --kb-r: 16%; --kb-t: 40%; --kb-b: 30%;   /* centre 55 % (bandeau mesuré) */
 }
+
+/* =====================================================================
+   v3.185→187 : .kframe — cadre principal des écrans, VERSION 2
+   (assets Seb : Cadre_Haut/Milieux/Bas, tranches 1604px alignées).
+   ATELIER UNIQUEMENT (section 12).
+
+   Architecture (v3.186 : 3 rangées en flux — rails du milieu
+   raccourcis par construction ; v3.187, retour Seb : le REMPLISSAGE
+   intérieur — texture ou couleur — est maintenant DÉCOUPÉ à
+   l'intérieur du cadre, il ne déborde plus sur les côtés ni au-dessus/
+   dessous des barres) :
+
+   Chaque rangée porte deux pseudo-éléments :
+     ::before (z:-1) = remplissage intérieur, inset MESURÉ au pixel :
+       - côtés : 3,45 % (affleure le bord intérieur du rail, 3,49 % —
+         v3.187b : le glissement sous le rail créait des encoches
+         claires aux jonctions, le débord ±1px passant par-dessus le
+         rail de la rangée voisine dans l'ordre de peinture DOM)
+       - kf-top : commence à 28 % de la hauteur du cap (bas de la barre
+         mesuré à 29 %, -1 % de recouvrement anti-couture)
+       - kf-bot : s'arrête à 87,5 % (haut de barre mesuré à 86,5 %)
+       - jonctions inter-rangées : -1px de chevauchement
+       Les % verticaux sont FIABLES car chaque rangée a un ratio figé
+       (aspect-ratio de son asset).
+     ::after (z:1) = l'art du cadre (cap ou rails), par-dessus.
+   Le contenu (kf-mid) peint entre les deux. `isolation:isolate` sur
+   chaque rangée confine le z:-1.
+
+   Markup :
+     <div class="kframe [kframe-dark|kframe-texture]">
+       <div class="kf-top"></div>
+       <div class="kf-mid"> ...contenu... </div>
+       <div class="kf-bot"></div>
+     </div> */
+
+/* v3.189.0 — DÉCISIONS FIGÉES (Seb) : intérieur = TEXTURE MOUSSUE par
+   défaut ; milieu = source LONGUE pour le grand cadre (la courte,
+   .kframe-court, reste dédiée aux petites fenêtres/popups) ; la
+   bascule ne concerne QUE le cadre principal (.nb-page-frame) — les
+   cadres intérieurs (frame-content-*) sont un chantier ultérieur. */
+.kframe {
+  display: flex;
+  flex-direction: column;
+  color: #f4e9d0;
+  --kf-fill: #1c2318;
+}
+
+.kframe .kf-top::before,
+.kframe .kf-mid::before,
+.kframe .kf-bot::before {
+  background-image: url('../images/UI/textures/bg-moss-stone.png');
+  background-size: 256px 256px;
+  background-repeat: repeat;
+}
+
+.kf-top,
+.kf-mid,
+.kf-bot {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+}
+
+.kf-top,
+.kf-bot {
+  flex: 0 0 auto;
+  pointer-events: none;
+}
+
+.kf-top { aspect-ratio: 1604 / 269; }
+.kf-bot { aspect-ratio: 1604 / 275; }
+
+.kf-mid {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 4px 6.5%;
+}
+
+/* --- remplissage intérieur (sous l'art) --- */
+.kf-top::before,
+.kf-mid::before,
+.kf-bot::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 3.45%;
+  right: 3.45%;
+  background-color: var(--kf-fill);
+}
+
+.kf-top::before { top: 28%; bottom: -1px; }
+.kf-mid::before { top: -1px; bottom: -1px; }
+.kf-bot::before { top: -1px; bottom: 12.5%; }
+
+/* --- art du cadre (au-dessus) --- */
+.kf-top::after,
+.kf-mid::after,
+.kf-bot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.kf-top::after { background-image: url('../images/UI/frames/page/Cadre_Haut.png'); }
+.kf-mid::after { background-image: url('../images/UI/frames/page/Cadre_Milieux.png'); }
+.kf-bot::after { background-image: url('../images/UI/frames/page/Cadre_Bas.png'); }
+
+/* v3.188.0 : source de milieu COURTE (asset Seb, 1604×371, rails
+   alignés au pixel avec la longue) — pour les fenêtres basses, où la
+   longue (1006px) serait fortement compressée et densifierait les
+   gravures des rails. Variante à poser sur le conteneur. */
+.kframe.kframe-court .kf-mid::after {
+  background-image: url('../images/UI/frames/page/Cadre_Milieux_court.png');
+}
+
+/* --- variantes de remplissage (la texture est le défaut depuis
+   v3.189.0 ; .kframe-texture conservée en alias inoffensif pour les
+   spécimens existants) --- */
+.kframe.kframe-dark {
+  --kf-fill: #241a10;
+  color: #f4e9d0;
+}
+
+.kframe.kframe-dark .kf-top::before,
+.kframe.kframe-dark .kf-mid::before,
+.kframe.kframe-dark .kf-bot::before,
+.kframe.kframe-parchment .kf-top::before,
+.kframe.kframe-parchment .kf-mid::before,
+.kframe.kframe-parchment .kf-bot::before {
+  background-image: none;
+}
+
+.kframe.kframe-parchment {
+  --kf-fill: var(--nb-cream, #f3e6c8);
+  color: var(--nb-ink, #3a2c1a);
+}
