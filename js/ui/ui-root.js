@@ -308,6 +308,10 @@ function renderPanel() {
   // sous-onglets (Équipement/Inventaire/Boutique, etc.) et la barre de navigation du bas.
   container.classList.toggle("has-subtab-page", !!container.querySelector(".subtab-page"));
 
+  // v3.190.0 : cadre principal v2 — décoration 3 rangées de chaque .nb-page-frame
+  // (voir ui/kframe-decorator.js), AVANT la restauration du scroll (les hauteurs changent).
+  if (window.decoratePageFrames) decoratePageFrames(container);
+
   if (sameTab) {
     container.scrollTop = savedScrollTop;
     if (savedInnerScrollTop !== null) {

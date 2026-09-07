@@ -57,7 +57,10 @@ window.buildSceneScreenHTML = buildSceneScreenHTML;
    (évite de redéclencher le garde anti-sortie à chaque action de jeu). */
 function refreshSceneScreen() {
   var container = document.getElementById("panel-container");
-  if (container && game.activeTab === "scene") container.innerHTML = buildSceneScreenHTML();
+  if (container && game.activeTab === "scene") {
+    container.innerHTML = buildSceneScreenHTML();
+    if (window.decoratePageFrames) decoratePageFrames(container); // v3.190.0 : rendu direct hors renderPanel
+  }
 }
 
 /* --- Écran d'accueil : pas de run actif --- */

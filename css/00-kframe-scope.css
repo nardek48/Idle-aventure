@@ -1,0 +1,86 @@
+/* ============================================================
+Aethervale — css/00-kframe-scope.css
+v3.190.0 : bascule des 17 écrans .nb-page-frame sur le cadre v2
+(structure 3 rangées posée par ui/kframe-decorator.js, composant
+.kframe/.kf-* dans css/00-kbtn.css — texture moussue par défaut,
+décision Seb v3.189).
+
+Deux responsabilités ici :
+1. Neutraliser l'ancien habillage de .nb-page-frame quand le
+   décorateur est passé (LONGHANDS uniquement — leçon v3.183 : jamais
+   le raccourci background: sur un composant dont l'image vient
+   d'ailleurs).
+2. Basculer les jetons d'encre en crème DANS le cadre (fond sombre),
+   puis les RESTAURER dans les conteneurs-cartes à fond clair (liste
+   curée des cartes/panneaux principaux — leurs enfants héritent).
+============================================================ */
+
+.nb-page-frame.kframe {
+  padding: 0;
+  border-radius: 0;
+  background-image: none;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.nb-page-frame.kframe > .kf-mid {
+  padding: 8px 6.5% 10px;
+}
+
+/* --- encre crème sur la pierre --- */
+.nb-page-frame.kframe {
+  --nb-ink: #f4e9d0;
+  --nb-ink-dim: rgba(244, 233, 208, 0.78);
+}
+
+/* --- restauration de l'encre sombre dans les conteneurs clairs ---
+   (cartes/panneaux à fond crème ; ajouter ici tout conteneur oublié
+   repéré aux tests — UNE ligne suffit) */
+.kframe .nb-card,
+.kframe .nb-card-alt,
+.kframe .panel-card,
+.kframe .nb-purchase-card,
+.kframe .nb-entry-card,
+.kframe .nb-accordion-section,
+.kframe .nb-icon-tile,
+.kframe .camp-card,
+.kframe .camp-mission-card,
+.kframe .qb-card,
+.kframe .quest-section-card,
+.kframe .story-chain,
+.kframe .map-quest-card,
+.kframe .dungeon-card,
+.kframe .dungeon-tier-card,
+.kframe .dungeon-shop-card,
+.kframe .production-card,
+.kframe .farm-plot-card,
+.kframe .farm-plots-panel,
+.kframe .workshop-card,
+.kframe .workshop-summary-row,
+.kframe .workshop-completion-card,
+.kframe .construction-entry-card,
+.kframe .warehouse-reserve-block,
+.kframe .eq-detail-panel,
+.kframe .eq-hero-card,
+.kframe .talent-tier-card,
+.kframe .talent-summary-bar,
+.kframe .pc-cumulative-card,
+.kframe .hero-card,
+.kframe .potion-card,
+.kframe .equip-shop-card,
+.kframe .aether-shop-card,
+.kframe .scene-card,
+.kframe .scene-landing,
+.kframe .scene-log,
+.kframe .sandbox-card,
+.kframe .codex-reading-card,
+.kframe .codex-excerpt,
+.kframe .settings-info,
+.kframe .confirm-card,
+.kframe .offline-card,
+.kframe .ability-card,
+.kframe .pc-stat-list,
+.kframe .log-entry {
+  --nb-ink: #3a2c1a;
+  --nb-ink-dim: rgba(58, 44, 26, 0.72);
+}
