@@ -259,6 +259,29 @@ les classes de l'ancien thème pendant la migration progressive.
 /* Halo subtil derrière l'icône (repris du réglage fin fait dans
    Amélioration : fond légèrement teinté, coins arrondis un peu plus
    larges que l'icône elle-même). */
+/* v3.161.0 (retour Seb) : cadre de rareté (kit UI) étendu à la boutique
+   d'équipement (equip-shop-view.js, buildEquipmentIconHTML pose rarity-*
+   sur .nb-purchase-icon) — même logique que les 5 endroits déjà faits
+   dans css/04-panel-equipment.css. Composant PARTAGÉ (.nb-purchase-card/
+   -icon-slot/-icon) par 5 écrans (Ascension, Donjon, boutique
+   Équipement, Potions, boutique générale) — vérifié que seuls
+   equip-shop-view.js (objets) et potion-view.js (potions, via une AUTRE
+   fonction, renderIconOrEmojiHTML, qui ne pose PAS rarity-* sur l'icône)
+   posent une classe de rareté ; les 3 autres écrans n'en posent aucune,
+   donc ces nouvelles règles .rarity-* ne peuvent pas s'y déclencher par
+   erreur. Le halo derrière l'icône (rgba(0,0,0,0.06)) est retiré pour
+   les variantes de rareté : redondant avec le cadre-image. */
+/* v3.161.0 (retour Seb) : cadre de rareté (kit UI) étendu à la boutique
+   d'équipement (equip-shop-view.js, buildEquipmentIconHTML pose rarity-*
+   sur .nb-purchase-icon) — même logique que les 5 endroits déjà faits
+   dans css/04-panel-equipment.css. Composant PARTAGÉ (.nb-purchase-card/
+   -icon-slot/-icon) par 5 écrans (Ascension, Donjon, boutique
+   Équipement, Potions, boutique générale) — vérifié que seuls
+   equip-shop-view.js (objets) et potion-view.js (potions, via une AUTRE
+   fonction, renderIconOrEmojiHTML, qui ne pose PAS rarity-* sur l'icône)
+   posent une classe de rareté ; les 3 autres écrans n'en posent aucune,
+   donc ces nouvelles règles .rarity-* ne peuvent pas s'y déclencher par
+   erreur. */
 .nb-purchase-icon-slot {
   width: 48px;
   height: 48px;
@@ -277,6 +300,23 @@ img.nb-purchase-icon {
   object-fit: contain;
   flex-shrink: 0;
   display: block;
+}
+
+/* v3.164.0 : les 3 blocs de rareté locaux (taille 48px + 5 fonds +
+   img 52%) sont remplacés par le composant unifié .rframe
+   (css/00-rframe.css), posé par equip-shop-view.js en plus de
+   nb-purchase-icon. Ici on ne garde que le dimensionnement dans la
+   carte d'achat (hauteur en auto : le ratio vient de .rframe) et la
+   neutralisation du fond gris du slot derrière le cadre orné. */
+.nb-purchase-icon.rframe {
+  width: 48px;
+  min-width: 48px;
+  height: auto;
+}
+
+.nb-purchase-icon-slot:has(> .rframe) {
+  background-color: transparent;
+  height: auto; /* le cadre (ratio 299/318) est un peu plus haut que le slot 48x48 */
 }
 
 /* Variante texte de .nb-purchase-icon pour les icônes encore en
@@ -712,15 +752,23 @@ button.nb-entry-card {
 
 .pc-subtab-bar {
   display: flex;
+  width: 100%;
   gap: 2px;
   margin-top: 0;
   justify-content: center;
 }
 
+/* v3.155.0 (retour Seb) : largeur fixe (110/125px) -> flex:1, pour que
+   les boutons se répartissent TOUTE la largeur disponible (366px : 390
+   - 2×12px de padding de #panel-container), que l'écran ait 2 boutons
+   (Donjon, Ascension) ou 3 (Village, Personnage...). L'état actif garde
+   un peu plus de place (flex-grow 1.15) pour rester visuellement mis en
+   avant, sans largeur figée en dur. */
 .pc-subtab-btn {
-  flex: 0 0 auto;
-  width: 110px;
-  height: 58px;
+  flex: 1 1 0;
+  min-width: 0;
+  aspect-ratio: 592 / 224;
+  height: auto;
 
   display: flex;
   align-items: center;
@@ -730,16 +778,10 @@ button.nb-entry-card {
 
   border: none;
   border-radius: 0;
-  background: url('../images/Buttons/boutonGlobal.png') center / contain no-repeat;
+  background: url('../images/UI/buttons/btn-subtab-normal.png') center / 100% 100% no-repeat;
 
-  /* v2.90.8 : var(--nb-ink-inverse) (texte clair, pensé pour un fond
-     sombre) remplacé par var(--nb-ink) — boutonGlobal.png est un
-     bouton de teinte claire (crème/or pâle), le texte clair dessus
-     était quasi invisible (retour utilisateur, capture à l'appui).
-     Composant partagé par TOUS les écrans à sous-onglets du jeu
-     (Personnage/Ascension/Bestiaire-Codex/Donjon/Équipement/Boutique)
-     — un seul correctif ici les corrige tous d'un coup. */
-  color: var(--nb-ink);
+  color: #e8d9b5;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
@@ -748,6 +790,8 @@ button.nb-entry-card {
 
 .pc-subtab-btn span {
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pc-subtab-btn:active {
@@ -755,28 +799,23 @@ button.nb-entry-card {
 }
 
 .pc-subtab-btn.is-active {
-  flex: 0 0 auto;
-  width: 125px;
-  height: 58px;
+  flex: 1.15 1 0;
+  min-width: 0;
+  aspect-ratio: 592 / 224;
+  height: auto;
 
-  background: url('../images/Buttons/boutonActiverGlobal.png') center / contain no-repeat;
-  border-color: var(--nb-gold);
-  color: #241a00;
+  background: url('../images/UI/buttons/btn-subtab-selected.png') center / 100% 100% no-repeat;
+  border-color: transparent;
+  color: #2a1a08;
+  text-shadow: none;
 }
 
-/* 3 boutons (Boutique) demandent un peu plus de place qu'à 2 (Donjon)
-   ou qu'à 3 mais plus courts (Personnage) : on resserre légèrement sur
-   petit écran pour éviter tout débordement/retour à la ligne. */
 @media (max-width: 380px) {
   .pc-subtab-bar {
     gap: 1px;
   }
   .pc-subtab-btn {
-    width: 92px;
     font-size: 10px;
-  }
-  .pc-subtab-btn.is-active {
-    width: 100px;
   }
 }
 
@@ -807,6 +846,27 @@ button.nb-entry-card {
                           .subtab-page-content qui doit remplir tout
                           l'espace scrollable disponible).
    ========================= */
+/* v3.156.0 : cadre principal des écrans (Seb, kit UI or/bronze) — remplace
+   ecrantext2.png (thème parchemin clair) sur les 17 écrans qui utilisent
+   .nb-page-frame. Le kit fournit le cadre en 6 morceaux séparés (coins à
+   dragons asymétriques, bords, bas) plutôt qu'un seul fichier étirable :
+   un vrai border-image/9-slice n'est pas utilisable ici (les 2 coins du
+   haut ont des dragons différents, pas un motif répétable). Assemblage en
+   couches CSS positionnées en absolute, chacune à son ratio natif réel
+   (pas de déformation), autour du contenu qui garde son padding existant.
+   Le fond (pierre sombre + voile) et le contenu (padding/scroll) restent
+   inchangés ; seul l'ornement autour change. Racine .nb-page-frame :
+   position:relative ajouté pour ancrer les 6 calques. */
+/* v3.156.0 (tenté) : cadre en 6 morceaux (kit UI, dragons) via
+   pseudo-éléments ::before/::after — retour Seb (capture d'écran) : rendu
+   décalé au milieu de l'écran, fond crème encore visible en dessous,
+   pas cohérent avec le cadre attendu. Cause exacte non confirmée (pas de
+   conflit CSS trouvé dans le reste du projet, donc probablement un souci
+   de cache navigateur non purgé malgré le bump de CACHE_VERSION, ou un
+   comportement du rendu mobile réel non reproduit par le test local de
+   Claude) — à reprendre plus tard, idéalement testé sur un seul écran
+   isolé avant généralisation aux 17. v3.157.0 : retour à ecrantext2.png
+   (thème parchemin clair) en attendant. */
 .nb-page-frame {
   width: 100%;
   max-width: 760px;

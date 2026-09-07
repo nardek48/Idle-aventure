@@ -59,6 +59,18 @@
   min-width: 0;
 }
 
+/* v3.164.0 (reconstruction .rframe, voir css/00-rframe.css) :
+   - aspect-ratio 1/1 -> 299/318 (ratio réel des cadres du kit), pour
+     que le cadre remplisse toute la case sans letterbox ;
+   - min-height/padding retirés : c'est le min-height 96px (hérité
+     d'avant le chantier) qui ÉTIRAIT les cadres en hauteur quand la
+     colonne était plus étroite que 96px (~89px sur écran 390) — le
+     ratio est maintenant la seule source de la hauteur ;
+   - l'ancienne règle .is-selected (bordure 3px + box-shadow sur le
+     CONTENEUR) supprimée : elle dessinait le "halo résiduel" décalé
+     signalé par Seb (la boîte du conteneur ne correspond plus au cadre
+     visuel depuis que le cadre est sur l'enfant). La sélection est
+     dessinée par 00-rframe.css sur le cadre lui-même. */
 .eq-hero-right .eq-orbit-slot {
   position: relative;
   top: auto !important;
@@ -67,9 +79,9 @@
   bottom: auto !important;
   transform: none !important;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 299 / 318;
   min-height: 0;
-  padding: 2px;
+  padding: 0;
   border-radius: 12px;
   text-align: center;
   display: flex;
@@ -83,12 +95,6 @@
   transform: scale(0.98) !important;
 }
 
-.eq-hero-right .eq-orbit-slot.is-selected {
-  border-color: var(--nb-gold-dark);
-  border-width: 3px;
-  box-shadow: 0 0 0 2px rgba(194, 127, 31, 0.25);
-}
-
 .eq-hero-right .eq-orbit-slot-icon {
   width: 88%;
   height: 88%;
@@ -99,27 +105,25 @@
   justify-content: center;
 }
 
+/* v3.162.0 (retour Seb, capture avant/après) : bordure/fond/padding
+   retirés du CONTENEUR .eq-orbit-slot — ils restaient visibles en trop
+   autour du cadre-image posé sur l'enfant .eq-orbit-slot-icon (v3.160.0),
+   créant un double cadrage (fin liseré doré + fond crème visibles autour
+   du cadre orné). Le cadre-image de .eq-orbit-slot-icon occupe maintenant
+   TOUTE la case, comme demandé. Les états vides/verrouillés (pas de
+   rareté, juste un "+" ou un cadenas) gardent un style distinct via
+   .eq-orbit-slot.empty/.locked plus bas — pas de cadre-image dans ces
+   cas, donc un repli visuel reste nécessaire pour indiquer l'état. */
 .eq-orbit-slot {
   width: 100%;
-  min-height: 96px;
-  padding: 10px;
+  padding: 0;
   text-align: center;
   color: var(--nb-ink);
   cursor: pointer;
-  border: 2px solid var(--nb-frame);
+  border: none;
   border-radius: var(--nb-radius-md);
-  background: var(--nb-cream);
-  box-shadow: var(--nb-shadow-card);
-  transition:
-    transform 0.12s ease,
-    border-color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.eq-orbit-slot:hover {
-  background: var(--nb-cream-alt);
-  border-color: var(--nb-gold-dark);
+  background: none;
+  transition: transform 0.12s ease;
 }
 
 .eq-orbit-slot:active {
@@ -127,11 +131,11 @@
 }
 
 .eq-orbit-slot.filled {
-  background: var(--nb-cream);
+  background: none;
 }
 
 .eq-orbit-slot.empty {
-  border-style: dashed;
+  border: 2px dashed var(--nb-frame);
   background: var(--nb-cream-alt);
   opacity: 0.85;
 }
@@ -140,7 +144,7 @@
    buildLockedEquipmentSlot) — pas cliquable, distinct visuellement
    de ".empty" (qui EST cliquable, juste sans objet dessus). */
 .eq-orbit-slot.locked {
-  border-style: dotted;
+  border: 2px dotted var(--nb-frame);
   background: var(--nb-cream-alt);
   opacity: 0.5;
 }
@@ -163,17 +167,25 @@
   background: var(--nb-cream);
 }
 
+/* v3.160.0 : cadre de rareté (kit UI, slot-{rareté}.png) généralisé aux 3
+   autres endroits qui affichent une icône d'objet avec sa rareté (en plus
+   du sac, déjà fait en v3.158/159) — décision Seb. Comme pour le sac, la
+   classe rarity-* est posée par buildEquipmentIconHTML() sur l'ÉLÉMENT
+   IMAGE lui-même (ex. .eq-detail-icon-img), pas sur son conteneur
+   (.eq-detail-icon) — le cadre est donc posé directement sur cet élément
+   image, pas sur le conteneur (CSS ne permet pas de styliser un parent
+   selon la classe d'un enfant de façon fiable cross-navigateur). Le
+   conteneur garde juste sa taille/centrage, sans plus de bordure/fond
+   propre (le cadre-image la remplace). */
+/* v3.164.0 : hauteur en auto (le ratio vient du cadre .rframe enfant,
+   voir css/00-rframe.css) — les 5 fonds de rareté locaux et le fond
+   par défaut slot-common sont supprimés d'ici, .rframe les porte. */
 .eq-detail-icon {
   width: 84px;
-  height: 84px;
   margin-bottom: 10px;
-  border-radius: var(--nb-radius-md);
-  border: 2px solid var(--nb-frame);
-  background: var(--nb-cream-alt);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
   font-size: 40px;
 }
 
@@ -181,23 +193,15 @@
   opacity: 0.5;
 }
 
-/* v3.14 : bordure de rareté générique, appliquée par
-   buildEquipmentIconHTML() (ui-root.js) — UNE SEULE règle pour tous
-   les endroits du jeu qui affichent une icône d'objet (détail, sac,
-   emplacements équipés, boutique, comparaison) : avant, seules les
-   tuiles du sac (.eq-bag-tile) avaient cette bordure. Cible
-   spécifiquement .has-icon-img (présent seulement quand une vraie
-   image a chargé, pas le repli emoji) pour ne pas dénaturer le style
-   des icônes sans visuel dédié. */
-.has-icon-img.rarity-common { box-shadow: inset 0 0 0 2px var(--rarity-common); }
-.has-icon-img.rarity-green { box-shadow: inset 0 0 0 2px var(--rarity-green); }
-.has-icon-img.rarity-rare { box-shadow: inset 0 0 0 2px var(--rarity-rare); }
-.has-icon-img.rarity-epic { box-shadow: inset 0 0 0 2px var(--rarity-epic); }
-.has-icon-img.rarity-legendary { box-shadow: inset 0 0 0 2px var(--rarity-legendary); }
-
+/* v3.164.0 : la règle transversale v3.14 (halo inset --rarity-* sur
+   .has-icon-img) et son bloc de désactivation v3.159 (25 sélecteurs)
+   sont SUPPRIMÉS — les 6 usages de buildEquipmentIconHTML portent
+   maintenant tous le cadre-image unifié .rframe (css/00-rframe.css),
+   le halo n'était plus "encore nécessaire" nulle part. Les anciens
+   blocs locaux .eq-detail-icon-img (fond + img 52%) sont remplacés
+   par .rframe également. */
 .eq-detail-icon-img {
   width: 100%;
-  height: 100%;
 }
 
 .eq-detail-name {
@@ -270,20 +274,17 @@
   border-bottom: none;
 }
 
+/* v3.164.0 : hauteur en auto (ratio via .rframe, css/00-rframe.css),
+   fonds de rareté et taille d'icône locaux supprimés (portés par
+   .rframe). */
 .eq-compat-icon {
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid var(--nb-frame);
-  background: var(--nb-cream-alt);
-  overflow: hidden;
+  width: 40px;
   position: relative;
 }
 
 .eq-compat-icon-img {
   width: 100%;
-  height: 100%;
 }
 
 .eq-compat-info {
@@ -365,20 +366,16 @@
   gap: 8px;
 }
 
+/* v3.164.0 : même simplification que .eq-compat-icon* (cadre porté
+   par .rframe, css/00-rframe.css). */
 .eq-compare-icon {
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid var(--nb-frame);
-  background: var(--nb-cream-alt);
-  overflow: hidden;
+  width: 40px;
   position: relative;
 }
 
 .eq-compare-icon-img {
   width: 100%;
-  height: 100%;
 }
 
 .eq-compare-info {
@@ -486,18 +483,20 @@
   display: none;
 }
 
+/* v3.164.0 : min-height 96px supprimé (c'était LA cause de l'étirement
+   des cadres — voir commentaire sur .eq-hero-right .eq-orbit-slot),
+   fonds de rareté et taille d'icône locaux supprimés (portés par
+   .rframe, css/00-rframe.css). Ne reste que le centrage et la taille
+   de l'emoji de repli/placeholder. */
 .eq-orbit-slot-icon {
-  display: inline-flex;
+  position: relative;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  margin-bottom: 0;
-  margin-right: 8px;
+  width: 100%;
+  height: 100%;
   font-size: 18px;
   line-height: 1;
-  vertical-align: middle;
-  border-radius: 6px;
 }
 
 .eq-orbit-slot-name {
@@ -513,25 +512,10 @@
   opacity: 0.55;
 }
 
-.eq-hero-right {
-  flex: 0 0 50%;
-  width: 50%;
-  display: flex;
-  gap: 8px;
-}
-
-/* v2.83.20 : structure a 3 colonnes EXPLICITES demandee - plus de
-   grille qui "wrap" toute seule (trop fragile, ecrasee par la media
-   query mobile dans les versions precedentes). Colonne 1 = 4
-   emplacements empiles, colonne 2 = 3 emplacements empiles, chacune
-   flex:1 (soit 25% de la largeur totale du panel, 50%/2). */
-.eq-slot-col {
-  flex: 1 1 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
+/* v3.164.0 : les définitions DUPLIQUÉES de .eq-hero-right et
+   .eq-slot-col qui se trouvaient ici (copies exactes de celles du haut
+   du fichier, reliquat d'un ancien réarrangement) sont supprimées —
+   une seule source de vérité, en tête de fichier. */
 
 .eq-orbit-slot-name.rarity-common { color: var(--rarity-common); }
 .eq-orbit-slot-name.rarity-green { color: var(--rarity-green); }
@@ -802,116 +786,12 @@
   background: rgba(220, 38, 38, 0.16);
 }
 
-.eq-bag-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 8px;
-}
-
-.eq-bag-item {
-  position: relative;
-  overflow: hidden;
-  color: var(--nb-ink);
-  border: 2px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream);
-  box-shadow: var(--nb-shadow-card);
-  transition:
-    transform 0.12s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.eq-bag-item::before {
-  content: none;
-}
-
-.eq-bag-item:hover {
-  transform: translateY(-2px);
-  background: var(--nb-cream-alt);
-}
-
-.eq-bag-item.rarity-common { border-color: var(--rarity-common); }
-.eq-bag-item.rarity-green { border-color: var(--rarity-green); }
-.eq-bag-item.rarity-rare { border-color: var(--rarity-rare); }
-.eq-bag-item.rarity-epic { border-color: var(--rarity-epic); }
-.eq-bag-item.rarity-legendary {
-  border-color: var(--rarity-legendary);
-  box-shadow: var(--nb-shadow-card), 0 0 0 2px rgba(245, 158, 11, 0.3);
-}
-
-.eq-bag-main {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  padding: 10px 8px 8px;
-  border: none;
-  background: transparent;
-  color: inherit;
-  text-align: center;
-  cursor: pointer;
-}
-
-.eq-bag-main:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.eq-bag-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  margin: 0 auto 6px;
-  font-size: 28px;
-  border-radius: 8px;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
-}
-
-.eq-bag-name {
-  margin-bottom: 4px;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.2;
-}
-
-.eq-bag-name.rarity-common { color: var(--rarity-common); }
-.eq-bag-name.rarity-green { color: var(--rarity-green); }
-.eq-bag-name.rarity-rare { color: var(--rarity-rare); }
-.eq-bag-name.rarity-epic { color: var(--rarity-epic); }
-.eq-bag-name.rarity-legendary {
-  color: var(--rarity-legendary);
-  text-shadow: 0 0 10px rgba(245, 158, 11, 0.18);
-}
-
-.eq-bag-stat {
-  min-height: 24px;
-  font-size: 10px;
-  line-height: 1.35;
-  color: var(--nb-ink-dim);
-}
-
-.eq-bag-sell {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  min-height: 34px;
-  border: none;
-  border-top: 2px solid var(--nb-frame-light);
-  background: rgba(240, 170, 62, 0.18);
-  color: var(--nb-gold-deep);
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: background-color 0.2s ease, filter 0.2s ease;
-}
-
-.eq-bag-sell:hover {
-  background: rgba(240, 170, 62, 0.3);
-  filter: brightness(1.03);
-}
-
+/* v3.164.0 : le bloc mort .eq-bag-grid/.eq-bag-item/.eq-bag-main/
+   .eq-bag-icon/.eq-bag-name/.eq-bag-stat/.eq-bag-sell (ancienne liste
+   d'inventaire, "conservée pour compatibilité" depuis v2.83.29) est
+   SUPPRIMÉ — vérifié : plus aucun JS ne génère ces classes. .eq-empty
+   et .inv-sell-all-btn, eux, sont encore utilisés (equipment-view.js,
+   warehouse-view.js, quests-view.js) et restent. */
 .eq-empty {
   padding: 16px 12px;
   border: 2px dashed var(--nb-frame-light);
@@ -942,17 +822,28 @@
   align-content: start;
 }
 
+/* v3.158.0 : cadres slot-{rareté}.png (kit UI, Seb) remplacent le cadre
+   CSS uni (nb-cream-alt + bordure colorée). 5 raretés du jeu (voir
+   data/equipment.js RARITY_ORDER) <-> 5 fichiers du kit, couleurs déjà
+   cohérentes avec --rarity-* (00-tokens.css) : common=gris, green=vert,
+   rare=bleu, epic=violet, legendary=or. Le cadre est directement le
+   fond de la tuile (plus de bordure/background CSS séparés) ; l'icône
+   de l'objet se recale dans le creux mesuré par scan de pixels sur les
+   5 fichiers (≈65% centré, cohérent aux 5 images) via .eq-bag-tile-icon.
+   Portée LIMITÉE à .eq-bag-tile pour cette livraison (décision Seb) —
+   les autres usages de rarity-* dans ce fichier (eq-detail-name,
+   eq-compat-name, eq-compare-name, eq-orbit-slot-name,
+   inv-threshold-pill) restent inchangés, à traiter dans une prochaine
+   session si Seb le souhaite. */
+/* v3.164.0 : la tuile porte maintenant la classe .rframe (posée par
+   buildBagTileHTML/buildPotionTileHTML, equipment-view.js) — ratio,
+   fond de rareté, centrage et halo de sélection viennent de
+   css/00-rframe.css (potions incluses, via potion.rarity). Ne restent
+   ici que les spécificités de la tuile. */
 .eq-bag-tile {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  padding: 2px;
-  border-radius: 10px;
-  border: 2px solid var(--nb-frame);
-  background: var(--nb-cream-alt);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 0;
   cursor: pointer;
 }
 
@@ -965,8 +856,8 @@
    besoin (jamais plus d'un exemplaire par objet). */
 .eq-bag-tile-stock {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
+  bottom: 6%;
+  right: 6%;
   min-width: 16px;
   padding: 1px 3px;
   border-radius: 8px;
@@ -976,36 +867,20 @@
   font-weight: 800;
   text-align: center;
   line-height: 1.4;
+  z-index: 1;
 }
 
-.eq-bag-tile.is-selected {
-  border-color: var(--nb-gold-dark);
-  border-width: 3px;
-  box-shadow: 0 0 0 2px rgba(194, 127, 31, 0.25);
-}
-
-.eq-bag-tile.rarity-common { border-color: var(--rarity-common); }
-.eq-bag-tile.rarity-green { border-color: var(--rarity-green); }
-.eq-bag-tile.rarity-rare { border-color: var(--rarity-rare); }
-.eq-bag-tile.rarity-epic { border-color: var(--rarity-epic); }
-.eq-bag-tile.rarity-legendary {
-  border-color: var(--rarity-legendary);
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
-}
-
-.eq-bag-tile.is-selected.rarity-common,
-.eq-bag-tile.is-selected.rarity-green,
-.eq-bag-tile.is-selected.rarity-rare,
-.eq-bag-tile.is-selected.rarity-epic,
-.eq-bag-tile.is-selected.rarity-legendary {
-  border-width: 3px;
-  box-shadow: 0 0 0 2px rgba(194, 127, 31, 0.35);
-}
-
+/* v3.164.0 : la règle .eq-bag-tile.is-selected (v3.161) est déplacée
+   dans css/00-rframe.css (une seule règle de sélection pour sac ET
+   emplacements équipés). L'icône interne suit la variable partagée
+   --rframe-icon (64 %, mesurée sur les assets — voir 00-rframe.css)
+   au lieu du 52 % en dur. */
 .eq-bag-tile-icon {
-  width: 88%;
-  height: 88%;
-  font-size: 30px;
+  position: relative;
+  z-index: 1;
+  width: var(--rframe-icon, 64%);
+  height: var(--rframe-icon, 64%);
+  font-size: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1013,13 +888,11 @@
 
 /* === Responsive === */
 
+/* v3.164.0 : références au bloc mort .eq-bag-grid/.eq-bag-main
+   retirées des media queries (bloc supprimé plus haut). */
 @media (max-width: 640px) {
   .eq-hero-card {
     padding: 12px;
-  }
-
-  .eq-bag-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .equip-toolbar .settings-btn {
@@ -1028,8 +901,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .eq-orbit-slot,
-  .eq-bag-main {
+  .eq-orbit-slot {
     transition: none;
   }
 

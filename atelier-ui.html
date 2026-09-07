@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aethervale — Atelier UI</title>
+
+<!-- =====================================================================
+     ATELIER UI (v3.163.0) — galerie de contrôle des composants.
+
+     PRINCIPE : cette page charge les MÊMES feuilles CSS que le jeu, dans
+     le MÊME ordre (copie de index.html), et affiche chaque composant du
+     chantier or/bronze dans TOUS ses états, avec le markup EXACT généré
+     par le JS du jeu (référence du builder source en commentaire au-dessus
+     de chaque spécimen). Ce que tu vois ici est donc le rendu réel de ton
+     navigateur — le filet de contrôle qui manquait au chantier.
+
+     RÈGLE DE MAINTENANCE : si un builder JS change la structure HTML d'un
+     composant listé ici, le spécimen correspondant doit être mis à jour
+     dans la même livraison (sinon l'atelier ment).
+
+     Les seuls styles propres à cette page sont préfixés "atl-" (chrome de
+     la galerie : titres, sélecteur de largeur...) et une neutralisation
+     documentée du layout plein-écran de body — AUCUN style de composant
+     du jeu n'est redéfini ici.
+     ===================================================================== -->
+
+<!-- Feuilles du jeu — même liste et même ordre que index.html -->
+<link rel="stylesheet" href="./css/00-tokens.css">
+<link rel="stylesheet" href="./css/00-components.css">
+<link rel="stylesheet" href="./css/00-rframe.css">
+<link rel="stylesheet" href="./css/00-title-screen.css">
+<link rel="stylesheet" href="./css/00-hero-creation.css">
+<link rel="stylesheet" href="./css/01-base.css">
+<link rel="stylesheet" href="./css/02-layout.css">
+<link rel="stylesheet" href="./css/03-combat.css">
+<link rel="stylesheet" href="./css/04-panels-common.css">
+<link rel="stylesheet" href="./css/04-panel-upgrades.css">
+<link rel="stylesheet" href="./css/04-panel-talents.css">
+<link rel="stylesheet" href="./css/04-panel-zones.css">
+<link rel="stylesheet" href="./css/04-panel-adventures.css">
+<link rel="stylesheet" href="./css/04-panel-quests.css">
+<link rel="stylesheet" href="./css/04-panel-scene.css">
+<link rel="stylesheet" href="./css/04-panel-camp.css">
+<link rel="stylesheet" href="./css/04-panel-bestiary.css">
+<link rel="stylesheet" href="./css/04-panel-dungeon.css">
+<link rel="stylesheet" href="./css/04-panel-achievements.css">
+<link rel="stylesheet" href="./css/04-panel-codex.css">
+<link rel="stylesheet" href="./css/04-panel-log.css">
+<link rel="stylesheet" href="./css/04-panel-settings.css">
+<link rel="stylesheet" href="./css/04-panel-grimoire.css">
+<link rel="stylesheet" href="./css/04-panel-combat-report.css">
+<link rel="stylesheet" href="./css/04-panel-tutorial.css">
+<link rel="stylesheet" href="./css/04-panel-aether-shop.css">
+<link rel="stylesheet" href="./css/04-panel-equipment.css">
+<link rel="stylesheet" href="./css/04-panel-afflictions.css">
+<link rel="stylesheet" href="./css/04-panel-combat-sandbox.css">
+<link rel="stylesheet" href="./css/04-panel-admin.css">
+<link rel="stylesheet" href="./css/04-panel-combat-speed.css">
+<link rel="stylesheet" href="./css/04-panel-hero-summary.css">
+<link rel="stylesheet" href="./css/04-panel-village-shop.css">
+<link rel="stylesheet" href="./css/04-panel-village.css">
+<link rel="stylesheet" href="./css/04-panel-production.css">
+<link rel="stylesheet" href="./css/04-panel-construction.css">
+<link rel="stylesheet" href="./css/05-overlays.css">
+<link rel="stylesheet" href="./css/06-map.css">
+<link rel="stylesheet" href="./css/07-responsive.css">
+
+<style>
+/* ===== Chrome de l'atelier (préfixe atl-, ne touche pas aux composants) ===== */
+
+/* Neutralisation DOCUMENTÉE du layout plein-écran du jeu : body est en
+   flex column + overflow:hidden (01-base.css) pour l'app ; l'atelier est
+   une page qui scrolle. On ne touche qu'au layout de page, pas au fond
+   ni à la typo (qui restent ceux du jeu). */
+body.atl-body {
+  display: block;
+  overflow: auto;
+  height: auto;
+  padding: 16px 12px 60px;
+  -webkit-user-select: text;
+  user-select: text; /* pouvoir copier les libellés/notes de l'atelier */
+}
+
+.atl-header {
+  max-width: 700px;
+  margin: 0 auto 14px;
+  color: #f4e9d0;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+.atl-header h1 { font-size: 20px; margin: 0 0 4px; }
+.atl-header p { font-size: 12px; margin: 0; opacity: 0.85; line-height: 1.5; }
+
+/* Sélecteur de largeur simulée */
+.atl-widths {
+  max-width: 700px;
+  margin: 0 auto 18px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.atl-widths button {
+  padding: 6px 12px;
+  border: 1px solid rgba(244,233,208,0.4);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.35);
+  color: #f4e9d0;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.atl-widths button.is-active {
+  background: #c27f1f;
+  border-color: #f0c85a;
+  color: #241a00;
+}
+
+/* Le "téléphone" : simule #panel-container du jeu (max-width 390px,
+   padding 12px, voir css/02-layout.css) — la largeur est pilotée par le
+   sélecteur ci-dessus via --atl-w. */
+.atl-stage {
+  width: var(--atl-w, 390px);
+  max-width: 100%;
+  margin: 0 auto;
+}
+.atl-panel-sim {
+  width: 100%;
+  padding: 0 12px; /* même padding horizontal que #panel-container */
+}
+
+.atl-section {
+  margin: 0 0 26px;
+}
+.atl-section > h2 {
+  font-size: 14px;
+  margin: 0 0 2px;
+  color: #f0c85a;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+}
+.atl-section > .atl-src {
+  font-size: 10px;
+  margin: 0 0 8px;
+  color: #f4e9d0;
+  opacity: 0.7;
+  font-family: monospace;
+}
+.atl-note {
+  font-size: 11px;
+  margin: 6px 0 0;
+  color: #f4e9d0;
+  opacity: 0.8;
+  line-height: 1.5;
+}
+.atl-label {
+  font-size: 10px;
+  text-align: center;
+  margin-top: 2px;
+  color: #f4e9d0;
+  opacity: 0.75;
+}
+
+/* Fond parchemin derrière les composants qui vivent sur .nb-page-frame
+   dans le jeu (le cadre complet est montré dans sa propre section ; ici
+   un simple fond crème suffit pour juger les composants). */
+.atl-on-parchment {
+  background: var(--nb-cream, #f3e6c8);
+  border-radius: 10px;
+  padding: 10px;
+}
+</style>
+</head>
+
+<body class="atl-body">
+
+<div class="atl-header">
+  <h1>🛠️ Atelier UI — Aethervale</h1>
+  <p>Rendu réel des composants du chantier or/bronze, avec le vrai CSS et les vrais
+  assets. Clique sur un emplacement ou une tuile pour basculer son état
+  <code>.is-selected</code>. Change la largeur simulée pour vérifier le comportement
+  aux tailles d'écran réelles.</p>
+</div>
+
+<div class="atl-widths" id="atl-widths">
+  <button data-w="320px">320</button>
+  <button data-w="360px">360</button>
+  <button data-w="390px" class="is-active">390 (jeu)</button>
+  <button data-w="480px">480</button>
+  <button data-w="100%">Pleine largeur</button>
+</div>
+
+<div class="atl-widths" style="align-items:center">
+  <label style="color:#f4e9d0;font-size:12px;font-weight:700">Taille icône dans le cadre :
+    <input type="range" id="atl-icon-size" min="50" max="70" value="64" style="vertical-align:middle">
+    <span id="atl-icon-size-val">64%</span>
+  </label>
+</div>
+
+<div class="atl-stage" id="atl-stage">
+  <div class="atl-panel-sim" id="atl-root"><!-- rempli par le script --></div>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   Génération des spécimens. Chaque bloc reproduit le markup EXACT du
+   builder du jeu indiqué en commentaire — si le builder change, mettre
+   à jour ici dans la même livraison.
+   ===================================================================== */
+
+var RARITIES = ["common", "green", "rare", "epic", "legendary"];
+var RARITY_LABELS = { common: "Commun", green: "Vert", rare: "Rare", epic: "Épique", legendary: "Légendaire" };
+
+/* Miroir de buildEquipmentIconHTML (js/ui/ui-root.js:37) — cas "image
+   chargée" : div .has-icon-img + <img> + fallback emoji. */
+function iconHTML(cssClass, rarity, imgPath, emoji) {
+  /* v3.164.0 : tous les points d'appel passent maintenant "... rframe"
+     (cadre unifié, css/00-rframe.css) — cssClass doit l'inclure. */
+  return '<div class="' + cssClass + ' rarity-' + rarity + ' has-icon-img">'
+    + '<img src="' + imgPath + '" alt="">'
+    + '<span class="icon-img-fallback">' + emoji + '</span>'
+    + '</div>';
+}
+
+function swordPath(r) { return "images/Icons/equipment_icon/sword_" + r + ".png"; }
+function armorPath(r) { return "images/Icons/equipment_icon/armor_" + r + ".png"; }
+
+function section(title, src, innerHTML, note) {
+  return '<div class="atl-section">'
+    + '<h2>' + title + '</h2>'
+    + '<p class="atl-src">' + src + '</p>'
+    + innerHTML
+    + (note ? '<p class="atl-note">' + note + '</p>' : '')
+    + '</div>';
+}
+
+/* --- 1. Emplacements équipés (.eq-orbit-slot) ------------------------
+   Structure réelle : .eq-layout > .nb-page-frame.eq-hero-card >
+   .eq-hero-main > .eq-hero-right > .eq-slot-col × 2 (equipment-view.js).
+   Le spécimen garde TOUTE cette imbrication : les largeurs de colonnes
+   (flex 25% du panel) et les règles ".eq-hero-right .eq-orbit-slot"
+   n'existent que dans ce contexte. */
+function buildOrbitSection() {
+  function slot(state, inner, extra) {
+    /* miroir de buildEquipSlotHTML (js/ui/equipment-view.js:71) */
+    return '<button class="eq-orbit-slot ' + state + (extra || "") + '" aria-label="spécimen" onclick="atlToggleSelect(this)">' + inner + '</button>';
+  }
+  var col1 = "", col2 = "";
+  RARITIES.forEach(function (r, i) {
+    var s = slot("filled", iconHTML("eq-orbit-slot-icon rframe", r, armorPath(r), "🛡️"));
+    if (i < 3) col1 += s; else col2 += s;
+  });
+  /* sélectionné + vide + verrouillé */
+  col2 += slot("filled", iconHTML("eq-orbit-slot-icon rframe", "epic", swordPath("epic"), "⚔️"), " is-selected");
+  col1 += slot("empty", '<div class="eq-orbit-slot-icon eq-orbit-slot-placeholder">⚔️</div>');
+  col2 += '<button class="eq-orbit-slot locked" aria-label="verrouillé"><div class="eq-orbit-slot-icon eq-orbit-slot-placeholder">🔒</div></button>';
+
+  var html =
+    '<div class="atl-on-parchment"><div class="eq-hero-main">'
+    + '<div style="flex:1 1 auto"><p class="atl-label" style="color:#5a4a2a;opacity:1;text-align:left">← moitié gauche de l\'écran (détail), vide ici</p></div>'
+    + '<div class="eq-hero-right">'
+    + '<div class="eq-slot-col">' + col1 + '</div>'
+    + '<div class="eq-slot-col">' + col2 + '</div>'
+    + '</div></div></div>';
+
+  return section(
+    "1. Emplacements équipés — 5 raretés + sélectionné + vide + verrouillé",
+    "css/04-panel-equipment.css (.eq-orbit-slot*) · js/ui/equipment-view.js (buildEquipSlotHTML)",
+    html,
+    "Largeur de colonne identique au jeu (25&nbsp;% du panel). Vérifier ici : ratio des cadres, halo de sélection, doubles cadrages."
+  );
+}
+
+/* --- 2. Tuiles du sac (.eq-bag-tile) ---------------------------------
+   Structure réelle : .eq-bag-flex > .eq-bag-inv-grid (50% de largeur,
+   3 colonnes) — js/ui/equipment-view.js:207 (objet) et :214 (potion). */
+function buildBagSection() {
+  var tiles = "";
+  RARITIES.forEach(function (r) {
+    tiles += '<button class="eq-bag-tile rframe rarity-' + r + '" aria-label="' + RARITY_LABELS[r] + '" onclick="atlToggleSelect(this)">'
+      + iconHTML("eq-bag-tile-icon", r, swordPath(r), "⚔️")
+      + '</button>';
+  });
+  /* tuile sélectionnée */
+  tiles += '<button class="eq-bag-tile rframe rarity-rare is-selected" aria-label="sélectionnée" onclick="atlToggleSelect(this)">'
+    + iconHTML("eq-bag-tile-icon", "rare", armorPath("rare"), "🛡️")
+    + '</button>';
+  /* tuile potion avec badge de stock (renderIconOrEmojiHTML ne pose pas rarity-* sur l'icône) */
+  tiles += '<button class="eq-bag-tile rframe rarity-common" aria-label="potion" onclick="atlToggleSelect(this)">'
+    + '<div class="eq-bag-tile-icon">🧪</div>'
+    + '<span class="eq-bag-tile-stock">12</span>'
+    + '</button>';
+
+  var html = '<div class="atl-on-parchment"><div class="eq-bag-flex">'
+    + '<div class="eq-bag-inv-grid">' + tiles + '</div>'
+    + '<div style="flex:1"><p class="atl-label" style="color:#5a4a2a;opacity:1;text-align:left">← panneau de détail, vide ici</p></div>'
+    + '</div></div>';
+
+  return section(
+    "2. Sac / Inventaire — 5 raretés + sélectionnée + potion",
+    "css/04-panel-equipment.css (.eq-bag-tile*) · js/ui/equipment-view.js:207",
+    html,
+    "Grille réelle : 3 colonnes sur 50&nbsp;% de la largeur du panel."
+  );
+}
+
+/* --- 3. Icône du panneau de détail (.eq-detail-icon) ----------------- */
+function buildDetailSection() {
+  var html = '<div class="atl-on-parchment" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">';
+  RARITIES.forEach(function (r) {
+    html += '<div><div class="eq-detail-icon">' + iconHTML("eq-detail-icon-img rframe", r, swordPath(r), "⚔️") + '</div>'
+      + '<p class="atl-label" style="color:#5a4a2a;opacity:1">' + RARITY_LABELS[r] + '</p></div>';
+  });
+  html += '</div>';
+  return section(
+    "3. Icône du panneau de détail (84×84)",
+    "css/04-panel-equipment.css (.eq-detail-icon*)",
+    html
+  );
+}
+
+/* --- 4. Lignes compat/compare (40×40) -------------------------------- */
+function buildCompatSection() {
+  var rows = "";
+  ["green", "epic"].forEach(function (r) {
+    rows += '<div class="eq-compat-row">'
+      + '<div class="eq-compat-icon">' + iconHTML("eq-compat-icon-img rframe", r, swordPath(r), "⚔️") + '</div>'
+      + '<div class="eq-compat-info"><div class="eq-compat-name rarity-' + r + '">Épée ' + RARITY_LABELS[r].toLowerCase() + '</div>'
+      + '<div class="eq-compat-stat">Attaque +12 <span class="eq-compat-delta is-up">(+4)</span></div></div>'
+      + '<button class="nb-btn eq-compat-equip-btn">Équiper</button>'
+      + '</div>';
+  });
+  var html = '<div class="atl-on-parchment"><div class="eq-compat-list" style="margin-top:0;padding-top:0;border-top:none">'
+    + '<div class="eq-compat-title">DANS LE SAC</div>' + rows + '</div></div>';
+  return section(
+    "4. Mini-liste « Dans le sac » (icônes 40×40)",
+    "css/04-panel-equipment.css (.eq-compat-*)",
+    html
+  );
+}
+
+/* --- 5. Boutique — carte d'achat (.nb-purchase-card) -----------------
+   Miroir de js/ui/equip-shop-view.js (buildEquipShopItemCardHTML). */
+function buildShopSection() {
+  function card(r, name) {
+    return '<div class="nb-purchase-card rarity-' + r + '">'
+      + '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">'
+      + iconHTML("nb-purchase-icon rframe", r, swordPath(r), "⚔️")
+      + '</div></div>'
+      + '<div class="nb-purchase-info-col">'
+      + '<div class="nb-purchase-name rarity-' + r + '">' + name + '</div>'
+      + '<div class="nb-purchase-meta">' + RARITY_LABELS[r] + '</div>'
+      + '<div class="nb-purchase-desc">Attaque +12</div>'
+      + '</div>'
+      + '<div class="nb-purchase-buy-col">'
+      + '<button class="btn-buy" type="button"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">1 250</button>'
+      + '</div></div>';
+  }
+  var html = '<div class="atl-on-parchment">' + card("rare", "Lame d'acier") + card("legendary", "Croc du dragon") + '</div>';
+  return section(
+    "5. Boutique d'équipement — carte d'achat",
+    "css/00-components.css (.nb-purchase-*) · js/ui/equip-shop-view.js",
+    html,
+    "Composant partagé par 5 écrans (Ascension, Donjon, Équipement, Potions, boutique générale)."
+  );
+}
+
+/* --- 6. Sous-onglets (.pc-subtab-btn) --------------------------------
+   Miroir du pattern commun (ex. js/ui/ascension-view.js:14). */
+function buildSubtabSection() {
+  var html = '<div class="pc-subtab-bar">'
+    + '<button type="button" class="pc-subtab-btn is-active" onclick="atlOnlyActive(this)">⚔️<span>Équipement</span></button>'
+    + '<button type="button" class="pc-subtab-btn" onclick="atlOnlyActive(this)">🎒<span>Inventaire</span></button>'
+    + '<button type="button" class="pc-subtab-btn" onclick="atlOnlyActive(this)">🏪<span>Boutique</span></button>'
+    + '</div>';
+  return section(
+    "6. Sous-onglets (composant partagé, 18 boutons / 8 écrans)",
+    "css/00-components.css (.pc-subtab-btn) · assets btn-subtab-normal/selected.png",
+    html,
+    "Cliquer pour changer l'onglet actif."
+  );
+}
+
+/* --- 7. Nav du bas (#tab-bar) ----------------------------------------
+   Markup copié de index.html:84 (statique, pas généré par JS). */
+function buildTabBarSection() {
+  function tab(icon, label, active) {
+    return '<button class="tab-btn' + (active ? " active" : "") + '" onclick="atlTabActive(this)">'
+      + '<div class="tab-icon-frame">'
+      + '<img src="./images/Icons/menu_icons/' + icon + '" alt="" class="tab-icon-img">'
+      + '<span class="tab-label">' + label + '</span>'
+      + '</div></button>';
+  }
+  var html = '<div id="tab-bar"><div id="tab-bar-row">'
+    + tab("camp_menu.png", "Campement", true)
+    + tab("quests_menu.png", "Quêtes")
+    + tab("village_menu.png", "Village")
+    + tab("heroes_menu.png", "Héros")
+    + tab("menu_menu.png", "Menu")
+    + '</div></div>';
+  return section(
+    "7. Navigation du bas",
+    "css/02-layout.css (#tab-bar) · index.html:84",
+    html,
+    "Cliquer pour changer l'onglet actif. Ici la barre est dans le flux de la page (dans le jeu elle est en bas de la colonne flex de body) — même rendu, seule la position verticale diffère."
+  );
+}
+
+/* --- 8. Cadre de page (.nb-page-frame, état actuel = parchemin) ------ */
+function buildFrameSection() {
+  var html = '<div class="nb-page-frame" style="min-height:180px">'
+    + '<h3 style="color:var(--nb-ink)">Titre d\'exemple</h3>'
+    + '<p style="color:var(--nb-ink-dim);font-size:12px">Contenu d\'exemple dans le cadre de page actuel (ecrantext2.png, thème parchemin — état d\'avant le chantier, suite à l\'annulation v3.157.0).</p>'
+    + '</div>';
+  return section(
+    "8. Cadre de page (état actuel)",
+    "css/00-components.css (.nb-page-frame)",
+    html,
+    "La future version « kit or/bronze » (annulée en v3.157.0) sera d'abord reconstruite ICI avant toute bascule dans le jeu."
+  );
+}
+
+/* --- Assemblage ------------------------------------------------------ */
+document.getElementById("atl-root").innerHTML =
+  buildOrbitSection()
+  + buildBagSection()
+  + buildDetailSection()
+  + buildCompatSection()
+  + buildShopSection()
+  + buildSubtabSection()
+  + buildTabBarSection()
+  + buildFrameSection();
+
+/* --- Interactions de la galerie -------------------------------------- */
+function atlToggleSelect(el) { el.classList.toggle("is-selected"); }
+
+function atlOnlyActive(el) {
+  var siblings = el.parentElement.querySelectorAll(".pc-subtab-btn");
+  siblings.forEach(function (b) { b.classList.remove("is-active"); });
+  el.classList.add("is-active");
+}
+
+function atlTabActive(el) {
+  var siblings = el.parentElement.querySelectorAll(".tab-btn");
+  siblings.forEach(function (b) { b.classList.remove("active"); });
+  el.classList.add("active");
+}
+
+/* Curseur --rframe-icon : règle en direct la taille des icônes dans les
+   cadres (la valeur retenue par Seb sera ensuite reportée dans
+   css/00-rframe.css, seule source de vérité). Valeur figée : 64 %
+   (choix Seb, v3.165). Au-delà de ~65 %, l'icône touche le nouveau
+   cadre légendaire (cavité mesurée la plus serrée des 5) — le curseur
+   monte à 70 % exprès pour pouvoir VOIR cette limite. */
+document.getElementById("atl-icon-size").addEventListener("input", function () {
+  document.documentElement.style.setProperty("--rframe-icon", this.value + "%");
+  document.getElementById("atl-icon-size-val").textContent = this.value + "%";
+});
+
+/* Sélecteur de largeur simulée */
+document.getElementById("atl-widths").addEventListener("click", function (e) {
+  var btn = e.target.closest("button[data-w]");
+  if (!btn) return;
+  document.getElementById("atl-stage").style.setProperty("--atl-w", btn.dataset.w);
+  this.querySelectorAll("button").forEach(function (b) { b.classList.remove("is-active"); });
+  btn.classList.add("is-active");
+});
+</script>
+</body>
+</html>

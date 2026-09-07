@@ -36,6 +36,10 @@ function buildSettingsHTML() {
   h += '<h3>🧪 Développement</h3>';
   h += '<p class="panel-sub">Outil de test, sans effet sur ta partie (pas de sauvegarde, pas de récompense).</p>';
   h += '<button class="settings-btn" onclick="switchTab(\'admin\')">🛠️ Admin</button>';
+  // v3.163.0 : Atelier UI — galerie de contrôle des composants (vrai CSS,
+  // vrais assets, tous les états), voir atelier-ui.html à la racine. Ouvre
+  // dans un onglet séparé : page indépendante du jeu, aucun état partagé.
+  h += '<button class="settings-btn" onclick="window.open(\'atelier-ui.html\', \'_blank\')">🎨 Atelier UI</button>';
   h += '</div>';
 
   h += '<div class="settings-info">';

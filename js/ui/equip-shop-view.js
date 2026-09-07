@@ -7,7 +7,7 @@ function buildEquipShopCardHTML(item) {
   var canBuy = !item.bought && (game.gold || 0) >= item.price;
 
   var h = '<div class="nb-purchase-card rarity-' + esc(item.rarity) + (item.bought ? ' is-bought' : '') + '">';
-  h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + buildEquipmentIconHTML(item, "nb-purchase-icon") + '</div></div>';
+  h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + buildEquipmentIconHTML(item, "nb-purchase-icon rframe") + '</div></div>';
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
   h += '<div class="nb-purchase-meta">' + esc(rarityLabel) + '</div>';

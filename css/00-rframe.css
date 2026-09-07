@@ -1,0 +1,93 @@
+/* =====================================================================
+   v3.164.0 : .rframe — cadre de rareté UNIFIÉ (kit UI, slot-{rareté}.png).
+
+   Reconstruction décidée avec Seb après les 5 correctifs successifs de
+   v3.158→v3.162 : UNE seule implémentation du "cadre de rareté" pour les
+   6 usages du jeu, au lieu de 6 blocs quasi identiques éparpillés
+   (04-panel-equipment.css ×5 + 00-components.css ×1), chacun avec ses
+   propres tailles en dur et ses reliquats.
+
+   Usage (classe posée par le JS, en plus de la classe de contexte) :
+     - directement sur la boîte interactive : .eq-bag-tile.rframe
+       (le cadre EST la tuile ; potions incluses, via potion.rarity)
+     - sur le div-icône généré par buildEquipmentIconHTML (ui-root.js) :
+       .eq-orbit-slot-icon, .eq-detail-icon-img, .eq-compat-icon-img,
+       .eq-compare-icon-img, .nb-purchase-icon
+   La classe de contexte ne garde QUE le dimensionnement externe (largeur
+   dans son écran) ; tout le rendu du cadre vit ici.
+
+   GARANTIES (les 3 défauts de v3.162 traités à la racine) :
+   1. Ratio JAMAIS déformé : aspect-ratio fixe (299/318, ratio réel des
+      PNG) + background-size CONTAIN (l'asset garde son propre ratio même
+      si la boîte diffère — les 5 PNG n'ont pas exactement le même ratio,
+      ex. le slot-legendary.png v3.165 fait 372×383, absorbé par contain
+      au lieu d'être étiré).
+   2. Plus de min-height héritées qui cassent le ratio aux petites
+      largeurs (l'ancien bug "cadres étirés" : min-height 96px gagnait
+      sur aspect-ratio quand la colonne faisait ~89px).
+   3. Sélection dessinée sur la boîte du cadre (box-shadow), une seule
+      règle partagée — plus de halo résiduel par état orphelin.
+
+   Taille de l'icône dans le cadre : --rframe-icon, mesurée sur les
+   assets (scan de pixels ; re-mesuré v3.165 après le NOUVEAU
+   slot-legendary.png de Seb, 372×383, cavité plus généreuse que
+   l'ancien) : cavité utile des 5 cadres, rapportée à la largeur de la
+   boîte, entre 65,3 % (légendaire, le plus serré) et 68,8 % ; les
+   icônes d'objets remplissent ~100 % de leur canvas. 64 % (choix Seb)
+   tient donc sur les 5 cadres avec ≥1,3 % de marge. Réglable en UN
+   endroit (et testable en direct dans atelier-ui.html).
+   ===================================================================== */
+
+/* Sur :root (et pas sur .rframe) : une valeur définie sur .rframe
+   lui-même masquerait toute redéfinition héritée — dont le curseur de
+   réglage en direct de atelier-ui.html, et un éventuel ajustement
+   ponctuel par écran. */
+:root {
+  --rframe-icon: 64%;
+}
+
+.rframe {
+  position: relative;
+  aspect-ratio: 299 / 318;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: center / contain no-repeat;
+}
+
+.rframe.rarity-common { background-image: url('../images/UI/slots/slot-common.png'); }
+.rframe.rarity-green { background-image: url('../images/UI/slots/slot-green.png'); }
+.rframe.rarity-rare { background-image: url('../images/UI/slots/slot-rare.png'); }
+.rframe.rarity-epic { background-image: url('../images/UI/slots/slot-epic.png'); }
+.rframe.rarity-legendary { background-image: url('../images/UI/slots/slot-legendary.png'); }
+
+/* Icône-image posée par buildEquipmentIconHTML directement dans le
+   .rframe (structure : .rframe.has-icon-img > img + fallback emoji).
+   Spécificité (0,2,1) > la règle générique .has-icon-img img
+   (04-panel-equipment.css, position:absolute + cover) quelle que soit
+   l'ordre de chargement des feuilles. */
+.rframe.has-icon-img {
+  overflow: visible; /* neutralise l'overflow:hidden générique — l'icône reste dans la cavité par construction */
+}
+
+.rframe.has-icon-img > img {
+  position: relative;
+  inset: auto;
+  z-index: 1;
+  width: var(--rframe-icon);
+  height: var(--rframe-icon);
+  object-fit: contain;
+}
+
+/* Sélection : halo doré sur la boîte du cadre (les PNG n'ont quasi pas
+   de marge transparente — bbox mesurée ≤ 0,3 % — donc la boîte du
+   .rframe correspond au contour visuel ; valeurs reprises du fix bag
+   v3.161, validé). Les deux structures possibles :
+   - le cadre est la boîte sélectionnée elle-même (tuile de sac) ;
+   - le cadre est l'enfant-icône d'un bouton sélectionné (emplacement
+     équipé). */
+.eq-bag-tile.rframe.is-selected,
+.eq-orbit-slot.is-selected .rframe {
+  box-shadow: 0 0 0 3px #f0c85a, 0 0 10px 2px rgba(240, 200, 90, 0.7);
+  border-radius: 12px;
+}

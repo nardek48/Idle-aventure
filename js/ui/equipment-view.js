@@ -70,7 +70,7 @@ function buildEquipmentSlot(slot, label, icon) {
   var isSelected = selectedEquipSlot === slot;
   var h = '<button class="eq-orbit-slot ' + (item ? 'filled' : 'empty') + (isSelected ? ' is-selected' : '') + '" onclick="selectEquipSlot(\'' + esc(slot) + '\')" aria-label="' + esc(label) + '">';
   h += item
-    ? buildEquipmentIconHTML(item, "eq-orbit-slot-icon")
+    ? buildEquipmentIconHTML(item, "eq-orbit-slot-icon rframe")
     : '<div class="eq-orbit-slot-icon eq-orbit-slot-placeholder">' + esc(icon) + '</div>';
   h += '</button>';
   return h;
@@ -112,7 +112,7 @@ function buildCompatibleItemsListHTML(slot) {
   items.slice(0, 5).forEach(function (item) {
     var delta = getEquipmentStatDelta(item, equipped);
     h += '<div class="eq-compat-row">';
-    h += '<div class="eq-compat-icon">' + buildEquipmentIconHTML(item, "eq-compat-icon-img") + '</div>';
+    h += '<div class="eq-compat-icon">' + buildEquipmentIconHTML(item, "eq-compat-icon-img rframe") + '</div>';
     h += '<div class="eq-compat-info">';
     h += '<div class="eq-compat-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
     h += '<div class="eq-compat-stat">' + esc(formatEquipmentStat(item));
@@ -141,7 +141,7 @@ function buildEquipDetailPanelHTML() {
   var h = '<div class="eq-detail-panel">';
 
   if (item) {
-    h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img") + '</div>';
+    h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img rframe") + '</div>';
     h += '<div class="eq-detail-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
     h += '<div class="eq-detail-stat">' + esc(formatEquipmentStat(item)) + '</div>';
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.unequip(\'' + esc(slot) + '\')">Déséquiper</button>';
@@ -204,14 +204,14 @@ function buildUnifiedTileHTML(entry) {
 
   if (entry.type === "equipment") {
     var item = entry.item;
-    var h = '<button class="eq-bag-tile rarity-' + esc(item.rarity) + (isSelected ? ' is-selected' : '') + '" onclick="selectInventoryKey(\'' + esc(entry.key) + '\')" aria-label="' + esc(item.name) + '">';
+    var h = '<button class="eq-bag-tile rframe rarity-' + esc(item.rarity) + (isSelected ? ' is-selected' : '') + '" onclick="selectInventoryKey(\'' + esc(entry.key) + '\')" aria-label="' + esc(item.name) + '">';
     h += buildEquipmentIconHTML(item, "eq-bag-tile-icon");
     h += '</button>';
     return h;
   }
 
   var potion = entry.potion;
-  var h2 = '<button class="eq-bag-tile rarity-' + esc(potion.rarity || "common") + (isSelected ? ' is-selected' : '') + '" onclick="selectInventoryKey(\'' + esc(entry.key) + '\')" aria-label="' + esc(potion.name) + '">';
+  var h2 = '<button class="eq-bag-tile rframe rarity-' + esc(potion.rarity || "common") + (isSelected ? ' is-selected' : '') + '" onclick="selectInventoryKey(\'' + esc(entry.key) + '\')" aria-label="' + esc(potion.name) + '">';
   h2 += renderIconOrEmojiHTML(potion.icon, "eq-bag-tile-icon", potion.name);
   h2 += '<span class="eq-bag-tile-stock">' + entry.stock + '</span>';
   h2 += '</button>';
@@ -228,7 +228,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<div class="eq-detail-hint">Touche un objet dans le sac pour voir son détail ici.</div>';
   } else if (entry.type === "equipment") {
     var item = entry.item;
-    h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img") + '</div>';
+    h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img rframe") + '</div>';
     h += '<div class="eq-detail-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
     h += '<div class="eq-detail-stat">' + esc(formatEquipmentStat(item)) + '</div>';
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">Équiper</button>';
@@ -267,7 +267,7 @@ function buildEquippedComparisonHTML(item) {
   } else {
     var delta = getEquipmentStatDelta(item, equipped);
     h += '<div class="eq-compare-row">';
-    h += '<div class="eq-compare-icon">' + buildEquipmentIconHTML(equipped, "eq-compare-icon-img") + '</div>';
+    h += '<div class="eq-compare-icon">' + buildEquipmentIconHTML(equipped, "eq-compare-icon-img rframe") + '</div>';
     h += '<div class="eq-compare-info">';
     h += '<div class="eq-compare-name rarity-' + esc(equipped.rarity) + '">' + esc(equipped.name) + '</div>';
     h += '<div class="eq-compare-stat">' + esc(formatEquipmentStat(equipped)) + '</div>';
