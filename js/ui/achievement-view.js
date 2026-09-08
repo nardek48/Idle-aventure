@@ -89,7 +89,7 @@ function buildAchievementsHTML() {
   var h = '<div class="achievement-summary">' + claimedCount + ' / ' + total + ' réclamés</div>';
   h += buildAchievementListHTML();
 
-  return '<div class="nb-page-frame">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83c\udfc6 Hauts faits">' + h + '</div>';
 }
 
 window.buildAchievementsHTML = buildAchievementsHTML;

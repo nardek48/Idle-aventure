@@ -8,7 +8,7 @@ function buildAfflictionsHTML() {
   var maxActive = window.AFFLICTION_MAX_ACTIVE || 4;
   var stackMult = window.AfflictionManager ? AfflictionManager.getStackRewardMult() : 1;
 
-  var h = '<div class="nb-page-frame">';
+  var h = '<div class="nb-page-frame kframe-page" data-kf-title="\u2620\ufe0f Afflictions">';
 
   h += '<div class="affliction-intro">';
   h += '<div class="affliction-intro-title">🔥 Afflictions</div>';

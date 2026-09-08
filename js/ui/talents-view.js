@@ -307,7 +307,7 @@ function closeTalentSummaryPopup() {
 function buildTalentsHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
-  h += '<div class="nb-page-frame">';
+  h += '<div class="nb-page-frame kframe-page" data-kf-title="\u2728 Talents">';
   h += buildTalentSummaryBarHTML();
   h += buildTalentBranchHTML(activeTalentCategory);
   h += '</div>';

@@ -182,7 +182,7 @@ function buildBestiaryListHTML() {
 function buildBestiaryHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
-  h += '<div class="nb-page-frame nb-page-frame-fill">';
+  h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="\ud83d\udc32 Bestiaire">';
 
   if (activeBestiaryCodexSubTab === "codex") {
     h += (typeof buildCodexHTML === "function") ? buildCodexHTML() : "";

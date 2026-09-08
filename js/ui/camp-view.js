@@ -72,7 +72,7 @@ function buildCampHTML() {
   var minutesToFull = window.CampManager ? CampManager.getMinutesToFull() : 0;
   var rationOptions = window.CampManager ? CampManager.getRationOptions() : [];
 
-  var h = '<div class="nb-page-frame camp-page">';
+  var h = '<div class="nb-page-frame camp-page kframe-page" data-kf-title="\u26fa Campement">';
 
   h += '<div class="camp-hero-title">🏕️ Campement</div>';
   h += '<div class="camp-hero-sub">Ton point de ralliement entre deux expéditions.</div>';

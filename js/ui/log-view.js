@@ -14,7 +14,7 @@ function buildLogHTML() {
   }
 
   h += '</div>';
-  return '<div class="nb-page-frame">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83d\udcd6 Journal">' + h + '</div>';
 }
 
 window.buildLogHTML = buildLogHTML;

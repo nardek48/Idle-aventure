@@ -427,7 +427,7 @@ function buildGrimoireHTML() {
     h += buildGrimoireRuleCardHTML(index, rule, kit, index >= unlockedCount);
   });
 
-  return '<div class="nb-page-frame">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83d\udcd5 Grimoire">' + h + '</div>';
 }
 
 function setGrimoireRuleCondition(index, conditionId) {

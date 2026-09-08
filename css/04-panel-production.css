@@ -953,3 +953,673 @@
   font-size: 12.5px;
   color: var(--nb-ink-dim);
 }
+
+/* ============================================================
+   v3.191.0 : TABLEAU DE BORD Production (maquette atelier-ecrans.html
+   validée) — double bouton Production|Ateliers, cartes compactes 2
+   colonnes, vue Ateliers agrégée, détail bâtiment zones seules.
+   Les cartes compactes et le détail sont stylés en DUR (fond crème +
+   encre sombre) plutôt qu'ajoutés à la liste de 00-kframe-scope.css :
+   bloc autoporté, pas de 2e fichier CSS dans le delta.
+   ============================================================ */
+
+.production-switch {
+  margin: 0 0 10px;
+}
+
+/* --- barre d'action de la vue Production --- */
+.production-harvest-all-kbtn {
+  margin-bottom: 2px;
+}
+
+.production-dash-hint {
+  font-size: 11px;
+  text-align: center;
+  color: var(--nb-gold-soft, #e8d5a8);
+  opacity: 0.85;
+  margin: 0 0 10px;
+}
+
+/* --- grille de cartes compactes --- */
+.production-dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.production-dash-card {
+  position: relative;
+  border: 1px solid #b98a4a;
+  border-radius: 10px;
+  background: #f6ecd9;
+  color: #3a2c1a;
+  padding: 7px 8px 8px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.production-dash-card:active {
+  transform: translateY(1px);
+}
+
+.production-dash-card.is-full {
+  border-color: #a33b2a;
+  box-shadow: inset 0 0 0 1px #a33b2a55;
+}
+
+.production-dash-flag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  padding: 2px 7px 2px 8px;
+  border-radius: 0 0 0 8px;
+}
+
+.production-dash-flag.is-full-flag {
+  color: #fff3d6;
+  background: #a33b2a;
+}
+
+.production-dash-flag.is-up-flag {
+  color: #2a3d1c;
+  background: #b9d18a;
+}
+
+.production-dash-card-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.production-dash-ico {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.production-dash-name {
+  font-size: 13px;
+  font-weight: 800;
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.production-dash-gauge {
+  margin: 2px 0 3px;
+}
+
+.production-dash-stock {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b4a22;
+  margin-bottom: 4px;
+}
+
+.production-dash-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+}
+
+.production-dash-rate {
+  color: #4a6b2a;
+  font-weight: 700;
+}
+
+.production-dash-zones {
+  color: #6b4a22;
+}
+
+.production-dash-status {
+  font-size: 9.5px;
+  color: #8a6a30;
+  margin-top: 3px;
+  min-height: 12px;
+}
+
+.production-dash-status.is-full {
+  color: #a33b2a;
+  font-weight: 700;
+}
+
+/* --- vue Ateliers agrégée --- */
+.production-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  border-radius: 9px;
+  padding: 7px 10px;
+  margin: 2px 0 8px;
+}
+
+.production-status-banner.is-warn {
+  background: rgba(163, 59, 42, 0.16);
+  border: 1px solid #a33b2a;
+  color: #ffb9a6;
+}
+
+.production-status-banner.is-ok {
+  background: rgba(74, 107, 42, 0.16);
+  border: 1px solid #4a6b2a;
+  color: #cfe8a8;
+}
+
+.workshop-building-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--nb-ink-dim, #6b4a22);
+  margin-right: auto;
+  padding-left: 2px;
+  /* 320px : se rétracte en ellipse plutôt que de chevaucher l'écu de niveau */
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.workshop-building-tag-ico {
+  flex: 0 0 auto;
+}
+
+.workshop-building-tag-ico {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.production-shops-locked {
+  border: 1px dashed #8a6a30;
+  border-radius: 10px;
+  padding: 7px 10px;
+  margin-top: 8px;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--nb-gold-soft, #d9c49a);
+  text-align: center;
+}
+
+/* --- détail bâtiment (zones seules) --- */
+.production-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* Retour rond : assets du kit, LONGHANDS uniquement (jamais background: raccourci sur
+   un composant à image — leçon v3.183, voir Guide UI §5). */
+.production-detail-back {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background-color: transparent;
+  background-image: url('../images/UI/buttons/btn-round-back.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.production-detail-back:active {
+  background-image: url('../images/UI/buttons/btn-round-back-pressed.png');
+}
+
+.production-detail-ico {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.production-detail-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--nb-gold-bright, #ffe9b0);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+.production-detail-stockline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.production-detail-gauge {
+  flex: 1 1 auto;
+}
+
+.production-detail-harvest {
+  flex: 0 0 auto;
+  width: auto; /* contrer le width:100% de .production-action-btn — à CÔTÉ de la jauge */
+  padding-left: 14px;
+  padding-right: 14px;
+  white-space: nowrap;
+}
+
+.production-detail-stock-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--nb-gold-soft, #e8d5a8);
+  margin: 3px 0 10px;
+}
+
+.production-detail-sec-title {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--nb-gold, #f0aa3e);
+  margin: 4px 0 6px;
+}
+
+.production-detail-sec-count {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--nb-gold-soft, #d9c49a);
+}
+
+.production-detail-shops-hint {
+  font-size: 10.5px;
+  text-align: center;
+  color: var(--nb-gold-soft, #d9c49a);
+  opacity: 0.8;
+  margin-top: 10px;
+}
+
+/* Actions groupées : boutons du kit empilés ; le coût compact passe à la ligne dans le
+   bouton (production-cost-row hérite du blanc du kbtn, is-missing #ffb4b4 déjà calibré
+   pour texte clair — voir v3.96.0 plus haut). */
+.production-group-actions {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6px;
+}
+
+.production-group-btn .production-cost-row {
+  margin-left: 6px;
+}
+
+/* Zone "la − chère" : liseré vert + drapeau, en écho au bouton groupé. Prime sur le
+   liseré de sélection si les deux s'appliquent (déclaré après .is-selected). */
+.farm-plot-card.is-cheapest {
+  position: relative; /* ancre du drapeau ::after (absent de .farm-plot-card de base) */
+  border-color: #4a6b2a;
+  box-shadow: inset 0 0 0 1px rgba(74, 107, 42, 0.4);
+}
+
+.farm-plot-card.is-cheapest::after {
+  content: "⬆ la − chère";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  font-size: 8px;
+  font-weight: 900;
+  color: #2a3d1c;
+  background: #b9d18a;
+  padding: 1px 5px;
+  border-radius: 7px 0 7px 0;
+  pointer-events: none;
+}
+
+/* 320px : la grille 3 colonnes débordait dans le détail — minmax(0,1fr) + min-width:0
+   neutralisent le min-content des noms de zones longs (piège grid classique), scopé au
+   détail pour ne pas toucher d'autres usages éventuels de la grille. */
+.production-detail .farm-plots-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.production-detail .farm-plot-card {
+  min-width: 0;
+}
+
+.production-detail .farm-plot-card-name {
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   v3.192.0 : carte atelier COMPACTE (maquette v4 validée) — préfixe wk-.
+   Steppers : réutilisent warehouse-qty-stepper compact existants.
+   Anciennes règles workshop-auto-*, workshop-craft-row,
+   workshop-upgrade-btn, warehouse-craft-queue et -recipe-tab désormais
+   sans usage côté ateliers — balayage CSS à planifier (non retirées ici
+   pour garder le delta minimal).
+   ============================================================ */
+
+.wk-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wk-emoji {
+  font-size: 16px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.wk-name {
+  font-size: 13px;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+.wk-head .workshop-building-tag {
+  flex: 1 1 auto;
+}
+
+.wk-shield {
+  width: 24px;
+  font-size: 9px;
+  flex: 0 0 auto;
+}
+
+.wk-up {
+  flex: 0 0 auto;
+  cursor: pointer;
+  border-radius: 7px;
+  border: 1px solid var(--nb-ink-strong, #6b4a22);
+  background: #e8d5a8;
+  color: var(--nb-ink, #3a2c1a);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.wk-up:active {
+  transform: translateY(1px);
+}
+
+.wk-up.is-disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.wk-up.is-max {
+  border: 1px dashed var(--nb-ink-dim, #8a6a30);
+  background: transparent;
+  color: var(--nb-ink-dim, #8a6a30);
+  cursor: default;
+}
+
+/* le coût compact vit sur fond crème ici : rouge encre au lieu du #ffb4b4
+   calibré texte blanc (voir v3.96.0 plus haut) */
+.wk-up .production-cost-item.is-missing {
+  color: #a33b2a;
+}
+
+.wk-up .btn-buy-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.wk-pills {
+  display: flex;
+  gap: 4px;
+  margin: 6px 0 0;
+  flex-wrap: wrap;
+}
+
+.wk-pill {
+  cursor: pointer;
+  border: 1px solid var(--nb-frame, #b98a4a);
+  border-radius: 20px;
+  background: #efe0c2;
+  color: var(--nb-ink-dim, #6b4a22);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 9px;
+}
+
+.wk-pill.is-active {
+  background: var(--nb-ink, #3a2c1a);
+  border-color: var(--nb-ink, #3a2c1a);
+  color: #ffe9b0;
+}
+
+.wk-pill.is-auto::before {
+  content: "♻️ ";
+}
+
+.wk-recipe {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  font-weight: 700;
+  margin: 6px 0 4px;
+}
+
+.wk-recipe-ico {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  font-size: 15px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.wk-time {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--nb-ink-dim, #8a6a30);
+  margin-left: 4px;
+}
+
+/* --- file : cases + entrée courante --- */
+.wk-queue {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin: 4px 0 2px;
+  min-height: 26px;
+}
+
+.wk-slot {
+  width: 24px;
+  height: 24px;
+  border: 1px dashed var(--nb-frame, #b98a4a);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #efe0c2;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.wk-slot-ico {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.wk-slot-x {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #a33b2a;
+  color: #fff3d6;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 14px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.wk-current {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-left: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wk-current-label {
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.wk-current-bar {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: #d9c9a8;
+  overflow: hidden;
+}
+
+.wk-current-bar-fill {
+  display: block;
+  height: 100%;
+  background: #4a6b2a;
+}
+
+.wk-queue-empty {
+  font-size: 10px;
+  color: var(--nb-ink-dim, #8a6a30);
+  margin-left: 4px;
+}
+
+/* --- pied : toggle + steppers --- */
+.wk-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+
+.wk-cont {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--nb-ink, #3a2c1a);
+  user-select: none;
+}
+
+.wk-cont-sw {
+  width: 34px;
+  height: 18px;
+  border-radius: 10px;
+  background: #c9b184;
+  position: relative;
+  transition: background 0.15s ease;
+}
+
+.wk-cont-sw::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff7e0;
+  transition: left 0.15s ease;
+  box-shadow: 0 1px 2px rgba(30, 15, 0, 0.4);
+}
+
+.wk-cont.is-on .wk-cont-sw {
+  background: #4a6b2a;
+}
+
+.wk-cont.is-on .wk-cont-sw::after {
+  left: 18px;
+}
+
+.wk-auto-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #4a6b2a;
+}
+
+.wk-manual {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.wk-craft-btn {
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid var(--nb-ink-strong, #6b4a22);
+  background: var(--nb-ink, #3a2c1a);
+  color: #ffe9b0;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 12px;
+}
+
+.wk-craft-btn:active {
+  transform: translateY(1px);
+}
+
+.wk-alert {
+  font-size: 10px;
+  font-weight: 800;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+.wk-alert.is-warn {
+  color: #a33b2a;
+}
+
+.wk-alert.is-reserve {
+  color: #8a6a30;
+}
+
+.wk-alert.is-hint {
+  color: var(--nb-ink-dim, #6b4a22);
+  font-weight: 700;
+}
+
+/* encre explicite : dans le kframe, la couleur héritée est l'or clair du décor —
+   le nom et les quantités de recette devenaient invisibles sur la carte crème
+   (constaté en Playwright v3.192.0). */
+.wk-name,
+.wk-recipe,
+.wk-current-label {
+  color: var(--nb-ink, #3a2c1a);
+}

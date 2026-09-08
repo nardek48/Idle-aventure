@@ -47,7 +47,7 @@ function buildSettingsHTML() {
   h += 'Sauvegarde : ' + (game.saveSupported ? 'locale navigateur' : 'indisponible') + '.<br>';
   h += 'La progression hors-ligne, l\'équipement et les quêtes sont activés.';
   h += '</div>';
-  return '<div class="nb-page-frame">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="\u2699\ufe0f Options">' + h + '</div>';
 }
 
 function toggleAutoSkills(enabled) {

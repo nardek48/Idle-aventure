@@ -251,7 +251,7 @@ function buildQuestsGeneralSubTabHTML() {
 function buildQuestsHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
-  h += '<div class="nb-page-frame">';
+  h += '<div class="nb-page-frame kframe-page" data-kf-title="\ud83d\udcdc Qu\u00eates">';
 
   h += buildQuestsGeneralSubTabHTML();
 

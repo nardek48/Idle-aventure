@@ -251,7 +251,7 @@ function buildCombatSandboxHTML() {
     return '<div class="nb-page-frame"><div class="panel-card"><h3>🧪 Bac à sable</h3><p class="panel-sub">js/sim/combat-round-sim.js n\'est pas chargé.</p></div></div>';
   }
   var coefs = rsbCoefs();
-  var h = '<div class="nb-page-frame">';
+  var h = '<div class="nb-page-frame kframe-page" data-kf-title="\ud83e\uddea Bac \u00e0 sable">';
   h += '<div class="panel-card rsb-card"><h3>🧪 Bac à sable — simulateur de rounds</h3>';
   h += '<p class="panel-sub">Rejoue le modèle du moteur (héros puis ennemi, jauge de célérité, patterns télégraphe → impact, contres) sur les vraies données, sans toucher à ta partie. Les coefficients sont pré-remplis avec les valeurs courantes du jeu.</p>';
 

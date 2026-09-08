@@ -56,7 +56,20 @@ function buildVillageMainSubTabHTML() {
 function buildVillageHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
-  h += '<div class="nb-page-frame village-page-frame">';
+  // v3.193.0 : titre du bandeau figé selon le sous-onglet actif — et, en
+  // détail bâtiment de Production, le NOM du bâtiment (le bandeau devient
+  // l'en-tête permanent de la fiche).
+  var kfTitle = "🏘️ Village";
+  if (activeVillageSubTab === "entrepot") {
+    kfTitle = "📦 Entrepôt";
+  } else if (activeVillageSubTab === "production") {
+    if (window.productionDetailBuildingId && PRODUCTION_BUILDINGS[productionDetailBuildingId]) {
+      kfTitle = PRODUCTION_BUILDINGS[productionDetailBuildingId].name;
+    } else {
+      kfTitle = (window.productionViewTab === "shops") ? "⚒️ Ateliers" : "🌾 Production";
+    }
+  }
+  h += '<div class="nb-page-frame village-page-frame kframe-page" data-kf-title="' + esc(kfTitle) + '">';
 
   if (activeVillageSubTab === "entrepot") {
     h += buildWarehouseHTML();
