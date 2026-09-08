@@ -17,20 +17,23 @@ var SceneCheckSystem = {
     return "high";
   },
 
-  /* successChance({statValue, difficulty}) -> nombre 10-90. v3.121.0 (recalibrage Seb) :
-     poids de la stat réduit et pénalité de profondeur fortement augmentée — décision explicite
-     "la difficulté doit surtout venir de la profondeur, pas de la stat". Les héros ont des
-     stats brutes réelles dans une fourchette ~30-80 (voir data/heroes.js, makeRpgStats), et
-     grandissent encore avec l'entraînement (game.trainedStats) : un statBonus plafonné à 55
-     comme avant écrasait quasiment toute pénalité de profondeur pour un héros déjà bien monté.
-     Nouveau statBonus plafonné à 20 (stat*0.18, donc ~14 pour une stat 80) ; difficultyPenalty
-     doublée (×0.9 au lieu de ×0.45) pour que depthDifficulty (voir plus bas, pente ×1.6/palier)
-     domine réellement en profondeur, même pour un héros fort. */
+  /* successChance({statValue, difficulty}) -> nombre 5-95. v3.195.0 (recalibrage Seb, retour
+     "aucune réelle difficulté / les choix n'ont pas d'impact") : le recalibrage v3.121.0 avait
+     sur-corrigé — statBonus plafonné à 20 rendait la stat du héros quasi invisible face à la
+     profondeur (un héros neuf et un héros très développé avaient une chance de réussite à peu
+     près identique, voir simulation Monte-Carlo de session). Les héros ont des stats brutes
+     ~30-80 de base (data/heroes.js) ET grandissent jusqu'à +150 par entraînement
+     (data/upgrades.js, utrain_power/precision/endurance) — le plafond doit refléter cette vraie
+     amplitude de progression, pas l'écraser. Nouveau statBonus plafonné à 55 (stat*0.40, donc
+     ~55 dès une stat de 138) ; difficultyPenalty réduite (×0.8 au lieu de ×0.9) ; base relevée
+     à 32 (au lieu de 35, compensé par le plafond de stat plus généreux) pour qu'un héros neuf
+     reste viable sur le mode d'intensité le plus doux (voir SCENE_INTENSITY,
+     data/scene-templates.js) sans dépendre d'un entraînement préalable. */
   successChance: function (statValue, difficulty) {
-    var baseChance = 35;
-    var statBonus = Math.min(20, Number(statValue || 0) * 0.18);
-    var difficultyPenalty = Number(difficulty || 0) * 0.9;
-    return this.clamp(baseChance + statBonus - difficultyPenalty, 10, 90);
+    var baseChance = 32;
+    var statBonus = Math.min(55, Number(statValue || 0) * 0.40);
+    var difficultyPenalty = Number(difficulty || 0) * 0.8;
+    return this.clamp(baseChance + statBonus - difficultyPenalty, 5, 95);
   },
 
   /* resolveCheck({statValue, difficulty, randomValue}) -> { estimate, successChance, result }
@@ -61,12 +64,13 @@ var SceneCheckSystem = {
   },
 
   /* depthDifficulty(baseDifficulty, depth) -> difficulté ajustée par la profondeur courante
-     (0-indexée). v3.121.0 (recalibrage Seb) : pente ×1.6/palier (au lieu de ×0.7) — avec la
-     pénalité successChance ×0.9, ça porte la pénalité totale à environ 1.44 point de % par
-     palier de profondeur ET par palier de baseDifficulty du gabarit, largement dominante sur
-     le statBonus plafonné à 20. */
+     (0-indexée). v3.195.0 : pente adoucie à ×1.4/palier (au lieu de ×1.6) — le curseur
+     d'intensité (SCENE_INTENSITY.diffMult, data/scene-templates.js) porte désormais une partie
+     de la variation de dureté que la profondeur seule portait avant ; garder ×1.6 en plus du
+     diffMult d'intensité et des diffMod par option (voir scene-nodes.js) aurait cumulé trois
+     pénalités et rendu Périple injouable même pour un héros développé. */
   depthDifficulty: function (baseDifficulty, depth) {
-    return Number(baseDifficulty || 0) + Number(depth || 0) * 1.6;
+    return Number(baseDifficulty || 0) + Number(depth || 0) * 1.4;
   },
 
   /* depthLootMultiplier(depth) -> multiplicateur de gain (1 + depth*0.3), même règle. */

@@ -136,11 +136,17 @@ var SceneEngine = {
   /* ---------- Résolution d'un nœud "check" ---------- */
   /* resolveObstacle(gabarit, optionKey, statEffective, depth, randomValue, riskMod) ->
      { result: "perfect"|"success"|"setback", estimate, successChance }
-     statEffective : stat déjà réduite par les blessures (calculée côté run-system). */
-  resolveObstacle: function (gabarit, optionKey, statEffective, depth, randomValue, riskMod) {
+     statEffective : stat déjà réduite par les blessures (calculée côté run-system).
+     v3.195.0 : diffMult ajouté (facultatif, défaut 1) — multiplicateur de difficulté
+     GÉNÉRIQUE en plus du riskMod de porte, utilisé pour composer le diffMod de l'option
+     choisie (scene-nodes.js:optionProfiles) ET/OU le diffMult de l'intensité de run
+     (data/scene-templates.js:SCENE_INTENSITY) sans multiplier les paramètres positionnels à
+     chaque nouveau facteur — l'appelant (scene-run-system.js) fait le produit des deux avant
+     d'appeler ici. */
+  resolveObstacle: function (gabarit, optionKey, statEffective, depth, randomValue, riskMod, diffMult) {
     var option = gabarit && gabarit.options && gabarit.options[optionKey];
     if (!option) return { result: "setback", estimate: "low", successChance: 15 };
-    var difficulty = SceneCheckSystem.depthDifficulty(gabarit.baseDifficulty || 4, depth) * (riskMod || 1);
+    var difficulty = SceneCheckSystem.depthDifficulty(gabarit.baseDifficulty || 4, depth) * (riskMod || 1) * (diffMult || 1);
     return SceneCheckSystem.resolveCheck({
       statValue: statEffective,
       difficulty: difficulty,
@@ -150,23 +156,25 @@ var SceneEngine = {
 
   /* estimateObstacle(...) -> même calcul que resolveObstacle mais sans randomValue, pour
      affichage AVANT résolution (estimate qualitatif uniquement, jamais de % — vue). */
-  estimateObstacle: function (gabarit, optionKey, statEffective, depth, riskMod) {
+  estimateObstacle: function (gabarit, optionKey, statEffective, depth, riskMod, diffMult) {
     var option = gabarit && gabarit.options && gabarit.options[optionKey];
     if (!option) return "low";
-    var difficulty = SceneCheckSystem.depthDifficulty(gabarit.baseDifficulty || 4, depth) * (riskMod || 1);
+    var difficulty = SceneCheckSystem.depthDifficulty(gabarit.baseDifficulty || 4, depth) * (riskMod || 1) * (diffMult || 1);
     var chance = SceneCheckSystem.successChance(statEffective, difficulty);
     return SceneCheckSystem.estimate(chance);
   },
 
   /* ---------- Gains ---------- */
-  /* rollLoot(baseRange, depth, randomValue, riskMod) -> entier, base tirée dans [min,max],
-     multiplié par depthLootMultiplier ET par riskMod (v3.121.0 : une porte plus périlleuse
-     rapporte visiblement plus — c'est ce qui rend le choix risque/récompense réel). */
-  rollLoot: function (baseRange, depth, randomValue, riskMod) {
+  /* rollLoot(baseRange, depth, randomValue, riskMod, lootMult) -> entier, base tirée dans
+     [min,max], multiplié par depthLootMultiplier, riskMod (v3.121.0 : une porte plus
+     périlleuse rapporte visiblement plus) ET lootMult (v3.195.0, facultatif, défaut 1 —
+     compose le lootMod de l'option choisie ET/OU le lootMult de l'intensité de run, même
+     principe que diffMult ci-dessus). */
+  rollLoot: function (baseRange, depth, randomValue, riskMod, lootMult) {
     var min = (baseRange && baseRange[0]) || 0;
     var max = (baseRange && baseRange[1]) || 0;
     var base = min + Math.floor(Number(randomValue || 0) * (max - min + 1));
-    return Math.round(base * SceneCheckSystem.depthLootMultiplier(depth) * (riskMod || 1));
+    return Math.round(base * SceneCheckSystem.depthLootMultiplier(depth) * (riskMod || 1) * (lootMult || 1));
   }
 };
 

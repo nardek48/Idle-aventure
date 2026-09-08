@@ -218,7 +218,9 @@ function buildShopHTML() {
 
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
-  h += '<div class="nb-page-frame nb-page-frame-fill">'; // v2.83.44 : ouverte ici (pas ré-enveloppée après coup, voir CHANGELOG)
+  // v3.194.0 (Seb) : le bandeau suit le sous-onglet actif.
+  var kfTitle = activeShopSubTab === "potions" ? "\ud83e\uddea Potions" : "\ud83d\udcb0 Économie";
+  h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + kfTitle + '">'; // v2.83.44 : ouverte ici (pas ré-enveloppée après coup, voir CHANGELOG)
 
   if (activeShopSubTab === "potions") {
     h += typeof buildPotionShopHTML === "function" ? buildPotionShopHTML() : "";

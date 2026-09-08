@@ -197,7 +197,7 @@ h += '</div>';   // /pc-info-wrapper
 
   h += buildHeroCarouselHTML();
 
-  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
+  return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83d\udee1\ufe0f H\u00e9ros">' + h + '</div>'; // v2.83.28
 }
 
 var HEROS_TRAINING_UPGRADE_IDS = [
@@ -219,7 +219,7 @@ function buildHerosAmeliorationHTML() {
 
   var h = '';
 
-  h += '<div class="pc-heros-train-section nb-page-frame">';
+  h += '<div class="pc-heros-train-section nb-page-frame kframe-page" data-kf-title="\u2b06\ufe0f Am\u00e9lioration">';
     h += '<div class="pc-heros-train-toolbar">';
       h += '<div class="shop-buy-toolbar">';
         h += '<button class="settings-btn ' + (buyAmount === 1 ? 'active' : '') + '" onclick="setShopBuyAmount(1)">x1</button>';
@@ -257,7 +257,7 @@ function buildHerosStatsHTML() {
 
   h += buildHerosCumulativeStatsHTML();
 
-  return '<div class="nb-page-frame">' + h + '</div>'; // v2.83.28
+  return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83d\udcca Stats">' + h + '</div>'; // v2.83.28
 }
 
 function buildHerosCumulativeStatsHTML() {
@@ -286,6 +286,10 @@ function buildHerosSubTabBarHTML() {
 
 function buildHerosHTML() {
   var h = '<div class="subtab-page">';
+
+  // v3.194.1 : chaque sous-vue possède en fait SON cadre racine — le bandeau
+  // autonome de v3.194.0 le doublait (retour Seb). Les cadres portent
+  // désormais le titre eux-mêmes (schéma standard des autres pages).
 
   h += '<div class="subtab-page-content">';
 

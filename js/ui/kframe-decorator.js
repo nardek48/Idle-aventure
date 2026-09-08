@@ -18,6 +18,10 @@ comportement 3 rangées classique.
 
 function decoratePageFrames(root) {
   if (!root || !root.querySelectorAll) return;
+
+  // (v3.194.1 : le mécanisme de bandeau autonome kfp-band, ajouté en v3.194.0
+  //  pour Héros, a été retiré — chaque sous-vue Héros avait en fait son cadre
+  //  racine, titré directement comme les autres pages.)
   var frames = root.querySelectorAll(".nb-page-frame:not(.kframe)");
   for (var i = 0; i < frames.length; i++) {
     var f = frames[i];

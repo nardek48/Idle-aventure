@@ -86,12 +86,22 @@ var SceneRunManager = {
     };
   },
 
-  /* Stat effective à la profondeur courante : base - 2 par blessure de ce type, plancher 1
-     (règle DESIGN_Scene_Engine_v1.md §4). */
+  /* Stat effective à la profondeur courante : base - malus cumulé des blessures de CE type,
+     plancher 1. v3.195.0 (recalibrage "les blessures ne se sentent pas") : remplace l'ancien
+     malus fixe -2/blessure (invisible, ~0.4% de chance) par un malus dépendant de la sévérité
+     de chaque blessure (run.injuries contient désormais des objets {stat, severity}, pas de
+     simples clés de stat — voir resolveObstacle ci-dessous et SCENE_NODES.injurySeverityMalus,
+     data/scene-nodes.js : légère -4, normale -8, grave -12). Une blessure grave (issue d'un
+     échec en voie de puissance) pèse donc 3x plus qu'une légère, cohérent avec le risque pris. */
   statEffective: function (run, statKey) {
     var base = run.heroSnapshot[statKey] || 0;
-    var count = run.injuries.filter(function (k) { return k === statKey; }).length;
-    return Math.max(1, base - 2 * count);
+    var bank = SceneEngine.getNodeBank();
+    var malus = run.injuries.filter(function (inj) {
+      return (inj && inj.stat) === statKey;
+    }).reduce(function (sum, inj) {
+      return sum + Number((bank.injurySeverityMalus && bank.injurySeverityMalus[inj.severity]) || 4);
+    }, 0);
+    return Math.max(1, base - malus);
   },
 
   /* ---------- Démarrage ---------- */
@@ -164,8 +174,13 @@ var SceneRunManager = {
       torchCharges: 0,
       ropeAvailable: false,
       amuletAvailable: false,
+      gourdeAvailable: false, // v3.195.0
 
-      injuries: [], // clés de stat ("power"/"precision"/"endurance"), cumulables
+      injuries: [], // v3.195.0 : {stat, severity} cumulables (avant : simples clés de stat)
+      breath: 100, // v3.195.0 : ressource de run visible, 0-100, consommée par les options
+                    // d'obstacle (voir SCENE_NODES.optionProfiles), restaurée par
+                    // autel/source/gourde (voir resolveAutel/resolveSource/useSceneGourde)
+      intensity: null, // v3.195.0 : "sentier"|"chemin"|"periple" — figé au choix, comme profile
       loot: 0, // ressource lootResource, non banquée tant que SortieManager n'a pas end()
 
       currentGate: null, // index de porte sélectionnée en attente de résolution (idempotence)
@@ -212,6 +227,12 @@ var SceneRunManager = {
     run.card[pickedDepth][pickedGate] = { type: "combat", gabaritId: gabaritId };
   },
 
+  /* v3.195.0 : chooseProfile ne génère plus la carte immédiatement — decoupé en deux étapes
+     (profile -> intensity -> preparation/gate) car depthMax dépend désormais de l'intensité
+     choisie (SCENE_INTENSITY, data/scene-templates.js), pas seulement du template. Le profil
+     reste figé ici comme avant (run.profile), juste le statut suivant change. Canevas SANS
+     window.SCENE_INTENSITY ou sans intensité pertinente (aucun aujourd'hui hors Petite
+     Aventure, mais garde générique) : saute directement à l'ancien comportement. */
   chooseProfile: function (profileId) {
     var run = this.getRun();
     if (!run || run.status !== "profile") return { ok: false, reason: "Aucun choix de profil en cours" };
@@ -220,18 +241,55 @@ var SceneRunManager = {
     var weights = template.profileWeights[profileId];
     if (!weights) return { ok: false, reason: "Profil invalide" };
 
-    var randCount = SceneEngine.estimateRandomCount(template);
-    var randomValues = [];
-    for (var i = 0; i < randCount; i++) randomValues.push(Math.random());
-    run.card = SceneEngine.buildCard(template, randomValues, weights);
-    this._ensureMinCombat(run, template, profileId);
     run.profile = profileId;
+    run._pendingProfileWeights = weights; // consommé par chooseIntensity, jamais persisté au-delà
 
-    var hasLoadout = Number(template.loadoutSlots || 0) > 0;
-    run.status = hasLoadout ? "preparation" : "gate";
+    run.status = window.SCENE_INTENSITY ? "intensity" : "preparation";
+    if (!window.SCENE_INTENSITY) this._generateCard(run, template, weights); // repli ancien flow
 
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null, run: run };
+  },
+
+  /* v3.195.0 : choix du curseur d'intensité ("sentier"|"chemin"|"periple", SCENE_INTENSITY) —
+     ORTHOGONAL au profil Bourrin/Prudent (décision Seb : profil = nature du parcours,
+     intensité = ampleur du risque/gain). Génère RÉELLEMENT la carte ici (depthMax dépend de
+     l'intensité), avec les poids du profil déjà choisi (run._pendingProfileWeights). Figé
+     comme profile, jamais recalculé ensuite. */
+  chooseIntensity: function (intensityId) {
+    var run = this.getRun();
+    if (!run || run.status !== "intensity") return { ok: false, reason: "Aucun choix d'intensité en cours" };
+    var intensity = window.SCENE_INTENSITY && window.SCENE_INTENSITY[intensityId];
+    if (!intensity) return { ok: false, reason: "Intensité invalide" };
+    var template = SceneEngine.getTemplate(run.templateId);
+    if (!template) return { ok: false, reason: "Expédition introuvable" };
+
+    run.intensity = intensityId;
+    this._generateCard(run, template, run._pendingProfileWeights, intensity.depthMax);
+    delete run._pendingProfileWeights;
+
+    if (typeof saveGame === "function") saveGame();
+    return { ok: true, reason: null, run: run };
+  },
+
+  /* Génère la carte réelle et avance au statut suivant (preparation ou gate) — factorisé car
+     appelé depuis chooseIntensity (flow normal) ET chooseProfile (repli si SCENE_INTENSITY
+     absent, canevas hors Petite Aventure). depthMaxOverride facultatif : sinon template.depthMax. */
+  _generateCard: function (run, template, profileWeights, depthMaxOverride) {
+    var effectiveTemplate = template;
+    if (depthMaxOverride) {
+      // Ne mute jamais l'objet SCENE_TEMPLATES partagé : clone léger avec depthMax substitué.
+      effectiveTemplate = Object.assign ? Object.assign({}, template, { depthMax: depthMaxOverride })
+        : (function () { var c = {}; for (var k in template) c[k] = template[k]; c.depthMax = depthMaxOverride; return c; })();
+    }
+    var randCount = SceneEngine.estimateRandomCount(effectiveTemplate);
+    var randomValues = [];
+    for (var i = 0; i < randCount; i++) randomValues.push(Math.random());
+    run.card = SceneEngine.buildCard(effectiveTemplate, randomValues, profileWeights);
+    if (profileWeights) this._ensureMinCombat(run, template, run.profile);
+
+    var hasLoadout = Number(template.loadoutSlots || 0) > 0;
+    run.status = hasLoadout ? "preparation" : "gate";
   },
 
   /* Valide l'équipement choisi en préparation (exactement loadoutSlots objets) et passe au
@@ -256,6 +314,7 @@ var SceneRunManager = {
       ? (template.items.torche.charges || 3) : 0;
     run.ropeAvailable = itemIds.indexOf("corde") !== -1;
     run.amuletAvailable = itemIds.indexOf("amulette") !== -1;
+    run.gourdeAvailable = itemIds.indexOf("gourde") !== -1; // v3.195.0
     run.status = "gate";
 
     if (typeof saveGame === "function") saveGame();
@@ -285,6 +344,21 @@ var SceneRunManager = {
   torchActiveThisLevel: function () {
     var run = this.getRun();
     return !!(run && run._torchUsedAtDepth === run.depth);
+  },
+
+  GOURDE_BREATH_AMOUNT: 30, // cohérent avec l'item Gourde (data/scene-templates.js)
+
+  /* useSceneGourde() -> { ok, reason }. Utilisable à tout moment (pas seulement en attente
+     de nœud, décision Seb : "à utiliser quand tu veux" — desc de l'item), réutilisable comme
+     la corde (pas de charges consommées, juste un flag de disponibilité). Restaure du Souffle
+     jusqu'au plafond 100, jamais au-delà. */
+  useSceneGourde: function () {
+    var run = this.getRun();
+    if (!run || !run.gourdeAvailable) return { ok: false, reason: "Gourde indisponible" };
+    if (Number(run.breath || 0) >= 100) return { ok: false, reason: "Souffle déjà au maximum" };
+    run.breath = Math.min(100, Number(run.breath || 0) + this.GOURDE_BREATH_AMOUNT);
+    if (typeof saveGame === "function") saveGame();
+    return { ok: true, reason: null };
   },
 
   /* Révèle un nœud "mystere" au moment d'y entrer (tirage pur SceneEngine, randomValue ici). */
@@ -371,7 +445,7 @@ var SceneRunManager = {
     if (!this.isBlockerReady()) return { ok: false, reason: "L'attente n'est pas terminée" };
 
     var template = SceneEngine.getTemplate(run.templateId);
-    var gainAmount = SceneEngine.rollLoot(template.lootRanges.decouverte, run.depth, Math.random());
+    var gainAmount = SceneEngine.rollLoot(template.lootRanges.decouverte, run.depth, Math.random(), 1, this._runLootMult(run));
     run.loot += gainAmount;
     this._creditLoot(template, gainAmount);
 
@@ -382,8 +456,26 @@ var SceneRunManager = {
   },
 
   /* ---------- Résolution d'un obstacle (nœud "check") ---------- */
+  /* v3.195.0 : facteurs de difficulté/gain de l'option choisie (SCENE_NODES.optionProfiles —
+     power/precision/endurance, générique à tous les gabarits) composés avec l'intensité de
+     run (SCENE_INTENSITY, Petite Aventure uniquement — repli 1 pour les autres canevas comme
+     expedition_faille). Centralisé ici, appelé par getObstacleEstimate ET resolveObstacle
+     pour ne jamais désynchroniser l'affichage AVANT résolution du calcul RÉEL. */
+  _obstacleFactors: function (run, optionKey) {
+    var bank = SceneEngine.getNodeBank();
+    var profile = (bank.optionProfiles && bank.optionProfiles[optionKey]) || { diffMod: 1, lootMod: 1, breathCost: 0, injurySeverity: "normale" };
+    var intensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
+    return {
+      diffMult: profile.diffMod * ((intensity && intensity.diffMult) || 1),
+      lootMult: profile.lootMod * ((intensity && intensity.lootMult) || 1),
+      breathCost: profile.breathCost,
+      injurySeverity: profile.injurySeverity
+    };
+  },
+
   /* getObstacleEstimate(optionKey) -> "low"|"medium"|"high", pour affichage AVANT résolution
-     (jamais de % exact — convention du jeu). Applique le riskMod de la porte courante. */
+     (jamais de % exact — convention du jeu). Applique le riskMod de la porte courante ET les
+     facteurs d'option/intensité (v3.195.0, voir _obstacleFactors). */
   getObstacleEstimate: function (optionKey) {
     var run = this.getRun();
     if (!run || !run.pendingNode || run.pendingNode.type !== "obstacle") return "low";
@@ -391,12 +483,17 @@ var SceneRunManager = {
     var option = gabarit && gabarit.options[optionKey];
     if (!option) return "low";
     var statEff = this.statEffective(run, option.stat);
-    return SceneEngine.estimateObstacle(gabarit, optionKey, statEff, run.depth, run.pendingNode.riskMod);
+    var factors = this._obstacleFactors(run, optionKey);
+    return SceneEngine.estimateObstacle(gabarit, optionKey, statEff, run.depth, run.pendingNode.riskMod, factors.diffMult);
   },
 
   /* resolveObstacle(optionKey|"corde") -> { ok, reason, outcome, gainAmount }. Idempotent :
      refuse si le nœud courant n'est pas un obstacle en attente. randomValue tiré ici
-     (une seule fois), jamais recalculé ensuite (même garde-fou que resolveEventChoice). */
+     (une seule fois), jamais recalculé ensuite (même garde-fou que resolveEventChoice).
+     v3.195.0 : refuse si le Souffle est insuffisant pour l'option choisie (breathCost, voir
+     _obstacleFactors) — SAUF pour "corde" (gratuite en Souffle, comme avant). L'échec pousse
+     désormais {stat, severity} dans run.injuries (au lieu d'une simple clé de stat), et
+     déduit le Souffle qu'il y ait réussite ou échec (l'effort est le même). */
   resolveObstacle: function (optionKey) {
     var run = this.getRun();
     if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "obstacle") {
@@ -411,39 +508,49 @@ var SceneRunManager = {
     if (isRope && !(run.ropeAvailable && gabarit.ropeOption)) {
       return { ok: false, reason: "Approche à la corde indisponible ici" };
     }
+    if (!isRope) {
+      var precheckFactors = this._obstacleFactors(run, optionKey);
+      if (Number(run.breath || 0) < precheckFactors.breathCost) {
+        return { ok: false, reason: "Pas assez de Souffle pour cette approche" };
+      }
+    }
 
     var outcome, gainAmount;
     if (isRope) {
       // Corde : réussite garantie (85% dans le proto -> en v1 sandbox, garanti pour la
       // simplicité du premier jet ; nuance à trancher si le calibrage l'exige) mais gain réduit
       // — volontairement INDÉPENDANTE du riskMod de la porte (la corde neutralise le risque
-      // qu'il soit haut ou bas, c'est tout son intérêt).
+      // qu'il soit haut ou bas, c'est tout son intérêt). Gratuite en Souffle (v3.195.0).
       outcome = "success";
       gainAmount = SceneEngine.rollLoot(template.lootRanges.obstacleRope, run.depth, Math.random());
       run.loot += gainAmount;
     } else {
       var option = gabarit.options[optionKey];
       if (!option) return { ok: false, reason: "Approche invalide" };
+      var factors = this._obstacleFactors(run, optionKey);
       var statEff = this.statEffective(run, option.stat);
       var randomValue = Math.random();
-      var checkResult = SceneEngine.resolveObstacle(gabarit, optionKey, statEff, run.depth, randomValue, riskMod);
+      var checkResult = SceneEngine.resolveObstacle(gabarit, optionKey, statEff, run.depth, randomValue, riskMod, factors.diffMult);
 
       // Amulette : relance automatique du premier échec du run.
       if (checkResult.result === "setback" && run.amuletAvailable) {
         run.amuletAvailable = false;
-        checkResult = SceneEngine.resolveObstacle(gabarit, optionKey, statEff, run.depth, Math.random(), riskMod);
+        checkResult = SceneEngine.resolveObstacle(gabarit, optionKey, statEff, run.depth, Math.random(), riskMod, factors.diffMult);
         run._amuletUsed = true;
       }
 
+      run.breath = Math.max(0, Number(run.breath || 0) - factors.breathCost);
+
       if (checkResult.result === "setback") {
         outcome = "setback";
-        var injury = option.stat;
-        run.injuries.push(injury);
+        // v3.195.0 : {stat, severity} au lieu d'une simple clé de stat — voir statEffective.
+        run.injuries.push({ stat: option.stat, severity: factors.injurySeverity });
         gainAmount = SceneEngine.rollLoot(template.lootRanges.obstacleSetback, run.depth, Math.random(), riskMod);
         run.loot += gainAmount;
       } else {
         outcome = checkResult.result; // "success" | "perfect" traités identiquement côté gain v1
-        gainAmount = SceneEngine.rollLoot(template.lootRanges.obstacleSuccess, run.depth, Math.random(), riskMod);
+        // v3.195.0 : lootMult ajouté (option choisie x intensité de run) — voir _obstacleFactors.
+        gainAmount = SceneEngine.rollLoot(template.lootRanges.obstacleSuccess, run.depth, Math.random(), riskMod, factors.lootMult);
         if (checkResult.result === "perfect") gainAmount = Math.round(gainAmount * 1.2);
         run.loot += gainAmount;
       }
@@ -472,6 +579,21 @@ var SceneRunManager = {
 
   /* ---------- Salles non-obstacle ---------- */
   /* resolveAutel(accept) -> soigne 1 blessure contre un pourcentage du loot courant. */
+  /* v3.195.0 : lootMult de run = intensité seule (SCENE_INTENSITY, Petite Aventure
+     uniquement — 1 pour les autres canevas), appliqué aux nœuds SANS option choisie par le
+     joueur (découverte, bloqueur) : distinct de _obstacleFactors qui compose EN PLUS le
+     lootMod de l'option prise. */
+  _runLootMult: function (run) {
+    var intensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
+    return (intensity && intensity.lootMult) || 1;
+  },
+
+  /* v3.195.0 : restauration de Souffle à un nœud "carotte" (autel accepté, source) — donne
+     enfin un rôle actif à ces nœuds vis-à-vis du Souffle, pas seulement des blessures.
+     Montant fixe modeste (20) : suffisant pour reprendre une option coûteuse, pas pour
+     spammer indéfiniment la voie de puissance. */
+  SOFT_HEAL_BREATH_AMOUNT: 20,
+
   resolveAutel: function (accept) {
     var run = this.getRun();
     if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "autel") {
@@ -482,6 +604,7 @@ var SceneRunManager = {
       var cost = Math.max(5, Math.round(run.loot * (template.autelCostRatio || 0.2)));
       run.loot = Math.max(0, run.loot - cost);
       run.injuries.pop();
+      run.breath = Math.min(100, Number(run.breath || 0) + this.SOFT_HEAL_BREATH_AMOUNT);
       // SortieManager.addGold()/addResource() ne supportent que des montants positifs
       // (clampés à 0) : un coût se traduit en resynchronisant directement la valeur exacte
       // (voir _debitLootTo), jamais par un delta négatif.
@@ -500,7 +623,7 @@ var SceneRunManager = {
       return { ok: false, reason: "Aucune découverte à résoudre" };
     }
     var template = SceneEngine.getTemplate(run.templateId);
-    var gainAmount = SceneEngine.rollLoot(template.lootRanges.decouverte, run.depth, Math.random());
+    var gainAmount = SceneEngine.rollLoot(template.lootRanges.decouverte, run.depth, Math.random(), 1, this._runLootMult(run));
     run.loot += gainAmount;
     this._creditLoot(template, gainAmount);
     run.pendingNode = null; run.currentGate = null;
@@ -509,7 +632,8 @@ var SceneRunManager = {
     return { ok: true, reason: null, gainAmount: gainAmount };
   },
 
-  /* resolveSource() -> soin gratuit d'une blessure si présente. */
+  /* resolveSource() -> soin gratuit d'une blessure si présente + restauration de Souffle
+     (v3.195.0, voir SOFT_HEAL_BREATH_AMOUNT). */
   resolveSource: function () {
     var run = this.getRun();
     if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "source") {
@@ -517,6 +641,7 @@ var SceneRunManager = {
     }
     var healed = false;
     if (run.injuries.length > 0) { run.injuries.pop(); healed = true; }
+    run.breath = Math.min(100, Number(run.breath || 0) + this.SOFT_HEAL_BREATH_AMOUNT);
     run.pendingNode = null; run.currentGate = null;
     this._advanceOrFinish(run);
     if (typeof saveGame === "function") saveGame();
@@ -575,7 +700,14 @@ var SceneRunManager = {
     this._rollSeveAeswynPerNode(run); // v3.127.0 (Lot PA3) : chance faible à CHAQUE nœud résolu
     run.depth += 1;
     var template = SceneEngine.getTemplate(run.templateId);
-    if (run.depth >= Number(template.depthMax || 1)) {
+    // v3.195.0 : depthMax RÉEL du run = intensité choisie si présente (SCENE_INTENSITY),
+    // sinon template.depthMax (canevas sans intensité, ex. expedition_faille — inchangé). Le
+    // run.card généré par _generateCard a déjà la bonne longueur, mais _advanceOrFinish doit
+    // savoir OÙ s'arrêter sans dépendre de card.length pour rester cohérent avec l'affichage
+    // "Profondeur X/depthMax" de la vue (buildSceneStatusBarHTML).
+    var intensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
+    var depthMax = (intensity && intensity.depthMax) || Number(template.depthMax || 1);
+    if (run.depth >= depthMax) {
       run.status = "finale";
     } else {
       run.status = "gate";
@@ -662,8 +794,13 @@ var SceneRunManager = {
     var template = SceneEngine.getTemplate(run.templateId);
 
     if (choiceId === "sur") {
-      run.loot += template.lootRanges.finalSafe[0];
-      this._creditLoot(template, template.lootRanges.finalSafe[0]);
+      // v3.195.0 : lootMult de l'intensité de run appliqué au bonus sûr de finale (le
+      // double-ou-rien du choix "risque" ci-dessous porte déjà son propre facteur x2/÷2,
+      // appliqué au loot DÉJÀ multiplié par l'intensité tout du long du run — cohérent, pas
+      // de double application).
+      var safeGain = Math.round(template.lootRanges.finalSafe[0] * this._runLootMult(run));
+      run.loot += safeGain;
+      this._creditLoot(template, safeGain);
     } else if (choiceId === "risque") {
       var win = Math.random() < 0.5;
       if (win) {

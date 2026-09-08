@@ -6,6 +6,26 @@
    (non exploité en v1 : un seul biome, "forest"). Détail : DESIGN_Scene_Engine_v1.md §5 */
 
 var SCENE_NODES = {
+  /* v3.195.0 (recalibrage "choix pas intéressant") : profil générique appliqué à CHAQUE
+     option d'obstacle (power/precision/endurance), quel que soit le gabarit — centralisé ici
+     plutôt que dupliqué dans les 19 gabarits (obstacles ci-dessous partagent tous le même
+     triangle). power = voie dure : plus difficile, gain supérieur, coûte plus de Souffle,
+     blessure grave en cas d'échec. endurance = voie sûre : plus facile, gain réduit, coûte
+     peu de Souffle, blessure légère. precision = équilibré, profil neutre (référence ×1).
+     Lu par SceneRunManager.resolveObstacle()/getObstacleEstimate() via optionKey. Purement
+     des données (aucune logique), cohérent avec le reste de ce fichier. */
+  optionProfiles: {
+    power: { diffMod: 1.05, lootMod: 1.20, breathCost: 3, injurySeverity: "grave" },
+    precision: { diffMod: 1.0, lootMod: 1.0, breathCost: 1.5, injurySeverity: "normale" },
+    endurance: { diffMod: 0.92, lootMod: 0.8, breathCost: 1, injurySeverity: "legere" }
+  },
+
+  /* Malus de stat effective par sévérité de blessure (statEffective, scene-run-system.js) —
+     remplace l'ancien malus fixe -2/blessure (v3.120.0), désormais différencié : une blessure
+     "grave" (issue d'un échec en voie de puissance) pèse bien plus qu'une "légère" (voie
+     d'endurance), cohérent avec le risque pris à l'obstacle. */
+  injurySeverityMalus: { legere: 4, normale: 8, grave: 12 },
+
   obstacles: {
     eboulis: {
       id: "eboulis", biome: "forest", name: "L'éboulis",

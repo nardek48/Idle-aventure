@@ -38,6 +38,10 @@
 .scene-status-loot { color: var(--nb-gold-dark); }
 .scene-status-injury { color: var(--danger); }
 .scene-status-depth { color: var(--nb-blue-dark); }
+/* v3.195.0 : pastille Souffle — vert par défaut, rouge/alerte sous 30 (seuil qui rend
+   l'option "power" indisponible pour la plupart des gabarits, breathCost 3). */
+.scene-status-breath { color: #3f7d42; }
+.scene-status-breath.is-low { color: var(--danger); }
 
 /* ---------- Barre de progression segmentée (une pastille par profondeur) ---------- */
 /* v3.139.0 (horizon de visibilité) : les segments dans l'horizon (is-upcoming) affichent
@@ -330,6 +334,12 @@ button.scene-path-node:active .scene-path-node-circle {
 .scene-card-sub.is-good { color: #3f7d42; }
 .scene-card-sub.is-medium { color: var(--nb-gold-dark); }
 .scene-card-sub.is-low { color: var(--danger); }
+/* v3.195.0 : ligne de coût Souffle / gain relatif sur les cartes d'obstacle — légèrement
+   distincte des autres sub (italique, un peu plus discrète que l'estimation de réussite). */
+.scene-card-cost {
+  font-style: italic;
+  opacity: .85;
+}
 
 /* ---------- Actions (pleine largeur, sous la grille) ---------- */
 .scene-actions {

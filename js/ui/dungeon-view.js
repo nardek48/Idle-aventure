@@ -130,7 +130,8 @@ function buildDungeonLobbyHTML() {
 
   if (activeDungeonSubTab === "shop") {
     h += buildDungeonShopHTML();
-    return '<div class="nb-page-frame nb-page-frame-fill">' + h + '</div>'; // v2.83.28
+    // v3.194.0 (Seb) : titre au bandeau (le h3 interne, doublon, est retiré)
+    return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="\ud83d\udd37 Boutique du donjon">' + h + '</div>'; // v2.83.28
   }
 
   h += buildDungeonTicketBadgeHTML();
@@ -141,14 +142,13 @@ function buildDungeonLobbyHTML() {
   });
   h += '</div>';
 
-  return '<div class="nb-page-frame nb-page-frame-fill">' + h + '</div>'; // v2.83.28
+  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="\ud83c\udff0 Donjon">' + h + '</div>'; // v2.83.28
 }
 
 function buildDungeonShopHTML() {
   var shards = game.dungeonShards || 0;
 
   var h = '<div class="panel-card">';
-  h += '<h3>🔷 Boutique du donjon</h3>';
   h += '<p class="panel-sub">Payée en Éclats — gagnés en passant des vagues (1 par vague, +' + DUNGEON_CONFIG.shardsBossBonus + ' bonus si le boss tombe). Utilisables uniquement ici.</p>';
   h += '<div class="dungeon-shard-count">🔷 ' + formatNumber(shards) + ' Éclats</div>';
 

@@ -74,8 +74,8 @@ function buildCampHTML() {
 
   var h = '<div class="nb-page-frame camp-page kframe-page" data-kf-title="\u26fa Campement">';
 
-  h += '<div class="camp-hero-title">🏕️ Campement</div>';
-  h += '<div class="camp-hero-sub">Ton point de ralliement entre deux expéditions.</div>';
+  // v3.194.0 (Seb) : titre et sous-titre retirés — le bandeau figé porte
+  // déjà « ⛺ Campement », la ligne d'ambiance n'apportait rien.
 
   if (game.justDied) {
     h += '<div class="camp-death-banner">💀 Tu es tombé au combat. Mange une ration, ou laisse le feu faire son œuvre, avant de repartir.</div>';

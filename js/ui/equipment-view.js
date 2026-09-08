@@ -292,7 +292,7 @@ function buildEquipmentTabContentHTML() {
   var h = '';
 
   h += '<div class="eq-layout">';
-  h += '<div class="eq-hero-card nb-page-frame nb-page-frame-fill">';
+  h += '<div class="eq-hero-card nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="\ud83d\udee1\ufe0f Équipement">';
   h += '<div class="eq-hero-main eq-hero-main-slots-only">';
 
   h += '<div class="eq-hero-right">';
@@ -464,7 +464,7 @@ function getOwnedPotionsList() {
 }
 
 function buildInventoryTabContentHTML() {
-  var h = '<div class="eq-bag-panel nb-page-frame nb-page-frame-fill">';
+  var h = '<div class="eq-bag-panel nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="\ud83c\udf92 Inventaire">';
 
   h += buildInventoryCompactToolbarHTML();
   h += buildInventoryFilterRowHTML();
@@ -506,7 +506,7 @@ function buildEquipHTML() {
   if (activeEquipSubTab === "inventory") {
     h += buildInventoryTabContentHTML();
   } else if (activeEquipSubTab === "shop") {
-    h += '<div class="nb-page-frame nb-page-frame-fill">';
+    h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="\ud83d\uded2 Boutique d\u2019équipement">';
     h += (typeof buildEquipShopHTML === "function") ? buildEquipShopHTML() : "";
     h += '</div>';
   } else {

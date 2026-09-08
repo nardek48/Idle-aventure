@@ -44,6 +44,7 @@ function buildSceneScreenHTML() {
     return buildSceneLandingHTML();
   }
   if (run.status === "profile") return buildSceneProfileChoiceHTML(); // v3.125.0 (Petites Aventures)
+  if (run.status === "intensity") return buildSceneIntensityChoiceHTML(); // v3.195.0
   if (run.status === "preparation") return buildScenePreparationHTML();
   if (run.status === "gate") return buildSceneGateChoiceHTML();
   if (run.status === "node") return buildSceneNodeHTML();
@@ -131,7 +132,16 @@ window.startSceneExpedition = startSceneExpedition;
    canevas via buildSceneStatusBarHTML (branche ci-dessous). Fond en dur (--nb-cream-deep) pour
    l'instant — remplaçable par une image dédiée plus tard sans changer la structure (voir
    .scene-path-bg-img, non utilisée tant qu'aucune image n'est fournie). */
-var SCENE_PATH_TEMPLATE_IDS = ["petite_aventure_foret"]; // canevas qui utilisent le chemin illustré
+/* v3.142.0 : canevas qui utilisent le chemin illustré (1 seul nœud cliquable par palier,
+   enterSceneGate(0) en dur dans buildScenePathNodeHTML). v3.195.0 (gatesPerDepth [2,2] sur la
+   Petite Aventure) : petite_aventure_foret RETIRÉ de cette liste — le chemin illustré suppose
+   structurellement 1 porte/palier (un seul nœud rendu, clic figé sur l'index 0), incompatible
+   avec 2 portes sans refonte visuelle (afficher 2 nœuds cliquables par palier). Bascule donc
+   sur buildSceneProgressHTML (barre segmentée) + la grille de cartes de
+   buildSceneGateChoiceHTML — chemin déjà emprunté par expedition_faille, zéro code neuf à
+   risque. Remettre ce canevas ici nécessiterait d'abord d'adapter buildScenePathNodeHTML à un
+   nombre de portes variable (chantier UI distinct, pas fait dans ce lot). */
+var SCENE_PATH_TEMPLATE_IDS = [];
 
 /* 8 positions de paliers en serpentin (bas -> haut, alternance gauche/droite) + 1 position pour
    la chambre finale, en % du cadre (comme MAP_NODE_POSITIONS). viewBox H choisi pour un cadre
@@ -217,7 +227,11 @@ function buildScenePathHTML(run) {
 
 function buildSceneProgressHTML(run) {
   var template = SceneEngine.getTemplate(run.templateId);
-  var depthMax = Number(template.depthMax || 1);
+  // v3.195.0 : depthMax RÉEL du run = intensité choisie si présente (SCENE_INTENSITY), sinon
+  // template.depthMax (canevas sans intensité, ex. expedition_faille — inchangé). Même règle
+  // que SceneRunManager._advanceOrFinish, jamais désynchronisée.
+  var intensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
+  var depthMax = (intensity && intensity.depthMax) || Number(template.depthMax || 1);
   var torchOn = SceneRunManager.torchActiveThisLevel();
   var horizon = run.depth + (torchOn ? 2 : 1); // dernier index de palier visible en type (inclus)
 
@@ -260,8 +274,21 @@ function buildSceneStatusBarHTML(run, opts) {
   h += '<span class="scene-status-pill scene-status-depth">Profondeur ' + (run.depth + 1) + '/' + template.depthMax + '</span>';
   h += '<span class="scene-status-pill scene-status-loot">' + esc(lootLabel) + ' : ' + lootAmount + '</span>';
   h += '<span class="scene-status-pill scene-status-injury">Blessures : ' + run.injuries.length + '/3</span>';
+  // v3.195.0 : pastille Souffle — seuils visuels (is-low sous 30, cohérent avec le seuil qui
+  // rend l'option "power" indisponible pour la plupart des gabarits, breathCost 3).
+  if (typeof run.breath === "number") {
+    h += '<span class="scene-status-pill scene-status-breath' + (run.breath < 30 ? ' is-low' : '') + '">Souffle : ' + Math.round(run.breath) + '/100</span>';
+  }
   if (run.torchCharges > 0) h += '<span class="scene-status-pill">Torche x' + run.torchCharges + '</span>';
   h += '</div>';
+  // v3.195.0 : bouton Gourde, utilisable à tout moment tant qu'elle est en loadout et que le
+  // Souffle n'est pas déjà au maximum (même emplacement que le bouton torche, juste après la
+  // barre de statut — voir buildSceneGateChoiceHTML pour le placement exact du bloc torche).
+  if (run.gourdeAvailable && run.breath < 100) {
+    h += '<div class="scene-actions" style="margin-top:0;margin-bottom:8px;">';
+    h += '  <button class="settings-btn" type="button" onclick="useSceneGourde()">Boire à la gourde (+' + SceneRunManager.GOURDE_BREATH_AMOUNT + ' Souffle)</button>';
+    h += '</div>';
+  }
   // Bouton "Rentrer" toujours accessible tant que le run est engagé (décision Seb : le
   // joueur doit pouvoir sortir quand il veut, pas seulement sur l'écran de choix de porte).
   // Masqué pendant la préparation (le run n'a pas vraiment commencé) et la chambre finale
@@ -317,6 +344,49 @@ function chooseSceneProfile(profileId) {
   refreshSceneScreen();
 }
 window.chooseSceneProfile = chooseSceneProfile;
+
+/* --- Choix d'intensité (v3.195.0) --- */
+/* ORTHOGONAL au profil (déjà choisi juste avant) : profil = nature du parcours (combats,
+   bloqueurs), intensité = ampleur du risque/gain sur ce parcours (longueur, difficulté,
+   multiplicateur de butin). SCENE_INTENSITY, data/scene-templates.js. */
+
+function buildSceneIntensityChoiceHTML() {
+  var run = SceneRunManager.getRun();
+  if (!run) return "";
+  var template = SceneEngine.getTemplate(run.templateId);
+
+  var h = '<div class="panel-title">' + esc(template.title) + '</div>';
+  h += '<div class="scene-screen">';
+  h += '  <div class="scene-heading">';
+  h += '    <div class="scene-heading-title">Choisis ton intensité</div>';
+  h += '    <div class="scene-heading-text">Plus le parcours est long et périlleux, plus le butin final est important.</div>';
+  h += '  </div>';
+
+  h += '  <div class="scene-card-grid">';
+  Object.keys(SCENE_INTENSITY).forEach(function (key) {
+    var intensity = SCENE_INTENSITY[key];
+    h += '<button type="button" class="scene-card" onclick="chooseSceneIntensity(\'' + esc(key) + '\')">';
+    h += '<span class="scene-card-icon">' + esc(intensity.icon) + '</span>';
+    h += '<span class="scene-card-label">' + esc(intensity.label) + '</span>';
+    h += '<span class="scene-card-sub">' + esc(intensity.desc) + '</span>';
+    h += '</button>';
+  });
+  h += '  </div>';
+  h += '</div>';
+  return h;
+}
+
+function chooseSceneIntensity(intensityId) {
+  var result = SceneRunManager.chooseIntensity(intensityId);
+  if (!result.ok) {
+    showToast(result.reason, 1600);
+    return;
+  }
+  var intensity = SCENE_INTENSITY[intensityId];
+  sceneLog("Tu choisis : " + intensity.label + ".");
+  refreshSceneScreen();
+}
+window.chooseSceneIntensity = chooseSceneIntensity;
 
 /* --- Préparation : choix de 3 objets --- */
 
@@ -405,9 +475,13 @@ function buildSceneSlotInfo(run, slot, torchOn) {
     var gabarit = SCENE_NODES.obstacles[slot.gabaritId];
     var bestEstimate = "low";
     var order = { low: 0, medium: 1, high: 2 };
+    // v3.195.0 : diffMult (profil de l'option x intensité de run) composé via
+    // SceneRunManager._obstacleFactors — même calcul que getObstacleEstimate (résolution
+    // réelle), pour ne jamais désynchroniser cet aperçu-avant-porte du calcul qui suivra.
     Object.keys(gabarit.options).forEach(function (key) {
       var statEff = SceneRunManager.statEffective(run, gabarit.options[key].stat);
-      var e = SceneEngine.estimateObstacle(gabarit, key, statEff, run.depth, slot.riskMod);
+      var factors = SceneRunManager._obstacleFactors(run, key);
+      var e = SceneEngine.estimateObstacle(gabarit, key, statEff, run.depth, slot.riskMod, factors.diffMult);
       if (order[e] > order[bestEstimate]) bestEstimate = e;
     });
     var riskLvl = SceneEngine.riskLevel(slot.riskMod);
@@ -490,6 +564,17 @@ function useSceneTorch() {
 }
 window.useSceneTorch = useSceneTorch;
 
+function useSceneGourde() {
+  var result = SceneRunManager.useSceneGourde();
+  if (!result.ok) {
+    showToast(result.reason, 1600);
+    return;
+  }
+  sceneLog("Tu reprends ton souffle.");
+  refreshSceneScreen();
+}
+window.useSceneGourde = useSceneGourde;
+
 function enterSceneGate(idx) {
   var result = SceneRunManager.enterGate(idx);
   if (!result.ok) {
@@ -524,6 +609,11 @@ function buildSceneNodeHTML() {
   return buildSceneGateChoiceHTML();
 }
 
+/* v3.195.0 : icônes/labels de gain relatif par profil d'option (power/precision/endurance),
+   affichés sur chaque carte d'obstacle pour rendre le triangle risque/gain/coût lisible
+   d'un coup d'œil, sans dupliquer les chiffres exacts de SCENE_NODES.optionProfiles. */
+var SCENE_OPTION_GAIN_LABELS = { power: "Gros butin", precision: "Bon butin", endurance: "Butin modeste" };
+
 function buildSceneObstacleHTML(run) {
   var gabarit = SCENE_NODES.obstacles[run.pendingNode.gabaritId];
   var h = '<div class="panel-title">' + esc(gabarit.name) + '</div>';
@@ -537,15 +627,21 @@ function buildSceneObstacleHTML(run) {
   Object.keys(gabarit.options).forEach(function (key) {
     var option = gabarit.options[key];
     var estimate = SceneRunManager.getObstacleEstimate(key);
-    h += '<button type="button" class="scene-card" onclick="resolveSceneObstacleChoice(\'' + esc(key) + '\')">';
+    var factors = SceneRunManager._obstacleFactors(run, key);
+    var canAfford = Number(run.breath || 0) >= factors.breathCost;
+    var gainLabel = SCENE_OPTION_GAIN_LABELS[key] || "";
+    h += '<button type="button" class="scene-card"'
+      + (canAfford ? ' onclick="resolveSceneObstacleChoice(\'' + esc(key) + '\')"' : ' disabled') + '>';
     h += '<span class="scene-card-label">' + esc(option.label) + '</span>';
     h += '<span class="scene-card-sub">' + SCENE_STAT_LABELS[option.stat] + ' — <span class="' + sceneEstimateClass(estimate) + '">' + esc(sceneEstimateLabel(estimate)) + '</span></span>';
+    h += '<span class="scene-card-sub scene-card-cost">' + esc(gainLabel) + ' · Souffle ' + factors.breathCost + (canAfford ? '' : ' (insuffisant)') + '</span>';
     h += '</button>';
   });
   if (gabarit.ropeOption && run.ropeAvailable) {
     h += '<button type="button" class="scene-card" onclick="resolveSceneObstacleChoice(\'corde\')">';
     h += '<span class="scene-card-label">Assurer à la corde</span>';
     h += '<span class="scene-card-sub is-good">Réussite garantie, gain réduit</span>';
+    h += '<span class="scene-card-sub scene-card-cost">Aucun coût de Souffle</span>';
     h += '</button>';
   }
   h += '  </div>';

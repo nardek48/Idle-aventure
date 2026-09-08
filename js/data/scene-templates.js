@@ -4,6 +4,26 @@
    v1 : un seul canevas génératif, sandbox (pas encore branché à MissionBoard/SortieManager
    en usage réel — voir CHANGELOG_v3.120.0.md, Lot S1). Détail : DESIGN_Scene_Engine_v1.md §5 */
 
+/* v3.195.0 (recalibrage "choix pas intéressant") : curseur d'intensité de la Petite Aventure,
+   choisi en préparation (après le profil Bourrin/Prudent, avant le loadout) — ORTHOGONAL au
+   profil (décision Seb : profil = nature du parcours, intensité = ampleur du risque/gain).
+   depthMax remplace template.depthMax pour le run (SceneRunManager.chooseIntensity),
+   diffMult multiplie SceneCheckSystem.depthDifficulty (via SceneEngine.resolveObstacle/
+   estimateObstacle, appliqué en plus du riskMod de porte et du diffMod d'option — voir
+   scene-nodes.js:optionProfiles), lootMult multiplie tous les gains du run (obstacles,
+   découvertes, bonus de finale) SAUF la Sève d'Aeswyn (collection, jamais mise en jeu par le
+   risque, voir _rollSeveAeswynPerNode/_rollSeveAeswynFinale — inchangé). Calibrage validé par
+   simulation Monte-Carlo (session, voir CHANGELOG_v3.195.0.md) : Sentier praticable dès un
+   héros neuf (~40-45% chance), Périple reste tendu même bien développé (~75% chance, ~24%
+   évac). Butin Périple sur héros développé (~785 or) dépasse enfin le haut de fourchette
+   d'une quête secondaire (400-800 or, adventure-quests.js), justifiant le risque maximal. */
+var SCENE_INTENSITY = {
+  sentier: { id: "sentier", label: "Sentier", icon: "🌿", depthMax: 6, diffMult: 0.70, lootMult: 1.0, desc: "Court et sûr. Butin standard." },
+  chemin: { id: "chemin", label: "Chemin", icon: "🌲", depthMax: 8, diffMult: 1.0, lootMult: 2.0, desc: "Le format habituel. Butin doublé." },
+  periple: { id: "periple", label: "Périple", icon: "⛰️", depthMax: 10, diffMult: 1.15, lootMult: 3.5, desc: "Long et périlleux. Butin x3.5." }
+};
+window.SCENE_INTENSITY = SCENE_INTENSITY;
+
 var SCENE_TEMPLATES = {
   expedition_faille: {
     id: "expedition_faille",
@@ -327,9 +347,16 @@ var SCENE_TEMPLATES = {
     title: "Petite aventure — Forêt",
     icon: "🍃",
 
+    // v3.195.0 : depthMax devient la valeur par défaut/repli — le run réel utilise
+    // SCENE_INTENSITY[run.intensity].depthMax (choisi en préparation, voir
+    // SceneRunManager.chooseIntensity). gatesPerDepth [2,2] (au lieu de [1,1]) : réactive le
+    // choix de PORTE déjà codé dans SceneEngine.buildCard (riskMod par porte, indices de gain
+    // gainHints) — mort faute de second choix jusqu'ici, cohérent avec expedition_faille qui
+    // l'utilise déjà. Bascule automatiquement l'UI de la fiche solo vers la grille de cartes
+    // (scene-view.js:SCENE_PATH_TEMPLATE_IDS ne matche plus que si level.length===1).
     depthMax: 8,
     firstDepthType: "obstacle",
-    gatesPerDepth: [1, 1],
+    gatesPerDepth: [2, 2],
 
     // v3.125.0 : profileWeights remplace slotWeights à la génération (voir SceneEngine.buildCard
     // slotWeightsOverride) — Bourrin : plus de combats (Lot PA2), aucun bloqueur (concept §2,
@@ -366,13 +393,19 @@ var SCENE_TEMPLATES = {
     // Date.now() à l'affichage, PAS un setInterval/hook game-loop — voir scene-run-system.js).
     blockerDurationRange: [300000, 600000], // 5-10 min en ms
 
-    loadoutOffer: ["torche", "corde", "provisions", "provisions", "amulette"],
+    // v3.195.0 : gourde ajoutée (item lié au Souffle, voir SCENE_NODES.optionProfiles) —
+    // seul nouvel objet de ce lot, décision Seb : le reste de l'enrichissement du choix
+    // d'objets (objets thématiques par option/profil) part en lot séparé après retour sur le
+    // Souffle en jeu réel. Réutilisable comme la corde (pas de charges) : restaure au premier
+    // usage plutôt que de forcer un choix cornélien dès la préparation sur un système neuf.
+    loadoutOffer: ["torche", "corde", "provisions", "provisions", "gourde", "amulette"],
     loadoutSlots: 3,
 
     items: {
       torche: { id: "torche", name: "🔥 Torche", desc: "Révèle le détail des portes du niveau courant (3 charges).", charges: 3 },
       corde: { id: "corde", name: "🪢 Corde", desc: "Approche sûre sur les obstacles compatibles (réutilisable, gain réduit).", },
       provisions: { id: "provisions", name: "🥖 Provisions", desc: "Soigne 1 blessure (consommable).", },
+      gourde: { id: "gourde", name: "🍶 Gourde", desc: "Restaure 30 Souffle (consommable, à utiliser quand tu veux)." },
       amulette: { id: "amulette", name: "🧿 Amulette", desc: "Relance automatiquement le premier jet raté (1 fois).", }
     },
 
