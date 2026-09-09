@@ -45,6 +45,7 @@ function buildSceneScreenHTML() {
   }
   if (run.status === "profile") return buildSceneProfileChoiceHTML(); // v3.125.0 (Petites Aventures)
   if (run.status === "intensity") return buildSceneIntensityChoiceHTML(); // v3.195.0
+  if (run.status === "mutator-announce") return buildSceneMutatorAnnounceHTML(); // v3.196.0
   if (run.status === "preparation") return buildScenePreparationHTML();
   if (run.status === "gate") return buildSceneGateChoiceHTML();
   if (run.status === "node") return buildSceneNodeHTML();
@@ -213,8 +214,7 @@ function buildScenePathNodeHTML(run, template, index, depthMax, horizon) {
 function buildScenePathHTML(run) {
   var template = SceneEngine.getTemplate(run.templateId);
   var depthMax = Number(template.depthMax || 1);
-  var torchOn = SceneRunManager.torchActiveThisLevel();
-  var horizon = run.depth + (torchOn ? 2 : 1);
+  var horizon = SceneRunManager.getVisibilityHorizon(); // v3.196.0 (centralisé, Brouillard)
 
   var h = '<div class="scene-path-frame">';
   h += buildScenePathSvgHTML(depthMax + 1);
@@ -232,8 +232,7 @@ function buildSceneProgressHTML(run) {
   // que SceneRunManager._advanceOrFinish, jamais désynchronisée.
   var intensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
   var depthMax = (intensity && intensity.depthMax) || Number(template.depthMax || 1);
-  var torchOn = SceneRunManager.torchActiveThisLevel();
-  var horizon = run.depth + (torchOn ? 2 : 1); // dernier index de palier visible en type (inclus)
+  var horizon = SceneRunManager.getVisibilityHorizon(); // v3.196.0 (centralisé, Brouillard)
 
   var h = '<div class="scene-progress">';
   for (var i = 0; i < depthMax; i++) {
@@ -269,17 +268,36 @@ function buildSceneStatusBarHTML(run, opts) {
     lootLabel = (resDef && resDef.name) || template.lootResource;
   }
 
+  // v3.195.0 : depthMax RÉEL du run = intensité si présente (même règle que
+  // buildSceneProgressHTML/_advanceOrFinish) — corrige un affichage figé sur template.depthMax
+  // resté en dur depuis le lot précédent (repéré en posant le mutateur "Nuit noire" ici).
+  var displayIntensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
+  var displayDepthMax = (displayIntensity && displayIntensity.depthMax) || Number(template.depthMax || 1);
+
   var h = SCENE_PATH_TEMPLATE_IDS.indexOf(run.templateId) !== -1 ? buildScenePathHTML(run) : buildSceneProgressHTML(run);
   h += '<div class="scene-status-bar">';
-  h += '<span class="scene-status-pill scene-status-depth">Profondeur ' + (run.depth + 1) + '/' + template.depthMax + '</span>';
+  h += '<span class="scene-status-pill scene-status-depth">Profondeur ' + (run.depth + 1) + '/' + displayDepthMax + '</span>';
   h += '<span class="scene-status-pill scene-status-loot">' + esc(lootLabel) + ' : ' + lootAmount + '</span>';
-  h += '<span class="scene-status-pill scene-status-injury">Blessures : ' + run.injuries.length + '/3</span>';
+  // v3.198.0 : le plafond vient du canevas (template.maxInjuries) — la Petite Aventure
+  // evacue a 2, expedition_faille et les quetes migrees restent a 3.
+  var injuryMax = SceneRunManager.getMaxInjuries(run.templateId);
+  h += '<span class="scene-status-pill scene-status-injury' + (run.injuries.length >= injuryMax - 1 ? ' is-low' : '') + '">Blessures : ' + run.injuries.length + '/' + injuryMax + '</span>';
   // v3.195.0 : pastille Souffle — seuils visuels (is-low sous 30, cohérent avec le seuil qui
   // rend l'option "power" indisponible pour la plupart des gabarits, breathCost 3).
   if (typeof run.breath === "number") {
     h += '<span class="scene-status-pill scene-status-breath' + (run.breath < 30 ? ' is-low' : '') + '">Souffle : ' + Math.round(run.breath) + '/100</span>';
   }
   if (run.torchCharges > 0) h += '<span class="scene-status-pill">Torche x' + run.torchCharges + '</span>';
+  // v3.198.0 : corde et provisions ont des charges — le joueur doit les voir fondre.
+  if (Number(run.ropeCharges || 0) > 0) h += '<span class="scene-status-pill">Corde x' + run.ropeCharges + '</span>';
+  if (Number(run.provisionCharges || 0) > 0) h += '<span class="scene-status-pill">Provisions x' + run.provisionCharges + '</span>';
+  // v3.196.0 : pastille mutateur, visible tout le run (pas seulement à l'annonce) — omise si
+  // "aucun" (rien à rappeler au joueur dans ce cas, cohérent avec les autres pastilles qui
+  // n'apparaissent que si pertinentes, ex. torche).
+  var statusMutator = SceneRunManager.getActiveMutator();
+  if (statusMutator.id && statusMutator.id !== "aucun") {
+    h += '<span class="scene-status-pill scene-status-mutator">' + esc(statusMutator.icon) + ' ' + esc(statusMutator.label) + '</span>';
+  }
   h += '</div>';
   // v3.195.0 : bouton Gourde, utilisable à tout moment tant qu'elle est en loadout et que le
   // Souffle n'est pas déjà au maximum (même emplacement que le bouton torche, juste après la
@@ -287,6 +305,14 @@ function buildSceneStatusBarHTML(run, opts) {
   if (run.gourdeAvailable && run.breath < 100) {
     h += '<div class="scene-actions" style="margin-top:0;margin-bottom:8px;">';
     h += '  <button class="settings-btn" type="button" onclick="useSceneGourde()">Boire à la gourde (+' + SceneRunManager.GOURDE_BREATH_AMOUNT + ' Souffle)</button>';
+    h += '</div>';
+  }
+  // v3.198.0 : bouton Provisions, meme emplacement et memes conditions d'affichage que la
+  // gourde (charge restante + un effet reel a produire). Seul moyen d'effacer une blessure
+  // grave : l'autel et la source ne retirent que les legeres.
+  if (Number(run.provisionCharges || 0) > 0 && run.injuries.length > 0) {
+    h += '<div class="scene-actions" style="margin-top:0;margin-bottom:8px;">';
+    h += '  <button class="settings-btn" type="button" onclick="useSceneProvision()">Manger les provisions (soigne la pire blessure)</button>';
     h += '</div>';
   }
   // Bouton "Rentrer" toujours accessible tant que le run est engagé (décision Seb : le
@@ -383,10 +409,45 @@ function chooseSceneIntensity(intensityId) {
     return;
   }
   var intensity = SCENE_INTENSITY[intensityId];
-  sceneLog("Tu choisis : " + intensity.label + ".");
+  sceneLog(intensity.label + ". Le chemin est posé."); // v3.197.0 (bible B §4.4)
   refreshSceneScreen();
 }
 window.chooseSceneIntensity = chooseSceneIntensity;
+
+/* --- Annonce du mutateur de run (v3.196.0) --- */
+/* Écran court, sans choix : juste faire savoir au joueur ce qui l'attend AVANT la préparation
+   (loadout), pour qu'il compose en connaissance de cause (ex. prendre la Gourde s'il sait que
+   la Pluie va augmenter le coût en Souffle). */
+
+function buildSceneMutatorAnnounceHTML() {
+  var run = SceneRunManager.getRun();
+  if (!run) return "";
+  var template = SceneEngine.getTemplate(run.templateId);
+  var mutator = SceneRunManager.getActiveMutator();
+
+  var h = '<div class="panel-title">' + esc(template.title) + '</div>';
+  h += '<div class="scene-screen">';
+  h += '  <div class="scene-mutator-announce">';
+  h += '    <span class="scene-mutator-icon">' + esc(mutator.icon || "🌤️") + '</span>';
+  h += '    <div class="scene-mutator-label">' + esc(mutator.label || "Rien à signaler") + '</div>';
+  h += '    <div class="scene-mutator-desc">' + esc(mutator.desc || "") + '</div>';
+  h += '  </div>';
+  h += '  <div class="scene-actions">';
+  h += '    <button type="button" class="settings-btn" onclick="acknowledgeSceneMutator()">Continuer</button>';
+  h += '  </div>';
+  h += '</div>';
+  return h;
+}
+
+function acknowledgeSceneMutator() {
+  var result = SceneRunManager.acknowledgeMutator();
+  if (!result.ok) {
+    showToast(result.reason, 1600);
+    return;
+  }
+  refreshSceneScreen();
+}
+window.acknowledgeSceneMutator = acknowledgeSceneMutator;
 
 /* --- Préparation : choix de 3 objets --- */
 
@@ -478,7 +539,10 @@ function buildSceneSlotInfo(run, slot, torchOn) {
     // v3.195.0 : diffMult (profil de l'option x intensité de run) composé via
     // SceneRunManager._obstacleFactors — même calcul que getObstacleEstimate (résolution
     // réelle), pour ne jamais désynchroniser cet aperçu-avant-porte du calcul qui suivra.
-    Object.keys(gabarit.options).forEach(function (key) {
+    // v3.198.0 : l'apercu ne considere que les voies REELLEMENT exposees par ce noeud
+    // (slot.voies), sinon la porte s'annoncerait sur une approche que le joueur ne pourra
+    // pas prendre une fois entre.
+    SceneEngine.nodeVoies(gabarit, slot).forEach(function (key) {
       var statEff = SceneRunManager.statEffective(run, gabarit.options[key].stat);
       var factors = SceneRunManager._obstacleFactors(run, key);
       var e = SceneEngine.estimateObstacle(gabarit, key, statEff, run.depth, slot.riskMod, factors.diffMult);
@@ -564,6 +628,14 @@ function useSceneTorch() {
 }
 window.useSceneTorch = useSceneTorch;
 
+function useSceneProvision() {
+  var result = SceneRunManager.useSceneProvision();
+  if (!result.ok) { showToast(result.reason, 1600); return; }
+  sceneLog('Tu manges. La plaie se referme.'); // v3.197.0 (bible B : narrateur proche, concret)
+  refreshSceneScreen();
+}
+window.useSceneProvision = useSceneProvision;
+
 function useSceneGourde() {
   var result = SceneRunManager.useSceneGourde();
   if (!result.ok) {
@@ -624,7 +696,10 @@ function buildSceneObstacleHTML(run) {
   h += '  </div>';
 
   h += '  <div class="scene-card-grid">';
-  Object.keys(gabarit.options).forEach(function (key) {
+  // v3.198.0 : seules les voies tirees pour ce noeud sont jouables (template.optionsPerNode).
+  // Meme source de verite que la resolution (SceneEngine.nodeVoies) : jamais deux listes.
+  var pendingSlot = (SceneRunManager.getCurrentLevel() || [])[run.currentGate] || run.pendingNode;
+  SceneEngine.nodeVoies(gabarit, pendingSlot).forEach(function (key) {
     var option = gabarit.options[key];
     var estimate = SceneRunManager.getObstacleEstimate(key);
     var factors = SceneRunManager._obstacleFactors(run, key);
@@ -637,11 +712,12 @@ function buildSceneObstacleHTML(run) {
     h += '<span class="scene-card-sub scene-card-cost">' + esc(gainLabel) + ' · Souffle ' + factors.breathCost + (canAfford ? '' : ' (insuffisant)') + '</span>';
     h += '</button>';
   });
-  if (gabarit.ropeOption && run.ropeAvailable) {
+  if (gabarit.ropeOption && Number(run.ropeCharges || 0) > 0) {
     h += '<button type="button" class="scene-card" onclick="resolveSceneObstacleChoice(\'corde\')">';
     h += '<span class="scene-card-label">Assurer à la corde</span>';
     h += '<span class="scene-card-sub is-good">Réussite garantie, gain réduit</span>';
-    h += '<span class="scene-card-sub scene-card-cost">Aucun coût de Souffle</span>';
+    // v3.198.0 : la corde se consomme — l'afficher evite que le joueur la croie illimitee.
+    h += '<span class="scene-card-sub scene-card-cost">Consomme la corde (x' + run.ropeCharges + ')</span>';
     h += '</button>';
   }
   h += '  </div>';
@@ -663,7 +739,8 @@ function resolveSceneObstacleChoice(optionKey) {
   }
   if (result.outcome === "setback") sceneLog('Échec, blessure. +' + result.gainAmount);
   else if (result.outcome === "perfect") sceneLog('Parfait ! +' + result.gainAmount);
-  else if (result.outcome === "evacuation") sceneLog('Trois blessures, évacuation d\u2019urgence.');
+  // v3.198.0 : le seuil vient du canevas, le texte ne l'ecrit plus en dur.
+  else if (result.outcome === "evacuation") sceneLog('Tu ne tiens plus debout. On te ramène.'); // v3.197.0 (bible B §4.4)
   else sceneLog('Réussi. +' + result.gainAmount);
 
   refreshSceneScreen();
@@ -671,13 +748,15 @@ function resolveSceneObstacleChoice(optionKey) {
 window.resolveSceneObstacleChoice = resolveSceneObstacleChoice;
 
 function buildSceneAutelHTML(run) {
-  var canHeal = run.injuries.length > 0;
+  // v3.198.0 : l'autel ne retire qu'une blessure legere — inutile de proposer une offrande
+  // au joueur qui ne porte qu'une plaie grave, elle lui couterait de l'or pour rien.
+  var canHeal = SceneRunManager.canHealHere(run);
   var cost = canHeal ? Math.max(5, Math.round(run.loot * 0.2)) : 0;
   var h = '<div class="panel-title">Autel oublié</div>';
   h += '<div class="scene-screen">';
   h += buildSceneStatusBarHTML(run);
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-text">' + (canHeal ? 'Une offrande de ' + cost + ' apaiserait tes plaies.' : 'Tu n\u2019as aucune blessure à soigner.') + '</div>';
+  h += '    <div class="scene-heading-text">' + (canHeal ? 'L\u2019autel demande ' + cost + '. Il rend une plaie.' : (run.injuries.length ? 'Il ne peut rien pour cette plaie-là.' : 'Tu n\u2019as rien à lui rendre.')) /* v3.197.0 (bible B §4.5) */ + '</div>';
   h += '  </div>';
   h += '  <div class="scene-actions">';
   if (canHeal) h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneAutel(true)">Faire l\u2019offrande</button>';
@@ -700,7 +779,7 @@ function buildSceneDecouverteHTML(run) {
   h += '<div class="scene-screen">';
   h += buildSceneStatusBarHTML(run);
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-text">Une cache scintille entre les pierres.</div>';
+  h += '    <div class="scene-heading-text">Quelque chose a été laissé là. Pas pour toi, mais tu es là.</div>';
   h += '  </div>';
   h += '  <div class="scene-actions">';
   h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneDecouverte()">Continuer</button>';
@@ -722,7 +801,7 @@ function buildSceneSourceHTML(run) {
   h += '<div class="scene-screen">';
   h += buildSceneStatusBarHTML(run);
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-text">Une source murmure dans la pénombre.</div>';
+  h += '    <div class="scene-heading-text">De l\u2019eau, entre les racines. Elle est bonne.</div>';
   h += '  </div>';
   h += '  <div class="scene-actions">';
   h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneSource()">Continuer</button>';
@@ -848,7 +927,9 @@ function buildSceneCompleteHTML() {
   var summary = game.lastSortieSummary;
   var kept = summary ? summary.kept : null;
   var lost = summary ? summary.lost : null;
-  var isEvacuation = run.injuries.length >= 3;
+  // v3.198.0 : seuil lu sur le canevas (template.maxInjuries) — était figé à 3, ce qui
+  // affichait un bilan "réussite" sur une Petite Aventure évacuée à 2 blessures.
+  var isEvacuation = run.injuries.length >= SceneRunManager.getMaxInjuries(run.templateId);
 
   var h = '<div class="panel-title">Résumé de l\u2019expédition</div>';
   h += '<div class="scene-screen">';

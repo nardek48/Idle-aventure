@@ -18,11 +18,46 @@
    évac). Butin Périple sur héros développé (~785 or) dépasse enfin le haut de fourchette
    d'une quête secondaire (400-800 or, adventure-quests.js), justifiant le risque maximal. */
 var SCENE_INTENSITY = {
-  sentier: { id: "sentier", label: "Sentier", icon: "🌿", depthMax: 6, diffMult: 0.70, lootMult: 1.0, desc: "Court et sûr. Butin standard." },
-  chemin: { id: "chemin", label: "Chemin", icon: "🌲", depthMax: 8, diffMult: 1.0, lootMult: 2.0, desc: "Le format habituel. Butin doublé." },
-  periple: { id: "periple", label: "Périple", icon: "⛰️", depthMax: 10, diffMult: 1.15, lootMult: 3.5, desc: "Long et périlleux. Butin x3.5." }
+  /* v3.198.0 (recalibrage Seb, "encore trop facile") : les diffMult 0.70/1.00/1.15 avaient ete
+     calibres en v3.195.0 contre un joueur qui choisit au GAIN. Simulation Monte-Carlo de
+     session contre un joueur qui choisit a la MEILLEURE CHANCE (ce que fait tout le monde,
+     l'estimation est ecrite sur la carte, corde jouee) : 0.2 a 0.6 % d'echec a TOUS les
+     stades. Nouveaux multiplicateurs calibres sur ce joueur-la, cible Seb "Periple = pari".
+     lootMult remonte en consequence : le Periple perd la moitie de son butin sur un run sur
+     trois, il doit rapporter davantage quand il passe. */
+  sentier: { id: "sentier", label: "Sentier", icon: "🌿", depthMax: 6, diffMult: 0.95, lootMult: 1.0, desc: "Court et sûr. Butin standard." },
+  chemin: { id: "chemin", label: "Chemin", icon: "🌲", depthMax: 8, diffMult: 1.70, lootMult: 2.6, desc: "Le format habituel. Exigeant. Butin x2.6." },
+  periple: { id: "periple", label: "Périple", icon: "⛰️", depthMax: 10, diffMult: 2.60, lootMult: 6.0, desc: "Un pari. Beaucoup en reviennent les mains vides. Butin x6." }
 };
 window.SCENE_INTENSITY = SCENE_INTENSITY;
+
+/* v3.196.0 (lot C2 "répétitivité", mutateurs de run) : tiré UNE FOIS au lancement du run
+   (juste après chooseIntensity, avant preparation), annoncé au joueur, jamais recalculé.
+   ORTHOGONAL au profil ET à l'intensité — un 3e axe de variabilité, purement additif par
+   rapport au système du lot v3.195.0 (chaque effet se branche sur un multiplicateur déjà
+   existant, aucun nouveau sous-système). "aucun" inclus dans les poids (20% chacun, y
+   compris aucun) pour ne pas mutater 100% des runs — décision Seb. */
+var SCENE_MUTATORS = {
+  aucun: { id: "aucun", label: "Rien à signaler", icon: "🌤️", weight: 20, desc: "Un run sans particularité." },
+  brouillard: {
+    id: "brouillard", label: "Brouillard", icon: "🌫️", weight: 20,
+    desc: "Horizon de visibilité nul, même avec la torche — tu avances à l'aveugle.",
+    horizonOverride: 0 // consommé par SceneRunManager.getVisibilityHorizon()
+  },
+  pluie: {
+    id: "pluie", label: "Pluie battante", icon: "🌧️", weight: 20,
+    desc: "L'Endurance est renforcée (+15%), mais l'effort fatigue davantage (coût en Souffle +50%).",
+    enduranceStatMult: 1.15, // consommé par SceneRunManager.statEffective()
+    breathCostMult: 1.5 // consommé par SceneRunManager._obstacleFactors()
+  },
+  nuit: {
+    id: "nuit", label: "Nuit noire", icon: "🌙", weight: 20,
+    desc: "Un danger de plus t'attend sur le chemin, mais le butin est meilleur (+15%).",
+    extraDangerNode: true, // consommé par SceneRunManager._ensureMinCombat() (génération de carte)
+    lootMult: 1.15 // consommé par SceneRunManager._runLootMult()/_obstacleFactors()
+  }
+};
+window.SCENE_MUTATORS = SCENE_MUTATORS;
 
 var SCENE_TEMPLATES = {
   expedition_faille: {
@@ -46,13 +81,15 @@ var SCENE_TEMPLATES = {
     riskModRange: [0.6, 1.6],
 
     // Équipement proposé en préparation (3 emplacements, doublons permis pour provisions).
-    loadoutOffer: ["torche", "corde", "provisions", "provisions", "amulette"],
+    // v3.198.0 : doublon retire — provisions devient un objet reellement actif (voir
+    // SceneRunManager.useSceneProvision), deux exemplaires desequilibreraient le canevas.
+    loadoutOffer: ["torche", "corde", "provisions", "amulette"],
     loadoutSlots: 3,
 
     items: {
       torche: { id: "torche", name: "🔥 Torche", desc: "Révèle le détail des portes du niveau courant (3 charges).", charges: 3 },
-      corde: { id: "corde", name: "🪢 Corde", desc: "Approche sûre sur les obstacles compatibles (réutilisable, gain réduit)." },
-      provisions: { id: "provisions", name: "🥖 Provisions", desc: "Soigne 1 blessure (consommable)." },
+      corde: { id: "corde", name: "🪢 Corde", desc: "Passe un obstacle compatible sans jet (1 usage, gain réduit).", charges: 1 },
+      provisions: { id: "provisions", name: "🥖 Provisions", desc: "Soigne la blessure la plus grave (1 usage).", charges: 1 },
       amulette: { id: "amulette", name: "🧿 Amulette", desc: "Relance automatiquement le premier jet raté (1 fois)." }
     },
 
@@ -356,7 +393,42 @@ var SCENE_TEMPLATES = {
     // (scene-view.js:SCENE_PATH_TEMPLATE_IDS ne matche plus que si level.length===1).
     depthMax: 8,
     firstDepthType: "obstacle",
-    gatesPerDepth: [2, 2],
+    // v3.198.0 : [1, 2] au lieu de [2, 2]. Avec 2 portes x 3 voies le joueur disposait de 6
+    // candidats par palier et trouvait toujours une sortie a ~90 % : la difficulte du jet
+    // n'avait plus aucune prise. Un palier sur deux n'offre desormais qu'un seul passage.
+    gatesPerDepth: [1, 2],
+
+    // v3.198.0 : un noeud-obstacle n'expose que 2 des 3 voies de son gabarit, tirees a la
+    // generation de la carte et memorisees dans slot.voies (SceneEngine.buildCard). Les
+    // gabarits gardent leurs 3 options en donnee : c'est le RUN qui en cache une, donc les
+    // autres canevas (expedition_faille, quetes de deblocage migrees) ne bougent pas. Effet
+    // recherche : le joueur ne peut plus systematiquement jouer sa meilleure stat.
+    optionsPerNode: 2,
+
+    // v3.198.0 : evacuation a 2 blessures au lieu de 3 (defaut du moteur, voir
+    // SceneRunManager.getMaxInjuries). Levier de difficulte le plus efficace mesure en
+    // simulation, et le moins couteux en code.
+    maxInjuries: 2,
+
+    // v3.198.0 : difficulte indexee sur le developpement du heros. Indexee sur le BONUS DE
+    // CHANCE reellement gagne (moyenne des min(55, stat*0.40), voir SceneCheckSystem) et NON
+    // sur la stat brute : la stat brute continue de monter apres que le bonus a plafonne a
+    // 55, ce qui creusait un trou de difficulte au stade intermediaire (mesure : 20 % d'echec
+    // a mi-parcours contre 27 % pour un heros neuf). ref 21 = heros neuf non entraine.
+    // Champ de TEMPLATE, pas de moteur : expedition_faille et les quetes migrees ne le
+    // declarent pas et gardent leur calibrage.
+    heroScaling: { ref: 21, coef: 0.60, max: 3.5 },
+
+    // v3.198.0 : triangle des voies elargi, en surcharge locale de SCENE_NODES.optionProfiles
+    // (qui reste le defaut des autres canevas). L'endurance etait a la fois la moins
+    // difficile, la moins chere en Souffle et la moins blessante, pour seulement -20 % de
+    // butin : ce n'etait pas un triangle mais une droite avec un peage symbolique. Elle
+    // rapporte desormais la moitie d'un passage normal, la puissance 2.6 fois plus.
+    optionProfiles: {
+      power: { diffMod: 1.12, lootMod: 2.60, breathCost: 3, injurySeverity: "grave" },
+      precision: { diffMod: 1.0, lootMod: 1.15, breathCost: 1.5, injurySeverity: "normale" },
+      endurance: { diffMod: 0.95, lootMod: 0.50, breathCost: 1, injurySeverity: "legere" }
+    },
 
     // v3.125.0 : profileWeights remplace slotWeights à la génération (voir SceneEngine.buildCard
     // slotWeightsOverride) — Bourrin : plus de combats (Lot PA2), aucun bloqueur (concept §2,
@@ -398,13 +470,25 @@ var SCENE_TEMPLATES = {
     // d'objets (objets thématiques par option/profil) part en lot séparé après retour sur le
     // Souffle en jeu réel. Réutilisable comme la corde (pas de charges) : restaure au premier
     // usage plutôt que de forcer un choix cornélien dès la préparation sur un système neuf.
-    loadoutOffer: ["torche", "corde", "provisions", "provisions", "gourde", "amulette"],
+    // v3.198.0 : doublon de provisions retire. Mesure en simulation : deux provisions sur un
+    // budget de 2 blessures absorbent tous les echecs et ramenent le taux d'echec de 34 % a
+    // 0.3 %. Le doublon annulait a lui seul le plafond de blessures. Corde en un seul
+    // exemplaire pour la meme raison (un second achetait 6 points de securite en ne
+    // deplacant que l'amulette : case gratuite, pas un arbitrage).
+    loadoutOffer: ["torche", "corde", "provisions", "gourde", "amulette"],
     loadoutSlots: 3,
 
     items: {
       torche: { id: "torche", name: "🔥 Torche", desc: "Révèle le détail des portes du niveau courant (3 charges).", charges: 3 },
-      corde: { id: "corde", name: "🪢 Corde", desc: "Approche sûre sur les obstacles compatibles (réutilisable, gain réduit).", },
-      provisions: { id: "provisions", name: "🥖 Provisions", desc: "Soigne 1 blessure (consommable).", },
+      // v3.198.0 : la corde n'est plus reutilisable a l'infini. Elle etait une reussite
+      // garantie, gratuite en Souffle, sans limite d'usage, sur 3 des 6 gabarits du pool
+      // (gouffre, paroi, riviere) : 3.8 obstacles passes sans jeter un de par Periple.
+      corde: { id: "corde", name: "🪢 Corde", desc: "Passe un obstacle compatible sans jet (1 usage, gain réduit).", charges: 1 },
+      // v3.198.0 : enfin implementee. L'objet etait offert depuis v3.120.0 mais AUCUN code ne
+      // le lisait (le mot "provisions" n'existait que dans ce fichier). Soigne la blessure la
+      // plus GRAVE, ce qui en fait la seule reponse a un echec en voie de puissance : autel
+      // et source ne retirent que les blessures legeres depuis ce lot.
+      provisions: { id: "provisions", name: "🥖 Provisions", desc: "Soigne la blessure la plus grave (1 usage).", charges: 1 },
       gourde: { id: "gourde", name: "🍶 Gourde", desc: "Restaure 30 Souffle (consommable, à utiliser quand tu veux)." },
       amulette: { id: "amulette", name: "🧿 Amulette", desc: "Relance automatiquement le premier jet raté (1 fois).", }
     },

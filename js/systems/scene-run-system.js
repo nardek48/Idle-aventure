@@ -49,7 +49,69 @@ var SceneRunManager = {
 
   getRun: function () {
     this.ensureDefaults();
-    return game.sceneRun;
+    var run = game.sceneRun;
+    if (run) this._migrateRun(run);
+    return run;
+  },
+
+  /* v3.198.0 : reprise d'un run demarre sous une version anterieure (le run entier est
+     persiste tel quel par save-system.js, aucune migration n'y est faite). Corde et
+     provisions passent d'un booleen de disponibilite a un compteur de charges ; sans ce
+     repli, un run en cours au moment de la mise a jour perdrait sa corde. Idempotent. */
+  _migrateRun: function (run) {
+    if (run.ropeCharges == null) run.ropeCharges = run.ropeAvailable ? 1 : 0;
+    if (run.provisionCharges == null) run.provisionCharges = 0;
+  },
+
+  /* getMaxInjuries(templateId) -> nombre de blessures qui declenche l'evacuation. Defaut 3
+     (regle DESIGN_Scene_Engine_v1.md §4, conservee pour expedition_faille et les quetes de
+     deblocage migrees) ; la Petite Aventure declare 2 depuis v3.198.0. */
+  getMaxInjuries: function (templateId) {
+    var template = SceneEngine.getTemplate(templateId);
+    return Math.max(1, Number((template && template.maxInjuries) || 3));
+  },
+
+  /* v3.198.0 : multiplicateur de difficulte indexe sur le developpement du heros
+     (template.heroScaling, absent = 1). Indexe sur le BONUS DE CHANCE reellement gagne
+     (min(55, stat*0.40), meme plafond que SceneCheckSystem.successChance) et NON sur la stat
+     brute : celle-ci continue de monter apres que le bonus a plafonne, ce qui creusait un
+     trou de difficulte au stade intermediaire. Calcule sur run.heroSnapshot (fige au depart
+     du run) : un entrainement en cours de run ne change pas la carte deja engagee. */
+  heroScale: function (run) {
+    var template = SceneEngine.getTemplate(run && run.templateId);
+    var cfg = template && template.heroScaling;
+    if (!cfg || !run || !run.heroSnapshot) return 1;
+    var keys = ["power", "precision", "endurance"];
+    var sum = 0;
+    for (var i = 0; i < keys.length; i++) {
+      sum += Math.min(55, Number(run.heroSnapshot[keys[i]] || 0) * 0.40);
+    }
+    var avgBonus = sum / keys.length;
+    var scale = 1 + Number(cfg.coef || 0) * Math.max(0, (avgBonus - Number(cfg.ref || 0)) / 10);
+    return Math.max(1, Math.min(Number(cfg.max || 99), scale));
+  },
+
+  /* v3.198.0 : retire UNE blessure du run selon une regle de ciblage.
+     "legere" -> la premiere blessure legere uniquement (autel, source : ils n'effacent plus
+     une erreur grave) ; "grave" -> la plus severe (provisions, seule reponse a un echec en
+     voie de puissance). Retourne la blessure retiree, ou null si aucune ne correspond. */
+  _healOneInjury: function (run, mode) {
+    if (!run || !run.injuries || !run.injuries.length) return null;
+    var idx = -1;
+    if (mode === "grave") {
+      var rank = { grave: 3, normale: 2, legere: 1 };
+      var best = 0;
+      for (var i = 0; i < run.injuries.length; i++) {
+        var r = rank[run.injuries[i].severity] || 1;
+        if (r > best) { best = r; idx = i; }
+      }
+    } else {
+      for (var j = 0; j < run.injuries.length; j++) {
+        if (run.injuries[j].severity === "legere") { idx = j; break; }
+      }
+    }
+    if (idx < 0) return null;
+    return run.injuries.splice(idx, 1)[0];
   },
 
   isRunActive: function () {
@@ -101,7 +163,15 @@ var SceneRunManager = {
     }).reduce(function (sum, inj) {
       return sum + Number((bank.injurySeverityMalus && bank.injurySeverityMalus[inj.severity]) || 4);
     }, 0);
-    return Math.max(1, base - malus);
+    var effective = Math.max(1, base - malus);
+    // v3.196.0 (mutateur "Pluie battante") : +15% sur l'Endurance effective SEULEMENT —
+    // appliqué après le malus de blessure, jamais avant (la pluie renforce la stat de base,
+    // elle ne rend pas une blessure moins grave).
+    var mutator = this.getActiveMutator();
+    if (statKey === "endurance" && mutator.enduranceStatMult) {
+      effective = Math.round(effective * mutator.enduranceStatMult);
+    }
+    return effective;
   },
 
   /* ---------- Démarrage ---------- */
@@ -177,10 +247,13 @@ var SceneRunManager = {
       gourdeAvailable: false, // v3.195.0
 
       injuries: [], // v3.195.0 : {stat, severity} cumulables (avant : simples clés de stat)
+      ropeCharges: 0, // v3.198.0 : usages de corde restants (etait un booleen illimite)
+      provisionCharges: 0, // v3.198.0 : provisions restantes (objet enfin actif)
       breath: 100, // v3.195.0 : ressource de run visible, 0-100, consommée par les options
                     // d'obstacle (voir SCENE_NODES.optionProfiles), restaurée par
                     // autel/source/gourde (voir resolveAutel/resolveSource/useSceneGourde)
       intensity: null, // v3.195.0 : "sentier"|"chemin"|"periple" — figé au choix, comme profile
+      mutator: null, // v3.196.0 : "aucun"|"brouillard"|"pluie"|"nuit" — figé au tirage (chooseIntensity)
       loot: 0, // ressource lootResource, non banquée tant que SortieManager n'a pas end()
 
       currentGate: null, // index de porte sélectionnée en attente de résolution (idempotence)
@@ -265,11 +338,56 @@ var SceneRunManager = {
     if (!template) return { ok: false, reason: "Expédition introuvable" };
 
     run.intensity = intensityId;
+    run.mutator = this._rollMutator(); // v3.196.0 : tiré ici, AVANT _generateCard (Nuit noire
+                                        // influence la génération de carte elle-même)
     this._generateCard(run, template, run._pendingProfileWeights, intensity.depthMax);
     delete run._pendingProfileWeights;
 
+    // v3.196.0 : écran d'annonce si un mutateur actif (pas "aucun") — court-circuite le statut
+    // posé par _generateCard (preparation/gate), restauré par acknowledgeMutator() ci-dessous.
+    // Toujours affiché (même "aucun", pour cohérence de rythme) sauf si SCENE_MUTATORS absent.
+    if (window.SCENE_MUTATORS) {
+      run._statusAfterMutator = run.status;
+      run.status = "mutator-announce";
+    }
+
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null, run: run };
+  },
+
+  /* v3.196.0 : accusé de lecture de l'écran d'annonce du mutateur — restaure le statut que
+     _generateCard avait posé (preparation ou gate selon loadoutSlots), jamais recalculé. */
+  acknowledgeMutator: function () {
+    var run = this.getRun();
+    if (!run || run.status !== "mutator-announce") return { ok: false, reason: "Aucune annonce en cours" };
+    run.status = run._statusAfterMutator || "gate";
+    delete run._statusAfterMutator;
+    if (typeof saveGame === "function") saveGame();
+    return { ok: true, reason: null, run: run };
+  },
+
+  /* v3.196.0 (lot C2, mutateurs de run) : tirage pondéré sur SCENE_MUTATORS (poids égaux,
+     20% chacun avec "aucun" inclus — décision Seb). Repli "aucun" si SCENE_MUTATORS absent
+     (canevas hors Petite Aventure, comportement inchangé). */
+  _rollMutator: function () {
+    if (!window.SCENE_MUTATORS) return "aucun";
+    var entries = Object.keys(window.SCENE_MUTATORS).map(function (k) { return window.SCENE_MUTATORS[k]; });
+    var totalWeight = entries.reduce(function (sum, m) { return sum + Number(m.weight || 0); }, 0);
+    var roll = Math.random() * totalWeight;
+    var acc = 0;
+    for (var i = 0; i < entries.length; i++) {
+      acc += Number(entries[i].weight || 0);
+      if (roll < acc) return entries[i].id;
+    }
+    return "aucun";
+  },
+
+  /* v3.196.0 : mutateur actif du run courant (objet complet, ou l'entrée "aucun" par défaut
+     — jamais null, pour que les lectures des consommateurs n'aient pas à re-tester l'absence). */
+  getActiveMutator: function () {
+    var run = this.getRun();
+    var id = (run && run.mutator) || "aucun";
+    return (window.SCENE_MUTATORS && window.SCENE_MUTATORS[id]) || { id: "aucun" };
   },
 
   /* Génère la carte réelle et avance au statut suivant (preparation ou gate) — factorisé car
@@ -287,9 +405,52 @@ var SceneRunManager = {
     for (var i = 0; i < randCount; i++) randomValues.push(Math.random());
     run.card = SceneEngine.buildCard(effectiveTemplate, randomValues, profileWeights);
     if (profileWeights) this._ensureMinCombat(run, template, run.profile);
+    if (profileWeights) this._applyMutatorToCard(run, template); // v3.196.0
 
     var hasLoadout = Number(template.loadoutSlots || 0) > 0;
     run.status = hasLoadout ? "preparation" : "gate";
+  },
+
+  /* v3.196.0 (lot C2, mutateur "Nuit noire") : ajoute UN nœud danger supplémentaire — combat
+     pour Bourrin (même pool que _ensureMinCombat), bloqueur pour Prudent (le "carrot" habituel
+     de ce profil). Appelé APRÈS _ensureMinCombat pour ne jamais interférer avec sa garantie
+     plancher/plafond déjà validée (session lot v3.195.0). Ne remplace jamais le palier 0
+     (firstDepthType), même règle que _ensureMinCombat. Silencieux si le mutateur actif n'est
+     pas "nuit" ou si aucun palier éligible. */
+  _applyMutatorToCard: function (run, template) {
+    var mutator = this.getActiveMutator();
+    if (!mutator.extraDangerNode || !run.card.length) return;
+
+    var eligibleDepths = [];
+    for (var d = 1; d < run.card.length; d++) eligibleDepths.push(d);
+    if (!eligibleDepths.length) return;
+
+    // Respecte le plafond déjà validé (template.maxSlotsPerRun, lot v3.195.0/v3.143.0) — un
+    // mutateur ne doit jamais faire dépasser la garantie ≤2 combat(s)/≤2 bloqueur(s) testée
+    // au harness. Si le plafond est déjà atteint, le mutateur n'ajoute simplement rien ce run.
+    var maxSlots = template.maxSlotsPerRun || {};
+    var targetType = (run.profile === "bourrin") ? "combat" : "bloqueur";
+    var cap = Number(maxSlots[targetType] || 99);
+    var current = 0;
+    run.card.forEach(function (level) {
+      level.forEach(function (slot) { if (slot.type === targetType) current++; });
+    });
+    if (current >= cap) return;
+
+    var pickedDepth = eligibleDepths[Math.floor(Math.random() * eligibleDepths.length)];
+    var pickedGate = Math.floor(Math.random() * run.card[pickedDepth].length);
+
+    if (run.profile === "bourrin" && template.pools && template.pools.combat && template.pools.combat.length) {
+      var gabaritId = template.pools.combat[Math.floor(Math.random() * template.pools.combat.length)];
+      run.card[pickedDepth][pickedGate] = { type: "combat", gabaritId: gabaritId };
+    } else if (run.profile === "prudent") {
+      // Même tirage que SceneEngine.buildCard pour un bloqueur naturel (template.
+      // blockerDurationRange), pour ne jamais désynchroniser la durée de ce bloqueur
+      // "manuel" de celle d'un bloqueur généré normalement par le tirage pondéré.
+      var durMin = (template.blockerDurationRange && template.blockerDurationRange[0]) || 300000;
+      var durMax = (template.blockerDurationRange && template.blockerDurationRange[1]) || 600000;
+      run.card[pickedDepth][pickedGate] = { type: "bloqueur", durationMs: Math.round(durMin + Math.random() * (durMax - durMin)) };
+    }
   },
 
   /* Valide l'équipement choisi en préparation (exactement loadoutSlots objets) et passe au
@@ -312,7 +473,12 @@ var SceneRunManager = {
     run.loadout = itemIds.slice();
     run.torchCharges = itemIds.filter(function (id) { return id === "torche"; }).length > 0
       ? (template.items.torche.charges || 3) : 0;
-    run.ropeAvailable = itemIds.indexOf("corde") !== -1;
+    // v3.198.0 : corde et provisions deviennent des charges consommables (1 par exemplaire
+    // embarque) au lieu d'un simple flag de disponibilite. ropeAvailable est conserve en
+    // miroir pour ne rien casser dans la vue et dans les sauvegardes existantes.
+    run.ropeCharges = itemIds.filter(function (id) { return id === "corde"; }).length;
+    run.ropeAvailable = run.ropeCharges > 0;
+    run.provisionCharges = itemIds.filter(function (id) { return id === "provisions"; }).length;
     run.amuletAvailable = itemIds.indexOf("amulette") !== -1;
     run.gourdeAvailable = itemIds.indexOf("gourde") !== -1; // v3.195.0
     run.status = "gate";
@@ -346,6 +512,23 @@ var SceneRunManager = {
     return !!(run && run._torchUsedAtDepth === run.depth);
   },
 
+  /* v3.196.0 (lot C2, mutateur "Brouillard") : centralise le calcul d'horizon de visibilité,
+     auparavant dupliqué à 2 endroits dans scene-view.js (buildScenePathHTML/
+     buildSceneProgressHTML, même formule run.depth + (torche ? 2 : 1)). Brouillard force
+     l'horizon à 0 (jamais d'aperçu du palier suivant), MÊME avec la torche active — cohérent
+     avec le flavor ("tu avances à l'aveugle") : la torche perd son usage habituel ce run-là,
+     mais reste utilisable pour ses autres effets éventuels (aucun actuellement). */
+  getVisibilityHorizon: function () {
+    var run = this.getRun();
+    if (!run) return 0;
+    var mutator = this.getActiveMutator();
+    if (typeof mutator.horizonOverride === "number") {
+      return run.depth + mutator.horizonOverride;
+    }
+    var torchOn = this.torchActiveThisLevel();
+    return run.depth + (torchOn ? 2 : 1);
+  },
+
   GOURDE_BREATH_AMOUNT: 30, // cohérent avec l'item Gourde (data/scene-templates.js)
 
   /* useSceneGourde() -> { ok, reason }. Utilisable à tout moment (pas seulement en attente
@@ -361,6 +544,31 @@ var SceneRunManager = {
     return { ok: true, reason: null };
   },
 
+  /* v3.198.0 : vrai si un soin d'autel/source aurait un effet ici (au moins une blessure
+     legere). La vue s'en sert pour ne pas proposer une offrande qui ne rendrait rien. */
+  canHealHere: function (run) {
+    if (!run || !run.injuries) return false;
+    for (var i = 0; i < run.injuries.length; i++) {
+      if (run.injuries[i].severity === "legere") return true;
+    }
+    return false;
+  },
+
+  /* useSceneProvision() -> { ok, reason, severity }. v3.198.0 : les provisions etaient
+     offertes en preparation depuis v3.120.0 mais AUCUN code ne les lisait — le mot n'existait
+     que dans data/scene-templates.js. Elles soignent desormais la blessure la PLUS GRAVE, ce
+     qui en fait la seule reponse a un echec en voie de puissance (autel et source ne retirent
+     que les legeres). Utilisable a tout moment du run, comme la gourde. */
+  useSceneProvision: function () {
+    var run = this.getRun();
+    if (!run || Number(run.provisionCharges || 0) <= 0) return { ok: false, reason: "Plus de provisions" };
+    if (!run.injuries || !run.injuries.length) return { ok: false, reason: "Aucune blessure à soigner" };
+    var healed = this._healOneInjury(run, "grave");
+    run.provisionCharges = Math.max(0, Number(run.provisionCharges || 0) - 1);
+    if (typeof saveGame === "function") saveGame();
+    return { ok: true, reason: null, severity: healed ? healed.severity : null };
+  },
+
   /* Révèle un nœud "mystere" au moment d'y entrer (tirage pur SceneEngine, randomValue ici). */
   _revealMystery: function (run, slot) {
     var types = ["obstacle", "autel", "decouverte", "source"];
@@ -372,6 +580,10 @@ var SceneRunManager = {
       var riskMin = (template.riskModRange && template.riskModRange[0]) || 0.6;
       var riskMax = (template.riskModRange && template.riskModRange[1]) || 1.6;
       slot.riskMod = riskMin + Math.random() * (riskMax - riskMin);
+      // v3.198.0 : un obstacle revele depuis un mystere expose les memes voies restreintes
+      // qu'un obstacle genere directement (template.optionsPerNode), sinon le mystere serait
+      // devenu la porte de secours qui redonne acces aux 3 voies.
+      slot.voies = SceneEngine.pickVoies(template, slot.gabaritId, Math.random());
     }
     return slot;
   },
@@ -463,12 +675,18 @@ var SceneRunManager = {
      pour ne jamais désynchroniser l'affichage AVANT résolution du calcul RÉEL. */
   _obstacleFactors: function (run, optionKey) {
     var bank = SceneEngine.getNodeBank();
-    var profile = (bank.optionProfiles && bank.optionProfiles[optionKey]) || { diffMod: 1, lootMod: 1, breathCost: 0, injurySeverity: "normale" };
+    // v3.198.0 : un canevas peut surcharger localement les profils d'option
+    // (template.optionProfiles) — la Petite Aventure a un triangle bien plus tranche que le
+    // defaut partage, sans imposer ce calibrage a expedition_faille ni aux quetes migrees.
+    var template = SceneEngine.getTemplate(run.templateId);
+    var profiles = (template && template.optionProfiles) || bank.optionProfiles || {};
+    var profile = profiles[optionKey] || { diffMod: 1, lootMod: 1, breathCost: 0, injurySeverity: "normale" };
     var intensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
+    var mutator = this.getActiveMutator(); // v3.196.0
     return {
-      diffMult: profile.diffMod * ((intensity && intensity.diffMult) || 1),
-      lootMult: profile.lootMod * ((intensity && intensity.lootMult) || 1),
-      breathCost: profile.breathCost,
+      diffMult: profile.diffMod * ((intensity && intensity.diffMult) || 1) * this.heroScale(run),
+      lootMult: profile.lootMod * ((intensity && intensity.lootMult) || 1) * (mutator.lootMult || 1),
+      breathCost: profile.breathCost * (mutator.breathCostMult || 1),
       injurySeverity: profile.injurySeverity
     };
   },
@@ -489,7 +707,8 @@ var SceneRunManager = {
 
   /* resolveObstacle(optionKey|"corde") -> { ok, reason, outcome, gainAmount }. Idempotent :
      refuse si le nœud courant n'est pas un obstacle en attente. randomValue tiré ici
-     (une seule fois), jamais recalculé ensuite (même garde-fou que resolveEventChoice).
+     (une seule fois), jamais recalculé ensuite (même garde-fou anti-double-clic que sur les
+     autres résolutions de nœud de ce fichier — resolveAutel, resolveDecouverte, etc.).
      v3.195.0 : refuse si le Souffle est insuffisant pour l'option choisie (breathCost, voir
      _obstacleFactors) — SAUF pour "corde" (gratuite en Souffle, comme avant). L'échec pousse
      désormais {stat, severity} dans run.injuries (au lieu d'une simple clé de stat), et
@@ -505,8 +724,17 @@ var SceneRunManager = {
     var riskMod = run.pendingNode.riskMod || 1;
 
     var isRope = (optionKey === "corde");
-    if (isRope && !(run.ropeAvailable && gabarit.ropeOption)) {
+    if (isRope && !(Number(run.ropeCharges || 0) > 0 && gabarit.ropeOption)) {
       return { ok: false, reason: "Approche à la corde indisponible ici" };
+    }
+    // v3.198.0 : une voie masquee par le noeud (slot.voies, template.optionsPerNode) est
+    // refusee ici aussi, jamais seulement cachee dans la vue — meme garde-fou que partout
+    // ailleurs dans ce fichier : on ne fait jamais confiance a l'ecran.
+    if (!isRope) {
+      var pendingSlot = (this.getCurrentLevel() || [])[run.currentGate] || run.pendingNode;
+      if (SceneEngine.nodeVoies(gabarit, pendingSlot).indexOf(optionKey) === -1) {
+        return { ok: false, reason: "Cette approche n'est pas praticable ici" };
+      }
     }
     if (!isRope) {
       var precheckFactors = this._obstacleFactors(run, optionKey);
@@ -522,6 +750,11 @@ var SceneRunManager = {
       // — volontairement INDÉPENDANTE du riskMod de la porte (la corde neutralise le risque
       // qu'il soit haut ou bas, c'est tout son intérêt). Gratuite en Souffle (v3.195.0).
       outcome = "success";
+      // v3.198.0 : consomme une charge. La corde reste une reussite garantie a gain reduit,
+      // mais un seul obstacle par exemplaire embarque (avant : illimitee, ce qui laissait
+      // passer 3.8 obstacles par Periple sans jamais jeter un de).
+      run.ropeCharges = Math.max(0, Number(run.ropeCharges || 0) - 1);
+      run.ropeAvailable = run.ropeCharges > 0;
       gainAmount = SceneEngine.rollLoot(template.lootRanges.obstacleRope, run.depth, Math.random());
       run.loot += gainAmount;
     } else {
@@ -561,8 +794,10 @@ var SceneRunManager = {
     run.pendingNode = null;
     run.currentGate = null;
 
-    // 3 blessures = évacuation immédiate (règle DESIGN_Scene_Engine_v1.md §4).
-    if (run.injuries.length >= 3) {
+    // Plafond de blessures = évacuation immédiate (règle DESIGN_Scene_Engine_v1.md §4).
+    // v3.198.0 : le seuil vient du canevas (template.maxInjuries, defaut 3) — la Petite
+    // Aventure evacue a 2, voir getMaxInjuries.
+    if (run.injuries.length >= this.getMaxInjuries(run.templateId)) {
       this._evacuate();
       if (typeof saveGame === "function") saveGame();
       return { ok: true, reason: null, outcome: "evacuation", gainAmount: gainAmount };
@@ -585,7 +820,8 @@ var SceneRunManager = {
      lootMod de l'option prise. */
   _runLootMult: function (run) {
     var intensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
-    return (intensity && intensity.lootMult) || 1;
+    var mutator = this.getActiveMutator(); // v3.196.0
+    return ((intensity && intensity.lootMult) || 1) * (mutator.lootMult || 1);
   },
 
   /* v3.195.0 : restauration de Souffle à un nœud "carotte" (autel accepté, source) — donne
@@ -600,10 +836,16 @@ var SceneRunManager = {
       return { ok: false, reason: "Aucun autel à résoudre" };
     }
     var template = SceneEngine.getTemplate(run.templateId);
-    if (accept && run.injuries.length > 0) {
+    // v3.198.0 : l'autel ne retire plus qu'une blessure LEGERE. Une blessure grave, prise en
+    // voie de puissance, reste jusqu'au bout du run ; seules les provisions l'effacent. Sans
+    // cela, autel + source + amulette + provisions absorbaient cinq echecs sur un budget de
+    // deux blessures et le plafond n'avait aucun effet (mesure de session). L'offrande n'est
+    // facturee que si un soin a effectivement eu lieu. Le Souffle, lui, est rendu dans tous
+    // les cas : c'est le role de "carotte" du noeud (v3.195.0), independant des blessures.
+    if (accept && this.canHealHere(run)) {
       var cost = Math.max(5, Math.round(run.loot * (template.autelCostRatio || 0.2)));
       run.loot = Math.max(0, run.loot - cost);
-      run.injuries.pop();
+      this._healOneInjury(run, "legere");
       run.breath = Math.min(100, Number(run.breath || 0) + this.SOFT_HEAL_BREATH_AMOUNT);
       // SortieManager.addGold()/addResource() ne supportent que des montants positifs
       // (clampés à 0) : un coût se traduit en resynchronisant directement la valeur exacte
@@ -639,8 +881,8 @@ var SceneRunManager = {
     if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "source") {
       return { ok: false, reason: "Aucune source à résoudre" };
     }
-    var healed = false;
-    if (run.injuries.length > 0) { run.injuries.pop(); healed = true; }
+    // v3.198.0 : meme regle que l'autel — la source ne lave qu'une blessure legere.
+    var healed = !!this._healOneInjury(run, "legere");
     run.breath = Math.min(100, Number(run.breath || 0) + this.SOFT_HEAL_BREATH_AMOUNT);
     run.pendingNode = null; run.currentGate = null;
     this._advanceOrFinish(run);
@@ -977,7 +1219,7 @@ var SceneRunManager = {
     if (run._combatIsFinalWave) {
       // Dernier kill de la dernière vague du run : le boss de l'aventure apparaît.
       run._combatBossSpawned = true;
-      addLog("👑 Le calme après la tempête... une présence bien plus dangereuse approche.", "event");
+      addLog("👑 Le silence, d'un coup. Quelque chose de plus lourd arrive.", "event"); // v3.197.0 (bible B §4.4)
       this._spawnNextCombatEnemy(run, true);
       if (typeof saveGame === "function") saveGame();
       return;
@@ -1001,7 +1243,7 @@ var SceneRunManager = {
     if (!run) return;
     var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
     game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
-    addLog("💀 Petite aventure interrompue — le butin de ce parcours est perdu. Retour au Campement.", "event");
+    addLog("💀 Le parcours s'arrête là. Ce que tu portais reste dans la forêt. Retour au feu.", "event"); // v3.197.0 (bible B §4.4)
     vibrate([80, 40, 80]);
 
     run.status = "completed";

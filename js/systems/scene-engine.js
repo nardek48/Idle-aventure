@@ -95,6 +95,10 @@ var SceneEngine = {
         if (type === "obstacle" && template.pools && template.pools.obstacle) {
           slot.gabaritId = this.pickFromArray(template.pools.obstacle, nextRandom());
           slot.riskMod = riskMin + nextRandom() * (riskMax - riskMin);
+          // v3.198.0 : voies exposees par CE noeud (template.optionsPerNode). Tirees ici,
+          // memorisees dans le slot et donc persistees avec run.card : un joueur qui quitte
+          // et revient retrouve exactement les memes approches, jamais un nouveau tirage.
+          slot.voies = this.pickVoies(template, slot.gabaritId, nextRandom());
         } else if (type === "combat" && template.pools && template.pools.combat) {
           // v3.125.0 (Lot PA2) : slot combat, gabaritId pointe vers un enemyFilter groupé
           // (template.pools.combat), pas vers SCENE_NODES.obstacles — résolu par CombatEngine,
@@ -114,14 +118,49 @@ var SceneEngine = {
     return card;
   },
 
+  /* pickVoies(template, gabaritId, randomValue) -> tableau de clés d'option exposées par un
+     noeud, ou null si le canevas les expose toutes (comportement historique, tous les canevas
+     hors Petite Aventure). v3.198.0 : template.optionsPerNode < 3 masque une voie du gabarit,
+     tiree ici. On retire UNE voie plutot que d'en choisir deux, pour que la voie masquee soit
+     equiprobable quel que soit l'ordre de declaration des options dans scene-nodes.js. */
+  pickVoies: function (template, gabaritId, randomValue) {
+    var perNode = Number((template && template.optionsPerNode) || 0);
+    var bank = (typeof SCENE_NODES !== "undefined") ? SCENE_NODES : {};
+    var gabarit = bank.obstacles && bank.obstacles[gabaritId];
+    if (!gabarit || !gabarit.options) return null;
+    var keys = Object.keys(gabarit.options);
+    if (!perNode || perNode >= keys.length) return null;
+    var dropped = this.clamp(Math.floor(Number(randomValue || 0) * keys.length), 0, keys.length - 1);
+    var kept = [];
+    for (var i = 0; i < keys.length; i++) { if (i !== dropped) kept.push(keys[i]); }
+    while (kept.length > perNode) kept.pop();
+    return kept;
+  },
+
+  /* nodeVoies(gabarit, slot) -> clés d'option réellement jouables sur ce noeud. Source unique
+     de verite pour la vue ET pour la resolution : jamais deux listes divergentes (meme regle
+     que _obstacleFactors, partage entre affichage et calcul reel). Repli sur toutes les
+     options du gabarit si le slot n'a pas de voies (canevas sans optionsPerNode, ou run
+     genere avant v3.198.0 et repris depuis une sauvegarde). */
+  nodeVoies: function (gabarit, slot) {
+    var all = (gabarit && gabarit.options) ? Object.keys(gabarit.options) : [];
+    var voies = slot && slot.voies;
+    if (!voies || !voies.length) return all;
+    var out = [];
+    for (var i = 0; i < voies.length; i++) {
+      if (all.indexOf(voies[i]) !== -1) out.push(voies[i]);
+    }
+    return out.length ? out : all;
+  },
+
   /* Combien de nombres aléatoires buildCard va consommer au maximum, pour que l'appelant
-     puisse préparer un tableau randomValues de taille suffisante (1 par palier + 2 par porte
-     — gabaritId + riskMod, v3.121.0). */
+     puisse préparer un tableau randomValues de taille suffisante (1 par palier + 3 par porte
+     — gabaritId + riskMod, v3.121.0, + voies exposées, v3.198.0). */
   estimateRandomCount: function (template) {
     if (!template) return 0;
     var depthMax = Number(template.depthMax || 1);
     var gatesMax = (template.gatesPerDepth && template.gatesPerDepth[1]) || 2;
-    return depthMax * (1 + gatesMax * 2);
+    return depthMax * (1 + gatesMax * 3);
   },
 
   /* riskLevel(riskMod) -> "low"|"medium"|"high", pour affichage qualitatif du GAIN relatif

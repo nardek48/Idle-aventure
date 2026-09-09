@@ -243,8 +243,8 @@ var STORY_QUESTS = {
         title: "Le colporteur",
         act: "Acte I — Le feu et la lame",
         narrative: {
-          objective: "Un colporteur a planté sa carriole à la Lisière. Il vend cher, mais il vend ce qu'on ne trouve pas dans la forêt.",
-          completion: "L'or a un usage. Le colporteur reviendra tant que tu paieras."
+          objective: "Un colporteur a planté sa carriole à la Lisière. Sarkel, il s'appelle. Il vend cher, mais il vend ce qu'on ne trouve pas dans la forêt.",
+          completion: "L'or a un usage. Sarkel reviendra tant que tu paieras. Il vient de plus loin que la forêt, et il en parle peu."
         },
         objectiveLabel: "Faire 1 achat en boutique (Économie ou Potion)",
         unlockTabs: ["shop"],
@@ -324,7 +324,12 @@ var STORY_QUESTS = {
         act: "Acte II — Le campement devient village",
         narrative: {
           objective: "Viande et eau font une ration. Une ration fait une route. Un tronc bloque celle vers une clairière oubliée.",
-          completion: "La clairière s'ouvre. Ce qu'il y a au fond mérite qu'on creuse."
+          completion: "La clairière s'ouvre. Ce qu'il y a au fond mérite qu'on creuse.",
+          // v3.197.0 (passe de ton, bible B §4.7) : Brannoc laisse échapper — graine du Veilleur (pilier 3).
+          dialogue: [
+            { who: "Brannoc", text: "Un tronc, ça se scie. Celui-là, c'est la troisième fois que je le trouve en travers. La première… enfin." },
+            { who: "Brannoc", text: "Il en est venu un autre, avant toi. Il n'est pas revenu. Bon. Pousse, je tire." }
+          ]
         },
         objectiveLabel: "Fabriquer 1 Petite ration et terminer l'expédition « Le sentier obstrué »",
         unlockTabs: [],
@@ -421,7 +426,7 @@ var STORY_QUESTS = {
         act: "Acte III — Le héros s'affirme",
         narrative: {
           objective: "Au Cœur, les combats s'enchaînent trop vite pour tout décider à la main. Écris tes réflexes.",
-          completion: "Le Grimoire agit à ta place quand tu ne regardes pas. Apprends à lui faire confiance."
+          completion: "Le Grimoire agit à ta place quand tu ne regardes pas. Quelqu'un l'a tenu avant toi : les pages du début sont d'une autre main. Apprends à lui faire confiance."
         },
         objectiveLabel: "Remporter 10 victoires au Cœur de la forêt et activer 1 règle du Grimoire",
         // v3.131.0 : pas de killTarget ici (check combine coeurKills + règle active) — autoReturn
@@ -514,7 +519,17 @@ var STORY_QUESTS = {
         act: "Acte IV — L'Aether",
         narrative: {
           objective: "La braise sous Aeswyn ne s'éteint plus. Elle demande quelque chose : la sève de la forêt, et le pain du village. Un jour tu devras tout lui rendre pour renaître plus fort — pas aujourd'hui, mais la porte est ouverte.",
-          completion: "Tu sais désormais ce qu'est l'Aether. Le désert t'attend. Reviens quand la forêt te l'ordonnera."
+          completion: "La braise a pris. Tu sais ce qu'elle prend, maintenant. Sarkel dit que le sable commence là où la forêt s'arrête, et qu'on y vend cher.",
+          // v3.197.0 (passe de ton, bible B §4.7) : le dialogue tient enfin la promesse « tu sais ce qu'est
+          // l'Aether » — par les anciens, jamais par le narrateur (pilier 6). Affiché au bloc « Les braises »
+          // du Campement et sur l'étape courante (buildStoryDialogueHTML, quests-view.js).
+          dialogue: [
+            { who: "Orwen", text: "Pose ça là. Pas plus près." },
+            { who: "Wenna", text: "Pourquoi elle prend le pain ? Le pain c'est pour nous." },
+            { who: "Orwen", text: "Elle prend ce qu'on est. Le pain, c'est nous." },
+            { who: "Brannoc", text: "Elle prenait déjà, cette nuit-là. Elle ne savait pas encore quoi… enfin. Vas-y, petit. Elle t'attend, celle-là. Toi." },
+            { who: null, text: "Aldric ne dit rien. Il est retourné au moulin." }
+          ]
         },
         // v3.109.0 : le Seigneur de guerre orc se vainc dans la quête « Le Cœur de la Forêt » (aq_forest_depths, run dédié,
         // liée ici comme « Prouver sa valeur » l'est à forest_05) — elle est aussi la porte du Désert (gatesNextWorld).

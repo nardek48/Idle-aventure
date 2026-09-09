@@ -24,7 +24,12 @@ var SCENE_NODES = {
      remplace l'ancien malus fixe -2/blessure (v3.120.0), désormais différencié : une blessure
      "grave" (issue d'un échec en voie de puissance) pèse bien plus qu'une "légère" (voie
      d'endurance), cohérent avec le risque pris à l'obstacle. */
-  injurySeverityMalus: { legere: 4, normale: 8, grave: 12 },
+  /* v3.198.0 (recalibrage Seb, "encore trop facile") : 4/8/12 relevés à 6/10/16. Avec le
+     plafond de blessures ramené à 2 sur la Petite Aventure (template.maxInjuries), le heros
+     ne porte au plus qu'UNE blessure a la fois : le malus doit se sentir sur le jet suivant,
+     pas se diluer sur trois cumuls. Une grave (voie de puissance) coute ~6.4 points de
+     chance, une legere (voie d'endurance) ~2.4. */
+  injurySeverityMalus: { legere: 6, normale: 10, grave: 16 },
 
   obstacles: {
     eboulis: {

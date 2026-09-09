@@ -358,6 +358,41 @@
   margin-bottom: 2px;
 }
 
+/* v3.197.0 (passe de ton) : dialogue d'anciens sous l'objectif d'une étape (buildStoryDialogueHTML,
+   quests-view.js — réutilisé par le bloc « Les braises » du Campement). Liseré or à gauche pour le
+   distinguer de la voix du narrateur ; nom en petites capitales, didascalie en italique. */
+.story-dialogue {
+  margin: 4px 0 12px 0;
+  padding: 6px 0 2px 10px;
+  border-left: 2px solid var(--nb-gold);
+}
+
+.story-dialogue-line {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--nb-ink);
+  margin-bottom: 5px;
+}
+
+.story-dialogue-who {
+  font-weight: 700;
+  font-variant: small-caps;
+  letter-spacing: .02em;
+  color: var(--nb-gold-dark);
+  margin-right: 6px;
+}
+
+.story-dialogue-who::after {
+  content: "—";
+  margin-left: 6px;
+  color: var(--nb-ink-dim);
+}
+
+.story-dialogue-aside {
+  font-style: italic;
+  color: var(--nb-ink-dim);
+}
+
 .story-step-unlock {
   font-size: 12px;
   font-weight: 700;

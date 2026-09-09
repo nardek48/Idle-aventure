@@ -638,6 +638,28 @@ function buildStoryClaimedStepHTML(chapterId, step, index) {
   return h;
 }
 
+/* v3.197.0 (passe de ton, bible B §2.1/§4.7) : rendu d'un dialogue d'anciens attaché à une étape
+   d'histoire (step.narrative.dialogue, facultatif — tableau de { who, text }). who = nom de
+   l'ancien ; who null = didascalie du narrateur (ex. « Aldric ne dit rien. »). Partagé entre
+   l'étape courante (ci-dessous) et le bloc « Les braises » du Campement (camp-view.js). Les
+   étapes sans dialogue ne changent pas. */
+function buildStoryDialogueHTML(step) {
+  var lines = step && step.narrative && step.narrative.dialogue;
+  if (!lines || !lines.length) return "";
+  var h = '<div class="story-dialogue">';
+  lines.forEach(function (line) {
+    if (!line) return;
+    if (line.who) {
+      h += '<div class="story-dialogue-line"><span class="story-dialogue-who">' + esc(line.who) + '</span><span class="story-dialogue-text">' + esc(line.text || "") + '</span></div>';
+    } else {
+      h += '<div class="story-dialogue-line story-dialogue-aside">' + esc(line.text || "") + '</div>';
+    }
+  });
+  h += '</div>';
+  return h;
+}
+window.buildStoryDialogueHTML = buildStoryDialogueHTML;
+
 function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
   var accepted = StoryQuestManager.isCurrentStepAccepted(chapterId);
   var ready = StoryQuestManager.isCurrentStepReady(chapterId);
@@ -647,6 +669,7 @@ function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
   if (step.act) h += '<div class="story-step-act">' + esc(step.act) + '</div>';
   h += '<div class="story-step-row"><span class="story-step-num">' + (index + 1) + '/' + chapter.steps.length + '</span><span class="story-step-title">' + esc(step.title) + '</span><span class="quest-badge quest-badge-main">Principale</span></div>';
   h += '<div class="story-step-text">' + esc(step.narrative.objective) + '</div>';
+  if (accepted) h += buildStoryDialogueHTML(step); // v3.197.0 : dialogue une fois l'étape acceptée
 
   h += '<div class="map-quest-step">';
   h += '<div class="map-quest-step-row"><span class="map-quest-step-desc">' + (ready ? "✔ " : "") + esc(step.objectiveLabel || "") + '</span></div>';

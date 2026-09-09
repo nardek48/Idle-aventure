@@ -42,6 +42,9 @@
    l'option "power" indisponible pour la plupart des gabarits, breathCost 3). */
 .scene-status-breath { color: #3f7d42; }
 .scene-status-breath.is-low { color: var(--danger); }
+/* v3.196.0 : pastille mutateur — teinte violette pour se distinguer des autres pastilles
+   (loot=or, blessure=rouge, souffle=vert), cohérent avec un effet "à part" sur le run. */
+.scene-status-mutator { color: #6a4e9e; }
 
 /* ---------- Barre de progression segmentée (une pastille par profondeur) ---------- */
 /* v3.139.0 (horizon de visibilité) : les segments dans l'horizon (is-upcoming) affichent
@@ -348,6 +351,38 @@ button.scene-path-node:active .scene-path-node-circle {
   flex-wrap: wrap;
   justify-content: center;
   margin-top: 14px;
+}
+
+/* ---------- Annonce du mutateur de run (v3.196.0) ---------- */
+.scene-mutator-announce {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 24px 16px;
+  background: var(--nb-cream-alt);
+  border: 2px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  margin: 12px 0;
+}
+
+.scene-mutator-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.scene-mutator-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--nb-ink);
+}
+
+.scene-mutator-desc {
+  font-size: 13px;
+  color: var(--nb-ink-dim);
+  line-height: 1.4;
+  max-width: 320px;
 }
 
 /* ---------- Journal de run ---------- */

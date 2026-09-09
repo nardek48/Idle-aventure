@@ -129,6 +129,8 @@ function buildCampHTML() {
     h += '<div class="camp-card camp-embers-card">';
     h += '<div class="camp-section-title">🔥 Les braises</div>';
     h += '<div class="camp-embers-desc">' + esc(offering.step.narrative.objective) + '</div>';
+    // v3.197.0 (passe de ton) : les anciens parlent avant l'offrande (buildStoryDialogueHTML, quests-view.js).
+    if (typeof buildStoryDialogueHTML === "function") h += buildStoryDialogueHTML(offering.step);
     h += '<div class="camp-embers-list">';
     offering.items.forEach(function (it) {
       var okItem = it.have >= it.need;

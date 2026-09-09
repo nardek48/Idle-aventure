@@ -23,7 +23,7 @@ var WORLDS = [
       {
         id: "forest_1",
         name: "Lisière de la forêt",
-        introText: "L'air est frais et plein de mystères...",
+        introText: "L'air est frais. Ce qui rôde à la Lisière ne dort jamais.", // v3.197.0 (bible B §4.1)
         // v3.107.4 : pool de base réduit aux 3 ennemis génériques (décision Seb — tutoriel, pas de
         // surcharge). Loup, Troll, Ronce restent dans ENEMY_DB mais ne sortent plus du farm libre :
         // ils n'apparaissent que via enemyFilter sur leur quête dédiée (hq_wolf_pack pour le Loup).
@@ -34,7 +34,7 @@ var WORLDS = [
       {
         id: "forest_2",
         name: "Cœur de la forêt",
-        introText: "Les arbres semblent chuchoter votre nom...",
+        introText: "Ici, la forêt ne chuchote plus : elle observe.", // v3.197.0 (bible B §4.1)
         enemyPool: ["slime", "goblin", "spider"], // v3.107.4 : voir note Lisière ci-dessus, même logique
         enemyCount: 10,
         boss: "orcwarlord" // v3.104.0 (P5) : nouveau boss du Cœur (le Roi Slime reste le boss de Lisière, forest_1)
@@ -52,7 +52,7 @@ var WORLDS = [
       {
         id: "desert_1",
         name: "Dunes brûlantes",
-        introText: "Le soleil écrase les dunes et le vent charrie des menaces invisibles...",
+        introText: "Le sable prend tout, et rend tard. Ce qui vit ici a le temps.", // v3.197.0 (bible B §4.1)
         enemyPool: ["scarab", "scorpion", "sandworm", "sandwarrior"],
         enemyCount: 10,
         boss: "djinn"
@@ -60,7 +60,7 @@ var WORLDS = [
       {
         id: "desert_2",
         name: "Temple ensablé",
-        introText: "Sous les sables repose un sanctuaire oublié où souffle une magie ancienne...",
+        introText: "Sous le sable, des pierres taillées avant tout le reste. Elles n'ont pas fini d'attendre.", // v3.197.0 (bible B §4.1)
         enemyPool: ["sandwarrior", "sandworm", "scorpion", "scarab"],
         enemyCount: 10,
         boss: "djinn"
@@ -78,7 +78,7 @@ var WORLDS = [
       {
         id: "ruins_1",
         name: "Couloirs effondrés",
-        introText: "La poussière du temps recouvre chaque pierre...",
+        introText: "Un royaume est mort ici. Les pierres n'ont pas fini de tomber.", // v3.197.0
         enemyPool: ["skeleton", "ghoul", "gargoyle", "zombie"],
         enemyCount: 10,
         boss: "skeletonlord"
@@ -86,7 +86,7 @@ var WORLDS = [
       {
         id: "ruins_2",
         name: "Sanctuaire enseveli",
-        introText: "Des inscriptions oubliées gravent les murs...",
+        introText: "Les murs ont été écrits. Quelqu'un les relit encore.", // v3.197.0
         enemyPool: ["gargoyle", "zombie", "skeleton", "ghoul"],
         enemyCount: 10,
         boss: "skeletonlord"
@@ -104,7 +104,7 @@ var WORLDS = [
       {
         id: "crypt_1",
         name: "Sépulcres silencieux",
-        introText: "Un froid glacial s'infiltre dans vos os...",
+        introText: "Le froid entre. Il ne ressort pas.", // v3.197.0
         enemyPool: ["spectre", "wraith", "necromancer", "deadknight"],
         enemyCount: 10,
         boss: "necrosupreme"
@@ -112,7 +112,7 @@ var WORLDS = [
       {
         id: "crypt_2",
         name: "Chambre funéraire",
-        introText: "Les morts refusent de reposer en paix...",
+        introText: "Ici, on ne repose pas. On attend.", // v3.197.0
         enemyPool: ["deadknight", "necromancer", "wraith", "spectre"],
         enemyCount: 10,
         boss: "necrosupreme"
@@ -130,7 +130,7 @@ var WORLDS = [
       {
         id: "mountain_1",
         name: "Pentes de cendres",
-        introText: "La chaleur devient presque insupportable...",
+        introText: "La roche est chaude sous la main. Elle l'était déjà avant le feu.", // v3.197.0
         enemyPool: ["lavagolem", "dragonling", "minordemon", "ifrit"],
         enemyCount: 10,
         boss: "ancientdragon"
@@ -138,7 +138,7 @@ var WORLDS = [
       {
         id: "mountain_2",
         name: "Antre du volcan",
-        introText: "La lave illumine des silhouettes menaçantes...",
+        introText: "La lave éclaire. Ce qu'elle éclaire est plus grand qu'il ne devrait.", // v3.197.0
         enemyPool: ["ifrit", "minordemon", "dragonling", "lavagolem"],
         enemyCount: 10,
         boss: "ancientdragon"
@@ -156,7 +156,7 @@ var WORLDS = [
       {
         id: "tower_1",
         name: "Sommet arcanique",
-        introText: "La magie crépite dans l'air autour de vous...",
+        introText: "L'air a le goût de la nuit où le ciel s'est fendu.", // v3.197.0
         enemyPool: ["arcanegolem", "corruptmage", "hybrid", "guardian"],
         enemyCount: 10,
         boss: "archmage"
@@ -164,7 +164,7 @@ var WORLDS = [
       {
         id: "tower_2",
         name: "Sanctuaire interdit",
-        introText: "Le pouvoir ultime est presque à portée de main...",
+        introText: "Le sommet. Ce n'est pas une fin.", // v3.197.0
         enemyPool: ["guardian", "hybrid", "corruptmage", "arcanegolem"],
         enemyCount: 10,
         boss: "archmage"
@@ -173,12 +173,14 @@ var WORLDS = [
   }
 ];
 
+/* v3.197.0 (passe de ton, bible B §4.2) : narrateur — une chose perçue, au présent, sans
+   vouvoiement ni points de suspension. */
 var AMBIANCE_TEXTS = [
-  "Un bruit étrange résonne au loin...",
-  "Vous sentez une présence magique...",
-  "Les ombres dansent autour de vous...",
-  "Une brise porte l'odeur du danger...",
-  "Le sol vibre sous vos pieds...",
-  "Des runes brillent faiblement sur les murs...",
-  "Vous entendez un murmure incompréhensible..."
+  "Un craquement, loin. Puis rien.",
+  "L'air a un goût de sève.",
+  "Les ombres bougent avant toi.",
+  "Le vent tourne. Il vient de derrière.",
+  "Le sol a tremblé une fois.",
+  "Sur la pierre, des traits qui luisent quand tu ne regardes pas.",
+  "Quelqu'un parle, trop bas pour les mots."
 ];

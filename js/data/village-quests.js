@@ -25,7 +25,7 @@ var VILLAGE_QUESTS = [
     category: "side",
     narrative: {
       objective: "Le Clos d'Aeswyn nourrit à peine trois familles. Juste à côté, le Champ Béni attend sous les ronces — du bois pour les clôtures, de la pierre pour le muret, et la terre sera à nous.",
-      completion: "Deux parcelles, deux récoltes. Le blé ne manquera plus les soirs de disette — et il reste sept terres à reprendre."
+      completion: "Deux parcelles, deux récoltes. Wenna a compté les sillons deux fois. Le blé ne manquera plus les soirs de disette — et il reste sept terres à reprendre." // v3.197.0 (bible B §2.1)
     },
     objectiveLabel: "Débloquer une 2e parcelle du Champs",
     check: function () {
@@ -130,7 +130,7 @@ var VILLAGE_QUESTS = [
     category: "side",
     narrative: {
       objective: "Le blé s'entasse mais il ne se mange pas cru. Le Moulin du Champs attend sa première meule — porte-lui cinq gerbes, et rapporte de la farine.",
-      completion: "La meule a tourné. Une farine grossière, mais Aeswyn n'en demandait pas plus pour rêver de pain."
+      completion: "La meule a tourné. Une farine grossière. Aldric dit que c'est la seule chose ici qui n'a pas changé — cinq gerbes, une farine." // v3.197.0 (bible B §2.1)
     },
     objectiveLabel: "Fabriquer 1 Farine au Moulin",
     check: function () {
@@ -161,7 +161,7 @@ var VILLAGE_QUESTS = [
     category: "side",
     narrative: {
       objective: "Farine du Moulin, eau du Puits : la Boulangerie a tout ce qu'il faut pour rallumer son four. Le premier pain d'Aeswyn depuis l'incendie — les anciens en parleront longtemps.",
-      completion: "L'odeur a traversé tout le village. Un seul pain, et déjà on fait la file devant la Boulangerie."
+      completion: "L'odeur a traversé tout le village. Un seul pain, et déjà on fait la file devant la Boulangerie. Orwen en a pris un morceau et l'a mis de côté, sans dire pour qui." // v3.197.0 (bible B) : graine — le pain pour la braise
     },
     objectiveLabel: "Fabriquer 1 Pain à la Boulangerie",
     check: function () {
@@ -197,7 +197,7 @@ var VILLAGE_QUESTS = [
     },
     narrative: {
       objective: "Nourrir le village ne suffit pas : il faut l'outiller. La Scierie fine débite des planches, la Fonderie coule des lingots — fabrique un de chaque, et Aeswyn pourra bâtir.",
-      completion: "Une planche et un lingot : rien de spectaculaire, mais tout ce qui s'améliorera à Aeswyn passera par eux."
+      completion: "Une planche et un lingot. Brannoc les a soupesés longtemps, comme s'il comptait autre chose que le poids. Tout ce qui s'améliorera à Aeswyn passera par eux." // v3.197.0 (bible B §2.1)
     },
     objectiveLabel: "Fabriquer 1 Planche (Scierie fine) et 1 Lingot (Fonderie)",
     check: function () {
