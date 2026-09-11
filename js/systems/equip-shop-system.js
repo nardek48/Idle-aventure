@@ -2,6 +2,8 @@
 /* systems/equip-shop-system.js — échoppe d'équipement (Boutique) : 6 objets aléatoires, rachetables une fois chacun, stock renouvelé/6h.
    Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
+/* Taille de base de la vitrine. v3.216.0 : la Halle marchande l'augmente
+   (voir EquipShopManager.getShopSize) — la constante reste le socle. */
 var EQUIP_SHOP_SIZE = 6;
 var EQUIP_SHOP_REFRESH_MS = 6 * 3600 * 1000;
 
@@ -55,9 +57,33 @@ var EquipShopManager = {
     return Math.floor(base * getEquipShopWorldPriceMult());
   },
 
+  /* v3.216.0 (lot V-5) — LA HALLE AGRANDIT L'ÉCHOPPE, elle ne la déplace pas.
+     Un emplacement de plus tous les deux niveaux, soit 6 → 11 au niveau 10.
+     Le paramètre `level` sert à la fiche du bâtiment, qui veut annoncer l'effet
+     du PROCHAIN niveau avant de le payer. */
+  getShopSize: function (level) {
+    var lvl = (typeof level === "number")
+      ? level
+      : ((window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function")
+          ? VillageBuildingManager.getLevel("hall") : 0);
+    return EQUIP_SHOP_SIZE + Math.floor(Math.max(0, lvl) / 2);
+  },
+
+  /* Remise sur le renouvellement manuel : -5 % par niveau, composés. Elle ne
+     touche PAS le prix des objets — indexer les prix sur le monde reste la
+     règle de la v3.114.0, et une remise dessus casserait cet équilibrage. */
+  getRefreshDiscount: function (level) {
+    var lvl = (typeof level === "number")
+      ? level
+      : ((window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function")
+          ? VillageBuildingManager.getLevel("hall") : 0);
+    return Math.pow(0.95, Math.max(0, lvl));
+  },
+
   generateStock: function () {
     var stock = [];
-    for (var i = 0; i < EQUIP_SHOP_SIZE; i++) {
+    var size = this.getShopSize();
+    for (var i = 0; i < size; i++) {
       var item = window.LootSystem && typeof LootSystem.rollDrop === "function"
         ? LootSystem.rollDrop()
         : null;
@@ -101,6 +127,20 @@ var EquipShopManager = {
     }
     if (this.hasOutOfTierStock()) {
       game.equipShopStock = this.generateStock();
+      return;
+    }
+
+    /* v3.216.0 : la Halle vient de monter d'un niveau → la vitrine a gagné un
+       emplacement. On COMPLÈTE le stock au lieu de le régénérer : sinon
+       améliorer la Halle effacerait les objets que le joueur gardait en vue,
+       ce qui serait une punition déguisée. */
+    var size = this.getShopSize();
+    while (game.equipShopStock.length < size) {
+      var extra = window.LootSystem && typeof LootSystem.rollDrop === "function" ? LootSystem.rollDrop() : null;
+      if (!extra) break;
+      extra.price = this.getPrice(extra);
+      extra.bought = false;
+      game.equipShopStock.push(extra);
     }
   },
 
@@ -108,7 +148,8 @@ var EquipShopManager = {
     this.ensure();
     var count = Number(game.equipShopManualRefreshCount || 0);
     // v3.114.0 : base indexée sur le monde max atteint, même logique que getPrice().
-    return Math.floor(EQUIP_SHOP_MANUAL_REFRESH_BASE_COST * getEquipShopWorldPriceMult() * Math.pow(EQUIP_SHOP_MANUAL_REFRESH_MULT, count));
+    return Math.floor(EQUIP_SHOP_MANUAL_REFRESH_BASE_COST * getEquipShopWorldPriceMult()
+      * Math.pow(EQUIP_SHOP_MANUAL_REFRESH_MULT, count) * this.getRefreshDiscount());
   },
 
   manualRefresh: function () {

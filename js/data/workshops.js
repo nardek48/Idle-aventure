@@ -85,8 +85,17 @@ var WORKSHOPS_CONFIG = {
       { id: "planche", inputs: [{ resourceId: "bois", quantity: 5 }], outputs: [{ resourceId: "planche", quantity: 1 }], craftTimeMs: 3000 }
     ]
   },
+  /* v3.214.0 (lot V-3) : premier atelier de tier 2 activé. Il ne fabrique pas
+     une ressource de plus à vendre : il transforme le matériau rare d'un monde
+     (Sève d'Aeswyn, Petites Aventures et élites) en matériau de construction.
+     C'est ce qui donne enfin une raison d'exister aux ateliers restés inactifs
+     depuis la v3.98.0 — un par monde, activé avec son matériau. */
   menuiserie: {
-    buildingId: "sawmill", name: "Menuiserie", icon: "🧰", active: false
+    buildingId: "sawmill", name: "Menuiserie", icon: "🧰", active: true,
+    upgradeCostBase: { planche: 4, lingot: 3 },
+    recipes: [
+      { id: "resine_durcie", inputs: [{ resourceId: "seve_aeswyn", quantity: 2 }, { resourceId: "planche", quantity: 3 }], outputs: [{ resourceId: "resine_durcie", quantity: 1 }], craftTimeMs: 9000 }
+    ]
   },
 
   // ===== Mine =====
@@ -113,8 +122,15 @@ var WORKSHOPS_CONFIG = {
   reservoir: {
     buildingId: "well", name: "Réservoir", icon: "🏺", active: false
   },
+  /* v3.215.0 (lot V-4) : deuxième atelier de tier 2 activé. Le Réservoir reste
+     volontairement inactif — lui inventer une recette pour faire nombre
+     n'apporterait rien ; il attendra d'avoir une vraie raison d'exister. */
   station_purification: {
-    buildingId: "well", name: "Station de purification", icon: "✨", active: false
+    buildingId: "well", name: "Station de purification", icon: "✨", active: true,
+    upgradeCostBase: { planche: 3, lingot: 2 },
+    recipes: [
+      { id: "eau_purifiee", inputs: [{ resourceId: "eau", quantity: 4 }], outputs: [{ resourceId: "eau_purifiee", quantity: 1 }], craftTimeMs: 4000 }
+    ]
   }
 };
 

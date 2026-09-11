@@ -120,7 +120,13 @@ function buildWarehouseDetailPanelHTML() {
   h += '<div class="eq-detail-icon rframe rframe-neutral">' + renderIconOrEmojiHTML(def.icon, "eq-detail-icon-img", def.name) + '</div>';
   h += '<div class="eq-detail-name">' + esc(def.name) + '</div>';
   h += '<div class="eq-detail-hint">' + esc(def.desc || "") + '</div>';
-  h += '<div class="eq-detail-hint">🎒 Stock : ' + formatNumber(stock) + '</div>';
+  /* v3.218.0 : le plafond s'affiche pour les ressources qui en ont un — sinon
+     le joueur ne voit jamais ce que lui rapporte l'Entrepôt agrandi, et il ne
+     comprend pas pourquoi un atelier s'arrête. */
+  var capDetail = WarehouseManager.getCap(selectedWarehouseKey);
+  h += '<div class="eq-detail-hint">🎒 Stock : ' + formatNumber(stock)
+     + (capDetail === Infinity ? '' : ' / ' + formatNumber(capDetail))
+     + (capDetail !== Infinity && stock >= capDetail ? ' — plein' : '') + '</div>';
 
   h += buildWarehouseReserveHTML(selectedWarehouseKey);
 
@@ -196,11 +202,10 @@ function buildWarehouseHTML() {
   h += buildWarehouseDetailPanelHTML();
   h += '</div>';
 
-  if (typeof ConstructionManager !== "undefined") {
-    ConstructionManager.ensure();
-    if (typeof WorkshopUnlockManager !== "undefined") WorkshopUnlockManager.ensure();
-    h += buildConstructionEntryCardHTML();
-  }
+  /* v3.213.0 (lot V-1) : la carte d'entrée de l'Atelier de Construction a
+     quitté l'Entrepôt pour la grille du Village — sa vraie adresse. Le
+     builder buildConstructionEntryCardHTML() est conservé plus bas, inerte,
+     le temps d'une version : rien ne l'appelle. */
 
   return h;
 }

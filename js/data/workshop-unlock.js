@@ -1,5 +1,11 @@
 "use strict";
 /* data/workshop-unlock.js — chaîne de 4 étapes linéaire, tutoriel + gate d'accès à l'Atelier de Construction uniquement.
+   v3.213.0 (lot V-1) : la chaîne devient la PORTE D'ENTRÉE DU VILLAGE. Elle enseigne la
+   boucle du village — matière brute → matériau travaillé → chantier — et sa dernière
+   étape est le premier chantier à durée réelle du jeu. Deux corrections de texte au
+   passage : les planches se fabriquent à la Scierie fine (atelier de la Scierie), plus à
+   l'Entrepôt comme le disait l'étape 2 depuis l'arrivée des ateliers ; et l'Atelier se
+   construit désormais depuis la grille du Village, plus depuis l'Entrepôt.
    Logique : systems/workshop-unlock-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var WORKSHOP_UNLOCK_STEPS = [
@@ -21,7 +27,7 @@ var WORKSHOP_UNLOCK_STEPS = [
     id: "craft_planks",
     label: "Fabriquer 5 Planches",
     narrative: {
-      objective: "Le bois brut ne suffit pas : il faut le tailler. Rends-toi à l'Entrepôt pour le transformer en planches.",
+      objective: "Le bois brut ne suffit pas : il faut le tailler. Va à la Scierie fine, l'atelier de ta Scierie, pour transformer ton bois en planches.",
       completion: "Les premières planches sont prêtes. Le bruit de la scie a attiré l'attention de quelques curieux du village."
     },
     check: function (game) {
@@ -49,14 +55,17 @@ var WORKSHOP_UNLOCK_STEPS = [
     id: "build_workshop",
     label: "Construire l'Atelier de Construction (niveau 1)",
     narrative: {
-      objective: "Planches et pierre attendent d'être assemblées. C'est le moment de bâtir le premier édifice du village : l'Atelier.",
-      completion: "L'Atelier se dresse enfin. Le village vient de faire son premier vrai pas vers quelque chose de plus grand."
+      objective: "Planches et pierre attendent d'être assemblées. Ouvre le Village et lance le chantier : bâtir prend du temps, mais l'Atelier sera le premier vrai édifice d'Aeswyn.",
+      completion: "L'Atelier se dresse enfin. Le village vient de faire son premier vrai pas vers quelque chose de plus grand — et chaque chantier suivant partira d'ici."
     },
+    /* v3.213.0 : le niveau est lu sur le socle du village. L'étape se valide
+       à la FIN du chantier (VillageBuildingManager._finishSite appelle
+       checkCurrentStep), pas à son lancement. */
     check: function (game) {
-      return window.ConstructionManager && ConstructionManager.getLevel("workshop") >= 1;
+      return window.VillageBuildingManager && VillageBuildingManager.getLevel("workshop") >= 1;
     },
     progress: function (game) {
-      var level = window.ConstructionManager ? ConstructionManager.getLevel("workshop") : 0;
+      var level = window.VillageBuildingManager ? VillageBuildingManager.getLevel("workshop") : 0;
       return Math.min(1, level) + "/1";
     }
   }

@@ -1,5 +1,6 @@
 "use strict";
 /* systems/warehouse-system.js — Entrepôt : SEUL point d'écriture sur game.resources (addResource/removeResource/sellResource).
+   v3.218.0 : et SEUL point de vérité du plafond, via getCap() — relevé par le bâtiment « Entrepôt agrandi ».
    v3.98.0 : le craft n'est plus géré ici — remplacé par des ateliers locaux par bâtiment
    (voir WorkshopsSystem, systems/workshops-system.js). game.craftQueue reste initialisé
    ci-dessous en tableau vide pour rester compatible avec save-system.js (fichier protégé,
@@ -21,6 +22,26 @@ var WarehouseManager = {
     return Number((game.resources || {})[key] || 0);
   },
 
+  /* v3.218.0 (lot V-7) — PLAFOND CENTRALISÉ.
+     Le plafond d'une ressource fabriquée (999 par défaut) est relevé par le
+     bâtiment « Entrepôt agrandi » du Village. Tous les appelants passent par
+     ici : addResource ci-dessous, le calcul de lots des ateliers
+     (workshops-system.js) et l'affichage (warehouse-view.js). Sans ce point
+     unique, un atelier pourrait fabriquer vers un plafond que l'Entrepôt
+     refuserait ensuite, et le lot serait perdu.
+
+     Les ressources sans `cap` (matières brutes) restent illimitées : le
+     bâtiment ne leur apporte rien et ne doit pas leur en inventer un. */
+  getCap: function (key) {
+    var def = (typeof WAREHOUSE_RESOURCES !== "undefined") ? WAREHOUSE_RESOURCES[key] : null;
+    if (!def || typeof def.cap !== "number") return Infinity;
+
+    var bonus = (window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function")
+      ? VillageBuildingManager.getLevel("warehouse") * WAREHOUSE_CAP_PER_LEVEL
+      : 0;
+    return def.cap + bonus;
+  },
+
   addResource: function (key, amount, silent) {
     this.ensure();
     amount = Math.floor(Number(amount || 0));
@@ -29,7 +50,7 @@ var WarehouseManager = {
 
     var def = WAREHOUSE_RESOURCES[key];
     var current = Number(game.resources[key] || 0);
-    var cap = typeof def.cap === "number" ? def.cap : Infinity;
+    var cap = this.getCap(key);
     var applied = Math.max(0, Math.min(amount, cap - current));
     if (applied <= 0) return 0;
 

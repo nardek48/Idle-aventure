@@ -93,6 +93,14 @@ Deux responsabilités ici :
    RÈGLE : tout nouveau bloc posant background: var(--nb-cream*) et rendu
    dans un .kframe doit être ajouté à cette liste. Une assertion [ENCRE] du
    harnais la vérifie désormais pour les écrans du chantier. */
+/* v3.213.0 (lot V-1) : conteneurs à fond crème de la grille du Village.
+   La fiche .vb-sheet-card vit HORS du cadre et déclare la même restauration
+   dans css/04-panel-village.css — les deux sont nécessaires. */
+.kframe .potion-craft-row,
+.kframe .equip-shop-hall-note,
+.kframe .vb-site-banner,
+.kframe .vb-chain-banner,
+.kframe .vb-card,
 .kframe .pc-stat-card,
 .kframe .pc-skill-card,
 .kframe .pc-stat-gold,

@@ -80,6 +80,18 @@ function init() {
     EquipmentManager.recalcStats();
   }
 
+  // v3.213.0 (lot V-1) : socle du Village. L'ordre compte — ensure() puis
+  // migration depuis game.construction (Atelier déjà construit avant cette
+  // version), puis tick() qui solde un chantier arrivé à terme pendant
+  // l'absence. Le tout AVANT WorkshopUnlockManager, dont la chaîne lit le
+  // niveau d'Atelier pour sa validation rétroactive.
+  if (window.VillageBuildingManager) {
+    VillageBuildingManager.ensure();
+    VillageBuildingManager.migrateFromConstruction();
+    VillageBuildingManager.migrateTraining();
+    VillageBuildingManager.tick();
+  }
+
   if (window.WorkshopUnlockManager) {
     if (typeof WorkshopUnlockManager.ensure === "function") WorkshopUnlockManager.ensure();
     if (typeof WorkshopUnlockManager.runRetroactiveCheck === "function") WorkshopUnlockManager.runRetroactiveCheck();

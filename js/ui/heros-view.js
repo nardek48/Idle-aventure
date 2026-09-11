@@ -492,8 +492,15 @@ function buildHeroStatCardHTML(row, buyAmount) {
   if (!upgrade) return "";
 
   var level = Number((game.upgrades && game.upgrades[row.upgradeId]) || 0);
-  var maxLevel = Number(upgrade.maxLevel || 0);
-  var capped = maxLevel > 0 && level >= maxLevel;
+  var hardMax = Number(upgrade.maxLevel || 0);
+  /* v3.213.1 (lot V-2) : la barre et le plafond affichés suivent le TERRAIN
+     D'ENTRAÎNEMENT, plus le maximum absolu d'upgrades.js. Deux murs
+     différents, deux messages différents : « Plafond » quand il ne reste
+     qu'à bâtir, « Maximum » quand il n'y a plus rien après. */
+  var cap = (typeof getUpgradeCap === "function") ? Number(getUpgradeCap(upgrade)) : hardMax;
+  var maxLevel = cap;
+  var atHardMax = hardMax > 0 && level >= hardMax;
+  var capped = cap > 0 && level >= cap;
   var locked = (WorldManager.worldIndex || 0) < (upgrade.unlockWorld || 0);
   var open = expandedHeroStat === row.key;
 
@@ -521,8 +528,12 @@ function buildHeroStatCardHTML(row, buyAmount) {
   h += '<span class="pc-stat-card-chev">›</span>';
   h += '</button>';
 
-  if (capped) {
-    h += '<div class="pc-stat-card-buy is-capped">Plafond<small>atteint</small></div>';
+  if (atHardMax) {
+    h += '<div class="pc-stat-card-buy is-capped">Maximum<small>atteint</small></div>';
+  } else if (capped) {
+    /* Le mur pointe vers sa solution : un clic ouvre le Village, là où se
+       bâtit le Terrain. */
+    h += '<button type="button" class="pc-stat-card-buy is-training-wall" onclick="goToTrainingGround()">Terrain<small>à améliorer</small></button>';
   } else if (locked) {
     h += '<div class="pc-stat-card-buy is-locked">Monde<small>' + ((upgrade.unlockWorld || 0) + 1) + '</small></div>';
   } else if (gain) {

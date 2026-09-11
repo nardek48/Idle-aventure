@@ -246,6 +246,46 @@ function getUpgradeCost(upgrade, atLevel) {
   return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, level));
 }
 
+/* v3.213.1 (lot V-2) — PLAFOND D'ENTRAÎNEMENT porté par le Terrain.
+   Les cinq entraînements (HEROS_TRAINING_UPGRADE_IDS, achetés dans
+   Personnage → Stats depuis la v3.203.0) ne montent plus jusqu'à
+   upgrade.maxLevel d'un bloc : le bâtiment « Terrain d'entraînement » ouvre
+   10 niveaux par niveau de bâtiment. Sans Terrain, le plafond est de 10 —
+   l'entraînement de fortune du campement.
+
+   Deux garde-fous :
+   - le plafond ne descend JAMAIS en dessous du niveau déjà acquis. Une
+     partie d'avant cette version garde tout ce qu'elle a payé, même si le
+     Terrain migré ouvre moins (voir VillageBuildingManager.migrateTraining).
+   - il ne dépasse jamais upgrade.maxLevel (150) : le plafond historique
+     reste le dernier mot.
+
+   Les autres améliorations (bourses, contrats) ne sont pas concernées. */
+function getTrainingCapLevels() {
+  var level = (window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function")
+    ? VillageBuildingManager.getLevel("training")
+    : 0;
+  return 10 * (level + 1);
+}
+
+function isTrainingUpgradeId(id) {
+  var ids = window.HEROS_TRAINING_UPGRADE_IDS
+    || ["utrain_power", "utrain_endurance", "utrain_celerity", "utrain_precision", "utrain_will"];
+  return ids.indexOf(id) !== -1;
+}
+
+function getUpgradeCap(upgrade) {
+  if (!upgrade) return Infinity;
+  var hardMax = upgrade.maxLevel || Infinity;
+  if (!isTrainingUpgradeId(upgrade.id)) return hardMax;
+
+  var owned = Number((game.upgrades && game.upgrades[upgrade.id]) || 0);
+  return Math.min(hardMax, Math.max(getTrainingCapLevels(), owned));
+}
+window.getTrainingCapLevels = getTrainingCapLevels;
+window.isTrainingUpgradeId = isTrainingUpgradeId;
+window.getUpgradeCap = getUpgradeCap;
+
 function buyUpgrade(id, amount) {
   var upgrade = (UPGRADES || []).find(function (u) { return u.id === id; });
   if (!upgrade) return showToast("Amélioration introuvable", 1000);
@@ -260,10 +300,11 @@ function buyUpgrade(id, amount) {
 
   var bought = 0;
   var totalSpent = 0;
+  var cap = getUpgradeCap(upgrade); // v3.213.1 : plafond du Terrain pour les entraînements
 
   while (bought < limit) {
     var level = game.upgrades[id] || 0;
-    if (level >= (upgrade.maxLevel || Infinity)) break;
+    if (level >= cap) break;
 
     var cost = getUpgradeCost(upgrade, level);
     if (game.gold < cost) break;
@@ -278,6 +319,10 @@ function buyUpgrade(id, amount) {
     var currentLevel = game.upgrades[id] || 0;
     if (currentLevel >= (upgrade.maxLevel || Infinity)) {
       return showToast("Niveau maximum", 1200);
+    }
+    if (currentLevel >= cap) {
+      /* Le mur n'est jamais silencieux : on dit QUOI faire, pas juste non. */
+      return showToast("Plafond atteint — améliore le Terrain d'entraînement", 1800);
     }
     return showToast("Pas assez d'or", 1000);
   }
@@ -314,7 +359,7 @@ function getUpgradePurchasePreview(upgrade, amount) {
   var limit = buyMax ? Infinity : Math.max(1, amount);
 
   var currentLevel = game.upgrades[upgrade.id] || 0;
-  var maxLevel = upgrade.maxLevel || Infinity;
+  var maxLevel = getUpgradeCap(upgrade); // v3.213.1 : le simulateur s'arrête au plafond du Terrain
   var simLevel = currentLevel;
   var goldLeft = Number(game.gold || 0);
 

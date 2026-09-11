@@ -6,6 +6,10 @@
    les prix des ressources CRAFTÉES sont inchangés (la transformation reste valorisante).
    Logique : systems/hunt-quest-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
+/* v3.218.0 (lot V-7) : chaque niveau de l'« Entrepôt agrandi » ajoute ceci au
+   plafond de CHAQUE ressource fabriquée. 999 → 3 499 au niveau 10. */
+var WAREHOUSE_CAP_PER_LEVEL = 250;
+
 var WAREHOUSE_RESOURCES = {
   viande: { id: "viande", name: "Viande", icon: "images/Icons/resources/meat_icon.png", desc: "Butin de chasse, obtenu en Forêt ou au bâtiment Chasse.", sellPrice: 2, tier: "raw" },
   viande_sechee: { id: "viande_sechee", name: "Viande séchée", icon: "images/Icons/resources/meat_icon.png", desc: "Séchée au Séchoir (atelier de Chasse) à partir de Viande.", sellPrice: 8, tier: "crafted", cap: 999 },
@@ -14,6 +18,11 @@ var WAREHOUSE_RESOURCES = {
   fer: { id: "fer", name: "Fer", icon: "images/Icons/resources/iron_icon.png", desc: "Extrait à la Mine. Sert aux zones de production et aux lingots de la Fonderie.", sellPrice: 3, tier: "raw" },
   pierre: { id: "pierre", name: "Pierre", icon: "images/Icons/resources/stone_icon.png", desc: "Extraite à la Carrière. Sert aux zones de production, aux sillons irrigués et aux fondations du village.", sellPrice: 1, tier: "raw" },
   eau: { id: "eau", name: "Eau", icon: "images/Icons/resources/water_icon.png", desc: "Puisée au Puits — ressource la moins chère du village.", sellPrice: 1, tier: "raw" },
+  /* v3.215.0 (lot V-4) : intrant unique de l'Apothicaire. Purifiée au Puits,
+     elle donne enfin un débouché à un bâtiment de production qui n'en avait
+     qu'un très faible (l'eau brute ne servait qu'au pain et aux petites
+     rations). Invendable : c'est un intrant, pas un revenu. */
+  eau_purifiee: { id: "eau_purifiee", name: "Eau purifiée", icon: "images/Icons/resources/water_icon.png", desc: "Eau filtrée à la Station de purification (atelier du Puits). Base de toutes les préparations de l'Apothicaire.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se filtre à la Station de purification (Puits)" },
   planche: { id: "planche", name: "Planche", icon: "images/Icons/resources/plank_icon.png", desc: "Fabriquée à partir de Bois.", sellPrice: 7, tier: "crafted", cap: 999 },
   lingot: { id: "lingot", name: "Lingot", icon: "images/Icons/resources/ingot_icon.png", desc: "Fabriqué à partir de Fer.", sellPrice: 10, tier: "crafted", cap: 999 },
   farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.png", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 },
@@ -30,7 +39,13 @@ var WAREHOUSE_RESOURCES = {
   // brutes non plafonnées). v3.137.0 : premier usage de craft (Grande ration) — desc mise à jour.
   // D'autres usages plus marquants (gemmes, enchantement, upgrade d'arme) restent envisagés
   // pour plus tard (décision Seb 04/09/2026, non actée).
-  seve_aeswyn: { id: "seve_aeswyn", name: "Sève d'Aeswyn", icon: "images/Icons/resources/seve_aeswyn_icon.png", desc: "Résine runique rare, trouvée en Petite Aventure. Sert à cuisiner la Grande ration.", sellPrice: 0, tier: "special" }
+  seve_aeswyn: { id: "seve_aeswyn", name: "Sève d'Aeswyn", icon: "images/Icons/resources/seve_aeswyn_icon.png", desc: "Résine runique rare, trouvée en Petite Aventure. Sert à cuisiner la Grande ration et, durcie à la Menuiserie, à bâtir les hauts paliers du village.", sellPrice: 0, tier: "special" },
+  /* v3.214.0 (lot V-3) : matériau de construction de la Forêt. Premier des six
+     matériaux de monde — c'est lui qui porte le plafond de construction, à la
+     place d'un verrou abstrait : un palier qui le demande est de fait
+     injoignable avant d'avoir atteint son monde, et le joueur lit une ligne de
+     coût avec l'endroit où la trouver. Invendable : ce n'est pas un revenu. */
+  resine_durcie: { id: "resine_durcie", name: "Résine durcie", icon: "images/Icons/resources/seve_aeswyn_icon.png", desc: "Sève d'Aeswyn durcie à la Menuiserie. Matériau de construction des hauts paliers du village, en Forêt enchantée.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 0, worldName: "Forêt enchantée", sourceHint: "Sève d'Aeswyn durcie à la Menuiserie (Scierie)" }
 };
 
 var HUNT_QUESTS = {
@@ -89,5 +104,6 @@ var HUNT_QUESTS = {
 var RATION_IDS = ["petite_ration", "ration", "grande_ration"];
 
 window.WAREHOUSE_RESOURCES = WAREHOUSE_RESOURCES;
+window.WAREHOUSE_CAP_PER_LEVEL = WAREHOUSE_CAP_PER_LEVEL;
 window.HUNT_QUESTS = HUNT_QUESTS;
 window.RATION_IDS = RATION_IDS;

@@ -1,122 +1,49 @@
 "use strict";
-/* systems/construction-system.js — ConstructionManager (data/construction.js), indépendant de Production/Village.
-   Consomme l'Entrepôt via WarehouseManager.removeResource() uniquement ; or débité en dur (pattern du projet). Détail : COMMENTAIRES_ORIGINAUX.md */
+/* systems/construction-system.js — v3.213.0 : ALIAS MINCE vers
+   VillageBuildingManager (systems/village-building-system.js).
+
+   Historique : de la v3.37 à la v3.212.0, ce fichier portait le 4e système
+   économique (améliorer l'Atelier de Construction contre or + ressources).
+   Le lot V-1 de la construction du village en a fait le PREMIER CAS d'un
+   socle générique : un bâtiment de village parmi d'autres. Le manager ne
+   contient donc plus de logique, il redirige.
+
+   Pourquoi le garder plutôt que le supprimer : warehouse-system.js,
+   data/workshop-unlock.js et ui/warehouse-view.js appellent encore
+   ConstructionManager.getSellBonus()/getLevel(). Une redirection d'une
+   ligne vaut mieux qu'une chasse aux appels dans une même livraison.
+   Ancien code complet : COMMENTAIRES_ORIGINAUX.md */
 
 var ConstructionManager = {
   ensure: function () {
-    if (!game.construction || typeof game.construction !== "object") game.construction = {};
-    Object.keys(CONSTRUCTION_BUILDINGS).forEach(function (id) {
-      if (!game.construction[id] || typeof game.construction[id] !== "object") {
-        game.construction[id] = { level: 0 };
-      }
-      if (typeof game.construction[id].level !== "number" || game.construction[id].level < 0) {
-        game.construction[id].level = 0;
-      }
-    });
+    VillageBuildingManager.ensure();
   },
 
   getLevel: function (id) {
-    this.ensure();
-    return Number((game.construction[id] || {}).level || 0);
+    return VillageBuildingManager.getLevel(id);
   },
 
   isMaxLevel: function (id) {
-    var def = CONSTRUCTION_BUILDINGS[id];
-    if (!def) return true;
-    return this.getLevel(id) >= def.maxLevel;
+    return VillageBuildingManager.isMaxLevel(id);
   },
 
   getNextCost: function (id) {
-    var def = CONSTRUCTION_BUILDINGS[id];
-    if (!def) return null;
-    if (this.isMaxLevel(id)) return null;
-    return def.costPerLevel(this.getLevel(id));
-  },
-
-  getCurrentBonusMultiplier: function (id) {
-    var def = CONSTRUCTION_BUILDINGS[id];
-    if (!def) return 1;
-    return def.bonusMultiplierAtLevel(this.getLevel(id));
-  },
-
-  getNextBonusMultiplier: function (id) {
-    var def = CONSTRUCTION_BUILDINGS[id];
-    if (!def) return 1;
-    var nextLevel = Math.min(def.maxLevel, this.getLevel(id) + 1);
-    return def.bonusMultiplierAtLevel(nextLevel);
+    return VillageBuildingManager.getNextCost(id);
   },
 
   getAffordability: function (id) {
-    var cost = this.getNextCost(id);
-    if (!cost) return { all: false };
-
-    var result = { gold: Number(game.gold || 0) >= cost.gold };
-    Object.keys(cost).forEach(function (key) {
-      if (key === "gold") return;
-      result[key] = WarehouseManager.getAmount(key) >= cost[key];
-    });
-    result.all = Object.keys(result).every(function (k) { return result[k]; });
-    return result;
+    return VillageBuildingManager.getAffordability(id);
   },
 
-  _buying: false,
-
-  buy: function (id) {
-    var def = CONSTRUCTION_BUILDINGS[id];
-    if (!def) return false;
-    if (this._buying) return false;
-
-    this.ensure();
-
-    if (this.isMaxLevel(id)) {
-      showToast("Niveau maximum", 1200);
-      return false;
-    }
-
-    var cost = this.getNextCost(id);
-    var afford = this.getAffordability(id);
-
-    var missingKey = Object.keys(afford).find(function (key) {
-      return key !== "all" && afford[key] === false;
-    });
-    if (missingKey) {
-      var missingLabel = missingKey === "gold" ? "or" : (WAREHOUSE_RESOURCES[missingKey] ? WAREHOUSE_RESOURCES[missingKey].name : missingKey);
-      showToast("Pas assez de " + missingLabel, 1000);
-      return false;
-    }
-
-    this._buying = true;
-
-    game.gold -= cost.gold;
-    Object.keys(cost).forEach(function (key) {
-      if (key === "gold") return;
-      WarehouseManager.removeResource(key, cost[key]);
-    });
-
-    game.construction[id].level += 1;
-
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldSpent", cost.gold);
-    }
-
-    if (window.WorkshopUnlockManager && typeof WorkshopUnlockManager.checkCurrentStep === "function") {
-      WorkshopUnlockManager.checkCurrentStep();
-    }
-
-    addLog(def.name + " amélioré (niv. " + game.construction[id].level + ")", "event");
-    showToast(def.name + " niv. " + game.construction[id].level, 1200);
-
-    if (typeof renderPanel === "function") renderPanel();
-    if (typeof renderHud === "function") renderHud();
-    saveGame();
-
-    this._buying = false;
-    return true;
+  getCurrentBonusMultiplier: function (id) {
+    if (id !== "workshop") return 1;
+    return VillageBuildingManager.getSellBonus();
   },
 
+  /* Le bonus de vente lu par warehouse-system.js — inchangé depuis la
+     v3.37 (+3 % par niveau), seule la source du niveau a bougé. */
   getSellBonus: function () {
-    if (!CONSTRUCTION_BUILDINGS.workshop) return 1;
-    return this.getCurrentBonusMultiplier("workshop");
+    return VillageBuildingManager.getSellBonus();
   }
 };
 

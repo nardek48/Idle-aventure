@@ -127,8 +127,10 @@ var WorkshopsSystem = {
         }, Infinity);
 
     var maxFromOutputCaps = recipe.outputs.reduce(function (min, output) {
-      var def = WAREHOUSE_RESOURCES[output.resourceId];
-      var cap = def && typeof def.cap === "number" ? def.cap : Infinity;
+      /* v3.218.0 : plafond lu sur WarehouseManager, pas sur la table — sinon un
+         atelier calculerait ses lots avec l'ancien plafond et l'Entrepôt
+         refuserait le surplus à l'arrivée. */
+      var cap = WarehouseManager.getCap(output.resourceId);
       if (cap === Infinity) return min;
       var current = WarehouseManager.getAmount(output.resourceId);
       var remainingRoom = Math.max(0, cap - current);

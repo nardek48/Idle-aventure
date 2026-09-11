@@ -1,0 +1,377 @@
+"use strict";
+/* ui/village-building-view.js — v3.213.0 (lot V-1) : fiche d'un bâtiment du
+   Village, rendue dans #village-modal-root, HORS du cycle renderPanel().
+
+   Pourquoi hors du panneau : #panel-container porte `isolation: isolate`.
+   Un position:fixed rendu à l'intérieur reste enfermé dans son contexte
+   d'empilement et passe sous #tab-bar — augmenter le z-index n'y change
+   rien (piège rencontré en v3.212.0 avec les feuilles du Grimoire).
+
+   Remplace ui/construction-view.js, dont elle est la généralisation :
+   mêmes lignes de coût, même feuille basse, mais pour N bâtiments. */
+
+var openVillageBuildingId = null;
+
+function getVillageCostMeta(key) {
+  if (key === "gold") {
+    return {
+      label: "Or",
+      iconHTML: '<img class="vb-cost-icon" src="images/Icons/gold_icon.png" alt="">'
+    };
+  }
+  var def = WAREHOUSE_RESOURCES[key];
+  if (!def) return { label: key, iconHTML: "" };
+  return {
+    label: def.name,
+    iconHTML: renderIconOrEmojiHTML(def.icon, "vb-cost-icon", def.name)
+  };
+}
+
+/* Icône d'un bâtiment : image si elle existe, emoji sinon. Les visuels du
+   village ne sont pas encore produits — l'emoji tient la place sans bloquer
+   le chantier (décision Seb, 11/09/2026). */
+function buildVillageBuildingIconHTML(def, cssClass) {
+  return renderIconOrEmojiHTML(def.iconImg || def.icon, cssClass, def.name);
+}
+window.buildVillageBuildingIconHTML = buildVillageBuildingIconHTML;
+
+function buildVillageCostListHTML(id) {
+  var cost = VillageBuildingManager.getNextCost(id);
+  if (!cost) return "";
+
+  var afford = VillageBuildingManager.getAffordability(id);
+  var keys = Object.keys(cost).sort(function (a, b) {
+    if (a === "gold") return -1;
+    if (b === "gold") return 1;
+    return 0;
+  });
+
+  var h = '<div class="vb-cost-list">';
+  keys.forEach(function (key) {
+    var meta = getVillageCostMeta(key);
+    var ok = !!afford[key];
+    var have = (key === "gold") ? Number(game.gold || 0) : WarehouseManager.getAmount(key);
+    var unreachable = !ok && isVillageResourceUnreachable(key);
+
+    h += '<div class="vb-cost-row' + (ok ? '' : (unreachable ? ' is-unreachable' : ' is-missing')) + '">';
+    h += meta.iconHTML;
+    h += '<span class="vb-cost-label">' + esc(meta.label) + '</span>';
+    /* On affiche le COÛT ; l'avoir n'apparaît que s'il manque quelque
+       chose, sinon la ligne est du bruit. */
+    h += '<span class="vb-cost-amount">'
+       + (ok ? '' : formatNumber(Math.floor(have)) + ' / ')
+       + formatNumber(cost[key]) + '</span>';
+    /* Une ressource d'un monde pas encore atteint n'est pas « manquante »,
+       elle est introuvable : la loupe et non la croix, et on dit où. */
+    h += '<span class="vb-cost-check">' + (ok ? '✅' : (unreachable ? '🔍' : '❌')) + '</span>';
+    h += '</div>';
+
+    if (!ok) {
+      var hint = getVillageResourceHint(key);
+      if (hint) h += '<div class="vb-cost-where">' + esc(hint) + '</div>';
+    }
+  });
+  h += '</div>';
+  return h;
+}
+
+/* v3.214.0 (lot V-3) — MATÉRIAUX DE MONDE.
+   Un matériau porte l'index du monde où il se trouve. Tant que le joueur n'y a
+   jamais mis les pieds, le palier qui le demande est de fait hors de portée :
+   c'est CE mécanisme qui plafonne la construction, à la place d'un verrou
+   abstrait. worldsEverReached n'est jamais lu comme un verrou, seulement pour
+   formuler la phrase. */
+function isVillageResourceUnreachable(key) {
+  var def = WAREHOUSE_RESOURCES[key];
+  if (!def || typeof def.worldIndex !== "number") return false;
+  if (def.worldIndex <= 0) return false; // monde de départ : toujours atteignable
+  var reached = (game.worldsEverReached && typeof game.worldsEverReached === "object")
+    ? game.worldsEverReached : {};
+  return !reached[def.worldIndex];
+}
+window.isVillageResourceUnreachable = isVillageResourceUnreachable;
+
+/* Où trouver une ressource qui manque. Le mur n'est jamais silencieux : une
+   ligne rouge sans explication laisserait le joueur chercher. */
+function getVillageResourceHint(key) {
+  var def = WAREHOUSE_RESOURCES[key];
+  if (!def) return "";
+  if (isVillageResourceUnreachable(key)) {
+    return def.worldName ? ("Se trouve en " + def.worldName + ".") : "Pas encore accessible.";
+  }
+  return def.sourceHint || "";
+}
+window.getVillageResourceHint = getVillageResourceHint;
+
+function buildVillageBuildingSheetHTML(id) {
+  var def = VILLAGE_BUILDINGS[id];
+  if (!def) return "";
+
+  var level = VillageBuildingManager.getLevel(id);
+  var onSite = VillageBuildingManager.isBuilding(id);
+  var maxed = VillageBuildingManager.isMaxLevel(id);
+
+  var h = '<div class="full-menu-overlay" onclick="closeVillageBuildingSheetFromBackdrop(event)">';
+  h += '<div class="full-menu vb-sheet-card" onclick="event.stopPropagation()">';
+
+  h += '<div class="vb-sheet-head">';
+  h += buildVillageBuildingIconHTML(def, "vb-sheet-icon");
+  h += '<div class="vb-sheet-head-text">';
+  h += '<div class="vb-sheet-title">' + esc(def.name) + '</div>';
+  h += '<div class="vb-sheet-level">' + (level === 0 ? 'Non construit' : 'Niveau ' + level + ' / ' + def.maxLevel) + '</div>';
+  h += '</div></div>';
+
+  h += '<div class="vb-sheet-text">' + esc(def.desc) + '</div>';
+
+  if (level > 0) {
+    h += '<div class="vb-sheet-effect"><strong>Effet actuel :</strong> '
+       + esc(VillageBuildingManager.getEffectLabel(id, level)) + '</div>';
+  }
+
+  /* Le Terrain renvoie vers l'écran où l'on dépense réellement : le bâtiment
+     décide du plafond, Personnage → Stats reste le lieu de l'entraînement
+     (décision Seb, option A). Sans ce renvoi, la fiche annoncerait un plafond
+     sans dire où s'en servir. */
+  if (id === "training" && level > 0) {
+    h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToHeroTraining()">'
+       + '🎯 S\'entraîner dans Personnage → Stats ›</div>';
+  }
+
+  /* L'Apothicaire renvoie vers l'écran où l'on prépare, comme le Terrain
+     renvoie vers l'entraînement : le bâtiment ouvre des recettes, la Boutique
+     reste le lieu où l'on s'en sert. */
+  if (id === "apothecary" && level > 0) {
+    h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToPotions()">'
+       + '🧪 Préparer dans Boutique → Potions ›</div>';
+  }
+
+  /* La Taverne est le seul bâtiment dont la fiche porte du contenu jouable :
+     ses contrats n'ont pas d'écran ailleurs, contrairement à l'entraînement,
+     aux potions ou à l'échoppe. Les envoyer au tableau de missions les
+     mélangerait à des quêtes qui racontent quelque chose. */
+  if (id === "tavern" && level > 0) {
+    h += buildTavernContractsHTML();
+  }
+
+  /* L'Entrepôt agrandi renvoie vers l'Entrepôt lui-même. */
+  if (id === "warehouse" && level > 0) {
+    h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToWarehouse()">'
+       + '📦 Voir l\'Entrepôt ›</div>';
+  }
+
+  /* La Halle renvoie vers l'échoppe qu'elle agrandit — même principe que le
+     Terrain et l'Apothicaire : le bâtiment change les règles, l'écran d'origine
+     reste le lieu où l'on s'en sert. */
+  if (id === "hall" && level > 0) {
+    h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToEquipShop()">'
+       + '🛒 Voir l\'échoppe dans Équipement ›</div>';
+  }
+
+  /* L'Atelier annonce le rang qu'il ouvre : c'est sa vraie fonction. */
+  if (id === "workshop") {
+    var rank = VillageBuildingManager.getRank();
+    h += '<div class="vb-sheet-effect">'
+       + (rank > 0 ? 'Rang ' + rank + ' — chantiers ouverts jusqu\'à ce rang.'
+                   : 'Aucun rang atteint : construis l\'Atelier pour ouvrir les premiers chantiers.')
+       + '</div>';
+  }
+
+  if (onSite) {
+    var left = VillageBuildingManager.getSiteSecondsLeft();
+    var pct = VillageBuildingManager.getSiteProgressPct();
+    h += '<div class="vb-sheet-progress">';
+    h += '<div class="vb-sheet-progress-label" id="vb-sheet-left">Chantier en cours — fin dans ' + esc(formatTime(left)) + '</div>';
+    h += '<div class="kgauge kgauge-thin kgauge-xp"><div class="kgauge-track">'
+       + '<div class="kgauge-fill" id="vb-sheet-bar" style="width:' + pct.toFixed(1) + '%"></div>'
+       + '</div></div>';
+    h += '</div>';
+    h += '<div class="vb-sheet-actions">';
+    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">Fermer</button>';
+    h += '</div>';
+
+  } else if (maxed) {
+    h += '<div class="vb-sheet-actions">';
+    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">Fermer</button>';
+    h += '<button class="settings-btn primary is-maxed" type="button" disabled>Niveau maximum</button>';
+    h += '</div>';
+
+  } else if (!def.implemented) {
+    h += '<div class="vb-sheet-effect">Ce bâtiment arrive dans une prochaine mise à jour.</div>';
+    h += '<div class="vb-sheet-actions">';
+    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">Fermer</button>';
+    h += '</div>';
+
+  } else {
+    var target = level + 1;
+    var reason = VillageBuildingManager.getBlockReason(id);
+
+    h += '<div class="vb-sheet-effect">Niveau ' + target + ' : '
+       + esc(VillageBuildingManager.getEffectLabel(id, target)) + '</div>';
+    h += buildVillageCostListHTML(id);
+    h += '<div class="vb-sheet-timer">⏳ Durée du chantier : '
+       + esc(formatTime(VillageBuildingManager.getNextBuildSeconds(id))) + '</div>';
+
+    h += '<div class="vb-sheet-actions">';
+    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">Fermer</button>';
+    if (reason) {
+      h += '<button class="settings-btn primary is-unaffordable" type="button" disabled>' + esc(reason) + '</button>';
+    } else {
+      h += '<button class="settings-btn primary" type="button" onclick="startVillageBuildFromSheet(\'' + id + '\')">'
+         + (level === 0 ? 'Construire' : 'Améliorer') + '</button>';
+    }
+    h += '</div>';
+  }
+
+  h += '</div></div>';
+  return h;
+}
+
+function openVillageBuildingSheet(id) {
+  var def = VILLAGE_BUILDINGS[id];
+  if (!def) return;
+  VillageBuildingManager.ensure();
+  openVillageBuildingId = id;
+  var host = document.getElementById("village-modal-root");
+  if (host) host.innerHTML = buildVillageBuildingSheetHTML(id);
+}
+window.openVillageBuildingSheet = openVillageBuildingSheet;
+
+function closeVillageBuildingSheet() {
+  openVillageBuildingId = null;
+  var host = document.getElementById("village-modal-root");
+  if (host) host.innerHTML = "";
+}
+window.closeVillageBuildingSheet = closeVillageBuildingSheet;
+
+function closeVillageBuildingSheetFromBackdrop(e) {
+  if (e && e.target && e.target.classList && e.target.classList.contains("full-menu-overlay")) {
+    closeVillageBuildingSheet();
+  }
+}
+window.closeVillageBuildingSheetFromBackdrop = closeVillageBuildingSheetFromBackdrop;
+
+function startVillageBuildFromSheet(id) {
+  if (VillageBuildingManager.startBuild(id) && openVillageBuildingId === id) {
+    openVillageBuildingSheet(id);
+  }
+}
+window.startVillageBuildFromSheet = startVillageBuildFromSheet;
+
+/* Rafraîchissement léger du chantier : on ne re-rend PAS la fiche ni la
+   grille à chaque seconde (le panneau clignoterait et le scroll sauterait).
+   Seules la barre et l'étiquette de temps bougent. Appelé par la boucle. */
+function refreshVillageSiteTickers() {
+  var site = VillageBuildingManager.getSite();
+  if (!site) return;
+
+  var left = VillageBuildingManager.getSiteSecondsLeft();
+  var pct = VillageBuildingManager.getSiteProgressPct().toFixed(1) + "%";
+
+  var bar = document.getElementById("vb-site-bar");
+  if (bar) bar.style.width = pct;
+  var label = document.getElementById("vb-site-left");
+  if (label) label.textContent = "Fin dans " + formatTime(left);
+
+  var cardBar = document.getElementById("vb-card-bar");
+  if (cardBar) cardBar.style.width = pct;
+  var cardLeft = document.getElementById("vb-card-left");
+  if (cardLeft) cardLeft.textContent = formatTime(left);
+
+  var sheetBar = document.getElementById("vb-sheet-bar");
+  if (sheetBar) sheetBar.style.width = pct;
+  var sheetLeft = document.getElementById("vb-sheet-left");
+  if (sheetLeft) sheetLeft.textContent = "Chantier en cours — fin dans " + formatTime(left);
+}
+window.refreshVillageSiteTickers = refreshVillageSiteTickers;
+
+/* Raccourci inverse du mur de Personnage → Stats : de la fiche du Terrain vers
+   l'entraînement. Les deux écrans se pointent l'un l'autre. */
+function goToHeroTraining() {
+  closeVillageBuildingSheet();
+  if (typeof switchTab === "function") switchTab("more"); // onglet Personnage (voir ui-root.js)
+  /* PIÈGE : les identifiants internes sont inversés par rapport aux libellés.
+     Le sous-onglet affiché « 📊 Stats » — celui qui porte les cartes de
+     caractéristiques — s'appelle "amelioration" ; l'identifiant "stats" est
+     celui de « ⚔️ Capacités ». Voir buildHerosSubTabBarHTML(). */
+  if (typeof setHerosSubTab === "function") setHerosSubTab("amelioration");
+}
+window.goToHeroTraining = goToHeroTraining;
+
+/* Renvoi de la fiche de l'Apothicaire vers l'écran des potions. */
+function goToPotions() {
+  closeVillageBuildingSheet();
+  if (typeof switchTab === "function") switchTab("shop");
+  if (typeof setShopSubTab === "function") setShopSubTab("potions");
+}
+window.goToPotions = goToPotions;
+
+/* Renvoi de la fiche de la Halle vers l'échoppe d'équipement. */
+function goToEquipShop() {
+  closeVillageBuildingSheet();
+  if (typeof switchTab === "function") switchTab("equip");
+  if (typeof setEquipSubTab === "function") setEquipSubTab("shop");
+}
+window.goToEquipShop = goToEquipShop;
+
+/* --- Tableau de contrats de la Taverne (rendu DANS la fiche) -------------- */
+function buildTavernContractsHTML() {
+  if (!window.TavernManager) return "";
+
+  var contracts = TavernManager.getContracts();
+  var h = '<div class="tavern-board">';
+  h += '<div class="tavern-board-head">📜 Contrats du jour'
+     + '<span class="tavern-board-timer">Renouvelés dans ' + esc(formatTime(TavernManager.timeUntilRefresh())) + '</span></div>';
+
+  if (!contracts.length) {
+    h += '<div class="tavern-empty">Le tableau est vide pour l\'instant.</div>';
+  }
+
+  contracts.forEach(function (c) {
+    var def = WAREHOUSE_RESOURCES[c.resourceId] || { name: c.resourceId, icon: "" };
+    var have = WarehouseManager.getAmount(c.resourceId);
+    var enough = have >= c.quantity;
+
+    h += '<div class="tavern-contract' + (c.done ? ' is-done' : '') + '">';
+    h += '<div class="tavern-contract-main">';
+    h += '<div class="tavern-contract-title">' + esc(c.title) + '</div>';
+    h += '<div class="tavern-contract-need">';
+    h += renderIconOrEmojiHTML(def.icon, "tavern-contract-icon", def.name);
+    h += '<span class="' + (enough || c.done ? '' : 'is-missing') + '">'
+       + formatNumber(Math.floor(have)) + ' / ' + formatNumber(c.quantity) + ' ' + esc(def.name) + '</span>';
+    h += '</div></div>';
+
+    h += '<div class="tavern-contract-side">';
+    h += '<div class="tavern-contract-reward">'
+       + '<img class="tavern-contract-gold" src="images/Icons/gold_icon.png" alt="">'
+       + formatNumber(c.reward) + '</div>';
+    if (c.done) {
+      h += '<div class="tavern-contract-btn is-done">Honoré</div>';
+    } else if (enough) {
+      h += '<button type="button" class="tavern-contract-btn" onclick="deliverTavernContract(\'' + esc(c.id) + '\')">Livrer</button>';
+    } else {
+      h += '<button type="button" class="tavern-contract-btn is-poor" disabled>Livrer</button>';
+    }
+    h += '</div>';
+
+    h += '</div>';
+  });
+
+  h += '</div>';
+  return h;
+}
+window.buildTavernContractsHTML = buildTavernContractsHTML;
+
+function deliverTavernContract(id) {
+  if (TavernManager.deliver(id) && openVillageBuildingId === "tavern") {
+    openVillageBuildingSheet("tavern");
+  }
+}
+window.deliverTavernContract = deliverTavernContract;
+
+/* Renvoi de la fiche de l'Entrepôt agrandi vers l'Entrepôt. */
+function goToWarehouse() {
+  closeVillageBuildingSheet();
+  if (typeof switchTab === "function") switchTab("village");
+  if (typeof setVillageSubTab === "function") setVillageSubTab("entrepot");
+}
+window.goToWarehouse = goToWarehouse;

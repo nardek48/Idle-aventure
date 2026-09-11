@@ -89,6 +89,25 @@ var GENERIC_TUTORIALS = {
       { icon: "📋", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Principale ») est toujours en tête. Clique sur « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
     ]
   },
+  /* v3.213.1 (lot V-2) : premier plafond d'entraînement. Condition : une
+     caractéristique a buté à 10 — le joueur vient de rencontrer le mur, c'est
+     le seul moment où l'explication a du sens. */
+  village_training: {
+    tab: "village",
+    condition: function () {
+      return !!(window.VILLAGE_BUILDINGS && VILLAGE_BUILDINGS.training
+        && typeof VILLAGE_BUILDINGS.training.unlockCheck === "function"
+        && VILLAGE_BUILDINGS.training.unlockCheck());
+    },
+    icon: "🎯",
+    title: "Le Terrain d'entraînement",
+    points: [
+      { icon: "🚧", text: "Tes caractéristiques butent à 10 : c'est la limite de l'entraînement de fortune du campement. Pour aller plus loin, il faut un vrai terrain." },
+      { icon: "🏗️", text: "Le Terrain se bâtit ici, au Village, comme l'Atelier : des matériaux, puis un chantier qui prend un peu de temps." },
+      { icon: "🎯", text: "Chaque niveau du Terrain ouvre 10 niveaux de plus sur CHACUNE des cinq caractéristiques — jamais un total à répartir." },
+      { icon: "💰", text: "L'entraînement lui-même se paie toujours en or, dans Personnage → Stats. Le Terrain décide jusqu'où tu peux monter, pas combien ça coûte." }
+    ]
+  },
   village_production: {
     tab: "village",
     // Condition d'affichage : seulement une fois la mission "Les fondations" accessible (La veine
@@ -129,12 +148,21 @@ window.GENERIC_TUTORIALS = GENERIC_TUTORIALS;
 
 function maybeShowGenericTutorial(tabName) {
   if (pendingTutorial) return; // v3.107.12 : ne jamais écraser un popup déjà ouvert (même conteneur DOM)
-  var id = Object.keys(GENERIC_TUTORIALS).find(function (key) { return GENERIC_TUTORIALS[key].tab === tabName; });
+  if (!game.genericTutorialsSeen || typeof game.genericTutorialsSeen !== "object") game.genericTutorialsSeen = {};
+
+  /* v3.213.1 : un onglet peut porter PLUSIEURS tutoriels (le Village en a deux
+     depuis le Terrain d'entraînement). On prend le premier candidat non vu
+     dont la condition est remplie, au lieu du premier déclaré — sinon un
+     tutoriel déjà vu masquerait définitivement les suivants. */
+  var id = Object.keys(GENERIC_TUTORIALS).find(function (key) {
+    var t = GENERIC_TUTORIALS[key];
+    if (t.tab !== tabName) return false;
+    if (game.genericTutorialsSeen[key]) return false;
+    if (typeof t.condition === "function" && !t.condition()) return false;
+    return true;
+  });
   if (!id) return;
   var tut = GENERIC_TUTORIALS[id];
-  if (typeof tut.condition === "function" && !tut.condition()) return;
-  if (!game.genericTutorialsSeen || typeof game.genericTutorialsSeen !== "object") game.genericTutorialsSeen = {};
-  if (game.genericTutorialsSeen[id]) return;
 
   pendingTutorial = { genericId: id, tutorial: tut };
   var host = document.getElementById("tutorial-modal-root");

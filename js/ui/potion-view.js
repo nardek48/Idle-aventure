@@ -1,6 +1,51 @@
 "use strict";
 /* ui/potion-view.js — sous-onglet Potions de la Boutique. Achat ajoute au stock (activation séparée, voir equipment-view.js). Détail : COMMENTAIRES_ORIGINAUX.md */
 
+
+/* v3.215.0 (lot V-4) — SECONDE VOIE : préparer au lieu d'acheter.
+   L'achat en or n'est jamais retiré ; le bloc ci-dessous s'ajoute sous la carte
+   quand l'Apothicaire est construit. Une recette pas encore ouverte affiche le
+   niveau qu'il faut plutôt que de disparaître : le joueur voit où va le
+   bâtiment avant de payer pour y aller. */
+function buildApothecaryCraftRowHTML(potionId) {
+  if (!window.ApothecaryManager) return "";
+  var recipe = ApothecaryManager.getRecipe(potionId);
+  if (!recipe) return "";
+
+  var level = ApothecaryManager.getLevel();
+  if (level <= 0) return ""; // pas d'Apothicaire : la Boutique est inchangée
+
+  var unlocked = ApothecaryManager.isUnlocked(potionId);
+  var required = ApothecaryManager.getRequiredLevel(potionId);
+
+  var h = '<div class="potion-craft-row' + (unlocked ? '' : ' is-locked') + '">';
+  h += '<span class="potion-craft-label">⚗️ Préparer</span>';
+
+  h += '<span class="potion-craft-inputs">';
+  Object.keys(recipe.inputs).forEach(function (key) {
+    var def = WAREHOUSE_RESOURCES[key];
+    var have = WarehouseManager.getAmount(key);
+    var enough = have >= recipe.inputs[key];
+    h += '<span class="potion-craft-item' + (enough ? '' : ' is-missing') + '">';
+    h += renderIconOrEmojiHTML(def ? def.icon : "", "potion-craft-icon", def ? def.name : key);
+    h += formatNumber(recipe.inputs[key]);
+    h += '</span>';
+  });
+  h += '</span>';
+
+  if (!unlocked) {
+    h += '<span class="potion-craft-locked">🔒 Apothicaire niv. ' + required + '</span>';
+  } else if (ApothecaryManager.canAfford(potionId)) {
+    h += '<button type="button" class="btn-buy potion-craft-btn" onclick="ApothecaryManager.craft(\'' + esc(potionId) + '\')">Préparer</button>';
+  } else {
+    h += '<button type="button" class="btn-buy cant-afford potion-craft-btn" disabled>Préparer</button>';
+  }
+
+  h += '</div>';
+  return h;
+}
+window.buildApothecaryCraftRowHTML = buildApothecaryCraftRowHTML;
+
 function buildPotionCardHTML(potion) {
   // v3.115.0 : per-run — plus de minuteur. États : armée (bue, en attente d'une mission),
   // active (mission en cours), sinon stock/achat. Cap de stock POTION_STOCK_CAP.
@@ -36,8 +81,13 @@ function buildPotionCardHTML(potion) {
   } else {
     h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
   }
-  h += '</div>';
-  return h;
+  h += '</div>'; // fin .nb-purchase-card
+
+  /* v3.215.0 : la voie « préparer » est pleine largeur, donc SOUS la carte et
+     non dans sa colonne d'achat. Les deux sont enveloppées ensemble pour que
+     la grille les garde solidaires. */
+  var craft = buildApothecaryCraftRowHTML(potion.id);
+  return craft ? ('<div class="potion-entry">' + h + craft + '</div>') : h;
 }
 
 function buildPotionShopHTML() {
@@ -65,8 +115,10 @@ function buildHealingPotionCardHTML(potion) {
   h += '<div class="nb-purchase-meta">🩹 Stock : ' + stock + '</div>';
   h += '</div>';
   h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
-  h += '</div>';
-  return h;
+  h += '</div>'; // fin .nb-purchase-card
+
+  var craft = buildApothecaryCraftRowHTML(potion.id);
+  return craft ? ('<div class="potion-entry">' + h + craft + '</div>') : h;
 }
 
 function buildHealingPotionShopHTML() {

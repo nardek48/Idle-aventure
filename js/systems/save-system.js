@@ -514,6 +514,19 @@ function buildSaveData() {
     // temporel à rattraper ici, contrairement à production.lastTick :
     // pas de stock local qui s'accumule tout seul pour ce système).
     construction: game.construction || {},
+    // v3.213.0 (lot V-1) : socle des bâtiments du Village (voir
+    // data/village-buildings.js, systems/village-building-system.js).
+    // { buildings: { id: { level } }, site: { id, targetLevel, endsAt } | null }
+    // `endsAt` est un horodatage ABSOLU : rien à rattraper au chargement,
+    // VillageBuildingManager.tick() compare simplement à Date.now() (un
+    // chantier terminé pendant l'absence se solde au boot). `construction`
+    // ci-dessus est conservé en l'état pour qu'un retour à une version
+    // antérieure retrouve son Atelier.
+    village: game.village || {},
+    // v3.217.0 (lot V-6) : tableau de contrats de la Taverne — { contracts, resetTime }.
+    // resetTime est un horodatage absolu, comme equipShopResetTime : rien à
+    // rattraper au chargement, checkRefresh() compare à Date.now().
+    tavern: game.tavern || {},
     // v3.38 : chaîne de déblocage de l'Atelier (voir
     // data/workshop-unlock.js, systems/workshop-unlock-system.js) —
     // même principe que construction ci-dessus, état simple sans
@@ -837,6 +850,14 @@ function restoreBaseState(d) {
   // repart avec {} ici, ConstructionManager.ensure() complète le reste
   // au premier accès.
   game.construction = d.construction && typeof d.construction === "object" ? d.construction : {};
+  // v3.213.0 : socle du Village — migration douce identique à production /
+  // construction ci-dessus. Une save antérieure repart avec {} :
+  // VillageBuildingManager.ensure() complète, puis migrateFromConstruction()
+  // reprend le niveau d'Atelier déjà acquis (voir main/boot.js).
+  game.village = d.village && typeof d.village === "object" ? d.village : {};
+  // v3.217.0 : contrats de la Taverne — migration douce, TavernManager.ensure()
+  // complète, checkRefresh() régénère si le tableau est vide ou périmé.
+  game.tavern = d.tavern && typeof d.tavern === "object" ? d.tavern : {};
   // v3.38 : chaîne de déblocage de l'Atelier — migration douce, même
   // principe que construction ci-dessus. WorkshopUnlockManager.ensure()
   // complète les champs manquants au premier accès ; la validation
@@ -983,6 +1004,13 @@ function hardResetState() {
   // même règle que Production (deep-copy pour la même raison : objet
   // imbriqué par bâtiment).
   var keptConstruction = JSON.parse(JSON.stringify(game.construction || {}));
+  // v3.213.0 : les bâtiments du Village sont une progression permanente,
+  // même règle que Construction — y compris un chantier en cours, qui
+  // continue de tourner pendant l'ascension.
+  var keptVillage = JSON.parse(JSON.stringify(game.village || {}));
+  // v3.217.0 : les contrats en cours survivent à l'ascension, comme le stock
+  // de l'échoppe — ce sont des ressources déjà produites qui attendent.
+  var keptTavern = JSON.parse(JSON.stringify(game.tavern || {}));
   // v3.38 : progression de déblocage de l'Atelier = permanente,
   // même règle que Construction (une fois débloqué, jamais reverrouillé,
   // y compris à l'ascension).
@@ -1112,6 +1140,8 @@ function hardResetState() {
   game.explorationProgression = keptExplorationProgression;
   game.production = keptProduction;
   game.construction = keptConstruction;
+  game.village = keptVillage;
+  game.tavern = keptTavern;
   game.workshopUnlock = keptWorkshopUnlock;
   game.workshopFoundationsCompleted = keptWorkshopFoundationsCompleted;
   game.storyQuests = keptStoryQuests;
@@ -1266,6 +1296,8 @@ function fullResetState() {
   game.craftQueue = []; // v3.43 : repart à zéro, aucun remboursement à faire sur un reset complet (tout repart de zéro de toute façon)
   game.production = {}; // v3.31 : repart à zéro, ProductionManager.ensure() recrée les 4 bâtiments au niveau 1
   game.construction = {}; // v3.37 : repart à zéro, ConstructionManager.ensure() recrée workshop au niveau 0
+  game.village = {}; // v3.213.0 : bâtiments + chantier du Village, VillageBuildingManager.ensure() recrée l'état initial
+  game.tavern = {}; // v3.217.0 : contrats de la Taverne, régénérés au premier affichage
   game.workshopUnlock = {}; // v3.38 : repart à zéro, WorkshopUnlockManager.ensure() recrée l'état initial (currentStep 0)
   game.workshopFoundationsCompleted = false; // v3.107.8
   game.storyQuests = {}; // v3.100.0 : repart à zéro, StoryQuestManager.ensure() recrée l'état initial (étape 1)

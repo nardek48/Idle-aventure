@@ -196,6 +196,13 @@ function createInitialGameState() {
 
     production: {},
 
+    // v3.213.0 (lot V-1) : socle des bâtiments du Village — { buildings: { id: { level } }, site }.
+    // Déclaré ici comme production ci-dessus pour qu'une partie neuve ait la clé dès le
+    // départ ; VillageBuildingManager.ensure() remplit le détail.
+    village: { buildings: {}, site: null },
+    // v3.217.0 (lot V-6) : tableau de contrats de la Taverne.
+    tavern: { contracts: [], resetTime: 0 },
+
     dungeonTiersEntered: {},
     codexChaosSeen: false,
     codexRead: {},

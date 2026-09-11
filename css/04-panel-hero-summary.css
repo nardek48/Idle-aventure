@@ -689,6 +689,14 @@
 .pc-stat-card-buy:active { transform: translateY(1px); }
 .pc-stat-card-buy.is-capped,
 .pc-stat-card-buy.is-locked { background: var(--nb-cream-alt); color: var(--nb-ink-dim); cursor: default; }
+/* v3.213.1 : mur du Terrain d'entraînement. Cliquable, contrairement aux deux
+   au-dessus : il mène au chantier qui le lève. */
+.pc-stat-card-buy.is-training-wall {
+  background: var(--aether);
+  color: #eaf6ff;
+  border-color: var(--aether-dark);
+  cursor: pointer;
+}
 .pc-stat-card-buy.is-poor { opacity: 0.5; cursor: default; }
 
 /* Progression vers le plafond RÉEL d'upgrades.js, pas vers un maximum

@@ -5,6 +5,7 @@
 var lastTick = Date.now();
 
 var questBadgeThrottleAccum = 0;
+var villageSiteThrottleAccum = 0; // v3.213.0 : chantier du Village, testé une fois par seconde
 
 var BLOCKING_MODAL_IDS = ["cycle-modal-root", "map-modal-root", "dungeon-modal-root", "village-modal-root", "talent-modal-root", "adventure-quest-modal-root"];
 function isBlockingModalOpen() {
@@ -116,6 +117,22 @@ function gameLoop() {
   if (questBadgeThrottleAccum >= 1) {
     questBadgeThrottleAccum = 0;
     if (typeof updateQuestBadge === "function") updateQuestBadge();
+  }
+
+  // v3.213.0 (lot V-1) : chantier du Village. Une seconde suffit largement
+  // (la durée minimale est de 30 s) et on évite un test par frame. tick()
+  // ne re-rend le panneau QUE si le chantier vient de se terminer ; le
+  // rafraîchissement continu se limite à la barre et au temps restant,
+  // sinon la grille clignoterait et le scroll sauterait à chaque seconde.
+  villageSiteThrottleAccum += dt;
+  if (villageSiteThrottleAccum >= 1) {
+    villageSiteThrottleAccum = 0;
+    if (window.VillageBuildingManager && typeof VillageBuildingManager.tick === "function") {
+      var finished = VillageBuildingManager.tick();
+      if (!finished && typeof refreshVillageSiteTickers === "function") {
+        refreshVillageSiteTickers();
+      }
+    }
   }
 
   requestAnimationFrame(gameLoop);
