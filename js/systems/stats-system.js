@@ -142,6 +142,24 @@ var StatsSystem = {
 
     var HERO_DEFENSE_COEF = 0.002;
     var HERO_DEFENSE_CAP = 0.6;
+    /* v3.219.0 — DÉFENSE DÉGRESSIVE AU-DELÀ D'UN SEUIL.
+       Mesure avant modification : un chevalier à l'entraînement maximal
+       (endurance 212) tirait 42,4 % de défense de sa seule endurance, et les
+       trois talents de survie maxés 17,8 % de plus. Soit 60,2 % — le plafond
+       était donc atteint AVANT d'équiper la moindre armure, ce qui rendait
+       l'emplacement armure strictement inutile en fin de partie et avait
+       conduit à comprimer ses fourchettes (session « scie »).
+
+       Correction : l'endurance garde sa pente d'origine jusqu'au seuil, puis
+       passe au quart. Le début et le milieu de partie sont INCHANGÉS au
+       chiffre près (le banc Forêt tourne à endurance 66-70, bien sous le
+       seuil) ; seule la fin de partie se tasse, ce qui rend 13 points de
+       défense disponibles pour l'équipement.
+
+       Ce n'est pas un plafond déguisé : la courbe continue de monter, sans
+       borne, simplement plus lentement. */
+    var HERO_DEFENSE_SOFTCAP_ENDURANCE = 120;
+    var HERO_DEFENSE_COEF_BEYOND = 0.0005;
 
     var bestiaryTotal = getTotalBestiaryBonus();
     game.goldMult += bestiaryTotal.goldBonus || 0;
@@ -180,7 +198,11 @@ var StatsSystem = {
       (game.talents.t_vital_anchor || 0) * 0.05 +
       (game.talents.t_immutable_guardian || 0) * 0.05
     ) * SURVIVAL_DEFENSE_FACTOR;
-    game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, totalEndurance * HERO_DEFENSE_COEF + (game.equipDefensePct || 0) + survivalDefenseBonus);
+    /* v3.219.0 : pente pleine jusqu'au seuil, quart de pente au-delà. */
+    var enduranceDefense =
+      Math.min(totalEndurance, HERO_DEFENSE_SOFTCAP_ENDURANCE) * HERO_DEFENSE_COEF
+      + Math.max(0, totalEndurance - HERO_DEFENSE_SOFTCAP_ENDURANCE) * HERO_DEFENSE_COEF_BEYOND;
+    game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, enduranceDefense + (game.equipDefensePct || 0) + survivalDefenseBonus);
 
     if (game.ascensionCount > 0) {
       game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + game.ascensionCount * 0.04)));

@@ -1,12 +1,23 @@
 "use strict";
 /* systems/loot-system.js — génération procédurale des drops (kill de boss uniquement). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-function generateEquipmentItem(slot, rarity) {
+function generateEquipmentItem(slot, rarity, worldIndex) {
   var config = EQUIPMENT_SLOT_CONFIG[slot];
   if (!config) return null;
 
   var range = config.ranges[rarity] || config.ranges.common;
   var raw = randFloat(range[0], range[1]);
+
+  /* v3.220.0 : échelle de monde. L'objet est estampillé du monde où il tombe,
+     et sa valeur est mise à l'échelle À LA GÉNÉRATION — pas à la lecture. Deux
+     raisons : la valeur affichée est alors la vraie (aucun calcul caché), et un
+     objet gardé ne change pas de puissance quand le joueur change de monde.
+     Seules les stats plates suivent la courbe (voir EQUIP_WORLD_SCALE). */
+  var world = (typeof worldIndex === "number")
+    ? worldIndex
+    : ((window.WorldManager && WorldManager.worldIndex) || 0);
+  if (config.scalesWithWorld) raw = raw * getEquipWorldScale(world);
+
   var decimals = config.decimals || 0;
   var factor = Math.pow(10, decimals);
   var value = Math.round(raw * factor) / factor;
@@ -29,7 +40,11 @@ function generateEquipmentItem(slot, rarity) {
     icon: icon,
     rarity: rarity,
     stat: config.stat,
-    value: value
+    value: value,
+    /* Monde d'origine : sert à l'affichage et aux futurs paliers de Forge.
+       Un objet d'une sauvegarde antérieure n'en a pas — il est alors traité
+       comme un objet de Forêt, ce qu'il est de fait. */
+    worldIndex: world
   };
 }
 

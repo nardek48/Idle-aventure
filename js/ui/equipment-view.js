@@ -144,6 +144,7 @@ function buildEquipDetailPanelHTML() {
     h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img rframe") + '</div>';
     h += '<div class="eq-detail-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
     h += '<div class="eq-detail-stat">' + esc(formatEquipmentStat(item)) + '</div>';
+    h += buildItemOriginHTML(item);
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.unequip(\'' + esc(slot) + '\')">Déséquiper</button>';
   } else {
     h += '<div class="eq-detail-icon eq-detail-icon-empty">' + esc(emoji) + '</div>';
@@ -218,6 +219,22 @@ function buildUnifiedTileHTML(entry) {
   return h2;
 }
 
+/* v3.220.0 : provenance d'un objet. Avec l'échelle de monde, deux objets de
+   même rareté peuvent avoir des valeurs très différentes — sans cette ligne, le
+   joueur n'a aucun moyen de comprendre pourquoi. Un objet d'une sauvegarde
+   antérieure n'a pas de `worldIndex` : il est de fait de Forêt, et on l'affiche
+   comme tel plutôt que de laisser un trou. */
+function buildItemOriginHTML(item) {
+  if (!item) return "";
+  var cfg = EQUIPMENT_SLOT_CONFIG[item.slot];
+  if (!cfg || !cfg.scalesWithWorld) return "";
+  var idx = (typeof item.worldIndex === "number") ? item.worldIndex : 0;
+  var world = (window.WORLDS && WORLDS[idx]) ? WORLDS[idx].name : null;
+  if (!world) return "";
+  return '<div class="eq-detail-hint">🗺️ Trouvé en ' + esc(world) + '</div>';
+}
+window.buildItemOriginHTML = buildItemOriginHTML;
+
 function buildUnifiedDetailPanelHTML(entries) {
   var entry = entries.find(function (e) { return e.key === selectedInventoryKey; });
   var h = '<div class="eq-detail-panel">';
@@ -231,6 +248,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img rframe") + '</div>';
     h += '<div class="eq-detail-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
     h += '<div class="eq-detail-stat">' + esc(formatEquipmentStat(item)) + '</div>';
+    h += buildItemOriginHTML(item);
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">Équiper</button>';
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="confirmSellItem(\'' + esc(item.uid) + '\')">Vendre</button>';
     h += buildEquippedComparisonHTML(item);

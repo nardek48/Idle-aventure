@@ -62,6 +62,38 @@ var SET_BONUS_CONFIG = {
   sameRarityCount: 3
 };
 
+/* v3.220.0 — ÉCHELLE DE MONDE SUR L'ÉQUIPEMENT.
+   Jusqu'ici, un objet trouvé au monde 6 valait exactement un objet trouvé en
+   Forêt : seule la rareté progressait, soit ×3,4 au total, quand les PV des
+   ennemis font ×214. Mesure du 11/09/2026 sur le vrai moteur : le combat
+   passait de 0,7 à 31 rounds par ennemi normal entre le premier et le dernier
+   monde. La courbe ci-dessous (option B, validée par Seb) ramène ce coût autour
+   de 4 à 5 rounds sur les cinq derniers mondes.
+
+   Elle reste BIEN en dessous de la courbe des PV (×214) : les stats entraînées
+   font déjà ×16 sur la partie, et l'ascension garde son rôle. Reprendre la
+   courbe des PV telle quelle remplacerait ces deux systèmes au lieu de les
+   compléter.
+
+   RECALAGE : la proposition initiale (×1 1,3 1,7 2,5 5 9) venait d'un modèle
+   supposant que 75 % des dégâts suivaient la courbe. Mesure faite : seules les
+   stats PLATES la suivent, donc la cible n'était pas atteinte aux mondes 5 et 6
+   (10,6 et 8,7 rounds au lieu de 4-5). Les coefficients ci-dessous sont ceux
+   qui atteignent la cible sur le vrai moteur, PV moyennés sur les trois
+   aventures de chaque monde.
+
+   NE S'APPLIQUE QU'AUX STATS PLATES (scalesWithWorld ci-dessous). Les stats en
+   pourcentage — défense, chance et multiplicateur de critique, multiplicateur
+   de dégâts et d'or — ne doivent JAMAIS être mises à l'échelle : la défense est
+   plafonnée à 60 %, et multiplier un multiplicateur n'a pas de sens. C'est le
+   piège principal de ce chantier. */
+var EQUIP_WORLD_SCALE = [1, 1.4, 2.2, 4, 10, 18];
+
+function getEquipWorldScale(worldIndex) {
+  var i = Math.max(0, Math.min(EQUIP_WORLD_SCALE.length - 1, Math.floor(Number(worldIndex) || 0)));
+  return EQUIP_WORLD_SCALE[i];
+}
+
 var EQUIPMENT_SLOTS = ["weapon", "armor", "helmet", "gloves", "boots", "ring", "amulet"];
 
 var EQUIPMENT_SLOT_LABELS = {
@@ -87,6 +119,8 @@ var EQUIPMENT_SLOT_EMOJI = {
 var EQUIPMENT_SLOT_CONFIG = {
   weapon: {
     stat: "tapDmg",
+    /* Stat plate : suit l'échelle de monde (voir EQUIP_WORLD_SCALE). */
+    scalesWithWorld: true,
     decimals: 0,
     icons: ["bow", "sword", "axe", "staff"],
     names: ["Épée", "Hache", "Bâton", "Arc", "Dague", "Lame"],
@@ -111,12 +145,20 @@ var EQUIPMENT_SLOT_CONFIG = {
     icons: ["armor"],
     names: ["Armure", "Cuirasse", "Plastron"],
     ranges: {
-      // Ranges réduites (session équilibrage "scie") : évite la saturation prématurée du plafond 60%, cf. rapport.
-      common: [0.01, 0.03],
-      green: [0.027, 0.045],
-      rare: [0.038, 0.06],
-      epic: [0.044, 0.066],
-      legendary: [0.046, 0.068]
+      /* v3.219.0 : échelle refaite. Les fourchettes réduites de la session
+         « scie » étaient plates en haut (légendaire +3 % sur épique), parce
+         que l'endurance saturait le plafond de 60 % à elle seule et qu'il n'y
+         avait plus de place. La défense étant devenue dégressive
+         (stats-system.js), l'armure retrouve une marge d'environ 13 points et
+         peut de nouveau constituer un vrai palier — écarts calés sur ceux de
+         l'amulette, le seul emplacement dont l'échelle était restée régulière.
+         Ancien barème : commun .01-.03, inhab. .027-.045, rare .038-.06,
+         épique .044-.066, légendaire .046-.068. */
+      common: [0.015, 0.035],
+      green: [0.032, 0.055],
+      rare: [0.05, 0.08],
+      epic: [0.075, 0.105],
+      legendary: [0.10, 0.13]
     }
   },
   helmet: {
@@ -147,6 +189,8 @@ var EQUIPMENT_SLOT_CONFIG = {
   },
   boots: {
     stat: "autoDps",
+    /* Stat plate : suit l'échelle de monde. */
+    scalesWithWorld: true,
     decimals: 0,
     icons: ["bottes"],
     names: ["Bottes"],
@@ -187,6 +231,8 @@ var EQUIPMENT_SLOT_CONFIG = {
   }
 };
 
+window.EQUIP_WORLD_SCALE = EQUIP_WORLD_SCALE;
+window.getEquipWorldScale = getEquipWorldScale;
 window.EQUIPMENT_SLOTS = EQUIPMENT_SLOTS;
 window.EQUIPMENT_SLOT_LABELS = EQUIPMENT_SLOT_LABELS;
 window.EQUIPMENT_SLOT_EMOJI = EQUIPMENT_SLOT_EMOJI;
