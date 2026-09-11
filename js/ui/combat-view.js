@@ -356,8 +356,10 @@ function renderEnemy() {
 
   var emoji = document.getElementById("enemy-emoji");
   var name = document.getElementById("enemy-name");
+  // v3.205.0 (E5) : une élite n'est ni dans ENEMY_DB ni dans BOSS_DB — elle porte
+  // son portrait (celui de sa base) directement sur l'objet ennemi.
   var db = game.enemy.isBoss ? BOSS_DB : ENEMY_DB;
-  var enemyData = db[game.enemy.id] || {};
+  var enemyData = (window.ELITE_DB && ELITE_DB[game.enemy.id]) ? {} : (db[game.enemy.id] || {});
   var assetKey = enemyData.asset || game.enemy.asset || "";
   var imagePath = enemyData.image || game.enemy.image || "";
 
@@ -377,14 +379,19 @@ function renderEnemy() {
     emoji.classList.toggle("boss", !!game.enemy.isBoss);
   }
 
-  if (name) name.textContent = game.enemy.name + (game.enemy.isBoss ? " [BOSS]" : "");
+  // v3.205.0 (E5) : une élite est isBoss, mais s'annonce comme élite.
+  var suffix = game.enemy.isElite ? " [ÉLITE]" : (game.enemy.isBoss ? " [BOSS]" : "");
+  if (name) name.textContent = game.enemy.name + suffix;
 
   // v3.172.0 : cadre de jauge selon le type d'ennemi (kit) — le cadre élite
   // rejoindra ce choix quand les quêtes Élite seront implémentées.
   var hpWrap = document.getElementById("enemy-hp-bar-wrapper");
   if (hpWrap) {
-    hpWrap.classList.toggle("kgauge-boss", !!game.enemy.isBoss);
-    hpWrap.classList.toggle("kgauge-dragon-claw", !game.enemy.isBoss);
+    // v3.205.0 (E5) : le cadre élite entre enfin en service (asset posé en v3.172.0).
+    var isElite = !!game.enemy.isElite;
+    hpWrap.classList.toggle("kgauge-elite", isElite);
+    hpWrap.classList.toggle("kgauge-boss", !isElite && !!game.enemy.isBoss);
+    hpWrap.classList.toggle("kgauge-dragon-claw", !isElite && !game.enemy.isBoss);
   }
 
   renderEnemyStatusBar();

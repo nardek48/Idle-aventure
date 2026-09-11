@@ -64,7 +64,6 @@ Deux responsabilités ici :
 .kframe .eq-hero-card,
 .kframe .talent-tier-card,
 .kframe .talent-summary-bar,
-.kframe .pc-cumulative-card,
 .kframe .hero-card,
 .kframe .potion-card,
 .kframe .equip-shop-card,
@@ -79,7 +78,28 @@ Deux responsabilités ici :
 .kframe .confirm-card,
 .kframe .offline-card,
 .kframe .ability-card,
+/* v3.210.0 : conteneurs à fond crème de la refonte du Grimoire. La feuille basse
+   (.grimoire-sheet) vit hors du .kframe mais déclare la même restauration dans
+   css/04-panel-grimoire.css — les deux sont nécessaires. */
+.kframe .grimoire-rule-row,
+.kframe .grimoire-card,
 .kframe .pc-stat-list,
+/* v3.203.0 / v3.203.1 : conteneurs à fond crème du chantier Écran Personnage.
+   Sans ces lignes, leurs enfants héritent de l'encre CRÈME du cadre et
+   deviennent illisibles sur leur propre fond crème. Ce sont exactement les
+   « conteneurs oubliés » que l'en-tête de ce fichier demande d'ajouter ici.
+   Repérés au rendu navigateur puis sur signalement de Seb (captures du
+   Résumé et des Hauts faits) — jamais devinés.
+   RÈGLE : tout nouveau bloc posant background: var(--nb-cream*) et rendu
+   dans un .kframe doit être ajouté à cette liste. Une assertion [ENCRE] du
+   harnais la vérifie désormais pour les écrans du chantier. */
+.kframe .pc-stat-card,
+.kframe .pc-skill-card,
+.kframe .pc-stat-gold,
+.kframe .pc-sum-ident,
+.kframe .pc-sum-cell,
+.kframe .pc-sum-jump,
+.kframe .achievement-total,
 .kframe .log-entry {
   --nb-ink: #3a2c1a;
   --nb-ink-dim: rgba(58, 44, 26, 0.72);

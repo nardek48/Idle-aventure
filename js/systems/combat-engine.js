@@ -55,6 +55,18 @@ var BOSS_SHIELD_REDUCTION = 0.5;
 var BOSS_HEAL_ROUNDS = 5;             // fixe, comme le sim P1
 var BOSS_HEAL_PERCENT = 0.15;
 
+/* v3.204.0 (E4) — EXALTATION D'ÉLITE. Une élite (enemy.isElite) ne se soigne
+   pas : son second minuteur porte ce pattern à la place. Télégraphe au round N,
+   impact au round N+1 comme tous les autres ; l'impact double l'intensité de
+   son ARCHÉTYPE pendant quelques rounds, au lieu d'introduire une cinquième
+   mécanique à lire. Décision Seb (10/09/2026) : le pic S'AJOUTE à l'archétype
+   permanent, il ne le remplace pas — mais le soin est retiré aux élites pour
+   qu'il n'y ait jamais plus de deux minuteurs simultanés sur 390 px. */
+var ELITE_SURGE_ROUNDS_MIN = 4;
+var ELITE_SURGE_ROUNDS_MAX = 6;
+var ELITE_SURGE_DURATION_ROUNDS = 4;
+var ELITE_SURGE_INTENSITY_MULT = 3;   // l'archétype compte triple pendant l'exaltation
+
 var COUNTER_CONFIRMATION_ROUNDS = 1;
 
 var COMBAT_MODES = ["tactique", "grimoire"];
@@ -194,6 +206,10 @@ var CombatEngine = {
     enemy.shieldRounds = 0;
     enemy.healIn = BOSS_HEAL_ROUNDS;
     enemy.healTelegraphed = false;
+    // v3.204.0 (E4) : l'élite troque le soin contre l'exaltation (voir constantes).
+    enemy.surgeIn = enemy.isElite ? randInt(ELITE_SURGE_ROUNDS_MIN, ELITE_SURGE_ROUNDS_MAX) : 0;
+    enemy.surgeTelegraphed = false;
+    enemy.surgeRounds = 0;
     enemy.vulnerableRounds = 0;
     enemy.vulnerableMult = 0;
     enemy.counteredRounds = 0;
@@ -422,11 +438,14 @@ var CombatEngine = {
     // Statuts posés PENDANT un tour ennemi (bouclier, silence) : décomptés ici, au tour ennemi suivant,
     // pour couvrir exactement N tours du héros (le décompte de fin de round les rognerait d'un round).
     if (e.shieldRounds > 0) e.shieldRounds -= 1;
+    if (e.surgeRounds > 0) e.surgeRounds -= 1; // v3.204.0 (E4)
     if (game.silencedRounds > 0) game.silencedRounds -= 1;
 
     var impact = false;
+    var surgeImpact = false; // v3.204.0 (E4) : voir juste en dessous
     if (e.isBoss) {
       if (e.healTelegraphed) { this.resolveBossHeal(); impact = true; }
+      else if (e.surgeTelegraphed) { this.resolveEliteSurge(); impact = true; surgeImpact = true; }
       else if (e.shieldTelegraphed) { this.resolveBossShield(); impact = true; }
     } else if (e.archetype === "silenced") {
       if (e.silenceTelegraphed) { this.resolveSilenceCast(); impact = true; }
@@ -437,7 +456,14 @@ var CombatEngine = {
       this.resolveEnemyCharge(); impact = true;
     }
 
-    if (impact) return; // le compte à rebours relancé démarre au round suivant
+    /* v3.204.0 (E4) : tous les patterns REMPLACENT la frappe du round — un
+       bouclier ou un soin est donc un round sans dégâts, ce qui les rend
+       presque indolores (mesuré : l'exaltation faisait GAGNER 3 à 5 points de
+       PV au joueur avant ce correctif). L'exaltation d'élite fait exception :
+       elle s'ajoute à la frappe. Ignorer son télégraphe coûte donc vraiment,
+       ce qui est tout l'objet du pattern. Périmètre volontairement limité aux
+       élites : le comportement des boss et du donjon est inchangé. */
+    if (impact && !surgeImpact) return; // le compte à rebours relancé démarre au round suivant
 
     // v3.105.0 : approche — l'ennemi avance au lieu de frapper ; sa jauge se remplit (il arrive « lancé »)
     // et ses compte à rebours de pattern tournent (un télégraphe peut tomber pendant l'approche).
@@ -460,7 +486,15 @@ var CombatEngine = {
   /* Compte à rebours des patterns : télégraphe au round N (badge + log), impact au round N+1 (remplace la frappe). */
   tickEnemyTelegraphs: function (e) {
     if (e.isBoss) {
-      if (e.healTelegraphed || e.shieldTelegraphed) return; // un seul télégraphe à la fois
+      if (e.healTelegraphed || e.shieldTelegraphed || e.surgeTelegraphed) return; // un seul télégraphe à la fois
+      // v3.204.0 (E4) : une élite remplace le minuteur de soin par celui d'exaltation.
+      if (e.isElite) {
+        e.surgeIn -= 1;
+        e.shieldIn -= 1;
+        if (e.surgeIn <= 0) this.telegraphPattern(e, "surge");
+        else if (e.shieldIn <= 0) this.telegraphPattern(e, "shield");
+        return;
+      }
       e.healIn -= 1;
       e.shieldIn -= 1;
       if (e.healIn <= 0) this.telegraphPattern(e, "heal");
@@ -490,7 +524,9 @@ var CombatEngine = {
       charge: { flag: "chargeTelegraphed", cond: "chargeIncoming", log: "⚠️ " + e.name + " prépare une charge !", toast: "⚠️ Charge au prochain tour !" },
       silence: { flag: "silenceTelegraphed", cond: "enemySilenceIncoming", log: "🔇 " + e.name + " se prépare à te réduire au silence !", toast: "🔇 Silence au prochain tour !" },
       shield: { flag: "shieldTelegraphed", cond: "shieldIncoming", log: "🛡️ " + e.name + " invoque un bouclier !", toast: "🛡️ Bouclier au prochain tour !" },
-      heal: { flag: "healTelegraphed", cond: "healIncoming", log: "💚 " + e.name + " se prépare à se soigner !", toast: "💚 Soin au prochain tour !" }
+      heal: { flag: "healTelegraphed", cond: "healIncoming", log: "💚 " + e.name + " se prépare à se soigner !", toast: "💚 Soin au prochain tour !" },
+      // v3.204.0 (E4) : exaltation d'élite — son archétype va compter double.
+      surge: { flag: "surgeTelegraphed", cond: "eliteSurgeIncoming", log: "🔥 " + e.name + " s'exalte !", toast: "🔥 Exaltation au prochain tour !" }
     }[kind];
     if (!info) return;
     e[info.flag] = true;
@@ -512,7 +548,31 @@ var CombatEngine = {
     else if (conditionId === "enemySilenceIncoming") { e.silenceTelegraphed = false; e.silenceIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX); }
     else if (conditionId === "shieldIncoming") { e.shieldTelegraphed = false; e.shieldIn = randInt(BOSS_SHIELD_ROUNDS_MIN, BOSS_SHIELD_ROUNDS_MAX); }
     else if (conditionId === "healIncoming") { e.healTelegraphed = false; e.healIn = BOSS_HEAL_ROUNDS; }
+    else if (conditionId === "eliteSurgeIncoming") {
+      // v3.204.0 (E4) : contrer une exaltation la repousse DEUX fois plus loin que
+      // le cycle normal. Sans ça, le contre coûte un round et l'exaltation revient
+      // 4 à 6 rounds plus tard : sur un combat de 12 rounds, contrer ne rapportait
+      // rien (mesuré). C'est le report qui paie, pas l'annulation seule.
+      e.surgeTelegraphed = false;
+      e.surgeIn = randInt(ELITE_SURGE_ROUNDS_MIN * 2, ELITE_SURGE_ROUNDS_MAX * 2);
+    }
     e.counteredRounds = COUNTER_CONFIRMATION_ROUNDS;
+  },
+
+  /* v3.204.0 (E4) : impact de l'exaltation — l'archétype de l'élite compte double
+     pendant ELITE_SURGE_DURATION_ROUNDS. Aucune mécanique nouvelle n'est introduite :
+     c'est le même archétype, plus fort, sur une fenêtre annoncée. */
+  resolveEliteSurge: function () {
+    var e = game.enemy;
+    if (!e) return;
+    if (window.CombatReportManager) {
+      getConfiguredCounterSlotsForCondition("eliteSurgeIncoming").forEach(function (s) { CombatReportManager.logCounterExpired(s); });
+    }
+    e.surgeTelegraphed = false;
+    e.surgeIn = randInt(ELITE_SURGE_ROUNDS_MIN, ELITE_SURGE_ROUNDS_MAX);
+    e.surgeRounds = ELITE_SURGE_DURATION_ROUNDS;
+    addLog("🔥 " + e.name + " s'exalte (" + ELITE_SURGE_DURATION_ROUNDS + " rounds) !", "event");
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
   resolveEnemyCharge: function () {
@@ -602,7 +662,7 @@ var CombatEngine = {
     if (patternMult !== 1) dmg = Math.max(1, Math.floor(dmg * patternMult));
 
     if (e.archetype === "enraged" && typeof getEnragedDamageMultiplier === "function") {
-      var enragedMult = getEnragedDamageMultiplier(this.getEnragedEffectivePctHpLost());
+      var enragedMult = getEnragedDamageMultiplier(this.getEnragedEffectivePctHpLost(), e); // v3.204.0 (E4)
       if (enragedMult !== 1) {
         var preEnragedDmg = dmg;
         dmg = Math.max(1, Math.floor(dmg * enragedMult));
@@ -632,7 +692,7 @@ var CombatEngine = {
 
     if (e.archetype === "vampiric" && dmg > 0 && typeof getVampiricLifestealAmount === "function") {
       if (!(Number(e.vampiricSuppressedRounds || 0) > 0)) {
-        var healed = getVampiricLifestealAmount(dmg);
+        var healed = getVampiricLifestealAmount(dmg, e); // v3.204.0 (E4)
         if (healed > 0) {
           e.hp = Math.min(e.maxHp, Number(e.hp || 0) + healed);
           if (window.CombatReportManager) CombatReportManager.logArchetypeImpact("vampiricHealStolen", healed);
@@ -838,7 +898,7 @@ var CombatEngine = {
 
     if (game.enemy.archetype === "corrupted" && typeof getCorruptedDamageMultiplier === "function") {
       var preCorruptedDmg = dmg;
-      dmg *= getCorruptedDamageMultiplier(game.enemy.corruptedStacks || 0);
+      dmg *= getCorruptedDamageMultiplier(game.enemy.corruptedStacks || 0, game.enemy); // v3.204.0 (E4)
       if (window.CombatReportManager) CombatReportManager.logArchetypeImpact("corruptedDamageLost", preCorruptedDmg - dmg);
     }
 
@@ -1106,5 +1166,9 @@ window.getConfiguredCounterSlotsForCondition = getConfiguredCounterSlotsForCondi
 window.ROUND_INTERVAL_MS = ROUND_INTERVAL_MS;
 window.CELERITY_GAUGE_MAX = CELERITY_GAUGE_MAX;
 window.BOSS_DMG_MULT = BOSS_DMG_MULT;
+window.ELITE_SURGE_ROUNDS_MIN = ELITE_SURGE_ROUNDS_MIN;
+window.ELITE_SURGE_ROUNDS_MAX = ELITE_SURGE_ROUNDS_MAX;
+window.ELITE_SURGE_DURATION_ROUNDS = ELITE_SURGE_DURATION_ROUNDS;
+window.ELITE_SURGE_INTENSITY_MULT = ELITE_SURGE_INTENSITY_MULT;
 window.ENEMY_POWER_DMG_COEF = ENEMY_POWER_DMG_COEF;
 window.COMBAT_MODES = COMBAT_MODES;

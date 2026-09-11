@@ -47,7 +47,8 @@ window.CLASS_SKILLS = {
         conditions: {},
         counters: ["healIncoming"],
         effects: [
-          { type: "enemyCorruptionPurge" }
+          { type: "enemyCorruptionPurge" },
+          { type: "enemyRageSuppression" }
         ]
       },
       skill2: {
@@ -69,7 +70,8 @@ window.CLASS_SKILLS = {
             value: 0.20,
             durationRounds: 2
           },
-          { type: "enemyLifestealSuppression" }
+          { type: "enemyLifestealSuppression" },
+          { type: "enemyArmorSuppression" }
         ]
       },
       skill3: {
@@ -86,9 +88,7 @@ window.CLASS_SKILLS = {
         conditions: {
           enemyHpPercentBelowOrEqual: 0.35
         },
-        effects: [
-          { type: "enemyRageSuppression" }
-        ]
+        effects: []
       },
       defense: {
         id: "knight_guard",
@@ -102,14 +102,13 @@ window.CLASS_SKILLS = {
         resourceGain: 0,
         cooldownRounds: 3,
         conditions: {},
-        counters: ["chargeIncoming", "enemySilenceIncoming"],
+        counters: ["chargeIncoming", "enemySilenceIncoming", "eliteSurgeIncoming"],
         effects: [
           {
             type: "damageReduction",
             value: 0.50,
             durationRounds: 1
-          },
-          { type: "enemyArmorSuppression" }
+          }
         ]
       }
     }
@@ -159,7 +158,8 @@ window.CLASS_SKILLS = {
         conditions: {},
         counters: ["shieldIncoming"],
         effects: [
-          { type: "enemyCorruptionPurge" }
+          { type: "enemyCorruptionPurge" },
+          { type: "enemyRageSuppression" }
         ]
       },
       skill2: {
@@ -176,7 +176,8 @@ window.CLASS_SKILLS = {
         conditions: {},
         counters: ["healIncoming"],
         effects: [
-          { type: "enemyLifestealSuppression" }
+          { type: "enemyLifestealSuppression" },
+          { type: "enemyArmorSuppression" }
         ]
       },
       skill3: {
@@ -192,9 +193,7 @@ window.CLASS_SKILLS = {
         resourceGain: 0,
         cooldownRounds: 4,
         conditions: {},
-        effects: [
-          { type: "enemyRageSuppression" }
-        ]
+        effects: []
       },
       defense: {
         id: "archer_evasion",
@@ -208,14 +207,13 @@ window.CLASS_SKILLS = {
         resourceGain: 0,
         cooldownRounds: 4,
         conditions: {},
-        counters: ["chargeIncoming", "enemySilenceIncoming"],
+        counters: ["chargeIncoming", "enemySilenceIncoming", "eliteSurgeIncoming"],
         effects: [
           {
             type: "evasion",
             value: 0.70,
             durationRounds: 1
-          },
-          { type: "enemyArmorSuppression" }
+          }
         ]
       }
     }
@@ -265,7 +263,8 @@ window.CLASS_SKILLS = {
         conditions: {},
         counters: ["shieldIncoming"],
         effects: [
-          { type: "enemyCorruptionPurge" }
+          { type: "enemyCorruptionPurge" },
+          { type: "enemyRageSuppression" }
         ]
       },
       skill2: {
@@ -287,7 +286,8 @@ window.CLASS_SKILLS = {
             percentPerRound: 0.50,
             durationRounds: 2
           },
-          { type: "enemyLifestealSuppression" }
+          { type: "enemyLifestealSuppression" },
+          { type: "enemyArmorSuppression" }
         ]
       },
       skill3: {
@@ -302,9 +302,7 @@ window.CLASS_SKILLS = {
         resourceGain: 0,
         cooldownRounds: 4,
         conditions: {},
-        effects: [
-          { type: "enemyRageSuppression" }
-        ]
+        effects: []
       },
       defense: {
         id: "mage_arcane_barrier",
@@ -318,14 +316,13 @@ window.CLASS_SKILLS = {
         resourceGain: 0,
         cooldownRounds: 4,
         conditions: {},
-        counters: ["chargeIncoming", "enemySilenceIncoming"],
+        counters: ["chargeIncoming", "enemySilenceIncoming", "eliteSurgeIncoming"],
         effects: [
           {
             type: "damageAbsorption",
             value: 0.40,
             durationRounds: 2
-          },
-          { type: "enemyArmorSuppression" }
+          }
         ]
       }
     }

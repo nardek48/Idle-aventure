@@ -8,9 +8,10 @@
    ========================= */
 
 /* ===== Plaque-titre "PERSONNAGE" =====
-   v2.76 : retirée — le titre de page est maintenant centralisé dans
-   le HUD (voir HUD_PAGE_TITLES dans ui/hud-view.js). Cette règle
-   n'est plus utilisée nulle part. */
+   v2.76 : retirée — le titre de page était alors centralisé dans le HUD.
+   v3.200.0 : ce titre de HUD a lui-même été retiré, le titre de chaque
+   écran est porté par le bandeau figé du kframe. Cette règle n'est plus
+   utilisée nulle part. */
 
 /* ===== Carte fiche de personnage ===== */
 .pc-card {
@@ -233,15 +234,10 @@
   margin: 2px 0 4px;  /* moins d’espace sous le label */
 }
 
-.pc-cumulative-card {
-  padding: 12px 14px;
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream);
-  border: 1px solid var(--nb-frame);
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--nb-ink);
-}
+/* v3.202.1 : .pc-cumulative-card retirée — plus aucun écran ne la produit
+   depuis que les statistiques cumulées sont passées chez les Hauts faits
+   (ui/achievement-view.js). .pc-section-label est conservée : les deux blocs
+   du sous-onglet Résumé l'utilisent. */
 
 .pc-empty {
   padding: 20px;
@@ -337,162 +333,6 @@
   background: rgba(255, 200, 61, 0.1);
 }
 
-/* ===== Carrousel de héros (v2.73) =====
-   Défilement horizontal des 6 héros dans l'onglet Personnage.
-   Réutilise le style .hero-card / .hero-card-image / .hero-card-name
-   existant (voir css/05-overlays.css, sélecteur modal de création de
-   perso) pour rester visuellement cohérent, avec une mise en page en
-   ligne plutôt qu'en grille 3 colonnes. */
-.hero-carousel-row {
-  display: flex;
-  gap: 4px;
-  padding: 0 2px 2px;
-  margin-top: 4px;
-  margin-bottom: 2px;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-}
-
-.hero-carousel-row::-webkit-scrollbar {
-  height: 4px;
-}
-
-.hero-carousel-row::-webkit-scrollbar-thumb {
-  background: var(--nb-frame);
-  border-radius: 999px;
-}
-
-/* cartes du carrousel : padding réduit */
-.hero-carousel-row .hero-card.hero-carousel-card {
-  flex: 0 0 auto;
-  width: 68px;
-  min-height: 0;
-  padding: 4px;
-  gap: 3px;
-  scroll-snap-align: start;
-}
-
-/* image plus petite */
-.hero-carousel-row .hero-card.hero-carousel-card .hero-card-image {
-  width: 40px;
-  height: 40px;
-}
-
-/* texte compact */
-.hero-carousel-row .hero-card.hero-carousel-card .hero-card-name {
-  font-size: 9px;
-  line-height: 1.1;
-}
-
-/* v3.25 : sélecteur des 3 emplacements de héros (phase 1, mécanique —
-   habillage définitif prévu dans un second temps). Emplacement vide
-   ("+ Nouveau héros") : contour en pointillés, plus discret qu'un
-   emplacement occupé. */
-.hero-carousel-sub {
-  font-size: 8px;
-  color: var(--nb-ink-dim);
-}
-
-.hero-carousel-empty {
-  border-style: dashed;
-  opacity: 0.75;
-}
-
-/* v3.29 : bandeau dépliable "attaque spéciale" — étape "hero" du picker de création.
-   ⚠️ Styles ici par défaut faute d'accès à css/05-overlays.css (où vivent .hero-picker-*) —
-   à déplacer là-bas si tu préfères garder tout le picker regroupé, aucune dépendance ne casse si tu le fais. */
-.hero-attack-preview-toggle {
-  width: 100%;
-  margin-top: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--nb-frame);
-  border-radius: 10px;
-  background: var(--nb-cream-alt);
-  color: var(--nb-ink);
-  font-size: 12px;
-  font-weight: 700;
-  text-align: left;
-}
-
-.hero-attack-preview-chevron {
-  float: right;
-}
-
-.hero-attack-preview-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 6px;
-  padding: 10px;
-  border-radius: 10px;
-  background: var(--nb-cream);
-  border: 1px solid var(--nb-frame);
-}
-
-.hero-attack-preview-icon-wrap {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hero-attack-preview-icon-wrap img.hero-attack-preview-icon {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-}
-
-.hero-attack-preview-name {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--nb-ink);
-}
-
-.hero-attack-preview-desc {
-  font-size: 11px;
-  color: var(--nb-ink-dim);
-  line-height: 1.35;
-  margin-top: 2px;
-}
-
-/* v3.29 : conteneur du bouton suppression (voir deleteHeroSlot, ui/heros-view.js) — évite un bouton nesté dans .hero-carousel-card. */
-.hero-carousel-slot {
-  position: relative;
-  flex: 0 0 auto;
-}
-
-.hero-carousel-delete-btn {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  font-size: 10px;
-  line-height: 18px;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  z-index: 2;
-}
-
-.hero-carousel-empty-icon {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--nb-ink-dim);
-  background: var(--nb-cream-deep);
-  border-radius: var(--nb-radius-sm);
-}
-
 /* ===== Sous-onglets Héros/Amélioration/Stats =====
    v2.83.5 : classes génériques .subtab-page / .subtab-page-content /
    .subtab-bar-wrapper / .pc-subtab-bar / .pc-subtab-btn déplacées vers
@@ -555,3 +395,441 @@
    index.html) une bonne partie de ces règles — c'est d'ailleurs
    exactement ce genre de duplication silencieuse que la
    centralisation doit éviter à l'avenir. */
+
+/* =====================================================================
+   v3.202.0 — ÉCRAN RÉSUMÉ (sous-onglet "hero")
+   Remplace l'ancienne fiche .pc-card + carrousel. Trois blocs de lecture
+   et deux sorties : identité, valeurs de combat, raccourcis.
+   Préfixe .pc-sum-* pour ne recouvrir aucune règle .pc-card existante,
+   qui reste utilisée ailleurs.
+   ===================================================================== */
+
+/* --- identité : portrait, classe, jauges --- */
+.pc-sum-ident {
+  display: flex;
+  gap: 10px;
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream);
+  color: var(--nb-ink);
+  padding: 9px 10px;
+  margin-bottom: 9px;
+}
+
+.pc-sum-portrait {
+  position: relative;
+  flex: 0 0 84px;
+  width: 84px;
+  height: 84px;
+  border-radius: var(--nb-radius-sm);
+  overflow: hidden;
+  border: 2px solid var(--nb-frame);
+  background: var(--nb-cream-deep);
+}
+.pc-sum-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+/* Le cadre du portrait prend la couleur de la classe : c'est le premier
+   signal que le héros EST quelque chose, avant même de lire la pastille. */
+.pc-sum-portrait.is-class-knight { border-color: #a33b2a; }
+.pc-sum-portrait.is-class-archer { border-color: #4a6b2a; }
+.pc-sum-portrait.is-class-mage { border-color: var(--nb-blue-dark); }
+
+.pc-sum-lvl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2px 0;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--nb-ink-inverse);
+  background: rgba(58, 44, 26, 0.9);
+}
+
+.pc-sum-col {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pc-sum-name {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.pc-sum-class {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px 2px 6px;
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-pill);
+  background: var(--nb-cream-alt);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--nb-ink-dim);
+}
+.pc-sum-class.is-class-knight { border-color: #a33b2a; background: rgba(163, 59, 42, 0.1); color: #8a2f20; }
+.pc-sum-class.is-class-archer { border-color: #4a6b2a; background: rgba(74, 107, 42, 0.1); color: #3f5c22; }
+.pc-sum-class.is-class-mage { border-color: var(--nb-blue-dark); background: rgba(44, 125, 191, 0.1); color: var(--nb-blue-dark); }
+
+.pc-sum-class-res { font-weight: 600; opacity: 0.85; }
+.pc-sum-class-res::before { content: "\00b7"; margin-right: 5px; }
+
+.pc-sum-gauges {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 1px;
+}
+.pc-sum-gauge-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.pc-sum-gauge-tag {
+  flex: 0 0 30px;
+  text-align: right;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--nb-ink-dim);
+}
+.pc-sum-gauge-row .kgauge { flex: 1 1 auto; }
+.pc-sum-gauge-row .kgauge-text { font-size: 9px; }
+
+/* Ressource de classe à zéro hors combat : affichée quand même, en retrait.
+   La masquer reviendrait à reproduire ce que corrige cet écran. */
+.pc-sum-gauge-row .is-res-empty .kgauge-text { opacity: 0.7; }
+
+/* --- valeurs de combat --- */
+.pc-sum-combat {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.pc-sum-cell {
+  border: 1px solid var(--nb-frame);
+  border-radius: 9px;
+  background: var(--nb-cream);
+  color: var(--nb-ink);
+  padding: 6px 4px;
+  text-align: center;
+}
+/* Défense et Critique sur une rangée pleine largeur : deux valeurs qui se
+   lisent en pourcentage, trop longues pour une case de tiers de largeur. */
+.pc-sum-cell.is-wide {
+  grid-column: span 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 5px 8px;
+}
+.pc-sum-cell-lbl {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--nb-ink-dim);
+}
+.pc-sum-cell-val {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+.pc-sum-cell.is-wide .pc-sum-cell-val { font-size: 13px; }
+
+/* --- raccourcis vers les autres sous-onglets --- */
+.pc-sum-jump {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 26px 1fr auto 14px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream);
+  color: var(--nb-ink);
+  padding: 8px 9px;
+  margin-bottom: 6px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.pc-sum-jump:active { transform: translateY(1px); }
+.pc-sum-jump-ico { font-size: 18px; text-align: center; }
+.pc-sum-jump-txt { min-width: 0; display: block; }
+.pc-sum-jump-t { display: block; font-size: 12.5px; font-weight: 800; }
+.pc-sum-jump-s { display: block; font-size: 10.5px; color: var(--nb-ink-dim); }
+.pc-sum-jump-prog { display: block; min-width: 74px; }
+.pc-sum-jump-pct { display: block; font-size: 10px; font-weight: 800; text-align: right; }
+.pc-sum-jump-chev { font-size: 11px; color: var(--nb-ink-dim); }
+
+.pc-sum-jump-kit { display: flex; gap: 3px; }
+.pc-sum-jump-kit span {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-cream-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+/* Les icônes de capacité sont des PNG (class-combat-system.js), pas des
+   emojis : la vignette doit les contenir. Le repli emoji garde sa taille. */
+.pc-sum-jump-kit-ico {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.pc-sum-jump-kit-ico.pc-sum-jump-kit-ico-emoji {
+  width: auto;
+  height: auto;
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* Barre de marge d'entraînement. Elle mesure la progression vers les
+   plafonds RÉELS de data/upgrades.js (somme des maxLevel), pas vers un
+   maximum arbitraire. Vert une fois tout entraîné. */
+.pc-sum-bar {
+  display: block;
+  height: 3px;
+  margin-top: 3px;
+  border-radius: 2px;
+  background: var(--nb-cream-deep);
+  overflow: hidden;
+}
+.pc-sum-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--nb-gold-dark), var(--nb-gold));
+}
+.pc-sum-bar.is-capped i { background: linear-gradient(90deg, #4a6b2a, #8ab54a); }
+
+/* --- sorties --- */
+.pc-sum-foot {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+.pc-sum-foot .settings-btn {
+  margin: 0;
+  flex: 1 1 0;
+  font-size: 11.5px;
+}
+
+/* =====================================================================
+   v3.203.0 — SOUS-ONGLET STATS : la stat et son achat sur la même carte.
+   Grille en 4 colonnes : icône + textes + valeur (dans le bouton de
+   dépliage) puis le bouton d'achat, hors du bouton de dépliage pour que
+   les deux zones tactiles ne se chevauchent jamais.
+   ===================================================================== */
+/* Or disponible. Encadré plutôt que posé sur la pierre : à 500K le nombre
+   débordait du cadre en haut à droite, constaté au rendu. */
+.pc-stat-gold {
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  font-size: 13px; font-weight: 800; color: var(--nb-ink);
+  margin: 0 0 7px; padding: 4px 10px;
+  border: 1px solid var(--nb-frame); border-radius: var(--nb-radius-pill);
+  background: var(--nb-cream);
+}
+.pc-stat-gold img { width: 16px; height: 16px; object-fit: contain; }
+
+.pc-stat-list-v2 { display: flex; flex-direction: column; gap: 6px; }
+
+.pc-stat-card {
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream);
+  color: var(--nb-ink);
+  overflow: hidden;
+}
+
+.pc-stat-card-head { display: flex; align-items: stretch; gap: 6px; padding: 6px 7px; }
+
+/* Zone de dépliage : bouton plein, pour la cible tactile et le focus clavier. */
+.pc-stat-card-id {
+  flex: 1 1 auto; min-width: 0;
+  display: grid; grid-template-columns: 26px 1fr auto 12px;
+  align-items: center; gap: 7px;
+  border: 0; background: none; padding: 0; margin: 0;
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.pc-stat-card-ico { width: 26px; height: 26px; object-fit: contain; }
+.pc-stat-card-texts { min-width: 0; display: flex; flex-direction: column; }
+.pc-stat-card-name { font-size: 13px; font-weight: 800; line-height: 1.15; }
+.pc-stat-card-out { font-size: 10.5px; font-weight: 700; color: var(--nb-ink-dim); }
+.pc-stat-card-num { display: flex; flex-direction: column; align-items: flex-end; }
+.pc-stat-card-total { font-size: 16px; font-weight: 800; line-height: 1; }
+.pc-stat-card-cap { font-size: 9.5px; font-weight: 700; color: var(--nb-ink-dim); }
+.pc-stat-card-chev { font-size: 12px; color: var(--nb-ink-dim); transition: transform 0.16s ease; }
+.pc-stat-card.is-open .pc-stat-card-chev { transform: rotate(90deg); }
+
+.pc-stat-card-buy {
+  flex: 0 0 auto; min-width: 62px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border: 1px solid var(--nb-gold-deep); border-radius: 8px;
+  background: var(--nb-cream-deep); color: var(--nb-ink);
+  font-size: 11px; font-weight: 800; padding: 5px 8px;
+  cursor: pointer; text-align: center;
+}
+.pc-stat-card-buy small { font-size: 8.5px; font-weight: 700; opacity: 0.72; }
+.pc-stat-card-buy:active { transform: translateY(1px); }
+.pc-stat-card-buy.is-capped,
+.pc-stat-card-buy.is-locked { background: var(--nb-cream-alt); color: var(--nb-ink-dim); cursor: default; }
+.pc-stat-card-buy.is-poor { opacity: 0.5; cursor: default; }
+
+/* Progression vers le plafond RÉEL d'upgrades.js, pas vers un maximum
+   inventé : l'ancien CHARACTER_STAT_MAX (500/300/400/200/250) ne
+   correspondait à aucun plafond du jeu. */
+.pc-stat-card-bar {
+  height: 3px; margin: 0 7px 7px;
+  background: var(--nb-cream-deep); border-radius: 2px; overflow: hidden;
+}
+.pc-stat-card-bar i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--nb-gold-dark), var(--nb-gold));
+}
+.pc-stat-card-bar.is-capped i { background: linear-gradient(90deg, #4a6b2a, #8ab54a); }
+
+.pc-stat-card-body {
+  border-top: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+  padding: 7px 9px 8px;
+}
+.pc-stat-break { display: flex; flex-direction: column; gap: 3px; }
+.pc-stat-break-row { display: flex; justify-content: space-between; gap: 10px; font-size: 11.5px; }
+.pc-stat-break-row span:first-child { color: var(--nb-ink-dim); }
+.pc-stat-break-row span:last-child { font-weight: 800; text-align: right; }
+.pc-stat-break-row.is-total {
+  border-top: 1px dashed var(--nb-frame); padding-top: 3px; margin-top: 2px;
+}
+.pc-stat-break-row.is-zero span { opacity: 0.45; }
+
+/* v3.203.2 : contributions par source, sous la décomposition de la stat. */
+.pc-stat-sources {
+  margin-top: 7px; padding-top: 6px;
+  border-top: 1px solid var(--nb-frame-light);
+  display: flex; flex-direction: column; gap: 3px;
+}
+.pc-stat-sources-lbl {
+  font-size: 10px; font-weight: 800; color: var(--nb-ink-dim); margin-bottom: 1px;
+}
+
+.pc-stat-next {
+  margin-top: 7px; padding: 4px 7px;
+  font-size: 11px; font-weight: 700;
+  border-radius: 7px;
+  background: rgba(74, 107, 42, 0.12);
+  border: 1px solid rgba(74, 107, 42, 0.4);
+  color: #3f5c22;
+}
+.pc-stat-next.is-slow {
+  background: rgba(194, 127, 31, 0.12);
+  border-color: rgba(194, 127, 31, 0.45);
+  color: var(--nb-gold-deep);
+}
+.pc-stat-next.is-done {
+  background: rgba(138, 122, 92, 0.12);
+  border-color: var(--nb-frame-light);
+  color: var(--nb-ink-dim);
+}
+
+/* =====================================================================
+   v3.203.0 — SOUS-ONGLET CAPACITÉS : cartes dépliables sur leurs contres.
+   ===================================================================== */
+.pc-skill-card {
+  border: 1px solid var(--nb-frame);
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream);
+  color: var(--nb-ink);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.pc-skill-card.is-defense { border-left: 3px solid var(--nb-blue-dark); }
+
+.pc-skill-head {
+  width: 100%;
+  display: grid; grid-template-columns: 32px 1fr auto 12px;
+  align-items: center; gap: 8px;
+  border: 0; background: none; margin: 0; padding: 7px 9px;
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.pc-skill-ico {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--nb-cream-deep); border: 1px solid var(--nb-frame);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; overflow: hidden;
+}
+.pc-skill-ico-img { width: 24px; height: 24px; object-fit: contain; }
+.pc-skill-name { font-size: 13px; font-weight: 800; min-width: 0; }
+.pc-skill-tags { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.pc-skill-tag {
+  font-size: 9.5px; font-weight: 800; border-radius: 999px;
+  padding: 2px 7px; white-space: nowrap;
+  border: 1px solid var(--nb-frame); background: var(--nb-cream-alt); color: var(--nb-ink-dim);
+}
+.pc-skill-tag.is-cost { border-color: #a33b2a; background: rgba(163, 59, 42, 0.12); color: #8a2f20; }
+.pc-skill-tag.is-free { border-color: #4a6b2a; background: rgba(74, 107, 42, 0.12); color: #3f5c22; }
+.pc-skill-tag.is-cd.is-active { border-color: var(--nb-gold-dark); color: var(--nb-gold-deep); font-weight: 900; }
+.pc-skill-chev { font-size: 12px; color: var(--nb-ink-dim); transition: transform 0.16s ease; }
+.pc-skill-card.is-open .pc-skill-chev { transform: rotate(90deg); }
+
+.pc-skill-body {
+  border-top: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+  padding: 8px 9px 9px;
+}
+.pc-skill-desc { font-size: 11.5px; line-height: 1.4; }
+
+.pc-skill-counters { margin-top: 8px; }
+.pc-skill-counters-lbl { font-size: 10px; font-weight: 800; color: var(--nb-ink-dim); margin-bottom: 4px; }
+.pc-skill-counter {
+  display: flex; align-items: flex-start; gap: 7px;
+  border: 1px solid var(--nb-frame); border-radius: 8px;
+  background: var(--nb-cream); padding: 5px 7px; margin-bottom: 4px;
+}
+.pc-skill-counter-ico { font-size: 14px; line-height: 1.2; flex: 0 0 auto; }
+.pc-skill-counter-texts { display: flex; flex-direction: column; min-width: 0; }
+.pc-skill-counter-lbl { font-size: 11px; font-weight: 800; line-height: 1.25; }
+.pc-skill-counter-desc { font-size: 10px; color: var(--nb-ink-dim); line-height: 1.3; }
+.pc-skill-counter-none {
+  font-size: 10.5px; font-style: italic; color: var(--nb-ink-dim);
+  border: 1px dashed var(--nb-frame); border-radius: 8px; padding: 6px 8px;
+}
+
+/* Emplacement réservé : aucun système d'amélioration n'existe encore, la
+   ligne est inerte et l'annonce clairement plutôt que de laisser croire à
+   un bouton. */
+.pc-skill-rank {
+  display: flex; align-items: center; gap: 7px;
+  margin-top: 8px; padding: 6px 8px;
+  border: 1px dashed var(--nb-ink-dim); border-radius: 8px;
+  background: rgba(228, 207, 160, 0.35); color: var(--nb-ink-dim);
+  font-size: 10.5px; font-weight: 700;
+}
+.pc-skill-pips { display: flex; gap: 3px; flex: 0 0 auto; }
+.pc-skill-pips i {
+  display: block; width: 9px; height: 9px; border-radius: 50%;
+  border: 1px solid var(--nb-ink-dim); background: transparent;
+}
+.pc-skill-pips i.is-on { background: var(--nb-gold-dark); border-color: var(--nb-gold-deep); }
+
+/* v3.203.1 : styles du carrousel d'emplacements et de l'aperçu d'attaque
+   retirés. Les deux blocs ont été supprimés de la vue en v3.202.0 et plus
+   aucun fichier de js/ ni index.html ne produit ces classes. Repérés par
+   l'assertion [ENCRE] du harnais, qui listait des conteneurs à fond crème
+   non enregistrés : ils n'avaient pas à l'être, ils n'existaient plus. */
+

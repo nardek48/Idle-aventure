@@ -25,9 +25,15 @@ var SCENE_INTENSITY = {
      stades. Nouveaux multiplicateurs calibres sur ce joueur-la, cible Seb "Periple = pari".
      lootMult remonte en consequence : le Periple perd la moitie de son butin sur un run sur
      trois, il doit rapporter davantage quand il passe. */
-  sentier: { id: "sentier", label: "Sentier", icon: "🌿", depthMax: 6, diffMult: 0.95, lootMult: 1.0, desc: "Court et sûr. Butin standard." },
-  chemin: { id: "chemin", label: "Chemin", icon: "🌲", depthMax: 8, diffMult: 1.70, lootMult: 2.6, desc: "Le format habituel. Exigeant. Butin x2.6." },
-  periple: { id: "periple", label: "Périple", icon: "⛰️", depthMax: 10, diffMult: 2.60, lootMult: 6.0, desc: "Un pari. Beaucoup en reviennent les mains vides. Butin x6." }
+  /* v3.199.0 : diffMult redescendu (0.95/1.70/2.60 -> 0.85/1.30/1.85). Le Souffle devenu
+     mordant apporte sa part de difficulte en interdisant la mono-strategie ; sans ce
+     reajustement le Peripe montait a 50 % d'echec. La cible v3.198.0 (~35 % au Periple) est
+     tenue, mais la difficulte vient desormais davantage des choix et moins des des. lootMult
+     ajuste a la baisse pour la meme raison : le joueur joue plus souvent la voie de
+     puissance, qui rapporte 2.6x, donc l'or moyen par run montait tout seul. */
+  sentier: { id: "sentier", label: "Sentier", icon: "🌿", depthMax: 6, diffMult: 0.85, lootMult: 1.0, desc: "Court et sûr. Butin standard." },
+  chemin: { id: "chemin", label: "Chemin", icon: "🌲", depthMax: 8, diffMult: 1.30, lootMult: 2.4, desc: "Le format habituel. Exigeant. Butin x2.4." },
+  periple: { id: "periple", label: "Périple", icon: "⛰️", depthMax: 10, diffMult: 1.85, lootMult: 5.4, desc: "Un pari. Beaucoup en reviennent les mains vides. Butin x5.4." }
 };
 window.SCENE_INTENSITY = SCENE_INTENSITY;
 
@@ -69,6 +75,22 @@ var SCENE_TEMPLATES = {
     depthMax: 8,
     firstDepthType: "obstacle", // v1 : premier palier toujours lisible, pas de mystère d'entrée
     gatesPerDepth: [2, 3],
+
+    /* v3.199.0 : expedition_faille etait le dernier canevas jamais calibre (point ouvert
+       depuis la session du 09/09). Mesure avant ce lot, joueur optimise : 0.0 a 0.2 %
+       d'echec, 100 % des choix en voie d'endurance, Souffle minimum 98/100. Exactement l'etat
+       dont sortait la Petite Aventure. Il recoit les memes leviers, calibres pour le placer
+       au niveau du Chemin (~10 %) et non du Periple : ses 2 a 3 portes par palier sont son
+       identite, il doit rester le format large ou l'on choisit son chemin.
+       Il ne recoit PAS optionProfiles : il garde le triangle par defaut de SCENE_NODES, plus
+       doux, pour que ses lootRanges (calibres v3.121.0) n'aient pas a etre refaits. */
+    optionsPerNode: 2,
+    maxInjuries: 2,
+    heroScaling: { ref: 21, coef: 0.60, max: 3.5 },
+    breathPerDepth: 5,
+    // Multiplicateur de difficulte propre au canevas, lu par _obstacleFactors quand le run
+    // n'a pas d'intensite (SCENE_INTENSITY est reserve a la Petite Aventure).
+    diffMult: 2.6,
 
     slotWeights: { obstacle: 56, autel: 12, decouverte: 12, source: 8, mystere: 12 },
     pools: {
@@ -425,10 +447,17 @@ var SCENE_TEMPLATES = {
     // butin : ce n'etait pas un triangle mais une droite avec un peage symbolique. Elle
     // rapporte desormais la moitie d'un passage normal, la puissance 2.6 fois plus.
     optionProfiles: {
-      power: { diffMod: 1.12, lootMod: 2.60, breathCost: 3, injurySeverity: "grave" },
-      precision: { diffMod: 1.0, lootMod: 1.15, breathCost: 1.5, injurySeverity: "normale" },
-      endurance: { diffMod: 0.95, lootMod: 0.50, breathCost: 1, injurySeverity: "legere" }
+      power: { diffMod: 1.12, lootMod: 2.60, breathCost: 10, injurySeverity: "grave" },
+      precision: { diffMod: 1.0, lootMod: 1.15, breathCost: 5, injurySeverity: "normale" },
+      endurance: { diffMod: 0.95, lootMod: 0.50, breathCost: 20, injurySeverity: "legere" }
     },
+
+    // v3.199.0 : cout fixe pour franchir un palier, quel que soit le noeud. Donne au Souffle
+    // un plancher indexe sur la LONGUEUR du run (Sentier 30, Chemin 40, Periple 50 sur un
+    // budget de 100) : c'est ce plancher qui rend le format long structurellement plus tendu,
+    // sans toucher a la difficulte des jets. Absent d'un canevas = 0 (les quetes de
+    // deblocage migrees font 2 paliers, aucune pression de Souffle : ce sont des tutoriels).
+    breathPerDepth: 5,
 
     // v3.125.0 : profileWeights remplace slotWeights à la génération (voir SceneEngine.buildCard
     // slotWeightsOverride) — Bourrin : plus de combats (Lot PA2), aucun bloqueur (concept §2,

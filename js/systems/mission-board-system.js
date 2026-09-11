@@ -37,6 +37,23 @@ var ACTIVE_QUEST_CAP_SOURCE_KINDS = ["village", "workshop", "scene", "adventure"
 /* v3.107.1 : une quête secondaire (aventure/chasse) référencée par l'étape Histoire COURANTE et
    ACCEPTÉE (linkTo.section "adventure", cardId "adv_"+questId) est mise en évidence sur le tableau
    de missions — décision Seb : c'est la donnée (linkTo) qui pilote, pas une liste codée en dur. */
+/* v3.205.0 (E5) : une quête élite n'apparaît qu'une fois l'étape d'Histoire
+   requise ATTEINTE — « Le grimoire du veilleur » par défaut, c'est-à-dire le
+   moment où le joueur possède le Grimoire, sans lequel l'archétype de l'élite
+   n'a aucun contre. Comparaison par ID d'étape et jamais par index : la chaîne
+   a déjà changé de longueur par le passé (même patron que _syncCoeurEnemyPool). */
+function isEliteQuestUnlocked(quest) {
+  if (!quest || quest.type !== "elite") return true;
+  var stepId = quest.requiresStoryStep;
+  if (!stepId || !window.STORY_QUESTS || !STORY_QUESTS.forest) return true;
+  var steps = STORY_QUESTS.forest.steps || [];
+  var targetIdx = steps.findIndex(function (s) { return s.id === stepId; });
+  if (targetIdx === -1) return true;
+  var currentIdx = (game.storyQuests && game.storyQuests.forest)
+    ? Number(game.storyQuests.forest.currentStep || 0) : 0;
+  return currentIdx >= targetIdx;
+}
+
 function isStoryLinkedQuest(questId) {
   if (!window.StoryQuestManager) return false;
   var step = StoryQuestManager.getCurrentStep("forest");
@@ -56,6 +73,7 @@ function missionRewardSummary(reward) {
     parts.push(reward.equipmentCount + " objet " + label);
   }
   if (reward.healingPotion) parts.push("1 potion de soin");
+  if (reward.seve) parts.push(reward.seve + " Sève d'Aeswyn"); // v3.205.0 (E5)
   if (reward.resources && typeof reward.resources === "object") {
     Object.keys(reward.resources).forEach(function (k) {
       var def = (window.WAREHOUSE_RESOURCES || {})[k];
@@ -139,7 +157,11 @@ var MissionBoard = {
       // v3.107.4 : décision Seb — tutoriel, pas de surcharge. Une quête secondaire NON LIÉE à
       // l'étape Histoire courante est masquée tant qu'elle n'est pas encore lancée (available) ;
       // une fois en cours (running), elle reste toujours visible (le joueur doit pouvoir la finir).
-      if (!isRunning && quest.category !== "main" && !isStoryLinkedQuest(quest.id)) return;
+      // v3.205.0 (E5) : une quête élite suit son propre gating (isEliteQuestUnlocked),
+      // elle n'est donc pas masquée par la règle « non liée à l'étape Histoire courante ».
+      if (quest.type === "elite") {
+        if (!isRunning && !isEliteQuestUnlocked(quest)) return;
+      } else if (!isRunning && quest.category !== "main" && !isStoryLinkedQuest(quest.id)) return;
       var stepsDone = quest.steps.filter(function (s) { return AdventureQuestManager.isStepComplete(quest, s); }).length;
       var status = isRunning ? "running" : (running ? "locked" : "available");
       var m = {
@@ -147,11 +169,15 @@ var MissionBoard = {
         title: quest.name, blurb: quest.story || "",
         type: "combat", place: missionWorldName(quest.worldId) || "",
         objectiveLabel: stepsDone + "/" + quest.steps.length + " objectifs", progressLabel: "",
-        rewardSummary: missionRewardSummary(quest.reward), badge: "contract", status: status, isMain: quest.category === "main" || isStoryLinkedQuest(quest.id)
+        rewardSummary: missionRewardSummary(quest.reward), badge: quest.type === "elite" ? "elite" : "contract",
+        status: status, isMain: quest.category === "main" || isStoryLinkedQuest(quest.id),
+        isElite: quest.type === "elite" // v3.205.0 (E5)
       };
       if (status === "available") {
         m.accept = function () {
-          if (self.isActiveQuestCapReached()) {
+          // v3.205.0 (E5) : les élites sont HORS du cap de 3 quêtes actives, comme
+          // le Donjon et la Petite Aventure — activité courte à lancement direct.
+          if (quest.type !== "elite" && self.isActiveQuestCapReached()) {
             self.showActiveQuestCapToast();
             return;
           }
@@ -184,7 +210,11 @@ var MissionBoard = {
         title: quest.name, blurb: quest.story || "",
         type: "chasse", place: missionWorldName(quest.worldId) || "",
         objectiveLabel: "Lot de " + quest.lotSize, progressLabel: isRunning ? (inLot + "/" + quest.lotSize) : "",
-        rewardSummary: quest.dropChancePct + " % par kill", badge: "contract", status: status, isMain: false
+        // v3.207.0 : une battue affiche sa prime, pas un taux de drop.
+        rewardSummary: quest.rewardGold
+          ? (formatNumber(quest.rewardGold) + " or par lot")
+          : (quest.dropChancePct + " % par kill"),
+        badge: "contract", status: status, isMain: false
       };
       if (status === "available") {
         m.accept = function () {
@@ -302,6 +332,7 @@ var MissionBoard = {
     return this.list().filter(function (m) {
       return ACTIVE_QUEST_CAP_SOURCE_KINDS.indexOf(m.sourceKind) !== -1
         && m.id !== "petite_aventure_foret"
+        && !m.isElite // v3.205.0 (E5)
         && activeStatus[m.status];
     }).length;
   },
@@ -319,6 +350,7 @@ var MissionBoard = {
     return this.list().filter(function (m) {
       return ACTIVE_QUEST_CAP_SOURCE_KINDS.indexOf(m.sourceKind) !== -1
         && m.id !== "petite_aventure_foret"
+        && !m.isElite // v3.205.0 (E5)
         && activeStatus[m.status];
     }).map(function (m) { return m.title; });
   },

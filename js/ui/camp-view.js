@@ -151,6 +151,33 @@ function buildCampHTML() {
   h += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">Voir le tableau complet</button>';
   h += '</div>';
 
+  // v3.210.0 (décision Seb) : raccourci vers le Grimoire, retiré du menu ☰ au passage.
+  // Le Campement est le lieu de préparation — on règle ses tactiques avant de partir.
+  // Respecte le même verrou que l'entrée de menu qu'il remplace : rien tant que
+  // l'onglet n'est pas débloqué.
+  if (typeof isTabUnlocked !== "function" || isTabUnlocked("grimoire")) {
+    ensureGrimoireRules();
+    var slotCount = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : 6;
+    var kit = (typeof getGrimoireCurrentKit === "function") ? getGrimoireCurrentKit() : null;
+    var activeRules = game.grimoireRules.slice(0, slotCount).filter(function (r) {
+      return r && r.conditionId && r.actionSlot;
+    });
+    var counterCount = activeRules.filter(function (r) {
+      return (typeof isGrimoireRuleCounter === "function") && isGrimoireRuleCounter(r, kit);
+    }).length;
+
+    h += '<div class="camp-card camp-grimoire-card">';
+    h += '<div class="camp-card-title">📕 Grimoire de tactiques</div>';
+    h += '<div class="camp-grimoire-summary">' + activeRules.length + ' / ' + slotCount + ' règles actives'
+      + (counterCount ? ' · <span class="camp-grimoire-counters">⚡ ' + counterCount + ' contre' + (counterCount > 1 ? 's' : '') + '</span>' : '')
+      + '</div>';
+    h += '<div class="camp-grimoire-mode">' + (game.combatMode === "grimoire"
+      ? '📖 Mode Grimoire : tes règles jouent seules.'
+      : '🎯 Mode Tactique : tes règles conseillent, tu choisis.') + '</div>';
+    h += '<button class="settings-btn" type="button" onclick="switchTab(\'grimoire\')">Régler mes tactiques</button>';
+    h += '</div>';
+  }
+
   // v3.181.0 (décision Seb) : carte « Accès rapide » supprimée — la nav du
   // bas couvre ces raccourcis depuis la refonte.
 

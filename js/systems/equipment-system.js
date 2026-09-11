@@ -102,7 +102,10 @@ function addDropToInventory(item) {
     WorldQuestManager.trackLoot(item.rarity);
   }
 
-  if (game.autoSellEquipment) {
+  if (game.autoSellEquipment && !item.unique) {
+    // v3.205.0 : un objet unique (arme d'élite) n'est JAMAIS autovendu. Sans
+    // cette garde, un seuil réglé sur Inhabituel liquidait le trophée à
+    // l'instant même où il tombait.
     var threshold = game.autoSellRarityThreshold || "common";
     var thresholdRank = RARITY_ORDER.indexOf(threshold);
     var dropRank = RARITY_ORDER.indexOf(item.rarity);

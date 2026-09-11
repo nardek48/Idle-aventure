@@ -60,7 +60,9 @@ var AFFLICTIONS = [
   },
   {
     id: "aff_elite",
-    name: "Élite",
+    // v3.205.0 (E5) : renommée — « Élite » désigne désormais une CRÉATURE
+    // (data/elites.js). L'id ne bouge pas : aucune sauvegarde à migrer.
+    name: "Traque",
     icon: "⚔️",
     desc: "Tous les ennemis rencontrés sont des boss, +20% or.",
     modifiers: {

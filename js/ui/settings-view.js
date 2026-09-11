@@ -40,6 +40,13 @@ function buildSettingsHTML() {
   // vrais assets, tous les états), voir atelier-ui.html à la racine. Ouvre
   // dans un onglet séparé : page indépendante du jeu, aucun état partagé.
   h += '<button class="settings-btn" onclick="window.open(\'atelier-ui.html\', \'_blank\')">🎨 Atelier UI</button>';
+  // v3.201.0 : maquette de l'écran Personnage (2 onglets), à valider avant tout
+  // code dans heros-view.js. Même logique que l'Atelier UI : consultable depuis
+  // le téléphone, hors du jeu.
+  h += '<button class="settings-btn" onclick="window.open(\'atelier-heros.html\', \'_blank\')">🛡️ Atelier Héros</button>';
+  // v3.203.4 : atelier des cadres parchemin, à juger sur téléphone avant tout
+  // usage dans le jeu. Aucun écran ne les utilise à ce stade.
+  h += '<button class="settings-btn" onclick="window.open(\'atelier-cadres.html\', \'_blank\')">🖼️ Atelier Cadres</button>';
   h += '</div>';
 
   h += '<div class="settings-info">';

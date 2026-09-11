@@ -14,8 +14,17 @@ function esc(value) {
    est TOUJOURS considéré débloqué (forcé en dur) même si l'état ne le contient pas,
    pour ne jamais se retrouver avec un écran totalement vide en cas de bug/save
    corrompue — c'est l'écran de départ, il doit rester une porte de sortie sûre. */
+/* v3.208.0 : onglets toujours accessibles, jamais présents dans game.unlockedTabs.
+   - admin / combat-sandbox : outils de dev. Le bouton « 🛠️ Admin » des Paramètres appelait
+     switchTab('admin') et retombait silencieusement sur le Campement (bug remonté par Seb).
+     À RETIRER à la fin de la période de test — c'est le seul endroit à toucher.
+   - tutorials : écran d'aide, toujours consultable ; ce sont ses ENTRÉES qui se déverrouillent
+     une à une (voir systems/tutorial-catalog-system.js), comme le Codex. */
+var ALWAYS_UNLOCKED_TABS = { admin: true, "combat-sandbox": true, tutorials: true };
+
 function isTabUnlocked(tabName) {
   if (tabName === "campement") return true;
+  if (ALWAYS_UNLOCKED_TABS[tabName]) return true;
   if (!game.unlockedTabs || typeof game.unlockedTabs !== "object") return false;
   return !!game.unlockedTabs[tabName];
 }
@@ -23,12 +32,18 @@ function isTabUnlocked(tabName) {
 /* Masque/affiche les boutons de la tab-bar du bas selon isTabUnlocked(). Le bouton
    "Menu" (☰) reste toujours visible : il donne accès à Quêtes et Paramètres, débloqués
    par défaut, et à la grille filtrée (voir ui/menu-view.js) pour le reste. */
+/* v3.208.0 (bug Seb) : `display:none` retirait le bouton du flux, et les .tab-btn restants
+   (flex: 1 0 0) se partageaient toute la largeur — en début de partie 3 icônes étirées au
+   lieu des 5 emplacements dessinés dans le cadre. Le bouton reste donc en place, marqué
+   .is-locked : le cadre vide (tab-slot-inactive.png) est conservé, l'icône et le libellé
+   sont masqués, le clic est neutralisé (voir css/02-layout.css). */
 function refreshTabBarVisibility() {
   var buttons = document.querySelectorAll(".tab-btn[data-tab]");
   buttons.forEach(function (btn) {
     var tab = btn.getAttribute("data-tab");
     if (tab === "menu") return; // toujours visible
-    btn.style.display = isTabUnlocked(tab) ? "" : "none";
+    btn.style.display = "";
+    btn.classList.toggle("is-locked", !isTabUnlocked(tab));
   });
 }
 window.isTabUnlocked = isTabUnlocked;
@@ -192,7 +207,8 @@ function switchTab(tabName) {
   // v3.120.0 (Lot S1) : même traitement que combat-active — l'expédition est une activité
   // engageante exclusive (décision Seb), le menu du bas disparaît pendant qu'elle est active.
   document.body.classList.toggle("scene-active", tabName === "scene");
-  if (typeof updateHudPageTitle === "function") updateHudPageTitle();
+  // v3.200.0 : appel à updateHudPageTitle() retiré — le titre de page du HUD n'existe plus,
+  // les bandeaux figés des kframes portent le titre de chaque écran.
   refreshTabBarVisibility();
   renderPanel();
 
@@ -209,7 +225,6 @@ function renderAll() {
   renderStats();
   renderPanel();
   updateQuestBadge();
-  if (typeof updateHudPageTitle === "function") updateHudPageTitle();
   if (typeof renderHealButtons === "function") renderHealButtons();
   if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
   if (typeof renderDefenseButton === "function") renderDefenseButton();
@@ -233,6 +248,11 @@ function renderPanel() {
   var savedInnerScrollTop = innerScroll ? innerScroll.scrollTop : null;
 
   container.classList.toggle("sandbox-wide-mode", game.activeTab === "combat-sandbox" || game.activeTab === "admin");
+
+  // v3.212.0 : la feuille basse du Grimoire vit hors de #panel-container (isolation:
+  // isolate y enfermait son z-index sous la barre du bas). Alimentée à chaque rendu,
+  // et vidée dès qu'on quitte l'écran.
+  if (typeof renderGrimoireSheet === "function") renderGrimoireSheet(game.activeTab === "grimoire");
 
   // v3.100.0 : vérification opportuniste de l'étape Histoire (throttlée 1/s dans le manager,
   // ne déclenche jamais de rendu — en combat renderPanel tourne à chaque kill).
@@ -297,6 +317,9 @@ function renderPanel() {
       break;
     case "afflictions":
       container.innerHTML = buildAfflictionsHTML();
+      break;
+    case "tutorials": // v3.208.0 : ui/tutorials-view.js (consultation des popups pédagogiques)
+      container.innerHTML = buildTutorialsHTML();
       break;
     default:
       container.innerHTML = "";

@@ -71,9 +71,12 @@ var BOSS_DB = {
 };
 
 (function () {
-  var allIds = Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB));
+  // v3.205.0 (E5) : les élites rejoignent la table — sans ça elles n'auraient
+  // aucun palier de bonus de bestiaire. Elles suivent la grille des boss.
+  var eliteIds = window.ELITE_DB ? Object.keys(ELITE_DB) : [];
+  var allIds = Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB)).concat(eliteIds);
   allIds.forEach(function (id) {
-    var isBoss = !!BOSS_DB[id];
+    var isBoss = !!BOSS_DB[id] || eliteIds.indexOf(id) !== -1;
     BESTIARY_BONUS_CONFIG[id] = isBoss ? [
       { kills: 3, goldBonus: 0.02, essenceBonus: 0.02, lootBonus: 0 },
       { kills: 10, goldBonus: 0.05, essenceBonus: 0.05, lootBonus: 2 },

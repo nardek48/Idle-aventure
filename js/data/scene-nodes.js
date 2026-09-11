@@ -14,10 +14,22 @@ var SCENE_NODES = {
      peu de Souffle, blessure légère. precision = équilibré, profil neutre (référence ×1).
      Lu par SceneRunManager.resolveObstacle()/getObstacleEstimate() via optionKey. Purement
      des données (aucune logique), cohérent avec le reste de ce fichier. */
+  /* v3.199.0 (lot Souffle) : les couts 3/1.5/1 rendaient la ressource inerte — un Periple de
+     10 paliers ne pouvait depenser que 30 Souffle sur 100, et la mesure de session le
+     confirmait (Souffle minimum moyen 96/100, aucune option jamais bloquee sur 180 000 runs).
+     Regime desormais commun a tous les canevas, avec l'AXE INVERSE par rapport a v3.195.0 :
+
+       endurance 20 — la voie sure est la voie LENTE, celle qui vide. C'est son prix.
+       precision   5 — le geste juste est econome : l'option soutenable sur la duree.
+       power      10 — un coup de reins : vite fait, cher en risque, pas en duree.
+
+     Chaque voie est maintenant la pire sur exactement un axe. Avant, l'endurance etait la
+     meilleure a la fois sur le risque ET sur le Souffle, pour -20 % de butin : elle n'avait
+     aucune contrepartie reelle. */
   optionProfiles: {
-    power: { diffMod: 1.05, lootMod: 1.20, breathCost: 3, injurySeverity: "grave" },
-    precision: { diffMod: 1.0, lootMod: 1.0, breathCost: 1.5, injurySeverity: "normale" },
-    endurance: { diffMod: 0.92, lootMod: 0.8, breathCost: 1, injurySeverity: "legere" }
+    power: { diffMod: 1.05, lootMod: 1.20, breathCost: 10, injurySeverity: "grave" },
+    precision: { diffMod: 1.0, lootMod: 1.0, breathCost: 5, injurySeverity: "normale" },
+    endurance: { diffMod: 0.92, lootMod: 0.8, breathCost: 20, injurySeverity: "legere" }
   },
 
   /* Malus de stat effective par sévérité de blessure (statEffective, scene-run-system.js) —

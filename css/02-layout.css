@@ -107,9 +107,10 @@
 
 /* v2.77 : colonne qui empile les ressources et le titre de page,
    pour que le titre colle juste sous les ressources au lieu d'être
-   une ligne à part sur toute la largeur du HUD (voir nb-hud-page-title
-   ci-dessous). Reste à gauche du portrait mini du héros, qui garde sa
-   propre largeur fixe à droite. */
+   une ligne à part sur toute la largeur du HUD. Reste à gauche du
+   portrait mini du héros, qui garde sa propre largeur fixe à droite.
+   v3.200.0 : ne contient plus que les ressources, le titre de page
+   ayant été retiré. */
 .nb-hud-left-col {
   display: flex;
   flex-direction: column;
@@ -118,28 +119,19 @@
   min-width: 0;
 }
 
-/* v2.76 : titre de page centralisé dans le HUD, sous la ligne de
-   ressources — remplace les ".panel-title" sticky qui étaient
-   dupliqués en haut de chaque écran (voir ui/hud-view.js,
-   updateHudPageTitle()). Masqué (display:none, posé en JS) sur
-   Combat.
-   v2.77 : remonté juste sous .nb-hud-resources (voir .nb-hud-left-col
-   ci-dessus) — marge réduite, plus de largeur 100% du HUD entier. */
-/* v2.83.52 : rangée contenant le bouton sac + le titre de page, côte
-   à côte, sous les ressources — le bouton reste visible même quand le
-   titre est masqué sur Combat (display:none ne s'applique qu'à
-   #hud-page-title lui-même, pas à cette rangée). */
-.nb-hud-title-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
+/* v3.200.0 : .nb-hud-title-row et .nb-hud-page-title retirés avec le
+   titre de page du HUD (voir ui/hud-view.js). La rangée ne contenait
+   plus que le titre depuis que le bouton sac est passé dans
+   .nb-hud-shortcuts, elle serait restée un conteneur vide.
+   .nb-hud-left-col est conservé : il porte encore les ressources et
+   sert de cible à la règle body.combat-active plus bas. */
 
-/* v3.17 : raccourcis Équipement + Ascension, sortis de
-   .nb-hud-title-row (où ils étaient nichés à gauche, sous les
-   ressources) — colonne dédiée entre .nb-hud-left-col et le portrait
-   du héros, empilée verticalement, centrée sur la hauteur du HUD pour
-   s'aligner avec le portrait juste à côté. */
+/* v3.17 : raccourcis Équipement + Ascension, sortis de la rangée de
+   titre du HUD (où ils étaient nichés à gauche, sous les ressources ;
+   cette rangée a été retirée en v3.200.0) — colonne dédiée entre
+   .nb-hud-left-col et le portrait du héros, empilée verticalement,
+   centrée sur la hauteur du HUD pour s'aligner avec le portrait juste
+   à côté. */
 .nb-hud-shortcuts {
   display: flex;
   flex-direction: column;
@@ -219,20 +211,6 @@
   height: 40px;
   object-fit: contain;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
-}
-
-.nb-hud-page-title {
-  width: 100%;
-  margin-top: 2px;
-  padding: 8px 20px; /* espace pour que le texte ne touche pas le cadre */
-  text-align: center;
-
-  font-size: clamp(14.72px, calc(7.27px + 2.33vw), 17.28px);
-  font-weight: 700;
-  color: #5a3518; /* brun foncé */
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-
-  background: url('../images/Borders/title.png') center / 100% 90% no-repeat;
 }
 
 /* v3.131.0 : .workshop-unlock-banner retiré (bandeau HUD "Les fondations", jugé inutile —
@@ -541,6 +519,26 @@
 
 .tab-btn.active .tab-icon-frame {
   background-image: url('../images/Icons/menu_icons/tab-slot-active.png');
+}
+
+/* v3.208.0 : emplacement pas encore débloqué. Le cadre reste dessiné (les 5 cases du
+   bandeau gardent leur largeur, cf. refreshTabBarVisibility), seul son contenu disparaît —
+   ça lit comme une case à débloquer, pas comme un trou dans l'ardoise. */
+.tab-btn.is-locked {
+  pointer-events: none;
+}
+
+.tab-btn.is-locked .tab-icon-frame {
+  opacity: 0.45;
+}
+
+/* Spécificité alignée sur `#tab-bar .tab-icon-img` plus bas dans ce fichier : sans le
+   préfixe d'id, le `display: none` perdait l'arbitrage et l'icône restait visible en
+   fantôme dans le cadre verrouillé (mesuré au rendu, invisible à l'œil sur maquette). */
+#tab-bar .tab-btn.is-locked .tab-icon-img,
+#tab-bar .tab-btn.is-locked .tab-label,
+#tab-bar .tab-btn.is-locked .tab-badge {
+  display: none;
 }
 
 .tab-btn:active {

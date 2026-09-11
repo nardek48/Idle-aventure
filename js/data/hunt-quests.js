@@ -50,6 +50,38 @@ var HUNT_QUESTS = {
     resourceKey: "viande",
     dropChancePct: 50, // v3.100.3 : 20 -> 50 (chasse active = vraie source de viande en Acte II, décision Seb)
     lotSize: 10
+  },
+
+  /* v3.207.0 — Battue : farm d'OR pur, répétable à volonté (décision Seb).
+     Réutilise le moteur des chasses (lots relancés indéfiniment) plutôt que
+     d'ouvrir un système de plus. Deux différences avec une chasse :
+       - pas de resourceKey ni de dropChancePct : aucune ressource ne tombe
+       - rewardGold : une prime versée à la fin du lot, pas à chaque kill
+     Aucun enemyFilter : n'importe quel monstre de la zone compte, c'est le
+     principe d'une battue.
+     Aucun gating narratif : disponible dès l'ouverture du tableau de missions,
+     donc bien avant le Donjon (forest_14) comme demandé — un joueur bloqué
+     doit pouvoir farmer de l'or pour ses potions et son équipement.
+     Butin (matériaux, ingrédients) volontairement laissé de côté pour l'instant. */
+  hq_forest_battue: {
+    id: "hq_forest_battue",
+    type: "gold",
+    section: "resource",
+    difficulty: "easy",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "forest",
+    adventureIndex: 0,
+    name: "Battue en Forêt",
+    story: "Aldric paie à la tête. Vingt bêtes, et la bourse s'ouvre — il ne demande ni laquelle, "
+      + "ni pourquoi. La Forêt en a toujours vingt de plus.",
+    icon: "🪙",
+    lotSize: 20,
+    // 120 or = exactement le double de ce que rapportent déjà 20 kills en Lisière
+    // (120 or bruts, ~3 min). Repères : amélioration de Force 45-122 or au niveau
+    // 8-15, potion mineure 150. Une source d'or INFINIE ne doit pas dépasser le
+    // rythme des quêtes uniques (élite : 700-1200 or).
+    rewardGold: 120
   }
 };
 

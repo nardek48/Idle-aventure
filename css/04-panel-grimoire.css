@@ -1,107 +1,508 @@
-/* =========================
-   Grimoire de tactiques (v3.50.0)
-   ========================= */
+/* ============================================================
+   Grimoire de tactiques
 
-.grimoire-rule-card {
-  /* hérite de .panel-card (04-panels-common.css) — pas de surcharge
-     de la carte elle-même, juste les champs internes ci-dessous */
+   v3.210.0 — REFONTE VISUELLE (atelier Seb). L'ancien écran empilait six
+   cartes d'édition complètes : 3 462 px de haut à 390 px de large, dont
+   1 429 px avant la première règle. Ici deux niveaux :
+     LISTE  une ligne par règle (~56 px), tout tient dans un écran ;
+     FICHE  ouverte au toucher, deux listes déroulantes natives.
+   Supprimés : Mode Expert et badges d'état de règle (décision Seb).
+   ============================================================ */
+
+/* --- Restauration de l'encre sombre ---
+   .kframe bascule --nb-ink en CRÈME : tout conteneur à fond crème doit
+   restaurer l'encre sombre, sinon il est illisible sur son propre fond.
+   Ces sélecteurs sont AUSSI déclarés dans css/00-kframe-scope.css, comme
+   l'exige la règle inscrite en tête de ce fichier ; la déclaration locale
+   couvre la feuille basse, qui vit HORS du .kframe (position: fixed). */
+.grimoire-rule-row,
+.grimoire-card,
+.grimoire-sheet {
+  --nb-ink: #3a2c1a;
+  --nb-ink-dim: #8a7a5c;
 }
 
-.grimoire-field-label {
-  display: block;
-  margin: 10px 0 4px;
-  font-size: 12px;
-  font-weight: 800;
+/* ============================================================
+   EN-TÊTE — sélecteur de mode de combat + aide
+   ============================================================ */
+.grimoire-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+/* Le bandeau d'avertissement disait seulement d'aller basculer le mode
+   ailleurs. L'interrupteur est ici, toujours visible, et indique le mode actif. */
+.grimoire-mode {
+  flex: 1;
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-pill);
+  background-color: rgba(0, 0, 0, 0.32);
+}
+
+.grimoire-mode button {
+  flex: 1;
+  padding: 7px 4px;
+  border: 0;
+  border-radius: var(--nb-radius-pill);
+  background-color: transparent;
   color: var(--nb-ink);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  opacity: 0.65;
+}
+
+.grimoire-mode button.is-on {
+  background-color: var(--nb-gold);
+  color: #3a2c1a;
+  opacity: 1;
+  font-weight: 800;
+}
+
+/* Une seule ligne d'explication, qui change avec le mode. */
+.grimoire-mode-desc {
+  margin: 0 0 10px;
+  padding: 0 6px;
+  font-size: 0.73rem;
+  line-height: 1.35;
+  color: var(--nb-ink);
+  opacity: 0.85;
+}
+
+/* Le « ? » remplace les 367 px de prose d'introduction de l'ancien écran. */
+.grimoire-help-btn {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--nb-frame);
+  background-color: rgba(0, 0, 0, 0.3);
+  color: var(--nb-gold);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+/* ============================================================
+   LIGNE DE RÈGLE
+   ============================================================ */
+.grimoire-rule-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 8px 7px 4px;
+  margin-bottom: 7px;
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  background-color: var(--nb-cream);
+  color: var(--nb-ink);
+  box-shadow: var(--nb-shadow-card);
+  text-align: left;
+  font-family: inherit;
+}
+
+/* Les règles sont évaluées DANS L'ORDRE ; l'ancien écran ne le montrait nulle part. */
+.grimoire-rule-order {
+  flex: 0 0 auto;
+  width: 15px;
+  text-align: center;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--nb-ink-dim);
+}
+
+.grimoire-rule-icon {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  border-radius: 50%;
+  border: 2px solid var(--nb-frame);
+  background-color: var(--nb-cream-alt);
+}
+
+.grimoire-rule-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.grimoire-rule-text {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.grimoire-rule-arrow {
+  color: var(--nb-gold-dark);
+  font-weight: 800;
+  padding: 0 2px;
+}
+
+.grimoire-rule-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  color: var(--nb-ink-dim);
+}
+
+.grimoire-rule-chevron {
+  flex: 0 0 auto;
+  font-size: 1.1rem;
+  color: var(--nb-gold-dark);
+}
+
+/* Marqueur de contre : principal outil pédagogique du système, il reste
+   visible depuis la liste — c'est la récompense d'un bon appariement. */
+.grimoire-counter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 5px;
+  padding: 1px 6px;
+  border-radius: var(--nb-radius-pill);
+  background-color: rgba(47, 158, 90, 0.16);
+  border: 1px solid rgba(47, 158, 90, 0.55);
+  color: #1f6b3d;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+/* --- Emplacement vide --- */
+.grimoire-rule-row.is-empty {
+  background-color: rgba(0, 0, 0, 0.22);
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.grimoire-rule-row.is-empty .grimoire-rule-icon {
+  background-color: transparent;
+  border-style: dashed;
+  opacity: 0.7;
+}
+
+.grimoire-rule-row.is-empty .grimoire-rule-text,
+.grimoire-rule-row.is-empty .grimoire-rule-order,
+.grimoire-rule-row.is-empty .grimoire-rule-sub {
+  color: var(--nb-ink-inverse);
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+/* --- Emplacement verrouillé --- */
+.grimoire-rule-row.is-locked {
+  background-color: var(--nb-cream-deep);
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+.grimoire-rule-row.is-locked .grimoire-rule-icon { filter: grayscale(1); }
+.grimoire-rule-row.is-locked .grimoire-rule-chevron { visibility: hidden; }
+
+.grimoire-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 8px;
+  color: var(--nb-ink);
+  font-size: 0.74rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.grimoire-divider::before,
+.grimoire-divider::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  background-color: currentColor;
+  opacity: 0.35;
+}
+
+.grimoire-foot {
+  display: flex;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.grimoire-foot button {
+  flex: 1;
+  padding: 9px 8px;
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  background-color: rgba(0, 0, 0, 0.3);
+  color: var(--nb-ink);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.grimoire-foot-badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: var(--nb-radius-pill);
+  background-color: var(--nb-gold);
+  color: #3a2c1a;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+/* ============================================================
+   FICHE — listes déroulantes natives, une seule page
+   ============================================================ */
+.grimoire-back-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  background-color: rgba(0, 0, 0, 0.3);
+  color: var(--nb-ink);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.grimoire-card {
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  background-color: var(--nb-cream);
+  color: var(--nb-ink);
+  box-shadow: var(--nb-shadow-card);
+}
+
+.grimoire-card-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  color: var(--nb-ink-dim);
+  margin-bottom: 7px;
 }
 
-.grimoire-field-label:first-of-type {
-  margin-top: 0;
-}
-
+/* Liste déroulante NATIVE : sur iPhone elle ouvre le sélecteur système,
+   plus rapide qu'une page de choix et déjà familier. */
 .grimoire-select {
   width: 100%;
-  min-height: 44px;
-  padding: 8px 10px;
-  background: var(--nb-cream);
-  color: var(--nb-ink);
+  min-height: 46px;
+  padding: 9px 10px;
   border: 2px solid var(--nb-frame);
   border-radius: var(--nb-radius-sm);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
+  background-color: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
 }
 
 .grimoire-select:disabled {
   opacity: 0.5;
-  cursor: not-allowed;
 }
 
-.grimoire-condition-desc,
-.grimoire-action-desc {
-  margin-top: 4px;
-  margin-bottom: 0;
+.grimoire-select-desc {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.74rem;
   font-style: italic;
-}
-
-/* v3.52.0 : message informatif quand la règle en cours d'édition est
-   un contre valide (action.counters inclut la condition choisie) —
-   distinct des descriptions italiques ci-dessus (fond teinté, texte
-   en gras) pour bien attirer l'œil sur cette info importante. */
-.grimoire-counter-active {
-  margin-top: 8px;
-  margin-bottom: 0;
-  padding: 8px 10px;
-  background: rgba(250, 204, 21, 0.18);
-  border: 1px solid var(--nb-gold-dark);
-  border-radius: var(--nb-radius-sm);
-  font-weight: 700;
-  font-style: normal;
-  color: var(--nb-ink);
-}
-
-/* v3.70.0 : même principe que .grimoire-counter-active ci-dessus, mais
-   teinte VIOLETTE distincte (pas dorée) — pour les effets d'archétype
-   (Enragé/Corrupteur), volontairement différente pour ne jamais laisser
-   croire que c'est une annulation comme les contres classiques. */
-.grimoire-archetype-active {
-  margin-top: 8px;
-  margin-bottom: 0;
-  padding: 8px 10px;
-  background: rgba(124, 58, 237, 0.15);
-  border: 1px solid #7c3aed;
-  border-radius: var(--nb-radius-sm);
-  font-weight: 700;
-  font-style: normal;
-  color: var(--nb-ink);
-}
-
-.grimoire-warning-card {
-  border-color: #b3261e;
-}
-
-/* v3.51.0 : carte de règle pas encore débloquée (jalon de monde non
-   atteint, voir getGrimoireSlotCount()) — grisée mais TOUJOURS
-   visible (jamais masquée), pour montrer au joueur ce qui l'attend.
-   Les 2 sélecteurs internes portent déjà leur propre grisage via
-   .grimoire-select:disabled ci-dessus ; cette classe grise la carte
-   entière (titre, texte de déblocage compris) pour un effet cohérent. */
-.grimoire-rule-locked {
-  opacity: 0.55;
-}
-
-.grimoire-rule-locked h3 {
   color: var(--nb-ink-dim);
+  line-height: 1.35;
+}
+
+/* Verdict de l'appariement : la seule information que la fiche ajoute. */
+.grimoire-verdict {
+  display: flex;
+  gap: 8px;
+  padding: 9px 10px;
+  margin-top: 10px;
+  border-radius: var(--nb-radius-sm);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.grimoire-verdict.is-counter {
+  background-color: rgba(47, 158, 90, 0.15);
+  border: 2px solid rgba(47, 158, 90, 0.5);
+  color: #1f6b3d;
+}
+
+.grimoire-verdict.is-neutral {
+  background-color: rgba(0, 0, 0, 0.06);
+  border: 2px solid var(--nb-frame-light);
+  color: var(--nb-ink-dim);
+}
+
+.grimoire-hint {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  color: var(--nb-ink-dim);
+  line-height: 1.35;
+}
+
+.grimoire-clear-btn {
+  width: 100%;
+  padding: 9px;
+  border: 2px dashed var(--nb-frame);
+  border-radius: var(--nb-radius-sm);
+  background-color: transparent;
+  color: var(--nb-ink-inverse);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+/* ============================================================
+   FEUILLE BASSE — aide et presets
+   Ancrée en bas : la liste reste visible derrière, on ne perd pas
+   le contexte comme avec une page pleine. Rendue HORS du .nb-page-frame
+   (voir buildGrimoireHTML) pour que position:fixed ne soit pas piégé
+   par un ancêtre transformé.
+   ============================================================ */
+.grimoire-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background-color: rgba(10, 7, 18, 0.66);
+}
+
+.grimoire-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 901;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 14px calc(16px + var(--safe-bottom));
+  border-top: 3px solid var(--nb-frame);
+  border-radius: var(--nb-radius-lg) var(--nb-radius-lg) 0 0;
+  background-color: var(--nb-cream);
+  color: var(--nb-ink);
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.45);
+}
+
+.grimoire-sheet-handle {
+  width: 44px;
+  height: 5px;
+  margin: 2px auto 10px;
+  border-radius: var(--nb-radius-pill);
+  background-color: var(--nb-frame-light);
+  flex: 0 0 auto;
+}
+
+.grimoire-sheet-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 1rem;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+.grimoire-sheet-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+}
+
+.grimoire-sheet-close {
+  width: 100%;
+  margin-top: 12px;
+  padding: 11px;
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  background-color: var(--nb-gold);
+  color: #3a2c1a;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+/* --- Contenu de la feuille d'aide --- */
+.grimoire-help-point {
+  display: flex;
+  gap: 9px;
+  margin-bottom: 11px;
+}
+
+.grimoire-help-point-icon {
+  flex: 0 0 auto;
+  font-size: 1.1rem;
+  width: 26px;
+  text-align: center;
+}
+
+.grimoire-help-point-text {
+  font-size: 0.8rem;
+  line-height: 1.45;
 }
 
 /* =========================
    v3.65.0 : Presets nommés (Phase 5)
    ========================= */
 
+/* v3.210.0 : les cartes de preset vivent maintenant dans une feuille basse.
+   Empilées (en-tête, date, puis rangée de boutons) elles coûtaient ~230 px
+   chacune et remplissaient la feuille à elles seules. GRILLE plutôt que flex :
+   les trois blocs sont des FRÈRES dans le DOM (voir buildGrimoirePresetCardHTML),
+   une rangée flex les ferait se chevaucher. Ici, nom et date occupent la colonne
+   de gauche sur deux lignes, les boutons la colonne de droite sur toute la hauteur. */
 .grimoire-preset-card {
-  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto; /* minmax(0,...) et non 1fr : sinon le plancher min-content de la colonne de gauche écrase la colonne des boutons, qui débordent de la carte */
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 10px;
+  padding: 9px 11px;
+  margin-bottom: 7px;
+}
+
+.grimoire-preset-card .grimoire-preset-header {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0; /* sans ça, le nom impose sa largeur min-content et pousse les boutons hors carte */
+  margin-bottom: 0;
+}
+
+.grimoire-preset-card .grimoire-preset-date {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 1px 0 0;
+}
+
+.grimoire-preset-card .grimoire-preset-actions {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  gap: 6px;
+}
+
+.grimoire-preset-card .grimoire-preset-load-btn {
+  /* .settings-btn porte width:100% ; la base flex `auto` reprend cette largeur
+     et le bouton avalait toute la colonne, éjectant la corbeille hors de la
+     carte. Largeur explicite, mesurée au rendu. */
+  flex: 0 0 auto;
+  width: 86px;
+}
+
+.grimoire-preset-card .grimoire-preset-delete-btn {
+  flex: 0 0 40px;
 }
 
 .grimoire-preset-header {
@@ -266,4 +667,45 @@
   font-size: 11px;
   font-family: monospace;
   color: var(--nb-ink-dim);
+}
+
+/* --- Contenu de la feuille Rapport (v3.211.0) ---
+   Le corps vient de buildCombatReportBodyHTML() : ses cartes sont des .panel-card,
+   dimensionnées pour une superposition plein écran. On resserre pour la feuille. */
+.grimoire-report-body .combat-report-summary {
+  margin-bottom: 10px;
+}
+
+.grimoire-report-body .combat-report-slot-card {
+  padding: 9px 11px;
+  margin-bottom: 7px;
+}
+
+.grimoire-report-body .combat-report-slot-card h3 {
+  margin-bottom: 3px;
+  font-size: 0.88rem;
+}
+
+.grimoire-report-body .grimoire-clear-btn {
+  margin-top: 4px;
+  color: var(--nb-ink);
+}
+
+/* --- Sortie en cours : écran en lecture seule (v3.212.0) --- */
+.grimoire-locked-notice {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+  padding: 7px 10px;
+  margin-bottom: 10px;
+  border-radius: var(--nb-radius-sm);
+  border-left: 4px solid var(--hp-yellow);
+  background-color: rgba(0, 0, 0, 0.3);
+  color: var(--nb-ink);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.grimoire-mode.is-locked {
+  opacity: 0.55;
 }

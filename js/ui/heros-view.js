@@ -10,125 +10,18 @@ function setHerosSubTab(tab) {
   if (typeof renderPanel === "function") renderPanel();
 }
 
-function buildCharacterAbilityCardHTML(config, cssClass, remainingRounds, cooldownRounds) {
-  var onCooldown = remainingRounds > 0;
-  var cdText = onCooldown ? remainingRounds + " r" : (cooldownRounds || 0) + " r"; // v3.102.0 : en rounds
+/* v3.203.0 : buildCharacterAbilityCardHTML() et buildCharacterAbilitiesHTML()
+   retirées. Elles rendaient les capacités en cartes fermées, sans dire QUAND
+   s'en servir. Remplacées par buildHeroSkillCardHTML(), qui déplie les contres
+   du Grimoire. Plus aucun appelant dans js/ ni dans index.html. */
 
-  var h = '<div class="ability-card ' + cssClass + '">';
-  h += '<div class="ability-icon-wrap">' + renderIconOrEmojiHTML(config.icon, "ability-icon", config.name) + '</div>';
-  h += '<div class="ability-body">';
-  h += '<div class="ability-name">' + esc(config.name) + '</div>';
-  h += '<div class="ability-desc">' + esc(config.desc) + '</div>';
-  if (config.counterLabels && config.counterLabels.length) {
-    h += '<div class="ability-counter">⚡ Contre : ' + esc(config.counterLabels.join(", ")) + '</div>';
-  }
-  h += '</div>';
-  h += '<div class="ability-cd' + (onCooldown ? ' is-active' : '') + '">' + esc(cdText) + '</div>';
-  h += '</div>';
-  return h;
-}
-
-function buildCharacterAbilitiesHTML() {
-  if (!window.ClassCombatManager || typeof ClassCombatManager.getAction !== "function") return "";
-
-  var h = '';
-  var slots = ["skill1", "skill2", "skill3", "defense"];
-  slots.forEach(function (slot) {
-    var action = ClassCombatManager.getAction(slot);
-    if (!action) return;
-
-    var remainingRounds = (game.classCooldowns && typeof game.classCooldowns[action.id] === "number") ? game.classCooldowns[action.id] : 0;
-    var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "🛡️" : "✨");
-    var counterLabels = (typeof getGrimoireCounterLabels === "function") ? getGrimoireCounterLabels(action) : [];
-    var config = { icon: icon, name: action.label, desc: action.description, counterLabels: counterLabels };
-    var cssClass = action.type === "defense" ? "defense" : "attack";
-    h += buildCharacterAbilityCardHTML(config, cssClass, remainingRounds, action.cooldownRounds);
-  });
-
-  return h;
-}
-
-function buildHeroCarouselHTML() {
-  if (!window.HeroSlotManager) return "";
-
-  var maxSlots = HeroSlotManager.getMaxSlots();
-  var activeSlot = HeroSlotManager.getActiveSlot();
-  var h = '<div class="hero-carousel-row">';
-
-  for (var i = 1; i <= maxSlots; i++) {
-    var isActive = i === activeSlot;
-    var summary = HeroSlotManager.getSlotSummary(i);
-
-    if (summary) {
-      h += '<div class="hero-carousel-slot">';
-      h += '<button type="button" class="hero-card hero-carousel-card' + (isActive ? ' active' : '') + '" onclick="selectHeroSlot(' + i + ')">';
-      if (summary.heroImage) {
-        h += '<img src="' + esc(summary.heroImage) + '" alt="' + esc(summary.heroName) + '" class="hero-card-image">';
-      }
-      h += '<div class="hero-card-name">' + esc(summary.playerName || summary.heroName) + '</div>';
-      h += '<div class="hero-carousel-sub">Niv. ' + esc(summary.heroLevel) + (isActive ? ' · actif' : '') + '</div>';
-      h += '</button>';
-      h += '<button type="button" class="hero-carousel-delete-btn" aria-label="Supprimer ce héros" onclick="deleteHeroSlot(' + i + ', event)">🗑️</button>';
-      h += '</div>';
-    } else {
-      h += '<button type="button" class="hero-card hero-carousel-card hero-carousel-empty" onclick="createNewHeroInSlot(' + i + ')">';
-      h += '<div class="hero-carousel-empty-icon">+</div>';
-      h += '<div class="hero-card-name">Nouveau héros</div>';
-      h += '</button>';
-    }
-  }
-
-  h += '</div>';
-  return h;
-}
-
-function selectHeroSlot(slotNumber) {
-  if (!window.HeroSlotManager) return;
-  if (slotNumber === HeroSlotManager.getActiveSlot()) return;
-
-  var summary = HeroSlotManager.getSlotSummary(slotNumber);
-  var label = summary ? (summary.playerName || summary.heroName) : ("Héros " + slotNumber);
-
-  if (!window.confirm("Passer à " + label + " ? La partie actuelle est sauvegardée automatiquement.")) return;
-
-  var ok = HeroSlotManager.switchToSlot(slotNumber);
-  if (ok) {
-    if (typeof switchTab === "function") switchTab("campement");
-    if (typeof renderAll === "function") renderAll();
-    if (typeof showToast === "function") showToast("Héros changé : " + label, 1200);
-  }
-}
-
-function createNewHeroInSlot(slotNumber) {
-  if (!window.HeroSlotManager) return;
-
-  if (!window.confirm("Créer un nouveau héros dans cet emplacement ? La partie actuelle est sauvegardée automatiquement, tu pourras y revenir.")) return;
-
-  HeroSlotManager.createHeroInSlot(slotNumber);
-}
-
-function deleteHeroSlot(slotNumber, event) {
-  if (event) event.stopPropagation();
-  if (!window.HeroSlotManager) return;
-
-  var summary = HeroSlotManager.getSlotSummary(slotNumber);
-  var label = summary ? (summary.playerName || summary.heroName) : ("Héros " + slotNumber);
-
-  var doDelete = function () {
-    var ok = HeroSlotManager.deleteSlot(slotNumber);
-    if (ok) {
-      if (typeof renderAll === "function") renderAll();
-      if (typeof showToast === "function") showToast("Héros supprimé : " + label, 1500);
-    }
-  };
-
-  var msg = "Supprimer définitivement " + label + " ? Toute sa progression sera perdue. Cette action est irréversible.";
-  if (typeof showConfirmModal === "function") {
-    showConfirmModal("Supprimer ce héros ?", msg, "🗑️", doDelete);
-  } else if (window.confirm(msg)) {
-    doDelete();
-  }
-}
+/* v3.202.0 : le carrousel d'emplacements et ses trois actions (sélection,
+   création, suppression) sont RETIRÉS de cet écran. Ils dupliquaient, en
+   moins complet, la gestion d'emplacements de l'écran titre
+   (ui/title-screen-view.js : monde, temps de jeu, date de sauvegarde,
+   confirmation de suppression dédiée), avec des window.confirm() natifs
+   étrangers au reste de l'app. Le bouton "Mes héros" du Résumé ouvre
+   désormais cet écran-là : un seul endroit gère les emplacements. */
 
 function buildPcStatRowHTML(icon, label, value) {
   return ''
@@ -139,65 +32,211 @@ function buildPcStatRowHTML(icon, label, value) {
     + '</div>';
 }
 
-function buildHeroFicheHTML() {
-  var hero = getSelectedHero();
+/* v3.202.0 — ÉCRAN 1 : RÉSUMÉ (maquette atelier-heros.html, validée par Seb).
+   Cet écran ne fait que LIRE : aucun achat, aucun dépliage, seulement des
+   sorties. C'est ce qui lui permet de tenir sur une hauteur d'écran, ce que
+   l'ancienne fiche suivie du carrousel ne faisait pas.
+   Ce qu'il apporte par rapport à l'ancienne fiche :
+     - la CLASSE et sa ressource, affichées nulle part depuis v3.34.0 ;
+     - deux raccourcis renseignés vers les deux autres sous-onglets ;
+     - une sortie vers la gestion d'emplacements, au lieu du carrousel. */
+
+/* Ressource de classe (Rage / Concentration / Mana). Lecture SEULE de
+   game.classResource : on n'appelle pas ensureForCurrentClass() ici, un écran
+   d'affichage n'a pas à créer d'état de combat. Hors combat la valeur est
+   nulle, et c'est très bien : la jauge dit ce que le héros EST, pas ce qu'il
+   a en réserve à cet instant. */
+function getHeroSummaryResource(cls) {
+  if (!cls || !cls.resource) return null;
+  var state = game.classResource;
+  var sameClass = !!(state && state.classId === cls.id);
+  var current = (sameClass && typeof state.current === "number") ? state.current : 0;
+  var max = (sameClass && state.max) ? state.max : Number(cls.resource.max || 100);
+  return { label: cls.resource.label, current: current, max: Math.max(1, max) };
+}
+
+/* Marge d'entraînement restante, tous entraînements confondus. Alimente le
+   raccourci "Stats" : sans ce chiffre, le raccourci serait une flèche muette. */
+function getHeroTrainingProgress() {
+  if (typeof UPGRADES === "undefined") return null;
+  var done = 0, total = 0;
+  UPGRADES.forEach(function (u) {
+    if (HEROS_TRAINING_UPGRADE_IDS.indexOf(u.id) === -1) return;
+    done += Number((game.upgrades && game.upgrades[u.id]) || 0);
+    total += Number(u.maxLevel || 0);
+  });
+  if (total <= 0) return null;
+  return {
+    done: done,
+    total: total,
+    left: Math.max(0, total - done),
+    pct: Math.max(0, Math.min(100, Math.round((done / total) * 100)))
+  };
+}
+
+function buildHeroSummaryGaugeHTML(tag, cssClass, pct, text, extraClass) {
+  return '<div class="pc-sum-gauge-row"><span class="pc-sum-gauge-tag">' + esc(tag) + '</span>'
+    + '<div class="kgauge kgauge-thin ' + cssClass + (extraClass || "") + '">'
+    + '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct + '%"></div></div>'
+    + '<span class="kgauge-text">' + esc(text) + '</span></div></div>';
+}
+
+function buildHeroSummaryIdentityHTML(hero) {
+  var cls = (typeof getClassForHero === "function") ? getClassForHero(hero) : null;
   var heroLevel = Number(game.heroLevel || 1);
   var heroXp = Number(game.heroXp || 0);
-  var heroXpToNext = Number(game.heroXpToNext || 20);
+  var heroXpToNext = Math.max(1, Number(game.heroXpToNext || 20));
   var xpPct = Math.max(2, Math.min(100, Math.round((heroXp / heroXpToNext) * 100)));
 
-  var heroMaxHp = Math.max(1, Math.floor(Number(game.heroMaxHp || 1)));
-  var atk = typeof EquipmentManager !== "undefined" ? EquipmentManager.effectiveTapDamage() : 0;
-  var defPct = Math.round(Number(game.heroDefensePct || 0) * 100);
-  var vit = Math.round((window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function") ? CombatEngine.getTotalCelerity() : 0);
-  var critPct = typeof EquipmentManager !== "undefined"
-    ? (Math.round(EquipmentManager.effectiveCritChance() * 10) / 10)
-    : 0;
+  var h = '<div class="pc-sum-ident">';
 
-  var h = '';
-
-  h += '<div class="pc-card">';
-
-  h += '<div class="pc-card-top">';
-
-  h += '<div class="pc-portrait-col">';
-  h += '<div class="pc-hero-name-label">' + esc(game.playerName || (hero ? hero.name : "")) + '</div>';
-  h += '<div class="pc-portrait-frame">';
+  h += '<div class="pc-sum-portrait' + (cls ? ' is-class-' + esc(cls.id) : '') + '">';
   if (hero && hero.image) {
     h += '<img src="' + esc(hero.image) + '" alt="' + esc(hero.name) + '">';
   } else {
     h += '<div class="pc-portrait-placeholder">?</div>';
   }
+  h += '<div class="pc-sum-lvl">Niveau ' + esc(heroLevel) + '</div>';
   h += '</div>';
-  h += '<div class="pc-exp-label">EXP</div>';
-  // v3.173.0 : XP sur la jauge fine du kit (remplace l'ancien cadre barre-pv-ennemi.png réutilisé ici).
-  h += '<div class="pc-bar pc-bar-exp kgauge kgauge-thin kgauge-xp"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + xpPct + '%"></div></div><span class="kgauge-text">' + formatNumber(heroXp) + ' / ' + formatNumber(heroXpToNext) + '</span></div>';
-  h += '</div>'; // /pc-portrait-col
 
-h += '<div class="pc-info-wrapper">';
-  h += '<div class="pc-info-col">';
-    h += '<div class="pc-level-pill"><span class="pc-level-badge">Niv.</span><span>Niveau ' + esc(heroLevel) + '</span></div>';
-    // v3.174.0 (retour Seb) : barre d'XP compacte retirée — doublon avec celle
-    // sous le portrait du héros, une seule suffit.
+  h += '<div class="pc-sum-col">';
+  h += '<div class="pc-sum-name">' + esc(game.playerName || (hero ? hero.name : "Sans nom")) + '</div>';
 
-    h += '<div class="pc-stat-list">';
-      h += buildPcStatRowHTML("❤️", "PV", formatNumber(heroMaxHp));
-      h += buildPcStatRowHTML("⚔️", "ATK", formatNumber(atk));
-      h += buildPcStatRowHTML("🛡️", "DEF", defPct + "%");
-      h += buildPcStatRowHTML("⚡", "VIT", formatNumber(vit));
-      h += buildPcStatRowHTML("🎯", "CRIT", critPct + "%");
-    h += '</div>'; // /pc-stat-list
+  if (cls) {
+    h += '<div class="pc-sum-class is-class-' + esc(cls.id) + '">' + esc(cls.icon) + ' ' + esc(cls.label);
+    if (cls.resource && cls.resource.label) {
+      h += '<span class="pc-sum-class-res">' + esc(cls.resource.label) + '</span>';
+    }
+    h += '</div>';
+  }
 
-  h += '</div>'; // /pc-info-col
-h += '</div>';   // /pc-info-wrapper
+  h += '<div class="pc-sum-gauges">';
+  h += buildHeroSummaryGaugeHTML("EXP", "kgauge-xp", xpPct,
+    formatNumber(heroXp) + " / " + formatNumber(heroXpToNext));
+  var res = getHeroSummaryResource(cls);
+  if (res) {
+    h += buildHeroSummaryGaugeHTML(res.label, "", Math.round((res.current / res.max) * 100),
+      formatNumber(res.current) + " / " + formatNumber(res.max),
+      res.current <= 0 ? " is-res-empty" : "");
+  }
+  h += '</div>';
 
-  h += '</div>'; // /pc-card-top
+  h += '</div></div>';
+  return h;
+}
 
-  h += '</div>'; // /pc-card
+function buildHeroSummaryCellHTML(label, value) {
+  return '<div class="pc-sum-cell"><div class="pc-sum-cell-lbl">' + esc(label) + '</div>'
+    + '<div class="pc-sum-cell-val">' + esc(value) + '</div></div>';
+}
 
-  h += buildHeroCarouselHTML();
+/* Les cinq valeurs de combat, telles que le moteur les lit. Mêmes sources
+   que l'ancienne fiche : aucune formule nouvelle ici. La PROVENANCE de ces
+   valeurs sera le sujet du sous-onglet Stats, pas de celui-ci. */
+function buildHeroSummaryCombatHTML() {
+  var heroMaxHp = Math.max(1, Math.floor(Number(game.heroMaxHp || 1)));
+  var atk = (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveTapDamage() : 0;
+  var defPct = Math.round(Number(game.heroDefensePct || 0) * 100);
+  var vit = Math.round((window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function")
+    ? CombatEngine.getTotalCelerity() : 0);
+  var critPct = (typeof EquipmentManager !== "undefined")
+    ? (Math.round(EquipmentManager.effectiveCritChance() * 10) / 10) : 0;
+  var critMult = (typeof EquipmentManager !== "undefined")
+    ? (Math.round(EquipmentManager.effectiveCritMult() * 100) / 100) : 1;
 
-  return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83d\udee1\ufe0f H\u00e9ros">' + h + '</div>'; // v2.83.28
+  var h = '<div class="pc-section-label">En combat</div>';
+  h += '<div class="pc-sum-combat">';
+  h += buildHeroSummaryCellHTML("PV", formatNumber(heroMaxHp));
+  h += buildHeroSummaryCellHTML("ATK", formatNumber(atk));
+  h += buildHeroSummaryCellHTML("VIT", formatNumber(vit));
+  h += '<div class="pc-sum-cell is-wide">';
+  h += '<span class="pc-sum-cell-lbl">DÉFENSE</span><span class="pc-sum-cell-val">' + defPct + ' %</span>';
+  h += '<span class="pc-sum-cell-lbl">CRITIQUE</span><span class="pc-sum-cell-val">' + esc(critPct) + ' % · ×' + esc(critMult) + '</span>';
+  h += '</div>';
+  h += '</div>';
+  return h;
+}
+
+/* Raccourcis vers les deux autres sous-onglets. Chacun porte l'information
+   qui donne une raison d'y aller : marge d'entraînement d'un côté, aperçu du
+   kit de classe de l'autre. */
+function buildHeroSummaryJumpsHTML() {
+  var h = '<div class="pc-section-label">Aller plus loin</div>';
+
+  var prog = getHeroTrainingProgress();
+  h += '<button type="button" class="pc-sum-jump" onclick="setHerosSubTab(\'amelioration\')">';
+  h += '<span class="pc-sum-jump-ico">📊</span>';
+  h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">Stats</span>';
+  h += '<span class="pc-sum-jump-s">' + (prog
+    ? (prog.left > 0
+      ? formatNumber(prog.left) + " niveaux d\u2019entraînement restants"
+      : "Tout est entraîné au maximum")
+    : "Entraînement") + '</span></span>';
+  if (prog) {
+    h += '<span class="pc-sum-jump-prog"><span class="pc-sum-jump-pct">' + prog.pct + ' %</span>';
+    h += '<span class="pc-sum-bar' + (prog.left === 0 ? ' is-capped' : '') + '">'
+      + '<i style="width:' + Math.max(2, prog.pct) + '%"></i></span></span>';
+  }
+  h += '<span class="pc-sum-jump-chev">›</span>';
+  h += '</button>';
+
+  var actions = [];
+  if (window.ClassCombatManager && typeof ClassCombatManager.getAction === "function") {
+    ["skill1", "skill2", "skill3", "defense"].forEach(function (slot) {
+      var a = ClassCombatManager.getAction(slot);
+      if (a) actions.push(a);
+    });
+  }
+  h += '<button type="button" class="pc-sum-jump" onclick="setHerosSubTab(\'stats\')">';
+  h += '<span class="pc-sum-jump-ico">⚔️</span>';
+  h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">Capacités</span>';
+  h += '<span class="pc-sum-jump-s">' + (actions.length
+    ? actions.length + " technique" + (actions.length > 1 ? "s" : "")
+    : "Aucune capacité") + '</span></span>';
+  if (actions.length) {
+    // CLASS_ACTION_ICON_FALLBACK contient des CHEMINS D'IMAGE, pas des emojis
+    // (class-combat-system.js) : esc() les affichait tels quels. On passe par
+    // renderIconOrEmojiHTML, qui gère les deux cas — même helper que les
+    // cartes de capacité plus haut dans ce fichier.
+    h += '<span class="pc-sum-jump-kit">';
+    actions.forEach(function (a) {
+      var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id])
+        || (a.type === "defense" ? "🛡️" : "✨");
+      h += '<span>' + renderIconOrEmojiHTML(icon, "pc-sum-jump-kit-ico", a.label || "") + '</span>';
+    });
+    h += '</span>';
+  }
+  h += '<span class="pc-sum-jump-chev">›</span>';
+  h += '</button>';
+
+  return h;
+}
+
+function buildHeroFicheHTML() {
+  var hero = getSelectedHero();
+
+  var h = buildHeroSummaryIdentityHTML(hero);
+  h += buildHeroSummaryCombatHTML();
+  h += buildHeroSummaryJumpsHTML();
+
+  h += '<div class="pc-sum-foot">';
+  h += '<button class="settings-btn" type="button" onclick="openHeroSlotsScreen()">👥 Mes héros</button>';
+  h += '<button class="settings-btn" type="button" onclick="switchTab(\'equip\')">🎒 Équipement</button>';
+  h += '</div>';
+
+  return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83d\udee1\ufe0f R\u00e9sum\u00e9">' + h + '</div>';
+}
+
+/* Ouvre l'écran titre directement sur "Charger une partie", qui est la gestion
+   d'emplacements complète et déjà éprouvée. openTitleScreen() prend un callback
+   résolu au retour : on se contente de re-rendre, HeroSlotManager.switchToSlot()
+   ayant déjà sauvegardé la partie quittée et chargé la nouvelle. */
+function openHeroSlotsScreen() {
+  if (typeof openTitleScreen !== "function" || typeof titleScreenShowLoad !== "function") return;
+  openTitleScreen(function () {
+    if (typeof renderAll === "function") renderAll();
+  });
+  titleScreenShowLoad(true); // true : ouvert depuis le jeu, le retour ramène au jeu
 }
 
 var HEROS_TRAINING_UPGRADE_IDS = [
@@ -208,78 +247,500 @@ var HEROS_TRAINING_UPGRADE_IDS = [
   "utrain_will"
 ];
 
-function buildHerosAmeliorationHTML() {
-  if (typeof UPGRADES === "undefined" || typeof buildUpgradeCardHTML !== "function") {
-    return '<div class="pc-empty">Amélioration indisponible.</div>';
-  }
 
-  var buyAmount = Number(game.shopBuyAmount || 1);
-  if (![1, 10, 25, -1].includes(buyAmount)) buyAmount = 1;
-  var modeLabel = buyAmount === -1 ? "MAX" : ("x" + buyAmount);
+/* =====================================================================
+   v3.203.0 — SOUS-ONGLET STATS (écran 2 sur 3, maquette validée par Seb)
 
-  var h = '';
+   La stat et son achat vivent sur la MÊME carte. Avant, l'écran des stats
+   dérivées (PV/ATK/DEF/VIT/CRIT) et l'écran d'entraînement (Puissance,
+   Endurance, Célérité, Précision, Volonté) étaient deux onglets distincts
+   et RIEN ne les reliait : le joueur qui achetait "+1 Précision" ne pouvait
+   savoir nulle part ce que ça faisait sur "CRIT".
 
-  h += '<div class="pc-heros-train-section nb-page-frame kframe-page" data-kf-title="\u2b06\ufe0f Am\u00e9lioration">';
-    h += '<div class="pc-heros-train-toolbar">';
-      h += '<div class="shop-buy-toolbar">';
-        h += '<button class="settings-btn ' + (buyAmount === 1 ? 'active' : '') + '" onclick="setShopBuyAmount(1)">x1</button>';
-        h += '<button class="settings-btn ' + (buyAmount === 10 ? 'active' : '') + '" onclick="setShopBuyAmount(10)">x10</button>';
-        h += '<button class="settings-btn ' + (buyAmount === 25 ? 'active' : '') + '" onclick="setShopBuyAmount(25)">x25</button>';
-        h += '<button class="settings-btn ' + (buyAmount === -1 ? 'active' : '') + '" onclick="setShopBuyAmount(-1)">MAX</button>';
-      h += '</div>';
+   Chaque carte porte donc, de gauche à droite : la stat, CE QU'ELLE PRODUIT
+   dans le vocabulaire du combat, sa valeur, sa progression vers le plafond
+   RÉEL d'upgrades.js, et son prix. Dépliée, elle donne la provenance des
+   points et le gain du prochain achat.
+   ===================================================================== */
 
-      //h += '<div class="shop-mode-info">Mode d’achat : <strong>' + esc(modeLabel) + '</strong></div>';
-    h += '</div>'; // /pc-hero-train-toolbar
+var expandedHeroStat = null;
 
-    h += '<div class="pc-heros-train-list">';
-      h += '<div class="shop-grid">';
-        UPGRADES.forEach(function (u) {
-          if (HEROS_TRAINING_UPGRADE_IDS.indexOf(u.id) === -1) return;
-          h += buildUpgradeCardHTML(u, buyAmount);
-        });
-      h += '</div>'; // /shop-grid
-    h += '</div>';   // /pc-hero-train-list
-
-  h += '</div>';     // /pc-hero-train-section
-
-  return h;
+function toggleHeroStat(key) {
+  expandedHeroStat = (expandedHeroStat === key) ? null : key;
+  if (typeof renderPanel === "function") renderPanel();
 }
 
-function buildHerosStatsHTML() {
-  var abilitiesHTML = buildCharacterAbilitiesHTML();
-  var h = '';
+/* Table des cinq lignes. `read` renvoie la valeur dérivée TELLE QUE LE JEU
+   la calcule : on appelle les mêmes accesseurs que le combat, jamais une
+   formule recopiée. `fmt` ne sert qu'à l'affichage.
+   Endurance produit deux choses (PV et Défense) : les PV sont la valeur de
+   tête, la Défense apparaît dans le corps déplié. */
+var HEROS_STAT_ROWS = [
+  {
+    key: "power", upgradeId: "utrain_power", trainedKey: "power",
+    name: "Force", icon: "./images/Icons/improvement_icons/power.png",
+    produces: "Dégâts de l'attaque de base", unit: "ATK",
+    read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveTapDamage() : 0; },
+    fmt: function (v) { return "ATK " + formatNumber(Math.round(v)); },
+    fmtDelta: function (d) { return "+" + formatNumber(Math.round(d)) + " ATK"; }
+  },
+  {
+    key: "endurance", upgradeId: "utrain_endurance", trainedKey: "endurance",
+    name: "Endurance", icon: "./images/Icons/improvement_icons/endurance.png",
+    produces: "Points de vie", unit: "PV",
+    read: function () { return Number(game.heroMaxHp || 0); },
+    fmt: function (v) { return "PV " + formatNumber(Math.round(v)); },
+    fmtDelta: function (d) { return "+" + formatNumber(Math.round(d)) + " PV"; },
+    extra: function () { return "Défense : " + Math.round(Number(game.heroDefensePct || 0) * 100) + " %"; }
+  },
+  {
+    key: "celerity", upgradeId: "utrain_celerity", trainedKey: "celerity",
+    name: "Célérité", icon: "./images/Icons/improvement_icons/celerity.png",
+    produces: "Vitesse de remplissage de la jauge", unit: "VIT",
+    read: function () {
+      return (window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function")
+        ? CombatEngine.getTotalCelerity() : 0;
+    },
+    fmt: function (v) { return "VIT " + formatNumber(Math.round(v)); },
+    fmtDelta: function (d) { return "+" + formatNumber(Math.round(d)) + " VIT"; }
+  },
+  {
+    key: "precision", upgradeId: "utrain_precision", trainedKey: "precision",
+    name: "Précision", icon: "./images/Icons/improvement_icons/accuracy.png",
+    produces: "Chance de coup critique", unit: "CRIT",
+    read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveCritChance() : 0; },
+    fmt: function (v) { return "CRIT " + (Math.round(v * 10) / 10) + " %"; },
+    fmtDelta: function (d) { return "+" + (Math.round(d * 10) / 10) + " % de critique"; }
+  },
+  {
+    key: "will", upgradeId: "utrain_will", trainedKey: "will",
+    name: "Volonté", icon: "./images/Icons/improvement_icons/will.png",
+    produces: "Puissance des coups critiques", unit: "CRIT ×",
+    read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveCritMult() : 0; },
+    fmt: function (v) { return "CRIT × " + (Math.round(v * 100) / 100); },
+    fmtDelta: function (d) { return "+" + (Math.round(d * 100) / 100) + " au multiplicateur"; }
+  }
+];
 
-  if (!abilitiesHTML) {
-    h += '<div class="pc-empty">Aucune capacité disponible pour le moment.</div>';
+function getHeroStatUpgrade(upgradeId) {
+  if (typeof UPGRADES === "undefined") return null;
+  for (var i = 0; i < UPGRADES.length; i++) {
+    if (UPGRADES[i].id === upgradeId) return UPGRADES[i];
+  }
+  return null;
+}
+
+/* Gain du prochain achat, obtenu par SIMULATION sur le vrai moteur et non
+   par une formule recopiée : on pousse temporairement le niveau d'upgrade,
+   on appelle StatsSystem.recalcStats() — qui recompose entièrement les stats
+   à chaque appel, c'est sa nature — on relit la valeur dérivée, puis on
+   restaure. Aucun coefficient de stats-system.js n'est dupliqué ici, donc un
+   rééquilibrage futur ne pourra pas faire mentir cet écran.
+   Le try/finally garantit la restauration même si un accesseur lève.
+   game.heroHp est sauvegardé parce que recalcStats le rabote sur heroMaxHp. */
+function getHeroStatGainPreview(row, buyAmount) {
+  var upgrade = getHeroStatUpgrade(row.upgradeId);
+  if (!upgrade || typeof StatsSystem === "undefined" || typeof StatsSystem.recalcStats !== "function") return null;
+  if (typeof getUpgradePurchasePreview !== "function") return null;
+
+  var preview = getUpgradePurchasePreview(upgrade, buyAmount);
+  var count = Number(preview.count || 0);
+  if (count <= 0) return null;
+
+  var before = row.read();
+  var savedLevel = Number((game.upgrades && game.upgrades[row.upgradeId]) || 0);
+  var savedHp = game.heroHp;
+  var after = before;
+
+  try {
+    game.upgrades[row.upgradeId] = savedLevel + count;
+    StatsSystem.recalcStats();
+    after = row.read();
+  } finally {
+    game.upgrades[row.upgradeId] = savedLevel;
+    game.heroHp = savedHp;
+    StatsSystem.recalcStats();
+  }
+
+  return { count: count, delta: after - before, totalCost: Number(preview.totalCost || 0) };
+}
+
+/* Combien de niveaux faut-il pour que la valeur dérivée BOUGE réellement ?
+   Nécessaire parce que plusieurs valeurs sont plancherisées : un niveau de
+   Force vaut +0,2 de dégât brut, or effectiveTapDamage() fait un Math.floor,
+   donc un achat x1 affiche "+0 ATK". Exact, mais inutile au joueur, et même
+   décourageant. On cherche donc le premier palier qui produit un changement
+   visible, et on le lui dit.
+   Recherche sur une échelle courte (1, 2, 5, 10, 25, 50) plutôt qu'un
+   balayage : six recalculs au pire, seulement quand le gain arrondi est nul,
+   et jamais au-delà du plafond de l'amélioration. */
+var HEROS_GAIN_PROBE_STEPS = [1, 2, 5, 10, 25, 50];
+
+function getHeroStatFirstVisibleStep(row) {
+  var upgrade = getHeroStatUpgrade(row.upgradeId);
+  if (!upgrade || typeof StatsSystem === "undefined") return null;
+
+  var savedLevel = Number((game.upgrades && game.upgrades[row.upgradeId]) || 0);
+  var maxLevel = Number(upgrade.maxLevel || 0);
+  var savedHp = game.heroHp;
+  var before = row.read();
+  var found = null;
+
+  try {
+    for (var i = 0; i < HEROS_GAIN_PROBE_STEPS.length; i++) {
+      var step = HEROS_GAIN_PROBE_STEPS[i];
+      if (maxLevel > 0 && savedLevel + step > maxLevel) break;
+      game.upgrades[row.upgradeId] = savedLevel + step;
+      StatsSystem.recalcStats();
+      if (Math.abs(row.read() - before) >= 0.005) { found = step; break; }
+    }
+  } finally {
+    game.upgrades[row.upgradeId] = savedLevel;
+    game.heroHp = savedHp;
+    StatsSystem.recalcStats();
+  }
+
+  return found;
+}
+
+
+/* Sources de bonus, mesurées une par une sur le VRAI moteur.
+
+   La maquette faisait de l'équipement, des talents et de l'Aether des lignes de
+   la STAT ("Épée de garnison +34" sur la Force). Le code dit autre chose : une
+   épée n'ajoute pas de Force, elle ajoute des dégâts plats et un multiplicateur
+   (stats-system.js). Une stat RPG ne reçoit que sa base et son entraînement.
+   Ces bonus existent bien, mais sur la valeur PRODUITE — c'est donc là qu'ils
+   sont affichés.
+
+   Chaque contribution est obtenue en neutralisant temporairement sa source et
+   en relisant la valeur : "voilà ce que tu perdrais sans". Pas de somme
+   affichée, parce que ces bonus se composent en partie multiplicativement et
+   qu'un total additif serait faux.
+
+   Les potions et les afflictions sont volontairement absentes : elles sont
+   temporaires, elles n'ont pas leur place dans une fiche de progression. */
+var HEROS_STAT_SOURCES = [
+  {
+    id: "training", label: "Entraînement",
+    off: function () {
+      var saved = {};
+      HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) {
+        saved[id] = game.upgrades[id] || 0;
+        game.upgrades[id] = 0;
+      });
+      return saved;
+    },
+    on: function (saved) {
+      HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { game.upgrades[id] = saved[id]; });
+    }
+  },
+  {
+    id: "gear", label: "Équipement",
+    off: function () { var saved = game.equipped; game.equipped = {}; return saved; },
+    on: function (saved) { game.equipped = saved; }
+  },
+  {
+    id: "talents", label: "Talents",
+    off: function () { var saved = game.talents; game.talents = {}; return saved; },
+    on: function (saved) { game.talents = saved; }
+  },
+  {
+    id: "ascension", label: "Ascension",
+    off: function () { var saved = game.ascensionCount; game.ascensionCount = 0; return saved; },
+    on: function (saved) { game.ascensionCount = saved; }
+  },
+  {
+    id: "aether", label: "Aether",
+    off: function () { var saved = game.aetherUpgrades; game.aetherUpgrades = {}; return saved; },
+    on: function (saved) { game.aetherUpgrades = saved; }
+  }
+];
+
+/* Renvoie [{label, delta}] pour les sources qui pèsent réellement sur cette
+   valeur. Cinq recalculs, uniquement sur la carte dépliée. Même discipline que
+   getHeroStatGainPreview : try/finally, et game.heroHp sauvegardé parce que
+   recalcStats() le rabote sur heroMaxHp. */
+function getHeroStatSources(row) {
+  if (typeof StatsSystem === "undefined" || typeof StatsSystem.recalcStats !== "function") return [];
+
+  var total = row.read();
+  var savedHp = game.heroHp;
+  var out = [];
+
+  HEROS_STAT_SOURCES.forEach(function (src) {
+    var saved = null;
+    var sans = total;
+    try {
+      saved = src.off();
+      StatsSystem.recalcStats();
+      sans = row.read();
+    } finally {
+      src.on(saved);
+      game.heroHp = savedHp;
+      StatsSystem.recalcStats();
+    }
+    var delta = total - sans;
+    if (Math.abs(delta) >= 0.005) out.push({ label: src.label, delta: delta });
+  });
+
+  return out;
+}
+
+function buildHeroStatCardHTML(row, buyAmount) {
+  var upgrade = getHeroStatUpgrade(row.upgradeId);
+  if (!upgrade) return "";
+
+  var level = Number((game.upgrades && game.upgrades[row.upgradeId]) || 0);
+  var maxLevel = Number(upgrade.maxLevel || 0);
+  var capped = maxLevel > 0 && level >= maxLevel;
+  var locked = (WorldManager.worldIndex || 0) < (upgrade.unlockWorld || 0);
+  var open = expandedHeroStat === row.key;
+
+  var hero = getSelectedHero();
+  var base = (hero && hero.stats) ? Number(hero.stats[row.trainedKey]) || 0 : 0;
+  var trained = Number((game.trainedStats && game.trainedStats[row.trainedKey]) || 0);
+  var pctLevel = maxLevel > 0 ? Math.max(0, Math.min(100, Math.round((level / maxLevel) * 100))) : 0;
+
+  var gain = (!capped && !locked) ? getHeroStatGainPreview(row, buyAmount) : null;
+  var nextCost = (typeof getUpgradeCost === "function") ? getUpgradeCost(upgrade, level) : 0;
+
+  var h = '<div class="pc-stat-card' + (open ? ' is-open' : '') + (capped ? ' is-capped' : '') + '">';
+
+  h += '<div class="pc-stat-card-head">';
+  h += '<button type="button" class="pc-stat-card-id" onclick="toggleHeroStat(\'' + esc(row.key) + '\')">';
+  h += renderIconOrEmojiHTML(row.icon, "pc-stat-card-ico", row.name);
+  h += '<span class="pc-stat-card-texts">';
+  h += '<span class="pc-stat-card-name">' + esc(row.name) + '</span>';
+  h += '<span class="pc-stat-card-out">' + esc(row.fmt(row.read())) + '</span>';
+  h += '</span>';
+  h += '<span class="pc-stat-card-num">';
+  h += '<span class="pc-stat-card-total">' + formatNumber(base + trained) + '</span>';
+  h += '<span class="pc-stat-card-cap">' + level + ' / ' + (maxLevel || "∞") + '</span>';
+  h += '</span>';
+  h += '<span class="pc-stat-card-chev">›</span>';
+  h += '</button>';
+
+  if (capped) {
+    h += '<div class="pc-stat-card-buy is-capped">Plafond<small>atteint</small></div>';
+  } else if (locked) {
+    h += '<div class="pc-stat-card-buy is-locked">Monde<small>' + ((upgrade.unlockWorld || 0) + 1) + '</small></div>';
+  } else if (gain) {
+    h += '<button type="button" class="pc-stat-card-buy" onclick="buyUpgrade(\'' + esc(row.upgradeId) + '\', ' + buyAmount + ')">';
+    h += formatNumber(gain.totalCost) + '<small>or · x' + gain.count + '</small></button>';
   } else {
-    h += abilitiesHTML;
+    h += '<div class="pc-stat-card-buy is-poor">' + formatNumber(nextCost) + '<small>or manquant</small></div>';
+  }
+  h += '</div>';
+
+  h += '<div class="pc-stat-card-bar' + (capped ? ' is-capped' : '') + '"><i style="width:' + pctLevel + '%"></i></div>';
+
+  if (open) {
+    h += '<div class="pc-stat-card-body">';
+    h += '<div class="pc-stat-break">';
+    h += '<div class="pc-stat-break-row"><span>Base du héros</span><span>+' + formatNumber(base) + '</span></div>';
+    h += '<div class="pc-stat-break-row' + (trained === 0 ? ' is-zero' : '') + '"><span>Entraînement (niveau ' + level + ')</span><span>+' + formatNumber(trained) + '</span></div>';
+    h += '<div class="pc-stat-break-row is-total"><span>' + esc(row.produces) + '</span><span>' + esc(row.fmt(row.read())) + '</span></div>';
+    if (typeof row.extra === "function") {
+      h += '<div class="pc-stat-break-row"><span>Aussi</span><span>' + esc(row.extra()) + '</span></div>';
+    }
+    h += '</div>';
+
+    // Ce que chaque source apporte à la valeur produite, mesuré en la
+    // neutralisant. Masqué s'il n'y a rien à montrer (héros neuf sans
+    // équipement, sans talent et sans Aether) : un bloc vide n'apprend rien.
+    var sources = getHeroStatSources(row);
+    if (sources.length) {
+      h += '<div class="pc-stat-sources">';
+      h += '<div class="pc-stat-sources-lbl">Ce que chaque source t\'apporte</div>';
+      sources.forEach(function (src) {
+        h += '<div class="pc-stat-break-row"><span>' + esc(src.label) + '</span><span>'
+          + esc(row.fmtDelta(src.delta)) + '</span></div>';
+      });
+      h += '</div>';
+    }
+    if (gain && Math.abs(gain.delta) >= 0.005) {
+      h += '<div class="pc-stat-next">↑ ' + esc(row.fmtDelta(gain.delta)) + ' pour ' + formatNumber(gain.totalCost) + ' or</div>';
+    } else if (gain) {
+      // Gain réel mais invisible après arrondi : on dit à partir de combien il
+      // se verra, plutôt que d'afficher un "+0" décourageant.
+      var step = getHeroStatFirstVisibleStep(row);
+      h += '<div class="pc-stat-next is-slow">' + (step
+        ? 'Effet visible à partir de ' + step + ' niveau' + (step > 1 ? 's' : '') + ' d\'un coup.'
+        : 'Le gain est trop fin pour se voir sur un seul achat.') + '</div>';
+    } else if (capped) {
+      h += '<div class="pc-stat-next is-done">Cette stat est entraînée au maximum.</div>';
+    }
+    h += '</div>';
   }
 
-  h += buildHerosCumulativeStatsHTML();
-
-  return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83d\udcca Stats">' + h + '</div>'; // v2.83.28
-}
-
-function buildHerosCumulativeStatsHTML() {
-  var h = '';
-  h += '<div class="pc-section-label">📈 Statistiques cumulées</div>';
-  h += '<div class="pc-cumulative-card">';
-  h += '  Temps de jeu : ' + esc(typeof formatTime === "function" ? formatTime(game.playTime || 0) : String(Math.floor(game.playTime || 0)) + "s") + '<br>';
-  h += '  Total tués : ' + esc(formatNumber(game.totalKills || 0)) + '<br>';
-  h += '  Or gagné : ' + esc(formatNumber(game.totalGoldEarned || 0)) + '<br>';
-  h += '  Dégâts infligés : ' + esc(formatNumber(game.totalDamageDealt || 0)) + '<br>';
-  h += '  Monde : ' + esc((WorldManager.worldIndex + 1) + " / " + WORLDS.length) + '<br>';
-  h += '  Cycles : ' + esc(formatNumber(game.cycleCount || 0)) + '<br>';
-  h += '  Ascensions : ' + esc(formatNumber(game.ascensionCount || 0));
   h += '</div>';
   return h;
 }
 
+function buildHerosAmeliorationHTML() {
+  if (typeof UPGRADES === "undefined") {
+    return '<div class="pc-empty">Entraînement indisponible.</div>';
+  }
+
+  var buyAmount = Number(game.shopBuyAmount || 1);
+  if ([1, 10, 25, -1].indexOf(buyAmount) === -1) buyAmount = 1;
+
+  var h = '';
+  // v3.202.1 : titre du cadre aligné sur le libellé du sous-onglet. Le bas de
+  // l'écran disait "Stats" et le bandeau "Amélioration" : le joueur tapait un
+  // nom et arrivait sur un autre.
+  h += '<div class="pc-heros-train-section nb-page-frame kframe-page" data-kf-title="\ud83d\udcca Stats">';
+
+  h += '<div class="pc-stat-gold"><img src="images/Icons/gold_icon.png" alt=""> ' + formatNumber(game.gold || 0) + '</div>';
+
+  // .shop-buy-toolbar : c'est ce conteneur qui porte l'état actif du bouton
+  // (css/04-panel-village-shop.css). Conservé tel quel de l'ancien écran.
+  h += '<div class="pc-heros-train-toolbar"><div class="shop-buy-toolbar">';
+  [[1, "x1"], [10, "x10"], [25, "x25"], [-1, "MAX"]].forEach(function (b) {
+    h += '<button class="settings-btn ' + (buyAmount === b[0] ? 'active' : '') + '" onclick="setShopBuyAmount(' + b[0] + ')">' + b[1] + '</button>';
+  });
+  h += '</div></div>';
+
+  h += '<div class="pc-stat-list-v2">';
+  HEROS_STAT_ROWS.forEach(function (row) { h += buildHeroStatCardHTML(row, buyAmount); });
+  h += '</div>';
+
+  h += '</div>';
+  return h;
+}
+
+/* =====================================================================
+   v3.203.0 — SOUS-ONGLET CAPACITÉS (écran 3 sur 3)
+
+   Les cartes étaient déjà là, mais fermées : le joueur voyait un nom, une
+   description et un rechargement, sans savoir QUAND s'en servir. Les
+   capacités portent pourtant des `counters` en donnée (class-skills.js),
+   qui pointent vers les cartes-conditions du Grimoire — l'information
+   existait et n'était affichée nulle part sur cet écran.
+
+   Chaque carte se déplie donc sur ses contres, avec les icônes et les
+   libellés du Grimoire (même vocabulaire des deux côtés), et sur un
+   emplacement réservé à l'amélioration future des capacités.
+   ===================================================================== */
+
+var expandedHeroSkill = null;
+
+function toggleHeroSkill(id) {
+  expandedHeroSkill = (expandedHeroSkill === id) ? null : id;
+  if (typeof renderPanel === "function") renderPanel();
+}
+
+/* Nombre de rangs prévus par capacité. AUCUN système d'amélioration n'existe
+   encore : la constante ne sert qu'à dessiner l'emplacement réservé, validé
+   sur maquette. Le jour où le système arrivera, c'est le seul endroit à
+   brancher sur une vraie donnée. */
+var HEROS_SKILL_RANK_MAX = 3;
+
+function buildHeroSkillCardHTML(action) {
+  if (!action) return "";
+
+  var id = String(action.id || "");
+  var open = expandedHeroSkill === id;
+  var isDefense = action.type === "defense";
+  var remaining = (game.classCooldowns && typeof game.classCooldowns[id] === "number") ? game.classCooldowns[id] : 0;
+  var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[id])
+    || (isDefense ? "🛡️" : "✨");
+  var cost = Number(action.resourceCost || 0);
+  var resLabel = "";
+  if (typeof getClassForHero === "function") {
+    var cls = getClassForHero(getSelectedHero());
+    if (cls && cls.resource) resLabel = cls.resource.label;
+  }
+
+  var h = '<div class="pc-skill-card' + (open ? ' is-open' : '') + (isDefense ? ' is-defense' : '') + '">';
+
+  h += '<button type="button" class="pc-skill-head" onclick="toggleHeroSkill(\'' + esc(id) + '\')">';
+  // renderIconOrEmojiHTML gère les deux cas : CLASS_ACTION_ICON_FALLBACK contient
+  // des CHEMINS d'image pour certaines actions et des emojis pour d'autres.
+  h += '<span class="pc-skill-ico">' + renderIconOrEmojiHTML(icon, "pc-skill-ico-img", action.label) + '</span>';
+  h += '<span class="pc-skill-name">' + esc(action.label) + '</span>';
+  h += '<span class="pc-skill-tags">';
+  h += cost > 0
+    ? '<span class="pc-skill-tag is-cost">' + cost + (resLabel ? ' ' + esc(resLabel) : '') + '</span>'
+    : '<span class="pc-skill-tag is-free">Sans coût</span>';
+  h += '<span class="pc-skill-tag is-cd' + (remaining > 0 ? ' is-active' : '') + '">'
+    + (remaining > 0 ? remaining + " r restants" : Number(action.cooldownRounds || 0) + " round" + (Number(action.cooldownRounds || 0) > 1 ? "s" : ""))
+    + '</span>';
+  h += '</span>';
+  h += '<span class="pc-skill-chev">›</span>';
+  h += '</button>';
+
+  if (open) {
+    h += '<div class="pc-skill-body">';
+    h += '<div class="pc-skill-desc">' + esc(action.description || "") + '</div>';
+
+    h += '<div class="pc-skill-counters">';
+    h += '<div class="pc-skill-counters-lbl">⚡ Utile contre</div>';
+    // v3.208.0 : liste complète (counters + suppressions d'archétype portées par effects).
+    // Avant, seul action.counters était lu — la moitié des contres n'était annoncée nulle part.
+    var ids = (typeof getAllGrimoireCounterIds === "function")
+      ? getAllGrimoireCounterIds(action)
+      : ((action.counters && action.counters.length) ? action.counters : []);
+    if (!ids.length) {
+      h += '<div class="pc-skill-counter-none">Aucune situation particulière : c\'est une technique de dégâts brute, à jouer quand rien d\'autre ne presse.</div>';
+    } else {
+      ids.forEach(function (condId) {
+        var cond = (typeof getGrimoireCondition === "function") ? getGrimoireCondition(condId) : null;
+        if (!cond) return;
+        h += '<div class="pc-skill-counter">';
+        h += '<span class="pc-skill-counter-ico">' + esc(cond.icon || "•") + '</span>';
+        h += '<span class="pc-skill-counter-texts">';
+        h += '<span class="pc-skill-counter-lbl">' + esc(cond.label) + '</span>';
+        h += '<span class="pc-skill-counter-desc">' + esc(cond.description || "") + '</span>';
+        h += '</span></div>';
+      });
+    }
+    h += '</div>';
+
+    h += '<div class="pc-skill-rank"><span class="pc-skill-pips">';
+    for (var i = 1; i <= HEROS_SKILL_RANK_MAX; i++) {
+      h += '<i' + (i === 1 ? ' class="is-on"' : '') + '></i>';
+    }
+    h += '</span><span>Amélioration des capacités — à venir</span></div>';
+
+    h += '</div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function buildHerosStatsHTML() {
+  var h = '';
+
+  if (!window.ClassCombatManager || typeof ClassCombatManager.getAction !== "function") {
+    h += '<div class="pc-empty">Aucune capacité disponible pour le moment.</div>';
+  } else {
+    var cls = (typeof getClassForHero === "function") ? getClassForHero(getSelectedHero()) : null;
+    if (cls) h += '<div class="pc-section-label">' + esc(cls.icon || "") + ' Kit du ' + esc(cls.label) + '</div>';
+
+    var cards = "";
+    ["skill1", "skill2", "skill3", "defense"].forEach(function (slot) {
+      cards += buildHeroSkillCardHTML(ClassCombatManager.getAction(slot));
+    });
+    h += cards || '<div class="pc-empty">Aucune capacité disponible pour le moment.</div>';
+  }
+
+  // v3.202.1 : le bandeau de statistiques cumulées est parti chez les Hauts
+  // faits (ui/achievement-view.js : buildAchievementTotalsHTML). Il n'avait
+  // aucun rapport avec les capacités de classe, et le renommage de v3.202.0
+  // rendait la cohabitation franchement fausse : un onglet "Capacités" qui
+  // affiche le temps de jeu.
+  // v3.202.1 : titre du cadre aligné sur le libellé du sous-onglet.
+  return '<div class="nb-page-frame kframe-page" data-kf-title="\u2694\ufe0f Capacit\u00e9s">' + h + '</div>';
+}
+
 function buildHerosSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "hero" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'hero\')">🛡️<span>Héros</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "amelioration" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'amelioration\')">⬆️<span>Amélioration</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "stats" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'stats\')">📊<span>Stats</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "hero" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'hero\')">🛡️<span>Résumé</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "amelioration" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'amelioration\')">📊<span>Stats</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "stats" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'stats\')">⚔️<span>Capacités</span></button>';
   h += '</div>';
   return h;
 }
@@ -345,9 +806,8 @@ function selectHeroInline(heroId) {
 }
 
 window.buildHerosHTML = buildHerosHTML;
-window.buildHeroCarouselHTML = buildHeroCarouselHTML;
-window.selectHeroSlot = selectHeroSlot;
-window.createNewHeroInSlot = createNewHeroInSlot;
-window.deleteHeroSlot = deleteHeroSlot;
-window.selectHeroInline = selectHeroInline; // v3.25 : conservée pour compat, plus appelée par le carrousel
+window.openHeroSlotsScreen = openHeroSlotsScreen; // v3.202.0
+window.selectHeroInline = selectHeroInline; // v3.25 : conservée pour compat
 window.setHerosSubTab = setHerosSubTab;
+window.toggleHeroStat = toggleHeroStat;   // v3.203.0
+window.toggleHeroSkill = toggleHeroSkill; // v3.203.0

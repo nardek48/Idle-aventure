@@ -103,6 +103,26 @@ var GENERIC_TUTORIALS = {
       { icon: "🔨", text: "Les Ateliers (comme la Cuisine de camp) transforment des ressources brutes (ex. viande + eau) en objets utiles (ex. rations) — file d'attente, continue même hors ligne." },
       { icon: "📦", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée ou vendue." }
     ]
+  },
+
+  /* v3.211.0 : aide du Grimoire. Déclarée ICI et pas dans grimoire-view.js pour une
+     seule raison — les trois sources du catalogue de Tutoriels (systems/tutorial-catalog-system.js)
+     ramassent GENERIC_TUTORIALS tel quel, donc l'écran Tutoriels la reprend sans code
+     supplémentaire, et il n'existe qu'UN texte à maintenir pour les deux endroits.
+     PAS de champ `tab` : maybeShowGenericTutorial() cherche par onglet, l'absence de tab
+     garantit qu'aucun popup ne s'ouvre tout seul en arrivant sur le Grimoire — c'est le
+     bouton « ? » qui l'affiche, et lui seul, conformément à la refonte v3.210.0. */
+  grimoire_rules: {
+    icon: "📕",
+    title: "Le Grimoire de tactiques",
+    points: [
+      { icon: "📖", text: "Le Grimoire programme ton combat automatique : si une situation se présente, ton héros joue l'action que tu as choisie en priorité." },
+      { icon: "🔢", text: "Les règles sont lues dans l'ordre, de haut en bas. La première qui s'applique l'emporte." },
+      { icon: "⚡", text: "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation." },
+      { icon: "🌀", text: "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas." },
+      { icon: "🔒", text: "En combat, ton héros met de côté un peu de ressource pour garantir ton contre le plus prioritaire : il jouera moins d'actions coûteuses en attendant." },
+      { icon: "🗺️", text: "De nouvelles règles se débloquent en atteignant de nouveaux mondes pour la première fois." }
+    ]
   }
 };
 window.GENERIC_TUTORIALS = GENERIC_TUTORIALS;

@@ -82,14 +82,46 @@ function buildAchievementListHTML() {
   return h;
 }
 
+/* v3.202.1 : bandeau de bilan, repris du sous-onglet Personnage > Stats où il
+   n'avait rien à faire (il cohabitait avec les capacités de classe). Sa place
+   est ici : ces compteurs alimentent directement des hauts faits — totalKills
+   en porte trois, ascensionCount trois autres (data/achievements.js). Le joueur
+   voit désormais son total juste au-dessus des hauts faits qui en dépendent.
+   Grille plutôt que la liste de <br> d'origine, qui était du texte brut étranger
+   au kit or/bronze. */
+function buildAchievementTotalsHTML() {
+  var rows = [
+    ["\u23f1\ufe0f", "Temps de jeu", (typeof formatTime === "function") ? formatTime(game.playTime || 0) : String(Math.floor(game.playTime || 0)) + "s"],
+    ["\u2694\ufe0f", "Ennemis vaincus", formatNumber(game.totalKills || 0)],
+    ["\ud83d\udcb0", "Or gagné", formatNumber(game.totalGoldEarned || 0)],
+    ["\ud83d\udca5", "Dégâts", formatNumber(game.totalDamageDealt || 0)], // libellé court : "Dégâts infligés" était tronqué en 2 colonnes sur 366 px
+    ["\ud83d\uddfa\ufe0f", "Monde", (WorldManager.worldIndex + 1) + " / " + WORLDS.length],
+    ["\ud83d\udd01", "Cycles", formatNumber(game.cycleCount || 0)],
+    ["\u2728", "Ascensions", formatNumber(game.ascensionCount || 0)]
+  ];
+
+  var h = '<div class="achievement-totals">';
+  rows.forEach(function (r) {
+    h += '<div class="achievement-total">';
+    h += '<span class="achievement-total-ico">' + r[0] + '</span>';
+    h += '<span class="achievement-total-lbl">' + esc(r[1]) + '</span>';
+    h += '<span class="achievement-total-val">' + esc(r[2]) + '</span>';
+    h += '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
 function buildAchievementsHTML() {
   var claimedCount = AchievementManager.getClaimedCount();
   var total = (ACHIEVEMENTS_DB || []).length;
 
   var h = '<div class="achievement-summary">' + claimedCount + ' / ' + total + ' réclamés</div>';
+  h += buildAchievementTotalsHTML();
   h += buildAchievementListHTML();
 
   return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83c\udfc6 Hauts faits">' + h + '</div>';
 }
 
 window.buildAchievementsHTML = buildAchievementsHTML;
+window.buildAchievementTotalsHTML = buildAchievementTotalsHTML;

@@ -69,6 +69,27 @@ var EquipShopManager = {
     return stock;
   },
 
+  /* v3.209.0 (bug Seb) — le stock est SAUVEGARDÉ et checkRefresh() ne regardait que
+     son minuteur. Un lot fabriqué dans un monde supérieur restait donc en vitrine
+     après un retour en arrière : Inhabituel proposé en Forêt, où seul le Commun est
+     censé exister (WORLD_RARITY_UNLOCKS). Reproduit en deux cas — retour au monde
+     précédent, et ascension (hardResetState remet worldIndex à 0 sans toucher au
+     stock). Pire, ces objets étaient achetables au prix du monde MAX atteint, donc
+     à la fois hors palier et hors budget.
+
+     Asymétrie voulue : on ne réagit qu'aux raretés AU-DESSUS du palier autorisé.
+     Progresser d'un monde n'invalide rien (un lot commun reste légitime au Désert),
+     seul un recul nettoie. Le minuteur et le compteur de renouvellements manuels ne
+     sont pas touchés : régénérer ici ne doit pas offrir un renouvellement gratuit. */
+  hasOutOfTierStock: function () {
+    if (!Array.isArray(game.equipShopStock) || !game.equipShopStock.length) return false;
+    var allowed = (typeof getAllowedRarities === "function") ? getAllowedRarities() : null;
+    if (!allowed || !allowed.length) return false;
+    return game.equipShopStock.some(function (item) {
+      return item && item.rarity && allowed.indexOf(item.rarity) === -1;
+    });
+  },
+
   checkRefresh: function () {
     this.ensure();
     var now = Date.now();
@@ -76,6 +97,10 @@ var EquipShopManager = {
       game.equipShopStock = this.generateStock();
       game.equipShopResetTime = now + EQUIP_SHOP_REFRESH_MS;
       game.equipShopManualRefreshCount = 0;
+      return;
+    }
+    if (this.hasOutOfTierStock()) {
+      game.equipShopStock = this.generateStock();
     }
   },
 

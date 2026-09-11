@@ -1,13 +1,22 @@
 "use strict";
-/* ui/grimoire-view.js — écran Grimoire (v3.50-51) : 6 règles conditionnelles {Si condition -> Alors action}, déblocage par jalon de monde. Presets nommés (v3.65), Mode Expert (v3.66), indices de contre/archétype. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* ui/grimoire-view.js — écran Grimoire : 6 règles conditionnelles {Si condition -> Alors action},
+   déblocage par jalon de monde, presets nommés (v3.65).
+   v3.210.0 — REFONTE VISUELLE (atelier Seb). L'écran mesurait 3 462 px à 390 px de large, dont
+   1 429 px de préambule avant la première règle : chaque règle affichait en permanence tout ce
+   qu'il faut pour la MODIFIER (deux libellés, deux listes, deux descriptions, un badge d'état).
+   Désormais deux niveaux :
+     - LISTE  : une ligne par règle, « Si X -> Y », lisible d'un coup d'œil (~560 px au total) ;
+     - FICHE  : ouverte au toucher, deux listes déroulantes natives et le verdict d'appariement.
+   Retirés sur décision Seb : le Mode Expert (game.expertModeEnabled reste en sauvegarde, inerte)
+   et les badges d'état de règle (prête / en attente / ressource insuffisante) — cette information
+   n'a de sens qu'en combat, et le Rapport de combat la couvre déjà a posteriori.
+   Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-function toggleGrimoireExpertMode() {
-  game.expertModeEnabled = !game.expertModeEnabled;
-  saveGame();
-  if (typeof renderPanel === "function") renderPanel();
-}
-
-window.toggleGrimoireExpertMode = toggleGrimoireExpertMode;
+/* État d'écran volontairement NON persisté (aucun nouveau champ dans save-system.js) :
+   quelle règle est ouverte et quelle feuille est déployée n'a pas d'intérêt d'une session
+   à l'autre. Même parti pris que ui/tutorials-view.js. */
+var grimoireEditIndex = null;
+var grimoireOpenSheet = null;
 
 var GRIMOIRE_SLOT_COUNT = 6;
 
@@ -63,6 +72,9 @@ function saveGrimoirePreset(name, icon) {
 }
 
 function loadGrimoirePreset(presetId) {
+  // v3.212.0 : charger un preset REMPLACE les 6 règles — c'est une modification,
+  // donc soumis au même verrou de sortie que les listes déroulantes.
+  if (typeof isGrimoireEditable === "function" && !isGrimoireEditable()) return;
   var presets = ensureGrimoirePresets();
   var preset = presets.filter(function (p) { return p.id === presetId; })[0];
   if (!preset) return;
@@ -132,6 +144,20 @@ window.confirmLoadGrimoirePreset = confirmLoadGrimoirePreset;
 window.confirmDeleteGrimoirePreset = confirmDeleteGrimoirePreset;
 window.getSuggestedGrimoirePreset = getSuggestedGrimoirePreset;
 
+/* v3.212.0 (décision Seb) — le Grimoire est un écran de PRÉPARATION : on règle ses
+   tactiques avant de partir, on assume sa configuration une fois dehors.
+   Gate = SortieManager.isActive(), le seul marqueur d'activité engagée du jeu :
+   `game.enemy` est présent en permanence (un ennemi réapparaît après chaque kill),
+   il ne dit donc rien. Une sortie démarre à la première action de combat
+   (combat-engine.js) et se termine au retour, à la fuite, à la mort ou au succès.
+   LECTURE SEULE plutôt que blocage sec : on peut relire ses règles en pleine sortie,
+   on ne peut simplement plus les changer. */
+function isGrimoireEditable() {
+  if (!window.SortieManager || typeof SortieManager.isActive !== "function") return true;
+  return !SortieManager.isActive();
+}
+window.isGrimoireEditable = isGrimoireEditable;
+
 function getGrimoireCurrentKit() {
   if (!window.ClassCombatManager || typeof ClassCombatManager.getCurrentClassId !== "function") return null;
   var classId = ClassCombatManager.getCurrentClassId();
@@ -169,135 +195,321 @@ function buildGrimoireActionOptionsHTML(kit, selectedSlot, conditionId) {
   GRIMOIRE_ASSIGNABLE_SLOTS.forEach(function (slot) {
     var action = kit.actions[slot];
     if (!action) return;
-    var isCounter = !!(conditionId && Array.isArray(action.counters) && action.counters.indexOf(conditionId) !== -1);
+    // v3.208.0 : le ⚡ ne s'allumait que sur action.counters — une action qui contre par
+    // suppression d'archétype (Frappe lourde vs corrompu, Brise-garde vs blindé) paraissait
+    // neutre dans la liste. getAllGrimoireCounterIds() couvre les deux canaux.
+    var isCounter = !!(conditionId && typeof getAllGrimoireCounterIds === "function"
+      && getAllGrimoireCounterIds(action).indexOf(conditionId) !== -1);
     h += '<option value="' + esc(slot) + '"' + (selectedSlot === slot ? ' selected' : '') + '>'
       + (isCounter ? '⚡ ' : '') + esc(action.label) + '</option>';
   });
   return h;
 }
 
-var GRIMOIRE_RULE_STATUS_LABELS = {
-  no_condition: { icon: "⬜", text: "Règle vide" },
-  no_action: { icon: "⬜", text: "Aucune action assignée" },
-  unknown_action: { icon: "⚠️", text: "Action introuvable" },
-  condition_false: { icon: "⏳", text: "En attente" },
-  resource_insufficient: { icon: "🔋", text: "Ressource insuffisante" },
-  on_cooldown: { icon: "⌛", text: "En recharge" },
-  action_condition_unmet: { icon: "🚫", text: "Condition de l'action non remplie" },
-  ready: { icon: "🔵", text: "Prête" }
+/* ============================================================
+   LIGNE DE RÈGLE — la liste
+   ============================================================ */
+
+/* Libellé court pour la ligne : le label complet d'une condition
+   (« L'ennemi prépare une charge ») fait passer la ligne sur trois lignes.
+   Défini ici et pas dans data/grimoire-conditions.js parce que c'est un besoin
+   d'affichage propre à cet écran, pas une propriété de la condition. */
+var GRIMOIRE_CONDITION_SHORT_LABELS = {
+  chargeIncoming: "l'ennemi charge",
+  shieldIncoming: "l'ennemi se protège",
+  healIncoming: "le boss se soigne",
+  eliteSurgeIncoming: "l'élite s'exalte",
+  heroLowHp: "je suis blessé",
+  enemyAttackIncoming: "il frappe 2 fois",
+  enemyEnraged: "l'ennemi est enragé",
+  enemyCorrupted: "l'ennemi est corrompu",
+  enemySilenceIncoming: "il va te silencer",
+  enemyVampiric: "l'ennemi est vampirique",
+  enemyArmored: "l'ennemi est blindé"
 };
 
-function buildGrimoireRuleStatusHTML(rule, kit, locked) {
-  if (locked) return "";
-  if (typeof explainGrimoireRuleStatus !== "function" || !window.ClassCombatManager) return "";
-
-  var resourceState = (typeof ClassCombatManager.ensureForCurrentClass === "function")
-    ? ClassCombatManager.ensureForCurrentClass()
-    : null;
-  var combatContext = (typeof ClassCombatManager.getGrimoireCombatContext === "function")
-    ? ClassCombatManager.getGrimoireCombatContext()
-    : {};
-
-  var roundsUntilTrigger = (typeof ClassCombatManager.getRoundsUntilPatternTrigger === "function")
-    ? ClassCombatManager.getRoundsUntilPatternTrigger(rule.conditionId)
-    : null;
-
-  var status = explainGrimoireRuleStatus(rule, kit, resourceState, game.classCooldowns, combatContext, roundsUntilTrigger);
-  if (status.code === "no_condition" || status.code === "no_action") return "";
-
-  var labelInfo = GRIMOIRE_RULE_STATUS_LABELS[status.code] || { icon: "❔", text: status.code };
-
-  var h = '<div class="grimoire-rule-status grimoire-rule-status-' + esc(status.code) + '">';
-  h += '<span class="grimoire-rule-status-badge">' + labelInfo.icon + ' ' + esc(labelInfo.text) + '</span>';
-
-  if (game.expertModeEnabled) {
-    var detailParts = [];
-
-    if (rule.conditionId === "heroLowHp") {
-      detailParts.push("Seuil : PV ≤ " + Math.round((typeof HERO_LOW_HP_THRESHOLD_PCT === "number" ? HERO_LOW_HP_THRESHOLD_PCT : 0.40) * 100) + "%");
-    } else if (rule.conditionId === "enemyAttackIncoming") {
-      detailParts.push("Se déclenche quand la jauge ennemie sera pleine au prochain tour");
-      if (status.roundsUntilTrigger !== null) {
-        detailParts.push("Double frappe dans ~" + status.roundsUntilTrigger + " round(s)");
-      }
-    } else if (status.roundsUntilTrigger !== null) {
-      detailParts.push("Prochain télégraphe dans ~" + status.roundsUntilTrigger + " round(s)");
-    }
-
-    if (status.resourceCost !== null && status.resourceCost > 0) {
-      detailParts.push("Ressource : " + Math.floor(status.resourceCurrent != null ? status.resourceCurrent : 0) + " / " + status.resourceCost + " requis");
-    }
-
-    if (status.cooldownRemainingRounds !== null && status.cooldownRemainingRounds > 0) {
-      detailParts.push("Recharge : " + status.cooldownRemainingRounds + " round(s) restant(s)");
-    }
-
-    if (detailParts.length) {
-      h += '<p class="panel-sub grimoire-rule-status-detail">' + esc(detailParts.join(" · ")) + '</p>';
-    }
-  }
-
-  h += '</div>';
-  return h;
+function getGrimoireConditionShortLabel(conditionId) {
+  var cond = getGrimoireCondition(conditionId);
+  if (!cond) return "";
+  return GRIMOIRE_CONDITION_SHORT_LABELS[conditionId] || cond.label;
 }
 
-window.buildGrimoireRuleStatusHTML = buildGrimoireRuleStatusHTML;
+/* Une règle contre-t-elle vraiment la situation choisie ? Couvre les DEUX
+   canaux (télégraphe + suppression d'archétype), cf. getAllGrimoireCounterIds. */
+function isGrimoireRuleCounter(rule, kit) {
+  if (!rule || !rule.conditionId || !rule.actionSlot) return false;
+  var action = (kit && kit.actions) ? kit.actions[rule.actionSlot] : null;
+  if (!action || typeof getAllGrimoireCounterIds !== "function") return false;
+  return getAllGrimoireCounterIds(action).indexOf(rule.conditionId) !== -1;
+}
 
-function buildGrimoireRuleCardHTML(index, rule, kit, locked) {
+function buildGrimoireRuleRowHTML(index, rule, kit, locked) {
   var cond = getGrimoireCondition(rule.conditionId);
   var action = (kit && kit.actions && rule.actionSlot) ? kit.actions[rule.actionSlot] : null;
-  var isActiveCounter = !!(action && rule.conditionId && Array.isArray(action.counters) && action.counters.indexOf(rule.conditionId) !== -1);
-  var counterLabels = (action && typeof getGrimoireCounterLabels === "function") ? getGrimoireCounterLabels(action) : [];
+  var configured = !!(cond && action);
 
-  var archetypeConditionId = (action && typeof getArchetypeEffectConditionId === "function") ? getArchetypeEffectConditionId(action) : null;
-  var archetypeCond = archetypeConditionId ? getGrimoireCondition(archetypeConditionId) : null;
-  var isActiveArchetypeEffect = !!(archetypeConditionId && rule.conditionId === archetypeConditionId);
+  var cls = "grimoire-rule-row";
+  if (locked) cls += " is-locked";
+  else if (!configured) cls += " is-empty";
 
-  var h = '<div class="panel-card grimoire-rule-card' + (locked ? ' grimoire-rule-locked' : '') + '">';
-  h += '<h3>Règle ' + (index + 1) + (locked ? ' 🔒' : '') + '</h3>';
+  var h = '<button type="button" class="' + cls + '"'
+    + (locked ? ' disabled' : ' onclick="openGrimoireRule(' + index + ')"') + '>';
 
-  h += buildGrimoireRuleStatusHTML(rule, kit, locked);
+  // Numéro d'ordre : les règles sont évaluées DANS L'ORDRE, ce que l'ancien
+  // écran ne montrait nulle part.
+  h += '<span class="grimoire-rule-order">' + (index + 1) + '</span>';
+  h += '<span class="grimoire-rule-icon">' + (locked ? '🔒' : (cond ? esc(cond.icon) : '＋')) + '</span>';
+  h += '<span class="grimoire-rule-body">';
 
   if (locked) {
     var worldLabel = getGrimoireUnlockWorldLabel(index);
-    h += '<p class="panel-sub">'
-      + (worldLabel ? 'Débloquée en atteignant ' + esc(worldLabel) + ' pour la première fois.' : 'Débloquée plus tard dans ta progression.')
-      + '</p>';
+    h += '<span class="grimoire-rule-text">Emplacement verrouillé</span>';
+    h += '<span class="grimoire-rule-sub">'
+      + (worldLabel ? 'Atteindre ' + esc(worldLabel) : 'Débloqué plus tard dans ta progression')
+      + '</span>';
+  } else if (!configured) {
+    h += '<span class="grimoire-rule-text">Emplacement libre</span>';
+    h += '<span class="grimoire-rule-sub">Toucher pour créer une règle</span>';
+  } else {
+    h += '<span class="grimoire-rule-text">Si ' + esc(getGrimoireConditionShortLabel(rule.conditionId))
+      + ' <span class="grimoire-rule-arrow">→</span> ' + esc(action.label)
+      + (isGrimoireRuleCounter(rule, kit) ? '<span class="grimoire-counter-tag">⚡ Contre</span>' : '')
+      + '</span>';
   }
 
-  h += '<label class="grimoire-field-label">Si...</label>';
-  h += '<select class="grimoire-select" onchange="setGrimoireRuleCondition(' + index + ', this.value)"' + (locked ? ' disabled' : '') + '>';
+  h += '</span>';
+  h += '<span class="grimoire-rule-chevron">›</span>';
+  h += '</button>';
+  return h;
+}
+
+/* ============================================================
+   FICHE — deux listes déroulantes natives
+   ============================================================ */
+
+function buildGrimoireEditHTML(index, kit) {
+  ensureGrimoireRules();
+  var rule = game.grimoireRules[index];
+  if (!rule) return "";
+
+  var cond = getGrimoireCondition(rule.conditionId);
+  var action = (kit && kit.actions && rule.actionSlot) ? kit.actions[rule.actionSlot] : null;
+  var unlockedCount = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : GRIMOIRE_SLOT_COUNT;
+
+  var h = '<button type="button" class="grimoire-back-btn" onclick="closeGrimoireRule()">← Règle '
+    + (index + 1) + ' sur ' + unlockedCount + '</button>';
+
+  h += '<div class="grimoire-card">';
+  h += '<div class="grimoire-card-title">Si…</div>';
+  var lock = isGrimoireEditable() ? '' : ' disabled';
+  h += '<select class="grimoire-select" onchange="setGrimoireRuleCondition(' + index + ', this.value)"' + lock + '>';
   h += buildGrimoireConditionOptionsHTML(rule.conditionId);
   h += '</select>';
-  if (cond) {
-    h += '<p class="panel-sub grimoire-condition-desc">' + esc(cond.description) + '</p>';
+  if (cond) h += '<span class="grimoire-select-desc">' + esc(cond.description) + '</span>';
+  h += '</div>';
+
+  h += '<div class="grimoire-card">';
+  h += '<div class="grimoire-card-title">Alors…</div>';
+  if (!kit) {
+    h += '<p class="grimoire-hint">Choisis d\'abord un héros pour assigner une action.</p>';
+  } else {
+    h += '<select class="grimoire-select" onchange="setGrimoireRuleAction(' + index + ', this.value)"' + lock + '>';
+    h += buildGrimoireActionOptionsHTML(kit, rule.actionSlot, rule.conditionId);
+    h += '</select>';
+    if (action) h += '<span class="grimoire-select-desc">' + esc(action.description) + '</span>';
   }
 
-  h += '<label class="grimoire-field-label">Alors...</label>';
-  h += '<select class="grimoire-select" onchange="setGrimoireRuleAction(' + index + ', this.value)"' + ((!kit || locked) ? ' disabled' : '') + '>';
-  h += buildGrimoireActionOptionsHTML(kit, rule.actionSlot, rule.conditionId);
-  h += '</select>';
-  if (!kit) {
-    h += '<p class="panel-sub">Choisis d\'abord un héros pour assigner une action.</p>';
-  } else if (action) {
-    h += '<p class="panel-sub grimoire-action-desc">' + esc(action.description) + '</p>';
-    if (counterLabels.length && !isActiveCounter) {
-      h += '<p class="panel-sub">⚡ Cette action contre aussi : ' + esc(counterLabels.join(", ")) + '</p>';
+  if (cond && action) {
+    // Les deux canaux de contre restent distingués ICI, et seulement ici : un contre
+    // de télégraphe ANNULE l'attaque, une suppression d'archétype s'ajoute aux dégâts.
+    var isTelegraphCounter = !!(Array.isArray(action.counters) && action.counters.indexOf(rule.conditionId) !== -1);
+    var isArchetypeCounter = !isTelegraphCounter && isGrimoireRuleCounter(rule, kit);
+
+    if (isTelegraphCounter) {
+      h += '<div class="grimoire-verdict is-counter"><span>⚡</span><span><strong>Contre parfait.</strong> '
+        + 'Cette action annulera complètement l\'attaque adverse si elle est jouée à temps.</span></div>';
+    } else if (isArchetypeCounter) {
+      h += '<div class="grimoire-verdict is-counter"><span>🌀</span><span><strong>Effet spécial.</strong> '
+        + 'Cette action agit sur cette situation en plus de ses dégâts normaux.</span></div>';
+    } else {
+      h += '<div class="grimoire-verdict is-neutral"><span>○</span><span>Cette action ne contre pas cette '
+        + 'situation — elle sera simplement jouée en priorité.</span></div>';
     }
-    if (archetypeCond && !isActiveArchetypeEffect) {
-      h += '<p class="panel-sub">🌀 Cette action a aussi un effet spécial contre : ' + esc(archetypeCond.label) + '</p>';
+
+    var allCounterIds = (typeof getAllGrimoireCounterIds === "function") ? getAllGrimoireCounterIds(action) : [];
+    var otherLabels = allCounterIds
+      .filter(function (conditionId) { return conditionId !== rule.conditionId; })
+      .map(function (conditionId) { return getGrimoireCondition(conditionId).label; });
+    if (otherLabels.length) {
+      h += '<p class="grimoire-hint">⚡ ' + esc(action.label) + ' contre aussi : ' + esc(otherLabels.join(", ")) + '.</p>';
     }
   }
-  if (isActiveCounter) {
-    h += '<p class="panel-sub grimoire-counter-active">⚡ Cette action CONTRE la situation choisie : elle annulera complètement l\'attaque adverse si elle est utilisée à temps.</p>';
+  h += '</div>';
+
+  if ((rule.conditionId || rule.actionSlot) && isGrimoireEditable()) {
+    h += '<button type="button" class="grimoire-clear-btn" onclick="clearGrimoireRule(' + index + ')">Vider cet emplacement</button>';
   }
-  if (isActiveArchetypeEffect) {
-    h += '<p class="panel-sub grimoire-archetype-active">🌀 Cette action a un effet spécial contre cette situation, en plus de ses dégâts normaux.</p>';
+
+  return h;
+}
+
+/* ============================================================
+   FEUILLES BASSES — aide et presets
+   Ancrées en bas : la liste reste visible derrière, on ne perd pas le contexte.
+   ============================================================ */
+
+/* L'aide remplace les 367 px de prose qui ouvraient l'ancien écran. Son texte vit
+   dans GENERIC_TUTORIALS.grimoire_rules (ui/tutorial-view.js) : une seule source pour
+   la feuille ci-dessous ET pour l'écran Tutoriels, qui l'agrège automatiquement. */
+function getGrimoireHelpTutorial() {
+  return (window.GENERIC_TUTORIALS && GENERIC_TUTORIALS.grimoire_rules) || null;
+}
+
+function buildGrimoireHelpSheetHTML() {
+  var tut = getGrimoireHelpTutorial();
+  if (!tut) return "";
+
+  var h = '<div class="grimoire-sheet-title"><span>' + esc(tut.icon) + '</span><span>' + esc(tut.title) + '</span></div>';
+  h += '<div class="grimoire-sheet-body">';
+  (tut.points || []).forEach(function (p) {
+    h += '<div class="grimoire-help-point"><span class="grimoire-help-point-icon">' + esc(p.icon) + '</span>'
+      + '<span class="grimoire-help-point-text">' + esc(p.text) + '</span></div>';
+  });
+  h += '</div>';
+  h += '<button type="button" class="grimoire-sheet-close" onclick="closeGrimoireSheet()">Compris</button>';
+  return h;
+}
+
+/* Le Rapport de combat partage la feuille basse de l'Aide et des Presets.
+   Le corps vient de buildCombatReportBodyHTML() (ui/combat-report-view.js) — la
+   superposition plein écran garde le même contenu, qu'elle utilise pour l'ouverture
+   automatique à la mort. Une seule source, deux habillages. */
+function buildGrimoireReportSheetHTML() {
+  var h = '<div class="grimoire-sheet-title"><span>📊</span><span>Rapport de combat</span></div>';
+  h += '<div class="grimoire-sheet-body grimoire-report-body">';
+  h += (typeof buildCombatReportBodyHTML === "function")
+    ? buildCombatReportBodyHTML()
+    : '<p class="grimoire-hint">Rapport indisponible.</p>';
+  h += '<button type="button" class="grimoire-clear-btn" onclick="resetCombatReport()">🗑️ Réinitialiser le rapport</button>';
+  h += '</div>';
+  h += '<button type="button" class="grimoire-sheet-close" onclick="closeGrimoireSheet()">Fermer</button>';
+  return h;
+}
+
+function buildGrimoirePresetsSheetHTML() {
+  var presets = ensureGrimoirePresets();
+  var suggested = (typeof getSuggestedGrimoirePreset === "function") ? getSuggestedGrimoirePreset() : null;
+
+  var h = '<div class="grimoire-sheet-title"><span>💾</span><span>Presets</span></div>';
+  h += '<div class="grimoire-sheet-body">';
+  h += '<p class="grimoire-hint" style="margin-top:0">Enregistre ta configuration sous un nom pour la retrouver selon le contexte.</p>';
+
+  if (presets.length) {
+    presets.forEach(function (preset) {
+      h += buildGrimoirePresetCardHTML(preset, !!(suggested && suggested.id === preset.id));
+    });
+  } else {
+    h += '<p class="grimoire-hint">Aucun preset enregistré pour l\'instant.</p>';
+  }
+
+  if (presets.length >= GRIMOIRE_PRESET_MAX_COUNT) {
+    h += '<p class="grimoire-hint">Limite de ' + GRIMOIRE_PRESET_MAX_COUNT + ' presets atteinte — supprime-en un pour en enregistrer un nouveau.</p>';
+  } else {
+    h += buildGrimoirePresetCreateFormHTML();
+    h += '<p class="grimoire-hint">' + presets.length + ' / ' + GRIMOIRE_PRESET_MAX_COUNT + ' presets enregistrés.</p>';
   }
 
   h += '</div>';
+  h += '<button type="button" class="grimoire-sheet-close" onclick="closeGrimoireSheet()">Fermer</button>';
   return h;
 }
+
+var GRIMOIRE_SHEETS = {
+  help: buildGrimoireHelpSheetHTML,
+  presets: buildGrimoirePresetsSheetHTML,
+  report: buildGrimoireReportSheetHTML
+};
+
+function buildGrimoireSheetHTML() {
+  if (!grimoireOpenSheet || !GRIMOIRE_SHEETS[grimoireOpenSheet]) return "";
+  return '<div class="grimoire-sheet-backdrop" onclick="closeGrimoireSheet()"></div>'
+    + '<div class="grimoire-sheet"><div class="grimoire-sheet-handle"></div>'
+    + GRIMOIRE_SHEETS[grimoireOpenSheet]() + '</div>';
+}
+
+/* v3.212.0 (bug Seb) — la feuille passait DERRIÈRE la barre de navigation du bas.
+   Elle était rendue dans #panel-container, qui porte `isolation: isolate` : son
+   z-index restait donc enfermé dans ce contexte d'empilement, et le panneau est
+   peint sous #tab-bar. Un z-index plus grand n'y aurait rien changé.
+   La feuille vit maintenant dans sa propre racine en fin de <body>, comme les
+   autres modales du jeu (tutorial-modal-root, combat-report-modal-root...). */
+function renderGrimoireSheet(isGrimoireTab) {
+  var host = document.getElementById("grimoire-sheet-root");
+  if (!host) return;
+  if (isGrimoireTab === false) {
+    grimoireOpenSheet = null; // quitter l'écran referme la feuille
+    host.innerHTML = "";
+    return;
+  }
+  host.innerHTML = buildGrimoireSheetHTML();
+}
+window.renderGrimoireSheet = renderGrimoireSheet;
+
+/* Lu par resetCombatReport() (ui/combat-report-view.js) pour savoir lequel des deux
+   habillages du rapport est à l'écran. */
+function isGrimoireReportSheetOpen() {
+  return grimoireOpenSheet === "report";
+}
+window.isGrimoireReportSheetOpen = isGrimoireReportSheetOpen;
+
+function openGrimoireSheet(name) {
+  grimoireOpenSheet = name;
+  // Lire l'aide ici vaut « rencontrée » : l'entrée se déverrouille dans l'écran
+  // Tutoriels, au même titre qu'un popup pédagogique réellement affiché.
+  if (name === "help") {
+    if (!game.genericTutorialsSeen || typeof game.genericTutorialsSeen !== "object") game.genericTutorialsSeen = {};
+    if (!game.genericTutorialsSeen.grimoire_rules) {
+      game.genericTutorialsSeen.grimoire_rules = true;
+      saveGame();
+    }
+  }
+  if (typeof renderPanel === "function") renderPanel();
+}
+
+function closeGrimoireSheet() {
+  grimoireOpenSheet = null;
+  if (typeof renderPanel === "function") renderPanel();
+}
+
+function openGrimoireRule(index) {
+  grimoireEditIndex = index;
+  grimoireOpenSheet = null;
+  if (typeof renderPanel === "function") renderPanel();
+}
+
+function closeGrimoireRule() {
+  grimoireEditIndex = null;
+  if (typeof renderPanel === "function") renderPanel();
+}
+
+function clearGrimoireRule(index) {
+  if (!isGrimoireEditable()) return;
+  ensureGrimoireRules();
+  if (!game.grimoireRules[index]) return;
+  game.grimoireRules[index] = { conditionId: null, actionSlot: null };
+  saveGame();
+  if (typeof renderPanel === "function") renderPanel();
+}
+
+window.openGrimoireRule = openGrimoireRule;
+window.closeGrimoireRule = closeGrimoireRule;
+window.clearGrimoireRule = clearGrimoireRule;
+window.openGrimoireSheet = openGrimoireSheet;
+window.closeGrimoireSheet = closeGrimoireSheet;
+window.buildGrimoireEditHTML = buildGrimoireEditHTML;
+window.buildGrimoireRuleRowHTML = buildGrimoireRuleRowHTML;
+window.isGrimoireRuleCounter = isGrimoireRuleCounter;
+window.getGrimoireConditionShortLabel = getGrimoireConditionShortLabel;
 
 function buildGrimoirePresetCardHTML(preset, isSuggested) {
   var dateLabel = preset.lastModified
@@ -316,7 +528,9 @@ function buildGrimoirePresetCardHTML(preset, isSuggested) {
     h += '<p class="panel-sub grimoire-preset-date">Modifié le ' + esc(dateLabel) + '</p>';
   }
   h += '<div class="grimoire-preset-actions">';
-  h += '<button class="settings-btn grimoire-preset-load-btn" type="button" onclick="confirmLoadGrimoirePreset(\'' + esc(preset.id) + '\')">Charger</button>';
+  h += '<button class="settings-btn grimoire-preset-load-btn" type="button"'
+    + ((typeof isGrimoireEditable === "function" && !isGrimoireEditable()) ? ' disabled' : '')
+    + ' onclick="confirmLoadGrimoirePreset(\'' + esc(preset.id) + '\')">Charger</button>';
   h += '<button class="settings-btn grimoire-preset-delete-btn" type="button" onclick="confirmDeleteGrimoirePreset(\'' + esc(preset.id) + '\')">🗑️</button>';
   h += '</div>';
   h += '</div>';
@@ -356,81 +570,84 @@ window.buildGrimoirePresetCardHTML = buildGrimoirePresetCardHTML;
 window.buildGrimoirePresetCreateFormHTML = buildGrimoirePresetCreateFormHTML;
 window.handleSaveGrimoirePresetClick = handleSaveGrimoirePresetClick;
 
+/* ============================================================
+   ÉCRAN — liste par défaut, fiche quand une règle est ouverte
+   ============================================================ */
+
+/* Sélecteur de mode de combat (demande Seb) : l'ancien écran se contentait d'un
+   bandeau disant d'aller basculer le mode AILLEURS (écran Combat ou Paramètres).
+   CombatEngine.setCombatMode() est appelable d'ici — c'est exactement ce que fait
+   le bouton de l'écran Combat, mêmes effets. Fichier protégé non modifié. */
+function buildGrimoireModeHTML() {
+  var on = game.combatMode === "grimoire";
+  var editable = isGrimoireEditable();
+  // Basculer le mode remet à zéro l'horloge de round (CombatEngine.setCombatMode) :
+  // interdit en pleine sortie, au même titre que modifier une règle.
+  var lock = editable ? '' : ' disabled';
+
+  var h = '<div class="grimoire-head">';
+  h += '<div class="grimoire-mode' + (editable ? '' : ' is-locked') + '">';
+  h += '<button type="button" class="' + (on ? '' : 'is-on') + '"' + lock + ' onclick="setGrimoireCombatMode(\'tactique\')">🎯 Tactique</button>';
+  h += '<button type="button" class="' + (on ? 'is-on' : '') + '"' + lock + ' onclick="setGrimoireCombatMode(\'grimoire\')">📖 Grimoire</button>';
+  h += '</div>';
+  h += '<button type="button" class="grimoire-help-btn" onclick="openGrimoireSheet(\'help\')">?</button>';
+  h += '</div>';
+
+  h += '<p class="grimoire-mode-desc">' + (on
+    ? 'Les rounds s\'enchaînent seuls et tes règles choisissent l\'action.'
+    : 'Chaque round attend ton choix — tes règles se contentent de surligner l\'action conseillée.') + '</p>';
+
+  if (!editable) {
+    h += '<div class="grimoire-locked-notice"><span>🔒</span><span>Sortie en cours — tes règles sont figées. '
+      + 'Rentre au Campement pour les modifier.</span></div>';
+  }
+  return h;
+}
+
+function setGrimoireCombatMode(mode) {
+  if (!isGrimoireEditable()) return;
+  if (window.CombatEngine && typeof CombatEngine.setCombatMode === "function") CombatEngine.setCombatMode(mode);
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setGrimoireCombatMode = setGrimoireCombatMode;
+
+function buildGrimoireListHTML(kit, unlockedCount) {
+  var h = buildGrimoireModeHTML();
+
+  game.grimoireRules.forEach(function (rule, index) {
+    if (index === unlockedCount) {
+      h += '<div class="grimoire-divider">Emplacements à venir</div>';
+    }
+    h += buildGrimoireRuleRowHTML(index, rule, kit, index >= unlockedCount);
+  });
+
+  h += '<div class="grimoire-foot">';
+  h += '<button type="button" onclick="openGrimoireSheet(\'presets\')">💾 Presets<span class="grimoire-foot-badge">'
+    + ensureGrimoirePresets().length + '</span></button>';
+  h += '<button type="button" onclick="openGrimoireSheet(\'report\')">📊 Rapport</button>';
+  h += '</div>';
+
+  return h;
+}
+
 function buildGrimoireHTML() {
   ensureGrimoireRules();
   var kit = getGrimoireCurrentKit();
   var unlockedCount = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : GRIMOIRE_SLOT_COUNT;
 
-  var h = '<div class="panel-card">';
-  h += '<h3>📖 Grimoire de tactiques</h3>';
-  h += '<p class="panel-sub">Programme des règles pour ton combat automatique : si une situation se présente, ton héros utilisera l\'action choisie en priorité. Les règles s\'ajoutent au comportement automatique habituel — s\'il n\'y a pas de règle applicable, ton héros continue de se battre normalement.</p>';
-  h += '<p class="panel-sub">⚡ Certaines actions marquées d\'un éclair CONTRENT complètement une situation (annulent l\'attaque adverse) si tu les assignes à la bonne condition — regarde les actions disponibles une fois une condition choisie.</p>';
-  h += '<p class="panel-sub">🔓 ' + unlockedCount + ' / ' + GRIMOIRE_SLOT_COUNT + ' règles débloquées. De nouvelles règles se débloquent en atteignant de nouveaux mondes pour la première fois.</p>';
+  // Une règle ouverte hors des emplacements débloqués ne doit pas rester affichée
+  // (changement de héros, preset d'une autre version, état d'écran resté en mémoire).
+  if (grimoireEditIndex !== null && grimoireEditIndex >= unlockedCount) grimoireEditIndex = null;
 
-  h += '<button class="settings-btn" type="button" onclick="openCombatReport(\'manual\', null)">📊 Voir le rapport de combat</button>';
-
-  h += '</div>';
-
-  var presets = ensureGrimoirePresets();
-  var suggestedPreset = (typeof getSuggestedGrimoirePreset === "function") ? getSuggestedGrimoirePreset() : null;
-
-  h += '<div class="panel-card grimoire-presets-section">';
-  h += '<h3>💾 Presets</h3>';
-  h += '<p class="panel-sub">Sauvegarde ta configuration de règles sous un nom, pour la retrouver rapidement selon le contexte (farm, boss, donjon...).</p>';
-
-  if (presets.length) {
-    presets.forEach(function (preset) {
-      h += buildGrimoirePresetCardHTML(preset, !!(suggestedPreset && suggestedPreset.id === preset.id));
-    });
-  } else {
-    h += '<p class="panel-sub">Aucun preset enregistré pour l\'instant.</p>';
-  }
-
-  if (presets.length >= GRIMOIRE_PRESET_MAX_COUNT) {
-    h += '<p class="panel-sub">Limite de ' + GRIMOIRE_PRESET_MAX_COUNT + ' presets atteinte — supprime-en un pour en enregistrer un nouveau.</p>';
-  } else {
-    h += buildGrimoirePresetCreateFormHTML();
-  }
-
-  h += '</div>';
-
-  h += '<div class="panel-card grimoire-expert-mode-section">';
-  h += '<h3>🔬 Mode Expert</h3>';
-  h += '<p class="panel-sub">Affiche les seuils chiffrés réels (ressource, recharge, temps avant une attaque adverse) sur chaque règle, en plus de l\'indice simple toujours visible.</p>';
-  h += '<button class="settings-btn' + (game.expertModeEnabled ? ' primary' : '') + '" type="button" onclick="toggleGrimoireExpertMode()">'
-    + (game.expertModeEnabled ? '✅ Mode Expert activé' : '⬜ Activer le Mode Expert') + '</button>';
-  h += '</div>';
-
-  h += '<div class="panel-card">';
-  if (kit) {
-    var activeRulesForReserve = (Array.isArray(game.grimoireRules) && game.grimoireRules.length)
-      ? game.grimoireRules.slice(0, unlockedCount)
-      : [];
-    var reserveAmount = (typeof getGrimoireCounterReserveAmount === "function")
-      ? getGrimoireCounterReserveAmount(activeRulesForReserve, kit, game.enemy)
-      : 0;
-    if (reserveAmount > 0 && kit.resource) {
-      h += '<p class="panel-sub">🔒 Ton héros réserve ' + reserveAmount + ' / ' + kit.resource.max + ' ' + esc(kit.resource.label)
-        + ' pour garantir ta règle de contre la plus prioritaire — le combat automatique par défaut jouera moins d\'actions coûteuses en attendant.</p>';
-    }
-  }
-
-  h += '</div>';
-
-  if (game.combatMode !== "grimoire") {
-    h += '<div class="panel-card grimoire-warning-card">';
-    h += '<p class="panel-sub">🎯 Mode Tactique actif : les règles ci-dessous ne font que <strong>suggérer</strong> une action (bouton surligné en combat). Passe en mode Grimoire (écran Combat ou Paramètres) pour qu\'elles jouent seules.</p>';
-    h += '</div>';
-  }
-
-  game.grimoireRules.forEach(function (rule, index) {
-    h += buildGrimoireRuleCardHTML(index, rule, kit, index >= unlockedCount);
-  });
+  var h = (grimoireEditIndex !== null)
+    ? buildGrimoireEditHTML(grimoireEditIndex, kit)
+    : buildGrimoireListHTML(kit, unlockedCount);
 
   return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83d\udcd5 Grimoire">' + h + '</div>';
 }
 
 function setGrimoireRuleCondition(index, conditionId) {
+  if (!isGrimoireEditable()) return; // garde-fou : l'UI désactive déjà, le code refuse aussi
   ensureGrimoireRules();
   if (!game.grimoireRules[index]) return;
   game.grimoireRules[index].conditionId = conditionId || null;
@@ -439,6 +656,7 @@ function setGrimoireRuleCondition(index, conditionId) {
 }
 
 function setGrimoireRuleAction(index, actionSlot) {
+  if (!isGrimoireEditable()) return;
   ensureGrimoireRules();
   if (!game.grimoireRules[index]) return;
   game.grimoireRules[index].actionSlot = actionSlot || null;

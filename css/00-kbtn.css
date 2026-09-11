@@ -459,12 +459,5 @@
   padding-bottom: 5.2%;
 }
 
-/* v3.194.0 (Seb) : le titre de page du HUD est redondant depuis que les
-   bandeaux figés portent le titre de chaque écran — NEUTRALISÉ ici par
-   CSS (!important bat le style.display inline d'updateHudPageTitle).
-   ⚠ hud-view.js est le fichier RESYNC (HUD intégré côté build de Seb) :
-   le retrait propre du code (élément, fonction, map HUD_PAGE_TITLES) se
-   fera au resync, sur sa base à jour. */
-#hud-page-title {
-  display: none !important;
-}
+/* v3.200.0 : la neutralisation CSS de #hud-page-title est retirée en même
+   temps que l'élément lui-même (voir ui/hud-view.js). Plus rien à masquer. */

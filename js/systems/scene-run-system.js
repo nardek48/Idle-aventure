@@ -247,6 +247,7 @@ var SceneRunManager = {
       gourdeAvailable: false, // v3.195.0
 
       injuries: [], // v3.195.0 : {stat, severity} cumulables (avant : simples clés de stat)
+      exhausted: false, // v3.199.0 : run terminé par Souffle épuisé (distinct des blessures)
       ropeCharges: 0, // v3.198.0 : usages de corde restants (etait un booleen illimite)
       provisionCharges: 0, // v3.198.0 : provisions restantes (objet enfin actif)
       breath: 100, // v3.195.0 : ressource de run visible, 0-100, consommée par les options
@@ -529,7 +530,7 @@ var SceneRunManager = {
     return run.depth + (torchOn ? 2 : 1);
   },
 
-  GOURDE_BREATH_AMOUNT: 30, // cohérent avec l'item Gourde (data/scene-templates.js)
+  GOURDE_BREATH_AMOUNT: 25, // v3.199.0 : 30 -> 25, le Souffle compte désormais vraiment
 
   /* useSceneGourde() -> { ok, reason }. Utilisable à tout moment (pas seulement en attente
      de nœud, décision Seb : "à utiliser quand tu veux" — desc de l'item), réutilisable comme
@@ -542,6 +543,31 @@ var SceneRunManager = {
     run.breath = Math.min(100, Number(run.breath || 0) + this.GOURDE_BREATH_AMOUNT);
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null };
+  },
+
+  /* v3.199.0 : Souffle épuisé -> fin du run par évacuation, même traitement que le plafond de
+     blessures (moitié du butin). Deux raisons de ne PAS se contenter de refuser les options :
+     un palier dont toutes les portes sont des obstacles trop chers laissait le joueur sans
+     aucune action possible hors abandon (cul-de-sac latent, inatteignable tant que le Souffle
+     était inerte, atteignable dès ce lot) ; et une seconde horloge de fin donne au Souffle un
+     enjeu réel plutôt qu'un simple filtre d'options. */
+  _exhaust: function () {
+    var run = this.getRun();
+    if (!run) return;
+    run.exhausted = true;
+    this._evacuate();
+  },
+
+  /* v3.199.0 : voies d'un obstacle que le Souffle courant permet encore de payer. La corde ne
+     coûte rien : un run avec une corde en réserve n'est jamais bloqué sur un gabarit
+     compatible. Utilisé par la vue ET par enterGate (détection de cul-de-sac). */
+  affordableVoies: function (run, gabarit, slot) {
+    var voies = SceneEngine.nodeVoies(gabarit, slot);
+    var out = [];
+    for (var i = 0; i < voies.length; i++) {
+      if (Number(run.breath || 0) >= this._obstacleFactors(run, voies[i]).breathCost) out.push(voies[i]);
+    }
+    return out;
   },
 
   /* v3.198.0 : vrai si un soin d'autel/source aurait un effet ici (au moins une blessure
@@ -601,8 +627,36 @@ var SceneRunManager = {
     var level = this.getCurrentLevel();
     var slot = level[gateIndex];
     if (!slot) return { ok: false, reason: "Porte invalide" };
+    var template = SceneEngine.getTemplate(run.templateId);
+
+    // v3.199.0 : franchir un palier coûte du Souffle (template.breathPerDepth, 0 par défaut).
+    // Prélevé À L'ENTRÉE de la porte et non à la sortie : le joueur voit le coût s'appliquer
+    // au moment où il s'engage, et un run repris depuis une sauvegarde ne le paie jamais deux
+    // fois (l'entrée n'a lieu qu'une fois par palier, la sortie pouvait être rejouée).
+    var stepCost = Number(template && template.breathPerDepth) || 0;
+    if (stepCost > 0) {
+      run.breath = Math.max(0, Number(run.breath || 0) - stepCost);
+      if (run.breath <= 0) {
+        this._exhaust();
+        if (typeof saveGame === "function") saveGame();
+        return { ok: true, reason: null, outcome: "epuisement" };
+      }
+    }
 
     if (slot.type === "mystere") this._revealMystery(run, slot);
+
+    // v3.199.0 : cul-de-sac. Si la porte est un obstacle dont AUCUNE voie n'est payable et
+    // qu'aucune corde n'est en réserve, le joueur n'aurait plus une seule action possible.
+    // Le run se termine par épuisement plutôt que de le laisser face à un écran mort.
+    if (slot.type === "obstacle") {
+      var gab = SceneEngine.getNodeBank().obstacles[slot.gabaritId];
+      var hasRope = Number(run.ropeCharges || 0) > 0 && gab && gab.ropeOption;
+      if (gab && !hasRope && this.affordableVoies(run, gab, slot).length === 0) {
+        this._exhaust();
+        if (typeof saveGame === "function") saveGame();
+        return { ok: true, reason: null, outcome: "epuisement" };
+      }
+    }
 
     run.currentGate = gateIndex;
     run.status = "node";
@@ -684,7 +738,9 @@ var SceneRunManager = {
     var intensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
     var mutator = this.getActiveMutator(); // v3.196.0
     return {
-      diffMult: profile.diffMod * ((intensity && intensity.diffMult) || 1) * this.heroScale(run),
+      // v3.199.0 : repli sur template.diffMult quand le run n'a pas d'intensité —
+      // SCENE_INTENSITY est réservé à la Petite Aventure, expedition_faille porte le sien.
+      diffMult: profile.diffMod * ((intensity && intensity.diffMult) || template.diffMult || 1) * this.heroScale(run),
       lootMult: profile.lootMod * ((intensity && intensity.lootMult) || 1) * (mutator.lootMult || 1),
       breathCost: profile.breathCost * (mutator.breathCostMult || 1),
       injurySeverity: profile.injurySeverity
@@ -828,7 +884,7 @@ var SceneRunManager = {
      enfin un rôle actif à ces nœuds vis-à-vis du Souffle, pas seulement des blessures.
      Montant fixe modeste (20) : suffisant pour reprendre une option coûteuse, pas pour
      spammer indéfiniment la voie de puissance. */
-  SOFT_HEAL_BREATH_AMOUNT: 20,
+  SOFT_HEAL_BREATH_AMOUNT: 15, // v3.199.0 : 20 -> 15 (idem, régime de Souffle resserré)
 
   resolveAutel: function (accept) {
     var run = this.getRun();

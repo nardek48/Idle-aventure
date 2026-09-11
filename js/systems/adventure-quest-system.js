@@ -114,7 +114,25 @@ var AdventureQuestManager = {
     });
   },
 
+  /* v3.205.0 (E5) : une quête « elite » fait paraître sa créature dès que toutes
+     ses autres étapes sont remplies. Toute la fabrication vit dans EliteManager
+     (systems/elite-system.js, non protégé) — ici, une délégation, rien d'autre. */
+  nextSpawnIsElite: function (quest) {
+    if (!quest || quest.type !== "elite" || !window.EliteManager) return false;
+    var self = this;
+    var pending = quest.steps.find(function (s) { return s.type === "eliteKill" && !self.isStepComplete(quest, s); });
+    if (!pending) return false;
+    return quest.steps.every(function (s) {
+      return s.type === "eliteKill" || self.isStepComplete(quest, s);
+    });
+  },
+
   spawnRunEnemy: function (quest) {
+    if (this.nextSpawnIsElite(quest)) {
+      var elite = EliteManager.spawn(quest.eliteId, quest.worldId, quest.adventureIndex);
+      if (elite) { this.applyQuestTheme(quest); return; }
+      // élite introuvable (donnée incohérente) : on retombe sur le spawn normal
+    }
     var forceBoss = this.nextSpawnIsBoss(quest);
     var enemy = this.buildQuestEnemy(quest, forceBoss);
     if (!enemy) {
@@ -162,9 +180,12 @@ var AdventureQuestManager = {
     var progress = game.adventureQuestProgress[quest.id];
 
     quest.steps.forEach(function (step) {
-      if (step.type === "kill" && !enemy.isBoss) {
+      if (step.type === "kill" && !enemy.isBoss && !enemy.isElite) { // v3.205.0 (E5) : l'élite ne compte pas dans son propre pistage
         if (progress[step.id] < step.target) progress[step.id] += 1;
       } else if (step.type === "bossKill" && enemy.isBoss && step.bossId === enemy.id) {
+        if (progress[step.id] < step.target) progress[step.id] += 1;
+      } else if (step.type === "eliteKill" && enemy.isElite && step.eliteId === enemy.id) {
+        // v3.205.0 (E5)
         if (progress[step.id] < step.target) progress[step.id] += 1;
       }
     });
@@ -190,6 +211,12 @@ var AdventureQuestManager = {
       game.essence += Number(reward.essence || 0);
       game.totalGoldEarned += Number(reward.gold || 0);
 
+      // v3.205.0 (E5) : butin propre à l'élite — arme unique déclinée par classe + Sève.
+      var eliteRows = [];
+      if (quest.type === "elite" && window.EliteManager) {
+        eliteRows = EliteManager.grantReward(quest.eliteId, reward.seve) || [];
+      }
+
       addLog("📜 Quête terminée : " + quest.name + " (+" + formatNumber(reward.gold || 0) + " or, +" + formatNumber(reward.essence || 0) + " essence)", "event");
       showToast("📜 " + quest.name + " terminée !", 2200);
 
@@ -197,6 +224,7 @@ var AdventureQuestManager = {
         var rewardRows = [];
         if (reward.gold) rewardRows.push({ label: "Or", value: formatNumber(reward.gold) });
         if (reward.essence) rewardRows.push({ label: "Essence", value: formatNumber(reward.essence) });
+        rewardRows = rewardRows.concat(eliteRows); // v3.205.0 (E5)
         openQuestCompletePopup({
           icon: quest.icon || "📜",
           title: "Quête terminée !",

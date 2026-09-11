@@ -7,17 +7,17 @@ var CORRUPTED_MIN_WORLD_INDEX = 3;
 var ENRAGED_SPAWN_CHANCE_PCT = 25;
 var ENRAGED_DAMAGE_BONUS_PER_10PCT_LOST = 0.08;
 var ENRAGED_DAMAGE_BONUS_CAP = 0.50;
-var ENRAGED_FREEZE_DURATION_ROUNDS = 2;
+var ENRAGED_FREEZE_DURATION_ROUNDS = 4;   // v3.204.0 (E3) : 2 -> 4, une suppression de 2 rounds sur un combat de 11 ne se voyait pas
 var ENRAGED_SUPPRESSION_REDUCTION_PCT = 0.20;
 var CORRUPTED_DAMAGE_REDUCTION_PER_STACK = 0.05;
 var CORRUPTED_MAX_STACKS = 5;
 var VAMPIRIC_MIN_WORLD_INDEX = 3;
 var VAMPIRIC_LIFESTEAL_PCT = 0.15;
-var VAMPIRIC_SUPPRESSION_DURATION_ROUNDS = 2;
+var VAMPIRIC_SUPPRESSION_DURATION_ROUNDS = 4;  // v3.204.0 (E3) : idem
 var ARMORED_MIN_WORLD_INDEX = 3;
 var ARMORED_DAMAGE_REDUCTION_PCT = 0.10;
 var ARMORED_SUPPRESSION_REDUCTION_PCT = 0.05;
-var ARMORED_SUPPRESSION_DURATION_ROUNDS = 2;
+var ARMORED_SUPPRESSION_DURATION_ROUNDS = 4;   // v3.204.0 (E3) : idem
 var SILENCED_MIN_WORLD_INDEX = 1;
 var SILENCED_VS_CHARGE_CHANCE_PCT = 50;
 var SILENCE_DURATION_ROUNDS = 2;
@@ -33,8 +33,8 @@ var FIXED_ENEMY_ARCHETYPES = {
 
 // v3.105.0 : distance d'approche — rounds avant le contact face à un héros À DISTANCE (arc/magie). 0 = frappe
 // immédiatement (l'ennemi attaque lui-même à distance) ; le Chevalier (épée) est toujours au contact direct.
-var ENGAGE_DEFAULT_ROUNDS = 1;
-var ENGAGE_BOSS_ROUNDS = 1;
+var ENGAGE_DEFAULT_ROUNDS = 2;
+var ENGAGE_BOSS_ROUNDS = 2;
 var ENEMY_ENGAGE_ROUNDS = {
   spider: 0,      // cracheuse
   goblin: 0,      // frondeur
@@ -79,30 +79,40 @@ function decideEnemyArchetype(worldIndex, isBoss, spawnRoll, archetypeRoll) {
   return "enraged";
 }
 
+/* v3.204.0 (E4) : intensité de l'archétype — doublée pendant l'exaltation d'une
+   élite (enemy.surgeRounds > 0). Une suppression posée à temps reste
+   prioritaire : contrer avant le pic annule bien son effet. */
+function getArchetypeIntensityMult(enemy) {
+  if (!enemy || !(Number(enemy.surgeRounds || 0) > 0)) return 1;
+  return (typeof ELITE_SURGE_INTENSITY_MULT === "number") ? ELITE_SURGE_INTENSITY_MULT : 2;
+}
+
 function getArmoredEffectiveDamageReduction(enemy) {
   if (!enemy || enemy.archetype !== "armored") return 0;
 
   if (Number(enemy.armorSuppressedRounds || 0) > 0) {
     return Math.max(0, Number(enemy.armorSuppressedReduction || 0));
   }
-  return ARMORED_DAMAGE_REDUCTION_PCT;
+  return Math.min(0.9, ARMORED_DAMAGE_REDUCTION_PCT * getArchetypeIntensityMult(enemy));
 }
 
-function getVampiricLifestealAmount(damageDealt) {
+/* enemy est optionnel : sans lui, comportement d'origine (pas d'exaltation). */
+function getVampiricLifestealAmount(damageDealt, enemy) {
   var dmg = (typeof damageDealt === "number" && damageDealt > 0) ? damageDealt : 0;
-  return Math.max(0, Math.floor(dmg * VAMPIRIC_LIFESTEAL_PCT));
+  return Math.max(0, Math.floor(dmg * VAMPIRIC_LIFESTEAL_PCT * getArchetypeIntensityMult(enemy)));
 }
 
-function getEnragedDamageMultiplier(pctHpLost) {
+function getEnragedDamageMultiplier(pctHpLost, enemy) {
   var pct = (typeof pctHpLost === "number" && pctHpLost > 0) ? Math.min(1, pctHpLost) : 0;
   var tier = Math.floor(pct * 10);
-  var bonus = Math.min(ENRAGED_DAMAGE_BONUS_CAP, tier * ENRAGED_DAMAGE_BONUS_PER_10PCT_LOST);
+  var mult = getArchetypeIntensityMult(enemy);
+  var bonus = Math.min(ENRAGED_DAMAGE_BONUS_CAP * mult, tier * ENRAGED_DAMAGE_BONUS_PER_10PCT_LOST * mult);
   return 1 + bonus;
 }
 
-function getCorruptedDamageMultiplier(stackCount) {
+function getCorruptedDamageMultiplier(stackCount, enemy) {
   var stacks = (typeof stackCount === "number" && stackCount > 0) ? Math.min(CORRUPTED_MAX_STACKS, Math.floor(stackCount)) : 0;
-  return Math.max(0, 1 - stacks * CORRUPTED_DAMAGE_REDUCTION_PER_STACK);
+  return Math.max(0, 1 - stacks * CORRUPTED_DAMAGE_REDUCTION_PER_STACK * getArchetypeIntensityMult(enemy));
 }
 
 window.ENRAGED_MIN_WORLD_INDEX = ENRAGED_MIN_WORLD_INDEX;
@@ -135,3 +145,4 @@ window.getEnragedDamageMultiplier = getEnragedDamageMultiplier;
 window.getCorruptedDamageMultiplier = getCorruptedDamageMultiplier;
 window.getVampiricLifestealAmount = getVampiricLifestealAmount;
 window.getArmoredEffectiveDamageReduction = getArmoredEffectiveDamageReduction;
+window.getArchetypeIntensityMult = getArchetypeIntensityMult;

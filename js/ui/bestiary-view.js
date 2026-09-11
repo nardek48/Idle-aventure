@@ -21,6 +21,11 @@ var BESTIARY_ENEMY_POWER_DMG_COEF = 0.5;
 var BESTIARY_ENEMY_PRECISION_CRIT_COEF = 0.3;
 
 function findCreatureLocation(id, isBoss) {
+  // v3.205.0 (E5) : une élite n'est ni un boss d'aventure ni dans un enemyPool —
+  // on la localise via l'ennemi dont elle est la variante.
+  var eliteDef = (window.ELITE_DB && ELITE_DB[id]) || null;
+  if (eliteDef) return findCreatureLocation(eliteDef.baseId, false);
+
   for (var w = 0; w < WORLDS.length; w++) {
     var adventures = WORLDS[w].adventures || [];
     for (var a = 0; a < adventures.length; a++) {
@@ -66,14 +71,43 @@ function estimateCreatureCombatStats(id, data, isBoss) {
 }
 
 function getAllBestiaryIds() {
-  return Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB));
+  // v3.205.0 (E5) : les élites ont leur entrée, comme les boss.
+  var eliteIds = window.ELITE_DB ? Object.keys(ELITE_DB) : [];
+  return Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB)).concat(eliteIds);
 }
+
+/* v3.205.0 (E5) : une élite n'a pas d'entrée propre dans ENEMY_DB/BOSS_DB — on
+   compose sa fiche depuis sa base et ses multiplicateurs, source unique. */
+function buildEliteBestiaryData(def) {
+  var base = (window.ENEMY_DB && ENEMY_DB[def.baseId]) || null;
+  if (!base) return null;
+  var m = def.statMult || {};
+  return {
+    name: def.name,
+    asset: base.asset,
+    image: base.image,
+    lore: def.lore || "",
+    resists: base.resists || [],
+    weak: base.weak || [],
+    stats: makeRpgStats(
+      Math.floor((base.stats.power || 0) * (m.power || 1)),
+      Math.floor((base.stats.endurance || 0) * (m.endurance || 1)),
+      Math.floor((base.stats.celerity || 0) * (m.celerity || 1)),
+      base.stats.precision,
+      base.stats.will
+    )
+  };
+}
+window.buildEliteBestiaryData = buildEliteBestiaryData;
 
 var expandedBestiaryWorld = null; // v2.83.37 : accordéon replié par défaut
 
 function buildBestiaryEntryCardHTML(id) {
-  var isBoss = !!BOSS_DB[id];
-  var data = isBoss ? BOSS_DB[id] : ENEMY_DB[id];
+  var eliteDef = (window.ELITE_DB && ELITE_DB[id]) || null;
+  var isBoss = !!BOSS_DB[id] || !!eliteDef;
+  var data = eliteDef
+    ? buildEliteBestiaryData(eliteDef)
+    : (BOSS_DB[id] || ENEMY_DB[id]);
   if (!data) return "";
 
   var kills = game.killCounts[id] || 0;
@@ -133,7 +167,7 @@ function getBestiaryGroupedByWorld() {
   var groups = {};
 
   ids.forEach(function (id) {
-    var isBoss = !!BOSS_DB[id];
+    var isBoss = !!BOSS_DB[id] || !!(window.ELITE_DB && ELITE_DB[id]); // v3.205.0 (E5)
     var location = findCreatureLocation(id, isBoss);
     var worldIndex = location ? location.worldIndex : 0;
     if (!groups[worldIndex]) groups[worldIndex] = [];

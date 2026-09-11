@@ -24,16 +24,49 @@ var ARCHETYPE_EFFECT_TO_CONDITION_ID = {
   enemyArmorSuppression: "enemyArmored"
 };
 
+/* v3.204.0 (E3) : même table, côté archétype — permet de choisir, parmi
+   plusieurs effets d'archétype portés par une action, celui qui vise
+   l'ennemi RÉELLEMENT en face. */
+var ARCHETYPE_EFFECT_TO_ARCHETYPE = {
+  enemyRageSuppression: "enraged",
+  enemyCorruptionPurge: "corrupted",
+  enemyLifestealSuppression: "vampiric",
+  enemyArmorSuppression: "armored"
+};
+
+/* v3.204.0 (E3) : la version d'origine renvoyait le PREMIER effet d'archétype
+   déclaré par l'action, sans regarder l'ennemi. Tant qu'une action n'en portait
+   qu'un seul, c'était équivalent ; depuis que skill1 et skill2 en portent deux
+   (redistribution des contres, class-skills.js), le second n'était jamais
+   déclenché — la suppression n'était tout simplement jamais posée.
+   On cherche donc d'abord l'effet qui cible l'archétype présent, et on retombe
+   sur le comportement historique s'il n'y a pas d'ennemi ou pas d'archétype
+   (aucun changement pour les actions à contre unique). */
 function getArchetypeEffectConditionId(action) {
   if (!action || !Array.isArray(action.effects)) return null;
-  for (var i = 0; i < action.effects.length; i++) {
-    var effect = action.effects[i];
+  var enemyArchetype = (window.game && game.enemy) ? game.enemy.archetype : null;
+  var i, effect;
+
+  if (enemyArchetype) {
+    for (i = 0; i < action.effects.length; i++) {
+      effect = action.effects[i];
+      if (effect && ARCHETYPE_EFFECT_TO_ARCHETYPE[effect.type] === enemyArchetype) {
+        return ARCHETYPE_EFFECT_TO_CONDITION_ID[effect.type];
+      }
+    }
+    return null; // l'action ne porte aucun contre pour CET archétype
+  }
+
+  for (i = 0; i < action.effects.length; i++) {
+    effect = action.effects[i];
     if (effect && ARCHETYPE_EFFECT_TO_CONDITION_ID[effect.type]) {
       return ARCHETYPE_EFFECT_TO_CONDITION_ID[effect.type];
     }
   }
   return null;
 }
+
+window.ARCHETYPE_EFFECT_TO_ARCHETYPE = ARCHETYPE_EFFECT_TO_ARCHETYPE;
 
 window.getArchetypeEffectConditionId = getArchetypeEffectConditionId;
 
@@ -105,6 +138,7 @@ var ClassCombatManager = {
     base.shieldIncoming = !!(e && e.shieldTelegraphed);
     base.healIncoming = !!(e && e.healTelegraphed);
     base.enemySilenceIncoming = !!(e && e.silenceTelegraphed);
+    base.eliteSurgeIncoming = !!(e && e.surgeTelegraphed); // v3.204.0 (E4)
 
     var heroMaxHp = Number(game.heroMaxHp || 0);
     base.heroHpPercent = heroMaxHp > 0 ? Number(game.heroHp || 0) / heroMaxHp : null;
@@ -249,7 +283,8 @@ var ClassCombatManager = {
       chargeIncoming: "chargeTelegraphed",
       shieldIncoming: "shieldTelegraphed",
       healIncoming: "healTelegraphed",
-      enemySilenceIncoming: "silenceTelegraphed"
+      enemySilenceIncoming: "silenceTelegraphed",
+      eliteSurgeIncoming: "surgeTelegraphed" // v3.204.0 (E4)
     };
     var countered = !!(flagByCondition[matchedConditionId] && game.enemy[flagByCondition[matchedConditionId]]);
 

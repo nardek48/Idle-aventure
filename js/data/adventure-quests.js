@@ -94,6 +94,94 @@ var ADVENTURE_QUESTS = {
       }
     ],
     reward: { gold: 400, essence: 8, unlockBuildingId: "hunt" }
+  },
+
+  /* ---------------------------------------------------------------------
+     QUÊTES ÉLITE (v3.205.0, lot E5). Même moteur que les quêtes d'aventure :
+     type "elite" + une étape eliteKill. Le spawn passe par EliteManager
+     (systems/elite-system.js), jamais écrit en ligne ici.
+
+     Gating : après « Le grimoire du veilleur » (forest_12). C'est le moment où
+     le joueur DISPOSE du Grimoire — sans lui, l'archétype de l'élite n'a aucun
+     contre et la rencontre n'est qu'un sac à PV. Comparaison par ID d'étape,
+     jamais par index (même patron que _syncCoeurEnemyPool).
+
+     Hors du cap de 3 quêtes actives (voir mission-board-system.js) : comme le
+     Donjon et la Petite Aventure, c'est une activité courte à lancement direct.
+
+     Échec : progression conservée, l'élite se représente (décision Seb) —
+     comportement par défaut du manager, rien à coder.
+     --------------------------------------------------------------------- */
+
+  eq_forest_spider: {
+    id: "eq_forest_spider",
+    type: "elite",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "forest",
+    adventureIndex: 0,
+    eliteId: "araignee_marquee",
+    requiresStoryStep: "forest_12",
+    enemyFilter: ["spider"],
+    name: "Les yeux blancs",
+    story: "Les toiles de la Lisière ne prennent plus rien. Elles pendent, intactes, comme si "
+      + "celle qui les a tissées avait cessé d'avoir faim. Wenna dit qu'elle a compté les fils "
+      + "deux fois et qu'il y en a trop.",
+    icon: "./images/Icons/quest_icons/elite/elite1.png",
+    steps: [
+      {
+        id: "track_spider",
+        type: "kill",
+        worldId: "forest",
+        target: 6,
+        desc: "Pister {target} araignées à la Lisière"
+      },
+      {
+        id: "elite_spider",
+        type: "eliteKill",
+        eliteId: "araignee_marquee",
+        target: 1,
+        desc: "Vaincre la Fileuse aux yeux blancs"
+      }
+    ],
+    reward: { gold: 700, essence: 20, seve: 5 }
+  },
+
+  eq_forest_bramble: {
+    id: "eq_forest_bramble",
+    type: "elite",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "forest",
+    adventureIndex: 1,
+    eliteId: "ronce_ardente",
+    requiresStoryStep: "forest_12",
+    enemyFilter: ["bramble"],
+    name: "Ce qui a poussé sur la cendre",
+    story: "Au Cœur, il y a un carré de terre où rien ne devrait tenir. Quelque chose y a poussé "
+      + "quand même. Brannoc y est allé une fois, il n'en parle pas.",
+    icon: "./images/Icons/quest_icons/elite/elite4.png",
+    steps: [
+      {
+        id: "track_bramble",
+        type: "kill",
+        worldId: "forest",
+        target: 6,
+        desc: "Pister {target} ronces au Cœur de la forêt"
+      },
+      {
+        id: "elite_bramble",
+        type: "eliteKill",
+        eliteId: "ronce_ardente",
+        target: 1,
+        desc: "Vaincre la Ronce qui se souvient"
+      }
+    ],
+    reward: { gold: 1200, essence: 30, seve: 5 }
   }
 };
 

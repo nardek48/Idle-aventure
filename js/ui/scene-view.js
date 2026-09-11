@@ -285,7 +285,10 @@ function buildSceneStatusBarHTML(run, opts) {
   // v3.195.0 : pastille Souffle — seuils visuels (is-low sous 30, cohérent avec le seuil qui
   // rend l'option "power" indisponible pour la plupart des gabarits, breathCost 3).
   if (typeof run.breath === "number") {
-    h += '<span class="scene-status-pill scene-status-breath' + (run.breath < 30 ? ' is-low' : '') + '">Souffle : ' + Math.round(run.breath) + '/100</span>';
+    // v3.199.0 : seuil d'alerte relevé de 30 à 40. La voie d'endurance coûte 20 et le passage
+    // de palier 5 : sous 40, le joueur est déjà à deux paliers de l'épuisement, c'est là qu'il
+    // doit le voir, pas quand il est trop tard pour boire ou viser une source.
+    h += '<span class="scene-status-pill scene-status-breath' + (run.breath < 40 ? ' is-low' : '') + '">Souffle : ' + Math.round(run.breath) + '/100</span>';
   }
   if (run.torchCharges > 0) h += '<span class="scene-status-pill">Torche x' + run.torchCharges + '</span>';
   // v3.198.0 : corde et provisions ont des charges — le joueur doit les voir fondre.
@@ -653,6 +656,9 @@ function enterSceneGate(idx) {
     showToast(result.reason, 1600);
     return;
   }
+  // v3.199.0 : le franchissement peut vider le Souffle (coût de palier) ou tomber sur un
+  // obstacle dont aucune voie n'est payable. Le run est déjà clos côté manager, on annonce.
+  if (result.outcome === "epuisement") sceneLog("Tu n\u2019en peux plus. On te ramène.");
   refreshSceneScreen();
 }
 window.enterSceneGate = enterSceneGate;
@@ -929,7 +935,8 @@ function buildSceneCompleteHTML() {
   var lost = summary ? summary.lost : null;
   // v3.198.0 : seuil lu sur le canevas (template.maxInjuries) — était figé à 3, ce qui
   // affichait un bilan "réussite" sur une Petite Aventure évacuée à 2 blessures.
-  var isEvacuation = run.injuries.length >= SceneRunManager.getMaxInjuries(run.templateId);
+  // v3.199.0 : l'épuisement est une seconde cause de fin ratée, distincte des blessures.
+  var isEvacuation = run.exhausted === true || run.injuries.length >= SceneRunManager.getMaxInjuries(run.templateId);
 
   var h = '<div class="panel-title">Résumé de l\u2019expédition</div>';
   h += '<div class="scene-screen">';

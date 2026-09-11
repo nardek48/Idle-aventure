@@ -40,6 +40,7 @@ function openTitleScreen(callback) {
 
   titleScreenPendingCallback = typeof callback === "function" ? callback : null;
   titleScreenResolved = false;
+  titleScreenFromGame = false; // v3.202.0 : posé ensuite par titleScreenShowLoad(true)
   titleScreenView = "main";
   renderTitleScreen();
 }
@@ -47,6 +48,7 @@ function openTitleScreen(callback) {
 function resolveTitleScreen() {
   if (titleScreenResolved) return;
   titleScreenResolved = true;
+  titleScreenFromGame = false; // v3.202.0 : le drapeau ne survit jamais à une sortie
 
   var host = document.getElementById("title-screen-root");
   if (host) host.innerHTML = "";
@@ -105,14 +107,30 @@ function titleScreenNewGame() {
   if (titleHost) titleHost.innerHTML = "";
 }
 
-function titleScreenShowLoad() {
+/* v3.202.0 : l'écran titre peut maintenant être ouvert EN COURS DE PARTIE,
+   depuis le bouton "Mes héros" du sous-onglet Résumé (ui/heros-view.js :
+   openHeroSlotsScreen). Dans ce cas la flèche de retour doit ramener AU JEU
+   et non à l'écran titre principal, qui n'offre aucun moyen de revenir : le
+   joueur y serait piégé jusqu'à charger un emplacement. */
+var titleScreenFromGame = false;
+
+function titleScreenShowLoad(fromGame) {
   titleScreenView = "load";
+  titleScreenFromGame = fromGame === true;
   titleScreenSelectedSlot = null;
   titleScreenDeleteConfirmSlot = null;
   renderTitleScreen();
 }
 
 function titleScreenBackToMain() {
+  // Ouvert depuis le jeu : la flèche referme l'écran titre au lieu de
+  // remonter au menu principal (resolveTitleScreen déclenche le callback,
+  // ici un simple renderAll — voir openHeroSlotsScreen).
+  if (titleScreenFromGame) {
+    titleScreenFromGame = false;
+    resolveTitleScreen();
+    return;
+  }
   titleScreenView = "main";
   titleScreenSelectedSlot = null;
   titleScreenDeleteConfirmSlot = null;

@@ -13,9 +13,14 @@ var MENU_ITEMS = [
   { tab: "ascension", label: "Ascension", img: "./images/Icons/menu_icons/aether_menu.png", badge: "ascension" },
   { tab: "map", label: "Carte du monde", img: "./images/Icons/menu_icons/map_menu.png" },
   { tab: "achievements", label: "Hauts faits", img: "./images/Icons/menu_icons/achivment_menu.png", badge: "achievement" },
-  { tab: "bestiary", label: "Bestiaire", img: "./images/Icons/menu_icons/bestiaire_menu.png", badge: "codex" },
+  // v3.208.0 (décision Seb) : plus de pastille sur le Bestiaire/Codex — le compteur « x / y »
+  // en tête de l'écran suffit, la pastille poussait à aller réclamer une lecture.
+  { tab: "bestiary", label: "Bestiaire", img: "./images/Icons/menu_icons/bestiaire_menu.png" },
   { tab: "afflictions", label: "Afflictions", icon: "🔥", badge: "afflictions" },
-  { tab: "grimoire", label: "Grimoire", icon: "📖" },
+  // v3.210.0 (décision Seb) : le Grimoire quitte le menu ☰ — son raccourci est au
+  // Campement (camp-view.js), là où on prépare une sortie. Un bouton de moins ici.
+  // v3.208.0 : consultation des tutoriels déjà rencontrés. Sans pastille, même raison.
+  { tab: "tutorials", label: "Tutoriels", icon: "📚" },
   { tab: "settings", label: "Paramètres", img: "./images/Icons/menu_icons/settings_menu.png" }
 ];
 
@@ -54,10 +59,6 @@ function buildFullMenuHTML() {
       badgeCount = (typeof getTalentsAvailableCount === "function") ? getTalentsAvailableCount() : 0;
     } else if (item.badge === "ascension") {
       badgeCount = (typeof getAscensionAvailableCount === "function") ? getAscensionAvailableCount() : 0;
-    } else if (item.badge === "codex") {
-      badgeCount = (window.CodexManager && typeof CodexManager.getUnreadCount === "function")
-        ? CodexManager.getUnreadCount()
-        : 0;
     } else if (item.badge === "afflictions") {
       badgeCount = (window.AfflictionManager && typeof AfflictionManager.getActiveCount === "function")
         ? AfflictionManager.getActiveCount()

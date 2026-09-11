@@ -348,3 +348,25 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .camp-embers-name { flex: 1; min-width: 0; font-weight: 700; color: var(--nb-ink); }
 .camp-embers-count { flex: 0 0 auto; font-weight: 800; color: var(--nb-ink); }
 .camp-embers-btn { width: 100%; }
+
+/* =========================
+   v3.210.0 — Carte Grimoire (raccourci, décision Seb)
+   .camp-card est déjà dans la liste de restauration d'encre de
+   00-kframe-scope.css : rien à ajouter pour la lisibilité.
+   ========================= */
+.camp-grimoire-summary {
+  margin-bottom: 2px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--nb-ink);
+}
+
+.camp-grimoire-counters { color: #1f6b3d; }
+
+.camp-grimoire-mode {
+  margin-bottom: 8px;
+  font-size: 0.74rem;
+  color: var(--nb-ink-dim);
+}
+
+.camp-grimoire-card .settings-btn { width: 100%; }

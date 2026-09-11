@@ -85,7 +85,9 @@ var HuntQuestManager = {
       return;
     }
 
-    if (chance(quest.dropChancePct)) {
+    // v3.207.0 : une battue (type "gold") ne fait tomber aucune ressource —
+    // sa prime est versée en une fois à la fin du lot, voir finishLot().
+    if (quest.resourceKey && chance(quest.dropChancePct)) {
       // v3.102.1 : la viande est du butin de sortie (banqué à la fin du lot, perdu à la mort, 50 % en arrêt manuel)
       if (window.SortieManager && SortieManager.isActive()) SortieManager.addResource(quest.resourceKey, 1);
       else WarehouseManager.addResource(quest.resourceKey, 1);
@@ -103,6 +105,15 @@ var HuntQuestManager = {
 
   finishLot: function (quest) {
     game.huntStats[quest.id] = Number(game.huntStats[quest.id] || 0) + 1;
+
+    // v3.207.0 : prime d'or d'une battue. Versée à la fin du lot seulement, donc
+    // perdue si le joueur meurt ou s'arrête en route — même règle que le butin
+    // de sortie, et c'est ce qui rend le lot de 20 engageant.
+    if (quest.rewardGold) {
+      game.gold += quest.rewardGold;
+      addLog("🪙 Prime de battue : +" + formatNumber(quest.rewardGold) + " or", "event");
+    }
+
     addLog("🏹 Chasse terminée : " + quest.name + " (" + quest.lotSize + "/" + quest.lotSize + ")", "event");
     game.huntRun = { active: false, questId: null, killsInLot: 0 };
     if (window.SortieManager) SortieManager.end("success");

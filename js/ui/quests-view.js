@@ -38,15 +38,14 @@ function updateQuestBadge() {
 
   var talentsReady = getTalentsAvailableCount();
   var ascensionReady = getAscensionAvailableCount();
-  var codexUnread = (window.CodexManager && typeof CodexManager.getUnreadCount === "function")
-    ? CodexManager.getUnreadCount()
-    : 0;
-
+  // v3.208.0 (décision Seb) : les entrées de Codex non lues ne comptent plus dans la pastille du
+  // bouton Menu. Lire une entrée n'est pas une action à réclamer — la pastille devait la traiter
+  // comme une récompense en attente. Même logique pour les Tutoriels, qui n'en ont jamais eu.
   var storyReady = (window.StoryQuestManager && typeof StoryQuestManager.getClaimableCount === "function")
     ? StoryQuestManager.getClaimableCount()
     : 0;
 
-  var total = achievementsReady + talentsReady + ascensionReady + codexUnread + dungeonTicketReady + storyReady; // v3.116.0 : plus de journalières
+  var total = achievementsReady + talentsReady + ascensionReady + dungeonTicketReady + storyReady; // v3.116.0 : plus de journalières ; v3.208.0 : plus de Codex
   badge.textContent = total > 0 ? String(total) : "";
   badge.style.display = total > 0 ? "inline-flex" : "none";
 }
@@ -912,7 +911,10 @@ function buildQuestCompleteHTML(config) {
   }
 
   h += '    <div class="dungeon-story-actions">';
-  h += '      <button class="settings-btn primary" type="button" onclick="closeQuestCompletePopup()">' + esc(config.closeLabel || "Fermer") + '</button>';
+  // v3.208.0 (bug Seb) : le bouton de fermeture était câblé en dur sur closeQuestCompletePopup(),
+  // qui vide la modale sans toucher à la navigation — après une chasse, le joueur restait donc sur
+  // l'écran Combat. config.closeOnclick permet à l'appelant de router la fermeture (voir les chasses).
+  h += '      <button class="settings-btn primary" type="button" onclick="' + (config.closeOnclick || "closeQuestCompletePopup()") + '">' + esc(config.closeLabel || "Fermer") + '</button>';
   if (config.extraActionLabel && config.extraActionOnclick) {
     h += '      <button class="settings-btn" type="button" onclick="' + config.extraActionOnclick + '">' + esc(config.extraActionLabel) + '</button>';
   }
@@ -973,6 +975,7 @@ function buildHuntLotCompleteHTML(quest) {
     text: quest.lotSize + " bêtes abattues. Le gibier se fait plus rare pour l\u2019instant — reviens plus tard, ou relance une nouvelle chasse tout de suite.",
     rewardRows: [{ label: (resource ? resource.name : quest.resourceKey) + " en stock", value: formatNumber(stock) }],
     closeLabel: "Fermer",
+    closeOnclick: "closeHuntLotComplete()", // v3.208.0 : ramène au Campement (le lot est fini, plus rien à faire en Combat)
     extraActionLabel: "Chasser à nouveau",
     extraActionOnclick: "restartHuntQuest(\'" + quest.id + "\')"
   });
@@ -983,12 +986,17 @@ function openHuntLotComplete(quest) {
   if (host) host.innerHTML = buildHuntLotCompleteHTML(quest);
 }
 
-function closeHuntLotComplete() {
+/* v3.208.0 : fin d'un lot de chasse/battue = retour au Campement. Le joueur est resté sur
+   l'onglet Combat depuis HuntQuestManager.start() ; sans ce switchTab il retombait sur un
+   combat libre qu'il n'a pas demandé. « Chasser à nouveau » passe par restartHuntQuest(),
+   qui rebascule seul vers Combat via HuntQuestManager.start(). */
+function closeHuntLotComplete(backToCamp) {
   closeQuestCompletePopup();
+  if (backToCamp !== false && typeof switchTab === "function") switchTab("campement");
 }
 
 function restartHuntQuest(questId) {
-  closeHuntLotComplete();
+  closeHuntLotComplete(false);
   if (questId && window.HuntQuestManager) HuntQuestManager.start(questId);
 }
 

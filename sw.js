@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.198.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.212.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -88,6 +88,7 @@ var PRECACHE_APP_SHELL = [
   "./js/data/achievements.js",
   "./js/data/ascension.js",
   "./js/data/auto-policy-defaults.js",
+  "./js/data/elites.js",
   "./js/data/bosses.js",
   "./js/data/class-skills.js",
   "./js/data/classes.js",
@@ -113,6 +114,7 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/codex-system.js",
   "./js/sim/combat-round-sim.js",
   "./js/systems/combat-engine.js",
+  "./js/systems/elite-system.js",
   "./js/systems/sortie-system.js",
   "./js/systems/combat-resource-system.js",
   "./js/systems/combat-cooldown-system.js",
@@ -132,10 +134,12 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/world-quest-system.js",
   "./js/systems/adventure-quest-system.js",
   "./js/systems/story-quest-system.js",
+  "./js/systems/tutorial-catalog-system.js",
   "./js/ui/achievement-view.js",
   "./js/ui/ascension-view.js",
   "./js/ui/bestiary-view.js",
   "./js/ui/codex-view.js",
+  "./js/ui/tutorials-view.js",
   "./js/ui/combat-view.js",
   "./js/ui/cycle-summary-view.js",
   "./js/ui/dungeon-view.js",

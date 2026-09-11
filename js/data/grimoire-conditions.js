@@ -21,6 +21,12 @@ var GRIMOIRE_CONDITIONS = {
     description: "Le boss s'apprête à récupérer des PV.",
     icon: "💚"
   },
+  eliteSurgeIncoming: {
+    id: "eliteSurgeIncoming",
+    label: "L'élite s'exalte",
+    description: "Sa nature va compter double pendant quelques rounds.",
+    icon: "🔥"
+  },
   heroLowHp: {
     id: "heroLowHp",
     label: "Je suis blessé",
@@ -65,25 +71,53 @@ var GRIMOIRE_CONDITIONS = {
   }
 };
 
-var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "heroLowHp", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
+var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "heroLowHp", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
 
 function getGrimoireCondition(conditionId) {
   if (!conditionId || typeof conditionId !== "string") return null;
   return GRIMOIRE_CONDITIONS[conditionId] || null;
 }
 
-function getGrimoireCounterLabels(action) {
-  if (!action || !Array.isArray(action.counters) || !action.counters.length) return [];
+/* v3.208.0 (bug Seb) — depuis la redistribution des contres d'archétype (v3.204.0), une action
+   contre une situation par DEUX canaux distincts :
+     - action.counters : les contres de télégraphe (charge, bouclier, soin, exaltation, silence) ;
+     - action.effects : les suppressions d'archétype (enemyCorruptionPurge, enemyRageSuppression,
+       enemyLifestealSuppression, enemyArmorSuppression), qui n'apparaissent nulle part dans counters.
+   Les écrans ne lisaient que le premier : Frappe lourde n'annonçait que « Le boss va se soigner »
+   alors qu'elle purge aussi la corruption et apaise la rage. Ce helper rend la liste complète,
+   dédoublonnée et rangée dans l'ordre du Grimoire.
+   ARCHETYPE_EFFECT_TO_CONDITION_ID vit dans systems/class-combat-system.js (fichier protégé, non
+   modifié) : on le lit à l'exécution, jamais au chargement — ce fichier de données est chargé avant. */
+function getAllGrimoireCounterIds(action) {
+  if (!action) return [];
 
-  var labels = [];
-  action.counters.forEach(function (conditionId) {
-    var cond = getGrimoireCondition(conditionId);
-    if (cond) labels.push(cond.label);
+  var map = window.ARCHETYPE_EFFECT_TO_CONDITION_ID || {};
+  var ids = [];
+
+  function push(conditionId) {
+    if (!conditionId || !GRIMOIRE_CONDITIONS[conditionId]) return;
+    if (ids.indexOf(conditionId) === -1) ids.push(conditionId);
+  }
+
+  (action.counters || []).forEach(push);
+  (action.effects || []).forEach(function (effect) {
+    if (effect) push(map[effect.type]);
   });
-  return labels;
+
+  var order = GRIMOIRE_CONDITION_ORDER;
+  return ids.sort(function (a, b) { return order.indexOf(a) - order.indexOf(b); });
+}
+
+/* v3.208.0 : s'appuie désormais sur getAllGrimoireCounterIds() — inclut donc les contres
+   d'archétype portés par action.effects, invisibles jusqu'ici. */
+function getGrimoireCounterLabels(action) {
+  return getAllGrimoireCounterIds(action).map(function (conditionId) {
+    return GRIMOIRE_CONDITIONS[conditionId].label;
+  });
 }
 
 window.GRIMOIRE_CONDITIONS = GRIMOIRE_CONDITIONS;
 window.GRIMOIRE_CONDITION_ORDER = GRIMOIRE_CONDITION_ORDER;
 window.getGrimoireCondition = getGrimoireCondition;
+window.getAllGrimoireCounterIds = getAllGrimoireCounterIds;
 window.getGrimoireCounterLabels = getGrimoireCounterLabels;

@@ -1,22 +1,11 @@
 "use strict";
-/* ui/hud-view.js — barre du haut (ressources, titre de page, mini-portrait héros) + barre de stats sous combat. Injectés une fois au boot. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* ui/hud-view.js — barre du haut (ressources, mini-portrait héros) + barre de stats sous combat. Injectés une fois au boot. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-var HUD_PAGE_TITLES = {
-  village: "Village",
-  dungeon: "Donjon",
-  more: "Personnage",
-  shop: "Boutique",
-  talents: "Arbres de talents",
-  equip: "Équipement",
-  quests: "Quêtes",
-  ascension: "Ascension",
-  map: "Carte du monde",
-  bestiary: "Bestiaire",
-  log: "Journal",
-  settings: "Paramètres",
-  achievements: "Hauts faits",
-  afflictions: "Afflictions"
-};
+/* v3.200.0 : HUD_PAGE_TITLES, updateHudPageTitle() et l'élément #hud-page-title sont retirés.
+   Le titre de page était redondant depuis v3.190.0 : les bandeaux figés des kframes portent le
+   titre de chaque écran (voir kframe-decorator.js). Neutralisé par CSS depuis v3.194.0 en
+   attendant le resync du HUD ; le retrait propre est fait ici. La map devait par ailleurs être
+   tenue à jour à chaque nouvel onglet, ce que plus personne ne faisait. */
 
 function buildHudHTML() {
   return ''
@@ -25,9 +14,6 @@ function buildHudHTML() {
     +     '<div class="nb-hud-resources">'
     +       '<span class="nb-pill nb-pill-gold"><img class="nb-pill-icon" src="images/Icons/gold_icon.png" alt="Or"><span id="hud-gold">0</span></span>'
     +       '<span class="nb-pill nb-pill-essence"><img class="nb-pill-icon" src="images/Icons/essence_icon.png" alt="Essence"><span id="hud-essence">0</span></span>'
-    +     '</div>'
-    +     '<div class="nb-hud-title-row">'
-    +       '<div id="hud-page-title" class="nb-hud-page-title"></div>'
     +     '</div>'
     +   '</div>'
     +   '<div class="nb-hud-shortcuts">'
@@ -175,21 +161,6 @@ function renderStats() {
   if (gold) gold.textContent = "x" + fmt2(EquipmentManager.effectiveGoldMult());
 }
 
-function updateHudPageTitle() {
-  var el = document.getElementById("hud-page-title");
-  if (!el) return;
-
-  var tab = game.activeTab;
-  if (tab === "combat") {
-    el.style.display = "none";
-    el.textContent = "";
-    return;
-  }
-
-  el.textContent = HUD_PAGE_TITLES[tab] || "";
-  el.style.display = el.textContent ? "block" : "none";
-}
-
 window.renderHud = renderHud;
 window.buildHudHTML = buildHudHTML;
 window.buildStatsBarHTML = buildStatsBarHTML;
@@ -197,7 +168,6 @@ window.mountHudAndStatsBar = mountHudAndStatsBar;
 window.renderHeroHp = renderHeroHp;
 window.renderCombatHeroMini = renderCombatHeroMini;
 window.renderStats = renderStats;
-window.updateHudPageTitle = updateHudPageTitle;
 
 function openBagFromHud() {
   if (typeof activeEquipSubTab !== "undefined") activeEquipSubTab = "inventory";

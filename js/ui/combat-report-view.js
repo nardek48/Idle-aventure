@@ -79,9 +79,56 @@ function buildCombatReportArchetypeCardHTML(impact) {
   return h;
 }
 
-function buildCombatReportHTML(trigger, enemyName) {
+/* v3.211.0 : le CORPS du rapport est extrait de la superposition pour être réutilisé
+   tel quel par la feuille basse du Grimoire (ui/grimoire-view.js). La superposition
+   plein écran garde exactement le même contenu — c'est elle qui s'ouvre automatiquement
+   à la mort et après un boss. Une seule source, deux habillages. */
+function buildCombatReportBodyHTML() {
   var report = (window.CombatReportManager) ? CombatReportManager.getSnapshot() : null;
 
+  if (!report) {
+    return '<p class="panel-sub">Aucune donnée de combat disponible pour l\'instant.</p>';
+  }
+
+  var hasAnyActivity = Object.keys(report.perSlot).some(function (slot) {
+    var s = report.perSlot[slot];
+    return s.uses || s.blockedByReserve || s.telegraphsSeen || s.countersSucceeded || s.countersMissed || s.countersExpired || s.failedNoResource || s.failedOnCooldown;
+  }) || report.totalDamageDealt > 0;
+
+  if (!hasAnyActivity) {
+    return '<p class="panel-sub">Pas encore assez d\'activité sur ce combat pour établir un rapport détaillé.</p>';
+  }
+
+  var h = "";
+  var summaryParts = [];
+  var avgDps = (window.CombatReportManager && typeof CombatReportManager.getAverageDps === "function") ? CombatReportManager.getAverageDps() : 0;
+  if (avgDps > 0) summaryParts.push('⚔️ ~' + formatNumber(Math.round(avgDps)) + ' DPS moyen');
+  if (report.damageAvoidedTotal > 0) summaryParts.push('🛡️ ~' + formatNumber(Math.floor(report.damageAvoidedTotal)) + ' dégâts évités');
+  if (report.healPreventedTotal > 0) summaryParts.push('💚 ~' + formatNumber(Math.floor(report.healPreventedTotal)) + ' PV de soin empêchés');
+  if (report.shieldsRemovedCount > 0) summaryParts.push('⚡ ' + report.shieldsRemovedCount + ' bouclier' + (report.shieldsRemovedCount !== 1 ? 's' : '') + ' retiré' + (report.shieldsRemovedCount !== 1 ? 's' : ''));
+  if (report.silencesAvoidedCount > 0) summaryParts.push('🔇 ' + report.silencesAvoidedCount + ' silence' + (report.silencesAvoidedCount !== 1 ? 's' : '') + ' évité' + (report.silencesAvoidedCount !== 1 ? 's' : ''));
+  if (summaryParts.length) {
+    h += '<div class="combat-report-summary">' + summaryParts.map(function (p) { return esc(p); }).join('<br>') + '</div>';
+  }
+
+  h += buildCombatReportArchetypeCardHTML(report.archetypeImpact);
+
+  ["skill1", "skill2", "skill3", "defense"].forEach(function (slot) {
+    h += buildCombatReportSlotCardHTML(slot, report.perSlot[slot]);
+  });
+
+  /* hasAnyActivity se contente de totalDamageDealt > 0, alors que chaque bloc ci-dessus
+     filtre sur ses propres compteurs : des dégâts infligés sans aucune capacité utilisée
+     (attaques de base seules) produisaient un corps VIDE, donc une feuille sans contenu
+     entre le titre et le bouton. Repérée au harnais. */
+  if (!h) return '<p class="panel-sub">Pas encore assez d\'activité sur ce combat pour établir un rapport détaillé.</p>';
+
+  return h;
+}
+
+window.buildCombatReportBodyHTML = buildCombatReportBodyHTML;
+
+function buildCombatReportHTML(trigger, enemyName) {
   var h = '<div class="full-menu-overlay combat-report-overlay">';
   h += '  <div class="full-menu dungeon-story-card combat-report-card">';
 
@@ -95,35 +142,7 @@ function buildCombatReportHTML(trigger, enemyName) {
     h += '    <div class="dungeon-story-meta">' + esc(enemyName) + '</div>';
   }
 
-  if (!report) {
-    h += '    <p class="panel-sub">Aucune donnée de combat disponible pour l\'instant.</p>';
-  } else {
-    var hasAnyActivity = Object.keys(report.perSlot).some(function (slot) {
-      var s = report.perSlot[slot];
-      return s.uses || s.blockedByReserve || s.telegraphsSeen || s.countersSucceeded || s.countersMissed || s.countersExpired || s.failedNoResource || s.failedOnCooldown;
-    }) || report.totalDamageDealt > 0;
-
-    if (!hasAnyActivity) {
-      h += '    <p class="panel-sub">Pas encore assez d\'activité sur ce combat pour établir un rapport détaillé.</p>';
-    } else {
-      var summaryParts = [];
-      var avgDps = (window.CombatReportManager && typeof CombatReportManager.getAverageDps === "function") ? CombatReportManager.getAverageDps() : 0;
-      if (avgDps > 0) summaryParts.push('⚔️ ~' + formatNumber(Math.round(avgDps)) + ' DPS moyen');
-      if (report.damageAvoidedTotal > 0) summaryParts.push('🛡️ ~' + formatNumber(Math.floor(report.damageAvoidedTotal)) + ' dégâts évités');
-      if (report.healPreventedTotal > 0) summaryParts.push('💚 ~' + formatNumber(Math.floor(report.healPreventedTotal)) + ' PV de soin empêchés');
-      if (report.shieldsRemovedCount > 0) summaryParts.push('⚡ ' + report.shieldsRemovedCount + ' bouclier' + (report.shieldsRemovedCount !== 1 ? 's' : '') + ' retiré' + (report.shieldsRemovedCount !== 1 ? 's' : ''));
-      if (report.silencesAvoidedCount > 0) summaryParts.push('🔇 ' + report.silencesAvoidedCount + ' silence' + (report.silencesAvoidedCount !== 1 ? 's' : '') + ' évité' + (report.silencesAvoidedCount !== 1 ? 's' : ''));
-      if (summaryParts.length) {
-        h += '    <div class="combat-report-summary">' + summaryParts.map(function (p) { return esc(p); }).join('<br>') + '</div>';
-      }
-
-      h += buildCombatReportArchetypeCardHTML(report.archetypeImpact);
-
-      ["skill1", "skill2", "skill3", "defense"].forEach(function (slot) {
-        h += buildCombatReportSlotCardHTML(slot, report.perSlot[slot]);
-      });
-    }
-  }
+  h += buildCombatReportBodyHTML();
 
   h += '    <button class="settings-btn primary dungeon-story-close" type="button" onclick="closeCombatReport()">Continuer</button>';
   h += '    <button class="settings-btn combat-report-reset-btn" type="button" onclick="resetCombatReport()">🗑️ Réinitialiser le rapport</button>';
@@ -149,6 +168,13 @@ function resetCombatReport() {
     "🗑️",
     function () {
       if (window.CombatReportManager) CombatReportManager.resetManual();
+      // v3.211.0 : le rapport a deux habillages. Si on l'a ouvert depuis la feuille
+      // basse du Grimoire, rouvrir la superposition plein écran ferait sortir le
+      // joueur de son écran — on se contente de redessiner le panneau.
+      if (typeof isGrimoireReportSheetOpen === "function" && isGrimoireReportSheetOpen()) {
+        if (typeof renderPanel === "function") renderPanel();
+        return;
+      }
       openCombatReport("manual", null);
     }
   );

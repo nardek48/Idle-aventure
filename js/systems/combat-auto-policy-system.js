@@ -46,6 +46,8 @@ function evaluateGrimoireCondition(conditionId, combatContext) {
       return !!ctx.shieldIncoming;
     case "healIncoming":
       return !!ctx.healIncoming;
+    case "eliteSurgeIncoming":
+      return !!ctx.eliteSurgeIncoming; // v3.204.0 (E4)
     case "heroLowHp":
       return typeof ctx.heroHpPercent === "number" && ctx.heroHpPercent <= HERO_LOW_HP_THRESHOLD_PCT;
     case "enemyAttackIncoming":
@@ -68,46 +70,14 @@ function evaluateGrimoireCondition(conditionId, combatContext) {
 window.HERO_LOW_HP_THRESHOLD_PCT = HERO_LOW_HP_THRESHOLD_PCT;
 window.evaluateGrimoireCondition = evaluateGrimoireCondition;
 
-function explainGrimoireRuleStatus(rule, kit, resourceState, cooldownState, combatContext, roundsUntilTrigger) {
-  var base = {
-    code: "no_condition",
-    conditionMet: false,
-    resourceOk: false,
-    cooldownOk: false,
-    actionConditionsOk: false,
-    resourceCurrent: null,
-    resourceCost: null,
-    cooldownRemainingRounds: null,
-    roundsUntilTrigger: (typeof roundsUntilTrigger === "number") ? roundsUntilTrigger : null
-  };
-
-  if (!rule || typeof rule.conditionId !== "string") return base;
-  if (typeof rule.actionSlot !== "string") { base.code = "no_action"; return base; }
-
-  var action = (kit && kit.actions) ? kit.actions[rule.actionSlot] : null;
-  if (!action) { base.code = "unknown_action"; return base; }
-
-  base.conditionMet = evaluateGrimoireCondition(rule.conditionId, combatContext);
-  base.resourceCost = (typeof action.resourceCost === "number") ? action.resourceCost : 0;
-  base.resourceCurrent = (resourceState && typeof resourceState.current === "number") ? resourceState.current : null;
-  base.resourceOk = (typeof canAfford === "function") ? canAfford(resourceState, action.resourceCost) : true;
-
-  var remaining = (cooldownState && typeof cooldownState[action.id] === "number") ? cooldownState[action.id] : 0;
-  base.cooldownRemainingRounds = remaining > 0 ? remaining : 0;
-  base.cooldownOk = (typeof isCooldownReady === "function") ? isCooldownReady(cooldownState, action.id) : (remaining <= 0);
-
-  base.actionConditionsOk = (typeof checkActionConditions === "function") ? checkActionConditions(action.conditions, combatContext) : true;
-
-  if (!base.conditionMet) { base.code = "condition_false"; return base; }
-  if (!base.resourceOk) { base.code = "resource_insufficient"; return base; }
-  if (!base.cooldownOk) { base.code = "on_cooldown"; return base; }
-  if (!base.actionConditionsOk) { base.code = "action_condition_unmet"; return base; }
-
-  base.code = "ready";
-  return base;
-}
-
-window.explainGrimoireRuleStatus = explainGrimoireRuleStatus;
+/* v3.212.0 : explainGrimoireRuleStatus() retirée (décision Seb). Elle ne servait
+   qu'aux badges d'état de l'ancien écran Grimoire (prête / en attente / ressource
+   insuffisante / en recharge), supprimés à la refonte v3.210.0 — plus aucun appelant.
+   Le Rapport de combat couvre la même information a posteriori (« 3 échecs par
+   ressource insuffisante », « 9 blocages par réservation »). Si un indicateur en
+   COMBAT devient nécessaire un jour, la version d'origine est dans le delta v3.211.0 :
+   elle combinait evaluateGrimoireCondition, canAfford, isCooldownReady et
+   checkActionConditions, tous encore présents dans ce fichier. */
 
 function chooseGrimoireAction(rules, kit, resourceState, cooldownState, combatContext) {
   if (!rules || !Array.isArray(rules) || !kit || !kit.actions) return null;
@@ -187,6 +157,9 @@ function isConditionPossibleForEnemy(conditionId, enemy) {
 
   if (conditionId === "chargeIncoming") return !enemy.isBoss && enemy.archetype !== "shielded" && enemy.archetype !== "silenced";
   if (conditionId === "shieldIncoming") return !!enemy.isBoss || enemy.archetype === "shielded";
+  // v3.204.0 (E4) : proposable dès qu'on affronte une élite — comme shieldIncoming,
+  // c'est la NATURE de l'ennemi qui rend la carte pertinente, pas l'état courant.
+  if (conditionId === "eliteSurgeIncoming") return !!enemy.isElite;
   if (conditionId === "healIncoming") return !!enemy.isBoss;
   if (conditionId === "enemyAttackIncoming") return Number((enemy.stats && enemy.stats.celerity) || 0) > 0;
   if (conditionId === "enemyEnraged") return enemy.archetype === "enraged";

@@ -39,3 +39,24 @@
   vertical-align: middle;
   margin-left: 2px;
 }
+
+/* =========================
+   v3.208.0 — ÉCRAN Tutoriels (ui/tutorials-view.js)
+
+   La liste et la fiche de lecture réutilisent telles quelles les classes du
+   Codex (.codex-summary, .nb-accordion-*, .nb-entry-card, .codex-back-btn,
+   .codex-reading-*) : ce sont deux écrans de consultation au même gabarit,
+   dupliquer leurs styles aurait garanti la dérive. Seuls les écarts propres
+   à la fiche de tutoriel sont ici.
+   ========================= */
+
+.tutorials-intro {
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+/* Dans le popup, .tutorial-points garde une marge basse pour dégager le bouton
+   « Compris ». Sur la fiche de lecture il n'y a pas de bouton en dessous. */
+.tutorial-points-read {
+  margin-bottom: 0;
+}
