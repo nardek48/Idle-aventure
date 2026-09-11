@@ -2,6 +2,38 @@
 /* systems/equipment-system.js — actions sur l'inventaire (équiper/déséquiper/vendre/trier).
    EquipmentSystem = logique réelle ; EquipmentManager = façade legacy déléguant à StatsSystem pour les "effective*". Détail : COMMENTAIRES_ORIGINAUX.md */
 
+/* v3.225.0 — affixes d'un objet, toujours un tableau (objet d'avant v3.225.0 ou Commun : []).
+   Seul point de lecture : stats-system.js, equipment-view.js, equip-shop-view.js passent par ici. */
+function getItemAffixes(item) {
+  if (!item || !Array.isArray(item.affixes)) return [];
+  return item.affixes.filter(function (a) { return a && typeof a.stat === "string" && typeof a.value === "number"; });
+}
+
+/* v3.226.0 — comparaison ligne à ligne (Lot 2, D6 : delta par ligne, jamais de score global).
+   Union des stats des deux objets : stat de base d'abord, puis les affixes du candidat,
+   puis les stats que seul l'objet équipé porte (ce que le joueur perdrait). Une stat
+   absente d'un côté vaut 0. equipped null (emplacement vide) : tout est un gain.
+   Valeurs de tirage (item.value) : même emplacement, donc même multiplicateur de Forge. */
+function getEquipmentCompareLines(candidate, equipped) {
+  var lines = [], byStat = {};
+  if (!candidate) return lines;
+  function line(stat, tier) {
+    if (!byStat[stat]) { byStat[stat] = { stat: stat, tier: tier, candValue: 0, equipValue: 0, onlyEquipped: false }; lines.push(byStat[stat]); }
+    return byStat[stat];
+  }
+  line(candidate.stat, "B").candValue += Number(candidate.value) || 0;
+  getItemAffixes(candidate).forEach(function (a) { line(a.stat, a.tier === "S" ? "S" : "P").candValue += a.value; });
+  if (equipped) {
+    var eqBase = line(equipped.stat, "B"); eqBase.equipValue += Number(equipped.value) || 0;
+    getItemAffixes(equipped).forEach(function (a) { line(a.stat, a.tier === "S" ? "S" : "P").equipValue += a.value; });
+  }
+  lines.forEach(function (l) {
+    l.onlyEquipped = l.candValue === 0 && l.equipValue !== 0;
+    l.delta = Math.round((l.candValue - l.equipValue) * 1000) / 1000;
+  });
+  return lines;
+}
+
 function getEquipmentSellValue(item) {
   if (!item) return 0;
   return item.rarity === "legendary" ? 1000 :
@@ -373,6 +405,8 @@ sortInventoryByType: function () {
 };
 
 window.getEquipmentSellValue = getEquipmentSellValue;
+window.getItemAffixes = getItemAffixes;
+window.getEquipmentCompareLines = getEquipmentCompareLines;
 window.getEquipmentIconPath = getEquipmentIconPath;
 window.addLootToInventory = addLootToInventory;
 window.addDropToInventory = addDropToInventory;

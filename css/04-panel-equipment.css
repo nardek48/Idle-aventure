@@ -233,6 +233,37 @@
   margin-bottom: 14px;
 }
 
+/* v3.225.0 : lignes d'affixes sous la stat de base (Lot 1b) — primaire pleine, secondaire atténuée.
+   La stat de base garde sa marge basse via .eq-detail-stat ; les lignes la compensent. */
+.eq-affix-lines { margin: -10px 0 14px; display: flex; flex-direction: column; gap: 2px; }
+.eq-affix-line { font-size: 11.5px; font-weight: 700; color: var(--nb-ink); }
+.eq-affix-line.is-secondary { font-weight: 600; color: var(--nb-ink-dim); font-style: italic; }
+.eq-compare-info .eq-affix-lines { margin: 2px 0 0; gap: 1px; }
+.eq-compare-info .eq-affix-line { font-size: 10px; font-weight: 600; }
+.nb-purchase-info-col .eq-affix-lines { margin: 2px 0 0; gap: 1px; }
+.nb-purchase-info-col .eq-affix-line { font-size: 10.5px; }
+/* v3.226.0 (Lot 2) : lignes de comparaison — texte à gauche, delta à droite, sur une ligne à 320 px. */
+.eq-cmp-lines { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; }
+.eq-cmp-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 11.5px; font-weight: 700; color: var(--nb-ink); }
+.eq-cmp-row.is-base { font-size: 12px; color: var(--nb-gold-dark); }
+.eq-cmp-row.is-secondary { font-weight: 600; font-style: italic; color: var(--nb-ink-dim); }
+.eq-cmp-row.is-lost { font-weight: 600; color: var(--nb-ink-dim); opacity: 0.85; }
+.eq-cmp-row.is-lost small { font-size: 9px; font-weight: 600; }
+.eq-cmp-txt { min-width: 0; text-align: left; }
+.eq-cmp-delta { flex: 0 0 auto; font-size: 11px; font-weight: 800; font-style: normal; white-space: nowrap; }
+.eq-cmp-delta.is-up { color: #16a34a; }
+.eq-cmp-delta.is-down { color: #dc2626; }
+.eq-cmp-delta.is-flat { color: var(--nb-ink-dim); font-weight: 600; }
+.nb-purchase-info-col .eq-cmp-lines { margin: 2px 0 0; gap: 1px; }
+.nb-purchase-info-col .eq-cmp-row { font-size: 10.5px; }
+.nb-purchase-info-col .eq-cmp-row.is-base { font-size: 10.5px; }
+.nb-purchase-info-col .eq-cmp-delta { font-size: 10px; }
+
+.eq-compat-affix-badge {
+  display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 6px;
+  font-size: 9.5px; font-weight: 800; color: var(--nb-cream); background-color: var(--nb-gold-deep);
+}
+
 .eq-detail-hint {
   font-size: 11px;
   color: var(--nb-ink-dim);

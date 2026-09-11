@@ -90,6 +90,8 @@ var ELITE_UNIQUE_LOOT = {
     stat: "tapDmg",
     rarity: "green",
     value: 26,
+    /* v3.225.0 (O3) : affixe FIXE, pas tiré — la récompense reste déterministe. Haut de la fourchette Inhabituelle. */
+    affixes: [{ stat: "critChance", value: 2, tier: "P" }],
     byClass: {
       knight: { name: "Fil-de-lame", icon: "sword" },
       archer: { name: "Arc à corde blanche", icon: "bow" },
@@ -102,6 +104,7 @@ var ELITE_UNIQUE_LOOT = {
     stat: "defense",
     rarity: "green",
     value: 0.04,
+    affixes: [{ stat: "maxHpPct", value: 0.05, tier: "P" }], // v3.225.0 (O3) : fixe, cf. arme
     item: { name: "Plastron d'écorce brûlée", icon: "armor" }
   }
 };

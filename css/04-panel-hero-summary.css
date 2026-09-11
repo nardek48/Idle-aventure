@@ -670,6 +670,13 @@
 .pc-stat-card-ico { width: 26px; height: 26px; object-fit: contain; }
 .pc-stat-card-texts { min-width: 0; display: flex; flex-direction: column; }
 .pc-stat-card-name { font-size: 13px; font-weight: 800; line-height: 1.15; }
+/* v3.224.0 : badge « principale » — la stat qui porte les dégâts de la classe (data/classes.js). */
+.pc-stat-card-main {
+  display: inline-block; vertical-align: 1px; margin-left: 4px;
+  font-size: 8px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--nb-cream); background-color: var(--nb-gold-deep);
+  border-radius: 4px; padding: 1px 4px; line-height: 1.2;
+}
 .pc-stat-card-out { font-size: 10.5px; font-weight: 700; color: var(--nb-ink-dim); }
 .pc-stat-card-num { display: flex; flex-direction: column; align-items: flex-end; }
 .pc-stat-card-total { font-size: 16px; font-weight: 800; line-height: 1; }

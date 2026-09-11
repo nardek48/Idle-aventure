@@ -78,6 +78,22 @@ function formatSetBonusEffect(effect) {
   return parts.join(" • ");
 }
 
+/* v3.225.0 : LE point d'application d'une stat d'équipement — stat de base ET affixes
+   passent ici (une seule table, pas deux qui divergent). Stat inconnue : ignorée. */
+function applyEquipmentStat(stat, value) {
+  var v = Number(value) || 0;
+  if (stat === "tapDmg") game.equipFlatTapBonus += v;
+  else if (stat === "tapMult") game.tapMult += v;
+  else if (stat === "goldMult") game.goldMult += v;
+  else if (stat === "critChance") game.critChance += v;
+  else if (stat === "critMult") game.critMult += v;
+  else if (stat === "autoDps") game.bonusCelerity += v; // v3.102.0 : bottes = célérité
+  else if (stat === "defense") game.equipDefensePct += v;
+  else if (stat === "maxHpPct") game.equipMaxHpPct += v;
+  else if (stat === "xpMult") game.equipXpMult += v;
+  else if (stat === "dropChance") game.equipDropChancePct += v;
+}
+
 var StatsSystem = {
     recalcStats: function () {
     game.tapDamage = 1;
@@ -92,6 +108,10 @@ var StatsSystem = {
     game.equipFlatTapBonus = 0;
 
     game.equipDefensePct = 0;
+    // v3.225.0 : accumulateurs des affixes d'équipement (maxHpPct multiplicatif, xpMult lu par grantHeroXp, dropChance par killEnemy).
+    game.equipMaxHpPct = 0;
+    game.equipXpMult = 0;
+    game.equipDropChancePct = 0;
 
     game.bossGoldBonusPct = 0;
 
@@ -105,12 +125,20 @@ var StatsSystem = {
       }
     });
 
-    var FORCE_TAP_COEF = 0.2;
+    /* v3.224.0 (périmètre confirmé par Seb) : Force universelle réduite + stat principale de classe,
+       coefficients dans data/classes.js (getHeroMainStat). Repli Force ×0,20 = comportement d'avant. */
     var hero = typeof getHeroByGameId === "function" ? getHeroByGameId(game.heroId) : null;
     var basePower = (hero && hero.stats) ? Number(hero.stats.power) || 0 : 0;
     var trainedPower = (game.trainedStats && game.trainedStats.power) || 0;
     var totalPower = basePower + trainedPower;
-    game.tapDamage += totalPower * FORCE_TAP_COEF;
+    if (typeof getHeroMainStat === "function" && typeof FORCE_UNIVERSAL_TAP_COEF === "number") {
+      var mainRule = getHeroMainStat(game.heroId);
+      var baseMain = (hero && hero.stats) ? Number(hero.stats[mainRule.stat]) || 0 : 0;
+      var trainedMain = (game.trainedStats && game.trainedStats[mainRule.stat]) || 0;
+      game.tapDamage += totalPower * FORCE_UNIVERSAL_TAP_COEF + (baseMain + trainedMain) * mainRule.coef;
+    } else {
+      game.tapDamage += totalPower * 0.2;
+    }
     // v3.90.0 : Puissance brute finale exposée pour le moteur d'Expéditions non-combat
     // (exploration-engine.js) — source de vérité unique, jamais recalculée ailleurs.
     game.heroPowerRaw = totalPower;
@@ -191,14 +219,12 @@ var StatsSystem = {
         ? ForgeManager.getForgedValue(item)
         : item.value;
 
-      if (item.stat === "tapDmg") game.equipFlatTapBonus += value;
-      else if (item.stat === "tapMult") game.tapMult += value;
-      else if (item.stat === "goldMult") game.goldMult += value;
-      else if (item.stat === "critChance") game.critChance += value;
-      else if (item.stat === "critMult") game.critMult += value;
-      else if (item.stat === "autoDps") game.bonusCelerity += value; // v3.102.0 : bottes = célérité
-      else if (item.stat === "defense") game.equipDefensePct += value;
+      applyEquipmentStat(item.stat, value);
+      /* v3.225.0 (périmètre confirmé par Seb) : affixes, valeur de tirage, jamais forgés (D14). */
+      (typeof getItemAffixes === "function" ? getItemAffixes(item) : []).forEach(function (a) { applyEquipmentStat(a.stat, a.value); });
     });
+    game.equipDropChancePct = Math.min(typeof EQUIP_DROP_CHANCE_CAP === "number" ? EQUIP_DROP_CHANCE_CAP : 25, game.equipDropChancePct);
+    if (game.equipMaxHpPct > 0) game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + game.equipMaxHpPct)));
 
     // Facteur validé session équilibrage "scie" (×0.35) : évite la saturation du plafond 60% dès le monde 4.
     var SURVIVAL_DEFENSE_FACTOR = 0.35;

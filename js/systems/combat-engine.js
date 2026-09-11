@@ -1003,7 +1003,8 @@ var CombatEngine = {
       vibrate([50, 30, 50, 30, 100]);
 
       var bestiaryBonus = typeof getBestiaryBonus === "function" ? getBestiaryBonus(enemy.id) : { lootBonus: 0 };
-      var lootChance = 50 + (getAetherBonuses().lootBonus || 0) + (bestiaryBonus.lootBonus || 0);
+      var lootChance = 50 + (getAetherBonuses().lootBonus || 0) + (bestiaryBonus.lootBonus || 0)
+        + (Number(game.equipDropChancePct) || 0); // v3.225.0 (périmètre confirmé par Seb) : affixe Chance de butin, plafonné dans recalcStats
       if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
         lootChance *= AfflictionManager.getCombinedModifiers().lootChanceMult;
       }

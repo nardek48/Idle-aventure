@@ -325,6 +325,32 @@ var HEROS_STAT_ROWS = [
   }
 ];
 
+/* v3.224.0 (D11) : vue d'une ligne selon la classe. La stat principale (Célérité
+   du Rôdeur, Volonté du Mage) produit d'abord des dégâts : elle prend la tête
+   « ATK » de la Force, et son rôle universel (VIT, CRIT ×) passe en repli, comme
+   Endurance affiche PV puis Défense. Force reste « ATK » pour tous (rôle universel).
+   Les autres lignes sont renvoyées telles quelles. */
+function getHeroStatRowView(row) {
+  var rule = (typeof getHeroMainStat === "function") ? getHeroMainStat(game.heroId) : null;
+  var isMain = !!rule && rule.stat === row.key;
+  if (!isMain || row.key === "power") {
+    return Object.assign({}, row, { isMain: isMain });
+  }
+  var universal = row;
+  return Object.assign({}, row, {
+    isMain: true,
+    produces: "Dégâts de l'attaque de base",
+    unit: "ATK",
+    read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveTapDamage() : 0; },
+    fmt: function (v) { return "ATK " + formatNumber(Math.round(v)); },
+    fmtDelta: function (d) { return "+" + formatNumber(Math.round(d)) + " ATK"; },
+    extra: function () { return universal.produces + " : " + universal.fmt(universal.read()).replace(universal.unit + " ", ""); },
+    /* Sonde du premier palier visible : un niveau fait déjà bouger le rôle universel (VIT, CRIT ×)
+       même quand l'ATK arrondi ne bouge pas encore — sinon « visible à partir de 25 niveaux » mentirait. */
+    probeRead: function () { return EquipmentManager.effectiveTapDamage() * 1000 + universal.read(); }
+  });
+}
+
 function getHeroStatUpgrade(upgradeId) {
   if (typeof UPGRADES === "undefined") return null;
   for (var i = 0; i < UPGRADES.length; i++) {
@@ -386,7 +412,8 @@ function getHeroStatFirstVisibleStep(row) {
   var savedLevel = Number((game.upgrades && game.upgrades[row.upgradeId]) || 0);
   var maxLevel = Number(upgrade.maxLevel || 0);
   var savedHp = game.heroHp;
-  var before = row.read();
+  var probe = (typeof row.probeRead === "function") ? row.probeRead : row.read; // v3.224.0
+  var before = probe();
   var found = null;
 
   try {
@@ -395,7 +422,7 @@ function getHeroStatFirstVisibleStep(row) {
       if (maxLevel > 0 && savedLevel + step > maxLevel) break;
       game.upgrades[row.upgradeId] = savedLevel + step;
       StatsSystem.recalcStats();
-      if (Math.abs(row.read() - before) >= 0.005) { found = step; break; }
+      if (Math.abs(probe() - before) >= 0.005) { found = step; break; }
     }
   } finally {
     game.upgrades[row.upgradeId] = savedLevel;
@@ -521,7 +548,8 @@ function buildHeroStatCardHTML(row, buyAmount) {
   h += '<button type="button" class="pc-stat-card-id" onclick="toggleHeroStat(\'' + esc(row.key) + '\')">';
   h += renderIconOrEmojiHTML(row.icon, "pc-stat-card-ico", row.name);
   h += '<span class="pc-stat-card-texts">';
-  h += '<span class="pc-stat-card-name">' + esc(row.name) + '</span>';
+  h += '<span class="pc-stat-card-name">' + esc(row.name)
+    + (row.isMain ? ' <span class="pc-stat-card-main">principale</span>' : '') + '</span>';
   h += '<span class="pc-stat-card-out">' + esc(row.fmt(row.read())) + '</span>';
   h += '</span>';
   h += '<span class="pc-stat-card-num">';
@@ -617,7 +645,7 @@ function buildHerosAmeliorationHTML() {
   h += '</div></div>';
 
   h += '<div class="pc-stat-list-v2">';
-  HEROS_STAT_ROWS.forEach(function (row) { h += buildHeroStatCardHTML(row, buyAmount); });
+  HEROS_STAT_ROWS.forEach(function (row) { h += buildHeroStatCardHTML(getHeroStatRowView(row), buyAmount); });
   h += '</div>';
 
   h += '</div>';

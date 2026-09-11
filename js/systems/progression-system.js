@@ -12,7 +12,9 @@ var ENEMY_POWER_SCALE_EXP = 0.3;
 // dichotomie visant ~55% de deathRate à adventureIndex=0, sur les nouvelles stats joueur
 // (post-nerf talents/équipement de v3.87.0). Index = WorldManager.worldIndex (0-based, ordre
 // réel de WORLDS : forest, desert, ruins, crypt, mountain, tower).
-var WORLD_MULT_BY_WORLD = [1.264, 1.637, 1.917, 2.757, 5.418, 7.892];
+// v3.227.0 (périmètre confirmé par Seb, Lot 3 affixes) : mondes 1-3 relevés pour reprendre ce que les affixes
+// apportent (mesure sim/world-bench.js : rounds de v3.223.0 retrouvés à ±0,3). Mondes 4-5 inchangés (chantier séparé).
+var WORLD_MULT_BY_WORLD = [1.264, 2.03, 2.30, 4.19, 5.418, 7.892];
 // Ratio boss/normal préservé identique à l'original (1.3 / 0.90 ≈ 1.444).
 var BOSS_WORLD_MULT_RATIO = 1.3 / 0.90;
 
@@ -514,6 +516,7 @@ function grantHeroXp(amount, source) {
   amount = Math.max(0, Number(amount || 0));
   source = source || "generic";
   if (amount <= 0) return 0;
+  amount = Math.round(amount * (1 + (Number(game.equipXpMult) || 0))); // v3.225.0 (périmètre confirmé par Seb) : affixe Expérience
 
   var levelsGained = 0;
   var previousLevel = game.heroLevel || 1;

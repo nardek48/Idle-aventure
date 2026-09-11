@@ -1,6 +1,33 @@
 "use strict";
 /* systems/loot-system.js — génération procédurale des drops (kill de boss uniquement). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
+/* v3.225.0 — tirage des affixes d'un objet (tables : AFFIX_COUNT_BY_RARITY, AFFIX_POOLS,
+   AFFIX_RANGES, data/equipment.js). Sans remise, jamais la stat de base ; les plats
+   suivent l'échelle de monde comme la stat de base. Renvoie [] pour un Commun ou un
+   emplacement inconnu — jamais null. */
+function rollEquipmentAffixes(slot, baseStat, rarity, worldIndex) {
+  var out = [];
+  var counts = (typeof AFFIX_COUNT_BY_RARITY !== "undefined") ? AFFIX_COUNT_BY_RARITY[rarity] : null;
+  var pools = (typeof AFFIX_POOLS !== "undefined") ? AFFIX_POOLS[slot] : null;
+  if (!counts || !pools) return out;
+
+  var world = Math.max(0, Number(worldIndex) || 0);
+  ["primary", "secondary"].forEach(function (tier) {
+    var pool = (pools[tier] || []).filter(function (st) { return st !== baseStat && AFFIX_RANGES[st]; });
+    var n = Math.min(Number(counts[tier]) || 0, pool.length);
+    for (var i = 0; i < n; i++) {
+      var stat = pool.splice(randInt(0, pool.length - 1), 1)[0];
+      var rule = AFFIX_RANGES[stat];
+      var range = rule[rarity] || rule.green;
+      var raw = randFloat(range[0], range[1]);
+      if (rule.flat) raw = raw * getEquipWorldScale(world);
+      var factor = Math.pow(10, rule.decimals || 0);
+      out.push({ stat: stat, value: Math.round(raw * factor) / factor, tier: tier === "primary" ? "P" : "S" });
+    }
+  });
+  return out;
+}
+
 function generateEquipmentItem(slot, rarity, worldIndex) {
   var config = EQUIPMENT_SLOT_CONFIG[slot];
   if (!config) return null;
@@ -44,7 +71,8 @@ function generateEquipmentItem(slot, rarity, worldIndex) {
     /* Monde d'origine : sert à l'affichage et aux futurs paliers de Forge.
        Un objet d'une sauvegarde antérieure n'en a pas — il est alors traité
        comme un objet de Forêt, ce qu'il est de fait. */
-    worldIndex: world
+    worldIndex: world,
+    affixes: rollEquipmentAffixes(slot, config.stat, rarity, world) // v3.225.0
   };
 }
 
@@ -93,4 +121,5 @@ var LootSystem = {
 
 window.LootSystem = LootSystem;
 window.generateEquipmentItem = generateEquipmentItem;
+window.rollEquipmentAffixes = rollEquipmentAffixes;
 window.getAllowedRarities = getAllowedRarities;

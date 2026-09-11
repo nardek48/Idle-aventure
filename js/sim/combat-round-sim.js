@@ -7,7 +7,8 @@
 /* Coefficients du modèle par rounds. Les formules de stats-system.js sont conservées ; seuls les
    coefficients marqués (round) sont nouveaux ou recalibrés par P1. */
 var ROUND_MODEL_DEFAULTS = {
-  heroPowerCoef: 0.20,        // dégâts de l'Attaque = 1 + power * coef (= FORCE_TAP_COEF actuel)
+  heroPowerCoef: 0.06,        // v3.224.0 : rôle universel de la Force (FORCE_UNIVERSAL_TAP_COEF)
+  heroMainStatCoef: { knight: { stat: "power", coef: 0.14 }, archer: { stat: "celerity", coef: 0.09 }, mage: { stat: "will", coef: 0.11 } }, // v3.224.0 : stat principale (data/classes.js)
   heroCritBase: 5,            // % de base (constants actuelles)
   precisionCritCoef: 0.06,
   willCritMultCoef: 0.01,
@@ -81,6 +82,9 @@ function buildHero(heroDef, kit, cfg) {
   var celerity = s.celerity + (t.celerity || 0);
   var precision = s.precision + (t.precision || 0);
   var will = s.will + (t.will || 0);
+  // v3.224.0 : stat principale de classe (miroir de data/classes.js) ; repli Force si classe inconnue.
+  var mainRule = (cfg.heroMainStatCoef && cfg.heroMainStatCoef[heroDef.classId]) || { stat: "power", coef: 0.14 };
+  var mainStatValue = (s[mainRule.stat] || 0) + (t[mainRule.stat] || 0);
   var maxHp = cfg.flatHeroHp || Math.max(1, Math.floor(Math.pow(endurance, cfg.enduranceHpExp) * cfg.enduranceHpCoef)); // flatHeroHp : variante d'analyse
   var actions = {};
   Object.keys(kit.actions).forEach(function (slot) {
@@ -105,7 +109,7 @@ function buildHero(heroDef, kit, cfg) {
     classId: heroDef.classId, weaponType: heroDef.weaponType,
     ranged: heroDef.weaponType !== "sword", // v3.105.0 : arc/magie profitent de l'approche, l'épée est au contact
     power: power, endurance: endurance, celerity: celerity, precision: precision, will: will,
-    attack: Math.max(1, Math.floor(1 + power * cfg.heroPowerCoef)),
+    attack: Math.max(1, Math.floor(1 + power * cfg.heroPowerCoef + mainStatValue * mainRule.coef)),
     critChance: cfg.heroCritBase + precision * cfg.precisionCritCoef + (heroDef.bonusCritChance || 0),
     critMult: cfg.critMultBase + will * cfg.willCritMultCoef,
     maxHp: maxHp, hp: maxHp,

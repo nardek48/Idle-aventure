@@ -13,7 +13,7 @@ var POTIONS_DB = [
     id: "potion_power",
     name: "Potion de Force",
     icon: "images/Icons/potions/potion_force.png",
-    desc: "+20% Force (dégâts de l'attaque de base) pour la prochaine mission.",
+    desc: "+20% de dégâts de l'attaque de base pour la prochaine mission.", // v3.224.0 : libellé, l'effet multiplie tapDamage quelle que soit la classe
     stat: "power",
     bonus: 0.20,
     perRun: true,

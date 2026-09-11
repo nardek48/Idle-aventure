@@ -122,6 +122,7 @@ var EliteManager = {
       rarity: def.rarity || "green",
       stat: def.stat,
       value: def.value,
+      affixes: Array.isArray(def.affixes) ? def.affixes.map(function (a) { return { stat: a.stat, value: a.value, tier: a.tier || "P" }; }) : [], // v3.225.0 : copie, jamais la référence de la donnée
       unique: true,
       eliteId: eliteId
     };

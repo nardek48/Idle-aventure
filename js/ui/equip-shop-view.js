@@ -11,7 +11,11 @@ function buildEquipShopCardHTML(item) {
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
   h += '<div class="nb-purchase-meta">' + esc(rarityLabel) + '</div>';
-  h += '<div class="nb-purchase-desc">' + esc(statText) + '</div>';
+  if (typeof buildEquipmentCompareLinesHTML === "function") {
+    h += buildEquipmentCompareLinesHTML(item, game.equipped ? game.equipped[item.slot] : null); // v3.226.0 : delta par ligne face à l'équipé
+  } else {
+    h += '<div class="nb-purchase-desc">' + esc(statText) + '</div>';
+  }
   h += '</div>';
 
   h += '<div class="nb-purchase-buy-col">';

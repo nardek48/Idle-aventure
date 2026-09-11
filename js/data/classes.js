@@ -10,6 +10,9 @@ var CLASSES = [
     weaponType: "sword",
     weaponIcons: ["sword", "axe"],
     heroIds: ["knight", "chaosKnight"],
+    /* v3.224.0 (D11/D12) : stat principale et coefficient de dégâts, voir MAIN_STAT_RULES ci-dessous. */
+    mainStat: "power",
+    mainStatTapCoef: 0.14,
     resource: {
       id: "rage",
       label: "Rage",
@@ -29,6 +32,8 @@ var CLASSES = [
     weaponType: "bow",
     weaponIcons: ["bow"],
     heroIds: ["ranger", "chaosRanger"],
+    mainStat: "celerity",
+    mainStatTapCoef: 0.09,
     resource: {
       id: "focus",
       label: "Concentration",
@@ -48,6 +53,8 @@ var CLASSES = [
     weaponType: "magic",
     weaponIcons: ["staff"],
     heroIds: ["mage", "chaosMage"],
+    mainStat: "will",
+    mainStatTapCoef: 0.11,
     resource: {
       id: "mana",
       label: "Mana",
@@ -97,7 +104,36 @@ function getAllowedWeaponIconsForCurrentHero() {
   return cls.weaponIcons;
 }
 
+/* v3.224.0 — STAT PRINCIPALE PAR CLASSE (chantier Équipement multi-affixes, D11-D13).
+   Les dégâts de l'attaque de base ne viennent plus de la seule Force :
+     tapDamage += Force × FORCE_UNIVERSAL_TAP_COEF + statPrincipale × mainStatTapCoef
+   La Force garde un rôle universel (option A, mesurée au banc sim/tree-bench.js :
+   l'option B « Force → ressource » ne faisait rien pour le Mage). Les coefficients
+   sont iso-dégâts au niveau 0 : Chevalier 60×0,06+60×0,14 = 12,0 (inchangé),
+   Rôdeur 46×0,06+70×0,09 = 9,06 (9,2 avant), Mage 62×0,06+76×0,11 = 12,08 (12,4 avant).
+   Célérité et Volonté conservent leur rôle universel (jauge, mult. critique). */
+var FORCE_UNIVERSAL_TAP_COEF = 0.06;
+var DEFAULT_MAIN_STAT_RULE = { stat: "power", coef: 0.14 };
+
+/* Règle { stat, coef } d'une classe ; repli Chevalier si classe absente/inconnue. */
+function getClassMainStat(classId) {
+  var cls = getClassById(classId);
+  if (!cls || typeof cls.mainStat !== "string" || typeof cls.mainStatTapCoef !== "number") {
+    return { stat: DEFAULT_MAIN_STAT_RULE.stat, coef: DEFAULT_MAIN_STAT_RULE.coef };
+  }
+  return { stat: cls.mainStat, coef: cls.mainStatTapCoef };
+}
+
+/* Même règle, à partir d'un id de héros (game.heroId). Jamais null. */
+function getHeroMainStat(heroId) {
+  var cls = getClassByHeroId(heroId);
+  return getClassMainStat(cls ? cls.id : null);
+}
+
 window.CLASSES = CLASSES;
+window.FORCE_UNIVERSAL_TAP_COEF = FORCE_UNIVERSAL_TAP_COEF;
+window.getClassMainStat = getClassMainStat;
+window.getHeroMainStat = getHeroMainStat;
 window.getClassById = getClassById;
 window.getClassByHeroId = getClassByHeroId;
 window.getClassForHero = getClassForHero;

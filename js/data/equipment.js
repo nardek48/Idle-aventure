@@ -237,3 +237,52 @@ window.EQUIPMENT_SLOTS = EQUIPMENT_SLOTS;
 window.EQUIPMENT_SLOT_LABELS = EQUIPMENT_SLOT_LABELS;
 window.EQUIPMENT_SLOT_EMOJI = EQUIPMENT_SLOT_EMOJI;
 window.EQUIPMENT_SLOT_CONFIG = EQUIPMENT_SLOT_CONFIG;
+
+/* v3.225.0 — AFFIXES (chantier Équipement multi-affixes, doc v1.2, tables figées au Lot 0).
+   Un objet garde sa stat de base (stat/value, identité de l'emplacement) et reçoit en plus
+   des affixes { stat, value, tier } tirés à la génération (voir rollEquipmentAffixes,
+   systems/loot-system.js). Commun = 0 affixe : rien ne change en Forêt. Le premier affixe
+   est toujours PRIMAIRE (combat) : dès l'Inhabituel, un drop change quelque chose en combat.
+   Les affixes ne sont ni forgés (D14) ni mis à l'échelle après coup : les plats (tapDmg,
+   autoDps) suivent EQUIP_WORLD_SCALE à la génération, les pourcentages jamais. */
+var AFFIX_COUNT_BY_RARITY = {
+  common: { primary: 0, secondary: 0 },
+  green: { primary: 1, secondary: 0 },
+  rare: { primary: 1, secondary: 1 },
+  epic: { primary: 2, secondary: 1 },
+  legendary: { primary: 2, secondary: 2 }
+};
+
+/* Pools par emplacement. Un affixe ne duplique jamais la stat de base ni un autre affixe
+   du même objet. tapDmg limité à Gants/Anneau (D16) : l'arme reste l'emplacement des dégâts plats. */
+var AFFIX_POOLS = {
+  weapon: { primary: ["tapMult", "critChance", "critMult"], secondary: ["goldMult", "xpMult", "dropChance"] },
+  armor: { primary: ["maxHpPct", "autoDps", "critChance"], secondary: ["goldMult", "xpMult", "dropChance"] },
+  helmet: { primary: ["critChance", "maxHpPct", "tapMult"], secondary: ["goldMult", "xpMult", "dropChance"] },
+  gloves: { primary: ["tapDmg", "critChance", "autoDps"], secondary: ["goldMult", "xpMult", "dropChance"] },
+  boots: { primary: ["maxHpPct", "defense", "critMult"], secondary: ["goldMult", "xpMult", "dropChance"] },
+  ring: { primary: ["tapDmg", "critChance", "tapMult"], secondary: ["xpMult", "dropChance"] },
+  amulet: { primary: ["critMult", "tapMult", "maxHpPct"], secondary: ["goldMult", "xpMult", "dropChance"] }
+};
+
+/* Fourchettes [min, max] par rareté (à partir de l'Inhabituel). flat = × échelle de monde. */
+var AFFIX_RANGES = {
+  tapDmg: { flat: true, decimals: 0, green: [6, 10], rare: [9, 15], epic: [14, 22], legendary: [18, 28] },
+  tapMult: { decimals: 2, green: [0.08, 0.15], rare: [0.15, 0.25], epic: [0.25, 0.40], legendary: [0.40, 0.65] },
+  critChance: { decimals: 0, green: [1, 2], rare: [2, 4], epic: [4, 6], legendary: [6, 9] },
+  critMult: { decimals: 2, green: [0.08, 0.15], rare: [0.15, 0.25], epic: [0.25, 0.40], legendary: [0.40, 0.60] },
+  defense: { decimals: 3, green: [0.015, 0.025], rare: [0.022, 0.036], epic: [0.034, 0.047], legendary: [0.045, 0.06] },
+  autoDps: { flat: true, decimals: 0, green: [2, 3], rare: [3, 5], epic: [4, 7], legendary: [5, 9] },
+  maxHpPct: { decimals: 2, green: [0.03, 0.06], rare: [0.06, 0.10], epic: [0.10, 0.15], legendary: [0.15, 0.22] },
+  goldMult: { decimals: 2, green: [0.03, 0.06], rare: [0.05, 0.10], epic: [0.08, 0.15], legendary: [0.12, 0.20] },
+  xpMult: { decimals: 2, green: [0.03, 0.06], rare: [0.05, 0.10], epic: [0.08, 0.15], legendary: [0.12, 0.20] },
+  dropChance: { decimals: 0, green: [2, 4], rare: [4, 7], epic: [6, 10], legendary: [8, 14] }
+};
+
+/* Plafond de la chance de butin apportée par l'équipement (points, sur les 50 % de base). */
+var EQUIP_DROP_CHANCE_CAP = 25;
+
+window.AFFIX_COUNT_BY_RARITY = AFFIX_COUNT_BY_RARITY;
+window.AFFIX_POOLS = AFFIX_POOLS;
+window.AFFIX_RANGES = AFFIX_RANGES;
+window.EQUIP_DROP_CHANCE_CAP = EQUIP_DROP_CHANCE_CAP;

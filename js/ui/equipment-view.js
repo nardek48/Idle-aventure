@@ -48,17 +48,36 @@ function buildEquipSubTabBarHTML() {
 
 function formatEquipmentStat(item) {
   if (!item) return "";
-  var value = Number(item.value || 0);
+  return formatEquipmentStatValue(item.stat, Number(item.value || 0));
+}
 
-  if (item.stat === "tapDmg") return "+" + formatNumber(value) + " dégâts/tap";
-  if (item.stat === "tapMult") return "+" + Math.round(value * 100) + "% dégâts";
-  if (item.stat === "goldMult") return "+" + Math.round(value * 100) + "% or";
-  if (item.stat === "critChance") return "+" + formatNumber(value) + "% critique";
-  if (item.stat === "critMult") return "+" + formatNumber(value) + "x dégâts crit";
-  if (item.stat === "autoDps") return "+" + formatNumber(value) + " célérité";
-  if (item.stat === "defense") return "+" + Math.round(value * 100) + "% défense";
+/* v3.225.0 : texte d'une stat quelle que soit sa source (stat de base ou affixe). */
+function formatEquipmentStatValue(stat, value) {
+  if (stat === "tapDmg") return "+" + formatNumber(value) + " dégâts/tap";
+  if (stat === "tapMult") return "+" + Math.round(value * 100) + "% dégâts";
+  if (stat === "goldMult") return "+" + Math.round(value * 100) + "% or";
+  if (stat === "critChance") return "+" + formatNumber(value) + "% critique";
+  if (stat === "critMult") return "+" + formatNumber(value) + "x dégâts crit";
+  if (stat === "autoDps") return "+" + formatNumber(value) + " célérité";
+  if (stat === "defense") return "+" + (Math.round(value * 1000) / 10) + "% défense";
+  if (stat === "maxHpPct") return "+" + Math.round(value * 100) + "% PV max";
+  if (stat === "xpMult") return "+" + Math.round(value * 100) + "% expérience";
+  if (stat === "dropChance") return "+" + formatNumber(value) + "% de butin"; // court : tient sur une ligne à 320 px
 
-  return "+" + formatNumber(value) + " " + esc(item.stat);
+  return "+" + formatNumber(value) + " " + esc(stat);
+}
+
+/* v3.225.0 : lignes d'affixes sous la stat de base (Lot 1b — sans comparaison, voir Lot 2).
+   Primaires puis secondaires ; vide pour un Commun ou un objet d'avant v3.225.0. */
+function buildEquipmentAffixLinesHTML(item) {
+  var affixes = (typeof getItemAffixes === "function") ? getItemAffixes(item) : [];
+  if (!affixes.length) return "";
+  var h = '<div class="eq-affix-lines">';
+  affixes.forEach(function (a) {
+    h += '<div class="eq-affix-line' + (a.tier === "S" ? ' is-secondary' : '') + '">' + esc(formatEquipmentStatValue(a.stat, a.value)) + '</div>';
+  });
+  h += '</div>';
+  return h;
 }
 
 function getCurrentHeroForEquipmentView() {
@@ -87,9 +106,32 @@ function getEquipmentStatDelta(candidate, current) {
 
 function formatStatDelta(stat, delta) {
   var sign = delta > 0 ? "+" : "";
-  if (stat === "tapMult" || stat === "goldMult" || stat === "defense") return sign + Math.round(delta * 100) + "%";
+  if (stat === "tapMult" || stat === "goldMult" || stat === "maxHpPct" || stat === "xpMult") return sign + Math.round(delta * 100) + "%";
+  if (stat === "defense") return sign + (Math.round(delta * 1000) / 10) + "%"; // v3.226.0 : 1 décimale, les affixes de défense en ont 3
   if (stat === "critMult") return sign + formatNumber(delta) + "x";
+  if (stat === "critChance" || stat === "dropChance") return sign + formatNumber(delta) + "%";
   return sign + formatNumber(delta);
+}
+
+/* v3.226.0 (Lot 2) : lignes du candidat avec un delta par ligne face à l'objet équipé
+   (getEquipmentCompareLines, systems/equipment-system.js). Stat de base en tête, puis
+   affixes, puis en atténué ce que seul l'objet équipé porte (▼). Emplacement vide : tout ▲. */
+function buildEquipmentCompareLinesHTML(candidate, equipped) {
+  var lines = (typeof getEquipmentCompareLines === "function") ? getEquipmentCompareLines(candidate, equipped) : [];
+  if (!lines.length) return "";
+  var h = '<div class="eq-cmp-lines">';
+  lines.forEach(function (l) {
+    var cls = l.onlyEquipped ? "is-lost" : (l.tier === "B" ? "is-base" : (l.tier === "S" ? "is-secondary" : "is-primary"));
+    var shown = l.onlyEquipped ? l.equipValue : l.candValue;
+    var dcls = l.delta > 0 ? "is-up" : (l.delta < 0 ? "is-down" : "is-flat");
+    var arrow = l.delta > 0 ? "\u25b2 " : (l.delta < 0 ? "\u25bc " : "\u2014");
+    h += '<div class="eq-cmp-row ' + cls + '">';
+    h += '<span class="eq-cmp-txt">' + esc(formatEquipmentStatValue(l.stat, shown)) + (l.onlyEquipped ? ' <small>(\u00e9quip\u00e9)</small>' : '') + '</span>';
+    h += '<span class="eq-cmp-delta ' + dcls + '">' + arrow + (l.delta !== 0 ? esc(formatStatDelta(l.stat, l.delta)) : '') + '</span>';
+    h += '</div>';
+  });
+  h += '</div>';
+  return h;
 }
 
 function getInventoryItemsForSlot(slot) {
@@ -122,6 +164,8 @@ function buildCompatibleItemsListHTML(slot) {
     if (delta != null) {
       h += ' <span class="eq-compat-delta ' + (delta > 0 ? "is-up" : delta < 0 ? "is-down" : "is-flat") + '">(' + esc(formatStatDelta(item.stat, delta)) + ')</span>';
     }
+    var affixCount = (typeof getItemAffixes === "function") ? getItemAffixes(item).length : 0; // v3.225.0 : badge « +N »
+    if (affixCount > 0) h += ' <span class="eq-compat-affix-badge">+' + affixCount + '</span>';
     h += '</div>';
     h += '</div>';
     h += '<button class="btn-buy eq-compat-equip-btn" type="button" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">Équiper</button>';
@@ -147,6 +191,7 @@ function buildEquipDetailPanelHTML() {
     h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img rframe") + '</div>';
     h += '<div class="eq-detail-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
     h += '<div class="eq-detail-stat">' + esc(formatEquipmentStat(item)) + '</div>';
+    h += buildEquipmentAffixLinesHTML(item);
     h += buildItemOriginHTML(item);
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.unequip(\'' + esc(slot) + '\')">Déséquiper</button>';
   } else {
@@ -250,7 +295,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     var item = entry.item;
     h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img rframe") + '</div>';
     h += '<div class="eq-detail-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
-    h += '<div class="eq-detail-stat">' + esc(formatEquipmentStat(item)) + '</div>';
+    h += buildEquipmentCompareLinesHTML(item, game.equipped ? game.equipped[item.slot] : null); // v3.226.0 : delta par ligne
     h += buildItemOriginHTML(item);
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">Équiper</button>';
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="confirmSellItem(\'' + esc(item.uid) + '\')">Vendre</button>';
@@ -286,23 +331,16 @@ function buildEquippedComparisonHTML(item) {
   if (!equipped) {
     h += '<div class="eq-compare-empty">Rien d\u2019équipé sur cet emplacement — équiper cet objet sera un pur gain.</div>';
   } else {
-    var delta = getEquipmentStatDelta(item, equipped);
     h += '<div class="eq-compare-row">';
     h += '<div class="eq-compare-icon">' + buildEquipmentIconHTML(equipped, "eq-compare-icon-img rframe") + '</div>';
     h += '<div class="eq-compare-info">';
     h += '<div class="eq-compare-name rarity-' + esc(equipped.rarity) + '">' + esc(equipped.name) + '</div>';
     h += '<div class="eq-compare-stat">' + esc(formatEquipmentStat(equipped)) + '</div>';
+    h += buildEquipmentAffixLinesHTML(equipped);
     h += '</div>';
     h += '</div>';
 
-    if (delta != null) {
-      h += '<div class="eq-compare-delta ' + (delta > 0 ? "is-up" : delta < 0 ? "is-down" : "is-flat") + '">';
-      h += (delta > 0 ? "▲ Amélioration : " : delta < 0 ? "▼ Recul : " : "= Égalité : ");
-      h += esc(formatStatDelta(item.stat, delta));
-      h += '</div>';
-    } else {
-      h += '<div class="eq-compare-hint">Types de bonus différents — compare les deux lignes ci-dessus à l\u2019œil.</div>';
-    }
+    /* v3.226.0 : le delta global a disparu (D6) — chaque ligne du candidat porte le sien, ci-dessus. */
   }
 
   h += '</div>';
