@@ -182,13 +182,22 @@ var StatsSystem = {
       .map(function (slot) { return equipped[slot]; })
       .forEach(function(item) {
       if (!item) return;
-      if (item.stat === "tapDmg") game.equipFlatTapBonus += item.value;
-      else if (item.stat === "tapMult") game.tapMult += item.value;
-      else if (item.stat === "goldMult") game.goldMult += item.value;
-      else if (item.stat === "critChance") game.critChance += item.value;
-      else if (item.stat === "critMult") game.critMult += item.value;
-      else if (item.stat === "autoDps") game.bonusCelerity += item.value; // v3.102.0 : bottes = célérité
-      else if (item.stat === "defense") game.equipDefensePct += item.value;
+      /* v3.221.0 (périmètre confirmé par Seb) : la valeur lue passe par la
+         Forge du village. Le niveau de forge appartient à l'EMPLACEMENT, pas à
+         l'objet — il ne peut donc pas être figé dans item.value, et c'est ici,
+         au seul endroit qui compose les stats, qu'il doit s'appliquer.
+         Sans Forge construite, getForgedValue() renvoie item.value inchangé. */
+      var value = (window.ForgeManager && typeof ForgeManager.getForgedValue === "function")
+        ? ForgeManager.getForgedValue(item)
+        : item.value;
+
+      if (item.stat === "tapDmg") game.equipFlatTapBonus += value;
+      else if (item.stat === "tapMult") game.tapMult += value;
+      else if (item.stat === "goldMult") game.goldMult += value;
+      else if (item.stat === "critChance") game.critChance += value;
+      else if (item.stat === "critMult") game.critMult += value;
+      else if (item.stat === "autoDps") game.bonusCelerity += value; // v3.102.0 : bottes = célérité
+      else if (item.stat === "defense") game.equipDefensePct += value;
     });
 
     // Facteur validé session équilibrage "scie" (×0.35) : évite la saturation du plafond 60% dès le monde 4.

@@ -12,8 +12,25 @@
 
 var activeVillageSubTab = "village"; // "village" | "entrepot" | "production"
 
+/* v3.222.0 (retour Seb) : cliquer sur un bouton de sous-onglet ramène TOUJOURS
+   l'écran à sa page d'accueil. Avant, revenir sur Production rouvrait la fiche
+   d'atelier ou le détail de bâtiment où l'on s'était arrêté, et il fallait
+   ressortir à la main pour retrouver la récolte. Un bouton de navigation doit
+   emmener là où son libellé le dit, pas là où on était la dernière fois.
+
+   Même principe appliqué aux autres sections qui gardent un état interne
+   (Entrepôt : ressource sélectionnée). */
+function resetVillageSubScreenState() {
+  if (typeof productionViewTab !== "undefined") productionViewTab = "prod";
+  if (typeof productionDetailBuildingId !== "undefined") productionDetailBuildingId = null;
+  if (typeof selectedWarehouseKey !== "undefined") selectedWarehouseKey = null;
+  if (typeof closeWorkshopSummaryModal === "function") closeWorkshopSummaryModal();
+}
+window.resetVillageSubScreenState = resetVillageSubScreenState;
+
 function setVillageSubTab(tab) {
   activeVillageSubTab = (tab === "entrepot") ? "entrepot" : (tab === "production") ? "production" : "village";
+  resetVillageSubScreenState();
   if (typeof renderPanel === "function") renderPanel();
 }
 window.setVillageSubTab = setVillageSubTab;

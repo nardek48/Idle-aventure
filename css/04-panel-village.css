@@ -865,3 +865,77 @@
   border-color: var(--nb-frame-light);
   cursor: default;
 }
+
+
+/* =====================================================================
+   v3.221.0 (lot V-8) — Forge : établi rendu DANS la fiche du bâtiment.
+   ===================================================================== */
+
+.forge-board {
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--nb-frame-light);
+  border-radius: 8px;
+  background: var(--nb-cream-alt);
+}
+.forge-board-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+.forge-board-max { font-size: 10px; font-weight: 700; color: var(--nb-ink-dim); }
+.forge-board-note { margin: 2px 0 6px; font-size: 10px; line-height: 1.3; color: var(--nb-ink-dim); }
+
+.forge-row {
+  display: grid;
+  /* minmax(0, 1fr) : le nom de la pièce ne doit pas pousser le bouton. */
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+}
+.forge-row + .forge-row { border-top: 1px dashed var(--nb-frame-light); }
+.forge-row-main { min-width: 0; }
+.forge-row-name { font-size: 12px; font-weight: 800; color: var(--nb-ink); }
+.forge-row-level { font-size: 10px; font-weight: 700; color: var(--nb-ink-dim); }
+.forge-row-effect {
+  font-size: 11px;
+  color: var(--nb-ink-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.forge-row-empty { font-style: italic; }
+.forge-row-gain { color: #1f7a3d; font-weight: 800; }
+
+.forge-row-cost { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.forge-cost-item { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: var(--nb-ink); }
+.forge-cost-item.is-missing { color: var(--danger); }
+.forge-cost-item .vb-cost-icon { width: 14px; height: 14px; }
+
+.forge-row-side { flex: 0 0 auto; }
+.forge-row-btn {
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--nb-frame);
+  background: var(--nb-gold);
+  color: #241a00;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.forge-row-btn.is-off {
+  background: var(--nb-cream-deep);
+  color: var(--nb-ink-dim);
+  border-color: var(--nb-frame-light);
+  cursor: default;
+  white-space: normal;
+  max-width: 90px;
+}

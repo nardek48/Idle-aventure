@@ -341,6 +341,14 @@ sortInventoryByType: function () {
   recalcStats: function () {
     return StatsSystem.recalcStats();
   },
+  /* v3.221.0 : valeur d'une pièce, forge comprise. Passerelle vers
+     ForgeManager pour que l'UI et StatsSystem lisent la même chose. */
+  getForgedValue: function (item) {
+    return (window.ForgeManager && typeof ForgeManager.getForgedValue === "function")
+      ? ForgeManager.getForgedValue(item)
+      : Number((item && item.value) || 0);
+  },
+
   effectiveTapDamage: function () {
     return StatsSystem.effectiveTapDamage();
   },

@@ -63,13 +63,34 @@ function buildDungeonTierCardHTML(tier, isLast) {
   h += '<div class="dungeon-tier-name">' + esc(tier.name) + '</div>';
   h += '<div class="dungeon-tier-rarity" style="color:' + rarityColor + '">🎁 ' + esc(rarityLabel) + ' max</div>';
 
+  /* v3.223.0 : le matériau de monde est annoncé AVANT d'entrer — c'est une
+     raison de choisir ce palier, pas une surprise de fin de run. */
+  if (tier.specialResourceId && tier.specialResourceAmount > 0) {
+    var specialDef = WAREHOUSE_RESOURCES[tier.specialResourceId];
+    if (specialDef) {
+      h += '<div class="dungeon-tier-special">'
+         + renderIconOrEmojiHTML(specialDef.icon, "dungeon-tier-special-icon", specialDef.name)
+         + '+' + tier.specialResourceAmount + ' ' + esc(specialDef.name) + '</div>';
+    }
+  }
+
   if (!unlocked) {
-    var tiers = DUNGEON_TIERS || [];
-    var idx = tiers.indexOf(tier);
-    var previousTier = idx > 0 ? tiers[idx - 1] : null;
-    var lockText = previousTier
-      ? 'Termine ' + esc(previousTier.name) + ' pour débloquer'
-      : 'Verrouillé';
+    /* Deux verrous possibles, deux messages : le monde, ou le palier précédent.
+       Un « Verrouillé » sec ne dit pas quoi faire. */
+    var reason = (typeof DungeonManager.getTierLockReason === "function")
+      ? DungeonManager.getTierLockReason(tier.id) : "previous";
+    var lockText;
+    if (reason === "world") {
+      var world = (window.WORLDS && WORLDS[tier.worldRequired]) ? WORLDS[tier.worldRequired].name : null;
+      lockText = world ? ('Atteins ' + esc(world) + ' pour débloquer') : 'Monde trop bas';
+    } else {
+      var tiers = DUNGEON_TIERS || [];
+      var idx = tiers.indexOf(tier);
+      var previousTier = idx > 0 ? tiers[idx - 1] : null;
+      lockText = previousTier
+        ? 'Termine ' + esc(previousTier.name) + ' pour débloquer'
+        : 'Verrouillé';
+    }
     h += '<div class="dungeon-tier-lock-text">' + lockText + '</div>';
   } else if (heroDowned) {
     h += '<div class="dungeon-tier-lock-text">Héros à terre — repos requis</div>';
@@ -278,6 +299,11 @@ function buildDungeonSummaryHTML(result) {
   h += '      <div class="dungeon-summary-row"><span>💰 Or</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
   h += '      <div class="dungeon-summary-row"><span>' + renderIconOrEmojiHTML("images/Icons/essence_icon.png", "dungeon-summary-icon", "Essence") + ' Essence</span><span>+' + formatNumber(result.essenceReward) + '</span></div>';
   h += '      <div class="dungeon-summary-row"><span>🔷 Éclats</span><span>+' + formatNumber(result.shardsGained) + '</span></div>';
+  /* v3.223.0 : matériau de monde, sur sa propre ligne du rapport. */
+  if (result.specialGained > 0 && result.specialName) {
+    h += '      <div class="dungeon-summary-row"><span>🌿 ' + esc(result.specialName) + '</span><span>+' + result.specialGained + '</span></div>';
+  }
+
   if (result.lootedItem) {
     h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span>🎁 Butin</span><span>' + esc(result.lootedItem.name) + '</span></div>';
   }

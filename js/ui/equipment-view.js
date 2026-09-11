@@ -5,7 +5,10 @@ var activeEquipSubTab = "equipment"; // "equipment" | "inventory" | "shop" | "po
 var selectedEquipSlot = "weapon"; // un des 7 slots réels (voir EQUIPMENT_SLOTS)
 var selectedInventoryKey = null; // clé unifiée équipement("eq:uid")/potion("buff:id"/"heal:id") — v2.83.46
 
+/* v3.222.0 : même règle que le Village — revenir sur un sous-onglet le ramène
+   à son état d'accueil, plutôt qu'à l'objet qu'on regardait la fois d'avant. */
 function setEquipSubTab(tab) {
+  selectedInventoryKey = null;
   if (tab === "inventory") activeEquipSubTab = "inventory";
   else if (tab === "shop") activeEquipSubTab = "shop";
   else activeEquipSubTab = "equipment";

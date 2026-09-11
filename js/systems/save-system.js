@@ -527,6 +527,9 @@ function buildSaveData() {
     // resetTime est un horodatage absolu, comme equipShopResetTime : rien à
     // rattraper au chargement, checkRefresh() compare à Date.now().
     tavern: game.tavern || {},
+    // v3.221.0 (lot V-8) : niveaux de forge par emplacement — { levels: { weapon: 0, ... } }.
+    // Attachés à l'emplacement, ils survivent donc à tout changement d'équipement.
+    forge: game.forge || {},
     // v3.38 : chaîne de déblocage de l'Atelier (voir
     // data/workshop-unlock.js, systems/workshop-unlock-system.js) —
     // même principe que construction ci-dessus, état simple sans
@@ -858,6 +861,8 @@ function restoreBaseState(d) {
   // v3.217.0 : contrats de la Taverne — migration douce, TavernManager.ensure()
   // complète, checkRefresh() régénère si le tableau est vide ou périmé.
   game.tavern = d.tavern && typeof d.tavern === "object" ? d.tavern : {};
+  // v3.221.0 : niveaux de forge — migration douce, ForgeManager.ensure() complète.
+  game.forge = d.forge && typeof d.forge === "object" ? d.forge : {};
   // v3.38 : chaîne de déblocage de l'Atelier — migration douce, même
   // principe que construction ci-dessus. WorkshopUnlockManager.ensure()
   // complète les champs manquants au premier accès ; la validation
@@ -1007,10 +1012,20 @@ function hardResetState() {
   // v3.213.0 : les bâtiments du Village sont une progression permanente,
   // même règle que Construction — y compris un chantier en cours, qui
   // continue de tourner pendant l'ascension.
+  /* v3.222.0 : progression du héros conservée à l'ascension. */
+  var keptHeroLevel = Number(game.heroLevel || 1);
+  var keptHeroXp = Number(game.heroXp || 0);
+  var keptHeroXpToNext = Number(game.heroXpToNext || 20);
+  var keptTalentPoints = Number(game.talentPoints || 0);
+  var keptTalents = JSON.parse(JSON.stringify(game.talents || {}));
+
   var keptVillage = JSON.parse(JSON.stringify(game.village || {}));
   // v3.217.0 : les contrats en cours survivent à l'ascension, comme le stock
   // de l'échoppe — ce sont des ressources déjà produites qui attendent.
   var keptTavern = JSON.parse(JSON.stringify(game.tavern || {}));
+  // v3.221.0 : la forge est une progression permanente du village, comme les
+  // bâtiments — elle traverse l'ascension.
+  var keptForge = JSON.parse(JSON.stringify(game.forge || {}));
   // v3.38 : progression de déblocage de l'Atelier = permanente,
   // même règle que Construction (une fois débloqué, jamais reverrouillé,
   // y compris à l'ascension).
@@ -1062,10 +1077,21 @@ function hardResetState() {
 
   game.trainedStats = { power: 0, endurance: 0, celerity: 0, precision: 0, will: 0 };
 
-  game.heroLevel = 1;
-  game.heroXp = 0;
-  game.heroXpToNext = 20;
-  game.talentPoints = 0;
+  /* v3.222.0 (périmètre confirmé par Seb) — LE HÉROS GARDE SES NIVEAUX ET SES
+     TALENTS À L'ASCENSION. L'expérience est devenue nettement plus lente à
+     gagner, et remettre le niveau à 1 à chaque cycle transformait l'ascension
+     en corvée de rattrapage plutôt qu'en relance.
+
+     Conservés : heroLevel, heroXp, heroXpToNext, talentPoints et game.talents
+     (plus bas). Les points déjà dépensés RESTENT dépensés : pas de reroll
+     gratuit à chaque cycle, la réinitialisation de talents garde son coût.
+
+     Les PV repartent à la base : StatsSystem.recalcStats() les recompose
+     immédiatement à partir du niveau conservé et de l'endurance. */
+  game.heroLevel = keptHeroLevel;
+  game.heroXp = keptHeroXp;
+  game.heroXpToNext = keptHeroXpToNext;
+  game.talentPoints = keptTalentPoints;
   game.heroHp = 10;
   game.heroMaxHp = 10;
 
@@ -1078,7 +1104,7 @@ function hardResetState() {
 
   game.killCounts = {};
   game.upgrades = {};
-  game.talents = {};
+  game.talents = keptTalents; // v3.222.0 : conservés à l'ascension (voir plus haut)
   game.aetherUpgrades = keptAetherUpgrades;
   game.inventory = [];
   game.equipped = getDefaultEquipped();
@@ -1142,6 +1168,7 @@ function hardResetState() {
   game.construction = keptConstruction;
   game.village = keptVillage;
   game.tavern = keptTavern;
+  game.forge = keptForge;
   game.workshopUnlock = keptWorkshopUnlock;
   game.workshopFoundationsCompleted = keptWorkshopFoundationsCompleted;
   game.storyQuests = keptStoryQuests;
@@ -1298,6 +1325,7 @@ function fullResetState() {
   game.construction = {}; // v3.37 : repart à zéro, ConstructionManager.ensure() recrée workshop au niveau 0
   game.village = {}; // v3.213.0 : bâtiments + chantier du Village, VillageBuildingManager.ensure() recrée l'état initial
   game.tavern = {}; // v3.217.0 : contrats de la Taverne, régénérés au premier affichage
+  game.forge = {}; // v3.221.0 : niveaux de forge par emplacement
   game.workshopUnlock = {}; // v3.38 : repart à zéro, WorkshopUnlockManager.ensure() recrée l'état initial (currentStep 0)
   game.workshopFoundationsCompleted = false; // v3.107.8
   game.storyQuests = {}; // v3.100.0 : repart à zéro, StoryQuestManager.ensure() recrée l'état initial (étape 1)

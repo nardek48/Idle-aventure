@@ -202,6 +202,8 @@ function createInitialGameState() {
     village: { buildings: {}, site: null },
     // v3.217.0 (lot V-6) : tableau de contrats de la Taverne.
     tavern: { contracts: [], resetTime: 0 },
+    // v3.221.0 (lot V-8) : niveaux de forge, PAR EMPLACEMENT et non par objet.
+    forge: { levels: {} },
 
     dungeonTiersEntered: {},
     codexChaosSeen: false,

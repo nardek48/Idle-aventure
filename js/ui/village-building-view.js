@@ -145,6 +145,12 @@ function buildVillageBuildingSheetHTML(id) {
        + '🧪 Préparer dans Boutique → Potions ›</div>';
   }
 
+  /* La Forge, comme la Taverne, porte son contenu dans sa fiche : reforger n'a
+     d'écran nulle part ailleurs. */
+  if (id === "forge" && level > 0) {
+    h += buildForgeBoardHTML();
+  }
+
   /* La Taverne est le seul bâtiment dont la fiche porte du contenu jouable :
      ses contrats n'ont pas d'écran ailleurs, contrairement à l'entraînement,
      aux potions ou à l'échoppe. Les envoyer au tableau de missions les
@@ -375,3 +381,78 @@ function goToWarehouse() {
   if (typeof setVillageSubTab === "function") setVillageSubTab("entrepot");
 }
 window.goToWarehouse = goToWarehouse;
+
+/* --- Établi de la Forge (rendu DANS la fiche) ---------------------------- */
+function buildForgeBoardHTML() {
+  if (!window.ForgeManager) return "";
+  ForgeManager.ensure();
+
+  var max = ForgeManager.getMaxLevel();
+  var h = '<div class="forge-board">';
+  h += '<div class="forge-board-head">⚒️ Établi'
+     + '<span class="forge-board-max">Niveau maximum : ' + max + '</span></div>';
+  h += '<div class="forge-board-note">Le niveau appartient à l\'emplacement : changer de pièce ne fait rien perdre.</div>';
+
+  EQUIPMENT_SLOTS.forEach(function (slot) {
+    var level = ForgeManager.getLevel(slot);
+    var item = (game.equipped || {})[slot];
+    var cost = ForgeManager.getCost(slot);
+    var reason = ForgeManager.getBlockReason(slot);
+
+    h += '<div class="forge-row">';
+    h += '<div class="forge-row-main">';
+    /* Le libellé vit dans EQUIPMENT_SLOT_LABELS, pas dans la config d'emplacement
+       (relevé au rendu : la ligne sortait sans nom). */
+    h += '<div class="forge-row-name">' + esc(EQUIPMENT_SLOT_LABELS[slot] || slot)
+       + ' <span class="forge-row-level">niv. ' + level + ' / ' + max + '</span></div>';
+
+    if (item) {
+      /* On montre l'effet réel sur la pièce portée : un pourcentage abstrait
+         ne dirait pas au joueur ce qu'il gagne. */
+      var brut = Number(item.value || 0);
+      var forge = ForgeManager.getForgedValue(item);
+      h += '<div class="forge-row-effect">' + esc(item.name) + ' : '
+         + esc(formatEquipmentStat({ slot: slot, stat: item.stat, value: forge }))
+         + (forge > brut ? ' <span class="forge-row-gain">(+' + Math.round((forge / brut - 1) * 100) + ' %)</span>' : '')
+         + '</div>';
+    } else {
+      h += '<div class="forge-row-effect forge-row-empty">Vide — le niveau attend sa pièce.</div>';
+    }
+
+    if (cost) {
+      h += '<div class="forge-row-cost">';
+      Object.keys(cost).forEach(function (key) {
+        var meta = getVillageCostMeta(key);
+        var have = (key === "gold") ? Number(game.gold || 0) : WarehouseManager.getAmount(key);
+        var ok = have >= cost[key];
+        h += '<span class="forge-cost-item' + (ok ? '' : ' is-missing') + '">'
+           + meta.iconHTML + formatNumber(cost[key]) + '</span>';
+      });
+      h += '</div>';
+    }
+    h += '</div>';
+
+    h += '<div class="forge-row-side">';
+    if (!cost) {
+      h += '<div class="forge-row-btn is-off">' + (level >= 30 ? 'Maximum' : 'Améliore<br>la Forge') + '</div>';
+    } else if (reason) {
+      h += '<div class="forge-row-btn is-off">' + esc(reason) + '</div>';
+    } else {
+      h += '<button type="button" class="forge-row-btn" onclick="reforgeSlot(\'' + esc(slot) + '\')">Reforger</button>';
+    }
+    h += '</div>';
+
+    h += '</div>';
+  });
+
+  h += '</div>';
+  return h;
+}
+window.buildForgeBoardHTML = buildForgeBoardHTML;
+
+function reforgeSlot(slot) {
+  if (ForgeManager.reforge(slot) && openVillageBuildingId === "forge") {
+    openVillageBuildingSheet("forge");
+  }
+}
+window.reforgeSlot = reforgeSlot;

@@ -3,7 +3,10 @@
 
 var activeHerosSubTab = "hero"; // "hero" | "amelioration" | "stats"
 
+/* v3.222.0 : voir setVillageSubTab — une carte de caractéristique dépliée ne
+   doit pas rester ouverte quand on revient sur l'écran. */
 function setHerosSubTab(tab) {
+  if (typeof expandedHeroStat !== "undefined") expandedHeroStat = null;
   if (tab === "amelioration") activeHerosSubTab = "amelioration";
   else if (tab === "stats") activeHerosSubTab = "stats";
   else activeHerosSubTab = "hero";

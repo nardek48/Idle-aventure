@@ -25,6 +25,10 @@ var WAREHOUSE_RESOURCES = {
   eau_purifiee: { id: "eau_purifiee", name: "Eau purifiée", icon: "images/Icons/resources/water_icon.png", desc: "Eau filtrée à la Station de purification (atelier du Puits). Base de toutes les préparations de l'Apothicaire.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se filtre à la Station de purification (Puits)" },
   planche: { id: "planche", name: "Planche", icon: "images/Icons/resources/plank_icon.png", desc: "Fabriquée à partir de Bois.", sellPrice: 7, tier: "crafted", cap: 999 },
   lingot: { id: "lingot", name: "Lingot", icon: "images/Icons/resources/ingot_icon.png", desc: "Fabriqué à partir de Fer.", sellPrice: 10, tier: "crafted", cap: 999 },
+  /* v3.221.0 (lot V-8) : matériau de reforge. Troisième atelier de tier 2
+     activé (Forge de la Mine), et premier débouché du Lingot en dehors de la
+     construction. Invendable : c'est un intrant. */
+  acier: { id: "acier", name: "Acier", icon: "images/Icons/resources/ingot_icon.png", desc: "Lingot retravaillé à la Forge de la Mine. Sert à reforger l'équipement.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se forge à la Forge (Mine), à partir de Lingot" },
   farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.png", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 },
   // v3.137.0 : desc corrigée — la Boulangerie (Champs), pas l'Atelier de Construction, cuit le Pain.
   pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.png", desc: "Cuit à la Boulangerie (Champs) à partir d'Eau et de Farine.", sellPrice: 19, tier: "crafted", cap: 999 },

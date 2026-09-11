@@ -134,12 +134,38 @@ var VILLAGE_BUILDINGS = {
     name: "Forge",
     icon: "⚒️",
     rank: 2,
-    maxLevel: 10,
-    implemented: false,      // V-4
+    /* Conception : 6 niveaux, un par monde, chacun ouvrant 5 niveaux de forge
+       sur les pièces — soit 30 au total, c'est-à-dire EXACTEMENT un cran de
+       rareté (voir systems/forge-system.js). Le palier de bâtiment et le
+       matériau de monde sont donc le même verrou, exprimé une fois.
+
+       v3.221.0 : limité à 2 pour l'instant (10 niveaux de forge). Les niveaux 3
+       à 6 exigent les matériaux des mondes 2 à 5, qui n'existent pas encore —
+       même règle que le Terrain d'entraînement en v3.213.1, relevé en v3.214.0
+       quand son matériau est arrivé. */
+    maxLevel: 2,
+    implemented: true,
     lockLabel: "Atelier niveau 3",
-    desc: "Renforce une pièce d'équipement : +5 % de sa caractéristique par niveau de renforcement.",
-    costTiers: null,
-    effectLabel: function (level) { return "Renforcement maximum : +" + (level * 5) + " %"; }
+    desc: "Reforge une pièce d'équipement. Le niveau appartient à l'emplacement, pas à l'objet : changer de pièce ne fait rien perdre.",
+    costTiers: [
+      {
+        minLevel: 0, maxLevel: 0,
+        resources: ["gold", "planche", "pierre", "acier"],
+        baseCost: { gold: 600, planche: 30, pierre: 40, acier: 6 },
+        costMult: 1.40
+      },
+      {
+        minLevel: 1, maxLevel: 1,
+        resources: ["gold", "planche", "pierre", "acier", "resine_durcie"],
+        baseCost: { gold: 2400, planche: 70, pierre: 85, acier: 18, resine_durcie: 4 },
+        costMult: 1.45
+      }
+    ],
+    effectLabel: function (level) {
+      var max = level * 5;
+      return max <= 0 ? "Aucune reforge possible"
+        : ("Reforge jusqu'au niveau " + max + " sur chaque emplacement");
+    }
   },
 
   apothecary: {

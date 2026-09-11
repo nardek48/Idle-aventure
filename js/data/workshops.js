@@ -106,8 +106,14 @@ var WORKSHOPS_CONFIG = {
       { id: "lingot", inputs: [{ resourceId: "fer", quantity: 5 }], outputs: [{ resourceId: "lingot", quantity: 1 }], craftTimeMs: 3000 }
     ]
   },
+  /* v3.221.0 (lot V-8) : troisième atelier de tier 2 activé, pour alimenter la
+     reforge d'équipement du bâtiment Forge du village. */
   forge: {
-    buildingId: "mine", name: "Forge", icon: "⚒️", active: false
+    buildingId: "mine", name: "Forge", icon: "⚒️", active: true,
+    upgradeCostBase: { planche: 4, lingot: 4 },
+    recipes: [
+      { id: "acier", inputs: [{ resourceId: "lingot", quantity: 3 }, { resourceId: "bois", quantity: 6 }], outputs: [{ resourceId: "acier", quantity: 1 }], craftTimeMs: 8000 }
+    ]
   },
 
   // ===== Carrière =====

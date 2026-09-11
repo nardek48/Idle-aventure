@@ -37,17 +37,43 @@ var DungeonManager = {
     }
   },
 
-  isTierUnlocked: function (tierId) {
+  /* v3.223.0 (périmètre confirmé par Seb) : plafond de palier par monde.
+     Le monde retenu est le plus haut JAMAIS atteint — redescendre en Forêt ne
+     referme pas un donjon déjà ouvert. */
+  getHighestWorldReached: function () {
+    var reached = (game.worldsEverReached && typeof game.worldsEverReached === "object")
+      ? game.worldsEverReached : {};
+    var best = Number((window.WorldManager && WorldManager.worldIndex) || 0);
+    Object.keys(reached).forEach(function (key) {
+      if (reached[key]) best = Math.max(best, Number(key) || 0);
+    });
+    return best;
+  },
+
+  isTierAllowedByWorld: function (tier) {
+    if (!tier || typeof tier.worldRequired !== "number") return true;
+    return this.getHighestWorldReached() >= tier.worldRequired;
+  },
+
+  /* Raison du verrou, pour que la carte dise quoi faire plutôt que « Verrouillé ».
+     "world" | "previous" | null */
+  getTierLockReason: function (tierId) {
     var tiers = DUNGEON_TIERS || [];
     var index = -1;
     for (var i = 0; i < tiers.length; i++) {
       if (tiers[i].id === tierId) { index = i; break; }
     }
-    if (index <= 0) return true;
+    if (index === -1) return "previous";
 
-    var previousTier = tiers[index - 1];
+    if (!this.isTierAllowedByWorld(tiers[index])) return "world";
+    if (index <= 0) return null;
+
     this.ensure();
-    return !!game.dungeonTierCleared[previousTier.id];
+    return game.dungeonTierCleared[tiers[index - 1].id] ? null : "previous";
+  },
+
+  isTierUnlocked: function (tierId) {
+    return this.getTierLockReason(tierId) === null;
   },
 
   checkTicketReset: function () {
@@ -303,6 +329,20 @@ var DungeonManager = {
       if (drop && addDropToInventory(drop)) lootedItem = drop;
     }
 
+    /* v3.223.0 (périmètre confirmé par Seb) : matériau de monde, seconde source
+       à côté des Petites Aventures. Réservé à la RÉUSSITE complète — une fuite
+       ou une mort n'en donne pas, comme pour le butin d'équipement. Écriture par
+       WarehouseManager, seul point d'entrée des ressources. */
+    var specialGained = 0;
+    var specialDef = null;
+    if (success && tier.specialResourceId && tier.specialResourceAmount > 0
+        && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
+      specialDef = WAREHOUSE_RESOURCES[tier.specialResourceId] || null;
+      if (specialDef) {
+        specialGained = WarehouseManager.addResource(tier.specialResourceId, tier.specialResourceAmount, true) || 0;
+      }
+    }
+
     var shardsGained = Number(game.dungeonRun.shardsEarned || 0);
     game.dungeonRun = { active: false, wave: 0 };
 
@@ -312,6 +352,7 @@ var DungeonManager = {
         ? "🏰 " + tier.name + " : terrassé à la vague " + (clearedWave + 1) + "/" + wavesTotal + " — aucune récompense, le butin reste dans le donjon."
         : "🏰 " + tier.name + " abandonné (vague " + clearedWave + "/" + wavesTotal + ") : +" + formatNumber(goldReward) + " or, +" + essenceReward + " essence (moitié)");
     if (lootedItem) msg += " + " + lootedItem.name;
+    if (specialGained > 0 && specialDef) msg += " + " + specialGained + " " + specialDef.name;
 
     addLog(msg, success ? "boss" : "event");
     showToast(success ? "🏆 Donjon terminé !" : "🏰 Donjon interrompu", 2200);
@@ -336,7 +377,10 @@ var DungeonManager = {
         goldReward: goldReward,
         essenceReward: essenceReward,
         shardsGained: shardsGained,
-        lootedItem: lootedItem
+        lootedItem: lootedItem,
+        // v3.223.0 : matériau de monde gagné (0 si aucun), pour le rapport de fin
+        specialGained: specialGained,
+        specialName: specialDef ? specialDef.name : null
       });
     }
 
