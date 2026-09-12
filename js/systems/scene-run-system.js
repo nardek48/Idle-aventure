@@ -1046,8 +1046,23 @@ var SceneRunManager = {
     var template = SceneEngine.getTemplate(run.templateId);
     var cfg = template && template.seveAeswyn;
     if (!cfg || !run.profile) return;
-    var amount = Number((cfg.finaleGuaranteedAmount && cfg.finaleGuaranteedAmount[run.profile]) || 0);
+    var amount = this._seveFinaleAmount(cfg, run.profile, run.intensity);
     if (amount > 0) this._creditSeveAeswyn(cfg.resourceId, amount);
+  },
+
+  /* v3.235.0 : le bonus de finale dépend maintenant de l'INTENSITÉ en plus du profil
+     (voir data/scene-templates.js pour le pourquoi). Deux formes acceptées, pour ne
+     casser aucun canevas et permettre un retour en arrière sans toucher au code :
+       - nombre          -> ancienne forme plate, rendue telle quelle
+       - objet par intensité -> valeur de l'intensité du run, repli sur la plus courte
+     Un run sans intensité (canevas sans SCENE_INTENSITY) prend la première valeur. */
+  _seveFinaleAmount: function (cfg, profil, intensite) {
+    var parProfil = cfg.finaleGuaranteedAmount && cfg.finaleGuaranteedAmount[profil];
+    if (parProfil == null) return 0;
+    if (typeof parProfil === "number") return Number(parProfil) || 0;
+    if (intensite && parProfil[intensite] != null) return Number(parProfil[intensite]) || 0;
+    var cles = Object.keys(parProfil);
+    return cles.length ? (Number(parProfil[cles[0]]) || 0) : 0;
   },
 
   _creditSeveAeswyn: function (resourceId, amount) {

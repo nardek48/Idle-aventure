@@ -114,9 +114,12 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   color: var(--nb-ink-dim);
 }
 
+/* v3.233.0 (Seb) : le bouton collait aux bords de la carte (width 100 %).
+   Il se dimensionne maintenant sur son texte, centré par le flex parent. */
 .camp-ration-btn {
-  width: 100%;
-  padding: 7px 4px;
+  width: auto;
+  max-width: 100%;
+  padding: 7px 14px;
   font-size: 12px;
 }
 
@@ -127,8 +130,8 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   margin-bottom: 8px;
 }
 
-/* v3.173.0 : .camp-regen-bar/.camp-regen-fill migrées (kgauge-focus,
-   sarcelle, pour la distinguer de la barre de PV verte au-dessus). */
+/* v3.233.0 : .camp-regen-bar/.camp-regen-fill supprimées du rendu
+   (elles affichaient hpPct, donc la barre de PV en double). */
 
 .camp-regen-meta {
   display: flex;

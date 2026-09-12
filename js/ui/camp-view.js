@@ -34,7 +34,12 @@ function buildCampMissionCardHTML(m) {
   if (m.place) h += '<div class="camp-mission-place">' + esc(m.place) + '</div>';
   h += '</div>';
   h += '</div>';
-  var objective = m.status === "running" || m.status === "accepted" ? (m.progressLabel || m.objectiveLabel) : m.objectiveLabel;
+  // v3.234.0 (retour Seb) : le `||` faisait gagner le compteur dès qu'il existait,
+  // et objectiveLabel — le seul champ qui dit QUOI FAIRE — disparaissait. Sur une
+  // quête de village, progress() renvoie un « 0/2 » nu : la carte ne disait plus rien.
+  var enCours = m.status === "running" || m.status === "accepted";
+  var objective = m.objectiveLabel || "";
+  if (enCours && m.progressLabel) objective = objective ? (objective + " \u2014 " + m.progressLabel) : m.progressLabel;
   if (objective) h += '<div class="camp-mission-objective">' + esc(objective) + '</div>';
   if (m.rewardSummary) h += '<div class="camp-mission-reward">🎁 ' + esc(m.rewardSummary) + '</div>';
   h += buildCampMissionActionHTML(m);
@@ -110,11 +115,11 @@ function buildCampHTML() {
   });
   h += '</div>';
 
-  // Bloc Régénération — barre verte + rythme + temps restant.
+  // Bloc Régénération — phrase + rythme + temps restant.
+  // v3.233.0 (Seb) : barre retirée. Elle était remplie avec hpPct, donc un
+  // doublon exact de la barre de PV trois lignes plus haut, en sarcelle.
   h += '<div class="camp-section-title camp-section-sub">✚ Régénération</div>';
   h += '<div class="camp-regen-desc">Récupère des PV automatiquement au fil du temps, hors combat.</div>';
-  // v3.173.0 : jauge fine du kit, teinte sarcelle (kgauge-focus) pour la distinguer de la barre de PV verte juste au-dessus.
-  h += '<div class="camp-regen-bar kgauge kgauge-thin kgauge-focus"><div class="kgauge-track"><div class="kgauge-fill" id="camp-regen-fill" style="width:' + hpPct + '%"></div></div></div>';
   h += '<div class="camp-regen-meta">';
   h += '<span class="camp-regen-rate">+' + regenPct + ' % PV par minute</span>';
   h += '<span class="camp-regen-eta" id="camp-fire-eta">' + (hpFull ? '✔ PV au maximum' : esc('⏳ Max dans ' + formatTime(Math.ceil(minutesToFull * 60)))) + '</span>';

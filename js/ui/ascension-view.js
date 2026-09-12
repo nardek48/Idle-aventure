@@ -34,33 +34,28 @@ function buildAscensionTabContentHTML() {
   var killsLeft = Math.max(0, minKills - currentKills);
   var h = (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("ascension") : "";
 
-  h += `<div class="prestige-section">
-    <div class="prestige-icon">${renderIconOrEmojiHTML("images/Icons/aether_icon.png", "prestige-icon-img", "Aether")}</div>
-    <div class="prestige-title">Ascension</div>
-    <div class="prestige-desc">
-      Réinitialise la progression classique mais conserve l’Aether, les ascensions et les améliorations astrales.
-    </div>
-    <div class="prestige-gain">+${formatNumber(gain)} Aether</div>
-    <div class="prestige-desc">
-      Aether actuel : ${formatNumber(game.aether || 0)}<br>
-      Ascensions effectuées : ${formatNumber(game.ascensionCount || 0)}
-    </div>
-    <button class="prestige-btn ${canAscend ? "" : "disabled"}"
-      ${canAscend ? 'onclick="doAscend()"' : "disabled"}>
-      ${canAscend ? "Ascension maintenant" : "Ascension indisponible"}
-    </button>
-  </div>`;
+  /* v3.233.0 : littéraux de gabarit convertis en concaténation (ES5 strict).
+     Rendu identique — seuls les retours à la ligne décoratifs ont sauté. */
+  h += '<div class="prestige-section">';
+  h += '<div class="prestige-icon">' + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "prestige-icon-img", "Aether") + '</div>';
+  h += '<div class="prestige-title">Ascension</div>';
+  h += '<div class="prestige-desc">Réinitialise la progression classique mais conserve l’Aether, les ascensions et les améliorations astrales.</div>';
+  h += '<div class="prestige-gain">+' + formatNumber(gain) + ' Aether</div>';
+  h += '<div class="prestige-desc">Aether actuel : ' + formatNumber(game.aether || 0) + '<br>'
+     + 'Ascensions effectuées : ' + formatNumber(game.ascensionCount || 0) + '</div>';
+  h += '<button class="prestige-btn' + (canAscend ? '' : ' disabled') + '" '
+     + (canAscend ? 'onclick="doAscend()"' : 'disabled') + '>'
+     + (canAscend ? 'Ascension maintenant' : 'Ascension indisponible') + '</button>';
+  h += '</div>';
 
-  h += `<div class="ascension-conditions">
-    <strong>Conditions</strong><br><br>
-    Kills requis : ${minKills}<br>
-    Kills actuels : ${currentKills}<br>
-    ${
-      canAscend
-        ? '<span class="ascension-ok">Ascension disponible</span>'
-        : `<span class="ascension-lock">Encore ${killsLeft} kill(s) avant de pouvoir ascensionner</span>`
-    }
-  </div>`;
+  h += '<div class="ascension-conditions">';
+  h += '<strong>Conditions</strong><br><br>';
+  h += 'Kills requis : ' + minKills + '<br>';
+  h += 'Kills actuels : ' + currentKills + '<br>';
+  h += canAscend
+    ? '<span class="ascension-ok">Ascension disponible</span>'
+    : '<span class="ascension-lock">Encore ' + killsLeft + ' kill(s) avant de pouvoir ascensionner</span>';
+  h += '</div>';
 
   return h;
 }
@@ -69,7 +64,7 @@ function buildAscensionShopTabContentHTML() {
   var h = "";
 
   if (typeof AETHER_SHOP === "undefined" || !Array.isArray(AETHER_SHOP) || !AETHER_SHOP.length) {
-    return `<div class="ascension-conditions">Aucune amélioration d’Aether disponible.</div>`;
+    return '<div class="ascension-conditions">Aucune amélioration d’Aether disponible.</div>';
   }
 
   AETHER_SHOP.forEach(function (u) {
@@ -83,26 +78,28 @@ function buildAscensionShopTabContentHTML() {
 
     var canBuy = !isMax && (game.aether || 0) >= cost;
 
-    h += `<div class="nb-purchase-card">
-      <div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">${renderIconOrEmojiHTML(u.icon || "images/Icons/aether_icon.png", "nb-purchase-icon", u.name)}</div></div>
+    /* v3.233.0 : littéraux de gabarit convertis en concaténation (ES5 strict). */
+    h += '<div class="nb-purchase-card">';
+    h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">'
+       + renderIconOrEmojiHTML(u.icon || "images/Icons/aether_icon.png", "nb-purchase-icon", u.name) + '</div></div>';
 
-      <div class="nb-purchase-info-col">
-        <div class="nb-purchase-top" style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;">
-          <div class="nb-purchase-name">${esc(u.name)}</div>
-          <div class="nb-purchase-meta" style="color:var(--aether);display:flex;align-items:center;gap:3px;">${renderIconOrEmojiHTML("images/Icons/aether_icon.png", "nb-purchase-cost-icon", "Aether")} ${isMax ? "MAX" : formatNumber(cost)}</div>
-        </div>
+    h += '<div class="nb-purchase-info-col">';
+    h += '<div class="nb-purchase-top" style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;">';
+    h += '<div class="nb-purchase-name">' + esc(u.name) + '</div>';
+    h += '<div class="nb-purchase-meta" style="color:var(--aether);display:flex;align-items:center;gap:3px;">'
+       + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "nb-purchase-cost-icon", "Aether")
+       + ' ' + (isMax ? "MAX" : formatNumber(cost)) + '</div>';
+    h += '</div>';
+    h += '<div class="nb-purchase-meta">Niveau ' + level + ' / ' + maxLevel + '</div>';
+    if (u.desc) h += '<div class="nb-purchase-desc">' + esc(u.desc) + '</div>';
+    h += '</div>';
 
-        <div class="nb-purchase-meta">Niveau ${level} / ${maxLevel}</div>
-        ${u.desc ? `<div class="nb-purchase-desc">${esc(u.desc)}</div>` : ""}
-      </div>
-
-      <div class="nb-purchase-buy-col">
-        <button class="btn-buy ${isMax || !canBuy ? "cant-afford" : ""}"
-          ${isMax || !canBuy ? "disabled" : `onclick="buyAetherUpgrade('${esc(u.id)}')"`}>
-          ${isMax ? "Maximum" : canBuy ? "Acheter" : "Coût trop élevé"}
-        </button>
-      </div>
-    </div>`;
+    h += '<div class="nb-purchase-buy-col">';
+    h += '<button class="btn-buy' + (isMax || !canBuy ? ' cant-afford' : '') + '" '
+       + (isMax || !canBuy ? 'disabled' : 'onclick="buyAetherUpgrade(\'' + esc(u.id) + '\')"') + '>'
+       + (isMax ? "Maximum" : canBuy ? "Acheter" : "Coût trop élevé") + '</button>';
+    h += '</div>';
+    h += '</div>';
   });
 
   return h;

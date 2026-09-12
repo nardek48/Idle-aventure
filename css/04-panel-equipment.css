@@ -963,6 +963,51 @@
   justify-content: center;
 }
 
+/* =========================
+   v3.233.0 (Seb, variante D) : cadre retiré dans les DEUX grilles qui
+   partagent .eq-bag-inv-grid — le sac (Inventaire) et l'Entrepôt.
+   L'icône occupe toute la case au lieu de 64 %.
+
+   Pourquoi on ne perd pas la rareté : le liseré coloré est déjà peint
+   DANS l'asset d'icône (un fichier par type ET par rareté, cf.
+   images/Icons/equipment_icon/sword_common|rare|epic|legendary.png).
+   Le cadre était redondant avec l'illustration.
+
+   Pourquoi le border-radius : 7 assets sur l'ensemble sont carrés et
+   non ronds (6 potions de bonus + robe_common.png) ; sans découpe ils
+   ressortaient comme un carré au milieu des médaillons. La découpe est
+   sans effet sur les icônes déjà rondes (fond transparent aux angles).
+
+   Portée VOLONTAIREMENT limitée aux deux grilles : emplacements
+   équipés, boutique et panneaux de détail gardent leur cadre .rframe.
+   ========================= */
+.eq-bag-inv-grid > .eq-bag-tile.rframe {
+  aspect-ratio: 1 / 1;
+  /* longhand only — le raccourci `background:` réinitialiserait
+     size/position et ferait réapparaître le PNG à sa taille naturelle
+     (régression v3.180-183, voir plus haut). */
+  background-image: none;
+}
+
+.eq-bag-inv-grid > .eq-bag-tile.rframe .eq-bag-tile-icon {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+/* Icône posée directement en <img> (Entrepôt, potions) : elle n'a pas
+   le conteneur .has-icon-img qui porte object-fit, on le pose ici. */
+.eq-bag-inv-grid > .eq-bag-tile.rframe img.eq-bag-tile-icon {
+  object-fit: cover;
+}
+
+/* Halo de sélection : rond, pour épouser l'icône (00-rframe.css le
+   dessine en 12px, taillé pour un cadre carré). */
+.eq-bag-inv-grid > .eq-bag-tile.rframe.is-selected {
+  border-radius: 50%;
+}
+
 /* === Responsive === */
 
 /* v3.164.0 : références au bloc mort .eq-bag-grid/.eq-bag-main

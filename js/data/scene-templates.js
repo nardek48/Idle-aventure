@@ -553,7 +553,22 @@ var SCENE_TEMPLATES = {
       resourceId: "seve_aeswyn",
       perNodeChancePct: { bourrin: 6, prudent: 3 }, // à calibrer (run_sim.js) avant fixation définitive
       perNodeAmount: [1, 1],
-      finaleGuaranteedAmount: { bourrin: 2, prudent: 1 } // à calibrer
+      /* v3.235.0 (banc sim/seve-bench.js) : le bonus était PLAT (bourrin 2, prudent 1),
+         quelle que soit la longueur du parcours. Mesuré en Monte-Carlo sur 200 000 runs,
+         ça inversait l'intention : le Sentier (6 nœuds, 2 % d'échec) rapportait 23 % de
+         Sève de PLUS que le Périple (10 nœuds, 35 % d'échec), parce que le bonus de finale
+         pèse plus lourd que les tirages par nœud et qu'un Périple sur trois le perd.
+         Le parcours le plus sûr était donc le plus rentable.
+         Table retenue (T2, seule monotone sur les DEUX profils — chaque cran de risque
+         paie plus que le précédent) :
+            bourrin  2.32 / 3.09 / 3.73 Sève par run   (Périple +61 % sur Sentier)
+            prudent  1.16 / 1.98 / 2.19               (Périple +89 %)
+         Offre de la Petite Aventure : 6,94 -> 11,22 Sève/jour au cap de 3 runs.
+         La forme PLATE reste lue si un jour on revient à un nombre simple. */
+      finaleGuaranteedAmount: {
+        bourrin: { sentier: 2, chemin: 3, periple: 5 },
+        prudent: { sentier: 1, chemin: 2, periple: 3 }
+      }
     },
 
     // v3.125.0 (Lot PA3, à peupler) : table de drop exclusive par profil — ingrédients rares

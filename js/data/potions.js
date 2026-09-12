@@ -81,7 +81,8 @@ var POTIONS_DB = [
 window.POTIONS_DB = POTIONS_DB;
 window.POTION_STOCK_CAP = POTION_STOCK_CAP;
 
-const HEALING_POTIONS_DB = [
+// v3.233.0 : const -> var (ES5 strict, seule occurrence du fichier).
+var HEALING_POTIONS_DB = [
   {
     id: "potion_soin_mineur",
     name: "Potion de soin mineur",

@@ -101,26 +101,12 @@
 
 
 
-/* Panneau de droite : cadre doré + fond crème */
-.pc-info-wrapper {
-  position: relative;
-  width: 220px;             /* ajuste à l’œil ou à la taille de ton cadre */
-  min-height: 160px;
-  padding: 12px 16px;       /* espace intérieur pour le contenu */
-  background-color: #f5e4c7;/* fond crème */
-  border-radius: var(--nb-radius-md);
-  overflow: hidden;
-}
-
-/* image de cadre autour du panneau de stats */
-.pc-info-wrapper::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: url('../images/Templates/right-panel-frame.png') center / 100% 100% no-repeat;
-  pointer-events: none;
-  z-index: 0;
-}
+/* v3.233.0 : .pc-info-wrapper et son ::before SUPPRIMÉS. Le ::before
+   pointait vers un cadre de panneau (Templates) absent du dépôt, et
+   aucun JS ne génère la classe .pc-info-wrapper.
+   .pc-info-col juste en dessous est dans le même cas mais ne casse
+   aucun asset : laissée en place, à trancher avec Seb si on fait une
+   passe de nettoyage des vestiges. */
 
 /* contenu du panneau au-dessus du cadre */
 .pc-info-col {

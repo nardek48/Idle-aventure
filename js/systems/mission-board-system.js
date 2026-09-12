@@ -202,6 +202,11 @@ var MissionBoard = {
     var out = [];
     quests.forEach(function (quest) {
       if (quest.id === "hq_forest_boar" && !(game.explorationProgression && game.explorationProgression.huntBuildingUnlocked)) return;
+      /* v3.236.0 : « Ce que les bêtes ont bu » se déroule au Cœur de la forêt.
+         Elle s'ouvre donc quand le Cœur s'ouvre, c'est-à-dire à la fin de
+         « Prouver sa valeur » (aq_forest_expedition, gatesTransitionTo: 1) —
+         le même événement qui autorise le joueur à y aller. */
+      if (quest.id === "hq_forest_seve" && !(game.adventureQuestsCompleted && game.adventureQuestsCompleted.aq_forest_expedition)) return;
       var isRunning = !!(running && running.id === quest.id);
       var status = isRunning ? "running" : (running ? "locked" : "available");
       var inLot = isRunning ? Number((game.huntRun && game.huntRun.killsInLot) || 0) : 0;
@@ -211,9 +216,13 @@ var MissionBoard = {
         type: "chasse", place: missionWorldName(quest.worldId) || "",
         objectiveLabel: "Lot de " + quest.lotSize, progressLabel: isRunning ? (inLot + "/" + quest.lotSize) : "",
         // v3.207.0 : une battue affiche sa prime, pas un taux de drop.
+        // v3.236.0 : et un taux de drop nomme sa RESSOURCE — « 3 % par kill »
+        // ne disait pas de quoi, maintenant qu'il y a deux chasses à ressource.
         rewardSummary: quest.rewardGold
           ? (formatNumber(quest.rewardGold) + " or par lot")
-          : (quest.dropChancePct + " % par kill"),
+          : (quest.dropChancePct + " % de "
+             + (((window.WAREHOUSE_RESOURCES || {})[quest.resourceKey] || {}).name || "butin")
+             + " par kill"),
         badge: "contract", status: status, isMain: false
       };
       if (status === "available") {

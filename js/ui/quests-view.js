@@ -168,7 +168,10 @@ function buildQuestBoardCardHTML(m) {
   // v3.131.3 : progressLabel masqué ici quand stepsDetail est présent — le détail par étape
   // (juste en dessous) couvre déjà cette info avec plus de contexte, éviter la redondance.
   if ((m.status === "running" || m.status === "accepted") && m.progressLabel && !hasStepsDetail) {
-    h += '<div class="qb-card-progress">' + esc(m.progressLabel) + '</div>';
+    // v3.234.0 (retour Seb) : même correctif qu'au Campement — le compteur seul
+    // ne dit pas ce qu'il faut faire. objectiveLabel le précède quand il existe.
+    var ligne = m.objectiveLabel ? (m.objectiveLabel + " \u2014 " + m.progressLabel) : m.progressLabel;
+    h += '<div class="qb-card-progress">' + esc(ligne) + '</div>';
   }
   // v3.131.0 : détail des étapes (m.stepsDetail, optionnel, générique — voir _workshopMissions()
   // pour "Les fondations") — visible tant que la mission est acceptée/en cours, pas avant.

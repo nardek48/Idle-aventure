@@ -207,8 +207,10 @@
 
 /* v3.39 : popup d'objectif (non-bloquant) — voir
    ui/workshop-quest-modal.js, buildWorkshopStepPopupHTML(). Même
-   principe visuel que .construction-popup-*/.village-popup-*
-   ci-dessus, classes propres pour ce popup précis. */
+   principe visuel que les popups de construction et de village
+   ci-dessus, classes propres pour ce popup précis.
+   v3.233.0 : le "*" suivi d'un "/" fermait le commentaire ici même,
+   et .workshop-step-popup-card était avalée par un sélecteur invalide. */
 .workshop-step-popup-card {
   padding: 24px 22px;
   text-align: center;

@@ -73,8 +73,7 @@ var CampManager = {
     var pct = Math.max(0, Math.min(100, (hp / maxHp) * 100)) + "%";
     var hpFill = document.getElementById("camp-hp-fill");
     if (hpFill) hpFill.style.width = pct;
-    var regenFill = document.getElementById("camp-regen-fill");
-    if (regenFill) regenFill.style.width = pct;
+    // v3.233.0 : la barre camp-regen-fill n'existe plus (doublon de la barre de PV).
     var eta = document.getElementById("camp-fire-eta");
     if (eta) {
       var full = (game.heroHp || 0) >= maxHp;

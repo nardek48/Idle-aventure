@@ -316,7 +316,9 @@ function buildTitleScreenMainHTML() {
   html += '          <span>Charger la Partie</span>';
   html += '        </button>';
   html += '      </div>';
-  html += '      <div class="title-screen-version">v3.151.0</div>';
+  // v3.233.0 : lu depuis GAME_VERSION (core/constants.js) — le numéro était
+  // codé en dur ici et figé à v3.151.0.
+  html += '      <div class="title-screen-version">v' + (typeof GAME_VERSION !== "undefined" ? GAME_VERSION : "?") + '</div>';
   html += '    </div>';
   html += '  </div>';
   html += '</div>';

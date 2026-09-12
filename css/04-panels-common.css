@@ -94,18 +94,10 @@
   box-shadow: var(--shadow-soft);
 }
 
-.talent-board-bg {
-  position: relative;
-  width: 100%;
-  min-height: 760px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-
-  background-image: url("./assets/talent.jpg");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
-}
+/* v3.233.0 : .talent-board-bg SUPPRIMÉE. Elle pointait vers un
+   fichier talent (jpg) absent du dépôt, et aucun JS ne génère
+   cette classe — vérifié : talents-view.js produit talent-board-{branche}
+   et les branches sont combat / fortune / survival, jamais "bg". */
 
 .talent-board-grid {
   position: relative;
