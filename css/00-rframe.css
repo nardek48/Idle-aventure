@@ -94,8 +94,46 @@
    - le cadre est la boîte sélectionnée elle-même (tuile de sac) ;
    - le cadre est l'enfant-icône d'un bouton sélectionné (emplacement
      équipé). */
+/* v3.237.0 : rayon passé en 50 % — les icônes sont rondes partout depuis
+   le retrait des cadres, un halo carré ne les épousait plus. */
 .eq-bag-tile.rframe.is-selected,
 .eq-orbit-slot.is-selected .rframe {
   box-shadow: 0 0 0 3px #f0c85a, 0 0 10px 2px rgba(240, 200, 90, 0.7);
-  border-radius: 12px;
+  border-radius: 50%;
+}
+
+/* =====================================================================
+   v3.237.0 (Seb) : plus de cadre nulle part. v3.233.0 ne l'avait retiré
+   que dans les deux grilles (sac + Entrepôt) ; il restait sur les
+   emplacements équipés, le panneau de détail, les mini-listes de
+   comparaison, l'icône de l'Entrepôt et la boutique d'équipement.
+
+   Même raison qu'en v3.233.0 : le liseré de rareté est déjà peint DANS
+   l'asset d'icône (un fichier par type ET par rareté), le cadre faisait
+   doublon avec l'illustration.
+
+   Les 6 URL de cadre restent déclarées plus haut — seul ce bloc les
+   neutralise, un retour en arrière tient donc en sa suppression.
+   ===================================================================== */
+.rframe.rarity-common,
+.rframe.rarity-green,
+.rframe.rarity-rare,
+.rframe.rarity-epic,
+.rframe.rarity-legendary,
+.rframe.rframe-neutral {
+  aspect-ratio: 1 / 1;
+  /* longhand only : le raccourci `background:` réinitialiserait
+     size/position posés plus haut (régression v3.180-183). */
+  background-image: none;
+}
+
+/* L'icône occupe toute la case au lieu de 64 %, découpée en rond : les
+   7 assets carrés relevés à la mesure (6 potions de bonus +
+   robe_common.png) ressortiraient sinon en carré au milieu des
+   médaillons. Sans effet sur les icônes déjà rondes. */
+.rframe.has-icon-img > img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }

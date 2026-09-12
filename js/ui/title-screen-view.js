@@ -156,6 +156,10 @@ function titleScreenConfirmLoad(slotNumber) {
   if (HeroSlotManager.getActiveSlot() !== target) {
     ensureActiveSlotLoadedBeforeSwitch(); // v3.99.16 : voir commentaire au-dessus de titleScreenNewGame()
     HeroSlotManager.switchToSlot(target);
+    // v3.239.0 : switchToSlot() charge la sauvegarde mais ne rattrape pas le temps
+    // passé loin de ce héros — et la boucle écrase lastTick à la frame suivante.
+    // Sans effet au démarrage (init() rattrape derrière, l'appel est idempotent).
+    if (window.ResumeManager) ResumeManager.catchUpAfterSlotLoad();
   }
 
   resolveTitleScreen();

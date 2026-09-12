@@ -32,6 +32,13 @@ function gameLoop() {
   lastTick = now;
 
   if (!isFinite(dt) || dt < 0) dt = 0;
+
+  // v3.239.0 : écart franc (app suspendue, écran verrouillé, onglet en fond). Le
+  // plafond ci-dessous EFFACERAIT ce temps au lieu de le reporter — mesuré, 0 unité
+  // créditée sur 84 pour 10 min. Le rattrapage lit l'écoulé réel ; dt=0 pour cette
+  // frame, aucun round de combat ne doit se déclencher sur une reprise.
+  if (window.ResumeManager && dt > ResumeManager.GAP_S) { ResumeManager.catchUpAfterGap(dt); dt = 0; }
+
   if (dt > 0.25) dt = 0.25;
 
   game.playTime += dt;

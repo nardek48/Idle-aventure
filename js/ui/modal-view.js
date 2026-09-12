@@ -222,6 +222,9 @@ function cancelHeroSelection() {
     if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
     if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
     if (typeof resumeCombatAfterSlotChange === "function") resumeCombatAfterSlotChange();
+    // v3.239.0 : ce retour recharge un emplacement à la main, sans passer par
+    // switchToSlot — même omission de rattrapage, même correctif.
+    if (window.ResumeManager) ResumeManager.catchUpAfterSlotLoad();
   } else {
     console.warn("[Aethervale] cancelHeroSelection: pas d'emplacement d'origine valide (origin=" + origin + ") — la fenêtre va se rouvrir via needsHeroSetup(). Si ça se reproduit alors que save-system.js est à jour, remonte ce message à Claude."); // v3.29.4 : TEMPORAIRE, diagnostic
   }

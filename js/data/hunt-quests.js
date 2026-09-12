@@ -28,7 +28,7 @@ var WAREHOUSE_RESOURCES = {
   /* v3.221.0 (lot V-8) : matériau de reforge. Troisième atelier de tier 2
      activé (Forge de la Mine), et premier débouché du Lingot en dehors de la
      construction. Invendable : c'est un intrant. */
-  acier: { id: "acier", name: "Acier", icon: "images/Icons/resources/ingot_icon.png", desc: "Lingot retravaillé à la Forge de la Mine. Sert à reforger l'équipement.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se forge à la Forge (Mine), à partir de Lingot" },
+  acier: { id: "acier", name: "Acier", icon: "images/Icons/resources/acier_icon.png", desc: "Lingot retravaillé à la Forge de la Mine. Sert à reforger l'équipement.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se forge à la Forge (Mine), à partir de Lingot" },
   farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.png", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 },
   // v3.137.0 : desc corrigée — la Boulangerie (Champs), pas l'Atelier de Construction, cuit le Pain.
   pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.png", desc: "Cuit à la Boulangerie (Champs) à partir d'Eau et de Farine.", sellPrice: 19, tier: "crafted", cap: 999 },
@@ -49,7 +49,7 @@ var WAREHOUSE_RESOURCES = {
      place d'un verrou abstrait : un palier qui le demande est de fait
      injoignable avant d'avoir atteint son monde, et le joueur lit une ligne de
      coût avec l'endroit où la trouver. Invendable : ce n'est pas un revenu. */
-  resine_durcie: { id: "resine_durcie", name: "Résine durcie", icon: "images/Icons/resources/seve_aeswyn_icon.png", desc: "Sève d'Aeswyn durcie à la Menuiserie. Matériau de construction des hauts paliers du village, en Forêt enchantée.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 0, worldName: "Forêt enchantée", sourceHint: "Sève d'Aeswyn durcie à la Menuiserie (Scierie)" }
+  resine_durcie: { id: "resine_durcie", name: "Résine durcie", icon: "images/Icons/resources/resine_durcie_icon.png", desc: "Sève d'Aeswyn durcie à la Menuiserie. Matériau de construction des hauts paliers du village, en Forêt enchantée.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 0, worldName: "Forêt enchantée", sourceHint: "Sève d'Aeswyn durcie à la Menuiserie (Scierie)" }
 };
 
 var HUNT_QUESTS = {

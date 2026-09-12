@@ -79,7 +79,9 @@
   bottom: auto !important;
   transform: none !important;
   width: 100%;
-  aspect-ratio: 299 / 318;
+  /* v3.237.0 : 299/318 (ratio des cadres) -> 1/1, le cadre est retiré et
+     l'icône ronde occupe toute la case, comme dans le sac. */
+  aspect-ratio: 1 / 1;
   min-height: 0;
   padding: 0;
   border-radius: 12px;
@@ -95,9 +97,10 @@
   transform: scale(0.98) !important;
 }
 
+/* v3.237.0 : 88 % -> 100 %, la marge servait à dégager le cadre retiré. */
 .eq-hero-right .eq-orbit-slot-icon {
-  width: 88%;
-  height: 88%;
+  width: 100%;
+  height: 100%;
   margin-right: 0;
   font-size: 34px;
   display: flex;
@@ -134,8 +137,12 @@
   background: none;
 }
 
+/* v3.237.0 : les états sans objet gardent leur repli visuel (pas
+   d'icône donc rien à montrer), mais en rond pour s'aligner sur les
+   médaillons des emplacements remplis. */
 .eq-orbit-slot.empty {
   border: 2px dashed var(--nb-frame);
+  border-radius: 50%;
   background: var(--nb-cream-alt);
   opacity: 0.85;
 }
@@ -145,6 +152,7 @@
    de ".empty" (qui EST cliquable, juste sans objet dessus). */
 .eq-orbit-slot.locked {
   border: 2px dotted var(--nb-frame);
+  border-radius: 50%;
   background: var(--nb-cream-alt);
   opacity: 0.5;
 }
@@ -204,13 +212,17 @@
   width: 100%;
 }
 
-/* v3.180.0 : quand le wrapper .eq-detail-icon porte lui-même un cadre
-   (rframe-neutral, Entrepôt), l'icône interne se réduit à la variable
-   partagée pour rester dans la cavité. */
+/* v3.180.0 : le wrapper .eq-detail-icon porte lui-même le cadre côté
+   Entrepôt (rframe-neutral), l'icône est son enfant direct.
+   v3.237.0 : cadre retiré là aussi — l'icône prend toute la case et se
+   découpe en rond, comme les tuiles de la grille d'Entrepôt (v3.233.0).
+   Sélecteur à 3 classes : il doit rester plus fort que la règle
+   partagée de css/00-rframe.css. */
 .eq-detail-icon.rframe > .eq-detail-icon-img {
-  width: var(--rframe-icon, 64%);
-  height: var(--rframe-icon, 64%);
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .eq-detail-name {
@@ -978,8 +990,11 @@
    ressortaient comme un carré au milieu des médaillons. La découpe est
    sans effet sur les icônes déjà rondes (fond transparent aux angles).
 
-   Portée VOLONTAIREMENT limitée aux deux grilles : emplacements
-   équipés, boutique et panneaux de détail gardent leur cadre .rframe.
+   v3.237.0 : la portée limitée aux deux grilles est LEVÉE (retour Seb,
+   l'écart se voyait). Le retrait est maintenant porté par
+   css/00-rframe.css pour les 6 usages ; ce bloc ne garde que ce qui est
+   propre à la tuile de grille (icône .eq-bag-tile-icon, qui n'est pas
+   un enfant <img> direct du .rframe comme dans les 5 autres usages).
    ========================= */
 .eq-bag-inv-grid > .eq-bag-tile.rframe {
   aspect-ratio: 1 / 1;

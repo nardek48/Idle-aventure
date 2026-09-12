@@ -326,9 +326,12 @@ img.nb-purchase-icon {
   height: auto;
 }
 
+/* v3.237.0 : le cadre est retiré (css/00-rframe.css), l'icône est de
+   nouveau carrée — le slot reprend ses 48x48. Le fond gris reste
+   transparent : un halo carré derrière une icône ronde se voyait. */
 .nb-purchase-icon-slot:has(> .rframe) {
   background-color: transparent;
-  height: auto; /* le cadre (ratio 299/318) est un peu plus haut que le slot 48x48 */
+  height: 48px;
 }
 
 /* Variante texte de .nb-purchase-icon pour les icônes encore en
