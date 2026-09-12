@@ -21,8 +21,8 @@ var ROUND_MODEL_DEFAULTS = {
   willCritResistCoef: 0.05,   // WILL_CRIT_RESIST_COEF actuel
   resistMult: 0.7,
   weakMult: 1.3,
-  enemyHpCoef: 4.0,           // (round) ENEMY_PV_MULT actuel = 4.0 — à recalibrer
-  bossHpCoef: 6.7,            // (round) BOSS_PV_MULT actuel
+  enemyHpCoef: 6,             // v3.232.0 : miroir de ENEMY_PV_MULT (le bac à sable le surcharge avec la valeur réelle)
+  bossHpCoef: 12,             // v3.232.0 : miroir de BOSS_PV_MULT
   enemyDmgCoef: 0.5,          // (round) ENEMY_POWER_DMG_COEF actuel
   bossDmgMult: 1.0,           // (round) multiplicateur de dégâts du boss (minions vs boss) — à calibrer
   enemyPrecisionCritCoef: 0.3,

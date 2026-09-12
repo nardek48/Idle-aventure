@@ -917,6 +917,17 @@
 .forge-cost-item.is-missing { color: var(--danger); }
 .forge-cost-item .vb-cost-icon { width: 14px; height: 14px; }
 
+/* v3.229.0 : établi de l'Enchanteresse — une pièce, puis ses lignes de bonus. */
+.ench-item { padding: 4px 0 2px; }
+.ench-item + .ench-item { border-top: 1px solid var(--nb-frame-light); margin-top: 4px; }
+.ench-item-name { font-size: 12px; font-weight: 800; color: var(--nb-ink); }
+.ench-item-name.rarity-green { color: var(--rarity-green); }
+.ench-item-name.rarity-rare { color: var(--rarity-rare); }
+.ench-item-name.rarity-epic { color: var(--rarity-epic); }
+.ench-item-name.rarity-legendary { color: var(--rarity-legendary); }
+.ench-item .forge-row { padding: 4px 0; }
+.ench-item .forge-row + .forge-row { border-top: 1px dashed var(--nb-frame-light); }
+
 .forge-row-side { flex: 0 0 auto; }
 .forge-row-btn {
   padding: 5px 10px;

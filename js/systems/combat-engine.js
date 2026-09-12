@@ -192,6 +192,13 @@ var CombatEngine = {
   },
 
   /* Initialise les compteurs de round d'un ennemi (paresseux : appelé au spawn et au premier tour). */
+  /* v3.230.0 (périmètre confirmé par Seb) : pouvoirs légendaires. Un seul point
+     d'interrogation, hasLegendaryPower() (equipment-system.js) ; faux tant qu'aucun
+     légendaire n'est porté, donc sans effet avant la Tour. */
+  hasPower: function (id) {
+    return (typeof hasLegendaryPower === "function") ? hasLegendaryPower(id) : false;
+  },
+
   prepareEnemy: function (enemy) {
     if (!enemy || enemy._roundReady) return enemy;
     enemy._roundReady = true;
@@ -222,6 +229,10 @@ var CombatEngine = {
     enemy.armorSuppressedRounds = 0;
     enemy.corruptedStacks = 0;
     enemy.dot = null;
+    enemy.patternHoldRounds = 0;   // v3.230.0 : Clairvoyance — le pattern attend un round de plus
+    game._legSecondWindUsed = false; // v3.230.0 : Second souffle, une fois par combat
+    game._legFirstHitDone = false;   // v3.230.0 : Poigne de fer
+    game._legBarkRounds = 0;         // v3.230.0 : Peau d'écorce
     return enemy;
   },
 
@@ -399,9 +410,24 @@ var CombatEngine = {
     var critChance = Math.max(0, EquipmentManager.effectiveCritChance() - getEnemyWillCritPenalty());
     var isCrit = chance(critChance);
 
+    // v3.230.0 : Poigne de fer — le premier coup d'un combat est toujours critique.
+    if (!isBonus && !game._legFirstHitDone && this.hasPower("leg_poigne")) {
+      isCrit = true;
+      game._legFirstHitDone = true;
+    } else if (!isBonus) {
+      game._legFirstHitDone = true;
+    }
+
     if (isCrit) {
       dmg = Math.floor(dmg * EquipmentManager.effectiveCritMult());
       if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("crits", 1);
+    }
+
+    // v3.230.0 : Œil du faucon — les critiques mordent plus fort sur les Élites.
+    if (isCrit && game.enemy.isElite && this.hasPower("leg_faucon")) dmg = Math.floor(dmg * 1.25);
+    // v3.230.0 : Frénésie — +2 % par ennemi vaincu sans avoir subi de dégâts, plafond +20 %.
+    if (this.hasPower("leg_frenesie") && Number(game._legFrenzyStacks || 0) > 0) {
+      dmg = Math.floor(dmg * (1 + 0.02 * Math.min(10, game._legFrenzyStacks)));
     }
 
     if (game.enemy.isBoss && game.talents.t_war_instinct) dmg = Math.floor(dmg * (1 + 0.05 * game.talents.t_war_instinct));
@@ -425,6 +451,13 @@ var CombatEngine = {
     if (window.ClassCombatManager && typeof ClassCombatManager.onBasicAttackDealt === "function") {
       ClassCombatManager.onBasicAttackDealt(dmg, isCrit);
     }
+
+    /* v3.230.0 : Écho — 10 % de chance que l'attaque de base frappe deux fois.
+       isBonus coupe la récursion : l'écho ne peut pas s'échoïser lui-même. */
+    if (!isBonus && game.enemy && game.enemy.hp > 0 && this.hasPower("leg_echo") && chance(10)) {
+      addLog("🌀 Écho : la frappe se répète !", "event");
+      this.playerAttack(true, extraMult);
+    }
   },
 
   /* ---------- Tour de l'ennemi ---------- */
@@ -443,7 +476,12 @@ var CombatEngine = {
 
     var impact = false;
     var surgeImpact = false; // v3.204.0 (E4) : voir juste en dessous
-    if (e.isBoss) {
+    /* v3.230.0 : Clairvoyance — le télégraphe est tombé un round plus tôt (voir
+       tickEnemyTelegraphs) ; ce round de retenue rend au joueur le temps gagné,
+       sans avancer l'impact. */
+    if (Number(e.patternHoldRounds || 0) > 0) {
+      e.patternHoldRounds -= 1;
+    } else if (e.isBoss) {
       if (e.healTelegraphed) { this.resolveBossHeal(); impact = true; }
       else if (e.surgeTelegraphed) { this.resolveEliteSurge(); impact = true; surgeImpact = true; }
       else if (e.shieldTelegraphed) { this.resolveBossShield(); impact = true; }
@@ -485,38 +523,40 @@ var CombatEngine = {
 
   /* Compte à rebours des patterns : télégraphe au round N (badge + log), impact au round N+1 (remplace la frappe). */
   tickEnemyTelegraphs: function (e) {
+    /* v3.230.0 : Clairvoyance — le compte à rebours déclenche à 1 au lieu de 0. */
+    var early = this.hasPower("leg_clairvoyance") ? 1 : 0;
     if (e.isBoss) {
       if (e.healTelegraphed || e.shieldTelegraphed || e.surgeTelegraphed) return; // un seul télégraphe à la fois
       // v3.204.0 (E4) : une élite remplace le minuteur de soin par celui d'exaltation.
       if (e.isElite) {
         e.surgeIn -= 1;
         e.shieldIn -= 1;
-        if (e.surgeIn <= 0) this.telegraphPattern(e, "surge");
-        else if (e.shieldIn <= 0) this.telegraphPattern(e, "shield");
+        if (e.surgeIn <= early) this.telegraphPattern(e, "surge");
+        else if (e.shieldIn <= early) this.telegraphPattern(e, "shield");
         return;
       }
       e.healIn -= 1;
       e.shieldIn -= 1;
-      if (e.healIn <= 0) this.telegraphPattern(e, "heal");
-      else if (e.shieldIn <= 0) this.telegraphPattern(e, "shield");
+      if (e.healIn <= early) this.telegraphPattern(e, "heal");
+      else if (e.shieldIn <= early) this.telegraphPattern(e, "shield");
       return;
     }
     if (e.archetype === "silenced") {
       if (e.silenceTelegraphed) return;
       e.silenceIn -= 1;
-      if (e.silenceIn <= 0) this.telegraphPattern(e, "silence");
+      if (e.silenceIn <= early) this.telegraphPattern(e, "silence");
       return;
     }
     if (e.archetype === "shielded") {
       // v3.104.1 (P5) : Troll des forêts — bouclier au lieu de charge, mêmes champs que le bouclier boss.
       if (e.shieldTelegraphed) return;
       e.shieldIn -= 1;
-      if (e.shieldIn <= 0) this.telegraphPattern(e, "shield");
+      if (e.shieldIn <= early) this.telegraphPattern(e, "shield");
       return;
     }
     if (e.chargeTelegraphed) return;
     e.chargeIn -= 1;
-    if (e.chargeIn <= 0) this.telegraphPattern(e, "charge");
+    if (e.chargeIn <= early) this.telegraphPattern(e, "charge");
   },
 
   telegraphPattern: function (e, kind) {
@@ -530,6 +570,8 @@ var CombatEngine = {
     }[kind];
     if (!info) return;
     e[info.flag] = true;
+    // v3.230.0 : Clairvoyance — un round de retenue, l'impact reste à sa date.
+    if (this.hasPower("leg_clairvoyance")) e.patternHoldRounds = 1;
     addLog(info.log, "event");
     showToast(info.toast, 1200);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
@@ -677,7 +719,9 @@ var CombatEngine = {
       ? ClassCombatManager.getActiveDefenseEffect()
       : null;
     var defenseCapNow = activeDefense ? 0.85 : 0.6;
-    var defense = Math.min(defenseCapNow, Number(game.heroDefensePct || 0));
+    // v3.230.0 : Peau d'écorce — +5 % de défense pendant le round qui suit un coup reçu.
+    var barkBonus = (Number(game._legBarkRounds || 0) > 0 && this.hasPower("leg_ecorce")) ? 0.05 : 0;
+    var defense = Math.min(defenseCapNow, Number(game.heroDefensePct || 0) + barkBonus);
     dmg = Math.max(1, Math.floor(dmg * (1 - defense)));
 
     if (activeDefense) {
@@ -688,7 +732,19 @@ var CombatEngine = {
       }
     }
 
-    game.heroHp = Math.max(0, Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1) - dmg);
+    var hpBefore = Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1);
+    /* v3.230.0 : Second souffle — une fois par combat, le coup mortel laisse 1 PV. */
+    if (dmg >= hpBefore && !game._legSecondWindUsed && this.hasPower("leg_second_souffle")) {
+      dmg = Math.max(0, hpBefore - 1);
+      game._legSecondWindUsed = true;
+      addLog("💨 Second souffle : tu tiens debout avec 1 PV !", "event");
+      showToast("💨 Second souffle !", 1600);
+    }
+    game.heroHp = Math.max(0, hpBefore - dmg);
+    if (dmg > 0) {
+      game._legBarkRounds = 1;    // v3.230.0 : Peau d'écorce s'arme sur le coup reçu
+      game._legFrenzyStacks = 0;  // v3.230.0 : Frénésie retombe dès qu'on encaisse
+    }
 
     if (e.archetype === "vampiric" && dmg > 0 && typeof getVampiricLifestealAmount === "function") {
       if (!(Number(e.vampiricSuppressedRounds || 0) > 0)) {
@@ -738,6 +794,7 @@ var CombatEngine = {
     if (window.ClassCombatManager && typeof ClassCombatManager.tickDoTRound === "function") ClassCombatManager.tickDoTRound();
     if (game.enemy !== e) return;
 
+    if (Number(game._legBarkRounds || 0) > 0) game._legBarkRounds -= 1; // v3.230.0 : Peau d'écorce
     if (e.vulnerableRounds > 0) e.vulnerableRounds -= 1;
     if (e.counteredRounds > 0) e.counteredRounds -= 1;
     if (e.rageFreezeRounds > 0) e.rageFreezeRounds -= 1;
@@ -826,6 +883,15 @@ var CombatEngine = {
 
     game.enemy = this.prepareEnemy(WorldManager.generateEnemy());
     if (typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
+
+    /* v3.230.0 : deux pouvoirs qui s'appliquent à l'ouverture d'un combat. */
+    if (this.hasPower("leg_foulee") && typeof CELERITY_GAUGE_MAX === "number") {
+      game.heroGauge = Math.max(Number(game.heroGauge || 0), CELERITY_GAUGE_MAX / 2);
+    }
+    if (this.hasPower("leg_coeur_ardent") && game.classResource && game.classResource.max) {
+      var res = game.classResource;
+      res.current = Math.min(res.max, Number(res.current || 0) + Math.floor(res.max * 0.10));
+    }
 
     if (typeof renderEnemy === "function") renderEnemy();
     if (typeof renderHud === "function") renderHud();
@@ -977,10 +1043,26 @@ var CombatEngine = {
       goldGain += merchantBonusGold;
     }
 
+    /* v3.230.0 : Prospecteur — un boss sur dix rapporte le double. */
+    if (enemy.isBoss && this.hasPower("leg_prospecteur") && chance(10)) {
+      goldGain *= 2;
+      addLog("💰 Prospecteur : la bourse est doublée !", "event");
+    }
+
     this.grantGold(goldGain);
     this.grantEssence(essenceGain);
     game.totalKills += 1;
     game.killCounts[enemy.id] = (game.killCounts[enemy.id] || 0) + 1;
+
+    /* v3.230.0 : Lame vorace (soin au kill) et Frénésie (pile tant qu'on n'encaisse pas). */
+    if (this.hasPower("leg_vorace") && game.heroHp > 0) {
+      var healed = Math.max(1, Math.floor(Number(game.heroMaxHp || 0) * 0.02));
+      game.heroHp = Math.min(Number(game.heroMaxHp || 0), game.heroHp + healed);
+      if (typeof renderHeroHp === "function") renderHeroHp();
+    }
+    if (this.hasPower("leg_frenesie")) {
+      game._legFrenzyStacks = Math.min(10, Number(game._legFrenzyStacks || 0) + 1);
+    }
     if (window.SortieManager) SortieManager.noteKill(enemy.isBoss);
 
     if (window.QuestManager && typeof QuestManager.track === "function") {

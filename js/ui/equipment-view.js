@@ -113,6 +113,15 @@ function formatStatDelta(stat, delta) {
   return sign + formatNumber(delta);
 }
 
+/* v3.230.0 : ligne de pouvoir d'un objet légendaire — sans delta, ce n'est pas
+   une valeur qui se compare. Vide pour tout autre objet. */
+function buildEquipmentPowerHTML(item) {
+  var power = (typeof getItemPower === "function") ? getItemPower(item) : null;
+  if (!power) return "";
+  return '<div class="eq-power-line"><span class="eq-power-label">' + esc(power.label) + '</span>'
+    + '<span class="eq-power-desc">' + esc(power.desc) + '</span></div>';
+}
+
 /* v3.226.0 (Lot 2) : lignes du candidat avec un delta par ligne face à l'objet équipé
    (getEquipmentCompareLines, systems/equipment-system.js). Stat de base en tête, puis
    affixes, puis en atténué ce que seul l'objet équipé porte (▼). Emplacement vide : tout ▲. */
@@ -192,6 +201,7 @@ function buildEquipDetailPanelHTML() {
     h += '<div class="eq-detail-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
     h += '<div class="eq-detail-stat">' + esc(formatEquipmentStat(item)) + '</div>';
     h += buildEquipmentAffixLinesHTML(item);
+    h += buildEquipmentPowerHTML(item); // v3.230.0
     h += buildItemOriginHTML(item);
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.unequip(\'' + esc(slot) + '\')">Déséquiper</button>';
   } else {
@@ -296,6 +306,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<div class="eq-detail-icon">' + buildEquipmentIconHTML(item, "eq-detail-icon-img rframe") + '</div>';
     h += '<div class="eq-detail-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
     h += buildEquipmentCompareLinesHTML(item, game.equipped ? game.equipped[item.slot] : null); // v3.226.0 : delta par ligne
+    h += buildEquipmentPowerHTML(item); // v3.230.0
     h += buildItemOriginHTML(item);
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">Équiper</button>';
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="confirmSellItem(\'' + esc(item.uid) + '\')">Vendre</button>';
@@ -444,6 +455,8 @@ function buildInventorySettingsHTML() {
   });
   h += '    </div>';
   h += '    <div class="inv-threshold-hint">... ou en dessous.</div>';
+  // v3.228.0 : l'autovente ne regarde que la rareté, pas les affixes — le dire pour éviter la mauvaise surprise.
+  h += '    <div class="inv-threshold-hint">Le tri se fait sur la rareté seule : un objet de cette rareté part même si ses bonus sont excellents.</div>';
 
   h += '    <div class="dungeon-story-actions">';
   h += '      <button class="settings-btn" type="button" onclick="closeInventorySettings()">Fermer</button>';

@@ -151,6 +151,11 @@ function buildVillageBuildingSheetHTML(id) {
     h += buildForgeBoardHTML();
   }
 
+  /* L'Enchanteresse, comme la Forge, porte son établi dans sa fiche. */
+  if (id === "enchanter" && level > 0) {
+    h += buildEnchantBoardHTML();
+  }
+
   /* La Taverne est le seul bâtiment dont la fiche porte du contenu jouable :
      ses contrats n'ont pas d'écran ailleurs, contrairement à l'entraînement,
      aux potions ou à l'échoppe. Les envoyer au tableau de missions les
@@ -456,3 +461,91 @@ function reforgeSlot(slot) {
   }
 }
 window.reforgeSlot = reforgeSlot;
+
+/* --- Établi de l'Enchanteresse (rendu DANS la fiche) --------------------- */
+/* Ne liste que les pièces ÉQUIPÉES qui portent des bonus : une grille de tout
+   l'inventaire serait illisible dans une fiche, et on enchante ce qu'on porte. */
+function buildEnchantBoardHTML() {
+  if (!window.EnchantManager) return "";
+
+  var allowed = EnchantManager.getAllowedRarities().map(function (r) {
+    return (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[r]) || r;
+  });
+  var h = '<div class="forge-board">';
+  h += '<div class="forge-board-head">✨ Établi'
+     + '<span class="forge-board-max">' + (allowed.length ? esc(allowed.join(", ")) : "Aucune rareté") + '</span></div>';
+  h += '<div class="forge-board-note">La ligne garde sa nature : seule sa valeur est relancée, et jamais vers le bas. Chaque relance de la même ligne coûte plus cher.</div>';
+
+  var rows = 0;
+  EQUIPMENT_SLOTS.forEach(function (slot) {
+    var item = (game.equipped || {})[slot];
+    var affixes = item ? getItemAffixes(item) : [];
+    if (!affixes.length) return;
+    rows += 1;
+
+    h += '<div class="ench-item">';
+    /* Le libellé d'emplacement n'est repris que s'il n'est pas déjà le nom de la pièce
+       (« Gants Gants » sortait au rendu). */
+    var slotLabel = EQUIPMENT_SLOT_LABELS[slot] || slot;
+    h += '<div class="ench-item-name rarity-' + esc(item.rarity) + '">' + esc(item.name)
+       + (slotLabel === item.name ? '' : ' <span class="forge-row-level">' + esc(slotLabel) + '</span>')
+       + '</div>';
+
+    affixes.forEach(function (a, index) {
+      var range = EnchantManager.getRange(item, index);
+      var cost = EnchantManager.getCost(item, index);
+      var reason = EnchantManager.getBlockReason(item, index);
+      var n = EnchantManager.getRerollCount(item, index);
+
+      h += '<div class="forge-row">';
+      h += '<div class="forge-row-main">';
+      h += '<div class="forge-row-name">' + esc(formatEquipmentStatValue(a.stat, a.value))
+         + (n > 0 ? ' <span class="forge-row-level">' + n + ' relance' + (n > 1 ? 's' : '') + '</span>' : '') + '</div>';
+      if (range) {
+        /* Le haut de fourchette dit au joueur ce qu'il peut encore espérer —
+           sans lui, la relance serait un pari sur un plafond invisible. */
+        h += '<div class="forge-row-effect">Maximum possible : '
+           + esc(formatEquipmentStatValue(a.stat, Math.round(range.max * Math.pow(10, range.decimals)) / Math.pow(10, range.decimals)))
+           + '</div>';
+      }
+      if (cost) {
+        h += '<div class="forge-row-cost">';
+        [["gold", cost.gold], ["seve_aeswyn", cost.seve_aeswyn]].forEach(function (pair) {
+          var meta = getVillageCostMeta(pair[0]);
+          var have = (pair[0] === "gold") ? Number(game.gold || 0) : WarehouseManager.getAmount(pair[0]);
+          h += '<span class="forge-cost-item' + (have >= pair[1] ? '' : ' is-missing') + '">'
+             + meta.iconHTML + formatNumber(pair[1]) + '</span>';
+        });
+        h += '</div>';
+      }
+      h += '</div>';
+
+      h += '<div class="forge-row-side">';
+      if (reason) {
+        h += '<div class="forge-row-btn is-off">' + esc(reason) + '</div>';
+      } else {
+        h += '<button type="button" class="forge-row-btn" onclick="rerollAffix(\'' + esc(slot) + '\',' + index + ')">Relancer</button>';
+      }
+      h += '</div>';
+      h += '</div>';
+    });
+
+    h += '</div>';
+  });
+
+  if (!rows) {
+    h += '<div class="forge-row-effect forge-row-empty">Aucune pièce équipée ne porte de bonus. Les objets inhabituels et au-dessus en ont.</div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+window.buildEnchantBoardHTML = buildEnchantBoardHTML;
+
+function rerollAffix(slot, index) {
+  var item = (game.equipped || {})[slot];
+  if (EnchantManager.reroll(item, index) && openVillageBuildingId === "enchanter") {
+    openVillageBuildingSheet("enchanter");
+  }
+}
+window.rerollAffix = rerollAffix;

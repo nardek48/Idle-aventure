@@ -2,9 +2,13 @@
 /* systems/progression-system.js — le plus gros fichier du projet : WorldManager (progression mondes + génération ennemis),
    achats (upgrades/talents/Aether), XP héros, AscensionManager + ascendNow(). Journalières retirées en v3.116.0.
    Détail complet (constantes de balance ENEMY_PV_*, historique des exposants) : COMMENTAIRES_ORIGINAUX.md */
-var ENEMY_PV_MULT = 3.33; // v3.102.0 (P2) : 4,0 → 3,33, calibration par rounds (P1_Budgets_Foret.md §B)
+// v3.232.0 (périmètre confirmé par Seb) : 3,33 → 6. Mesuré sur un joueur ÉQUIPÉ (sim/balance-bench.js) :
+// un ennemi normal de Forêt coûtait 2 % de PV, il en coûte 4 — les 9 ennemis avant le boss pèsent enfin.
+var ENEMY_PV_MULT = 6;
 var ENEMY_PV_WORLD_EXP = 1.45;
-var BOSS_PV_MULT = 3.1;   // v3.102.0 (P2) : 6,7 → 3,1 ; les dégâts de boss passent ×1,5 (BOSS_DMG_MULT, combat-engine.js)
+// v3.232.0 : 3,1 → 12. L'ancienne valeur visait un héros NU (forest-bench.js) ; équipé, le joueur ne
+// perdait que 0 à 8 % de PV sur un boss de Forêt. À 12, le Chevalier est à 40 %, la cible actée.
+var BOSS_PV_MULT = 12;
 var ENEMY_POWER_SCALE_EXP = 0.3;
 
 // Coefficient WORLD_MULT par monde (session équilibrage "scie", cf. CHANGELOG_v3.87.0.md) :
@@ -12,9 +16,11 @@ var ENEMY_POWER_SCALE_EXP = 0.3;
 // dichotomie visant ~55% de deathRate à adventureIndex=0, sur les nouvelles stats joueur
 // (post-nerf talents/équipement de v3.87.0). Index = WorldManager.worldIndex (0-based, ordre
 // réel de WORLDS : forest, desert, ruins, crypt, mountain, tower).
-// v3.227.0 (périmètre confirmé par Seb, Lot 3 affixes) : mondes 1-3 relevés pour reprendre ce que les affixes
-// apportent (mesure sim/world-bench.js : rounds de v3.223.0 retrouvés à ±0,3). Mondes 4-5 inchangés (chantier séparé).
-var WORLD_MULT_BY_WORLD = [1.264, 2.03, 2.30, 4.19, 5.418, 7.892];
+// v3.232.0 : recalculée pour que les PV des BOSS des mondes 1-5 restent EXACTEMENT ceux de la v3.231.0
+// malgré BOSS_PV_MULT 3,1 → 12 (la hausse est donc réservée à la Forêt, où worldIndex = 0 annule ce terme).
+// Effet de bord assumé : les ennemis normaux des mondes 1+ perdent ~40 % de PV — ils coûtaient 29 à 50 %
+// de la barre de vie au Désert, c'est un pas dans le bon sens. Le Désert sera traité à part (dégâts ennemis).
+var WORLD_MULT_BY_WORLD = [1.264, 0.378, 0.694, 1.507, 2.025, 3.019];
 // Ratio boss/normal préservé identique à l'original (1.3 / 0.90 ≈ 1.444).
 var BOSS_WORLD_MULT_RATIO = 1.3 / 0.90;
 

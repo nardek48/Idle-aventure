@@ -199,6 +199,43 @@ var VILLAGE_BUILDINGS = {
     }
   },
 
+  /* v3.229.0 (chantier Équipement multi-affixes, Lot 5) : puits à or et à Sève.
+     Le niveau ouvre les raretés relançables, comme la Forge ouvre des niveaux.
+     Limité à 2 : le Légendaire ne tombe qu'à la Tour, un niveau 3 n'ouvrirait
+     rien d'atteignable (même règle que la Forge en v3.221.0). */
+  enchanter: {
+    id: "enchanter",
+    name: "Enchanteresse",
+    icon: "✨",
+    rank: 2,
+    maxLevel: 2,
+    implemented: true,
+    lockLabel: "Atelier niveau 3",
+    desc: "Relance la valeur d'un bonus sur une pièce équipée. Le bonus ne change jamais de nature, et la pièce ne peut pas empirer.",
+    costTiers: [
+      {
+        minLevel: 0, maxLevel: 0,
+        resources: ["gold", "planche", "pierre", "seve_aeswyn"],
+        baseCost: { gold: 800, planche: 35, pierre: 45, seve_aeswyn: 6 },
+        costMult: 1.40
+      },
+      {
+        minLevel: 1, maxLevel: 1,
+        resources: ["gold", "planche", "pierre", "seve_aeswyn", "resine_durcie"],
+        baseCost: { gold: 3000, planche: 80, pierre: 95, seve_aeswyn: 14, resine_durcie: 5 },
+        costMult: 1.45
+      }
+    ],
+    effectLabel: function (level) {
+      var labels = (typeof ENCHANT_RARITY_BY_LEVEL !== "undefined") ? ENCHANT_RARITY_BY_LEVEL : null;
+      if (level <= 0 || !labels) return "Aucune relance possible";
+      var list = labels.slice(0, level).map(function (group) {
+        return group.map(function (r) { return (RARITY_LABELS && RARITY_LABELS[r]) || r; }).join(", ");
+      }).join(", ");
+      return "Relance les bonus : " + list;
+    }
+  },
+
   hall: {
     id: "hall",
     name: "Halle marchande",
@@ -313,7 +350,7 @@ var VILLAGE_BUILDINGS = {
 /* Ordre d'affichage dans la grille — l'ordre d'arrivée du rapport. */
 var VILLAGE_BUILDING_ORDER = [
   "workshop", "training", "forge", "apothecary",
-  "hall", "tavern", "warehouse", "palisade"
+  "enchanter", "hall", "tavern", "warehouse", "palisade"
 ];
 
 window.VILLAGE_BUILDINGS = VILLAGE_BUILDINGS;

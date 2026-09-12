@@ -18,6 +18,11 @@ function startCooldown(cooldownState, actionId, durationRounds) {
   if (!actionId || typeof actionId !== "string") return Object.assign({}, base);
 
   var duration = (typeof durationRounds === "number" && durationRounds > 0) ? durationRounds : 0;
+  /* v3.230.0 : Mémoire des anciens (pouvoir légendaire d'amulette) — un round de
+     recharge en moins, jamais en dessous de 1. */
+  if (duration > 1 && typeof hasLegendaryPower === "function" && hasLegendaryPower("leg_memoire")) {
+    duration -= 1;
+  }
   var next = Object.assign({}, base);
   if (duration > 0) {
     next[actionId] = duration;

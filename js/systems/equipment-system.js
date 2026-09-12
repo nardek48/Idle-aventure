@@ -34,6 +34,23 @@ function getEquipmentCompareLines(candidate, equipped) {
   return lines;
 }
 
+/* v3.230.0 — pouvoir légendaire d'un objet, ou null. Les objets d'avant v3.230.0
+   et toutes les raretés inférieures renvoient null : un seul point de lecture. */
+function getItemPower(item) {
+  if (!item || typeof item.power !== "string") return null;
+  return (typeof LEGENDARY_POWER_BY_ID !== "undefined") ? (LEGENDARY_POWER_BY_ID[item.power] || null) : null;
+}
+
+/* Le héros porte-t-il ce pouvoir ? Seul point d'interrogation pour le moteur. */
+function hasLegendaryPower(powerId) {
+  var equipped = game.equipped || {};
+  for (var i = 0; i < EQUIPMENT_SLOTS.length; i++) {
+    var item = equipped[EQUIPMENT_SLOTS[i]];
+    if (item && item.power === powerId) return true;
+  }
+  return false;
+}
+
 function getEquipmentSellValue(item) {
   if (!item) return 0;
   return item.rarity === "legendary" ? 1000 :
@@ -407,6 +424,8 @@ sortInventoryByType: function () {
 window.getEquipmentSellValue = getEquipmentSellValue;
 window.getItemAffixes = getItemAffixes;
 window.getEquipmentCompareLines = getEquipmentCompareLines;
+window.getItemPower = getItemPower;
+window.hasLegendaryPower = hasLegendaryPower;
 window.getEquipmentIconPath = getEquipmentIconPath;
 window.addLootToInventory = addLootToInventory;
 window.addDropToInventory = addDropToInventory;

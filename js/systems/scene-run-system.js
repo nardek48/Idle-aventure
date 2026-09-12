@@ -742,7 +742,9 @@ var SceneRunManager = {
       // SCENE_INTENSITY est réservé à la Petite Aventure, expedition_faille porte le sien.
       diffMult: profile.diffMod * ((intensity && intensity.diffMult) || template.diffMult || 1) * this.heroScale(run),
       lootMult: profile.lootMod * ((intensity && intensity.lootMult) || 1) * (mutator.lootMult || 1),
-      breathCost: profile.breathCost * (mutator.breathCostMult || 1),
+      // v3.230.0 : Endurance du marcheur (pouvoir légendaire de bottes) — Souffle 15 % moins cher.
+      breathCost: profile.breathCost * (mutator.breathCostMult || 1)
+        * ((typeof hasLegendaryPower === "function" && hasLegendaryPower("leg_marcheur")) ? 0.85 : 1),
       injurySeverity: profile.injurySeverity
     };
   },
@@ -978,7 +980,11 @@ var SceneRunManager = {
   _creditLoot: function (template, amount) {
     if (!window.SortieManager || amount === 0) return;
     if (template.lootResource === "gold") SortieManager.addGold(amount);
-    else SortieManager.addResource(template.lootResource, amount);
+    else {
+      // v3.230.0 : Collectionneur (pouvoir légendaire d'anneau) — un exemplaire de plus par butin.
+      if (amount > 0 && typeof hasLegendaryPower === "function" && hasLegendaryPower("leg_collectionneur")) amount += 1;
+      SortieManager.addResource(template.lootResource, amount);
+    }
   },
 
   /* Équivalent négatif de _creditLoot (contournement du clamp positif, voir

@@ -128,9 +128,21 @@ function buildHeroSummaryIdentityHTML(hero) {
   return h;
 }
 
-function buildHeroSummaryCellHTML(label, value) {
+function buildHeroSummaryCellHTML(label, value, hint) {
   return '<div class="pc-sum-cell"><div class="pc-sum-cell-lbl">' + esc(label) + '</div>'
-    + '<div class="pc-sum-cell-val">' + esc(value) + '</div></div>';
+    + '<div class="pc-sum-cell-val">' + esc(value) + '</div>'
+    + (hint ? '<div class="pc-sum-cell-hint">' + esc(hint) + '</div>' : '') + '</div>';
+}
+
+/* v3.228.0 : nom de la stat principale de la classe, avec le libellé de l'écran
+   Amélioration (« Force », pas « Puissance »). Vide si la règle n'est pas chargée. */
+function getHeroMainStatLabel() {
+  if (typeof getHeroMainStat !== "function") return "";
+  var key = getHeroMainStat(game.heroId).stat;
+  for (var i = 0; i < HEROS_STAT_ROWS.length; i++) {
+    if (HEROS_STAT_ROWS[i].key === key) return HEROS_STAT_ROWS[i].name;
+  }
+  return "";
 }
 
 /* Les cinq valeurs de combat, telles que le moteur les lit. Mêmes sources
@@ -150,7 +162,7 @@ function buildHeroSummaryCombatHTML() {
   var h = '<div class="pc-section-label">En combat</div>';
   h += '<div class="pc-sum-combat">';
   h += buildHeroSummaryCellHTML("PV", formatNumber(heroMaxHp));
-  h += buildHeroSummaryCellHTML("ATK", formatNumber(atk));
+  h += buildHeroSummaryCellHTML("ATK", formatNumber(atk), getHeroMainStatLabel()); // v3.228.0 : quelle stat porte les dégâts
   h += buildHeroSummaryCellHTML("VIT", formatNumber(vit));
   h += '<div class="pc-sum-cell is-wide">';
   h += '<span class="pc-sum-cell-lbl">DÉFENSE</span><span class="pc-sum-cell-val">' + defPct + ' %</span>';

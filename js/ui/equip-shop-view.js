@@ -16,6 +16,7 @@ function buildEquipShopCardHTML(item) {
   } else {
     h += '<div class="nb-purchase-desc">' + esc(statText) + '</div>';
   }
+  if (typeof buildEquipmentPowerHTML === "function") h += buildEquipmentPowerHTML(item); // v3.230.0
   h += '</div>';
 
   h += '<div class="nb-purchase-buy-col">';

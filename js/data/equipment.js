@@ -286,3 +286,55 @@ window.AFFIX_COUNT_BY_RARITY = AFFIX_COUNT_BY_RARITY;
 window.AFFIX_POOLS = AFFIX_POOLS;
 window.AFFIX_RANGES = AFFIX_RANGES;
 window.EQUIP_DROP_CHANCE_CAP = EQUIP_DROP_CHANCE_CAP;
+
+/* v3.230.0 — POUVOIRS LÉGENDAIRES (Lot 4). Un pouvoir fixe par objet légendaire,
+   tiré parmi les 2 candidats de son emplacement, en plus de ses 4 affixes.
+   `hook` documente où l'effet est lu — aucun effet n'est câblé ici, la donnée
+   ne fait que décrire. Le Légendaire ne tombe qu'à la Tour (WORLD_RARITY_UNLOCKS)
+   ou en cycle : ces pouvoirs sont du contenu de fin de course. */
+var LEGENDARY_POWERS = {
+  weapon: [
+    { id: "leg_echo", label: "Écho", desc: "10 % de chance qu'une attaque de base frappe deux fois.", hook: "combat-engine" },
+    { id: "leg_vorace", label: "Lame vorace", desc: "Chaque ennemi vaincu rend 2 % des PV max.", hook: "combat-engine" }
+  ],
+  armor: [
+    { id: "leg_ecorce", label: "Peau d'écorce", desc: "+5 % de défense pendant le round qui suit un coup reçu.", hook: "combat-engine" },
+    { id: "leg_second_souffle", label: "Second souffle", desc: "Une fois par combat, survit à un coup mortel avec 1 PV.", hook: "combat-engine" }
+  ],
+  helmet: [
+    { id: "leg_faucon", label: "Œil du faucon", desc: "Les coups critiques infligent +25 % de dégâts aux Élites.", hook: "combat-engine" },
+    { id: "leg_clairvoyance", label: "Clairvoyance", desc: "Les intentions de l'ennemi se lisent un round plus tôt.", hook: "combat-engine" }
+  ],
+  gloves: [
+    { id: "leg_poigne", label: "Poigne de fer", desc: "Le premier coup d'un combat est toujours critique.", hook: "combat-engine" },
+    { id: "leg_frenesie", label: "Frénésie", desc: "+2 % de dégâts par ennemi vaincu sans subir de dégâts (max +20 %).", hook: "combat-engine" }
+  ],
+  /* v3.230.0 : « Pas rapides » et « Chasseur » (doc v1.2) n'avaient pas de mécanique en face —
+     le repos court n'existe plus dans le code, et la Petite Aventure ne lit pas la Célérité.
+     Remplacés par deux effets réels, l'un en combat, l'autre en Sortie. */
+  boots: [
+    { id: "leg_foulee", label: "Foulée vive", desc: "La jauge de célérité démarre chaque combat à moitié pleine.", hook: "combat-engine" },
+    { id: "leg_marcheur", label: "Endurance du marcheur", desc: "Les options d'obstacle coûtent 15 % de Souffle en moins.", hook: "scene-run" }
+  ],
+  ring: [
+    { id: "leg_prospecteur", label: "Prospecteur", desc: "10 % des boss vaincus rapportent le double d'or.", hook: "combat-engine" },
+    { id: "leg_collectionneur", label: "Collectionneur", desc: "+1 exemplaire sur chaque butin d'ingrédient en Sortie.", hook: "scene-run" }
+  ],
+  amulet: [
+    { id: "leg_coeur_ardent", label: "Cœur ardent", desc: "La ressource de classe démarre chaque combat à +10 %.", hook: "class-combat" },
+    /* v3.230.0 : remplace « Ténacité », dont l'effet n'avait jamais été défini (retiré par Seb le 12/09).
+       La recharge passe par combat-cooldown-system.js, hors fichiers protégés. */
+    { id: "leg_memoire", label: "Mémoire des anciens", desc: "Les compétences récupèrent un round plus vite (minimum 1).", hook: "cooldown" }
+  ]
+};
+
+/* Index id → pouvoir, pour lire un pouvoir sans connaître son emplacement. */
+var LEGENDARY_POWER_BY_ID = {};
+Object.keys(LEGENDARY_POWERS).forEach(function (slot) {
+  LEGENDARY_POWERS[slot].forEach(function (p) {
+    LEGENDARY_POWER_BY_ID[p.id] = { id: p.id, label: p.label, desc: p.desc, hook: p.hook, slot: slot };
+  });
+});
+
+window.LEGENDARY_POWERS = LEGENDARY_POWERS;
+window.LEGENDARY_POWER_BY_ID = LEGENDARY_POWER_BY_ID;

@@ -28,6 +28,15 @@ function rollEquipmentAffixes(slot, baseStat, rarity, worldIndex) {
   return out;
 }
 
+/* v3.230.0 — pouvoir d'un objet légendaire : un des 2 candidats de l'emplacement.
+   Renvoie null pour toute autre rareté, ou si l'emplacement n'a pas de table. */
+function rollLegendaryPower(slot, rarity) {
+  if (rarity !== "legendary" || typeof LEGENDARY_POWERS === "undefined") return null;
+  var pool = LEGENDARY_POWERS[slot];
+  if (!pool || !pool.length) return null;
+  return pool[randInt(0, pool.length - 1)].id;
+}
+
 function generateEquipmentItem(slot, rarity, worldIndex) {
   var config = EQUIPMENT_SLOT_CONFIG[slot];
   if (!config) return null;
@@ -72,7 +81,8 @@ function generateEquipmentItem(slot, rarity, worldIndex) {
        Un objet d'une sauvegarde antérieure n'en a pas — il est alors traité
        comme un objet de Forêt, ce qu'il est de fait. */
     worldIndex: world,
-    affixes: rollEquipmentAffixes(slot, config.stat, rarity, world) // v3.225.0
+    affixes: rollEquipmentAffixes(slot, config.stat, rarity, world), // v3.225.0
+    power: rollLegendaryPower(slot, rarity) // v3.230.0 : null hors Légendaire
   };
 }
 
@@ -122,4 +132,5 @@ var LootSystem = {
 window.LootSystem = LootSystem;
 window.generateEquipmentItem = generateEquipmentItem;
 window.rollEquipmentAffixes = rollEquipmentAffixes;
+window.rollLegendaryPower = rollLegendaryPower;
 window.getAllowedRarities = getAllowedRarities;
