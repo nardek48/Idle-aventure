@@ -35,7 +35,7 @@ function buildCombatReportSlotCardHTML(slot, stats) {
     if (stats.countersSucceeded > 0) counterParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + stats.countersSucceeded + ' contre' + (stats.countersSucceeded !== 1 ? 's' : '') + ' réussi' + (stats.countersSucceeded !== 1 ? 's' : ''));
     if (stats.countersExpired > 0) counterParts.push(stats.countersExpired + ' expiré' + (stats.countersExpired !== 1 ? 's' : '') + ' sans contre');
     if (stats.countersMissed > 0) counterParts.push(stats.countersMissed + ' raté' + (stats.countersMissed !== 1 ? 's' : '') + ' (mauvais timing)');
-    h += '<p class="panel-sub combat-report-slot-line">' + esc(counterParts.join(' · ')) + '</p>';
+    h += '<p class="panel-sub combat-report-slot-line">' + escPreservingIcons(counterParts.join(' · ')) + '</p>';
   }
 
   if (stats.failedNoResource > 0 || stats.failedOnCooldown > 0) {
@@ -74,7 +74,7 @@ function buildCombatReportArchetypeCardHTML(impact) {
 
   var h = '<div class="panel-card combat-report-slot-card">';
   h += '<h3>Archétypes rencontrés</h3>';
-  h += '<p class="panel-sub combat-report-slot-line">' + lines.map(function (l) { return esc(l); }).join('<br>') + '</p>';
+  h += '<p class="panel-sub combat-report-slot-line">' + lines.map(function (l) { return escPreservingIcons(l); }).join('<br>') + '</p>';
   h += '</div>';
   return h;
 }
@@ -108,7 +108,7 @@ function buildCombatReportBodyHTML() {
   if (report.shieldsRemovedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + report.shieldsRemovedCount + ' bouclier' + (report.shieldsRemovedCount !== 1 ? 's' : '') + ' retiré' + (report.shieldsRemovedCount !== 1 ? 's' : ''));
   if (report.silencesAvoidedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/silence_incoming.png> ' + report.silencesAvoidedCount + ' silence' + (report.silencesAvoidedCount !== 1 ? 's' : '') + ' évité' + (report.silencesAvoidedCount !== 1 ? 's' : ''));
   if (summaryParts.length) {
-    h += '<div class="combat-report-summary">' + summaryParts.map(function (p) { return esc(p); }).join('<br>') + '</div>';
+    h += '<div class="combat-report-summary">' + summaryParts.map(function (p) { return escPreservingIcons(p); }).join('<br>') + '</div>';
   }
 
   h += buildCombatReportArchetypeCardHTML(report.archetypeImpact);
@@ -165,7 +165,7 @@ function resetCombatReport() {
   showConfirmModal(
     "Réinitialiser le rapport ?",
     "Toutes les données accumulées (utilisations, contres, réservations) seront effacées. Cette action est irréversible.",
-    "<img class=ico-inline src=images/Icons/system/trash.png>",
+    "images/Icons/system/trash.png",
     function () {
       if (window.CombatReportManager) CombatReportManager.resetManual();
       // v3.211.0 : le rapport a deux habillages. Si on l'a ouvert depuis la feuille

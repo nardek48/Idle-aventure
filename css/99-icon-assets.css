@@ -49,7 +49,9 @@ img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
 /* Afflictions et Grimoire. */
 .affliction-toggle-img { width: 24px; height: 24px; }
 .active-affliction-img { width: 18px; height: 18px; }
-.grimoire-rule-ico { width: 20px; height: 20px; }
+/* v3.242.0 (retour Seb) : l'icône remplit tout le disque de 38 px au lieu de
+   flotter à 20 px en son centre. */
+.grimoire-rule-ico { width: 100%; height: 100%; }
 
 /* Icône posée dans un libellé de bouton. */
 .ico-btn { width: 18px; height: 18px; object-fit: contain; vertical-align: -3px; margin-right: 2px; }
@@ -85,7 +87,9 @@ img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
 .dungeon-card-head-ico { width: 36px; height: 36px; }
 
 /* Icône du titre de cadre (.kframe-page). */
-.kf-title-ico { width: 1.15em; height: 1.15em; object-fit: contain; vertical-align: -0.2em; }
+/* v3.242.0 : marge explicite — l'espace du nœud texte se collapse selon la
+   casse du titre, l'icône se retrouvait collée au libellé. */
+.kf-title-ico { width: 1.15em; height: 1.15em; object-fit: contain; vertical-align: -0.2em; margin-right: 0.3em; }
 
 /* ---- Correctifs de rendu (retour Seb) ---- */
 
@@ -154,10 +158,17 @@ img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
 /* Grimoire : emblèmes de preset (grille de choix + pastille de la liste). */
 .grimoire-preset-ico, .grimoire-choice-ico { width: 26px; height: 26px; }
 
-/* Filet de sécurité : aucune image d'icône ne doit afficher de texte de repli. */
-/* Portée GLOBALE : l'élément fautif peut être hors de #panel-container
-   (élément en position absolue qui déborde du cadre). */
-img { font-size: 0 !important; color: transparent !important; }
+/* Filet de sécurité : aucune image d'icône ne doit afficher de texte de repli.
+   Portée GLOBALE : l'élément fautif peut être hors de #panel-container
+   (élément en position absolue qui déborde du cadre).
+
+   v3.242.0 (bug Seb) — `font-size: 0` a été RETIRÉ d'ici. Une <img> dimensionnée
+   en em (.ico-inline : 1.05em, .kf-title-ico : 1.15em) résout ses em contre sa
+   PROPRE taille de police : la mettre à 0 rendait toutes ces icônes 0 × 0 px.
+   C'est ce qui vidait le bouton poubelle des presets et le bouton de réglages du
+   sac (boutons « tout bleus », sans rien dedans). `color: transparent` suffit à
+   masquer un éventuel texte de repli sans toucher au calcul des em. */
+img { color: transparent !important; }
 
 /* Nouvelle texture parchemin : les compteurs orange clair ne passaient plus. */
 #panel-container .achievement-summary,

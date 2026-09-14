@@ -1,16 +1,28 @@
 "use strict";
 /* ui/heros-view.js — écran Personnage (v2.75, fiche façon jeu de rôle), 3 sous-onglets Héros/Amélioration/Stats. Carrousel de 3 emplacements de héros indépendants (v3.25). Détail : COMMENTAIRES_ORIGINAUX.md */
 
-var activeHerosSubTab = "hero"; // "hero" | "amelioration" | "stats"
+/* v3.244.0 (chantier Navigation, décision Seb 14/09/2026) : Héros devient le hub
+   « Progresser ». Sous-onglets : Résumé / Équipement / Talents. Les anciens
+   sous-onglets Stats (amelioration) et Capacités (stats) deviennent des FEUILLES
+   BASSES ouvertes depuis le Résumé — le Résumé reste visible derrière. */
+var activeHerosSubTab = "hero"; // "hero" | "equip" | "talents"
+var herosOpenSheet = null;      // null | "stats" | "abilities"
 
 /* v3.222.0 : voir setVillageSubTab — une carte de caractéristique dépliée ne
    doit pas rester ouverte quand on revient sur l'écran. */
 function setHerosSubTab(tab) {
   if (typeof expandedHeroStat !== "undefined") expandedHeroStat = null;
-  if (tab === "amelioration") activeHerosSubTab = "amelioration";
-  else if (tab === "stats") activeHerosSubTab = "stats";
-  else activeHerosSubTab = "hero";
+  // Compat v3.244.0 : les deux anciens noms ouvrent la feuille correspondante.
+  if (tab === "amelioration") { openHerosSheet("stats"); return; }
+  if (tab === "stats") { openHerosSheet("abilities"); return; }
+  setHerosSubTabSilent(tab);
   if (typeof renderPanel === "function") renderPanel();
+}
+
+/* Positionne le sous-onglet sans rendre — pour switchTab('equip'/'talents') (ui-root.js). */
+function setHerosSubTabSilent(tab) {
+  if (tab === "equip" || tab === "talents") activeHerosSubTab = tab;
+  else activeHerosSubTab = "hero";
 }
 
 /* v3.203.0 : buildCharacterAbilityCardHTML() et buildCharacterAbilitiesHTML()
@@ -179,7 +191,7 @@ function buildHeroSummaryJumpsHTML() {
   var h = '<div class="pc-section-label">Aller plus loin</div>';
 
   var prog = getHeroTrainingProgress();
-  h += '<button type="button" class="pc-sum-jump" onclick="setHerosSubTab(\'amelioration\')">';
+  h += '<button type="button" class="pc-sum-jump" onclick="openHerosSheet(\'stats\')">';
   h += '<span class="pc-sum-jump-ico"><img class=ico-inline src=images/Icons/subtabs/hero_stats.png></span>';
   h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">Stats</span>';
   h += '<span class="pc-sum-jump-s">' + (prog
@@ -202,7 +214,7 @@ function buildHeroSummaryJumpsHTML() {
       if (a) actions.push(a);
     });
   }
-  h += '<button type="button" class="pc-sum-jump" onclick="setHerosSubTab(\'stats\')">';
+  h += '<button type="button" class="pc-sum-jump" onclick="openHerosSheet(\'abilities\')">';
   h += '<span class="pc-sum-jump-ico"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png></span>';
   h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">Capacités</span>';
   h += '<span class="pc-sum-jump-s">' + (actions.length
@@ -216,13 +228,25 @@ function buildHeroSummaryJumpsHTML() {
     h += '<span class="pc-sum-jump-kit">';
     actions.forEach(function (a) {
       var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id])
-        || (a.type === "defense" ? "<img class=ico-inline src=images/Icons/combat_stats/stat_defense.png>" : "<img class=ico-inline src=images/Icons/scene/node_discovery.png>");
+        || (a.type === "defense" ? "images/Icons/combat_stats/stat_defense.png" : "images/Icons/scene/node_discovery.png");
       h += '<span>' + renderIconOrEmojiHTML(icon, "pc-sum-jump-kit-ico", a.label || "") + '</span>';
     });
     h += '</span>';
   }
   h += '<span class="pc-sum-jump-chev">›</span>';
   h += '</button>';
+
+  // v3.244.0 : l'Ascension quitte le menu ☰ — c'est une étape de progression du héros,
+  // elle s'ouvre d'ici. Même verrou d'Histoire que l'ancienne case de menu.
+  if (typeof isTabUnlocked !== "function" || isTabUnlocked("ascension")) {
+    var aetherNow = Number(game.aether || 0);
+    h += '<button type="button" class="pc-sum-jump" onclick="switchTab(\'ascension\')">';
+    h += '<span class="pc-sum-jump-ico"><img class=ico-inline src=images/Icons/subtabs/ascension_tab.png></span>';
+    h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">Ascension</span>';
+    h += '<span class="pc-sum-jump-s">' + formatNumber(aetherNow) + ' Aether · ' + formatNumber(game.cycleCount || 0) + ' ascension' + ((game.cycleCount || 0) > 1 ? 's' : '') + '</span></span>';
+    h += '<span class="pc-sum-jump-chev">›</span>';
+    h += '</button>';
+  }
 
   return h;
 }
@@ -236,7 +260,7 @@ function buildHeroFicheHTML() {
 
   h += '<div class="pc-sum-foot">';
   h += '<button class="settings-btn" type="button" onclick="openHeroSlotsScreen()"><img class=ico-inline src=images/Icons/subtabs/hero_roster.png> Mes héros</button>';
-  h += '<button class="settings-btn" type="button" onclick="switchTab(\'equip\')"><img class=ico-inline src=images/Icons/subtabs/inventory.png> Équipement</button>';
+  // v3.244.0 : le bouton « Équipement » est parti — c'est un sous-onglet de cet écran.
   h += '</div>';
 
   return '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/combat_stats/stat_defense.png|R\u00e9sum\u00e9">' + h + '</div>';
@@ -644,7 +668,8 @@ function buildHerosAmeliorationHTML() {
   // v3.202.1 : titre du cadre aligné sur le libellé du sous-onglet. Le bas de
   // l'écran disait "Stats" et le bandeau "Amélioration" : le joueur tapait un
   // nom et arrivait sur un autre.
-  h += '<div class="pc-heros-train-section nb-page-frame kframe-page" data-kf-title="images/Icons/subtabs/hero_stats.png|Stats">';
+  // v3.244.0 : le corps est rendu dans une feuille basse — plus de cadre de page.
+  h += '<div class="pc-heros-train-section">';
 
   h += '<div class="pc-stat-gold"><img src="images/Icons/gold_icon.png" alt=""> ' + formatNumber(game.gold || 0) + '</div>';
 
@@ -699,7 +724,7 @@ function buildHeroSkillCardHTML(action) {
   var isDefense = action.type === "defense";
   var remaining = (game.classCooldowns && typeof game.classCooldowns[id] === "number") ? game.classCooldowns[id] : 0;
   var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[id])
-    || (isDefense ? "<img class=ico-inline src=images/Icons/combat_stats/stat_defense.png>" : "<img class=ico-inline src=images/Icons/scene/node_discovery.png>");
+    || (isDefense ? "images/Icons/combat_stats/stat_defense.png" : "images/Icons/scene/node_discovery.png");
   var cost = Number(action.resourceCost || 0);
   var resLabel = "";
   if (typeof getClassForHero === "function") {
@@ -787,14 +812,71 @@ function buildHerosStatsHTML() {
   // rendait la cohabitation franchement fausse : un onglet "Capacités" qui
   // affiche le temps de jeu.
   // v3.202.1 : titre du cadre aligné sur le libellé du sous-onglet.
-  return '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/combat_stats/stat_attack.png|Capacit\u00e9s">' + h + '</div>';
+  // v3.244.0 : rendu dans une feuille basse — plus de cadre de page.
+  return '<div>' + h + '</div>';
 }
 
 function buildHerosSubTabBarHTML() {
+  var unlocked = function (t) { return typeof isTabUnlocked !== "function" || isTabUnlocked(t); };
   var h = '<div class="pc-subtab-bar">';
   h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "hero" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'hero\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/hero_summary.png" alt=""><span>Résumé</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "amelioration" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'amelioration\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/hero_stats.png" alt=""><span>Stats</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "stats" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'stats\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/hero_abilities.png" alt=""><span>Capacités</span></button>';
+  // v3.244.0 : Équipement et Talents rejoignent Héros. Mêmes verrous d'Histoire que
+  // leurs anciennes cases de menu — un sous-onglet verrouillé n'est pas dessiné.
+  if (unlocked("equip")) {
+    h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "equip" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'equip\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/equipment.png" alt=""><span>Équipement</span></button>';
+  }
+  if (unlocked("talents")) {
+    h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "talents" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'talents\')"><img class="pc-subtab-ico" src="images/Icons/scene/node_discovery.png" alt=""><span>Talents</span></button>';
+  }
+  h += '</div>';
+  return h;
+}
+
+/* v3.244.0 : sous-onglet Équipement — un segment Équipé / Sac (/ Boutique, transitoire
+   jusqu'au lot N-2 qui l'emmène à la Halle marchande) au-dessus du contenu existant de
+   ui/equipment-view.js. L'état reste activeEquipSubTab : rien ne change pour les
+   fonctions qui le lisent (sélection d'objet, tri, autovente). */
+function buildHerosEquipHTML() {
+  var cur = (typeof activeEquipSubTab !== "undefined") ? activeEquipSubTab : "equipment";
+  var bagCount = Array.isArray(game.inventory) ? game.inventory.length : 0;
+  // Le segment est passé EN TÊTE DU CADRE (topHTML) : posé avant, il tomberait entre le
+  // bandeau, que kframe-decorator sort du flux, et le corps du cadre.
+  var seg = '<div class="kseg kseg-in-frame">';
+  seg += '<button type="button" class="' + (cur === "equipment" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'equipment\')">Équipé</button>';
+  seg += '<button type="button" class="' + (cur === "inventory" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'inventory\')">Sac<span class="kseg-count">' + bagCount + '</span></button>';
+  seg += '<button type="button" class="' + (cur === "shop" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'shop\')">Boutique</button>';
+  seg += '</div>';
+
+  var h = '';
+  if (cur === "inventory") {
+    h += (typeof buildInventoryTabContentHTML === "function") ? buildInventoryTabContentHTML(seg) : "";
+  } else if (cur === "shop") {
+    h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="images/Icons/subtabs/equipment_shop.png|Boutique d\u2019\u00e9quipement">';
+    h += seg;
+    h += (typeof buildEquipShopHTML === "function") ? buildEquipShopHTML() : "";
+    h += '</div>';
+  } else {
+    h += (typeof buildEquipmentTabContentHTML === "function") ? buildEquipmentTabContentHTML(seg) : "";
+  }
+  return h;
+}
+
+/* v3.244.0 : sous-onglet Talents — les trois branches passent de la barre du kit à
+   un segment (second niveau), au-dessus de l'arbre existant de ui/talents-view.js. */
+function buildHerosTalentsHTML() {
+  if (typeof buildTalentBranchHTML !== "function") return '<div class="pc-empty">Talents indisponibles.</div>';
+  var cats = ["combat", "fortune", "survival"];
+  var cur = (typeof activeTalentCategory !== "undefined") ? activeTalentCategory : "combat";
+  var seg = '<div class="kseg kseg-in-frame">';
+  cats.forEach(function (c) {
+    seg += '<button type="button" class="' + (c === cur ? 'is-on' : '') + '" onclick="window.setTalentCategory(\'' + c + '\')">'
+      + esc(getTalentCategoryLabel(c)) + '</button>';
+  });
+  seg += '</div>';
+  var h = '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/scene/node_discovery.png|Talents">';
+  h += seg; // en tête du cadre, même raison que buildHerosEquipHTML
+  h += buildTalentSummaryBarHTML();
+  h += buildTalentBranchHTML(cur);
   h += '</div>';
   return h;
 }
@@ -808,10 +890,10 @@ function buildHerosHTML() {
 
   h += '<div class="subtab-page-content">';
 
-  if (activeHerosSubTab === "amelioration") {
-    h += buildHerosAmeliorationHTML();
-  } else if (activeHerosSubTab === "stats") {
-    h += buildHerosStatsHTML();
+  if (activeHerosSubTab === "equip") {
+    h += buildHerosEquipHTML();
+  } else if (activeHerosSubTab === "talents") {
+    h += buildHerosTalentsHTML();
   } else {
     h += buildHeroFicheHTML();
   }
@@ -826,6 +908,60 @@ function buildHerosHTML() {
 
   return h;
 }
+
+/* ============================================================
+   v3.244.0 — FEUILLES BASSES du Résumé (Stats, Capacités)
+   Rendues dans #heros-sheet-root, HORS de #panel-container (même raison que le
+   Grimoire, v3.212.0 : isolation:isolate y enfermait le z-index sous la barre du
+   bas). Alimentées par renderPanel() à chaque rendu, vidées en quittant l'écran.
+   ============================================================ */
+var HEROS_SHEETS = {
+  stats: { title: "Stats", icon: "images/Icons/subtabs/hero_stats.png", build: function () { return buildHerosAmeliorationHTML(); } },
+  abilities: { title: "Capacités", icon: "images/Icons/subtabs/hero_abilities.png", build: function () { return buildHerosStatsHTML(); } }
+};
+
+function buildHerosSheetHTML() {
+  var def = herosOpenSheet && HEROS_SHEETS[herosOpenSheet];
+  if (!def) return "";
+  return '<div class="ksheet-backdrop" onclick="closeHerosSheet()"></div>'
+    + '<div class="ksheet"><div class="ksheet-handle"></div>'
+    + '<div class="ksheet-title"><img src="' + def.icon + '" alt=""><span>' + def.title + '</span></div>'
+    + '<div class="ksheet-body">' + def.build() + '</div>'
+    + '<button type="button" class="ksheet-close" onclick="closeHerosSheet()">Fermer</button>'
+    + '</div>';
+}
+
+function renderHerosSheet(isHerosTab) {
+  var root = document.getElementById("heros-sheet-root");
+  if (!root) return;
+  if (!isHerosTab || !herosOpenSheet) { root.innerHTML = ""; return; }
+  // Un achat de stat re-rend tout : on garde la position de lecture de la feuille.
+  var body = root.querySelector(".ksheet-body");
+  var keep = body ? body.scrollTop : 0;
+  root.innerHTML = buildHerosSheetHTML();
+  body = root.querySelector(".ksheet-body");
+  if (body && keep) body.scrollTop = keep;
+}
+
+function openHerosSheet(name) {
+  if (!HEROS_SHEETS[name]) return;
+  if (typeof expandedHeroStat !== "undefined") expandedHeroStat = null;
+  if (typeof expandedHeroSkill !== "undefined") expandedHeroSkill = null;
+  herosOpenSheet = name;
+  if (typeof renderPanel === "function") renderPanel();
+}
+
+function closeHerosSheet() {
+  herosOpenSheet = null;
+  if (typeof renderPanel === "function") renderPanel();
+}
+
+window.buildHerosEquipHTML = buildHerosEquipHTML;
+window.buildHerosTalentsHTML = buildHerosTalentsHTML;
+window.renderHerosSheet = renderHerosSheet;
+window.openHerosSheet = openHerosSheet;
+window.closeHerosSheet = closeHerosSheet;
+window.setHerosSubTabSilent = setHerosSubTabSilent;
 
 function selectHeroInline(heroId) {
   if (!heroId || heroId === game.heroId) return;

@@ -2,11 +2,30 @@
 /* core/utils.js — utilitaires génériques (formatage, aléatoire, vibration), ne touchent pas à game (sauf cloneQuestProgress). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 function renderIconOrEmojiHTML(icon, baseClass, altText) {
+  // v3.242.0 : la passe icônes v3.240 a laissé des balises <img ...> COMPLÈTES là où
+  // cette fonction attend un chemin — elles ressortaient échappées (le joueur voyait
+  // le HTML). On en extrait le src plutôt que de l'afficher tel quel.
+  if (typeof icon === "string" && icon.indexOf("<img") === 0) {
+    var srcMatch = /src\s*=\s*["']?([^"'\s>]+)/i.exec(icon);
+    icon = srcMatch ? srcMatch[1] : "";
+  }
   var isImagePath = typeof icon === "string" && /\.(png|jpg|jpeg|svg|gif|webp)$/i.test(icon);
   if (isImagePath) {
     return '<img class="' + baseClass + '" src="' + esc(icon) + '" alt="">';
   }
   return '<span class="' + baseClass + ' ' + baseClass + '-emoji">' + esc(icon || "") + '</span>';
+}
+
+/* v3.242.1 (bug Seb) : échappe du texte qui contient déjà des balises <img> d'icône.
+   esc() sur la chaîne entière affichait le HTML en clair (rapport de combat). Ici on
+   ne laisse passer QUE les <img ...>, tout le reste est échappé normalement. */
+function escPreservingIcons(text) {
+  var parts = String(text == null ? "" : text).split(/(<img\b[^>]*>)/i);
+  var out = "";
+  for (var i = 0; i < parts.length; i++) {
+    out += (i % 2 === 1) ? parts[i] : esc(parts[i]);
+  }
+  return out;
 }
 
 function cloneQuestProgress() {
@@ -69,6 +88,7 @@ function vibrate(pattern) {
   if (navigator.vibrate) navigator.vibrate(pattern);
 }
 
+window.escPreservingIcons = escPreservingIcons;
 window.cloneQuestProgress = cloneQuestProgress;
 window.formatNumber = formatNumber;
 window.formatTime = formatTime;

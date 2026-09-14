@@ -358,11 +358,15 @@ function buildEquippedComparisonHTML(item) {
   return h;
 }
 
-function buildEquipmentTabContentHTML() {
+/* v3.244.0 : `topHTML` (optionnel) est inséré EN TÊTE DU CADRE — c'est là que le segment
+   Équipé / Sac de Héros doit vivre. Posé avant le cadre, il tomberait entre le bandeau
+   (que kframe-decorator sort du flux) et le corps. */
+function buildEquipmentTabContentHTML(topHTML) {
   var h = '';
 
   h += '<div class="eq-layout">';
   h += '<div class="eq-hero-card nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="images/Icons/combat_stats/stat_defense.png|\u00c9quipement">';
+  h += topHTML || '';
   h += '<div class="eq-hero-main eq-hero-main-slots-only">';
 
   h += '<div class="eq-hero-right">';
@@ -416,7 +420,10 @@ function buildInventoryCompactToolbarHTML() {
   }
   h += '</div>';
 
-  h += '<button class="inv-toolbar-btn" type="button" onclick="openInventorySettings()"><img class=ico-inline src=images/Icons/system/settings.png></button>';
+  // v3.242.0 (retour Seb) : le bouton n'affichait qu'une icône, réduite à 0 px par le
+  // filet `img { font-size: 0 }` — il ne restait qu'une plaque bleue vide. Icône rétablie
+  // (voir css/99-icon-assets.css) et libellé ajouté pour qu'il se lise sans ambiguïté.
+  h += '<button class="inv-toolbar-btn" type="button" onclick="openInventorySettings()"><img class=ico-inline src=images/Icons/system/auto_sell.png> Autovente</button>';
 
   h += '</div>';
   return h;
@@ -489,7 +496,7 @@ function confirmSellItem(uid) {
   showConfirmModal(
     "Vendre cet objet ?",
     "Tu es sur le point de vendre " + itemName + " pour " + formatNumber(sellValue) + " or. Cette action est irréversible.",
-    "<img class=ico-inline src=images/Icons/gold_icon.png>",
+    "images/Icons/gold_icon.png",
     function () { EquipmentManager.sell(uid); }
   );
 }
@@ -507,7 +514,7 @@ function confirmSellAllInventory() {
   showConfirmModal(
     "Tout vendre ?",
     "Tu es sur le point de vendre les " + count + " objets de ton sac pour " + formatNumber(totalValue) + " or au total. Cette action est irréversible.",
-    "<img class=ico-inline src=images/Icons/system/trash.png>",
+    "images/Icons/system/trash.png",
     function () { sellAllInventory(); }
   );
 }
@@ -535,8 +542,9 @@ function getOwnedPotionsList() {
   return list;
 }
 
-function buildInventoryTabContentHTML() {
+function buildInventoryTabContentHTML(topHTML) {
   var h = '<div class="eq-bag-panel nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="images/Icons/subtabs/inventory.png|Inventaire">';
+  h += topHTML || ''; // v3.244.0 : voir buildEquipmentTabContentHTML
 
   h += buildInventoryCompactToolbarHTML();
   h += buildInventoryFilterRowHTML();

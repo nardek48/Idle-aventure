@@ -441,7 +441,7 @@ function collectCompletedQuestCardEntries() {
         section: quest.section || "worldexpedition",
         html: buildCollapsibleQuestCardHTML(
           'world_' + quest.id,
-          quest.icon || "<img class=ico-inline src=images/Icons/quests/quest_resources.png>",
+          quest.icon || "images/Icons/quests/quest_resources.png",
           quest.name,
           buildWorldUnlockQuestDetailHTML(quest, quest.worldIndex),
           "is-claimed",
@@ -460,7 +460,7 @@ function collectCompletedQuestCardEntries() {
         section: quest.section || "adventure",
         html: buildCollapsibleQuestCardHTML(
           'adv_' + quest.id,
-          quest.icon || "<img class=ico-inline src=images/Icons/quests/quest_story.png>",
+          quest.icon || "images/Icons/quests/quest_story.png",
           quest.name,
           buildAdventureQuestDetailHTML(quest, true, null),
           "is-claimed",
@@ -479,7 +479,7 @@ function collectCompletedQuestCardEntries() {
         section: quest.section || "resource",
         html: buildCollapsibleQuestCardHTML(
           'village_' + quest.id,
-          quest.icon || "<img class=ico-inline src=images/Icons/quests/village_quest.png>",
+          quest.icon || "images/Icons/quests/village_quest.png",
           quest.title,
           buildVillageQuestDetailHTML(quest),
           "is-claimed",
@@ -506,7 +506,7 @@ function collectCompletedQuestCardEntries() {
         section: "expedition",
         html: buildCollapsibleQuestCardHTML(
           'scene_' + templateId,
-          template.icon || "<img class=ico-inline src=images/Icons/quests/quest_adventure.png>",
+          template.icon || "images/Icons/quests/quest_adventure.png",
           template.title,
           buildSceneQuestCompletedDetailHTML(template),
           "is-claimed",
@@ -973,7 +973,7 @@ function buildHuntLotCompleteHTML(quest) {
   var resource = window.WAREHOUSE_RESOURCES ? WAREHOUSE_RESOURCES[quest.resourceKey] : null;
 
   return buildQuestCompleteHTML({
-    icon: quest.icon || "<img class=ico-inline src=images/Icons/classes/class_ranger.png>",
+    icon: quest.icon || "images/Icons/classes/class_ranger.png",
     title: "Chasse terminée !",
     text: quest.lotSize + " bêtes abattues. Le gibier se fait plus rare pour l\u2019instant — reviens plus tard, ou relance une nouvelle chasse tout de suite.",
     rewardRows: [{ label: (resource ? resource.name : quest.resourceKey) + " en stock", value: formatNumber(stock) }],

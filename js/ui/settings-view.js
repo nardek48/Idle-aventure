@@ -75,6 +75,11 @@ function unlockAllTabsFromSettings() {
   var fixedTabBarTabs = ["campement", "combat", "village", "more"];
   fixedTabBarTabs.forEach(function (t) { game.unlockedTabs[t] = true; });
 
+  // v3.244.0 : ces onglets ont quitté MENU_ITEMS (chantier Navigation) mais restent
+  // des verrous d'Histoire — sans cette liste, le déverrouillage global les oublierait.
+  var relocatedTabs = ["dungeon", "shop", "talents", "equip", "ascension", "map", "grimoire", "quests"];
+  relocatedTabs.forEach(function (t) { game.unlockedTabs[t] = true; });
+
   if (typeof MENU_ITEMS !== "undefined" && Array.isArray(MENU_ITEMS)) {
     MENU_ITEMS.forEach(function (item) {
       if (item && item.tab) game.unlockedTabs[item.tab] = true;

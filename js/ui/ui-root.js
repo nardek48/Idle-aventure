@@ -20,7 +20,9 @@ function esc(value) {
      À RETIRER à la fin de la période de test — c'est le seul endroit à toucher.
    - tutorials : écran d'aide, toujours consultable ; ce sont ses ENTRÉES qui se déverrouillent
      une à une (voir systems/tutorial-catalog-system.js), comme le Codex. */
-var ALWAYS_UNLOCKED_TABS = { admin: true, "combat-sandbox": true, tutorials: true };
+/* v3.244.0 : log (Journal) rejoint la liste — écran de consultation pure, jamais
+   débloqué par l'Histoire ; son bouton des Paramètres retombait sur le Campement. */
+var ALWAYS_UNLOCKED_TABS = { admin: true, "combat-sandbox": true, tutorials: true, log: true };
 
 function isTabUnlocked(tabName) {
   if (tabName === "campement") return true;
@@ -115,6 +117,15 @@ function switchTab(tabName) {
   // etc.). Retombe sur campement, toujours débloqué.
   if (!isTabUnlocked(tabName)) {
     tabName = "campement";
+  }
+
+  // v3.244.0 (chantier Navigation) : Équipement et Talents vivent désormais DANS Héros.
+  // Les anciens raccourcis (pastille sac du HUD, bouton du Résumé, toast de butin, quêtes)
+  // continuent d'appeler switchTab('equip') / ('talents') : on les y conduit, sous-onglet
+  // déjà positionné. Le verrou d'Histoire a été vérifié juste au-dessus sur le nom d'origine.
+  if (tabName === "equip" || tabName === "talents") {
+    if (typeof setHerosSubTabSilent === "function") setHerosSubTabSilent(tabName);
+    tabName = "more";
   }
 
   // v3.107.3 : impossible d'entrer sur l'écran Combat à 0 PV — aucune action n'y était possible
@@ -255,6 +266,8 @@ function renderPanel() {
   // isolate y enfermait son z-index sous la barre du bas). Alimentée à chaque rendu,
   // et vidée dès qu'on quitte l'écran.
   if (typeof renderGrimoireSheet === "function") renderGrimoireSheet(game.activeTab === "grimoire");
+  // v3.244.0 : même mécanique pour les feuilles Stats / Capacités du Résumé du héros.
+  if (typeof renderHerosSheet === "function") renderHerosSheet(game.activeTab === "more");
 
   // v3.100.0 : vérification opportuniste de l'étape Histoire (throttlée 1/s dans le manager,
   // ne déclenche jamais de rendu — en combat renderPanel tourne à chaque kill).

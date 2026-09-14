@@ -77,7 +77,11 @@ var CampManager = {
     var eta = document.getElementById("camp-fire-eta");
     if (eta) {
       var full = (game.heroHp || 0) >= maxHp;
-      eta.textContent = full ? "✔ PV au maximum" : "⏳ Max dans " + formatTime(Math.ceil(this.getMinutesToFull() * 60));
+      // v3.242.0 : même rendu que camp-view.js (icônes PNG) — ce textContent réécrivait
+      // l'élément avec les anciens emoji à chaque tick, annulant l'icône de la vue.
+      eta.innerHTML = full
+        ? '<img class=ico-inline src=images/Icons/system/check_valid.png> PV au maximum'
+        : '<img class=ico-inline src=images/Icons/system/hourglass_waiting.png> Max dans ' + formatTime(Math.ceil(this.getMinutesToFull() * 60));
       if (full && typeof renderPanel === "function") renderPanel(); // ré-évalue les boutons de ration (grisés si PV pleins)
     }
   },

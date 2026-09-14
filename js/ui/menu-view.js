@@ -2,24 +2,15 @@
 /* ui/menu-view.js — menu plein écran (bouton ☰), grille de destinations non couvertes par la barre du bas. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var MENU_ITEMS = [
-  // v3.131.0 (décision Seb) : Combat/Quêtes permutés — Quêtes est la base du jeu, passe dans
-  // la tab-bar principale (index.html) ; Combat (accédé indirectement via les quêtes/expéditions
-  // la plupart du temps) rejoint la grille du menu complet, à l'ancienne place de Quêtes.
-  { tab: "combat", label: "Combat", img: "./images/Icons/menu_icons/combat_menu.png" },
-  { tab: "dungeon", label: "Donjon", img: "./images/Icons/menu_icons/donjon_menu.png", badge: "dungeon" },
-  { tab: "shop", label: "Boutique", img: "./images/Icons/menu_icons/shop_menu.png" },
-  { tab: "talents", label: "Talents", img: "./images/Icons/menu_icons/talents_menu.png", badge: "talents" },
-  { tab: "equip", label: "Équipement", img: "./images/Icons/menu_icons/equip_menu.png" },
-  { tab: "ascension", label: "Ascension", img: "./images/Icons/menu_icons/aether_menu.png", badge: "ascension" },
-  { tab: "map", label: "Carte du monde", img: "./images/Icons/menu_icons/map_menu.png" },
+  /* v3.244.0 (chantier Navigation, décision Seb 14/09/2026) : le menu ☰ ne garde que la
+     CONSULTATION et les réglages — rien du quotidien. Combat s'atteint par une mission,
+     Donjon et Carte remontent au bloc « Expédition » du Campement, Équipement et Talents
+     deviennent des sous-onglets de Héros, Ascension s'ouvre depuis le Résumé du héros,
+     Boutique migre vers les bâtiments du Village (lot N-2). Six cases, deux rangées. */
+  { tab: "bestiary", label: "Bestiaire & Codex", img: "./images/Icons/menu_icons/bestiaire_menu.png" },
   { tab: "achievements", label: "Hauts faits", img: "./images/Icons/menu_icons/achivment_menu.png", badge: "achievement" },
-  // v3.208.0 (décision Seb) : plus de pastille sur le Bestiaire/Codex — le compteur « x / y »
-  // en tête de l'écran suffit, la pastille poussait à aller réclamer une lecture.
-  { tab: "bestiary", label: "Bestiaire", img: "./images/Icons/menu_icons/bestiaire_menu.png" },
   { tab: "afflictions", label: "Afflictions", icon: "images/Icons/camp/campfire.png", badge: "afflictions" },
-  // v3.210.0 (décision Seb) : le Grimoire quitte le menu ☰ — son raccourci est au
-  // Campement (camp-view.js), là où on prépare une sortie. Un bouton de moins ici.
-  // v3.208.0 : consultation des tutoriels déjà rencontrés. Sans pastille, même raison.
+  { tab: "log", label: "Journal", img: "./images/Icons/menu_icons/journal_menu.png" },
   { tab: "tutorials", label: "Tutoriels", icon: "images/Icons/codex/codex_lore.png" },
   { tab: "settings", label: "Paramètres", img: "./images/Icons/menu_icons/settings_menu.png" }
 ];

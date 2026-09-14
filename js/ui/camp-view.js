@@ -122,7 +122,11 @@ function buildCampHTML() {
   h += '<div class="camp-regen-desc">Récupère des PV automatiquement au fil du temps, hors combat.</div>';
   h += '<div class="camp-regen-meta">';
   h += '<span class="camp-regen-rate">+' + regenPct + ' % PV par minute</span>';
-  h += '<span class="camp-regen-eta" id="camp-fire-eta">' + (hpFull ? '<img class=ico-inline src=images/Icons/system/check_valid.png> PV au maximum' : esc('<img class=ico-inline src=images/Icons/system/hourglass_waiting.png> Max dans ' + formatTime(Math.ceil(minutesToFull * 60)))) + '</span>';
+  // v3.242.0 (bug Seb) : esc() enveloppait AUSSI la balise <img> — le joueur lisait le
+  // HTML au lieu de voir le sablier. Seule la partie texte est échappée désormais.
+  h += '<span class="camp-regen-eta" id="camp-fire-eta">' + (hpFull
+    ? '<img class=ico-inline src=images/Icons/system/check_valid.png> PV au maximum'
+    : '<img class=ico-inline src=images/Icons/system/hourglass_waiting.png> ' + esc('Max dans ' + formatTime(Math.ceil(minutesToFull * 60)))) + '</span>';
   h += '</div>';
 
   h += '</div>'; // fin .camp-health-card
@@ -155,6 +159,11 @@ function buildCampHTML() {
   h += buildCampMissionBoardHTML();
   h += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">Voir le tableau complet</button>';
   h += '</div>';
+
+  // v3.244.0 (chantier Navigation, décision Seb) : Donjon et Carte du monde quittent le
+  // menu ☰ pour le bloc « Expédition » du Campement — c'est d'ici qu'on part. Mêmes
+  // verrous d'Histoire que leurs anciennes cases ; rien tant que rien n'est débloqué.
+  h += buildCampExpeditionDoorsHTML();
 
   // v3.210.0 (décision Seb) : raccourci vers le Grimoire, retiré du menu ☰ au passage.
   // Le Campement est le lieu de préparation — on règle ses tactiques avant de partir.
@@ -191,4 +200,47 @@ function buildCampHTML() {
 }
 
 window.buildCampHTML = buildCampHTML;
+
+/* v3.244.0 : deux portes côte à côte — Donjon (tickets en pastille) et Carte du monde
+   (monde courant · aventure). Chacune n'apparaît que si son onglet est débloqué ; si
+   aucune ne l'est, le bloc entier reste absent. */
+function buildCampExpeditionDoorsHTML() {
+  var unlocked = function (t) { return typeof isTabUnlocked !== "function" || isTabUnlocked(t); };
+  var showDungeon = unlocked("dungeon");
+  var showMap = unlocked("map");
+  if (!showDungeon && !showMap) return "";
+
+  var h = '<div class="camp-card camp-expedition-card">';
+  h += '<div class="camp-card-title"><img class=ico-inline src=images/Icons/quests/start_expedition.png> Expédition</div>';
+  h += '<div class="camp-doors">';
+
+  if (showDungeon) {
+    if (window.DungeonManager && typeof DungeonManager.checkTicketReset === "function") DungeonManager.checkTicketReset();
+    var tickets = Number(game.dungeonTickets || 0);
+    var running = !!(game.dungeonRun && game.dungeonRun.active);
+    h += '<button type="button" class="camp-door" onclick="switchTab(\'dungeon\')">';
+    h += '<img class="camp-door-ico" src="images/Icons/subtabs/dungeon.png" alt="">';
+    h += '<span class="camp-door-txt"><span class="camp-door-t">Donjon</span>';
+    h += '<span class="camp-door-s">' + (running ? 'En cours' : (tickets + ' ticket' + (tickets > 1 ? 's' : ''))) + '</span></span>';
+    if (tickets > 0 && !running) h += '<span class="camp-door-badge kbadge kbadge-round"><span>' + tickets + '</span></span>';
+    h += '<span class="camp-door-chev">›</span>';
+    h += '</button>';
+  }
+
+  if (showMap) {
+    var world = (window.WorldManager && typeof WorldManager.getWorld === "function") ? WorldManager.getWorld() : null;
+    h += '<button type="button" class="camp-door" onclick="switchTab(\'map\')">';
+    h += '<img class="camp-door-ico" src="images/Icons/menu_icons/map_menu.png" alt="">';
+    h += '<span class="camp-door-txt"><span class="camp-door-t">Carte</span>';
+    // Nom du monde seul : « Forêt enchantée · 1/8 » se coupait à 390 px.
+    h += '<span class="camp-door-s">' + esc(world && world.name ? world.name : 'Monde') + '</span></span>';
+    h += '<span class="camp-door-chev">›</span>';
+    h += '</button>';
+  }
+
+  h += '</div>';
+  h += '</div>';
+  return h;
+}
+window.buildCampExpeditionDoorsHTML = buildCampExpeditionDoorsHTML;
 

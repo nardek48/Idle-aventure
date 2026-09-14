@@ -726,6 +726,10 @@ button.nb-entry-card {
 .subtab-page-content {
   flex: 1 1 auto;
   overflow-y: auto;
+  /* v3.242.0 : le geste ne remonte plus au parent en fin de course (iOS) — c'est
+     ce chaînage qui donnait l'impression de blocages courts dans Potions. */
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   padding-bottom: 4px;
   width: 100%;
   max-width: 600px;
@@ -929,3 +933,135 @@ button.nb-entry-card {
   flex-direction: column;
   gap: 8px;
 }
+
+/* =========================
+   v3.244.0 (chantier Navigation) — deux composants génériques, extraits du
+   Grimoire où ils avaient déjà été validés sur iPhone (v3.210–212) :
+   .kseg   = segment à 2–3 positions, SECOND niveau sous une barre de sous-onglets
+             (copie de .grimoire-mode, css/04-panel-grimoire.css) ;
+   .ksheet = feuille basse ancrée en bas, hors #panel-container (copie de
+             .grimoire-sheet — même z-index, même raison : isolation:isolate du panel).
+   Plafond mesuré : la barre du kit tient à 3 boutons (4 = 32 px de haut, libellés
+   coupés). Au-delà, c'est .kseg qui prend le second niveau.
+   ========================= */
+.kseg {
+  display: flex;
+  gap: 3px;
+  margin: 0 0 8px;
+  padding: 3px;
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-pill);
+  background-color: rgba(0, 0, 0, 0.32);
+}
+
+.kseg button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 7px 4px;
+  border: 0;
+  border-radius: var(--nb-radius-pill);
+  background-color: transparent;
+  color: #f4e9d0;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.kseg button.is-on {
+  background-color: var(--nb-gold);
+  color: #3a2c1a;
+  opacity: 1;
+  font-weight: 800;
+}
+
+.kseg button .kseg-count {
+  margin-left: 4px;
+  font-weight: 800;
+  opacity: 0.85;
+}
+
+.ksheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background-color: rgba(10, 7, 18, 0.66);
+}
+
+.ksheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 901;
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 14px calc(16px + var(--safe-bottom));
+  border-top: 3px solid var(--nb-frame);
+  border-radius: var(--nb-radius-lg) var(--nb-radius-lg) 0 0;
+  background-color: var(--nb-cream);
+  color: var(--nb-ink);
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.45);
+  /* Hors du .kframe : l'encre sombre est restaurée ici, comme pour .grimoire-sheet. */
+  --nb-ink: #3a2c1a;
+  --nb-ink-dim: #8a7a5c;
+}
+
+.ksheet-handle {
+  width: 44px;
+  height: 5px;
+  margin: 2px auto 10px;
+  border-radius: var(--nb-radius-pill);
+  background-color: var(--nb-frame-light);
+  flex: 0 0 auto;
+}
+
+.ksheet-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 1rem;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+.ksheet-title img { width: 24px; height: 24px; object-fit: contain; }
+
+.ksheet-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ksheet-close {
+  width: 100%;
+  margin-top: 12px;
+  padding: 11px;
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  background-color: var(--nb-gold);
+  color: #3a2c1a;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
+/* Segment posé en tête d'un cadre de page : fond clair du cadre → contour et
+   encre adaptés (le .kseg nu est conçu pour le fond sombre des feuilles). */
+.kframe .kseg-in-frame {
+  margin: 2px 0 10px;
+  background-color: rgba(58, 44, 26, 0.16);
+  border-color: var(--nb-frame);
+}
+.kframe .kseg-in-frame button { color: #3a2c1a; opacity: 0.85; }
+.kframe .kseg-in-frame button.is-on { opacity: 1; }

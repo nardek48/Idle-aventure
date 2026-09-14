@@ -28,6 +28,8 @@ var ROUND_MODEL_DEFAULTS = {
   enemyPrecisionCritCoef: 0.3,
   enemyCritMult: 1.5,
   celerityGaugePerAction: 1.0, // (round) jauge += célérité * coef par action offensive ; à 100 → frappe bonus
+  celeritySoftCapK: 60,       // v3.243.0 : miroir de CELERITY_SOFT_CAP_K (combat-engine.js). 0 = linéaire historique
+                              // gain = 100 * célérité / (célérité + K), miroir de CombatEngine.getGaugeGainPerAction()
   enemyCelerityGaugeCoef: 1.0, // (round) idem côté ennemi
   bossHealEveryRounds: 5,     // (round) soin boss : télégraphe au round 5, impact (remplace la frappe) au round 6
   bossHealPercent: 0.15,
@@ -215,7 +217,7 @@ function performHeroAction(hero, enemy, slot, rng, det, cfg, log) {
       if (e.type === "damageOverTime") enemy.dot = { rounds: e.durationRounds || 2, perRound: Math.floor(last * (e.percentPerRound || 0.5)) };
     });
     // jauge de célérité (décision §10 n°1) : action offensive → jauge += célérité ; à 100, frappe bonus
-    hero.gauge += hero.celerity * cfg.celerityGaugePerAction;
+    hero.gauge += rsGaugeGain(hero.celerity, cfg);
     if (hero.gauge >= 100 && enemy.hp > 0) {
       hero.gauge -= 100;
       var bonus = heroHitDamage(hero, enemy, 1, rng, det, cfg);
@@ -227,6 +229,15 @@ function performHeroAction(hero, enemy, slot, rng, det, cfg, log) {
     var eff = a.effects[0] || { type: "damageReduction", value: 0.5 };
     hero.activeDefense = { effectType: eff.type, value: eff.value, roundsLeft: eff.durationRounds || 1 };
   }
+}
+
+/* v3.243.0 : gain de jauge par action. Miroir EXACT de CombatEngine.getGaugeGainPerAction().
+   K = 0 conserve la formule linéaire d'origine (pour comparer avant/après). */
+function rsGaugeGain(celerity, cfg) {
+  var raw = Number(celerity || 0) * cfg.celerityGaugePerAction;
+  var K = Number(cfg.celeritySoftCapK || 0);
+  if (K <= 0) return raw;
+  return 100 * raw / (raw + K);
 }
 
 function randRange(rng, min, max) { return min + Math.floor(rng() * (max - min + 1)); }
@@ -399,7 +410,7 @@ function simulateSortie(heroDef, kit, pool, bossDef, cfg, opts) {
 function duelBudget(heroDef, kit, enemyDef, isBoss, cfg, scale) {
   var hero = buildHero(heroDef, kit, cfg);
   var enemy = buildEnemy(enemyDef, isBoss, scale || 1, cfg);
-  var dmgPerRound = heroHitDamage(hero, enemy, 1, null, true, cfg) * (1 + hero.celerity * cfg.celerityGaugePerAction / 100);
+  var dmgPerRound = heroHitDamage(hero, enemy, 1, null, true, cfg) * (1 + rsGaugeGain(hero.celerity, cfg) / 100);
   var rpt = enemy.maxHp / dmgPerRound;
   // v3.105.0 (distance) : E rounds d'approche — l'ennemi ne frappe pas, le RPM est décalé d'autant (RPT inchangé)
   var eng = 0;
@@ -430,7 +441,7 @@ function aggregateSorties(heroDef, kit, pool, bossDef, cfg, opts) {
 
 var CombatRoundSim = {
   DEFAULTS: ROUND_MODEL_DEFAULTS, config: function (over) { return rsMerge(ROUND_MODEL_DEFAULTS, over); },
-  makeRng: makeRng, buildHero: buildHero, buildEnemy: buildEnemy, simulateFight: simulateFight,
+  makeRng: makeRng, gaugeGain: rsGaugeGain, buildHero: buildHero, buildEnemy: buildEnemy, simulateFight: simulateFight,
   simulateSortie: simulateSortie, duelBudget: duelBudget, aggregateSorties: aggregateSorties, defaultPolicy: defaultPolicy
 };
 

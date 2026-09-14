@@ -40,6 +40,17 @@ var DEFEAT_GOLD_PENALTY = 0; // v3.101.0 (P3-lite) : la mort ne coûte plus d'or
 var ROUND_INTERVAL_MS = 1500;         // tempo du mode Grimoire / « Continuer l'attaque » (× vitesse de combat)
 var CELERITY_GAUGE_MAX = 100;
 var CELERITY_GAUGE_PER_ACTION = 1.0;  // jauge héros += célérité × coef par action offensive
+/* v3.243.0 (bug Seb : « la jauge se remplit très vite, on a tout le temps des doubles
+   attaques à partir d'un certain niveau »). La célérité vient surtout des bottes, dont la
+   stat plate suit EQUIP_WORLD_SCALE (×1 en Forêt → ×18 à la Tour) ; le plafond de jauge,
+   lui, restait à 100. Mesuré : ~40 de célérité en Forêt mais 113 dès la Crypte et 470 à la
+   Tour, donc jauge pleine à CHAQUE action. Pire, afterOffensiveAction ne déclenche qu'UNE
+   frappe par action : toute célérité au-delà de 100 était purement perdue (470 == 100).
+   Rendements décroissants : gain = 100 × célérité / (célérité + K). Le gain tend vers 100
+   sans jamais l'atteindre — la frappe bonus n'est donc jamais garantie, et chaque point de
+   célérité continue de compter jusqu'au bout. K = 60 retenu en simulation
+   (sim/celerity-curve-bench.js) : laisse la Forêt EXACTEMENT telle qu'elle est (40 → 40). */
+var CELERITY_SOFT_CAP_K = 60;
 var ENEMY_CELERITY_GAUGE_COEF = 1.0;  // idem côté ennemi (le loup mord deux fois)
 var FRENZY_ATTACKS_REQUIRED = 8;      // Frénésie d'assaut : toutes les 8 Attaques (ex 20 taps)
 
@@ -188,6 +199,12 @@ var CombatEngine = {
       game.combatRound = { number: 0, busy: false, continueAttack: false, clockMs: 0 };
     }
     if (typeof game.heroGauge !== "number" || !isFinite(game.heroGauge)) game.heroGauge = 0;
+    /* v3.243.0 : avant la courbe ci-dessus, le reliquat de jauge s'accumulait sans limite
+       (gain de 470 pour un plafond de 100, une seule frappe consommée par action) et
+       n'était jamais remis à zéro entre deux ennemis. Une partie en cours peut donc arriver
+       ici avec plusieurs milliers en réserve : on la ramène dans sa plage légitime. */
+    if (game.heroGauge > CELERITY_GAUGE_MAX) game.heroGauge = CELERITY_GAUGE_MAX;
+    if (game.heroGauge < 0) game.heroGauge = 0;
     if (typeof game.silencedRounds !== "number") game.silencedRounds = 0;
   },
 
@@ -381,7 +398,10 @@ var CombatEngine = {
 
   getGaugeGainPerAction: function () {
     var talentMult = 1 + 0.15 * Number((game.talents && game.talents.t_auto_tap) || 0); // Main spectrale reconvertie
-    return this.getTotalCelerity() * CELERITY_GAUGE_PER_ACTION * talentMult;
+    var raw = this.getTotalCelerity() * CELERITY_GAUGE_PER_ACTION * talentMult;
+    if (!(CELERITY_SOFT_CAP_K > 0) || raw <= 0) return raw;
+    // v3.243.0 : rendements décroissants, voir CELERITY_SOFT_CAP_K en tête de fichier.
+    return CELERITY_GAUGE_MAX * raw / (raw + CELERITY_SOFT_CAP_K);
   },
 
   afterOffensiveAction: function () {
@@ -1248,6 +1268,7 @@ window.getEnemyWillCritPenalty = getEnemyWillCritPenalty;
 window.getConfiguredCounterSlotsForCondition = getConfiguredCounterSlotsForCondition;
 window.ROUND_INTERVAL_MS = ROUND_INTERVAL_MS;
 window.CELERITY_GAUGE_MAX = CELERITY_GAUGE_MAX;
+window.CELERITY_SOFT_CAP_K = CELERITY_SOFT_CAP_K; // v3.243.0
 window.BOSS_DMG_MULT = BOSS_DMG_MULT;
 window.ELITE_SURGE_ROUNDS_MIN = ELITE_SURGE_ROUNDS_MIN;
 window.ELITE_SURGE_ROUNDS_MAX = ELITE_SURGE_ROUNDS_MAX;

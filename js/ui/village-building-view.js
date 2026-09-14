@@ -134,7 +134,7 @@ function buildVillageBuildingSheetHTML(id) {
      sans dire où s'en servir. */
   if (id === "training" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToHeroTraining()">'
-       + '<img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> S\'entraîner dans Personnage → Stats ›</div>';
+       + '<img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> S\'entraîner dans Héros → Stats ›</div>';
   }
 
   /* L'Apothicaire renvoie vers l'écran où l'on prépare, comme le Terrain
@@ -164,6 +164,15 @@ function buildVillageBuildingSheetHTML(id) {
     h += buildTavernContractsHTML();
   }
 
+  /* v3.244.0 (chantier Navigation, transitoire) : la Boutique a quitté le menu ☰. Ses
+     améliorations d'or (Bourse lourde, Contrats lucratifs) n'avaient plus de porte —
+     la Taverne, qui vend déjà des contrats, les héberge. Lien de renvoi en N-1 ; le
+     lot N-2 embarque les cartes ici même. */
+  if (id === "tavern") {
+    h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToEconomy()">'
+       + '<img class=ico-inline src=images/Icons/subtabs/economy.png> Bourse et contrats d\'or ›</div>';
+  }
+
   /* L'Entrepôt agrandi renvoie vers l'Entrepôt lui-même. */
   if (id === "warehouse" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToWarehouse()">'
@@ -175,7 +184,7 @@ function buildVillageBuildingSheetHTML(id) {
      reste le lieu où l'on s'en sert. */
   if (id === "hall" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToEquipShop()">'
-       + '<img class=ico-inline src=images/Icons/subtabs/equipment_shop.png> Voir l\'échoppe dans Équipement ›</div>';
+       + '<img class=ico-inline src=images/Icons/subtabs/equipment_shop.png> Voir l\'échoppe dans Héros → Équipement ›</div>';
   }
 
   /* L'Atelier annonce le rang qu'il ouvre : c'est sa vraie fonction. */
@@ -315,6 +324,14 @@ function goToPotions() {
   if (typeof setShopSubTab === "function") setShopSubTab("potions");
 }
 window.goToPotions = goToPotions;
+
+/* v3.244.0 : renvoi de la Taverne vers les améliorations d'or (ex-Boutique › Économie). */
+function goToEconomy() {
+  closeVillageBuildingSheet();
+  if (typeof switchTab === "function") switchTab("shop");
+  if (typeof setShopSubTab === "function") setShopSubTab("upgrades");
+}
+window.goToEconomy = goToEconomy;
 
 /* Renvoi de la fiche de la Halle vers l'échoppe d'équipement. */
 function goToEquipShop() {

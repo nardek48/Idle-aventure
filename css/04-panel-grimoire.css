@@ -117,6 +117,9 @@
   color: var(--nb-ink-dim);
 }
 
+/* v3.242.0 (retour Seb) : l'icône de condition flottait au centre du cercle.
+   Sa taille est portée par css/99-icon-assets.css (chargé en dernier) ; ici on
+   ne fait que rogner ce qui dépasserait du disque. */
 .grimoire-rule-icon {
   flex: 0 0 auto;
   width: 38px;
@@ -128,6 +131,7 @@
   border-radius: 50%;
   border: 2px solid var(--nb-frame);
   background-color: var(--nb-cream-alt);
+  overflow: hidden;
 }
 
 .grimoire-rule-body {
@@ -313,13 +317,27 @@
   opacity: 0.5;
 }
 
+/* v3.242.2 (retour Seb) : la description rappelle désormais l'icône du sort ou de
+   la situation choisie — impossible à mettre dans une <option> native. */
 .grimoire-select-desc {
-  display: block;
-  margin-top: 5px;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 6px;
   font-size: 0.74rem;
   font-style: italic;
   color: var(--nb-ink-dim);
   line-height: 1.35;
+}
+
+.grimoire-select-desc-ico {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  border-radius: 50%;
+  border: 1px solid var(--nb-frame);
+  background-color: var(--nb-cream-alt);
 }
 
 /* Verdict de l'appariement : la seule information que la fiche ajoute. */
@@ -552,10 +570,25 @@
   flex: 1;
 }
 
+/* v3.242.0 (retour Seb) : plus de plaque bleue du kit pour une action
+   destructrice secondaire — une poubelle cerclée de rouge, lisible d'un coup
+   d'œil et visuellement distincte du bouton « Charger ». */
 .grimoire-preset-delete-btn {
   flex: 0 0 44px;
   color: #b23b3b;
-  border-color: #b23b3b;
+  border: 1px solid #b23b3b;
+  border-radius: var(--nb-radius-sm, 8px);
+  background-image: none;
+  background-color: rgba(178, 59, 59, 0.08);
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grimoire-preset-delete-btn .ico-inline {
+  width: 22px;
+  height: 22px;
 }
 
 /* Formulaire d'enregistrement d'un nouveau preset — input texte +

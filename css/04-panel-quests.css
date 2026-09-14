@@ -451,7 +451,7 @@
   border-radius: var(--nb-radius-sm, 8px);
   background: rgba(255, 255, 255, 0.4);
   border: 1px solid var(--nb-frame-light);
-  color: var(--nb-ink-dim);
+  color: var(--nb-ink); /* v3.242.0 (retour Seb) : l'encre atténuée passait mal sur le fond clair */
   font-size: 11.5px;
   font-weight: 700;
   text-align: center;

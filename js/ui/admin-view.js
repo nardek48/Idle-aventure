@@ -73,7 +73,7 @@ function buildAdminHTML() {
   h += '<button class="settings-btn admin-btn" onclick="switchTab(\'settings\')"><img class=ico-inline src=images/Icons/system/back.png> Retour aux Paramètres</button>';
 
   h += '</div>';
-  return '<div class="nb-page-frame admin-root kframe-page" data-kf-title="\ud83d\udee0\ufe0f Admin">' + h + '</div>';
+  return '<div class="nb-page-frame admin-root kframe-page" data-kf-title="Admin">' + h + '</div>';
 }
 
 function adminFieldRow(inputId, label, currentValue, onApplyCall, minVal, maxVal) {

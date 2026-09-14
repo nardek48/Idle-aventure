@@ -108,7 +108,7 @@ function buildAscensionShopTabContentHTML() {
 function buildAscensionHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
-  h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="\ud83c\udf20 Ascension">';
+  h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="Ascension">';
   h += (activeAscensionSubTab === "shop") ? buildAscensionShopTabContentHTML() : buildAscensionTabContentHTML();
   h += '</div>';
   h += '</div>';

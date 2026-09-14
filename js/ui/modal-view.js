@@ -465,7 +465,7 @@ function buildHeroAttackPreviewBandeauHTML(selectedHero) {
     slots.forEach(function (slot) {
       var action = kit.actions[slot];
       if (!action) return;
-      var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "<img class=ico-inline src=images/Icons/combat_stats/stat_defense.png>" : "<img class=ico-inline src=images/Icons/scene/node_discovery.png>");
+      var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.png" : "images/Icons/scene/node_discovery.png");
 
       html += '<div class="hc-skill-card">';
       html += '  <div class="hc-skill-icon-wrap">' + renderIconOrEmojiHTML(icon, "hc-skill-icon", action.label) + '</div>';

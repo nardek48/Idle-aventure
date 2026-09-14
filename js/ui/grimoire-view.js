@@ -96,7 +96,7 @@ function confirmLoadGrimoirePreset(presetId) {
   showConfirmModal(
     "Charger « " + preset.name + " » ?",
     "Les 6 règles actuellement configurées seront remplacées par celles de ce preset. Enregistre ta configuration actuelle comme preset avant de continuer si tu veux la garder.",
-    preset.icon || "<img class=ico-inline src=images/Icons/codex/codex_lore.png>",
+    preset.icon || "images/Icons/codex/codex_lore.png",
     function () { loadGrimoirePreset(presetId); }
   );
 }
@@ -109,7 +109,7 @@ function confirmDeleteGrimoirePreset(presetId) {
   showConfirmModal(
     "Supprimer « " + preset.name + " » ?",
     "Cette action est irréversible. Le preset sera définitivement supprimé (la config actuellement active n'est pas affectée).",
-    "<img class=ico-inline src=images/Icons/system/trash.png>",
+    "images/Icons/system/trash.png",
     function () {
       game.grimoirePresets = presets.filter(function (p) { return p.id !== presetId; });
       saveGame();
@@ -200,6 +200,9 @@ function buildGrimoireActionOptionsHTML(kit, selectedSlot, conditionId) {
     // neutre dans la liste. getAllGrimoireCounterIds() couvre les deux canaux.
     var isCounter = !!(conditionId && typeof getAllGrimoireCounterIds === "function"
       && getAllGrimoireCounterIds(action).indexOf(conditionId) !== -1);
+    // v3.242.2 : le suffixe « — contre … » tenté en v3.242.0 tronquait le libellé dans le
+    // champ fermé. L'information passe maintenant par l'icône + la description sous la
+    // liste (voir buildGrimoireEditHTML) ; ici on garde le seul marqueur ⚡.
     h += '<option value="' + esc(slot) + '"' + (selectedSlot === slot ? ' selected' : '') + '>'
       + (isCounter ? '\u26a1 ' : '') + esc(action.label) + '</option>';
   });
@@ -305,7 +308,14 @@ function buildGrimoireEditHTML(index, kit) {
   h += '<select class="grimoire-select" onchange="setGrimoireRuleCondition(' + index + ', this.value)"' + lock + '>';
   h += buildGrimoireConditionOptionsHTML(rule.conditionId);
   h += '</select>';
-  if (cond) h += '<span class="grimoire-select-desc">' + esc(cond.description) + '</span>';
+  if (cond) {
+    // v3.242.2 (retour Seb) : une <option> native ne peut pas porter d'image. Une fois
+    // la condition choisie, on rappelle son icône à côté de la description — le joueur
+    // voit ainsi quelle attaque ennemie sera contrée.
+    h += '<span class="grimoire-select-desc">'
+      + renderIconOrEmojiHTML(cond.icon, "grimoire-select-desc-ico", cond.label)
+      + '<span>' + esc(cond.description) + '</span></span>';
+  }
   h += '</div>';
 
   h += '<div class="grimoire-card">';
@@ -316,7 +326,15 @@ function buildGrimoireEditHTML(index, kit) {
     h += '<select class="grimoire-select" onchange="setGrimoireRuleAction(' + index + ', this.value)"' + lock + '>';
     h += buildGrimoireActionOptionsHTML(kit, rule.actionSlot, rule.conditionId);
     h += '</select>';
-    if (action) h += '<span class="grimoire-select-desc">' + esc(action.description) + '</span>';
+    if (action) {
+      // v3.242.2 : même rappel côté action — l'icône est celle du bouton de compétence
+      // en combat, pour que le lien soit immédiat.
+      var actionIcon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id])
+        || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.png" : "images/Icons/scene/node_discovery.png");
+      h += '<span class="grimoire-select-desc">'
+        + renderIconOrEmojiHTML(actionIcon, "grimoire-select-desc-ico", action.label)
+        + '<span>' + esc(action.description) + '</span></span>';
+    }
   }
 
   if (cond && action) {

@@ -592,8 +592,15 @@
    .subtab-page gère lui-même sa zone basse, donc pas besoin d'un padding-bottom supplémentaire
    ici. Classe posée par JS (voir ui-root.js switchTab) plutôt qu'un sélecteur :has() — meilleure
    compatibilité mobile garantie sans dépendre du support navigateur de :has(). */
+/* v3.242.0 (retour Seb) : les écrans à sous-onglets avaient DEUX conteneurs
+   défilants imbriqués (#panel-container et .subtab-page-content). Mesuré au
+   navigateur, l'extérieur ne déborde jamais dans ce cas (scrollHeight ==
+   clientHeight) : il ne servait qu'à accrocher le geste en fin de course
+   (« mini-blocages » signalés dans Potions). On ne garde qu'un seul scroller. */
 #panel-container.has-subtab-page {
   padding-bottom: 0px;
+  overflow-y: hidden;
+  overscroll-behavior: contain;
 }
 
 #panel-container.active {

@@ -47,8 +47,8 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .cb-arena #enemy-emoji img,
 .cb-arena .enemy-image {
   max-height: 100%; max-width: 84%; width: auto; height: auto; object-fit: contain; border-radius: 0;
-  -webkit-mask-image: radial-gradient(ellipse 62% 62% at 50% 52%, #000 55%, rgba(0, 0, 0, 0) 100%);
-          mask-image: radial-gradient(ellipse 62% 62% at 50% 52%, #000 55%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 72%, rgba(0, 0, 0, 0) 100%);
+          mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 72%, rgba(0, 0, 0, 0) 100%);
 }
 
 /* ---------- Commandes ---------- */
@@ -86,7 +86,11 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .cb-hero {
   margin-top: 6px;
   background: linear-gradient(0deg, rgba(20, 14, 8, 0.85), rgba(20, 14, 8, 0.6));
-  border: 1px solid rgba(217, 164, 65, 0.5); border-radius: 12px; padding: 6px 8px;
+  border: 1px solid rgba(217, 164, 65, 0.5); border-radius: 12px;
+  /* v3.242.1 (bug Seb) : ce `padding` écrasait la réserve de safe-area posée plus
+     haut (l. 20) — sur iPhone, la barre de Célérité passait sous l'indicateur
+     home et se retrouvait coupée. La réserve est réintégrée ici. */
+  padding: 6px 8px calc(6px + var(--safe-bottom, 0px));
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
   display: grid; gap: 3px;
 }
@@ -95,6 +99,15 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 /* Le mini-héros du HUD, replacé ici : portrait à gauche, PV pleine largeur, cliquable à nouveau. */
 .cb-hero #combat-hero-mini { display: flex; align-items: center; gap: 8px; width: 100%; pointer-events: auto; cursor: pointer; }
 .cb-hero .combat-hero-mini-portrait { flex: 0 0 auto; width: 56px; height: 56px; }
+/* v3.242.1 (point iPhone laissé ouvert en v3.241) : à 56 px, le badge « Niv. »
+   mordait le bas du portrait et devenait illisible. Il descend sous le cadre et
+   se resserre ; le portrait garde sa place, seule la pastille bouge. */
+.cb-hero .combat-hero-mini-level {
+  bottom: -9px;
+  font-size: 9.5px;
+  padding: 1px 6px;
+}
+.cb-hero #combat-hero-mini { padding-bottom: 5px; }
 .cb-hero .combat-hero-mini-hp-bar { flex: 1 1 auto; min-width: 0; }
 .cb-hero .combat-sortie-row { position: static; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding: 0; }
 .cb-hero .combat-sortie-row .combat-loot-pill { font-size: 10.5px; }
@@ -106,7 +119,7 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 
 /* ---------- Petits écrans (SE) : le panneau héros se compacte ---------- */
 @media (max-height: 640px), (max-width: 340px) {
-  .cb-hero { padding: 4px 6px; gap: 2px; }
+  .cb-hero { padding: 4px 6px calc(4px + var(--safe-bottom, 0px)); gap: 2px; }
   .cb-hero .combat-hero-mini-portrait { width: 44px; height: 44px; }
   .cb-cmd #class-skills-root { --cb-skill: clamp(58px, 17vw, 66px); }
   .cb-arena .enemy-status-bar { margin-top: 3px; min-height: 34px; }
@@ -123,8 +136,8 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .cb-arena #enemy-emoji.has-image img,
 .cb-arena .enemy-image {
   width: auto !important; height: auto !important; max-height: 100% !important; max-width: 84% !important;
-  -webkit-mask-image: radial-gradient(ellipse 62% 62% at 50% 52%, #000 55%, rgba(0, 0, 0, 0) 100%) !important;
-          mask-image: radial-gradient(ellipse 62% 62% at 50% 52%, #000 55%, rgba(0, 0, 0, 0) 100%) !important;
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 72%, rgba(0, 0, 0, 0) 100%) !important;
+          mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 72%, rgba(0, 0, 0, 0) 100%) !important;
   -webkit-mask-composite: initial !important; mask-composite: initial !important;
 }
 .cb-arena #enemy-emoji.has-image { flex: 1 1 auto; min-height: 120px !important; }

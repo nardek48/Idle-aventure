@@ -217,7 +217,7 @@ function buildBestiaryHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
   // v3.194.0 (Seb) : le bandeau suit le sous-onglet actif.
-  var kfTitle = activeBestiaryCodexSubTab === "codex" ? "\ud83d\udcd6 Codex" : "\ud83d\udc32 Bestiaire";
+  var kfTitle = activeBestiaryCodexSubTab === "codex" ? "Codex" : "Bestiaire";
   h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + kfTitle + '">';
 
   if (activeBestiaryCodexSubTab === "codex") {

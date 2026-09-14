@@ -499,7 +499,7 @@ function buildClassSkillButtonHTML(slot, suggestedSlot) {
     : null;
   var isActiveNow = !!(activeDefense && activeDefense.actionId === action.id);
 
-  var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "<img class=ico-inline src=images/Icons/combat_stats/stat_defense.png>" : "<img class=ico-inline src=images/Icons/scene/node_discovery.png>");
+  var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.png" : "images/Icons/scene/node_discovery.png");
   var keyLabel = CLASS_SKILL_KEY_LABELS[action.slot] || "";
 
   var title = autoModeActive

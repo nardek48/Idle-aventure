@@ -219,7 +219,7 @@ function buildShopHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
   // v3.194.0 (Seb) : le bandeau suit le sous-onglet actif.
-  var kfTitle = activeShopSubTab === "potions" ? "\ud83e\uddea Potions" : "\ud83d\udcb0 Économie";
+  var kfTitle = activeShopSubTab === "potions" ? "Potions" : "Économie";
   h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + kfTitle + '">'; // v2.83.44 : ouverte ici (pas ré-enveloppée après coup, voir CHANGELOG)
 
   if (activeShopSubTab === "potions") {
