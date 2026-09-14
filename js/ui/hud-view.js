@@ -120,6 +120,18 @@ function renderHeroHp() {
   }
 }
 
+/* v3.241.0 : le mini-héros (portrait + niveau + PV, ids conservés) vit dans le HUD
+   hors combat et dans le panneau héros en bas de l'écran pendant le combat. */
+function relocateCombatHeroMini(intoCombat) {
+  var mini = document.getElementById("combat-hero-mini");
+  if (!mini) return;
+  var target = intoCombat
+    ? document.getElementById("combat-hero-slot")
+    : document.querySelector("#hud .nb-hud-top-row");
+  if (target && mini.parentNode !== target) target.appendChild(mini);
+}
+window.relocateCombatHeroMini = relocateCombatHeroMini;
+
 function renderCombatHeroMini() {
   var img = document.getElementById("combat-hero-mini-img");
   var placeholder = document.getElementById("combat-hero-mini-placeholder");

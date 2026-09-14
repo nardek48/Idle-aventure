@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.240.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.241.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -59,6 +59,7 @@ var PRECACHE_APP_SHELL = [
   "./css/01-base.css",
   "./css/02-layout.css",
   "./css/03-combat.css",
+  "./css/03-combat-v2.css",
   "./css/04-panel-achievements.css",
   "./css/04-panel-adventures.css",
   "./css/04-panel-aether-shop.css",

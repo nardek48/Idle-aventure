@@ -14,7 +14,8 @@ function buildCombatSpeedBarHTML() {
 }
 
 function renderCombatSpeedBar() {
-  var host = document.getElementById("combat-speed-bar");
+  // v3.241.0 : rendue dans la rangée de contrôles du combat si elle existe (#combat-speed-inline).
+  var host = document.getElementById("combat-speed-inline") || document.getElementById("combat-speed-bar");
   if (!host) return;
 
   if (!host.hasChildNodes()) host.innerHTML = buildCombatSpeedBarHTML();

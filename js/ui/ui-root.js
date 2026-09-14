@@ -204,6 +204,7 @@ function switchTab(tabName) {
   }
   if (panel) panel.classList.toggle("active", !combatMode);
   document.body.classList.toggle("combat-active", combatMode);
+  if (typeof relocateCombatHeroMini === "function") relocateCombatHeroMini(combatMode); // v3.241.0
   // v3.120.0 (Lot S1) : même traitement que combat-active — l'expédition est une activité
   // engageante exclusive (décision Seb), le menu du bas disparaît pendant qu'elle est active.
   document.body.classList.toggle("scene-active", tabName === "scene");
@@ -230,6 +231,7 @@ function renderAll() {
   if (typeof renderDefenseButton === "function") renderDefenseButton();
   if (typeof renderActivePotionsBar === "function") renderActivePotionsBar();
   if (typeof renderCombatHeroMini === "function") renderCombatHeroMini();
+  if (typeof renderClassSkillButtons === "function") renderClassSkillButtons(); // v3.241.0 : compétences dès l'entrée en combat
   refreshTabBarVisibility();
   if (needsHeroSetup()) {
     openHeroSelection();

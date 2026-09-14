@@ -3,41 +3,50 @@
    (n°, mode Tactique/Grimoire, Continuer l'attaque, jauge de célérité), 4 boutons de classe, bouton Attaque, potions (= action Objet). */
 
 function buildCombatHTML() {
+  /* v3.241.0 : écran de combat en trois bandes (atelier-combat.html, layout A2
+     validé par Seb) — arène en haut, commandes au milieu, panneau héros en bas. */
   return ''
-
-    + '<div id="active-potions-bar" class="active-potions-bar"></div>'
-
-    + '<div id="enemy-display">'
-    +   '<div id="combat-mission-progress" class="combat-mission-progress"></div>'
-    +   '<div id="enemy-status-bar" class="enemy-status-bar"></div>'
-    +   '<div id="enemy-name">Slime</div>'
-    // v3.172.0 : PV ennemi sur le composant jauge du kit (css/00-kgauge.css) —
-    // dragon-claw pour un ennemi normal, boss (œil) pour un boss (classe basculée
-    // par renderEnemy selon game.enemy.isBoss). Ids conservés (renderEnemyHp).
-    +   '<div id="enemy-hp-bar-wrapper" class="kgauge kgauge-dragon-claw kgauge-hp-enemy">'
-    +     '<div class="kgauge-track"><div id="enemy-hp-bar" class="kgauge-fill" style="width:100%"></div></div>'
-    +     '<div id="enemy-hp-text" class="kgauge-text">10 / 10</div>'
+    + '<div class="cb-arena">'
+    +   '<div id="active-potions-bar" class="active-potions-bar"></div>'
+    +   '<div id="enemy-display">'
+    +     '<div id="combat-mission-progress" class="combat-mission-progress"></div>'
+    +     '<div id="enemy-name">Slime</div>'
+    +     '<div id="enemy-hp-bar-wrapper" class="kgauge kgauge-dragon-claw kgauge-hp-enemy">'
+    +       '<div class="kgauge-track"><div id="enemy-hp-bar" class="kgauge-fill" style="width:100%"></div></div>'
+    +       '<div id="enemy-hp-text" class="kgauge-text">10 / 10</div>'
+    +     '</div>'
+    +     '<div id="enemy-status-bar" class="enemy-status-bar"></div>'
+    +     '<div id="enemy-emoji">\ud83d\udfe2</div>'
     +   '</div>'
-    +   '<div id="enemy-emoji">🟢</div>'
-    + '</div>'
-    + '<div id="class-resource-root"></div>'
-    + '<div id="combat-sortie-root" class="combat-sortie-row"></div>'
-    + '<div id="combat-controls-root" class="combat-controls"></div>'
-
-    + '<div class="combat-action-row">'
-    +   '<div id="class-skills-root"></div>'
     + '</div>'
 
-    + '<div class="combat-attack-row">'
-    +   '<div id="heal-quick-root-left"></div>'
-    +   '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="heroBasicAttack()" aria-label="Attaque"></button>'
-    +   '<div id="heal-quick-root"></div>'
+    + '<div class="cb-cmd">'
+    +   '<div class="combat-action-row"><div id="class-skills-root"></div></div>'
+    +   '<div class="combat-attack-row">'
+    +     '<div id="heal-quick-root-left"></div>'
+    +     '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="heroBasicAttack()" aria-label="Attaque"></button>'
+    +     '<div id="heal-quick-root"></div>'
+    +   '</div>'
+    +   '<div class="cb-ctl-row">'
+    +     '<div id="combat-controls-root" class="combat-controls"></div>'
+    +     '<div id="combat-speed-inline" class="combat-speed-inline"></div>'
+    +   '</div>'
+    + '</div>'
+
+    + '<div class="cb-hero">'
+    +   '<div class="cb-hero-top">'
+    +     '<div id="combat-hero-slot" class="cb-hero-slot"></div>'
+    +     '<div id="combat-sortie-root" class="combat-sortie-row"></div>'
+    +   '</div>'
+    +   '<div id="class-resource-root"></div>'
+    +   '<div id="combat-celerity-root" class="cb-celerity"></div>'
     + '</div>';
 }
 
 function mountCombatArea() {
   var gameArea = document.getElementById("game-area");
   if (gameArea) gameArea.innerHTML = buildCombatHTML();
+  if (typeof relocateCombatHeroMini === "function") relocateCombatHeroMini(document.body.classList.contains("combat-active"));
 }
 
 function buildHealButtonHTML(index) {
@@ -243,12 +252,6 @@ function buildCombatControlsHTML() {
   var downed = (game.heroHp || 0) <= 0;
 
   var h = '<div class="combat-round-pill" title="Round en cours">R' + (round.number || 0) + '</div>';
-  // v3.172.0 : célérité sur la jauge fine du kit (structure kgauge, la classe
-  // .combat-gauge ne garde que le dimensionnement dans la barre de round).
-  h += '<div class="combat-gauge kgauge kgauge-thin" title="Jauge de célérité : à 100 %, une frappe bonus suit ta prochaine attaque">';
-  h += '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + gaugePct + '%"></div></div>';
-  h += '<span class="kgauge-text"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + gaugePct + '%</span>';
-  h += '</div>';
 
   if (grimoireUnlocked) {
     h += '<button type="button" class="combat-mode-btn' + (mode === "grimoire" ? ' is-auto' : '') + '" onclick="CombatEngine.setCombatMode(\'' + (mode === "grimoire" ? "tactique" : "grimoire") + '\')" title="'
@@ -265,6 +268,18 @@ function buildCombatControlsHTML() {
   }
   return h;
 }
+
+/* v3.241.0 : jauge de célérité — dans le panneau héros, sous la ressource de classe. */
+function buildCombatCelerityHTML() {
+  var gaugeMax = (typeof CELERITY_GAUGE_MAX === "number") ? CELERITY_GAUGE_MAX : 100;
+  var gaugePct = Math.max(0, Math.min(100, Math.round((Number(game.heroGauge || 0) / gaugeMax) * 100)));
+  var h = '<div class="combat-gauge kgauge kgauge-thin" title="Jauge de célérité : à 100 %, une frappe bonus suit ta prochaine attaque">';
+  h += '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + gaugePct + '%"></div></div>';
+  h += '<span class="kgauge-text"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> Célérité ' + gaugePct + ' %</span>';
+  h += '</div>';
+  return h;
+}
+window.buildCombatCelerityHTML = buildCombatCelerityHTML;
 
 /* Rangée de sortie (v3.102.1) : butin en cours + Rentrer (exploration) ou Fuir (mission, 50 % du butin). */
 function buildCombatSortieHTML() {
@@ -294,6 +309,8 @@ window.confirmFlee = confirmFlee;
 function renderCombatControls() {
   var host = document.getElementById("combat-controls-root");
   if (host) host.innerHTML = buildCombatControlsHTML();
+  var celHost = document.getElementById("combat-celerity-root");
+  if (celHost) celHost.innerHTML = buildCombatCelerityHTML();
   var sortieHost = document.getElementById("combat-sortie-root");
   if (sortieHost) sortieHost.innerHTML = buildCombatSortieHTML();
   var attackBtn = document.getElementById("combat-attack-btn");
