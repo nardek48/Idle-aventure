@@ -152,7 +152,7 @@ var STORY_QUESTS = {
     worldId: "forest",
     title: "Les Braises d'Aeswyn",
     subtitle: "Chapitre 1 — Forêt",
-    icon: "🔥",
+    icon: "images/Icons/camp/campfire.png",
     steps: [
       /* ---------- Acte I — Le feu et la lame ---------- */
       {
@@ -188,13 +188,13 @@ var STORY_QUESTS = {
         // pour le déclenchement, ui/tutorial-view.js pour le rendu.
         tutorial: {
           tab: "combat",
-          icon: "⚔️",
+          icon: "images/Icons/combat_stats/stat_attack.png",
           title: "Le combat",
           points: [
-            { icon: "⚔️", text: "Attaque de base — frappe l'ennemi sans coûter de ressource. Toujours disponible." },
-            { icon: "✨", text: "Compétences (1/2/3) — coûtent de la ressource de ta classe (Rage, Concentration ou Mana selon ton héros), pour plus de dégâts ou un effet spécial." },
-            { icon: "🛡️", text: "Défense — réduit ou évite le prochain coup. Utile quand un badge comme celui-ci apparaît au-dessus de l'ennemi : il prépare une attaque plus forte.", preview: "charge" },
-            { icon: "⚡", text: "Jauge de célérité — se remplit à chaque round. Une fois pleine, tu frappes deux fois d'affilée." }
+            { icon: "images/Icons/combat_stats/stat_attack.png", text: "Attaque de base — frappe l'ennemi sans coûter de ressource. Toujours disponible." },
+            { icon: "images/Icons/scene/node_discovery.png", text: "Compétences (1/2/3) — coûtent de la ressource de ta classe (Rage, Concentration ou Mana selon ton héros), pour plus de dégâts ou un effet spécial." },
+            { icon: "images/Icons/combat_stats/stat_defense.png", text: "Défense — réduit ou évite le prochain coup. Utile quand un badge comme celui-ci apparaît au-dessus de l'ennemi : il prépare une attaque plus forte.", preview: "charge" },
+            { icon: "images/Icons/combat_stats/stat_speed.png", text: "Jauge de célérité — se remplit à chaque round. Une fois pleine, tu frappes deux fois d'affilée." }
           ]
         },
         // v3.107.1 : killTarget déclaratif — affiché comme compteur de mission en combat (combat-view.js)
@@ -220,15 +220,15 @@ var STORY_QUESTS = {
         // v3.107.9 : chaque stat détaillée (décision Seb).
         tutorial: {
           tab: "more",
-          icon: "⬆️",
+          icon: "images/Icons/system/upgrade.png",
           title: "L'Amélioration",
           points: [
-            { icon: "⬆️", text: "Chaque amélioration augmente une statistique de façon permanente contre de l'or. Le prix grimpe à chaque achat — étale tes investissements plutôt que de tout miser sur une seule stat." },
-            { icon: "💪", text: "Puissance — dégâts de ton attaque de base." },
-            { icon: "🎯", text: "Précision — chance de coup critique." },
-            { icon: "✨", text: "Volonté — dégâts bonus en cas de critique." },
-            { icon: "❤️", text: "Endurance — PV maximum et une partie de ta défense." },
-            { icon: "⚡", text: "Célérité — remplit ta jauge de combat plus vite (frappe bonus plus fréquente)." }
+            { icon: "images/Icons/system/upgrade.png", text: "Chaque amélioration augmente une statistique de façon permanente contre de l'or. Le prix grimpe à chaque achat — étale tes investissements plutôt que de tout miser sur une seule stat." },
+            { icon: "images/Icons/improvement_icons/power.png", text: "Puissance — dégâts de ton attaque de base." },
+            { icon: "images/Icons/combat_stats/stat_critical.png", text: "Précision — chance de coup critique." },
+            { icon: "images/Icons/scene/node_discovery.png", text: "Volonté — dégâts bonus en cas de critique." },
+            { icon: "images/Icons/combat_stats/stat_health.png", text: "Endurance — PV maximum et une partie de ta défense." },
+            { icon: "images/Icons/combat_stats/stat_speed.png", text: "Célérité — remplit ta jauge de combat plus vite (frappe bonus plus fréquente)." }
           ]
         },
         // v3.109.0 : condition « niveau 2 » retirée — l'XP est par mission depuis P4 (15/étape Histoire), le niveau 2
@@ -253,12 +253,12 @@ var STORY_QUESTS = {
         // v3.107.9 : potions détaillées (décision Seb).
         tutorial: {
           tab: "shop",
-          icon: "🛒",
+          icon: "images/Icons/subtabs/equipment_shop.png",
           title: "La Boutique",
           points: [
-            { icon: "🛒", text: "La Boutique vend des potions et des améliorations d'Économie contre de l'or." },
-            { icon: "🧪", text: "Potions de soin — sur le 2e onglet de la Boutique. Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 3000 or). Utilisables en combat comme une action à part entière — elles consomment ton tour." },
-            { icon: "⚠️", text: "Maximum 2 potions par sortie — pense à te ménager pour la suite du combat." }
+            { icon: "images/Icons/subtabs/equipment_shop.png", text: "La Boutique vend des potions et des améliorations d'Économie contre de l'or." },
+            { icon: "images/Icons/subtabs/potions.png", text: "Potions de soin — sur le 2e onglet de la Boutique. Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 3000 or). Utilisables en combat comme une action à part entière — elles consomment ton tour." },
+            { icon: "images/Icons/system/warning.png", text: "Maximum 2 potions par sortie — pense à te ménager pour la suite du combat." }
           ]
         },
         // v3.107.1 : condition « 300 or gagné » retirée (décision Seb) — pur temps d'attente passive,
@@ -339,13 +339,13 @@ var STORY_QUESTS = {
         // pas sur l'écran de l'expédition elle-même — le craft doit se faire AVANT de lancer.
         tutorial: {
           tab: "village",
-          icon: "🎒",
+          icon: "images/Icons/subtabs/inventory.png",
           title: "Fabriquer une ration",
           points: [
-            { icon: "🎒", text: "Cette expédition consomme une Petite ration — il faut d'abord la fabriquer avant de partir." },
-            { icon: "🔨", text: "Rends-toi au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
-            { icon: "🥩", text: "Choisis la recette Petite ration (8 Viande + 4 Eau) et clique sur Fabriquer." },
-            { icon: "🧭", text: "Une fois la ration en stock, reviens sur ce tableau et lance l'expédition — elle la consommera automatiquement." }
+            { icon: "images/Icons/subtabs/inventory.png", text: "Cette expédition consomme une Petite ration — il faut d'abord la fabriquer avant de partir." },
+            { icon: "images/Icons/quests/mission_construction.png", text: "Rends-toi au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
+            { icon: "images/Icons/quests/ration_reward.png", text: "Choisis la recette Petite ration (8 Viande + 4 Eau) et clique sur Fabriquer." },
+            { icon: "images/Icons/quests/quest_adventure.png", text: "Une fois la ration en stock, reviens sur ce tableau et lance l'expédition — elle la consommera automatiquement." }
           ]
         },
         // La ration est consommée par l'expédition : « en stock OU sentier terminé » évite un faux 0/1 après coup.
@@ -407,12 +407,12 @@ var STORY_QUESTS = {
         // v3.107.9 : talents détaillés, réversibilité vérifiée dans le code (respecTalents).
         tutorial: {
           tab: "talents",
-          icon: "🌟",
+          icon: "images/Icons/quests/quest_side.png",
           title: "Les Talents",
           points: [
-            { icon: "🌟", text: "Chaque niveau franchi te donne un point de talent à dépenser." },
-            { icon: "🌳", text: "Les talents sont propres à ta classe et améliorent tes mécaniques de combat (ex. durée de ta Défense, vitesse de ta jauge de célérité, sang-froid en cas de mort...)." },
-            { icon: "🔄", text: "Rien n'est figé : tu peux réinitialiser tous tes talents contre de l'or (150 or par point déjà investi) si tu changes d'avis sur ta répartition." }
+            { icon: "images/Icons/quests/quest_side.png", text: "Chaque niveau franchi te donne un point de talent à dépenser." },
+            { icon: "images/Icons/plots/preserved_wood.png", text: "Les talents sont propres à ta classe et améliorent tes mécaniques de combat (ex. durée de ta Défense, vitesse de ta jauge de célérité, sang-froid en cas de mort...)." },
+            { icon: "images/Icons/system/reset.png", text: "Rien n'est figé : tu peux réinitialiser tous tes talents contre de l'or (150 or par point déjà investi) si tu changes d'avis sur ta répartition." }
           ]
         },
         check: function (game) { return storyCountTalentsBought(game) >= 1; },
@@ -447,10 +447,10 @@ var STORY_QUESTS = {
         // v3.107.9 : Grimoire détaillé (nombre de règles vérifié dans le code).
         tutorial: {
           tab: "grimoire",
-          icon: "📖",
+          icon: "images/Icons/codex/codex_lore.png",
           title: "Le Grimoire",
           points: [
-            { icon: "📖", text: "Le Grimoire automatise tes actions en combat selon des règles conditionnelles que tu définis (ex. « si une charge est annoncée → Défense »)." },
+            { icon: "images/Icons/codex/codex_lore.png", text: "Le Grimoire automatise tes actions en combat selon des règles conditionnelles que tu définis (ex. « si une charge est annoncée → Défense »)." },
             { icon: "🎚️", text: "Tu commences avec 2 règles disponibles, et tu en débloqueras d'autres au fil de ta progression dans le jeu." },
             { icon: "🔀", text: "Bascule entre mode Tactique (manuel, tu joues chaque round) et mode Grimoire (automatique, tes règles décident) à tout moment depuis l'écran Combat." }
           ]
@@ -481,13 +481,13 @@ var STORY_QUESTS = {
         },
         tutorial: {
           tab: "afflictions",
-          icon: "☣️",
+          icon: "images/Icons/afflictions/aff_plague.png",
           title: "Les Afflictions",
           points: [
-            { icon: "☣️", text: "Une affliction est un handicap volontaire pour le farm libre (ennemis plus durs, potions interdites, PV réduits...) en échange d'un gain d'or, d'essence ou de butin." },
+            { icon: "images/Icons/afflictions/aff_plague.png", text: "Une affliction est un handicap volontaire pour le farm libre (ennemis plus durs, potions interdites, PV réduits...) en échange d'un gain d'or, d'essence ou de butin." },
             { icon: "➕", text: "Jusqu'à 4 afflictions actives en même temps. Chaque affliction cumulée ajoute +10 % aux récompenses, en plus de ses effets propres." },
-            { icon: "🔁", text: "Active-les ou désactive-les à tout moment ici, entre deux sorties — rien n'est définitif." },
-            { icon: "⚔️", text: "Pour cette étape : 2 afflictions actives, puis 5 victoires au Cœur de la forêt en farm libre." }
+            { icon: "images/Icons/system/auto_repeat.png", text: "Active-les ou désactive-les à tout moment ici, entre deux sorties — rien n'est définitif." },
+            { icon: "images/Icons/combat_stats/stat_attack.png", text: "Pour cette étape : 2 afflictions actives, puis 5 victoires au Cœur de la forêt en farm libre." }
           ]
         },
         killTarget: { label: "Sous la marque", counter: function (g) { return storyCounter(g, "coeurKillsMarked"); }, target: 5, autoReturn: true },
@@ -545,12 +545,12 @@ var STORY_QUESTS = {
         },
         tutorial: {
           tab: "campement",
-          icon: "🔥",
+          icon: "images/Icons/camp/campfire.png",
           title: "Les braises d'Aeswyn",
           points: [
-            { icon: "🍃", text: "La Sève d'Aeswyn se trouve en Petite Aventure (tableau de missions, 3 par jour) — 1 à 2 par parcours, davantage en profil Bourrin." },
-            { icon: "🥩", text: "La Ration moyenne se cuisine à la Cuisine de camp (bâtiment Chasse) : 10 Viande séchée (Séchoir) + 1 Pain (Moulin puis Boulangerie du Champs)." },
-            { icon: "🔥", text: "Quand tout est réuni, reviens au Campement : le bloc « Les braises » te laisse faire l'offrande." }
+            { icon: "images/Icons/scene/path_easy.png", text: "La Sève d'Aeswyn se trouve en Petite Aventure (tableau de missions, 3 par jour) — 1 à 2 par parcours, davantage en profil Bourrin." },
+            { icon: "images/Icons/quests/ration_reward.png", text: "La Ration moyenne se cuisine à la Cuisine de camp (bâtiment Chasse) : 10 Viande séchée (Séchoir) + 1 Pain (Moulin puis Boulangerie du Champs)." },
+            { icon: "images/Icons/camp/campfire.png", text: "Quand tout est réuni, reviens au Campement : le bloc « Les braises » te laisse faire l'offrande." }
           ]
         },
         check: function (game) {

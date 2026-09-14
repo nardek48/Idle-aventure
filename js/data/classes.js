@@ -6,7 +6,7 @@ var CLASSES = [
   {
     id: "knight",
     label: "Chevalier",
-    icon: "⚔️",
+    icon: "images/Icons/classes/class_knight.png",
     weaponType: "sword",
     weaponIcons: ["sword", "axe"],
     heroIds: ["knight", "chaosKnight"],
@@ -28,7 +28,7 @@ var CLASSES = [
   {
     id: "archer",
     label: "Archer",
-    icon: "🏹",
+    icon: "images/Icons/classes/class_ranger.png",
     weaponType: "bow",
     weaponIcons: ["bow"],
     heroIds: ["ranger", "chaosRanger"],
@@ -49,7 +49,7 @@ var CLASSES = [
   {
     id: "mage",
     label: "Mage",
-    icon: "🔮",
+    icon: "images/Icons/classes/class_mage.png",
     weaponType: "magic",
     weaponIcons: ["staff"],
     heroIds: ["mage", "chaosMage"],

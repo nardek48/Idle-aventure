@@ -222,7 +222,7 @@ var StoryQuestManager = {
     addLog("📖 Étape terminée : " + step.title, "event");
     if (typeof openQuestCompletePopup === "function") {
       openQuestCompletePopup({
-        icon: "🔥",
+        icon: "images/Icons/camp/campfire.png",
         title: step.title,
         text: step.narrative.completion,
         rewardRows: rewardRows,

@@ -18,12 +18,12 @@ function buildTutorialPreviewHTML(kind) {
 function buildTutorialModalHTML(closeHandlerJs, tutorial) {
   var h = '<div class="full-menu-overlay tutorial-overlay">';
   h += '  <div class="full-menu dungeon-story-card tutorial-card">';
-  h += '    <div class="dungeon-story-icon">' + esc(tutorial.icon || "📖") + '</div>';
+  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(tutorial.icon || "images/Icons/codex/codex_lore.png", "dungeon-story-icon-img", "") + '</div>';
   h += '    <div class="dungeon-story-title">' + esc(tutorial.title || "") + '</div>';
   h += '    <div class="tutorial-points">';
   (tutorial.points || []).forEach(function (p) {
     h += '<div class="tutorial-point">';
-    h += '<span class="tutorial-point-icon">' + esc(p.icon || "") + '</span>';
+    h += '<span class="tutorial-point-icon">' + renderIconOrEmojiHTML(p.icon, "tutorial-point-ico", "") + '</span>';
     h += '<span class="tutorial-point-text">' + esc(p.text || "");
     if (p.preview) h += ' ' + buildTutorialPreviewHTML(p.preview);
     h += '</span>';
@@ -80,13 +80,13 @@ var GENERIC_TUTORIALS = {
      condition : affiché une seule fois, dès la toute première arrivée (y compris au boot). */
   camp_welcome: {
     tab: "campement",
-    icon: "🏕️",
+    icon: "images/Icons/plots/hunting_blind.png",
     title: "Le Campement",
     points: [
-      { icon: "🏕️", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
-      { icon: "❤️", text: "Ta santé — hors combat, tu récupères 5 % de tes PV max par minute (jusqu'à 50 % si tu es hors ligne). Suis ta barre de vie et la régénération en bas de l'écran." },
-      { icon: "🍖", text: "Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre." },
-      { icon: "📋", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Principale ») est toujours en tête. Clique sur « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
+      { icon: "images/Icons/plots/hunting_blind.png", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
+      { icon: "images/Icons/combat_stats/stat_health.png", text: "Ta santé — hors combat, tu récupères 5 % de tes PV max par minute (jusqu'à 50 % si tu es hors ligne). Suis ta barre de vie et la régénération en bas de l'écran." },
+      { icon: "images/Icons/quests/ration_reward.png", text: "Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre." },
+      { icon: "images/Icons/quests/quest_list.png", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Principale ») est toujours en tête. Clique sur « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
     ]
   },
   /* v3.213.1 (lot V-2) : premier plafond d'entraînement. Condition : une
@@ -99,13 +99,13 @@ var GENERIC_TUTORIALS = {
         && typeof VILLAGE_BUILDINGS.training.unlockCheck === "function"
         && VILLAGE_BUILDINGS.training.unlockCheck());
     },
-    icon: "🎯",
+    icon: "images/Icons/combat_stats/stat_critical.png",
     title: "Le Terrain d'entraînement",
     points: [
       { icon: "🚧", text: "Tes caractéristiques butent à 10 : c'est la limite de l'entraînement de fortune du campement. Pour aller plus loin, il faut un vrai terrain." },
-      { icon: "🏗️", text: "Le Terrain se bâtit ici, au Village, comme l'Atelier : des matériaux, puis un chantier qui prend un peu de temps." },
-      { icon: "🎯", text: "Chaque niveau du Terrain ouvre 10 niveaux de plus sur CHACUNE des cinq caractéristiques — jamais un total à répartir." },
-      { icon: "💰", text: "L'entraînement lui-même se paie toujours en or, dans Personnage → Stats. Le Terrain décide jusqu'où tu peux monter, pas combien ça coûte." }
+      { icon: "images/Icons/workshops/masonry.png", text: "Le Terrain se bâtit ici, au Village, comme l'Atelier : des matériaux, puis un chantier qui prend un peu de temps." },
+      { icon: "images/Icons/combat_stats/stat_critical.png", text: "Chaque niveau du Terrain ouvre 10 niveaux de plus sur CHACUNE des cinq caractéristiques — jamais un total à répartir." },
+      { icon: "images/Icons/gold_icon.png", text: "L'entraînement lui-même se paie toujours en or, dans Personnage → Stats. Le Terrain décide jusqu'où tu peux monter, pas combien ça coûte." }
     ]
   },
   village_production: {
@@ -113,14 +113,14 @@ var GENERIC_TUTORIALS = {
     // Condition d'affichage : seulement une fois la mission "Les fondations" accessible (La veine
     // instable terminée) — avant, le joueur n'a pas encore vraiment de quoi produire à comprendre.
     condition: function () { return !!(game.explorationProgression && (game.explorationProgression.unstableVeinDiscoveryCompleted || game.explorationProgression.quarryUnlocked)); }, // v3.124.0 (retrait ancien moteur) : lecture directe du flag, sans MiningManager
-    icon: "🌾",
+    icon: "images/Icons/scene/scene_harvest.png",
     title: "Village & Production",
     points: [
-      { icon: "🌾", text: "Les parcelles produisent une ressource en continu, même hors ligne — mais chaque bâtiment a un stock local limité (« Plein dans Xm »)." },
-      { icon: "🎒", text: "Clique sur « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
-      { icon: "⬆️", text: "Améliorer une parcelle augmente sa vitesse de production et sa capacité de stock local." },
-      { icon: "🔨", text: "Les Ateliers (comme la Cuisine de camp) transforment des ressources brutes (ex. viande + eau) en objets utiles (ex. rations) — file d'attente, continue même hors ligne." },
-      { icon: "📦", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée ou vendue." }
+      { icon: "images/Icons/scene/scene_harvest.png", text: "Les parcelles produisent une ressource en continu, même hors ligne — mais chaque bâtiment a un stock local limité (« Plein dans Xm »)." },
+      { icon: "images/Icons/subtabs/inventory.png", text: "Clique sur « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
+      { icon: "images/Icons/system/upgrade.png", text: "Améliorer une parcelle augmente sa vitesse de production et sa capacité de stock local." },
+      { icon: "images/Icons/quests/mission_construction.png", text: "Les Ateliers (comme la Cuisine de camp) transforment des ressources brutes (ex. viande + eau) en objets utiles (ex. rations) — file d'attente, continue même hors ligne." },
+      { icon: "images/Icons/system/warehouse_supplies.png", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée ou vendue." }
     ]
   },
 
@@ -132,15 +132,15 @@ var GENERIC_TUTORIALS = {
      garantit qu'aucun popup ne s'ouvre tout seul en arrivant sur le Grimoire — c'est le
      bouton « ? » qui l'affiche, et lui seul, conformément à la refonte v3.210.0. */
   grimoire_rules: {
-    icon: "📕",
+    icon: "images/Icons/codex/codex_lore.png",
     title: "Le Grimoire de tactiques",
     points: [
-      { icon: "📖", text: "Le Grimoire programme ton combat automatique : si une situation se présente, ton héros joue l'action que tu as choisie en priorité." },
+      { icon: "images/Icons/codex/codex_lore.png", text: "Le Grimoire programme ton combat automatique : si une situation se présente, ton héros joue l'action que tu as choisie en priorité." },
       { icon: "🔢", text: "Les règles sont lues dans l'ordre, de haut en bas. La première qui s'applique l'emporte." },
-      { icon: "⚡", text: "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation." },
-      { icon: "🌀", text: "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas." },
-      { icon: "🔒", text: "En combat, ton héros met de côté un peu de ressource pour garantir ton contre le plus prioritaire : il jouera moins d'actions coûteuses en attendant." },
-      { icon: "🗺️", text: "De nouvelles règles se débloquent en atteignant de nouveaux mondes pour la première fois." }
+      { icon: "images/Icons/combat_stats/stat_speed.png", text: "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation." },
+      { icon: "images/Icons/system/ascension.png", text: "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas." },
+      { icon: "images/Icons/system/lock_closed.png", text: "En combat, ton héros met de côté un peu de ressource pour garantir ton contre le plus prioritaire : il jouera moins d'actions coûteuses en attendant." },
+      { icon: "images/Icons/quests/quest_resources.png", text: "De nouvelles règles se débloquent en atteignant de nouveaux mondes pour la première fois." }
     ]
   }
 };

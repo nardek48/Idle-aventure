@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.239.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.240.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -82,6 +82,7 @@ var PRECACHE_APP_SHELL = [
   "./css/05-overlays.css",
   "./css/06-map.css",
   "./css/07-responsive.css",
+  "./css/99-icon-assets.css",
   "./js/core/constants.js",
   "./js/core/state.js",
   "./js/core/utils.js",

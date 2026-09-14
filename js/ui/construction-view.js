@@ -18,7 +18,7 @@ function buildConstructionCostRowHTML(label, iconHTML, amount, ok) {
   h += iconHTML;
   h += '<span class="construction-cost-label">' + esc(label) + '</span>';
   h += '<span class="construction-cost-amount">' + formatNumber(amount) + '</span>';
-  h += '<span class="construction-cost-check">' + (ok ? '✅' : '❌') + '</span>';
+  h += '<span class="construction-cost-check">' + (ok ? '<img class=ico-inline src=images/Icons/system/check_valid.png>' : '<img class=ico-inline src=images/Icons/system/cross_error.png>') + '</span>';
   h += '</div>';
   return h;
 }
@@ -33,7 +33,7 @@ function buildConstructionModalHTML(id) {
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu construction-popup-card">';
-  h += '    <div class="construction-popup-icon">🏗️</div>';
+  h += '    <div class="construction-popup-icon"><img class=ico-inline src=images/Icons/workshops/masonry.png></div>';
   h += '    <div class="construction-popup-title">' + esc(def.name) + '</div>';
   h += '    <div class="construction-popup-text">' + esc(def.desc) + '</div>';
   h += '    <div class="construction-popup-meta">Niveau ' + level + ' / ' + def.maxLevel + '</div>';

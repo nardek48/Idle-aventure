@@ -29,7 +29,7 @@ function setHerosSubTab(tab) {
 function buildPcStatRowHTML(icon, label, value) {
   return ''
     + '<div class="pc-stat-row">'
-    + '<span class="pc-stat-icon">' + esc(icon) + '</span>'
+    + '<span class="pc-stat-icon">' + renderIconOrEmojiHTML(icon, "pc-stat-ico-img", "") + '</span>'
     + '<span class="pc-stat-label">' + esc(label) + '</span>'
     + '<span class="pc-stat-value">' + esc(value) + '</span>'
     + '</div>';
@@ -106,7 +106,7 @@ function buildHeroSummaryIdentityHTML(hero) {
   h += '<div class="pc-sum-name">' + esc(game.playerName || (hero ? hero.name : "Sans nom")) + '</div>';
 
   if (cls) {
-    h += '<div class="pc-sum-class is-class-' + esc(cls.id) + '">' + esc(cls.icon) + ' ' + esc(cls.label);
+    h += '<div class="pc-sum-class is-class-' + esc(cls.id) + '">' + renderIconOrEmojiHTML(cls.icon, "pc-sum-class-ico", cls.label) + ' ' + esc(cls.label);
     if (cls.resource && cls.resource.label) {
       h += '<span class="pc-sum-class-res">' + esc(cls.resource.label) + '</span>';
     }
@@ -180,7 +180,7 @@ function buildHeroSummaryJumpsHTML() {
 
   var prog = getHeroTrainingProgress();
   h += '<button type="button" class="pc-sum-jump" onclick="setHerosSubTab(\'amelioration\')">';
-  h += '<span class="pc-sum-jump-ico">📊</span>';
+  h += '<span class="pc-sum-jump-ico"><img class=ico-inline src=images/Icons/subtabs/hero_stats.png></span>';
   h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">Stats</span>';
   h += '<span class="pc-sum-jump-s">' + (prog
     ? (prog.left > 0
@@ -203,7 +203,7 @@ function buildHeroSummaryJumpsHTML() {
     });
   }
   h += '<button type="button" class="pc-sum-jump" onclick="setHerosSubTab(\'stats\')">';
-  h += '<span class="pc-sum-jump-ico">⚔️</span>';
+  h += '<span class="pc-sum-jump-ico"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png></span>';
   h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">Capacités</span>';
   h += '<span class="pc-sum-jump-s">' + (actions.length
     ? actions.length + " technique" + (actions.length > 1 ? "s" : "")
@@ -216,7 +216,7 @@ function buildHeroSummaryJumpsHTML() {
     h += '<span class="pc-sum-jump-kit">';
     actions.forEach(function (a) {
       var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id])
-        || (a.type === "defense" ? "🛡️" : "✨");
+        || (a.type === "defense" ? "<img class=ico-inline src=images/Icons/combat_stats/stat_defense.png>" : "<img class=ico-inline src=images/Icons/scene/node_discovery.png>");
       h += '<span>' + renderIconOrEmojiHTML(icon, "pc-sum-jump-kit-ico", a.label || "") + '</span>';
     });
     h += '</span>';
@@ -235,11 +235,11 @@ function buildHeroFicheHTML() {
   h += buildHeroSummaryJumpsHTML();
 
   h += '<div class="pc-sum-foot">';
-  h += '<button class="settings-btn" type="button" onclick="openHeroSlotsScreen()">👥 Mes héros</button>';
-  h += '<button class="settings-btn" type="button" onclick="switchTab(\'equip\')">🎒 Équipement</button>';
+  h += '<button class="settings-btn" type="button" onclick="openHeroSlotsScreen()"><img class=ico-inline src=images/Icons/subtabs/hero_roster.png> Mes héros</button>';
+  h += '<button class="settings-btn" type="button" onclick="switchTab(\'equip\')"><img class=ico-inline src=images/Icons/subtabs/inventory.png> Équipement</button>';
   h += '</div>';
 
-  return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83d\udee1\ufe0f R\u00e9sum\u00e9">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/combat_stats/stat_defense.png|R\u00e9sum\u00e9">' + h + '</div>';
 }
 
 /* Ouvre l'écran titre directement sur "Charger une partie", qui est la gestion
@@ -614,7 +614,7 @@ function buildHeroStatCardHTML(row, buyAmount) {
       h += '</div>';
     }
     if (gain && Math.abs(gain.delta) >= 0.005) {
-      h += '<div class="pc-stat-next">↑ ' + esc(row.fmtDelta(gain.delta)) + ' pour ' + formatNumber(gain.totalCost) + ' or</div>';
+      h += '<div class="pc-stat-next"><img class=ico-inline src=images/Icons/system/upgrade.png> ' + esc(row.fmtDelta(gain.delta)) + ' pour ' + formatNumber(gain.totalCost) + ' or</div>';
     } else if (gain) {
       // Gain réel mais invisible après arrondi : on dit à partir de combien il
       // se verra, plutôt que d'afficher un "+0" décourageant.
@@ -644,7 +644,7 @@ function buildHerosAmeliorationHTML() {
   // v3.202.1 : titre du cadre aligné sur le libellé du sous-onglet. Le bas de
   // l'écran disait "Stats" et le bandeau "Amélioration" : le joueur tapait un
   // nom et arrivait sur un autre.
-  h += '<div class="pc-heros-train-section nb-page-frame kframe-page" data-kf-title="\ud83d\udcca Stats">';
+  h += '<div class="pc-heros-train-section nb-page-frame kframe-page" data-kf-title="images/Icons/subtabs/hero_stats.png|Stats">';
 
   h += '<div class="pc-stat-gold"><img src="images/Icons/gold_icon.png" alt=""> ' + formatNumber(game.gold || 0) + '</div>';
 
@@ -699,7 +699,7 @@ function buildHeroSkillCardHTML(action) {
   var isDefense = action.type === "defense";
   var remaining = (game.classCooldowns && typeof game.classCooldowns[id] === "number") ? game.classCooldowns[id] : 0;
   var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[id])
-    || (isDefense ? "🛡️" : "✨");
+    || (isDefense ? "<img class=ico-inline src=images/Icons/combat_stats/stat_defense.png>" : "<img class=ico-inline src=images/Icons/scene/node_discovery.png>");
   var cost = Number(action.resourceCost || 0);
   var resLabel = "";
   if (typeof getClassForHero === "function") {
@@ -730,7 +730,7 @@ function buildHeroSkillCardHTML(action) {
     h += '<div class="pc-skill-desc">' + esc(action.description || "") + '</div>';
 
     h += '<div class="pc-skill-counters">';
-    h += '<div class="pc-skill-counters-lbl">⚡ Utile contre</div>';
+    h += '<div class="pc-skill-counters-lbl"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> Utile contre</div>';
     // v3.208.0 : liste complète (counters + suppressions d'archétype portées par effects).
     // Avant, seul action.counters était lu — la moitié des contres n'était annoncée nulle part.
     var ids = (typeof getAllGrimoireCounterIds === "function")
@@ -743,7 +743,7 @@ function buildHeroSkillCardHTML(action) {
         var cond = (typeof getGrimoireCondition === "function") ? getGrimoireCondition(condId) : null;
         if (!cond) return;
         h += '<div class="pc-skill-counter">';
-        h += '<span class="pc-skill-counter-ico">' + esc(cond.icon || "•") + '</span>';
+        h += '<span class="pc-skill-counter-ico">' + renderIconOrEmojiHTML(cond.icon, "pc-skill-counter-img", "") + '</span>';
         h += '<span class="pc-skill-counter-texts">';
         h += '<span class="pc-skill-counter-lbl">' + esc(cond.label) + '</span>';
         h += '<span class="pc-skill-counter-desc">' + esc(cond.description || "") + '</span>';
@@ -772,7 +772,7 @@ function buildHerosStatsHTML() {
     h += '<div class="pc-empty">Aucune capacité disponible pour le moment.</div>';
   } else {
     var cls = (typeof getClassForHero === "function") ? getClassForHero(getSelectedHero()) : null;
-    if (cls) h += '<div class="pc-section-label">' + esc(cls.icon || "") + ' Kit du ' + esc(cls.label) + '</div>';
+    if (cls) h += '<div class="pc-section-label">' + renderIconOrEmojiHTML(cls.icon, "pc-section-ico", "") + ' Kit du ' + esc(cls.label) + '</div>';
 
     var cards = "";
     ["skill1", "skill2", "skill3", "defense"].forEach(function (slot) {
@@ -787,14 +787,14 @@ function buildHerosStatsHTML() {
   // rendait la cohabitation franchement fausse : un onglet "Capacités" qui
   // affiche le temps de jeu.
   // v3.202.1 : titre du cadre aligné sur le libellé du sous-onglet.
-  return '<div class="nb-page-frame kframe-page" data-kf-title="\u2694\ufe0f Capacit\u00e9s">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/combat_stats/stat_attack.png|Capacit\u00e9s">' + h + '</div>';
 }
 
 function buildHerosSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "hero" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'hero\')">🛡️<span>Résumé</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "amelioration" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'amelioration\')">📊<span>Stats</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "stats" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'stats\')">⚔️<span>Capacités</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "hero" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'hero\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/hero_summary.png" alt=""><span>Résumé</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "amelioration" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'amelioration\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/hero_stats.png" alt=""><span>Stats</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "stats" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'stats\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/hero_abilities.png" alt=""><span>Capacités</span></button>';
   h += '</div>';
   return h;
 }

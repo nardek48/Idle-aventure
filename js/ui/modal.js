@@ -18,7 +18,7 @@ function showConfirmModal(title, text, icon, onConfirm) {
 
   if (titleEl) titleEl.textContent = title || "Confirmer";
   if (textEl) textEl.textContent = text || "";
-  if (iconEl) iconEl.innerHTML = renderIconOrEmojiHTML(icon || "🌀", "confirm-icon-img", title || "");
+  if (iconEl) iconEl.innerHTML = renderIconOrEmojiHTML(icon || "images/Icons/system/ascension.png", "confirm-icon-img", title || "");
 
   _confirmModalCallback = typeof onConfirm === "function" ? onConfirm : null;
   modal.classList.add("show");

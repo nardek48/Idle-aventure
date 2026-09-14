@@ -168,13 +168,13 @@ function rsbSingleSortieHTML(ctx, cfg, scale) {
     var def = pool[i % pool.length];
     var enemy = CombatRoundSim.buildEnemy(def, false, scale + i * 0.05, cfg);
     var f = CombatRoundSim.simulateFight(hero, enemy, cfg, { rng: rng });
-    lines.push((i + 1) + ". " + def.name + " (" + enemy.maxHp + " PV) : " + f.rounds + " rounds, " + f.decisions + " décision(s), " + f.bonusStrikes + " frappe(s) bonus, " + f.patternImpacts + " impact(s) — PV héros " + hero.hp + "/" + hero.maxHp + (f.won ? "" : " ☠️"));
+    lines.push((i + 1) + ". " + def.name + " (" + enemy.maxHp + " PV) : " + f.rounds + " rounds, " + f.decisions + " décision(s), " + f.bonusStrikes + " frappe(s) bonus, " + f.patternImpacts + " impact(s) — PV héros " + hero.hp + "/" + hero.maxHp + (f.won ? "" : " <img class=ico-inline src=images/Icons/combat_status/corruption.png>"));
     if (!f.won) break;
   }
   if (hero.hp > 0) {
     var b = CombatRoundSim.buildEnemy(boss, true, scale, cfg);
     var fb = CombatRoundSim.simulateFight(hero, b, cfg, { rng: rng });
-    lines.push("👑 " + boss.name + " (" + b.maxHp + " PV) : " + fb.rounds + " rounds, " + fb.decisions + " décision(s), " + fb.counters + " contre(s) — PV héros " + hero.hp + "/" + hero.maxHp + (fb.won ? " ✔ victoire" : " ☠️"));
+    lines.push("👑 " + boss.name + " (" + b.maxHp + " PV) : " + fb.rounds + " rounds, " + fb.decisions + " décision(s), " + fb.counters + " contre(s) — PV héros " + hero.hp + "/" + hero.maxHp + (fb.won ? " <img class=ico-inline src=images/Icons/system/check_valid.png> victoire" : " <img class=ico-inline src=images/Icons/combat_status/corruption.png>"));
   }
   lines.push("Potions utilisées : " + (cfg.potionsPerSortie - hero.potions) + "/" + cfg.potionsPerSortie);
   return '<ol class="rsb-log">' + lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join("") + '</ol>';
@@ -248,11 +248,11 @@ function rsbCopyMarkdown() {
 /* ---------- Vue ---------- */
 function buildCombatSandboxHTML() {
   if (!window.CombatRoundSim) {
-    return '<div class="nb-page-frame"><div class="panel-card"><h3>🧪 Bac à sable</h3><p class="panel-sub">js/sim/combat-round-sim.js n\'est pas chargé.</p></div></div>';
+    return '<div class="nb-page-frame"><div class="panel-card"><h3><img class=ico-inline src=images/Icons/subtabs/potions.png> Bac à sable</h3><p class="panel-sub">js/sim/combat-round-sim.js n\'est pas chargé.</p></div></div>';
   }
   var coefs = rsbCoefs();
-  var h = '<div class="nb-page-frame kframe-page" data-kf-title="\ud83e\uddea Bac \u00e0 sable">';
-  h += '<div class="panel-card rsb-card"><h3>🧪 Bac à sable — simulateur de rounds</h3>';
+  var h = '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/subtabs/potions.png|Bac \u00e0 sable">';
+  h += '<div class="panel-card rsb-card"><h3><img class=ico-inline src=images/Icons/subtabs/potions.png> Bac à sable — simulateur de rounds</h3>';
   h += '<p class="panel-sub">Rejoue le modèle du moteur (héros puis ennemi, jauge de célérité, patterns télégraphe → impact, contres) sur les vraies données, sans toucher à ta partie. Les coefficients sont pré-remplis avec les valeurs courantes du jeu.</p>';
 
   h += '<div class="rsb-grid">';
@@ -280,7 +280,7 @@ function buildCombatSandboxHTML() {
   h += '<label class="rsb-check"><input type="checkbox" id="rsb-patterns"' + (rsbState.patterns ? ' checked' : '') + '> Patterns (charge, bouclier, soin) et contres</label>';
   h += '</div>';
 
-  h += '<div class="panel-card rsb-card"><h3>⚙️ Coefficients</h3>';
+  h += '<div class="panel-card rsb-card"><h3><img class=ico-inline src=images/Icons/system/settings.png> Coefficients</h3>';
   h += '<div class="rsb-grid">';
   h += '<label>PV ennemi (ENEMY_PV_MULT)<input type="number" step="0.01" id="rsb-c-ehp" value="' + coefs.enemyHpCoef + '"></label>';
   h += '<label>PV boss (BOSS_PV_MULT)<input type="number" step="0.01" id="rsb-c-bhp" value="' + coefs.bossHpCoef + '"></label>';
@@ -294,21 +294,21 @@ function buildCombatSandboxHTML() {
   h += '<div class="rsb-actions">';
   h += '<button class="settings-btn" onclick="rsbRun(\'budget\')">📐 Budgets duel</button>';
   h += '<button class="settings-btn" onclick="rsbRun(\'sortie\')">🎲 Sorties Monte-Carlo</button>';
-  h += '<button class="settings-btn" onclick="rsbRun(\'all\')">📊 Les deux</button>';
-  h += '<button class="settings-btn" onclick="rsbRun(\'single\')">🔍 Une sortie détaillée</button>';
-  h += '<button class="settings-btn" onclick="rsbResetCoefs()">↺ Valeurs du jeu</button>';
+  h += '<button class="settings-btn" onclick="rsbRun(\'all\')"><img class=ico-inline src=images/Icons/subtabs/hero_stats.png> Les deux</button>';
+  h += '<button class="settings-btn" onclick="rsbRun(\'single\')"><img class=ico-inline src=images/Icons/system/search_unknown.png> Une sortie détaillée</button>';
+  h += '<button class="settings-btn" onclick="rsbResetCoefs()"><img class=ico-inline src=images/Icons/system/reset.png> Valeurs du jeu</button>';
   h += '</div></div>';
 
   if (rsbState.resultsHtml) {
     h += '<div class="panel-card rsb-card rsb-results">' + rsbState.resultsHtml;
     if (rsbState.markdown) {
       h += '<textarea id="rsb-md" class="rsb-md" readonly>' + esc(rsbState.markdown) + '</textarea>';
-      h += '<button class="settings-btn" onclick="rsbCopyMarkdown()">📋 Copier en Markdown</button>';
+      h += '<button class="settings-btn" onclick="rsbCopyMarkdown()"><img class=ico-inline src=images/Icons/quests/quest_list.png> Copier en Markdown</button>';
     }
     h += '</div>';
   }
 
-  h += '<button class="settings-btn" onclick="switchTab(\'admin\')">← Retour Admin</button>';
+  h += '<button class="settings-btn" onclick="switchTab(\'admin\')"><img class=ico-inline src=images/Icons/system/back.png> Retour Admin</button>';
   h += '</div>';
   return h;
 }

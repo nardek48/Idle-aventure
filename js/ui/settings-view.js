@@ -3,23 +3,23 @@
 
 function buildSettingsHTML() {
   var h = '<button class="settings-btn" onclick="saveGame()">Sauvegarder</button>';
-  h += '<button class="settings-btn" onclick="switchTab(\'log\')">📜 Journal</button>';
+  h += '<button class="settings-btn" onclick="switchTab(\'log\')"><img class=ico-inline src=images/Icons/quests/quest_story.png> Journal</button>';
   // v3.99.15 : onglets cachés par défaut (voir core/state.js:unlockedTabs). v3.100.0 : le
   // déblocage normal passe par la chaîne Histoire (systems/story-quest-system.js) ; ce bouton
   // reste un raccourci qui court-circuite le chapitre (StoryQuestManager.skipAll).
-  h += '<button class="settings-btn" onclick="unlockAllTabsFromSettings()">🔓 Débloquer tous les onglets</button>';
+  h += '<button class="settings-btn" onclick="unlockAllTabsFromSettings()"><img class=ico-inline src=images/Icons/system/lock_open.png> Débloquer tous les onglets</button>';
 
   h += '<div class="panel-card">';
-  h += '<h3>💾 Sauvegarde</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/system/save.png> Sauvegarde</h3>';
   h += '<p class="panel-sub">Le jeu ne sauvegarde que dans ce navigateur. Exporte régulièrement une copie pour ne rien perdre en cas de changement d\'appareil ou de nettoyage du cache.</p>';
-  h += '<button class="settings-btn" onclick="exportSaveToFile()">📤 Exporter (fichier)</button>';
-  h += '<button class="settings-btn" onclick="showExportTextModal()">📋 Exporter (code à copier)</button>';
-  h += '<button class="settings-btn" onclick="triggerImportFilePicker()">📥 Importer un fichier</button>';
-  h += '<button class="settings-btn" onclick="showImportTextModal()">📋 Importer un code</button>';
+  h += '<button class="settings-btn" onclick="exportSaveToFile()"><img class=ico-inline src=images/Icons/system/export.png> Exporter (fichier)</button>';
+  h += '<button class="settings-btn" onclick="showExportTextModal()"><img class=ico-inline src=images/Icons/quests/quest_list.png> Exporter (code à copier)</button>';
+  h += '<button class="settings-btn" onclick="triggerImportFilePicker()"><img class=ico-inline src=images/Icons/system/import.png> Importer un fichier</button>';
+  h += '<button class="settings-btn" onclick="showImportTextModal()"><img class=ico-inline src=images/Icons/quests/quest_list.png> Importer un code</button>';
   h += '</div>';
 
   h += '<div class="panel-card">';
-  h += '<h3>⚔️ Combat</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> Combat</h3>';
   var grimoireUnlocked = (typeof isTabUnlocked === "function") ? isTabUnlocked("grimoire") : true;
   h += '<label class="settings-toggle-row">';
   h += '<span>Mode Grimoire (rounds automatiques)</span>';
@@ -27,13 +27,13 @@ function buildSettingsHTML() {
   h += '</label>';
   h += '<p class="panel-sub">Tactique : chaque round attend ton choix (Attaque, compétences, Défense, potion). Grimoire : les rounds s\'enchaînent seuls et tes règles du Grimoire (ou la priorité par défaut) choisissent l\'action.'
     + (grimoireUnlocked ? '' : ' Le mode Grimoire se débloque avec la chaîne Histoire.') + '</p>';
-  h += '<button class="settings-btn" onclick="switchTab(\'grimoire\')">📖 Grimoire de tactiques</button>';
+  h += '<button class="settings-btn" onclick="switchTab(\'grimoire\')"><img class=ico-inline src=images/Icons/codex/codex_lore.png> Grimoire de tactiques</button>';
   h += '</div>';
 
   h += '<button class="settings-btn danger" onclick="resetGame()">Réinitialiser tout</button>';
 
   h += '<div class="panel-card">';
-  h += '<h3>🧪 Développement</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/subtabs/potions.png> Développement</h3>';
   h += '<p class="panel-sub">Outil de test, sans effet sur ta partie (pas de sauvegarde, pas de récompense).</p>';
   h += '<button class="settings-btn" onclick="switchTab(\'admin\')">🛠️ Admin</button>';
   // v3.163.0 : Atelier UI — galerie de contrôle des composants (vrai CSS,
@@ -43,7 +43,7 @@ function buildSettingsHTML() {
   // v3.201.0 : maquette de l'écran Personnage (2 onglets), à valider avant tout
   // code dans heros-view.js. Même logique que l'Atelier UI : consultable depuis
   // le téléphone, hors du jeu.
-  h += '<button class="settings-btn" onclick="window.open(\'atelier-heros.html\', \'_blank\')">🛡️ Atelier Héros</button>';
+  h += '<button class="settings-btn" onclick="window.open(\'atelier-heros.html\', \'_blank\')"><img class=ico-inline src=images/Icons/combat_stats/stat_defense.png> Atelier Héros</button>';
   // v3.203.4 : atelier des cadres parchemin, à juger sur téléphone avant tout
   // usage dans le jeu. Aucun écran ne les utilise à ce stade.
   h += '<button class="settings-btn" onclick="window.open(\'atelier-cadres.html\', \'_blank\')">🖼️ Atelier Cadres</button>';
@@ -54,7 +54,7 @@ function buildSettingsHTML() {
   h += 'Sauvegarde : ' + (game.saveSupported ? 'locale navigateur' : 'indisponible') + '.<br>';
   h += 'La progression hors-ligne, l\'équipement et les quêtes sont activés.';
   h += '</div>';
-  return '<div class="nb-page-frame kframe-page" data-kf-title="\u2699\ufe0f Options">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/system/settings.png|Options">' + h + '</div>';
 }
 
 function toggleAutoSkills(enabled) {

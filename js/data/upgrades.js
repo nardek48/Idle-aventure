@@ -82,7 +82,7 @@ var UPGRADES = [
     {
     id: "u_bounty",
     name: "Contrats lucratifs",
-    icon: "📜",
+    icon: "images/Icons/quests/quest_story.png",
     desc: "+10% or sur boss par niveau.",
     baseCost: 260,
     costMult: 1.30,

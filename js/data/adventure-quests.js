@@ -83,7 +83,7 @@ var ADVENTURE_QUESTS = {
     enemyFilter: ["wolf"], // v3.107.0 : la Meute affamée ne fait combattre que des loups (cohérence narrative)
     name: "La Meute Affamée",
     story: "Des loups rôdent près du campement. Il faut réduire leur nombre avant d'envisager d'installer un poste de chasse permanent.",
-    icon: "🐺",
+    icon: "images/Icons/quests/objective_wolf.png",
     steps: [
       {
         id: "kills_wolfpack",

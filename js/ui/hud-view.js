@@ -42,10 +42,10 @@ function buildHudHTML() {
 
 function buildStatsBarHTML() {
   return ''
-    + '<div class="stat-item"><span class="stat-label">⚔️ Attaque</span><span class="stat-value" id="stat-tap-dmg">1</span></div>'
-    + '<div class="stat-item"><span class="stat-label">⚡ Célérité</span><span class="stat-value" id="stat-auto-dps">0</span></div>'
-    + '<div class="stat-item"><span class="stat-label">🎯 Critique</span><span class="stat-value" id="stat-crit">5%</span></div>'
-    + '<div class="stat-item"><span class="stat-label">🎯 Dégâts crit.</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> Attaque</span><span class="stat-value" id="stat-tap-dmg">1</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> Célérité</span><span class="stat-value" id="stat-auto-dps">0</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> Critique</span><span class="stat-value" id="stat-crit">5%</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> Dégâts crit.</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>'
     + '<div class="stat-item"><span class="stat-label"><img class="stat-label-icon" src="images/Icons/gold_icon.png" alt="Or"> Or</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>';
 }
 

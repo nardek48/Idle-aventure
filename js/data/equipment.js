@@ -107,13 +107,13 @@ var EQUIPMENT_SLOT_LABELS = {
 };
 
 var EQUIPMENT_SLOT_EMOJI = {
-  weapon: "⚔️",
-  armor: "🛡️",
-  helmet: "🪖",
-  gloves: "🧤",
-  boots: "👢",
-  ring: "💍",
-  amulet: "📿"
+  weapon: "images/Icons/equipment_slots/slot_weapon.png",
+  armor: "images/Icons/equipment_slots/slot_armor.png",
+  helmet: "images/Icons/equipment_slots/slot_helmet.png",
+  gloves: "images/Icons/equipment_slots/slot_gloves.png",
+  boots: "images/Icons/equipment_slots/slot_boots.png",
+  ring: "images/Icons/equipment_slots/slot_ring.png",
+  amulet: "images/Icons/equipment_slots/slot_amulet.png"
 };
 
 var EQUIPMENT_SLOT_CONFIG = {

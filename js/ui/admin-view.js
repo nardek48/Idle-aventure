@@ -9,7 +9,7 @@ function buildAdminHTML() {
   var h = '<div class="admin-panel">';
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3>💰 Or & Essence</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/gold_icon.png> Or & Essence</h3>';
   h += adminFieldRow("admin-gold", "Or", game.gold, "adminApplyGold()");
   h += adminFieldRow("admin-essence", "Essence", game.essence, "adminApplyEssence()");
   h += '<div class="admin-quick-row">';
@@ -19,33 +19,33 @@ function buildAdminHTML() {
   h += '</div>';
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3>📦 Éclats de donjon</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/system/warehouse_supplies.png> Éclats de donjon</h3>';
   h += adminFieldRow("admin-shards", "Éclats", game.dungeonShards || 0, "adminApplyShards()");
   h += '</div>';
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3>💪 Stats entraînées</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/improvement_icons/power.png> Stats entraînées</h3>';
   h += adminFieldRow("admin-power", "Puissance", game.trainedStats.power, "adminApplyTrainedStat('power')");
   h += adminFieldRow("admin-endurance", "Endurance", game.trainedStats.endurance, "adminApplyTrainedStat('endurance')");
   h += adminFieldRow("admin-celerity", "Célérité", game.trainedStats.celerity, "adminApplyTrainedStat('celerity')");
   h += adminFieldRow("admin-precision", "Précision", game.trainedStats.precision, "adminApplyTrainedStat('precision')");
   h += adminFieldRow("admin-will", "Volonté", game.trainedStats.will, "adminApplyTrainedStat('will')");
   h += '<div class="admin-quick-row">';
-  h += '<button class="settings-btn admin-btn" onclick="adminRecalcStats()">🔄 Recalculer les stats</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminRecalcStats()"><img class=ico-inline src=images/Icons/system/reset.png> Recalculer les stats</button>';
   h += '</div>';
   h += '</div>';
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3>❤️ PV du héros</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/combat_stats/stat_health.png> PV du héros</h3>';
   h += adminFieldRow("admin-herohp", "PV actuels (max " + Math.floor(game.heroMaxHp) + ")", game.heroHp, "adminApplyHeroHp()");
   h += '<div class="admin-quick-row">';
-  h += '<button class="settings-btn admin-btn" onclick="adminHeroHpMax()">💚 PV au maximum</button>';
-  h += '<button class="settings-btn admin-btn" onclick="adminKillEnemy()">☠️ Tuer l\'ennemi affiché</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminHeroHpMax()"><img class=ico-inline src=images/Icons/combat_status/heal_incoming.png> PV au maximum</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminKillEnemy()"><img class=ico-inline src=images/Icons/combat_status/corruption.png> Tuer l\'ennemi affiché</button>';
   h += '</div>';
   h += '</div>';
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3>🗺️ Monde & cycle</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/quests/quest_resources.png> Monde & cycle</h3>';
   h += '<p class="panel-sub">Monde actuel : ' + (window.WorldManager ? WorldManager.worldIndex : 0) + ' (' + ((window.WorldManager && WorldManager.getWorld() && WorldManager.getWorld().name) || "?") + ')</p>';
   h += adminFieldRow("admin-worldindex", "Index de monde (0–6)", (window.WorldManager ? WorldManager.worldIndex : 0), "adminApplyWorldIndex()", 0, 6);
   h += adminFieldRow("admin-cyclecount", "Nombre de cycles", game.cycleCount || 0, "adminApplyCycleCount()");
@@ -53,9 +53,9 @@ function buildAdminHTML() {
   h += '</div>';
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3>🧪 Bac à sable de combat</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/subtabs/potions.png> Bac à sable de combat</h3>';
   h += '<p class="panel-sub">Simulateur de rounds sur les vraies données (budgets RPT/RPM, sorties Monte-Carlo, export Markdown) — sans effet sur ta partie.</p>';
-  h += '<button class="settings-btn admin-btn" onclick="switchTab(\'combat-sandbox\')">🧪 Ouvrir le bac à sable</button>';
+  h += '<button class="settings-btn admin-btn" onclick="switchTab(\'combat-sandbox\')"><img class=ico-inline src=images/Icons/subtabs/potions.png> Ouvrir le bac à sable</button>';
   h += '</div>';
 
   // v3.122.0 (Lot S2a) : expedition_faille (canevas génératif du scene-engine) n'est plus
@@ -64,13 +64,13 @@ function buildAdminHTML() {
   // de test/démo du moteur, réserve pour une future feature répétable (Petites Aventures).
   if (window.SceneRunManager && window.SCENE_TEMPLATES && SCENE_TEMPLATES.expedition_faille) {
     h += '<div class="panel-card admin-card">';
-    h += '<h3>🕳️ Bac à sable d\'expédition</h3>';
+    h += '<h3><img class=ico-inline src=images/Icons/scene/scene_cavern.png> Bac à sable d\'expédition</h3>';
     h += '<p class="panel-sub">Canevas génératif du scene-engine (8 profondeurs, push-your-luck) — hors catalogue de quêtes, réserve pour une future feature.</p>';
-    h += '<button class="settings-btn admin-btn" onclick="adminStartSandboxExpedition()">🕳️ Lancer l\'expédition sandbox</button>';
+    h += '<button class="settings-btn admin-btn" onclick="adminStartSandboxExpedition()"><img class=ico-inline src=images/Icons/scene/scene_cavern.png> Lancer l\'expédition sandbox</button>';
     h += '</div>';
   }
 
-  h += '<button class="settings-btn admin-btn" onclick="switchTab(\'settings\')">← Retour aux Paramètres</button>';
+  h += '<button class="settings-btn admin-btn" onclick="switchTab(\'settings\')"><img class=ico-inline src=images/Icons/system/back.png> Retour aux Paramètres</button>';
 
   h += '</div>';
   return '<div class="nb-page-frame admin-root kframe-page" data-kf-title="\ud83d\udee0\ufe0f Admin">' + h + '</div>';

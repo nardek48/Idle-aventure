@@ -49,11 +49,11 @@ function buildWorkshopSummaryBodyHTML() {
     var buildingDef = PRODUCTION_BUILDINGS[def.buildingId];
 
     var h = '<button type="button" class="workshop-summary-row" onclick="jumpToWorkshop(\'' + def.buildingId + '\')">';
-    h += '<div class="workshop-summary-row-icon">' + def.icon + '</div>';
+    h += '<div class="workshop-summary-row-icon">' + renderIconOrEmojiHTML(def.icon, "workshop-sum-ico", "") + '</div>';
     h += '<div class="workshop-summary-row-body">';
     h += '<div class="workshop-summary-row-top">';
     h += '<span class="workshop-summary-row-name">' + esc(def.name) + '</span>';
-    if (entry.auto) h += '<span class="workshop-summary-row-auto-badge">🔁 auto</span>';
+    if (entry.auto) h += '<span class="workshop-summary-row-auto-badge"><img class=ico-inline src=images/Icons/system/auto_repeat.png> auto</span>';
     h += '<span class="workshop-summary-row-building">' + esc(buildingDef ? buildingDef.name : def.buildingId) + '</span>';
     h += '</div>';
     h += '<div class="workshop-summary-row-recipe">' + esc(outputDef ? outputDef.name : (recipe ? recipe.id : "?")) + ' ×' + formatNumber(entry.times) + '</div>';
@@ -77,7 +77,7 @@ function buildWorkshopSummaryHTML() {
   h += '  <div class="full-menu workshop-summary-card">';
   h += '    <div class="full-menu-header">';
   h += '      <h2>Files en cours</h2>';
-  h += '      <button class="full-menu-close" type="button" onclick="closeWorkshopSummaryModal()">✕</button>';
+  h += '      <button class="full-menu-close" type="button" onclick="closeWorkshopSummaryModal()"><img class=ico-inline src=images/Icons/system/close.png></button>';
   h += '    </div>';
   h += '    <div id="workshop-summary-body">' + buildWorkshopSummaryBodyHTML() + '</div>';
   h += '  </div>';

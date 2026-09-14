@@ -52,9 +52,9 @@ window.goToTrainingGround = goToTrainingGround;
 
 function buildVillageSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "village" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'village\')">🏘️<span>Village</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "entrepot" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'entrepot\')">📦<span>Entrepôt</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "production" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'production\')">🌾<span>Production</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "village" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'village\')"><img class="pc-subtab-ico" src="images/Icons/quests/village_quest.png" alt=""><span>Village</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "entrepot" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'entrepot\')"><img class="pc-subtab-ico" src="images/Icons/system/warehouse_supplies.png" alt=""><span>Entrepôt</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "production" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'production\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/production.png" alt=""><span>Production</span></button>';
   h += '</div>';
   return h;
 }
@@ -67,7 +67,7 @@ function buildVillageSiteBannerHTML() {
 
   if (!site) {
     return '<div class="vb-site-banner is-idle">'
-      + '<div class="vb-site-banner-icon">🧱</div>'
+      + '<div class="vb-site-banner-icon"><img class="ico-lg" src="images/Icons/plots/reinforced_gallery.png" alt=""></div>'
       + '<div class="vb-site-banner-body">'
       + '<div class="vb-site-banner-title">Aucun chantier en cours</div>'
       + '<div class="vb-site-banner-sub">Un seul chantier à la fois dans le village.</div>'
@@ -134,7 +134,7 @@ function buildVillageBuildingCardHTML(id) {
   h += '</div>';
 
   if (locked) {
-    h += '<div class="vb-card-lock"><span class="vb-card-lock-icon">🔒</span>'
+    h += '<div class="vb-card-lock"><span class="vb-card-lock-icon"><img class="ico-sys" src="images/Icons/system/lock_closed.png" alt=""></span>'
        + '<span>' + esc(getVillageLockLabel(def)) + '</span></div>';
 
   } else if (state === "site") {
@@ -154,7 +154,7 @@ function buildVillageBuildingCardHTML(id) {
   } else if (state === "built") {
     var afford = VillageBuildingManager.getAffordability(id);
     h += '<div class="vb-card-level">Niveau ' + level + ' / ' + def.maxLevel + '</div>';
-    h += '<div class="vb-card-status">' + (afford.all ? '⬆ Améliorable' : 'Matériaux manquants') + '</div>';
+    h += '<div class="vb-card-status">' + (afford.all ? '<img class=ico-inline src=images/Icons/system/upgrade.png> Améliorable' : 'Matériaux manquants') + '</div>';
 
   } else { /* ready */
     h += '<div class="vb-card-level">Non construit</div>';
@@ -195,14 +195,16 @@ function buildVillageHTML() {
   // v3.193.0 : titre du bandeau figé selon le sous-onglet actif — et, en
   // détail bâtiment de Production, le NOM du bâtiment (le bandeau devient
   // l'en-tête permanent de la fiche).
-  var kfTitle = "🏘️ Village";
+  var kfTitle = "images/Icons/quests/village_quest.png|Village";
   if (activeVillageSubTab === "entrepot") {
-    kfTitle = "📦 Entrepôt";
+    kfTitle = "images/Icons/system/warehouse_supplies.png|Entrepôt";
   } else if (activeVillageSubTab === "production") {
     if (window.productionDetailBuildingId && PRODUCTION_BUILDINGS[productionDetailBuildingId]) {
       kfTitle = PRODUCTION_BUILDINGS[productionDetailBuildingId].name;
     } else {
-      kfTitle = (window.productionViewTab === "shops") ? "⚒️ Ateliers" : "🌾 Production";
+      kfTitle = (window.productionViewTab === "shops")
+        ? "images/Icons/subtabs/workshops.png|Ateliers"
+        : "images/Icons/subtabs/production.png|Production";
     }
   }
   h += '<div class="nb-page-frame village-page-frame kframe-page" data-kf-title="' + esc(kfTitle) + '">';

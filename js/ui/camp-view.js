@@ -6,12 +6,12 @@ var CAMP_MISSION_TYPE_LABEL = { combat: "Combat", expedition: "Expédition", cha
 var CAMP_MISSION_STATUS_CLASS = { claimable: "is-claimable", running: "is-running", accepted: "is-running", available: "" };
 
 function buildCampMissionActionHTML(m) {
-  if (m.claim) return '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'claim\')">🎁 Réclamer</button>';
+  if (m.claim) return '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'claim\')"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> Réclamer</button>';
   if (m.status === "running" || m.status === "accepted") {
     var h = '<div class="camp-mission-actions">';
     // v3.117.0 : "accepted" = acceptée mais pas encore lancée (ex. expédition à mini-jeu juste
     // acceptée) -> "Partir" ; "running" = déjà en cours -> "Continuer". Même bouton launch.
-    var launchLabel = m.status === "running" ? "▶ Continuer" : "🚩 Partir";
+    var launchLabel = m.status === "running" ? '<img class="ico-btn" src="images/Icons/quests/continue.png" alt=""> Continuer' : '<img class="ico-btn" src="images/Icons/quests/start_expedition.png" alt=""> Partir';
     if (m.launch) h += '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'launch\')">' + launchLabel + '</button>';
     if (m.abandon) h += '<button class="settings-btn danger camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'abandon\')">Abandonner</button>';
     h += '</div>';
@@ -41,7 +41,7 @@ function buildCampMissionCardHTML(m) {
   var objective = m.objectiveLabel || "";
   if (enCours && m.progressLabel) objective = objective ? (objective + " \u2014 " + m.progressLabel) : m.progressLabel;
   if (objective) h += '<div class="camp-mission-objective">' + esc(objective) + '</div>';
-  if (m.rewardSummary) h += '<div class="camp-mission-reward">🎁 ' + esc(m.rewardSummary) + '</div>';
+  if (m.rewardSummary) h += '<div class="camp-mission-reward"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> ' + esc(m.rewardSummary) + '</div>';
   h += buildCampMissionActionHTML(m);
   h += '</div>';
   return h;
@@ -77,13 +77,13 @@ function buildCampHTML() {
   var minutesToFull = window.CampManager ? CampManager.getMinutesToFull() : 0;
   var rationOptions = window.CampManager ? CampManager.getRationOptions() : [];
 
-  var h = '<div class="nb-page-frame camp-page kframe-page" data-kf-title="\u26fa Campement">';
+  var h = '<div class="nb-page-frame camp-page kframe-page" data-kf-title="images/Icons/quests/village_quest.png|Campement">';
 
   // v3.194.0 (Seb) : titre et sous-titre retirés — le bandeau figé porte
-  // déjà « ⛺ Campement », la ligne d'ambiance n'apportait rien.
+  // déjà « <img class=ico-inline src=images/Icons/quests/village_quest.png> Campement », la ligne d'ambiance n'apportait rien.
 
   if (game.justDied) {
-    h += '<div class="camp-death-banner">💀 Tu es tombé au combat. Mange une ration, ou laisse le feu faire son œuvre, avant de repartir.</div>';
+    h += '<div class="camp-death-banner"><img class="ico-lg" src="images/Icons/camp/hero_defeated.png" alt=""> Tu es tombé au combat. Mange une ration, ou laisse le feu faire son œuvre, avant de repartir.</div>';
     game.justDied = false;
   }
 
@@ -91,7 +91,7 @@ function buildCampHTML() {
 
   // v3.116.0 (Lot C, maquette Seb) : bloc Santé du Héros — barre de PV pleine largeur.
   h += '<div class="camp-card camp-health-card">';
-  h += '<div class="camp-section-title">❤️ Santé du Héros</div>';
+  h += '<div class="camp-section-title"><img class="ico-lg" src="images/Icons/combat_stats/stat_health.png" alt=""> Santé du Héros</div>';
   // v3.173.0 : jauge fine du kit (vert, aligné sur les PV héros du combat — avant : rouge).
   // v3.174.0 (retour Seb) : PV courants/max affichés DANS la barre (kgauge-text)
   // au lieu d'une ligne séparée dessous — l'id camp-fire-hp-value migre sur le
@@ -100,15 +100,15 @@ function buildCampHTML() {
     + '<span class="kgauge-text" id="camp-fire-hp-value">' + formatNumber(Math.floor(hp)) + ' / ' + formatNumber(maxHp) + '</span></div>';
 
   // Bloc Rations — 3 cartes côte à côte (icône, soin, stock, bouton Manger).
-  h += '<div class="camp-section-title camp-section-sub">🍖 Rations</div>';
+  h += '<div class="camp-section-title camp-section-sub"><img class="ico-lg" src="images/Icons/quests/ration_reward.png" alt=""> Rations</div>';
   h += '<div class="camp-ration-grid">';
   rationOptions.forEach(function (r) {
     var def = (window.WAREHOUSE_RESOURCES || {})[r.id] || {};
     var healValue = Math.floor(maxHp * r.healPct);
     var canEat = r.amount >= 1 && !hpFull;
-    h += '<div class="camp-ration-item' + (r.amount < 1 ? ' is-empty' : '') + '">';
-    h += '<div class="camp-ration-icon">' + renderIconOrEmojiHTML(def.icon || "🍞", "camp-ration-icon-img", r.name) + '</div>';
-    h += '<div class="camp-ration-heal">❤️ +' + formatNumber(healValue) + '</div>';
+    h += '<div class="camp-ration-item' + (r.amount < 1 ? ' is-empty' : '') + '" title="' + esc(r.name) + '">';
+    h += '<div class="camp-ration-icon">' + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.png", "camp-ration-icon-img", r.name) + '</div>';
+    h += '<div class="camp-ration-heal"><img class=ico-inline src=images/Icons/combat_stats/stat_health.png> +' + formatNumber(healValue) + '</div>';
     h += '<div class="camp-ration-stock">×' + formatNumber(r.amount) + ' · ' + Math.round(r.healPct * 100) + ' %</div>';
     h += '<button class="settings-btn primary camp-ration-btn" type="button"' + (canEat ? ' onclick="CampManager.eatRation(\'' + esc(r.id) + '\');"' : ' disabled') + '>Manger</button>';
     h += '</div>';
@@ -118,11 +118,11 @@ function buildCampHTML() {
   // Bloc Régénération — phrase + rythme + temps restant.
   // v3.233.0 (Seb) : barre retirée. Elle était remplie avec hpPct, donc un
   // doublon exact de la barre de PV trois lignes plus haut, en sarcelle.
-  h += '<div class="camp-section-title camp-section-sub">✚ Régénération</div>';
+  h += '<div class="camp-section-title camp-section-sub"><img class="ico-lg" src="images/Icons/camp/regeneration.png" alt=""> Régénération</div>';
   h += '<div class="camp-regen-desc">Récupère des PV automatiquement au fil du temps, hors combat.</div>';
   h += '<div class="camp-regen-meta">';
   h += '<span class="camp-regen-rate">+' + regenPct + ' % PV par minute</span>';
-  h += '<span class="camp-regen-eta" id="camp-fire-eta">' + (hpFull ? '✔ PV au maximum' : esc('⏳ Max dans ' + formatTime(Math.ceil(minutesToFull * 60)))) + '</span>';
+  h += '<span class="camp-regen-eta" id="camp-fire-eta">' + (hpFull ? '<img class=ico-inline src=images/Icons/system/check_valid.png> PV au maximum' : esc('<img class=ico-inline src=images/Icons/system/hourglass_waiting.png> Max dans ' + formatTime(Math.ceil(minutesToFull * 60)))) + '</span>';
   h += '</div>';
 
   h += '</div>'; // fin .camp-health-card
@@ -132,7 +132,7 @@ function buildCampHTML() {
   var offering = (window.StoryQuestManager && typeof StoryQuestManager.getOfferingInfo === "function") ? StoryQuestManager.getOfferingInfo("forest") : null;
   if (offering) {
     h += '<div class="camp-card camp-embers-card">';
-    h += '<div class="camp-section-title">🔥 Les braises</div>';
+    h += '<div class="camp-section-title"><img class="ico-lg" src="images/Icons/camp/campfire.png" alt=""> Les braises</div>';
     h += '<div class="camp-embers-desc">' + esc(offering.step.narrative.objective) + '</div>';
     // v3.197.0 (passe de ton) : les anciens parlent avant l'offrande (buildStoryDialogueHTML, quests-view.js).
     if (typeof buildStoryDialogueHTML === "function") h += buildStoryDialogueHTML(offering.step);
@@ -140,18 +140,18 @@ function buildCampHTML() {
     offering.items.forEach(function (it) {
       var okItem = it.have >= it.need;
       h += '<div class="camp-embers-item' + (okItem ? ' is-ready' : '') + '">';
-      h += '<span class="camp-embers-icon">' + renderIconOrEmojiHTML(it.icon || "🍃", "camp-embers-icon-img", it.name) + '</span>';
+      h += '<span class="camp-embers-icon">' + renderIconOrEmojiHTML(it.icon || "images/Icons/scene/path_easy.png", "camp-embers-icon-img", it.name) + '</span>';
       h += '<span class="camp-embers-name">' + esc(it.name) + '</span>';
-      h += '<span class="camp-embers-count">' + (okItem ? '✔ ' : '') + formatNumber(Math.min(it.have, it.need)) + '/' + formatNumber(it.need) + '</span>';
+      h += '<span class="camp-embers-count">' + (okItem ? '<img class=ico-inline src=images/Icons/system/check_valid.png> ' : '') + formatNumber(Math.min(it.have, it.need)) + '/' + formatNumber(it.need) + '</span>';
       h += '</div>';
     });
     h += '</div>';
-    h += '<button class="settings-btn primary camp-embers-btn" type="button"' + (offering.canOffer ? ' onclick="StoryQuestManager.offerToEmbers(\'forest\');"' : ' disabled') + '>🔥 Offrir aux braises</button>';
+    h += '<button class="settings-btn primary camp-embers-btn" type="button"' + (offering.canOffer ? ' onclick="StoryQuestManager.offerToEmbers(\'forest\');"' : ' disabled') + '><img class=ico-inline src=images/Icons/camp/campfire.png> Offrir aux braises</button>';
     h += '</div>';
   }
 
   h += '<div class="camp-card camp-missions-card">';
-  h += '<div class="camp-card-title">📋 Tableau de missions</div>';
+  h += '<div class="camp-card-title"><img class=ico-inline src=images/Icons/quests/quest_list.png> Tableau de missions</div>';
   h += buildCampMissionBoardHTML();
   h += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">Voir le tableau complet</button>';
   h += '</div>';
@@ -172,13 +172,13 @@ function buildCampHTML() {
     }).length;
 
     h += '<div class="camp-card camp-grimoire-card">';
-    h += '<div class="camp-card-title">📕 Grimoire de tactiques</div>';
+    h += '<div class="camp-card-title"><img class=ico-inline src=images/Icons/codex/codex_lore.png> Grimoire de tactiques</div>';
     h += '<div class="camp-grimoire-summary">' + activeRules.length + ' / ' + slotCount + ' règles actives'
-      + (counterCount ? ' · <span class="camp-grimoire-counters">⚡ ' + counterCount + ' contre' + (counterCount > 1 ? 's' : '') + '</span>' : '')
+      + (counterCount ? ' · <span class="camp-grimoire-counters"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + counterCount + ' contre' + (counterCount > 1 ? 's' : '') + '</span>' : '')
       + '</div>';
     h += '<div class="camp-grimoire-mode">' + (game.combatMode === "grimoire"
-      ? '📖 Mode Grimoire : tes règles jouent seules.'
-      : '🎯 Mode Tactique : tes règles conseillent, tu choisis.') + '</div>';
+      ? '<img class=ico-inline src=images/Icons/codex/codex_lore.png> Mode Grimoire : tes règles jouent seules.'
+      : '<img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> Mode Tactique : tes règles conseillent, tu choisis.') + '</div>';
     h += '<button class="settings-btn" type="button" onclick="switchTab(\'grimoire\')">Régler mes tactiques</button>';
     h += '</div>';
   }

@@ -64,7 +64,7 @@ var HUNT_QUESTS = {
     adventureIndex: 0,
     name: "Chasse en Forêt",
     story: "Le gibier ne manque pas à la Lisière. Chaque bête abattue rapporte de la viande à stocker à l'Entrepôt — une chasse peut se répéter indéfiniment.",
-    icon: "🍖",
+    icon: "images/Icons/quests/ration_reward.png",
     enemyFilter: ["wolf"], // v3.108.0 : le gibier, c'est le Loup (sorti du pool libre en 3.107.4) — plus de viande de slime
     resourceKey: "viande",
     dropChancePct: 50, // v3.100.3 : 20 -> 50 (chasse active = vraie source de viande en Acte II, décision Seb)
@@ -113,7 +113,7 @@ var HUNT_QUESTS = {
     story: "Les bêtes du Cœur ne saignent pas comme les autres. Sous l'écorce de leur peau, "
       + "quelque chose de clair affleure et durcit à l'air. La Forêt leur a donné quelque chose ; "
       + "rien n'empêche de le reprendre.",
-    icon: "🌲",
+    icon: "images/Icons/codex/world_forest.png",
     resourceKey: "seve_aeswyn",
     dropChancePct: 3,
     lotSize: 30
@@ -142,7 +142,7 @@ var HUNT_QUESTS = {
     name: "Battue en Forêt",
     story: "Aldric paie à la tête. Vingt bêtes, et la bourse s'ouvre — il ne demande ni laquelle, "
       + "ni pourquoi. La Forêt en a toujours vingt de plus.",
-    icon: "🪙",
+    icon: "images/Icons/gold_icon.png",
     lotSize: 20,
     // 120 or = exactement le double de ce que rapportent déjà 20 kills en Lisière
     // (120 or bruts, ~3 min). Repères : amélioration de Force 45-122 or au niveau

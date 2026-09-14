@@ -39,9 +39,9 @@ window.setInventoryFilter = setInventoryFilter;
 
 function buildEquipSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "equipment" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'equipment\')">🛡️<span>Équipement</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "inventory" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'inventory\')">🎒<span>Inventaire</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "shop" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'shop\')">🛒<span>Boutique</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "equipment" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'equipment\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/equipment.png" alt=""><span>Équipement</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "inventory" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'inventory\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/inventory.png" alt=""><span>Inventaire</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "shop" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'shop\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/equipment_shop.png" alt=""><span>Boutique</span></button>';
   h += '</div>';
   return h;
 }
@@ -93,7 +93,7 @@ function buildEquipmentSlot(slot, label, icon) {
   var h = '<button class="eq-orbit-slot ' + (item ? 'filled' : 'empty') + (isSelected ? ' is-selected' : '') + '" onclick="selectEquipSlot(\'' + esc(slot) + '\')" aria-label="' + esc(label) + '">';
   h += item
     ? buildEquipmentIconHTML(item, "eq-orbit-slot-icon rframe")
-    : '<div class="eq-orbit-slot-icon eq-orbit-slot-placeholder">' + esc(icon) + '</div>';
+    : '<div class="eq-orbit-slot-icon eq-orbit-slot-placeholder">' + renderIconOrEmojiHTML(icon, "eq-orbit-slot-img", label) + '</div>';
   h += '</button>';
   return h;
 }
@@ -161,7 +161,7 @@ function buildCompatibleItemsListHTML(slot) {
 
   var equipped = game.equipped[slot];
   var h = '<div class="eq-compat-list">';
-  h += '<div class="eq-compat-title">🎒 Dans le sac (' + items.length + ')</div>';
+  h += '<div class="eq-compat-title"><img class=ico-inline src=images/Icons/subtabs/inventory.png> Dans le sac (' + items.length + ')</div>';
 
   items.slice(0, 5).forEach(function (item) {
     var delta = getEquipmentStatDelta(item, equipped);
@@ -192,7 +192,7 @@ function buildCompatibleItemsListHTML(slot) {
 function buildEquipDetailPanelHTML() {
   var slot = selectedEquipSlot;
   var label = EQUIPMENT_SLOT_LABELS[slot] || slot;
-  var emoji = EQUIPMENT_SLOT_EMOJI[slot] || "❔";
+  var emoji = EQUIPMENT_SLOT_EMOJI[slot] || "images/Icons/equipment_slots/slot_unknown.png";
   var item = game.equipped[slot];
   var h = '<div class="eq-detail-panel">';
 
@@ -205,7 +205,7 @@ function buildEquipDetailPanelHTML() {
     h += buildItemOriginHTML(item);
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.unequip(\'' + esc(slot) + '\')">Déséquiper</button>';
   } else {
-    h += '<div class="eq-detail-icon eq-detail-icon-empty">' + esc(emoji) + '</div>';
+    h += '<div class="eq-detail-icon eq-detail-icon-empty">' + renderIconOrEmojiHTML(emoji, "eq-detail-empty-img", "") + '</div>';
     h += '<div class="eq-detail-name">' + esc(label) + ' — Vide</div>';
     h += '<div class="eq-detail-hint">Équipe un objet depuis l\u2019Inventaire pour remplir cet emplacement.</div>';
   }
@@ -224,7 +224,7 @@ function buildCompactSetBonusHTML() {
 
   if (!active.length) {
     var h = '<div class="eq-detail-setbonus">';
-    h += '<span class="eq-detail-setbonus-icon">✦</span>';
+    h += '<span class="eq-detail-setbonus-icon"><img class=ico-inline src=images/Icons/equipment_slots/set_bonus.png></span>';
     h += '<span class="eq-detail-setbonus-text">Bonus de set inactif</span>';
     h += '</div>';
     return h;
@@ -233,7 +233,7 @@ function buildCompactSetBonusHTML() {
   var out = '';
   active.forEach(function (entry) {
     out += '<div class="eq-detail-setbonus is-active">';
-    out += '<span class="eq-detail-setbonus-icon">✨</span>';
+    out += '<span class="eq-detail-setbonus-icon"><img class=ico-inline src=images/Icons/equipment_slots/set_bonus.png></span>';
     out += '<span class="eq-detail-setbonus-text">' + esc(entry.config.name) + ' — ' + esc(entry.config.text) + '</span>';
     out += '</div>';
   });
@@ -289,7 +289,7 @@ function buildItemOriginHTML(item) {
   var idx = (typeof item.worldIndex === "number") ? item.worldIndex : 0;
   var world = (window.WORLDS && WORLDS[idx]) ? WORLDS[idx].name : null;
   if (!world) return "";
-  return '<div class="eq-detail-hint">🗺️ Trouvé en ' + esc(world) + '</div>';
+  return '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/quests/quest_resources.png> Trouvé en ' + esc(world) + '</div>';
 }
 window.buildItemOriginHTML = buildItemOriginHTML;
 
@@ -298,7 +298,7 @@ function buildUnifiedDetailPanelHTML(entries) {
   var h = '<div class="eq-detail-panel">';
 
   if (!entry) {
-    h += '<div class="eq-detail-icon eq-detail-icon-empty">🎒</div>';
+    h += '<div class="eq-detail-icon eq-detail-icon-empty"><img class=ico-inline src=images/Icons/subtabs/inventory.png></div>';
     h += '<div class="eq-detail-name">Aucun objet sélectionné</div>';
     h += '<div class="eq-detail-hint">Touche un objet dans le sac pour voir son détail ici.</div>';
   } else if (entry.type === "equipment") {
@@ -320,7 +320,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<div class="eq-detail-icon">' + renderIconOrEmojiHTML(potion.icon, "eq-detail-icon-img", potion.name) + '</div>';
     h += '<div class="eq-detail-name">' + esc(potion.name) + '</div>';
     h += '<div class="eq-detail-stat">' + esc(descText) + '</div>';
-    h += '<div class="eq-detail-hint">🎒 Stock : ' + entry.stock + '</div>';
+    h += '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/subtabs/inventory.png> Stock : ' + entry.stock + '</div>';
 
     if (entry.isHealing) {
       h += '<button class="btn-buy eq-detail-action" type="button" onclick="PotionManager.useHealingPotion(\'' + esc(potion.id) + '\')">Utiliser</button>';
@@ -337,7 +337,7 @@ function buildUnifiedDetailPanelHTML(entries) {
 function buildEquippedComparisonHTML(item) {
   var equipped = game.equipped ? game.equipped[item.slot] : null;
   var h = '<div class="eq-compare-box">';
-  h += '<div class="eq-compare-title">🔁 Actuellement équipé</div>';
+  h += '<div class="eq-compare-title"><img class=ico-inline src=images/Icons/system/auto_repeat.png> Actuellement équipé</div>';
 
   if (!equipped) {
     h += '<div class="eq-compare-empty">Rien d\u2019équipé sur cet emplacement — équiper cet objet sera un pur gain.</div>';
@@ -362,7 +362,7 @@ function buildEquipmentTabContentHTML() {
   var h = '';
 
   h += '<div class="eq-layout">';
-  h += '<div class="eq-hero-card nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="\ud83d\udee1\ufe0f Équipement">';
+  h += '<div class="eq-hero-card nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="images/Icons/combat_stats/stat_defense.png|\u00c9quipement">';
   h += '<div class="eq-hero-main eq-hero-main-slots-only">';
 
   h += '<div class="eq-hero-right">';
@@ -407,7 +407,7 @@ function buildInventoryCompactToolbarHTML() {
   var h = '<div class="inv-toolbar">';
 
   h += '<div class="inv-toolbar-sort-wrap">';
-  h += '<button class="inv-toolbar-btn" type="button" onclick="toggleInventorySortMenu()">⇅ Trier</button>';
+  h += '<button class="inv-toolbar-btn" type="button" onclick="toggleInventorySortMenu()"><img class=ico-inline src=images/Icons/system/sort.png> Trier</button>';
   if (showInventorySortMenu) {
     h += '<div class="inv-sort-menu">';
     h += '<button type="button" onclick="applyInventorySort(\'rarity\')">Rareté</button>';
@@ -416,7 +416,7 @@ function buildInventoryCompactToolbarHTML() {
   }
   h += '</div>';
 
-  h += '<button class="inv-toolbar-btn" type="button" onclick="openInventorySettings()">⚙</button>';
+  h += '<button class="inv-toolbar-btn" type="button" onclick="openInventorySettings()"><img class=ico-inline src=images/Icons/system/settings.png></button>';
 
   h += '</div>';
   return h;
@@ -425,8 +425,8 @@ function buildInventoryCompactToolbarHTML() {
 function buildInventoryFilterRowHTML() {
   var h = '<div class="inv-filter-row">';
   h += '<button type="button" class="inv-filter-btn' + (inventoryFilter === "all" ? ' is-active' : '') + '" onclick="setInventoryFilter(\'all\')">Tout</button>';
-  h += '<button type="button" class="inv-filter-btn' + (inventoryFilter === "equipment" ? ' is-active' : '') + '" onclick="setInventoryFilter(\'equipment\')">🛡️ Équipement</button>';
-  h += '<button type="button" class="inv-filter-btn' + (inventoryFilter === "potions" ? ' is-active' : '') + '" onclick="setInventoryFilter(\'potions\')">🧪 Potions</button>';
+  h += '<button type="button" class="inv-filter-btn' + (inventoryFilter === "equipment" ? ' is-active' : '') + '" onclick="setInventoryFilter(\'equipment\')"><img class=ico-inline src=images/Icons/combat_stats/stat_defense.png> Équipement</button>';
+  h += '<button type="button" class="inv-filter-btn' + (inventoryFilter === "potions" ? ' is-active' : '') + '" onclick="setInventoryFilter(\'potions\')"><img class=ico-inline src=images/Icons/subtabs/potions.png> Potions</button>';
   h += '</div>';
   return h;
 }
@@ -437,13 +437,13 @@ function buildInventorySettingsHTML() {
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card">';
-  h += '    <div class="dungeon-story-icon">⚙️</div>';
+  h += '    <div class="dungeon-story-icon"><img class=ico-inline src=images/Icons/system/settings.png></div>';
   h += '    <div class="dungeon-story-title">Réglages du sac</div>';
 
   h += '    <div class="auto-sell-toggle-row">';
   h += '      <button class="auto-sell-toggle' + (game.autoSellEquipment ? ' is-on' : '') + '" type="button" onclick="toggleAutoSellEquipment();openInventorySettings();">';
   h += '        <span class="auto-sell-switch"></span>';
-  h += '        <span class="auto-sell-label">🤖 Autovente ' + (game.autoSellEquipment ? "activée" : "désactivée") + '</span>';
+  h += '        <span class="auto-sell-label"><img class=ico-inline src=images/Icons/system/auto_sell.png> Autovente ' + (game.autoSellEquipment ? "activée" : "désactivée") + '</span>';
   h += '      </button>';
   h += '    </div>';
 
@@ -462,7 +462,7 @@ function buildInventorySettingsHTML() {
   h += '      <button class="settings-btn" type="button" onclick="closeInventorySettings()">Fermer</button>';
   h += '    </div>';
 
-  h += '    <button class="inv-sell-all-btn" type="button" onclick="confirmSellAllInventory()">🗑️ Tout vendre</button>';
+  h += '    <button class="inv-sell-all-btn" type="button" onclick="confirmSellAllInventory()"><img class=ico-inline src=images/Icons/system/bulk_sell.png> Tout vendre</button>';
 
   h += '  </div>';
   h += '</div>';
@@ -489,7 +489,7 @@ function confirmSellItem(uid) {
   showConfirmModal(
     "Vendre cet objet ?",
     "Tu es sur le point de vendre " + itemName + " pour " + formatNumber(sellValue) + " or. Cette action est irréversible.",
-    "💰",
+    "<img class=ico-inline src=images/Icons/gold_icon.png>",
     function () { EquipmentManager.sell(uid); }
   );
 }
@@ -507,7 +507,7 @@ function confirmSellAllInventory() {
   showConfirmModal(
     "Tout vendre ?",
     "Tu es sur le point de vendre les " + count + " objets de ton sac pour " + formatNumber(totalValue) + " or au total. Cette action est irréversible.",
-    "🗑️",
+    "<img class=ico-inline src=images/Icons/system/trash.png>",
     function () { sellAllInventory(); }
   );
 }
@@ -536,7 +536,7 @@ function getOwnedPotionsList() {
 }
 
 function buildInventoryTabContentHTML() {
-  var h = '<div class="eq-bag-panel nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="\ud83c\udf92 Inventaire">';
+  var h = '<div class="eq-bag-panel nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="images/Icons/subtabs/inventory.png|Inventaire">';
 
   h += buildInventoryCompactToolbarHTML();
   h += buildInventoryFilterRowHTML();
@@ -578,7 +578,7 @@ function buildEquipHTML() {
   if (activeEquipSubTab === "inventory") {
     h += buildInventoryTabContentHTML();
   } else if (activeEquipSubTab === "shop") {
-    h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="\ud83d\uded2 Boutique d\u2019équipement">';
+    h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="images/Icons/subtabs/equipment_shop.png|Boutique d\u2019\u00e9quipement">';
     h += (typeof buildEquipShopHTML === "function") ? buildEquipShopHTML() : "";
     h += '</div>';
   } else {

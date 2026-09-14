@@ -68,7 +68,7 @@ var SpecialAttackManager = {
       addLog("✨ " + special.name + " !", "event");
     }
 
-    showToast(special.icon + " " + special.name, 1400);
+    showToast(special.name, 1400);
     if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
     saveGame();
   }
@@ -116,7 +116,7 @@ var DefenseManager = {
     }
 
     addLog("🛡️ " + DEFENSE_ABILITY.name + " activée (" + Math.round(effectiveDurationMs / 1000) + "s)", "event");
-    showToast(DEFENSE_ABILITY.icon + " " + DEFENSE_ABILITY.name, 1400);
+    showToast(DEFENSE_ABILITY.name, 1400);
     if (typeof renderDefenseButton === "function") renderDefenseButton();
     saveGame();
   }

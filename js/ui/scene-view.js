@@ -76,7 +76,7 @@ function buildSceneLandingHTML() {
   }
   var h = '<div class="panel-title">Expédition</div>';
   h += '<div class="scene-landing">';
-  h += '<div class="scene-landing-icon">🕳️</div>';
+  h += '<div class="scene-landing-icon"><img class=ico-inline src=images/Icons/scene/scene_cavern.png></div>';
   h += '<p class="scene-landing-text">Aucune expédition en cours, direction le tableau de missions.</p>';
   h += '<button class="settings-btn primary" type="button" onclick="switchTab(\'quests\')">Voir le tableau de missions</button>';
   h += '</div>';
@@ -120,7 +120,7 @@ window.startSceneExpedition = startSceneExpedition;
 /* v3.139.0 (audit Forêt §3.6, horizon de visibilité) : buildSceneProgressHTML() type désormais
    les nœuds à venir dans un HORIZON limité (1 palier d'avance, 2 avec torche active sur le palier
    courant — décision Seb 04/09/2026), au lieu d'une simple frise de segments plats. Chaque palier
-   dans l'horizon affiche l'icône réelle de son type (SCENE_NODES.icons) ; au-delà, un ❓ muet.
+   dans l'horizon affiche l'icône réelle de son type (SCENE_NODES.icons) ; au-delà, un <img class=ico-inline src=images/Icons/scene/node_unknown.png> muet.
    Palette de nœuds distincte de buildSceneGateChoiceHTML (celle-ci reste inchangée : c'est elle
    qui gère le détail/estimate du palier COURANT via la torche, la frise ne montre QUE le type). */
 /* v3.142.0 (Petite Aventure, remplace la frise v3.139.0) : chemin illustré à nœuds cliquables,
@@ -192,7 +192,7 @@ function buildScenePathNodeHTML(run, template, index, depthMax, horizon) {
 
   var icon = "";
   if (isFinale) {
-    icon = isVisible ? "🏆" : "";
+    icon = isVisible ? "<img class=ico-inline src=images/Icons/scene/final_reward.png>" : "";
   } else if (isVisible) {
     var level = run.card[index] || [];
     var slotType = level[0] && level[0].type;
@@ -206,7 +206,7 @@ function buildScenePathNodeHTML(run, template, index, depthMax, horizon) {
   var attrs = clickable ? ' type="button" onclick="enterSceneGate(0)"' : "";
 
   var h = "<" + tag + ' class="' + classes.join(" ") + '" style="left:' + pos.x + '%;top:' + pos.y + '%;"' + attrs + ">";
-  h += '<span class="scene-path-node-circle">' + (icon ? esc(icon) : "") + '</span>';
+  h += '<span class="scene-path-node-circle">' + (icon ? renderIconOrEmojiHTML(icon, "scene-node-ico", "") : "") + '</span>';
   h += "</" + tag + ">";
   return h;
 }
@@ -243,12 +243,12 @@ function buildSceneProgressHTML(run) {
       var slotType = level[0] && level[0].type;
       icon = (slotType && SCENE_NODES.icons[slotType]) || "";
     }
-    h += '<i class="scene-progress-seg' + cls + '">' + (icon ? esc(icon) : "") + '</i>';
+    h += '<i class="scene-progress-seg' + cls + '">' + (icon ? renderIconOrEmojiHTML(icon, "scene-seg-ico", "") : "") + '</i>';
   }
   // Chambre finale : nœud virtuel après depthMax, hors run.card (résolu par resolveFinale) —
   // même règle d'horizon (icône coffre visible seulement si atteint dans le champ de visibilité).
   var finaleCls = run.depth >= depthMax ? " is-done" : (horizon >= depthMax ? " is-upcoming" : " is-hidden");
-  h += '<i class="scene-progress-seg scene-progress-finale' + finaleCls + '">' + (horizon >= depthMax || run.depth >= depthMax ? "🏆" : "") + '</i>';
+  h += '<i class="scene-progress-seg scene-progress-finale' + finaleCls + '">' + (horizon >= depthMax || run.depth >= depthMax ? "<img class=ico-inline src=images/Icons/scene/final_reward.png>" : "") + '</i>';
   h += '</div>';
   return h;
 }
@@ -299,7 +299,7 @@ function buildSceneStatusBarHTML(run, opts) {
   // n'apparaissent que si pertinentes, ex. torche).
   var statusMutator = SceneRunManager.getActiveMutator();
   if (statusMutator.id && statusMutator.id !== "aucun") {
-    h += '<span class="scene-status-pill scene-status-mutator">' + esc(statusMutator.icon) + ' ' + esc(statusMutator.label) + '</span>';
+    h += '<span class="scene-status-pill scene-status-mutator">' + renderIconOrEmojiHTML(statusMutator.icon, "scene-pill-ico", "") + ' ' + esc(statusMutator.label) + '</span>';
   }
   h += '</div>';
   // v3.195.0 : bouton Gourde, utilisable à tout moment tant qu'elle est en loadout et que le
@@ -349,12 +349,12 @@ function buildSceneProfileChoiceHTML() {
 
   h += '  <div class="scene-card-grid">';
   h += '<button type="button" class="scene-card" onclick="chooseSceneProfile(\'bourrin\')">';
-  h += '<span class="scene-card-icon">⚔️</span>';
+  h += '<span class="scene-card-icon"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png></span>';
   h += '<span class="scene-card-label">Bourrin</span>';
   h += '<span class="scene-card-sub">Rapide, plus de combats, aucune attente.</span>';
   h += '</button>';
   h += '<button type="button" class="scene-card" onclick="chooseSceneProfile(\'prudent\')">';
-  h += '<span class="scene-card-icon">🛡️</span>';
+  h += '<span class="scene-card-icon"><img class=ico-inline src=images/Icons/combat_stats/stat_defense.png></span>';
   h += '<span class="scene-card-label">Prudent</span>';
   h += '<span class="scene-card-sub">Plus long, peu de combats, quelques attentes à faire pendant que tu vaques à autre chose.</span>';
   h += '</button>';
@@ -395,7 +395,7 @@ function buildSceneIntensityChoiceHTML() {
   Object.keys(SCENE_INTENSITY).forEach(function (key) {
     var intensity = SCENE_INTENSITY[key];
     h += '<button type="button" class="scene-card" onclick="chooseSceneIntensity(\'' + esc(key) + '\')">';
-    h += '<span class="scene-card-icon">' + esc(intensity.icon) + '</span>';
+    h += '<span class="scene-card-icon">' + renderIconOrEmojiHTML(intensity.icon, "scene-card-ico", "") + '</span>';
     h += '<span class="scene-card-label">' + esc(intensity.label) + '</span>';
     h += '<span class="scene-card-sub">' + esc(intensity.desc) + '</span>';
     h += '</button>';
@@ -431,7 +431,7 @@ function buildSceneMutatorAnnounceHTML() {
   var h = '<div class="panel-title">' + esc(template.title) + '</div>';
   h += '<div class="scene-screen">';
   h += '  <div class="scene-mutator-announce">';
-  h += '    <span class="scene-mutator-icon">' + esc(mutator.icon || "🌤️") + '</span>';
+  h += '    <span class="scene-mutator-icon">' + renderIconOrEmojiHTML(mutator.icon || "images/Icons/scene/weather_clear.png", "scene-mutator-img", "") + '</span>';
   h += '    <div class="scene-mutator-label">' + esc(mutator.label || "Rien à signaler") + '</div>';
   h += '    <div class="scene-mutator-desc">' + esc(mutator.desc || "") + '</div>';
   h += '  </div>';
@@ -481,6 +481,7 @@ function buildScenePreparationHTML() {
     var badge = selectedCount > 0 ? ' (x' + selectedCount + ')' : '';
     h += '<button type="button" class="scene-card' + (selectedCount > 0 ? ' is-selected' : '') + '"'
       + ' onclick="toggleScenePrepItem(\'' + esc(itemId) + '\')"' + (disabled && selectedCount === 0 ? ' disabled' : '') + '>';
+    h += '<span class="scene-card-icon">' + renderIconOrEmojiHTML(item.icon, "scene-card-ico", "") + '</span>';
     h += '<span class="scene-card-label">' + esc(item.name) + esc(badge) + '</span>';
     h += '<span class="scene-card-sub">' + esc(item.desc) + (maxCopies > 1 ? ' (max ' + maxCopies + ')' : '') + '</span>';
     h += '</button>';
@@ -602,7 +603,7 @@ function buildSceneGateChoiceHTML() {
   if (SCENE_PATH_TEMPLATE_IDS.indexOf(run.templateId) !== -1 && level.length === 1) {
     var info = buildSceneSlotInfo(run, level[0], torchOn);
     h += '  <div class="scene-card scene-card-solo">';
-    h += '<span class="scene-card-icon">' + esc(info.icon) + '</span>';
+    h += '<span class="scene-card-icon">' + renderIconOrEmojiHTML(info.icon, "scene-card-ico", "") + '</span>';
     h += '<span class="scene-card-label">' + esc(info.label) + '</span>';
     h += '<span class="scene-card-sub' + (info.subClass ? ' ' + info.subClass : '') + '">' + esc(info.sub) + '</span>';
     h += '<span class="scene-card-solo-hint">Touche le nœud sur le chemin pour t\u2019y engager.</span>';
@@ -612,7 +613,7 @@ function buildSceneGateChoiceHTML() {
     level.forEach(function (slot, idx) {
       var info = buildSceneSlotInfo(run, slot, torchOn);
       h += '<button type="button" class="scene-card" onclick="enterSceneGate(' + idx + ')">';
-      h += '<span class="scene-card-icon">' + esc(info.icon) + '</span>';
+      h += '<span class="scene-card-icon">' + renderIconOrEmojiHTML(info.icon, "scene-card-ico", "") + '</span>';
       h += '<span class="scene-card-label">' + esc(info.label) + '</span>';
       h += '<span class="scene-card-sub' + (info.subClass ? ' ' + info.subClass : '') + '">' + esc(info.sub) + '</span>';
       h += '</button>';

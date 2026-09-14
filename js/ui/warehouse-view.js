@@ -79,7 +79,7 @@ window.commitWarehouseReserve = commitWarehouseReserve;
 function buildWarehouseReserveHTML(key) {
   var reserve = ResourceReserveManager.getReserve(key);
   var h = '<div class="warehouse-reserve-block">';
-  h += '<div class="warehouse-reserve-label">🔒 Réserve protégée</div>';
+  h += '<div class="warehouse-reserve-label"><img class=ico-inline src=images/Icons/system/lock_closed.png> Réserve protégée</div>';
   h += '<div class="warehouse-reserve-hint">Jamais consommée par la production automatique des ateliers.</div>';
   h += '<input class="warehouse-reserve-input" type="number" min="0" step="1" value="' + (reserve > 0 ? reserve : '') + '" placeholder="0" onchange="commitWarehouseReserve(\'' + esc(key) + '\', this.value)">';
   h += '</div>';
@@ -108,7 +108,7 @@ function buildWarehouseDetailPanelHTML() {
   var stock = def ? Math.floor(WarehouseManager.getAmount(selectedWarehouseKey)) : 0;
 
   if (!def) {
-    h += '<div class="eq-detail-icon eq-detail-icon-empty">📦</div>';
+    h += '<div class="eq-detail-icon eq-detail-icon-empty"><img class=ico-inline src=images/Icons/system/warehouse_supplies.png></div>';
     h += '<div class="eq-detail-name">Aucune ressource sélectionnée</div>';
     h += '<div class="eq-detail-hint">Touche une ressource dans l\'Entrepôt pour voir son détail ici.</div>';
     h += '</div>';
@@ -124,7 +124,7 @@ function buildWarehouseDetailPanelHTML() {
      le joueur ne voit jamais ce que lui rapporte l'Entrepôt agrandi, et il ne
      comprend pas pourquoi un atelier s'arrête. */
   var capDetail = WarehouseManager.getCap(selectedWarehouseKey);
-  h += '<div class="eq-detail-hint">🎒 Stock : ' + formatNumber(stock)
+  h += '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/subtabs/inventory.png> Stock : ' + formatNumber(stock)
      + (capDetail === Infinity ? '' : ' / ' + formatNumber(capDetail))
      + (capDetail !== Infinity && stock >= capDetail ? ' — plein' : '') + '</div>';
 
@@ -157,7 +157,7 @@ function buildWarehouseDetailPanelHTML() {
 function buildWarehouseFilterRowHTML() {
   var h = '<div class="inv-filter-row">';
   h += '<button type="button" class="inv-filter-btn' + (warehouseFilter === "raw" ? ' is-active' : '') + '" onclick="setWarehouseFilter(\'raw\')">Bruts</button>';
-  h += '<button type="button" class="inv-filter-btn' + (warehouseFilter === "crafted" ? ' is-active' : '') + '" onclick="setWarehouseFilter(\'crafted\')">🔨 Tier 1</button>';
+  h += '<button type="button" class="inv-filter-btn' + (warehouseFilter === "crafted" ? ' is-active' : '') + '" onclick="setWarehouseFilter(\'crafted\')"><img class=ico-inline src=images/Icons/quests/mission_construction.png> Tier 1</button>';
   // v3.128.0 : 3e filtre "Rares" (tier "special") — Sève d'Aeswyn (Petites Aventures, Lot PA3)
   // et toute future ressource de collection hors circuit vente/craft classique. N'apparaît que
   // si au moins une ressource special existe dans WAREHOUSE_RESOURCES (évite un onglet vide
@@ -165,7 +165,7 @@ function buildWarehouseFilterRowHTML() {
   // Sève en stock, contrairement à sa présence : ici on masque seulement si la DÉFINITION
   // n'existe pas du tout, pas si le stock est à 0).
   if (Object.keys(WAREHOUSE_RESOURCES).some(function (k) { return WAREHOUSE_RESOURCES[k].tier === "special"; })) {
-    h += '<button type="button" class="inv-filter-btn' + (warehouseFilter === "special" ? ' is-active' : '') + '" onclick="setWarehouseFilter(\'special\')">✨ Rares</button>';
+    h += '<button type="button" class="inv-filter-btn' + (warehouseFilter === "special" ? ' is-active' : '') + '" onclick="setWarehouseFilter(\'special\')"><img class=ico-inline src=images/Icons/scene/node_discovery.png> Rares</button>';
   }
   h += '</div>';
   return h;
@@ -225,9 +225,9 @@ function buildConstructionEntryCardHTML() {
   var maxed = ConstructionManager.isMaxLevel(id);
 
   var h = '<div class="construction-entry-card' + (questPending ? ' is-quest-pending' : '') + '" onclick="openConstructionModal(\'' + id + '\')">';
-  h += '<div class="construction-entry-icon">' + renderIconOrEmojiHTML(def.icon || "🏗️", "construction-entry-icon-img", def.name) + '</div>';
+  h += '<div class="construction-entry-icon">' + renderIconOrEmojiHTML(def.icon || "images/Icons/workshops/masonry.png", "construction-entry-icon-img", def.name) + '</div>';
   h += '<div class="construction-entry-info">';
-  h += '<div class="construction-entry-name">' + esc(def.name) + (questPending ? ' <span class="construction-quest-badge">🎯 Quête</span>' : '') + '</div>';
+  h += '<div class="construction-entry-name">' + esc(def.name) + (questPending ? ' <span class="construction-quest-badge"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> Quête</span>' : '') + '</div>';
   h += '<div class="construction-entry-level">' + (maxed ? 'Niveau maximum' : 'Niveau ' + level + ' / ' + def.maxLevel) + '</div>';
   h += '</div>';
   h += '<div class="construction-entry-arrow">›</div>';

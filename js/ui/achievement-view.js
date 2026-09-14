@@ -30,12 +30,12 @@ function buildAchievementCardHTML(ach) {
   h += '<div class="nb-entry-name">' + esc(ach.name) + '</div>';
   h += '<div class="nb-entry-desc">' + esc(ach.desc) + '</div>';
   h += '<div class="nb-entry-progress-bar"><div class="nb-entry-progress-fill' + (complete ? ' done' : '') + '" style="width:' + pct + '%"></div><span class="nb-entry-progress-text">' + formatNumber(Math.min(progress, target)) + ' / ' + formatNumber(target) + '</span></div>';
-  h += '<div class="nb-entry-meta">🎁 ' + esc(formatAchievementRewardText(ach.reward)) + '</div>';
+  h += '<div class="nb-entry-meta"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> ' + esc(formatAchievementRewardText(ach.reward)) + '</div>';
   h += '</div>';
 
   h += '<div class="nb-entry-status-col">';
   if (claimed) {
-    h += '<span class="nb-entry-status-label is-complete">✔ Réclamé</span>';
+    h += '<span class="nb-entry-status-label is-complete"><img class=ico-inline src=images/Icons/system/check_valid.png> Réclamé</span>';
   } else if (complete) {
     h += '<button class="btn-buy" type="button" onclick="AchievementManager.claim(\'' + esc(ach.id) + '\')">Réclamer</button>';
   } else {
@@ -91,19 +91,19 @@ function buildAchievementListHTML() {
    au kit or/bronze. */
 function buildAchievementTotalsHTML() {
   var rows = [
-    ["\u23f1\ufe0f", "Temps de jeu", (typeof formatTime === "function") ? formatTime(game.playTime || 0) : String(Math.floor(game.playTime || 0)) + "s"],
-    ["\u2694\ufe0f", "Ennemis vaincus", formatNumber(game.totalKills || 0)],
-    ["\ud83d\udcb0", "Or gagné", formatNumber(game.totalGoldEarned || 0)],
-    ["\ud83d\udca5", "Dégâts", formatNumber(game.totalDamageDealt || 0)], // libellé court : "Dégâts infligés" était tronqué en 2 colonnes sur 366 px
-    ["\ud83d\uddfa\ufe0f", "Monde", (WorldManager.worldIndex + 1) + " / " + WORLDS.length],
-    ["\ud83d\udd01", "Cycles", formatNumber(game.cycleCount || 0)],
-    ["\u2728", "Ascensions", formatNumber(game.ascensionCount || 0)]
+    ["images/Icons/system/hourglass_waiting.png", "Temps de jeu", (typeof formatTime === "function") ? formatTime(game.playTime || 0) : String(Math.floor(game.playTime || 0)) + "s"],
+    ["images/Icons/combat_stats/stat_attack.png", "Ennemis vaincus", formatNumber(game.totalKills || 0)],
+    ["images/Icons/gold_icon.png", "Or gagné", formatNumber(game.totalGoldEarned || 0)],
+    ["images/Icons/combat_status/charge_incoming.png", "Dégâts", formatNumber(game.totalDamageDealt || 0)], // libellé court : "Dégâts infligés" était tronqué en 2 colonnes sur 366 px
+    ["images/Icons/quests/quest_resources.png", "Monde", (WorldManager.worldIndex + 1) + " / " + WORLDS.length],
+    ["images/Icons/system/auto_repeat.png", "Cycles", formatNumber(game.cycleCount || 0)],
+    ["images/Icons/system/ascension.png", "Ascensions", formatNumber(game.ascensionCount || 0)]
   ];
 
   var h = '<div class="achievement-totals">';
   rows.forEach(function (r) {
     h += '<div class="achievement-total">';
-    h += '<span class="achievement-total-ico">' + r[0] + '</span>';
+    h += '<span class="achievement-total-ico">' + renderIconOrEmojiHTML(r[0], "ach-total-ico", "") + '</span>';
     h += '<span class="achievement-total-lbl">' + esc(r[1]) + '</span>';
     h += '<span class="achievement-total-val">' + esc(r[2]) + '</span>';
     h += '</div>';
@@ -120,7 +120,7 @@ function buildAchievementsHTML() {
   h += buildAchievementTotalsHTML();
   h += buildAchievementListHTML();
 
-  return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83c\udfc6 Hauts faits">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/scene/final_reward.png|Hauts faits">' + h + '</div>';
 }
 
 window.buildAchievementsHTML = buildAchievementsHTML;

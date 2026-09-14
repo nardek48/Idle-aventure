@@ -8,10 +8,10 @@ function buildAfflictionsHTML() {
   var maxActive = window.AFFLICTION_MAX_ACTIVE || 4;
   var stackMult = window.AfflictionManager ? AfflictionManager.getStackRewardMult() : 1;
 
-  var h = '<div class="nb-page-frame kframe-page" data-kf-title="\u2620\ufe0f Afflictions">';
+  var h = '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/combat_status/corruption.png|Afflictions">';
 
   h += '<div class="affliction-intro">';
-  h += '<div class="affliction-intro-title">🔥 Afflictions</div>';
+  h += '<div class="affliction-intro-title"><img class=ico-inline src=images/Icons/camp/campfire.png> Afflictions</div>';
   h += '<div class="affliction-intro-desc">Des modificateurs optionnels pour ton farm dans les mondes — jamais un pur malus, toujours un vrai compromis. Cumulables jusqu\'à ' + maxActive + ' à la fois. Farm libre uniquement : elles se taisent en donjon, en quête et en Petite Aventure.</div>';
   h += '<div class="affliction-intro-count">' + activeCount + ' / ' + maxActive + ' actives';
   if (activeCount > 0) {
@@ -26,7 +26,7 @@ function buildAfflictionsHTML() {
 
     h += '<div class="affliction-card' + (isOn ? ' is-on' : '') + (atCap ? ' is-capped' : '') + '">';
     h += '<button class="affliction-toggle' + (isOn ? ' is-on' : '') + '" type="button" ' + (atCap ? 'disabled' : '') + ' onclick="AfflictionManager.toggle(\'' + a.id + '\')">';
-    h += '<span class="affliction-toggle-icon">' + esc(a.icon || "🔥") + '</span>';
+    h += '<span class="affliction-toggle-icon">' + renderIconOrEmojiHTML(a.icon, "affliction-toggle-img", a.name) + '</span>';
     h += '<span class="affliction-toggle-body">';
     h += '<span class="affliction-toggle-name">' + esc(a.name) + '</span>';
     h += '<span class="affliction-toggle-desc">' + esc(a.desc) + '</span>';

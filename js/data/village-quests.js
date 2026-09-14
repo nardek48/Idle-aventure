@@ -19,7 +19,7 @@ var VILLAGE_QUESTS = [
   {
     id: "farm_second_plot",
     title: "Le Clos qui s'agrandit",
-    icon: "🌱",
+    icon: "images/Icons/plots/enriched_soil.png",
     buildingId: "farm",
     section: "resource",
     category: "side",
@@ -38,20 +38,20 @@ var VILLAGE_QUESTS = [
     reward: { gold: 100, resources: { ble: 5 } },
     tutorial: {
       tab: "village",
-      icon: "🌱",
+      icon: "images/Icons/plots/enriched_soil.png",
       title: "Agrandir un bâtiment : les zones",
       points: [
-        { icon: "🗺️", text: "Chaque bâtiment de production possède 9 zones (les « Parcelles » pour le Champs). Seule la première est ouverte au départ — les autres se débloquent contre des ressources." },
-        { icon: "🌾", text: "Chaque zone ouverte produit en continu, indépendamment des autres, avec son propre stock local — plus de zones, plus de blé à chaque récolte." },
+        { icon: "images/Icons/quests/quest_resources.png", text: "Chaque bâtiment de production possède 9 zones (les « Parcelles » pour le Champs). Seule la première est ouverte au départ — les autres se débloquent contre des ressources." },
+        { icon: "images/Icons/scene/scene_harvest.png", text: "Chaque zone ouverte produit en continu, indépendamment des autres, avec son propre stock local — plus de zones, plus de blé à chaque récolte." },
         { icon: "⚖️", text: "Les zones ont des profils différents (rapide, équilibrée, lente) : une zone lente produit moins vite mais stocke davantage — pratique si tu récoltes rarement." },
-        { icon: "🪵", text: "Le déblocage du Champ Béni coûte du bois et de la pierre : la Scierie et la Carrière alimentent le Champs — chaque bâtiment nourrit les autres." }
+        { icon: "images/Icons/workshops/fine_sawmill.png", text: "Le déblocage du Champ Béni coûte du bois et de la pierre : la Scierie et la Carrière alimentent le Champs — chaque bâtiment nourrit les autres." }
       ]
     }
   },
   {
     id: "farm_level_two",
     title: "Une terre bien menée",
-    icon: "⬆️",
+    icon: "images/Icons/system/upgrade.png",
     buildingId: "farm",
     section: "resource",
     category: "side",
@@ -71,20 +71,20 @@ var VILLAGE_QUESTS = [
     reward: { gold: 150, resources: { eau: 5 } },
     tutorial: {
       tab: "village",
-      icon: "⬆️",
+      icon: "images/Icons/system/upgrade.png",
       title: "Améliorer une zone : les niveaux",
       points: [
-        { icon: "⬆️", text: "Chaque zone ouverte peut monter jusqu'au niveau 5. Chaque niveau augmente à la fois sa vitesse de production et sa capacité de stock local." },
-        { icon: "💧", text: "Pour le Champs, l'amélioration coûte du bois et de l'eau — le Puits n'est pas là que pour les rations." },
+        { icon: "images/Icons/system/upgrade.png", text: "Chaque zone ouverte peut monter jusqu'au niveau 5. Chaque niveau augmente à la fois sa vitesse de production et sa capacité de stock local." },
+        { icon: "images/Icons/scene/node_clear_spring.png", text: "Pour le Champs, l'amélioration coûte du bois et de l'eau — le Puits n'est pas là que pour les rations." },
         { icon: "📈", text: "Le coût grimpe à chaque niveau (×1,4) : monter une zone au niveau 2 est bon marché, la mener au niveau 5 est un vrai investissement." },
-        { icon: "🎯", text: "Conseil : améliore d'abord la zone que tu récoltes le plus souvent — c'est elle qui convertit le mieux chaque ressource dépensée." }
+        { icon: "images/Icons/combat_stats/stat_critical.png", text: "Conseil : améliore d'abord la zone que tu récoltes le plus souvent — c'est elle qui convertit le mieux chaque ressource dépensée." }
       ]
     }
   },
   {
     id: "farm_improvement",
     title: "Le secret des sillons",
-    icon: "💧",
+    icon: "images/Icons/scene/node_clear_spring.png",
     buildingId: "farm",
     section: "resource",
     category: "side",
@@ -103,13 +103,13 @@ var VILLAGE_QUESTS = [
     reward: { gold: 250, essence: 10, potions: { potion_celerity: 1 } }, // v3.115.0
     tutorial: {
       tab: "village",
-      icon: "💧",
+      icon: "images/Icons/scene/node_clear_spring.png",
       title: "Les améliorations permanentes",
       points: [
-        { icon: "🌱", text: "« Terre enrichie » (+8 % de rendement) et « Sillon irrigué » (+10 %) sont des améliorations PERMANENTES, distinctes des niveaux — elles s'achètent une fois par zone." },
+        { icon: "images/Icons/plots/enriched_soil.png", text: "« Terre enrichie » (+8 % de rendement) et « Sillon irrigué » (+10 %) sont des améliorations PERMANENTES, distinctes des niveaux — elles s'achètent une fois par zone." },
         { icon: "➕", text: "Les deux se cumulent sur la même zone, et se cumulent aussi avec les niveaux : une parcelle niveau 5, enrichie et irriguée, est la meilleure terre d'Aeswyn." },
-        { icon: "⚠️", text: "Elles ne sont pas réversibles — mais il n'y a aucun piège : c'est toujours un gain net pour la zone." },
-        { icon: "🏛️", text: "Tous les bâtiments de production ont leurs deux améliorations, sous d'autres noms — ce que tu apprends ici vaut pour la Scierie, la Mine et les autres." }
+        { icon: "images/Icons/system/warning.png", text: "Elles ne sont pas réversibles — mais il n'y a aucun piège : c'est toujours un gain net pour la zone." },
+        { icon: "images/Icons/codex/world_ruins.png", text: "Tous les bâtiments de production ont leurs deux améliorations, sous d'autres noms — ce que tu apprends ici vaut pour la Scierie, la Mine et les autres." }
       ]
     }
   },
@@ -124,7 +124,7 @@ var VILLAGE_QUESTS = [
   {
     id: "workshop_first_flour",
     title: "La première mouture",
-    icon: "⚙️",
+    icon: "images/Icons/system/settings.png",
     buildingId: "farm",
     section: "resource",
     category: "side",
@@ -142,20 +142,20 @@ var VILLAGE_QUESTS = [
     reward: { gold: 150, resources: { ble: 10 } },
     tutorial: {
       tab: "village",
-      icon: "⚙️",
+      icon: "images/Icons/system/settings.png",
       title: "Les ateliers : transformer les ressources",
       points: [
-        { icon: "🔨", text: "Chaque bâtiment possède ses ateliers (le Moulin et la Boulangerie pour le Champs). Un atelier transforme des ressources brutes en produits via des recettes." },
-        { icon: "📥", text: "Les intrants (ex. 5 blé) sont déduits de l'Entrepôt dès que tu lances le craft — le produit est crédité à la FIN du temps de fabrication." },
-        { icon: "⏳", text: "Chaque atelier a sa propre file d'attente : tu peux empiler plusieurs lots, ils s'enchaînent tout seuls — même hors ligne." },
-        { icon: "⚙️", text: "Ouvre le Champs et lance ta première mouture au Moulin : 5 blé donnent 1 farine." }
+        { icon: "images/Icons/quests/mission_construction.png", text: "Chaque bâtiment possède ses ateliers (le Moulin et la Boulangerie pour le Champs). Un atelier transforme des ressources brutes en produits via des recettes." },
+        { icon: "images/Icons/system/import.png", text: "Les intrants (ex. 5 blé) sont déduits de l'Entrepôt dès que tu lances le craft — le produit est crédité à la FIN du temps de fabrication." },
+        { icon: "images/Icons/system/hourglass_waiting.png", text: "Chaque atelier a sa propre file d'attente : tu peux empiler plusieurs lots, ils s'enchaînent tout seuls — même hors ligne." },
+        { icon: "images/Icons/system/settings.png", text: "Ouvre le Champs et lance ta première mouture au Moulin : 5 blé donnent 1 farine." }
       ]
     }
   },
   {
     id: "workshop_first_bread",
     title: "Le pain d'Aeswyn",
-    icon: "🥖",
+    icon: "images/Icons/quests/ration_reward.png",
     buildingId: "farm",
     section: "resource",
     category: "side",
@@ -173,20 +173,20 @@ var VILLAGE_QUESTS = [
     reward: { gold: 200, resources: { eau: 10 } },
     tutorial: {
       tab: "village",
-      icon: "🥖",
+      icon: "images/Icons/quests/ration_reward.png",
       title: "Les chaînes de recettes",
       points: [
         { icon: "🔗", text: "Les recettes s'enchaînent : le blé devient farine (Moulin), la farine devient pain (Boulangerie, 3 farine + 5 eau). Plus loin, le pain entre dans la Ration de la Cuisine de camp." },
         { icon: "🧾", text: "Une recette peut demander PLUSIEURS ingrédients, venus de bâtiments différents — garde un œil sur l'Entrepôt avant de lancer un lot." },
-        { icon: "🔁", text: "Le mode Auto d'une recette relance un lot dès que les ingrédients sont là (une seule recette auto par atelier) — parfait pour la farine pendant que tu joues ailleurs." },
-        { icon: "🥖", text: "Fais moudre assez de farine, puis lance ton premier pain à la Boulangerie." }
+        { icon: "images/Icons/system/auto_repeat.png", text: "Le mode Auto d'une recette relance un lot dès que les ingrédients sont là (une seule recette auto par atelier) — parfait pour la farine pendant que tu joues ailleurs." },
+        { icon: "images/Icons/quests/ration_reward.png", text: "Fais moudre assez de farine, puis lance ton premier pain à la Boulangerie." }
       ]
     }
   },
   {
     id: "workshop_materials",
     title: "Planche et lingot",
-    icon: "🧱",
+    icon: "images/Icons/plots/reinforced_gallery.png",
     buildingId: "sawmill",
     section: "resource",
     category: "side",
@@ -210,12 +210,12 @@ var VILLAGE_QUESTS = [
     reward: { gold: 250, resources: { bois: 5, fer: 5 } },
     tutorial: {
       tab: "village",
-      icon: "🧱",
+      icon: "images/Icons/plots/reinforced_gallery.png",
       title: "Les matériaux de construction",
       points: [
-        { icon: "🪚", text: "Chaque bâtiment a ses propres ateliers : la Scierie fine (Scierie) transforme 5 bois en 1 planche, la Fonderie (Mine) coule 5 fer en 1 lingot." },
-        { icon: "🧱", text: "Planches et lingots sont les matériaux « travaillés » d'Aeswyn : c'est avec eux que s'améliorent les ateliers — et que se bâtiront les projets à venir." },
-        { icon: "🏗️", text: "Tu as déjà croisé la planche avec « Les fondations » : chaque planche fabriquée compte, quelle que soit la raison pour laquelle tu la fabriques." },
+        { icon: "images/Icons/workshops/fine_sawmill.png", text: "Chaque bâtiment a ses propres ateliers : la Scierie fine (Scierie) transforme 5 bois en 1 planche, la Fonderie (Mine) coule 5 fer en 1 lingot." },
+        { icon: "images/Icons/plots/reinforced_gallery.png", text: "Planches et lingots sont les matériaux « travaillés » d'Aeswyn : c'est avec eux que s'améliorent les ateliers — et que se bâtiront les projets à venir." },
+        { icon: "images/Icons/workshops/masonry.png", text: "Tu as déjà croisé la planche avec « Les fondations » : chaque planche fabriquée compte, quelle que soit la raison pour laquelle tu la fabriques." },
         { icon: "⚖️", text: "Conseil : garde toujours quelques planches et lingots d'avance — les besoins arrivent souvent d'un coup." }
       ]
     }
@@ -223,7 +223,7 @@ var VILLAGE_QUESTS = [
   {
     id: "workshop_level_two",
     title: "L'atelier bien huilé",
-    icon: "🔧",
+    icon: "images/Icons/system/wrench_settings.png",
     buildingId: "farm",
     section: "resource",
     category: "side",
@@ -259,13 +259,13 @@ var VILLAGE_QUESTS = [
     reward: { gold: 300, essence: 15 },
     tutorial: {
       tab: "village",
-      icon: "🔧",
+      icon: "images/Icons/system/wrench_settings.png",
       title: "Améliorer un atelier",
       points: [
-        { icon: "⬆️", text: "Chaque atelier monte jusqu'au niveau 5, indépendamment des autres (le Moulin niveau 3 ne change rien à la Boulangerie)." },
-        { icon: "⚡", text: "Chaque niveau accélère les crafts (-8 % de temps par niveau, jusqu'à -32 %) ET allonge la file d'attente : sa taille est égale au niveau de l'atelier." },
-        { icon: "🧱", text: "Le coût se paie en planches et lingots, et grimpe de ×1,4 par niveau — comme les zones de production." },
-        { icon: "🎯", text: "Conseil : améliore d'abord l'atelier qui tourne le plus (souvent celui en mode Auto) — chaque pour cent de vitesse y rapporte davantage." }
+        { icon: "images/Icons/system/upgrade.png", text: "Chaque atelier monte jusqu'au niveau 5, indépendamment des autres (le Moulin niveau 3 ne change rien à la Boulangerie)." },
+        { icon: "images/Icons/combat_stats/stat_speed.png", text: "Chaque niveau accélère les crafts (-8 % de temps par niveau, jusqu'à -32 %) ET allonge la file d'attente : sa taille est égale au niveau de l'atelier." },
+        { icon: "images/Icons/plots/reinforced_gallery.png", text: "Le coût se paie en planches et lingots, et grimpe de ×1,4 par niveau — comme les zones de production." },
+        { icon: "images/Icons/combat_stats/stat_critical.png", text: "Conseil : améliore d'abord l'atelier qui tourne le plus (souvent celui en mode Auto) — chaque pour cent de vitesse y rapporte davantage." }
       ]
     }
   }

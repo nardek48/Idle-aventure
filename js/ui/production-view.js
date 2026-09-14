@@ -70,7 +70,7 @@ function buildProductionDashCardHTML(id) {
 
   var h = '<div class="production-dash-card' + (isFull ? ' is-full' : '') + '" onclick="openProductionBuildingDetail(\'' + id + '\')">';
   if (isFull) h += '<span class="production-dash-flag is-full-flag">PLEIN</span>';
-  else if (upgradable) h += '<span class="production-dash-flag is-up-flag">⬆ AMÉLIORABLE</span>';
+  else if (upgradable) h += '<span class="production-dash-flag is-up-flag"><img class="ico-sys" src="images/Icons/system/upgrade.png" alt=""> AMÉLIORABLE</span>';
 
   h += '<div class="production-dash-card-top">';
   h += renderIconOrEmojiHTML(resDef.icon, "production-dash-ico", resDef.name);
@@ -86,7 +86,7 @@ function buildProductionDashCardHTML(id) {
   h += '<span class="production-dash-rate">+' + formatNumber(ratePerMin) + '/min</span>';
   h += '<span class="production-dash-zones">' + openCount + '/' + PRODUCTION_PLOTS_SHARED.totalPlots + ' zones</span>';
   h += '</div>';
-  h += '<div class="production-dash-status" id="prod-status-' + id + '">' + (isFull ? '✅ Stock plein' : (ratePerMin > 0 ? '⏳ Plein dans ' + esc(formatTime(((capacity - stock) / ratePerMin) * 60)) : '')) + '</div>';
+  h += '<div class="production-dash-status" id="prod-status-' + id + '">' + (isFull ? '<img class=ico-inline src=images/Icons/system/check_valid.png> Stock plein' : (ratePerMin > 0 ? '<img class="ico-sys" src="images/Icons/system/hourglass_waiting.png" alt=""> Plein dans ' + esc(formatTime(((capacity - stock) / ratePerMin) * 60)) : '')) + '</div>';
 
   h += '</div>';
   return h;
@@ -162,7 +162,7 @@ function buildPlotCardHTML(buildingId, plot, index, selectedIndex, cheapestIndex
   if (plot.state === "locked") {
     classNames += " is-locked";
     var h0 = '<div class="' + classNames + '" onclick="selectProductionPlot(\'' + buildingId + '\', ' + index + ')">';
-    h0 += '<div class="farm-plot-card-lock-icon">🔒</div>';
+    h0 += '<div class="farm-plot-card-lock-icon"><img class=ico-inline src=images/Icons/system/lock_closed.png></div>';
     h0 += '<div class="farm-plot-card-name">' + esc(zoneName) + '</div>';
     h0 += '</div>';
     return h0;
@@ -204,7 +204,7 @@ function buildPlotImprovementIconHTML(buildingCfg, plot, kind) {
   if (!def) return "";
   var applied = !!plot[kind];
   var classNames = "farm-plot-improvement-icon" + (applied ? " is-applied" : "");
-  return '<span class="' + classNames + '" title="' + esc(def.label) + '">' + def.icon + '</span>';
+  return '<span class="' + classNames + '" title="' + esc(def.label) + '">' + renderIconOrEmojiHTML(def.icon, "farm-plot-improvement-img", def.label) + '</span>';
 }
 
 /* Zone commune d'actions pour la zone sélectionnée : un seul bouton Défricher si
@@ -263,7 +263,8 @@ function buildPlotActionsHTML(buildingId, plot, index) {
     });
     h += buildPlotActionButtonHTML({
       onclick: "productionPlotToggleImprovement('" + buildingId + "', " + index + ", 'fertile')",
-      label: fertileDef.icon + " " + fertileDef.label,
+      iconHTML: renderIconOrEmojiHTML(fertileDef.icon, "plot-act-ico", ""),
+      label: fertileDef.label,
       desc: "+" + Math.round(PRODUCTION_PLOTS_SHARED.bonusPerImprovement.fertile * 100) + "% " + resName + ", permanent. " + fertileDef.desc,
       cost: fertileDef.cost,
       canAfford: canAffordFertile
@@ -277,7 +278,8 @@ function buildPlotActionsHTML(buildingId, plot, index) {
     });
     h += buildPlotActionButtonHTML({
       onclick: "productionPlotToggleImprovement('" + buildingId + "', " + index + ", 'irrigated')",
-      label: irrigatedDef.icon + " " + irrigatedDef.label,
+      iconHTML: renderIconOrEmojiHTML(irrigatedDef.icon, "plot-act-ico", ""),
+      label: irrigatedDef.label,
       desc: "+" + Math.round(PRODUCTION_PLOTS_SHARED.bonusPerImprovement.irrigated * 100) + "% " + resName + ", permanent. " + irrigatedDef.desc,
       cost: irrigatedDef.cost,
       canAfford: canAffordIrrigated
@@ -294,7 +296,7 @@ function buildPlotActionsHTML(buildingId, plot, index) {
 function buildPlotActionButtonHTML(opts) {
   var h = '<button class="farm-plot-action-btn' + (opts.canAfford ? '' : ' is-disabled') + '" type="button" ' + (opts.canAfford ? '' : 'disabled') + ' onclick="' + opts.onclick + '">';
   h += '<span class="farm-plot-action-btn-text">';
-  h += '<span class="farm-plot-action-label">' + esc(opts.label) + '</span>';
+  h += '<span class="farm-plot-action-label">' + (opts.iconHTML || "") + esc(opts.label) + '</span>';
   h += '<span class="farm-plot-action-desc">' + esc(opts.desc) + '</span>';
   h += '</span>';
   h += buildPlotCostRowHTML(opts.cost);
@@ -386,7 +388,7 @@ function buildZoneGroupActionsHTML(buildingId) {
       if (!afford[key]) all = false;
     });
     h += '<button class="settings-btn primary production-group-btn' + (all ? '' : ' is-locked') + '" type="button" ' + (all ? '' : 'disabled') + ' onclick="productionUpgradeCheapest(\'' + buildingId + '\')">';
-    h += '⬆ Améliorer la − chère ' + buildProductionCostRowHTML(cost, afford);
+    h += '<img class=ico-inline src=images/Icons/system/upgrade.png> Améliorer la − chère ' + buildProductionCostRowHTML(cost, afford);
     h += '</button>';
   }
 
@@ -402,7 +404,7 @@ function buildZoneGroupActionsHTML(buildingId) {
       uAfford[key] = WarehouseManager.getAmount(key) >= unlockCost[key];
     });
     h += '<button class="settings-btn production-group-btn" type="button" onclick="productionSelectFirstLocked(\'' + buildingId + '\')">';
-    h += '🔓 Défricher une zone ' + buildProductionCostRowHTML(unlockCost, uAfford);
+    h += '<img class=ico-inline src=images/Icons/system/lock_open.png> Défricher une zone ' + buildProductionCostRowHTML(unlockCost, uAfford);
     h += '</button>';
   }
 
@@ -472,16 +474,16 @@ function buildBuildingDetailHTML(buildingId) {
     h += buildZoneGroupActionsHTML(buildingId);
   }
 
-  h += '<div class="production-detail-shops-hint">⚙️ Les ateliers de ce bâtiment se pilotent depuis la vue Ateliers</div>';
+  h += '<div class="production-detail-shops-hint"><img class=ico-inline src=images/Icons/system/settings.png> Les ateliers de ce bâtiment se pilotent depuis la vue Ateliers</div>';
 
   h += '</div>';
   return h;
 }
 
 /* ============================================================
-   Section "⚙️ Production" — ateliers de craft locaux au bâtiment
+   Section "<img class=ico-inline src=images/Icons/system/settings.png> Production" — ateliers de craft locaux au bâtiment
    (voir WorkshopsSystem, data/workshops.js). Toggle dépliable au même
-   niveau que "🌾 Parcelles" etc., état indépendant par bâtiment.
+   niveau que "<img class=ico-inline src=images/Icons/scene/scene_harvest.png> Parcelles" etc., état indépendant par bâtiment.
    ============================================================ */
 
 var selectedWorkshopRecipe = {}; // { [workshopId]: recipeId } — mémorise le choix de recette par atelier
@@ -496,12 +498,12 @@ var workshopAutoQty = {};        // { [workshopId]: number } — v3.98.15 : quan
    v3.192.0 : carte atelier COMPACTE (maquette atelier-ecrans.html v4
    validée par Seb) — ~moitié de la hauteur des anciennes cartes, tout le
    fonctionnel conservé. 4 décisions actées :
-   (1) ♻️ actif sur la recette affichée -> la ligne de craft manuel
+   (1) <img class=ico-inline src=images/Icons/system/auto_repeat.png> actif sur la recette affichée -> la ligne de craft manuel
        disparaît (couper le toggle pour forcer un lot à la main) ;
    (2) quantité par lot auto = mini-stepper inline à côté du toggle
        (mêmes handlers v3.98.15/16, saisie directe conservée) ;
    (3) file = cases visuelles + entrée courante (temps + barre fine),
-       ✕ sur les lots suivants — remplace la liste verticale. Ids
+       <img class=ico-inline src=images/Icons/system/close.png> sur les lots suivants — remplace la liste verticale. Ids
        prod-workshop-time-/bar- et conteneur workshop-queue-{id}
        CONSERVÉS : updateDOM() et refreshWorkshopQueueDOM() inchangés.
        Le badge "File : X/Y" (prod-workshop-queue-badge-) disparaît —
@@ -514,7 +516,7 @@ var workshopAutoQty = {};        // { [workshopId]: number } — v3.98.15 : quan
 function buildWorkshopCardHTML(workshop) {
   if (!workshop.active) {
     var h0 = '<div class="workshop-card is-inactive">';
-    h0 += '<div class="workshop-card-icon">' + workshop.icon + '</div>';
+    h0 += '<div class="workshop-card-icon">' + renderIconOrEmojiHTML(workshop.icon, "workshop-card-icon-img", workshop.name) + '</div>';
     h0 += '<div class="workshop-card-name">' + esc(workshop.name) + '</div>';
     h0 += '<div class="workshop-card-soon">Bientôt</div>';
     h0 += '</div>';
@@ -542,14 +544,14 @@ function buildWorkshopCardHTML(workshop) {
 
   // --- en-tête : icône, nom, tag bâtiment, écu, amélioration compacte ---
   h += '<div class="wk-head">';
-  h += '<span class="wk-emoji">' + workshop.icon + '</span>';
+  h += '<span class="wk-emoji">' + renderIconOrEmojiHTML(workshop.icon, "wk-emoji-img", workshop.name) + '</span>';
   h += '<span class="wk-name">' + esc(workshop.name) + '</span>';
   if (tagDef) h += '<span class="workshop-building-tag">' + renderIconOrEmojiHTML(tagRes.icon, "workshop-building-tag-ico", tagDef.name) + esc(tagDef.name) + '</span>';
   h += '<span class="kbadge kbadge-shield wk-shield"><span>' + level + '</span></span>';
   h += buildWorkshopUpgradeCompactHTML(workshop.id);
   h += '</div>';
 
-  // --- pilules de recettes (ateliers multi-recettes) — la pilule active porte ♻️
+  // --- pilules de recettes (ateliers multi-recettes) — la pilule active porte <img class=ico-inline src=images/Icons/system/auto_repeat.png>
   //     si le chaînage est sur elle ---
   if (recipes.length > 1) {
     h += '<div class="wk-pills">';
@@ -575,10 +577,10 @@ function buildWorkshopCardHTML(workshop) {
   // --- file : cases + entrée courante ---
   h += buildWorkshopQueueHTML(workshop.id);
 
-  // --- pied : toggle ♻️ + (quantité auto inline) OU (stepper manuel + Fabriquer) ---
+  // --- pied : toggle <img class=ico-inline src=images/Icons/system/auto_repeat.png> + (quantité auto inline) OU (stepper manuel + Fabriquer) ---
   h += '<div class="wk-foot">';
   h += '<span class="wk-cont' + (isAutoHere ? " is-on" : "") + '" onclick="setWorkshopAutoRecipe(\'' + workshop.id + '\', \'' + esc(recipe.id) + '\')">';
-  h += '<span class="wk-cont-sw"></span>♻️ Continue</span>';
+  h += '<span class="wk-cont-sw"></span><img class="ico-sys" src="images/Icons/system/auto_repeat.png" alt=""> Continue</span>';
 
   if (isAutoHere) {
     var maxAutoNow = WorkshopsSystem.getMaxAutoCraftTimes(workshop.id, recipe.id);
@@ -610,11 +612,11 @@ function buildWorkshopCardHTML(workshop) {
   if (otherAuto) {
     var otherRecipe = WorkshopsSystem.getRecipe(workshop.id, activeAutoId);
     var otherDef = otherRecipe ? WAREHOUSE_RESOURCES[otherRecipe.outputs[0].resourceId] : null;
-    h += '<div class="wk-alert is-hint">♻️ déjà active sur ' + esc(otherDef ? otherDef.name : activeAutoId) + ' — l\'activer ici la remplacera.</div>';
+    h += '<div class="wk-alert is-hint"><img class=ico-inline src=images/Icons/system/auto_repeat.png> déjà active sur ' + esc(otherDef ? otherDef.name : activeAutoId) + ' — l\'activer ici la remplacera.</div>';
   } else if (isAutoHere && !queue.length && WorkshopsSystem.getMaxAutoCraftTimes(workshop.id, recipe.id) <= 0) {
     if (maxCrafts > 0) {
       // stock brut suffisant mais pas la version "moins réserve" -> c'est la réserve (v3.98.17)
-      h += '<div class="wk-alert is-reserve">⏸ En attente : la réserve protégée empêche un nouveau lot — ajustable dans l\'Entrepôt.</div>';
+      h += '<div class="wk-alert is-reserve"><img class=ico-inline src=images/Icons/system/pause_stop.png> En attente : la réserve protégée empêche un nouveau lot — ajustable dans l\'Entrepôt.</div>';
     } else {
       h += buildWorkshopMissingInputHTML(recipe);
     }
@@ -634,7 +636,7 @@ function buildWorkshopMissingInputHTML(recipe) {
   });
   if (!missing) return "";
   var d = WAREHOUSE_RESOURCES[missing.resourceId] || {};
-  return '<div class="wk-alert is-warn">⚠ ' + esc(d.name || missing.resourceId) + ' insuffisant (' + formatNumber(WarehouseManager.getAmount(missing.resourceId)) + '/' + formatNumber(missing.quantity) + ')</div>';
+  return '<div class="wk-alert is-warn"><img class=ico-inline src=images/Icons/system/warning.png> ' + esc(d.name || missing.resourceId) + ' insuffisant (' + formatNumber(WarehouseManager.getAmount(missing.resourceId)) + '/' + formatNumber(missing.quantity) + ')</div>';
 }
 
 /* Décision (4) : coût seul sur le bouton d'amélioration, en tête de carte —
@@ -646,13 +648,13 @@ function buildWorkshopUpgradeCompactHTML(workshopId) {
   var cost = WorkshopsSystem.getUpgradeCost(workshopId);
   var afford = WorkshopsSystem.getUpgradeAffordability(workshopId);
   var h = '<button class="wk-up' + (afford.all ? '' : ' is-disabled') + '" type="button" ' + (afford.all ? '' : 'disabled') + ' onclick="upgradeWorkshop(\'' + workshopId + '\')">';
-  h += '⬆ ' + buildProductionCostRowHTML(cost, afford);
+  h += '<img class=ico-inline src=images/Icons/system/upgrade.png> ' + buildProductionCostRowHTML(cost, afford);
   h += '</button>';
   return h;
 }
 
 /* v3.192.0 : file en CASES (taille = niveau d'atelier) + entrée courante (nom ×N,
-   temps restant, barre fine) + ✕ d'annulation sur les lots suivants. Conteneur
+   temps restant, barre fine) + <img class=ico-inline src=images/Icons/system/close.png> d'annulation sur les lots suivants. Conteneur
    workshop-queue-{id} et ids prod-workshop-time-/bar- CONSERVÉS : le tick
    (updateDOM) et refreshWorkshopQueueDOM ci-dessous fonctionnent sans changement.
    Le calcul de pct reprend celui d'updateDOM (craftTimeMs brut × times). */
@@ -668,7 +670,7 @@ function buildWorkshopQueueHTML(workshopId) {
       var r = WorkshopsSystem.getRecipe(workshopId, entry.recipeId);
       var d = r ? (WAREHOUSE_RESOURCES[r.outputs[0].resourceId] || {}) : {};
       h += renderIconOrEmojiHTML(d.icon, "wk-slot-ico", d.name);
-      if (q > 0) h += '<span class="wk-slot-x" onclick="cancelWorkshopCraft(\'' + workshopId + '\', \'' + esc(entry.id) + '\')" role="button" aria-label="Annuler">✕</span>';
+      if (q > 0) h += '<span class="wk-slot-x" onclick="cancelWorkshopCraft(\'' + workshopId + '\', \'' + esc(entry.id) + '\')" role="button" aria-label="Annuler"><img class=ico-inline src=images/Icons/system/close.png></span>';
     }
     h += '</span>';
   }
@@ -841,8 +843,8 @@ window.cancelWorkshopCraft = cancelWorkshopCraft;
    positions dans l'écran, pas de 4e sous-onglet Village. */
 function buildProductionSwitchHTML() {
   var h = '<div class="pc-subtab-bar production-switch">';
-  h += '<button type="button" class="pc-subtab-btn' + (productionViewTab === "prod" ? ' is-active' : '') + '" onclick="setProductionViewTab(\'prod\')">🏠<span>Production</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (productionViewTab === "shops" ? ' is-active' : '') + '" onclick="setProductionViewTab(\'shops\')">⚒️<span>Ateliers</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (productionViewTab === "prod" ? ' is-active' : '') + '" onclick="setProductionViewTab(\'prod\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/production.png" alt=""><span>Production</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (productionViewTab === "shops" ? ' is-active' : '') + '" onclick="setProductionViewTab(\'shops\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/workshops.png" alt=""><span>Ateliers</span></button>';
   h += '</div>';
   return h;
 }
@@ -862,7 +864,7 @@ function buildProdActionBarHTML() {
   var hasAnyStock = totalStock > 0;
 
   var h = '<button class="settings-btn primary production-harvest-all-kbtn' + (hasAnyStock ? '' : ' is-locked') + '" id="prod-harvest-all-btn" type="button" ' + (hasAnyStock ? '' : 'disabled') + ' onclick="ProductionManager.harvestAll()">';
-  h += '🧺 Tout récolter';
+  h += '<img class="ico-btn" src="images/Icons/system/collect_all.png" alt=""> Tout récolter';
   h += '</button>';
   if (upCount > 0) h += '<p class="production-dash-hint">' + upCount + ' bâtiment' + (upCount > 1 ? 's ont' : ' a') + ' une amélioration abordable · touche un bâtiment pour gérer ses zones</p>';
   else h += '<p class="production-dash-hint">Touche un bâtiment pour gérer ses zones</p>';
@@ -904,9 +906,9 @@ function buildShopsViewHTML() {
   var stalled = countStalledWorkshops();
   var h = '';
   if (stalled > 0) {
-    h += '<div class="production-status-banner is-warn">⚠ ' + stalled + (stalled > 1 ? ' ateliers' : ' atelier') + ' à l\'arrêt — intrants ou réserve</div>';
+    h += '<div class="production-status-banner is-warn"><img class=ico-inline src=images/Icons/system/warning.png> ' + stalled + (stalled > 1 ? ' ateliers' : ' atelier') + ' à l\'arrêt — intrants ou réserve</div>';
   } else {
-    h += '<div class="production-status-banner is-ok">✅ Tous les ateliers suivis tournent</div>';
+    h += '<div class="production-status-banner is-ok"><img class="ico-sys" src="images/Icons/system/check_valid.png" alt=""> Tous les ateliers suivis tournent</div>';
   }
 
   var activeQueueCount = Object.keys(WORKSHOPS_CONFIG).filter(function (workshopId) {
@@ -919,9 +921,9 @@ function buildShopsViewHTML() {
   }).length;
   h += '<div class="production-harvest-all-row">';
   h += '<button class="production-action-btn production-harvest-btn production-queues-btn" id="prod-queues-btn" type="button" onclick="openWorkshopSummaryModal()">';
-  h += '📋 Files';
+  h += '<img class="ico-btn" src="images/Icons/quests/quest_list.png" alt=""> Files';
   if (activeQueueCount > 0) h += '<span class="production-queues-badge">' + activeQueueCount + '</span>';
-  if (activeAutoCount > 0) h += '<span class="production-queues-badge production-auto-badge">🔁 ' + activeAutoCount + '</span>';
+  if (activeAutoCount > 0) h += '<span class="production-queues-badge production-auto-badge"><img class=ico-inline src=images/Icons/system/auto_repeat.png> ' + activeAutoCount + '</span>';
   h += '</button>';
   h += '</div>';
 
@@ -941,7 +943,7 @@ function buildShopsViewHTML() {
   });
   h += '</div>';
   if (lockedNames.length) {
-    h += '<div class="production-shops-locked">🔒 ' + lockedNames.length + ' ateliers à venir : ' + esc(lockedNames.join(" · ")) + '</div>';
+    h += '<div class="production-shops-locked"><img class=ico-inline src=images/Icons/system/lock_closed.png> ' + lockedNames.length + ' ateliers à venir : ' + esc(lockedNames.join(" · ")) + '</div>';
   }
   return h;
 }

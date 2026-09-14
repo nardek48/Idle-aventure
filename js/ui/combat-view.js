@@ -72,7 +72,7 @@ function renderHealButtons() {
 function buildActivePotionsBarHTML() {
   if (typeof POTIONS_DB === "undefined" || !window.PotionManager) return "";
 
-  // v3.115.0 : per-run — icônes des potions armées, sans minuteur. ⚔ = effet vivant
+  // v3.115.0 : per-run — icônes des potions armées, sans minuteur. <img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> = effet vivant
   // (mission en cours), sinon armée en attente du prochain run.
   var live = typeof PotionManager.isEffectLive === "function" && PotionManager.isEffectLive();
   var h = "";
@@ -82,15 +82,15 @@ function buildActivePotionsBarHTML() {
 
     var title = potion.name + (live ? " — active pour ce run" : " — armée pour la prochaine mission");
     h += '<div class="active-potion-icon' + (live ? '' : ' is-armed-idle') + '" title="' + esc(title) + '">';
-    h += '<img src="' + esc(potion.icon) + '" alt="' + esc(potion.name) + '">';
-    if (live) h += '<span class="active-potion-timer">⚔</span>';
+    h += '<img src="' + esc(potion.icon) + '" alt="">';
+    if (live) h += '<span class="active-potion-timer"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png></span>';
     h += '</div>';
   });
 
   if (window.AfflictionManager && typeof AfflictionManager.getActiveList === "function") {
     AfflictionManager.getActiveList().forEach(function (affliction) {
       h += '<div class="active-potion-icon active-affliction-icon" title="' + esc(affliction.name) + ' — ' + esc(affliction.desc) + '">';
-      h += '<span class="active-affliction-emoji">' + esc(affliction.icon || "🔥") + '</span>';
+      h += '<span class="active-affliction-emoji">' + renderIconOrEmojiHTML(affliction.icon, "active-affliction-img", affliction.name) + '</span>';
       h += '</div>';
     });
   }
@@ -115,7 +115,7 @@ function buildEnemyStatusBarHTML() {
   var engageIn = Number(game.enemy.engageIn || 0);
   if (engageIn > 0) {
     h += '<div class="enemy-status-icon enemy-status-approaching" title="À distance : il ne frappe pas encore, mais il approche (et arrive lancé)">';
-    h += '<span class="enemy-status-emoji">👣</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/enemy_approaching.png" alt="">';
     h += '<span class="enemy-status-timer">' + engageIn + '</span>';
     h += '</div>';
   }
@@ -124,14 +124,14 @@ function buildEnemyStatusBarHTML() {
     var rageFrozen = Number(game.enemy.rageFreezeRounds || 0) > 0;
     h += '<div class="enemy-status-icon enemy-status-enraged' + (rageFrozen ? ' is-suppressed' : '') + '" title="'
       + (rageFrozen ? 'Enragé (rage apaisée temporairement)' : 'Enragé : plus dangereux à mesure qu\u2019il perd des PV') + '">';
-    h += '<span class="enemy-status-emoji">' + (rageFrozen ? '😮\u200d💨' : '😡') + '</span>';
+    h += rageFrozen ? '<img class="enemy-status-img" src="images/Icons/combat_status/rage_calmed.png" alt="">' : '<img class="enemy-status-img" src="images/Icons/combat_status/rage.png" alt="">';
     h += '</div>';
   }
 
   if (game.enemy.archetype === "corrupted") {
     var corruptedStacks = Number(game.enemy.corruptedStacks || 0);
     h += '<div class="enemy-status-icon enemy-status-corrupted" title="Corrupteur : chaque coup reçu réduit tes dégâts (' + corruptedStacks + '/' + (typeof CORRUPTED_MAX_STACKS === "number" ? CORRUPTED_MAX_STACKS : 5) + ' stacks)">';
-    h += '<span class="enemy-status-emoji">☠️</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/corruption.png" alt="">';
     if (corruptedStacks > 0) {
       h += '<span class="enemy-status-timer">' + corruptedStacks + '</span>';
     }
@@ -142,7 +142,7 @@ function buildEnemyStatusBarHTML() {
     var lifestealSuppressed = Number(game.enemy.vampiricSuppressedRounds || 0) > 0;
     h += '<div class="enemy-status-icon enemy-status-vampiric' + (lifestealSuppressed ? ' is-suppressed' : '') + '" title="'
       + (lifestealSuppressed ? 'Vampirique (vol de vie bloqué temporairement)' : 'Vampirique : se soigne à chaque coup qu\u2019il te porte') + '">';
-    h += '<span class="enemy-status-emoji">🧛</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/vampiric.png" alt="">';
     h += '</div>';
   }
 
@@ -150,73 +150,73 @@ function buildEnemyStatusBarHTML() {
     var armorSuppressed = Number(game.enemy.armorSuppressedRounds || 0) > 0;
     h += '<div class="enemy-status-icon enemy-status-armored' + (armorSuppressed ? ' is-suppressed' : '') + '" title="'
       + (armorSuppressed ? 'Blindé (blindage fissuré temporairement)' : 'Blindé : subit un peu moins de dégâts en permanence') + '">';
-    h += '<span class="enemy-status-emoji">🛡️‍🩹</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/armored.png" alt="">';
     h += '</div>';
   }
 
   if (Number(game.enemy.vulnerableRounds || 0) > 0) {
     var vulnPct = Math.round((game.enemy.vulnerableMult || 0) * 100);
     h += '<div class="enemy-status-icon enemy-status-vulnerability" title="Vulnérable : +' + vulnPct + '% dégâts subis">';
-    h += '<span class="enemy-status-emoji">⚡</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/vulnerable.png" alt="">';
     h += '<span class="enemy-status-timer">' + game.enemy.vulnerableRounds + '</span>';
     h += '</div>';
   }
 
   if (game.enemy.dot && game.enemy.dot.rounds > 0) {
     h += '<div class="enemy-status-icon enemy-status-dot" title="Brûlure arcanique : ' + formatNumber(game.enemy.dot.perRound) + ' dégâts par round">';
-    h += '<span class="enemy-status-emoji">🔥</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/arcane_burn.png" alt="">';
     h += '<span class="enemy-status-timer">' + game.enemy.dot.rounds + '</span>';
     h += '</div>';
   }
 
   if (game.enemy.chargeTelegraphed) {
     h += '<div class="enemy-status-icon enemy-status-charge" title="Charge au prochain tour !">';
-    h += '<span class="enemy-status-emoji">💢</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/charge_incoming.png" alt="">';
     h += '</div>';
   }
 
   if (game.enemy.silenceTelegraphed) {
     h += '<div class="enemy-status-icon enemy-status-silence-telegraph" title="Silence au prochain tour !">';
-    h += '<span class="enemy-status-emoji">🔇</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/silence_incoming.png" alt="">';
     h += '</div>';
   }
 
   if (Number(game.silencedRounds || 0) > 0) {
     h += '<div class="enemy-status-icon enemy-status-silenced-active" title="Tu es silencié : tes techniques sont bloquées">';
-    h += '<span class="enemy-status-emoji">🔇</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/silenced.png" alt="">';
     h += '<span class="enemy-status-timer">' + game.silencedRounds + '</span>';
     h += '</div>';
   }
 
   if (game.enemy.shieldTelegraphed) {
     h += '<div class="enemy-status-icon enemy-status-shield-telegraph" title="Bouclier au prochain tour !">';
-    h += '<span class="enemy-status-emoji">🛡️</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/shield_incoming.png" alt="">';
     h += '</div>';
   }
 
   if (Number(game.enemy.shieldRounds || 0) > 0) {
     h += '<div class="enemy-status-icon enemy-status-shield-active" title="Bouclier actif : -50% dégâts subis">';
-    h += '<span class="enemy-status-emoji">🛡️</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/shield_active.png" alt="">';
     h += '<span class="enemy-status-timer">' + game.enemy.shieldRounds + '</span>';
     h += '</div>';
   }
 
   if (game.enemy.healTelegraphed) {
     h += '<div class="enemy-status-icon enemy-status-heal-telegraph" title="Soin au prochain tour !">';
-    h += '<span class="enemy-status-emoji">💚</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/heal_incoming.png" alt="">';
     h += '</div>';
   }
 
   if (window.CombatEngine && typeof CombatEngine.enemyDoubleStrikeNext === "function" && CombatEngine.enemyDoubleStrikeNext()) {
     h += '<div class="enemy-status-icon enemy-status-double-strike" title="Jauge pleine : il frappera deux fois au prochain tour">';
-    h += '<span class="enemy-status-emoji">⚡</span>';
+    h += '<img class="enemy-status-img" src="images/Icons/combat_status/gauge_full.png" alt="">';
     h += '<span class="enemy-status-timer">×2</span>';
     h += '</div>';
   }
 
   if (Number(game.enemy.counteredRounds || 0) > 0) {
     h += '<div class="enemy-status-icon enemy-status-countered" title="Attaque contrée !">';
-    h += '<span class="enemy-status-emoji">⚡</span>';
+    h += '<span class="enemy-status-emoji"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png></span>';
     h += '</div>';
   }
 
@@ -247,20 +247,20 @@ function buildCombatControlsHTML() {
   // .combat-gauge ne garde que le dimensionnement dans la barre de round).
   h += '<div class="combat-gauge kgauge kgauge-thin" title="Jauge de célérité : à 100 %, une frappe bonus suit ta prochaine attaque">';
   h += '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + gaugePct + '%"></div></div>';
-  h += '<span class="kgauge-text">⚡ ' + gaugePct + '%</span>';
+  h += '<span class="kgauge-text"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + gaugePct + '%</span>';
   h += '</div>';
 
   if (grimoireUnlocked) {
     h += '<button type="button" class="combat-mode-btn' + (mode === "grimoire" ? ' is-auto' : '') + '" onclick="CombatEngine.setCombatMode(\'' + (mode === "grimoire" ? "tactique" : "grimoire") + '\')" title="'
       + (mode === "grimoire" ? "Mode Grimoire : les rounds s\u2019enchaînent, le Grimoire choisit. Toucher pour repasser en Tactique." : "Mode Tactique : chaque round attend ton choix. Toucher pour laisser le Grimoire jouer.") + '">';
-    h += (mode === "grimoire" ? "📖 Grimoire" : "🎯 Tactique");
+    h += (mode === "grimoire" ? "<img class=ico-inline src=images/Icons/codex/codex_lore.png> Grimoire" : "<img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> Tactique");
     h += '</button>';
   }
 
   if (mode !== "grimoire") {
     h += '<button type="button" class="combat-continue-btn' + (round.continueAttack ? ' is-active' : '') + '"' + (downed ? ' disabled' : '')
       + ' onclick="CombatEngine.toggleContinueAttack()" title="Répète l\u2019Attaque jusqu\u2019au prochain événement (PV < 50 %, télégraphe, double frappe, nouvel ennemi)">';
-    h += round.continueAttack ? "⏸️ Stop" : "⟳ Continuer";
+    h += round.continueAttack ? "<img class=ico-inline src=images/Icons/system/pause_stop.png> Stop" : "<img class=ico-inline src=images/Icons/quests/continue.png> Continuer";
     h += '</button>';
   }
   return h;
@@ -273,13 +273,13 @@ function buildCombatSortieHTML() {
   var downed = (game.heroHp || 0) <= 0;
   var h = "";
   if (s.active) {
-    h += '<div class="combat-loot-pill" title="Butin de la sortie — banqué au retour, perdu si tu tombes">🎒 ' + esc(SortieManager.getLootSummary()) + '</div>';
-    h += '<div class="combat-loot-pill combat-potion-pill" title="Potions restantes pour cette sortie">🧪 ' + SortieManager.getPotionsLeft() + '</div>';
+    h += '<div class="combat-loot-pill" title="Butin de la sortie — banqué au retour, perdu si tu tombes"><img class=ico-inline src=images/Icons/subtabs/inventory.png> ' + esc(SortieManager.getLootSummary()) + '</div>';
+    h += '<div class="combat-loot-pill combat-potion-pill" title="Potions restantes pour cette sortie"><img class=ico-inline src=images/Icons/subtabs/potions.png> ' + SortieManager.getPotionsLeft() + '</div>';
   }
   if (s.active && SortieManager.isMission()) {
-    h += '<button type="button" class="combat-sortie-btn is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()" title="Fuir : la mission n\u2019est pas validée, tu rapportes 50 % du butin">🏳️ Fuir</button>';
+    h += '<button type="button" class="combat-sortie-btn is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()" title="Fuir : la mission n\u2019est pas validée, tu rapportes 50 % du butin"><img class=ico-inline src=images/Icons/quests/flee.png> Fuir</button>';
   } else {
-    h += '<button type="button" class="combat-sortie-btn"' + (downed ? ' disabled' : '') + ' onclick="SortieManager.returnToCamp()" title="Rentrer au Campement avec tout le butin">🏕️ Rentrer</button>';
+    h += '<button type="button" class="combat-sortie-btn"' + (downed ? ' disabled' : '') + ' onclick="SortieManager.returnToCamp()" title="Rentrer au Campement avec tout le butin"><img class=ico-inline src=images/Icons/plots/hunting_blind.png> Rentrer</button>';
   }
   return h;
 }
@@ -482,7 +482,7 @@ function buildClassSkillButtonHTML(slot, suggestedSlot) {
     : null;
   var isActiveNow = !!(activeDefense && activeDefense.actionId === action.id);
 
-  var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "🛡️" : "✨");
+  var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "<img class=ico-inline src=images/Icons/combat_stats/stat_defense.png>" : "<img class=ico-inline src=images/Icons/scene/node_discovery.png>");
   var keyLabel = CLASS_SKILL_KEY_LABELS[action.slot] || "";
 
   var title = autoModeActive
@@ -504,7 +504,7 @@ function buildClassSkillButtonHTML(slot, suggestedSlot) {
   } else if (isActiveNow) {
     h += '<span class="combat-action-active-tag">ACTIF</span>';
   } else if (isSuggested) {
-    h += '<span class="combat-action-suggest-tag">📖</span>';
+    h += '<span class="combat-action-suggest-tag"><img class=ico-inline src=images/Icons/codex/codex_lore.png></span>';
   }
   h += '</button>';
   return h;

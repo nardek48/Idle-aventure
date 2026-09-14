@@ -21,8 +21,8 @@ function getWorldProgressText(index) {
   if (index === (WorldManager.worldIndex || 0)) return "En cours";
   if (!WorldManager.meetsAscensionRequirement(index)) {
     var quest = window.WorldQuestManager ? WorldQuestManager.getQuestForWorldIndex(index) : null;
-    if (quest && WorldQuestManager.isReadyToClaim(quest)) return "🗺️ Questline prête !";
-    if (quest) return "🗺️ " + quest.name;
+    if (quest && WorldQuestManager.isReadyToClaim(quest)) return "<img class=ico-inline src=images/Icons/quests/quest_resources.png> Questline prête !";
+    if (quest) return "<img class=ico-inline src=images/Icons/quests/quest_resources.png> " + quest.name;
     return "Verrouillé";
   }
   return "Verrouillé";
@@ -107,7 +107,7 @@ function buildMapNodeHTML(world, index) {
   var h = '<button type="button" class="' + classes.join(" ") + '" style="left:' + pos.x + '%;top:' + pos.y + '%;" onclick="openWorldPopup(' + index + ')">';
   h += '<span class="map-node-circle"><img src="' + esc(getWorldThumb(world)) + '" alt="' + esc(world.name) + '" draggable="false">';
   if (isCurrent) h += '<span class="map-node-badge">Actuel</span>';
-  if (!unlocked) h += '<span class="map-node-lock">🔒</span>';
+  if (!unlocked) h += '<span class="map-node-lock"><img class=ico-inline src=images/Icons/system/lock_closed.png></span>';
   h += '</span>';
   h += '<span class="map-node-name">' + esc(world.name) + '</span>';
   h += '</button>';
@@ -151,7 +151,7 @@ function buildWorldPopupHTML(index) {
       h += '</div>';
     }
   } else if (!isWorldUnlocked(index) && !WorldManager.meetsAscensionRequirement(index)) {
-    h += '<div class="map-current-adventure">🗺️ Questline de déblocage en cours — voir l\'onglet Quêtes.</div>';
+    h += '<div class="map-current-adventure"><img class=ico-inline src=images/Icons/quests/quest_resources.png> Questline de déblocage en cours — voir l\'onglet Quêtes.</div>';
   }
 
   var monsters = getWorldMonsterList(world);
@@ -161,7 +161,7 @@ function buildWorldPopupHTML(index) {
       h += '<div class="map-monster-chip' + (m.isBoss ? " is-boss" : "") + (m.image ? " has-icon-img" : "") + '" title="' + esc(m.name) + '">';
       if (m.image) {
         h += '<img src="' + esc(m.image) + '" alt="' + esc(m.name) + '" onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">';
-        h += '<span class="icon-img-fallback">' + m.icon + '</span>';
+        h += '<span class="icon-img-fallback">' + renderIconOrEmojiHTML(m.icon, "map-fallback-ico", "") + '</span>';
       } else {
         h += m.icon;
       }

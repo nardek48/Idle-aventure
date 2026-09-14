@@ -266,8 +266,8 @@ var SCENE_NODES = {
   },
 
   icons: {
-    obstacle: "⛰", autel: "🕯", decouverte: "✨", source: "💧", mystere: "❓",
-    combat: "⚔️", bloqueur: "⏳"
+    obstacle: "images/Icons/scene/node_obstacle.png", autel: "images/Icons/scene/node_forgotten_altar.png", decouverte: "images/Icons/scene/node_discovery.png", source: "images/Icons/scene/node_clear_spring.png", mystere: "images/Icons/scene/node_unknown.png",
+    combat: "images/Icons/scene/node_encounter.png", bloqueur: "images/Icons/scene/node_long_path.png"
   },
 
   /* v3.125.0 (Lot PA2) : groupes d'ennemis exploitables par un slot combat de scene-engine

@@ -4,7 +4,7 @@
 function renderIconOrEmojiHTML(icon, baseClass, altText) {
   var isImagePath = typeof icon === "string" && /\.(png|jpg|jpeg|svg|gif|webp)$/i.test(icon);
   if (isImagePath) {
-    return '<img class="' + baseClass + '" src="' + esc(icon) + '" alt="' + esc(altText || "") + '">';
+    return '<img class="' + baseClass + '" src="' + esc(icon) + '" alt="">';
   }
   return '<span class="' + baseClass + ' ' + baseClass + '-emoji">' + esc(icon || "") + '</span>';
 }

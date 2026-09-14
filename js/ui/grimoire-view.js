@@ -34,7 +34,7 @@ function ensureGrimoireRules() {
 
 var GRIMOIRE_PRESET_MAX_COUNT = 6;
 
-var GRIMOIRE_PRESET_ICON_CHOICES = ["⚔️", "🛡️", "🏹", "🔮", "👑", "🌲", "🏜️", "🗿"];
+var GRIMOIRE_PRESET_ICON_CHOICES = ["images/Icons/combat_stats/stat_attack.png", "images/Icons/combat_stats/stat_defense.png", "images/Icons/classes/class_ranger.png", "images/Icons/classes/class_mage.png", "images/Icons/dungeon/boss_crown.png", "images/Icons/codex/world_forest.png", "images/Icons/codex/world_desert.png", "images/Icons/codex/world_mountain.png"];
 
 function ensureGrimoirePresets() {
   if (!Array.isArray(game.grimoirePresets)) game.grimoirePresets = [];
@@ -96,7 +96,7 @@ function confirmLoadGrimoirePreset(presetId) {
   showConfirmModal(
     "Charger « " + preset.name + " » ?",
     "Les 6 règles actuellement configurées seront remplacées par celles de ce preset. Enregistre ta configuration actuelle comme preset avant de continuer si tu veux la garder.",
-    preset.icon || "📖",
+    preset.icon || "<img class=ico-inline src=images/Icons/codex/codex_lore.png>",
     function () { loadGrimoirePreset(presetId); }
   );
 }
@@ -109,7 +109,7 @@ function confirmDeleteGrimoirePreset(presetId) {
   showConfirmModal(
     "Supprimer « " + preset.name + " » ?",
     "Cette action est irréversible. Le preset sera définitivement supprimé (la config actuellement active n'est pas affectée).",
-    "🗑️",
+    "<img class=ico-inline src=images/Icons/system/trash.png>",
     function () {
       game.grimoirePresets = presets.filter(function (p) { return p.id !== presetId; });
       saveGame();
@@ -183,7 +183,7 @@ function buildGrimoireConditionOptionsHTML(selectedId) {
     var cond = getGrimoireCondition(conditionId);
     if (!cond) return;
     h += '<option value="' + esc(conditionId) + '"' + (selectedId === conditionId ? ' selected' : '') + '>'
-      + esc(cond.icon) + ' ' + esc(cond.label) + '</option>';
+      + esc(cond.label) + '</option>';
   });
   return h;
 }
@@ -195,13 +195,13 @@ function buildGrimoireActionOptionsHTML(kit, selectedSlot, conditionId) {
   GRIMOIRE_ASSIGNABLE_SLOTS.forEach(function (slot) {
     var action = kit.actions[slot];
     if (!action) return;
-    // v3.208.0 : le ⚡ ne s'allumait que sur action.counters — une action qui contre par
+    // v3.208.0 : le <img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ne s'allumait que sur action.counters — une action qui contre par
     // suppression d'archétype (Frappe lourde vs corrompu, Brise-garde vs blindé) paraissait
     // neutre dans la liste. getAllGrimoireCounterIds() couvre les deux canaux.
     var isCounter = !!(conditionId && typeof getAllGrimoireCounterIds === "function"
       && getAllGrimoireCounterIds(action).indexOf(conditionId) !== -1);
     h += '<option value="' + esc(slot) + '"' + (selectedSlot === slot ? ' selected' : '') + '>'
-      + (isCounter ? '⚡ ' : '') + esc(action.label) + '</option>';
+      + (isCounter ? '\u26a1 ' : '') + esc(action.label) + '</option>';
   });
   return h;
 }
@@ -258,7 +258,7 @@ function buildGrimoireRuleRowHTML(index, rule, kit, locked) {
   // Numéro d'ordre : les règles sont évaluées DANS L'ORDRE, ce que l'ancien
   // écran ne montrait nulle part.
   h += '<span class="grimoire-rule-order">' + (index + 1) + '</span>';
-  h += '<span class="grimoire-rule-icon">' + (locked ? '🔒' : (cond ? esc(cond.icon) : '＋')) + '</span>';
+  h += '<span class="grimoire-rule-icon">' + (locked ? '<img class="ico-sys" src="images/Icons/system/lock_closed.png" alt="">' : (cond ? renderIconOrEmojiHTML(cond.icon, "grimoire-rule-ico", cond.label) : '＋')) + '</span>';
   h += '<span class="grimoire-rule-body">';
 
   if (locked) {
@@ -273,7 +273,7 @@ function buildGrimoireRuleRowHTML(index, rule, kit, locked) {
   } else {
     h += '<span class="grimoire-rule-text">Si ' + esc(getGrimoireConditionShortLabel(rule.conditionId))
       + ' <span class="grimoire-rule-arrow">→</span> ' + esc(action.label)
-      + (isGrimoireRuleCounter(rule, kit) ? '<span class="grimoire-counter-tag">⚡ Contre</span>' : '')
+      + (isGrimoireRuleCounter(rule, kit) ? '<span class="grimoire-counter-tag"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> Contre</span>' : '')
       + '</span>';
   }
 
@@ -296,7 +296,7 @@ function buildGrimoireEditHTML(index, kit) {
   var action = (kit && kit.actions && rule.actionSlot) ? kit.actions[rule.actionSlot] : null;
   var unlockedCount = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : GRIMOIRE_SLOT_COUNT;
 
-  var h = '<button type="button" class="grimoire-back-btn" onclick="closeGrimoireRule()">← Règle '
+  var h = '<button type="button" class="grimoire-back-btn" onclick="closeGrimoireRule()"><img class=ico-inline src=images/Icons/system/back.png> Règle '
     + (index + 1) + ' sur ' + unlockedCount + '</button>';
 
   h += '<div class="grimoire-card">';
@@ -326,10 +326,10 @@ function buildGrimoireEditHTML(index, kit) {
     var isArchetypeCounter = !isTelegraphCounter && isGrimoireRuleCounter(rule, kit);
 
     if (isTelegraphCounter) {
-      h += '<div class="grimoire-verdict is-counter"><span>⚡</span><span><strong>Contre parfait.</strong> '
+      h += '<div class="grimoire-verdict is-counter"><span><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png></span><span><strong>Contre parfait.</strong> '
         + 'Cette action annulera complètement l\'attaque adverse si elle est jouée à temps.</span></div>';
     } else if (isArchetypeCounter) {
-      h += '<div class="grimoire-verdict is-counter"><span>🌀</span><span><strong>Effet spécial.</strong> '
+      h += '<div class="grimoire-verdict is-counter"><span><img class=ico-inline src=images/Icons/system/ascension.png></span><span><strong>Effet spécial.</strong> '
         + 'Cette action agit sur cette situation en plus de ses dégâts normaux.</span></div>';
     } else {
       h += '<div class="grimoire-verdict is-neutral"><span>○</span><span>Cette action ne contre pas cette '
@@ -341,7 +341,7 @@ function buildGrimoireEditHTML(index, kit) {
       .filter(function (conditionId) { return conditionId !== rule.conditionId; })
       .map(function (conditionId) { return getGrimoireCondition(conditionId).label; });
     if (otherLabels.length) {
-      h += '<p class="grimoire-hint">⚡ ' + esc(action.label) + ' contre aussi : ' + esc(otherLabels.join(", ")) + '.</p>';
+      h += '<p class="grimoire-hint"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + esc(action.label) + ' contre aussi : ' + esc(otherLabels.join(", ")) + '.</p>';
     }
   }
   h += '</div>';
@@ -369,10 +369,10 @@ function buildGrimoireHelpSheetHTML() {
   var tut = getGrimoireHelpTutorial();
   if (!tut) return "";
 
-  var h = '<div class="grimoire-sheet-title"><span>' + esc(tut.icon) + '</span><span>' + esc(tut.title) + '</span></div>';
+  var h = '<div class="grimoire-sheet-title"><span>' + renderIconOrEmojiHTML(tut.icon, "grimoire-sheet-ico", "") + '</span><span>' + esc(tut.title) + '</span></div>';
   h += '<div class="grimoire-sheet-body">';
   (tut.points || []).forEach(function (p) {
-    h += '<div class="grimoire-help-point"><span class="grimoire-help-point-icon">' + esc(p.icon) + '</span>'
+    h += '<div class="grimoire-help-point"><span class="grimoire-help-point-icon">' + renderIconOrEmojiHTML(p.icon, "tutorial-point-ico", "") + '</span>'
       + '<span class="grimoire-help-point-text">' + esc(p.text) + '</span></div>';
   });
   h += '</div>';
@@ -385,12 +385,12 @@ function buildGrimoireHelpSheetHTML() {
    superposition plein écran garde le même contenu, qu'elle utilise pour l'ouverture
    automatique à la mort. Une seule source, deux habillages. */
 function buildGrimoireReportSheetHTML() {
-  var h = '<div class="grimoire-sheet-title"><span>📊</span><span>Rapport de combat</span></div>';
+  var h = '<div class="grimoire-sheet-title"><span><img class=ico-inline src=images/Icons/subtabs/hero_stats.png></span><span>Rapport de combat</span></div>';
   h += '<div class="grimoire-sheet-body grimoire-report-body">';
   h += (typeof buildCombatReportBodyHTML === "function")
     ? buildCombatReportBodyHTML()
     : '<p class="grimoire-hint">Rapport indisponible.</p>';
-  h += '<button type="button" class="grimoire-clear-btn" onclick="resetCombatReport()">🗑️ Réinitialiser le rapport</button>';
+  h += '<button type="button" class="grimoire-clear-btn" onclick="resetCombatReport()"><img class=ico-inline src=images/Icons/system/trash.png> Réinitialiser le rapport</button>';
   h += '</div>';
   h += '<button type="button" class="grimoire-sheet-close" onclick="closeGrimoireSheet()">Fermer</button>';
   return h;
@@ -400,7 +400,7 @@ function buildGrimoirePresetsSheetHTML() {
   var presets = ensureGrimoirePresets();
   var suggested = (typeof getSuggestedGrimoirePreset === "function") ? getSuggestedGrimoirePreset() : null;
 
-  var h = '<div class="grimoire-sheet-title"><span>💾</span><span>Presets</span></div>';
+  var h = '<div class="grimoire-sheet-title"><span><img class=ico-inline src=images/Icons/system/save.png></span><span>Presets</span></div>';
   h += '<div class="grimoire-sheet-body">';
   h += '<p class="grimoire-hint" style="margin-top:0">Enregistre ta configuration sous un nom pour la retrouver selon le contexte.</p>';
 
@@ -518,10 +518,10 @@ function buildGrimoirePresetCardHTML(preset, isSuggested) {
 
   var h = '<div class="panel-card grimoire-preset-card">';
   h += '<div class="grimoire-preset-header">';
-  h += '<span class="grimoire-preset-icon">' + esc(preset.icon || "📖") + '</span>';
+  h += '<span class="grimoire-preset-icon">' + renderIconOrEmojiHTML(preset.icon || "images/Icons/codex/codex_lore.png", "grimoire-preset-ico", "") + '</span>';
   h += '<span class="grimoire-preset-name">' + esc(preset.name) + '</span>';
   if (isSuggested) {
-    h += '<span class="grimoire-preset-suggested" title="Suggéré pour le monde actuel">💡</span>';
+    h += '<span class="grimoire-preset-suggested" title="Suggéré pour le monde actuel"><img class=ico-inline src=images/Icons/system/suggested_preset.png></span>';
   }
   h += '</div>';
   if (dateLabel) {
@@ -531,7 +531,7 @@ function buildGrimoirePresetCardHTML(preset, isSuggested) {
   h += '<button class="settings-btn grimoire-preset-load-btn" type="button"'
     + ((typeof isGrimoireEditable === "function" && !isGrimoireEditable()) ? ' disabled' : '')
     + ' onclick="confirmLoadGrimoirePreset(\'' + esc(preset.id) + '\')">Charger</button>';
-  h += '<button class="settings-btn grimoire-preset-delete-btn" type="button" onclick="confirmDeleteGrimoirePreset(\'' + esc(preset.id) + '\')">🗑️</button>';
+  h += '<button class="settings-btn grimoire-preset-delete-btn" type="button" onclick="confirmDeleteGrimoirePreset(\'' + esc(preset.id) + '\')"><img class=ico-inline src=images/Icons/system/trash.png></button>';
   h += '</div>';
   h += '</div>';
   return h;
@@ -544,11 +544,11 @@ function buildGrimoirePresetCreateFormHTML() {
   GRIMOIRE_PRESET_ICON_CHOICES.forEach(function (icon, index) {
     h += '<label class="grimoire-preset-icon-choice">';
     h += '<input type="radio" name="grimoire-preset-icon" value="' + esc(icon) + '"' + (index === 0 ? ' checked' : '') + '>';
-    h += '<span>' + esc(icon) + '</span>';
+    h += '<span>' + renderIconOrEmojiHTML(icon, "grimoire-choice-ico", "") + '</span>';
     h += '</label>';
   });
   h += '</div>';
-  h += '<button class="settings-btn primary" type="button" onclick="handleSaveGrimoirePresetClick()">💾 Enregistrer comme preset</button>';
+  h += '<button class="settings-btn primary" type="button" onclick="handleSaveGrimoirePresetClick()"><img class=ico-inline src=images/Icons/system/save.png> Enregistrer comme preset</button>';
   h += '</div>';
   return h;
 }
@@ -587,8 +587,8 @@ function buildGrimoireModeHTML() {
 
   var h = '<div class="grimoire-head">';
   h += '<div class="grimoire-mode' + (editable ? '' : ' is-locked') + '">';
-  h += '<button type="button" class="' + (on ? '' : 'is-on') + '"' + lock + ' onclick="setGrimoireCombatMode(\'tactique\')">🎯 Tactique</button>';
-  h += '<button type="button" class="' + (on ? 'is-on' : '') + '"' + lock + ' onclick="setGrimoireCombatMode(\'grimoire\')">📖 Grimoire</button>';
+  h += '<button type="button" class="' + (on ? '' : 'is-on') + '"' + lock + ' onclick="setGrimoireCombatMode(\'tactique\')"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> Tactique</button>';
+  h += '<button type="button" class="' + (on ? 'is-on' : '') + '"' + lock + ' onclick="setGrimoireCombatMode(\'grimoire\')"><img class=ico-inline src=images/Icons/codex/codex_lore.png> Grimoire</button>';
   h += '</div>';
   h += '<button type="button" class="grimoire-help-btn" onclick="openGrimoireSheet(\'help\')">?</button>';
   h += '</div>';
@@ -598,7 +598,7 @@ function buildGrimoireModeHTML() {
     : 'Chaque round attend ton choix — tes règles se contentent de surligner l\'action conseillée.') + '</p>';
 
   if (!editable) {
-    h += '<div class="grimoire-locked-notice"><span>🔒</span><span>Sortie en cours — tes règles sont figées. '
+    h += '<div class="grimoire-locked-notice"><span><img class=ico-inline src=images/Icons/system/lock_closed.png></span><span>Sortie en cours — tes règles sont figées. '
       + 'Rentre au Campement pour les modifier.</span></div>';
   }
   return h;
@@ -622,9 +622,9 @@ function buildGrimoireListHTML(kit, unlockedCount) {
   });
 
   h += '<div class="grimoire-foot">';
-  h += '<button type="button" onclick="openGrimoireSheet(\'presets\')">💾 Presets<span class="grimoire-foot-badge">'
+  h += '<button type="button" onclick="openGrimoireSheet(\'presets\')"><img class=ico-inline src=images/Icons/system/save.png> Presets<span class="grimoire-foot-badge">'
     + ensureGrimoirePresets().length + '</span></button>';
-  h += '<button type="button" onclick="openGrimoireSheet(\'report\')">📊 Rapport</button>';
+  h += '<button type="button" onclick="openGrimoireSheet(\'report\')"><img class=ico-inline src=images/Icons/subtabs/hero_stats.png> Rapport</button>';
   h += '</div>';
 
   return h;
@@ -643,7 +643,7 @@ function buildGrimoireHTML() {
     ? buildGrimoireEditHTML(grimoireEditIndex, kit)
     : buildGrimoireListHTML(kit, unlockedCount);
 
-  return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83d\udcd5 Grimoire">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/codex/codex_lore.png|Grimoire">' + h + '</div>';
 }
 
 function setGrimoireRuleCondition(index, conditionId) {

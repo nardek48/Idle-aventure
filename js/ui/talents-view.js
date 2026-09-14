@@ -43,7 +43,7 @@ function setTalentCategory(category) {
   renderPanel("talents");
 }
 
-var TALENT_CATEGORY_ICONS = { combat: "⚔️", fortune: "💰", survival: "🛡️" };
+var TALENT_CATEGORY_ICONS = { combat: "<img class=ico-inline src=images/Icons/combat_stats/stat_attack.png>", fortune: "<img class=ico-inline src=images/Icons/gold_icon.png>", survival: "<img class=ico-inline src=images/Icons/combat_stats/stat_defense.png>" };
 
 function buildTalentCategoryTabs() {
   var categories = ["combat", "fortune", "survival"];
@@ -87,7 +87,7 @@ function renderTalentIconHTML(node) {
   if (node.img) {
     return '<img class="talent-icon-img" src="' + esc(node.img) + '" alt="">';
   }
-  return esc(node.icon || "✨");
+  return renderIconOrEmojiHTML(node.icon || "images/Icons/scene/node_discovery.png", "talent-node-ico", "");
 }
 
 var TALENT_CURRENT_VALUE_OVERRIDES = {
@@ -135,18 +135,18 @@ function buildTalentStatusHTML(node, nodes) {
   var tierLocked = isTierLockedByOpposite(node, nodes);
 
   if (level >= maxLevel) {
-    return '<span class="talent-tier-status status-unlocked">✔ Niveau max (' + maxLevel + '/' + maxLevel + ')</span>';
+    return '<span class="talent-tier-status status-unlocked"><img class=ico-inline src=images/Icons/system/check_valid.png> Niveau max (' + maxLevel + '/' + maxLevel + ')</span>';
   }
   if (tierLocked) {
     var sideLabel = node.side === "left" ? "Passif" : "Actif";
-    return '<span class="talent-tier-status status-locked">🔒 Palier engagé côté ' + sideLabel + ' — réinitialise pour changer</span>';
+    return '<span class="talent-tier-status status-locked"><img class=ico-inline src=images/Icons/system/lock_closed.png> Palier engagé côté ' + sideLabel + ' — réinitialise pour changer</span>';
   }
   if (node.requires && getTalentLevel(node.requires) === 0) {
     var reqNode = findTalentNodeInBranch(nodes, node.requires);
-    return '<span class="talent-tier-status status-locked">🔒 Nécessite ' + esc(reqNode ? reqNode.name : "un talent précédent") + '</span>';
+    return '<span class="talent-tier-status status-locked"><img class=ico-inline src=images/Icons/system/lock_closed.png> Nécessite ' + esc(reqNode ? reqNode.name : "un talent précédent") + '</span>';
   }
   if ((game.talentPoints || 0) < 1) {
-    return '<span class="talent-tier-status status-locked">🔒 Pas assez de points</span>';
+    return '<span class="talent-tier-status status-locked"><img class=ico-inline src=images/Icons/system/lock_closed.png> Pas assez de points</span>';
   }
   var label = level > 0 ? ("Niveau " + level + "/" + maxLevel + " · Améliorer · 1 pt") : "Disponible · 1 pt";
   return '<span class="talent-tier-status status-available">' + label + '</span>';
@@ -166,7 +166,7 @@ function buildTalentLevelPipsHTML(node) {
 function buildTalentSideTagHTML(node) {
   if (!node.side) return "";
   var isLeft = node.side === "left";
-  return '<span class="talent-side-tag ' + (isLeft ? "side-active" : "side-passive") + '">' + (isLeft ? "⚔ Actif" : "🧘 Passif") + '</span>';
+  return '<span class="talent-side-tag ' + (isLeft ? "side-active" : "side-passive") + '">' + (isLeft ? "<img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> Actif" : "<img class=ico-inline src=images/Icons/classes/talent_passive.png> Passif") + '</span>';
 }
 
 function buildTalentBranchHTML(branchKey) {
@@ -247,7 +247,7 @@ function buildTalentSummaryBarHTML() {
   var ownedCount = all.filter(function (n) { return isTalentOwned(n.id); }).length;
 
   var h = '<button type="button" class="talent-summary-bar" onclick="openTalentSummaryPopup()">';
-  h += '<span>✨ ' + ownedCount + ' bonus actif' + (ownedCount > 1 ? "s" : "") + '</span>';
+  h += '<span><img class=ico-inline src=images/Icons/scene/node_discovery.png> ' + ownedCount + ' bonus actif' + (ownedCount > 1 ? "s" : "") + '</span>';
   h += '<span class="talent-summary-bar-points">' + (game.talentPoints || 0) + ' pt(s) disponible(s)</span>';
   h += '<span class="talent-summary-bar-chevron">▸</span>';
   h += '</button>';
@@ -261,7 +261,7 @@ function buildTalentSummaryPopupHTML() {
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu talent-popup-card">';
-  h += '    <div class="talent-popup-title">✨ Bonus de talents actifs</div>';
+  h += '    <div class="talent-popup-title"><img class=ico-inline src=images/Icons/scene/node_discovery.png> Bonus de talents actifs</div>';
   h += '    <div class="talent-popup-meta">' + (game.talentPoints || 0) + ' point(s) disponible(s)</div>';
 
   if (owned.length) {
@@ -282,7 +282,7 @@ function buildTalentSummaryPopupHTML() {
     var respecCost = typeof getTalentRespecCost === "function" ? getTalentRespecCost() : 0;
     var canRespec = (game.gold || 0) >= respecCost;
     h += '<button class="talent-respec-btn' + (canRespec ? "" : " disabled") + '" type="button" onclick="respecTalents()">' +
-         '🔄 Réinitialiser les talents (' + formatNumber(respecCost) + ' or)' +
+         '<img class=ico-inline src=images/Icons/system/reset.png> Réinitialiser les talents (' + formatNumber(respecCost) + ' or)' +
          '</button>';
   } else {
     h += '<div class="talent-summary-empty">Aucun talent débloqué pour l\'instant.</div>';
@@ -307,7 +307,7 @@ function closeTalentSummaryPopup() {
 function buildTalentsHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
-  h += '<div class="nb-page-frame kframe-page" data-kf-title="\u2728 Talents">';
+  h += '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/scene/node_discovery.png|Talents">';
   h += buildTalentSummaryBarHTML();
   h += buildTalentBranchHTML(activeTalentCategory);
   h += '</div>';

@@ -35,7 +35,18 @@ function decoratePageFrames(root) {
     if (title && isPage) {
       var span = document.createElement("span");
       span.className = "kf-title";
-      span.textContent = title;
+      // Titre au format "chemin.png|Libellé" : icône image + texte. Sinon texte pur.
+      var bar = title.indexOf("|");
+      if (bar > 0 && /\.(png|jpg|jpeg|svg|webp)$/i.test(title.slice(0, bar))) {
+        var kfIco = document.createElement("img");
+        kfIco.className = "kf-title-ico";
+        kfIco.src = title.slice(0, bar);
+        kfIco.alt = "";
+        span.appendChild(kfIco);
+        span.appendChild(document.createTextNode(" " + title.slice(bar + 1)));
+      } else {
+        span.textContent = title;
+      }
       top.appendChild(span);
     }
     var bot = document.createElement("div");

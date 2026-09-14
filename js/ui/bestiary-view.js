@@ -11,8 +11,8 @@ window.setBestiaryCodexSubTab = setBestiaryCodexSubTab;
 
 function buildBestiaryCodexSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeBestiaryCodexSubTab === "bestiary" ? ' is-active' : '') + '" onclick="setBestiaryCodexSubTab(\'bestiary\')">🐾<span>Bestiaire</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeBestiaryCodexSubTab === "codex" ? ' is-active' : '') + '" onclick="setBestiaryCodexSubTab(\'codex\')">📖<span>Codex</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeBestiaryCodexSubTab === "bestiary" ? ' is-active' : '') + '" onclick="setBestiaryCodexSubTab(\'bestiary\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/bestiary.png" alt=""><span>Bestiaire</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeBestiaryCodexSubTab === "codex" ? ' is-active' : '') + '" onclick="setBestiaryCodexSubTab(\'codex\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/codex.png" alt=""><span>Codex</span></button>';
   h += '</div>';
   return h;
 }
@@ -136,9 +136,9 @@ function buildBestiaryEntryCardHTML(id) {
     var combat = estimateCreatureCombatStats(id, data, isBoss);
     if (combat) {
       h += '<div class="nb-entry-meta-row">';
-      h += '<span class="nb-entry-meta">❤️ ' + formatNumber(combat.hp) + '</span>';
-      h += '<span class="nb-entry-meta">⚔️ ' + formatNumber(combat.dmg) + '</span>';
-      h += '<span class="nb-entry-meta">🎯 ' + Math.round(combat.critChance) + '%</span>';
+      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_health.png> ' + formatNumber(combat.hp) + '</span>';
+      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ' + formatNumber(combat.dmg) + '</span>';
+      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> ' + Math.round(combat.critChance) + '%</span>';
       h += '</div>';
     }
   } else {

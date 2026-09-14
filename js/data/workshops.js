@@ -39,14 +39,14 @@ var WORKSHOP_LEVEL_CONFIG = {
 var WORKSHOPS_CONFIG = {
   // ===== Champs =====
   moulin: {
-    buildingId: "farm", name: "Moulin", icon: "⚙️", active: true,
+    buildingId: "farm", name: "Moulin", icon: "images/Icons/workshops/grain_mill.png", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
       { id: "farine", inputs: [{ resourceId: "ble", quantity: 5 }], outputs: [{ resourceId: "farine", quantity: 1 }], craftTimeMs: 3000 }
     ]
   },
   boulangerie: {
-    buildingId: "farm", name: "Boulangerie", icon: "🥖", active: true,
+    buildingId: "farm", name: "Boulangerie", icon: "images/Icons/workshops/bakery.png", active: true,
     upgradeCostBase: { planche: 4, lingot: 3 },
     recipes: [
       { id: "pain", inputs: [{ resourceId: "farine", quantity: 3 }, { resourceId: "eau", quantity: 5 }], outputs: [{ resourceId: "pain", quantity: 1 }], craftTimeMs: 5000 }
@@ -55,14 +55,14 @@ var WORKSHOPS_CONFIG = {
 
   // ===== Chasse =====
   sechoir: {
-    buildingId: "hunt", name: "Séchoir", icon: "🥩", active: true,
+    buildingId: "hunt", name: "Séchoir", icon: "images/Icons/workshops/drying_rack.png", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
       { id: "viande_sechee", inputs: [{ resourceId: "viande", quantity: 5 }], outputs: [{ resourceId: "viande_sechee", quantity: 1 }], craftTimeMs: 3000 }
     ]
   },
   cuisine_de_camp: {
-    buildingId: "hunt", name: "Cuisine de camp", icon: "🎒", active: true,
+    buildingId: "hunt", name: "Cuisine de camp", icon: "images/Icons/workshops/camp_kitchen.png", active: true,
     upgradeCostBase: { planche: 4, lingot: 3 },
     // v3.107.13 : Ration moyenne restaurée sur viande séchée + pain (recette d'origine, retour arrière
     // du passage v3.106.0 sur viande+eau brutes — non voulu pour cette recette précise, décision Seb).
@@ -79,7 +79,7 @@ var WORKSHOPS_CONFIG = {
 
   // ===== Scierie =====
   scierie_fine: {
-    buildingId: "sawmill", name: "Scierie fine", icon: "🪚", active: true,
+    buildingId: "sawmill", name: "Scierie fine", icon: "images/Icons/workshops/fine_sawmill.png", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
       { id: "planche", inputs: [{ resourceId: "bois", quantity: 5 }], outputs: [{ resourceId: "planche", quantity: 1 }], craftTimeMs: 3000 }
@@ -91,7 +91,7 @@ var WORKSHOPS_CONFIG = {
      C'est ce qui donne enfin une raison d'exister aux ateliers restés inactifs
      depuis la v3.98.0 — un par monde, activé avec son matériau. */
   menuiserie: {
-    buildingId: "sawmill", name: "Menuiserie", icon: "🧰", active: true,
+    buildingId: "sawmill", name: "Menuiserie", icon: "images/Icons/workshops/carpentry.png", active: true,
     upgradeCostBase: { planche: 4, lingot: 3 },
     recipes: [
       { id: "resine_durcie", inputs: [{ resourceId: "seve_aeswyn", quantity: 2 }, { resourceId: "planche", quantity: 3 }], outputs: [{ resourceId: "resine_durcie", quantity: 1 }], craftTimeMs: 9000 }
@@ -100,7 +100,7 @@ var WORKSHOPS_CONFIG = {
 
   // ===== Mine =====
   fonderie: {
-    buildingId: "mine", name: "Fonderie", icon: "🔥", active: true,
+    buildingId: "mine", name: "Fonderie", icon: "images/Icons/workshops/smelter.png", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
       { id: "lingot", inputs: [{ resourceId: "fer", quantity: 5 }], outputs: [{ resourceId: "lingot", quantity: 1 }], craftTimeMs: 3000 }
@@ -109,7 +109,7 @@ var WORKSHOPS_CONFIG = {
   /* v3.221.0 (lot V-8) : troisième atelier de tier 2 activé, pour alimenter la
      reforge d'équipement du bâtiment Forge du village. */
   forge: {
-    buildingId: "mine", name: "Forge", icon: "⚒️", active: true,
+    buildingId: "mine", name: "Forge", icon: "images/Icons/workshops/smithing_station.png", active: true,
     upgradeCostBase: { planche: 4, lingot: 4 },
     recipes: [
       { id: "acier", inputs: [{ resourceId: "lingot", quantity: 3 }, { resourceId: "bois", quantity: 6 }], outputs: [{ resourceId: "acier", quantity: 1 }], craftTimeMs: 8000 }
@@ -118,21 +118,21 @@ var WORKSHOPS_CONFIG = {
 
   // ===== Carrière =====
   tailleur_de_pierre: {
-    buildingId: "quarry", name: "Tailleur de pierre", icon: "🔨", active: false
+    buildingId: "quarry", name: "Tailleur de pierre", icon: "images/Icons/workshops/stonemason.png", active: false
   },
   maconnerie: {
-    buildingId: "quarry", name: "Maçonnerie", icon: "🏗️", active: false
+    buildingId: "quarry", name: "Maçonnerie", icon: "images/Icons/workshops/masonry.png", active: false
   },
 
   // ===== Puits =====
   reservoir: {
-    buildingId: "well", name: "Réservoir", icon: "🏺", active: false
+    buildingId: "well", name: "Réservoir", icon: "images/Icons/workshops/water_reservoir.png", active: false
   },
   /* v3.215.0 (lot V-4) : deuxième atelier de tier 2 activé. Le Réservoir reste
      volontairement inactif — lui inventer une recette pour faire nombre
      n'apporterait rien ; il attendra d'avoir une vraie raison d'exister. */
   station_purification: {
-    buildingId: "well", name: "Station de purification", icon: "✨", active: true,
+    buildingId: "well", name: "Station de purification", icon: "images/Icons/workshops/purification_station.png", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
       { id: "eau_purifiee", inputs: [{ resourceId: "eau", quantity: 4 }], outputs: [{ resourceId: "eau_purifiee", quantity: 1 }], craftTimeMs: 4000 }

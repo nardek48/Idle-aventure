@@ -36,15 +36,15 @@ function buildTutorialReadingHTML(id) {
   if (!entry) return "";
   var tut = entry.tutorial;
 
-  var h = '<button class="codex-back-btn" type="button" onclick="closeTutorialReading()">← Retour aux Tutoriels</button>';
+  var h = '<button class="codex-back-btn" type="button" onclick="closeTutorialReading()"><img class=ico-inline src=images/Icons/system/back.png> Retour aux Tutoriels</button>';
   h += '<div class="codex-reading-card">';
-  h += '<div class="codex-reading-icon">' + renderIconOrEmojiHTML(tut.icon || "📖", "codex-reading-icon-img", tut.title || "") + '</div>';
+  h += '<div class="codex-reading-icon">' + renderIconOrEmojiHTML(tut.icon || "images/Icons/codex/codex_lore.png", "codex-reading-icon-img", tut.title || "") + '</div>';
   h += '<div class="codex-reading-title">' + esc(tut.title || "") + '</div>';
 
   h += '<div class="tutorial-points tutorial-points-read">';
   (tut.points || []).forEach(function (p) {
     h += '<div class="tutorial-point">';
-    h += '<span class="tutorial-point-icon">' + esc(p.icon || "") + '</span>';
+    h += '<span class="tutorial-point-icon">' + renderIconOrEmojiHTML(p.icon, "tutorial-point-ico", "") + '</span>';
     h += '<span class="tutorial-point-text">' + esc(p.text || "");
     // Aperçu de badge réel (ex. télégraphe de charge) : même helper que le popup.
     if (p.preview && typeof buildTutorialPreviewHTML === "function") h += ' ' + buildTutorialPreviewHTML(p.preview);
@@ -64,7 +64,7 @@ function buildTutorialListItemHTML(entry) {
 
   var h = '<button type="button" class="nb-entry-card' + (!unlocked ? ' is-locked' : '') + '" onclick="selectTutorialEntry(\'' + esc(entry.id) + '\')">';
   h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame"><span class="nb-entry-icon-emoji">'
-    + (unlocked ? renderIconOrEmojiHTML(tut.icon || "📖", "nb-entry-icon-img", tut.title || "") : '🔒')
+    + (unlocked ? renderIconOrEmojiHTML(tut.icon || "images/Icons/codex/codex_lore.png", "nb-entry-icon-img", tut.title || "") : '<img class=ico-inline src=images/Icons/system/lock_closed.png>')
     + '</span></div></div>';
   h += '<div class="nb-entry-info-col">';
   h += '<div class="nb-entry-name">' + (unlocked ? esc(tut.title || "") : '???') + '</div>';
@@ -122,6 +122,6 @@ function buildTutorialsHTML() {
     h += buildTutorialListHTML();
   }
 
-  return '<div class="nb-page-frame kframe-page" data-kf-title="\ud83d\udcda Tutoriels">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/codex/codex_lore.png|Tutoriels">' + h + '</div>';
 }
 window.buildTutorialsHTML = buildTutorialsHTML;

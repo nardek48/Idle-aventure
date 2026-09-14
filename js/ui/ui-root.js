@@ -60,7 +60,7 @@ function buildEquipmentIconHTML(item, cssClass) {
   if (!path) return '<div class="' + cls + rarityClass + '">' + fallbackEmoji + '</div>';
 
   return '<div class="' + cls + rarityClass + ' has-icon-img">'
-    + '<img src="' + esc(path) + '" alt="' + esc(item.name || "") + '" '
+    + '<img src="' + esc(path) + '" alt="" '
     + 'onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">'
     + '<span class="icon-img-fallback">' + fallbackEmoji + '</span>'
     + '</div>';

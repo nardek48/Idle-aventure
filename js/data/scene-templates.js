@@ -31,9 +31,9 @@ var SCENE_INTENSITY = {
      tenue, mais la difficulte vient desormais davantage des choix et moins des des. lootMult
      ajuste a la baisse pour la meme raison : le joueur joue plus souvent la voie de
      puissance, qui rapporte 2.6x, donc l'or moyen par run montait tout seul. */
-  sentier: { id: "sentier", label: "Sentier", icon: "🌿", depthMax: 6, diffMult: 0.85, lootMult: 1.0, desc: "Court et sûr. Butin standard." },
-  chemin: { id: "chemin", label: "Chemin", icon: "🌲", depthMax: 8, diffMult: 1.30, lootMult: 2.4, desc: "Le format habituel. Exigeant. Butin x2.4." },
-  periple: { id: "periple", label: "Périple", icon: "⛰️", depthMax: 10, diffMult: 1.85, lootMult: 5.4, desc: "Un pari. Beaucoup en reviennent les mains vides. Butin x5.4." }
+  sentier: { id: "sentier", label: "Sentier", icon: "images/Icons/scene/path_easy.png", depthMax: 6, diffMult: 0.85, lootMult: 1.0, desc: "Court et sûr. Butin standard." },
+  chemin: { id: "chemin", label: "Chemin", icon: "images/Icons/scene/path_medium.png", depthMax: 8, diffMult: 1.30, lootMult: 2.4, desc: "Le format habituel. Exigeant. Butin x2.4." },
+  periple: { id: "periple", label: "Périple", icon: "images/Icons/scene/journey_long.png", depthMax: 10, diffMult: 1.85, lootMult: 5.4, desc: "Un pari. Beaucoup en reviennent les mains vides. Butin x5.4." }
 };
 window.SCENE_INTENSITY = SCENE_INTENSITY;
 
@@ -44,20 +44,20 @@ window.SCENE_INTENSITY = SCENE_INTENSITY;
    existant, aucun nouveau sous-système). "aucun" inclus dans les poids (20% chacun, y
    compris aucun) pour ne pas mutater 100% des runs — décision Seb. */
 var SCENE_MUTATORS = {
-  aucun: { id: "aucun", label: "Rien à signaler", icon: "🌤️", weight: 20, desc: "Un run sans particularité." },
+  aucun: { id: "aucun", label: "Rien à signaler", icon: "images/Icons/scene/weather_clear.png", weight: 20, desc: "Un run sans particularité." },
   brouillard: {
-    id: "brouillard", label: "Brouillard", icon: "🌫️", weight: 20,
+    id: "brouillard", label: "Brouillard", icon: "images/Icons/scene/weather_fog.png", weight: 20,
     desc: "Horizon de visibilité nul, même avec la torche — tu avances à l'aveugle.",
     horizonOverride: 0 // consommé par SceneRunManager.getVisibilityHorizon()
   },
   pluie: {
-    id: "pluie", label: "Pluie battante", icon: "🌧️", weight: 20,
+    id: "pluie", label: "Pluie battante", icon: "images/Icons/scene/weather_rain.png", weight: 20,
     desc: "L'Endurance est renforcée (+15%), mais l'effort fatigue davantage (coût en Souffle +50%).",
     enduranceStatMult: 1.15, // consommé par SceneRunManager.statEffective()
     breathCostMult: 1.5 // consommé par SceneRunManager._obstacleFactors()
   },
   nuit: {
-    id: "nuit", label: "Nuit noire", icon: "🌙", weight: 20,
+    id: "nuit", label: "Nuit noire", icon: "images/Icons/scene/weather_night.png", weight: 20,
     desc: "Un danger de plus t'attend sur le chemin, mais le butin est meilleur (+15%).",
     extraDangerNode: true, // consommé par SceneRunManager._ensureMinCombat() (génération de carte)
     lootMult: 1.15 // consommé par SceneRunManager._runLootMult()/_obstacleFactors()
@@ -70,7 +70,7 @@ var SCENE_TEMPLATES = {
     id: "expedition_faille",
     mode: "generative",
     title: "Expédition en profondeur",
-    icon: "🕳️",
+    icon: "images/Icons/scene/scene_cavern.png",
 
     depthMax: 8,
     firstDepthType: "obstacle", // v1 : premier palier toujours lisible, pas de mystère d'entrée
@@ -109,10 +109,10 @@ var SCENE_TEMPLATES = {
     loadoutSlots: 3,
 
     items: {
-      torche: { id: "torche", name: "🔥 Torche", desc: "Révèle le détail des portes du niveau courant (3 charges).", charges: 3 },
-      corde: { id: "corde", name: "🪢 Corde", desc: "Passe un obstacle compatible sans jet (1 usage, gain réduit).", charges: 1 },
-      provisions: { id: "provisions", name: "🥖 Provisions", desc: "Soigne la blessure la plus grave (1 usage).", charges: 1 },
-      amulette: { id: "amulette", name: "🧿 Amulette", desc: "Relance automatiquement le premier jet raté (1 fois)." }
+      torche: { id: "torche", icon: "images/Icons/scene/torch.png", name: "Torche", desc: "Révèle le détail des portes du niveau courant (3 charges).", charges: 3 },
+      corde: { id: "corde", icon: "images/Icons/scene/rope.png", name: "Corde", desc: "Passe un obstacle compatible sans jet (1 usage, gain réduit).", charges: 1 },
+      provisions: { id: "provisions", icon: "images/Icons/scene/provisions.png", name: "Provisions", desc: "Soigne la blessure la plus grave (1 usage).", charges: 1 },
+      amulette: { id: "amulette", icon: "images/Icons/scene/protective_amulet.png", name: "Amulette", desc: "Relance automatiquement le premier jet raté (1 fois)." }
     },
 
     // Gains de base par type de salle (avant multiplicateur de profondeur, voir
@@ -146,7 +146,7 @@ var SCENE_TEMPLATES = {
     id: "sentier_obstrue",
     mode: "semi",
     title: "Le Sentier Obstrué",
-    icon: "🌲",
+    icon: "images/Icons/codex/world_forest.png",
 
     depthMax: 2,
     firstDepthType: "obstacle",
@@ -188,7 +188,7 @@ var SCENE_TEMPLATES = {
     id: "bosquet_silencieux",
     mode: "semi",
     title: "Le Bosquet Silencieux",
-    icon: "🪓",
+    icon: "images/Icons/scene/scene_woodland.png",
 
     depthMax: 2,
     firstDepthType: "obstacle",
@@ -228,7 +228,7 @@ var SCENE_TEMPLATES = {
     id: "terre_en_friche",
     mode: "semi",
     title: "La Terre en Friche",
-    icon: "🌾",
+    icon: "images/Icons/scene/scene_harvest.png",
 
     depthMax: 2,
     firstDepthType: "obstacle",
@@ -273,7 +273,7 @@ var SCENE_TEMPLATES = {
     id: "veine_instable",
     mode: "semi",
     title: "La Veine Instable",
-    icon: "⛏️",
+    icon: "images/Icons/scene/scene_mine.png",
 
     depthMax: 2,
     firstDepthType: "obstacle",
@@ -311,7 +311,7 @@ var SCENE_TEMPLATES = {
     id: "eboulis_ferreux",
     mode: "semi",
     title: "L'Éboulis Ferreux",
-    icon: "⛏️",
+    icon: "images/Icons/scene/scene_mine.png",
 
     depthMax: 2,
     firstDepthType: "obstacle",
@@ -349,7 +349,7 @@ var SCENE_TEMPLATES = {
     id: "source_tarie",
     mode: "semi",
     title: "La Source Tarie",
-    icon: "💧",
+    icon: "images/Icons/scene/node_clear_spring.png",
 
     depthMax: 2,
     firstDepthType: "obstacle",
@@ -404,7 +404,7 @@ var SCENE_TEMPLATES = {
     id: "petite_aventure_foret",
     mode: "generative",
     title: "Petite aventure — Forêt",
-    icon: "🍃",
+    icon: "images/Icons/scene/path_easy.png",
 
     // v3.195.0 : depthMax devient la valeur par défaut/repli — le run réel utilise
     // SCENE_INTENSITY[run.intensity].depthMax (choisi en préparation, voir
@@ -508,18 +508,18 @@ var SCENE_TEMPLATES = {
     loadoutSlots: 3,
 
     items: {
-      torche: { id: "torche", name: "🔥 Torche", desc: "Révèle le détail des portes du niveau courant (3 charges).", charges: 3 },
+      torche: { id: "torche", icon: "images/Icons/scene/torch.png", name: "Torche", desc: "Révèle le détail des portes du niveau courant (3 charges).", charges: 3 },
       // v3.198.0 : la corde n'est plus reutilisable a l'infini. Elle etait une reussite
       // garantie, gratuite en Souffle, sans limite d'usage, sur 3 des 6 gabarits du pool
       // (gouffre, paroi, riviere) : 3.8 obstacles passes sans jeter un de par Periple.
-      corde: { id: "corde", name: "🪢 Corde", desc: "Passe un obstacle compatible sans jet (1 usage, gain réduit).", charges: 1 },
+      corde: { id: "corde", icon: "images/Icons/scene/rope.png", name: "Corde", desc: "Passe un obstacle compatible sans jet (1 usage, gain réduit).", charges: 1 },
       // v3.198.0 : enfin implementee. L'objet etait offert depuis v3.120.0 mais AUCUN code ne
       // le lisait (le mot "provisions" n'existait que dans ce fichier). Soigne la blessure la
       // plus GRAVE, ce qui en fait la seule reponse a un echec en voie de puissance : autel
       // et source ne retirent que les blessures legeres depuis ce lot.
-      provisions: { id: "provisions", name: "🥖 Provisions", desc: "Soigne la blessure la plus grave (1 usage).", charges: 1 },
-      gourde: { id: "gourde", name: "🍶 Gourde", desc: "Restaure 30 Souffle (consommable, à utiliser quand tu veux)." },
-      amulette: { id: "amulette", name: "🧿 Amulette", desc: "Relance automatiquement le premier jet raté (1 fois).", }
+      provisions: { id: "provisions", icon: "images/Icons/scene/provisions.png", name: "Provisions", desc: "Soigne la blessure la plus grave (1 usage).", charges: 1 },
+      gourde: { id: "gourde", icon: "images/Icons/scene/water_flask.png", name: "Gourde", desc: "Restaure 30 Souffle (consommable, à utiliser quand tu veux)." },
+      amulette: { id: "amulette", icon: "images/Icons/scene/protective_amulet.png", name: "Amulette", desc: "Relance automatiquement le premier jet raté (1 fois).", }
     },
 
     entryCost: { resourceId: "petite_ration", amount: 1 },

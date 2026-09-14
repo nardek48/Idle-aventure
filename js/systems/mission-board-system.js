@@ -21,7 +21,7 @@ var EXPLORATION_BOARD_BLURBS = {
   fallowField: "Débloque les Champs (blé)."
 };
 
-var MISSION_TYPE_ICON = { combat: "⚔️", expedition: "🧭", chasse: "🐗", donjon: "🏰", production: "🔨" }; // v3.108.0 : production (Les fondations)
+var MISSION_TYPE_ICON = { combat: "images/Icons/quests/mission_combat.png", expedition: "images/Icons/quests/mission_exploration.png", chasse: "images/Icons/quests/mission_hunt.png", donjon: "images/Icons/quests/mission_dungeon.png", production: "images/Icons/quests/mission_construction.png" }; // v3.108.0 : production (Les fondations)
 var MISSION_STATUS_LABEL = {
   locked: "Verrouillée", available: "Disponible", accepted: "Acceptée",
   running: "En cours", ready: "Objectif atteint", claimable: "Prête à réclamer"
@@ -611,7 +611,7 @@ var MissionBoard = {
   },
 
   statusLabel: function (status) { return MISSION_STATUS_LABEL[status] || status; },
-  typeIcon: function (type) { return MISSION_TYPE_ICON[type] || "📜"; }
+  typeIcon: function (type) { return MISSION_TYPE_ICON[type] || "images/Icons/quests/quest_story.png"; }
 };
 
 window.MissionBoard = MissionBoard;

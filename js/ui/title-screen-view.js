@@ -254,10 +254,10 @@ function buildTitleScreenLoadListHTML() {
       html += '  <img src="images/TitleScreen/cadre_slot.png" alt="" class="title-slot-card-bg">';
       html += '  <div class="title-slot-body">';
       html += '    <div class="title-slot-name">' + esc(summary.playerName || ("Emplacement " + i)) + '</div>';
-      html += '    <div class="title-slot-stat"><span class="title-slot-stat-icon">♛</span>Niveau ' + esc(formatNumber(summary.heroLevel)) + (worldName ? ' · ' + esc(worldName) : '') + '</div>';
+      html += '    <div class="title-slot-stat"><span class="title-slot-stat-icon"><img class=ico-inline src=images/Icons/classes/hero_level.png></span>Niveau ' + esc(formatNumber(summary.heroLevel)) + (worldName ? ' · ' + esc(worldName) : '') + '</div>';
       html += '    <div class="title-slot-stat"><span class="title-slot-stat-icon">◷</span>Temps de jeu : ' + esc(formatPlayTimeClock(summary.playTime)) + '</div>';
       if (summary.savedAt) {
-        html += '    <div class="title-slot-stat"><span class="title-slot-stat-icon">✦</span>Dernière partie : ' + esc(formatSavedAtDate(summary.savedAt)) + '</div>';
+        html += '    <div class="title-slot-stat"><span class="title-slot-stat-icon"><img class=ico-inline src=images/Icons/equipment_slots/set_bonus.png></span>Dernière partie : ' + esc(formatSavedAtDate(summary.savedAt)) + '</div>';
       }
       html += '  </div>';
       html += '  <div class="title-slot-actions">';

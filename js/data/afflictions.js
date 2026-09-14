@@ -10,7 +10,7 @@ var AFFLICTIONS = [
   {
     id: "aff_colossus",
     name: "Colosses",
-    icon: "👹",
+    icon: "images/Icons/afflictions/aff_colossus.png",
     desc: "Les boss ont 2× plus de PV, mais rapportent +50% d'or et d'essence.",
     modifiers: {
       bossHpMult: 2,
@@ -21,7 +21,7 @@ var AFFLICTIONS = [
   {
     id: "aff_asceticism",
     name: "Ascétisme",
-    icon: "🚫",
+    icon: "images/Icons/afflictions/aff_asceticism.png",
     desc: "Potions interdites (achat et usage bloqués), +15% dégâts en compensation.",
     modifiers: {
       tapMult: 0.15,
@@ -31,7 +31,7 @@ var AFFLICTIONS = [
   {
     id: "aff_fragility",
     name: "Fragilité",
-    icon: "💔",
+    icon: "images/Icons/afflictions/aff_fragility.png",
     desc: "-30% PV max, +30% dégâts — glass cannon.",
     modifiers: {
       heroMaxHpMult: 0.70,
@@ -41,7 +41,7 @@ var AFFLICTIONS = [
   {
     id: "aff_greed",
     name: "Avarice",
-    icon: "🪙",
+    icon: "images/Icons/afflictions/aff_greed.png",
     desc: "Chance de trouver un objet divisée par 2, mais or gagné ×2.",
     modifiers: {
       lootChanceMult: 0.5,
@@ -51,7 +51,7 @@ var AFFLICTIONS = [
   {
     id: "aff_plague",
     name: "Fléau",
-    icon: "☣️",
+    icon: "images/Icons/afflictions/aff_plague.png",
     desc: "Riposte ennemie +30%, +20% or global.",
     modifiers: {
       enemyPowerMult: 1.30,
@@ -63,7 +63,7 @@ var AFFLICTIONS = [
     // v3.205.0 (E5) : renommée — « Élite » désigne désormais une CRÉATURE
     // (data/elites.js). L'id ne bouge pas : aucune sauvegarde à migrer.
     name: "Traque",
-    icon: "⚔️",
+    icon: "images/Icons/afflictions/aff_elite.png",
     desc: "Tous les ennemis rencontrés sont des boss, +20% or.",
     modifiers: {
       forceAllBosses: true,

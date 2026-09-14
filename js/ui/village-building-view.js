@@ -63,7 +63,7 @@ function buildVillageCostListHTML(id) {
        + formatNumber(cost[key]) + '</span>';
     /* Une ressource d'un monde pas encore atteint n'est pas « manquante »,
        elle est introuvable : la loupe et non la croix, et on dit où. */
-    h += '<span class="vb-cost-check">' + (ok ? '✅' : (unreachable ? '🔍' : '❌')) + '</span>';
+    h += '<span class="vb-cost-check">' + (ok ? '<img class="ico-sys" src="images/Icons/system/check_valid.png" alt="">' : (unreachable ? '<img class="ico-sys" src="images/Icons/system/search_unknown.png" alt="">' : '<img class="ico-sys" src="images/Icons/system/cross_error.png" alt="">')) + '</span>';
     h += '</div>';
 
     if (!ok) {
@@ -134,7 +134,7 @@ function buildVillageBuildingSheetHTML(id) {
      sans dire où s'en servir. */
   if (id === "training" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToHeroTraining()">'
-       + '🎯 S\'entraîner dans Personnage → Stats ›</div>';
+       + '<img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> S\'entraîner dans Personnage → Stats ›</div>';
   }
 
   /* L'Apothicaire renvoie vers l'écran où l'on prépare, comme le Terrain
@@ -142,7 +142,7 @@ function buildVillageBuildingSheetHTML(id) {
      reste le lieu où l'on s'en sert. */
   if (id === "apothecary" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToPotions()">'
-       + '🧪 Préparer dans Boutique → Potions ›</div>';
+       + '<img class=ico-inline src=images/Icons/subtabs/potions.png> Préparer dans Boutique → Potions ›</div>';
   }
 
   /* La Forge, comme la Taverne, porte son contenu dans sa fiche : reforger n'a
@@ -167,7 +167,7 @@ function buildVillageBuildingSheetHTML(id) {
   /* L'Entrepôt agrandi renvoie vers l'Entrepôt lui-même. */
   if (id === "warehouse" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToWarehouse()">'
-       + '📦 Voir l\'Entrepôt ›</div>';
+       + '<img class=ico-inline src=images/Icons/system/warehouse_supplies.png> Voir l\'Entrepôt ›</div>';
   }
 
   /* La Halle renvoie vers l'échoppe qu'elle agrandit — même principe que le
@@ -175,7 +175,7 @@ function buildVillageBuildingSheetHTML(id) {
      reste le lieu où l'on s'en sert. */
   if (id === "hall" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToEquipShop()">'
-       + '🛒 Voir l\'échoppe dans Équipement ›</div>';
+       + '<img class=ico-inline src=images/Icons/subtabs/equipment_shop.png> Voir l\'échoppe dans Équipement ›</div>';
   }
 
   /* L'Atelier annonce le rang qu'il ouvre : c'est sa vraie fonction. */
@@ -219,7 +219,7 @@ function buildVillageBuildingSheetHTML(id) {
     h += '<div class="vb-sheet-effect">Niveau ' + target + ' : '
        + esc(VillageBuildingManager.getEffectLabel(id, target)) + '</div>';
     h += buildVillageCostListHTML(id);
-    h += '<div class="vb-sheet-timer">⏳ Durée du chantier : '
+    h += '<div class="vb-sheet-timer"><img class=ico-inline src=images/Icons/system/hourglass_waiting.png> Durée du chantier : '
        + esc(formatTime(VillageBuildingManager.getNextBuildSeconds(id))) + '</div>';
 
     h += '<div class="vb-sheet-actions">';
@@ -301,9 +301,9 @@ function goToHeroTraining() {
   closeVillageBuildingSheet();
   if (typeof switchTab === "function") switchTab("more"); // onglet Personnage (voir ui-root.js)
   /* PIÈGE : les identifiants internes sont inversés par rapport aux libellés.
-     Le sous-onglet affiché « 📊 Stats » — celui qui porte les cartes de
+     Le sous-onglet affiché « <img class=ico-inline src=images/Icons/subtabs/hero_stats.png> Stats » — celui qui porte les cartes de
      caractéristiques — s'appelle "amelioration" ; l'identifiant "stats" est
-     celui de « ⚔️ Capacités ». Voir buildHerosSubTabBarHTML(). */
+     celui de « <img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> Capacités ». Voir buildHerosSubTabBarHTML(). */
   if (typeof setHerosSubTab === "function") setHerosSubTab("amelioration");
 }
 window.goToHeroTraining = goToHeroTraining;
@@ -330,7 +330,7 @@ function buildTavernContractsHTML() {
 
   var contracts = TavernManager.getContracts();
   var h = '<div class="tavern-board">';
-  h += '<div class="tavern-board-head">📜 Contrats du jour'
+  h += '<div class="tavern-board-head"><img class=ico-inline src=images/Icons/quests/quest_story.png> Contrats du jour'
      + '<span class="tavern-board-timer">Renouvelés dans ' + esc(formatTime(TavernManager.timeUntilRefresh())) + '</span></div>';
 
   if (!contracts.length) {
@@ -394,7 +394,7 @@ function buildForgeBoardHTML() {
 
   var max = ForgeManager.getMaxLevel();
   var h = '<div class="forge-board">';
-  h += '<div class="forge-board-head">⚒️ Établi'
+  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/workshops/smithing_station.png> Établi'
      + '<span class="forge-board-max">Niveau maximum : ' + max + '</span></div>';
   h += '<div class="forge-board-note">Le niveau appartient à l\'emplacement : changer de pièce ne fait rien perdre.</div>';
 
@@ -472,7 +472,7 @@ function buildEnchantBoardHTML() {
     return (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[r]) || r;
   });
   var h = '<div class="forge-board">';
-  h += '<div class="forge-board-head">✨ Établi'
+  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/scene/node_discovery.png> Établi'
      + '<span class="forge-board-max">' + (allowed.length ? esc(allowed.join(", ")) : "Aucune rareté") + '</span></div>';
   h += '<div class="forge-board-note">La ligne garde sa nature : seule sa valeur est relancée, et jamais vers le bas. Chaque relance de la même ligne coûte plus cher.</div>';
 

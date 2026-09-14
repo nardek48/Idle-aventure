@@ -11,8 +11,8 @@ window.setAscensionSubTab = setAscensionSubTab;
 
 function buildAscensionSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeAscensionSubTab === "ascension" ? ' is-active' : '') + '" onclick="setAscensionSubTab(\'ascension\')">🌀<span>Ascension</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeAscensionSubTab === "shop" ? ' is-active' : '') + '" onclick="setAscensionSubTab(\'shop\')">🔷<span>Boutique</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeAscensionSubTab === "ascension" ? ' is-active' : '') + '" onclick="setAscensionSubTab(\'ascension\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/ascension_tab.png" alt=""><span>Ascension</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeAscensionSubTab === "shop" ? ' is-active' : '') + '" onclick="setAscensionSubTab(\'shop\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/aether_shop.png" alt=""><span>Boutique</span></button>';
   h += '</div>';
   return h;
 }

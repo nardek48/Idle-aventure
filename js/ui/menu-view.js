@@ -16,11 +16,11 @@ var MENU_ITEMS = [
   // v3.208.0 (décision Seb) : plus de pastille sur le Bestiaire/Codex — le compteur « x / y »
   // en tête de l'écran suffit, la pastille poussait à aller réclamer une lecture.
   { tab: "bestiary", label: "Bestiaire", img: "./images/Icons/menu_icons/bestiaire_menu.png" },
-  { tab: "afflictions", label: "Afflictions", icon: "🔥", badge: "afflictions" },
+  { tab: "afflictions", label: "Afflictions", icon: "images/Icons/camp/campfire.png", badge: "afflictions" },
   // v3.210.0 (décision Seb) : le Grimoire quitte le menu ☰ — son raccourci est au
   // Campement (camp-view.js), là où on prépare une sortie. Un bouton de moins ici.
   // v3.208.0 : consultation des tutoriels déjà rencontrés. Sans pastille, même raison.
-  { tab: "tutorials", label: "Tutoriels", icon: "📚" },
+  { tab: "tutorials", label: "Tutoriels", icon: "images/Icons/codex/codex_lore.png" },
   { tab: "settings", label: "Paramètres", img: "./images/Icons/menu_icons/settings_menu.png" }
 ];
 
@@ -36,7 +36,7 @@ function buildFullMenuHTML() {
   h += '  <div class="full-menu">';
   h += '    <div class="full-menu-header">';
   h += '      <h2>Menu</h2>';
-  h += '      <button class="full-menu-close" type="button" onclick="closeFullMenu()">✕</button>';
+  h += '      <button class="full-menu-close" type="button" onclick="closeFullMenu()"><img class=ico-inline src=images/Icons/system/close.png></button>';
   h += '    </div>';
   h += '    <div class="full-menu-grid">';
 
@@ -74,7 +74,7 @@ function buildFullMenuHTML() {
     if (item.img) {
       h += '<img src="' + esc(item.img) + '" alt="" class="full-menu-card-icon-img">';
     } else {
-      h += '<div class="full-menu-card-icon">' + esc(item.icon || "❔") + '</div>';
+      h += '<div class="full-menu-card-icon">' + renderIconOrEmojiHTML(item.icon, "full-menu-card-icon-img", item.label) + '</div>';
     }
     h += '<div class="full-menu-card-label">' + esc(item.label) + '</div>';
     h += '</button>';

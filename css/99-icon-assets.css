@@ -1,0 +1,170 @@
+/* css/99-icon-assets.css — DÉMO : dimensionne les <img> qui remplacent les emoji.
+   Chargé en dernier, ne touche à aucune règle existante. */
+
+/* Classe générique : toute icône posée par renderIconOrEmojiHTML garde son ratio. */
+.ico-sys, .ico-lg,
+.pc-subtab-ico, .enemy-status-img,
+.farm-plot-improvement-img, .workshop-card-icon-img, .wk-emoji-img,
+.qb-tab-icon-img, .eq-orbit-slot-img, .pc-sum-class-ico,
+.affliction-toggle-img, .active-affliction-img,
+.grimoire-rule-ico, .hc-stat-ico-img {
+  display: inline-block;
+  object-fit: contain;
+  vertical-align: middle;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* États système en ligne (coûts, verrous). */
+.ico-sys { width: 15px; height: 15px; }
+.ico-lg { width: 26px; height: 26px; }
+
+/* Barres de sous-onglets : l'emoji faisait ~17px, l'image monte un peu. */
+.pc-subtab-ico { width: 22px; height: 22px; margin-bottom: 1px; }
+
+/* Bâtiments du village (rendus via iconImg + le helper existant). */
+img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
+@media (max-width: 360px) { img.vb-card-icon { width: 32px; height: 32px; } }
+
+/* Ateliers. */
+.workshop-card-icon-img { width: 26px; height: 26px; }
+.wk-emoji-img { width: 20px; height: 20px; }
+
+/* Améliorations de parcelle (pastilles sur la vignette). */
+.farm-plot-improvement-img { width: 17px; height: 17px; }
+
+/* Badges de statut ennemi — contrainte de lisibilité la plus dure du jeu. */
+.enemy-status-img { width: 19px; height: 19px; }
+
+/* Onglets de catégorie du tableau de quêtes. */
+.qb-tab-icon-img { width: 22px; height: 22px; }
+
+/* Emplacement d'équipement vide : l'asset porte déjà son cadre rond. */
+.eq-orbit-slot-img { width: 100%; height: 100%; object-fit: contain; }
+.eq-orbit-slot-placeholder { font-size: 0; }
+
+/* Fiche héros et création. */
+.pc-sum-class-ico { width: 16px; height: 16px; margin-right: 3px; }
+.hc-stat-ico-img { width: 16px; height: 16px; }
+
+/* Afflictions et Grimoire. */
+.affliction-toggle-img { width: 24px; height: 24px; }
+.active-affliction-img { width: 18px; height: 18px; }
+.grimoire-rule-ico { width: 20px; height: 20px; }
+
+/* Icône posée dans un libellé de bouton. */
+.ico-btn { width: 18px; height: 18px; object-fit: contain; vertical-align: -3px; margin-right: 2px; }
+
+/* Icône générique posée en ligne dans un libellé ou une pastille (passe globale). */
+.ico-inline {
+  display: inline-block;
+  width: 1.05em; height: 1.05em;
+  object-fit: contain;
+  vertical-align: -0.16em;
+}
+/* Porteurs convertis vers renderIconOrEmojiHTML lors de la passe globale. */
+.grimoire-sheet-ico, .grimoire-preset-ico, .grimoire-choice-ico,
+.tutorial-point-ico, .pc-stat-ico-img, .pc-skill-counter-img, .pc-section-ico,
+.full-menu-card-icon-img, .story-chain-ico, .inline-res-ico,
+.scene-node-ico, .scene-seg-ico, .scene-pill-ico, .scene-card-ico, .scene-mutator-img,
+.talent-node-ico, .dungeon-card-head-ico {
+  display: inline-block; object-fit: contain; vertical-align: middle;
+}
+.grimoire-sheet-ico { width: 22px; height: 22px; }
+.grimoire-preset-ico, .grimoire-choice-ico { width: 22px; height: 22px; }
+.tutorial-point-ico { width: 20px; height: 20px; }
+.pc-stat-ico-img { width: 16px; height: 16px; }
+.pc-skill-counter-img { width: 14px; height: 14px; }
+.pc-section-ico { width: 18px; height: 18px; margin-right: 3px; }
+.full-menu-card-icon-img { width: 42px; height: 42px; }
+.story-chain-ico { width: 22px; height: 22px; }
+.inline-res-ico { width: 15px; height: 15px; vertical-align: -3px; }
+.scene-node-ico, .scene-seg-ico { width: 100%; height: 100%; }
+.scene-pill-ico { width: 15px; height: 15px; }
+.scene-card-ico, .scene-mutator-img { width: 30px; height: 30px; }
+.talent-node-ico { width: 100%; height: 100%; }
+.dungeon-card-head-ico { width: 36px; height: 36px; }
+
+/* Icône du titre de cadre (.kframe-page). */
+.kf-title-ico { width: 1.15em; height: 1.15em; object-fit: contain; vertical-align: -0.2em; }
+
+/* ---- Correctifs de rendu (retour Seb) ---- */
+
+/* Icônes ajoutées par les correctifs. */
+.plot-act-ico { width: 16px; height: 16px; object-fit: contain; vertical-align: -3px; }
+.scene-card-ico { width: 30px; height: 30px; object-fit: contain; }
+.map-fallback-ico, .hc-confirm-class-ico, .workshop-sum-ico {
+  width: 20px; height: 20px; object-fit: contain; vertical-align: middle;
+}
+
+/* La flèche de retour du Grimoire était trop petite dans son bouton. */
+.grimoire-back-btn .ico-inline { width: 16px; height: 16px; vertical-align: -3px; }
+
+/* Afflictions — le texte doit rester lisible même quand aucune n'est active. */
+.affliction-intro,
+.affliction-intro *,
+.affliction-toggle,
+.affliction-toggle-name,
+.affliction-toggle-desc,
+.affliction-toggle-body {
+  opacity: 1 !important;
+}
+.affliction-intro-title, .affliction-toggle-name { color: var(--nb-ink) !important; }
+.affliction-intro-desc, .affliction-toggle-desc { color: #2b2318 !important; }
+.affliction-toggle:disabled { opacity: 1 !important; }
+
+/* Ascension — même correction. */
+.prestige-card, .prestige-card *,
+.nb-purchase, .nb-purchase * { opacity: 1; }
+#panel-container .prestige-title,
+#panel-container .prestige-sub,
+#panel-container .prestige-desc,
+#panel-container .nb-purchase-name,
+#panel-container .nb-purchase-desc { color: #2b2318 !important; }
+
+/* Emplacement d'équipement vide : le libellé est déjà dans le panneau de détail. */
+.eq-orbit-slot-placeholder { font-size: 0; }
+
+/* Titres d'affliction et d'ascension : couleur en dur, une règle plus haut
+   dans la cascade les rendait quasi invisibles sur le fond crème. */
+#panel-container .affliction-toggle-name,
+#panel-container .affliction-intro-title,
+#panel-container .affliction-intro-count,
+#panel-container .prestige-card h3,
+#panel-container .nb-purchase-name,
+#panel-container .nb-purchase-title {
+  color: #3a2c1a !important;
+  -webkit-text-fill-color: #3a2c1a !important;
+  background: none !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+/* Les 10 icônes ajoutées au second envoi. */
+.combat-continue-btn .ico-inline,
+.combat-sortie-btn .ico-inline { width: 17px; height: 17px; vertical-align: -3px; }
+.talent-side-tag .ico-inline { width: 13px; height: 13px; vertical-align: -2px; }
+.eq-detail-setbonus-icon .ico-inline { width: 18px; height: 18px; }
+.title-slot-stat-icon .ico-inline { width: 15px; height: 15px; vertical-align: -3px; }
+.dungeon-wave-label .ico-inline,
+.dungeon-best-wave .ico-inline { width: 18px; height: 18px; vertical-align: -3px; }
+
+/* Hauts faits : icônes des sept compteurs. */
+.ach-total-ico { width: 18px; height: 18px; object-fit: contain; vertical-align: middle; }
+
+/* Grimoire : emblèmes de preset (grille de choix + pastille de la liste). */
+.grimoire-preset-ico, .grimoire-choice-ico { width: 26px; height: 26px; }
+
+/* Filet de sécurité : aucune image d'icône ne doit afficher de texte de repli. */
+/* Portée GLOBALE : l'élément fautif peut être hors de #panel-container
+   (élément en position absolue qui déborde du cadre). */
+img { font-size: 0 !important; color: transparent !important; }
+
+/* Nouvelle texture parchemin : les compteurs orange clair ne passaient plus. */
+#panel-container .achievement-summary,
+#panel-container .nb-count,
+#panel-container .achievement-total-lbl { color: #4a3a22 !important; }
+#panel-container .achievement-total-val { color: #2b2318 !important; }
+
+/* Emplacement vide sélectionné : la silhouette remplace le chemin affiché en texte. */
+.eq-detail-empty-img { width: 100%; height: 100%; object-fit: contain; }
+.eq-detail-icon-empty { font-size: 0; }

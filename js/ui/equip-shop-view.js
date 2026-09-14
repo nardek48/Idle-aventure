@@ -39,7 +39,7 @@ function buildEquipShopHTML() {
   var manualCost = EquipShopManager.getManualRefreshCost();
   var canRefresh = (game.gold || 0) >= manualCost;
 
-  var h = '<div class="equip-shop-timer">🔄 Renouvellement gratuit dans ' + esc(EquipShopManager.timeUntilRefresh()) + '</div>';
+  var h = '<div class="equip-shop-timer"><img class=ico-inline src=images/Icons/system/reset.png> Renouvellement gratuit dans ' + esc(EquipShopManager.timeUntilRefresh()) + '</div>';
 
   /* v3.216.0 : quand la Halle marchande agrandit la vitrine, l'écran le dit —
      sinon le joueur paie un chantier sans jamais voir ce qu'il a acheté. */
@@ -47,11 +47,11 @@ function buildEquipShopHTML() {
     ? VillageBuildingManager.getLevel("hall") : 0;
   if (hallLevel > 0) {
     var remise = Math.round((1 - EquipShopManager.getRefreshDiscount()) * 100);
-    h += '<div class="equip-shop-hall-note">🛒 Halle marchande niv. ' + hallLevel + ' — '
+    h += '<div class="equip-shop-hall-note"><img class=ico-inline src=images/Icons/subtabs/equipment_shop.png> Halle marchande niv. ' + hallLevel + ' — '
       + EquipShopManager.getShopSize() + ' emplacements'
       + (remise > 0 ? ', renouvellement -' + remise + ' %' : '') + '</div>';
   }
-  h += '<button class="settings-btn' + (canRefresh ? '' : ' disabled') + '" type="button" ' + (canRefresh ? 'onclick="EquipShopManager.manualRefresh()"' : 'disabled') + '>🔄 Renouveler maintenant (' + formatNumber(manualCost) + ' or)</button>';
+  h += '<button class="settings-btn' + (canRefresh ? '' : ' disabled') + '" type="button" ' + (canRefresh ? 'onclick="EquipShopManager.manualRefresh()"' : 'disabled') + '><img class=ico-inline src=images/Icons/system/reset.png> Renouveler maintenant (' + formatNumber(manualCost) + ' or)</button>';
   h += '<div class="equip-shop-grid">';
 
   (game.equipShopStock || []).forEach(function (item) {

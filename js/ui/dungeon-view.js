@@ -18,8 +18,8 @@ window.toggleDungeonExpand = toggleDungeonExpand;
 
 function buildDungeonSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeDungeonSubTab === "tiers" ? ' is-active' : '') + '" onclick="setDungeonSubTab(\'tiers\')">🏰<span>Donjon</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeDungeonSubTab === "shop" ? ' is-active' : '') + '" onclick="setDungeonSubTab(\'shop\')">🔷<span>Boutique</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeDungeonSubTab === "tiers" ? ' is-active' : '') + '" onclick="setDungeonSubTab(\'tiers\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/dungeon.png" alt=""><span>Donjon</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeDungeonSubTab === "shop" ? ' is-active' : '') + '" onclick="setDungeonSubTab(\'shop\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/shard_shop.png" alt=""><span>Boutique</span></button>';
   h += '</div>';
   return h;
 }
@@ -33,7 +33,7 @@ function buildDungeonActiveHTML() {
 
   var h = '<div class="panel-card dungeon-active-card">';
   h += '<div class="dungeon-active-tier">' + esc(tier.name) + '</div>';
-  h += '<div class="dungeon-wave-label">' + (isBossWave ? '👑 Boss du donjon' : 'Vague ' + wave + ' / ' + total) + '</div>';
+  h += '<div class="dungeon-wave-label">' + (isBossWave ? '<img class=ico-inline src=images/Icons/dungeon/boss_crown.png> Boss du donjon' : 'Vague ' + wave + ' / ' + total) + '</div>';
   h += '<div class="dungeon-progress-bar"><div class="dungeon-progress-fill' + (isBossWave ? ' is-boss' : '') + '" style="width:' + progressPct + '%"></div></div>';
   h += '<p class="panel-sub">Bats-toi dans l\u2019onglet Combat. Si tes PV tombent à 0, la tentative s\u2019arrête ici (récompense réduite selon les vagues passées).</p>';
   h += '<button class="settings-btn danger" type="button" onclick="DungeonManager.forfeit()">Abandonner la tentative</button>';
@@ -58,10 +58,10 @@ function buildDungeonTierCardHTML(tier, isLast) {
     : '';
 
   var h = '<' + cardTag + ' class="dungeon-tier-card' + (unlocked ? ' is-tappable' : ' is-locked') + (unlocked && heroDowned ? ' is-downed' : '') + (isLast ? ' is-full' : '') + '"' + cardAttrs + '>';
-  h += '<div class="dungeon-tier-image">' + imageHTML + (unlocked ? '' : '<span class="dungeon-tier-image-lock">🔒</span>') + (unlocked && heroDowned ? '<span class="dungeon-tier-image-lock">💀</span>' : '') + '</div>';
+  h += '<div class="dungeon-tier-image">' + imageHTML + (unlocked ? '' : '<span class="dungeon-tier-image-lock"><img class=ico-inline src=images/Icons/system/lock_closed.png></span>') + (unlocked && heroDowned ? '<span class="dungeon-tier-image-lock"><img class=ico-inline src=images/Icons/camp/hero_defeated.png></span>' : '') + '</div>';
   h += '<div class="dungeon-tier-info">';
   h += '<div class="dungeon-tier-name">' + esc(tier.name) + '</div>';
-  h += '<div class="dungeon-tier-rarity" style="color:' + rarityColor + '">🎁 ' + esc(rarityLabel) + ' max</div>';
+  h += '<div class="dungeon-tier-rarity" style="color:' + rarityColor + '"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> ' + esc(rarityLabel) + ' max</div>';
 
   /* v3.223.0 : le matériau de monde est annoncé AVANT d'entrer — c'est une
      raison de choisir ce palier, pas une surprise de fin de run. */
@@ -112,9 +112,9 @@ function buildDungeonCardHTML(dungeon) {
   if (dungeon.banner) {
     h += renderIconOrEmojiHTML(dungeon.banner, "dungeon-card-head-img", dungeon.name);
   } else {
-    h += '<span class="dungeon-card-head-placeholder">' + esc(dungeon.icon || "🏰") + '</span>';
+    h += '<span class="dungeon-card-head-placeholder">' + renderIconOrEmojiHTML(dungeon.icon || "images/Icons/subtabs/dungeon.png", "dungeon-card-head-ico", "") + '</span>';
   }
-  h += '<div class="dungeon-card-head-name">' + esc(dungeon.name) + (isLocked ? ' 🔒' : '') + '</div>';
+  h += '<div class="dungeon-card-head-name">' + esc(dungeon.name) + (isLocked ? ' <img class=ico-inline src=images/Icons/system/lock_closed.png>' : '') + '</div>';
   if (isLocked) h += '<div class="dungeon-card-head-hint">' + esc(dungeon.lockedHint || "Pas encore disponible") + '</div>';
   if (!isLocked) h += '<div class="dungeon-card-chevron">' + (isExpanded ? "▲" : "▼") + '</div>';
   h += '</button>';
@@ -122,7 +122,7 @@ function buildDungeonCardHTML(dungeon) {
   if (isExpanded && !isLocked) {
     h += '<div class="dungeon-card-body">';
     h += '<div class="dungeon-card-desc">' + esc(dungeon.desc) + '</div>';
-    h += '<div class="dungeon-best-wave">🏅 Record : vague ' + Math.min(bestWave, DUNGEON_CONFIG.waveCount) + ' / ' + DUNGEON_CONFIG.waveCount + (beatBoss ? ' — Boss vaincu !' : '') + '</div>';
+    h += '<div class="dungeon-best-wave"><img class=ico-inline src=images/Icons/dungeon/wave_record.png> Record : vague ' + Math.min(bestWave, DUNGEON_CONFIG.waveCount) + ' / ' + DUNGEON_CONFIG.waveCount + (beatBoss ? ' — Boss vaincu !' : '') + '</div>';
     h += '<div class="dungeon-tier-grid">';
     var tierIds = dungeon.tierIds || [];
     tierIds.forEach(function (tierId, index) {
@@ -139,7 +139,7 @@ function buildDungeonCardHTML(dungeon) {
 function buildDungeonTicketBadgeHTML() {
   var tickets = game.dungeonTickets || 0;
   var h = '<button type="button" class="dungeon-ticket-badge" onclick="openDungeonTicketOverlay()">';
-  h += '<span class="dungeon-ticket-badge-icon">🎟️</span>';
+  h += '<span class="dungeon-ticket-badge-icon"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png></span>';
   h += '<span class="dungeon-ticket-badge-label">Achat de ticket</span>';
   h += '<span class="dungeon-ticket-badge-count kbadge kbadge-round"><span>' + tickets + '</span></span>';
   h += '</button>';
@@ -152,7 +152,7 @@ function buildDungeonLobbyHTML() {
   if (activeDungeonSubTab === "shop") {
     h += buildDungeonShopHTML();
     // v3.194.0 (Seb) : titre au bandeau (le h3 interne, doublon, est retiré)
-    return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="\ud83d\udd37 Boutique du donjon">' + h + '</div>'; // v2.83.28
+    return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="images/Icons/subtabs/shard_shop.png|Boutique du donjon">' + h + '</div>'; // v2.83.28
   }
 
   h += buildDungeonTicketBadgeHTML();
@@ -163,7 +163,7 @@ function buildDungeonLobbyHTML() {
   });
   h += '</div>';
 
-  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="\ud83c\udff0 Donjon">' + h + '</div>'; // v2.83.28
+  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="images/Icons/subtabs/dungeon.png|Donjon">' + h + '</div>'; // v2.83.28
 }
 
 function buildDungeonShopHTML() {
@@ -171,7 +171,7 @@ function buildDungeonShopHTML() {
 
   var h = '<div class="panel-card">';
   h += '<p class="panel-sub">Payée en Éclats — gagnés en passant des vagues (1 par vague, +' + DUNGEON_CONFIG.shardsBossBonus + ' bonus si le boss tombe). Utilisables uniquement ici.</p>';
-  h += '<div class="dungeon-shard-count">🔷 ' + formatNumber(shards) + ' Éclats</div>';
+  h += '<div class="dungeon-shard-count"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + formatNumber(shards) + ' Éclats</div>';
 
   h += '<div class="dungeon-shop-grid">';
   (DUNGEON_SHOP || []).forEach(function (item) {
@@ -191,7 +191,7 @@ function buildDungeonShopHTML() {
     if (maxed) {
       h += '<button class="btn-buy is-maxed" type="button" disabled>Max</button>';
     } else {
-      h += '<button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="DungeonManager.buyShardUpgrade(\'' + esc(item.id) + '\')">🔷 ' + formatNumber(cost) + '</button>';
+      h += '<button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="DungeonManager.buyShardUpgrade(\'' + esc(item.id) + '\')"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + formatNumber(cost) + '</button>';
     }
     h += '</div>';
     h += '</div>';
@@ -235,16 +235,16 @@ function buildDungeonIntroHTML(tierId) {
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card">';
-  h += '    <div class="dungeon-story-icon">🏰</div>';
+  h += '    <div class="dungeon-story-icon"><img class=ico-inline src=images/Icons/subtabs/dungeon.png></div>';
   h += '    <div class="dungeon-story-title">' + esc(tier.name) + '</div>';
   h += '    <div class="dungeon-story-text">' + esc(tier.story) + '</div>';
   h += buildDungeonSceauLoreHTML(tierId);
-  h += '    <div class="dungeon-story-meta">🎁 Butin garanti jusqu\u2019à : <strong>' + esc(rarityLabel) + '</strong> · ⚔️ ' + DUNGEON_CONFIG.waveCount + ' vagues + boss</div>';
+  h += '    <div class="dungeon-story-meta"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> Butin garanti jusqu\u2019à : <strong>' + esc(rarityLabel) + '</strong> · <img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ' + DUNGEON_CONFIG.waveCount + ' vagues + boss</div>';
   // v3.136.0 : ticket offert par l'Histoire (forest_14 en cours) — pas de décompte, pas d'achat à proposer.
   if (typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(tierId)) {
-    h += '    <div class="dungeon-story-meta">🎟️ <strong>Entrée offerte</strong> — les braises te guident, aucun ticket consommé tant que « La tanière du Basilic » est en cours</div>';
+    h += '    <div class="dungeon-story-meta"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> <strong>Entrée offerte</strong> — les braises te guident, aucun ticket consommé tant que « La tanière du Basilic » est en cours</div>';
   } else {
-    h += '    <div class="dungeon-story-meta">🎟️ Tickets restants : <strong>' + tickets + '</strong>' + (tickets <= 0 ? ' · <a href="javascript:void(0)" onclick="closeDungeonIntro();openDungeonTicketOverlay();">en acheter</a>' : '') + '</div>';
+    h += '    <div class="dungeon-story-meta"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> Tickets restants : <strong>' + tickets + '</strong>' + (tickets <= 0 ? ' · <a href="javascript:void(0)" onclick="closeDungeonIntro();openDungeonTicketOverlay();">en acheter</a>' : '') + '</div>';
   }
   h += '    <div class="dungeon-story-actions">';
   h += '      <button class="settings-btn" type="button" onclick="closeDungeonIntro()">Annuler</button>';
@@ -259,7 +259,7 @@ function buildDungeonSceauLoreHTML(tierId) {
   if (typeof CodexManager === "undefined") return "";
   var entry = CodexManager.getById("dungeon_tier_" + tierId);
   if (!entry) return "";
-  return '    <div class="dungeon-story-lore">📖 « ' + esc(entry.text) + ' »</div>';
+  return '    <div class="dungeon-story-lore"><img class=ico-inline src=images/Icons/codex/codex_lore.png> « ' + esc(entry.text) + ' »</div>';
 }
 
 function openDungeonIntro(tierId) {
@@ -288,7 +288,7 @@ function confirmDungeonStart() {
 function buildDungeonSummaryHTML(result) {
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card' + (result.success ? ' is-success' : ' is-failure') + '">';
-  h += '    <div class="dungeon-story-icon">' + (result.success ? '🏆' : '🏰') + '</div>';
+  h += '    <div class="dungeon-story-icon">' + (result.success ? '<img class=ico-inline src=images/Icons/scene/final_reward.png>' : '<img class=ico-inline src=images/Icons/subtabs/dungeon.png>') + '</div>';
   h += '    <div class="dungeon-story-title">' + esc(result.tierName) + (result.success ? ' terminé !' : ' interrompu') + '</div>';
   h += '    <div class="dungeon-story-text">' + (result.success
     ? 'Le boss s\u2019effondre. La salle retrouve son calme — pour cette fois.'
@@ -296,16 +296,16 @@ function buildDungeonSummaryHTML(result) {
 
   h += '    <div class="dungeon-summary-rewards">';
   h += '      <div class="dungeon-summary-row"><span>Vagues passées</span><span>' + Math.min(result.clearedWave, result.wavesTotal) + ' / ' + result.wavesTotal + (result.success ? ' + Boss' : '') + '</span></div>';
-  h += '      <div class="dungeon-summary-row"><span>💰 Or</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
+  h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/gold_icon.png> Or</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
   h += '      <div class="dungeon-summary-row"><span>' + renderIconOrEmojiHTML("images/Icons/essence_icon.png", "dungeon-summary-icon", "Essence") + ' Essence</span><span>+' + formatNumber(result.essenceReward) + '</span></div>';
-  h += '      <div class="dungeon-summary-row"><span>🔷 Éclats</span><span>+' + formatNumber(result.shardsGained) + '</span></div>';
+  h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> Éclats</span><span>+' + formatNumber(result.shardsGained) + '</span></div>';
   /* v3.223.0 : matériau de monde, sur sa propre ligne du rapport. */
   if (result.specialGained > 0 && result.specialName) {
-    h += '      <div class="dungeon-summary-row"><span>🌿 ' + esc(result.specialName) + '</span><span>+' + result.specialGained + '</span></div>';
+    h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/scene/path_easy.png> ' + esc(result.specialName) + '</span><span>+' + result.specialGained + '</span></div>';
   }
 
   if (result.lootedItem) {
-    h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span>🎁 Butin</span><span>' + esc(result.lootedItem.name) + '</span></div>';
+    h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> Butin</span><span>' + esc(result.lootedItem.name) + '</span></div>';
   }
   h += '    </div>';
 
@@ -341,12 +341,12 @@ function buildDungeonTicketOverlayHTML() {
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card">';
-  h += '    <div class="dungeon-story-icon">🎟️</div>';
+  h += '    <div class="dungeon-story-icon"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png></div>';
   h += '    <div class="dungeon-story-title">Tickets de donjon</div>';
   h += '    <div class="dungeon-story-text">1 ticket gratuit par jour, valable pour n\u2019importe quel donjon et n\u2019importe quel palier. Chaque ticket supplémentaire coûte de plus en plus cher au fil de la journée — limité à ' + maxPerDay + ' achats par jour.</div>';
 
   h += '    <div class="dungeon-ticket-row">';
-  h += '      <span class="dungeon-ticket-count">🎟️ ' + tickets + '</span>';
+  h += '      <span class="dungeon-ticket-count"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> ' + tickets + '</span>';
   h += '      <span class="dungeon-ticket-reset">Renouvellement dans ' + esc(DungeonManager.timeUntilTicketReset()) + '</span>';
   h += '    </div>';
   h += '    <div class="dungeon-ticket-limit">Achats aujourd\u2019hui : ' + purchasedToday + ' / ' + maxPerDay + '</div>';

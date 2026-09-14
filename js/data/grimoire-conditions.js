@@ -7,67 +7,67 @@ var GRIMOIRE_CONDITIONS = {
     id: "chargeIncoming",
     label: "L'ennemi prépare une charge",
     description: "Un ennemi normal s'apprête à charger.",
-    icon: "💢"
+    icon: "images/Icons/combat_status/charge_incoming.png"
   },
   shieldIncoming: {
     id: "shieldIncoming",
     label: "L'ennemi invoque un bouclier",
     description: "Il va bientôt réduire les dégâts qu'il subit.",
-    icon: "🛡️"
+    icon: "images/Icons/combat_status/shield_incoming.png"
   },
   healIncoming: {
     id: "healIncoming",
     label: "Le boss va se soigner",
     description: "Le boss s'apprête à récupérer des PV.",
-    icon: "💚"
+    icon: "images/Icons/combat_status/heal_incoming.png"
   },
   eliteSurgeIncoming: {
     id: "eliteSurgeIncoming",
     label: "L'élite s'exalte",
     description: "Sa nature va compter double pendant quelques rounds.",
-    icon: "🔥"
+    icon: "images/Icons/combat_status/arcane_burn.png"
   },
   heroLowHp: {
     id: "heroLowHp",
     label: "Je suis blessé",
     description: "Tes PV sont bas.",
-    icon: "❤️‍🩹"
+    icon: "images/Icons/combat_status/heal_incoming.png"
   },
   enemyAttackIncoming: {
     id: "enemyAttackIncoming",
     label: "L'ennemi va frapper deux fois",
     description: "Sa jauge de célérité sera pleine au prochain tour : il enchaînera deux coups.",
-    icon: "⚔️"
+    icon: "images/Icons/combat_status/double_strike.png"
   },
   enemyEnraged: {
     id: "enemyEnraged",
     label: "L'ennemi est enragé",
     description: "Il devient plus dangereux à mesure qu'il perd des PV.",
-    icon: "😡"
+    icon: "images/Icons/combat_status/rage.png"
   },
   enemyCorrupted: {
     id: "enemyCorrupted",
     label: "L'ennemi est corrompu",
     description: "Chaque coup reçu réduit un peu tes dégâts.",
-    icon: "☠️"
+    icon: "images/Icons/combat_status/corruption.png"
   },
   enemySilenceIncoming: {
     id: "enemySilenceIncoming",
     label: "L'ennemi va te réduire au silence",
     description: "Un ennemi normal s'apprête à bloquer tes techniques.",
-    icon: "🔇"
+    icon: "images/Icons/combat_status/silence_incoming.png"
   },
   enemyVampiric: {
     id: "enemyVampiric",
     label: "L'ennemi est vampirique",
     description: "Il se soigne à chaque coup qu'il te porte.",
-    icon: "🧛"
+    icon: "images/Icons/combat_status/vampiric.png"
   },
   enemyArmored: {
     id: "enemyArmored",
     label: "L'ennemi est blindé",
     description: "Il subit un peu moins de dégâts en permanence.",
-    icon: "🛡️‍🩹"
+    icon: "images/Icons/combat_status/armored.png"
   }
 };
 

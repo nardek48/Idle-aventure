@@ -41,7 +41,7 @@ var VILLAGE_BUILDINGS = {
   workshop: {
     id: "workshop",
     name: "Atelier de Construction",
-    icon: "🏗️",
+    icon: "images/Icons/workshops/masonry.png",
     iconImg: "images/Icons/construction_icon.png",
     rank: 0,                 // pas de prérequis : c'est lui qui donne les rangs
     maxLevel: 10,
@@ -83,7 +83,8 @@ var VILLAGE_BUILDINGS = {
   training: {
     id: "training",
     name: "Terrain d'entraînement",
-    icon: "🎯",
+    icon: "images/Icons/combat_stats/stat_critical.png",
+    iconImg: "images/Icons/village_buildings/training_grounds.png",
     rank: 1,
     /* v3.214.0 : 14 niveaux, soit le plafond historique de 150 par
        caractéristique. Les quatre derniers (11 à 14) exigent la Résine durcie,
@@ -132,7 +133,8 @@ var VILLAGE_BUILDINGS = {
   forge: {
     id: "forge",
     name: "Forge",
-    icon: "⚒️",
+    icon: "images/Icons/workshops/smithing_station.png",
+    iconImg: "images/Icons/village_buildings/village_forge.png",
     rank: 2,
     /* Conception : 6 niveaux, un par monde, chacun ouvrant 5 niveaux de forge
        sur les pièces — soit 30 au total, c'est-à-dire EXACTEMENT un cran de
@@ -171,7 +173,8 @@ var VILLAGE_BUILDINGS = {
   apothecary: {
     id: "apothecary",
     name: "Apothicaire",
-    icon: "⚗️",
+    icon: "images/Icons/village_buildings/apothecary.png",
+    iconImg: "images/Icons/village_buildings/apothecary.png",
     rank: 2,
     /* 6 niveaux : un par recette. Au-delà, il n'y aurait plus rien à ouvrir —
        un niveau qui ne débloque rien serait un piège à ressources. */
@@ -206,7 +209,8 @@ var VILLAGE_BUILDINGS = {
   enchanter: {
     id: "enchanter",
     name: "Enchanteresse",
-    icon: "✨",
+    icon: "images/Icons/scene/node_discovery.png",
+    iconImg: "images/Icons/village_buildings/enchantress_tower.png",
     rank: 2,
     maxLevel: 2,
     implemented: true,
@@ -239,7 +243,8 @@ var VILLAGE_BUILDINGS = {
   hall: {
     id: "hall",
     name: "Halle marchande",
-    icon: "🛒",
+    icon: "images/Icons/subtabs/equipment_shop.png",
+    iconImg: "images/Icons/village_buildings/merchant_hall.png",
     rank: 3,
     /* 10 niveaux : 5 emplacements de vitrine gagnés (un tous les deux niveaux)
        et une remise croissante sur le renouvellement. */
@@ -273,7 +278,8 @@ var VILLAGE_BUILDINGS = {
   tavern: {
     id: "tavern",
     name: "Taverne",
-    icon: "🍺",
+    icon: "images/Icons/village_buildings/tavern.png",
+    iconImg: "images/Icons/village_buildings/tavern.png",
     rank: 3,
     /* 5 niveaux, un contrat par niveau : chaque chantier se voit tout de suite
        sur le tableau. */
@@ -305,7 +311,8 @@ var VILLAGE_BUILDINGS = {
   warehouse: {
     id: "warehouse",
     name: "Entrepôt agrandi",
-    icon: "📦",
+    icon: "images/Icons/system/warehouse_supplies.png",
+    iconImg: "images/Icons/village_buildings/warehouse_expanded.png",
     rank: 4,
     maxLevel: 10,
     implemented: true,
@@ -336,7 +343,8 @@ var VILLAGE_BUILDINGS = {
   palisade: {
     id: "palisade",
     name: "Palissade",
-    icon: "🛡️",
+    icon: "images/Icons/combat_stats/stat_defense.png",
+    iconImg: "images/Icons/village_buildings/palisade.png",
     rank: 4,
     maxLevel: 10,
     implemented: false,      // V-5, dépend des cartes vivantes

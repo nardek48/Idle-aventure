@@ -61,10 +61,10 @@ var DUNGEON_TIERS = [
 ];
 
 var DUNGEON_SHOP = [
-  { id: "d_power", name: "Lame du donjon", icon: "⚔️", desc: "+2% dégâts globaux par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 },
-  { id: "d_gold", name: "Trésor du donjon", icon: "💰", desc: "+2% or global par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 },
+  { id: "d_power", name: "Lame du donjon", icon: "images/Icons/dungeon/dungeon_weapon.png", desc: "+2% dégâts globaux par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 },
+  { id: "d_gold", name: "Trésor du donjon", icon: "images/Icons/dungeon/dungeon_gold.png", desc: "+2% or global par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 },
   { id: "d_essence", name: "Essence du donjon", icon: "images/Icons/essence_icon.png", desc: "+2% essence globale par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 },
-  { id: "d_defense", name: "Armure du donjon", icon: "🛡️", desc: "+1% défense par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 }
+  { id: "d_defense", name: "Armure du donjon", icon: "images/Icons/dungeon/dungeon_armor.png", desc: "+1% défense par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 }
 ];
 
 var DUNGEONS = [

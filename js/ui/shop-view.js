@@ -12,14 +12,14 @@ function setShopSubTab(tab) {
 function getUpgradePreviewMeta(upgrade) {
   if (!upgrade) return { cls: "neutral", icon: "", label: "Bonus" };
 
-  if (upgrade.id === "utrain_power") return { cls: "damage", icon: "💪", label: "Force" };
-  if (upgrade.id === "utrain_celerity") return { cls: "speed", icon: "⚡", label: "Célérité" };
-  if (upgrade.id === "utrain_precision") return { cls: "crit", icon: "🎯", label: "Précision" };
-  if (upgrade.id === "utrain_will") return { cls: "crit", icon: "✨", label: "Volonté" };
-  if (upgrade.id === "utrain_endurance") return { cls: "tank", icon: "🛡️", label: "Endurance" };
+  if (upgrade.id === "utrain_power") return { cls: "damage", icon: "images/Icons/improvement_icons/power.png", label: "Force" };
+  if (upgrade.id === "utrain_celerity") return { cls: "speed", icon: "images/Icons/combat_stats/stat_speed.png", label: "Célérité" };
+  if (upgrade.id === "utrain_precision") return { cls: "crit", icon: "images/Icons/combat_stats/stat_critical.png", label: "Précision" };
+  if (upgrade.id === "utrain_will") return { cls: "crit", icon: "images/Icons/scene/node_discovery.png", label: "Volonté" };
+  if (upgrade.id === "utrain_endurance") return { cls: "tank", icon: "images/Icons/combat_stats/stat_defense.png", label: "Endurance" };
 
-  if (upgrade.id === "u_gold") return { cls: "gold", icon: "💰", label: "Or" };
-  if (upgrade.id === "u_bounty") return { cls: "gold", icon: "📜", label: "Boss gold" };
+  if (upgrade.id === "u_gold") return { cls: "gold", icon: "images/Icons/gold_icon.png", label: "Or" };
+  if (upgrade.id === "u_bounty") return { cls: "gold", icon: "images/Icons/quests/quest_story.png", label: "Boss gold" };
 
   return { cls: "neutral", icon: "", label: "Bonus" };
 }
@@ -204,8 +204,8 @@ function buildUpgradeCardHTML(u, buyAmount) {
 
 function buildShopSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "upgrades" ? ' is-active' : '') + '" onclick="setShopSubTab(\'upgrades\')">💰<span>Économie</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "potions" ? ' is-active' : '') + '" onclick="setShopSubTab(\'potions\')">🧪<span>Potions</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "upgrades" ? ' is-active' : '') + '" onclick="setShopSubTab(\'upgrades\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/economy.png" alt=""><span>Économie</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "potions" ? ' is-active' : '') + '" onclick="setShopSubTab(\'potions\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/potions.png" alt=""><span>Potions</span></button>';
   h += '</div>';
   return h;
 }

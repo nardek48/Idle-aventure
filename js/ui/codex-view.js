@@ -35,7 +35,7 @@ function buildCodexReadingHTML(id) {
 
   var paragraphs = entry.text.split("\n\n");
 
-  var h = '<button class="codex-back-btn" type="button" onclick="closeCodexReading()">← Retour au Codex</button>';
+  var h = '<button class="codex-back-btn" type="button" onclick="closeCodexReading()"><img class=ico-inline src=images/Icons/system/back.png> Retour au Codex</button>';
   h += '<div class="codex-reading-card">';
   h += '<div class="codex-reading-icon">' + renderIconOrEmojiHTML(entry.icon, "codex-reading-icon-img", entry.title) + '</div>';
   h += '<div class="codex-reading-title">' + esc(entry.title) + '</div>';
@@ -51,7 +51,7 @@ function buildCodexListItemHTML(entry) {
   var read = CodexManager.isRead(entry.id);
 
   var h = '<button type="button" class="nb-entry-card' + (!unlocked ? ' is-locked' : '') + '" onclick="selectCodexEntry(\'' + esc(entry.id) + '\')">';
-  h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame"><span class="nb-entry-icon-emoji">' + (unlocked ? renderIconOrEmojiHTML(entry.icon, "nb-entry-icon-img", entry.title) : '🔒') + '</span></div></div>';
+  h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame"><span class="nb-entry-icon-emoji">' + (unlocked ? renderIconOrEmojiHTML(entry.icon, "nb-entry-icon-img", entry.title) : '<img class=ico-inline src=images/Icons/system/lock_closed.png>') + '</span></div></div>';
   h += '<div class="nb-entry-info-col">';
   h += '<div class="nb-entry-name">' + (unlocked ? esc(entry.title) : '???') + '</div>';
   h += '<div class="nb-entry-desc">' + (unlocked ? (read ? 'Déjà lu.' : 'Nouvelle entrée à découvrir.') : 'Pas encore découvert.') + '</div>';
@@ -130,7 +130,7 @@ function buildCodexExcerptHTML(codexId, cssClass) {
   if (!entry || !CodexManager.isUnlocked(entry)) return "";
 
   var firstSentence = entry.text.split(".")[0] + ".";
-  return '<div class="' + (cssClass || "codex-excerpt") + '">📖 « ' + esc(firstSentence) + ' »</div>';
+  return '<div class="' + (cssClass || "codex-excerpt") + '"><img class=ico-inline src=images/Icons/codex/codex_lore.png> « ' + esc(firstSentence) + ' »</div>';
 }
 
 window.buildCodexExcerptHTML = buildCodexExcerptHTML;
