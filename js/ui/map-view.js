@@ -104,7 +104,7 @@ function buildMapNodeHTML(world, index) {
   if (!unlocked) classes.push("is-locked");
   if (isDone) classes.push("is-done");
 
-  var h = '<button type="button" class="' + classes.join(" ") + '" style="left:' + pos.x + '%;top:' + pos.y + '%;" onclick="openWorldPopup(' + index + ')">';
+  var h = '<button type="button" class="' + classes.join(" ") + '" style="left:' + pos.x + '%;top:' + pos.y + '%;" onclick="tapMapWorld(' + index + ')">';
   h += '<span class="map-node-circle"><img src="' + esc(getWorldThumb(world)) + '" alt="' + esc(world.name) + '" draggable="false">';
   if (isCurrent) h += '<span class="map-node-badge">Actuel</span>';
   if (!unlocked) h += '<span class="map-node-lock"><img class=ico-inline src=images/Icons/system/lock_closed.png></span>';
@@ -115,6 +115,11 @@ function buildMapNodeHTML(world, index) {
 }
 
 function buildMapHTML() {
+  // v3.256.0 (Cartes Vivantes, C-2) : une carte vivante ouverte remplace la carte du monde.
+  if (typeof isLivingMapOpen === "function" && isLivingMapOpen() && typeof buildLivingMapHTML === "function") {
+    var lm = buildLivingMapHTML(livingMapOpenId);
+    if (lm) return lm;
+  }
   var h = '<div class="map-path-frame">';
   h += '<img class="map-path-bg" src="images/Map/world_map.jpg" alt="Carte du monde" draggable="false">';
   h += buildMapPathSvgHTML(WORLDS.length);
@@ -202,6 +207,19 @@ function buildWorldPopupHTML(index) {
   h += '</div>';
   return h;
 }
+
+/* v3.256.0 (C-2, §9.1) : toucher un monde qui a une carte vivante l'ouvre ; un monde sans
+   carte garde sa popup. Depuis la carte vivante elle-même, « Le monde » rouvre la popup. */
+function tapMapWorld(index) {
+  var world = WORLDS[index];
+  if (world && window.LivingMapManager && LivingMapManager.getMapForWorld(world.id)
+      && typeof isLivingMapOpen === "function" && !isLivingMapOpen() && typeof openLivingMap === "function") {
+    openLivingMap(LivingMapManager.getMapForWorld(world.id).id);
+    return;
+  }
+  openWorldPopup(index);
+}
+window.tapMapWorld = tapMapWorld;
 
 function openWorldPopup(index) {
   if (index < 0 || index >= WORLDS.length) return;

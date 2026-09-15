@@ -344,6 +344,12 @@ function buildSceneProfileChoiceHTML() {
   h += '<div class="scene-screen">';
   h += '  <div class="scene-heading">';
   h += '    <div class="scene-heading-title">Choisis ton approche</div>';
+  // v3.256.0 (Cartes Vivantes, C-2) : run ciblé — le secteur, sa ligne de lore, et l'intensité que l'anneau impose.
+  if (run.livingMap && window.LivingMapManager) {
+    var lmDef = LivingMapManager.getSectorDef(run.livingMap.mapId, run.livingMap.sectorId);
+    var lmInt = lmDef && window.SCENE_INTENSITY && SCENE_INTENSITY[LivingMapManager.getIntensity(lmDef)];
+    if (lmDef) h += '    <div class="scene-map-target"><b>' + esc(lmDef.name) + '</b> · ' + esc(lmInt ? lmInt.label : "") + ' — ' + esc(lmDef.lore || "") + '</div>';
+  }
   h += '    <div class="scene-heading-text">Le butin final est identique quel que soit ton choix — seul le chemin change.</div>';
   h += '  </div>';
 
@@ -956,6 +962,17 @@ function buildSceneCompleteHTML() {
   }
   h += '  </div>';
 
+  // v3.256.0 (Cartes Vivantes, C-2) : run ciblé — ce que la carte en a fait, puis retour sur la carte.
+  if (run.livingMap) {
+    var rep = run.livingMapReport;
+    if (rep && rep.message) h += '  <div class="scene-map-report' + (rep.regressed ? ' is-loss' : '') + '">' + esc(rep.message) + '</div>';
+    h += '  <div class="scene-actions">';
+    h += '    <button class="settings-btn primary" type="button" onclick="leaveSceneScreen()">Retour à la carte</button>';
+    h += '  </div>';
+    h += '</div>';
+    return h;
+  }
+
   h += '  <div class="scene-actions">';
   h += '    <button class="settings-btn primary" type="button" onclick="startSceneExpeditionAgain()">Nouvelle expédition</button>';
   h += '    <button class="settings-btn" type="button" onclick="leaveSceneScreen()">Quitter</button>';
@@ -976,8 +993,12 @@ window.startSceneExpeditionAgain = startSceneExpeditionAgain;
    Expédition une fois le run terminé (décision Seb : le joueur doit pouvoir quitter, pas
    seulement relancer). */
 function leaveSceneScreen() {
+  var run = SceneRunManager.getRun();
+  var target = (run && run.livingMap) ? run.livingMap : null; // v3.256.0 (C-2) : lu AVANT clearRun
   SceneRunManager.clearRun();
   sceneRunLog = [];
+  // v3.256.0 (C-2, décision Seb) : un run ciblé ramène sur la carte, là où la brume a bougé.
+  if (target && typeof openLivingMap === "function") { openLivingMap(target.mapId, target.sectorId); return; }
   if (typeof switchTab === "function") switchTab("campement");
 }
 window.leaveSceneScreen = leaveSceneScreen;

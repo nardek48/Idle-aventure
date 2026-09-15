@@ -78,6 +78,10 @@ QuestEnemyManager.respawnActiveRunEnemy = function () {
     var hq = (window.HUNT_QUESTS || {})[game.huntRun.questId];
     if (hq) { HuntQuestManager.spawnRunEnemy(hq); return true; }
   }
+  // v3.256.0 (Cartes Vivantes, C-2) : combat d'élite de secteur en cours au rechargement.
+  if (game.livingMaps && game.livingMaps.fight && window.LivingMapManager) {
+    if (LivingMapManager.respawnFightEnemy()) return true;
+  }
   return false;
 };
 

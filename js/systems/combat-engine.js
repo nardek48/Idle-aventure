@@ -941,6 +941,12 @@ var CombatEngine = {
       return;
     }
 
+    // v3.256.0 (Cartes Vivantes, C-2) : mort face à l'élite d'un secteur — même dispatch que les autres runs.
+    if (window.LivingMapManager && game.livingMaps && game.livingMaps.fight) {
+      LivingMapManager.onFightLost();
+      return;
+    }
+
     // v3.126.0 (Petites Aventures, Lot PA2) : mort en nœud combat du scene-engine = perte
     // totale du run (SortieManager.end("death") déjà appelé ci-dessus, universel) — décision
     // Seb confirmée avant ce lot : pas d'échec "doux" à 50% ici, réservé à l'évacuation
@@ -1142,6 +1148,14 @@ var CombatEngine = {
 
     if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active) {
       AdventureQuestManager.onEnemyKilled(enemy);
+      if (typeof renderAll === "function") renderAll();
+      restoreEquipBagScroll();
+      saveGame();
+      return;
+    }
+
+    // v3.256.0 (Cartes Vivantes, C-2) : élite d'un secteur vaincue — le butin est déjà routé vers la sortie.
+    if (window.LivingMapManager && game.livingMaps && game.livingMaps.fight && LivingMapManager.onFightWon(enemy)) {
       if (typeof renderAll === "function") renderAll();
       restoreEquipBagScroll();
       saveGame();

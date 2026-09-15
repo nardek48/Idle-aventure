@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.254.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.256.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -82,6 +82,7 @@ var PRECACHE_APP_SHELL = [
   "./css/04-panels-common.css",
   "./css/05-overlays.css",
   "./css/06-map.css",
+  "./css/04-panel-living-map.css",
   "./css/07-responsive.css",
   "./css/99-icon-assets.css",
   "./js/core/constants.js",
@@ -99,6 +100,7 @@ var PRECACHE_APP_SHELL = [
   "./js/data/enemies.js",
   "./js/data/equipment.js",
   "./js/data/heroes.js",
+  "./js/data/living-maps.js",
   "./js/data/potions.js",
   "./js/data/talents.js",
   "./js/data/upgrades.js",
@@ -137,6 +139,7 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/stats-system.js",
   "./js/systems/affliction-system.js",
   "./js/systems/world-quest-system.js",
+  "./js/systems/living-map-system.js",
   "./js/systems/adventure-quest-system.js",
   "./js/systems/story-quest-system.js",
   "./js/systems/tutorial-catalog-system.js",
@@ -155,6 +158,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/hud-view.js",
   "./js/ui/log-view.js",
   "./js/ui/map-view.js",
+  "./js/ui/living-map-view.js",
   "./js/ui/menu-view.js",
   "./js/ui/modal-view.js",
   "./js/ui/modal.js",

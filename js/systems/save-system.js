@@ -528,6 +528,8 @@ function buildSaveData() {
     // ci-dessus est conservé en l'état pour qu'un retour à une version
     // antérieure retrouve son Atelier.
     village: game.village || {},
+    // v3.255.0 (Cartes Vivantes, C-1) : état des secteurs par carte + repère d'Ascension. Voir living-map-system.js.
+    livingMaps: game.livingMaps || {},
     // v3.217.0 (lot V-6) : tableau de contrats de la Taverne — { contracts, resetTime }.
     // resetTime est un horodatage absolu, comme equipShopResetTime : rien à
     // rattraper au chargement, checkRefresh() compare à Date.now().
@@ -869,6 +871,8 @@ function restoreBaseState(d) {
   // VillageBuildingManager.ensure() complète, puis migrateFromConstruction()
   // reprend le niveau d'Atelier déjà acquis (voir main/boot.js).
   game.village = d.village && typeof d.village === "object" ? d.village : {};
+  // v3.255.0 (C-1) : repli d'avant la version = objet vide, LivingMapManager.ensureDefaults() complète.
+  game.livingMaps = d.livingMaps && typeof d.livingMaps === "object" ? d.livingMaps : {};
   // v3.217.0 : contrats de la Taverne — migration douce, TavernManager.ensure()
   // complète, checkRefresh() régénère si le tableau est vide ou périmé.
   game.tavern = d.tavern && typeof d.tavern === "object" ? d.tavern : {};
@@ -1031,6 +1035,9 @@ function hardResetState() {
   var keptTalents = JSON.parse(JSON.stringify(game.talents || {}));
 
   var keptVillage = JSON.parse(JSON.stringify(game.village || {}));
+  // v3.255.0 (C-1) : conservé à l'Ascension — c'est LivingMapManager qui recouvre les secteurs
+  // (repère lastAscensionSeen), pas la sauvegarde ; la Sève de première libération reste acquise.
+  var keptLivingMaps = JSON.parse(JSON.stringify(game.livingMaps || {}));
   // v3.217.0 : les contrats en cours survivent à l'ascension, comme le stock
   // de l'échoppe — ce sont des ressources déjà produites qui attendent.
   var keptTavern = JSON.parse(JSON.stringify(game.tavern || {}));
@@ -1180,6 +1187,7 @@ function hardResetState() {
   game.production = keptProduction;
   game.construction = keptConstruction;
   game.village = keptVillage;
+  game.livingMaps = keptLivingMaps;
   game.tavern = keptTavern;
   game.forge = keptForge;
   game.workshopUnlock = keptWorkshopUnlock;
@@ -1337,6 +1345,7 @@ function fullResetState() {
   game.production = {}; // v3.31 : repart à zéro, ProductionManager.ensure() recrée les 4 bâtiments au niveau 1
   game.construction = {}; // v3.37 : repart à zéro, ConstructionManager.ensure() recrée workshop au niveau 0
   game.village = {}; // v3.213.0 : bâtiments + chantier du Village, VillageBuildingManager.ensure() recrée l'état initial
+  game.livingMaps = {}; // v3.255.0 (C-1) : cartes vivantes, LivingMapManager.ensureDefaults() recrée l'état initial
   game.tavern = {}; // v3.217.0 : contrats de la Taverne, régénérés au premier affichage
   game.forge = {}; // v3.221.0 : niveaux de forge par emplacement
   game.workshopUnlock = {}; // v3.38 : repart à zéro, WorkshopUnlockManager.ensure() recrée l'état initial (currentStep 0)

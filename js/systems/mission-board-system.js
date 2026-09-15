@@ -545,7 +545,11 @@ var MissionBoard = {
     var remaining = SceneRunManager.PETITE_AVENTURE_DAILY_CAP - SceneRunManager.petiteAventureCountToday();
     var canStart = SceneRunManager.canStartPetiteAventureToday();
 
-    var blurb = "Un parcours court, choisis ton style : rapide et risqué, ou lent et sûr.";
+    // v3.256.0 (Cartes Vivantes, C-2, décision 7) : la Petite Aventure se joue depuis la carte de la
+    // Forêt — cette carte de mission l'ouvre au lieu de lancer un run. Une seule porte, pas une de plus.
+    var hasMap = !!(window.LivingMapManager && LivingMapManager.getMapForWorld("forest") && typeof openLivingMap === "function");
+    var blurb = hasMap ? "Choisis un secteur sur la carte de la Forêt : chaque expédition repousse la brume."
+      : "Un parcours court, choisis ton style : rapide et risqué, ou lent et sûr.";
     if (!isRunning && !canStart) blurb += " Plus de tentative aujourd'hui, reviens demain.";
     var m = {
       id: "petite_aventure_foret", sourceKind: "scene", worldId: null,
@@ -561,6 +565,7 @@ var MissionBoard = {
       isMain: false
     };
     var launchFn = function () {
+      if (hasMap && !isRunning) { openLivingMap("forest"); return; } // v3.256.0 (C-2) : vers la carte
       if (typeof switchTab === "function") switchTab("scene");
       if (typeof openSceneQuestEntry === "function") openSceneQuestEntry("petite_aventure_foret");
     };

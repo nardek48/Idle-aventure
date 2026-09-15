@@ -386,6 +386,12 @@ function getCombatMissionProgressLabel() {
     var wave = Math.min(waveCount, Number(game.dungeonRun.wave || 0));
     return "Donjon · Vague " + wave + "/" + waveCount;
   }
+  // v3.256.0 (Cartes Vivantes, C-2) : combat d'élite d'un secteur.
+  if (window.LivingMapManager && game.livingMaps && game.livingMaps.fight) {
+    var f = game.livingMaps.fight;
+    var sec = LivingMapManager.getSectorDef(f.mapId, f.sectorId);
+    return (sec ? sec.name : "Carte") + " · Élite";
+  }
   // v3.107.1 : étape Histoire en farm libre avec killTarget déclaratif (ex. forest_02 « Premier sang »).
   if (window.StoryQuestManager) {
     var storyStep = StoryQuestManager.getCurrentStep("forest");

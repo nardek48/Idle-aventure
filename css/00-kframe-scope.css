@@ -116,6 +116,12 @@ Deux responsabilités ici :
 .kframe .qb-cap-indicator,
 .kframe .dungeon-ticket-badge,
 .kframe .inv-sort-menu,
+/* v3.256.0 (Cartes Vivantes, C-2) : en-tête, pilules, panneau de secteur et ligne de bilan
+   de la carte vivante, tous à fond crème (css/04-panel-living-map.css). */
+.kframe .lm-head,
+.kframe .lm-pill,
+.kframe .lm-panel,
+.kframe .scene-map-report,
 .kframe .log-entry {
   --nb-ink: #3a2c1a;
   --nb-ink-dim: rgba(58, 44, 26, 0.72);

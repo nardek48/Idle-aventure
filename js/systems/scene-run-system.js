@@ -185,7 +185,11 @@ var SceneRunManager = {
      n'est PAS générée ici — le run démarre en status "profile" (choix Bourrin/Prudent avant
      préparation), la génération réelle se fait dans chooseProfile(). Vérifie aussi le cap
      journalier (voir canStartPetiteAventureToday) AVANT tout débit de ressource. */
-  startRun: function (templateId) {
+  /* v3.256.0 (Cartes Vivantes, C-2) : opts.livingMap = { mapId, sectorId } — run ciblé sur un
+     secteur. L'anneau fixe l'intensité (chooseProfile la pose sans écran), les pools du secteur
+     surchargent le gabarit (_generateCard), et la fin du run est rapportée à
+     LivingMapManager.onRunEnd (_notifyLivingMap). Le run ne connaît pas la carte au-delà. */
+  startRun: function (templateId, opts) {
     this.ensureDefaults();
 
     if (this.isRunActive()) {
@@ -255,6 +259,8 @@ var SceneRunManager = {
                     // autel/source/gourde (voir resolveAutel/resolveSource/useSceneGourde)
       intensity: null, // v3.195.0 : "sentier"|"chemin"|"periple" — figé au choix, comme profile
       mutator: null, // v3.196.0 : "aucun"|"brouillard"|"pluie"|"nuit" — figé au tirage (chooseIntensity)
+      livingMap: (opts && opts.livingMap) ? { mapId: opts.livingMap.mapId, sectorId: opts.livingMap.sectorId } : null, // v3.256.0 (C-2)
+      livingMapReport: null, // v3.256.0 : compte rendu de LivingMapManager.onRunEnd, affiché au bilan
       loot: 0, // ressource lootResource, non banquée tant que SortieManager n'a pas end()
 
       currentGate: null, // index de porte sélectionnée en attente de résolution (idempotence)
@@ -320,6 +326,13 @@ var SceneRunManager = {
 
     run.status = window.SCENE_INTENSITY ? "intensity" : "preparation";
     if (!window.SCENE_INTENSITY) this._generateCard(run, template, weights); // repli ancien flow
+
+    // v3.256.0 (C-2, décision 8) : sur un run ciblé, l'anneau du secteur fixe l'intensité — pas
+    // d'écran de choix, la géographie décide.
+    if (run.status === "intensity" && run.livingMap && window.LivingMapManager) {
+      var sectorDef = LivingMapManager.getSectorDef(run.livingMap.mapId, run.livingMap.sectorId);
+      if (sectorDef) return this.chooseIntensity(LivingMapManager.getIntensity(sectorDef));
+    }
 
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null, run: run };
@@ -394,12 +407,34 @@ var SceneRunManager = {
   /* Génère la carte réelle et avance au statut suivant (preparation ou gate) — factorisé car
      appelé depuis chooseIntensity (flow normal) ET chooseProfile (repli si SCENE_INTENSITY
      absent, canevas hors Petite Aventure). depthMaxOverride facultatif : sinon template.depthMax. */
+  /* v3.256.0 (C-2) : pools du secteur ciblé (data/living-maps.js), ou null. */
+  _livingMapPools: function (run) {
+    if (!run || !run.livingMap || !window.LivingMapManager) return null;
+    var content = LivingMapManager.getContentFor(run.livingMap.mapId, run.livingMap.sectorId);
+    return (content && content.type === "expedition" && content.pools) ? content.pools : null;
+  },
+
+  /* v3.256.0 (C-2) : rapporte la fin d'un run ciblé à la carte, une seule fois par run.
+     result : "success" | "fail" | "neutral" (voir LivingMapManager.onRunEnd). */
+  _notifyLivingMap: function (run, result) {
+    if (!run || !run.livingMap || run.livingMapReport || !window.LivingMapManager) return;
+    run.livingMapReport = LivingMapManager.onRunEnd(run.livingMap.mapId, run.livingMap.sectorId, result);
+  },
+
   _generateCard: function (run, template, profileWeights, depthMaxOverride) {
     var effectiveTemplate = template;
     if (depthMaxOverride) {
       // Ne mute jamais l'objet SCENE_TEMPLATES partagé : clone léger avec depthMax substitué.
       effectiveTemplate = Object.assign ? Object.assign({}, template, { depthMax: depthMaxOverride })
         : (function () { var c = {}; for (var k in template) c[k] = template[k]; c.depthMax = depthMaxOverride; return c; })();
+    }
+    // v3.256.0 (C-2) : surcharge de gabarit par secteur — seuls les pools déclarés par le secteur
+    // remplacent ceux du gabarit (obstacle et/ou combat), le reste du canevas est inchangé.
+    var sectorPools = this._livingMapPools(run);
+    if (sectorPools) {
+      var mergedPools = Object.assign({}, effectiveTemplate.pools || {});
+      Object.keys(sectorPools).forEach(function (k) { if (Array.isArray(sectorPools[k]) && sectorPools[k].length) mergedPools[k] = sectorPools[k]; });
+      effectiveTemplate = Object.assign({}, effectiveTemplate, { pools: mergedPools });
     }
     var randCount = SceneEngine.estimateRandomCount(effectiveTemplate);
     var randomValues = [];
@@ -1082,6 +1117,7 @@ var SceneRunManager = {
     }
     run.status = "completed";
     var summary = window.SortieManager ? SortieManager.end("success") : null;
+    this._notifyLivingMap(run, "neutral"); // v3.256.0 : rentrer avant la fin ne libère rien et ne coûte rien
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null, summary: summary };
   },
@@ -1090,6 +1126,7 @@ var SceneRunManager = {
     var run = this.getRun();
     run.status = "completed";
     if (window.SortieManager) SortieManager.end("flee"); // 50% du loot, 0 XP (règle §4)
+    this._notifyLivingMap(run, "fail"); // v3.256.0 (décision 4) : l'évacuation compte comme un échec
   },
 
   /* abandon() -> quitte l'expédition prématurément via la tab-bar/bouton retour (garde dans
@@ -1101,6 +1138,7 @@ var SceneRunManager = {
     if (!run || run.status === "completed") return { ok: false, reason: "Aucune expédition en cours" };
     run.status = "completed";
     var summary = window.SortieManager ? SortieManager.end("flee") : null;
+    this._notifyLivingMap(run, "fail"); // v3.256.0 (décision 4) : l'abandon compte comme un échec
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null, summary: summary };
   },
@@ -1145,6 +1183,7 @@ var SceneRunManager = {
 
     run.status = "completed";
     var summary = window.SortieManager ? SortieManager.end("success") : null;
+    this._notifyLivingMap(run, "success"); // v3.256.0 : la chambre finale résolue libère le secteur
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null, summary: summary };
   },
@@ -1324,6 +1363,8 @@ var SceneRunManager = {
     vibrate([80, 40, 80]);
 
     run.status = "completed";
+    this._notifyLivingMap(run, "fail"); // v3.256.0 (décision 4) : la mort compte comme un échec
+    if (run.livingMapReport && run.livingMapReport.message && typeof showToast === "function") showToast(run.livingMapReport.message, 2600);
     game.justDied = true;
     if (typeof switchTab === "function") switchTab("campement");
     if (typeof saveGame === "function") saveGame();
