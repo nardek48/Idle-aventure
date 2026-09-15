@@ -191,7 +191,9 @@ var DungeonManager = {
     var isBossWave = wave > DUNGEON_CONFIG.waveCount;
     var worldScale = 1 + Math.max(0, dungeon.worldPower || 0) * 0.6;
     var waveProgress = Math.min(1, wave / DUNGEON_CONFIG.waveCount);
-    var premium = isBossWave ? DUNGEON_CONFIG.bossPremiumMult : DUNGEON_CONFIG.basePremiumMult;
+    // v3.253.0 : les vagues normales suivent le donjon quand il le déclare (wavePremiumMult).
+    var wavePremium = (typeof dungeon.wavePremiumMult === "number") ? dungeon.wavePremiumMult : DUNGEON_CONFIG.basePremiumMult;
+    var premium = isBossWave ? DUNGEON_CONFIG.bossPremiumMult : wavePremium;
     return worldScale * (1 + waveProgress * DUNGEON_CONFIG.waveRampMult) * premium * Math.max(1, dungeon.difficultyMult || 1);
   },
 

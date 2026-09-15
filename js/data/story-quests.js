@@ -53,7 +53,7 @@ var STORY_TAB_LABELS = {
   combat: "Combat", village: "Village", more: "Héros",
   dungeon: "Donjon", shop: "Boutique", talents: "Talents", equip: "Équipement",
   ascension: "Ascension", map: "Carte du monde", achievements: "Hauts faits",
-  bestiary: "Bestiaire", afflictions: "Afflictions", grimoire: "Grimoire"
+  bestiary: "Bestiaire", grimoire: "Grimoire"
 };
 
 /* Étape 15 — v3.133.0 (audit Forêt, décision Seb) : les 200 kills (pur temps d'attente, ~100 kills de farm libre non guidé)

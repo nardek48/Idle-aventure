@@ -330,7 +330,7 @@ function renderPanel() {
     case "achievements":
       container.innerHTML = buildAchievementsHTML();
       break;
-    case "afflictions": // v3.245.0 : écran parqué — une sauvegarde peut encore pointer dessus
+    case "afflictions": // v3.254.0 : écran supprimé — une sauvegarde d'avant la v3.245.0 peut encore pointer dessus
       container.innerHTML = '<div class="panel-card"><p class="panel-sub">Les Marques se choisissent désormais à l\u2019entrée d\u2019un donjon (Campement → Expédition → Donjon).</p></div>';
       break;
     case "tutorials": // v3.208.0 : ui/tutorials-view.js (consultation des popups pédagogiques)

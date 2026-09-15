@@ -545,7 +545,6 @@ function buildSaveData() {
     campfireLastUsed: game.campfireLastUsed || 0, // v3.7 : cooldown du feu de camp (long repos), voir systems/camp-system.js
     campfireShortLastUsed: game.campfireShortLastUsed || 0, // v3.14 : cooldown du repos court
     campRegenLastAt: game.campRegenLastAt || 0, // v3.101.0 : repère de régénération au camp (systems/camp-system.js)
-    activeAfflictions: Object.assign({}, game.activeAfflictions || {}), // v3.20 : voir data/afflictions.js
     dungeonTiersEntered: game.dungeonTiersEntered || {},
     codexChaosSeen: !!game.codexChaosSeen,
     codexRead: game.codexRead || {},
@@ -912,7 +911,7 @@ function restoreBaseState(d) {
   game.campfireLastUsed = typeof d.campfireLastUsed === "number" ? d.campfireLastUsed : 0;
   game.campfireShortLastUsed = typeof d.campfireShortLastUsed === "number" ? d.campfireShortLastUsed : 0;
   game.campRegenLastAt = typeof d.campRegenLastAt === "number" && d.campRegenLastAt > 0 ? d.campRegenLastAt : Date.now(); // v3.101.0
-  game.activeAfflictions = (d.activeAfflictions && typeof d.activeAfflictions === "object") ? d.activeAfflictions : {};
+  delete game.activeAfflictions; // v3.254.0 : clé supprimée — les Marques vivent dans dungeonRun.marks
   game.dungeonTiersEntered = d.dungeonTiersEntered && typeof d.dungeonTiersEntered === "object" ? d.dungeonTiersEntered : {};
   game.codexChaosSeen = !!d.codexChaosSeen;
   game.codexRead = d.codexRead && typeof d.codexRead === "object" ? d.codexRead : {};
@@ -1315,7 +1314,6 @@ function fullResetState() {
   game.campfireLastUsed = 0; // v3.7 : repos gratuit du Campement — repart bien à zéro sur un reset complet
   game.campfireShortLastUsed = 0; // v3.14 : idem pour le repos court
   game.campRegenLastAt = Date.now(); // v3.101.0
-  game.activeAfflictions = {}; // v3.20 : remis à zéro sur un reset complet (conservé à l'ascension)
   game.dungeonBossClears = 0;
   game.dungeonShards = 0;
   game.dungeonShopLevels = {};

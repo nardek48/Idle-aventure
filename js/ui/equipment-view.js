@@ -72,9 +72,16 @@ function formatEquipmentStatValue(stat, value) {
 function buildEquipmentAffixLinesHTML(item) {
   var affixes = (typeof getItemAffixes === "function") ? getItemAffixes(item) : [];
   if (!affixes.length) return "";
+  /* v3.252.0 : primaire et secondaire ne se distinguaient que par un italique atténué —
+     invisible en pratique. Une puce pleine / creuse porte la différence, et le libellé
+     l'explicite pour qui ne connaît pas encore le vocabulaire. */
   var h = '<div class="eq-affix-lines">';
   affixes.forEach(function (a) {
-    h += '<div class="eq-affix-line' + (a.tier === "S" ? ' is-secondary' : '') + '">' + esc(formatEquipmentStatValue(a.stat, a.value)) + '</div>';
+    var sec = a.tier === "S";
+    h += '<div class="eq-affix-line' + (sec ? ' is-secondary' : '') + '">';
+    h += '<span class="eq-affix-dot" aria-hidden="true"></span>';
+    h += '<span class="eq-affix-txt">' + esc(formatEquipmentStatValue(a.stat, a.value)) + '</span>';
+    h += '</div>';
   });
   h += '</div>';
   return h;
@@ -155,6 +162,28 @@ function getInventoryItemsForSlot(slot) {
     });
 }
 
+/* v3.252.0 (lot B-2) — RÉSUMÉ DE COMPARAISON d'un objet du sac face à l'équipé.
+   Avant, la liste n'affichait qu'un delta sur la STAT DE BASE (getEquipmentStatDelta, qui
+   renvoie même null quand les deux objets n'ont pas la même stat) plus un badge « +3 » muet :
+   un objet avec trois affixes excellents était indiscernable d'un objet avec trois affixes
+   médiocres, et le joueur ne pouvait pas savoir lequel prendre — ce que cet écran existe
+   pourtant pour lui dire.
+   getEquipmentCompareLines() savait déjà fusionner base et affixes par statistique et sortir
+   les deltas ; elle n'était utilisée que dans la feuille. On s'en sert ici. */
+function getEquipmentCompareSummary(candidate, equipped) {
+  var lines = (typeof getEquipmentCompareLines === "function") ? getEquipmentCompareLines(candidate, equipped) : [];
+  if (!lines.length) return null;
+  var base = null, gains = 0, pertes = 0;
+  lines.forEach(function (l) {
+    if (l.tier === "B" && !l.onlyEquipped) base = l;
+    if (l.delta > 0) gains += 1;
+    else if (l.delta < 0 || l.onlyEquipped) pertes += 1;
+  });
+  return { lines: lines, base: base, gains: gains, pertes: pertes };
+}
+
+/* Une ligne du sac : nom complet, stat de base avec son delta, puis le RESTE chiffré
+   (« +2 autres gains », « −1 perte ») au lieu d'un badge « +3 » qui ne disait rien. */
 function buildCompatibleItemsListHTML(slot) {
   var items = getInventoryItemsForSlot(slot);
   if (!items.length) return "";
@@ -164,30 +193,102 @@ function buildCompatibleItemsListHTML(slot) {
   h += '<div class="eq-compat-title"><img class=ico-inline src=images/Icons/subtabs/inventory.png> Dans le sac (' + items.length + ')</div>';
 
   items.slice(0, 5).forEach(function (item) {
-    var delta = getEquipmentStatDelta(item, equipped);
-    h += '<div class="eq-compat-row">';
+    var sum = getEquipmentCompareSummary(item, equipped);
+    var baseDelta = (sum && sum.base) ? sum.base.delta : null;
+    var autresGains = sum ? Math.max(0, sum.gains - (baseDelta > 0 ? 1 : 0)) : 0;
+    var pertes = sum ? sum.pertes : 0;
+
+    h += '<div class="eq-compat-row" onclick="openEquipCompareSheet(\'' + esc(item.uid) + '\')">';
     h += '<div class="eq-compat-icon">' + buildEquipmentIconHTML(item, "eq-compat-icon-img rframe") + '</div>';
     h += '<div class="eq-compat-info">';
     h += '<div class="eq-compat-name rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</div>';
     h += '<div class="eq-compat-stat">' + esc(formatEquipmentStat(item));
-    if (delta != null) {
-      h += ' <span class="eq-compat-delta ' + (delta > 0 ? "is-up" : delta < 0 ? "is-down" : "is-flat") + '">(' + esc(formatStatDelta(item.stat, delta)) + ')</span>';
+    if (baseDelta != null && baseDelta !== 0) {
+      h += ' <span class="eq-compat-delta ' + (baseDelta > 0 ? "is-up" : "is-down") + '">'
+        + (baseDelta > 0 ? "\u25b2" : "\u25bc") + esc(formatStatDelta(sum.base.stat, baseDelta)) + '</span>';
     }
-    var affixCount = (typeof getItemAffixes === "function") ? getItemAffixes(item).length : 0; // v3.225.0 : badge « +N »
-    if (affixCount > 0) h += ' <span class="eq-compat-affix-badge">+' + affixCount + '</span>';
     h += '</div>';
+    /* Le reste du bilan, en clair. C'est ce qui permet enfin de choisir. */
+    if (autresGains > 0 || pertes > 0) {
+      h += '<div class="eq-compat-extra">';
+      if (autresGains > 0) h += '<span class="is-up">+' + autresGains + ' gain' + (autresGains > 1 ? "s" : "") + '</span>';
+      if (autresGains > 0 && pertes > 0) h += '<span class="eq-compat-extra-sep">\u00b7</span>';
+      if (pertes > 0) h += '<span class="is-down">\u2212' + pertes + ' perte' + (pertes > 1 ? "s" : "") + '</span>';
+      h += '</div>';
+    }
     h += '</div>';
-    h += '<button class="btn-buy eq-compat-equip-btn" type="button" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">Équiper</button>';
+    h += '<button class="btn-buy eq-compat-equip-btn" type="button" onclick="event.stopPropagation(); EquipmentManager.equip(\'' + esc(item.uid) + '\')">\u00c9quiper</button>';
     h += '</div>';
   });
 
   if (items.length > 5) {
-    h += '<button class="eq-compat-more-btn" type="button" onclick="setEquipSubTab(\'inventory\')">Voir les ' + items.length + ' objets dans l\u2019Inventaire →</button>';
+    h += '<button class="eq-compat-more-btn" type="button" onclick="setEquipSubTab(\'inventory\')">Voir les ' + items.length + ' objets dans l\u2019Inventaire \u2192</button>';
   }
 
   h += '</div>';
   return h;
 }
+
+/* Feuille de comparaison détaillée — même composant que la feuille d'états de combat (B-1).
+   C'est le seul endroit où l'on peut dire honnêtement « +79 dégâts mais −6 % d'or » : un
+   arbitrage que la liste seule rend invisible. */
+function buildEquipCompareSheetHTML(uid) {
+  var item = (game.inventory || []).find(function (i) { return i.uid === uid; });
+  if (!item) return "";
+  var equipped = game.equipped[item.slot];
+  var sum = getEquipmentCompareSummary(item, equipped);
+
+  var h = '<div class="ksheet-backdrop" onclick="closeEquipCompareSheet()"></div>';
+  h += '<div class="ksheet"><div class="ksheet-handle"></div>';
+  h += '<div class="ksheet-title">' + buildEquipmentIconHTML(item, "eqs-title-icon rframe")
+    + '<span class="rarity-' + esc(item.rarity) + '">' + esc(item.name) + '</span></div>';
+  h += '<div class="eqs-sub">' + esc(EQUIPMENT_SLOT_LABELS[item.slot] || item.slot)
+    + (equipped ? ' \u00b7 compar\u00e9 \u00e0 ' + esc(equipped.name) : ' \u00b7 emplacement vide') + '</div>';
+  h += '<div class="ksheet-body">';
+
+  if (sum && sum.lines.length) {
+    sum.lines.forEach(function (l) {
+      var shown = l.onlyEquipped ? l.equipValue : l.candValue;
+      var tier = l.tier === "B" ? "base" : (l.tier === "S" ? "secondaire" : "primaire");
+      var dcls = l.delta > 0 ? "is-up" : (l.delta < 0 ? "is-down" : "is-flat");
+      h += '<div class="eqs-row' + (l.onlyEquipped ? " is-lost" : "") + '">';
+      h += '<div class="eqs-row-body">';
+      h += '<div class="eqs-row-txt">' + esc(formatEquipmentStatValue(l.stat, shown)) + '</div>';
+      h += '<div class="eqs-row-tier">' + tier + (l.onlyEquipped ? " \u2014 seulement sur l\u2019objet port\u00e9" : "") + '</div>';
+      h += '</div>';
+      h += '<div class="eqs-row-delta ' + dcls + '">'
+        + (l.delta > 0 ? "\u25b2 " : l.delta < 0 ? "\u25bc " : "\u2014")
+        + (l.delta !== 0 ? esc(formatStatDelta(l.stat, l.delta)) : "") + '</div>';
+      h += '</div>';
+    });
+  }
+
+  var power = buildEquipmentPowerHTML(item);
+  if (power) h += '<div class="eqs-power">' + power + '</div>';
+  h += buildItemOriginHTML(item);
+  h += '</div>';
+  h += '<button type="button" class="ksheet-close" onclick="equipFromCompareSheet(\'' + esc(uid) + '\')">\u00c9quiper</button>';
+  h += '</div>';
+  return h;
+}
+
+function openEquipCompareSheet(uid) {
+  var host = document.getElementById("equip-compare-modal-root");
+  if (host) host.innerHTML = buildEquipCompareSheetHTML(uid);
+}
+function closeEquipCompareSheet() {
+  var host = document.getElementById("equip-compare-modal-root");
+  if (host) host.innerHTML = "";
+}
+function equipFromCompareSheet(uid) {
+  closeEquipCompareSheet();
+  if (window.EquipmentManager && typeof EquipmentManager.equip === "function") EquipmentManager.equip(uid);
+}
+window.getEquipmentCompareSummary = getEquipmentCompareSummary;
+window.buildEquipCompareSheetHTML = buildEquipCompareSheetHTML;
+window.openEquipCompareSheet = openEquipCompareSheet;
+window.closeEquipCompareSheet = closeEquipCompareSheet;
+window.equipFromCompareSheet = equipFromCompareSheet;
 
 function buildEquipDetailPanelHTML() {
   var slot = selectedEquipSlot;
@@ -210,7 +311,8 @@ function buildEquipDetailPanelHTML() {
     h += '<div class="eq-detail-hint">Équipe un objet depuis l\u2019Inventaire pour remplir cet emplacement.</div>';
   }
 
-  h += buildCompatibleItemsListHTML(slot);
+  // v3.252.0 : la liste du sac a quitté ce panneau — il fait 50 % de largeur (~150 px utiles),
+  // ce qui tronquait les noms à une lettre (« D… »). Elle est rendue en pleine largeur, après.
   h += buildCompactSetBonusHTML();
 
   h += '</div>';
@@ -386,6 +488,8 @@ function buildEquipmentTabContentHTML(topHTML) {
   h += buildEquipDetailPanelHTML();
 
   h += '</div>';
+  // v3.252.0 : pleine largeur, hors de la ligne « grille + détail ».
+  h += buildCompatibleItemsListHTML(selectedEquipSlot);
   h += '</div>';
   h += '</div>';
 

@@ -10,6 +10,9 @@ var DUNGEON_CONFIG = {
   ticketCostGrowth: 1.2,
   maxTicketPurchasesPerDay: 20,
 
+  /* Multiplicateur par défaut des vagues normales. v3.253.0 : chaque donjon peut le
+     surcharger par wavePremiumMult — la Forêt est passée à 2,8, les autres mondes gardent
+     1,3 en attendant leur propre chantier d'équilibrage. */
   basePremiumMult: 1.3,
   waveRampMult: 1,
   bossPremiumMult: 1.8,
@@ -45,6 +48,16 @@ var DUNGEONS = [
     id: 1, key: "basilic",
     name: "Tanière du Basilic",
     worldId: "forest", worldRequired: 0, worldPower: 0, difficultyMult: 1,
+    /* v3.253.0 (retour de jeu de Seb : « le donjon un peu facile »). Les vagues faisaient
+       37 à 54 PV quand un ennemi de farm de la Forêt en fait 109 à 140 : elles valaient un
+       tiers d'un combat ordinaire, tombaient en un ou deux rounds et n'usaient rien. Le boss
+       était le seul vrai combat du run.
+       Mesuré (sim/dungeon-bench.js, 40 runs × 3 classes) : monter le BOSS ne servait à rien
+       — le run nu restait à 0 % d'échec jusqu'à 1 286 PV de boss, tandis que Colosses passait
+       de 0 à 100 %. C'est l'usure des quinze vagues qui manquait.
+       À 2,8 : vagues de 80 à 117 PV, run de 37-41 rounds au lieu de 24-28, les potions
+       servent enfin, et les Marques restent jouables. */
+    wavePremiumMult: 2.8,
     maxRarity: "common",
     specialResourceId: "seve_aeswyn", specialResourceAmount: 2,
     icon: "images/Dungeons/donjon_poison/donjon_poison.jpg",

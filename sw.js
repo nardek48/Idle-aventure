@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.250.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.254.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -68,7 +68,6 @@ var PRECACHE_APP_SHELL = [
   "./css/04-panel-forecast.css",
   "./css/04-panel-dungeon.css",
   "./css/04-panel-equipment.css",
-  "./css/04-panel-afflictions.css",
   "./css/04-panel-combat-sandbox.css",
   "./css/04-panel-hero-summary.css",
   "./css/04-panel-log.css",
@@ -99,7 +98,6 @@ var PRECACHE_APP_SHELL = [
   "./js/data/dungeon.js",
   "./js/data/enemies.js",
   "./js/data/equipment.js",
-  "./js/data/afflictions.js",
   "./js/data/heroes.js",
   "./js/data/potions.js",
   "./js/data/talents.js",
@@ -117,6 +115,7 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/codex-system.js",
   "./js/sim/combat-round-sim.js",
   "./js/systems/combat-engine.js",
+  "./js/data/combat-states.js",
   "./js/systems/elite-system.js",
   "./js/systems/combat-forecast-system.js",
   "./js/systems/sortie-system.js",
@@ -152,7 +151,6 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/dungeon-view.js",
   "./js/ui/equip-shop-view.js",
   "./js/ui/equipment-view.js",
-  "./js/ui/afflictions-view.js",
   "./js/ui/heros-view.js",
   "./js/ui/hud-view.js",
   "./js/ui/log-view.js",

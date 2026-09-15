@@ -2,15 +2,13 @@
 /* systems/affliction-system.js — v3.245.0 (refonte Donjons, doc v1.1 §6.1) : les afflictions deviennent les MARQUES d'un run
    de donjon. Même API pour les crochets du moteur (stats-system, combat-engine, potion-system, apothecary-system, combat-view),
    mais la SOURCE est game.dungeonRun.marks (DUNGEON_MARKS) et la GARDE est « run de donjon actif ». Hors run, tout est neutre :
-   le farm libre n'a plus d'afflictions. game.activeAfflictions est conservé en sauvegarde mais ignoré (purge au lot D-4).
+   le farm libre n'a plus d'afflictions. La clé de sauvegarde activeAfflictions et data/afflictions.js ont été
+   supprimés au lot D-4 (v3.254.0) : DUNGEON_MARKS est la seule table.
    Ancienne garde v3.136.0, pour mémoire : !(s && s.active && s.context && s.context !== "farm") — abandonnée parce que le
    jeu est devenu narratif et mission par mission, plus personne ne savait où les afflictions s'appliquaient. */
 
 var AfflictionManager = {
   ensure: function () {
-    if (!game.activeAfflictions || typeof game.activeAfflictions !== "object") {
-      game.activeAfflictions = {};
-    }
   },
 
   /* Une Marque est-elle active sur le run en cours ? (vide hors run) */

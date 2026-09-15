@@ -247,9 +247,17 @@
 
 /* v3.225.0 : lignes d'affixes sous la stat de base (Lot 1b) — primaire pleine, secondaire atténuée.
    La stat de base garde sa marge basse via .eq-detail-stat ; les lignes la compensent. */
-.eq-affix-lines { margin: -10px 0 14px; display: flex; flex-direction: column; gap: 2px; }
-.eq-affix-line { font-size: 11.5px; font-weight: 700; color: var(--nb-ink); }
-.eq-affix-line.is-secondary { font-weight: 600; color: var(--nb-ink-dim); font-style: italic; }
+/* v3.252.0 (lot B-2) : la distinction primaire / secondaire reposait sur un italique
+   atténué, invisible en pratique. Une puce pleine (primaire) ou creuse (secondaire) la
+   porte désormais, alignée en colonne. */
+.eq-affix-lines { margin: -10px 0 14px; display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+.eq-affix-line { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; color: var(--nb-ink); }
+.eq-affix-dot {
+  flex: 0 0 auto; width: 7px; height: 7px; border-radius: 999px;
+  background: var(--nb-gold-dark, #8a5a1a); border: 1.5px solid var(--nb-gold-dark, #8a5a1a);
+}
+.eq-affix-line.is-secondary { font-weight: 600; color: var(--nb-ink-dim); }
+.eq-affix-line.is-secondary .eq-affix-dot { background: transparent; }
 .eq-compare-info .eq-affix-lines { margin: 2px 0 0; gap: 1px; }
 .eq-compare-info .eq-affix-line { font-size: 10px; font-weight: 600; }
 .nb-purchase-info-col .eq-affix-lines { margin: 2px 0 0; gap: 1px; }
@@ -1050,3 +1058,39 @@
     transform: none;
   }
 }
+
+/* =====================================================================
+   v3.252.0 (lot B-2) — liste du sac lisible et feuille de comparaison.
+   La liste vivait dans le panneau de détail, large de 50 % (~150 px utiles) :
+   les noms étaient tronqués à une lettre et la stat passait à la ligne. Elle est
+   désormais rendue en pleine largeur, sous la ligne « grille + détail ».
+   ===================================================================== */
+.eq-layout .eq-compat-list { width: 100%; }
+.eq-compat-row { cursor: pointer; }
+/* La ligne entière ouvre le détail ; seul le bouton Équiper arrête la propagation. */
+.eq-compat-name { white-space: normal; overflow: visible; font-size: 12px; }
+.eq-compat-stat { font-size: 11px; white-space: nowrap; }
+.eq-compat-extra { font-size: 10.5px; font-weight: 700; margin-top: 1px; }
+.eq-compat-extra .is-up { color: #16a34a; }
+.eq-compat-extra .is-down { color: #dc2626; }
+.eq-compat-extra-sep { color: var(--nb-ink-dim); margin: 0 4px; }
+.eq-compat-equip-btn { align-self: center; }
+
+/* --- Feuille de comparaison (même composant que la feuille d'états de combat) --- */
+.eqs-title-icon { width: 30px; height: auto; }
+.eqs-sub { font-size: 11px; color: var(--nb-ink-dim); margin: -6px 0 8px; }
+.eqs-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 9px; margin-bottom: 5px;
+  border-radius: var(--nb-radius-md); border: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+}
+.eqs-row.is-lost { opacity: 0.72; }
+.eqs-row-body { flex: 1 1 auto; min-width: 0; }
+.eqs-row-txt { font-size: 12.5px; font-weight: 800; color: var(--nb-ink); }
+.eqs-row-tier { font-size: 10px; color: var(--nb-ink-dim); text-transform: lowercase; }
+.eqs-row-delta { flex: 0 0 auto; font-size: 12px; font-weight: 800; }
+.eqs-row-delta.is-up { color: #16a34a; }
+.eqs-row-delta.is-down { color: #dc2626; }
+.eqs-row-delta.is-flat { color: var(--nb-ink-dim); }
+.eqs-power { margin: 8px 0 4px; }

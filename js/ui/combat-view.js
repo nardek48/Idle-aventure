@@ -15,6 +15,7 @@ function buildCombatHTML() {
     +       '<div class="kgauge-track"><div id="enemy-hp-bar" class="kgauge-fill" style="width:100%"></div></div>'
     +       '<div id="enemy-hp-text" class="kgauge-text">10 / 10</div>'
     +     '</div>'
+    +     '<div id="combat-alert-bar" class="combat-alert-bar"></div>'
     +     '<div id="enemy-status-bar" class="enemy-status-bar"></div>'
     +     '<div id="enemy-emoji">\ud83d\udfe2</div>'
     +   '</div>'
@@ -115,127 +116,168 @@ function renderActivePotionsBar() {
 window.buildActivePotionsBarHTML = buildActivePotionsBarHTML;
 window.renderActivePotionsBar = renderActivePotionsBar;
 
-function buildEnemyStatusBarHTML() {
-  if (!game.enemy) return "";
+/* ============================================================================
+   ÉTATS DE COMBAT (v3.251.0, lot B-1 — atelier atelier-statuts.html)
 
-  var h = "";
+   Avant : une seule barre, 14 états rendus à l'identique, explication dans un attribut
+   title que mobile n'affiche JAMAIS (il faut un survol souris). Une charge imminente, qui
+   demande une action ce round, avait le même poids visuel qu'un archétype permanent.
 
-  // v3.105.0 : approche — l'ennemi n'est pas encore au contact (héros à distance), il ne frappe pas ce temps-là
-  var engageIn = Number(game.enemy.engageIn || 0);
-  if (engageIn > 0) {
-    h += '<div class="enemy-status-icon enemy-status-approaching" title="À distance : il ne frappe pas encore, mais il approche (et arrive lancé)">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/enemy_approaching.png" alt="">';
-    h += '<span class="enemy-status-timer">' + engageIn + '</span>';
-    h += '</div>';
+   Maintenant, deux zones :
+     - le BANDEAU (buildCombatAlertHTML) : ce qui arrive au prochain round, avec le MOT
+       écrit — « Il charge ! » se comprend sans rien apprendre, une pastille rouge non ;
+     - la RANGÉE (buildCombatStatesHTML) : tout le reste, discret, sous la barre de PV,
+       cliquable EN ENTIER pour ouvrir la feuille (une pastille fait 34 px, sous les 44 px
+       recommandés au doigt).
+   Le catalogue (nom, effet, conseil d'action) vit dans data/combat-states.js.
+   ============================================================================ */
+
+/* Liste des états actifs, lue sur l'état de jeu. Renvoie [{ id, def, n, suppressed }] où
+   `n` est un compteur à afficher (rounds restants, cumuls) ou null. */
+function getActiveCombatStates() {
+  var out = [];
+  if (!game.enemy) return out;
+  var e = game.enemy;
+  var C = window.COMBAT_STATES || {};
+  function push(id, n, suppressed) {
+    if (!C[id]) return;
+    out.push({ id: id, def: C[id], n: (typeof n === "number" && n > 0) ? n : null, suppressed: !!suppressed });
   }
 
-  if (game.enemy.archetype === "enraged") {
-    var rageFrozen = Number(game.enemy.rageFreezeRounds || 0) > 0;
-    h += '<div class="enemy-status-icon enemy-status-enraged' + (rageFrozen ? ' is-suppressed' : '') + '" title="'
-      + (rageFrozen ? 'Enragé (rage apaisée temporairement)' : 'Enragé : plus dangereux à mesure qu\u2019il perd des PV') + '">';
-    h += rageFrozen ? '<img class="enemy-status-img" src="images/Icons/combat_status/rage_calmed.png" alt="">' : '<img class="enemy-status-img" src="images/Icons/combat_status/rage.png" alt="">';
-    h += '</div>';
-  }
-
-  if (game.enemy.archetype === "corrupted") {
-    var corruptedStacks = Number(game.enemy.corruptedStacks || 0);
-    h += '<div class="enemy-status-icon enemy-status-corrupted" title="Corrupteur : chaque coup reçu réduit tes dégâts (' + corruptedStacks + '/' + (typeof CORRUPTED_MAX_STACKS === "number" ? CORRUPTED_MAX_STACKS : 5) + ' stacks)">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/corruption.png" alt="">';
-    if (corruptedStacks > 0) {
-      h += '<span class="enemy-status-timer">' + corruptedStacks + '</span>';
-    }
-    h += '</div>';
-  }
-
-  if (game.enemy.archetype === "vampiric") {
-    var lifestealSuppressed = Number(game.enemy.vampiricSuppressedRounds || 0) > 0;
-    h += '<div class="enemy-status-icon enemy-status-vampiric' + (lifestealSuppressed ? ' is-suppressed' : '') + '" title="'
-      + (lifestealSuppressed ? 'Vampirique (vol de vie bloqué temporairement)' : 'Vampirique : se soigne à chaque coup qu\u2019il te porte') + '">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/vampiric.png" alt="">';
-    h += '</div>';
-  }
-
-  if (game.enemy.archetype === "armored") {
-    var armorSuppressed = Number(game.enemy.armorSuppressedRounds || 0) > 0;
-    h += '<div class="enemy-status-icon enemy-status-armored' + (armorSuppressed ? ' is-suppressed' : '') + '" title="'
-      + (armorSuppressed ? 'Blindé (blindage fissuré temporairement)' : 'Blindé : subit un peu moins de dégâts en permanence') + '">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/armored.png" alt="">';
-    h += '</div>';
-  }
-
-  if (Number(game.enemy.vulnerableRounds || 0) > 0) {
-    var vulnPct = Math.round((game.enemy.vulnerableMult || 0) * 100);
-    h += '<div class="enemy-status-icon enemy-status-vulnerability" title="Vulnérable : +' + vulnPct + '% dégâts subis">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/vulnerable.png" alt="">';
-    h += '<span class="enemy-status-timer">' + game.enemy.vulnerableRounds + '</span>';
-    h += '</div>';
-  }
-
-  if (game.enemy.dot && game.enemy.dot.rounds > 0) {
-    h += '<div class="enemy-status-icon enemy-status-dot" title="Brûlure arcanique : ' + formatNumber(game.enemy.dot.perRound) + ' dégâts par round">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/arcane_burn.png" alt="">';
-    h += '<span class="enemy-status-timer">' + game.enemy.dot.rounds + '</span>';
-    h += '</div>';
-  }
-
-  if (game.enemy.chargeTelegraphed) {
-    h += '<div class="enemy-status-icon enemy-status-charge" title="Charge au prochain tour !">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/charge_incoming.png" alt="">';
-    h += '</div>';
-  }
-
-  if (game.enemy.silenceTelegraphed) {
-    h += '<div class="enemy-status-icon enemy-status-silence-telegraph" title="Silence au prochain tour !">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/silence_incoming.png" alt="">';
-    h += '</div>';
-  }
-
-  if (Number(game.silencedRounds || 0) > 0) {
-    h += '<div class="enemy-status-icon enemy-status-silenced-active" title="Tu es silencié : tes techniques sont bloquées">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/silenced.png" alt="">';
-    h += '<span class="enemy-status-timer">' + game.silencedRounds + '</span>';
-    h += '</div>';
-  }
-
-  if (game.enemy.shieldTelegraphed) {
-    h += '<div class="enemy-status-icon enemy-status-shield-telegraph" title="Bouclier au prochain tour !">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/shield_incoming.png" alt="">';
-    h += '</div>';
-  }
-
-  if (Number(game.enemy.shieldRounds || 0) > 0) {
-    h += '<div class="enemy-status-icon enemy-status-shield-active" title="Bouclier actif : -50% dégâts subis">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/shield_active.png" alt="">';
-    h += '<span class="enemy-status-timer">' + game.enemy.shieldRounds + '</span>';
-    h += '</div>';
-  }
-
-  if (game.enemy.healTelegraphed) {
-    h += '<div class="enemy-status-icon enemy-status-heal-telegraph" title="Soin au prochain tour !">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/heal_incoming.png" alt="">';
-    h += '</div>';
-  }
-
+  // --- Au prochain round ---
+  var engageIn = Number(e.engageIn || 0);
+  if (engageIn > 0) push("approaching", engageIn);
+  if (e.chargeTelegraphed) push("charge");
+  if (e.silenceTelegraphed) push("silence");
+  if (e.shieldTelegraphed) push("shieldIncoming");
+  if (e.healTelegraphed) push("healIncoming");
   if (window.CombatEngine && typeof CombatEngine.enemyDoubleStrikeNext === "function" && CombatEngine.enemyDoubleStrikeNext()) {
-    h += '<div class="enemy-status-icon enemy-status-double-strike" title="Jauge pleine : il frappera deux fois au prochain tour">';
-    h += '<img class="enemy-status-img" src="images/Icons/combat_status/gauge_full.png" alt="">';
-    h += '<span class="enemy-status-timer">×2</span>';
-    h += '</div>';
+    push("doubleStrike");
   }
 
-  if (Number(game.enemy.counteredRounds || 0) > 0) {
-    h += '<div class="enemy-status-icon enemy-status-countered" title="Attaque contrée !">';
-    h += '<span class="enemy-status-emoji"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png></span>';
-    h += '</div>';
-  }
+  // --- Porté par l'ennemi ---
+  if (e.archetype === "enraged") push("enraged", null, Number(e.rageFreezeRounds || 0) > 0);
+  if (e.archetype === "corrupted") push("corrupted", Number(e.corruptedStacks || 0));
+  if (e.archetype === "vampiric") push("vampiric", null, Number(e.vampiricSuppressedRounds || 0) > 0);
+  if (e.archetype === "armored") push("armored", null, Number(e.armorSuppressedRounds || 0) > 0);
+  if (Number(e.shieldRounds || 0) > 0) push("shieldActive", Number(e.shieldRounds));
 
+  // --- Posé par le héros ---
+  if (Number(e.vulnerableRounds || 0) > 0) push("vulnerable", Number(e.vulnerableRounds));
+  if (e.dot && Number(e.dot.rounds || 0) > 0) push("dot", Number(e.dot.rounds));
+  if (Number(e.counteredRounds || 0) > 0) push("countered");
+
+  // --- Subi par le héros ---
+  if (Number(game.silencedRounds || 0) > 0) push("silenced", Number(game.silencedRounds));
+
+  return out;
+}
+window.getActiveCombatStates = getActiveCombatStates;
+
+/* Bandeau : uniquement la famille « alerte ». Un SEUL bandeau même à plusieurs télégraphes —
+   deux bandeaux empilés cesseraient d'être lus comme une alerte ; on rétrécit le texte. */
+function buildCombatAlertHTML() {
+  var alerts = getActiveCombatStates().filter(function (st) { return st.def.famille === "alerte"; });
+  if (!alerts.length) return "";
+  var teinte = (alerts.length === 1 && alerts[0].def.teinte) ? alerts[0].def.teinte : "";
+  var h = '<div class="cb-alert ' + teinte + (alerts.length > 1 ? " is-multi" : "") + '" onclick="openCombatStatesSheet()">';
+  alerts.forEach(function (st, i) {
+    if (i > 0) h += '<span class="cb-alert-sep">\u00b7</span>';
+    h += renderIconOrEmojiHTML(st.def.icon, "", st.def.nom);
+    h += '<span>' + esc(st.def.mot || st.def.nom) + '</span>';
+  });
+  h += '</div>';
   return h;
 }
+window.buildCombatAlertHTML = buildCombatAlertHTML;
+
+function familyClass(f) {
+  return f === "enemy" ? "is-enemy" : f === "mine" ? "is-mine" : f === "onme" ? "is-onme" : "";
+}
+
+/* Rangée : tout sauf les alertes. */
+function buildCombatStatesHTML() {
+  var states = getActiveCombatStates().filter(function (st) { return st.def.famille !== "alerte"; });
+  if (!states.length) return "";
+  var max = (typeof COMBAT_STATES_MAX_VISIBLE === "number") ? COMBAT_STATES_MAX_VISIBLE : 6;
+  var visibles = states.slice(0, max);
+  var reste = states.length - visibles.length;
+
+  var h = '<div class="cb-states" onclick="openCombatStatesSheet()">';
+  visibles.forEach(function (st) {
+    var icon = (st.suppressed && st.def.iconSuppressed) ? st.def.iconSuppressed : st.def.icon;
+    h += '<span class="cb-state ' + familyClass(st.def.famille) + (st.suppressed ? " is-suppressed" : "") + '">';
+    h += renderIconOrEmojiHTML(icon, "", st.def.nom);
+    if (st.n) h += '<span class="cb-state-n">' + st.n + '</span>';
+    h += '</span>';
+  });
+  if (reste > 0) h += '<span class="cb-states-more">+' + reste + '</span>';
+  h += '</div>';
+  return h;
+}
+window.buildCombatStatesHTML = buildCombatStatesHTML;
+
+/* Feuille d'explication : le remplacement du title, qui n'existait pas sur mobile.
+   Elle dit ce que l'état FAIT et ce qu'on peut FAIRE — ce second point manquait partout. */
+function buildCombatStatesSheetHTML() {
+  var states = getActiveCombatStates();
+  var familles = window.COMBAT_STATE_FAMILIES || [];
+  var h = '<div class="ksheet-backdrop" onclick="closeCombatStatesSheet()"></div>';
+  h += '<div class="ksheet"><div class="ksheet-handle"></div>';
+  h += '<div class="ksheet-title"><span>\u00c9tats du combat</span></div>';
+  h += '<div class="st-sheet-sub">Ce qui p\u00e8se sur ce combat, et quoi en faire.</div>';
+  h += '<div class="ksheet-body">';
+
+  var vide = true;
+  familles.forEach(function (fam) {
+    var ids = states.filter(function (st) { return st.def.famille === fam.id; });
+    if (!ids.length) return;
+    vide = false;
+    h += '<div class="st-group-title">' + esc(fam.titre) + '</div>';
+    ids.forEach(function (st) {
+      var desc = (st.suppressed && st.def.descSuppressed) ? st.def.descSuppressed : st.def.desc;
+      h += '<div class="st-row' + (fam.id === "alerte" ? " is-alert" : "") + '">';
+      h += renderIconOrEmojiHTML((st.suppressed && st.def.iconSuppressed) ? st.def.iconSuppressed : st.def.icon, "st-row-ico", st.def.nom);
+      h += '<div class="st-row-body"><div class="st-row-name">' + esc(st.def.nom) + '</div>';
+      h += '<div class="st-row-desc">' + esc(desc) + '</div>';
+      if (st.def.hint && !st.suppressed) h += '<div class="st-row-hint">' + esc(st.def.hint) + '</div>';
+      h += '</div>';
+      if (st.n) h += '<div class="st-row-n">' + st.n + (fam.id === "mine" || fam.id === "onme" ? " rd" : "") + '</div>';
+      h += '</div>';
+    });
+  });
+  if (vide) h += '<div class="st-empty">Rien de particulier pour l\u2019instant.</div>';
+
+  h += '</div>';
+  h += '<button type="button" class="ksheet-close" onclick="closeCombatStatesSheet()">Fermer</button>';
+  h += '</div>';
+  return h;
+}
+window.buildCombatStatesSheetHTML = buildCombatStatesSheetHTML;
+
+function openCombatStatesSheet() {
+  var host = document.getElementById("combat-states-modal-root");
+  if (host) host.innerHTML = buildCombatStatesSheetHTML();
+}
+function closeCombatStatesSheet() {
+  var host = document.getElementById("combat-states-modal-root");
+  if (host) host.innerHTML = "";
+}
+window.openCombatStatesSheet = openCombatStatesSheet;
+window.closeCombatStatesSheet = closeCombatStatesSheet;
 
 function renderEnemyStatusBar() {
-  var host = document.getElementById("enemy-status-bar");
-  if (host) host.innerHTML = buildEnemyStatusBarHTML();
+  var alertHost = document.getElementById("combat-alert-bar");
+  if (alertHost) alertHost.innerHTML = buildCombatAlertHTML();
+  var statesHost = document.getElementById("enemy-status-bar");
+  if (statesHost) statesHost.innerHTML = buildCombatStatesHTML();
+  // La feuille ouverte suit l'évolution du combat plutôt que d'afficher un état périmé.
+  var sheetHost = document.getElementById("combat-states-modal-root");
+  if (sheetHost && sheetHost.innerHTML) sheetHost.innerHTML = buildCombatStatesSheetHTML();
 }
+
+/* Alias historique : plusieurs systèmes appellent encore buildEnemyStatusBarHTML(). */
+function buildEnemyStatusBarHTML() { return buildCombatStatesHTML(); }
 
 window.buildEnemyStatusBarHTML = buildEnemyStatusBarHTML;
 window.renderEnemyStatusBar = renderEnemyStatusBar;
