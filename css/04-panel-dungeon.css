@@ -516,3 +516,64 @@
   color: var(--nb-ink);
 }
 .dungeon-tier-special-icon { width: 14px; height: 14px; object-fit: contain; flex: 0 0 auto; }
+
+/* =========================
+   v3.245.0 (refonte Donjons, doc v1.1 §5) — liste à une carte par monde
+   et feuille basse de lancement (.ksheet du kit). Validé dans atelier-donjon.html (lot D-0).
+   ========================= */
+.dungeon-list { display: flex; flex-direction: column; gap: 8px; }
+/* L'image de la carte pleine largeur est bornée à un carré de 96 px : donjon_poison.jpg est un
+   portrait (700 × 1254), il étirait la carte à 170 px. */
+.dungeon-list .dungeon-tier-card.is-full .dungeon-tier-image { height: 96px; align-self: flex-start; }
+.dungeon-tier-world { font-size: 10px; color: var(--nb-ink-dim); font-weight: 700; }
+.dungeon-tier-done { display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 10px; font-weight: 800; color: var(--nb-gold-dark, #8a5a1a); }
+.dungeon-tier-done img { width: 13px; height: 13px; }
+
+/* Marques du run en cours, sur la carte de run actif */
+.dungeon-active-marks { display: flex; align-items: center; gap: 6px; margin: 6px 0 2px; font-size: 12px; font-weight: 800; color: var(--nb-gold-dark, #8a5a1a); }
+.dungeon-active-mark-icon { width: 24px; height: 24px; object-fit: contain; }
+
+/* --- Feuille de lancement --- */
+.dungeon-sheet .ksheet-title img { width: 26px; height: 26px; object-fit: cover; border-radius: 6px; }
+.dsheet-sub { font-size: 11px; color: var(--nb-ink-dim); margin: -6px 0 8px; }
+.dsheet-story { font-size: 12px; line-height: 1.4; color: var(--nb-ink); margin-bottom: 8px; }
+.dsheet-lore { font-size: 11px; font-style: italic; color: var(--nb-ink-dim); margin-bottom: 8px; padding-left: 8px; border-left: 2px solid var(--nb-frame-light); }
+.dsheet-marks-title { font-size: 11px; font-weight: 800; color: var(--nb-ink); margin: 6px 0 4px; display: flex; justify-content: space-between; }
+.dsheet-marks-title span:last-child { color: var(--nb-ink-dim); font-weight: 700; }
+
+/* Une Marque = une ligne à bascule de 48 px. Cinq lignes = 240 px, sans scroll. */
+.dmark {
+  display: flex; align-items: center; gap: 10px; width: 100%; height: 48px;
+  margin: 0 0 4px; padding: 0 8px 0 6px; border-radius: var(--nb-radius-md);
+  border: 1px solid var(--nb-frame-light); background: var(--nb-cream-alt);
+  color: var(--nb-ink); text-align: left; font: inherit; cursor: pointer;
+}
+.dmark-img { width: 34px; height: 34px; object-fit: contain; flex: 0 0 auto; }
+.dmark-body { flex: 1 1 auto; min-width: 0; line-height: 1.15; }
+.dmark-name { font-size: 12px; font-weight: 800; }
+.dmark-desc { font-size: 10px; color: var(--nb-ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.dmark-state {
+  flex: 0 0 auto; width: 38px; height: 22px; border-radius: 999px; position: relative;
+  background: rgba(58, 44, 26, 0.18); border: 1px solid var(--nb-frame-light); transition: background 0.15s;
+}
+.dmark-state::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff8e8; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); transition: left 0.15s; }
+.dmark.is-on { border-color: var(--nb-gold); background: #fff3d6; }
+.dmark.is-on .dmark-state { background: var(--nb-gold); }
+.dmark.is-on .dmark-state::after { left: 18px; }
+.dmark.is-locked { opacity: 0.55; cursor: default; }
+.dmark.is-locked .dmark-desc { font-style: italic; }
+.dmark.is-locked .dmark-state { visibility: hidden; }
+.dmark.is-locked .dmark-img { filter: grayscale(1); }
+
+/* Récompense projetée : la raison d'être des Marques, visible sans dérouler. */
+.dsheet-reward {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin: 8px 0 4px; padding: 8px 10px; border-radius: var(--nb-radius-md);
+  background: var(--nb-cream-alt); border: 1px solid var(--nb-frame-light); font-size: 12px;
+}
+.dsheet-reward > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.dsheet-reward strong { font-size: 14px; color: var(--nb-gold-dark, #8a5a1a); }
+.dsheet-reward-icon { width: 18px; height: 18px; vertical-align: -4px; object-fit: contain; }
+.dsheet-ticket { font-size: 11px; color: var(--nb-ink-dim); margin: 4px 0 0; }
+.dsheet-ticket strong { color: var(--nb-ink); }
+.dsheet-ticket a { color: var(--nb-gold-dark, #8a5a1a); font-weight: 800; }

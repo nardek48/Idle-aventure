@@ -165,7 +165,7 @@ var MissionBoard = {
       var stepsDone = quest.steps.filter(function (s) { return AdventureQuestManager.isStepComplete(quest, s); }).length;
       var status = isRunning ? "running" : (running ? "locked" : "available");
       var m = {
-        id: "adv_" + quest.id, sourceKind: "adventure", worldId: quest.worldId,
+        id: "adv_" + quest.id, sourceKind: "adventure", questId: quest.id, worldId: quest.worldId, // v3.247.0 : questId pour le pronostic
         title: quest.name, blurb: quest.story || "",
         type: "combat", place: missionWorldName(quest.worldId) || "",
         objectiveLabel: stepsDone + "/" + quest.steps.length + " objectifs", progressLabel: "",
@@ -211,7 +211,7 @@ var MissionBoard = {
       var status = isRunning ? "running" : (running ? "locked" : "available");
       var inLot = isRunning ? Number((game.huntRun && game.huntRun.killsInLot) || 0) : 0;
       var m = {
-        id: "hunt_" + quest.id, sourceKind: "hunt", worldId: quest.worldId,
+        id: "hunt_" + quest.id, sourceKind: "hunt", questId: quest.id, worldId: quest.worldId, // v3.247.0 : questId pour le pronostic
         title: quest.name, blurb: quest.story || "",
         type: "chasse", place: missionWorldName(quest.worldId) || "",
         objectiveLabel: "Lot de " + quest.lotSize, progressLabel: isRunning ? (inLot + "/" + quest.lotSize) : "",
@@ -254,32 +254,29 @@ var MissionBoard = {
     var out = [];
     var isRunning = !!(game.dungeonRun && game.dungeonRun.active);
     DungeonManager.checkTicketReset();
+    /* v3.245.0 (refonte Donjons) : un donjon par monde, plus de paliers. Depuis le tableau, « Partir »
+       lance le run NU (sans Marque) ; les Marques se choisissent sur l'écran Donjon (feuille de lancement). */
     (DUNGEONS || []).forEach(function (dungeon) {
       if (dungeon.locked) return;
-      (dungeon.tierIds || []).forEach(function (tierId) {
-        var tier = DungeonManager.getTierById(tierId);
-        if (!tier) return;
-        var unlocked = DungeonManager.isTierUnlocked(tierId);
-        if (!unlocked) return; // paliers verrouillés : pas encore une mission proposable
-        var cleared = !!(game.dungeonTierCleared && game.dungeonTierCleared[tierId]);
-        if (cleared) return; // -> considéré terminé, hors tableau (repasse par l'écran Donjon si Seb veut le refaire)
-        var runningHere = isRunning && game.dungeonRun.tierId === tierId;
-        var status = runningHere ? "running" : (isRunning ? "locked" : "available");
-        var m = {
-          id: "dungeon_" + dungeon.id + "_" + tierId, sourceKind: "dungeon", worldId: null,
-          title: dungeon.name + " — " + tier.name, blurb: tier.story || "",
-          type: "donjon", place: dungeon.name,
-          objectiveLabel: "Vague " + (runningHere ? (game.dungeonRun.wave || 1) : 1) + "/" + DUNGEON_CONFIG.waveCount, progressLabel: "",
-          rewardSummary: (game.dungeonTickets > 0 ? game.dungeonTickets + " ticket(s)" : "Aucun ticket"),
-          badge: "contract", status: status, isMain: false
-        };
-        if (status === "available" && game.dungeonTickets > 0) m.accept = function () { return DungeonManager.start(tierId); };
-        if (status === "running") {
-          m.launch = function () { if (typeof switchTab === "function") switchTab("combat"); };
-          m.abandon = function () { return DungeonManager.forfeit(); };
-        }
-        out.push(m);
-      });
+      if (!DungeonManager.isUnlocked(dungeon.id)) return; // verrouillé : pas encore une mission proposable
+      var cleared = !!(game.dungeonTierCleared && game.dungeonTierCleared[dungeon.id]);
+      if (cleared) return; // -> considéré terminé, hors tableau (repasse par l'écran Donjon pour le refaire)
+      var runningHere = isRunning && game.dungeonRun.dungeonId === dungeon.id;
+      var status = runningHere ? "running" : (isRunning ? "locked" : "available");
+      var m = {
+        id: "dungeon_" + dungeon.id, sourceKind: "dungeon", worldId: dungeon.worldId || null,
+        title: dungeon.name, blurb: dungeon.story || "",
+        type: "donjon", place: dungeon.name,
+        objectiveLabel: "Vague " + (runningHere ? (game.dungeonRun.wave || 1) : 1) + "/" + DUNGEON_CONFIG.waveCount, progressLabel: "",
+        rewardSummary: (game.dungeonTickets > 0 ? game.dungeonTickets + " ticket(s)" : "Aucun ticket"),
+        badge: "contract", status: status, isMain: false
+      };
+      if (status === "available" && game.dungeonTickets > 0) m.accept = function () { return DungeonManager.start(dungeon.id, []); };
+      if (status === "running") {
+        m.launch = function () { if (typeof switchTab === "function") switchTab("combat"); };
+        m.abandon = function () { return DungeonManager.forfeit(); };
+      }
+      out.push(m);
     });
     return out;
   },

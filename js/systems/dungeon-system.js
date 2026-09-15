@@ -1,6 +1,8 @@
 "use strict";
 /* systems/dungeon-system.js — gauntlet de 15 vagues + boss, séparé de la progression normale des mondes.
-   Branché depuis combat-engine.js (killEnemy/onHeroDefeated délèguent ici si game.dungeonRun.active). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Branché depuis combat-engine.js (killEnemy/onHeroDefeated délèguent ici si game.dungeonRun.active). Détail complet : COMMENTAIRES_ORIGINAUX.md
+   v3.245.0 (refonte Donjons, doc v1.1) : un donjon par monde (DUNGEONS), Marques de run (DUNGEON_MARKS), élites de données
+   aux vagues fixes, boss identitaire à trait signature. dungeonRun.tierId devient dungeonId (repli en lecture dans ensure). */
 
 var DungeonManager = {
   ensure: function () {
@@ -8,30 +10,37 @@ var DungeonManager = {
     if (typeof game.dungeonTicketResetTime !== "number") game.dungeonTicketResetTime = 0;
     if (typeof game.dungeonTicketsPurchasedToday !== "number") game.dungeonTicketsPurchasedToday = 0;
     if (!game.dungeonRun || typeof game.dungeonRun !== "object") {
-      game.dungeonRun = { active: false, wave: 0, tierId: 1 };
+      game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
     }
-    if (typeof game.dungeonRun.tierId !== "number") game.dungeonRun.tierId = 1;
+    // v3.245.0 : sauvegarde d'avant la refonte — tierId devient dungeonId (mêmes numéros)
+    if (typeof game.dungeonRun.dungeonId !== "number") game.dungeonRun.dungeonId = Number(game.dungeonRun.tierId) || 1;
+    delete game.dungeonRun.tierId;
+    if (!Array.isArray(game.dungeonRun.marks)) game.dungeonRun.marks = [];
     if (typeof game.dungeonBestWave !== "number") game.dungeonBestWave = 0;
     if (typeof game.dungeonBossClears !== "number") game.dungeonBossClears = 0;
     if (typeof game.dungeonShards !== "number") game.dungeonShards = 0;
     if (!game.dungeonShopLevels || typeof game.dungeonShopLevels !== "object") game.dungeonShopLevels = {};
     if (!game.dungeonTierCleared || typeof game.dungeonTierCleared !== "object") game.dungeonTierCleared = {};
+    /* v3.245.0 : partie sauvegardée AVANT la refonte, en cours sur forest_13 (acceptée) — l'étape ouvre désormais
+       le Donjon (unlockTabs appliqué à l'acceptation, déjà passée) : on ouvre l'onglet ici, une fois. */
+    if (window.StoryQuestManager && game.unlockedTabs && !game.unlockedTabs.dungeon
+        && typeof StoryQuestManager.getCurrentStep === "function") {
+      var stepNow = StoryQuestManager.getCurrentStep("forest");
+      if (stepNow && stepNow.id === "forest_13" && StoryQuestManager.isCurrentStepAccepted("forest")) game.unlockedTabs.dungeon = true;
+    }
   },
 
-  getTierById: function (tierId) {
-    return (DUNGEON_TIERS || []).find(function (t) { return t.id === tierId; }) || DUNGEON_TIERS[0];
+  getById: function (dungeonId) {
+    var id = Number(dungeonId);
+    return (window.DUNGEONS || []).find(function (d) { return d.id === id; }) || DUNGEONS[0];
   },
+  // alias historique (harnais, anciens appelants) : un palier = un donjon désormais
+  getTierById: function (id) { return this.getById(id); },
 
-  getDungeonForTier: function (tierId) {
-    return (window.DUNGEONS || []).find(function (d) {
-      return (d.tierIds || []).indexOf(tierId) !== -1;
-    }) || null;
-  },
-
-  applyDungeonTheme: function (tierId) {
+  applyDungeonTheme: function (dungeonId) {
     var root = document.documentElement;
     if (!root) return;
-    var dungeon = this.getDungeonForTier(tierId);
+    var dungeon = this.getById(dungeonId);
     if (dungeon && dungeon.combatMap) {
       root.style.setProperty("--world-combat-map", 'url("' + dungeon.combatMap + '")');
     }
@@ -50,30 +59,84 @@ var DungeonManager = {
     return best;
   },
 
-  isTierAllowedByWorld: function (tier) {
-    if (!tier || typeof tier.worldRequired !== "number") return true;
-    return this.getHighestWorldReached() >= tier.worldRequired;
+  isAllowedByWorld: function (dungeon) {
+    if (!dungeon || typeof dungeon.worldRequired !== "number") return true;
+    return this.getHighestWorldReached() >= dungeon.worldRequired;
   },
 
   /* Raison du verrou, pour que la carte dise quoi faire plutôt que « Verrouillé ».
-     "world" | "previous" | null */
-  getTierLockReason: function (tierId) {
-    var tiers = DUNGEON_TIERS || [];
+     "data" (donjon déclaré locked) | "world" | "previous" | null */
+  getLockReason: function (dungeonId) {
+    var list = window.DUNGEONS || [];
     var index = -1;
-    for (var i = 0; i < tiers.length; i++) {
-      if (tiers[i].id === tierId) { index = i; break; }
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === Number(dungeonId)) { index = i; break; }
     }
     if (index === -1) return "previous";
-
-    if (!this.isTierAllowedByWorld(tiers[index])) return "world";
+    if (list[index].locked) return "data";
+    if (!this.isAllowedByWorld(list[index])) return "world";
     if (index <= 0) return null;
 
     this.ensure();
-    return game.dungeonTierCleared[tiers[index - 1].id] ? null : "previous";
+    return game.dungeonTierCleared[list[index - 1].id] ? null : "previous";
   },
 
-  isTierUnlocked: function (tierId) {
-    return this.getTierLockReason(tierId) === null;
+  isUnlocked: function (dungeonId) {
+    return this.getLockReason(dungeonId) === null;
+  },
+  // alias historiques
+  getTierLockReason: function (id) { return this.getLockReason(id); },
+  isTierUnlocked: function (id) { return this.isUnlocked(id); },
+
+  /* ---------- Marques (v3.245.0) ---------- */
+  getMark: function (markId) {
+    return (window.DUNGEON_MARKS || []).find(function (m) { return m.id === markId; }) || null;
+  },
+
+  /* Traque et Fléau demandent le donjon terminé une fois (unlock "cleared"). */
+  isMarkUnlocked: function (markId, dungeonId) {
+    var mark = this.getMark(markId);
+    if (!mark) return false;
+    if (!mark.unlock) return true;
+    this.ensure();
+    if (mark.unlock === "cleared") return !!game.dungeonTierCleared[Number(dungeonId)];
+    return true;
+  },
+
+  /* Marques valides pour un lancement : connues, débloquées, dédoublonnées, plafonnées. */
+  sanitizeMarks: function (marks, dungeonId) {
+    var self = this, out = [];
+    var max = Number(DUNGEON_CONFIG.maxMarks || 3);
+    (Array.isArray(marks) ? marks : []).forEach(function (id) {
+      if (out.length >= max || out.indexOf(id) !== -1) return;
+      if (self.isMarkUnlocked(id, dungeonId)) out.push(id);
+    });
+    return out;
+  },
+
+  /* Définitions des Marques du run en cours (vide hors run). */
+  getRunMarks: function () {
+    this.ensure();
+    if (!game.dungeonRun.active) return [];
+    var self = this;
+    return game.dungeonRun.marks.map(function (id) { return self.getMark(id); }).filter(Boolean);
+  },
+
+  hasRunMark: function (markId) {
+    this.ensure();
+    return !!game.dungeonRun.active && game.dungeonRun.marks.indexOf(markId) !== -1;
+  },
+
+  /* Multiplicateur de récompense pour n Marques : 1 + n × markStackBonus. */
+  getMarkRewardMult: function (count) {
+    var n = (typeof count === "number") ? count : (this.ensure(), game.dungeonRun.marks.length);
+    return 1 + Math.max(0, n) * Number(DUNGEON_CONFIG.markStackBonus || 0);
+  },
+
+  /* Matériau projeté pour un donjon et n Marques : base + n × specialPerMark (décision 12.2). */
+  getSpecialAmount: function (dungeon, count) {
+    if (!dungeon || !dungeon.specialResourceId || !(dungeon.specialResourceAmount > 0)) return 0;
+    return Number(dungeon.specialResourceAmount) + Math.max(0, count || 0) * Number(DUNGEON_CONFIG.specialPerMark || 0);
   },
 
   checkTicketReset: function () {
@@ -122,31 +185,65 @@ var DungeonManager = {
     saveGame();
   },
 
-  buildWaveEnemy: function (wave) {
-    this.ensure();
-    var tier = this.getTierById(game.dungeonRun.tierId);
+  /* Échelle des vagues : formule inchangée (worldScale × rampe × premium × difficultyMult).
+     Les mondes 2 à 6 seront rebasés sur l'échelle du monde avec leur monde (rapport D-0 §5). */
+  getWaveScale: function (dungeon, wave) {
     var isBossWave = wave > DUNGEON_CONFIG.waveCount;
-    var tierWorldPower = Math.max(0, tier.worldPower || 0);
-    var worldScale = 1 + tierWorldPower * 0.6;
+    var worldScale = 1 + Math.max(0, dungeon.worldPower || 0) * 0.6;
     var waveProgress = Math.min(1, wave / DUNGEON_CONFIG.waveCount);
     var premium = isBossWave ? DUNGEON_CONFIG.bossPremiumMult : DUNGEON_CONFIG.basePremiumMult;
-    var tierDifficultyMult = Math.max(1, tier.difficultyMult || 1);
-    var scale = worldScale * (1 + waveProgress * DUNGEON_CONFIG.waveRampMult) * premium * tierDifficultyMult;
+    return worldScale * (1 + waveProgress * DUNGEON_CONFIG.waveRampMult) * premium * Math.max(1, dungeon.difficultyMult || 1);
+  },
 
-    var id, data;
+  /* Élite de données à l'échelle du donjon (doc §4.5) : EliteManager.build calcule
+     hp = endurance × statMult × BOSS_PV_MULT × s ; on veut endurance × statMult × 1,5 × scale,
+     donc s = scale × 1,5 / BOSS_PV_MULT. Milestone de cycle neutre : le donjon n'est pas indexé dessus. */
+  buildEliteWave: function (eliteId, dungeon, wave) {
+    if (!window.EliteManager || typeof EliteManager.build !== "function") return null;
+    var pvMult = (typeof BOSS_PV_MULT === "number") ? BOSS_PV_MULT : 3.1;
+    var s = this.getWaveScale(dungeon, wave) * 1.5 / pvMult;
+    var e = EliteManager.build(eliteId, s, { noMilestone: true });
+    if (!e) return null;
+    e.name = "\u2604\ufe0f " + e.name;
+    e.goldReward = Math.floor(16 * this.getWaveScale(dungeon, wave));
+    e.essenceReward = 2;
+    return e;
+  },
+
+  buildWaveEnemy: function (wave) {
+    this.ensure();
+    var dungeon = this.getById(game.dungeonRun.dungeonId);
+    var isBossWave = wave > DUNGEON_CONFIG.waveCount;
+    var scale = this.getWaveScale(dungeon, wave);
+    var waveProgress = Math.min(1, wave / DUNGEON_CONFIG.waveCount);
+    var difficultyMult = Math.max(1, dungeon.difficultyMult || 1);
+    var traque = this.hasRunMark("aff_elite");
+    var colossus = this.hasRunMark("aff_colossus");
+
+    /* Vague élite de données (positions fixes du donjon). Sous Traque, une vague déjà élite ne cumule pas. */
+    if (!isBossWave && dungeon.eliteWaves && dungeon.eliteWaves[wave]) {
+      var elite = this.buildEliteWave(dungeon.eliteWaves[wave], dungeon, wave);
+      if (elite) return elite;
+    }
+
+    var id, data, bossDef = null, statMult = { endurance: 1, power: 1 };
 
     if (isBossWave) {
-      var bossIds = Object.keys(BOSS_DB);
-      id = bossIds[randInt(0, bossIds.length - 1)];
+      /* Boss IDENTITAIRE du donjon (v3.245.0) : plus de tirage au hasard dans BOSS_DB. */
+      bossDef = dungeon.boss || {};
+      id = bossDef.baseId && BOSS_DB[bossDef.baseId] ? bossDef.baseId : Object.keys(BOSS_DB)[0];
       data = BOSS_DB[id];
+      if (bossDef.statMult) statMult = { endurance: Number(bossDef.statMult.endurance) || 1, power: Number(bossDef.statMult.power) || 1 };
     } else {
-      var pool = [];
-      for (var w = 0; w <= tierWorldPower && w < WORLDS.length; w++) {
-        (WORLDS[w].adventures || []).forEach(function (adv) {
-          (adv.enemyPool || []).forEach(function (eid) {
-            if (pool.indexOf(eid) === -1) pool.push(eid);
+      var pool = Array.isArray(dungeon.enemyPool) && dungeon.enemyPool.length ? dungeon.enemyPool.slice() : [];
+      if (!pool.length) {
+        for (var w = 0; w <= (dungeon.worldPower || 0) && w < WORLDS.length; w++) {
+          (WORLDS[w].adventures || []).forEach(function (adv) {
+            (adv.enemyPool || []).forEach(function (eid) {
+              if (pool.indexOf(eid) === -1) pool.push(eid);
+            });
           });
-        });
+        }
       }
       if (!pool.length) pool = Object.keys(ENEMY_DB);
       id = pool[randInt(0, pool.length - 1)];
@@ -160,13 +257,16 @@ var DungeonManager = {
     var speedScale = 0.65;
     var precisionScale = 0.75;
 
-    var hp = Math.max(1, Math.floor((stats.endurance || 0) * hpCoef * scale));
+    var hp = Math.max(1, Math.floor((stats.endurance || 0) * statMult.endurance * hpCoef * scale));
+    if (isBossWave && colossus) hp = Math.floor(hp * 2); // Colosses : boss 2× PV (bossHpMult de la Marque)
 
-    return {
+    var enemy = {
       id: id,
-      name: (isBossWave ? "👑 " : "") + (data ? data.name : "Ennemi") + " (" + tier.name + ")",
+      name: (isBossWave ? "\ud83d\udc51 " + (bossDef && bossDef.name ? bossDef.name : (data ? data.name : "Boss")) : (data ? data.name : "Ennemi")),
       asset: data ? data.asset : "slime",
+      image: (isBossWave && bossDef && bossDef.image) ? bossDef.image : (data ? data.image : undefined),
       isBoss: isBossWave,
+      archetype: (isBossWave && bossDef && bossDef.archetype) ? bossDef.archetype : null, // trait signature, lu tel quel par combat-engine.js
       hp: hp,
       maxHp: hp,
       goldReward: Math.floor((isBossWave ? 60 : 8) * scale),
@@ -174,13 +274,26 @@ var DungeonManager = {
       resists: (data && data.resists) || [],
       weak: (data && data.weak) || [],
       stats: {
-        power: Math.floor((stats.power || 0) * (1 + waveProgress) * Math.sqrt(tierDifficultyMult) * damageScale),
+        power: Math.floor((stats.power || 0) * statMult.power * (1 + waveProgress) * Math.sqrt(difficultyMult) * damageScale),
         endurance: stats.endurance || 0,
-        celerity: Math.floor((stats.celerity || 0) * (1 + waveProgress * 0.5) * Math.sqrt(tierDifficultyMult) * speedScale),
+        celerity: Math.floor((stats.celerity || 0) * (1 + waveProgress * 0.5) * Math.sqrt(difficultyMult) * speedScale),
         precision: Math.floor((stats.precision || 0) * (1 + waveProgress * 0.5) * precisionScale),
         will: stats.will || 0
       }
     };
+
+    /* Traque : chaque vague normale est une élite GÉNÉRIQUE (isBoss + multiplicateurs relatifs,
+       sans archétype). Les élites de données gardent leurs vagues fixes, traitées plus haut. */
+    if (!isBossWave && traque) {
+      var gm = window.DUNGEON_GENERIC_ELITE_MULT || { endurance: 2.4, power: 1.1 };
+      enemy.isBoss = true;
+      enemy.name = "\u2604\ufe0f " + enemy.name;
+      enemy.hp = Math.max(1, Math.floor(enemy.hp * (Number(gm.endurance) || 1)));
+      enemy.maxHp = enemy.hp;
+      enemy.stats.power = Math.max(1, Math.floor(enemy.stats.power * (Number(gm.power) || 1)));
+    }
+
+    return enemy;
   },
 
   spawnWave: function (wave) {
@@ -195,33 +308,39 @@ var DungeonManager = {
   /* v3.136.0 (audit Forêt §3.4) : ticket OFFERT par l'Histoire sur le Donjon I tant que l'étape forest_14
      « La tanière du Basilic » est en cours (acceptée, non réclamée) — un échec ne bloque plus la chaîne
      principale 24 h (1 ticket gratuit/jour) ni ne coûte l'essence du joueur. Sans effet sur les autres paliers. */
-  isStoryTicketFree: function (tierId) {
-    if (Number(tierId) !== 1 || !window.StoryQuestManager) return false;
+  /* v3.245.0 : étendu à forest_13 (« Marques du corrompu » se joue désormais dans la Tanière). */
+  isStoryTicketFree: function (dungeonId) {
+    if (Number(dungeonId) !== 1 || !window.StoryQuestManager) return false;
     var step = StoryQuestManager.getCurrentStep("forest");
-    return !!(step && step.id === "forest_14" && StoryQuestManager.isCurrentStepAccepted("forest"));
+    return !!(step && (step.id === "forest_13" || step.id === "forest_14") && StoryQuestManager.isCurrentStepAccepted("forest"));
   },
 
-  start: function (tierId) {
+  /* marks : tableau d'id de DUNGEON_MARKS choisis dans la feuille de lancement (figés pour le run). */
+  start: function (dungeonId, marks) {
     this.ensure();
     this.checkTicketReset();
 
-    var tier = this.getTierById(tierId);
-    if (!this.isTierUnlocked(tier.id)) return showToast("Palier verrouillé", 1200);
+    var dungeon = this.getById(dungeonId);
+    if (!this.isUnlocked(dungeon.id)) return showToast("Donjon verrouillé", 1200);
     if ((game.heroHp || 0) <= 0) return showToast("Héros à terre — repose-toi au Campement d'abord", 1600);
-    var storyFree = this.isStoryTicketFree(tier.id); // v3.136.0
+    var storyFree = this.isStoryTicketFree(dungeon.id); // v3.136.0
     if (!storyFree && (game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
     if (game.dungeonRun.active) return showToast("Donjon déjà en cours", 1200);
     if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast("Termine ou abandonne ta quête en cours avant d'entrer en donjon", 1600);
     if (game.huntRun && game.huntRun.active) return showToast("Termine ou arrête ta chasse en cours avant d'entrer en donjon", 1600);
 
     if (!storyFree) game.dungeonTickets -= 1; // v3.136.0 : ticket Histoire, rien à décompter
-    game.dungeonRun = { active: true, wave: 0, tierId: tier.id, shardsEarned: 0 };
+    var runMarks = this.sanitizeMarks(marks, dungeon.id);
+    game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, marks: runMarks, shardsEarned: 0 };
     if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
-    game.dungeonTiersEntered[tier.id] = true;
+    game.dungeonTiersEntered[dungeon.id] = true;
     game.heroHp = game.heroMaxHp || 1;
-    if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("dungeon"); } // v3.102.1 : le donjon est une sortie
-    addLog("🏰 Entrée dans " + tier.name + " !", "event");
-    this.applyDungeonTheme(tier.id);
+    // v3.102.1 : le donjon est une sortie. SortieManager.start recalcule les stats : les Marques héros (Fragilité,
+    // Ascétisme, Fléau) s'appliquent ici via AfflictionManager, dont la source est désormais dungeonRun.marks.
+    if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("dungeon"); }
+    game.heroHp = game.heroMaxHp || 1; // on entre à PV pleins, après le recalc des Marques
+    addLog("🏰 Entrée dans " + dungeon.name + (runMarks.length ? " sous " + runMarks.length + " Marque" + (runMarks.length > 1 ? "s" : "") : "") + " !", "event");
+    this.applyDungeonTheme(dungeon.id);
     this.spawnWave(1);
     if (typeof switchTab === "function") switchTab("combat");
     saveGame();
@@ -232,8 +351,11 @@ var DungeonManager = {
     var clearedWave = game.dungeonRun.wave;
     if (clearedWave > (game.dungeonBestWave || 0)) game.dungeonBestWave = clearedWave;
 
-    game.dungeonShards = Number(game.dungeonShards || 0) + (DUNGEON_CONFIG.shardsPerWaveCleared || 1);
-    game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) + (DUNGEON_CONFIG.shardsPerWaveCleared || 1);
+    var shards = Number(DUNGEON_CONFIG.shardsPerWaveCleared || 1);
+    // v3.245.0 : une vague élite de données rapporte des éclats en plus (pas de butin unique en donjon)
+    if (game.enemy && game.enemy.isElite && clearedWave <= DUNGEON_CONFIG.waveCount) shards += Number(DUNGEON_CONFIG.eliteShardsBonus || 0);
+    game.dungeonShards = Number(game.dungeonShards || 0) + shards;
+    game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) + shards;
 
     if (clearedWave > DUNGEON_CONFIG.waveCount) {
       this.finish(true, clearedWave);
@@ -279,12 +401,14 @@ var DungeonManager = {
   /* outcome (échec) : "flee" = récompense partielle ÷ 2 ; "death" = aucune récompense partielle (v3.102.1, la mort coûte le butin) */
   finish: function (success, clearedWave, outcome) {
     this.ensure();
+    var tier = this.getById(game.dungeonRun.dungeonId);
+    var runMarks = (game.dungeonRun.marks || []).slice();
+    var markMult = this.getMarkRewardMult(runMarks.length); // v3.245.0 : cumul des Marques, appliqué ici (or/essence/matériau de fin ne passent pas par goldMult)
     if (success && window.SortieManager) SortieManager.end("success");
-    var tier = this.getTierById(game.dungeonRun.tierId);
     var wavesTotal = DUNGEON_CONFIG.waveCount;
     var progress = Math.max(0, Math.min(1, clearedWave / wavesTotal));
 
-    var worldBonus = 1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.difficultyMult || 1)) * 0.4;
+    var worldBonus = (1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.difficultyMult || 1)) * 0.4) * markMult;
     var goldReward, essenceReward, grantLoot, lootRarity;
 
     var rarityOrder = (typeof RARITY_ORDER !== "undefined" && RARITY_ORDER) || ["common", "green", "rare", "epic", "legendary"];
@@ -339,12 +463,20 @@ var DungeonManager = {
         && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
       specialDef = WAREHOUSE_RESOURCES[tier.specialResourceId] || null;
       if (specialDef) {
-        specialGained = WarehouseManager.addResource(tier.specialResourceId, tier.specialResourceAmount, true) || 0;
+        // v3.245.0 : +specialPerMark par Marque active (décision 12.2)
+        specialGained = WarehouseManager.addResource(tier.specialResourceId, this.getSpecialAmount(tier, runMarks.length), true) || 0;
       }
     }
 
     var shardsGained = Number(game.dungeonRun.shardsEarned || 0);
-    game.dungeonRun = { active: false, wave: 0 };
+    game.dungeonRun = { active: false, wave: 0, dungeonId: tier.id, marks: [] };
+    /* v3.245.0 : les Marques héros (Fragilité…) tombent avec le run. SortieManager.end() a recalculé les stats
+       AVANT cette ligne, run encore actif : on recalcule ici, même ratio de PV conservé (0 reste 0 après une mort). */
+    if (runMarks.length && window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
+      var hpRatio = (game.heroMaxHp > 0) ? Math.min(1, (game.heroHp || 0) / game.heroMaxHp) : 1;
+      StatsSystem.recalcStats();
+      game.heroHp = Math.max(0, Math.min(game.heroMaxHp, Math.floor(game.heroMaxHp * hpRatio)));
+    }
 
     var msg = success
       ? "🏆 " + tier.name + " terminé ! +" + formatNumber(goldReward) + " or, +" + essenceReward + " essence"
@@ -380,7 +512,10 @@ var DungeonManager = {
         lootedItem: lootedItem,
         // v3.223.0 : matériau de monde gagné (0 si aucun), pour le rapport de fin
         specialGained: specialGained,
-        specialName: specialDef ? specialDef.name : null
+        specialName: specialDef ? specialDef.name : null,
+        // v3.245.0 : Marques du run et multiplicateur, pour la ligne « Marques ×1,45 » du rapport
+        marks: runMarks,
+        markMult: markMult
       });
     }
 

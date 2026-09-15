@@ -45,9 +45,12 @@ function init() {
   }
 
   if (game.dungeonRun && game.dungeonRun.active && window.DungeonManager) {
-    if (typeof DungeonManager.applyDungeonTheme === "function") DungeonManager.applyDungeonTheme(game.dungeonRun.tierId);
+    if (typeof DungeonManager.ensure === "function") DungeonManager.ensure(); // v3.245.0 : tierId -> dungeonId
+    if (typeof DungeonManager.applyDungeonTheme === "function") DungeonManager.applyDungeonTheme(game.dungeonRun.dungeonId);
     DungeonManager.spawnWave(game.dungeonRun.wave || 1);
-  } else {
+  } else if (!(window.QuestEnemyManager && typeof QuestEnemyManager.respawnActiveRunEnemy === "function"
+      && QuestEnemyManager.respawnActiveRunEnemy())) {
+    // v3.246.0 : sinon un run de quête/chasse repris après rechargement retombait sur un ennemi de farm
     CombatEngine.spawnEnemy();
   }
 

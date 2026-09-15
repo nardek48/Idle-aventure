@@ -5,8 +5,32 @@
 /* Récompenses placeholder, regroupées ici pour le passage d'équilibrage or ultérieur. forest_10 (« Les fondations »)
    reste ici : réclamée via MissionBoard._workshopMissions (v3.107.8). Formats : gold, essence, healingPotion {id,count},
    equipmentRarity + equipmentCount, resources {clé Entrepôt: qté}. Viande/eau sur 6/7 : Petite ration (8 viande + 4 eau) craftable dès l'étape 8. */
+/* v3.249.0 (idée Seb 15/09/2026) — ARME OFFERTE À LA PREMIÈRE ÉTAPE.
+   « Le feu de camp » ne donnait que 50 or, et le narratif promettait déjà une lame : « Il te
+   faudra une lame pour tenir la nuit ». Elle est maintenant réellement remise, ce qui règle
+   deux choses d'un coup :
+     - l'étape SUIVANTE (forest_02) exige « équiper 1 objet » : le joueur a désormais de quoi
+       le faire tout de suite, et la leçon devient « je reçois une arme, je l'équipe » ;
+     - plus aucun héros ne peut se retrouver bloqué faute d'arme. Mesuré
+       (sim/forecast-calibration-bench.js) sur « Prouver sa valeur », sans rien d'autre :
+       sans arme, 83 à 100 % d'échec selon la classe ; avec cette arme, 0 % pour les trois.
+   Valeur 15 : milieu de la fourchette commune (10-25), donc en dessous de l'arme de la vitrine
+   de départ (25) — l'échoppe garde tout son intérêt. Déclinée par classe : un Mage ne peut pas
+   se servir d'une épée (voir generateEquipmentItem et EQUIP_SHOP_STARTER). */
+var STORY_STARTER_WEAPON = {
+  slot: "weapon",
+  stat: "tapDmg",
+  value: 15,
+  rarity: "common",
+  byClass: {
+    knight: { name: "Lame ébréchée", icon: "sword" },
+    archer: { name: "Arc de fortune", icon: "bow" },
+    mage: { name: "Bâton noueux", icon: "staff" }
+  }
+};
+
 var STORY_REWARDS = {
-  forest_01: { gold: 50 },
+  forest_01: { gold: 50, equipmentItem: STORY_STARTER_WEAPON },
   forest_02: { gold: 100, essence: 5 },
   forest_03: { gold: 150, essence: 5 },
   forest_04: { healingPotion: { id: "potion_soin_mineur", count: 1 } },
@@ -142,6 +166,7 @@ function storyGoToCoeur(g) {
   }
 }
 
+/* v3.245.0 : nombre de Marques du run de donjon en cours (ex-afflictions actives). */
 function storyActiveAfflictions() {
   return (window.AfflictionManager && typeof AfflictionManager.getActiveCount === "function") ? AfflictionManager.getActiveCount() : 0;
 }
@@ -465,35 +490,32 @@ var STORY_QUESTS = {
         title: "Marques du corrompu",
         act: "Acte III — Le héros s'affirme",
         narrative: {
-          objective: "Certaines bêtes portent une marque. Provoque-la, et vois ce qu'elle t'apporte. Un jour elles viendront sans qu'on les appelle.",
-          completion: "La marque pique, mais elle paie. Souviens-t'en."
+          objective: "Sous les racines, une tanière. Entre sous une Marque — la tienne, choisie — et vois ce qu'elle t'apporte. Cinq salles, et tu sauras.",
+          completion: "La Marque pique, mais elle paie. Souviens-t'en."
         },
-        // v3.134.0 (audit Forêt §3.3) : l'ancienne variante B (2 afflictions + coeurKills ≥ 10, déjà acquis par forest_12)
-        // se réclamait sans un seul combat sous marque. Désormais compteur dédié coeurKillsMarked : victoires au Cœur en
-        // farm libre avec ≥ 2 afflictions actives au moment du kill (StoryQuestManager._trackKills). Cible 5.
-        objectiveLabel: "Activer 2 afflictions en même temps et remporter 5 victoires au Cœur sous leur marque",
-        unlockTabs: ["afflictions"],
+        // v3.245.0 (refonte Donjons, doc v1.1 §6.3) : les afflictions sont devenues les MARQUES d'un run de donjon.
+        // L'étape ouvre le Donjon (avancé d'une étape) et se joue dans la Tanière : 5 vagues passées avec ≥ 1 Marque.
+        // Même id, même position, même compteur coeurKillsMarked (réutilisé : vagues de donjon sous Marque) — les
+        // parties en cours ne sont pas décalées ; l'entrée est offerte par l'Histoire (DungeonManager.isStoryTicketFree).
+        objectiveLabel: "Entrer dans la Tanière du Basilic sous au moins une Marque et passer 5 vagues",
+        unlockTabs: ["dungeon"],
         reward: STORY_REWARDS.forest_13,
-        // Moins de 2 afflictions actives -> écran Afflictions (il faut d'abord les activer) ; sinon -> combat au Cœur.
-        linkTo: {
-          tab: function () { return storyActiveAfflictions() >= 2 ? "combat" : "afflictions"; },
-          beforeGo: function (g) { if (storyActiveAfflictions() >= 2) storyGoToCoeur(g); }
-        },
+        linkTo: { tab: "dungeon" },
         tutorial: {
-          tab: "afflictions",
+          tab: "dungeon",
           icon: "images/Icons/afflictions/aff_plague.png",
-          title: "Les Afflictions",
+          title: "Les Marques",
           points: [
-            { icon: "images/Icons/afflictions/aff_plague.png", text: "Une affliction est un handicap volontaire pour le farm libre (ennemis plus durs, potions interdites, PV réduits...) en échange d'un gain d'or, d'essence ou de butin." },
-            { icon: "➕", text: "Jusqu'à 4 afflictions actives en même temps. Chaque affliction cumulée ajoute +10 % aux récompenses, en plus de ses effets propres." },
-            { icon: "images/Icons/system/auto_repeat.png", text: "Active-les ou désactive-les à tout moment ici, entre deux sorties — rien n'est définitif." },
-            { icon: "images/Icons/combat_stats/stat_attack.png", text: "Pour cette étape : 2 afflictions actives, puis 5 victoires au Cœur de la forêt en farm libre." }
+            { icon: "images/Icons/afflictions/aff_plague.png", text: "Une Marque est un handicap volontaire pour un run de donjon (boss plus dur, potions interdites, PV réduits...) en échange de récompenses plus riches." },
+            { icon: "➕", text: "Jusqu'à 3 Marques par run. Chaque Marque ajoute +15 % aux récompenses et +2 matériau de monde, en plus de ses effets propres." },
+            { icon: "images/Icons/subtabs/dungeon.png", text: "Elles se choisissent à l'entrée du donjon, dans la feuille de lancement, et restent figées pour le run." },
+            { icon: "images/Icons/combat_stats/stat_attack.png", text: "Pour cette étape : entre dans la Tanière sous au moins une Marque et passe 5 vagues. L'entrée est offerte tant que l'étape est en cours." }
           ]
         },
-        killTarget: { label: "Sous la marque", counter: function (g) { return storyCounter(g, "coeurKillsMarked"); }, target: 5, autoReturn: true },
+        killTarget: { label: "Sous la Marque", counter: function (g) { return storyCounter(g, "coeurKillsMarked"); }, target: 5, autoReturn: false },
         check: function (game) { return storyCounter(game, "coeurKillsMarked") >= 5; },
         progress: function (game) {
-          return "Afflictions " + Math.min(2, storyActiveAfflictions()) + "/2 · Marqués " + Math.min(5, storyCounter(game, "coeurKillsMarked")) + "/5";
+          return "Vagues sous Marque " + Math.min(5, storyCounter(game, "coeurKillsMarked")) + "/5";
         }
       },
       {
@@ -568,6 +590,7 @@ var STORY_QUESTS = {
 };
 
 window.STORY_REWARDS = STORY_REWARDS;
+window.STORY_STARTER_WEAPON = STORY_STARTER_WEAPON;
 window.STORY_TAB_LABELS = STORY_TAB_LABELS;
 window.STORY_STEP15_OFFERING = STORY_STEP15_OFFERING;
 window.storyOfferingMissing = storyOfferingMissing;

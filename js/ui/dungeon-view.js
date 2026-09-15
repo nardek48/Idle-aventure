@@ -1,140 +1,97 @@
 "use strict";
-/* ui/dungeon-view.js — écran Donjon (v2.16), sous-onglets Donjon/Boutique. Liste en accordéon (v2.83.6), overlay tickets, intro/résumé de palier. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* ui/dungeon-view.js — écran Donjon (v3.245.0, refonte Donjons, doc v1.1 §5) : une carte par monde, feuille basse .ksheet de
+   lancement avec les Marques, carte de run actif, overlay tickets, rapport de fin. La Boutique d'éclats vit chez l'Enchanteresse
+   (ui/village-building-view.js). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-var activeDungeonSubTab = "tiers"; // "tiers" | "shop"
-var expandedDungeonId = null; // v2.83.30 : replié par défaut (demande explicite — on veut voir la liste complète des donjons directement)
-
-function setDungeonSubTab(tab) {
-  activeDungeonSubTab = (tab === "shop") ? "shop" : "tiers";
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.setDungeonSubTab = setDungeonSubTab;
-
-function toggleDungeonExpand(dungeonId) {
-  expandedDungeonId = (expandedDungeonId === dungeonId) ? null : dungeonId;
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.toggleDungeonExpand = toggleDungeonExpand;
-
-function buildDungeonSubTabBarHTML() {
-  var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeDungeonSubTab === "tiers" ? ' is-active' : '') + '" onclick="setDungeonSubTab(\'tiers\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/dungeon.png" alt=""><span>Donjon</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeDungeonSubTab === "shop" ? ' is-active' : '') + '" onclick="setDungeonSubTab(\'shop\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/shard_shop.png" alt=""><span>Boutique</span></button>';
-  h += '</div>';
-  return h;
-}
+var pendingDungeonId = null;   // donjon ouvert dans la feuille de lancement
+var pendingDungeonMarks = [];  // bascules de la feuille — copiées dans game.dungeonRun.marks au start() seulement
 
 function buildDungeonActiveHTML() {
-  var tier = DungeonManager.getTierById(game.dungeonRun.tierId);
+  var dungeon = DungeonManager.getById(game.dungeonRun.dungeonId);
   var wave = game.dungeonRun.wave || 1;
   var total = DUNGEON_CONFIG.waveCount;
   var isBossWave = wave > total;
   var progressPct = Math.min(100, Math.round((Math.min(wave, total) / total) * 100));
+  var marks = DungeonManager.getRunMarks();
 
   var h = '<div class="panel-card dungeon-active-card">';
-  h += '<div class="dungeon-active-tier">' + esc(tier.name) + '</div>';
+  h += '<div class="dungeon-active-tier">' + esc(dungeon.name) + '</div>';
   h += '<div class="dungeon-wave-label">' + (isBossWave ? '<img class=ico-inline src=images/Icons/dungeon/boss_crown.png> Boss du donjon' : 'Vague ' + wave + ' / ' + total) + '</div>';
   h += '<div class="dungeon-progress-bar"><div class="dungeon-progress-fill' + (isBossWave ? ' is-boss' : '') + '" style="width:' + progressPct + '%"></div></div>';
+  if (marks.length) {
+    h += '<div class="dungeon-active-marks">';
+    marks.forEach(function (m) { h += renderIconOrEmojiHTML(m.icon, "dungeon-active-mark-icon", m.name); });
+    h += '<span>×' + DungeonManager.getMarkRewardMult(marks.length).toFixed(2).replace(/0$/, "") + '</span></div>';
+  }
   h += '<p class="panel-sub">Bats-toi dans l\u2019onglet Combat. Si tes PV tombent à 0, la tentative s\u2019arrête ici (récompense réduite selon les vagues passées).</p>';
   h += '<button class="settings-btn danger" type="button" onclick="DungeonManager.forfeit()">Abandonner la tentative</button>';
   h += '</div>';
   return h;
 }
 
-function buildDungeonTierCardHTML(tier, isLast) {
-  var unlocked = DungeonManager.isTierUnlocked(tier.id);
+/* Une carte par donjon : image 96 px à gauche (.is-full existante), monde, nom, rareté max,
+   matériau annoncé, raison du verrou ou statut « Boss vaincu ». */
+function buildDungeonCardHTML(dungeon) {
+  var reason = DungeonManager.getLockReason(dungeon.id);
+  var unlocked = reason === null;
   var heroDowned = (game.heroHp || 0) <= 0;
-  var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[tier.maxRarity]) || tier.maxRarity;
-  var rarityColor = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[tier.maxRarity]) || "#9ca3af";
+  var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[dungeon.maxRarity]) || dungeon.maxRarity;
+  var rarityColor = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[dungeon.maxRarity]) || "#9ca3af";
+  var world = (window.WORLDS || []).find(function (w) { return w.id === dungeon.worldId; });
 
-  var imageHTML = tier.icon
-    ? renderIconOrEmojiHTML(tier.icon, "dungeon-tier-img", tier.name)
-    : '<span class="dungeon-tier-num">' + tier.id + '</span>';
+  var imageHTML = dungeon.icon
+    ? renderIconOrEmojiHTML(dungeon.icon, "dungeon-tier-img", dungeon.name)
+    : '<span class="dungeon-tier-num">' + dungeon.id + '</span>';
 
-  
   var cardTag = unlocked ? 'button' : 'div';
-  var cardAttrs = unlocked
-    ? ' type="button" onclick="openDungeonIntro(' + tier.id + ')"'
-    : '';
+  var cardAttrs = unlocked ? ' type="button" onclick="openDungeonSheet(' + dungeon.id + ')"' : '';
 
-  var h = '<' + cardTag + ' class="dungeon-tier-card' + (unlocked ? ' is-tappable' : ' is-locked') + (unlocked && heroDowned ? ' is-downed' : '') + (isLast ? ' is-full' : '') + '"' + cardAttrs + '>';
-  h += '<div class="dungeon-tier-image">' + imageHTML + (unlocked ? '' : '<span class="dungeon-tier-image-lock"><img class=ico-inline src=images/Icons/system/lock_closed.png></span>') + (unlocked && heroDowned ? '<span class="dungeon-tier-image-lock"><img class=ico-inline src=images/Icons/camp/hero_defeated.png></span>' : '') + '</div>';
+  var h = '<' + cardTag + ' class="dungeon-tier-card is-full' + (unlocked ? ' is-tappable' : ' is-locked') + (unlocked && heroDowned ? ' is-downed' : '') + '"' + cardAttrs + '>';
+  h += '<div class="dungeon-tier-image">' + imageHTML
+     + (unlocked ? '' : '<span class="dungeon-tier-image-lock"><img class=ico-inline src=images/Icons/system/lock_closed.png></span>')
+     + (unlocked && heroDowned ? '<span class="dungeon-tier-image-lock"><img class=ico-inline src=images/Icons/camp/hero_defeated.png></span>' : '') + '</div>';
   h += '<div class="dungeon-tier-info">';
-  h += '<div class="dungeon-tier-name">' + esc(tier.name) + '</div>';
+  if (world) h += '<div class="dungeon-tier-world">' + esc(world.name) + '</div>';
+  h += '<div class="dungeon-tier-name">' + esc(dungeon.name) + '</div>';
   h += '<div class="dungeon-tier-rarity" style="color:' + rarityColor + '"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> ' + esc(rarityLabel) + ' max</div>';
 
-  /* v3.223.0 : le matériau de monde est annoncé AVANT d'entrer — c'est une
-     raison de choisir ce palier, pas une surprise de fin de run. */
-  if (tier.specialResourceId && tier.specialResourceAmount > 0) {
-    var specialDef = WAREHOUSE_RESOURCES[tier.specialResourceId];
+  /* v3.223.0 : le matériau de monde est annoncé AVANT d'entrer — c'est une raison de choisir ce donjon. */
+  if (dungeon.specialResourceId && dungeon.specialResourceAmount > 0) {
+    var specialDef = WAREHOUSE_RESOURCES[dungeon.specialResourceId];
     if (specialDef) {
       h += '<div class="dungeon-tier-special">'
          + renderIconOrEmojiHTML(specialDef.icon, "dungeon-tier-special-icon", specialDef.name)
-         + '+' + tier.specialResourceAmount + ' ' + esc(specialDef.name) + '</div>';
+         + '+' + dungeon.specialResourceAmount + ' ' + esc(specialDef.name) + '</div>';
     }
   }
 
   if (!unlocked) {
-    /* Deux verrous possibles, deux messages : le monde, ou le palier précédent.
-       Un « Verrouillé » sec ne dit pas quoi faire. */
-    var reason = (typeof DungeonManager.getTierLockReason === "function")
-      ? DungeonManager.getTierLockReason(tier.id) : "previous";
     var lockText;
-    if (reason === "world") {
-      var world = (window.WORLDS && WORLDS[tier.worldRequired]) ? WORLDS[tier.worldRequired].name : null;
-      lockText = world ? ('Atteins ' + esc(world) + ' pour débloquer') : 'Monde trop bas';
+    if (reason === "data") {
+      lockText = dungeon.lockedHint || "Pas encore disponible";
+    } else if (reason === "world") {
+      var reqWorld = (window.WORLDS && WORLDS[dungeon.worldRequired]) ? WORLDS[dungeon.worldRequired].name : null;
+      lockText = reqWorld ? ('Atteins ' + esc(reqWorld) + ' pour débloquer') : 'Monde trop bas';
     } else {
-      var tiers = DUNGEON_TIERS || [];
-      var idx = tiers.indexOf(tier);
-      var previousTier = idx > 0 ? tiers[idx - 1] : null;
-      lockText = previousTier
-        ? 'Termine ' + esc(previousTier.name) + ' pour débloquer'
-        : 'Verrouillé';
+      var list = DUNGEONS || [];
+      var idx = list.indexOf(dungeon);
+      var previous = idx > 0 ? list[idx - 1] : null;
+      lockText = previous ? 'Termine ' + esc(previous.name) + ' pour débloquer' : 'Verrouillé';
     }
     h += '<div class="dungeon-tier-lock-text">' + lockText + '</div>';
   } else if (heroDowned) {
     h += '<div class="dungeon-tier-lock-text">Héros à terre — repos requis</div>';
+  } else if ((game.dungeonTierCleared || {})[dungeon.id]) {
+    h += '<div class="dungeon-tier-done"><img src="images/Icons/dungeon/boss_crown.png" alt=""> Boss vaincu</div>';
   }
 
   h += '</div>';
   h += '</' + cardTag + '>';
   return h;
 }
-
-function buildDungeonCardHTML(dungeon) {
-  var isExpanded = expandedDungeonId === dungeon.id;
-  var isLocked = !!dungeon.locked;
-  var bestWave = game.dungeonBestWave || 0;
-  var beatBoss = bestWave > DUNGEON_CONFIG.waveCount;
-
-  var h = '<div class="dungeon-card' + (isExpanded ? ' is-expanded' : '') + (isLocked ? ' is-locked' : '') + '">';
-  h += '<button type="button" class="dungeon-card-head" onclick="' + (isLocked ? '' : 'toggleDungeonExpand(\'' + esc(dungeon.id) + '\')') + '">';
-  if (dungeon.banner) {
-    h += renderIconOrEmojiHTML(dungeon.banner, "dungeon-card-head-img", dungeon.name);
-  } else {
-    h += '<span class="dungeon-card-head-placeholder">' + renderIconOrEmojiHTML(dungeon.icon || "images/Icons/subtabs/dungeon.png", "dungeon-card-head-ico", "") + '</span>';
-  }
-  h += '<div class="dungeon-card-head-name">' + esc(dungeon.name) + (isLocked ? ' <img class=ico-inline src=images/Icons/system/lock_closed.png>' : '') + '</div>';
-  if (isLocked) h += '<div class="dungeon-card-head-hint">' + esc(dungeon.lockedHint || "Pas encore disponible") + '</div>';
-  if (!isLocked) h += '<div class="dungeon-card-chevron">' + (isExpanded ? "▲" : "▼") + '</div>';
-  h += '</button>';
-
-  if (isExpanded && !isLocked) {
-    h += '<div class="dungeon-card-body">';
-    h += '<div class="dungeon-card-desc">' + esc(dungeon.desc) + '</div>';
-    h += '<div class="dungeon-best-wave"><img class=ico-inline src=images/Icons/dungeon/wave_record.png> Record : vague ' + Math.min(bestWave, DUNGEON_CONFIG.waveCount) + ' / ' + DUNGEON_CONFIG.waveCount + (beatBoss ? ' — Boss vaincu !' : '') + '</div>';
-    h += '<div class="dungeon-tier-grid">';
-    var tierIds = dungeon.tierIds || [];
-    tierIds.forEach(function (tierId, index) {
-      h += buildDungeonTierCardHTML(DungeonManager.getTierById(tierId), index === tierIds.length - 1);
-    });
-    h += '</div>';
-    h += '</div>';
-  }
-
-  h += '</div>';
-  return h;
-}
+// alias historique (harnais)
+function buildDungeonTierCardHTML(dungeon) { return buildDungeonCardHTML(dungeon); }
+window.buildDungeonTierCardHTML = buildDungeonTierCardHTML;
 
 function buildDungeonTicketBadgeHTML() {
   var tickets = game.dungeonTickets || 0;
@@ -147,144 +104,144 @@ function buildDungeonTicketBadgeHTML() {
 }
 
 function buildDungeonLobbyHTML() {
-  var h = "";
-
-  if (activeDungeonSubTab === "shop") {
-    h += buildDungeonShopHTML();
-    // v3.194.0 (Seb) : titre au bandeau (le h3 interne, doublon, est retiré)
-    return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="images/Icons/subtabs/shard_shop.png|Boutique du donjon">' + h + '</div>'; // v2.83.28
-  }
-
-  h += buildDungeonTicketBadgeHTML();
-
+  var h = buildDungeonTicketBadgeHTML();
   h += '<div class="dungeon-list">';
-  (DUNGEONS || []).forEach(function (dungeon) {
-    h += buildDungeonCardHTML(dungeon);
-  });
+  (DUNGEONS || []).forEach(function (dungeon) { h += buildDungeonCardHTML(dungeon); });
   h += '</div>';
-
   return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="images/Icons/subtabs/dungeon.png|Donjon">' + h + '</div>'; // v2.83.28
-}
-
-function buildDungeonShopHTML() {
-  var shards = game.dungeonShards || 0;
-
-  var h = '<div class="panel-card">';
-  h += '<p class="panel-sub">Payée en Éclats — gagnés en passant des vagues (1 par vague, +' + DUNGEON_CONFIG.shardsBossBonus + ' bonus si le boss tombe). Utilisables uniquement ici.</p>';
-  h += '<div class="dungeon-shard-count"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + formatNumber(shards) + ' Éclats</div>';
-
-  h += '<div class="dungeon-shop-grid">';
-  (DUNGEON_SHOP || []).forEach(function (item) {
-    var level = DungeonManager.getShardShopLevel(item.id);
-    var maxed = level >= item.maxLevel;
-    var cost = DungeonManager.getShardShopCost(item);
-    var canBuy = !maxed && shards >= cost;
-
-    h += '<div class="nb-purchase-card' + (maxed ? ' is-maxed' : '') + '">';
-    h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(item.icon, "nb-purchase-icon", item.name) + '</div></div>';
-    h += '<div class="nb-purchase-info-col">';
-    h += '<div class="nb-purchase-name">' + esc(item.name) + '</div>';
-    h += '<div class="nb-purchase-meta">Niv. ' + level + '/' + item.maxLevel + '</div>';
-    h += '<div class="nb-purchase-desc">' + esc(item.desc) + '</div>';
-    h += '</div>';
-    h += '<div class="nb-purchase-buy-col">';
-    if (maxed) {
-      h += '<button class="btn-buy is-maxed" type="button" disabled>Max</button>';
-    } else {
-      h += '<button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="DungeonManager.buyShardUpgrade(\'' + esc(item.id) + '\')"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + formatNumber(cost) + '</button>';
-    }
-    h += '</div>';
-    h += '</div>';
-  });
-  h += '</div>';
-
-  h += '</div>';
-  return h;
 }
 
 function buildDungeonHTML() {
   if (window.DungeonManager && typeof DungeonManager.checkTicketReset === "function") {
     DungeonManager.checkTicketReset();
   }
-
   var isActive = !!(game.dungeonRun && game.dungeonRun.active);
-
+  // v3.245.0 : plus de sous-onglets (la Boutique est chez l'Enchanteresse) — .subtab-page conservé pour le scroll
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
   h += isActive ? buildDungeonActiveHTML() : buildDungeonLobbyHTML();
-  h += '</div>'; // fin .subtab-page-content
-
-  if (!isActive) {
-    h += '<div class="subtab-bar-wrapper">';
-    h += buildDungeonSubTabBarHTML();
-    h += '</div>';
-  }
-
-  h += '</div>'; // fin .subtab-page
+  h += '</div>';
+  h += '</div>';
   return h;
 }
-
 window.buildDungeonHTML = buildDungeonHTML;
 
-var pendingDungeonTierId = null;
+/* ---------- Feuille de lancement (.ksheet) ---------- */
+function buildDungeonSceauLoreHTML(dungeonId) {
+  if (typeof CodexManager === "undefined") return "";
+  var entry = CodexManager.getById("dungeon_tier_" + dungeonId);
+  if (!entry) return "";
+  return '<div class="dsheet-lore">« ' + esc(entry.text) + ' »</div>';
+}
 
-function buildDungeonIntroHTML(tierId) {
-  var tier = DungeonManager.getTierById(tierId);
-  var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[tier.maxRarity]) || tier.maxRarity;
+function buildDungeonSheetHTML(dungeonId) {
+  var dungeon = DungeonManager.getById(dungeonId);
+  var world = (window.WORLDS || []).find(function (w) { return w.id === dungeon.worldId; });
+  var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[dungeon.maxRarity]) || dungeon.maxRarity;
+  var rarityColor = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[dungeon.maxRarity]) || "#9ca3af";
   var tickets = game.dungeonTickets || 0;
+  var n = pendingDungeonMarks.length;
+  var maxMarks = DUNGEON_CONFIG.maxMarks || 3;
+  var mult = DungeonManager.getMarkRewardMult(n);
+  var storyFree = typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(dungeon.id);
 
-  var h = '<div class="full-menu-overlay">';
-  h += '  <div class="full-menu dungeon-story-card">';
-  h += '    <div class="dungeon-story-icon"><img class=ico-inline src=images/Icons/subtabs/dungeon.png></div>';
-  h += '    <div class="dungeon-story-title">' + esc(tier.name) + '</div>';
-  h += '    <div class="dungeon-story-text">' + esc(tier.story) + '</div>';
-  h += buildDungeonSceauLoreHTML(tierId);
-  h += '    <div class="dungeon-story-meta"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> Butin garanti jusqu\u2019à : <strong>' + esc(rarityLabel) + '</strong> · <img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ' + DUNGEON_CONFIG.waveCount + ' vagues + boss</div>';
-  // v3.136.0 : ticket offert par l'Histoire (forest_14 en cours) — pas de décompte, pas d'achat à proposer.
-  if (typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(tierId)) {
-    h += '    <div class="dungeon-story-meta"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> <strong>Entrée offerte</strong> — les braises te guident, aucun ticket consommé tant que « La tanière du Basilic » est en cours</div>';
+  var h = '<div class="ksheet-backdrop" onclick="closeDungeonSheet()"></div>';
+  h += '<div class="ksheet dungeon-sheet"><div class="ksheet-handle"></div>';
+  h += '<div class="ksheet-title">' + renderIconOrEmojiHTML(dungeon.icon || "images/Icons/subtabs/dungeon.png", "", dungeon.name) + '<span>' + esc(dungeon.name) + '</span></div>';
+  h += '<div class="dsheet-sub">' + (world ? esc(world.name) + ' · ' : '') + DUNGEON_CONFIG.waveCount + ' vagues + boss · <span style="color:' + rarityColor + ';font-weight:800">' + esc(rarityLabel) + '</span> max</div>';
+  h += '<div class="ksheet-body">';
+  if (dungeon.story) h += '<div class="dsheet-story">' + esc(dungeon.story) + '</div>';
+  h += buildDungeonSceauLoreHTML(dungeon.id);
+
+  h += '<div class="dsheet-marks-title"><span>Marques</span><span>' + n + ' / ' + maxMarks + '</span></div>';
+  (DUNGEON_MARKS || []).forEach(function (m) {
+    var on = pendingDungeonMarks.indexOf(m.id) !== -1;
+    var ok = DungeonManager.isMarkUnlocked(m.id, dungeon.id);
+    h += '<button type="button" class="dmark' + (on ? ' is-on' : '') + (ok ? '' : ' is-locked') + '" onclick="toggleDungeonMark(\'' + esc(m.id) + '\')">';
+    h += renderIconOrEmojiHTML(m.icon, "dmark-img", m.name);
+    h += '<span class="dmark-body"><span class="dmark-name">' + esc(m.name) + '</span><br><span class="dmark-desc">' + (ok ? esc(m.desc) : 'Termine ce donjon une fois') + '</span></span>';
+    h += '<span class="dmark-state"></span></button>';
+  });
+
+  /* Récompense projetée : la raison d'être des Marques, visible sans dérouler. */
+  h += '<div class="dsheet-reward"><span>Récompenses <strong>×' + mult.toFixed(2).replace(/0$/, "") + '</strong></span>';
+  var specialDef = dungeon.specialResourceId ? WAREHOUSE_RESOURCES[dungeon.specialResourceId] : null;
+  if (specialDef && dungeon.specialResourceAmount > 0) {
+    h += '<span>' + renderIconOrEmojiHTML(specialDef.icon, "dsheet-reward-icon", specialDef.name) + ' ' + esc(specialDef.name) + ' <strong>+' + DungeonManager.getSpecialAmount(dungeon, n) + '</strong></span>';
   } else {
-    h += '    <div class="dungeon-story-meta"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> Tickets restants : <strong>' + tickets + '</strong>' + (tickets <= 0 ? ' · <a href="javascript:void(0)" onclick="closeDungeonIntro();openDungeonTicketOverlay();">en acheter</a>' : '') + '</div>';
+    h += '<span><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> Éclats <strong>+' + (DUNGEON_CONFIG.waveCount + DUNGEON_CONFIG.shardsBossBonus) + '</strong></span>';
   }
-  h += '    <div class="dungeon-story-actions">';
-  h += '      <button class="settings-btn" type="button" onclick="closeDungeonIntro()">Annuler</button>';
-  h += '      <button class="settings-btn primary" type="button" onclick="confirmDungeonStart()">Entrer</button>';
-  h += '    </div>';
-  h += '  </div>';
+  h += '</div>';
+
+  /* v3.247.0 : pronostic du BOSS du donjon, Marques comprises. buildWaveEnemy lit
+     game.dungeonRun.dungeonId : on le pose le temps du calcul (le run n'est pas actif,
+     start() le réécrira de toute façon) et on restaure ensuite. */
+  if (window.CombatForecast && window.DungeonManager) {
+    var savedRun = game.dungeonRun;
+    try {
+      game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, marks: pendingDungeonMarks.slice() };
+      var bossPreview = DungeonManager.buildWaveEnemy(DUNGEON_CONFIG.waveCount + 1);
+      game.dungeonRun = savedRun;
+      var f = CombatForecast.forEnemy(bossPreview);
+      if (f) h += buildCombatForecastLineHTML(f);
+    } catch (e) { game.dungeonRun = savedRun; }
+  }
+
+  if (storyFree) {
+    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> <strong>Entrée offerte</strong> — les braises te guident, aucun ticket consommé</div>';
+  } else {
+    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> Tickets restants : <strong>' + tickets + '</strong>'
+       + (tickets <= 0 ? ' · <a href="javascript:void(0)" onclick="closeDungeonSheet();openDungeonTicketOverlay();">en acheter</a>' : '') + '</div>';
+  }
+  h += '</div>'; // ksheet-body
+  h += '<button type="button" class="ksheet-close" onclick="confirmDungeonStart()">Entrer</button>';
   h += '</div>';
   return h;
 }
 
-function buildDungeonSceauLoreHTML(tierId) {
-  if (typeof CodexManager === "undefined") return "";
-  var entry = CodexManager.getById("dungeon_tier_" + tierId);
-  if (!entry) return "";
-  return '    <div class="dungeon-story-lore"><img class=ico-inline src=images/Icons/codex/codex_lore.png> « ' + esc(entry.text) + ' »</div>';
-}
-
-function openDungeonIntro(tierId) {
-  if (!DungeonManager.isTierUnlocked(tierId)) return showToast("Palier verrouillé", 1200);
-  if ((game.heroHp || 0) <= 0) return showToast("Héros à terre — repose-toi au Campement d'abord", 1600);
-  var storyFree = typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(tierId); // v3.136.0
-  if (!storyFree && (game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
-
-  pendingDungeonTierId = tierId;
+function renderDungeonSheet() {
   var host = document.getElementById("dungeon-modal-root");
-  if (host) host.innerHTML = buildDungeonIntroHTML(tierId);
+  if (host && pendingDungeonId != null) host.innerHTML = buildDungeonSheetHTML(pendingDungeonId);
 }
 
-function closeDungeonIntro() {
-  pendingDungeonTierId = null;
+function openDungeonSheet(dungeonId) {
+  if (!DungeonManager.isUnlocked(dungeonId)) return showToast("Donjon verrouillé", 1200);
+  if ((game.heroHp || 0) <= 0) return showToast("Héros à terre — repose-toi au Campement d'abord", 1600);
+  var storyFree = typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(dungeonId);
+  if (!storyFree && (game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
+  pendingDungeonId = Number(dungeonId);
+  pendingDungeonMarks = [];
+  renderDungeonSheet();
+}
+// alias historique
+function openDungeonIntro(dungeonId) { return openDungeonSheet(dungeonId); }
+
+function closeDungeonSheet() {
+  pendingDungeonId = null;
+  pendingDungeonMarks = [];
   var host = document.getElementById("dungeon-modal-root");
   if (host) host.innerHTML = "";
 }
+function closeDungeonIntro() { return closeDungeonSheet(); }
 
-function confirmDungeonStart() {
-  var tierId = pendingDungeonTierId;
-  closeDungeonIntro();
-  if (tierId) DungeonManager.start(tierId);
+function toggleDungeonMark(markId) {
+  if (pendingDungeonId == null) return;
+  if (!DungeonManager.isMarkUnlocked(markId, pendingDungeonId)) return;
+  var i = pendingDungeonMarks.indexOf(markId);
+  if (i !== -1) pendingDungeonMarks.splice(i, 1);
+  else if (pendingDungeonMarks.length >= (DUNGEON_CONFIG.maxMarks || 3)) return showToast((DUNGEON_CONFIG.maxMarks || 3) + " Marques au plus", 1200);
+  else pendingDungeonMarks.push(markId);
+  renderDungeonSheet();
 }
 
+function confirmDungeonStart() {
+  var id = pendingDungeonId;
+  var marks = pendingDungeonMarks.slice();
+  closeDungeonSheet();
+  if (id != null) DungeonManager.start(id, marks);
+}
+
+/* ---------- Rapport de fin ---------- */
 function buildDungeonSummaryHTML(result) {
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card' + (result.success ? ' is-success' : ' is-failure') + '">';
@@ -296,19 +253,22 @@ function buildDungeonSummaryHTML(result) {
 
   h += '    <div class="dungeon-summary-rewards">';
   h += '      <div class="dungeon-summary-row"><span>Vagues passées</span><span>' + Math.min(result.clearedWave, result.wavesTotal) + ' / ' + result.wavesTotal + (result.success ? ' + Boss' : '') + '</span></div>';
+  if (result.marks && result.marks.length) {
+    var names = result.marks.map(function (id) { var m = DungeonManager.getMark(id); return m ? m.name : id; }).join(", ");
+    h += '      <div class="dungeon-summary-row"><span>Marques</span><span>×' + Number(result.markMult || 1).toFixed(2).replace(/0$/, "") + ' · ' + esc(names) + '</span></div>';
+  }
   h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/gold_icon.png> Or</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
   h += '      <div class="dungeon-summary-row"><span>' + renderIconOrEmojiHTML("images/Icons/essence_icon.png", "dungeon-summary-icon", "Essence") + ' Essence</span><span>+' + formatNumber(result.essenceReward) + '</span></div>';
   h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> Éclats</span><span>+' + formatNumber(result.shardsGained) + '</span></div>';
-  /* v3.223.0 : matériau de monde, sur sa propre ligne du rapport. */
   if (result.specialGained > 0 && result.specialName) {
     h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/scene/path_easy.png> ' + esc(result.specialName) + '</span><span>+' + result.specialGained + '</span></div>';
   }
-
   if (result.lootedItem) {
     h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> Butin</span><span>' + esc(result.lootedItem.name) + '</span></div>';
   }
   h += '    </div>';
-
+  // v3.245.0 : les éclats se dépensent chez l'Enchanteresse
+  h += '    <div class="dungeon-story-meta"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> Les Éclats se dépensent chez l\u2019Enchanteresse, au Village.</div>';
   h += '    <button class="settings-btn primary dungeon-story-close" type="button" onclick="closeDungeonSummary()">Continuer</button>';
   h += '  </div>';
   h += '</div>';
@@ -325,12 +285,16 @@ function closeDungeonSummary() {
   if (host) host.innerHTML = "";
 }
 
+window.openDungeonSheet = openDungeonSheet;
+window.closeDungeonSheet = closeDungeonSheet;
+window.toggleDungeonMark = toggleDungeonMark;
 window.openDungeonIntro = openDungeonIntro;
 window.closeDungeonIntro = closeDungeonIntro;
 window.confirmDungeonStart = confirmDungeonStart;
 window.openDungeonSummary = openDungeonSummary;
 window.closeDungeonSummary = closeDungeonSummary;
 
+/* ---------- Tickets (inchangé) ---------- */
 function buildDungeonTicketOverlayHTML() {
   var tickets = game.dungeonTickets || 0;
   var purchasedToday = game.dungeonTicketsPurchasedToday || 0;
@@ -343,20 +307,17 @@ function buildDungeonTicketOverlayHTML() {
   h += '  <div class="full-menu dungeon-story-card">';
   h += '    <div class="dungeon-story-icon"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png></div>';
   h += '    <div class="dungeon-story-title">Tickets de donjon</div>';
-  h += '    <div class="dungeon-story-text">1 ticket gratuit par jour, valable pour n\u2019importe quel donjon et n\u2019importe quel palier. Chaque ticket supplémentaire coûte de plus en plus cher au fil de la journée — limité à ' + maxPerDay + ' achats par jour.</div>';
-
+  h += '    <div class="dungeon-story-text">1 ticket gratuit par jour, valable pour n\u2019importe quel donjon. Chaque ticket supplémentaire coûte de plus en plus cher au fil de la journée — limité à ' + maxPerDay + ' achats par jour.</div>';
   h += '    <div class="dungeon-ticket-row">';
   h += '      <span class="dungeon-ticket-count"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> ' + tickets + '</span>';
   h += '      <span class="dungeon-ticket-reset">Renouvellement dans ' + esc(DungeonManager.timeUntilTicketReset()) + '</span>';
   h += '    </div>';
   h += '    <div class="dungeon-ticket-limit">Achats aujourd\u2019hui : ' + purchasedToday + ' / ' + maxPerDay + '</div>';
   h += '    <div class="dungeon-ticket-limit">Prix du prochain ticket : ' + formatNumber(nextTicketCost) + ' essence</div>';
-
   h += '    <div class="dungeon-story-actions">';
   h += '      <button class="settings-btn" type="button" onclick="closeDungeonTicketOverlay()">Fermer</button>';
   h += '      <button class="settings-btn primary' + (canBuyTicket ? '' : ' disabled') + '" type="button" ' + (canBuyTicket ? 'onclick="buyDungeonTicketFromOverlay()"' : 'disabled') + '>' + (remainingPurchases > 0 ? 'Acheter (' + formatNumber(nextTicketCost) + ' essence)' : 'Limite atteinte') + '</button>';
   h += '    </div>';
-
   h += '  </div>';
   h += '</div>';
   return h;

@@ -46,6 +46,7 @@ function getEquipShopWorldPriceMult() {
 
 var EquipShopManager = {
   ensure: function () {
+    if (typeof game.equipShopStarterServed !== "boolean") game.equipShopStarterServed = false; // v3.247.0
     if (!Array.isArray(game.equipShopStock)) game.equipShopStock = [];
     if (typeof game.equipShopResetTime !== "number") game.equipShopResetTime = 0;
     if (typeof game.equipShopManualRefreshCount !== "number") game.equipShopManualRefreshCount = 0;
@@ -80,7 +81,40 @@ var EquipShopManager = {
     return Math.pow(0.95, Math.max(0, lvl));
   },
 
+  /* v3.247.0 : la PREMIÈRE vitrine d'une partie est figée (EQUIP_SHOP_STARTER), la même pour
+     tous les héros, l'arme déclinée par classe. Tout renouvellement ensuite repasse en aléatoire. */
+  buildStarterStock: function () {
+    var cls = (typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
+    var classId = cls ? cls.id : "knight";
+    var self = this;
+    return (window.EQUIP_SHOP_STARTER || []).map(function (def, i) {
+      var config = (typeof EQUIPMENT_SLOT_CONFIG !== "undefined") ? EQUIPMENT_SLOT_CONFIG[def.slot] : null;
+      var icon = (def.byClassIcon && def.byClassIcon[classId]) || def.icon
+        || (config && config.icons ? config.icons[0] : "sword");
+      var item = {
+        uid: "shopstart_" + def.slot + "_" + i,
+        slot: def.slot,
+        name: def.name,
+        icon: icon,
+        rarity: "common",
+        stat: def.stat,
+        value: def.value,
+        affixes: [],          // la vitrine de départ n'a pas d'affixes : c'est un socle
+        worldIndex: 0,
+        starter: true
+      };
+      item.price = self.getPrice(item);
+      item.bought = false;
+      return item;
+    });
+  },
+
   generateStock: function () {
+    // v3.247.0 : vitrine de départ, servie une seule fois par partie
+    if (!game.equipShopStarterServed) {
+      var starter = this.buildStarterStock();
+      if (starter.length) { game.equipShopStarterServed = true; return starter; }
+    }
     var stock = [];
     var size = this.getShopSize();
     for (var i = 0; i < size; i++) {

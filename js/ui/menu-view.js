@@ -9,7 +9,7 @@ var MENU_ITEMS = [
      Boutique migre vers les bâtiments du Village (lot N-2). Six cases, deux rangées. */
   { tab: "bestiary", label: "Bestiaire & Codex", img: "./images/Icons/menu_icons/bestiaire_menu.png" },
   { tab: "achievements", label: "Hauts faits", img: "./images/Icons/menu_icons/achivment_menu.png", badge: "achievement" },
-  { tab: "afflictions", label: "Afflictions", icon: "images/Icons/camp/campfire.png", badge: "afflictions" },
+  /* v3.245.0 (refonte Donjons) : Afflictions retirées — devenues les Marques, choisies à l'entrée d'un donjon. 5 cases (décision 12.4). */
   { tab: "log", label: "Journal", img: "./images/Icons/menu_icons/journal_menu.png" },
   { tab: "tutorials", label: "Tutoriels", icon: "images/Icons/codex/codex_lore.png" },
   { tab: "settings", label: "Paramètres", img: "./images/Icons/menu_icons/settings_menu.png" }
@@ -50,10 +50,6 @@ function buildFullMenuHTML() {
       badgeCount = (typeof getTalentsAvailableCount === "function") ? getTalentsAvailableCount() : 0;
     } else if (item.badge === "ascension") {
       badgeCount = (typeof getAscensionAvailableCount === "function") ? getAscensionAvailableCount() : 0;
-    } else if (item.badge === "afflictions") {
-      badgeCount = (window.AfflictionManager && typeof AfflictionManager.getActiveCount === "function")
-        ? AfflictionManager.getActiveCount()
-        : 0;
     } else if (item.badge) {
       badgeCount = getMenuQuestBadgeCount();
     }

@@ -1,6 +1,10 @@
 "use strict";
-/* systems/affliction-system.js — activation/désactivation des afflictions (data/afflictions.js) + calcul centralisé de leurs effets cumulés.
-   Interrupteur immédiat. Écran dédié : ui/afflictions-view.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* systems/affliction-system.js — v3.245.0 (refonte Donjons, doc v1.1 §6.1) : les afflictions deviennent les MARQUES d'un run
+   de donjon. Même API pour les crochets du moteur (stats-system, combat-engine, potion-system, apothecary-system, combat-view),
+   mais la SOURCE est game.dungeonRun.marks (DUNGEON_MARKS) et la GARDE est « run de donjon actif ». Hors run, tout est neutre :
+   le farm libre n'a plus d'afflictions. game.activeAfflictions est conservé en sauvegarde mais ignoré (purge au lot D-4).
+   Ancienne garde v3.136.0, pour mémoire : !(s && s.active && s.context && s.context !== "farm") — abandonnée parce que le
+   jeu est devenu narratif et mission par mission, plus personne ne savait où les afflictions s'appliquaient. */
 
 var AfflictionManager = {
   ensure: function () {
@@ -9,49 +13,24 @@ var AfflictionManager = {
     }
   },
 
+  /* Une Marque est-elle active sur le run en cours ? (vide hors run) */
   isActive: function (id) {
-    this.ensure();
-    return !!game.activeAfflictions[id];
+    return !!(window.DungeonManager && typeof DungeonManager.hasRunMark === "function" && DungeonManager.hasRunMark(id));
   },
 
   getActiveCount: function () {
-    this.ensure();
-    return Object.keys(game.activeAfflictions).filter(function (id) { return game.activeAfflictions[id]; }).length;
+    return this.getActiveList().length;
   },
 
+  /* Définitions des Marques du run (DUNGEON_MARKS), vide hors run de donjon. */
   getActiveList: function () {
-    this.ensure();
-    return (AFFLICTIONS || []).filter(function (a) { return game.activeAfflictions[a.id]; });
+    return (window.DungeonManager && typeof DungeonManager.getRunMarks === "function") ? DungeonManager.getRunMarks() : [];
   },
 
-  toggle: function (id) {
-    this.ensure();
-    var def = (AFFLICTIONS || []).find(function (a) { return a.id === id; });
-    if (!def) return showToast("Affliction introuvable", 1000);
-
-    var currentlyActive = !!game.activeAfflictions[id];
-
-    if (!currentlyActive && this.getActiveCount() >= (window.AFFLICTION_MAX_ACTIVE || 4)) {
-      showToast("Maximum " + (window.AFFLICTION_MAX_ACTIVE || 4) + " afflictions actives à la fois", 1600);
-      return false;
-    }
-
-    game.activeAfflictions[id] = !currentlyActive;
-    showToast((currentlyActive ? "Désactivé : " : "Activé : ") + def.name, 1400);
-
-    if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
-    if (typeof renderAll === "function") renderAll();
-    if (typeof saveGame === "function") saveGame();
-    return true;
-  },
-
-  /* v3.136.0 (audit Forêt) : les afflictions ne s'appliquent QU'AU FARM LIBRE (data/afflictions.js l'annonçait, le code
-     ne le faisait pas : donjon, quêtes, chasse et Petite Aventure les subissaient aussi). Contexte lu sur la sortie
-     (SortieManager) : hors sortie ou sortie « farm » = actives ; toute mission (dungeon/adventure/hunt/scene) = neutres.
-     Les toggles restent visibles/actifs à l'écran Afflictions (getActiveList/getActiveCount ne filtrent pas). */
+  /* v3.245.0 : la garde devient « run de donjon actif ». Les Marques se choisissent dans la feuille de lancement
+     (ui/dungeon-view.js) et sont figées pour le run : plus de bascule globale (toggle supprimé). */
   isContextActive: function () {
-    var s = game.sortie;
-    return !(s && s.active && s.context && s.context !== "farm");
+    return !!(game.dungeonRun && game.dungeonRun.active);
   },
 
   getCombinedModifiers: function () {
@@ -69,7 +48,7 @@ var AfflictionManager = {
       forceAllBosses: false
     };
 
-    if (!contextActive) return out; // v3.136.0 : mission en cours -> modificateurs neutres
+    if (!contextActive) return out; // hors run de donjon : neutre
 
     this.getActiveList().forEach(function (a) {
       var m = a.modifiers || {};
@@ -88,10 +67,11 @@ var AfflictionManager = {
     return out;
   },
 
+  /* 1 + n × DUNGEON_CONFIG.markStackBonus (0,15) — appliqué par recalcStats sur goldMult/essenceGlobalMult pendant le run. */
   getStackRewardMult: function () {
-    if (!this.isContextActive()) return 1; // v3.136.0 : pas de bonus de cumul hors farm libre
-    var count = this.getActiveCount();
-    return 1 + count * (window.AFFLICTION_STACK_REWARD_BONUS || 0);
+    if (!this.isContextActive()) return 1;
+    var bonus = (window.DUNGEON_CONFIG && typeof DUNGEON_CONFIG.markStackBonus === "number") ? DUNGEON_CONFIG.markStackBonus : 0;
+    return 1 + this.getActiveCount() * bonus;
   },
 
   shouldForceAllBosses: function () {

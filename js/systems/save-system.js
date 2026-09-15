@@ -73,8 +73,12 @@ function resumeCombatAfterSlotChange(freshState) {
   if (typeof ensureDailyQuests === "function") ensureDailyQuests();
 
   if (game.dungeonRun && game.dungeonRun.active && window.DungeonManager) {
-    if (typeof DungeonManager.applyDungeonTheme === "function") DungeonManager.applyDungeonTheme(game.dungeonRun.tierId);
+    if (typeof DungeonManager.ensure === "function") DungeonManager.ensure(); // v3.245.0 : tierId -> dungeonId
+    if (typeof DungeonManager.applyDungeonTheme === "function") DungeonManager.applyDungeonTheme(game.dungeonRun.dungeonId);
     if (typeof DungeonManager.spawnWave === "function") DungeonManager.spawnWave(game.dungeonRun.wave || 1);
+  } else if (window.QuestEnemyManager && typeof QuestEnemyManager.respawnActiveRunEnemy === "function"
+      && QuestEnemyManager.respawnActiveRunEnemy()) {
+    // v3.246.0 : run de quête ou de chasse en cours — son propre ennemi, pas un ennemi de farm
   } else if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
     CombatEngine.spawnEnemy();
   }
@@ -429,10 +433,11 @@ function buildSaveData() {
     equipShopStock: game.equipShopStock || [],
     equipShopResetTime: Number(game.equipShopResetTime || 0),
     equipShopManualRefreshCount: Number(game.equipShopManualRefreshCount || 0),
+    equipShopStarterServed: !!game.equipShopStarterServed, // v3.247.0
     dungeonTickets: Number(game.dungeonTickets != null ? game.dungeonTickets : 1),
     dungeonTicketResetTime: Number(game.dungeonTicketResetTime || 0),
     dungeonTicketsPurchasedToday: Number(game.dungeonTicketsPurchasedToday || 0),
-    dungeonRun: game.dungeonRun || { active: false, wave: 0, tierId: 1 },
+    dungeonRun: game.dungeonRun || { active: false, wave: 0, dungeonId: 1, marks: [] }, // v3.245.0
     dungeonBestWave: Number(game.dungeonBestWave || 0),
     dungeonBossClears: Number(game.dungeonBossClears || 0),
     dungeonShards: Number(game.dungeonShards || 0),
@@ -674,12 +679,19 @@ function restoreBaseState(d) {
   game.equipShopStock = Array.isArray(d.equipShopStock) ? d.equipShopStock : [];
   game.equipShopResetTime = Number(d.equipShopResetTime || 0);
   game.equipShopManualRefreshCount = Number(d.equipShopManualRefreshCount || 0);
+  /* v3.247.0 : une partie d'AVANT cette version a forcément déjà eu sa vitrine — on ne
+     lui sert pas une vitrine de départ au prochain renouvellement. Repli : servie si un
+     stock existe déjà ou si un renouvellement a eu lieu. */
+  game.equipShopStarterServed = (typeof d.equipShopStarterServed === "boolean")
+    ? d.equipShopStarterServed
+    : (Array.isArray(d.equipShopStock) && d.equipShopStock.length > 0) || Number(d.equipShopResetTime || 0) > 0;
 
   game.dungeonTickets = typeof d.dungeonTickets === "number" ? d.dungeonTickets : 1;
   game.dungeonTicketResetTime = Number(d.dungeonTicketResetTime || 0);
   game.dungeonTicketsPurchasedToday = Number(d.dungeonTicketsPurchasedToday || 0);
-  game.dungeonRun = d.dungeonRun && typeof d.dungeonRun === "object" ? d.dungeonRun : { active: false, wave: 0, tierId: 1 };
-  if (typeof game.dungeonRun.tierId !== "number") game.dungeonRun.tierId = 1;
+  game.dungeonRun = d.dungeonRun && typeof d.dungeonRun === "object" ? d.dungeonRun : { active: false, wave: 0, dungeonId: 1, marks: [] };
+  if (typeof game.dungeonRun.dungeonId !== "number") game.dungeonRun.dungeonId = Number(game.dungeonRun.tierId) || 1; // v3.245.0 : repli d'avant la refonte
+  if (!Array.isArray(game.dungeonRun.marks)) game.dungeonRun.marks = [];
   game.dungeonBestWave = Number(d.dungeonBestWave || 0);
   game.dungeonBossClears = Number(d.dungeonBossClears || 0);
   game.dungeonShards = Number(d.dungeonShards || 0);
@@ -1054,6 +1066,7 @@ function hardResetState() {
   var keptEquipShopStock = game.equipShopStock || [];
   var keptEquipShopResetTime = Number(game.equipShopResetTime || 0);
   var keptEquipShopManualRefreshCount = Number(game.equipShopManualRefreshCount || 0);
+  var keptEquipShopStarterServed = !!game.equipShopStarterServed; // v3.247.0 : l'ascension ne redonne pas la vitrine de départ
   // v3.14 : le réglage d'autovente n'est plus conservé à l'ascension — logique puisque tout l'équipement est perdu à l'ascension.
   // Détail : save-system_notes.md #32.
   var keptHasSeenOnboarding = !!game.hasSeenOnboarding;
@@ -1118,6 +1131,7 @@ function hardResetState() {
   game.equipShopStock = keptEquipShopStock;
   game.equipShopResetTime = keptEquipShopResetTime;
   game.equipShopManualRefreshCount = keptEquipShopManualRefreshCount;
+  game.equipShopStarterServed = keptEquipShopStarterServed;
 
   game.activePotions = {};
   game.pendingPotionBonuses = { aetherNext: 0 };
@@ -1129,7 +1143,7 @@ function hardResetState() {
   game.dungeonTickets = keptDungeonTickets;
   game.dungeonTicketResetTime = keptDungeonTicketResetTime;
   game.dungeonTicketsPurchasedToday = keptDungeonTicketsPurchasedToday;
-  game.dungeonRun = { active: false, wave: 0, tierId: 1 };
+  game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
   // v3.2 : le run de quête en cours ne survit pas à l'ascension (la progression déjà enregistrée, elle, est conservée séparément).
   // Détail : save-system_notes.md #33.
   game.adventureQuestRun = { active: false, questId: null };
@@ -1281,6 +1295,7 @@ function fullResetState() {
   game.lastSave = 0;
   // v2.26 : tous les systèmes ajoutés depuis la 1ère version de fullResetState() — oubliés jusqu'ici, un reset "complet" ne l'était pas vraiment.
   game.equipShopStock = [];
+  game.equipShopStarterServed = false; // v3.247.0 : partie neuve -> vitrine de départ à nouveau
   game.equipShopResetTime = 0;
   game.equipShopManualRefreshCount = 0;
 
@@ -1291,7 +1306,7 @@ function fullResetState() {
   game.potionsOwned = {};
   game.lastHealUse = 0;
 
-  game.dungeonRun = { active: false, wave: 0, tierId: 1 };
+  game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
   game.adventureQuestRun = { active: false, questId: null };
   game.huntRun = { active: false, questId: null, killsInLot: 0 }; // v3.30
   game.explorationRun = null; // v3.90.0 : reset complet, tout repart de zéro

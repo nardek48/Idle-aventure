@@ -231,6 +231,26 @@ var EQUIPMENT_SLOT_CONFIG = {
   }
 };
 
+/* v3.247.0 (décision Seb 15/09/2026) — VITRINE DE DÉPART FIGÉE.
+   La première vitrine d'une partie neuve ne doit plus être tirée au hasard : six objets
+   identiques pour tous les héros, un par emplacement utile, valeurs FIXES. Deux raisons :
+   garantir que le joueur voie une arme, un casque, une armure — et supprimer l'aléa au
+   moment précis où il n'a de quoi acheter qu'une pièce (300 or = 32 combats en Lisière).
+   L'arme est déclinée par classe (même valeur, icône adaptée) : une épée est inutilisable
+   par un Mage, la restriction d'icône existe déjà dans generateEquipmentItem.
+   Les valeurs sont prises au HAUT de la fourchette commune de chaque emplacement : la
+   vitrine de départ est un socle correct, pas un lot au rabais.
+   Le renouvellement (6 h, ou manuel) repasse en aléatoire — décision Seb. */
+var EQUIP_SHOP_STARTER = [
+  { slot: "weapon", stat: "tapDmg", value: 25, name: "Arme du campement", byClassIcon: { knight: "sword", archer: "bow", mage: "staff" }, icon: "sword" },
+  { slot: "armor", stat: "defense", value: 0.035, name: "Armure de cuir usée", icon: "armor" },
+  { slot: "helmet", stat: "critMult", value: 0.20, name: "Casque cabossé", icon: "casque" },
+  { slot: "gloves", stat: "tapMult", value: 0.20, name: "Gants de marche", icon: "gants" },
+  { slot: "boots", stat: "autoDps", value: 5, name: "Bottes éculées", icon: "bottes" },
+  { slot: "amulet", stat: "critChance", value: 3, name: "Amulette ternie", icon: "amulet" }
+];
+
+window.EQUIP_SHOP_STARTER = EQUIP_SHOP_STARTER;
 window.EQUIP_WORLD_SCALE = EQUIP_WORLD_SCALE;
 window.getEquipWorldScale = getEquipWorldScale;
 window.EQUIPMENT_SLOTS = EQUIPMENT_SLOTS;

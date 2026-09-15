@@ -151,9 +151,18 @@ function buildVillageBuildingSheetHTML(id) {
     h += buildForgeBoardHTML();
   }
 
-  /* L'Enchanteresse, comme la Forge, porte son établi dans sa fiche. */
-  if (id === "enchanter" && level > 0) {
-    h += buildEnchantBoardHTML();
+  /* L'Enchanteresse, comme la Forge, porte son établi dans sa fiche.
+     v3.245.0 (refonte Donjons, décision 12.5) : la Boutique d'éclats du Donjon vit ici aussi, derrière
+     un segment Relance / Éclats. Éclats reste accessible bâtiment NON construit — les éclats arrivent
+     dès forest_13, bien avant l'Atelier niveau 3 : c'est une invitation à construire, pas une porte fermée. */
+  if (id === "enchanter") {
+    var seg = enchanterSheetSegment || (level > 0 ? "relance" : "eclats");
+    if (level <= 0) seg = "eclats";
+    h += '<div class="kseg vb-sheet-seg">';
+    h += '<button type="button"' + (level > 0 ? '' : ' disabled') + ' class="' + (seg === "relance" ? 'is-on' : '') + '" onclick="setEnchanterSheetSegment(\'relance\')">Relance</button>';
+    h += '<button type="button" class="' + (seg === "eclats" ? 'is-on' : '') + '" onclick="setEnchanterSheetSegment(\'eclats\')">Éclats<span class="kseg-count">' + formatNumber(game.dungeonShards || 0) + '</span></button>';
+    h += '</div>';
+    h += (seg === "relance" && level > 0) ? buildEnchantBoardHTML() : buildShardShopBoardHTML();
   }
 
   /* La Taverne est le seul bâtiment dont la fiche porte du contenu jouable :
@@ -558,6 +567,55 @@ function buildEnchantBoardHTML() {
   return h;
 }
 window.buildEnchantBoardHTML = buildEnchantBoardHTML;
+
+/* --- Boutique d'éclats (ex-sous-onglet Donjon > Boutique, v3.245.0) ------ */
+var enchanterSheetSegment = null; // variable de vue, non sauvegardée
+
+function setEnchanterSheetSegment(seg) {
+  enchanterSheetSegment = (seg === "eclats") ? "eclats" : "relance";
+  if (openVillageBuildingId === "enchanter") openVillageBuildingSheet("enchanter");
+}
+window.setEnchanterSheetSegment = setEnchanterSheetSegment;
+
+function buildShardShopBoardHTML() {
+  if (!window.DungeonManager || !window.DUNGEON_SHOP) return "";
+  var shards = game.dungeonShards || 0;
+  var h = '<div class="vb-shard-board">';
+  h += '<div class="vb-shard-count"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + formatNumber(shards) + ' Éclats</div>';
+  h += '<div class="vb-board-sub">Payée en Éclats — gagnés en passant des vagues de donjon (1 par vague, +' + DUNGEON_CONFIG.shardsBossBonus + ' si le boss tombe, +' + (DUNGEON_CONFIG.eliteShardsBonus || 0) + ' par élite). Utilisables uniquement ici.</div>';
+  h += '<div class="dungeon-shop-grid">';
+  (DUNGEON_SHOP || []).forEach(function (item) {
+    var level = DungeonManager.getShardShopLevel(item.id);
+    var maxed = level >= item.maxLevel;
+    var cost = DungeonManager.getShardShopCost(item);
+    var canBuy = !maxed && shards >= cost;
+    h += '<div class="nb-purchase-card' + (maxed ? ' is-maxed' : '') + '">';
+    h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(item.icon, "nb-purchase-icon", item.name) + '</div></div>';
+    h += '<div class="nb-purchase-info-col">';
+    h += '<div class="nb-purchase-name">' + esc(item.name) + '</div>';
+    h += '<div class="nb-purchase-meta">Niv. ' + level + '/' + item.maxLevel + '</div>';
+    h += '<div class="nb-purchase-desc">' + esc(item.desc) + '</div>';
+    h += '</div>';
+    h += '<div class="nb-purchase-buy-col">';
+    if (maxed) {
+      h += '<button class="btn-buy is-maxed" type="button" disabled>Max</button>';
+    } else {
+      h += '<button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="buyShardUpgradeFromSheet(\'' + esc(item.id) + '\')"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + formatNumber(cost) + '</button>';
+    }
+    h += '</div>';
+    h += '</div>';
+  });
+  h += '</div>';
+  h += '</div>';
+  return h;
+}
+window.buildShardShopBoardHTML = buildShardShopBoardHTML;
+
+function buyShardUpgradeFromSheet(id) {
+  DungeonManager.buyShardUpgrade(id);
+  if (openVillageBuildingId === "enchanter") openVillageBuildingSheet("enchanter");
+}
+window.buyShardUpgradeFromSheet = buyShardUpgradeFromSheet;
 
 function rerollAffix(slot, index) {
   var item = (game.equipped || {})[slot];

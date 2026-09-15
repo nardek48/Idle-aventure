@@ -1,0 +1,71 @@
+/* =====================================================================
+   css/04-panel-forecast.css — v3.247.0, pronostic de combat.
+   Écran affiché avant un lancement risqué (ui/combat-forecast-view.js) et
+   ligne compacte reprise dans la feuille de lancement du donjon.
+   ===================================================================== */
+
+/* --- Ligne compacte (dans un écran de lancement existant) --- */
+.cf-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 6px 0 2px;
+  padding: 7px 10px;
+  border-radius: var(--nb-radius-md);
+  border: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+  font-size: 11px;
+  color: var(--nb-ink-dim);
+}
+.cf-line-verdict { font-size: 12px; font-weight: 800; color: var(--nb-ink); }
+.cf-line-detail { flex: 1 1 auto; min-width: 0; }
+
+/* Le verdict porte la couleur : vert rassurant, ambre prudent, rouge bloquant. */
+.cf-line.is-trivial .cf-line-verdict,
+.cf-line.is-abordable .cf-line-verdict { color: #2f7d32; }
+.cf-line.is-risque .cf-line-verdict { color: #8a5a1a; }
+.cf-line.is-tresdur .cf-line-verdict { color: #b4560f; }
+.cf-line.is-horsportee .cf-line-verdict { color: var(--danger); }
+.cf-line.is-horsportee { border-color: var(--danger); }
+
+/* --- Carte de confirmation --- */
+.cf-card {
+  padding: 16px 14px calc(16px + var(--safe-bottom));
+  /* Rendue HORS du .kframe : restauration d'encre, comme .vb-sheet-card. */
+  --nb-ink: #3a2c1a;
+  --nb-ink-dim: rgba(58, 44, 26, 0.72);
+}
+.cf-title { font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); text-align: center; }
+.cf-verdict { font-size: 20px; font-weight: 800; text-align: center; margin: 2px 0 6px; color: var(--nb-ink); }
+.cf-card.is-risque .cf-verdict { color: #8a5a1a; }
+.cf-card.is-tresdur .cf-verdict { color: #b4560f; }
+.cf-card.is-horsportee .cf-verdict { color: var(--danger); }
+.cf-enemy { font-size: 12px; text-align: center; color: var(--nb-ink-dim); margin-bottom: 10px; }
+
+.cf-rows {
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  background: var(--nb-cream-alt);
+  padding: 4px 10px;
+  margin-bottom: 10px;
+}
+.cf-row { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; font-size: 12px; color: var(--nb-ink); }
+.cf-row + .cf-row { border-top: 1px dashed var(--nb-frame-light); }
+.cf-row span:last-child { font-weight: 800; }
+.cf-row.is-blocking span:last-child { color: var(--danger); }
+
+.cf-reason { font-size: 12px; line-height: 1.45; color: var(--nb-ink); margin-bottom: 8px; }
+.cf-advice {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--nb-ink);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: var(--nb-radius-md);
+  border: 1px solid var(--nb-frame-light);
+  border-left: 3px solid var(--nb-gold);
+  background: #fff3d6;
+}
+.cf-hint { font-size: 11px; font-style: italic; color: var(--nb-ink-dim); margin-bottom: 8px; }
+.cf-actions { display: flex; gap: 8px; }
+.cf-actions .settings-btn { flex: 1 1 0; width: auto; min-width: 0; }

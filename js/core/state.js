@@ -151,11 +151,12 @@ function createInitialGameState() {
     equipShopStock: [],
     equipShopResetTime: 0,
     equipShopManualRefreshCount: 0,
+    equipShopStarterServed: false, // v3.247.0 : la vitrine de départ figée a-t-elle déjà été servie
 
     dungeonTickets: 1,
     dungeonTicketResetTime: 0,
     dungeonTicketsPurchasedToday: 0,
-    dungeonRun: { active: false, wave: 0, tierId: 1 },
+    dungeonRun: { active: false, wave: 0, dungeonId: 1, marks: [] }, // v3.245.0 : tierId -> dungeonId, Marques du run
     dungeonBestWave: 0,
     dungeonBossClears: 0,
     dungeonShards: 0,
@@ -316,14 +317,16 @@ function ensureGameStateDefaults() {
   if (!Array.isArray(game.equipShopStock)) game.equipShopStock = [];
   if (typeof game.equipShopResetTime !== "number") game.equipShopResetTime = 0;
   if (typeof game.equipShopManualRefreshCount !== "number") game.equipShopManualRefreshCount = 0;
+  if (typeof game.equipShopStarterServed !== "boolean") game.equipShopStarterServed = false; // v3.247.0
 
   if (typeof game.dungeonTickets !== "number") game.dungeonTickets = 1;
   if (typeof game.dungeonTicketResetTime !== "number") game.dungeonTicketResetTime = 0;
   if (typeof game.dungeonTicketsPurchasedToday !== "number") game.dungeonTicketsPurchasedToday = 0;
-  if (!game.dungeonRun || typeof game.dungeonRun !== "object") game.dungeonRun = { active: false, wave: 0, tierId: 1 };
+  if (!game.dungeonRun || typeof game.dungeonRun !== "object") game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
   if (window.CampManager && typeof CampManager.ensureDefaults === "function") CampManager.ensureDefaults();
   if (window.AfflictionManager && typeof AfflictionManager.ensure === "function") AfflictionManager.ensure();
-  if (typeof game.dungeonRun.tierId !== "number") game.dungeonRun.tierId = 1;
+  if (typeof game.dungeonRun.dungeonId !== "number") game.dungeonRun.dungeonId = Number(game.dungeonRun.tierId) || 1; // v3.245.0 : repli des sauvegardes d'avant la refonte
+  if (!Array.isArray(game.dungeonRun.marks)) game.dungeonRun.marks = [];
   if (typeof game.dungeonBestWave !== "number") game.dungeonBestWave = 0;
   if (typeof game.dungeonBossClears !== "number") game.dungeonBossClears = 0;
   if (typeof game.dungeonShards !== "number") game.dungeonShards = 0;

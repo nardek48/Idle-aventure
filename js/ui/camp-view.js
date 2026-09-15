@@ -58,8 +58,14 @@ function buildCampMissionBoardHTML() {
 function campMissionAction(missionId, action) {
   var m = window.MissionBoard ? MissionBoard.getById(missionId) : null;
   if (!m || typeof m[action] !== "function") return;
-  m[action]();
-  if (typeof renderPanel === "function") renderPanel();
+  var run = function () {
+    m[action]();
+    if (typeof renderPanel === "function") renderPanel();
+  };
+  /* v3.247.0 : avant de PARTIR (accept), on montre le pronostic si le combat est risqué ou
+     pire, avec possibilité d'annuler. Les autres actions (réclamer, abandonner) passent direct. */
+  if (action === "accept" && typeof launchWithForecast === "function") return launchWithForecast(m, run);
+  run();
 }
 window.campMissionAction = campMissionAction;
 window.buildCampMissionBoardHTML = buildCampMissionBoardHTML;
@@ -163,6 +169,7 @@ function buildCampHTML() {
   // v3.244.0 (chantier Navigation, décision Seb) : Donjon et Carte du monde quittent le
   // menu ☰ pour le bloc « Expédition » du Campement — c'est d'ici qu'on part. Mêmes
   // verrous d'Histoire que leurs anciennes cases ; rien tant que rien n'est débloqué.
+  h += buildCampPreparationDoorsHTML();
   h += buildCampExpeditionDoorsHTML();
 
   // v3.210.0 (décision Seb) : raccourci vers le Grimoire, retiré du menu ☰ au passage.
@@ -200,6 +207,52 @@ function buildCampHTML() {
 }
 
 window.buildCampHTML = buildCampHTML;
+
+/* v3.250.0 (bug remonté par Seb) — PORTE DE LA BOUTIQUE.
+   Le lot Navigation N-1 (v3.244.0) a retiré la Boutique du menu ☰ en prévision du lot N-2,
+   qui devait l'installer dans les bâtiments du Village. Entre les deux, l'écran n'avait plus
+   AUCUNE porte accessible en début de partie : les seuls renvois vivent dans les fiches de
+   l'Apothicaire (niveau > 0) et de la Taverne, deux bâtiments de rang 2 qui exigent le Village
+   — débloqué à forest_06. Or forest_04 débloque `shop` et demande « faire 1 achat en boutique » :
+   la chaîne d'Histoire était bloquée à la 4e étape sur une partie neuve, et les potions de soin
+   (décisives : 98 % d'échec sans, 0 % avec, cf. sim/forecast-calibration-bench.js) étaient
+   inatteignables.
+
+   La porte vit au Campement, comme celle du Grimoire : c'est le lieu où l'on prépare sa sortie.
+   Transitoire — quand la Halle et l'Apothicaire porteront les boutiques (lot N-2), elle pointera
+   vers eux ou disparaîtra. */
+function buildCampPreparationDoorsHTML() {
+  var unlocked = function (t) { return typeof isTabUnlocked !== "function" || isTabUnlocked(t); };
+  if (!unlocked("shop")) return "";
+
+  var potions = 0;
+  if (window.PotionManager && typeof PotionManager.getHealingStock === "function") {
+    (window.HEALING_POTIONS_DB || []).forEach(function (po) { potions += Number(PotionManager.getHealingStock(po.id) || 0); });
+  }
+
+  var h = '<div class="camp-card camp-expedition-card">';
+  h += '<div class="camp-card-title"><img class=ico-inline src=images/Icons/subtabs/potions.png> Préparer</div>';
+  h += '<div class="camp-doors">';
+
+  h += '<button type="button" class="camp-door" onclick="goToPotions()">';
+  h += '<img class="camp-door-ico" src="images/Icons/subtabs/potions.png" alt="">';
+  h += '<span class="camp-door-txt"><span class="camp-door-t">Potions</span>';
+  h += '<span class="camp-door-s">' + (potions > 0 ? potions + ' en réserve' : 'aucune en réserve') + '</span></span>';
+  if (potions > 0) h += '<span class="camp-door-badge kbadge kbadge-round"><span>' + potions + '</span></span>';
+  h += '<span class="camp-door-chev">›</span>';
+  h += '</button>';
+
+  h += '<button type="button" class="camp-door" onclick="goToEconomy()">';
+  h += '<img class="camp-door-ico" src="images/Icons/subtabs/economy.png" alt="">';
+  h += '<span class="camp-door-txt"><span class="camp-door-t">Économie</span>';
+  h += '<span class="camp-door-s">Améliorations d\'or</span></span>';
+  h += '<span class="camp-door-chev">›</span>';
+  h += '</button>';
+
+  h += '</div></div>';
+  return h;
+}
+window.buildCampPreparationDoorsHTML = buildCampPreparationDoorsHTML;
 
 /* v3.244.0 : deux portes côte à côte — Donjon (tickets en pastille) et Carte du monde
    (monde courant · aventure). Chacune n'apparaît que si son onglet est débloqué ; si

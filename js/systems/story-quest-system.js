@@ -168,14 +168,14 @@ var StoryQuestManager = {
     st.lastSeenTotalKills = total;
     if (delta <= 0) return; // reset/ascension : on resynchronise sans compter
     if (game.huntRun && game.huntRun.active) return;
-    if (game.dungeonRun && game.dungeonRun.active) return;
+    if (game.dungeonRun && game.dungeonRun.active) {
+      // v3.245.0 (refonte Donjons, forest_13) : vagues de donjon passées sous ≥ 1 Marque -> compteur coeurKillsMarked
+      if (Array.isArray(game.dungeonRun.marks) && game.dungeonRun.marks.length >= 1) st.counters.coeurKillsMarked += delta;
+      return;
+    }
     if (game.adventureQuestRun && game.adventureQuestRun.active) return;
     if (!atCoeur) return;
     st.counters.coeurKills += delta;
-    // v3.134.0 : les afflictions ne s'appliquent qu'au farm libre (déjà exclu ci-dessus pour donjon/quête/chasse) —
-    // le compteur « sous marque » n'avance que si ≥ 2 sont actives à l'instant du rendu qui suit le kill.
-    var aff = (window.AfflictionManager && typeof AfflictionManager.getActiveCount === "function") ? AfflictionManager.getActiveCount() : 0;
-    if (aff >= 2) st.counters.coeurKillsMarked += delta;
   },
 
   _checkNow: function (silent) {
@@ -278,6 +278,28 @@ var StoryQuestManager = {
         var def = (window.WAREHOUSE_RESOURCES || {})[key];
         if (applied > 0) rows.push({ label: def ? def.name : key, value: "+" + formatNumber(applied) });
       });
+    }
+    /* v3.249.0 : objet FIXE (equipmentItem), par opposition à equipmentRarity qui tire au sort.
+       Même forme d'objet que generateEquipmentItem : rien à changer côté inventaire ni équipement. */
+    if (reward.equipmentItem) {
+      var def = reward.equipmentItem;
+      var cls = (typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
+      var variant = (def.byClass && def.byClass[cls ? cls.id : "knight"]) || def.byClass_knight || null;
+      var fixe = {
+        uid: "itm_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8),
+        slot: def.slot,
+        name: variant ? variant.name : (def.name || "Objet"),
+        icon: variant ? variant.icon : def.icon,
+        rarity: def.rarity || "common",
+        stat: def.stat,
+        value: def.value,
+        affixes: [],
+        worldIndex: 0
+      };
+      if (typeof addLootToInventory === "function" && addLootToInventory(fixe)) {
+        addLog("🎁 Récompense d'histoire : " + fixe.name, "event");
+        rows.push({ label: "Objet", value: fixe.name });
+      }
     }
     if (reward.equipmentRarity && reward.equipmentCount) {
       var granted = 0;

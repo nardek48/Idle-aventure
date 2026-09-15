@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.244.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.250.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -65,6 +65,7 @@ var PRECACHE_APP_SHELL = [
   "./css/04-panel-aether-shop.css",
   "./css/04-panel-bestiary.css",
   "./css/04-panel-codex.css",
+  "./css/04-panel-forecast.css",
   "./css/04-panel-dungeon.css",
   "./css/04-panel-equipment.css",
   "./css/04-panel-afflictions.css",
@@ -117,6 +118,7 @@ var PRECACHE_APP_SHELL = [
   "./js/sim/combat-round-sim.js",
   "./js/systems/combat-engine.js",
   "./js/systems/elite-system.js",
+  "./js/systems/combat-forecast-system.js",
   "./js/systems/sortie-system.js",
   "./js/systems/combat-resource-system.js",
   "./js/systems/combat-cooldown-system.js",
@@ -146,6 +148,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/tutorials-view.js",
   "./js/ui/combat-view.js",
   "./js/ui/cycle-summary-view.js",
+  "./js/ui/combat-forecast-view.js",
   "./js/ui/dungeon-view.js",
   "./js/ui/equip-shop-view.js",
   "./js/ui/equipment-view.js",

@@ -950,3 +950,16 @@
   white-space: normal;
   max-width: 90px;
 }
+
+/* =====================================================================
+   v3.245.0 (refonte Donjons, décision 12.5) — segment Relance / Éclats dans
+   la fiche Enchanteresse, et Boutique d'éclats (ex-Donjon > Boutique).
+   .kseg est conçu pour le fond sombre des feuilles du Grimoire ; la fiche est
+   crème : même adaptation que .kframe .kseg-in-frame, portée par la fiche.
+   ===================================================================== */
+.vb-sheet-card .vb-sheet-seg { margin: 2px 0 10px; background-color: rgba(58, 44, 26, 0.16); border-color: var(--nb-frame); }
+.vb-sheet-card .vb-sheet-seg button { color: #3a2c1a; opacity: 0.85; }
+.vb-sheet-card .vb-sheet-seg button.is-on { opacity: 1; }
+.vb-sheet-card .vb-sheet-seg button:disabled { opacity: 0.4; cursor: default; }
+.vb-shard-count { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: var(--nb-ink); margin: 0 0 8px; }
+.vb-board-sub { font-size: 11px; color: var(--nb-ink-dim); margin: 0 0 8px; line-height: 1.35; }

@@ -219,6 +219,9 @@ var CombatEngine = {
   prepareEnemy: function (enemy) {
     if (!enemy || enemy._roundReady) return enemy;
     enemy._roundReady = true;
+    // v3.246.0 (retour Seb) : le compteur R est le round DU COMBAT. Il n'était remis à zéro qu'au
+    // chargement d'une partie : il affichait donc les rounds cumulés de la session (R85 sur un combat neuf).
+    if (game.combatRound) game.combatRound.number = 0;
     enemy.gauge = 0;
     enemy.roundsAlive = 0;
     enemy.chargeIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX);

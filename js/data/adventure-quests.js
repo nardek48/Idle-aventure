@@ -15,6 +15,11 @@ var ADVENTURE_QUESTS = {
     adventureIndex: 0,
     gatesTransitionTo: 1, // v3.100.0 : category "side" — seule la chaîne Histoire (story-quests.js) est « Principale »
     enemyFilter: ["slime", "goblin", "spider"], // v3.107.4 : uniquement les ennemis génériques (décision Seb)
+    /* v3.246.0 (décision Seb 15/09/2026) : PV de tous les ennemis de la quête ÷ 2,5. 4e étape de
+       l'Histoire, elle doit se gagner avec l'équipement de départ — le joueur n'a ni l'or pour
+       s'équiper (10 combats = 94 or, une pièce commune = 300) ni les améliorations. Le soin du boss
+       est CONSERVÉ : c'est ici qu'on découvre les télégraphes. Calibré sim/lisiere-quest-bench.js. */
+    enemyHpMult: 0.4,
     name: "Prouver sa valeur",
     story: "Le Roi Slime géant règne sur la Lisière depuis des lunes, gardant jalousement le passage vers le cœur de la forêt. Pour qu'on te laisse poursuivre, il faudra d'abord montrer que tu n'es pas qu'un simple aventurier de passage.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.png",

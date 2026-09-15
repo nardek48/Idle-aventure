@@ -36,7 +36,8 @@ var EliteManager = {
   /* Fabrique l'objet ennemi d'une élite. Même FORME que WorldManager.generateEnemy()
      et DungeonManager.buildWaveEnemy() — le moteur ne voit aucune différence,
      hormis isElite qui pilote l'exaltation (combat-engine.js) et l'affichage. */
-  build: function (eliteId, scale) {
+  /* opts.noMilestone (v3.245.0, Donjon) : ignore le palier de cycle — le donjon n'est pas indexé dessus. */
+  build: function (eliteId, scale, opts) {
     var def = this.get(eliteId);
     if (!def) return null;
     var base = (window.ENEMY_DB && ENEMY_DB[def.baseId]) || null;
@@ -55,8 +56,8 @@ var EliteManager = {
     };
 
     var pvMult = (typeof BOSS_PV_MULT === "number") ? BOSS_PV_MULT : 3.1;
-    var milestone = (window.WorldManager && typeof WorldManager.getCycleMilestoneMult === "function")
-      ? WorldManager.getCycleMilestoneMult() : 1;
+    var milestone = (opts && opts.noMilestone) ? 1
+      : ((window.WorldManager && typeof WorldManager.getCycleMilestoneMult === "function") ? WorldManager.getCycleMilestoneMult() : 1);
     var hp = Math.max(1, Math.floor(stats.endurance * pvMult * s * milestone));
 
     var powerExp = (typeof ENEMY_POWER_SCALE_EXP === "number") ? ENEMY_POWER_SCALE_EXP : 0.3;

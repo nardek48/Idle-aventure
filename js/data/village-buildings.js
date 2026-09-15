@@ -92,7 +92,7 @@ var VILLAGE_BUILDINGS = {
        plafond par monde du jeu. */
     maxLevel: 14,
     implemented: true,
-    lockLabel: "Atteins 10 dans une caractéristique",
+    lockLabel: "Atteins 20 dans une caractéristique",
     desc: "Chaque niveau ouvre 10 niveaux d'entraînement supplémentaires sur chacune des cinq caractéristiques. L'entraînement lui-même se paie en or, dans Personnage → Stats.",
     /* La porte d'entrée du Terrain n'est pas une quête du tableau : c'est le
        mur lui-même. Quand une caractéristique bute à 10, le bâtiment devient
@@ -101,7 +101,9 @@ var VILLAGE_BUILDINGS = {
       var ids = window.HEROS_TRAINING_UPGRADE_IDS
         || ["utrain_power", "utrain_endurance", "utrain_celerity", "utrain_precision", "utrain_will"];
       return ids.some(function (id) {
-        return Number((game.upgrades && game.upgrades[id]) || 0) >= 10;
+        // v3.248.0 : le socle sans bâtiment est passé à 20 — le mur reste la porte d'entrée
+        var seuil = (typeof TRAINING_BASE_CAP === "number") ? TRAINING_BASE_CAP : 20;
+        return Number((game.upgrades && game.upgrades[id]) || 0) >= seuil;
       });
     },
     costTiers: [
@@ -126,7 +128,9 @@ var VILLAGE_BUILDINGS = {
       }
     ],
     effectLabel: function (level) {
-      return "Plafond d'entraînement : " + Math.min(150, 10 * (level + 1)) + " par caractéristique";
+      // v3.248.0 : le socle sans bâtiment est passé à 20 (voir getTrainingCapLevels)
+      var base = (typeof TRAINING_BASE_CAP === "number") ? TRAINING_BASE_CAP : 20;
+      return "Plafond d'entraînement : " + Math.min(150, base + 10 * level) + " par caractéristique";
     }
   },
 

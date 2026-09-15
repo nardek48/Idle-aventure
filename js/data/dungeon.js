@@ -1,5 +1,6 @@
 "use strict";
-/* data/dungeon.js — donjon : 15 vagues + boss, 5 paliers à difficulté fixe. Logique : systems/dungeon-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* data/dungeon.js — un donjon PAR MONDE (v3.245.0, refonte Donjons, doc de conception v1.1 §3).
+   Logique : systems/dungeon-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var DUNGEON_CONFIG = {
   waveCount: 15,
@@ -18,47 +19,137 @@ var DUNGEON_CONFIG = {
   partialLootChance: 40,
 
   shardsPerWaveCleared: 1,
-  shardsBossBonus: 10
+  shardsBossBonus: 10,
+
+  /* v3.245.0 — Marques (doc §3.1, valeurs confirmées par sim/dungeon-bench.js, lot D-0). */
+  maxMarks: 3,              // Marques actives au plus par run
+  markStackBonus: 0.15,     // bonus d'or/essence/matériau par Marque active (1 + n × 0,15)
+  specialPerMark: 2,        // matériau de monde supplémentaire par Marque (décision Seb 12.2 : +2)
+  eliteShardsBonus: 3       // éclats en plus pour une vague élite passée
 };
 
-/* v3.223.0 (retours Seb) — DEUX AJOUTS PAR PALIER.
+/* v3.245.0 — DUNGEON_TIERS est absorbé ici : chaque donjon EST le palier de son monde.
+   id reste NUMÉRIQUE et égal à l'ancien numéro de palier : dungeonTierCleared,
+   dungeonTiersEntered, le Codex (dungeon_tier_N) et forest_14 restent valides sans migration.
 
-   worldRequired : index du monde qu'il faut AVOIR ATTEINT pour ouvrir le
-   palier. Un Donjon V donne du légendaire ; le proposer en Forêt, où la rareté
-   maximale du loot est le commun, n'avait pas de sens. Le plafond suit le monde
-   le plus haut JAMAIS atteint (worldsEverReached) et non le monde courant :
-   redescendre en Forêt ne doit pas refermer un donjon déjà ouvert.
-
-   specialResourceId : le donjon devient une SECONDE SOURCE de matériau de monde,
-   à côté des Petites Aventures. Ça règle un manque de la v3.214.0 : la Sève
-   d'Aeswyn n'avait qu'une source, que la Menuiserie et la Grande ration se
-   disputaient déjà.
-
-   Les paliers II à V n'ont pas encore de matériau : ceux des mondes 2 à 5
-   n'existent pas. Ils arriveront avec eux, comme la Résine est arrivée avec la
-   Menuiserie. */
-var DUNGEON_TIERS = [
-  { id: 1, name: "Donjon I",
-    worldRequired: 0, specialResourceId: "seve_aeswyn", specialResourceAmount: 2,   maxRarity: "common",    worldPower: 0, difficultyMult: 1,
-    icon: "images/Dungeons/Icone_base/palier1.jpg",
-    story: "Les premières salles sentent la terre humide et la mousse. Des bruits de pas résonnent au loin — rien de bien effrayant, pour l'instant." },
-  { id: 2, name: "Donjon II",
-    worldRequired: 1, specialResourceId: null, specialResourceAmount: 0,  maxRarity: "green",     worldPower: 1, difficultyMult: 2.5,
-    icon: "images/Dungeons/Icone_base/palier2.jpg",
-    story: "Les couloirs se resserrent. Des ombres inhabituelles glissent entre les pierres, et l'air se charge d'une tension nouvelle." },
-  { id: 3, name: "Donjon III",
-    worldRequired: 2, specialResourceId: null, specialResourceAmount: 0, maxRarity: "rare",      worldPower: 2, difficultyMult: 6,
-    icon: "images/Dungeons/Icone_base/palier3.jpg",
-    story: "Un froid ancien s'infiltre jusque dans les os. Ces lieux ne sont pas laissés à l'abandon — quelque chose les garde, avec méthode." },
-  { id: 4, name: "Donjon IV",
-    worldRequired: 3, specialResourceId: null, specialResourceAmount: 0,  maxRarity: "epic",      worldPower: 3, difficultyMult: 14,
-    icon: "images/Dungeons/Icone_base/palier4.jpg",
-    story: "Les murs eux-mêmes semblent respirer. Peu de ceux qui s'aventurent ici en ressortent sans égratignures — et encore moins sans butin." },
-  { id: 5, name: "Donjon V",
-    worldRequired: 4, specialResourceId: null, specialResourceAmount: 0,   maxRarity: "legendary", worldPower: 5, difficultyMult: 30,
-    icon: "images/Dungeons/Icone_base/palier5.jpg",
-    story: "Le seuil du dernier palier. Une puissance oubliée sommeille dans l'obscurité — et elle sait déjà que tu es arrivé." }
+   worldRequired      index du monde à avoir atteint (plus haut jamais atteint, worldsEverReached)
+   worldPower         échelle des vagues et pool d'ennemis (mondes 0..worldPower), inchangé
+   difficultyMult     inchangé pour la Forêt ; les mondes 2 à 6 seront rebasés sur l'échelle
+                      du monde quand leur monde sera travaillé (décision Seb 15/09/2026, rapport D-0 §5)
+   eliteWaves         vague -> id de ELITE_DB ; null tant que le monde n'a pas ses élites
+   boss               identité du boss final : baseId dans BOSS_DB, nom propre, trait signature
+                      (archetype lu tel quel par combat-engine.js), statMult relatif, image optionnelle
+   locked             donjon déclaré mais pas encore ouvert (art et banc manquants) */
+var DUNGEONS = [
+  {
+    id: 1, key: "basilic",
+    name: "Tanière du Basilic",
+    worldId: "forest", worldRequired: 0, worldPower: 0, difficultyMult: 1,
+    maxRarity: "common",
+    specialResourceId: "seve_aeswyn", specialResourceAmount: 2,
+    icon: "images/Dungeons/donjon_poison/donjon_poison.jpg",
+    banner: "images/Dungeons/donjon_poison/donjon_poison_baniere.jpg",
+    combatMap: "../images/Dungeons/donjon_poison/donjon_poison.jpg",
+    desc: "Un antre reptilien tapi sous la roche, jusqu'au repaire du Basilic lui-même.",
+    story: "Les premières salles sentent la terre humide et la mousse. Des bruits de pas résonnent au loin — rien de bien effrayant, pour l'instant.",
+    enemyPool: null,
+    eliteWaves: { 5: "araignee_marquee", 10: "ronce_ardente" },
+    boss: { baseId: "slimeking", name: "Basilic", archetype: "corrupted", statMult: { endurance: 1.2, power: 1.5 }, image: null },
+    locked: false
+  },
+  {
+    id: 2, key: "desert",
+    name: "Cité engloutie",
+    worldId: "desert", worldRequired: 1, worldPower: 1, difficultyMult: 2.5,
+    maxRarity: "green",
+    specialResourceId: null, specialResourceAmount: 0,
+    icon: "images/Dungeons/Icone_base/palier2.jpg", banner: null, combatMap: null,
+    desc: "Une cité que le sable a prise, salle après salle.",
+    story: "Les couloirs se resserrent. Des ombres inhabituelles glissent entre les pierres, et l'air se charge d'une tension nouvelle.",
+    enemyPool: null, eliteWaves: null,
+    boss: { baseId: "djinn", name: "Sultan des sables", archetype: "vampiric", statMult: { endurance: 1, power: 1 }, image: null },
+    locked: false
+  },
+  {
+    id: 3, key: "ruins",
+    name: "Sanctuaire scellé",
+    worldId: "ruins", worldRequired: 2, worldPower: 2, difficultyMult: 6,
+    maxRarity: "rare",
+    specialResourceId: null, specialResourceAmount: 0,
+    icon: "images/Dungeons/Icone_base/palier3.jpg", banner: null, combatMap: null,
+    desc: "Ce que les ruines gardent encore, elles le gardent avec méthode.",
+    story: "Un froid ancien s'infiltre jusque dans les os. Ces lieux ne sont pas laissés à l'abandon — quelque chose les garde, avec méthode.",
+    enemyPool: null, eliteWaves: null,
+    boss: { baseId: "skeletonlord", name: "Gardien scellé", archetype: "armored", statMult: { endurance: 1, power: 1 }, image: null },
+    locked: false
+  },
+  {
+    id: 4, key: "crypt",
+    name: "Ossuaire",
+    worldId: "crypt", worldRequired: 3, worldPower: 3, difficultyMult: 14,
+    maxRarity: "epic",
+    specialResourceId: null, specialResourceAmount: 0,
+    icon: "images/Dungeons/Icone_base/palier4.jpg", banner: null, combatMap: null,
+    desc: "Les os y sont rangés. Pas tous.",
+    story: "Les murs eux-mêmes semblent respirer. Peu de ceux qui s'aventurent ici en ressortent sans égratignures — et encore moins sans butin.",
+    enemyPool: null, eliteWaves: null,
+    boss: { baseId: "necrosupreme", name: "Liche des sépulcres", archetype: "corrupted", statMult: { endurance: 1, power: 1 }, image: null },
+    locked: false
+  },
+  {
+    id: 5, key: "mountain",
+    name: "Gueule du volcan",
+    worldId: "mountain", worldRequired: 4, worldPower: 4, difficultyMult: 22,
+    maxRarity: "epic", // le légendaire ne tombe qu'à la Tour (décision 12.1)
+    specialResourceId: null, specialResourceAmount: 0,
+    icon: "images/Dungeons/Icone_base/palier5.jpg", banner: null, combatMap: null,
+    desc: "La montagne respire par ici. Chaud.",
+    story: "Le seuil du dernier palier. Une puissance oubliée sommeille dans l'obscurité — et elle sait déjà que tu es arrivé.",
+    enemyPool: null, eliteWaves: null,
+    boss: { baseId: "ancientdragon", name: "Wyrm de cendres", archetype: "enraged", statMult: { endurance: 1, power: 1 }, image: null },
+    locked: false
+  },
+  {
+    id: 6, key: "tower",
+    name: "Sommet interdit",
+    worldId: "tower", worldRequired: 5, worldPower: 5, difficultyMult: 30,
+    maxRarity: "legendary",
+    specialResourceId: null, specialResourceAmount: 0,
+    icon: null, banner: null, combatMap: null,
+    desc: "Le sommet de la Tour, et ce qui s'y reflète.",
+    story: "",
+    enemyPool: null, eliteWaves: null,
+    boss: { baseId: "archmage", name: "Reflet de l'Archimage", archetype: "vampiric", statMult: { endurance: 1, power: 1 }, image: null },
+    locked: true, lockedHint: "Pas encore disponible"
+  }
 ];
+
+/* v3.245.0 — MARQUES de run (ex-afflictions, doc §3.3). Mêmes id et mêmes icônes que
+   data/afflictions.js (aucune migration) ; Avarice n'est pas reprise. Les modificateurs sont
+   lus par AfflictionManager.getCombinedModifiers() (Fragilité, Ascétisme, Fléau, cumul) ;
+   Colosses et Traque agissent dans DungeonManager.buildWaveEnemy().
+   unlock : null = libre ; "cleared" = disponible une fois le donjon terminé une fois. */
+var DUNGEON_MARKS = [
+  { id: "aff_colossus", name: "Colosses", icon: "images/Icons/afflictions/aff_colossus.png",
+    desc: "Boss 2× PV · +50 % or et essence sur le boss", unlock: null,
+    modifiers: { bossHpMult: 2, bossGoldBonusPct: 0.50, bossEssenceBonusPct: 0.50 } },
+  { id: "aff_asceticism", name: "Ascétisme", icon: "images/Icons/afflictions/aff_asceticism.png",
+    desc: "Potions interdites · +15 % dégâts", unlock: null,
+    modifiers: { tapMult: 0.15, forbidPotions: true } },
+  { id: "aff_fragility", name: "Fragilité", icon: "images/Icons/afflictions/aff_fragility.png",
+    desc: "−30 % PV max · +30 % dégâts", unlock: null,
+    modifiers: { heroMaxHpMult: 0.70, tapMult: 0.30 } },
+  { id: "aff_plague", name: "Fléau", icon: "images/Icons/afflictions/aff_plague.png",
+    desc: "Dégâts ennemis +30 % · +20 % or", unlock: "cleared",
+    modifiers: { enemyPowerMult: 1.30, goldMult: 1.20 } },
+  { id: "aff_elite", name: "Traque", icon: "images/Icons/afflictions/aff_elite.png",
+    desc: "Chaque vague est une élite · +20 % or", unlock: "cleared",
+    modifiers: { forceAllBosses: true, goldMult: 1.20 } }
+];
+
+/* Élite GÉNÉRIQUE de Traque pour un donjon sans élites de données : l'ennemi de la vague
+   passe boss avec ces multiplicateurs relatifs (banc D-0 : 8–32 % d'échec seule en Forêt). */
+var DUNGEON_GENERIC_ELITE_MULT = { endurance: 2.4, power: 1.1 };
 
 var DUNGEON_SHOP = [
   { id: "d_power", name: "Lame du donjon", icon: "images/Icons/dungeon/dungeon_weapon.png", desc: "+2% dégâts globaux par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 },
@@ -67,21 +158,8 @@ var DUNGEON_SHOP = [
   { id: "d_defense", name: "Armure du donjon", icon: "images/Icons/dungeon/dungeon_armor.png", desc: "+1% défense par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 }
 ];
 
-var DUNGEONS = [
-  {
-    id: "basilic",
-    name: "Tanière du Basilic",
-    icon: "images/Dungeons/donjon_poison/donjon_poison.jpg",
-    banner: "images/Dungeons/donjon_poison/donjon_poison_baniere.jpg",
-    combatMap: "../images/Dungeons/donjon_poison/donjon_poison.jpg",
-    desc: "Un antre reptilien tapi sous la roche — cinq paliers de danger croissante, jusqu'au repaire du Basilic lui-même.",
-    tierIds: [1, 2, 3, 4, 5],
-    locked: false
-  }
-];
-
 window.DUNGEONS = DUNGEONS;
-
 window.DUNGEON_CONFIG = DUNGEON_CONFIG;
-window.DUNGEON_TIERS = DUNGEON_TIERS;
+window.DUNGEON_MARKS = DUNGEON_MARKS;
+window.DUNGEON_GENERIC_ELITE_MULT = DUNGEON_GENERIC_ELITE_MULT;
 window.DUNGEON_SHOP = DUNGEON_SHOP;

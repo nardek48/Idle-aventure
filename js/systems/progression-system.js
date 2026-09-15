@@ -251,6 +251,13 @@ function getUpgradeCost(upgrade, atLevel) {
     ? (game.upgrades[upgrade.id] || 0)
     : Number(atLevel || 0);
 
+  /* v3.248.0 : courbe LINÉAIRE quand l'amélioration déclare costStep (les cinq entraînements,
+     voir data/upgrades.js). L'exponentielle rendait le 20e niveau 15 fois plus cher que le
+     premier, ce qui vidait l'entraînement de son intérêt face à l'équipement. Les autres
+     améliorations (bourses, contrats) gardent costMult. */
+  if (typeof upgrade.costStep === "number" && upgrade.costStep >= 0) {
+    return Math.floor(upgrade.baseCost * (1 + upgrade.costStep * level));
+  }
   return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, level));
 }
 
@@ -269,11 +276,15 @@ function getUpgradeCost(upgrade, atLevel) {
      reste le dernier mot.
 
    Les autres améliorations (bourses, contrats) ne sont pas concernées. */
+/* v3.248.0 (décision Seb) : le PREMIER palier passe de 10 à 20 — sans Terrain, l'or devenait
+   indépensable dès ~600 or (mesuré : mêmes stats avec 500, 2 000 ou 10 000 or). Chaque niveau
+   de Terrain continue d'ouvrir 10 niveaux : 20, 30, 40… jusqu'au plafond de l'amélioration. */
+var TRAINING_BASE_CAP = 20;
 function getTrainingCapLevels() {
   var level = (window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function")
     ? VillageBuildingManager.getLevel("training")
     : 0;
-  return 10 * (level + 1);
+  return Math.min(150, TRAINING_BASE_CAP + 10 * level); // 150 reste le plafond historique
 }
 
 function isTrainingUpgradeId(id) {
@@ -290,6 +301,7 @@ function getUpgradeCap(upgrade) {
   var owned = Number((game.upgrades && game.upgrades[upgrade.id]) || 0);
   return Math.min(hardMax, Math.max(getTrainingCapLevels(), owned));
 }
+window.TRAINING_BASE_CAP = TRAINING_BASE_CAP;
 window.getTrainingCapLevels = getTrainingCapLevels;
 window.isTrainingUpgradeId = isTrainingUpgradeId;
 window.getUpgradeCap = getUpgradeCap;

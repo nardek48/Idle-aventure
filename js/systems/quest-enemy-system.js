@@ -43,6 +43,17 @@ var QuestEnemyManager = {
 
     var enemy = WorldManager.generateEnemy();
 
+    /* v3.246.0 (retour Seb 15/09/2026) — enemyHpMult : PV de TOUS les ennemis de la quête
+       (normaux et boss). « Prouver sa valeur » est la 4e étape de l'Histoire : elle doit se
+       gagner avec l'équipement de départ, sans or à dépenser. Mesuré dans
+       sim/lisiere-quest-bench.js, profil sortie de tutoriel : à 1,0 l'échec est de 100 %
+       pour les trois classes ; à 0,4 (÷2,5) il tombe à 0 / 7 / 0 %. */
+    var hpMult = Number(quest.enemyHpMult);
+    if (enemy && isFinite(hpMult) && hpMult > 0 && hpMult !== 1) {
+      enemy.hp = Math.max(1, Math.floor(enemy.maxHp * hpMult));
+      enemy.maxHp = enemy.hp;
+    }
+
     if (savedPool) adventure.enemyPool = savedPool;
     WorldManager.worldIndex = savedWorldIndex;
     WorldManager.adventureIndex = savedAdventureIndex;
@@ -50,6 +61,24 @@ var QuestEnemyManager = {
 
     return enemy;
   }
+};
+
+/* v3.246.0 — reprise d'un run après un rechargement de page (bug remonté par Seb : le Roi Slime
+   apparaissait à 3/9). save-system.js et boot.js respawnaient la vague du DONJON mais retombaient
+   sinon sur CombatEngine.spawnEnemy(), qui ignore adventureQuestRun/huntRun et tire un ennemi de
+   FARM selon WorldManager.enemyIndex — donc le boss du monde si l'index y était resté.
+   Renvoie true si un ennemi de run a été replacé, false pour laisser l'appelant faire son spawn
+   normal. Vit ici plutôt que dans les fichiers protégés : ceux-ci n'appellent qu'une ligne. */
+QuestEnemyManager.respawnActiveRunEnemy = function () {
+  if (game.adventureQuestRun && game.adventureQuestRun.active && window.AdventureQuestManager) {
+    var aq = (window.ADVENTURE_QUESTS || {})[game.adventureQuestRun.questId];
+    if (aq) { AdventureQuestManager.spawnRunEnemy(aq); return true; }
+  }
+  if (game.huntRun && game.huntRun.active && window.HuntQuestManager) {
+    var hq = (window.HUNT_QUESTS || {})[game.huntRun.questId];
+    if (hq) { HuntQuestManager.spawnRunEnemy(hq); return true; }
+  }
+  return false;
 };
 
 window.QuestEnemyManager = QuestEnemyManager;
