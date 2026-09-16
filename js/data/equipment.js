@@ -240,14 +240,18 @@ var EQUIPMENT_SLOT_CONFIG = {
    par un Mage, la restriction d'icône existe déjà dans generateEquipmentItem.
    Les valeurs sont prises au HAUT de la fourchette commune de chaque emplacement : la
    vitrine de départ est un socle correct, pas un lot au rabais.
-   Le renouvellement (6 h, ou manuel) repasse en aléatoire — décision Seb. */
+   Le renouvellement (6 h, ou manuel) repasse en aléatoire — décision Seb.
+   v3.263.0 (décision Seb 16/09/2026) : plus d'arme en vitrine — la seule arme de départ est celle
+   de « Premier sang » (+15). L'anneau prend sa place. Chaque valeur est au BAS de la fourchette
+   commune de son emplacement (EQUIPMENT_SLOT_CONFIG[slot].ranges.common[0]) : la vitrine de départ
+   est un premier pas, pas un raccourci. Le champ byClassIcon reste lu par buildStarterStock. */
 var EQUIP_SHOP_STARTER = [
-  { slot: "weapon", stat: "tapDmg", value: 25, name: "Arme du campement", byClassIcon: { knight: "sword", archer: "bow", mage: "staff" }, icon: "sword" },
-  { slot: "armor", stat: "defense", value: 0.035, name: "Armure de cuir usée", icon: "armor" },
-  { slot: "helmet", stat: "critMult", value: 0.20, name: "Casque cabossé", icon: "casque" },
-  { slot: "gloves", stat: "tapMult", value: 0.20, name: "Gants de marche", icon: "gants" },
-  { slot: "boots", stat: "autoDps", value: 5, name: "Bottes éculées", icon: "bottes" },
-  { slot: "amulet", stat: "critChance", value: 3, name: "Amulette ternie", icon: "amulet" }
+  { slot: "armor", stat: "defense", value: 0.015, name: "Armure de cuir usée", icon: "armor" },
+  { slot: "helmet", stat: "critMult", value: 0.10, name: "Casque cabossé", icon: "casque" },
+  { slot: "gloves", stat: "tapMult", value: 0.10, name: "Gants de marche", icon: "gants" },
+  { slot: "boots", stat: "autoDps", value: 2, name: "Bottes éculées", icon: "bottes" },
+  { slot: "ring", stat: "goldMult", value: 0.05, name: "Anneau de cuivre", icon: "ring" },
+  { slot: "amulet", stat: "critChance", value: 1, name: "Amulette ternie", icon: "amulet" }
 ];
 
 window.EQUIP_SHOP_STARTER = EQUIP_SHOP_STARTER;

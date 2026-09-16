@@ -73,7 +73,7 @@ function livingMapContentLabel(mapId, def) {
   if (!content) return intensity;
   if (content.type === "elite") {
     var e = window.ELITE_DB && ELITE_DB[content.eliteId];
-    return "Élite : " + (e ? e.name : content.eliteId) + " · " + intensity;
+    return (content.repeatable ? "Élite répétable : " : "Élite : ") + (e ? e.name : content.eliteId) + " · " + intensity;
   }
   return "Expédition · " + intensity;
 }
@@ -234,9 +234,16 @@ function buildLivingMapPanelHTML(mapId, running) {
     else if (s.state === "recouvert") h += '<p class="lm-panel-line is-lost"><b>Effet perdu :</b> ' + esc(d.heldEffect.label) + '</p>';
     else h += '<p class="lm-panel-line"><b>Effet :</b> ' + (known ? esc(d.heldEffect.label) : "inconnu") + '</p>';
   }
+  var repeatable = LM.isRepeatable(mapId, d.id);
   if (!s.firstRewardClaimed) h += '<p class="lm-panel-line"><b>Première libération :</b> +' + LM.getFirstReward(d) + ' Sève d\'Aeswyn</p>';
   else if (s.state !== "libere") h += '<p class="lm-panel-line"><b>Reprise :</b> Sève du run seule, pas de récompense de secteur.</p>';
-  else h += '<p class="lm-panel-line"><b>Rejeu :</b> Petite Aventure ordinaire, Sève du run seule.</p>';
+  else if (!repeatable) h += '<p class="lm-panel-line"><b>Rejeu :</b> Petite Aventure ordinaire, Sève du run seule.</p>';
+  if (repeatable && known) {
+    // v3.258.0 (C-5) : élite répétable — Sève par victoire, frein du jour affiché avant de partir.
+    var re = LM.getRules().repeatableElite || {}, wins = LM.getDailyWins(mapId, d.id);
+    h += '<p class="lm-panel-line"><b>Chaque victoire :</b> +' + Number(re.sevePerWin || 0) + ' Sève d\'Aeswyn. Sans ration, hors cap. Fuir ou tomber reste un échec.</p>';
+    h += '<p class="lm-panel-line"><b>Aujourd\'hui :</b> ' + wins + ' victoire' + (wins > 1 ? 's' : '') + ' · prochain combat ' + (wins ? '+' + Math.round((LM.getBrakeMult(mapId, d.id) - 1) * 100) + ' % PV et dégâts' : 'à sa force de base') + '</p>';
+  }
   if (s.state === "recouvert") {
     var gw = LM.getGateway(mapId, d.id);
     h += '<p class="lm-panel-line is-lost">Le Recouvrement le tient. Reprends-le depuis ' + esc(d.ring === 1 || !gw ? "le village" : gw.name) + '.</p>';
@@ -245,7 +252,7 @@ function buildLivingMapPanelHTML(mapId, running) {
   var content = LM.getContentFor(mapId, d.id);
   var isElite = content && content.type === "elite";
   // Le verbe ne trahit pas un contenu inconnu : « Affronter l'élite » seulement quand le nom est révélé.
-  var verb = s.state === "libere" ? "Rejouer le secteur" : s.state === "recouvert" ? "Reprendre le secteur" : (isElite && known ? "Affronter l\'élite" : "Partir");
+  var verb = s.state === "libere" ? (isElite && repeatable ? "Affronter l\'élite" : "Rejouer le secteur") : s.state === "recouvert" ? "Reprendre le secteur" : (isElite && known ? "Affronter l\'élite" : "Partir");
   if (running === d.id) {
     h += '<button class="settings-btn is-running" type="button" disabled>' + (isElite ? "Combat en cours" : "Expédition en cours") + '</button>';
   } else {
@@ -253,7 +260,9 @@ function buildLivingMapPanelHTML(mapId, running) {
     if (cs.ok) h += '<button class="settings-btn primary" type="button" onclick="startLivingMapSector(\'' + d.id + '\')">' + verb + '</button>';
     else {
       h += '<p class="lm-panel-wall">' + esc(cs.reason) + '</p>';
-      h += '<button class="settings-btn" type="button" disabled>' + verb + '</button>';
+      // v3.260.0 : ressource d'entrée manquante -> raccourci vers les Ateliers plutôt qu'un bouton mort
+      if (cs.missingResource && typeof goToSceneCostWorkshop === "function") h += '<button class="settings-btn primary" type="button" onclick="goToSceneCostWorkshop()">Préparer aux Ateliers</button>';
+      else h += '<button class="settings-btn" type="button" disabled>' + verb + '</button>';
     }
   }
   return h + '</div>';

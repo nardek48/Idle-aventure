@@ -55,13 +55,14 @@ var EliteManager = {
       will: base.stats.will
     };
 
+    var brake = (opts && typeof opts.brakeMult === "number" && opts.brakeMult > 0) ? opts.brakeMult : 1; // v3.258.0 (C-5) : frein de l'Arbre-mère
     var pvMult = (typeof BOSS_PV_MULT === "number") ? BOSS_PV_MULT : 3.1;
     var milestone = (opts && opts.noMilestone) ? 1
       : ((window.WorldManager && typeof WorldManager.getCycleMilestoneMult === "function") ? WorldManager.getCycleMilestoneMult() : 1);
-    var hp = Math.max(1, Math.floor(stats.endurance * pvMult * s * milestone));
+    var hp = Math.max(1, Math.floor(stats.endurance * pvMult * s * milestone * brake));
 
     var powerExp = (typeof ENEMY_POWER_SCALE_EXP === "number") ? ENEMY_POWER_SCALE_EXP : 0.3;
-    stats.power = Math.max(1, Math.floor(stats.power * Math.pow(s, powerExp) * milestone));
+    stats.power = Math.max(1, Math.floor(stats.power * Math.pow(s, powerExp) * milestone * brake));
 
     return {
       id: def.id,
@@ -82,12 +83,12 @@ var EliteManager = {
   },
 
   /* Spawn dans le combat courant. worldId/adventureIndex viennent de la quête. */
-  spawn: function (eliteId, worldId, adventureIndex) {
+  spawn: function (eliteId, worldId, adventureIndex, opts) {
     if (!window.WORLDS) return null;
     var worldIndex = WORLDS.findIndex(function (w) { return w.id === worldId; });
     if (worldIndex === -1) worldIndex = 0;
 
-    var enemy = this.build(eliteId, this.scaleFor(worldIndex, adventureIndex || 0));
+    var enemy = this.build(eliteId, this.scaleFor(worldIndex, adventureIndex || 0), opts || null); // v3.258.0 : opts.brakeMult
     if (!enemy) return null;
 
     game.enemy = enemy;

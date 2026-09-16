@@ -90,7 +90,8 @@ function isWeaponIconAllowedForCurrentHero(icon) {
   return allowed.indexOf(icon) !== -1;
 }
 
-/* Génère et équipe directement (sans passer par l'inventaire) une arme de départ à 1 dégât tap, liée à la classe du héros actif. */
+/* Génère et équipe directement (sans passer par l'inventaire) une arme de départ à 1 dégât tap, liée à la classe du héros actif.
+   v3.260.0 : plus appelée à la création, seulement au changement de héros sans arme compatible (heros-view.js). */
 function equipStarterWeapon() {
   if (typeof getAllowedWeaponIconsForCurrentHero !== "function" || typeof generateEquipmentItem !== "function") return null;
   if (!game.equipped) return null;

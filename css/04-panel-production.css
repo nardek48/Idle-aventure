@@ -1623,3 +1623,17 @@
 .wk-current-label {
   color: var(--nb-ink, #3a2c1a);
 }
+
+/* v3.265.0 : bâtiment encore verrouillé (fin des déblocages de l'Histoire) — bord pointillé,
+   icône grisée, texte lisible ; cliquable vers la quête qui l'ouvre. */
+.production-dash-card.is-locked { border-style: dashed; }
+.production-dash-card.is-locked .production-dash-ico { filter: grayscale(1); opacity: 0.7; }
+.production-dash-lock-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 6px; padding: 2px 8px; border-radius: 999px;
+  background: #6b5a44; color: #fff7e0;
+  font-size: 10px; font-weight: 900; letter-spacing: 0.3px;
+}
+.production-dash-lock-badge .ico-sys { width: 12px; height: 12px; }
+.production-dash-lock-text { font-size: 11px; color: #8a6a30; margin-top: 6px; } /* couleurs en dur, comme le reste de la carte : --nb-ink est redéfini dans ce cadre */
+.production-dash-lock-quest { font-size: 12px; font-weight: 800; color: #3a2c1a; margin-top: 1px; }

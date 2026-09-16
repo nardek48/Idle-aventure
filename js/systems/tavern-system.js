@@ -150,6 +150,17 @@ var TavernManager = {
 
   _delivering: false,
 
+  /* v3.257.0 (Cartes Vivantes, C-3) : or réellement versé pour un contrat. La récompense
+     stockée reste la valeur de base ; le Campement tenu sur la carte ajoute 10 % à la
+     livraison, et le perd dès que le secteur régresse. Affiché tel quel sur le tableau. */
+  getPayout: function (c) {
+    var base = Number(c && c.reward || 0);
+    if (window.LivingMapManager && LivingMapManager.hasEffect("contrats_plus")) {
+      return Math.floor(base * Number(LivingMapManager.getEffectValue("contractMult", 1.10)));
+    }
+    return base;
+  },
+
   deliver: function (id) {
     if (this._delivering) return false;
 
@@ -168,15 +179,16 @@ var TavernManager = {
 
     this._delivering = true;
 
+    var payout = this.getPayout(c); // v3.257.0 (C-3) : Campement tenu -> +10 %
     WarehouseManager.removeResource(c.resourceId, c.quantity);
-    game.gold = Number(game.gold || 0) + c.reward;
+    game.gold = Number(game.gold || 0) + payout;
     c.done = true;
 
     if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldEarned", c.reward);
+      QuestManager.track("goldEarned", payout);
     }
 
-    addLog("🍺 Contrat honoré : " + c.title + " (+" + formatNumber(c.reward) + " or)", "event");
+    addLog("🍺 Contrat honoré : " + c.title + " (+" + formatNumber(payout) + " or)", "event");
     showToast("+" + formatNumber(c.reward) + " or", 1400);
 
     if (typeof renderAll === "function") renderAll();

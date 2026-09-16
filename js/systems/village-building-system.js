@@ -133,6 +133,8 @@ var VillageBuildingManager = {
     if (!def || this.isMaxLevel(id)) return null;
 
     var level = this.getLevel(id);
+    // v3.264.0 : coût propre au niveau 1 (Atelier de Construction), les paliers reprennent ensuite
+    if (level === 0 && def.firstLevelCost) return Object.assign({}, def.firstLevelCost);
     var tier = this.getCostTierForLevel(def, level);
     if (!tier) return null;
 

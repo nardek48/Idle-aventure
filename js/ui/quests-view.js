@@ -149,6 +149,12 @@ function buildQuestBoardActionHTML(m) {
 }
 
 /* Carte façon maquette : bannière-icône à gauche, titre + description, chips récompenses, action. */
+/* v3.265.0 : carte à mettre en évidence à l'arrivée sur l'écran Quêtes (depuis un bâtiment
+   verrouillé de la Production). Consommée par openQuestsAt, qui fait défiler jusqu'à elle. */
+var questsHighlightId = null;
+function highlightQuestCard(missionId) { questsHighlightId = missionId || null; }
+window.highlightQuestCard = highlightQuestCard;
+
 function buildQuestBoardCardHTML(m) {
   var statusCls = m.status === "claimable" || m.status === "ready" ? " is-claimable"
     : (m.status === "running" || m.status === "accepted") ? " is-running"
@@ -156,7 +162,7 @@ function buildQuestBoardCardHTML(m) {
     // la carte reste visible et lisible (titre, description, comment ça marche) mais son statut
     // "pas aujourd'hui" saute aux yeux au lieu de ressembler à une mission normale sans action.
     : (m.status === "locked" || m.status === "unavailable") ? " is-locked" : "";
-  var h = '<div class="qb-card' + statusCls + (m.isMain ? ' is-main' : '') + '">';
+  var h = '<div class="qb-card' + statusCls + (m.isMain ? ' is-main' : '') + (questsHighlightId && questsHighlightId === m.id ? ' is-highlight' : '') + '" data-mission-id="' + esc(m.id) + '">';
   h += '<div class="qb-card-banner qb-banner-' + esc(m.type || "combat") + '">' + renderIconOrEmojiHTML(MissionBoard.typeIcon(m.type), "qb-card-banner-img", m.title) + '</div>';
   h += '<div class="qb-card-body">';
   h += '<div class="qb-card-title-row"><span class="qb-card-title">' + esc(m.title) + '</span>';
@@ -754,6 +760,13 @@ function openQuestsAt(sectionKey, cardId) {
   // point d'appel (bouton "Aller à la quête" depuis le Campement) — force le rendu pour être
   // sûr que le joueur voit bien l'écran Quêtes à jour, pas un état visuellement figé.
   if (typeof renderPanel === "function") renderPanel();
+  // v3.265.0 : défile jusqu'à la carte demandée, puis oublie la demande (la mise en évidence
+  // disparaît au rendu suivant).
+  if (questsHighlightId && typeof document !== "undefined" && document.querySelector) {
+    var target = document.querySelector('[data-mission-id="' + questsHighlightId + '"]');
+    if (target && target.scrollIntoView) target.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+  questsHighlightId = null;
 }
 window.buildStoryChainHTML = buildStoryChainHTML;
 window.openQuestsAt = openQuestsAt;
@@ -967,6 +980,24 @@ function closeQuestCompletePopup() {
 }
 window.closeQuestCompletePopup = closeQuestCompletePopup;
 
+/* v3.260.0 : une chasse à ressources multiples affiche ce que le lot a rapporté, ressource par
+   ressource (résumé de sortie). Une chasse à ressource unique garde sa ligne « en stock ». */
+function buildHuntLotRewardRows(quest, resource, stock) {
+  if (!(quest.resourcePool && quest.resourcePool.length > 1)) {
+    return [{ label: (resource ? resource.name : quest.resourceKey) + " en stock", value: formatNumber(stock) }];
+  }
+  var kept = (game.lastSortieSummary && game.lastSortieSummary.kept && game.lastSortieSummary.kept.resources) || {};
+  var rows = [];
+  quest.resourcePool.forEach(function (key) {
+    var n = Number(kept[key] || 0);
+    if (n <= 0) return;
+    var def = (window.WAREHOUSE_RESOURCES || {})[key];
+    rows.push({ label: def ? def.name : key, value: "+" + formatNumber(n) });
+  });
+  if (!rows.length) rows.push({ label: "Butin", value: "rien cette fois" });
+  return rows;
+}
+
 function buildHuntLotCompleteHTML(quest) {
   if (!quest) return "";
   var stock = Number((game.resources && game.resources[quest.resourceKey]) || 0);
@@ -976,7 +1007,7 @@ function buildHuntLotCompleteHTML(quest) {
     icon: quest.icon || "images/Icons/classes/class_ranger.png",
     title: "Chasse terminée !",
     text: quest.lotSize + " bêtes abattues. Le gibier se fait plus rare pour l\u2019instant — reviens plus tard, ou relance une nouvelle chasse tout de suite.",
-    rewardRows: [{ label: (resource ? resource.name : quest.resourceKey) + " en stock", value: formatNumber(stock) }],
+    rewardRows: buildHuntLotRewardRows(quest, resource, stock),
     closeLabel: "Fermer",
     closeOnclick: "closeHuntLotComplete()", // v3.208.0 : ramène au Campement (le lot est fini, plus rien à faire en Combat)
     extraActionLabel: "Chasser à nouveau",

@@ -1,6 +1,6 @@
 "use strict";
 /* systems/hunt-quest-system.js — Chasses (data/hunt-quests.js), run dédié par lots de kills, s'arrête à la fin du lot (popup, relance manuelle).
-   Seule la viande est gagnée pendant une chasse (pas d'or/essence/XP/équipement). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Seules des ressources sont gagnées pendant une chasse (pas d'or/essence/XP/équipement) ; v3.260.0 : resourcePool. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var HuntQuestManager = {
   ensureDefaults: function () {
@@ -88,9 +88,12 @@ var HuntQuestManager = {
     // v3.207.0 : une battue (type "gold") ne fait tomber aucune ressource —
     // sa prime est versée en une fois à la fin du lot, voir finishLot().
     if (quest.resourceKey && chance(quest.dropChancePct)) {
-      // v3.102.1 : la viande est du butin de sortie (banqué à la fin du lot, perdu à la mort, 50 % en arrêt manuel)
-      if (window.SortieManager && SortieManager.isActive()) SortieManager.addResource(quest.resourceKey, 1);
-      else WarehouseManager.addResource(quest.resourceKey, 1);
+      // v3.260.0 (accord Seb) : resourcePool -> une ressource tirée à parts égales, sinon resourceKey
+      var pool = Array.isArray(quest.resourcePool) && quest.resourcePool.length ? quest.resourcePool : null;
+      var dropKey = pool ? pool[Math.floor(Math.random() * pool.length)] : quest.resourceKey;
+      // v3.102.1 : le butin est de sortie (banqué à la fin du lot, perdu à la mort, 50 % en arrêt manuel)
+      if (window.SortieManager && SortieManager.isActive()) SortieManager.addResource(dropKey, 1);
+      else WarehouseManager.addResource(dropKey, 1);
     }
 
     game.huntRun.killsInLot += 1;
@@ -148,7 +151,7 @@ var HuntQuestManager = {
     // v3.102.0 (P2) : même règle de mort qu'ailleurs (PV 0, Sang-froid, retour Campement)
     var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
     game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
-    addLog("💀 Chasse interrompue" + (quest ? " : " + quest.name : "") + " — la viande de la sortie est perdue. Retour au Campement.", "event");
+    addLog("💀 Chasse interrompue" + (quest ? " : " + quest.name : "") + " — le butin de la sortie est perdu. Retour au Campement.", "event");
     vibrate([80, 40, 80]);
     this.stop();
     game.justDied = true;

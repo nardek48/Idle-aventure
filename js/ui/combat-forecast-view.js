@@ -11,6 +11,25 @@
    L'overlay ne s'ouvre que si le pronostic est « Risqué » ou pire : sur un combat abordable,
    il n'y a rien à dire et une confirmation de plus serait une gêne. */
 
+/* v3.265.0 (retour Seb) : sous ce seuil de PV, le départ en mission est précédé d'un
+   avertissement « soigne-toi », quel que soit le verdict du pronostic. */
+var FORECAST_LOW_HP_PCT = 0.60;
+window.FORECAST_LOW_HP_PCT = FORECAST_LOW_HP_PCT;
+
+function getHeroHpRatio() {
+  var max = Number(game.heroMaxHp || 0);
+  if (max <= 0) return 1;
+  return Math.max(0, Number(game.heroHp != null ? game.heroHp : max)) / max;
+}
+window.getHeroHpRatio = getHeroHpRatio;
+
+/* Soigner = aller au Campement (rations, régénération) : ferme l'overlay sans lancer. */
+function goHealFromForecast() {
+  closeCombatForecast();
+  if (typeof switchTab === "function") switchTab("campement");
+}
+window.goHealFromForecast = goHealFromForecast;
+
 function getForecastLevelClass(f) {
   return f ? ("is-" + f.id) : "";
 }
@@ -38,6 +57,11 @@ function buildCombatForecastHTML(f, opts) {
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu cf-card ' + getForecastLevelClass(f) + '">';
   h += '    <div class="cf-title">' + esc(opts.title || "Avant de partir") + '</div>';
+  if (opts.lowHp) {
+    h += '    <div class="cf-lowhp"><img class="cf-lowhp-ico" src="images/Icons/combat_stats/stat_health.png" alt="">'
+      + '<span><b>Attention, il faut te soigner.</b> Tu pars à ' + Math.round(getHeroHpRatio() * 100) + ' % de tes PV : '
+      + 'mange une ration au Campement ou laisse le feu te remettre sur pied.</span></div>';
+  }
   h += '    <div class="cf-verdict">' + esc(def.label) + '</div>';
   if (f.enemyName) h += '    <div class="cf-enemy">Adversaire annoncé : ' + esc(f.enemyName) + '</div>';
 
@@ -58,7 +82,8 @@ function buildCombatForecastHTML(f, opts) {
   if (def.hint) h += '    <div class="cf-hint">' + esc(def.hint) + '</div>';
 
   h += '    <div class="cf-actions">';
-  h += '      <button class="settings-btn" type="button" onclick="closeCombatForecast()">Annuler</button>';
+  if (opts.lowHp) h += '      <button class="settings-btn" type="button" onclick="goHealFromForecast()">Me soigner</button>';
+  else h += '      <button class="settings-btn" type="button" onclick="closeCombatForecast()">Annuler</button>';
   h += '      <button class="settings-btn primary" type="button" onclick="confirmCombatForecast()">' + esc(opts.confirmLabel || "Partir quand même") + '</button>';
   h += '    </div>';
   h += '  </div>';
@@ -99,10 +124,14 @@ function launchWithForecast(mission, action) {
   if (!window.CombatForecast || !mission) return action();
   var f = null;
   try { f = CombatForecast.forMission(mission); } catch (e) { f = null; }
-  if (!f || CombatForecast.getLevelDef(f.id).level < 2) return action();
+  if (!f) return action();
+  // v3.265.0 : PV sous le seuil -> avertissement même sur un combat abordable
+  var lowHp = getHeroHpRatio() < FORECAST_LOW_HP_PCT;
+  if (!lowHp && CombatForecast.getLevelDef(f.id).level < 2) return action();
   openCombatForecastConfirm(f, {
     title: mission.title || "Avant de partir",
-    confirmLabel: f.unwinnable ? "Partir quand même" : "Partir",
+    confirmLabel: (f.unwinnable || lowHp) ? "Partir quand même" : "Partir",
+    lowHp: lowHp,
     onConfirm: action
   });
 }

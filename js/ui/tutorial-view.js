@@ -8,11 +8,13 @@ var pendingTutorial = null; // { chapterId, tutorial } le temps que la modale es
 
 /* Aperçu fidèle d'un badge de statut réel (ex. télégraphe de charge), pour montrer au joueur
    exactement ce qu'il verra en combat plutôt que de le décrire seulement en texte. */
+/* v3.263.0 (retour Seb) : l'aperçu reprend le BANDEAU d'alerte du combat (v3.251.0) et son icône
+   PNG, lus dans COMBAT_STATES — l'ancien badge à emoji n'existe plus en jeu. */
 function buildTutorialPreviewHTML(kind) {
-  if (kind === "charge") {
-    return '<div class="enemy-status-icon enemy-status-charge tutorial-preview-badge" title="Charge au prochain tour !"><span class="enemy-status-emoji">💢</span></div>';
-  }
-  return "";
+  var def = (window.COMBAT_STATES || {})[kind];
+  if (!def) return "";
+  return '<span class="cb-alert tutorial-preview-alert">' + renderIconOrEmojiHTML(def.icon, "", def.nom)
+    + '<span>' + esc(def.mot || def.nom) + '</span></span>';
 }
 
 function buildTutorialModalHTML(closeHandlerJs, tutorial) {

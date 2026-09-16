@@ -110,6 +110,12 @@ var SceneRunManager = {
         if (run.injuries[j].severity === "legere") { idx = j; break; }
       }
     }
+    // v3.257.0 (C-3) : en mode "legere", repli sur la première blessure normale si l'effet tenu le permet.
+    if (idx < 0 && mode !== "grave" && this.autelHealsNormal()) {
+      for (var k = 0; k < run.injuries.length; k++) {
+        if (run.injuries[k].severity === "normale") { idx = k; break; }
+      }
+    }
     if (idx < 0) return null;
     return run.injuries.splice(idx, 1)[0];
   },
@@ -513,6 +519,10 @@ var SceneRunManager = {
     // embarque) au lieu d'un simple flag de disponibilite. ropeAvailable est conserve en
     // miroir pour ne rien casser dans la vue et dans les sauvegardes existantes.
     run.ropeCharges = itemIds.filter(function (id) { return id === "corde"; }).length;
+    // v3.257.0 (Cartes Vivantes, C-3) : Pont du gué tenu -> la corde embarquée tient un usage de plus.
+    if (run.ropeCharges > 0 && window.LivingMapManager && LivingMapManager.hasEffect("corde_plus")) {
+      run.ropeCharges += Number(LivingMapManager.getEffectValue("ropeBonus", 1));
+    }
     run.ropeAvailable = run.ropeCharges > 0;
     run.provisionCharges = itemIds.filter(function (id) { return id === "provisions"; }).length;
     run.amuletAvailable = itemIds.indexOf("amulette") !== -1;
@@ -575,9 +585,17 @@ var SceneRunManager = {
     var run = this.getRun();
     if (!run || !run.gourdeAvailable) return { ok: false, reason: "Gourde indisponible" };
     if (Number(run.breath || 0) >= 100) return { ok: false, reason: "Souffle déjà au maximum" };
-    run.breath = Math.min(100, Number(run.breath || 0) + this.GOURDE_BREATH_AMOUNT);
+    run.breath = Math.min(100, Number(run.breath || 0) + this.getGourdeAmount());
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null };
+  },
+
+  /* v3.257.0 (C-3) : Autel de pierre tenu -> la gourde rend 40 Souffle au lieu de 25. */
+  getGourdeAmount: function () {
+    if (window.LivingMapManager && LivingMapManager.hasEffect("gourde_40")) {
+      return Number(LivingMapManager.getEffectValue("gourdeBreath", 40));
+    }
+    return this.GOURDE_BREATH_AMOUNT;
   },
 
   /* v3.199.0 : Souffle épuisé -> fin du run par évacuation, même traitement que le plafond de
@@ -609,10 +627,18 @@ var SceneRunManager = {
      legere). La vue s'en sert pour ne pas proposer une offrande qui ne rendrait rien. */
   canHealHere: function (run) {
     if (!run || !run.injuries) return false;
+    var normalOk = this.autelHealsNormal();
     for (var i = 0; i < run.injuries.length; i++) {
       if (run.injuries[i].severity === "legere") return true;
+      if (normalOk && run.injuries[i].severity === "normale") return true;
     }
     return false;
+  },
+
+  /* v3.257.0 (C-3) : Cercle des menhirs tenu -> l'autel (et la source) soignent aussi une
+     blessure NORMALE. La grave reste hors de portée : seules les provisions l'effacent. */
+  autelHealsNormal: function () {
+    return !!(window.LivingMapManager && LivingMapManager.hasEffect("autel_normale"));
   },
 
   /* useSceneProvision() -> { ok, reason, severity }. v3.198.0 : les provisions etaient

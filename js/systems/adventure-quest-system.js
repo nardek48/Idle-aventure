@@ -1,6 +1,7 @@
 "use strict";
 /* systems/adventure-quest-system.js — quêtes scopées {worldId, adventureIndex} (data/adventure-quests.js), run dédié type Donjon.
-   Indépendant de world-quest-system.js. Progression PERMANENTE, run éphémère (ne survit pas à l'ascension). Détail : COMMENTAIRES_ORIGINAUX.md */
+   Indépendant de world-quest-system.js. Run éphémère (ne survit pas à l'ascension). v3.260.0 : la progression
+   d'une quête repart de 0 à chaque départ (décision Seb) — elle n'est plus conservée après une mort ou un abandon. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var AdventureQuestManager = {
   ensureDefaults: function () {
@@ -161,12 +162,22 @@ var AdventureQuestManager = {
       return showToast("Termine ou arrête ta chasse en cours avant de lancer une quête", 1600);
     }
 
+    this._resetProgress(quest); // v3.260.0 : chaque départ repart de 0
     game.adventureQuestRun = { active: true, questId: questId };
     if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("adventure"); } // v3.102.1 : la quête est une sortie
     addLog("📜 Départ en quête : " + quest.name, "event");
     this.spawnRunEnemy(quest);
     if (typeof switchTab === "function") switchTab("combat");
     saveGame();
+  },
+
+  /* v3.260.0 (décision Seb) : remet à 0 les étapes d'une quête non terminée.
+     v3.261.0 (décision Seb, « toutes les quêtes combat ») : les quêtes d'élite aussi — la règle
+     v3.205.0 (pistage conservé après un échec contre l'élite) est levée. */
+  _resetProgress: function (quest) {
+    if (!quest || game.adventureQuestsCompleted[quest.id]) return;
+    var progress = game.adventureQuestProgress[quest.id] || (game.adventureQuestProgress[quest.id] = {});
+    quest.steps.forEach(function (step) { progress[step.id] = 0; });
   },
 
   onEnemyKilled: function (enemy) {
@@ -201,6 +212,7 @@ var AdventureQuestManager = {
   finish: function (quest, success) {
     this.ensureRun();
     game.adventureQuestRun = { active: false, questId: null };
+    if (!success) this._resetProgress(quest); // v3.260.0 : le tableau n'affiche pas une progression qui ne sera pas reprise
     if (success && window.SortieManager) SortieManager.end("success"); // v3.102.1 : mission réussie = butin banqué
 
     if (success && quest) {
@@ -252,7 +264,7 @@ var AdventureQuestManager = {
     // v3.102.0 (P2) : mort en quête = même règle qu'ailleurs (PV 0, Sang-froid, retour Campement) — plus de soin complet gratuit
     var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
     game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
-    addLog("💀 Quête interrompue" + (quest ? " : " + quest.name : "") + " — progression conservée. Retour au Campement.", "event");
+    addLog("💀 Quête interrompue" + (quest ? " : " + quest.name : "") + " — retour au Campement. Au prochain départ, tout est à refaire.", "event");
     vibrate([80, 40, 80]);
     this.finish(quest, false);
     game.justDied = true;
@@ -264,7 +276,7 @@ var AdventureQuestManager = {
     if (!game.adventureQuestRun.active) return;
     var quest = ADVENTURE_QUESTS[game.adventureQuestRun.questId];
     if (window.SortieManager) SortieManager.end("flee"); // v3.102.1 : abandon = fuite, 50 % du butin
-    addLog("🏳️ Quête abandonnée" + (quest ? " : " + quest.name : "") + " — progression conservée.", "event");
+    addLog("🏳️ Quête abandonnée" + (quest ? " : " + quest.name : "") + " — au prochain départ, tout est à refaire.", "event");
     this.finish(quest, false);
   }
 };

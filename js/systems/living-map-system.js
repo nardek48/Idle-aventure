@@ -83,6 +83,12 @@ var LivingMapManager = {
         if (this.STATES.indexOf(s.state) < 0) s.state = "voile";
         s.firstRewardClaimed = !!s.firstRewardClaimed;
         s.liberatedCount = Math.max(0, Math.floor(Number(s.liberatedCount || 0)));
+        /* v3.258.0 (C-5) : compteur du jour d'une élite répétable, sur son secteur seulement. */
+        var c = map.sectors[j].content;
+        if (c && c.type === "elite" && c.repeatable) {
+          if (typeof s.dailyKey !== "string") s.dailyKey = "";
+          s.dailyWins = Math.max(0, Math.floor(Number(s.dailyWins || 0)));
+        } else { delete s.dailyKey; delete s.dailyWins; }
       }
     }
     /* Repère absent (première fois) : on s'aligne sur le compteur SANS recouvrir,
@@ -218,8 +224,40 @@ var LivingMapManager = {
     var def = this.getSectorDef(mapId, sectorId);
     if (!def || !def.content) return null;
     var s = this.getState(mapId, sectorId);
-    if (def.content.type === "elite" && s && s.liberatedCount > 0 && def.content.then) return def.content.then;
+    if (def.content.type === "elite" && !def.content.repeatable && s && s.liberatedCount > 0 && def.content.then) return def.content.then;
     return def.content;
+  },
+
+  /* ---------- Élite répétable (C-5) ---------- */
+
+  isRepeatable: function (mapId, sectorId) {
+    var def = this.getSectorDef(mapId, sectorId);
+    return !!(def && def.content && def.content.type === "elite" && def.content.repeatable);
+  },
+
+  _todayKey: function () { return new Date().toDateString(); },
+
+  /* Victoires du jour civil sur ce secteur (0 si la journée a changé). */
+  getDailyWins: function (mapId, sectorId) {
+    var s = this.getState(mapId, sectorId);
+    if (!s || !this.isRepeatable(mapId, sectorId)) return 0;
+    return s.dailyKey === this._todayKey() ? Number(s.dailyWins || 0) : 0;
+  },
+
+  _addDailyWin: function (mapId, sectorId) {
+    var s = this.getState(mapId, sectorId);
+    if (!s) return 0;
+    var today = this._todayKey();
+    if (s.dailyKey !== today) { s.dailyKey = today; s.dailyWins = 0; }
+    s.dailyWins = Number(s.dailyWins || 0) + 1;
+    return s.dailyWins;
+  },
+
+  /* Multiplicateur de frein du PROCHAIN combat : 1 + pas × victoires du jour. */
+  getBrakeMult: function (mapId, sectorId) {
+    if (!this.isRepeatable(mapId, sectorId)) return 1;
+    var per = Number((this.getRules().repeatableElite || {}).brakePerWin || 0);
+    return 1 + per * this.getDailyWins(mapId, sectorId);
   },
 
   /* Effet tenu actif (§4.3) : lu par les systèmes concernés en C-2/C-3, jamais par stats-system. */
@@ -233,6 +271,12 @@ var LivingMapManager = {
       }
     }
     return false;
+  },
+
+  /* Constante d'un effet tenu (LIVING_MAP_RULES.effects), ou le défaut donné. */
+  getEffectValue: function (key, fallback) {
+    var e = this.getRules().effects || {};
+    return (e[key] != null) ? e[key] : fallback;
   },
 
   /* Secteurs atteignables non libérés : ce qui reste à prendre. */
@@ -288,8 +332,9 @@ var LivingMapManager = {
     if (window.SortieManager && typeof SortieManager.isMission === "function" && SortieManager.isMission()) {
       return { ok: false, reason: "Une sortie est déjà en cours. Rentre d'abord.", content: content, intensity: intensity };
     }
-    if (this.isLiberated(mapId, sectorId)) {
-      /* §6.1 : un secteur libéré ne se rejoue que quand plus rien d'atteignable n'attend. */
+    if (this.isLiberated(mapId, sectorId) && !this.isRepeatable(mapId, sectorId)) {
+      /* §6.1 : un secteur libéré ne se rejoue que quand plus rien d'atteignable n'attend.
+         Exception (C-5) : une élite répétable se rejoue à volonté. */
       var open = this.getOpenTargets(mapId);
       if (open.length) {
         var next = this.getSectorDef(mapId, open[0]);
@@ -300,6 +345,17 @@ var LivingMapManager = {
         && typeof SceneRunManager.canStartPetiteAventureToday === "function"
         && !SceneRunManager.canStartPetiteAventureToday()) {
       return { ok: false, reason: "Plus d'expédition aujourd'hui. Reviens demain.", content: content, intensity: intensity };
+    }
+    /* v3.260.0 (retour Seb) : le coût d'entrée de l'expédition se dit dans le panneau, avant
+       le départ, au lieu d'un refus de SceneRunManager.startRun après coup. */
+    if (content && content.type === "expedition" && window.SceneEngine && window.WarehouseManager) {
+      var tpl = SceneEngine.getTemplate(content.templateId);
+      var cost = tpl && tpl.entryCost;
+      if (cost && WarehouseManager.getAmount(cost.resourceId) < Number(cost.amount || 0)) {
+        var resDef = (window.WAREHOUSE_RESOURCES || {})[cost.resourceId];
+        var rName = (resDef && resDef.name) || cost.resourceId;
+        return { ok: false, reason: "Il te manque " + (Number(cost.amount) > 1 ? cost.amount + " " : "une ") + rName + ". Elle se prépare à la Cuisine de camp, dans les Ateliers du Village.", content: content, intensity: intensity, missingResource: cost.resourceId };
+      }
     }
     return { ok: true, reason: "", content: content, intensity: intensity };
   },
@@ -332,7 +388,8 @@ var LivingMapManager = {
     game.livingMaps.fight = { mapId: mapId, sectorId: sectorId, eliteId: content.eliteId };
     SortieManager.end("return"); // un farm en cours est rangé, comme pour une quête ou une chasse
     if (!SortieManager.start("mapelite")) { game.livingMaps.fight = null; return { ok: false, reason: "Une sortie est déjà en cours." }; }
-    var enemy = EliteManager.spawn(content.eliteId, map.worldId, 0);
+    var brake = this.getBrakeMult(mapId, sectorId); // v3.258.0 (C-5) : 1 hors élite répétable
+    var enemy = EliteManager.spawn(content.eliteId, map.worldId, 0, { brakeMult: brake });
     if (!enemy) { SortieManager.end("return"); game.livingMaps.fight = null; return { ok: false, reason: "L'élite n'a pas paru." }; }
     this._applyFightTheme(map);
     if (typeof addLog === "function") addLog("Carte : " + this.getSectorDef(mapId, sectorId).name + " — " + enemy.name + " se dresse devant toi.", "event");
@@ -360,7 +417,7 @@ var LivingMapManager = {
     if (!f || !window.EliteManager) return false;
     var map = this.getMap(f.mapId);
     if (map) this._applyFightTheme(map);
-    return !!EliteManager.spawn(f.eliteId, map ? map.worldId : "forest", 0);
+    return !!EliteManager.spawn(f.eliteId, map ? map.worldId : "forest", 0, { brakeMult: this.getBrakeMult(f.mapId, f.sectorId) });
   },
 
   /* Appelé par combat-engine.js:killEnemy quand un combat de carte est actif. Seule l'élite
@@ -372,6 +429,19 @@ var LivingMapManager = {
     if (window.SortieManager) SortieManager.end("success");
     game.livingMaps.fight = null;
     var report = this.onRunEnd(f.mapId, f.sectorId, "success");
+    /* v3.258.0 (C-5) : élite répétable — Sève par victoire, et la suivante sera plus dure. */
+    if (this.isRepeatable(f.mapId, f.sectorId)) {
+      var rules = this.getRules(), re = rules.repeatableElite || {};
+      var wins = this._addDailyWin(f.mapId, f.sectorId);
+      var seve = Number(re.sevePerWin || 0);
+      if (seve > 0 && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
+        WarehouseManager.addResource(rules.seveResourceId || "seve_aeswyn", seve, true);
+      }
+      report.repeatWin = wins; report.repeatSeve = seve;
+      var eliteDef = window.ELITE_DB && ELITE_DB[f.eliteId];
+      if (!report.firstReward) report.message = (eliteDef ? eliteDef.name : "L'élite") + " plie."; // reprise : le secteur était déjà libéré
+      report.message += " +" + seve + " Sève. Victoire " + wins + " du jour : la prochaine sera plus dure (+" + Math.round(Number(re.brakePerWin || 0) * wins * 100) + " %).";
+    }
     this._afterFight(f, report, "success");
     return true;
   },

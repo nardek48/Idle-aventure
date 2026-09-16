@@ -69,3 +69,21 @@
 .cf-hint { font-size: 11px; font-style: italic; color: var(--nb-ink-dim); margin-bottom: 8px; }
 .cf-actions { display: flex; gap: 8px; }
 .cf-actions .settings-btn { flex: 1 1 0; width: auto; min-width: 0; }
+
+/* v3.265.0 : avertissement PV bas (sous FORECAST_LOW_HP_PCT), en tête de la carte */
+.cf-lowhp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 10px;
+  padding: 8px 10px;
+  border-radius: var(--nb-radius-md);
+  border: 1.5px solid var(--danger, #c0392b);
+  background: rgba(192, 57, 43, 0.12);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--nb-ink);
+  text-align: left;
+}
+.cf-lowhp b { color: var(--danger, #c0392b); }
+.cf-lowhp-ico { flex: 0 0 auto; width: 28px; height: 28px; object-fit: contain; }

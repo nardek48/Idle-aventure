@@ -61,6 +61,24 @@ var ELITE_DB = {
     questIcon: "./images/Icons/quest_icons/elite/elite4.png",
     phases: null,
     repeatable: false
+  },
+
+  /* v3.258.0 (Cartes Vivantes, C-5) : l'Arbre-mère, élite répétable du secteur 7 de la
+     Forêt (data/living-maps.js). Base Troll des forêts (lent, endurant, archétype shielded
+     fixe) — décision Seb 16/09/2026. Aucun butin unique : la récompense est la Sève par
+     victoire, freinée par la journée (LIVING_MAP_RULES.motherTree). Pas de quête d'aventure :
+     elle ne se joue que depuis la carte. */
+  arbre_mere: {
+    id: "arbre_mere",
+    baseId: "foresttroll",
+    name: "L'Arbre-mère",
+    archetype: "shielded",
+    statMult: { endurance: 2.6, power: 1.05, celerity: 0.8 },
+    lore: "Ce n'est pas un arbre qui a poussé. C'est quelque chose qui a pris la forme d'un arbre "
+      + "pour qu'on cesse de le regarder. Le battement vient de dessous.",
+    questIcon: "./images/Icons/quest_icons/elite/elite2.png",
+    phases: null,
+    repeatable: true
   }
 };
 

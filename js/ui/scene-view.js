@@ -70,10 +70,92 @@ function refreshSceneScreen() {
    décision Seb "c'est l'onglet Quêtes qui est important") — il n'affiche qu'un run en cours,
    lancé depuis le tableau de missions. Sans run actif, invite à y retourner plutôt que de
    proposer de lancer quoi que ce soit ici. */
+/* v3.260.0 (retour Seb) : départ refusé -> l'écran dit POURQUOI au lieu de « aucune expédition ».
+   Non sauvegardé : un rechargement retombe sur l'accueil normal. */
+var sceneStartBlock = null; // { templateId, reason }
+
+/* Recette qui produit une ressource (premier atelier trouvé), pour dire où la fabriquer. */
+function findSceneCostRecipe(resourceId) {
+  var cfg = window.WORKSHOPS_CONFIG || {};
+  var found = null;
+  Object.keys(cfg).some(function (wid) {
+    return (cfg[wid].recipes || []).some(function (r) {
+      if (!(r.outputs || []).some(function (o) { return o.resourceId === resourceId; })) return false;
+      found = { workshopName: cfg[wid].name, inputs: r.inputs || [] };
+      return true;
+    });
+  });
+  return found;
+}
+window.findSceneCostRecipe = findSceneCostRecipe;
+
+/* Écran du départ refusé : ressource manquante (icône, quantité, recette, raccourci Ateliers)
+   ou, à défaut, la raison brute. Si le manque est comblé entre-temps, propose de repartir. */
+function buildSceneStartBlockHTML(block) {
+  var template = (window.SceneEngine && SceneEngine.getTemplate) ? SceneEngine.getTemplate(block.templateId) : null;
+  var cost = template && template.entryCost;
+  var h = '<div class="panel-title">Expédition</div>';
+  h += '<div class="scene-landing scene-landing-blocked">';
+  if (cost) {
+    var def = (window.WAREHOUSE_RESOURCES || {})[cost.resourceId] || {};
+    var need = Number(cost.amount || 0);
+    var have = (window.WarehouseManager && WarehouseManager.getAmount) ? Number(WarehouseManager.getAmount(cost.resourceId) || 0) : 0;
+    var name = def.name || cost.resourceId;
+    h += '<div class="scene-landing-icon scene-cost-icon' + (have >= need ? ' is-ok' : '') + '">' + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.png", "scene-cost-img", name) + '</div>';
+    if (have < need) {
+      h += '<div class="scene-cost-title">Il te manque ' + (need - have > 1 ? (need - have) + ' ' : 'une ') + esc(name) + '</div>';
+      h += '<p class="scene-landing-text">' + esc((template.title || "Cette expédition") + " consomme " + need + " " + name + " au départ. Tu en as " + have + ".") + '</p>';
+      var recipe = findSceneCostRecipe(cost.resourceId);
+      if (recipe) {
+        h += '<div class="scene-cost-recipe"><span class="scene-cost-recipe-label">' + esc(recipe.workshopName) + '</span>';
+        recipe.inputs.forEach(function (inp) {
+          var rd = (window.WAREHOUSE_RESOURCES || {})[inp.resourceId] || {};
+          var got = (window.WarehouseManager && WarehouseManager.getAmount) ? Number(WarehouseManager.getAmount(inp.resourceId) || 0) : 0;
+          h += '<span class="scene-cost-input' + (got >= inp.quantity ? '' : ' is-missing') + '">' + renderIconOrEmojiHTML(rd.icon || "", "scene-cost-input-img", rd.name || inp.resourceId) + formatNumber(got) + '/' + formatNumber(inp.quantity) + '</span>';
+        });
+        h += '</div>';
+        h += '<button class="settings-btn primary" type="button" onclick="goToSceneCostWorkshop()">Préparer aux Ateliers</button>';
+      }
+    } else {
+      h += '<div class="scene-cost-title">' + esc(name) + ' prête</div>';
+      h += '<p class="scene-landing-text">Tu as ce qu\u2019il faut pour partir.</p>';
+      h += '<button class="settings-btn primary" type="button" onclick="retrySceneStart()">Partir</button>';
+    }
+  } else {
+    h += '<div class="scene-landing-icon"><img class=ico-inline src=images/Icons/system/warning.png></div>';
+    h += '<p class="scene-landing-text">' + esc(block.reason || "Départ impossible pour l\u2019instant.") + '</p>';
+  }
+  h += '<button class="settings-btn" type="button" onclick="leaveSceneStartBlock()">Voir le tableau de missions</button>';
+  h += '</div>';
+  return h;
+}
+
+function goToSceneCostWorkshop() {
+  sceneStartBlock = null;
+  if (typeof closeLivingMap === "function" && typeof isLivingMapOpen === "function" && isLivingMapOpen()) closeLivingMap(); // appel depuis la carte
+  if (typeof switchTab === "function") switchTab("village");
+  if (typeof setVillageSubTab === "function") setVillageSubTab("production");
+  if (typeof setProductionViewTab === "function") setProductionViewTab("shops");
+}
+function retrySceneStart() {
+  var id = sceneStartBlock && sceneStartBlock.templateId;
+  sceneStartBlock = null;
+  if (id) openSceneQuestEntry(id);
+}
+function leaveSceneStartBlock() {
+  sceneStartBlock = null;
+  if (typeof switchTab === "function") switchTab("quests");
+}
+window.goToSceneCostWorkshop = goToSceneCostWorkshop;
+window.retrySceneStart = retrySceneStart;
+window.leaveSceneStartBlock = leaveSceneStartBlock;
+window.buildSceneStartBlockHTML = buildSceneStartBlockHTML;
+
 function buildSceneLandingHTML() {
   if (game.sceneRun && game.sceneRun.status === "completed") {
     return buildSceneCompleteHTML(); // bilan pas encore consulté (ex. reprise post-rechargement)
   }
+  if (sceneStartBlock) return buildSceneStartBlockHTML(sceneStartBlock); // v3.260.0
   var h = '<div class="panel-title">Expédition</div>';
   h += '<div class="scene-landing">';
   h += '<div class="scene-landing-icon"><img class=ico-inline src=images/Icons/scene/scene_cavern.png></div>';
@@ -95,8 +177,10 @@ function openSceneQuestEntry(templateId) {
   if (SceneRunManager.isRunActive()) return; // un AUTRE run est en cours, rien à faire ici (switchTab a déjà affiché son écran)
   sceneRunLog = [];
   var result = SceneRunManager.startRun(templateId);
+  // v3.260.0 : le refus reste affiché à l'écran (ration manquante, cap du jour...)
+  sceneStartBlock = result.ok ? null : { templateId: templateId, reason: result.reason };
   if (!result.ok) {
-    showToast(result.reason, 1600);
+    if (game.activeTab !== "scene") showToast(result.reason, 1600); // sur l'écran, le refus est déjà affiché
     refreshSceneScreen();
     return;
   }
@@ -948,7 +1032,8 @@ function buildSceneCompleteHTML() {
   var h = '<div class="panel-title">Résumé de l\u2019expédition</div>';
   h += '<div class="scene-screen">';
   h += '  <div class="scene-end-card' + (isEvacuation ? ' is-failure' : '') + '">';
-  h += '    <div class="scene-end-icon">' + (isEvacuation ? '\u{1F480}' : '\u{1F3D5}\uFE0F') + '</div>';
+  // v3.263.0 (retour Seb) : icônes du kit au lieu des emoji (Campement de la barre de navigation, héros à terre)
+  h += '    <div class="scene-end-icon"><img class="scene-end-img" src="' + (isEvacuation ? 'images/Icons/camp/hero_defeated.png' : 'images/Icons/menu_icons/camp_menu.png') + '" alt=""></div>';
   h += '  </div>';
 
   h += '  <div class="dungeon-summary-rewards">';
@@ -973,21 +1058,14 @@ function buildSceneCompleteHTML() {
     return h;
   }
 
+  /* v3.260.0 (retour Seb) : « Nouvelle expédition » retirée. Elle relançait toujours
+     expedition_faille (bac à sable admin), quel que soit le run terminé. Retour au Campement seul. */
   h += '  <div class="scene-actions">';
-  h += '    <button class="settings-btn primary" type="button" onclick="startSceneExpeditionAgain()">Nouvelle expédition</button>';
-  h += '    <button class="settings-btn" type="button" onclick="leaveSceneScreen()">Quitter</button>';
+  h += '    <button class="settings-btn primary" type="button" onclick="leaveSceneScreen()">Retour au Campement</button>';
   h += '  </div>';
   h += '</div>';
   return h;
 }
-
-/* Nettoie le bilan et relance directement une expédition (raccourci pratique). */
-function startSceneExpeditionAgain() {
-  SceneRunManager.clearRun();
-  sceneRunLog = [];
-  startSceneExpedition();
-}
-window.startSceneExpeditionAgain = startSceneExpeditionAgain;
 
 /* Nettoie le bilan et retourne au Campement — seul vrai point de sortie complet de l'écran
    Expédition une fois le run terminé (décision Seb : le joueur doit pouvoir quitter, pas

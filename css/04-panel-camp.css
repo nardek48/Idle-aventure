@@ -115,19 +115,68 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 }
 
 /* v3.233.0 (Seb) : le bouton collait aux bords de la carte (width 100 %).
-   Il se dimensionne maintenant sur son texte, centré par le flex parent. */
+   Il se dimensionne maintenant sur son texte, centré par le flex parent.
+   v3.260.0 (retour Seb) : l'asset 393x88 plaqué en 100 % 100 % dans ~63x48 écrasait
+   les pointes du cadre. Découpe en 9 zones : coins et pointes gardent leurs proportions,
+   seul le centre s'étire. Limité à ce bouton, le composant du kit ne change pas. */
 .camp-ration-btn {
   width: auto;
   max-width: 100%;
-  padding: 7px 14px;
+  min-height: 36px;
+  padding: 0 4px;
   font-size: 12px;
+  background: none;
+  border-style: solid;
+  border-width: 9px 13px;
+  border-image: url('../images/UI/buttons/btn-rect-normal.png') 26 38 fill / 9px 13px stretch;
 }
 
-/* Bloc Régénération */
+.camp-ration-btn:not(:disabled):active {
+  background-image: none;
+  border-image-source: url('../images/UI/buttons/btn-rect-pressed.png');
+}
+
+/* Bloc Régénération — v3.260.0 : une ligne (icône, rythme, temps restant, « ? ») */
+.camp-regen-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.camp-regen-line .camp-regen-rate,
+.camp-regen-line .camp-regen-eta {
+  white-space: nowrap;
+}
+
+.camp-regen-line .camp-regen-eta {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+}
+
+.camp-help-btn {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--nb-frame);
+  background-color: #4a3219;
+  color: #ffd76a;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
 .camp-regen-desc {
   font-size: 11px;
   color: var(--nb-ink-dim);
-  margin-bottom: 8px;
+  margin-top: 6px;
 }
 
 /* v3.233.0 : .camp-regen-bar/.camp-regen-fill supprimées du rendu
@@ -430,4 +479,13 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   right: -4px;
   width: 22px;
   font-size: 10px;
+}
+
+/* v3.260.0 : petits écrans (320-359 px) — rations et ligne de régénération tiennent sans déborder */
+@media (max-width: 359px) {
+  .camp-ration-item { padding: 8px 3px; }
+  .camp-ration-btn { font-size: 11px; padding: 0 1px; border-width: 8px 10px; border-image-width: 8px 10px; }
+  .camp-regen-line { gap: 4px; font-size: 10.5px; }
+  .camp-regen-line .ico-lg { width: 20px; height: 20px; }
+  .camp-help-btn { width: 24px; height: 24px; font-size: 0.8rem; }
 }

@@ -19,7 +19,12 @@ var ADVENTURE_QUESTS = {
        l'Histoire, elle doit se gagner avec l'équipement de départ — le joueur n'a ni l'or pour
        s'équiper (10 combats = 94 or, une pièce commune = 300) ni les améliorations. Le soin du boss
        est CONSERVÉ : c'est ici qu'on découvre les télégraphes. Calibré sim/lisiere-quest-bench.js. */
-    enemyHpMult: 0.4,
+    /* v3.263.0 (retour Seb) : depuis que l'arme +15 arrive à Premier sang (v3.260.0), le run était
+       trop facile. PV des ennemis ORDINAIRES doublés (×0,8), le Roi Slime reste à ×0,4.
+       sim/roi-marais-bench.js : 0 % d'échec toujours, mais 23-26 rounds au lieu de 16-18 et
+       53-67 % des PV à l'arrivée au lieu de 70-78 %. */
+    enemyHpMult: 0.8,
+    bossHpMult: 0.4,
     name: "Prouver sa valeur",
     story: "Le Roi Slime géant règne sur la Lisière depuis des lunes, gardant jalousement le passage vers le cœur de la forêt. Pour qu'on te laisse poursuivre, il faudra d'abord montrer que tu n'es pas qu'un simple aventurier de passage.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.png",
@@ -114,8 +119,8 @@ var ADVENTURE_QUESTS = {
      Hors du cap de 3 quêtes actives (voir mission-board-system.js) : comme le
      Donjon et la Petite Aventure, c'est une activité courte à lancement direct.
 
-     Échec : progression conservée, l'élite se représente (décision Seb) —
-     comportement par défaut du manager, rien à coder.
+     Échec : v3.261.0 (décision Seb) — tout est à refaire, pistage compris, comme
+     pour toute quête de combat (AdventureQuestManager._resetProgress).
      --------------------------------------------------------------------- */
 
   eq_forest_spider: {

@@ -380,7 +380,7 @@ function buildTavernContractsHTML() {
     h += '<div class="tavern-contract-side">';
     h += '<div class="tavern-contract-reward">'
        + '<img class="tavern-contract-gold" src="images/Icons/gold_icon.png" alt="">'
-       + formatNumber(c.reward) + '</div>';
+       + formatNumber(TavernManager.getPayout(c)) + '</div>';
     if (c.done) {
       h += '<div class="tavern-contract-btn is-done">Honoré</div>';
     } else if (enough) {

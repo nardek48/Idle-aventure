@@ -270,9 +270,8 @@ function confirmHeroSelection() {
   game.playerName = name;
   window.pendingHeroCreationOrigin = null; // v3.29 : création confirmée, la croix <img class=ico-inline src=images/Icons/system/close.png> n'a plus lieu d'être pour cet emplacement
 
-  if (!game.equipped || !game.equipped.weapon) {
-    if (typeof equipStarterWeapon === "function") equipStarterWeapon();
-  }
+  // v3.260.0 (décision Seb) : plus d'arme de départ à la création — la première arme est la
+  // récompense de « Premier sang ». equipStarterWeapon reste le secours du changement de héros.
 
   if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
     StatsSystem.recalcStats();

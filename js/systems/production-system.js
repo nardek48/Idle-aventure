@@ -121,11 +121,23 @@ var ProductionManager = {
   },
 
   getRatePerMin: function (id) {
+    var rate;
     if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
-      return ProductionPlotsSystem.getTotalRatePerMin(id);
+      rate = ProductionPlotsSystem.getTotalRatePerMin(id);
+    } else {
+      var level = this.getLevel(id);
+      rate = PRODUCTION_CONFIG.baseRatePerMin * Math.pow(PRODUCTION_CONFIG.rateGrowthPerLevel, level - 1);
     }
-    var level = this.getLevel(id);
-    return PRODUCTION_CONFIG.baseRatePerMin * Math.pow(PRODUCTION_CONFIG.rateGrowthPerLevel, level - 1);
+    return rate * this.getLivingMapMult(id);
+  },
+
+  /* v3.257.0 (Cartes Vivantes, C-3) : Étang aux roseaux tenu -> Puits +10 %, Arbre doré tenu
+     -> Scierie +10 %. Lu à chaque tick, donc perdu dès que le secteur régresse. */
+  LIVING_MAP_EFFECT_BY_BUILDING: { well: "puits_plus", sawmill: "scierie_plus" },
+  getLivingMapMult: function (id) {
+    var effectId = this.LIVING_MAP_EFFECT_BY_BUILDING[id];
+    if (!effectId || !window.LivingMapManager || !LivingMapManager.hasEffect(effectId)) return 1;
+    return Number(LivingMapManager.getEffectValue("productionMult", 1.10));
   },
 
   getCapacity: function (id) {

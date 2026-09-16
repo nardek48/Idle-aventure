@@ -49,6 +49,11 @@ var VILLAGE_BUILDINGS = {
     desc: "Le maître d'œuvre du village. Son niveau ouvre les chantiers des autres bâtiments, et chaque amélioration fait monter le prix de vente de l'Entrepôt.",
     /* Repris tel quel de data/construction.js (v3.37/v3.40) : mêmes
        ressources, mêmes bases, mêmes multiplicateurs. */
+    /* v3.264.0 (décision Seb) : le NIVEAU 1 seul coûte 5 planches au lieu de 10 — exactement
+       celles de l'étape « Fabriquer 5 planches » des Fondations. Attente estimée ~47 min -> ~11 min
+       (bois : 50 -> 25 pour les planches, dont ~17 rapportés par le Bosquet silencieux). Les niveaux
+       2 et suivants gardent le palier ci-dessous. Lu par VillageBuildingManager.getNextCost. */
+    firstLevelCost: { gold: 25, planche: 5, pierre: 15 },
     costTiers: [
       {
         minLevel: 0, maxLevel: 4,
@@ -350,12 +355,43 @@ var VILLAGE_BUILDINGS = {
     icon: "images/Icons/combat_stats/stat_defense.png",
     iconImg: "images/Icons/village_buildings/palisade.png",
     rank: 4,
+    /* v3.257.0 (Cartes Vivantes, C-3) : 10 niveaux, paliers de l'Entrepôt agrandi (décision
+       Seb 16/09/2026). Frein 7 %/niveau sur l'échec ; anneau 1 tenu au niveau 3, anneau 2 au
+       7, anneau 3 au 10 — au 10, le Recouvrement ne reprend plus rien (immunité de plafond,
+       décision Seb). Révèle le nom des secteurs au front dès le niveau 5. Valeurs lues sur
+       LIVING_MAP_RULES.palisade par LivingMapManager. */
     maxLevel: 10,
-    implemented: false,      // V-5, dépend des cartes vivantes
-    lockLabel: "Atelier niveau 7 (cartes vivantes)",
-    desc: "Zone sûre du village sur la carte : freine la régression du Recouvrement.",
-    costTiers: null,
-    effectLabel: function (level) { return "Secteurs protégés autour du village : " + level; }
+    implemented: true,
+    lockLabel: "Atelier niveau 7",
+    desc: "Le mur d'Aeswyn sur la carte de la Forêt : chaque niveau freine le Recouvrement quand une expédition échoue, et les anneaux tenus survivent à l'Ascension.",
+    costTiers: [
+      {
+        minLevel: 0, maxLevel: 4,
+        resources: ["gold", "planche", "pierre"],
+        baseCost: { gold: 1200, planche: 50, pierre: 65 },
+        costMult: 1.38
+      },
+      {
+        minLevel: 5, maxLevel: 9,
+        resources: ["gold", "planche", "pierre", "lingot", "resine_durcie"],
+        baseCost: { gold: 5000, planche: 110, pierre: 130, lingot: 30, resine_durcie: 3 },
+        costMult: 1.42
+      }
+    ],
+    effectLabel: function (level) {
+      var LM = window.LivingMapManager;
+      if (!LM) return "Frein du Recouvrement : niveau " + level;
+      var pal = LM.getRules().palisade || {};
+      var brake = Math.round(Number(pal.brakePerLevel || 0) * level * 100);
+      var held = LM.getHeldRing(level);
+      var txt = "Frein sur l'échec : " + brake + " %";
+      if (held >= 3) txt += " · anneaux 1 à 3 tenus : le Recouvrement ne reprend plus rien";
+      else if (held === 2) txt += " · anneaux 1 et 2 tenus à l'Ascension";
+      else if (held === 1) txt += " · anneau 1 tenu à l'Ascension";
+      else txt += " · niveau 3 : l'anneau 1 tiendra à l'Ascension";
+      if (level >= Number(pal.revealLevel || 99)) txt += " · noms révélés au front";
+      return txt;
+    }
   }
 };
 

@@ -266,3 +266,42 @@ body.combat-active #game-area { overflow: hidden; }
 .cb-arena #enemy-name, .cb-arena #enemy-hp-bar-wrapper { transform: none !important; }
 /* Encoche iPhone : l'arène commence sous la zone sûre. */
 body.combat-active #game-area { padding-top: calc(4px + var(--safe-top, env(safe-area-inset-top, 0px))); }
+
+/* =====================================================================
+   v3.261.0 — BANDEAU HÉROS, variante B (atelier-bandeau-combat.html, retour Seb).
+   Portrait à gauche sur deux lignes ; à droite, butin / potions / Fuir, puis la
+   jauge de PV sur toute la largeur. Célérité centrée et agrandie.
+   Corrige aussi un défaut de v3.241 : un butin long écrasait la jauge de PV à 0 px
+   (la rangée de sortie prenait toute la ligne du flex).
+   Balisage inchangé : display:contents sur le slot et sur #combat-hero-mini fait du
+   portrait et de la jauge des cases de la grille. Le clic vers Talents bulle toujours
+   depuis les enfants (le DOM ne change pas).
+   ===================================================================== */
+.cb-hero { grid-template-columns: minmax(0, 1fr); } /* colonne bornée : un butin long n'élargit plus le panneau */
+.cb-hero .cb-hero-top {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  row-gap: 0;
+  align-items: center;
+}
+.cb-hero .cb-hero-top .cb-hero-slot,
+.cb-hero .cb-hero-top #combat-hero-mini { display: contents !important; }
+.cb-hero .cb-hero-top .combat-hero-mini-portrait { grid-column: 1; grid-row: 1 / span 2; cursor: pointer; }
+.cb-hero .cb-hero-top .combat-sortie-row {
+  grid-column: 2; grid-row: 1;
+  flex-direction: row; align-items: center; justify-content: flex-end;
+  gap: 5px; min-width: 0;
+}
+.cb-hero .cb-hero-top .combat-hero-mini-hp-bar { grid-column: 2; grid-row: 2; width: 100% !important; cursor: pointer; }
+.cb-hero .combat-hero-mini-hp-bar .kgauge-text { font-size: 12px; }
+
+.cb-hero .cb-celerity { display: flex; justify-content: center; }
+.cb-hero .cb-celerity .combat-gauge { flex: 0 0 auto; width: 70%; max-width: none; }
+.cb-hero .cb-celerity .kgauge-text { font-size: 11px; }
+.cb-hero .cb-celerity .kgauge-text img { margin-right: 3px; }
+
+@media (max-height: 640px), (max-width: 340px) {
+  .cb-hero .cb-hero-top { grid-template-columns: 44px minmax(0, 1fr); }
+}

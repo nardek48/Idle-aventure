@@ -261,6 +261,63 @@ button.scene-path-node:active .scene-path-node-circle {
   margin-right: auto;
 }
 
+/* v3.260.0 : départ refusé faute de ressource — l'objet manquant, grisé, puis la recette */
+.scene-cost-icon {
+  display: flex;
+  justify-content: center;
+}
+
+.scene-cost-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: grayscale(0.9) opacity(0.6);
+}
+
+.scene-cost-icon.is-ok .scene-cost-img {
+  filter: none;
+}
+
+.scene-cost-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  margin-bottom: 6px;
+}
+
+.scene-cost-recipe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+  margin: 0 auto 16px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.scene-cost-recipe-label {
+  width: 100%;
+  color: var(--nb-ink-dim);
+}
+
+.scene-cost-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #15803d;
+}
+
+.scene-cost-input.is-missing {
+  color: #b42318;
+}
+
+.scene-cost-input-img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
 /* ---------- En-tête de scène (titre + sous-texte narratif) ---------- */
 .scene-heading {
   margin-bottom: 10px;
@@ -413,6 +470,14 @@ button.scene-path-node:active .scene-path-node-circle {
 .scene-end-icon {
   font-size: 40px;
   margin-bottom: 8px;
+}
+
+.scene-end-img {
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto;
+  object-fit: contain;
 }
 
 .scene-end-title {

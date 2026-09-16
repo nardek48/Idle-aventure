@@ -90,14 +90,28 @@ function buildPotionCardHTML(potion) {
   return craft ? ('<div class="potion-entry">' + h + craft + '</div>') : h;
 }
 
-function buildPotionShopHTML() {
-  var h = '<div class="potion-grid">';
-  (POTIONS_DB || []).forEach(function (potion) {
-    h += buildPotionCardHTML(potion);
-  });
-  h += '</div>';
+/* v3.260.0 (retour Seb) : les potions de mission n'apparaissent qu'une fois la première reçue
+   (récompense du Roi des marais, forest_05). Avant, le Colporteur ne montre que le soin. */
+function isPerRunPotionShopOpen() {
+  var st = (game.storyQuests || {}).forest;
+  if (!st || st.skipped || (st.claimedSteps || {}).forest_05) return true;
+  var owned = game.potionsOwned || {};
+  return Object.keys(owned).some(function (id) { return Number(owned[id] || 0) > 0; }); // save déjà équipée
+}
+window.isPerRunPotionShopOpen = isPerRunPotionShopOpen;
 
-  h += buildHealingPotionShopHTML();
+function buildPotionShopHTML() {
+  // v3.260.0 : le soin passe en tête — c'est l'achat qui décide d'un combat.
+  var h = buildHealingPotionShopHTML();
+
+  if (isPerRunPotionShopOpen()) {
+    h += '<div class="potion-section-label"><img class=ico-inline src=images/Icons/subtabs/potions.png> Potions de mission</div>';
+    h += '<div class="potion-grid">';
+    (POTIONS_DB || []).forEach(function (potion) {
+      h += buildPotionCardHTML(potion);
+    });
+    h += '</div>';
+  }
 
   return h;
 }

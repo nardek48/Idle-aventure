@@ -13,9 +13,12 @@
      neighbors   secteurs adjacents ; le village est voisin implicite de l'anneau 1
      content     { type: "expedition", templateId, pools } ou
                  { type: "elite", eliteId, then: {expedition} } — l'élite se joue
-                 UNE fois (première libération), les reprises jouent `then`
-     heldEffect  { id, label } — descripteur lu par les systèmes concernés
-                 (scene-run, production, taverne) en C-2/C-3 ; null si aucun
+                 UNE fois (première libération), les reprises jouent `then` ; ou
+                 { type: "elite", eliteId, repeatable: true } — se rejoue à volonté (C-5)
+     heldEffect  { id, label } — descripteur lu par les systèmes concernés via
+                 LivingMapManager.hasEffect(id) (C-3) : corde_plus, gourde_40, autel_normale
+                 -> scene-run-system ; puits_plus, scierie_plus -> production-system ;
+                 contrats_plus -> tavern-system. null si aucun
      lore        une ligne, au présent, une chose perçue (bible, pilier 6)
    La récompense de première libération se lit sur l'anneau (LIVING_MAP_RULES.firstReward). */
 
@@ -25,6 +28,13 @@ var LIVING_MAP_RULES = {
   /* §4.4 : Sève d'Aeswyn à la première libération, jamais aux reprises. À confirmer au banc (sim/map-bench.js). */
   firstReward: { 1: 5, 2: 8, 3: 12 },
   seveResourceId: "seve_aeswyn",
+  /* Arbre-mère (C-5) : élite répétable à frein interne. Chaque victoire du jour durcit la
+     suivante (+brakePerWin sur PV et dégâts), remise à zéro au jour civil. Sève par victoire,
+     XP de mission ordinaire (5, boss). Chiffres fixés au banc sim/arbremere-bench.js
+     (16/09/2026) : +50 % = 4 à 4,5 victoires/jour en fin de Forêt, ~9 Sève/jour. */
+  repeatableElite: { brakePerWin: 0.50, sevePerWin: 2 },
+  /* Effets tenus (C-3), chiffres en un seul endroit. */
+  effects: { productionMult: 1.10, contractMult: 1.10, gourdeBreath: 40, ropeBonus: 1 },
   /* §5.4 : Palissade (C-3). Frein : chance qu'un échec ne recouvre rien. Tenue : anneau conservé à l'Ascension. */
   palisade: {
     buildingId: "palisade",
@@ -40,7 +50,7 @@ var LIVING_MAPS = {
     id: "forest",
     worldId: "forest",                       // WORLDS[0].id
     name: "Forêt enchantée",
-    asset: "images/maps/foret_atelier.jpg",  // provisoire (décision 13), 372 Ko
+    asset: "images/Maps/foret_atelier.jpg",  // provisoire (décision 13), 372 Ko — v3.260.0 : casse du dossier (GitHub Pages distingue maps/Maps)
     village: { x: 51.1, y: 46.7, name: "Aeswyn" },
     sectors: [
       { id: "gue", name: "Pont du gué", x: 30.3, y: 52.2, ring: 1, neighbors: ["menhirs", "arbremere"],
@@ -49,7 +59,7 @@ var LIVING_MAPS = {
         lore: "Les planches du pont sont neuves, quelqu'un les a changées cet hiver." },
       { id: "camp", name: "Campement", x: 82.9, y: 44.5, ring: 1, neighbors: ["autel"],
         content: { type: "expedition", templateId: "petite_aventure_foret", pools: { obstacle: ["eboulis", "racines"] } },
-        heldEffect: { id: "rumeur_gratuite", label: "Une rumeur de Taverne gratuite par jour." },
+        heldEffect: { id: "contrats_plus", label: "Contrats de la Taverne : +10 % d'or." }, // décision Seb 16/09/2026 (la Taverne n'a pas de rumeurs)
         lore: "Des toiles tendues entre deux chênes, un feu qui ne fume presque pas." },
       { id: "etang", name: "Étang aux roseaux", x: 63.2, y: 65.3, ring: 1, neighbors: ["portail", "arbredore"],
         content: { type: "expedition", templateId: "petite_aventure_foret", pools: { obstacle: ["riviere", "racines"] } },
@@ -65,11 +75,12 @@ var LIVING_MAPS = {
         lore: "Une maison dans les branches, une échelle, une lanterne encore chaude." },
       { id: "autel", name: "Autel de pierre", x: 74.1, y: 23.7, ring: 2, neighbors: ["camp", "arbremere"],
         content: { type: "expedition", templateId: "petite_aventure_foret", pools: { obstacle: ["porte_scellee", "paroi"] } },
-        heldEffect: { id: "gourde_40", label: "Gourde : 40 Souffle au lieu de 30." },
+        heldEffect: { id: "gourde_40", label: "Gourde : 40 Souffle au lieu de 25." },
         lore: "Des marches trop hautes pour des jambes humaines. En haut, une lueur." },
-      // Arbre-mère : élite répétable à frein interne, conçue à part (lot C-5). D'ici là, Périple ordinaire (§8).
+      // Arbre-mère (C-5) : élite RÉPÉTABLE — se rejoue à volonté une fois libérée, hors cap, sans
+      // ration ; chaque victoire du jour durcit la suivante (LIVING_MAP_RULES.repeatableElite).
       { id: "arbremere", name: "Arbre-mère", x: 29.2, y: 12.7, ring: 3, neighbors: ["gue", "menhirs", "autel"],
-        content: { type: "expedition", templateId: "petite_aventure_foret", pools: {} },
+        content: { type: "elite", eliteId: "arbre_mere", repeatable: true },
         heldEffect: null,
         lore: "On l'entend avant de la voir. Un battement lent, sous l'écorce." },
       // Camp des toiles : l'élite une fois, puis expédition Périple aux reprises (décision Seb, 15/09/2026).

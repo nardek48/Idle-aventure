@@ -63,11 +63,15 @@ var HUNT_QUESTS = {
     worldId: "forest",
     adventureIndex: 0,
     name: "Chasse en Forêt",
-    story: "Le gibier ne manque pas à la Lisière. Chaque bête abattue rapporte de la viande à stocker à l'Entrepôt — une chasse peut se répéter indéfiniment.",
+    story: "Le gibier ne manque pas à la Lisière, et ce qu'il traîne avec lui non plus. Une bête abattue sur cinq ne laisse rien ; les autres rapportent viande, blé, bois, fer, pierre ou eau pour l'Entrepôt. Une chasse peut se répéter indéfiniment.",
     icon: "images/Icons/quests/ration_reward.png",
     enemyFilter: ["wolf"], // v3.108.0 : le gibier, c'est le Loup (sorti du pool libre en 3.107.4) — plus de viande de slime
     resourceKey: "viande",
-    dropChancePct: 50, // v3.100.3 : 20 -> 50 (chasse active = vraie source de viande en Acte II, décision Seb)
+    /* v3.260.0 (décision Seb) : 80 % de butin par kill, la ressource tirée à parts égales parmi
+       les six ressources de base (13,3 % chacune). resourceKey reste le repli d'une save/d'un
+       code qui ne lit pas resourcePool. Viande : ~1,3 par lot de 10 (5 avant). */
+    resourcePool: ["viande", "ble", "bois", "fer", "pierre", "eau"],
+    dropChancePct: 80,
     lotSize: 10
   },
 
@@ -126,9 +130,8 @@ var HUNT_QUESTS = {
        - rewardGold : une prime versée à la fin du lot, pas à chaque kill
      Aucun enemyFilter : n'importe quel monstre de la zone compte, c'est le
      principe d'une battue.
-     Aucun gating narratif : disponible dès l'ouverture du tableau de missions,
-     donc bien avant le Donjon (forest_14) comme demandé — un joueur bloqué
-     doit pouvoir farmer de l'or pour ses potions et son équipement.
+     v3.264.0 (décision Seb) : ouverte avec le Village (onglet village, « La meute
+     affamée ») au lieu du lancement du jeu — gating dans MissionBoard._huntMissions.
      Butin (matériaux, ingrédients) volontairement laissé de côté pour l'instant. */
   hq_forest_battue: {
     id: "hq_forest_battue",

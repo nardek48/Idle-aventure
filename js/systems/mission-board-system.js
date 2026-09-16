@@ -208,6 +208,10 @@ var MissionBoard = {
          le même événement qui autorise le joueur à y aller. */
       if (quest.id === "hq_forest_seve" && !(game.adventureQuestsCompleted && game.adventureQuestsCompleted.aq_forest_expedition)) return;
       var isRunning = !!(running && running.id === quest.id);
+      /* v3.264.0 (décision Seb) : la Battue s'ouvre avec le Village (« La meute affamée ») —
+         c'est Aldric qui paie, et le Roi des marais ne bloque plus personne (sim/roi-marais-bench.js).
+         Une battue déjà lancée reste visible pour pouvoir la suivre. */
+      if (quest.id === "hq_forest_battue" && !isRunning && !(game.unlockedTabs && game.unlockedTabs.village)) return;
       var status = isRunning ? "running" : (running ? "locked" : "available");
       var inLot = isRunning ? Number((game.huntRun && game.huntRun.killsInLot) || 0) : 0;
       var m = {
@@ -220,9 +224,12 @@ var MissionBoard = {
         // ne disait pas de quoi, maintenant qu'il y a deux chasses à ressource.
         rewardSummary: quest.rewardGold
           ? (formatNumber(quest.rewardGold) + " or par lot")
-          : (quest.dropChancePct + " % de "
-             + (((window.WAREHOUSE_RESOURCES || {})[quest.resourceKey] || {}).name || "butin")
-             + " par kill"),
+          : (quest.resourcePool && quest.resourcePool.length > 1
+            // v3.260.0 : chasse à ressources multiples — le taux global et la famille, pas six noms
+            ? (quest.dropChancePct + " % de ressource de base par kill")
+            : (quest.dropChancePct + " % de "
+               + (((window.WAREHOUSE_RESOURCES || {})[quest.resourceKey] || {}).name || "butin")
+               + " par kill")),
         badge: "contract", status: status, isMain: false
       };
       if (status === "available") {

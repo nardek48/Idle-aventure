@@ -871,6 +871,59 @@ function buildProdActionBarHTML() {
   return h;
 }
 
+/* v3.265.0 (retour Seb) — BÂTIMENTS MANQUANTS.
+   Une fois les déblocages portés par l'Histoire terminés (Puits, Chasse, Carrière : fin de
+   « La veine instable »), les bâtiments encore verrouillés s'affichent au tableau de bord.
+   Toucher la carte mène à la quête qui les débloque (Scierie, Champs, Mine). Avant ce moment
+   ils restent invisibles, comme depuis la v3.92.0 : l'Histoire guide seule. */
+function getProductionUnlockQuestId(buildingId) {
+  var found = null;
+  Object.keys(window.SCENE_TEMPLATES || {}).some(function (tid) {
+    var u = SCENE_TEMPLATES[tid].unlockOnSuccess;
+    if (u && u.buildingId === buildingId) { found = tid; return true; }
+    return false;
+  });
+  return found;
+}
+window.getProductionUnlockQuestId = getProductionUnlockQuestId;
+
+function areStoryBuildingUnlocksDone() {
+  var st = (game.storyQuests || {}).forest;
+  return !!(st && (st.skipped || (st.claimedSteps || {}).forest_09));
+}
+window.areStoryBuildingUnlocksDone = areStoryBuildingUnlocksDone;
+
+function buildProductionLockedCardHTML(id) {
+  var def = PRODUCTION_BUILDINGS[id];
+  var questId = getProductionUnlockQuestId(id);
+  if (!def || !questId) return "";
+  var resDef = WAREHOUSE_RESOURCES[def.resourceKey] || {};
+  var tpl = SCENE_TEMPLATES[questId];
+  var run = game.sceneRun;
+  var running = !!(run && run.templateId === questId && run.status !== "completed");
+  var accepted = running || !!((game.explorationProgression || {}).boardAccepted || {})[questId];
+  var h = '<div class="production-dash-card is-locked" onclick="goToProductionUnlockQuest(\'' + id + '\')">';
+  h += '<div class="production-dash-card-top">';
+  h += renderIconOrEmojiHTML(resDef.icon, "production-dash-ico", resDef.name);
+  h += '<span class="production-dash-name">' + esc(def.name) + '</span>';
+  h += '</div>';
+  h += '<div class="production-dash-lock-badge"><img class="ico-sys" src="images/Icons/system/lock_closed.png" alt=""> À débloquer</div>';
+  h += '<div class="production-dash-lock-text">' + esc(resDef.name || "") + ' — par l\u2019expédition :</div>';
+  h += '<div class="production-dash-lock-quest">' + esc(tpl.title || questId) + '</div>';
+  h += '<div class="production-dash-status">' + (running ? 'En cours' : accepted ? 'Acceptée · touche pour partir' : 'Touche pour voir la quête') + ' ›</div>';
+  h += '</div>';
+  return h;
+}
+
+function goToProductionUnlockQuest(buildingId) {
+  var questId = getProductionUnlockQuestId(buildingId);
+  if (!questId) return;
+  if (typeof highlightQuestCard === "function") highlightQuestCard("scene_" + questId);
+  if (typeof openQuestsAt === "function") openQuestsAt("expedition", "scene_" + questId);
+}
+window.goToProductionUnlockQuest = goToProductionUnlockQuest;
+window.buildProductionLockedCardHTML = buildProductionLockedCardHTML;
+
 function buildProdDashboardHTML() {
   var h = buildProdActionBarHTML();
   h += '<div class="production-dash-grid">';
@@ -878,6 +931,11 @@ function buildProdDashboardHTML() {
     if (!ProductionManager.isBuildingUnlocked(id)) return; // v3.92.0 : Carrière verrouillée -> invisible
     h += buildProductionDashCardHTML(id);
   });
+  if (areStoryBuildingUnlocksDone()) { // v3.265.0 : les bâtiments restants, en fin de grille
+    Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
+      if (!ProductionManager.isBuildingUnlocked(id)) h += buildProductionLockedCardHTML(id);
+    });
+  }
   h += '</div>';
   return h;
 }

@@ -1,5 +1,5 @@
 "use strict";
-/* data/story-quests.js — questline « Les Braises d'Aeswyn » (chapitre 1, Forêt) : 15 étapes séquentielles (v3.107.8 : « Les fondations » sortie ; v3.109.0 : « Franchir la Lisière » ajoutée).
+/* data/story-quests.js — questline « Les Braises d'Aeswyn » (chapitre 1, Forêt) : 16 étapes séquentielles (v3.107.8 : « Les fondations » sortie ; v3.109.0 : « Franchir la Lisière » ajoutée ; v3.259.0 : « Ce que la brume reprend » ajoutée, déplacée en fin d'Acte II en v3.260.0).
    Accepter une étape débloque ses onglets ; l'objectif enseigne la mécanique ; réclamer donne la récompense. Logique : systems/story-quest-system.js */
 
 /* Récompenses placeholder, regroupées ici pour le passage d'équilibrage or ultérieur. forest_10 (« Les fondations »)
@@ -16,7 +16,12 @@
        sans arme, 83 à 100 % d'échec selon la classe ; avec cette arme, 0 % pour les trois.
    Valeur 15 : milieu de la fourchette commune (10-25), donc en dessous de l'arme de la vitrine
    de départ (25) — l'échoppe garde tout son intérêt. Déclinée par classe : un Mage ne peut pas
-   se servir d'une épée (voir generateEquipmentItem et EQUIP_SHOP_STARTER). */
+   se servir d'une épée (voir generateEquipmentItem et EQUIP_SHOP_STARTER).
+   v3.260.0 (décision Seb 16/09/2026) : l'arme de 1 dégât n'est plus équipée à la création, et
+   celle-ci devient la RÉCOMPENSE de « Premier sang ». Le premier combat se joue à mains nues :
+   mesuré (sim/premier-sang-bench.js), 90 à 99 % de réussite sur 5 victoires sans potion, fini
+   à 14-24 % des PV — tendu sans bloquer (une mort ne retire aucun kill). La leçon « équiper »
+   passe à « Prendre la mesure ». */
 var STORY_STARTER_WEAPON = {
   slot: "weapon",
   stat: "tapDmg",
@@ -30,12 +35,13 @@ var STORY_STARTER_WEAPON = {
 };
 
 var STORY_REWARDS = {
-  forest_01: { gold: 50, equipmentItem: STORY_STARTER_WEAPON },
-  forest_02: { gold: 100, essence: 5 },
+  forest_01: { gold: 50 },
+  forest_02: { gold: 100, essence: 5, equipmentItem: STORY_STARTER_WEAPON }, // v3.260.0 : l'arme passe ici (décision Seb)
   forest_03: { gold: 150, essence: 5 },
   forest_04: { healingPotion: { id: "potion_soin_mineur", count: 1 } },
   forest_05: { gold: 400, essence: 10, potions: { potion_power: 1 } }, // v3.115.0 : découverte des potions per-run
   forest_06: { gold: 200, resources: { viande: 15 } },
+  forest_brume: { gold: 150, resources: { seve_aeswyn: 3 } }, // v3.259.0 (C-4) : les 3 Sève que réclamera l'offrande aux braises (forest_15)
   forest_07: { gold: 150, essence: 5, resources: { eau: 5 } },
   forest_08: { gold: 200, essence: 5 },
   forest_09: { gold: 200, essence: 5 },
@@ -77,6 +83,13 @@ function storyCountForestKills(game) {
   return total;
 }
 
+/* v3.260.0 (retour Seb) : les objectifs de kills repartent de 0 à l'acceptation. forestKillsBase
+   est posé par onAccept de forest_02 ; absent (save acceptée avant la version) = ancien comptage. */
+function storyForestKillsSinceAccept(game) {
+  var base = storyCounter(game, "forestKillsBase");
+  return Math.max(0, storyCountForestKills(game) - base);
+}
+
 function storyHasEquippedItem(game) {
   var eq = game.equipped || {};
   return Object.keys(eq).some(function (slot) { return !!eq[slot]; });
@@ -106,8 +119,27 @@ function storyCounter(game, key) {
   return Number(((st && st.counters) || {})[key] || 0);
 }
 
+/* v3.261.0 (retour Seb) : « Franchir la Lisière » est une traversée COMPLÈTE — l'acceptation ramène
+   au début de la Lisière. Même garde que storyGoToCoeur : une activité dédiée en cours n'est pas
+   touchée, le retour est alors reporté (StoryQuestManager._trackKills le rejoue). Renvoie true si fait. */
+function storyResetLisiere(g) {
+  if (!window.WorldManager) return false;
+  if (g.dungeonRun && g.dungeonRun.active) return false;
+  if (g.adventureQuestRun && g.adventureQuestRun.active) return false;
+  if (g.huntRun && g.huntRun.active) return false;
+  if (g.livingMaps && g.livingMaps.fight) return false;
+  if (g.sceneRun && g.sceneRun.status && g.sceneRun.status !== "completed") return false;
+  var moved = WorldManager.worldIndex !== 0 || WorldManager.adventureIndex !== 0 || WorldManager.enemyIndex !== 0;
+  WorldManager.worldIndex = 0;
+  WorldManager.adventureIndex = 0;
+  WorldManager.enemyIndex = 0;
+  if (moved && window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") CombatEngine.spawnEnemy();
+  return true;
+}
+
 /* v3.109.0 : progression de la traversée de la Lisière pour le compteur de mission (enemyIndex 0..9, 10 = Cœur atteint). */
 function storyLisiereCrossingProgress(game) {
+  if (storyCounter(game, "crossingReset") >= 1) return 0; // retour à la Lisière pas encore appliqué
   if (storyCounter(game, "coeurReached") >= 1) return 10;
   var wm = window.WorldManager;
   if (!wm || Number(wm.worldIndex || 0) !== 0) return 0;
@@ -186,7 +218,7 @@ var STORY_QUESTS = {
         act: "Acte I — Le feu et la lame",
         narrative: {
           objective: "Aeswyn n'est plus qu'un cercle de cendres. Le feu tient encore. Il te faudra une lame pour tenir la nuit.",
-          completion: "La lame est tirée. Ce qui rôde à la Lisière ne dort jamais."
+          completion: "Tu te lèves. Ce qui rôde à la Lisière ne dort jamais." // v3.260.0 : plus de lame remise ici (texte validé Seb)
         },
         objectiveLabel: "Accepter la quête",
         unlockTabs: ["combat"],
@@ -202,9 +234,9 @@ var STORY_QUESTS = {
         act: "Acte I — Le feu et la lame",
         narrative: {
           objective: "Les bêtes viennent flairer les braises. Écarte-les, et garde ce qu'elles laissent.",
-          completion: "Une pièce d'armure grossière, mais c'est un début. Tout se prend sur le corps des vaincus."
+          completion: "Sous la dernière bête, une arme oubliée. Grossière, mais c'est un début. Tout se prend sur le corps des vaincus."
         },
-        objectiveLabel: "Vaincre 5 ennemis à la Lisière et équiper 1 objet",
+        objectiveLabel: "Vaincre 5 ennemis à la Lisière", // v3.260.0 : l'équipement passe à forest_03
         unlockTabs: ["equip"],
         reward: STORY_REWARDS.forest_02,
         linkTo: { tab: "combat" },
@@ -218,16 +250,17 @@ var STORY_QUESTS = {
           points: [
             { icon: "images/Icons/combat_stats/stat_attack.png", text: "Attaque de base — frappe l'ennemi sans coûter de ressource. Toujours disponible." },
             { icon: "images/Icons/scene/node_discovery.png", text: "Compétences (1/2/3) — coûtent de la ressource de ta classe (Rage, Concentration ou Mana selon ton héros), pour plus de dégâts ou un effet spécial." },
-            { icon: "images/Icons/combat_stats/stat_defense.png", text: "Défense — réduit ou évite le prochain coup. Utile quand un badge comme celui-ci apparaît au-dessus de l'ennemi : il prépare une attaque plus forte.", preview: "charge" },
+            { icon: "images/Icons/combat_stats/stat_defense.png", text: "Défense — réduit ou évite le prochain coup. Utile quand ce bandeau apparaît sous la barre de vie de l'ennemi : il prépare une attaque plus forte.", preview: "charge" },
             { icon: "images/Icons/combat_stats/stat_speed.png", text: "Jauge de célérité — se remplit à chaque round. Une fois pleine, tu frappes deux fois d'affilée." }
           ]
         },
         // v3.107.1 : killTarget déclaratif — affiché comme compteur de mission en combat (combat-view.js)
         // et déclenche un retour auto au Campement une fois check() vrai (story-quest-system.js).
-        killTarget: { label: "Premier sang", counter: storyCountForestKills, target: 5, autoReturn: true },
-        check: function (game) { return storyCountForestKills(game) >= 5 && storyHasEquippedItem(game); },
+        killTarget: { label: "Premier sang", counter: storyForestKillsSinceAccept, target: 5, autoReturn: true },
+        onAccept: function (game, st) { st.counters.forestKillsBase = storyCountForestKills(game); },
+        check: function (game) { return storyForestKillsSinceAccept(game) >= 5; },
         progress: function (game) {
-          return "Kills " + Math.min(5, storyCountForestKills(game)) + "/5 · Équipé " + (storyHasEquippedItem(game) ? "1/1" : "0/1");
+          return "Kills " + Math.min(5, storyForestKillsSinceAccept(game)) + "/5";
         }
       },
       {
@@ -238,7 +271,7 @@ var STORY_QUESTS = {
           objective: "Chaque combat t'endurcit. Apprends à lire ce que ton corps devient, et à le forger.",
           completion: "Tu connais tes forces. Reste à savoir quoi en faire."
         },
-        objectiveLabel: "Acheter 1 amélioration d'entraînement",
+        objectiveLabel: "Équiper ton arme et acheter 1 amélioration d'entraînement", // v3.260.0 : la leçon « équiper » arrive avec l'arme
         unlockTabs: ["more"],
         reward: STORY_REWARDS.forest_03,
         linkTo: { tab: "more", subTab: "amelioration" }, // v3.107.1 : direct sur le sous-onglet Amélioration (décision Seb)
@@ -258,9 +291,9 @@ var STORY_QUESTS = {
         },
         // v3.109.0 : condition « niveau 2 » retirée — l'XP est par mission depuis P4 (15/étape Histoire), le niveau 2
         // (20 XP) est atteint en réclamant forest_02, avant même d'accepter celle-ci : condition morte, libellé trompeur.
-        check: function (game) { return storyCountTrainingUpgrades(game) >= 1; },
+        check: function (game) { return storyHasEquippedItem(game) && storyCountTrainingUpgrades(game) >= 1; },
         progress: function (game) {
-          return "Entraînement " + Math.min(1, storyCountTrainingUpgrades(game)) + "/1";
+          return "Équipé " + (storyHasEquippedItem(game) ? "1/1" : "0/1") + " · Entraînement " + Math.min(1, storyCountTrainingUpgrades(game)) + "/1";
         }
       },
       {
@@ -274,7 +307,7 @@ var STORY_QUESTS = {
         objectiveLabel: "Faire 1 achat en boutique (Économie ou Potion)",
         unlockTabs: ["shop"],
         reward: STORY_REWARDS.forest_04,
-        linkTo: { tab: "shop" },
+        linkTo: { tab: "shop", subTab: "potions" }, // v3.260.0 (retour Seb) : arrive sur Potions, pas sur Économie
         // v3.107.9 : potions détaillées (décision Seb).
         tutorial: {
           tab: "shop",
@@ -282,7 +315,7 @@ var STORY_QUESTS = {
           title: "La Boutique",
           points: [
             { icon: "images/Icons/subtabs/equipment_shop.png", text: "La Boutique vend des potions et des améliorations d'Économie contre de l'or." },
-            { icon: "images/Icons/subtabs/potions.png", text: "Potions de soin — sur le 2e onglet de la Boutique. Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 3000 or). Utilisables en combat comme une action à part entière — elles consomment ton tour." },
+            { icon: "images/Icons/subtabs/potions.png", text: "Potions de soin — sur le 2e onglet de la Boutique. Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 400 or). Utilisables en combat comme une action à part entière — elles consomment ton tour." },
             { icon: "images/Icons/system/warning.png", text: "Maximum 2 potions par sortie — pense à te ménager pour la suite du combat." }
           ]
         },
@@ -395,6 +428,45 @@ var STORY_QUESTS = {
         check: function () { return storyExplorationDone("unstableVein"); },
         progress: function () { return storyExplorationDone("unstableVein") ? "1/1" : "0/1"; }
       },
+      /* v3.259.0 (Cartes Vivantes, lot C-4) : introduction du Recouvrement par les anciens.
+         v3.260.0 (retour de jeu Seb) : déplacée après « La veine instable », en fin d'Acte II.
+         Un secteur coûte une Petite ration (8 viande + 4 eau) : juste après la Meute, l'eau
+         n'existait pas encore et la fabrication n'était pas enseignée (forest_08) — blocage. Bible A pilier 3 et bible C §4.4 : les anciens disent « elle »,
+         jamais « Aether » — le mot reste à Orwen pour forest_15 (« Elle prend ce qu'on est »),
+         qui répond à « Autour, c'est elle ». La puissance est dite par ce qu'elle FAIT, pas
+         nommée ; « vivre avec » est la dernière réplique d'Orwen, jamais une leçon du
+         narrateur ; le mot « Recouvrement » n'est que dans l'interface. Aldric se tait, comme
+         à forest_15. Textes validés par Seb le 16/09/2026. */
+      {
+        id: "forest_brume",
+        title: "Ce que la brume reprend",
+        act: "Acte II — Le campement devient village",
+        narrative: {
+          objective: "Orwen t'attend au bord du village, une carte roulée sous le bras. Il ne l'a jamais montrée à personne.",
+          completion: "Un secteur de moins pour la brume. Orwen a roulé la carte moins serré. Il n'a dit qu'une chose de plus : ce qu'on tient, on peut le perdre. Et on y retourne.",
+          dialogue: [
+            { who: "Orwen", text: "Regarde. Là, c'est nous. Autour, c'est elle." },
+            { who: "Wenna", text: "La brume ? Elle bouge pas, la brume." },
+            { who: "Orwen", text: "Elle bouge quand on lui laisse la place. Partout où personne ne va, elle revient. Ici elle ne revient pas, parce qu'on y vit." },
+            { who: "Brannoc", text: "On a tenu le gué, une fois. Trois jours. Puis on a eu autre chose à faire." },
+            { who: "Orwen", text: "On ne la chasse pas. On lui reprend un bout, on le tient, et quand elle le reprend, on y retourne. C'est comme ça qu'on vit ici." },
+            { who: null, text: "Aldric a déjà tourné le dos. Le moulin, lui, ne se tient pas tout seul." }
+          ]
+        },
+        objectiveLabel: "Libérer un secteur de la carte de la Forêt",
+        unlockTabs: [],
+        reward: STORY_REWARDS.forest_brume,
+        /* Pas de carte de mission : la carte vivante est une sous-vue de l'onglet Carte, ouverte
+           par son propre point d'entrée (ui/living-map-view.js), comme le scene-engine a le sien. */
+        linkTo: { section: "map", cardId: "livingmap_forest" },
+        check: function () {
+          return !!(window.LivingMapManager && LivingMapManager.getSummary("forest").libere > 0);
+        },
+        progress: function () {
+          var n = window.LivingMapManager ? LivingMapManager.getSummary("forest").libere : 0;
+          return "Secteurs libérés " + Math.min(1, n) + "/1";
+        }
+      },
 
       /* ---------- Acte III — Le héros s'affirme ---------- */
       {
@@ -412,6 +484,10 @@ var STORY_QUESTS = {
         reward: STORY_REWARDS.forest_crossing,
         linkTo: { tab: "combat" },
         killTarget: { label: "Vers le Cœur", counter: storyLisiereCrossingProgress, target: 10, autoReturn: true },
+        onAccept: function (game, st) { // v3.261.0 : la traversée repart de 0
+          st.counters.coeurReached = 0;
+          st.counters.crossingReset = storyResetLisiere(game) ? 0 : 1;
+        },
         check: function (game) { return storyCounter(game, "coeurReached") >= 1; },
         progress: function (game) { return "Lisière " + storyLisiereCrossingProgress(game) + "/10"; }
       },
@@ -480,6 +556,7 @@ var STORY_QUESTS = {
             { icon: "🔀", text: "Bascule entre mode Tactique (manuel, tu joues chaque round) et mode Grimoire (automatique, tes règles décident) à tout moment depuis l'écran Combat." }
           ]
         },
+        onAccept: function (game, st) { st.counters.coeurKills = 0; }, // v3.260.0 : seules les victoires après acceptation comptent
         check: function (game) { return storyCounter(game, "coeurKills") >= 10 && storyCountActiveGrimoireRules(game) >= 1; },
         progress: function (game) {
           return "Cœur " + Math.min(10, storyCounter(game, "coeurKills")) + "/10 · Règle " + Math.min(1, storyCountActiveGrimoireRules(game)) + "/1";
@@ -497,7 +574,7 @@ var STORY_QUESTS = {
         // L'étape ouvre le Donjon (avancé d'une étape) et se joue dans la Tanière : 5 vagues passées avec ≥ 1 Marque.
         // Même id, même position, même compteur coeurKillsMarked (réutilisé : vagues de donjon sous Marque) — les
         // parties en cours ne sont pas décalées ; l'entrée est offerte par l'Histoire (DungeonManager.isStoryTicketFree).
-        objectiveLabel: "Entrer dans la Tanière du Basilic sous au moins une Marque et passer 5 vagues",
+        objectiveLabel: "Entrer dans la Tanière du Basilic sous au moins une Marque et passer 5 vagues dans le même run",
         unlockTabs: ["dungeon"],
         reward: STORY_REWARDS.forest_13,
         linkTo: { tab: "dungeon" },
@@ -513,6 +590,7 @@ var STORY_QUESTS = {
           ]
         },
         killTarget: { label: "Sous la Marque", counter: function (g) { return storyCounter(g, "coeurKillsMarked"); }, target: 5, autoReturn: false },
+        onAccept: function (game, st) { st.counters.coeurKillsMarked = 0; st.markedRunTag = null; }, // v3.260.0 : idem forest_12 ; v3.261.0 : 5 vagues dans un même run
         check: function (game) { return storyCounter(game, "coeurKillsMarked") >= 5; },
         progress: function (game) {
           return "Vagues sous Marque " + Math.min(5, storyCounter(game, "coeurKillsMarked")) + "/5";

@@ -48,7 +48,8 @@ var QuestEnemyManager = {
        gagner avec l'équipement de départ, sans or à dépenser. Mesuré dans
        sim/lisiere-quest-bench.js, profil sortie de tutoriel : à 1,0 l'échec est de 100 %
        pour les trois classes ; à 0,4 (÷2,5) il tombe à 0 / 7 / 0 %. */
-    var hpMult = Number(quest.enemyHpMult);
+    /* v3.263.0 : bossHpMult (optionnel) règle le boss à part ; absent, le boss suit enemyHpMult. */
+    var hpMult = Number(enemy && enemy.isBoss && quest.bossHpMult != null ? quest.bossHpMult : quest.enemyHpMult);
     if (enemy && isFinite(hpMult) && hpMult > 0 && hpMult !== 1) {
       enemy.hp = Math.max(1, Math.floor(enemy.maxHp * hpMult));
       enemy.maxHp = enemy.hp;

@@ -71,6 +71,14 @@ window.campMissionAction = campMissionAction;
 window.buildCampMissionBoardHTML = buildCampMissionBoardHTML;
 window.buildCampMissionCardHTML = buildCampMissionCardHTML;
 
+/* v3.260.0 : état du « ? » de la régénération (non persistant, replié au chargement). */
+var campRegenHelpOpen = false;
+function toggleCampRegenHelp() {
+  campRegenHelpOpen = !campRegenHelpOpen;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.toggleCampRegenHelp = toggleCampRegenHelp;
+
 function buildCampHTML() {
   if (window.CampManager) CampManager.ensureDefaults();
 
@@ -121,19 +129,21 @@ function buildCampHTML() {
   });
   h += '</div>';
 
-  // Bloc Régénération — phrase + rythme + temps restant.
-  // v3.233.0 (Seb) : barre retirée. Elle était remplie avec hpPct, donc un
-  // doublon exact de la barre de PV trois lignes plus haut, en sarcelle.
-  h += '<div class="camp-section-title camp-section-sub"><img class="ico-lg" src="images/Icons/camp/regeneration.png" alt=""> Régénération</div>';
-  h += '<div class="camp-regen-desc">Récupère des PV automatiquement au fil du temps, hors combat.</div>';
-  h += '<div class="camp-regen-meta">';
-  h += '<span class="camp-regen-rate">+' + regenPct + ' % PV par minute</span>';
-  // v3.242.0 (bug Seb) : esc() enveloppait AUSSI la balise <img> — le joueur lisait le
-  // HTML au lieu de voir le sablier. Seule la partie texte est échappée désormais.
+  /* Bloc Régénération — v3.260.0 (décision Seb) : une seule ligne (rythme + temps restant) et
+     un « ? » qui déplie l'explication. La phrase ne s'affiche plus en permanence. */
+  h += '<div class="camp-regen-line">';
+  h += '<img class="ico-lg" src="images/Icons/camp/regeneration.png" alt="">';
+  h += '<span class="camp-regen-rate">+' + regenPct + ' % PV/min</span>';
+  // v3.242.0 (bug Seb) : esc() enveloppait AUSSI la balise <img> — seule la partie texte est échappée.
   h += '<span class="camp-regen-eta" id="camp-fire-eta">' + (hpFull
     ? '<img class=ico-inline src=images/Icons/system/check_valid.png> PV au maximum'
     : '<img class=ico-inline src=images/Icons/system/hourglass_waiting.png> ' + esc('Max dans ' + formatTime(Math.ceil(minutesToFull * 60)))) + '</span>';
+  h += '<button type="button" class="camp-help-btn" aria-label="Régénération : explication" aria-expanded="' + (campRegenHelpOpen ? 'true' : 'false') + '" onclick="toggleCampRegenHelp()">?</button>';
   h += '</div>';
+  if (campRegenHelpOpen) {
+    h += '<div class="camp-regen-desc">Hors combat, tes PV remontent seuls au rythme indiqué. Les rations soignent tout de suite. '
+      + 'Pendant ton absence, le feu rend au plus ' + Math.round((typeof CAMP_OFFLINE_REGEN_CAP_PCT === "number" ? CAMP_OFFLINE_REGEN_CAP_PCT : 0.5) * 100) + ' % des PV max.</div>';
+  }
 
   h += '</div>'; // fin .camp-health-card
 

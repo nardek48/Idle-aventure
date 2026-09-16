@@ -390,7 +390,8 @@ function getCombatMissionProgressLabel() {
   if (window.LivingMapManager && game.livingMaps && game.livingMaps.fight) {
     var f = game.livingMaps.fight;
     var sec = LivingMapManager.getSectorDef(f.mapId, f.sectorId);
-    return (sec ? sec.name : "Carte") + " · Élite";
+    var wins = LivingMapManager.getDailyWins(f.mapId, f.sectorId);
+    return (sec ? sec.name : "Carte") + " · Élite" + (LivingMapManager.isRepeatable(f.mapId, f.sectorId) ? " · " + (wins + 1) + (wins === 0 ? "er" : "e") + " du jour" : "");
   }
   // v3.107.1 : étape Histoire en farm libre avec killTarget déclaratif (ex. forest_02 « Premier sang »).
   if (window.StoryQuestManager) {

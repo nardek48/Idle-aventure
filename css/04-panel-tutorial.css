@@ -33,11 +33,12 @@
   color: rgba(58, 44, 26, 0.85);
 }
 
-.tutorial-preview-badge {
-  display: inline-flex;
-  position: static;
-  vertical-align: middle;
-  margin-left: 2px;
+/* v3.263.0 : aperçu du bandeau d'alerte (.cb-alert, 03-combat-v2.css), posé sous le texte */
+.tutorial-preview-alert {
+  display: flex;
+  width: max-content;
+  margin: 6px 0 2px;
+  cursor: default;
 }
 
 /* =========================

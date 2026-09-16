@@ -32,7 +32,51 @@ var StoryQuestManager = {
     if (typeof st.counters.coeurKillsMarked !== "number") st.counters.coeurKillsMarked = 0; // v3.134.0 : kills au Cœur sous ≥ 2 afflictions (forest_13)
     if (typeof st.lastSeenTotalKills !== "number") st.lastSeenTotalKills = Number(game.totalKills || 0);
     this._migrateV3109(chapterId, st);
+    var fromBeforeV3259 = !st.migratedV3259; // lu AVANT _migrateV3259, qui pose le drapeau
+    this._migrateV3259(chapterId, st);
+    this._migrateV3260(chapterId, st, fromBeforeV3259);
+    this._migrateV3261(chapterId, st);
     return st;
+  },
+
+  /* v3.259.0 (C-4) : « Ce que la brume reprend » insérée (après forest_06 ; après forest_09 depuis v3.260.0). Même modèle que
+     _migrateV3109 : currentStep est un index, une save déjà au-delà se décale d'un cran, une
+     seule fois. Un joueur qui a déjà libéré un secteur verra l'étape immédiatement prête. */
+  _migrateV3259: function (chapterId, st) {
+    if (st.migratedV3259) return;
+    var chapter = STORY_QUESTS[chapterId];
+    var idx = chapter ? chapter.steps.findIndex(function (s) { return s.id === "forest_brume"; }) : -1;
+    if (idx !== -1 && typeof st.currentStep === "number" && st.currentStep >= idx) st.currentStep += 1;
+    st.migratedV3259 = true;
+  },
+
+  /* v3.260.0 : « Ce que la brume reprend » déplacée de l'index 6 (après forest_06) à la fin de
+     l'Acte II (après forest_09). Seules les saves v3.259.0 pointées entre les deux positions sont
+     concernées : elles reprennent à la première étape non réclamée. Une save d'avant v3.259.0 a
+     déjà été placée par _migrateV3259, qui lit la position actuelle. */
+  _migrateV3260: function (chapterId, st, fromBeforeV3259) {
+    if (st.migratedV3260) return;
+    st.migratedV3260 = true;
+    if (fromBeforeV3259 || chapterId !== "forest" || typeof st.currentStep !== "number") return;
+    var OLD_ORDER = ["forest_01", "forest_02", "forest_03", "forest_04", "forest_05", "forest_06", "forest_brume", "forest_07", "forest_08", "forest_09"];
+    var oldId = OLD_ORDER[st.currentStep];
+    if (st.currentStep < 6 || !oldId) return; // avant la brume ou au-delà de forest_09 : même index
+    var steps = STORY_QUESTS[chapterId].steps;
+    var target = st.currentStep;
+    for (var i = 6; i < steps.length; i++) { if (!st.claimedSteps[steps[i].id]) { target = i; break; } }
+    st.currentStep = target;
+    if (steps[target].id !== oldId) { st.accepted = false; st.readyNotified = false; } // l'acceptation portait sur l'ancienne étape
+  },
+
+  /* v3.261.0 : « Franchir la Lisière » déjà acceptée avec une traversée entamée en farm libre
+     (le cas remonté par Seb, 5/10 dès l'acceptation) : le retour au début de la Lisière est
+     appliqué une fois, comme s'il venait d'accepter. Étape déjà remplie : rien ne change. */
+  _migrateV3261: function (chapterId, st) {
+    if (st.migratedV3261) return;
+    st.migratedV3261 = true;
+    var step = STORY_QUESTS[chapterId] && STORY_QUESTS[chapterId].steps[st.currentStep];
+    if (!step || step.id !== "forest_crossing" || !st.accepted || st.counters.coeurReached >= 1) return;
+    st.counters.crossingReset = 1; // appliqué par _trackKills dès qu'aucune activité n'est en cours
   },
 
   /* v3.109.0 : « Franchir la Lisière » insérée à l'index 9 (avant forest_11). currentStep est un index : une save
@@ -97,6 +141,8 @@ var StoryQuestManager = {
 
     st.accepted = true;
     st.readyNotified = false;
+    // v3.260.0 : hook d'étape (remise à zéro des compteurs de kills — l'objectif part de 0)
+    if (typeof step.onAccept === "function") step.onAccept(game, st);
     this._applyUnlockTabs(step);
 
     addLog("📖 " + step.title + " — " + step.narrative.objective, "event");
@@ -158,9 +204,11 @@ var StoryQuestManager = {
     var st = game.storyQuests.forest;
     if (!st) return;
     var wm = window.WorldManager;
+    // v3.261.0 : retour à la Lisière demandé à l'acceptation de forest_crossing, reporté si une activité était en cours
+    if (st.counters.crossingReset && typeof storyResetLisiere === "function" && storyResetLisiere(game)) st.counters.crossingReset = 0;
     var atCoeur = !!wm && Number(wm.worldIndex || 0) === 0 && Number(wm.adventureIndex || 0) === 1;
     // v3.109.0 : « Franchir la Lisière » — drapeau persistant (une mort en farm libre renvoie en Lisière via resetToCycleStart).
-    if (atCoeur && !(game.adventureQuestRun && game.adventureQuestRun.active) && !(game.huntRun && game.huntRun.active) && !(game.dungeonRun && game.dungeonRun.active)) {
+    if (atCoeur && !st.counters.crossingReset && !(game.adventureQuestRun && game.adventureQuestRun.active) && !(game.huntRun && game.huntRun.active) && !(game.dungeonRun && game.dungeonRun.active)) {
       st.counters.coeurReached = 1;
     }
     var total = Number(game.totalKills || 0);
@@ -170,7 +218,13 @@ var StoryQuestManager = {
     if (game.huntRun && game.huntRun.active) return;
     if (game.dungeonRun && game.dungeonRun.active) {
       // v3.245.0 (refonte Donjons, forest_13) : vagues de donjon passées sous ≥ 1 Marque -> compteur coeurKillsMarked
-      if (Array.isArray(game.dungeonRun.marks) && game.dungeonRun.marks.length >= 1) st.counters.coeurKillsMarked += delta;
+      if (Array.isArray(game.dungeonRun.marks) && game.dungeonRun.marks.length >= 1) {
+        // v3.261.0 (retour Seb) : les 5 vagues se passent dans UN run — un nouveau run repart de 0.
+        // Le run est marqué d'une étiquette, sauvegardée avec lui (dungeonRun est persisté tel quel).
+        if (!game.dungeonRun.storyRunTag) game.dungeonRun.storyRunTag = "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        if (st.markedRunTag !== game.dungeonRun.storyRunTag) { st.markedRunTag = game.dungeonRun.storyRunTag; st.counters.coeurKillsMarked = 0; }
+        st.counters.coeurKillsMarked += delta;
+      }
       return;
     }
     if (game.adventureQuestRun && game.adventureQuestRun.active) return;
@@ -216,6 +270,9 @@ var StoryQuestManager = {
     var rewardRows = this._grantReward(step.reward || {});
     st.claimedSteps[step.id] = true;
     st.currentStep += 1;
+    // v3.260.0 : une étape déjà réclamée plus loin (forest_brume sur une save v3.259.0) est sautée
+    var steps = this.getChapter(chapterId).steps;
+    while (st.currentStep < steps.length && st.claimedSteps[steps[st.currentStep].id]) st.currentStep += 1;
     st.accepted = false;
     st.readyNotified = false;
 
@@ -388,6 +445,8 @@ var StoryQuestManager = {
     if (targetTab) {
       if (typeof switchTab === "function") switchTab(targetTab);
       // v3.107.1 : sous-onglet optionnel (ex. forest_03 -> Menu > Amélioration directement, décision Seb).
+      // v3.260.0 : même mécanisme pour la Boutique (forest_04 -> Potions directement).
+      if (step.linkTo.subTab && targetTab === "shop") { if (typeof setShopSubTab === "function") setShopSubTab(step.linkTo.subTab); return; }
       if (step.linkTo.subTab && typeof setHerosSubTab === "function") setHerosSubTab(step.linkTo.subTab);
       return;
     }
@@ -398,6 +457,12 @@ var StoryQuestManager = {
     // ont pour cardId "scene_<templateId>" — routées vers openSceneQuestEntry(), qui gère la
     // navigation elle-même (switchTab("scene") inclus).
     var cardId = step.linkTo.cardId || "";
+    // v3.259.0 (Cartes Vivantes, C-4) : "livingmap_<mapId>" ouvre la carte vivante du monde
+    // (sous-vue de l'onglet Carte) — openLivingMap gère la navigation elle-même.
+    if (cardId.indexOf("livingmap_") === 0 && typeof openLivingMap === "function") {
+      openLivingMap(cardId.replace("livingmap_", ""));
+      return;
+    }
     if (cardId.indexOf("scene_") === 0 && typeof openSceneQuestEntry === "function") {
       if (typeof switchTab === "function") switchTab("scene");
       openSceneQuestEntry(cardId.replace("scene_", ""));
