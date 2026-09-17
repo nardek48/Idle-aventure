@@ -126,6 +126,8 @@ Deux responsabilités ici :
    crème dans un cadre de pierre — sans cette ligne, son texte héritait de l'encre crème
    et se lisait à peine. Les descendants (.cp-portrait, .cp-skill) héritent de celle-ci. */
 .kframe .cp-card,
+/* v3.276.0 : rappel du mode de contrôle sur la fiche de compagnon, à fond crème. */
+.kframe .cp-controlnote,
 .kframe .log-entry {
   --nb-ink: #3a2c1a;
   --nb-ink-dim: rgba(58, 44, 26, 0.72);

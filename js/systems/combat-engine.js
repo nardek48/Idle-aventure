@@ -346,7 +346,7 @@ var CombatEngine = {
        jouer. Le mode Grimoire ignore l'interrupteur (tout le monde est auto, décision
        Seb), et _playingQueue est le drapeau qui laisse passer le round une fois la file
        complète, sans repasser par ici. */
-    if (source !== "auto" && !this._playingQueue && game.combatMode !== "grimoire" && this.hasManualAllies()) {
+    if (source !== "auto" && game.combatMode !== "grimoire" && this.hasManualAllies()) {
       return this.queueChoice(slot, arg);
     }
 
@@ -511,9 +511,12 @@ var CombatEngine = {
      tout part d'un coup. Sans compagnon manuel, rien de tout ceci ne s'active et
      heroAction se comporte exactement comme avant. */
   manualAllies: function () {
-    if (!window.CombatActors) return [];
+    if (!window.CombatActors || !window.CompanionManager) return [];
+    /* v3.276.0 : le mode de combat décide. En Grimoire, aucun compagnon n'est manuel —
+       inutile de relire un réglage par compagnon, il n'y en a plus. */
+    if (game.combatMode === "grimoire") return [];
     return CombatActors.allies().filter(function (a) {
-      return a && a.companionId && a.control === "manual" && Number(a.hp || 0) > 0;
+      return a && a.companionId && Number(a.hp || 0) > 0;
     });
   },
 
@@ -566,20 +569,78 @@ var CombatEngine = {
     c.selection = list.length ? list[0].actorId : null;
   },
 
-  /* Enregistre le choix de l'acteur courant. Renvoie true si le round a été joué. */
+  /* v3.276.0 (décision Seb) : l'action est RÉSOLUE AU CLIC, plus préchargée. Les dégâts
+     partent immédiatement, sur la cible désignée à cet instant — c'est ce qui permet de
+     frapper l'ennemi qu'on veut au moment où on le choisit, et de changer de cible entre
+     deux acteurs du même round. Les ennemis, eux, ne ripostent qu'une fois que tout le
+     monde a joué : le round reste une unité. */
   queueChoice: function (slot, arg) {
     var c = CombatActors.ensure();
     var acteur = this.selectedActor();
 
     // Une potion est une action DU HÉROS : le plafond par sortie est calibré pour un seul buveur.
     if (slot === "potion" && acteur && acteur.companionId) acteur = CombatActors.heroActor();
+    if (this.pendingOf(acteur)) return false;   // il a déjà joué ce round
+
+    // Le round s'ouvre au premier acte, et le groupe ennemi est photographié à cet instant.
+    if (!this._manualRoundOpen) {
+      if (window.SortieManager && !SortieManager.isActive()) SortieManager.start(null);
+      game.combatRound.number += 1;
+      this._manualGroupRef = window.CombatActors ? CombatActors.enemies().slice() : [game.enemy];
+      this._manualRoundOpen = true;
+    }
+
+    /* v3.277.0 (bug Seb) : `busy` ne couvre QUE la résolution d'un acte. Posé pour tout le
+       round manuel, il faisait échouer isHeroTurnAvailable() au clic suivant — le gros
+       bouton ne faisait donc rien pendant le tour d'un compagnon. */
+    var joue;
+    game.combatRound.busy = true;
+    try {
+      if (acteur.companionId) {
+        this._actingAlly = acteur;
+        try { joue = CompanionManager.takeTurn(acteur, slot, arg); }
+        finally { this._actingAlly = null; }
+      } else {
+        joue = this.performHeroAction(slot, arg, null);
+      }
+    } finally {
+      game.combatRound.busy = false;
+    }
+
+    if (!joue) {
+      // action refusée (recharge, ressource, condition) : le round reste ouvert, rien n'est perdu
+      if (!Object.keys(c.pending).length) this.cancelManualRound();
+      return false;
+    }
 
     c.pending[acteur.actorId] = { slot: slot, arg: arg || null };
     this.advanceSelection();
 
-    if (this.allChosen()) return this.playQueuedRound();
+    if (this.allChosen()) return this.finishManualRound();
     this.refreshCombatUI();
     return true;
+  },
+
+  /* Le dernier acteur a joué : les ennemis ripostent, puis le round se ferme. */
+  finishManualRound: function () {
+    var groupRef = this._manualGroupRef || (window.CombatActors ? CombatActors.enemies().slice() : [game.enemy]);
+    this.enemiesTurn(groupRef);
+    this.endRoundGroup(groupRef);
+    this.cancelManualRound();
+    game.combatRound.clockMs = 0;
+    this.refreshCombatUI();
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+    if (typeof renderHealButtons === "function") renderHealButtons();
+    return true;
+  },
+
+  cancelManualRound: function () {
+    this.clearQueue();
+    this._manualRoundOpen = false;
+    this._manualGroupRef = null;
+    /* game.combatRound peut ne pas exister encore : spawnGroup est appelé pendant la
+       création d'un héros, avant ensureState (constaté au harnais). */
+    if (game.combatRound) game.combatRound.busy = false;
   },
 
   clearQueue: function () {
@@ -587,26 +648,8 @@ var CombatEngine = {
     if (c) { c.pending = {}; c.selection = null; }
   },
 
-  /* Tout le monde a choisi : le round part, dans l'ordre héros puis compagnons. */
-  playQueuedRound: function () {
-    var c = game.combat;
-    var hero = CombatActors.heroActor();
-    var choixHeros = c.pending[hero.actorId];
-    if (!choixHeros) return false;
-
-    this._playingQueue = true;
-    var joue;
-    try {
-      joue = this.heroAction(choixHeros.slot, choixHeros.arg, null);
-    } finally {
-      this._playingQueue = false;
-    }
-    if (joue) this.clearQueue();
-    this.refreshCombatUI();
-    return joue;
-  },
-
   refreshCombatUI: function () {
+    if (typeof renderActorBand === "function") renderActorBand();   // v3.273.0 : le cadre suit l'acteur
     if (typeof renderClassSkillButtons === "function") renderClassSkillButtons();
     if (typeof renderCombatControls === "function") renderCombatControls();
     if (typeof renderAllyRow === "function") renderAllyRow();
@@ -629,11 +672,11 @@ var CombatEngine = {
       if (!a || !a.companionId) continue;        // le héros a déjà joué
       if (Number(a.hp || 0) <= 0) continue;      // KO
       if (!CombatActors.aliveEnemies().length) break;
-      // v3.270.0 (L-4) : en Manuel, c'est le choix préchargé qui est joué ; en Auto, la
-      // politique du compagnon décide comme avant.
-      var choix = (a.control === "manual") ? this.pendingOf(a) : null;
+      /* v3.276.0 : en Manuel, le compagnon a DÉJÀ joué au clic (queueChoice) — on ne le
+         rejoue pas ici. Cette boucle ne sert donc plus qu'au mode automatique. */
+      if (a.control === "manual") continue;
       this._actingAlly = a;
-      try { CompanionManager.takeTurn(a, choix ? choix.slot : null, choix ? choix.arg : null); }
+      try { CompanionManager.takeTurn(a, null, null); }
       finally { this._actingAlly = null; }
     }
   },
@@ -1273,6 +1316,7 @@ var CombatEngine = {
     // v3.268.0 (L-2) : le groupe allié est reconstruit depuis game.companions, et un
     // compagnon KO au combat précédent revient avec des PV réduits (§4.4).
     if (window.CompanionManager) CompanionManager.onCombatStart();
+    this.cancelManualRound();   // v3.276.0 : un round manuel en cours ne survit pas au spawn suivant
 
     if (typeof WorldManager !== "undefined" && typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
 

@@ -173,9 +173,11 @@ var CombatActors = {
       enumerable: true
     });
     Object.defineProperty(a, "name", {
+      /* v3.274.0 (retour Seb) : le NOM DU HÉROS d'abord — « Mage » est sa classe, pas son
+         nom, et c'est le nom qu'on cherche dans une rangée d'acteurs. */
       get: function () {
         var hero = (typeof getHeroByGameId === "function") ? getHeroByGameId(game.heroId) : null;
-        return (hero && hero.name) || game.playerName || "Héros";
+        return game.playerName || (hero && hero.name) || "Héros";
       },
       enumerable: true
     });

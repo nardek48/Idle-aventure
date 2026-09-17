@@ -149,6 +149,17 @@ var ClassCombatManager = {
 
     base.enemyArchetype = e ? (e.archetype || null) : null;
 
+    /* v3.271.0 (L-5) : état du GROUPE, pour les deux conditions de groupe. */
+    base.aliveEnemyCount = window.CombatActors ? CombatActors.aliveEnemies().length : (e ? 1 : 0);
+    base.allyLowestHpPercent = null;
+    if (window.CombatActors) {
+      CombatActors.aliveAllies().forEach(function (a) {
+        if (!a || !a.companionId || !(Number(a.maxHp || 0) > 0)) return;   // le héros a heroLowHp
+        var pct = Number(a.hp || 0) / Number(a.maxHp);
+        if (base.allyLowestHpPercent === null || pct < base.allyLowestHpPercent) base.allyLowestHpPercent = pct;
+      });
+    }
+
     return base;
   },
 

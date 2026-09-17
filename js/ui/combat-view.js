@@ -27,24 +27,34 @@ function buildCombatHTML() {
     +   '<div class="combat-action-row"><div id="class-skills-root"></div></div>'
     +   '<div class="combat-attack-row">'
     +     '<div id="heal-quick-root-left"></div>'
-    +     '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="heroBasicAttack()" aria-label="Attaque"></button>'
+    +     '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="heroBasicAttack()" aria-label="Attaque">ATTAQUER</button>'
     +     '<div id="heal-quick-root"></div>'
-    +   '</div>'
-    +   '<div class="cb-ctl-row">'
-    +     '<div id="combat-controls-root" class="combat-controls"></div>'
-    +     '<div id="combat-speed-inline" class="combat-speed-inline"></div>'
     +   '</div>'
     + '</div>'
 
+    /* v3.273.0 (atelier-bandeau-v2, validé par Seb) : la rangée des acteurs — héros
+       COMPRIS — est au-dessus du cadre ; le cadre, lui, englobe la rangée de commandes
+       et les jauges de l'acteur affiché. */
+    + '<div id="combat-sortie-sheet-root"></div>'
+    + '<div id="ally-row"></div>'
     + '<div class="cb-hero">'
-    // v3.269.0 (L-3) : mini-cartes des compagnons — vides tant que personne n'accompagne.
-    +   '<div id="ally-row"></div>'
-    +   '<div class="cb-hero-top">'
-    +     '<div id="combat-hero-slot" class="cb-hero-slot"></div>'
+    +   '<div class="cb-ctl-row">'
+    +     '<div id="combat-controls-root" class="combat-controls"></div>'
+    +     '<div id="combat-speed-inline" class="combat-speed-inline"></div>'
     +     '<div id="combat-sortie-root" class="combat-sortie-row"></div>'
     +   '</div>'
-    +   '<div id="class-resource-root"></div>'
-    +   '<div id="combat-celerity-root" class="cb-celerity"></div>'
+    +   '<div id="companion-band-root"></div>'
+    +   '<div class="cb-hero-top">'
+    +     '<div id="combat-hero-slot" class="cb-hero-slot"></div>'
+    +   '</div>'
+    /* Les deux jauges secondaires sont décalées de la largeur du portrait pour s'aligner
+       sous la barre de PV, et non sur tout le cadre (maquette validée). */
+    /* v3.275.0 : plus qu'une jauge secondaire — la célérité s'y superpose. Le conteneur
+       de célérité reste dans le DOM (des vues le renseignent) mais n'est plus dessiné. */
+    +   '<div class="cb-gauges">'
+    +     '<div id="class-resource-root"></div>'
+    +     '<div id="combat-celerity-root" class="cb-celerity is-merged"></div>'
+    +   '</div>'
     + '</div>';
 }
 
@@ -297,7 +307,10 @@ function buildCombatControlsHTML() {
   var gaugePct = Math.max(0, Math.min(100, Math.round((Number(game.heroGauge || 0) / gaugeMax) * 100)));
   var downed = (game.heroHp || 0) <= 0;
 
-  var h = '<div class="combat-round-pill" title="Round en cours">R' + (round.number || 0) + '</div>';
+  /* v3.273.0 (retour Seb) : le compteur de rounds est retiré de la rangée — il ne sert à
+     aucune décision, ce sont les télégraphes qui annoncent ce qui arrive au round suivant.
+     Il reste au Rapport de combat, où le nombre de rounds a du sens a posteriori. */
+  var h = "";
 
   if (grimoireUnlocked) {
     h += '<button type="button" class="combat-mode-btn' + (mode === "grimoire" ? ' is-auto' : '') + '" onclick="CombatEngine.setCombatMode(\'' + (mode === "grimoire" ? "tactique" : "grimoire") + '\')" title="'
@@ -333,9 +346,17 @@ function buildCombatSortieHTML() {
   var s = SortieManager.ensure();
   var downed = (game.heroHp || 0) <= 0;
   var h = "";
+  /* v3.273.0 (retour Seb) : le butin devient un BOUTON qui ouvre la feuille de sortie ;
+     les potions restantes y entrent aussi — c'est une information de sortie, pas de round,
+     et elle encombrait la rangée de commandes. */
   if (s.active) {
-    h += '<div class="combat-loot-pill" title="Butin de la sortie — banqué au retour, perdu si tu tombes"><img class=ico-inline src=images/Icons/subtabs/inventory.png> ' + esc(SortieManager.getLootSummary()) + '</div>';
-    h += '<div class="combat-loot-pill combat-potion-pill" title="Potions restantes pour cette sortie"><img class=ico-inline src=images/Icons/subtabs/potions.png> ' + SortieManager.getPotionsLeft() + '</div>';
+    var loot = s.loot || {};
+    var objets = (loot.items && loot.items.length) || 0;
+    h += '<button type="button" class="combat-loot-pill" onclick="openSortieSheet()"'
+      + ' title="Butin de la sortie — banqué au retour, perdu si tu tombes">'
+      + '<img class=ico-inline src=images/Icons/gold_icon.png> ' + formatNumber(Math.floor(loot.gold || 0))
+      + (objets ? ' · ' + objets + ' objet' + (objets > 1 ? 's' : '') : '')
+      + '</button>';
   }
   if (s.active && SortieManager.isMission()) {
     h += '<button type="button" class="combat-sortie-btn is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()" title="Fuir : la mission n\u2019est pas validée, tu rapportes 50 % du butin"><img class=ico-inline src=images/Icons/quests/flee.png> Fuir</button>';
@@ -344,6 +365,57 @@ function buildCombatSortieHTML() {
   }
   return h;
 }
+
+/* Feuille de sortie : butin détaillé + potions restantes. Elle réutilise la feuille basse
+   .ksheet du jeu, comme celle des états de combat. */
+/* v3.276.0 (bug Seb) : la feuille du butin s'ouvrait dans #combat-states-modal-root, que
+   renderEnemyStatusBar réécrit à chaque rafraîchissement avec la feuille des ÉTATS de
+   combat — on tombait donc sur les actions des ennemis au lieu du sac. Racine dédiée. */
+function openSortieSheet() {
+  if (!window.SortieManager) return;
+  var root = document.getElementById("combat-sortie-sheet-root");
+  if (!root) return;
+  var s = SortieManager.ensure();
+  var loot = s.loot || {};
+
+  var h = '<div class="ksheet-backdrop" onclick="closeSortieSheet()"></div>';
+  h += '<div class="ksheet"><div class="ksheet-title"><img src="images/Icons/subtabs/inventory.png" alt=""><span>Sortie en cours</span></div>';
+  h += '<div class="ksheet-body">';
+
+  h += '<div class="cbs-sub">Butin ramassé</div>';
+  var lignes = "";
+  if (Number(loot.gold || 0) > 0) lignes += buildSortieLineHTML("images/Icons/gold_icon.png", "Or", formatNumber(Math.floor(loot.gold)));
+  if (Number(loot.essence || 0) > 0) lignes += buildSortieLineHTML("images/Icons/essence_icon.png", "Essence", formatNumber(Math.floor(loot.essence)));
+  Object.keys(loot.resources || {}).forEach(function (k) {
+    var q = Math.floor(loot.resources[k]);
+    if (q <= 0) return;
+    var def = (window.WAREHOUSE_RESOURCES && WAREHOUSE_RESOURCES[k]) || null;
+    lignes += buildSortieLineHTML((def && def.icon) || "images/Icons/subtabs/inventory.png", (def && def.name) || k, "×" + q);
+  });
+  (loot.items || []).forEach(function (it) {
+    lignes += buildSortieLineHTML("images/Icons/subtabs/equipment.png", it.name || "Objet", it.rarity || "");
+  });
+  h += lignes || '<div class="cbs-empty">Rien pour l\'instant.</div>';
+
+  h += '<div class="cbs-sub">Potions de cette sortie</div>';
+  h += buildSortieLineHTML("images/Icons/subtabs/potions.png", "Il t'en reste",
+    SortieManager.getPotionsLeft() + " sur " + (typeof SORTIE_POTION_CAP === "number" ? SORTIE_POTION_CAP : "?"));
+
+  h += '</div><button type="button" class="ksheet-close" onclick="closeSortieSheet()">Fermer</button></div>';
+  root.innerHTML = h;
+}
+
+function buildSortieLineHTML(icon, nom, valeur) {
+  return '<div class="cbs-line"><img src="' + esc(icon) + '" alt=""><span>' + esc(nom) + '</span><b>' + esc(String(valeur)) + '</b></div>';
+}
+
+function closeSortieSheet() {
+  var root = document.getElementById("combat-sortie-sheet-root");
+  if (root) root.innerHTML = "";
+}
+
+window.openSortieSheet = openSortieSheet;
+window.closeSortieSheet = closeSortieSheet;
 
 function confirmFlee() {
   if (!window.SortieManager || !SortieManager.isActive()) return;
@@ -355,10 +427,17 @@ window.confirmFlee = confirmFlee;
 function renderCombatControls() {
   var host = document.getElementById("combat-controls-root");
   if (host) host.innerHTML = buildCombatControlsHTML();
+  /* v3.275.0 : la célérité vit désormais dans la jauge de ressource (voile translucide,
+     buildClassResourceBarHTML). Son conteneur reste vide plutôt que d'être supprimé —
+     d'autres vues le cherchent encore. */
   var celHost = document.getElementById("combat-celerity-root");
-  if (celHost) celHost.innerHTML = buildCombatCelerityHTML();
+  if (celHost) celHost.innerHTML = "";
+  if (typeof renderClassResourceBar === "function") renderClassResourceBar();
   var sortieHost = document.getElementById("combat-sortie-root");
   if (sortieHost) sortieHost.innerHTML = buildCombatSortieHTML();
+  /* v3.275.0 : les vitesses apparaissent et disparaissent avec le mode — il faut donc
+     les redessiner ici, à chaque bascule, et plus seulement au changement d'onglet. */
+  if (typeof renderCombatSpeedBar === "function") renderCombatSpeedBar();
   var attackBtn = document.getElementById("combat-attack-btn");
   if (attackBtn) {
     var locked = game.combatMode === "grimoire" || !!(game.combatRound && game.combatRound.continueAttack) || (game.heroHp || 0) <= 0;
@@ -468,6 +547,7 @@ function renderEnemy() {
   renderEnemyHp();
   if (typeof renderEnemyRow === "function") renderEnemyRow();
   if (typeof renderAllyRow === "function") renderAllyRow();
+  if (typeof renderActorBand === "function") renderActorBand();
 }
 
 function renderEnemyHp() {
@@ -606,10 +686,12 @@ function renderClassSkillButtons() {
     var acteur = CombatEngine.selectedActor();
     if (acteur && acteur.companionId && typeof buildCompanionActionsHTML === "function") {
       host.innerHTML = buildCompanionActionsHTML(acteur);
+      host.classList.add("is-companion");   // voir css/03-combat-group.css : sort de la grille à 4 colonnes
       renderClassResourceBar();
       return;
     }
   }
+  if (host) host.classList.remove("is-companion");
   if (host) host.innerHTML = buildClassSkillButtonsHTML();
   renderClassResourceBar();
   if (typeof renderCombatControls === "function") renderCombatControls();
@@ -631,10 +713,19 @@ function buildClassResourceBarHTML() {
   // v3.172.0 : ressource de classe sur la jauge fine du kit — kgauge-rage/
   // kgauge-focus/kgauge-mana (00-kgauge.css) correspondent exactement aux
   // resourceId des 3 classes. .class-resource-bar garde le positionnement.
+  /* v3.275.0 (retour Seb) : la célérité n'a plus sa propre jauge — elle se superpose à
+     celle de la ressource de classe, en voile translucide. Une seule ligne au lieu de
+     deux, et le remplissage reste lisible parce que les deux couleurs ne se mélangent
+     jamais : la ressource peint le fond, la célérité pose un film par-dessus. */
+  var gaugeMaxCel = (typeof CELERITY_GAUGE_MAX === "number") ? CELERITY_GAUGE_MAX : 100;
+  var celPct = Math.max(0, Math.min(100, Math.round((Number(game.heroGauge || 0) / gaugeMaxCel) * 100)));
+
   var h = '<div class="class-resource-bar class-resource-' + esc(state.resourceId || "") + '">';
   h +=   '<div class="class-resource-track kgauge kgauge-thin kgauge-' + esc(state.resourceId || "rage") + '">';
-  h +=     '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct + '%"></div></div>';
-  h +=     '<span class="kgauge-text">' + esc(label) + ' — ' + Math.floor(state.current) + ' / ' + state.max + '</span>';
+  h +=     '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct + '%"></div>'
+    +        '<div class="kgauge-cel" style="width:' + celPct + '%" title="Célérité ' + celPct + ' %"></div></div>';
+  h +=     '<span class="kgauge-text">' + esc(label) + ' — ' + Math.floor(state.current) + ' / ' + state.max
+    +        ' <span class="kgauge-cel-tag">· ' + celPct + ' %</span></span>';
   h +=   '</div>';
   h += '</div>';
   return h;

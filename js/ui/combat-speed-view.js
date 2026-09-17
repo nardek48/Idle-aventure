@@ -18,6 +18,15 @@ function renderCombatSpeedBar() {
   var host = document.getElementById("combat-speed-inline") || document.getElementById("combat-speed-bar");
   if (!host) return;
 
+  /* v3.275.0 (retour Seb) : la vitesse ne pilote que l'enchaînement automatique des
+     rounds — elle n'a aucun effet en Tactique, où chaque round attend ton choix. Elle
+     n'apparaît donc qu'en mode Grimoire. */
+  if (host.id === "combat-speed-inline" && game.combatMode !== "grimoire") {
+    host.innerHTML = "";
+    return;
+  }
+  if (host.id === "combat-speed-inline" && !host.hasChildNodes()) host.innerHTML = buildCombatSpeedBarHTML();
+
   if (!host.hasChildNodes()) host.innerHTML = buildCombatSpeedBarHTML();
 
   var current = Number(game.combatSpeed || 1);

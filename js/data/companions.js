@@ -48,7 +48,7 @@ var COMPANIONS_DB = {
     },
     /* Politique en mode Auto : premier slot jouable gagne (§4.3). */
     autoPolicy: ["skill", "basic"],
-    autoSkillHpThreshold: 0.60,          // la compétence n'est jouée que sous ce seuil
+    autoSkillHpThreshold: 0.60,          // seuil par défaut, réglable par le joueur (§4.3)
     upgrades: { costs: [60, 120, 240, 480, 900], statPct: 0.06 },
     unlockedBy: "forest_wenna",          // étape d'Histoire qui la fait rejoindre
     /* Répliques de combat — une par événement, dans sa voix (bible B §2.1 :
@@ -60,6 +60,42 @@ var COMPANIONS_DB = {
     }
   }
 };
+
+/* v3.271.0 (L-5) — RÉGLAGES DE COMPORTEMENT, sur la fiche du compagnon (décision Seb
+   17/09/2026 : ce qui appartient au compagnon se règle chez lui ; les cartes du Grimoire,
+   elles, pilotent le kit du HÉROS). Ils ne jouent qu'en mode Auto : en Manuel, c'est le
+   joueur qui décide et ces réglages dorment.
+
+   Trois réglages, pas un moteur de règles : un compagnon n'a qu'UNE compétence, un
+   système conditionnel complet s'y résumerait de toute façon à « quand l'utiliser ». */
+var COMPANION_HEAL_THRESHOLDS = [
+  { id: "tot", label: "Tôt", value: 0.80, desc: "Dès qu'un allié descend sous 80 % de ses PV." },
+  { id: "normal", label: "Normal", value: 0.60, desc: "Sous 60 % — le réglage par défaut." },
+  { id: "tard", label: "Tard", value: 0.40, desc: "Sous 40 %, pour garder ses charges." }
+];
+
+var COMPANION_HEAL_PRIORITIES = [
+  { id: "lowest", label: "Le plus bas", desc: "Soigne l'allié dont il reste le moins, toi compris." },
+  { id: "hero", label: "Toi d'abord", desc: "Te soigne en priorité dès que tu es sous le seuil." }
+];
+
+/* Lecture TOLÉRANTE : renvoie toujours un seuil utilisable (le défaut si l'id est
+   inconnu), pour que la politique auto ne tombe jamais en panne. */
+function getCompanionHealThreshold(id) {
+  for (var i = 0; i < COMPANION_HEAL_THRESHOLDS.length; i++) {
+    if (COMPANION_HEAL_THRESHOLDS[i].id === id) return COMPANION_HEAL_THRESHOLDS[i];
+  }
+  return COMPANION_HEAL_THRESHOLDS[1];
+}
+
+/* Contrôle STRICT : sert à refuser une valeur à l'écriture et à assainir une save.
+   Les deux usages sont distincts — le premier doit dire non, le second doit se replier. */
+function isCompanionHealThreshold(id) {
+  for (var i = 0; i < COMPANION_HEAL_THRESHOLDS.length; i++) {
+    if (COMPANION_HEAL_THRESHOLDS[i].id === id) return true;
+  }
+  return false;
+}
 
 var COMPANION_ROLE_LABELS = {
   assault: "Assaut",
@@ -106,6 +142,10 @@ function getCompanionMaxUpgrades(companionId) {
 }
 
 window.COMPANIONS_DB = COMPANIONS_DB;
+window.COMPANION_HEAL_THRESHOLDS = COMPANION_HEAL_THRESHOLDS;
+window.COMPANION_HEAL_PRIORITIES = COMPANION_HEAL_PRIORITIES;
+window.getCompanionHealThreshold = getCompanionHealThreshold;
+window.isCompanionHealThreshold = isCompanionHealThreshold;
 window.COMPANION_ROLE_LABELS = COMPANION_ROLE_LABELS;
 window.COMPANION_POWER_DMG_COEF = COMPANION_POWER_DMG_COEF;
 window.COMPANION_HP_COEF = COMPANION_HP_COEF;

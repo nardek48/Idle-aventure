@@ -68,10 +68,27 @@ var GRIMOIRE_CONDITIONS = {
     label: "L'ennemi est blindé",
     description: "Il subit un peu moins de dégâts en permanence.",
     icon: "images/Icons/combat_status/armored.png"
+  },
+  /* v3.271.0 (L-5) — deux conditions de GROUPE. Elles pilotent TON kit face à ce qui
+     arrive au groupe : le comportement du compagnon, lui, se règle sur sa fiche.
+     Le document proposait « un ennemi télégraphie sur un allié » : impossible à évaluer,
+     la victime d'une frappe n'est tirée qu'au moment où elle part (menace pondérée).
+     « Plusieurs ennemis » la remplace — c'est la situation que ces règles servent. */
+  allyLowHp: {
+    id: "allyLowHp",
+    label: "Un compagnon est en danger",
+    description: "Un de tes compagnons est tombé sous 40 % de ses PV.",
+    icon: "images/Icons/combat_status/heal_incoming.png"
+  },
+  multipleEnemies: {
+    id: "multipleEnemies",
+    label: "Ils sont plusieurs",
+    description: "Au moins deux ennemis sont encore debout.",
+    icon: "images/Icons/combat_status/double_strike.png"
   }
 };
 
-var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "heroLowHp", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
+var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "heroLowHp", "allyLowHp", "multipleEnemies", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
 
 function getGrimoireCondition(conditionId) {
   if (!conditionId || typeof conditionId !== "string") return null;

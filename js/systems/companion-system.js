@@ -24,13 +24,18 @@ var CompanionManager = {
     var all = this.ensure();
     if (!getCompanionDef(companionId)) return null;
     if (!all[companionId] || typeof all[companionId] !== "object") {
-      all[companionId] = { unlocked: false, upgrades: 0, control: "auto", present: false, hp: null };
+      all[companionId] = { unlocked: false, upgrades: 0, control: "auto", present: false, hp: null,
+        healThreshold: "normal", healPriority: "lowest", keepReserve: false };
     }
     var st = all[companionId];
     if (typeof st.unlocked !== "boolean") st.unlocked = false;
     if (typeof st.upgrades !== "number" || st.upgrades < 0) st.upgrades = 0;
     if (st.control !== "manual") st.control = "auto";
     if (typeof st.present !== "boolean") st.present = false;
+    // v3.271.0 (L-5) : réglages de comportement (mode Auto). Valeurs sûres pour une save d'avant.
+    if (!isCompanionHealThreshold(st.healThreshold)) st.healThreshold = "normal";
+    if (st.healPriority !== "hero") st.healPriority = "lowest";
+    if (typeof st.keepReserve !== "boolean") st.keepReserve = false;
     return st;
   },
 
@@ -82,11 +87,37 @@ var CompanionManager = {
     return true;
   },
 
+  /* Réglages de comportement. Un seul point d'entrée : la valeur est validée ici, pas
+     dans la vue, pour qu'une save trafiquée ne puisse pas casser la politique auto. */
+  setSetting: function (companionId, key, value) {
+    var st = this.state(companionId);
+    if (!st) return false;
+    if (key === "healThreshold") {
+      if (!isCompanionHealThreshold(value)) return false;   // contrôle strict : on refuse
+      st.healThreshold = value;
+    } else if (key === "healPriority") {
+      st.healPriority = (value === "hero") ? "hero" : "lowest";
+    } else if (key === "keepReserve") {
+      st.keepReserve = !!value;
+    } else return false;
+    if (typeof saveGame === "function") saveGame();
+    return true;
+  },
+
+  /* v3.276.0 (décision Seb) : plus d'interrupteur par compagnon. Le mode de combat décide
+     pour tout le monde — Grimoire, les compagnons jouent seuls ; Tactique, tu les joues.
+     C'était déjà la règle implicite (le Grimoire ignorait l'interrupteur) ; elle devient
+     la seule, et il n'y a plus un réglage qui puisse la contredire. */
+  controlOf: function () {
+    return (game.combatMode === "grimoire") ? "auto" : "manual";
+  },
+
+  /* Conservé pour les appelants existants et le harnais : le réglage n'est plus stocké,
+     mais forcer un mode reste possible en changeant le mode de combat. */
   setControl: function (companionId, control) {
     var st = this.state(companionId);
     if (!st) return false;
     st.control = (control === "manual") ? "manual" : "auto";
-    if (typeof saveGame === "function") saveGame();
     return true;
   },
 
@@ -158,7 +189,6 @@ var CompanionManager = {
       actorId: "a_" + companionId,
       companionId: companionId,
       side: "ally",
-      control: st.control,
       role: def.role,
       name: def.name,
       image: def.image,
@@ -170,6 +200,14 @@ var CompanionManager = {
       isBoss: false,
       isElite: false
     };
+
+    /* v3.276.0 : `control` est une VUE sur le mode de combat, pas une valeur figée au
+       spawn — sinon un changement de mode en plein combat laissait l'acteur sur l'ancien
+       réglage et le compagnon ne jouait plus du tout (constaté au banc). */
+    Object.defineProperty(actor, "control", {
+      get: function () { return self.controlOf(); },
+      enumerable: true
+    });
 
     Object.defineProperty(actor, "hp", {
       get: function () { return self.hpOf(companionId); },
@@ -227,10 +265,15 @@ var CompanionManager = {
         if (Number(actor.cooldown || 0) > 0) continue;
         if (this.chargesMax(actor.companionId) > 0 && Number(actor.charges || 0) <= 0) continue; // plafond du combat atteint
         if (def.skill && def.skill.type === "heal") {
-          var t = this.lowestAlly();
+          var st = this.state(actor.companionId);
+          /* v3.271.0 (L-5) : réserve — il garde sa dernière charge pour un coup dur,
+             sauf si l'allié visé est vraiment bas (moitié du seuil). */
+          var t = this.autoHealTarget(actor);
           if (!t) continue;
-          var threshold = (typeof def.autoSkillHpThreshold === "number") ? def.autoSkillHpThreshold : 0.6;
-          if (Number(t.maxHp || 0) <= 0 || (t.hp / t.maxHp) >= threshold) continue;
+          var seuil = getCompanionHealThreshold(st.healThreshold).value;
+          var ratio = Number(t.maxHp || 0) > 0 ? (t.hp / t.maxHp) : 1;
+          if (ratio >= seuil) continue;
+          if (st.keepReserve && Number(actor.charges || 0) <= 1 && ratio > seuil / 2) continue;
         }
         return "skill";
       }
@@ -252,6 +295,18 @@ var CompanionManager = {
     return CombatActors.aliveAllies().filter(function (a) {
       return Number(a.maxHp || 0) > 0 && Number(a.hp || 0) < Number(a.maxHp || 0);
     });
+  },
+
+  /* Qui il soigne en Auto : le plus bas, ou toi d'abord si le réglage le dit et que tu
+     es toi-même sous le seuil. */
+  autoHealTarget: function (actor) {
+    var st = this.state(actor.companionId);
+    if (st && st.healPriority === "hero" && window.CombatActors) {
+      var hero = CombatActors.heroActor();
+      var seuil = getCompanionHealThreshold(st.healThreshold).value;
+      if (hero && Number(hero.maxHp || 0) > 0 && (hero.hp / hero.maxHp) < seuil) return hero;
+    }
+    return this.lowestAlly();
   },
 
   lowestAlly: function () {
@@ -295,9 +350,11 @@ var CompanionManager = {
     // s'appliquent au compagnon exactement comme au héros.
     var dmg = Math.max(1, Number(actor.damage || 1));
 
-    // La menace est attribuée par CombatEngine.noteThreat() — l'allié qui frappe est
-    // celui que alliesTurn a posé, héros compris. Rien à compter ici.
-    CombatEngine.dealDamage(dmg, false, false, true, target);
+    /* La menace est attribuée par CombatEngine.noteThreat() — l'allié qui frappe est celui
+       que le moteur a posé, héros compris. Rien à compter ici.
+       v3.277.0 (retour Seb) : fromTap à true pour que les dégâts du compagnon S'AFFICHENT
+       au-dessus de l'ennemi, comme les tiens — ils étaient muets à l'écran. */
+    CombatEngine.dealDamage(dmg, false, true, true, target);
 
     /* v3.268.1 (retour Seb) : l'attaque du compagnon ne laissait AUCUNE trace — les PV
        de l'ennemi tombaient plus vite sans explication. Une ligne de journal, comme
@@ -317,7 +374,7 @@ var CompanionManager = {
 
     if (skill.type === "heal") {
       var t = forcedTargetId ? this.allyById(forcedTargetId) : null;
-      if (!t || Number(t.hp || 0) <= 0) t = this.lowestAlly();
+      if (!t || Number(t.hp || 0) <= 0) t = this.autoHealTarget(actor);
       if (!t || Number(t.maxHp || 0) <= 0) return false;
       if (t.hp >= t.maxHp) return false;
       var healed = Math.max(1, Math.floor(t.maxHp * Number(skill.value || 0)));
@@ -389,7 +446,10 @@ var CompanionManager = {
         upgrades: Number(st.upgrades || 0),
         control: st.control === "manual" ? "manual" : "auto",
         present: !!st.present,
-        hp: (typeof st.hp === "number" && isFinite(st.hp)) ? st.hp : null
+        hp: (typeof st.hp === "number" && isFinite(st.hp)) ? st.hp : null,
+        healThreshold: st.healThreshold,     // v3.271.0 (L-5)
+        healPriority: st.healPriority,
+        keepReserve: !!st.keepReserve
       };
     });
     return out;
@@ -408,6 +468,10 @@ var CompanionManager = {
       st.control = d.control === "manual" ? "manual" : "auto";
       st.present = !!d.present;
       st.hp = (typeof d.hp === "number" && isFinite(d.hp)) ? d.hp : null;
+      // v3.271.0 (L-5) : réglages relus en passant par setSetting, qui valide.
+      if (d.healThreshold) self.setSetting(id, "healThreshold", d.healThreshold);
+      if (d.healPriority) self.setSetting(id, "healPriority", d.healPriority);
+      self.setSetting(id, "keepReserve", !!d.keepReserve);
     });
   }
 };

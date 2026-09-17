@@ -106,8 +106,9 @@ function buildAllyRowHTML() {
   if (!allies || allies.length < 2) return ""; // personne ne t'accompagne
 
   var h = '<div class="cbg-allies">';
+  h += buildHeroCardHTML();   // v3.273.0 (retour Seb) : le héros a sa carte, comme les autres
   allies.forEach(function (a) {
-    if (!a || !a.companionId) return; // le héros a déjà son bandeau
+    if (!a || !a.companionId) return; // le héros a déjà sa carte, juste au-dessus
     var max = Number(a.maxHp || 0);
     var pct = max > 0 ? Math.max(0, (a.hp / max) * 100) : 0;
     var ko = Number(a.hp || 0) <= 0;
@@ -148,6 +149,34 @@ function buildAllyRowHTML() {
 function renderAllyRow() {
   var host = document.getElementById("ally-row");
   if (host) host.innerHTML = buildAllyRowHTML();
+}
+
+/* Carte du héros dans la rangée. Elle existe pour deux raisons : on ne perd jamais ses
+   PV de vue quand le cadre du bas affiche un compagnon, et elle sert à reprendre la main
+   d'un tap en mode Manuel. */
+function buildHeroCardHTML() {
+  var hero = CombatActors.heroActor();
+  var max = Number(hero.maxHp || 0);
+  var pct = max > 0 ? Math.max(0, (hero.hp / max) * 100) : 0;
+  var manuel = (window.CombatEngine && CombatEngine.hasManualAllies());
+  var choisi = manuel && !!CombatEngine.pendingOf(hero);
+  var actif = manuel && CombatEngine.selectedActor() === hero;
+  var attend = manuel && !choisi;
+
+  var heroDef = (typeof getHeroByGameId === "function") ? getHeroByGameId(game.heroId) : null;
+  var img = (heroDef && heroDef.image) || "";
+
+  var h = '<div class="cbg-ally cbg-me' + (actif ? " is-active" : "")
+    + (attend ? " is-waiting" : "") + (choisi ? " is-done" : "") + '"'
+    + (manuel ? ' onclick="selectCombatActor(\'' + esc(hero.actorId) + '\')"' : "") + '>';
+  h += '<div class="cbg-ally-portrait"><img src="' + esc(img) + '" alt=""></div>';
+  h += '<div class="cbg-ally-right">';
+  h += '<div class="cbg-ally-name"><span>' + esc(hero.name || "Toi") + '</span>';
+  h += choisi ? '<span class="cbg-ally-tick">\u2713</span>' : '<span class="cbg-ally-cd">\u2014</span>';
+  h += '</div>';
+  h += '<div class="cbg-ally-hp"><i style="width:' + pct.toFixed(1) + '%"></i></div>';
+  h += '</div></div>';
+  return h;
 }
 
 /* ---------- Mode Manuel : actions de l'acteur sélectionné ---------- */
@@ -207,7 +236,7 @@ function companionAction(slot) {
 }
 
 function openHealTargetSheet(actor, blesses) {
-  var root = document.getElementById("combat-states-modal-root");
+  var root = document.getElementById("combat-sortie-sheet-root");
   if (!root) return;
   var h = '<div class="ksheet-backdrop" onclick="closeHealTargetSheet()"></div>';
   h += '<div class="ksheet cbg-heal-sheet"><div class="ksheet-title"><span>Qui soigner ?</span></div>';
@@ -226,7 +255,7 @@ function openHealTargetSheet(actor, blesses) {
 }
 
 function closeHealTargetSheet() {
-  var root = document.getElementById("combat-states-modal-root");
+  var root = document.getElementById("combat-sortie-sheet-root");
   if (root) root.innerHTML = "";
 }
 
@@ -235,6 +264,68 @@ function chooseHealTarget(targetActorId) {
   var actor = CombatEngine.selectedActor();
   if (actor && actor.companionId) CombatEngine.queueChoice("skill", targetActorId);
 }
+
+/* v3.273.0 (maquette validée) : quand un COMPAGNON est l'acteur sélectionné, le cadre du
+   bas devient le sien — portrait, PV, et à la place de Mana/Célérité (qu'il n'a pas) une
+   ligne qui dit ce qu'il a vraiment : ses charges et sa recharge. Le mini-héros du HUD
+   est simplement masqué le temps de la sélection, jamais détruit. */
+function buildCompanionBandHTML(actor) {
+  var def = getCompanionDef(actor.companionId);
+  var max = Number(actor.maxHp || 0);
+  var pct = max > 0 ? Math.max(0, (actor.hp / max) * 100) : 0;
+
+  var h = '<div class="cbg-band">';
+  h += '<div class="cbg-band-portrait"><img src="' + esc((def && def.image) || "") + '" alt="">'
+    + '<span class="cbg-band-tag">' + (actor.control === "manual" ? "Manuel" : "Auto") + '</span></div>';
+  h += '<div class="cbg-band-right">';
+  h += '<div class="cbg-band-hp kgauge kgauge-dragon-claw">'
+    + '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct.toFixed(1) + '%"></div></div>'
+    + '<span class="kgauge-text">' + formatNumber(Math.ceil(actor.hp)) + " / " + formatNumber(max) + '</span></div>';
+
+  var chargesMax = CompanionManager.chargesMax(actor.companionId);
+  var dots = "";
+  for (var i = 0; i < chargesMax; i++) dots += '<i class="' + (i < Number(actor.charges || 0) ? "" : "is-off") + '"></i>';
+  h += '<div class="cbg-band-line">';
+  if (chargesMax) h += '<span>Charges <span class="cbg-band-dots">' + dots + '</span></span>';
+  h += '<span>' + (Number(actor.cooldown || 0) > 0 ? "Recharge " + actor.cooldown + " r" : "Prêt") + '</span>';
+  h += '</div>';
+  h += '</div></div>';
+  return h;
+}
+
+/* Bascule le cadre du bas entre le héros et le compagnon sélectionné. */
+function renderActorBand() {
+  /* Le bouton d'attaque dit pour QUI il joue quand un compagnon est sélectionné. */
+  var btn = document.getElementById("combat-attack-btn");
+  if (btn && window.CombatEngine && typeof CombatEngine.hasManualAllies === "function") {
+    var sel = CombatEngine.hasManualAllies() ? CombatEngine.selectedActor() : null;
+    btn.textContent = (sel && sel.companionId) ? ("ATTAQUER (" + (sel.name || "") + ")") : "ATTAQUER";
+  }
+
+  var slot = document.getElementById("combat-hero-slot");
+  var res = document.getElementById("class-resource-root");
+  var cel = document.getElementById("combat-celerity-root");
+  if (!slot) return;
+
+  var acteur = (window.CombatEngine && CombatEngine.hasManualAllies()) ? CombatEngine.selectedActor() : null;
+  var host = document.getElementById("companion-band-root");
+  var cadre = document.querySelector(".cb-hero");
+
+  /* v3.274.0 (retour Seb) : le portrait du héros ne doit PAS rester visible pendant le
+     tour d'un compagnon. On pose une classe sur le cadre plutôt que des styles en ligne :
+     le mini-héros est déplacé du HUD à l'exécution (relocateCombatHeroMini) et remettait
+     son style à zéro au premier rendu, d'où le portrait qui revenait. */
+  if (cadre) cadre.classList.toggle("is-companion-band", !!(acteur && acteur.companionId));
+
+  if (acteur && acteur.companionId) {
+    if (host) host.innerHTML = buildCompanionBandHTML(acteur);
+    return;
+  }
+  if (host) host.innerHTML = "";
+}
+
+window.buildCompanionBandHTML = buildCompanionBandHTML;
+window.renderActorBand = renderActorBand;
 
 function selectCombatActor(actorId) {
   if (window.CombatEngine) CombatEngine.selectActor(actorId);
@@ -251,5 +342,6 @@ window.buildEnemyRowHTML = buildEnemyRowHTML;
 window.renderEnemyRow = renderEnemyRow;
 window.selectEnemyTarget = selectEnemyTarget;
 window.buildAllyRowHTML = buildAllyRowHTML;
+window.buildHeroCardHTML = buildHeroCardHTML;
 window.renderAllyRow = renderAllyRow;
 window.getEnemyRowBadges = getEnemyRowBadges;

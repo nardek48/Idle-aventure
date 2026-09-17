@@ -62,11 +62,21 @@ function evaluateGrimoireCondition(conditionId, combatContext) {
       return ctx.enemyArchetype === "vampiric";
     case "enemyArmored":
       return ctx.enemyArchetype === "armored";
+    // v3.271.0 (L-5) : conditions de groupe.
+    case "allyLowHp":
+      return typeof ctx.allyLowestHpPercent === "number" && ctx.allyLowestHpPercent <= ALLY_LOW_HP_THRESHOLD_PCT;
+    case "multipleEnemies":
+      return Number(ctx.aliveEnemyCount || 0) >= 2;
     default:
       return false;
   }
 }
 
+/* v3.271.0 (L-5) : un compagnon « en danger » est plus bas que le héros ne l'est pour
+   heroLowHp — il n'a ni potion ni Défense de classe, la fenêtre pour l'aider est courte. */
+var ALLY_LOW_HP_THRESHOLD_PCT = 0.40;
+
+window.ALLY_LOW_HP_THRESHOLD_PCT = ALLY_LOW_HP_THRESHOLD_PCT;
 window.HERO_LOW_HP_THRESHOLD_PCT = HERO_LOW_HP_THRESHOLD_PCT;
 window.evaluateGrimoireCondition = evaluateGrimoireCondition;
 

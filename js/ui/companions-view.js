@@ -51,9 +51,40 @@ function buildCompanionCardHTML(companionId) {
   h += '<button type="button" class="' + (!st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + companionId + '\', false)">Au camp</button>';
   h += '</div>';
 
-  h += '<div class="kseg cp-seg">';
-  h += '<button type="button" class="' + (st.control === "auto" ? 'is-on' : '') + '" onclick="companionSetControl(\'' + companionId + '\', \'auto\')">Auto</button>';
-  h += '<button type="button" class="' + (st.control === "manual" ? 'is-on' : '') + '" onclick="companionSetControl(\'' + companionId + '\', \'manual\')">Manuel</button>';
+  /* v3.276.0 (décision Seb) : l'interrupteur Auto/Manuel est retiré — c'est le mode de
+     combat qui décide, pour tout le monde. On le RAPPELLE ici plutôt que de laisser un
+     réglage muet : le joueur doit savoir où se règle ce qu'il cherche. */
+  h += '<div class="cp-controlnote">'
+    + 'Il joue seul en mode <b>Grimoire</b>, tu le joues en mode <b>Tactique</b> — la bascule est sur l\'écran de combat.'
+    + '</div>';
+
+  /* v3.271.0 (L-5) : comportement en mode Auto. Volontairement sur SA fiche et pas dans
+     le Grimoire : ces réglages disent comment il se débrouille sans toi ; le Grimoire,
+     lui, pilote le kit du héros. En Manuel ils ne servent pas, et la carte le dit. */
+  h += '<div class="cp-behavior">';
+  var joueSeul = (window.CompanionManager && CompanionManager.controlOf() === "auto");
+  h += '<div class="cp-behavior-title">Comportement'
+    + (joueSeul ? '' : ' <span class="cp-behavior-off">— sert en mode Grimoire</span>') + '</div>';
+
+  h += '<div class="cp-behavior-row"><span>Soigne</span><div class="kseg">';
+  COMPANION_HEAL_THRESHOLDS.forEach(function (t) {
+    h += '<button type="button" class="' + (st.healThreshold === t.id ? 'is-on' : '') + '"'
+      + ' onclick="companionSetSetting(\'' + companionId + '\', \'healThreshold\', \'' + t.id + '\')">' + esc(t.label) + '</button>';
+  });
+  h += '</div></div>';
+  h += '<div class="cp-behavior-hint">' + esc(getCompanionHealThreshold(st.healThreshold).desc) + '</div>';
+
+  h += '<div class="cp-behavior-row"><span>En priorité</span><div class="kseg">';
+  COMPANION_HEAL_PRIORITIES.forEach(function (p) {
+    h += '<button type="button" class="' + (st.healPriority === p.id ? 'is-on' : '') + '"'
+      + ' onclick="companionSetSetting(\'' + companionId + '\', \'healPriority\', \'' + p.id + '\')">' + esc(p.label) + '</button>';
+  });
+  h += '</div></div>';
+
+  h += '<label class="cp-behavior-check"><input type="checkbox"' + (st.keepReserve ? ' checked' : '')
+    + ' onclick="companionSetSetting(\'' + companionId + '\', \'keepReserve\', this.checked)">'
+    + '<span>Garder une charge en réserve</span></label>';
+  h += '<div class="cp-behavior-hint">Il n\'utilise pas sa dernière charge, sauf si un allié est vraiment bas.</div>';
   h += '</div>';
 
   var maxUp = getCompanionMaxUpgrades(companionId);
@@ -98,9 +129,9 @@ function companionSetPresent(companionId, present) {
   if (typeof renderAll === "function") renderAll();
 }
 
-function companionSetControl(companionId, control) {
+function companionSetSetting(companionId, key, value) {
   if (!window.CompanionManager) return;
-  CompanionManager.setControl(companionId, control);
+  CompanionManager.setSetting(companionId, key, value);
   if (typeof renderAll === "function") renderAll();
 }
 
@@ -112,5 +143,5 @@ function companionBuyUpgrade(companionId) {
 window.buildHerosCompanionsHTML = buildHerosCompanionsHTML;
 window.buildCompanionCardHTML = buildCompanionCardHTML;
 window.companionSetPresent = companionSetPresent;
-window.companionSetControl = companionSetControl;
 window.companionBuyUpgrade = companionBuyUpgrade;
+window.companionSetSetting = companionSetSetting;

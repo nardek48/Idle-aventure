@@ -140,8 +140,14 @@ Deux contraintes mesurées à l'atelier :
 .cbg-allies {
   display: flex;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
+
+/* Hors du cadre du héros, #ally-row devient un enfant direct de #game-area, qui centre
+   ses enfants : sans cette largeur, la rangée se rétrécissait au contenu au lieu de
+   s'aligner sur le cadre. Vide, elle ne prend aucune place. */
+#ally-row { width: 100%; flex: 0 0 auto; }
+#ally-row:empty { display: none; }
 
 .cbg-ally {
   flex: 1 1 0;
@@ -277,6 +283,24 @@ Deux contraintes mesurées à l'atelier :
 
 /* ---------- Actions du compagnon, à la place du kit de classe ---------- */
 
+/* La rangée d'actions du compagnon prend la place du kit de classe. Celui-ci est une
+   GRILLE de quatre colonnes fixes (`grid-template-columns: repeat(4, var(--cb-skill))`
+   en 03-combat-v2.css) : notre conteneur unique atterrissait dans la première colonne,
+   d'où deux actions larges de 74 px collées à gauche (retour Seb). En mode compagnon, le
+   conteneur redevient une simple rangée centrée. La classe est posée par le rendu, pas
+   par :has() — la prise en charge de :has() est trop récente sur iOS pour qu'on s'y fie. */
+.cb-cmd #class-skills-root.is-companion {
+  display: flex !important;
+  justify-content: center;
+  grid-template-columns: none !important;
+}
+
+.cb-cmd #class-skills-root.is-companion > .cbg-acts {
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+}
+
 .cbg-acts {
   display: flex;
   gap: 8px;
@@ -371,4 +395,283 @@ Deux contraintes mesurées à l'atelier :
   display: block;
   height: 100%;
   background: #2f9e44;
+}
+
+/* ============================================================
+   v3.273.0 — bandeau de combat v2 (atelier-bandeau-v2.html, validé par Seb).
+   Rangée de commandes DANS le cadre, cadre qui suit l'acteur sélectionné,
+   jauges secondaires alignées sur la colonne des PV et plus étroites qu'elles.
+   ============================================================ */
+
+/* La rangée de commandes est la première ligne du cadre, séparée des jauges. */
+.cb-hero .cb-ctl-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 6px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid rgba(217, 164, 65, .25);
+}
+
+/* Le butin devient un bouton : même pastille que les autres commandes. */
+.cb-hero .combat-loot-pill {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Jauges secondaires : 78 % de la COLONNE DES PV, centrées sous elles. Mesuré à
+   l'atelier : calculées sur la largeur du cadre, elles étaient plus larges que les PV
+   (303 px contre 290). Le décalage de 64 px correspond au portrait (56) plus sa
+   gouttière (8) — c'est ce qui les fait commencer au même endroit que la barre de PV. */
+.cb-hero .cb-gauges { padding-left: 64px; }
+
+.cb-hero .cb-gauges #class-resource-root,
+.cb-hero .cb-gauges .cb-celerity {
+  width: 78%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* La célérité était déjà bornée à 70 % de son conteneur : elle suit maintenant la même
+   règle que la ressource de classe, sinon les deux ne font pas la même largeur. */
+.cb-hero .cb-gauges .cb-celerity .combat-gauge { width: 100%; }
+
+/* Carte du héros dans la rangée des acteurs. */
+.cbg-ally.cbg-me { border-color: rgba(217, 164, 65, .55); }
+
+/* ---------- Cadre d'un compagnon sélectionné ---------- */
+
+.cbg-band {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  column-gap: 8px;
+  row-gap: 3px;
+  align-items: center;
+}
+
+.cbg-band-portrait {
+  position: relative;
+  grid-row: 1 / -1;
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid rgba(217, 164, 65, .6);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .45);
+}
+
+.cbg-band-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.cbg-band-tag {
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-weight: 800;
+  padding: 0 5px;
+  border-radius: 7px;
+  background: rgba(244, 233, 211, .94);
+  color: #3a2c1a;
+  white-space: nowrap;
+}
+
+.cbg-band-right { min-width: 0; }
+
+/* À la place de Mana et Célérité, qu'un compagnon n'a pas : ce qu'il a vraiment. */
+.cbg-band-line {
+  width: 78%;
+  margin: 3px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f4e9d3;
+}
+
+.cbg-band-dots { display: inline-flex; gap: 3px; margin-left: 3px; }
+.cbg-band-dots i { width: 6px; height: 6px; border-radius: 50%; background: #6fc6e8; }
+.cbg-band-dots i.is-off { background: transparent; border: 1px solid rgba(111, 198, 232, .6); box-sizing: border-box; }
+
+/* ---------- Feuille de sortie (butin + potions) ---------- */
+
+.cbs-sub {
+  font-size: 11px;
+  font-weight: 800;
+  opacity: .75;
+  margin: 8px 0 4px;
+}
+
+.cbs-sub:first-child { margin-top: 0; }
+
+.cbs-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+
+.cbs-line img { width: 22px; height: 22px; object-fit: contain; }
+.cbs-line b { margin-left: auto; }
+.cbs-empty { font-size: 12px; opacity: .8; padding: 4px 2px; }
+
+/* ============================================================
+   v3.274.0 — retours de jeu sur le bandeau v2.
+   ============================================================ */
+
+/* 1. Pendant le tour d'un compagnon, le cadre du héros s'efface entièrement : portrait,
+   PV, ressource et célérité. Par classe et non par style en ligne — le mini-héros est
+   déplacé du HUD à l'exécution et réécrivait son style au premier rendu. */
+.cb-hero.is-companion-band .cb-hero-top,
+.cb-hero.is-companion-band .cb-gauges { display: none; }
+
+/* 2. La barre de PV du compagnon occupe toute sa colonne, comme celle du héros — elle
+   héritait d'une largeur de jauge fine et se retrouvait minuscule. */
+.cbg-band-hp { width: 100%; }
+.cbg-band-hp .kgauge-text { font-size: clamp(9px, calc(5px + 1.2vw), 11px); }
+
+/* 3. Toutes les pastilles de la rangée de commandes au MÊME gabarit que « Tactique » :
+   les vitesses venaient de l'écran de vitesse (fond crème, bordure épaisse, taille
+   différente) et juraient avec le reste. */
+.cb-hero .cb-ctl-row .combat-speed-btn {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, .6);
+  background: rgba(15, 20, 32, .85);
+  color: #f3e6c4;
+  font-size: clamp(10px, calc(6px + 1.2vw), 12px);
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.cb-hero .cb-ctl-row .combat-speed-btn.active {
+  background: rgba(120, 80, 10, .85);
+  border-color: rgba(253, 230, 138, .9);
+  color: #f3e6c4;
+}
+
+/* Même hauteur pour tout le monde : les pastilles de butin et le bouton Fuir suivaient
+   leurs propres règles et dépassaient. */
+.cb-hero .cb-ctl-row .combat-mode-btn,
+.cb-hero .cb-ctl-row .combat-continue-btn,
+.cb-hero .cb-ctl-row .combat-speed-btn,
+.cb-hero .cb-ctl-row .combat-loot-pill,
+.cb-hero .cb-ctl-row .combat-sortie-btn {
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: clamp(10px, calc(6px + 1.2vw), 12px);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* La rangée redevient une simple ligne qui se replie : en grille 1fr/auto, les vitesses
+   étaient rejetées à droite et la ligne ne se centrait pas. */
+.cb-hero .cb-ctl-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+
+.cb-hero .cb-ctl-row .combat-controls,
+.cb-hero .cb-ctl-row .combat-speed-inline,
+.cb-hero .cb-ctl-row .combat-sortie-row {
+  display: contents;
+}
+
+/* 4. Boutons d'attaque spéciale : −10 % (retour Seb). */
+.cb-cmd #class-skills-root { --cb-skill: clamp(59px, 17vw, 72px); }
+
+/* ============================================================
+   v3.275.0 — retours de jeu : boutons carrés, célérité fusionnée, cadre à
+   hauteur fixe, vitesses réservées au mode Grimoire.
+   ============================================================ */
+
+/* 1. Boutons d'action : carrés arrondis et plus petits, comme dans l'atelier — les
+   ronds de 66–72 px mangeaient la bande de commandes. */
+.cb-cmd #class-skills-root { --cb-skill: clamp(50px, 14.5vw, 60px); }
+
+.cb-cmd .combat-action-btn {
+  border-radius: 12px;
+  border: 1px solid rgba(217, 164, 65, .5);
+  background: rgba(20, 14, 8, .72);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .45);
+  overflow: hidden;
+}
+
+.cb-cmd .combat-action-btn .combat-action-icon {
+  width: 78% !important;
+  height: 78% !important;
+  object-fit: contain;
+}
+
+/* 2. Célérité fondue dans la jauge de ressource : un voile clair par-dessus le
+   remplissage, jamais une seconde couleur qui se mélangerait à la première. */
+.cb-hero .kgauge-cel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, .30);
+  border-right: 1px solid rgba(255, 236, 170, .75);
+  pointer-events: none;
+  transition: width .25s;
+}
+
+.cb-hero .kgauge-cel-tag {
+  opacity: .8;
+  font-size: .92em;
+}
+
+/* La jauge de célérité autonome ne s'affiche plus : elle vit dans celle du dessus. */
+.cb-hero .cb-celerity.is-merged { display: none; }
+
+/* 3. Hauteur du cadre figée : le héros porte plus d'informations qu'un compagnon, et
+   l'écran sautait à chaque changement d'acteur. La valeur correspond au cas le plus
+   haut — commandes sur deux lignes, portrait, PV et jauge secondaire. */
+.cb-hero {
+  min-height: calc(146px + var(--safe-bottom, 0px));
+  align-content: start;
+}
+
+@media (min-width: 380px) {
+  .cb-hero { min-height: calc(152px + var(--safe-bottom, 0px)); }
+}
+
+/* ============================================================
+   v3.278.0 (retour Seb) — la barre de PV du héros prend le MÊME cadre que celle des
+   compagnons (griffe de dragon), en gardant son remplissage vert.
+
+   Pourquoi une reprise et non un changement dans hud-view.js : le mini-héros est le même
+   élément dans le HUD hors combat et dans le cadre du bas pendant le combat. Le redéfinir
+   à la source changerait aussi le HUD, qui n'était pas le sujet. La reprise est donc
+   bornée à `.cb-hero`.
+   ============================================================ */
+
+.cb-hero .combat-hero-mini-hp-bar.kgauge {
+  aspect-ratio: 1086 / 163;
+  --kg-frame: url('../images/UI/gauges/gauge-dragon-claw-frame.png');
+  --kg-l: 11.2%;
+  --kg-r: 11%;
+  --kg-t: 35%;
+  --kg-b: 26.4%;
+  --kg-tl: 7.2%;
+  --kg-tr: 7%;
+  /* Remplissage inchangé : le vert reste celui des PV, c'est la lecture la plus
+     immédiate de l'écran. */
+  --kgauge-fill: linear-gradient(90deg, #15803d, #4ade80);
 }
