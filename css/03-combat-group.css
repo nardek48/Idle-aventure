@@ -717,3 +717,25 @@ Deux contraintes mesurées à l'atelier :
 }
 
 .cbg-foe { touch-action: manipulation; }
+
+/* v3.281.0 — tout ce qui se tape est un <button>. Sur iOS, un div porteur d'un onclick ne
+   reçoit pas toujours le tap, même avec cursor:pointer ; un bouton, si. Ces reprises
+   neutralisent le style natif pour que rien ne change à l'œil. */
+.cb-alert,
+.cb-states,
+.cbg-ally {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.cb-alert,
+.cb-states { border: 0; }
+
+/* Un bouton désactivé (carte non cliquable hors mode Manuel) garde son apparence : c'est
+   une fiche d'information, pas un contrôle grisé. */
+.cbg-ally:disabled { opacity: 1; cursor: default; }

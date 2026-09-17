@@ -194,13 +194,16 @@ function buildCombatAlertHTML() {
   var alerts = getActiveCombatStates().filter(function (st) { return st.def.famille === "alerte"; });
   if (!alerts.length) return "";
   var teinte = (alerts.length === 1 && alerts[0].def.teinte) ? alerts[0].def.teinte : "";
-  var h = '<div class="cb-alert ' + teinte + (alerts.length > 1 ? " is-multi" : "") + '" onclick="openCombatStatesSheet()">';
+  /* v3.281.0 (bug Seb, iPhone) : de vrais <button>. Un div porteur d'un onclick ne reçoit
+     pas toujours le tap sur iOS, y compris avec cursor:pointer — un bouton, si. Le style
+     est neutralisé en CSS, l'apparence ne change pas. */
+  var h = '<button type="button" class="cb-alert ' + teinte + (alerts.length > 1 ? " is-multi" : "") + '" onclick="openCombatStatesSheet()">';
   alerts.forEach(function (st, i) {
     if (i > 0) h += '<span class="cb-alert-sep">\u00b7</span>';
     h += renderIconOrEmojiHTML(st.def.icon, "", st.def.nom);
     h += '<span>' + esc(st.def.mot || st.def.nom) + '</span>';
   });
-  h += '</div>';
+  h += '</button>';
   return h;
 }
 window.buildCombatAlertHTML = buildCombatAlertHTML;
@@ -217,7 +220,7 @@ function buildCombatStatesHTML() {
   var visibles = states.slice(0, max);
   var reste = states.length - visibles.length;
 
-  var h = '<div class="cb-states" onclick="openCombatStatesSheet()">';
+  var h = '<button type="button" class="cb-states" onclick="openCombatStatesSheet()">';
   visibles.forEach(function (st) {
     var icon = (st.suppressed && st.def.iconSuppressed) ? st.def.iconSuppressed : st.def.icon;
     h += '<span class="cb-state ' + familyClass(st.def.famille) + (st.suppressed ? " is-suppressed" : "") + '">';
@@ -226,7 +229,7 @@ function buildCombatStatesHTML() {
     h += '</span>';
   });
   if (reste > 0) h += '<span class="cb-states-more">+' + reste + '</span>';
-  h += '</div>';
+  h += '</button>';
   return h;
 }
 window.buildCombatStatesHTML = buildCombatStatesHTML;

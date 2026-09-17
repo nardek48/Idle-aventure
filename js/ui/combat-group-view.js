@@ -131,9 +131,9 @@ function buildAllyRowHTML() {
     var actif = manuel && CombatEngine.selectedActor() === a;
     var attend = manuel && !choisi && !ko;
 
-    h += '<div class="cbg-ally' + (ko ? " is-ko" : "") + (actif ? " is-active" : "")
+    h += '<button type="button" class="cbg-ally' + (ko ? " is-ko" : "") + (actif ? " is-active" : "")
       + (attend ? " is-waiting" : "") + (choisi ? " is-done" : "") + '"'
-      + (manuel && !ko ? ' onclick="selectCombatActor(\'' + esc(a.actorId) + '\')"' : "") + '>';
+      + (manuel && !ko ? ' onclick="selectCombatActor(\'' + esc(a.actorId) + '\')"' : " disabled") + '>';
     h += '<div class="cbg-ally-portrait"><img src="' + esc((def && def.image) || "") + '" alt=""></div>';
     h += '<div class="cbg-ally-right">';
     h += '<div class="cbg-ally-name"><span>' + esc(a.name || "") + '</span>';
@@ -148,7 +148,7 @@ function buildAllyRowHTML() {
       }
       h += '</div>';
     }
-    h += '</div></div>';
+    h += '</div></button>';
   });
   h += '</div>';
   return h;
@@ -177,16 +177,18 @@ function buildHeroCardHTML() {
   var heroDef = (typeof getHeroByGameId === "function") ? getHeroByGameId(game.heroId) : null;
   var img = (heroDef && heroDef.image) || "";
 
-  var h = '<div class="cbg-ally cbg-me' + (actif ? " is-active" : "")
+  /* v3.281.0 (bug Seb, iPhone) : <button> et non <div> — un div à onclick ne reçoit pas
+     toujours le tap sur iOS. */
+  var h = '<button type="button" class="cbg-ally cbg-me' + (actif ? " is-active" : "")
     + (attend ? " is-waiting" : "") + (choisi ? " is-done" : "") + '"'
-    + (manuel ? ' onclick="selectCombatActor(\'' + esc(hero.actorId) + '\')"' : "") + '>';
+    + (manuel ? ' onclick="selectCombatActor(\'' + esc(hero.actorId) + '\')"' : " disabled") + '>';
   h += '<div class="cbg-ally-portrait"><img src="' + esc(img) + '" alt=""></div>';
   h += '<div class="cbg-ally-right">';
   h += '<div class="cbg-ally-name"><span>' + esc(hero.name || "Toi") + '</span>';
   h += choisi ? '<span class="cbg-ally-tick">\u2713</span>' : '<span class="cbg-ally-cd">\u2014</span>';
   h += '</div>';
   h += '<div class="cbg-ally-hp"><i style="width:' + pct.toFixed(1) + '%"></i></div>';
-  h += '</div></div>';
+  h += '</div></button>';
   return h;
 }
 
