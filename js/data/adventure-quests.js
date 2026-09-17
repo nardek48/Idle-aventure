@@ -117,7 +117,16 @@ var ADVENTURE_QUESTS = {
         id: "kills_wolfpack",
         type: "kill",
         worldId: "forest",
-        target: 10,
+        /* v3.282.0 — objectif porté de 10 à 16 (mesure, sim/quest-cost-bench.js).
+           Une meute coûte plus cher qu'un loup seul PAR COMBAT, mais elle fait avancer
+           l'objectif de deux crans : à 10 crans, la quête devenait 40 % moins coûteuse
+           qu'avant les groupes. Mesuré, héros nu, PV perdus par cran d'objectif :
+             un par un        Chevalier 160 · Rôdeur 159 · Mage 132
+             par meutes de 2   Chevalier  99 · Rôdeur 107 · Mage  86
+           16 crans ramènent le coût total à celui d'avant (1584 / 1712 / 1376 contre
+           1600 / 1587 / 1324), tout en restant environ 1,4 fois plus rapide — c'est
+           l'échange qu'on veut : une meute va plus vite, elle ne coûte pas moins. */
+        target: 16,
         desc: "Tuer {target} loups en Forêt" // v3.108.0 : aligné sur enemyFilter
       }
     ],

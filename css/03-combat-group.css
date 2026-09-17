@@ -739,3 +739,25 @@ Deux contraintes mesurées à l'atelier :
 /* Un bouton désactivé (carte non cliquable hors mode Manuel) garde son apparence : c'est
    une fiche d'information, pas un contrôle grisé. */
 .cbg-ally:disabled { opacity: 1; cursor: default; }
+
+/* v3.283.0 (retour Seb) — la suggestion du Grimoire était redevenue invisible.
+
+   Elle se marque par un box-shadow (.combat-action-btn.is-suggested, css/03-combat.css).
+   Le passage des boutons en carrés (v3.275.0) leur a donné leur propre box-shadow d'ombre
+   portée, dans un fichier chargé APRÈS : à spécificité égale, c'est l'ombre qui gagnait et
+   le halo disparaissait. Il est reposé ici, avec l'ombre conservée dessous. */
+.cb-cmd .combat-action-btn.is-suggested {
+  box-shadow: 0 0 0 3px rgba(253, 230, 138, .75),
+              0 0 12px rgba(253, 230, 138, .6),
+              0 2px 6px rgba(0, 0, 0, .45);
+  border-color: rgba(253, 230, 138, .9);
+}
+
+/* L'état ACTIF d'une posture et la recharge se marquent aussi par un contour : même
+   cause, même reprise, sinon on ne distingue plus une Garde active d'un bouton normal. */
+.cb-cmd .combat-action-btn.is-active {
+  box-shadow: 0 0 0 2px rgba(110, 231, 183, .8), 0 2px 6px rgba(0, 0, 0, .45);
+  border-color: rgba(110, 231, 183, .9);
+}
+
+.cb-cmd .combat-action-btn.on-cooldown { opacity: .55; }
