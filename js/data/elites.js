@@ -46,6 +46,24 @@ var ELITE_DB = {
     lore: "Ses yeux ont blanchi. Elle tisse toujours, mais plus rien ne se prend dans sa toile : "
       + "on dirait qu'elle attend autre chose. Quelqu'un est passé par ici avant toi.",
     questIcon: "./images/Icons/quest_icons/elite/elite1.png",
+    /* v3.286.0 — ESCORTE. La Fileuse ne garde pas ses toiles seule : une araignée de sa
+       couvée l'accompagne. Une étape d'élite demande « vaincre la Fileuse », pas « en tuer
+       N » : l'escorte durcit la rencontre sans jamais rendre l'objectif moins cher — c'est
+       pour ça qu'une élite est le bon endroit pour un groupe, là où un compteur de kills
+       oblige à relever la cible (voir La Meute, la Chasse).
+
+       UNE seule araignée, et une élite abaissée. Mesuré, profil de fin de Forêt :
+         la Fileuse seule                    Chev. 87 % PV / 23 % morts · Rôd. 90/38 · Mage 91/44
+         + 1 araignée, élite inchangée       Chev. 97 / 83        · Rôd. 99/97 · Mage 99/94
+         + 1 araignée, élite p1,35 e4,1      Chev. 82 / 24        · Rôd. 90/53 · Mage 91/53
+       Le multiplicateur de PV de l'escorte ne change presque rien : ce sont les frappes en
+       plus qui tuent. C'est donc l'élite qu'on abaisse, pas l'escorte qu'on affaiblit. */
+    escort: {
+      members: ["spider"],
+      hpMult: 0.25,
+      goldMult: 0.25,
+      eliteStatMult: { power: 1.35, endurance: 4.1 }   // au lieu de 1,55 / 4,8 en duel
+    },
     phases: null,
     repeatable: false
   },

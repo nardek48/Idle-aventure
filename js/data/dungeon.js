@@ -67,7 +67,27 @@ var DUNGEONS = [
     story: "Les premières salles sentent la terre humide et la mousse. Des bruits de pas résonnent au loin — rien de bien effrayant, pour l'instant.",
     enemyPool: null,
     eliteWaves: { 5: "araignee_marquee", 10: "ronce_ardente" },
-    boss: { baseId: "slimeking", name: "Basilic", archetype: "corrupted", statMult: { endurance: 1.2, power: 1.5 }, image: null },
+    /* v3.288.0 — PHASES DU BASILIC (idée Seb). Deux seuils, pas plus : un combat de boss
+       doit rester lisible. Chaque phase s'annonce dans le journal, et les renforts arrivent
+       au round SUIVANT (engageIn), jamais par surprise.
+         75 % : une couvée de serpents sort des failles — UN seul renfort, mesuré ; deux
+                d'un coup quadruplaient déjà les morts sur la Fileuse.
+         25 % : il enrage. L'archétype « enraged » existe depuis la v3.204 et fait monter
+                ses dégâts à mesure qu'il perd des PV — il ne reste qu'à l'allumer.
+       Tant qu'un renfort tient debout, son soin de boss est suspendu (combat-engine) :
+       sinon les renforts allongeraient le combat et multiplieraient les soins. */
+    boss: {
+      baseId: "slimeking", name: "Basilic", archetype: "corrupted",
+      statMult: { endurance: 1.2, power: 1.5 }, image: null,
+      phases: [
+        /* Seb parlait de serpents : il n'y en a pas au bestiaire. On prend l'araignée,
+           qui existe et tient le rôle dans un antre humide. Le jour où un serpent est
+           ajouté à ENEMY_DB, il suffit de changer cet identifiant. */
+        { atPct: 0.75, adds: ["spider"], addsHpMult: 0.16, addsPowerMult: 0.45,
+          label: "des fileuses descendent des voûtes" },
+        { atPct: 0.25, archetype: "enraged", label: "il entre en rage" }
+      ]
+    },
     locked: false
   },
   {

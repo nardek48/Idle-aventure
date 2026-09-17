@@ -1315,7 +1315,14 @@ var SceneRunManager = {
     var pseudoQuest = {
       worldId: currentWorld.id,
       adventureIndex: WorldManager.adventureIndex,
-      enemyFilter: filterMatchesCurrentWorld ? group.enemyFilter : undefined
+      enemyFilter: filterMatchesCurrentWorld ? group.enemyFilter : undefined,
+      /* v3.285.0 (accord Seb) : un gabarit peut servir un GROUPE — « une meute de loups »
+         est une meute, pas des loups à la file. Ces trois champs viennent de
+         SCENE_NODES.combatGroups et sont lus par QuestEnemyManager.spawnFor, qui renvoie
+         alors un tableau ; l'accesseur game.enemy l'accepte depuis le lot L-3. */
+      group: group.group,
+      groupHpMult: group.groupHpMult,
+      groupGoldMult: group.groupGoldMult
     };
     var enemy = QuestEnemyManager.spawnFor(pseudoQuest, !!forceBoss);
     if (!enemy) return false;
@@ -1350,6 +1357,12 @@ var SceneRunManager = {
       return;
     }
 
+    /* v3.285.0 : une vague se compte en RENCONTRES, plus en têtes — et ça n'a demandé
+       aucune garde ici. Quand un membre de groupe tombe alors qu'il en reste, combat-engine
+       le retire du groupe et s'arrête là sans prévenir le run ; seule la mort du DERNIER
+       membre traverse jusqu'ici. Une meute vaut donc un cran, comme un ennemi seul.
+       Sans ce comptage, une meute de deux aurait vidé la vague deux fois plus vite, donc
+       pour moitié moins cher. */
     run._combatWaveKills = Number(run._combatWaveKills || 0) + 1;
 
     if (run._combatWaveKills < Number(run._combatWaveTarget || 1)) {

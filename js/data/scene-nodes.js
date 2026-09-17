@@ -276,7 +276,12 @@ var SCENE_NODES = {
      données : aucune logique, cohérent avec le reste de ce fichier. */
   combatGroups: {
     gobelins_foret: { name: "Une bande de gobelins", enemyFilter: ["goblin"] },
-    loups_foret: { name: "Une meute de loups", enemyFilter: ["wolf"] },
+    /* v3.285.0 : « une meute de loups » en est vraiment une — deux bêtes à la fois. La
+       vague se comptant en rencontres (scene-run-system.js), elle garde sa longueur : une
+       meute rend la rencontre plus rude, elle ne raccourcit pas la vague.
+       Les gobelins et les araignées restent à l'unité pour l'instant : une bande et un nid
+       appellent des effectifs plus nombreux, donc leur propre mesure. */
+    loups_foret: { name: "Une meute de loups", enemyFilter: ["wolf"], group: ["wolf", "wolf"], groupHpMult: 0.40, groupGoldMult: 0.40 },
     araignees_foret: { name: "Un nid d'araignées", enemyFilter: ["spider"] }
   }
 };

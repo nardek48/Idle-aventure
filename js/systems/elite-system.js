@@ -88,8 +88,50 @@ var EliteManager = {
     var worldIndex = WORLDS.findIndex(function (w) { return w.id === worldId; });
     if (worldIndex === -1) worldIndex = 0;
 
-    var enemy = this.build(eliteId, this.scaleFor(worldIndex, adventureIndex || 0), opts || null); // v3.258.0 : opts.brakeMult
+    /* v3.286.0 — L'escorte est une propriété de l'ÉLITE (data/elites.js) : « la Fileuse ne
+       garde pas ses toiles seule » vaut partout où elle apparaît. opts.escort reste
+       possible pour un appel qui voudrait forcer autre chose. */
+    var def = (window.ELITE_DB || {})[eliteId] || null;
+    var specEscorte = (opts && opts.escort) || (def && def.escort) || null;
+
+    /* Une élite escortée frappe MOINS FORT qu'en duel, et c'est mesuré : une seule
+       araignée à ×0,25 faisait passer les morts de 23 % à 83 %, et baisser ses points de
+       vie n'y changeait rien — ce sont les frappes en plus qui tuent, pas la vie en plus.
+       Ses multiplicateurs sont donc abaissés le temps de la construction, pour que la
+       rencontre ENTIÈRE coûte ce que coûtait le duel. */
+    var multSauve = null;
+    if (specEscorte && specEscorte.eliteStatMult && def && def.statMult) {
+      multSauve = def.statMult;
+      def.statMult = Object.assign({}, def.statMult, specEscorte.eliteStatMult);
+    }
+    var enemy;
+    try {
+      enemy = this.build(eliteId, this.scaleFor(worldIndex, adventureIndex || 0), opts || null); // v3.258.0 : opts.brakeMult
+    } finally {
+      if (multSauve) def.statMult = multSauve;
+    }
     if (!enemy) return null;
+
+    /* v3.286.0 — ESCORTE D'ÉLITE (demande Seb : « on n'est pas obligé de toujours mettre
+       2 ou 3 »). Une élite peut venir accompagnée : la Fileuse ne garde pas ses toiles
+       seule. L'escorte est déclarée par la QUÊTE (eliteEscort), donc son effectif varie
+       d'une élite à l'autre — une, deux, autant qu'on veut.
+
+       C'est le bon endroit pour un groupe, et c'est mesuré : l'objectif d'une étape
+       d'élite est « gagner ce combat », pas « en tuer N ». L'escorte durcit donc la
+       rencontre sans jamais rendre l'objectif moins cher, contrairement à un compteur de
+       kills où il faut relever la cible (voir La Meute, la Chasse).
+
+       L'élite reste EN TÊTE du groupe : elle est la cible par défaut, et l'étape
+       eliteKill ne reconnaît qu'elle (isElite + id), donc l'escorte ne peut pas valider
+       la quête à sa place. */
+    var escorte = this.buildEscort(specEscorte, worldIndex, adventureIndex || 0);
+    if (escorte.length && window.CombatEngine && typeof CombatEngine.spawnGroup === "function") {
+      CombatEngine.spawnGroup([enemy].concat(escorte));
+      if (typeof renderEnemy === "function") renderEnemy();
+      if (typeof renderHud === "function") renderHud();
+      return enemy;
+    }
 
     game.enemy = enemy;
     if (window.CombatEngine && typeof CombatEngine.prepareEnemy === "function") {
@@ -98,6 +140,51 @@ var EliteManager = {
     if (typeof renderEnemy === "function") renderEnemy();
     if (typeof renderHud === "function") renderHud();
     return enemy;
+  },
+
+  /* Fabrique les membres d'escorte. `spec` = { members: ["spider", ...], hpMult, goldMult }.
+     Chaque membre passe par le vrai generateEnemy() : une escorte est faite d'ennemis
+     ordinaires, seulement plus fragiles et moins payants. */
+  buildEscort: function (spec, worldIndex, adventureIndex) {
+    if (!spec || !Array.isArray(spec.members) || !spec.members.length) return [];
+    if (!window.WorldManager || typeof WorldManager.generateEnemy !== "function") return [];
+
+    var max = (typeof COMBAT_MAX_ENEMIES === "number" ? COMBAT_MAX_ENEMIES : 3) - 1; // l'élite occupe une place
+    var membres = spec.members.slice(0, Math.max(0, max));
+    var hpMult = Number(spec.hpMult);
+    if (!isFinite(hpMult) || hpMult <= 0) hpMult = 0.35;
+    var goldMult = Number(spec.goldMult);
+    if (!isFinite(goldMult) || goldMult <= 0) goldMult = hpMult;
+
+    var savedWorld = WorldManager.worldIndex;
+    var savedAdv = WorldManager.adventureIndex;
+    var savedEnemy = WorldManager.enemyIndex;
+    var monde = WORLDS[worldIndex] || WORLDS[0];
+    var aventure = (monde.adventures && monde.adventures[adventureIndex]) || (monde.adventures && monde.adventures[0]);
+    var poolAvant = aventure ? aventure.enemyPool : null;
+
+    var out = [];
+    try {
+      WorldManager.worldIndex = worldIndex;
+      WorldManager.adventureIndex = adventureIndex;
+      WorldManager.enemyIndex = 0;
+      membres.forEach(function (id) {
+        if (aventure && typeof id === "string" && (!window.ENEMY_DB || ENEMY_DB[id])) aventure.enemyPool = [id];
+        var e = WorldManager.generateEnemy();
+        if (!e) return;
+        e.hp = Math.max(1, Math.floor(e.maxHp * hpMult));
+        e.maxHp = e.hp;
+        e.goldReward = Math.max(1, Math.floor(Number(e.goldReward || 0) * goldMult));
+        e.essenceReward = Number(e.essenceReward || 0) * goldMult;
+        out.push(e);
+      });
+    } finally {
+      if (aventure && poolAvant) aventure.enemyPool = poolAvant;
+      WorldManager.worldIndex = savedWorld;
+      WorldManager.adventureIndex = savedAdv;
+      WorldManager.enemyIndex = savedEnemy;
+    }
+    return out;
   },
 
   /* Butin unique de l'élite, déclinée pour la classe du héros courant quand

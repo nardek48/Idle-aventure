@@ -204,12 +204,78 @@ var DungeonManager = {
     if (!window.EliteManager || typeof EliteManager.build !== "function") return null;
     var pvMult = (typeof BOSS_PV_MULT === "number") ? BOSS_PV_MULT : 3.1;
     var s = this.getWaveScale(dungeon, wave) * 1.5 / pvMult;
-    var e = EliteManager.build(eliteId, s, { noMilestone: true });
+    /* v3.288.0 (accord Seb) : une élite de donjon vient escortée comme ailleurs. L'escorte
+       est une propriété de l'élite (data/elites.js) ; ses membres sont mis à l'échelle de
+       la VAGUE, pas du monde — un donjon avancé ne doit pas servir des ennemis de Lisière.
+       Comme spawnWave fait `game.enemy = buildWaveEnemy(...)` et que l'accesseur accepte
+       les tableaux depuis le lot L-3, renvoyer un tableau suffit : rien d'autre à changer. */
+    var def = (window.ELITE_DB || {})[eliteId] || null;
+    var spec = def && def.escort;
+    var multSauve = null;
+    if (spec && spec.eliteStatMult && def.statMult) {
+      multSauve = def.statMult;
+      def.statMult = Object.assign({}, def.statMult, spec.eliteStatMult);
+    }
+    var e;
+    try {
+      e = EliteManager.build(eliteId, s, { noMilestone: true });
+    } finally {
+      if (multSauve) def.statMult = multSauve;
+    }
     if (!e) return null;
     e.name = "\u2604\ufe0f " + e.name;
     e.goldReward = Math.floor(16 * this.getWaveScale(dungeon, wave));
     e.essenceReward = 2;
-    return e;
+
+    var escorte = this.buildEscortWave(spec, dungeon, wave);
+    return escorte.length ? [e].concat(escorte) : e;
+  },
+
+  /* Membres d'escorte d'une élite de donjon, à l'échelle de la vague. */
+  buildEscortWave: function (spec, dungeon, wave) {
+    if (!spec || !Array.isArray(spec.members) || !spec.members.length) return [];
+    var max = (typeof COMBAT_MAX_ENEMIES === "number" ? COMBAT_MAX_ENEMIES : 3) - 1;
+    var hpMult = Number(spec.hpMult);
+    if (!isFinite(hpMult) || hpMult <= 0) hpMult = 0.25;
+    var goldMult = Number(spec.goldMult);
+    if (!isFinite(goldMult) || goldMult <= 0) goldMult = hpMult;
+
+    /* Construit à part plutôt que via buildWaveEnemy() : celle-ci appelle ensure(), donc
+       suppose un run en cours et touche l'état du jeu. Une escorte doit pouvoir se
+       fabriquer à la demande, y compris hors run (banc, harnais). Les coefficients sont
+       ceux d'un ennemi de vague ordinaire. */
+    var scale = this.getWaveScale(dungeon, wave);
+    var waveProgress = Math.min(1, wave / DUNGEON_CONFIG.waveCount);
+    var difficultyMult = Math.max(1, (dungeon && dungeon.difficultyMult) || 1);
+
+    return spec.members.slice(0, Math.max(0, max)).map(function (id) {
+      var data = (window.ENEMY_DB || {})[id];
+      if (!data) return null;
+      var stats = data.stats || makeRpgStats(10, 10, 10, 10, 10);
+      var hp = Math.max(1, Math.floor((stats.endurance || 0) * 1.5 * scale * hpMult));
+      return {
+        id: id,
+        name: data.name || "Escorte",
+        asset: data.asset || "slime",
+        image: data.image,
+        isBoss: false,
+        isElite: false,
+        archetype: null,
+        hp: hp,
+        maxHp: hp,
+        goldReward: Math.max(1, Math.floor(8 * scale * goldMult)),
+        essenceReward: goldMult,
+        resists: data.resists || [],
+        weak: data.weak || [],
+        stats: {
+          power: Math.floor((stats.power || 0) * (1 + waveProgress) * Math.sqrt(difficultyMult) * 0.4),
+          endurance: stats.endurance || 0,
+          celerity: Math.floor((stats.celerity || 0) * 0.65),
+          precision: Math.floor((stats.precision || 0) * 0.75),
+          will: stats.will || 0
+        }
+      };
+    }).filter(Boolean);
   },
 
   buildWaveEnemy: function (wave) {
@@ -269,6 +335,8 @@ var DungeonManager = {
       image: (isBossWave && bossDef && bossDef.image) ? bossDef.image : (data ? data.image : undefined),
       isBoss: isBossWave,
       archetype: (isBossWave && bossDef && bossDef.archetype) ? bossDef.archetype : null, // trait signature, lu tel quel par combat-engine.js
+      // v3.288.0 : seuils de phase du boss, lus par CombatEngine.checkPhases().
+      phases: (isBossWave && bossDef && Array.isArray(bossDef.phases)) ? bossDef.phases : null,
       hp: hp,
       maxHp: hp,
       goldReward: Math.floor((isBossWave ? 60 : 8) * scale),

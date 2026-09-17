@@ -71,8 +71,30 @@ var HUNT_QUESTS = {
        les six ressources de base (13,3 % chacune). resourceKey reste le repli d'une save/d'un
        code qui ne lit pas resourcePool. Viande : ~1,3 par lot de 10 (5 avant). */
     resourcePool: ["viande", "ble", "bois", "fer", "pierre", "eau"],
-    dropChancePct: 80,
-    lotSize: 10
+
+    /* v3.284.0 — LA CHASSE S'OUVRE AUX GROUPES. Les loups chassent en meute : le gibier
+       vient par deux. Trois chiffres bougent ensemble, et ils se tiennent l'un l'autre —
+       changer l'un sans les autres casse l'économie de la chasse.
+
+       Mesuré (sim/quest-cost-bench.js, héros nu, sans compagnon : cette chasse se joue
+       bien avant que Wenna rejoigne), PV perdus par cran d'objectif :
+         un par un       Chevalier 160 · Rôdeur 159 · Mage 132
+         meutes de 2      Chevalier  99 · Rôdeur 106 · Mage  85
+
+       - lotSize 10 -> 16 : sans ça, un lot coûterait 40 % moins cher qu'avant, puisque
+         chaque combat rapporte deux crans. À 16, le lot revient au coût d'avant.
+       - dropChancePct 80 -> 50 : à 16 kills au lieu de 10, le butin par lot aurait
+         augmenté de 60 % pour le même coût. 16 × 50 % ≈ 8 ressources, contre 10 × 80 %
+         ≈ 8 avant : le rendement par lot est conservé.
+
+       Ce qui reste gagné, et qui est la récompense assumée du risque : la vitesse. Un lot
+       demande environ 1,4 fois moins de rounds. Une meute frappe deux fois par round —
+       plus dangereuse à armure égale, surtout pour les classes fragiles. */
+    group: ["wolf", "wolf"],
+    groupHpMult: 0.40,
+    groupGoldMult: 0.40,
+    dropChancePct: 50,
+    lotSize: 16
   },
 
   /* v3.236.0 — « Ce que les bêtes ont bu » : chasse à la Sève d'Aeswyn.

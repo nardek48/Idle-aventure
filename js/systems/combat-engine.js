@@ -504,6 +504,98 @@ var CombatEngine = {
     }
   },
 
+  /* ---------- Phases (v3.288.0, décision Seb) ----------
+
+     Un boss ou une élite peut changer d'état à un seuil de PV : appeler des renforts,
+     entrer en rage. `phases` est une liste [{ atPct, adds, archetype, label }], champ
+     réservé depuis data/elites.js et enfin lu.
+
+     Trois règles, chacune pour une raison mesurée ou constatée :
+     1. Les renforts s'ANNONCENT un round avant d'arriver (engageIn). Un pic de danger non
+        annoncé se lit comme un bug — c'est la grammaire des télégraphes du jeu.
+     2. Le soin de boss est SUSPENDU tant qu'un renfort est debout. Sinon les renforts
+        allongent le combat, donc multiplient les soins, et une classe à faibles dégâts
+        bute contre un mur : c'est exactement ce que le pronostic de combat sert à éviter.
+     3. Les renforts se dispersent à la mort du chef (même règle que l'escorte d'élite,
+        voir killEnemy) — sinon une salle de donjon ne se referme jamais. */
+  checkPhases: function (e) {
+    if (!e || !Array.isArray(e.phases) || !e.phases.length) return;
+    if (!(Number(e.maxHp || 0) > 0)) return;
+
+    var pct = Number(e.hp || 0) / Number(e.maxHp);
+    e._phasesDone = e._phasesDone || {};
+
+    for (var i = 0; i < e.phases.length; i++) {
+      var ph = e.phases[i];
+      if (!ph || e._phasesDone[i]) continue;
+      if (pct > Number(ph.atPct || 0)) continue;
+
+      e._phasesDone[i] = true;
+      if (ph.label) addLog("⚠️ " + e.name + " — " + ph.label, "event");
+
+      if (ph.archetype) {
+        e.archetype = ph.archetype;   // « enraged » existe déjà : les dégâts montent avec les PV perdus
+      }
+
+      if (Array.isArray(ph.adds) && ph.adds.length) this.summonAdds(e, ph);
+    }
+  },
+
+  /* Renforts de phase, mis à l'échelle sur le chef : un renfort d'un boss de donjon doit
+     être dangereux comme le donjon, pas comme la Lisière. */
+  summonAdds: function (chef, ph) {
+    if (!window.CombatActors) return;
+    var libres = (typeof COMBAT_MAX_ENEMIES === "number" ? COMBAT_MAX_ENEMIES : 3) - CombatActors.enemies().length;
+    if (libres <= 0) return;
+
+    var hpMult = Number(ph.addsHpMult);
+    if (!isFinite(hpMult) || hpMult <= 0) hpMult = 0.18;
+    var powMult = Number(ph.addsPowerMult);
+    if (!isFinite(powMult) || powMult <= 0) powMult = 0.45;
+
+    var self = this;
+    var nouveaux = ph.adds.slice(0, libres).map(function (id) {
+      var data = (window.ENEMY_DB || {})[id];
+      if (!data) return null;
+      var stats = data.stats || (typeof makeRpgStats === "function" ? makeRpgStats(10, 10, 10, 10, 10) : null);
+      if (!stats) return null;
+      var hp = Math.max(1, Math.floor(Number(chef.maxHp || 0) * hpMult));
+      var renfort = {
+        id: id,
+        name: data.name || "Renfort",
+        asset: data.asset || "slime",
+        image: data.image,
+        isBoss: false, isElite: false, archetype: null,
+        hp: hp, maxHp: hp,
+        goldReward: Math.max(1, Math.floor(Number(chef.goldReward || 0) * 0.10)),
+        essenceReward: 0,
+        resists: data.resists || [], weak: data.weak || [],
+        stats: {
+          power: Math.max(1, Math.floor(Number((chef.stats && chef.stats.power) || 0) * powMult)),
+          endurance: stats.endurance || 0,
+          celerity: stats.celerity || 0,
+          precision: stats.precision || 0,
+          will: stats.will || 0
+        }
+      };
+      self.prepareEnemy(renfort);
+      renfort.engageIn = 1;   // annoncé : il arrive au round suivant
+      return renfort;
+    }).filter(Boolean);
+
+    if (!nouveaux.length) return;
+    CombatActors.setEnemies(CombatActors.enemies().concat(nouveaux));
+    addLog("🐍 " + nouveaux.map(function (r) { return r.name; }).join(" et ") + " arrive" + (nouveaux.length > 1 ? "nt" : "") + " en renfort !", "danger");
+    if (typeof renderEnemy === "function") renderEnemy();
+  },
+
+  /* Le soin de boss est suspendu tant qu'un renfort tient debout (règle 2 ci-dessus). */
+  bossHealSuspended: function (e) {
+    if (!e || !window.CombatActors) return false;
+    if (!Array.isArray(e.phases) || !e.phases.length) return false;
+    return CombatActors.aliveEnemies().some(function (x) { return x !== e; });
+  },
+
   /* ---------- Mode Manuel : la file d'attente (L-4) ---------- */
 
   /* v3.270.0 (L-4) : un compagnon en Manuel ne joue plus seul. Le round n'est PAS joué
@@ -832,6 +924,14 @@ var CombatEngine = {
       }
       e.healIn -= 1;
       e.shieldIn -= 1;
+      /* v3.288.0 : soin suspendu tant qu'un renfort de phase tient debout — sinon les
+         renforts allongent le combat, donc multiplient les soins, et une classe à faibles
+         dégâts se retrouve devant un mur. Le compte à rebours continue de tourner : le
+         soin repart dès que la salle est nettoyée. */
+      if (this.bossHealSuspended(e)) {
+        if (e.shieldIn <= early) this.telegraphPattern(e, "shield");
+        return;
+      }
       if (e.healIn <= early) this.telegraphPattern(e, "heal");
       else if (e.shieldIn <= early) this.telegraphPattern(e, "shield");
       return;
@@ -1178,6 +1278,8 @@ var CombatEngine = {
     });
     if ((window.CombatActors ? CombatActors.enemies() : [game.enemy]).indexOf(e) === -1) return false;
 
+    this.checkPhases(e);   // v3.288.0 : seuils de phase d'un boss ou d'une élite
+
     if (tickHeroFlags && Number(game._legBarkRounds || 0) > 0) game._legBarkRounds -= 1; // v3.230.0 : Peau d'écorce
     if (e.vulnerableRounds > 0) e.vulnerableRounds -= 1;
     if (e.counteredRounds > 0) e.counteredRounds -= 1;
@@ -1281,6 +1383,12 @@ var CombatEngine = {
   spawnGroup: function (actors) {
     var list = [].concat(actors || []).filter(Boolean);
     if (!list.length) return null;
+
+    /* v3.284.0 : le verrou de spawn vaut AUSSI ici. HuntQuestManager enchaîne son ennemi
+       suivant par CombatEngine.spawnEnemy(), qui passe par spawnGroup et court-circuitait
+       donc assignCurrentEnemy — une meute de chasse se voyait remplacée dès la mort de son
+       premier membre (constaté au banc). */
+    if (window.CombatActors && CombatActors._holdSpawn && CombatActors.aliveEnemies().length > 0) return;
 
     var self = this;
     var prepared = list.map(function (e) { return self.prepareEnemy(e); });
@@ -1469,7 +1577,24 @@ var CombatEngine = {
       game.totalKills += 1;
       game.killCounts[enemy.id] = (game.killCounts[enemy.id] || 0) + 1;
       if (window.SortieManager) SortieManager.noteKill(false); // la chasse n'a pas de boss (branche séparée avant grantGold/grantMissionXp)
-      HuntQuestManager.onEnemyKilled();
+
+      /* v3.284.0 — MEUTES DE CHASSE. Cette branche précède tout le reste, donc le retrait
+         d'un membre doit se faire ICI aussi : sans ça, la chasse enchaînait son ennemi
+         suivant dès la première mort et remplaçait la meute en cours (constaté au banc).
+         Le kill compte pour le lot dans les deux cas — c'est la meute qui ne doit pas
+         être balayée tant qu'il en reste. */
+      var meute = window.CombatActors && CombatActors.enemies().length > 1;
+      if (meute) CombatActors.removeEnemy(enemy);
+      if (meute) CombatActors.holdSpawn(true);
+      try {
+        HuntQuestManager.onEnemyKilled();
+      } finally {
+        if (meute) CombatActors.holdSpawn(false);
+      }
+      if (meute && CombatActors.aliveEnemies().length) {
+        addLog("⚔️ " + enemy.name + " tombe — il en reste "
+          + CombatActors.aliveEnemies().length + ".", "normal");
+      }
       if (typeof renderAll === "function") renderAll();
       saveGame();
       return;
@@ -1520,6 +1645,19 @@ var CombatEngine = {
        crédité, le kill compté, mais rien de ce qui suit (jet d'objet de boss, événement
        aléatoire, avance de monde, fin de run, spawn enchaîné) ne doit se jouer tant que
        le groupe n'est pas vide : sinon un groupe de trois avancerait trois fois. */
+    /* v3.286.0 — L'ESCORTE TOMBE AVEC SON ÉLITE. L'objectif d'une étape d'élite est
+       « vaincre la Fileuse », pas « nettoyer la clairière » : à sa mort, sa couvée se
+       disperse. Sans ça, l'escorte survivante empêchait la fin du combat — et donc la
+       libération du secteur sur la Carte Vivante, où l'élite EST l'objectif (attrapé par
+       le harnais). Le combat suit alors le flux normal, comme un duel d'élite. */
+    if ((enemy.isElite || enemy.isBoss) && window.CombatActors && CombatActors.enemies().length > 1) {
+      CombatActors.enemies().slice().forEach(function (e) {
+        if (e !== enemy) CombatActors.removeEnemy(e);
+      });
+      addLog("🕷️ " + enemy.name + " tombe — son escorte se disperse.", "normal");
+      // v3.288.0 : vaut aussi pour les renforts de phase d'un boss, même raison.
+    }
+
     if (window.CombatActors && CombatActors.enemies().length > 1) {
       CombatActors.removeEnemy(enemy);
       if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("kills", 1);
@@ -1534,6 +1672,11 @@ var CombatEngine = {
           AdventureQuestManager.onEnemyKilled(enemy);
         } else if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
           HuntQuestManager.onEnemyKilled();
+        } else if (window.SceneRunManager && game.sceneRun && game.sceneRun.status === "combat") {
+          /* v3.285.0 : rien à faire. Une vague de Petite Aventure se compte en RENCONTRES :
+             tant qu'il reste un membre, le run ne doit surtout pas être prévenu, sinon la
+             meute avancerait la vague deux fois. Le dernier membre, lui, passe par le flux
+             normal plus bas et appelle onCombatWon(). */
         } else if (window.WorldQuestManager && currentWorld && !enemy.isBoss) {
           WorldQuestManager.trackKill(currentWorld.id);
         }
