@@ -675,3 +675,45 @@ Deux contraintes mesurées à l'atelier :
      immédiate de l'écran. */
   --kgauge-fill: linear-gradient(90deg, #15803d, #4ade80);
 }
+
+/* v3.279.0 (retour Seb) — les deux barres de PV au MÊME endroit.
+
+   Deux causes, mesurées :
+   1. `#companion-band-root` vide occupait quand même une ligne de la grille `.cb-hero`,
+      et sa gouttière de 3 px décalait tout le bloc du héros vers le bas. Une ligne vide
+      qui pousse le contenu est invisible tant qu'on ne compare pas les deux états.
+   2. Le portrait du compagnon faisait 54 px contre 56 pour le héros : la barre commençait
+      2 px plus à gauche et gagnait 2 px de large, donc 0,3 px de haut. */
+
+#companion-band-root:empty { display: none; }
+
+/* Le cadre d'un compagnon reprend la disposition du héros : une rangée portrait + barre,
+   centrée verticalement, puis sa ligne d'information là où le héros a sa ressource. */
+.cbg-band {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cbg-band-portrait { flex: 0 0 56px; width: 56px; height: 56px; }
+.cbg-band-hp { flex: 1 1 auto; min-width: 0; }
+
+/* La barre du héros porte un `margin-top: 8px` hérité du HUD (css/02-layout.css) : c'est
+   lui, et lui seul, qui la posait 8 px plus bas que celle du compagnon. Mesuré au pixel. */
+.cb-hero .combat-hero-mini-hp-bar { margin-top: 0; }
+
+/* Même décalage que .cb-gauges : 56 px de portrait plus 8 de gouttière. */
+.cbg-band-extra { padding-left: 64px; }
+.cbg-band-extra .cbg-band-line { width: 78%; margin: 3px auto 0; }
+
+/* v3.280.0 : la rangée d'ennemis passe au-dessus de l'illustration et reçoit les touchers
+   sans condition. #enemy-display remonte de 100 px (css/03-combat.css) et son illustration
+   peut mordre sur la rangée selon la hauteur disponible ; un portrait à moitié recouvert
+   ne réagit qu'à moitié. */
+#enemy-row {
+  position: relative;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+.cbg-foe { touch-action: manipulation; }

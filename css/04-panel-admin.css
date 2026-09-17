@@ -85,3 +85,20 @@ du jeu (fond sombre semi-transparent, texte clair, champs compacts).
 .admin-btn:active {
   background: rgba(120, 95, 160, 0.75) !important;
 }
+
+/* v3.279.0 : liste déroulante de la section « Rejouer un combat ». Même gabarit que les
+   champs de saisie de l'écran, pour ne pas introduire un troisième style de contrôle. */
+.admin-select {
+  width: 100%;
+  max-width: 260px;
+  display: block;
+  margin: 0 auto 8px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: var(--nb-radius-sm);
+  border: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+  color: var(--nb-ink);
+  font-size: 13px;
+  font-weight: 600;
+}

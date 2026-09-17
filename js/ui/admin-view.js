@@ -70,10 +70,93 @@ function buildAdminHTML() {
     h += '</div>';
   }
 
+  /* v3.279.0 (demande Seb) : relancer n'importe quelle quête de COMBAT pour la tester.
+     Les quêtes d'aventure et de chasse ont chacune leur moteur de run ; on remet leur
+     progression à zéro avant de lancer, sinon une quête déjà terminée refuserait de
+     repartir et une quête entamée reprendrait au milieu. */
+  h += buildAdminCombatQuestHTML();
+
   h += '<button class="settings-btn admin-btn" onclick="switchTab(\'settings\')"><img class=ico-inline src=images/Icons/system/back.png> Retour aux Paramètres</button>';
 
   h += '</div>';
   return '<div class="nb-page-frame admin-root kframe-page" data-kf-title="Admin">' + h + '</div>';
+}
+
+/* Catalogue des combats relançables : quêtes d'aventure (kill / boss / élite) et quêtes
+   de chasse. Les étapes d'Histoire ne sont pas listées — elles n'ont pas de run propre,
+   elles s'appuient sur le farm ou sur l'une de ces quêtes. */
+function getAdminCombatQuests() {
+  var out = [];
+  if (window.ADVENTURE_QUESTS) {
+    Object.keys(ADVENTURE_QUESTS).forEach(function (id) {
+      var q = ADVENTURE_QUESTS[id];
+      if (!q) return;
+      var monde = (window.WORLDS || []).find(function (w) { return w.id === q.worldId; });
+      out.push({
+        id: id, kind: "adventure",
+        label: (q.name || id) + (monde ? " — " + monde.name : ""),
+        groupe: Array.isArray(q.group) ? q.group.length : 1
+      });
+    });
+  }
+  if (window.HUNT_QUESTS) {
+    Object.keys(HUNT_QUESTS).forEach(function (id) {
+      var q = HUNT_QUESTS[id];
+      if (!q) return;
+      out.push({ id: id, kind: "hunt", label: "🏹 " + (q.name || id), groupe: Array.isArray(q.group) ? q.group.length : 1 });
+    });
+  }
+  out.sort(function (a, b) { return a.label.localeCompare(b.label); });
+  return out;
+}
+
+function buildAdminCombatQuestHTML() {
+  var liste = getAdminCombatQuests();
+  if (!liste.length) return "";
+
+  var h = '<div class="panel-card admin-card">';
+  h += '<h3><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> Rejouer un combat</h3>';
+  h += '<p class="panel-sub">Relance la quête choisie depuis le début : sa progression est remise à zéro, puis le run démarre. Le nombre entre parenthèses est la taille du groupe ennemi.</p>';
+  h += '<select id="admin-combat-quest" class="admin-select">';
+  liste.forEach(function (q) {
+    h += '<option value="' + esc(q.kind + ":" + q.id) + '">' + esc(q.label)
+      + (q.groupe > 1 ? " (groupe de " + q.groupe + ")" : "") + '</option>';
+  });
+  h += '</select>';
+  h += '<button class="settings-btn admin-btn" onclick="adminReplayCombatQuest()"><img class=ico-inline src=images/Icons/system/reset.png> Lancer ce combat</button>';
+  h += '</div>';
+  return h;
+}
+
+function adminReplayCombatQuest() {
+  var sel = document.getElementById("admin-combat-quest");
+  if (!sel || !sel.value) return;
+  var parts = sel.value.split(":");
+  var kind = parts[0], id = parts[1];
+
+  /* Un run déjà en cours doit être abandonné, sinon deux moteurs se disputeraient l'ennemi. */
+  if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active
+    && typeof AdventureQuestManager.forfeit === "function") AdventureQuestManager.forfeit();
+  if (window.HuntQuestManager && game.huntRun && game.huntRun.active
+    && typeof HuntQuestManager.stop === "function") HuntQuestManager.stop();
+
+  if (kind === "adventure") {
+    var q = (window.ADVENTURE_QUESTS || {})[id];
+    if (!q || !window.AdventureQuestManager) return;
+    // Remise à zéro : terminée, elle refuserait de repartir ; entamée, elle reprendrait au milieu.
+    if (game.adventureQuestsCompleted) delete game.adventureQuestsCompleted[id];
+    if (game.adventureQuestProgress) {
+      game.adventureQuestProgress[id] = {};
+      (q.steps || []).forEach(function (s) { game.adventureQuestProgress[id][s.id] = 0; });
+    }
+    AdventureQuestManager.start(id);
+  } else if (kind === "hunt") {
+    if (!window.HuntQuestManager) return;
+    HuntQuestManager.start(id);
+  }
+
+  if (typeof showToast === "function") showToast("⚔️ Combat relancé", 1400);
+  if (typeof saveGame === "function") saveGame();
 }
 
 function adminFieldRow(inputId, label, currentValue, onApplyCall, minVal, maxVal) {
@@ -192,6 +275,9 @@ function adminStartSandboxExpedition() {
 }
 
 window.buildAdminHTML = buildAdminHTML;
+window.getAdminCombatQuests = getAdminCombatQuests;
+window.buildAdminCombatQuestHTML = buildAdminCombatQuestHTML;
+window.adminReplayCombatQuest = adminReplayCombatQuest;
 window.adminApplyGold = adminApplyGold;
 window.adminApplyEssence = adminApplyEssence;
 window.adminApplyShards = adminApplyShards;

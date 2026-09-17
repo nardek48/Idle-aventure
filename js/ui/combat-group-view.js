@@ -84,9 +84,17 @@ function buildEnemyRowHTML() {
   return h;
 }
 
+/* v3.280.0 : la rangée n'est RÉÉCRITE que si son contenu a changé.
+   renderEnemyRow est appelée à chaque dégât et à chaque rafraîchissement de l'écran ;
+   réécrire innerHTML entre le toucher et le relâchement annule le tap sur mobile — le
+   portrait ne réagissait alors pas, sans qu'aucune erreur n'apparaisse. Le même
+   raisonnement vaut pour la rangée d'alliés. */
 function renderEnemyRow() {
   var host = document.getElementById("enemy-row");
-  if (host) host.innerHTML = buildEnemyRowHTML();
+  if (!host) return;
+  var html = buildEnemyRowHTML();
+  if (host.innerHTML === html) return;
+  host.innerHTML = html;
 }
 
 /* Tap sur un portrait : cible collante. Elle tient jusqu'à la mort de l'ennemi visé,
@@ -148,7 +156,10 @@ function buildAllyRowHTML() {
 
 function renderAllyRow() {
   var host = document.getElementById("ally-row");
-  if (host) host.innerHTML = buildAllyRowHTML();
+  if (!host) return;
+  var html = buildAllyRowHTML();
+  if (host.innerHTML === html) return;
+  host.innerHTML = html;
 }
 
 /* Carte du héros dans la rangée. Elle existe pour deux raisons : on ne perd jamais ses
@@ -274,21 +285,23 @@ function buildCompanionBandHTML(actor) {
   var max = Number(actor.maxHp || 0);
   var pct = max > 0 ? Math.max(0, (actor.hp / max) * 100) : 0;
 
+  /* v3.279.0 (retour Seb) : MÊME structure que le cadre du héros — portrait et barre de
+     PV sur une rangée centrée, puis la ligne d'information en dessous, à la place qu'occupe
+     sa jauge de ressource. C'est ce qui met les deux barres exactement au même endroit. */
   var h = '<div class="cbg-band">';
   h += '<div class="cbg-band-portrait"><img src="' + esc((def && def.image) || "") + '" alt="">'
     + '<span class="cbg-band-tag">' + (actor.control === "manual" ? "Manuel" : "Auto") + '</span></div>';
-  h += '<div class="cbg-band-right">';
   h += '<div class="cbg-band-hp kgauge kgauge-dragon-claw">'
     + '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct.toFixed(1) + '%"></div></div>'
     + '<span class="kgauge-text">' + formatNumber(Math.ceil(actor.hp)) + " / " + formatNumber(max) + '</span></div>';
+  h += '</div>';
 
   var chargesMax = CompanionManager.chargesMax(actor.companionId);
   var dots = "";
   for (var i = 0; i < chargesMax; i++) dots += '<i class="' + (i < Number(actor.charges || 0) ? "" : "is-off") + '"></i>';
-  h += '<div class="cbg-band-line">';
+  h += '<div class="cbg-band-extra"><div class="cbg-band-line">';
   if (chargesMax) h += '<span>Charges <span class="cbg-band-dots">' + dots + '</span></span>';
   h += '<span>' + (Number(actor.cooldown || 0) > 0 ? "Recharge " + actor.cooldown + " r" : "Prêt") + '</span>';
-  h += '</div>';
   h += '</div></div>';
   return h;
 }
