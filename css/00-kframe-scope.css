@@ -122,6 +122,10 @@ Deux responsabilités ici :
 .kframe .lm-pill,
 .kframe .lm-panel,
 .kframe .scene-map-report,
+/* v3.268.2 (retour Seb : « le texte est trop clair ») : la fiche de compagnon est à fond
+   crème dans un cadre de pierre — sans cette ligne, son texte héritait de l'encre crème
+   et se lisait à peine. Les descendants (.cp-portrait, .cp-skill) héritent de celle-ci. */
+.kframe .cp-card,
 .kframe .log-entry {
   --nb-ink: #3a2c1a;
   --nb-ink-dim: rgba(58, 44, 26, 0.72);

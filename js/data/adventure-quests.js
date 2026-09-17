@@ -91,6 +91,24 @@ var ADVENTURE_QUESTS = {
     worldId: "forest",
     adventureIndex: 0,
     enemyFilter: ["wolf"], // v3.107.0 : la Meute affamée ne fait combattre que des loups (cohérence narrative)
+    /* v3.269.0 (L-3) — PREMIER GROUPE DU JEU. Une meute est une meute : des loups à la
+       fois, pas des loups à la suite. Les PV et le butin de chaque membre suivent
+       groupHpMult / groupGoldMult ; sans le second, une meute rapporterait plusieurs fois
+       l'or pour les points de vie d'un seul ennemi.
+
+       DEUX loups, pas trois, et c'est une MESURE qui l'impose. Cette quête est au tout
+       début du jeu (progressionStage world_start, elle ouvre le bâtiment Chasse) et se
+       joue donc sans compagnon et sans technique. Mesuré sur le vrai moteur, 200 runs,
+       héros nu entraînement +4, attaque de base uniquement :
+         3 loups ×0,35 : Chevalier 83 % PV · Rôdeur 99 % et 84 % de MORTS · Mage 96 %
+         2 loups ×0,50 : Chevalier 61 % · Rôdeur 81 % · Mage 73 %, aucune mort
+         2 loups ×0,40 : Chevalier 47 % · Rôdeur 68 % · Mage 60 %, aucune mort
+       Le trio est un mur à cet endroit du jeu. ×0,40 à deux place la meute au-dessus d'un
+       boss de Forêt sans jamais tuer, ce qui est le bon niveau pour une première
+       rencontre de groupe. Les trios attendront un contenu plus avancé. */
+    group: ["wolf", "wolf"],
+    groupHpMult: 0.40,
+    groupGoldMult: 0.40,
     name: "La Meute Affamée",
     story: "Des loups rôdent près du campement. Il faut réduire leur nombre avant d'envisager d'installer un poste de chasse permanent.",
     icon: "images/Icons/quests/objective_wolf.png",

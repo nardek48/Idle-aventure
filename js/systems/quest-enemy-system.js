@@ -41,6 +41,20 @@ var QuestEnemyManager = {
       // valid vide (config incohérente, ex. faute de frappe/id inexistant) : on garde le pool complet plutôt que de planter.
     }
 
+    /* v3.269.0 (L-3) — GROUPES. quest.group = liste de membres, chacun un id d'ennemi ou
+       { boss: true }. Absent : un seul ennemi, comportement d'avant à la ligne près.
+       Les PV de chaque membre suivent groupHpMult (mesuré : ×0,50 à deux, ×0,35 à trois),
+       son butin groupGoldMult — sans quoi une meute de trois rapporterait trois fois l'or
+       pour les points de vie d'un ennemi seul. */
+    if (!forceBoss && Array.isArray(quest.group) && quest.group.length > 1) {
+      var groupe = this.buildGroup(quest, adventure);
+      if (savedPool) adventure.enemyPool = savedPool;
+      WorldManager.worldIndex = savedWorldIndex;
+      WorldManager.adventureIndex = savedAdventureIndex;
+      WorldManager.enemyIndex = savedEnemyIndex;
+      return groupe;
+    }
+
     var enemy = WorldManager.generateEnemy();
 
     /* v3.246.0 (retour Seb 15/09/2026) — enemyHpMult : PV de TOUS les ennemis de la quête
@@ -84,6 +98,43 @@ QuestEnemyManager.respawnActiveRunEnemy = function () {
     if (LivingMapManager.respawnFightEnemy()) return true;
   }
   return false;
+};
+
+/* Fabrique les membres d'un groupe. Chacun passe par le VRAI generateEnemy() : un membre
+   de groupe est un ennemi ordinaire, seulement plus fragile et moins payant. */
+QuestEnemyManager.buildGroup = function (quest, adventure) {
+  var membres = quest.group.slice(0, (typeof COMBAT_MAX_ENEMIES === "number" ? COMBAT_MAX_ENEMIES : 3));
+  var hpMult = Number(quest.groupHpMult);
+  if (!isFinite(hpMult) || hpMult <= 0) hpMult = (membres.length >= 3) ? 0.35 : 0.50;
+  var goldMult = Number(quest.groupGoldMult);
+  if (!isFinite(goldMult) || goldMult <= 0) goldMult = hpMult;
+
+  var enemyCount = (adventure && adventure.enemyCount) || 1;
+  var poolAvant = adventure ? adventure.enemyPool : null;
+  var out = [];
+
+  for (var i = 0; i < membres.length; i++) {
+    var m = membres[i];
+    var estBoss = !!(m && m.boss);
+    WorldManager.enemyIndex = estBoss ? Math.max(0, enemyCount - 1) : 0;
+    if (!estBoss && adventure && typeof m === "string" && (!window.ENEMY_DB || ENEMY_DB[m])) {
+      adventure.enemyPool = [m];
+    } else if (adventure && poolAvant) {
+      adventure.enemyPool = poolAvant;
+    }
+
+    var e = WorldManager.generateEnemy();
+    if (!e) continue;
+    if (!estBoss) {   // un boss garde ses PV et son butin : c'est lui l'enjeu
+      e.hp = Math.max(1, Math.floor(e.maxHp * hpMult));
+      e.maxHp = e.hp;
+      e.goldReward = Math.max(1, Math.floor(Number(e.goldReward || 0) * goldMult));
+      e.essenceReward = Number(e.essenceReward || 0) * goldMult;
+    }
+    out.push(e);
+  }
+  if (adventure && poolAvant) adventure.enemyPool = poolAvant;
+  return out;
 };
 
 window.QuestEnemyManager = QuestEnemyManager;

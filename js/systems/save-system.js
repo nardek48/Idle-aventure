@@ -466,6 +466,10 @@ function buildSaveData() {
     // ClassCombatManager.tickAutoSkills(). Array.isArray() garde
     // contre un état corrompu plutôt que de planter la sauvegarde.
     grimoireRules: Array.isArray(game.grimoireRules) ? game.grimoireRules : [],
+    // v3.268.0 (L-2) : compagnons — déblocage, améliorations, Auto/Manuel, présence, PV
+    // entre deux combats. Les acteurs de combat ne sont pas sauvegardés (voir game.enemy).
+    companions: (window.CompanionManager && typeof CompanionManager.buildSaveData === "function")
+      ? CompanionManager.buildSaveData() : (game.companions || {}),
     // v3.65.0 : presets nommés du Grimoire (Phase 5) — voir
     // ui/grimoire-view.js (ensureGrimoirePresets()/saveGrimoirePreset()).
     grimoirePresets: Array.isArray(game.grimoirePresets) ? game.grimoirePresets : [],
@@ -731,6 +735,10 @@ function restoreBaseState(d) {
   // plus stricte par classe aura de toute façon lieu à la volée dans
   // chooseGrimoireAction() à chaque tick (canUseAction() y échoue déjà
   // proprement si l'action n'existe pas dans le kit courant).
+  // v3.268.0 (L-2) : repli d'avant la version = aucun compagnon débloqué.
+  if (window.CompanionManager && typeof CompanionManager.restore === "function") CompanionManager.restore(d.companions);
+  else game.companions = (d.companions && typeof d.companions === "object") ? d.companions : {};
+
   game.grimoireRules = (typeof sanitizeGrimoireRules === "function")
     ? sanitizeGrimoireRules(d.grimoireRules, null)
     : (Array.isArray(d.grimoireRules) ? d.grimoireRules : []);
@@ -1213,6 +1221,11 @@ function hardResetState() {
   game.classResource = null;
   game.classCooldowns = {};
   game.classActiveDefense = null;
+
+  /* v3.268.0 (L-2) : à l'ascension, les compagnons restent acquis — ils sont débloqués
+     par l'Histoire, elle-même conservée (keptStoryQuests) — mais repartent à PV pleins,
+     comme le héros. Seuls leurs PV courants sont des données de run. */
+  if (window.CompanionManager && typeof CompanionManager.healAll === "function") CompanionManager.healAll();
   // v3.102.0 (P2) : combatMode = préférence, PRÉSERVÉE à l'ascension (comme autoSkillsEnabled avant) ; état de round remis à zéro
   if (game.combatMode !== "grimoire") game.combatMode = "tactique";
   game.combatRound = { number: 0, busy: false, continueAttack: false, clockMs: 0 };
@@ -1383,6 +1396,7 @@ function fullResetState() {
   // volontairement PRÉSERVÉE à l'ascension (hardResetState, plus haut
   // dans ce fichier), remise à vide seulement sur un reset complet ici.
   game.grimoireRules = [];
+  game.companions = {}; // v3.268.0 (L-2) : aucun compagnon dans une partie neuve
   // v3.65.0 : même principe — les presets sont eux aussi une
   // configuration stratégique du joueur, préservée à l'ascension (rien
   // ne les touche dans hardResetState), remise à vide seulement ici.

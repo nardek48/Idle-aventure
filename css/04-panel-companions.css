@@ -1,0 +1,147 @@
+/* ============================================================
+Aethervale — css/04-panel-companions.css
+v3.268.0 (lot L-2) : sous-onglet Héros › Compagnons (ui/companions-view.js).
+v3.268.2 : tout le texte de la fiche en encre pleine (--nb-ink). L'encre atténuée
+(--nb-ink-dim) était illisible sur le crème ; la hiérarchie passe par la TAILLE,
+plus par la couleur. La carte est enregistrée dans 00-kframe-scope.css.
+Réutilise .nb-page-frame, .kseg, .kbtn et .kgauge comme les autres écrans —
+seules les classes propres aux compagnons sont définies ici.
+============================================================ */
+
+.cp-intro {
+  font-size: 13px;
+  color: var(--nb-ink);
+  margin-bottom: 12px;
+}
+
+.cp-card {
+  background: var(--nb-cream);
+  border: 1px solid var(--nb-frame-light);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-card);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+/* Un compagnon hors de combat reste lisible mais visiblement en retrait. */
+.cp-card.is-ko {
+  opacity: 0.6;
+  filter: grayscale(0.7);
+}
+
+.cp-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.cp-portrait {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  border-radius: var(--nb-radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--nb-frame-light);
+  background: var(--nb-cream-alt);
+}
+
+.cp-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cp-ident { min-width: 0; }
+
+.cp-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--nb-ink);
+}
+
+.cp-role {
+  font-size: 12px;
+  color: var(--nb-ink);
+}
+
+.cp-hp { margin-bottom: 8px; }
+
+.cp-ko-note {
+  font-size: 12px;
+  color: var(--danger);
+  margin-bottom: 8px;
+}
+
+.cp-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--nb-ink);
+  margin-bottom: 10px;
+}
+
+.cp-stats b { color: var(--nb-ink); }
+
+.cp-skill {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--nb-radius-sm);
+  background: var(--nb-cream-alt);
+  border: 1px solid var(--nb-frame-light);
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--nb-ink);
+}
+
+.cp-skill-ico {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+}
+
+.cp-skill-desc {
+  font-size: 12px;
+  color: var(--nb-ink);
+  margin-top: 2px;
+}
+
+.cp-seg { margin-bottom: 8px; }
+
+.cp-upgrade {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--nb-frame-light);
+}
+
+.cp-upgrade-label {
+  font-size: 13px;
+  color: var(--nb-ink);
+  min-width: 0;
+}
+
+.cp-upgrade-label b { color: var(--nb-ink); }
+
+.cp-upgrade-hint {
+  display: block;
+  font-size: 11px;
+  color: var(--nb-ink);
+}
+
+.cp-upgrade-done {
+  font-size: 13px;
+  color: var(--nb-ink);
+}
+
+/* 320 px : le portrait rétrécit plutôt que de pousser le nom à la ligne. */
+@media (max-width: 360px) {
+  .cp-portrait { width: 44px; height: 44px; flex-basis: 44px; }
+  .cp-name { font-size: 15px; }
+}

@@ -10,6 +10,8 @@ function buildCombatHTML() {
     +   '<div id="active-potions-bar" class="active-potions-bar"></div>'
     +   '<div id="enemy-display">'
     +     '<div id="combat-mission-progress" class="combat-mission-progress"></div>'
+    // v3.269.0 (L-3) : rangée d'ennemis — vide, donc invisible, tant qu'ils sont seuls.
+    +     '<div id="enemy-row"></div>'
     +     '<div id="enemy-name">Slime</div>'
     +     '<div id="enemy-hp-bar-wrapper" class="kgauge kgauge-dragon-claw kgauge-hp-enemy">'
     +       '<div class="kgauge-track"><div id="enemy-hp-bar" class="kgauge-fill" style="width:100%"></div></div>'
@@ -35,6 +37,8 @@ function buildCombatHTML() {
     + '</div>'
 
     + '<div class="cb-hero">'
+    // v3.269.0 (L-3) : mini-cartes des compagnons — vides tant que personne n'accompagne.
+    +   '<div id="ally-row"></div>'
     +   '<div class="cb-hero-top">'
     +     '<div id="combat-hero-slot" class="cb-hero-slot"></div>'
     +     '<div id="combat-sortie-root" class="combat-sortie-row"></div>'
@@ -462,6 +466,8 @@ function renderEnemy() {
 
   renderEnemyStatusBar();
   renderEnemyHp();
+  if (typeof renderEnemyRow === "function") renderEnemyRow();
+  if (typeof renderAllyRow === "function") renderAllyRow();
 }
 
 function renderEnemyHp() {
@@ -475,6 +481,8 @@ function renderEnemyHp() {
       formatNumber(Math.max(0, Math.ceil(game.enemy.hp))) + " / " + formatNumber(game.enemy.maxHp);
   }
   renderEnemyStatusBar();
+  if (typeof renderEnemyRow === "function") renderEnemyRow();   // v3.269.0 : PV des autres membres
+  if (typeof renderAllyRow === "function") renderAllyRow();
 }
 
 window.renderEnemy = renderEnemy;
@@ -591,6 +599,17 @@ function buildClassSkillButtonsHTML() {
 
 function renderClassSkillButtons() {
   var host = document.getElementById("class-skills-root");
+  /* v3.270.0 (L-4) : si un compagnon en Manuel est l'acteur sélectionné, ce sont SES
+     actions qui occupent la rangée. Le héros reprend la place dès qu'il est resélectionné
+     ou que le round est joué. */
+  if (host && window.CombatEngine && typeof CombatEngine.hasManualAllies === "function" && CombatEngine.hasManualAllies()) {
+    var acteur = CombatEngine.selectedActor();
+    if (acteur && acteur.companionId && typeof buildCompanionActionsHTML === "function") {
+      host.innerHTML = buildCompanionActionsHTML(acteur);
+      renderClassResourceBar();
+      return;
+    }
+  }
   if (host) host.innerHTML = buildClassSkillButtonsHTML();
   renderClassResourceBar();
   if (typeof renderCombatControls === "function") renderCombatControls();

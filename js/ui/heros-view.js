@@ -5,7 +5,7 @@
    « Progresser ». Sous-onglets : Résumé / Équipement / Talents. Les anciens
    sous-onglets Stats (amelioration) et Capacités (stats) deviennent des FEUILLES
    BASSES ouvertes depuis le Résumé — le Résumé reste visible derrière. */
-var activeHerosSubTab = "hero"; // "hero" | "equip" | "talents"
+var activeHerosSubTab = "hero"; // "hero" | "equip" | "talents" | "companions"
 var herosOpenSheet = null;      // null | "stats" | "abilities"
 
 /* v3.222.0 : voir setVillageSubTab — une carte de caractéristique dépliée ne
@@ -21,7 +21,11 @@ function setHerosSubTab(tab) {
 
 /* Positionne le sous-onglet sans rendre — pour switchTab('equip'/'talents') (ui-root.js). */
 function setHerosSubTabSilent(tab) {
-  if (tab === "equip" || tab === "talents") activeHerosSubTab = tab;
+  /* v3.268.1 (bug Seb) : liste blanche. « companions » y manquait, donc le clic sur le
+     sous-onglet retombait silencieusement sur le Résumé — rien ne se passait à l'écran.
+     Toute nouvelle valeur d'activeHerosSubTab doit être ajoutée ICI, pas seulement dans
+     la barre de boutons et le routeur de buildHerosHTML(). */
+  if (tab === "equip" || tab === "talents" || tab === "companions") activeHerosSubTab = tab;
   else activeHerosSubTab = "hero";
 }
 
@@ -260,6 +264,12 @@ function buildHeroFicheHTML() {
 
   h += '<div class="pc-sum-foot">';
   h += '<button class="settings-btn" type="button" onclick="openHeroSlotsScreen()"><img class=ico-inline src=images/Icons/subtabs/hero_roster.png> Mes héros</button>';
+  /* v3.268.3 (retour Seb) : l'accès aux Compagnons passe du haut au bas de l'écran —
+     les boutons du pied sont nettement plus lisibles que la barre de sous-onglets.
+     Même gabarit que « Mes héros », .pc-sum-foot les met côte à côte. */
+  if (typeof isTabUnlocked !== "function" || isTabUnlocked("companions")) {
+    h += '<button class="settings-btn" type="button" onclick="setHerosSubTab(\'companions\')"><img class=ico-inline src=images/Icons/subtabs/hero_abilities.png> Compagnons</button>';
+  }
   // v3.244.0 : le bouton « Équipement » est parti — c'est un sous-onglet de cet écran.
   h += '</div>';
 
@@ -828,6 +838,9 @@ function buildHerosSubTabBarHTML() {
   if (unlocked("talents")) {
     h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "talents" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'talents\')"><img class="pc-subtab-ico" src="images/Icons/scene/node_discovery.png" alt=""><span>Talents</span></button>';
   }
+  /* v3.268.3 (retour Seb) : Compagnons n'est plus dans cette barre — son accès est un
+     bouton bleu au pied du Résumé (buildHeroFicheHTML), plus lisible. Le sous-onglet
+     existe toujours comme valeur d'activeHerosSubTab, seul son point d'entrée a bougé. */
   h += '</div>';
   return h;
 }
@@ -894,6 +907,8 @@ function buildHerosHTML() {
     h += buildHerosEquipHTML();
   } else if (activeHerosSubTab === "talents") {
     h += buildHerosTalentsHTML();
+  } else if (activeHerosSubTab === "companions") {
+    h += (typeof buildHerosCompanionsHTML === "function") ? buildHerosCompanionsHTML() : "";
   } else {
     h += buildHeroFicheHTML();
   }

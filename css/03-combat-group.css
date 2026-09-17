@@ -1,0 +1,374 @@
+/* ============================================================
+Aethervale — css/03-combat-group.css
+v3.269.0 (lot L-3) : arène de groupe (ui/combat-group-view.js).
+Repris tel quel d'atelier-groupe.html, validé sur iPhone.
+
+Deux contraintes mesurées à l'atelier :
+  - trois portraits de front doivent tenir en 320 px. Le portrait est donc plafonné
+    au tiers de la rangée, gouttières déduites : 104 px demandés deviennent 95 px en
+    320 px de large, et valent 104 px dès 390 px.
+  - le nom est POSÉ SUR le portrait, sur fond crème et encre sombre : en texte clair
+    avec ombre il se perdait sur les illustrations chargées.
+============================================================ */
+
+/* ---------- Rangée d'ennemis ---------- */
+
+.cbg-foes {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.cbg-foe {
+  width: min(104px, calc((100% - 16px) / 3));
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cbg-foe-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid rgba(20, 14, 8, .65);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .45);
+  background: rgba(20, 14, 8, .4);
+}
+
+.cbg-foe-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Cible collante : halo or, doublé d'un liseré sombre pour tenir aussi sur les fonds
+   clairs (le halo seul disparaissait sur le chemin ensoleillé de la Forêt). */
+.cbg-foe.is-target .cbg-foe-frame {
+  border-color: rgba(217, 164, 65, .95);
+  box-shadow: 0 0 0 1px rgba(20, 14, 8, .85), 0 0 12px 3px rgba(217, 164, 65, .8);
+}
+
+.cbg-foe.is-dead {
+  opacity: .35;
+  filter: grayscale(1);
+  pointer-events: none;
+}
+
+.cbg-foe-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-size: 9.5px;
+  font-weight: 800;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: rgba(244, 233, 211, .92);
+  color: #3a2c1a;
+  padding: 1px 4px;
+  border-top: 1px solid rgba(58, 44, 26, .35);
+}
+
+.cbg-foe-hp {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(20, 14, 8, .85);
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, .5);
+}
+
+.cbg-foe-hp > i {
+  display: block;
+  height: 100%;
+  background: #d13b2e;
+}
+
+/* ---------- Pastilles de statut, SOUS le portrait ---------- */
+
+.cbg-foe-badges {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  min-height: 20px;
+}
+
+.cbg-pastille {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(20, 14, 8, .88);
+  border: 1px solid rgba(217, 164, 65, .75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .45);
+}
+
+.cbg-pastille img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+/* Ce qui arrive au prochain round bat de l'œil — c'est la seule pastille urgente. */
+.cbg-pastille.is-urgent {
+  border-color: #f2b33d;
+  animation: cbg-badge 1s ease-in-out infinite;
+}
+
+@keyframes cbg-badge {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(242, 179, 61, 0); }
+  50% { box-shadow: 0 0 0 3px rgba(242, 179, 61, .5); }
+}
+
+/* ---------- Rangée d'alliés, au-dessus du bandeau héros ---------- */
+
+.cbg-allies {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.cbg-ally {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: rgba(20, 14, 8, .6);
+  border: 1px solid rgba(217, 164, 65, .3);
+}
+
+.cbg-ally.is-ko {
+  opacity: .45;
+  filter: grayscale(1);
+}
+
+.cbg-ally-portrait {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(217, 164, 65, .5);
+}
+
+.cbg-ally-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cbg-ally-right {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Le nom cède avant le compteur de recharge : mesuré, « Maddoc » poussait le badge
+   hors de la carte en 320 px. */
+.cbg-ally-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #f4e9d3;
+}
+
+.cbg-ally-name > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cbg-ally-cd {
+  flex: 0 0 auto;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(20, 14, 8, .8);
+  border: 1px solid rgba(217, 164, 65, .5);
+}
+
+.cbg-ally-hp {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(20, 14, 8, .85);
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.cbg-ally-hp > i {
+  display: block;
+  height: 100%;
+  background: #3fb950;
+}
+
+/* Charges de compétence : une pastille par usage restant sur le combat. Une charge
+   dépensée reste VISIBLE en cercle vide — pleine et sombre, « épuisé » se confondait
+   avec « pas de charges du tout ». */
+.cbg-ally-charges {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.cbg-ally-charges i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #6fc6e8;
+  box-shadow: 0 0 2px rgba(0, 0, 0, .6);
+}
+
+.cbg-ally-charges i.is-off {
+  background: transparent;
+  border: 1px solid rgba(111, 198, 232, .55);
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   v3.270.0 (lot L-4) — mode Manuel : sélection d'acteur, actions du compagnon,
+   feuille de choix de cible pour un soin.
+   ============================================================ */
+
+.cbg-ally.is-active {
+  border-color: rgba(217, 164, 65, .9);
+  background: rgba(70, 50, 20, .75);
+  box-shadow: 0 0 0 1px rgba(217, 164, 65, .6);
+}
+
+/* Celui dont on attend le choix bat de l'œil — c'est la seule animation de la rangée. */
+.cbg-ally.is-waiting { animation: cbg-wait 1.1s ease-in-out infinite; }
+
+@keyframes cbg-wait {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0); }
+  50% { box-shadow: 0 0 0 3px rgba(217, 164, 65, .45); }
+}
+
+.cbg-ally.is-done { opacity: .72; }
+
+.cbg-ally-tick {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 800;
+  color: #7ee08a;
+}
+
+/* ---------- Actions du compagnon, à la place du kit de classe ---------- */
+
+.cbg-acts {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.cbg-act {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  border: 1px solid rgba(217, 164, 65, .5);
+  background: rgba(20, 14, 8, .72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .45);
+  padding: 0;
+}
+
+.cbg-act img {
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+}
+
+.cbg-act.is-picked {
+  border-color: #d9a441;
+  box-shadow: 0 0 0 2px rgba(217, 164, 65, .55);
+}
+
+.cbg-act.is-off { opacity: .45; }
+.cbg-act.is-off img { filter: grayscale(1); }
+
+/* Une compétence indisponible DIT pourquoi : rounds restants, ou ∅ si les charges du
+   combat sont épuisées. Sans ça, le tap semble ne rien faire. */
+.cbg-act-cd {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #f4e9d3;
+  text-shadow: 0 1px 3px #000;
+}
+
+/* ---------- Feuille de choix de cible pour un soin ---------- */
+
+.cbg-heal-opt {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(58, 44, 26, .35);
+  background: #f6ecd9;
+  color: #3a2c1a;
+  text-align: left;
+}
+
+.cbg-heal-opt.is-best {
+  border-color: #2f9e44;
+  box-shadow: 0 0 0 1px #2f9e44;
+}
+
+.cbg-heal-txt {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12.5px;
+}
+
+.cbg-heal-txt span {
+  display: block;
+  font-size: 11px;
+  opacity: .8;
+}
+
+.cbg-heal-bar {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(58, 44, 26, .2);
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.cbg-heal-bar > b {
+  display: block;
+  height: 100%;
+  background: #2f9e44;
+}

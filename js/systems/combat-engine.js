@@ -80,6 +80,13 @@ var ELITE_SURGE_INTENSITY_MULT = 3;   // l'archétype compte triple pendant l'ex
 
 var COUNTER_CONFIRMATION_ROUNDS = 1;
 
+/* v3.268.0 (L-2) — ciblage des alliés par la menace (doc §6.2). Valeurs de départ,
+   à confirmer au banc (sim/group-bench.js --ally) : on vise 35 à 50 % des frappes
+   reçues par le héros lorsqu'un compagnon l'accompagne. */
+var THREAT_DECAY = 0.7;
+var THREAT_FLOOR = 0.15;
+var COMPANION_FLAT_DEFENSE = 0.10;   // un compagnon n'a pas d'équipement : réduction plate
+
 var COMBAT_MODES = ["tactique", "grimoire"];
 
 function getEnemyWillCritPenalty() {
@@ -194,6 +201,9 @@ function showCounterSuccessPopup() {
 var CombatEngine = {
   /* ---------- État de round ---------- */
   ensureState: function () {
+    // v3.266.0 (L-0) : socle du combat de groupe — game.combat (acteurs, cible collante).
+    // À un seul ennemi, rien ne change : game.enemy est l'alias de la cible courante.
+    if (window.CombatActors) CombatActors.ensure();
     if (COMBAT_MODES.indexOf(game.combatMode) === -1) game.combatMode = "tactique";
     if (!game.combatRound || typeof game.combatRound !== "object") {
       game.combatRound = { number: 0, busy: false, continueAttack: false, clockMs: 0 };
@@ -332,13 +342,26 @@ var CombatEngine = {
     if (!this.isHeroTurnAvailable()) return false;
     if (game.combatMode === "grimoire" && source !== "auto" && slot !== "potion") return false;
 
+    /* v3.270.0 (L-4) : un compagnon en Manuel attend son choix — on précharge au lieu de
+       jouer. Le mode Grimoire ignore l'interrupteur (tout le monde est auto, décision
+       Seb), et _playingQueue est le drapeau qui laisse passer le round une fois la file
+       complète, sans repasser par ici. */
+    if (source !== "auto" && !this._playingQueue && game.combatMode !== "grimoire" && this.hasManualAllies()) {
+      return this.queueChoice(slot, arg);
+    }
+
     // v3.102.1 : le premier round hors mission ouvre une sortie d'exploration (décision 1a)
     if (window.SortieManager && !SortieManager.isActive()) SortieManager.start(null);
 
     var round = game.combatRound;
     round.busy = true;
     round.number += 1;
-    var enemyRef = game.enemy;
+
+    /* v3.267.0 (L-1) : le groupe est photographié AVANT l'action du héros. Seuls les
+       ennemis présents à ce moment-là jouent leur tour — un ennemi tué puis remplacé
+       pendant l'action ne joue pas, exactement comme la condition historique
+       « game.enemy === enemyRef » le garantissait à un seul ennemi. */
+    var groupRef = window.CombatActors ? CombatActors.enemies().slice() : [game.enemy];
 
     var played = this.performHeroAction(slot, arg, source);
     if (!played) {
@@ -347,11 +370,9 @@ var CombatEngine = {
       return false;
     }
 
-    if (game.enemy === enemyRef && game.enemy && game.enemy.hp > 0 && (game.heroHp || 0) > 0) {
-      this.enemyTurn();
-    }
-
-    this.endRound(enemyRef);
+    this.alliesTurn();
+    this.enemiesTurn(groupRef);
+    this.endRoundGroup(groupRef);
     round.busy = false;
     round.clockMs = 0;
 
@@ -483,7 +504,215 @@ var CombatEngine = {
     }
   },
 
-  /* ---------- Tour de l'ennemi ---------- */
+  /* ---------- Mode Manuel : la file d'attente (L-4) ---------- */
+
+  /* v3.270.0 (L-4) : un compagnon en Manuel ne joue plus seul. Le round n'est PAS joué
+     tant que chaque acteur manuel n'a pas choisi : les actions sont préchargées, puis
+     tout part d'un coup. Sans compagnon manuel, rien de tout ceci ne s'active et
+     heroAction se comporte exactement comme avant. */
+  manualAllies: function () {
+    if (!window.CombatActors) return [];
+    return CombatActors.allies().filter(function (a) {
+      return a && a.companionId && a.control === "manual" && Number(a.hp || 0) > 0;
+    });
+  },
+
+  hasManualAllies: function () {
+    return this.manualAllies().length > 0;
+  },
+
+  /* Qui doit encore choisir : le héros d'abord, puis les compagnons manuels vivants. */
+  actorsToChoose: function () {
+    if (!window.CombatActors) return [];
+    var out = [CombatActors.heroActor()];
+    this.manualAllies().forEach(function (a) { out.push(a); });
+    return out;
+  },
+
+  pendingOf: function (actor) {
+    var c = game.combat;
+    return (c && actor && c.pending) ? c.pending[actor.actorId] : null;
+  },
+
+  allChosen: function () {
+    var self = this;
+    return this.actorsToChoose().every(function (a) { return !!self.pendingOf(a); });
+  },
+
+  selectedActor: function () {
+    var c = CombatActors.ensure();
+    var list = this.actorsToChoose();
+    for (var i = 0; i < list.length; i++) if (list[i].actorId === c.selection) return list[i];
+    return list[0] || CombatActors.heroActor();
+  },
+
+  selectActor: function (actorId) {
+    var c = CombatActors.ensure();
+    var list = this.actorsToChoose();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].actorId === actorId) { c.selection = actorId; this.refreshCombatUI(); return true; }
+    }
+    return false;
+  },
+
+  /* Après un choix, on passe seul au premier acteur qui n'a pas encore le sien. */
+  advanceSelection: function () {
+    var c = CombatActors.ensure();
+    var self = this;
+    var list = this.actorsToChoose();
+    for (var i = 0; i < list.length; i++) {
+      if (!self.pendingOf(list[i])) { c.selection = list[i].actorId; return; }
+    }
+    c.selection = list.length ? list[0].actorId : null;
+  },
+
+  /* Enregistre le choix de l'acteur courant. Renvoie true si le round a été joué. */
+  queueChoice: function (slot, arg) {
+    var c = CombatActors.ensure();
+    var acteur = this.selectedActor();
+
+    // Une potion est une action DU HÉROS : le plafond par sortie est calibré pour un seul buveur.
+    if (slot === "potion" && acteur && acteur.companionId) acteur = CombatActors.heroActor();
+
+    c.pending[acteur.actorId] = { slot: slot, arg: arg || null };
+    this.advanceSelection();
+
+    if (this.allChosen()) return this.playQueuedRound();
+    this.refreshCombatUI();
+    return true;
+  },
+
+  clearQueue: function () {
+    var c = CombatActors.ensure();
+    if (c) { c.pending = {}; c.selection = null; }
+  },
+
+  /* Tout le monde a choisi : le round part, dans l'ordre héros puis compagnons. */
+  playQueuedRound: function () {
+    var c = game.combat;
+    var hero = CombatActors.heroActor();
+    var choixHeros = c.pending[hero.actorId];
+    if (!choixHeros) return false;
+
+    this._playingQueue = true;
+    var joue;
+    try {
+      joue = this.heroAction(choixHeros.slot, choixHeros.arg, null);
+    } finally {
+      this._playingQueue = false;
+    }
+    if (joue) this.clearQueue();
+    this.refreshCombatUI();
+    return joue;
+  },
+
+  refreshCombatUI: function () {
+    if (typeof renderClassSkillButtons === "function") renderClassSkillButtons();
+    if (typeof renderCombatControls === "function") renderCombatControls();
+    if (typeof renderAllyRow === "function") renderAllyRow();
+    if (typeof renderEnemyRow === "function") renderEnemyRow();
+  },
+
+  /* ---------- Tours alliés (groupe) ---------- */
+
+  /* v3.268.0 (L-2) : après l'action du héros, chaque compagnon vivant joue la sienne.
+     Le moteur ne connaît rien des compagnons : il délègue à CompanionManager, qui
+     porte la politique automatique, les cooldowns et les compétences. Sans compagnon
+     présent, cette boucle est vide et le round est celui d'avant. */
+  alliesTurn: function () {
+    if (!window.CombatActors || !window.CompanionManager) return;
+    if ((game.heroHp || 0) <= 0) return;
+
+    var allies = CombatActors.allies().slice();
+    for (var i = 0; i < allies.length; i++) {
+      var a = allies[i];
+      if (!a || !a.companionId) continue;        // le héros a déjà joué
+      if (Number(a.hp || 0) <= 0) continue;      // KO
+      if (!CombatActors.aliveEnemies().length) break;
+      // v3.270.0 (L-4) : en Manuel, c'est le choix préchargé qui est joué ; en Auto, la
+      // politique du compagnon décide comme avant.
+      var choix = (a.control === "manual") ? this.pendingOf(a) : null;
+      this._actingAlly = a;
+      try { CompanionManager.takeTurn(a, choix ? choix.slot : null, choix ? choix.arg : null); }
+      finally { this._actingAlly = null; }
+    }
+  },
+
+  /* Qui encaisse la frappe : tirage au prorata de la menace (§6.2). Un Garde attire,
+     un Soutien peu, un KO sort du tirage ; le plancher garantit que le héros reste
+     exposé — sans lui, un compagnon à forte menace ferait de lui un spectateur. */
+  pickVictim: function () {
+    if (!window.CombatActors) return null;
+    var hero = CombatActors.heroActor();
+    var list = CombatActors.aliveAllies();
+    if (list.length <= 1) return hero;           // aucun compagnon : chemin historique
+
+    var total = 0, weights = [];
+    for (var i = 0; i < list.length; i++) {
+      var a = list[i];
+      var w = (Number(a.threat || 0) * Number(a.threatMult || 1));
+      w = Math.max(THREAT_FLOOR, w);
+      weights.push(w);
+      total += w;
+    }
+    if (!(total > 0)) return hero;
+
+    var roll = Math.random() * total;
+    for (var j = 0; j < list.length; j++) {
+      roll -= weights[j];
+      if (roll <= 0) return list[j];
+    }
+    return hero;
+  },
+
+  /* Menace de l'allié en train d'agir. _actingAlly est posé par alliesTurn pendant le
+     tour d'un compagnon ; hors de cette fenêtre, c'est le héros qui frappe. */
+  noteThreat: function (dmg) {
+    if (!window.CombatActors) return;
+    var actor = this._actingAlly || CombatActors.heroActor();
+    if (actor) actor.threat = Number(actor.threat || 0) + Math.max(0, Number(dmg || 0));
+  },
+
+  /* Décroissance de la menace en fin de round : sans elle, un compagnon qui a frappé
+     fort une fois resterait la cible du combat entier. */
+  decayThreat: function () {
+    if (!window.CombatActors) return;
+    CombatActors.allies().forEach(function (a) {
+      if (a && typeof a.threat === "number") a.threat *= THREAT_DECAY;
+    });
+  },
+
+  /* ---------- Tours ennemis (groupe) ---------- */
+
+  /* v3.267.0 (L-1) : exécute fn en désignant temporairement `e` comme cible courante,
+     puis rend la main à la cible choisie par le joueur. C'est ce qui permet à enemyTurn(),
+     enemyStrike(), aux cinq resolve*() et au tick de DoT — tous écrits pour « l'ennemi » —
+     d'opérer sur un membre précis du groupe SANS être réécrits. À un seul ennemi, la cible
+     est déjà la bonne : l'appel est transparent. */
+  withTarget: function (e, fn) {
+    if (!window.CombatActors) return fn();
+    var previous = game.combat ? game.combat.targetId : null;
+    CombatActors.setTarget(e);
+    try { return fn(); }
+    finally { if (game.combat) game.combat.targetId = previous; }
+  },
+
+  /* Chaque ennemi encore en vie joue son tour, sur lui-même. Les compteurs de pattern
+     vivant déjà sur chaque objet, les télégraphes restent indépendants (décision 9). */
+  enemiesTurn: function (groupRef) {
+    var self = this;
+    var list = groupRef || (window.CombatActors ? CombatActors.enemies().slice() : [game.enemy]);
+    var current = window.CombatActors ? CombatActors.enemies() : [game.enemy];
+
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i];
+      if ((game.heroHp || 0) <= 0) return;          // héros tombé : le round s'arrête là
+      if (!e || Number(e.hp || 0) <= 0) continue;   // mort pendant le round
+      if (current.indexOf(e) === -1) continue;      // remplacé entre-temps (spawn de run)
+      this.withTarget(e, function () { self.enemyTurn(); });
+    }
+  },
+
   enemyTurn: function () {
     var e = game.enemy;
     if (!e || !e.stats) return;
@@ -715,6 +944,14 @@ var CombatEngine = {
     if ((game.heroHp || 0) <= 0) return;
     this.prepareEnemy(e);
 
+    /* v3.268.0 (L-2) : la frappe choisit sa victime parmi les alliés vivants. Sans
+       compagnon présent, pickVictim() renvoie toujours le héros et la suite de cette
+       fonction est celle d'avant, ligne pour ligne. */
+    var victim = this.pickVictim();
+    if (victim && window.CombatActors && !CombatActors.isHero(victim)) {
+      return this.enemyStrikeCompanion(e, victim, dmgMult, isPatternOrBonus);
+    }
+
     var power = Number(e.stats.power || 0);
     var precision = Number(e.stats.precision || 0);
 
@@ -804,25 +1041,113 @@ var CombatEngine = {
     }
   },
 
+  /* v3.268.0 (L-2) : frappe encaissée par un compagnon. Volontairement plus simple que
+     la version héros : pas de défense d'équipement, pas de Défense de classe, pas de
+     pouvoir légendaire, pas de Second souffle — un compagnon n'a ni équipement ni kit.
+     Ce qui vient de l'ENNEMI (puissance, boss, pattern, rage, critique, vampirisme,
+     corruption) est identique, et c'est ce qui compte pour l'équilibrage. */
+  enemyStrikeCompanion: function (e, victim, dmgMult, isPatternOrBonus) {
+    var power = Number(e.stats.power || 0);
+    var precision = Number(e.stats.precision || 0);
+
+    if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
+      power *= AfflictionManager.getCombinedModifiers().enemyPowerMult;
+    }
+
+    var dmg = Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF * (e.isBoss ? BOSS_DMG_MULT : 1)));
+    var patternMult = (typeof dmgMult === "number" && dmgMult > 0) ? dmgMult : 1;
+    if (patternMult !== 1) dmg = Math.max(1, Math.floor(dmg * patternMult));
+
+    if (e.archetype === "enraged" && typeof getEnragedDamageMultiplier === "function") {
+      var enragedMult = getEnragedDamageMultiplier(this.getEnragedEffectivePctHpLost(), e);
+      if (enragedMult !== 1) dmg = Math.max(1, Math.floor(dmg * enragedMult));
+    }
+
+    if (chance(Math.min(40, precision * ENEMY_PRECISION_CRIT_COEF))) dmg = Math.floor(dmg * ENEMY_CRIT_MULT);
+    dmg = Math.max(1, Math.floor(dmg * (1 - COMPANION_FLAT_DEFENSE)));
+
+    victim.hp = Math.max(0, Number(victim.hp || 0) - dmg);
+    addLog("🩸 " + e.name + " frappe " + (victim.name || "ton compagnon") + " (-" + formatNumber(dmg) + " PV)", "normal");
+
+    if (e.archetype === "vampiric" && dmg > 0 && typeof getVampiricLifestealAmount === "function"
+      && !(Number(e.vampiricSuppressedRounds || 0) > 0)) {
+      var healed = getVampiricLifestealAmount(dmg, e);
+      if (healed > 0) {
+        e.hp = Math.min(e.maxHp, Number(e.hp || 0) + healed);
+        if (typeof renderEnemyHp === "function") renderEnemyHp();
+      }
+    }
+
+    if (e.archetype === "corrupted") {
+      e.corruptedStacks = Math.min(
+        (typeof CORRUPTED_MAX_STACKS === "number" ? CORRUPTED_MAX_STACKS : 5),
+        Number(e.corruptedStacks || 0) + 1
+      );
+    }
+
+    if (victim.hp <= 0 && window.CompanionManager) CompanionManager.noteKo(victim);
+
+    // Jauge de célérité ennemie : même règle que contre le héros.
+    if (!isPatternOrBonus) {
+      e.gauge = Number(e.gauge || 0) + this.getEnemyGaugeGain(e);
+      if (e.gauge >= CELERITY_GAUGE_MAX) {
+        e.gauge -= CELERITY_GAUGE_MAX;
+        addLog("⚡ " + e.name + " enchaîne une seconde frappe !", "event");
+        this.enemyStrike(1, true);
+      }
+    }
+  },
+
   /* ---------- Fin de round ---------- */
-  endRound: function (enemyRef) {
+
+  /* v3.267.0 (L-1) : la fin de round se scinde en deux. Ce qui appartient au HÉROS
+     (cooldowns, mana passif, Défense active, Peau d'écorce) est décompté UNE FOIS par
+     round, quel que soit le nombre d'ennemis ; ce qui appartient à un ennemi (DoT,
+     vulnérabilité, contre, rage figée, suppressions) est décompté sur chacun.
+     Sans cette séparation, trois ennemis feraient tomber un cooldown de 3 au lieu de 1. */
+  endRoundGroup: function (groupRef) {
     this.ensureState();
     if (window.ClassCombatManager && typeof ClassCombatManager.onRoundEnd === "function") ClassCombatManager.onRoundEnd();
+    // v3.268.0 (L-2) : côté allié, une fois par round comme le reste des drapeaux héros.
+    if (window.CompanionManager) CompanionManager.onRoundEnd();
+    this.decayThreat();
 
-    var e = game.enemy;
-    if (!e || e !== enemyRef || e.hp <= 0) return;
+    var list = groupRef || (window.CombatActors ? CombatActors.enemies().slice() : [game.enemy]);
+    var heroFlagsTicked = false;
+    for (var i = 0; i < list.length; i++) {
+      if (this.endRoundEnemy(list[i], !heroFlagsTicked)) heroFlagsTicked = true;
+    }
+  },
+
+  /* Décompte de fin de round pour UN ennemi. Retourne true si le tick a bien eu lieu
+     (l'ennemi est toujours en lice), ce qui sert à n'armer qu'une fois les drapeaux héros. */
+  endRoundEnemy: function (enemyRef, tickHeroFlags) {
+    var e = enemyRef;
+    if (!e || Number(e.hp || 0) <= 0) return false;
+    var current = window.CombatActors ? CombatActors.enemies() : [game.enemy];
+    if (current.indexOf(e) === -1) return false;
     this.prepareEnemy(e);
 
     // DoT (Brûlure arcanique) : peut tuer → killEnemy → nouvel ennemi, on s'arrête là.
-    if (window.ClassCombatManager && typeof ClassCombatManager.tickDoTRound === "function") ClassCombatManager.tickDoTRound();
-    if (game.enemy !== e) return;
+    var self = this;
+    this.withTarget(e, function () {
+      if (window.ClassCombatManager && typeof ClassCombatManager.tickDoTRound === "function") ClassCombatManager.tickDoTRound();
+    });
+    if ((window.CombatActors ? CombatActors.enemies() : [game.enemy]).indexOf(e) === -1) return false;
 
-    if (Number(game._legBarkRounds || 0) > 0) game._legBarkRounds -= 1; // v3.230.0 : Peau d'écorce
+    if (tickHeroFlags && Number(game._legBarkRounds || 0) > 0) game._legBarkRounds -= 1; // v3.230.0 : Peau d'écorce
     if (e.vulnerableRounds > 0) e.vulnerableRounds -= 1;
     if (e.counteredRounds > 0) e.counteredRounds -= 1;
     if (e.rageFreezeRounds > 0) e.rageFreezeRounds -= 1;
     if (e.vampiricSuppressedRounds > 0) e.vampiricSuppressedRounds -= 1;
     if (e.armorSuppressedRounds > 0) e.armorSuppressedRounds -= 1;
+    return true;
+  },
+
+  /* Conservé tel quel : appelé par le harnais et par tout code qui termine le round
+     d'un ennemi unique. Équivaut à endRoundGroup([enemyRef]). */
+  endRound: function (enemyRef) {
+    this.endRoundGroup([enemyRef]);
   },
 
   /* ---------- Horloge des modes automatiques (appelée par game-loop, dt déjà × vitesse) ---------- */
@@ -863,7 +1188,13 @@ var CombatEngine = {
     if (!e) return true;
     if (game.combatRound._continueEnemyRef && game.combatRound._continueEnemyRef !== e) return true;
     if ((game.heroHp || 0) / (game.heroMaxHp || 1) < 0.5) return true;
-    if (e.chargeTelegraphed || e.silenceTelegraphed || e.shieldTelegraphed || e.healTelegraphed) return true;
+    // v3.267.0 (L-1) : un télégraphe sur N'IMPORTE quel membre du groupe interrompt.
+    // À un seul ennemi, c'est exactement la condition historique.
+    var group = window.CombatActors ? CombatActors.enemies() : [e];
+    for (var i = 0; i < group.length; i++) {
+      var f = group[i];
+      if (f && (f.chargeTelegraphed || f.silenceTelegraphed || f.shieldTelegraphed || f.healTelegraphed)) return true;
+    }
     if (this.enemyDoubleStrikeNext()) return true;
     return false;
   },
@@ -901,11 +1232,49 @@ var CombatEngine = {
     return 1 - (Number(game.enemy.hp || 0) / Number(game.enemy.maxHp || 1));
   },
 
-  spawnEnemy: function () {
-    if (!window.WorldManager || typeof WorldManager.generateEnemy !== "function") return;
+  /* v3.266.0 (L-0) : entrée unique de mise en place d'un groupe ennemi (1 à 3 membres).
+     spawnEnemy() n'en est plus qu'un cas particulier à un seul membre — même ordre
+     d'opérations, mêmes appels de rendu qu'avant. */
+  spawnGroup: function (actors) {
+    var list = [].concat(actors || []).filter(Boolean);
+    if (!list.length) return null;
 
-    game.enemy = this.prepareEnemy(WorldManager.generateEnemy());
-    if (typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
+    var self = this;
+    var prepared = list.map(function (e) { return self.prepareEnemy(e); });
+
+    /* v3.269.0 (L-3) — ORDRE ET ARRIVÉE (décisions Seb 17/09/2026).
+       1. Tri par célérité décroissante : le plus rapide frappe en premier, et comme la
+          rangée de portraits suit ce tableau, l'ordre des tours se lit à l'écran.
+       2. Arrivée au contact décalée : seuls les membres qui doivent réellement approcher
+          (engageIn > 0 — un tireur est à 0 par donnée) sont échelonnés 0, 1, 2 rounds.
+          Sans ça, ils approchent tous ensemble et un groupe affaibli meurt avant
+          d'arriver : le Mage ne perdait pas un PV (mesuré au banc).
+       3. Compteurs de pattern décalés d'un round entre membres, pour que trois charges
+          ne tombent jamais au même round. */
+    if (prepared.length > 1) {
+      prepared.sort(function (a, b) {
+        return Number((b.stats && b.stats.celerity) || 0) - Number((a.stats && a.stats.celerity) || 0);
+      });
+      var retard = 0;
+      for (var i = 0; i < prepared.length; i++) {
+        var e = prepared[i];
+        if (Number(e.engageIn || 0) > 0) { e.engageIn = retard; retard += 1; }
+        e.chargeIn = Number(e.chargeIn || 0) + i;
+        e.shieldIn = Number(e.shieldIn || 0) + i;
+        e.silenceIn = Number(e.silenceIn || 0) + i;
+        e.healIn = Number(e.healIn || 0) + i;
+        if (e.surgeIn) e.surgeIn = Number(e.surgeIn) + i;
+      }
+    }
+
+    if (window.CombatActors) CombatActors.setEnemies(prepared);
+    else game.enemy = prepared[0];
+
+    // v3.268.0 (L-2) : le groupe allié est reconstruit depuis game.companions, et un
+    // compagnon KO au combat précédent revient avec des PV réduits (§4.4).
+    if (window.CompanionManager) CompanionManager.onCombatStart();
+
+    if (typeof WorldManager !== "undefined" && typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
 
     /* v3.230.0 : deux pouvoirs qui s'appliquent à l'ouverture d'un combat. */
     if (this.hasPower("leg_foulee") && typeof CELERITY_GAUGE_MAX === "number") {
@@ -918,6 +1287,12 @@ var CombatEngine = {
 
     if (typeof renderEnemy === "function") renderEnemy();
     if (typeof renderHud === "function") renderHud();
+    return game.enemy;
+  },
+
+  spawnEnemy: function () {
+    if (!window.WorldManager || typeof WorldManager.generateEnemy !== "function") return;
+    this.spawnGroup([WorldManager.generateEnemy()]);
   },
 
   onHeroDefeated: function () {
@@ -984,38 +1359,46 @@ var CombatEngine = {
     saveGame();
   },
 
-  dealDamage: function (dmg, isCrit, fromTap, ignoreAffinity) {
-    if (!game.enemy) return;
-    this.prepareEnemy(game.enemy);
+  /* v3.266.0 (L-0) : `target` (optionnel, dernier argument) désigne l'ennemi frappé.
+     Sans lui, c'est la cible courante — donc l'unique ennemi tant qu'il n'y en a qu'un.
+     Tous les appels existants restent valides et se comportent à l'identique. */
+  dealDamage: function (dmg, isCrit, fromTap, ignoreAffinity, target) {
+    var foe = target || game.enemy;
+    if (!foe) return;
+    this.prepareEnemy(foe);
 
     dmg = Math.max(0, Number(dmg || 0));
     if (!ignoreAffinity) dmg *= getDamageAffinity().mult;
 
-    if (game.enemy.archetype === "corrupted" && typeof getCorruptedDamageMultiplier === "function") {
+    if (foe.archetype === "corrupted" && typeof getCorruptedDamageMultiplier === "function") {
       var preCorruptedDmg = dmg;
-      dmg *= getCorruptedDamageMultiplier(game.enemy.corruptedStacks || 0, game.enemy); // v3.204.0 (E4)
+      dmg *= getCorruptedDamageMultiplier(foe.corruptedStacks || 0, foe); // v3.204.0 (E4)
       if (window.CombatReportManager) CombatReportManager.logArchetypeImpact("corruptedDamageLost", preCorruptedDmg - dmg);
     }
 
-    if (Number(game.enemy.vulnerableRounds || 0) > 0) {
-      dmg *= (1 + Number(game.enemy.vulnerableMult || 0));
+    if (Number(foe.vulnerableRounds || 0) > 0) {
+      dmg *= (1 + Number(foe.vulnerableMult || 0));
     }
 
-    if ((game.enemy.isBoss || game.enemy.archetype === "shielded") && Number(game.enemy.shieldRounds || 0) > 0) {
+    if ((foe.isBoss || foe.archetype === "shielded") && Number(foe.shieldRounds || 0) > 0) {
       dmg *= (1 - BOSS_SHIELD_REDUCTION);
     }
 
-    if (game.enemy.archetype === "armored" && typeof getArmoredEffectiveDamageReduction === "function") {
+    if (foe.archetype === "armored" && typeof getArmoredEffectiveDamageReduction === "function") {
       var preArmoredDmg = dmg;
-      dmg *= (1 - getArmoredEffectiveDamageReduction(game.enemy));
+      dmg *= (1 - getArmoredEffectiveDamageReduction(foe));
       if (window.CombatReportManager) CombatReportManager.logArchetypeImpact("armoredDamageLost", preArmoredDmg - dmg);
     }
 
-    if (game.enemy.isBoss && game.talents.t_perfect_execution && game.enemy.maxHp > 0 && (game.enemy.hp / game.enemy.maxHp) < 0.2) {
+    if (foe.isBoss && game.talents.t_perfect_execution && foe.maxHp > 0 && (foe.hp / foe.maxHp) < 0.2) {
       dmg *= (1 + 0.15 * game.talents.t_perfect_execution);
     }
 
-    game.enemy.hp -= dmg;
+    foe.hp -= dmg;
+    // v3.268.0 (L-2) : la menace va à l'allié qui vient de frapper. Sans cette ligne,
+    // seuls les compagnons en accumulaient et le héros, coincé au plancher, ne recevait
+    // plus aucun coup (mesuré : 0 % de PV perdus, tout encaissé par le compagnon).
+    this.noteThreat(dmg);
     game.totalDamageDealt += dmg;
     if (window.CombatReportManager) CombatReportManager.logDamageDealt(dmg);
 
@@ -1024,16 +1407,23 @@ var CombatEngine = {
       vibrate(isCrit ? 30 : 10);
     }
 
-    if (game.enemy.hp <= 0) this.killEnemy();
+    if (foe.hp <= 0) this.killEnemy(foe);
     else if (typeof renderEnemyHp === "function") renderEnemyHp();
   },
 
-    killEnemy: function () {
-    if (!game.enemy) return;
+    /* v3.266.0 (L-0) : `enemyArg` (optionnel) désigne l'ennemi qui tombe. Sans lui, la
+       cible courante.
+       v3.269.0 (L-3) : s'il reste des membres vivants, le mort quitte simplement le groupe
+       et le combat CONTINUE — pas d'avance de monde, pas de spawn enchaîné, pas de fin de
+       quête. Son butin lui est crédité au passage (voir plus bas). À un seul ennemi, le
+       flux historique est intact. */
+  killEnemy: function (enemyArg) {
+    var enemy = enemyArg || game.enemy;
+    if (!enemy) return;
 
     if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
       game.totalKills += 1;
-      game.killCounts[game.enemy.id] = (game.killCounts[game.enemy.id] || 0) + 1;
+      game.killCounts[enemy.id] = (game.killCounts[enemy.id] || 0) + 1;
       if (window.SortieManager) SortieManager.noteKill(false); // la chasse n'a pas de boss (branche séparée avant grantGold/grantMissionXp)
       HuntQuestManager.onEnemyKilled();
       if (typeof renderAll === "function") renderAll();
@@ -1041,7 +1431,6 @@ var CombatEngine = {
       return;
     }
 
-    var enemy = game.enemy;
     var goldGain = Number(enemy.goldReward || 0);
     var essenceGain = Number(enemy.essenceReward || 0);
 
@@ -1082,6 +1471,38 @@ var CombatEngine = {
     this.grantEssence(essenceGain);
     game.totalKills += 1;
     game.killCounts[enemy.id] = (game.killCounts[enemy.id] || 0) + 1;
+
+    /* v3.269.0 (L-3) : membre d'un groupe encore fourni — on s'arrête ici. Le butin est
+       crédité, le kill compté, mais rien de ce qui suit (jet d'objet de boss, événement
+       aléatoire, avance de monde, fin de run, spawn enchaîné) ne doit se jouer tant que
+       le groupe n'est pas vide : sinon un groupe de trois avancerait trois fois. */
+    if (window.CombatActors && CombatActors.enemies().length > 1) {
+      CombatActors.removeEnemy(enemy);
+      if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("kills", 1);
+
+      /* Le kill doit compter pour la quête en cours — une meute de trois fait avancer un
+         objectif de trois crans, pas d'un. On appelle donc le vrai système de run, en
+         tenant fermé son spawn enchaîné (CombatActors.holdSpawn) : il compte, il ne
+         remplace pas. Aucun fichier de quête n'est modifié. */
+      CombatActors.holdSpawn(true);
+      try {
+        if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active) {
+          AdventureQuestManager.onEnemyKilled(enemy);
+        } else if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
+          HuntQuestManager.onEnemyKilled();
+        } else if (window.WorldQuestManager && currentWorld && !enemy.isBoss) {
+          WorldQuestManager.trackKill(currentWorld.id);
+        }
+      } finally {
+        CombatActors.holdSpawn(false);
+      }
+
+      addLog("⚔️ " + enemy.name + " tombe (+" + formatNumber(goldGain) + " or) — il en reste "
+        + CombatActors.aliveEnemies().length + ".", "normal");
+      if (typeof renderAll === "function") renderAll();
+      saveGame();
+      return;
+    }
 
     /* v3.230.0 : Lame vorace (soin au kill) et Frénésie (pile tant qu'on n'encaisse pas). */
     if (this.hasPower("leg_vorace") && game.heroHp > 0) {
@@ -1293,3 +1714,6 @@ window.ELITE_SURGE_DURATION_ROUNDS = ELITE_SURGE_DURATION_ROUNDS;
 window.ELITE_SURGE_INTENSITY_MULT = ELITE_SURGE_INTENSITY_MULT;
 window.ENEMY_POWER_DMG_COEF = ENEMY_POWER_DMG_COEF;
 window.COMBAT_MODES = COMBAT_MODES;
+window.THREAT_DECAY = THREAT_DECAY;          // v3.268.0 (L-2)
+window.THREAT_FLOOR = THREAT_FLOOR;
+window.COMPANION_FLAT_DEFENSE = COMPANION_FLAT_DEFENSE;

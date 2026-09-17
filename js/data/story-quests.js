@@ -51,6 +51,7 @@ var STORY_REWARDS = {
   forest_12: { gold: 400, essence: 10 },
   forest_13: { gold: 500, essence: 15 },
   forest_14: { gold: 600, essence: 20, equipmentRarity: "common", equipmentCount: 1 },
+  forest_wenna: { gold: 500, essence: 15 }, // v3.268.0 (L-2) : Wenna rejoint
   forest_15: { gold: 1000, essence: 30, equipmentRarity: "common", equipmentCount: 1 }
 };
 
@@ -59,7 +60,7 @@ var STORY_TAB_LABELS = {
   combat: "Combat", village: "Village", more: "Héros",
   dungeon: "Donjon", shop: "Boutique", talents: "Talents", equip: "Équipement",
   ascension: "Ascension", map: "Carte du monde", achievements: "Hauts faits",
-  bestiary: "Bestiaire", grimoire: "Grimoire"
+  bestiary: "Bestiaire", grimoire: "Grimoire", companions: "Compagnons"
 };
 
 /* Étape 15 — v3.133.0 (audit Forêt, décision Seb) : les 200 kills (pur temps d'attente, ~100 kills de farm libre non guidé)
@@ -610,6 +611,51 @@ var STORY_QUESTS = {
         linkTo: { tab: "dungeon" },
         check: function (game) { return !!((game.dungeonTierCleared || {})[1]); },
         progress: function (game) { return (game.dungeonTierCleared || {})[1] ? "1/1" : "0/1"; }
+      },
+
+      /* v3.268.0 (L-2) — premier compagnon. Même forme que forest_12 (le Grimoire) :
+         l'étape donne un outil, puis oblige à s'en servir une fois. Wenna rejoint à
+         l'ACCEPTATION (onAccept), l'objectif se joue avec elle. Interdits de la Forêt
+         respectés (bible C §4.4) : ni « Aether » ni « Veilleur » dans ces lignes. */
+      {
+        id: "forest_wenna",
+        title: "Celle qui demande",
+        act: "Acte III — Le héros s'affirme",
+        narrative: {
+          objective: "La tanière est vide, le Basilic n'est plus. À Aeswyn, quelqu'un t'attend devant la palissade, le sac déjà fait.",
+          completion: "Elle marche derrière toi et pose des questions. Aucune n'a de réponse. Elle continue quand même.",
+          dialogue: [
+            { who: "Wenna", text: "Tu repars quand ?" },
+            { who: "Orwen", text: "Le pain d'abord." },
+            { who: "Wenna", text: "C'est pas une réponse. Toi non plus tu réponds jamais." },
+            { who: "Brannoc", text: "Laisse-la partir, petit. Elle demande depuis qu'elle sait parler… enfin. Prends-en soin." },
+            { who: null, text: "Orwen met un morceau de pain de côté. Deux, cette fois." }
+          ]
+        },
+        objectiveLabel: "Remporter 3 combats avec Wenna à tes côtés",
+        unlockTabs: ["companions"],
+        reward: STORY_REWARDS.forest_wenna,
+        linkTo: { tab: "combat" },
+        /* Wenna rejoint dès l'acceptation, et le compteur repart de 0 — règle posée par
+           Seb le 16/09/2026 : une quête de combat repart systématiquement de zéro. */
+        onAccept: function (g, st) {
+          if (st && st.counters) st.counters.companionWins = 0;
+          if (window.CompanionManager) CompanionManager.unlock("wenna");
+        },
+        tutorial: {
+          tab: "more",
+          icon: "images/Icons/subtabs/hero_summary.png",
+          title: "Les compagnons",
+          points: [
+            { icon: "images/Icons/subtabs/hero_summary.png", text: "Un compagnon combat à tes côtés : il joue son action après la tienne, à chaque round. Deux au maximum peuvent t'accompagner." },
+            { icon: "images/Icons/combat_status/heal_incoming.png", text: "Wenna est un Soutien : elle soigne l'allié le plus bas en PV. Elle n'a ni équipement ni talents — elle s'améliore contre de l'or, dans Héros › Compagnons." },
+            { icon: "images/Icons/combat_stats/stat_attack.png", text: "Tu choisis pour chacun : Auto (il décide seul) ou Manuel. Un compagnon tombé à 0 PV est hors de combat jusqu'à la fin, et revient affaibli au combat suivant." }
+          ]
+        },
+        check: function (game) { return storyCounter(game, "companionWins") >= 3; },
+        progress: function (game) {
+          return "Combats à deux " + Math.min(3, storyCounter(game, "companionWins")) + "/3";
+        }
       },
 
       /* ---------- Acte IV — L'Aether ---------- */

@@ -320,7 +320,9 @@ var ClassCombatManager = {
       var isCrit = chance(critChance);
       if (isCrit) dmg = dmg * EquipmentManager.effectiveCritMult();
       lastHitDmg = dmg;
-      CombatEngine.dealDamage(dmg, isCrit, true, !!action.ignoreAffinity);
+      // v3.266.0 (L-0) : la cible est passée explicitement — les coups d'une même action
+      // restent sur le même ennemi quand le groupe en comptera plusieurs (L-3).
+      CombatEngine.dealDamage(dmg, isCrit, true, !!action.ignoreAffinity, target);
     }
 
     if (game.enemy && game.enemy === target) this.applyActionEffects(action, lastHitDmg, matchedConditionId);

@@ -30,12 +30,14 @@ var StoryQuestManager = {
     if (typeof st.counters.coeurReached !== "number") st.counters.coeurReached = 0;
     if (typeof st.counters.offeringDone !== "number") st.counters.offeringDone = 0; // v3.133.0 : offrande aux braises (forest_15)
     if (typeof st.counters.coeurKillsMarked !== "number") st.counters.coeurKillsMarked = 0; // v3.134.0 : kills au Cœur sous ≥ 2 afflictions (forest_13)
+    if (typeof st.counters.companionWins !== "number") st.counters.companionWins = 0; // v3.268.0 (L-2) : combats gagnés avec un compagnon (forest_wenna)
     if (typeof st.lastSeenTotalKills !== "number") st.lastSeenTotalKills = Number(game.totalKills || 0);
     this._migrateV3109(chapterId, st);
     var fromBeforeV3259 = !st.migratedV3259; // lu AVANT _migrateV3259, qui pose le drapeau
     this._migrateV3259(chapterId, st);
     this._migrateV3260(chapterId, st, fromBeforeV3259);
     this._migrateV3261(chapterId, st);
+    this._migrateV3268(chapterId, st);
     return st;
   },
 
@@ -66,6 +68,21 @@ var StoryQuestManager = {
     for (var i = 6; i < steps.length; i++) { if (!st.claimedSteps[steps[i].id]) { target = i; break; } }
     st.currentStep = target;
     if (steps[target].id !== oldId) { st.accepted = false; st.readyNotified = false; } // l'acceptation portait sur l'ancienne étape
+  },
+
+  /* v3.268.0 (L-2) : « Celle qui demande » insérée entre forest_14 (le Basilic) et
+     forest_15 (les braises). currentStep est un INDEX : une save déjà à l'étape 15 ou
+     au-delà doit être décalée d'un cran, une seule fois. Même modèle que _migrateV3109
+     et _migrateV3259. Un joueur qui était pile sur forest_15 découvre donc l'étape
+     Wenna avant l'offrande, ce qui est le but. */
+  _migrateV3268: function (chapterId, st) {
+    if (st.migratedV3268) return;
+    st.migratedV3268 = true;
+    var chapter = STORY_QUESTS[chapterId];
+    var idx = chapter ? chapter.steps.findIndex(function (s) { return s.id === "forest_wenna"; }) : -1;
+    if (idx !== -1 && typeof st.currentStep === "number" && st.currentStep >= idx) {
+      st.currentStep += 1;
+    }
   },
 
   /* v3.261.0 : « Franchir la Lisière » déjà acceptée avec une traversée entamée en farm libre
@@ -215,6 +232,14 @@ var StoryQuestManager = {
     var delta = total - st.lastSeenTotalKills;
     st.lastSeenTotalKills = total;
     if (delta <= 0) return; // reset/ascension : on resynchronise sans compter
+
+    /* v3.268.0 (L-2) : combats gagnés avec un compagnon présent (étape forest_wenna).
+       Compté AVANT les filtres de contexte ci-dessous : ce qu'on découvre est le
+       compagnon, pas un lieu — chasse, donjon ou farm libre comptent pareil. */
+    if (window.CompanionManager && typeof CompanionManager.partyIds === "function"
+      && CompanionManager.partyIds().length > 0) {
+      st.counters.companionWins += delta;
+    }
     if (game.huntRun && game.huntRun.active) return;
     if (game.dungeonRun && game.dungeonRun.active) {
       // v3.245.0 (refonte Donjons, forest_13) : vagues de donjon passées sous ≥ 1 Marque -> compteur coeurKillsMarked

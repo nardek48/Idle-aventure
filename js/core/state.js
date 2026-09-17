@@ -117,6 +117,9 @@ function createInitialGameState() {
     shopBuyAmount: 1,
     talents: {},
     enemy: null,
+    // v3.266.0 (L-0) : état du combat de groupe (acteurs, cible collante).
+    // Reconstruit par CombatActors.ensure() ; jamais sauvegardé, comme `enemy`.
+    combat: null,
     activeTab: "campement",
     // v3.99.15 : onglets débloqués par défaut à la création d'un héros — le reste
     // (combat, village, more/héros, et tout le menu ☰ sauf quêtes/paramètres) reste
@@ -469,6 +472,12 @@ function ensureGameStateDefaults() {
   if (![1, 10, 25, -1].includes(Number(game.shopBuyAmount))) {
     game.shopBuyAmount = 1;
   }
+
+  // v3.266.0 (L-0) : repose l'accesseur game.enemy et l'état de combat après un wipe
+  // complet de l'objet game (save-system.js, modal-view.js). Absent au tout premier
+  // appel, en bas de ce fichier : core/combat-actors.js n'est pas encore chargé et
+  // se pose lui-même. Voir js/core/combat-actors.js.
+  if (typeof installCombatAlias === "function") installCombatAlias();
 }
 
 ensureGameStateDefaults();

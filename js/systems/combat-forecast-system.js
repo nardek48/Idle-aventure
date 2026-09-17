@@ -1,4 +1,9 @@
 "use strict";
+/* v3.269.0 (L-3) : QuestEnemyManager.spawnFor renvoie un TABLEAU quand la quête déclare
+   un groupe. Le pronostic raisonne sur un adversaire de référence : on prend le premier
+   membre, celui qui frappe en premier après le tri par célérité. */
+function firstOfGroup(x) { return Array.isArray(x) ? (x[0] || null) : x; }
+
 /* systems/combat-forecast-system.js — PRONOSTIC DE COMBAT (v3.247.0, demande Seb 15/09/2026).
 
    Pourquoi ce module existe : rien n'avertissait le joueur qu'un combat était hors de portée.
@@ -258,11 +263,11 @@ var CombatForecast = {
       var aq = (window.ADVENTURE_QUESTS || {})[mission.questId];
       if (!aq) return null;
       var hasBoss = (aq.steps || []).some(function (st) { return st.type === "bossKill"; });
-      return QuestEnemyManager.spawnFor(aq, hasBoss);
+      return firstOfGroup(QuestEnemyManager.spawnFor(aq, hasBoss)); // v3.269.0 : spawnFor peut renvoyer un groupe
     }
     if (mission.sourceKind === "hunt") {
       var hq = (window.HUNT_QUESTS || {})[mission.questId];
-      return hq ? QuestEnemyManager.spawnFor(hq, false) : null;
+      return hq ? firstOfGroup(QuestEnemyManager.spawnFor(hq, false)) : null;
     }
     return null;
   },
@@ -290,7 +295,7 @@ var CombatForecast = {
     if (fights > 0 && window.QuestEnemyManager) {
       var quest = (mission.sourceKind === "adventure") ? (window.ADVENTURE_QUESTS || {})[mission.questId]
         : (window.HUNT_QUESTS || {})[mission.questId];
-      var normal = quest ? QuestEnemyManager.spawnFor(quest, false) : null;
+      var normal = quest ? firstOfGroup(QuestEnemyManager.spawnFor(quest, false)) : null;
       attrition = this.getAttritionCost(normal, fights);
     }
     var out = this.forEnemy(enemy, { attrition: attrition });
