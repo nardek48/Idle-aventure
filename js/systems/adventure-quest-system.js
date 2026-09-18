@@ -251,8 +251,9 @@ var AdventureQuestManager = {
       CombatEngine.spawnEnemy();
     }
 
-    // v3.100.3 : quête réussie -> retour au Campement (décision Seb). Échec/abandon : on reste en combat.
-    if (success && typeof switchTab === "function") switchTab("campement");
+    // v3.100.3 : quête réussie -> retour au Campement (décision Seb).
+    // v3.293.0 : échec/abandon aussi — rester sur l'écran Combat relançait le farm libre.
+    if ((success || game.activeTab === "combat") && typeof switchTab === "function") switchTab("campement");
 
     if (typeof renderAll === "function") renderAll();
     saveGame();

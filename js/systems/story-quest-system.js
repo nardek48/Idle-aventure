@@ -38,6 +38,7 @@ var StoryQuestManager = {
     this._migrateV3260(chapterId, st, fromBeforeV3259);
     this._migrateV3261(chapterId, st);
     this._migrateV3268(chapterId, st);
+    this._migrateV3293(chapterId, st);
     return st;
   },
 
@@ -83,6 +84,31 @@ var StoryQuestManager = {
     if (idx !== -1 && typeof st.currentStep === "number" && st.currentStep >= idx) {
       st.currentStep += 1;
     }
+  },
+
+  /* v3.293.0 (règle Seb : plus de farm libre) — trois étapes lisent désormais un run défini.
+     Étape déjà passée, ou acceptée avec l'ancien objectif déjà rempli : le run est marqué terminé,
+     rien n'est à refaire. Étape acceptée à mi-chemin : l'avancée en farm libre est perdue, le
+     run se lance depuis le tableau. Une seule fois. */
+  _migrateV3293: function (chapterId, st) {
+    if (st.migratedV3293) return;
+    st.migratedV3293 = true;
+    if (chapterId !== "forest") return;
+    var steps = STORY_QUESTS.forest.steps;
+    if (!game.adventureQuestsCompleted || typeof game.adventureQuestsCompleted !== "object") game.adventureQuestsCompleted = {};
+    var c = st.counters || {};
+    var PAIRS = [
+      { step: "forest_02", quest: "aq_story_premier_sang", oldDone: function () { return typeof storyForestKillsSinceAccept === "function" && storyForestKillsSinceAccept(game) >= 5; } },
+      { step: "forest_crossing", quest: "aq_story_lisiere", oldDone: function () { return Number(c.coeurReached || 0) >= 1; } },
+      { step: "forest_12", quest: "aq_story_coeur", oldDone: function () { return Number(c.coeurKills || 0) >= 10; } }
+    ];
+    PAIRS.forEach(function (pair) {
+      var idx = steps.findIndex(function (s) { return s.id === pair.step; });
+      if (idx === -1) return;
+      var passed = st.skipped || st.currentStep > idx || !!st.claimedSteps[pair.step];
+      var readyHere = st.currentStep === idx && st.accepted && pair.oldDone();
+      if (passed || readyHere) game.adventureQuestsCompleted[pair.quest] = true;
+    });
   },
 
   /* v3.261.0 : « Franchir la Lisière » déjà acceptée avec une traversée entamée en farm libre
@@ -220,14 +246,7 @@ var StoryQuestManager = {
     this._syncCoeurEnemyPool();
     var st = game.storyQuests.forest;
     if (!st) return;
-    var wm = window.WorldManager;
-    // v3.261.0 : retour à la Lisière demandé à l'acceptation de forest_crossing, reporté si une activité était en cours
-    if (st.counters.crossingReset && typeof storyResetLisiere === "function" && storyResetLisiere(game)) st.counters.crossingReset = 0;
-    var atCoeur = !!wm && Number(wm.worldIndex || 0) === 0 && Number(wm.adventureIndex || 0) === 1;
-    // v3.109.0 : « Franchir la Lisière » — drapeau persistant (une mort en farm libre renvoie en Lisière via resetToCycleStart).
-    if (atCoeur && !st.counters.crossingReset && !(game.adventureQuestRun && game.adventureQuestRun.active) && !(game.huntRun && game.huntRun.active) && !(game.dungeonRun && game.dungeonRun.active)) {
-      st.counters.coeurReached = 1;
-    }
+    // v3.293.0 : plus de suivi de position (Cœur atteint, retour à la Lisière) — farm libre retiré.
     var total = Number(game.totalKills || 0);
     var delta = total - st.lastSeenTotalKills;
     st.lastSeenTotalKills = total;
@@ -235,7 +254,7 @@ var StoryQuestManager = {
 
     /* v3.268.0 (L-2) : combats gagnés avec un compagnon présent (étape forest_wenna).
        Compté AVANT les filtres de contexte ci-dessous : ce qu'on découvre est le
-       compagnon, pas un lieu — chasse, donjon ou farm libre comptent pareil. */
+       compagnon, pas un lieu — tout combat de quête compte pareil (v3.293.0 : plus de farm libre). */
     if (window.CompanionManager && typeof CompanionManager.partyIds === "function"
       && CompanionManager.partyIds().length > 0) {
       st.counters.companionWins += delta;
@@ -252,9 +271,6 @@ var StoryQuestManager = {
       }
       return;
     }
-    if (game.adventureQuestRun && game.adventureQuestRun.active) return;
-    if (!atCoeur) return;
-    st.counters.coeurKills += delta;
   },
 
   _checkNow: function (silent) {

@@ -1302,6 +1302,8 @@ var CombatEngine = {
     var auto = game.combatMode === "grimoire";
     if (!auto && !round.continueAttack) return;
     if (!this.isHeroTurnAvailable()) return;
+    // v3.293.0 : aucun round automatique hors d'un run de quête (plus de farm libre)
+    if (typeof hasCombatQuestContext === "function" && !hasCombatQuestContext()) return;
 
     round.clockMs += Math.max(0, Number(dt || 0)) * 1000;
     if (round.clockMs < ROUND_INTERVAL_MS) return;
@@ -1622,8 +1624,6 @@ var CombatEngine = {
       }
     }
 
-    var currentWorld = (window.WORLDS && window.WorldManager) ? WORLDS[WorldManager.worldIndex] : null;
-
     var merchantBonusGold = 0;
     if (game.talents.t_merchant_instinct && chance(5 * game.talents.t_merchant_instinct)) {
       merchantBonusGold = Math.floor(goldGain * 0.5);
@@ -1677,9 +1677,8 @@ var CombatEngine = {
              tant qu'il reste un membre, le run ne doit surtout pas être prévenu, sinon la
              meute avancerait la vague deux fois. Le dernier membre, lui, passe par le flux
              normal plus bas et appelle onCombatWon(). */
-        } else if (window.WorldQuestManager && currentWorld && !enemy.isBoss) {
-          WorldQuestManager.trackKill(currentWorld.id);
         }
+        // v3.293.0 : plus de trackKill de farm libre ici (voir fin de killEnemy)
       } finally {
         CombatActors.holdSpawn(false);
       }
@@ -1784,55 +1783,11 @@ var CombatEngine = {
       return;
     }
 
-    if (window.WorldQuestManager && currentWorld) {
-      if (enemy.isBoss) WorldQuestManager.trackBossKill(enemy.id);
-      else WorldQuestManager.trackKill(currentWorld.id);
-    }
-
-    var result = null;
-    if (window.WorldManager && typeof WorldManager.advance === "function") result = WorldManager.advance();
-
-    if (result && result.type === "adventure" && result.adventure) {
-      addLog("Nouveau chapitre : " + result.adventure.name, "zone");
-      showToast(result.adventure.name, 1800);
-    } else if (result && result.type === "world" && result.world) {
-      addLog("Nouveau monde débloqué : " + result.world.name, "zone");
-      showToast(result.world.name, 2200);
-
-      if (window.WorldManager && typeof isGrimoireWorldUnlockMilestone === "function"
-        && isGrimoireWorldUnlockMilestone(WorldManager.worldIndex)) {
-        addLog("📖 Une nouvelle règle de Grimoire est disponible !", "event");
-        showToast("📖 Nouvelle règle de Grimoire débloquée !", 2200);
-      }
-    } else if (result && result.type === "cycle") {
-      addLog("Le cycle recommence, les ennemis deviennent plus forts.", "zone");
-      if (typeof openCycleSummary === "function") openCycleSummary();
-    } else if (result && result.type === "locked") {
-      addLog("🔒 " + result.world.name + " est verrouillé (questline de déblocage incomplète, voir Carte). Le cycle recommence.", "zone");
-      showToast("🔒 Termine la questline pour débloquer " + result.world.name, 2200);
-      if (typeof openCycleSummary === "function") openCycleSummary(result.world);
-    } else if (result && result.type === "world_gate_locked") {
-      // v3.109.1 : porte de monde (gatesNextWorld) non franchie — on reste sur place, pas de cycle.
-      var gateName = result.gateQuest ? result.gateQuest.name : "la quête de passage";
-      addLog("🗺️ Le passage vers le monde suivant est gardé — termine « " + gateName + " » (tableau de missions). Tu restes au " + (result.adventure ? result.adventure.name : "même endroit") + ".", "zone");
-      showToast("🗺️ Termine « " + gateName + " » pour ouvrir la suite", 2200);
-    } else if (result && result.type === "adventure_locked") {
-      addLog("🧭 Une quête d'Expédition attend d'être lancée pour explorer plus loin (voir l'onglet Quêtes).", "zone");
-      showToast("🧭 Lance la quête d'Expédition (onglet Quêtes) pour continuer", 2200);
-    }
-
-    if (result && (result.type === "adventure" || result.type === "world")) {
-      var chapterGold = Math.floor(20 + (WorldManager.worldIndex || 0) * 15);
-      var chapterEssence = 2 + (WorldManager.worldIndex || 0);
-
-      if (game.talents.t_deep_pockets) {
-        chapterGold = Math.floor(chapterGold * (1 + 0.10 * game.talents.t_deep_pockets));
-      }
-
-      this.grantGold(chapterGold);
-      this.grantEssence(chapterEssence);
-      addLog("🎉 Récompense de chapitre : +" + formatNumber(chapterGold) + " or, +" + chapterEssence + " essence", "event");
-    }
+    /* v3.293.0 (règle Seb 18/09/2026) : plus de farm libre. Ce point n'est atteint que par un
+       combat hors quête, qui n'existe plus en jeu (switchTab le refuse) : il ne fait plus
+       avancer ni le monde (WorldManager.advance), ni les questlines de monde (WorldQuestManager),
+       ni aucune récompense de chapitre. worldIndex n'est plus écrit que par la traversée,
+       le voyage, l'Ascension, le chargement et l'Admin. */
 
     // v3.103.3 (P4, décision §10 n°6) : XP par mission, plus par kill. Le farm classique (context "farm")
     // n'est pas une mission au sens de la ligne directrice §4 : il ne donne pas d'XP (grantMissionXp l'exclut).

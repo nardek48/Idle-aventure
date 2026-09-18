@@ -84,8 +84,8 @@ function storyCountForestKills(game) {
   return total;
 }
 
-/* v3.260.0 (retour Seb) : les objectifs de kills repartent de 0 à l'acceptation. forestKillsBase
-   est posé par onAccept de forest_02 ; absent (save acceptée avant la version) = ancien comptage. */
+/* v3.260.0 : kills à la Lisière depuis l'acceptation de forest_02 (forestKillsBase).
+   v3.293.0 : plus lu par l'étape — conservé pour la migration des saves (_migrateV3293). */
 function storyForestKillsSinceAccept(game) {
   var base = storyCounter(game, "forestKillsBase");
   return Math.max(0, storyCountForestKills(game) - base);
@@ -113,39 +113,25 @@ function storyHasShopPurchase(game) {
   return hasStock(game.potionsOwned) || hasStock(game.healingPotionsOwned);
 }
 
-/* Compteurs Histoire tenus par StoryQuestManager (delta de game.totalKills à chaque rendu, voir
-   systems/story-quest-system.js:_trackKills) : coeurKills, coeurReached (v3.109.0, persistant : survit à une mort). */
+/* Compteurs Histoire tenus par StoryQuestManager (systems/story-quest-system.js:_trackKills).
+   v3.293.0 : coeurKills / coeurReached ne sont plus alimentés (farm libre retiré), lus par la migration. */
 function storyCounter(game, key) {
   var st = (game.storyQuests || {}).forest;
   return Number(((st && st.counters) || {})[key] || 0);
 }
 
-/* v3.261.0 (retour Seb) : « Franchir la Lisière » est une traversée COMPLÈTE — l'acceptation ramène
-   au début de la Lisière. Même garde que storyGoToCoeur : une activité dédiée en cours n'est pas
-   touchée, le retour est alors reporté (StoryQuestManager._trackKills le rejoue). Renvoie true si fait. */
-function storyResetLisiere(g) {
-  if (!window.WorldManager) return false;
-  if (g.dungeonRun && g.dungeonRun.active) return false;
-  if (g.adventureQuestRun && g.adventureQuestRun.active) return false;
-  if (g.huntRun && g.huntRun.active) return false;
-  if (g.livingMaps && g.livingMaps.fight) return false;
-  if (g.sceneRun && g.sceneRun.status && g.sceneRun.status !== "completed") return false;
-  var moved = WorldManager.worldIndex !== 0 || WorldManager.adventureIndex !== 0 || WorldManager.enemyIndex !== 0;
-  WorldManager.worldIndex = 0;
-  WorldManager.adventureIndex = 0;
-  WorldManager.enemyIndex = 0;
-  if (moved && window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") CombatEngine.spawnEnemy();
-  return true;
+/* v3.293.0 (règle Seb 18/09/2026) : storyResetLisiere, storyLisiereCrossingProgress et
+   storyGoToCoeur retirées — elles déplaçaient le joueur pour le farm libre, qui n'existe plus.
+   Les étapes concernées lisent désormais leur run défini (data/adventure-quests.js). */
+function storyAdvDone(game, questId) {
+  return !!(game.adventureQuestsCompleted || {})[questId];
 }
 
-/* v3.109.0 : progression de la traversée de la Lisière pour le compteur de mission (enemyIndex 0..9, 10 = Cœur atteint). */
-function storyLisiereCrossingProgress(game) {
-  if (storyCounter(game, "crossingReset") >= 1) return 0; // retour à la Lisière pas encore appliqué
-  if (storyCounter(game, "coeurReached") >= 1) return 10;
-  var wm = window.WorldManager;
-  if (!wm || Number(wm.worldIndex || 0) !== 0) return 0;
-  if (Number(wm.adventureIndex || 0) >= 1) return 10;
-  return Math.min(9, Number(wm.enemyIndex || 0));
+/* Avancement d'une étape de run pour l'affichage (plein une fois la quête terminée). */
+function storyAdvProgress(game, questId, stepId, target) {
+  if (storyAdvDone(game, questId)) return target;
+  var p = (game.adventureQuestProgress || {})[questId] || {};
+  return Math.min(target, Number(p[stepId] || 0));
 }
 
 /* v3.124.0 (retrait ancien moteur) : lecture directe des flags de progression, sans passer par
@@ -178,25 +164,6 @@ function storyCountTalentsBought(game) {
 
 function storyCountActiveGrimoireRules(game) {
   return (game.grimoireRules || []).filter(function (r) { return r && r.conditionId && r.actionSlot; }).length;
-}
-
-/* v3.131.2 (forest_12), factorisé v3.134.0 (réutilisé par forest_13) : repositionne le joueur au Cœur de la forêt
-   (worldIndex 0 / adventureIndex 1) et régénère un ennemi cohérent. Ne fait rien si une activité de combat dédiée
-   (donjon/aventure/chasse/scene) est en cours — le joueur y est engagé volontairement. Idempotent si déjà au Cœur
-   (l'ennemi en cours n'est pas remplacé). */
-function storyGoToCoeur(g) {
-  if (!window.WorldManager) return;
-  if (g.dungeonRun && g.dungeonRun.active) return;
-  if (g.adventureQuestRun && g.adventureQuestRun.active) return;
-  if (g.huntRun && g.huntRun.active) return;
-  if (g.sceneRun && g.sceneRun.status && g.sceneRun.status !== "completed") return;
-  var alreadyAtCoeur = WorldManager.worldIndex === 0 && WorldManager.adventureIndex === 1;
-  WorldManager.worldIndex = 0;
-  WorldManager.adventureIndex = 1;
-  if (!alreadyAtCoeur) {
-    WorldManager.enemyIndex = 0;
-    if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") CombatEngine.spawnEnemy();
-  }
 }
 
 /* v3.245.0 : nombre de Marques du run de donjon en cours (ex-afflictions actives). */
@@ -237,10 +204,10 @@ var STORY_QUESTS = {
           objective: "Les bêtes viennent flairer les braises. Écarte-les, et garde ce qu'elles laissent.",
           completion: "Sous la dernière bête, une arme oubliée. Grossière, mais c'est un début. Tout se prend sur le corps des vaincus."
         },
-        objectiveLabel: "Vaincre 5 ennemis à la Lisière", // v3.260.0 : l'équipement passe à forest_03
+        objectiveLabel: "Terminer « Premier sang » : vaincre 5 ennemis à la Lisière", // v3.293.0 : run défini
         unlockTabs: ["equip"],
         reward: STORY_REWARDS.forest_02,
-        linkTo: { tab: "combat" },
+        linkTo: { section: "adventure", cardId: "adv_aq_story_premier_sang" }, // v3.293.0 : plus de farm libre
         // v3.107.7 : tutorial déclaratif — popup pédagogique affiché une seule fois, à la première
         // arrivée sur l'onglet cible (tab) une fois l'étape acceptée. Voir switchTab() (ui-root.js)
         // pour le déclenchement, ui/tutorial-view.js pour le rendu.
@@ -255,13 +222,11 @@ var STORY_QUESTS = {
             { icon: "images/Icons/combat_stats/stat_speed.png", text: "Jauge de célérité — se remplit à chaque round. Une fois pleine, tu frappes deux fois d'affilée." }
           ]
         },
-        // v3.107.1 : killTarget déclaratif — affiché comme compteur de mission en combat (combat-view.js)
-        // et déclenche un retour auto au Campement une fois check() vrai (story-quest-system.js).
-        killTarget: { label: "Premier sang", counter: storyForestKillsSinceAccept, target: 5, autoReturn: true },
-        onAccept: function (game, st) { st.counters.forestKillsBase = storyCountForestKills(game); },
-        check: function (game) { return storyForestKillsSinceAccept(game) >= 5; },
+        /* v3.293.0 (règle Seb) : les 5 victoires se jouent dans le run « Premier sang »
+           (data/adventure-quests.js), plus sur l'onglet Combat nu. Mêmes ennemis. */
+        check: function (game) { return storyAdvDone(game, "aq_story_premier_sang"); },
         progress: function (game) {
-          return "Kills " + Math.min(5, storyForestKillsSinceAccept(game)) + "/5";
+          return "Kills " + storyAdvProgress(game, "aq_story_premier_sang", "kills_premier_sang", 5) + "/5";
         }
       },
       {
@@ -480,17 +445,16 @@ var STORY_QUESTS = {
           objective: "Le Roi des marais est tombé, mais la Lisière n'a pas fini de te tester. Traverse-la une dernière fois, et ne t'arrête plus avant le Cœur.",
           completion: "Les arbres se referment derrière toi. Ici, la forêt ne chuchote plus : elle observe."
         },
-        objectiveLabel: "Atteindre le Cœur de la forêt (enchaîner la Lisière jusqu'au Roi Slime)",
+        objectiveLabel: "Terminer « Franchir la Lisière » : 9 ennemis puis le Roi Slime, d'une traite",
         unlockTabs: [],
         reward: STORY_REWARDS.forest_crossing,
-        linkTo: { tab: "combat" },
-        killTarget: { label: "Vers le Cœur", counter: storyLisiereCrossingProgress, target: 10, autoReturn: true },
-        onAccept: function (game, st) { // v3.261.0 : la traversée repart de 0
-          st.counters.coeurReached = 0;
-          st.counters.crossingReset = storyResetLisiere(game) ? 0 : 1;
-        },
-        check: function (game) { return storyCounter(game, "coeurReached") >= 1; },
-        progress: function (game) { return "Lisière " + storyLisiereCrossingProgress(game) + "/10"; }
+        // v3.293.0 (règle Seb) : run défini, même composition que l'ancienne traversée en farm libre
+        linkTo: { section: "adventure", cardId: "adv_aq_story_lisiere" },
+        check: function (game) { return storyAdvDone(game, "aq_story_lisiere"); },
+        progress: function (game) {
+          var boss = storyAdvProgress(game, "aq_story_lisiere", "boss_lisiere", 1);
+          return "Lisière " + (storyAdvProgress(game, "aq_story_lisiere", "kills_lisiere", 9) + boss) + "/10";
+        }
       },
       {
         id: "forest_11",
@@ -530,10 +494,7 @@ var STORY_QUESTS = {
           objective: "Au Cœur, les combats s'enchaînent trop vite pour tout décider à la main. Écris tes réflexes.",
           completion: "Le Grimoire agit à ta place quand tu ne regardes pas. Quelqu'un l'a tenu avant toi : les pages du début sont d'une autre main. Apprends à lui faire confiance."
         },
-        objectiveLabel: "Remporter 10 victoires au Cœur de la forêt et activer 1 règle du Grimoire",
-        // v3.131.0 : pas de killTarget ici (check combine coeurKills + règle active) — autoReturn
-        // générique pour quand même ramener au Campement dès l'objectif atteint, comme forest_02/forest_11.
-        autoReturn: true,
+        objectiveLabel: "Activer 1 règle du Grimoire et terminer « Tenir le Cœur » (10 victoires d'affilée)",
         unlockTabs: ["grimoire"],
         reward: STORY_REWARDS.forest_12,
         // v3.131.2 (retour Seb) : tant qu'aucune règle n'est configurée, le lien mène au
@@ -541,10 +502,10 @@ var STORY_QUESTS = {
         // il mène directement au combat — beforeGo repositionne le joueur au Cœur de la forêt
         // (worldIndex 0 / adventureIndex 1) et régénère un ennemi cohérent à cette position,
         // au cas où le joueur ait bougé ailleurs entre-temps (autre aventure, donjon...).
+        // v3.293.0 (règle Seb) : la règle d'abord (Grimoire), puis le run « Tenir le Cœur ».
         linkTo: {
-          tab: function (g) { return storyCountActiveGrimoireRules(g) >= 1 ? "combat" : "grimoire"; },
-          // pas encore de règle -> pas de repositionnement, direction Grimoire normale
-          beforeGo: function (g) { if (storyCountActiveGrimoireRules(g) >= 1) storyGoToCoeur(g); }
+          tab: function (g) { return storyCountActiveGrimoireRules(g) >= 1 ? null : "grimoire"; },
+          section: "adventure", cardId: "adv_aq_story_coeur"
         },
         // v3.107.9 : Grimoire détaillé (nombre de règles vérifié dans le code).
         tutorial: {
@@ -557,10 +518,9 @@ var STORY_QUESTS = {
             { icon: "🔀", text: "Bascule entre mode Tactique (manuel, tu joues chaque round) et mode Grimoire (automatique, tes règles décident) à tout moment depuis l'écran Combat." }
           ]
         },
-        onAccept: function (game, st) { st.counters.coeurKills = 0; }, // v3.260.0 : seules les victoires après acceptation comptent
-        check: function (game) { return storyCounter(game, "coeurKills") >= 10 && storyCountActiveGrimoireRules(game) >= 1; },
+        check: function (game) { return storyAdvDone(game, "aq_story_coeur") && storyCountActiveGrimoireRules(game) >= 1; },
         progress: function (game) {
-          return "Cœur " + Math.min(10, storyCounter(game, "coeurKills")) + "/10 · Règle " + Math.min(1, storyCountActiveGrimoireRules(game)) + "/1";
+          return "Cœur " + storyAdvProgress(game, "aq_story_coeur", "kills_coeur", 10) + "/10 · Règle " + Math.min(1, storyCountActiveGrimoireRules(game)) + "/1";
         }
       },
       {
@@ -632,10 +592,10 @@ var STORY_QUESTS = {
             { who: null, text: "Orwen met un morceau de pain de côté. Deux, cette fois." }
           ]
         },
-        objectiveLabel: "Remporter 3 combats avec Wenna à tes côtés",
+        objectiveLabel: "Remporter 3 combats avec Wenna à tes côtés (chasse, élite, donjon ou carte)",
         unlockTabs: ["companions"],
         reward: STORY_REWARDS.forest_wenna,
-        linkTo: { tab: "combat" },
+        linkTo: { section: "adventure" }, // v3.293.0 : le tableau des missions, plus l'onglet Combat nu
         /* Wenna rejoint dès l'acceptation, et le compteur repart de 0 — règle posée par
            Seb le 16/09/2026 : une quête de combat repart systématiquement de zéro. */
         onAccept: function (g, st) {

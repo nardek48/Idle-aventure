@@ -81,6 +81,81 @@ var ADVENTURE_QUESTS = {
     reward: { gold: 800, essence: 15 } // aligné sur « Prouver sa valeur » (kills + boss)
   },
 
+  /* ---------------------------------------------------------------------
+     v3.293.0 (règle Seb 18/09/2026) — PLUS DE FARM LIBRE. Trois étapes d'Histoire
+     de la Forêt se jouaient sur l'onglet Combat sans quête (Premier sang, Franchir la
+     Lisière, Le grimoire du veilleur). Elles deviennent des runs définis, liés à leur
+     étape (isStoryLinkedQuest) : mêmes ennemis, dans le même ordre. En Forêt,
+     enemyIndex est neutralisé (WorldManager.generateEnemy), donc un run dédié tire
+     exactement les mêmes stats que l'ancien farm. Mesuré : sim/story-runs-bench.js.
+     Récompense vide : c'est l'étape d'Histoire qui paie, à la réclamation.
+     --------------------------------------------------------------------- */
+  aq_story_premier_sang: {
+    id: "aq_story_premier_sang",
+    type: "kill",
+    section: "adventure",
+    difficulty: "easy",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "forest",
+    adventureIndex: 0,
+    enemyFilter: ["slime", "goblin", "spider"],
+    /* v3.293.0 : ×0,8 sur les PV. En farm libre une mort ne retirait aucun kill ; dans un run,
+       elle fait tout recommencer. À ×1, le Rôdeur à mains nues échoue 44 % des départs
+       (sim/story-runs-bench.js) ; à ×0,8 : 95-100 %, fin à 32-44 % des PV. */
+    enemyHpMult: 0.8,
+    name: "Premier sang",
+    story: "Les bêtes viennent flairer les braises. Écarte-les du feu, une à une.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    steps: [
+      { id: "kills_premier_sang", type: "kill", worldId: "forest", target: 5, desc: "Vaincre {target} ennemis à la Lisière" }
+    ],
+    reward: {}
+  },
+
+  /* L'ancien farm menait la Lisière d'un bout à l'autre : 9 ennemis puis le Roi Slime à PV
+     pleins. Même composition que « Prouver sa valeur », SANS ses réductions de PV. */
+  aq_story_lisiere: {
+    id: "aq_story_lisiere",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_mid",
+    category: "side",
+    worldId: "forest",
+    adventureIndex: 0,
+    enemyFilter: ["slime", "goblin", "spider"],
+    name: "Franchir la Lisière",
+    story: "La Lisière d'un bout à l'autre, sans t'arrêter. Au bout, les marais. Ce qui les tient s'est relevé.",
+    icon: "./images/Icons/quest_icons/exploration/exploration4.png",
+    steps: [
+      { id: "kills_lisiere", type: "kill", worldId: "forest", target: 9, desc: "Vaincre {target} ennemis à la Lisière" },
+      { id: "boss_lisiere", type: "bossKill", bossId: "slimeking", target: 1, desc: "Vaincre le Roi Slime géant" }
+    ],
+    reward: {}
+  },
+
+  /* Pool de l'Acte III écrit en dur (STORY_COEUR_ACT3_POOL) : le run ne dépend plus de la
+     synchronisation du pool du Cœur, qui ne servait qu'au farm libre. */
+  aq_story_coeur: {
+    id: "aq_story_coeur",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_mid",
+    category: "side",
+    worldId: "forest",
+    adventureIndex: 1,
+    enemyFilter: ["slime", "goblin", "spider", "foresttroll", "bramble"],
+    name: "Tenir le Cœur",
+    story: "Au Cœur, les bêtes arrivent plus vite qu'on ne décide. Dix d'affilée. Laisse le Grimoire frapper quand tu ne regardes pas.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    steps: [
+      { id: "kills_coeur", type: "kill", worldId: "forest", target: 10, desc: "Vaincre {target} ennemis au Cœur de la forêt" }
+    ],
+    reward: {}
+  },
+
   hq_wolf_pack: {
     id: "hq_wolf_pack",
     type: "kill",

@@ -136,6 +136,12 @@ function switchTab(tabName) {
     if (typeof showToast === "function") showToast("💀 Tu es à terre — soigne-toi au Campement avant de repartir.", 2000);
   }
 
+  // v3.293.0 (règle Seb) : plus de farm libre. Sans run de quête en cours, l'écran Combat
+  // n'a rien à montrer — retour au Campement (Ascension, anciens liens, fin de run ratée).
+  if (tabName === "combat" && typeof hasCombatQuestContext === "function" && !hasCombatQuestContext()) {
+    tabName = "campement";
+  }
+
   // v3.120.0 (Lot S1) : l'expédition (scene-engine) est une activité engageante exclusive,
   // comme le combat — décision Seb 03/09/2026 : "soit on abandonne prématurément, soit on va
   // au bout, le joueur doit être concentré sur la quête en cours". Toute tentative de quitter

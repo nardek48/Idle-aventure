@@ -141,6 +141,8 @@ var HuntQuestManager = {
     if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
       CombatEngine.spawnEnemy();
     }
+    // v3.293.0 : arrêt depuis l'écran Combat -> Campement (plus de farm libre derrière)
+    if (game.activeTab === "combat" && typeof switchTab === "function") switchTab("campement");
     if (typeof renderAll === "function") renderAll();
     saveGame();
   },

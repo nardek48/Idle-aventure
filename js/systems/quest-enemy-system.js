@@ -138,3 +138,16 @@ QuestEnemyManager.buildGroup = function (quest, adventure) {
 };
 
 window.QuestEnemyManager = QuestEnemyManager;
+
+/* v3.293.0 (règle Seb 18/09/2026) : plus de farm libre — un combat n'existe que dans une quête
+   définie. Vrai si un run qui porte un combat est en cours ; lu par switchTab (ui-root.js). */
+function hasCombatQuestContext() {
+  if (typeof game === "undefined" || !game) return false;
+  if (game.dungeonRun && game.dungeonRun.active) return true;
+  if (game.adventureQuestRun && game.adventureQuestRun.active) return true;
+  if (game.huntRun && game.huntRun.active) return true;
+  if (game.livingMaps && game.livingMaps.fight) return true;
+  if (game.sceneRun && game.sceneRun.status === "combat") return true;
+  return false;
+}
+window.hasCombatQuestContext = hasCombatQuestContext;
