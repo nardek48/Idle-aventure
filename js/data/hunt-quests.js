@@ -36,8 +36,9 @@ var WAREHOUSE_RESOURCES = {
   petite_ration: { id: "petite_ration", name: "Petite ration", icon: "images/Icons/resources/petite_ration_icon.png", desc: "Repas au Campement : restaure 35 % des PV max. Crafté à la Cuisine de camp à partir de Viande et d'Eau.", sellPrice: 18, tier: "crafted", cap: 999, healPct: 0.35 },
   // v3.137.0 : recette de craft ajoutée (Cuisine de camp : Ration moyenne + 3 Sève d'Aeswyn) — desc mise à jour.
   /* v3.303.0 (W-2, Désert D3) : l'Outre pleine, fabriquée au Réservoir du Puits. Emportée dans
-     la préparation d'un parcours du Désert, elle rend du Souffle une fois. Jamais obligatoire. */
-  outre_pleine: { id: "outre_pleine", name: "Outre pleine", icon: "images/Icons/scene/water_flask.png", desc: "Se remplit au Réservoir (Puits). Emportée dans un parcours du Désert, elle rend du Souffle une fois.", sellPrice: 20, tier: "crafted", cap: 99 },
+     la préparation d'un parcours du Désert, elle rend du Souffle une fois. Jamais obligatoire.
+     v3.304.0 : icône propre (générique en jeu tant qu'elle n'est pas dessinée), plus celle de la gourde. */
+  outre_pleine: { id: "outre_pleine", name: "Outre pleine", icon: "images/Icons/resources/outre_pleine_icon.png", desc: "Se remplit au Réservoir (Puits). Emportée dans un parcours du Désert, elle rend du Souffle une fois.", sellPrice: 20, tier: "crafted", cap: 99 },
   grande_ration: { id: "grande_ration", name: "Grande ration", icon: "images/Icons/resources/grande_ration_icon.png", desc: "Repas au Campement : restaure 100 % des PV max. Cuisine de camp (Chasse) : 1 Ration moyenne + 3 Sève d'Aeswyn → 1.", sellPrice: 60, tier: "crafted", cap: 999, healPct: 1.00 },
   // v3.127.0 (Petites Aventures, Lot PA3) : butin exclusif du scene-engine petite_aventure_foret
   // (voir data/scene-templates.js, exclusiveLoot) — nom + icône validés Seb 03/09/2026.
@@ -47,6 +48,9 @@ var WAREHOUSE_RESOURCES = {
   // D'autres usages plus marquants (gemmes, enchantement, upgrade d'arme) restent envisagés
   // pour plus tard (décision Seb 04/09/2026, non actée).
   seve_aeswyn: { id: "seve_aeswyn", name: "Sève d'Aeswyn", icon: "images/Icons/resources/seve_aeswyn_icon.png", desc: "Résine runique rare, trouvée en Petite Aventure. Sert à cuisiner la Grande ration et, durcie à la Menuiserie, à bâtir les hauts paliers du village.", sellPrice: 0, tier: "special" },
+  /* v3.304.0 (W-2) : la ressource rare du Désert, butin exclusif de sa Petite Aventure (mêmes
+     points de tirage que la Sève). Ses dépenses viendront avec le Tailleur de pierre (W-6). */
+  verre_des_dunes: { id: "verre_des_dunes", name: "Verre des dunes", icon: "images/Icons/resources/verre_des_dunes_icon.png", desc: "Sable fondu par la foudre, lisse comme de l'eau. Trouvé en Petite Aventure du Désert.", sellPrice: 0, tier: "special" },
   /* v3.214.0 (lot V-3) : matériau de construction de la Forêt. Premier des six
      matériaux de monde — c'est lui qui porte le plafond de construction, à la
      place d'un verrou abstrait : un palier qui le demande est de fait

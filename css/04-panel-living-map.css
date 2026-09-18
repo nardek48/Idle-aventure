@@ -34,6 +34,12 @@
   background-image: repeating-linear-gradient(135deg, rgba(8, 14, 28, 0.55) 0 2px, transparent 2px 6px);
 }
 .lm-fog, .lm-cover { -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; display: none; }
+/* v3.306.1 : trame seule du Recouvrement, posée sur l'image pré-calculée (living-map-view.js,
+   livingMapBake). Couleur = celle de la trame ci-dessus passée par les filtres de .lm-cover. */
+.lm-cover-trame {
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  background-image: repeating-linear-gradient(135deg, rgba(14, 13, 11, 0.55) 0 2px, transparent 2px 6px);
+}
 .lm-fog.is-on, .lm-cover.is-on { display: block; }
 
 /* Calque 3 : liens vers les voisins du secteur sélectionné */

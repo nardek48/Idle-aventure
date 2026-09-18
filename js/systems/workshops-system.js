@@ -99,7 +99,16 @@ var WorkshopsSystem = {
     if (!recipe) return 0;
     var level = typeof levelOverride === "number" ? levelOverride : this.getLevel(workshopId);
     var reduction = Math.min(0.95, WORKSHOP_LEVEL_CONFIG.speedBonusPerLevel * (level - 1));
-    return Math.max(1, Math.round(Number(recipe.craftTimeMs || 0) * (1 - reduction)));
+    return Math.max(1, Math.round(Number(recipe.craftTimeMs || 0) * (1 - reduction) / this.getLivingMapSpeedMult(workshopId)));
+  },
+
+  /* v3.305.0 (carte du Désert) : un secteur tenu accélère un atelier de 10 % — l'oasis basse le
+     Réservoir, la verrerie ensevelie le Tailleur de pierre (quand il existera). Perdu à l'Ensablement. */
+  LIVING_MAP_EFFECT_BY_WORKSHOP: { reservoir: "reservoir_plus", tailleur_pierre: "tailleur_plus" },
+  getLivingMapSpeedMult: function (workshopId) {
+    var effectId = this.LIVING_MAP_EFFECT_BY_WORKSHOP[workshopId];
+    if (!effectId || !window.LivingMapManager || !LivingMapManager.hasEffect(effectId)) return 1;
+    return Number(LivingMapManager.getEffectValue("workshopSpeedMult", 1.10));
   },
 
   getQueue: function (workshopId) {

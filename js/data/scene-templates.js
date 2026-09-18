@@ -61,6 +61,20 @@ var SCENE_MUTATORS = {
     desc: "Un danger de plus t'attend sur le chemin, mais le butin est meilleur (+15%).",
     extraDangerNode: true, // consommé par SceneRunManager._ensureMinCombat() (génération de carte)
     lootMult: 1.15 // consommé par SceneRunManager._runLootMult()/_obstacleFactors()
+  },
+  /* v3.304.0 (Désert, validés par Seb) : poids 0 ici, donc jamais tirés par la table par défaut ;
+     seul un canevas qui les déclare dans sa propre table (template.mutatorWeights) les sort. */
+  tempete: {
+    id: "tempete", label: "Tempête de sable", icon: "images/Icons/scene/weather_sandstorm.png", weight: 0,
+    desc: "Le sable bouche l'horizon : un seul palier en vue, même à la torche. Chaque effort coûte plus de Souffle (+50%).",
+    horizonOverride: 1, // un palier d'avance, torche ou pas (getVisibilityHorizon)
+    breathCostMult: 1.5 // voies d'obstacle seulement, pas le coût par palier (_obstacleFactors)
+  },
+  chaleur: {
+    id: "chaleur", label: "Chaleur de midi", icon: "images/Icons/scene/weather_heat.png", weight: 0,
+    desc: "L'air brûle : chaque effort coûte plus de Souffle (+30%), mais le butin est meilleur (+20%).",
+    breathCostMult: 1.3,
+    lootMult: 1.2
   }
 };
 window.SCENE_MUTATORS = SCENE_MUTATORS;
@@ -634,6 +648,108 @@ var SCENE_TEMPLATES = {
     // + équipement dédié (décision Seb), résolue à la chambre finale, en plus du loot chiffré
     // identique entre profils (§4 du concept). Vide en PA1/PA2 : aucun tirage tant que non défini.
     exclusiveLoot: { bourrin: [], prudent: [] }
+  },
+
+  /* ================= v3.304.0 (W-2) — PETITE AVENTURE DU DÉSERT =================
+     Conception Désert §8 et acte I, étape 3. Tout ce qui a été recalibré en Forêt entre v3.195.0
+     et v3.235.0 est repris tel quel (intensités, 2 voies sur 3, 2 blessures, 2 combats et 2
+     bloqueurs au plus, difficulté indexée sur le héros). Ce qui change : ses obstacles, ses
+     trois groupes (sans boss), sa table de mutateurs, le Souffle par palier, l'Outre en 6e place
+     et le Verre des dunes. S'ouvre avec l'étape « L'outre » (boardRequires.storyStep). */
+  petite_aventure_desert: {
+    id: "petite_aventure_desert",
+    worldId: "desert", // ses combats sortent du Désert, où que réside le joueur
+    adventureIndex: 0, // les Dunes brûlantes
+    mode: "generative",
+    title: "Petite aventure — Désert",
+    departLabel: "Partir dans les dunes", // bouton de la préparation (la Forêt « descend dans la faille »)
+    icon: "images/Icons/scene/path_easy.png",
+
+    depthMax: 8,
+    firstDepthType: "obstacle",
+    gatesPerDepth: [1, 2],
+    optionsPerNode: 2,
+    maxInjuries: 2,
+    heroScaling: { ref: 21, coef: 0.60, max: 3.5 },
+    optionProfiles: {
+      power: { diffMod: 1.12, lootMod: 2.60, breathCost: 10, injurySeverity: "grave" },
+      precision: { diffMod: 1.0, lootMod: 1.15, breathCost: 5, injurySeverity: "normale" },
+      endurance: { diffMod: 0.95, lootMod: 0.50, breathCost: 20, injurySeverity: "legere" }
+    },
+
+    // La soif du Désert (D3) : 5 en Forêt. Mesuré avec et sans Outre (sim/desert-pa-bench.js).
+    breathPerDepth: 6,
+
+    slotWeights: { obstacle: 56, autel: 10, decouverte: 12, source: 8, mystere: 14 },
+    profileWeights: {
+      bourrin: { obstacle: 38, combat: 32, autel: 6, decouverte: 10, source: 4, mystere: 10 },
+      prudent: { obstacle: 46, combat: 4, autel: 10, decouverte: 14, source: 10, bloqueur: 16 }
+    },
+    pools: {
+      obstacle: ["sables_mouvants", "dune", "dalle_scellee", "puits_effondre", "vent_de_face", "dalles_ensablees"],
+      combat: ["scarabees_desert", "guerriers_desert", "ver_desert"]
+    },
+    riskModRange: [0.6, 1.5],
+    maxSlotsPerRun: { combat: 2, bloqueur: 2 },
+    // Monde de l'usure : peu d'ennemis, longs à tomber. Une vague compte des rencontres (une
+    // nuée ou une paire vaut un cran). Mesuré au banc.
+    combatWaveRange: [2, 3],
+    finalBoss: false, // pas de boss en Petite Aventure du Désert (conception §8.2)
+    blockerDurationRange: [300000, 600000],
+
+    // Table de mutateurs propre (conception §8.3) : la pluie n'a rien à faire ici, le brouillard
+    // non plus. Nuit noire reprise de la Forêt.
+    mutatorWeights: { aucun: 25, nuit: 25, tempete: 25, chaleur: 25 },
+
+    // Décision Seb (option B) : une seule gorgée de gourde par run au Désert, la Forêt garde la
+    // sienne illimitée. Sans ça, la gourde gratuite et sans fin rendait l'Outre inutile.
+    gourdeUses: 1,
+
+    // L'Outre en 6e place : payée au départ (consumes), bue une fois (breath). Trois emplacements.
+    loadoutOffer: ["torche", "corde", "provisions", "gourde", "amulette", "outre"],
+    loadoutSlots: 3,
+    items: {
+      torche: { id: "torche", icon: "images/Icons/scene/torch.png", name: "Torche", desc: "Révèle le détail des portes du niveau courant (3 charges).", charges: 3 },
+      corde: { id: "corde", icon: "images/Icons/scene/rope.png", name: "Corde", desc: "Passe un obstacle compatible sans jet (1 usage, gain réduit).", charges: 1 },
+      provisions: { id: "provisions", icon: "images/Icons/scene/provisions.png", name: "Provisions", desc: "Soigne la blessure la plus grave (1 usage).", charges: 1 },
+      gourde: { id: "gourde", icon: "images/Icons/scene/water_flask.png", name: "Gourde", desc: "Restaure du Souffle une fois, quand tu veux. Au Désert, elle ne se remplit pas en route." },
+      amulette: { id: "amulette", icon: "images/Icons/scene/protective_amulet.png", name: "Amulette", desc: "Relance automatiquement le premier jet raté (1 fois)." },
+      outre: { id: "outre", icon: "images/Icons/resources/outre_pleine_icon.png", name: "Outre pleine",
+        desc: "Se boit une fois, quand tu veux. Prise dans ton Entrepôt au départ.",
+        consumes: { resourceId: "outre_pleine", amount: 1 }, breath: 40,
+        breathBonusEffect: "outre_plus" } // v3.305.0 : puits sec tenu -> +15
+    },
+
+    entryCost: { resourceId: "petite_ration", amount: 1 },
+    boardRequires: { tabUnlocked: "village", storyStep: "desert_03" },
+
+    // Or : mêmes montants que la Forêt en attendant l'économie du Désert (W-6).
+    lootResource: "gold",
+    lootRanges: {
+      obstacleSuccess: [6, 14],
+      obstacleRope: [3, 7],
+      obstacleSetback: [1, 3],
+      decouverte: [8, 16],
+      finalSafe: [20, 20],
+      finalRiskyBase: [0, 0]
+    },
+    autelCostRatio: 0.2,
+
+    // Verre des dunes : les deux points de tirage de la Sève (par nœud, puis garanti à la
+    // finale), mêmes taux en attendant ses dépenses (Tailleur de pierre, W-6).
+    rareDrop: {
+      resourceId: "verre_des_dunes",
+      perNodeChancePct: { bourrin: 6, prudent: 3 },
+      perNodeAmount: [1, 1],
+      finaleGuaranteedAmount: {
+        bourrin: { sentier: 2, chemin: 3, periple: 5 },
+        prudent: { sentier: 1, chemin: 2, periple: 3 }
+      }
+    },
+
+    // Drapeau posé à chaque chambre finale résolue (objectif de l'étape « L'outre »).
+    successFlag: "desertPaCompleted",
+    deathLine: "Le parcours s'arrête là. Ce que tu portais reste dans le sable. Retour au camp."
   }
 };
 

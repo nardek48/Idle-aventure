@@ -97,3 +97,31 @@ window.chance = chance;
 window.randInt = randInt;
 window.randFloat = randFloat;
 window.vibrate = vibrate;
+
+/* v3.304.0 (règle Seb) — ICÔNE GÉNÉRIQUE POUR TOUTE IMAGE ABSENTE. Une icône pas encore dessinée
+   garde son vrai chemin dans les données : elle reste repérable par le contrôle des icônes
+   manquantes (sim/missing-icons.js) et prend sa place d'elle-même le jour où le fichier existe.
+   En attendant, l'image qui échoue est remplacée par ce carré neutre, jamais par une autre icône
+   du jeu. Les <img> qui déclarent leur propre onerror (repli emoji) gardent leur comportement. */
+var MISSING_ICON_SRC = "data:image/svg+xml," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+  + '<rect x="4" y="4" width="56" height="56" rx="10" fill="#efe0c2" stroke="#8a7a5c" stroke-width="3" stroke-dasharray="7 5"/>'
+  + '<text x="32" y="43" text-anchor="middle" font-family="Georgia,serif" font-size="30" fill="#8a7a5c">?</text></svg>');
+var MISSING_ICONS = []; // chemins réellement tombés en jeu (diagnostic, sans doublon)
+
+function onMissingImage(e) {
+  var img = e && e.target;
+  if (!img || img.tagName !== "IMG" || img.getAttribute("onerror") || img.getAttribute("data-missing-icon")) return;
+  var src = img.getAttribute("src") || "";
+  if (!src || src.indexOf("data:") === 0) return;
+  if (MISSING_ICONS.indexOf(src) === -1) MISSING_ICONS.push(src);
+  img.setAttribute("data-missing-icon", src); // garde l'origine lisible, et empêche une boucle
+  img.src = MISSING_ICON_SRC;
+}
+// Les erreurs d'image ne remontent pas : écoute en phase de capture, une fois pour toute la page.
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+  window.addEventListener("error", onMissingImage, true);
+}
+window.MISSING_ICON_SRC = MISSING_ICON_SRC;
+window.MISSING_ICONS = MISSING_ICONS;
+window.onMissingImage = onMissingImage;

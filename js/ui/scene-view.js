@@ -391,7 +391,9 @@ function buildSceneStatusBarHTML(run, opts) {
   // barre de statut — voir buildSceneGateChoiceHTML pour le placement exact du bloc torche).
   if (run.gourdeAvailable && run.breath < 100) {
     h += '<div class="scene-actions" style="margin-top:0;margin-bottom:8px;">';
-    h += '  <button class="settings-btn" type="button" onclick="useSceneGourde()">Boire à la gourde (+' + SceneRunManager.GOURDE_BREATH_AMOUNT + ' Souffle)</button>';
+    // v3.304.0 : montant réel (40 avec l'Autel de pierre tenu), gorgées restantes si comptées
+    var gorgees = run.gourdeUses != null ? (run.gourdeUses > 1 ? ", " + run.gourdeUses + " gorgées" : ", dernière gorgée") : "";
+    h += '  <button class="settings-btn" type="button" onclick="useSceneGourde()">Boire à la gourde (+' + SceneRunManager.getGourdeAmount() + ' Souffle' + gorgees + ')</button>';
     h += '</div>';
   }
   // v3.303.0 : objets à boire (l'Outre pleine), une charge par exemplaire emporté
@@ -593,7 +595,7 @@ function buildScenePreparationHTML() {
   h += '  </div>';
 
   h += '  <div class="scene-actions">';
-  h += '    <button class="settings-btn primary" type="button"' + (scenePrepSelected.length === slots ? '' : ' disabled') + ' onclick="confirmScenePreparation()">Descendre dans la faille</button>';
+  h += '    <button class="settings-btn primary" type="button"' + (scenePrepSelected.length === slots ? '' : ' disabled') + ' onclick="confirmScenePreparation()">' + esc(template.departLabel || "Descendre dans la faille") + '</button>'; // v3.304.0 : libellé par canevas
   h += '  </div>';
   h += '</div>';
   return h;

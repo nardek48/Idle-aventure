@@ -366,7 +366,7 @@ var SceneRunManager = {
     if (!template) return { ok: false, reason: "Expédition introuvable" };
 
     run.intensity = intensityId;
-    run.mutator = this._rollMutator(); // v3.196.0 : tiré ici, AVANT _generateCard (Nuit noire
+    run.mutator = this._rollMutator(template); // v3.196.0 (v3.304.0 : table du canevas) : tiré ici, AVANT _generateCard (Nuit noire
                                         // influence la génération de carte elle-même)
     this._generateCard(run, template, run._pendingProfileWeights, intensity.depthMax);
     delete run._pendingProfileWeights;
@@ -397,9 +397,13 @@ var SceneRunManager = {
   /* v3.196.0 (lot C2, mutateurs de run) : tirage pondéré sur SCENE_MUTATORS (poids égaux,
      20% chacun avec "aucun" inclus — décision Seb). Repli "aucun" si SCENE_MUTATORS absent
      (canevas hors Petite Aventure, comportement inchangé). */
-  _rollMutator: function () {
+  /* v3.304.0 (Désert §8.3) : un canevas peut déclarer SA table (template.mutatorWeights,
+     { id: poids }) ; sinon les poids du catalogue, comme avant (même tirage, même ordre). */
+  _rollMutator: function (template) {
     if (!window.SCENE_MUTATORS) return "aucun";
-    var entries = Object.keys(window.SCENE_MUTATORS).map(function (k) { return window.SCENE_MUTATORS[k]; });
+    var own = template && template.mutatorWeights;
+    var entries = Object.keys(own || window.SCENE_MUTATORS).filter(function (k) { return !!window.SCENE_MUTATORS[k]; })
+      .map(function (k) { return { id: k, weight: own ? own[k] : window.SCENE_MUTATORS[k].weight }; });
     var totalWeight = entries.reduce(function (sum, m) { return sum + Number(m.weight || 0); }, 0);
     var roll = Math.random() * totalWeight;
     var acc = 0;
@@ -545,6 +549,9 @@ var SceneRunManager = {
     run.provisionCharges = itemIds.filter(function (id) { return id === "provisions"; }).length;
     run.amuletAvailable = itemIds.indexOf("amulette") !== -1;
     run.gourdeAvailable = itemIds.indexOf("gourde") !== -1; // v3.195.0
+    // v3.304.0 (décision Seb, option B) : un canevas peut compter les gorgées (template.gourdeUses).
+    // Au Désert, une seule : sinon la gourde illimitée annule la soif et l'Outre. Absent = illimitée.
+    run.gourdeUses = (run.gourdeAvailable && Number(template.gourdeUses) > 0) ? Number(template.gourdeUses) : null;
     // v3.303.0 : objets qui rendent du Souffle, une fois chacun (item.breath), ex. l'Outre pleine
     run.breathItems = {};
     itemIds.forEach(function (id) {
@@ -615,12 +622,15 @@ var SceneRunManager = {
     return need;
   },
 
-  /* v3.303.0 : Souffle rendu par un objet à boire (item.breath). Le hook de secteur tenu viendra
-     avec la carte du Désert (le puits sec renforce l'Outre). */
+  /* v3.303.0 : Souffle rendu par un objet à boire (item.breath).
+     v3.305.0 : un secteur tenu peut le renforcer (item.breathBonusEffect, ex. le puits sec). */
   getBreathItemAmount: function (itemId, template) {
     template = template || (this.getRun() ? SceneEngine.getTemplate(this.getRun().templateId) : null);
     var it = template && template.items && template.items[itemId];
-    return it ? Number(it.breath || 0) : 0;
+    if (!it) return 0;
+    var bonus = (it.breathBonusEffect && window.LivingMapManager && LivingMapManager.hasEffect(it.breathBonusEffect))
+      ? Number(LivingMapManager.getEffectValue("outreBreathBonus", 15)) : 0;
+    return Number(it.breath || 0) + bonus;
   },
 
   /* useBreathItem(itemId) -> { ok, reason, gained }. Une charge par exemplaire emporté ; jamais
@@ -641,6 +651,11 @@ var SceneRunManager = {
     if (!run || !run.gourdeAvailable) return { ok: false, reason: "Gourde indisponible" };
     if (Number(run.breath || 0) >= 100) return { ok: false, reason: "Souffle déjà au maximum" };
     run.breath = Math.min(100, Number(run.breath || 0) + this.getGourdeAmount());
+    // v3.304.0 : gorgées comptées (template.gourdeUses) — la dernière vide la gourde
+    if (run.gourdeUses != null) {
+      run.gourdeUses = Math.max(0, Number(run.gourdeUses) - 1);
+      if (run.gourdeUses === 0) run.gourdeAvailable = false;
+    }
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null };
   },
@@ -1144,9 +1159,15 @@ var SceneRunManager = {
      fuite (c'est une trouvaille de collection, pas un butin de sortie ordinaire). Log discret,
      pas de popup pour ne pas alourdir un flux déjà chargé (obstacle/autel/etc. ont chacun
      leur propre feedback). */
+  /* v3.304.0 : la ressource rare se déclare par canevas (template.rareDrop : Verre des dunes au
+     Désert) ; la Forêt garde son champ seveAeswyn, lu par les bancs. Même forme, mêmes tirages. */
+  _rareDropCfg: function (template) {
+    return (template && (template.rareDrop || template.seveAeswyn)) || null;
+  },
+
   _rollSeveAeswynPerNode: function (run) {
     var template = SceneEngine.getTemplate(run.templateId);
-    var cfg = template && template.seveAeswyn;
+    var cfg = this._rareDropCfg(template);
     if (!cfg || !run.profile) return;
     var chancePct = Number((cfg.perNodeChancePct && cfg.perNodeChancePct[run.profile]) || 0);
     if (chancePct <= 0 || Math.random() * 100 >= chancePct) return;
@@ -1160,7 +1181,7 @@ var SceneRunManager = {
      de coffre (sûr ou risqué), la Sève n'est jamais remise en jeu par le double-ou-rien. */
   _rollSeveAeswynFinale: function (run) {
     var template = SceneEngine.getTemplate(run.templateId);
-    var cfg = template && template.seveAeswyn;
+    var cfg = this._rareDropCfg(template);
     if (!cfg || !run.profile) return;
     var amount = this._seveFinaleAmount(cfg, run.profile, run.intensity);
     if (amount > 0) this._creditSeveAeswyn(cfg.resourceId, amount);
@@ -1266,6 +1287,13 @@ var SceneRunManager = {
     // coffre — AVANT le SortieManager.end("success") ci-dessous (déjà créditée directement via
     // WarehouseManager, pas affectée par le double-ou-rien ni par le "success" de la sortie).
     this._rollSeveAeswynFinale(run);
+
+    // v3.304.0 : drapeau permanent posé à chaque chambre finale résolue (template.successFlag),
+    // lu par l'Histoire (étape « L'outre »). Ne rend jamais le canevas « terminé ».
+    if (template.successFlag) {
+      if (!game.explorationProgression) game.explorationProgression = {};
+      game.explorationProgression[template.successFlag] = true;
+    }
 
     run.status = "completed";
     var summary = window.SortieManager ? SortieManager.end("success") : null;
@@ -1504,7 +1532,9 @@ var SceneRunManager = {
     if (!run) return;
     var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
     game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
-    addLog("💀 Le parcours s'arrête là. Ce que tu portais reste dans la forêt. Retour au feu.", "event"); // v3.197.0 (bible B §4.4)
+    // v3.197.0 (bible B §4.4) ; v3.304.0 : un canevas peut déclarer sa ligne (deathLine), le Désert n'est pas la forêt
+    var deathTpl = SceneEngine.getTemplate(run.templateId);
+    addLog("💀 " + ((deathTpl && deathTpl.deathLine) || "Le parcours s'arrête là. Ce que tu portais reste dans la forêt. Retour au feu."), "event");
     vibrate([80, 40, 80]);
 
     run.status = "completed";

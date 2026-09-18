@@ -270,6 +270,8 @@ var MissionBoard = {
     // v3.119.0 (retour Seb) : plusieurs conditions cumulées (ex. Terre en Friche exige à la fois
     // le Puits ET la Cuisine de camp/petite ration) — progressFlags (pluriel), toutes requises.
     if (req.progressFlags && !req.progressFlags.every(function (flag) { return !!(game.explorationProgression && game.explorationProgression[flag]); })) return false;
+    // v3.304.0 : ouvert par une étape d'Histoire atteinte (la Petite Aventure du Désert, étape « L'outre »)
+    if (req.storyStep && !(window.StoryQuestManager && StoryQuestManager.isStepReached(req.storyStep))) return false;
     return true;
   },
 
@@ -314,7 +316,7 @@ var MissionBoard = {
     var activeStatus = { accepted: 1, running: 1, claimable: 1 };
     return this.list().filter(function (m) {
       return ACTIVE_QUEST_CAP_SOURCE_KINDS.indexOf(m.sourceKind) !== -1
-        && m.id !== "petite_aventure_foret"
+        && !m.isPetiteAventure // v3.304.0 : toutes les Petites Aventures, un canevas par monde
         && !m.isElite // v3.205.0 (E5)
         && activeStatus[m.status];
     }).length;
@@ -332,7 +334,7 @@ var MissionBoard = {
     var activeStatus = { accepted: 1, running: 1, claimable: 1 };
     return this.list().filter(function (m) {
       return ACTIVE_QUEST_CAP_SOURCE_KINDS.indexOf(m.sourceKind) !== -1
-        && m.id !== "petite_aventure_foret"
+        && !m.isPetiteAventure // v3.304.0 : toutes les Petites Aventures, un canevas par monde
         && !m.isElite // v3.205.0 (E5)
         && activeStatus[m.status];
     }).map(function (m) { return m.title; });
@@ -516,29 +518,51 @@ var MissionBoard = {
      (SceneRunManager.canStartPetiteAventureToday). Pas de flux accept/launch classique non
      plus : lancement direct comme startSceneExpedition(), le tableau affiche juste le
      compteur restant du jour. */
+  /* v3.304.0 (W-2) : UNE MISSION PAR CANEVAS DE PETITE AVENTURE (profileWeights + mode generative),
+     plus seulement celle de la Forêt. Chacune porte son monde : le filtre du tableau montre celle
+     du monde où tu es. Visibilité par boardRequires du canevas ; cap journalier partagé. La carte
+     vivante sert de porte d'entrée si le monde en a une (la Forêt ; le Désert à l'étape 4). */
+  _PA_BLURB: "Un parcours court, choisis ton style : rapide et risqué, ou lent et sûr.",
+
+  _petiteAventureTemplateIds: function () {
+    if (!window.SCENE_TEMPLATES) return [];
+    return Object.keys(SCENE_TEMPLATES).filter(function (id) {
+      var t = SCENE_TEMPLATES[id];
+      return t && t.mode === "generative" && !!t.profileWeights;
+    });
+  },
+
   _petiteAventureMissions: function () {
-    if (!window.SceneRunManager || !window.SCENE_TEMPLATES || !SCENE_TEMPLATES.petite_aventure_foret) return [];
-    if (!(game.unlockedTabs && game.unlockedTabs.village)) return []; // même boardRequires que le template
-    var template = SCENE_TEMPLATES.petite_aventure_foret;
+    if (!window.SceneRunManager || !window.SCENE_TEMPLATES) return [];
+    var self = this, out = [];
+    this._petiteAventureTemplateIds().forEach(function (templateId) {
+      var m = self._petiteAventureMission(templateId);
+      if (m) out.push(m);
+    });
+    return out;
+  },
+
+  _petiteAventureMission: function (templateId) {
+    var template = SCENE_TEMPLATES[templateId];
+    if (!this._isExplorationQuestBoardVisible(template)) return null;
     var activeRun = game.sceneRun;
-    var isRunning = !!(activeRun && activeRun.templateId === "petite_aventure_foret" && activeRun.status !== "completed");
+    var isRunning = !!(activeRun && activeRun.templateId === templateId && activeRun.status !== "completed");
     var cap = SceneRunManager.getPetiteAventureCap(); // v3.298.0 : cap par monde
     var remaining = cap - SceneRunManager.petiteAventureCountToday();
     var canStart = SceneRunManager.canStartPetiteAventureToday();
 
-    // v3.256.0 (Cartes Vivantes, C-2, décision 7) : la Petite Aventure se joue depuis la carte de la
-    // Forêt — cette carte de mission l'ouvre au lieu de lancer un run. Une seule porte, pas une de plus.
-    var hasMap = !!(window.LivingMapManager && LivingMapManager.getMapForWorld("forest") && typeof openLivingMap === "function");
-    var blurb = hasMap ? "Choisis un secteur sur la carte de la Forêt : chaque expédition repousse la brume."
-      : "Un parcours court, choisis ton style : rapide et risqué, ou lent et sûr.";
+    // v3.256.0 (C-2, décision 7) : la carte du monde, si elle existe, est la seule porte d'entrée.
+    var worldId = template.worldId || null;
+    var map = (worldId && window.LivingMapManager) ? LivingMapManager.getMapForWorld(worldId) : null;
+    var hasMap = !!(map && typeof openLivingMap === "function");
+    var mapId = map ? (map.id || worldId) : null;
+    var blurb = hasMap ? LivingMapManager.getWords(mapId).mapBlurb : this._PA_BLURB; // v3.305.0 : texte de la carte
     if (!isRunning && !canStart) blurb += " Plus de tentative aujourd'hui, reviens demain.";
     var m = {
-      id: "petite_aventure_foret", sourceKind: "scene", worldId: template.worldId || null, // v3.301.0 : Petite Aventure de la Forêt
+      id: templateId, sourceKind: "scene", worldId: worldId, isPetiteAventure: true,
       title: template.title, blurb: blurb,
       type: "expedition", place: "", objectiveLabel: "",
-      // v3.125.0 : progressLabel n'est affiché par la vue que pour running/accepted — le
-      // compteur "X/3 aujourd'hui" est donc porté par blurb quand indisponible (voir ci-dessus),
-      // et ici seulement pour le cas running (cohérent avec le pattern des autres missions).
+      // v3.125.0 : le compteur "X/N aujourd'hui" passe par rewardSummary (progressLabel = running seulement)
       progressLabel: isRunning ? "En cours" : "",
       rewardSummary: (canStart && !isRunning) ? (remaining + "/" + cap + " aujourd'hui") : "",
       badge: "contract",
@@ -546,13 +570,13 @@ var MissionBoard = {
       isMain: false
     };
     var launchFn = function () {
-      if (hasMap && !isRunning) { openLivingMap("forest"); return; } // v3.256.0 (C-2) : vers la carte
+      if (hasMap && !isRunning) { openLivingMap(mapId); return; }
       if (typeof switchTab === "function") switchTab("scene");
-      if (typeof openSceneQuestEntry === "function") openSceneQuestEntry("petite_aventure_foret");
+      if (typeof openSceneQuestEntry === "function") openSceneQuestEntry(templateId);
     };
     if (isRunning) m.launch = launchFn;
-    else if (canStart) m.accept = launchFn; // pas d'étape "accepter" séparée : accepter = lancer directement
-    return [m];
+    else if (canStart) m.accept = launchFn; // accepter = lancer directement
+    return m;
   },
 
   /* ---------- Agrégation ---------- */

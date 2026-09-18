@@ -127,6 +127,148 @@ function livingMapMask(map, ids) {
   }).join(", ");
 }
 
+/* ---------- v3.306.1 : pré-calcul de la brume et du Recouvrement ----------
+   Sur iPhone, trois copies pleine taille de l'image (base, brume, Recouvrement), chacune avec
+   filtre CSS et masque à dégradés, se repeignent tuile par tuile quand la carte glisse ou
+   grossit : c'est la latence. Ici, on calcule UNE fois (à chaque changement d'état) l'image
+   finale dans un canvas, avec exactement les mêmes opérations que le CSS :
+     - calque = image + teinte (::after), puis filtres chaînés (matrices de la spec Filter
+       Effects, espace sRGB, bornés à chaque étape comme le navigateur) ;
+     - masque = union des disques en dégradé (radial-gradient circle farthest-corner, arrêts
+       à 55 % et 100 % du rayon) ;
+     - empilement : base, brume, Recouvrement.
+   Aucun canvas (harnais) ou échec (image, mémoire) : les calques CSS restent, rien ne casse. */
+var LIVING_MAP_BAKE = { key: null, url: null, pending: null };
+
+function livingMapBakeKey(map, fogIds, coverIds) {
+  return map.id + "|" + map.asset + "|" + fogIds.join(",") + "|" + coverIds.join(",") + "|" + LIVING_MAP_RADIUS_PCT + "|" + LIVING_MAP_FOG_OPACITY;
+}
+
+// Matrices 3×3 (sRGB) des fonctions de filtre CSS, spec Filter Effects 1 §13
+function lmFilterMatrix(name, a) {
+  var s = 1 - a, c, n;
+  if (name === "grayscale") return [0.2126 + 0.7874 * s, 0.7152 - 0.7152 * s, 0.0722 - 0.0722 * s, 0.2126 - 0.2126 * s, 0.7152 + 0.2848 * s, 0.0722 - 0.0722 * s, 0.2126 - 0.2126 * s, 0.7152 - 0.7152 * s, 0.0722 + 0.9278 * s];
+  if (name === "sepia") return [0.393 + 0.607 * s, 0.769 - 0.769 * s, 0.189 - 0.189 * s, 0.349 - 0.349 * s, 0.686 + 0.314 * s, 0.168 - 0.168 * s, 0.272 - 0.272 * s, 0.534 - 0.534 * s, 0.131 + 0.869 * s];
+  if (name === "saturate") return [0.213 + 0.787 * a, 0.715 - 0.715 * a, 0.072 - 0.072 * a, 0.213 - 0.213 * a, 0.715 + 0.285 * a, 0.072 - 0.072 * a, 0.213 - 0.213 * a, 0.715 - 0.715 * a, 0.072 + 0.928 * a];
+  if (name === "hue-rotate") {
+    c = Math.cos(a * Math.PI / 180); n = Math.sin(a * Math.PI / 180);
+    return [0.213 + c * 0.787 - n * 0.213, 0.715 - c * 0.715 - n * 0.715, 0.072 - c * 0.072 + n * 0.928,
+      0.213 - c * 0.213 + n * 0.143, 0.715 + c * 0.285 + n * 0.140, 0.072 - c * 0.072 - n * 0.283,
+      0.213 - c * 0.213 - n * 0.787, 0.715 - c * 0.715 + n * 0.715, 0.072 + c * 0.928 + n * 0.072];
+  }
+  return null;
+}
+// Chaînes identiques à css/04-panel-living-map.css (.lm-fog, .lm-cover) ; teinte = ::after
+var LIVING_MAP_FOG_CHAIN = [["grayscale", 1], ["brightness", 1.35], ["contrast", 0.78]];
+var LIVING_MAP_COVER_CHAIN = [["grayscale", 0.75], ["brightness", 0.92], ["sepia", 0.12], ["hue-rotate", 165], ["saturate", 0.9]];
+var LIVING_MAP_COVER_TINT = [30, 48, 74, 0.22];
+
+// Une couleur (0-1) à travers une chaîne de filtres, bornée à chaque étape
+function lmFilterPixel(chain, rgb) {
+  var r = rgb[0], g = rgb[1], b = rgb[2];
+  for (var i = 0; i < chain.length; i++) {
+    var f = chain[i][0], a = chain[i][1], m;
+    if (f === "brightness") { r *= a; g *= a; b *= a; }
+    else if (f === "contrast") { var k = 0.5 * (1 - a); r = r * a + k; g = g * a + k; b = b * a + k; }
+    else if ((m = lmFilterMatrix(f, a))) {
+      var nr = m[0] * r + m[1] * g + m[2] * b, ng = m[3] * r + m[4] * g + m[5] * b, nb = m[6] * r + m[7] * g + m[8] * b;
+      r = nr; g = ng; b = nb;
+    }
+    r = r < 0 ? 0 : r > 1 ? 1 : r; g = g < 0 ? 0 : g > 1 ? 1 : g; b = b < 0 ? 0 : b > 1 ? 1 : b;
+  }
+  return [r, g, b];
+}
+
+// Masque (0-1 par pixel) : union des disques, comme mask-image à plusieurs couches (add)
+function lmBakeMask(map, ids, N) {
+  var m = new Float32Array(N * N), rPct = LIVING_MAP_RADIUS_PCT / 100, inner = Math.round(LIVING_MAP_RADIUS_PCT * 55) / 100 / 100;
+  ids.forEach(function (id) {
+    var d = LivingMapManager.getSectorDef(map.id, id); if (!d) return;
+    var cx = d.x / 100 * N, cy = d.y / 100 * N;
+    var R = Math.max(Math.hypot(cx, cy), Math.hypot(N - cx, cy), Math.hypot(cx, N - cy), Math.hypot(N - cx, N - cy));
+    var r0 = inner * R, r1 = rPct * R;
+    var x0 = Math.max(0, Math.floor(cx - r1)), x1 = Math.min(N - 1, Math.ceil(cx + r1));
+    var y0 = Math.max(0, Math.floor(cy - r1)), y1 = Math.min(N - 1, Math.ceil(cy + r1));
+    for (var y = y0; y <= y1; y++) {
+      for (var x = x0; x <= x1; x++) {
+        var dist = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+        if (dist >= r1) continue;
+        var a = dist <= r0 ? 1 : (r1 - dist) / (r1 - r0);
+        var k = y * N + x; m[k] = m[k] + a * (1 - m[k]);
+      }
+    }
+  });
+  return m;
+}
+
+function livingMapBake(map, fogIds, coverIds, key) {
+  if (!fogIds.length && !coverIds.length) { LIVING_MAP_BAKE.key = key; LIVING_MAP_BAKE.url = map.asset; return; }
+  if (LIVING_MAP_BAKE.pending === key || typeof document === "undefined" || typeof Image === "undefined") return;
+  var probe = document.createElement("canvas");
+  if (!probe || typeof probe.getContext !== "function") return;
+  LIVING_MAP_BAKE.pending = key;
+  var img = new Image();
+  img.onload = function () {
+    try {
+      var N = Math.min(img.naturalWidth, img.naturalHeight, 2048);
+      var cv = document.createElement("canvas"); cv.width = N; cv.height = N;
+      var ctx = cv.getContext("2d");
+      ctx.drawImage(img, 0, 0, N, N);
+      var data = ctx.getImageData(0, 0, N, N), px = data.data;
+      var mf = fogIds.length ? lmBakeMask(map, fogIds, N) : null, mc = coverIds.length ? lmBakeMask(map, coverIds, N) : null;
+      var fa = LIVING_MAP_FOG_OPACITY, ft = [224 / 255, 230 / 255, 236 / 255], ct = LIVING_MAP_COVER_TINT, ca = ct[3];
+      for (var k = 0, i = 0; k < N * N; k++, i += 4) {
+        var a1 = mf ? mf[k] : 0, a2 = mc ? mc[k] : 0;
+        if (a1 <= 0 && a2 <= 0) continue;
+        var r = px[i] / 255, g = px[i + 1] / 255, b = px[i + 2] / 255, o;
+        if (a1 > 0) {
+          o = lmFilterPixel(LIVING_MAP_FOG_CHAIN, [r * (1 - fa) + ft[0] * fa, g * (1 - fa) + ft[1] * fa, b * (1 - fa) + ft[2] * fa]);
+          var br = r, bg = g, bb = b; // base sous la brume
+          r = o[0] * a1 + br * (1 - a1); g = o[1] * a1 + bg * (1 - a1); b = o[2] * a1 + bb * (1 - a1);
+        }
+        if (a2 > 0) {
+          var sr = px[i] / 255, sg = px[i + 1] / 255, sb = px[i + 2] / 255; // le calque repart de l'image
+          o = lmFilterPixel(LIVING_MAP_COVER_CHAIN, [sr * (1 - ca) + ct[0] / 255 * ca, sg * (1 - ca) + ct[1] / 255 * ca, sb * (1 - ca) + ct[2] / 255 * ca]);
+          r = o[0] * a2 + r * (1 - a2); g = o[1] * a2 + g * (1 - a2); b = o[2] * a2 + b * (1 - a2);
+        }
+        px[i] = Math.round(r * 255); px[i + 1] = Math.round(g * 255); px[i + 2] = Math.round(b * 255);
+      }
+      ctx.putImageData(data, 0, 0);
+      var done = function (url) {
+        if (LIVING_MAP_BAKE.pending !== key) return;
+        if (LIVING_MAP_BAKE.url && LIVING_MAP_BAKE.url.indexOf("blob:") === 0 && typeof URL !== "undefined") URL.revokeObjectURL(LIVING_MAP_BAKE.url);
+        LIVING_MAP_BAKE.key = key; LIVING_MAP_BAKE.url = url; LIVING_MAP_BAKE.pending = null;
+        livingMapApplyBake(map, coverIds, key);
+      };
+      if (cv.toBlob && typeof URL !== "undefined" && URL.createObjectURL) cv.toBlob(function (bl) { if (bl) done(URL.createObjectURL(bl)); else LIVING_MAP_BAKE.pending = null; }, "image/jpeg", 0.92);
+      else done(cv.toDataURL("image/jpeg", 0.92));
+    } catch (e) { LIVING_MAP_BAKE.pending = null; } // canvas refusé : les calques CSS restent
+  };
+  img.onerror = function () { LIVING_MAP_BAKE.pending = null; };
+  img.src = map.asset;
+}
+
+// Pose l'image calculée sur la carte affichée, sans nouveau rendu (un glissé en cours continue)
+function livingMapApplyBake(map, coverIds, key) {
+  var root = document.getElementById("lmx-root");
+  if (!root || root.getAttribute("data-map") !== map.id) return;
+  var base = document.getElementById("lm-base"); if (!base) return;
+  var img = new Image();
+  img.onload = function () { // l'image décodée d'abord : pas de trou pendant la bascule
+    if (LIVING_MAP_BAKE.key !== key) return;
+    base.style.backgroundImage = "url('" + LIVING_MAP_BAKE.url + "')";
+    var mapEl = base.parentNode;
+    Array.prototype.slice.call(mapEl.querySelectorAll(".lm-fog, .lm-cover")).forEach(function (el) { el.parentNode.removeChild(el); });
+    if (coverIds.length && !mapEl.querySelector(".lm-cover-trame")) {
+      var t = document.createElement("div"), mk = livingMapMask(map, coverIds);
+      t.className = "lm-layer lm-cover-trame";
+      t.style.webkitMaskImage = mk; t.style.maskImage = mk;
+      base.parentNode.insertBefore(t, base.nextSibling);
+    }
+  };
+  img.src = LIVING_MAP_BAKE.url;
+}
+
 /* Un run ciblé en cours sur ce secteur (expédition ou combat d'élite) ? */
 function livingMapRunningSector(mapId) {
   var run = game.sceneRun;
@@ -144,7 +286,9 @@ function buildLivingMapHTML(mapId) {
   if (!map) return "";
   var sum = LM.getSummary(mapId);
   var pal = LM.getPalisadeLevel();
-  var seve = (window.WarehouseManager && typeof WarehouseManager.getAmount === "function") ? WarehouseManager.getAmount("seve_aeswyn") : 0;
+  // v3.305.0 : la ressource de la carte (Sève en Forêt, Verre des dunes au Désert)
+  var rewardId = LM.getRewardResourceId(mapId), rewardDef = (window.WAREHOUSE_RESOURCES || {})[rewardId];
+  var seve = (window.WarehouseManager && typeof WarehouseManager.getAmount === "function") ? WarehouseManager.getAmount(rewardId) : 0;
   var running = livingMapRunningSector(mapId);
   var worldIndex = window.WORLDS ? WORLDS.findIndex(function (w) { return w.id === map.worldId; }) : -1;
 
@@ -164,12 +308,22 @@ function buildLivingMapHTML(mapId) {
     if (st === "recouvert") coverIds.push(d.id);
   });
   h += '<div class="lm-map" style="--lm-r:' + LIVING_MAP_RADIUS_PCT + ';--lm-fog:' + LIVING_MAP_FOG_OPACITY + ';" onclick="lmxTapBackground()">';
-  h += '<div class="lm-layer lm-base" style="background-image:url(\'' + esc(map.asset) + '\')"></div>';
-  if (fogIds.length) {
+  /* v3.306.1 (latence au glissé, iPhone) : brume et Recouvrement sont pré-calculés dans UNE image
+     (livingMapBake). Tant qu'elle n'est pas prête, les calques CSS d'origine s'affichent, puis
+     sont remplacés sans nouveau rendu. Seule la trame du Recouvrement reste en CSS, nette. */
+  var bakeKey = livingMapBakeKey(map, fogIds, coverIds);
+  var baked = LIVING_MAP_BAKE.key === bakeKey ? LIVING_MAP_BAKE.url : null;
+  h += '<div class="lm-layer lm-base" id="lm-base" style="background-image:url(\'' + esc(baked || map.asset) + '\')"></div>';
+  if (!baked) livingMapBake(map, fogIds, coverIds, bakeKey);
+  if (coverIds.length && baked) {
+    var mt = livingMapMask(map, coverIds);
+    h += '<div class="lm-layer lm-cover-trame" style="-webkit-mask-image:' + mt + ';mask-image:' + mt + ';"></div>';
+  }
+  if (fogIds.length && !baked) {
     var mf = livingMapMask(map, fogIds);
     h += '<div class="lm-layer lm-fog is-on" style="background-image:url(\'' + esc(map.asset) + '\');-webkit-mask-image:' + mf + ';mask-image:' + mf + ';"></div>';
   }
-  if (coverIds.length) {
+  if (coverIds.length && !baked) {
     var mc = livingMapMask(map, coverIds);
     h += '<div class="lm-layer lm-cover is-on" style="background-image:url(\'' + esc(map.asset) + '\');-webkit-mask-image:' + mc + ';mask-image:' + mc + ';"></div>';
   }
@@ -223,7 +377,7 @@ function buildLivingMapHTML(mapId) {
   h += '<button class="lmx-btn" type="button" aria-label="Carte du monde" onclick="closeLivingMap()">‹</button>';
   h += '<div class="lmx-pills">';
   h += '<span class="lmx-pill is-title">' + sum.libere + '/' + sum.total + ' libérés' + (sum.recouvert ? ' <small>· ' + sum.recouvert + ' repris</small>' : '') + '</span>';
-  h += '<span class="lmx-pill"><img class=ico-inline src=images/Icons/resources/seve_aeswyn_icon.png alt=""> ' + seve + '</span>';
+  h += '<span class="lmx-pill"><img class=ico-inline src=' + esc((rewardDef && rewardDef.icon) || "images/Icons/resources/seve_aeswyn_icon.png") + ' alt=""> ' + seve + '</span>';
   h += '<span class="lmx-pill is-pal">Palissade ' + pal + '</span>';
   h += '</div>';
   if (worldIndex >= 0) h += '<button class="lmx-btn is-info" type="button" aria-label="Le monde" onclick="openWorldPopup(' + worldIndex + ')">i</button>';
@@ -257,6 +411,13 @@ function buildLivingMapHTML(mapId) {
 }
 window.buildLivingMapHTML = buildLivingMapHTML;
 
+/* v3.305.0 : les mots de la carte ouverte (LivingMapManager.getWords), textes de la Forêt par défaut. */
+function livingMapWords() {
+  var LM = window.LivingMapManager;
+  var id = (typeof livingMapOpenId !== "undefined" && livingMapOpenId) || "forest";
+  return LM ? LM.getWords(id) : {};
+}
+
 /* Légende : les sept états, avec leur vraie pastille. */
 function buildLivingMapLegendHTML() {
   function node(cls, glyph) { return '<span class="lm-node ' + cls + '"><span class="lm-node-disc">' + glyph + '</span></span>'; }
@@ -266,7 +427,7 @@ function buildLivingMapLegendHTML() {
   h += row(node("is-voile", "?"), "Voilé", "à découvrir, atteignable");
   h += row(node("is-voile is-far", "?"), "Voilé, trop loin", "libère d'abord un voisin");
   h += row(node("is-libere", "1"), "Libéré", "son effet s'applique");
-  h += row(node("is-recouvert", "3"), "Recouvert", "effet perdu, à reprendre");
+  h += row(node("is-recouvert", "3"), esc(livingMapWords().coveredState), "effet perdu, à reprendre"); // v3.305.0
   h += row(node("is-libere is-protege", "1"), "Tenu par la Palissade", "résiste à l'Ascension");
   h += row(node("is-libere is-running", "4"), "Expédition en cours", "");
   return h + '</div>';
@@ -283,18 +444,30 @@ function lmxMaxW() { return lmxCoverW() * LMX_ZOOM_MAX; }
 /* Bornes : la carte ne quitte jamais l'écran. Elle peut descendre de LMX_TOP_SLACK sous
    l'en-tête ; volet ouvert, la zone utile s'arrête au haut du volet. */
 function lmxClamp() {
-  var vp = lmxVp(); if (!vp) return;
-  var W = vp.clientWidth, H = vp.clientHeight - lmxSheetH(), w = lmxView.w;
+  var geo = lmxGeo(); if (!geo) return;
+  var W = geo.W, H = geo.H, w = lmxView.w;
   lmxView.tx = w <= W ? (W - w) / 2 : Math.min(0, Math.max(W - w, lmxView.tx));
   lmxView.ty = w <= H ? (H - w) / 2 : Math.min(LMX_TOP_SLACK, Math.max(H - w, lmxView.ty));
 }
+/* v3.306.1 : la taille n'est réécrite que si elle change (un glissé ne touche que la
+   translation, déplacée par le compositeur sans repeindre). */
 function lmxApply(anim) {
   var st = document.getElementById("lmx-stage"); if (!st) return;
   st.classList.toggle("is-anim", !!anim);
   st.style.visibility = "";
-  st.style.width = lmxView.w + "px"; st.style.height = lmxView.w + "px";
+  var wpx = lmxView.w + "px";
+  if (st.style.width !== wpx) { st.style.width = wpx; st.style.height = wpx; }
   st.style.transform = "translate3d(" + lmxView.tx + "px," + lmxView.ty + "px,0)";
-  if (anim) setTimeout(lmxUpdateOffscreen, 300); else lmxUpdateOffscreen();
+  if (anim) setTimeout(lmxUpdateOffscreen, 300); else if (!lmxGesture.mode) lmxUpdateOffscreen();
+}
+
+/* v3.306.1 : géométrie figée pendant un geste — la relire à chaque mouvement forçait le
+   navigateur à recalculer la page entre deux écritures. */
+function lmxGeo() {
+  var g = typeof lmxGesture !== "undefined" ? lmxGesture : null;
+  if (g && g.geo) return g.geo;
+  var vp = lmxVp();
+  return vp ? { W: vp.clientWidth, H: vp.clientHeight - lmxSheetH(), rect: vp.getBoundingClientRect() } : null;
 }
 function lmxZoomAt(nw, px, py, anim) {
   nw = Math.max(lmxCoverW(), Math.min(lmxMaxW(), nw));
@@ -365,9 +538,16 @@ function lmxUpdateOffscreen() {
 
 /* ---------- Gestes (délégués sur document : survivent à un nouveau rendu) ---------- */
 
-var lmxGesture = { pts: {}, mode: null, start: null, moved: false, suppressClick: false, lastTap: 0, vel: { x: 0, y: 0 }, lastMove: 0, raf: 0 };
+var lmxGesture = { pts: {}, mode: null, start: null, moved: false, suppressClick: false, lastTap: 0, vel: { x: 0, y: 0 }, lastMove: 0, raf: 0, geo: null, frame: 0 };
 
-function lmxLocal(e) { var r = lmxVp().getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+function lmxLocal(e) { var r = (lmxGesture.geo && lmxGesture.geo.rect) || lmxVp().getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+/* v3.306.1 : un seul lmxApply par image, quel que soit le nombre de mouvements reçus (l'écran
+   tactile en envoie jusqu'à 120 par seconde). */
+function lmxSchedule() {
+  var g = lmxGesture;
+  if (g.frame || typeof requestAnimationFrame !== "function") { if (!g.frame) lmxApply(false); return; }
+  g.frame = requestAnimationFrame(function () { g.frame = 0; lmxApply(false); });
+}
 function lmxPts() { return Object.keys(lmxGesture.pts).map(function (k) { return lmxGesture.pts[k]; }); }
 function lmxBegin() {
   var p = lmxPts(), g = lmxGesture;
@@ -383,6 +563,7 @@ function lmxBegin() {
 function lmxOnDown(e) {
   if (!e.target || !e.target.closest || !e.target.closest("#lmx-vp")) return;
   var g = lmxGesture;
+  if (!lmxPts().length) { g.geo = null; g.geo = lmxGeo(); } // lue une fois, au premier doigt
   g.pts[e.pointerId] = lmxLocal(e);
   if (lmxPts().length === 1) { g.moved = false; g.suppressClick = false; }
   lmxBegin();
@@ -398,7 +579,7 @@ function lmxOnMove(e) {
     g.moved = true;
     var now = performance.now(), dt = Math.max(1, now - g.lastMove);
     g.vel = { x: (p[0].x - prev.x) / dt, y: (p[0].y - prev.y) / dt }; g.lastMove = now;
-    lmxView.tx = s.tx + dx; lmxView.ty = s.ty + dy; lmxClamp(); lmxApply(false);
+    lmxView.tx = s.tx + dx; lmxView.ty = s.ty + dy; lmxClamp(); lmxSchedule();
   } else if (g.mode === "pinch" && p.length >= 2) {
     g.moved = true;
     var m = { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 };
@@ -406,7 +587,7 @@ function lmxOnMove(e) {
     var nw = Math.max(lmxCoverW(), Math.min(lmxMaxW(), s.w * f));
     var u = (s.m.x - s.tx) / s.w, v = (s.m.y - s.ty) / s.w;   // point de la carte sous les doigts au départ
     lmxView.w = nw; lmxView.tx = m.x - u * nw; lmxView.ty = m.y - v * nw;
-    lmxClamp(); lmxApply(false);
+    lmxClamp(); lmxSchedule();
   }
 }
 function lmxOnUp(e) {
@@ -415,7 +596,10 @@ function lmxOnUp(e) {
   var up = g.pts[e.pointerId]; delete g.pts[e.pointerId];
   if (g.moved) { g.suppressClick = true; setTimeout(function () { g.suppressClick = false; }, 0); }
   if (lmxPts().length) { lmxBegin(); return; }
-  if (g.mode === "pan" && g.moved && performance.now() - g.lastMove < 60) lmxMomentum();
+  if (g.frame && typeof cancelAnimationFrame === "function") { cancelAnimationFrame(g.frame); g.frame = 0; }
+  var momentum = g.mode === "pan" && g.moved && performance.now() - g.lastMove < 60;
+  if (!momentum) { g.geo = null; lmxApply(false); lmxUpdateOffscreen(); } // position finale posée, repère hors écran à jour
+  if (momentum) lmxMomentum();
   else if (!g.moved) {
     var now = performance.now();
     if (now - g.lastTap < LMX_DOUBLE_TAP_MS) {   // double tap : ×1,8 ; au max, retour Couvrant
@@ -431,7 +615,7 @@ function lmxMomentum() {
   var g = lmxGesture, v = { x: g.vel.x * 16, y: g.vel.y * 16 };
   function step() {
     v.x *= 0.92; v.y *= 0.92;
-    if ((Math.abs(v.x) < 0.3 && Math.abs(v.y) < 0.3) || !lmxVp()) return;
+    if ((Math.abs(v.x) < 0.3 && Math.abs(v.y) < 0.3) || !lmxVp()) { g.geo = null; lmxUpdateOffscreen(); return; }
     lmxView.tx += v.x; lmxView.ty += v.y; lmxClamp(); lmxApply(false);
     g.raf = requestAnimationFrame(step);
   }
@@ -462,19 +646,20 @@ if (typeof window !== "undefined" && window.addEventListener) {
 function buildLivingMapPanelHTML(mapId, running) {
   var LM = LivingMapManager;
   var map = LM.getMap(mapId);
+  var W = LM.getWords(mapId), rName = LM.getRewardResourceName(mapId); // v3.305.0 : mots et ressource de la carte
   var h = '<div class="lm-panel">';
 
   if (!livingMapSelected) {
-    h += '<div class="lm-panel-name">Aeswyn tient la clairière.</div>';
-    h += '<p class="lm-panel-lore">Touche un secteur pour voir ce qu\'on en sait. Le Recouvrement ne reprend que ce qu\'on lui laisse : un échec, ou l\'Ascension.</p>';
+    h += '<div class="lm-panel-name">' + esc(W.homeTitle) + '</div>';
+    h += '<p class="lm-panel-lore">' + esc(W.intro) + '</p>';
     return h + '</div>';
   }
 
   if (livingMapSelected === "village") {
     var pal = LM.getPalisadeLevel(), held = LM.getHeldRing(pal);
     h += '<div class="lm-panel-name">' + esc(map.village.name) + '</div>';
-    h += '<p class="lm-panel-lore">Le village hors du Cycle. Les trois secteurs de l\'anneau 1 sont toujours à portée.</p>';
-    h += '<p class="lm-panel-line"><b>Palissade niveau ' + pal + '</b> · frein ' + Math.round(LM.getBrakeChance() * 100) + ' % sur l\'échec · '
+    h += '<p class="lm-panel-lore">' + esc(W.homeLore) + '</p>';
+    h += '<p class="lm-panel-line"><b>Palissade niveau ' + pal + '</b> · frein ' + Math.round(LM.getBrakeChance(mapId) * 100) + ' % sur l\'échec · '
       + (held ? 'tient l\'anneau ' + (held === 3 ? '1 à 3' : held === 2 ? '1 et 2' : '1') + ' à l\'Ascension' : 'ne tient rien encore à l\'Ascension (niveau 3)') + '</p>';
     return h + '</div>';
   }
@@ -491,31 +676,38 @@ function buildLivingMapPanelHTML(mapId, running) {
   h += '<div class="lm-panel-meta">Anneau ' + d.ring + ' · ' + esc(intensity) + '</div>';
   h += '</div>';
   var stCls = protege ? "is-protege" : "is-" + s.state;
-  var stTxt = protege ? "Libéré · tenu par la Palissade" : s.state === "voile" ? "Voilé" : s.state === "libere" ? "Libéré" : "Recouvert";
+  var stTxt = protege ? "Libéré · tenu par la Palissade" : s.state === "voile" ? "Voilé" : s.state === "libere" ? "Libéré" : W.coveredState;
   h += '<span class="lm-panel-state ' + stCls + '">' + stTxt + '</span>';
   if (known) h += '<p class="lm-panel-lore">' + esc(d.lore || "") + '</p>';
-  else h += '<p class="lm-panel-lore">La brume ne laisse rien voir. On sait seulement que le chemin est ' + (d.ring === 1 ? "court" : d.ring === 2 ? "long" : "très long") + '.</p>';
+  else h += '<p class="lm-panel-lore">' + esc(W.fogLore) + ' On sait seulement que le chemin est ' + (d.ring === 1 ? "court" : d.ring === 2 ? "long" : "très long") + '.</p>';
   h += '<p class="lm-panel-line"><b>Contenu :</b> ' + (known ? esc(livingMapContentLabel(mapId, d)) : esc(intensity) + ' (contenu inconnu)') + '</p>';
-  if (d.heldEffect) {
+  if (d.heldEffect && LM.isEffectLostByChoice(d)) {
+    h += '<p class="lm-panel-line is-lost"><b>Effet :</b> aucun. La stèle est vide.</p>'; // v3.306.0 : perdu pour de bon
+  } else if (d.heldEffect) {
     if (s.state === "libere") h += '<p class="lm-panel-line"><b>Effet en cours :</b> ' + esc(d.heldEffect.label) + '</p>';
     else if (s.state === "recouvert") h += '<p class="lm-panel-line is-lost"><b>Effet perdu :</b> ' + esc(d.heldEffect.label) + '</p>';
     else h += '<p class="lm-panel-line"><b>Effet :</b> ' + (known ? esc(d.heldEffect.label) : "inconnu") + '</p>';
   }
   var repeatable = LM.isRepeatable(mapId, d.id);
-  if (!s.firstRewardClaimed) h += '<p class="lm-panel-line"><b>Première libération :</b> +' + LM.getFirstReward(d) + ' Sève d\'Aeswyn</p>';
-  else if (s.state !== "libere") h += '<p class="lm-panel-line"><b>Reprise :</b> Sève du run seule, pas de récompense de secteur.</p>';
-  else if (!repeatable) h += '<p class="lm-panel-line"><b>Rejeu :</b> Petite Aventure ordinaire, Sève du run seule.</p>';
+  if (!s.firstRewardClaimed) h += '<p class="lm-panel-line"><b>Première libération :</b> +' + LM.getFirstReward(d) + ' ' + esc(rName) + '</p>';
+  else if (s.state !== "libere") h += '<p class="lm-panel-line"><b>Reprise :</b> ' + esc(W.runLoot) + ', pas de récompense de secteur.</p>';
+  else if (!repeatable) h += '<p class="lm-panel-line"><b>Rejeu :</b> Petite Aventure ordinaire, ' + esc(W.runLoot) + '.</p>';
   if (repeatable && known) {
     // v3.258.0 (C-5) : élite répétable — Sève par victoire, frein du jour affiché avant de partir.
     var re = LM.getRules().repeatableElite || {}, wins = LM.getDailyWins(mapId, d.id);
-    h += '<p class="lm-panel-line"><b>Chaque victoire :</b> +' + Number(re.sevePerWin || 0) + ' Sève d\'Aeswyn. Sans ration, hors cap. Fuir ou tomber reste un échec.</p>';
+    h += '<p class="lm-panel-line"><b>Chaque victoire :</b> +' + Number(re.sevePerWin || 0) + ' ' + esc(rName) + '. Sans ration, hors cap. Fuir ou tomber reste un échec.</p>';
     h += '<p class="lm-panel-line"><b>Aujourd\'hui :</b> ' + wins + ' victoire' + (wins > 1 ? 's' : '') + ' · prochain combat ' + (wins ? '+' + Math.round((LM.getBrakeMult(mapId, d.id) - 1) * 100) + ' % PV et dégâts' : 'à sa force de base') + '</p>';
   }
   if (s.state === "recouvert") {
     var gw = LM.getGateway(mapId, d.id);
-    h += '<p class="lm-panel-line is-lost">Le Recouvrement le tient. Reprends-le depuis ' + esc(d.ring === 1 || !gw ? "le village" : gw.name) + '.</p>';
+    h += '<p class="lm-panel-line is-lost">' + esc(W.coverCap) + ' le tient. Reprends-le depuis ' + esc(d.ring === 1 || !gw ? W.home : gw.name) + '.</p>';
   }
 
+  // v3.306.0 : un choix pesant qui se pose ici (étape en cours, secteur libéré) passe avant le départ
+  var pending = (typeof storyPendingChoiceAt === "function") ? storyPendingChoiceAt(mapId, d.id) : null;
+  if (pending) {
+    h += '<button class="settings-btn primary" type="button" onclick="openStoryChoiceModal(\'' + esc(pending.chapterId) + '\')">' + esc(pending.choice.buttonLabel || "Choisir") + '</button>';
+  }
   var content = LM.getContentFor(mapId, d.id);
   var isElite = content && content.type === "elite";
   // Le verbe ne trahit pas un contenu inconnu : « Affronter l'élite » seulement quand le nom est révélé.
@@ -535,3 +727,47 @@ function buildLivingMapPanelHTML(mapId, running) {
   return h + '</div>';
 }
 window.buildLivingMapPanelHTML = buildLivingMapPanelHTML;
+
+/* ---------- v3.306.0 : écran d'un choix pesant ----------
+   Les deux conséquences écrites en clair sous chaque option, aucune jauge (acte I §7). Même
+   habillage que les tutoriels (.dungeon-story-card), dans le même hôte de modale. */
+function buildStoryChoiceModalHTML(chapterId) {
+  var step = window.StoryQuestManager && StoryQuestManager.getCurrentStep(chapterId);
+  var c = step && step.choice;
+  if (!c) return "";
+  var h = '<div class="full-menu-overlay tutorial-overlay">';
+  h += '  <div class="full-menu dungeon-story-card tutorial-card story-choice-card">';
+  h += '    <div class="dungeon-story-title">' + esc(c.title || step.title) + '</div>';
+  if (c.text) h += '    <p class="story-choice-text">' + esc(c.text) + '</p>';
+  c.options.forEach(function (o) {
+    h += '    <div class="story-choice-option">';
+    h += '      <button class="settings-btn primary" type="button" onclick="chooseStoryOption(\'' + esc(chapterId) + '\', \'' + esc(o.value) + '\')">' + esc(o.label) + '</button>';
+    h += '      <p class="story-choice-desc">' + esc(o.desc || "") + '</p>';
+    h += '    </div>';
+  });
+  h += '    <div class="dungeon-story-actions"><button class="settings-btn" type="button" onclick="closeStoryChoiceModal()">Plus tard</button></div>';
+  h += '  </div>';
+  h += '</div>';
+  return h;
+}
+window.buildStoryChoiceModalHTML = buildStoryChoiceModalHTML;
+
+function openStoryChoiceModal(chapterId) {
+  var host = document.getElementById("tutorial-modal-root");
+  if (host) host.innerHTML = buildStoryChoiceModalHTML(chapterId);
+}
+function closeStoryChoiceModal() {
+  var host = document.getElementById("tutorial-modal-root");
+  if (host) host.innerHTML = "";
+}
+// Choisir est définitif : noté, conséquences appliquées, puis l'Histoire est revérifiée
+function chooseStoryOption(chapterId, value) {
+  closeStoryChoiceModal();
+  if (typeof storyMakeChoice !== "function" || !storyMakeChoice(chapterId, value)) return;
+  if (window.StoryQuestManager && typeof StoryQuestManager._checkNow === "function") StoryQuestManager._checkNow(false);
+  if (typeof renderAll === "function") renderAll();
+  else if (typeof renderPanel === "function") renderPanel();
+}
+window.openStoryChoiceModal = openStoryChoiceModal;
+window.closeStoryChoiceModal = closeStoryChoiceModal;
+window.chooseStoryOption = chooseStoryOption;

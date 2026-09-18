@@ -54,7 +54,10 @@ var STORY_REWARDS = {
   forest_wenna: { gold: 500, essence: 15 }, // v3.268.0 (L-2) : Wenna rejoint
   forest_15: { gold: 1000, essence: 30, equipmentRarity: "common", equipmentCount: 1 },
   desert_01: { gold: 600, essence: 20 }, // v3.300.0 (W-2) : provisoire, à caler au banc avec l'acte I
-  desert_02: { gold: 700, essence: 20 } // v3.302.0 : provisoire, même remarque
+  desert_02: { gold: 700, essence: 20 }, // v3.302.0 : provisoire, même remarque
+  desert_03: { gold: 750, essence: 20 }, // v3.304.0 : provisoire, même remarque
+  desert_04: { gold: 800, essence: 25 }, // v3.305.0 : provisoire, même remarque
+  desert_05: { gold: 850, essence: 25 } // v3.306.0 : provisoire, même remarque
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -696,6 +699,47 @@ var STORY_QUESTS = {
    le chapitre de la Forêt est terminé (requiresChapter, v3.297.0). Livré étape par étape :
    un chapitre dont la suite n'est pas encore écrite affiche « La suite de l'histoire arrive
    bientôt… » après sa dernière étape livrée. */
+/* v3.306.0 — CHOIX PESANTS SUR LA CARTE. Un choix se déclare sur son étape (step.choice :
+   chapitre, clé du registre, carte et secteur où il se pose, options, conséquences). Il se
+   propose sur le volet du secteur quand l'étape est en cours, acceptée, le secteur libéré et
+   le choix pas encore fait. La vue (living-map-view.js) ne connaît que ces deux fonctions. */
+function storyPendingChoiceAt(mapId, sectorId) {
+  if (!window.StoryQuestManager || !window.LivingMapManager) return null;
+  var ids = Object.keys(STORY_QUESTS);
+  for (var i = 0; i < ids.length; i++) {
+    var step = StoryQuestManager.getCurrentStep(ids[i]);
+    var c = step && step.choice;
+    if (!c || c.mapId !== mapId || c.sectorId !== sectorId) continue;
+    if (!StoryQuestManager.isCurrentStepAccepted(ids[i]) || StoryQuestManager.getChoice(c.key) != null) continue;
+    if (!LivingMapManager.isLiberated(mapId, sectorId)) continue;
+    return { chapterId: ids[i], step: step, choice: c };
+  }
+  return null;
+}
+
+// Applique un choix : noté au registre (définitif), puis ses conséquences immédiates
+function storyMakeChoice(chapterId, value) {
+  var step = StoryQuestManager.getCurrentStep(chapterId), c = step && step.choice;
+  if (!c || !c.options.some(function (o) { return o.value === value; })) return false;
+  if (!StoryQuestManager.recordChoice(chapterId, c.key, value)) return false;
+  if (typeof c.apply === "function") c.apply(value);
+  if (typeof saveGame === "function") saveGame();
+  return true;
+}
+window.storyPendingChoiceAt = storyPendingChoiceAt;
+window.storyMakeChoice = storyMakeChoice;
+
+// v3.306.0 : essence donnée tout de suite quand on déterre les noms (provisoire)
+var STORY_NOMS_ESSENCE = 40;
+window.STORY_NOMS_ESSENCE = STORY_NOMS_ESSENCE;
+
+// v3.305.0 : secteurs de la carte du Désert libérés au moins une fois (étape 4)
+function storyDesertSectorsFreed() {
+  var lm = window.LivingMapManager, map = lm && lm.getMap("desert");
+  if (!map) return 0;
+  return map.sectors.filter(function (d) { var st = lm.getState("desert", d.id); return !!(st && st.liberatedCount > 0); }).length;
+}
+
 function storyDesertFlag(key) {
   return !!(game.explorationProgression && game.explorationProgression[key]);
 }
@@ -776,6 +820,140 @@ STORY_QUESTS.desert = {
       },
       check: function (game) { return storyAdvDone(game, "aq_desert_dunes"); },
       progress: function (game) { return "Bêtes " + storyAdvProgress(game, "aq_desert_dunes", "kills_dunes", 6) + "/6"; }
+    },
+    /* v3.304.0 (W-2) — acte I, §5. Le Réservoir (openAtStoryStep) et la Petite Aventure du Désert
+       (boardRequires.storyStep) s'ouvrent avec cette étape. Deux drapeaux permanents : la première
+       Outre remplie (firstCraftFlag), une chambre finale de PA du Désert résolue (successFlag). */
+    {
+      id: "desert_03",
+      title: "L'outre",
+      act: "Acte I — La surface",
+      narrative: {
+        objective: "Au camp, l'eau se paie à la mesure. À Aeswyn, le puits coule pour rien. Il manque de quoi la porter.",
+        completion: "L'outre est tiède contre ta hanche. Le sable a soif. Toi, un peu moins. Tu es allé plus loin qu'hier.",
+        dialogue: [
+          { who: "Wenna", text: "La dame du puits coud les outres avec du boyau. J'ai regardé. Je sais faire." },
+          { who: "Sarkel", text: "Pleine, une outre vaut trois repas ici. Vide, c'est un bout de cuir. Rapporte-les pleines." },
+          { who: "Brannoc", text: "Le réservoir ? Je l'ai monté il y a… enfin. Pour rien, je croyais. Il servira." },
+          { who: "Aldric", text: "Une outre, quatre mesures. Je note." }
+        ]
+      },
+      objectiveLabel: "Remplir 1 Outre au Réservoir, puis terminer une Petite aventure du Désert",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_03,
+      linkTo: { section: "expedition", cardId: "petite_aventure_desert" },
+      tutorial: {
+        tab: "village",
+        icon: "images/Icons/workshops/water_reservoir.png",
+        title: "L'outre",
+        points: [
+          { icon: "images/Icons/workshops/water_reservoir.png", text: "Le Réservoir est un atelier du Puits, au Village. Il transforme ton eau en Outres pleines." },
+          { icon: "images/Icons/resources/outre_pleine_icon.png", text: "Avant un parcours au Désert, emporte une Outre dans ta préparation : elle te rendra du Souffle quand tu en manques." },
+          { icon: "images/Icons/scene/journey_long.png", text: "Le Désert coûte plus de Souffle par palier que la Forêt. Sans Outre, tu passes quand même, mais tu vas moins loin." }
+        ]
+      },
+      check: function () { return storyDesertFlag("outreFilled") && storyDesertFlag("desertPaCompleted"); },
+      progress: function () {
+        return "Outre " + (storyDesertFlag("outreFilled") ? "1/1" : "0/1") + " · Petite aventure " + (storyDesertFlag("desertPaCompleted") ? "1/1" : "0/1");
+      }
+    },
+    /* v3.305.0 (W-2) — acte I, §6. La carte du Désert s'ouvre avec cette étape (opensAtStoryStep).
+       Compte les secteurs libérés AU MOINS UNE FOIS : un secteur repris par le sable reste acquis
+       pour l'étape, comme la brume en Forêt ne retire pas une étape déjà gagnée. */
+    {
+      id: "desert_04",
+      title: "Les pierres qui dépassent",
+      act: "Acte I — La surface",
+      narrative: {
+        objective: "Sarkel a déplié une peau tannée sur la table du camp. Des traits à l'encre, des croix, et beaucoup de blanc.",
+        completion: "Deux croix de plus sur la peau de Sarkel. Il les a tracées à l'encre, pas au charbon. Ce qu'on tient, le sable le reprend. On y retourne.",
+        dialogue: [
+          { who: "Sarkel", text: "Mes routes. Là, un puits. Là, une caravane qui n'est jamais arrivée. Le reste, le sable l'a mangé." },
+          { who: "Wenna", text: "Il mange quoi, le sable ?" },
+          { who: "Sarkel", text: "Ce qu'on n'use pas. Une route où personne ne passe, trois jours après elle est dessous." },
+          { who: "Wenna", text: "Comme la brume, chez nous." },
+          { who: "Sarkel", text: "Chez vous, la brume s'en va. Le sable, lui, reste." },
+          { who: null, text: "Il pose deux cailloux sur la peau, le puits sec et la caravane. Puis il attend que tu y ailles." }
+        ]
+      },
+      objectiveLabel: "Libérer 2 secteurs de la carte du Désert",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_04,
+      linkTo: { section: "map", cardId: "livingmap_desert" },
+      tutorial: {
+        tab: "map",
+        icon: "images/Icons/resources/verre_des_dunes_icon.png",
+        title: "L'Ensablement",
+        points: [
+          { icon: "images/Icons/scene/node_obstacle.png", text: "La carte du Désert fonctionne comme celle de la Forêt. Tu libères un secteur en terminant son parcours." },
+          { icon: "images/Icons/scene/node_unknown.png", text: "Un parcours raté rend un secteur au sable. Sa récompense de secteur tenu est perdue jusqu'à ce que tu le reprennes." },
+          { icon: "images/Icons/scene/protective_amulet.png", text: "La Palissade d'Aeswyn freine l'Ensablement, comme elle freine la brume." }
+        ]
+      },
+      check: function () { return storyDesertSectorsFreed() >= 2; },
+      progress: function () { return "Secteurs libérés " + Math.min(2, storyDesertSectorsFreed()) + "/2"; }
+    },
+    /* v3.306.0 (W-2) — acte I, §7 : le premier choix pesant. Se pose aux stèles penchées, sur la
+       carte ; si elles ne sont pas libérées, l'étape demande d'abord de les libérer. Définitif,
+       y compris après une Ascension (noté dans storyQuests). La complétion dépend du choix. */
+    {
+      id: "desert_05",
+      title: "Les noms sous le sable",
+      act: "Acte I — La surface",
+      narrative: {
+        objective: "Aux stèles penchées, le vent a découvert une ligne de signes. Des noms, dit la gardienne du puits. Personne au camp ne les lit.",
+        get completion() {
+          return (window.StoryQuestManager && StoryQuestManager.getChoice("noms") === "deterrer")
+            ? "Les noms sont dans ton sac, sur des éclats de pierre. Derrière toi, le sable recouvre déjà les stèles. Orwen saura quoi en faire. Ou elle se taira."
+            : "Tu repousses le sable sur la première ligne. La gardienne ne dit pas merci. Elle remplit ton outre sans la peser.";
+        },
+        dialogue: [
+          { who: "La gardienne du puits", text: "Ce sont des noms. On ne les lit pas. On ne les déterre pas. Le sable les garde, et il se tient tranquille." },
+          { who: "Sarkel", text: "Des noms de rois, taillés dans la bonne pierre. À Aeswyn, ils les prendraient pour rien. Moi, je les vendrais." },
+          { who: "Wenna", text: "Des gens avaient ces noms. Quelqu'un les cherche peut-être encore." },
+          { who: "La gardienne du puits", text: "Plus personne ne les cherche. C'est pour ça qu'ils sont tranquilles." },
+          { who: null, text: "Le vent repousse le sable sur la première ligne. Il la découvrira encore demain." }
+        ]
+      },
+      objectiveLabel: "Aller aux stèles penchées (carte du Désert) et choisir",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_05,
+      linkTo: { section: "map", cardId: "livingmap_desert:steles" },
+      tutorial: {
+        tab: "map",
+        icon: "images/Icons/codex/codex_lore.png",
+        title: "Un choix qui pèse",
+        points: [
+          { icon: "images/Icons/codex/codex_lore.png", text: "Certains choix ne se reprennent pas, même après une Ascension." },
+          { icon: "images/Icons/scene/node_discovery.png", text: "Chacun des deux chemins apporte quelque chose que l'autre n'apporte pas." },
+          { icon: "images/Icons/scene/node_unknown.png", text: "Rien ne te dira si tu as bien choisi." }
+        ]
+      },
+      choice: {
+        key: "noms", mapId: "desert", sectorId: "steles",
+        buttonLabel: "Lire les noms",
+        title: "Les noms sous le sable",
+        text: "Une ligne de signes dépasse du sable, au pied de la première stèle. D'autres dorment dessous.",
+        options: [
+          { value: "deterrer", label: "Déterrer les noms", desc: "Les noms partent pour Aeswyn. Le sable reprend les stèles." },
+          { value: "laisser", label: "Les laisser au sable", desc: "Les stèles restent debout et tiennent le sable. Les noms restent dessous." }
+        ],
+        // Déterrer : essence tout de suite, les stèles retournent au sable (leur effet est perdu
+        // pour de bon, effectLostOnChoice). La quête de village viendra avec celles du Désert.
+        // Laisser : rien d'immédiat — le frein vit dans la carte (choiceBrakes).
+        apply: function (value) {
+          if (value !== "deterrer") return;
+          game.essence = Number(game.essence || 0) + STORY_NOMS_ESSENCE;
+          if (window.LivingMapManager) LivingMapManager.setState("desert", "steles", "recouvert", "noms déterrés");
+          if (typeof addLog === "function") addLog("Les noms sont dans ton sac. +" + STORY_NOMS_ESSENCE + " essence.", "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("noms")); },
+      progress: function () {
+        var chosen = !!(window.StoryQuestManager && StoryQuestManager.getChoice("noms"));
+        var freed = chosen || !!(window.LivingMapManager && LivingMapManager.isLiberated("desert", "steles"));
+        return "Stèles libérées " + (freed ? "1/1" : "0/1") + " · Choix " + (chosen ? "1/1" : "0/1");
+      }
     }
   ]
 };

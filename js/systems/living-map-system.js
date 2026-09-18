@@ -39,13 +39,62 @@ var LivingMapManager = {
     return window.LIVING_MAPS ? Object.keys(LIVING_MAPS) : [];
   },
 
-  /* Carte d'un monde de WORLDS (par id), ou null : « pas de carte pour l'instant ». */
+  /* Carte d'un monde de WORLDS (par id), ou null : « pas de carte pour l'instant ».
+     v3.305.0 : une carte fermée par l'Histoire (opensAtStoryStep) n'existe pas encore pour le
+     joueur — ni bouton, ni porte de Petite Aventure. Son état se tient quand même à jour. */
   getMapForWorld: function (worldId) {
     var ids = this.getMapIds();
     for (var i = 0; i < ids.length; i++) {
-      if (LIVING_MAPS[ids[i]].worldId === worldId) return LIVING_MAPS[ids[i]];
+      if (LIVING_MAPS[ids[i]].worldId === worldId && this.isMapOpen(ids[i])) return LIVING_MAPS[ids[i]];
     }
     return null;
+  },
+
+  isMapOpen: function (mapId) {
+    var map = this.getMap(mapId);
+    return !!map && (!map.opensAtStoryStep || this.isStoryStepReached(map.opensAtStoryStep));
+  },
+
+  /* v3.305.0 : étape d'Histoire atteinte. Une étape pas encore ÉCRITE n'est jamais atteinte
+     (StoryQuestManager.isStepReached rend vrai pour un id inconnu) : les secteurs fermés
+     jusqu'à une étape future le restent tant qu'elle n'existe pas. */
+  isStoryStepReached: function (stepId) {
+    if (!stepId) return true;
+    if (!window.STORY_QUESTS || !window.StoryQuestManager) return false;
+    var exists = Object.keys(STORY_QUESTS).some(function (c) {
+      return (STORY_QUESTS[c].steps || []).some(function (st) { return st.id === stepId; });
+    });
+    return exists && StoryQuestManager.isStepReached(stepId);
+  },
+
+  /* v3.305.0 : les mots d'une carte (la brume de la Forêt, l'Ensablement du Désert). Défauts =
+     textes de la Forêt, inchangés. */
+  WORDS_DEFAULT: {
+    cover: "le Recouvrement", coverCap: "Le Recouvrement", coveredState: "Recouvert",
+    home: "le village", fogLore: "La brume ne laisse rien voir.",
+    openElsewhere: "La brume attend encore ailleurs",
+    homeTitle: "Aeswyn tient la clairière.",
+    homeLore: "Le village hors du Cycle. Les trois secteurs de l'anneau 1 sont toujours à portée.",
+    intro: "Touche un secteur pour voir ce qu'on en sait. Le Recouvrement ne reprend que ce qu'on lui laisse : un échec, ou l'Ascension.",
+    runLoot: "Sève du run seule",
+    mapBlurb: "Choisis un secteur sur la carte de la Forêt : chaque expédition repousse la brume."
+  },
+  getWords: function (mapId) {
+    var map = this.getMap(mapId), out = {}, k;
+    for (k in this.WORDS_DEFAULT) out[k] = this.WORDS_DEFAULT[k];
+    if (map && map.words) for (k in map.words) out[k] = map.words[k];
+    return out;
+  },
+
+  /* v3.305.0 : ressource de première libération et de l'élite répétable, propre à chaque carte
+     (Verre des dunes au Désert) ; la Forêt garde la Sève de LIVING_MAP_RULES. */
+  getRewardResourceId: function (mapId) {
+    var map = this.getMap(mapId);
+    return (map && map.rewardResourceId) || this.getRules().seveResourceId || "seve_aeswyn";
+  },
+  getRewardResourceName: function (mapId) {
+    var id = this.getRewardResourceId(mapId), def = (window.WAREHOUSE_RESOURCES || {})[id];
+    return (def && def.name) || id;
   },
 
   getSectorDef: function (mapId, sectorId) {
@@ -155,6 +204,7 @@ var LivingMapManager = {
   isReachable: function (mapId, sectorId) {
     var def = this.getSectorDef(mapId, sectorId);
     if (!def) return false;
+    if (def.requiresStoryStep && !this.isStoryStepReached(def.requiresStoryStep)) return false; // v3.305.0
     if (def.ring === 1) return true;
     for (var i = 0; i < def.neighbors.length; i++) {
       if (this.isLiberated(mapId, def.neighbors[i])) return true;
@@ -267,10 +317,17 @@ var LivingMapManager = {
       var map = LIVING_MAPS[ids[i]];
       for (var j = 0; j < map.sectors.length; j++) {
         var def = map.sectors[j];
-        if (def.heldEffect && def.heldEffect.id === effectId && this.isLiberated(map.id, def.id)) return true;
+        if (def.heldEffect && def.heldEffect.id === effectId && this.isLiberated(map.id, def.id) && !this.isEffectLostByChoice(def)) return true;
       }
     }
     return false;
+  },
+
+  /* v3.306.0 : un choix pesant peut vider un secteur de son effet pour de bon
+     (def.effectLostOnChoice = { key, value }, ex. les stèles quand on déterre les noms). */
+  isEffectLostByChoice: function (def) {
+    var c = def && def.effectLostOnChoice;
+    return !!(c && window.StoryQuestManager && StoryQuestManager.getChoice(c.key) === c.value);
   },
 
   /* Constante d'un effet tenu (LIVING_MAP_RULES.effects), ou le défaut donné. */
@@ -316,6 +373,10 @@ var LivingMapManager = {
     if (!(game.unlockedTabs && game.unlockedTabs.village)) {
       return { ok: false, reason: "Aeswyn n'a pas encore ouvert ses portes. Avance l'Histoire.", content: content, intensity: intensity };
     }
+    // v3.305.0 : fermé par l'Histoire — le mur le dit, sans renvoyer vers un voisin
+    if (def.requiresStoryStep && !this.isStoryStepReached(def.requiresStoryStep)) {
+      return { ok: false, reason: "Pas encore. L'Histoire t'y mènera plus tard.", content: content, intensity: intensity };
+    }
     if (!this.isReachable(mapId, sectorId)) {
       var gw = this.getGateway(mapId, sectorId);
       return { ok: false, reason: "Rien ne mène encore là. Libère d'abord " + (gw ? gw.name : "un secteur voisin") + ".", content: content, intensity: intensity };
@@ -338,7 +399,7 @@ var LivingMapManager = {
       var open = this.getOpenTargets(mapId);
       if (open.length) {
         var next = this.getSectorDef(mapId, open[0]);
-        return { ok: false, reason: "La brume attend encore ailleurs : " + (next ? next.name : open[0]) + ".", content: content, intensity: intensity };
+        return { ok: false, reason: this.getWords(mapId).openElsewhere + " : " + (next ? next.name : open[0]) + ".", content: content, intensity: intensity };
       }
     }
     if (content && content.type === "expedition" && window.SceneRunManager
@@ -435,12 +496,12 @@ var LivingMapManager = {
       var wins = this._addDailyWin(f.mapId, f.sectorId);
       var seve = Number(re.sevePerWin || 0);
       if (seve > 0 && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
-        WarehouseManager.addResource(rules.seveResourceId || "seve_aeswyn", seve, true);
+        WarehouseManager.addResource(this.getRewardResourceId(f.mapId), seve, true); // v3.305.0 : ressource de la carte
       }
       report.repeatWin = wins; report.repeatSeve = seve;
       var eliteDef = window.ELITE_DB && ELITE_DB[f.eliteId];
       if (!report.firstReward) report.message = (eliteDef ? eliteDef.name : "L'élite") + " plie."; // reprise : le secteur était déjà libéré
-      report.message += " +" + seve + " Sève. Victoire " + wins + " du jour : la prochaine sera plus dure (+" + Math.round(Number(re.brakePerWin || 0) * wins * 100) + " %).";
+      report.message += " +" + seve + " " + (f.mapId === "forest" ? "Sève" : this.getRewardResourceName(f.mapId)) + ". Victoire " + wins + " du jour : la prochaine sera plus dure (+" + Math.round(Number(re.brakePerWin || 0) * wins * 100) + " %).";
     }
     this._afterFight(f, report, "success");
     return true;
@@ -503,10 +564,10 @@ var LivingMapManager = {
         var seve = this.getFirstReward(def);
         var rules = this.getRules();
         if (seve > 0 && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
-          WarehouseManager.addResource(rules.seveResourceId || "seve_aeswyn", seve, true);
+          WarehouseManager.addResource(this.getRewardResourceId(mapId), seve, true); // v3.305.0 : ressource de la carte
         }
         report.firstReward = seve;
-        if (seve > 0) report.message += " +" + seve + " Sève d'Aeswyn.";
+        if (seve > 0) report.message += " +" + seve + " " + this.getRewardResourceName(mapId) + ".";
       }
       if (typeof addLog === "function") addLog("Carte : " + report.message, "event");
       return report;
@@ -514,7 +575,7 @@ var LivingMapManager = {
 
     if (result === "fail") {
       report.message = "Échec devant " + def.name + ".";
-      var brake = this.getBrakeChance();
+      var brake = this.getBrakeChance(mapId); // v3.306.0 : frein de la carte (choix pesants)
       if (brake > 0 && this._rand() < brake) {
         report.braked = true;
         report.message += " La Palissade a tenu.";
@@ -525,7 +586,7 @@ var LivingMapManager = {
           report.regressed = victim.id;
           report.message += " " + this.buildRegressionMessage(mapId, victim.id);
         } else {
-          report.message += " Rien à reprendre pour le Recouvrement.";
+          report.message += " Rien à reprendre pour " + this.getWords(mapId).cover + ".";
         }
       }
       if (typeof addLog === "function") addLog("Carte : " + report.message, "event");
@@ -536,9 +597,17 @@ var LivingMapManager = {
   },
 
   /* §5.4 : frein de Palissade, 7 % par niveau (70 % au niveau 10). À confirmer au banc. */
-  getBrakeChance: function () {
+  /* v3.306.0 : mapId facultatif — un choix pesant peut ajouter son frein sur SA carte
+     (map.choiceBrakes, ex. les stèles laissées qui tiennent le sable tant qu'elles sont libérées). */
+  getBrakeChance: function (mapId) {
     var per = Number((this.getRules().palisade || {}).brakePerLevel || 0);
-    return Math.min(1, Math.max(0, per * this.getPalisadeLevel()));
+    var brake = per * this.getPalisadeLevel();
+    var map = mapId ? this.getMap(mapId) : null;
+    var self = this;
+    ((map && map.choiceBrakes) || []).forEach(function (cb) {
+      if (window.StoryQuestManager && StoryQuestManager.getChoice(cb.key) === cb.value && self.isLiberated(mapId, cb.sectorId)) brake += Number(cb.bonus || 0);
+    });
+    return Math.min(1, Math.max(0, brake));
   },
 
   /* Source d'aléa isolée : le harnais et le banc la remplacent pour rendre l'échec déterministe. */
@@ -577,10 +646,11 @@ var LivingMapManager = {
   buildRegressionMessage: function (mapId, sectorId) {
     var def = this.getSectorDef(mapId, sectorId);
     if (!def) return "";
-    var msg = "Le Recouvrement a repris " + def.name + ".";
+    var words = this.getWords(mapId);
+    var msg = words.coverCap + " a repris " + def.name + ".";
     if (def.heldEffect) msg += " L'effet est perdu : " + def.heldEffect.label;
     var gw = this.getGateway(mapId, sectorId);
-    msg += " Reprends-le depuis " + (def.ring === 1 || !gw ? "le village" : gw.name) + ".";
+    msg += " Reprends-le depuis " + (def.ring === 1 || !gw ? words.home : gw.name) + ".";
     return msg;
   },
 

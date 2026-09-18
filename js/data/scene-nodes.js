@@ -123,6 +123,46 @@ var SCENE_NODES = {
         endurance: { stat: "endurance", label: "Attendre qu'il retombe, puis marcher" }
       }
     },
+    /* v3.304.0 (W-2) — la Petite Aventure du Désert : quatre gabarits neufs, libellés validés
+       par Seb le 18/09/2026. La dalle remplace la « stèle » de la conception : les stèles sont
+       la matière de l'étape 5, un tirage au hasard ne doit pas les user avant elle. */
+    sables_mouvants: {
+      id: "sables_mouvants", biome: "desert", name: "Les sables mouvants",
+      baseDifficulty: 5,
+      options: {
+        power: { stat: "power", label: "S'arracher d'un coup" },
+        precision: { stat: "precision", label: "Marcher sur les pierres plates" },
+        endurance: { stat: "endurance", label: "Ramper à plat ventre" }
+      }
+    },
+    dune: {
+      id: "dune", biome: "desert", name: "La dune",
+      baseDifficulty: 4,
+      options: {
+        power: { stat: "power", label: "Monter droit" },
+        precision: { stat: "precision", label: "Prendre la crête" },
+        endurance: { stat: "endurance", label: "Faire le grand tour" }
+      }
+    },
+    dalle_scellee: {
+      id: "dalle_scellee", biome: "desert", name: "La dalle scellée",
+      baseDifficulty: 6,
+      options: {
+        power: { stat: "power", label: "Forcer la dalle" },
+        precision: { stat: "precision", label: "Trouver le joint" },
+        endurance: { stat: "endurance", label: "Creuser à côté" }
+      }
+    },
+    // ropeOption : la corde de préparation y ouvre sa voie, comme au gouffre et à la paroi
+    puits_effondre: {
+      id: "puits_effondre", biome: "desert", name: "Le puits effondré",
+      baseDifficulty: 5, ropeOption: true,
+      options: {
+        power: { stat: "power", label: "Sauter d'élan" },
+        precision: { stat: "precision", label: "Longer la margelle" },
+        endurance: { stat: "endurance", label: "Contourner par les ruines" }
+      }
+    },
     tronc_deracine: {
       id: "tronc_deracine", biome: "forest", name: "Le tronc déraciné",
       baseDifficulty: 4,
@@ -305,7 +345,11 @@ var SCENE_NODES = {
     araignees_foret: { name: "Un nid d'araignées", enemyFilter: ["spider"] },
     /* v3.300.0 (W-2, grammaire du Désert D2) : les scarabées vont par trois. PV de chaque
        membre ×0,35 (mesuré à trois pendant le chantier de groupe), butin au même facteur. */
-    scarabees_desert: { name: "Une nuée de scarabées", enemyFilter: ["scarab"], group: ["scarab", "scarab", "scarab"], groupHpMult: 0.35, groupGoldMult: 0.35 }
+    scarabees_desert: { name: "Une nuée de scarabées", enemyFilter: ["scarab"], group: ["scarab", "scarab", "scarab"], groupHpMult: 0.35, groupGoldMult: 0.35 },
+    /* v3.304.0 (Petite Aventure du Désert) : le Guerrier des sables va au plus par deux (D2),
+       le ver toujours seul. Facteurs de la paire mesurés au banc (sim/desert-pa-bench.js). */
+    guerriers_desert: { name: "Deux guerriers des sables", enemyFilter: ["sandwarrior"], group: ["sandwarrior", "sandwarrior"], groupHpMult: 0.55, groupGoldMult: 0.55 },
+    ver_desert: { name: "Un ver des sables", enemyFilter: ["sandworm"] }
   }
 };
 

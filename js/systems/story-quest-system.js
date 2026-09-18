@@ -586,7 +586,9 @@ var StoryQuestManager = {
     // v3.259.0 (Cartes Vivantes, C-4) : "livingmap_<mapId>" ouvre la carte vivante du monde
     // (sous-vue de l'onglet Carte) — openLivingMap gère la navigation elle-même.
     if (cardId.indexOf("livingmap_") === 0 && typeof openLivingMap === "function") {
-      openLivingMap(cardId.replace("livingmap_", ""));
+      // v3.306.0 : "livingmap_<mapId>:<sectorId>" ouvre la carte sur un secteur (ex. les stèles)
+      var lmParts = cardId.replace("livingmap_", "").split(":");
+      openLivingMap(lmParts[0], lmParts[1] || null);
       return;
     }
     if (cardId.indexOf("scene_") === 0 && typeof openSceneQuestEntry === "function") {
