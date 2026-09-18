@@ -36,7 +36,7 @@ function buildConstructionModalHTML(id) {
   h += '    <div class="construction-popup-icon"><img class=ico-inline src=images/Icons/workshops/masonry.png></div>';
   h += '    <div class="construction-popup-title">' + esc(def.name) + '</div>';
   h += '    <div class="construction-popup-text">' + esc(def.desc) + '</div>';
-  h += '    <div class="construction-popup-meta">Niveau ' + level + ' / ' + def.maxLevel + '</div>';
+  h += '    <div class="construction-popup-meta">Niveau ' + level + ' / ' + VillageBuildingManager.getMaxLevel(id) + '</div>';
   h += '    <div class="construction-popup-meta"><strong>Bonus actuel : +' + currentBonusPct + '% or de vente à l\'Entrepôt</strong></div>';
 
   if (maxed) {

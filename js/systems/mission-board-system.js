@@ -74,6 +74,8 @@ function missionRewardSummary(reward) {
   }
   if (reward.healingPotion) parts.push("1 potion de soin");
   if (reward.seve) parts.push(reward.seve + " Sève d'Aeswyn"); // v3.205.0 (E5)
+  // v3.289.0 : la quête qui ouvre un bâtiment de production annonce la dotation de l'intendant
+  if (reward.unlockBuildingId && window.ProductionManager) parts.push(ProductionManager.getUnlockGiftSummary());
   if (reward.resources && typeof reward.resources === "object") {
     Object.keys(reward.resources).forEach(function (k) {
       var def = (window.WAREHOUSE_RESOURCES || {})[k];
@@ -521,6 +523,9 @@ var MissionBoard = {
         type: "expedition", place: "", objectiveLabel: "", progressLabel: isRunning ? "En cours" : "",
         rewardSummary: "", badge: "contract", status: isRunning ? "running" : (accepted ? "accepted" : "available"), isMain: false
       };
+      // v3.289.0 : dotation de l'intendant affichée sur les quêtes qui ouvrent un bâtiment
+      var unlockSpec = template.unlockOnSuccess;
+      if (unlockSpec && unlockSpec.buildingId && window.ProductionManager) m.rewardSummary = ProductionManager.getUnlockGiftSummary();
       var launchFn = function () {
         if (typeof switchTab === "function") switchTab("scene");
         if (typeof openSceneQuestEntry === "function") openSceneQuestEntry(templateId);

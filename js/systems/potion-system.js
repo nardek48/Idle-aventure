@@ -187,10 +187,33 @@ var PotionManager = {
     return Number(game.healingPotionsOwned[id] || 0);
   },
 
+  /* v3.291.0 : limite d'achat quotidienne (potion.dailyBuyLimit). Compteur rangé dans
+     game.village.potionShop — game.village est sauvegardé tel quel, sans toucher
+     save-system.js, et la Boutique est appelée à rejoindre le village. Jour civil. */
+  _shopDaily: function () {
+    if (!game.village || typeof game.village !== "object") game.village = {};
+    var st = game.village.potionShop;
+    var today = new Date().toDateString();
+    if (!st || typeof st !== "object" || st.dayKey !== today) st = game.village.potionShop = { dayKey: today, bought: {} };
+    if (!st.bought || typeof st.bought !== "object") st.bought = {};
+    return st;
+  },
+
+  /* Achats restants aujourd'hui, Infinity si la potion n'a pas de limite. */
+  getHealingBuyRemaining: function (id) {
+    var potion = this.getHealingPotion(id);
+    if (!potion || typeof potion.dailyBuyLimit !== "number") return Infinity;
+    return Math.max(0, potion.dailyBuyLimit - Number(this._shopDaily().bought[id] || 0));
+  },
+
   buyHealingPotion: function (id) {
     this.ensureHealing();
     var potion = this.getHealingPotion(id);
     if (!potion) return;
+
+    if (this.getHealingBuyRemaining(id) <= 0) {
+      return showToast("Le colporteur n'en a plus aujourd'hui (" + potion.dailyBuyLimit + " max)", 1600);
+    }
 
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
       return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
@@ -201,6 +224,10 @@ var PotionManager = {
 
     game.gold -= cost;
     game.healingPotionsOwned[id] = this.getHealingStock(id) + 1;
+    if (typeof potion.dailyBuyLimit === "number") {
+      var daily = this._shopDaily();
+      daily.bought[id] = Number(daily.bought[id] || 0) + 1;
+    }
 
     addLog("🩹 " + potion.name + " achetée (stock : " + game.healingPotionsOwned[id] + ")", "event");
     showToast(potion.name + " +1", 1300);

@@ -219,6 +219,8 @@ function switchTab(tabName) {
   // v3.120.0 (Lot S1) : même traitement que combat-active — l'expédition est une activité
   // engageante exclusive (décision Seb), le menu du bas disparaît pendant qu'elle est active.
   document.body.classList.toggle("scene-active", tabName === "scene");
+  // v3.292.0 : carte vivante plein écran (HUD masqué), seulement sur l'onglet Carte
+  if (typeof syncLivingMapBodyClass === "function") syncLivingMapBodyClass();
   // v3.200.0 : appel à updateHudPageTitle() retiré — le titre de page du HUD n'existe plus,
   // les bandeaux figés des kframes portent le titre de chaque écran.
   refreshTabBarVisibility();

@@ -80,8 +80,33 @@ var ProductionPlotsSystem = {
     return Math.floor(profile.baseCapacity * Math.pow(profile.capacityGrowthPerLevel, plot.level - 1));
   },
 
+  /* v3.289.0 : niveau max EFFECTIF d'une zone = min(max propre, plafond du monde
+     atteint — data/world-caps.js). Une zone déjà plus haute garde son niveau. */
+  getPlotLevelCap: function () {
+    var cap = window.WorldCaps ? WorldCaps.getZoneLevel() : Infinity;
+    return Math.min(PRODUCTION_PLOTS_SHARED.plotMaxLevel, cap);
+  },
+
   isPlotMaxLevel: function (plot) {
-    return plot.level >= PRODUCTION_PLOTS_SHARED.plotMaxLevel;
+    return plot.level >= this.getPlotLevelCap();
+  },
+
+  /* Vrai quand c'est le monde, pas la zone, qui arrête l'amélioration. */
+  isPlotLevelWorldCapped: function (plot) {
+    return this.isPlotMaxLevel(plot) && plot.level < PRODUCTION_PLOTS_SHARED.plotMaxLevel;
+  },
+
+  /* v3.289.0 : une ligne de la grille 3×3 par monde (Forêt / Désert / Ruines).
+     Une zone déjà ouverte reste ouverte, quelle que soit sa ligne. */
+  isPlotRowOpen: function (plotIndex) {
+    var rows = window.WorldCaps ? WorldCaps.getZoneRows() : Infinity;
+    return Math.floor(Number(plotIndex) / 3) < rows;
+  },
+
+  /* Monde qui ouvre la ligne de cette zone, avec sa préposition (« au Désert oublié »). */
+  getPlotRowOpening: function (plotIndex) {
+    var row = Math.floor(Number(plotIndex) / 3);
+    return window.WorldCaps ? WorldCaps.withPrep(row) : "dans un prochain monde";
   },
 
   /* Totaux agrégés, utilisés par ProductionManager. getTotalStock() somme
@@ -169,6 +194,7 @@ var ProductionPlotsSystem = {
     var plots = this.getPlots(buildingId);
     var plot = plots[plotIndex];
     if (!plot || plot.state !== "locked") return { ok: false, reason: "Zone invalide" };
+    if (!this.isPlotRowOpen(plotIndex)) return { ok: false, reason: "S'ouvre " + this.getPlotRowOpening(plotIndex) };
 
     var cost = getProductionPlotUnlockCost(buildingId, plotIndex);
     if (!cost) return { ok: false, reason: "Zone invalide" };
@@ -194,7 +220,7 @@ var ProductionPlotsSystem = {
     var plots = this.getPlots(buildingId);
     var plot = plots[plotIndex];
     if (!plot || plot.state !== "open") return { ok: false, reason: "Zone invalide" };
-    if (this.isPlotMaxLevel(plot)) return { ok: false, reason: "Niveau maximum" };
+    if (this.isPlotMaxLevel(plot)) return { ok: false, reason: this.isPlotLevelWorldCapped(plot) ? "Plafond de ce monde" : "Niveau maximum" };
 
     var cost = getProductionPlotUpgradeCost(buildingId, plot.level, plotIndex);
     var canAfford = Object.keys(cost).every(function (key) {

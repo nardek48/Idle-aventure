@@ -75,6 +75,8 @@ var ProductionManager = {
       // ce qui était câblé sur "farm" en dur depuis v3.96.0.
       if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
         ProductionPlotsSystem.ensurePlots(id);
+        // v3.289.0 : bâtiment déjà ouvert avant la dotation = acquis, pas de versement rétroactif
+        if (typeof game.production[id].giftGranted !== "boolean") game.production[id].giftGranted = true;
         return;
       }
       if (!game.production[id] || typeof game.production[id] !== "object") {
@@ -101,6 +103,37 @@ var ProductionManager = {
     if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
       ProductionPlotsSystem.ensurePlots(id);
     }
+    this._grantUnlockGift(id);
+  },
+
+  /* v3.289.0 : dotation d'ouverture (PRODUCTION_UNLOCK_GIFT), une seule fois par bâtiment.
+     Le marqueur vit dans game.production[id] (bloc déjà sauvegardé tel quel) : unlockBuilding
+     est rappelée à chaque popup de fin de quête, il faut donc un vrai verrou. */
+  _grantUnlockGift: function (id) {
+    var b = game.production && game.production[id];
+    if (!b || b.giftGranted === true) return;
+    b.giftGranted = true;
+    var gift = window.PRODUCTION_UNLOCK_GIFT || {};
+    var parts = [];
+    Object.keys(gift).forEach(function (k) {
+      var n = WarehouseManager.addResource(k, gift[k], true);
+      var def = WAREHOUSE_RESOURCES[k];
+      if (n > 0) parts.push("+" + n + " " + (def ? def.name : k));
+    });
+    if (parts.length) {
+      var def = PRODUCTION_BUILDINGS[id];
+      addLog("🧺 L'intendant livre de quoi bâtir (" + (def ? def.name : id) + ") : " + parts.join(", "), "event");
+      if (typeof showToast === "function") showToast("🧺 " + parts.join(" · "), 1800);
+    }
+  },
+
+  /* Résumé lisible de la dotation, pour les cartes de quête. */
+  getUnlockGiftSummary: function () {
+    var gift = window.PRODUCTION_UNLOCK_GIFT || {};
+    return Object.keys(gift).map(function (k) {
+      var def = WAREHOUSE_RESOURCES[k];
+      return formatNumber(gift[k]) + " " + (def ? def.name : k);
+    }).join(" · ");
   },
 
   /* v3.97.0 : tout bâtiment géré par ProductionPlotsSystem (9 zones indépendantes) n'a

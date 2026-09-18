@@ -60,8 +60,19 @@ var WorkshopsSystem = {
     return this.ensureWorkshop(def.buildingId, workshopId).level;
   },
 
+  /* v3.289.0 : niveau max EFFECTIF = min(max propre, plafond du monde atteint —
+     data/world-caps.js). Un atelier déjà plus haut garde son niveau. */
+  getMaxLevel: function () {
+    var cap = window.WorldCaps ? WorldCaps.getWorkshopLevel() : Infinity;
+    return Math.min(WORKSHOP_LEVEL_CONFIG.maxLevel, cap);
+  },
+
   isMaxLevel: function (workshopId) {
-    return this.getLevel(workshopId) >= WORKSHOP_LEVEL_CONFIG.maxLevel;
+    return this.getLevel(workshopId) >= this.getMaxLevel();
+  },
+
+  isWorldCapped: function (workshopId) {
+    return this.isMaxLevel(workshopId) && this.getLevel(workshopId) < WORKSHOP_LEVEL_CONFIG.maxLevel;
   },
 
   /* Taille de file max ACTUELLE de l'atelier = son niveau (niveau 1 -> 1 entrée,
@@ -202,7 +213,7 @@ var WorkshopsSystem = {
   upgradeWorkshop: function (workshopId) {
     var def = WORKSHOPS_CONFIG[workshopId];
     if (!def || !def.active) return { ok: false, reason: "Atelier invalide" };
-    if (this.isMaxLevel(workshopId)) return { ok: false, reason: "Niveau maximum" };
+    if (this.isMaxLevel(workshopId)) return { ok: false, reason: this.isWorldCapped(workshopId) ? "Plafond de ce monde" : "Niveau maximum" };
 
     var cost = this.getUpgradeCost(workshopId);
     if (!cost) return { ok: false, reason: "Atelier invalide" };

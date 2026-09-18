@@ -16,7 +16,9 @@ function buildApothecaryCraftRowHTML(potionId) {
   if (level <= 0) return ""; // pas d'Apothicaire : la Boutique est inchangée
 
   var unlocked = ApothecaryManager.isUnlocked(potionId);
-  var required = ApothecaryManager.getRequiredLevel(potionId);
+  // v3.291.0 : les recettes se gagnent par commande, plafond quotidien hors Soin mineur
+  var capped = !!recipe.capped;
+  var remaining = ApothecaryManager.getDailyRemaining();
 
   var h = '<div class="potion-craft-row' + (unlocked ? '' : ' is-locked') + '">';
   h += '<span class="potion-craft-label"><img class=ico-inline src=images/Icons/village_buildings/apothecary.png> Préparer</span>';
@@ -34,7 +36,9 @@ function buildApothecaryCraftRowHTML(potionId) {
   h += '</span>';
 
   if (!unlocked) {
-    h += '<span class="potion-craft-locked"><img class=ico-inline src=images/Icons/system/lock_closed.png> Apothicaire niv. ' + required + '</span>';
+    h += '<span class="potion-craft-locked"><img class=ico-inline src=images/Icons/system/lock_closed.png> ' + esc(ApothecaryManager.getLockReason(potionId)) + '</span>';
+  } else if (capped && remaining <= 0) {
+    h += '<span class="potion-craft-locked">Fini pour aujourd\u2019hui (' + ApothecaryManager.getDailyCap() + '/' + ApothecaryManager.getDailyCap() + ')</span>';
   } else if (ApothecaryManager.canAfford(potionId)) {
     h += '<button type="button" class="btn-buy potion-craft-btn" onclick="ApothecaryManager.craft(\'' + esc(potionId) + '\')">Préparer</button>';
   } else {
@@ -119,7 +123,9 @@ function buildPotionShopHTML() {
 function buildHealingPotionCardHTML(potion) {
   var stock = PotionManager.getHealingStock(potion.id);
   var cost = PotionManager.getCost(potion);
-  var canBuy = (game.gold || 0) >= cost;
+  // v3.291.0 : limite d'achat quotidienne (Soin majeur : 10)
+  var buyLeft = PotionManager.getHealingBuyRemaining(potion.id);
+  var canBuy = (game.gold || 0) >= cost && buyLeft > 0;
 
   var h = '<div class="nb-purchase-card">';
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(potion.icon, "nb-purchase-icon", potion.name) + '</div></div>';
@@ -127,8 +133,15 @@ function buildHealingPotionCardHTML(potion) {
   h += '<div class="nb-purchase-name">' + esc(potion.name) + '</div>';
   h += '<div class="nb-purchase-desc">Restaure ' + Math.round(potion.healPercent * 100) + '% des PV max, à la demande depuis l\u2019écran Combat.</div>';
   h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/combat_status/heal_incoming.png> Stock : ' + stock + '</div>';
+  if (buyLeft !== Infinity) {
+    h += '<div class="nb-purchase-meta">Colporteur : ' + buyLeft + ' / ' + potion.dailyBuyLimit + ' aujourd\u2019hui</div>';
+  }
   h += '</div>';
-  h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
+  if (buyLeft <= 0) {
+    h += '<div class="nb-purchase-buy-col"><button class="btn-buy cant-afford" type="button" disabled>ÉPUISÉ</button></div>';
+  } else {
+    h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
+  }
   h += '</div>'; // fin .nb-purchase-card
 
   var craft = buildApothecaryCraftRowHTML(potion.id);

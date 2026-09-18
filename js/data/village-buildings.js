@@ -33,8 +33,9 @@ function getVillageBuildSeconds(targetLevel) {
 window.getVillageBuildSeconds = getVillageBuildSeconds;
 
 /* Rang de l'Atelier de Construction requis pour ouvrir un chantier.
-   Seuils actés : niveau 1 → rang 1, 3 → rang 2, 5 → rang 3, 7 → rang 4. */
-var VILLAGE_RANK_THRESHOLDS = [1, 3, 5, 7];
+   v3.289.0 (D12) : seuils [1, 2, 3, 4] — à [1, 3, 5, 7], l'Atelier plafonné à 4 en Forêt
+   rendait Halle, Taverne, Entrepôt et Palissade inconstructibles dans leur propre monde. */
+var VILLAGE_RANK_THRESHOLDS = [1, 2, 3, 4];
 window.VILLAGE_RANK_THRESHOLDS = VILLAGE_RANK_THRESHOLDS;
 
 var VILLAGE_BUILDINGS = {
@@ -145,10 +146,9 @@ var VILLAGE_BUILDINGS = {
     icon: "images/Icons/workshops/smithing_station.png",
     iconImg: "images/Icons/village_buildings/village_forge.png",
     rank: 2,
-    /* Conception : 6 niveaux, un par monde, chacun ouvrant 5 niveaux de forge
-       sur les pièces — soit 30 au total, c'est-à-dire EXACTEMENT un cran de
-       rareté (voir systems/forge-system.js). Le palier de bâtiment et le
-       matériau de monde sont donc le même verrou, exprimé une fois.
+    /* Conception : 6 niveaux, un par monde. v3.289.0 : chacun ouvre 2 niveaux de
+       reforge (5 avant, plafond qui ne mordait jamais — voir systems/forge-system.js).
+       Fermée en Forêt, ouverte au Désert (data/world-caps.js).
 
        v3.221.0 : limité à 2 pour l'instant (10 niveaux de forge). Les niveaux 3
        à 6 exigent les matériaux des mondes 2 à 5, qui n'existent pas encore —
@@ -156,7 +156,6 @@ var VILLAGE_BUILDINGS = {
        quand son matériau est arrivé. */
     maxLevel: 2,
     implemented: true,
-    lockLabel: "Atelier niveau 3",
     desc: "Reforge une pièce d'équipement. Le niveau appartient à l'emplacement, pas à l'objet : changer de pièce ne fait rien perdre.",
     costTiers: [
       {
@@ -173,7 +172,9 @@ var VILLAGE_BUILDINGS = {
       }
     ],
     effectLabel: function (level) {
-      var max = level * 5;
+      // v3.289.0 : 2 niveaux de reforge par niveau de bâtiment (FORGE_LEVELS_PER_BUILDING_LEVEL)
+      var per = (typeof FORGE_LEVELS_PER_BUILDING_LEVEL === "number") ? FORGE_LEVELS_PER_BUILDING_LEVEL : 2;
+      var max = level * per;
       return max <= 0 ? "Aucune reforge possible"
         : ("Reforge jusqu'au niveau " + max + " sur chaque emplacement");
     }
@@ -185,12 +186,11 @@ var VILLAGE_BUILDINGS = {
     icon: "images/Icons/village_buildings/apothecary.png",
     iconImg: "images/Icons/village_buildings/apothecary.png",
     rank: 2,
-    /* 6 niveaux : un par recette. Au-delà, il n'y aurait plus rien à ouvrir —
-       un niveau qui ne débloque rien serait un piège à ressources. */
+    /* 6 niveaux. v3.291.0 : le niveau donne la CAPACITÉ (préparations par jour), les
+       recettes se gagnent par commande dans la fiche (data/apothecary-recipes.js). */
     maxLevel: 6,
     implemented: true,
-    lockLabel: "Atelier niveau 3",
-    desc: "Prépare les potions avec des ressources plutôt qu'avec de l'or. Chaque niveau ouvre une recette de plus.",
+    desc: "Prépare les potions avec des ressources plutôt qu'avec de l'or. Les recettes se gagnent en livrant ses commandes ; chaque niveau permet plus de préparations par jour.",
     costTiers: [
       {
         minLevel: 0, maxLevel: 2,
@@ -206,24 +206,25 @@ var VILLAGE_BUILDINGS = {
       }
     ],
     effectLabel: function (level) {
-      var n = Math.min(level, (window.APOTHECARY_RECIPES || []).length || 6);
-      return n <= 0 ? "Aucune recette encore ouverte" : ("Recettes ouvertes : " + n);
+      // v3.291.0 : 4 au niveau 1, +2 par niveau suivant (ApothecaryManager.getDailyCap)
+      var cap = (window.ApothecaryManager) ? ApothecaryManager.getDailyCap(level) : 0;
+      return cap <= 0 ? "Aucune préparation" : (cap + " préparations par jour (Soin mineur libre)");
     }
   },
 
   /* v3.229.0 (chantier Équipement multi-affixes, Lot 5) : puits à or et à Sève.
      Le niveau ouvre les raretés relançables, comme la Forge ouvre des niveaux.
-     Limité à 2 : le Légendaire ne tombe qu'à la Tour, un niveau 3 n'ouvrirait
-     rien d'atteignable (même règle que la Forge en v3.221.0). */
+     v3.289.0 (D12) : maxLevel 2 -> 3. ENCHANT_RARITY_BY_LEVEL compte trois groupes : à 2,
+     le Légendaire n'était relançable par personne. Le plafond par monde (data/world-caps.js)
+     fait le reste : 1 au Désert, 2 à la Crypte, 3 à la Tour. */
   enchanter: {
     id: "enchanter",
     name: "Enchanteresse",
     icon: "images/Icons/scene/node_discovery.png",
     iconImg: "images/Icons/village_buildings/enchantress_tower.png",
     rank: 2,
-    maxLevel: 2,
+    maxLevel: 3,
     implemented: true,
-    lockLabel: "Atelier niveau 3",
     desc: "Relance la valeur d'un bonus sur une pièce équipée. Le bonus ne change jamais de nature, et la pièce ne peut pas empirer.",
     costTiers: [
       {
@@ -237,6 +238,14 @@ var VILLAGE_BUILDINGS = {
         resources: ["gold", "planche", "pierre", "seve_aeswyn", "resine_durcie"],
         baseCost: { gold: 3000, planche: 80, pierre: 95, seve_aeswyn: 14, resine_durcie: 5 },
         costMult: 1.45
+      },
+      /* v3.289.0 : palier provisoire du niveau 3, inatteignable avant la Tour. À refaire
+         avec le matériau de ce monde quand il existera. */
+      {
+        minLevel: 2, maxLevel: 2,
+        resources: ["gold", "planche", "pierre", "seve_aeswyn", "resine_durcie"],
+        baseCost: { gold: 9000, planche: 150, pierre: 180, seve_aeswyn: 30, resine_durcie: 12 },
+        costMult: 1.50
       }
     ],
     effectLabel: function (level) {
@@ -254,18 +263,19 @@ var VILLAGE_BUILDINGS = {
     name: "Halle marchande",
     icon: "images/Icons/subtabs/equipment_shop.png",
     iconImg: "images/Icons/village_buildings/merchant_hall.png",
-    rank: 3,
+    rank: 4,   // v3.289.0 (D12) : Atelier 4
     /* 10 niveaux : 5 emplacements de vitrine gagnés (un tous les deux niveaux)
        et une remise croissante sur le renouvellement. */
     maxLevel: 10,
     implemented: true,
-    lockLabel: "Atelier niveau 5",
     desc: "Agrandit l'échoppe d'équipement : plus d'emplacements en vitrine, et un renouvellement moins cher. L'échoppe reste à sa place, dans Équipement → Échoppe.",
     costTiers: [
       {
         minLevel: 0, maxLevel: 4,
         resources: ["gold", "planche", "pierre"],
-        baseCost: { gold: 800, planche: 40, pierre: 50 },
+        /* v3.290.0 (équilibrage Forêt) : ×0,75 (800/40/50 avant). Mesuré au banc
+           village-economy-bench, fin du village de la Forêt dans la cible de 4 à 6 h. */
+        baseCost: { gold: 600, planche: 30, pierre: 38 },
         costMult: 1.38
       },
       {
@@ -289,12 +299,11 @@ var VILLAGE_BUILDINGS = {
     name: "Taverne",
     icon: "images/Icons/village_buildings/tavern.png",
     iconImg: "images/Icons/village_buildings/tavern.png",
-    rank: 3,
+    rank: 4,   // v3.289.0 (D12) : Atelier 4
     /* 5 niveaux, un contrat par niveau : chaque chantier se voit tout de suite
        sur le tableau. */
     maxLevel: 5,
     implemented: true,
-    lockLabel: "Atelier niveau 5",
     desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. Livrer paie mieux que vendre à l'Entrepôt : c'est le débouché du surplus de Production.",
     costTiers: [
       {
@@ -322,16 +331,16 @@ var VILLAGE_BUILDINGS = {
     name: "Entrepôt agrandi",
     icon: "images/Icons/system/warehouse_supplies.png",
     iconImg: "images/Icons/village_buildings/warehouse_expanded.png",
-    rank: 4,
+    rank: 3,   // v3.289.0 (D12) : Atelier 3
     maxLevel: 10,
     implemented: true,
-    lockLabel: "Atelier niveau 7",
     desc: "Relève le plafond de stockage de toutes les ressources fabriquées. Les matières brutes n'ont pas de plafond et ne sont pas concernées.",
     costTiers: [
       {
         minLevel: 0, maxLevel: 4,
         resources: ["gold", "planche", "pierre"],
-        baseCost: { gold: 1200, planche: 50, pierre: 65 },
+        /* v3.290.0 (équilibrage Forêt) : ×0,75 (1200/50/65 avant). */
+        baseCost: { gold: 900, planche: 38, pierre: 49 },
         costMult: 1.38
       },
       {
@@ -354,19 +363,30 @@ var VILLAGE_BUILDINGS = {
     name: "Palissade",
     icon: "images/Icons/combat_stats/stat_defense.png",
     iconImg: "images/Icons/village_buildings/palisade.png",
-    rank: 4,
-    /* v3.257.0 (Cartes Vivantes, C-3) : 10 niveaux, paliers de l'Entrepôt agrandi (décision
+    rank: 2,   // v3.289.0 (D12) : Atelier 2 — protège d'une mécanique qu'on découvre tôt
+    /* v3.290.0 : les niveaux de la Forêt ont désormais leur propre palier (voir costTiers).
+       v3.257.0 (Cartes Vivantes, C-3) : 10 niveaux, paliers de l'Entrepôt agrandi (décision
        Seb 16/09/2026). Frein 7 %/niveau sur l'échec ; anneau 1 tenu au niveau 3, anneau 2 au
        7, anneau 3 au 10 — au 10, le Recouvrement ne reprend plus rien (immunité de plafond,
        décision Seb). Révèle le nom des secteurs au front dès le niveau 5. Valeurs lues sur
        LIVING_MAP_RULES.palisade par LivingMapManager. */
     maxLevel: 10,
     implemented: true,
-    lockLabel: "Atelier niveau 7",
     desc: "Le mur d'Aeswyn sur la carte de la Forêt : chaque niveau freine le Recouvrement quand une expédition échoue, et les anneaux tenus survivent à l'Ascension.",
     costTiers: [
+      /* v3.290.0 (équilibrage Forêt, décision Seb) : palier PROPRE pour les trois niveaux
+         de la Forêt. Premier niveau bon marché — la cible le veut à l'arrivée au Désert —
+         mais progression plus raide (×1,7 contre ×1,38) : 250/425/722 or, 15/25/43
+         planches, 25/42/72 pierre. Les niveaux du Désert gardent les anciens paliers de
+         l'Entrepôt, à recalibrer avec le Désert. */
       {
-        minLevel: 0, maxLevel: 4,
+        minLevel: 0, maxLevel: 2,
+        resources: ["gold", "planche", "pierre"],
+        baseCost: { gold: 250, planche: 15, pierre: 25 },
+        costMult: 1.70
+      },
+      {
+        minLevel: 3, maxLevel: 4,
         resources: ["gold", "planche", "pierre"],
         baseCost: { gold: 1200, planche: 50, pierre: 65 },
         costMult: 1.38

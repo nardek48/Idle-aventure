@@ -100,6 +100,13 @@ function getVillageLockLabel(def) {
     return step ? step.replace(/^Objectif\s*:\s*/, "") : "Bientôt";
   }
   if (!def.implemented) return "Bientôt";
+  // v3.289.0 : fermé dans ce monde -> le monde qui l'ouvre, avant tout rang
+  if (VillageBuildingManager.getLevel(def.id) === 0 && VillageBuildingManager.getMaxLevel(def.id) === 0) {
+    return VillageBuildingManager.getWorldCapLabel(def.id);
+  }
+  if (def.rank > 0 && VillageBuildingManager.getRank() < def.rank) {
+    return "Atelier niveau " + VILLAGE_RANK_THRESHOLDS[def.rank - 1];
+  }
   return def.lockLabel || ("Atelier niveau " + VILLAGE_RANK_THRESHOLDS[def.rank - 1]);
 }
 
@@ -148,12 +155,14 @@ function buildVillageBuildingCardHTML(id) {
        + esc(formatTime(VillageBuildingManager.getSiteSecondsLeft())) + '</div>';
 
   } else if (state === "maxed") {
-    h += '<div class="vb-card-level">Niveau ' + level + ' / ' + def.maxLevel + '</div>';
-    h += '<div class="vb-card-status">Niveau maximum</div>';
+    // v3.289.0 : plafond du monde -> on dit où se trouve la suite
+    h += '<div class="vb-card-level">Niveau ' + level + ' / ' + VillageBuildingManager.getMaxLevel(id) + '</div>';
+    h += '<div class="vb-card-status">' + esc(VillageBuildingManager.isWorldCapped(id)
+      ? VillageBuildingManager.getWorldCapLabel(id) : 'Niveau maximum') + '</div>';
 
   } else if (state === "built") {
     var afford = VillageBuildingManager.getAffordability(id);
-    h += '<div class="vb-card-level">Niveau ' + level + ' / ' + def.maxLevel + '</div>';
+    h += '<div class="vb-card-level">Niveau ' + level + ' / ' + VillageBuildingManager.getMaxLevel(id) + '</div>';
     h += '<div class="vb-card-status">' + (afford.all ? '<img class=ico-inline src=images/Icons/system/upgrade.png> Améliorable' : 'Matériaux manquants') + '</div>';
 
   } else { /* ready */

@@ -118,7 +118,7 @@ function buildVillageBuildingSheetHTML(id) {
   h += buildVillageBuildingIconHTML(def, "vb-sheet-icon");
   h += '<div class="vb-sheet-head-text">';
   h += '<div class="vb-sheet-title">' + esc(def.name) + '</div>';
-  h += '<div class="vb-sheet-level">' + (level === 0 ? 'Non construit' : 'Niveau ' + level + ' / ' + def.maxLevel) + '</div>';
+  h += '<div class="vb-sheet-level">' + (level === 0 ? 'Non construit' : 'Niveau ' + level + ' / ' + VillageBuildingManager.getMaxLevel(id)) + '</div>';
   h += '</div></div>';
 
   h += '<div class="vb-sheet-text">' + esc(def.desc) + '</div>';
@@ -143,6 +143,7 @@ function buildVillageBuildingSheetHTML(id) {
   if (id === "apothecary" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToPotions()">'
        + '<img class=ico-inline src=images/Icons/subtabs/potions.png> Préparer dans Boutique → Potions ›</div>';
+    h += buildApothecaryOrdersHTML(); // v3.291.0 : les recettes se gagnent ici
   }
 
   /* La Forge, comme la Taverne, porte son contenu dans sa fiche : reforger n'a
@@ -221,7 +222,9 @@ function buildVillageBuildingSheetHTML(id) {
   } else if (maxed) {
     h += '<div class="vb-sheet-actions">';
     h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">Fermer</button>';
-    h += '<button class="settings-btn primary is-maxed" type="button" disabled>Niveau maximum</button>';
+    // v3.289.0 : plafond du monde -> le bouton dit où se trouve la suite
+    h += '<button class="settings-btn primary is-maxed" type="button" disabled>'
+       + esc(VillageBuildingManager.isWorldCapped(id) ? VillageBuildingManager.getWorldCapLabel(id) : 'Niveau maximum') + '</button>';
     h += '</div>';
 
   } else if (!def.implemented) {
@@ -254,6 +257,58 @@ function buildVillageBuildingSheetHTML(id) {
   h += '</div></div>';
   return h;
 }
+
+/* v3.291.0 : commandes de l'Apothicaire, dans sa fiche (décision Seb). Une recette
+   acquise est cochée, une commande ouverte montre ses ingrédients et « Livrer », une
+   commande d'un monde pas encore atteint dit où elle s'ouvre. */
+function buildApothecaryOrdersHTML() {
+  var A = window.ApothecaryManager;
+  if (!A) return "";
+  var h = '<div class="vb-sheet-effect"><strong>Aujourd\u2019hui :</strong> '
+     + A.getDailyUsed() + ' / ' + A.getDailyCap() + ' préparations (Soin mineur libre)</div>';
+  h += '<div class="vb-sheet-effect"><strong>Commandes</strong> — livre une fois, la recette est acquise pour toujours.</div>';
+
+  (APOTHECARY_RECIPES || []).forEach(function (r) {
+    if (r.known) return;
+    var potion = A._getPotion(r);
+    var name = potion ? potion.name : r.potionId;
+
+    if (A.isLearned(r.potionId)) {
+      h += '<div class="vb-sheet-effect">✔ ' + esc(name) + ' — recette acquise</div>';
+      return;
+    }
+    if (!A.isOrderOpen(r.potionId)) {
+      h += '<div class="vb-sheet-effect is-locked"><img class=ico-inline src=images/Icons/system/lock_closed.png> '
+         + esc(name) + ' — ' + esc(A.getLockReason(r.potionId)) + '</div>';
+      return;
+    }
+
+    h += '<div class="vb-sheet-effect"><strong>' + esc(name) + '</strong></div>';
+    h += '<div class="vb-cost-list">';
+    Object.keys(r.order).forEach(function (k) {
+      var meta = getVillageCostMeta(k);
+      var have = WarehouseManager.getAmount(k);
+      var ok = have >= r.order[k];
+      h += '<div class="vb-cost-row' + (ok ? '' : ' is-missing') + '">' + meta.iconHTML
+         + '<span class="vb-cost-label">' + esc(meta.label) + '</span>'
+         + '<span class="vb-cost-amount">' + (ok ? '' : formatNumber(Math.floor(have)) + ' / ') + formatNumber(r.order[k]) + '</span></div>';
+    });
+    h += '</div>';
+    var can = A.canDeliver(r.potionId);
+    h += '<div class="vb-sheet-actions"><button class="settings-btn primary' + (can ? '' : ' is-unaffordable') + '" type="button"'
+       + (can ? ' onclick="deliverApothecaryOrderFromSheet(\'' + esc(r.potionId) + '\')"' : ' disabled') + '>'
+       + (can ? 'Livrer la commande' : 'Ingrédients manquants') + '</button></div>';
+  });
+  return h;
+}
+window.buildApothecaryOrdersHTML = buildApothecaryOrdersHTML;
+
+function deliverApothecaryOrderFromSheet(potionId) {
+  if (ApothecaryManager.deliverOrder(potionId) && openVillageBuildingId === "apothecary") {
+    openVillageBuildingSheet("apothecary"); // la fiche se redessine avec la recette cochée
+  }
+}
+window.deliverApothecaryOrderFromSheet = deliverApothecaryOrderFromSheet;
 
 function openVillageBuildingSheet(id) {
   var def = VILLAGE_BUILDINGS[id];

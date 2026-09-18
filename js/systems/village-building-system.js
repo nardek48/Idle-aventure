@@ -97,10 +97,33 @@ var VillageBuildingManager = {
     return Number((game.village.buildings[id] || {}).level || 0);
   },
 
+  /* v3.289.0 : plafond EFFECTIF = min(max propre, plafond du plus haut monde atteint)
+     (data/world-caps.js). Jamais sous le niveau déjà construit : rien n'est repris. */
+  getMaxLevel: function (id) {
+    var def = VILLAGE_BUILDINGS[id];
+    if (!def) return 0;
+    var cap = (window.WorldCaps) ? WorldCaps.getVillageCap(id) : Infinity;
+    return Math.max(this.getLevel(id), Math.min(def.maxLevel, cap));
+  },
+
+  /* Vrai quand le plafond vient du monde et non du bâtiment : la suite existe ailleurs. */
+  isWorldCapped: function (id) {
+    var def = VILLAGE_BUILDINGS[id];
+    return !!def && this.getMaxLevel(id) < def.maxLevel;
+  },
+
+  /* « S'ouvre au Désert oublié » / « Suite au Désert oublié » pour le prochain niveau
+     bloqué par le monde. */
+  getWorldCapLabel: function (id) {
+    var next = this.getLevel(id) + 1;
+    var where = window.WorldCaps ? WorldCaps.getWorldOpening(id, next) : "dans un prochain monde";
+    return (this.getLevel(id) === 0 ? "S'ouvre " : "Suite ") + where;
+  },
+
   isMaxLevel: function (id) {
     var def = VILLAGE_BUILDINGS[id];
     if (!def) return true;
-    return this.getLevel(id) >= def.maxLevel;
+    return this.getLevel(id) >= this.getMaxLevel(id);
   },
 
   /* ---------- rangs ---------- */
@@ -207,7 +230,7 @@ var VillageBuildingManager = {
         && !WorkshopUnlockManager.isWorkshopVisible()) {
       return "Objectif en cours";
     }
-    if (this.isMaxLevel(id)) return "Niveau maximum";
+    if (this.isMaxLevel(id)) return this.isWorldCapped(id) ? this.getWorldCapLabel(id) : "Niveau maximum";
     if (this.isBuilding()) return "Un chantier est déjà en cours";
     if (def.rank > 0 && this.getRank() < def.rank) {
       return "Atelier niveau " + VILLAGE_RANK_THRESHOLDS[def.rank - 1];
@@ -236,6 +259,11 @@ var VillageBuildingManager = {
       showToast(reason, 1200);
       return false;
     }
+
+    /* v3.291.0 : l'état de l'Apothicaire est posé AVANT tout chantier, au niveau actuel —
+       sa migration « déjà en jeu = acquis » ne doit jamais prendre un niveau construit
+       après la v3.291.0 pour un niveau hérité. */
+    if (id === "apothecary" && window.ApothecaryManager) ApothecaryManager.ensureState();
 
     var cost = this.getNextCost(id);
     this._starting = true;
@@ -339,7 +367,9 @@ var VillageBuildingManager = {
     if (this.isBuilding(id)) return "site";
 
     var level = this.getLevel(id);
-    if (level >= def.maxLevel) return "maxed";
+    // v3.289.0 : un bâtiment fermé dans ce monde (plafond 0) reste verrouillé, pas « maxed »
+    if (level === 0 && this.getMaxLevel(id) === 0) return "locked";
+    if (level >= this.getMaxLevel(id)) return "maxed";
     if (level > 0) return "built";
     if (!def.implemented) return "locked";
     if (def.rank > 0 && this.getRank() < def.rank) return "locked";

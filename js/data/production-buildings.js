@@ -89,6 +89,15 @@ function getProductionBuildingCost(id, level) {
   return result;
 }
 
+/* v3.289.0 (équilibrage Forêt) : chargement remis par l'intendant à l'ouverture de chaque
+   bâtiment de production, une seule fois. Mesuré (sim/village-economy-bench.js) : c'est le
+   levier qui ENTAME le village en Forêt sans raccourcir la suite — à l'arrivée au Désert,
+   Atelier 3 et Terrain 2 au lieu de l'Atelier 1 seul. Bois et pierre : ce que le village
+   consomme. Versé par ProductionManager.unlockBuilding. */
+/* v3.290.0 : 40/30 -> 60/45 — à 40/30, l'Apothicaire 1 manquait à l'arrivée au Désert. */
+var PRODUCTION_UNLOCK_GIFT = { bois: 60, pierre: 45 };
+
+window.PRODUCTION_UNLOCK_GIFT = PRODUCTION_UNLOCK_GIFT;
 window.PRODUCTION_CONFIG = PRODUCTION_CONFIG;
 window.PRODUCTION_BUILDINGS = PRODUCTION_BUILDINGS;
 window.getProductionBuildingCost = getProductionBuildingCost;

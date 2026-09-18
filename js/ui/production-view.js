@@ -101,7 +101,7 @@ function hasAffordableZoneAction(buildingId) {
   for (var i = 0; i < plots.length; i++) {
     var plot = plots[i];
     var cost = null;
-    if (plot.state === "locked") cost = getProductionPlotUnlockCost(buildingId, i);
+    if (plot.state === "locked") cost = ProductionPlotsSystem.isPlotRowOpen(i) ? getProductionPlotUnlockCost(buildingId, i) : null;
     else if (!ProductionPlotsSystem.isPlotMaxLevel(plot)) cost = getProductionPlotUpgradeCost(buildingId, plot.level, i);
     if (cost && Object.keys(cost).every(function (key) { return WarehouseManager.getAmount(key) >= cost[key]; })) return true;
   }
@@ -161,9 +161,12 @@ function buildPlotCardHTML(buildingId, plot, index, selectedIndex, cheapestIndex
 
   if (plot.state === "locked") {
     classNames += " is-locked";
+    var rowOpen = ProductionPlotsSystem.isPlotRowOpen(index);
     var h0 = '<div class="' + classNames + '" onclick="selectProductionPlot(\'' + buildingId + '\', ' + index + ')">';
     h0 += '<div class="farm-plot-card-lock-icon"><img class=ico-inline src=images/Icons/system/lock_closed.png></div>';
     h0 += '<div class="farm-plot-card-name">' + esc(zoneName) + '</div>';
+    // v3.289.0 : une ligne par monde — la zone dit quel monde l'ouvre
+    if (!rowOpen) h0 += '<div class="farm-plot-card-profile">' + esc((WORLDS[Math.floor(index / 3)] || {}).name || '') + '</div>';
     h0 += '</div>';
     return h0;
   }
@@ -221,6 +224,14 @@ function buildPlotActionsHTML(buildingId, plot, index) {
   var h = '<div class="farm-plot-actions">';
   h += '<div class="farm-plot-actions-title">' + esc(zoneName) + '</div>';
 
+  if (plot.state === "locked" && !ProductionPlotsSystem.isPlotRowOpen(index)) {
+    // v3.289.0 : ligne d'un monde pas encore atteint
+    h += '<div class="farm-plot-action-btn is-disabled"><span class="farm-plot-action-label">S\'ouvre '
+       + esc(ProductionPlotsSystem.getPlotRowOpening(index)) + '</span></div>';
+    h += '</div>';
+    return h;
+  }
+
   if (plot.state === "locked") {
     var unlockCost = getProductionPlotUnlockCost(buildingId, index);
     var canAffordUnlock = unlockCost && Object.keys(unlockCost).every(function (key) {
@@ -239,7 +250,9 @@ function buildPlotActionsHTML(buildingId, plot, index) {
 
   var isMaxLevel = ProductionPlotsSystem.isPlotMaxLevel(plot);
   if (isMaxLevel) {
-    h += '<div class="farm-plot-action-btn is-disabled"><span class="farm-plot-action-label">Niveau max</span></div>';
+    // v3.289.0 : le plafond du monde n'est pas le niveau max de la zone
+    h += '<div class="farm-plot-action-btn is-disabled"><span class="farm-plot-action-label">'
+       + (ProductionPlotsSystem.isPlotLevelWorldCapped(plot) ? 'Plafond de ce monde (niv. ' + plot.level + ')' : 'Niveau max') + '</span></div>';
   } else {
     var upgradeCost = getProductionPlotUpgradeCost(buildingId, plot.level, index);
     var canAffordUpgrade = Object.keys(upgradeCost).every(function (key) {
@@ -395,7 +408,7 @@ function buildZoneGroupActionsHTML(buildingId) {
   var firstLocked = null;
   var allPlots = ProductionPlotsSystem.getPlots(buildingId);
   for (var i = 0; i < allPlots.length; i++) {
-    if (allPlots[i].state === "locked") { firstLocked = i; break; }
+    if (allPlots[i].state === "locked" && ProductionPlotsSystem.isPlotRowOpen(i)) { firstLocked = i; break; }
   }
   if (firstLocked !== null) {
     var unlockCost = getProductionPlotUnlockCost(buildingId, firstLocked);
@@ -424,7 +437,7 @@ window.productionUpgradeCheapest = productionUpgradeCheapest;
 function productionSelectFirstLocked(buildingId) {
   var plots = ProductionPlotsSystem.getPlots(buildingId);
   for (var i = 0; i < plots.length; i++) {
-    if (plots[i].state === "locked") {
+    if (plots[i].state === "locked" && ProductionPlotsSystem.isPlotRowOpen(i)) {
       selectedProductionPlotIndex[buildingId] = i;
       if (typeof renderPanel === "function") renderPanel();
       return;
@@ -643,7 +656,10 @@ function buildWorkshopMissingInputHTML(recipe) {
    l'effet du niveau est confirmé au toast (voir upgradeWorkshop). */
 function buildWorkshopUpgradeCompactHTML(workshopId) {
   if (WorkshopsSystem.isMaxLevel(workshopId)) {
-    return '<span class="wk-up is-max">MAX</span>';
+    // v3.289.0 : plafond du monde, la suite viendra au monde suivant
+    return WorkshopsSystem.isWorldCapped(workshopId)
+      ? '<span class="wk-up is-max" title="Plafond de ce monde">MAX ' + WorkshopsSystem.getLevel(workshopId) + '</span>'
+      : '<span class="wk-up is-max">MAX</span>';
   }
   var cost = WorkshopsSystem.getUpgradeCost(workshopId);
   var afford = WorkshopsSystem.getUpgradeAffordability(workshopId);

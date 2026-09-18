@@ -31,8 +31,11 @@ var FORGE_MIN_STEP = 1.35;
 /* Niveaux de forge équivalant à un cran complet de rareté. */
 var FORGE_LEVELS_PER_RARITY_STEP = 30;
 
-/* Niveaux d'objet ouverts par niveau de bâtiment (6 × 5 = 30). */
-var FORGE_LEVELS_PER_BUILDING_LEVEL = 5;
+/* Niveaux d'objet ouverts par niveau de bâtiment.
+   v3.289.0 (D12) : 5 -> 2. À 5, le plafond ne mordait jamais (l'Acier freinait avant) :
+   il n'y avait rien à équilibrer. La puissance d'un niveau de reforge ne change pas
+   (FORGE_LEVELS_PER_RARITY_STEP reste 30) : seul le plafond se resserre. */
+var FORGE_LEVELS_PER_BUILDING_LEVEL = 2;
 
 var FORGE_RARITY_ORDER = ["common", "green", "rare", "epic", "legendary"];
 
@@ -114,8 +117,8 @@ var ForgeManager = {
   },
 
   /* --- Coût d'une reforge ------------------------------------------------
-     Or + matériau, le matériau dépendant du palier : acier sur les cinq
-     premiers niveaux, acier + résine ensuite. Le coût monte avec le niveau
+     Or + matériau, le matériau dépendant du palier : acier sur les niveaux du
+     premier niveau de bâtiment, acier + résine ensuite. Le coût monte avec le niveau
      visé, pas avec la rareté de la pièce : c'est l'emplacement qu'on forge. */
   getCost: function (slot) {
     var level = this.getLevel(slot);
@@ -126,7 +129,9 @@ var ForgeManager = {
       gold: Math.floor(400 * Math.pow(1.35, level)),
       acier: Math.max(2, Math.floor(2 + level * 1.5))
     };
-    if (target > 5) cost.resine_durcie = Math.max(1, Math.floor((target - 5) / 2) + 1);
+    // v3.289.0 : la Résine arrive avec le 2e niveau de bâtiment, comme avant (seuil suivi)
+    var seuil = FORGE_LEVELS_PER_BUILDING_LEVEL;
+    if (target > seuil) cost.resine_durcie = Math.max(1, Math.floor((target - seuil) / 2) + 1);
     return cost;
   },
 

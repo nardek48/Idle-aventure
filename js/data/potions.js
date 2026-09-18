@@ -95,7 +95,10 @@ var HEALING_POTIONS_DB = [
     name: "Potion de soin majeur",
     icon: "images/Icons/potions/potion_soin_majeur_icone.png",
     healPercent: 0.60,
-    cost: 400 // v3.115.0 : 3000 → 400, recalé sur l'économie active post-village (grille v3.114)
+    /* v3.291.0 (décision Seb) : 400 -> 600 et 10 achats par jour civil. Pousse vers la
+       préparation à l'Apothicaire, qui reste la voie bon marché. */
+    cost: 600,
+    dailyBuyLimit: 10
   }
 ];
 

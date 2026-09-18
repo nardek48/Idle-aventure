@@ -228,7 +228,7 @@ function buildConstructionEntryCardHTML() {
   h += '<div class="construction-entry-icon">' + renderIconOrEmojiHTML(def.icon || "images/Icons/workshops/masonry.png", "construction-entry-icon-img", def.name) + '</div>';
   h += '<div class="construction-entry-info">';
   h += '<div class="construction-entry-name">' + esc(def.name) + (questPending ? ' <span class="construction-quest-badge"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> Quête</span>' : '') + '</div>';
-  h += '<div class="construction-entry-level">' + (maxed ? 'Niveau maximum' : 'Niveau ' + level + ' / ' + def.maxLevel) + '</div>';
+  h += '<div class="construction-entry-level">' + (maxed ? 'Niveau maximum' : 'Niveau ' + level + ' / ' + VillageBuildingManager.getMaxLevel(id)) + '</div>';
   h += '</div>';
   h += '<div class="construction-entry-arrow">›</div>';
   h += '</div>';
