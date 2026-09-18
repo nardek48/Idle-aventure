@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.296.1"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.300.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -108,7 +108,6 @@ var PRECACHE_APP_SHELL = [
   "./js/data/potions.js",
   "./js/data/talents.js",
   "./js/data/upgrades.js",
-  "./js/data/world-quests.js",
   "./js/data/adventure-quests.js",
   "./js/data/story-quests.js",
   "./js/data/worlds.js",
@@ -141,10 +140,10 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/resume-system.js",
   "./js/systems/potion-system.js",
   "./js/systems/progression-system.js",
+  "./js/systems/world-travel-system.js",
   "./js/systems/save-system.js",
   "./js/systems/stats-system.js",
   "./js/systems/affliction-system.js",
-  "./js/systems/world-quest-system.js",
   "./js/systems/living-map-system.js",
   "./js/systems/adventure-quest-system.js",
   "./js/systems/story-quest-system.js",
@@ -158,7 +157,6 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/tap-rescue.js",
   "./js/ui/combat-group-view.js",
   "./js/ui/combat-view.js",
-  "./js/ui/cycle-summary-view.js",
   "./js/ui/combat-forecast-view.js",
   "./js/ui/dungeon-view.js",
   "./js/ui/equip-shop-view.js",
