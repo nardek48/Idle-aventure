@@ -746,3 +746,28 @@
   50% { box-shadow: 0 0 0 3px var(--nb-gold, #d9a441), 0 0 22px rgba(217, 164, 65, 0.95); }
 }
 @media (prefers-reduced-motion: reduce) { .qb-card.is-highlight { animation: none; } }
+
+/* v3.301.0 (W-2b) : quêtes proposées dans un autre monde, masquées du tableau — une ligne par monde. */
+.qb-other-world {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  max-width: 720px;
+  margin: 10px auto 0;
+  padding: 8px 12px;
+  border: 1px dashed rgba(138, 109, 43, .55);
+  border-radius: 10px;
+  background: rgba(255, 248, 230, .55);
+}
+.qb-other-world-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #5a4418;
+}
+.qb-other-world .settings-btn {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+  padding: 6px 14px;
+}

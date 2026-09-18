@@ -1104,14 +1104,10 @@ ok(freshState.resources.ration === 3, "point 3 : createInitialGameState().resour
 ok(freshState.resources.viande === 0, "point 3 : plus de 10 viande/6 eau résiduels dans l'état initial");
 
 console.log("\n[57] Retours de test v3.107.4 : 6 points");
-// Point 1 : L'Appel des Ruines masquée tant que le Désert n'est pas terminé
+// Point 1 : v3.299.0 (W-1c, D5) — plus aucune questline de monde, nulle part
 game = freshCombat("knight"); giveWeapon();
-run("WorldManager.worldIndex = 0; WorldManager.adventureIndex = 0;"); // tout début Forêt
-var m1 = g.MissionBoard.list();
-ok(!m1.find(function (m) { return m.sourceKind === "worldExpedition"; }), "point 1 : L'Appel des Ruines absente en tout début de Forêt");
-run("WorldManager.worldIndex = 1; WorldManager.adventureIndex = 1;"); // Désert, dernière aventure
-var m1b = g.MissionBoard.list();
-ok(!!m1b.find(function (m) { return m.sourceKind === "worldExpedition"; }), "point 1 : L'Appel des Ruines visible une fois le Désert (monde précédent) atteint dans sa dernière aventure");
+run("WorldManager.worldIndex = 1; WorldManager.adventureIndex = 1;"); // l'ancien cas d'affichage de « L'Appel des Ruines »
+ok(!g.MissionBoard.list().some(function (m) { return m.sourceKind === "worldExpedition"; }) && typeof g.WorldQuestManager === "undefined" && typeof g.WORLD_QUESTS === "undefined", "point 1 : questlines de monde retirées (système, données, tableau)");
 run("WorldManager.worldIndex = 0; WorldManager.adventureIndex = 0;"); // remet l'état par défaut pour la suite
 
 // Point 2 : pool de base réduit, Troll/Ronce réapparaissent au Cœur dès l'Acte III
@@ -2761,13 +2757,16 @@ var expectedScale = run("Math.pow(1 + WorldManager.worldIndex * (WORLD_MULT_BY_W
 run("SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('bourrin'); SceneRunManager.chooseIntensity('chemin'); SceneRunManager.acknowledgeMutator(); SceneRunManager.confirmLoadout(['torche','torche','torche']);");
 run("game.sceneRun.card[game.sceneRun.depth] = [{ type: 'combat', gabaritId: 'gobelins_foret' }];");
 run("SceneRunManager.enterGate(0);");
-var paEnemyHp = g.game.enemy.hp;
-// Reconstruit le scale IMPLIQUÉ par les PV obtenus (endurance connue via ENEMY_DB, PV = endurance * ENEMY_PV_MULT * scale)
+/* v3.298.0 (W-1b, D6) : le canevas déclare son monde. La Petite Aventure de la FORÊT tire des
+   ennemis de la Forêt même pour un joueur qui réside aux Ruines — décision de la conception
+   Désert §4.2 : chaque canevas nomme son monde au lieu de le supposer. Le bug v3.129.0 (ennemis
+   figés sur la Forêt pour TOUT canevas) ne revient pas : un canevas sans worldId suit toujours
+   le monde de résidence (contrôlé en [93]), et le cycle continue de peser sur l'échelle. */
+ok(["goblin"].indexOf(g.game.enemy.id) !== -1, "résidant aux Ruines, la Petite Aventure de la Forêt tire le groupe « gobelins_foret » (monde du canevas)");
 var paEnemyEndurance = run("(ENEMY_DB[game.enemy.id] && ENEMY_DB[game.enemy.id].stats.endurance) || 0");
-var impliedScale = paEnemyHp / (paEnemyEndurance * run("ENEMY_PV_MULT"));
-ok(Math.abs(impliedScale - expectedScale) / expectedScale < 0.15, "scale de l'ennemi de Petite Aventure aligné sur le monde/cycle RÉEL du joueur (attendu ~" + expectedScale.toFixed(2) + ", obtenu ~" + impliedScale.toFixed(2) + "), pas figé sur la Forêt d'origine (scale ~1 sans ce correctif)");
-var tapDmg = run("EquipmentManager.effectiveTapDamage()");
-ok(tapDmg < g.game.enemy.hp, "un joueur avancé (513 dégâts/coup ici) ne one-shot plus l'ennemi (PV=" + g.game.enemy.hp + ") — le combat rapporté 'fini trop vite' ne se reproduit plus");
+var impliedScale = g.game.enemy.maxHp / (paEnemyEndurance * run("ENEMY_PV_MULT"));
+var forestScale = 1 + 5 * 0.45; // monde 0, aventure 0, cycle 5
+ok(Math.abs(impliedScale - forestScale) / forestScale < 0.15, "échelle de la Forêt, cycle compris (attendu ~" + forestScale.toFixed(2) + ", obtenu ~" + impliedScale.toFixed(2) + ")");
 
 // Contrôle : sur une partie FRAÎCHE (monde 0, cycle 0), le comportement reste identique à
 // avant le correctif — aucune régression pour un joueur en tout début de jeu.
@@ -5361,6 +5360,11 @@ console.log("\n[31] v3.222.0 \u2014 Ascension : le h\u00e9ros garde ses niveaux,
 console.log("\n[32] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9riau de monde");
 (function () {
   var D = g.DungeonManager;
+  /* v3.300.0 : le Donjon II est fermé par la donnée (locked) jusqu'à W-4. Cette section teste
+     le verrou de MONDE : on lève le verrou de donnée le temps de la section. */
+  var d2 = g.DUNGEONS.find(function (d) { return d.id === 2; }), d2Locked = d2.locked;
+  d2.locked = false;
+  try {
 
   run("fullResetState(); game.playerName='D'; game.heroId='knight';");
   D.ensure();
@@ -5419,6 +5423,7 @@ console.log("\n[32] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9riau
   var html = run("buildDungeonCardHTML(DungeonManager.getById(1))");
   ok(html.indexOf("dungeon-tier-special") !== -1,
     "la carte de palier annonce le mat\u00e9riau avant d'entrer, pas apr\u00e8s coup");
+  } finally { d2.locked = d2Locked; }
 })();
 
 console.log("\n[33] v3.224.0 \u2014 Stat principale par classe (D11-D13, option A)");
@@ -9411,6 +9416,265 @@ console.log("\n[91] v3.296.1 — Tap immédiat sur l'écran Combat");
   T.onStart(ev(100, 200));
   ok(T.onEnd(ev(100, 200)) === false && clicks === 2, "bouton désactivé : jamais cliqué");
   btn.disabled = false;
+})();
+
+/* [92] v3.297.0 — W-1a : l'Histoire à plusieurs chapitres (chapitre de test injecté, retiré à la fin). */
+console.log("\n[92] v3.297.0 — W-1a : chapitres enchaînés, endroits « forest » généralisés, choix et registre");
+(function () {
+  var S = g.StoryQuestManager, Q = g.STORY_QUESTS;
+  var forestLen = Q.forest.steps.length;
+  Q.test2 = {
+    id: "test2", worldId: "desert", title: "Chapitre de test", subtitle: "Test", requiresChapter: "forest",
+    steps: [
+      { id: "test2_01", title: "Étape A", act: "Acte I", narrative: { objective: "Objectif A", completion: "Fin A",
+          completionDialogue: [{ who: "Sarkel", text: "Dessous." }, { who: null, text: "Il montre le sol." }] },
+        objectiveLabel: "A", unlockTabs: [], reward: { gold: 1 },
+        linkTo: { section: "adventure", cardId: "adv_aq_story_coeur" },
+        killTarget: { label: "Test", counter: function (gm) { return g.storyChapterCounter(gm, "test2", "companionWins"); }, target: 3 },
+        check: function (gm) { return g.storyChapterCounter(gm, "test2", "companionWins") >= 2; }, progress: function () { return ""; } },
+      { id: "test2_02", title: "Étape B", narrative: { objective: "B", completion: "B" }, objectiveLabel: "B", unlockTabs: [], reward: {},
+        check: function () { return true; }, progress: function () { return ""; } }
+    ]
+  };
+  try {
+    game = freshCombat("knight");
+    run("StoryQuestManager.ensure();");
+    ok(S.isChapterOpen("forest") === true && S.isChapterOpen("test2") === false, "chapitre 2 fermé tant que la Forêt n'est pas finie");
+    ok(S.getCurrentStep("test2") === null && !g.MissionBoard.list().some(function (m) { return m.id === "story_test2"; }), "chapitre fermé : aucune étape au tableau");
+    ok(g.buildStoryChainHTML().indexOf("Chapitre de test") === -1, "chapitre fermé : absent de l'écran Quêtes");
+    ok(S.isStepReached("test2_01") === false && S.isStepReached("forest_02") === false, "isStepReached : étape d'un chapitre fermé, ou pas encore atteinte = non");
+    game.totalKills += 4; run("StoryQuestManager._trackKills();");
+    ok(game.storyQuests.test2.counters.companionWins === 0, "chapitre fermé : aucun kill compté");
+
+    /* La Forêt se termine : le chapitre 2 s'ouvre. */
+    game.storyQuests.forest.currentStep = forestLen;
+    ok(S.isChapterCompleted("forest") && S.isChapterOpen("test2") && S.getCurrentStep("test2").id === "test2_01", "Forêt terminée : le chapitre 2 s'ouvre sur sa 1re étape");
+    ok(S.isStepReached("forest_12") === true && S.isStepReached("inconnue") === true, "isStepReached : chapitre terminé = oui ; id inconnu = oui");
+    ok(g.MissionBoard.list().some(function (m) { return m.id === "story_test2" && m.status === "available"; }), "étape du chapitre 2 au tableau");
+    ok(g.buildStoryChainHTML().indexOf("Chapitre terminé — le Désert t'attend.") !== -1, "texte de fin propre au chapitre de la Forêt");
+    S.acceptStep("test2");
+    ok(g.isStoryLinkedQuest("aq_story_coeur") === true && g.isStoryLinkedQuest("aq_forest_depths") === false, "quête liée à l'étape du chapitre 2 : visible au tableau");
+
+    /* Compteurs par chapitre. */
+    run("CompanionManager.unlock('wenna');");
+    game.totalKills += 2; run("StoryQuestManager._trackKills();");
+    ok(game.storyQuests.test2.counters.companionWins === 2, "kills avec compagnon comptés dans le chapitre actif (2)");
+    game.activeTab = "combat";
+    ok(g.getCombatMissionProgressLabel() === "Test · 2/3", "compteur de mission en combat lu sur le chapitre actif : " + g.getCombatMissionProgressLabel());
+    ok(S.isCurrentStepReady("test2") === true, "étape prête");
+
+    /* Dialogue de complétion à la réclamation. */
+    var html = g.buildQuestCompleteHTML({ title: "t", text: "x", dialogue: Q.test2.steps[0].narrative.completionDialogue });
+    ok(html.indexOf("story-dialogue-who") !== -1 && html.indexOf("Dessous.") !== -1 && html.indexOf("Il montre le sol.") !== -1, "popup de fin : dialogue de complétion rendu");
+    ok(S.claimStep("test2") === true && game.storyQuests.test2.currentStep === 1, "réclamation : étape suivante");
+
+    /* Choix et registre. */
+    ok(S.recordChoice("test2", "noms", "laisser") === true && S.getChoice("noms") === "laisser", "choix noté");
+    ok(S.recordChoice("test2", "noms", "deterrer") === false && S.getChoice("noms") === "laisser", "choix définitif : un second appel ne change rien");
+    var reg = S.getRegister();
+    ok(reg.garder === 1 && reg.donner === 0 && reg.soi === 0, "registre calculé : Garder 1");
+    S.recordChoice("test2", "roi", "soi");
+    reg = S.getRegister();
+    ok(reg.soi === 1 && reg.chaos === 1 && reg.garder === 1, "« pour soi » compte aussi pour le Chaos");
+    var saved = run("buildSaveData()");
+    ok(saved.storyQuests.test2.choices.noms === "laisser", "choix sauvegardé dans storyQuests (save-system.js intact)");
+
+    /* Élite : requiresStoryStep lu dans n'importe quel chapitre. */
+    ok(g.isEliteQuestUnlocked({ type: "elite", requiresStoryStep: "test2_02" }) === true && g.isEliteQuestUnlocked({ type: "elite", requiresStoryStep: "test2_99" }) === true, "élite : étape du chapitre 2 atteinte = visible");
+    game.storyQuests.test2.currentStep = 0;
+    ok(g.isEliteQuestUnlocked({ type: "elite", requiresStoryStep: "test2_02" }) === false, "élite : étape du chapitre 2 pas encore atteinte = masquée");
+  } finally {
+    delete Q.test2;
+    if (game.storyQuests) delete game.storyQuests.test2;
+  }
+  game = freshCombat("knight");
+  run("StoryQuestManager.ensure();");
+  ok(!g.MissionBoard.list().some(function (m) { return m.id === "story_test2"; }) && g.StoryQuestManager.getCurrentStep("forest").id === "forest_01", "chapitre de test retiré : partie neuve intacte");
+})();
+
+/* [93] v3.298.0 — W-1b : le canevas déclare son monde, journal scripté, voyage, cap par monde. */
+console.log("\n[93] v3.298.0 — W-1b : monde du canevas, journal par palier, traversée, cap journalier");
+(function () {
+  var R = g.SceneRunManager, T = g.SCENE_TEMPLATES;
+  game = freshCombat("knight");
+  /* Monde des combats d'un run. */
+  run("WorldManager.worldIndex = 1; WorldManager.adventureIndex = 1;");
+  var pl = R._combatPlace({ templateId: "petite_aventure_foret" });
+  ok(pl.world.id === "forest" && pl.adventureIndex === 0, "résidant au Désert : la Petite Aventure de la Forêt combat en Forêt (aventure 0)");
+  pl = R._combatPlace({ templateId: "expedition_faille" });
+  ok(pl.world.id === "desert" && pl.adventureIndex === 1, "canevas sans worldId : monde et aventure de résidence (comportement d'avant)");
+  pl = R._combatPlace({ templateId: "expedition_faille", livingMap: { mapId: "forest", sectorId: "gue" } });
+  ok(pl.world.id === "forest", "canevas sans worldId sur la carte de la Forêt : monde de la carte");
+  run("WorldManager.worldIndex = 0; WorldManager.adventureIndex = 1;");
+  ok(R._combatPlace({ templateId: "petite_aventure_foret" }).adventureIndex === 1, "résidant en Forêt : l'aventure de résidence reste lue (inchangé)");
+  ["sentier_obstrue", "bosquet_silencieux", "terre_en_friche", "veine_instable", "eboulis_ferreux", "source_tarie", "petite_aventure_foret"].forEach(function (id) {
+    if (T[id].worldId !== "forest") ok(false, id + " sans worldId");
+  });
+  ok(true, "les sept canevas de la Forêt déclarent worldId « forest »");
+
+  /* Journal scripté par palier. */
+  var fakeRun = { templateId: "test_journal", depth: 0, status: "gate" };
+  T.test_journal = { id: "test_journal", journalByDepth: { 1: "A", 3: { before: "B", after: "C" } } };
+  try {
+    ok(JSON.stringify(R.takeJournalLines(fakeRun)) === '["A"]', "palier 1 : sa ligne");
+    ok(R.takeJournalLines(fakeRun).length === 0, "une ligne ne sort qu'une fois");
+    fakeRun.depth = 2;
+    ok(JSON.stringify(R.takeJournalLines(fakeRun)) === '["B"]', "palier 3 : la ligne d'avant (combat à venir)");
+    fakeRun.depth = 3;
+    ok(JSON.stringify(R.takeJournalLines(fakeRun)) === '["C"]', "palier franchi : la ligne d'après");
+    fakeRun.depth = 1; fakeRun.journalShown = {};
+    ok(JSON.stringify(R.takeJournalLines(fakeRun)) === '["A"]', "journal remis à zéro, palier 2 sans entrée : seule la ligne du palier 1");
+    ok(R.takeJournalLines({ templateId: "petite_aventure_foret", depth: 0, status: "gate" }).length === 0, "canevas sans journalByDepth : rien");
+  } finally { delete T.test_journal; }
+
+  /* Voyage et cap. */
+  game = freshCombat("knight");
+  run("WarehouseManager.addResource('petite_ration', 5, true);");
+  game.unlockedTabs.village = true;
+  ok(R.getPetiteAventureCap() === 3, "Forêt : 3 Petites Aventures par jour");
+  var m = g.MissionBoard.getById("petite_aventure_foret");
+  ok(m && m.rewardSummary.indexOf("/3") !== -1, "tableau : « …/3 aujourd'hui » (" + (m && m.rewardSummary) + ")");
+  ok(g.WorldTravel.canTravelTo("desert") === false, "Désert jamais atteint : voyage libre refusé");
+  ok(g.WorldTravel.arrive("desert", 0) === true && g.WorldManager.worldIndex === 1 && g.WorldManager.adventureIndex === 0 && game.worldsEverReached[1] === true, "arrivée : monde de résidence posé, monde atteint");
+  ok(R.getPetiteAventureCap() === 4, "Désert atteint : 4 par jour, recalculé aussitôt");
+  ok(g.WorldTravel.travelTo("forest", 0) === true && g.WorldManager.worldIndex === 0 && R.getPetiteAventureCap() === 4, "retour en Forêt : le cap reste celui du plus haut monde atteint (4)");
+  game.huntRun = { active: true, questId: "hq_forest_boar", killsInLot: 0 };
+  ok(g.WorldTravel.travelTo("desert", 0) === false && g.WorldManager.worldIndex === 0, "voyage refusé pendant un run");
+  game.huntRun = { active: false, questId: null, killsInLot: 0 };
+  ok(g.WorldTravel.travelTo("ruins", 0) === false, "monde jamais atteint : refusé");
+
+  /* Traversée : la chambre finale d'un canevas à travelOnSuccess pose le monde. */
+  game = freshCombat("knight");
+  T.test_traversee = JSON.parse(JSON.stringify(T.source_tarie));
+  T.test_traversee.id = "test_traversee"; T.test_traversee.worldId = "desert";
+  delete T.test_traversee.unlockOnSuccess; delete T.test_traversee.boardRequires;
+  T.test_traversee.travelOnSuccess = { worldId: "desert", adventureIndex: 0 };
+  try {
+    var st = R.startRun("test_traversee");
+    ok(st && st.ok, "run de traversée lancé");
+    ok(g.WorldManager.worldIndex === 0, "pendant le run : toujours en Forêt");
+    game.sceneRun.status = "finale";
+    var fin = R.resolveFinale("sur");
+    ok(fin.ok && g.WorldManager.worldIndex === 1 && game.worldsEverReached[1] === true && game.sceneRun.status === "completed", "chambre finale résolue : arrivée au Désert");
+  } finally { delete T.test_traversee; }
+})();
+
+/* [94] v3.299.0 — W-1c : questlines de monde retirées ; « Tour atteinte » les remplace. */
+console.log("\n[94] v3.299.0 — W-1c : retrait de world-quests.js");
+(function () {
+  ok(typeof g.WorldQuestManager === "undefined" && typeof g.WORLD_QUESTS === "undefined" && typeof g.openCycleSummary === "undefined", "système, données et bilan de cycle absents");
+  game = freshCombat("knight");
+  game.cycleCount = 5;
+  ok(g.WorldManager.getCycleMilestoneMult() === 1, "5 cycles, Tour jamais atteinte : aucun bonus (comportement d'avant)");
+  game.worldsEverReached[5] = true;
+  ok(g.WorldManager.getCycleMilestoneMult() === 1.25, "Tour atteinte : bonus de palier de cycle (×1,25)");
+  var rar = g.getAllowedRarities();
+  ok(rar.length === g.WORLD_RARITY_UNLOCKS[g.WORLD_RARITY_UNLOCKS.length - 1].length, "Tour atteinte et cycle en cours : toutes les raretés");
+  delete game.worldsEverReached[5];
+  ok(g.getAllowedRarities().length === g.WORLD_RARITY_UNLOCKS[0].length, "Tour pas atteinte : raretés du monde courant");
+  game.cycleCount = 0;
+  var eq = { uid: "t1", slot: "weapon", name: "x", rarity: "common", stat: "tapDmg", value: 1, affixes: [] };
+  ok(g.addDropToInventory(eq) !== undefined, "butin ajouté sans questline de monde à alimenter");
+  var html = g.buildMapHTML ? g.buildMapHTML() : "";
+  ok(html.indexOf("Questline") === -1, "carte du monde : plus aucune mention de questline");
+  ok(g.WorldManager.meetsAscensionRequirement(1) === !!game.adventureQuestsCompleted.aq_forest_depths, "porte du Désert : toujours « Le Cœur de la Forêt » (lecture seule, sans advance)");
+})();
+
+/* [95] v3.300.0 — W-2 : chapitre 2 du Désert, étape 1 « La traversée ». */
+console.log("\n[95] v3.300.0 — W-2 : chapitre du Désert, la traversée");
+(function () {
+  var S = g.StoryQuestManager, R = g.SceneRunManager, T = g.SCENE_TEMPLATES.traversee_desert;
+  game = freshCombat("knight"); giveWeapon();
+  run("StoryQuestManager.ensure(); CompanionManager.unlock('wenna');");
+  ok(g.STORY_QUESTS.desert.requiresChapter === "forest" && S.getCurrentStep("desert") === null, "chapitre du Désert fermé tant que la Forêt n'est pas finie");
+  ok(g.DUNGEONS.find(function (d) { return d.worldId === "desert"; }).locked === true, "donjon du Désert fermé jusqu'à W-4");
+  game.storyQuests.forest.currentStep = g.STORY_QUESTS.forest.steps.length;
+  var st1 = S.getCurrentStep("desert");
+  ok(st1 && st1.id === "desert_01" && st1.linkTo.cardId === "scene_traversee_desert", "Forêt finie : « La traversée » ouvre le chapitre 2");
+  ok(st1.narrative.dialogue.length === 9 && st1.narrative.completionDialogue.length === 6, "textes validés : 9 répliques au départ, 6 à l'arrivée");
+  ok(g.MissionBoard.list()[0].id === "story_desert" || g.MissionBoard.list().some(function (m) { return m.id === "story_desert"; }), "étape au tableau");
+  S.acceptStep("desert");
+
+  /* Le run : coût, carte scriptée, monde de ses combats. */
+  game.resources.ration = 0;
+  ok(R.startRun("traversee_desert").ok === false, "sans Ration moyenne : départ refusé");
+  run("WarehouseManager.addResource('ration', 1, true);");
+  var started = R.startRun("traversee_desert");
+  ok(started.ok && g.WarehouseManager.getAmount("ration") === 0, "départ : 1 Ration moyenne payée");
+  var types = game.sceneRun.card.map(function (lvl) { return lvl.length + ":" + lvl[0].type + (lvl[0].gabaritId ? "/" + lvl[0].gabaritId : ""); }).join(" ");
+  ok(types === "1:obstacle/dalles_ensablees 1:source 1:combat/scarabees_desert 1:obstacle/vent_de_face", "carte scriptée : " + types);
+  ok(g.WorldManager.worldIndex === 0, "pendant la traversée : toujours résident de la Forêt");
+  var lines = R.takeJournalLines(game.sceneRun);
+  ok(lines.length === 1 && lines[0].indexOf("Les dalles du portail") === 0, "journal du palier 1");
+  game.sceneRun.depth = 2; game.sceneRun.status = "gate";
+  R.enterGate(0);
+  var foes = game.combat && game.combat.enemies ? game.combat.enemies : [game.enemy];
+  ok(foes.length === 3 && foes.every(function (e) { return e.id === "scarab"; }), "palier 3 : une nuée de trois scarabées du Désert");
+  var guard = 20;
+  while (game.sceneRun.status === "combat" && guard-- > 0) { var e = (game.combat && game.combat.enemies && game.combat.enemies[0]) || game.enemy; e.hp = 0; g.CombatEngine.killEnemy(e); }
+  ok(game.sceneRun.status !== "combat" && !game.sceneRun._combatBossSpawned, "nuée vaincue : aucun boss d'aventure (finalBoss: false)");
+  // Le retour sur l'écran d'expédition inscrit les lignes dues au journal de la vue (sceneRunLog).
+  g.buildSceneGateChoiceHTML();
+  var logTxt = (g.sceneRunLog || []).join(" | ");
+  ok(logTxt.indexOf("Wenna compte les carapaces") !== -1 && logTxt.indexOf("Le deuxième puits est sec") !== -1 && logTxt.indexOf("Un puits. La corde est neuve") !== -1, "journal de la vue : palier 2, après la nuée, palier 4");
+
+  /* L'arrivée. */
+  game.sceneRun.status = "finale";
+  var fin = R.resolveFinale("sur");
+  ok(fin.ok && g.WorldManager.worldIndex === 1 && game.worldsEverReached[1] === true, "chambre finale : arrivée au Désert");
+  ok(game.explorationProgression.desertCrossingCompleted === true && S.isCurrentStepReady("desert") === true, "l'étape est prête à réclamer");
+  ok(R.getPetiteAventureCap() === 4, "cap de Petites Aventures passé à 4");
+  var popup = null;
+  run("window.__openQC = openQuestCompletePopup; window.openQuestCompletePopup = function (c) { window.__qc = c; };");
+  S.claimStep("desert");
+  popup = g.__qc;
+  run("window.openQuestCompletePopup = window.__openQC;");
+  ok(popup && popup.dialogue && popup.dialogue[4].text === "Dessous." && popup.text.indexOf("camp du Portail") !== -1, "réclamation : scène d'arrivée au camp du Portail");
+  ok(S.getCurrentStep("desert") === null && game.storyQuests.desert.currentStep === 1, "après l'étape 1 : la suite arrive (étape 2 pas encore livrée)");
+})();
+
+/* [96] v3.301.0 — W-2b : voyage depuis la carte, tableau filtré par monde. */
+console.log("\n[96] v3.301.0 — W-2b : voyage libre et tableau par monde");
+(function () {
+  var MB = g.MissionBoard, WT = g.WorldTravel;
+  game = freshCombat("knight");
+  run("StoryQuestManager.ensure(); WarehouseManager.addResource('petite_ration', 3, true);");
+  game.unlockedTabs.village = true; game.explorationProgression.huntBuildingUnlocked = true;
+  game.storyQuests.forest.currentStep = g.STORY_QUESTS.forest.steps.length; // Forêt finie
+  ok(MB.getById("petite_aventure_foret").worldId === "forest" && MB.getById("scene_sentier_obstrue").worldId === "forest", "Petite Aventure et quêtes de déblocage portent leur monde");
+  ok(MB.list().some(function (m) { return m.id === "petite_aventure_foret"; }) && JSON.stringify(MB.hiddenByWorld()) === "{}", "en Forêt : rien de masqué");
+
+  /* Arrivée au Désert. */
+  WT.arrive("desert", 0);
+  var here = MB.list();
+  ok(!here.some(function (m) { return m.id === "petite_aventure_foret"; }), "au Désert : la Petite Aventure de la Forêt est masquée");
+  ok(here.some(function (m) { return m.id === "story_desert"; }), "l'Histoire reste visible");
+  ok(!!MB.getById("petite_aventure_foret"), "getById voit tous les mondes");
+  var hidden = MB.hiddenByWorld();
+  ok(hidden.forest >= 2, "masquées comptées par monde : " + JSON.stringify(hidden));
+  var html = g.buildOtherWorldQuestsHTML();
+  ok(html.indexOf("dans la Forêt enchantée") !== -1 && html.indexOf("travelToWorldFromUI('forest')") !== -1, "écran Quêtes : « N quêtes dans la Forêt enchantée » avec « Y aller »");
+
+  /* Ce qui est engagé n'est jamais masqué. */
+  g.AdventureQuestManager.start("hq_wolf_pack");
+  var wolf = MB.list().find(function (m) { return m.id === "adv_hq_wolf_pack"; });
+  ok(wolf && wolf.status === "running", "une quête de la Forêt EN COURS reste visible au Désert");
+  ok(WT.refusalReason("forest") === "Termine d'abord ton combat ou ton expédition" && g.buildOtherWorldQuestsHTML().indexOf("travelToWorldFromUI") === -1, "en run : voyage refusé, pas de bouton");
+  g.AdventureQuestManager.forfeit();
+
+  /* Voyage retour depuis l'interface. */
+  ok(g.travelToWorldFromUI("forest") === true && g.WorldManager.worldIndex === 0 && g.WorldManager.adventureIndex === 1, "retour en Forêt : chapitre fini -> le Cœur (dernière aventure)");
+  ok(MB.list().some(function (m) { return m.id === "petite_aventure_foret"; }), "en Forêt : la Petite Aventure de la Forêt revient");
+  ok(MB.list().some(function (m) { return m.id === "story_desert"; }), "l'Histoire du Désert reste visible depuis la Forêt");
+  ok(WT.refusalReason("forest") === "Tu y es déjà" && WT.refusalReason("ruins") === "Tu n'as pas encore atteint ce monde", "raisons de refus lisibles");
+  ok(WT.defaultAdventureFor("desert") === 0, "Désert pas fini : retour aux Dunes");
+
+  /* Carte du monde. */
+  ok(g.isWorldUnlocked(1) === true && g.getWorldProgressText(1) === "Atteint" && g.getWorldProgressText(0) === "Tu es ici" && g.getWorldProgressText(2) === "Verrouillé", "carte : Désert atteint mais quitté = ouvert");
+  var popup = g.buildWorldPopupHTML(1);
+  ok(popup.indexOf("travelToWorldFromUI('desert')") !== -1 && popup.indexOf("Y voyager") !== -1, "fiche du Désert : bouton « Y voyager »");
+  ok(popup.indexOf("combats avant le boss") === -1, "plus de « combats avant le boss » (farm libre)");
+  ok(g.buildWorldPopupHTML(0).indexOf("Y voyager") === -1, "fiche du monde courant : pas de bouton de voyage");
 })();
 
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
