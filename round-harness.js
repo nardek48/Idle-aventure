@@ -9381,31 +9381,35 @@ console.log("\n[90] v3.295.0 — Diagnostic tactile, sortie de combat forcée");
   ok(g.TouchDebug.isOn() === false && g.TouchDebug.on === false, "désactivation");
 })();
 
-/* [91] v3.296.0 — Secours de tap : click absent sur iPhone après un tap net sur un bouton du combat. */
-console.log("\n[91] v3.296.0 — Secours de tap sur l'écran Combat");
+/* [91] v3.296.0 → v3.296.1 — Tap sur l'écran Combat : clic dès le relâcher, click natif absorbé. */
+console.log("\n[91] v3.296.1 — Tap immédiat sur l'écran Combat");
 (function () {
   var T = g.TapRescue;
-  ok(typeof T === "object" && typeof T.fire === "function", "module chargé");
+  ok(typeof T === "object" && typeof T.onEnd === "function", "module chargé");
   var clicks = 0;
-  var btn = { isConnected: true, disabled: false, textContent: "Fuir", click: function () { clicks++; }, contains: function (x) { return x === btn; } };
+  var btn = { isConnected: true, disabled: false, textContent: "Fuir", click: function () { clicks++; } };
   btn.closest = function () { return btn; };
   var ev = function (x, y) { return { target: btn, changedTouches: [{ clientX: x, clientY: y }] }; };
+  var nat = function (x, y) { var st = 0; return { clientX: x, clientY: y, stopped: function () { return st; }, preventDefault: function () {}, stopPropagation: function () { st++; }, stopImmediatePropagation: function () { st++; } }; };
   game = freshCombat("knight");
-  T.onStart(ev(100, 200)); T.onEnd(ev(102, 201));
-  ok(!!T.pending, "tap net sur un bouton du combat : secours armé");
-  ok(T.fire() === true && clicks === 1, "aucun click natif : le bouton est cliqué une fois");
+  T.onStart(ev(100, 200));
+  ok(T.onEnd(ev(102, 201)) === true && clicks === 1, "tap net : bouton cliqué dès le relâcher, sans délai");
+  var n1 = nat(101, 200);
+  ok(T.onClick(n1) === true && n1.stopped() > 0 && clicks === 1, "click natif du même tap : absorbé, une seule action");
+  var n2 = nat(101, 200);
+  ok(T.onClick(n2) === false, "un second click natif n'est plus absorbé (fenêtre consommée)");
   T.onStart(ev(100, 200)); T.onEnd(ev(100, 200));
-  T.onClick({ target: btn });
-  ok(!T.pending && T.fire() === false && clicks === 1, "click natif arrivé : secours annulé, pas de double action");
-  T.onStart(ev(100, 200)); T.onEnd(ev(140, 200));
-  ok(!T.pending, "glissé de 40 px : pas un tap, rien d'armé");
+  ok(T.onClick(nat(300, 600)) === false && clicks === 2, "click natif ailleurs : jamais absorbé");
+  T.suppress = null;
+  T.onStart(ev(100, 200));
+  ok(T.onEnd(ev(140, 200)) === false && clicks === 2, "glissé de 40 px : pas un tap");
   game.activeTab = "campement";
-  T.onStart(ev(100, 200)); T.onEnd(ev(100, 200));
-  ok(!T.pending, "hors de l'écran Combat : le secours ne s'arme pas");
+  T.onStart(ev(100, 200));
+  ok(T.onEnd(ev(100, 200)) === false && clicks === 2 && T.onClick(nat(100, 200)) === false, "hors de l'écran Combat : rien ne change");
   game.activeTab = "combat";
   btn.disabled = true;
-  T.onStart(ev(100, 200)); T.onEnd(ev(100, 200));
-  ok(T.fire() === false && clicks === 1, "bouton désactivé : jamais cliqué par le secours");
+  T.onStart(ev(100, 200));
+  ok(T.onEnd(ev(100, 200)) === false && clicks === 2, "bouton désactivé : jamais cliqué");
   btn.disabled = false;
 })();
 
