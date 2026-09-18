@@ -6,7 +6,7 @@
    dur dans title-screen-view.js et figé à v3.151.0 depuis 81 livraisons.
    DOIT rester égal au CACHE_VERSION de sw.js — le harnais le vérifie et
    échoue si les deux divergent. */
-var GAME_VERSION = "3.306.1";
+var GAME_VERSION = "3.306.2";
 window.GAME_VERSION = GAME_VERSION;
 
 var DEFAULT_QUEST_PROGRESS = {

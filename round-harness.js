@@ -2021,14 +2021,14 @@ if (g.game.sceneRun.status === "completed") {
   ok(g.game.sortie.active === false, "SortieManager.end() appelé -> sortie clôturée");
 }
 
-console.log("\n[S1] SceneRunManager — retour volontaire (leaveNow) banque en 'success', pas 'return'");
+console.log("\n[S1] SceneRunManager — retour volontaire (leaveNow) : clôture la sortie (XP réglée en [103])");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
 g.SceneRunManager.startRun("expedition_faille");
 g.SceneRunManager.confirmLoadout(["provisions", "provisions", "provisions"]);
 var leave76 = g.SceneRunManager.leaveNow();
 ok(leave76.ok === true, "leaveNow accepté au statut 'gate'");
 ok(g.game.sceneRun.status === "completed", "run marqué 'completed' après leaveNow");
-ok(g.game.sortie.active === false, "sortie clôturée par SortieManager.end('success')");
+ok(g.game.sortie.active === false, "sortie clôturée par SortieManager.end()");
 
 console.log("\n[S1] SceneRunManager.abandon() — sortie prématurée via le garde ui-root.js:switchTab");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
@@ -6130,8 +6130,12 @@ console.log("\n[44] Chasse à la Sève");
     if (!fs.existsSync(path.join(ROOT, icon))) manquants.push(id + " -> " + icon);
     (doublons[icon] = doublons[icon] || []).push(id);
   });
-  ok(manquants.length === 0,
-    "aucun chemin d'icône ne pointe dans le vide" + (manquants.length ? " (" + manquants.join(", ") + ")" : ""));
+  /* v3.304.0 (règle Seb) : une icône pas encore dessinée garde son vrai chemin ; le jeu affiche
+     l'icône générique à sa place (utils.js). Son absence n'est donc plus un échec : elle est
+     listée ici, à générer en une fois (liste complète : node sim/missing-icons.js .). */
+  console.log("  · icônes de ressources à générer : " + (manquants.length ? manquants.join(", ") : "aucune"));
+  ok(typeof g.onMissingImage === "function" && /^data:image\/svg\+xml,/.test(g.MISSING_ICON_SRC || ""),
+    "une icône absente s'affiche en générique (repli de utils.js en place)");
 
   /* Icône partagée : toléré (c'est un choix, pas un bug), mais on le dit — c'est
      exactement l'état dont l'Acier et la Résine sortent en v3.238.0. */
@@ -9630,7 +9634,7 @@ console.log("\n[95] v3.300.0 — W-2 : chapitre du Désert, la traversée");
   popup = g.__qc;
   run("window.openQuestCompletePopup = window.__openQC;");
   ok(popup && popup.dialogue && popup.dialogue[4].text === "Dessous." && popup.text.indexOf("camp du Portail") !== -1, "réclamation : scène d'arrivée au camp du Portail");
-  ok(S.getCurrentStep("desert") === null && game.storyQuests.desert.currentStep === 1, "après l'étape 1 : la suite arrive (étape 2 pas encore livrée)");
+  ok(S.getCurrentStep("desert").id === "desert_02" && game.storyQuests.desert.currentStep === 1, "après l'étape 1 : l'étape 2 s'ouvre (v3.302.0)");
 })();
 
 /* [96] v3.301.0 — W-2b : voyage depuis la carte, tableau filtré par monde. */
@@ -9675,6 +9679,379 @@ console.log("\n[96] v3.301.0 — W-2b : voyage libre et tableau par monde");
   ok(popup.indexOf("travelToWorldFromUI('desert')") !== -1 && popup.indexOf("Y voyager") !== -1, "fiche du Désert : bouton « Y voyager »");
   ok(popup.indexOf("combats avant le boss") === -1, "plus de « combats avant le boss » (farm libre)");
   ok(g.buildWorldPopupHTML(0).indexOf("Y voyager") === -1, "fiche du monde courant : pas de bouton de voyage");
+})();
+
+/* [97] v3.302.0 — D1 (pool du Désert, réglage B) et étape 2 « Ce qui vit ici a le temps ». */
+console.log("\n[97] v3.302.0 — D1 : le monde de l'usure ; étape 2 du Désert");
+(function () {
+  var E = g.ENEMY_DB;
+  ok(E.scarab.stats.power === 14 && E.scarab.stats.endurance === 33 && E.scorpion.stats.power === 18 && E.scorpion.stats.endurance === 45
+    && E.sandworm.stats.power === 23 && E.sandworm.stats.endurance === 81 && E.sandwarrior.stats.power === 21 && E.sandwarrior.stats.endurance === 60,
+    "pool du Désert : puissance ×0,55, endurance ×1,5 (réglage B)");
+  ok(g.FIXED_ENEMY_ARCHETYPES.sandwarrior === "armored", "le Guerrier des sables est Blindé");
+  ok(g.BOSS_DB.djinn.stats.power === 44 && g.BOSS_DB.djinn.stats.endurance === 66, "boss du Désert inchangé (Djinn 44/66)");
+
+  game = freshCombat("knight"); giveWeapon();
+  run("StoryQuestManager.ensure();");
+  game.storyQuests.forest.currentStep = g.STORY_QUESTS.forest.steps.length;
+  game.storyQuests.desert.currentStep = 1; // traversée faite
+  g.WorldTravel.arrive("desert", 0);
+  var s2 = g.StoryQuestManager.getCurrentStep("desert");
+  ok(s2 && s2.id === "desert_02" && s2.narrative.dialogue.length === 4 && s2.tutorial.title === "Le silence", "étape 2 : textes et tutoriel « Le silence »");
+  g.StoryQuestManager.acceptStep("desert");
+  ok(g.MissionBoard.list().some(function (m) { return m.id === "adv_aq_desert_dunes" && m.isMain === true; }), "le run des Dunes est au tableau, lié à l'étape");
+
+  /* Ce que le run fait sortir. */
+  var seen = {}, silenced = 0, armoredOk = true;
+  for (var i = 0; i < 60; i++) {
+    var e = g.QuestEnemyManager.spawnFor(g.ADVENTURE_QUESTS.aq_desert_dunes, false);
+    seen[e.id] = true;
+    if (e.archetype === "silenced") silenced++;
+    if (e.id === "sandwarrior" && e.archetype !== "armored") armoredOk = false;
+  }
+  ok(Object.keys(seen).every(function (id) { return ["scorpion", "sandworm", "sandwarrior"].indexOf(id) !== -1; }) && !seen.scarab, "bêtes solitaires seulement : " + Object.keys(seen).join(", "));
+  ok(armoredOk && silenced > 0, "Guerrier toujours Blindé, et des Silencieux parmi les autres (" + silenced + "/60)");
+
+  /* De bout en bout. */
+  g.AdventureQuestManager.start("aq_desert_dunes");
+  ok(g.getCombatMissionProgressLabel() === "Ce qui tourne autour du camp · 0/6", "compteur en combat : 0/6");
+  for (var k = 0; k < 6 && game.adventureQuestRun.active; k++) { game.enemy.chargeIn = 99; game.enemy.engageIn = 0; game.enemy.hp = 1; game.heroHp = game.heroMaxHp; g.CombatEngine.heroAction("basic"); }
+  g.StoryQuestManager._checkNow(true);
+  ok(game.adventureQuestsCompleted.aq_desert_dunes === true && g.StoryQuestManager.isCurrentStepReady("desert"), "six bêtes vaincues : étape prête");
+  ok(g.WorldManager.worldIndex === 1, "le run n'a pas déplacé le joueur");
+})();
+
+/* [98] v3.303.0 — Désert D3 : le Réservoir et l'Outre pleine. */
+console.log("\n[98] v3.303.0 — Réservoir, Outre pleine, objets payés et objets à boire");
+(function () {
+  var W = g.WORKSHOPS_CONFIG.reservoir, R = g.SceneRunManager;
+  game = freshCombat("knight");
+  run("StoryQuestManager.ensure();");
+  ok(!!g.WAREHOUSE_RESOURCES.outre_pleine && W.recipes[0].outputs[0].resourceId === "outre_pleine", "ressource et recette « Outre pleine »");
+  ok(W.active === false, "Réservoir fermé tant que l'étape « L'outre » n'existe pas / n'est pas atteinte");
+  /* Étape de test : l'atelier s'ouvre quand l'étape est atteinte. */
+  var steps = g.STORY_QUESTS.desert.steps, fake = { id: "desert_03", title: "t", narrative: { objective: "", completion: "" }, unlockTabs: [], reward: {}, check: function () { return false; }, progress: function () { return ""; } };
+  var had = steps.some(function (x) { return x.id === "desert_03"; });
+  if (!had) steps.push(fake);
+  try {
+    game.storyQuests.forest.currentStep = g.STORY_QUESTS.forest.steps.length;
+    game.storyQuests.desert.currentStep = 1;
+    ok(W.active === false, "étape 2 en cours : toujours fermé");
+    game.storyQuests.desert.currentStep = steps.findIndex(function (x) { return x.id === "desert_03"; });
+    ok(W.active === true, "étape « L'outre » atteinte : le Réservoir s'ouvre");
+    run("ProductionManager.unlockBuilding && ProductionManager.unlockBuilding('well'); WarehouseManager.addResource('eau_purifiee', 8, true); WarehouseManager.addResource('viande', 4, true);");
+    var queued = g.WorkshopsSystem.enqueueCraft("reservoir", "outre_pleine", 1);
+    ok(queued === true, "une Outre mise en fabrication");
+    g.WorkshopsSystem.tickWorkshop("reservoir", 20000);
+    ok(g.WarehouseManager.getAmount("outre_pleine") >= 1 && game.explorationProgression.outreFilled === true, "lot terminé : Outre au stock, drapeau « outreFilled » posé");
+  } finally { if (!had) steps.pop(); }
+
+  /* Objets payés en ressource, objets à boire (canevas de test). */
+  var T = g.SCENE_TEMPLATES;
+  T.test_outre = JSON.parse(JSON.stringify(T.petite_aventure_foret));
+  T.test_outre.id = "test_outre";
+  T.test_outre.items.outre = { id: "outre", name: "Outre pleine", desc: "Rend 40 Souffle.", icon: "images/Icons/scene/water_flask.png", consumes: { resourceId: "outre_pleine", amount: 1 }, breath: 40 };
+  T.test_outre.loadoutOffer = ["torche", "corde", "provisions", "gourde", "amulette", "outre", "outre"];
+  try {
+    game = freshCombat("knight");
+    run("WarehouseManager.addResource('petite_ration', 3, true); game.unlockedTabs.village = true;");
+    var go = function () { R.startRun("test_outre"); R.chooseProfile("prudent"); R.chooseIntensity("sentier"); R.acknowledgeMutator(); };
+    go();
+    ok(game.sceneRun.status === "preparation", "préparation atteinte");
+    ok(R.confirmLoadout(["torche", "corde", "outre"]).ok === false && game.sceneRun.status === "preparation", "sans Outre au stock : départ refusé, rien retiré");
+    run("WarehouseManager.addResource('outre_pleine', 1, true);");
+    ok(R.confirmLoadout(["torche", "outre", "outre"]).ok === false && g.WarehouseManager.getAmount("outre_pleine") === 1, "deux Outres pour une en stock : refusé, tout-ou-rien");
+    ok(R.confirmLoadout(["torche", "corde", "outre"]).ok === true && g.WarehouseManager.getAmount("outre_pleine") === 0 && game.sceneRun.breathItems.outre === 1, "départ : l'Outre est payée et emportée");
+    game.sceneRun.breath = 50;
+    ok(g.buildSceneStatusBarHTML(game.sceneRun).indexOf("useSceneBreathItem('outre')") !== -1, "pendant le run : bouton « Boire : Outre pleine »");
+    var used = R.useBreathItem("outre");
+    ok(used.ok && game.sceneRun.breath === 90 && used.gained === 40 && game.sceneRun.breathItems.outre === 0, "boire : +40 Souffle, charge consommée");
+    ok(R.useBreathItem("outre").ok === false, "plus de charge : refusé");
+    ok(g.buildSceneStatusBarHTML(game.sceneRun).indexOf("useSceneBreathItem") === -1, "plus de bouton une fois l'Outre bue");
+  } finally { delete T.test_outre; }
+})();
+
+/* [99] v3.304.0 — W-2 : la Petite Aventure du Désert, l'étape « L'outre », l'icône générique. */
+console.log("\n[99] v3.304.0 — Petite Aventure du Désert, étape 3, icône générique");
+(function () {
+  var R = g.SceneRunManager, T = g.SCENE_TEMPLATES, N = g.SCENE_NODES, MU = g.SCENE_MUTATORS, MB = g.MissionBoard;
+  var D = T.petite_aventure_desert;
+
+  /* Données : obstacles, groupes, mutateurs. */
+  var obs = ["sables_mouvants", "dune", "dalle_scellee", "puits_effondre"];
+  ok(obs.every(function (id) { var o = N.obstacles[id]; return o && o.biome === "desert" && ["power", "precision", "endurance"].every(function (k) { return o.options[k] && o.options[k].stat === k && o.options[k].label; }); }),
+    "quatre obstacles du Désert, trois voies chacun");
+  ok(N.obstacles.puits_effondre.ropeOption === true && N.obstacles.puits_effondre.options.precision.label === "Longer la margelle", "le puits ouvre la voie de la corde ; la précision longe la margelle");
+  ok(N.combatGroups.guerriers_desert.group.length === 2 && !N.combatGroups.ver_desert.group, "guerriers par deux, ver seul");
+  ok(D && D.worldId === "desert" && D.finalBoss === false && D.pools.combat.length === 3 && D.loadoutOffer.length === 6 && D.loadoutOffer[5] === "outre", "canevas : monde du Désert, pas de boss, trois groupes, l'Outre en 6e place");
+  ok(MU.tempete.weight === 0 && MU.chaleur.weight === 0, "tempête et chaleur hors de la table par défaut");
+
+  /* Tirage des mutateurs : la Forêt ne sort jamais ceux du Désert, et inversement. */
+  var vusF = {}, vusD = {};
+  for (var i = 0; i < 400; i++) { vusF[R._rollMutator(T.petite_aventure_foret)] = 1; vusD[R._rollMutator(D)] = 1; }
+  ok(!vusF.tempete && !vusF.chaleur && vusF.pluie && vusF.brouillard, "Forêt : sa table d'origine (pluie, brouillard…), jamais tempête ni chaleur");
+  ok(Object.keys(vusD).sort().join() === "aucun,chaleur,nuit,tempete", "Désert : rien, nuit, tempête, chaleur — ni pluie ni brouillard");
+
+  /* Un run du Désert : tempête, horizon, coût, Verre des dunes, drapeau. */
+  game = freshCombat("knight");
+  run("StoryQuestManager.ensure(); WarehouseManager.addResource('petite_ration', 3, true); WarehouseManager.addResource('outre_pleine', 1, true); game.unlockedTabs.village = true;");
+  game.explorationProgression.petiteAventure = { day: "", count: 0 };
+  var saved = D.mutatorWeights; D.mutatorWeights = { tempete: 1 };
+  try {
+    R.startRun("petite_aventure_desert"); R.chooseProfile("prudent"); R.chooseIntensity("sentier");
+    ok(game.sceneRun.mutator === "tempete" && game.sceneRun.status === "mutator-announce", "le canevas tire dans sa table (tempête forcée)");
+    R.acknowledgeMutator();
+    ok(R.confirmLoadout(["torche", "gourde", "outre"]).ok && g.WarehouseManager.getAmount("outre_pleine") === 0, "l'Outre se prend dans l'offre du Désert");
+    game.sceneRun._torchUsedAtDepth = game.sceneRun.depth;
+    ok(R.getVisibilityHorizon() === game.sceneRun.depth + 1, "tempête : un palier d'avance, même torche allumée");
+    ok(R._obstacleFactors(game.sceneRun, "endurance").breathCost === 30, "tempête : la voie d'endurance coûte 30 au lieu de 20");
+    game.sceneRun.status = "finale";
+    var seve0 = g.WarehouseManager.getAmount("seve_aeswyn");
+    R.resolveFinale("sur");
+    ok(g.WarehouseManager.getAmount("verre_des_dunes") >= 1 && g.WarehouseManager.getAmount("seve_aeswyn") === seve0, "finale : du Verre des dunes, pas de Sève");
+    ok(game.explorationProgression.desertPaCompleted === true && R.isQuestCompleted("petite_aventure_desert") === false, "drapeau « desertPaCompleted » posé, le canevas reste rejouable");
+  } finally { D.mutatorWeights = saved; }
+  ok(T.petite_aventure_foret.seveAeswyn && R._rareDropCfg(T.petite_aventure_foret).resourceId === "seve_aeswyn", "la Forêt garde la Sève");
+
+  /* Mort au Désert : pas « dans la forêt ». */
+  game = freshCombat("knight");
+  run("WarehouseManager.addResource('petite_ration', 3, true); game.unlockedTabs.village = true;");
+  game.explorationProgression.petiteAventure = { day: "", count: 0 };
+  R.startRun("petite_aventure_desert"); R.chooseProfile("bourrin"); R.chooseIntensity("sentier");
+  game.sceneRun.status = "combat";
+  var logs = []; var addLog0 = g.addLog; g.addLog = function (t) { logs.push(t); };
+  try { R.onCombatDefeat(); } finally { g.addLog = addLog0; }
+  ok(logs.some(function (t) { return /dans le sable/.test(t); }) && !logs.some(function (t) { return /dans la for/.test(t); }), "mort au Désert : « reste dans le sable »");
+
+  /* Combat : la paire de guerriers sort du Désert. */
+  game = freshCombat("knight");
+  run("WarehouseManager.addResource('petite_ration', 3, true); game.unlockedTabs.village = true;");
+  game.explorationProgression.petiteAventure = { day: "", count: 0 };
+  R.startRun("petite_aventure_desert"); R.chooseProfile("bourrin"); R.chooseIntensity("sentier"); R.acknowledgeMutator();
+  game.sceneRun.status = "node"; game.sceneRun.pendingNode = { type: "combat", gabaritId: "guerriers_desert" };
+  ok(R.enterCombatNode().ok && g.CombatActors.aliveEnemies().length === 2 && g.CombatActors.aliveEnemies().every(function (e) { return /sandwarrior|Guerrier/.test(e.id + " " + e.name + " " + (e.asset || "")); }), "« Deux guerriers des sables » : deux guerriers en combat");
+  ok(game.sceneRun._combatIsFinalWave === false, "pas de boss en fin de vague");
+
+  /* Étape « L'outre » et tableau. */
+  game = freshCombat("knight");
+  run("StoryQuestManager.ensure(); WarehouseManager.addResource('petite_ration', 3, true);");
+  game.unlockedTabs.village = true;
+  var desertSteps = g.STORY_QUESTS.desert.steps, i3 = desertSteps.findIndex(function (x) { return x.id === "desert_03"; });
+  ok(i3 === 2, "l'étape « L'outre » est la 3e du chapitre du Désert");
+  game.storyQuests.forest.currentStep = g.STORY_QUESTS.forest.steps.length;
+  game.storyQuests.desert.currentStep = 1;
+  var paIds = function () { return MB._petiteAventureMissions().map(function (m) { return m.id; }); };
+  ok(paIds().join() === "petite_aventure_foret", "étape 2 : la Petite Aventure du Désert n'existe pas encore au tableau");
+  game.storyQuests.desert.currentStep = i3;
+  var md = MB._petiteAventureMissions().find(function (m) { return m.id === "petite_aventure_desert"; });
+  ok(md && md.worldId === "desert" && md.isPetiteAventure && typeof md.accept === "function", "étape 3 : elle apparaît, rattachée au Désert, lançable");
+  ok(MB.list().every(function (m) { return m.id !== "petite_aventure_desert"; }), "résidant en Forêt : filtrée par le monde");
+  var st = desertSteps[i3];
+  game.explorationProgression.outreFilled = false; game.explorationProgression.desertPaCompleted = false;
+  ok(st.check(game) === false && /Outre 0\/1/.test(st.progress(game)), "objectifs : rien de fait");
+  game.explorationProgression.outreFilled = true;
+  ok(st.check(game) === false && /Outre 1\/1 · Petite aventure 0\/1/.test(st.progress(game)), "l'Outre seule ne suffit pas");
+  game.explorationProgression.desertPaCompleted = true;
+  ok(st.check(game) === true, "Outre remplie et Petite Aventure du Désert terminée : étape validée");
+  ok(g.WORKSHOPS_CONFIG.reservoir.active === true, "le Réservoir est ouvert à l'étape 3");
+
+  /* Gourde (décision Seb, option B) : une gorgée au Désert, illimitée en Forêt. */
+  game = freshCombat("knight");
+  run("WarehouseManager.addResource('petite_ration', 3, true); game.unlockedTabs.village = true;");
+  game.explorationProgression.petiteAventure = { day: "", count: 0 };
+  R.startRun("petite_aventure_desert"); R.chooseProfile("prudent"); R.chooseIntensity("sentier"); R.acknowledgeMutator();
+  R.confirmLoadout(["torche", "gourde", "amulette"]);
+  game.sceneRun.breath = 40;
+  ok(g.buildSceneStatusBarHTML(game.sceneRun).indexOf("dernière gorgée") !== -1, "Désert : le bouton annonce la dernière gorgée");
+  ok(R.useSceneGourde().ok && game.sceneRun.breath === 65 && game.sceneRun.gourdeAvailable === false, "Désert : une gorgée, puis la gourde est vide");
+  game.sceneRun.breath = 40;
+  ok(R.useSceneGourde().ok === false && g.buildSceneStatusBarHTML(game.sceneRun).indexOf("useSceneGourde()") === -1, "Désert : plus de gorgée, plus de bouton");
+  game = freshCombat("knight");
+  run("WarehouseManager.addResource('petite_ration', 3, true); game.unlockedTabs.village = true;");
+  game.explorationProgression.petiteAventure = { day: "", count: 0 };
+  R.startRun("petite_aventure_foret"); R.chooseProfile("prudent"); R.chooseIntensity("sentier"); R.acknowledgeMutator();
+  R.confirmLoadout(["torche", "gourde", "amulette"]);
+  game.sceneRun.breath = 20; R.useSceneGourde(); game.sceneRun.breath = 20;
+  ok(R.useSceneGourde().ok && game.sceneRun.gourdeAvailable === true && game.sceneRun.gourdeUses == null, "Forêt : la gourde reste illimitée");
+
+  /* Icône générique. */
+  var img = { tagName: "IMG", _a: { src: "images/Icons/x/absente.png" }, src: "images/Icons/x/absente.png",
+    getAttribute: function (k) { return this._a[k] || null; }, setAttribute: function (k, v) { this._a[k] = v; } };
+  g.onMissingImage({ target: img });
+  ok(img.src === g.MISSING_ICON_SRC && img._a["data-missing-icon"] === "images/Icons/x/absente.png" && g.MISSING_ICONS.indexOf("images/Icons/x/absente.png") !== -1,
+    "image absente : remplacée par l'icône générique, chemin d'origine noté");
+  var img2 = { tagName: "IMG", _a: { src: "a.png", onerror: "this.remove()" }, src: "a.png",
+    getAttribute: function (k) { return this._a[k] || null; }, setAttribute: function (k, v) { this._a[k] = v; } };
+  g.onMissingImage({ target: img2 });
+  ok(img2.src === "a.png", "une image qui a son propre repli (onerror) n'est pas touchée");
+})();
+
+/* [100] v3.305.0 — W-2 : la carte du Désert et l'étape 4 « Les pierres qui dépassent ». */
+console.log("\n[100] v3.305.0 — Carte du Désert, Ensablement, étape 4");
+(function () {
+  var LM = g.LivingMapManager, MAP = g.LIVING_MAPS.desert, MB = g.MissionBoard;
+  game = freshCombat("knight");
+  run("StoryQuestManager.ensure(); WarehouseManager.addResource('petite_ration', 5, true);");
+  game.unlockedTabs.village = true;
+  game.livingMaps = {}; LM._validated = null;
+  var steps = g.STORY_QUESTS.desert.steps, i4 = steps.findIndex(function (x) { return x.id === "desert_04"; });
+  game.storyQuests.forest.currentStep = g.STORY_QUESTS.forest.steps.length;
+
+  /* Données */
+  var rings = {}; MAP.sectors.forEach(function (d) { rings[d.ring] = (rings[d.ring] || 0) + 1; });
+  ok(MAP.sectors.length === 12 && rings[1] === 4 && rings[2] === 5 && rings[3] === 3 && MAP.asset === "images/Maps/desert.jpg", "12 secteurs (4/5/3) sur l'image de Seb");
+  ok(MAP.sectors.every(function (d) { return d.neighbors.every(function (n) { var o = LM.getSectorDef("desert", n); return o && o.neighbors.indexOf(d.id) !== -1; }); }), "voisinages symétriques");
+  ok(MAP.village.name === "Le camp du Portail", "foyer : le camp du Portail");
+
+  /* Carte fermée avant l'étape 4 */
+  game.storyQuests.desert.currentStep = i4 - 1;
+  ok(LM.getMapForWorld("desert") === null && LM.getMapForWorld("forest") !== null, "étape 3 : pas encore de carte du Désert (la Forêt garde la sienne)");
+  var pa = MB._petiteAventureMission("petite_aventure_desert");
+  ok(pa && !/carte/.test(pa.blurb), "étape 3 : la Petite Aventure du Désert se lance directement");
+  game.storyQuests.desert.currentStep = i4;
+  ok(LM.getMapForWorld("desert") === MAP, "étape 4 : la carte s'ouvre");
+  pa = MB._petiteAventureMission("petite_aventure_desert");
+  ok(/carte du Désert/.test(pa.blurb) && /sable/.test(pa.blurb), "étape 4 : la Petite Aventure passe par la carte du Désert");
+
+  /* Secteurs fermés par l'Histoire */
+  ["scarabees", "tour_guet", "bete_dune", "porte_temple"].forEach(function (id) {
+    ok(!LM.isReachable("desert", id) && /L'Histoire/.test(LM.canStart("desert", id).reason), id + " : fermé par l'Histoire, le mur le dit");
+  });
+  ok(LM.getOpenTargets("desert").sort().join() === "caravane,puits_sec,steles", "au départ : le puits sec, la caravane, les stèles");
+
+  /* Départ depuis un secteur */
+  game.explorationProgression.petiteAventure = { day: "", count: 0 };
+  ok(LM.start("desert", "puits_sec").ok && game.sceneRun.templateId === "petite_aventure_desert" && game.sceneRun.livingMap.sectorId === "puits_sec", "départ du puits sec : une Petite Aventure du Désert ciblée");
+  run("SceneRunManager.clearRun();");
+
+  /* Première libération : Verre des dunes */
+  var seve0 = g.WarehouseManager.getAmount("seve_aeswyn"), verre0 = g.WarehouseManager.getAmount("verre_des_dunes");
+  var rep = LM.onRunEnd("desert", "puits_sec", "success");
+  ok(g.WarehouseManager.getAmount("verre_des_dunes") === verre0 + 5 && g.WarehouseManager.getAmount("seve_aeswyn") === seve0 && /Verre des dunes/.test(rep.message), "première libération : +5 Verre des dunes, pas de Sève");
+  ok(steps[i4].check(game) === false && /1\/2/.test(steps[i4].progress(game)), "étape 4 : 1/2");
+
+  /* Effets tenus : Outre renforcée, Réservoir plus rapide */
+  ok(g.SceneRunManager.getBreathItemAmount("outre", g.SCENE_TEMPLATES.petite_aventure_desert) === 55, "puits sec tenu : l'Outre rend 55");
+  LM.onRunEnd("desert", "steles", "success");
+  ok(steps[i4].check(game) === true, "deux secteurs libérés : étape validée");
+  LM.onRunEnd("desert", "oasis", "success");
+  var rec = g.WORKSHOPS_CONFIG.reservoir.recipes[0];
+  ok(g.WorkshopsSystem.getLivingMapSpeedMult("reservoir") === 1.10, "oasis basse tenue : Réservoir 10 % plus rapide");
+
+  /* Ensablement */
+  var rand0 = LM._rand; LM._rand = function () { return 0.999; };
+  try {
+    var fail = LM.onRunEnd("desert", "verrerie", "fail");
+    ok(fail.regressed === "puits_sec" && /L'Ensablement a repris Le puits sec/.test(fail.message) && /depuis le camp/.test(fail.message) && LM.getState("desert", "puits_sec").state === "recouvert",
+      "échec devant la verrerie : l'Ensablement reprend le puits sec, « reprends-le depuis le camp »");
+    ok(g.SceneRunManager.getBreathItemAmount("outre", g.SCENE_TEMPLATES.petite_aventure_desert) === 40 && g.WorkshopsSystem.getLivingMapSpeedMult("reservoir") === 1.10, "l'Outre perd son bonus, le Réservoir garde le sien");
+    LM.onRunEnd("desert", "puits_sec", "fail"); LM.onRunEnd("desert", "steles", "fail");
+    ok(steps[i4].check(game) === true, "l'étape reste acquise même si le sable reprend tout");
+  } finally { LM._rand = rand0; }
+
+  /* Mots de la Forêt inchangés */
+  var wf = LM.getWords("forest");
+  ok(wf.cover === "le Recouvrement" && wf.home === "le village" && LM.getRewardResourceId("forest") === "seve_aeswyn", "la Forêt garde la brume, le Recouvrement et la Sève");
+  ok(/Ensablé/.test(g.buildLivingMapLegendHTML ? (function () { var o = g.livingMapOpenId; g.livingMapOpenId = "desert"; var h = run("livingMapOpenId = 'desert'; var __h = buildLivingMapLegendHTML(); livingMapOpenId = null; __h"); return h; })() : ""), "légende du Désert : « Ensablé »");
+})();
+
+/* [101] v3.306.0 — W-2 : l'étape 5 « Les noms sous le sable », premier choix pesant. */
+console.log("\n[101] v3.306.0 — Les noms sous le sable : choix, registre, stèles");
+(function () {
+  var LM = g.LivingMapManager, SQ = g.StoryQuestManager;
+  var steps = g.STORY_QUESTS.desert.steps, i5 = steps.findIndex(function (x) { return x.id === "desert_05"; }), st5 = steps[i5];
+  function fresh() {
+    game = freshCombat("knight");
+    run("StoryQuestManager.ensure();");
+    game.unlockedTabs.village = true;
+    game.livingMaps = {}; LM._validated = null;
+    game.storyQuests.forest.currentStep = g.STORY_QUESTS.forest.steps.length;
+    game.storyQuests.desert.currentStep = i5;
+    game.storyQuests.desert.accepted = true;
+  }
+  fresh();
+  ok(i5 === 4 && st5.choice && st5.choice.options.length === 2 && st5.tutorial && st5.tutorial.title === "Un choix qui pèse", "5e étape du Désert : un choix à deux options, tutoriel « Un choix qui pèse »");
+  ok(st5.linkTo.cardId === "livingmap_desert:steles", "le lien ouvre la carte sur les stèles");
+
+  /* Les stèles d'abord */
+  ok(g.storyPendingChoiceAt("desert", "steles") === null && /Stèles libérées 0\/1 · Choix 0\/1/.test(st5.progress(game)), "stèles pas libérées : pas de choix, l'étape le dit");
+  LM.onRunEnd("desert", "steles", "success");
+  game.storyQuests.desert.accepted = false;
+  ok(g.storyPendingChoiceAt("desert", "steles") === null, "étape non acceptée : pas de choix");
+  game.storyQuests.desert.accepted = true;
+  var pend = g.storyPendingChoiceAt("desert", "steles");
+  ok(pend && pend.chapterId === "desert" && g.storyPendingChoiceAt("desert", "puits_sec") === null, "stèles libérées, étape acceptée : le choix se pose là, et seulement là");
+  run("livingMapOpenId = 'desert'; livingMapSelected = 'steles';");
+  ok(run("buildLivingMapPanelHTML('desert', null)").indexOf("openStoryChoiceModal('desert')") !== -1, "le volet des stèles propose « Lire les noms »");
+  var modal = run("buildStoryChoiceModalHTML('desert')");
+  ok(/Déterrer les noms/.test(modal) && /Le sable reprend les stèles/.test(modal) && /Les laisser au sable/.test(modal) && /tiennent le sable/.test(modal) && !/jauge|%/.test(modal), "écran : deux options, conséquences en clair, aucune jauge");
+
+  /* Déterrer */
+  var ess0 = Number(game.essence || 0);
+  ok(g.storyMakeChoice("desert", "deterrer") === true, "déterrer : choix accepté");
+  ok(SQ.getChoice("noms") === "deterrer" && SQ.getRegister().donner === 1 && SQ.getRegister().garder === 0, "registre : Donner");
+  ok(Number(game.essence) === ess0 + g.STORY_NOMS_ESSENCE && LM.getState("desert", "steles").state === "recouvert", "essence tout de suite, les stèles retournent au sable");
+  ok(g.storyMakeChoice("desert", "laisser") === false && SQ.getChoice("noms") === "deterrer", "définitif : un second choix ne change rien");
+  ok(st5.check(game) === true && /déjà les stèles/.test(st5.narrative.completion), "étape validée, complétion « Déterrer »");
+  LM.onRunEnd("desert", "steles", "success");
+  ok(LM.isLiberated("desert", "steles") && !LM.hasEffect("autel_normale") && /La stèle est vide/.test(run("buildLivingMapPanelHTML('desert', null)")), "reprises, les stèles n'ont plus d'effet : la stèle est vide");
+  ok(LM.getBrakeChance("desert") === LM.getBrakeChance(), "déterrer : aucun frein en plus");
+
+  /* Laisser */
+  fresh();
+  LM.onRunEnd("desert", "steles", "success");
+  ok(g.storyMakeChoice("desert", "laisser") === true && SQ.getRegister().garder === 1, "laisser : registre Garder");
+  ok(LM.isLiberated("desert", "steles") && LM.hasEffect("autel_normale"), "les stèles restent libérées, leur effet aussi");
+  ok(Math.abs(LM.getBrakeChance("desert") - (LM.getBrakeChance() + 0.10)) < 1e-9 && LM.getBrakeChance("forest") === LM.getBrakeChance(), "elles tiennent le sable : +10 % de frein au Désert, rien en Forêt");
+  LM.regress("desert", "steles", "test");
+  ok(LM.getBrakeChance("desert") === LM.getBrakeChance(), "stèles ensablées : le frein retombe");
+  ok(/sans la peser/.test(st5.narrative.completion), "complétion « Laisser »");
+  run("livingMapOpenId = null; livingMapSelected = null;");
+})();
+
+/* [102] v3.306.1 — Carte : image pré-calculée (latence au glissé sur iPhone). */
+console.log("\n[102] v3.306.1 — Carte : brume et Recouvrement pré-calculés, gestes allégés");
+(function () {
+  var LM = g.LivingMapManager;
+  game = freshCombat("knight");
+  run("StoryQuestManager.ensure();");
+  game.unlockedTabs.village = true; game.livingMaps = {}; LM._validated = null;
+  LM.onRunEnd("forest", "gue", "success"); LM.onRunEnd("forest", "menhirs", "success"); LM.regress("forest", "menhirs", "t");
+  run("LIVING_MAP_BAKE.key = null; LIVING_MAP_BAKE.url = null; LIVING_MAP_BAKE.pending = null;");
+  var html = run("buildLivingMapHTML('forest')");
+  ok(/lm-fog is-on/.test(html) && /lm-cover is-on/.test(html) && !/lm-cover-trame/.test(html), "sans canvas (ou avant le calcul) : les calques CSS d'origine restent");
+  var k1 = run("livingMapBakeKey(LIVING_MAP_TMP = LivingMapManager.getMap('forest'), ['arbremere'], ['menhirs'])");
+  var k2 = run("livingMapBakeKey(LIVING_MAP_TMP, ['arbremere'], [])");
+  ok(k1 !== k2, "l'image est recalculée dès que l'état de la carte change");
+  run("LIVING_MAP_BAKE.key = " + JSON.stringify(run("livingMapBakeKey(LivingMapManager.getMap('forest'), " + JSON.stringify(LM.getMap("forest").sectors.filter(function (d) { return LM.getState("forest", d.id).state === "voile"; }).map(function (d) { return d.id; })) + ", ['menhirs'])")) + "; LIVING_MAP_BAKE.url = 'blob:test';");
+  html = run("buildLivingMapHTML('forest')");
+  ok(/url\('blob:test'\)/.test(html) && !/lm-fog is-on/.test(html) && !/lm-cover is-on/.test(html) && /lm-cover-trame/.test(html), "image prête : un seul calque d'image, la trame du Recouvrement en CSS");
+  var gray = run("lmFilterPixel([['grayscale', 1]], [1, 0, 0])");
+  ok(Math.abs(gray[0] - 0.2126) < 1e-9 && Math.abs(gray[1] - 0.2126) < 1e-9, "filtres : matrices de la spec (grayscale(1) du rouge = 0,2126)");
+  var br = run("lmFilterPixel([['brightness', 1.35]], [0.9, 0.5, 0])");
+  ok(br[0] === 1 && Math.abs(br[1] - 0.675) < 1e-9, "filtres : bornés à chaque étape, comme le navigateur");
+  run("LIVING_MAP_BAKE.key = null; LIVING_MAP_BAKE.url = null;");
+})();
+
+/* [103] v3.306.2 — « Rentrer » avant le premier palier ne donne plus d'XP. */
+console.log("\n[103] v3.306.2 — leaveNow : 0 XP à la profondeur 0, 10 XP après un palier");
+(function () {
+  function leaveAt(depth) {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    g.SceneRunManager.startRun("expedition_faille");
+    g.SceneRunManager.confirmLoadout(["provisions", "provisions", "provisions"]);
+    g.game.sceneRun.depth = depth; // palier franchi simulé (le chemin réel est couvert en [S1])
+    g.game.sortie.loot.gold = 7;
+    var xp0 = g.game.heroXp || 0, gold0 = g.game.gold;
+    var r = g.SceneRunManager.leaveNow();
+    return { r: r, dxp: (g.game.heroXp || 0) - xp0, dgold: g.game.gold - gold0 };
+  }
+  var a = leaveAt(0);
+  ok(a.r.ok === true && a.r.summary && a.r.summary.outcome === "return", "profondeur 0 : sortie close en 'return'");
+  ok(a.dxp === 0, "profondeur 0 : aucune XP (était 10)");
+  ok(a.dgold === 7, "profondeur 0 : le butin éventuel reste banqué à 100 %");
+  var b = leaveAt(1);
+  ok(b.r.summary && b.r.summary.outcome === "success" && b.dxp > 0, "un palier franchi : mission réussie, XP forfaitaire conservée");
 })();
 
 console.log("\n" + passes + " OK, " + failures + " échec(s)");

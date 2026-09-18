@@ -1211,14 +1211,17 @@ var SceneRunManager = {
 
   /* leaveNow() -> rentre volontairement, banque via SortieManager("success") — voir décision
      Seb 03/09/2026 : un retour volontaire est traité comme une mission réussie (loot 100%,
-     XP forfaitaire), la profondeur atteinte n'influence QUE le loot déjà accumulé, jamais l'XP. */
+     XP forfaitaire), la profondeur atteinte n'influence QUE le loot déjà accumulé, jamais l'XP.
+     v3.306.2 : exception — rentrer avant le premier palier (depth 0) ne donne aucune XP. */
   leaveNow: function () {
     var run = this.getRun();
     if (!run || (run.status !== "gate" && run.status !== "preparation")) {
       return { ok: false, reason: "Impossible de rentrer maintenant" };
     }
     run.status = "completed";
-    var summary = window.SortieManager ? SortieManager.end("success") : null;
+    // v3.306.2 : sans aucun palier franchi, pas de mission accomplie -> "return" (butin gardé, 0 XP).
+    var outcome = (run.depth > 0) ? "success" : "return";
+    var summary = window.SortieManager ? SortieManager.end(outcome) : null;
     this._notifyLivingMap(run, "neutral"); // v3.256.0 : rentrer avant la fin ne libère rien et ne coûte rien
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null, summary: summary };
