@@ -70,13 +70,31 @@ var TouchDebug = {
     return parts.length ? parts.join("+") : "aucun run";
   },
 
+  _ids: (typeof WeakMap === "function") ? new WeakMap() : null,
+  _next: 1,
+
+  /* v3.296.0 : numéro stable par nœud — deux événements sur « Fuir » avec deux numéros
+     différents = le bouton a été remplacé entre le toucher et le relâcher. */
+  nodeId: function (el) {
+    if (!el || !this._ids) return "";
+    var b = el.closest ? (el.closest("button") || el) : el;
+    if (!this._ids.has(b)) this._ids.set(b, this._next++);
+    return " n" + this._ids.get(b) + (b.isConnected === false ? "(détaché)" : "");
+  },
+
+  note: function (msg) {
+    this.events.unshift("★ " + msg);
+    if (this.events.length > 8) this.events.length = 8;
+    this.render();
+  },
+
   record: function (e) {
     var t = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : e;
     var x = Math.round(t.clientX || 0), y = Math.round(t.clientY || 0);
     var top = (typeof document.elementFromPoint === "function") ? document.elementFromPoint(x, y) : null;
     var same = top && e.target && (top === e.target || (e.target.contains && e.target.contains(top)));
     this.events.unshift(e.type.replace("pointer", "ptr").replace("touch", "tch") + " " + x + "," + y
-      + " → " + this.describe(e.target) + (same ? "" : "  | dessus : " + this.describe(top))
+      + " → " + this.describe(e.target) + this.nodeId(e.target) + (same ? "" : "  | dessus : " + this.describe(top))
       + (e.defaultPrevented ? " [bloqué]" : ""));
     if (this.events.length > 8) this.events.length = 8;
     this.render();
