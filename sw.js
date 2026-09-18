@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.301.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.303.1"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -203,7 +203,16 @@ self.addEventListener("install", function (event) {
       var requests = PRECACHE_APP_SHELL.map(function (url) {
         return new Request(url, { cache: "reload" });
       });
-      return cache.addAll(requests);
+      /* v3.303.1 (bug Seb : application installée bloquée sur une ancienne version) : addAll
+         échouait en entier si UN SEUL fichier manquait sur le serveur — la nouvelle version ne
+         s'installait jamais et l'ancienne restait en place. Chaque fichier est désormais mis en
+         cache séparément : un fichier absent est signalé en console et ne bloque plus la mise
+         à jour (il sera récupéré au réseau à la demande). */
+      return Promise.all(requests.map(function (req) {
+        return cache.add(req).catch(function (err) {
+          console.warn("Précache : fichier ignoré", req.url, err);
+        });
+      }));
     }).then(function () {
       return self.skipWaiting();
     })

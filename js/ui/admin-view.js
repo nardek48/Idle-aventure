@@ -1,0 +1,303 @@
+"use strict";
+/* ui/admin-view.js — écran Admin/Debug (dev uniquement) : éditeur rapide de
+   stats/ressources + accès direct au bac à sable de combat. Accessible via
+   l'onglet caché "admin" (bouton dans Paramètres). N'ajoute aucune logique
+   métier : appelle uniquement les points d'écriture déjà en place
+   (WarehouseManager, StatsSystem.recalcStats, CombatEngine.killEnemy...). */
+
+function buildAdminHTML() {
+  var h = '<div class="admin-panel">';
+
+  // v3.295.0 : diagnostic du bug iPhone « boutons de combat sans réponse » (ui/debug-touch-view.js)
+  var debugOn = !!(window.TouchDebug && TouchDebug.isOn());
+  h += '<div class="panel-card admin-card">';
+  h += '<h3><img class=ico-inline src=images/Icons/system/warning.png> Diagnostic combat</h3>';
+  h += '<p class="panel-sub">Affiche en haut de l\'écran ce que reçoit chaque toucher, l\'état du tour et les erreurs. Ne bloque aucun toucher.</p>';
+  h += '<div class="admin-quick-row">';
+  h += '<button class="settings-btn admin-btn" onclick="TouchDebug.setOn(' + (debugOn ? 'false' : 'true') + '); renderPanel();">' + (debugOn ? 'Désactiver' : 'Activer') + ' le diagnostic tactile</button>';
+  h += '<button class="settings-btn admin-btn" onclick="forceLeaveCombat()">Quitter le combat en cours</button>';
+  h += '</div>';
+  h += '</div>';
+
+  h += '<div class="panel-card admin-card">';
+  h += '<h3><img class=ico-inline src=images/Icons/gold_icon.png> Or & Essence</h3>';
+  h += adminFieldRow("admin-gold", "Or", game.gold, "adminApplyGold()");
+  h += adminFieldRow("admin-essence", "Essence", game.essence, "adminApplyEssence()");
+  h += '<div class="admin-quick-row">';
+  h += '<button class="settings-btn admin-btn" onclick="adminQuickAdd(\'gold\', 10000)">+10 000 or</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminQuickAdd(\'essence\', 1000)">+1 000 essence</button>';
+  h += '</div>';
+  h += '</div>';
+
+  h += '<div class="panel-card admin-card">';
+  h += '<h3><img class=ico-inline src=images/Icons/system/warehouse_supplies.png> Éclats de donjon</h3>';
+  h += adminFieldRow("admin-shards", "Éclats", game.dungeonShards || 0, "adminApplyShards()");
+  h += '</div>';
+
+  h += '<div class="panel-card admin-card">';
+  h += '<h3><img class=ico-inline src=images/Icons/improvement_icons/power.png> Stats entraînées</h3>';
+  h += adminFieldRow("admin-power", "Puissance", game.trainedStats.power, "adminApplyTrainedStat('power')");
+  h += adminFieldRow("admin-endurance", "Endurance", game.trainedStats.endurance, "adminApplyTrainedStat('endurance')");
+  h += adminFieldRow("admin-celerity", "Célérité", game.trainedStats.celerity, "adminApplyTrainedStat('celerity')");
+  h += adminFieldRow("admin-precision", "Précision", game.trainedStats.precision, "adminApplyTrainedStat('precision')");
+  h += adminFieldRow("admin-will", "Volonté", game.trainedStats.will, "adminApplyTrainedStat('will')");
+  h += '<div class="admin-quick-row">';
+  h += '<button class="settings-btn admin-btn" onclick="adminRecalcStats()"><img class=ico-inline src=images/Icons/system/reset.png> Recalculer les stats</button>';
+  h += '</div>';
+  h += '</div>';
+
+  h += '<div class="panel-card admin-card">';
+  h += '<h3><img class=ico-inline src=images/Icons/combat_stats/stat_health.png> PV du héros</h3>';
+  h += adminFieldRow("admin-herohp", "PV actuels (max " + Math.floor(game.heroMaxHp) + ")", game.heroHp, "adminApplyHeroHp()");
+  h += '<div class="admin-quick-row">';
+  h += '<button class="settings-btn admin-btn" onclick="adminHeroHpMax()"><img class=ico-inline src=images/Icons/combat_status/heal_incoming.png> PV au maximum</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminKillEnemy()"><img class=ico-inline src=images/Icons/combat_status/corruption.png> Tuer l\'ennemi affiché</button>';
+  h += '</div>';
+  h += '</div>';
+
+  h += '<div class="panel-card admin-card">';
+  h += '<h3><img class=ico-inline src=images/Icons/quests/quest_resources.png> Monde & cycle</h3>';
+  h += '<p class="panel-sub">Monde actuel : ' + (window.WorldManager ? WorldManager.worldIndex : 0) + ' (' + ((window.WorldManager && WorldManager.getWorld() && WorldManager.getWorld().name) || "?") + ')</p>';
+  h += adminFieldRow("admin-worldindex", "Index de monde (0–6)", (window.WorldManager ? WorldManager.worldIndex : 0), "adminApplyWorldIndex()", 0, 6);
+  h += adminFieldRow("admin-cyclecount", "Nombre de cycles", game.cycleCount || 0, "adminApplyCycleCount()");
+  h += '<p class="panel-sub admin-warn">Changer l\'index de monde réinitialise la progression d\'aventure/ennemi du monde (adventureIndex/enemyIndex à 0).</p>';
+  h += '</div>';
+
+  h += '<div class="panel-card admin-card">';
+  h += '<h3><img class=ico-inline src=images/Icons/subtabs/potions.png> Bac à sable de combat</h3>';
+  h += '<p class="panel-sub">Simulateur de rounds sur les vraies données (budgets RPT/RPM, sorties Monte-Carlo, export Markdown) — sans effet sur ta partie.</p>';
+  h += '<button class="settings-btn admin-btn" onclick="switchTab(\'combat-sandbox\')"><img class=ico-inline src=images/Icons/subtabs/potions.png> Ouvrir le bac à sable</button>';
+  h += '</div>';
+
+  // v3.122.0 (Lot S2a) : expedition_faille (canevas génératif du scene-engine) n'est plus
+  // accessible depuis le menu ☰ (décision Seb : l'onglet Expédition sert uniquement à
+  // afficher un run en cours, lancé depuis le tableau de missions) — conservé ici comme outil
+  // de test/démo du moteur, réserve pour une future feature répétable (Petites Aventures).
+  if (window.SceneRunManager && window.SCENE_TEMPLATES && SCENE_TEMPLATES.expedition_faille) {
+    h += '<div class="panel-card admin-card">';
+    h += '<h3><img class=ico-inline src=images/Icons/scene/scene_cavern.png> Bac à sable d\'expédition</h3>';
+    h += '<p class="panel-sub">Canevas génératif du scene-engine (8 profondeurs, push-your-luck) — hors catalogue de quêtes, réserve pour une future feature.</p>';
+    h += '<button class="settings-btn admin-btn" onclick="adminStartSandboxExpedition()"><img class=ico-inline src=images/Icons/scene/scene_cavern.png> Lancer l\'expédition sandbox</button>';
+    h += '</div>';
+  }
+
+  /* v3.279.0 (demande Seb) : relancer n'importe quelle quête de COMBAT pour la tester.
+     Les quêtes d'aventure et de chasse ont chacune leur moteur de run ; on remet leur
+     progression à zéro avant de lancer, sinon une quête déjà terminée refuserait de
+     repartir et une quête entamée reprendrait au milieu. */
+  h += buildAdminCombatQuestHTML();
+
+  h += '<button class="settings-btn admin-btn" onclick="switchTab(\'settings\')"><img class=ico-inline src=images/Icons/system/back.png> Retour aux Paramètres</button>';
+
+  h += '</div>';
+  return '<div class="nb-page-frame admin-root kframe-page" data-kf-title="Admin">' + h + '</div>';
+}
+
+/* Catalogue des combats relançables : quêtes d'aventure (kill / boss / élite) et quêtes
+   de chasse. Les étapes d'Histoire ne sont pas listées — elles n'ont pas de run propre,
+   elles s'appuient sur le farm ou sur l'une de ces quêtes. */
+function getAdminCombatQuests() {
+  var out = [];
+  if (window.ADVENTURE_QUESTS) {
+    Object.keys(ADVENTURE_QUESTS).forEach(function (id) {
+      var q = ADVENTURE_QUESTS[id];
+      if (!q) return;
+      var monde = (window.WORLDS || []).find(function (w) { return w.id === q.worldId; });
+      out.push({
+        id: id, kind: "adventure",
+        label: (q.name || id) + (monde ? " — " + monde.name : ""),
+        groupe: Array.isArray(q.group) ? q.group.length : 1
+      });
+    });
+  }
+  if (window.HUNT_QUESTS) {
+    Object.keys(HUNT_QUESTS).forEach(function (id) {
+      var q = HUNT_QUESTS[id];
+      if (!q) return;
+      out.push({ id: id, kind: "hunt", label: "🏹 " + (q.name || id), groupe: Array.isArray(q.group) ? q.group.length : 1 });
+    });
+  }
+  out.sort(function (a, b) { return a.label.localeCompare(b.label); });
+  return out;
+}
+
+function buildAdminCombatQuestHTML() {
+  var liste = getAdminCombatQuests();
+  if (!liste.length) return "";
+
+  var h = '<div class="panel-card admin-card">';
+  h += '<h3><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> Rejouer un combat</h3>';
+  h += '<p class="panel-sub">Relance la quête choisie depuis le début : sa progression est remise à zéro, puis le run démarre. Le nombre entre parenthèses est la taille du groupe ennemi.</p>';
+  h += '<select id="admin-combat-quest" class="admin-select">';
+  liste.forEach(function (q) {
+    h += '<option value="' + esc(q.kind + ":" + q.id) + '">' + esc(q.label)
+      + (q.groupe > 1 ? " (groupe de " + q.groupe + ")" : "") + '</option>';
+  });
+  h += '</select>';
+  h += '<button class="settings-btn admin-btn" onclick="adminReplayCombatQuest()"><img class=ico-inline src=images/Icons/system/reset.png> Lancer ce combat</button>';
+  h += '</div>';
+  return h;
+}
+
+function adminReplayCombatQuest() {
+  var sel = document.getElementById("admin-combat-quest");
+  if (!sel || !sel.value) return;
+  var parts = sel.value.split(":");
+  var kind = parts[0], id = parts[1];
+
+  /* Un run déjà en cours doit être abandonné, sinon deux moteurs se disputeraient l'ennemi. */
+  if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active
+    && typeof AdventureQuestManager.forfeit === "function") AdventureQuestManager.forfeit();
+  if (window.HuntQuestManager && game.huntRun && game.huntRun.active
+    && typeof HuntQuestManager.stop === "function") HuntQuestManager.stop();
+
+  if (kind === "adventure") {
+    var q = (window.ADVENTURE_QUESTS || {})[id];
+    if (!q || !window.AdventureQuestManager) return;
+    // Remise à zéro : terminée, elle refuserait de repartir ; entamée, elle reprendrait au milieu.
+    if (game.adventureQuestsCompleted) delete game.adventureQuestsCompleted[id];
+    if (game.adventureQuestProgress) {
+      game.adventureQuestProgress[id] = {};
+      (q.steps || []).forEach(function (s) { game.adventureQuestProgress[id][s.id] = 0; });
+    }
+    AdventureQuestManager.start(id);
+  } else if (kind === "hunt") {
+    if (!window.HuntQuestManager) return;
+    HuntQuestManager.start(id);
+  }
+
+  if (typeof showToast === "function") showToast("⚔️ Combat relancé", 1400);
+  if (typeof saveGame === "function") saveGame();
+}
+
+function adminFieldRow(inputId, label, currentValue, onApplyCall, minVal, maxVal) {
+  var v = (typeof currentValue === "number" && isFinite(currentValue)) ? Math.floor(currentValue) : 0;
+  var attrs = "";
+  if (typeof minVal === "number") attrs += ' min="' + minVal + '"';
+  if (typeof maxVal === "number") attrs += ' max="' + maxVal + '"';
+  var row = '<div class="admin-field-row">';
+  row += '<label for="' + inputId + '">' + label + '</label>';
+  row += '<input type="number" id="' + inputId + '" class="admin-input" value="' + v + '"' + attrs + '>';
+  row += '<button class="settings-btn admin-btn admin-apply-btn" onclick="' + onApplyCall + '">Appliquer</button>';
+  row += '</div>';
+  return row;
+}
+
+function adminReadInt(inputId) {
+  var el = document.getElementById(inputId);
+  if (!el) return null;
+  var n = Math.floor(Number(el.value));
+  return isFinite(n) ? n : null;
+}
+
+function adminRefresh() {
+  saveGame();
+  if (typeof renderAll === "function") renderAll();
+  if (game.activeTab === "admin" && typeof renderPanel === "function") renderPanel();
+}
+
+function adminApplyGold() {
+  var n = adminReadInt("admin-gold");
+  if (n === null || n < 0) return;
+  game.gold = n;
+  adminRefresh();
+}
+
+function adminApplyEssence() {
+  var n = adminReadInt("admin-essence");
+  if (n === null || n < 0) return;
+  game.essence = n;
+  adminRefresh();
+}
+
+function adminApplyShards() {
+  var n = adminReadInt("admin-shards");
+  if (n === null || n < 0) return;
+  game.dungeonShards = n;
+  adminRefresh();
+}
+
+function adminQuickAdd(field, amount) {
+  if (field === "gold") game.gold = (game.gold || 0) + amount;
+  else if (field === "essence") game.essence = (game.essence || 0) + amount;
+  adminRefresh();
+}
+
+function adminApplyTrainedStat(statKey) {
+  var idMap = { power: "admin-power", endurance: "admin-endurance", celerity: "admin-celerity", precision: "admin-precision", will: "admin-will" };
+  var n = adminReadInt(idMap[statKey]);
+  if (n === null || n < 0) return;
+  game.trainedStats[statKey] = n;
+  StatsSystem.recalcStats();
+  adminRefresh();
+}
+
+function adminRecalcStats() {
+  StatsSystem.recalcStats();
+  adminRefresh();
+}
+
+function adminApplyHeroHp() {
+  var n = adminReadInt("admin-herohp");
+  if (n === null || n < 0) return;
+  game.heroHp = Math.min(n, game.heroMaxHp);
+  adminRefresh();
+}
+
+function adminHeroHpMax() {
+  game.heroHp = game.heroMaxHp;
+  adminRefresh();
+}
+
+function adminKillEnemy() {
+  if (!game.enemy) return;
+  CombatEngine.killEnemy();
+  adminRefresh();
+}
+
+function adminApplyWorldIndex() {
+  var n = adminReadInt("admin-worldindex");
+  if (n === null || n < 0 || n > 6 || !window.WorldManager || typeof WORLDS === "undefined" || !WORLDS[n]) return;
+  WorldManager.worldIndex = n;
+  WorldManager.adventureIndex = 0;
+  WorldManager.enemyIndex = 0;
+  if (typeof WorldManager.markWorldReached === "function") WorldManager.markWorldReached(n);
+  if (typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
+  adminRefresh();
+}
+
+function adminApplyCycleCount() {
+  var n = adminReadInt("admin-cyclecount");
+  if (n === null || n < 0) return;
+  game.cycleCount = n;
+  adminRefresh();
+}
+
+/* v3.122.0 (Lot S2a) : lance expedition_faille (scene-engine générique) directement, sans
+   passer par le tableau de missions (le canevas n'y figure plus). Réutilise startSceneExpedition()
+   de scene-view.js (fixée sur "expedition_faille"). */
+function adminStartSandboxExpedition() {
+  if (window.SceneRunManager && SceneRunManager.isRunActive()) {
+    showToast("Une expédition est déjà en cours", 1600);
+    return;
+  }
+  if (typeof switchTab === "function") switchTab("scene");
+  if (typeof startSceneExpedition === "function") startSceneExpedition();
+}
+
+window.buildAdminHTML = buildAdminHTML;
+window.getAdminCombatQuests = getAdminCombatQuests;
+window.buildAdminCombatQuestHTML = buildAdminCombatQuestHTML;
+window.adminReplayCombatQuest = adminReplayCombatQuest;
+window.adminApplyGold = adminApplyGold;
+window.adminApplyEssence = adminApplyEssence;
+window.adminApplyShards = adminApplyShards;
+window.adminQuickAdd = adminQuickAdd;
+window.adminApplyTrainedStat = adminApplyTrainedStat;
+window.adminRecalcStats = adminRecalcStats;
+window.adminApplyHeroHp = adminApplyHeroHp;
+window.adminHeroHpMax = adminHeroHpMax;
+window.adminKillEnemy = adminKillEnemy;
+window.adminApplyWorldIndex = adminApplyWorldIndex;
+window.adminApplyCycleCount = adminApplyCycleCount;
+window.adminStartSandboxExpedition = adminStartSandboxExpedition;
