@@ -275,12 +275,10 @@ var ClassCombatManager = {
     if (action.type === "defense") {
       this.activateDefenseEffect(action);
       if (game.enemy) this.applyActionEffects(action, 0, matchedConditionId);
-      addLog("🛡️ " + action.label + " !", "event");
-      showToast((action.icon || "🛡️") + " " + action.label, 1400);
+      addLog("🛡️ " + action.label + " !", "event"); // v3.294.0 : plus de popup, le bandeau de combat suffit (retour Seb)
     } else {
       this.applyDamageAction(action, matchedConditionId);
-      addLog("✨ " + action.label + " !", "event");
-      showToast((action.icon || "✨") + " " + action.label, 1400);
+      addLog("✨ " + action.label + " !", "event"); // v3.294.0 : idem, journal seulement
     }
 
     return true;

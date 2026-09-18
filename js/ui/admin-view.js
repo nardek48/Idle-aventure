@@ -8,6 +8,17 @@
 function buildAdminHTML() {
   var h = '<div class="admin-panel">';
 
+  // v3.295.0 : diagnostic du bug iPhone « boutons de combat sans réponse » (ui/debug-touch-view.js)
+  var debugOn = !!(window.TouchDebug && TouchDebug.isOn());
+  h += '<div class="panel-card admin-card">';
+  h += '<h3><img class=ico-inline src=images/Icons/system/warning.png> Diagnostic combat</h3>';
+  h += '<p class="panel-sub">Affiche en haut de l\'écran ce que reçoit chaque toucher, l\'état du tour et les erreurs. Ne bloque aucun toucher.</p>';
+  h += '<div class="admin-quick-row">';
+  h += '<button class="settings-btn admin-btn" onclick="TouchDebug.setOn(' + (debugOn ? 'false' : 'true') + '); renderPanel();">' + (debugOn ? 'Désactiver' : 'Activer') + ' le diagnostic tactile</button>';
+  h += '<button class="settings-btn admin-btn" onclick="forceLeaveCombat()">Quitter le combat en cours</button>';
+  h += '</div>';
+  h += '</div>';
+
   h += '<div class="panel-card admin-card">';
   h += '<h3><img class=ico-inline src=images/Icons/gold_icon.png> Or & Essence</h3>';
   h += adminFieldRow("admin-gold", "Or", game.gold, "adminApplyGold()");
