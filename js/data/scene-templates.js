@@ -460,6 +460,55 @@ var SCENE_TEMPLATES = {
     travelOnSuccess: { worldId: "desert", adventureIndex: 0 }
   },
 
+  /* v3.310.0 (W-3a, acte II §4) — LA DESCENTE. Première libération de la porte du Temple, lancée
+     depuis la carte (firstContent du secteur) : hors cap journalier (pas de profileWeights), un seul
+     combat, journal fixe. L'arrivée pose le Temple ensablé (adventureIndex 1). */
+  descente_temple: {
+    id: "descente_temple",
+    worldId: "desert",
+    adventureIndex: 1,
+    mode: "semi",
+    title: "La descente",
+    icon: "images/Icons/codex/world_desert.png",
+
+    depthMax: 4,
+    gatesPerDepth: [1, 1],
+    fixedCard: [
+      [{ type: "obstacle", gabaritId: "dalle_scellee" }],
+      [{ type: "obstacle", gabaritId: "dalles_ensablees" }],
+      [{ type: "combat", gabaritId: "guerrier_seul_desert" }],
+      [{ type: "source" }]
+    ],
+    combatWaveRange: [1, 1],
+    finalBoss: false,
+    slotWeights: { obstacle: 100 },
+    pools: { obstacle: ["dalle_scellee", "dalles_ensablees"], combat: ["guerrier_seul_desert"] },
+
+    loadoutOffer: [], loadoutSlots: 0,
+
+    journalByDepth: {
+      1: "Le battant ouvert laisse passer un homme, pas un sac. Sarkel pose le sien et s'assoit dessus.",
+      2: "Des marches. Le sable les a remplies à moitié. Quelqu'un a dégagé une bande de la largeur d'un pied.",
+      3: { before: "Quelque chose se tient en travers des marches. Il n'attendait pas toi.",
+           after: "Wenna regarde en haut. La lumière de la porte est petite, maintenant." },
+      4: "En bas, une lampe. L'huile est neuve."
+    },
+
+    lootResource: "gold",
+    lootRanges: {
+      obstacleSuccess: [15, 25],
+      obstacleRope: [8, 12],
+      obstacleSetback: [3, 6],
+      decouverte: [15, 25],
+      finalSafe: [60, 60],
+      finalRiskyBase: [0, 0]
+    },
+    autelCostRatio: 0.2,
+
+    unlockOnSuccess: { buildingId: null, unlockFlag: "templeReached", completionFlag: "templeDescended" },
+    travelOnSuccess: { worldId: "desert", adventureIndex: 1 }
+  },
+
   /* ================= v3.125.0 (Petites Aventures, Lot PA1/PA2) =================
      Concept Seb (Aethervale_Concept_Petites_Aventures.docx, 01/09/2026) : quête répétable
      à profil (Bourrin/Prudent), parcours à points 5-10, butin final IDENTIQUE entre profils

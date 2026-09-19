@@ -58,9 +58,14 @@ function buildCompanionCardHTML(companionId) {
     + 'Il joue seul en mode <b>Grimoire</b>, tu le joues en mode <b>Tactique</b> — la bascule est sur l\'écran de combat.'
     + '</div>';
 
+  /* v3.311.0 : voie (Maddoc) — la voie courante, l'autre, et le prix du changement (D4b). */
+  if (CompanionManager.hasVoies(companionId)) h += buildCompanionVoieHTML(companionId, st);
+
   /* v3.271.0 (L-5) : comportement en mode Auto. Volontairement sur SA fiche et pas dans
      le Grimoire : ces réglages disent comment il se débrouille sans toi ; le Grimoire,
-     lui, pilote le kit du héros. En Manuel ils ne servent pas, et la carte le dit. */
+     lui, pilote le kit du héros. En Manuel ils ne servent pas, et la carte le dit.
+     v3.311.0 : réglages de soin, donc seulement pour un compagnon qui soigne. */
+  if (def.skill && def.skill.type === "heal") {
   h += '<div class="cp-behavior">';
   var joueSeul = (window.CompanionManager && CompanionManager.controlOf() === "auto");
   h += '<div class="cp-behavior-title">Comportement'
@@ -86,6 +91,7 @@ function buildCompanionCardHTML(companionId) {
     + '<span>Garder une charge en réserve</span></label>';
   h += '<div class="cp-behavior-hint">Il n\'utilise pas sa dernière charge, sauf si un allié est vraiment bas.</div>';
   h += '</div>';
+  }
 
   var maxUp = getCompanionMaxUpgrades(companionId);
   var cost = getCompanionUpgradeCost(companionId, st.upgrades);
@@ -104,6 +110,42 @@ function buildCompanionCardHTML(companionId) {
   h += '</div>';
   return h;
 }
+
+/* v3.311.0 : bloc « Voie » d'un compagnon à voies. Tant que la voie n'est pas choisie
+   (étape 8 acceptée, écran de choix pas encore passé), la carte renvoie à l'Histoire. */
+function buildCompanionVoieHTML(companionId, st) {
+  var raw = COMPANIONS_DB[companionId];
+  var h = '<div class="cp-voie">';
+  if (!st.voie) {
+    h += '<div class="cp-voie-title">Voie</div><div class="cp-behavior-hint">Pas encore choisie. Elle se choisit dans l\'Histoire.</div>';
+    return h + '</div>';
+  }
+  var cur = raw.voies[st.voie];
+  h += '<div class="cp-voie-title">Voie : <b>' + esc(cur.label) + '</b></div>';
+  h += '<div class="cp-behavior-hint">' + esc(cur.desc) + '</div>';
+  var cost = getVoieChangeCost(st.voieChanges);
+  Object.keys(raw.voies).forEach(function (vid) {
+    if (vid === st.voie) return;
+    var v = raw.voies[vid], afford = (game.gold || 0) >= cost;
+    h += '<div class="cp-voie-other"><span>' + esc(v.label) + ' — ' + esc(v.desc) + '</span>';
+    h += '<button type="button" class="kbtn' + (afford ? '' : ' is-disabled') + '"' + (afford ? '' : ' disabled')
+      + ' onclick="companionChangeVoie(\'' + companionId + '\', \'' + vid + '\')">Changer : ' + formatNumber(cost) + ' or</button></div>';
+  });
+  h += '<div class="cp-behavior-hint">Ses améliorations sont conservées. Chaque changement coûte trois fois le précédent.</div>';
+  return h + '</div>';
+}
+
+function companionChangeVoie(companionId, voieId) {
+  if (!window.CompanionManager) return;
+  var raw = COMPANIONS_DB[companionId], st = CompanionManager.state(companionId);
+  var cost = getVoieChangeCost(st.voieChanges);
+  var go = function () { CompanionManager.changeVoie(companionId, voieId); };
+  if (typeof showConfirmModal === "function") {
+    showConfirmModal("Changer de voie ?", raw.name + " passe à « " + raw.voies[voieId].label + " » pour " + formatNumber(cost) + " or.", "🔁", go);
+  } else go();
+}
+window.companionChangeVoie = companionChangeVoie;
+window.buildCompanionVoieHTML = buildCompanionVoieHTML;
 
 function buildHerosCompanionsHTML() {
   var h = '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/subtabs/hero_summary.png|Compagnons">';
@@ -131,6 +173,8 @@ function companionSetPresent(companionId, present) {
 
 function companionSetSetting(companionId, key, value) {
   if (!window.CompanionManager) return;
+  // v3.307.0 : garde ici et pas dans setSetting, que restore() rappelle au chargement
+  if (window.heroLockToast && heroLockToast()) { if (typeof renderAll === "function") renderAll(); return; }
   CompanionManager.setSetting(companionId, key, value);
   if (typeof renderAll === "function") renderAll();
 }

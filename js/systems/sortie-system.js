@@ -113,6 +113,8 @@ var SortieManager = {
   end: function (outcome) {
     var s = this.ensure();
     if (!s.active) return null;
+    // v3.307.0 : filet — un lancement ailleurs ne clôt jamais la sortie d'une expédition en cours.
+    if (outcome === "return" && s.context === "scene" && window.SceneRunManager && SceneRunManager.isRunActive()) return null;
     var keepPct = (outcome === "flee") ? SORTIE_FLEE_KEEP_PCT : (outcome === "death" ? 0 : 1);
     var lost = this.emptyLoot();
     var kept = this.emptyLoot();

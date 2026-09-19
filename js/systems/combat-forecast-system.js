@@ -263,6 +263,8 @@ var CombatForecast = {
       var aq = (window.ADVENTURE_QUESTS || {})[mission.questId];
       if (!aq) return null;
       var hasBoss = (aq.steps || []).some(function (st) { return st.type === "bossKill"; });
+      // v3.311.0 : rencontres scriptées -> la rencontre en cours sert de référence
+      if (aq.encounters && window.AdventureQuestManager) return firstOfGroup(QuestEnemyManager.spawnFor(AdventureQuestManager._encounterQuest(aq), false));
       return firstOfGroup(QuestEnemyManager.spawnFor(aq, hasBoss)); // v3.269.0 : spawnFor peut renvoyer un groupe
     }
     if (mission.sourceKind === "hunt") {
@@ -280,7 +282,7 @@ var CombatForecast = {
     if (!quest) return 0;
     var total = 0;
     (quest.steps || []).forEach(function (st) {
-      if (st.type === "kill" || st.type === "eliteTrack") total += Number(st.target || 0);
+      if (st.type === "kill" || st.type === "eliteTrack" || st.type === "encounter") total += Number(st.target || 0); // v3.311.0
     });
     if (!total && quest.lotSize) total = Number(quest.lotSize) || 0; // chasse : un lot de N
     return total;
@@ -295,7 +297,7 @@ var CombatForecast = {
     if (fights > 0 && window.QuestEnemyManager) {
       var quest = (mission.sourceKind === "adventure") ? (window.ADVENTURE_QUESTS || {})[mission.questId]
         : (window.HUNT_QUESTS || {})[mission.questId];
-      var normal = quest ? firstOfGroup(QuestEnemyManager.spawnFor(quest, false)) : null;
+      var normal = quest ? firstOfGroup(QuestEnemyManager.spawnFor((quest.encounters && window.AdventureQuestManager) ? AdventureQuestManager._encounterQuest(quest) : quest, false)) : null; // v3.311.0
       attrition = this.getAttritionCost(normal, fights);
     }
     var out = this.forEnemy(enemy, { attrition: attrition });

@@ -95,9 +95,16 @@ var EnchantManager = {
   },
 
   /* Raison de blocage lisible, jamais un simple faux : l'écran doit dire quoi faire. */
+  /* v3.307.0 : pièce portée (même objet ou même uid) — seule celle-ci est gelée en expédition. */
+  _isEquipped: function (item) {
+    var eq = game.equipped || {};
+    return Object.keys(eq).some(function (k) { return eq[k] && (eq[k] === item || (item.uid && eq[k].uid === item.uid)); });
+  },
+
   getBlockReason: function (item, index) {
     if (this.getBuildingLevel() <= 0) return "Enchanteresse non construite";
     if (!item) return "Aucune pièce";
+    if (window.heroLockReason && heroLockReason() && this._isEquipped(item)) return "Héros en expédition"; // v3.307.0
     if (!getItemAffixes(item)[index]) return "Aucun bonus";
     if (!this.canRerollRarity(item.rarity)) {
       var need = this.getRequiredLevel(item.rarity);

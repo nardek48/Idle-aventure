@@ -232,6 +232,33 @@ function createInitialGameState() {
 
 var game = createInitialGameState();
 
+/* v3.313.0 : améliorations retirées de la Boutique — l'or dépensé est rendu, une fois, et la
+   clé disparaît de la sauvegarde. Même formule que getUpgradeCost (exponentielle, arrondi bas). */
+var RETIRED_UPGRADES = {
+  u_gold: { name: "Bourse lourde", baseCost: 55, costMult: 1.10 },
+  u_bounty: { name: "Contrats lucratifs", baseCost: 260, costMult: 1.30 }
+};
+function refundRetiredUpgrades() {
+  if (!game.upgrades) return 0;
+  var total = 0, names = [];
+  Object.keys(RETIRED_UPGRADES).forEach(function (id) {
+    var lvl = Math.max(0, Math.floor(Number(game.upgrades[id] || 0)));
+    if (game.upgrades[id] === undefined) return;
+    var r = RETIRED_UPGRADES[id], sum = 0;
+    for (var l = 0; l < lvl; l++) sum += Math.floor(r.baseCost * Math.pow(r.costMult, l));
+    delete game.upgrades[id];
+    if (sum > 0) { total += sum; names.push(r.name); }
+  });
+  if (total > 0) {
+    game.gold = Number(game.gold || 0) + total;
+    var msg = "La Boutique ne vend plus " + names.join(" ni ") + " : " + total + " or te sont rendus.";
+    if (typeof addLog === "function") addLog("💰 " + msg, "event");
+  }
+  return total;
+}
+window.refundRetiredUpgrades = refundRetiredUpgrades;
+window.RETIRED_UPGRADES = RETIRED_UPGRADES;
+
 function ensureGameStateDefaults() {
   if (!game.killCounts) game.killCounts = {};
   if (game.heroGender !== "f" && game.heroGender !== "m") game.heroGender = "m"; // v3.151.0 : migration vieilles saves
@@ -284,6 +311,8 @@ function ensureGameStateDefaults() {
       game.questProgress[key] = DEFAULT_QUEST_PROGRESS[key];
     }
   });
+
+  refundRetiredUpgrades(); // v3.313.0
 
   if (typeof UPGRADES !== "undefined" && Array.isArray(UPGRADES)) {
     UPGRADES.forEach(function (u) {

@@ -308,6 +308,7 @@ window.isTrainingUpgradeId = isTrainingUpgradeId;
 window.getUpgradeCap = getUpgradeCap;
 
 function buyUpgrade(id, amount) {
+  if (isTrainingUpgradeId(id) && window.heroLockToast && heroLockToast()) return; // v3.307.0 : entraînements seulement
   var upgrade = (UPGRADES || []).find(function (u) { return u.id === id; });
   if (!upgrade) return showToast("Amélioration introuvable", 1000);
 
@@ -426,6 +427,7 @@ function getTalentRespecCost() {
 }
 
 function respecTalents() {
+  if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
   var levels = Object.keys(game.talents || {}).map(function (id) { return Number(game.talents[id] || 0); });
   var totalPoints = levels.reduce(function (sum, lvl) { return sum + lvl; }, 0);
   if (!totalPoints) return showToast("Aucun talent à réinitialiser", 1200);
@@ -462,6 +464,7 @@ function respecTalents() {
 }
 
 function buyTalentNode(id) {
+  if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
   var tree = getAllTalentNodes();
   var node = null;
   var branchOfNode = null;
@@ -504,6 +507,7 @@ function buyTalentNode(id) {
 }
 
 function buyAetherUpgrade(id) {
+  if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
   var upgrade = (AETHER_SHOP || []).find(function (u) { return u.id === id; });
   if (!upgrade) return showToast("Amélioration astrale introuvable", 1000);
 
@@ -601,6 +605,7 @@ var AscensionManager = {
 };
 
 function ascendNow() {
+  if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
   if (typeof ASCENSION_CONFIG === "undefined") return;
   var minKills = ASCENSION_CONFIG.minKillsToAscend || 0;
   if ((game.totalKills || 0) < minKills) {

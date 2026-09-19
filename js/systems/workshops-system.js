@@ -104,7 +104,8 @@ var WorkshopsSystem = {
 
   /* v3.305.0 (carte du Désert) : un secteur tenu accélère un atelier de 10 % — l'oasis basse le
      Réservoir, la verrerie ensevelie le Tailleur de pierre (quand il existera). Perdu à l'Ensablement. */
-  LIVING_MAP_EFFECT_BY_WORKSHOP: { reservoir: "reservoir_plus", tailleur_pierre: "tailleur_plus" },
+  // v3.312.0 : clé corrigée (tailleur_de_pierre, l'id réel de l'atelier) — l'effet ne se branchait jamais
+  LIVING_MAP_EFFECT_BY_WORKSHOP: { reservoir: "reservoir_plus", tailleur_de_pierre: "tailleur_plus" },
   getLivingMapSpeedMult: function (workshopId) {
     var effectId = this.LIVING_MAP_EFFECT_BY_WORKSHOP[workshopId];
     if (!effectId || !window.LivingMapManager || !LivingMapManager.hasEffect(effectId)) return 1;

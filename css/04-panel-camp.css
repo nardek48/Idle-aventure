@@ -489,3 +489,12 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   .camp-regen-line .ico-lg { width: 20px; height: 20px; }
   .camp-help-btn { width: 24px; height: 24px; font-size: 0.8rem; }
 }
+
+/* v3.307.0 : héros en expédition — rations gelées, raison lisible au-dessus */
+.camp-lock-note {
+  margin: 6px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  opacity: 0.85;
+}

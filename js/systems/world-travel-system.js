@@ -63,7 +63,11 @@ var WorldTravel = {
     var done = Object.keys(chapters).some(function (id) {
       return chapters[id].worldId === worldId && window.StoryQuestManager && StoryQuestManager.isChapterCompleted(id);
     });
-    return done ? last : 0;
+    if (done) return last;
+    // v3.310.0 : sinon la plus avancée des aventures déjà atteintes (reachedFlag, ex. le Temple)
+    var ep = game.explorationProgression || {}, best = 0;
+    (WORLDS[idx].adventures || []).forEach(function (a, i) { if (a.reachedFlag && ep[a.reachedFlag]) best = i; });
+    return best;
   },
 
   /* Pourquoi le voyage est refusé (texte affichable), ou null s'il est possible. */

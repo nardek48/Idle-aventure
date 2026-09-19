@@ -220,3 +220,27 @@ seules les classes propres aux compagnons sont définies ici.
   padding: 6px 8px;
   margin-bottom: 8px;
 }
+
+/* v3.311.0 (W-3b) — voie d'un compagnon à voies (Maddoc). */
+.cp-voie {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--nb-frame-light);
+}
+.cp-voie-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--nb-ink);
+  margin-bottom: 4px;
+}
+.cp-voie-other {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--nb-ink);
+  margin-bottom: 6px;
+}
+.cp-voie-other > span { flex: 1 1 auto; min-width: 0; }
+.cp-voie-other .kbtn { flex: 0 0 auto; }

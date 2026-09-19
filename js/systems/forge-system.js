@@ -149,6 +149,7 @@ var ForgeManager = {
      faire. */
   getBlockReason: function (slot) {
     if (this.getBuildingLevel() <= 0) return "Forge non construite";
+    if (window.heroLockReason && heroLockReason()) return "Héros en expédition"; // v3.307.0 : la Forge travaille l'équipement porté
     if (this.getLevel(slot) >= this.getMaxLevel()) return "Améliore la Forge";
     if (!this.canAfford(slot)) return "Matériaux manquants";
     return null;

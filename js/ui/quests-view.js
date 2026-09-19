@@ -671,8 +671,19 @@ function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
     h += '<button class="settings-btn primary" type="button" onclick="StoryQuestManager.acceptStep(\'' + esc(chapterId) + '\')">Accepter</button>';
   } else if (ready) {
     h += '<button class="settings-btn primary" type="button" onclick="StoryQuestManager.claimStep(\'' + esc(chapterId) + '\')"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> Réclamer</button>';
-  } else if (step.linkTo) {
-    h += '<button class="settings-btn" type="button" onclick="StoryQuestManager.goToLink(\'' + esc(chapterId) + '\')"><img class=ico-inline src=images/Icons/system/forward.png> Aller à la quête</button>';
+  } else {
+    // v3.311.0 : choix posé sur la carte d'étape (ex. la voie de Maddoc), avant tout le reste
+    var cardChoice = (typeof storyPendingCardChoice === "function") ? storyPendingCardChoice(chapterId) : null;
+    if (cardChoice) h += '<button class="settings-btn primary" type="button" onclick="openStoryChoiceModal(\'' + esc(chapterId) + '\')">' + esc(cardChoice.choice.buttonLabel || "Choisir") + '</button>';
+    // v3.310.0 : offrande faite depuis la carte d'étape (step.offeringUi.where === "story")
+    var offer = StoryQuestManager.getOfferingInfo(chapterId, "story");
+    if (offer) {
+      h += '<button class="settings-btn primary" type="button"' + (offer.canOffer ? ' onclick="StoryQuestManager.offerToEmbers(\'' + esc(chapterId) + '\')"' : ' disabled') + '>' + esc(offer.step.offeringUi.buttonLabel) + '</button>';
+      if (!offer.canOffer) h += '<div class="story-step-progress">' + esc(offer.step.offeringUi.lackToast) + '</div>';
+    }
+    if (step.linkTo && !(offer && offer.canOffer)) {
+      h += '<button class="settings-btn" type="button" onclick="StoryQuestManager.goToLink(\'' + esc(chapterId) + '\')"><img class=ico-inline src=images/Icons/system/forward.png> ' + esc(step.linkTo.label || "Aller à la quête") + '</button>';
+    }
   }
   h += '</div>';
   h += '</div>';

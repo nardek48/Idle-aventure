@@ -133,6 +133,13 @@ var SceneRunManager = {
     return !!(run && run.status !== "completed");
   },
 
+  /* v3.307.0 (retour Seb) : héros engagé sur la route — rien de ce qui le touche ne se fait
+     ailleurs (combats, soins, équipement, talents…). Le combat de nœud reste libre (potion). */
+  isHeroEngaged: function () {
+    var run = this.getRun();
+    return !!(run && run.status !== "completed" && run.status !== "combat");
+  },
+
   /* v3.122.0 (Lot S2a) : vrai si la quête (canevas à unlockOnSuccess) est déjà réussie de
      façon permanente — même contrat que ExplorationManager.isQuestCompleted() (repli sur
      unlockFlag si completionFlag absent, migration "déjà en jeu = acquis" incluse). Les
@@ -460,6 +467,7 @@ var SceneRunManager = {
     run.card = SceneEngine.buildCard(effectiveTemplate, randomValues, profileWeights);
     if (profileWeights) this._ensureMinCombat(run, template, run.profile);
     if (profileWeights) this._applyMutatorToCard(run, template); // v3.196.0
+    if (profileWeights) this._injectEvent(run, template); // v3.312.0 (W-3d) : événement à branches
 
     var hasLoadout = Number(template.loadoutSlots || 0) > 0;
     run.status = hasLoadout ? "preparation" : "gate";
@@ -792,6 +800,7 @@ var SceneRunManager = {
     run.currentGate = gateIndex;
     run.status = "node";
     run.pendingNode = { type: slot.type, gabaritId: slot.gabaritId || null, riskMod: slot.riskMod || null };
+    if (slot.eventId) run.pendingNode.eventId = slot.eventId; // v3.312.0 : événement à branches
 
     if (slot.type === "bloqueur") {
       run.blockerReadyAt = Date.now() + Number(slot.durationMs || 300000);
@@ -810,6 +819,97 @@ var SceneRunManager = {
     }
 
     return { ok: true, reason: null, node: run.pendingNode };
+  },
+
+  /* ---------- Événements à branches (v3.312.0, W-3d, bible B §5) ---------- */
+
+  /* À la génération d'une carte de Petite Aventure : au plus un événement, sur une porte du
+     milieu du run qui n'est ni un combat ni un bloqueur (données : SCENE_NODES.events). */
+  _injectEvent: function (run, template) {
+    var events = (SceneEngine.getNodeBank().events) || {};
+    var ep = game.explorationProgression || {};
+    var ids = Object.keys(events).filter(function (id) {
+      var ev = events[id];
+      return ev.templateIds.indexOf(run.templateId) !== -1 && !ep[ev.flag] && (typeof ev.eligible !== "function" || ev.eligible());
+    });
+    if (!ids.length || !run.card || run.card.length < 3) return;
+    var ev = events[ids[0]];
+    if (Math.random() >= Number(ev.chance == null ? 1 : ev.chance)) return;
+    var mid = Math.floor(run.card.length / 2);
+    var depths = [mid, mid - 1, mid + 1].filter(function (d) { return d >= 1 && d < run.card.length - 1; });
+    for (var i = 0; i < depths.length; i++) {
+      var level = run.card[depths[i]];
+      for (var g = 0; g < level.length; g++) {
+        if (level[g].type === "combat" || level[g].type === "bloqueur") continue;
+        level[g] = { type: "evenement", eventId: ev.id };
+        return;
+      }
+    }
+  },
+
+  getPendingEvent: function () {
+    var run = this.getRun();
+    if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "evenement") return null;
+    var events = SceneEngine.getNodeBank().events || {};
+    return events[run.pendingNode.eventId] || null;
+  },
+
+  /* Une branche est-elle payable ? (gourde encore pleine, Souffle au-dessus du coût) */
+  canTakeEventBranch: function (branch) {
+    var run = this.getRun();
+    if (!run || !branch) return false;
+    var c = branch.cost || {};
+    if (c.gourde && !run.gourdeAvailable) return false;
+    if (c.breath && Number(run.breath || 0) <= Number(c.breath)) return false;
+    return true;
+  },
+
+  resolveEvent: function (branchId) {
+    var run = this.getRun(), ev = this.getPendingEvent();
+    if (!ev) return { ok: false, reason: "Aucun événement à résoudre" };
+    var branch = ev.branches.filter(function (b) { return b.id === branchId; })[0];
+    if (!branch) return { ok: false, reason: "Choix invalide" };
+    if (!this.canTakeEventBranch(branch)) return { ok: false, reason: "Tu ne peux pas payer ça" };
+    var c = branch.cost || {};
+    if (c.gourde) { // la gourde part avec lui, gorgées comprises
+      run.gourdeAvailable = false;
+      if (run.gourdeUses != null) run.gourdeUses = 0;
+    }
+    if (c.breath) run.breath = Math.max(0, Number(run.breath || 0) - Number(c.breath));
+    if (!game.explorationProgression) game.explorationProgression = {};
+    game.explorationProgression[ev.flag] = branch.outcome;
+    run.eventEcho = { id: ev.id, outcome: branch.outcome, done: false };
+    run.pendingNode = null; run.currentGate = null;
+    this._advanceOrFinish(run);
+    if (typeof saveGame === "function") saveGame();
+    return { ok: true, reason: null, text: branch.text, outcome: branch.outcome };
+  },
+
+  /* L'écho d'un événement, plus loin dans le même run (une fois). moment : "combat" | "finale". */
+  _applyEventEcho: function (run, moment, template) {
+    var e = run && run.eventEcho;
+    if (!e || e.done) return null;
+    var ev = (SceneEngine.getNodeBank().events || {})[e.id];
+    var echo = ev && ev.echo && ev.echo[e.outcome];
+    if (!echo || echo.at !== moment) return null;
+    var text = echo.text;
+    if (moment === "combat") {
+      var foes = (game.combat && game.combat.enemies && game.combat.enemies.length) ? game.combat.enemies : (game.enemy ? [game.enemy] : []);
+      var cible = foes.filter(function (x) { return Number(x.hp || 0) > 0; })[0];
+      if (!cible) return null;
+      cible.hp = Math.max(1, Number(cible.hp) - Math.floor(Number(cible.maxHp || 0) * Number(echo.hpPct || 0)));
+      var nom = String(cible.name || "bête");
+      text = text.replace("{enemy}", "un " + nom.charAt(0).toLowerCase() + nom.slice(1));
+      if (typeof renderEnemy === "function") renderEnemy();
+    } else if (moment === "finale" && template) {
+      var reste = Math.floor(Number(run.loot || 0) * (1 - Number(echo.lootPct || 0)));
+      if (reste < run.loot) { run.loot = reste; this._debitLootTo(template, run.loot); }
+    }
+    e.done = true;
+    if (!Array.isArray(run.extraLines)) run.extraLines = [];
+    run.extraLines.push(text);
+    if (typeof addLog === "function") addLog(text, "event");
+    return text;
   },
 
   /* ---------- Nœud bloqueur (Prudent uniquement) ---------- */
@@ -1290,6 +1390,7 @@ var SceneRunManager = {
     // coffre — AVANT le SortieManager.end("success") ci-dessous (déjà créditée directement via
     // WarehouseManager, pas affectée par le double-ou-rien ni par le "success" de la sortie).
     this._rollSeveAeswynFinale(run);
+    this._applyEventEcho(run, "finale", template); // v3.312.0 : le coffre entamé
 
     // v3.304.0 : drapeau permanent posé à chaque chambre finale résolue (template.successFlag),
     // lu par l'Histoire (étape « L'outre »). Ne rend jamais le canevas « terminé ».
@@ -1385,6 +1486,7 @@ var SceneRunManager = {
 
     var spawned = this._spawnNextCombatEnemy(run, false);
     if (!spawned) return { ok: false, reason: "Impossible de générer l'ennemi" };
+    this._applyEventEcho(run, "combat"); // v3.312.0 : la pierre depuis les dunes
 
     run.status = "combat"; // en pause sur le scene-engine tant que le combat n'est pas résolu
     if (typeof switchTab === "function") switchTab("combat");
@@ -1455,10 +1557,13 @@ var SceneRunManager = {
   takeJournalLines: function (run) {
     run = run || this.getRun();
     var template = run ? SceneEngine.getTemplate(run.templateId) : null;
+    // v3.312.0 : lignes posées par le run lui-même (échos d'événement), rendues une fois
+    var extra = [];
+    if (run && Array.isArray(run.extraLines) && run.extraLines.length) { extra = run.extraLines; run.extraLines = []; }
     var entries = template && template.journalByDepth;
-    if (!entries) return [];
+    if (!entries) return extra;
     if (!run.journalShown || typeof run.journalShown !== "object") run.journalShown = {};
-    var out = [];
+    var out = extra.slice();
     var shown = run.journalShown;
     var take = function (key, text) { if (text && !shown[key]) { shown[key] = true; out.push(text); } };
     var cur = run.depth + 1;
@@ -1550,3 +1655,18 @@ var SceneRunManager = {
 };
 
 window.SceneRunManager = SceneRunManager;
+
+/* v3.307.0 : raison affichable du verrou héros, ou null. Lu par les systèmes et les vues. */
+var HERO_LOCK_REASON = "Ton héros est en expédition : termine-la d'abord.";
+function heroLockReason() {
+  return (window.SceneRunManager && SceneRunManager.isHeroEngaged()) ? HERO_LOCK_REASON : null;
+}
+/* Garde d'une ligne : true (et toast) si l'action doit être refusée. */
+function heroLockToast() {
+  var r = heroLockReason();
+  if (r && typeof showToast === "function") showToast("🧭 " + r, 1800);
+  return !!r;
+}
+window.HERO_LOCK_REASON = HERO_LOCK_REASON;
+window.heroLockReason = heroLockReason;
+window.heroLockToast = heroLockToast;

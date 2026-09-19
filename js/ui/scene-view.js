@@ -798,8 +798,39 @@ function buildSceneNodeHTML() {
   if (type === "decouverte") return buildSceneDecouverteHTML(run);
   if (type === "source") return buildSceneSourceHTML(run);
   if (type === "bloqueur") return buildSceneBloqueurHTML(run); // v3.125.0 (Petites Aventures)
+  if (type === "evenement") return buildSceneEventHTML(run); // v3.312.0 (W-3d)
   return buildSceneGateChoiceHTML();
 }
+
+/* --- Événement à branches (v3.312.0, W-3d, bible B §5) ---
+   L'annonce, puis une branche par bouton ; le coût est dans le libellé, jamais de jugement.
+   Une branche impayable reste visible, grisée. La conséquence immédiate va au journal. */
+function buildSceneEventHTML(run) {
+  var ev = SceneRunManager.getPendingEvent();
+  if (!ev) return buildSceneGateChoiceHTML();
+  var h = '<div class="panel-title">' + esc(ev.title || "Quelqu'un") + '</div>';
+  h += '<div class="scene-screen">';
+  h += buildSceneStatusBarHTML(run);
+  h += '  <div class="scene-heading"><div class="scene-heading-text">' + esc(ev.annonce) + '</div></div>';
+  h += '  <div class="scene-actions scene-event-actions">';
+  ev.branches.forEach(function (b) {
+    var ok = SceneRunManager.canTakeEventBranch(b);
+    h += '    <button class="settings-btn' + (b.id === "passer" ? '' : ' primary') + '" type="button"' + (ok ? ' onclick="resolveSceneEvent(\'' + esc(b.id) + '\')"' : ' disabled') + '>' + esc(b.label) + '</button>';
+  });
+  h += '  </div>';
+  h += buildSceneLogHTML();
+  h += '</div>';
+  return h;
+}
+
+function resolveSceneEvent(branchId) {
+  var result = SceneRunManager.resolveEvent(branchId);
+  if (!result.ok) { showToast(result.reason, 1600); return; }
+  sceneLog(esc(result.text));
+  refreshSceneScreen();
+}
+window.resolveSceneEvent = resolveSceneEvent;
+window.buildSceneEventHTML = buildSceneEventHTML;
 
 /* v3.195.0 : icônes/labels de gain relatif par profil d'option (power/precision/endurance),
    affichés sur chaque carte d'obstacle pour rendre le triangle risque/gain/coût lisible

@@ -153,6 +153,7 @@ window.getSuggestedGrimoirePreset = getSuggestedGrimoirePreset;
    LECTURE SEULE plutôt que blocage sec : on peut relire ses règles en pleine sortie,
    on ne peut simplement plus les changer. */
 function isGrimoireEditable() {
+  if (window.heroLockReason && heroLockReason()) return false; // v3.307.0
   if (!window.SortieManager || typeof SortieManager.isActive !== "function") return true;
   return !SortieManager.isActive();
 }

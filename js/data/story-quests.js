@@ -57,7 +57,12 @@ var STORY_REWARDS = {
   desert_02: { gold: 700, essence: 20 }, // v3.302.0 : provisoire, même remarque
   desert_03: { gold: 750, essence: 20 }, // v3.304.0 : provisoire, même remarque
   desert_04: { gold: 800, essence: 25 }, // v3.305.0 : provisoire, même remarque
-  desert_05: { gold: 850, essence: 25 } // v3.306.0 : provisoire, même remarque
+  desert_05: { gold: 850, essence: 25 }, // v3.306.0 : provisoire, même remarque
+  desert_06: { gold: 900, essence: 30 }, // v3.310.0 : provisoire, même remarque
+  desert_07: { gold: 950, essence: 30 }, // v3.310.0 : provisoire, même remarque
+  desert_08: { gold: 1000, essence: 35 }, // v3.311.0 : provisoire, même remarque
+  desert_09: { gold: 1050, essence: 35 }, // v3.312.0 : provisoire, même remarque
+  desert_10: { gold: 1100, essence: 40 } // v3.312.0 : provisoire, même remarque
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -108,10 +113,9 @@ function storyCountTrainingUpgrades(game) {
   return total;
 }
 
-/* Achat Boutique : niveau Économie (u_gold/u_bounty) OU stock de potion possédé (bonus ou soin). */
+/* Achat Boutique : stock de potion possédé (bonus ou soin). v3.313.0 : l'onglet Économie
+   (u_gold/u_bounty) n'existe plus. */
 function storyHasShopPurchase(game) {
-  var up = game.upgrades || {};
-  if (Number(up.u_gold || 0) + Number(up.u_bounty || 0) >= 1) return true;
   var hasStock = function (obj) {
     return Object.keys(obj || {}).some(function (id) { return Number(obj[id] || 0) > 0; });
   };
@@ -717,11 +721,24 @@ function storyPendingChoiceAt(mapId, sectorId) {
   return null;
 }
 
+/* v3.311.0 : choix posé depuis la carte d'étape (onStoryCard), ex. la voie de Maddoc. Un tel
+   choix n'entre pas au registre (noRecord) : il dit lui-même s'il est fait (isDone). */
+function storyPendingCardChoice(chapterId) {
+  if (!window.StoryQuestManager) return null;
+  var step = StoryQuestManager.getCurrentStep(chapterId), c = step && step.choice;
+  if (!c || !c.onStoryCard || !StoryQuestManager.isCurrentStepAccepted(chapterId)) return null;
+  if (typeof c.isDone === "function" ? c.isDone() : StoryQuestManager.getChoice(c.key) != null) return null;
+  return { chapterId: chapterId, step: step, choice: c };
+}
+window.storyPendingCardChoice = storyPendingCardChoice;
+
 // Applique un choix : noté au registre (définitif), puis ses conséquences immédiates
 function storyMakeChoice(chapterId, value) {
   var step = StoryQuestManager.getCurrentStep(chapterId), c = step && step.choice;
   if (!c || !c.options.some(function (o) { return o.value === value; })) return false;
-  if (!StoryQuestManager.recordChoice(chapterId, c.key, value)) return false;
+  if (c.noRecord) { // v3.311.0 : choix de build, hors registre
+    if (typeof c.isDone === "function" && c.isDone()) return false;
+  } else if (!StoryQuestManager.recordChoice(chapterId, c.key, value)) return false;
   if (typeof c.apply === "function") c.apply(value);
   if (typeof saveGame === "function") saveGame();
   return true;
@@ -743,6 +760,21 @@ function storyDesertSectorsFreed() {
 function storyDesertFlag(key) {
   return !!(game.explorationProgression && game.explorationProgression[key]);
 }
+
+/* v3.311.0 (acte II §8) : ce qui s'est passé avec Maddoc en surface — "aided", "passed" ou null
+   (jamais croisé). Posé par l'événement de Petite Aventure (W-3d). */
+function storyMaddocMet() {
+  var v = game.explorationProgression && game.explorationProgression.maddocMet;
+  return (v === "aided" || v === "passed") ? v : null;
+}
+window.storyMaddocMet = storyMaddocMet;
+
+var STORY_MADDOC_GREETING = {
+  aided: "Toi. La gourde. Je te dois une eau. Je paie en marchant devant.",
+  passed: "Toi. Tu étais pressé, là-haut. On l'est tous. Je viens.",
+  none: "Maddoc. J'habite de l'autre côté. Il n'y a plus vraiment de côté."
+};
+window.STORY_MADDOC_GREETING = STORY_MADDOC_GREETING;
 
 STORY_QUESTS.desert = {
   id: "desert",
@@ -954,6 +986,234 @@ STORY_QUESTS.desert = {
         var freed = chosen || !!(window.LivingMapManager && LivingMapManager.isLiberated("desert", "steles"));
         return "Stèles libérées " + (freed ? "1/1" : "0/1") + " · Choix " + (chosen ? "1/1" : "0/1");
       }
+    },
+
+    /* ---------- Acte II — Le Temple et l'homme assis ---------- */
+    /* v3.310.0 (W-3a) — acte II §4. La porte du Temple (anneau 3, fermée par l'Histoire jusqu'ici)
+       n'est atteignable que par la verrerie ou le marché de sel. Sa première libération joue la
+       descente (firstContent), hors cap ; l'arrivée pose le Temple ensablé. */
+    {
+      id: "desert_06",
+      title: "La descente",
+      act: "Acte II — Le Temple et l'homme assis",
+      narrative: {
+        objective: "La porte du Temple dépasse du sable, au nord. Deux battants plus hauts que des arbres. Sarkel a dit « dessous ». C'est par là.",
+        completion: "Une salle, des piliers, et une chaise tournée vers une porte fermée. La lampe est posée à côté. Personne sur la chaise.",
+        dialogue: [
+          { who: "Sarkel", text: "Je t'emmène jusqu'à la porte. Pas plus loin. Ce qui est dessous ne se vend pas." },
+          { who: "Wenna", text: "Tu y es déjà descendu ?" },
+          { who: "Sarkel", text: "Une fois. J'ai remonté un sac de sel. Il était plein de sable." },
+          { who: "La gardienne du puits", text: "Prends de l'eau pour trois. On ne sait jamais combien on remonte." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Il y a quelqu'un, ici." },
+          { who: "Wenna", text: "Ou il y avait." },
+          { who: null, text: "La lampe brûle droit. Rien, ici, ne la fait bouger." }
+        ]
+      },
+      objectiveLabel: "Libérer la porte du Temple (carte du Désert, par la verrerie ou le marché de sel)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_06,
+      linkTo: { section: "map", cardId: "livingmap_desert:porte_temple" },
+      check: function () { return storyDesertFlag("templeDescended"); },
+      progress: function () { return "Porte du Temple " + (storyDesertFlag("templeDescended") ? "1/1" : "0/1"); }
+    },
+    /* v3.310.0 (W-3a) — acte II §5. Aucun combat : une Outre pleine donnée depuis la carte d'étape
+       (offrande générique, offeringUi.where = "story"), pour l'homme derrière la porte. */
+    {
+      id: "desert_07",
+      title: "Un homme assis",
+      act: "Acte II — Le Temple et l'homme assis",
+      narrative: {
+        objective: "L'homme est sur la chaise, face à la porte fermée. Il ne se lève pas. La lampe est de son côté.",
+        completion: "Il couche l'outre sur la pierre et la pousse sous la porte, du plat de la main. De l'autre côté, rien. Puis un choc contre le battant. Un seul.",
+        dialogue: [
+          { who: "Le Veilleur", text: "Tu viens d'Aeswyn. Tu as encore de la sève sur tes bottes. Il n'y a qu'une chaise. Le sol est propre, je l'ai balayé." },
+          { who: "Wenna", text: "C'est vous, le vieux ?" },
+          { who: "Le Veilleur", text: "Sarkel dit « le vieux » parce qu'il ne sait pas mon nom. Au camp, on dit le Veilleur, parce que je veille. Les deux sont exacts." },
+          { who: "Le Veilleur", text: "Cette porte ne s'ouvre pas de ce côté. Un homme est descendu avant toi. Il boitait. Il n'est pas remonté. Je la tiens pour qu'il puisse revenir." },
+          { who: "Le Veilleur", text: "Il avait une outre. Elle doit être vide. Il y a un jour sous le battant, assez pour en passer une pleine." }
+        ],
+        completionDialogue: [
+          { who: "Le Veilleur", text: "Il est vivant. Tu l'as entendu comme moi." },
+          { who: "Le Veilleur", text: "Tu as un grimoire dans ton sac. Garde-le. Il fait ce que je lui ai appris." },
+          { who: "Wenna", text: "Vous lui avez appris quoi ?" },
+          { who: "Le Veilleur", text: "À agir quand on ne regarde pas. C'est tout ce qu'il sait faire, et il le fait bien." }
+        ]
+      },
+      objectiveLabel: "Donner une Outre pleine au Veilleur",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_07,
+      offering: { outre_pleine: 1 },
+      offeringKey: "outreGiven",
+      offeringUi: {
+        where: "story",
+        buttonLabel: "Donner l'Outre",
+        lackToast: "Il te faut une Outre pleine. Le Réservoir la remplit, au Puits.",
+        doneToast: "L'outre passe sous la porte",
+        log: "Tu donnes une Outre pleine au Veilleur. Elle passe sous la porte."
+      },
+      linkTo: {
+        tab: "village", label: "Aller au Réservoir",
+        afterGo: function () {
+          if (typeof setVillageSubTab === "function") setVillageSubTab("production");
+          if (typeof setProductionViewTab === "function") setProductionViewTab("shops");
+        }
+      },
+      check: function (game) { return storyChapterCounter(game, "desert", "outreGiven") >= 1; },
+      progress: function (game) { return "Outre donnée " + (storyChapterCounter(game, "desert", "outreGiven") >= 1 ? "1/1" : "0/1"); }
+    },
+    /* v3.311.0 (W-3b) — acte II §6. Maddoc rejoint à l'acceptation (première amélioration offerte
+       s'il a été aidé en surface), sa voie se choisit sur la carte d'étape AVANT les combats (hors
+       registre), puis trois rencontres à trois au Temple (aq_desert_gouffre). */
+    {
+      id: "desert_08",
+      title: "Celui qui n'est pas rentré",
+      act: "Acte II — Le Temple et l'homme assis",
+      narrative: {
+        objective: "La porte est ouverte. Quelqu'un l'a poussée de l'autre côté, pendant la nuit. Derrière, un gouffre, et une passerelle dont il reste la moitié.",
+        completion: "Vous remontez à trois. La gardienne du puits compte trois ombres dans l'escalier. Elle remplit trois outres.",
+        get dialogue() {
+          return [
+            { who: "Le Veilleur", text: "Je reste ici. Si elle se referme, elle ne se rouvrira pas de ce côté. Va." },
+            { who: null, text: "De l'autre côté du gouffre, un homme est assis contre la paroi, une outre sur les genoux. Il se lève en s'aidant du mur." },
+            { who: "Maddoc", text: STORY_MADDOC_GREETING[storyMaddocMet() || "none"] },
+            { who: "Wenna", text: "Il boite." },
+            { who: "Maddoc", text: "Je boite. Je ne tombe pas." },
+            { who: "Maddoc", text: "Je peux me mettre devant et prendre les coups. Ou rester derrière et viser. Pas les deux. Choisis, c'est toi qui avances." }
+          ];
+        },
+        completionDialogue: [
+          { who: "Le Veilleur", text: "Il est rentré. C'est tout ce que je voulais." },
+          { who: "Maddoc", text: "Il tient cette porte depuis combien de temps ?" },
+          { who: "Le Veilleur", text: "Depuis avant ta naissance. Pas pour toi, au début." }
+        ]
+      },
+      objectiveLabel: "Choisir la voie de Maddoc, puis remonter à trois : 3 rencontres au Temple",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_08,
+      linkTo: { section: "adventure", cardId: "adv_aq_desert_gouffre" },
+      onAccept: function () {
+        if (!window.CompanionManager) return;
+        CompanionManager.unlock("maddoc");
+        // Aidé en surface : première amélioration offerte, une seule fois
+        var st = CompanionManager.state("maddoc");
+        if (storyMaddocMet() === "aided" && st && st.upgrades === 0 && !game.explorationProgression.maddocGift) {
+          st.upgrades = 1;
+          st.hp = CompanionManager.maxHpOf("maddoc");
+          game.explorationProgression.maddocGift = true;
+          if (typeof addLog === "function") addLog("🤝 Maddoc marche devant. Il n'a pas oublié la gourde.", "event");
+        }
+      },
+      choice: {
+        key: "maddocVoie", onStoryCard: true, noRecord: true,
+        buttonLabel: "Choisir sa voie",
+        title: "Devant ou derrière",
+        text: "Maddoc attend, la main sur la paroi. Il ne choisira pas pour toi.",
+        options: [
+          { value: "tronc", label: "Devant — Le tronc", desc: "Il se met devant et prend les coups. Il attire les ennemis et encaisse." },
+          { value: "affut", label: "Derrière — L'affût", desc: "Il reste derrière et vise. Il frappe fort mais attire peu." }
+        ],
+        isDone: function () { return !!(window.CompanionManager && CompanionManager.state("maddoc").voie); },
+        apply: function (value) { if (window.CompanionManager) CompanionManager.chooseVoie("maddoc", value); }
+      },
+      tutorial: {
+        tab: "more",
+        icon: "images/Icons/subtabs/hero_summary.png",
+        title: "À trois",
+        points: [
+          { icon: "images/Icons/subtabs/hero_summary.png", text: "Maddoc se bat à tes côtés, comme Wenna. Sa voie décide de son rôle : devant, il attire les coups ; derrière, il frappe fort mais attire peu." },
+          { icon: "images/Icons/system/forward.png", text: "Tu peux changer de voie depuis sa fiche, dans Héros › Compagnons. Chaque changement coûte plus cher que le précédent. Ses améliorations sont conservées." }
+        ]
+      },
+      check: function (game) { return !!(window.CompanionManager && CompanionManager.state("maddoc").voie) && storyAdvDone(game, "aq_desert_gouffre"); },
+      progress: function (game) {
+        var voie = !!(window.CompanionManager && CompanionManager.state("maddoc").voie);
+        return "Voie " + (voie ? "1/1" : "0/1") + " · Rencontres " + storyAdvProgress(game, "aq_desert_gouffre", "rencontres_gouffre", 3) + "/3";
+      }
+    },
+    /* v3.312.0 (W-3c) — acte II §7. Le Tailleur de pierre (Carrière) s'ouvre avec l'étape
+       (openAtStoryStep) ; le premier Verre trempé pose verreTrempe (firstCraftFlag). */
+    {
+      id: "desert_09",
+      title: "Le verre des dunes",
+      act: "Acte II — Le Temple et l'homme assis",
+      narrative: {
+        objective: "Maddoc ramasse un éclat de verre vert au bord du camp. Il le tourne contre le soleil, puis le frappe sur une pierre. Il ne casse pas.",
+        completion: "Le premier Verre trempé sort du four de la Carrière. Vert, froid, plus lourd qu'il ne devrait. Brannoc passe l'ongle dessus. Il ne le raye pas.",
+        dialogue: [
+          { who: "Maddoc", text: "Chez moi, on le chauffait deux fois. Une pour le fondre, une pour le rendre dur. Après, il coupait le fer." },
+          { who: "Wenna", text: "Chez toi, c'est où ?" },
+          { who: "Maddoc", text: "De l'autre côté. Il y avait un four. Il est sous le sable, maintenant." },
+          { who: "Sarkel", text: "Du verre qui coupe le fer. Je t'en prends dix. Non. Je t'en prends tout." },
+          { who: "Brannoc", text: "Le tailleur de la Carrière sait chauffer la pierre. Le verre, il apprendra. Montre-lui, petit." }
+        ],
+        completionDialogue: [
+          { who: "Brannoc", text: "Ça, petit, ça tiendra un toit." },
+          { who: "Maddoc", text: "Ça tenait des villes." }
+        ]
+      },
+      objectiveLabel: "Fabriquer 1 Verre trempé au Tailleur de pierre (Carrière)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_09,
+      linkTo: {
+        tab: "village", label: "Aller aux Ateliers",
+        afterGo: function () {
+          if (typeof setVillageSubTab === "function") setVillageSubTab("production");
+          if (typeof setProductionViewTab === "function") setProductionViewTab("shops");
+        }
+      },
+      tutorial: {
+        tab: "village",
+        icon: "images/Icons/workshops/stonemason.png",
+        title: "Le Tailleur de pierre",
+        points: [
+          { icon: "images/Icons/workshops/stonemason.png", text: "À la Carrière, le Tailleur de pierre chauffe le Verre des dunes avec de la Pierre. Il en sort du Verre trempé." },
+          { icon: "images/Icons/resources/verre_des_dunes_icon.png", text: "Le Verre des dunes se trouve en Petite Aventure du Désert, et à la première libération des secteurs de la carte." },
+          { icon: "images/Icons/resources/verre_trempe_icon.png", text: "Le Verre trempé servira aux hauts paliers des bâtiments d'Aeswyn." },
+          { icon: "images/Icons/scene/node_discovery.png", text: "Libérer la verrerie ensevelie fait travailler le Tailleur 10 % plus vite." }
+        ]
+      },
+      check: function () { return storyDesertFlag("verreTrempe"); },
+      progress: function () { return "Verre trempé " + (storyDesertFlag("verreTrempe") ? "1/1" : "0/1"); }
+    },
+    /* v3.312.0 (W-3c) — acte II §7. La grammaire de groupes : six rencontres scriptées aux Dunes
+       (aq_desert_nuee), une nuée = une rencontre. Le champ de scarabées s'ouvre à la réclamation
+       (requiresStoryStep: "desert_10" est atteint dès qu'on passe à l'étape suivante). */
+    {
+      id: "desert_10",
+      title: "La nuée",
+      act: "Acte II — Le Temple et l'homme assis",
+      narrative: {
+        objective: "Le sable crépite, au sud du camp. La gardienne du puits a tendu une corde autour de la réserve d'eau. Hier, elle n'y était pas.",
+        completion: "Six rencontres. Les carapaces par tas de trois, deux boucliers couchés l'un contre l'autre. Au sud, le sable ne crépite plus. Pas aujourd'hui.",
+        dialogue: [
+          { who: "Maddoc", text: "Les petites viennent par trois. Toujours. Tu en tues une, les deux autres ne s'en aperçoivent pas." },
+          { who: "Wenna", text: "Et les grands ?" },
+          { who: "Maddoc", text: "Par deux, dos à dos. Ils ont appris ça de quelqu'un." },
+          { who: "Sarkel", text: "Les carapaces, je les reprends. Trois pièces l'une. Une nuée, ça fait neuf. Fais le compte." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Elles reviendront. Par trois." }
+        ]
+      },
+      objectiveLabel: "Terminer « La nuée » : 6 rencontres aux Dunes, nuées et paires",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_10,
+      linkTo: { section: "adventure", cardId: "adv_aq_desert_nuee" },
+      tutorial: {
+        tab: "combat",
+        icon: "images/Icons/combat_status/double_strike.png",
+        title: "La nuée",
+        points: [
+          { icon: "images/Icons/combat_status/double_strike.png", text: "Au Désert, certaines bêtes vont en groupe : les scarabées par trois, les guerriers des sables par deux." },
+          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Touche un ennemi pour le cibler. Une nuée tue par le nombre de ses coups : chaque scarabée abattu en retire un." },
+          { icon: "images/Icons/quests/quest_list.png", text: "Dans cette quête, un groupe compte pour une seule rencontre." },
+          { icon: "images/Icons/codex/codex_lore.png", text: "Dans le Grimoire, la condition « Ils sont plusieurs » te permet de régler ton kit face à un groupe." }
+        ]
+      },
+      check: function (game) { return storyAdvDone(game, "aq_desert_nuee"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_desert_nuee", "rencontres_nuee", 6) + "/6"; }
     }
   ]
 };

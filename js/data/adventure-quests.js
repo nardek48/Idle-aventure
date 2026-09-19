@@ -179,6 +179,64 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.311.0 (W-3b, acte II §6) — étape 8 « Celui qui n'est pas rentré » : trois rencontres À TROIS
+     (héros, Wenna, Maddoc) au Temple ensablé, contre des bêtes SEULES — la nuée est la leçon de
+     l'étape 10. Rencontres scriptées (encounters), comptées une par une. Maddoc doit avoir sa voie.
+     PV au banc sim/desert-acte2-bench.js. */
+  aq_desert_gouffre: {
+    id: "aq_desert_gouffre",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_mid",
+    category: "side",
+    worldId: "desert",
+    adventureIndex: 1,
+    requiresVoie: "maddoc",
+    encounters: [{ enemy: "sandwarrior" }, { enemy: "sandworm" }, { enemy: "scorpion" }],
+    /* ×1,6 (banc, arme 30 + vitrine, entr. 40, Wenna et Maddoc) : ~12 rounds par bête, 67-83 %
+       de PV à l'arrivée, aucune potion. Le tronc rend la remontée plus sûre, l'affût plus courte. */
+    encounterHpMult: 1.6,
+    name: "Remonter à trois",
+    story: "Derrière la porte, le gouffre. Maddoc boite devant, ou derrière. L'escalier est long.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    steps: [
+      { id: "rencontres_gouffre", type: "encounter", worldId: "desert", target: 3, desc: "Vaincre {target} rencontres à trois" }
+    ],
+    reward: {}
+  },
+
+  /* v3.311.0 (W-3c, acte II §7) — étape 10 « La nuée » : la grammaire de groupes du Désert.
+     Six rencontres au sud du camp (Dunes) : trois nuées, deux paires de guerriers, un ver seul.
+     Un groupe = une rencontre. Facteurs des groupes repris de la Petite Aventure (0,35 / 0,55). */
+  aq_desert_nuee: {
+    id: "aq_desert_nuee",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_mid",
+    category: "side",
+    worldId: "desert",
+    adventureIndex: 0,
+    encounters: [
+      { group: ["scarab", "scarab", "scarab"], groupHpMult: 0.35 },
+      { group: ["sandwarrior", "sandwarrior"], groupHpMult: 0.55 },
+      { group: ["scarab", "scarab", "scarab"], groupHpMult: 0.35 },
+      { enemy: "sandworm" },
+      { group: ["scarab", "scarab", "scarab"], groupHpMult: 0.35 },
+      { group: ["sandwarrior", "sandwarrior"], groupHpMult: 0.55 }
+    ],
+    // ×1,3 (même banc) : 32-52 rounds, ~70 % de PV à l'arrivée, aucune potion
+    encounterHpMult: 1.3,
+    name: "La nuée",
+    story: "Le sable crépite, au sud du camp. Les petites viennent par trois, les grands par deux.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    steps: [
+      { id: "rencontres_nuee", type: "encounter", worldId: "desert", target: 6, desc: "Vaincre {target} rencontres (une nuée compte pour une)" }
+    ],
+    reward: {}
+  },
+
   hq_wolf_pack: {
     id: "hq_wolf_pack",
     type: "kill",

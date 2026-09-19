@@ -103,7 +103,35 @@ var AdventureQuestManager = {
   buildQuestEnemy: function (quest, forceBoss) {
     // v3.107.0 : délègue au module partagé (systems/quest-enemy-system.js), qui gère aussi le
     // filtre d'ennemis optionnel de la quête (quest.enemyFilter).
-    return window.QuestEnemyManager ? QuestEnemyManager.spawnFor(quest, forceBoss) : null;
+    if (!window.QuestEnemyManager) return null;
+    if (Array.isArray(quest.encounters) && quest.encounters.length) return QuestEnemyManager.spawnFor(this._encounterQuest(quest), false);
+    return QuestEnemyManager.spawnFor(quest, forceBoss);
+  },
+
+  /* v3.311.0 (acte II) — RENCONTRES SCRIPTÉES. quest.encounters = liste de rencontres, jouées
+     dans l'ordre : { enemy: "sandworm" } ou { group: [...], groupHpMult }. L'étape de type
+     "encounter" compte une rencontre quand le DERNIER ennemi du groupe tombe (un groupe = un
+     cran, règle des objectifs du Désert). quest.encounterHpMult règle toute la quête. */
+  _encounterIndex: function (quest) {
+    var step = (quest.steps || []).find(function (s) { return s.type === "encounter"; });
+    var p = (game.adventureQuestProgress || {})[quest.id] || {};
+    return step ? Number(p[step.id] || 0) : 0;
+  },
+
+  _encounterQuest: function (quest) {
+    var list = quest.encounters, e = list[Math.min(this._encounterIndex(quest), list.length - 1)] || list[0];
+    var mult = Number(quest.encounterHpMult || 1);
+    var q = { id: quest.id, worldId: quest.worldId, adventureIndex: quest.adventureIndex };
+    if (Array.isArray(e.group) && e.group.length > 1) {
+      q.enemyFilter = [e.group[0]];
+      q.group = e.group;
+      q.groupHpMult = Number(e.groupHpMult || (e.group.length >= 3 ? 0.35 : 0.50)) * mult;
+      q.groupGoldMult = Number(e.groupGoldMult || e.groupHpMult || (e.group.length >= 3 ? 0.35 : 0.50));
+    } else {
+      q.enemyFilter = [e.enemy || (e.group && e.group[0])];
+      q.enemyHpMult = Number(e.hpMult || 1) * mult;
+    }
+    return q;
   },
 
   nextSpawnIsBoss: function (quest) {
@@ -162,6 +190,11 @@ var AdventureQuestManager = {
       return showToast("Termine ou arrête ta chasse en cours avant de lancer une quête", 1600);
     }
 
+    if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
+    // v3.311.0 : quête qui se joue avec un compagnon dont la voie doit être choisie (étape 8)
+    if (quest.requiresVoie && window.CompanionManager && !CompanionManager.state(quest.requiresVoie).voie) {
+      return showToast("Choisis d'abord la voie de " + (getCompanionDef(quest.requiresVoie) || {}).name + ", dans l'Histoire", 1800);
+    }
     this._resetProgress(quest); // v3.260.0 : chaque départ repart de 0
     game.adventureQuestRun = { active: true, questId: questId };
     if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("adventure"); } // v3.102.1 : la quête est une sortie
@@ -193,6 +226,10 @@ var AdventureQuestManager = {
     quest.steps.forEach(function (step) {
       if (step.type === "kill" && !enemy.isBoss && !enemy.isElite) { // v3.205.0 (E5) : l'élite ne compte pas dans son propre pistage
         if (progress[step.id] < step.target) progress[step.id] += 1;
+      } else if (step.type === "encounter") {
+        // v3.311.0 : un cran quand plus aucun autre ennemi n'est debout (fin de la rencontre)
+        var restants = window.CombatActors ? CombatActors.enemies().filter(function (x) { return x !== enemy && Number(x.hp || 0) > 0; }).length : 0;
+        if (restants === 0 && progress[step.id] < step.target) progress[step.id] += 1;
       } else if (step.type === "bossKill" && enemy.isBoss && step.bossId === enemy.id) {
         if (progress[step.id] < step.target) progress[step.id] += 1;
       } else if (step.type === "eliteKill" && enemy.isElite && step.eliteId === enemy.id) {

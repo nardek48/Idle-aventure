@@ -69,6 +69,7 @@ var HuntQuestManager = {
       return showToast("Termine ou abandonne ta quête avant de chasser", 1600);
     }
 
+    if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
     game.huntRun = { active: true, questId: questId, killsInLot: 0 };
     if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("hunt"); } // v3.102.1 : la chasse est une sortie
     addLog("🏹 Départ en chasse : " + quest.name, "event");

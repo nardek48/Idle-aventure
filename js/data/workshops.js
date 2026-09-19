@@ -117,8 +117,15 @@ var WORKSHOPS_CONFIG = {
   },
 
   // ===== Carrière =====
+  /* v3.312.0 (W-3c, acte II étape 9) : s'ouvre avec « Le verre des dunes ». Quantités provisoires. */
   tailleur_de_pierre: {
-    buildingId: "quarry", name: "Tailleur de pierre", icon: "images/Icons/workshops/stonemason.png", active: false
+    buildingId: "quarry", name: "Tailleur de pierre", icon: "images/Icons/workshops/stonemason.png",
+    openAtStoryStep: "desert_09",
+    upgradeCostBase: { planche: 4, lingot: 3 },
+    recipes: [
+      { id: "verre_trempe", inputs: [{ resourceId: "verre_des_dunes", quantity: 2 }, { resourceId: "pierre", quantity: 10 }],
+        outputs: [{ resourceId: "verre_trempe", quantity: 1 }], craftTimeMs: 30000, firstCraftFlag: "verreTrempe" }
+    ]
   },
   maconnerie: {
     buildingId: "quarry", name: "Maçonnerie", icon: "images/Icons/workshops/masonry.png", active: false

@@ -36,7 +36,48 @@ var CompanionManager = {
     if (!isCompanionHealThreshold(st.healThreshold)) st.healThreshold = "normal";
     if (st.healPriority !== "hero") st.healPriority = "lowest";
     if (typeof st.keepReserve !== "boolean") st.keepReserve = false;
+    // v3.311.0 : voie (compagnon à voies, ex. Maddoc) — null tant qu'elle n'est pas choisie
+    var raw = COMPANIONS_DB[companionId];
+    if (raw && raw.voies) {
+      if (st.voie != null && !raw.voies[st.voie]) st.voie = null;
+      if (st.voie == null) st.voie = null;
+      if (typeof st.voieChanges !== "number" || st.voieChanges < 0) st.voieChanges = 0;
+    }
     return st;
+  },
+
+  /* ---------- Voies (v3.311.0, D4 / D4b) ---------- */
+
+  hasVoies: function (companionId) {
+    var raw = COMPANIONS_DB[companionId];
+    return !!(raw && raw.voies);
+  },
+
+  /* Premier choix, gratuit (étape 8). Refusé si une voie est déjà prise. */
+  chooseVoie: function (companionId, voieId) {
+    var raw = COMPANIONS_DB[companionId], st = this.state(companionId);
+    if (!raw || !raw.voies || !raw.voies[voieId] || !st || st.voie) return false;
+    st.voie = voieId;
+    st.hp = this.maxHpOf(companionId);
+    if (typeof saveGame === "function") saveGame();
+    return true;
+  },
+
+  /* Changement payant : VOIE_CHANGE_BASE_COST ×3 à chaque fois, améliorations conservées. */
+  changeVoie: function (companionId, voieId) {
+    if (window.heroLockToast && heroLockToast()) return false; // v3.307.0 : héros en expédition
+    var raw = COMPANIONS_DB[companionId], st = this.state(companionId);
+    if (!raw || !raw.voies || !raw.voies[voieId] || !st || !st.unlocked || !st.voie || st.voie === voieId) return false;
+    var cost = getVoieChangeCost(st.voieChanges);
+    if ((game.gold || 0) < cost) { if (typeof showToast === "function") showToast("Pas assez d'or", 1200); return false; }
+    game.gold -= cost;
+    st.voie = voieId;
+    st.voieChanges += 1;
+    st.hp = this.maxHpOf(companionId);
+    if (typeof addLog === "function") addLog("🔁 " + raw.name + " : " + raw.voies[voieId].label + ".", "event");
+    if (typeof saveGame === "function") saveGame();
+    if (typeof renderAll === "function") renderAll();
+    return true;
   },
 
   isUnlocked: function (companionId) {
@@ -76,6 +117,7 @@ var CompanionManager = {
   },
 
   setPresent: function (companionId, present) {
+    if (window.heroLockToast && heroLockToast()) return false; // v3.307.0 : héros en expédition
     var st = this.state(companionId);
     if (!st || !st.unlocked) return false;
     if (present && this.partyIds().length >= COMPANION_MAX_PRESENT && !st.present) {
@@ -275,11 +317,20 @@ var CompanionManager = {
           if (ratio >= seuil) continue;
           if (st.keepReserve && Number(actor.charges || 0) <= 1 && ratio > seuil / 2) continue;
         }
+        // v3.311.0 : « Planté » seulement quand un autre allié a pris des coups (sinon il gâche le round)
+        if (def.skill && def.skill.type === "taunt" && !this._someoneElseHurt(actor)) continue;
         return "skill";
       }
       if (policy[i] === "basic") return "basic";
     }
     return "basic";
+  },
+
+  _someoneElseHurt: function (actor) {
+    if (!window.CombatActors) return false;
+    return CombatActors.aliveAllies().some(function (a) {
+      return a !== actor && Number(a.maxHp || 0) > 0 && (a.hp / a.maxHp) < 0.9;
+    });
   },
 
   allyById: function (actorId) {
@@ -388,6 +439,33 @@ var CompanionManager = {
       return true;
     }
 
+    /* v3.311.0 — Planté (Maddoc, le tronc) : sa menace passe à quatre fois celle de tous les
+       autres réunis (tirage au prorata, §6.2) ; elle décroît ensuite comme toute menace.
+       Il se rend une part de ses PV. */
+    if (skill.type === "taunt") {
+      var others = 0;
+      (window.CombatActors ? CombatActors.aliveAllies() : []).forEach(function (a) {
+        if (a !== actor) others += Math.max(Number(typeof THREAT_FLOOR === "number" ? THREAT_FLOOR : 0.15), Number(a.threat || 0) * Number(a.threatMult || 1));
+      });
+      actor.threat = (others * 4 + 20) / Math.max(0.1, Number(actor.threatMult || 1));
+      var soin = Math.max(1, Math.floor(actor.maxHp * Number(skill.value || 0)));
+      actor.hp = Math.min(actor.maxHp, actor.hp + soin);
+      actor.cooldown = Number(skill.cooldown || 0);
+      if (typeof addLog === "function") addLog("🛡️ " + def.name + " — " + skill.name + " : il attire les coups (+" + (typeof formatNumber === "function" ? formatNumber(soin) : soin) + " PV)", "event");
+      return true;
+    }
+
+    /* v3.311.0 — Tir ajusté (Maddoc, l'affût) : une frappe multipliée, par le vrai dealDamage. */
+    if (skill.type === "strike") {
+      var cible = window.CombatActors ? CombatActors.target() : null;
+      if (!cible || Number(cible.hp || 0) <= 0 || !window.CombatEngine) return false;
+      var dmg = Math.max(1, Math.floor(Number(actor.damage || 1) * Number(skill.value || 1)));
+      CombatEngine.dealDamage(dmg, false, true, true, cible);
+      actor.cooldown = Number(skill.cooldown || 0);
+      if (typeof addLog === "function") addLog("🎯 " + def.name + " — " + skill.name + " sur " + (cible.name || "l'ennemi") + " (-" + (typeof formatNumber === "function" ? formatNumber(dmg) : dmg) + ")", "event");
+      return true;
+    }
+
     return false;
   },
 
@@ -412,6 +490,7 @@ var CompanionManager = {
   /* ---------- Améliorations ---------- */
 
   buyUpgrade: function (companionId) {
+    if (window.heroLockToast && heroLockToast()) return false; // v3.307.0 : héros en expédition
     var st = this.state(companionId);
     if (!st || !st.unlocked) return false;
     var cost = getCompanionUpgradeCost(companionId, st.upgrades);
@@ -449,7 +528,9 @@ var CompanionManager = {
         hp: (typeof st.hp === "number" && isFinite(st.hp)) ? st.hp : null,
         healThreshold: st.healThreshold,     // v3.271.0 (L-5)
         healPriority: st.healPriority,
-        keepReserve: !!st.keepReserve
+        keepReserve: !!st.keepReserve,
+        voie: st.voie || null,               // v3.311.0 : compagnon à voies
+        voieChanges: Number(st.voieChanges || 0)
       };
     });
     return out;
@@ -472,6 +553,10 @@ var CompanionManager = {
       if (d.healThreshold) self.setSetting(id, "healThreshold", d.healThreshold);
       if (d.healPriority) self.setSetting(id, "healPriority", d.healPriority);
       self.setSetting(id, "keepReserve", !!d.keepReserve);
+      if (self.hasVoies(id)) { // v3.311.0
+        st.voie = (d.voie && COMPANIONS_DB[id].voies[d.voie]) ? d.voie : null;
+        st.voieChanges = Math.max(0, Number(d.voieChanges || 0));
+      }
     });
   }
 };

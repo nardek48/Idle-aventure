@@ -178,7 +178,8 @@ function buildVillageBuildingSheetHTML(id) {
      améliorations d'or (Bourse lourde, Contrats lucratifs) n'avaient plus de porte —
      la Taverne, qui vend déjà des contrats, les héberge. Lien de renvoi en N-1 ; le
      lot N-2 embarque les cartes ici même. */
-  if (id === "tavern") {
+  // v3.313.0 : Bourse et Contrats retirés — la porte n'apparaît que s'il reste une amélioration d'or
+  if (id === "tavern" && typeof shopHasEconomyUpgrades === "function" && shopHasEconomyUpgrades()) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToEconomy()">'
        + '<img class=ico-inline src=images/Icons/subtabs/economy.png> Bourse et contrats d\'or ›</div>';
   }

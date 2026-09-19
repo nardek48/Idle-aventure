@@ -519,15 +519,18 @@ var StoryQuestManager = {
   /* Navigation « Aller à la quête » : onglet direct, ou section/carte de l'écran Quêtes. */
   /* v3.133.0 : offrande aux braises (étape à champ `offering`, ex. forest_15). getOfferingInfo() -> null si aucune
      étape acceptée n'en demande (ou déjà faite), sinon { step, items:[{id,name,icon,need,have}], canOffer }. */
-  getOfferingInfo: function (chapterId) {
+  /* v3.310.0 : `where` filtre le lieu de l'offrande (step.offeringUi.where, "camp" par défaut) ;
+     step.offeringKey nomme le compteur (offeringDone par défaut, celui de forest_15). */
+  getOfferingInfo: function (chapterId, where) {
     if (!chapterId) { // v3.297.0 : sans chapitre précisé, le premier chapitre actif qui en demande une
       var ids = this.activeChapterIds();
-      for (var i = 0; i < ids.length; i++) { var info = this.getOfferingInfo(ids[i]); if (info) return info; }
+      for (var i = 0; i < ids.length; i++) { var info = this.getOfferingInfo(ids[i], where); if (info) return info; }
       return null;
     }
     var step = this.getCurrentStep(chapterId);
     var st = this.getState(chapterId);
-    if (!step || !step.offering || !st.accepted || Number(st.counters.offeringDone || 0) >= 1) return null;
+    if (!step || !step.offering || !st.accepted || Number(st.counters[step.offeringKey || "offeringDone"] || 0) >= 1) return null;
+    if (where && ((step.offeringUi && step.offeringUi.where) || "camp") !== where) return null;
     var canOffer = true;
     var items = Object.keys(step.offering).map(function (key) {
       var def = (window.WAREHOUSE_RESOURCES || {})[key] || {};
@@ -545,14 +548,21 @@ var StoryQuestManager = {
     var info = this.getOfferingInfo(chapterId || null); // v3.297.0 : sans chapitre, le chapitre actif qui en demande une
     if (!info) return false;
     chapterId = info.chapterId;
-    if (!info.canOffer) { if (typeof showToast === "function") showToast("Il manque encore de quoi nourrir les braises", 1600); return false; }
+    var ui = info.step.offeringUi || null; // v3.310.0 : textes propres à l'étape (ex. l'Outre du Veilleur)
+    if (!info.canOffer) { if (typeof showToast === "function") showToast(ui ? ui.lackToast : "Il manque encore de quoi nourrir les braises", 1600); return false; }
     if (!window.WarehouseManager) return false;
     for (var i = 0; i < info.items.length; i++) {
       if (!WarehouseManager.removeResource(info.items[i].id, info.items[i].need)) return false;
     }
-    this.getState(chapterId).counters.offeringDone = 1;
-    addLog("🔥 Offrande aux braises : " + info.items.map(function (it) { return it.need + " " + it.name; }).join(", ") + ". Les braises rougeoient.", "event");
-    if (typeof showToast === "function") showToast("🔥 Les braises s'éveillent", 1800);
+    this.getState(chapterId).counters[info.step.offeringKey || "offeringDone"] = 1;
+    if (ui) {
+      addLog(ui.log, "event");
+      if (typeof showToast === "function") showToast(ui.doneToast, 1800);
+      this._checkNow(false); // l'étape est prête tout de suite
+    } else {
+      addLog("🔥 Offrande aux braises : " + info.items.map(function (it) { return it.need + " " + it.name; }).join(", ") + ". Les braises rougeoient.", "event");
+      if (typeof showToast === "function") showToast("🔥 Les braises s'éveillent", 1800);
+    }
     if (typeof vibrate === "function") vibrate([40, 30, 80]);
     if (typeof renderAll === "function") renderAll();
     if (typeof saveGame === "function") saveGame();
@@ -570,6 +580,8 @@ var StoryQuestManager = {
     var targetTab = (typeof step.linkTo.tab === "function") ? step.linkTo.tab(game) : step.linkTo.tab;
     if (targetTab) {
       if (typeof switchTab === "function") switchTab(targetTab);
+      // v3.310.0 : hook après la navigation (ex. desert_07 -> Village › Ateliers, le Réservoir)
+      if (typeof step.linkTo.afterGo === "function") { step.linkTo.afterGo(game); return; }
       // v3.107.1 : sous-onglet optionnel (ex. forest_03 -> Menu > Amélioration directement, décision Seb).
       // v3.260.0 : même mécanisme pour la Boutique (forest_04 -> Potions directement).
       if (step.linkTo.subTab && targetTab === "shop") { if (typeof setShopSubTab === "function") setShopSubTab(step.linkTo.subTab); return; }

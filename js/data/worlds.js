@@ -60,6 +60,7 @@ var WORLDS = [
       {
         id: "desert_2",
         name: "Temple ensablé",
+        reachedFlag: "templeReached", // v3.310.0 : posé par la descente (acte II §4), relu au voyage retour
         introText: "Sous le sable, des pierres taillées avant tout le reste. Elles n'ont pas fini d'attendre.", // v3.197.0 (bible B §4.1)
         enemyPool: ["sandwarrior", "sandworm", "scorpion", "scarab"],
         enemyCount: 10,

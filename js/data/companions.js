@@ -58,8 +58,69 @@ var COMPANIONS_DB = {
       skill: "Tiens-toi tranquille deux secondes.",
       ko: "Wenna tombe. Elle ne demande rien, pour une fois."
     }
+  },
+
+  /* v3.311.0 (W-3b, acte II §3 et §6) — MADDOC, second compagnon, rejoint à l'étape 8.
+     DEUX VOIES au choix du joueur (D4) : la fiche commune ci-dessous, et dans `voies` ce qui
+     change d'une voie à l'autre (rôle, stats, menace, compétence, politique). getCompanionDef
+     fusionne la voie courante : le reste du code ne voit qu'un compagnon ordinaire.
+     Changement de voie : VOIE_CHANGE_BASE_COST ×3 à chaque fois (D4b), améliorations gardées.
+     Stats provisoires, calibrées au banc sim/desert-acte2-bench.js. */
+  maddoc: {
+    id: "maddoc",
+    name: "Maddoc",
+    image: "./images/Companions/maddoc.png", // portrait à générer (icône générique d'ici là)
+    weaponType: "sling",
+    defaultVoie: "tronc",
+    voies: {
+      tronc: {
+        label: "Le tronc", short: "Devant",
+        desc: "Il se met devant et prend les coups. Il attire les ennemis et encaisse.",
+        role: "guard",
+        base: { power: 34, endurance: 74, celerity: 30, precision: 30, will: 36 },
+        threatMult: 1.8,                   // Garde : il attire (§6.2)
+        skill: {
+          id: "maddoc_plante", name: "Planté",
+          icon: "images/Icons/companions/maddoc_plante.png", // à générer
+          type: "taunt",
+          value: 0.12,                     // se rend 12 % de ses PV max
+          cooldown: 4, charges: 0,
+          desc: "Attire sur lui les coups des prochains rounds et se rend 12 % de ses PV max."
+        },
+        autoPolicy: ["skill", "basic"],
+        lines: { skill: "Par ici." }
+      },
+      affut: {
+        label: "L'affût", short: "Derrière",
+        desc: "Il reste derrière et vise. Il frappe fort mais attire peu.",
+        role: "assault",
+        base: { power: 52, endurance: 38, celerity: 48, precision: 50, will: 34 },
+        threatMult: 0.6,                   // de loin, il attire peu
+        skill: {
+          id: "maddoc_tir", name: "Tir ajusté",
+          icon: "images/Icons/companions/maddoc_tir.png", // à générer
+          type: "strike",
+          value: 2.5,                      // ×2,5 ses dégâts de base sur la cible
+          cooldown: 3, charges: 0,
+          desc: "Une pierre bien ajustée : 2,5 fois ses dégâts sur la cible."
+        },
+        autoPolicy: ["skill", "basic"],
+        lines: { skill: "Bouge pas." }
+      }
+    },
+    upgrades: { costs: [240, 480, 960, 1920, 3600], statPct: 0.06 }, // prix du Désert (×4), provisoires
+    unlockedBy: "desert_08",
+    lines: {
+      join: "Je boite. Je ne tombe pas.",
+      ko: "Maddoc s'assoit contre la paroi. Il se relèvera."
+    }
   }
 };
+
+/* v3.311.0 : changement de voie (D4b) — 2 000 or, ×3 à chaque changement. Le premier choix
+   (étape 8) est gratuit. */
+var VOIE_CHANGE_BASE_COST = 2000;
+var VOIE_CHANGE_COST_MULT = 3;
 
 /* v3.271.0 (L-5) — RÉGLAGES DE COMPORTEMENT, sur la fiche du compagnon (décision Seb
    17/09/2026 : ce qui appartient au compagnon se règle chez lui ; les cartes du Grimoire,
@@ -103,9 +164,31 @@ var COMPANION_ROLE_LABELS = {
   support: "Soutien"
 };
 
-function getCompanionDef(companionId) {
+var _companionVoieCache = {}; // fiche fusionnée par « id:voie », identité stable
+
+/* v3.311.0 : un compagnon à voies (Maddoc) renvoie sa fiche commune fusionnée avec la voie
+   courante (game.companions[id].voie, sinon defaultVoie). Seule lecture de game.* du fichier. */
+function getCompanionDef(companionId, voieId) {
   if (!companionId || typeof companionId !== "string") return null;
-  return COMPANIONS_DB[companionId] || null;
+  var def = COMPANIONS_DB[companionId] || null;
+  if (!def || !def.voies) return def;
+  var voie = voieId || (window.game && game.companions && game.companions[companionId] && game.companions[companionId].voie) || def.defaultVoie;
+  if (!def.voies[voie]) voie = def.defaultVoie;
+  var key = companionId + ":" + voie;
+  if (!_companionVoieCache[key]) {
+    var v = def.voies[voie], merged = {};
+    Object.keys(def).forEach(function (k) { if (k !== "voies") merged[k] = def[k]; });
+    Object.keys(v).forEach(function (k) { if (k !== "lines") merged[k] = v[k]; });
+    merged.lines = Object.assign({}, def.lines || {}, v.lines || {});
+    merged.voie = voie;
+    _companionVoieCache[key] = merged;
+  }
+  return _companionVoieCache[key];
+}
+
+/* Coût du prochain changement de voie (changes = changements déjà faits). */
+function getVoieChangeCost(changes) {
+  return Math.round(VOIE_CHANGE_BASE_COST * Math.pow(VOIE_CHANGE_COST_MULT, Math.max(0, Number(changes || 0))));
 }
 
 /* Stats effectives d'un compagnon à un monde donné, améliorations comprises.
@@ -152,6 +235,8 @@ window.COMPANION_HP_COEF = COMPANION_HP_COEF;
 window.COMPANION_KO_RETURN_PCT = COMPANION_KO_RETURN_PCT;
 window.COMPANION_MAX_PRESENT = COMPANION_MAX_PRESENT;
 window.getCompanionDef = getCompanionDef;
+window.getVoieChangeCost = getVoieChangeCost;
+window.VOIE_CHANGE_BASE_COST = VOIE_CHANGE_BASE_COST;
 window.getCompanionStats = getCompanionStats;
 window.getCompanionUpgradeCost = getCompanionUpgradeCost;
 window.getCompanionMaxUpgrades = getCompanionMaxUpgrades;

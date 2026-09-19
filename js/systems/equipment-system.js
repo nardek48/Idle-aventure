@@ -169,6 +169,7 @@ function addDropToInventory(item) {
 
 var EquipmentSystem = {
   equip: function (uid) {
+    if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
     var index = (game.inventory || []).findIndex(function (item) {
       return item.uid === uid;
     });
@@ -201,6 +202,7 @@ var EquipmentSystem = {
   },
 
   unequip: function (slot) {
+    if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
     if (!game.equipped || !game.equipped[slot]) return;
 
     var item = game.equipped[slot];

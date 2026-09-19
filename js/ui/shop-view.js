@@ -1,10 +1,17 @@
 "use strict";
 /* ui/shop-view.js — écran Boutique, sous-onglets Économie (upgrades or)/Potions. Duplique volontairement les coeffs stats-system.js pour preview "avant→après". Détail : COMMENTAIRES_ORIGINAUX.md */
 
-var activeShopSubTab = "upgrades";
+var activeShopSubTab = "potions"; // v3.313.0 : l'Économie est vide depuis le retrait de la Bourse et des Contrats
+
+/* v3.313.0 : améliorations d'or vendues à la Boutique (hors entraînements, achetés dans Héros). */
+function shopHasEconomyUpgrades() {
+  return (UPGRADES || []).some(function (u) {
+    return !(typeof HEROS_TRAINING_UPGRADE_IDS !== "undefined" && HEROS_TRAINING_UPGRADE_IDS.indexOf(u.id) !== -1);
+  });
+}
 
 function setShopSubTab(tab) {
-  if (tab === "potions") activeShopSubTab = "potions";
+  if (tab === "potions" || !shopHasEconomyUpgrades()) activeShopSubTab = "potions";
   else activeShopSubTab = "upgrades";
   if (typeof renderPanel === "function") renderPanel();
 }
@@ -203,6 +210,7 @@ function buildUpgradeCardHTML(u, buyAmount) {
 }
 
 function buildShopSubTabBarHTML() {
+  if (!shopHasEconomyUpgrades()) return ""; // v3.313.0 : un seul sous-onglet, pas de barre
   var h = '<div class="pc-subtab-bar">';
   h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "upgrades" ? ' is-active' : '') + '" onclick="setShopSubTab(\'upgrades\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/economy.png" alt=""><span>Économie</span></button>';
   h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "potions" ? ' is-active' : '') + '" onclick="setShopSubTab(\'potions\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/potions.png" alt=""><span>Potions</span></button>';
@@ -218,6 +226,7 @@ function buildShopHTML() {
 
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
+  if (!shopHasEconomyUpgrades()) activeShopSubTab = "potions"; // v3.313.0
   // v3.194.0 (Seb) : le bandeau suit le sous-onglet actif.
   var kfTitle = activeShopSubTab === "potions" ? "Potions" : "Économie";
   h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + kfTitle + '">'; // v2.83.44 : ouverte ici (pas ré-enveloppée après coup, voir CHANGELOG)

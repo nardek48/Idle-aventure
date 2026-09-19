@@ -14,6 +14,7 @@ var CampManager = {
 
   /* Run à sortie en cours (donjon / chasse / quête d'aventure) : pas de repos au camp tant qu'il n'est pas clos. */
   _hasActiveRun: function () {
+    if (window.SceneRunManager && SceneRunManager.isRunActive()) return true; // v3.307.0 : pas de feu de camp en expédition
     if (game.dungeonRun && game.dungeonRun.active) return true;
     if (game.huntRun && game.huntRun.active) return true;
     if (game.adventureQuestRun && game.adventureQuestRun.active) return true;
@@ -105,6 +106,7 @@ var CampManager = {
 
   canEatRation: function (rationId) {
     if (!window.WarehouseManager) return false;
+    if (window.heroLockReason && heroLockReason()) return false; // v3.307.0
     return WarehouseManager.getAmount(rationId) >= 1;
   },
 
@@ -114,6 +116,7 @@ var CampManager = {
     if (!def || !def.healPct) return false;
     var maxHp = game.heroMaxHp || 1;
     if ((game.heroHp || 0) >= maxHp) { showToast("PV déjà au maximum", 1200); return false; }
+    if (window.heroLockToast && heroLockToast()) return false; // v3.307.0
     if (!this.canEatRation(rationId)) { showToast("Aucune " + def.name.toLowerCase() + " en stock", 1600); return false; }
     if (!WarehouseManager.removeResource(rationId, 1)) return false;
 

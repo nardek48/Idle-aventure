@@ -290,7 +290,8 @@ var SCENE_NODES = {
     source: "Un bruit d'eau",
     mystere: "Une ombre indistincte",
     combat: "Des bruits de pas",
-    bloqueur: "Un obstacle qui prendra du temps"
+    bloqueur: "Un obstacle qui prendra du temps",
+    evenement: "Une silhouette, assise" // v3.312.0 (W-3d)
   },
 
   /* Indices qualitatifs affichés SANS torche (décision Seb 03/09/2026 : un "???" pur sur
@@ -302,7 +303,8 @@ var SCENE_NODES = {
     decouverte: "Prometteur",
     source: "Apaisant",
     combat: "Une présence hostile",
-    bloqueur: "Une attente s'annonce"
+    bloqueur: "Une attente s'annonce",
+    evenement: "Quelqu'un, sur le chemin" // v3.312.0 (W-3d)
   },
 
   /* Indice de gain relatif d'un obstacle (v3.121.0, recalibrage Seb "le choix est trop
@@ -322,12 +324,49 @@ var SCENE_NODES = {
     source: "Source claire",
     mystere: "Zone inconnue",
     combat: "Rencontre",
-    bloqueur: "Chemin long"
+    bloqueur: "Chemin long",
+    evenement: "Quelqu'un" // v3.312.0 (W-3d)
   },
 
   icons: {
     obstacle: "images/Icons/scene/node_obstacle.png", autel: "images/Icons/scene/node_forgotten_altar.png", decouverte: "images/Icons/scene/node_discovery.png", source: "images/Icons/scene/node_clear_spring.png", mystere: "images/Icons/scene/node_unknown.png",
-    combat: "images/Icons/scene/node_encounter.png", bloqueur: "images/Icons/scene/node_long_path.png"
+    combat: "images/Icons/scene/node_encounter.png", bloqueur: "images/Icons/scene/node_long_path.png",
+    evenement: "images/Icons/scene/node_event.png" // v3.312.0 : à générer
+  },
+
+  /* v3.312.0 (W-3d, bible B §5, acte II §8) — ÉVÉNEMENTS À BRANCHES. Un événement remplace une
+     porte d'une Petite Aventure (injecté à la génération de la carte, une porte au milieu du
+     run), si eligible() et au tirage `chance`. Gabarit : une annonce (deux phrases au plus, pas
+     de question), des branches à coût visible, une conséquence immédiate constatée, et un écho
+     plus loin dans le run (sceneRunManager : run.eventEcho). `flag` : drapeau permanent
+     (explorationProgression) qui note l'issue et ferme l'événement pour la partie. */
+  events: {
+    maddoc: {
+      id: "maddoc",
+      templateIds: ["petite_aventure_desert"],
+      flag: "maddocMet",
+      chance: 0.5,
+      // Entre l'étape 3 (Petite Aventure du Désert ouverte) et l'étape 8 (Maddoc rejoint)
+      eligible: function () {
+        var SQ = window.StoryQuestManager;
+        return !!(SQ && SQ.isStepReached("desert_03") && !SQ.isStepReached("desert_08"));
+      },
+      title: "Un homme",
+      annonce: "Un homme, assis contre une dalle. Sa jambe ne va pas dans le bon sens. Il a vu que tu portais une gourde.",
+      branches: [
+        { id: "gourde", label: "Lui donner la gourde (− Gourde)", cost: { gourde: true }, outcome: "aided",
+          text: "Il boit. Il ne dit pas merci, il dit son nom : Maddoc, de l'autre côté du gouffre." },
+        { id: "souffle", label: "Lui donner du Souffle pour l'aider à marcher (− 20 Souffle)", cost: { breath: 20 }, outcome: "aided",
+          text: "Il s'appuie sur toi jusqu'au bout du passage. Il ne dit pas merci, il dit son nom : Maddoc, de l'autre côté du gouffre." },
+        { id: "passer", label: "Passer", cost: {}, outcome: "passed",
+          text: "Tu passes. Il ne t'appelle pas." }
+      ],
+      // Échos plus loin dans le même run, sans rappel de la cause
+      echo: {
+        aided: { at: "combat", hpPct: 0.25, text: "Une pierre siffle depuis les dunes et prend {enemy} à la tempe. Quelqu'un, derrière, qui boite." },
+        passed: { at: "finale", lootPct: 0.15, text: "Le coffre est ouvert. Il manque ce qu'un homme peut porter d'une main." }
+      }
+    }
   },
 
   /* v3.125.0 (Lot PA2) : groupes d'ennemis exploitables par un slot combat de scene-engine
@@ -349,7 +388,9 @@ var SCENE_NODES = {
     /* v3.304.0 (Petite Aventure du Désert) : le Guerrier des sables va au plus par deux (D2),
        le ver toujours seul. Facteurs de la paire mesurés au banc (sim/desert-pa-bench.js). */
     guerriers_desert: { name: "Deux guerriers des sables", enemyFilter: ["sandwarrior"], group: ["sandwarrior", "sandwarrior"], groupHpMult: 0.55, groupGoldMult: 0.55 },
-    ver_desert: { name: "Un ver des sables", enemyFilter: ["sandworm"] }
+    ver_desert: { name: "Un ver des sables", enemyFilter: ["sandworm"] },
+    // v3.310.0 (acte II, étape 6) : le guerrier des sables seul, en travers des marches
+    guerrier_seul_desert: { name: "Un guerrier des sables", enemyFilter: ["sandwarrior"] }
   }
 };
 

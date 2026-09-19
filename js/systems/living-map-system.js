@@ -274,6 +274,8 @@ var LivingMapManager = {
     var def = this.getSectorDef(mapId, sectorId);
     if (!def || !def.content) return null;
     var s = this.getState(mapId, sectorId);
+    // v3.310.0 : contenu joué tant que le secteur n'a jamais été libéré (ex. la descente au Temple)
+    if (def.firstContent && !(s && s.liberatedCount > 0)) return def.firstContent;
     if (def.content.type === "elite" && !def.content.repeatable && s && s.liberatedCount > 0 && def.content.then) return def.content.then;
     return def.content;
   },
@@ -402,7 +404,9 @@ var LivingMapManager = {
         return { ok: false, reason: this.getWords(mapId).openElsewhere + " : " + (next ? next.name : open[0]) + ".", content: content, intensity: intensity };
       }
     }
-    if (content && content.type === "expedition" && window.SceneRunManager
+    // v3.310.0 : seul un canevas de Petite Aventure (à profils) compte dans le cap journalier
+    var capTpl = (content && content.type === "expedition" && window.SceneEngine) ? SceneEngine.getTemplate(content.templateId) : null;
+    if (capTpl && capTpl.profileWeights && window.SceneRunManager
         && typeof SceneRunManager.canStartPetiteAventureToday === "function"
         && !SceneRunManager.canStartPetiteAventureToday()) {
       return { ok: false, reason: "Plus d'expédition aujourd'hui. Reviens demain.", content: content, intensity: intensity };
@@ -445,6 +449,7 @@ var LivingMapManager = {
     var map = this.getMap(mapId);
     if (!map || !content || !window.EliteManager || !window.SortieManager) return { ok: false, reason: "Combat indisponible" };
     if (!window.ELITE_DB || !ELITE_DB[content.eliteId]) return { ok: false, reason: "Élite inconnue" };
+    if (window.heroLockReason && heroLockReason()) return { ok: false, reason: heroLockReason() }; // v3.307.0
     this.ensureDefaults();
     game.livingMaps.fight = { mapId: mapId, sectorId: sectorId, eliteId: content.eliteId };
     SortieManager.end("return"); // un farm en cours est rangé, comme pour une quête ou une chasse

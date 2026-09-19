@@ -7,6 +7,12 @@
 var EQUIP_SHOP_SIZE = 6;
 var EQUIP_SHOP_REFRESH_MS = 6 * 3600 * 1000;
 
+/* v3.308.0 (décision Seb 19/09/2026) : la rareté la plus haute du monde occupe au plus 25 %
+   de la vitrine (arrondi inférieur, minimum 1). Au Désert, l'Inhabituel pèse 31 % par tirage :
+   sans borne, 3 Inhabituels ou plus sortaient dans ~28 % des vitrines et le joueur s'équipait
+   dès l'arrivée. Plus loin la rareté du sommet pèse déjà moins (Rare 16 %, Épique 4 %). */
+var EQUIP_SHOP_TOP_RARITY_SHARE = 0.25;
+
 var EQUIP_SHOP_MANUAL_REFRESH_BASE_COST = 1000;
 var EQUIP_SHOP_MANUAL_REFRESH_MULT = 2.2;
 
@@ -122,11 +128,31 @@ var EquipShopManager = {
         ? LootSystem.rollDrop()
         : null;
       if (!item) continue;
-      item.price = this.getPrice(item);
-      item.bought = false;
       stock.push(item);
     }
+    this._capTopRarity(stock, size);
+    var self = this;
+    stock.forEach(function (it) { it.price = self.getPrice(it); it.bought = false; });
     return stock;
+  },
+
+  /* v3.308.0 : nombre maximal d'objets de la rareté du sommet pour une vitrine de `size`. */
+  getTopRarityCap: function (size) {
+    return Math.max(1, Math.floor(size * EQUIP_SHOP_TOP_RARITY_SHARE));
+  },
+
+  /* Retire l'excédent de la rareté du sommet : chaque objet en trop est retiré dans la
+     rareté juste en dessous, même emplacement. Sans effet s'il n'y a qu'une rareté. */
+  _capTopRarity: function (stock, size) {
+    var allowed = (typeof getAllowedRarities === "function") ? getAllowedRarities() : null;
+    if (!allowed || allowed.length < 2 || typeof generateEquipmentItem !== "function") return;
+    var top = allowed[allowed.length - 1], below = allowed[allowed.length - 2];
+    var cap = this.getTopRarityCap(size), seen = 0;
+    for (var i = 0; i < stock.length; i++) {
+      if (!stock[i] || stock[i].rarity !== top) continue;
+      seen += 1;
+      if (seen > cap) stock[i] = generateEquipmentItem(stock[i].slot, below) || stock[i];
+    }
   },
 
   /* v3.209.0 (bug Seb) — le stock est SAUVEGARDÉ et checkRefresh() ne regardait que

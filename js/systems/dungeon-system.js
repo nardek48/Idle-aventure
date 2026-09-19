@@ -398,6 +398,7 @@ var DungeonManager = {
     if (game.dungeonRun.active) return showToast("Donjon déjà en cours", 1200);
     if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast("Termine ou abandonne ta quête en cours avant d'entrer en donjon", 1600);
     if (game.huntRun && game.huntRun.active) return showToast("Termine ou arrête ta chasse en cours avant d'entrer en donjon", 1600);
+    if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
 
     if (!storyFree) game.dungeonTickets -= 1; // v3.136.0 : ticket Histoire, rien à décompter
     var runMarks = this.sanitizeMarks(marks, dungeon.id);

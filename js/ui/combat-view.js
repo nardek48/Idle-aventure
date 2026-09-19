@@ -458,7 +458,7 @@ function getCombatMissionProgressLabel() {
     var aq = AdventureQuestManager.getRunningQuest();
     if (aq) {
       var step = aq.steps[0];
-      if (step && step.type === "kill") {
+      if (step && (step.type === "kill" || step.type === "encounter")) { // v3.311.0 : rencontres scriptées
         return aq.name + " · " + AdventureQuestManager.getStepProgress(aq, step) + "/" + step.target;
       }
     }

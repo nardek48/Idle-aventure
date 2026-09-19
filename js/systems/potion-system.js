@@ -109,6 +109,7 @@ var PotionManager = {
     this.ensure();
     var potion = this.getPotion(id);
     if (!potion) return showToast("Potion introuvable", 1000);
+    if (potion.perRun && window.heroLockToast && heroLockToast()) return; // v3.307.0 : pas d'armement en expédition
 
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
       return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
@@ -251,6 +252,7 @@ var PotionManager = {
     this.ensureHealing();
     var potion = this.getHealingPotion(id);
     if (!potion) return false;
+    if (window.heroLockToast && heroLockToast()) return false; // v3.307.0 : libre au combat de nœud (verrou levé)
 
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
       showToast("🚫 Potions interdites (Ascétisme actif)", 1600);

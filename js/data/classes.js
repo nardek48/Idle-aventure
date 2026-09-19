@@ -33,7 +33,11 @@ var CLASSES = [
     weaponIcons: ["bow"],
     heroIds: ["ranger", "chaosRanger"],
     mainStat: "celerity",
-    mainStatTapCoef: 0.09,
+    /* v3.309.0 (retour Seb, banc sim/training-cap-bench.js) : 0,09 → 0,12. Les entraînements
+       donnent de la Célérité à tout le monde et la jauge plafonne en douceur (K = 60) : l'avance
+       du Rôdeur en frappes bonus s'effaçait (à 110 : jauge 75 contre 70 au Chevalier) et il
+       tombait à ~88-91 % de la vitesse du Chevalier, avec moins de PV. À 0,12 : 96-107 %. */
+    mainStatTapCoef: 0.12,
     resource: {
       id: "focus",
       label: "Concentration",
@@ -111,6 +115,7 @@ function getAllowedWeaponIconsForCurrentHero() {
    l'option B « Force → ressource » ne faisait rien pour le Mage). Les coefficients
    sont iso-dégâts au niveau 0 : Chevalier 60×0,06+60×0,14 = 12,0 (inchangé),
    Rôdeur 46×0,06+70×0,09 = 9,06 (9,2 avant), Mage 62×0,06+76×0,11 = 12,08 (12,4 avant).
+   v3.309.0 : Rôdeur 0,12 → 46×0,06+70×0,12 = 11,16 (voir la note sur son coefficient).
    Célérité et Volonté conservent leur rôle universel (jauge, mult. critique). */
 var FORCE_UNIVERSAL_TAP_COEF = 0.06;
 var DEFAULT_MAIN_STAT_RULE = { stat: "power", coef: 0.14 };

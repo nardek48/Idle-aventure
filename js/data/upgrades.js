@@ -42,10 +42,10 @@ var UPGRADES = [
     name: "AMELIORATION DE CELERITE",
     icon: "./images/Icons/improvement_icons/celerity.png",
     desc: "Augmente l'auto DPS.",
-    baseCost: 4,
+    baseCost: 5.5,     // v3.309.0 : 4 → 5,5, suit le coefficient du Rôdeur (0,09 → 0,12) pour garder l'iso-prix
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain
 
-    maxLevel: 120,
+    maxLevel: 150, // v3.308.0 : plafond commun aux cinq entraînements
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.celerity = lvl;
@@ -59,7 +59,7 @@ var UPGRADES = [
     baseCost: 7,
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain
 
-    maxLevel: 60,
+    maxLevel: 150, // v3.308.0 : plafond commun aux cinq entraînements
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.precision = lvl;
@@ -73,7 +73,7 @@ var UPGRADES = [
     baseCost: 5,
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain
 
-    maxLevel: 80,
+    maxLevel: 150, // v3.308.0 : plafond commun aux cinq entraînements
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.will = lvl;
@@ -93,28 +93,10 @@ var UPGRADES = [
       game.trainedStats.endurance = lvl;
     }
   },
-  {
-    id: "u_gold",
-    name: "Bourse lourde",
-    icon: "images/Icons/gold_icon.png",
-    desc: "+3% or gagné par niveau.",
-    baseCost: 55,
-    costMult: 1.10,
-    maxLevel: 200,
-    unlockWorld: 0,
-    apply: function (lvl) { game.goldMult = 1 + lvl * 0.03; }
-  },
-    {
-    id: "u_bounty",
-    name: "Contrats lucratifs",
-    icon: "images/Icons/quests/quest_story.png",
-    desc: "+10% or sur boss par niveau.",
-    baseCost: 260,
-    costMult: 1.30,
-    maxLevel: 50,
-    unlockWorld: 2,
-    apply: function (lvl) { game.bossGoldBonusPct = lvl * 0.10; }
-  }
+  /* v3.313.0 (décision Seb 19/09/2026) : « Bourse lourde » (u_gold) et « Contrats lucratifs »
+     (u_bounty) retirés. Elles ne touchaient que l'or des ennemis tués, devenu marginal sans farm
+     libre (< 10 % de l'or d'une quête). L'or dépensé est rendu au chargement (core/state.js,
+     RETIRED_UPGRADES). */
 ];
 
 function getUpgradeById(id) {

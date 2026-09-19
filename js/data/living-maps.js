@@ -187,8 +187,10 @@ var LIVING_MAPS = {
         heldEffect: null,
         lore: "La dune respire. Pas beaucoup, mais elle respire." },
       // Hors de portée pendant tout l'acte I : ouvre avec l'étape 6 « La descente »
+      // v3.310.0 (acte II §4) : première libération = la descente (canevas dédié, hors cap), puis PA
       { id: "porte_temple", name: "La porte du Temple", x: 81, y: 10, ring: 3, neighbors: ["verrerie", "marche_sel"], labelTop: true,
         requiresStoryStep: "desert_06",
+        firstContent: { type: "expedition", templateId: "descente_temple" },
         content: { type: "expedition", templateId: "petite_aventure_desert", pools: { obstacle: ["dalle_scellee", "puits_effondre"] } },
         heldEffect: null,
         lore: "Deux battants plus hauts que des arbres. L'un est ouvert de la largeur d'un homme." },

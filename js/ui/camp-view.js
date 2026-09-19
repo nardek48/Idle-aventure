@@ -115,11 +115,13 @@ function buildCampHTML() {
 
   // Bloc Rations — 3 cartes côte à côte (icône, soin, stock, bouton Manger).
   h += '<div class="camp-section-title camp-section-sub"><img class="ico-lg" src="images/Icons/quests/ration_reward.png" alt=""> Rations</div>';
+  var campLock = (window.heroLockReason && heroLockReason()) || null; // v3.307.0
+  if (campLock) h += '<div class="camp-lock-note">🧭 ' + esc(campLock) + '</div>';
   h += '<div class="camp-ration-grid">';
   rationOptions.forEach(function (r) {
     var def = (window.WAREHOUSE_RESOURCES || {})[r.id] || {};
     var healValue = Math.floor(maxHp * r.healPct);
-    var canEat = r.amount >= 1 && !hpFull;
+    var canEat = r.amount >= 1 && !hpFull && !campLock;
     h += '<div class="camp-ration-item' + (r.amount < 1 ? ' is-empty' : '') + '" title="' + esc(r.name) + '">';
     h += '<div class="camp-ration-icon">' + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.png", "camp-ration-icon-img", r.name) + '</div>';
     h += '<div class="camp-ration-heal"><img class=ico-inline src=images/Icons/combat_stats/stat_health.png> +' + formatNumber(healValue) + '</div>';
@@ -149,7 +151,7 @@ function buildCampHTML() {
 
   // v3.133.0 : bloc « Les braises » — offrande de l'étape Histoire courante (forest_15), affiché
   // seulement pendant l'étape acceptée et tant que l'offrande n'est pas faite (StoryQuestManager.getOfferingInfo).
-  var offering = (window.StoryQuestManager && typeof StoryQuestManager.getOfferingInfo === "function") ? StoryQuestManager.getOfferingInfo() : null; // v3.297.0 : chapitre actif
+  var offering = (window.StoryQuestManager && typeof StoryQuestManager.getOfferingInfo === "function") ? StoryQuestManager.getOfferingInfo(null, "camp") : null; // v3.297.0 : chapitre actif ; v3.310.0 : offrandes du Camp seulement
   if (offering) {
     h += '<div class="camp-card camp-embers-card">';
     h += '<div class="camp-section-title"><img class="ico-lg" src="images/Icons/camp/campfire.png" alt=""> Les braises</div>';
@@ -252,12 +254,15 @@ function buildCampPreparationDoorsHTML() {
   h += '<span class="camp-door-chev">›</span>';
   h += '</button>';
 
-  h += '<button type="button" class="camp-door" onclick="goToEconomy()">';
-  h += '<img class="camp-door-ico" src="images/Icons/subtabs/economy.png" alt="">';
-  h += '<span class="camp-door-txt"><span class="camp-door-t">Économie</span>';
-  h += '<span class="camp-door-s">Améliorations d\'or</span></span>';
-  h += '<span class="camp-door-chev">›</span>';
-  h += '</button>';
+  // v3.313.0 : porte « Économie » seulement s'il reste une amélioration d'or à vendre
+  if (typeof shopHasEconomyUpgrades === "function" && shopHasEconomyUpgrades()) {
+    h += '<button type="button" class="camp-door" onclick="goToEconomy()">';
+    h += '<img class="camp-door-ico" src="images/Icons/subtabs/economy.png" alt="">';
+    h += '<span class="camp-door-txt"><span class="camp-door-t">Économie</span>';
+    h += '<span class="camp-door-s">Améliorations d\'or</span></span>';
+    h += '<span class="camp-door-chev">›</span>';
+    h += '</button>';
+  }
 
   h += '</div></div>';
   return h;
