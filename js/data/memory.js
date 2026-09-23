@@ -20,6 +20,7 @@ var MEMORY_LEVEL_COSTS = [5, 8, 11, 14, 20, 25, 30, 35];
 var MEMORY_LEVELS_PER_WORLD = 4;        // O6 : plafond par monde atteint
 var MEMORY_REPRISE_BASE_COST = 10;      // O5 : reprise d'un choix, ×3 à chaque fois
 var MEMORY_REPRISE_MULT = 3;
+var MEMORY_CUISINE_PETITE_RATION_MULT = 1.25; // Cuisine de campagne : +25 % sur la Petite ration seule (décision Seb)
 
 /* Les huit niveaux (conception v1.2 §5.3-5.4). `id` est la clé lue par MemoryManager.has().
    Icônes : images/Icons/memory/<id>.png, à générer (icône générique en attendant, règle Seb). */
@@ -36,11 +37,14 @@ var MEMORY_LEVELS = [
     { id: "repos_camp", name: "Repos du camp", icon: "images/Icons/memory/repos_camp.png",
       desc: "Tu récupères 50 % plus vite au Campement, et jusqu'à 75 % de tes PV hors ligne au lieu de 50 %." }
   ] },
-  { level: 3, theme: "Tenue au combat", options: [
+  /* v3.323.0 (décision Seb) : la Fiole de réserve quitte le niveau 3 — au banc elle portait le
+     Chevalier de 67 à 92 % sur le sphinx. Elle ira aux Ruines (niveaux 9 à 12), où le calibrage
+     la supposera acquise ; le crochet getSortiePotionCap() reste en place pour elle. */
+  { level: 3, theme: "Entre deux combats", options: [
     { id: "fidelite_wenna", name: "Fidélité de Wenna", icon: "images/Icons/memory/fidelite_wenna.png",
       desc: "Après un KO, Wenna revient au combat suivant avec tous ses PV au lieu de 30 %." },
-    { id: "fiole_reserve", name: "Fiole de réserve", icon: "images/Icons/memory/fiole_reserve.png",
-      desc: "Tu peux boire 3 potions de soin par sortie au lieu de 2." }
+    { id: "cuisine_campagne", name: "Cuisine de campagne", icon: "images/Icons/memory/cuisine_campagne.png",
+      desc: "Les Petites rations soignent 25 % de plus au Campement (35 % → 43 % des PV)." }
   ] },
   { level: 4, theme: "La Mémoire", jalon: true, options: [
     { id: "memoire_vive", name: "Mémoire vive", icon: "images/Icons/memory/memoire_vive.png",
@@ -84,4 +88,5 @@ window.MEMORY_LEVEL_COSTS = MEMORY_LEVEL_COSTS;
 window.MEMORY_LEVELS_PER_WORLD = MEMORY_LEVELS_PER_WORLD;
 window.MEMORY_REPRISE_BASE_COST = MEMORY_REPRISE_BASE_COST;
 window.MEMORY_REPRISE_MULT = MEMORY_REPRISE_MULT;
+window.MEMORY_CUISINE_PETITE_RATION_MULT = MEMORY_CUISINE_PETITE_RATION_MULT;
 window.MEMORY_LEVELS = MEMORY_LEVELS;

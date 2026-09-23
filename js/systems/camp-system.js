@@ -126,7 +126,12 @@ var CampManager = {
     if (!this.canEatRation(rationId)) { showToast("Aucune " + def.name.toLowerCase() + " en stock", 1600); return false; }
     if (!WarehouseManager.removeResource(rationId, 1)) return false;
 
-    var healed = Math.min(maxHp - (game.heroHp || 0), Math.floor(maxHp * def.healPct));
+    // v3.323.0 : Cuisine de campagne (Mémoire niveau 3) — la Petite ration soigne 25 % de plus
+    var pct = def.healPct;
+    if (rationId === "petite_ration" && window.MemoryManager && MemoryManager.has("cuisine_campagne")) {
+      pct *= (typeof MEMORY_CUISINE_PETITE_RATION_MULT === "number" ? MEMORY_CUISINE_PETITE_RATION_MULT : 1.25);
+    }
+    var healed = Math.min(maxHp - (game.heroHp || 0), Math.floor(maxHp * pct));
     game.heroHp = (game.heroHp || 0) + healed;
     addLog("🍖 " + def.name + " — +" + formatNumber(healed) + " PV.", "event");
     showToast("🍖 +" + formatNumber(healed) + " PV", 1600);

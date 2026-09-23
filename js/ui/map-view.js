@@ -112,6 +112,8 @@ function buildMapNodeHTML(world, index) {
 }
 
 function buildMapHTML() {
+  // v3.324.0 (bug Seb) : une carte ouverte par un autre héros ne s'affiche plus
+  if (typeof livingMapDropStale === "function") livingMapDropStale();
   // v3.256.0 (Cartes Vivantes, C-2) : une carte vivante ouverte remplace la carte du monde.
   if (typeof isLivingMapOpen === "function" && isLivingMapOpen() && typeof buildLivingMapHTML === "function") {
     var lm = buildLivingMapHTML(livingMapOpenId);

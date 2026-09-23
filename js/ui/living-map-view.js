@@ -18,6 +18,10 @@
 
 var livingMapOpenId = null;   // id de carte ouverte, ou null (carte du monde)
 var livingMapSelected = null; // id de secteur, "village", ou null
+/* v3.324.0 (bug Seb) : emplacement de héros qui a ouvert la carte. Ces variables vivent hors
+   de `game` et survivaient au changement de héros : la carte du Désert d'un héros restait
+   ouverte pour un héros encore en Forêt. */
+var livingMapOpenSlot = null;
 
 var LIVING_MAP_RADIUS_PCT = 19;  // rayon d'un secteur, % de la carte (validé C-0)
 var LIVING_MAP_FOG_OPACITY = 0.36; // opacité de la brume (validé C-0)
@@ -43,6 +47,7 @@ function openLivingMap(mapId, sectorId) {
   if (!window.LivingMapManager || !LivingMapManager.getMap(mapId)) return;
   livingMapOpenId = mapId;
   livingMapSelected = sectorId || null;
+  livingMapOpenSlot = livingMapCurrentSlot();
   lmxView.mapId = null;            // nouvelle ouverture : cadrage d'ouverture
   lmxLegendOpen = false;
   lmxPendingCenter = !!sectorId;
@@ -60,6 +65,26 @@ function closeLivingMap() {
   refreshLivingMap();
 }
 window.closeLivingMap = closeLivingMap;
+
+function livingMapCurrentSlot() {
+  return (window.HeroSlotManager && typeof HeroSlotManager.getActiveSlot === "function") ? HeroSlotManager.getActiveSlot() : null;
+}
+
+/* Referme une carte ouverte par un autre héros, ou que ce héros n'a pas encore atteinte.
+   Appelée avant chaque rendu de l'écran Carte (map-view.js). */
+function livingMapDropStale() {
+  if (!livingMapOpenId) return false;
+  var LM = window.LivingMapManager;
+  var stale = livingMapOpenSlot !== livingMapCurrentSlot() || !LM || !LM.isMapOpen(livingMapOpenId);
+  if (!stale) return false;
+  livingMapOpenId = null;
+  livingMapSelected = null;
+  livingMapOpenSlot = null;
+  lmxLegendOpen = false;
+  syncLivingMapBodyClass();
+  return true;
+}
+window.livingMapDropStale = livingMapDropStale;
 
 function isLivingMapOpen() { return !!livingMapOpenId; }
 window.isLivingMapOpen = isLivingMapOpen;
