@@ -119,7 +119,13 @@ var LIVING_MAPS = {
     rewardResourceId: "verre_des_dunes",
     /* v3.306.0 (étape 5) : noms laissés -> tant que les stèles sont libérées, elles tiennent le
        sable : +10 % au frein de la Palissade sur CETTE carte (provisoire, à caler au banc). */
-    choiceBrakes: [{ key: "noms", value: "laisser", sectorId: "steles", bonus: 0.10 }],
+    /* v3.314.0 (W-4a1, acte III §4) : le Serment laissé à son poste tient le sable comme les
+       stèles laissées au sable. Même grammaire, même bonus — ce qu'on laisse en place freine
+       l'Ensablement, et seulement tant que le secteur reste libéré. */
+    choiceBrakes: [
+      { key: "noms", value: "laisser", sectorId: "steles", bonus: 0.10 },
+      { key: "serment", value: "laisser", sectorId: "tour_guet", bonus: 0.10 }
+    ],
     words: {
       cover: "l'Ensablement", coverCap: "L'Ensablement", coveredState: "Ensablé",
       home: "le camp", fogLore: "Le sable ne laisse rien voir.",
@@ -172,7 +178,12 @@ var LIVING_MAPS = {
         requiresStoryStep: "desert_11",
         content: { type: "elite", eliteId: "serment_armure",
           then: { type: "expedition", templateId: "petite_aventure_desert", pools: { combat: ["guerriers_desert"] } } },
-        heldEffect: null,
+        /* v3.314.0 (W-4a1) : l'effet de la tour EST le frein déclaré plus haut en choiceBrakes.
+           heldEffect ne sert ici qu'à l'afficher sur le panneau du secteur (living-map-view.js) :
+           aucun hasEffect("guet_tour") ailleurs dans le code, et il ne faut pas en écrire un,
+           sous peine de compter le frein deux fois. Relever le Serment ne pose jamais l'effet. */
+        heldEffect: { id: "guet_tour", label: "La tour tient le sable : l'Ensablement recule plus souvent." },
+        effectLostOnChoice: { key: "serment", value: "relever" },
         lore: "Quelqu'un monte encore la garde là-haut. Il ne s'est pas retourné." },
       { id: "lit_fleuve", name: "Le lit du fleuve", x: 19.5, y: 60, ring: 2, neighbors: ["steles", "trone"],
         content: { type: "expedition", templateId: "petite_aventure_desert", pools: { combat: ["ver_desert"] } },

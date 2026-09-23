@@ -133,6 +133,21 @@ var GENERIC_TUTORIALS = {
      PAS de champ `tab` : maybeShowGenericTutorial() cherche par onglet, l'absence de tab
      garantit qu'aucun popup ne s'ouvre tout seul en arrivant sur le Grimoire — c'est le
      bouton « ? » qui l'affiche, et lui seul, conformément à la refonte v3.210.0. */
+  /* v3.322.0 (O12) : mini-tutoriel du premier niveau de Mémoire, montré à la première
+     ouverture de l'écran de Mémoire une fois le niveau 1 atteint. */
+  memoire: {
+    tab: "ascension",
+    condition: function () { return !!(window.MemoryManager && MemoryManager.getLevel() >= 1); },
+    icon: "images/Icons/aether_icon.png",
+    title: "La Mémoire",
+    points: [
+      { icon: "images/Icons/aether_icon.png", text: "Ce que tu donnes, l'Aether le retient. Chaque objet offert depuis ton sac et chaque grande victoire remplissent la jauge ; un niveau ouvre un choix." },
+      { icon: "images/Icons/system/upgrade.png", text: "Choisis. Une seule amélioration par niveau. L'autre n'est pas perdue : elle reste là." },
+      { icon: "images/Icons/system/lock_closed.png", text: "Reprendre a un prix. Changer d'avis coûte de l'Aether, trois fois plus à chaque fois." },
+      { icon: "images/Icons/gold_icon.png", text: "Un objet acheté à l'échoppe ne porte aucun souvenir : il ne rend pas d'Aether." }
+    ]
+  },
+
   grimoire_rules: {
     icon: "images/Icons/codex/codex_lore.png",
     title: "Le Grimoire de tactiques",

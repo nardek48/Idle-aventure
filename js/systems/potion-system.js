@@ -86,7 +86,7 @@ var PotionManager = {
     var cost = this.getCost(potion);
     if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
 
-    var cap = typeof POTION_STOCK_CAP === "number" ? POTION_STOCK_CAP : 9;
+    var cap = typeof getPotionStockCap === "function" ? getPotionStockCap() : 9; // v3.322.0
     if (potion.perRun && this.getStock(id) >= cap) {
       return showToast("Stock plein (" + cap + " max)", 1400);
     }

@@ -1,124 +1,79 @@
 "use strict";
-/* ui/ascension-view.js — écran Ascension : sous-onglets Ascension (bouton prestige) / Boutique Aether. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/ascension-view.js — v3.322.0 (Offrande, conception v1.2) : l'onglet « ascension » devient
+   l'écran de MÉMOIRE — jauge, niveaux, choix et reprises. Le nom de fichier et la clé d'onglet
+   sont gardés (ui-root.js, heros-view.js, verrous d'onglets). */
 
-var activeAscensionSubTab = "ascension";
-
-function setAscensionSubTab(tab) {
-  activeAscensionSubTab = (tab === "shop") ? "shop" : "ascension";
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.setAscensionSubTab = setAscensionSubTab;
-
-function buildAscensionSubTabBarHTML() {
-  var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeAscensionSubTab === "ascension" ? ' is-active' : '') + '" onclick="setAscensionSubTab(\'ascension\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/ascension_tab.png" alt=""><span>Ascension</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeAscensionSubTab === "shop" ? ' is-active' : '') + '" onclick="setAscensionSubTab(\'shop\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/aether_shop.png" alt=""><span>Boutique</span></button>';
-  h += '</div>';
-  return h;
-}
-
-function buildAscensionTabContentHTML() {
-  var minKills = (typeof ASCENSION_CONFIG !== "undefined" && ASCENSION_CONFIG.minKillsToAscend != null)
-    ? ASCENSION_CONFIG.minKillsToAscend
-    : 50;
-
-  var currentKills = Number(game.totalKills || 0);
-  var gain = (window.AscensionManager && typeof AscensionManager.previewGain === "function")
-    ? AscensionManager.previewGain()
-    : 0;
-
-  var canAscend = (window.AscensionManager && typeof AscensionManager.canAscend === "function")
-    ? AscensionManager.canAscend()
-    : false;
-
-  var killsLeft = Math.max(0, minKills - currentKills);
-  var h = (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("ascension") : "";
-
-  /* v3.233.0 : littéraux de gabarit convertis en concaténation (ES5 strict).
-     Rendu identique — seuls les retours à la ligne décoratifs ont sauté. */
-  h += '<div class="prestige-section">';
-  h += '<div class="prestige-icon">' + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "prestige-icon-img", "Aether") + '</div>';
-  h += '<div class="prestige-title">Ascension</div>';
-  h += '<div class="prestige-desc">Réinitialise la progression classique mais conserve l’Aether, les ascensions et les améliorations astrales.</div>';
-  h += '<div class="prestige-gain">+' + formatNumber(gain) + ' Aether</div>';
-  h += '<div class="prestige-desc">Aether actuel : ' + formatNumber(game.aether || 0) + '<br>'
-     + 'Ascensions effectuées : ' + formatNumber(game.ascensionCount || 0) + '</div>';
-  h += '<button class="prestige-btn' + (canAscend ? '' : ' disabled') + '" '
-     + (canAscend ? 'onclick="doAscend()"' : 'disabled') + '>'
-     + (canAscend ? 'Ascension maintenant' : 'Ascension indisponible') + '</button>';
-  h += '</div>';
-
-  h += '<div class="ascension-conditions">';
-  h += '<strong>Conditions</strong><br><br>';
-  h += 'Kills requis : ' + minKills + '<br>';
-  h += 'Kills actuels : ' + currentKills + '<br>';
-  h += canAscend
-    ? '<span class="ascension-ok">Ascension disponible</span>'
-    : '<span class="ascension-lock">Encore ' + killsLeft + ' kill(s) avant de pouvoir ascensionner</span>';
-  h += '</div>';
-
-  return h;
-}
-
-function buildAscensionShopTabContentHTML() {
-  var h = "";
-
-  if (typeof AETHER_SHOP === "undefined" || !Array.isArray(AETHER_SHOP) || !AETHER_SHOP.length) {
-    return '<div class="ascension-conditions">Aucune amélioration d’Aether disponible.</div>';
+function chooseMemoryOption(level, optionId) {
+  if (!window.MemoryManager) return;
+  var current = MemoryManager.getChoice(level);
+  if (current && current !== optionId && typeof showConfirmModal === "function") {
+    var cost = MemoryManager.getRepriseCost();
+    showConfirmModal(
+      "Reprendre ce choix ?",
+      "Changer d'avis coûte " + formatNumber(cost) + " Aether (tu en as " + formatNumber(game.aether || 0) + "). La prochaine reprise coûtera trois fois plus.",
+      "images/Icons/aether_icon.png",
+      function () { MemoryManager.choose(level, optionId); }
+    );
+    return;
   }
+  MemoryManager.choose(level, optionId);
+}
+window.chooseMemoryOption = chooseMemoryOption;
 
-  AETHER_SHOP.forEach(function (u) {
-    var level = (game.aetherUpgrades && game.aetherUpgrades[u.id]) || 0;
-    var maxLevel = Number(u.maxLevel || 1);
-    var isMax = level >= maxLevel;
+function buildMemoryGaugeHTML(p) {
+  var pct = p.maxed ? 100 : (p.need > 0 ? Math.min(100, Math.floor(100 * p.into / p.need)) : 0);
+  var h = '<div class="mem-gauge">';
+  h += '<div class="mem-gauge-head"><span class="mem-gauge-lvl">Mémoire ' + p.level + '</span>';
+  h += '<span class="mem-gauge-num">' + (p.maxed ? "Tout est retenu" : formatNumber(p.into) + ' / ' + formatNumber(p.need) + ' Aether') + '</span></div>';
+  h += '<div class="mem-gauge-bar"><div class="mem-gauge-fill" style="width:' + pct + '%"></div></div>';
+  if (p.capped) h += '<div class="mem-gauge-note">La jauge est pleine pour ce monde : le niveau suivant s\'ouvrira dans le prochain monde.</div>';
+  h += '</div>';
+  return h;
+}
 
-    var cost = typeof getAetherUpgradeCost === "function"
-      ? getAetherUpgradeCost(u)
-      : Math.floor((u.baseCost || 1) * Math.pow(1.4, level));
-
-    var canBuy = !isMax && (game.aether || 0) >= cost;
-
-    /* v3.233.0 : littéraux de gabarit convertis en concaténation (ES5 strict). */
-    h += '<div class="nb-purchase-card">';
-    h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">'
-       + renderIconOrEmojiHTML(u.icon || "images/Icons/aether_icon.png", "nb-purchase-icon", u.name) + '</div></div>';
-
-    h += '<div class="nb-purchase-info-col">';
-    h += '<div class="nb-purchase-top" style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;">';
-    h += '<div class="nb-purchase-name">' + esc(u.name) + '</div>';
-    h += '<div class="nb-purchase-meta" style="color:var(--aether);display:flex;align-items:center;gap:3px;">'
-       + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "nb-purchase-cost-icon", "Aether")
-       + ' ' + (isMax ? "MAX" : formatNumber(cost)) + '</div>';
-    h += '</div>';
-    h += '<div class="nb-purchase-meta">Niveau ' + level + ' / ' + maxLevel + '</div>';
-    if (u.desc) h += '<div class="nb-purchase-desc">' + esc(u.desc) + '</div>';
-    h += '</div>';
-
-    h += '<div class="nb-purchase-buy-col">';
-    h += '<button class="btn-buy' + (isMax || !canBuy ? ' cant-afford' : '') + '" '
-       + (isMax || !canBuy ? 'disabled' : 'onclick="buyAetherUpgrade(\'' + esc(u.id) + '\')"') + '>'
-       + (isMax ? "Maximum" : canBuy ? "Acheter" : "Coût trop élevé") + '</button>';
-    h += '</div>';
-    h += '</div>';
+function buildMemoryLevelHTML(def, p) {
+  var level = def.level, chosen = MemoryManager.getChoice(level);
+  var reached = level <= p.level;
+  var worldLocked = !reached && level > p.cap;
+  var h = '<div class="mem-level' + (reached ? '' : ' is-locked') + (reached && !chosen ? ' is-pending' : '') + '">';
+  h += '<div class="mem-level-head"><span class="mem-level-num">Niveau ' + level + '</span>';
+  h += '<span class="mem-level-theme">' + esc(def.theme) + (def.jalon ? ' · jalon' : '') + '</span></div>';
+  if (!reached) {
+    h += '<div class="mem-level-lock">' + (worldLocked ? 'S\'ouvre dans un monde plus lointain.' : 'Encore un peu d\'Aether à rassembler.') + '</div>';
+  }
+  h += '<div class="mem-options">';
+  def.options.forEach(function (o) {
+    var isChosen = chosen === o.id;
+    var cls = 'mem-option' + (isChosen ? ' is-chosen' : '') + (chosen && !isChosen ? ' is-other' : '');
+    if (reached) h += '<button type="button" class="' + cls + '" onclick="chooseMemoryOption(' + level + ',\'' + esc(o.id) + '\')">';
+    else h += '<div class="' + cls + '">';
+    h += '<span class="mem-option-ico">' + renderIconOrEmojiHTML(o.icon, "mem-option-img", o.name) + '</span>';
+    h += '<span class="mem-option-txt"><span class="mem-option-name">' + esc(o.name) + (isChosen ? ' ✓' : '') + '</span>';
+    h += '<span class="mem-option-desc">' + esc(o.desc) + '</span></span>';
+    h += reached ? '</button>' : '</div>';
   });
-
+  h += '</div></div>';
   return h;
 }
 
 function buildAscensionHTML() {
-  var h = '<div class="subtab-page">';
-  h += '<div class="subtab-page-content">';
-  h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="Ascension">';
-  h += (activeAscensionSubTab === "shop") ? buildAscensionShopTabContentHTML() : buildAscensionTabContentHTML();
-  h += '</div>';
+  if (!window.MemoryManager) return '<div class="panel">Mémoire indisponible</div>';
+  MemoryManager.ensure();
+  var p = MemoryManager.getProgress();
+  var pending = MemoryManager.getPendingLevels();
+
+  var h = (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("ascension") : "";
+  h += '<div class="prestige-section">';
+  h += '<div class="prestige-icon">' + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "prestige-icon-img", "Aether") + '</div>';
+  h += '<div class="prestige-title">Mémoire</div>';
+  h += '<div class="prestige-desc">Ce que tu offres et ce que tu vis, l\'Aether le retient. Offre les objets dont tu te sépares depuis ton sac ; tes grandes victoires comptent aussi.</div>';
+  h += buildMemoryGaugeHTML(p);
+  h += '<div class="prestige-desc">Aether disponible pour les reprises : ' + formatNumber(game.aether || 0)
+     + ' · prochaine reprise : ' + formatNumber(MemoryManager.getRepriseCost()) + '</div>';
+  if (pending.length) h += '<div class="mem-pending">🌟 ' + (pending.length > 1 ? pending.length + ' choix t\'attendent.' : 'Un choix t\'attend.') + '</div>';
   h += '</div>';
 
-  h += '<div class="subtab-bar-wrapper">';
-  h += buildAscensionSubTabBarHTML();
-  h += '</div>';
-
-  h += '</div>';
-  return h;
+  (window.MEMORY_LEVELS || []).forEach(function (def) { h += buildMemoryLevelHTML(def, p); });
+  return '<div class="panel mem-panel">' + h + '</div>';
 }
-
 window.buildAscensionHTML = buildAscensionHTML;

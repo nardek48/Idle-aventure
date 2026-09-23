@@ -137,6 +137,14 @@ var EliteManager = {
     if (window.CombatEngine && typeof CombatEngine.prepareEnemy === "function") {
       CombatEngine.prepareEnemy(enemy);
     }
+    /* v3.318.0 — Le chemin AVEC escorte passe par CombatEngine.spawnGroup, qui rebâtit le
+       groupe allié (CompanionManager.onCombatStart : compagnon KO relevé, file du round
+       précédent vidée). Le chemin SANS escorte ne le faisait pas : un compagnon tombé au
+       combat d'avant restait à terre, et la file survivait au changement d'ennemi.
+       Trouvé au banc des élites de carte (sim/desert-elite-bench.js). */
+    if (window.CompanionManager && typeof CompanionManager.onCombatStart === "function") {
+      CompanionManager.onCombatStart();
+    }
     if (typeof renderEnemy === "function") renderEnemy();
     if (typeof renderHud === "function") renderHud();
     return enemy;
@@ -220,6 +228,11 @@ var EliteManager = {
   /* Butin d'une élite vaincue : l'objet unique + la Sève. Appelé par la quête. */
   grantReward: function (eliteId, seveAmount) {
     var rows = [];
+    // v3.322.0 (Souvenirs) : élite d'aventure vaincue
+    if (window.MemoryManager) {
+      var eDef = (window.ELITE_DB || {})[eliteId];
+      MemoryManager.souvenir("elite", "Souvenir : " + (eDef ? eDef.name : "élite") + " vaincue");
+    }
     var loot = this.buildUniqueLoot(eliteId);
     if (loot && typeof addLootToInventory === "function") {
       addLootToInventory(loot);

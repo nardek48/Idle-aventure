@@ -243,11 +243,13 @@ function buildHeroSummaryJumpsHTML() {
   // v3.244.0 : l'Ascension quitte le menu ☰ — c'est une étape de progression du héros,
   // elle s'ouvre d'ici. Même verrou d'Histoire que l'ancienne case de menu.
   if (typeof isTabUnlocked !== "function" || isTabUnlocked("ascension")) {
-    var aetherNow = Number(game.aether || 0);
+    // v3.322.0 : l'Ascension devient la Mémoire (même onglet)
+    var mp = window.MemoryManager ? MemoryManager.getProgress() : { level: 0 };
+    var nPending = window.MemoryManager ? MemoryManager.getPendingLevels().length : 0;
     h += '<button type="button" class="pc-sum-jump" onclick="switchTab(\'ascension\')">';
     h += '<span class="pc-sum-jump-ico"><img class=ico-inline src=images/Icons/subtabs/ascension_tab.png></span>';
-    h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">Ascension</span>';
-    h += '<span class="pc-sum-jump-s">' + formatNumber(aetherNow) + ' Aether · ' + formatNumber(game.cycleCount || 0) + ' ascension' + ((game.cycleCount || 0) > 1 ? 's' : '') + '</span></span>';
+    h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">Mémoire</span>';
+    h += '<span class="pc-sum-jump-s">Niveau ' + mp.level + (nPending ? ' · un choix t\'attend' : '') + '</span></span>';
     h += '<span class="pc-sum-jump-chev">›</span>';
     h += '</button>';
   }
@@ -520,17 +522,8 @@ var HEROS_STAT_SOURCES = [
     id: "talents", label: "Talents",
     off: function () { var saved = game.talents; game.talents = {}; return saved; },
     on: function (saved) { game.talents = saved; }
-  },
-  {
-    id: "ascension", label: "Ascension",
-    off: function () { var saved = game.ascensionCount; game.ascensionCount = 0; return saved; },
-    on: function (saved) { game.ascensionCount = saved; }
-  },
-  {
-    id: "aether", label: "Aether",
-    off: function () { var saved = game.aetherUpgrades; game.aetherUpgrades = {}; return saved; },
-    on: function (saved) { game.aetherUpgrades = saved; }
   }
+  // v3.322.0 : Ascension et Aether ne sont plus des sources de stats (Offrande)
 ];
 
 /* Renvoie [{label, delta}] pour les sources qui pèsent réellement sur cette

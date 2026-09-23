@@ -87,6 +87,7 @@ function createInitialGameState() {
     essence: 0,
     aether: 0,
     totalAetherEarned: 0,
+    memory: null, // v3.322.0 : niveau de Mémoire (MemoryManager.ensure)
 
     tapDamage: 1,
     tapMult: 1,
@@ -292,6 +293,7 @@ function ensureGameStateDefaults() {
 
   if (!game.aetherUpgrades) game.aetherUpgrades = {};
   if (typeof game.totalAetherEarned !== "number") game.totalAetherEarned = Number(game.aether || 0);
+  if (window.MemoryManager) MemoryManager.ensure(); // v3.322.0
   if (!Array.isArray(game.quests)) game.quests = [];
 
   // v3.99.15 : garde-fou minimal — la vraie migration pour les sauvegardes

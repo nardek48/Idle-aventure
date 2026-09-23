@@ -24,7 +24,8 @@ var WORLD_CAPS = [
   },
   /* 1 — Désert oublié */
   {
-    village: { workshop: 7, training: 9, hall: 7, warehouse: 6, palisade: 7, tavern: 5, apothecary: 6, forge: 2, enchanter: 1 },
+    // v3.316.0 (W-4b) : forge 2 -> 3, le palier de l'étape 13 se paie en Verre trempé.
+    village: { workshop: 7, training: 9, hall: 7, warehouse: 6, palisade: 7, tavern: 5, apothecary: 6, forge: 3, enchanter: 1 },
     zoneRows: 2,
     zoneLevel: 5,
     workshopLevel: 3,

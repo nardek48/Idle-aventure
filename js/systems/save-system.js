@@ -379,6 +379,7 @@ function buildSaveData() {
     essence: Number(game.essence || 0),
     aether: Number(game.aether || 0),
     totalAetherEarned: Number(game.totalAetherEarned || 0),
+    memory: game.memory && typeof game.memory === "object" ? JSON.parse(JSON.stringify(game.memory)) : null, // v3.322.0 : niveau de Mémoire
     tapDamage: Number(game.tapDamage || 1),
     tapMult: Number(game.tapMult || 1),
     equipFlatTapBonus: Number(game.equipFlatTapBonus || 0),
@@ -580,6 +581,8 @@ function restoreBaseState(d) {
   game.essence = Number(d.essence || 0);
   game.aether = Number(d.aether || 0);
   game.totalAetherEarned = Number(d.totalAetherEarned != null ? d.totalAetherEarned : d.aether || 0);
+  game.memory = (d.memory && typeof d.memory === "object") ? d.memory : null; // v3.322.0 : complété par MemoryManager.ensure()
+  if (window.MemoryManager) MemoryManager.ensure();
 
   game.playerName = d.playerName || "";
   game.heroId = migrateHeroId(d.heroId);
@@ -996,6 +999,7 @@ function hardResetState() {
   var questDefaults = getDefaultQuestProgress();
   var keptAether = game.aether || 0;
   var keptTotalAetherEarned = game.totalAetherEarned || 0;
+  var keptMemory = game.memory ? JSON.parse(JSON.stringify(game.memory)) : null; // v3.322.0
   var keptAscensions = game.ascensionCount || 0;
   var keptAetherUpgrades = Object.assign({}, game.aetherUpgrades || {});
 
@@ -1090,6 +1094,7 @@ function hardResetState() {
   game.essence = 0;
   game.aether = keptAether;
   game.totalAetherEarned = keptTotalAetherEarned;
+  game.memory = keptMemory;
 
   game.tapDamage = 1;
   game.tapMult = 1;
@@ -1268,6 +1273,8 @@ function fullResetState() {
   game.essence = 0;
   game.aether = 0;
   game.totalAetherEarned = 0;
+  game.memory = null; // v3.322.0 : recréé par MemoryManager.ensure()
+  if (window.MemoryManager) MemoryManager.ensure();
   game.playerName = "";
   game.heroId = "";
   game.heroGender = "m"; // v3.151.0

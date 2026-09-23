@@ -222,3 +222,37 @@
     font-size: 11px;
   }
 }
+/* v3.322.0 (Offrande) : écran de Mémoire — jauge, niveaux et choix.
+   Mêmes jetons que le reste de l'écran (aether, nb-ink, nb-frame, nb-cream). */
+.mem-gauge { margin: 12px auto 4px; max-width: 340px; text-align: left; }
+.mem-gauge-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.mem-gauge-lvl { font-weight: 800; color: var(--aether); font-size: 14px; }
+.mem-gauge-num { font-size: 12px; color: var(--nb-ink-dim); }
+.mem-gauge-bar { height: 10px; margin-top: 6px; border-radius: 6px; background: var(--aether-tint-strong); overflow: hidden; }
+.mem-gauge-fill { height: 100%; background: var(--aether); border-radius: 6px; transition: width 0.3s ease; }
+.mem-gauge-note { margin-top: 6px; font-size: 11px; color: var(--nb-ink-dim); }
+.mem-pending { margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--aether); }
+
+.mem-level { margin: 10px 0; padding: 10px; border: 1px solid var(--nb-frame); border-radius: var(--nb-radius-md); background: var(--nb-cream); }
+.mem-level.is-pending { border-color: var(--aether); box-shadow: 0 0 0 1px var(--aether); }
+.mem-level.is-locked { opacity: 0.6; }
+.mem-level-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.mem-level-num { font-weight: 800; color: var(--nb-ink); font-size: 13px; }
+.mem-level-theme { font-size: 11px; color: var(--nb-ink-dim); }
+.mem-level-lock { font-size: 11px; color: var(--nb-ink-dim); margin-bottom: 6px; }
+
+.mem-options { display: flex; flex-direction: column; gap: 6px; }
+.mem-option {
+  -webkit-appearance: none; appearance: none;
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px;
+  padding: 8px 10px; text-align: left; font: inherit; color: var(--nb-ink);
+  border: 1px solid var(--nb-frame); border-radius: var(--nb-radius-sm);
+  background-color: transparent; cursor: pointer;
+}
+.mem-option.is-chosen { border-color: var(--aether); background-color: var(--aether-tint-strong); }
+.mem-option.is-other { opacity: 0.7; }
+.mem-option-ico { flex: 0 0 32px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.mem-option-img { max-width: 32px; max-height: 32px; object-fit: contain; }
+.mem-option-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mem-option-name { font-weight: 700; font-size: 13px; }
+.mem-option-desc { font-size: 12px; line-height: 1.4; color: var(--nb-ink-dim); }

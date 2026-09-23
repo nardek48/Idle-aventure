@@ -73,7 +73,8 @@ var EquipShopManager = {
       ? level
       : ((window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function")
           ? VillageBuildingManager.getLevel("hall") : 0);
-    return EQUIP_SHOP_SIZE + Math.floor(Math.max(0, lvl) / 2);
+    var etal = (window.MemoryManager && MemoryManager.has("etal_garni")) ? 1 : 0; // v3.322.0 : Étal garni
+    return EQUIP_SHOP_SIZE + Math.floor(Math.max(0, lvl) / 2) + etal;
   },
 
   /* Remise sur le renouvellement manuel : -5 % par niveau, composés. Elle ne
@@ -138,7 +139,9 @@ var EquipShopManager = {
 
   /* v3.308.0 : nombre maximal d'objets de la rareté du sommet pour une vitrine de `size`. */
   getTopRarityCap: function (size) {
-    return Math.max(1, Math.floor(size * EQUIP_SHOP_TOP_RARITY_SHARE));
+    // v3.322.0 : Regard du marchand (Mémoire niveau 8) — 40 % au lieu de 25 %
+    var share = (window.MemoryManager && MemoryManager.has("regard_marchand")) ? 0.40 : EQUIP_SHOP_TOP_RARITY_SHARE;
+    return Math.max(1, Math.floor(size * share));
   },
 
   /* Retire l'excédent de la rareté du sommet : chaque objet en trop est retiré dans la
@@ -209,7 +212,8 @@ var EquipShopManager = {
     var count = Number(game.equipShopManualRefreshCount || 0);
     // v3.114.0 : base indexée sur le monde max atteint, même logique que getPrice().
     return Math.floor(EQUIP_SHOP_MANUAL_REFRESH_BASE_COST * getEquipShopWorldPriceMult()
-      * Math.pow(EQUIP_SHOP_MANUAL_REFRESH_MULT, count) * this.getRefreshDiscount());
+      * Math.pow(EQUIP_SHOP_MANUAL_REFRESH_MULT, count) * this.getRefreshDiscount()
+      * ((window.MemoryManager && MemoryManager.has("oeil_marchand")) ? 0.5 : 1)); // v3.322.0 : Œil du marchand
   },
 
   manualRefresh: function () {
@@ -256,7 +260,12 @@ var EquipShopManager = {
     delete owned.price;
     delete owned.bought;
     owned.uid = "itm_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+    owned.fromShop = true; // v3.322.0 (O9) : un objet acheté ne porte aucun souvenir, Offrande à 0
 
+    /* v3.322.0 : sac plein, on refuse l'achat — sinon addLootToInventory offrirait l'objet
+       avant qu'il soit payé. */
+    var cap = (typeof getInventoryCap === "function") ? getInventoryCap() : 25;
+    if ((game.inventory || []).length >= cap) return showToast("🎒 Sac plein : offre des objets pour faire de la place", 1800);
     if (!addLootToInventory(owned)) return;
 
     game.gold -= price;

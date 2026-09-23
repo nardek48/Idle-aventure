@@ -8,19 +8,12 @@ var MENU_ITEMS = [
      deviennent des sous-onglets de Héros, Ascension s'ouvre depuis le Résumé du héros,
      Boutique migre vers les bâtiments du Village (lot N-2). Six cases, deux rangées. */
   { tab: "bestiary", label: "Bestiaire & Codex", img: "./images/Icons/menu_icons/bestiaire_menu.png" },
-  { tab: "achievements", label: "Hauts faits", img: "./images/Icons/menu_icons/achivment_menu.png", badge: "achievement" },
+  { tab: "achievements", label: "Hauts faits", img: "./images/Icons/menu_icons/achivment_menu.png" },
   /* v3.245.0 (refonte Donjons) : Afflictions retirées — devenues les Marques, choisies à l'entrée d'un donjon. 5 cases (décision 12.4). */
   { tab: "log", label: "Journal", img: "./images/Icons/menu_icons/journal_menu.png" },
   { tab: "tutorials", label: "Tutoriels", icon: "images/Icons/codex/codex_lore.png" },
   { tab: "settings", label: "Paramètres", img: "./images/Icons/menu_icons/settings_menu.png" }
 ];
-
-function getMenuQuestBadgeCount() {
-  // v3.116.0 : journalières retirées — seules les étapes Histoire réclamables comptent ici.
-  return (window.StoryQuestManager && typeof StoryQuestManager.getClaimableCount === "function")
-    ? StoryQuestManager.getClaimableCount()
-    : 0;
-}
 
 function buildFullMenuHTML() {
   var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeFullMenu();">';
@@ -36,28 +29,8 @@ function buildFullMenuHTML() {
     // simplement absents de la grille, plutôt que grisés — comportement demandé par Seb.
     if (typeof isTabUnlocked === "function" && !isTabUnlocked(item.tab)) return;
 
-    var badgeCount = 0;
-    if (item.badge === "achievement") {
-      badgeCount = (window.AchievementManager && typeof AchievementManager.getAvailableToClaimCount === "function")
-        ? AchievementManager.getAvailableToClaimCount()
-        : 0;
-    } else if (item.badge === "dungeon") {
-      if (window.DungeonManager && typeof DungeonManager.checkTicketReset === "function") {
-        DungeonManager.checkTicketReset();
-        badgeCount = ((game.dungeonTickets || 0) > 0 && !(game.dungeonRun && game.dungeonRun.active)) ? 1 : 0;
-      }
-    } else if (item.badge === "talents") {
-      badgeCount = (typeof getTalentsAvailableCount === "function") ? getTalentsAvailableCount() : 0;
-    } else if (item.badge === "ascension") {
-      badgeCount = (typeof getAscensionAvailableCount === "function") ? getAscensionAvailableCount() : 0;
-    } else if (item.badge) {
-      badgeCount = getMenuQuestBadgeCount();
-    }
-
+    // v3.320.0 (décision Seb) : plus aucune pastille dans le menu.
     h += '<button class="full-menu-card" type="button" onclick="selectMenuTab(\'' + item.tab + '\')">';
-    if (badgeCount > 0) {
-      h += '<span class="full-menu-card-badge">' + badgeCount + '</span>';
-    }
     if (item.img) {
       h += '<img src="' + esc(item.img) + '" alt="" class="full-menu-card-icon-img">';
     } else {
@@ -93,4 +66,3 @@ window.openFullMenu = openFullMenu;
 window.closeFullMenu = closeFullMenu;
 window.selectMenuTab = selectMenuTab;
 window.buildFullMenuHTML = buildFullMenuHTML;
-window.getMenuQuestBadgeCount = getMenuQuestBadgeCount;

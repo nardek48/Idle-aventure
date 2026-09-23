@@ -126,12 +126,17 @@ var ForgeManager = {
     if (target > this.getMaxLevel()) return null;
 
     var cost = {
-      gold: Math.floor(400 * Math.pow(1.35, level)),
+      // v3.322.0 : Main du forgeron (Mémoire niveau 8) — reforges −25 % d'or
+      gold: Math.floor(400 * Math.pow(1.35, level) * ((window.MemoryManager && MemoryManager.has("main_forgeron")) ? 0.75 : 1)),
       acier: Math.max(2, Math.floor(2 + level * 1.5))
     };
     // v3.289.0 : la Résine arrive avec le 2e niveau de bâtiment, comme avant (seuil suivi)
     var seuil = FORGE_LEVELS_PER_BUILDING_LEVEL;
     if (target > seuil) cost.resine_durcie = Math.max(1, Math.floor((target - seuil) / 2) + 1);
+    /* v3.317.0 (W-4c) : la bande ouverte par la Forge 3 (niveaux 5 et 6) demande en plus la
+       Chitine du Dard. Même règle que la Résine au palier précédent : le matériau du monde
+       accompagne les niveaux que ce monde ouvre. */
+    if (target > seuil * 2) cost.chitine_profondeurs = target - seuil * 2;
     return cost;
   },
 

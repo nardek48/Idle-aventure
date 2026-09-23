@@ -129,15 +129,24 @@ function unequipIncompatibleWeapon() {
 window.unequipIncompatibleWeapon = unequipIncompatibleWeapon;
 window.isWeaponIconAllowedForCurrentHero = isWeaponIconAllowedForCurrentHero;
 
-var MAX_INVENTORY_SIZE = 50;
+/* v3.322.0 (Offrande, O8) : 25 places de base, 50 avec le Sac profond. MAX_INVENTORY_SIZE
+   reste la valeur de repli ; la vraie limite se lit dans getInventoryCap(). */
+var MAX_INVENTORY_SIZE = 25;
+
+function getInventoryCap() {
+  return (window.MemoryManager && typeof MemoryManager.getInventoryCap === "function")
+    ? MemoryManager.getInventoryCap() : MAX_INVENTORY_SIZE;
+}
 
 function addLootToInventory(item) {
   if (!item) return false;
   if (!Array.isArray(game.inventory)) game.inventory = [];
 
-  if (game.inventory.length >= MAX_INVENTORY_SIZE) {
-    addLog("🎒 Sac plein (" + MAX_INVENTORY_SIZE + "/" + MAX_INVENTORY_SIZE + ") : " + item.name + " perdu.", "event");
-    showToast("🎒 Sac plein ! Vends des objets pour faire de la place", 2000);
+  /* v3.322.0 : sac plein -> l'objet est offert au lieu d'être perdu. Un objet unique
+     (arme d'élite) n'est jamais offert d'office : il entre en dépassement. */
+  if (game.inventory.length >= getInventoryCap() && !item.unique) {
+    var gained = (window.MemoryManager) ? MemoryManager.offerItem(item, "full") : 0;
+    showToast("🎒 Sac plein : " + item.name + " offert" + (gained > 0 ? " (+" + gained + " Aether)" : ""), 2000);
     return false;
   }
 
@@ -148,6 +157,7 @@ function addLootToInventory(item) {
 function addDropToInventory(item) {
   if (!item) return false;
 
+  // v3.322.0 : l'autovente devient l'auto-offrande (même réglage, même seuil de rareté)
   if (game.autoSellEquipment && !item.unique) {
     // v3.205.0 : un objet unique (arme d'élite) n'est JAMAIS autovendu. Sans
     // cette garde, un seuil réglé sur Inhabituel liquidait le trophée à
@@ -157,9 +167,7 @@ function addDropToInventory(item) {
     var dropRank = RARITY_ORDER.indexOf(item.rarity);
 
     if (thresholdRank !== -1 && dropRank <= thresholdRank) {
-      var value = getEquipmentSellValue(item);
-      game.gold += value;
-      addLog("💰 " + item.name + " vendu automatiquement (+" + formatNumber(value) + " or)", "event");
+      if (window.MemoryManager) MemoryManager.offerItem(item, "auto");
       return true;
     }
   }
@@ -218,28 +226,9 @@ var EquipmentSystem = {
     saveGame();
   },
 
+  /* v3.322.0 (O2) : la vente d'équipement devient l'Offrande. Le nom est gardé pour les appelants. */
   sell: function (uid) {
-    var index = (game.inventory || []).findIndex(function (item) {
-      return item.uid === uid;
-    });
-
-    if (index === -1) return;
-
-    var item = game.inventory[index];
-    var value = getEquipmentSellValue(item);
-
-    game.inventory.splice(index, 1);
-    game.gold += value;
-    game.totalGoldEarned += value;
-
-    addLog("Objet vendu : " + item.name + " (+" + value + " or)", "event");
-
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldEarned", value);
-    }
-
-    if (typeof renderAll === "function") renderAll();
-    saveGame();
+    if (window.MemoryManager) MemoryManager.offer(uid);
   },
 
   sortInventoryByRarity: function () {
@@ -294,70 +283,24 @@ var EquipmentSystem = {
     saveGame();
   },
 
+  /* v3.322.0 : « Tout offrir » — jamais les objets uniques. */
   sellAllInventory: function () {
-    if (!Array.isArray(game.inventory) || !game.inventory.length) {
-      showToast("Aucun objet à vendre", 1200);
-      return;
-    }
-
-    var soldCount = game.inventory.length;
-    var goldGain = game.inventory.reduce(function (sum, item) {
-      return sum + getEquipmentSellValue(item);
-    }, 0);
-
-    game.inventory = [];
-    game.gold += goldGain;
-    game.totalGoldEarned += goldGain;
-
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldEarned", goldGain);
-    }
-
-    addLog(
-      "🧹 Vente totale de " + soldCount + " objets pour +" + formatNumber(goldGain) + " or",
-      "event"
-    );
-    showToast("Inventaire vendu", 1200);
-
-    if (typeof renderPanel === "function") renderPanel();
-    if (typeof renderHud === "function") renderHud();
-    saveGame();
+    if (window.MemoryManager) MemoryManager.offerAll();
   },
 
   sellInventoryByRarity: function (rarity) {
-    var items = (game.inventory || []).filter(function (item) {
-      return item.rarity === rarity;
+    // v3.322.0 : offre tous les objets d'une rareté (jamais un objet unique)
+    var self = window.MemoryManager;
+    if (!self) return;
+    var gained = 0, n = 0;
+    game.inventory = (game.inventory || []).filter(function (item) {
+      if (item.rarity !== rarity || item.unique) return true;
+      gained += self.offerItem(item, "manual"); n++;
+      return false;
     });
-
-    if (!items.length) {
-      showToast("Aucun objet à vendre", 1200);
-      return;
-    }
-
-    var goldGain = items.reduce(function (sum, item) {
-      return sum + getEquipmentSellValue(item);
-    }, 0);
-
-    game.inventory = game.inventory.filter(function (item) {
-      return item.rarity !== rarity;
-    });
-
-    game.gold += goldGain;
-    game.totalGoldEarned += goldGain;
-
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldEarned", goldGain);
-    }
-
-    addLog(
-      "🧹 Vente de " + items.length + " objets " + rarity + " pour +" + formatNumber(goldGain) + " or",
-      "event"
-    );
-    showToast("Vente effectuée", 1200);
-
+    if (!n) showToast("Aucun objet à offrir", 1200);
     if (typeof renderPanel === "function") renderPanel();
-    if (typeof renderHud === "function") renderHud();
-    saveGame();
+    if (typeof saveGame === "function") saveGame();
   }
 };
 
@@ -431,8 +374,8 @@ window.addDropToInventory = addDropToInventory;
 
 function toggleAutoSellEquipment() {
   game.autoSellEquipment = !game.autoSellEquipment;
-  addLog(game.autoSellEquipment ? "🤖 Autovente activée" : "🤖 Autovente désactivée", "event");
-  showToast(game.autoSellEquipment ? "Autovente activée" : "Autovente désactivée", 1300);
+  addLog(game.autoSellEquipment ? "🤖 Auto-offrande activée" : "🤖 Auto-offrande désactivée", "event"); // v3.322.0
+  showToast(game.autoSellEquipment ? "Auto-offrande activée" : "Auto-offrande désactivée", 1300);
   if (typeof renderPanel === "function") renderPanel();
   saveGame();
 }
@@ -442,12 +385,13 @@ function setAutoSellRarityThreshold(rarity) {
   if (typeof RARITY_ORDER === "undefined" || RARITY_ORDER.indexOf(rarity) === -1) return;
   game.autoSellRarityThreshold = rarity;
   var label = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[rarity]) || rarity;
-  showToast("Seuil d\u2019autovente : " + label + " et en dessous", 1300);
+  showToast("Seuil d\u2019auto-offrande : " + label + " et en dessous", 1300);
   if (typeof renderPanel === "function") renderPanel();
   saveGame();
 }
 window.setAutoSellRarityThreshold = setAutoSellRarityThreshold;
 window.MAX_INVENTORY_SIZE = MAX_INVENTORY_SIZE;
+window.getInventoryCap = getInventoryCap;
 window.sortInventoryByRarity = function () {
   EquipmentSystem.sortInventoryByRarity();
 };

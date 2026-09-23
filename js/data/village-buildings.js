@@ -153,8 +153,13 @@ var VILLAGE_BUILDINGS = {
        v3.221.0 : limité à 2 pour l'instant (10 niveaux de forge). Les niveaux 3
        à 6 exigent les matériaux des mondes 2 à 5, qui n'existent pas encore —
        même règle que le Terrain d'entraînement en v3.213.1, relevé en v3.214.0
-       quand son matériau est arrivé. */
-    maxLevel: 2,
+       quand son matériau est arrivé.
+
+       v3.316.0 (W-4b, acte III §6) : relevé à 3, le matériau du Désert existe. Le niveau 3
+       coûte du Verre trempé (étape 9) et ouvre la reforge jusqu'au niveau 6 — c'est le
+       deuxième compteur du palier de l'étape 13. Les niveaux 4 à 6 attendent les mondes
+       suivants, comme avant. */
+    maxLevel: 3,
     implemented: true,
     desc: "Reforge une pièce d'équipement. Le niveau appartient à l'emplacement, pas à l'objet : changer de pièce ne fait rien perdre.",
     costTiers: [
@@ -169,6 +174,15 @@ var VILLAGE_BUILDINGS = {
         resources: ["gold", "planche", "pierre", "acier", "resine_durcie"],
         baseCost: { gold: 2400, planche: 70, pierre: 85, acier: 18, resine_durcie: 4 },
         costMult: 1.45
+      },
+      /* v3.316.0 (W-4b) : palier du Désert. Or et pierre suivent la progression des deux
+         premiers (×~2,2) ; le Verre trempé est la marche neuve. 3 verres = 6 Verre des dunes
+         et 30 Pierre au Tailleur, soit deux à trois passages. Provisoire, à caler au banc. */
+      {
+        minLevel: 2, maxLevel: 2,
+        resources: ["gold", "pierre", "acier", "verre_trempe"],
+        baseCost: { gold: 5200, pierre: 180, acier: 40, verre_trempe: 3 },
+        costMult: 1.50
       }
     ],
     effectLabel: function (level) {

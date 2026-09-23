@@ -507,6 +507,8 @@ function buyTalentNode(id) {
 }
 
 function buyAetherUpgrade(id) {
+  // v3.322.0 (O7) : la boutique d'Aether est retirée, remplacée par les choix de Mémoire
+  if (!(AETHER_SHOP || []).length) return showToast("La boutique d'Aether a laissé place à la Mémoire", 1600);
   if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
   var upgrade = (AETHER_SHOP || []).find(function (u) { return u.id === id; });
   if (!upgrade) return showToast("Amélioration astrale introuvable", 1000);
@@ -579,84 +581,17 @@ function grantHeroXp(amount, source) {
   return levelsGained;
 }
 
+/* v3.322.0 (Offrande, décision O1 de Seb) : l'Ascension n'existe plus. Plus aucune remise à
+   zéro du héros ; l'Aether vient des Offrandes et des Souvenirs (systems/memory-system.js).
+   Les noms restent pour les appelants et les vieilles sauvegardes : tout répond « non ». */
 var AscensionManager = {
-  previewGain: function () {
-    var gain = typeof ASCENSION_CONFIG.computeGain === "function" ? ASCENSION_CONFIG.computeGain() : 0;
-    if (game.talents.t_rich_ritual && gain >= 10) gain += game.talents.t_rich_ritual;
-
-    var pendingAetherBonus = (game.pendingPotionBonuses && game.pendingPotionBonuses.aetherNext) || 0;
-    if (pendingAetherBonus > 0) gain = Math.ceil(gain * (1 + pendingAetherBonus));
-
-    return Math.max(0, gain);
-  },
-
-  canAscend: function () {
-    var kills = Number(game.totalKills || 0);
-    return kills >= (ASCENSION_CONFIG.minKillsToAscend || 0) && this.previewGain() > 0;
-  },
-
-  doAscend: function () {
-    if (!this.canAscend()) {
-      showToast("Ascension indisponible", 1200);
-      return;
-    }
-    if (typeof ascendNow === "function") ascendNow();
-  }
+  previewGain: function () { return 0; },
+  canAscend: function () { return false; },
+  doAscend: function () { showToast("L'Ascension a laissé place à la Mémoire", 1600); }
 };
 
 function ascendNow() {
-  if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
-  if (typeof ASCENSION_CONFIG === "undefined") return;
-  var minKills = ASCENSION_CONFIG.minKillsToAscend || 0;
-  if ((game.totalKills || 0) < minKills) {
-    showToast("Ascension non disponible (" + minKills + " kills minimum)", 1500);
-    return;
-  }
-
-  var gain = typeof ASCENSION_CONFIG.computeGain === "function" ? ASCENSION_CONFIG.computeGain() : 0;
-  if (game.talents.t_rich_ritual && gain >= 10) gain += game.talents.t_rich_ritual;
-
-  var pendingAetherBonus = (window.PotionManager && game.pendingPotionBonuses)
-    ? Number(game.pendingPotionBonuses.aetherNext || 0)
-    : 0;
-  if (pendingAetherBonus > 0) gain = Math.ceil(gain * (1 + pendingAetherBonus));
-
-  if (gain <= 0) return showToast("Gain d'Aether insuffisant", 1200);
-
-  var doAscend = function () {
-    game.aether = Number(game.aether || 0) + gain;
-    game.totalAetherEarned = Number(game.totalAetherEarned || 0) + gain;
-    game.ascensionCount = Number(game.ascensionCount || 0) + 1;
-
-    if (pendingAetherBonus > 0 && game.pendingPotionBonuses) {
-      game.pendingPotionBonuses.aetherNext = 0;
-    }
-    game.aetherElixirStackCount = 0;
-
-    addLog("Ascension accomplie : +" + gain + " Aether", "event");
-
-    if (typeof hardResetState === "function") {
-      hardResetState();
-    }
-
-    if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") CombatEngine.spawnEnemy();
-    if (typeof switchTab === "function") switchTab("combat");
-    if (typeof renderAll === "function") renderAll();
-    if (typeof updateQuestBadge === "function") updateQuestBadge();
-    if (typeof saveGame === "function") saveGame();
-    if (typeof showToast === "function") showToast("Ascension +" + gain + " Aether", 1800);
-  };
-
-  if (typeof showConfirmModal === "function") {
-    showConfirmModal(
-      "Ascension",
-      "Tu vas recommencer ta progression, mais garder ton Aether, tes ascensions et tes améliorations d'Aether.\n\nGain prévu : +" + gain + " Aether.",
-      "images/Icons/aether_icon.png",
-      doAscend
-    );
-  } else if (window.confirm("Ascensionner et gagner +" + gain + " Aether ?")) {
-    doAscend();
-  }
+  if (typeof showToast === "function") showToast("L'Ascension a laissé place à la Mémoire", 1600);
 }
 
 window.WorldManager = WorldManager;

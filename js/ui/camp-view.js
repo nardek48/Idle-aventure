@@ -144,7 +144,7 @@ function buildCampHTML() {
   h += '</div>';
   if (campRegenHelpOpen) {
     h += '<div class="camp-regen-desc">Hors combat, tes PV remontent seuls au rythme indiqué. Les rations soignent tout de suite. '
-      + 'Pendant ton absence, le feu rend au plus ' + Math.round((typeof CAMP_OFFLINE_REGEN_CAP_PCT === "number" ? CAMP_OFFLINE_REGEN_CAP_PCT : 0.5) * 100) + ' % des PV max.</div>';
+      + 'Pendant ton absence, le feu rend au plus ' + Math.round((typeof getCampOfflineRegenCap === "function" ? getCampOfflineRegenCap() : 0.5) * 100) + ' % des PV max.</div>';
   }
 
   h += '</div>'; // fin .camp-health-card

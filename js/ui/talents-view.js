@@ -109,7 +109,7 @@ var TALENT_CURRENT_VALUE_OVERRIDES = {
     return "Bonus actuel : +" + (node.perLevel * level);
   },
   t_rich_ritual: function (node, level) {
-    return "Bonus actuel : +" + (node.perLevel * level);
+    return "Chance actuelle : " + (10 * level) + " %"; // v3.322.0 : Main offrante
   }
 };
 

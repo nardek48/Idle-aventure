@@ -88,22 +88,60 @@ var DUNGEONS = [
         { atPct: 0.25, archetype: "enraged", label: "il entre en rage" }
       ]
     },
-    locked: false
+    locked: false,
+    /* v3.315.0 (W-4a2) : ces deux étapes étaient nommées en dur dans isStoryTicketFree
+       (dungeon-system.js). Elles vivent maintenant dans la donnée, comme pour la Cité. */
+    storyChapterId: "forest",
+    storyFreeSteps: ["forest_13", "forest_14"]
   },
   {
     id: 2, key: "desert",
     name: "Cité engloutie",
-    worldId: "desert", worldRequired: 1, worldPower: 1, difficultyMult: 2.5,
+    /* v3.319.0 (W-4d) : difficultyMult 2,5 -> 1,7, mesuré. À 2,5 le Chevalier mourait dans
+       les vagues avant même de voir le boss (15,0 vagues tenues pour les classes à distance,
+       14,7 pour lui, 0 % de boss). La difficulté du donjon passe dans le SPHINX, pas dans
+       l'usure des quinze vagues — c'est la leçon du Basilic, appliquée. */
+    worldId: "desert", worldRequired: 1, worldPower: 1, difficultyMult: 1.7,
     maxRarity: "green",
-    specialResourceId: null, specialResourceAmount: 0,
+    // v3.321.0 (décision Seb) : la matière brute de la Petite Aventure du monde, comme la Sève en Forêt
+    specialResourceId: "verre_des_dunes", specialResourceAmount: 2,
     icon: "images/Dungeons/Icone_base/palier2.jpg", banner: null, combatMap: null,
     desc: "Une cité que le sable a prise, salle après salle.",
     story: "Les couloirs se resserrent. Des ombres inhabituelles glissent entre les pierres, et l'air se charge d'une tension nouvelle.",
-    enemyPool: null, eliteWaves: null,
-    boss: { baseId: "djinn", name: "Sultan des sables", archetype: "vampiric", statMult: { endurance: 1, power: 1 }, image: null },
-    /* v3.300.0 (W-2) : fermé jusqu'au lot W-4. La traversée rend le Désert atteignable, et ce
-       donjon s'ouvrait sur worldRequired 1 sans pool, sans élites ni boss calibré. */
-    locked: true
+    /* v3.315.0 (W-4a2, acte III §5) : le pool du Désert, les quatre bêtes de l'usure.
+       Vague élite 5 = le Serment sous l'armure, le même TYPE qu'à la tour de guet : la cité
+       en est pleine. Vague 10 : le Dard des profondeurs — la même bête qu'à la dune (acte III §7). */
+    enemyPool: ["scarab", "scorpion", "sandworm", "sandwarrior"],
+    eliteWaves: { 5: "serment_armure", 10: "dard_profondeurs" }, // v3.317.0 (W-4c) : la vague 10 arrive
+    /* v3.319.0 (W-4d, décision Seb) — LE SPHINX remplace le « Sultan des sables », qui
+       empruntait le Djinn des dunes (BOSS_DB). Deux seuils de phase, comme le Basilic,
+       et la difficulté portée par les DÉGÂTS et les renforts, jamais par la seule barre de
+       vie : mesuré au Basilic (les PV ne changeaient rien) puis reconfirmé en v3.318.0.
+         66 % : deux armures du Serment sortent des rues — il cesse d'attendre une réponse ;
+         33 % : il change d'archétype et frappe comme il regarde, droit devant.
+       Tant qu'un renfort tient debout, son soin de boss reste suspendu (combat-engine). */
+    boss: {
+      baseId: "sphinx", name: "Le sphinx", archetype: "armored",
+      /* Calibré au banc (sim/cite-vague5-bench.js --profil palier, 16 runs/classe, sans
+         Marque), sur les VRAIES stats de BOSS_DB : Chevalier 69 % de boss vaincu en brûlant
+         ses deux potions, Rôdeur et Mage 100 % pour 0,6 à 0,9. Multiplicateurs sous 1 parce
+         que la base est déjà un boss (104 d'endurance) : on ne le gonfle pas, on l'aiguise.
+         L'écart entre classes sur un run long est un chantier à part (voir le changelog). */
+      statMult: { endurance: 0.8, power: 1.6 }, image: null,
+      phases: [
+        { atPct: 0.66, adds: ["sandwarrior", "sandwarrior"], addsHpMult: 0.18, addsPowerMult: 0.5,
+          label: "il n'attend plus de réponse" },
+        { atPct: 0.33, archetype: "enraged", label: "il regarde la rue" }
+      ]
+    },
+    /* v3.300.0 (W-2) : fermé jusqu'au lot W-4, faute de pool, d'élites et de boss calibré.
+       v3.315.0 : le verrou de donnée tombe, remplacé par un verrou d'HISTOIRE — la cité s'ouvre
+       à l'étape 12 et pas à l'arrivée au Désert (getLockReason lit requiresStoryStep). */
+    locked: false,
+    requiresStoryStep: "desert_12",
+    lockedHint: "Le sable la garde encore.",
+    storyChapterId: "desert",
+    storyFreeSteps: ["desert_12", "desert_15"] // v3.319.0 : l'entrée est aussi offerte pour le sphinx
   },
   {
     id: 3, key: "ruins",
@@ -186,11 +224,23 @@ var DUNGEON_MARKS = [
    passe boss avec ces multiplicateurs relatifs (banc D-0 : 8–32 % d'échec seule en Forêt). */
 var DUNGEON_GENERIC_ELITE_MULT = { endurance: 2.4, power: 1.1 };
 
+/* v3.321.0 (décision Seb, 23/09/2026) : la boutique ne vend plus de PUISSANCE. Dégâts et défense
+   faussaient le calibrage (aucun banc ne les voyait) ; or et essence ne touchaient que les kills,
+   moins de 10 % des revenus. Chaque article déclare un `effect` et un `perLevel`, lus par
+   DungeonManager.getShardEffect() ; un article absent d'ici n'agit plus. Prix provisoires. */
 var DUNGEON_SHOP = [
-  { id: "d_power", name: "Lame du donjon", icon: "images/Icons/dungeon/dungeon_weapon.png", desc: "+2% dégâts globaux par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 },
-  { id: "d_gold", name: "Trésor du donjon", icon: "images/Icons/dungeon/dungeon_gold.png", desc: "+2% or global par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 },
-  { id: "d_essence", name: "Essence du donjon", icon: "images/Icons/essence_icon.png", desc: "+2% essence globale par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 },
-  { id: "d_defense", name: "Armure du donjon", icon: "images/Icons/dungeon/dungeon_armor.png", desc: "+1% défense par niveau.", baseCost: 5, costMult: 1.30, maxLevel: 20 }
+  { id: "d_sacoche", name: "Sacoche du donjon", icon: "images/Icons/dungeon/dungeon_sacoche.png",
+    desc: "+1 matériau de monde par run réussi, par niveau.",
+    effect: "specialBonus", perLevel: 1, baseCost: 20, costMult: 1.5, maxLevel: 5 },
+  { id: "d_cle", name: "Clé de faille", icon: "images/Icons/dungeon/dungeon_cle.png",
+    desc: "−10 % sur le coût en essence des tickets achetés, par niveau.",
+    effect: "ticketDiscount", perLevel: 0.10, baseCost: 15, costMult: 1.4, maxLevel: 5 },
+  { id: "d_doigte", name: "Doigté de l'Enchanteresse", icon: "images/Icons/dungeon/dungeon_doigte.png",
+    desc: "−1 Sève par relance d'affixe, par niveau (jamais moins d'une).",
+    effect: "seveDiscount", perLevel: 1, baseCost: 30, costMult: 1.6, maxLevel: 3 },
+  { id: "d_eclaireur", name: "Carte de l'éclaireur", icon: "images/Icons/dungeon/dungeon_eclaireur.png",
+    desc: "+1 Petite Aventure par jour, par niveau.",
+    effect: "paBonus", perLevel: 1, baseCost: 60, costMult: 2, maxLevel: 2 }
 ];
 
 window.DUNGEONS = DUNGEONS;

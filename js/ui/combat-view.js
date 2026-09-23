@@ -93,32 +93,45 @@ function renderHealButtons() {
   if (right) right.innerHTML = buildHealButtonHTML(1);
 }
 
-function buildActivePotionsBarHTML() {
-  if (typeof POTIONS_DB === "undefined" || !window.PotionManager) return "";
-
-  // v3.115.0 : per-run — icônes des potions armées, sans minuteur. <img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> = effet vivant
-  // (mission en cours), sinon armée en attente du prochain run.
-  var live = typeof PotionManager.isEffectLive === "function" && PotionManager.isEffectLive();
-  var h = "";
-  POTIONS_DB.forEach(function (potion) {
-    if (!potion.perRun) return; // Élixir d'Aether : hors runs, ignoré ici
-    if (!PotionManager.isArmed(potion.id)) return;
-
-    var title = potion.name + (live ? " — active pour ce run" : " — armée pour la prochaine mission");
-    h += '<div class="active-potion-icon' + (live ? '' : ' is-armed-idle') + '" title="' + esc(title) + '">';
-    h += '<img src="' + esc(potion.icon) + '" alt="">';
-    if (live) h += '<span class="active-potion-timer"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png></span>';
-    h += '</div>';
-  });
-
-  if (window.AfflictionManager && typeof AfflictionManager.getActiveList === "function") {
-    AfflictionManager.getActiveList().forEach(function (affliction) {
-      h += '<div class="active-potion-icon active-affliction-icon" title="' + esc(affliction.name) + ' — ' + esc(affliction.desc) + '">';
-      h += '<span class="active-affliction-emoji">' + renderIconOrEmojiHTML(affliction.icon, "active-affliction-img", affliction.name) + '</span>';
-      h += '</div>';
+/* v3.320.0 (bug Seb) : ce que le joueur a PRÉPARÉ pour le run — potions armées et Marques
+   du donjon. Source unique de la barre du haut ET de la section « Pour ce run » de la feuille. */
+function getRunPreparations() {
+  var out = [];
+  if (typeof POTIONS_DB !== "undefined" && window.PotionManager) {
+    var live = typeof PotionManager.isEffectLive === "function" && PotionManager.isEffectLive();
+    POTIONS_DB.forEach(function (potion) {
+      if (!potion.perRun || !PotionManager.isArmed(potion.id)) return; // Élixir d'Aether : hors runs
+      out.push({ kind: "potion", icon: potion.icon, name: potion.name, desc: potion.desc, live: live });
     });
   }
+  if (window.AfflictionManager && typeof AfflictionManager.getActiveList === "function") {
+    AfflictionManager.getActiveList().forEach(function (m) {
+      out.push({ kind: "mark", icon: m.icon, name: m.name, desc: m.desc, live: true });
+    });
+  }
+  return out;
+}
+window.getRunPreparations = getRunPreparations;
 
+function buildActivePotionsBarHTML() {
+  var preps = getRunPreparations();
+  if (!preps.length) return "";
+  /* Un seul <button> pour toute la barre : le title ne s'affiche jamais sur mobile,
+     et un div à onclick ne reçoit pas toujours le tap sur iOS (cf. v3.281.0). */
+  var h = '<button type="button" class="active-potions-btn" onclick="openCombatStatesSheet()" aria-label="Pr\u00e9paratifs du run">';
+  preps.forEach(function (p) {
+    if (p.kind === "potion") {
+      h += '<span class="active-potion-icon' + (p.live ? '' : ' is-armed-idle') + '">';
+      h += '<img src="' + esc(p.icon) + '" alt="">';
+      if (p.live) h += '<span class="active-potion-timer"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png></span>';
+      h += '</span>';
+    } else {
+      h += '<span class="active-potion-icon active-affliction-icon">';
+      h += '<span class="active-affliction-emoji">' + renderIconOrEmojiHTML(p.icon, "active-affliction-img", p.name) + '</span>';
+      h += '</span>';
+    }
+  });
+  h += '</button>';
   return h;
 }
 
@@ -246,6 +259,20 @@ function buildCombatStatesSheetHTML() {
   h += '<div class="ksheet-body">';
 
   var vide = true;
+  /* v3.320.0 : potions armées et Marques, jusque-là seulement dans un title invisible sur mobile. */
+  var preps = (typeof getRunPreparations === "function") ? getRunPreparations() : [];
+  if (preps.length) {
+    vide = false;
+    h += '<div class="st-group-title">Pour ce run</div>';
+    preps.forEach(function (p) {
+      h += '<div class="st-row">';
+      h += renderIconOrEmojiHTML(p.icon, "st-row-ico", p.name);
+      h += '<div class="st-row-body"><div class="st-row-name">' + esc(p.name) + '</div>';
+      h += '<div class="st-row-desc">' + esc(p.desc || "") + '</div>';
+      if (p.kind === "potion" && !p.live) h += '<div class="st-row-hint">Arm\u00e9e : elle agira \u00e0 la prochaine mission.</div>';
+      h += '</div></div>';
+    });
+  }
   familles.forEach(function (fam) {
     var ids = states.filter(function (st) { return st.def.famille === fam.id; });
     if (!ids.length) return;
@@ -402,7 +429,7 @@ function openSortieSheet() {
 
   h += '<div class="cbs-sub">Potions de cette sortie</div>';
   h += buildSortieLineHTML("images/Icons/subtabs/potions.png", "Il t'en reste",
-    SortieManager.getPotionsLeft() + " sur " + (typeof SORTIE_POTION_CAP === "number" ? SORTIE_POTION_CAP : "?"));
+    SortieManager.getPotionsLeft() + " sur " + (typeof getSortiePotionCap === "function" ? getSortiePotionCap() : "?"));
 
   h += '</div><button type="button" class="ksheet-close" onclick="closeSortieSheet()">Fermer</button></div>';
   root.innerHTML = h;

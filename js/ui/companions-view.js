@@ -123,13 +123,14 @@ function buildCompanionVoieHTML(companionId, st) {
   var cur = raw.voies[st.voie];
   h += '<div class="cp-voie-title">Voie : <b>' + esc(cur.label) + '</b></div>';
   h += '<div class="cp-behavior-hint">' + esc(cur.desc) + '</div>';
-  var cost = getVoieChangeCost(st.voieChanges);
+  var free = !!(window.MemoryManager && MemoryManager.isVoieFreeToday()); // v3.322.0 : Voie libre
+  var cost = free ? 0 : getVoieChangeCost(st.voieChanges);
   Object.keys(raw.voies).forEach(function (vid) {
     if (vid === st.voie) return;
     var v = raw.voies[vid], afford = (game.gold || 0) >= cost;
     h += '<div class="cp-voie-other"><span>' + esc(v.label) + ' — ' + esc(v.desc) + '</span>';
     h += '<button type="button" class="kbtn' + (afford ? '' : ' is-disabled') + '"' + (afford ? '' : ' disabled')
-      + ' onclick="companionChangeVoie(\'' + companionId + '\', \'' + vid + '\')">Changer : ' + formatNumber(cost) + ' or</button></div>';
+      + ' onclick="companionChangeVoie(\'' + companionId + '\', \'' + vid + '\')">Changer : ' + (free ? 'gratuit aujourd\'hui' : formatNumber(cost) + ' or') + '</button></div>';
   });
   h += '<div class="cp-behavior-hint">Ses améliorations sont conservées. Chaque changement coûte trois fois le précédent.</div>';
   return h + '</div>';
@@ -138,10 +139,11 @@ function buildCompanionVoieHTML(companionId, st) {
 function companionChangeVoie(companionId, voieId) {
   if (!window.CompanionManager) return;
   var raw = COMPANIONS_DB[companionId], st = CompanionManager.state(companionId);
-  var cost = getVoieChangeCost(st.voieChanges);
+  var free = !!(window.MemoryManager && MemoryManager.isVoieFreeToday());
+  var cost = free ? 0 : getVoieChangeCost(st.voieChanges);
   var go = function () { CompanionManager.changeVoie(companionId, voieId); };
   if (typeof showConfirmModal === "function") {
-    showConfirmModal("Changer de voie ?", raw.name + " passe à « " + raw.voies[voieId].label + " » pour " + formatNumber(cost) + " or.", "🔁", go);
+    showConfirmModal("Changer de voie ?", raw.name + " passe à « " + raw.voies[voieId].label + " » " + (free ? "gratuitement (Voie libre)." : "pour " + formatNumber(cost) + " or."), "🔁", go);
   } else go();
 }
 window.companionChangeVoie = companionChangeVoie;

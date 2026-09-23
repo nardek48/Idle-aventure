@@ -20,35 +20,9 @@ function getAscensionAvailableCount() {
   return (window.AscensionManager && typeof AscensionManager.canAscend === "function" && AscensionManager.canAscend()) ? 1 : 0;
 }
 
-function updateQuestBadge() {
-  var badge = document.getElementById("quest-badge");
-  if (!badge) return;
-
-  var achievementsReady = (window.AchievementManager && typeof AchievementManager.getAvailableToClaimCount === "function")
-    ? AchievementManager.getAvailableToClaimCount()
-    : 0;
-
-  var dungeonTicketReady = 0;
-  if (window.DungeonManager && typeof DungeonManager.checkTicketReset === "function") {
-    DungeonManager.checkTicketReset();
-    if ((game.dungeonTickets || 0) > 0 && !(game.dungeonRun && game.dungeonRun.active)) {
-      dungeonTicketReady = 1;
-    }
-  }
-
-  var talentsReady = getTalentsAvailableCount();
-  var ascensionReady = getAscensionAvailableCount();
-  // v3.208.0 (décision Seb) : les entrées de Codex non lues ne comptent plus dans la pastille du
-  // bouton Menu. Lire une entrée n'est pas une action à réclamer — la pastille devait la traiter
-  // comme une récompense en attente. Même logique pour les Tutoriels, qui n'en ont jamais eu.
-  var storyReady = (window.StoryQuestManager && typeof StoryQuestManager.getClaimableCount === "function")
-    ? StoryQuestManager.getClaimableCount()
-    : 0;
-
-  var total = achievementsReady + talentsReady + ascensionReady + dungeonTicketReady + storyReady; // v3.116.0 : plus de journalières ; v3.208.0 : plus de Codex
-  badge.textContent = total > 0 ? String(total) : "";
-  badge.style.display = total > 0 ? "inline-flex" : "none";
-}
+/* v3.320.0 (décision Seb) : pastille du bouton Menu retirée — elle additionnait des
+   destinations sorties du menu (talents, ascension, donjon, Histoire). Gardée vide : 4 fichiers l'appellent. */
+function updateQuestBadge() {}
 
 /* v3.116.0 (Lot B) : onglets de catégorie en tête du tableau (Histoire/Secondaires/Chasse/Aventure),
    mapping par sourceKind des missions du MissionBoard. « Terminées » devient un lien discret. */

@@ -6,17 +6,10 @@ function getAetherUpgradeLevel(id) {
   return Number((game.aetherUpgrades && game.aetherUpgrades[id]) || 0);
 }
 
+/* v3.322.0 (O7) : la boutique d'Aether est retirée — plus aucun bonus, quels que soient les
+   niveaux achetés autrefois (ils restent dans la sauvegarde, sans effet). */
 function getAetherBonuses() {
-  if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
-
-  var levels = game.aetherUpgrades || {};
-  return {
-    tapBonus: (levels.a_tap || 0) * 0.10,
-    goldBonus: (levels.a_gold || 0) * 0.10,
-    lootBonus: (levels.a_loot || 0) * 3,
-    essenceBonus: Math.floor((levels.a_essence || 0) / 2),
-    vitalityBonus: (levels.a_vitality || 0) * 0.10
-  };
+  return { tapBonus: 0, goldBonus: 0, lootBonus: 0, essenceBonus: 0, vitalityBonus: 0 };
 }
 
 function getAetherMult() {
@@ -239,9 +232,7 @@ var StatsSystem = {
       + Math.max(0, totalEndurance - HERO_DEFENSE_SOFTCAP_ENDURANCE) * HERO_DEFENSE_COEF_BEYOND;
     game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, enduranceDefense + (game.equipDefensePct || 0) + survivalDefenseBonus);
 
-    if (game.ascensionCount > 0) {
-      game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + game.ascensionCount * 0.04)));
-    }
+    // v3.322.0 : plus de bonus de PV par Ascension (l'Ascension n'existe plus)
 
     var survivalHpMult =
       (game.talents.t_regenerate || 0) * 0.05 +
@@ -276,10 +267,7 @@ var StatsSystem = {
       game.tapMult += Math.min((game.ascensionCount || 0) * 0.03 * bloodlustLevel, 0.15 * bloodlustLevel);
     }
 
-    if (game.ascensionCount > 0) {
-      game.tapMult += game.ascensionCount * 0.06;
-      game.goldMult += game.ascensionCount * 0.05;
-    }
+    // v3.322.0 : plus de bonus de dégâts ni d'or par Ascension
 
     var aether = getAetherBonuses();
     game.tapMult += aether.tapBonus || 0;
@@ -335,10 +323,7 @@ var StatsSystem = {
       game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, game.heroDefensePct + dungeonShopBonus.defense);
     }
 
-    var AETHER_LIFETIME_MULT_COEF = 0.005;
-    var totalAether = Number(game.totalAetherEarned || 0);
-    game.tapMult += totalAether * AETHER_LIFETIME_MULT_COEF;
-    game.goldMult += totalAether * AETHER_LIFETIME_MULT_COEF;
+    // v3.322.0 : le bonus caché de +0,5 % par Aether gagné est retiré (hors calibrage, sans plafond)
   },
 
         effectiveTapDamage: function () {

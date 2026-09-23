@@ -411,7 +411,9 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += buildEquipmentPowerHTML(item); // v3.230.0
     h += buildItemOriginHTML(item);
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">Équiper</button>';
-    h += '<button class="btn-buy eq-detail-action" type="button" onclick="confirmSellItem(\'' + esc(item.uid) + '\')">Vendre</button>';
+    // v3.322.0 (O2) : la vente devient l'Offrande ; la valeur s'affiche, 0 compris (O9)
+    var offerVal = window.MemoryManager ? MemoryManager.getOfferingValue(item) : 0;
+    h += '<button class="btn-buy eq-detail-action" type="button" onclick="confirmSellItem(\'' + esc(item.uid) + '\')">Offrir (' + (offerVal > 0 ? '+' + offerVal + ' Aether' : 'aucun souvenir') + ')</button>';
     h += buildEquippedComparisonHTML(item);
   } else {
     var potion = entry.potion;
@@ -554,11 +556,11 @@ function buildInventorySettingsHTML() {
   h += '    <div class="auto-sell-toggle-row">';
   h += '      <button class="auto-sell-toggle' + (game.autoSellEquipment ? ' is-on' : '') + '" type="button" onclick="toggleAutoSellEquipment();openInventorySettings();">';
   h += '        <span class="auto-sell-switch"></span>';
-  h += '        <span class="auto-sell-label"><img class=ico-inline src=images/Icons/system/auto_sell.png> Autovente ' + (game.autoSellEquipment ? "activée" : "désactivée") + '</span>';
+  h += '        <span class="auto-sell-label"><img class=ico-inline src=images/Icons/system/auto_sell.png> Auto-offrande ' + (game.autoSellEquipment ? "activée" : "désactivée") + '</span>';
   h += '      </button>';
   h += '    </div>';
 
-  h += '    <div class="inv-threshold-label">Vendre automatiquement tout objet de rareté :</div>';
+  h += '    <div class="inv-threshold-label">Offrir automatiquement tout objet de rareté :</div>';
   h += '    <div class="inv-threshold-row">';
   rarities.forEach(function (r) {
     var label = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[r]) || r;
@@ -567,13 +569,13 @@ function buildInventorySettingsHTML() {
   h += '    </div>';
   h += '    <div class="inv-threshold-hint">... ou en dessous.</div>';
   // v3.228.0 : l'autovente ne regarde que la rareté, pas les affixes — le dire pour éviter la mauvaise surprise.
-  h += '    <div class="inv-threshold-hint">Le tri se fait sur la rareté seule : un objet de cette rareté part même si ses bonus sont excellents.</div>';
+  h += '    <div class="inv-threshold-hint">Le tri se fait sur la rareté seule : un objet de cette rareté part même si ses bonus sont excellents. Une arme d\'élite n\'est jamais offerte d\'office.</div>';
 
   h += '    <div class="dungeon-story-actions">';
   h += '      <button class="settings-btn" type="button" onclick="closeInventorySettings()">Fermer</button>';
   h += '    </div>';
 
-  h += '    <button class="inv-sell-all-btn" type="button" onclick="confirmSellAllInventory()"><img class=ico-inline src=images/Icons/system/bulk_sell.png> Tout vendre</button>';
+  h += '    <button class="inv-sell-all-btn" type="button" onclick="confirmSellAllInventory()"><img class=ico-inline src=images/Icons/system/bulk_sell.png> Tout offrir</button>';
 
   h += '  </div>';
   h += '</div>';
@@ -592,15 +594,18 @@ function closeInventorySettings() {
 window.openInventorySettings = openInventorySettings;
 window.closeInventorySettings = closeInventorySettings;
 
+/* v3.322.0 (O2) : confirmations d'Offrande. Les noms des fonctions sont gardés (appelants). */
 function confirmSellItem(uid) {
   var item = (Array.isArray(game.inventory) ? game.inventory : []).find(function (i) { return i.uid === uid; });
   var itemName = item ? item.name : "cet objet";
-  var sellValue = (item && typeof getEquipmentSellValue === "function") ? getEquipmentSellValue(item) : 0;
+  var value = (item && window.MemoryManager) ? MemoryManager.getOfferingValue(item) : 0;
   if (typeof showConfirmModal !== "function") { EquipmentManager.sell(uid); return; }
   showConfirmModal(
-    "Vendre cet objet ?",
-    "Tu es sur le point de vendre " + itemName + " pour " + formatNumber(sellValue) + " or. Cette action est irréversible.",
-    "images/Icons/gold_icon.png",
+    "Offrir cet objet ?",
+    value > 0
+      ? "Tu donnes " + itemName + " à l'Aether, qui t'en rendra " + formatNumber(value) + ". L'objet disparaît."
+      : itemName + " a été acheté : il ne porte aucun souvenir et ne rendra pas d'Aether. L'objet disparaît.",
+    "images/Icons/system/ascension.png",
     function () { EquipmentManager.sell(uid); }
   );
 }
@@ -608,16 +613,14 @@ window.confirmSellItem = confirmSellItem;
 
 function confirmSellAllInventory() {
   var inventory = Array.isArray(game.inventory) ? game.inventory : [];
-  var count = inventory.length;
-  if (!count) { showToast("Aucun objet à vendre", 1200); return; }
-  var totalValue = (typeof getEquipmentSellValue === "function")
-    ? inventory.reduce(function (sum, item) { return sum + getEquipmentSellValue(item); }, 0)
-    : 0;
+  var count = inventory.filter(function (it) { return it && !it.unique; }).length;
+  if (!count) { showToast("Aucun objet à offrir", 1200); return; }
+  var totalValue = window.MemoryManager ? MemoryManager.previewOfferAll() : 0;
   if (typeof showConfirmModal !== "function") { sellAllInventory(); return; }
   closeInventorySettings();
   showConfirmModal(
-    "Tout vendre ?",
-    "Tu es sur le point de vendre les " + count + " objets de ton sac pour " + formatNumber(totalValue) + " or au total. Cette action est irréversible.",
+    "Tout offrir ?",
+    "Tu donnes les " + count + " objets de ton sac à l'Aether, pour " + formatNumber(totalValue) + " Aether environ. Les armes d'élite restent. Cette action est irréversible.",
     "images/Icons/system/trash.png",
     function () { sellAllInventory(); }
   );
@@ -656,7 +659,7 @@ function buildInventoryTabContentHTML(topHTML) {
   var entries = getUnifiedInventoryEntries();
   var equipCount = (Array.isArray(game.inventory) ? game.inventory.length : 0);
 
-  h += '<div class="panel-title" style="margin:0 0 10px;">Sac (' + equipCount + '/50)</div>';
+  h += '<div class="panel-title" style="margin:0 0 10px;">Sac (' + equipCount + '/' + (typeof getInventoryCap === "function" ? getInventoryCap() : 25) + ')</div>'; // v3.322.0
 
   if (!entries.length) {
     var emptyMsg = inventoryFilter === "potions"

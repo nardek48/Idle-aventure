@@ -387,6 +387,8 @@ var StoryQuestManager = {
     }
 
     var rewardRows = this._grantReward(step.reward || {});
+    // v3.322.0 (Souvenirs, O10) : une étape d'Histoire terminée, l'Aether s'en souvient
+    if (window.MemoryManager) MemoryManager.souvenir("storyStep", "Souvenir : " + step.title);
     st.claimedSteps[step.id] = true;
     st.currentStep += 1;
     // v3.260.0 : une étape déjà réclamée plus loin (forest_brume sur une save v3.259.0) est sautée
@@ -438,7 +440,7 @@ var StoryQuestManager = {
        stock (potionsOwned, plafond POTION_STOCK_CAP), même porte pour les quêtes de village. */
     if (reward.potions && typeof reward.potions === "object" && window.PotionManager) {
       PotionManager.ensure();
-      var potionCap = typeof POTION_STOCK_CAP === "number" ? POTION_STOCK_CAP : 9;
+      var potionCap = typeof getPotionStockCap === "function" ? getPotionStockCap() : 9; // v3.322.0
       Object.keys(reward.potions).forEach(function (pid) {
         var pdef = PotionManager.getPotion(pid);
         if (!pdef || !pdef.perRun) return; // seules les potions per-run sont distribuables

@@ -57,7 +57,7 @@ function buildPotionCardHTML(potion) {
   var isLive = isArmed && PotionManager.isEffectLive();
   var stock = (window.PotionManager && typeof PotionManager.getStock === "function") ? PotionManager.getStock(potion.id) : 0;
   var cost = (window.PotionManager && typeof PotionManager.getCost === "function") ? PotionManager.getCost(potion) : potion.cost;
-  var cap = typeof POTION_STOCK_CAP === "number" ? POTION_STOCK_CAP : 9;
+  var cap = typeof getPotionStockCap === "function" ? getPotionStockCap() : 9; // v3.322.0
   var isStockCapped = !!potion.perRun && stock >= cap;
   var canBuy = !isStockCapped && (game.gold || 0) >= cost;
 

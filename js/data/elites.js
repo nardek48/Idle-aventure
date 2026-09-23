@@ -86,6 +86,72 @@ var ELITE_DB = {
      fixe) — décision Seb 16/09/2026. Aucun butin unique : la récompense est la Sève par
      victoire, freinée par la journée (LIVING_MAP_RULES.motherTree). Pas de quête d'aventure :
      elle ne se joue que depuis la carte. */
+  /* v3.314.0 (W-4a1, acte III §4) — LE SERMENT SOUS L'ARMURE, élite de la tour de guet.
+     Base : sandwarrior, le Guerrier des sables (resists épée et arc, faible en magie,
+     Blindé au monde 1). L'archétype reste "armored" : l'élite est le même garde, en plus
+     entêté — elle ne change pas de nature, elle tient plus longtemps et frappe plus fort.
+
+     « Serment sous l'armure » est un TYPE, pas un individu (acte III §2) : celui de la tour
+     en est un, la Cité engloutie en est pleine (vague élite 5, lot W-4a2). Rien dans la
+     donnée ne l'attache au secteur, ce qui permettra au donjon de réutiliser la même entrée.
+
+     Pas d'entrée dans ELITE_UNIQUE_LOOT : le butin unique appartient à la QUÊTE d'une élite
+     (elite-system.js), pas au combat de carte. Ici, la récompense d'équipement est le heaume
+     du guet, et elle dépend du CHOIX de l'étape 11, pas de la victoire (voir heaume_guet).
+
+     Chiffres : provisoires, à trancher au banc (sim/desert-elite-bench.js --sweep). */
+  serment_armure: {
+    id: "serment_armure",
+    baseId: "sandwarrior",
+    name: "Le Serment sous l'armure",
+    archetype: "armored",
+    /* Calibré au banc (sim/desert-elite-bench.js --sweep, 40 runs/cellule, profil de fin
+       d'acte II) : puissance 2,6 / endurance 1,6 -> 100 % de réussite, 49 / 53 / 58 % de PV
+       à l'arrivée (Chev. / Rôd. / Mage), 1,1 potion bue par le Chevalier. Le contenu de
+       l'acte II laissait ~70 % de PV et aucune potion : c'est le cran demandé par Seb.
+       Mesuré aussi : la PUISSANCE porte la difficulté, l'ENDURANCE n'allonge que le combat.
+       Même leçon qu'au Basilic.
+       v3.318.0 : chiffres RECONTRÔLÉS après correction du banc (il mesurait parfois un héros
+       seul, EliteManager.spawn ne rebâtissant pas le groupe sans escorte). Les valeurs
+       tiennent : 50 / 52 / 60 % de PV, 0,6 potion pour le Chevalier. La « non-monotonie »
+       signalée en v3.317.0 venait du banc, pas du jeu. */
+    statMult: { endurance: 1.6, power: 2.6, celerity: 1.0 },
+    lore: "L'armure est vide. Ce qui la tient debout n'est pas un homme : c'est une phrase, "
+      + "dite il y a longtemps à quelqu'un qui n'est jamais revenu l'en délier.",
+    // Icône propre, pas encore générée : jamais d'emprunt à une autre image (règle Seb 18/09/2026).
+    questIcon: "./images/Icons/quest_icons/elite/elite_serment.png",
+    phases: null,
+    repeatable: false
+  },
+
+  /* v3.317.0 (W-4c, acte III §7) — LE DARD DES PROFONDEURS, élite RÉPÉTABLE de la bête sous
+     la dune, et vague élite 10 de la Cité engloutie : la dune est son terrier, la cité son
+     terrain de chasse. On ne la tue pas, on la renvoie en bas.
+     Base : sandworm, le Ver des sables (résiste à l'épée, faible à l'arc, très endurant).
+     Premier contenu calé SUR LE PALIER de l'étape 13. Chiffres au banc (--profil palier).
+     winResource : lu par LivingMapManager à chaque victoire, en plus de la Sève du secteur. */
+  dard_profondeurs: {
+    id: "dard_profondeurs",
+    baseId: "sandworm",
+    name: "Le Dard des profondeurs",
+    archetype: "enraged",
+    /* Calibré au banc (--elite dard_profondeurs --profil palier, 40 runs/cellule) :
+       100 % de réussite, 49 / 60 / 64 % de PV à l'arrivée (Chev. / Rôd. / Mage), 1 potion
+       pour le Chevalier — que le Ver des sables désavantage (il résiste à l'épée).
+       Endurance laissée à 1,0 : la base a déjà 81 d'endurance, la monter n'allongerait que
+       le combat.
+       v3.318.0 : recontrôlé au banc corrigé — 51 / 58 / 64 % de PV, 0,8 potion pour le
+       Chevalier. La non-monotonie signalée en v3.317.0 venait du banc. */
+    statMult: { endurance: 1.0, power: 2.8, celerity: 1.0 },
+    lore: "La dune bouge avant lui. Quand le dard sort, l'eau des mares a déjà baissé : "
+      + "il boit d'abord, il frappe ensuite.",
+    // Icône propre, pas encore générée : jamais d'emprunt (règle Seb 18/09/2026).
+    questIcon: "./images/Icons/quest_icons/elite/elite_dard.png",
+    winResource: { id: "chitine_profondeurs", amount: 1 },
+    phases: null,
+    repeatable: true
+  },
+
   arbre_mere: {
     id: "arbre_mere",
     baseId: "foresttroll",
@@ -135,6 +201,27 @@ var ELITE_UNIQUE_LOOT = {
     }
   },
 
+  /* v3.314.0 (W-4a1, acte III §4) — LE HEAUME DU GUET. Seule entrée de cette table qui ne
+     récompense PAS une victoire : elle récompense le CHOIX de relever le Serment de son
+     serment (story-quests.js, desert_11, choice.apply). buildUniqueLoot() ne fait qu'une
+     lecture par clé, donc l'étape l'appelle avec "heaume_guet" sans rien changer au système.
+     Laisser le Serment à son poste ne donne rien ici : l'effet vit dans la carte (choiceBrakes).
+
+     Valeur 0.24 : l'emplacement casque porte critMult (EQUIPMENT_SLOT_CONFIG.helmet), dont
+     la fourchette commune plafonne à 0,20 et l'Inhabituelle va de 0,20 à 0,35. 0,24 est donc
+     strictement au-dessus de toute commune, dans la moitié basse de l'Inhabituel — même
+     raisonnement que l'arme de la Fileuse et le plastron de la Ronce. Le casque n'a ni
+     déclinaison de classe ni restriction d'icône. Ce heaume compte pour le palier de
+     l'étape 13 (4 emplacements Inhabituels sur 7, dont l'arme). */
+  heaume_guet: {
+    slot: "helmet",
+    stat: "critMult",
+    rarity: "green",
+    value: 0.24,
+    affixes: [{ stat: "maxHpPct", value: 0.05, tier: "P" }],
+    item: { name: "Heaume du guet", icon: "casque" }
+  },
+
   ronce_ardente: {
     slot: "armor",
     stat: "defense",
@@ -149,7 +236,8 @@ var ELITE_UNIQUE_LOOT = {
    fin de quête et dans le résumé du tableau de missions. */
 var ELITE_UNIQUE_LOOT_LABELS = {
   weapon: "Arme unique",
-  armor: "Armure unique"
+  armor: "Armure unique",
+  helmet: "Casque unique" // v3.314.0 (W-4a1) : heaume du guet, étape 11
 };
 
 window.ELITE_UNIQUE_LOOT = ELITE_UNIQUE_LOOT;

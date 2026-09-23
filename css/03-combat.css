@@ -181,6 +181,25 @@
   pointer-events: auto;
 }
 
+/* v3.320.0 (bug Seb) : la barre entière est un bouton qui ouvre la feuille des états.
+   Apparence inchangée ; le padding porte la zone de tap vers 44 px sans décaler les icônes. */
+.active-potions-bar .active-potions-btn {
+  pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: -8px 0 0;
+  padding: 8px 10px;
+  border: 0;
+  background-color: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .active-potion-icon {
   position: relative;
   width: clamp(26px, 6vw, 30px);

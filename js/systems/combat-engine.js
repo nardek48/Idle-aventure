@@ -402,7 +402,7 @@ var CombatEngine = {
     if (slot === "potion") {
       if (!window.PotionManager || typeof PotionManager.useHealingPotion !== "function") return false;
       if (window.SortieManager && !SortieManager.canUsePotion()) {
-        showToast("🧪 Plus de potion pour cette sortie (" + SORTIE_POTION_CAP + " max)", 1500);
+        showToast("🧪 Plus de potion pour cette sortie (" + getSortiePotionCap() + " max)", 1500);
         return false;
       }
       if (PotionManager.useHealingPotion(arg) !== true) return false; // consomme le tour (décision §10 n°10)

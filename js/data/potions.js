@@ -7,6 +7,11 @@
    systems/potion-system.js. Ancien format (durationMin) : COMMENTAIRES_ORIGINAUX.md */
 
 var POTION_STOCK_CAP = 9;
+/* v3.322.0 : Réserve d'alchimiste (Mémoire niveau 1) — 15 au lieu de 9. Lu à l'exécution. */
+function getPotionStockCap() {
+  return (window.MemoryManager && MemoryManager.has("reserve_alchimiste")) ? 15 : POTION_STOCK_CAP;
+}
+window.getPotionStockCap = getPotionStockCap;
 
 var POTIONS_DB = [
   {
@@ -63,19 +68,8 @@ var POTIONS_DB = [
     perRun: true,
     cost: 350,
     rarity: "rare"
-  },
-  {
-    id: "elixir_aether",
-    name: "Élixir d'Aether",
-    icon: "images/Icons/potions/potion_aether.png",
-    desc: "+10% Aether au prochain gain d'ascension (se consomme à la prochaine ascension, sans lien avec les runs).",
-    stat: "aetherNext",
-    bonus: 0.10,
-    perRun: false,
-    cost: 10000,
-    costMult: 2.5,
-    rarity: "rare"
   }
+  /* v3.322.0 (O13) : Élixir d'Aether retiré — il ne servait qu'à l'Ascension, qui n'existe plus. */
 ];
 
 window.POTIONS_DB = POTIONS_DB;

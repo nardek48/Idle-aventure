@@ -62,7 +62,12 @@ var STORY_REWARDS = {
   desert_07: { gold: 950, essence: 30 }, // v3.310.0 : provisoire, même remarque
   desert_08: { gold: 1000, essence: 35 }, // v3.311.0 : provisoire, même remarque
   desert_09: { gold: 1050, essence: 35 }, // v3.312.0 : provisoire, même remarque
-  desert_10: { gold: 1100, essence: 40 } // v3.312.0 : provisoire, même remarque
+  desert_10: { gold: 1100, essence: 40 }, // v3.312.0 : provisoire, même remarque
+  desert_11: { gold: 1150, essence: 40 }, // v3.314.0 (W-4a1) : provisoire, même remarque
+  desert_12: { gold: 1200, essence: 45 }, // v3.315.0 (W-4a2) : provisoire, même remarque
+  desert_13: { gold: 1250, essence: 45 }, // v3.316.0 (W-4b) : provisoire, même remarque
+  desert_14: { gold: 1300, essence: 50 }, // v3.317.0 (W-4c) : provisoire, même remarque
+  desert_15: { gold: 1500, essence: 60 } // v3.319.0 (W-4d) : fin d'acte III, provisoire
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -141,6 +146,10 @@ function storyChapterCounter(game, chapterId, key) {
    le Chaos, sans effet visible en v1). */
 var STORY_CHOICE_AXES = {
   noms: { deterrer: ["donner"], laisser: ["garder"] },
+  /* v3.314.0 (W-4a1) : second choix pesant du Désert. Même polarité que « les noms » —
+     laisser en place = garder, emporter = donner. À REVOIR avec le registre des axes (W-5) :
+     la conception du registre n'était pas disponible à l'écriture de l'acte III. */
+  serment: { relever: ["donner"], laisser: ["garder"] },
   roi: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] }
 };
 
@@ -743,6 +752,8 @@ function storyMakeChoice(chapterId, value) {
   if (typeof saveGame === "function") saveGame();
   return true;
 }
+window.storyCiteWave5 = storyCiteWave5;
+window.storyPalierDesert = storyPalierDesert;
 window.storyPendingChoiceAt = storyPendingChoiceAt;
 window.storyMakeChoice = storyMakeChoice;
 
@@ -1214,9 +1225,287 @@ STORY_QUESTS.desert = {
       },
       check: function (game) { return storyAdvDone(game, "aq_desert_nuee"); },
       progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_desert_nuee", "rencontres_nuee", 6) + "/6"; }
+    },
+
+    /* ---------- Acte III — La cité engloutie ---------- */
+    /* v3.314.0 (W-4a1) — acte III §4. La tour de guet (anneau 2, voisine du champ de scarabées
+       ouvert à l'étape 10) est fermée par l'Histoire jusqu'ici. Sa première libération est le
+       combat contre le Serment sous l'armure ; le choix ne s'affiche qu'ENSUITE, parce que
+       storyPendingChoiceAt() exige le secteur libéré. Deuxième choix pesant du chapitre,
+       après « les noms » à l'étape 5 : même écran, même définitivité, même grammaire (ce qu'on
+       laisse en place tient le sable).
+
+       La réplique de l'armure (« Personne ne remonte le fleuve ») est posée en dernière ligne
+       du dialogue d'acceptation, faute de crochet de texte AVANT un combat d'élite de carte.
+       Elle plante le fleuve, donc Nezzam, que le sphinx nommera à l'étape 15. */
+    {
+      id: "desert_11",
+      title: "Le serment sous l'armure",
+      act: "Acte III — La cité engloutie",
+      narrative: {
+        objective: "Depuis le champ de scarabées, on voit la tour. En haut, une silhouette en armure, tournée vers l'est. Elle n'a pas bougé depuis l'étape d'avant. Ni depuis bien plus longtemps.",
+        get completion() {
+          return (window.StoryQuestManager && StoryQuestManager.getChoice("serment") === "relever")
+            ? "Tu dis les mots qu'il attendait, ou d'autres qui leur ressemblent. L'armure s'ouvre et le sable s'en va, tout d'un coup, comme un souffle retenu. Le heaume roule jusqu'à tes pieds."
+            : "L'armure se redresse sans toi. Elle se remet face à l'est, là où était le fleuve. Le sable autour de la tour cesse de glisser.";
+        },
+        dialogue: [
+          { who: "Maddoc", text: "Il était là quand je suis descendu. Je suis passé derrière. Il ne se retourne pas." },
+          { who: "Wenna", text: "Et si on passe devant ?" },
+          { who: "Maddoc", text: "Personne n'est passé devant." },
+          { who: "L'armure", text: "Personne ne remonte le fleuve." }
+        ],
+        get completionDialogue() {
+          return (window.StoryQuestManager && StoryQuestManager.getChoice("serment") === "relever")
+            ? [{ who: "Wenna", text: "Il était fatigué." }, { who: "Maddoc", text: "Il a tenu. C'est assez." }]
+            : [{ who: "Wenna", text: "Il garde quoi, au juste ?" }, { who: "Maddoc", text: "Une promesse. Pas la nôtre." }];
+        }
+      },
+      objectiveLabel: "Libérer la tour de guet (carte du Désert), puis choisir",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_11,
+      linkTo: { section: "map", cardId: "livingmap_desert:tour_guet" },
+      choice: {
+        key: "serment", mapId: "desert", sectorId: "tour_guet",
+        buttonLabel: "Parler à l'armure",
+        title: "Le serment sous l'armure",
+        text: "L'armure est vide. Ce qui la tient debout est une phrase, dite à quelqu'un qui n'est jamais revenu l'en délier.",
+        options: [
+          { value: "laisser", label: "Le laisser à son poste", desc: "Il reprend le guet. La tour tient le sable." },
+          { value: "relever", label: "Le relever de son serment", desc: "Il peut enfin tomber. Son heaume reste." }
+        ],
+        /* Relever : le heaume tout de suite, et l'effet de la tour est perdu pour de bon
+           (living-maps.js, effectLostOnChoice). Laisser : rien d'immédiat — le frein vit
+           dans la carte (choiceBrakes), exactement comme les stèles laissées au sable. */
+        apply: function (value) {
+          if (value !== "relever") return;
+          var loot = window.EliteManager && EliteManager.buildUniqueLoot("heaume_guet");
+          if (loot && typeof addLootToInventory === "function") {
+            addLootToInventory(loot);
+            if (typeof addLog === "function") addLog("Le heaume du guet roule jusqu'à toi. (" + loot.name + ")", "event");
+          }
+        }
+      },
+      check: function () {
+        return !!(window.StoryQuestManager && StoryQuestManager.getChoice("serment"));
+      },
+      progress: function () {
+        var chosen = !!(window.StoryQuestManager && StoryQuestManager.getChoice("serment"));
+        var freed = chosen || !!(window.LivingMapManager && LivingMapManager.isLiberated("desert", "tour_guet"));
+        return "Tour libérée " + (freed ? "1/1" : "0/1") + " · Choix " + (chosen ? "1/1" : "0/1");
+      }
+    },
+
+    /* v3.315.0 (W-4a2) — acte III §5. La Cité engloutie s'ouvre ici : le verrou du donjon lit
+       requiresStoryStep dans sa donnée (dungeon.js), et l'entrée est offerte tant que l'étape
+       court (storyFreeSteps), comme la Tanière pour forest_13 / forest_14.
+
+       Objectif : passer la vague 5, la première vague élite. Le relevé se fait sans toucher au
+       compteur du donjon : game.dungeonRun porte dungeonId et wave, et storyCiteWave5() note le
+       passage au vol, sur le modèle de _trackKills pour le Cœur. La vague 5 franchie, le donjon
+       est à la vague 6 : c'est ce qu'on guette. */
+    {
+      id: "desert_12",
+      title: "La cité engloutie",
+      act: "Acte III — La cité engloutie",
+      narrative: {
+        objective: "Derrière le gouffre, la passerelle continue. En bas, des toits. Une ville entière, sous le sable, et le sable ne l'a pas écrasée : il l'a remplie, doucement, rue par rue.",
+        completion: "Au bout de la grande rue, une place. Sur la place, couché, quelque chose de très grand avec une tête d'homme. Ses yeux sont ouverts. Il ne regarde pas toi : il regarde la rue par laquelle tu es venu, comme s'il attendait quelqu'un d'autre.",
+        dialogue: [
+          { who: "Maddoc", text: "J'ai vécu dans la première rue. Je ne suis jamais allé plus loin." },
+          { who: "Wenna", text: "Pourquoi ?" },
+          { who: "Maddoc", text: "Il y en a d'autres comme celle de la tour. À chaque carrefour." },
+          { who: "Le Veilleur", text: "Ils gardent les rues comme on le leur a demandé. Ils ne savent pas que la ville est morte. Personne ne le leur a dit." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Il est vivant ?" },
+          { who: "Maddoc", text: "Il est là. Ici, c'est pareil." }
+        ]
+      },
+      objectiveLabel: "Passer la vague 5 de la Cité engloutie",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_12,
+      linkTo: { tab: "dungeon" },
+      tutorial: {
+        tab: "dungeon",
+        icon: "images/Icons/subtabs/dungeon.png",
+        title: "La Cité engloutie",
+        points: [
+          { icon: "images/Icons/subtabs/dungeon.png", text: "Le donjon du Désert est bien plus dur que la Tanière. Ses vagues élites sont des gardes du royaume mort." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "On y trouve de l'équipement Inhabituel : c'est ici qu'on se prépare pour la suite." },
+          { icon: "images/Icons/dungeon/wave_record.png", text: "Tu n'as pas à aller jusqu'au bout maintenant. Ce qui dort sur la place peut attendre." }
+        ]
+      },
+      check: function (game) { return storyCiteWave5(game); },
+      progress: function (game) { return "Vague 5 " + (storyCiteWave5(game) ? "1/1" : "0/1"); }
+    },
+
+    /* v3.316.0 (W-4b) — acte III §6. LE PALIER D'ÉQUIPEMENT, demandé par Seb (« les combats
+       sont trop faciles », 20/09/2026). Trois compteurs, remplis dans n'importe quel ordre.
+       C'est à partir d'ici que le contenu se cale au banc EN SUPPOSANT le palier atteint, et
+       sur les dégâts des ennemis — les PV ne font qu'allonger (mesure du lot W-4a1). */
+    {
+      id: "desert_13",
+      title: "Le verre et le fer",
+      act: "Acte III — La cité engloutie",
+      narrative: {
+        objective: "Vous remontez de la cité avec ce que vous aviez en descendant. Maddoc s'arrête sur la passerelle et regarde ton arme, longtemps.",
+        completion: "La lame sort du feu avec un fil vert sur le tranchant, fin comme un cheveu. Maddoc passe le pouce dessus, sans appuyer.",
+        dialogue: [
+          { who: "Maddoc", text: "Pas avec ça." },
+          { who: "Wenna", text: "Ça a suffi jusqu'ici." },
+          { who: "Maddoc", text: "Jusqu'ici, rien ne gardait rien." },
+          { who: "Le Veilleur", text: "Le verre des dunes coupe le fer. Ils ont appris ça de quelqu'un. Apprends-le aussi." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Là." },
+          { who: "Wenna", text: "C'est tout ?" },
+          { who: "Maddoc", text: "Chez moi, c'était un compliment." }
+        ]
+      },
+      objectiveLabel: "4 emplacements Inhabituels dont l'arme, Forge 3, arme reforgée à 4",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_13,
+      linkTo: { tab: "equip" },
+      tutorial: {
+        tab: "equip",
+        icon: "images/Icons/workshops/smithing_station.png",
+        title: "Le palier",
+        points: [
+          { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller plus loin au Désert, il faut être équipé pour. Les trois compteurs de l'étape te disent où tu en es." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "L'équipement Inhabituel se trouve au donjon, à la boutique et dans le butin des Petites Aventures." },
+          { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge du village peut monter d'un niveau avec du Verre trempé. Plus haut, elle reforge plus loin — et le niveau de reforge reste à l'emplacement quand tu changes de pièce." }
+        ]
+      },
+      check: function (game) {
+        var p = storyPalierDesert(game);
+        return p.pieces >= STORY_PALIER_PIECES && p.armeVerte && p.forge >= STORY_PALIER_FORGE && p.reforge >= STORY_PALIER_REFORGE;
+      },
+      progress: function (game) {
+        var p = storyPalierDesert(game);
+        return "Inhabituels " + Math.min(p.pieces, STORY_PALIER_PIECES) + "/" + STORY_PALIER_PIECES
+          + (p.armeVerte ? "" : " (arme comprise)")
+          + " · Forge " + Math.min(p.forge, STORY_PALIER_FORGE) + "/" + STORY_PALIER_FORGE
+          + " · Reforge de l'arme " + Math.min(p.reforge, STORY_PALIER_REFORGE) + "/" + STORY_PALIER_REFORGE;
+      }
+    },
+
+    /* v3.317.0 (W-4c) — acte III §7. La bête sous la dune, anneau 3, atteignable par l'oasis
+       ou la verrerie. Élite RÉPÉTABLE : on ne la tue pas, on la renvoie en bas. Chaque victoire
+       donne sa Chitine (ELITE_DB.dard_profondeurs.winResource), ingrédient des reforges 5 et 6.
+       Premier contenu calé SUR LE PALIER de l'étape 13, sur les dégâts. */
+    {
+      id: "desert_14",
+      title: "La bête sous la dune",
+      act: "Acte III — La cité engloutie",
+      narrative: {
+        objective: "La dune derrière l'oasis a bougé cette nuit. Pas le sable dessus : la dune elle-même. L'eau de la mare a baissé d'un doigt.",
+        completion: "Le dard s'enfonce, puis toute la dune avec lui, en un long soupir. Le sable se referme. Au bout d'un moment, la mare remonte d'un doigt.",
+        dialogue: [
+          { who: "Wenna", text: "C'est celle de la cité ?" },
+          { who: "Maddoc", text: "C'est la même. Elle remonte quand elle a soif." },
+          { who: "Le Veilleur", text: "Elle était là avant la ville. Ils ont construit par-dessus. Ils pensaient que ça la tiendrait." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Elle est morte ?" },
+          { who: "Maddoc", text: "Non. Elle est partie. Elle reviendra." },
+          { who: "Wenna", text: "Et nous ?" },
+          { who: "Maddoc", text: "Nous aussi." }
+        ]
+      },
+      objectiveLabel: "Libérer la bête sous la dune (carte du Désert)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_14,
+      linkTo: { section: "map", cardId: "livingmap_desert:bete_dune" },
+      tutorial: {
+        tab: "map",
+        icon: "images/Icons/resources/chitine_profondeurs_icon.png",
+        title: "Une bête qui revient",
+        points: [
+          { icon: "images/Icons/scene/node_encounter.png", text: "Cette bête revient. Tu peux la combattre à nouveau, et son butin avec elle." },
+          { icon: "images/Icons/resources/chitine_profondeurs_icon.png", text: "Chaque victoire donne une Chitine des profondeurs : c'est ce qu'exigent les reforges 5 et 6, ouvertes par la Forge 3." },
+          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Chaque victoire du jour rend la suivante plus dure. Le lendemain, elle repart à sa force de base." }
+        ]
+      },
+      check: function () { return !!(window.LivingMapManager && LivingMapManager.isLiberated("desert", "bete_dune")); },
+      progress: function () {
+        var freed = !!(window.LivingMapManager && LivingMapManager.isLiberated("desert", "bete_dune"));
+        return "Bête renvoyée " + (freed ? "1/1" : "0/1");
+      }
+    },
+
+    /* v3.319.0 (W-4d) — acte III §7, FIN DE L'ACTE III. Vaincre le sphinx au bout de la Cité
+       engloutie : même forme que forest_14 avec le Basilic (game.dungeonTierCleared). Le boss
+       est répétable comme tout boss de donjon — il ne meurt pas, il se recouche.
+       C'est ici que le nom de NEZZAM est prononcé pour la première fois : il ouvre l'acte IV. */
+    {
+      id: "desert_15",
+      title: "Ce qui garde la porte",
+      act: "Acte III — La cité engloutie",
+      narrative: {
+        objective: "Dans la cité, les armures ont bougé. Elles ne regardent plus leurs rues : elles regardent toutes la place.",
+        completion: "Le sphinx se couche lentement, comme on se rassoit. Ses yeux retournent à la rue.",
+        dialogue: [
+          { who: "Maddoc", text: "Elles savent que tu y vas." },
+          { who: "Wenna", text: "Et lui ?" },
+          { who: "Le Veilleur", text: "Lui le sait depuis que tu es entré. Il pose une question à ceux qui arrivent. Une seule." },
+          { who: "Wenna", text: "Laquelle ?" },
+          { who: "Le Veilleur", text: "Il la choisit en te regardant." }
+        ],
+        completionDialogue: [
+          { who: "Le sphinx", text: "Il est parti par le fleuve, quand le fleuve coulait encore. Il reviendra par le fleuve. Je suis là pour le lui interdire." },
+          { who: "Wenna", text: "Qui ?" },
+          { who: "Le sphinx", text: "Nezzam." },
+          { who: "Le Veilleur", text: "Tout ce qu'il a dit est vrai." }
+        ]
+      },
+      objectiveLabel: "Vaincre le sphinx au bout de la Cité engloutie",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_15,
+      linkTo: { tab: "dungeon" },
+      check: function (game) { return !!((game.dungeonTierCleared || {})[2]); },
+      progress: function (game) { return "Sphinx vaincu " + ((game.dungeonTierCleared || {})[2] ? "1/1" : "0/1"); }
     }
   ]
 };
+
+/* v3.316.0 (W-4b) — le palier de l'étape 13, en un seul endroit pour que check et progress
+   ne puissent pas diverger. Lecture seule : équipement porté, niveau du bâtiment Forge,
+   niveau de reforge de l'arme. Aucun compteur ajouté nulle part. */
+var STORY_PALIER_PIECES = 4;   // emplacements Inhabituels sur 7, l'arme comprise
+var STORY_PALIER_FORGE = 3;    // niveau du bâtiment Forge (ouvre la reforge jusqu'à 6)
+var STORY_PALIER_REFORGE = 4;  // niveau de reforge de l'arme — le maximum d'un bâtiment 2
+
+function storyPalierDesert(game) {
+  var portes = (game && game.equipped) || {};
+  var rang = (window.RARITY_ORDER || ["common", "green", "rare", "epic", "legendary"]).indexOf("green");
+  var pieces = 0, armeVerte = false;
+  (window.EQUIPMENT_SLOTS || []).forEach(function (slot) {
+    var it = portes[slot];
+    if (!it) return;
+    var r = (window.RARITY_ORDER || []).indexOf(it.rarity);
+    if (r >= rang) {
+      pieces++;
+      if (slot === "weapon") armeVerte = true;
+    }
+  });
+  return {
+    pieces: pieces,
+    armeVerte: armeVerte,
+    forge: (window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function") ? VillageBuildingManager.getLevel("forge") : 0,
+    reforge: (window.ForgeManager && typeof ForgeManager.getLevel === "function") ? ForgeManager.getLevel("weapon") : 0
+  };
+}
+
+/* v3.315.0 (W-4a2) : note au vol le passage de la vague 5 de la Cité engloutie (donjon 2), puis
+   garde le drapeau. Lecture seule sur game.dungeonRun : aucun compteur ajouté au donjon. */
+function storyCiteWave5(game) {
+  if (!game) return false;
+  if (!game.explorationProgression || typeof game.explorationProgression !== "object") game.explorationProgression = {};
+  var run = game.dungeonRun;
+  if (run && run.active && Number(run.dungeonId) === 2 && Number(run.wave) > 5) game.explorationProgression.citeVague5 = true;
+  return !!game.explorationProgression.citeVague5;
+}
 
 window.STORY_REWARDS = STORY_REWARDS;
 window.STORY_STARTER_WEAPON = STORY_STARTER_WEAPON;

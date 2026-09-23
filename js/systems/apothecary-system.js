@@ -202,7 +202,7 @@ var ApothecaryManager = {
     /* Le plafond de stock des potions per-run s'applique à l'identique : la
        fabrication ne doit pas être une porte dérobée autour de lui. */
     if (potion.perRun) {
-      var cap = typeof POTION_STOCK_CAP === "number" ? POTION_STOCK_CAP : 9;
+      var cap = typeof getPotionStockCap === "function" ? getPotionStockCap() : 9; // v3.322.0
       if (PotionManager.getStock(potionId) >= cap) {
         showToast("Stock plein (" + cap + " max)", 1400);
         return false;

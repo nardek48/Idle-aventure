@@ -37,11 +37,12 @@ var CODEX_ENTRIES = [
 
   {
     id: "ascension",
-    title: "L'Ascension et la promesse de l'Aether",
+    title: "La Mémoire et la promesse de l'Aether",
     icon: "images/Icons/aether_icon.png",
     category: "system",
-    text: "Chaque héros qui s'aventure jusqu'à la Tour, ou qui tombe en chemin, découvre la même vérité : le corps ne suffit pas à contenir ce qu'il faudra affronter au sommet. Alors on Ascensionne — on accepte de tout perdre, sauf l'essentiel, pour renaître un peu plus proche de ce que l'Aether exige.\n\nL'Aether gagné à chaque Ascension n'est pas qu'une monnaie. C'est un souvenir du Cycle précédent, une trace qui reste quand tout le reste s'efface. Certains anciens champions racontent que si l'on accumule assez d'Aether, on cesse un jour d'être simplement plus fort — on commence à comprendre le langage de la Rupture elle-même.",
-    isUnlocked: function () { return (game.ascensionCount || 0) >= 1; }
+    // v3.322.0 (Offrande) : réécrit — plus de remise à zéro, on donne ce qu'on choisit.
+    text: "Les anciens champions Ascensionnaient : ils acceptaient de tout perdre pour renaître un peu plus proches de ce que l'Aether exige. Certains l'ont fait jusqu'à n'avoir plus rien à rendre.\n\nToi, tu donnes autrement. Ce dont tu te sépares, ce que tu traverses, l'Aether le retient — un objet offert, une victoire qui compte. Ce n'est pas qu'une monnaie : c'est un souvenir, une trace qui reste. Et chaque fois que la Mémoire s'élargit, elle te laisse choisir ce que tu deviens.",
+    isUnlocked: function () { return !!(window.MemoryManager && MemoryManager.getLevel() >= 1); }
   },
 
   {
@@ -74,10 +75,10 @@ var CODEX_ENTRIES = [
     text: "Le premier Sceau est presque accueillant : un écho affaibli de la Faille, où même un héros novice peut apprendre sans trop de danger.",
     isUnlocked: function () { return !!(game.dungeonTiersEntered && game.dungeonTiersEntered[1]); } },
   { id: "dungeon_tier_2", title: "Le deuxième Sceau", icon: "images/Icons/system/lock_closed.png", category: "system",
-    text: "Le deuxième Sceau demande d'avoir déjà accepté plusieurs Ascensions — la Faille ne se laisse approcher que par ceux qui ont montré qu'ils reviendraient, encore et encore.",
+    text: "Le deuxième Sceau ne s'approche qu'après avoir franchi le premier — la Faille ne se laisse approcher que par ceux qui ont montré qu'ils reviendraient, encore et encore.",
     isUnlocked: function () { return !!(game.dungeonTiersEntered && game.dungeonTiersEntered[2]); } },
   { id: "dungeon_tier_3", title: "Le troisième Sceau", icon: "images/Icons/system/lock_closed.png", category: "system",
-    text: "Comme le second, le troisième Sceau ne s'ouvre qu'à ceux qui ont prouvé leur constance à travers plusieurs Ascensions. Ici, l'écho de la Faille commence à se faire sentir plus distinctement.",
+    text: "Comme le second, le troisième Sceau ne s'ouvre qu'à ceux qui ont prouvé leur constance. Ici, l'écho de la Faille commence à se faire sentir plus distinctement.",
     isUnlocked: function () { return !!(game.dungeonTiersEntered && game.dungeonTiersEntered[3]); } },
   { id: "dungeon_tier_4", title: "Le quatrième Sceau", icon: "images/Icons/system/lock_closed.png", category: "system",
     text: "Le quatrième Sceau est le premier où la Faille semble répondre : les créatures y sont façonnées avec une intention presque calculée, comme un test.",
@@ -105,7 +106,7 @@ var CODEX_ENTRIES = [
     icon: "images/Icons/scene/node_discovery.png",
     category: "system",
     text: "Personne ne sait avec certitude ce qui a causé la Rupture, ni ce qui attend réellement au sommet de la Tour, au cœur du cinquième Sceau. Mais chaque Ascension, chaque créature du Bestiaire comprise, chaque Éclat arraché à la Faille rapproche un peu plus le héros d'une réponse.\n\nLe Cycle continuera tant que personne n'aura franchi ce dernier seuil. Jusque-là, il ne reste qu'une chose à faire : recommencer, un peu plus fort, un peu plus proche de la vérité — et voir jusqu'où l'Aether est prêt à mener celui qui refuse de s'arrêter.",
-    isUnlocked: function () { return (game.dungeonBossClears || 0) >= 1 && (game.ascensionCount || 0) >= 1; }
+    isUnlocked: function () { return (game.dungeonBossClears || 0) >= 1 && !!(window.MemoryManager && MemoryManager.getLevel() >= 1); } // v3.322.0
   }
 ];
 

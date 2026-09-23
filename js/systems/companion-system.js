@@ -68,11 +68,13 @@ var CompanionManager = {
     if (window.heroLockToast && heroLockToast()) return false; // v3.307.0 : héros en expédition
     var raw = COMPANIONS_DB[companionId], st = this.state(companionId);
     if (!raw || !raw.voies || !raw.voies[voieId] || !st || !st.unlocked || !st.voie || st.voie === voieId) return false;
-    var cost = getVoieChangeCost(st.voieChanges);
+    // v3.322.0 : Voie libre (Mémoire niveau 7) — un changement gratuit par jour, hors multiplicateur
+    var free = !!(window.MemoryManager && MemoryManager.isVoieFreeToday());
+    var cost = free ? 0 : getVoieChangeCost(st.voieChanges);
     if ((game.gold || 0) < cost) { if (typeof showToast === "function") showToast("Pas assez d'or", 1200); return false; }
     game.gold -= cost;
     st.voie = voieId;
-    st.voieChanges += 1;
+    if (free) MemoryManager.useVoieFree(); else st.voieChanges += 1;
     st.hp = this.maxHpOf(companionId);
     if (typeof addLog === "function") addLog("🔁 " + raw.name + " : " + raw.voies[voieId].label + ".", "event");
     if (typeof saveGame === "function") saveGame();
@@ -284,7 +286,9 @@ var CompanionManager = {
       var st = self.state(id);
       var max = self.maxHpOf(id);
       if (typeof st.hp !== "number" || !isFinite(st.hp)) st.hp = max;
-      if (st.hp <= 0) st.hp = Math.max(1, Math.floor(max * COMPANION_KO_RETURN_PCT));
+      // v3.322.0 : Fidélité de Wenna / de Maddoc (Mémoire niveaux 3 et 7) — retour à 100 %
+      var fidele = window.MemoryManager && MemoryManager.has("fidelite_" + id);
+      if (st.hp <= 0) st.hp = fidele ? max : Math.max(1, Math.floor(max * COMPANION_KO_RETURN_PCT));
       if (st.hp > max) st.hp = max;
     });
     this.syncParty();

@@ -97,7 +97,7 @@ function buildAchievementTotalsHTML() {
     ["images/Icons/combat_status/charge_incoming.png", "Dégâts", formatNumber(game.totalDamageDealt || 0)], // libellé court : "Dégâts infligés" était tronqué en 2 colonnes sur 366 px
     ["images/Icons/quests/quest_resources.png", "Monde", (WorldManager.worldIndex + 1) + " / " + WORLDS.length],
     ["images/Icons/system/auto_repeat.png", "Cycles", formatNumber(game.cycleCount || 0)],
-    ["images/Icons/system/ascension.png", "Ascensions", formatNumber(game.ascensionCount || 0)]
+    ["images/Icons/system/ascension.png", "Mémoire", formatNumber(window.MemoryManager ? MemoryManager.getLevel() : 0)] // v3.322.0
   ];
 
   var h = '<div class="achievement-totals">';

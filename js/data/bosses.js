@@ -33,6 +33,20 @@ var BOSS_DB = {
     stats: makeRpgStats(44, 66, 42, 30, 46)
   },
 
+  /* v3.319.0 (W-4d, décision Seb) — LE SPHINX, boss de la Cité engloutie, à la place du
+     « Sultan des sables » (qui empruntait le Djinn des dunes). Taillé, pas né : très endurant,
+     lent, précis. Affinités inversées par rapport au pool du Désert, où tout est faible à la
+     magie — la pierre boit les sorts et ignore les flèches, mais une lame trouve les joints.
+     Image fournie par Seb ; le chemin reste vrai tant qu'elle n'existe pas (règle 18/09). */
+  sphinx: {
+    name: "Le sphinx",
+    asset: "sphinx",
+    image: "./images/Boss/sphinx.jpg",
+    resists: ["bow", "magic"],
+    weak: ["sword"],
+    stats: makeRpgStats(40, 104, 26, 44, 50)
+  },
+
   skeletonlord: {
     name: "Seigneur squelette",
     asset: "skeletonlord",

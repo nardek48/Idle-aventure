@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.313.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.322.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -108,6 +108,7 @@ var PRECACHE_APP_SHELL = [
   "./js/data/potions.js",
   "./js/data/talents.js",
   "./js/data/upgrades.js",
+  "./js/data/memory.js",
   "./js/data/adventure-quests.js",
   "./js/data/story-quests.js",
   "./js/data/worlds.js",
@@ -143,6 +144,7 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/world-travel-system.js",
   "./js/systems/save-system.js",
   "./js/systems/stats-system.js",
+  "./js/systems/memory-system.js",
   "./js/systems/affliction-system.js",
   "./js/systems/living-map-system.js",
   "./js/systems/adventure-quest-system.js",

@@ -5,6 +5,11 @@
 
 var CAMP_REGEN_PCT_PER_MIN = 0.05;
 var CAMP_OFFLINE_REGEN_CAP_PCT = 0.50;
+/* v3.322.0 : Repos du camp (Mémoire niveau 2) — plafond hors ligne 75 % au lieu de 50 %. */
+function getCampOfflineRegenCap() {
+  return (window.MemoryManager && MemoryManager.has("repos_camp")) ? 0.75 : CAMP_OFFLINE_REGEN_CAP_PCT;
+}
+window.getCampOfflineRegenCap = getCampOfflineRegenCap;
 var CAMP_REGEN_TALENT_BONUS_PER_LEVEL = 0.25; // t_last_stand « Repos du guerrier » : +25 % de vitesse par niveau
 
 var CampManager = {
@@ -23,7 +28,8 @@ var CampManager = {
 
   getRegenPctPerMin: function () {
     var lvl = (game.talents && game.talents.t_last_stand) || 0;
-    return CAMP_REGEN_PCT_PER_MIN * (1 + lvl * CAMP_REGEN_TALENT_BONUS_PER_LEVEL);
+    var repos = (window.MemoryManager && MemoryManager.has("repos_camp")) ? 1.5 : 1; // v3.322.0 : Repos du camp
+    return CAMP_REGEN_PCT_PER_MIN * (1 + lvl * CAMP_REGEN_TALENT_BONUS_PER_LEVEL) * repos;
   },
 
   /* La régénération court hors combat (héros à terre inclus) : jamais pendant un combat actif ni pendant
@@ -49,7 +55,7 @@ var CampManager = {
     if (hp >= maxHp) return 0;
 
     var heal = maxHp * this.getRegenPctPerMin() * elapsedMin;
-    if (offline) heal = Math.min(heal, maxHp * CAMP_OFFLINE_REGEN_CAP_PCT);
+    if (offline) heal = Math.min(heal, maxHp * getCampOfflineRegenCap());
     heal = Math.floor(Math.min(heal, maxHp - hp));
     if (heal <= 0) return 0;
 

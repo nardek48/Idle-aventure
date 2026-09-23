@@ -40,7 +40,10 @@ var SceneRunManager = {
      traversée. PETITE_AVENTURE_DAILY_CAP reste la valeur de repli (et l'ancre des bancs). */
   getPetiteAventureCap: function () {
     var c = (window.WorldCaps && typeof WorldCaps.getPetiteAventureCap === "function") ? WorldCaps.getPetiteAventureCap() : null;
-    return (typeof c === "number" && isFinite(c)) ? c : this.PETITE_AVENTURE_DAILY_CAP;
+    var base = (typeof c === "number" && isFinite(c)) ? c : this.PETITE_AVENTURE_DAILY_CAP;
+    // v3.321.0 : Carte de l'éclaireur (boutique d'Éclats), ajoutée au cap du monde
+    var bonus = (window.DungeonManager && typeof DungeonManager.getShardEffect === "function") ? DungeonManager.getShardEffect("paBonus") : 0;
+    return base + bonus;
   },
 
   canStartPetiteAventureToday: function () {
@@ -560,6 +563,8 @@ var SceneRunManager = {
     // v3.304.0 (décision Seb, option B) : un canevas peut compter les gorgées (template.gourdeUses).
     // Au Désert, une seule : sinon la gourde illimitée annule la soif et l'Outre. Absent = illimitée.
     run.gourdeUses = (run.gourdeAvailable && Number(template.gourdeUses) > 0) ? Number(template.gourdeUses) : null;
+    // v3.322.0 : Seconde gorgée (Mémoire niveau 5) — une gorgée de plus là où elles sont comptées
+    if (run.gourdeUses != null && window.MemoryManager && MemoryManager.has("seconde_gorgee")) run.gourdeUses += 1;
     // v3.303.0 : objets qui rendent du Souffle, une fois chacun (item.breath), ex. l'Outre pleine
     run.breathItems = {};
     itemIds.forEach(function (id) {
@@ -638,7 +643,10 @@ var SceneRunManager = {
     if (!it) return 0;
     var bonus = (it.breathBonusEffect && window.LivingMapManager && LivingMapManager.hasEffect(it.breathBonusEffect))
       ? Number(LivingMapManager.getEffectValue("outreBreathBonus", 15)) : 0;
-    return Number(it.breath || 0) + bonus;
+    var total = Number(it.breath || 0) + bonus;
+    // v3.322.0 : Outre de cuir (Mémoire niveau 5) — +50 % de Souffle rendu par un objet à boire
+    if (window.MemoryManager && MemoryManager.has("outre_cuir")) total = Math.floor(total * 1.5);
+    return total;
   },
 
   /* useBreathItem(itemId) -> { ok, reason, gained }. Une charge par exemplaire emporté ; jamais
@@ -1284,6 +1292,8 @@ var SceneRunManager = {
     var cfg = this._rareDropCfg(template);
     if (!cfg || !run.profile) return;
     var amount = this._seveFinaleAmount(cfg, run.profile, run.intensity);
+    // v3.322.0 : Récolte (Mémoire niveau 4) — +1 matériau de monde par Petite Aventure réussie
+    if (window.MemoryManager && MemoryManager.has("recolte")) amount += 1;
     if (amount > 0) this._creditSeveAeswyn(cfg.resourceId, amount);
   },
 

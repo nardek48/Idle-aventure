@@ -93,7 +93,7 @@ var CombatForecast = {
      l'échec réel de 98 % à 0 % sur « Prouver sa valeur ». */
   getHealingReserve: function () {
     if (!window.PotionManager || typeof PotionManager.getHealingStock !== "function") return 0;
-    var cap = (typeof SORTIE_POTION_CAP === "number") ? SORTIE_POTION_CAP : 2;
+    var cap = (typeof getSortiePotionCap === "function") ? getSortiePotionCap() : 2; // v3.322.0
     var used = (game.sortie && game.sortie.active) ? Number(game.sortie.potionsUsed || 0) : 0;
     var restantes = Math.max(0, cap - used);
     var maxHp = Number(game.heroMaxHp || 1);

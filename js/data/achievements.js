@@ -74,21 +74,21 @@ var ACHIEVEMENTS_DB = [
   {
     id: "ach_ascend_1",
     category: "ascension",
-    name: "Premier envol",
+    name: "Premier souvenir",
     icon: "images/Icons/achivement/ach_ascend_1.png",
-    desc: "Effectuer 1 ascension.",
+    desc: "Atteindre le niveau de Mémoire 1.",
     target: 1,
-    track: function () { return game.ascensionCount || 0; },
+    track: function () { return window.MemoryManager ? MemoryManager.getLevel() : 0; }, // v3.322.0 : Mémoire
     reward: { goldMult: 0.02 }
   },
   {
     id: "ach_ascend_2",
     category: "ascension",
-    name: "Cycle maîtrisé",
+    name: "Ce que la Forêt a retenu",
     icon: "images/Icons/achivement/ach_ascend_2.png",
-    desc: "Effectuer 5 ascensions.",
-    target: 5,
-    track: function () { return game.ascensionCount || 0; },
+    desc: "Atteindre le niveau de Mémoire 4.",
+    target: 4,
+    track: function () { return window.MemoryManager ? MemoryManager.getLevel() : 0; }, // v3.322.0 : Mémoire
     reward: { tapMult: 0.03 }
   },
   {
@@ -96,9 +96,9 @@ var ACHIEVEMENTS_DB = [
     category: "ascension",
     name: "Au-delà des mondes",
     icon: "images/Icons/achivement/ach_ascend_3.png",
-    desc: "Effectuer 15 ascensions.",
-    target: 15,
-    track: function () { return game.ascensionCount || 0; },
+    desc: "Atteindre le niveau de Mémoire 8.",
+    target: 8,
+    track: function () { return window.MemoryManager ? MemoryManager.getLevel() : 0; }, // v3.322.0 : Mémoire
     reward: { tapMult: 0.05, goldMult: 0.05 }
   },
 

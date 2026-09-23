@@ -4,6 +4,11 @@
    (Rentrer, mission réussie) ; la mort perd tout le butin, Fuir en garde 50 %. Potions plafonnées par sortie. Persisté (4 emplacements). */
 
 var SORTIE_POTION_CAP = 2;        // décision §10 n°10 : 2 potions par sortie (calibration P1)
+/* v3.322.0 : Fiole de réserve (Mémoire niveau 3) — 3 au lieu de 2. Entre dans les bancs. */
+function getSortiePotionCap() {
+  return (window.MemoryManager && MemoryManager.has("fiole_reserve")) ? 3 : SORTIE_POTION_CAP;
+}
+window.getSortiePotionCap = getSortiePotionCap;
 var SORTIE_FLEE_KEEP_PCT = 0.5;   // décision §10 n°3 : fuir = 50 % du butin
 
 var SORTIE_CONTEXT_LABELS = { farm: "exploration", adventure: "quête", hunt: "chasse", dungeon: "donjon", scene: "expédition", mapelite: "élite de la carte" }; // v3.256.0 (C-2) : combat d'élite direct depuis une carte vivante // v3.120.0 (Lot S1) : scene-engine générique
@@ -87,12 +92,12 @@ var SortieManager = {
 
   canUsePotion: function () {
     var s = this.ensure();
-    return !s.active || s.potionsUsed < SORTIE_POTION_CAP;
+    return !s.active || s.potionsUsed < getSortiePotionCap();
   },
   notePotion: function () { var s = this.ensure(); if (s.active) s.potionsUsed += 1; },
   getPotionsLeft: function () {
     var s = this.ensure();
-    return s.active ? Math.max(0, SORTIE_POTION_CAP - s.potionsUsed) : SORTIE_POTION_CAP;
+    return s.active ? Math.max(0, getSortiePotionCap() - s.potionsUsed) : getSortiePotionCap();
   },
 
   getLootSummary: function (loot) {

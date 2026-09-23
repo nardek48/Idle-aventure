@@ -231,7 +231,10 @@ var AdventureQuestManager = {
         var restants = window.CombatActors ? CombatActors.enemies().filter(function (x) { return x !== enemy && Number(x.hp || 0) > 0; }).length : 0;
         if (restants === 0 && progress[step.id] < step.target) progress[step.id] += 1;
       } else if (step.type === "bossKill" && enemy.isBoss && step.bossId === enemy.id) {
-        if (progress[step.id] < step.target) progress[step.id] += 1;
+        if (progress[step.id] < step.target) {
+          progress[step.id] += 1;
+          if (window.MemoryManager) MemoryManager.souvenir("adventureBoss", "Souvenir : " + enemy.name + " vaincu"); // v3.322.0
+        }
       } else if (step.type === "eliteKill" && enemy.isElite && step.eliteId === enemy.id) {
         // v3.205.0 (E5)
         if (progress[step.id] < step.target) progress[step.id] += 1;

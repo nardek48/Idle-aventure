@@ -74,6 +74,10 @@ var DungeonManager = {
     }
     if (index === -1) return "previous";
     if (list[index].locked) return "data";
+    /* v3.315.0 (W-4a2, accord Seb) : verrou d'Histoire lu dans la donnée, même règle que les
+       secteurs de carte (isStepReached). Renvoie "data" pour que la vue affiche lockedHint. */
+    if (list[index].requiresStoryStep && window.StoryQuestManager
+      && !StoryQuestManager.isStepReached(list[index].requiresStoryStep)) return "data";
     if (!this.isAllowedByWorld(list[index])) return "world";
     if (index <= 0) return null;
 
@@ -136,7 +140,8 @@ var DungeonManager = {
   /* Matériau projeté pour un donjon et n Marques : base + n × specialPerMark (décision 12.2). */
   getSpecialAmount: function (dungeon, count) {
     if (!dungeon || !dungeon.specialResourceId || !(dungeon.specialResourceAmount > 0)) return 0;
-    return Number(dungeon.specialResourceAmount) + Math.max(0, count || 0) * Number(DUNGEON_CONFIG.specialPerMark || 0);
+    return Number(dungeon.specialResourceAmount) + Math.max(0, count || 0) * Number(DUNGEON_CONFIG.specialPerMark || 0)
+      + this.getShardEffect("specialBonus"); // v3.321.0 : Sacoche du donjon
   },
 
   checkTicketReset: function () {
@@ -162,7 +167,8 @@ var DungeonManager = {
     var baseCost = DUNGEON_CONFIG.ticketCostEssence || 100;
     var boughtToday = game.dungeonTicketsPurchasedToday || 0;
     var growth = DUNGEON_CONFIG.ticketCostGrowth || 1.35;
-    return Math.floor(baseCost * Math.pow(growth, boughtToday));
+    var discount = Math.min(0.9, this.getShardEffect("ticketDiscount")); // v3.321.0 : Clé de faille
+    return Math.floor(baseCost * Math.pow(growth, boughtToday) * (1 - discount));
   },
 
   buyTicket: function () {
@@ -379,10 +385,18 @@ var DungeonManager = {
      « La tanière du Basilic » est en cours (acceptée, non réclamée) — un échec ne bloque plus la chaîne
      principale 24 h (1 ticket gratuit/jour) ni ne coûte l'essence du joueur. Sans effet sur les autres paliers. */
   /* v3.245.0 : étendu à forest_13 (« Marques du corrompu » se joue désormais dans la Tanière). */
+  /* v3.315.0 (W-4a2, accord Seb) : rendue générique — les étapes concernées vivent dans la
+     donnée du donjon (storyChapterId, storyFreeSteps) au lieu d'être nommées ici. Comportement
+     inchangé pour la Tanière ; la Cité engloutie offre l'entrée pendant l'étape 12. */
   isStoryTicketFree: function (dungeonId) {
-    if (Number(dungeonId) !== 1 || !window.StoryQuestManager) return false;
-    var step = StoryQuestManager.getCurrentStep("forest");
-    return !!(step && (step.id === "forest_13" || step.id === "forest_14") && StoryQuestManager.isCurrentStepAccepted("forest"));
+    if (!window.StoryQuestManager) return false;
+    var list = window.DUNGEONS || [], d = null;
+    for (var i = 0; i < list.length; i++) { if (list[i].id === Number(dungeonId)) { d = list[i]; break; } }
+    var steps = d && d.storyFreeSteps;
+    if (!steps || !steps.length) return false;
+    var chapterId = d.storyChapterId || "forest";
+    var step = StoryQuestManager.getCurrentStep(chapterId);
+    return !!(step && steps.indexOf(step.id) >= 0 && StoryQuestManager.isCurrentStepAccepted(chapterId));
   },
 
   /* marks : tableau d'id de DUNGEON_MARKS choisis dans la feuille de lancement (figés pour le run). */
@@ -514,6 +528,17 @@ var DungeonManager = {
       lootRarity = allowedForTier[randInt(0, allowedForTier.length - 1)];
     }
 
+    /* v3.322.0 (Offrande) : Écho de la faille (Mémoire niveau 4) — +50 % des Éclats du run,
+       ajoutés une fois ici ; et le Souvenir d'un run complet. */
+    if (window.MemoryManager && MemoryManager.has("echo_faille")) {
+      var echo = Math.floor(Number(game.dungeonRun.shardsEarned || 0) * 0.5);
+      if (echo > 0) {
+        game.dungeonShards = Number(game.dungeonShards || 0) + echo;
+        game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) + echo;
+      }
+    }
+    if (success && window.MemoryManager) MemoryManager.souvenir("dungeonClear", "Souvenir : " + (tier && tier.name ? tier.name : "donjon") + " terminé");
+
     game.gold += goldReward;
     game.essence += essenceReward;
     game.totalGoldEarned += goldReward;
@@ -627,14 +652,19 @@ var DungeonManager = {
     saveGame();
   },
 
+  /* v3.321.0 (accord Seb) : bonus lus dans la DONNÉE. Seuls les articles présents dans
+     DUNGEON_SHOP comptent : un niveau acheté d'un article retiré n'agit plus. */
+  getShardEffect: function (effect) {
+    var self = this, total = 0;
+    (window.DUNGEON_SHOP || []).forEach(function (item) {
+      if (item.effect === effect) total += self.getShardShopLevel(item.id) * Number(item.perLevel || 0);
+    });
+    return total;
+  },
+
   getShardShopBonuses: function () {
-    this.ensure();
-    return {
-      power: this.getShardShopLevel("d_power") * 0.02,
-      gold: this.getShardShopLevel("d_gold") * 0.02,
-      essence: this.getShardShopLevel("d_essence") * 0.02,
-      defense: this.getShardShopLevel("d_defense") * 0.01
-    };
+    // v3.321.0 : plus de dégâts / or / essence / défense — stats-system.js lit des zéros
+    return { power: 0, gold: 0, essence: 0, defense: 0 };
   }
 };
 

@@ -84,6 +84,10 @@ var EnchantManager = {
     var worldMult = (typeof getEquipShopWorldPriceMult === "function") ? getEquipShopWorldPriceMult() : 1;
     var gold = (ENCHANT_BASE_GOLD[item.rarity] || 80) * Math.pow(ENCHANT_COST_MULT, n) * worldMult;
     var seve = (ENCHANT_BASE_SEVE[item.rarity] || 1) + Math.floor(n / ENCHANT_SEVE_STEP);
+    // v3.321.0 : Doigté de l'Enchanteresse (boutique d'Éclats), jamais sous une Sève
+    if (window.DungeonManager && typeof DungeonManager.getShardEffect === "function") {
+      seve = Math.max(1, seve - DungeonManager.getShardEffect("seveDiscount"));
+    }
     return { gold: Math.floor(gold), seve_aeswyn: seve };
   },
 

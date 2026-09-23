@@ -53,6 +53,11 @@ var WAREHOUSE_RESOURCES = {
   verre_des_dunes: { id: "verre_des_dunes", name: "Verre des dunes", icon: "images/Icons/resources/verre_des_dunes_icon.png", desc: "Sable fondu par la foudre, lisse comme de l'eau. Trouvé en Petite Aventure du Désert.", sellPrice: 0, tier: "special" },
   /* v3.312.0 (W-3c, acte II étape 9) : le matériau de monde du Désert, chauffé au Tailleur de
      pierre. Ses dépenses (hauts paliers du village) viennent avec W-6. Icône à générer. */
+  /* v3.317.0 (W-4c, acte III §7) : lâchée par le Dard des profondeurs, ingrédient des reforges
+     5 et 6 — la bande que la Forge 3 ouvre. Le Verre trempé CONSTRUIT la Forge, la Chitine
+     NOURRIT la reforge : deux matériaux du Désert, deux rôles. */
+  chitine_profondeurs: { id: "chitine_profondeurs", name: "Chitine des profondeurs", icon: "images/Icons/resources/chitine_profondeurs_icon.png", desc: "Une plaque arrachée au dard de la bête. Elle ne chauffe pas : elle boit le feu. On s'en sert pour les dernières reforges.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 1, worldName: "Désert", sourceHint: "Le Dard des profondeurs (la bête sous la dune, carte du Désert)" },
+
   verre_trempe: { id: "verre_trempe", name: "Verre trempé", icon: "images/Icons/resources/verre_trempe_icon.png", desc: "Verre des dunes chauffé deux fois au Tailleur de pierre. Il coupe le fer. Matériau des hauts paliers du village, au Désert.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 1, worldName: "Désert", sourceHint: "Verre des dunes et Pierre chauffés au Tailleur de pierre (Carrière)" },
   /* v3.214.0 (lot V-3) : matériau de construction de la Forêt. Premier des six
      matériaux de monde — c'est lui qui porte le plafond de construction, à la

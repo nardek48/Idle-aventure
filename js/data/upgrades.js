@@ -106,53 +106,10 @@ function getUpgradeById(id) {
   return null;
 }
 
-var AETHER_SHOP = [
-  {
-    id: "a_tap",
-    name: "Puissance ancestrale",
-    icon: "images/Icons/ascension/puissance_ancestrale.png",
-    desc: "+10% dégâts globaux par niveau.",
-    baseCost: 15,
-    costMult: 1.18,
-    maxLevel: 20
-  },
-  {
-    id: "a_gold",
-    name: "Fortune astrale",
-    icon: "images/Icons/ascension/fortune_astrale.png",
-    desc: "+10% or global par niveau.",
-    baseCost: 15,
-    costMult: 1.18,
-    maxLevel: 20
-  },
-  {
-    id: "a_loot",
-    name: "Main du destin",
-    icon: "images/Icons/ascension/main_du_destin.png",
-    desc: "+3% chance de loot boss par niveau.",
-    baseCost: 20,
-    costMult: 1.15,
-    maxLevel: 15
-  },
-  {
-    id: "a_essence",
-    name: "Noyau d'essence",
-    icon: "images/Icons/ascension/noyau_essence.png",
-    desc: "+1 essence boss tous les 2 niveaux.",
-    baseCost: 20,
-    costMult: 1.23,
-    maxLevel: 12
-  },
-  {
-    id: "a_vitality",
-    name: "Vitalité éthérée",
-    icon: "images/Icons/ascension/vitalite_etheree.png",
-    desc: "+10% PV max globaux par niveau.",
-    baseCost: 15,
-    costMult: 1.18,
-    maxLevel: 20
-  }
-];
+/* v3.322.0 (O7, décision Seb) : la boutique d'Aether est retirée, remplacée par les choix de
+   Mémoire (data/memory.js). Tableau gardé vide pour les lecteurs existants. Ancien contenu :
+   Puissance ancestrale, Fortune astrale, Main du destin, Noyau d'essence, Vitalité éthérée. */
+var AETHER_SHOP = [];
 
 function getAetherUpgradeById(id) {
   return (AETHER_SHOP || []).find(function (u) {

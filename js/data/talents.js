@@ -31,7 +31,7 @@ var TALENTTREE = {
     { id: "t_golden_touch", name: "Toucher doré", icon: "images/Icons/scene/node_discovery.png", img: "images/Icons/talents/t_golden_touch.png", slot: "inner_left", tier: "inner", side: "left", requires: "t_deep_pockets", maxLevel: 3, perLevel: 0.12, effect: "+12% or global, par niveau.", capstone: true },
     { id: "t_astral_prospecting", name: "Prospection astrale", icon: "🌠", img: "images/Icons/talents/t_astral_prospecting.png", slot: "inner_right", tier: "inner", side: "right", requires: "t_merchant_instinct", maxLevel: 3, perLevel: 5, effect: "+5% de chance de doubler un butin gagné, par niveau.", capstone: true },
 
-    { id: "t_rich_ritual", name: "Rituel opulent", icon: "images/Icons/scene/final_reward.png", img: "images/Icons/talents/t_rich_ritual.png", slot: "lower_left", tier: "lower", side: "left", requires: "t_golden_touch", maxLevel: 3, perLevel: 1, effect: "+1 Aether supplémentaire lors des grosses ascensions, par niveau.", capstone: true },
+    { id: "t_rich_ritual", name: "Main offrante", icon: "images/Icons/scene/final_reward.png", img: "images/Icons/talents/t_rich_ritual.png", slot: "lower_left", tier: "lower", side: "left", requires: "t_golden_touch", maxLevel: 3, perLevel: 1, effect: "Un objet offert a 10 % de chances par niveau de rendre l'Aether d'une rareté au-dessus.", capstone: true },
     { id: "t_sovereign_treasure", name: "Trésor souverain", icon: "👑", img: "images/Icons/talents/t_sovereign_treasure.png", slot: "lower_right", tier: "lower", side: "right", requires: "t_astral_prospecting", maxLevel: 3, perLevel: 0.20, effect: "+20% or global et bonus sur les récompenses rares, par niveau.", capstone: true }
   ],
 

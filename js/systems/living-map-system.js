@@ -495,6 +495,11 @@ var LivingMapManager = {
     if (window.SortieManager) SortieManager.end("success");
     game.livingMaps.fight = null;
     var report = this.onRunEnd(f.mapId, f.sectorId, "success");
+    // v3.322.0 (Souvenirs) : élite de carte vaincue, première victoire comme reprise
+    if (window.MemoryManager) {
+      var eDefS = window.ELITE_DB && ELITE_DB[f.eliteId];
+      MemoryManager.souvenir("elite", "Souvenir : " + (eDefS ? eDefS.name : "élite") + " vaincue");
+    }
     /* v3.258.0 (C-5) : élite répétable — Sève par victoire, et la suivante sera plus dure. */
     if (this.isRepeatable(f.mapId, f.sectorId)) {
       var rules = this.getRules(), re = rules.repeatableElite || {};
@@ -504,9 +509,23 @@ var LivingMapManager = {
         WarehouseManager.addResource(this.getRewardResourceId(f.mapId), seve, true); // v3.305.0 : ressource de la carte
       }
       report.repeatWin = wins; report.repeatSeve = seve;
+      /* v3.317.0 (W-4c) : une élite peut lâcher sa propre ressource à chaque victoire
+         (ELITE_DB.winResource) — la Chitine du Dard. Déclaré en donnée, pas ici. */
+      var wr = (window.ELITE_DB && ELITE_DB[f.eliteId] || {}).winResource;
+      if (wr && wr.id && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
+        // v3.322.0 : Chitine fendue (Mémoire niveau 8) — une de plus par victoire
+        var wrAmount = Number(wr.amount || 0) + ((window.MemoryManager && MemoryManager.has("chitine_fendue")) ? 1 : 0);
+        WarehouseManager.addResource(wr.id, wrAmount, true);
+        report.repeatResource = { id: wr.id, amount: wrAmount };
+      }
       var eliteDef = window.ELITE_DB && ELITE_DB[f.eliteId];
       if (!report.firstReward) report.message = (eliteDef ? eliteDef.name : "L'élite") + " plie."; // reprise : le secteur était déjà libéré
-      report.message += " +" + seve + " " + (f.mapId === "forest" ? "Sève" : this.getRewardResourceName(f.mapId)) + ". Victoire " + wins + " du jour : la prochaine sera plus dure (+" + Math.round(Number(re.brakePerWin || 0) * wins * 100) + " %).";
+      report.message += " +" + seve + " " + (f.mapId === "forest" ? "Sève" : this.getRewardResourceName(f.mapId));
+      if (report.repeatResource) {
+        var rDef = (window.WAREHOUSE_RESOURCES || {})[report.repeatResource.id];
+        report.message += ", +" + report.repeatResource.amount + " " + (rDef ? rDef.name : report.repeatResource.id);
+      }
+      report.message += ". Victoire " + wins + " du jour : la prochaine sera plus dure (+" + Math.round(Number(re.brakePerWin || 0) * wins * 100) + " %).";
     }
     this._afterFight(f, report, "success");
     return true;

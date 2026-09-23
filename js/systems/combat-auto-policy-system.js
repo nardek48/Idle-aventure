@@ -149,7 +149,10 @@ function getGrimoireSlotCount(worldsEverReached) {
   for (var i = 0; i < GRIMOIRE_UNLOCK_WORLD_INDEXES.length; i++) {
     if (reached[GRIMOIRE_UNLOCK_WORLD_INDEXES[i]]) extra++;
   }
-  return GRIMOIRE_BASE_SLOT_COUNT + extra;
+  // v3.322.0 : Grimoire étendu (Mémoire niveau 2) — une règle active de plus, dans la limite stockée
+  if (window.MemoryManager && MemoryManager.has("grimoire_etendu")) extra++;
+  var stored = (typeof GRIMOIRE_SLOT_COUNT === "number") ? GRIMOIRE_SLOT_COUNT : 6;
+  return Math.min(stored, GRIMOIRE_BASE_SLOT_COUNT + extra);
 }
 
 function isGrimoireWorldUnlockMilestone(worldIndex) {
