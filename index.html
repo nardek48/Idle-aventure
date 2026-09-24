@@ -74,6 +74,7 @@
   <link rel="stylesheet" href="./css/05-overlays.css">
   <link rel="stylesheet" href="./css/06-map.css">
   <link rel="stylesheet" href="./css/04-panel-living-map.css"> <!-- v3.256.0 (Cartes Vivantes, C-2) -->
+  <link rel="stylesheet" href="./css/04-panel-evolutions.css"> <!-- v3.332.0 : fil rouge, écran de retour -->
   <link rel="stylesheet" href="./css/07-responsive.css">
   <link rel="stylesheet" href="./css/99-icon-assets.css">
 
@@ -234,6 +235,8 @@
 <script src="js/data/classes.js"></script>
 <script src="js/data/class-skills.js"></script>
 <script src="js/data/companions.js"></script>
+<script src="js/data/boss-moments.js"></script> <!-- v3.333.0 : répliques et titres des boss -->
+<script src="js/data/patrols.js"></script> <!-- v3.334.0 : patrouilles de compagnons -->
 <script src="js/sim/combat-round-sim.js"></script>
 <script src="js/data/auto-policy-defaults.js"></script>
 <script src="js/data/grimoire-conditions.js"></script>
@@ -245,7 +248,7 @@
 <script src="js/data/dungeon.js"></script>
 <script src="js/data/achievements.js"></script>
 <script src="js/data/codex.js"></script>
-<script src="js/data/talents.js"></script>
+<script src="js/data/talent-trees.js"></script>
 <script src="js/data/equipment.js"></script>
 <script src="js/data/ascension.js"></script>
 <script src="js/data/adventure-quests.js"></script>
@@ -306,9 +309,16 @@
 <script src="js/systems/codex-system.js"></script>
 <script src="js/systems/tutorial-catalog-system.js"></script>
 <script src="js/systems/progression-system.js"></script>
+<script src="js/systems/talent-system.js"></script>
 <script src="js/systems/world-travel-system.js"></script> <!-- v3.298.0 (W-1b) : changement de monde de résidence -->
+<script src="js/systems/prefs-system.js"></script> <!-- v3.332.0 : préférences d'affichage de l'appareil -->
+<script src="js/systems/return-system.js"></script> <!-- v3.332.0 : écran de retour (R-1) -->
+<script src="js/systems/fil-rouge-system.js"></script> <!-- v3.332.0 : fil rouge (F-1) -->
+<script src="js/systems/boss-moment-system.js"></script> <!-- v3.333.0 : moments de boss, trophées -->
+<script src="js/systems/patrol-system.js"></script> <!-- v3.334.0 : patrouilles de compagnons -->
 <script src="js/systems/offline-system.js"></script>
 <script src="js/systems/camp-system.js"></script>
+<script src="js/systems/provisions-system.js"></script>
 <script src="js/systems/resume-system.js"></script>
 <script src="js/systems/save-system.js"></script>
 <script src="js/systems/combat-report-system.js"></script>
@@ -328,6 +338,10 @@
 <script src="js/ui/workshop-quest-modal.js"></script>
 <script src="js/ui/modal-view.js"></script>
 <script src="js/ui/hud-view.js"></script>
+<script src="js/ui/fil-rouge-view.js"></script> <!-- v3.332.0 -->
+<script src="js/ui/return-view.js"></script> <!-- v3.332.0 -->
+<script src="js/ui/boss-moment-view.js"></script> <!-- v3.333.0 -->
+<script src="js/ui/patrol-view.js"></script> <!-- v3.334.0 -->
 <script src="js/ui/combat-speed-view.js"></script>
 <script src="js/ui/combat-view.js"></script>
 <script src="js/ui/combat-group-view.js"></script>

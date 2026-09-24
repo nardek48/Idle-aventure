@@ -303,8 +303,7 @@ var AdventureQuestManager = {
     this.ensureRun();
     var quest = ADVENTURE_QUESTS[game.adventureQuestRun.questId];
     // v3.102.0 (P2) : mort en quête = même règle qu'ailleurs (PV 0, Sang-froid, retour Campement) — plus de soin complet gratuit
-    var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
-    game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
+    game.heroHp = 0; // v3.327.0 : Sang-froid retiré (décision T9)
     addLog("💀 Quête interrompue" + (quest ? " : " + quest.name : "") + " — retour au Campement. Au prochain départ, tout est à refaire.", "event");
     vibrate([80, 40, 80]);
     this.finish(quest, false);

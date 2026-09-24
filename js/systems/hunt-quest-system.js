@@ -70,6 +70,12 @@ var HuntQuestManager = {
     }
 
     if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
+    // v3.330.0 (E4) : vivres de sortie pour une chasse déjà bouclée une fois
+    if (window.ProvisionsManager) {
+      var noFood = ProvisionsManager.check("hunt", quest);
+      if (noFood) return showToast(noFood, 2200);
+      ProvisionsManager.consume("hunt", quest);
+    }
     game.huntRun = { active: true, questId: questId, killsInLot: 0 };
     if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("hunt"); } // v3.102.1 : la chasse est une sortie
     addLog("🏹 Départ en chasse : " + quest.name, "event");
@@ -152,8 +158,7 @@ var HuntQuestManager = {
     this.ensureRun();
     var quest = HUNT_QUESTS[game.huntRun.questId];
     // v3.102.0 (P2) : même règle de mort qu'ailleurs (PV 0, Sang-froid, retour Campement)
-    var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
-    game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
+    game.heroHp = 0; // v3.327.0 : Sang-froid retiré (décision T9)
     addLog("💀 Chasse interrompue" + (quest ? " : " + quest.name : "") + " — le butin de la sortie est perdu. Retour au Campement.", "event");
     vibrate([80, 40, 80]);
     this.stop();

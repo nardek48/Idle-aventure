@@ -57,7 +57,9 @@ var TavernManager = {
        de référence : elle ne sort jamais en contrat, mais la garde évite un
        contrat à 0 or si un modèle est ajouté par erreur. */
     if (unit <= 0) return 0;
-    return Math.max(1, Math.floor(unit * quantity * TAVERN_REWARD_MULT));
+    // v3.330.0 (E6) : le bonus de l'Atelier de Construction s'applique aux contrats
+    var bonus = (window.WarehouseManager && typeof WarehouseManager.getSellPriceMultiplier === "function") ? WarehouseManager.getSellPriceMultiplier() : 1;
+    return Math.max(1, Math.floor(unit * quantity * TAVERN_REWARD_MULT * bonus));
   },
 
   generateContracts: function () {
@@ -183,6 +185,7 @@ var TavernManager = {
     WarehouseManager.removeResource(c.resourceId, c.quantity);
     game.gold = Number(game.gold || 0) + payout;
     c.done = true;
+    if (window.AchievementManager) AchievementManager.onTavernDelivered(); // v3.338.0 : « Pilier de la Taverne »
 
     if (window.QuestManager && typeof QuestManager.track === "function") {
       QuestManager.track("goldEarned", payout);

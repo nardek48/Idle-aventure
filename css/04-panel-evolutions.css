@@ -1,0 +1,385 @@
+/* ============================================================
+Aethervale — css/04-panel-evolutions.css
+v3.332.0 : chantier Évolutions (conception v1.0, atelier E-0).
+  1. Fil rouge : bouton du HUD (à la place de l'Ascension) et bulle.
+  2. Écran de retour et pastille « Retour ».
+Maquette de référence : atelier-evolutions.html.
+============================================================ */
+
+/* ---------- 1. Fil rouge : bouton du HUD ---------- */
+.hud-fr-btn { justify-content: center; border-radius: 50%; }
+
+.hud-fr-disc {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff4d6, #e9cf92 60%, #b88a3a);
+  border: 2px solid #8a5a14;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.hud-fr-ico { width: 26px; height: 26px; object-fit: contain; }
+
+/* Le « fil » : un liseré rouge qui fait le tour du disque */
+.hud-fr-thread {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid #b3261e;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  transform: rotate(-30deg);
+  pointer-events: none;
+}
+
+.hud-fr-btn.is-new .hud-fr-disc { animation: hud-fr-glow 1.6s ease-out 1; }
+
+@keyframes hud-fr-glow {
+  0% { box-shadow: 0 0 0 0 #f0aa3e; }
+  60% { box-shadow: 0 0 0 9px rgba(240, 170, 62, 0); }
+  100% { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.65); }
+}
+
+/* ---------- 1. Fil rouge : bulle ---------- */
+.fr-bubble-bg { position: fixed; inset: 0; z-index: 9000; }
+
+.fr-bubble {
+  position: fixed;
+  top: 80px;
+  left: 8px;
+  width: min(300px, calc(100vw - 16px));
+  background: #f6ecd9;
+  color: #3a2c1a;
+  border: 1.5px solid #b98a4a;
+  border-radius: 14px;
+  padding: 10px 11px 6px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.7);
+}
+
+.fr-bubble::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: var(--fr-arrow, 240px);
+  width: 14px;
+  height: 14px;
+  background: #f6ecd9;
+  border-left: 1.5px solid #b98a4a;
+  border-top: 1.5px solid #b98a4a;
+  transform: rotate(45deg);
+}
+
+.fr-kicker { font-size: 9.5px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; color: #b3261e; }
+.fr-row { display: flex; gap: 9px; align-items: flex-start; margin: 4px 0 8px; }
+.fr-row-ico { width: 36px; height: 36px; flex: 0 0 36px; object-fit: contain; }
+.fr-title { font-size: 15px; font-weight: 800; line-height: 1.2; color: #3a2c1a; }
+.fr-reason { font-size: 12px; line-height: 1.4; color: #5a4a30; margin-top: 2px; }
+.fr-bubble .fr-go { max-width: 220px; min-height: 42px; font-size: 13px; }
+.fr-also { font-size: 11px; color: #7a6444; margin: 0 0 4px; line-height: 1.5; }
+.fr-also > span { font-weight: 800; }
+.fr-also-btn {
+  font: inherit;
+  font-weight: 700;
+  color: #8a5a14;
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---------- 2. Écran de retour ---------- */
+.ret-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 8500;
+  background: rgba(0, 0, 0, 0.66);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(14px, env(safe-area-inset-top, 0px)) 14px max(14px, env(safe-area-inset-bottom, 0px));
+}
+
+.ret-card {
+  width: 100%;
+  max-width: 400px;
+  max-height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #f3e6c8;
+  color: #3a2c1a;
+  border: 2px solid #c9a86a;
+  border-radius: 18px;
+  padding: 14px 13px 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+
+.ret-top { text-align: center; }
+.ret-top img { width: 44px; height: 44px; }
+.ret-title { font-size: 19px; font-weight: 800; color: #6b4a22; margin-top: 2px; }
+.ret-time { font-size: 12.5px; font-weight: 700; color: #8a6a3c; }
+.ret-line { font-size: 12px; font-style: italic; line-height: 1.45; color: #5a4a30; margin: 8px 6px 10px; text-align: center; }
+
+.ret-sec { background: #fbf3e4; border: 1px solid #dcc79c; border-radius: 11px; padding: 7px 9px; margin-bottom: 6px; }
+.ret-sec-h { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 800; color: #6b4a22; }
+.ret-sec-h img { width: 20px; height: 20px; object-fit: contain; }
+.ret-sec-b { font-size: 12px; line-height: 1.4; margin-top: 3px; }
+.ret-warn { color: #9a3412; font-weight: 700; }
+
+.ret-gains { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 2px; }
+.ret-gain {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11.5px;
+  font-weight: 800;
+  background: #efe0c2;
+  border-radius: 999px;
+  padding: 2px 8px 2px 3px;
+  color: #3a2c1a;
+}
+.ret-gain.is-done { background: #dcebd0; color: #2f5a1a; }
+.ret-gain-ico { width: 18px; height: 18px; object-fit: contain; }
+
+.ret-link { font: inherit; font-size: 11.5px; font-weight: 800; color: #8a5a14; background: none; border: none; padding: 2px 0; cursor: pointer; text-decoration: underline; }
+.ret-story { font-size: 12px; line-height: 1.5; font-style: italic; color: #4a3a20; border-left: 2px solid #c9a86a; padding-left: 8px; margin-top: 5px; }
+
+.ret-acts { margin-top: 8px; }
+.ret-acts .settings-btn { max-width: 300px; font-size: 13px; }
+.ret-btn-col { display: flex; flex-direction: column; align-items: center; }
+.ret-btn-col small { font-size: 10.5px; font-weight: 700; color: #fff4d6; }
+.ret-done { text-align: center; font-size: 12px; font-weight: 800; color: #2f5a1a; margin: 2px 0 8px; }
+
+.ret-next { display: flex; align-items: center; gap: 8px; margin-top: 4px; border-top: 1px dashed #c9a86a; padding-top: 8px; }
+.ret-next img { width: 30px; height: 30px; object-fit: contain; }
+.ret-next-t { flex: 1 1 auto; font-size: 12px; line-height: 1.3; min-width: 0; }
+.ret-next-t b { display: block; font-size: 13px; }
+.ret-next-t small { font-size: 9.5px; font-weight: 900; color: #b3261e; letter-spacing: 0.4px; text-transform: uppercase; }
+.ret-next button {
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 7px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid #8a5a14;
+  background: #c27f1f;
+  color: #fff8e8;
+}
+
+.ret-close { display: block; margin: 8px auto 2px; font: inherit; font-size: 13px; font-weight: 800; color: #6b4a22; background: none; border: none; cursor: pointer; padding: 6px 14px; }
+
+/* Pastille « Retour » : le héros est engagé, l'écran attend */
+.ret-pending {
+  position: fixed;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8400;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f3e6c8;
+  color: #3a2c1a;
+  border: 1.5px solid #c9a86a;
+  border-radius: 999px;
+  padding: 5px 11px 5px 6px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+}
+.ret-pending img { width: 20px; height: 20px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-fr-btn.is-new .hud-fr-disc { animation: none; }
+}
+
+/* ============================================================
+   3. Moments de boss (v3.333.0, lot B-1) — ui/boss-moment-view.js
+   Carte d'entrée et coup final dans #cycle-modal-root (met le combat en pause),
+   bandeaux dans #boss-banner-root (ne bloque rien).
+============================================================ */
+.bm-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  cursor: pointer;
+  background: radial-gradient(90% 70% at 50% 40%, #3a1a0c 0%, #120806 70%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  animation: bm-in 0.35s ease-out;
+}
+@keyframes bm-in { from { opacity: 0; } to { opacity: 1; } }
+
+.bm-intro-pic {
+  width: min(210px, 56vw);
+  height: min(210px, 56vw);
+  border-radius: 18px;
+  object-fit: cover;
+  border: 3px solid #c9a227;
+  box-shadow: 0 0 40px rgba(240, 170, 62, 0.35);
+  animation: bm-zoom 2s ease-out;
+}
+@keyframes bm-zoom { from { transform: scale(1.12); } to { transform: scale(1); } }
+.bm-pic-empty { background: #3a2a18; }
+
+.bm-kicker { margin-top: 14px; font-size: 10.5px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #f0aa3e; }
+.bm-name { font-size: 24px; font-weight: 900; color: #ffe9b0; text-shadow: 0 2px 6px #000; margin-top: 2px; }
+.bm-title { font-size: 13px; font-style: italic; color: #d9c49a; margin-top: 2px; }
+.bm-line { font-size: 13.5px; line-height: 1.45; color: #f3e0b0; margin-top: 14px; max-width: 320px; }
+.bm-ally { display: flex; gap: 8px; align-items: center; margin-top: 10px; max-width: 320px; text-align: left; font-size: 12.5px; line-height: 1.4; color: #d8f5d0; }
+.bm-ally img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; object-position: top; border: 2px solid #4a8a3a; flex: 0 0 36px; }
+.bm-skip { position: absolute; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); font-size: 11px; color: #a08a60; }
+.bm-bar { position: absolute; bottom: 0; left: 0; height: 3px; width: 0; background: #f0aa3e; animation-name: bm-bar; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes bm-bar { to { width: 100%; } }
+
+/* Bandeaux : entrée rejouée, bascule de phase */
+.bm-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 38%;
+  z-index: 9400;
+  pointer-events: none;
+  text-align: center;
+  padding: 12px 10px;
+  background: linear-gradient(90deg, rgba(42, 12, 6, 0), rgba(42, 12, 6, 0.93) 18%, rgba(42, 12, 6, 0.93) 82%, rgba(42, 12, 6, 0));
+  border-top: 1px solid rgba(240, 170, 62, 0.55);
+  border-bottom: 1px solid rgba(240, 170, 62, 0.55);
+  animation: bm-band 0.3s ease-out;
+}
+@keyframes bm-band { from { transform: scaleY(0.2); opacity: 0; } to { transform: none; opacity: 1; } }
+.bm-banner b { display: block; font-size: 17px; color: #ffe9b0; }
+.bm-banner span { font-size: 12.5px; font-style: italic; color: #f3c9a0; }
+
+.bm-flash { position: fixed; inset: 0; z-index: 9390; pointer-events: none; opacity: 0; }
+.bm-flash-red { animation: bm-red 0.6s ease-out; }
+@keyframes bm-red { 0% { opacity: 0.55; background: #b3261e; } 100% { opacity: 0; background: #b3261e; } }
+
+/* Coup final */
+.bm-final {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 20px;
+}
+.bm-final-pic {
+  width: min(220px, 60vw);
+  height: min(220px, 60vw);
+  border-radius: 16px;
+  object-fit: cover;
+  border: 3px solid #c9a227;
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+.bm-final.is-hit .bm-final-pic { transform: scale(1.14); filter: brightness(1.6) saturate(0.4); }
+.bm-final.is-hit .bm-flash { animation: bm-white 0.7s ease-out; }
+.bm-final.is-down .bm-final-pic { transform: scale(0.96); filter: grayscale(1) brightness(0.55); }
+@keyframes bm-white { 0% { opacity: 0.9; background: #fff; } 100% { opacity: 0; background: #fff; } }
+.bm-final-line { font-size: 13.5px; font-style: italic; color: #f3e0b0; text-align: center; max-width: 320px; }
+
+/* Victoire + trophée */
+.bm-win { position: fixed; inset: 0; z-index: 9500; background: rgba(0, 0, 0, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; animation: bm-in 0.3s ease-out; }
+.bm-win-card { width: 100%; max-width: 380px; background: #f3e6c8; color: #3a2c1a; border: 2px solid #c9a86a; border-radius: 18px; padding: 14px; text-align: center; }
+.bm-win-t { font-size: 21px; font-weight: 900; color: #6b4a22; }
+.bm-new { font-size: 10px; font-weight: 900; letter-spacing: 0.6px; text-transform: uppercase; color: #9a7a14; margin-top: 6px; }
+.bm-win-line { font-size: 12.5px; font-style: italic; color: #4a6b2a; margin: 4px 0 10px; }
+
+.bm-trophy {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  margin: 8px 0;
+  background: linear-gradient(#fbf1d6, #f1e0b3);
+  border: 2px solid #c9a227;
+  border-radius: 12px;
+  padding: 8px;
+  color: #3a2c1a;
+}
+.bm-trophy img, .bm-trophy-empty { width: 56px; height: 56px; flex: 0 0 56px; border-radius: 10px; object-fit: cover; border: 2px solid #c9a227; background: #3a2a18; }
+.bm-trophy-k { font-size: 9.5px; font-weight: 900; color: #9a7a14; letter-spacing: 0.5px; text-transform: uppercase; }
+.bm-trophy-n { font-size: 14px; font-weight: 800; }
+.bm-trophy-d { font-size: 11px; color: #6b5a3c; line-height: 1.35; }
+.bm-trophies { padding-top: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bm-intro, .bm-intro-pic, .bm-banner, .bm-win, .bm-flash-red, .bm-final.is-hit .bm-flash { animation: none !important; }
+  .bm-final-pic { transition: none; }
+}
+
+/* ============================================================
+   4. Patrouilles (v3.334.0, lot P-1) — ui/patrol-view.js
+   Bloc de la fiche compagnon (Héros › Compagnons) ; la rubrique de l'écran de
+   retour réutilise les classes ret-* ci-dessus.
+============================================================ */
+.pt-box { margin: 8px 0; padding: 8px 9px; border-radius: 11px; background: #fbf3e4; border: 1px solid #dcc79c; color: #3a2c1a; }
+.pt-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: #6b4a22; margin-bottom: 4px; }
+.pt-title img { width: 20px; height: 20px; }
+.pt-line { font-size: 12px; line-height: 1.4; }
+.pt-hint { font-size: 10.5px; line-height: 1.35; color: #7a6444; margin: 3px 0; }
+.pt-select {
+  width: 100%;
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 9px;
+  border: 1px solid #b98a4a;
+  background: #f6ecd9;
+  color: #3a2c1a;
+  margin: 2px 0 6px;
+}
+.pt-seg { margin-bottom: 4px; }
+.pt-box .kbtn { margin-top: 6px; }
+.pt-ret-row { font-size: 12px; margin-top: 3px; }
+.cp-patrol-note { font-size: 12px; font-weight: 700; color: #6b4a22; background: #efe0c2; border: 1px dashed #b98a4a; border-radius: 999px; padding: 7px 12px; text-align: center; margin: 6px 0; }
+
+/* ============================================================
+   5. Refus « Pour y arriver » (v3.336.0, lot F-2) — ui/fil-rouge-view.js
+============================================================ */
+.howto-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 9600;
+  width: min(360px, calc(100vw - 20px));
+  background: #2a1c0c;
+  color: #f3e0b0;
+  border: 1.5px solid #c9a86a;
+  border-radius: 14px;
+  padding: 9px 11px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  animation: howto-in 0.2s ease-out;
+}
+@keyframes howto-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.howto-msg { font-size: 13px; font-weight: 800; line-height: 1.3; }
+.howto-why { font-size: 12px; line-height: 1.35; color: #d9c49a; margin-top: 3px; }
+.howto-row { display: flex; align-items: center; gap: 8px; margin-top: 7px; }
+.howto-kicker { font-size: 9.5px; font-weight: 900; letter-spacing: 0.4px; text-transform: uppercase; color: #f0aa3e; flex: 1 1 auto; }
+.howto-go {
+  font: inherit; font-size: 12.5px; font-weight: 800;
+  padding: 6px 11px; border-radius: 10px; cursor: pointer;
+  border: 1px solid #f0aa3e; background: #c27f1f; color: #fff8e8;
+}
+.howto-close { font: inherit; font-size: 13px; background: none; border: none; color: #a08a60; cursor: pointer; padding: 4px 6px; }
+.farm-plot-action-btn.is-capped { cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .howto-toast { animation: none; } }
+.tt-sheet-howto { font-size: 12px; line-height: 1.4; color: #5a4a30; margin: -4px 0 10px; }

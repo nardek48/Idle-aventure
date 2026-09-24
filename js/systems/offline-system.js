@@ -5,7 +5,10 @@
    seule le hors-ligne (rattrapage par zone/atelier, ProductionManager.catchUpOffline()).
    Ne subsiste qu'OfflineManager : résumé de retour d'absence basé sur la Production.
    Boot (main/boot.js) : snapshot() AVANT catchUpOffline(), summarize() APRÈS, show() si
-   absence > OFFLINE_SUMMARY_MIN_MS et gains non nuls. Ancien code : COMMENTAIRES_ORIGINAUX.md */
+   absence > OFFLINE_SUMMARY_MIN_MS et gains non nuls. Ancien code : COMMENTAIRES_ORIGINAUX.md
+   v3.332.0 (Évolutions, R-1) : la photographie prend aussi chantier, Taverne et PV
+   (ReturnManager.capture) ; summarize() est appelé en FIN de boot, après la régénération du
+   feu et le solde du chantier ; show() ouvre l'écran de retour unique (ReturnManager). */
 
 var OFFLINE_SUMMARY_MIN_MS = 5 * 60 * 1000;
 
@@ -18,7 +21,8 @@ var OfflineManager = {
     this._before = {
       ms: game.lastOnline ? Math.max(0, Date.now() - game.lastOnline) : 0,
       plots: this._collectPlotTotals(),
-      warehouse: this._collectWarehouseCounts()
+      warehouse: this._collectWarehouseCounts(),
+      extras: window.ReturnManager ? ReturnManager.capture() : null // v3.332.0
     };
   },
 
@@ -95,10 +99,16 @@ var OfflineManager = {
       if (delta > 0) crafted[key] = delta;
     });
 
-    if (!Object.keys(produced).length && !Object.keys(crafted).length) return null;
-
     var fullInfo = this._countFullPlots();
-    return { ms: before.ms, produced: produced, crafted: crafted, fullPlots: fullInfo.full, openPlots: fullInfo.open };
+    var summary = { ms: before.ms, produced: produced, crafted: crafted, fullPlots: fullInfo.full, openPlots: fullInfo.open };
+
+    // v3.332.0 : chantier, Taverne, PV, patrouilles — un retour sans production peut avoir à dire
+    if (window.ReturnManager) {
+      summary = ReturnManager.complete(summary, before.extras);
+      return ReturnManager.hasContent(summary) ? summary : null;
+    }
+    if (!Object.keys(produced).length && !Object.keys(crafted).length) return null;
+    return summary;
   },
 
   /* Journal + modale de retour. Le libellé d'une ressource vient de WAREHOUSE_RESOURCES. */
@@ -115,8 +125,10 @@ var OfflineManager = {
       parts.push("+" + formatNumber(summary.crafted[key]) + " " + (def ? def.name : key) + " (atelier)");
     });
 
-    addLog("Pendant ton absence, le village a produit : " + parts.join(", ") + ".", "event");
+    if (parts.length) addLog("Pendant ton absence, le village a produit : " + parts.join(", ") + ".", "event");
 
+    // v3.332.0 : écran de retour unique (R1) ; l'ancienne modale reste en repli
+    if (window.ReturnManager) { ReturnManager.request(summary); return; }
     if (typeof showOfflineModal === "function") {
       showOfflineModal(summary);
     } else {

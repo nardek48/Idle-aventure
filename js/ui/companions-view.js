@@ -46,10 +46,18 @@ function buildCompanionCardHTML(companionId) {
   h += '</div>';
 
   /* Présence et contrôle : deux segments, l'état du jeu se lit d'un coup d'œil. */
+  /* v3.334.0 (P2) : en patrouille, le choix Avec toi / Au camp ne s'applique pas — on le dit. */
+  if (window.PatrolManager && PatrolManager.isOnPatrol(companionId)) {
+    h += '<div class="cp-patrol-note">En patrouille — ' + (st.present ? 'repartira avec toi' : 'restera au camp') + ' à son retour.</div>';
+  } else {
   h += '<div class="kseg cp-seg">';
   h += '<button type="button" class="' + (st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + companionId + '\', true)">Avec toi</button>';
   h += '<button type="button" class="' + (!st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + companionId + '\', false)">Au camp</button>';
   h += '</div>';
+  }
+
+  // v3.334.0 (Évolutions, P9) : patrouille — départ, retour, rappel
+  if (typeof buildCompanionPatrolHTML === "function") h += buildCompanionPatrolHTML(companionId);
 
   /* v3.276.0 (décision Seb) : l'interrupteur Auto/Manuel est retiré — c'est le mode de
      combat qui décide, pour tout le monde. On le RAPPELLE ici plutôt que de laisser un

@@ -332,7 +332,10 @@ window.CLASS_SKILLS = {
 function getClassSkills(classId) {
   if (!classId || typeof classId !== "string") return null;
   var kit = window.CLASS_SKILLS[classId];
-  return kit || null;
+  if (!kit) return null;
+  // v3.327.0 : les talents de classe réécrivent le kit à la lecture (data/talent-trees.js)
+  if (window.TalentManager && typeof TalentManager.modKit === "function") return TalentManager.modKit(classId, kit);
+  return kit;
 }
 
 function getClassAction(classId, actionSlot) {

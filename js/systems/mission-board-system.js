@@ -347,7 +347,9 @@ var MissionBoard = {
     if (typeof showToast !== "function") return;
     var titles = this.getActiveQuestTitles();
     var detail = titles.length ? " (" + titles.join(", ") + ")" : "";
-    showToast("⛔ 3 quêtes actives max" + detail + " — abandonnes-en une avant d'en accepter une nouvelle", 3200);
+    var msg = "⛔ 3 quêtes actives max" + detail + " — abandonnes-en une avant d'en accepter une nouvelle";
+    if (typeof showHowToToast === "function") showHowToToast(msg, "questCap"); // v3.336.0 (F-2)
+    else showToast(msg, 3200);
   },
 
   /* v3.124.0 (retrait ancien moteur) : _explorationMissions() retirée — les 6 quêtes

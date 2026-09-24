@@ -52,6 +52,9 @@ var ADVENTURE_QUESTS = {
     type: "kill",
     section: "adventure",
     difficulty: "medium",
+    // v3.326.0 (C-2) : uniques + Wenna +5, entr. 60 : 95-100 %, 41-50 rounds, 52-61 % de PV (Wenna soigne beaucoup)
+    enemyPowerMult: 6,
+    enemyHpMult: 1.4,
     progressionStage: "world_end",
     category: "side", // v3.100.1 : « Principale » réservée à la chaîne Histoire
     worldId: "forest",
@@ -120,6 +123,11 @@ var ADVENTURE_QUESTS = {
     type: "kill",
     section: "adventure",
     difficulty: "medium",
+    /* v3.326.0 (plan C-2, décision Seb : plus long, plus dur) — enemyPowerMult : dégâts des ennemis
+       (systems/quest-enemy-system.js). Première étape de l'acte III : calée à 40 d'entraînement
+       (plafond de l'acte II), vitrine : 93-100 %, 54-95 rounds, 32-52 % de PV, 1,3-2 potions. */
+    enemyPowerMult: 1.3,
+    enemyHpMult: 1.3,
     progressionStage: "world_mid",
     category: "side",
     worldId: "forest",
@@ -142,6 +150,9 @@ var ADVENTURE_QUESTS = {
     type: "kill",
     section: "adventure",
     difficulty: "medium",
+    // v3.326.0 (C-2) : entr. 60 vitrine 100 %, ~50 % de PV ; à 50, 97-100 %, 0,9-1,9 potion
+    enemyPowerMult: 2.5,
+    enemyHpMult: 1.3,
     progressionStage: "world_mid",
     category: "side",
     worldId: "forest",
@@ -165,6 +176,9 @@ var ADVENTURE_QUESTS = {
     type: "kill",
     section: "adventure",
     difficulty: "medium",
+    // v3.326.0 (C-2) : acte I (entr. 70) 97-100 %, 32-47 rounds ; à 60 (arrivée) 87-100 %, 0,5-1,8 potion
+    enemyPowerMult: 4,
+    enemyHpMult: 1.5,
     progressionStage: "world_start",
     category: "side",
     worldId: "desert",
@@ -196,7 +210,9 @@ var ADVENTURE_QUESTS = {
     encounters: [{ enemy: "sandwarrior" }, { enemy: "sandworm" }, { enemy: "scorpion" }],
     /* ×1,6 (banc, arme 30 + vitrine, entr. 40, Wenna et Maddoc) : ~12 rounds par bête, 67-83 %
        de PV à l'arrivée, aucune potion. Le tronc rend la remontée plus sûre, l'affût plus courte. */
-    encounterHpMult: 1.6,
+    encounterHpMult: 2.4, // v3.326.0 (C-2) : 1,6 -> 2,4
+    // v3.326.0 (C-2) : acte II (entr. 90, Maddoc +1) 97-100 %, 26-37 rounds ; à 75, 97-100 %, 0,1-1,8 potion
+    enemyPowerMult: 5.5,
     name: "Remonter à trois",
     story: "Derrière la porte, le gouffre. Maddoc boite devant, ou derrière. L'escalier est long.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.png",
@@ -227,7 +243,9 @@ var ADVENTURE_QUESTS = {
       { group: ["sandwarrior", "sandwarrior"], groupHpMult: 0.55 }
     ],
     // ×1,3 (même banc) : 32-52 rounds, ~70 % de PV à l'arrivée, aucune potion
-    encounterHpMult: 1.3,
+    encounterHpMult: 1.9, // v3.326.0 (C-2) : 1,3 -> 1,9
+    // v3.326.0 (C-2) : acte II (entr. 90) 100 %, 36-47 rounds, ~50 % de PV ; à 80, 100 %, 0,3-1,7 potion
+    enemyPowerMult: 6.5,
     name: "La nuée",
     story: "Le sable crépite, au sud du camp. Les petites viennent par trois, les grands par deux.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.png",

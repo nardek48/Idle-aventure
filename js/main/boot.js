@@ -58,14 +58,8 @@ function init() {
     addLog("Partie chargée", "event");
     showToast("Partie chargée", 1400);
 
-    // v3.113.0 : résumé de retour d'absence basé sur la Production (delta du snapshot
-    // pris avant catchUpOffline) — remplace l'ancien calcul or/essence/kills du village.
-    if (window.OfflineManager && typeof OfflineManager.summarize === "function") {
-      var offline = OfflineManager.summarize();
-      if (offline && typeof OfflineManager.show === "function") {
-        OfflineManager.show(offline);
-      }
-    }
+    // v3.332.0 (R-1) : le résumé de retour est fait en FIN d'init (plus bas), une fois le feu
+    // passé et le chantier soldé — l'écran de retour les montre.
     // v3.101.0 : régénération au camp accumulée hors ligne (plafond 50 % PV max), voir systems/camp-system.js
     if (window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(true);
   } else {
@@ -119,6 +113,14 @@ function init() {
   }
 
   if (!sceneRunResumed && typeof switchTab === "function") switchTab(game.activeTab || "campement");
+
+  // v3.113.0 : résumé de retour d'absence (delta du snapshot pris avant catchUpOffline).
+  // v3.332.0 (R-1) : déplacé ici — écran de retour unique, ouvert (ou mis en attente si le
+  // héros est engagé) une fois l'écran de départ posé.
+  if (loaded && window.OfflineManager && typeof OfflineManager.summarize === "function") {
+    var offline = OfflineManager.summarize();
+    if (offline && typeof OfflineManager.show === "function") OfflineManager.show(offline);
+  }
 
   lastTick = Date.now();
   requestAnimationFrame(gameLoop);

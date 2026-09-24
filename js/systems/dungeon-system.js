@@ -413,6 +413,12 @@ var DungeonManager = {
     if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast("Termine ou abandonne ta quête en cours avant d'entrer en donjon", 1600);
     if (game.huntRun && game.huntRun.active) return showToast("Termine ou arrête ta chasse en cours avant d'entrer en donjon", 1600);
     if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
+    // v3.330.0 (E4) : vivres de sortie pour un donjon déjà fini une fois (jamais sur un ticket d'Histoire)
+    if (window.ProvisionsManager) {
+      var noFood = ProvisionsManager.check("dungeon", dungeon);
+      if (noFood) return showToast(noFood, 2200);
+      ProvisionsManager.consume("dungeon", dungeon);
+    }
 
     if (!storyFree) game.dungeonTickets -= 1; // v3.136.0 : ticket Histoire, rien à décompter
     var runMarks = this.sanitizeMarks(marks, dungeon.id);
@@ -461,8 +467,7 @@ var DungeonManager = {
     if (clearedWave > (game.dungeonBestWave || 0)) game.dungeonBestWave = clearedWave;
 
     // v3.102.0 (P2) : même règle de mort qu'ailleurs (PV 0, Sang-froid, retour Campement)
-    var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
-    game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
+    game.heroHp = 0; // v3.327.0 : Sang-froid retiré (décision T9)
     addLog("💀 Tentative de donjon interrompue à la vague " + (game.dungeonRun.wave || 1) + " ! Retour au Campement.", "event");
     vibrate([80, 40, 80]);
 

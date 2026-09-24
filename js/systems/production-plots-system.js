@@ -179,12 +179,16 @@ var ProductionPlotsSystem = {
 
   /* Récolte GLOBALE : additionne le stock (arrondi par zone) de toutes les zones
      ouvertes, crédite l'Entrepôt en une fois, vide chaque zone. */
-  harvestAll: function (buildingId) {
+  harvestAll: function (buildingId, maxTake) {
+    // v3.330.0 (E1) : maxTake = place libre à l'Entrepôt ; le reste attend dans les zones
     var total = 0;
+    var left = (typeof maxTake === "number" && isFinite(maxTake)) ? Math.max(0, Math.floor(maxTake)) : Infinity;
     this.getPlots(buildingId).forEach(function (plot) {
-      if (plot.state !== "open") return;
-      total += Math.floor(plot.stock);
-      plot.stock -= Math.floor(plot.stock);
+      if (plot.state !== "open" || left <= 0) return;
+      var n = Math.min(Math.floor(plot.stock), left);
+      total += n;
+      left -= n;
+      plot.stock -= n;
     });
     return total;
   },

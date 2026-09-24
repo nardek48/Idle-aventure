@@ -47,7 +47,11 @@ var DUNGEONS = [
   {
     id: 1, key: "basilic",
     name: "Tanière du Basilic",
-    worldId: "forest", worldRequired: 0, worldPower: 0, difficultyMult: 1,
+    /* v3.326.0 (plan C-2) : 1 -> 1,8. Banc sim/plafond-bench.js, entr. 60 avec les uniques des
+       deux élites : Basilic 100 %, 42-53 rounds, 48-52 % de PV, 0,3-0,7 potion. Objectif de
+       l'étape 13 (5 vagues sous une Marque) tenu à 100 % même en vitrine. ATTENTION : sans arme
+       unique ni équivalent (vitrine seule), le run complet tombe à 0 % dès 1,4. */
+    worldId: "forest", worldRequired: 0, worldPower: 0, difficultyMult: 1.8,
     /* v3.253.0 (retour de jeu de Seb : « le donjon un peu facile »). Les vagues faisaient
        37 à 54 PV quand un ennemi de farm de la Forêt en fait 109 à 140 : elles valaient un
        tiers d'un combat ordinaire, tombaient en un ou deux rounds et n'usaient rien. Le boss
@@ -101,7 +105,11 @@ var DUNGEONS = [
        les vagues avant même de voir le boss (15,0 vagues tenues pour les classes à distance,
        14,7 pour lui, 0 % de boss). La difficulté du donjon passe dans le SPHINX, pas dans
        l'usure des quinze vagues — c'est la leçon du Basilic, appliquée. */
-    worldId: "desert", worldRequired: 1, worldPower: 1, difficultyMult: 1.7,
+    /* v3.326.0 (plan C-2) : 1,7 -> 2,6, avec les élites des vagues 5 et 10 recalées. Banc
+       sim/plafond-bench.js, fin d'acte III (Mar) : sphinx 75 / 95 / 95 %, 53-66 rounds, 1,1-1,9
+       potion. Début d'acte III : vague 5 passée à 100 % (objectif de l'étape 12), sphinx 0 %.
+       Le Chevalier reste en retrait : chantier des arbres de talents par classe. */
+    worldId: "desert", worldRequired: 1, worldPower: 1, difficultyMult: 2.6,
     maxRarity: "green",
     // v3.321.0 (décision Seb) : la matière brute de la Petite Aventure du monde, comme la Sève en Forêt
     specialResourceId: "verre_des_dunes", specialResourceAmount: 2,

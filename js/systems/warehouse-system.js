@@ -34,12 +34,23 @@ var WarehouseManager = {
      bâtiment ne leur apporte rien et ne doit pas leur en inventer un. */
   getCap: function (key) {
     var def = (typeof WAREHOUSE_RESOURCES !== "undefined") ? WAREHOUSE_RESOURCES[key] : null;
-    if (!def || typeof def.cap !== "number") return Infinity;
+    if (!def) return Infinity;
+    // v3.330.0 (E1) : les ressources brutes ont leur propre plafond de base
+    var base = (typeof def.cap === "number") ? def.cap
+      : ((def.tier || "raw") === "raw" && typeof RAW_STOCK_BASE === "number") ? RAW_STOCK_BASE : null;
+    if (base === null) return Infinity;
 
     var bonus = (window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function")
       ? VillageBuildingManager.getLevel("warehouse") * WAREHOUSE_CAP_PER_LEVEL
       : 0;
-    return def.cap + bonus;
+    return base + bonus;
+  },
+
+  /* v3.330.0 (E1) : place libre avant le plafond (0 si un stock ancien le dépasse déjà). */
+  getFreeSpace: function (key) {
+    var cap = this.getCap(key);
+    if (cap === Infinity) return Infinity;
+    return Math.max(0, Math.floor(cap - Number((game.resources || {})[key] || 0)));
   },
 
   addResource: function (key, amount, silent) {
@@ -52,6 +63,10 @@ var WarehouseManager = {
     var current = Number(game.resources[key] || 0);
     var cap = this.getCap(key);
     var applied = Math.max(0, Math.min(amount, cap - current));
+    // v3.330.1 (E1) : ce qui ne rentre pas est perdu — on le dit au journal (chasses, sorties, récompenses)
+    if (applied < amount && typeof addLog === "function") {
+      addLog("📦 Entrepôt plein : " + formatNumber(amount - applied) + " " + def.name + " perdu(s)", "event");
+    }
     if (applied <= 0) return 0;
 
     game.resources[key] = current + applied;
@@ -87,8 +102,17 @@ var WarehouseManager = {
     return 1;
   },
 
+  /* v3.330.0 (économie du village, décision E6 option C de Seb) : plus de vente à l'Entrepôt.
+     La Taverne est le seul débouché (contrats) ; sellPrice reste la valeur de référence qui
+     calcule les contrats. La fonction reste pour les anciens appelants et répond « non ». */
+  SELLING_ENABLED: false,
+
   sellResource: function (key, amount) {
     this.ensure();
+    if (!this.SELLING_ENABLED) {
+      if (typeof showToast === "function") showToast("L'Entrepôt ne rachète plus rien : livre tes ressources à la Taverne", 2200);
+      return 0;
+    }
     if (typeof WAREHOUSE_RESOURCES === "undefined" || !WAREHOUSE_RESOURCES[key]) return 0;
 
     var available = this.getAmount(key);

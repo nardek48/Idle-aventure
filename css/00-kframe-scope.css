@@ -108,6 +108,11 @@ Deux responsabilités ici :
 .kframe .pc-sum-cell,
 .kframe .pc-sum-jump,
 .kframe .achievement-total,
+/* v3.338.0 : Hauts faits refondus (css/04-panel-achievements.css) */
+.kframe .hf-top,
+.kframe .hf-tiers,
+.kframe .hf-card,
+.kframe .hf-old-h,
 /* v3.242.0 (retour Seb) : trois conteneurs à fond clair oubliés — leur texte
    sortait en crème sur crème. .qb-cap-indicator (« Quêtes actives : x/3 »),
    .dungeon-ticket-badge (« Achat de ticket ») et .inv-sort-menu (menu Trier

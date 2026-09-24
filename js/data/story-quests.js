@@ -63,9 +63,9 @@ var STORY_REWARDS = {
   desert_08: { gold: 1000, essence: 35 }, // v3.311.0 : provisoire, même remarque
   desert_09: { gold: 1050, essence: 35 }, // v3.312.0 : provisoire, même remarque
   desert_10: { gold: 1100, essence: 40 }, // v3.312.0 : provisoire, même remarque
-  desert_11: { gold: 1150, essence: 40 }, // v3.314.0 (W-4a1) : provisoire, même remarque
-  desert_12: { gold: 1200, essence: 45 }, // v3.315.0 (W-4a2) : provisoire, même remarque
-  desert_13: { gold: 1250, essence: 45 }, // v3.316.0 (W-4b) : provisoire, même remarque
+  desert_11: { gold: 2150, essence: 40 }, // v3.314.0 (W-4a1) : provisoire ; v3.330.0 : +1 000 (banc « or par acte », E2/E6)
+  desert_12: { gold: 2200, essence: 45 }, // v3.315.0 (W-4a2) : provisoire ; v3.330.0 : +1 000
+  desert_13: { gold: 2250, essence: 45 }, // v3.316.0 (W-4b) : provisoire ; v3.330.0 : +1 000
   desert_14: { gold: 1300, essence: 50 }, // v3.317.0 (W-4c) : provisoire, même remarque
   desert_15: { gold: 1500, essence: 60 } // v3.319.0 (W-4d) : fin d'acte III, provisoire
 };
@@ -510,9 +510,10 @@ var STORY_QUESTS = {
           icon: "images/Icons/quests/quest_side.png",
           title: "Les Talents",
           points: [
-            { icon: "images/Icons/quests/quest_side.png", text: "Chaque niveau franchi te donne un point de talent à dépenser." },
-            { icon: "images/Icons/plots/preserved_wood.png", text: "Les talents sont propres à ta classe et améliorent tes mécaniques de combat (ex. durée de ta Défense, vitesse de ta jauge de célérité, sang-froid en cas de mort...)." },
-            { icon: "images/Icons/system/reset.png", text: "Rien n'est figé : tu peux réinitialiser tous tes talents contre de l'or (150 or par point déjà investi) si tu changes d'avis sur ta répartition." }
+            // v3.327.0 : talents par classe (conception Talents v1.1)
+            { icon: "images/Icons/quests/quest_side.png", text: "Chaque niveau franchi te donne un point de talent. Chaque acte de l'Histoire fixe combien tu peux en placer : le surplus attend en réserve." },
+            { icon: "images/Icons/plots/preserved_wood.png", text: "Ton arbre est propre à ta classe : un tronc, puis deux voies qui changent ta façon de combattre. Au bout de chaque voie, une clé de voûte — tu n'en choisiras qu'une." },
+            { icon: "images/Icons/system/reset.png", text: "Rien n'est figé : la réinitialisation est gratuite, hors d'une sortie en cours. Essaie, compare, recommence." }
           ]
         },
         check: function (game) { return storyCountTalentsBought(game) >= 1; },
@@ -967,7 +968,7 @@ STORY_QUESTS.desert = {
         icon: "images/Icons/codex/codex_lore.png",
         title: "Un choix qui pèse",
         points: [
-          { icon: "images/Icons/codex/codex_lore.png", text: "Certains choix ne se reprennent pas, même après une Ascension." },
+          { icon: "images/Icons/codex/codex_lore.png", text: "Certains choix ne se reprennent pas." }, // v3.335.0 : l'Ascension n'existe plus
           { icon: "images/Icons/scene/node_discovery.png", text: "Chacun des deux chemins apporte quelque chose que l'autre n'apporte pas." },
           { icon: "images/Icons/scene/node_unknown.png", text: "Rien ne te dira si tu as bien choisi." }
         ]

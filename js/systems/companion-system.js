@@ -114,6 +114,8 @@ var CompanionManager = {
   partyIds: function () {
     var self = this;
     return this.unlockedIds().filter(function (id) {
+      // v3.334.0 (P2) : un compagnon en patrouille quitte le groupe jusqu'à son retour
+      if (window.PatrolManager && PatrolManager.isOnPatrol(id)) return false;
       return !!self.state(id).present;
     }).slice(0, COMPANION_MAX_PRESENT);
   },

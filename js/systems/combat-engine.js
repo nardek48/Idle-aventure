@@ -52,7 +52,6 @@ var CELERITY_GAUGE_PER_ACTION = 1.0;  // jauge héros += célérité × coef par
    (sim/celerity-curve-bench.js) : laisse la Forêt EXACTEMENT telle qu'elle est (40 → 40). */
 var CELERITY_SOFT_CAP_K = 60;
 var ENEMY_CELERITY_GAUGE_COEF = 1.0;  // idem côté ennemi (le loup mord deux fois)
-var FRENZY_ATTACKS_REQUIRED = 8;      // Frénésie d'assaut : toutes les 8 Attaques (ex 20 taps)
 
 var ENEMY_CHARGE_ROUNDS_MIN = 3;      // ex 8-12 s → 3-5 rounds
 var ENEMY_CHARGE_ROUNDS_MAX = 5;
@@ -421,7 +420,7 @@ var CombatEngine = {
   },
 
   getGaugeGainPerAction: function () {
-    var talentMult = 1 + 0.15 * Number((game.talents && game.talents.t_auto_tap) || 0); // Main spectrale reconvertie
+    var talentMult = 1 + (window.TalentManager ? TalentManager.gaugeBonus() : 0); // v3.327.0 : Rythme (Rôdeur)
     var raw = this.getTotalCelerity() * CELERITY_GAUGE_PER_ACTION * talentMult;
     if (!(CELERITY_SOFT_CAP_K > 0) || raw <= 0) return raw;
     // v3.243.0 : rendements décroissants, voir CELERITY_SOFT_CAP_K en tête de fichier.
@@ -434,7 +433,7 @@ var CombatEngine = {
     if (game.heroGauge >= CELERITY_GAUGE_MAX) {
       game.heroGauge -= CELERITY_GAUGE_MAX;
       if (game.enemy && game.enemy.hp > 0) {
-        var bonusMult = 1 + 0.12 * Number((game.talents && game.talents.t_battle_trance) || 0); // Transe de bataille reconvertie
+        var bonusMult = window.TalentManager ? TalentManager.bonusStrikeMult() : 1; // v3.327.0 : Transe (Rôdeur)
         this.playerAttack(true, bonusMult);
         addLog("⚡ Frappe bonus (jauge de célérité pleine) !", "event");
       }
@@ -450,7 +449,8 @@ var CombatEngine = {
       ? ClassCombatManager.getBasicAttackMultiplier()
       : 1;
 
-    var dmg = Math.max(1, Math.floor(EquipmentManager.effectiveTapDamage() * classBasicMult * (extraMult || 1)));
+    var talentMult = window.TalentManager ? TalentManager.heroDamageMult(null, game.enemy) : 1; // v3.327.0 : Surtension
+    var dmg = Math.max(1, Math.floor(EquipmentManager.effectiveTapDamage() * classBasicMult * (extraMult || 1) * talentMult));
     var critChance = Math.max(0, EquipmentManager.effectiveCritChance() - getEnemyWillCritPenalty());
     var isCrit = chance(critChance);
 
@@ -465,6 +465,7 @@ var CombatEngine = {
     if (isCrit) {
       dmg = Math.floor(dmg * EquipmentManager.effectiveCritMult());
       if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("crits", 1);
+      if (window.TalentManager) TalentManager.onHeroCrit(); // v3.327.0 : Tir mortel
     }
 
     // v3.230.0 : Œil du faucon — les critiques mordent plus fort sur les Élites.
@@ -474,21 +475,7 @@ var CombatEngine = {
       dmg = Math.floor(dmg * (1 + 0.02 * Math.min(10, game._legFrenzyStacks)));
     }
 
-    if (game.enemy.isBoss && game.talents.t_war_instinct) dmg = Math.floor(dmg * (1 + 0.05 * game.talents.t_war_instinct));
-    if (game.enemy.isBoss && game.talents.t_boss_slayer) dmg = Math.floor(dmg * (1 + 0.08 * game.talents.t_boss_slayer));
-
-    if (game.talents.t_assault_frenzy && !isBonus) {
-      if (game._frenzyReady) {
-        dmg = Math.floor(dmg * (1 + 0.25 * game.talents.t_assault_frenzy));
-        game._frenzyReady = false;
-        showToast("💥 Frénésie d'assaut !", 1000);
-      }
-      game._frenzyTapCount = (game._frenzyTapCount || 0) + 1;
-      if (game._frenzyTapCount >= FRENZY_ATTACKS_REQUIRED) {
-        game._frenzyTapCount = 0;
-        game._frenzyReady = true;
-      }
-    }
+    // v3.327.0 : Instinct de guerre, Tueur de boss et Frénésie d'assaut retirés (talents par classe)
 
     this.dealDamage(dmg, isCrit, true);
 
@@ -532,6 +519,7 @@ var CombatEngine = {
 
       e._phasesDone[i] = true;
       if (ph.label) addLog("⚠️ " + e.name + " — " + ph.label, "event");
+      if (window.BossMomentManager) BossMomentManager.onPhase(e, ph); // v3.333.0 (B3) : bandeau de phase, vue seulement
 
       if (ph.archetype) {
         e.archetype = ph.archetype;   // « enraged » existe déjà : les dégâts montent avec les PV perdus
@@ -1127,11 +1115,12 @@ var CombatEngine = {
     var defense = Math.min(defenseCapNow, Number(game.heroDefensePct || 0) + barkBonus);
     dmg = Math.max(1, Math.floor(dmg * (1 - defense)));
 
+    var preClassDmg = dmg, evaded = false; // v3.327.0 : lu par les talents (Riposte, Écho, Contre-tir)
     if (activeDefense) {
       if (activeDefense.effectType === "damageReduction" || activeDefense.effectType === "damageAbsorption") {
         dmg = Math.max(0, Math.floor(dmg * (1 - activeDefense.value)));
       } else if (activeDefense.effectType === "evasion") {
-        if (chance(activeDefense.value * 100)) dmg = 0;
+        if (chance(activeDefense.value * 100)) { dmg = 0; evaded = true; }
       }
     }
 
@@ -1181,6 +1170,16 @@ var CombatEngine = {
         addLog("⚡ " + e.name + " enchaîne une seconde frappe !", "event");
         this.enemyStrike(1, true);
       }
+    }
+
+    /* v3.327.0 : crochet des talents, en DERNIER — une Riposte ou un Contre-tir peut tuer
+       l'ennemi et en faire venir un autre ; plus rien de cette frappe ne doit le lire ensuite. */
+    if (window.TalentManager && (game.heroHp || 0) > 0) {
+      TalentManager.onHeroStruck({
+        enemy: e, taken: dmg, evaded: evaded,
+        blocked: Math.max(0, preClassDmg - dmg) * (evaded ? 0 : 1),
+        defenseType: activeDefense ? activeDefense.effectType : null
+      });
     }
   },
 
@@ -1438,6 +1437,7 @@ var CombatEngine = {
       var res = game.classResource;
       res.current = Math.min(res.max, Number(res.current || 0) + Math.floor(res.max * 0.10));
     }
+    if (window.TalentManager) TalentManager.onCombatStart(); // v3.327.0 : Sang chaud, Brasier
 
     if (typeof renderEnemy === "function") renderEnemy();
     if (typeof renderHud === "function") renderHud();
@@ -1485,9 +1485,7 @@ var CombatEngine = {
       return;
     }
 
-    // v3.101.0 : t_essence_bloom « Sang-froid » = 10 % PV max conservés par niveau à la défaite (au lieu de -pénalité d'or)
-    var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
-    game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
+    game.heroHp = 0; // v3.327.0 : Sang-froid retiré (décision T9)
 
     if (typeof openCombatReport === "function") openCombatReport("defeat", game.enemy ? game.enemy.name : null);
 
@@ -1544,10 +1542,6 @@ var CombatEngine = {
       if (window.CombatReportManager) CombatReportManager.logArchetypeImpact("armoredDamageLost", preArmoredDmg - dmg);
     }
 
-    if (foe.isBoss && game.talents.t_perfect_execution && foe.maxHp > 0 && (foe.hp / foe.maxHp) < 0.2) {
-      dmg *= (1 + 0.15 * game.talents.t_perfect_execution);
-    }
-
     foe.hp -= dmg;
     // v3.268.0 (L-2) : la menace va à l'allié qui vient de frapper. Sans cette ligne,
     // seuls les compagnons en accumulaient et le héros, coincé au plancher, ne recevait
@@ -1563,6 +1557,7 @@ var CombatEngine = {
 
     if (foe.hp <= 0) this.killEnemy(foe);
     else if (typeof renderEnemyHp === "function") renderEnemyHp();
+    return dmg; // v3.328.0 : dégâts réellement infligés (lisible par un appelant)
   },
 
     /* v3.266.0 (L-0) : `enemyArg` (optionnel) désigne l'ennemi qui tombe. Sans lui, la
@@ -1574,6 +1569,7 @@ var CombatEngine = {
   killEnemy: function (enemyArg) {
     var enemy = enemyArg || game.enemy;
     if (!enemy) return;
+    if (window.TalentManager) TalentManager.onEnemyKilled(enemy); // v3.327.0 : Soif du bourreau, Brasier
 
     if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
       game.totalKills += 1;
@@ -1624,11 +1620,7 @@ var CombatEngine = {
       }
     }
 
-    var merchantBonusGold = 0;
-    if (game.talents.t_merchant_instinct && chance(5 * game.talents.t_merchant_instinct)) {
-      merchantBonusGold = Math.floor(goldGain * 0.5);
-      goldGain += merchantBonusGold;
-    }
+    var merchantBonusGold = 0; // v3.327.0 : Instinct marchand retiré (branche Fortune, T4)
 
     /* v3.230.0 : Prospecteur — un boss sur dix rapporte le double. */
     if (enemy.isBoss && this.hasPower("leg_prospecteur") && chance(10)) {
@@ -1713,6 +1705,8 @@ var CombatEngine = {
 
     showGoldPopup(goldGain);
     addLog((enemy.isBoss ? "👑 Boss vaincu : " : "⚔️ Ennemi vaincu : ") + enemy.name + " (+" + formatNumber(goldGain) + " or)", enemy.isBoss ? "boss" : "normal");
+    if (window.AchievementManager) AchievementManager.onEnemyKilled(enemy); // v3.338.0 : compteurs des Hauts faits (Grimoire, orc sans potion)
+    if (enemy.isBoss && window.BossMomentManager) BossMomentManager.onBossKilled(enemy); // v3.333.0 (B4, B5) : trophée, coup final
     if (merchantBonusGold > 0) {
       addLog("📜 Instinct marchand : bonus de +" + formatNumber(merchantBonusGold) + " or", "event");
     }
@@ -1727,7 +1721,6 @@ var CombatEngine = {
         lootChance *= AfflictionManager.getCombinedModifiers().lootChanceMult;
       }
       var rolls = 1;
-      if (game.talents.t_astral_prospecting && chance(5 * game.talents.t_astral_prospecting)) rolls = 2;
 
       for (var r = 0; r < rolls; r++) {
         if (window.LootSystem && typeof LootSystem.rollDrop === "function" && chance(lootChance)) {
@@ -1802,12 +1795,11 @@ var CombatEngine = {
     var events = [
       function () {
         var bonus = randInt(10, 50);
-        if (game.talents.t_deep_pockets) bonus = Math.floor(bonus * (1 + 0.10 * game.talents.t_deep_pockets));
         CombatEngine.grantGold(bonus);
         addLog("💰 Trésor trouvé ! +" + bonus + " or", "event");
         showToast("💰 +" + bonus + " or", 1400);
         if (window.QuestManager && typeof QuestManager.track === "function") {
-          QuestManager.track("treasures", 1 + (game.talents.t_treasure_hunter || 0));
+          QuestManager.track("treasures", 1);
         }
       },
       function () {

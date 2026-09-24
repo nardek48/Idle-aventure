@@ -743,6 +743,10 @@ var SCENE_TEMPLATES = {
     // Monde de l'usure : peu d'ennemis, longs à tomber. Une vague compte des rencontres (une
     // nuée ou une paire vaut un cran). Mesuré au banc.
     combatWaveRange: [2, 3],
+    // v3.331.0 (suite du recalage, R1) : force des combats de ce canevas (scene-run-system.js).
+    // Mesuré (plafond-bench --only padesert) : 100 %, 65-71 % de PV, 0-0,4 potion, combats ×2.
+    combatPowerMult: 3.5,
+    combatHpMult: 2.3,
     finalBoss: false, // pas de boss en Petite Aventure du Désert (conception §8.2)
     blockerDurationRange: [300000, 600000],
 

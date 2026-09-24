@@ -24,7 +24,11 @@
    run ciblé (un seul secteur, jamais en cascade) et sur l'ASCENSION (tout ce
    que la Palissade ne tient pas). L'Ascension est appliquée paresseusement par
    ensureDefaults() en comparant game.ascensionCount au repère persisté —
-   aucune accroche dans ascendNow() ni hardResetState(). */
+   aucune accroche dans ascendNow() ni hardResetState().
+   v3.335.0 : depuis la Mémoire (v3.322.0), l'Ascension n'existe plus et ascensionCount ne
+   bouge plus : cette reprise ne se déclenche jamais. Code gardé, inoffensif. Seul l'ÉCHEC fait
+   avancer le Recouvrement ; la Palissade le freine et protège ses anneaux tenus (décision
+   Seb 24/09/2026, option A : textes seuls). */
 
 var LivingMapManager = {
   STATES: ["voile", "libere", "recouvert"],
@@ -75,7 +79,7 @@ var LivingMapManager = {
     openElsewhere: "La brume attend encore ailleurs",
     homeTitle: "Aeswyn tient la clairière.",
     homeLore: "Le village hors du Cycle. Les trois secteurs de l'anneau 1 sont toujours à portée.",
-    intro: "Touche un secteur pour voir ce qu'on en sait. Le Recouvrement ne reprend que ce qu'on lui laisse : un échec, ou l'Ascension.",
+    intro: "Touche un secteur pour voir ce qu'on en sait. Le Recouvrement ne reprend que ce qu'on lui laisse, quand une expédition échoue.",
     runLoot: "Sève du run seule",
     mapBlurb: "Choisis un secteur sur la carte de la Forêt : chaque expédition repousse la brume."
   },
@@ -450,7 +454,14 @@ var LivingMapManager = {
     if (!map || !content || !window.EliteManager || !window.SortieManager) return { ok: false, reason: "Combat indisponible" };
     if (!window.ELITE_DB || !ELITE_DB[content.eliteId]) return { ok: false, reason: "Élite inconnue" };
     if (window.heroLockReason && heroLockReason()) return { ok: false, reason: heroLockReason() }; // v3.307.0
+    // v3.330.0 (E4) : vivres de sortie pour une élite rejouée (secteur déjà libéré)
+    var foodRef = { mapId: mapId, sectorId: sectorId, worldId: map.worldId };
+    if (window.ProvisionsManager) {
+      var noFood = ProvisionsManager.check("mapelite", foodRef);
+      if (noFood) return { ok: false, reason: noFood };
+    }
     this.ensureDefaults();
+    if (window.ProvisionsManager) ProvisionsManager.consume("mapelite", foodRef);
     game.livingMaps.fight = { mapId: mapId, sectorId: sectorId, eliteId: content.eliteId };
     SortieManager.end("return"); // un farm en cours est rangé, comme pour une quête ou une chasse
     if (!SortieManager.start("mapelite")) { game.livingMaps.fight = null; return { ok: false, reason: "Une sortie est déjà en cours." }; }
@@ -538,8 +549,7 @@ var LivingMapManager = {
     if (!f) return false;
     game.livingMaps.fight = null;
     var report = this.onRunEnd(f.mapId, f.sectorId, "fail");
-    var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
-    game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
+    game.heroHp = 0; // v3.327.0 : Sang-froid retiré (décision T9)
     game.justDied = true;
     if (typeof showToast === "function" && report.message) showToast(report.message, 2600);
     if (typeof switchTab === "function") switchTab("campement");
@@ -687,6 +697,7 @@ var LivingMapManager = {
     if (!s || this.STATES.indexOf(state) < 0) return false;
     if (state === "voile" && s.state !== "voile") return false; // ce qui a été vu reste vu
     if (state === "libere" && s.state !== "libere") s.liberatedCount += 1;
+    if (state === "libere" && s.state === "recouvert" && window.AchievementManager) AchievementManager.onSectorRetaken(mapId); // v3.338.0
     s.state = state;
     if (typeof addLog === "function") addLog("Carte : " + sectorId + " -> " + state + " (" + (reason || "sans raison") + ")", "event");
     return true;

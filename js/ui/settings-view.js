@@ -30,6 +30,18 @@ function buildSettingsHTML() {
   h += '<button class="settings-btn" onclick="switchTab(\'grimoire\')"><img class=ico-inline src=images/Icons/codex/codex_lore.png> Grimoire de tactiques</button>';
   h += '</div>';
 
+  // v3.332.0 (Évolutions, F4 et B4) : préférences d'affichage de CET appareil (Prefs, hors sauvegarde)
+  if (window.Prefs) {
+    h += '<div class="panel-card">';
+    h += '<h3><img class=ico-inline src=images/Icons/system/settings.png> Affichage</h3>';
+    h += '<label class="settings-toggle-row"><span>Fil rouge (bouton à côté du portrait)</span>'
+      + '<input type="checkbox"' + (Prefs.get("filRouge") ? ' checked' : '') + ' onchange="setDisplayPref(\'filRouge\', this.checked)"></label>';
+    h += '<label class="settings-toggle-row"><span>Mises en scène des boss</span>'
+      + '<input type="checkbox"' + (Prefs.get("bossMoments") ? ' checked' : '') + ' onchange="setDisplayPref(\'bossMoments\', this.checked)"></label>';
+    h += '<p class="panel-sub">Le fil rouge propose ta prochaine action. Les mises en scène : carte d\'entrée, changement de phase, coup final et trophée. Réglages propres à cet appareil.</p>';
+    h += '</div>';
+  }
+
   h += '<button class="settings-btn danger" onclick="resetGame()">Réinitialiser tout</button>';
 
   h += '<div class="panel-card">';
@@ -97,4 +109,12 @@ function unlockAllTabsFromSettings() {
 
 window.buildSettingsHTML = buildSettingsHTML;
 window.toggleAutoSkills = toggleAutoSkills;
+
+/* v3.332.0 : préférence d'affichage (Prefs). Le HUD relit le fil rouge à l'image suivante. */
+function setDisplayPref(key, value) {
+  if (!window.Prefs) return;
+  Prefs.set(key, value);
+  if (typeof renderHud === "function") renderHud();
+}
+window.setDisplayPref = setDisplayPref;
 window.unlockAllTabsFromSettings = unlockAllTabsFromSettings;

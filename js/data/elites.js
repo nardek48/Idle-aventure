@@ -73,7 +73,10 @@ var ELITE_DB = {
     baseId: "bramble",
     name: "Ronce qui se souvient",
     archetype: "enraged",
-    statMult: { endurance: 2.4, power: 1.11, celerity: 1.0 },
+    /* v3.326.0 (plan C-2) : 1,11 / 2,4 -> 1,4 / 2,8. Banc sim/plafond-bench.js, acte III de la
+       Forêt (entr. 60, vitrine, sans Wenna) : 100 %, 30-46 rounds, 46-48 % de PV, 1,4-1,8
+       potion. À 1,6 / 3 le Chevalier finit à 24 % de PV. */
+    statMult: { endurance: 2.8, power: 1.4, celerity: 1.0 },
     lore: "Elle a poussé sur de la cendre, et la cendre ne l'a pas quittée. Quand on la coupe, "
       + "elle chauffe au lieu de saigner.",
     questIcon: "./images/Icons/quest_icons/elite/elite4.png",
@@ -115,7 +118,13 @@ var ELITE_DB = {
        seul, EliteManager.spawn ne rebâtissant pas le groupe sans escorte). Les valeurs
        tiennent : 50 / 52 / 60 % de PV, 0,6 potion pour le Chevalier. La « non-monotonie »
        signalée en v3.317.0 venait du banc, pas du jeu. */
-    statMult: { endurance: 1.6, power: 2.6, celerity: 1.0 },
+    /* v3.326.0 (plan C-2, décision Seb 23/09/2026 : plus long, plus dur, compagnons comptés) :
+       2,6 / 1,6 -> 4 / 3,5. Première étape de l'acte III : calée sur le plafond de l'acte
+       PRÉCÉDENT (entr. 90, équipement de Forêt), le joueur n'ayant pas encore monté son Terrain.
+       Banc sim/plafond-bench.js, 30 runs : à 90, 100 %, 34-44 rounds, 1,1-1,8 potion ; à 110,
+       plus sûr ; fin d'acte III (Mar) sans difficulté. Le 5 / 4 proposé d'abord tombait à
+       13-57 % à 90 d'entraînement. */
+    statMult: { endurance: 3.5, power: 4, celerity: 1.0 },
     lore: "L'armure est vide. Ce qui la tient debout n'est pas un homme : c'est une phrase, "
       + "dite il y a longtemps à quelqu'un qui n'est jamais revenu l'en délier.",
     // Icône propre, pas encore générée : jamais d'emprunt à une autre image (règle Seb 18/09/2026).
@@ -142,7 +151,10 @@ var ELITE_DB = {
        le combat.
        v3.318.0 : recontrôlé au banc corrigé — 51 / 58 / 64 % de PV, 0,8 potion pour le
        Chevalier. La non-monotonie signalée en v3.317.0 venait du banc. */
-    statMult: { endurance: 1.0, power: 2.8, celerity: 1.0 },
+    /* v3.326.0 (plan C-2) : 2,8 / 1,0 -> 4,3 / 3,5. Banc sim/plafond-bench.js, 40 runs, fin
+       d'acte III (Mar) : 83 / 83 / 88 %, 17-22 rounds, 1,4-1,7 potion. Les trois classes
+       alignées. À 5 / 3,5 : 30 / 47 / 60 %. */
+    statMult: { endurance: 3.5, power: 4.3, celerity: 1.0 },
     lore: "La dune bouge avant lui. Quand le dard sort, l'eau des mares a déjà baissé : "
       + "il boit d'abord, il frappe ensuite.",
     // Icône propre, pas encore générée : jamais d'emprunt (règle Seb 18/09/2026).
@@ -157,7 +169,10 @@ var ELITE_DB = {
     baseId: "foresttroll",
     name: "L'Arbre-mère",
     archetype: "shielded",
-    statMult: { endurance: 2.6, power: 1.05, celerity: 0.8 },
+    /* v3.331.0 (suite du recalage, R2) : 2,6 / 1,05 -> 6 / 2,5. Calé sur la PREMIÈRE rencontre
+       possible (début de l'acte III, secteur voisin du gué) : 100 %, 1,2 à 1,6 potion, combat ×4.
+       À 9 / 4 (fin de Forêt), elle était un mur au début de l'acte III (0 %). */
+    statMult: { endurance: 6, power: 2.5, celerity: 0.8 },
     lore: "Ce n'est pas un arbre qui a poussé. C'est quelque chose qui a pris la forme d'un arbre "
       + "pour qu'on cesse de le regarder. Le battement vient de dessous.",
     questIcon: "./images/Icons/quest_icons/elite/elite2.png",

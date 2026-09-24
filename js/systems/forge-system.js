@@ -137,7 +137,14 @@ var ForgeManager = {
        Chitine du Dard. Même règle que la Résine au palier précédent : le matériau du monde
        accompagne les niveaux que ce monde ouvre. */
     if (target > seuil * 2) cost.chitine_profondeurs = target - seuil * 2;
+    // v3.330.0 (E2) : reforges de l'arme exigées par l'Histoire -> or et matériaux du monde seulement
+    if (this.isStoryReforge(slot, target) && typeof stripStoryMaterials === "function") cost = stripStoryMaterials(cost).cost;
     return cost;
+  },
+
+  isStoryReforge: function (slot, target) {
+    var max = (typeof STORY_WEAPON_REFORGE_LEVELS === "number") ? STORY_WEAPON_REFORGE_LEVELS : 4;
+    return slot === "weapon" && target <= max;
   },
 
   canAfford: function (slot) {

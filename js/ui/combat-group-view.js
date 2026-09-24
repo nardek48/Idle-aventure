@@ -92,9 +92,9 @@ function buildEnemyRowHTML() {
 function renderEnemyRow() {
   var host = document.getElementById("enemy-row");
   if (!host) return;
-  var html = buildEnemyRowHTML();
-  if (host.innerHTML === html) return;
-  host.innerHTML = html;
+  // v3.329.0 : comparaison sur la chaîne gardée (combat-view.js, setHtmlIfChanged) ; innerHTML
+  // resérialisé ne redonnait pas la chaîne d'origine et la rangée était réécrite à chaque image.
+  setHtmlIfChanged(host, buildEnemyRowHTML());
 }
 
 /* Tap sur un portrait : cible collante. Elle tient jusqu'à la mort de l'ennemi visé,
@@ -157,9 +157,9 @@ function buildAllyRowHTML() {
 function renderAllyRow() {
   var host = document.getElementById("ally-row");
   if (!host) return;
-  var html = buildAllyRowHTML();
-  if (host.innerHTML === html) return;
-  host.innerHTML = html;
+  // v3.329.0 : comparaison sur la chaîne gardée (combat-view.js, setHtmlIfChanged) ; innerHTML
+  // resérialisé ne redonnait pas la chaîne d'origine et la rangée était réécrite à chaque image.
+  setHtmlIfChanged(host, buildAllyRowHTML());
 }
 
 /* Carte du héros dans la rangée. Elle existe pour deux raisons : on ne perd jamais ses

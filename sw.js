@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.324.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.338.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -85,6 +85,7 @@ var PRECACHE_APP_SHELL = [
   "./css/05-overlays.css",
   "./css/06-map.css",
   "./css/04-panel-living-map.css",
+  "./css/04-panel-evolutions.css",
   "./css/07-responsive.css",
   "./css/99-icon-assets.css",
   "./js/core/constants.js",
@@ -98,6 +99,8 @@ var PRECACHE_APP_SHELL = [
   "./js/data/bosses.js",
   "./js/data/class-skills.js",
   "./js/data/companions.js",
+  "./js/data/boss-moments.js",
+  "./js/data/patrols.js",
   "./js/data/classes.js",
   "./js/data/codex.js",
   "./js/data/dungeon.js",
@@ -106,7 +109,7 @@ var PRECACHE_APP_SHELL = [
   "./js/data/heroes.js",
   "./js/data/living-maps.js",
   "./js/data/potions.js",
-  "./js/data/talents.js",
+  "./js/data/talent-trees.js",
   "./js/data/upgrades.js",
   "./js/data/memory.js",
   "./js/data/adventure-quests.js",
@@ -136,11 +139,18 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/enchant-system.js",
   "./js/systems/equipment-system.js",
   "./js/systems/loot-system.js",
+  "./js/systems/prefs-system.js",
+  "./js/systems/return-system.js",
+  "./js/systems/fil-rouge-system.js",
+  "./js/systems/boss-moment-system.js",
+  "./js/systems/patrol-system.js",
   "./js/systems/offline-system.js",
   "./js/systems/camp-system.js",
+  "./js/systems/provisions-system.js",
   "./js/systems/resume-system.js",
   "./js/systems/potion-system.js",
   "./js/systems/progression-system.js",
+  "./js/systems/talent-system.js",
   "./js/systems/world-travel-system.js",
   "./js/systems/save-system.js",
   "./js/systems/stats-system.js",
@@ -166,6 +176,10 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/companions-view.js",
   "./js/ui/heros-view.js",
   "./js/ui/hud-view.js",
+  "./js/ui/fil-rouge-view.js",
+  "./js/ui/return-view.js",
+  "./js/ui/boss-moment-view.js",
+  "./js/ui/patrol-view.js",
   "./js/ui/log-view.js",
   "./js/ui/map-view.js",
   "./js/ui/living-map-view.js",

@@ -254,6 +254,7 @@ function buildTitleScreenLoadListHTML() {
       html += '  <img src="images/TitleScreen/cadre_slot.png" alt="" class="title-slot-card-bg">';
       html += '  <div class="title-slot-body">';
       html += '    <div class="title-slot-name">' + esc(summary.playerName || ("Emplacement " + i)) + '</div>';
+      if (summary.heroTitle) html += '    <div class="title-slot-stat title-slot-heroic-title">' + esc(summary.heroTitle) + '</div>'; // v3.338.0 (H8)
       html += '    <div class="title-slot-stat"><span class="title-slot-stat-icon"><img class=ico-inline src=images/Icons/classes/hero_level.png></span>Niveau ' + esc(formatNumber(summary.heroLevel)) + (worldName ? ' · ' + esc(worldName) : '') + '</div>';
       html += '    <div class="title-slot-stat"><span class="title-slot-stat-icon">◷</span>Temps de jeu : ' + esc(formatPlayTimeClock(summary.playTime)) + '</div>';
       if (summary.savedAt) {

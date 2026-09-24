@@ -47,6 +47,10 @@ function buildVillageCostListHTML(id) {
   });
 
   var h = '<div class="vb-cost-list">';
+  // v3.330.0 (E2) : niveau exigé par l'Histoire, matériaux communs fournis
+  if (VillageBuildingManager.isNextLevelStoryProvided && VillageBuildingManager.isNextLevelStoryProvided(id)) {
+    h += '<div class="vb-cost-where vb-cost-provided">Matériaux fournis par le village (niveau exigé par l\u2019Histoire)</div>';
+  }
   keys.forEach(function (key) {
     var meta = getVillageCostMeta(key);
     var ok = !!afford[key];
@@ -507,6 +511,9 @@ function buildForgeBoardHTML() {
     }
 
     if (cost) {
+      if (ForgeManager.isStoryReforge && ForgeManager.isStoryReforge(slot, level + 1)) {
+        h += '<div class="forge-board-note">Matériaux fournis par le village (reforge exigée par l\u2019Histoire)</div>';
+      }
       h += '<div class="forge-row-cost">';
       Object.keys(cost).forEach(function (key) {
         var meta = getVillageCostMeta(key);

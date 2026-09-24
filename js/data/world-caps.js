@@ -33,6 +33,35 @@ var WORLD_CAPS = [
   }
 ];
 
+/* v3.325.0 (plan C-1, décision Seb 23/09/2026) — PLAFOND DU TERRAIN PAR ACTE.
+   Le plafond par monde ouvrait 110 d'entraînement dès la première étape du Désert : deux
+   joueurs au même point de l'Histoire pouvaient avoir 30 ou 110. Le Terrain d'entraînement
+   est désormais plafonné aussi par l'acte atteint (étape de début d'acte, lue sur
+   StoryQuestManager.isStepReached). Seules les entrées du plus haut monde atteint comptent ;
+   un monde sans entrée n'a pas de plafond d'acte. Rien de déjà construit n'est repris. */
+var TRAINING_CAP_BY_ACT = [
+  { worldIndex: 0, stepId: "forest_01", act: "I", terrain: 0 },       // entraînement 20
+  { worldIndex: 0, stepId: "forest_06", act: "II", terrain: 2 },      // 40
+  { worldIndex: 0, stepId: "forest_crossing", act: "III", terrain: 4 }, // 60, acte IV compris
+  { worldIndex: 1, stepId: "desert_01", act: "I", terrain: 5 },       // 70
+  { worldIndex: 1, stepId: "desert_06", act: "II", terrain: 7 },      // 90
+  { worldIndex: 1, stepId: "desert_11", act: "III", terrain: 9 }      // 110
+];
+
+/* v3.327.0 (conception Talents v1.1, T2 option B) — PLAFOND DE POINTS DE TALENT PAR ACTE.
+   Même lecture que le Terrain : plus haut monde atteint, étape de début d'acte. Un monde sans
+   entrée n'a pas de plafond. Valeurs provisoires, réglées au banc (lot T-3). */
+var TALENT_CAP_BY_ACT = [
+  { worldIndex: 0, stepId: "forest_01", act: "I", points: 0 },
+  { worldIndex: 0, stepId: "forest_crossing", act: "III", points: 5 },  // acte IV compris
+  { worldIndex: 1, stepId: "desert_01", act: "I", points: 7 },
+  { worldIndex: 1, stepId: "desert_06", act: "II", points: 9 },
+  { worldIndex: 1, stepId: "desert_11", act: "III", points: 11 }
+];
+
+/* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ». */
+var WORLD_CAPS_DE = ["de la", "du", "des", "de la", "de la", "de la"];
+
 /* Préposition devant chaque nom de monde : « s'ouvre au Désert », « aux Ruines ». */
 var WORLD_CAPS_PREP = ["à la", "au", "aux", "à la", "à la", "à la"];
 
@@ -65,8 +94,50 @@ var WorldCaps = {
   /* Plafond d'un bâtiment du village (Infinity si non plafonné). */
   getVillageCap: function (id) {
     var e = this.getEntry();
-    if (!e || !e.village || typeof e.village[id] !== "number") return Infinity;
-    return e.village[id];
+    var cap = (!e || !e.village || typeof e.village[id] !== "number") ? Infinity : e.village[id];
+    if (id === "training") cap = Math.min(cap, this.getTrainingActCap()); // v3.325.0
+    return cap;
+  },
+
+  /* v3.325.0 : niveau de Terrain permis par l'acte atteint dans le plus haut monde atteint.
+     Infinity si ce monde n'a pas d'entrée dans TRAINING_CAP_BY_ACT. */
+  getTrainingActCap: function () {
+    var world = this.getReachedWorldIndex(), cap = Infinity;
+    var SQ = window.StoryQuestManager;
+    TRAINING_CAP_BY_ACT.forEach(function (a) {
+      if (a.worldIndex !== world) return;
+      if (cap === Infinity) cap = a.terrain; // premier acte du monde : toujours permis
+      if (SQ && typeof SQ.isStepReached === "function" && SQ.isStepReached(a.stepId)) cap = Math.max(cap === Infinity ? 0 : cap, a.terrain);
+    });
+    return cap;
+  },
+
+  /* v3.327.0 : points de talent permis par l'acte atteint (Infinity hors table). */
+  getTalentActCap: function () {
+    var world = this.getReachedWorldIndex(), cap = Infinity;
+    var SQ = window.StoryQuestManager;
+    TALENT_CAP_BY_ACT.forEach(function (a) {
+      if (a.worldIndex !== world) return;
+      if (cap === Infinity) cap = a.points; // premier acte du monde : toujours permis
+      if (SQ && typeof SQ.isStepReached === "function" && SQ.isStepReached(a.stepId)) cap = Math.max(cap, a.points);
+    });
+    return cap;
+  },
+
+  /* v3.325.0 : où s'ouvre le niveau `level` d'un bâtiment. Pour le Terrain, le premier acte
+     pas encore atteint qui l'ouvre (« à l'acte II du Désert oublié ») ; sinon le monde. */
+  getCapOpening: function (id, level) {
+    if (id === "training") {
+      var SQ = window.StoryQuestManager, world = this.getReachedWorldIndex();
+      for (var i = 0; i < TRAINING_CAP_BY_ACT.length; i++) {
+        var a = TRAINING_CAP_BY_ACT[i];
+        if (a.worldIndex < world || a.terrain < level) continue;
+        if (a.worldIndex === world && SQ && SQ.isStepReached(a.stepId)) continue;
+        var w = (typeof WORLDS !== "undefined") ? WORLDS[a.worldIndex] : null;
+        if (w) return "à l'acte " + a.act + " " + (WORLD_CAPS_DE[a.worldIndex] || "de") + " " + w.name;
+      }
+    }
+    return this.getWorldOpening(id, level);
   },
 
   getZoneRows: function () { var e = this.getEntry(); return e ? e.zoneRows : Infinity; },
@@ -88,4 +159,6 @@ var WorldCaps = {
 };
 
 window.WORLD_CAPS = WORLD_CAPS;
+window.TRAINING_CAP_BY_ACT = TRAINING_CAP_BY_ACT;
+window.TALENT_CAP_BY_ACT = TALENT_CAP_BY_ACT;
 window.WorldCaps = WorldCaps;

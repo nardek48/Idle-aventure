@@ -10,7 +10,6 @@ function getCampOfflineRegenCap() {
   return (window.MemoryManager && MemoryManager.has("repos_camp")) ? 0.75 : CAMP_OFFLINE_REGEN_CAP_PCT;
 }
 window.getCampOfflineRegenCap = getCampOfflineRegenCap;
-var CAMP_REGEN_TALENT_BONUS_PER_LEVEL = 0.25; // t_last_stand « Repos du guerrier » : +25 % de vitesse par niveau
 
 var CampManager = {
   ensureDefaults: function () {
@@ -27,9 +26,8 @@ var CampManager = {
   },
 
   getRegenPctPerMin: function () {
-    var lvl = (game.talents && game.talents.t_last_stand) || 0;
     var repos = (window.MemoryManager && MemoryManager.has("repos_camp")) ? 1.5 : 1; // v3.322.0 : Repos du camp
-    return CAMP_REGEN_PCT_PER_MIN * (1 + lvl * CAMP_REGEN_TALENT_BONUS_PER_LEVEL) * repos;
+    return CAMP_REGEN_PCT_PER_MIN * repos; // v3.327.0 : « Repos du guerrier » retiré (doublon de Repos du camp)
   },
 
   /* La régénération court hors combat (héros à terre inclus) : jamais pendant un combat actif ni pendant

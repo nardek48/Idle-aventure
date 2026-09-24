@@ -310,14 +310,32 @@ function closeCombatStatesSheet() {
 window.openCombatStatesSheet = openCombatStatesSheet;
 window.closeCombatStatesSheet = closeCombatStatesSheet;
 
+/* v3.329.0 (bug « Il approche », Seb) — N'ÉCRIRE QUE SI ÇA A CHANGÉ.
+   renderEnemyStatusBar est appelée à CHAQUE image par la boucle (game-loop -> renderEnemyHp).
+   Réécrire innerHTML remplaçait le bouton du bandeau 60 fois par seconde :
+     - souris : l'appui et le relâcher tombent sur deux boutons différents, pas de click ;
+     - iPhone : le doigt reste sur un bouton retiré du document, touchend ne remonte plus
+       jusqu'au document, donc ni click natif ni secours de tap (tap-rescue.js) ;
+     - en mode mobile du navigateur, le secours clique au relâcher : ça marchait par chance.
+   La chaîne produite est gardée sur l'hôte ; on ne réécrit que si elle diffère, ou si le
+   contenu a été remplacé par quelqu'un d'autre. On ne compare pas à innerHTML : sa
+   sérialisation (guillemets, entités) ne redonne jamais la chaîne d'origine. */
+function setHtmlIfChanged(host, html) {
+  if (!host) return false;
+  if (host.__cbHtml === html && host.__cbFirst === host.firstChild) return false;
+  host.innerHTML = html;
+  host.__cbHtml = html;
+  host.__cbFirst = host.firstChild;
+  return true;
+}
+window.setHtmlIfChanged = setHtmlIfChanged;
+
 function renderEnemyStatusBar() {
-  var alertHost = document.getElementById("combat-alert-bar");
-  if (alertHost) alertHost.innerHTML = buildCombatAlertHTML();
-  var statesHost = document.getElementById("enemy-status-bar");
-  if (statesHost) statesHost.innerHTML = buildCombatStatesHTML();
+  setHtmlIfChanged(document.getElementById("combat-alert-bar"), buildCombatAlertHTML());
+  setHtmlIfChanged(document.getElementById("enemy-status-bar"), buildCombatStatesHTML());
   // La feuille ouverte suit l'évolution du combat plutôt que d'afficher un état périmé.
   var sheetHost = document.getElementById("combat-states-modal-root");
-  if (sheetHost && sheetHost.innerHTML) sheetHost.innerHTML = buildCombatStatesSheetHTML();
+  if (sheetHost && sheetHost.innerHTML) setHtmlIfChanged(sheetHost, buildCombatStatesSheetHTML());
 }
 
 /* Alias historique : plusieurs systèmes appellent encore buildEnemyStatusBarHTML(). */
@@ -455,6 +473,7 @@ window.buildCombatSortieHTML = buildCombatSortieHTML;
 window.confirmFlee = confirmFlee;
 
 function renderCombatControls() {
+  if (window.AchievementManager) AchievementManager.onModeShown(game.combatMode); // v3.338.0 : bascule de mode pendant un combat
   var host = document.getElementById("combat-controls-root");
   if (host) host.innerHTML = buildCombatControlsHTML();
   /* v3.275.0 : la célérité vit désormais dans la jauge de ressource (voile translucide,
@@ -534,6 +553,11 @@ window.renderCombatMissionProgress = renderCombatMissionProgress;
 
 function renderEnemy() {
   if (!game.enemy) return;
+
+  // v3.338.0 : un nouvel ennemi à l'écran = un nouveau combat (Hauts faits : potion, bascule de mode)
+  if (game.activeTab === "combat" && window.AchievementManager) AchievementManager.onFightStart(game.enemy);
+  // v3.333.0 (B2) : carte d'entrée d'un boss ou d'une élite, une fois par rencontre, à l'écran de combat
+  if (game.activeTab === "combat" && game.enemy.isBoss && window.BossMomentManager) BossMomentManager.onEnemyShown(game.enemy);
 
   renderCombatMissionProgress();
 

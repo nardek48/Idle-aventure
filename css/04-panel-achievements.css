@@ -73,3 +73,77 @@
    category*) ont déménagé vers css/00-components.css sous des noms
    génériques (.nb-accordion-section*), partagées avec Codex et
    Bestiaire. */
+
+/* ============================================================
+   v3.338.0 — Refonte des Hauts faits (conception v1.0, atelier-hauts-faits.html)
+   Conteneurs clairs enregistrés dans 00-kframe-scope.css : .hf-top, .hf-tiers,
+   .hf-card, .hf-old-h (règle [ENCRE]).
+============================================================ */
+.hf-top { display: flex; align-items: center; gap: 8px; background: #f6ecd9; border: 1px solid #dcc79c; border-radius: 12px; padding: 8px 10px; color: #3a2c1a; margin-bottom: 8px; }
+.hf-count { flex: 0 0 auto; font-size: 18px; font-weight: 900; color: #6b4a22; line-height: 1; white-space: nowrap; }
+.hf-count small { display: block; font-size: 10px; font-weight: 800; color: #8a6a3c; letter-spacing: 0.3px; text-transform: uppercase; margin-top: 3px; }
+.hf-title-btn { flex: 1 1 auto; min-width: 0; text-align: left; font: inherit; background: #eddcb9; border: 1px dashed #b98a4a; border-radius: 10px; padding: 5px 8px; cursor: pointer; color: #3a2c1a; }
+.hf-title-btn small { display: block; font-size: 9.5px; font-weight: 900; color: #8a6a3c; text-transform: uppercase; letter-spacing: 0.3px; }
+.hf-title-btn b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.hf-claim-all { flex: 0 0 auto; font: inherit; font-size: 12px; font-weight: 800; padding: 8px 10px; border-radius: 10px; cursor: pointer; border: 1px solid #8a5a14; background: #c27f1f; color: #fff8e8; }
+
+.hf-tabs { display: flex; gap: 5px; overflow-x: auto; padding: 4px 0 6px; margin-bottom: 4px; scrollbar-width: none; }
+.hf-tabs::-webkit-scrollbar { display: none; }
+.hf-tab { position: relative; flex: 0 0 auto; font: inherit; font-size: 12px; font-weight: 800; padding: 6px 10px; border-radius: 999px; cursor: pointer; border: 1px solid #b98a4a; background: #f3e6c8; color: #6b4a22; }
+.hf-tab.is-on { background: #6b4a22; color: #fff4d6; border-color: #6b4a22; }
+.hf-dot { position: absolute; top: -4px; right: -3px; min-width: 15px; height: 15px; border-radius: 8px; background: var(--danger, #c0392b); color: #fff; font-size: 9px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1px solid #f3e6c8; }
+
+.hf-tiers { background: #f6ecd9; border: 1px solid #dcc79c; border-radius: 12px; padding: 9px 10px 8px; color: #3a2c1a; margin-bottom: 8px; }
+.hf-tiers-h { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; color: #6b4a22; margin-bottom: 6px; }
+.hf-track { position: relative; height: 8px; border-radius: 4px; background: #e2d1ae; margin: 6px 11px 22px; }
+.hf-track-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: linear-gradient(90deg, #b07a3c, #c9d2da 60%, #f0c64a); }
+.hf-notch { position: absolute; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; border: 2px solid #b9a582; background: #f3e6c8; color: #8a7a64; }
+.hf-notch.is-bronze.is-got { background: #b07a3c; border-color: #6b4a22; color: #fff; }
+.hf-notch.is-silver.is-got { background: #c9d2da; border-color: #56606a; color: #2a3036; }
+.hf-notch.is-gold.is-got { background: #f0c64a; border-color: #7a5a10; color: #3a2a06; }
+.hf-notch span { position: absolute; top: 24px; white-space: nowrap; font-size: 9.5px; font-weight: 800; color: #6b5a3c; }
+.hf-tiers-reward { font-size: 11px; color: #6b5a3c; line-height: 1.35; }
+
+.hf-card { display: flex; gap: 9px; align-items: flex-start; background: #fbf3e4; border: 1px solid #dcc79c; border-radius: 12px; padding: 8px 9px; margin-bottom: 7px; color: #3a2c1a; }
+.hf-card.is-ready { border: 1.5px solid #c27f1f; box-shadow: 0 0 0 2px rgba(240, 170, 62, 0.2); background: #fff6e2; }
+.hf-card.is-done { background: #f1ead9; }
+.hf-card.is-hidden { background: #eee5d2; border-style: dashed; }
+.hf-ico { width: 44px; height: 44px; flex: 0 0 44px; border-radius: 10px; object-fit: cover; border: 1.5px solid #c9a86a; background: #e5d0a2; filter: grayscale(0.85) opacity(0.75); }
+.hf-card.is-ready .hf-ico, .hf-card.is-done .hf-ico { filter: none; }
+.hf-q { width: 44px; height: 44px; flex: 0 0 44px; border-radius: 10px; border: 1.5px dashed #b9a582; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; color: #a08a60; }
+.hf-body { flex: 1 1 auto; min-width: 0; }
+.hf-name { font-size: 13.5px; font-weight: 800; line-height: 1.2; }
+.hf-desc { font-size: 11.5px; line-height: 1.35; color: #5a4a30; margin-top: 2px; }
+.hf-bar { height: 6px; border-radius: 3px; background: #e2d1ae; margin-top: 5px; overflow: hidden; }
+.hf-bar > i { display: block; height: 100%; background: #6b9a3a; }
+.hf-meta { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: 4px; font-size: 10.5px; color: #7a6444; }
+.hf-rew { font-weight: 800; color: #8a5a14; }
+.hf-btn { font: inherit; font-size: 11.5px; font-weight: 800; padding: 5px 10px; border-radius: 9px; cursor: pointer; border: 1px solid #8a5a14; background: #c27f1f; color: #fff8e8; }
+.hf-got { font-weight: 800; color: #2f5a1a; }
+.hf-title-tag { display: inline-block; font-size: 9.5px; font-weight: 900; color: #7a5a10; background: #f6e3a8; border-radius: 6px; padding: 0 5px; margin-left: 4px; vertical-align: 1px; }
+
+.hf-old { margin-top: 6px; }
+.hf-old-h { width: 100%; text-align: left; font: inherit; font-size: 12px; font-weight: 800; color: #6b4a22; background: #efe0c2; border: 1px solid #dcc79c; border-radius: 10px; padding: 7px 10px; cursor: pointer; }
+.hf-old-row { font-size: 11.5px; color: #5a4a30; background: #fbf3e4; padding: 5px 10px; border-bottom: 1px dotted #dcc79c; }
+.hf-old .achievement-totals { margin-top: 6px; }
+
+/* Feuille « Choisir un titre » (hors du cadre, à la racine du body) */
+.hf-sheet-bg { position: fixed; inset: 0; z-index: 9000; background: rgba(0, 0, 0, 0.55); display: flex; align-items: flex-end; }
+.hf-sheet { width: 100%; max-width: 480px; margin: 0 auto; background: #f3e6c8; color: #3a2c1a; border-radius: 18px 18px 0 0; border-top: 2px solid #c9a86a; padding: 14px 12px calc(18px + env(safe-area-inset-bottom, 0px)); max-height: 70vh; overflow-y: auto; }
+.hf-sheet h3 { margin: 0 0 8px; font-size: 16px; color: #6b4a22; }
+.hf-opt { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; font: inherit; text-align: left; padding: 9px 10px; margin-bottom: 5px; border-radius: 10px; border: 1px solid #dcc79c; background: #fbf3e4; color: #3a2c1a; cursor: pointer; }
+.hf-opt.is-on { border: 1.5px solid #c27f1f; background: #fff1d2; }
+.hf-opt small { color: #7a6444; font-size: 10.5px; text-align: right; }
+.hf-opt.is-locked { opacity: 0.5; cursor: default; }
+
+/* H4 : liseré du palier du monde courant autour du portrait du HUD */
+.combat-hero-mini-portrait[class*="hf-tier-"]::after { content: ""; position: absolute; inset: 2%; border-radius: 50%; pointer-events: none; }
+.combat-hero-mini-portrait.hf-tier-bronze::after { box-shadow: 0 0 0 2px #b07a3c; }
+.combat-hero-mini-portrait.hf-tier-silver::after { box-shadow: 0 0 0 2px #c9d2da, 0 0 8px rgba(201, 210, 218, 0.5); }
+.combat-hero-mini-portrait.hf-tier-gold::after { box-shadow: 0 0 0 2px #f0c64a, 0 0 12px rgba(240, 198, 74, 0.65); }
+/* H8 : titre porté dans le Résumé, liseré autour du portrait (le cadre garde la couleur de la classe) */
+.pc-sum-title { font-size: 12.5px; font-style: italic; color: #8a5a14; margin: -2px 0 3px; }
+.pc-sum-portrait.hf-tier-bronze { outline: 2px solid #b07a3c; outline-offset: 2px; }
+.pc-sum-portrait.hf-tier-silver { outline: 2px solid #c9d2da; outline-offset: 2px; }
+.pc-sum-portrait.hf-tier-gold { outline: 2px solid #f0c64a; outline-offset: 2px; }
+.title-slot-heroic-title { font-style: italic; }

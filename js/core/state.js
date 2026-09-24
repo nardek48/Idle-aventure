@@ -88,6 +88,8 @@ function createInitialGameState() {
     aether: 0,
     totalAetherEarned: 0,
     memory: null, // v3.322.0 : niveau de Mémoire (MemoryManager.ensure)
+    bossTrophies: {}, // v3.333.0 : trophées de boss (BossMomentManager, Bestiaire)
+    patrols: {}, // v3.334.0 : patrouilles de compagnons en cours (PatrolManager)
 
     tapDamage: 1,
     tapMult: 1,
@@ -106,7 +108,7 @@ function createInitialGameState() {
 
     heroLevel: 1,
     heroXp: 0,
-    heroXpToNext: 20,
+    heroXpToNext: 30, // v3.327.0 : courbe linéaire
     talentPoints: 0,
     heroHp: 10,
     heroMaxHp: 10,
@@ -117,6 +119,7 @@ function createInitialGameState() {
     upgrades: {},
     shopBuyAmount: 1,
     talents: {},
+    talentsV2: true, // v3.327.0 : talents par classe ; false seulement sur une ancienne sauvegarde
     enemy: null,
     // v3.266.0 (L-0) : état du combat de groupe (acteurs, cible collante).
     // Reconstruit par CombatActors.ensure() ; jamais sauvegardé, comme `enemy`.
@@ -189,6 +192,7 @@ function createInitialGameState() {
     combatSpeed: 1,
 
     achievementsClaimed: {},
+    achievementStats: null, // v3.338.0 : Hauts faits (compteurs, obtenus, paliers, titre) — AchievementManager.ensure
 
     worldsEverReached: {},
     worldQuestProgress: {},
@@ -489,7 +493,7 @@ function ensureGameStateDefaults() {
   if (typeof game.heroLevel !== "number") game.heroLevel = 1;
   if (typeof game.heroXp !== "number") game.heroXp = 0;
   if (typeof game.heroXpToNext !== "number" || !isFinite(game.heroXpToNext) || game.heroXpToNext <= 0) {
-    game.heroXpToNext = 20;
+    game.heroXpToNext = 30;
   }
   if (typeof game.talentPoints !== "number") game.talentPoints = 0;
 

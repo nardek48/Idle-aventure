@@ -123,6 +123,7 @@ var PotionManager = {
     }
 
     game.potionsOwned[id] = stock - 1;
+    if (window.AchievementManager) AchievementManager.onPotionUsed(); // v3.338.0 : « Sans une gorgée »
 
     if (potion.perRun) {
       game.activePotions[id] = true;
@@ -267,6 +268,7 @@ var PotionManager = {
     if (currentHp >= maxHp) { showToast("PV déjà au maximum", 1000); return false; }
 
     game.healingPotionsOwned[id] = stock - 1;
+    if (window.AchievementManager) AchievementManager.onPotionUsed(); // v3.338.0 : « Sans une gorgée »
     var healed = Math.floor(maxHp * potion.healPercent);
     game.heroHp = Math.min(maxHp, currentHp + healed);
     game.lastHealUse = Date.now();

@@ -78,9 +78,7 @@ function gameLoop() {
     }
   }
 
-  if (game.talents.t_regenerate) {
-    game.essence += dt;
-  }
+  // v3.327.0 : l'Essence cachée de « Cœur vaillant » est retirée avec le talent (T9)
 
   if (window.PotionManager && typeof renderHealButtons === "function") {
     game._healUiTimer = (game._healUiTimer || 0) + dt;
@@ -98,20 +96,7 @@ function gameLoop() {
     }
   }
 
-  if (game.talents.t_interest) {
-    game._interestTimer = (game._interestTimer || 0) + dt;
-    while (game._interestTimer >= 10) {
-      var bonus = Math.floor(10 * 2 * game.talents.t_interest * Number(game.goldMult || 1));
-      if (bonus > 0) {
-        game.gold += bonus;
-        game.totalGoldEarned += bonus;
-        if (window.QuestManager && typeof QuestManager.track === "function") {
-          QuestManager.track("goldEarned", bonus);
-        }
-      }
-      game._interestTimer -= 10;
-    }
-  }
+  // v3.327.0 : « Intérêt composé » (or passif) retiré avec la branche Fortune (T4)
 
   if (window.QuestManager && typeof QuestManager.checkReset === "function") {
     QuestManager.checkReset();

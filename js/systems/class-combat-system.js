@@ -97,6 +97,13 @@ var ClassCombatManager = {
 
     if (!game.classResource || game.classResource.classId !== classId) {
       game.classResource = (typeof createCombatResourceState === "function") ? createCombatResourceState(classId) : null;
+    } else {
+      // v3.327.0 : un talent peut changer le max (Réserve du Mage) : on réaligne l'état existant
+      var def = (typeof getClassResource === "function") ? getClassResource(classId) : null;
+      if (def && typeof def.max === "number" && game.classResource.max !== def.max) {
+        game.classResource.max = def.max;
+        game.classResource.current = Math.min(def.max, Number(game.classResource.current || 0));
+      }
     }
     return game.classResource;
   },
@@ -107,6 +114,7 @@ var ClassCombatManager = {
     game.classCooldowns = (typeof createCooldownState === "function") ? createCooldownState() : {};
     game.classActiveDefense = null;
     this.ensureForCurrentClass();
+    if (window.TalentManager) TalentManager.afterChange(); // v3.327.0 : talents d'une autre classe retirés
   },
 
     isCombatActive: function () {
@@ -325,16 +333,24 @@ var ClassCombatManager = {
     for (var i = 0; i < hits; i++) {
       if (!game.enemy || game.enemy !== target) break; // v3.102.0 : l'ennemi est mort, les coups restants sont perdus
       var dmg = baseDamage * Number(action.damageMultiplier || 1);
-      var critChance = Math.max(0, EquipmentManager.effectiveCritChance() - getEnemyWillCritPenalty());
+      if (window.TalentManager) dmg *= TalentManager.heroDamageMult(action, target); // v3.327.0 : Surtension, Incendie
+      var critChance = Math.max(0, EquipmentManager.effectiveCritChance() + Number(action.critBonus || 0) - getEnemyWillCritPenalty());
       var isCrit = chance(critChance);
       if (isCrit) dmg = dmg * EquipmentManager.effectiveCritMult();
+      if (isCrit && window.TalentManager) TalentManager.onHeroCrit(); // v3.327.0 : Tir mortel
       lastHitDmg = dmg;
       // v3.266.0 (L-0) : la cible est passée explicitement — les coups d'une même action
       // restent sur le même ennemi quand le groupe en comptera plusieurs (L-3).
       CombatEngine.dealDamage(dmg, isCrit, true, !!action.ignoreAffinity, target);
     }
+    // v3.328.0 : soin d'action en % des PV max (donnée, posée par un talent : Élan)
+    if (action.healMaxHpPct > 0 && (game.heroHp || 0) > 0) {
+      game.heroHp = Math.min(game.heroMaxHp, Number(game.heroHp || 0) + Math.floor(Number(game.heroMaxHp || 0) * action.healMaxHpPct));
+      if (typeof renderHeroHp === "function") renderHeroHp();
+    }
 
     if (game.enemy && game.enemy === target) this.applyActionEffects(action, lastHitDmg, matchedConditionId);
+    if (window.TalentManager && game.enemy === target) TalentManager.afterAction(action, target); // v3.327.0 : Attiser
   },
 
     applyActionEffects: function (action, lastHitDmg, matchedConditionId) {
@@ -422,7 +438,8 @@ var ClassCombatManager = {
     var dot = game.enemy.dot;
     var target = game.enemy;
     if (dot.perRound > 0) {
-      CombatEngine.dealDamage(dot.perRound, false, false, true); // ignoreAffinity : déjà appliquée sur le coup d'origine
+      var tick = window.TalentManager ? TalentManager.rollDotCrit(dot.perRound) : { dmg: dot.perRound, isCrit: false }; // v3.327.0 : Combustion
+      CombatEngine.dealDamage(tick.dmg, tick.isCrit, false, true); // ignoreAffinity : déjà appliquée sur le coup d'origine
     }
     if (game.enemy !== target || !game.enemy.dot) return;
     dot.rounds -= 1;
@@ -433,15 +450,14 @@ var ClassCombatManager = {
     var effect = (action.effects && action.effects[0]) || null;
     if (!effect) return;
 
-    var talentDurationBonusRounds = (game.talents && game.talents.t_thick_skin) ? game.talents.t_thick_skin : 0; // +1 round/niveau
-    var talentValueBonus = (game.talents && game.talents.t_calm_breath) ? game.talents.t_calm_breath * 0.05 : 0;
-
+    // v3.327.0 : valeur et durée viennent du kit, déjà réécrit par les talents de classe (Mur, Bastion…)
     game.classActiveDefense = {
       actionId: action.id,
       effectType: effect.type, // "damageReduction" | "evasion" | "damageAbsorption"
-      value: Math.min(1, Number(effect.value || 0) + talentValueBonus),
-      roundsLeft: Math.max(1, Number(effect.durationRounds || 1)) + talentDurationBonusRounds
+      value: Math.min(1, Number(effect.value || 0)),
+      roundsLeft: Math.max(1, Number(effect.durationRounds || 1))
     };
+    if (window.TalentManager) TalentManager.onDefenseStart();
   },
 
     getBasicAttackMultiplier: function () {
@@ -457,7 +473,10 @@ var ClassCombatManager = {
     var resourceDef = (typeof getClassResource === "function") ? getClassResource(classId) : null;
     if (!resourceDef || !resourceDef.generation) return;
 
-    game.classResource = applyResourceGain(resourceState, resourceDef.generation, {
+    var gen = resourceDef.generation;
+    var gm = window.TalentManager ? TalentManager.basicGainMult() : 1; // v3.327.0 : Bastion
+    if (gm !== 1) gen = Object.assign({}, gen, { value: Number(gen.value || 0) * gm, maxGainPerHit: gen.maxGainPerHit ? gen.maxGainPerHit * gm : gen.maxGainPerHit });
+    game.classResource = applyResourceGain(resourceState, gen, {
       damageDealt: damageDealt,
       isCritical: !!isCritical,
       isBasicAttack: true
@@ -480,7 +499,11 @@ var ClassCombatManager = {
 
     if (game.classActiveDefense) {
       game.classActiveDefense.roundsLeft = Number(game.classActiveDefense.roundsLeft || 0) - 1;
-      if (game.classActiveDefense.roundsLeft <= 0) game.classActiveDefense = null;
+      if (game.classActiveDefense.roundsLeft <= 0) {
+        var ended = game.classActiveDefense;
+        game.classActiveDefense = null;
+        if (window.TalentManager) TalentManager.onDefenseEnd(ended); // v3.327.0 : Surcharge
+      }
     }
   },
 
@@ -577,7 +600,10 @@ var ClassCombatManager = {
 
     if (activeRules && activeRules.length && typeof chooseGrimoireAction === "function") {
       var grimoireResult = chooseGrimoireAction(activeRules, kit, resourceState, game.classCooldowns, grimoireContext);
-      if (grimoireResult) return { slot: grimoireResult.actionSlot, matchedConditionId: grimoireResult.matchedConditionId };
+      if (grimoireResult) {
+        if (forExecution && window.AchievementManager) AchievementManager.onRuleFired(); // v3.338.0 : « Tacticien »
+        return { slot: grimoireResult.actionSlot, matchedConditionId: grimoireResult.matchedConditionId };
+      }
     }
 
     var reserveAmount = this.shouldActivateGrimoireReserve(activeRules, kit, resourceState)

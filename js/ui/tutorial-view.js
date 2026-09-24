@@ -148,6 +148,20 @@ var GENERIC_TUTORIALS = {
     ]
   },
 
+  /* v3.334.0 (Évolutions, P9) : patrouilles — à la première visite de l'écran Héros une fois
+     un compagnon arrivé. Rejoint le catalogue de tutoriels comme les autres. */
+  patrols_intro: {
+    tab: "more",
+    condition: function () { return !!(window.PatrolManager && PatrolManager.isUnlocked()); },
+    icon: "images/Icons/quests/mission_exploration.png",
+    title: "Les patrouilles",
+    points: [
+      { icon: "images/Icons/quests/mission_exploration.png", text: "Un compagnon peut partir en patrouille 2, 4 ou 8 heures vers un secteur libéré de la carte, même quand tu ne joues pas." },
+      { icon: "images/Icons/resources/wood_icon.png", text: "Il rapporte les matériaux du secteur, un peu d'or, parfois de quoi faire des rations — et une petite histoire." },
+      { icon: "images/Icons/system/hourglass_waiting.png", text: "Pendant ce temps, il ne combat pas avec toi. Tu peux le rappeler quand tu veux : il rapporte ce qu'il a déjà trouvé." },
+      { icon: "images/Icons/system/check_valid.png", text: "Aucun risque : une patrouille revient toujours. Réglage sur la fiche du compagnon (Héros › Compagnons)." }
+    ]
+  },
   grimoire_rules: {
     icon: "images/Icons/codex/codex_lore.png",
     title: "Le Grimoire de tactiques",

@@ -221,11 +221,7 @@ var StatsSystem = {
 
     // Facteur validé session équilibrage "scie" (×0.35) : évite la saturation du plafond 60% dès le monde 4.
     var SURVIVAL_DEFENSE_FACTOR = 0.35;
-    var survivalDefenseBonus = (
-      (game.talents.t_second_wind || 0) * 0.02 +
-      (game.talents.t_vital_anchor || 0) * 0.05 +
-      (game.talents.t_immutable_guardian || 0) * 0.05
-    ) * SURVIVAL_DEFENSE_FACTOR;
+    var survivalDefenseBonus = 0 * SURVIVAL_DEFENSE_FACTOR; // v3.327.0 : plus de défense passive par talent
     /* v3.219.0 : pente pleine jusqu'au seuil, quart de pente au-delà. */
     var enduranceDefense =
       Math.min(totalEndurance, HERO_DEFENSE_SOFTCAP_ENDURANCE) * HERO_DEFENSE_COEF
@@ -234,11 +230,9 @@ var StatsSystem = {
 
     // v3.322.0 : plus de bonus de PV par Ascension (l'Ascension n'existe plus)
 
-    var survivalHpMult =
-      (game.talents.t_regenerate || 0) * 0.05 +
-      (game.talents.t_tenacious_will || 0) * 0.08 +
-      (game.talents.t_vital_anchor || 0) * 0.05 +
-      (game.talents.t_immutable_guardian || 0) * 0.10;
+    // v3.327.0 : talents par classe — PV du tronc (Cuirasse, Peau d'arcane), critique (Œil vif)
+    var talentStats = window.TalentManager ? TalentManager.getStatBonuses() : { hpPct: 0, critChance: 0 };
+    var survivalHpMult = talentStats.hpPct;
     if (survivalHpMult) {
       game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + survivalHpMult)));
     }
@@ -255,17 +249,7 @@ var StatsSystem = {
       if (bonus.tapDamage != null) game.equipFlatTapBonus += bonus.tapDamage;
     });
 
-    game.tapMult += (game.talents.t_sharpened_blades || 0) * 0.05;
-    game.critChance += (game.talents.t_precise_strike || 0) * 6;
-
-    game.goldMult += (game.talents.t_scavenger || 0) * 0.08;
-    game.goldMult += (game.talents.t_golden_touch || 0) * 0.12;
-    game.goldMult += (game.talents.t_sovereign_treasure || 0) * 0.20;
-
-    if (game.talents.t_bloodlust) {
-      var bloodlustLevel = game.talents.t_bloodlust;
-      game.tapMult += Math.min((game.ascensionCount || 0) * 0.03 * bloodlustLevel, 0.15 * bloodlustLevel);
-    }
+    game.critChance += talentStats.critChance; // v3.327.0 : Œil vif ; Lames affûtées et la branche Fortune retirées
 
     // v3.322.0 : plus de bonus de dégâts ni d'or par Ascension
 

@@ -15,7 +15,10 @@ var StoryQuestManager = {
 
   _ensureChapter: function (chapterId) {
     var st = game.storyQuests[chapterId];
-    if (!st || typeof st !== "object") st = game.storyQuests[chapterId] = {};
+    // v3.327.1 : un chapitre NEUF n'a rien à migrer. Sans ce drapeau, la migration v3.107.8 de
+    // restoreBaseState reculait d'un cran une partie neuve passée au-delà de l'étape 10 sans
+    // rechargement (constaté avec l'avance d'Histoire de l'admin).
+    if (!st || typeof st !== "object") st = game.storyQuests[chapterId] = { migratedV31078: true };
     if (typeof st.currentStep !== "number" || st.currentStep < 0) st.currentStep = 0;
     if (typeof st.accepted !== "boolean") st.accepted = false;
     if (!st.claimedSteps || typeof st.claimedSteps !== "object") st.claimedSteps = {};

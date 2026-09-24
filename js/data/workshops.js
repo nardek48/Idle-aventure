@@ -69,7 +69,8 @@ var WORKSHOPS_CONFIG = {
     // Petite ration reste sur viande+eau brutes (accessible dès le début de l'Acte II, décision confirmée).
     recipes: [
       { id: "petite_ration", inputs: [{ resourceId: "viande", quantity: 8 }, { resourceId: "eau", quantity: 4 }], outputs: [{ resourceId: "petite_ration", quantity: 1 }], craftTimeMs: 3000 },
-      { id: "ration", inputs: [{ resourceId: "viande_sechee", quantity: 10 }, { resourceId: "pain", quantity: 1 }], outputs: [{ resourceId: "ration", quantity: 1 }], craftTimeMs: 8000 },
+      // v3.330.0 (E4) : 10 -> 3 viandes séchées — la ration moyenne devient les vivres du Désert
+      { id: "ration", inputs: [{ resourceId: "viande_sechee", quantity: 3 }, { resourceId: "pain", quantity: 1 }], outputs: [{ resourceId: "ration", quantity: 1 }], craftTimeMs: 8000 },
       // v3.137.0 (option B validée Seb) : Grande ration = Ration moyenne + 3 Sève d'Aeswyn — escalade
       // visible sur la chaîne plutôt qu'un doublon des intrants de la Ration moyenne (option A).
       // Premier débouché de craft de la Sève (jusqu'ici uniquement l'offrande forest_15, ponctuelle).
@@ -127,8 +128,16 @@ var WORKSHOPS_CONFIG = {
         outputs: [{ resourceId: "verre_trempe", quantity: 1 }], craftTimeMs: 30000, firstCraftFlag: "verreTrempe" }
     ]
   },
+  /* v3.330.0 (économie du village, décision E3 de Seb) : la Maçonnerie s'ouvre à l'arrivée au
+     Désert. Le Bloc taillé absorbe la pierre et le fer qui débordaient, et remplace la moitié
+     des planches dans les paliers du Désert (data/village-buildings.js). */
   maconnerie: {
-    buildingId: "quarry", name: "Maçonnerie", icon: "images/Icons/workshops/masonry.png", active: false
+    buildingId: "quarry", name: "Maçonnerie", icon: "images/Icons/workshops/masonry.png",
+    openAtStoryStep: "desert_01",
+    upgradeCostBase: { planche: 3, lingot: 2 },
+    recipes: [
+      { id: "bloc", inputs: [{ resourceId: "pierre", quantity: 6 }, { resourceId: "fer", quantity: 2 }], outputs: [{ resourceId: "bloc", quantity: 1 }], craftTimeMs: 4000 }
+    ]
   },
 
   // ===== Puits =====

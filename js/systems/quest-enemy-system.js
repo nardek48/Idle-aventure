@@ -48,6 +48,8 @@ var QuestEnemyManager = {
        pour les points de vie d'un ennemi seul. */
     if (!forceBoss && Array.isArray(quest.group) && quest.group.length > 1) {
       var groupe = this.buildGroup(quest, adventure);
+      var selfG = this;
+      groupe.forEach(function (m) { selfG.applyPowerMult(quest, m); }); // v3.326.0
       if (savedPool) adventure.enemyPool = savedPool;
       WorldManager.worldIndex = savedWorldIndex;
       WorldManager.adventureIndex = savedAdventureIndex;
@@ -69,12 +71,31 @@ var QuestEnemyManager = {
       enemy.maxHp = enemy.hp;
     }
 
+    this.applyPowerMult(quest, enemy); // v3.326.0
+
     if (savedPool) adventure.enemyPool = savedPool;
     WorldManager.worldIndex = savedWorldIndex;
     WorldManager.adventureIndex = savedAdventureIndex;
     WorldManager.enemyIndex = savedEnemyIndex;
 
     return enemy;
+  },
+
+  /* v3.326.0 (plan C-2) — enemyPowerMult : PUISSANCE (dégâts) de tous les ennemis de la quête,
+     le pendant de enemyHpMult ; bossPowerMult règle le boss à part. Lu sur la donnée d'origine
+     (ADVENTURE_QUESTS / HUNT_QUESTS) : les rencontres scriptées arrivent ici sous une copie
+     réduite, fabriquée par adventure-quest-system.js (protégé). Absent = 1, rien ne change. */
+  getPowerMult: function (quest, isBoss) {
+    if (!quest) return 1;
+    var src = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || (window.HUNT_QUESTS && HUNT_QUESTS[quest.id]) || quest;
+    var m = Number(isBoss && src.bossPowerMult != null ? src.bossPowerMult : src.enemyPowerMult);
+    return (isFinite(m) && m > 0) ? m : 1;
+  },
+
+  applyPowerMult: function (quest, enemy) {
+    if (!enemy || !enemy.stats) return;
+    var m = this.getPowerMult(quest, !!enemy.isBoss);
+    if (m !== 1) enemy.stats.power = Math.max(1, Math.floor(Number(enemy.stats.power || 0) * m));
   }
 };
 

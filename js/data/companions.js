@@ -56,7 +56,10 @@ var COMPANIONS_DB = {
     lines: {
       join: "Toi aussi tu pars sans rien dire ? Bon. Je viens.",
       skill: "Tiens-toi tranquille deux secondes.",
-      ko: "Wenna tombe. Elle ne demande rien, pour une fois."
+      ko: "Wenna tombe. Elle ne demande rien, pour une fois.",
+      // v3.333.0 (moments de boss, B6) — PROVISOIRES, à relire selon la bible
+      bossIntro: "Il est plus grand que dans les histoires. Tant mieux, on ne peut pas le rater.",
+      bossWin: "Tu as vu ? Il est tombé. On l'a fait tomber."
     }
   },
 
@@ -112,7 +115,10 @@ var COMPANIONS_DB = {
     unlockedBy: "desert_08",
     lines: {
       join: "Je boite. Je ne tombe pas.",
-      ko: "Maddoc s'assoit contre la paroi. Il se relèvera."
+      ko: "Maddoc s'assoit contre la paroi. Il se relèvera.",
+      // v3.333.0 (moments de boss, B6) — PROVISOIRES, à relire selon la bible
+      bossIntro: "Je passe devant. Tu frappes quand il me regarde.",
+      bossWin: "Bon. On rentre. Et on ne raconte pas ça à ma mère."
     }
   }
 };

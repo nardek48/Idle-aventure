@@ -240,10 +240,9 @@ var WorldManager = {
   }
 };
 
+/* v3.327.0 : arbre de la classe courante, { trunk, paths } (data/talent-trees.js). */
 function getAllTalentNodes() {
-  if (typeof TALENTTREE !== "undefined") return TALENTTREE;
-  if (typeof TALENT_TREE !== "undefined") return TALENT_TREE;
-  return {};
+  return (window.TalentManager && TalentManager.getTree()) || { trunk: [], paths: [] };
 }
 
 function getUpgradeCost(upgrade, atLevel) {
@@ -420,91 +419,7 @@ function setShopBuyAmount(amount) {
   saveGame();
 }
 
-function getTalentRespecCost() {
-  var levels = Object.keys(game.talents || {}).map(function (id) { return Number(game.talents[id] || 0); });
-  var totalPoints = levels.reduce(function (sum, lvl) { return sum + lvl; }, 0);
-  return totalPoints * 150;
-}
-
-function respecTalents() {
-  if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
-  var levels = Object.keys(game.talents || {}).map(function (id) { return Number(game.talents[id] || 0); });
-  var totalPoints = levels.reduce(function (sum, lvl) { return sum + lvl; }, 0);
-  if (!totalPoints) return showToast("Aucun talent à réinitialiser", 1200);
-
-  var cost = getTalentRespecCost();
-  if ((game.gold || 0) < cost) return showToast("Pas assez d'or (" + formatNumber(cost) + " requis)", 1500);
-
-  var doRespec = function () {
-    game.gold -= cost;
-    game.talentPoints = Number(game.talentPoints || 0) + totalPoints;
-    game.talents = {};
-    game._frenzyTapCount = 0;
-    game._frenzyReady = false;
-
-    if (window.StatsSystem) StatsSystem.recalcStats();
-
-    addLog("🔄 Talents réinitialisés (-" + formatNumber(cost) + " or, " + totalPoints + " point(s) rendu(s))", "event");
-    showToast("Talents réinitialisés", 1500);
-    if (typeof closeTalentSummaryPopup === "function") closeTalentSummaryPopup();
-    if (typeof renderAll === "function") renderAll();
-    saveGame();
-  };
-
-  if (typeof showConfirmModal === "function") {
-    showConfirmModal(
-      "Réinitialiser les talents ?",
-      "Coût : " + formatNumber(cost) + " or. Les " + totalPoints + " point(s) dépensé(s) seront rendus.",
-      "🔄",
-      doRespec
-    );
-  } else if (window.confirm("Réinitialiser les talents pour " + cost + " or ?")) {
-    doRespec();
-  }
-}
-
-function buyTalentNode(id) {
-  if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
-  var tree = getAllTalentNodes();
-  var node = null;
-  var branchOfNode = null;
-
-  Object.keys(tree).forEach(function (branch) {
-    (tree[branch] || []).forEach(function (entry) {
-      if (entry.id === id) { node = entry; branchOfNode = branch; }
-    });
-  });
-
-  if (!node) return showToast("Talent introuvable", 1000);
-
-  var maxLevel = node.maxLevel || 1;
-  var currentLevel = Number(game.talents[id] || 0);
-  if (currentLevel >= maxLevel) return showToast("Niveau maximum atteint", 1000);
-  if (node.requires && !(Number(game.talents[node.requires] || 0) > 0)) return showToast("Talent précédent requis", 1200);
-  if ((game.talentPoints || 0) < 1) return showToast("Pas assez de points de talent", 1200);
-
-  if (node.tier && node.side) {
-    var oppositeSide = node.side === "left" ? "right" : "left";
-    var blocked = (tree[branchOfNode] || []).some(function (entry) {
-      return entry.tier === node.tier && entry.side === oppositeSide && Number(game.talents[entry.id] || 0) > 0;
-    });
-    if (blocked) {
-      showToast("Choix déjà fait pour ce palier (" + (oppositeSide === "left" ? "Actif" : "Passif") + ") — réinitialise pour changer", 2000);
-      return;
-    }
-  }
-
-  game.talentPoints -= 1;
-  game.talents[id] = currentLevel + 1;
-
-  if (window.StatsSystem) StatsSystem.recalcStats();
-
-  addLog("Talent amélioré : " + (node.name || id) + " (niveau " + game.talents[id] + "/" + maxLevel + ")", "event");
-  showToast((node.name || id) + " niveau " + game.talents[id], 1500);
-  vibrate([40, 20, 40]);
-  if (typeof renderAll === "function") renderAll();
-  saveGame();
-}
+/* v3.327.0 : achat et remise à zéro des talents -> systems/talent-system.js (TalentManager). */
 
 function buyAetherUpgrade(id) {
   // v3.322.0 (O7) : la boutique d'Aether est retirée, remplacée par les choix de Mémoire
@@ -532,9 +447,12 @@ function buyAetherUpgrade(id) {
   saveGame();
 }
 
+/* v3.327.0 (conception Talents, T2) : courbe LINÉAIRE (30, 40, 50…). L'ancienne, exponentielle,
+   laissait ~1 point de talent par monde après le Désert ; c'est désormais le plafond par acte
+   (TALENT_CAP_BY_ACT) qui tient les points, la courbe sert juste à l'atteindre en jouant. */
 function getHeroXpRequiredForLevel(level) {
   level = Math.max(1, Number(level || 1));
-  return Math.floor(20 * Math.pow(1.35, level - 1) + (level - 1) * 10);
+  return 30 + (level - 1) * 10;
 }
 
 function grantHeroXp(amount, source) {
@@ -556,14 +474,17 @@ function grantHeroXp(amount, source) {
   while (game.heroXp >= game.heroXpToNext) {
     game.heroXp -= game.heroXpToNext;
     game.heroLevel += 1;
-    game.talentPoints += 1;
     levelsGained += 1;
     game.heroXpToNext = getHeroXpRequiredForLevel(game.heroLevel);
 
-    addLog("Niveau du héros : " + game.heroLevel + " (+1 point de talent)", "event");
-    showToast("Niveau " + game.heroLevel + " ! +1 point de talent", 1800);
+    // v3.327.0 : au-delà du plafond de l'acte, le point part en réserve
+    var capped = window.TalentManager && TalentManager.earned() > TalentManager.cap();
+    var what = capped ? "+1 point de talent en réserve" : "+1 point de talent";
+    addLog("Niveau du héros : " + game.heroLevel + " (" + what + ")", "event");
+    showToast("Niveau " + game.heroLevel + " ! " + what, 1800);
     vibrate([30, 20, 30]);
   }
+  if (window.TalentManager) TalentManager.sync(); else game.talentPoints += levelsGained;
 
   if (levelsGained === 0) {
     addLog("+" + Math.floor(amount) + " XP héros", "event");
@@ -599,9 +520,6 @@ window.AscensionManager = AscensionManager;
 window.getUpgradeCost = getUpgradeCost;
 window.getAllTalentNodes = getAllTalentNodes;
 window.buyUpgrade = buyUpgrade;
-window.buyTalentNode = buyTalentNode;
-window.respecTalents = respecTalents;
-window.getTalentRespecCost = getTalentRespecCost;
 window.buyAetherUpgrade = buyAetherUpgrade;
 window.grantHeroXp = grantHeroXp;
 window.ascendNow = ascendNow;

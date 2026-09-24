@@ -1412,6 +1412,7 @@ var SceneRunManager = {
     run.status = "completed";
     var summary = window.SortieManager ? SortieManager.end("success") : null;
     this._notifyLivingMap(run, "success"); // v3.256.0 : la chambre finale résolue libère le secteur
+    if (window.AchievementManager) AchievementManager.onRunSuccess(); // v3.338.0 : « Un Périple », « Une traversée »
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null, summary: summary };
   },
@@ -1534,6 +1535,14 @@ var SceneRunManager = {
       groupHpMult: group.groupHpMult,
       groupGoldMult: group.groupGoldMult
     };
+    /* v3.331.0 (suite du recalage, plan C) : un canevas règle la force de SES combats —
+       combatPowerMult (dégâts des ennemis) et combatHpMult (PV, groupes compris). Absents : ×1. */
+    var tplCombat = SceneEngine.getTemplate(run.templateId) || {};
+    if (tplCombat.combatPowerMult) pseudoQuest.enemyPowerMult = tplCombat.combatPowerMult;
+    if (tplCombat.combatHpMult) {
+      pseudoQuest.enemyHpMult = tplCombat.combatHpMult;
+      if (pseudoQuest.groupHpMult) pseudoQuest.groupHpMult = pseudoQuest.groupHpMult * tplCombat.combatHpMult;
+    }
     var enemy = QuestEnemyManager.spawnFor(pseudoQuest, !!forceBoss);
     if (!enemy) return false;
 
@@ -1648,8 +1657,7 @@ var SceneRunManager = {
   onCombatDefeat: function () {
     var run = this.getRun();
     if (!run) return;
-    var keptPct = (game.talents && game.talents.t_essence_bloom) ? game.talents.t_essence_bloom * 0.10 : 0;
-    game.heroHp = Math.floor((game.heroMaxHp || 1) * keptPct);
+    game.heroHp = 0; // v3.327.0 : Sang-froid retiré (décision T9)
     // v3.197.0 (bible B §4.4) ; v3.304.0 : un canevas peut déclarer sa ligne (deathLine), le Désert n'est pas la forêt
     var deathTpl = SceneEngine.getTemplate(run.templateId);
     addLog("💀 " + ((deathTpl && deathTpl.deathLine) || "Le parcours s'arrête là. Ce que tu portais reste dans la forêt. Retour au feu."), "event");
@@ -1674,7 +1682,11 @@ function heroLockReason() {
 /* Garde d'une ligne : true (et toast) si l'action doit être refusée. */
 function heroLockToast() {
   var r = heroLockReason();
-  if (r && typeof showToast === "function") showToast("🧭 " + r, 1800);
+  if (r) {
+    // v3.336.0 (F-2) : le refus propose de reprendre l'expédition
+    if (typeof showHowToToast === "function") showHowToToast("🧭 " + r, "heroLock");
+    else if (typeof showToast === "function") showToast("🧭 " + r, 1800);
+  }
   return !!r;
 }
 window.HERO_LOCK_REASON = HERO_LOCK_REASON;

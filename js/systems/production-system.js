@@ -449,19 +449,26 @@ var ProductionManager = {
     this.ensure();
     var self = this;
     var anyHarvested = false;
+    var fullRes = null; // v3.336.0 (F-2) : première ressource bloquée par l'Entrepôt plein
 
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
       if (!self.isBuildingUnlocked(id)) return;
       if (Math.floor(self.getStock(id)) <= 0) return;
       if (self._harvestSilent(id)) anyHarvested = true;
+      if (!fullRes && Math.floor(self.getStock(id)) > 0 && WarehouseManager.getFreeSpace && WarehouseManager.getFreeSpace(PRODUCTION_BUILDINGS[id].resourceKey) <= 0) {
+        fullRes = PRODUCTION_BUILDINGS[id].resourceKey;
+      }
     });
 
-    if (!anyHarvested) {
-      showToast("Rien à récolter", 1000);
+    if (fullRes && typeof showHowToToast === "function") {
+      showHowToToast(anyHarvested ? "Récolte faite, mais l'Entrepôt est plein" : "Entrepôt plein", "warehouseFull", { resourceId: fullRes });
+      if (!anyHarvested) return;
+    } else if (!anyHarvested) {
+      showToast("Rien à récolter", 1200);
       return;
+    } else {
+      showToast("Tout récolté", 1300);
     }
-
-    showToast("Tout récolté", 1300);
     if (typeof renderPanel === "function") renderPanel();
     saveGame();
   },
@@ -469,19 +476,37 @@ var ProductionManager = {
   /* Récolte un bâtiment sans re-render/save individuel (utilisé par harvestAll pour ne
      déclencher renderPanel()/saveGame() qu'une seule fois au total, plutôt qu'une fois
      par bâtiment). Retourne true si une récolte a effectivement eu lieu. */
+  /* v3.330.0 (E1) : prélève ce qui tient sous le plafond de l'Entrepôt. Retourne
+     { amount, blocked } : blocked = il restait du stock mais l'Entrepôt est plein. */
+  _takeHarvest: function (id) {
+    var def = PRODUCTION_BUILDINGS[id];
+    var free = WarehouseManager.getFreeSpace ? WarehouseManager.getFreeSpace(def.resourceKey) : Infinity;
+    var had = Math.floor(this.getStock(id));
+    var amount;
+    if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
+      amount = ProductionPlotsSystem.harvestAll(id, free);
+    } else {
+      var b = game.production[id];
+      if (!b) return { amount: 0, blocked: false };
+      amount = Math.min(Math.floor(b.stock), free);
+      if (amount > 0) b.stock -= amount;
+    }
+    return { amount: amount, blocked: free !== Infinity && amount >= free && had > amount };
+  },
+
+  _noteFull: function (id) {
+    var def = PRODUCTION_BUILDINGS[id], resDef = WAREHOUSE_RESOURCES[def.resourceKey];
+    var left = Math.floor(this.getStock(id));
+    addLog("📦 " + (resDef ? resDef.name : def.resourceKey) + " : entrepôt plein, " + formatNumber(left) + " restent dans les zones", "event");
+  },
+
   _harvestSilent: function (id) {
     var def = PRODUCTION_BUILDINGS[id];
     if (!def) return false;
 
-    var amount;
-    if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
-      amount = ProductionPlotsSystem.harvestAll(id);
-    } else {
-      var b = game.production[id];
-      if (!b) return false;
-      amount = Math.floor(b.stock);
-      if (amount > 0) b.stock -= amount;
-    }
+    var r = this._takeHarvest(id);
+    if (r.blocked) this._noteFull(id);
+    var amount = r.amount;
     if (amount <= 0) return false;
 
     WarehouseManager.addResource(def.resourceKey, amount, true);
@@ -500,18 +525,15 @@ var ProductionManager = {
     var def = PRODUCTION_BUILDINGS[id];
     if (!def) return;
 
-    var amount;
-    if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
-      amount = ProductionPlotsSystem.harvestAll(id);
-    } else {
-      var b = game.production[id];
-      if (!b) return;
-      amount = Math.floor(b.stock);
-      if (amount > 0) b.stock -= amount;
-    }
+    if (!game.production[id] && !(window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id))) return;
+    var r = this._takeHarvest(id);
+    var amount = r.amount;
+    if (r.blocked) this._noteFull(id);
 
     if (amount <= 0) {
-      showToast("Rien à récolter", 1000);
+      // v3.336.0 (F-2) : Entrepôt plein -> Taverne si un contrat prend la ressource, sinon l'Entrepôt
+      if (r.blocked && typeof showHowToToast === "function") showHowToToast("Entrepôt plein", "warehouseFull", { resourceId: def.resourceKey });
+      else showToast(r.blocked ? "Entrepôt plein" : "Rien à récolter", 1200);
       return;
     }
 

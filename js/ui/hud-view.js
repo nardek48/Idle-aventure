@@ -18,7 +18,9 @@ function buildHudHTML() {
     +   '</div>'
     +   '<div class="nb-hud-shortcuts">'
     +     '<button type="button" class="nb-hud-bag-btn" onclick="openBagFromHud()" aria-label="Inventaire"><img src="./images/Icons/menu_icons/equip_menu.png" alt="" class="nb-hud-bag-icon"><span id="hud-bag-badge" class="nb-hud-bag-badge" style="display:none;">0</span></button>'
-    +     '<button type="button" class="nb-hud-bag-btn" onclick="switchTab(\'ascension\')" aria-label="Ascension"><img src="./images/Icons/menu_icons/aether_menu.png" alt="" class="nb-hud-bag-icon"><span id="hud-ascension-badge" class="nb-hud-bag-badge" style="display:none;"></span></button>'
+    // v3.332.0 (Évolutions, F1) : le fil rouge remplace le raccourci Ascension (badge mort depuis
+    // la v3.322.0 ; la Mémoire s'ouvre depuis Héros › Résumé). Voir ui/fil-rouge-view.js.
+    +     (typeof buildHudFilRougeButtonHTML === "function" ? buildHudFilRougeButtonHTML() : '')
     +   '</div>'
     +   '<div id="combat-hero-mini" class="combat-hero-mini" onclick="switchTab(\'talents\')" role="button" aria-label="Talents">'
     +     '<div class="combat-hero-mini-portrait">'
@@ -68,7 +70,24 @@ function renderHud() {
   renderHeroHp();
   renderHudBagBadge();
   renderHudLevelUpBadge();
-  renderHudAscensionBadge();
+  if (typeof renderHudFilRouge === "function") renderHudFilRouge(); // v3.332.0 : à la place du badge d'Ascension
+  renderHudAchievementTier(); // v3.338.0 (H4)
+}
+
+/* v3.338.0 (Hauts faits, H4) : liseré du portrait selon le palier du monde courant.
+   Lu au plus une fois par seconde, classe réécrite seulement si elle change. */
+var hudAchTierLast = null, hudAchTierAt = 0;
+function renderHudAchievementTier() {
+  var now = Date.now();
+  if (now - hudAchTierAt < 1000) return;
+  hudAchTierAt = now;
+  var el = document.querySelector ? document.querySelector("#combat-hero-mini .combat-hero-mini-portrait") : null;
+  if (!el || !window.AchievementManager) return;
+  var tier = AchievementManager.getCurrentWorldTier() || "none";
+  if (tier === hudAchTierLast) return;
+  if (hudAchTierLast) el.classList.remove("hf-tier-" + hudAchTierLast);
+  if (tier !== "none") el.classList.add("hf-tier-" + tier);
+  hudAchTierLast = tier === "none" ? null : tier;
 }
 
 function renderHudLevelUpBadge() {
@@ -94,12 +113,10 @@ function renderHudBagBadge() {
 }
 window.renderHudBagBadge = renderHudBagBadge;
 
+/* v3.332.0 : le bouton Ascension du HUD n'existe plus (fil rouge à sa place). Gardée pour
+   un éventuel appel extérieur : rend le bouton du fil rouge. */
 function renderHudAscensionBadge() {
-  var badge = document.getElementById("hud-ascension-badge");
-  if (!badge) return;
-
-  var available = (typeof getAscensionAvailableCount === "function") ? getAscensionAvailableCount() : 0;
-  badge.style.display = available > 0 ? "flex" : "none";
+  if (typeof renderHudFilRouge === "function") renderHudFilRouge();
 }
 window.renderHudAscensionBadge = renderHudAscensionBadge;
 

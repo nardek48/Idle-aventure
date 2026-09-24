@@ -109,7 +109,8 @@ function buildHeroSummaryIdentityHTML(hero) {
 
   var h = '<div class="pc-sum-ident">';
 
-  h += '<div class="pc-sum-portrait' + (cls ? ' is-class-' + esc(cls.id) : '') + '">';
+  var achTier = window.AchievementManager ? AchievementManager.getCurrentWorldTier() : null; // v3.338.0 (H4)
+  h += '<div class="pc-sum-portrait' + (cls ? ' is-class-' + esc(cls.id) : '') + (achTier ? ' hf-tier-' + achTier : '') + '">';
   if (hero && hero.image) {
     h += '<img src="' + esc(hero.image) + '" alt="' + esc(hero.name) + '">';
   } else {
@@ -120,6 +121,8 @@ function buildHeroSummaryIdentityHTML(hero) {
 
   h += '<div class="pc-sum-col">';
   h += '<div class="pc-sum-name">' + esc(game.playerName || (hero ? hero.name : "Sans nom")) + '</div>';
+  var heroicTitle = window.AchievementManager ? AchievementManager.getTitle() : null; // v3.338.0 (H8) : titre porté
+  if (heroicTitle) h += '<div class="pc-sum-title">' + esc(heroicTitle) + '</div>';
 
   if (cls) {
     h += '<div class="pc-sum-class is-class-' + esc(cls.id) + '">' + renderIconOrEmojiHTML(cls.icon, "pc-sum-class-ico", cls.label) + ' ' + esc(cls.label);
@@ -867,24 +870,11 @@ function buildHerosEquipHTML() {
   return h;
 }
 
-/* v3.244.0 : sous-onglet Talents — les trois branches passent de la barre du kit à
-   un segment (second niveau), au-dessus de l'arbre existant de ui/talents-view.js. */
+/* v3.327.0 : sous-onglet Talents — un arbre par classe (ui/talents-view.js). */
 function buildHerosTalentsHTML() {
-  if (typeof buildTalentBranchHTML !== "function") return '<div class="pc-empty">Talents indisponibles.</div>';
-  var cats = ["combat", "fortune", "survival"];
-  var cur = (typeof activeTalentCategory !== "undefined") ? activeTalentCategory : "combat";
-  var seg = '<div class="kseg kseg-in-frame">';
-  cats.forEach(function (c) {
-    seg += '<button type="button" class="' + (c === cur ? 'is-on' : '') + '" onclick="window.setTalentCategory(\'' + c + '\')">'
-      + esc(getTalentCategoryLabel(c)) + '</button>';
-  });
-  seg += '</div>';
-  var h = '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/scene/node_discovery.png|Talents">';
-  h += seg; // en tête du cadre, même raison que buildHerosEquipHTML
-  h += buildTalentSummaryBarHTML();
-  h += buildTalentBranchHTML(cur);
-  h += '</div>';
-  return h;
+  if (typeof buildTalentBoardHTML !== "function") return '<div class="pc-empty">Talents indisponibles.</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/scene/node_discovery.png|Talents">'
+    + buildTalentBoardHTML() + '</div>';
 }
 
 function buildHerosHTML() {
@@ -925,7 +915,9 @@ function buildHerosHTML() {
    ============================================================ */
 var HEROS_SHEETS = {
   stats: { title: "Stats", icon: "images/Icons/subtabs/hero_stats.png", build: function () { return buildHerosAmeliorationHTML(); } },
-  abilities: { title: "Capacités", icon: "images/Icons/subtabs/hero_abilities.png", build: function () { return buildHerosStatsHTML(); } }
+  abilities: { title: "Capacités", icon: "images/Icons/subtabs/hero_abilities.png", build: function () { return buildHerosStatsHTML(); } },
+  // v3.327.0 : détail d'un talent (ui/talents-view.js, openTalentSheet)
+  talent: { title: "Talent", icon: "images/Icons/scene/node_discovery.png", build: function () { return buildTalentSheetBodyHTML(); } }
 };
 
 function buildHerosSheetHTML() {

@@ -4,16 +4,8 @@
    + chasses, chaque catégorie groupée par monde en cartes repliables. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 function getTalentsAvailableCount() {
-  if ((game.talentPoints || 0) <= 0) return 0;
-  if (typeof getAllTalentNodes !== "function") return (game.talentPoints > 0) ? 1 : 0;
-
-  var tree = getAllTalentNodes();
-  var hasPurchasable = ["combat", "fortune", "survival"].some(function (branch) {
-    return (tree[branch] || []).some(function (node) {
-      return !game.talents[node.id] && (!node.requires || game.talents[node.requires]);
-    });
-  });
-  return hasPurchasable ? 1 : 0;
+  // v3.327.0 : un talent achetable maintenant (points, plafond d'acte et règles de l'arbre)
+  return (window.TalentManager && TalentManager.hasAffordable()) ? 1 : 0;
 }
 
 function getAscensionAvailableCount() {
@@ -841,6 +833,7 @@ function buildHuntQuestIntroHTML(questId) {
   h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(quest.icon || "images/Icons/classes/class_ranger.png", "dungeon-story-icon-img", quest.name) + '</div>';
   h += '    <div class="dungeon-story-title">' + esc(quest.name) + '</div>';
   if (quest.story) h += '    <div class="dungeon-story-text">' + esc(quest.story) + '</div>';
+  if (window.ProvisionsManager) h += ProvisionsManager.buildLineHTML("hunt", quest); // v3.330.1 : vivres de sortie
   h += '    <div class="dungeon-story-actions">';
   h += '      <button class="settings-btn" type="button" onclick="closeHuntQuestIntro()">Annuler</button>';
   h += '      <button class="settings-btn primary" type="button" onclick="confirmHuntQuestStart()">Commencer</button>';

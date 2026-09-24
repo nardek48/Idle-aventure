@@ -193,6 +193,9 @@ function buildDungeonSheetHTML(dungeonId) {
     h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> Tickets restants : <strong>' + tickets + '</strong>'
        + (tickets <= 0 ? ' · <a href="javascript:void(0)" onclick="closeDungeonSheet();openDungeonTicketOverlay();">en acheter</a>' : '') + '</div>';
   }
+  // v3.330.1 : vivres de sortie (donjon déjà fini une fois)
+  var dDef = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(dungeonId); })[0];
+  if (window.ProvisionsManager && dDef) h += ProvisionsManager.buildLineHTML("dungeon", dDef);
   h += '</div>'; // ksheet-body
   h += '<button type="button" class="ksheet-close" onclick="confirmDungeonStart()">Entrer</button>';
   h += '</div>';

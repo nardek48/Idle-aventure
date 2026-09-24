@@ -61,15 +61,28 @@ var ResumeManager = {
      second appel ne crédite rien. */
   _catchUp: function (ms) {
     var before = this._collect();
+    var extras = window.ReturnManager ? ReturnManager.capture() : null; // v3.332.0 : chantier, Taverne
 
     if (window.ProductionManager && typeof ProductionManager.catchUpOffline === "function") {
       ProductionManager.catchUpOffline();
     }
 
     var gains = this._diff(before);
+
+    /* v3.332.0 (R1) : au-dessus du seuil, l'écran de retour unique — même quand la production
+       n'a rien donné (chantier fini, contrats renouvelés, patrouille rentrée). */
+    if (ms >= RESUME_NOTICE_MS && window.ReturnManager) {
+      var now = Date.now();
+      if (now - this._lastNoticeAt >= RESUME_NOTICE_COOLDOWN_MS) {
+        var fullInfo = window.OfflineManager ? OfflineManager._countFullPlots() : { full: 0, open: 0 };
+        var summary = ReturnManager.complete({ ms: ms, produced: gains ? gains.zones : {}, crafted: gains ? gains.entrepot : {},
+          fullPlots: fullInfo.full, openPlots: fullInfo.open }, extras);
+        if (ReturnManager.request(summary)) this._lastNoticeAt = now;
+      }
+    }
     if (!gains) return null;
 
-    if (ms >= RESUME_NOTICE_MS) this._notify(ms, gains);
+    if (ms >= RESUME_NOTICE_MS && !window.ReturnManager) this._notify(ms, gains);
     if (typeof saveGame === "function") saveGame();
     if (typeof renderHud === "function") renderHud();
 

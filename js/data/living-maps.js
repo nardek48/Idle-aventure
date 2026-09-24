@@ -32,12 +32,15 @@ var LIVING_MAP_RULES = {
      suivante (+brakePerWin sur PV et dégâts), remise à zéro au jour civil. Sève par victoire,
      XP de mission ordinaire (5, boss). Chiffres fixés au banc sim/arbremere-bench.js
      (16/09/2026) : +50 % = 4 à 4,5 victoires/jour en fin de Forêt, ~9 Sève/jour. */
-  repeatableElite: { brakePerWin: 0.50, sevePerWin: 2 },
+  /* v3.331.0 (suite du recalage, R2) : base de l'Arbre-mère durcie (data/elites.js), frein
+     0,50 -> 0,25. Mesuré (plafond-bench --journee) : fin de Forêt ~4 victoires par jour, ~8 Sève
+     (la cible d'origine) ; avant : 7,5 victoires faciles, 15 Sève. */
+  repeatableElite: { brakePerWin: 0.25, sevePerWin: 2 },
   /* Effets tenus (C-3), chiffres en un seul endroit. */
   effects: { productionMult: 1.10, contractMult: 1.10, gourdeBreath: 40, ropeBonus: 1,
     outreBreathBonus: 15, // v3.305.0 : puits sec tenu -> l'Outre rend 55 au lieu de 40 (provisoire)
     workshopSpeedMult: 1.10 }, // v3.305.0 : oasis basse / verrerie tenues -> Réservoir / Tailleur de pierre 10 % plus rapides
-  /* §5.4 : Palissade (C-3). Frein : chance qu'un échec ne recouvre rien. Tenue : anneau conservé à l'Ascension. */
+  /* §5.4 : Palissade (C-3). Frein : chance qu'un échec ne recouvre rien. Tenue : secteur d'un anneau tenu, jamais repris par un échec (v3.335.0 : l'Ascension n'existe plus). */
   palisade: {
     buildingId: "palisade",
     brakePerLevel: 0.07,
@@ -79,8 +82,9 @@ var LIVING_MAPS = {
         content: { type: "expedition", templateId: "petite_aventure_foret", pools: { obstacle: ["porte_scellee", "paroi"] } },
         heldEffect: { id: "gourde_40", label: "Gourde : 40 Souffle au lieu de 25." },
         lore: "Des marches trop hautes pour des jambes humaines. En haut, une lueur." },
-      // Arbre-mère (C-5) : élite RÉPÉTABLE — se rejoue à volonté une fois libérée, hors cap, sans
-      // ration ; chaque victoire du jour durcit la suivante (LIVING_MAP_RULES.repeatableElite).
+      // Arbre-mère (C-5) : élite RÉPÉTABLE — se rejoue à volonté une fois libérée, hors cap ; chaque
+      // victoire du jour durcit la suivante (LIVING_MAP_RULES.repeatableElite). v3.331.0 : une
+      // ration par combat rejoué (vivres de sortie, décision E4 confirmée par Seb).
       { id: "arbremere", name: "Arbre-mère", x: 29.2, y: 12.7, ring: 3, neighbors: ["gue", "menhirs", "autel"],
         content: { type: "elite", eliteId: "arbre_mere", repeatable: true },
         heldEffect: null,
@@ -132,7 +136,7 @@ var LIVING_MAPS = {
       openElsewhere: "Le sable attend encore ailleurs",
       homeTitle: "Le camp tient le puits.",
       homeLore: "Le camp du Portail, hors du Cycle. Les secteurs de l'anneau 1 sont toujours à portée.",
-      intro: "Touche un secteur pour voir ce qu'on en sait. L'Ensablement ne reprend que ce qu'on lui laisse : un échec, ou l'Ascension.",
+      intro: "Touche un secteur pour voir ce qu'on en sait. L'Ensablement ne reprend que ce qu'on lui laisse, quand une expédition échoue.",
       runLoot: "Verre du run seul",
       mapBlurb: "Choisis un secteur sur la carte du Désert : chaque expédition repousse le sable."
     },

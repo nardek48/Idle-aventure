@@ -453,7 +453,7 @@ function buildLivingMapLegendHTML() {
   h += row(node("is-voile is-far", "?"), "Voilé, trop loin", "libère d'abord un voisin");
   h += row(node("is-libere", "1"), "Libéré", "son effet s'applique");
   h += row(node("is-recouvert", "3"), esc(livingMapWords().coveredState), "effet perdu, à reprendre"); // v3.305.0
-  h += row(node("is-libere is-protege", "1"), "Tenu par la Palissade", "résiste à l'Ascension");
+  h += row(node("is-libere is-protege", "1"), "Tenu par la Palissade", "un échec ne le reprend pas"); // v3.335.0
   h += row(node("is-libere is-running", "4"), "Expédition en cours", "");
   return h + '</div>';
 }
@@ -685,7 +685,7 @@ function buildLivingMapPanelHTML(mapId, running) {
     h += '<div class="lm-panel-name">' + esc(map.village.name) + '</div>';
     h += '<p class="lm-panel-lore">' + esc(W.homeLore) + '</p>';
     h += '<p class="lm-panel-line"><b>Palissade niveau ' + pal + '</b> · frein ' + Math.round(LM.getBrakeChance(mapId) * 100) + ' % sur l\'échec · '
-      + (held ? 'tient l\'anneau ' + (held === 3 ? '1 à 3' : held === 2 ? '1 et 2' : '1') + ' à l\'Ascension' : 'ne tient rien encore à l\'Ascension (niveau 3)') + '</p>';
+      + (held ? 'tient l\'anneau ' + (held === 3 ? '1 à 3' : held === 2 ? '1 et 2' : '1') + ' : un échec n\'y reprend rien' : 'ne tient aucun anneau (niveau 3)') // v3.335.0 + '</p>';
     return h + '</div>';
   }
 
@@ -741,6 +741,11 @@ function buildLivingMapPanelHTML(mapId, running) {
     h += '<button class="settings-btn is-running" type="button" disabled>' + (isElite ? "Combat en cours" : "Expédition en cours") + '</button>';
   } else {
     var cs = LM.canStart(mapId, d.id);
+    // v3.330.1 : vivres d'une élite rejouée
+    if (cs.ok && isElite && window.ProvisionsManager) {
+      var lmap = LM.getMap(mapId);
+      h += ProvisionsManager.buildLineHTML("mapelite", { mapId: mapId, sectorId: d.id, worldId: lmap ? lmap.worldId : "forest" });
+    }
     if (cs.ok) h += '<button class="settings-btn primary" type="button" onclick="startLivingMapSector(\'' + d.id + '\')">' + verb + '</button>';
     else {
       h += '<p class="lm-panel-wall">' + esc(cs.reason) + '</p>';

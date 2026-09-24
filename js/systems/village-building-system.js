@@ -106,7 +106,7 @@ var VillageBuildingManager = {
     return Math.max(this.getLevel(id), Math.min(def.maxLevel, cap));
   },
 
-  /* Vrai quand le plafond vient du monde et non du bâtiment : la suite existe ailleurs. */
+  /* Vrai quand le plafond vient du monde (ou de l'acte, v3.325.0) et non du bâtiment. */
   isWorldCapped: function (id) {
     var def = VILLAGE_BUILDINGS[id];
     return !!def && this.getMaxLevel(id) < def.maxLevel;
@@ -116,7 +116,8 @@ var VillageBuildingManager = {
      bloqué par le monde. */
   getWorldCapLabel: function (id) {
     var next = this.getLevel(id) + 1;
-    var where = window.WorldCaps ? WorldCaps.getWorldOpening(id, next) : "dans un prochain monde";
+    // v3.325.0 : le Terrain peut être plafonné par l'acte, pas seulement par le monde
+    var where = window.WorldCaps ? WorldCaps.getCapOpening(id, next) : "dans un prochain monde";
     return (this.getLevel(id) === 0 ? "S'ouvre " : "Suite ") + where;
   },
 
@@ -155,18 +156,34 @@ var VillageBuildingManager = {
     var def = VILLAGE_BUILDINGS[id];
     if (!def || this.isMaxLevel(id)) return null;
 
-    var level = this.getLevel(id);
-    // v3.264.0 : coût propre au niveau 1 (Atelier de Construction), les paliers reprennent ensuite
-    if (level === 0 && def.firstLevelCost) return Object.assign({}, def.firstLevelCost);
-    var tier = this.getCostTierForLevel(def, level);
-    if (!tier) return null;
+    return this.getLevelCost(id, this.getLevel(id));
+  },
 
-    var mult = Math.pow(tier.costMult, level - tier.minLevel);
-    var out = {};
-    tier.resources.forEach(function (key) {
-      out[key] = Math.floor(tier.baseCost[key] * mult);
-    });
+  /* v3.330.0 : coût pour passer du niveau `level` au suivant — factorisé pour que les
+     niveaux d'Histoire (E2) et les blocs (E3) s'appliquent partout de la même façon. */
+  getLevelCost: function (id, level) {
+    var def = VILLAGE_BUILDINGS[id];
+    if (!def) return null;
+    var out;
+    // v3.264.0 : coût propre au niveau 1 (Atelier de Construction), les paliers reprennent ensuite
+    if (level === 0 && def.firstLevelCost) out = Object.assign({}, def.firstLevelCost);
+    else {
+      var tier = this.getCostTierForLevel(def, level);
+      if (!tier) return null;
+      var mult = Math.pow(tier.costMult, level - tier.minLevel);
+      out = {};
+      tier.resources.forEach(function (key) {
+        out[key] = Math.floor(tier.baseCost[key] * mult);
+      });
+    }
+    // v3.330.0 (E2) : niveau exigé par l'Histoire -> or et matériaux du monde seulement
+    if (typeof isStoryVillageLevel === "function" && isStoryVillageLevel(id, level + 1)) out = stripStoryMaterials(out).cost;
     return out;
+  },
+
+  /* v3.330.0 (E2) : le prochain niveau est-il fourni par le village (matériaux communs) ? */
+  isNextLevelStoryProvided: function (id) {
+    return !this.isMaxLevel(id) && typeof isStoryVillageLevel === "function" && isStoryVillageLevel(id, this.getLevel(id) + 1);
   },
 
   getNextBuildSeconds: function (id) {

@@ -213,6 +213,27 @@ function buildBestiaryListHTML() {
   return h;
 }
 
+/* v3.333.0 (Évolutions, B5) : trophées de boss — première victoire sur chaque boss ou élite,
+   dans l'ordre où ils ont été gagnés. Rien tant qu'aucun n'est gagné. */
+var bestiaryTrophiesOpen = false;
+function toggleBestiaryTrophies() { bestiaryTrophiesOpen = !bestiaryTrophiesOpen; if (typeof renderPanel === "function") renderPanel(); }
+window.toggleBestiaryTrophies = toggleBestiaryTrophies;
+
+function buildBestiaryTrophiesHTML() {
+  var list = window.BossMomentManager ? BossMomentManager.list() : [];
+  if (!list.length) return "";
+  var h = '<div class="nb-accordion-section' + (bestiaryTrophiesOpen ? ' is-expanded' : '') + '">';
+  h += '<button type="button" class="nb-accordion-head' + (bestiaryTrophiesOpen ? ' is-expanded' : '') + '" onclick="toggleBestiaryTrophies()">'
+    + '<span class="nb-accordion-name">🏆 Trophées</span><span class="nb-accordion-count">' + list.length + '</span>'
+    + '<span class="nb-accordion-chevron">' + (bestiaryTrophiesOpen ? "▲" : "▼") + '</span></button>';
+  if (bestiaryTrophiesOpen && typeof buildBossTrophyCardHTML === "function") {
+    h += '<div class="nb-accordion-body bm-trophies">' + list.map(buildBossTrophyCardHTML).join("") + '</div>';
+  }
+  h += '</div>';
+  return h;
+}
+window.buildBestiaryTrophiesHTML = buildBestiaryTrophiesHTML;
+
 function buildBestiaryHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
@@ -224,6 +245,7 @@ function buildBestiaryHTML() {
     h += (typeof buildCodexHTML === "function") ? buildCodexHTML() : "";
   } else {
     h += (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("bestiary") : "";
+    h += buildBestiaryTrophiesHTML(); // v3.333.0 (B5)
     h += buildBestiaryListHTML();
   }
 

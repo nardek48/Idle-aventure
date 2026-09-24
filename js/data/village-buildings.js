@@ -32,6 +32,42 @@ function getVillageBuildSeconds(targetLevel) {
 }
 window.getVillageBuildSeconds = getVillageBuildSeconds;
 
+/* v3.330.0 (économie du village, décision E2 option c de Seb) — NIVEAUX D'HISTOIRE.
+   Ce que l'Histoire exige du village ne doit jamais bloquer un joueur qui avance vite :
+   ces niveaux ne coûtent que l'or et les matériaux DU MONDE (résine, Verre trempé, Chitine).
+   Les matériaux communs (ceux des zones et de leurs ateliers) sont fournis par le village.
+     - Terrain d'entraînement : jusqu'au plafond de l'acte (TRAINING_CAP_BY_ACT) ;
+     - Forge : niveaux 1 à 3 (palier de l'étape 13 du Désert, STORY_PALIER_FORGE) ;
+     - reforge de l'ARME : niveaux 1 à 4 (même palier, STORY_PALIER_REFORGE). */
+var STORY_PROVIDED_MATERIALS = ["bois", "planche", "pierre", "fer", "lingot", "acier", "bloc", "eau", "ble", "viande"];
+var STORY_FORGE_LEVELS = 3;
+var STORY_WEAPON_REFORGE_LEVELS = 4;
+
+/* Vrai si le niveau `targetLevel` du bâtiment `id` est un niveau d'Histoire. */
+function isStoryVillageLevel(id, targetLevel) {
+  if (id === "training") {
+    var cap = (window.WorldCaps && typeof WorldCaps.getTrainingActCap === "function") ? WorldCaps.getTrainingActCap() : Infinity;
+    return targetLevel <= cap;
+  }
+  if (id === "forge") return targetLevel <= STORY_FORGE_LEVELS;
+  return false;
+}
+
+/* Retire d'un coût les matériaux communs ; renvoie la copie et la liste retirée. */
+function stripStoryMaterials(cost) {
+  var out = {}, removed = [];
+  Object.keys(cost || {}).forEach(function (k) {
+    if (STORY_PROVIDED_MATERIALS.indexOf(k) !== -1) removed.push(k);
+    else out[k] = cost[k];
+  });
+  return { cost: out, removed: removed };
+}
+window.STORY_PROVIDED_MATERIALS = STORY_PROVIDED_MATERIALS;
+window.STORY_FORGE_LEVELS = STORY_FORGE_LEVELS;
+window.STORY_WEAPON_REFORGE_LEVELS = STORY_WEAPON_REFORGE_LEVELS;
+window.isStoryVillageLevel = isStoryVillageLevel;
+window.stripStoryMaterials = stripStoryMaterials;
+
 /* Rang de l'Atelier de Construction requis pour ouvrir un chantier.
    v3.289.0 (D12) : seuils [1, 2, 3, 4] — à [1, 3, 5, 7], l'Atelier plafonné à 4 en Forêt
    rendait Halle, Taverne, Entrepôt et Palissade inconstructibles dans leur propre monde. */
@@ -47,7 +83,7 @@ var VILLAGE_BUILDINGS = {
     rank: 0,                 // pas de prérequis : c'est lui qui donne les rangs
     maxLevel: 10,
     implemented: true,
-    desc: "Le maître d'œuvre du village. Son niveau ouvre les chantiers des autres bâtiments, et chaque amélioration fait monter le prix de vente de l'Entrepôt.",
+    desc: "Le maître d'œuvre du village. Son niveau ouvre les chantiers des autres bâtiments, et chaque amélioration fait mieux payer les contrats de la Taverne.",
     /* Repris tel quel de data/construction.js (v3.37/v3.40) : mêmes
        ressources, mêmes bases, mêmes multiplicateurs. */
     /* v3.264.0 (décision Seb) : le NIVEAU 1 seul coûte 5 planches au lieu de 10 — exactement
@@ -64,8 +100,8 @@ var VILLAGE_BUILDINGS = {
       },
       {
         minLevel: 5, maxLevel: 7,
-        resources: ["gold", "planche", "pierre", "lingot"],
-        baseCost: { gold: 120, planche: 45, pierre: 65, lingot: 8 },
+        resources: ["gold", "planche", "bloc", "pierre", "lingot"],
+        baseCost: { gold: 120, planche: 23, bloc: 22, pierre: 65, lingot: 8 }, // v3.330.0 (E3) : moitié des planches en blocs
         costMult: 1.40
       },
       /* v3.214.0 (lot V-3) : 3e palier au matériau de monde. Les niveaux 8 à 10
@@ -73,13 +109,14 @@ var VILLAGE_BUILDINGS = {
          dépense d'or. Les paliers 0-7 n'ont pas bougé d'un chiffre. */
       {
         minLevel: 8, maxLevel: 9,
-        resources: ["gold", "planche", "pierre", "lingot", "resine_durcie"],
-        baseCost: { gold: 600, planche: 110, pierre: 140, lingot: 30, resine_durcie: 4 },
+        resources: ["gold", "planche", "bloc", "pierre", "lingot", "resine_durcie"],
+        baseCost: { gold: 600, planche: 55, bloc: 55, pierre: 140, lingot: 30, resine_durcie: 4 }, // v3.330.0 (E3) : moitié des planches en blocs
         costMult: 1.45
       }
     ],
     effectLabel: function (level) {
-      return "+" + Math.round(level * 3) + " % de prix de vente à l'Entrepôt";
+      // v3.330.0 (E6) : la vente à l'Entrepôt n'existe plus, le bonus passe aux contrats de la Taverne
+      return "+" + Math.round(level * 3) + " % sur les contrats de la Taverne";
     },
     sellBonusAtLevel: function (level) {
       return 1 + 0.03 * level;
@@ -214,8 +251,8 @@ var VILLAGE_BUILDINGS = {
       },
       {
         minLevel: 3, maxLevel: 5,
-        resources: ["gold", "planche", "pierre", "lingot"],
-        baseCost: { gold: 900, planche: 60, pierre: 70, lingot: 14 },
+        resources: ["gold", "planche", "bloc", "pierre", "lingot"],
+        baseCost: { gold: 900, planche: 30, bloc: 30, pierre: 70, lingot: 14 }, // v3.330.0 (E3) : moitié des planches en blocs
         costMult: 1.40
       }
     ],
@@ -294,8 +331,8 @@ var VILLAGE_BUILDINGS = {
       },
       {
         minLevel: 5, maxLevel: 9,
-        resources: ["gold", "planche", "pierre", "lingot"],
-        baseCost: { gold: 4000, planche: 90, pierre: 110, lingot: 24 },
+        resources: ["gold", "planche", "bloc", "pierre", "lingot"],
+        baseCost: { gold: 4000, planche: 45, bloc: 45, pierre: 110, lingot: 24 }, // v3.330.0 (E3) : moitié des planches en blocs
         costMult: 1.42
       }
     ],
@@ -318,7 +355,7 @@ var VILLAGE_BUILDINGS = {
        sur le tableau. */
     maxLevel: 5,
     implemented: true,
-    desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. Livrer paie mieux que vendre à l'Entrepôt : c'est le débouché du surplus de Production.",
+    desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. C'est le seul débouché du surplus de Production : l'Entrepôt ne rachète plus rien.",
     costTiers: [
       {
         minLevel: 0, maxLevel: 2,
@@ -328,8 +365,8 @@ var VILLAGE_BUILDINGS = {
       },
       {
         minLevel: 3, maxLevel: 4,
-        resources: ["gold", "planche", "pierre", "lingot"],
-        baseCost: { gold: 3200, planche: 80, pierre: 95, lingot: 20 },
+        resources: ["gold", "planche", "bloc", "pierre", "lingot"],
+        baseCost: { gold: 3200, planche: 40, bloc: 40, pierre: 95, lingot: 20 }, // v3.330.0 (E3) : moitié des planches en blocs
         costMult: 1.45
       }
     ],
@@ -359,15 +396,16 @@ var VILLAGE_BUILDINGS = {
       },
       {
         minLevel: 5, maxLevel: 9,
-        resources: ["gold", "planche", "pierre", "lingot", "resine_durcie"],
-        baseCost: { gold: 5000, planche: 110, pierre: 130, lingot: 30, resine_durcie: 3 },
+        resources: ["gold", "planche", "bloc", "pierre", "lingot", "resine_durcie"],
+        baseCost: { gold: 5000, planche: 55, bloc: 55, pierre: 130, lingot: 30, resine_durcie: 3 }, // v3.330.0 (E3) : moitié des planches en blocs
         costMult: 1.42
       }
     ],
     effectLabel: function (level) {
       var par = (typeof WAREHOUSE_CAP_PER_LEVEL === "number") ? WAREHOUSE_CAP_PER_LEVEL : 250;
-      var base = 999;
-      return "Plafond des ressources fabriquées : " + (base + level * par)
+      var base = 999, raw = (typeof RAW_STOCK_BASE === "number") ? RAW_STOCK_BASE : 500;
+      // v3.330.0 (E1) : le bâtiment relève aussi le plafond des ressources brutes
+      return "Plafond : ressources brutes " + (raw + level * par) + ", fabriquées " + (base + level * par)
         + (level > 0 ? " (+" + (level * par) + ")" : "");
     }
   },
@@ -386,7 +424,7 @@ var VILLAGE_BUILDINGS = {
        LIVING_MAP_RULES.palisade par LivingMapManager. */
     maxLevel: 10,
     implemented: true,
-    desc: "Le mur d'Aeswyn sur la carte de la Forêt : chaque niveau freine le Recouvrement quand une expédition échoue, et les anneaux tenus survivent à l'Ascension.",
+    desc: "Le mur d'Aeswyn sur la carte de la Forêt : chaque niveau freine le Recouvrement quand une expédition échoue, et un secteur d'un anneau tenu ne peut plus être repris.",
     costTiers: [
       /* v3.290.0 (équilibrage Forêt, décision Seb) : palier PROPRE pour les trois niveaux
          de la Forêt. Premier niveau bon marché — la cible le veut à l'arrivée au Désert —
@@ -407,8 +445,8 @@ var VILLAGE_BUILDINGS = {
       },
       {
         minLevel: 5, maxLevel: 9,
-        resources: ["gold", "planche", "pierre", "lingot", "resine_durcie"],
-        baseCost: { gold: 5000, planche: 110, pierre: 130, lingot: 30, resine_durcie: 3 },
+        resources: ["gold", "planche", "bloc", "pierre", "lingot", "resine_durcie"],
+        baseCost: { gold: 5000, planche: 55, bloc: 55, pierre: 130, lingot: 30, resine_durcie: 3 }, // v3.330.0 (E3) : moitié des planches en blocs
         costMult: 1.42
       }
     ],
@@ -420,9 +458,10 @@ var VILLAGE_BUILDINGS = {
       var held = LM.getHeldRing(level);
       var txt = "Frein sur l'échec : " + brake + " %";
       if (held >= 3) txt += " · anneaux 1 à 3 tenus : le Recouvrement ne reprend plus rien";
-      else if (held === 2) txt += " · anneaux 1 et 2 tenus à l'Ascension";
-      else if (held === 1) txt += " · anneau 1 tenu à l'Ascension";
-      else txt += " · niveau 3 : l'anneau 1 tiendra à l'Ascension";
+      // v3.335.0 : l'Ascension n'existe plus (v3.322.0) — un anneau tenu protège de l'échec
+      else if (held === 2) txt += " · anneaux 1 et 2 tenus : un échec ne les reprend plus";
+      else if (held === 1) txt += " · anneau 1 tenu : un échec ne le reprend plus";
+      else txt += " · niveau 3 : l'anneau 1 sera tenu";
       if (level >= Number(pal.revealLevel || 99)) txt += " · noms révélés au front";
       return txt;
     }

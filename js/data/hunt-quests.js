@@ -10,6 +10,11 @@
    plafond de CHAQUE ressource fabriquée. 999 → 3 499 au niveau 10. */
 var WAREHOUSE_CAP_PER_LEVEL = 250;
 
+/* v3.330.0 (économie du village, décision E1 de Seb) : les ressources BRUTES plafonnent aussi.
+   500 de base, + WAREHOUSE_CAP_PER_LEVEL par niveau d'Entrepôt (1 250 au plafond de la Forêt,
+   2 000 au Désert). Un stock déjà au-dessus est conservé (a1) : rien ne rentre tant qu'on y est. */
+var RAW_STOCK_BASE = 500;
+
 var WAREHOUSE_RESOURCES = {
   viande: { id: "viande", name: "Viande", icon: "images/Icons/resources/meat_icon.png", desc: "Butin de chasse, obtenu en Forêt ou au bâtiment Chasse.", sellPrice: 2, tier: "raw" },
   viande_sechee: { id: "viande_sechee", name: "Viande séchée", icon: "images/Icons/resources/meat_icon.png", desc: "Séchée au Séchoir (atelier de Chasse) à partir de Viande.", sellPrice: 8, tier: "crafted", cap: 999 },
@@ -25,6 +30,8 @@ var WAREHOUSE_RESOURCES = {
   eau_purifiee: { id: "eau_purifiee", name: "Eau purifiée", icon: "images/Icons/resources/water_icon.png", desc: "Eau filtrée à la Station de purification (atelier du Puits). Base de toutes les préparations de l'Apothicaire.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se filtre à la Station de purification (Puits)" },
   planche: { id: "planche", name: "Planche", icon: "images/Icons/resources/plank_icon.png", desc: "Fabriquée à partir de Bois.", sellPrice: 7, tier: "crafted", cap: 999 },
   lingot: { id: "lingot", name: "Lingot", icon: "images/Icons/resources/ingot_icon.png", desc: "Fabriqué à partir de Fer.", sellPrice: 10, tier: "crafted", cap: 999 },
+  /* v3.330.0 (E3) : Bloc taillé, Maçonnerie de la Carrière (ouverte au Désert). Invendable. */
+  bloc: { id: "bloc", name: "Bloc taillé", icon: "images/Icons/resources/bloc_taille_icon.png", desc: "Pierre équarrie et cerclée de fer, à la Maçonnerie de la Carrière. Sert aux constructions du Désert.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 1, worldName: "Désert", sourceHint: "Se taille à la Maçonnerie (Carrière), avec de la Pierre et du Fer" },
   /* v3.221.0 (lot V-8) : matériau de reforge. Troisième atelier de tier 2
      activé (Forge de la Mine), et premier débouché du Lingot en dehors de la
      construction. Invendable : c'est un intrant. */
@@ -32,8 +39,8 @@ var WAREHOUSE_RESOURCES = {
   farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.png", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 },
   // v3.137.0 : desc corrigée — la Boulangerie (Champs), pas l'Atelier de Construction, cuit le Pain.
   pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.png", desc: "Cuit à la Boulangerie (Champs) à partir d'Eau et de Farine.", sellPrice: 19, tier: "crafted", cap: 999 },
-  ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.png", desc: "Repas au Campement : restaure 60 % des PV max. Crafté à la Cuisine de camp à partir de Viande séchée et de Pain.", sellPrice: 36, tier: "crafted", cap: 999, healPct: 0.60 },
-  petite_ration: { id: "petite_ration", name: "Petite ration", icon: "images/Icons/resources/petite_ration_icon.png", desc: "Repas au Campement : restaure 35 % des PV max. Crafté à la Cuisine de camp à partir de Viande et d'Eau.", sellPrice: 18, tier: "crafted", cap: 999, healPct: 0.35 },
+  ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.png", desc: "Repas au Campement : restaure 60 % des PV max. Vivres pour repartir au Désert (chasse, donjon, élite rejouée). Cuisine de camp : 3 Viandes séchées + 1 Pain.", sellPrice: 36, tier: "crafted", cap: 999, healPct: 0.60 },
+  petite_ration: { id: "petite_ration", name: "Petite ration", icon: "images/Icons/resources/petite_ration_icon.png", desc: "Repas au Campement : restaure 35 % des PV max. Vivres pour repartir en Forêt (chasse, donjon, élite rejouée). Crafté à la Cuisine de camp à partir de Viande et d'Eau.", sellPrice: 18, tier: "crafted", cap: 999, healPct: 0.35 },
   // v3.137.0 : recette de craft ajoutée (Cuisine de camp : Ration moyenne + 3 Sève d'Aeswyn) — desc mise à jour.
   /* v3.303.0 (W-2, Désert D3) : l'Outre pleine, fabriquée au Réservoir du Puits. Emportée dans
      la préparation d'un parcours du Désert, elle rend du Souffle une fois. Jamais obligatoire.
@@ -197,5 +204,6 @@ var RATION_IDS = ["petite_ration", "ration", "grande_ration"];
 
 window.WAREHOUSE_RESOURCES = WAREHOUSE_RESOURCES;
 window.WAREHOUSE_CAP_PER_LEVEL = WAREHOUSE_CAP_PER_LEVEL;
+window.RAW_STOCK_BASE = RAW_STOCK_BASE;
 window.HUNT_QUESTS = HUNT_QUESTS;
 window.RATION_IDS = RATION_IDS;

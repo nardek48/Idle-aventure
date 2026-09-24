@@ -96,8 +96,7 @@ var DefenseManager = {
   getActiveBonusPct: function () {
     if (!this.isActive()) return 0;
     var base = DEFENSE_ABILITY.defenseBonusPct;
-    var talentBonus = (game.talents && game.talents.t_calm_breath) ? game.talents.t_calm_breath * 0.05 : 0;
-    return base + talentBonus;
+    return base; // v3.327.0 : ancien talent commun retiré
   },
 
   use: function () {
@@ -107,8 +106,7 @@ var DefenseManager = {
     }
 
     game.lastDefenseUse = Date.now();
-    var talentDurationBonusMs = (game.talents && game.talents.t_thick_skin) ? game.talents.t_thick_skin * 2000 : 0;
-    var effectiveDurationMs = DEFENSE_ABILITY.durationMs + talentDurationBonusMs;
+    var effectiveDurationMs = DEFENSE_ABILITY.durationMs; // v3.327.0 : ancien talent commun retiré
     game.defenseBuffExpires = Date.now() + effectiveDurationMs;
 
     if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {

@@ -127,6 +127,7 @@ var HeroSlotManager = {
         // mauvais genre. hero.image (getter, data/heroes.js) ne convient pas ici.
         heroImage: hero ? ((d.heroGender === "f" ? hero.imageF : hero.imageM) || hero.imageM || hero.imageF || "") : "",
         heroLevel: Number(d.heroLevel || 1),
+        heroTitle: (d.achievementStats && typeof d.achievementStats.title === "string") ? d.achievementStats.title : "", // v3.338.0 (H8)
         worldIndex: Number(d.worldIndex || 0),
         cycleCount: Number(d.cycleCount || 0),
         ascensionCount: Number(d.ascensionCount || 0),
@@ -380,6 +381,8 @@ function buildSaveData() {
     aether: Number(game.aether || 0),
     totalAetherEarned: Number(game.totalAetherEarned || 0),
     memory: game.memory && typeof game.memory === "object" ? JSON.parse(JSON.stringify(game.memory)) : null, // v3.322.0 : niveau de Mémoire
+    bossTrophies: game.bossTrophies && typeof game.bossTrophies === "object" ? game.bossTrophies : {}, // v3.333.0 : trophées de boss
+    patrols: game.patrols && typeof game.patrols === "object" ? game.patrols : {}, // v3.334.0 : patrouilles en cours
     tapDamage: Number(game.tapDamage || 1),
     tapMult: Number(game.tapMult || 1),
     equipFlatTapBonus: Number(game.equipFlatTapBonus || 0),
@@ -410,6 +413,7 @@ function buildSaveData() {
     killCounts: game.killCounts || {},
     upgrades: game.upgrades || {},
     talents: game.talents || {},
+    talentsV2: !!game.talentsV2, // v3.327.0 : talents par classe (migration faite)
     unlockedTabs: game.unlockedTabs || {}, // v3.99.15 : onglets débloqués, voir core/state.js
     inventory: Array.isArray(game.inventory) ? game.inventory : [],
     equipped: game.equipped || getDefaultEquipped(),
@@ -481,6 +485,7 @@ function buildSaveData() {
     classCooldowns: game.classCooldowns || {},
     classActiveDefense: game.classActiveDefense || null,
     achievementsClaimed: game.achievementsClaimed || {},
+    achievementStats: game.achievementStats && typeof game.achievementStats === "object" ? game.achievementStats : null, // v3.338.0 : Hauts faits
     worldsEverReached: game.worldsEverReached || {},
     worldQuestProgress: game.worldQuestProgress || {},
     worldQuestsCompleted: game.worldQuestsCompleted || {},
@@ -582,6 +587,12 @@ function restoreBaseState(d) {
   game.aether = Number(d.aether || 0);
   game.totalAetherEarned = Number(d.totalAetherEarned != null ? d.totalAetherEarned : d.aether || 0);
   game.memory = (d.memory && typeof d.memory === "object") ? d.memory : null; // v3.322.0 : complété par MemoryManager.ensure()
+  // v3.333.0 : trophées de boss — une sauvegarde d'avant n'en a pas : {}
+  if (window.BossMomentManager) BossMomentManager.restore(d.bossTrophies);
+  else game.bossTrophies = (d.bossTrophies && typeof d.bossTrophies === "object") ? d.bossTrophies : {};
+  // v3.334.0 : patrouilles en cours (butin tiré au départ) — une sauvegarde d'avant n'en a pas : {}
+  if (window.PatrolManager) PatrolManager.restore(d.patrols);
+  else game.patrols = (d.patrols && typeof d.patrols === "object") ? d.patrols : {};
   if (window.MemoryManager) MemoryManager.ensure();
 
   game.playerName = d.playerName || "";
@@ -602,7 +613,7 @@ function restoreBaseState(d) {
 
   game.heroLevel = Number(d.heroLevel || 1);
   game.heroXp = Number(d.heroXp || 0);
-  game.heroXpToNext = Number(d.heroXpToNext || 20);
+  game.heroXpToNext = Number(d.heroXpToNext || 30);
   game.talentPoints = Number(d.talentPoints || 0);
   game.heroMaxHp = Number(d.heroMaxHp || 10);
   game.heroHp = d.heroHp != null ? Number(d.heroHp) : game.heroMaxHp;
@@ -617,6 +628,7 @@ function restoreBaseState(d) {
   game.killCounts = d.killCounts && typeof d.killCounts === "object" ? d.killCounts : {};
   game.upgrades = d.upgrades && typeof d.upgrades === "object" ? d.upgrades : {};
   game.talents = d.talents && typeof d.talents === "object" ? d.talents : {};
+  game.talentsV2 = !!d.talentsV2; // v3.327.0 : false = ancienne sauvegarde, migrée par loadGame
   game.aetherUpgrades = d.aetherUpgrades && typeof d.aetherUpgrades === "object" ? d.aetherUpgrades : {};
   // v3.99.15 : onglets débloqués (voir core/state.js). Migration pour les sauvegardes
   // antérieures à cette version (d.unlockedTabs absent) : une partie déjà entamée
@@ -780,6 +792,9 @@ function restoreBaseState(d) {
     ? d.classActiveDefense
     : null;
   game.achievementsClaimed = d.achievementsClaimed && typeof d.achievementsClaimed === "object" ? d.achievementsClaimed : {};
+  // v3.338.0 : Hauts faits refondus — une sauvegarde d'avant n'en a pas : tout se rattrape à l'ouverture
+  if (window.AchievementManager && typeof AchievementManager.restore === "function") AchievementManager.restore(d.achievementStats);
+  else game.achievementStats = (d.achievementStats && typeof d.achievementStats === "object") ? d.achievementStats : null;
   game.worldsEverReached = d.worldsEverReached && typeof d.worldsEverReached === "object" ? d.worldsEverReached : {};
   game.worldQuestProgress = d.worldQuestProgress && typeof d.worldQuestProgress === "object" ? d.worldQuestProgress : {};
   game.worldQuestsCompleted = d.worldQuestsCompleted && typeof d.worldQuestsCompleted === "object" ? d.worldQuestsCompleted : {};
@@ -967,6 +982,13 @@ function loadGame() {
     restoreBaseState(d);
     reapplyProgressEffects();
 
+    // v3.327.0 (T10) : anciens talents communs -> points rendus ; puis points recalculés
+    if (window.TalentManager) {
+      TalentManager.migrate();
+      TalentManager.afterChange();
+      setTimeout(function () { TalentManager.showMigrationNotice(); }, 2500);
+    }
+
     if (window.QuestManager && typeof QuestManager.checkReset === "function") {
       QuestManager.checkReset();
     }
@@ -1006,6 +1028,7 @@ function hardResetState() {
   // v2.26 : la progression VRAIMENT permanente (Codex, hauts faits, boutique du donjon...) doit survivre à l'ascension comme l'Aether.
   // Détail : save-system_notes.md #28.
   var keptAchievementsClaimed = Object.assign({}, game.achievementsClaimed || {});
+  var keptAchievementStats = game.achievementStats; // v3.338.0 : conservés à la reprise, comme les réclamés
   var keptWorldsEverReached = Object.assign({}, game.worldsEverReached || {});
   var keptWorldQuestProgress = Object.assign({}, game.worldQuestProgress || {});
   var keptWorldQuestsCompleted = Object.assign({}, game.worldQuestsCompleted || {});
@@ -1095,6 +1118,10 @@ function hardResetState() {
   game.aether = keptAether;
   game.totalAetherEarned = keptTotalAetherEarned;
   game.memory = keptMemory;
+  // v3.333.0 : les trophées de boss sont des souvenirs — conservés à la reprise, comme le Codex
+  if (!game.bossTrophies || typeof game.bossTrophies !== "object") game.bossTrophies = {};
+  // v3.334.0 : une patrouille en cours continue pendant la reprise — les compagnons sont conservés
+  if (!game.patrols || typeof game.patrols !== "object") game.patrols = {};
 
   game.tapDamage = 1;
   game.tapMult = 1;
@@ -1137,6 +1164,7 @@ function hardResetState() {
   game.killCounts = {};
   game.upgrades = {};
   game.talents = keptTalents; // v3.222.0 : conservés à l'ascension (voir plus haut)
+  game.talentsV2 = true;      // v3.327.0
   game.aetherUpgrades = keptAetherUpgrades;
   game.inventory = [];
   game.equipped = getDefaultEquipped();
@@ -1186,6 +1214,7 @@ function hardResetState() {
   game.dungeonTierCleared = keptDungeonTierCleared;
 
   game.achievementsClaimed = keptAchievementsClaimed;
+  game.achievementStats = keptAchievementStats;
 
   game.worldsEverReached = keptWorldsEverReached;
   game.worldQuestProgress = keptWorldQuestProgress;
@@ -1274,6 +1303,9 @@ function fullResetState() {
   game.aether = 0;
   game.totalAetherEarned = 0;
   game.memory = null; // v3.322.0 : recréé par MemoryManager.ensure()
+  game.achievementStats = null; // v3.338.0 : Hauts faits repartis de zéro
+  game.bossTrophies = {}; // v3.333.0 : partie neuve, aucun trophée
+  game.patrols = {}; // v3.334.0 : partie neuve, aucune patrouille
   if (window.MemoryManager) MemoryManager.ensure();
   game.playerName = "";
   game.heroId = "";
@@ -1294,7 +1326,7 @@ function fullResetState() {
 
   game.heroLevel = 1;
   game.heroXp = 0;
-  game.heroXpToNext = 20;
+  game.heroXpToNext = 30; // v3.327.0 : courbe linéaire
   game.talentPoints = 0;
   game.heroHp = 10;
   game.heroMaxHp = 10;
@@ -1309,6 +1341,7 @@ function fullResetState() {
   game.killCounts = {};
   game.upgrades = {};
   game.talents = {};
+  game.talentsV2 = true; // v3.327.0 : une partie neuve n'a rien à migrer
   game.aetherUpgrades = {};
   game.unlockedTabs = { campement: true, quests: true, settings: true, scene: true }; // v3.99.15 / v3.122.0 : "scene" toujours débloqué (infrastructure d'affichage des runs, pas un onglet narratif — même statut que quests/settings)
   game.inventory = [];
@@ -1658,6 +1691,8 @@ function applyImportedSave(data) {
       // ACTIF uniquement, comportement identique à avant ce correctif.
       restoreBaseState(data);
       reapplyProgressEffects();
+      // v3.327.1 : même passage que loadGame (anciens talents -> points rendus)
+      if (window.TalentManager) { TalentManager.migrate(); TalentManager.afterChange(); TalentManager.showMigrationNotice(); }
 
       if (window.QuestManager && typeof QuestManager.checkReset === "function") {
         QuestManager.checkReset();

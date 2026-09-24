@@ -1,421 +1,113 @@
 /* =========================
-   Talents (v2.90.13 — bascule de branche alignée sur le composant
-   partagé .pc-subtab-bar, résumé compact + popup, connecteurs entre
-   paliers)
+   Talents par classe (v3.327.0) — conception Talents v1.1, atelier-talents.html
+   validé par Seb sur iPhone (24/09/2026). Remplace l'arbre commun à trois branches.
+   Préfixe tt-. Couleur de classe : --cl (trait), --cl-bg (fond), --cl-ink (texte).
    ========================= */
 
-#panel-container[data-tab="talents"] {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.tt-board { --cl: #a33b2a; --cl-bg: #a33b2a1a; --cl-ink: #8a2f20; color: #3a2c1a; width: 100%; }
+.tt-class-archer { --cl: #4a6b2a; --cl-bg: #4a6b2a1a; --cl-ink: #3f5c22; }
+.tt-class-mage { --cl: #3b4fa3; --cl-bg: #3b4fa31a; --cl-ink: #2f3f86; }
+
+/* Bandeau des points */
+.tt-points {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid #b98a4a; border-radius: 11px;
+  background: #f6ecd9; padding: 7px 9px; margin-bottom: 8px;
 }
-
-/* =========================
-   Résumé compact (bandeau tappable) + popup (#talent-modal-root)
-   ========================= */
-
-.talent-summary-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  margin: 0 0 12px;
-  padding: 9px 12px;
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream-alt);
-  border: 2px solid var(--nb-frame);
-  box-shadow: 0 2px 0 var(--nb-frame-light);
-  color: var(--nb-ink);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
+.tt-points-main { flex: 1 1 auto; min-width: 0; }
+.tt-points-big { font-size: 14px; font-weight: 800; color: #6b4a22; }
+.tt-points-big b { color: #b7791f; font-size: 17px; }
+.tt-points-sub { font-size: 10px; color: #8a7a5c; margin-top: 1px; line-height: 1.3; }
+.tt-res { color: #4a6b2a; font-weight: 800; }
+.tt-reset {
+  flex: 0 0 auto; font: inherit; font-size: 10.5px; font-weight: 800;
+  padding: 6px 8px; border-radius: 9px; cursor: pointer;
+  border: 1px solid #b98a4a; background: #efe0c2; color: #6b4a22;
 }
+.tt-reset:disabled { opacity: 0.45; }
+.tt-reset small { display: block; font-size: 9px; font-weight: 700; color: #4a6b2a; }
 
-.talent-summary-bar:active {
-  transform: translateY(1px);
-  box-shadow: none;
+/* Titres de section */
+.tt-sec {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: 11.5px; font-weight: 800; color: #4a3520;
+  margin: 10px 2px 5px;
 }
+.tt-sec small { font-weight: 600; color: #7a6444; font-size: 10px; }
 
-.talent-summary-bar-points {
-  color: var(--nb-gold-deep);
-  font-size: 11px;
+/* Nœud */
+.tt-node {
+  position: relative; display: flex; align-items: center; gap: 6px;
+  width: 100%; text-align: left; font: inherit; cursor: pointer;
+  border: 1.5px solid #b98a4a; border-radius: 10px;
+  background: #f6ecd9; color: #3a2c1a;
+  padding: 6px; min-height: 52px;
 }
-
-.talent-summary-bar-chevron {
-  color: var(--nb-ink-dim);
-  font-size: 11px;
+.tt-ico {
+  flex: 0 0 32px; width: 32px; height: 32px; border-radius: 8px; overflow: hidden;
+  background: #e4cfa0; border: 1px solid #b98a4a;
+  display: flex; align-items: center; justify-content: center;
 }
+.tt-ico img { width: 100%; height: 100%; object-fit: contain; }
+.tt-node-col { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.tt-node-name { font-size: 11px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.tt-node-short { font-size: 9.5px; line-height: 1.25; color: #6b5a3c; margin-top: 1px; }
+.tt-pips { display: flex; gap: 3px; margin-top: 3px; }
+.tt-pips i { width: 10px; height: 4px; border-radius: 2px; background: #e0cfa8; }
+.tt-pips i.is-on { background: var(--cl); }
 
-.talent-popup-card {
-  padding: 22px 20px;
-  text-align: center;
+/* États */
+.tt-node.is-owned { border-color: var(--cl); background: #fbf3e4; box-shadow: inset 0 0 0 1px var(--cl); }
+.tt-node.is-owned .tt-ico { background: var(--cl-bg); border-color: var(--cl); }
+.tt-node.is-avail { border-color: #c27f1f; box-shadow: 0 0 0 2px #f0aa3e55; }
+.tt-node.is-avail::after {
+  content: "+"; position: absolute; top: 3px; right: 3px;
+  width: 15px; height: 15px; border-radius: 50%;
+  background: #f0aa3e; color: #2a1c0c; font-size: 13px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center; line-height: 1;
 }
+.tt-node.is-avail .tt-node-col { padding-right: 12px; }
+.tt-node.is-locked { opacity: 0.55; }
+.tt-node.is-closed { opacity: 0.4; filter: grayscale(0.8); }
+.tt-node.is-closed .tt-node-short::before { content: "Fermée · "; font-weight: 800; color: #8a2f20; }
 
-.talent-popup-title {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  margin-bottom: 4px;
+/* Tronc : trois tuiles */
+.tt-trunk { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+.tt-trunk .tt-node { flex-direction: column; align-items: center; text-align: center; padding: 7px 4px 6px; min-height: 0; }
+.tt-trunk .tt-node-col { width: 100%; align-items: center; padding-right: 0; }
+.tt-trunk .tt-node-short { display: none; }
+
+/* Deux voies */
+.tt-paths { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+.tt-path { display: flex; flex-direction: column; }
+.tt-path-head {
+  border-radius: 9px; padding: 5px 6px; margin-bottom: 5px;
+  background: var(--cl-bg); border: 1px solid var(--cl); color: var(--cl-ink);
 }
+.tt-path-head.is-locked { opacity: 0.6; }
+.tt-path-name { font-size: 11.5px; font-weight: 800; }
+.tt-path-tag { font-size: 9.5px; line-height: 1.25; opacity: 0.9; }
+.tt-path-count { font-size: 9.5px; font-weight: 800; margin-top: 2px; }
+.tt-gap { height: 5px; }
+.tt-link { width: 2px; height: 9px; margin: 0 auto; background: #c9a227; }
 
-.talent-popup-meta {
-  font-size: 12px;
-  color: var(--nb-gold-deep);
-  font-weight: 700;
-  margin-bottom: 14px;
+/* Clé de voûte */
+.tt-node.is-key { border-width: 2px; border-color: #c9a227; background: linear-gradient(#fbf1d6, #f1e0b3); }
+.tt-node.is-key .tt-ico { border-radius: 50%; border-color: #c9a227; }
+.tt-key-tag { font-size: 8.5px; font-weight: 900; color: #9a7a14; letter-spacing: 0.3px; text-transform: uppercase; }
+.tt-node.is-key.is-owned { box-shadow: inset 0 0 0 1px #c9a227, 0 0 8px #f0cf5a88; }
+
+/* Feuille basse (contenu de .ksheet-body) */
+.tt-sheet-top { display: flex; gap: 10px; align-items: center; }
+.tt-sheet-top .tt-ico { flex-basis: 44px; width: 44px; height: 44px; }
+.tt-sheet-title { font-size: 16px; font-weight: 800; }
+.tt-sheet-where { font-size: 10.5px; color: #8a7a5c; font-weight: 700; }
+.tt-sheet-effect { font-size: 13px; line-height: 1.45; margin: 10px 0 6px; }
+.tt-sheet-now { font-size: 11px; color: #4a6b2a; font-weight: 700; margin-bottom: 6px; }
+.tt-sheet-state { font-size: 11px; font-weight: 700; color: #8a2f20; margin-bottom: 8px; }
+.tt-go {
+  width: 100%; font: inherit; font-size: 13px; font-weight: 800;
+  padding: 10px; border-radius: 11px; cursor: pointer; margin-top: 4px;
+  background: #c27f1f; border: 1px solid #8a5a14; color: #fff8e8;
 }
-
-.talent-summary-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  max-height: 220px;
-  overflow-y: auto;
-  margin-bottom: 12px;
-  text-align: left;
-}
-
-.talent-summary-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  padding: 5px 7px;
-  border-radius: 8px;
-  background: var(--nb-cream-alt);
-  color: var(--nb-ink);
-}
-
-.talent-summary-icon {
-  flex-shrink: 0;
-}
-
-.talent-summary-empty {
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-  text-align: center;
-  padding: 6px 0 14px;
-}
-
-.talent-respec-btn {
-  width: 100%;
-  padding: 9px 10px;
-  margin-bottom: 10px;
-  border-radius: var(--nb-radius-sm);
-  border: 2px solid var(--nb-frame);
-  background: var(--nb-blue);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.talent-respec-btn.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* =========================
-   Plateau de talents par palier
-   ========================= */
-
-.talent-board {
-  width: 100%;
-  max-width: 460px;
-  margin: 0 auto;
-}
-
-.talent-tier-label {
-  margin: 4px 0 8px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--nb-ink-dim);
-  text-align: center;
-}
-
-.talent-tier-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.talent-tier-row.single {
-  grid-template-columns: 1fr;
-  max-width: 220px;
-  margin: 0 auto;
-}
-
-.talent-tier-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 10px;
-  text-align: center;
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream-alt);
-  border: 2px solid var(--nb-frame);
-  box-shadow: 0 2px 0 var(--nb-frame-light);
-  cursor: pointer;
-  transition: transform 0.1s ease, border-color 0.15s ease, background-color 0.15s ease;
-}
-
-.talent-tier-card:active {
-  transform: translateY(2px);
-  box-shadow: none;
-}
-
-.talent-tier-card.unlocked {
-  background: #eaf7ea;
-  border-color: var(--hp-green);
-}
-
-.talent-tier-card.available {
-  border-color: var(--nb-gold-dark);
-  background: #fff3d6;
-}
-
-/* v2.90.13 : distinction verrouillé/débloqué plus marquée qu'avant
-   (grayscale en plus de l'opacité) — proposé dans l'option C pour
-   compenser l'absence de vraie ligne de connexion par talent (juste
-   un connecteur de forme générique entre paliers, voir plus bas). */
-.talent-tier-card.locked {
-  opacity: 0.6;
-  filter: grayscale(0.5);
-}
-
-/* v3.28 : talent partiellement amélioré (niveau 1-2 sur 3) — entre
-   "locked" et "unlocked", encore améliorable. Même famille visuelle
-   que .available (peut recevoir un point de plus) mais teinte
-   légèrement différente pour bien le distinguer d'un talent neuf. */
-.talent-tier-card.in-progress {
-  border-color: var(--nb-gold-dark);
-  background: #fff8e8;
-}
-
-/* v3.28 : verrouillé PAR EXCLUSIVITÉ DE PALIER (l'autre côté du même
-   palier a déjà un point investi) — distinct du verrouillage "pas
-   encore accessible" (.locked) : celui-ci ne se débloquera JAMAIS
-   sans réinitialiser, contrairement à .locked qui attend juste un
-   prérequis/des points. */
-.talent-tier-card.tier-locked {
-  opacity: 0.4;
-  filter: grayscale(0.8);
-}
-
-.talent-tier-card.capstone {
-  border-color: #a855f7;
-}
-
-.talent-tier-card.capstone.available {
-  border-color: var(--nb-gold-dark);
-}
-
-.talent-tier-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  overflow: hidden;
-  background: var(--nb-cream-deep);
-}
-
-.talent-icon-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 9px;
-}
-
-.talent-summary-icon .talent-icon-img {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-}
-
-.talent-tier-card.unlocked .talent-tier-icon {
-  background: rgba(74, 222, 128, 0.25);
-}
-
-.talent-tier-card.available .talent-tier-icon {
-  background: rgba(240, 170, 62, 0.3);
-}
-
-.talent-tier-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-ink);
-  line-height: 1.2;
-}
-
-.talent-tier-effect {
-  font-size: 10px;
-  color: var(--nb-ink-dim);
-  line-height: 1.3;
-}
-
-/* v3.29.6 : bonus total au niveau actuel, affiché sous l'effet de base
-   quand le talent a au moins 1 point investi. */
-.talent-tier-current {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--nb-gold-dark);
-  margin-top: 2px;
-}
-
-.talent-tier-status {
-  margin-top: 4px;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-/* v3.28 : pastilles de niveau (● ● ○ pour niveau 2/3) sous le nom. */
-.talent-tier-pips {
-  display: flex;
-  gap: 3px;
-  margin: 2px 0;
-}
-
-.talent-pip {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  border: 1px solid var(--nb-gold-dark);
-  background: transparent;
-}
-
-.talent-pip.is-filled {
-  background: var(--nb-gold-dark);
-}
-
-/* v3.28 : étiquette Actif (gauche)/Passif (droite) en haut de la
-   carte — le thème demandé pour les 2 colonnes de chaque palier. */
-.talent-side-tag {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  padding: 1px 5px;
-  border-radius: 999px;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-
-.talent-side-tag.side-active {
-  background: rgba(239, 68, 68, 0.18);
-  color: #b91c1c;
-}
-
-.talent-side-tag.side-passive {
-  background: rgba(59, 130, 246, 0.18);
-  color: #1d4ed8;
-}
-
-.talent-tier-status.status-unlocked {
-  color: #2f8f4e;
-}
-
-.talent-tier-status.status-available {
-  color: var(--nb-gold-deep);
-}
-
-.talent-tier-status.status-locked {
-  color: var(--nb-ink-dim);
-  font-weight: 400;
-}
-
-/* =========================
-   Connecteurs entre paliers (option C) — deux formes possibles selon
-   la structure réelle des données (voir buildTalentBranchHTML en
-   ui/talents-view.js) : "split" (1 talent -> 2, palier 1 -> 2 sur
-   les 3 branches) et "parallel" (2 talents -> 2, chaque colonne
-   reste sur SA branche jusqu'au bout). Doré (.is-active) si le
-   talent d'origine de cette colonne est débloqué, pour matérialiser
-   le chemin déjà emprunté ; gris sinon.
-   ========================= */
-
-.talent-connector {
-  position: relative;
-  height: 20px;
-  width: 100%;
-  max-width: 460px;
-  margin: 0 auto;
-}
-
-.talent-connector .tc-stem-top,
-.talent-connector .tc-bar,
-.talent-connector .tc-stem-left,
-.talent-connector .tc-stem-right {
-  display: none;
-  position: absolute;
-  background: var(--nb-frame);
-}
-
-.talent-connector .tc-stem-top.is-active,
-.talent-connector .tc-bar.is-active,
-.talent-connector .tc-stem-left.is-active,
-.talent-connector .tc-stem-right.is-active {
-  background: var(--nb-gold-dark);
-}
-
-.talent-connector.split .tc-stem-top {
-  display: block;
-  top: 0;
-  left: 50%;
-  width: 2px;
-  height: 9px;
-  transform: translateX(-50%);
-}
-
-.talent-connector.split .tc-bar {
-  display: block;
-  top: 9px;
-  left: 25%;
-  right: 25%;
-  height: 2px;
-}
-
-.talent-connector.split .tc-stem-left {
-  display: block;
-  top: 9px;
-  left: 25%;
-  width: 2px;
-  height: 11px;
-}
-
-.talent-connector.split .tc-stem-right {
-  display: block;
-  top: 9px;
-  right: 25%;
-  width: 2px;
-  height: 11px;
-}
-
-.talent-connector.parallel .tc-stem-left {
-  display: block;
-  top: 0;
-  left: 25%;
-  width: 2px;
-  height: 100%;
-}
-
-.talent-connector.parallel .tc-stem-right {
-  display: block;
-  top: 0;
-  right: 25%;
-  width: 2px;
-  height: 100%;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .talent-tier-card {
-    transition: none;
-  }
-}
+.tt-go:disabled { background: #d8c6a0; border-color: #b98a4a; color: #8a7a5c; }

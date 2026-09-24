@@ -162,17 +162,9 @@ var MemoryManager = {
     return Number((window.MEMORY_OFFERING_VALUES || {})[item.rarity] || 0);
   },
 
-  /* Main offrante (talent) : 10 % par rang de rendre la valeur d'une rareté au-dessus. */
+  /* v3.327.0 : « Main offrante » sort des talents (T4) ; l'Offrande rend sa valeur fixe. */
   rollOfferingValue: function (item) {
-    var base = this.getOfferingValue(item);
-    if (base <= 0) return 0;
-    var rank = Number((game.talents && game.talents.t_rich_ritual) || 0);
-    if (rank > 0 && typeof chance === "function" && chance(10 * rank)) {
-      var order = window.RARITY_ORDER || ["common", "green", "rare", "epic", "legendary"];
-      var up = order[Math.min(order.length - 1, order.indexOf(item.rarity) + 1)];
-      return Number((window.MEMORY_OFFERING_VALUES || {})[up] || base);
-    }
-    return base;
+    return this.getOfferingValue(item);
   },
 
   /* Offre un objet déjà retiré du sac (ou qui n'y est jamais entré). Retourne l'Aether gagné. */

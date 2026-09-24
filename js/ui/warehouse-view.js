@@ -1,5 +1,6 @@
 "use strict";
-/* ui/warehouse-view.js — sous-onglet Entrepôt (Village) : grille+panneau détail (v3.32), vente, entrée vers modale Construction (v3.37.1).
+/* ui/warehouse-view.js — sous-onglet Entrepôt (Village) : grille+panneau détail (v3.32), entrée vers modale Construction (v3.37.1).
+   v3.330.0 (E6) : la vente est retirée (Taverne seul débouché) ; les fonctions de quantité restent, inertes.
    v3.98.0 : le craft (sélecteur de recette, file, Fabriquer) est retiré de cet écran —
    migré vers des ateliers locaux par bâtiment de Production (voir WorkshopsSystem,
    js/ui/production-view.js). Le filtre "Bruts / Tier 1" reste pertinent pour la VENTE
@@ -130,26 +131,15 @@ function buildWarehouseDetailPanelHTML() {
 
   h += buildWarehouseReserveHTML(selectedWarehouseKey);
 
-  var canSell = Number(def.sellPrice || 0) > 0;
-
-  if (!canSell) {
-    h += '<div class="warehouse-empty-hint">Rien à faire pour l\'instant.</div>';
-  } else if (stock <= 0) {
-    h += '<div class="warehouse-empty-hint">Rien à vendre pour l\'instant.</div>';
+  /* v3.330.0 (E6) : plus de vente. La valeur de référence dit ce que la ressource pèse dans
+     un contrat de la Taverne, seul débouché désormais. */
+  var refValue = Number(def.sellPrice || 0);
+  if (refValue > 0) {
+    h += '<div class="warehouse-empty-hint">Valeur de référence : ' + formatNumber(refValue)
+       + ' or. Se livre à la Taverne, dans ses contrats.</div>';
   } else {
-    h += '<div class="warehouse-qty-stepper">';
-    h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWarehouseSellQty(-1)"' + (warehouseSellQty <= 1 ? ' disabled' : '') + '>−</button>';
-    h += '<input class="warehouse-qty-value" type="number" min="1" max="' + stock + '" step="1" value="' + warehouseSellQty + '" onchange="setWarehouseSellQty(this.value)">';
-    h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWarehouseSellQty(1)"' + (warehouseSellQty >= stock ? ' disabled' : '') + '>+</button>';
-    h += '<button class="warehouse-qty-max-btn" type="button" onclick="adjustWarehouseSellQty(\'max\')"' + (warehouseSellQty >= stock ? ' disabled' : '') + '>Max</button>';
-    h += '</div>';
-
-    var totalGold = warehouseSellQty * Number(def.sellPrice || 0);
-    h += '<button class="btn-buy eq-detail-action" type="button" onclick="confirmSellWarehouseResource()">';
-    h += 'Vendre · <img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(totalGold);
-    h += '</button>';
+    h += '<div class="warehouse-empty-hint">Ne se vend pas : sert aux constructions et aux ateliers.</div>';
   }
-
   h += '</div>';
   return h;
 }
@@ -189,6 +179,13 @@ function buildWarehouseHTML() {
   }
 
   var h = buildWarehouseFilterRowHTML();
+  // v3.330.0 (E6) : à la première visite, le tavernier explique la fin de la vente
+  if (!(game.genericTutorialsSeen || {}).warehouse_no_sale) {
+    h += '<div class="warehouse-note">'
+       + '<div class="warehouse-note-text"><strong>Le tavernier</strong> : « L\u2019Entrepôt ne rachète plus rien. Ce qu\u2019il te reste, porte-le-moi : '
+       + 'mes contrats paient mieux, et on sait ce qu\u2019on te demande. »</div>'
+       + '<button type="button" class="settings-btn" onclick="dismissWarehouseNoSaleNote()">Compris</button></div>';
+  }
   h += '<div class="eq-bag-flex">';
   h += '<div class="eq-bag-inv-grid warehouse-grid">';
   if (!keys.length) {
@@ -234,5 +231,13 @@ function buildConstructionEntryCardHTML() {
   h += '</div>';
   return h;
 }
+
+function dismissWarehouseNoSaleNote() {
+  if (!game.genericTutorialsSeen || typeof game.genericTutorialsSeen !== "object") game.genericTutorialsSeen = {};
+  game.genericTutorialsSeen.warehouse_no_sale = true;
+  if (typeof saveGame === "function") saveGame();
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.dismissWarehouseNoSaleNote = dismissWarehouseNoSaleNote;
 
 window.buildWarehouseHTML = buildWarehouseHTML;

@@ -251,8 +251,13 @@ function buildPlotActionsHTML(buildingId, plot, index) {
   var isMaxLevel = ProductionPlotsSystem.isPlotMaxLevel(plot);
   if (isMaxLevel) {
     // v3.289.0 : le plafond du monde n'est pas le niveau max de la zone
-    h += '<div class="farm-plot-action-btn is-disabled"><span class="farm-plot-action-label">'
-       + (ProductionPlotsSystem.isPlotLevelWorldCapped(plot) ? 'Plafond de ce monde (niv. ' + plot.level + ')' : 'Niveau max') + '</span></div>';
+    // v3.336.0 (F-2) : le plafond du monde se touche et dit où s'ouvre le niveau suivant
+    if (ProductionPlotsSystem.isPlotLevelWorldCapped(plot)) {
+      h += '<div class="farm-plot-action-btn is-disabled is-capped" role="button" onclick="showHowToToast(\'Plafond de ce monde (niv. ' + plot.level + ')\', \'zoneCap\', { level: ' + plot.level + ' })">'
+         + '<span class="farm-plot-action-label">Plafond de ce monde (niv. ' + plot.level + ') · ?</span></div>';
+    } else {
+      h += '<div class="farm-plot-action-btn is-disabled"><span class="farm-plot-action-label">Niveau max</span></div>';
+    }
   } else {
     var upgradeCost = getProductionPlotUpgradeCost(buildingId, plot.level, index);
     var canAffordUpgrade = Object.keys(upgradeCost).every(function (key) {
