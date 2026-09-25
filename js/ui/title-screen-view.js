@@ -4,7 +4,8 @@
    "Charger la Partie" ouvre la liste des 3 emplacements existants (HeroSlotManager,
    voir systems/save-system.js). "Nouvelle Partie" cherche le 1er emplacement vide et
    ouvre directement la création de héros (modal-view.js, système déjà en place).
-   v3.99.0. */
+   v3.99.0. v3.341.0 : « Continuer » en tête (dernier héros joué, nommé sur le bouton),
+   « Nouvelle Partie » et « Charger » passent côte à côte en dessous. */
 
 var titleScreenResolved = false; // true une fois qu'un slot est choisi/créé -> init() peut démarrer
 var titleScreenView = "main"; // "main" | "load"
@@ -154,12 +155,16 @@ function titleScreenConfirmLoad(slotNumber) {
   if (!window.HeroSlotManager || !target || !HeroSlotManager.hasSlot(target)) return;
 
   if (HeroSlotManager.getActiveSlot() !== target) {
-    ensureActiveSlotLoadedBeforeSwitch(); // v3.99.16 : voir commentaire au-dessus de titleScreenNewGame()
-    HeroSlotManager.switchToSlot(target);
+    // v3.341.0 : au démarrage, rien n'a été joué — on ne réécrit pas le héros quitté (sinon sa
+    // date de dernière partie passait à maintenant et son prochain retour perdait l'absence).
+    if (titleScreenFromGame) ensureActiveSlotLoadedBeforeSwitch(); // v3.99.16 : voir titleScreenNewGame()
+    HeroSlotManager.switchToSlot(target, !titleScreenFromGame);
     // v3.239.0 : switchToSlot() charge la sauvegarde mais ne rattrape pas le temps
     // passé loin de ce héros — et la boucle écrase lastTick à la frame suivante.
-    // Sans effet au démarrage (init() rattrape derrière, l'appel est idempotent).
-    if (window.ResumeManager) ResumeManager.catchUpAfterSlotLoad();
+    // v3.340.0 : depuis le jeu SEULEMENT. Au démarrage, init() recharge et rattrape derrière ;
+    // rattraper ici sauvait lastOnline = maintenant, et l'écran de retour d'init() ne voyait
+    // plus d'absence (5 à 30 min : aucun écran ; au-delà : écran ouvert deux fois).
+    if (window.ResumeManager && titleScreenFromGame) ResumeManager.catchUpAfterSlotLoad();
   }
 
   resolveTitleScreen();
@@ -305,21 +310,54 @@ function buildTitleScreenDeleteConfirmHTML() {
   return html;
 }
 
+/* v3.341.0 : héros à reprendre = l'emplacement actif (le dernier chargé), sinon le plus
+   récemment sauvegardé. null s'il n'y a aucune partie. */
+function getTitleScreenContinueSlot() {
+  if (!window.HeroSlotManager) return null;
+  var active = HeroSlotManager.getActiveSlot();
+  if (HeroSlotManager.hasSlot(active)) return active;
+  var best = null, bestAt = -1;
+  for (var i = 1; i <= HeroSlotManager.getMaxSlots(); i++) {
+    var sum = HeroSlotManager.hasSlot(i) ? HeroSlotManager.getSlotSummary(i) : null;
+    if (sum && Number(sum.savedAt || 0) > bestAt) { best = i; bestAt = Number(sum.savedAt || 0); }
+  }
+  return best;
+}
+
+/* « Continuer » : le dernier héros, nommé sur le bouton (plusieurs joueurs sur un appareil). */
+function buildTitleScreenContinueHTML(slot) {
+  var sum = HeroSlotManager.getSlotSummary(slot) || {};
+  var world = getWorldNameByIndex(sum.worldIndex);
+  var line = esc(sum.playerName || ("Emplacement " + slot)) + ' · niv. ' + esc(formatNumber(sum.heroLevel || 1)) + (world ? ' · ' + esc(world) : '');
+  return '<button type="button" class="title-screen-img-btn title-screen-continue" onclick="titleScreenConfirmLoad(' + slot + ')">'
+    + '<img src="images/TitleScreen/bouton_titre.png" alt="" class="title-screen-img-btn-bg">'
+    + '<span class="title-screen-continue-txt"><b>Continuer</b><small>' + line + '</small></span></button>';
+}
+
+function titleScreenContinue() {
+  var slot = getTitleScreenContinueSlot();
+  if (slot) titleScreenConfirmLoad(slot);
+}
+
 function buildTitleScreenMainHTML() {
   var html = '<div class="title-screen-overlay">';
   html += '  <div class="title-screen-stage">';
   html += '    <img src="images/TitleScreen/title_background_new.png" alt="" class="title-screen-bg">';
   html += '    <img src="images/TitleScreen/titre_logo.png" alt="Aethervale" class="title-screen-logo-img">';
   html += '    <div class="title-screen-frame">';
-  html += '      <div class="title-screen-buttons">';
+  var continueSlot = getTitleScreenContinueSlot();
+  html += '      <div class="title-screen-buttons' + (continueSlot ? ' has-continue' : '') + '">';
+  if (continueSlot) html += buildTitleScreenContinueHTML(continueSlot);
+  if (continueSlot) html += '<div class="title-screen-btn-row">';
   html += '        <button type="button" class="title-screen-img-btn" onclick="titleScreenNewGame()">';
   html += '          <img src="images/TitleScreen/bouton_titre.png" alt="" class="title-screen-img-btn-bg">';
   html += '          <span>Nouvelle Partie</span>';
   html += '        </button>';
   html += '        <button type="button" class="title-screen-img-btn" onclick="titleScreenShowLoad()">';
   html += '          <img src="images/TitleScreen/bouton_titre.png" alt="" class="title-screen-img-btn-bg">';
-  html += '          <span>Charger la Partie</span>';
+  html += '          <span>' + (continueSlot ? 'Charger' : 'Charger la Partie') + '</span>';
   html += '        </button>';
+  if (continueSlot) html += '</div>';
   html += '      </div>';
   // v3.233.0 : lu depuis GAME_VERSION (core/constants.js) — le numéro était
   // codé en dur ici et figé à v3.151.0.
@@ -361,6 +399,8 @@ function renderTitleScreen() {
 }
 
 window.openTitleScreen = openTitleScreen;
+window.titleScreenContinue = titleScreenContinue;
+window.getTitleScreenContinueSlot = getTitleScreenContinueSlot;
 window.resolveTitleScreen = resolveTitleScreen;
 window.titleScreenNewGame = titleScreenNewGame;
 window.titleScreenShowLoad = titleScreenShowLoad;

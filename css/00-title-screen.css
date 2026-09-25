@@ -555,3 +555,33 @@
 .title-screen-delete-confirm:active {
   transform: scale(0.96);
 }
+
+/* ---------------------------------------------------------
+   v3.341.0 : « Continuer » (dernier héros) en tête, pleine largeur ;
+   « Nouvelle Partie » et « Charger » côte à côte, plus petits, en dessous.
+   --------------------------------------------------------- */
+.title-screen-buttons.has-continue { gap: 8px; }
+
+.title-screen-continue-txt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  max-width: 72%;
+}
+.title-screen-continue-txt b { font-size: 20px; }
+.title-screen-continue-txt small {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #5a3c1c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.title-screen-btn-row { display: flex; gap: 8px; }
+.title-screen-btn-row .title-screen-img-btn { flex: 1 1 0; min-width: 0; }
+.title-screen-btn-row .title-screen-img-btn span { font-size: 14px; letter-spacing: 0.2px; }

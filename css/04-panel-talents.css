@@ -43,9 +43,10 @@
   background: #f6ecd9; color: #3a2c1a;
   padding: 6px; min-height: 52px;
 }
+/* v3.342.0 : les icônes de talent portent leur cadre peint (simple, ou doré pour la clé de
+   voûte) : plus de fond, de bordure ni d'arrondi CSS, sinon double cadre et coins rognés. */
 .tt-ico {
-  flex: 0 0 32px; width: 32px; height: 32px; border-radius: 8px; overflow: hidden;
-  background: #e4cfa0; border: 1px solid #b98a4a;
+  flex: 0 0 32px; width: 32px; height: 32px;
   display: flex; align-items: center; justify-content: center;
 }
 .tt-ico img { width: 100%; height: 100%; object-fit: contain; }
@@ -58,7 +59,6 @@
 
 /* États */
 .tt-node.is-owned { border-color: var(--cl); background: #fbf3e4; box-shadow: inset 0 0 0 1px var(--cl); }
-.tt-node.is-owned .tt-ico { background: var(--cl-bg); border-color: var(--cl); }
 .tt-node.is-avail { border-color: #c27f1f; box-shadow: 0 0 0 2px #f0aa3e55; }
 .tt-node.is-avail::after {
   content: "+"; position: absolute; top: 3px; right: 3px;
@@ -93,7 +93,6 @@
 
 /* Clé de voûte */
 .tt-node.is-key { border-width: 2px; border-color: #c9a227; background: linear-gradient(#fbf1d6, #f1e0b3); }
-.tt-node.is-key .tt-ico { border-radius: 50%; border-color: #c9a227; }
 .tt-key-tag { font-size: 8.5px; font-weight: 900; color: #9a7a14; letter-spacing: 0.3px; text-transform: uppercase; }
 .tt-node.is-key.is-owned { box-shadow: inset 0 0 0 1px #c9a227, 0 0 8px #f0cf5a88; }
 
