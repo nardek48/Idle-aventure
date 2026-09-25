@@ -135,7 +135,7 @@ var CompanionManager = {
 
   /* Réglages de comportement. Un seul point d'entrée : la valeur est validée ici, pas
      dans la vue, pour qu'une save trafiquée ne puisse pas casser la politique auto. */
-  setSetting: function (companionId, key, value) {
+  setSetting: function (companionId, key, value, silent) {
     var st = this.state(companionId);
     if (!st) return false;
     if (key === "healThreshold") {
@@ -146,7 +146,10 @@ var CompanionManager = {
     } else if (key === "keepReserve") {
       st.keepReserve = !!value;
     } else return false;
-    if (typeof saveGame === "function") saveGame();
+    /* v3.351.0 : `silent` au chargement. Sauvegarder ici, en plein loadGame(), écrivait une partie
+       à moitié restaurée et remettait lastOnline à maintenant : l'écran de retour du démarrage
+       ne voyait plus aucune absence pour un héros qui a un compagnon (vu par le harnais de parcours). */
+    if (!silent && typeof saveGame === "function") saveGame();
     return true;
   },
 
@@ -556,9 +559,9 @@ var CompanionManager = {
       st.present = !!d.present;
       st.hp = (typeof d.hp === "number" && isFinite(d.hp)) ? d.hp : null;
       // v3.271.0 (L-5) : réglages relus en passant par setSetting, qui valide.
-      if (d.healThreshold) self.setSetting(id, "healThreshold", d.healThreshold);
-      if (d.healPriority) self.setSetting(id, "healPriority", d.healPriority);
-      self.setSetting(id, "keepReserve", !!d.keepReserve);
+      if (d.healThreshold) self.setSetting(id, "healThreshold", d.healThreshold, true);
+      if (d.healPriority) self.setSetting(id, "healPriority", d.healPriority, true);
+      self.setSetting(id, "keepReserve", !!d.keepReserve, true);
       if (self.hasVoies(id)) { // v3.311.0
         st.voie = (d.voie && COMPANIONS_DB[id].voies[d.voie]) ? d.voie : null;
         st.voieChanges = Math.max(0, Number(d.voieChanges || 0));

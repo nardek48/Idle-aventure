@@ -232,6 +232,11 @@ function switchTab(tabName) {
   refreshTabBarVisibility();
   renderPanel();
 
+  // v3.350.0 : un boss ou une élite posé AVANT l'arrivée sur l'écran de combat (carte vivante,
+  // quête qui commence par son boss) n'était jamais « vu » : renderEnemy() ne lance la carte
+  // d'entrée que sur l'onglet Combat, et switchTab ne le rappelait pas. Idempotent (_momentShown).
+  if (tabName === "combat" && game.enemy && game.enemy.isBoss && window.BossMomentManager) BossMomentManager.onEnemyShown(game.enemy);
+
   // v3.107.7 : popup pédagogique par étape Histoire, à la première arrivée sur l'onglet concerné.
   // v3.297.0 (W-1a) : tutoriel de l'étape en cours de chaque chapitre actif
   if (typeof maybeShowStepTutorial === "function" && window.StoryQuestManager && typeof StoryQuestManager.activeChapterIds === "function") {
