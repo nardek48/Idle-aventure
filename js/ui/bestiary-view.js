@@ -85,7 +85,7 @@ function buildEliteBestiaryData(def) {
   return {
     name: def.name,
     asset: base.asset,
-    image: base.image,
+    image: def.image || base.image, // v3.348.0 : portrait propre de l'élite
     lore: def.lore || "",
     resists: base.resists || [],
     weak: base.weak || [],

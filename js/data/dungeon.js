@@ -82,7 +82,7 @@ var DUNGEONS = [
        sinon les renforts allongeraient le combat et multiplieraient les soins. */
     boss: {
       baseId: "slimeking", name: "Basilic", archetype: "corrupted",
-      statMult: { endurance: 1.2, power: 1.5 }, image: null,
+      statMult: { endurance: 1.2, power: 1.5 }, image: "./images/Boss/basilic.jpg", // v3.348.0
       phases: [
         /* Seb parlait de serpents : il n'y en a pas au bestiaire. On prend l'araignée,
            qui existe et tient le rôle dans un antre humide. Le jour où un serpent est

@@ -68,7 +68,7 @@ var EliteManager = {
       id: def.id,
       name: def.name,
       asset: base.asset,
-      image: base.image,          // portrait de la base : décision actée, icônes dédiées plus tard
+      image: def.image || base.image, // v3.348.0 : portrait propre de l'élite, sinon celui de la base
       isBoss: true,               // hérite dégâts ×1,5, bouclier, immunité résist/faiblesse
       isElite: true,              // pilote l'exaltation (combat-engine.js) et la jauge élite
       archetype: def.archetype || null,

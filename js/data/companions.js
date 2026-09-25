@@ -29,7 +29,7 @@ var COMPANIONS_DB = {
   wenna: {
     id: "wenna",
     name: "Wenna",
-    image: "./images/Heroes/ranger_f.png", // portrait dédié à poser plus tard
+    image: "./images/Companions/wenna.png", // v3.349.0 : portrait dédié (ranger_f.png reste au héros rôdeur)
     role: "support",
     weaponType: "bow",
     /* makeRpgStats(power, endurance, celerity, precision, will) — voir data/enemies.js */
@@ -72,7 +72,7 @@ var COMPANIONS_DB = {
   maddoc: {
     id: "maddoc",
     name: "Maddoc",
-    image: "./images/Companions/maddoc.png", // portrait à générer (icône générique d'ici là)
+    image: "./images/Companions/maddoc.png", // v3.349.0 : portrait posé
     weaponType: "sling",
     defaultVoie: "tronc",
     voies: {
