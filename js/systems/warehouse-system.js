@@ -95,6 +95,17 @@ var WarehouseManager = {
     return true;
   },
 
+  /* v3.355.0 : remboursement d'une commande d'atelier annulée. Sans plafond : ces
+     ressources étaient déjà dans l'Entrepôt, les perdre serait une double peine. */
+  refundResource: function (key, amount) {
+    this.ensure();
+    amount = Math.floor(Number(amount || 0));
+    if (amount <= 0) return 0;
+    if (typeof WAREHOUSE_RESOURCES === "undefined" || !WAREHOUSE_RESOURCES[key]) return 0;
+    game.resources[key] = Number(game.resources[key] || 0) + amount;
+    return amount;
+  },
+
   getSellPriceMultiplier: function () {
     if (window.ConstructionManager && typeof ConstructionManager.getSellBonus === "function") {
       return ConstructionManager.getSellBonus();

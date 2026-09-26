@@ -349,7 +349,6 @@ function buildAdventureQuestDetailHTML(quest, claimed, runningQuest) {
   h += '<span class="map-quest-reward-label">Récompense</span>';
   h += '<span class="map-quest-reward-value">';
   if (reward.gold) h += esc(formatNumber(reward.gold)) + ' or';
-  if (reward.essence) h += ' · ' + esc(formatNumber(reward.essence)) + ' essence';
   h += '</span>';
   h += '</div>';
 
@@ -560,7 +559,6 @@ function buildStoryStepRewardText(reward) {
   var parts = [];
   reward = reward || {};
   if (reward.gold) parts.push(formatNumber(reward.gold) + " or");
-  if (reward.essence) parts.push(formatNumber(reward.essence) + " essence");
   if (reward.healingPotion) {
     var potion = (window.PotionManager && typeof PotionManager.getHealingPotion === "function") ? PotionManager.getHealingPotion(reward.healingPotion.id) : null;
     parts.push((reward.healingPotion.count || 1) + " " + (potion ? potion.name : "potion"));
@@ -740,7 +738,6 @@ function buildVillageQuestDetailHTML(quest) {
   var reward = quest.reward || {};
   var parts = [];
   if (reward.gold) parts.push(formatNumber(reward.gold) + ' or');
-  if (reward.essence) parts.push(formatNumber(reward.essence) + ' essence');
   if (reward.resources && typeof reward.resources === 'object') {
     Object.keys(reward.resources).forEach(function (key) {
       var def = (window.WAREHOUSE_RESOURCES || {})[key];
@@ -911,7 +908,7 @@ window.openQuestCompletePopup = openQuestCompletePopup;
 window.applyQuestUnlockSideEffects = applyQuestUnlockSideEffects;
 
 /* v3.93.0 : point d'observation pour les récompenses "déblocage de bâtiment" portées par
-   des quêtes classiques (AdventureQuestManager, protégé, ne connaît que gold/essence dans
+   des quêtes classiques (AdventureQuestManager, protégé, ne connaît que l'or dans
    son reward). Appelé à chaque ouverture du popup de fin générique — vérifie simplement si
    une quête ayant reward.unlockBuildingId vient de passer à "complétée" et, si oui,
    applique le déblocage (idempotent : ProductionManager.unlockBuilding() ne réinitialise

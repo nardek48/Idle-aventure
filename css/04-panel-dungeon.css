@@ -577,3 +577,12 @@
 .dsheet-ticket { font-size: 11px; color: var(--nb-ink-dim); margin: 4px 0 0; }
 .dsheet-ticket strong { color: var(--nb-ink); }
 .dsheet-ticket a { color: var(--nb-gold-dark, #8a5a1a); font-weight: 800; }
+
+/* v3.358.0 (D7) : sorties du jour — le bandeau n'est plus un bouton d'achat, il dit la règle
+   (le libellé peut passer à la ligne sur 320 px) ; chaque carte porte son compte. */
+.dungeon-runs-badge { cursor: default; max-width: 100%; }
+.dungeon-runs-badge:active { transform: none; }
+.dungeon-runs-badge .dungeon-ticket-badge-label { white-space: normal; font-size: 11px; line-height: 1.3; }
+.dungeon-tier-runs { margin-top: 2px; font-size: 10px; font-weight: 800; color: var(--nb-ink); }
+.dungeon-tier-runs.is-free { color: var(--nb-gold-dark, #8a5a1a); }
+.dungeon-tier-runs.is-empty { color: var(--nb-ink-dim); }

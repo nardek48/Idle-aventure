@@ -100,7 +100,7 @@ var VILLAGE_QUESTS = [
       var done = getFarmPlotsReadOnly().some(function (p) { return p.state === "open" && (p.fertile === true || p.irrigated === true); });
       return (done ? 1 : 0) + "/1";
     },
-    reward: { gold: 250, essence: 10, potions: { potion_celerity: 1 } }, // v3.115.0
+    reward: { gold: 300, potions: { potion_celerity: 1 } }, // v3.115.0
     tutorial: {
       tab: "village",
       icon: "images/Icons/scene/node_clear_spring.png",
@@ -256,7 +256,7 @@ var VILLAGE_QUESTS = [
       });
       return Math.min(best, 2) + "/2";
     },
-    reward: { gold: 300, essence: 15 },
+    reward: { gold: 375 },
     tutorial: {
       tab: "village",
       icon: "images/Icons/system/wrench_settings.png",

@@ -6,9 +6,9 @@
 
 var DungeonManager = {
   ensure: function () {
-    if (typeof game.dungeonTickets !== "number") game.dungeonTickets = DUNGEON_CONFIG.freeTicketsPerDay;
     if (typeof game.dungeonTicketResetTime !== "number") game.dungeonTicketResetTime = 0;
-    if (typeof game.dungeonTicketsPurchasedToday !== "number") game.dungeonTicketsPurchasedToday = 0;
+    // v3.358.0 (D7) : sorties du jour, par donjon ({ id: n }) — remplacent les tickets
+    if (!game.dungeonRunsUsed || typeof game.dungeonRunsUsed !== "object") game.dungeonRunsUsed = {};
     if (!game.dungeonRun || typeof game.dungeonRun !== "object") {
       game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
     }
@@ -148,10 +148,31 @@ var DungeonManager = {
     this.ensure();
     var now = Date.now();
     if (now >= (game.dungeonTicketResetTime || 0)) {
-      game.dungeonTickets = DUNGEON_CONFIG.freeTicketsPerDay;
-      game.dungeonTicketsPurchasedToday = 0;
+      game.dungeonRunsUsed = {};
       game.dungeonTicketResetTime = now + DUNGEON_CONFIG.ticketResetHours * 3600 * 1000;
     }
+  },
+
+  /* v3.358.0 (D7) : sorties par jour et par donjon (Clé de faille comprise, 2 niveaux au plus). */
+  getRunsPerDay: function () {
+    var cle = (window.DUNGEON_SHOP || []).filter(function (it) { return it.effect === "runsBonus"; })[0];
+    var bonus = cle ? Math.min(Number(cle.maxLevel || 0), this.getShardShopLevel(cle.id)) * Number(cle.perLevel || 0) : 0;
+    return Number(DUNGEON_CONFIG.runsPerDay || 3) + bonus;
+  },
+
+  getRunsUsed: function (dungeonId) {
+    this.ensure();
+    return Number(game.dungeonRunsUsed[dungeonId] || 0);
+  },
+
+  getRunsLeft: function (dungeonId) {
+    this.checkTicketReset();
+    return Math.max(0, this.getRunsPerDay() - this.getRunsUsed(dungeonId));
+  },
+
+  /* Peut-on entrer ? Une sortie demandée par l'Histoire est toujours offerte. */
+  hasRunLeft: function (dungeonId) {
+    return this.isStoryTicketFree(dungeonId) || this.getRunsLeft(dungeonId) > 0;
   },
 
   timeUntilTicketReset: function () {
@@ -160,35 +181,6 @@ var DungeonManager = {
     var h = Math.floor(diff / 3600000);
     var m = Math.floor((diff % 3600000) / 60000);
     return h + "h " + m + "m";
-  },
-
-  getTicketBuyCost: function () {
-    this.ensure();
-    var baseCost = DUNGEON_CONFIG.ticketCostEssence || 100;
-    var boughtToday = game.dungeonTicketsPurchasedToday || 0;
-    var growth = DUNGEON_CONFIG.ticketCostGrowth || 1.35;
-    var discount = Math.min(0.9, this.getShardEffect("ticketDiscount")); // v3.321.0 : Clé de faille
-    return Math.floor(baseCost * Math.pow(growth, boughtToday) * (1 - discount));
-  },
-
-  buyTicket: function () {
-    this.ensure();
-    this.checkTicketReset();
-
-    var maxPerDay = DUNGEON_CONFIG.maxTicketPurchasesPerDay || 20;
-    if ((game.dungeonTicketsPurchasedToday || 0) >= maxPerDay) {
-      return showToast("Limite journalière atteinte (" + maxPerDay + "/jour)", 1600);
-    }
-
-    var cost = this.getTicketBuyCost();
-    if ((game.essence || 0) < cost) return showToast("Pas assez d'essence", 1000);
-
-    game.essence -= cost;
-    game.dungeonTickets = (game.dungeonTickets || 0) + 1;
-    game.dungeonTicketsPurchasedToday = (game.dungeonTicketsPurchasedToday || 0) + 1;
-    addLog("🎟️ Ticket de donjon acheté (" + cost + " essence)", "event");
-    if (typeof renderAll === "function") renderAll();
-    saveGame();
   },
 
   /* Échelle des vagues : formule inchangée (worldScale × rampe × premium × difficultyMult).
@@ -231,7 +223,6 @@ var DungeonManager = {
     if (!e) return null;
     e.name = "\u2604\ufe0f " + e.name;
     e.goldReward = Math.floor(16 * this.getWaveScale(dungeon, wave));
-    e.essenceReward = 2;
 
     var escorte = this.buildEscortWave(spec, dungeon, wave);
     return escorte.length ? [e].concat(escorte) : e;
@@ -270,7 +261,6 @@ var DungeonManager = {
         hp: hp,
         maxHp: hp,
         goldReward: Math.max(1, Math.floor(8 * scale * goldMult)),
-        essenceReward: goldMult,
         resists: data.resists || [],
         weak: data.weak || [],
         stats: {
@@ -346,7 +336,6 @@ var DungeonManager = {
       hp: hp,
       maxHp: hp,
       goldReward: Math.floor((isBossWave ? 60 : 8) * scale),
-      essenceReward: isBossWave ? 5 : 1,
       resists: (data && data.resists) || [],
       weak: (data && data.weak) || [],
       stats: {
@@ -383,7 +372,7 @@ var DungeonManager = {
 
   /* v3.136.0 (audit Forêt §3.4) : ticket OFFERT par l'Histoire sur le Donjon I tant que l'étape forest_14
      « La tanière du Basilic » est en cours (acceptée, non réclamée) — un échec ne bloque plus la chaîne
-     principale 24 h (1 ticket gratuit/jour) ni ne coûte l'essence du joueur. Sans effet sur les autres paliers. */
+     principale 24 h, ni ne consomme une sortie du jour (v3.358.0). Sans effet sur les autres paliers. */
   /* v3.245.0 : étendu à forest_13 (« Marques du corrompu » se joue désormais dans la Tanière). */
   /* v3.315.0 (W-4a2, accord Seb) : rendue générique — les étapes concernées vivent dans la
      donnée du donjon (storyChapterId, storyFreeSteps) au lieu d'être nommées ici. Comportement
@@ -408,7 +397,7 @@ var DungeonManager = {
     if (!this.isUnlocked(dungeon.id)) return showToast("Donjon verrouillé", 1200);
     if ((game.heroHp || 0) <= 0) return showToast("Héros à terre — repose-toi au Campement d'abord", 1600);
     var storyFree = this.isStoryTicketFree(dungeon.id); // v3.136.0
-    if (!storyFree && (game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
+    if (!storyFree && this.getRunsLeft(dungeon.id) <= 0) return showToast("Plus de sortie aujourd'hui dans ce donjon — renouvellement dans " + this.timeUntilTicketReset(), 1800);
     if (game.dungeonRun.active) return showToast("Donjon déjà en cours", 1200);
     if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast("Termine ou abandonne ta quête en cours avant d'entrer en donjon", 1600);
     if (game.huntRun && game.huntRun.active) return showToast("Termine ou arrête ta chasse en cours avant d'entrer en donjon", 1600);
@@ -420,7 +409,7 @@ var DungeonManager = {
       ProvisionsManager.consume("dungeon", dungeon);
     }
 
-    if (!storyFree) game.dungeonTickets -= 1; // v3.136.0 : ticket Histoire, rien à décompter
+    if (!storyFree) game.dungeonRunsUsed[dungeon.id] = this.getRunsUsed(dungeon.id) + 1; // v3.358.0 (D7) : une sortie du jour ; celle de l'Histoire est offerte
     var runMarks = this.sanitizeMarks(marks, dungeon.id);
     game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, marks: runMarks, shardsEarned: 0 };
     if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
@@ -493,13 +482,13 @@ var DungeonManager = {
     this.ensure();
     var tier = this.getById(game.dungeonRun.dungeonId);
     var runMarks = (game.dungeonRun.marks || []).slice();
-    var markMult = this.getMarkRewardMult(runMarks.length); // v3.245.0 : cumul des Marques, appliqué ici (or/essence/matériau de fin ne passent pas par goldMult)
+    var markMult = this.getMarkRewardMult(runMarks.length); // v3.245.0 : cumul des Marques, appliqué ici (or et matériau de fin ne passent pas par goldMult)
     if (success && window.SortieManager) SortieManager.end("success");
     var wavesTotal = DUNGEON_CONFIG.waveCount;
     var progress = Math.max(0, Math.min(1, clearedWave / wavesTotal));
 
     var worldBonus = (1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.difficultyMult || 1)) * 0.4) * markMult;
-    var goldReward, essenceReward, grantLoot, lootRarity;
+    var goldReward, grantLoot, lootRarity; // v3.358.0 (D7) : l'essence de fin est fondue dans l'or (fullClearGoldBase)
 
     var rarityOrder = (typeof RARITY_ORDER !== "undefined" && RARITY_ORDER) || ["common", "green", "rare", "epic", "legendary"];
     var tierMaxIndex = Math.max(0, rarityOrder.indexOf(tier.maxRarity));
@@ -507,7 +496,6 @@ var DungeonManager = {
 
     if (success) {
       goldReward = Math.floor(DUNGEON_CONFIG.fullClearGoldBase * worldBonus);
-      essenceReward = Math.floor(DUNGEON_CONFIG.fullClearEssenceBase * worldBonus);
       grantLoot = true;
       lootRarity = tier.maxRarity;
       game.dungeonBossClears = Number(game.dungeonBossClears || 0) + 1;
@@ -522,13 +510,11 @@ var DungeonManager = {
       }
     } else if (outcome === "death") {
       goldReward = 0;
-      essenceReward = 0;
       grantLoot = false;
       lootRarity = null;
     } else {
       var fleeKeep = (typeof SORTIE_FLEE_KEEP_PCT === "number") ? SORTIE_FLEE_KEEP_PCT : 0.5;
       goldReward = Math.floor(DUNGEON_CONFIG.fullClearGoldBase * worldBonus * progress * 0.6 * fleeKeep);
-      essenceReward = Math.floor(DUNGEON_CONFIG.fullClearEssenceBase * worldBonus * progress * 0.6 * fleeKeep);
       grantLoot = chance(DUNGEON_CONFIG.partialLootChance * fleeKeep);
       lootRarity = allowedForTier[randInt(0, allowedForTier.length - 1)];
     }
@@ -545,7 +531,6 @@ var DungeonManager = {
     if (success && window.MemoryManager) MemoryManager.souvenir("dungeonClear", "Souvenir : " + (tier && tier.name ? tier.name : "donjon") + " terminé");
 
     game.gold += goldReward;
-    game.essence += essenceReward;
     game.totalGoldEarned += goldReward;
 
     var lootedItem = null;
@@ -580,10 +565,10 @@ var DungeonManager = {
     }
 
     var msg = success
-      ? "🏆 " + tier.name + " terminé ! +" + formatNumber(goldReward) + " or, +" + essenceReward + " essence"
+      ? "🏆 " + tier.name + " terminé ! +" + formatNumber(goldReward) + " or"
       : (outcome === "death"
         ? "🏰 " + tier.name + " : terrassé à la vague " + (clearedWave + 1) + "/" + wavesTotal + " — aucune récompense, le butin reste dans le donjon."
-        : "🏰 " + tier.name + " abandonné (vague " + clearedWave + "/" + wavesTotal + ") : +" + formatNumber(goldReward) + " or, +" + essenceReward + " essence (moitié)");
+        : "🏰 " + tier.name + " abandonné (vague " + clearedWave + "/" + wavesTotal + ") : +" + formatNumber(goldReward) + " or (moitié)");
     if (lootedItem) msg += " + " + lootedItem.name;
     if (specialGained > 0 && specialDef) msg += " + " + specialGained + " " + specialDef.name;
 
@@ -608,7 +593,6 @@ var DungeonManager = {
         clearedWave: clearedWave,
         wavesTotal: wavesTotal,
         goldReward: goldReward,
-        essenceReward: essenceReward,
         shardsGained: shardsGained,
         lootedItem: lootedItem,
         // v3.223.0 : matériau de monde gagné (0 si aucun), pour le rapport de fin

@@ -37,7 +37,8 @@ window.getVillageBuildSeconds = getVillageBuildSeconds;
    ces niveaux ne coûtent que l'or et les matériaux DU MONDE (résine, Verre trempé, Chitine).
    Les matériaux communs (ceux des zones et de leurs ateliers) sont fournis par le village.
      - Terrain d'entraînement : jusqu'au plafond de l'acte (TRAINING_CAP_BY_ACT) ;
-     - Forge : niveaux 1 à 3 (palier de l'étape 13 du Désert, STORY_PALIER_FORGE) ;
+     - Forge : niveaux 1 à 3 (v3.356.0 : l'étape 13 n'en demande plus que 2, STORY_PALIER_FORGE ;
+       le 3e reste aidé, pour ne pas renchérir ce qui l'était) ;
      - reforge de l'ARME : niveaux 1 à 4 (même palier, STORY_PALIER_REFORGE). */
 var STORY_PROVIDED_MATERIALS = ["bois", "planche", "pierre", "fer", "lingot", "acier", "bloc", "eau", "ble", "viande"];
 var STORY_FORGE_LEVELS = 3;

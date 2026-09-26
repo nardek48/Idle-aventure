@@ -13,7 +13,6 @@ function buildHudHTML() {
     +   '<div class="nb-hud-left-col">'
     +     '<div class="nb-hud-resources">'
     +       '<span class="nb-pill nb-pill-gold"><img class="nb-pill-icon" src="images/Icons/gold_icon.png" alt="Or"><span id="hud-gold">0</span></span>'
-    +       '<span class="nb-pill nb-pill-essence"><img class="nb-pill-icon" src="images/Icons/essence_icon.png" alt="Essence"><span id="hud-essence">0</span></span>'
     +     '</div>'
     +   '</div>'
     +   '<div class="nb-hud-shortcuts">'
@@ -62,10 +61,8 @@ function renderHud() {
   // v3.101.0 : régénération au camp (accrual paresseux, voir systems/camp-system.js)
   if (window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(false);
   var gold = document.getElementById("hud-gold");
-  var essence = document.getElementById("hud-essence");
 
   if (gold) gold.textContent = formatNumber(game.gold);
-  if (essence) essence.textContent = formatNumber(game.essence);
 
   renderHeroHp();
   renderHudBagBadge();

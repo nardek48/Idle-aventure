@@ -3,7 +3,7 @@
    Accepter une étape débloque ses onglets ; l'objectif enseigne la mécanique ; réclamer donne la récompense. Logique : systems/story-quest-system.js */
 
 /* Récompenses placeholder, regroupées ici pour le passage d'équilibrage or ultérieur. forest_10 (« Les fondations »)
-   reste ici : réclamée via MissionBoard._workshopMissions (v3.107.8). Formats : gold, essence, healingPotion {id,count},
+   reste ici : réclamée via MissionBoard._workshopMissions (v3.107.8). Formats : gold, healingPotion {id,count},
    equipmentRarity + equipmentCount, resources {clé Entrepôt: qté}. Viande/eau sur 6/7 : Petite ration (8 viande + 4 eau) craftable dès l'étape 8. */
 /* v3.249.0 (idée Seb 15/09/2026) — ARME OFFERTE À LA PREMIÈRE ÉTAPE.
    « Le feu de camp » ne donnait que 50 or, et le narratif promettait déjà une lame : « Il te
@@ -34,40 +34,41 @@ var STORY_STARTER_WEAPON = {
   }
 };
 
+/* v3.358.0 (D7, décision Seb 26/09/2026) : l'essence de chaque étape est fondue dans l'or, à 5 or l'essence. */
 var STORY_REWARDS = {
   forest_01: { gold: 50 },
-  forest_02: { gold: 100, essence: 5, equipmentItem: STORY_STARTER_WEAPON }, // v3.260.0 : l'arme passe ici (décision Seb)
-  forest_03: { gold: 150, essence: 5 },
+  forest_02: { gold: 125, equipmentItem: STORY_STARTER_WEAPON }, // v3.260.0 : l'arme passe ici (décision Seb)
+  forest_03: { gold: 175 },
   forest_04: { healingPotion: { id: "potion_soin_mineur", count: 1 } },
-  forest_05: { gold: 400, essence: 10, potions: { potion_power: 1 } }, // v3.115.0 : découverte des potions per-run
+  forest_05: { gold: 450, potions: { potion_power: 1 } }, // v3.115.0 : découverte des potions per-run
   forest_06: { gold: 200, resources: { viande: 15 } },
   forest_brume: { gold: 150, resources: { seve_aeswyn: 3 } }, // v3.259.0 (C-4) : les 3 Sève que réclamera l'offrande aux braises (forest_15)
-  forest_07: { gold: 150, essence: 5, resources: { eau: 5 } },
-  forest_08: { gold: 200, essence: 5 },
-  forest_09: { gold: 200, essence: 5 },
-  forest_crossing: { gold: 250, essence: 10 }, // v3.109.0 : Franchir la Lisière (placeholder, même échelle que 08/09)
-  forest_10: { gold: 500, essence: 15, potions: { potion_endurance: 1, potion_power: 1 } }, // v3.115.0 : kit avant le Cœur
-  forest_11: { gold: 300, essence: 10 },
-  forest_12: { gold: 400, essence: 10 },
-  forest_13: { gold: 500, essence: 15 },
-  forest_14: { gold: 600, essence: 20, equipmentRarity: "common", equipmentCount: 1 },
-  forest_wenna: { gold: 500, essence: 15 }, // v3.268.0 (L-2) : Wenna rejoint
-  forest_15: { gold: 1000, essence: 30, equipmentRarity: "common", equipmentCount: 1 },
-  desert_01: { gold: 600, essence: 20 }, // v3.300.0 (W-2) : provisoire, à caler au banc avec l'acte I
-  desert_02: { gold: 700, essence: 20 }, // v3.302.0 : provisoire, même remarque
-  desert_03: { gold: 750, essence: 20 }, // v3.304.0 : provisoire, même remarque
-  desert_04: { gold: 800, essence: 25 }, // v3.305.0 : provisoire, même remarque
-  desert_05: { gold: 850, essence: 25 }, // v3.306.0 : provisoire, même remarque
-  desert_06: { gold: 900, essence: 30 }, // v3.310.0 : provisoire, même remarque
-  desert_07: { gold: 950, essence: 30 }, // v3.310.0 : provisoire, même remarque
-  desert_08: { gold: 1000, essence: 35 }, // v3.311.0 : provisoire, même remarque
-  desert_09: { gold: 1050, essence: 35 }, // v3.312.0 : provisoire, même remarque
-  desert_10: { gold: 1100, essence: 40 }, // v3.312.0 : provisoire, même remarque
-  desert_11: { gold: 2150, essence: 40 }, // v3.314.0 (W-4a1) : provisoire ; v3.330.0 : +1 000 (banc « or par acte », E2/E6)
-  desert_12: { gold: 2200, essence: 45 }, // v3.315.0 (W-4a2) : provisoire ; v3.330.0 : +1 000
-  desert_13: { gold: 2250, essence: 45 }, // v3.316.0 (W-4b) : provisoire ; v3.330.0 : +1 000
-  desert_14: { gold: 1300, essence: 50 }, // v3.317.0 (W-4c) : provisoire, même remarque
-  desert_15: { gold: 1500, essence: 60 } // v3.319.0 (W-4d) : fin d'acte III, provisoire
+  forest_07: { gold: 175, resources: { eau: 5 } },
+  forest_08: { gold: 225 },
+  forest_09: { gold: 225 },
+  forest_crossing: { gold: 300 }, // v3.109.0 : Franchir la Lisière (placeholder, même échelle que 08/09)
+  forest_10: { gold: 575, potions: { potion_endurance: 1, potion_power: 1 } }, // v3.115.0 : kit avant le Cœur
+  forest_11: { gold: 350 },
+  forest_12: { gold: 450 },
+  forest_13: { gold: 575 },
+  forest_14: { gold: 700, equipmentRarity: "common", equipmentCount: 1 },
+  forest_wenna: { gold: 575 }, // v3.268.0 (L-2) : Wenna rejoint
+  forest_15: { gold: 1150, equipmentRarity: "common", equipmentCount: 1 },
+  desert_01: { gold: 700 }, // v3.300.0 (W-2) : provisoire, à caler au banc avec l'acte I
+  desert_02: { gold: 800 }, // v3.302.0 : provisoire, même remarque
+  desert_03: { gold: 850 }, // v3.304.0 : provisoire, même remarque
+  desert_04: { gold: 925 }, // v3.305.0 : provisoire, même remarque
+  desert_05: { gold: 975 }, // v3.306.0 : provisoire, même remarque
+  desert_06: { gold: 1050 }, // v3.310.0 : provisoire, même remarque
+  desert_07: { gold: 1100 }, // v3.310.0 : provisoire, même remarque
+  desert_08: { gold: 1175 }, // v3.311.0 : provisoire, même remarque
+  desert_09: { gold: 1225 }, // v3.312.0 : provisoire, même remarque
+  desert_10: { gold: 1300 }, // v3.312.0 : provisoire, même remarque
+  desert_11: { gold: 2350 }, // v3.314.0 (W-4a1) : provisoire ; v3.330.0 : +1 000 (banc « or par acte », E2/E6)
+  desert_12: { gold: 2425, uniqueLoot: "arme_cite" }, // v3.315.0 (W-4a2) : provisoire ; v3.330.0 : +1 000 ; v3.356.0 (D4) : l'arme de la Cité
+  desert_13: { gold: 2475 }, // v3.316.0 (W-4b) : provisoire ; v3.330.0 : +1 000
+  desert_14: { gold: 1550 }, // v3.317.0 (W-4c) : provisoire, même remarque
+  desert_15: { gold: 1800 } // v3.319.0 (W-4d) : fin d'acte III, provisoire
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -758,9 +759,9 @@ window.storyPalierDesert = storyPalierDesert;
 window.storyPendingChoiceAt = storyPendingChoiceAt;
 window.storyMakeChoice = storyMakeChoice;
 
-// v3.306.0 : essence donnée tout de suite quand on déterre les noms (provisoire)
-var STORY_NOMS_ESSENCE = 40;
-window.STORY_NOMS_ESSENCE = STORY_NOMS_ESSENCE;
+// v3.306.0 : donné tout de suite quand on déterre les noms (provisoire) ; v3.358.0 (D7) : 40 essence -> 200 or
+var STORY_NOMS_GOLD = 200;
+window.STORY_NOMS_GOLD = STORY_NOMS_GOLD;
 
 // v3.305.0 : secteurs de la carte du Désert libérés au moins une fois (étape 4)
 function storyDesertSectorsFreed() {
@@ -982,14 +983,14 @@ STORY_QUESTS.desert = {
           { value: "deterrer", label: "Déterrer les noms", desc: "Les noms partent pour Aeswyn. Le sable reprend les stèles." },
           { value: "laisser", label: "Les laisser au sable", desc: "Les stèles restent debout et tiennent le sable. Les noms restent dessous." }
         ],
-        // Déterrer : essence tout de suite, les stèles retournent au sable (leur effet est perdu
+        // Déterrer : de l'or tout de suite, les stèles retournent au sable (leur effet est perdu
         // pour de bon, effectLostOnChoice). La quête de village viendra avec celles du Désert.
         // Laisser : rien d'immédiat — le frein vit dans la carte (choiceBrakes).
         apply: function (value) {
           if (value !== "deterrer") return;
-          game.essence = Number(game.essence || 0) + STORY_NOMS_ESSENCE;
+          game.gold = Number(game.gold || 0) + STORY_NOMS_GOLD;
           if (window.LivingMapManager) LivingMapManager.setState("desert", "steles", "recouvert", "noms déterrés");
-          if (typeof addLog === "function") addLog("Les noms sont dans ton sac. +" + STORY_NOMS_ESSENCE + " essence.", "event");
+          if (typeof addLog === "function") addLog("Les noms sont dans ton sac. +" + STORY_NOMS_GOLD + " or.", "event");
         }
       },
       check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("noms")); },
@@ -1311,7 +1312,7 @@ STORY_QUESTS.desert = {
       act: "Acte III — La cité engloutie",
       narrative: {
         objective: "Derrière le gouffre, la passerelle continue. En bas, des toits. Une ville entière, sous le sable, et le sable ne l'a pas écrasée : il l'a remplie, doucement, rue par rue.",
-        completion: "Au bout de la grande rue, une place. Sur la place, couché, quelque chose de très grand avec une tête d'homme. Ses yeux sont ouverts. Il ne regarde pas toi : il regarde la rue par laquelle tu es venu, comme s'il attendait quelqu'un d'autre.",
+        completion: "Au bout de la grande rue, une place. Sur la place, couché, quelque chose de très grand avec une tête d'homme. Ses yeux sont ouverts. Il ne regarde pas toi : il regarde la rue par laquelle tu es venu, comme s'il attendait quelqu'un d'autre. Au bord de la place, une arme de la garde, propre comme au premier jour. Tu la prends.",
         dialogue: [
           { who: "Maddoc", text: "J'ai vécu dans la première rue. Je ne suis jamais allé plus loin." },
           { who: "Wenna", text: "Pourquoi ?" },
@@ -1350,7 +1351,7 @@ STORY_QUESTS.desert = {
       title: "Le verre et le fer",
       act: "Acte III — La cité engloutie",
       narrative: {
-        objective: "Vous remontez de la cité avec ce que vous aviez en descendant. Maddoc s'arrête sur la passerelle et regarde ton arme, longtemps.",
+        objective: "Vous remontez de la cité avec l'arme trouvée sur la place. Maddoc s'arrête sur la passerelle et la regarde, longtemps.", // v3.356.0 (D4)
         completion: "La lame sort du feu avec un fil vert sur le tranchant, fin comme un cheveu. Maddoc passe le pouce dessus, sans appuyer.",
         dialogue: [
           { who: "Maddoc", text: "Pas avec ça." },
@@ -1364,7 +1365,7 @@ STORY_QUESTS.desert = {
           { who: "Maddoc", text: "Chez moi, c'était un compliment." }
         ]
       },
-      objectiveLabel: "4 emplacements Inhabituels dont l'arme, Forge 3, arme reforgée à 4",
+      objectiveLabel: "3 emplacements Inhabituels dont l'arme, Forge 2, arme reforgée à 4", // v3.356.0 (D1)
       unlockTabs: [],
       reward: STORY_REWARDS.desert_13,
       linkTo: { tab: "equip" },
@@ -1374,8 +1375,8 @@ STORY_QUESTS.desert = {
         title: "Le palier",
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller plus loin au Désert, il faut être équipé pour. Les trois compteurs de l'étape te disent où tu en es." },
-          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "L'équipement Inhabituel se trouve au donjon, à la boutique et dans le butin des Petites Aventures." },
-          { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge du village peut monter d'un niveau avec du Verre trempé. Plus haut, elle reforge plus loin — et le niveau de reforge reste à l'emplacement quand tu changes de pièce." }
+          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "L'arme de la Cité compte déjà. Les autres pièces Inhabituelles : élites de la Forêt, heaume du guet, donjon, boutique, butin des Petites Aventures." },
+          { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge 2 reforge l'arme jusqu'au niveau 4. Le Verre trempé ouvre la Forge 3, pour aller plus loin ensuite. Le niveau de reforge reste à l'emplacement quand tu changes de pièce." }
         ]
       },
       check: function (game) {
@@ -1473,8 +1474,11 @@ STORY_QUESTS.desert = {
 /* v3.316.0 (W-4b) — le palier de l'étape 13, en un seul endroit pour que check et progress
    ne puissent pas diverger. Lecture seule : équipement porté, niveau du bâtiment Forge,
    niveau de reforge de l'arme. Aucun compteur ajouté nulle part. */
-var STORY_PALIER_PIECES = 4;   // emplacements Inhabituels sur 7, l'arme comprise
-var STORY_PALIER_FORGE = 3;    // niveau du bâtiment Forge (ouvre la reforge jusqu'à 6)
+/* v3.356.0 (D1, décision Seb 26/09/2026) : 4 -> 3 pièces et Forge 3 -> 2. Les deux élites de
+   la Forêt, le heaume du Serment et l'arme de la Cité (D4) en donnent déjà trois ; la Forge 2
+   suffit pour la reforge 4. Mesuré : 152 h de farm d'or sur cette étape, visé 10 à 40 h. */
+var STORY_PALIER_PIECES = 3;   // emplacements Inhabituels sur 7, l'arme comprise
+var STORY_PALIER_FORGE = 2;    // niveau du bâtiment Forge (ouvre la reforge jusqu'à 4)
 var STORY_PALIER_REFORGE = 4;  // niveau de reforge de l'arme — le maximum d'un bâtiment 2
 
 function storyPalierDesert(game) {

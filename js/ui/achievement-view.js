@@ -29,7 +29,6 @@ window.toggleAchievementTotals = toggleAchievementTotals;
 function formatAchievementRewardHTML(ach) {
   var r = ach.reward || {}, parts = [];
   if (r.gold) parts.push('<img class="ico-inline" src="images/Icons/gold_icon.png" alt=""> ' + formatNumber(r.gold) + ' or');
-  if (r.essence) parts.push('<img class="ico-inline" src="images/Icons/essence_icon.png" alt=""> ' + formatNumber(r.essence) + ' essence');
   return '<span class="hf-rew">' + parts.join(" · ") + (ach.title ? '<span class="hf-title-tag">Titre</span>' : '') + '</span>';
 }
 
@@ -77,9 +76,7 @@ function buildAchievementTiersHTML(cat) {
   });
   var rew = cat.tierRewards.map(function (r, i) {
     var p = [];
-    if (r.essence) p.push("+" + formatNumber(r.essence) + " essence");
     if (r.title) p.push("titre « " + r.title + " »");
-    if (r.aether) p.push("+" + formatNumber(r.aether) + " Aether");
     return labels[i][1] + " : " + p.join(" + ");
   }).join(" · ");
   h += '</div><div class="hf-tiers-reward">' + esc(rew) + '. Les hauts faits cachés ne comptent pas.</div></div>';

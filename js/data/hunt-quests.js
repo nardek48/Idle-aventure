@@ -196,6 +196,27 @@ var HUNT_QUESTS = {
     // 8-15, potion mineure 150. Une source d'or INFINIE ne doit pas dépasser le
     // rythme des quêtes uniques (élite : 700-1200 or).
     rewardGold: 120
+  },
+
+  /* v3.356.0 (D2, décision Seb 26/09/2026) — Battue du Désert. Le Désert n'avait aucune source
+     d'or répétable : le joueur y farmait la Battue de la Forêt à 120 or le lot (~166 or/h) face
+     aux prix du Désert (Inhabituel à 4 000 or). Même moteur, bêtes des Dunes brûlantes, prime
+     fixée par Seb. Ouverte à l'arrivée au Désert (desertCrossingCompleted, étape desert_01). */
+  hq_desert_battue: {
+    id: "hq_desert_battue",
+    type: "gold",
+    section: "resource",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "desert",
+    adventureIndex: 0,
+    name: "Battue du Désert",
+    story: "Le Veilleur ne paie pas, lui. Mais les caravanes qui passent encore la frange, si. "
+      + "Vingt bêtes éloignées de la piste, et la bourse s'ouvre.",
+    icon: "images/Icons/gold_icon.png",
+    lotSize: 20,
+    rewardGold: 450
   }
 };
 

@@ -433,7 +433,6 @@ function openSortieSheet() {
   h += '<div class="cbs-sub">Butin ramassé</div>';
   var lignes = "";
   if (Number(loot.gold || 0) > 0) lignes += buildSortieLineHTML("images/Icons/gold_icon.png", "Or", formatNumber(Math.floor(loot.gold)));
-  if (Number(loot.essence || 0) > 0) lignes += buildSortieLineHTML("images/Icons/essence_icon.png", "Essence", formatNumber(Math.floor(loot.essence)));
   Object.keys(loot.resources || {}).forEach(function (k) {
     var q = Math.floor(loot.resources[k]);
     if (q <= 0) return;
@@ -568,7 +567,8 @@ function renderEnemy() {
   var db = game.enemy.isBoss ? BOSS_DB : ENEMY_DB;
   var enemyData = (window.ELITE_DB && ELITE_DB[game.enemy.id]) ? {} : (db[game.enemy.id] || {});
   var assetKey = enemyData.asset || game.enemy.asset || "";
-  var imagePath = enemyData.image || game.enemy.image || "";
+  // v3.355.0 (D3) : l'image propre à l'ennemi d'abord (boss de donjon : Basilic), la fiche de base en repli
+  var imagePath = game.enemy.image || enemyData.image || "";
 
   if (typeof imagePath !== "string") {
     imagePath = "";

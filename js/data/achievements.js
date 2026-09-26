@@ -4,11 +4,11 @@
    - H1 : une catégorie par monde (paliers bronze / argent / or, H4) + quatre transversales ;
    - H2 : Bestiaire et Mémoire gardés (mêmes identifiants : déjà réclamés = acquis) ; compteurs
           de kills, de critiques, panoplie et donjon retirés (ACHIEVEMENTS_RETIRED, H9) ;
-   - H3 : récompense PONCTUELLE (or, essence ; Aether au palier or), plus AUCUN bonus permanent
+   - H3 : récompense PONCTUELLE en or (v3.358.0 : essence ×5 et Aether ×50 fondus dans l'or), plus AUCUN bonus permanent
           (AchievementManager.getTotalBonus() rend {} : les bancs n'en ont jamais compté) ;
    - H5 : quelques cachés, jamais ratables.
    Champs : id, category, name, desc, icon, target, track() (progression lue dans l'état),
-   reward { gold | essence }, hidden + hint, fresh (compteur neuf, sans rattrapage), title.
+   reward { gold }, hidden + hint, fresh (compteur neuf, sans rattrapage), title.
    Icônes des nouveaux : images/Icons/achivement/<id>.png, à générer (générique d'ici là).
    Textes PROVISOIRES. Agrégation : systems/achievement-system.js. */
 
@@ -202,9 +202,9 @@ ACHIEVEMENTS_DB.forEach(function (a) { if (!a.icon) a.icon = ACH_ICON + a.id + "
 /* H1, H4 : catégories. `world` = index du monde (paliers, titre au palier or). */
 var ACHIEVEMENT_CATEGORIES = [
   { id: "forest", label: "Forêt", world: 0, tiers: [3, 6, 8],
-    tierRewards: [{ essence: 100 }, { essence: 250 }, { aether: 10, title: "Gardien d'Aeswyn" }] },
+    tierRewards: [{ gold: 500 }, { gold: 1250 }, { gold: 500, title: "Gardien d'Aeswyn" }] },
   { id: "desert", label: "Désert", world: 1, tiers: [3, 6, 8],
-    tierRewards: [{ essence: 300 }, { essence: 750 }, { aether: 15, title: "Celui qui marche sur le sable" }] },
+    tierRewards: [{ gold: 1500 }, { gold: 3750 }, { gold: 750, title: "Celui qui marche sur le sable" }] },
   { id: "grimoire", label: "Grimoire" },
   { id: "village", label: "Village" },
   { id: "companions", label: "Compagnons" },

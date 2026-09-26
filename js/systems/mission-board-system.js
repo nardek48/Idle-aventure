@@ -64,8 +64,6 @@ function missionRewardSummary(reward) {
   if (!reward) return "";
   var parts = [];
   if (reward.gold) parts.push(formatNumber(reward.gold) + " or");
-  if (reward.essence) parts.push(formatNumber(reward.essence) + " essence");
-  if (reward.aether) parts.push(formatNumber(reward.aether) + " Aether");
   if (reward.equipmentRarity && reward.equipmentCount) {
     var label = (window.RARITY_LABELS && RARITY_LABELS[reward.equipmentRarity]) || reward.equipmentRarity;
     parts.push(reward.equipmentCount + " objet " + label);
@@ -182,6 +180,8 @@ var MissionBoard = {
          c'est Aldric qui paie, et le Roi des marais ne bloque plus personne (sim/roi-marais-bench.js).
          Une battue déjà lancée reste visible pour pouvoir la suivre. */
       if (quest.id === "hq_forest_battue" && !isRunning && !(game.unlockedTabs && game.unlockedTabs.village)) return;
+      // v3.356.0 (D2) : la Battue du Désert s'ouvre à l'arrivée au Désert (étape desert_01)
+      if (quest.id === "hq_desert_battue" && !isRunning && !(game.explorationProgression && game.explorationProgression.desertCrossingCompleted)) return;
       var status = isRunning ? "running" : (running ? "locked" : "available");
       var inLot = isRunning ? Number((game.huntRun && game.huntRun.killsInLot) || 0) : 0;
       var m = {
@@ -245,10 +245,10 @@ var MissionBoard = {
         title: dungeon.name, blurb: dungeon.story || "",
         type: "donjon", place: dungeon.name,
         objectiveLabel: "Vague " + (runningHere ? (game.dungeonRun.wave || 1) : 1) + "/" + DUNGEON_CONFIG.waveCount, progressLabel: "",
-        rewardSummary: (game.dungeonTickets > 0 ? game.dungeonTickets + " ticket(s)" : "Aucun ticket"),
+        rewardSummary: DungeonManager.isStoryTicketFree(dungeon.id) ? "Sortie offerte" : (DungeonManager.getRunsLeft(dungeon.id) + " / " + DungeonManager.getRunsPerDay() + " sorties aujourd'hui"), // v3.358.0 (D7)
         badge: "contract", status: status, isMain: false
       };
-      if (status === "available" && game.dungeonTickets > 0) m.accept = function () { return DungeonManager.start(dungeon.id, []); };
+      if (status === "available" && DungeonManager.hasRunLeft(dungeon.id)) m.accept = function () { return DungeonManager.start(dungeon.id, []); };
       if (status === "running") {
         m.launch = function () { if (typeof switchTab === "function") switchTab("combat"); };
         m.abandon = function () { return DungeonManager.forfeit(); };
@@ -403,7 +403,7 @@ var MissionBoard = {
       status: ready ? "claimable" : (accepted ? "accepted" : "available"), isMain: false,
       claim: ready ? function () {
         if (!window.StoryQuestManager) return;
-        StoryQuestManager._grantReward(STORY_REWARDS.forest_10); // même récompense qu'avant (500 or, 15 essence, +15 XP)
+        StoryQuestManager._grantReward(STORY_REWARDS.forest_10); // même récompense qu'avant (575 or, +15 XP ; v3.358.0 : l'essence fondue dans l'or)
         game.workshopFoundationsCompleted = true;
         addLog("📖 Étape terminée : Les fondations", "event");
         if (typeof showToast === "function") showToast("🔓 Les fondations terminées", 2000);

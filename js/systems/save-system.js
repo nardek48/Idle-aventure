@@ -331,11 +331,6 @@ function ensureUpgradeDefaults() {
     });
   }
 
-  if (typeof AETHER_SHOP !== "undefined" && Array.isArray(AETHER_SHOP)) {
-    AETHER_SHOP.forEach(function(u) {
-      if (u && u.id != null && game.aetherUpgrades[u.id] === undefined) game.aetherUpgrades[u.id] = 0;
-    });
-  }
 }
 
 /* À appeler une fois au boot : détecte si localStorage marche, lance l'autosave périodique et sauvegarde au blur/fermeture d'onglet. */
@@ -377,8 +372,6 @@ function buildSaveData() {
     savedAt: Date.now(),
     lastOnline: Date.now(),
     gold: Number(game.gold || 0),
-    essence: Number(game.essence || 0),
-    aether: Number(game.aether || 0),
     totalAetherEarned: Number(game.totalAetherEarned || 0),
     memory: game.memory && typeof game.memory === "object" ? JSON.parse(JSON.stringify(game.memory)) : null, // v3.322.0 : niveau de Mémoire
     bossTrophies: game.bossTrophies && typeof game.bossTrophies === "object" ? game.bossTrophies : {}, // v3.333.0 : trophées de boss
@@ -439,9 +432,8 @@ function buildSaveData() {
     equipShopResetTime: Number(game.equipShopResetTime || 0),
     equipShopManualRefreshCount: Number(game.equipShopManualRefreshCount || 0),
     equipShopStarterServed: !!game.equipShopStarterServed, // v3.247.0
-    dungeonTickets: Number(game.dungeonTickets != null ? game.dungeonTickets : 1),
     dungeonTicketResetTime: Number(game.dungeonTicketResetTime || 0),
-    dungeonTicketsPurchasedToday: Number(game.dungeonTicketsPurchasedToday || 0),
+    dungeonRunsUsed: Object.assign({}, game.dungeonRunsUsed || {}), // v3.358.0 (D7) : sorties du jour, par donjon
     dungeonRun: game.dungeonRun || { active: false, wave: 0, dungeonId: 1, marks: [] }, // v3.245.0
     dungeonBestWave: Number(game.dungeonBestWave || 0),
     dungeonBossClears: Number(game.dungeonBossClears || 0),
@@ -583,9 +575,16 @@ function restoreBaseState(d) {
   var questDefaults = getDefaultQuestProgress();
 
   game.gold = Number(d.gold || 0);
-  game.essence = Number(d.essence || 0);
-  game.aether = Number(d.aether || 0);
   game.totalAetherEarned = Number(d.totalAetherEarned != null ? d.totalAetherEarned : d.aether || 0);
+  /* v3.358.0 (D7) : l'essence et le solde d'Aether d'une ancienne sauvegarde deviennent de
+     l'or, une fois (la sauvegarde suivante ne les écrit plus). La jauge de Mémoire reste. */
+  var essenceConvertie = Math.floor(Number(d.essence || 0) * ESSENCE_GOLD_RATE);
+  var aetherConverti = Math.floor(Number(d.aether || 0) * AETHER_GOLD_RATE);
+  if (essenceConvertie + aetherConverti > 0) {
+    game.gold += essenceConvertie + aetherConverti;
+    game.legacyCurrencyConverted = { essence: Number(d.essence || 0), aether: Number(d.aether || 0), gold: essenceConvertie + aetherConverti };
+    if (typeof addLog === "function") addLog("🪙 L'essence et l'Aether de réserve disparaissent : +" + formatNumber(essenceConvertie + aetherConverti) + " or", "event");
+  }
   game.memory = (d.memory && typeof d.memory === "object") ? d.memory : null; // v3.322.0 : complété par MemoryManager.ensure()
   // v3.333.0 : trophées de boss — une sauvegarde d'avant n'en a pas : {}
   if (window.BossMomentManager) BossMomentManager.restore(d.bossTrophies);
@@ -706,9 +705,8 @@ function restoreBaseState(d) {
     ? d.equipShopStarterServed
     : (Array.isArray(d.equipShopStock) && d.equipShopStock.length > 0) || Number(d.equipShopResetTime || 0) > 0;
 
-  game.dungeonTickets = typeof d.dungeonTickets === "number" ? d.dungeonTickets : 1;
   game.dungeonTicketResetTime = Number(d.dungeonTicketResetTime || 0);
-  game.dungeonTicketsPurchasedToday = Number(d.dungeonTicketsPurchasedToday || 0);
+  game.dungeonRunsUsed = (d.dungeonRunsUsed && typeof d.dungeonRunsUsed === "object") ? Object.assign({}, d.dungeonRunsUsed) : {}; // v3.358.0 (D7)
   game.dungeonRun = d.dungeonRun && typeof d.dungeonRun === "object" ? d.dungeonRun : { active: false, wave: 0, dungeonId: 1, marks: [] };
   if (typeof game.dungeonRun.dungeonId !== "number") game.dungeonRun.dungeonId = Number(game.dungeonRun.tierId) || 1; // v3.245.0 : repli d'avant la refonte
   if (!Array.isArray(game.dungeonRun.marks)) game.dungeonRun.marks = [];
@@ -1019,7 +1017,6 @@ function hardResetState() {
   }
 
   var questDefaults = getDefaultQuestProgress();
-  var keptAether = game.aether || 0;
   var keptTotalAetherEarned = game.totalAetherEarned || 0;
   var keptMemory = game.memory ? JSON.parse(JSON.stringify(game.memory)) : null; // v3.322.0
   var keptAscensions = game.ascensionCount || 0;
@@ -1101,9 +1098,8 @@ function hardResetState() {
   var keptDungeonShards = Number(game.dungeonShards || 0);
   var keptDungeonBestWave = Number(game.dungeonBestWave || 0);
   var keptDungeonBossClears = Number(game.dungeonBossClears || 0);
-  var keptDungeonTickets = Number(game.dungeonTickets != null ? game.dungeonTickets : 1);
   var keptDungeonTicketResetTime = Number(game.dungeonTicketResetTime || 0);
-  var keptDungeonTicketsPurchasedToday = Number(game.dungeonTicketsPurchasedToday || 0);
+  var keptDungeonRunsUsed = Object.assign({}, game.dungeonRunsUsed || {}); // v3.358.0 (D7)
   var keptEquipShopStock = game.equipShopStock || [];
   var keptEquipShopResetTime = Number(game.equipShopResetTime || 0);
   var keptEquipShopManualRefreshCount = Number(game.equipShopManualRefreshCount || 0);
@@ -1114,8 +1110,6 @@ function hardResetState() {
   var keptGenericTutorialsSeen = Object.assign({}, game.genericTutorialsSeen || {});
 
   game.gold = 0;
-  game.essence = 0;
-  game.aether = keptAether;
   game.totalAetherEarned = keptTotalAetherEarned;
   game.memory = keptMemory;
   // v3.333.0 : les trophées de boss sont des souvenirs — conservés à la reprise, comme le Codex
@@ -1187,9 +1181,8 @@ function hardResetState() {
   game.potionsOwned = {};
   game.lastHealUse = 0;
 
-  game.dungeonTickets = keptDungeonTickets;
   game.dungeonTicketResetTime = keptDungeonTicketResetTime;
-  game.dungeonTicketsPurchasedToday = keptDungeonTicketsPurchasedToday;
+  game.dungeonRunsUsed = keptDungeonRunsUsed;
   game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
   // v3.2 : le run de quête en cours ne survit pas à l'ascension (la progression déjà enregistrée, elle, est conservée séparément).
   // Détail : save-system_notes.md #33.
@@ -1299,8 +1292,6 @@ function fullResetState() {
   // v2.26 : plus d'or de confort au reset complet (était 1 000 000,
   // un réglage de test qui n'avait pas sa place dans un vrai reset).
   game.gold = 0;
-  game.essence = 0;
-  game.aether = 0;
   game.totalAetherEarned = 0;
   game.memory = null; // v3.322.0 : recréé par MemoryManager.ensure()
   game.achievementStats = null; // v3.338.0 : Hauts faits repartis de zéro
@@ -1381,6 +1372,8 @@ function fullResetState() {
   // v2.90.11 : voir note dans buildSaveData() — repart bien à zéro
   // sur un reset complet, comme dungeonBossClears/dungeonShopLevels.
   game.dungeonTierCleared = {};
+  game.dungeonRunsUsed = {}; // v3.358.0 (D7) : partie neuve, sorties du jour intactes
+  game.dungeonTicketResetTime = 0;
 
   game.worldsEverReached = {};
   game.worldQuestProgress = {};

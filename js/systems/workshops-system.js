@@ -276,8 +276,9 @@ var WorkshopsSystem = {
       return false;
     }
 
+    // v3.355.0 : débit par l'Entrepôt, seul point d'écriture des ressources (canCraft a vérifié les stocks)
     recipe.inputs.forEach(function (input) {
-      game.resources[input.resourceId] = Number(game.resources[input.resourceId] || 0) - input.quantity * times;
+      WarehouseManager.removeResource(input.resourceId, input.quantity * times);
     });
 
     workshop.queue.push({
@@ -346,7 +347,7 @@ var WorkshopsSystem = {
     var recipe = this.getRecipe(workshopId, entry.recipeId);
     if (recipe) {
       recipe.inputs.forEach(function (input) {
-        game.resources[input.resourceId] = Number(game.resources[input.resourceId] || 0) + input.quantity * entry.times;
+        WarehouseManager.refundResource(input.resourceId, input.quantity * entry.times); // v3.355.0 : par l'Entrepôt
       });
     }
     queue.splice(index, 1);
@@ -501,7 +502,7 @@ var WorkshopsSystem = {
         var recipe = self.getRecipe(workshopId, entry.recipeId);
         if (!recipe) return;
         recipe.inputs.forEach(function (input) {
-          game.resources[input.resourceId] = Number(game.resources[input.resourceId] || 0) + input.quantity * entry.times;
+          WarehouseManager.refundResource(input.resourceId, input.quantity * entry.times); // v3.355.0 : par l'Entrepôt
         });
       });
       queue.length = 0;

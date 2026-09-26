@@ -42,7 +42,7 @@ var WorldManager = {
     generateEnemy: function () {
     var adventure = this.getAdventure();
     if (!adventure) {
-      return { id: "fallback", name: "Ennemi", asset: "slime", isBoss: false, hp: 10, maxHp: 10, goldReward: 1, essenceReward: 0, resists: [], weak: [], stats: makeRpgStats(5, 10, 10, 5, 5) };
+      return { id: "fallback", name: "Ennemi", asset: "slime", isBoss: false, hp: 10, maxHp: 10, goldReward: 1, resists: [], weak: [], stats: makeRpgStats(5, 10, 10, 5, 5) };
     }
 
     var milestoneMult = this.getCycleMilestoneMult();
@@ -90,7 +90,6 @@ var WorldManager = {
         hp: bossHp,
         maxHp: bossHp,
         goldReward: Math.floor(40 * bossScale),
-        essenceReward: 3 + this.worldIndex,
         resists: bossData.resists || [],
         weak: bossData.weak || [],
         stats: bossStats
@@ -130,7 +129,6 @@ var WorldManager = {
       hp: hp,
       maxHp: hp,
       goldReward: Math.floor(6 * scale + this.worldIndex * 3),
-      essenceReward: 1,
       resists: enemyData.resists || [],
       weak: enemyData.weak || [],
       stats: effectiveStats
@@ -421,31 +419,7 @@ function setShopBuyAmount(amount) {
 
 /* v3.327.0 : achat et remise à zéro des talents -> systems/talent-system.js (TalentManager). */
 
-function buyAetherUpgrade(id) {
-  // v3.322.0 (O7) : la boutique d'Aether est retirée, remplacée par les choix de Mémoire
-  if (!(AETHER_SHOP || []).length) return showToast("La boutique d'Aether a laissé place à la Mémoire", 1600);
-  if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
-  var upgrade = (AETHER_SHOP || []).find(function (u) { return u.id === id; });
-  if (!upgrade) return showToast("Amélioration astrale introuvable", 1000);
-
-  var currentLevel = game.aetherUpgrades[id] || 0;
-  if (currentLevel >= (upgrade.maxLevel || Infinity)) return showToast("Niveau maximum", 1200);
-
-  var cost = typeof getAetherUpgradeCost === "function"
-    ? getAetherUpgradeCost(upgrade)
-    : Math.floor(upgrade.baseCost * Math.pow(1.4, currentLevel));
-
-  if (game.aether < cost) return showToast("Pas assez d'Aether", 1000);
-
-  game.aether -= cost;
-  game.aetherUpgrades[id] = currentLevel + 1;
-
-  if (window.StatsSystem) StatsSystem.recalcStats();
-  addLog("Amélioration astrale : " + upgrade.name + " niv. " + game.aetherUpgrades[id], "event");
-  showToast(upgrade.name, 1500);
-  if (typeof renderAll === "function") renderAll();
-  saveGame();
-}
+/* v3.355.0 : buyAetherUpgrade retiré (boutique d'Aether vide depuis la v3.322.0). */
 
 /* v3.327.0 (conception Talents, T2) : courbe LINÉAIRE (30, 40, 50…). L'ancienne, exponentielle,
    laissait ~1 point de talent par monde après le Désert ; c'est désormais le plafond par acte
@@ -520,7 +494,6 @@ window.AscensionManager = AscensionManager;
 window.getUpgradeCost = getUpgradeCost;
 window.getAllTalentNodes = getAllTalentNodes;
 window.buyUpgrade = buyUpgrade;
-window.buyAetherUpgrade = buyAetherUpgrade;
 window.grantHeroXp = grantHeroXp;
 window.ascendNow = ascendNow;
 window.setShopBuyAmount = setShopBuyAmount;

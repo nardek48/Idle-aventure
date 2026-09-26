@@ -260,7 +260,6 @@ var AdventureQuestManager = {
 
       var reward = quest.reward || {};
       game.gold += Number(reward.gold || 0);
-      game.essence += Number(reward.essence || 0);
       game.totalGoldEarned += Number(reward.gold || 0);
 
       // v3.205.0 (E5) : butin propre à l'élite — arme unique déclinée par classe + Sève.
@@ -269,13 +268,12 @@ var AdventureQuestManager = {
         eliteRows = EliteManager.grantReward(quest.eliteId, reward.seve) || [];
       }
 
-      addLog("📜 Quête terminée : " + quest.name + " (+" + formatNumber(reward.gold || 0) + " or, +" + formatNumber(reward.essence || 0) + " essence)", "event");
+      addLog("📜 Quête terminée : " + quest.name + " (+" + formatNumber(reward.gold || 0) + " or)", "event");
       showToast("📜 " + quest.name + " terminée !", 2200);
 
       if (typeof openQuestCompletePopup === "function") {
         var rewardRows = [];
         if (reward.gold) rewardRows.push({ label: "Or", value: formatNumber(reward.gold) });
-        if (reward.essence) rewardRows.push({ label: "Essence", value: formatNumber(reward.essence) });
         rewardRows = rewardRows.concat(eliteRows); // v3.205.0 (E5)
         openQuestCompletePopup({
           icon: quest.icon || "📜",

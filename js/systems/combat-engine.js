@@ -320,12 +320,7 @@ var CombatEngine = {
     if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("goldEarned", amount);
   },
 
-  grantEssence: function (amount) {
-    amount = Math.max(0, Number(amount) || 0);
-    if (amount <= 0) return;
-    if (this.inSortie()) SortieManager.addEssence(amount);
-    else game.essence += amount;
-  },
+  /* v3.358.0 (D7, décision Seb 26/09/2026) : grantEssence retiré avec l'essence. */
 
   /* Objet trouvé : rangé dans le butin de sortie (inventaire au retour) ou directement dans le sac. Retourne true si gardé. */
   grantDrop: function (drop) {
@@ -556,7 +551,6 @@ var CombatEngine = {
         isBoss: false, isElite: false, archetype: null,
         hp: hp, maxHp: hp,
         goldReward: Math.max(1, Math.floor(Number(chef.goldReward || 0) * 0.10)),
-        essenceReward: 0,
         resists: data.resists || [], weak: data.weak || [],
         stats: {
           power: Math.max(1, Math.floor(Number((chef.stats && chef.stats.power) || 0) * powMult)),
@@ -1598,8 +1592,7 @@ var CombatEngine = {
       return;
     }
 
-    var goldGain = Number(enemy.goldReward || 0);
-    var essenceGain = Number(enemy.essenceReward || 0);
+    var goldGain = Number(enemy.goldReward || 0); // v3.358.0 (D7) : plus d'essence au kill
 
     if (window.EquipmentManager && typeof EquipmentManager.effectiveGoldMult === "function") {
       goldGain = Math.floor(goldGain * EquipmentManager.effectiveGoldMult());
@@ -1607,17 +1600,6 @@ var CombatEngine = {
 
     if (enemy.isBoss) {
       goldGain = Math.floor(goldGain * (1 + Number(game.bossGoldBonusPct || 0)));
-    }
-
-    essenceGain = Math.ceil(essenceGain * Math.max(1, Number(game.essenceGlobalMult || 1)));
-
-    if (enemy.isBoss) {
-      var aetherBonuses = getAetherBonuses();
-      essenceGain += aetherBonuses.essenceBonus || 0;
-
-      if (game.bossEssenceBonusPct) {
-        essenceGain = Math.ceil(essenceGain * (1 + Number(game.bossEssenceBonusPct || 0)));
-      }
     }
 
     var merchantBonusGold = 0; // v3.327.0 : Instinct marchand retiré (branche Fortune, T4)
@@ -1629,7 +1611,6 @@ var CombatEngine = {
     }
 
     this.grantGold(goldGain);
-    this.grantEssence(essenceGain);
     game.totalKills += 1;
     game.killCounts[enemy.id] = (game.killCounts[enemy.id] || 0) + 1;
 
@@ -1801,12 +1782,6 @@ var CombatEngine = {
         if (window.QuestManager && typeof QuestManager.track === "function") {
           QuestManager.track("treasures", 1);
         }
-      },
-      function () {
-        var bonus = randInt(1, 3);
-        CombatEngine.grantEssence(bonus);
-        addLog("🔮 Fontaine d'essence ! +" + bonus + " essence", "event");
-        showToast("🔮 +" + bonus + " essence", 1400);
       },
       function () {
         var bonus = Math.floor(game.gold * 0.05);

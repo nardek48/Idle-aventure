@@ -2,14 +2,7 @@
 /* data/worlds.js — mondes, chapitres, ambiance et fonds de panneaux. Ordre = progression linéaire (WorldManager.worldIndex).
    Note : requiredAscension potentiellement vestigial depuis v2.83 (world-quests.js), à vérifier. Détail : COMMENTAIRES_ORIGINAUX.md */
 
-var WORLD_PANEL_BACKGROUNDS = {
-  forest: "../images/Worlds/World_Forest.jpg",
-  ruins: "../images/Worlds/World_Ruins.jpg",
-  crypt: "../images/Worlds/World_Crypt.jpg",
-  mountain: "../images/Worlds/World_Mountain.jpg",
-  tower: "../images/Worlds/World_Tower.jpg",
-  desert: "../images/Worlds/World_Desert.jpg"
-};
+/* v3.355.0 : WORLD_PANEL_BACKGROUNDS retiré (six fonds que plus rien n'affichait, images absentes). */
 
 var WORLDS = [
   {

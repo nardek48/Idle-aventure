@@ -75,7 +75,6 @@ var EliteManager = {
       hp: hp,
       maxHp: hp,
       goldReward: Math.floor(60 * s),
-      essenceReward: 5 + (window.WorldManager ? WorldManager.worldIndex : 0),
       resists: base.resists || [],  // ignorés tant que isBoss (combat-engine.js), conservés pour le bestiaire
       weak: base.weak || [],
       stats: stats
@@ -183,7 +182,6 @@ var EliteManager = {
         e.hp = Math.max(1, Math.floor(e.maxHp * hpMult));
         e.maxHp = e.hp;
         e.goldReward = Math.max(1, Math.floor(Number(e.goldReward || 0) * goldMult));
-        e.essenceReward = Number(e.essenceReward || 0) * goldMult;
         out.push(e);
       });
     } finally {
@@ -220,6 +218,7 @@ var EliteManager = {
       stat: def.stat,
       value: def.value,
       affixes: Array.isArray(def.affixes) ? def.affixes.map(function (a) { return { stat: a.stat, value: a.value, tier: a.tier || "P" }; }) : [], // v3.225.0 : copie, jamais la référence de la donnée
+      worldIndex: Number(def.worldIndex || 0), // v3.356.0 : monde d'origine affiché (arme de la Cité)
       unique: true,
       eliteId: eliteId
     };

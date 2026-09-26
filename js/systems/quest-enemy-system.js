@@ -150,7 +150,6 @@ QuestEnemyManager.buildGroup = function (quest, adventure) {
       e.hp = Math.max(1, Math.floor(e.maxHp * hpMult));
       e.maxHp = e.hp;
       e.goldReward = Math.max(1, Math.floor(Number(e.goldReward || 0) * goldMult));
-      e.essenceReward = Number(e.essenceReward || 0) * goldMult;
     }
     out.push(e);
   }

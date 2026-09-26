@@ -44,7 +44,7 @@ var ADVENTURE_QUESTS = {
         desc: "Vaincre le Roi Slime géant {target} fois"
       }
     ],
-    reward: { gold: 800, essence: 15 }
+    reward: { gold: 875 }
   },
 
   aq_forest_depths: {
@@ -81,7 +81,7 @@ var ADVENTURE_QUESTS = {
         desc: "Vaincre le Seigneur de guerre orc {target} fois"
       }
     ],
-    reward: { gold: 800, essence: 15 } // aligné sur « Prouver sa valeur » (kills + boss)
+    reward: { gold: 875 } // aligné sur « Prouver sa valeur » (kills + boss)
   },
 
   /* ---------------------------------------------------------------------
@@ -304,7 +304,7 @@ var ADVENTURE_QUESTS = {
         desc: "Tuer {target} loups en Forêt" // v3.108.0 : aligné sur enemyFilter
       }
     ],
-    reward: { gold: 400, essence: 8, unlockBuildingId: "hunt" }
+    reward: { gold: 440, unlockBuildingId: "hunt" }
   },
 
   /* ---------------------------------------------------------------------
@@ -357,7 +357,7 @@ var ADVENTURE_QUESTS = {
         desc: "Vaincre la Fileuse aux yeux blancs"
       }
     ],
-    reward: { gold: 700, essence: 20, seve: 5 }
+    reward: { gold: 800, seve: 5 }
   },
 
   eq_forest_bramble: {
@@ -392,7 +392,7 @@ var ADVENTURE_QUESTS = {
         desc: "Vaincre la Ronce qui se souvient"
       }
     ],
-    reward: { gold: 1200, essence: 30, seve: 5 }
+    reward: { gold: 1350, seve: 5 }
   }
 };
 

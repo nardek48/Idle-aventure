@@ -84,8 +84,6 @@ function createDefaultGatheringActivity() {
 function createInitialGameState() {
   return {
     gold: 0,
-    essence: 0,
-    aether: 0,
     totalAetherEarned: 0,
     memory: null, // v3.322.0 : niveau de Mémoire (MemoryManager.ensure)
     bossTrophies: {}, // v3.333.0 : trophées de boss (BossMomentManager, Bestiaire)
@@ -160,9 +158,8 @@ function createInitialGameState() {
     equipShopManualRefreshCount: 0,
     equipShopStarterServed: false, // v3.247.0 : la vitrine de départ figée a-t-elle déjà été servie
 
-    dungeonTickets: 1,
     dungeonTicketResetTime: 0,
-    dungeonTicketsPurchasedToday: 0,
+    dungeonRunsUsed: {}, // v3.358.0 (D7) : sorties du jour, par donjon
     dungeonRun: { active: false, wave: 0, dungeonId: 1, marks: [] }, // v3.245.0 : tierId -> dungeonId, Marques du run
     dungeonBestWave: 0,
     dungeonBossClears: 0,
@@ -328,13 +325,6 @@ function ensureGameStateDefaults() {
     });
   }
 
-  if (typeof AETHER_SHOP !== "undefined" && Array.isArray(AETHER_SHOP)) {
-    AETHER_SHOP.forEach(function (u) {
-      if (u && u.id != null && game.aetherUpgrades[u.id] === undefined) {
-        game.aetherUpgrades[u.id] = 0;
-      }
-    });
-  }
   // v3.113.0 : plus aucun défaut game.village — champ abandonné (bâtiments supprimés).
 
   if (!game.classCooldowns || typeof game.classCooldowns !== "object") game.classCooldowns = {};
@@ -357,9 +347,8 @@ function ensureGameStateDefaults() {
   if (typeof game.equipShopManualRefreshCount !== "number") game.equipShopManualRefreshCount = 0;
   if (typeof game.equipShopStarterServed !== "boolean") game.equipShopStarterServed = false; // v3.247.0
 
-  if (typeof game.dungeonTickets !== "number") game.dungeonTickets = 1;
   if (typeof game.dungeonTicketResetTime !== "number") game.dungeonTicketResetTime = 0;
-  if (typeof game.dungeonTicketsPurchasedToday !== "number") game.dungeonTicketsPurchasedToday = 0;
+  if (!game.dungeonRunsUsed || typeof game.dungeonRunsUsed !== "object") game.dungeonRunsUsed = {}; // v3.358.0 (D7)
   if (!game.dungeonRun || typeof game.dungeonRun !== "object") game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
   if (window.CampManager && typeof CampManager.ensureDefaults === "function") CampManager.ensureDefaults();
   if (window.AfflictionManager && typeof AfflictionManager.ensure === "function") AfflictionManager.ensure();

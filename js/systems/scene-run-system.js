@@ -58,6 +58,15 @@ var SceneRunManager = {
     pa.count += 1;
   },
 
+  /* v3.355.0 (D6) : un échec SUBI (évacuation, Souffle épuisé, mort) rend la place du jour.
+     L'abandon volontaire la garde : sinon on relancerait le tirage sans limite. */
+  _refundPetiteAventureSlot: function (run) {
+    if (!run || !run.paSlotDay) return;
+    var pa = game.explorationProgression && game.explorationProgression.petiteAventure;
+    if (pa && pa.day === run.paSlotDay && Number(pa.count || 0) > 0) pa.count -= 1;
+    run.paSlotDay = null;
+  },
+
   getRun: function () {
     this.ensureDefaults();
     var run = game.sceneRun;
@@ -294,7 +303,7 @@ var SceneRunManager = {
 
     game.sceneRun = run;
 
-    if (needsProfile) this._consumePetiteAventureSlot(); // consommé au lancement, pas au succès (même esprit que l'entryCost)
+    if (needsProfile) { this._consumePetiteAventureSlot(); run.paSlotDay = this._today(); } // consommé au lancement, pas au succès (même esprit que l'entryCost)
     if (window.SortieManager) SortieManager.start("scene");
 
     if (typeof saveGame === "function") saveGame();
@@ -1340,6 +1349,7 @@ var SceneRunManager = {
   _evacuate: function () {
     var run = this.getRun();
     run.status = "completed";
+    this._refundPetiteAventureSlot(run); // v3.355.0 (D6)
     if (window.SortieManager) SortieManager.end("flee"); // 50% du loot, 0 XP (règle §4)
     this._notifyLivingMap(run, "fail"); // v3.256.0 (décision 4) : l'évacuation compte comme un échec
   },
@@ -1664,6 +1674,7 @@ var SceneRunManager = {
     vibrate([80, 40, 80]);
 
     run.status = "completed";
+    this._refundPetiteAventureSlot(run); // v3.355.0 (D6)
     this._notifyLivingMap(run, "fail"); // v3.256.0 (décision 4) : la mort compte comme un échec
     if (run.livingMapReport && run.livingMapReport.message && typeof showToast === "function") showToast(run.livingMapReport.message, 2600);
     game.justDied = true;

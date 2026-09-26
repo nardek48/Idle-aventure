@@ -10,8 +10,8 @@ function chooseMemoryOption(level, optionId) {
     var cost = MemoryManager.getRepriseCost();
     showConfirmModal(
       "Reprendre ce choix ?",
-      "Changer d'avis coûte " + formatNumber(cost) + " Aether (tu en as " + formatNumber(game.aether || 0) + "). La prochaine reprise coûtera trois fois plus.",
-      "images/Icons/aether_icon.png",
+      "Changer d'avis coûte " + formatNumber(cost) + " or (tu en as " + formatNumber(game.gold || 0) + "). La prochaine reprise coûtera trois fois plus.",
+      "images/Icons/gold_icon.png",
       function () { MemoryManager.choose(level, optionId); }
     );
     return;
@@ -68,8 +68,7 @@ function buildAscensionHTML() {
   h += '<div class="prestige-title">Mémoire</div>';
   h += '<div class="prestige-desc">Ce que tu offres et ce que tu vis, l\'Aether le retient. Offre les objets dont tu te sépares depuis ton sac ; tes grandes victoires comptent aussi.</div>';
   h += buildMemoryGaugeHTML(p);
-  h += '<div class="prestige-desc">Aether disponible pour les reprises : ' + formatNumber(game.aether || 0)
-     + ' · prochaine reprise : ' + formatNumber(MemoryManager.getRepriseCost()) + '</div>';
+  h += '<div class="prestige-desc">Reprendre un choix coûte de l\'or : ' + formatNumber(MemoryManager.getRepriseCost()) + ' pour la prochaine reprise, trois fois plus ensuite.</div>'; // v3.358.0 (D7)
   if (pending.length) h += '<div class="mem-pending">🌟 ' + (pending.length > 1 ? pending.length + ' choix t\'attendent.' : 'Un choix t\'attend.') + '</div>';
   h += '</div>';
 

@@ -20,12 +20,10 @@ function buildAdminHTML() {
   h += '</div>';
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/gold_icon.png> Or & Essence</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/gold_icon.png> Or</h3>';
   h += adminFieldRow("admin-gold", "Or", game.gold, "adminApplyGold()");
-  h += adminFieldRow("admin-essence", "Essence", game.essence, "adminApplyEssence()");
   h += '<div class="admin-quick-row">';
   h += '<button class="settings-btn admin-btn" onclick="adminQuickAdd(\'gold\', 10000)">+10 000 or</button>';
-  h += '<button class="settings-btn admin-btn" onclick="adminQuickAdd(\'essence\', 1000)">+1 000 essence</button>';
   h += '</div>';
   h += '</div>';
 
@@ -208,13 +206,6 @@ function adminApplyGold() {
   adminRefresh();
 }
 
-function adminApplyEssence() {
-  var n = adminReadInt("admin-essence");
-  if (n === null || n < 0) return;
-  game.essence = n;
-  adminRefresh();
-}
-
 function adminApplyShards() {
   var n = adminReadInt("admin-shards");
   if (n === null || n < 0) return;
@@ -224,7 +215,6 @@ function adminApplyShards() {
 
 function adminQuickAdd(field, amount) {
   if (field === "gold") game.gold = (game.gold || 0) + amount;
-  else if (field === "essence") game.essence = (game.essence || 0) + amount;
   adminRefresh();
 }
 
@@ -295,7 +285,6 @@ window.getAdminCombatQuests = getAdminCombatQuests;
 window.buildAdminCombatQuestHTML = buildAdminCombatQuestHTML;
 window.adminReplayCombatQuest = adminReplayCombatQuest;
 window.adminApplyGold = adminApplyGold;
-window.adminApplyEssence = adminApplyEssence;
 window.adminApplyShards = adminApplyShards;
 window.adminQuickAdd = adminQuickAdd;
 window.adminApplyTrainedStat = adminApplyTrainedStat;

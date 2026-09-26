@@ -6,8 +6,16 @@
    dur dans title-screen-view.js et figé à v3.151.0 depuis 81 livraisons.
    DOIT rester égal au CACHE_VERSION de sw.js — le harnais le vérifie et
    échoue si les deux divergent. */
-var GAME_VERSION = "3.354.0";
+var GAME_VERSION = "3.358.0";
 window.GAME_VERSION = GAME_VERSION;
+
+/* v3.358.0 (D7, décision Seb 26/09/2026) : l'essence et le solde d'Aether disparaissent.
+   Ce qu'une ancienne sauvegarde en garde est converti une fois en or au chargement ;
+   les récompenses fixes des données ont été converties au même taux. */
+var ESSENCE_GOLD_RATE = 5;   // 1 essence = 5 or (tickets de donjon remplacés par des sorties)
+var AETHER_GOLD_RATE = 50;   // 1 Aether de solde = 50 or (au prix des reprises de Mémoire)
+window.ESSENCE_GOLD_RATE = ESSENCE_GOLD_RATE;
+window.AETHER_GOLD_RATE = AETHER_GOLD_RATE;
 
 var DEFAULT_QUEST_PROGRESS = {
   kills: 0,

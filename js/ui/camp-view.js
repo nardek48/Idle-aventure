@@ -284,12 +284,14 @@ function buildCampExpeditionDoorsHTML() {
 
   if (showDungeon) {
     if (window.DungeonManager && typeof DungeonManager.checkTicketReset === "function") DungeonManager.checkTicketReset();
-    var tickets = Number(game.dungeonTickets || 0);
+    // v3.358.0 (D7) : sorties du jour, tous donjons ouverts confondus
+    var tickets = (window.DUNGEONS || []).filter(function (dg) { return DungeonManager.isUnlocked(dg.id); })
+      .reduce(function (t, dg) { return t + DungeonManager.getRunsLeft(dg.id); }, 0);
     var running = !!(game.dungeonRun && game.dungeonRun.active);
     h += '<button type="button" class="camp-door" onclick="switchTab(\'dungeon\')">';
     h += '<img class="camp-door-ico" src="images/Icons/subtabs/dungeon.png" alt="">';
     h += '<span class="camp-door-txt"><span class="camp-door-t">Donjon</span>';
-    h += '<span class="camp-door-s">' + (running ? 'En cours' : (tickets + ' ticket' + (tickets > 1 ? 's' : ''))) + '</span></span>';
+    h += '<span class="camp-door-s">' + (running ? 'En cours' : (tickets + ' sortie' + (tickets > 1 ? 's' : ''))) + '</span></span>';
     if (tickets > 0 && !running) h += '<span class="camp-door-badge kbadge kbadge-round"><span>' + tickets + '</span></span>';
     h += '<span class="camp-door-chev">›</span>';
     h += '</button>';

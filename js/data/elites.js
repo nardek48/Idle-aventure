@@ -157,7 +157,12 @@ var ELITE_DB = {
     /* v3.326.0 (plan C-2) : 2,8 / 1,0 -> 4,3 / 3,5. Banc sim/plafond-bench.js, 40 runs, fin
        d'acte III (Mar) : 83 / 83 / 88 %, 17-22 rounds, 1,4-1,7 potion. Les trois classes
        alignées. À 5 / 3,5 : 30 / 47 / 60 %. */
-    statMult: { endurance: 3.5, power: 4.3, celerity: 1.0 },
+    /* v3.357.0 (lot 3 des corrections de la campagne B) : puissance 4,3 -> 3,5. Réglé sur le héros
+       de CAMPAGNE (sim/plafond-bench.js --profil campagne : uniques, heaume, arme de la Cité,
+       reforge 4/2), plus sur Mar : 55 / 33 / 65 % -> ~100 / ~80 / ~92 % (40 runs, Ch./Rô./Ma.).
+       En vague 10 de la Cité, il usait le héros avant le Sphinx : le Donjon II complet passe de
+       80 / 48 / 73 % à 93 / 83 / 85 %, Sphinx inchangé. En campagne : 43 % de PV, 0,8 potion. */
+    statMult: { endurance: 3.5, power: 3.5, celerity: 1.0 },
     lore: "La dune bouge avant lui. Quand le dard sort, l'eau des mares a déjà baissé : "
       + "il boit d'abord, il frappe ensuite.",
     // Icône propre, pas encore générée : jamais d'emprunt (règle Seb 18/09/2026).
@@ -240,6 +245,25 @@ var ELITE_UNIQUE_LOOT = {
     value: 0.24,
     affixes: [{ stat: "maxHpPct", value: 0.05, tier: "P" }],
     item: { name: "Heaume du guet", icon: "casque" }
+  },
+
+  /* v3.356.0 (D4, décision Seb 26/09/2026) — L'ARME DE LA CITÉ. Récompense de l'étape 12
+     (STORY_REWARDS.desert_12.uniqueLoot), pas d'une victoire d'élite : buildUniqueLoot() ne fait
+     qu'une lecture par clé, comme pour le heaume. Le Sphinx a été réglé (v3.326.0) sur une arme
+     Inhabituelle du Désert ; sans elle, 17 à 41 % de victoires. Valeur calée au lot de campagnes
+     pour viser 75 à 95 % par tentative (sim/campagne-lot.js). Compte pour le palier de l'étape 13. */
+  arme_cite: {
+    slot: "weapon",
+    stat: "tapDmg",
+    rarity: "green",
+    value: 44,
+    worldIndex: 1,
+    affixes: [{ stat: "tapMult", value: 0.12, tier: "P" }],
+    byClass: {
+      knight: { name: "Lame de la Cité", icon: "sword" },
+      archer: { name: "Arc de la Cité", icon: "bow" },
+      mage: { name: "Bâton de la Cité", icon: "staff" }
+    }
   },
 
   ronce_ardente: {

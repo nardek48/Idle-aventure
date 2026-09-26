@@ -4,11 +4,11 @@
 
 var DUNGEON_CONFIG = {
   waveCount: 15,
-  freeTicketsPerDay: 1,
+  /* v3.358.0 (D7, décision Seb 26/09/2026) : plus de tickets ni d'essence. 3 sorties par jour et
+     par donjon, remises à zéro toutes les 24 h ; les sorties demandées par l'Histoire sont
+     offertes et hors quota (isStoryTicketFree). */
+  runsPerDay: 3,
   ticketResetHours: 24,
-  ticketCostEssence: 100,
-  ticketCostGrowth: 1.2,
-  maxTicketPurchasesPerDay: 20,
 
   /* Multiplicateur par défaut des vagues normales. v3.253.0 : chaque donjon peut le
      surcharger par wavePremiumMult — la Forêt est passée à 2,8, les autres mondes gardent
@@ -17,8 +17,7 @@ var DUNGEON_CONFIG = {
   waveRampMult: 1,
   bossPremiumMult: 1.8,
 
-  fullClearGoldBase: 500,
-  fullClearEssenceBase: 40,
+  fullClearGoldBase: 700,   // v3.358.0 (D7) : 500 or + 40 essence × 5, l'essence fondue dans l'or
   partialLootChance: 40,
 
   shardsPerWaveCleared: 1,
@@ -26,7 +25,7 @@ var DUNGEON_CONFIG = {
 
   /* v3.245.0 — Marques (doc §3.1, valeurs confirmées par sim/dungeon-bench.js, lot D-0). */
   maxMarks: 3,              // Marques actives au plus par run
-  markStackBonus: 0.15,     // bonus d'or/essence/matériau par Marque active (1 + n × 0,15)
+  markStackBonus: 0.15,     // bonus d'or et de matériau par Marque active (1 + n × 0,15)
   specialPerMark: 2,        // matériau de monde supplémentaire par Marque (décision Seb 12.2 : +2)
   eliteShardsBonus: 3       // éclats en plus pour une vague élite passée
 };
@@ -212,8 +211,8 @@ var DUNGEONS = [
    unlock : null = libre ; "cleared" = disponible une fois le donjon terminé une fois. */
 var DUNGEON_MARKS = [
   { id: "aff_colossus", name: "Colosses", icon: "images/Icons/afflictions/aff_colossus.png",
-    desc: "Boss 2× PV · +50 % or et essence sur le boss", unlock: null,
-    modifiers: { bossHpMult: 2, bossGoldBonusPct: 0.50, bossEssenceBonusPct: 0.50 } },
+    desc: "Boss 2× PV · +50 % d'or sur le boss", unlock: null,
+    modifiers: { bossHpMult: 2, bossGoldBonusPct: 0.50 } },
   { id: "aff_asceticism", name: "Ascétisme", icon: "images/Icons/afflictions/aff_asceticism.png",
     desc: "Potions interdites · +15 % dégâts", unlock: null,
     modifiers: { tapMult: 0.15, forbidPotions: true } },
@@ -240,9 +239,11 @@ var DUNGEON_SHOP = [
   { id: "d_sacoche", name: "Sacoche du donjon", icon: "images/Icons/dungeon/dungeon_sacoche.png",
     desc: "+1 matériau de monde par run réussi, par niveau.",
     effect: "specialBonus", perLevel: 1, baseCost: 20, costMult: 1.5, maxLevel: 5 },
+  /* v3.358.0 (D7) : les tickets disparaissent — la Clé de faille ouvre une sortie de plus par jour et
+     par donjon (2 niveaux). Les niveaux achetés au-delà comptent pour 2. */
   { id: "d_cle", name: "Clé de faille", icon: "images/Icons/dungeon/dungeon_cle.png",
-    desc: "−10 % sur le coût en essence des tickets achetés, par niveau.",
-    effect: "ticketDiscount", perLevel: 0.10, baseCost: 15, costMult: 1.4, maxLevel: 5 },
+    desc: "+1 sortie par jour dans chaque donjon, par niveau.",
+    effect: "runsBonus", perLevel: 1, baseCost: 15, costMult: 1.4, maxLevel: 2 },
   { id: "d_doigte", name: "Doigté de l'Enchanteresse", icon: "images/Icons/dungeon/dungeon_doigte.png",
     desc: "−1 Sève par relance d'affixe, par niveau (jamais moins d'une).",
     effect: "seveDiscount", perLevel: 1, baseCost: 30, costMult: 1.6, maxLevel: 3 },

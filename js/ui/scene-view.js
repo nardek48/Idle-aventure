@@ -1097,7 +1097,7 @@ function buildSceneCompleteHTML() {
   if (kept && window.SortieManager) {
     h += '    <div class="dungeon-summary-row"><span>Butin rapporté</span><span>' + esc(SortieManager.getLootSummary(kept)) + '</span></div>';
   }
-  if (lost && window.SortieManager && (lost.gold || lost.essence || (lost.resources && Object.keys(lost.resources).some(function (k) { return lost.resources[k] > 0; })))) {
+  if (lost && window.SortieManager && (lost.gold || (lost.resources && Object.keys(lost.resources).some(function (k) { return lost.resources[k] > 0; })))) {
     h += '    <div class="dungeon-summary-row"><span>Perdu</span><span>' + esc(SortieManager.getLootSummary(lost)) + '</span></div>';
   }
   h += '  </div>';

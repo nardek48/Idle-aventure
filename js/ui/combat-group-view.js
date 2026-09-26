@@ -41,7 +41,7 @@ function getEnemyPortrait(e) {
   if (!e) return "";
   var db = e.isBoss ? window.BOSS_DB : window.ENEMY_DB;
   var data = (window.ELITE_DB && ELITE_DB[e.id]) ? {} : ((db && db[e.id]) || {});
-  return data.image || e.image || "";
+  return e.image || data.image || ""; // v3.355.0 (D3) : l'image propre d'abord, la fiche de base en repli
 }
 
 function buildEnemyRowHTML() {
@@ -209,16 +209,22 @@ function buildCompanionActionsHTML(actor) {
   /* Compétence signature. Indisponible, elle le DIT : rounds restants pendant la
      recharge, ∅ quand les charges du combat sont épuisées. */
   var off = enRecharge || sansCharge;
-  h += '<button type="button" class="cbg-act' + (off ? " is-off" : "") + (choix && choix.slot === "skill" ? " is-picked" : "") + '"'
+  /* v3.355.0 (D5) : en Tactique, le compagnon est conseillé comme le héros — même marque,
+     calculée par sa politique automatique. Le conseil ne choisit rien : le joueur tape. */
+  var conseil = (!choix && game.combatMode !== "grimoire") ? CompanionManager.chooseAction(actor) : null;
+  if (conseil === "skill" && off) conseil = "basic";
+  var tag = '<span class="combat-action-suggest-tag"><img class=ico-inline src=images/Icons/codex/codex_lore.png></span>';
+  h += '<button type="button" class="cbg-act' + (off ? " is-off" : "") + (choix && choix.slot === "skill" ? " is-picked" : "") + (conseil === "skill" ? " is-suggested" : "") + '"'
     + ' onclick="companionAction(\'skill\')" aria-label="' + esc(def.skill.name) + '">'
     + '<img src="' + esc(def.skill.icon) + '" alt="">'
     + (enRecharge ? '<span class="cbg-act-cd">' + actor.cooldown + '</span>' : "")
     + (!enRecharge && sansCharge ? '<span class="cbg-act-cd">\u2205</span>' : "")
+    + (conseil === "skill" ? tag : "")
     + '</button>';
 
-  h += '<button type="button" class="cbg-act' + (choix && choix.slot === "basic" ? " is-picked" : "") + '"'
+  h += '<button type="button" class="cbg-act' + (choix && choix.slot === "basic" ? " is-picked" : "") + (conseil === "basic" ? " is-suggested" : "") + '"'
     + ' onclick="companionAction(\'basic\')" aria-label="Attaque">'
-    + '<img src="images/Icons/special_attacks/attack3.png" alt=""></button>';
+    + '<img src="images/Icons/special_attacks/attack3.png" alt="">' + (conseil === "basic" ? tag : "") + '</button>';
 
   return '<div class="cbg-acts">' + h + '</div>';
 }

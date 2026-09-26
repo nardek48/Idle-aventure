@@ -1,6 +1,6 @@
 "use strict";
 /* ui/dungeon-view.js — écran Donjon (v3.245.0, refonte Donjons, doc v1.1 §5) : une carte par monde, feuille basse .ksheet de
-   lancement avec les Marques, carte de run actif, overlay tickets, rapport de fin. La Boutique d'éclats vit chez l'Enchanteresse
+   lancement avec les Marques, carte de run actif, sorties du jour, rapport de fin. La Boutique d'éclats vit chez l'Enchanteresse
    (ui/village-building-view.js). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 var pendingDungeonId = null;   // donjon ouvert dans la feuille de lancement
@@ -84,22 +84,31 @@ function buildDungeonCardHTML(dungeon) {
   } else if ((game.dungeonTierCleared || {})[dungeon.id]) {
     h += '<div class="dungeon-tier-done"><img src="images/Icons/dungeon/boss_crown.png" alt=""> Boss vaincu</div>';
   }
+  if (unlocked) h += buildDungeonRunsLineHTML(dungeon.id); // v3.358.0 (D7)
 
   h += '</div>';
   h += '</' + cardTag + '>';
   return h;
 }
+/* v3.358.0 (D7) : sorties du jour de ce donjon, ou « offerte » quand l'Histoire la demande. */
+function buildDungeonRunsLineHTML(dungeonId) {
+  if (DungeonManager.isStoryTicketFree(dungeonId)) return '<div class="dungeon-tier-runs is-free">Sortie offerte par l\'Histoire</div>';
+  var left = DungeonManager.getRunsLeft(dungeonId), max = DungeonManager.getRunsPerDay();
+  return '<div class="dungeon-tier-runs' + (left <= 0 ? ' is-empty' : '') + '">Sorties aujourd\'hui : ' + left + ' / ' + max + '</div>';
+}
+window.buildDungeonRunsLineHTML = buildDungeonRunsLineHTML;
+
 // alias historique (harnais)
 function buildDungeonTierCardHTML(dungeon) { return buildDungeonCardHTML(dungeon); }
 window.buildDungeonTierCardHTML = buildDungeonTierCardHTML;
 
+/* v3.358.0 (D7) : plus de tickets. Le bandeau dit la règle et le renouvellement ; le compte
+   de chaque donjon est sur sa carte. */
 function buildDungeonTicketBadgeHTML() {
-  var tickets = game.dungeonTickets || 0;
-  var h = '<button type="button" class="dungeon-ticket-badge" onclick="openDungeonTicketOverlay()">';
+  var h = '<div class="dungeon-ticket-badge dungeon-runs-badge">';
   h += '<span class="dungeon-ticket-badge-icon"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png></span>';
-  h += '<span class="dungeon-ticket-badge-label">Achat de ticket</span>';
-  h += '<span class="dungeon-ticket-badge-count kbadge kbadge-round"><span>' + tickets + '</span></span>';
-  h += '</button>';
+  h += '<span class="dungeon-ticket-badge-label">' + DungeonManager.getRunsPerDay() + ' sorties par jour et par donjon · renouvellement dans ' + esc(DungeonManager.timeUntilTicketReset()) + '</span>';
+  h += '</div>';
   return h;
 }
 
@@ -139,7 +148,6 @@ function buildDungeonSheetHTML(dungeonId) {
   var world = (window.WORLDS || []).find(function (w) { return w.id === dungeon.worldId; });
   var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[dungeon.maxRarity]) || dungeon.maxRarity;
   var rarityColor = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[dungeon.maxRarity]) || "#9ca3af";
-  var tickets = game.dungeonTickets || 0;
   var n = pendingDungeonMarks.length;
   var maxMarks = DUNGEON_CONFIG.maxMarks || 3;
   var mult = DungeonManager.getMarkRewardMult(n);
@@ -188,10 +196,9 @@ function buildDungeonSheetHTML(dungeonId) {
   }
 
   if (storyFree) {
-    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> <strong>Entrée offerte</strong> — les braises te guident, aucun ticket consommé</div>';
+    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> <strong>Entrée offerte</strong> — les braises te guident, aucune sortie du jour consommée</div>';
   } else {
-    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> Tickets restants : <strong>' + tickets + '</strong>'
-       + (tickets <= 0 ? ' · <a href="javascript:void(0)" onclick="closeDungeonSheet();openDungeonTicketOverlay();">en acheter</a>' : '') + '</div>';
+    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> Sorties restantes aujourd\'hui : <strong>' + DungeonManager.getRunsLeft(dungeon.id) + ' / ' + DungeonManager.getRunsPerDay() + '</strong></div>';
   }
   // v3.330.1 : vivres de sortie (donjon déjà fini une fois)
   var dDef = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(dungeonId); })[0];
@@ -211,7 +218,7 @@ function openDungeonSheet(dungeonId) {
   if (!DungeonManager.isUnlocked(dungeonId)) return showToast("Donjon verrouillé", 1200);
   if ((game.heroHp || 0) <= 0) return showToast("Héros à terre — repose-toi au Campement d'abord", 1600);
   var storyFree = typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(dungeonId);
-  if (!storyFree && (game.dungeonTickets || 0) <= 0) return showToast("Aucun ticket de donjon", 1200);
+  if (!storyFree && DungeonManager.getRunsLeft(dungeonId) <= 0) return showToast("Plus de sortie aujourd'hui dans ce donjon — renouvellement dans " + DungeonManager.timeUntilTicketReset(), 1800); // v3.358.0 (D7)
   pendingDungeonId = Number(dungeonId);
   pendingDungeonMarks = [];
   renderDungeonSheet();
@@ -261,7 +268,6 @@ function buildDungeonSummaryHTML(result) {
     h += '      <div class="dungeon-summary-row"><span>Marques</span><span>×' + Number(result.markMult || 1).toFixed(2).replace(/0$/, "") + ' · ' + esc(names) + '</span></div>';
   }
   h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/gold_icon.png> Or</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
-  h += '      <div class="dungeon-summary-row"><span>' + renderIconOrEmojiHTML("images/Icons/essence_icon.png", "dungeon-summary-icon", "Essence") + ' Essence</span><span>+' + formatNumber(result.essenceReward) + '</span></div>';
   h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> Éclats</span><span>+' + formatNumber(result.shardsGained) + '</span></div>';
   if (result.specialGained > 0 && result.specialName) {
     h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/scene/path_easy.png> ' + esc(result.specialName) + '</span><span>+' + result.specialGained + '</span></div>';
@@ -297,50 +303,4 @@ window.confirmDungeonStart = confirmDungeonStart;
 window.openDungeonSummary = openDungeonSummary;
 window.closeDungeonSummary = closeDungeonSummary;
 
-/* ---------- Tickets (inchangé) ---------- */
-function buildDungeonTicketOverlayHTML() {
-  var tickets = game.dungeonTickets || 0;
-  var purchasedToday = game.dungeonTicketsPurchasedToday || 0;
-  var maxPerDay = DUNGEON_CONFIG.maxTicketPurchasesPerDay || 20;
-  var remainingPurchases = Math.max(0, maxPerDay - purchasedToday);
-  var nextTicketCost = DungeonManager.getTicketBuyCost();
-  var canBuyTicket = (game.essence || 0) >= nextTicketCost && remainingPurchases > 0;
-
-  var h = '<div class="full-menu-overlay">';
-  h += '  <div class="full-menu dungeon-story-card">';
-  h += '    <div class="dungeon-story-icon"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png></div>';
-  h += '    <div class="dungeon-story-title">Tickets de donjon</div>';
-  h += '    <div class="dungeon-story-text">1 ticket gratuit par jour, valable pour n\u2019importe quel donjon. Chaque ticket supplémentaire coûte de plus en plus cher au fil de la journée — limité à ' + maxPerDay + ' achats par jour.</div>';
-  h += '    <div class="dungeon-ticket-row">';
-  h += '      <span class="dungeon-ticket-count"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> ' + tickets + '</span>';
-  h += '      <span class="dungeon-ticket-reset">Renouvellement dans ' + esc(DungeonManager.timeUntilTicketReset()) + '</span>';
-  h += '    </div>';
-  h += '    <div class="dungeon-ticket-limit">Achats aujourd\u2019hui : ' + purchasedToday + ' / ' + maxPerDay + '</div>';
-  h += '    <div class="dungeon-ticket-limit">Prix du prochain ticket : ' + formatNumber(nextTicketCost) + ' essence</div>';
-  h += '    <div class="dungeon-story-actions">';
-  h += '      <button class="settings-btn" type="button" onclick="closeDungeonTicketOverlay()">Fermer</button>';
-  h += '      <button class="settings-btn primary' + (canBuyTicket ? '' : ' disabled') + '" type="button" ' + (canBuyTicket ? 'onclick="buyDungeonTicketFromOverlay()"' : 'disabled') + '>' + (remainingPurchases > 0 ? 'Acheter (' + formatNumber(nextTicketCost) + ' essence)' : 'Limite atteinte') + '</button>';
-  h += '    </div>';
-  h += '  </div>';
-  h += '</div>';
-  return h;
-}
-
-function openDungeonTicketOverlay() {
-  var host = document.getElementById("dungeon-modal-root");
-  if (host) host.innerHTML = buildDungeonTicketOverlayHTML();
-}
-
-function closeDungeonTicketOverlay() {
-  var host = document.getElementById("dungeon-modal-root");
-  if (host) host.innerHTML = "";
-}
-
-function buyDungeonTicketFromOverlay() {
-  DungeonManager.buyTicket();
-  openDungeonTicketOverlay();
-}
-
-window.openDungeonTicketOverlay = openDungeonTicketOverlay;
-window.closeDungeonTicketOverlay = closeDungeonTicketOverlay;
-window.buyDungeonTicketFromOverlay = buyDungeonTicketFromOverlay;
+/* v3.358.0 (D7) : l'overlay d'achat de tickets est retiré avec l'essence. */

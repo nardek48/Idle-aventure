@@ -3,7 +3,7 @@
    - Offrande : se séparer d'un objet rend de l'Aether (rareté seule, 0 si acheté).
    - Souvenirs : les grandes victoires rendent de l'Aether.
    - Mémoire : game.totalAetherEarned est la jauge (jamais vidée) ; un niveau atteint ouvre
-     un choix. game.aether est le solde dépensable, qui ne sert plus qu'aux reprises.
+     un choix. v3.358.0 (D7) : plus de solde d'Aether, les reprises se paient en or.
    Tous les effets des choix passent par MemoryManager.has(id) : un seul point à lire. */
 
 var MEMORY_INVENTORY_BASE = 25;  // O8 : sac de base
@@ -108,10 +108,10 @@ var MemoryManager = {
     if (current === optionId) return false;
     if (current) {
       var cost = this.getRepriseCost();
-      if (Number(game.aether || 0) < cost) { showToast("Pas assez d'Aether (" + cost + ")", 1400); return false; }
-      game.aether = Number(game.aether || 0) - cost;
+      if (Number(game.gold || 0) < cost) { showToast("Pas assez d'or (" + formatNumber(cost) + ")", 1400); return false; }
+      game.gold = Number(game.gold || 0) - cost;
       m.reprises += 1;
-      addLog("Mémoire : choix du niveau " + level + " repris (−" + cost + " Aether)", "event");
+      addLog("Mémoire : choix du niveau " + level + " repris (−" + formatNumber(cost) + " or)", "event");
     }
     m.choices[level] = optionId;
     this.afterChoice();
@@ -134,7 +134,6 @@ var MemoryManager = {
     m.carry = raw - gained;
     if (gained <= 0) return 0;
     var before = this.getLevel();
-    game.aether = Number(game.aether || 0) + gained;
     game.totalAetherEarned = Number(game.totalAetherEarned || 0) + gained;
     if (label) addLog("✨ " + label + " : +" + gained + " Aether", "event");
     this.announceLevels(before);

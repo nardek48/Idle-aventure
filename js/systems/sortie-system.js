@@ -15,7 +15,7 @@ var SORTIE_CONTEXT_LABELS = { farm: "exploration", adventure: "quête", hunt: "c
 
 var SortieManager = {
   emptyLoot: function () {
-    return { gold: 0, essence: 0, items: [], resources: {} };
+    return { gold: 0, items: [], resources: {} }; // v3.358.0 (D7) : plus d'essence
   },
 
   ensure: function () {
@@ -78,7 +78,6 @@ var SortieManager = {
 
   /* ---------- Butin ---------- */
   addGold: function (n) { var s = this.ensure(); s.loot.gold += Math.max(0, Math.floor(Number(n) || 0)); },
-  addEssence: function (n) { var s = this.ensure(); s.loot.essence += Math.max(0, Number(n) || 0); },
   addItem: function (item) { if (item) this.ensure().loot.items.push(item); },
   addResource: function (key, n) {
     var s = this.ensure();
@@ -104,7 +103,6 @@ var SortieManager = {
     loot = loot || this.ensure().loot;
     var parts = [];
     if (loot.gold > 0) parts.push(formatNumber(loot.gold) + " or");
-    if (loot.essence > 0) parts.push(formatNumber(Math.floor(loot.essence)) + " essence");
     if (loot.items.length) parts.push(loot.items.length + " objet" + (loot.items.length > 1 ? "s" : ""));
     Object.keys(loot.resources).forEach(function (k) {
       var q = Math.floor(loot.resources[k]);
@@ -125,7 +123,6 @@ var SortieManager = {
     var kept = this.emptyLoot();
 
     kept.gold = Math.floor(s.loot.gold * keepPct); lost.gold = s.loot.gold - kept.gold;
-    kept.essence = Math.floor(s.loot.essence * keepPct); lost.essence = s.loot.essence - kept.essence;
     var keepItems = Math.ceil(s.loot.items.length * keepPct);
     kept.items = s.loot.items.slice(0, keepItems); lost.items = s.loot.items.slice(keepItems);
     Object.keys(s.loot.resources).forEach(function (k) {
@@ -146,7 +143,7 @@ var SortieManager = {
       showToast("🏳️ Fuite : 50 % du butin conservé", 1800);
     } else {
       addLog("🏕️ Retour au camp (" + label + ", " + s.kills + " ennemi" + (s.kills > 1 ? "s" : "") + ") : " + this.getLootSummary(kept) + " rapportés.", "event");
-      if (kept.gold > 0 || kept.essence > 0 || kept.items.length || Object.keys(kept.resources).length) {
+      if (kept.gold > 0 || kept.items.length || Object.keys(kept.resources).length) {
         showToast("🎒 Butin rapporté : " + this.getLootSummary(kept), 2200);
       }
     }
@@ -187,7 +184,6 @@ var SortieManager = {
       game.totalGoldEarned += loot.gold;
       if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("goldEarned", loot.gold);
     }
-    if (loot.essence > 0) game.essence += loot.essence;
     loot.items.forEach(function (item) {
       if (typeof addDropToInventory === "function" && addDropToInventory(item)) {
         addLog("🎁 Objet rapporté : " + item.name + " (" + item.rarity + ")", "event");

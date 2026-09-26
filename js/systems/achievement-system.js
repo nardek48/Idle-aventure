@@ -94,15 +94,6 @@ var AchievementManager = {
       if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("goldEarned", reward.gold);
       parts.push("+" + formatNumber(reward.gold) + " or");
     }
-    if (reward.essence) {
-      game.essence = Number(game.essence || 0) + reward.essence;
-      parts.push("+" + formatNumber(reward.essence) + " essence");
-    }
-    if (reward.aether) {
-      // Aether versé au porte-monnaie SEULEMENT : pas à totalAetherEarned, qui fait la jauge de Mémoire
-      game.aether = Number(game.aether || 0) + reward.aether;
-      parts.push("+" + formatNumber(reward.aether) + " Aether");
-    }
   },
 
   /* Paie les paliers franchis d'une catégorie de monde. Rend la liste des paliers gagnés. */
@@ -145,21 +136,20 @@ var AchievementManager = {
 
   claimAll: function () {
     this.refresh(true);
-    var self = this, n = 0, gold = 0, ess = 0, tierMsgs = [];
+    var self = this, n = 0, gold = 0, tierMsgs = [];
     (ACHIEVEMENTS_DB || []).forEach(function (a) {
       if (!self.isReady(a)) return;
       var r = self.claim(a.id, true);
       if (!r) return;
       n++;
       gold += (a.reward && a.reward.gold) || 0;
-      ess += (a.reward && a.reward.essence) || 0;
       if (r.tiers.length) {
         var cat = self.getCategory(a.category);
         tierMsgs.push("palier " + ACH_TIER_LABELS[r.tiers[r.tiers.length - 1]] + " — " + (cat ? cat.label : a.category));
       }
     });
     if (n && typeof showToast === "function") {
-      showToast("🏆 " + n + " haut" + (n > 1 ? "s faits" : " fait") + (gold ? " · +" + formatNumber(gold) + " or" : "") + (ess ? " · +" + formatNumber(ess) + " essence" : "")
+      showToast("🏆 " + n + " haut" + (n > 1 ? "s faits" : " fait") + (gold ? " · +" + formatNumber(gold) + " or" : "")
         + (tierMsgs.length ? " · " + tierMsgs.join(", ") : ""), 2600);
     }
     if (n) this._after();

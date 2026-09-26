@@ -417,7 +417,7 @@ var StoryQuestManager = {
     return true;
   },
 
-  /* Or/essence en direct (même pratique que adventure-quest-system), potion de soin via healingPotionsOwned,
+  /* Or en direct (v3.358.0 : l'essence est fondue dans l'or) (même pratique que adventure-quest-system), potion de soin via healingPotionsOwned,
      équipement via LootSystem.rollDropAtRarity (pattern world-quest-system). */
   _grantReward: function (reward) {
     var rows = [];
@@ -426,10 +426,6 @@ var StoryQuestManager = {
     if (reward.gold) {
       game.gold += Number(reward.gold);
       rows.push({ label: "Or", value: formatNumber(reward.gold) });
-    }
-    if (reward.essence) {
-      game.essence += Number(reward.essence);
-      rows.push({ label: "Essence", value: formatNumber(reward.essence) });
     }
     if (reward.healingPotion && reward.healingPotion.id) {
       if (window.PotionManager && typeof PotionManager.ensureHealing === "function") PotionManager.ensureHealing();
@@ -481,6 +477,14 @@ var StoryQuestManager = {
       if (typeof addLootToInventory === "function" && addLootToInventory(fixe)) {
         addLog("🎁 Récompense d'histoire : " + fixe.name, "event");
         rows.push({ label: "Objet", value: fixe.name });
+      }
+    }
+    /* v3.356.0 (D4) : objet unique nommé, décliné par classe (ELITE_UNIQUE_LOOT), comme le heaume. */
+    if (reward.uniqueLoot && window.EliteManager) {
+      var unique = EliteManager.buildUniqueLoot(reward.uniqueLoot);
+      if (unique && typeof addLootToInventory === "function" && addLootToInventory(unique)) {
+        addLog("🎁 Récompense d'histoire : " + unique.name, "event");
+        rows.push({ label: (window.ELITE_UNIQUE_LOOT_LABELS || {})[unique.slot] || "Objet unique", value: unique.name });
       }
     }
     if (reward.equipmentRarity && reward.equipmentCount) {

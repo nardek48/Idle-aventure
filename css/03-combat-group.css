@@ -333,6 +333,18 @@ Deux contraintes mesurées à l'atelier :
   box-shadow: 0 0 0 2px rgba(217, 164, 65, .55);
 }
 
+/* v3.355.0 (D5) : conseil du compagnon en Tactique, même halo que le bouton conseillé du héros */
+.cbg-act.is-suggested {
+  border-color: rgba(253, 230, 138, .9);
+  box-shadow: 0 0 0 3px rgba(253, 230, 138, .75), 0 0 12px rgba(253, 230, 138, .6), 0 2px 6px rgba(0, 0, 0, .45);
+}
+
+/* L'étiquette garde sa taille d'icône : sans ça, « .cbg-act img » l'étirait sur tout le bouton */
+.cbg-act .combat-action-suggest-tag img {
+  width: 1.3em;
+  height: 1.3em;
+}
+
 .cbg-act.is-off { opacity: .45; }
 .cbg-act.is-off img { filter: grayscale(1); }
 

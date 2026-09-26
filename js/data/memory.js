@@ -1,8 +1,8 @@
 "use strict";
 /* data/memory.js — v3.322.0 (Offrande, conception v1.2) : le niveau de Mémoire remplace l'Ascension.
    L'Aether gagné (Offrandes + Souvenirs) remplit une jauge qui ne se vide jamais
-   (game.totalAetherEarned) ; chaque niveau ouvre un choix. game.aether reste le solde
-   dépensable, qui ne sert plus qu'aux reprises. Valeurs mesurées : sim/offrande-bench.js. */
+   (game.totalAetherEarned) ; chaque niveau ouvre un choix. v3.358.0 (D7) : plus de solde
+   d'Aether, les reprises se paient en or. Valeurs mesurées : sim/offrande-bench.js. */
 
 /* Offrande : Aether rendu selon la rareté seule (les reforges restent à l'emplacement). */
 var MEMORY_OFFERING_VALUES = { common: 1, green: 3, rare: 8, epic: 25, legendary: 80 };
@@ -18,7 +18,7 @@ var MEMORY_SOUVENIRS = {
 /* Coût de chaque niveau (O11), mesuré au banc : Forêt 5/8/11/14, Désert 20/25/30/35. */
 var MEMORY_LEVEL_COSTS = [5, 8, 11, 14, 20, 25, 30, 35];
 var MEMORY_LEVELS_PER_WORLD = 4;        // O6 : plafond par monde atteint
-var MEMORY_REPRISE_BASE_COST = 10;      // O5 : reprise d'un choix, ×3 à chaque fois
+var MEMORY_REPRISE_BASE_COST = 500;     // O5 : reprise d'un choix, ×3 à chaque fois ; v3.358.0 : en or (10 Aether × AETHER_GOLD_RATE)
 var MEMORY_REPRISE_MULT = 3;
 var MEMORY_CUISINE_PETITE_RATION_MULT = 1.25; // Cuisine de campagne : +25 % sur la Petite ration seule (décision Seb)
 

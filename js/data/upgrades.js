@@ -1,5 +1,5 @@
 "use strict";
-/* data/upgrades.js — 2 boutiques : UPGRADES (or, apply(lvl) fixe la valeur au niveau TOTAL) et AETHER_SHOP (Aether, bonus calculés à la volée dans getAetherBonuses()).
+/* data/upgrades.js — UPGRADES (or, apply(lvl) fixe la valeur au niveau TOTAL).
    unlockWorld = index de monde minimum. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
 
@@ -106,13 +106,5 @@ function getUpgradeById(id) {
   return null;
 }
 
-/* v3.322.0 (O7, décision Seb) : la boutique d'Aether est retirée, remplacée par les choix de
-   Mémoire (data/memory.js). Tableau gardé vide pour les lecteurs existants. Ancien contenu :
-   Puissance ancestrale, Fortune astrale, Main du destin, Noyau d'essence, Vitalité éthérée. */
-var AETHER_SHOP = [];
-
-function getAetherUpgradeById(id) {
-  return (AETHER_SHOP || []).find(function (u) {
-    return u.id === id;
-  }) || null;
-}
+/* v3.355.0 : AETHER_SHOP et son achat retirés (boutique vide depuis la v3.322.0, remplacée par
+   la Mémoire). game.aetherUpgrades reste lu par la sauvegarde, sans effet. */
