@@ -300,3 +300,103 @@ var PotionManager = {
 };
 
 window.PotionManager = PotionManager;
+
+/* =====================================================================
+   v3.379.0 — POTION AUTOMATIQUE en mode Grimoire (décisions Seb, 28/09/2026).
+   Hors des règles : un seuil (Jamais / Tard / Normal / Tôt) et « garder la dernière pour le boss ».
+   Réglage de partie (game.potionAuto, sauvegardé) : « Normal » sur une partie neuve, « Jamais »
+   sur une partie d'avant cette version. Lu par CombatEngine.tickRoundClock, avant les règles ;
+   la potion passe par heroAction("potion") : même plafond par sortie, elle prend le tour.
+   ===================================================================== */
+
+var POTION_AUTO_THRESHOLDS = [
+  { id: "jamais", label: _t("Jamais"), value: 0,    desc: _t("Tu bois à la main, comme en mode Tactique.") },
+  { id: "tard",   label: _t("Tard"),   value: 0.25, desc: _t("Sous 25 % de tes PV, pour ménager ton stock.") },
+  { id: "normal", label: _t("Normal"), value: 0.40, desc: _t("Sous 40 % de tes PV — le réglage conseillé.") },
+  { id: "tot",    label: _t("Tôt"),    value: 0.55, desc: _t("Sous 55 % de tes PV, pour ne jamais frôler la chute.") }
+];
+var POTION_AUTO_NEW_GAME = { threshold: "normal", keepForBoss: true };   // partie neuve (fullResetState)
+var POTION_AUTO_OLD_SAVE = { threshold: "jamais", keepForBoss: true };   // sauvegarde sans le réglage
+var POTION_AUTO_TARGET_PCT = 0.60; // « suffit » = te remonte au moins à 60 % de tes PV
+
+var PotionAutoManager = {
+  /* Réglage normalisé (tolérant : un id inconnu retombe sur « Jamais »). */
+  normalize: function (raw, fallback) {
+    var f = fallback || POTION_AUTO_OLD_SAVE;
+    if (!raw || typeof raw !== "object") return { threshold: f.threshold, keepForBoss: f.keepForBoss };
+    var ok = POTION_AUTO_THRESHOLDS.some(function (t) { return t.id === raw.threshold; });
+    return { threshold: ok ? raw.threshold : "jamais", keepForBoss: raw.keepForBoss !== false };
+  },
+
+  ensure: function () {
+    game.potionAuto = this.normalize(game.potionAuto);
+    return game.potionAuto;
+  },
+
+  getThreshold: function (id) {
+    return POTION_AUTO_THRESHOLDS.filter(function (t) { return t.id === id; })[0] || POTION_AUTO_THRESHOLDS[0];
+  },
+
+  set: function (key, value) {
+    var s = this.ensure();
+    if (key === "threshold" && POTION_AUTO_THRESHOLDS.some(function (t) { return t.id === value; })) s.threshold = value;
+    if (key === "keepForBoss") s.keepForBoss = !!value;
+    if (typeof saveGame === "function") saveGame();
+  },
+
+  /* Un boss ou une élite est-il devant, dans la sortie en cours ? Quête d'aventure dont l'étape
+     boss/élite n'est pas faite, ou donjon avant la vague du boss. Chasse, expédition : non. */
+  hasBossAhead: function () {
+    if (game.dungeonRun && game.dungeonRun.active) {
+      var n = (typeof DUNGEON_CONFIG !== "undefined" && DUNGEON_CONFIG.waveCount) || 15;
+      return Number(game.dungeonRun.wave || 1) <= n;
+    }
+    if (game.adventureQuestRun && game.adventureQuestRun.active && window.AdventureQuestManager) {
+      var q = (window.ADVENTURE_QUESTS || {})[game.adventureQuestRun.questId];
+      if (!q) return false;
+      return q.steps.some(function (s) {
+        return (s.type === "bossKill" || s.type === "eliteKill") && !AdventureQuestManager.isStepComplete(q, s);
+      });
+    }
+    return false;
+  },
+
+  /* Le combat en cours oppose-t-il un boss ou une élite (isBoss couvre les deux) ? */
+  isFacingBoss: function () {
+    var list = (window.CombatActors && typeof CombatActors.enemies === "function") ? CombatActors.enemies() : [game.enemy];
+    return (list || []).some(function (e) { return e && e.isBoss && Number(e.hp || 0) > 0; });
+  },
+
+  /* Potion à boire maintenant, ou null. La plus petite qui te remonte à 60 %, sinon la plus forte. */
+  pick: function () {
+    if (game.combatMode !== "grimoire") return null;
+    var s = this.ensure();
+    var seuil = this.getThreshold(s.threshold).value;
+    if (!(seuil > 0)) return null;
+    var maxHp = Number(game.heroMaxHp || 0);
+    if (!(maxHp > 0)) return null;
+    var hp = Number(game.heroHp != null ? game.heroHp : maxHp);
+    if (hp <= 0 || hp / maxHp > seuil) return null;
+    if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) return null;
+    if (window.SortieManager && typeof SortieManager.canUsePotion === "function" && !SortieManager.canUsePotion()) return null;
+
+    var enStock = (HEALING_POTIONS_DB || []).filter(function (p) { return PotionManager.getHealingStock(p.id) > 0; })
+      .sort(function (a, b) { return a.healPercent - b.healPercent; });
+    if (!enStock.length) return null;
+
+    // Réserve : la dernière potion disponible attend le boss, s'il en reste un devant.
+    if (s.keepForBoss && !this.isFacingBoss() && this.hasBossAhead()) {
+      var permises = (window.SortieManager && typeof SortieManager.getPotionsLeft === "function") ? SortieManager.getPotionsLeft() : 2;
+      var stock = enStock.reduce(function (n, p) { return n + PotionManager.getHealingStock(p.id); }, 0);
+      if (Math.min(permises, stock) <= 1) return null;
+    }
+
+    var suffit = enStock.filter(function (p) { return hp + maxHp * p.healPercent >= maxHp * POTION_AUTO_TARGET_PCT; })[0];
+    return (suffit || enStock[enStock.length - 1]).id;
+  }
+};
+
+window.POTION_AUTO_THRESHOLDS = POTION_AUTO_THRESHOLDS;
+window.POTION_AUTO_NEW_GAME = POTION_AUTO_NEW_GAME;
+window.POTION_AUTO_OLD_SAVE = POTION_AUTO_OLD_SAVE;
+window.PotionAutoManager = PotionAutoManager;

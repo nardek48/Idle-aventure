@@ -181,6 +181,7 @@ function createInitialGameState() {
     grimoireRules: [],
 
     grimoirePresets: [],
+    potionAuto: { threshold: "normal", keepForBoss: true }, // v3.379.0 : potion automatique d'une partie neuve (potion-system.js)
 
     classResource: null,
     classCooldowns: {},

@@ -3,7 +3,8 @@
    D1 : le texte français EST la clé. On écrit _t("Santé du Héros") ; js/lang/en.js associe chaque
         texte français à son anglais. Traduction absente : le français s'affiche, jamais une clé brute.
    D2 : changer de langue relance le jeu (après sauvegarde).
-   D3 : le choix reste dans l'Admin tant que l'interface n'est pas traduite.
+   D3 : v3.375.0, choix « English (beta) » dans les Paramètres ; v3.376.0 (Forêt traduite), un appareil
+        neuf démarre dans la langue du navigateur (firstLang).
    Écriture : _t(texte), _t(texte, contexte), _t(texte, {params}), _tn(n, singulier, pluriel).
    La sauvegarde reste en français (noms d'objets, trophées) : traduits à l'affichage seulement. */
 
@@ -26,10 +27,27 @@ var I18n = {
   lang: function () {
     if (this._lang) return this._lang;
     if (!window.Prefs || typeof Prefs.getValue !== "function") return I18N_DEFAULT_LANG; // Prefs pas encore chargé : rien de figé
-    var l = Prefs.getValue("lang");
+    var l;
+    if (typeof Prefs.has === "function" && !Prefs.has("lang")) {   // v3.376.0 (D3) : premier lancement
+      l = this.firstLang();
+      Prefs.setValue("lang", l);                                     // fixée une fois : le joueur la change dans Paramètres
+    } else l = Prefs.getValue("lang");
     this._lang = I18N_LANGS.hasOwnProperty(l) ? l : I18N_DEFAULT_LANG;
     if (typeof document !== "undefined" && document.documentElement) document.documentElement.lang = this._lang === I18N_PSEUDO_LANG ? "fr" : this._lang;
     return this._lang;
+  },
+
+  /* v3.376.0 (D3) : langue d'un appareil qui n'en a jamais choisi.
+     - une partie existe déjà (clé quest_idle_save*) : français, le joueur jouait en français avant le choix ;
+     - sinon, langue du navigateur : français si elle commence par « fr », anglais pour toutes les autres. */
+  firstLang: function () {
+    try {
+      var ls = window.localStorage;
+      for (var i = 0; ls && i < ls.length; i++) if (/^quest_idle_save/.test(ls.key(i) || "")) return I18N_DEFAULT_LANG;
+    } catch (e) { return I18N_DEFAULT_LANG; }
+    var nav = window.navigator || {};
+    var code = String((nav.languages && nav.languages[0]) || nav.language || "");
+    return !code || /^fr\b/i.test(code) ? I18N_DEFAULT_LANG : "en";
   },
 
   locale: function () { return I18N_LANGS[this.lang()].locale; },

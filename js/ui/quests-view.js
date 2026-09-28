@@ -26,7 +26,7 @@ var activeQuestCategory = "histoire"; // histoire | secondaires | chasse | avent
 var QUEST_BOARD_CATEGORIES = [
   { key: "histoire", label: _t("Histoire", "catégorie"), icon: "images/Icons/quests/quest_story.png", kinds: ["story"], emptyText: _t("Aucune quête d'histoire pour le moment.") },
   { key: "secondaires", label: _t("Secondaires"), icon: "images/Icons/quests/quest_side.png", kinds: ["village", "workshop", "exploration", "scene"], emptyText: _t("Aucune quête secondaire disponible pour le moment.") }, // v3.122.0 (Lot S2a) : "scene" ajouté (quêtes migrées vers le scene-engine)
-  { key: "chasse", label: _t("Chasse"), icon: "images/Icons/quests/quest_hunt.png", kinds: ["hunt"], emptyText: _t("Aucune chasse disponible pour le moment.") },
+  { key: "chasse", label: _t("Chasse", "quête"), icon: "images/Icons/quests/quest_hunt.png", kinds: ["hunt"], emptyText: _t("Aucune chasse disponible pour le moment.") },
   { key: "aventure", label: _t("Aventure"), icon: "images/Icons/quests/quest_adventure.png", kinds: ["adventure", "dungeon"], emptyText: _t("Aucune aventure disponible pour le moment.") }
 ];
 
@@ -298,6 +298,7 @@ function buildAdventureQuestIntroHTML(questId) {
   h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(quest.icon || "images/Icons/quests/quest_story.png", "dungeon-story-icon-img", _td(quest.name)) + '</div>';
   h += '    <div class="dungeon-story-title">' + esc(_td(quest.name)) + '</div>';
   if (quest.story) h += '    <div class="dungeon-story-text">' + esc(_td(quest.story)) + '</div>';
+  if (typeof buildEnemyTraitsCardHTML === "function") h += buildEnemyTraitsCardHTML({ type: "adventure", id: questId }); // v3.378.0
   h += '    <div class="dungeon-story-actions">';
   h += '      <button class="settings-btn" type="button" onclick="closeAdventureQuestIntro()">' + _t("Annuler") + '</button>';
   h += '      <button class="settings-btn primary" type="button" onclick="confirmAdventureQuestStart()">' + _t("Commencer") + '</button>';
@@ -835,6 +836,7 @@ function buildHuntQuestIntroHTML(questId) {
   h += '    <div class="dungeon-story-title">' + esc(_td(quest.name)) + '</div>';
   if (quest.story) h += '    <div class="dungeon-story-text">' + esc(_td(quest.story)) + '</div>';
   if (window.ProvisionsManager) h += ProvisionsManager.buildLineHTML("hunt", quest); // v3.330.1 : vivres de sortie
+  if (typeof buildEnemyTraitsCardHTML === "function") h += buildEnemyTraitsCardHTML({ type: "hunt", id: questId }); // v3.378.0
   h += '    <div class="dungeon-story-actions">';
   h += '      <button class="settings-btn" type="button" onclick="closeHuntQuestIntro()">' + _t("Annuler") + '</button>';
   h += '      <button class="settings-btn primary" type="button" onclick="confirmHuntQuestStart()">' + _t("Commencer") + '</button>';

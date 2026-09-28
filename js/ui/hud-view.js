@@ -117,6 +117,16 @@ function renderHudAscensionBadge() {
 }
 window.renderHudAscensionBadge = renderHudAscensionBadge;
 
+/* v3.379.1 : PV du HUD, format court qui tient dans la fenêtre de la jauge (~47 px sur iPhone) :
+   895, 1.2K, 45K. formatNumber donnerait « 1.23K/1.58K », trop large. */
+function hudHpShort(n) {
+  n = Math.max(0, Math.floor(Number(n) || 0));
+  if (n < 1000) return String(n);
+  if (n < 10000) return (Math.floor(n / 100) / 10).toFixed(1).replace(/\.0$/, "") + "K";
+  if (n < 1000000) return Math.floor(n / 1000) + "K";
+  return (Math.floor(n / 100000) / 10).toFixed(1).replace(/\.0$/, "") + "M";
+}
+
 function renderHeroHp() {
   var miniText = document.getElementById("combat-hero-mini-hp-text");
   var miniFill = document.getElementById("combat-hero-mini-hp-fill");
@@ -125,7 +135,7 @@ function renderHeroHp() {
   var hp = Math.max(0, Math.ceil(Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1)));
   var maxHp = Math.max(1, Math.floor(Number(game.heroMaxHp || 1)));
   var pct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
-  var hpText = formatNumber(hp) + " / " + formatNumber(maxHp);
+  var hpText = hudHpShort(hp) + "/" + hudHpShort(maxHp); // v3.379.1 : court et sans espaces (« 623 / 895 » passait sur deux lignes)
 
   if (miniText) miniText.textContent = hpText;
   if (miniFill) {

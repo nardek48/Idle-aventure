@@ -49,14 +49,13 @@ function buildSettingsHTML() {
     h += '<div class="panel-card">';
     h += '<h3><img class=ico-inline src=images/Icons/system/settings.png> ' + _t("Langue") + (curLang === "fr" ? ' · Language' : '') + '</h3>';
     h += '<div class="settings-lang-row">';
-    [["fr", "Français"], ["en", "English (beta)"]].forEach(function (l) {
+    [["fr", "Français"], ["en", "English"]].forEach(function (l) {
       h += '<button class="settings-btn' + (l[0] === curLang ? ' active' : '') + '" type="button"' + (l[0] === curLang ? ' disabled' : '')
         + ' onclick="confirmLanguageChange(\'' + l[0] + '\')">' + l[1] + (l[0] === curLang ? ' ✓' : '') + '</button>';
     });
     h += '</div>';
-    h += '<p class="panel-sub">' + (curLang === "en"
-      ? _t("L'histoire, le Codex et les noms du monde restent en français pour l'instant : leur traduction arrive monde par monde.")
-      : _t("Le jeu redémarre pour changer de langue. En anglais, l'histoire et les textes du monde restent en français pour l'instant.")) + '</p>';
+    // v3.377.0 (EN-3) : tout le contenu est traduit, « (beta) » et la note sur le Désert disparaissent
+    h += '<p class="panel-sub">' + _t("Le jeu redémarre pour changer de langue.") + '</p>';
     h += '</div>';
   }
 

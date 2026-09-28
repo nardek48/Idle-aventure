@@ -1324,6 +1324,10 @@ var CombatEngine = {
       return;
     }
 
+    // v3.379.0 : potion automatique (réglage du Grimoire, hors règles), avant les règles
+    var potionAuto = (window.PotionAutoManager && typeof PotionAutoManager.pick === "function") ? PotionAutoManager.pick() : null;
+    if (potionAuto && this.heroAction("potion", potionAuto, "auto")) return;
+
     var decision = (window.ClassCombatManager && typeof ClassCombatManager.chooseRoundAction === "function")
       ? ClassCombatManager.chooseRoundAction(true)
       : null;

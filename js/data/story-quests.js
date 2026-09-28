@@ -447,8 +447,8 @@ var STORY_QUESTS = {
         title: "Ce que la brume reprend",
         act: "Acte II — Le campement devient village",
         narrative: {
-          objective: "Orwen t'attend au bord du village, une carte roulée sous le bras. Il ne l'a jamais montrée à personne.",
-          completion: "Un secteur de moins pour la brume. Orwen a roulé la carte moins serré. Il n'a dit qu'une chose de plus : ce qu'on tient, on peut le perdre. Et on y retourne.",
+          objective: "Orwen t'attend au bord du village, une carte roulée sous le bras. Elle ne l'a jamais montrée à personne.",
+          completion: "Un secteur de moins pour la brume. Orwen a roulé la carte moins serré. Elle n'a dit qu'une chose de plus : ce qu'on tient, on peut le perdre. Et on y retourne.",
           dialogue: [
             { who: "Orwen", text: "Regarde. Là, c'est nous. Autour, c'est elle." },
             { who: "Wenna", text: "La brume ? Elle bouge pas, la brume." },

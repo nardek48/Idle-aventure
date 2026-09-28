@@ -194,6 +194,7 @@ function buildDungeonSheetHTML(dungeonId) {
       if (f) h += buildCombatForecastLineHTML(f);
     } catch (e) { game.dungeonRun = savedRun; }
   }
+  if (typeof buildEnemyTraitsCardHTML === "function") h += buildEnemyTraitsCardHTML({ type: "dungeon", id: dungeon.id }); // v3.378.0
 
   if (storyFree) {
     h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> <strong>' + _t("Entrée offerte") + '</strong> ' + _t("— les braises te guident, aucune sortie du jour consommée") + '</div>';

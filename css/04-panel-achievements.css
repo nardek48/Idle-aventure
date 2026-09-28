@@ -50,9 +50,9 @@
   font-size: 10.5px;
   font-weight: 700;
   color: var(--nb-ink-dim);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* v3.379.1 : le libellé passe à la ligne plutôt que d'être tronqué (« Ennemis vainc… » sur iPhone) */
+  line-height: 1.15;
+  overflow-wrap: break-word;
 }
 
 .achievement-total-val {

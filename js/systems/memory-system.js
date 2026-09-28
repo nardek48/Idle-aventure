@@ -173,8 +173,8 @@ var MemoryManager = {
     var gained = value > 0 ? this.gainAether(value, null) : 0;
     var prefix = how === "auto" ? "🤖 " : (how === "full" ? "🎒 " + _t("Sac plein :") + " " : "");
     addLog(prefix + (gained > 0
-      ? _t("{x} offert à l'Aether (+{n})", { x: _td(item.name), n: gained })
-      : _t("{x} offert à l'Aether — cet objet ne porte aucun souvenir", { x: _td(item.name) })), "event");
+      ? _t("Offert à l'Aether : {x} (+{n})", { x: _td(item.name), n: gained }) // v3.379.1 : tournure neutre (« Bague offert »)
+      : _t("Offert à l'Aether : {x} — cet objet ne porte aucun souvenir", { x: _td(item.name) })), "event");
     this.noteFirstOffering();
     return gained;
   },

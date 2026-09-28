@@ -74,12 +74,14 @@ function buildAchievementTiersHTML(cat) {
   labels.forEach(function (l, i) {
     h += '<div class="hf-notch is-' + l[0] + (w.count >= t[i] ? ' is-got' : '') + '" style="left:' + pct(t[i]) + '%">' + t[i] + '<span>' + l[1] + '</span></div>';
   });
-  var rew = cat.tierRewards.map(function (r, i) {
+  // v3.376.0 : un palier sans récompense n'est plus affiché (« Bronze : · » vide) ; « : » passe par _t (anglais « Gold: »)
+  var rew = [];
+  cat.tierRewards.forEach(function (r, i) {
     var p = [];
     if (r.title) p.push(_t("titre « {x} »", { x: _td(r.title) }));
-    return labels[i][1] + " : " + p.join(" + ");
-  }).join(" · ");
-  h += '</div><div class="hf-tiers-reward">' + esc(rew) + '. ' + _t("Les hauts faits cachés ne comptent pas.") + '</div></div>';
+    if (p.length) rew.push(_t("{palier} : {gains}", { palier: labels[i][1], gains: p.join(" + ") }));
+  });
+  h += '</div><div class="hf-tiers-reward">' + (rew.length ? esc(rew.join(" · ")) + '. ' : '') + _t("Les hauts faits cachés ne comptent pas.") + '</div></div>';
   return h;
 }
 
@@ -107,8 +109,9 @@ function buildAchievementTotalsHTML() {
     ["images/Icons/system/ascension.png", _t("Mémoire"), formatNumber(window.MemoryManager ? MemoryManager.getLevel() : 0)],
     // v3.365.0 (lot J) : trois lignes de plus, sans nouveau compteur
     ["images/Icons/scene/final_reward.png", _t("Hauts faits"), window.AchievementManager ? AchievementManager.getClaimedCount() + " / " + (window.ACHIEVEMENTS_DB || []).length : "—"],
-    ["images/Icons/codex/codex_lore.png", _t("Histoire"), buildTotalsStoryLabel()],
-    ["images/Icons/system/ascension.png", _t("Aether gagné"), formatNumber(Math.floor(Number(game.totalAetherEarned || 0)))]
+    ["images/Icons/system/ascension.png", _t("Aether gagné"), formatNumber(Math.floor(Number(game.totalAetherEarned || 0)))],
+    // v3.379.1 : l'Histoire en dernier = seule sur sa ligne (valeur longue, « Hist… » tronqué sur iPhone)
+    ["images/Icons/codex/codex_lore.png", _t("Histoire"), buildTotalsStoryLabel()]
   ];
   var h = '<div class="achievement-totals">';
   rows.forEach(function (r) {

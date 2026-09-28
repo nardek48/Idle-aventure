@@ -310,6 +310,8 @@
 
 .combat-hero-mini-hp-bar .kgauge-text {
   font-size: clamp(9px, calc(4.5px + 1.4vw), 10.5px);
+  white-space: nowrap; /* v3.379.1 : jamais sur deux lignes (« 623 / 895 » coupé sous l'avatar) */
+  letter-spacing: -0.2px;
 }
 
 /* v3.172.0 : base du remplissage portée par .kgauge-fill (+ couleur

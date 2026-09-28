@@ -9,7 +9,8 @@
      installHint  true   v3.359.0 : bouton « Installer le jeu » sur l'écran titre ; « Plus tard » le passe à
                          false (l'installation reste proposée dans Paramètres › Application)
      logTotals    true   v3.365.0 : Bilan de la partie ouvert en tête du Journal
-     lang         "fr"   v3.368.0 : langue du jeu (core/i18n.js) ; texte, lu par getValue/setValue */
+     lang         "fr"   v3.368.0 : langue du jeu (core/i18n.js) ; texte, lu par getValue/setValue.
+                         v3.376.0 : absente au premier lancement, elle est fixée par I18n.firstLang() (D3) */
 
 var PREFS_STORAGE_KEY = "aethervale_prefs";
 var PREFS_DEFAULTS = { filRouge: true, bossMoments: true, installHint: true, logTotals: true, lang: "fr" };
@@ -46,6 +47,11 @@ var Prefs = {
     var data = this._load();
     if (typeof data[key] === "string") return data[key];
     return PREFS_DEFAULTS.hasOwnProperty(key) ? PREFS_DEFAULTS[key] : null;
+  },
+
+  /* v3.376.0 : la clé a-t-elle été enregistrée sur cet appareil ? (sinon getValue rend le défaut) */
+  has: function (key) {
+    return Object.prototype.hasOwnProperty.call(this._load(), key);
   },
 
   setValue: function (key, value) {

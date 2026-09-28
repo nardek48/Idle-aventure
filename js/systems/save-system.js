@@ -470,6 +470,8 @@ function buildSaveData() {
     // v3.65.0 : presets nommés du Grimoire (Phase 5) — voir
     // ui/grimoire-view.js (ensureGrimoirePresets()/saveGrimoirePreset()).
     grimoirePresets: Array.isArray(game.grimoirePresets) ? game.grimoirePresets : [],
+    // v3.379.0 : potion automatique du mode Grimoire (systems/potion-system.js)
+    potionAuto: game.potionAuto || null,
     // v3.34.0 : lastSpecialUse/specialBuffExpires/specialBuffPct/
     // lastDefenseUse/defenseBuffExpires retirés (ancien système), voir
     // classResource/classCooldowns/classActiveDefense ci-dessous.
@@ -760,6 +762,9 @@ function restoreBaseState(d) {
   // dupliqué ici volontairement : loadGame() ne passe pas forcément
   // par restoreBaseState() selon le chemin de chargement (voir plus
   // haut dans ce fichier pour le contexte des 2 chemins existants).
+  // v3.379.0 : potion automatique — une sauvegarde d'avant n'a pas le champ : « Jamais » (rien ne change pour elle)
+  game.potionAuto = (window.PotionAutoManager && typeof PotionAutoManager.normalize === "function")
+    ? PotionAutoManager.normalize(d.potionAuto, window.POTION_AUTO_OLD_SAVE) : (d.potionAuto || null);
   game.grimoirePresets = Array.isArray(d.grimoirePresets)
     ? d.grimoirePresets.filter(function (p) {
         return p && typeof p === "object" && typeof p.id === "string" && typeof p.name === "string" && Array.isArray(p.rules);
@@ -1255,6 +1260,8 @@ function hardResetState() {
   if (window.CompanionManager && typeof CompanionManager.healAll === "function") CompanionManager.healAll();
   // v3.102.0 (P2) : combatMode = préférence, PRÉSERVÉE à l'ascension (comme autoSkillsEnabled avant) ; état de round remis à zéro
   if (game.combatMode !== "grimoire") game.combatMode = "tactique";
+  // v3.379.0 : réglage de la potion automatique = préférence, préservée comme combatMode
+  if (window.PotionAutoManager && typeof PotionAutoManager.ensure === "function") PotionAutoManager.ensure();
   game.combatRound = { number: 0, busy: false, continueAttack: false, clockMs: 0 };
   game.heroGauge = 0;
   game.silencedRounds = 0;
@@ -1434,6 +1441,8 @@ function fullResetState() {
   // configuration stratégique du joueur, préservée à l'ascension (rien
   // ne les touche dans hardResetState), remise à vide seulement ici.
   game.grimoirePresets = [];
+  // v3.379.0 : partie neuve = potion automatique « Normal », dernière gardée pour le boss
+  game.potionAuto = { threshold: "normal", keepForBoss: true };
   game.hasSeenOnboarding = false;
   game.genericTutorialsSeen = {}; // v3.107.9
 
