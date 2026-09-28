@@ -344,6 +344,8 @@ function buildTitleScreenMainHTML() {
   html += '  <div class="title-screen-stage">';
   html += '    <img src="images/TitleScreen/title_background_new.png" alt="" class="title-screen-bg">';
   html += '    <img src="images/TitleScreen/titre_logo.png" alt="Aethervale" class="title-screen-logo-img">';
+  // v3.359.0 : « Installer le jeu » (main/pwa.js), en haut de l'écran ; vide si déjà installé ou masqué par « Plus tard »
+  if (typeof buildPwaInstallButtonHTML === "function") html += buildPwaInstallButtonHTML("title");
   html += '    <div class="title-screen-frame">';
   var continueSlot = getTitleScreenContinueSlot();
   html += '      <div class="title-screen-buttons' + (continueSlot ? ' has-continue' : '') + '">';

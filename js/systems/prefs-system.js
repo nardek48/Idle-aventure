@@ -5,10 +5,13 @@
 
    Clés connues (valeur par défaut) :
      filRouge     true   bouton du fil rouge dans le HUD (conception F4)
-     bossMoments  true   mises en scène des boss (conception B4) */
+     bossMoments  true   mises en scène des boss (conception B4)
+     installHint  true   v3.359.0 : bouton « Installer le jeu » sur l'écran titre ; « Plus tard » le passe à
+                         false (l'installation reste proposée dans Paramètres › Application)
+     logTotals    true   v3.365.0 : Bilan de la partie ouvert en tête du Journal */
 
 var PREFS_STORAGE_KEY = "aethervale_prefs";
-var PREFS_DEFAULTS = { filRouge: true, bossMoments: true };
+var PREFS_DEFAULTS = { filRouge: true, bossMoments: true, installHint: true, logTotals: true };
 
 var Prefs = {
   _cache: null,

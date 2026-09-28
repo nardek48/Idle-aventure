@@ -955,3 +955,25 @@
     transform: none;
   }
 }
+/* v3.359.0 : feuille « Installer sur iPhone ou iPad » (main/pwa.js). La couche crée son
+   propre contexte au-dessus de l'écran titre (9000), sous le voile PWA (9999). */
+#pwa-install-root:empty { display: none; }
+.pwa-install-layer { position: relative; z-index: 9500; }
+.pwa-install-steps { margin: 0 0 8px; padding-left: 22px; line-height: 1.5; font-size: 0.92rem; }
+.pwa-install-steps li { margin-bottom: 6px; }
+.pwa-install-note { margin: 0; font-size: 0.82rem; color: var(--nb-ink-dim); }
+.pwa-install-actions { display: flex; gap: 8px; align-items: stretch; }
+.pwa-install-actions .ksheet-close { flex: 1 1 auto; }
+.pwa-install-later {
+  flex: 0 0 auto;
+  margin-top: 12px;
+  padding: 11px 14px;
+  border: 2px solid var(--nb-frame);
+  border-radius: var(--nb-radius-md);
+  background-color: transparent;
+  color: var(--nb-ink);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+}

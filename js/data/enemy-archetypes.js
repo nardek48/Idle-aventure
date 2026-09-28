@@ -21,6 +21,13 @@ var ARMORED_SUPPRESSION_DURATION_ROUNDS = 4;   // v3.204.0 (E3) : idem
 var SILENCED_MIN_WORLD_INDEX = 1;
 var SILENCED_VS_CHARGE_CHANCE_PCT = 50;
 var SILENCE_DURATION_ROUNDS = 2;
+/* v3.363.0 (acte IV, choix « roi » = prendre) : La forme du roi — le Silence ne tient plus le héros
+   qu'un round. Lu par combat-engine.js (lancer du silence et pronostic du contre). */
+var SILENCE_DURATION_ROUNDS_ROI = 1;
+function getHeroSilenceRounds() {
+  var soi = !!(window.StoryQuestManager && typeof StoryQuestManager.getChoice === "function" && StoryQuestManager.getChoice("roi") === "soi");
+  return soi ? SILENCE_DURATION_ROUNDS_ROI : SILENCE_DURATION_ROUNDS;
+}
 
 // v3.104.1 (P5) : identité FIXE par ennemi (LIGNE_DIRECTRICE §8, profils de round distincts). Prioritaire sur le
 // tirage aléatoire ci-dessous. Le Troll des forêts encaisse (bouclier), la Ronce animée bloque (silence) — cohérent
@@ -135,6 +142,8 @@ window.ARMORED_SUPPRESSION_DURATION_ROUNDS = ARMORED_SUPPRESSION_DURATION_ROUNDS
 window.SILENCED_MIN_WORLD_INDEX = SILENCED_MIN_WORLD_INDEX;
 window.SILENCED_VS_CHARGE_CHANCE_PCT = SILENCED_VS_CHARGE_CHANCE_PCT;
 window.SILENCE_DURATION_ROUNDS = SILENCE_DURATION_ROUNDS;
+window.SILENCE_DURATION_ROUNDS_ROI = SILENCE_DURATION_ROUNDS_ROI;
+window.getHeroSilenceRounds = getHeroSilenceRounds;
 window.FIXED_ENEMY_ARCHETYPES = FIXED_ENEMY_ARCHETYPES;
 window.ENGAGE_DEFAULT_ROUNDS = ENGAGE_DEFAULT_ROUNDS;
 window.ENGAGE_BOSS_ROUNDS = ENGAGE_BOSS_ROUNDS;

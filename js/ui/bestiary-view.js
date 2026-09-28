@@ -25,6 +25,12 @@ function findCreatureLocation(id, isBoss) {
   // on la localise via l'ennemi dont elle est la variante.
   var eliteDef = (window.ELITE_DB && ELITE_DB[id]) || null;
   if (eliteDef) return findCreatureLocation(eliteDef.baseId, false);
+  // v3.360.0 (acte IV) : un boss d'Histoire qu'aucune aventure ne déclare (Nezzam) dit son monde.
+  var fiche = isBoss && window.BOSS_DB ? BOSS_DB[id] : null;
+  if (fiche && fiche.worldId) {
+    var wi = WORLDS.findIndex(function (w) { return w.id === fiche.worldId; });
+    if (wi !== -1) return { worldIndex: wi, adventureIndex: 0 };
+  }
 
   for (var w = 0; w < WORLDS.length; w++) {
     var adventures = WORLDS[w].adventures || [];
@@ -132,6 +138,7 @@ function buildBestiaryEntryCardHTML(id) {
     var weak = Array.isArray(data.weak) ? data.weak : [];
     if (resists.length) h += '<div class="nb-entry-desc">Résiste : ' + esc(resists.join(", ")) + '</div>';
     if (weak.length) h += '<div class="nb-entry-desc">Faible : ' + esc(weak.join(", ")) + '</div>';
+    if (data.lore) h += '<div class="nb-entry-desc nb-entry-lore">' + esc(data.lore) + '</div>'; // v3.360.0 : une ligne de bestiaire
 
     var combat = estimateCreatureCombatStats(id, data, isBoss);
     if (combat) {

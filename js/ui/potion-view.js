@@ -24,13 +24,14 @@ function buildApothecaryCraftRowHTML(potionId) {
   h += '<span class="potion-craft-label"><img class=ico-inline src=images/Icons/village_buildings/apothecary.png> Préparer</span>';
 
   h += '<span class="potion-craft-inputs">';
-  Object.keys(recipe.inputs).forEach(function (key) {
+  var inputs = ApothecaryManager.getInputs(potionId); // v3.363.0 : puits du roi (moitié moins d'eau)
+  Object.keys(inputs).forEach(function (key) {
     var def = WAREHOUSE_RESOURCES[key];
     var have = WarehouseManager.getAmount(key);
-    var enough = have >= recipe.inputs[key];
+    var enough = have >= inputs[key];
     h += '<span class="potion-craft-item' + (enough ? '' : ' is-missing') + '">';
     h += renderIconOrEmojiHTML(def ? def.icon : "", "potion-craft-icon", def ? def.name : key);
-    h += formatNumber(recipe.inputs[key]);
+    h += formatNumber(inputs[key]);
     h += '</span>';
   });
   h += '</span>';

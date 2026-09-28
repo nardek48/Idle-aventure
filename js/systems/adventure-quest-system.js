@@ -104,7 +104,9 @@ var AdventureQuestManager = {
     // v3.107.0 : délègue au module partagé (systems/quest-enemy-system.js), qui gère aussi le
     // filtre d'ennemis optionnel de la quête (quest.enemyFilter).
     if (!window.QuestEnemyManager) return null;
-    if (Array.isArray(quest.encounters) && quest.encounters.length) return QuestEnemyManager.spawnFor(this._encounterQuest(quest), false);
+    // v3.360.0 (acte IV) : une quête à rencontres peut finir sur un boss (le trône de sable) — le boss
+    // passe par la quête d'origine, pas par la copie réduite d'une rencontre.
+    if (!forceBoss && Array.isArray(quest.encounters) && quest.encounters.length) return QuestEnemyManager.spawnFor(this._encounterQuest(quest), false);
     return QuestEnemyManager.spawnFor(quest, forceBoss);
   },
 
@@ -168,6 +170,7 @@ var AdventureQuestManager = {
       this.forfeit();
       return;
     }
+    if (forceBoss && quest.bossLog) addLog(quest.bossLog, "event"); // v3.360.0 : ligne d'entrée du boss de quête
 
     game.enemy = enemy;
     if (window.CombatEngine && typeof CombatEngine.prepareEnemy === "function") CombatEngine.prepareEnemy(enemy);

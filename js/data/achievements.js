@@ -114,8 +114,13 @@ var ACHIEVEMENTS_DB = [
     target: 1, track: function () { return achCounter("orcNoPotion"); }, reward: { gold: 300 } },
 
   /* ===================== Désert oublié ===================== */
-  { id: "hf_desert_djinn", category: "desert", name: "Le souffle éteint", desc: "Vaincre le Djinn.",
-    target: 1, track: function () { return achKills("djinn") > 0 ? 1 : 0; }, reward: { gold: 600 } },
+  // v3.360.0 (acte IV) : l'id reste (sauvegardes), la cible devient Nezzam — le Djinn était sa forme.
+  { id: "hf_desert_djinn", category: "desert", name: "Le trône vide", desc: "Vaincre Nezzam le Desséché.",
+    target: 1, track: function () { return achKills("nezzam") > 0 ? 1 : 0; }, reward: { gold: 600 } },
+  // v3.362.0 (acte IV) : le miroir de « Sans une gorgée » (l'Orc), même prix, caché comme lui.
+  { id: "hf_desert_nezzam_nopotion", category: "desert", name: "Pas une goutte", desc: "Vaincre Nezzam le Desséché sans boire de potion pendant ce combat.",
+    hidden: true, hint: "Il boit. Pas toi.", fresh: true,
+    target: 1, track: function () { return achCounter("nezzamNoPotion"); }, reward: { gold: 300 } },
   { id: "hf_desert_sphinx", category: "desert", name: "Ce que garde le sphinx", desc: "Vaincre le sphinx, au fond de la Cité engloutie.",
     target: 1, track: function () { return achKills("sphinx") > 0 ? 1 : 0; }, reward: { gold: 600 } },
   { id: "hf_desert_map", category: "desert", name: "Le sable recule", desc: "Tous les secteurs de la carte du Désert libérés en même temps.",

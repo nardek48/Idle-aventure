@@ -24,10 +24,17 @@ var BOSS_DB = {
     stats: makeRpgStats(26, 40, 20, 24, 26)
   },
 
-  djinn: {
-    name: "Djinn des dunes",
-    asset: "djinn",
+  /* v3.360.0 (acte IV, décision Seb 28/09/2026) — NEZZAM LE DESSÉCHÉ, le dernier roi. Le Djinn des
+     dunes EST sa forme : la fiche « djinn » devient « nezzam » et garde son image. Boss d'Histoire
+     unique, ne sort que par sa quête (aq_desert_trone, bossId) ; worldId place sa fiche au Désert
+     dans le Bestiaire, puisqu'aucune aventure ne le déclare. Stats de base du Djinn, affûtées par
+     bossPowerMult / bossHpMult de sa quête (banc sim/nezzam-bench.js). */
+  nezzam: {
+    name: "Nezzam le Desséché",
+    asset: "nezzam",
     image: "./images/Boss/Lord_Djinn.jpg",
+    worldId: "desert",
+    lore: "Il a bu le fleuve pour ne pas mourir. Il a encore soif.",
     resists: ["magic", "bow"],
     weak: ["sword"],
     stats: makeRpgStats(44, 66, 42, 30, 46)

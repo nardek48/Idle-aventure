@@ -36,7 +36,7 @@ var ASSETS = {
     necrosupreme: "🧙",
     ancientdragon: "🐉",
     archmage: "🧙",
-    djinn: "🧞",
+    nezzam: "🧞", // v3.360.0 : le Djinn des dunes devient Nezzam le Desséché
     orcwarlord: "🪓"
   },
   worlds: {

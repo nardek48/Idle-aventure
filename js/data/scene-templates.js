@@ -509,6 +509,78 @@ var SCENE_TEMPLATES = {
     travelOnSuccess: { worldId: "desert", adventureIndex: 1 }
   },
 
+  /* v3.361.0 (acte IV §4, textes validés par Seb 28/09/2026) — PERSONNE NE REMONTE LE FLEUVE,
+     étape 16. Lancé depuis la carte d'étape (cardId scene_remontee_fleuve), comme la traversée :
+     hors cap journalier (pas de profileWeights), une Ration moyenne. Six paliers écrits, deux
+     combats seulement (l'étape 17 en a quatre). Palier 4 : le Veilleur tire le héros des sables
+     mouvants — une source qui rend TOUT le Souffle et lave la pire blessure (fullBreath), sans
+     condition. Réglages de la Petite Aventure du Désert (Souffle, triangle, force des combats) :
+     c'est une fin de monde, pas une traversée d'arrivée. Pas de boss, pas de voyage. */
+  remontee_fleuve: {
+    id: "remontee_fleuve",
+    worldId: "desert",
+    adventureIndex: 0, // le lit du fleuve est en surface
+    mode: "semi",
+    title: "Personne ne remonte le fleuve",
+    departLabel: "Remonter le lit",
+    icon: "images/Icons/codex/world_desert.png",
+
+    depthMax: 6,
+    gatesPerDepth: [1, 1],
+    fixedCard: [
+      [{ type: "obstacle", gabaritId: "vent_de_face" }],
+      [{ type: "combat", gabaritId: "ver_desert" }],
+      [{ type: "obstacle", gabaritId: "sables_mouvants", riskMod: 0.8 }],
+      [{ type: "source", fullBreath: true }],
+      [{ type: "combat", gabaritId: "guerriers_desert" }],
+      [{ type: "obstacle", gabaritId: "dune" }]
+    ],
+    maxInjuries: 2,
+    heroScaling: { ref: 21, coef: 0.60, max: 3.5 },
+    optionProfiles: {
+      power: { diffMod: 1.12, lootMod: 2.60, breathCost: 10, injurySeverity: "grave" },
+      precision: { diffMod: 1.0, lootMod: 1.15, breathCost: 5, injurySeverity: "normale" },
+      endurance: { diffMod: 0.95, lootMod: 0.50, breathCost: 20, injurySeverity: "legere" }
+    },
+    breathPerDepth: 6,
+    combatWaveRange: [1, 1],
+    combatPowerMult: 3.5,
+    combatHpMult: 2.3,
+    finalBoss: false,
+    slotWeights: { obstacle: 100 },
+    pools: { obstacle: ["vent_de_face", "sables_mouvants", "dune"], combat: ["ver_desert", "guerriers_desert"] },
+    gourdeUses: 1,
+
+    loadoutOffer: ["torche", "corde", "provisions", "gourde", "amulette", "outre"],
+    loadoutSlots: 3,
+    items: null, // repris de la Petite Aventure du Désert (voir plus bas)
+    entryCost: { resourceId: "ration", amount: 1 },
+
+    journalByDepth: {
+      1: "Le lit est large comme une rue de la cité. Les pierres rondes roulent sous les bottes. Derrière, le Veilleur ne fait aucun bruit.",
+      2: { before: "Le sable du lit se soulève d'une berge à l'autre. Quelque chose remonte le fleuve, lui aussi.",
+           after: "Maddoc s'assoit sur une pierre ronde. Il se relève avant qu'on le lui demande." },
+      3: "Le lit cède. Pas le sable dessus : le sol dessous. Tu t'enfonces jusqu'à la taille, puis plus.",
+      4: "Une main te prend au col et te tire. Le Veilleur te pose sur la berge, te tend son outre, et reprend sa place derrière. Wenna le regarde. Pour une fois, elle ne demande rien.",
+      5: { before: "Deux armures sur la berge. Elles ne gardent pas une rue : elles marchent vers le sud, comme toi.",
+           after: "Elles tombent face au sud. Pas face à toi." },
+      6: "Le lit s'arrête contre une dune. Au sommet, un siège taillé dans le sable, tourné vers le sud. Vide."
+    },
+
+    lootResource: "gold",
+    lootRanges: {
+      obstacleSuccess: [15, 25],
+      obstacleRope: [8, 12],
+      obstacleSetback: [3, 6],
+      decouverte: [15, 25],
+      finalSafe: [60, 60],
+      finalRiskyBase: [0, 0]
+    },
+    autelCostRatio: 0.2,
+
+    unlockOnSuccess: { buildingId: null, unlockFlag: null, completionFlag: "remonteeFleuveDone" }
+  },
+
   /* ================= v3.125.0 (Petites Aventures, Lot PA1/PA2) =================
      Concept Seb (Aethervale_Concept_Petites_Aventures.docx, 01/09/2026) : quête répétable
      à profil (Bourrin/Prudent), parcours à points 5-10, butin final IDENTIQUE entre profils
@@ -805,5 +877,9 @@ var SCENE_TEMPLATES = {
     deathLine: "Le parcours s'arrête là. Ce que tu portais reste dans le sable. Retour au camp."
   }
 };
+
+// v3.361.0 : la remontée du fleuve prépare son sac comme la Petite Aventure du Désert (mêmes objets, même Outre).
+SCENE_TEMPLATES.remontee_fleuve.items = SCENE_TEMPLATES.petite_aventure_desert.items;
+SCENE_TEMPLATES.remontee_fleuve.deathLine = SCENE_TEMPLATES.petite_aventure_desert.deathLine;
 
 window.SCENE_TEMPLATES = SCENE_TEMPLATES;

@@ -84,6 +84,19 @@ function buildAchievementTiersHTML(cat) {
 }
 
 /* Bilan de partie (repris de v3.202.1), replié en bas de Collection. */
+/* v3.365.0 (lot J) : où en est l'Histoire, en une ligne — le dernier chapitre ouvert, son étape
+   courante, ou « terminé ». Lecture seule. */
+function buildTotalsStoryLabel() {
+  var S = window.StoryQuestManager, Q = window.STORY_QUESTS;
+  if (!S || !Q) return "—";
+  var ids = Object.keys(Q).filter(function (id) { return S.isChapterOpen(id); });
+  if (!ids.length) return "—";
+  var id = ids[ids.length - 1], ch = Q[id], nom = "Ch. " + ids.length; // court : la case est étroite sur iPhone
+  if (S.isChapterCompleted(id)) return nom + " terminé";
+  var st = S.getState(id), n = ch.steps.length;
+  return nom + " · " + Math.min(n, Number(st.currentStep || 0) + 1) + " / " + n;
+}
+
 function buildAchievementTotalsHTML() {
   var rows = [
     ["images/Icons/system/hourglass_waiting.png", "Temps de jeu", (typeof formatTime === "function") ? formatTime(game.playTime || 0) : String(Math.floor(game.playTime || 0)) + "s"],
@@ -91,7 +104,11 @@ function buildAchievementTotalsHTML() {
     ["images/Icons/gold_icon.png", "Or gagné", formatNumber(game.totalGoldEarned || 0)],
     ["images/Icons/combat_status/charge_incoming.png", "Dégâts", formatNumber(game.totalDamageDealt || 0)],
     ["images/Icons/quests/quest_resources.png", "Monde", (WorldManager.worldIndex + 1) + " / " + WORLDS.length],
-    ["images/Icons/system/ascension.png", "Mémoire", formatNumber(window.MemoryManager ? MemoryManager.getLevel() : 0)]
+    ["images/Icons/system/ascension.png", "Mémoire", formatNumber(window.MemoryManager ? MemoryManager.getLevel() : 0)],
+    // v3.365.0 (lot J) : trois lignes de plus, sans nouveau compteur
+    ["images/Icons/scene/final_reward.png", "Hauts faits", window.AchievementManager ? AchievementManager.getClaimedCount() + " / " + (window.ACHIEVEMENTS_DB || []).length : "—"],
+    ["images/Icons/codex/codex_lore.png", "Histoire", buildTotalsStoryLabel()],
+    ["images/Icons/system/ascension.png", "Aether gagné", formatNumber(Math.floor(Number(game.totalAetherEarned || 0)))]
   ];
   var h = '<div class="achievement-totals">';
   rows.forEach(function (r) {
@@ -139,9 +156,7 @@ function buildAchievementsHTML() {
       if (achievementOldOpen) h += old.map(function (o) { return '<div class="hf-old-row"><b>' + esc(o.name) + '</b> — ' + esc(o.desc) + ' <i>Obtenu avant la refonte.</i></div>'; }).join("");
       h += '</div>';
     }
-    h += '<div class="hf-old"><button type="button" class="hf-old-h" onclick="toggleAchievementTotals()">' + (achievementTotalsOpen ? '▾' : '▸') + ' Bilan de la partie</button>';
-    if (achievementTotalsOpen) h += buildAchievementTotalsHTML();
-    h += '</div>';
+    // v3.365.0 (lot J, demande Seb) : le Bilan de la partie est parti en tête du Journal (log-view.js)
   }
 
   return '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/scene/final_reward.png|Hauts faits">' + h + '</div>';

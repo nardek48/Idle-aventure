@@ -277,6 +277,7 @@ var AchievementManager = {
     if (grimoire) this.bump("grimoireKills");
     if (enemy.isBoss && grimoire && this._fight.startMode === "grimoire" && !this._fight.modeChanged) this.flag("grimoireBoss");
     if (enemy.id === "orcwarlord" && this._fight.enemy === enemy && !this._fight.potion) this.flag("orcNoPotion");
+    if (enemy.id === "nezzam" && this._fight.enemy === enemy && !this._fight.potion) this.flag("nezzamNoPotion"); // v3.362.0
   },
 
   /* scene-run-system.js : chambre finale résolue. */

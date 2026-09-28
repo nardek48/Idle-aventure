@@ -573,6 +573,12 @@ button.nb-entry-card {
   line-height: 1.35;
 }
 
+/* v3.360.0 : ligne de bestiaire (élites, Nezzam) */
+.nb-entry-lore {
+  font-style: italic;
+  margin-top: 3px;
+}
+
 .nb-entry-meta-row {
   display: flex;
   flex-wrap: wrap;

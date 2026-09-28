@@ -23,11 +23,16 @@ var BOSS_MOMENTS = {
     phase: "« Assez joué. »",
     death: "« La forêt… ne vous gardera pas. »"
   },
-  djinn: {
-    title: "Le souffle qui efface les pistes",
-    intro: "« Tu marches sur mon sable, petite flamme. »",
-    phase: "« Voyons si tu brûles. »",
-    death: "« Le vent… se souviendra de toi. »"
+  /* v3.360.0 (acte IV §5, textes validés par Seb 28/09/2026) : l'entrée dépend du premier choix
+     pesant (les noms) ; chaque phase porte sa ligne (bossPhases[].line, aq_desert_trone). */
+  nezzam: {
+    title: "Le dernier roi",
+    intro: function (g) {
+      var noms = window.StoryQuestManager ? StoryQuestManager.getChoice("noms") : null;
+      if (noms === "deterrer") return "Il tourne la tête vers les stèles, loin derrière toi. Rien ne répond. « Qui a pris mes noms ? »";
+      return "Autour du trône, le sable murmure des noms. Les tiens n'y sont pas. « Je les ai tous gardés. Tous. »";
+    },
+    death: "Le sable coule de lui comme de l'eau."
   },
   sphinx: {
     title: "Le gardien de la Cité engloutie",

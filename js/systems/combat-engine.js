@@ -518,6 +518,8 @@ var CombatEngine = {
 
       if (ph.archetype) {
         e.archetype = ph.archetype;   // « enraged » existe déjà : les dégâts montent avec les PV perdus
+        // v3.360.0 : un boss qui devient Silencieux repart d'un minuteur neuf, télégraphié comme toujours
+        if (ph.archetype === "silenced") { e.silenceTelegraphed = false; e.silenceIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX); }
       }
 
       if (Array.isArray(ph.adds) && ph.adds.length) this.summonAdds(e, ph);
@@ -851,7 +853,8 @@ var CombatEngine = {
     if (Number(e.patternHoldRounds || 0) > 0) {
       e.patternHoldRounds -= 1;
     } else if (e.isBoss) {
-      if (e.healTelegraphed) { this.resolveBossHeal(); impact = true; }
+      if (e.silenceTelegraphed) { this.resolveSilenceCast(); impact = true; } // v3.360.0 : boss Silencieux (Nezzam, phase)
+      else if (e.healTelegraphed) { this.resolveBossHeal(); impact = true; }
       else if (e.surgeTelegraphed) { this.resolveEliteSurge(); impact = true; surgeImpact = true; }
       else if (e.shieldTelegraphed) { this.resolveBossShield(); impact = true; }
     } else if (e.archetype === "silenced") {
@@ -895,7 +898,13 @@ var CombatEngine = {
     /* v3.230.0 : Clairvoyance — le compte à rebours déclenche à 1 au lieu de 0. */
     var early = this.hasPower("leg_clairvoyance") ? 1 : 0;
     if (e.isBoss) {
-      if (e.healTelegraphed || e.shieldTelegraphed || e.surgeTelegraphed) return; // un seul télégraphe à la fois
+      if (e.healTelegraphed || e.shieldTelegraphed || e.surgeTelegraphed || e.silenceTelegraphed) return; // un seul télégraphe à la fois
+      /* v3.360.0 (acte IV, accord Seb 28/09/2026) : un boss devenu Silencieux (phase de Nezzam) fait
+         tourner le minuteur de silence, prioritaire sur soin et bouclier. Aucun boss ne l'était avant. */
+      if (e.archetype === "silenced" && !e.isElite) {
+        e.silenceIn -= 1;
+        if (e.silenceIn <= early) { this.telegraphPattern(e, "silence"); return; }
+      }
       // v3.204.0 (E4) : une élite remplace le minuteur de soin par celui d'exaltation.
       if (e.isElite) {
         e.surgeIn -= 1;
@@ -1016,8 +1025,10 @@ var CombatEngine = {
     }
     e.silenceTelegraphed = false;
     e.silenceIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX);
-    game.silencedRounds = (typeof SILENCE_DURATION_ROUNDS === "number") ? SILENCE_DURATION_ROUNDS : 2;
-    addLog("🔇 Tu es réduit au silence ! Tes techniques sont bloquées " + game.silencedRounds + " rounds.", "event");
+    // v3.363.0 (accord Seb 28/09/2026) : La forme du roi (choix « roi » = prendre) réduit le silence à 1 round
+    game.silencedRounds = (typeof getHeroSilenceRounds === "function") ? getHeroSilenceRounds()
+      : ((typeof SILENCE_DURATION_ROUNDS === "number") ? SILENCE_DURATION_ROUNDS : 2);
+    addLog("🔇 Tu es réduit au silence ! Tes techniques sont bloquées " + game.silencedRounds + " round" + (game.silencedRounds > 1 ? "s" : "") + ".", "event");
     showToast("🔇 Silencié !", 1400);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
@@ -1359,6 +1370,7 @@ var CombatEngine = {
       return Math.max(1, Math.floor(Number(game.enemy.hp || 0) * BOSS_HEAL_PERCENT));
     }
     if (conditionId === "enemySilenceIncoming") {
+      if (typeof getHeroSilenceRounds === "function") return getHeroSilenceRounds(); // v3.363.0
       return (typeof SILENCE_DURATION_ROUNDS === "number") ? SILENCE_DURATION_ROUNDS : 2;
     }
     return 0;

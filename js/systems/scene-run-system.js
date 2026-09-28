@@ -817,6 +817,7 @@ var SceneRunManager = {
     run.currentGate = gateIndex;
     run.status = "node";
     run.pendingNode = { type: slot.type, gabaritId: slot.gabaritId || null, riskMod: slot.riskMod || null };
+    if (slot.fullBreath) run.pendingNode.fullBreath = true; // v3.361.0 : source scriptée (le Veilleur, étape 16)
     if (slot.eventId) run.pendingNode.eventId = slot.eventId; // v3.312.0 : événement à branches
 
     if (slot.type === "bloqueur") {
@@ -1188,8 +1189,10 @@ var SceneRunManager = {
       return { ok: false, reason: "Aucune source à résoudre" };
     }
     // v3.198.0 : meme regle que l'autel — la source ne lave qu'une blessure legere.
-    var healed = !!this._healOneInjury(run, "legere");
-    run.breath = Math.min(100, Number(run.breath || 0) + this.SOFT_HEAL_BREATH_AMOUNT);
+    // v3.361.0 : une source scriptée « fullBreath » rend tout le Souffle et lave la pire blessure.
+    var full = !!run.pendingNode.fullBreath;
+    var healed = !!this._healOneInjury(run, full ? "grave" : "legere");
+    run.breath = full ? 100 : Math.min(100, Number(run.breath || 0) + this.SOFT_HEAL_BREATH_AMOUNT);
     run.pendingNode = null; run.currentGate = null;
     this._advanceOrFinish(run);
     if (typeof saveGame === "function") saveGame();

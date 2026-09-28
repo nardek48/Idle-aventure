@@ -585,3 +585,29 @@
 .title-screen-btn-row { display: flex; gap: 8px; }
 .title-screen-btn-row .title-screen-img-btn { flex: 1 1 0; min-width: 0; }
 .title-screen-btn-row .title-screen-img-btn span { font-size: 14px; letter-spacing: 0.2px; }
+
+/* v3.359.0 : « Installer le jeu » (main/pwa.js). Posé en haut de l'écran, au-dessus du logo,
+   pour ne pas pousser les boutons ni la version hors de l'écran. Il n'apparaît que dans le
+   navigateur (jamais une fois installé), où le haut de page n'est pas sous l'encoche. */
+.pwa-install-btn-title {
+  position: absolute;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1.5px solid rgba(90, 60, 20, 0.55);
+  border-radius: 999px;
+  background-color: rgba(255, 244, 214, 0.82);
+  color: #3a2410;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.pwa-install-btn-title:active { transform: translateX(-50%) scale(0.97); }
+.pwa-install-btn-title .ico-inline { width: 16px; height: 16px; border-radius: 4px; }

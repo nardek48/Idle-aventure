@@ -42,6 +42,9 @@ function buildSettingsHTML() {
     h += '</div>';
   }
 
+  // v3.359.0 : installer le jeu sur l'appareil (main/pwa.js)
+  if (typeof buildPwaSettingsCardHTML === "function") h += buildPwaSettingsCardHTML();
+
   h += '<button class="settings-btn danger" onclick="resetGame()">Réinitialiser tout</button>';
 
   h += '<div class="panel-card">';

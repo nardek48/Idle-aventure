@@ -266,6 +266,27 @@ var ELITE_UNIQUE_LOOT = {
     }
   },
 
+  /* v3.363.0 (acte IV §3.6, décision Seb 28/09/2026, option B) — L'ARME DU FLEUVE. Récompense de
+     l'étape 18 (STORY_REWARDS.desert_18.uniqueLoot), dans les deux branches du choix, donnée par
+     Maddoc. Premier objet Rare du jeu : « le plus bas du bleu, mieux que le meilleur Inhabituel ».
+     Au Désert, le Rare d'arme va de 45 à 67 (32-48 × 1,4) : 50 est le bas de la fourchette,
+     +14 % de dégâts plats sur l'arme de la Cité (44). Plancher du Rare pour les affixes :
+     multiplicateur +15 % et +5 % d'expérience. Aux Ruines, elle vaut un Inhabituel moyen (51-70) :
+     elle fait le pont. Remise APRÈS Nezzam : aucun banc de l'Histoire ne bouge. */
+  arme_fleuve: {
+    slot: "weapon",
+    stat: "tapDmg",
+    rarity: "rare",
+    value: 50,
+    worldIndex: 1,
+    affixes: [{ stat: "tapMult", value: 0.15, tier: "P" }, { stat: "xpMult", value: 0.05, tier: "S" }],
+    byClass: {
+      knight: { name: "Lame du Fleuve", icon: "sword" },
+      archer: { name: "Arc du Fleuve", icon: "bow" },
+      mage: { name: "Bâton du Fleuve", icon: "staff" }
+    }
+  },
+
   ronce_ardente: {
     slot: "armor",
     stat: "defense",

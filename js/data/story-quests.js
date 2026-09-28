@@ -68,7 +68,11 @@ var STORY_REWARDS = {
   desert_12: { gold: 2425, uniqueLoot: "arme_cite" }, // v3.315.0 (W-4a2) : provisoire ; v3.330.0 : +1 000 ; v3.356.0 (D4) : l'arme de la Cité
   desert_13: { gold: 2475 }, // v3.316.0 (W-4b) : provisoire ; v3.330.0 : +1 000
   desert_14: { gold: 1550 }, // v3.317.0 (W-4c) : provisoire, même remarque
-  desert_15: { gold: 1800 } // v3.319.0 (W-4d) : fin d'acte III, provisoire
+  desert_15: { gold: 1800 }, // v3.319.0 (W-4d) : fin d'acte III, provisoire
+  // v3.361.0 à v3.363.0 (acte IV) : provisoires, calés sur la suite de l'acte III (banc « or par acte » à refaire)
+  desert_16: { gold: 1900 },
+  desert_17: { gold: 2500 },
+  desert_18: { gold: 3000, uniqueLoot: "arme_fleuve" }
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -796,7 +800,7 @@ STORY_QUESTS.desert = {
   title: "Ce que le sable garde",
   subtitle: "Chapitre 2 — Désert",
   icon: "images/Icons/codex/world_desert.png",
-  endText: "Chapitre terminé.",
+  endText: "Chapitre terminé — au nord, les pierres bougent.", // v3.363.0 (acte IV) : amorce des Ruines, monde 3 fermé
   steps: [
     /* ---------- Acte I — La surface ---------- */
     {
@@ -1467,6 +1471,156 @@ STORY_QUESTS.desert = {
       linkTo: { tab: "dungeon" },
       check: function (game) { return !!((game.dungeonTierCleared || {})[2]); },
       progress: function (game) { return "Sphinx vaincu " + ((game.dungeonTierCleared || {})[2] ? "1/1" : "0/1"); }
+    },
+
+    /* ---------- Acte IV — Le dernier roi (document « Désert — Acte IV » v1.0, 28/09/2026) ---------- */
+
+    /* v3.361.0 (X-1) — acte IV §4. Le lit du fleuve jusqu'au trône vide : un parcours scripté
+       (scene-templates.js : remontee_fleuve), lancé depuis cette carte comme la traversée. Le
+       Veilleur se lève pour la première fois et tire le héros des sables mouvants (palier 4). */
+    {
+      id: "desert_16",
+      title: "Personne ne remonte le fleuve",
+      act: "Acte IV — Le dernier roi",
+      narrative: {
+        objective: "Le sphinx s'est recouché. Ses yeux sont sur la rue, et la rue descend vers le lit du fleuve. Au Temple, la chaise est vide. La lampe est restée.",
+        completion: "Le trône est vide. Le sable autour est lisse, sans une trace. Sauf une : une ligne sèche, du lit jusqu'au siège, comme une eau qui aurait coulé à l'envers.",
+        dialogue: [
+          { who: "Sarkel", text: "Je vends de l'eau à ceux qui descendent le fleuve. Ceux qui le remontent, je ne les revois pas." },
+          { who: "Wenna", text: "Et le vieux ?" },
+          { who: "Sarkel", text: "Il a laissé sa lampe. Il ne laisse jamais sa lampe." },
+          { who: null, text: "Au bord du lit, un homme debout. Tu ne l'avais jamais vu debout." },
+          { who: "Le Veilleur", text: "Tu as entendu le sphinx. Il ne ment pas plus que moi." },
+          { who: "Maddoc", text: "Tu marches, toi ?" },
+          { who: "Le Veilleur", text: "Quand il faut. Derrière. C'est ton chemin, pas le mien." }
+        ],
+        completionDialogue: [
+          { who: "Le Veilleur", text: "Il n'est pas encore là. Il vient." },
+          { who: "Wenna", text: "Vous le connaissez ?" },
+          { who: "Le Veilleur", text: "Oui." },
+          { who: "Maddoc", text: "Alors on attend." },
+          { who: "Le Veilleur", text: "Ici, on sait faire." }
+        ]
+      },
+      objectiveLabel: "Terminer « Personne ne remonte le fleuve » (coût : 1 Ration moyenne)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_16,
+      linkTo: { section: "expedition", cardId: "scene_remontee_fleuve" },
+      check: function () { return storyDesertFlag("remonteeFleuveDone"); },
+      progress: function () { return "Lit du fleuve remonté " + (storyDesertFlag("remonteeFleuveDone") ? "1/1" : "0/1"); }
+    },
+
+    /* v3.362.0 (X-2) — acte IV §5. Nezzam le Desséché, le dernier roi : la quête d'aventure
+       aq_desert_trone (trois rencontres, puis lui), même forme que le Cœur et l'Orc (forest_15).
+       Combat unique. Sa réplique d'entrée dépend du premier choix (boss-moments.js : nezzam). */
+    {
+      id: "desert_17",
+      title: "Le trône de sable",
+      act: "Acte IV — Le dernier roi",
+      narrative: {
+        objective: "La ligne sèche a bougé cette nuit. Elle monte jusqu'au siège, et sur le siège il y a quelqu'un.",
+        completion: "Nezzam retombe sur le trône. Le sable coule de lui, longtemps. Quand il s'arrête, il reste une forme assise, trop légère pour un roi, qui ne tient plus à rien.",
+        dialogue: [
+          { who: "Wenna", text: "C'est lui ?" },
+          { who: "Le Veilleur", text: "Oui." },
+          { who: "Wenna", text: "Qu'est-ce qu'il est ?" },
+          { who: "Le Veilleur", text: "Un roi qui a emporté le fleuve pour ne pas mourir. Elle lui a donné ce qu'il demandait. Ce qui reste, c'est ça." },
+          { who: "Maddoc", text: "Dans la cité, il n'y a pas un puits. Pas un seul. J'ai toujours trouvé ça bizarre." },
+          { who: "Le Veilleur", text: "Il n'en fallait pas. Il y avait le fleuve." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Il est mort ?" },
+          { who: "Maddoc", text: "Il l'était déjà. Il ne le savait pas." },
+          { who: "Le Veilleur", text: "Il ne reviendra pas par le fleuve." },
+          { who: null, text: "Derrière vous, au fond du lit, une flaque. Petite. Elle ne sèche pas." }
+        ]
+      },
+      objectiveLabel: "Terminer « Le trône de sable » : 3 rencontres, puis Nezzam le Desséché",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_17,
+      linkTo: { section: "adventure", cardId: "adv_aq_desert_trone" },
+      tutorial: {
+        tab: "combat",
+        icon: "images/Icons/combat_status/vampiric.png",
+        title: "Le Desséché",
+        points: [
+          { icon: "images/Icons/combat_status/vampiric.png", text: "Nezzam boit : ce qu'il t'arrache le soigne. Plus le combat dure, plus il tient." },
+          { icon: "images/Icons/combat_status/silence_incoming.png", text: "Ses changements s'annoncent dans le journal un round avant." }
+        ]
+      },
+      check: function (game) { return storyAdvDone(game, "aq_desert_trone"); },
+      progress: function (game) {
+        return "Rencontres " + storyAdvProgress(game, "aq_desert_trone", "rencontres_trone", 3) + "/3"
+          + " · Nezzam " + storyAdvProgress(game, "aq_desert_trone", "boss_nezzam", 1) + "/1";
+      }
+    },
+
+    /* v3.363.0 (X-3) — acte IV §7, FIN DU CHAPITRE II. Le troisième choix pesant (clé « roi »,
+       axe Soi/Aeswyn, déjà déclaré dans STORY_CHOICE_AXES), posé depuis la carte d'étape comme
+       la voie de Maddoc, mais noté au registre. Ses effets n'ont aucun état propre : le choix
+       noté fait foi. Prendre -> La forme du roi (getHeroSilenceRounds, enemy-archetypes.js).
+       Rapporter -> le puits du roi (ApothecaryManager.hasPuitsDuRoi). Dans les deux cas, Maddoc
+       donne l'arme du Fleuve à la réclamation (uniqueLoot). La première demande du Veilleur. */
+    {
+      id: "desert_18",
+      title: "Ce qui reste du roi",
+      act: "Acte IV — Le dernier roi",
+      narrative: {
+        objective: "La forme est toujours sur le trône. Le vent passe à travers. Elle ne tombe pas.",
+        get completion() {
+          return (window.StoryQuestManager && StoryQuestManager.getChoice("roi") === "aeswyn")
+            ? "Tu la portes jusqu'à Aeswyn. Elle ne pèse rien, et pourtant tu t'arrêtes souvent."
+            : "Tu la prends. Elle n'a pas de poids. Elle se pose sur toi comme une ombre à midi, juste sous tes pieds, et ne bouge plus.";
+        },
+        dialogue: [
+          { who: "Le Veilleur", text: "Prends-la. Elle t'ira." },
+          { who: null, text: "Il ne t'avait encore jamais rien demandé." },
+          { who: "Wenna", text: "Et si on la ramène ? Orwen saurait quoi en faire." },
+          { who: "Le Veilleur", text: "Elle saurait. Les deux sont vrais." },
+          { who: "Maddoc", text: "Moi, je porte ce que tu me donnes." }
+        ],
+        get completionDialogue() {
+          var branche = (window.StoryQuestManager && StoryQuestManager.getChoice("roi") === "aeswyn")
+            ? [
+              { who: "Orwen", text: "Pose ça là. Pas plus près." },
+              { who: null, text: "Elle la glisse sous la braise. Le lendemain, au fond du vieux puits, l'eau monte d'un doigt. Elle n'a le goût de rien. Elle soigne." },
+              { who: "Brannoc", text: "Un puits de roi, dans un village de bûcherons… enfin. On l'a mérité, petit." }
+            ]
+            : [
+              { who: "Wenna", text: "Tu as l'air pareil." },
+              { who: "Le Veilleur", text: "Pour l'instant." },
+              { who: null, text: "À Aeswyn, Orwen te regarde longtemps. Elle ne dit rien. Elle met un morceau de pain de côté." }
+            ];
+          // Suite commune aux deux branches : l'arme du Fleuve, puis Sarkel ferme le chapitre
+          return branche.concat([
+            { who: null, text: "Avant de quitter la cité, Maddoc t'emmène sous la place. Une porte, une salle, des râteliers vides. Un seul ne l'est pas." },
+            { who: "Maddoc", text: "Chez moi, on ne la donnait qu'une fois." },
+            { who: null, text: "Le fil du tranchant est bleu, comme de l'eau vue de haut." },
+            { who: "Sarkel", text: "Au nord, il y a des pierres qui bougent. Toutes seules. On n'y vend rien." },
+            { who: "Sarkel", text: "Pas encore." }
+          ]);
+        }
+      },
+      objectiveLabel: "Décider de ce qui reste du roi",
+      unlockTabs: [],
+      reward: STORY_REWARDS.desert_18,
+      choice: {
+        key: "roi", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "Ce qui reste du roi",
+        text: "Le Veilleur a dit de la prendre. Wenna voudrait la ramener. Personne ne choisira pour toi.",
+        options: [
+          { value: "soi", label: "Prendre la forme", desc: "Elle t'ira. Le silence aura moins de prise sur toi." },
+          { value: "aeswyn", label: "La rapporter à Aeswyn", desc: "Orwen saura où la mettre. Le village aura son puits." }
+        ],
+        apply: function (value) {
+          if (typeof addLog !== "function") return;
+          if (value === "soi") addLog("La forme du roi : le silence ne te tient plus qu'un round.", "event");
+          else addLog("Le puits du roi : l'Apothicaire prépare 2 potions de plus par jour, pour moitié moins d'eau.", "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("roi")); },
+      progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("roi")) ? "1/1" : "0/1"); }
     }
   ]
 };

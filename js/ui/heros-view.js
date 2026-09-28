@@ -260,12 +260,27 @@ function buildHeroSummaryJumpsHTML() {
   return h;
 }
 
+/* v3.363.0 (acte IV) — traits gagnés par l'Histoire. Un seul pour l'instant : La forme du roi
+   (choix « roi » = prendre). Aucun état propre : le choix noté fait foi. */
+function buildHeroSummaryTraitsHTML() {
+  var soi = !!(window.StoryQuestManager && StoryQuestManager.getChoice("roi") === "soi");
+  if (!soi) return "";
+  var h = '<div class="pc-section-label">Ce que tu portes</div>';
+  h += '<div class="pc-sum-jump is-static">';
+  h += '<span class="pc-sum-jump-ico"><img class="ico-inline" src="images/Icons/memory/forme_du_roi.png" alt=""></span>';
+  h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">La forme du roi</span>';
+  h += '<span class="pc-sum-jump-s">Le silence ne te tient plus qu\u2019un round.</span></span>';
+  h += '</div>';
+  return h;
+}
+
 function buildHeroFicheHTML() {
   var hero = getSelectedHero();
 
   var h = buildHeroSummaryIdentityHTML(hero);
   h += buildHeroSummaryCombatHTML();
   h += buildHeroSummaryJumpsHTML();
+  h += buildHeroSummaryTraitsHTML(); // v3.363.0 (acte IV)
 
   h += '<div class="pc-sum-foot">';
   h += '<button class="settings-btn" type="button" onclick="openHeroSlotsScreen()"><img class=ico-inline src=images/Icons/subtabs/hero_roster.png> Mes héros</button>';

@@ -255,6 +255,51 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.362.0 (X-2, acte IV §5 et §6, décisions Seb 28/09/2026) — étape 17 « Le trône de sable ».
+     Trois rencontres dans le lit du fleuve, puis NEZZAM LE DESSÉCHÉ (bossId) : Vampirique dès le
+     début, un ver des sables à 60 %, Silencieux à 30 % (bossPhases, lues par combat-engine.js).
+     Combat unique : une fois gagnée, la quête ne se rejoue pas. Les deux compagnons.
+     Réglé au banc sim/nezzam-bench.js, profil « campagne » (cibles : 75 à 90 % par classe, Rôdeur
+     ≥ 70 %, 60 à 75 % de PV à l'arrivée, 20 à 40 % à la fin, 1 à 2 potions, 20 à 30 rounds). */
+  aq_desert_trone: {
+    id: "aq_desert_trone",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "desert",
+    adventureIndex: 0,
+    requiresVoie: "maddoc",
+    encounters: [
+      { group: ["sandwarrior", "sandwarrior"], groupHpMult: 0.55 },
+      { group: ["scarab", "scarab", "scarab"], groupHpMult: 0.35 },
+      { enemy: "sandworm" }
+    ],
+    // Banc (profil campagne, 60 runs) : 90 / 78 / 95 % (Ch./Rô./Ma.), 67-73 % de PV à l'arrivée,
+    // 35-46 % à la fin, 1,6-1,9 potion, Nezzam en 24-28 rounds. Le Mage reste le plus à l'aise.
+    encounterHpMult: 2.4,
+    enemyPowerMult: 6.5,
+    bossId: "nezzam",
+    bossArchetype: "vampiric",
+    bossPhases: [
+      { atPct: 0.6, adds: ["sandworm"], addsHpMult: 0.18, addsPowerMult: 0.5,
+        label: "le lit se remplit", line: "Le lit se remplit. Pas d'eau." },
+      { atPct: 0.3, archetype: "silenced", label: "il prend ta voix", line: "« Ici, on ne parle pas au roi. »" }
+    ],
+    bossHpMult: 4,
+    bossPowerMult: 1.7,
+    bossLog: "Il revient par le fleuve. Il n'y a plus de fleuve.",
+    name: "Le trône de sable",
+    story: "Il revient par le lit du fleuve. Tiens le lit jusqu'au trône, puis tiens le trône.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    steps: [
+      { id: "rencontres_trone", type: "encounter", worldId: "desert", target: 3, desc: "Vaincre {target} rencontres dans le lit du fleuve" },
+      { id: "boss_nezzam", type: "bossKill", bossId: "nezzam", target: 1, desc: "Vaincre Nezzam le Desséché" }
+    ],
+    reward: {}
+  },
+
   hq_wolf_pack: {
     id: "hq_wolf_pack",
     type: "kill",

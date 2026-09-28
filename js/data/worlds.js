@@ -48,7 +48,7 @@ var WORLDS = [
         introText: "Le sable prend tout, et rend tard. Ce qui vit ici a le temps.", // v3.197.0 (bible B §4.1)
         enemyPool: ["scarab", "scorpion", "sandworm", "sandwarrior"],
         enemyCount: 10,
-        boss: "djinn"
+        boss: "sphinx" // v3.360.0 (acte IV) : le gardien répétable ; Nezzam ne sort que par sa quête
       },
       {
         id: "desert_2",
@@ -57,7 +57,7 @@ var WORLDS = [
         introText: "Sous le sable, des pierres taillées avant tout le reste. Elles n'ont pas fini d'attendre.", // v3.197.0 (bible B §4.1)
         enemyPool: ["sandwarrior", "sandworm", "scorpion", "scarab"],
         enemyCount: 10,
-        boss: "djinn"
+        boss: "sphinx" // v3.360.0 (acte IV) : le gardien répétable ; Nezzam ne sort que par sa quête
       }
     ]
   },

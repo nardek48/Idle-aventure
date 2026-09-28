@@ -114,7 +114,28 @@ var ApothecaryManager = {
   getDailyCap: function (level) {
     var lvl = (typeof level === "number") ? level : this.getLevel();
     if (lvl <= 0) return 0;
-    return APOTHECARY_DAILY_CAP_BASE + APOTHECARY_DAILY_CAP_PER_LEVEL * (lvl - 1);
+    return APOTHECARY_DAILY_CAP_BASE + APOTHECARY_DAILY_CAP_PER_LEVEL * (lvl - 1)
+      + (this.hasPuitsDuRoi() ? APOTHECARY_PUITS_ROI_BONUS : 0);
+  },
+
+  /* ---------- v3.363.0 (acte IV) : le puits du roi ---------- */
+
+  /* Choix « roi » = rapporter la forme à Aeswyn : +2 préparations par jour, moitié moins
+     d'eau purifiée dans chaque recette (arrondi au-dessus). Aucun état propre : le choix fait foi. */
+  hasPuitsDuRoi: function () {
+    return !!(window.StoryQuestManager && typeof StoryQuestManager.getChoice === "function"
+      && StoryQuestManager.getChoice("roi") === "aeswyn");
+  },
+
+  /* Ingrédients réels d'une recette (le puits du roi réduit l'eau). Seul point à lire. */
+  getInputs: function (potionId) {
+    var recipe = this.getRecipe(potionId);
+    if (!recipe) return {};
+    var out = {}, puits = this.hasPuitsDuRoi();
+    Object.keys(recipe.inputs).forEach(function (k) {
+      out[k] = (puits && k === "eau_purifiee") ? Math.ceil(recipe.inputs[k] / 2) : recipe.inputs[k];
+    });
+    return out;
   },
 
   getDailyUsed: function () {
@@ -151,17 +172,18 @@ var ApothecaryManager = {
   canAfford: function (potionId) {
     var recipe = this.getRecipe(potionId);
     if (!recipe) return false;
-    return Object.keys(recipe.inputs).every(function (key) {
-      return WarehouseManager.getAmount(key) >= recipe.inputs[key];
+    var inputs = this.getInputs(potionId); // v3.363.0 : puits du roi
+    return Object.keys(inputs).every(function (key) {
+      return WarehouseManager.getAmount(key) >= inputs[key];
     });
   },
 
   getMissingInput: function (potionId) {
     var recipe = this.getRecipe(potionId);
     if (!recipe) return null;
-    var missing = null;
-    Object.keys(recipe.inputs).some(function (key) {
-      if (WarehouseManager.getAmount(key) < recipe.inputs[key]) { missing = key; return true; }
+    var inputs = this.getInputs(potionId), missing = null; // v3.363.0 : puits du roi
+    Object.keys(inputs).some(function (key) {
+      if (WarehouseManager.getAmount(key) < inputs[key]) { missing = key; return true; }
       return false;
     });
     return missing;
@@ -218,8 +240,9 @@ var ApothecaryManager = {
 
     this._crafting = true;
 
-    Object.keys(recipe.inputs).forEach(function (key) {
-      WarehouseManager.removeResource(key, recipe.inputs[key]);
+    var inputs = this.getInputs(potionId); // v3.363.0 : puits du roi
+    Object.keys(inputs).forEach(function (key) {
+      WarehouseManager.removeResource(key, inputs[key]);
     });
 
     if (recipe.capped) this._countDaily();

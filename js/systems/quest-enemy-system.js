@@ -57,7 +57,25 @@ var QuestEnemyManager = {
       return groupe;
     }
 
+    /* v3.360.0 (acte IV, X-0) — bossId de QUÊTE : le boss déclaré par la quête remplace, le temps
+       d'une apparition, celui de l'aventure (même patron que enemyFilter). Nezzam reste ainsi unique :
+       rien d'autre au Désert ne le fait sortir. Absent = le boss de l'aventure, comme avant. */
+    var src = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || quest;
+    var savedBoss = null;
+    if (forceBoss && adventure && src.bossId && window.BOSS_DB && BOSS_DB[src.bossId]) {
+      savedBoss = adventure.boss;
+      adventure.boss = src.bossId;
+    }
+
     var enemy = WorldManager.generateEnemy();
+    if (savedBoss !== null) adventure.boss = savedBoss;
+
+    /* v3.360.0 — trait et phases du boss de quête, lus tels quels par combat-engine.js (archetype,
+       checkPhases). Copie des phases : l'état « phase jouée » vit sur l'ennemi, jamais dans la donnée. */
+    if (enemy && enemy.isBoss && src.bossId) {
+      if (src.bossArchetype) enemy.archetype = src.bossArchetype;
+      if (Array.isArray(src.bossPhases)) enemy.phases = JSON.parse(JSON.stringify(src.bossPhases));
+    }
 
     /* v3.246.0 (retour Seb 15/09/2026) — enemyHpMult : PV de TOUS les ennemis de la quête
        (normaux et boss). « Prouver sa valeur » est la 4e étape de l'Histoire : elle doit se

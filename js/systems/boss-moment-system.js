@@ -38,7 +38,9 @@ var BossMomentManager = {
   getMoment: function (enemy) {
     var M = window.BOSS_MOMENTS || {};
     var m = M[this.cleanName(enemy)] || M[enemy && enemy.id] || {};
-    var out = { title: m.title || null, intro: m.intro || null, phase: m.phase || null, death: m.death || null };
+    // v3.360.0 (acte IV) : une réplique peut dépendre de la partie (Nezzam porte les noms, ou pas).
+    var intro = (typeof m.intro === "function") ? m.intro(game) : m.intro;
+    var out = { title: m.title || null, intro: intro || null, phase: m.phase || null, death: m.death || null };
     // Élite sans réplique : sa lore (texte déjà validé) tient lieu d'intro
     if (!out.intro && enemy && enemy.isElite && window.ELITE_DB && ELITE_DB[enemy.id]) out.intro = ELITE_DB[enemy.id].lore || null;
     return out;
@@ -89,7 +91,8 @@ var BossMomentManager = {
     if (!enemy || (window.Prefs && !Prefs.get("bossMoments"))) return;
     var m = this.getMoment(enemy);
     if (typeof showBossPhase === "function") {
-      showBossPhase(enemy, (ph && ph.label) || "change de rythme", m.phase, this.isFullMoment(enemy));
+      // v3.360.0 : une phase peut porter sa propre ligne (ph.line) ; sinon la réplique commune du boss.
+      showBossPhase(enemy, (ph && ph.label) || "change de rythme", (ph && ph.line) || m.phase, this.isFullMoment(enemy));
     }
   },
 
