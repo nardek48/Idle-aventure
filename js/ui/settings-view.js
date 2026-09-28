@@ -42,6 +42,24 @@ function buildSettingsHTML() {
     h += '</div>';
   }
 
+  // v3.375.0 (i18n, D3) : l'interface est traduite en anglais — le choix de langue sort de l'Admin.
+  // Les libellés des langues restent dans leur propre langue ; la pseudo-langue de test reste à l'Admin.
+  if (window.I18n) {
+    var curLang = I18n.lang();
+    h += '<div class="panel-card">';
+    h += '<h3><img class=ico-inline src=images/Icons/system/settings.png> ' + _t("Langue") + (curLang === "fr" ? ' · Language' : '') + '</h3>';
+    h += '<div class="settings-lang-row">';
+    [["fr", "Français"], ["en", "English (beta)"]].forEach(function (l) {
+      h += '<button class="settings-btn' + (l[0] === curLang ? ' active' : '') + '" type="button"' + (l[0] === curLang ? ' disabled' : '')
+        + ' onclick="confirmLanguageChange(\'' + l[0] + '\')">' + l[1] + (l[0] === curLang ? ' ✓' : '') + '</button>';
+    });
+    h += '</div>';
+    h += '<p class="panel-sub">' + (curLang === "en"
+      ? _t("L'histoire, le Codex et les noms du monde restent en français pour l'instant : leur traduction arrive monde par monde.")
+      : _t("Le jeu redémarre pour changer de langue. En anglais, l'histoire et les textes du monde restent en français pour l'instant.")) + '</p>';
+    h += '</div>';
+  }
+
   // v3.359.0 : installer le jeu sur l'appareil (main/pwa.js)
   if (typeof buildPwaSettingsCardHTML === "function") h += buildPwaSettingsCardHTML();
 
@@ -111,6 +129,18 @@ function unlockAllTabsFromSettings() {
 }
 
 window.buildSettingsHTML = buildSettingsHTML;
+
+/* v3.375.0 : changer de langue relance le jeu (D2) — on le dit avant. */
+function confirmLanguageChange(lang) {
+  if (!window.I18n || lang === I18n.lang()) return;
+  var go = function () { I18n.setLang(lang); };
+  if (typeof showConfirmModal === "function") {
+    showConfirmModal(lang === "en" ? "Switch to English?" : "Passer en français ?",
+      lang === "en" ? "The game will restart. Your progress is saved first." : "Le jeu va redémarrer. Ta progression est sauvegardée avant.",
+      "images/Icons/system/settings.png", go);
+  } else go();
+}
+window.confirmLanguageChange = confirmLanguageChange;
 window.toggleAutoSkills = toggleAutoSkills;
 
 /* v3.332.0 : préférence d'affichage (Prefs). Le HUD relit le fil rouge à l'image suivante. */

@@ -46,3 +46,13 @@
     transition: none;
   }
 }
+/* v3.375.0 (i18n) : choix de langue — deux boutons côte à côte, la langue active grisée. */
+.settings-lang-row {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0 4px;
+}
+.settings-lang-row .settings-btn {
+  flex: 1 1 0;
+  margin: 0;
+}

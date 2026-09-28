@@ -117,7 +117,7 @@ function buildDungeonLobbyHTML() {
   h += '<div class="dungeon-list">';
   (DUNGEONS || []).forEach(function (dungeon) { h += buildDungeonCardHTML(dungeon); });
   h += '</div>';
-  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc(_t("images/Icons/subtabs/dungeon.png|Donjon")) + '">' + h + '</div>'; // v2.83.28
+  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/dungeon.png|" + _t("Donjon")) + '">' + h + '</div>'; // v2.83.28
 }
 
 function buildDungeonHTML() {
