@@ -15,7 +15,7 @@ var openVillageBuildingId = null;
 function getVillageCostMeta(key) {
   if (key === "gold") {
     return {
-      label: "Or",
+      label: _t("Or"),
       iconHTML: '<img class="vb-cost-icon" src="images/Icons/gold_icon.png" alt="">'
     };
   }
@@ -23,7 +23,7 @@ function getVillageCostMeta(key) {
   if (!def) return { label: key, iconHTML: "" };
   return {
     label: def.name,
-    iconHTML: renderIconOrEmojiHTML(def.icon, "vb-cost-icon", def.name)
+    iconHTML: renderIconOrEmojiHTML(def.icon, "vb-cost-icon", _td(def.name))
   };
 }
 
@@ -31,7 +31,7 @@ function getVillageCostMeta(key) {
    village ne sont pas encore produits — l'emoji tient la place sans bloquer
    le chantier (décision Seb, 11/09/2026). */
 function buildVillageBuildingIconHTML(def, cssClass) {
-  return renderIconOrEmojiHTML(def.iconImg || def.icon, cssClass, def.name);
+  return renderIconOrEmojiHTML(def.iconImg || def.icon, cssClass, _td(def.name));
 }
 window.buildVillageBuildingIconHTML = buildVillageBuildingIconHTML;
 
@@ -49,7 +49,7 @@ function buildVillageCostListHTML(id) {
   var h = '<div class="vb-cost-list">';
   // v3.330.0 (E2) : niveau exigé par l'Histoire, matériaux communs fournis
   if (VillageBuildingManager.isNextLevelStoryProvided && VillageBuildingManager.isNextLevelStoryProvided(id)) {
-    h += '<div class="vb-cost-where vb-cost-provided">Matériaux fournis par le village (niveau exigé par l\u2019Histoire)</div>';
+    h += '<div class="vb-cost-where vb-cost-provided">' + _t("Matériaux fournis par le village (niveau exigé par l’Histoire)") + '</div>';
   }
   keys.forEach(function (key) {
     var meta = getVillageCostMeta(key);
@@ -59,7 +59,7 @@ function buildVillageCostListHTML(id) {
 
     h += '<div class="vb-cost-row' + (ok ? '' : (unreachable ? ' is-unreachable' : ' is-missing')) + '">';
     h += meta.iconHTML;
-    h += '<span class="vb-cost-label">' + esc(meta.label) + '</span>';
+    h += '<span class="vb-cost-label">' + esc(_td(meta.label)) + '</span>';
     /* On affiche le COÛT ; l'avoir n'apparaît que s'il manque quelque
        chose, sinon la ligne est du bruit. */
     h += '<span class="vb-cost-amount">'
@@ -101,9 +101,9 @@ function getVillageResourceHint(key) {
   var def = WAREHOUSE_RESOURCES[key];
   if (!def) return "";
   if (isVillageResourceUnreachable(key)) {
-    return def.worldName ? ("Se trouve en " + def.worldName + ".") : "Pas encore accessible.";
+    return def.worldName ? _t("Se trouve en {w}.", { w: _td(def.worldName) }) : _t("Pas encore accessible.");
   }
-  return def.sourceHint || "";
+  return _td(def.sourceHint || "");
 }
 window.getVillageResourceHint = getVillageResourceHint;
 
@@ -121,14 +121,14 @@ function buildVillageBuildingSheetHTML(id) {
   h += '<div class="vb-sheet-head">';
   h += buildVillageBuildingIconHTML(def, "vb-sheet-icon");
   h += '<div class="vb-sheet-head-text">';
-  h += '<div class="vb-sheet-title">' + esc(def.name) + '</div>';
-  h += '<div class="vb-sheet-level">' + (level === 0 ? 'Non construit' : 'Niveau ' + level + ' / ' + VillageBuildingManager.getMaxLevel(id)) + '</div>';
+  h += '<div class="vb-sheet-title">' + esc(_td(def.name)) + '</div>';
+  h += '<div class="vb-sheet-level">' + (level === 0 ? _t("Non construit") : _t("Niveau {a} / {b}", { a: level, b: VillageBuildingManager.getMaxLevel(id) })) + '</div>';
   h += '</div></div>';
 
-  h += '<div class="vb-sheet-text">' + esc(def.desc) + '</div>';
+  h += '<div class="vb-sheet-text">' + esc(_td(def.desc)) + '</div>';
 
   if (level > 0) {
-    h += '<div class="vb-sheet-effect"><strong>Effet actuel :</strong> '
+    h += '<div class="vb-sheet-effect"><strong>' + _t("Effet actuel :") + '</strong> '
        + esc(VillageBuildingManager.getEffectLabel(id, level)) + '</div>';
   }
 
@@ -138,7 +138,7 @@ function buildVillageBuildingSheetHTML(id) {
      sans dire où s'en servir. */
   if (id === "training" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToHeroTraining()">'
-       + '<img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> S\'entraîner dans Héros → Stats ›</div>';
+       + '<img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> ' + _t("S'entraîner dans Héros → Stats ›") + '</div>';
   }
 
   /* L'Apothicaire renvoie vers l'écran où l'on prépare, comme le Terrain
@@ -146,7 +146,7 @@ function buildVillageBuildingSheetHTML(id) {
      reste le lieu où l'on s'en sert. */
   if (id === "apothecary" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToPotions()">'
-       + '<img class=ico-inline src=images/Icons/subtabs/potions.png> Préparer dans Boutique → Potions ›</div>';
+       + '<img class=ico-inline src=images/Icons/subtabs/potions.png> ' + _t("Préparer dans Boutique → Potions ›") + '</div>';
     h += buildApothecaryOrdersHTML(); // v3.291.0 : les recettes se gagnent ici
   }
 
@@ -164,8 +164,8 @@ function buildVillageBuildingSheetHTML(id) {
     var seg = enchanterSheetSegment || (level > 0 ? "relance" : "eclats");
     if (level <= 0) seg = "eclats";
     h += '<div class="kseg vb-sheet-seg">';
-    h += '<button type="button"' + (level > 0 ? '' : ' disabled') + ' class="' + (seg === "relance" ? 'is-on' : '') + '" onclick="setEnchanterSheetSegment(\'relance\')">Relance</button>';
-    h += '<button type="button" class="' + (seg === "eclats" ? 'is-on' : '') + '" onclick="setEnchanterSheetSegment(\'eclats\')">Éclats<span class="kseg-count">' + formatNumber(game.dungeonShards || 0) + '</span></button>';
+    h += '<button type="button"' + (level > 0 ? '' : ' disabled') + ' class="' + (seg === "relance" ? 'is-on' : '') + '" onclick="setEnchanterSheetSegment(\'relance\')">' + _t("Relance") + '</button>';
+    h += '<button type="button" class="' + (seg === "eclats" ? 'is-on' : '') + '" onclick="setEnchanterSheetSegment(\'eclats\')">' + _t("Éclats") + '<span class="kseg-count">' + formatNumber(game.dungeonShards || 0) + '</span></button>';
     h += '</div>';
     h += (seg === "relance" && level > 0) ? buildEnchantBoardHTML() : buildShardShopBoardHTML();
   }
@@ -185,13 +185,13 @@ function buildVillageBuildingSheetHTML(id) {
   // v3.313.0 : Bourse et Contrats retirés — la porte n'apparaît que s'il reste une amélioration d'or
   if (id === "tavern" && typeof shopHasEconomyUpgrades === "function" && shopHasEconomyUpgrades()) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToEconomy()">'
-       + '<img class=ico-inline src=images/Icons/subtabs/economy.png> Bourse et contrats d\'or ›</div>';
+       + '<img class=ico-inline src=images/Icons/subtabs/economy.png> ' + _t("Bourse et contrats d'or ›") + '</div>';
   }
 
   /* L'Entrepôt agrandi renvoie vers l'Entrepôt lui-même. */
   if (id === "warehouse" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToWarehouse()">'
-       + '<img class=ico-inline src=images/Icons/system/warehouse_supplies.png> Voir l\'Entrepôt ›</div>';
+       + '<img class=ico-inline src=images/Icons/system/warehouse_supplies.png> ' + _t("Voir l'Entrepôt ›") + '</div>';
   }
 
   /* La Halle renvoie vers l'échoppe qu'elle agrandit — même principe que le
@@ -199,15 +199,15 @@ function buildVillageBuildingSheetHTML(id) {
      reste le lieu où l'on s'en sert. */
   if (id === "hall" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToEquipShop()">'
-       + '<img class=ico-inline src=images/Icons/subtabs/equipment_shop.png> Voir l\'échoppe dans Héros → Équipement ›</div>';
+       + '<img class=ico-inline src=images/Icons/subtabs/equipment_shop.png> ' + _t("Voir l'échoppe dans Héros → Équipement ›") + '</div>';
   }
 
   /* L'Atelier annonce le rang qu'il ouvre : c'est sa vraie fonction. */
   if (id === "workshop") {
     var rank = VillageBuildingManager.getRank();
     h += '<div class="vb-sheet-effect">'
-       + (rank > 0 ? 'Rang ' + rank + ' — chantiers ouverts jusqu\'à ce rang.'
-                   : 'Aucun rang atteint : construis l\'Atelier pour ouvrir les premiers chantiers.')
+       + (rank > 0 ? _t("Rang {n} — chantiers ouverts jusqu'à ce rang.", { n: rank })
+                   : _t("Aucun rang atteint : construis l'Atelier pour ouvrir les premiers chantiers."))
        + '</div>';
   }
 
@@ -215,46 +215,46 @@ function buildVillageBuildingSheetHTML(id) {
     var left = VillageBuildingManager.getSiteSecondsLeft();
     var pct = VillageBuildingManager.getSiteProgressPct();
     h += '<div class="vb-sheet-progress">';
-    h += '<div class="vb-sheet-progress-label" id="vb-sheet-left">Chantier en cours — fin dans ' + esc(formatTime(left)) + '</div>';
+    h += '<div class="vb-sheet-progress-label" id="vb-sheet-left">' + esc(_t("Chantier en cours — fin dans {d}", { d: formatTime(left) })) + '</div>';
     h += '<div class="kgauge kgauge-thin kgauge-xp"><div class="kgauge-track">'
        + '<div class="kgauge-fill" id="vb-sheet-bar" style="width:' + pct.toFixed(1) + '%"></div>'
        + '</div></div>';
     h += '</div>';
     h += '<div class="vb-sheet-actions">';
-    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">Fermer</button>';
+    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">' + _t("Fermer") + '</button>';
     h += '</div>';
 
   } else if (maxed) {
     h += '<div class="vb-sheet-actions">';
-    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">Fermer</button>';
+    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">' + _t("Fermer") + '</button>';
     // v3.289.0 : plafond du monde -> le bouton dit où se trouve la suite
     h += '<button class="settings-btn primary is-maxed" type="button" disabled>'
-       + esc(VillageBuildingManager.isWorldCapped(id) ? VillageBuildingManager.getWorldCapLabel(id) : 'Niveau maximum') + '</button>';
+       + esc(VillageBuildingManager.isWorldCapped(id) ? VillageBuildingManager.getWorldCapLabel(id) : _t("Niveau maximum")) + '</button>';
     h += '</div>';
 
   } else if (!def.implemented) {
-    h += '<div class="vb-sheet-effect">Ce bâtiment arrive dans une prochaine mise à jour.</div>';
+    h += '<div class="vb-sheet-effect">' + _t("Ce bâtiment arrive dans une prochaine mise à jour.") + '</div>';
     h += '<div class="vb-sheet-actions">';
-    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">Fermer</button>';
+    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">' + _t("Fermer") + '</button>';
     h += '</div>';
 
   } else {
     var target = level + 1;
     var reason = VillageBuildingManager.getBlockReason(id);
 
-    h += '<div class="vb-sheet-effect">Niveau ' + target + ' : '
+    h += '<div class="vb-sheet-effect">' + _t("Niveau {n} :", { n: target }) + ' '
        + esc(VillageBuildingManager.getEffectLabel(id, target)) + '</div>';
     h += buildVillageCostListHTML(id);
-    h += '<div class="vb-sheet-timer"><img class=ico-inline src=images/Icons/system/hourglass_waiting.png> Durée du chantier : '
-       + esc(formatTime(VillageBuildingManager.getNextBuildSeconds(id))) + '</div>';
+    h += '<div class="vb-sheet-timer"><img class=ico-inline src=images/Icons/system/hourglass_waiting.png> '
+       + esc(_t("Durée du chantier : {d}", { d: formatTime(VillageBuildingManager.getNextBuildSeconds(id)) })) + '</div>';
 
     h += '<div class="vb-sheet-actions">';
-    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">Fermer</button>';
+    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">' + _t("Fermer") + '</button>';
     if (reason) {
       h += '<button class="settings-btn primary is-unaffordable" type="button" disabled>' + esc(reason) + '</button>';
     } else {
       h += '<button class="settings-btn primary" type="button" onclick="startVillageBuildFromSheet(\'' + id + '\')">'
-         + (level === 0 ? 'Construire' : 'Améliorer') + '</button>';
+         + (level === 0 ? _t("Construire") : _t("Améliorer")) + '</button>';
     }
     h += '</div>';
   }
@@ -269,20 +269,20 @@ function buildVillageBuildingSheetHTML(id) {
 function buildApothecaryOrdersHTML() {
   var A = window.ApothecaryManager;
   if (!A) return "";
-  var h = '<div class="vb-sheet-effect"><strong>Aujourd\u2019hui :</strong> '
-     + A.getDailyUsed() + ' / ' + A.getDailyCap() + ' préparations (Soin mineur libre)</div>';
+  var h = '<div class="vb-sheet-effect"><strong>' + _t("Aujourd’hui :") + '</strong> '
+     + _t("{a} / {b} préparations (Soin mineur libre)", { a: A.getDailyUsed(), b: A.getDailyCap() }) + '</div>';
   // v3.363.0 (acte IV) : le puits du roi, si la forme a été rapportée à Aeswyn
   if (A.hasPuitsDuRoi()) h += '<div class="vb-sheet-effect"><img class="ico-inline" src="images/Icons/village_buildings/puits_du_roi.png" alt=""> '
-     + '<strong>Le puits du roi :</strong> 2 préparations de plus par jour, moitié moins d\u2019eau purifiée.</div>';
-  h += '<div class="vb-sheet-effect"><strong>Commandes</strong> — livre une fois, la recette est acquise pour toujours.</div>';
+     + '<strong>' + _t("Le puits du roi :") + '</strong> ' + _t("2 préparations de plus par jour, moitié moins d’eau purifiée.") + '</div>';
+  h += '<div class="vb-sheet-effect"><strong>' + _t("Commandes") + '</strong> ' + _t("— livre une fois, la recette est acquise pour toujours.") + '</div>';
 
   (APOTHECARY_RECIPES || []).forEach(function (r) {
     if (r.known) return;
     var potion = A._getPotion(r);
-    var name = potion ? potion.name : r.potionId;
+    var name = potion ? _td(potion.name) : r.potionId;
 
     if (A.isLearned(r.potionId)) {
-      h += '<div class="vb-sheet-effect">✔ ' + esc(name) + ' — recette acquise</div>';
+      h += '<div class="vb-sheet-effect">✔ ' + esc(_t("{x} — recette acquise", { x: name })) + '</div>';
       return;
     }
     if (!A.isOrderOpen(r.potionId)) {
@@ -298,14 +298,14 @@ function buildApothecaryOrdersHTML() {
       var have = WarehouseManager.getAmount(k);
       var ok = have >= r.order[k];
       h += '<div class="vb-cost-row' + (ok ? '' : ' is-missing') + '">' + meta.iconHTML
-         + '<span class="vb-cost-label">' + esc(meta.label) + '</span>'
+         + '<span class="vb-cost-label">' + esc(_td(meta.label)) + '</span>'
          + '<span class="vb-cost-amount">' + (ok ? '' : formatNumber(Math.floor(have)) + ' / ') + formatNumber(r.order[k]) + '</span></div>';
     });
     h += '</div>';
     var can = A.canDeliver(r.potionId);
     h += '<div class="vb-sheet-actions"><button class="settings-btn primary' + (can ? '' : ' is-unaffordable') + '" type="button"'
        + (can ? ' onclick="deliverApothecaryOrderFromSheet(\'' + esc(r.potionId) + '\')"' : ' disabled') + '>'
-       + (can ? 'Livrer la commande' : 'Ingrédients manquants') + '</button></div>';
+       + (can ? _t("Livrer la commande") : _t("Ingrédients manquants")) + '</button></div>';
   });
   return h;
 }
@@ -362,7 +362,7 @@ function refreshVillageSiteTickers() {
   var bar = document.getElementById("vb-site-bar");
   if (bar) bar.style.width = pct;
   var label = document.getElementById("vb-site-left");
-  if (label) label.textContent = "Fin dans " + formatTime(left);
+  if (label) label.textContent = _t("Fin dans {d}", { d: formatTime(left) });
 
   var cardBar = document.getElementById("vb-card-bar");
   if (cardBar) cardBar.style.width = pct;
@@ -372,7 +372,7 @@ function refreshVillageSiteTickers() {
   var sheetBar = document.getElementById("vb-sheet-bar");
   if (sheetBar) sheetBar.style.width = pct;
   var sheetLeft = document.getElementById("vb-sheet-left");
-  if (sheetLeft) sheetLeft.textContent = "Chantier en cours — fin dans " + formatTime(left);
+  if (sheetLeft) sheetLeft.textContent = _t("Chantier en cours — fin dans {d}", { d: formatTime(left) });
 }
 window.refreshVillageSiteTickers = refreshVillageSiteTickers;
 
@@ -419,11 +419,11 @@ function buildTavernContractsHTML() {
 
   var contracts = TavernManager.getContracts();
   var h = '<div class="tavern-board">';
-  h += '<div class="tavern-board-head"><img class=ico-inline src=images/Icons/quests/quest_story.png> Contrats du jour'
-     + '<span class="tavern-board-timer">Renouvelés dans ' + esc(formatTime(TavernManager.timeUntilRefresh())) + '</span></div>';
+  h += '<div class="tavern-board-head"><img class=ico-inline src=images/Icons/quests/quest_story.png> ' + _t("Contrats du jour")
+     + '<span class="tavern-board-timer">' + esc(_t("Renouvelés dans {d}", { d: formatTime(TavernManager.timeUntilRefresh()) })) + '</span></div>';
 
   if (!contracts.length) {
-    h += '<div class="tavern-empty">Le tableau est vide pour l\'instant.</div>';
+    h += '<div class="tavern-empty">' + _t("Le tableau est vide pour l'instant.") + '</div>';
   }
 
   contracts.forEach(function (c) {
@@ -433,11 +433,11 @@ function buildTavernContractsHTML() {
 
     h += '<div class="tavern-contract' + (c.done ? ' is-done' : '') + '">';
     h += '<div class="tavern-contract-main">';
-    h += '<div class="tavern-contract-title">' + esc(c.title) + '</div>';
+    h += '<div class="tavern-contract-title">' + esc(_td(c.title)) + '</div>';
     h += '<div class="tavern-contract-need">';
-    h += renderIconOrEmojiHTML(def.icon, "tavern-contract-icon", def.name);
+    h += renderIconOrEmojiHTML(def.icon, "tavern-contract-icon", _td(def.name));
     h += '<span class="' + (enough || c.done ? '' : 'is-missing') + '">'
-       + formatNumber(Math.floor(have)) + ' / ' + formatNumber(c.quantity) + ' ' + esc(def.name) + '</span>';
+       + formatNumber(Math.floor(have)) + ' / ' + formatNumber(c.quantity) + ' ' + esc(_td(def.name)) + '</span>';
     h += '</div></div>';
 
     h += '<div class="tavern-contract-side">';
@@ -445,11 +445,11 @@ function buildTavernContractsHTML() {
        + '<img class="tavern-contract-gold" src="images/Icons/gold_icon.png" alt="">'
        + formatNumber(TavernManager.getPayout(c)) + '</div>';
     if (c.done) {
-      h += '<div class="tavern-contract-btn is-done">Honoré</div>';
+      h += '<div class="tavern-contract-btn is-done">' + _t("Honoré") + '</div>';
     } else if (enough) {
-      h += '<button type="button" class="tavern-contract-btn" onclick="deliverTavernContract(\'' + esc(c.id) + '\')">Livrer</button>';
+      h += '<button type="button" class="tavern-contract-btn" onclick="deliverTavernContract(\'' + esc(c.id) + '\')">' + _t("Livrer") + '</button>';
     } else {
-      h += '<button type="button" class="tavern-contract-btn is-poor" disabled>Livrer</button>';
+      h += '<button type="button" class="tavern-contract-btn is-poor" disabled>' + _t("Livrer") + '</button>';
     }
     h += '</div>';
 
@@ -483,9 +483,9 @@ function buildForgeBoardHTML() {
 
   var max = ForgeManager.getMaxLevel();
   var h = '<div class="forge-board">';
-  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/workshops/smithing_station.png> Établi'
-     + '<span class="forge-board-max">Niveau maximum : ' + max + '</span></div>';
-  h += '<div class="forge-board-note">Le niveau appartient à l\'emplacement : changer de pièce ne fait rien perdre.</div>';
+  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/workshops/smithing_station.png> ' + _t("Établi")
+     + '<span class="forge-board-max">' + _t("Niveau maximum : {n}", { n: max }) + '</span></div>';
+  h += '<div class="forge-board-note">' + _t("Le niveau appartient à l'emplacement : changer de pièce ne fait rien perdre.") + '</div>';
 
   EQUIPMENT_SLOTS.forEach(function (slot) {
     var level = ForgeManager.getLevel(slot);
@@ -497,25 +497,25 @@ function buildForgeBoardHTML() {
     h += '<div class="forge-row-main">';
     /* Le libellé vit dans EQUIPMENT_SLOT_LABELS, pas dans la config d'emplacement
        (relevé au rendu : la ligne sortait sans nom). */
-    h += '<div class="forge-row-name">' + esc(EQUIPMENT_SLOT_LABELS[slot] || slot)
-       + ' <span class="forge-row-level">niv. ' + level + ' / ' + max + '</span></div>';
+    h += '<div class="forge-row-name">' + esc(_td(EQUIPMENT_SLOT_LABELS[slot] || slot))
+       + ' <span class="forge-row-level">' + _t("niv. {a} / {b}", { a: level, b: max }) + '</span></div>';
 
     if (item) {
       /* On montre l'effet réel sur la pièce portée : un pourcentage abstrait
          ne dirait pas au joueur ce qu'il gagne. */
       var brut = Number(item.value || 0);
       var forge = ForgeManager.getForgedValue(item);
-      h += '<div class="forge-row-effect">' + esc(item.name) + ' : '
+      h += '<div class="forge-row-effect">' + esc(_td(item.name)) + ' : '
          + esc(formatEquipmentStat({ slot: slot, stat: item.stat, value: forge }))
          + (forge > brut ? ' <span class="forge-row-gain">(+' + Math.round((forge / brut - 1) * 100) + ' %)</span>' : '')
          + '</div>';
     } else {
-      h += '<div class="forge-row-effect forge-row-empty">Vide — le niveau attend sa pièce.</div>';
+      h += '<div class="forge-row-effect forge-row-empty">' + _t("Vide — le niveau attend sa pièce.") + '</div>';
     }
 
     if (cost) {
       if (ForgeManager.isStoryReforge && ForgeManager.isStoryReforge(slot, level + 1)) {
-        h += '<div class="forge-board-note">Matériaux fournis par le village (reforge exigée par l\u2019Histoire)</div>';
+        h += '<div class="forge-board-note">' + _t("Matériaux fournis par le village (reforge exigée par l’Histoire)") + '</div>';
       }
       h += '<div class="forge-row-cost">';
       Object.keys(cost).forEach(function (key) {
@@ -531,11 +531,11 @@ function buildForgeBoardHTML() {
 
     h += '<div class="forge-row-side">';
     if (!cost) {
-      h += '<div class="forge-row-btn is-off">' + (level >= 30 ? 'Maximum' : 'Améliore<br>la Forge') + '</div>';
+      h += '<div class="forge-row-btn is-off">' + (level >= 30 ? _t("Maximum") : _t("Améliore") + '<br>' + _t("la Forge")) + '</div>';
     } else if (reason) {
       h += '<div class="forge-row-btn is-off">' + esc(reason) + '</div>';
     } else {
-      h += '<button type="button" class="forge-row-btn" onclick="reforgeSlot(\'' + esc(slot) + '\')">Reforger</button>';
+      h += '<button type="button" class="forge-row-btn" onclick="reforgeSlot(\'' + esc(slot) + '\')">' + _t("Reforger") + '</button>';
     }
     h += '</div>';
 
@@ -561,12 +561,12 @@ function buildEnchantBoardHTML() {
   if (!window.EnchantManager) return "";
 
   var allowed = EnchantManager.getAllowedRarities().map(function (r) {
-    return (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[r]) || r;
+    return _td((typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[r]) || r);
   });
   var h = '<div class="forge-board">';
-  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/scene/node_discovery.png> Établi'
-     + '<span class="forge-board-max">' + (allowed.length ? esc(allowed.join(", ")) : "Aucune rareté") + '</span></div>';
-  h += '<div class="forge-board-note">La ligne garde sa nature : seule sa valeur est relancée, et jamais vers le bas. Chaque relance de la même ligne coûte plus cher.</div>';
+  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/scene/node_discovery.png> ' + _t("Établi")
+     + '<span class="forge-board-max">' + (allowed.length ? esc(allowed.join(", ")) : _t("Aucune rareté")) + '</span></div>';
+  h += '<div class="forge-board-note">' + _t("La ligne garde sa nature : seule sa valeur est relancée, et jamais vers le bas. Chaque relance de la même ligne coûte plus cher.") + '</div>';
 
   var rows = 0;
   EQUIPMENT_SLOTS.forEach(function (slot) {
@@ -578,9 +578,9 @@ function buildEnchantBoardHTML() {
     h += '<div class="ench-item">';
     /* Le libellé d'emplacement n'est repris que s'il n'est pas déjà le nom de la pièce
        (« Gants Gants » sortait au rendu). */
-    var slotLabel = EQUIPMENT_SLOT_LABELS[slot] || slot;
-    h += '<div class="ench-item-name rarity-' + esc(item.rarity) + '">' + esc(item.name)
-       + (slotLabel === item.name ? '' : ' <span class="forge-row-level">' + esc(slotLabel) + '</span>')
+    var slotLabel = _td(EQUIPMENT_SLOT_LABELS[slot] || slot);
+    h += '<div class="ench-item-name rarity-' + esc(item.rarity) + '">' + esc(_td(item.name))
+       + (slotLabel === _td(item.name) ? '' : ' <span class="forge-row-level">' + esc(slotLabel) + '</span>')
        + '</div>';
 
     affixes.forEach(function (a, index) {
@@ -592,12 +592,12 @@ function buildEnchantBoardHTML() {
       h += '<div class="forge-row">';
       h += '<div class="forge-row-main">';
       h += '<div class="forge-row-name">' + esc(formatEquipmentStatValue(a.stat, a.value))
-         + (n > 0 ? ' <span class="forge-row-level">' + n + ' relance' + (n > 1 ? 's' : '') + '</span>' : '') + '</div>';
+         + (n > 0 ? ' <span class="forge-row-level">' + _tn(n, "{n} relance", "{n} relances") + '</span>' : '') + '</div>';
       if (range) {
         /* Le haut de fourchette dit au joueur ce qu'il peut encore espérer —
            sans lui, la relance serait un pari sur un plafond invisible. */
-        h += '<div class="forge-row-effect">Maximum possible : '
-           + esc(formatEquipmentStatValue(a.stat, Math.round(range.max * Math.pow(10, range.decimals)) / Math.pow(10, range.decimals)))
+        h += '<div class="forge-row-effect">'
+           + esc(_t("Maximum possible : {x}", { x: formatEquipmentStatValue(a.stat, Math.round(range.max * Math.pow(10, range.decimals)) / Math.pow(10, range.decimals)) }))
            + '</div>';
       }
       if (cost) {
@@ -616,7 +616,7 @@ function buildEnchantBoardHTML() {
       if (reason) {
         h += '<div class="forge-row-btn is-off">' + esc(reason) + '</div>';
       } else {
-        h += '<button type="button" class="forge-row-btn" onclick="rerollAffix(\'' + esc(slot) + '\',' + index + ')">Relancer</button>';
+        h += '<button type="button" class="forge-row-btn" onclick="rerollAffix(\'' + esc(slot) + '\',' + index + ')">' + _t("Relancer") + '</button>';
       }
       h += '</div>';
       h += '</div>';
@@ -626,7 +626,7 @@ function buildEnchantBoardHTML() {
   });
 
   if (!rows) {
-    h += '<div class="forge-row-effect forge-row-empty">Aucune pièce équipée ne porte de bonus. Les objets inhabituels et au-dessus en ont.</div>';
+    h += '<div class="forge-row-effect forge-row-empty">' + _t("Aucune pièce équipée ne porte de bonus. Les objets inhabituels et au-dessus en ont.") + '</div>';
   }
 
   h += '</div>';
@@ -647,8 +647,8 @@ function buildShardShopBoardHTML() {
   if (!window.DungeonManager || !window.DUNGEON_SHOP) return "";
   var shards = game.dungeonShards || 0;
   var h = '<div class="vb-shard-board">';
-  h += '<div class="vb-shard-count"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + formatNumber(shards) + ' Éclats</div>';
-  h += '<div class="vb-board-sub">Payée en Éclats — gagnés en passant des vagues de donjon (1 par vague, +' + DUNGEON_CONFIG.shardsBossBonus + ' si le boss tombe, +' + (DUNGEON_CONFIG.eliteShardsBonus || 0) + ' par élite). Utilisables uniquement ici.</div>';
+  h += '<div class="vb-shard-count"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + _t("{n} Éclats", { n: formatNumber(shards) }) + '</div>';
+  h += '<div class="vb-board-sub">' + _t("Payée en Éclats — gagnés en passant des vagues de donjon (1 par vague, +{b} si le boss tombe, +{e} par élite). Utilisables uniquement ici.", { b: DUNGEON_CONFIG.shardsBossBonus, e: DUNGEON_CONFIG.eliteShardsBonus || 0 }) + '</div>';
   h += '<div class="dungeon-shop-grid">';
   (DUNGEON_SHOP || []).forEach(function (item) {
     var level = DungeonManager.getShardShopLevel(item.id);
@@ -656,15 +656,15 @@ function buildShardShopBoardHTML() {
     var cost = DungeonManager.getShardShopCost(item);
     var canBuy = !maxed && shards >= cost;
     h += '<div class="nb-purchase-card' + (maxed ? ' is-maxed' : '') + '">';
-    h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(item.icon, "nb-purchase-icon", item.name) + '</div></div>';
+    h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(item.icon, "nb-purchase-icon", _td(item.name)) + '</div></div>';
     h += '<div class="nb-purchase-info-col">';
-    h += '<div class="nb-purchase-name">' + esc(item.name) + '</div>';
-    h += '<div class="nb-purchase-meta">Niv. ' + level + '/' + item.maxLevel + '</div>';
-    h += '<div class="nb-purchase-desc">' + esc(item.desc) + '</div>';
+    h += '<div class="nb-purchase-name">' + esc(_td(item.name)) + '</div>';
+    h += '<div class="nb-purchase-meta">' + _t("Niv. {a}/{b}", { a: level, b: item.maxLevel }) + '</div>';
+    h += '<div class="nb-purchase-desc">' + esc(_td(item.desc)) + '</div>';
     h += '</div>';
     h += '<div class="nb-purchase-buy-col">';
     if (maxed) {
-      h += '<button class="btn-buy is-maxed" type="button" disabled>Max</button>';
+      h += '<button class="btn-buy is-maxed" type="button" disabled>' + _t("Max") + '</button>';
     } else {
       h += '<button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="buyShardUpgradeFromSheet(\'' + esc(item.id) + '\')"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + formatNumber(cost) + '</button>';
     }

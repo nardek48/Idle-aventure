@@ -46,19 +46,19 @@ function bossPortraitHTML(enemy, cls) {
 function showBossIntro(enemy, mode) {
   var BM = window.BossMomentManager;
   if (!BM) return;
-  var name = BM.cleanName(enemy);
-  if (mode !== "full") { showBossBanner(name, "de retour", BOSS_BANNER_MS, false); return; }
+  var name = _td(BM.cleanName(enemy));
+  if (mode !== "full") { showBossBanner(name, _t("de retour"), BOSS_BANNER_MS, false); return; }
 
   var m = BM.getMoment(enemy);
   var ally = BM.allyLine("bossIntro");
   var h = '<div class="bm-intro" onclick="closeBossIntro()" role="dialog" aria-label="' + esc(name) + '">';
   h += bossPortraitHTML(enemy, "bm-intro-pic");
-  h += '<div class="bm-kicker">' + (enemy.isElite ? "Élite" : "Boss") + '</div>';
+  h += '<div class="bm-kicker">' + (enemy.isElite ? _t("Élite") : _t("Boss")) + '</div>';
   h += '<div class="bm-name">' + esc(name) + '</div>';
-  if (m.title) h += '<div class="bm-title">' + esc(m.title) + '</div>';
-  if (m.intro) h += '<div class="bm-line">' + esc(m.intro) + '</div>';
-  if (ally) h += '<div class="bm-ally">' + (ally.image ? '<img src="' + esc(ally.image) + '" alt="">' : '') + '<span><b>' + esc(ally.name) + ' :</b> ' + esc(ally.text) + '</span></div>';
-  h += '<div class="bm-skip">Touche pour passer</div><div class="bm-bar" style="animation-duration:' + BOSS_INTRO_MS + 'ms"></div>';
+  if (m.title) h += '<div class="bm-title">' + esc(_td(m.title)) + '</div>';
+  if (m.intro) h += '<div class="bm-line">' + esc(_td(m.intro)) + '</div>';
+  if (ally) h += '<div class="bm-ally">' + (ally.image ? '<img src="' + esc(ally.image) + '" alt="">' : '') + '<span><b>' + esc(_td(ally.name)) + ' :</b> ' + esc(_td(ally.text)) + '</span></div>';
+  h += '<div class="bm-skip">' + _t("Touche pour passer") + '</div><div class="bm-bar" style="animation-duration:' + BOSS_INTRO_MS + 'ms"></div>';
   h += '</div>';
 
   var root = getBossBlockingRoot();
@@ -87,8 +87,8 @@ function showBossBanner(title, sub, ms, flash) {
 
 /* B3 option A : le libellé de checkPhases devient un bandeau central, flash à la première. */
 function showBossPhase(enemy, label, line, full) {
-  var name = window.BossMomentManager ? BossMomentManager.cleanName(enemy) : "";
-  showBossBanner(name + " — " + label, line || "", BOSS_PHASE_MS, !!full);
+  var name = window.BossMomentManager ? _td(BossMomentManager.cleanName(enemy)) : "";
+  showBossBanner(name + " — " + _td(label), _td(line || ""), BOSS_PHASE_MS, !!full);
 }
 
 /* ---------- Coup final et trophée (B4, B5) ---------- */
@@ -100,7 +100,7 @@ function showBossFinal(enemy, trophy) {
   var m = BM.getMoment(enemy);
   bossMomentClearTimers();
   root.innerHTML = '<div class="bm-final">' + bossPortraitHTML(enemy, "bm-final-pic") + '<div class="bm-flash"></div>'
-    + (m.death ? '<div class="bm-final-line">' + esc(m.death) + '</div>' : '') + '</div>';
+    + (m.death ? '<div class="bm-final-line">' + esc(_td(m.death)) + '</div>' : '') + '</div>';
 
   bossMomentTimers.push(setTimeout(function () {
     var el = root.querySelector ? root.querySelector(".bm-final") : null;
@@ -116,11 +116,11 @@ function showBossFinal(enemy, trophy) {
 function buildBossTrophyCardHTML(t) {
   var d = new Date(t.at || Date.now());
   var date = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
-  var bits = [date, "niveau " + t.level];
-  if (t.rounds > 0) bits.push(t.rounds + " round" + (t.rounds > 1 ? "s" : ""));
-  if (t.allies && t.allies.length) bits.push("avec " + t.allies.join(" et "));
+  var bits = [date, _t("niveau {n}", { n: t.level })];
+  if (t.rounds > 0) bits.push(_tn(t.rounds, "{n} round", "{n} rounds"));
+  if (t.allies && t.allies.length) bits.push(_t("avec {x}", { x: t.allies.map(_td).join(" " + _t("et") + " ") }));
   return '<div class="bm-trophy">' + (t.image ? '<img src="' + esc(t.image) + '" alt="">' : '<div class="bm-trophy-empty"></div>')
-    + '<div><div class="bm-trophy-k">Trophée</div><div class="bm-trophy-n">' + esc(t.name) + '</div>'
+    + '<div><div class="bm-trophy-k">' + _t("Trophée") + '</div><div class="bm-trophy-n">' + esc(_td(t.name)) + '</div>'
     + '<div class="bm-trophy-d">' + esc(bits.join(" · ")) + '</div></div></div>';
 }
 
@@ -128,10 +128,10 @@ function showBossVictory(enemy, trophy) {
   var root = getBossBlockingRoot();
   if (!root) return;
   var ally = window.BossMomentManager ? BossMomentManager.allyLine("bossWin") : null;
-  var h = '<div class="bm-win"><div class="bm-win-card"><div class="bm-win-t">Victoire</div>';
-  if (trophy) h += '<div class="bm-new">Nouveau trophée</div>' + buildBossTrophyCardHTML(trophy);
-  if (ally) h += '<div class="bm-win-line">' + esc(ally.name) + ' : « ' + esc(ally.text) + ' »</div>';
-  h += '<button type="button" class="settings-btn primary" onclick="closeBossFinal()">Continuer</button></div></div>';
+  var h = '<div class="bm-win"><div class="bm-win-card"><div class="bm-win-t">' + _t("Victoire") + '</div>';
+  if (trophy) h += '<div class="bm-new">' + _t("Nouveau trophée") + '</div>' + buildBossTrophyCardHTML(trophy);
+  if (ally) h += '<div class="bm-win-line">' + esc(_td(ally.name)) + ' : « ' + esc(_td(ally.text)) + ' »</div>';
+  h += '<button type="button" class="settings-btn primary" onclick="closeBossFinal()">' + _t("Continuer") + '</button></div></div>';
   root.innerHTML = h;
 }
 

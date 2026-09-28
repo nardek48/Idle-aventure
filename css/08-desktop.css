@@ -1,0 +1,88 @@
+/* =========================================================
+   08-desktop.css — v3.367.0 : MODE PC (niveau A, grand écran)
+   Actif seulement quand js/ui/desktop-scale.js pose html.pc-mode
+   (écran ≥ 1000 px, souris). Le mobile ne lit aucune de ces règles.
+   ========================================================= */
+
+/* La colonne mobile entière est agrandie d'un bloc : proportions de téléphone gardées. */
+html.pc-mode {
+  zoom: var(--pc-zoom, 1);
+}
+
+/* vh et dvh ne suivent pas le zoom : 100vh zoomé déborderait de l'écran.
+   On divise donc chaque hauteur « en % d'écran » par le zoom. */
+html.pc-mode body {
+  min-height: calc(100vh / var(--pc-zoom, 1));
+}
+html.pc-mode .title-screen-frame-load { max-height: calc(100vh / var(--pc-zoom, 1)); }
+
+/* Écran titre : même largeur que la colonne de jeu, et jamais plus large qu'un
+   téléphone de même hauteur (sinon les deux boutons sortent par le bas). */
+html.pc-mode .title-screen-stage {
+  max-width: min(390px, calc(100vh / var(--pc-zoom, 1) * 0.54));
+}
+html.pc-mode .hero-picker { max-height: calc(94vh / var(--pc-zoom, 1)); }
+html.pc-mode .full-menu { max-height: calc(88vh / var(--pc-zoom, 1)); }
+html.pc-mode .grimoire-sheet { max-height: calc(82vh / var(--pc-zoom, 1)); }
+html.pc-mode .ksheet { max-height: calc(84vh / var(--pc-zoom, 1)); }
+html.pc-mode .hf-sheet { max-height: calc(70vh / var(--pc-zoom, 1)); }
+
+/* Feuilles du bas et menus : même largeur que la colonne de jeu (sur téléphone,
+   l'écran les bornait déjà ; sur PC elles s'étalaient jusqu'à 640 px). */
+html.pc-mode .full-menu,
+html.pc-mode .ksheet,
+html.pc-mode .grimoire-sheet,
+html.pc-mode .hf-sheet {
+  max-width: 390px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Fond : les côtés de la colonne sont assombris pour que l'œil reste au centre.
+   Même pile que body (01-base.css), avec une couche de voile ajoutée devant. */
+html.pc-mode body {
+  background:
+    linear-gradient(90deg,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.12) calc(50% - 250px),
+      rgba(0, 0, 0, 0) calc(50% - 205px),
+      rgba(0, 0, 0, 0) calc(50% + 205px),
+      rgba(0, 0, 0, 0.12) calc(50% + 250px),
+      rgba(0, 0, 0, 0.55) 100%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.30), rgba(0, 0, 0, 0.10)),
+    var(--world-combat-map, none),
+    var(--world-bg, var(--nb-shell));
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+/* Souris : curseur main sur tout ce qui se clique. */
+html.pc-mode button:not(:disabled),
+html.pc-mode [onclick],
+html.pc-mode .tab-btn {
+  cursor: pointer;
+}
+
+/* Survol : léger éclaircissement, jamais de déplacement (pas de saut de mise en page). */
+html.pc-mode button:not(:disabled):hover,
+html.pc-mode .tab-btn:hover {
+  filter: brightness(1.08);
+}
+
+/* Barres de défilement fines, aux couleurs du parchemin (Chrome, Edge, Firefox). */
+html.pc-mode * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 88, 48, 0.55) transparent;
+}
+
+/* Écran titre : l'illustration déborde, floutée et assombrie, sur les côtés de la colonne. */
+html.pc-mode .title-screen-overlay {
+  background:
+    linear-gradient(rgba(20, 12, 4, 0.62), rgba(20, 12, 4, 0.62)),
+    url("../images/TitleScreen/title_background_new.png") center / cover no-repeat,
+    #1a1006;
+}
+html.pc-mode .title-screen-stage {
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.75);
+}

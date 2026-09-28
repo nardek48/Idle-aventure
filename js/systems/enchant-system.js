@@ -106,15 +106,15 @@ var EnchantManager = {
   },
 
   getBlockReason: function (item, index) {
-    if (this.getBuildingLevel() <= 0) return "Enchanteresse non construite";
-    if (!item) return "Aucune pièce";
-    if (window.heroLockReason && heroLockReason() && this._isEquipped(item)) return "Héros en expédition"; // v3.307.0
-    if (!getItemAffixes(item)[index]) return "Aucun bonus";
+    if (this.getBuildingLevel() <= 0) return _t("Enchanteresse non construite");
+    if (!item) return _t("Aucune pièce");
+    if (window.heroLockReason && heroLockReason() && this._isEquipped(item)) return _t("Héros en expédition"); // v3.307.0
+    if (!getItemAffixes(item)[index]) return _t("Aucun bonus");
     if (!this.canRerollRarity(item.rarity)) {
       var need = this.getRequiredLevel(item.rarity);
-      return need ? ("Niveau " + need + " requis") : "Aucun bonus";
+      return need ? _t("Niveau {n} requis", { n: need }) : _t("Aucun bonus");
     }
-    if (!this.canAfford(item, index)) return "Ressources manquantes";
+    if (!this.canAfford(item, index)) return _t("Ressources manquantes");
     return null;
   },
 
@@ -169,11 +169,11 @@ var EnchantManager = {
     var label = (typeof formatEquipmentStatValue === "function")
       ? formatEquipmentStatValue(affix.stat, kept) : String(kept);
     if (kept > before) {
-      addLog("✨ " + item.name + " : " + label + " (relance réussie).", "event");
+      addLog("✨ " + _t("{x} : {y} (relance réussie).", { x: _td(item.name), y: label }), "event");
       showToast("✨ " + label, 1300);
     } else {
-      addLog("✨ " + item.name + " : la relance n'a pas fait mieux, le bonus est conservé.", "event");
-      showToast("Pas mieux — bonus conservé", 1300);
+      addLog("✨ " + _t("{x} : la relance n'a pas fait mieux, le bonus est conservé.", { x: _td(item.name) }), "event");
+      showToast(_t("Pas mieux — bonus conservé"), 1300);
     }
 
     if (typeof StatsSystem !== "undefined") StatsSystem.recalcStats();

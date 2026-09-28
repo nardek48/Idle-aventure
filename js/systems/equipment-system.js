@@ -123,7 +123,7 @@ function unequipIncompatibleWeapon() {
   game.inventory.push(item);
   game.equipped.weapon = null;
 
-  addLog("⚔️ " + item.name + " retirée (incompatible avec la nouvelle classe)", "event");
+  addLog("⚔️ " + _t("{x} retirée (incompatible avec la nouvelle classe)", { x: _td(item.name) }), "event");
   return true;
 }
 window.unequipIncompatibleWeapon = unequipIncompatibleWeapon;
@@ -146,7 +146,7 @@ function addLootToInventory(item) {
      (arme d'élite) n'est jamais offert d'office : il entre en dépassement. */
   if (game.inventory.length >= getInventoryCap() && !item.unique) {
     var gained = (window.MemoryManager) ? MemoryManager.offerItem(item, "full") : 0;
-    showToast("🎒 Sac plein : " + item.name + " offert" + (gained > 0 ? " (+" + gained + " Aether)" : ""), 2000);
+    showToast("🎒 " + (gained > 0 ? _t("Sac plein : {x} offert (+{n} Aether)", { x: _td(item.name), n: gained }) : _t("Sac plein : {x} offert", { x: _td(item.name) })), 2000);
     return false;
   }
 
@@ -188,7 +188,7 @@ var EquipmentSystem = {
     if (!item || !item.slot || !game.equipped) return;
 
     if (item.slot === "weapon" && !isWeaponIconAllowedForCurrentHero(item.icon)) {
-      showToast("⚔️ Cette arme ne convient pas à ta classe", 1600);
+      showToast(_t("⚔️ Cette arme ne convient pas à ta classe"), 1600);
       return;
     }
 
@@ -204,7 +204,7 @@ var EquipmentSystem = {
       StatsSystem.recalcStats();
     }
 
-    addLog("Équipé : " + item.name, "event");
+    addLog(_t("Équipé : {x}", { x: _td(item.name) }), "event");
     if (typeof renderAll === "function") renderAll();
     saveGame();
   },
@@ -221,7 +221,7 @@ var EquipmentSystem = {
       StatsSystem.recalcStats();
     }
 
-    addLog("Retiré : " + item.name, "event");
+    addLog(_t("Retiré : {x}", { x: _td(item.name) }), "event");
     if (typeof renderAll === "function") renderAll();
     saveGame();
   },
@@ -298,7 +298,7 @@ var EquipmentSystem = {
       gained += self.offerItem(item, "manual"); n++;
       return false;
     });
-    if (!n) showToast("Aucun objet à offrir", 1200);
+    if (!n) showToast(_t("Aucun objet à offrir"), 1200);
     if (typeof renderPanel === "function") renderPanel();
     if (typeof saveGame === "function") saveGame();
   }
@@ -374,8 +374,8 @@ window.addDropToInventory = addDropToInventory;
 
 function toggleAutoSellEquipment() {
   game.autoSellEquipment = !game.autoSellEquipment;
-  addLog(game.autoSellEquipment ? "🤖 Auto-offrande activée" : "🤖 Auto-offrande désactivée", "event"); // v3.322.0
-  showToast(game.autoSellEquipment ? "Auto-offrande activée" : "Auto-offrande désactivée", 1300);
+  addLog("🤖 " + (game.autoSellEquipment ? _t("Auto-offrande activée") : _t("Auto-offrande désactivée")), "event"); // v3.322.0
+  showToast(game.autoSellEquipment ? _t("Auto-offrande activée") : _t("Auto-offrande désactivée"), 1300);
   if (typeof renderPanel === "function") renderPanel();
   saveGame();
 }
@@ -384,8 +384,8 @@ window.toggleAutoSellEquipment = toggleAutoSellEquipment;
 function setAutoSellRarityThreshold(rarity) {
   if (typeof RARITY_ORDER === "undefined" || RARITY_ORDER.indexOf(rarity) === -1) return;
   game.autoSellRarityThreshold = rarity;
-  var label = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[rarity]) || rarity;
-  showToast("Seuil d\u2019auto-offrande : " + label + " et en dessous", 1300);
+  var label = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[rarity]) ? _td(RARITY_LABELS[rarity]) : rarity;
+  showToast(_t("Seuil d’auto-offrande : {x} et en dessous", { x: label }), 1300);
   if (typeof renderPanel === "function") renderPanel();
   saveGame();
 }

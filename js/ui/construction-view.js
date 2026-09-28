@@ -10,7 +10,7 @@ function getConstructionCostMeta(key) {
   }
   var def = WAREHOUSE_RESOURCES[key];
   if (!def) return { label: key, iconHTML: "" };
-  return { label: def.name, iconHTML: renderIconOrEmojiHTML(def.icon, "construction-cost-icon", def.name) };
+  return { label: def.name, iconHTML: renderIconOrEmojiHTML(def.icon, "construction-cost-icon", _td(def.name)) };
 }
 
 function buildConstructionCostRowHTML(label, iconHTML, amount, ok) {
@@ -34,23 +34,23 @@ function buildConstructionModalHTML(id) {
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu construction-popup-card">';
   h += '    <div class="construction-popup-icon"><img class=ico-inline src=images/Icons/workshops/masonry.png></div>';
-  h += '    <div class="construction-popup-title">' + esc(def.name) + '</div>';
-  h += '    <div class="construction-popup-text">' + esc(def.desc) + '</div>';
-  h += '    <div class="construction-popup-meta">Niveau ' + level + ' / ' + VillageBuildingManager.getMaxLevel(id) + '</div>';
-  h += '    <div class="construction-popup-meta"><strong>Bonus actuel : +' + currentBonusPct + '% or de vente à l\'Entrepôt</strong></div>';
+  h += '    <div class="construction-popup-title">' + esc(_td(def.name)) + '</div>';
+  h += '    <div class="construction-popup-text">' + esc(_td(def.desc)) + '</div>';
+  h += '    <div class="construction-popup-meta">' + _t("Niveau {a} / {b}", { a: level, b: VillageBuildingManager.getMaxLevel(id) }) + '</div>';
+  h += '    <div class="construction-popup-meta"><strong>' + _t("Bonus actuel : +{p}% or de vente à l'Entrepôt", { p: currentBonusPct }) + '</strong></div>';
 
   if (maxed) {
-    h += '    <div class="construction-popup-meta">Niveau maximum atteint.</div>';
+    h += '    <div class="construction-popup-meta">' + _t("Niveau maximum atteint.") + '</div>';
     h += '    <div class="construction-popup-actions">';
-    h += '      <button class="settings-btn" type="button" onclick="closeConstructionModal()">Fermer</button>';
-    h += '      <button class="settings-btn primary is-maxed" type="button" disabled>Niveau maximum</button>';
+    h += '      <button class="settings-btn" type="button" onclick="closeConstructionModal()">' + _t("Fermer") + '</button>';
+    h += '      <button class="settings-btn primary is-maxed" type="button" disabled>' + _t("Niveau maximum") + '</button>';
     h += '    </div>';
   } else {
     var nextBonusPct = Math.round((ConstructionManager.getNextBonusMultiplier(id) - 1) * 100);
     var cost = ConstructionManager.getNextCost(id);
     var afford = ConstructionManager.getAffordability(id);
 
-    h += '    <div class="construction-popup-meta">Prochain niveau : +' + nextBonusPct + '% <span class="construction-popup-delta">(+' + (nextBonusPct - currentBonusPct) + ')</span></div>';
+    h += '    <div class="construction-popup-meta">' + _t("Prochain niveau : +{p}%", { p: nextBonusPct }) + ' <span class="construction-popup-delta">(+' + (nextBonusPct - currentBonusPct) + ')</span></div>';
 
     h += '    <div class="construction-cost-list">';
     var costKeys = Object.keys(cost);
@@ -66,11 +66,11 @@ function buildConstructionModalHTML(id) {
     h += '    </div>';
 
     h += '    <div class="construction-popup-actions">';
-    h += '      <button class="settings-btn" type="button" onclick="closeConstructionModal()">Fermer</button>';
+    h += '      <button class="settings-btn" type="button" onclick="closeConstructionModal()">' + _t("Fermer") + '</button>';
     if (afford.all) {
-      h += '      <button class="settings-btn primary" type="button" onclick="buyConstructionFromModal(\'' + id + '\')">Améliorer</button>';
+      h += '      <button class="settings-btn primary" type="button" onclick="buyConstructionFromModal(\'' + id + '\')">' + _t("Améliorer") + '</button>';
     } else {
-      h += '      <button class="settings-btn primary is-unaffordable" type="button" disabled>Améliorer</button>';
+      h += '      <button class="settings-btn primary is-unaffordable" type="button" disabled>' + _t("Améliorer") + '</button>';
     }
     h += '    </div>';
   }

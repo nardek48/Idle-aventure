@@ -194,12 +194,12 @@ var WorkshopsSystem = {
 
     if (workshop.autoRecipeId === recipeId) {
       workshop.autoRecipeId = null;
-      if (typeof showToast === "function") showToast("Production automatique désactivée", 1200);
+      if (typeof showToast === "function") showToast(_t("Production automatique désactivée"), 1200);
     } else {
       workshop.autoRecipeId = recipeId;
       var recipe = this.getRecipe(workshopId, recipeId);
       var outDef = recipe ? WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId] : null;
-      if (typeof showToast === "function") showToast("Auto : " + (outDef ? outDef.name : recipeId), 1200);
+      if (typeof showToast === "function") showToast(_t("Auto : {x}", { x: outDef ? _td(outDef.name) : recipeId }), 1200);
     }
 
     if (typeof renderPanel === "function") renderPanel();
@@ -230,23 +230,23 @@ var WorkshopsSystem = {
      réserve protégée (règle du chaînage auto, sans rapport avec les améliorations). */
   upgradeWorkshop: function (workshopId) {
     var def = WORKSHOPS_CONFIG[workshopId];
-    if (!def || !def.active) return { ok: false, reason: "Atelier invalide" };
-    if (this.isMaxLevel(workshopId)) return { ok: false, reason: this.isWorldCapped(workshopId) ? "Plafond de ce monde" : "Niveau maximum" };
+    if (!def || !def.active) return { ok: false, reason: _t("Atelier invalide") };
+    if (this.isMaxLevel(workshopId)) return { ok: false, reason: this.isWorldCapped(workshopId) ? _t("Plafond de ce monde") : _t("Niveau maximum") };
 
     var cost = this.getUpgradeCost(workshopId);
-    if (!cost) return { ok: false, reason: "Atelier invalide" };
+    if (!cost) return { ok: false, reason: _t("Atelier invalide") };
     var canAfford = Object.keys(cost).every(function (key) {
       return WarehouseManager.getAmount(key) >= cost[key];
     });
-    if (!canAfford) return { ok: false, reason: "Ressources insuffisantes" };
+    if (!canAfford) return { ok: false, reason: _t("Ressources insuffisantes") };
 
     Object.keys(cost).forEach(function (key) { WarehouseManager.removeResource(key, cost[key]); });
 
     var workshop = this.ensureWorkshop(def.buildingId, workshopId);
     workshop.level += 1;
 
-    addLog("⚙️ " + def.name + " amélioré (niv. " + workshop.level + ")", "event");
-    if (typeof showToast === "function") showToast(def.name + " niv. " + workshop.level, 1200);
+    addLog("⚙️ " + _t("{x} amélioré (niv. {n})", { x: _td(def.name), n: workshop.level }), "event");
+    if (typeof showToast === "function") showToast(_t("{x} niv. {n}", { x: _td(def.name), n: workshop.level }), 1200);
 
     if (typeof renderPanel === "function") renderPanel();
     saveGame();
@@ -272,7 +272,7 @@ var WorkshopsSystem = {
     var workshop = this.ensureWorkshop(def.buildingId, workshopId);
     var maxQueueLength = this.getMaxQueueLength(workshopId);
     if (workshop.queue.length >= maxQueueLength) {
-      if (!fromAuto && typeof showToast === "function") showToast("File pleine (max " + maxQueueLength + ")", 1200);
+      if (!fromAuto && typeof showToast === "function") showToast(_t("File pleine (max {n})", { n: maxQueueLength }), 1200);
       return false;
     }
 
@@ -290,7 +290,9 @@ var WorkshopsSystem = {
     });
 
     var outDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
-    addLog((outDef ? outDef.name : recipe.id) + (fromAuto ? " remise en file automatiquement (" : " mise en file (") + def.name + ")", "event");
+    addLog(fromAuto
+      ? _t("{x} remise en file automatiquement ({y})", { x: outDef ? _td(outDef.name) : recipe.id, y: _td(def.name) })
+      : _t("{x} mise en file ({y})", { x: outDef ? _td(outDef.name) : recipe.id, y: _td(def.name) }), "event");
 
     if (!fromAuto) {
       if (typeof renderPanel === "function") renderPanel();
@@ -351,7 +353,7 @@ var WorkshopsSystem = {
       });
     }
     queue.splice(index, 1);
-    addLog("Commande annulée, ressources remboursées (" + def.name + ")", "event");
+    addLog(_t("Commande annulée, ressources remboursées ({x})", { x: _td(def.name) }), "event");
 
     if (typeof renderPanel === "function") renderPanel();
     saveGame();
@@ -419,7 +421,7 @@ var WorkshopsSystem = {
       });
 
       var outDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
-      addLog((outDef ? outDef.name : recipe.id) + " fabriquée ×" + formatNumber(entry.times) + " (" + def.name + ")", "event");
+      addLog(_t("{x} fabriquée ×{n} ({y})", { x: outDef ? _td(outDef.name) : recipe.id, n: formatNumber(entry.times), y: _td(def.name) }), "event");
     }
 
     this._tryAutoEnqueue(workshopId);
@@ -484,7 +486,7 @@ var WorkshopsSystem = {
         });
 
         var outDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
-        addLog((outDef ? outDef.name : recipe.id) + " fabriquée ×" + formatNumber(entry.times) + " (" + def.name + ", hors ligne)", "event");
+        addLog(_t("{x} fabriquée ×{n} ({y}, hors ligne)", { x: outDef ? _td(outDef.name) : recipe.id, n: formatNumber(entry.times), y: _td(def.name) }), "event");
       }
 
       this._tryAutoEnqueue(workshopId);

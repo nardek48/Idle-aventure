@@ -16,7 +16,7 @@ function showConfirmModal(title, text, icon, onConfirm) {
   var textEl = document.getElementById("confirm-text");
   var iconEl = document.getElementById("confirm-icon");
 
-  if (titleEl) titleEl.textContent = title || "Confirmer";
+  if (titleEl) titleEl.textContent = title || _t("Confirmer");
   if (textEl) textEl.textContent = text || "";
   if (iconEl) iconEl.innerHTML = renderIconOrEmojiHTML(icon || "images/Icons/system/ascension.png", "confirm-icon-img", title || "");
 
@@ -49,7 +49,7 @@ function showOfflineModal(offline) {
   var totalMinutes = Math.floor((offline.ms || 0) / 60000);
   var hours = Math.floor(totalMinutes / 60);
   var minutes = totalMinutes % 60;
-  var timeText = hours > 0 ? ("Absent depuis " + hours + "h" + (minutes ? minutes + "m" : "")) : ("Absent depuis " + minutes + "m");
+  var timeText = _t("Absent depuis {d}", { d: hours > 0 ? (hours + "h" + (minutes ? minutes + "m" : "")) : (minutes + "m") });
   if (timeEl) timeEl.textContent = timeText;
 
   if (rewardsEl) {
@@ -57,19 +57,19 @@ function showOfflineModal(offline) {
 
     var pushResourceRow = function (key, amount, suffix) {
       var def = typeof WAREHOUSE_RESOURCES !== "undefined" ? WAREHOUSE_RESOURCES[key] : null;
-      var iconHTML = def && def.icon ? renderIconOrEmojiHTML(def.icon, "offline-reward-icon", def.name) : "📦";
-      rows.push('<div class="offline-reward-row">' + iconHTML + ' +' + formatNumber(amount) + ' ' + esc(def ? def.name : key) + (suffix || "") + '</div>');
+      var iconHTML = def && def.icon ? renderIconOrEmojiHTML(def.icon, "offline-reward-icon", _td(def.name)) : "📦";
+      rows.push('<div class="offline-reward-row">' + iconHTML + ' +' + formatNumber(amount) + ' ' + esc(def ? _td(def.name) : key) + (suffix || "") + '</div>');
     };
 
     Object.keys(offline.produced || {}).forEach(function (key) {
       pushResourceRow(key, offline.produced[key], "");
     });
     Object.keys(offline.crafted || {}).forEach(function (key) {
-      pushResourceRow(key, offline.crafted[key], " (atelier)");
+      pushResourceRow(key, offline.crafted[key], " " + _t("(atelier)"));
     });
 
     if (offline.fullPlots > 0) {
-      rows.push('<div class="offline-reward-row">⚠️ ' + offline.fullPlots + ' zone' + (offline.fullPlots > 1 ? 's' : '') + ' pleine' + (offline.fullPlots > 1 ? 's' : '') + ' sur ' + offline.openPlots + ' — pense à récolter !</div>');
+      rows.push('<div class="offline-reward-row">⚠️ ' + _tn(offline.fullPlots, "{n} zone pleine sur {m} — pense à récolter !", "{n} zones pleines sur {m} — pense à récolter !", { m: offline.openPlots }) + '</div>');
     }
 
     rewardsEl.innerHTML = rows.join("");

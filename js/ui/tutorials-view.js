@@ -18,7 +18,7 @@ window.toggleTutorialSection = toggleTutorialSection;
 
 function selectTutorialEntry(id) {
   var entry = TutorialCatalogManager.getById(id);
-  if (!entry || !TutorialCatalogManager.isUnlocked(entry)) return showToast("Pas encore rencontré", 1200);
+  if (!entry || !TutorialCatalogManager.isUnlocked(entry)) return showToast(_t("Pas encore rencontré"), 1200);
 
   selectedTutorialId = id;
   if (typeof renderPanel === "function") renderPanel();
@@ -36,16 +36,16 @@ function buildTutorialReadingHTML(id) {
   if (!entry) return "";
   var tut = entry.tutorial;
 
-  var h = '<button class="codex-back-btn" type="button" onclick="closeTutorialReading()"><img class=ico-inline src=images/Icons/system/back.png> Retour aux Tutoriels</button>';
+  var h = '<button class="codex-back-btn" type="button" onclick="closeTutorialReading()"><img class=ico-inline src=images/Icons/system/back.png> ' + _t("Retour aux Tutoriels") + '</button>';
   h += '<div class="codex-reading-card">';
-  h += '<div class="codex-reading-icon">' + renderIconOrEmojiHTML(tut.icon || "images/Icons/codex/codex_lore.png", "codex-reading-icon-img", tut.title || "") + '</div>';
-  h += '<div class="codex-reading-title">' + esc(tut.title || "") + '</div>';
+  h += '<div class="codex-reading-icon">' + renderIconOrEmojiHTML(tut.icon || "images/Icons/codex/codex_lore.png", "codex-reading-icon-img", _td(tut.title || "")) + '</div>';
+  h += '<div class="codex-reading-title">' + esc(_td(tut.title || "")) + '</div>';
 
   h += '<div class="tutorial-points tutorial-points-read">';
   (tut.points || []).forEach(function (p) {
     h += '<div class="tutorial-point">';
     h += '<span class="tutorial-point-icon">' + renderIconOrEmojiHTML(p.icon, "tutorial-point-ico", "") + '</span>';
-    h += '<span class="tutorial-point-text">' + esc(p.text || "");
+    h += '<span class="tutorial-point-text">' + esc(_td(p.text || ""));
     // Aperçu de badge réel (ex. télégraphe de charge) : même helper que le popup.
     if (p.preview && typeof buildTutorialPreviewHTML === "function") h += ' ' + buildTutorialPreviewHTML(p.preview);
     h += '</span>';
@@ -64,12 +64,12 @@ function buildTutorialListItemHTML(entry) {
 
   var h = '<button type="button" class="nb-entry-card' + (!unlocked ? ' is-locked' : '') + '" onclick="selectTutorialEntry(\'' + esc(entry.id) + '\')">';
   h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame"><span class="nb-entry-icon-emoji">'
-    + (unlocked ? renderIconOrEmojiHTML(tut.icon || "images/Icons/codex/codex_lore.png", "nb-entry-icon-img", tut.title || "") : '<img class=ico-inline src=images/Icons/system/lock_closed.png>')
+    + (unlocked ? renderIconOrEmojiHTML(tut.icon || "images/Icons/codex/codex_lore.png", "nb-entry-icon-img", _td(tut.title || "")) : '<img class=ico-inline src=images/Icons/system/lock_closed.png>')
     + '</span></div></div>';
   h += '<div class="nb-entry-info-col">';
-  h += '<div class="nb-entry-name">' + (unlocked ? esc(tut.title || "") : '???') + '</div>';
+  h += '<div class="nb-entry-name">' + (unlocked ? esc(_td(tut.title || "")) : '???') + '</div>';
   h += '<div class="nb-entry-desc">'
-    + (unlocked ? (pointCount + ' point' + (pointCount > 1 ? 's' : '') + ' à revoir') : 'Pas encore rencontré.')
+    + (unlocked ? _tn(pointCount, "{n} point à revoir", "{n} points à revoir") : _t("Pas encore rencontré."))
     + '</div>';
   h += '</div>';
   h += '</button>';
@@ -79,7 +79,7 @@ function buildTutorialListItemHTML(entry) {
 function buildTutorialSectionHeaderHTML(section, items, isExpanded) {
   var unlockedInSection = items.filter(function (e) { return TutorialCatalogManager.isUnlocked(e); }).length;
   var h = '<button type="button" class="nb-accordion-head' + (isExpanded ? ' is-expanded' : '') + '" onclick="toggleTutorialSection(\'' + esc(section.id) + '\')">';
-  h += '<span class="nb-accordion-name">' + esc(section.label) + '</span>';
+  h += '<span class="nb-accordion-name">' + esc(_td(section.label)) + '</span>';
   h += '<span class="nb-accordion-count">' + unlockedInSection + ' / ' + items.length + '</span>';
   h += '<span class="nb-accordion-chevron">' + (isExpanded ? "▲" : "▼") + '</span>';
   h += '</button>';
@@ -112,8 +112,8 @@ function buildTutorialsHTML() {
   var unlockedCount = TutorialCatalogManager.getUnlockedCount();
   var total = TutorialCatalogManager.getAll().length;
 
-  var h = '<div class="codex-summary">' + unlockedCount + ' / ' + total + ' rencontrés</div>';
-  h += '<p class="panel-sub tutorials-intro">Chaque explication déjà rencontrée en jeu reste consultable ici.</p>';
+  var h = '<div class="codex-summary">' + _t("{a} / {b} rencontrés", { a: unlockedCount, b: total }) + '</div>';
+  h += '<p class="panel-sub tutorials-intro">' + _t("Chaque explication déjà rencontrée en jeu reste consultable ici.") + '</p>';
 
   // Une fiche ouverte remplace la liste (même navigation que le Codex : un seul niveau de retour).
   if (selectedTutorialId) {
@@ -122,6 +122,6 @@ function buildTutorialsHTML() {
     h += buildTutorialListHTML();
   }
 
-  return '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/codex/codex_lore.png|Tutoriels">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/codex/codex_lore.png|" + _t("Tutoriels")) + '">' + h + '</div>';
 }
 window.buildTutorialsHTML = buildTutorialsHTML;

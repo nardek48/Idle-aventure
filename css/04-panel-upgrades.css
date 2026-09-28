@@ -15,7 +15,7 @@
    Mobile
    ========================= */
 
-@media (max-width: 640px) {
+@media (max-width: 640px), (min-width: 1000px) and (hover: hover) and (pointer: fine) { /* v3.367.0 : + mode PC (colonne mobile) */
   .btn-buy {
     min-width: 46px;
     min-height: 26px;

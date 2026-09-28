@@ -7,9 +7,9 @@
 /* Les trois sources, dans l'ordre d'apparition à l'écran. La clé `source` sert d'identifiant
    de catégorie ET de discriminant pour lire l'état « déjà vu » (chacune le stocke ailleurs). */
 var TUTORIAL_CATALOG_SECTIONS = [
-  { id: "story", label: "Le fil de l'histoire" },
-  { id: "generic", label: "Les bases" },
-  { id: "village", label: "Le village" }
+  { id: "story", label: _t("Le fil de l'histoire") },
+  { id: "generic", label: _t("Les bases") },
+  { id: "village", label: _t("Le village") }
 ];
 
 var TutorialCatalogManager = {

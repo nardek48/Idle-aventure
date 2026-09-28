@@ -23,17 +23,17 @@
 function getEnemyRowBadges(e) {
   var out = [];
   if (!e) return out;
-  if (e.chargeTelegraphed) out.push({ ico: "images/Icons/combat_status/charge_incoming.png", urgent: true, t: "Charge au prochain round" });
-  else if (e.silenceTelegraphed) out.push({ ico: "images/Icons/combat_status/silence_incoming.png", urgent: true, t: "Silence au prochain round" });
-  else if (e.shieldTelegraphed) out.push({ ico: "images/Icons/combat_status/shield_incoming.png", urgent: true, t: "Bouclier au prochain round" });
-  else if (e.healTelegraphed) out.push({ ico: "images/Icons/combat_status/heal_incoming.png", urgent: true, t: "Soin au prochain round" });
-  else if (e.surgeTelegraphed) out.push({ ico: "images/Icons/combat_status/arcane_burn.png", urgent: true, t: "Exaltation au prochain round" });
+  if (e.chargeTelegraphed) out.push({ ico: "images/Icons/combat_status/charge_incoming.png", urgent: true, t: _t("Charge au prochain round") });
+  else if (e.silenceTelegraphed) out.push({ ico: "images/Icons/combat_status/silence_incoming.png", urgent: true, t: _t("Silence au prochain round") });
+  else if (e.shieldTelegraphed) out.push({ ico: "images/Icons/combat_status/shield_incoming.png", urgent: true, t: _t("Bouclier au prochain round") });
+  else if (e.healTelegraphed) out.push({ ico: "images/Icons/combat_status/heal_incoming.png", urgent: true, t: _t("Soin au prochain round") });
+  else if (e.surgeTelegraphed) out.push({ ico: "images/Icons/combat_status/arcane_burn.png", urgent: true, t: _t("Exaltation au prochain round") });
 
-  if (Number(e.engageIn || 0) > 0) out.push({ ico: "images/Icons/combat_status/enemy_approaching.png", urgent: false, t: "Arrive dans " + e.engageIn + " round(s)" });
-  if (e.archetype === "armored") out.push({ ico: "images/Icons/combat_status/armored.png", urgent: false, t: "Blindé" });
-  if (e.archetype === "enraged") out.push({ ico: "images/Icons/combat_status/rage.png", urgent: false, t: "Enragé" });
-  if (e.archetype === "vampiric") out.push({ ico: "images/Icons/combat_status/vampiric.png", urgent: false, t: "Vampirique" });
-  if (e.archetype === "corrupted") out.push({ ico: "images/Icons/combat_status/corruption.png", urgent: false, t: "Corrompu" });
+  if (Number(e.engageIn || 0) > 0) out.push({ ico: "images/Icons/combat_status/enemy_approaching.png", urgent: false, t: _tn(Number(e.engageIn), "Arrive dans {n} round", "Arrive dans {n} rounds") });
+  if (e.archetype === "armored") out.push({ ico: "images/Icons/combat_status/armored.png", urgent: false, t: _t("Blindé") });
+  if (e.archetype === "enraged") out.push({ ico: "images/Icons/combat_status/rage.png", urgent: false, t: _t("Enragé") });
+  if (e.archetype === "vampiric") out.push({ ico: "images/Icons/combat_status/vampiric.png", urgent: false, t: _t("Vampirique") });
+  if (e.archetype === "corrupted") out.push({ ico: "images/Icons/combat_status/corruption.png", urgent: false, t: _t("Corrompu") });
   return out.slice(0, 3); // au-delà, la rangée devient illisible en 320 px
 }
 
@@ -59,7 +59,7 @@ function buildEnemyRowHTML() {
 
     h += '<button type="button" class="cbg-foe' + (e === cible ? " is-target" : "") + (mort ? " is-dead" : "") + '"'
       + ' onclick="selectEnemyTarget(\'' + esc(e.actorId || "") + '\')"'
-      + ' aria-label="' + esc(e.name || "Ennemi") + '">';
+      + ' aria-label="' + esc(e.name ? _td(e.name) : _t("Ennemi")) + '">';
 
     h += '<div class="cbg-foe-frame">';
     h += img
@@ -136,7 +136,7 @@ function buildAllyRowHTML() {
       + (manuel && !ko ? ' onclick="selectCombatActor(\'' + esc(a.actorId) + '\')"' : " disabled") + '>';
     h += '<div class="cbg-ally-portrait"><img src="' + esc((def && def.image) || "") + '" alt=""></div>';
     h += '<div class="cbg-ally-right">';
-    h += '<div class="cbg-ally-name"><span>' + esc(a.name || "") + '</span>';
+    h += '<div class="cbg-ally-name"><span>' + esc(_td(a.name || "")) + '</span>';
     if (choisi) h += '<span class="cbg-ally-tick">\u2713</span>';
     else if (Number(a.cooldown || 0) > 0) h += '<span class="cbg-ally-cd">' + a.cooldown + '</span>';
     h += '</div>';
@@ -184,7 +184,7 @@ function buildHeroCardHTML() {
     + (manuel ? ' onclick="selectCombatActor(\'' + esc(hero.actorId) + '\')"' : " disabled") + '>';
   h += '<div class="cbg-ally-portrait"><img src="' + esc(img) + '" alt=""></div>';
   h += '<div class="cbg-ally-right">';
-  h += '<div class="cbg-ally-name"><span>' + esc(hero.name || "Toi") + '</span>';
+  h += '<div class="cbg-ally-name"><span>' + esc(hero.name || _t("Toi")) + '</span>';
   h += choisi ? '<span class="cbg-ally-tick">\u2713</span>' : '<span class="cbg-ally-cd">\u2014</span>';
   h += '</div>';
   h += '<div class="cbg-ally-hp"><i style="width:' + pct.toFixed(1) + '%"></i></div>';
@@ -215,7 +215,7 @@ function buildCompanionActionsHTML(actor) {
   if (conseil === "skill" && off) conseil = "basic";
   var tag = '<span class="combat-action-suggest-tag"><img class=ico-inline src=images/Icons/codex/codex_lore.png></span>';
   h += '<button type="button" class="cbg-act' + (off ? " is-off" : "") + (choix && choix.slot === "skill" ? " is-picked" : "") + (conseil === "skill" ? " is-suggested" : "") + '"'
-    + ' onclick="companionAction(\'skill\')" aria-label="' + esc(def.skill.name) + '">'
+    + ' onclick="companionAction(\'skill\')" aria-label="' + esc(_td(def.skill.name)) + '">'
     + '<img src="' + esc(def.skill.icon) + '" alt="">'
     + (enRecharge ? '<span class="cbg-act-cd">' + actor.cooldown + '</span>' : "")
     + (!enRecharge && sansCharge ? '<span class="cbg-act-cd">\u2205</span>' : "")
@@ -223,7 +223,7 @@ function buildCompanionActionsHTML(actor) {
     + '</button>';
 
   h += '<button type="button" class="cbg-act' + (choix && choix.slot === "basic" ? " is-picked" : "") + (conseil === "basic" ? " is-suggested" : "") + '"'
-    + ' onclick="companionAction(\'basic\')" aria-label="Attaque">'
+    + ' onclick="companionAction(\'basic\')" aria-label="' + _t("Attaque") + '">'
     + '<img src="images/Icons/special_attacks/attack3.png" alt="">' + (conseil === "basic" ? tag : "") + '</button>';
 
   return '<div class="cbg-acts">' + h + '</div>';
@@ -245,7 +245,7 @@ function companionAction(slot) {
     if (enRecharge || sansCharge) return;
     if (def && def.skill && def.skill.type === "heal") {
       var blesses = CompanionManager.woundedAllies();
-      if (!blesses.length) { showToast("Personne n'est blessé", 1200); return; }
+      if (!blesses.length) { showToast(_t("Personne n'est blessé"), 1200); return; }
       if (blesses.length > 1) { openHealTargetSheet(actor, blesses); return; }
       CombatEngine.queueChoice("skill", blesses[0].actorId);
       return;
@@ -258,18 +258,18 @@ function openHealTargetSheet(actor, blesses) {
   var root = document.getElementById("combat-sortie-sheet-root");
   if (!root) return;
   var h = '<div class="ksheet-backdrop" onclick="closeHealTargetSheet()"></div>';
-  h += '<div class="ksheet cbg-heal-sheet"><div class="ksheet-title"><span>Qui soigner ?</span></div>';
+  h += '<div class="ksheet cbg-heal-sheet"><div class="ksheet-title"><span>' + _t("Qui soigner ?") + '</span></div>';
   h += '<div class="ksheet-body">';
   var bas = blesses.slice().sort(function (x, y) { return (x.hp / x.maxHp) - (y.hp / y.maxHp); })[0];
   blesses.forEach(function (t) {
     var pct = Math.round((t.hp / t.maxHp) * 100);
     h += '<button type="button" class="cbg-heal-opt' + (t === bas ? " is-best" : "") + '"'
       + ' onclick="chooseHealTarget(\'' + esc(t.actorId) + '\')">'
-      + '<div class="cbg-heal-txt"><b>' + esc(t.name || "") + (t === bas ? " \u00b7 le plus bas" : "") + '</b>'
+      + '<div class="cbg-heal-txt"><b>' + esc(_td(t.name || "")) + (t === bas ? " \u00b7 " + _t("le plus bas") : "") + '</b>'
       + '<span>' + formatNumber(Math.ceil(t.hp)) + " / " + formatNumber(t.maxHp) + ' (' + pct + ' %)</span>'
       + '<i class="cbg-heal-bar"><b style="width:' + pct + '%"></b></i></div></button>';
   });
-  h += '</div><button type="button" class="ksheet-close" onclick="closeHealTargetSheet()">Annuler</button></div>';
+  h += '</div><button type="button" class="ksheet-close" onclick="closeHealTargetSheet()">' + _t("Annuler") + '</button></div>';
   root.innerHTML = h;
 }
 
@@ -298,7 +298,7 @@ function buildCompanionBandHTML(actor) {
      sa jauge de ressource. C'est ce qui met les deux barres exactement au même endroit. */
   var h = '<div class="cbg-band">';
   h += '<div class="cbg-band-portrait"><img src="' + esc((def && def.image) || "") + '" alt="">'
-    + '<span class="cbg-band-tag">' + (actor.control === "manual" ? "Manuel" : "Auto") + '</span></div>';
+    + '<span class="cbg-band-tag">' + (actor.control === "manual" ? _t("Manuel") : _t("Auto")) + '</span></div>';
   h += '<div class="cbg-band-hp kgauge kgauge-dragon-claw">'
     + '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct.toFixed(1) + '%"></div></div>'
     + '<span class="kgauge-text">' + formatNumber(Math.ceil(actor.hp)) + " / " + formatNumber(max) + '</span></div>';
@@ -308,8 +308,8 @@ function buildCompanionBandHTML(actor) {
   var dots = "";
   for (var i = 0; i < chargesMax; i++) dots += '<i class="' + (i < Number(actor.charges || 0) ? "" : "is-off") + '"></i>';
   h += '<div class="cbg-band-extra"><div class="cbg-band-line">';
-  if (chargesMax) h += '<span>Charges <span class="cbg-band-dots">' + dots + '</span></span>';
-  h += '<span>' + (Number(actor.cooldown || 0) > 0 ? "Recharge " + actor.cooldown + " r" : "Prêt") + '</span>';
+  if (chargesMax) h += '<span>' + _t("Charges") + ' <span class="cbg-band-dots">' + dots + '</span></span>';
+  h += '<span>' + (Number(actor.cooldown || 0) > 0 ? _t("Recharge {n} r", { n: actor.cooldown }) : _t("Prêt")) + '</span>';
   h += '</div></div>';
   return h;
 }
@@ -320,7 +320,7 @@ function renderActorBand() {
   var btn = document.getElementById("combat-attack-btn");
   if (btn && window.CombatEngine && typeof CombatEngine.hasManualAllies === "function") {
     var sel = CombatEngine.hasManualAllies() ? CombatEngine.selectedActor() : null;
-    btn.textContent = (sel && sel.companionId) ? ("ATTAQUER (" + (sel.name || "") + ")") : "ATTAQUER";
+    btn.textContent = (sel && sel.companionId) ? _t("ATTAQUER ({x})", { x: _td(sel.name || "") }) : _t("ATTAQUER");
   }
 
   var slot = document.getElementById("combat-hero-slot");

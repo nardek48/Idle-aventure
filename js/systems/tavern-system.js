@@ -169,13 +169,13 @@ var TavernManager = {
     var c = this.getContract(id);
     if (!c) return false;
     if (c.done) {
-      showToast("Contrat déjà honoré", 1200);
+      showToast(_t("Contrat déjà honoré"), 1200);
       return false;
     }
 
     var def = WAREHOUSE_RESOURCES[c.resourceId];
     if (WarehouseManager.getAmount(c.resourceId) < c.quantity) {
-      showToast("Pas assez de " + (def ? def.name : c.resourceId), 1400);
+      showToast(_t("Pas assez de {x}", { x: def ? _td(def.name) : c.resourceId }), 1400);
       return false;
     }
 
@@ -191,8 +191,8 @@ var TavernManager = {
       QuestManager.track("goldEarned", payout);
     }
 
-    addLog("🍺 Contrat honoré : " + c.title + " (+" + formatNumber(payout) + " or)", "event");
-    showToast("+" + formatNumber(c.reward) + " or", 1400);
+    addLog("🍺 " + _t("Contrat honoré : {x} (+{n} or)", { x: _td(c.title), n: formatNumber(payout) }), "event");
+    showToast(_t("+{n} or", { n: formatNumber(c.reward) }), 1400);
 
     if (typeof renderAll === "function") renderAll();
     saveGame();

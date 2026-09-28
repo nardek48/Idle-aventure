@@ -19,6 +19,20 @@ function buildAdminHTML() {
   h += '</div>';
   h += '</div>';
 
+  // v3.368.0 (i18n, D3) : choix de langue réservé à l'Admin tant que l'interface n'est pas traduite
+  if (window.I18n) {
+    var cur = I18n.lang();
+    h += '<div class="panel-card admin-card">';
+    h += '<h3><img class=ico-inline src=images/Icons/system/warning.png> Langue (test)</h3>';
+    h += '<p class="panel-sub">La pseudo-langue entoure de ⟦ ⟧ chaque texte déjà traduisible : ce qui reste nu n\'est pas encore extrait. Changer relance le jeu.</p>';
+    h += '<div class="admin-quick-row">';
+    Object.keys(I18N_LANGS).forEach(function (l) {
+      h += '<button class="settings-btn admin-btn"' + (l === cur ? ' disabled' : '') + ' onclick="I18n.setLang(\'' + l + '\')">' + I18N_LANGS[l].label + (l === cur ? ' ✓' : '') + '</button>';
+    });
+    h += '</div>';
+    h += '</div>';
+  }
+
   h += '<div class="panel-card admin-card">';
   h += '<h3><img class=ico-inline src=images/Icons/gold_icon.png> Or</h3>';
   h += adminFieldRow("admin-gold", "Or", game.gold, "adminApplyGold()");

@@ -170,7 +170,7 @@ var AdventureQuestManager = {
       this.forfeit();
       return;
     }
-    if (forceBoss && quest.bossLog) addLog(quest.bossLog, "event"); // v3.360.0 : ligne d'entrée du boss de quête
+    if (forceBoss && quest.bossLog) addLog(_td(quest.bossLog), "event"); // v3.360.0 : ligne d'entrée du boss de quête
 
     game.enemy = enemy;
     if (window.CombatEngine && typeof CombatEngine.prepareEnemy === "function") CombatEngine.prepareEnemy(enemy);
@@ -183,25 +183,25 @@ var AdventureQuestManager = {
     this.ensureDefaults();
 
     var quest = ADVENTURE_QUESTS[questId];
-    if (!quest) return showToast("Quête introuvable", 1200);
-    if (game.adventureQuestsCompleted[questId]) return showToast("Quête déjà terminée", 1200);
-    if (game.adventureQuestRun.active) return showToast("Une quête est déjà en cours", 1200);
+    if (!quest) return showToast(_t("Quête introuvable"), 1200);
+    if (game.adventureQuestsCompleted[questId]) return showToast(_t("Quête déjà terminée"), 1200);
+    if (game.adventureQuestRun.active) return showToast(_t("Une quête est déjà en cours"), 1200);
     if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
-      return showToast("Termine ou abandonne ton donjon avant de lancer une quête", 1600);
+      return showToast(_t("Termine ou abandonne ton donjon avant de lancer une quête"), 1600);
     }
     if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
-      return showToast("Termine ou arrête ta chasse en cours avant de lancer une quête", 1600);
+      return showToast(_t("Termine ou arrête ta chasse en cours avant de lancer une quête"), 1600);
     }
 
     if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
     // v3.311.0 : quête qui se joue avec un compagnon dont la voie doit être choisie (étape 8)
     if (quest.requiresVoie && window.CompanionManager && !CompanionManager.state(quest.requiresVoie).voie) {
-      return showToast("Choisis d'abord la voie de " + (getCompanionDef(quest.requiresVoie) || {}).name + ", dans l'Histoire", 1800);
+      return showToast(_t("Choisis d'abord la voie de {x}, dans l'Histoire", { x: _td((getCompanionDef(quest.requiresVoie) || {}).name) }), 1800);
     }
     this._resetProgress(quest); // v3.260.0 : chaque départ repart de 0
     game.adventureQuestRun = { active: true, questId: questId };
     if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("adventure"); } // v3.102.1 : la quête est une sortie
-    addLog("📜 Départ en quête : " + quest.name, "event");
+    addLog("📜 " + _t("Départ en quête : {x}", { x: _td(quest.name) }), "event");
     this.spawnRunEnemy(quest);
     if (typeof switchTab === "function") switchTab("combat");
     saveGame();
@@ -236,7 +236,7 @@ var AdventureQuestManager = {
       } else if (step.type === "bossKill" && enemy.isBoss && step.bossId === enemy.id) {
         if (progress[step.id] < step.target) {
           progress[step.id] += 1;
-          if (window.MemoryManager) MemoryManager.souvenir("adventureBoss", "Souvenir : " + enemy.name + " vaincu"); // v3.322.0
+          if (window.MemoryManager) MemoryManager.souvenir("adventureBoss", _t("Souvenir : {x} vaincu", { x: _td(enemy.name) })); // v3.322.0
         }
       } else if (step.type === "eliteKill" && enemy.isElite && step.eliteId === enemy.id) {
         // v3.205.0 (E5)
@@ -271,19 +271,19 @@ var AdventureQuestManager = {
         eliteRows = EliteManager.grantReward(quest.eliteId, reward.seve) || [];
       }
 
-      addLog("📜 Quête terminée : " + quest.name + " (+" + formatNumber(reward.gold || 0) + " or)", "event");
-      showToast("📜 " + quest.name + " terminée !", 2200);
+      addLog("📜 " + _t("Quête terminée : {x} (+{n} or)", { x: _td(quest.name), n: formatNumber(reward.gold || 0) }), "event");
+      showToast("📜 " + _t("{x} terminée !", { x: _td(quest.name) }), 2200);
 
       if (typeof openQuestCompletePopup === "function") {
         var rewardRows = [];
-        if (reward.gold) rewardRows.push({ label: "Or", value: formatNumber(reward.gold) });
+        if (reward.gold) rewardRows.push({ label: _t("Or"), value: formatNumber(reward.gold) });
         rewardRows = rewardRows.concat(eliteRows); // v3.205.0 (E5)
         openQuestCompletePopup({
           icon: quest.icon || "📜",
-          title: "Quête terminée !",
+          title: _t("Quête terminée !"),
           text: quest.name,
           rewardRows: rewardRows,
-          closeLabel: "Fermer"
+          closeLabel: _t("Fermer")
         });
       }
     }
@@ -305,7 +305,7 @@ var AdventureQuestManager = {
     var quest = ADVENTURE_QUESTS[game.adventureQuestRun.questId];
     // v3.102.0 (P2) : mort en quête = même règle qu'ailleurs (PV 0, Sang-froid, retour Campement) — plus de soin complet gratuit
     game.heroHp = 0; // v3.327.0 : Sang-froid retiré (décision T9)
-    addLog("💀 Quête interrompue" + (quest ? " : " + quest.name : "") + " — retour au Campement. Au prochain départ, tout est à refaire.", "event");
+    addLog("💀 " + (quest ? _t("Quête interrompue : {x} — retour au Campement. Au prochain départ, tout est à refaire.", { x: _td(quest.name) }) : _t("Quête interrompue — retour au Campement. Au prochain départ, tout est à refaire.")), "event");
     vibrate([80, 40, 80]);
     this.finish(quest, false);
     game.justDied = true;
@@ -317,7 +317,7 @@ var AdventureQuestManager = {
     if (!game.adventureQuestRun.active) return;
     var quest = ADVENTURE_QUESTS[game.adventureQuestRun.questId];
     if (window.SortieManager) SortieManager.end("flee"); // v3.102.1 : abandon = fuite, 50 % du butin
-    addLog("🏳️ Quête abandonnée" + (quest ? " : " + quest.name : "") + " — au prochain départ, tout est à refaire.", "event");
+    addLog("🏳️ " + (quest ? _t("Quête abandonnée : {x} — au prochain départ, tout est à refaire.", { x: _td(quest.name) }) : _t("Quête abandonnée — au prochain départ, tout est à refaire.")), "event");
     this.finish(quest, false);
   }
 };

@@ -35,7 +35,7 @@ var SpecialAttackManager = {
     if (!special) return;
 
     if (this.getCooldownRemainingMs() > 0) {
-      return showToast("⏳ Encore un instant...", 900);
+      return showToast(_t("⏳ Encore un instant..."), 900);
     }
     if (!game.enemy) return;
 
@@ -63,12 +63,12 @@ var SpecialAttackManager = {
       if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
         StatsSystem.recalcStats();
       }
-      addLog("🔥 " + special.name + " ! (+"+ Math.round(special.buffPct * 100) + "% dégâts pendant " + Math.round(special.buffDurationMs / 1000) + "s)", "event");
+      addLog("🔥 " + _t("{x} ! (+{p}% dégâts pendant {s}s)", { x: _td(special.name), p: Math.round(special.buffPct * 100), s: Math.round(special.buffDurationMs / 1000) }), "event");
     } else {
-      addLog("✨ " + special.name + " !", "event");
+      addLog("✨ " + _td(special.name) + " !", "event");
     }
 
-    showToast(special.name, 1400);
+    showToast(_td(special.name), 1400);
     if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
     saveGame();
   }
@@ -102,7 +102,7 @@ var DefenseManager = {
   use: function () {
     this.ensure();
     if (this.getCooldownRemainingMs() > 0) {
-      return showToast("⏳ Encore un instant...", 900);
+      return showToast(_t("⏳ Encore un instant..."), 900);
     }
 
     game.lastDefenseUse = Date.now();
@@ -113,8 +113,8 @@ var DefenseManager = {
       StatsSystem.recalcStats();
     }
 
-    addLog("🛡️ " + DEFENSE_ABILITY.name + " activée (" + Math.round(effectiveDurationMs / 1000) + "s)", "event");
-    showToast(DEFENSE_ABILITY.name, 1400);
+    addLog("🛡️ " + _t("{x} activée ({s}s)", { x: _td(DEFENSE_ABILITY.name), s: Math.round(effectiveDurationMs / 1000) }), "event");
+    showToast(_td(DEFENSE_ABILITY.name), 1400);
     if (typeof renderDefenseButton === "function") renderDefenseButton();
     saveGame();
   }

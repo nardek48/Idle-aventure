@@ -30,7 +30,7 @@ var WorldTravel = {
     WorldManager.enemyIndex = 0;
     if (typeof WorldManager.markWorldReached === "function") WorldManager.markWorldReached(idx);
     if (typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
-    if (typeof addLog === "function") addLog((first ? "🗺️ Nouveau monde : " : "🗺️ Tu rejoins ") + world.name + ".", "zone");
+    if (typeof addLog === "function") addLog("🗺️ " + (first ? _t("Nouveau monde : {x}.", { x: _td(world.name) }) : _t("Tu rejoins {x}.", { x: _td(world.name) })), "zone");
     if (typeof saveGame === "function") saveGame();
     return true;
   },
@@ -73,10 +73,10 @@ var WorldTravel = {
   /* Pourquoi le voyage est refusé (texte affichable), ou null s'il est possible. */
   refusalReason: function (worldId) {
     var idx = this.indexOf(worldId);
-    if (idx === -1) return "Monde inconnu";
-    if (!(game.worldsEverReached && game.worldsEverReached[idx])) return "Tu n'as pas encore atteint ce monde";
-    if (window.WorldManager && Number(WorldManager.worldIndex || 0) === idx) return "Tu y es déjà";
-    if (this.isBusy()) return "Termine d'abord ton combat ou ton expédition";
+    if (idx === -1) return _t("Monde inconnu");
+    if (!(game.worldsEverReached && game.worldsEverReached[idx])) return _t("Tu n'as pas encore atteint ce monde");
+    if (window.WorldManager && Number(WorldManager.worldIndex || 0) === idx) return _t("Tu y es déjà");
+    if (this.isBusy()) return _t("Termine d'abord ton combat ou ton expédition");
     return null;
   },
 

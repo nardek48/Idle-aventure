@@ -36,11 +36,11 @@ var FORECAST_RATIO_THRESHOLDS = {
 
 /* Verdicts, du plus sûr au pire. `level` sert au tri et au style ; `label` est le texte. */
 var COMBAT_FORECAST_LEVELS = [
-  { id: "trivial", level: 0, label: "Sans danger", hint: "" },
-  { id: "abordable", level: 1, label: "Abordable", hint: "" },
-  { id: "risque", level: 2, label: "Risqué", hint: "Garde une potion de soin sous la main." },
-  { id: "tresdur", level: 3, label: "Très difficile", hint: "" },
-  { id: "horsportee", level: 4, label: "Hors de portée", hint: "" }
+  { id: "trivial", level: 0, label: _t("Sans danger"), hint: "" },
+  { id: "abordable", level: 1, label: _t("Abordable"), hint: "" },
+  { id: "risque", level: 2, label: _t("Risqué"), hint: _t("Garde une potion de soin sous la main.") },
+  { id: "tresdur", level: 3, label: _t("Très difficile"), hint: "" },
+  { id: "horsportee", level: 4, label: _t("Hors de portée"), hint: "" }
 ];
 
 var CombatForecast = {
@@ -183,7 +183,7 @@ var CombatForecast = {
     if (healThreshold > 0 && netDmg <= 0) {
       out.unwinnable = true;
       out.id = "horsportee";
-      out.reason = "Il se soigne plus vite que tu ne frappes : ce combat ne peut pas être gagné en l'état.";
+      out.reason = _t("Il se soigne plus vite que tu ne frappes : ce combat ne peut pas être gagné en l'état.");
       out.advice = this.buildAdvice(true);
       return out;
     }
@@ -194,9 +194,9 @@ var CombatForecast = {
     var ratio = out.roundsToKill / Math.max(1, out.roundsToDie);
     out.ratio = ratio;
     var T = FORECAST_RATIO_THRESHOLDS;
-    if (ratio >= T.horsportee) { out.id = "horsportee"; out.reason = "Il te met à terre bien avant de tomber."; }
-    else if (ratio >= T.tresdur) { out.id = "tresdur"; out.reason = "La course est trop serrée : la moindre charge peut te coûter le combat."; }
-    else if (ratio >= T.risque) { out.id = "risque"; out.reason = "Il t'entamera sérieusement."; }
+    if (ratio >= T.horsportee) { out.id = "horsportee"; out.reason = _t("Il te met à terre bien avant de tomber."); }
+    else if (ratio >= T.tresdur) { out.id = "tresdur"; out.reason = _t("La course est trop serrée : la moindre charge peut te coûter le combat."); }
+    else if (ratio >= T.risque) { out.id = "risque"; out.reason = _t("Il t'entamera sérieusement."); }
     else if (ratio >= T.abordable) { out.id = "abordable"; out.reason = ""; }
     else { out.id = "trivial"; out.reason = ""; }
 
@@ -204,13 +204,13 @@ var CombatForecast = {
        d'échec là où le même profil avec trois potions en mesure 0. On le dit plutôt que de
        durcir le verdict en silence. */
     if (reserve <= 0 && (out.id === "tresdur" || out.id === "risque")) {
-      out.advice = "Emporte des potions de soin (Campement → Préparer → Potions) : à ce niveau, elles font la différence entre passer et tomber.";
+      out.advice = _t("Emporte des potions de soin (Campement → Préparer → Potions) : à ce niveau, elles font la différence entre passer et tomber.");
     }
 
     /* Un combat interminable est un mauvais combat, même gagné. */
     if (!out.unwinnable && out.roundsToKill > 60 && out.id !== "horsportee") {
       out.id = "tresdur";
-      out.reason = "Il te faudrait des dizaines de rounds pour en venir à bout.";
+      out.reason = _t("Il te faudrait des dizaines de rounds pour en venir à bout.");
     }
 
     if (!out.advice && (out.id === "tresdur" || out.id === "horsportee")) {
@@ -239,13 +239,12 @@ var CombatForecast = {
     }
 
     var parts = [];
-    if (empty > 0) parts.push(empty + " emplacement" + (empty > 1 ? "s" : "") + " d'équipement vide" + (empty > 1 ? "s" : "") + " — l'échoppe du village est le gain le plus rapide");
-    else if (commons >= 4) parts.push("ton équipement est encore tout en commun : une pièce de meilleure qualité change plus que dix niveaux d'entraînement");
-    if (capped) parts.push("tes caractéristiques butent sur le plafond : c'est le Terrain d'entraînement qu'il faut monter");
-    else parts.push("monte tes caractéristiques dans Héros → Stats");
+    if (empty > 0) parts.push(_tn(empty, "{n} emplacement d'équipement vide — l'échoppe du village est le gain le plus rapide", "{n} emplacements d'équipement vides — l'échoppe du village est le gain le plus rapide"));
+    else if (commons >= 4) parts.push(_t("ton équipement est encore tout en commun : une pièce de meilleure qualité change plus que dix niveaux d'entraînement"));
+    if (capped) parts.push(_t("tes caractéristiques butent sur le plafond : c'est le Terrain d'entraînement qu'il faut monter"));
+    else parts.push(_t("monte tes caractéristiques dans Héros → Stats"));
 
-    var head = unwinnable ? "Reviens plus fort : " : "Pour améliorer tes chances : ";
-    return head + parts.join(", ") + ".";
+    return unwinnable ? _t("Reviens plus fort : {liste}.", { liste: parts.join(", ") }) : _t("Pour améliorer tes chances : {liste}.", { liste: parts.join(", ") });
   },
 
   /* Pronostic pour un RUN entier (quête, chasse, donjon) : on regarde l'ennemi le plus dur

@@ -262,9 +262,9 @@ var StoryQuestManager = {
     if (typeof step.onAccept === "function") step.onAccept(game, st);
     this._applyUnlockTabs(step);
 
-    addLog("📖 " + step.title + " — " + step.narrative.objective, "event");
+    addLog("📖 " + _td(step.title) + " — " + _td(step.narrative.objective), "event");
     var unlocked = this._describeUnlocks(step);
-    if (unlocked && typeof showToast === "function") showToast("🔓 Débloqué : " + unlocked, 2000);
+    if (unlocked && typeof showToast === "function") showToast("🔓 " + _t("Débloqué : {x}", { x: unlocked }), 2000);
 
     this._refreshAfterChange();
     return true;
@@ -277,7 +277,7 @@ var StoryQuestManager = {
 
   _describeUnlocks: function (step) {
     var labels = window.STORY_TAB_LABELS || {};
-    return (step.unlockTabs || []).map(function (t) { return labels[t] || t; }).join(", ");
+    return (step.unlockTabs || []).map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
   },
 
   /* Vérification opportuniste (renderPanel, throttlée) : signale une seule fois le passage à « réclamable ».
@@ -364,8 +364,8 @@ var StoryQuestManager = {
       anyNew = true;
       var step = self.getCurrentStep(chapterId);
       if (!silent) {
-        addLog("✅ Objectif atteint : " + step.title + " — réclame ta récompense dans Quêtes.", "event");
-        if (typeof showToast === "function") showToast("✅ " + step.title + " — récompense prête", 2000);
+        addLog("✅ " + _t("Objectif atteint : {x} — réclame ta récompense dans Quêtes.", { x: _td(step.title) }), "event");
+        if (typeof showToast === "function") showToast("✅ " + _t("{x} — récompense prête", { x: _td(step.title) }), 2000);
       }
       // v3.107.1 : killTarget.autoReturn — dès l'objectif atteint (ex. forest_02 « Premier sang »), retour
       // au Campement pour que le joueur voie tout de suite qu'il peut réclamer, sans continuer à farmer inutilement.
@@ -385,13 +385,13 @@ var StoryQuestManager = {
     var st = this.getState(chapterId);
     if (!step || !st.accepted) return false;
     if (!this.isCurrentStepReady(chapterId)) {
-      if (typeof showToast === "function") showToast("Objectif non atteint", 1200);
+      if (typeof showToast === "function") showToast(_t("Objectif non atteint"), 1200);
       return false;
     }
 
     var rewardRows = this._grantReward(step.reward || {});
     // v3.322.0 (Souvenirs, O10) : une étape d'Histoire terminée, l'Aether s'en souvient
-    if (window.MemoryManager) MemoryManager.souvenir("storyStep", "Souvenir : " + step.title);
+    if (window.MemoryManager) MemoryManager.souvenir("storyStep", _t("Souvenir : {x}", { x: _td(step.title) }));
     st.claimedSteps[step.id] = true;
     st.currentStep += 1;
     // v3.260.0 : une étape déjà réclamée plus loin (forest_brume sur une save v3.259.0) est sautée
@@ -400,7 +400,7 @@ var StoryQuestManager = {
     st.accepted = false;
     st.readyNotified = false;
 
-    addLog("📖 Étape terminée : " + step.title, "event");
+    addLog("📖 " + _t("Étape terminée : {x}", { x: _td(step.title) }), "event");
     if (typeof openQuestCompletePopup === "function") {
       openQuestCompletePopup({
         icon: this.getChapter(chapterId).icon || "images/Icons/camp/campfire.png",
@@ -408,7 +408,7 @@ var StoryQuestManager = {
         text: step.narrative.completion,
         dialogue: step.narrative.completionDialogue || null, // v3.297.0 (W-1a) : la scène d'arrivée, à la réclamation
         rewardRows: rewardRows,
-        closeLabel: "Continuer",
+        closeLabel: _t("Continuer"),
         suggestNextQuest: false // v3.100.4 ; sans effet depuis v3.109.0 (bouton retiré partout), conservé pour lisibilité
       });
     }
@@ -475,7 +475,7 @@ var StoryQuestManager = {
         worldIndex: 0
       };
       if (typeof addLootToInventory === "function" && addLootToInventory(fixe)) {
-        addLog("🎁 Récompense d'histoire : " + fixe.name, "event");
+        addLog("🎁 " + _t("Récompense d'histoire : {x}", { x: _td(fixe.name) }), "event");
         rows.push({ label: "Objet", value: fixe.name });
       }
     }
@@ -483,8 +483,8 @@ var StoryQuestManager = {
     if (reward.uniqueLoot && window.EliteManager) {
       var unique = EliteManager.buildUniqueLoot(reward.uniqueLoot);
       if (unique && typeof addLootToInventory === "function" && addLootToInventory(unique)) {
-        addLog("🎁 Récompense d'histoire : " + unique.name, "event");
-        rows.push({ label: (window.ELITE_UNIQUE_LOOT_LABELS || {})[unique.slot] || "Objet unique", value: unique.name });
+        addLog("🎁 " + _t("Récompense d'histoire : {x}", { x: _td(unique.name) }), "event");
+        rows.push({ label: (window.ELITE_UNIQUE_LOOT_LABELS || {})[unique.slot] || _t("Objet unique"), value: unique.name });
       }
     }
     if (reward.equipmentRarity && reward.equipmentCount) {
@@ -493,7 +493,7 @@ var StoryQuestManager = {
         var item = (window.LootSystem && typeof LootSystem.rollDropAtRarity === "function") ? LootSystem.rollDropAtRarity(reward.equipmentRarity) : null;
         if (item && typeof addLootToInventory === "function" && addLootToInventory(item)) {
           granted += 1;
-          addLog("🎁 Récompense d'histoire : " + item.name, "event");
+          addLog("🎁 " + _t("Récompense d'histoire : {x}", { x: _td(item.name) }), "event");
         }
       }
       if (granted) rows.push({ label: "Objet", value: granted + " (" + ((window.RARITY_LABELS || {})[reward.equipmentRarity] || reward.equipmentRarity) + ")" });
@@ -558,19 +558,19 @@ var StoryQuestManager = {
     if (!info) return false;
     chapterId = info.chapterId;
     var ui = info.step.offeringUi || null; // v3.310.0 : textes propres à l'étape (ex. l'Outre du Veilleur)
-    if (!info.canOffer) { if (typeof showToast === "function") showToast(ui ? ui.lackToast : "Il manque encore de quoi nourrir les braises", 1600); return false; }
+    if (!info.canOffer) { if (typeof showToast === "function") showToast(ui ? _td(ui.lackToast) : _t("Il manque encore de quoi nourrir les braises"), 1600); return false; }
     if (!window.WarehouseManager) return false;
     for (var i = 0; i < info.items.length; i++) {
       if (!WarehouseManager.removeResource(info.items[i].id, info.items[i].need)) return false;
     }
     this.getState(chapterId).counters[info.step.offeringKey || "offeringDone"] = 1;
     if (ui) {
-      addLog(ui.log, "event");
-      if (typeof showToast === "function") showToast(ui.doneToast, 1800);
+      addLog(_td(ui.log), "event");
+      if (typeof showToast === "function") showToast(_td(ui.doneToast), 1800);
       this._checkNow(false); // l'étape est prête tout de suite
     } else {
-      addLog("🔥 Offrande aux braises : " + info.items.map(function (it) { return it.need + " " + it.name; }).join(", ") + ". Les braises rougeoient.", "event");
-      if (typeof showToast === "function") showToast("🔥 Les braises s'éveillent", 1800);
+      addLog("🔥 " + _t("Offrande aux braises : {liste}. Les braises rougeoient.", { liste: info.items.map(function (it) { return it.need + " " + _td(it.name); }).join(", ") }), "event");
+      if (typeof showToast === "function") showToast(_t("🔥 Les braises s'éveillent"), 1800);
     }
     if (typeof vibrate === "function") vibrate([40, 30, 80]);
     if (typeof renderAll === "function") renderAll();

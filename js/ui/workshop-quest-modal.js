@@ -10,17 +10,17 @@ function buildWorkshopStepPopupHTML() {
   h += '  <div class="full-menu workshop-step-popup-card">';
 
   if (wu.completed) {
-    h += '    <div class="workshop-step-popup-title">Chaîne terminée</div>';
-    h += '    <div class="workshop-step-popup-text">L\'Atelier de Construction est débloqué en permanence.</div>';
+    h += '    <div class="workshop-step-popup-title">' + _t("Chaîne terminée") + '</div>';
+    h += '    <div class="workshop-step-popup-text">' + _t("L'Atelier de Construction est débloqué en permanence.") + '</div>';
   } else {
     var step = WORKSHOP_UNLOCK_STEPS[wu.currentStep];
-    h += '    <div class="workshop-step-popup-title">' + esc(step.label) + '</div>';
-    h += '    <div class="workshop-step-popup-text">' + esc(step.narrative.objective) + '</div>';
+    h += '    <div class="workshop-step-popup-title">' + esc(_td(step.label)) + '</div>';
+    h += '    <div class="workshop-step-popup-text">' + esc(_td(step.narrative.objective)) + '</div>';
     h += '    <div class="workshop-step-popup-condition">' + esc(formatWorkshopStepCondition(step)) + '</div>';
   }
 
   h += '    <div class="workshop-step-popup-actions">';
-  h += '      <button class="settings-btn primary" type="button" onclick="closeWorkshopStepPopup()">Fermer</button>';
+  h += '      <button class="settings-btn primary" type="button" onclick="closeWorkshopStepPopup()">' + _t("Fermer") + '</button>';
   h += '    </div>';
   h += '  </div>';
   h += '</div>';
@@ -34,12 +34,12 @@ function formatWorkshopStepCondition(step) {
   var target = parts[1];
 
   var labels = {
-    harvest_wood: "Bois",
-    craft_planks: "Planches fabriquées",
-    harvest_stone: "Pierre",
-    build_workshop: "Niveau de l'Atelier"
+    harvest_wood: _t("Bois"),
+    craft_planks: _t("Planches fabriquées"),
+    harvest_stone: _t("Pierre"),
+    build_workshop: _t("Niveau de l'Atelier")
   };
-  var label = labels[step.id] || step.label;
+  var label = labels[step.id] || _td(step.label);
 
   return current + " / " + target + " " + label;
 }
@@ -68,12 +68,12 @@ function showWorkshopStepCompletionPopup(completedStep, nextStep) {
   var textEl = document.getElementById("workshop-completion-text");
   var nextEl = document.getElementById("workshop-completion-next");
 
-  if (titleEl) titleEl.textContent = "Étape terminée";
-  if (textEl) textEl.textContent = completedStep.narrative.completion;
+  if (titleEl) titleEl.textContent = _t("Étape terminée");
+  if (textEl) textEl.textContent = _td(completedStep.narrative.completion);
 
   if (nextEl) {
     if (nextStep) {
-      nextEl.textContent = "Prochain objectif : " + nextStep.label;
+      nextEl.textContent = _t("Prochain objectif : {x}", { x: _td(nextStep.label) });
       nextEl.style.display = "block";
     } else {
       nextEl.textContent = "";

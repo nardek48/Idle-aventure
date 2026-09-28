@@ -183,9 +183,10 @@ function getProductionPlotUpgradeCost(buildingId, level, plotIndex) {
    zoneNames est absent/incomplet, pour ne jamais planter sur une config partielle. */
 function getProductionZoneName(buildingId, plotIndex) {
   var cfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
-  if (!cfg) return "Zone " + (plotIndex + 1);
-  if (Array.isArray(cfg.zoneNames) && cfg.zoneNames[plotIndex]) return cfg.zoneNames[plotIndex];
-  return (cfg.zoneNamePrefix || "Zone") + " " + (plotIndex + 1);
+  // v3.371.0 (i18n) : noms traduits à l'affichage
+  if (!cfg) return _t("Zone {n}", { n: plotIndex + 1 });
+  if (Array.isArray(cfg.zoneNames) && cfg.zoneNames[plotIndex]) return _td(cfg.zoneNames[plotIndex]);
+  return (cfg.zoneNamePrefix ? _td(cfg.zoneNamePrefix) : _t("Zone")) + " " + (plotIndex + 1);
 }
 
 window.PRODUCTION_PLOTS_SHARED = PRODUCTION_PLOTS_SHARED;

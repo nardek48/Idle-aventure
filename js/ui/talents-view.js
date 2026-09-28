@@ -35,42 +35,42 @@ function talentNodeHTML(node) {
   return '<button type="button" class="tt-node ' + talentNodeState(node) + (node.key ? ' is-key' : '')
     + '" onclick="openTalentSheet(\'' + esc(node.id) + '\')">'
     + talentIconHTML(node) + '<span class="tt-node-col">'
-    + (node.key ? '<span class="tt-key-tag">Clé de voûte</span>' : '')
-    + '<span class="tt-node-name">' + esc(node.name) + '</span>'
-    + '<span class="tt-node-short">' + esc(node.short || "") + '</span>'
+    + (node.key ? '<span class="tt-key-tag">' + _t("Clé de voûte") + '</span>' : '')
+    + '<span class="tt-node-name">' + esc(_td(node.name)) + '</span>'
+    + '<span class="tt-node-short">' + esc(_td(node.short || "")) + '</span>'
     + talentPipsHTML(node) + '</span></button>';
 }
 
 function buildTalentPointsHTML() {
   var TM = TalentManager, cap = TM.cap(), res = TM.reserve(), av = TM.available();
-  var capTxt = isFinite(cap) ? (TM.spent() + " / " + cap + " placés · plafond de l'acte") : (TM.spent() + " placés");
+  var capTxt = isFinite(cap) ? _t("{a} / {b} placés · plafond de l'acte", { a: TM.spent(), b: cap }) : _t("{a} placés", { a: TM.spent() });
   return '<div class="tt-points"><div class="tt-points-main">'
-    + '<div class="tt-points-big"><b>' + av + '</b> point' + (av > 1 ? 's' : '') + ' à placer</div>'
+    + '<div class="tt-points-big">' + _tn(av, "<b>{n}</b> point à placer", "<b>{n}</b> points à placer") + '</div>'
     + '<div class="tt-points-sub">' + capTxt
-    + (res > 0 ? ' · <span class="tt-res">' + res + ' en réserve</span>' : '') + '</div></div>'
+    + (res > 0 ? ' · <span class="tt-res">' + _t("{n} en réserve", { n: res }) + '</span>' : '') + '</div></div>'
     + '<button type="button" class="tt-reset" onclick="respecTalents()"' + (TM.spent() ? '' : ' disabled') + '>'
-    + 'Réinitialiser<small>gratuit</small></button></div>';
+    + _t("Réinitialiser") + '<small>' + _t("gratuit") + '</small></button></div>';
 }
 
 function buildTalentBoardHTML() {
-  if (!window.TalentManager || !TalentManager.getTree()) return '<div class="pc-empty">Talents indisponibles.</div>';
+  if (!window.TalentManager || !TalentManager.getTree()) return '<div class="pc-empty">' + _t("Talents indisponibles.") + '</div>';
   var TM = TalentManager, t = TM.getTree(), gate = window.TALENT_TRUNK_GATE || 2;
   var cls = (typeof getClassById === "function") ? getClassById(TM.getClassId()) : null;
   var h = '<div class="tt-board tt-class-' + esc(TM.getClassId()) + '">';
   h += buildTalentPointsHTML();
 
-  h += '<div class="tt-sec">Tronc' + (cls ? ' · ' + esc(cls.label) : '')
-    + '<small>' + Math.min(gate, TM.trunkSpent()) + ' / ' + gate + ' pour ouvrir les voies</small></div>';
+  h += '<div class="tt-sec">' + _t("Tronc") + (cls ? ' · ' + esc(_td(cls.label)) : '')
+    + '<small>' + _t("{a} / {b} pour ouvrir les voies", { a: Math.min(gate, TM.trunkSpent()), b: gate }) + '</small></div>';
   h += '<div class="tt-trunk">' + t.trunk.map(talentNodeHTML).join("") + '</div>';
 
-  h += '<div class="tt-sec">Voies<small>une seule clé de voûte</small></div><div class="tt-paths">';
+  h += '<div class="tt-sec">' + _t("Voies") + '<small>' + _t("une seule clé de voûte") + '</small></div><div class="tt-paths">';
   var open = TM.trunkSpent() >= gate;
   t.paths.forEach(function (p) {
     var keyOwned = p.nodes.some(function (n) { return n.key && TM.has(n.id); });
     h += '<div class="tt-path"><div class="tt-path-head' + (open ? '' : ' is-locked') + '">'
-      + '<div class="tt-path-name">' + esc(p.name) + '</div>'
-      + '<div class="tt-path-tag">' + esc(p.tag) + '</div>'
-      + '<div class="tt-path-count">' + TM.pathSpent(p) + ' / 4' + (keyOwned ? ' · clé' : '') + '</div></div>';
+      + '<div class="tt-path-name">' + esc(_td(p.name)) + '</div>'
+      + '<div class="tt-path-tag">' + esc(_td(p.tag)) + '</div>'
+      + '<div class="tt-path-count">' + TM.pathSpent(p) + ' / 4' + (keyOwned ? ' · ' + _t("clé", "voûte") : '') + '</div></div>';
     p.nodes.forEach(function (n, i) {
       if (n.key) h += '<div class="tt-link"></div>';
       else if (i > 0) h += '<div class="tt-gap"></div>';
@@ -85,24 +85,25 @@ function buildTalentBoardHTML() {
 /* Corps de la feuille basse (Héros › « talent »). */
 function buildTalentSheetBodyHTML() {
   var TM = window.TalentManager, e = TM && openTalentId ? TM.find(openTalentId) : null;
-  if (!e) return '<div class="pc-empty">Talent introuvable.</div>';
+  if (!e) return '<div class="pc-empty">' + _t("Talent introuvable.") + '</div>';
   var n = e.node, r = TM.rank(n.id), max = TM.maxRank(n);
-  var where = e.zone === "trunk" ? "Tronc" : "Voie " + e.path.name + (n.key ? " · clé de voûte" : "");
-  var reason = TM.blockReason(n.id);
+  var where = e.zone === "trunk" ? _t("Tronc") : _t("Voie {x}", { x: _td(e.path.name) }) + (n.key ? " · " + _t("clé de voûte") : "");
+  var block = TM.blockInfo ? TM.blockInfo(n.id) : null;
+  var reason = block ? block.text : null;
   var h = '<div class="tt-sheet"><div class="tt-sheet-top">' + talentIconHTML(n)
-    + '<div><div class="tt-sheet-title">' + esc(n.name) + '</div>'
-    + '<div class="tt-sheet-where">' + esc(where) + (max > 1 ? ' · rang ' + r + ' / ' + max : '') + '</div></div></div>'
-    + '<div class="tt-sheet-effect">' + esc(n.effect) + '</div>';
-  if (r > 0) h += '<div class="tt-sheet-now">' + (max > 1 ? 'Rang ' + r + ' appris.' : 'Appris.') + '</div>';
+    + '<div><div class="tt-sheet-title">' + esc(_td(n.name)) + '</div>'
+    + '<div class="tt-sheet-where">' + esc(where) + (max > 1 ? ' · ' + _t("rang {a} / {b}", { a: r, b: max }) : '') + '</div></div></div>'
+    + '<div class="tt-sheet-effect">' + esc(_td(n.effect)) + '</div>';
+  if (r > 0) h += '<div class="tt-sheet-now">' + (max > 1 ? _t("Rang {n} appris.", { n: r }) : _t("Appris.")) + '</div>';
   if (r < max) {
     if (reason) h += '<div class="tt-sheet-state">' + esc(reason) + '</div>';
     // v3.336.0 (F-2) : plafond de l'acte -> ce qui l'ouvre, et un geste pour y aller
-    if (reason && /^Plafond de l'acte/.test(reason) && window.FilRouge && typeof FilRouge.howTo === "function") {
+    if (block && block.kind === "actCap" && window.FilRouge && typeof FilRouge.howTo === "function") {
       var how = FilRouge.howTo("talentCap");
-      if (how) h += '<div class="tt-sheet-howto">' + esc(how.text) + ' <button type="button" class="ret-link" onclick="talentHowToGo()">' + esc(how.label) + ' ›</button></div>';
+      if (how) h += '<div class="tt-sheet-howto">' + esc(_td(how.text)) + ' <button type="button" class="ret-link" onclick="talentHowToGo()">' + esc(_td(how.label)) + ' ›</button></div>';
     }
     h += '<button type="button" class="tt-go"' + (reason ? ' disabled' : '') + ' onclick="learnOpenTalent()">'
-      + (r ? 'Rang suivant' : 'Apprendre') + ' · 1 point</button>';
+      + (r ? _t("Rang suivant · 1 point") : _t("Apprendre · 1 point")) + '</button>';
   }
   return h + '</div>';
 }
@@ -128,7 +129,7 @@ function learnOpenTalent() {
 /* Écran autonome (ancien onglet « talents » de ui-root) : même contenu. */
 function buildTalentsHTML() {
   return '<div class="subtab-page"><div class="subtab-page-content">'
-    + '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/scene/node_discovery.png|Talents">'
+    + '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/scene/node_discovery.png|" + _t("Talents")) + '">'
     + buildTalentBoardHTML() + '</div></div></div>';
 }
 

@@ -13,27 +13,27 @@ var pendingTutorial = null; // { chapterId, tutorial } le temps que la modale es
 function buildTutorialPreviewHTML(kind) {
   var def = (window.COMBAT_STATES || {})[kind];
   if (!def) return "";
-  return '<span class="cb-alert tutorial-preview-alert">' + renderIconOrEmojiHTML(def.icon, "", def.nom)
-    + '<span>' + esc(def.mot || def.nom) + '</span></span>';
+  return '<span class="cb-alert tutorial-preview-alert">' + renderIconOrEmojiHTML(def.icon, "", _td(def.nom))
+    + '<span>' + esc(_td(def.mot || def.nom)) + '</span></span>';
 }
 
 function buildTutorialModalHTML(closeHandlerJs, tutorial) {
   var h = '<div class="full-menu-overlay tutorial-overlay">';
   h += '  <div class="full-menu dungeon-story-card tutorial-card">';
   h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(tutorial.icon || "images/Icons/codex/codex_lore.png", "dungeon-story-icon-img", "") + '</div>';
-  h += '    <div class="dungeon-story-title">' + esc(tutorial.title || "") + '</div>';
+  h += '    <div class="dungeon-story-title">' + esc(_td(tutorial.title || "")) + '</div>';
   h += '    <div class="tutorial-points">';
   (tutorial.points || []).forEach(function (p) {
     h += '<div class="tutorial-point">';
     h += '<span class="tutorial-point-icon">' + renderIconOrEmojiHTML(p.icon, "tutorial-point-ico", "") + '</span>';
-    h += '<span class="tutorial-point-text">' + esc(p.text || "");
+    h += '<span class="tutorial-point-text">' + esc(_td(p.text || ""));
     if (p.preview) h += ' ' + buildTutorialPreviewHTML(p.preview);
     h += '</span>';
     h += '</div>';
   });
   h += '    </div>';
   h += '    <div class="dungeon-story-actions">';
-  h += '      <button class="settings-btn primary" type="button" onclick="' + closeHandlerJs + '">Compris</button>';
+  h += '      <button class="settings-btn primary" type="button" onclick="' + closeHandlerJs + '">' + _t("Compris") + '</button>';
   h += '    </div>';
   h += '  </div>';
   h += '</div>';

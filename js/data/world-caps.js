@@ -59,18 +59,29 @@ var TALENT_CAP_BY_ACT = [
   { worldIndex: 1, stepId: "desert_11", act: "III", points: 11 }
 ];
 
-/* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ». */
-var WORLD_CAPS_DE = ["de la", "du", "des", "de la", "de la", "de la"];
+/* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ».
+   v3.371.0 (i18n) : la préposition est un gabarit de phrase complet par monde ({w} = nom
+   du monde, {a} = acte), traduit une fois au chargement (la langue ne change qu'au relancement). */
+var WORLD_CAPS_DE = [
+  _t("à l'acte {a} de la {w}"), _t("à l'acte {a} du {w}"), _t("à l'acte {a} des {w}"),
+  _t("à l'acte {a} de la {w}"), _t("à l'acte {a} de la {w}"), _t("à l'acte {a} de la {w}")
+];
 
 /* Préposition devant chaque nom de monde : « s'ouvre au Désert », « aux Ruines ». */
-var WORLD_CAPS_PREP = ["à la", "au", "aux", "à la", "à la", "à la"];
+var WORLD_CAPS_PREP = [_t("à la {w}"), _t("au {w}"), _t("aux {w}"), _t("à la {w}"), _t("à la {w}"), _t("à la {w}")];
 
 var WorldCaps = {
   /* « au Désert oublié », « aux Ruines anciennes » — index de monde -> texte prêt à lire. */
   withPrep: function (index) {
     var w = (typeof WORLDS !== "undefined") ? WORLDS[index] : null;
-    if (!w) return "dans un prochain monde";
-    return (WORLD_CAPS_PREP[index] || "à") + " " + w.name;
+    if (!w) return _t("dans un prochain monde");
+    return I18n.fill(WORLD_CAPS_PREP[index] || _t("à {w}"), { w: _td(w.name) });
+  },
+
+  /* v3.371.0 : « à l'acte II du Désert oublié » — phrase entière, préposition comprise. */
+  atAct: function (act, index) {
+    var w = (typeof WORLDS !== "undefined") ? WORLDS[index] : null;
+    return I18n.fill(WORLD_CAPS_DE[index] || _t("à l'acte {a} de {w}"), { a: act, w: w ? _td(w.name) : "" });
   },
 
   /* Plus haut monde atteint — même lecture que l'échoppe (getEquipShopWorldPriceMult). */
@@ -134,7 +145,7 @@ var WorldCaps = {
         if (a.worldIndex < world || a.terrain < level) continue;
         if (a.worldIndex === world && SQ && SQ.isStepReached(a.stepId)) continue;
         var w = (typeof WORLDS !== "undefined") ? WORLDS[a.worldIndex] : null;
-        if (w) return "à l'acte " + a.act + " " + (WORLD_CAPS_DE[a.worldIndex] || "de") + " " + w.name;
+        if (w) return this.atAct(a.act, a.worldIndex);
       }
     }
     return this.getWorldOpening(id, level);

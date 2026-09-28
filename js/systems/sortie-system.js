@@ -11,7 +11,7 @@ function getSortiePotionCap() {
 window.getSortiePotionCap = getSortiePotionCap;
 var SORTIE_FLEE_KEEP_PCT = 0.5;   // décision §10 n°3 : fuir = 50 % du butin
 
-var SORTIE_CONTEXT_LABELS = { farm: "exploration", adventure: "quête", hunt: "chasse", dungeon: "donjon", scene: "expédition", mapelite: "élite de la carte" }; // v3.256.0 (C-2) : combat d'élite direct depuis une carte vivante // v3.120.0 (Lot S1) : scene-engine générique
+var SORTIE_CONTEXT_LABELS = { farm: _t("exploration"), adventure: _t("quête"), hunt: _t("chasse"), dungeon: _t("donjon"), scene: _t("expédition"), mapelite: _t("élite de la carte") }; // v3.256.0 (C-2) : combat d'élite direct depuis une carte vivante // v3.120.0 (Lot S1) : scene-engine générique
 
 var SortieManager = {
   emptyLoot: function () {
@@ -55,7 +55,7 @@ var SortieManager = {
     s.loot = this.emptyLoot();
     s.potionsUsed = 0;
     s.kills = 0;
-    addLog("🎒 Départ en sortie (" + (SORTIE_CONTEXT_LABELS[s.context] || s.context) + ") — le butin sera banqué au retour.", "event");
+    addLog("🎒 " + _t("Départ en sortie ({x}) — le butin sera banqué au retour.", { x: SORTIE_CONTEXT_LABELS[s.context] || s.context }), "event");
     // v3.115.0 : potions per-run — leurs effets ne vivent que pendant une mission (jamais le
     // farm libre), le recalc les applique à l'entrée. Voir potion-system.js.
     if (s.context !== "farm" && window.PotionManager && window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
@@ -65,7 +65,7 @@ var SortieManager = {
       StatsSystem.recalcStats();
       game.heroHp = Math.max(0, Math.min(game.heroMaxHp, Math.floor(game.heroMaxHp * hpRatioIn)));
       var armed = Object.keys(game.activePotions || {});
-      if (armed.length) addLog("🧪 " + armed.length + " potion" + (armed.length > 1 ? "s" : "") + " active" + (armed.length > 1 ? "s" : "") + " pour ce run.", "event");
+      if (armed.length) addLog("🧪 " + _tn(armed.length, "{n} potion active pour ce run.", "{n} potions actives pour ce run."), "event");
     }
     if (typeof renderCombatControls === "function") renderCombatControls();
     return true;
@@ -102,13 +102,13 @@ var SortieManager = {
   getLootSummary: function (loot) {
     loot = loot || this.ensure().loot;
     var parts = [];
-    if (loot.gold > 0) parts.push(formatNumber(loot.gold) + " or");
-    if (loot.items.length) parts.push(loot.items.length + " objet" + (loot.items.length > 1 ? "s" : ""));
+    if (loot.gold > 0) parts.push(_t("{n} or", { n: formatNumber(loot.gold) }));
+    if (loot.items.length) parts.push(_tn(loot.items.length, "{n} objet", "{n} objets"));
     Object.keys(loot.resources).forEach(function (k) {
       var q = Math.floor(loot.resources[k]);
       if (q > 0) parts.push(q + " " + k);
     });
-    return parts.length ? parts.join(", ") : "rien";
+    return parts.length ? parts.join(", ") : _t("rien");
   },
 
   /* ---------- Fin de sortie ---------- */
@@ -137,14 +137,14 @@ var SortieManager = {
     var summary = { outcome: outcome, context: s.context, kept: kept, lost: lost, kills: s.kills, potionsUsed: s.potionsUsed };
     var label = SORTIE_CONTEXT_LABELS[s.context] || s.context;
     if (outcome === "death") {
-      addLog("💀 Sortie perdue (" + label + ") : butin abandonné sur place — " + this.getLootSummary(lost) + ".", "event");
+      addLog("💀 " + _t("Sortie perdue ({x}) : butin abandonné sur place — {l}.", { x: label, l: this.getLootSummary(lost) }), "event");
     } else if (outcome === "flee") {
-      addLog("🏳️ Fuite (" + label + ") : " + this.getLootSummary(kept) + " rapportés, " + this.getLootSummary(lost) + " perdus.", "event");
-      showToast("🏳️ Fuite : 50 % du butin conservé", 1800);
+      addLog("🏳️ " + _t("Fuite ({x}) : {k} rapportés, {l} perdus.", { x: label, k: this.getLootSummary(kept), l: this.getLootSummary(lost) }), "event");
+      showToast(_t("🏳️ Fuite : 50 % du butin conservé"), 1800);
     } else {
-      addLog("🏕️ Retour au camp (" + label + ", " + s.kills + " ennemi" + (s.kills > 1 ? "s" : "") + ") : " + this.getLootSummary(kept) + " rapportés.", "event");
+      addLog("🏕️ " + _tn(s.kills, "Retour au camp ({x}, {n} ennemi) : {k} rapportés.", "Retour au camp ({x}, {n} ennemis) : {k} rapportés.", { x: label, n: s.kills, k: this.getLootSummary(kept) }), "event");
       if (kept.gold > 0 || kept.items.length || Object.keys(kept.resources).length) {
-        showToast("🎒 Butin rapporté : " + this.getLootSummary(kept), 2200);
+        showToast("🎒 " + _t("Butin rapporté : {x}", { x: this.getLootSummary(kept) }), 2200);
       }
     }
 
@@ -186,7 +186,7 @@ var SortieManager = {
     }
     loot.items.forEach(function (item) {
       if (typeof addDropToInventory === "function" && addDropToInventory(item)) {
-        addLog("🎁 Objet rapporté : " + item.name + " (" + item.rarity + ")", "event");
+        addLog("🎁 " + _t("Objet rapporté : {x} ({r})", { x: _td(item.name), r: item.rarity }), "event");
       }
     });
     Object.keys(loot.resources).forEach(function (k) {

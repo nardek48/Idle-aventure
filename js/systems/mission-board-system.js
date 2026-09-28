@@ -12,19 +12,20 @@
 /* v3.118.0 (retour Seb) : sur le tableau de missions, ce qui manque avant d'accepter c'est "à quoi
    ça sert", pas le lore (déjà présent ailleurs, ex. popup de préparation). Texte orienté objectif,
    par questId — distinct de quest.description (narratif) utilisé lui dans le popup de préparation. */
+/* v3.370.0 : textes traduits à la définition (changer de langue relance le jeu, i18n D2). */
 var EXPLORATION_BOARD_BLURBS = {
-  blockedPath: "Ouvre l'accès à la Clairière oubliée (mène à la Carrière).",
-  unstableVein: "Débloque la Carrière (pierre).",
-  ironLode: "Débloque la Mine (fer).",
-  driedSpring: "Débloque le Puits (eau).",
-  silentGrove: "Débloque la Scierie (planches).",
-  fallowField: "Débloque les Champs (blé)."
+  blockedPath: _t("Ouvre l'accès à la Clairière oubliée (mène à la Carrière)."),
+  unstableVein: _t("Débloque la Carrière (pierre)."),
+  ironLode: _t("Débloque la Mine (fer)."),
+  driedSpring: _t("Débloque le Puits (eau)."),
+  silentGrove: _t("Débloque la Scierie (planches)."),
+  fallowField: _t("Débloque les Champs (blé).")
 };
 
 var MISSION_TYPE_ICON = { combat: "images/Icons/quests/mission_combat.png", expedition: "images/Icons/quests/mission_exploration.png", chasse: "images/Icons/quests/mission_hunt.png", donjon: "images/Icons/quests/mission_dungeon.png", production: "images/Icons/quests/mission_construction.png" }; // v3.108.0 : production (Les fondations)
 var MISSION_STATUS_LABEL = {
-  locked: "Verrouillée", available: "Disponible", accepted: "Acceptée",
-  running: "En cours", ready: "Objectif atteint", claimable: "Prête à réclamer"
+  locked: _t("Verrouillée"), available: _t("Disponible"), accepted: _t("Acceptée"),
+  running: _t("En cours"), ready: _t("Objectif atteint"), claimable: _t("Prête à réclamer")
 };
 
 /* v3.131.0 (retour Seb) : cap de 3 quêtes actives simultanées, toutes sources non-Histoire
@@ -63,19 +64,19 @@ function isStoryLinkedQuest(questId) {
 function missionRewardSummary(reward) {
   if (!reward) return "";
   var parts = [];
-  if (reward.gold) parts.push(formatNumber(reward.gold) + " or");
+  if (reward.gold) parts.push(_t("{n} or", { n: formatNumber(reward.gold) }));
   if (reward.equipmentRarity && reward.equipmentCount) {
-    var label = (window.RARITY_LABELS && RARITY_LABELS[reward.equipmentRarity]) || reward.equipmentRarity;
-    parts.push(reward.equipmentCount + " objet " + label);
+    var label = _td((window.RARITY_LABELS && RARITY_LABELS[reward.equipmentRarity]) || reward.equipmentRarity);
+    parts.push(_t("{n} objet {r}", { n: reward.equipmentCount, r: label })); // « objet » au singulier : texte d'origine gardé
   }
-  if (reward.healingPotion) parts.push("1 potion de soin");
-  if (reward.seve) parts.push(reward.seve + " Sève d'Aeswyn"); // v3.205.0 (E5)
+  if (reward.healingPotion) parts.push(_t("1 potion de soin"));
+  if (reward.seve) parts.push(_t("{n} Sève d'Aeswyn", { n: reward.seve })); // v3.205.0 (E5)
   // v3.289.0 : la quête qui ouvre un bâtiment de production annonce la dotation de l'intendant
   if (reward.unlockBuildingId && window.ProductionManager) parts.push(ProductionManager.getUnlockGiftSummary());
   if (reward.resources && typeof reward.resources === "object") {
     Object.keys(reward.resources).forEach(function (k) {
       var def = (window.WAREHOUSE_RESOURCES || {})[k];
-      parts.push(formatNumber(reward.resources[k]) + " " + (def ? def.name : k));
+      parts.push(formatNumber(reward.resources[k]) + " " + (def ? _td(def.name) : k));
     });
   }
   return parts.join(" · ");
@@ -83,7 +84,7 @@ function missionRewardSummary(reward) {
 
 function missionWorldName(worldId) {
   var w = (window.WORLDS || []).find(function (x) { return x.id === worldId; });
-  return w ? w.name : null;
+  return w ? _td(w.name) : null;
 }
 
 var MissionBoard = {
@@ -99,9 +100,9 @@ var MissionBoard = {
       var status = !accepted ? "available" : (ready ? "claimable" : "accepted");
       var m = {
         id: "story_" + chapterId, sourceKind: "story", worldId: chapterId,
-        title: step.title, blurb: (step.narrative && step.narrative.objective) || "",
-        type: "combat", place: missionWorldName(chapterId) || step.act || "",
-        objectiveLabel: step.objectiveLabel || "", progressLabel: accepted ? (step.progress ? step.progress(game) : "") : "",
+        title: _td(step.title), blurb: _td((step.narrative && step.narrative.objective) || ""),
+        type: "combat", place: missionWorldName(chapterId) || _td(step.act || ""),
+        objectiveLabel: _td(step.objectiveLabel || ""), progressLabel: accepted ? (step.progress ? step.progress(game) : "") : "",
         rewardSummary: missionRewardSummary(step.reward), badge: "story", status: status, isMain: true
       };
       if (status === "available") m.accept = function () { return StoryQuestManager.acceptStep(chapterId); };
@@ -134,9 +135,9 @@ var MissionBoard = {
       var status = isRunning ? "running" : (running ? "locked" : "available");
       var m = {
         id: "adv_" + quest.id, sourceKind: "adventure", questId: quest.id, worldId: quest.worldId, // v3.247.0 : questId pour le pronostic
-        title: quest.name, blurb: quest.story || "",
+        title: _td(quest.name), blurb: _td(quest.story || ""),
         type: "combat", place: missionWorldName(quest.worldId) || "",
-        objectiveLabel: stepsDone + "/" + quest.steps.length + " objectifs", progressLabel: "",
+        objectiveLabel: _t("{a}/{b} objectifs", { a: stepsDone, b: quest.steps.length }), progressLabel: "",
         rewardSummary: missionRewardSummary(quest.reward), badge: quest.type === "elite" ? "elite" : "contract",
         status: status, isMain: quest.category === "main" || isStoryLinkedQuest(quest.id),
         isElite: quest.type === "elite" // v3.205.0 (E5)
@@ -186,20 +187,19 @@ var MissionBoard = {
       var inLot = isRunning ? Number((game.huntRun && game.huntRun.killsInLot) || 0) : 0;
       var m = {
         id: "hunt_" + quest.id, sourceKind: "hunt", questId: quest.id, worldId: quest.worldId, // v3.247.0 : questId pour le pronostic
-        title: quest.name, blurb: quest.story || "",
+        title: _td(quest.name), blurb: _td(quest.story || ""),
         type: "chasse", place: missionWorldName(quest.worldId) || "",
-        objectiveLabel: "Lot de " + quest.lotSize, progressLabel: isRunning ? (inLot + "/" + quest.lotSize) : "",
+        objectiveLabel: _t("Lot de {n}", { n: quest.lotSize }), progressLabel: isRunning ? (inLot + "/" + quest.lotSize) : "",
         // v3.207.0 : une battue affiche sa prime, pas un taux de drop.
         // v3.236.0 : et un taux de drop nomme sa RESSOURCE — « 3 % par kill »
         // ne disait pas de quoi, maintenant qu'il y a deux chasses à ressource.
         rewardSummary: quest.rewardGold
-          ? (formatNumber(quest.rewardGold) + " or par lot")
+          ? _t("{n} or par lot", { n: formatNumber(quest.rewardGold) })
           : (quest.resourcePool && quest.resourcePool.length > 1
             // v3.260.0 : chasse à ressources multiples — le taux global et la famille, pas six noms
-            ? (quest.dropChancePct + " % de ressource de base par kill")
-            : (quest.dropChancePct + " % de "
-               + (((window.WAREHOUSE_RESOURCES || {})[quest.resourceKey] || {}).name || "butin")
-               + " par kill")),
+            ? _t("{p} % de ressource de base par kill", { p: quest.dropChancePct })
+            : _t("{p} % de {x} par kill", { p: quest.dropChancePct,
+               x: (((window.WAREHOUSE_RESOURCES || {})[quest.resourceKey] || {}).name) ? _td(WAREHOUSE_RESOURCES[quest.resourceKey].name) : _t("butin") })),
         badge: "contract", status: status, isMain: false
       };
       if (status === "available") {
@@ -242,10 +242,10 @@ var MissionBoard = {
       var status = runningHere ? "running" : (isRunning ? "locked" : "available");
       var m = {
         id: "dungeon_" + dungeon.id, sourceKind: "dungeon", worldId: dungeon.worldId || null,
-        title: dungeon.name, blurb: dungeon.story || "",
-        type: "donjon", place: dungeon.name,
-        objectiveLabel: "Vague " + (runningHere ? (game.dungeonRun.wave || 1) : 1) + "/" + DUNGEON_CONFIG.waveCount, progressLabel: "",
-        rewardSummary: DungeonManager.isStoryTicketFree(dungeon.id) ? "Sortie offerte" : (DungeonManager.getRunsLeft(dungeon.id) + " / " + DungeonManager.getRunsPerDay() + " sorties aujourd'hui"), // v3.358.0 (D7)
+        title: _td(dungeon.name), blurb: _td(dungeon.story || ""),
+        type: "donjon", place: _td(dungeon.name),
+        objectiveLabel: _t("Vague {a}/{b}", { a: runningHere ? (game.dungeonRun.wave || 1) : 1, b: DUNGEON_CONFIG.waveCount }), progressLabel: "",
+        rewardSummary: DungeonManager.isStoryTicketFree(dungeon.id) ? _t("Sortie offerte") : _t("{a} / {b} sorties aujourd'hui", { a: DungeonManager.getRunsLeft(dungeon.id), b: DungeonManager.getRunsPerDay() }), // v3.358.0 (D7)
         badge: "contract", status: status, isMain: false
       };
       if (status === "available" && DungeonManager.hasRunLeft(dungeon.id)) m.accept = function () { return DungeonManager.start(dungeon.id, []); };
@@ -303,7 +303,7 @@ var MissionBoard = {
   abandonBoardQuest: function (questId) {
     if (!game.explorationProgression || !game.explorationProgression.boardAccepted) return;
     delete game.explorationProgression.boardAccepted[questId];
-    if (typeof addLog === "function") addLog("🗂️ Quête abandonnée — elle reste disponible pour plus tard.", "event");
+    if (typeof addLog === "function") addLog("🗂️ " + _t("Quête abandonnée — elle reste disponible pour plus tard."), "event");
     if (typeof renderPanel === "function") renderPanel();
     if (typeof saveGame === "function") saveGame();
   },
@@ -346,8 +346,9 @@ var MissionBoard = {
   showActiveQuestCapToast: function () {
     if (typeof showToast !== "function") return;
     var titles = this.getActiveQuestTitles();
-    var detail = titles.length ? " (" + titles.join(", ") + ")" : "";
-    var msg = "⛔ 3 quêtes actives max" + detail + " — abandonnes-en une avant d'en accepter une nouvelle";
+    var msg = "⛔ " + (titles.length
+      ? _t("3 quêtes actives max ({x}) — abandonnes-en une avant d'en accepter une nouvelle", { x: titles.join(", ") })
+      : _t("3 quêtes actives max — abandonnes-en une avant d'en accepter une nouvelle"));
     if (typeof showHowToToast === "function") showHowToToast(msg, "questCap"); // v3.336.0 (F-2)
     else showToast(msg, 3200);
   },
@@ -380,7 +381,7 @@ var MissionBoard = {
       var isDone = ready || idx < currentStep;
       var isCurrent = !ready && idx === currentStep;
       return {
-        label: step.label,
+        label: _td(step.label),
         done: isDone,
         current: isCurrent,
         progress: isCurrent ? step.progress(game) : ""
@@ -391,12 +392,12 @@ var MissionBoard = {
     // libellé concret de l'étape en cours (ex. "Récolter 15 Pierre (2/15)") au lieu du compteur
     // brut d'étapes "2/4" — plus lisible sur le résumé compact du Campement, qui n'a pas la place
     // pour le détail complet des 4 étapes (réservé à la carte de l'écran Quêtes, stepsDetail).
-    var stepProgressLabel = ready ? "Prête à réclamer"
-      : (currentStepData ? currentStepData.label + " (" + currentStepData.progress(game) + ")" : (done + "/" + total));
+    var stepProgressLabel = ready ? _t("Prête à réclamer")
+      : (currentStepData ? _td(currentStepData.label) + " (" + currentStepData.progress(game) + ")" : (done + "/" + total));
     var m = {
       id: "workshop_foundations", sourceKind: "workshop", worldId: null,
-      title: "Les fondations", blurb: "Bois, planches, pierre. Assemble-les, et Aeswyn aura son premier mur.",
-      type: "production", place: "", objectiveLabel: "Construire l'Atelier de Construction (chaîne de 4 objectifs)",
+      title: _t("Les fondations"), blurb: _t("Bois, planches, pierre. Assemble-les, et Aeswyn aura son premier mur."),
+      type: "production", place: "", objectiveLabel: _t("Construire l'Atelier de Construction (chaîne de 4 objectifs)"),
       progressLabel: stepProgressLabel,
       stepsDetail: stepsDetail,
       rewardSummary: missionRewardSummary(STORY_REWARDS.forest_10), badge: "contract",
@@ -405,8 +406,8 @@ var MissionBoard = {
         if (!window.StoryQuestManager) return;
         StoryQuestManager._grantReward(STORY_REWARDS.forest_10); // même récompense qu'avant (575 or, +15 XP ; v3.358.0 : l'essence fondue dans l'or)
         game.workshopFoundationsCompleted = true;
-        addLog("📖 Étape terminée : Les fondations", "event");
-        if (typeof showToast === "function") showToast("🔓 Les fondations terminées", 2000);
+        addLog("📖 " + _t("Étape terminée : {x}", { x: _t("Les fondations") }), "event");
+        if (typeof showToast === "function") showToast("🔓 " + _t("Les fondations terminées"), 2000);
       } : null
     };
     if (accepted) m.launch = launchFn;
@@ -435,8 +436,8 @@ var MissionBoard = {
     var accepted = ready || self._isBoardAccepted("village_" + quest.id);
     var m = {
       id: "village_" + quest.id, sourceKind: "village", worldId: null,
-      title: quest.title, blurb: (quest.narrative && quest.narrative.objective) || "",
-      type: "production", place: "", objectiveLabel: quest.objectiveLabel || "",
+      title: _td(quest.title), blurb: _td((quest.narrative && quest.narrative.objective) || ""),
+      type: "production", place: "", objectiveLabel: _td(quest.objectiveLabel || ""),
       progressLabel: (typeof quest.progress === "function") ? quest.progress() : "",
       rewardSummary: missionRewardSummary(quest.reward || {}), badge: "contract",
       status: ready ? "claimable" : (accepted ? "accepted" : "available"), isMain: false,
@@ -491,8 +492,8 @@ var MissionBoard = {
       var accepted = isRunning || self._isBoardAccepted(templateId);
       var m = {
         id: "scene_" + templateId, sourceKind: "scene", worldId: template.worldId || null, // v3.301.0 : monde du canevas
-        title: template.title, blurb: EXPLORATION_BOARD_BLURBS[legacyId] || "",
-        type: "expedition", place: "", objectiveLabel: "", progressLabel: isRunning ? "En cours" : "",
+        title: _td(template.title), blurb: EXPLORATION_BOARD_BLURBS[legacyId] || "",
+        type: "expedition", place: "", objectiveLabel: "", progressLabel: isRunning ? _t("En cours") : "",
         rewardSummary: "", badge: "contract", status: isRunning ? "running" : (accepted ? "accepted" : "available"), isMain: false
       };
       // v3.289.0 : dotation de l'intendant affichée sur les quêtes qui ouvrent un bâtiment
@@ -524,7 +525,7 @@ var MissionBoard = {
      plus seulement celle de la Forêt. Chacune porte son monde : le filtre du tableau montre celle
      du monde où tu es. Visibilité par boardRequires du canevas ; cap journalier partagé. La carte
      vivante sert de porte d'entrée si le monde en a une (la Forêt ; le Désert à l'étape 4). */
-  _PA_BLURB: "Un parcours court, choisis ton style : rapide et risqué, ou lent et sûr.",
+  _PA_BLURB: _t("Un parcours court, choisis ton style : rapide et risqué, ou lent et sûr."),
 
   _petiteAventureTemplateIds: function () {
     if (!window.SCENE_TEMPLATES) return [];
@@ -558,15 +559,15 @@ var MissionBoard = {
     var map = (worldId && window.LivingMapManager) ? LivingMapManager.getMapForWorld(worldId) : null;
     var hasMap = !!(map && typeof openLivingMap === "function");
     var mapId = map ? (map.id || worldId) : null;
-    var blurb = hasMap ? LivingMapManager.getWords(mapId).mapBlurb : this._PA_BLURB; // v3.305.0 : texte de la carte
+    var blurb = hasMap ? _td(LivingMapManager.getWords(mapId).mapBlurb) : this._PA_BLURB; // v3.305.0 : texte de la carte
     if (!isRunning && !canStart) blurb += " " + SceneRunManager.petiteAventureWaitLabel() + "."; // v3.366.0 : recharge
     var m = {
       id: templateId, sourceKind: "scene", worldId: worldId, isPetiteAventure: true,
-      title: template.title, blurb: blurb,
+      title: _td(template.title), blurb: blurb,
       type: "expedition", place: "", objectiveLabel: "",
       // v3.125.0 : le compteur "X/N aujourd'hui" passe par rewardSummary (progressLabel = running seulement)
-      progressLabel: isRunning ? "En cours" : "",
-      rewardSummary: (canStart && !isRunning) ? (remaining + "/" + cap + " disponibles") : "", // v3.366.0
+      progressLabel: isRunning ? _t("En cours") : "",
+      rewardSummary: (canStart && !isRunning) ? _t("{a}/{b} disponibles", { a: remaining, b: cap }) : "", // v3.366.0
       badge: "contract",
       status: isRunning ? "running" : (canStart ? "available" : "unavailable"),
       isMain: false

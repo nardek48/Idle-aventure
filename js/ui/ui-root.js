@@ -133,7 +133,7 @@ function switchTab(tabName) {
   // d'un jeu figé sans qu'aucun message n'explique qu'il fallait repasser par le Campement.
   if (tabName === "combat" && (game.heroHp || 0) <= 0) {
     tabName = "campement";
-    if (typeof showToast === "function") showToast("💀 Tu es à terre — soigne-toi au Campement avant de repartir.", 2000);
+    if (typeof showToast === "function") showToast(_t("💀 Tu es à terre — soigne-toi au Campement avant de repartir."), 2000);
   }
 
   // v3.293.0 (règle Seb) : plus de farm libre. Sans run de quête en cours, l'écran Combat
@@ -167,8 +167,8 @@ function switchTab(tabName) {
     var targetTab = tabName;
     if (typeof showConfirmModal === "function") {
       showConfirmModal(
-        "Abandonner l'expédition ?",
-        "Tu perds la moitié du butin non sécurisé. Le reste sera rapporté au village.",
+        _t("Abandonner l'expédition ?"),
+        _t("Tu perds la moitié du butin non sécurisé. Le reste sera rapporté au village."),
         "⚠️",
         function () {
           if (window.SceneRunManager && typeof SceneRunManager.abandon === "function") SceneRunManager.abandon();
@@ -347,7 +347,7 @@ function renderPanel() {
       container.innerHTML = buildAchievementsHTML();
       break;
     case "afflictions": // v3.254.0 : écran supprimé — une sauvegarde d'avant la v3.245.0 peut encore pointer dessus
-      container.innerHTML = '<div class="panel-card"><p class="panel-sub">Les Marques se choisissent désormais à l\u2019entrée d\u2019un donjon (Campement → Expédition → Donjon).</p></div>';
+      container.innerHTML = '<div class="panel-card"><p class="panel-sub">' + _t("Les Marques se choisissent désormais à l’entrée d’un donjon (Campement → Expédition → Donjon).") + '</p></div>';
       break;
     case "tutorials": // v3.208.0 : ui/tutorials-view.js (consultation des popups pédagogiques)
       container.innerHTML = buildTutorialsHTML();

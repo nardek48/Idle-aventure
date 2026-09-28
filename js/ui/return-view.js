@@ -10,7 +10,7 @@ var returnScreenState = null; // { summary, harvested, delivered, line }
 
 function returnResName(key) {
   var def = (window.WAREHOUSE_RESOURCES || {})[key];
-  return def ? def.name : key;
+  return def ? _td(def.name) : key;
 }
 
 function returnResIcon(key) {
@@ -46,25 +46,26 @@ function getReturnStockLeft() {
 function buildReturnScreenHTML() {
   var st = returnScreenState;
   var s = st.summary;
-  var h = '<div class="ret-card" role="dialog" aria-label="Pendant ton absence">';
+  var h = '<div class="ret-card" role="dialog" aria-label="' + _t("Pendant ton absence") + '">';
   h += '<div class="ret-top"><img src="images/Icons/system/offline_progress.png" alt="">'
-    + '<div class="ret-title">Pendant ton absence</div>'
-    + '<div class="ret-time">Tu es parti ' + esc(window.ResumeManager ? ResumeManager.formatAbsence(s.ms || 0) : "") + '.</div></div>';
-  if (st.line) h += '<div class="ret-line">' + esc(st.line) + '</div>';
+    + '<div class="ret-title">' + _t("Pendant ton absence") + '</div>'
+    + '<div class="ret-time">' + esc(_t("Tu es parti {d}.", { d: window.ResumeManager ? ResumeManager.formatAbsence(s.ms || 0) : "" })) + '</div></div>';
+  if (st.line) h += '<div class="ret-line">' + esc(_td(st.line)) + '</div>';
 
   // Village (production des zones)
   var produced = Object.keys(s.produced || {});
   if (produced.length) {
     var vb = '<div class="ret-gains">' + produced.map(function (k) { return buildReturnGainHTML(k, s.produced[k], st.harvested); }).join("") + '</div>';
     if (!st.harvested && s.fullPlots > 0) {
-      vb += '<div class="ret-warn">' + s.fullPlots + ' zone' + (s.fullPlots > 1 ? 's pleines' : ' pleine') + ' sur ' + s.openPlots + ' — elle' + (s.fullPlots > 1 ? 's ne produisent' : ' ne produit') + ' plus.</div>';
+      vb += '<div class="ret-warn">' + _tn(s.fullPlots, "{n} zone pleine sur {m} — elle ne produit plus.", "{n} zones pleines sur {m} — elles ne produisent plus.", { m: s.openPlots }) + '</div>';
     }
     if (st.harvested) {
       var left = getReturnStockLeft();
       var lk = Object.keys(left);
-      if (lk.length) vb += '<div class="ret-warn">Entrepôt plein : ' + lk.map(function (k) { return formatNumber(left[k]) + ' ' + esc(returnResName(k)); }).join(", ") + ' reste' + (lk.length > 1 || left[lk[0]] > 1 ? 'nt' : '') + ' dans les zones.</div>';
+      if (lk.length) vb += '<div class="ret-warn">' + _tn(lk.length > 1 ? 2 : left[lk[0]], "Entrepôt plein : {x} reste dans les zones.", "Entrepôt plein : {x} restent dans les zones.",
+        { x: lk.map(function (k) { return formatNumber(left[k]) + ' ' + esc(returnResName(k)); }).join(", ") }) + '</div>';
     }
-    h += buildReturnSectionHTML("images/Icons/menu_icons/village_menu.png", "Village" + (st.harvested ? " · récolté" : " · à récolter"), vb);
+    h += buildReturnSectionHTML("images/Icons/menu_icons/village_menu.png", st.harvested ? _t("Village · récolté") : _t("Village · à récolter"), vb);
   }
 
   // Ateliers et chantier
@@ -72,23 +73,23 @@ function buildReturnScreenHTML() {
   if (crafted.length || s.siteDone) {
     var ab = "";
     if (crafted.length) ab += '<div class="ret-gains">' + crafted.map(function (k) { return buildReturnGainHTML(k, s.crafted[k], true); }).join("") + '</div>';
-    if (s.siteDone) ab += 'Chantier terminé : <b>' + esc(s.siteDone.name) + ' niveau ' + s.siteDone.level + '</b>.';
-    h += buildReturnSectionHTML("images/Icons/construction_icon.png", "Ateliers et chantier", ab);
+    if (s.siteDone) ab += _t("Chantier terminé : <b>{x} niveau {n}</b>.", { x: esc(_td(s.siteDone.name)), n: s.siteDone.level });
+    h += buildReturnSectionHTML("images/Icons/construction_icon.png", _t("Ateliers et chantier"), ab);
   }
 
   // Taverne
   var ready = getReturnDeliverables();
   if (s.tavernNew || ready.length || st.delivered) {
     var tb;
-    if (st.delivered) tb = 'Contrats livrés : <b>+' + formatNumber(st.delivered) + ' or</b>.';
-    else tb = (s.tavernNew ? 'Nouveaux contrats. ' : '') + (ready.length ? '<b>' + ready.length + ' livrable' + (ready.length > 1 ? 's' : '') + ' maintenant.</b>' : 'Rien de livrable pour l\u2019instant.');
-    h += buildReturnSectionHTML("images/Icons/village_buildings/tavern.png", "Taverne", tb);
+    if (st.delivered) tb = _t("Contrats livrés : <b>+{n} or</b>.", { n: formatNumber(st.delivered) });
+    else tb = (s.tavernNew ? _t("Nouveaux contrats.") + ' ' : '') + (ready.length ? '<b>' + _tn(ready.length, "{n} livrable maintenant.", "{n} livrables maintenant.") + '</b>' : _t("Rien de livrable pour l’instant."));
+    h += buildReturnSectionHTML("images/Icons/village_buildings/tavern.png", _t("Taverne"), tb);
   }
 
   // Héros
   if (s.hpGain > 0) {
-    h += buildReturnSectionHTML("images/Icons/camp/campfire.png", "Héros",
-      '+' + formatNumber(s.hpGain) + ' PV au coin du feu (' + formatNumber(Math.floor(game.heroHp || 0)) + ' / ' + formatNumber(game.heroMaxHp || 0) + ').');
+    h += buildReturnSectionHTML("images/Icons/camp/campfire.png", _t("Héros"),
+      _t("+{n} PV au coin du feu ({a} / {b}).", { n: formatNumber(s.hpGain), a: formatNumber(Math.floor(game.heroHp || 0)), b: formatNumber(game.heroMaxHp || 0) }));
   }
 
   // Patrouilles (lot P-1)
@@ -97,26 +98,26 @@ function buildReturnScreenHTML() {
   // Gestes (R3)
   h += '<div class="ret-acts">';
   if (produced.length) {
-    if (!st.harvested) h += '<button type="button" class="settings-btn primary" onclick="returnHarvestAll()">Tout récolter</button>';
-    else h += '<div class="ret-done">✓ Récolte faite.</div>';
+    if (!st.harvested) h += '<button type="button" class="settings-btn primary" onclick="returnHarvestAll()">' + _t("Tout récolter") + '</button>';
+    else h += '<div class="ret-done">✓ ' + _t("Récolte faite.") + '</div>';
   }
   if (ready.length && !st.delivered) {
     var cost = ready.map(function (c) { return '−' + formatNumber(c.quantity) + ' ' + returnResName(c.resourceId); }).join(", ");
     var pay = ready.reduce(function (sum, c) { return sum + TavernManager.getPayout(c); }, 0);
-    h += '<button type="button" class="settings-btn" onclick="returnDeliverAll()"><span class="ret-btn-col"><span>Livrer '
-      + ready.length + ' contrat' + (ready.length > 1 ? 's' : '') + ' · +' + formatNumber(pay) + ' or</span><small>' + esc(cost) + '</small></span></button>';
+    h += '<button type="button" class="settings-btn" onclick="returnDeliverAll()"><span class="ret-btn-col"><span>'
+      + _tn(ready.length, "Livrer {n} contrat · +{p} or", "Livrer {n} contrats · +{p} or", { p: formatNumber(pay) }) + '</span><small>' + esc(cost) + '</small></span></button>';
   } else if (st.delivered) {
-    h += '<div class="ret-done">✓ Contrats livrés.</div>';
+    h += '<div class="ret-done">✓ ' + _t("Contrats livrés.") + '</div>';
   }
   h += '</div>';
 
   // Fil rouge en pied d'écran
   if (window.FilRouge) {
     var a = FilRouge.next();
-    h += '<div class="ret-next"><img src="' + a.icon + '" alt=""><div class="ret-next-t"><small>Ensuite</small><b>' + esc(a.title) + '</b></div>'
-      + '<button type="button" onclick="returnGoFilRouge()">' + esc(a.goLabel) + '</button></div>';
+    h += '<div class="ret-next"><img src="' + a.icon + '" alt=""><div class="ret-next-t"><small>' + _t("Ensuite") + '</small><b>' + esc(_td(a.title)) + '</b></div>'
+      + '<button type="button" onclick="returnGoFilRouge()">' + esc(_td(a.goLabel)) + '</button></div>';
   }
-  h += '<button type="button" class="ret-close" onclick="closeReturnScreen()">Continuer</button>';
+  h += '<button type="button" class="ret-close" onclick="closeReturnScreen()">' + _t("Continuer") + '</button>';
   h += '</div>';
   return h;
 }
@@ -186,14 +187,14 @@ function renderReturnPending(on) {
     el.type = "button";
     el.className = "ret-pending";
     el.setAttribute("onclick", "returnPendingTap()");
-    el.innerHTML = '<img src="images/Icons/system/offline_progress.png" alt="">Retour · après le combat';
+    el.innerHTML = '<img src="images/Icons/system/offline_progress.png" alt="">' + _t("Retour · après le combat");
     document.body.appendChild(el);
   }
 }
 
 function returnPendingTap() {
   if (window.ReturnManager && !ReturnManager.flushPending() && typeof showToast === "function") {
-    showToast("Termine d'abord ce que tu as commencé", 1400);
+    showToast(_t("Termine d'abord ce que tu as commencé"), 1400);
   }
 }
 

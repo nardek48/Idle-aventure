@@ -122,16 +122,16 @@ var PatrolManager = {
     var list = p.story.rare ? pool.rare : pool.common;
     var txt = list[p.story.index] || list[0] || "";
     var def = this.getSectorDef(p.mapId, p.sectorId);
-    return txt.replace(/\{secteur\}/g, def ? def.name : "");
+    return _td(txt).replace(/\{secteur\}/g, def ? _td(def.name) : ""); // v3.374.0 : traduit AVANT la substitution
   },
 
   /* ---------- Actions ---------- */
 
   canStart: function (companionId) {
-    if (!window.CompanionManager || !CompanionManager.isUnlocked(companionId)) return "Compagnon indisponible";
-    if (this.isOnPatrol(companionId)) return "Déjà en patrouille";
+    if (!window.CompanionManager || !CompanionManager.isUnlocked(companionId)) return _t("Compagnon indisponible");
+    if (this.isOnPatrol(companionId)) return _t("Déjà en patrouille");
     if (window.heroLockReason && heroLockReason()) return heroLockReason();
-    if (game.activeTab === "combat") return "Pas pendant un combat";
+    if (game.activeTab === "combat") return _t("Pas pendant un combat");
     return null;
   },
 
@@ -140,7 +140,7 @@ var PatrolManager = {
     if (why) { if (typeof showToast === "function") showToast(why, 1400); return false; }
     if (PATROL_DURATIONS_H.indexOf(Number(hours)) === -1) return false;
     var dest = this.getDestinations().filter(function (d) { return d.sectorId === sectorId; })[0];
-    if (!dest) { if (typeof showToast === "function") showToast("Secteur à libérer d'abord", 1400); return false; }
+    if (!dest) { if (typeof showToast === "function") showToast(_t("Secteur à libérer d'abord"), 1400); return false; }
 
     var now = Date.now();
     var r = this.roll(companionId, dest.mapId, sectorId, Number(hours), rng);
@@ -151,7 +151,7 @@ var PatrolManager = {
     };
     if (window.AchievementManager) AchievementManager.onPatrolStarted(); // v3.338.0 : « Le camp est vide »
     var def = getCompanionDef(companionId);
-    if (typeof addLog === "function") addLog("🧭 " + (def ? def.name : companionId) + " part en patrouille : " + dest.name + " (" + hours + " h).", "event");
+    if (typeof addLog === "function") addLog("🧭 " + _t("{x} part en patrouille : {d} ({h} h).", { x: def ? _td(def.name) : companionId, d: _td(dest.name), h: hours }), "event");
     this._refresh();
     return true;
   },
@@ -201,7 +201,7 @@ var PatrolManager = {
     if (window.AchievementManager) AchievementManager.onPatrolCollected(p); // v3.338.0 (pas au rappel : patrouille inachevée)
     delete this.ensure()[companionId];
     var def = getCompanionDef(companionId);
-    if (typeof addLog === "function") addLog("🧭 " + (def ? def.name : companionId) + " rentre de patrouille : " + this._describe(res) + ".", "event");
+    if (typeof addLog === "function") addLog("🧭 " + _t("{x} rentre de patrouille : {r}.", { x: def ? _td(def.name) : companionId, r: this._describe(res) }), "event");
     this._refresh();
     return res;
   },
@@ -229,7 +229,9 @@ var PatrolManager = {
     res.recalled = true;
     delete this.ensure()[companionId];
     var def = getCompanionDef(companionId);
-    if (typeof addLog === "function") addLog("🧭 " + (def ? def.name : companionId) + " est rappelé" + (PATROL_COMPANION_FEMININE[companionId] ? "e" : "") + " : " + this._describe(res) + ".", "event");
+    if (typeof addLog === "function") addLog("🧭 " + (PATROL_COMPANION_FEMININE[companionId]
+      ? _t("{x} est rappelée : {r}.", { x: def ? _td(def.name) : companionId, r: this._describe(res) })
+      : _t("{x} est rappelé : {r}.", { x: def ? _td(def.name) : companionId, r: this._describe(res) })), "event");
     this._refresh();
     return res;
   },
@@ -237,10 +239,10 @@ var PatrolManager = {
   _describe: function (res) {
     var parts = Object.keys(res.loot || {}).map(function (k) {
       var d = (window.WAREHOUSE_RESOURCES || {})[k];
-      return "+" + formatNumber(res.loot[k]) + " " + (d ? d.name : k);
+      return "+" + formatNumber(res.loot[k]) + " " + (d ? _td(d.name) : k);
     });
-    if (res.gold) parts.push("+" + formatNumber(res.gold) + " or");
-    return parts.length ? parts.join(", ") : "rien";
+    if (res.gold) parts.push(_t("+{n} or", { n: formatNumber(res.gold) }));
+    return parts.length ? parts.join(", ") : _t("rien");
   },
 
   _refresh: function () {

@@ -283,10 +283,10 @@ var ClassCombatManager = {
     if (action.type === "defense") {
       this.activateDefenseEffect(action);
       if (game.enemy) this.applyActionEffects(action, 0, matchedConditionId);
-      addLog("🛡️ " + action.label + " !", "event"); // v3.294.0 : plus de popup, le bandeau de combat suffit (retour Seb)
+      addLog("🛡️ " + _td(action.label) + " !", "event"); // v3.294.0 : plus de popup, le bandeau de combat suffit (retour Seb)
     } else {
       this.applyDamageAction(action, matchedConditionId);
-      addLog("✨ " + action.label + " !", "event"); // v3.294.0 : idem, journal seulement
+      addLog("✨ " + _td(action.label) + " !", "event"); // v3.294.0 : idem, journal seulement
     }
 
     return true;
@@ -312,8 +312,8 @@ var ClassCombatManager = {
           : 0;
         CombatReportManager.logCounterSuccess(slot, matchedConditionId, estimatedValue);
       }
-      addLog("⚡ Contre réussi : " + (action.label || "l'action") + " annule l'attaque adverse !", "event");
-      showToast("⚡ Contré !", 1600);
+      addLog("⚡ " + _t("Contre réussi : {x} annule l'attaque adverse !", { x: action.label ? _td(action.label) : _t("l'action") }), "event");
+      showToast(_t("⚡ Contré !"), 1600);
       if (window.CombatEngine && typeof CombatEngine.rescheduleCounteredPattern === "function") {
         CombatEngine.rescheduleCounteredPattern(matchedConditionId); // annule le pattern, relance son compte à rebours
       }
@@ -386,8 +386,8 @@ var ClassCombatManager = {
     game.enemy.rageFrozenPct = reducedPct;
     game.enemy.rageFreezeRounds = (typeof ENRAGED_FREEZE_DURATION_ROUNDS === "number") ? ENRAGED_FREEZE_DURATION_ROUNDS : 2;
 
-    addLog("😤 La rage de " + game.enemy.name + " retombe temporairement !", "event");
-    showToast("😤 Rage apaisée !", 1400);
+    addLog("😤 " + _t("La rage de {x} retombe temporairement !", { x: _td(game.enemy.name) }), "event");
+    showToast(_t("😤 Rage apaisée !"), 1400);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
@@ -397,8 +397,8 @@ var ClassCombatManager = {
 
     game.enemy.corruptedStacks = 0;
 
-    addLog("✨ La corruption de " + game.enemy.name + " est purgée !", "event");
-    showToast("✨ Corruption purgée !", 1400);
+    addLog("✨ " + _t("La corruption de {x} est purgée !", { x: _td(game.enemy.name) }), "event");
+    showToast(_t("✨ Corruption purgée !"), 1400);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
@@ -407,8 +407,8 @@ var ClassCombatManager = {
 
     game.enemy.vampiricSuppressedRounds = (typeof VAMPIRIC_SUPPRESSION_DURATION_ROUNDS === "number") ? VAMPIRIC_SUPPRESSION_DURATION_ROUNDS : 2;
 
-    addLog("🧛 Le vol de vie de " + game.enemy.name + " est bloqué temporairement !", "event");
-    showToast("🧛 Vol de vie bloqué !", 1400);
+    addLog("🧛 " + _t("Le vol de vie de {x} est bloqué temporairement !", { x: _td(game.enemy.name) }), "event");
+    showToast(_t("🧛 Vol de vie bloqué !"), 1400);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
@@ -420,8 +420,8 @@ var ClassCombatManager = {
     game.enemy.armorSuppressedReduction = suppressedReduction;
     game.enemy.armorSuppressedRounds = (typeof ARMORED_SUPPRESSION_DURATION_ROUNDS === "number") ? ARMORED_SUPPRESSION_DURATION_ROUNDS : 2;
 
-    addLog("🛡️‍🩹 Le blindage de " + game.enemy.name + " se fissure temporairement !", "event");
-    showToast("🛡️‍🩹 Blindage fissuré !", 1400);
+    addLog("🛡️‍🩹 " + _t("Le blindage de {x} se fissure temporairement !", { x: _td(game.enemy.name) }), "event");
+    showToast(_t("🛡️‍🩹 Blindage fissuré !"), 1400);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 

@@ -249,11 +249,11 @@ function refundRetiredUpgrades() {
     var r = RETIRED_UPGRADES[id], sum = 0;
     for (var l = 0; l < lvl; l++) sum += Math.floor(r.baseCost * Math.pow(r.costMult, l));
     delete game.upgrades[id];
-    if (sum > 0) { total += sum; names.push(r.name); }
+    if (sum > 0) { total += sum; names.push(_td(r.name)); }
   });
   if (total > 0) {
     game.gold = Number(game.gold || 0) + total;
-    var msg = "La Boutique ne vend plus " + names.join(" ni ") + " : " + total + " or te sont rendus.";
+    var msg = _t("La Boutique ne vend plus {liste} : {n} or te sont rendus.", { liste: names.join(" " + _t("ni") + " "), n: total });
     if (typeof addLog === "function") addLog("💰 " + msg, "event");
   }
   return total;

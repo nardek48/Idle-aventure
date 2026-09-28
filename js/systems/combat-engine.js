@@ -180,7 +180,7 @@ function showCounterSuccessPopup() {
 
   var el = document.createElement("div");
   el.className = "counter-success-popup";
-  el.textContent = "⚡ CONTRÉ !";
+  el.textContent = "⚡ " + _t("CONTRÉ !");
   el.style.left = "50%";
   el.style.top = "18%";
   container.appendChild(el);
@@ -396,7 +396,7 @@ var CombatEngine = {
     if (slot === "potion") {
       if (!window.PotionManager || typeof PotionManager.useHealingPotion !== "function") return false;
       if (window.SortieManager && !SortieManager.canUsePotion()) {
-        showToast("🧪 Plus de potion pour cette sortie (" + getSortiePotionCap() + " max)", 1500);
+        showToast("🧪 " + _t("Plus de potion pour cette sortie ({n} max)", { n: getSortiePotionCap() }), 1500);
         return false;
       }
       if (PotionManager.useHealingPotion(arg) !== true) return false; // consomme le tour (décision §10 n°10)
@@ -430,7 +430,7 @@ var CombatEngine = {
       if (game.enemy && game.enemy.hp > 0) {
         var bonusMult = window.TalentManager ? TalentManager.bonusStrikeMult() : 1; // v3.327.0 : Transe (Rôdeur)
         this.playerAttack(true, bonusMult);
-        addLog("⚡ Frappe bonus (jauge de célérité pleine) !", "event");
+        addLog(_t("⚡ Frappe bonus (jauge de célérité pleine) !"), "event");
       }
     }
   },
@@ -481,7 +481,7 @@ var CombatEngine = {
     /* v3.230.0 : Écho — 10 % de chance que l'attaque de base frappe deux fois.
        isBonus coupe la récursion : l'écho ne peut pas s'échoïser lui-même. */
     if (!isBonus && game.enemy && game.enemy.hp > 0 && this.hasPower("leg_echo") && chance(10)) {
-      addLog("🌀 Écho : la frappe se répète !", "event");
+      addLog(_t("🌀 Écho : la frappe se répète !"), "event");
       this.playerAttack(true, extraMult);
     }
   },
@@ -513,7 +513,7 @@ var CombatEngine = {
       if (pct > Number(ph.atPct || 0)) continue;
 
       e._phasesDone[i] = true;
-      if (ph.label) addLog("⚠️ " + e.name + " — " + ph.label, "event");
+      if (ph.label) addLog("⚠️ " + _td(e.name) + " — " + _td(ph.label), "event");
       if (window.BossMomentManager) BossMomentManager.onPhase(e, ph); // v3.333.0 (B3) : bandeau de phase, vue seulement
 
       if (ph.archetype) {
@@ -569,7 +569,7 @@ var CombatEngine = {
 
     if (!nouveaux.length) return;
     CombatActors.setEnemies(CombatActors.enemies().concat(nouveaux));
-    addLog("🐍 " + nouveaux.map(function (r) { return r.name; }).join(" et ") + " arrive" + (nouveaux.length > 1 ? "nt" : "") + " en renfort !", "danger");
+    addLog("🐍 " + _tn(nouveaux.length, "{x} arrive en renfort !", "{x} arrivent en renfort !", { x: nouveaux.map(function (r) { return _td(r.name); }).join(" " + _t("et") + " ") }), "danger");
     if (typeof renderEnemy === "function") renderEnemy();
   },
 
@@ -880,8 +880,8 @@ var CombatEngine = {
     if (Number(e.engageIn || 0) > 0) {
       e.engageIn -= 1;
       e.gauge = Number(e.gauge || 0) + this.getEnemyGaugeGain(e);
-      if (e.engageIn > 0) addLog("👣 " + e.name + " avance vers toi… (contact dans " + e.engageIn + " round" + (e.engageIn > 1 ? "s" : "") + ")", "event");
-      else addLog("👣 " + e.name + " arrive au contact !", "event");
+      if (e.engageIn > 0) addLog("👣 " + _tn(e.engageIn, "{x} avance vers toi… (contact dans {n} round)", "{x} avance vers toi… (contact dans {n} rounds)", { x: _td(e.name) }), "event");
+      else addLog("👣 " + _t("{x} arrive au contact !", { x: _td(e.name) }), "event");
       this.tickEnemyTelegraphs(e);
       if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
       return;
@@ -947,12 +947,12 @@ var CombatEngine = {
 
   telegraphPattern: function (e, kind) {
     var info = {
-      charge: { flag: "chargeTelegraphed", cond: "chargeIncoming", log: "⚠️ " + e.name + " prépare une charge !", toast: "⚠️ Charge au prochain tour !" },
-      silence: { flag: "silenceTelegraphed", cond: "enemySilenceIncoming", log: "🔇 " + e.name + " se prépare à te réduire au silence !", toast: "🔇 Silence au prochain tour !" },
-      shield: { flag: "shieldTelegraphed", cond: "shieldIncoming", log: "🛡️ " + e.name + " invoque un bouclier !", toast: "🛡️ Bouclier au prochain tour !" },
-      heal: { flag: "healTelegraphed", cond: "healIncoming", log: "💚 " + e.name + " se prépare à se soigner !", toast: "💚 Soin au prochain tour !" },
+      charge: { flag: "chargeTelegraphed", cond: "chargeIncoming", log: "⚠️ " + _t("{x} prépare une charge !", { x: _td(e.name) }), toast: "⚠️ " + _t("Charge au prochain tour !") },
+      silence: { flag: "silenceTelegraphed", cond: "enemySilenceIncoming", log: "🔇 " + _t("{x} se prépare à te réduire au silence !", { x: _td(e.name) }), toast: "🔇 " + _t("Silence au prochain tour !") },
+      shield: { flag: "shieldTelegraphed", cond: "shieldIncoming", log: "🛡️ " + _t("{x} invoque un bouclier !", { x: _td(e.name) }), toast: "🛡️ " + _t("Bouclier au prochain tour !") },
+      heal: { flag: "healTelegraphed", cond: "healIncoming", log: "💚 " + _t("{x} se prépare à se soigner !", { x: _td(e.name) }), toast: "💚 " + _t("Soin au prochain tour !") },
       // v3.204.0 (E4) : exaltation d'élite — son archétype va compter double.
-      surge: { flag: "surgeTelegraphed", cond: "eliteSurgeIncoming", log: "🔥 " + e.name + " s'exalte !", toast: "🔥 Exaltation au prochain tour !" }
+      surge: { flag: "surgeTelegraphed", cond: "eliteSurgeIncoming", log: "🔥 " + _t("{x} s'exalte !", { x: _td(e.name) }), toast: "🔥 " + _t("Exaltation au prochain tour !") }
     }[kind];
     if (!info) return;
     e[info.flag] = true;
@@ -999,7 +999,7 @@ var CombatEngine = {
     e.surgeTelegraphed = false;
     e.surgeIn = randInt(ELITE_SURGE_ROUNDS_MIN, ELITE_SURGE_ROUNDS_MAX);
     e.surgeRounds = ELITE_SURGE_DURATION_ROUNDS;
-    addLog("🔥 " + e.name + " s'exalte (" + ELITE_SURGE_DURATION_ROUNDS + " rounds) !", "event");
+    addLog("🔥 " + _t("{x} s'exalte ({n} rounds) !", { x: _td(e.name), n: ELITE_SURGE_DURATION_ROUNDS }), "event");
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
@@ -1012,7 +1012,7 @@ var CombatEngine = {
     e.chargeTelegraphed = false;
     e.chargeIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX);
     e.engageIn = 0; // v3.105.0 : la charge le porte au contact
-    addLog("💢 " + e.name + " charge !", "event");
+    addLog("💢 " + _t("{x} charge !", { x: _td(e.name) }), "event");
     this.enemyStrike(ENEMY_CHARGE_DMG_MULT, true);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
@@ -1028,8 +1028,8 @@ var CombatEngine = {
     // v3.363.0 (accord Seb 28/09/2026) : La forme du roi (choix « roi » = prendre) réduit le silence à 1 round
     game.silencedRounds = (typeof getHeroSilenceRounds === "function") ? getHeroSilenceRounds()
       : ((typeof SILENCE_DURATION_ROUNDS === "number") ? SILENCE_DURATION_ROUNDS : 2);
-    addLog("🔇 Tu es réduit au silence ! Tes techniques sont bloquées " + game.silencedRounds + " round" + (game.silencedRounds > 1 ? "s" : "") + ".", "event");
-    showToast("🔇 Silencié !", 1400);
+    addLog("🔇 " + _tn(game.silencedRounds, "Tu es réduit au silence ! Tes techniques sont bloquées {n} round.", "Tu es réduit au silence ! Tes techniques sont bloquées {n} rounds."), "event");
+    showToast(_t("🔇 Silencié !"), 1400);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
@@ -1042,7 +1042,7 @@ var CombatEngine = {
     e.shieldTelegraphed = false;
     e.shieldIn = randInt(BOSS_SHIELD_ROUNDS_MIN, BOSS_SHIELD_ROUNDS_MAX);
     e.shieldRounds = BOSS_SHIELD_DURATION_ROUNDS;
-    addLog("🛡️ Le bouclier se referme (" + BOSS_SHIELD_DURATION_ROUNDS + " rounds) !", "event");
+    addLog("🛡️ " + _t("Le bouclier se referme ({n} rounds) !", { n: BOSS_SHIELD_DURATION_ROUNDS }), "event");
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
@@ -1056,8 +1056,8 @@ var CombatEngine = {
     e.healIn = BOSS_HEAL_ROUNDS;
     var healAmount = Math.max(1, Math.floor(Number(e.hp || 0) * BOSS_HEAL_PERCENT));
     e.hp = Math.min(e.maxHp, e.hp + healAmount);
-    addLog("💚 " + e.name + " récupère " + formatNumber(healAmount) + " PV !", "event");
-    showToast("💚 +" + formatNumber(healAmount) + " PV boss", 1200);
+    addLog("💚 " + _t("{x} récupère {n} PV !", { x: _td(e.name), n: formatNumber(healAmount) }), "event");
+    showToast("💚 " + _t("+{n} PV boss", { n: formatNumber(healAmount) }), 1200);
     if (typeof renderEnemyHp === "function") renderEnemyHp();
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
@@ -1134,8 +1134,8 @@ var CombatEngine = {
     if (dmg >= hpBefore && !game._legSecondWindUsed && this.hasPower("leg_second_souffle")) {
       dmg = Math.max(0, hpBefore - 1);
       game._legSecondWindUsed = true;
-      addLog("💨 Second souffle : tu tiens debout avec 1 PV !", "event");
-      showToast("💨 Second souffle !", 1600);
+      addLog(_t("💨 Second souffle : tu tiens debout avec 1 PV !"), "event");
+      showToast(_t("💨 Second souffle !"), 1600);
     }
     game.heroHp = Math.max(0, hpBefore - dmg);
     if (dmg > 0) {
@@ -1172,7 +1172,7 @@ var CombatEngine = {
       e.gauge = Number(e.gauge || 0) + this.getEnemyGaugeGain(e);
       if (e.gauge >= CELERITY_GAUGE_MAX) {
         e.gauge -= CELERITY_GAUGE_MAX;
-        addLog("⚡ " + e.name + " enchaîne une seconde frappe !", "event");
+        addLog("⚡ " + _t("{x} enchaîne une seconde frappe !", { x: _td(e.name) }), "event");
         this.enemyStrike(1, true);
       }
     }
@@ -1214,7 +1214,7 @@ var CombatEngine = {
     dmg = Math.max(1, Math.floor(dmg * (1 - COMPANION_FLAT_DEFENSE)));
 
     victim.hp = Math.max(0, Number(victim.hp || 0) - dmg);
-    addLog("🩸 " + e.name + " frappe " + (victim.name || "ton compagnon") + " (-" + formatNumber(dmg) + " PV)", "normal");
+    addLog("🩸 " + _t("{x} frappe {y} (-{n} PV)", { x: _td(e.name), y: victim.name ? _td(victim.name) : _t("ton compagnon"), n: formatNumber(dmg) }), "normal");
 
     if (e.archetype === "vampiric" && dmg > 0 && typeof getVampiricLifestealAmount === "function"
       && !(Number(e.vampiricSuppressedRounds || 0) > 0)) {
@@ -1239,7 +1239,7 @@ var CombatEngine = {
       e.gauge = Number(e.gauge || 0) + this.getEnemyGaugeGain(e);
       if (e.gauge >= CELERITY_GAUGE_MAX) {
         e.gauge -= CELERITY_GAUGE_MAX;
-        addLog("⚡ " + e.name + " enchaîne une seconde frappe !", "event");
+        addLog("⚡ " + _t("{x} enchaîne une seconde frappe !", { x: _td(e.name) }), "event");
         this.enemyStrike(1, true);
       }
     }
@@ -1316,7 +1316,7 @@ var CombatEngine = {
     if (round.continueAttack) {
       if (this.shouldStopContinueAttack()) {
         round.continueAttack = false;
-        showToast("⏸️ Attaque interrompue : un choix s'impose", 1200);
+        showToast(_t("⏸️ Attaque interrompue : un choix s'impose"), 1200);
         if (typeof renderCombatControls === "function") renderCombatControls();
         return;
       }
@@ -1505,8 +1505,8 @@ var CombatEngine = {
       }
     }
 
-    addLog("💀 Vous avez été terrassé ! Retour au Campement : mange ou laisse le feu te remettre debout.", "event");
-    showToast("💀 Terrassé !", 1800);
+    addLog(_t("💀 Vous avez été terrassé ! Retour au Campement : mange ou laisse le feu te remettre debout."), "event");
+    showToast(_t("💀 Terrassé !"), 1800);
     vibrate([80, 40, 80]);
 
     game.justDied = true;
@@ -1596,8 +1596,7 @@ var CombatEngine = {
         if (meute) CombatActors.holdSpawn(false);
       }
       if (meute && CombatActors.aliveEnemies().length) {
-        addLog("⚔️ " + enemy.name + " tombe — il en reste "
-          + CombatActors.aliveEnemies().length + ".", "normal");
+        addLog("⚔️ " + _t("{x} tombe — il en reste {n}.", { x: _td(enemy.name), n: CombatActors.aliveEnemies().length }), "normal");
       }
       if (typeof renderAll === "function") renderAll();
       saveGame();
@@ -1619,7 +1618,7 @@ var CombatEngine = {
     /* v3.230.0 : Prospecteur — un boss sur dix rapporte le double. */
     if (enemy.isBoss && this.hasPower("leg_prospecteur") && chance(10)) {
       goldGain *= 2;
-      addLog("💰 Prospecteur : la bourse est doublée !", "event");
+      addLog(_t("💰 Prospecteur : la bourse est doublée !"), "event");
     }
 
     this.grantGold(goldGain);
@@ -1639,7 +1638,7 @@ var CombatEngine = {
       CombatActors.enemies().slice().forEach(function (e) {
         if (e !== enemy) CombatActors.removeEnemy(e);
       });
-      addLog("🕷️ " + enemy.name + " tombe — son escorte se disperse.", "normal");
+      addLog("🕷️ " + _t("{x} tombe — son escorte se disperse.", { x: _td(enemy.name) }), "normal");
       // v3.288.0 : vaut aussi pour les renforts de phase d'un boss, même raison.
     }
 
@@ -1668,8 +1667,7 @@ var CombatEngine = {
         CombatActors.holdSpawn(false);
       }
 
-      addLog("⚔️ " + enemy.name + " tombe (+" + formatNumber(goldGain) + " or) — il en reste "
-        + CombatActors.aliveEnemies().length + ".", "normal");
+      addLog("⚔️ " + _t("{x} tombe (+{g} or) — il en reste {n}.", { x: _td(enemy.name), g: formatNumber(goldGain), n: CombatActors.aliveEnemies().length }), "normal");
       if (typeof renderAll === "function") renderAll();
       saveGame();
       return;
@@ -1697,11 +1695,13 @@ var CombatEngine = {
     }
 
     showGoldPopup(goldGain);
-    addLog((enemy.isBoss ? "👑 Boss vaincu : " : "⚔️ Ennemi vaincu : ") + enemy.name + " (+" + formatNumber(goldGain) + " or)", enemy.isBoss ? "boss" : "normal");
+    addLog(enemy.isBoss
+      ? "👑 " + _t("Boss vaincu : {x} (+{g} or)", { x: _td(enemy.name), g: formatNumber(goldGain) })
+      : "⚔️ " + _t("Ennemi vaincu : {x} (+{g} or)", { x: _td(enemy.name), g: formatNumber(goldGain) }), enemy.isBoss ? "boss" : "normal");
     if (window.AchievementManager) AchievementManager.onEnemyKilled(enemy); // v3.338.0 : compteurs des Hauts faits (Grimoire, orc sans potion)
     if (enemy.isBoss && window.BossMomentManager) BossMomentManager.onBossKilled(enemy); // v3.333.0 (B4, B5) : trophée, coup final
     if (merchantBonusGold > 0) {
-      addLog("📜 Instinct marchand : bonus de +" + formatNumber(merchantBonusGold) + " or", "event");
+      addLog("📜 " + _t("Instinct marchand : bonus de +{n} or", { n: formatNumber(merchantBonusGold) }), "event");
     }
 
     if (enemy.isBoss) {
@@ -1719,8 +1719,8 @@ var CombatEngine = {
         if (window.LootSystem && typeof LootSystem.rollDrop === "function" && chance(lootChance)) {
           var drop = LootSystem.rollDrop();
           if (this.grantDrop(drop)) {
-            addLog("🎁 Objet trouvé : " + drop.name + " (" + drop.rarity + ")" + (this.inSortie() ? " — dans le butin de sortie" : ""), "event");
-            showToast("🎁 " + drop.name, 1800);
+            addLog("🎁 " + _t("Objet trouvé : {x} ({r})", { x: _td(drop.name), r: drop.rarity }) + (this.inSortie() ? " — " + _t("dans le butin de sortie") : ""), "event");
+            showToast("🎁 " + _td(drop.name), 1800);
           }
         }
       }
@@ -1789,8 +1789,8 @@ var CombatEngine = {
       function () {
         var bonus = randInt(10, 50);
         CombatEngine.grantGold(bonus);
-        addLog("💰 Trésor trouvé ! +" + bonus + " or", "event");
-        showToast("💰 +" + bonus + " or", 1400);
+        addLog("💰 " + _t("Trésor trouvé ! +{n} or", { n: bonus }), "event");
+        showToast("💰 " + _t("+{n} or", { n: bonus }), 1400);
         if (window.QuestManager && typeof QuestManager.track === "function") {
           QuestManager.track("treasures", 1);
         }
@@ -1799,13 +1799,13 @@ var CombatEngine = {
         var bonus = Math.floor(game.gold * 0.05);
         if (bonus > 0) {
           CombatEngine.grantGold(bonus);
-          addLog("✨ Bénédiction ! +" + formatNumber(bonus) + " or", "event");
-          showToast("✨ +" + formatNumber(bonus) + " or", 1400);
+          addLog("✨ " + _t("Bénédiction ! +{n} or", { n: formatNumber(bonus) }), "event");
+          showToast("✨ " + _t("+{n} or", { n: formatNumber(bonus) }), 1400);
         }
       },
       function () {
         if (typeof AMBIANCE_TEXTS !== "undefined" && AMBIANCE_TEXTS.length) {
-          addLog(AMBIANCE_TEXTS[randInt(0, AMBIANCE_TEXTS.length - 1)], "event");
+          addLog(_td(AMBIANCE_TEXTS[randInt(0, AMBIANCE_TEXTS.length - 1)]), "event");
         }
       }
     ];

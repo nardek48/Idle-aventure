@@ -31,9 +31,9 @@ var HERO_SELECTION_BASE_IDS = ["knight", "ranger", "mage", "chaosKnight", "chaos
 
 /* Descriptions courtes par classe (validées par Seb, session v3.149.0). Clé = CLASSES[].id. */
 var HERO_CLASS_TAGLINES = {
-  knight: "Maître du combat et de la défense, inébranlable en toute situation.",
-  archer: "Agile et précis, maître des attaques à distance.",
-  mage: "Gardien des savoirs anciens, il manipule les éléments et l'énergie arcanique."
+  knight: _t("Maître du combat et de la défense, inébranlable en toute situation."),
+  archer: _t("Agile et précis, maître des attaques à distance."),
+  mage: _t("Gardien des savoirs anciens, il manipule les éléments et l'énergie arcanique.")
 };
 
 function getHeroPreviewStats(hero) {
@@ -151,7 +151,7 @@ function goToHeroStep() {
   var name = input ? input.value.trim() : (pendingPlayerName || "");
 
   if (!name) {
-    showToast("Entre un nom", 1200);
+    showToast(_t("Entre un nom"), 1200);
     return;
   }
 
@@ -168,7 +168,7 @@ function backToNameStep() {
 /* v3.149.0 : étape "confirm" (récap) avant la confirmation réelle. */
 function goToConfirmStep() {
   if (!pendingHeroId && !getSelectedHero()) {
-    showToast("Choisis un héros", 1200);
+    showToast(_t("Choisis un héros"), 1200);
     return;
   }
   heroSelectionStep = "confirm";
@@ -236,7 +236,7 @@ function cancelHeroSelection() {
    v3.149.0 : aussi affichée quand la création vient de l'écran titre (retour au titre). */
 function buildHeroPickerCloseButtonHTML() {
   if (!window.pendingHeroCreationOrigin && !window.titleScreenSlotBeingCreated) return "";
-  return '<button type="button" class="hc-close-btn" aria-label="Annuler" onclick="cancelHeroSelection()"><img class=ico-inline src=images/Icons/system/close.png></button>';
+  return '<button type="button" class="hc-close-btn" aria-label="' + esc(_t("Annuler")) + '" onclick="cancelHeroSelection()"><img class=ico-inline src=images/Icons/system/close.png></button>';
 }
 
 function toggleHeroAttackPreview() {
@@ -248,12 +248,12 @@ function confirmHeroSelection() {
   var name = pendingPlayerName || game.playerName || "";
 
   if (!pendingHeroId && !getSelectedHero()) {
-    showToast("Choisis un héros", 1200);
+    showToast(_t("Choisis un héros"), 1200);
     return;
   }
 
   if (!name) {
-    showToast("Entre un nom", 1200);
+    showToast(_t("Entre un nom"), 1200);
     return;
   }
 
@@ -293,7 +293,7 @@ function confirmHeroSelection() {
   switchTab(isFirstEverSetup ? "campement" : "combat");
   renderAll();
   saveGame();
-  showToast("Héros sélectionné", 1200);
+  showToast(_t("Héros sélectionné"), 1200);
 }
 
 function openHeroSelection() {
@@ -337,7 +337,7 @@ function buildHeroCreationShellHTML(bodyHtml) {
   html += '  <img src="images/TitleScreen/title_background_new.png" alt="" class="hc-bg">';
   html += '  <div class="hc-frame">';
   html += buildHeroPickerCloseButtonHTML();
-  html += '    <img src="images/TitleScreen/titre_logo.png" alt="Aethervale" class="hc-logo">';
+  html += '    <img src="images/TitleScreen/titre_logo.png" alt="' + esc(_t("Aethervale")) + '" class="hc-logo">';
   html += '    <div class="hc-body">';
   html += bodyHtml;
   html += '    </div>';
@@ -364,17 +364,17 @@ function buildHeroStepHeaderHTML(title, subtitle) {
 function buildNameStepHTML() {
   var currentName = pendingPlayerName || game.playerName || "";
 
-  var html = buildHeroStepHeaderHTML("Choix du nom", "Entrez le nom de votre héros.");
+  var html = buildHeroStepHeaderHTML(_t("Choix du nom"), _t("Entrez le nom de votre héros."));
 
   html += '<div class="hc-name-wrap">';
   html += '  <img src="images/TitleScreen/bouton_titre.png" alt="" class="hc-name-bg">';
-  html += '  <input id="player-name-input" type="text" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="Entrez le nom…" value="' + esc(currentName) + '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();goToHeroStep();}">';
+  html += '  <input id="player-name-input" type="text" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="' + esc(_t("Entrez le nom…")) + '" value="' + esc(currentName) + '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();goToHeroStep();}">';
   html += '</div>';
 
   html += '<div class="hc-actions">';
   html += '  <button type="button" class="hc-img-btn" onclick="goToHeroStep()">';
   html += '    <img src="images/TitleScreen/bouton_titre.png" alt="" class="hc-img-btn-bg">';
-  html += '    <span>Continuer</span>';
+  html += '    <span>' + _t("Continuer") + '</span>';
   html += '  </button>';
   html += '</div>';
   return html;
@@ -388,7 +388,7 @@ function buildHeroStepHTML(selectedHero) {
   var selectedIsChaos = selectedHero ? isChaosHeroId(selectedHero.id) : false;
   var gender = getPendingHeroGender();
 
-  var html = buildHeroStepHeaderHTML("Choix de la classe", "Choisissez la voie que suivra votre héros.");
+  var html = buildHeroStepHeaderHTML(_t("Choix de la classe"), _t("Choisissez la voie que suivra votre héros."));
 
   html += '<div class="hc-class-grid">';
   if (typeof CLASSES !== "undefined") {
@@ -402,8 +402,8 @@ function buildHeroStepHTML(selectedHero) {
       var tagline = HERO_CLASS_TAGLINES[cls.id] || "";
 
       html += '<button type="button" class="hc-class-card' + (isActive ? ' active' : '') + '" onclick="selectHeroClass(\'' + esc(cls.id) + '\')">';
-      html += '  <div class="hc-class-portrait"><img src="' + esc(getHeroImageForGender(shownHero, gender)) + '" alt="' + esc(baseHero.name) + '"></div>';
-      html += '  <div class="hc-class-name">' + esc(baseHero.name) + '</div>';
+      html += '  <div class="hc-class-portrait"><img src="' + esc(getHeroImageForGender(shownHero, gender)) + '" alt="' + esc(_td(baseHero.name)) + '"></div>';
+      html += '  <div class="hc-class-name">' + esc(_td(baseHero.name)) + '</div>';
       html += '  <div class="hc-class-tagline">' + esc(tagline) + '</div>';
       html += '</button>';
     });
@@ -412,8 +412,8 @@ function buildHeroStepHTML(selectedHero) {
 
   // Toggle Homme/Femme (v3.151.0, skin cosmétique — option A).
   html += '<div class="hc-gender-toggle">';
-  html += '  <button type="button" class="hc-gender-btn' + (gender === "m" ? ' active' : '') + '" onclick="selectHeroGender(\'m\')">Homme</button>';
-  html += '  <button type="button" class="hc-gender-btn' + (gender === "f" ? ' active' : '') + '" onclick="selectHeroGender(\'f\')">Femme</button>';
+  html += '  <button type="button" class="hc-gender-btn' + (gender === "m" ? ' active' : '') + '" onclick="selectHeroGender(\'m\')">' + _t("Homme") + '</button>';
+  html += '  <button type="button" class="hc-gender-btn' + (gender === "f" ? ' active' : '') + '" onclick="selectHeroGender(\'f\')">' + _t("Femme") + '</button>';
   html += '</div>';
 
   // Toggle Chaos — uniquement si la classe active a bien 2 variantes.
@@ -421,27 +421,27 @@ function buildHeroStepHTML(selectedHero) {
     var chaosHero = getHeroById(selectedClass.heroIds[1]);
     html += '<button type="button" class="hc-chaos-toggle' + (selectedIsChaos ? ' on' : '') + '" onclick="toggleHeroChaosVariant()">';
     html += '  <span class="hc-chaos-toggle-box">' + (selectedIsChaos ? '<img class=ico-inline src=images/Icons/system/check_valid.png>' : '') + '</span>';
-    html += '  <span>Variante du Chaos' + (chaosHero ? ' — ' + esc(chaosHero.name) : '') + '</span>';
+    html += '  <span>' + _t("Variante du Chaos") + (chaosHero ? ' — ' + esc(_td(chaosHero.name)) : '') + '</span>';
     html += '</button>';
   }
 
   // Aperçu stats + bandeau compétences (v3.29), sous les colonnes.
   var stats = selectedHero ? getHeroPreviewStats(selectedHero) : { pv: 0, atk: 0, def: 0, vit: 0, crit: 0 };
   html += '<div class="hc-stats">';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_health.png" alt=""></span><span class="hc-stat-label">PV</span><strong>' + esc(formatNumber(stats.pv)) + '</strong></div>';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_attack.png" alt=""></span><span class="hc-stat-label">ATK</span><strong>' + esc(formatNumber(stats.atk)) + '</strong></div>';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_defense.png" alt=""></span><span class="hc-stat-label">DEF</span><strong>' + stats.def + '%</strong></div>';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_speed.png" alt=""></span><span class="hc-stat-label">VIT</span><strong>' + esc(formatNumber(stats.vit)) + '</strong></div>';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_critical.png" alt=""></span><span class="hc-stat-label">CRIT</span><strong>' + stats.crit + '%</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_health.png" alt=""></span><span class="hc-stat-label">' + _t("PV", "unité") + '</span><strong>' + esc(formatNumber(stats.pv)) + '</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_attack.png" alt=""></span><span class="hc-stat-label">' + _t("ATK", "unité") + '</span><strong>' + esc(formatNumber(stats.atk)) + '</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_defense.png" alt=""></span><span class="hc-stat-label">' + _t("DEF", "unité") + '</span><strong>' + stats.def + '%</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_speed.png" alt=""></span><span class="hc-stat-label">' + _t("VIT", "unité") + '</span><strong>' + esc(formatNumber(stats.vit)) + '</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_critical.png" alt=""></span><span class="hc-stat-label">' + _t("CRIT", "unité") + '</span><strong>' + stats.crit + '%</strong></div>';
   html += '</div>';
 
   html += buildHeroAttackPreviewBandeauHTML(selectedHero);
 
   html += '<div class="hc-actions hc-actions-row">';
-  html += '  <button type="button" class="hc-back-btn" onclick="backToNameStep()"><img src="images/TitleScreen/bouton_retour_new.png" alt="Retour"></button>';
+  html += '  <button type="button" class="hc-back-btn" onclick="backToNameStep()"><img src="images/TitleScreen/bouton_retour_new.png" alt="' + esc(_t("Retour")) + '"></button>';
   html += '  <button type="button" class="hc-img-btn" onclick="goToConfirmStep()">';
   html += '    <img src="images/TitleScreen/bouton_titre.png" alt="" class="hc-img-btn-bg">';
-  html += '    <span>Continuer</span>';
+  html += '    <span>' + _t("Continuer") + '</span>';
   html += '  </button>';
   html += '</div>';
   return html;
@@ -455,7 +455,7 @@ function buildHeroAttackPreviewBandeauHTML(selectedHero) {
   if (!kit) return "";
 
   var html = '<button type="button" class="hc-skills-toggle" onclick="toggleHeroAttackPreview()">';
-  html += '<img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> Compétences de classe <span class="hc-skills-chevron">' + (heroAttackPreviewExpanded ? '▴' : '▾') + '</span>';
+  html += '<img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ' + _t("Compétences de classe") + ' <span class="hc-skills-chevron">' + (heroAttackPreviewExpanded ? '▴' : '▾') + '</span>';
   html += '</button>';
 
   if (heroAttackPreviewExpanded) {
@@ -467,10 +467,10 @@ function buildHeroAttackPreviewBandeauHTML(selectedHero) {
       var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.png" : "images/Icons/scene/node_discovery.png");
 
       html += '<div class="hc-skill-card">';
-      html += '  <div class="hc-skill-icon-wrap">' + renderIconOrEmojiHTML(icon, "hc-skill-icon", action.label) + '</div>';
+      html += '  <div class="hc-skill-icon-wrap">' + renderIconOrEmojiHTML(icon, "hc-skill-icon", _td(action.label)) + '</div>';
       html += '  <div class="hc-skill-body">';
-      html += '    <div class="hc-skill-name">' + esc(action.label) + '</div>';
-      html += '    <div class="hc-skill-desc">' + esc(action.description) + '</div>';
+      html += '    <div class="hc-skill-name">' + esc(_td(action.label)) + '</div>';
+      html += '    <div class="hc-skill-desc">' + esc(_td(action.description)) + '</div>';
       html += '  </div>';
       html += '</div>';
     });
@@ -487,28 +487,28 @@ function buildConfirmStepHTML(selectedHero) {
   var name = pendingPlayerName || game.playerName || "";
   var cls = selectedHero ? getHeroClassEntry(selectedHero.id) : null;
   var baseHero = (cls && cls.heroIds) ? getHeroById(cls.heroIds[0]) : selectedHero;
-  var className = baseHero ? baseHero.name : (selectedHero ? selectedHero.name : "");
+  var className = baseHero ? _td(baseHero.name) : (selectedHero ? _td(selectedHero.name) : "");
   var tagline = (cls && HERO_CLASS_TAGLINES[cls.id]) || "";
 
-  var html = buildHeroStepHeaderHTML("Confirmation", "Vérifiez votre héros avant de commencer l'aventure.");
+  var html = buildHeroStepHeaderHTML(_t("Confirmation"), _t("Vérifiez votre héros avant de commencer l'aventure."));
 
   html += '<div class="hc-confirm-portrait">';
   var confirmImg = getHeroImageForGender(selectedHero, getPendingHeroGender());
-  if (confirmImg) html += '<img src="' + esc(confirmImg) + '" alt="' + esc(selectedHero ? selectedHero.name : "") + '">';
+  if (confirmImg) html += '<img src="' + esc(confirmImg) + '" alt="' + esc(selectedHero ? _td(selectedHero.name) : "") + '">';
   html += '</div>';
 
   html += '<div class="hc-confirm-name">' + esc(name) + '</div>';
   html += '<div class="hc-confirm-class">' + (cls && cls.icon ? '<span class="hc-confirm-class-icon">' + renderIconOrEmojiHTML(cls.icon, "hc-confirm-class-ico", "") + '</span>' : '') + esc(className) + '</div>';
   if (selectedHero && isChaosHeroId(selectedHero.id)) {
-    html += '<div class="hc-confirm-variant">' + esc(selectedHero.name) + '</div>';
+    html += '<div class="hc-confirm-variant">' + esc(_td(selectedHero.name)) + '</div>';
   }
   if (tagline) html += '<div class="hc-confirm-tagline">' + esc(tagline) + '</div>';
 
   html += '<div class="hc-actions hc-actions-row">';
-  html += '  <button type="button" class="hc-back-btn" onclick="backToHeroStep()"><img src="images/TitleScreen/bouton_retour_new.png" alt="Retour"></button>';
+  html += '  <button type="button" class="hc-back-btn" onclick="backToHeroStep()"><img src="images/TitleScreen/bouton_retour_new.png" alt="' + esc(_t("Retour")) + '"></button>';
   html += '  <button type="button" class="hc-img-btn hc-img-btn-start" onclick="confirmHeroSelection()">';
   html += '    <img src="images/TitleScreen/bouton_titre.png" alt="" class="hc-img-btn-bg">';
-  html += '    <span>Commencer l\'aventure</span>';
+  html += '    <span>' + _t("Commencer l'aventure") + '</span>';
   html += '  </button>';
   html += '</div>';
   return html;

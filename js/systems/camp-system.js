@@ -58,7 +58,7 @@ var CampManager = {
     if (heal <= 0) return 0;
 
     game.heroHp = hp + heal;
-    if (offline) addLog("🔥 Régénération au camp pendant ton absence : +" + formatNumber(heal) + " PV.", "event");
+    if (offline) addLog("🔥 " + _t("Régénération au camp pendant ton absence : +{n} PV.", { n: formatNumber(heal) }), "event");
     if (typeof renderHeroHp === "function") renderHeroHp();
     this.refreshCampCard();
     return heal;
@@ -85,8 +85,8 @@ var CampManager = {
       // v3.242.0 : même rendu que camp-view.js (icônes PNG) — ce textContent réécrivait
       // l'élément avec les anciens emoji à chaque tick, annulant l'icône de la vue.
       eta.innerHTML = full
-        ? '<img class=ico-inline src=images/Icons/system/check_valid.png> PV au maximum'
-        : '<img class=ico-inline src=images/Icons/system/hourglass_waiting.png> Max dans ' + formatTime(Math.ceil(this.getMinutesToFull() * 60));
+        ? '<img class=ico-inline src=images/Icons/system/check_valid.png> ' + _t("PV au maximum")
+        : '<img class=ico-inline src=images/Icons/system/hourglass_waiting.png> ' + _t("Max dans {d}", { d: formatTime(Math.ceil(this.getMinutesToFull() * 60)) });
       if (full && typeof renderPanel === "function") renderPanel(); // ré-évalue les boutons de ration (grisés si PV pleins)
     }
   },
@@ -119,9 +119,9 @@ var CampManager = {
     var def = (window.WAREHOUSE_RESOURCES || {})[rationId];
     if (!def || !def.healPct) return false;
     var maxHp = game.heroMaxHp || 1;
-    if ((game.heroHp || 0) >= maxHp) { showToast("PV déjà au maximum", 1200); return false; }
+    if ((game.heroHp || 0) >= maxHp) { showToast(_t("PV déjà au maximum"), 1200); return false; }
     if (window.heroLockToast && heroLockToast()) return false; // v3.307.0
-    if (!this.canEatRation(rationId)) { showToast("Aucune " + def.name.toLowerCase() + " en stock", 1600); return false; }
+    if (!this.canEatRation(rationId)) { showToast(_t("Aucune {x} en stock", { x: _td(def.name).toLowerCase() }), 1600); return false; }
     if (!WarehouseManager.removeResource(rationId, 1)) return false;
 
     // v3.323.0 : Cuisine de campagne (Mémoire niveau 3) — la Petite ration soigne 25 % de plus
@@ -131,8 +131,8 @@ var CampManager = {
     }
     var healed = Math.min(maxHp - (game.heroHp || 0), Math.floor(maxHp * pct));
     game.heroHp = (game.heroHp || 0) + healed;
-    addLog("🍖 " + def.name + " — +" + formatNumber(healed) + " PV.", "event");
-    showToast("🍖 +" + formatNumber(healed) + " PV", 1600);
+    addLog("🍖 " + _t("{x} — +{n} PV.", { x: _td(def.name), n: formatNumber(healed) }), "event");
+    showToast("🍖 " + _t("+{n} PV", { n: formatNumber(healed) }), 1600);
     if (typeof renderAll === "function") renderAll();
     if (typeof saveGame === "function") saveGame();
     return true;

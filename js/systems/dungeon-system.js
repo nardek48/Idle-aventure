@@ -394,13 +394,13 @@ var DungeonManager = {
     this.checkTicketReset();
 
     var dungeon = this.getById(dungeonId);
-    if (!this.isUnlocked(dungeon.id)) return showToast("Donjon verrouillé", 1200);
-    if ((game.heroHp || 0) <= 0) return showToast("Héros à terre — repose-toi au Campement d'abord", 1600);
+    if (!this.isUnlocked(dungeon.id)) return showToast(_t("Donjon verrouillé"), 1200);
+    if ((game.heroHp || 0) <= 0) return showToast(_t("Héros à terre — repose-toi au Campement d'abord"), 1600);
     var storyFree = this.isStoryTicketFree(dungeon.id); // v3.136.0
-    if (!storyFree && this.getRunsLeft(dungeon.id) <= 0) return showToast("Plus de sortie aujourd'hui dans ce donjon — renouvellement dans " + this.timeUntilTicketReset(), 1800);
-    if (game.dungeonRun.active) return showToast("Donjon déjà en cours", 1200);
-    if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast("Termine ou abandonne ta quête en cours avant d'entrer en donjon", 1600);
-    if (game.huntRun && game.huntRun.active) return showToast("Termine ou arrête ta chasse en cours avant d'entrer en donjon", 1600);
+    if (!storyFree && this.getRunsLeft(dungeon.id) <= 0) return showToast(_t("Plus de sortie aujourd'hui dans ce donjon — renouvellement dans {d}", { d: this.timeUntilTicketReset() }), 1800);
+    if (game.dungeonRun.active) return showToast(_t("Donjon déjà en cours"), 1200);
+    if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast(_t("Termine ou abandonne ta quête en cours avant d'entrer en donjon"), 1600);
+    if (game.huntRun && game.huntRun.active) return showToast(_t("Termine ou arrête ta chasse en cours avant d'entrer en donjon"), 1600);
     if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
     // v3.330.0 (E4) : vivres de sortie pour un donjon déjà fini une fois (jamais sur un ticket d'Histoire)
     if (window.ProvisionsManager) {
@@ -419,7 +419,9 @@ var DungeonManager = {
     // Ascétisme, Fléau) s'appliquent ici via AfflictionManager, dont la source est désormais dungeonRun.marks.
     if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("dungeon"); }
     game.heroHp = game.heroMaxHp || 1; // on entre à PV pleins, après le recalc des Marques
-    addLog("🏰 Entrée dans " + dungeon.name + (runMarks.length ? " sous " + runMarks.length + " Marque" + (runMarks.length > 1 ? "s" : "") : "") + " !", "event");
+    addLog("🏰 " + (runMarks.length
+      ? _tn(runMarks.length, "Entrée dans {x} sous {n} Marque !", "Entrée dans {x} sous {n} Marques !", { x: _td(dungeon.name) })
+      : _t("Entrée dans {x} !", { x: _td(dungeon.name) })), "event");
     this.applyDungeonTheme(dungeon.id);
     this.spawnWave(1);
     if (typeof switchTab === "function") switchTab("combat");
@@ -444,8 +446,8 @@ var DungeonManager = {
 
     var nextWave = clearedWave + 1;
     if (nextWave > DUNGEON_CONFIG.waveCount) {
-      addLog("🏰 Vagues terminées ! Le boss du donjon apparaît...", "event");
-      showToast("👑 Le boss du donjon apparaît !", 2000);
+      addLog(_t("🏰 Vagues terminées ! Le boss du donjon apparaît..."), "event");
+      showToast(_t("👑 Le boss du donjon apparaît !"), 2000);
     }
     this.spawnWave(nextWave);
   },
@@ -457,7 +459,7 @@ var DungeonManager = {
 
     // v3.102.0 (P2) : même règle de mort qu'ailleurs (PV 0, Sang-froid, retour Campement)
     game.heroHp = 0; // v3.327.0 : Sang-froid retiré (décision T9)
-    addLog("💀 Tentative de donjon interrompue à la vague " + (game.dungeonRun.wave || 1) + " ! Retour au Campement.", "event");
+    addLog("💀 " + _t("Tentative de donjon interrompue à la vague {n} ! Retour au Campement.", { n: game.dungeonRun.wave || 1 }), "event");
     vibrate([80, 40, 80]);
 
     this.finish(false, clearedWave, "death");
@@ -473,7 +475,7 @@ var DungeonManager = {
     if (clearedWave > (game.dungeonBestWave || 0)) game.dungeonBestWave = clearedWave;
 
     if (window.SortieManager) SortieManager.end("flee"); // v3.102.1 : abandon = fuite, 50 % du butin
-    addLog("🏳️ Donjon abandonné à la vague " + (game.dungeonRun.wave || 1) + ".", "event");
+    addLog("🏳️ " + _t("Donjon abandonné à la vague {n}.", { n: game.dungeonRun.wave || 1 }), "event");
     this.finish(false, clearedWave, "flee");
   },
 
@@ -506,7 +508,7 @@ var DungeonManager = {
       var wasAlreadyCleared = !!game.dungeonTierCleared[tier.id];
       game.dungeonTierCleared[tier.id] = true;
       if (!wasAlreadyCleared) {
-        addLog("🔓 " + esc(tier.name) + " entièrement terminé — palier suivant débloqué !", "event");
+        addLog("🔓 " + _t("{x} entièrement terminé — palier suivant débloqué !", { x: _td(tier.name) }), "event");
       }
     } else if (outcome === "death") {
       goldReward = 0;
@@ -528,7 +530,7 @@ var DungeonManager = {
         game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) + echo;
       }
     }
-    if (success && window.MemoryManager) MemoryManager.souvenir("dungeonClear", "Souvenir : " + (tier && tier.name ? tier.name : "donjon") + " terminé");
+    if (success && window.MemoryManager) MemoryManager.souvenir("dungeonClear", _t("Souvenir : {x} terminé", { x: tier && tier.name ? _td(tier.name) : _t("donjon") }));
 
     game.gold += goldReward;
     game.totalGoldEarned += goldReward;
@@ -565,15 +567,15 @@ var DungeonManager = {
     }
 
     var msg = success
-      ? "🏆 " + tier.name + " terminé ! +" + formatNumber(goldReward) + " or"
+      ? "🏆 " + _t("{x} terminé ! +{g} or", { x: _td(tier.name), g: formatNumber(goldReward) })
       : (outcome === "death"
-        ? "🏰 " + tier.name + " : terrassé à la vague " + (clearedWave + 1) + "/" + wavesTotal + " — aucune récompense, le butin reste dans le donjon."
-        : "🏰 " + tier.name + " abandonné (vague " + clearedWave + "/" + wavesTotal + ") : +" + formatNumber(goldReward) + " or (moitié)");
-    if (lootedItem) msg += " + " + lootedItem.name;
-    if (specialGained > 0 && specialDef) msg += " + " + specialGained + " " + specialDef.name;
+        ? "🏰 " + _t("{x} : terrassé à la vague {a}/{b} — aucune récompense, le butin reste dans le donjon.", { x: _td(tier.name), a: clearedWave + 1, b: wavesTotal })
+        : "🏰 " + _t("{x} abandonné (vague {a}/{b}) : +{g} or (moitié)", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) }));
+    if (lootedItem) msg += " + " + _td(lootedItem.name);
+    if (specialGained > 0 && specialDef) msg += " + " + specialGained + " " + _td(specialDef.name);
 
     addLog(msg, success ? "boss" : "event");
-    showToast(success ? "🏆 Donjon terminé !" : "🏰 Donjon interrompu", 2200);
+    showToast(success ? "🏆 " + _t("Donjon terminé !") : "🏰 " + _t("Donjon interrompu"), 2200);
 
     if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
       CombatEngine.spawnEnemy();
@@ -623,10 +625,10 @@ var DungeonManager = {
     if (!item) return;
 
     var level = this.getShardShopLevel(id);
-    if (level >= item.maxLevel) return showToast("Niveau maximum atteint", 1200);
+    if (level >= item.maxLevel) return showToast(_t("Niveau maximum atteint"), 1200);
 
     var cost = this.getShardShopCost(item);
-    if ((game.dungeonShards || 0) < cost) return showToast("Pas assez d'Éclats", 1000);
+    if ((game.dungeonShards || 0) < cost) return showToast(_t("Pas assez d'Éclats"), 1000);
 
     game.dungeonShards -= cost;
     game.dungeonShopLevels[id] = level + 1;
@@ -635,8 +637,8 @@ var DungeonManager = {
       StatsSystem.recalcStats();
     }
 
-    addLog("🔷 " + item.name + " amélioré (niveau " + (level + 1) + ")", "event");
-    showToast(item.name + " +1", 1500);
+    addLog("🔷 " + _t("{x} amélioré (niveau {n})", { x: _td(item.name), n: level + 1 }), "event");
+    showToast(_td(item.name) + " +1", 1500);
     if (typeof renderAll === "function") renderAll();
     saveGame();
   },

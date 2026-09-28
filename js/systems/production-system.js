@@ -118,11 +118,11 @@ var ProductionManager = {
     Object.keys(gift).forEach(function (k) {
       var n = WarehouseManager.addResource(k, gift[k], true);
       var def = WAREHOUSE_RESOURCES[k];
-      if (n > 0) parts.push("+" + n + " " + (def ? def.name : k));
+      if (n > 0) parts.push("+" + n + " " + (def ? _td(def.name) : k));
     });
     if (parts.length) {
       var def = PRODUCTION_BUILDINGS[id];
-      addLog("🧺 L'intendant livre de quoi bâtir (" + (def ? def.name : id) + ") : " + parts.join(", "), "event");
+      addLog("🧺 " + _t("L'intendant livre de quoi bâtir ({x}) : {liste}", { x: def ? _td(def.name) : id, liste: parts.join(", ") }), "event");
       if (typeof showToast === "function") showToast("🧺 " + parts.join(" · "), 1800);
     }
   },
@@ -132,7 +132,7 @@ var ProductionManager = {
     var gift = window.PRODUCTION_UNLOCK_GIFT || {};
     return Object.keys(gift).map(function (k) {
       var def = WAREHOUSE_RESOURCES[k];
-      return formatNumber(gift[k]) + " " + (def ? def.name : k);
+      return formatNumber(gift[k]) + " " + (def ? _td(def.name) : k);
     }).join(" · ");
   },
 
@@ -303,17 +303,17 @@ var ProductionManager = {
       var hasStock = Math.floor(stock) > 0;
 
       setElementWidth("prod-bar-" + id, pct);
-      setElementText("prod-stock-label-" + id, formatNumber(Math.floor(stock)) + " / " + formatNumber(capacity) + " " + (resDef.name || ""));
+      setElementText("prod-stock-label-" + id, formatNumber(Math.floor(stock)) + " / " + formatNumber(capacity) + " " + (resDef.name ? _td(resDef.name) : ""));
 
       var statusEl = document.getElementById("prod-status-" + id);
       if (statusEl) {
         if (isFull) {
-          statusEl.textContent = "✅ Stock plein";
+          statusEl.textContent = "✅ " + _t("Stock plein");
           statusEl.classList.add("is-full");
         } else {
           var ratePerMin = self.getRatePerMin(id);
           var secondsUntilFull = ratePerMin > 0 ? ((capacity - stock) / ratePerMin) * 60 : 0;
-          statusEl.textContent = ratePerMin > 0 ? "⏳ Plein dans " + formatTime(secondsUntilFull) : "";
+          statusEl.textContent = ratePerMin > 0 ? "⏳ " + _t("Plein dans {d}", { d: formatTime(secondsUntilFull) }) : "";
           statusEl.classList.remove("is-full");
         }
       }
@@ -345,7 +345,7 @@ var ProductionManager = {
       // v3.98.21 : badge "File : X / Y" tenu à jour ici (simple texte, id stable) même
       // quand la file est vide — auparavant seul un renderPanel() complet (retiré du
       // tick d'atelier, voir workshops-system.js) le faisait.
-      setElementText("prod-workshop-queue-badge-" + workshopId, "File : " + WorkshopsSystem.getQueue(workshopId).length + " / " + WorkshopsSystem.getMaxQueueLength(workshopId));
+      setElementText("prod-workshop-queue-badge-" + workshopId, _t("File : {a} / {b}", { a: WorkshopsSystem.getQueue(workshopId).length, b: WorkshopsSystem.getMaxQueueLength(workshopId) }));
 
       var queue = WorkshopsSystem.getQueue(workshopId);
       if (!queue.length) return;
@@ -461,13 +461,13 @@ var ProductionManager = {
     });
 
     if (fullRes && typeof showHowToToast === "function") {
-      showHowToToast(anyHarvested ? "Récolte faite, mais l'Entrepôt est plein" : "Entrepôt plein", "warehouseFull", { resourceId: fullRes });
+      showHowToToast(anyHarvested ? _t("Récolte faite, mais l'Entrepôt est plein") : _t("Entrepôt plein"), "warehouseFull", { resourceId: fullRes });
       if (!anyHarvested) return;
     } else if (!anyHarvested) {
-      showToast("Rien à récolter", 1200);
+      showToast(_t("Rien à récolter"), 1200);
       return;
     } else {
-      showToast("Tout récolté", 1300);
+      showToast(_t("Tout récolté"), 1300);
     }
     if (typeof renderPanel === "function") renderPanel();
     saveGame();
@@ -497,7 +497,7 @@ var ProductionManager = {
   _noteFull: function (id) {
     var def = PRODUCTION_BUILDINGS[id], resDef = WAREHOUSE_RESOURCES[def.resourceKey];
     var left = Math.floor(this.getStock(id));
-    addLog("📦 " + (resDef ? resDef.name : def.resourceKey) + " : entrepôt plein, " + formatNumber(left) + " restent dans les zones", "event");
+    addLog("📦 " + _t("{x} : entrepôt plein, {n} restent dans les zones", { x: resDef ? _td(resDef.name) : def.resourceKey, n: formatNumber(left) }), "event");
   },
 
   _harvestSilent: function (id) {
@@ -513,7 +513,7 @@ var ProductionManager = {
     if (!(window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id))) game.production[id].lastTick = Date.now();
 
     var resDef = WAREHOUSE_RESOURCES[def.resourceKey];
-    addLog("🌾 " + def.name + " récoltée : +" + formatNumber(amount) + " " + (resDef ? resDef.name : def.resourceKey), "event");
+    addLog("🌾 " + _t("{x} récoltée : +{n} {r}", { x: _td(def.name), n: formatNumber(amount), r: resDef ? _td(resDef.name) : def.resourceKey }), "event");
     return true;
   },
 
@@ -532,8 +532,8 @@ var ProductionManager = {
 
     if (amount <= 0) {
       // v3.336.0 (F-2) : Entrepôt plein -> Taverne si un contrat prend la ressource, sinon l'Entrepôt
-      if (r.blocked && typeof showHowToToast === "function") showHowToToast("Entrepôt plein", "warehouseFull", { resourceId: def.resourceKey });
-      else showToast(r.blocked ? "Entrepôt plein" : "Rien à récolter", 1200);
+      if (r.blocked && typeof showHowToToast === "function") showHowToToast(_t("Entrepôt plein"), "warehouseFull", { resourceId: def.resourceKey });
+      else showToast(r.blocked ? _t("Entrepôt plein") : _t("Rien à récolter"), 1200);
       return;
     }
 
@@ -541,8 +541,8 @@ var ProductionManager = {
     if (!(window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id))) game.production[id].lastTick = Date.now();
 
     var resDef = WAREHOUSE_RESOURCES[def.resourceKey];
-    addLog("🌾 " + def.name + " récoltée : +" + formatNumber(amount) + " " + (resDef ? resDef.name : def.resourceKey), "event");
-    showToast("+" + formatNumber(amount) + " " + (resDef ? resDef.name : ""), 1300);
+    addLog("🌾 " + _t("{x} récoltée : +{n} {r}", { x: _td(def.name), n: formatNumber(amount), r: resDef ? _td(resDef.name) : def.resourceKey }), "event");
+    showToast("+" + formatNumber(amount) + " " + (resDef ? _td(resDef.name) : ""), 1300);
 
     if (typeof renderPanel === "function") renderPanel();
     saveGame();
@@ -562,7 +562,7 @@ var ProductionManager = {
     if (!b || !def) return;
 
     if (this.isMaxLevel(id)) {
-      showToast("Niveau maximum", 1200);
+      showToast(_t("Niveau maximum"), 1200);
       return;
     }
 
@@ -573,8 +573,8 @@ var ProductionManager = {
       return key !== "all" && afford[key] === false;
     });
     if (missingKey) {
-      var missingLabel = missingKey === "gold" ? "or" : (WAREHOUSE_RESOURCES[missingKey] ? WAREHOUSE_RESOURCES[missingKey].name : missingKey);
-      showToast("Pas assez de " + missingLabel, 1000);
+      var missingLabel = missingKey === "gold" ? _t("or") : (WAREHOUSE_RESOURCES[missingKey] ? _td(WAREHOUSE_RESOURCES[missingKey].name) : missingKey);
+      showToast(_t("Pas assez de {x}", { x: missingLabel }), 1000);
       return;
     }
 
@@ -590,8 +590,8 @@ var ProductionManager = {
       QuestManager.track("goldSpent", cost.gold);
     }
 
-    addLog(def.name + " amélioré (niv. " + b.level + ")", "event");
-    showToast(def.name + " niv. " + b.level, 1200);
+    addLog(_t("{x} amélioré (niv. {n})", { x: _td(def.name), n: b.level }), "event");
+    showToast(_t("{x} niv. {n}", { x: _td(def.name), n: b.level }), 1200);
 
     if (typeof renderPanel === "function") renderPanel();
     saveGame();

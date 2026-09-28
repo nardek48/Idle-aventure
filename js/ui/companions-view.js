@@ -21,10 +21,10 @@ function buildCompanionCardHTML(companionId) {
   var h = '<div class="cp-card' + (ko ? ' is-ko' : '') + '">';
 
   h += '<div class="cp-head">';
-  h += '<div class="cp-portrait"><img src="' + esc(def.image) + '" alt="' + esc(def.name) + '"></div>';
+  h += '<div class="cp-portrait"><img src="' + esc(def.image) + '" alt="' + esc(_td(def.name)) + '"></div>';
   h += '<div class="cp-ident">';
-  h += '<div class="cp-name">' + esc(def.name) + '</div>';
-  h += '<div class="cp-role">' + esc(COMPANION_ROLE_LABELS[def.role] || def.role) + '</div>';
+  h += '<div class="cp-name">' + esc(_td(def.name)) + '</div>';
+  h += '<div class="cp-role">' + esc(COMPANION_ROLE_LABELS[def.role] ? _td(COMPANION_ROLE_LABELS[def.role]) : def.role) + '</div>';
   h += '</div>';
   h += '</div>';
 
@@ -32,27 +32,27 @@ function buildCompanionCardHTML(companionId) {
   h += '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct.toFixed(1) + '%"></div></div>';
   h += '<div class="kgauge-text">' + formatNumber(Math.ceil(hp)) + ' / ' + formatNumber(maxHp) + '</div>';
   h += '</div>';
-  if (ko) h += '<div class="cp-ko-note">Hors de combat — revient affaibli au prochain combat.</div>';
+  if (ko) h += '<div class="cp-ko-note">' + _t("Hors de combat — revient affaibli au prochain combat.") + '</div>';
 
   h += '<div class="cp-stats">';
-  h += '<span>Dégâts <b>' + formatNumber(stats.damage) + '</b></span>';
-  h += '<span>PV <b>' + formatNumber(maxHp) + '</b></span>';
+  h += '<span>' + _t("Dégâts") + ' <b>' + formatNumber(stats.damage) + '</b></span>';
+  h += '<span>' + _t("PV", "unité") + ' <b>' + formatNumber(maxHp) + '</b></span>';
   h += '</div>';
 
   h += '<div class="cp-skill">';
   h += '<img class="cp-skill-ico" src="' + esc(def.skill.icon) + '" alt="">';
-  h += '<div><b>' + esc(def.skill.name) + '</b><div class="cp-skill-desc">' + esc(def.skill.desc)
-    + ' Recharge : ' + def.skill.cooldown + ' rounds.</div></div>';
+  h += '<div><b>' + esc(_td(def.skill.name)) + '</b><div class="cp-skill-desc">' + esc(_td(def.skill.desc))
+    + ' ' + esc(_t("Recharge : {n} rounds.", { n: def.skill.cooldown })) + '</div></div>';
   h += '</div>';
 
   /* Présence et contrôle : deux segments, l'état du jeu se lit d'un coup d'œil. */
   /* v3.334.0 (P2) : en patrouille, le choix Avec toi / Au camp ne s'applique pas — on le dit. */
   if (window.PatrolManager && PatrolManager.isOnPatrol(companionId)) {
-    h += '<div class="cp-patrol-note">En patrouille — ' + (st.present ? 'repartira avec toi' : 'restera au camp') + ' à son retour.</div>';
+    h += '<div class="cp-patrol-note">' + (st.present ? _t("En patrouille — repartira avec toi à son retour.") : _t("En patrouille — restera au camp à son retour.")) + '</div>';
   } else {
   h += '<div class="kseg cp-seg">';
-  h += '<button type="button" class="' + (st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + companionId + '\', true)">Avec toi</button>';
-  h += '<button type="button" class="' + (!st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + companionId + '\', false)">Au camp</button>';
+  h += '<button type="button" class="' + (st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + companionId + '\', true)">' + _t("Avec toi") + '</button>';
+  h += '<button type="button" class="' + (!st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + companionId + '\', false)">' + _t("Au camp") + '</button>';
   h += '</div>';
   }
 
@@ -63,7 +63,7 @@ function buildCompanionCardHTML(companionId) {
      combat qui décide, pour tout le monde. On le RAPPELLE ici plutôt que de laisser un
      réglage muet : le joueur doit savoir où se règle ce qu'il cherche. */
   h += '<div class="cp-controlnote">'
-    + 'Il joue seul en mode <b>Grimoire</b>, tu le joues en mode <b>Tactique</b> — la bascule est sur l\'écran de combat.'
+    + _t("Il joue seul en mode <b>Grimoire</b>, tu le joues en mode <b>Tactique</b> — la bascule est sur l'écran de combat.")
     + '</div>';
 
   /* v3.311.0 : voie (Maddoc) — la voie courante, l'autre, et le prix du changement (D4b). */
@@ -76,42 +76,42 @@ function buildCompanionCardHTML(companionId) {
   if (def.skill && def.skill.type === "heal") {
   h += '<div class="cp-behavior">';
   var joueSeul = (window.CompanionManager && CompanionManager.controlOf() === "auto");
-  h += '<div class="cp-behavior-title">Comportement'
-    + (joueSeul ? '' : ' <span class="cp-behavior-off">— sert en mode Grimoire</span>') + '</div>';
+  h += '<div class="cp-behavior-title">' + _t("Comportement")
+    + (joueSeul ? '' : ' <span class="cp-behavior-off">' + _t("— sert en mode Grimoire") + '</span>') + '</div>';
 
-  h += '<div class="cp-behavior-row"><span>Soigne</span><div class="kseg">';
+  h += '<div class="cp-behavior-row"><span>' + _t("Soigne") + '</span><div class="kseg">';
   COMPANION_HEAL_THRESHOLDS.forEach(function (t) {
     h += '<button type="button" class="' + (st.healThreshold === t.id ? 'is-on' : '') + '"'
-      + ' onclick="companionSetSetting(\'' + companionId + '\', \'healThreshold\', \'' + t.id + '\')">' + esc(t.label) + '</button>';
+      + ' onclick="companionSetSetting(\'' + companionId + '\', \'healThreshold\', \'' + t.id + '\')">' + esc(_td(t.label)) + '</button>';
   });
   h += '</div></div>';
-  h += '<div class="cp-behavior-hint">' + esc(getCompanionHealThreshold(st.healThreshold).desc) + '</div>';
+  h += '<div class="cp-behavior-hint">' + esc(_td(getCompanionHealThreshold(st.healThreshold).desc)) + '</div>';
 
-  h += '<div class="cp-behavior-row"><span>En priorité</span><div class="kseg">';
+  h += '<div class="cp-behavior-row"><span>' + _t("En priorité") + '</span><div class="kseg">';
   COMPANION_HEAL_PRIORITIES.forEach(function (p) {
     h += '<button type="button" class="' + (st.healPriority === p.id ? 'is-on' : '') + '"'
-      + ' onclick="companionSetSetting(\'' + companionId + '\', \'healPriority\', \'' + p.id + '\')">' + esc(p.label) + '</button>';
+      + ' onclick="companionSetSetting(\'' + companionId + '\', \'healPriority\', \'' + p.id + '\')">' + esc(_td(p.label)) + '</button>';
   });
   h += '</div></div>';
 
   h += '<label class="cp-behavior-check"><input type="checkbox"' + (st.keepReserve ? ' checked' : '')
     + ' onclick="companionSetSetting(\'' + companionId + '\', \'keepReserve\', this.checked)">'
-    + '<span>Garder une charge en réserve</span></label>';
-  h += '<div class="cp-behavior-hint">Il n\'utilise pas sa dernière charge, sauf si un allié est vraiment bas.</div>';
+    + '<span>' + _t("Garder une charge en réserve") + '</span></label>';
+  h += '<div class="cp-behavior-hint">' + _t("Il n'utilise pas sa dernière charge, sauf si un allié est vraiment bas.") + '</div>';
   h += '</div>';
   }
 
   var maxUp = getCompanionMaxUpgrades(companionId);
   var cost = getCompanionUpgradeCost(companionId, st.upgrades);
   h += '<div class="cp-upgrade">';
-  h += '<div class="cp-upgrade-label">Entraînement <b>' + st.upgrades + ' / ' + maxUp + '</b>';
-  h += '<span class="cp-upgrade-hint">+' + Math.round((def.upgrades.statPct || 0) * 100) + ' % à toutes ses stats par palier</span></div>';
+  h += '<div class="cp-upgrade-label">' + _t("Entraînement") + ' <b>' + st.upgrades + ' / ' + maxUp + '</b>';
+  h += '<span class="cp-upgrade-hint">' + _t("+{p} % à toutes ses stats par palier", { p: Math.round((def.upgrades.statPct || 0) * 100) }) + '</span></div>';
   if (cost == null) {
-    h += '<div class="cp-upgrade-done">Terminé</div>';
+    h += '<div class="cp-upgrade-done">' + _t("Terminé") + '</div>';
   } else {
     var afford = (game.gold || 0) >= cost;
     h += '<button type="button" class="kbtn' + (afford ? '' : ' is-disabled') + '" onclick="companionBuyUpgrade(\'' + companionId + '\')"'
-      + (afford ? '' : ' disabled') + '>' + formatNumber(cost) + ' or</button>';
+      + (afford ? '' : ' disabled') + '>' + _t("{n} or", { n: formatNumber(cost) }) + '</button>';
   }
   h += '</div>';
 
@@ -125,22 +125,22 @@ function buildCompanionVoieHTML(companionId, st) {
   var raw = COMPANIONS_DB[companionId];
   var h = '<div class="cp-voie">';
   if (!st.voie) {
-    h += '<div class="cp-voie-title">Voie</div><div class="cp-behavior-hint">Pas encore choisie. Elle se choisit dans l\'Histoire.</div>';
+    h += '<div class="cp-voie-title">' + _t("Voie") + '</div><div class="cp-behavior-hint">' + _t("Pas encore choisie. Elle se choisit dans l'Histoire.") + '</div>';
     return h + '</div>';
   }
   var cur = raw.voies[st.voie];
-  h += '<div class="cp-voie-title">Voie : <b>' + esc(cur.label) + '</b></div>';
-  h += '<div class="cp-behavior-hint">' + esc(cur.desc) + '</div>';
+  h += '<div class="cp-voie-title">' + _t("Voie :") + ' <b>' + esc(_td(cur.label)) + '</b></div>';
+  h += '<div class="cp-behavior-hint">' + esc(_td(cur.desc)) + '</div>';
   var free = !!(window.MemoryManager && MemoryManager.isVoieFreeToday()); // v3.322.0 : Voie libre
   var cost = free ? 0 : getVoieChangeCost(st.voieChanges);
   Object.keys(raw.voies).forEach(function (vid) {
     if (vid === st.voie) return;
     var v = raw.voies[vid], afford = (game.gold || 0) >= cost;
-    h += '<div class="cp-voie-other"><span>' + esc(v.label) + ' — ' + esc(v.desc) + '</span>';
+    h += '<div class="cp-voie-other"><span>' + esc(_td(v.label)) + ' — ' + esc(_td(v.desc)) + '</span>';
     h += '<button type="button" class="kbtn' + (afford ? '' : ' is-disabled') + '"' + (afford ? '' : ' disabled')
-      + ' onclick="companionChangeVoie(\'' + companionId + '\', \'' + vid + '\')">Changer : ' + (free ? 'gratuit aujourd\'hui' : formatNumber(cost) + ' or') + '</button></div>';
+      + ' onclick="companionChangeVoie(\'' + companionId + '\', \'' + vid + '\')">' + (free ? _t("Changer : gratuit aujourd'hui") : _t("Changer : {n} or", { n: formatNumber(cost) })) + '</button></div>';
   });
-  h += '<div class="cp-behavior-hint">Ses améliorations sont conservées. Chaque changement coûte trois fois le précédent.</div>';
+  h += '<div class="cp-behavior-hint">' + _t("Ses améliorations sont conservées. Chaque changement coûte trois fois le précédent.") + '</div>';
   return h + '</div>';
 }
 
@@ -151,21 +151,22 @@ function companionChangeVoie(companionId, voieId) {
   var cost = free ? 0 : getVoieChangeCost(st.voieChanges);
   var go = function () { CompanionManager.changeVoie(companionId, voieId); };
   if (typeof showConfirmModal === "function") {
-    showConfirmModal("Changer de voie ?", raw.name + " passe à « " + raw.voies[voieId].label + " » " + (free ? "gratuitement (Voie libre)." : "pour " + formatNumber(cost) + " or."), "🔁", go);
+    showConfirmModal(_t("Changer de voie ?"), free
+      ? _t("{x} passe à « {v} » gratuitement (Voie libre).", { x: _td(raw.name), v: _td(raw.voies[voieId].label) })
+      : _t("{x} passe à « {v} » pour {n} or.", { x: _td(raw.name), v: _td(raw.voies[voieId].label), n: formatNumber(cost) }), "🔁", go);
   } else go();
 }
 window.companionChangeVoie = companionChangeVoie;
 window.buildCompanionVoieHTML = buildCompanionVoieHTML;
 
 function buildHerosCompanionsHTML() {
-  var h = '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/subtabs/hero_summary.png|Compagnons">';
+  var h = '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/subtabs/hero_summary.png|" + _t("Compagnons")) + '">';
 
   var ids = (window.CompanionManager) ? CompanionManager.unlockedIds() : [];
   if (!ids.length) {
-    h += '<div class="pc-empty">Personne ne t\'accompagne encore.</div>';
+    h += '<div class="pc-empty">' + _t("Personne ne t'accompagne encore.") + '</div>';
   } else {
-    h += '<div class="cp-intro">Deux compagnons au maximum peuvent partir avec toi. '
-      + 'Ils jouent après toi à chaque round.</div>';
+    h += '<div class="cp-intro">' + _t("Deux compagnons au maximum peuvent partir avec toi. Ils jouent après toi à chaque round.") + '</div>';
     ids.forEach(function (id) { h += buildCompanionCardHTML(id); });
   }
 

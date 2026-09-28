@@ -177,7 +177,7 @@ var CombatActors = {
          nom, et c'est le nom qu'on cherche dans une rangée d'acteurs. */
       get: function () {
         var hero = (typeof getHeroByGameId === "function") ? getHeroByGameId(game.heroId) : null;
-        return game.playerName || (hero && hero.name) || "Héros";
+        return game.playerName || (hero && hero.name ? _td(hero.name) : _t("Héros"));
       },
       enumerable: true
     });

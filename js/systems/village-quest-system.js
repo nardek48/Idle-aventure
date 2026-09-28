@@ -95,15 +95,15 @@ var VillageQuestManager = {
     }
     vq.claimed[current.id] = true;
 
-    addLog("🏡 Quête de village terminée : " + current.title, "event");
-    if (typeof showToast === "function") showToast("✅ " + current.title, 1800);
+    addLog("🏡 " + _t("Quête de village terminée : {x}", { x: _td(current.title) }), "event");
+    if (typeof showToast === "function") showToast("✅ " + _td(current.title), 1800);
     if (typeof openQuestCompletePopup === "function") {
       openQuestCompletePopup({
         icon: current.icon || "🏡",
         title: current.title,
         text: (current.narrative && current.narrative.completion) || "",
         rewardRows: rewardRows,
-        closeLabel: "Continuer",
+        closeLabel: _t("Continuer"),
         suggestNextQuest: false
       });
     }

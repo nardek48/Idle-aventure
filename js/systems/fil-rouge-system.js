@@ -62,8 +62,8 @@ var FilRouge = {
     if (!n) return null;
     return {
       id: "achievement", urgent: false, icon: "images/Icons/menu_icons/achivment_menu.png",
-      title: n > 1 ? (n + " hauts faits à réclamer") : "Un haut fait à réclamer",
-      reason: "Récompense prête dans les Hauts faits.", goLabel: "Voir",
+      title: n > 1 ? _t("{n} hauts faits à réclamer", { n: n }) : _t("Un haut fait à réclamer"),
+      reason: _t("Récompense prête dans les Hauts faits."), goLabel: _t("Voir"),
       go: function () { if (typeof switchTab === "function") switchTab("achievements"); }
     };
   },
@@ -108,9 +108,9 @@ var FilRouge = {
     var self = this;
     return {
       id: "claim", urgent: true, icon: FIL_ROUGE_ICONS.claim,
-      title: "Réclamer : " + m.title,
-      reason: (m.sourceKind === "story" ? "Ton étape d'Histoire est terminée." : "Objectif atteint.") + (m.rewardSummary ? " " + m.rewardSummary + "." : ""),
-      goLabel: "Réclamer",
+      title: _t("Réclamer : {x}", { x: m.title }),
+      reason: (m.sourceKind === "story" ? _t("Ton étape d'Histoire est terminée.") : _t("Objectif atteint.")) + (m.rewardSummary ? " " + m.rewardSummary + "." : ""),
+      goLabel: _t("Réclamer"),
       go: function () { m.claim(); self.invalidate(); if (typeof renderAll === "function") renderAll(); }
     };
   },
@@ -123,9 +123,9 @@ var FilRouge = {
     if (!n) return null;
     return {
       id: "memory", urgent: true, icon: FIL_ROUGE_ICONS.memory,
-      title: "Un choix de Mémoire t'attend",
-      reason: n > 1 ? (n + " niveaux atteints, un choix pour chacun.") : "Un niveau atteint : un souvenir à choisir.",
-      goLabel: "Choisir",
+      title: _t("Un choix de Mémoire t'attend"),
+      reason: n > 1 ? _t("{n} niveaux atteints, un choix pour chacun.", { n: n }) : _t("Un niveau atteint : un souvenir à choisir."),
+      goLabel: _t("Choisir"),
       go: function () { if (typeof switchTab === "function") switchTab("ascension"); }
     };
   },
@@ -150,9 +150,9 @@ var FilRouge = {
     if (pct >= FIL_ROUGE_HEAL_PCT) return null;
     return {
       id: "heal", urgent: false, icon: FIL_ROUGE_ICONS.heal,
-      title: "Reprends des forces",
-      reason: "Prochaine étape : " + m.title + ". Tu es à " + Math.round(pct * 100) + " % de tes PV.",
-      goLabel: "Au Campement",
+      title: _t("Reprends des forces"),
+      reason: _t("Prochaine étape : {x}. Tu es à {p} % de tes PV.", { x: m.title, p: Math.round(pct * 100) }),
+      goLabel: _t("Au Campement"),
       go: function () { if (typeof switchTab === "function") switchTab("campement"); }
     };
   },
@@ -165,9 +165,9 @@ var FilRouge = {
     if (m.status === "available") {
       return {
         id: "story", urgent: false, icon: FIL_ROUGE_ICONS.story,
-        title: "Nouvelle étape : " + m.title,
-        reason: m.blurb || "L'Histoire continue.",
-        goLabel: "Accepter",
+        title: _t("Nouvelle étape : {x}", { x: m.title }),
+        reason: m.blurb || _t("L'Histoire continue."),
+        goLabel: _t("Accepter"),
         go: function () {
           if (typeof m.accept === "function") m.accept();
           self.invalidate();
@@ -179,7 +179,7 @@ var FilRouge = {
       id: "story", urgent: false, icon: FIL_ROUGE_ICONS.story,
       title: m.title,
       reason: m.blurb || m.objectiveLabel || "",
-      goLabel: "Y aller",
+      goLabel: _t("Y aller"),
       go: function () {
         if (typeof m.launch === "function") m.launch();
         else if (typeof switchTab === "function") switchTab("quests");
@@ -195,9 +195,10 @@ var FilRouge = {
     var p = back[0];
     return {
       id: "patrol", urgent: true, icon: FIL_ROUGE_ICONS.patrol,
-      title: back.length > 1 ? (back.length + " patrouilles sont rentrées") : (p.companionName + " est rentré" + (p.feminine ? "e" : "")),
-      reason: "Retour de " + p.sectorName + ".",
-      goLabel: "Voir",
+      title: back.length > 1 ? _t("{n} patrouilles sont rentrées", { n: back.length })
+        : (p.feminine ? _t("{x} est rentrée", { x: _td(p.companionName) }) : _t("{x} est rentré", { x: _td(p.companionName) })),
+      reason: _t("Retour de {x}.", { x: _td(p.sectorName) }),
+      goLabel: _t("Voir"),
       go: function () { if (typeof openPatrolScreen === "function") openPatrolScreen(); }
     };
   },
@@ -210,9 +211,9 @@ var FilRouge = {
     var gold = ready.reduce(function (s, c) { return s + TavernManager.getPayout(c); }, 0);
     return {
       id: "tavern", urgent: false, icon: FIL_ROUGE_ICONS.tavern,
-      title: "Livrer à la Taverne",
-      reason: ready.length + " contrat" + (ready.length > 1 ? "s livrables" : " livrable") + " : " + formatNumber(gold) + " or.",
-      goLabel: "Aller à la Taverne",
+      title: _t("Livrer à la Taverne"),
+      reason: _tn(ready.length, "{n} contrat livrable : {g} or.", "{n} contrats livrables : {g} or.", { g: formatNumber(gold) }),
+      goLabel: _t("Aller à la Taverne"),
       go: function () {
         if (typeof switchTab === "function") switchTab("village");
         if (typeof setVillageSubTab === "function") setVillageSubTab("village");
@@ -228,9 +229,9 @@ var FilRouge = {
     if (!c.open || c.full < c.open * FIL_ROUGE_PLOTS_RATIO) return null;
     return {
       id: "plots", urgent: false, icon: FIL_ROUGE_ICONS.plots,
-      title: "Récolter le village",
-      reason: c.full + " zone" + (c.full > 1 ? "s pleines" : " pleine") + " sur " + c.open + " : elles ne produisent plus.",
-      goLabel: "Récolter",
+      title: _t("Récolter le village"),
+      reason: _tn(c.full, "{n} zone pleine sur {m} : elles ne produisent plus.", "{n} zones pleines sur {m} : elles ne produisent plus.", { m: c.open }),
+      goLabel: _t("Récolter"),
       go: function () {
         if (typeof switchTab === "function") switchTab("village");
         if (typeof setVillageSubTab === "function") setVillageSubTab("production");
@@ -248,8 +249,8 @@ var FilRouge = {
       return {
         id: "idle", urgent: false, icon: FIL_ROUGE_ICONS.idle,
         title: m.title,
-        reason: engaged ? "Rien ne presse. Tu peux reprendre là où tu en étais." : "Rien ne presse. " + (m.rewardSummary ? "Récompense : " + m.rewardSummary + "." : "Une activité du monde t'attend."),
-        goLabel: engaged ? "Reprendre" : "Voir",
+        reason: engaged ? _t("Rien ne presse. Tu peux reprendre là où tu en étais.") : _t("Rien ne presse.") + " " + (m.rewardSummary ? _t("Récompense : {x}.", { x: m.rewardSummary }) : _t("Une activité du monde t'attend.")),
+        goLabel: engaged ? _t("Reprendre") : _t("Voir"),
         go: function () {
           if (engaged && typeof m.launch === "function") m.launch();
           else if (typeof switchTab === "function") switchTab("quests");
@@ -258,8 +259,8 @@ var FilRouge = {
     }
     return {
       id: "idle", urgent: false, icon: FIL_ROUGE_ICONS.idle,
-      title: "Tableau de missions", reason: "Rien ne presse. Choisis ta prochaine sortie.",
-      goLabel: "Ouvrir",
+      title: _t("Tableau de missions"), reason: _t("Rien ne presse. Choisis ta prochaine sortie."),
+      goLabel: _t("Ouvrir"),
       go: function () { if (typeof switchTab === "function") switchTab("quests"); }
     };
   }
@@ -274,28 +275,28 @@ FilRouge.howTo = function (kind, ctx) {
   var self = this;
   function story(text) {
     var st = self._story();
-    return { text: text, label: st ? "Suivre l'Histoire" : "Tableau de missions",
+    return { text: text, label: st ? _t("Suivre l'Histoire") : _t("Tableau de missions"),
       go: function () { if (st) st.go(); else if (typeof switchTab === "function") switchTab("quests"); } };
   }
   if (kind === "heroLock") {
-    return { text: "Ton héros est en expédition.", label: "Reprendre l'expédition", go: function () {
+    return { text: _t("Ton héros est en expédition."), label: _t("Reprendre l'expédition"), go: function () {
       if (typeof resumeSceneRun === "function") resumeSceneRun(); else if (typeof switchTab === "function") switchTab("scene");
     } };
   }
   if (kind === "questCap") {
-    return { text: "Trois quêtes en cours au plus : termine ou abandonne l'une d'elles.", label: "Voir mes quêtes",
+    return { text: _t("Trois quêtes en cours au plus : termine ou abandonne l'une d'elles."), label: _t("Voir mes quêtes"),
       go: function () { if (typeof switchTab === "function") switchTab("quests"); } };
   }
   if (kind === "warehouseFull") {
-    var res = ctx.resourceId, name = ((window.WAREHOUSE_RESOURCES || {})[res] || {}).name || res || "";
+    var res = ctx.resourceId, name = ((window.WAREHOUSE_RESOURCES || {})[res] || {}).name ? _td(WAREHOUSE_RESOURCES[res].name) : (res || "");
     var contract = (window.TavernManager && TavernManager.getLevel() > 0) ? TavernManager.getContracts().filter(function (c) {
       return !c.done && c.resourceId === res && TavernManager.canDeliver(c.id);
     })[0] : null;
     if (contract) {
-      return { text: "Entrepôt plein en " + name + ". La Taverne en demande " + formatNumber(contract.quantity) + ".", label: "Livrer à la Taverne",
+      return { text: _t("Entrepôt plein en {x}. La Taverne en demande {n}.", { x: name, n: formatNumber(contract.quantity) }), label: _t("Livrer à la Taverne"),
         go: function () { self._tavernGo(); } };
     }
-    return { text: "Entrepôt plein en " + name + ". Un niveau d'Entrepôt ajoute 250 de place.", label: "Voir l'Entrepôt",
+    return { text: _t("Entrepôt plein en {x}. Un niveau d'Entrepôt ajoute 250 de place.", { x: name }), label: _t("Voir l'Entrepôt"),
       go: function () {
         if (typeof switchTab === "function") switchTab("village");
         if (typeof setVillageSubTab === "function") setVillageSubTab("village");
@@ -309,11 +310,11 @@ FilRouge.howTo = function (kind, ctx) {
       for (var i = 0; i < WORLD_CAPS.length; i++) if (Number(WORLD_CAPS[i].zoneLevel) > lvl) { where = WorldCaps.withPrep(i); break; }
       if (!where) where = WorldCaps.withPrep(WORLD_CAPS.length);
     }
-    return story("Niveau " + (lvl + 1) + " des zones : il s'ouvre " + (where || "dans un prochain monde") + ".");
+    return story(_t("Niveau {n} des zones : il s'ouvre {lieu}.", { n: lvl + 1, lieu: where || _t("dans un prochain monde") }));
   }
   if (kind === "talentCap") {
     var next = this._nextTalentAct();
-    return story(next ? ("Plafond de l'acte : " + next.points + " points " + next.where + ".") : "Plafond de l'acte atteint : l'Histoire ouvre la suite.");
+    return story(next ? _t("Plafond de l'acte : {n} points {lieu}.", { n: next.points, lieu: next.where }) : _t("Plafond de l'acte atteint : l'Histoire ouvre la suite."));
   }
   return null;
 };
@@ -328,7 +329,7 @@ FilRouge._nextTalentAct = function () {
     if (SQ && SQ.isStepReached(a.stepId)) continue;
     var w = window.WORLDS ? WORLDS[a.worldIndex] : null;
     var where = a.worldIndex > world ? WorldCaps.withPrep(a.worldIndex)
-      : ("à l'acte " + a.act + " " + ((window.WORLD_CAPS_DE || [])[a.worldIndex] || "de") + " " + (w ? w.name : ""));
+      : WorldCaps.atAct(a.act, a.worldIndex); // v3.371.0 : phrase entière portée par WorldCaps
     return { points: a.points, where: where };
   }
   return null;

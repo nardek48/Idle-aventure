@@ -120,10 +120,10 @@ var BossMomentManager = {
         elite: !!enemy.isElite
       };
       this.ensure()[this.keyOf(enemy)] = trophy;
-      if (typeof addLog === "function") addLog("🏆 Nouveau trophée : " + trophy.name + ".", "event");
+      if (typeof addLog === "function") addLog("🏆 " + _t("Nouveau trophée : {x}.", { x: _td(trophy.name) }), "event");
     }
     if (full && typeof showBossFinal === "function") showBossFinal(enemy, trophy);
-    else if (first && typeof showToast === "function") showToast("🏆 Trophée : " + trophy.name, 1800);
+    else if (first && typeof showToast === "function") showToast("🏆 " + _t("Trophée : {x}", { x: _td(trophy.name) }), 1800);
     return trophy;
   },
 

@@ -7,19 +7,20 @@ var MENU_ITEMS = [
      Donjon et Carte remontent au bloc « Expédition » du Campement, Équipement et Talents
      deviennent des sous-onglets de Héros, Ascension s'ouvre depuis le Résumé du héros,
      Boutique migre vers les bâtiments du Village (lot N-2). Six cases, deux rangées. */
-  { tab: "bestiary", label: "Bestiaire & Codex", img: "./images/Icons/menu_icons/bestiaire_menu.png" },
-  { tab: "achievements", label: "Hauts faits", img: "./images/Icons/menu_icons/achivment_menu.png" },
+  /* v3.369.0 : libellés traduits à la définition — possible car changer de langue relance le jeu (i18n D2). */
+  { tab: "bestiary", label: _t("Bestiaire & Codex"), img: "./images/Icons/menu_icons/bestiaire_menu.png" },
+  { tab: "achievements", label: _t("Hauts faits"), img: "./images/Icons/menu_icons/achivment_menu.png" },
   /* v3.245.0 (refonte Donjons) : Afflictions retirées — devenues les Marques, choisies à l'entrée d'un donjon. 5 cases (décision 12.4). */
-  { tab: "log", label: "Journal", img: "./images/Icons/menu_icons/journal_menu.png" },
-  { tab: "tutorials", label: "Tutoriels", icon: "images/Icons/codex/codex_lore.png" },
-  { tab: "settings", label: "Paramètres", img: "./images/Icons/menu_icons/settings_menu.png" }
+  { tab: "log", label: _t("Journal"), img: "./images/Icons/menu_icons/journal_menu.png" },
+  { tab: "tutorials", label: _t("Tutoriels"), icon: "images/Icons/codex/codex_lore.png" },
+  { tab: "settings", label: _t("Paramètres"), img: "./images/Icons/menu_icons/settings_menu.png" }
 ];
 
 function buildFullMenuHTML() {
   var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeFullMenu();">';
   h += '  <div class="full-menu">';
   h += '    <div class="full-menu-header">';
-  h += '      <h2>Menu</h2>';
+  h += '      <h2>' + _t("Menu") + '</h2>';
   h += '      <button class="full-menu-close" type="button" onclick="closeFullMenu()"><img class=ico-inline src=images/Icons/system/close.png></button>';
   h += '    </div>';
   h += '    <div class="full-menu-grid">';
@@ -34,9 +35,9 @@ function buildFullMenuHTML() {
     if (item.img) {
       h += '<img src="' + esc(item.img) + '" alt="" class="full-menu-card-icon-img">';
     } else {
-      h += '<div class="full-menu-card-icon">' + renderIconOrEmojiHTML(item.icon, "full-menu-card-icon-img", item.label) + '</div>';
+      h += '<div class="full-menu-card-icon">' + renderIconOrEmojiHTML(item.icon, "full-menu-card-icon-img", _td(item.label)) + '</div>';
     }
-    h += '<div class="full-menu-card-label">' + esc(item.label) + '</div>';
+    h += '<div class="full-menu-card-label">' + esc(_td(item.label)) + '</div>';
     h += '</button>';
   });
 

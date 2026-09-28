@@ -117,20 +117,20 @@ var ReturnManager = {
    Textes PROVISOIRES, à relire par Seb selon la bible. */
 var RETURN_WORLD_LINES = {
   forest: [
-    { text: "Le feu a tenu. Quelqu'un a remis une bûche sans te réveiller." },
-    { text: "Aldric compte ses sacs devant la réserve. Il ne se plaint pas, ce qui chez lui est un compliment." },
-    { text: "Le Veilleur n'a pas quitté son banc. Il dit que la forêt a été calme. Il ment un peu." },
-    { text: "Une brume basse traîne encore sur les Champs. Le village a travaillé sans toi." },
-    { text: "Wenna a laissé une trace de boue jusqu'à la porte. Elle, au moins, n'a pas dormi.", needs: "wenna" },
-    { text: "Les cloches du village n'ont pas sonné. C'est une bonne nouvelle." }
+    { text: _t("Le feu a tenu. Quelqu'un a remis une bûche sans te réveiller.") },
+    { text: _t("Aldric compte ses sacs devant la réserve. Il ne se plaint pas, ce qui chez lui est un compliment.") },
+    { text: _t("Le Veilleur n'a pas quitté son banc. Il dit que la forêt a été calme. Il ment un peu.") },
+    { text: _t("Une brume basse traîne encore sur les Champs. Le village a travaillé sans toi.") },
+    { text: _t("Wenna a laissé une trace de boue jusqu'à la porte. Elle, au moins, n'a pas dormi."), needs: "wenna" },
+    { text: _t("Les cloches du village n'ont pas sonné. C'est une bonne nouvelle.") }
   ],
   desert: [
-    { text: "Le sable a recouvert le seuil. Ici, on le balaie à chaque retour." },
-    { text: "La nuit a été froide. Les jarres ont gardé leur eau." },
-    { text: "Le vent a tourné pendant ton absence. Les dunes ne sont plus tout à fait au même endroit." },
-    { text: "Maddoc a fait deux fois le tour du camp. Il dit qu'il ne s'inquiétait pas.", needs: "maddoc" },
-    { text: "Au marché de sel, on parle d'une lumière vue dans la Cité engloutie." },
-    { text: "Rien n'a bougé à l'horizon. Ici, c'est plutôt rassurant." }
+    { text: _t("Le sable a recouvert le seuil. Ici, on le balaie à chaque retour.") },
+    { text: _t("La nuit a été froide. Les jarres ont gardé leur eau.") },
+    { text: _t("Le vent a tourné pendant ton absence. Les dunes ne sont plus tout à fait au même endroit.") },
+    { text: _t("Maddoc a fait deux fois le tour du camp. Il dit qu'il ne s'inquiétait pas."), needs: "maddoc" },
+    { text: _t("Au marché de sel, on parle d'une lumière vue dans la Cité engloutie.") },
+    { text: _t("Rien n'a bougé à l'horizon. Ici, c'est plutôt rassurant.") }
   ]
 };
 

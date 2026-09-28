@@ -1038,7 +1038,7 @@
 
 /* v3.164.0 : références au bloc mort .eq-bag-grid/.eq-bag-main
    retirées des media queries (bloc supprimé plus haut). */
-@media (max-width: 640px) {
+@media (max-width: 640px), (min-width: 1000px) and (hover: hover) and (pointer: fine) { /* v3.367.0 : + mode PC (colonne mobile) */
   .eq-hero-card {
     padding: 12px;
   }

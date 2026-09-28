@@ -63,8 +63,7 @@ var VillageBuildingManager = {
       VILLAGE_BUILDINGS.workshop.maxLevel,
       Math.floor(legacy.level)
     );
-    addLog("Atelier de Construction repris dans le Village (niveau " +
-      game.village.buildings.workshop.level + ").", "event");
+    addLog(_t("Atelier de Construction repris dans le Village (niveau {n}).", { n: game.village.buildings.workshop.level }), "event");
   },
 
   /* Migration v3.213.1 — « déjà en jeu = acquis ». Une partie qui a déjà payé
@@ -89,7 +88,7 @@ var VillageBuildingManager = {
     if (level <= 0) return;
 
     game.village.buildings.training.level = level;
-    addLog("Terrain d'entraînement repris au niveau " + level + " (entraînement déjà acquis).", "event");
+    addLog(_t("Terrain d'entraînement repris au niveau {n} (entraînement déjà acquis).", { n: level }), "event");
   },
 
   getLevel: function (id) {
@@ -117,8 +116,8 @@ var VillageBuildingManager = {
   getWorldCapLabel: function (id) {
     var next = this.getLevel(id) + 1;
     // v3.325.0 : le Terrain peut être plafonné par l'acte, pas seulement par le monde
-    var where = window.WorldCaps ? WorldCaps.getCapOpening(id, next) : "dans un prochain monde";
-    return (this.getLevel(id) === 0 ? "S'ouvre " : "Suite ") + where;
+    var where = window.WorldCaps ? WorldCaps.getCapOpening(id, next) : _t("dans un prochain monde");
+    return this.getLevel(id) === 0 ? _t("S'ouvre {lieu}", { lieu: where }) : _t("Suite {lieu}", { lieu: where });
   },
 
   isMaxLevel: function (id) {
@@ -237,29 +236,29 @@ var VillageBuildingManager = {
      d'écrire ce qui manque au lieu d'un bouton mort. */
   getBlockReason: function (id) {
     var def = VILLAGE_BUILDINGS[id];
-    if (!def) return "Bâtiment inconnu";
-    if (!def.implemented) return "Bientôt disponible";
+    if (!def) return _t("Bâtiment inconnu");
+    if (!def.implemented) return _t("Bientôt disponible");
     /* L'Atelier a sa propre porte d'entrée : la chaîne de déblocage
        (data/workshop-unlock.js). Garde-fou ceinture-bretelles — la grille
        ne propose déjà pas le chantier avant. */
     if (id === "workshop" && window.WorkshopUnlockManager
         && typeof WorkshopUnlockManager.isWorkshopVisible === "function"
         && !WorkshopUnlockManager.isWorkshopVisible()) {
-      return "Objectif en cours";
+      return _t("Objectif en cours");
     }
-    if (this.isMaxLevel(id)) return this.isWorldCapped(id) ? this.getWorldCapLabel(id) : "Niveau maximum";
-    if (this.isBuilding()) return "Un chantier est déjà en cours";
+    if (this.isMaxLevel(id)) return this.isWorldCapped(id) ? this.getWorldCapLabel(id) : _t("Niveau maximum");
+    if (this.isBuilding()) return _t("Un chantier est déjà en cours");
     if (def.rank > 0 && this.getRank() < def.rank) {
-      return "Atelier niveau " + VILLAGE_RANK_THRESHOLDS[def.rank - 1];
+      return _t("Atelier niveau {n}", { n: VILLAGE_RANK_THRESHOLDS[def.rank - 1] });
     }
     /* Condition propre au bâtiment, en plus du rang (v3.213.1 : le Terrain
        n'apparaît qu'une fois une caractéristique butée à 10). Elle ne
        s'applique qu'au premier chantier : une fois construit, le bâtiment
        s'améliore sans la revérifier. */
     if (this.getLevel(id) === 0 && typeof def.unlockCheck === "function" && !def.unlockCheck()) {
-      return def.lockLabel || "Condition non remplie";
+      return def.lockLabel ? _td(def.lockLabel) : _t("Condition non remplie");
     }
-    if (!this.getAffordability(id).all) return "Matériaux manquants";
+    if (!this.getAffordability(id).all) return _t("Matériaux manquants");
     return null;
   },
 
@@ -303,8 +302,8 @@ var VillageBuildingManager = {
       endsAt: Date.now() + seconds * 1000
     };
 
-    addLog("Chantier lancé : " + def.name + " (niveau " + targetLevel + ").", "event");
-    showToast("🧱 Chantier lancé", 1200);
+    addLog(_t("Chantier lancé : {x} (niveau {n}).", { x: _td(def.name), n: targetLevel }), "event");
+    showToast(_t("🧱 Chantier lancé"), 1200);
 
     if (typeof renderPanel === "function") renderPanel();
     if (typeof renderHud === "function") renderHud();
@@ -345,8 +344,8 @@ var VillageBuildingManager = {
       game.construction.workshop.level = level;
     }
 
-    addLog(def.name + " — chantier terminé (niveau " + level + ").", "event");
-    showToast("✅ " + def.name + " niv. " + level, 1600);
+    addLog(_t("{x} — chantier terminé (niveau {n}).", { x: _td(def.name), n: level }), "event");
+    showToast("✅ " + _t("{x} niv. {n}", { x: _td(def.name), n: level }), 1600);
 
     /* La chaîne de déblocage de l'Atelier valide son étape « construire »
        ici, pas au lancement : c'est la fin du chantier qui compte. */

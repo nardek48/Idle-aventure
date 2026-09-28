@@ -666,7 +666,7 @@
 /* =========================
    Responsive
    ========================= */
-@media (max-width: 768px) {
+@media (max-width: 768px), (min-width: 1000px) and (hover: hover) and (pointer: fine) { /* v3.367.0 : + mode PC (colonne mobile) */
   /* v3.21 : la grille des 3 héros reste sur 3 colonnes (voir note
      détaillée dans la media-query "Petit mobile" de css/07-responsive.css) —
      avant, ce palier forçait 2 colonnes, ce qui écrasait ma règle
@@ -676,7 +676,7 @@
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 520px), (min-width: 1000px) and (hover: hover) and (pointer: fine) { /* v3.367.0 : + mode PC (colonne mobile) */
   #toast {
     bottom: calc(96px + var(--safe-bottom));
     padding: 10px 16px;

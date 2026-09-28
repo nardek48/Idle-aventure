@@ -118,21 +118,21 @@ var OfflineManager = {
     var parts = [];
     Object.keys(summary.produced).forEach(function (key) {
       var def = typeof WAREHOUSE_RESOURCES !== "undefined" ? WAREHOUSE_RESOURCES[key] : null;
-      parts.push("+" + formatNumber(summary.produced[key]) + " " + (def ? def.name : key));
+      parts.push("+" + formatNumber(summary.produced[key]) + " " + (def ? _td(def.name) : key));
     });
     Object.keys(summary.crafted).forEach(function (key) {
       var def = typeof WAREHOUSE_RESOURCES !== "undefined" ? WAREHOUSE_RESOURCES[key] : null;
-      parts.push("+" + formatNumber(summary.crafted[key]) + " " + (def ? def.name : key) + " (atelier)");
+      parts.push("+" + formatNumber(summary.crafted[key]) + " " + (def ? _td(def.name) : key) + " " + _t("(atelier)"));
     });
 
-    if (parts.length) addLog("Pendant ton absence, le village a produit : " + parts.join(", ") + ".", "event");
+    if (parts.length) addLog(_t("Pendant ton absence, le village a produit : {liste}.", { liste: parts.join(", ") }), "event");
 
     // v3.332.0 : écran de retour unique (R1) ; l'ancienne modale reste en repli
     if (window.ReturnManager) { ReturnManager.request(summary); return; }
     if (typeof showOfflineModal === "function") {
       showOfflineModal(summary);
     } else {
-      showToast("Production hors-ligne : " + parts.join(", "), 2200);
+      showToast(_t("Production hors-ligne : {liste}", { liste: parts.join(", ") }), 2200);
     }
   }
 };

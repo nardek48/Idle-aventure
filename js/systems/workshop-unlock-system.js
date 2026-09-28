@@ -48,14 +48,14 @@ var WorkshopUnlockManager = {
     wu.currentStep += 1;
 
     if (!silent) {
-      addLog("Objectif complété : " + step.label, "event");
-      if (typeof showToast === "function") showToast("✅ " + step.label, 1600);
+      addLog(_t("Objectif complété : {x}", { x: _td(step.label) }), "event");
+      if (typeof showToast === "function") showToast("✅ " + _td(step.label), 1600);
     }
 
     if (wu.currentStep >= WORKSHOP_UNLOCK_STEPS.length) {
       wu.completed = true;
       if (!silent) {
-        addLog("L'Atelier de Construction est maintenant débloqué en permanence.", "event");
+        addLog(_t("L'Atelier de Construction est maintenant débloqué en permanence."), "event");
       }
     }
 
@@ -79,11 +79,11 @@ var WorkshopUnlockManager = {
     if (after === before) return;
 
     if (game.workshopUnlock.completed) {
-      addLog("L'Atelier de Construction est débloqué (progression déjà acquise).", "event");
+      addLog(_t("L'Atelier de Construction est débloqué (progression déjà acquise)."), "event");
     } else {
       var nextStep = WORKSHOP_UNLOCK_STEPS[after];
       if (nextStep) {
-        addLog("Progression retrouvée — prochain objectif : " + nextStep.label, "event");
+        addLog(_t("Progression retrouvée — prochain objectif : {x}", { x: _td(nextStep.label) }), "event");
       }
     }
 
@@ -108,7 +108,17 @@ var WorkshopUnlockManager = {
     var step = WORKSHOP_UNLOCK_STEPS[wu.currentStep];
     if (!step) return null;
 
-    return "Objectif : " + step.label + " (" + step.progress(game) + ")";
+    return _t("Objectif : {x} ({p})", { x: _td(step.label), p: step.progress(game) });
+  },
+
+  /* v3.374.0 (i18n) : le même texte sans « Objectif : » — la carte du Village le retirait par une
+     expression régulière sur le français, qui ne marcherait plus en anglais. */
+  getBannerStepText: function () {
+    this.ensure();
+    if (game.workshopUnlock.completed) return null;
+    var step = WORKSHOP_UNLOCK_STEPS[game.workshopUnlock.currentStep];
+    if (!step) return null;
+    return _t("{x} ({p})", { x: _td(step.label), p: step.progress(game) });
   }
 };
 

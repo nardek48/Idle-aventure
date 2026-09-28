@@ -2,11 +2,15 @@
 /* ui/combat-report-view.js — rapport post-combat CUMULATIF (v3.62.0), fiche par capacité (utilisations/contres/réservations).
    Ouverture auto à la mort (onHeroDefeated), accès permanent depuis le Grimoire. Non bloquant. Détail : COMMENTAIRES_ORIGINAUX.md */
 
+/* v3.373.0 (i18n) : le rapport écrit « 0 utilisations » (pluriel dès 0, ≠ 1) — on garde cette
+   règle telle quelle plutôt que celle de la langue ; les deux formes sont des phrases entières. */
+function crPl(n, one, other) { return n === 1 ? one : other; }
+
 function getCombatReportSlotLabel(slot) {
-  var fallback = { skill1: "Compétence 1", skill2: "Compétence 2", skill3: "Compétence 3", defense: "Défense" };
+  var fallback = { skill1: _t("Compétence 1"), skill2: _t("Compétence 2"), skill3: _t("Compétence 3"), defense: _t("Défense") };
   if (!window.ClassCombatManager || typeof ClassCombatManager.getAction !== "function") return fallback[slot] || slot;
   var action = ClassCombatManager.getAction(slot);
-  return action ? action.label : (fallback[slot] || slot);
+  return action ? _td(action.label) : (fallback[slot] || slot);
 }
 
 function buildCombatReportSlotCardHTML(slot, stats) {
@@ -21,37 +25,37 @@ function buildCombatReportSlotCardHTML(slot, stats) {
   h += '<h3>' + esc(label) + '</h3>';
 
   var lineParts = [];
-  lineParts.push(stats.uses + ' utilisation' + (stats.uses !== 1 ? 's' : ''));
+  lineParts.push(crPl(stats.uses, _t("{n} utilisation", { n: stats.uses }), _t("{n} utilisations", { n: stats.uses })));
   if (stats.blockedByReserve > 0) {
-    lineParts.push(stats.blockedByReserve + ' blocage' + (stats.blockedByReserve !== 1 ? 's' : '') + ' par réservation');
+    lineParts.push(crPl(stats.blockedByReserve, _t("{n} blocage par réservation", { n: stats.blockedByReserve }), _t("{n} blocages par réservation", { n: stats.blockedByReserve })));
   }
   if (stats.telegraphsSeen > 0) {
-    lineParts.push(stats.telegraphsSeen + ' télégraphe' + (stats.telegraphsSeen !== 1 ? 's' : '') + ' compatible' + (stats.telegraphsSeen !== 1 ? 's' : '') + ' vu' + (stats.telegraphsSeen !== 1 ? 's' : ''));
+    lineParts.push(crPl(stats.telegraphsSeen, _t("{n} télégraphe compatible vu", { n: stats.telegraphsSeen }), _t("{n} télégraphes compatibles vus", { n: stats.telegraphsSeen })));
   }
   h += '<p class="panel-sub combat-report-slot-line">' + esc(lineParts.join(' · ')) + '</p>';
 
   if (stats.countersSucceeded > 0 || stats.countersExpired > 0 || stats.countersMissed > 0) {
     var counterParts = [];
-    if (stats.countersSucceeded > 0) counterParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + stats.countersSucceeded + ' contre' + (stats.countersSucceeded !== 1 ? 's' : '') + ' réussi' + (stats.countersSucceeded !== 1 ? 's' : ''));
-    if (stats.countersExpired > 0) counterParts.push(stats.countersExpired + ' expiré' + (stats.countersExpired !== 1 ? 's' : '') + ' sans contre');
-    if (stats.countersMissed > 0) counterParts.push(stats.countersMissed + ' raté' + (stats.countersMissed !== 1 ? 's' : '') + ' (mauvais timing)');
+    if (stats.countersSucceeded > 0) counterParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + crPl(stats.countersSucceeded, _t("{n} contre réussi", { n: stats.countersSucceeded }), _t("{n} contres réussis", { n: stats.countersSucceeded })));
+    if (stats.countersExpired > 0) counterParts.push(crPl(stats.countersExpired, _t("{n} expiré sans contre", { n: stats.countersExpired }), _t("{n} expirés sans contre", { n: stats.countersExpired })));
+    if (stats.countersMissed > 0) counterParts.push(crPl(stats.countersMissed, _t("{n} raté (mauvais timing)", { n: stats.countersMissed }), _t("{n} ratés (mauvais timing)", { n: stats.countersMissed })));
     h += '<p class="panel-sub combat-report-slot-line">' + escPreservingIcons(counterParts.join(' · ')) + '</p>';
   }
 
   if (stats.failedNoResource > 0 || stats.failedOnCooldown > 0) {
     var failParts = [];
-    if (stats.failedNoResource > 0) failParts.push(stats.failedNoResource + ' échec' + (stats.failedNoResource !== 1 ? 's' : '') + ' (ressource insuffisante)');
-    if (stats.failedOnCooldown > 0) failParts.push(stats.failedOnCooldown + ' échec' + (stats.failedOnCooldown !== 1 ? 's' : '') + ' (en recharge)');
+    if (stats.failedNoResource > 0) failParts.push(crPl(stats.failedNoResource, _t("{n} échec (ressource insuffisante)", { n: stats.failedNoResource }), _t("{n} échecs (ressource insuffisante)", { n: stats.failedNoResource })));
+    if (stats.failedOnCooldown > 0) failParts.push(crPl(stats.failedOnCooldown, _t("{n} échec (en recharge)", { n: stats.failedOnCooldown }), _t("{n} échecs (en recharge)", { n: stats.failedOnCooldown })));
     h += '<p class="panel-sub combat-report-slot-line">' + esc(failParts.join(' · ')) + '</p>';
   }
 
   var verdict = null;
   if (stats.blockedByReserve > 0 && stats.telegraphsSeen === 0) {
-    verdict = "Réservation non rentable pour cette rencontre : aucun télégraphe compatible rencontré.";
+    verdict = _t("Réservation non rentable pour cette rencontre : aucun télégraphe compatible rencontré.");
   } else if (stats.countersSucceeded > 0 && stats.blockedByReserve > 0) {
-    verdict = "Réservation rentable : le contre a bien annulé une attaque adverse.";
+    verdict = _t("Réservation rentable : le contre a bien annulé une attaque adverse.");
   } else if (stats.blockedByReserve > 0 && stats.countersExpired > 0) {
-    verdict = "Réservation présente mais contre manqué — vérifie le timing ou le coût de l'action.";
+    verdict = _t("Réservation présente mais contre manqué — vérifie le timing ou le coût de l'action.");
   }
   if (verdict) {
     h += '<p class="panel-sub combat-report-verdict">' + esc(verdict) + '</p>';
@@ -65,15 +69,15 @@ function buildCombatReportArchetypeCardHTML(impact) {
   if (!impact) return "";
 
   var lines = [];
-  if (impact.enragedBonusDamageTaken > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/rage.png> ~' + formatNumber(Math.floor(impact.enragedBonusDamageTaken)) + ' dégâts bonus subis (Enragé)');
-  if (impact.vampiricHealStolen > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/vampiric.png> ~' + formatNumber(Math.floor(impact.vampiricHealStolen)) + ' PV volés par l\'ennemi (Vampirique)');
-  if (impact.corruptedDamageLost > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/corruption.png> ~' + formatNumber(Math.floor(impact.corruptedDamageLost)) + ' dégâts perdus (Corrompu)');
-  if (impact.armoredDamageLost > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/armored.png> ~' + formatNumber(Math.floor(impact.armoredDamageLost)) + ' dégâts perdus (Blindé)');
+  if (impact.enragedBonusDamageTaken > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/rage.png> ' + _t("~{n} dégâts bonus subis (Enragé)", { n: formatNumber(Math.floor(impact.enragedBonusDamageTaken)) }));
+  if (impact.vampiricHealStolen > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/vampiric.png> ' + _t("~{n} PV volés par l'ennemi (Vampirique)", { n: formatNumber(Math.floor(impact.vampiricHealStolen)) }));
+  if (impact.corruptedDamageLost > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/corruption.png> ' + _t("~{n} dégâts perdus (Corrompu)", { n: formatNumber(Math.floor(impact.corruptedDamageLost)) }));
+  if (impact.armoredDamageLost > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/armored.png> ' + _t("~{n} dégâts perdus (Blindé)", { n: formatNumber(Math.floor(impact.armoredDamageLost)) }));
 
   if (!lines.length) return "";
 
   var h = '<div class="panel-card combat-report-slot-card">';
-  h += '<h3>Archétypes rencontrés</h3>';
+  h += '<h3>' + _t("Archétypes rencontrés") + '</h3>';
   h += '<p class="panel-sub combat-report-slot-line">' + lines.map(function (l) { return escPreservingIcons(l); }).join('<br>') + '</p>';
   h += '</div>';
   return h;
@@ -87,7 +91,7 @@ function buildCombatReportBodyHTML() {
   var report = (window.CombatReportManager) ? CombatReportManager.getSnapshot() : null;
 
   if (!report) {
-    return '<p class="panel-sub">Aucune donnée de combat disponible pour l\'instant.</p>';
+    return '<p class="panel-sub">' + _t("Aucune donnée de combat disponible pour l'instant.") + '</p>';
   }
 
   var hasAnyActivity = Object.keys(report.perSlot).some(function (slot) {
@@ -96,17 +100,17 @@ function buildCombatReportBodyHTML() {
   }) || report.totalDamageDealt > 0;
 
   if (!hasAnyActivity) {
-    return '<p class="panel-sub">Pas encore assez d\'activité sur ce combat pour établir un rapport détaillé.</p>';
+    return '<p class="panel-sub">' + _t("Pas encore assez d'activité sur ce combat pour établir un rapport détaillé.") + '</p>';
   }
 
   var h = "";
   var summaryParts = [];
   var avgDps = (window.CombatReportManager && typeof CombatReportManager.getAverageDps === "function") ? CombatReportManager.getAverageDps() : 0;
-  if (avgDps > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ~' + formatNumber(Math.round(avgDps)) + ' DPS moyen');
-  if (report.damageAvoidedTotal > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_defense.png> ~' + formatNumber(Math.floor(report.damageAvoidedTotal)) + ' dégâts évités');
-  if (report.healPreventedTotal > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/heal_incoming.png> ~' + formatNumber(Math.floor(report.healPreventedTotal)) + ' PV de soin empêchés');
-  if (report.shieldsRemovedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + report.shieldsRemovedCount + ' bouclier' + (report.shieldsRemovedCount !== 1 ? 's' : '') + ' retiré' + (report.shieldsRemovedCount !== 1 ? 's' : ''));
-  if (report.silencesAvoidedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/silence_incoming.png> ' + report.silencesAvoidedCount + ' silence' + (report.silencesAvoidedCount !== 1 ? 's' : '') + ' évité' + (report.silencesAvoidedCount !== 1 ? 's' : ''));
+  if (avgDps > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ' + _t("~{n} DPS moyen", { n: formatNumber(Math.round(avgDps)) }));
+  if (report.damageAvoidedTotal > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_defense.png> ' + _t("~{n} dégâts évités", { n: formatNumber(Math.floor(report.damageAvoidedTotal)) }));
+  if (report.healPreventedTotal > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/heal_incoming.png> ' + _t("~{n} PV de soin empêchés", { n: formatNumber(Math.floor(report.healPreventedTotal)) }));
+  if (report.shieldsRemovedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + crPl(report.shieldsRemovedCount, _t("{n} bouclier retiré", { n: report.shieldsRemovedCount }), _t("{n} boucliers retirés", { n: report.shieldsRemovedCount })));
+  if (report.silencesAvoidedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/silence_incoming.png> ' + crPl(report.silencesAvoidedCount, _t("{n} silence évité", { n: report.silencesAvoidedCount }), _t("{n} silences évités", { n: report.silencesAvoidedCount })));
   if (summaryParts.length) {
     h += '<div class="combat-report-summary">' + summaryParts.map(function (p) { return escPreservingIcons(p); }).join('<br>') + '</div>';
   }
@@ -121,7 +125,7 @@ function buildCombatReportBodyHTML() {
      filtre sur ses propres compteurs : des dégâts infligés sans aucune capacité utilisée
      (attaques de base seules) produisaient un corps VIDE, donc une feuille sans contenu
      entre le titre et le bouton. Repérée au harnais. */
-  if (!h) return '<p class="panel-sub">Pas encore assez d\'activité sur ce combat pour établir un rapport détaillé.</p>';
+  if (!h) return '<p class="panel-sub">' + _t("Pas encore assez d'activité sur ce combat pour établir un rapport détaillé.") + '</p>';
 
   return h;
 }
@@ -133,19 +137,19 @@ function buildCombatReportHTML(trigger, enemyName) {
   h += '  <div class="full-menu dungeon-story-card combat-report-card">';
 
   var icon = trigger === "defeat" ? "images/Icons/camp/hero_defeated.png" : trigger === "boss" ? "images/Icons/dungeon/boss_crown.png" : "images/Icons/subtabs/hero_stats.png";
-  var title = trigger === "defeat" ? "Rapport de combat — défaite"
-    : trigger === "boss" ? "Rapport de combat — boss vaincu"
-    : "Rapport de combat";
+  var title = trigger === "defeat" ? _t("Rapport de combat — défaite")
+    : trigger === "boss" ? _t("Rapport de combat — boss vaincu")
+    : _t("Rapport de combat");
   h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(icon, "dungeon-story-icon-img", "") + '</div>';
   h += '    <div class="dungeon-story-title">' + esc(title) + '</div>';
   if (enemyName) {
-    h += '    <div class="dungeon-story-meta">' + esc(enemyName) + '</div>';
+    h += '    <div class="dungeon-story-meta">' + esc(_td(enemyName)) + '</div>';
   }
 
   h += buildCombatReportBodyHTML();
 
-  h += '    <button class="settings-btn primary dungeon-story-close" type="button" onclick="closeCombatReport()">Continuer</button>';
-  h += '    <button class="settings-btn combat-report-reset-btn" type="button" onclick="resetCombatReport()"><img class=ico-inline src=images/Icons/system/trash.png> Réinitialiser le rapport</button>';
+  h += '    <button class="settings-btn primary dungeon-story-close" type="button" onclick="closeCombatReport()">' + _t("Continuer") + '</button>';
+  h += '    <button class="settings-btn combat-report-reset-btn" type="button" onclick="resetCombatReport()"><img class=ico-inline src=images/Icons/system/trash.png> ' + _t("Réinitialiser le rapport") + '</button>';
   h += '  </div>';
   h += '</div>';
   return h;
@@ -163,8 +167,8 @@ function closeCombatReport() {
 
 function resetCombatReport() {
   showConfirmModal(
-    "Réinitialiser le rapport ?",
-    "Toutes les données accumulées (utilisations, contres, réservations) seront effacées. Cette action est irréversible.",
+    _t("Réinitialiser le rapport ?"),
+    _t("Toutes les données accumulées (utilisations, contres, réservations) seront effacées. Cette action est irréversible."),
     "images/Icons/system/trash.png",
     function () {
       if (window.CombatReportManager) CombatReportManager.resetManual();

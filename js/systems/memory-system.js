@@ -108,10 +108,10 @@ var MemoryManager = {
     if (current === optionId) return false;
     if (current) {
       var cost = this.getRepriseCost();
-      if (Number(game.gold || 0) < cost) { showToast("Pas assez d'or (" + formatNumber(cost) + ")", 1400); return false; }
+      if (Number(game.gold || 0) < cost) { showToast(_t("Pas assez d'or ({n})", { n: formatNumber(cost) }), 1400); return false; }
       game.gold = Number(game.gold || 0) - cost;
       m.reprises += 1;
-      addLog("Mémoire : choix du niveau " + level + " repris (−" + formatNumber(cost) + " or)", "event");
+      addLog(_t("Mémoire : choix du niveau {n} repris (−{c} or)", { n: level, c: formatNumber(cost) }), "event");
     }
     m.choices[level] = optionId;
     this.afterChoice();
@@ -135,7 +135,7 @@ var MemoryManager = {
     if (gained <= 0) return 0;
     var before = this.getLevel();
     game.totalAetherEarned = Number(game.totalAetherEarned || 0) + gained;
-    if (label) addLog("✨ " + label + " : +" + gained + " Aether", "event");
+    if (label) addLog("✨ " + _t("{x} : +{n} Aether", { x: _td(label), n: gained }), "event");
     this.announceLevels(before);
     return gained;
   },
@@ -145,14 +145,14 @@ var MemoryManager = {
     var m = this.ensure(), now = this.getLevel();
     if (now <= before || now <= m.announced) return;
     m.announced = now;
-    addLog("🌟 Niveau de Mémoire " + now + " atteint : un choix t'attend (Héros › Mémoire).", "event");
-    if (typeof showToast === "function") showToast("🌟 Mémoire niveau " + now + " : un choix t'attend", 2600);
+    addLog("🌟 " + _t("Niveau de Mémoire {n} atteint : un choix t'attend (Héros › Mémoire).", { n: now }), "event");
+    if (typeof showToast === "function") showToast("🌟 " + _t("Mémoire niveau {n} : un choix t'attend", { n: now }), 2600);
   },
 
   /* Souvenirs : appelés là où la victoire est déjà reconnue. */
   souvenir: function (key, label) {
     var v = (window.MEMORY_SOUVENIRS || {})[key];
-    return v ? this.gainAether(v, label || "Souvenir") : 0;
+    return v ? this.gainAether(v, label || _t("Souvenir")) : 0;
   },
 
   /* ---------- Offrande ---------- */
@@ -171,8 +171,10 @@ var MemoryManager = {
     if (!item) return 0;
     var value = this.rollOfferingValue(item);
     var gained = value > 0 ? this.gainAether(value, null) : 0;
-    var prefix = how === "auto" ? "🤖 " : (how === "full" ? "🎒 Sac plein : " : "");
-    addLog(prefix + item.name + " offert à l'Aether" + (gained > 0 ? " (+" + gained + ")" : " — cet objet ne porte aucun souvenir"), "event");
+    var prefix = how === "auto" ? "🤖 " : (how === "full" ? "🎒 " + _t("Sac plein :") + " " : "");
+    addLog(prefix + (gained > 0
+      ? _t("{x} offert à l'Aether (+{n})", { x: _td(item.name), n: gained })
+      : _t("{x} offert à l'Aether — cet objet ne porte aucun souvenir", { x: _td(item.name) })), "event");
     this.noteFirstOffering();
     return gained;
   },
@@ -182,7 +184,7 @@ var MemoryManager = {
     var m = this.ensure();
     if (m.firstOffering) return;
     m.firstOffering = true;
-    addLog("Le Veilleur : « Ce que tu lui donnes, l'Aether ne l'oublie pas. Il le garde, pour toi. »", "event");
+    addLog(_t("Le Veilleur : « Ce que tu lui donnes, l'Aether ne l'oublie pas. Il le garde, pour toi. »"), "event");
   },
 
   /* Offrir depuis le sac (remplace l'ancienne vente). */
@@ -192,7 +194,7 @@ var MemoryManager = {
     if (index === -1) return 0;
     var item = inv.splice(index, 1)[0];
     var gained = this.offerItem(item, "manual");
-    if (typeof showToast === "function") showToast(gained > 0 ? "✨ +" + gained + " Aether" : "Offert", 1200);
+    if (typeof showToast === "function") showToast(gained > 0 ? "✨ " + _t("+{n} Aether", { n: gained }) : _t("Offert"), 1200);
     if (typeof renderAll === "function") renderAll();
     if (typeof saveGame === "function") saveGame();
     return gained;
@@ -208,9 +210,9 @@ var MemoryManager = {
       total += self.gainAether(self.rollOfferingValue(it), null);
     });
     game.inventory = kept;
-    if (!count) { showToast("Aucun objet à offrir", 1200); return 0; }
-    addLog("✨ " + count + " objets offerts à l'Aether (+" + total + ")", "event");
-    showToast("✨ " + count + " objets offerts (+" + total + ")", 1600);
+    if (!count) { showToast(_t("Aucun objet à offrir"), 1200); return 0; }
+    addLog("✨ " + _t("{n} objets offerts à l'Aether (+{t})", { n: count, t: total }), "event");
+    showToast("✨ " + _t("{n} objets offerts (+{t})", { n: count, t: total }), 1600);
     this.noteFirstOffering();
     if (typeof renderPanel === "function") renderPanel();
     if (typeof renderHud === "function") renderHud();

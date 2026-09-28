@@ -219,7 +219,7 @@ var EquipShopManager = {
   manualRefresh: function () {
     this.ensure();
     var cost = this.getManualRefreshCost();
-    if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
+    if ((game.gold || 0) < cost) return showToast(_t("Pas assez d'or"), 1000);
 
     game.gold -= cost;
     game.equipShopManualRefreshCount = Number(game.equipShopManualRefreshCount || 0) + 1;
@@ -230,8 +230,8 @@ var EquipShopManager = {
       QuestManager.track("goldSpent", cost);
     }
 
-    addLog("🔄 Échoppe renouvelée (" + formatNumber(cost) + " or)", "event");
-    showToast("🔄 Stock renouvelé !", 1500);
+    addLog("🔄 " + _t("Échoppe renouvelée ({n} or)", { n: formatNumber(cost) }), "event");
+    showToast(_t("🔄 Stock renouvelé !"), 1500);
     if (typeof renderAll === "function") renderAll();
     saveGame();
   },
@@ -247,14 +247,14 @@ var EquipShopManager = {
   buy: function (uid) {
     this.ensure();
     var item = game.equipShopStock.find(function (it) { return it.uid === uid; });
-    if (!item) return showToast("Objet introuvable", 1000);
-    if (item.bought) return showToast("Déjà acheté", 1000);
+    if (!item) return showToast(_t("Objet introuvable"), 1000);
+    if (item.bought) return showToast(_t("Déjà acheté"), 1000);
 
     // v3.114.0 : le joueur paie le prix AFFICHÉ (estampillé à la génération du stock) —
     // si un nouveau monde est atteint entre deux refresh, le stock courant garde ses prix,
     // le prochain renouvellement (6h ou manuel) appliquera le nouveau multiplicateur.
     var price = typeof item.price === "number" ? item.price : this.getPrice(item);
-    if ((game.gold || 0) < price) return showToast("Pas assez d'or", 1000);
+    if ((game.gold || 0) < price) return showToast(_t("Pas assez d'or"), 1000);
 
     var owned = Object.assign({}, item);
     delete owned.price;
@@ -265,7 +265,7 @@ var EquipShopManager = {
     /* v3.322.0 : sac plein, on refuse l'achat — sinon addLootToInventory offrirait l'objet
        avant qu'il soit payé. */
     var cap = (typeof getInventoryCap === "function") ? getInventoryCap() : 25;
-    if ((game.inventory || []).length >= cap) return showToast("🎒 Sac plein : offre des objets pour faire de la place", 1800);
+    if ((game.inventory || []).length >= cap) return showToast(_t("🎒 Sac plein : offre des objets pour faire de la place"), 1800);
     if (!addLootToInventory(owned)) return;
 
     game.gold -= price;
@@ -275,8 +275,8 @@ var EquipShopManager = {
       QuestManager.track("goldSpent", price);
     }
 
-    addLog("🛒 " + owned.name + " acheté à l'échoppe (" + formatNumber(price) + " or)", "event");
-    showToast(owned.name, 1500);
+    addLog("🛒 " + _t("{x} acheté à l'échoppe ({n} or)", { x: _td(owned.name), n: formatNumber(price) }), "event");
+    showToast(_td(owned.name), 1500);
     if (typeof renderAll === "function") renderAll();
     saveGame();
   }

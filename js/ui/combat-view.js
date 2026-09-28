@@ -12,7 +12,7 @@ function buildCombatHTML() {
     +     '<div id="combat-mission-progress" class="combat-mission-progress"></div>'
     // v3.269.0 (L-3) : rangée d'ennemis — vide, donc invisible, tant qu'ils sont seuls.
     +     '<div id="enemy-row"></div>'
-    +     '<div id="enemy-name">Slime</div>'
+    +     '<div id="enemy-name">' + _t("Slime") + '</div>'
     +     '<div id="enemy-hp-bar-wrapper" class="kgauge kgauge-dragon-claw kgauge-hp-enemy">'
     +       '<div class="kgauge-track"><div id="enemy-hp-bar" class="kgauge-fill" style="width:100%"></div></div>'
     +       '<div id="enemy-hp-text" class="kgauge-text">10 / 10</div>'
@@ -27,7 +27,7 @@ function buildCombatHTML() {
     +   '<div class="combat-action-row"><div id="class-skills-root"></div></div>'
     +   '<div class="combat-attack-row">'
     +     '<div id="heal-quick-root-left"></div>'
-    +     '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="heroBasicAttack()" aria-label="Attaque">ATTAQUER</button>'
+    +     '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="heroBasicAttack()" aria-label="' + _t("Attaque") + '">' + _t("ATTAQUER") + '</button>'
     +     '<div id="heal-quick-root"></div>'
     +   '</div>'
     + '</div>'
@@ -77,7 +77,7 @@ function buildHealButtonHTML(index) {
   var h = '<div class="heal-quick-bar">';
   h += '<button class="heal-quick-btn' + (disabled ? ' disabled' : '') + '" type="button" '
     + (disabled ? 'disabled' : '')
-    + ' onclick="CombatEngine.heroAction(\'potion\', \'' + esc(potion.id) + '\')" title="' + esc(potion.name) + ' — consomme le tour (touche ' + keyLabel + ' sur PC)">';
+    + ' onclick="CombatEngine.heroAction(\'potion\', \'' + esc(potion.id) + '\')" title="' + esc(_t("{x} — consomme le tour (touche {k} sur PC)", { x: _td(potion.name), k: keyLabel })) + '">';
   h += '<span class="heal-quick-icon">' + '<img src="' + esc(potion.icon) + '" alt="" draggable="false">' + '</span>';
   h += '<span class="heal-quick-count">' + stock + '</span>';
   h += '<span class="heal-quick-key">' + keyLabel + '</span>';
@@ -118,7 +118,7 @@ function buildActivePotionsBarHTML() {
   if (!preps.length) return "";
   /* Un seul <button> pour toute la barre : le title ne s'affiche jamais sur mobile,
      et un div à onclick ne reçoit pas toujours le tap sur iOS (cf. v3.281.0). */
-  var h = '<button type="button" class="active-potions-btn" onclick="openCombatStatesSheet()" aria-label="Pr\u00e9paratifs du run">';
+  var h = '<button type="button" class="active-potions-btn" onclick="openCombatStatesSheet()" aria-label="' + _t("Préparatifs du run") + '">';
   preps.forEach(function (p) {
     if (p.kind === "potion") {
       h += '<span class="active-potion-icon' + (p.live ? '' : ' is-armed-idle') + '">';
@@ -127,7 +127,7 @@ function buildActivePotionsBarHTML() {
       h += '</span>';
     } else {
       h += '<span class="active-potion-icon active-affliction-icon">';
-      h += '<span class="active-affliction-emoji">' + renderIconOrEmojiHTML(p.icon, "active-affliction-img", p.name) + '</span>';
+      h += '<span class="active-affliction-emoji">' + renderIconOrEmojiHTML(p.icon, "active-affliction-img", _td(p.name)) + '</span>';
       h += '</span>';
     }
   });
@@ -213,8 +213,8 @@ function buildCombatAlertHTML() {
   var h = '<button type="button" class="cb-alert ' + teinte + (alerts.length > 1 ? " is-multi" : "") + '" onclick="openCombatStatesSheet()">';
   alerts.forEach(function (st, i) {
     if (i > 0) h += '<span class="cb-alert-sep">\u00b7</span>';
-    h += renderIconOrEmojiHTML(st.def.icon, "", st.def.nom);
-    h += '<span>' + esc(st.def.mot || st.def.nom) + '</span>';
+    h += renderIconOrEmojiHTML(st.def.icon, "", _td(st.def.nom));
+    h += '<span>' + esc(_td(st.def.mot || st.def.nom)) + '</span>';
   });
   h += '</button>';
   return h;
@@ -237,7 +237,7 @@ function buildCombatStatesHTML() {
   visibles.forEach(function (st) {
     var icon = (st.suppressed && st.def.iconSuppressed) ? st.def.iconSuppressed : st.def.icon;
     h += '<span class="cb-state ' + familyClass(st.def.famille) + (st.suppressed ? " is-suppressed" : "") + '">';
-    h += renderIconOrEmojiHTML(icon, "", st.def.nom);
+    h += renderIconOrEmojiHTML(icon, "", _td(st.def.nom));
     if (st.n) h += '<span class="cb-state-n">' + st.n + '</span>';
     h += '</span>';
   });
@@ -254,8 +254,8 @@ function buildCombatStatesSheetHTML() {
   var familles = window.COMBAT_STATE_FAMILIES || [];
   var h = '<div class="ksheet-backdrop" onclick="closeCombatStatesSheet()"></div>';
   h += '<div class="ksheet"><div class="ksheet-handle"></div>';
-  h += '<div class="ksheet-title"><span>\u00c9tats du combat</span></div>';
-  h += '<div class="st-sheet-sub">Ce qui p\u00e8se sur ce combat, et quoi en faire.</div>';
+  h += '<div class="ksheet-title"><span>' + _t("États du combat") + '</span></div>';
+  h += '<div class="st-sheet-sub">' + _t("Ce qui pèse sur ce combat, et quoi en faire.") + '</div>';
   h += '<div class="ksheet-body">';
 
   var vide = true;
@@ -263,13 +263,13 @@ function buildCombatStatesSheetHTML() {
   var preps = (typeof getRunPreparations === "function") ? getRunPreparations() : [];
   if (preps.length) {
     vide = false;
-    h += '<div class="st-group-title">Pour ce run</div>';
+    h += '<div class="st-group-title">' + _t("Pour ce run") + '</div>';
     preps.forEach(function (p) {
       h += '<div class="st-row">';
-      h += renderIconOrEmojiHTML(p.icon, "st-row-ico", p.name);
-      h += '<div class="st-row-body"><div class="st-row-name">' + esc(p.name) + '</div>';
-      h += '<div class="st-row-desc">' + esc(p.desc || "") + '</div>';
-      if (p.kind === "potion" && !p.live) h += '<div class="st-row-hint">Arm\u00e9e : elle agira \u00e0 la prochaine mission.</div>';
+      h += renderIconOrEmojiHTML(p.icon, "st-row-ico", _td(p.name));
+      h += '<div class="st-row-body"><div class="st-row-name">' + esc(_td(p.name)) + '</div>';
+      h += '<div class="st-row-desc">' + esc(_td(p.desc || "")) + '</div>';
+      if (p.kind === "potion" && !p.live) h += '<div class="st-row-hint">' + _t("Armée : elle agira à la prochaine mission.") + '</div>';
       h += '</div></div>';
     });
   }
@@ -277,23 +277,23 @@ function buildCombatStatesSheetHTML() {
     var ids = states.filter(function (st) { return st.def.famille === fam.id; });
     if (!ids.length) return;
     vide = false;
-    h += '<div class="st-group-title">' + esc(fam.titre) + '</div>';
+    h += '<div class="st-group-title">' + esc(_td(fam.titre)) + '</div>';
     ids.forEach(function (st) {
       var desc = (st.suppressed && st.def.descSuppressed) ? st.def.descSuppressed : st.def.desc;
       h += '<div class="st-row' + (fam.id === "alerte" ? " is-alert" : "") + '">';
-      h += renderIconOrEmojiHTML((st.suppressed && st.def.iconSuppressed) ? st.def.iconSuppressed : st.def.icon, "st-row-ico", st.def.nom);
-      h += '<div class="st-row-body"><div class="st-row-name">' + esc(st.def.nom) + '</div>';
-      h += '<div class="st-row-desc">' + esc(desc) + '</div>';
-      if (st.def.hint && !st.suppressed) h += '<div class="st-row-hint">' + esc(st.def.hint) + '</div>';
+      h += renderIconOrEmojiHTML((st.suppressed && st.def.iconSuppressed) ? st.def.iconSuppressed : st.def.icon, "st-row-ico", _td(st.def.nom));
+      h += '<div class="st-row-body"><div class="st-row-name">' + esc(_td(st.def.nom)) + '</div>';
+      h += '<div class="st-row-desc">' + esc(_td(desc)) + '</div>';
+      if (st.def.hint && !st.suppressed) h += '<div class="st-row-hint">' + esc(_td(st.def.hint)) + '</div>';
       h += '</div>';
-      if (st.n) h += '<div class="st-row-n">' + st.n + (fam.id === "mine" || fam.id === "onme" ? " rd" : "") + '</div>';
+      if (st.n) h += '<div class="st-row-n">' + st.n + (fam.id === "mine" || fam.id === "onme" ? " " + _t("rd", "round abrégé") : "") + '</div>';
       h += '</div>';
     });
   });
-  if (vide) h += '<div class="st-empty">Rien de particulier pour l\u2019instant.</div>';
+  if (vide) h += '<div class="st-empty">' + _t("Rien de particulier pour l’instant.") + '</div>';
 
   h += '</div>';
-  h += '<button type="button" class="ksheet-close" onclick="closeCombatStatesSheet()">Fermer</button>';
+  h += '<button type="button" class="ksheet-close" onclick="closeCombatStatesSheet()">' + _t("Fermer") + '</button>';
   h += '</div>';
   return h;
 }
@@ -362,15 +362,15 @@ function buildCombatControlsHTML() {
 
   if (grimoireUnlocked) {
     h += '<button type="button" class="combat-mode-btn' + (mode === "grimoire" ? ' is-auto' : '') + '" onclick="CombatEngine.setCombatMode(\'' + (mode === "grimoire" ? "tactique" : "grimoire") + '\')" title="'
-      + (mode === "grimoire" ? "Mode Grimoire : les rounds s\u2019enchaînent, le Grimoire choisit. Toucher pour repasser en Tactique." : "Mode Tactique : chaque round attend ton choix. Toucher pour laisser le Grimoire jouer.") + '">';
-    h += (mode === "grimoire" ? "<img class=ico-inline src=images/Icons/codex/codex_lore.png> Grimoire" : "<img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> Tactique");
+      + (mode === "grimoire" ? _t("Mode Grimoire : les rounds s’enchaînent, le Grimoire choisit. Toucher pour repasser en Tactique.") : _t("Mode Tactique : chaque round attend ton choix. Toucher pour laisser le Grimoire jouer.")) + '">';
+    h += (mode === "grimoire" ? "<img class=ico-inline src=images/Icons/codex/codex_lore.png> " + _t("Grimoire") : "<img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> " + _t("Tactique"));
     h += '</button>';
   }
 
   if (mode !== "grimoire") {
     h += '<button type="button" class="combat-continue-btn' + (round.continueAttack ? ' is-active' : '') + '"' + (downed ? ' disabled' : '')
-      + ' onclick="CombatEngine.toggleContinueAttack()" title="Répète l\u2019Attaque jusqu\u2019au prochain événement (PV < 50 %, télégraphe, double frappe, nouvel ennemi)">';
-    h += round.continueAttack ? "<img class=ico-inline src=images/Icons/system/pause_stop.png> Stop" : "<img class=ico-inline src=images/Icons/quests/continue.png> Continuer";
+      + ' onclick="CombatEngine.toggleContinueAttack()" title="' + esc(_t("Répète l’Attaque jusqu’au prochain événement (PV < 50 %, télégraphe, double frappe, nouvel ennemi)")) + '">';
+    h += round.continueAttack ? "<img class=ico-inline src=images/Icons/system/pause_stop.png> " + _t("Stop") : "<img class=ico-inline src=images/Icons/quests/continue.png> " + _t("Continuer");
     h += '</button>';
   }
   return h;
@@ -380,9 +380,9 @@ function buildCombatControlsHTML() {
 function buildCombatCelerityHTML() {
   var gaugeMax = (typeof CELERITY_GAUGE_MAX === "number") ? CELERITY_GAUGE_MAX : 100;
   var gaugePct = Math.max(0, Math.min(100, Math.round((Number(game.heroGauge || 0) / gaugeMax) * 100)));
-  var h = '<div class="combat-gauge kgauge kgauge-thin" title="Jauge de célérité : à 100 %, une frappe bonus suit ta prochaine attaque">';
+  var h = '<div class="combat-gauge kgauge kgauge-thin" title="' + esc(_t("Jauge de célérité : à 100 %, une frappe bonus suit ta prochaine attaque")) + '">';
   h += '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + gaugePct + '%"></div></div>';
-  h += '<span class="kgauge-text"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> Célérité ' + gaugePct + ' %</span>';
+  h += '<span class="kgauge-text"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + _t("Célérité {n} %", { n: gaugePct }) + '</span>';
   h += '</div>';
   return h;
 }
@@ -401,15 +401,15 @@ function buildCombatSortieHTML() {
     var loot = s.loot || {};
     var objets = (loot.items && loot.items.length) || 0;
     h += '<button type="button" class="combat-loot-pill" onclick="openSortieSheet()"'
-      + ' title="Butin de la sortie — banqué au retour, perdu si tu tombes">'
+      + ' title="' + esc(_t("Butin de la sortie — banqué au retour, perdu si tu tombes")) + '">'
       + '<img class=ico-inline src=images/Icons/gold_icon.png> ' + formatNumber(Math.floor(loot.gold || 0))
-      + (objets ? ' · ' + objets + ' objet' + (objets > 1 ? 's' : '') : '')
+      + (objets ? ' · ' + _tn(objets, "{n} objet", "{n} objets") : '')
       + '</button>';
   }
   if (s.active && SortieManager.isMission()) {
-    h += '<button type="button" class="combat-sortie-btn is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()" title="Fuir : la mission n\u2019est pas validée, tu rapportes 50 % du butin"><img class=ico-inline src=images/Icons/quests/flee.png> Fuir</button>';
+    h += '<button type="button" class="combat-sortie-btn is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()" title="' + esc(_t("Fuir : la mission n’est pas validée, tu rapportes 50 % du butin")) + '"><img class=ico-inline src=images/Icons/quests/flee.png> ' + _t("Fuir") + '</button>';
   } else {
-    h += '<button type="button" class="combat-sortie-btn"' + (downed ? ' disabled' : '') + ' onclick="SortieManager.returnToCamp()" title="Rentrer au Campement avec tout le butin"><img class=ico-inline src=images/Icons/plots/hunting_blind.png> Rentrer</button>';
+    h += '<button type="button" class="combat-sortie-btn"' + (downed ? ' disabled' : '') + ' onclick="SortieManager.returnToCamp()" title="' + esc(_t("Rentrer au Campement avec tout le butin")) + '"><img class=ico-inline src=images/Icons/plots/hunting_blind.png> ' + _t("Rentrer") + '</button>';
   }
   return h;
 }
@@ -427,28 +427,28 @@ function openSortieSheet() {
   var loot = s.loot || {};
 
   var h = '<div class="ksheet-backdrop" onclick="closeSortieSheet()"></div>';
-  h += '<div class="ksheet"><div class="ksheet-title"><img src="images/Icons/subtabs/inventory.png" alt=""><span>Sortie en cours</span></div>';
+  h += '<div class="ksheet"><div class="ksheet-title"><img src="images/Icons/subtabs/inventory.png" alt=""><span>' + _t("Sortie en cours") + '</span></div>';
   h += '<div class="ksheet-body">';
 
-  h += '<div class="cbs-sub">Butin ramassé</div>';
+  h += '<div class="cbs-sub">' + _t("Butin ramassé") + '</div>';
   var lignes = "";
-  if (Number(loot.gold || 0) > 0) lignes += buildSortieLineHTML("images/Icons/gold_icon.png", "Or", formatNumber(Math.floor(loot.gold)));
+  if (Number(loot.gold || 0) > 0) lignes += buildSortieLineHTML("images/Icons/gold_icon.png", _t("Or"), formatNumber(Math.floor(loot.gold)));
   Object.keys(loot.resources || {}).forEach(function (k) {
     var q = Math.floor(loot.resources[k]);
     if (q <= 0) return;
     var def = (window.WAREHOUSE_RESOURCES && WAREHOUSE_RESOURCES[k]) || null;
-    lignes += buildSortieLineHTML((def && def.icon) || "images/Icons/subtabs/inventory.png", (def && def.name) || k, "×" + q);
+    lignes += buildSortieLineHTML((def && def.icon) || "images/Icons/subtabs/inventory.png", (def && def.name) ? _td(def.name) : k, "×" + q);
   });
   (loot.items || []).forEach(function (it) {
-    lignes += buildSortieLineHTML("images/Icons/subtabs/equipment.png", it.name || "Objet", it.rarity || "");
+    lignes += buildSortieLineHTML("images/Icons/subtabs/equipment.png", it.name ? _td(it.name) : _t("Objet"), it.rarity || "");
   });
-  h += lignes || '<div class="cbs-empty">Rien pour l\'instant.</div>';
+  h += lignes || '<div class="cbs-empty">' + _t("Rien pour l'instant.") + '</div>';
 
-  h += '<div class="cbs-sub">Potions de cette sortie</div>';
-  h += buildSortieLineHTML("images/Icons/subtabs/potions.png", "Il t'en reste",
-    SortieManager.getPotionsLeft() + " sur " + (typeof getSortiePotionCap === "function" ? getSortiePotionCap() : "?"));
+  h += '<div class="cbs-sub">' + _t("Potions de cette sortie") + '</div>';
+  h += buildSortieLineHTML("images/Icons/subtabs/potions.png", _t("Il t'en reste"),
+    _t("{a} sur {b}", { a: SortieManager.getPotionsLeft(), b: (typeof getSortiePotionCap === "function" ? getSortiePotionCap() : "?") }));
 
-  h += '</div><button type="button" class="ksheet-close" onclick="closeSortieSheet()">Fermer</button></div>';
+  h += '</div><button type="button" class="ksheet-close" onclick="closeSortieSheet()">' + _t("Fermer") + '</button></div>';
   root.innerHTML = h;
 }
 
@@ -466,7 +466,7 @@ window.closeSortieSheet = closeSortieSheet;
 
 function confirmFlee() {
   if (!window.SortieManager || !SortieManager.isActive()) return;
-  if (confirm("Fuir ? La mission ne sera pas validée et tu ne rapporteras que 50 % du butin de la sortie.")) SortieManager.flee();
+  if (confirm(_t("Fuir ? La mission ne sera pas validée et tu ne rapporteras que 50 % du butin de la sortie."))) SortieManager.flee();
 }
 window.buildCombatSortieHTML = buildCombatSortieHTML;
 window.confirmFlee = confirmFlee;
@@ -504,25 +504,25 @@ function getCombatMissionProgressLabel() {
     if (aq) {
       var step = aq.steps[0];
       if (step && (step.type === "kill" || step.type === "encounter")) { // v3.311.0 : rencontres scriptées
-        return aq.name + " · " + AdventureQuestManager.getStepProgress(aq, step) + "/" + step.target;
+        return _td(aq.name) + " · " + AdventureQuestManager.getStepProgress(aq, step) + "/" + step.target;
       }
     }
   }
   if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
     var hq = HUNT_QUESTS[game.huntRun.questId];
-    if (hq) return hq.name + " · " + Math.min(hq.lotSize, Number(game.huntRun.killsInLot || 0)) + "/" + hq.lotSize;
+    if (hq) return _td(hq.name) + " · "+ Math.min(hq.lotSize, Number(game.huntRun.killsInLot || 0)) + "/" + hq.lotSize;
   }
   if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
     var waveCount = (typeof DUNGEON_CONFIG !== "undefined") ? DUNGEON_CONFIG.waveCount : 0;
     var wave = Math.min(waveCount, Number(game.dungeonRun.wave || 0));
-    return "Donjon · Vague " + wave + "/" + waveCount;
+    return _t("Donjon · Vague {a}/{b}", { a: wave, b: waveCount });
   }
   // v3.256.0 (Cartes Vivantes, C-2) : combat d'élite d'un secteur.
   if (window.LivingMapManager && game.livingMaps && game.livingMaps.fight) {
     var f = game.livingMaps.fight;
     var sec = LivingMapManager.getSectorDef(f.mapId, f.sectorId);
     var wins = LivingMapManager.getDailyWins(f.mapId, f.sectorId);
-    return (sec ? sec.name : "Carte") + " · Élite" + (LivingMapManager.isRepeatable(f.mapId, f.sectorId) ? " · " + (wins + 1) + (wins === 0 ? "er" : "e") + " du jour" : "");
+    return (sec ? _td(sec.name) : _t("Carte")) + " · " + _t("Élite") + (LivingMapManager.isRepeatable(f.mapId, f.sectorId) ? " · " + (wins === 0 ? _t("1er du jour") : _t("{n}e du jour", { n: wins + 1 })) : "");
   }
   // v3.107.1 : étape Histoire en farm libre avec killTarget déclaratif (ex. forest_02 « Premier sang »).
   // v3.297.0 (W-1a) : tout chapitre actif, plus seulement la Forêt
@@ -533,7 +533,7 @@ function getCombatMissionProgressLabel() {
       if (storyStep && storyStep.killTarget && StoryQuestManager.isCurrentStepAccepted(chapters[ci])) {
         var kt = storyStep.killTarget;
         var count = Math.min(kt.target, kt.counter(game));
-        return kt.label + " · " + count + "/" + kt.target;
+        return _td(kt.label) + " · " + count + "/" + kt.target;
       }
     }
   }
@@ -577,7 +577,7 @@ function renderEnemy() {
   if (emoji) {
     if (imagePath) {
       emoji.innerHTML =
-        '<img class="enemy-image" src="' + esc(imagePath) + '" alt="' + esc(game.enemy.name || "Ennemi") + '">';
+        '<img class="enemy-image" src="' + esc(imagePath) + '" alt="' + esc(game.enemy.name ? _td(game.enemy.name) : _t("Ennemi")) + '">';
       emoji.classList.add("has-image");
     } else {
       emoji.innerHTML = renderIcon(game.enemy.isBoss ? "bosses" : "enemies", assetKey);
@@ -587,8 +587,8 @@ function renderEnemy() {
   }
 
   // v3.205.0 (E5) : une élite est isBoss, mais s'annonce comme élite.
-  var suffix = game.enemy.isElite ? " [ÉLITE]" : (game.enemy.isBoss ? " [BOSS]" : "");
-  if (name) name.textContent = game.enemy.name + suffix;
+  var suffix = game.enemy.isElite ? " " + _t("[ÉLITE]") : (game.enemy.isBoss ? " " + _t("[BOSS]") : "");
+  if (name) name.textContent = _td(game.enemy.name) + suffix;
 
   // v3.172.0 : cadre de jauge selon le type d'ennemi (kit) — le cadre élite
   // rejoindra ce choix quand les quêtes Élite seront implémentées.
@@ -698,10 +698,10 @@ function buildClassSkillButtonHTML(slot, suggestedSlot) {
   var keyLabel = CLASS_SKILL_KEY_LABELS[action.slot] || "";
 
   var title = autoModeActive
-    ? "Combat automatique actif (mode Grimoire / Continuer)"
-    : (isSilenced ? "Silencié : cette technique est bloquée un instant"
-      : (!conditionOk ? "Condition non remplie : " + esc(action.description)
-        : esc(action.description) + (action.cooldownRounds ? " Recharge : " + action.cooldownRounds + " round(s)." : "") + (keyLabel ? " (touche " + keyLabel + " sur PC)" : "")));
+    ? esc(_t("Combat automatique actif (mode Grimoire / Continuer)"))
+    : (isSilenced ? esc(_t("Silencié : cette technique est bloquée un instant"))
+      : (!conditionOk ? esc(_t("Condition non remplie : {x}", { x: _td(action.description) }))
+        : esc(_td(action.description)) + (action.cooldownRounds ? " " + esc(_tn(action.cooldownRounds, "Recharge : {n} round.", "Recharge : {n} rounds.")) : "") + (keyLabel ? " " + esc(_t("(touche {k} sur PC)", { k: keyLabel })) : "")));
 
   var h = '<button class="combat-action-btn class-skill-btn' + (action.type === "defense" ? " defense-action-btn" : " attack-action-btn")
     + (onCooldown ? ' on-cooldown' : '') + (isActiveNow ? ' is-active' : '') + (!affordable && !onCooldown ? ' not-affordable' : '')
@@ -709,12 +709,12 @@ function buildClassSkillButtonHTML(slot, suggestedSlot) {
     + (disabled ? 'disabled' : '')
     + ' onclick="CombatEngine.heroAction(\'' + esc(slot) + '\')" title="' + title + '">';
   h += '<span class="combat-action-key">' + esc(keyLabel) + '</span>';
-  h += renderIconOrEmojiHTML(icon, "combat-action-icon", action.label);
+  h += renderIconOrEmojiHTML(icon, "combat-action-icon", _td(action.label));
   if (onCooldown) {
-    h += '<span class="combat-action-cooldown">' + cooldownRemaining + 'r</span>';
+    h += '<span class="combat-action-cooldown">' + cooldownRemaining + _t("r", "round abrégé, collé au nombre") + '</span>';
     h += '<span class="combat-action-cooldown-fill" style="width:' + cooldownPct + '%"></span>';
   } else if (isActiveNow) {
-    h += '<span class="combat-action-active-tag">ACTIF</span>';
+    h += '<span class="combat-action-active-tag">' + _t("ACTIF") + '</span>';
   } else if (isSuggested) {
     h += '<span class="combat-action-suggest-tag"><img class=ico-inline src=images/Icons/codex/codex_lore.png></span>';
   }
@@ -766,7 +766,7 @@ function buildClassResourceBarHTML() {
   var pct = Math.max(0, Math.min(100, Math.round((state.current / state.max) * 100)));
   var classId = typeof ClassCombatManager.getCurrentClassId === "function" ? ClassCombatManager.getCurrentClassId() : null;
   var resourceDef = (classId && typeof getClassResource === "function") ? getClassResource(classId) : null;
-  var label = resourceDef ? resourceDef.label : "";
+  var label = resourceDef ? _td(resourceDef.label) : "";
 
   // v3.172.0 : ressource de classe sur la jauge fine du kit — kgauge-rage/
   // kgauge-focus/kgauge-mana (00-kgauge.css) correspondent exactement aux
@@ -781,7 +781,7 @@ function buildClassResourceBarHTML() {
   var h = '<div class="class-resource-bar class-resource-' + esc(state.resourceId || "") + '">';
   h +=   '<div class="class-resource-track kgauge kgauge-thin kgauge-' + esc(state.resourceId || "rage") + '">';
   h +=     '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct + '%"></div>'
-    +        '<div class="kgauge-cel" style="width:' + celPct + '%" title="Célérité ' + celPct + ' %"></div></div>';
+    +        '<div class="kgauge-cel" style="width:' + celPct + '%" title="' + esc(_t("Célérité {n} %", { n: celPct })) + '"></div></div>';
   h +=     '<span class="kgauge-text">' + esc(label) + ' — ' + Math.floor(state.current) + ' / ' + state.max
     +        ' <span class="kgauge-cel-tag">· ' + celPct + ' %</span></span>';
   h +=   '</div>';

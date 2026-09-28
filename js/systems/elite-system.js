@@ -230,18 +230,18 @@ var EliteManager = {
     // v3.322.0 (Souvenirs) : élite d'aventure vaincue
     if (window.MemoryManager) {
       var eDef = (window.ELITE_DB || {})[eliteId];
-      MemoryManager.souvenir("elite", "Souvenir : " + (eDef ? eDef.name : "élite") + " vaincue");
+      MemoryManager.souvenir("elite", _t("Souvenir : {x} vaincue", { x: eDef ? _td(eDef.name) : _t("élite") }));
     }
     var loot = this.buildUniqueLoot(eliteId);
     if (loot && typeof addLootToInventory === "function") {
       addLootToInventory(loot);
       var labels = window.ELITE_UNIQUE_LOOT_LABELS || {};
-      rows.push({ label: labels[loot.slot] || "Objet unique", value: loot.name });
+      rows.push({ label: labels[loot.slot] || _t("Objet unique"), value: loot.name });
     }
     var seve = Number(seveAmount || 0);
     if (seve > 0 && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
       WarehouseManager.addResource("seve_aeswyn", seve); // seul point d'écriture des ressources
-      rows.push({ label: "Sève d'Aeswyn", value: seve });
+      rows.push({ label: _t("Sève d'Aeswyn"), value: seve });
     }
     return rows;
   }

@@ -12,21 +12,21 @@ function buildHudHTML() {
     + '<div class="nb-hud-top-row">'
     +   '<div class="nb-hud-left-col">'
     +     '<div class="nb-hud-resources">'
-    +       '<span class="nb-pill nb-pill-gold"><img class="nb-pill-icon" src="images/Icons/gold_icon.png" alt="Or"><span id="hud-gold">0</span></span>'
+    +       '<span class="nb-pill nb-pill-gold"><img class="nb-pill-icon" src="images/Icons/gold_icon.png" alt="' + _t("Or") + '"><span id="hud-gold">0</span></span>'
     +     '</div>'
     +   '</div>'
     +   '<div class="nb-hud-shortcuts">'
-    +     '<button type="button" class="nb-hud-bag-btn" onclick="openBagFromHud()" aria-label="Inventaire"><img src="./images/Icons/menu_icons/equip_menu.png" alt="" class="nb-hud-bag-icon"><span id="hud-bag-badge" class="nb-hud-bag-badge" style="display:none;">0</span></button>'
+    +     '<button type="button" class="nb-hud-bag-btn" onclick="openBagFromHud()" aria-label="' + _t("Inventaire") + '"><img src="./images/Icons/menu_icons/equip_menu.png" alt="" class="nb-hud-bag-icon"><span id="hud-bag-badge" class="nb-hud-bag-badge" style="display:none;">0</span></button>'
     // v3.332.0 (Évolutions, F1) : le fil rouge remplace le raccourci Ascension (badge mort depuis
     // la v3.322.0 ; la Mémoire s'ouvre depuis Héros › Résumé). Voir ui/fil-rouge-view.js.
     +     (typeof buildHudFilRougeButtonHTML === "function" ? buildHudFilRougeButtonHTML() : '')
     +   '</div>'
-    +   '<div id="combat-hero-mini" class="combat-hero-mini" onclick="switchTab(\'talents\')" role="button" aria-label="Talents">'
+    +   '<div id="combat-hero-mini" class="combat-hero-mini" onclick="switchTab(\'talents\')" role="button" aria-label="' + _t("Talents") + '">'
     +     '<div class="combat-hero-mini-portrait">'
     +       '<img id="combat-hero-mini-img" class="combat-hero-mini-img" src="" alt="" style="display:none">'
     +       '<div id="combat-hero-mini-placeholder" class="combat-hero-mini-placeholder">?</div>'
-    +       '<span class="combat-hero-mini-level" id="combat-hero-mini-level">Niv. 1</span>'
-    +       '<img id="hud-hero-levelup-badge" class="hud-hero-levelup-badge" src="./images/Icons/talents/up_icon.png" alt="Talent disponible" style="display:none;">'
+    +       '<span class="combat-hero-mini-level" id="combat-hero-mini-level">' + _t("Niv. {n}", { n: 1 }) + '</span>'
+    +       '<img id="hud-hero-levelup-badge" class="hud-hero-levelup-badge" src="./images/Icons/talents/up_icon.png" alt="' + _t("Talent disponible") + '" style="display:none;">'
     +     '</div>'
     // v3.172.0 : PV du héros sur la jauge dragon du kit (la plus ornée, tête
     // à gauche côté portrait — décision Seb). Ids conservés (updateHeroHpHud).
@@ -43,11 +43,11 @@ function buildHudHTML() {
 
 function buildStatsBarHTML() {
   return ''
-    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> Attaque</span><span class="stat-value" id="stat-tap-dmg">1</span></div>'
-    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> Célérité</span><span class="stat-value" id="stat-auto-dps">0</span></div>'
-    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> Critique</span><span class="stat-value" id="stat-crit">5%</span></div>'
-    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> Dégâts crit.</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>'
-    + '<div class="stat-item"><span class="stat-label"><img class="stat-label-icon" src="images/Icons/gold_icon.png" alt="Or"> Or</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>';
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ' + _t("Attaque") + '</span><span class="stat-value" id="stat-tap-dmg">1</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + _t("Célérité") + '</span><span class="stat-value" id="stat-auto-dps">0</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> ' + _t("Critique") + '</span><span class="stat-value" id="stat-crit">5%</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> ' + _t("Dégâts crit.") + '</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class="stat-label-icon" src="images/Icons/gold_icon.png" alt="' + _t("Or") + '"> ' + _t("Or") + '</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>';
 }
 
 function mountHudAndStatsBar() {
@@ -166,7 +166,7 @@ function renderCombatHeroMini() {
     if (placeholder) placeholder.style.display = "flex";
   }
 
-  if (levelEl) levelEl.textContent = "Niv. " + Number(game.heroLevel || 1);
+  if (levelEl) levelEl.textContent = _t("Niv. {n}", { n: Number(game.heroLevel || 1) });
 }
 
 function renderStats() {

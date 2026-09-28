@@ -87,6 +87,7 @@ var LivingMapManager = {
     var map = this.getMap(mapId), out = {}, k;
     for (k in this.WORDS_DEFAULT) out[k] = this.WORDS_DEFAULT[k];
     if (map && map.words) for (k in map.words) out[k] = map.words[k];
+    for (k in out) out[k] = _td(out[k]); // v3.373.0 (i18n) : mots de carte = données, traduits à la lecture
     return out;
   },
 
@@ -165,7 +166,7 @@ var LivingMapManager = {
     var ids = this.getMapIds();
     for (var i = 0; i < ids.length; i++) taken = taken.concat(this._regressAllUnprotected(ids[i]));
     if (taken.length && typeof addLog === "function") {
-      addLog("Ascension : le Cycle reprend " + taken.map(function (t) { return t.name; }).join(", ") + ".", "event");
+      addLog(_t("Ascension : le Cycle reprend {x}.", { x: taken.map(function (t) { return _td(t.name); }).join(", ") }), "event");
     }
     return taken;
   },
@@ -373,31 +374,31 @@ var LivingMapManager = {
      (décision 9) et ne porte que sur les expéditions ; un secteur d'élite est un combat. */
   canStart: function (mapId, sectorId) {
     var def = this.getSectorDef(mapId, sectorId);
-    if (!def) return { ok: false, reason: "Secteur inconnu" };
+    if (!def) return { ok: false, reason: _t("Secteur inconnu") };
     var content = this.getContentFor(mapId, sectorId);
     var intensity = this.getIntensity(def);
     if (!(game.unlockedTabs && game.unlockedTabs.village)) {
-      return { ok: false, reason: "Aeswyn n'a pas encore ouvert ses portes. Avance l'Histoire.", content: content, intensity: intensity };
+      return { ok: false, reason: _t("Aeswyn n'a pas encore ouvert ses portes. Avance l'Histoire."), content: content, intensity: intensity };
     }
     // v3.305.0 : fermé par l'Histoire — le mur le dit, sans renvoyer vers un voisin
     if (def.requiresStoryStep && !this.isStoryStepReached(def.requiresStoryStep)) {
-      return { ok: false, reason: "Pas encore. L'Histoire t'y mènera plus tard.", content: content, intensity: intensity };
+      return { ok: false, reason: _t("Pas encore. L'Histoire t'y mènera plus tard."), content: content, intensity: intensity };
     }
     if (!this.isReachable(mapId, sectorId)) {
       var gw = this.getGateway(mapId, sectorId);
-      return { ok: false, reason: "Rien ne mène encore là. Libère d'abord " + (gw ? gw.name : "un secteur voisin") + ".", content: content, intensity: intensity };
+      return { ok: false, reason: _t("Rien ne mène encore là. Libère d'abord {x}.", { x: gw ? _td(gw.name) : _t("un secteur voisin") }), content: content, intensity: intensity };
     }
     if (game.sceneRun && game.sceneRun.status !== "completed") {
-      return { ok: false, reason: "Une expédition est déjà en cours.", content: content, intensity: intensity };
+      return { ok: false, reason: _t("Une expédition est déjà en cours."), content: content, intensity: intensity };
     }
     if (this.getFight()) {
-      return { ok: false, reason: "Un combat est déjà engagé sur la carte.", content: content, intensity: intensity };
+      return { ok: false, reason: _t("Un combat est déjà engagé sur la carte."), content: content, intensity: intensity };
     }
     if ((game.heroHp || 0) <= 0) {
-      return { ok: false, reason: "Tes PV sont à zéro. Repose-toi au Campement.", content: content, intensity: intensity };
+      return { ok: false, reason: _t("Tes PV sont à zéro. Repose-toi au Campement."), content: content, intensity: intensity };
     }
     if (window.SortieManager && typeof SortieManager.isMission === "function" && SortieManager.isMission()) {
-      return { ok: false, reason: "Une sortie est déjà en cours. Rentre d'abord.", content: content, intensity: intensity };
+      return { ok: false, reason: _t("Une sortie est déjà en cours. Rentre d'abord."), content: content, intensity: intensity };
     }
     if (this.isLiberated(mapId, sectorId) && !this.isRepeatable(mapId, sectorId)) {
       /* §6.1 : un secteur libéré ne se rejoue que quand plus rien d'atteignable n'attend.
@@ -405,7 +406,7 @@ var LivingMapManager = {
       var open = this.getOpenTargets(mapId);
       if (open.length) {
         var next = this.getSectorDef(mapId, open[0]);
-        return { ok: false, reason: this.getWords(mapId).openElsewhere + " : " + (next ? next.name : open[0]) + ".", content: content, intensity: intensity };
+        return { ok: false, reason: this.getWords(mapId).openElsewhere + " : " + (next ? _td(next.name) : open[0]) + ".", content: content, intensity: intensity };
       }
     }
     // v3.310.0 : seul un canevas de Petite Aventure (à profils) compte dans le cap journalier
@@ -422,8 +423,10 @@ var LivingMapManager = {
       var cost = tpl && tpl.entryCost;
       if (cost && WarehouseManager.getAmount(cost.resourceId) < Number(cost.amount || 0)) {
         var resDef = (window.WAREHOUSE_RESOURCES || {})[cost.resourceId];
-        var rName = (resDef && resDef.name) || cost.resourceId;
-        return { ok: false, reason: "Il te manque " + (Number(cost.amount) > 1 ? cost.amount + " " : "une ") + rName + ". Elle se prépare à la Cuisine de camp, dans les Ateliers du Village.", content: content, intensity: intensity, missingResource: cost.resourceId };
+        var rName = (resDef && resDef.name) ? _td(resDef.name) : cost.resourceId;
+        return { ok: false, reason: Number(cost.amount) > 1
+            ? _t("Il te manque {n} {x}. Elle se prépare à la Cuisine de camp, dans les Ateliers du Village.", { n: cost.amount, x: rName })
+            : _t("Il te manque une {x}. Elle se prépare à la Cuisine de camp, dans les Ateliers du Village.", { x: rName }), content: content, intensity: intensity, missingResource: cost.resourceId };
       }
     }
     return { ok: true, reason: "", content: content, intensity: intensity };
@@ -438,7 +441,7 @@ var LivingMapManager = {
     var cs = this.canStart(mapId, sectorId);
     if (!cs.ok) return cs;
     if (cs.content && cs.content.type === "elite") return this.startEliteFight(mapId, sectorId, cs.content);
-    if (!window.SceneRunManager || typeof SceneRunManager.startRun !== "function") return { ok: false, reason: "Expéditions indisponibles" };
+    if (!window.SceneRunManager || typeof SceneRunManager.startRun !== "function") return { ok: false, reason: _t("Expéditions indisponibles") };
     var r = SceneRunManager.startRun(cs.content.templateId, { livingMap: { mapId: mapId, sectorId: sectorId } });
     if (!r.ok) return { ok: false, reason: r.reason };
     if (typeof switchTab === "function") switchTab("scene");
@@ -451,8 +454,8 @@ var LivingMapManager = {
      d'aventure ; ici la récompense est celle du secteur (Sève de première libération). */
   startEliteFight: function (mapId, sectorId, content) {
     var map = this.getMap(mapId);
-    if (!map || !content || !window.EliteManager || !window.SortieManager) return { ok: false, reason: "Combat indisponible" };
-    if (!window.ELITE_DB || !ELITE_DB[content.eliteId]) return { ok: false, reason: "Élite inconnue" };
+    if (!map || !content || !window.EliteManager || !window.SortieManager) return { ok: false, reason: _t("Combat indisponible") };
+    if (!window.ELITE_DB || !ELITE_DB[content.eliteId]) return { ok: false, reason: _t("Élite inconnue") };
     if (window.heroLockReason && heroLockReason()) return { ok: false, reason: heroLockReason() }; // v3.307.0
     // v3.330.0 (E4) : vivres de sortie pour une élite rejouée (secteur déjà libéré)
     var foodRef = { mapId: mapId, sectorId: sectorId, worldId: map.worldId };
@@ -464,12 +467,12 @@ var LivingMapManager = {
     if (window.ProvisionsManager) ProvisionsManager.consume("mapelite", foodRef);
     game.livingMaps.fight = { mapId: mapId, sectorId: sectorId, eliteId: content.eliteId };
     SortieManager.end("return"); // un farm en cours est rangé, comme pour une quête ou une chasse
-    if (!SortieManager.start("mapelite")) { game.livingMaps.fight = null; return { ok: false, reason: "Une sortie est déjà en cours." }; }
+    if (!SortieManager.start("mapelite")) { game.livingMaps.fight = null; return { ok: false, reason: _t("Une sortie est déjà en cours.") }; }
     var brake = this.getBrakeMult(mapId, sectorId); // v3.258.0 (C-5) : 1 hors élite répétable
     var enemy = EliteManager.spawn(content.eliteId, map.worldId, 0, { brakeMult: brake });
-    if (!enemy) { SortieManager.end("return"); game.livingMaps.fight = null; return { ok: false, reason: "L'élite n'a pas paru." }; }
+    if (!enemy) { SortieManager.end("return"); game.livingMaps.fight = null; return { ok: false, reason: _t("L'élite n'a pas paru.") }; }
     this._applyFightTheme(map);
-    if (typeof addLog === "function") addLog("Carte : " + this.getSectorDef(mapId, sectorId).name + " — " + enemy.name + " se dresse devant toi.", "event");
+    if (typeof addLog === "function") addLog(_t("Carte : {x} — {e} se dresse devant toi.", { x: _td(this.getSectorDef(mapId, sectorId).name), e: _td(enemy.name) }), "event");
     if (typeof switchTab === "function") switchTab("combat");
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: "" };
@@ -509,7 +512,7 @@ var LivingMapManager = {
     // v3.322.0 (Souvenirs) : élite de carte vaincue, première victoire comme reprise
     if (window.MemoryManager) {
       var eDefS = window.ELITE_DB && ELITE_DB[f.eliteId];
-      MemoryManager.souvenir("elite", "Souvenir : " + (eDefS ? eDefS.name : "élite") + " vaincue");
+      MemoryManager.souvenir("elite", _t("Souvenir : {x} vaincue", { x: eDefS ? _td(eDefS.name) : _t("élite") }));
     }
     /* v3.258.0 (C-5) : élite répétable — Sève par victoire, et la suivante sera plus dure. */
     if (this.isRepeatable(f.mapId, f.sectorId)) {
@@ -530,13 +533,13 @@ var LivingMapManager = {
         report.repeatResource = { id: wr.id, amount: wrAmount };
       }
       var eliteDef = window.ELITE_DB && ELITE_DB[f.eliteId];
-      if (!report.firstReward) report.message = (eliteDef ? eliteDef.name : "L'élite") + " plie."; // reprise : le secteur était déjà libéré
-      report.message += " +" + seve + " " + (f.mapId === "forest" ? "Sève" : this.getRewardResourceName(f.mapId));
+      if (!report.firstReward) report.message = _t("{x} plie.", { x: eliteDef ? _td(eliteDef.name) : _t("L'élite") }); // reprise : le secteur était déjà libéré
+      report.message += " +" + seve + " " + (f.mapId === "forest" ? _t("Sève") : _td(this.getRewardResourceName(f.mapId)));
       if (report.repeatResource) {
         var rDef = (window.WAREHOUSE_RESOURCES || {})[report.repeatResource.id];
-        report.message += ", +" + report.repeatResource.amount + " " + (rDef ? rDef.name : report.repeatResource.id);
+        report.message += ", +" + report.repeatResource.amount + " " + (rDef ? _td(rDef.name) : report.repeatResource.id);
       }
-      report.message += ". Victoire " + wins + " du jour : la prochaine sera plus dure (+" + Math.round(Number(re.brakePerWin || 0) * wins * 100) + " %).";
+      report.message += ". " + _t("Victoire {n} du jour : la prochaine sera plus dure (+{p} %).", { n: wins, p: Math.round(Number(re.brakePerWin || 0) * wins * 100) });
     }
     this._afterFight(f, report, "success");
     return true;
@@ -592,7 +595,7 @@ var LivingMapManager = {
       s.state = "libere";
       s.liberatedCount += 1;
       report.liberated = true;
-      report.message = def.name + " est libéré.";
+      report.message = _t("{x} est libéré.", { x: _td(def.name) });
       if (!s.firstRewardClaimed) {
         s.firstRewardClaimed = true;
         var seve = this.getFirstReward(def);
@@ -601,18 +604,18 @@ var LivingMapManager = {
           WarehouseManager.addResource(this.getRewardResourceId(mapId), seve, true); // v3.305.0 : ressource de la carte
         }
         report.firstReward = seve;
-        if (seve > 0) report.message += " +" + seve + " " + this.getRewardResourceName(mapId) + ".";
+        if (seve > 0) report.message += " +" + seve + " " + _td(this.getRewardResourceName(mapId)) + ".";
       }
-      if (typeof addLog === "function") addLog("Carte : " + report.message, "event");
+      if (typeof addLog === "function") addLog(_t("Carte : {x}", { x: report.message }), "event");
       return report;
     }
 
     if (result === "fail") {
-      report.message = "Échec devant " + def.name + ".";
+      report.message = _t("Échec devant {x}.", { x: _td(def.name) });
       var brake = this.getBrakeChance(mapId); // v3.306.0 : frein de la carte (choix pesants)
       if (brake > 0 && this._rand() < brake) {
         report.braked = true;
-        report.message += " La Palissade a tenu.";
+        report.message += " " + _t("La Palissade a tenu.");
       } else if (this.isLiberated(mapId, sectorId) && !this.isProtected(mapId, sectorId)) {
         /* v3.366.0 (décision Seb 28/09/2026, option A) : un échec ne reprend QUE le secteur tenté,
            et seulement s'il était déjà libéré (un rejeu). Une première tentative ratée ne coûte
@@ -622,9 +625,9 @@ var LivingMapManager = {
         report.regressed = sectorId;
         report.message += " " + this.buildRegressionMessage(mapId, sectorId);
       } else {
-        report.message += " Rien n'est perdu : tu n'as pas avancé, c'est tout.";
+        report.message += " " + _t("Rien n'est perdu : tu n'as pas avancé, c'est tout.");
       }
-      if (typeof addLog === "function") addLog("Carte : " + report.message, "event");
+      if (typeof addLog === "function") addLog(_t("Carte : {x}", { x: report.message }), "event");
       return report;
     }
 
@@ -682,10 +685,10 @@ var LivingMapManager = {
     var def = this.getSectorDef(mapId, sectorId);
     if (!def) return "";
     var words = this.getWords(mapId);
-    var msg = words.coverCap + " a repris " + def.name + ".";
-    if (def.heldEffect) msg += " L'effet est perdu : " + def.heldEffect.label;
+    var msg = _t("{x} a repris {s}.", { x: _td(words.coverCap), s: _td(def.name) });
+    if (def.heldEffect) msg += " " + _t("L'effet est perdu : {x}", { x: _td(def.heldEffect.label) });
     var gw = this.getGateway(mapId, sectorId);
-    msg += " Reprends-le depuis " + (def.ring === 1 || !gw ? words.home : gw.name) + ".";
+    msg += " " + _t("Reprends-le depuis {lieu}.", { lieu: _td(def.ring === 1 || !gw ? words.home : gw.name) });
     return msg;
   },
 

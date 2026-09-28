@@ -52,9 +52,9 @@ window.goToTrainingGround = goToTrainingGround;
 
 function buildVillageSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "village" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'village\')"><img class="pc-subtab-ico" src="images/Icons/quests/village_quest.png" alt=""><span>Village</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "entrepot" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'entrepot\')"><img class="pc-subtab-ico" src="images/Icons/system/warehouse_supplies.png" alt=""><span>Entrepôt</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "production" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'production\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/production.png" alt=""><span>Production</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "village" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'village\')"><img class="pc-subtab-ico" src="images/Icons/quests/village_quest.png" alt=""><span>' + _t("Village") + '</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "entrepot" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'entrepot\')"><img class="pc-subtab-ico" src="images/Icons/system/warehouse_supplies.png" alt=""><span>' + _t("Entrepôt") + '</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "production" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'production\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/production.png" alt=""><span>' + _t("Production") + '</span></button>';
   h += '</div>';
   return h;
 }
@@ -69,8 +69,8 @@ function buildVillageSiteBannerHTML() {
     return '<div class="vb-site-banner is-idle">'
       + '<div class="vb-site-banner-icon"><img class="ico-lg" src="images/Icons/plots/reinforced_gallery.png" alt=""></div>'
       + '<div class="vb-site-banner-body">'
-      + '<div class="vb-site-banner-title">Aucun chantier en cours</div>'
-      + '<div class="vb-site-banner-sub">Un seul chantier à la fois dans le village.</div>'
+      + '<div class="vb-site-banner-title">' + _t("Aucun chantier en cours") + '</div>'
+      + '<div class="vb-site-banner-sub">' + _t("Un seul chantier à la fois dans le village.") + '</div>'
       + '</div></div>';
   }
 
@@ -81,8 +81,8 @@ function buildVillageSiteBannerHTML() {
   var h = '<div class="vb-site-banner">';
   h += buildVillageBuildingIconHTML(def, "vb-site-banner-icon");
   h += '<div class="vb-site-banner-body">';
-  h += '<div class="vb-site-banner-title">' + esc(def.name) + ' — niveau ' + site.targetLevel + '</div>';
-  h += '<div class="vb-site-banner-sub" id="vb-site-left">Fin dans ' + esc(formatTime(left)) + '</div>';
+  h += '<div class="vb-site-banner-title">' + esc(_t("{x} — niveau {n}", { x: _td(def.name), n: site.targetLevel })) + '</div>';
+  h += '<div class="vb-site-banner-sub" id="vb-site-left">' + esc(_t("Fin dans {d}", { d: formatTime(left) })) + '</div>';
   h += '<div class="kgauge kgauge-thin kgauge-xp"><div class="kgauge-track">'
      + '<div class="kgauge-fill" id="vb-site-bar" style="width:' + pct.toFixed(1) + '%"></div>'
      + '</div></div>';
@@ -96,18 +96,18 @@ function buildVillageSiteBannerHTML() {
 function getVillageLockLabel(def) {
   if (def.id === "workshop") {
     var step = (window.WorkshopUnlockManager && typeof WorkshopUnlockManager.getBannerText === "function")
-      ? WorkshopUnlockManager.getBannerText() : null;
-    return step ? step.replace(/^Objectif\s*:\s*/, "") : "Bientôt";
+      ? (WorkshopUnlockManager.getBannerStepText || WorkshopUnlockManager.getBannerText).call(WorkshopUnlockManager) : null;
+    return step ? step.replace(/^Objectif\s*:\s*/, "") : _t("Bientôt");
   }
-  if (!def.implemented) return "Bientôt";
+  if (!def.implemented) return _t("Bientôt");
   // v3.289.0 : fermé dans ce monde -> le monde qui l'ouvre, avant tout rang
   if (VillageBuildingManager.getLevel(def.id) === 0 && VillageBuildingManager.getMaxLevel(def.id) === 0) {
     return VillageBuildingManager.getWorldCapLabel(def.id);
   }
   if (def.rank > 0 && VillageBuildingManager.getRank() < def.rank) {
-    return "Atelier niveau " + VILLAGE_RANK_THRESHOLDS[def.rank - 1];
+    return _t("Atelier niveau {n}", { n: VILLAGE_RANK_THRESHOLDS[def.rank - 1] });
   }
-  return def.lockLabel || ("Atelier niveau " + VILLAGE_RANK_THRESHOLDS[def.rank - 1]);
+  return def.lockLabel ? _td(def.lockLabel) : _t("Atelier niveau {n}", { n: VILLAGE_RANK_THRESHOLDS[def.rank - 1] });
 }
 
 function buildVillageBuildingCardHTML(id) {
@@ -132,12 +132,12 @@ function buildVillageBuildingCardHTML(id) {
   var h = '<button type="button" class="vb-card is-' + state + '"'
     + (locked ? ' disabled' : ' onclick="openVillageBuildingSheet(\'' + id + '\')"') + '>';
 
-  if (state === "ready") h += '<span class="vb-card-flag">Disponible</span>';
-  else if (state === "site") h += '<span class="vb-card-flag">Chantier</span>';
+  if (state === "ready") h += '<span class="vb-card-flag">' + _t("Disponible") + '</span>';
+  else if (state === "site") h += '<span class="vb-card-flag">' + _t("Chantier") + '</span>';
 
   h += '<div class="vb-card-top">';
   h += buildVillageBuildingIconHTML(def, "vb-card-icon");
-  h += '<div class="vb-card-name">' + esc(def.name) + '</div>';
+  h += '<div class="vb-card-name">' + esc(_td(def.name)) + '</div>';
   h += '</div>';
 
   if (locked) {
@@ -156,18 +156,18 @@ function buildVillageBuildingCardHTML(id) {
 
   } else if (state === "maxed") {
     // v3.289.0 : plafond du monde -> on dit où se trouve la suite
-    h += '<div class="vb-card-level">Niveau ' + level + ' / ' + VillageBuildingManager.getMaxLevel(id) + '</div>';
+    h += '<div class="vb-card-level">' + _t("Niveau {a} / {b}", { a: level, b: VillageBuildingManager.getMaxLevel(id) }) + '</div>';
     h += '<div class="vb-card-status">' + esc(VillageBuildingManager.isWorldCapped(id)
-      ? VillageBuildingManager.getWorldCapLabel(id) : 'Niveau maximum') + '</div>';
+      ? VillageBuildingManager.getWorldCapLabel(id) : _t("Niveau maximum")) + '</div>';
 
   } else if (state === "built") {
     var afford = VillageBuildingManager.getAffordability(id);
-    h += '<div class="vb-card-level">Niveau ' + level + ' / ' + VillageBuildingManager.getMaxLevel(id) + '</div>';
-    h += '<div class="vb-card-status">' + (afford.all ? '<img class=ico-inline src=images/Icons/system/upgrade.png> Améliorable' : 'Matériaux manquants') + '</div>';
+    h += '<div class="vb-card-level">' + _t("Niveau {a} / {b}", { a: level, b: VillageBuildingManager.getMaxLevel(id) }) + '</div>';
+    h += '<div class="vb-card-status">' + (afford.all ? '<img class=ico-inline src=images/Icons/system/upgrade.png> ' + _t("Améliorable") : _t("Matériaux manquants")) + '</div>';
 
   } else { /* ready */
-    h += '<div class="vb-card-level">Non construit</div>';
-    h += '<div class="vb-card-status">Chantier possible</div>';
+    h += '<div class="vb-card-level">' + _t("Non construit") + '</div>';
+    h += '<div class="vb-card-status">' + _t("Chantier possible") + '</div>';
   }
 
   h += '</button>';
@@ -204,16 +204,16 @@ function buildVillageHTML() {
   // v3.193.0 : titre du bandeau figé selon le sous-onglet actif — et, en
   // détail bâtiment de Production, le NOM du bâtiment (le bandeau devient
   // l'en-tête permanent de la fiche).
-  var kfTitle = "images/Icons/quests/village_quest.png|Village";
+  var kfTitle = "images/Icons/quests/village_quest.png|" + _t("Village");
   if (activeVillageSubTab === "entrepot") {
-    kfTitle = "images/Icons/system/warehouse_supplies.png|Entrepôt";
+    kfTitle = "images/Icons/system/warehouse_supplies.png|" + _t("Entrepôt");
   } else if (activeVillageSubTab === "production") {
     if (window.productionDetailBuildingId && PRODUCTION_BUILDINGS[productionDetailBuildingId]) {
-      kfTitle = PRODUCTION_BUILDINGS[productionDetailBuildingId].name;
+      kfTitle = _td(PRODUCTION_BUILDINGS[productionDetailBuildingId].name);
     } else {
       kfTitle = (window.productionViewTab === "shops")
-        ? "images/Icons/subtabs/workshops.png|Ateliers"
-        : "images/Icons/subtabs/production.png|Production";
+        ? "images/Icons/subtabs/workshops.png|" + _t("Ateliers")
+        : "images/Icons/subtabs/production.png|" + _t("Production");
     }
   }
   h += '<div class="nb-page-frame village-page-frame kframe-page" data-kf-title="' + esc(kfTitle) + '">';

@@ -151,7 +151,7 @@
   max-width: 68px;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px), (min-width: 1000px) and (hover: hover) and (pointer: fine) { /* v3.367.0 : + mode PC (colonne mobile) */
   .talent-board-bg {
     min-height: 560px;
   }

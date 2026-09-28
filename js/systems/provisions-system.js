@@ -48,7 +48,7 @@ var ProvisionsManager = {
   label: function (req) {
     if (!req) return "";
     var def = (typeof WAREHOUSE_RESOURCES !== "undefined") ? WAREHOUSE_RESOURCES[req.resourceId] : null;
-    return req.amount + " " + (def ? def.name : req.resourceId);
+    return req.amount + " " + (def ? _td(def.name) : req.resourceId);
   },
 
   /* Raison du refus (texte prêt à afficher), ou null si on peut partir. */
@@ -57,7 +57,7 @@ var ProvisionsManager = {
     if (!req) return null;
     var have = window.WarehouseManager ? WarehouseManager.getAmount(req.resourceId) : 0;
     if (have >= req.amount) return null;
-    return "Vivres : il te faut " + this.label(req) + " pour repartir (Cuisine de camp, à la Chasse)";
+    return _t("Vivres : il te faut {x} pour repartir (Cuisine de camp, à la Chasse)", { x: this.label(req) });
   },
 
   /* v3.330.1 : ligne d'écran « Vivres : 1 Petite ration (en stock : 3) », vide si la sortie
@@ -67,8 +67,8 @@ var ProvisionsManager = {
     if (!req) return "";
     var have = window.WarehouseManager ? Math.floor(WarehouseManager.getAmount(req.resourceId)) : 0;
     var ok = have >= req.amount;
-    return '<div class="provisions-line' + (ok ? '' : ' is-missing') + '">Vivres : ' + (typeof esc === "function" ? esc(this.label(req)) : this.label(req))
-      + ' <span class="provisions-have">(en stock : ' + have + ')</span></div>';
+    return '<div class="provisions-line' + (ok ? '' : ' is-missing') + '">' + _t("Vivres :") + ' ' + (typeof esc === "function" ? esc(this.label(req)) : this.label(req))
+      + ' <span class="provisions-have">' + _t("(en stock : {n})", { n: have }) + '</span></div>';
   },
 
   /* Prélève les vivres (à appeler juste avant le départ, après check()). */
@@ -76,7 +76,7 @@ var ProvisionsManager = {
     var req = this.getRequirement(kind, ref);
     if (!req || !window.WarehouseManager) return true;
     if (!WarehouseManager.removeResource(req.resourceId, req.amount)) return false;
-    if (typeof addLog === "function") addLog("🎒 Vivres emportés : " + this.label(req), "event");
+    if (typeof addLog === "function") addLog("🎒 " + _t("Vivres emportés : {x}", { x: this.label(req) }), "event");
     return true;
   }
 };

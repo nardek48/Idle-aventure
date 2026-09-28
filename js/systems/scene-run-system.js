@@ -89,12 +89,12 @@ var SceneRunManager = {
     var m = Math.max(1, Math.ceil(Number(ms || 0) / 60000));
     var h = Math.floor(m / 60);
     m = m % 60;
-    return h ? (h + " h" + (m ? " " + (m < 10 ? "0" : "") + m : "")) : (m + " min");
+    return h ? (_t("{n} h", { n: h }) + (m ? " " + (m < 10 ? "0" : "") + m : "")) : _t("{n} min", { n: m });
   },
 
   /* Phrase de refus commune (carte vivante, tableau, départ) */
   petiteAventureWaitLabel: function () {
-    return "Prochaine expédition dans " + this.formatPetiteAventureWait(this.petiteAventureNextInMs());
+    return _t("Prochaine expédition dans {d}", { d: this.formatPetiteAventureWait(this.petiteAventureNextInMs()) });
   },
 
   _consumePetiteAventureSlot: function () {
@@ -273,14 +273,14 @@ var SceneRunManager = {
     this.ensureDefaults();
 
     if (this.isRunActive()) {
-      return { ok: false, reason: "Une expédition est déjà en cours", run: null };
+      return { ok: false, reason: _t("Une expédition est déjà en cours"), run: null };
     }
 
     var template = SceneEngine.getTemplate(templateId);
-    if (!template) return { ok: false, reason: "Expédition introuvable", run: null };
+    if (!template) return { ok: false, reason: _t("Expédition introuvable"), run: null };
 
     if (this.isQuestCompleted(templateId)) {
-      return { ok: false, reason: "Expédition déjà terminée", run: null };
+      return { ok: false, reason: _t("Expédition déjà terminée"), run: null };
     }
 
     var needsProfile = !!template.profileWeights;
@@ -292,14 +292,14 @@ var SceneRunManager = {
       var costResource = template.entryCost.resourceId;
       var costAmount = Number(template.entryCost.amount || 0);
       if (!window.WarehouseManager || typeof WarehouseManager.removeResource !== "function") {
-        return { ok: false, reason: "Entrepôt indisponible", run: null };
+        return { ok: false, reason: _t("Entrepôt indisponible"), run: null };
       }
       if (WarehouseManager.getAmount(costResource) < costAmount) {
         var resDef = (window.WAREHOUSE_RESOURCES || {})[costResource];
-        return { ok: false, reason: "Pas assez de " + ((resDef && resDef.name) || costResource), run: null };
+        return { ok: false, reason: _t("Pas assez de {x}", { x: (resDef && resDef.name) ? _td(resDef.name) : costResource }), run: null };
       }
       var removed = WarehouseManager.removeResource(costResource, costAmount);
-      if (!removed) return { ok: false, reason: "Échec du retrait des ressources", run: null };
+      if (!removed) return { ok: false, reason: _t("Échec du retrait des ressources"), run: null };
     }
 
     var hasLoadout = Number(template.loadoutSlots || 0) > 0;
@@ -395,11 +395,11 @@ var SceneRunManager = {
      Aventure, mais garde générique) : saute directement à l'ancien comportement. */
   chooseProfile: function (profileId) {
     var run = this.getRun();
-    if (!run || run.status !== "profile") return { ok: false, reason: "Aucun choix de profil en cours" };
+    if (!run || run.status !== "profile") return { ok: false, reason: _t("Aucun choix de profil en cours") };
     var template = SceneEngine.getTemplate(run.templateId);
-    if (!template || !template.profileWeights) return { ok: false, reason: "Expédition introuvable" };
+    if (!template || !template.profileWeights) return { ok: false, reason: _t("Expédition introuvable") };
     var weights = template.profileWeights[profileId];
-    if (!weights) return { ok: false, reason: "Profil invalide" };
+    if (!weights) return { ok: false, reason: _t("Profil invalide") };
 
     run.profile = profileId;
     run._pendingProfileWeights = weights; // consommé par chooseIntensity, jamais persisté au-delà
@@ -425,11 +425,11 @@ var SceneRunManager = {
      comme profile, jamais recalculé ensuite. */
   chooseIntensity: function (intensityId) {
     var run = this.getRun();
-    if (!run || run.status !== "intensity") return { ok: false, reason: "Aucun choix d'intensité en cours" };
+    if (!run || run.status !== "intensity") return { ok: false, reason: _t("Aucun choix d'intensité en cours") };
     var intensity = window.SCENE_INTENSITY && window.SCENE_INTENSITY[intensityId];
-    if (!intensity) return { ok: false, reason: "Intensité invalide" };
+    if (!intensity) return { ok: false, reason: _t("Intensité invalide") };
     var template = SceneEngine.getTemplate(run.templateId);
-    if (!template) return { ok: false, reason: "Expédition introuvable" };
+    if (!template) return { ok: false, reason: _t("Expédition introuvable") };
 
     run.intensity = intensityId;
     run.mutator = this._rollMutator(template); // v3.196.0 (v3.304.0 : table du canevas) : tiré ici, AVANT _generateCard (Nuit noire
@@ -453,7 +453,7 @@ var SceneRunManager = {
      _generateCard avait posé (preparation ou gate selon loadoutSlots), jamais recalculé. */
   acknowledgeMutator: function () {
     var run = this.getRun();
-    if (!run || run.status !== "mutator-announce") return { ok: false, reason: "Aucune annonce en cours" };
+    if (!run || run.status !== "mutator-announce") return { ok: false, reason: _t("Aucune annonce en cours") };
     run.status = run._statusAfterMutator || "gate";
     delete run._statusAfterMutator;
     if (typeof saveGame === "function") saveGame();
@@ -578,18 +578,18 @@ var SceneRunManager = {
      premier palier. */
   confirmLoadout: function (itemIds) {
     var run = this.getRun();
-    if (!run || run.status !== "preparation") return { ok: false, reason: "Aucune préparation en cours" };
+    if (!run || run.status !== "preparation") return { ok: false, reason: _t("Aucune préparation en cours") };
 
     var template = SceneEngine.getTemplate(run.templateId);
-    if (!template) return { ok: false, reason: "Expédition introuvable" };
+    if (!template) return { ok: false, reason: _t("Expédition introuvable") };
 
     var slots = Number(template.loadoutSlots || 3);
     if (!Array.isArray(itemIds) || itemIds.length !== slots) {
-      return { ok: false, reason: "Choisis exactement " + slots + " objets" };
+      return { ok: false, reason: _t("Choisis exactement {n} objets", { n: slots }) };
     }
     var validIds = Object.keys(template.items || {});
     var allValid = itemIds.every(function (id) { return validIds.indexOf(id) !== -1; });
-    if (!allValid) return { ok: false, reason: "Objet invalide" };
+    if (!allValid) return { ok: false, reason: _t("Objet invalide") };
 
     /* v3.303.0 (Désert D3) : un objet peut se payer en ressource (item.consumes), comme l'Outre
        pleine, fabriquée au village. Tout est vérifié avant tout retrait (tout-ou-rien). */
@@ -597,7 +597,7 @@ var SceneRunManager = {
     var missing = Object.keys(need).filter(function (rid) { return !window.WarehouseManager || WarehouseManager.getAmount(rid) < need[rid]; });
     if (missing.length) {
       var def0 = (window.WAREHOUSE_RESOURCES || {})[missing[0]];
-      return { ok: false, reason: "Pas assez de " + ((def0 && def0.name) || missing[0]) };
+      return { ok: false, reason: _t("Pas assez de {x}", { x: (def0 && def0.name) ? _td(def0.name) : missing[0] }) };
     }
     Object.keys(need).forEach(function (rid) { WarehouseManager.removeResource(rid, need[rid]); });
 
@@ -709,8 +709,8 @@ var SceneRunManager = {
      au-delà de 100 de Souffle. Refusé si le Souffle est déjà plein (la charge est gardée). */
   useBreathItem: function (itemId) {
     var run = this.getRun();
-    if (!run || !run.breathItems || !(Number(run.breathItems[itemId] || 0) > 0)) return { ok: false, reason: "Objet indisponible" };
-    if (Number(run.breath || 0) >= 100) return { ok: false, reason: "Souffle déjà au maximum" };
+    if (!run || !run.breathItems || !(Number(run.breathItems[itemId] || 0) > 0)) return { ok: false, reason: _t("Objet indisponible") };
+    if (Number(run.breath || 0) >= 100) return { ok: false, reason: _t("Souffle déjà au maximum") };
     var before = Number(run.breath || 0);
     run.breath = Math.min(100, before + this.getBreathItemAmount(itemId));
     run.breathItems[itemId] -= 1;
@@ -720,8 +720,8 @@ var SceneRunManager = {
 
   useSceneGourde: function () {
     var run = this.getRun();
-    if (!run || !run.gourdeAvailable) return { ok: false, reason: "Gourde indisponible" };
-    if (Number(run.breath || 0) >= 100) return { ok: false, reason: "Souffle déjà au maximum" };
+    if (!run || !run.gourdeAvailable) return { ok: false, reason: _t("Gourde indisponible") };
+    if (Number(run.breath || 0) >= 100) return { ok: false, reason: _t("Souffle déjà au maximum") };
     run.breath = Math.min(100, Number(run.breath || 0) + this.getGourdeAmount());
     // v3.304.0 : gorgées comptées (template.gourdeUses) — la dernière vide la gourde
     if (run.gourdeUses != null) {
@@ -790,8 +790,8 @@ var SceneRunManager = {
      que les legeres). Utilisable a tout moment du run, comme la gourde. */
   useSceneProvision: function () {
     var run = this.getRun();
-    if (!run || Number(run.provisionCharges || 0) <= 0) return { ok: false, reason: "Plus de provisions" };
-    if (!run.injuries || !run.injuries.length) return { ok: false, reason: "Aucune blessure à soigner" };
+    if (!run || Number(run.provisionCharges || 0) <= 0) return { ok: false, reason: _t("Plus de provisions") };
+    if (!run.injuries || !run.injuries.length) return { ok: false, reason: _t("Aucune blessure à soigner") };
     var healed = this._healOneInjury(run, "grave");
     run.provisionCharges = Math.max(0, Number(run.provisionCharges || 0) - 1);
     if (typeof saveGame === "function") saveGame();
@@ -826,10 +826,10 @@ var SceneRunManager = {
      d'écran). */
   enterGate: function (gateIndex) {
     var run = this.getRun();
-    if (!run || run.status !== "gate") return { ok: false, reason: "Aucun palier à choisir" };
+    if (!run || run.status !== "gate") return { ok: false, reason: _t("Aucun palier à choisir") };
     var level = this.getCurrentLevel();
     var slot = level[gateIndex];
-    if (!slot) return { ok: false, reason: "Porte invalide" };
+    if (!slot) return { ok: false, reason: _t("Porte invalide") };
     var template = SceneEngine.getTemplate(run.templateId);
 
     // v3.199.0 : franchir un palier coûte du Souffle (template.breathPerDepth, 0 par défaut).
@@ -931,10 +931,10 @@ var SceneRunManager = {
 
   resolveEvent: function (branchId) {
     var run = this.getRun(), ev = this.getPendingEvent();
-    if (!ev) return { ok: false, reason: "Aucun événement à résoudre" };
+    if (!ev) return { ok: false, reason: _t("Aucun événement à résoudre") };
     var branch = ev.branches.filter(function (b) { return b.id === branchId; })[0];
-    if (!branch) return { ok: false, reason: "Choix invalide" };
-    if (!this.canTakeEventBranch(branch)) return { ok: false, reason: "Tu ne peux pas payer ça" };
+    if (!branch) return { ok: false, reason: _t("Choix invalide") };
+    if (!this.canTakeEventBranch(branch)) return { ok: false, reason: _t("Tu ne peux pas payer ça") };
     var c = branch.cost || {};
     if (c.gourde) { // la gourde part avec lui, gorgées comprises
       run.gourdeAvailable = false;
@@ -957,14 +957,14 @@ var SceneRunManager = {
     var ev = (SceneEngine.getNodeBank().events || {})[e.id];
     var echo = ev && ev.echo && ev.echo[e.outcome];
     if (!echo || echo.at !== moment) return null;
-    var text = echo.text;
+    var text = _td(echo.text);
     if (moment === "combat") {
       var foes = (game.combat && game.combat.enemies && game.combat.enemies.length) ? game.combat.enemies : (game.enemy ? [game.enemy] : []);
       var cible = foes.filter(function (x) { return Number(x.hp || 0) > 0; })[0];
       if (!cible) return null;
       cible.hp = Math.max(1, Number(cible.hp) - Math.floor(Number(cible.maxHp || 0) * Number(echo.hpPct || 0)));
-      var nom = String(cible.name || "bête");
-      text = text.replace("{enemy}", "un " + nom.charAt(0).toLowerCase() + nom.slice(1));
+      var nom = String(cible.name ? _td(cible.name) : _t("bête"));
+      text = text.replace("{enemy}", _t("un {x}", { x: nom.charAt(0).toLowerCase() + nom.slice(1) }));
       if (typeof renderEnemy === "function") renderEnemy();
     } else if (moment === "finale" && template) {
       var reste = Math.floor(Number(run.loot || 0) * (1 - Number(echo.lootPct || 0)));
@@ -1002,9 +1002,9 @@ var SceneRunManager = {
   resolveBloqueur: function () {
     var run = this.getRun();
     if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "bloqueur") {
-      return { ok: false, reason: "Aucun bloqueur à résoudre" };
+      return { ok: false, reason: _t("Aucun bloqueur à résoudre") };
     }
-    if (!this.isBlockerReady()) return { ok: false, reason: "L'attente n'est pas terminée" };
+    if (!this.isBlockerReady()) return { ok: false, reason: _t("L'attente n'est pas terminée") };
 
     var template = SceneEngine.getTemplate(run.templateId);
     var gainAmount = SceneEngine.rollLoot(template.lootRanges.decouverte, run.depth, Math.random(), 1, this._runLootMult(run));
@@ -1070,16 +1070,16 @@ var SceneRunManager = {
   resolveObstacle: function (optionKey) {
     var run = this.getRun();
     if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "obstacle") {
-      return { ok: false, reason: "Aucun obstacle à résoudre" };
+      return { ok: false, reason: _t("Aucun obstacle à résoudre") };
     }
     var template = SceneEngine.getTemplate(run.templateId);
     var gabarit = SceneEngine.getNodeBank().obstacles[run.pendingNode.gabaritId];
-    if (!gabarit) return { ok: false, reason: "Obstacle introuvable" };
+    if (!gabarit) return { ok: false, reason: _t("Obstacle introuvable") };
     var riskMod = run.pendingNode.riskMod || 1;
 
     var isRope = (optionKey === "corde");
     if (isRope && !(Number(run.ropeCharges || 0) > 0 && gabarit.ropeOption)) {
-      return { ok: false, reason: "Approche à la corde indisponible ici" };
+      return { ok: false, reason: _t("Approche à la corde indisponible ici") };
     }
     // v3.198.0 : une voie masquee par le noeud (slot.voies, template.optionsPerNode) est
     // refusee ici aussi, jamais seulement cachee dans la vue — meme garde-fou que partout
@@ -1087,13 +1087,13 @@ var SceneRunManager = {
     if (!isRope) {
       var pendingSlot = (this.getCurrentLevel() || [])[run.currentGate] || run.pendingNode;
       if (SceneEngine.nodeVoies(gabarit, pendingSlot).indexOf(optionKey) === -1) {
-        return { ok: false, reason: "Cette approche n'est pas praticable ici" };
+        return { ok: false, reason: _t("Cette approche n'est pas praticable ici") };
       }
     }
     if (!isRope) {
       var precheckFactors = this._obstacleFactors(run, optionKey);
       if (Number(run.breath || 0) < precheckFactors.breathCost) {
-        return { ok: false, reason: "Pas assez de Souffle pour cette approche" };
+        return { ok: false, reason: _t("Pas assez de Souffle pour cette approche") };
       }
     }
 
@@ -1113,7 +1113,7 @@ var SceneRunManager = {
       run.loot += gainAmount;
     } else {
       var option = gabarit.options[optionKey];
-      if (!option) return { ok: false, reason: "Approche invalide" };
+      if (!option) return { ok: false, reason: _t("Approche invalide") };
       var factors = this._obstacleFactors(run, optionKey);
       var statEff = this.statEffective(run, option.stat);
       var randomValue = Math.random();
@@ -1187,7 +1187,7 @@ var SceneRunManager = {
   resolveAutel: function (accept) {
     var run = this.getRun();
     if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "autel") {
-      return { ok: false, reason: "Aucun autel à résoudre" };
+      return { ok: false, reason: _t("Aucun autel à résoudre") };
     }
     var template = SceneEngine.getTemplate(run.templateId);
     // v3.198.0 : l'autel ne retire plus qu'une blessure LEGERE. Une blessure grave, prise en
@@ -1216,7 +1216,7 @@ var SceneRunManager = {
   resolveDecouverte: function () {
     var run = this.getRun();
     if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "decouverte") {
-      return { ok: false, reason: "Aucune découverte à résoudre" };
+      return { ok: false, reason: _t("Aucune découverte à résoudre") };
     }
     var template = SceneEngine.getTemplate(run.templateId);
     var gainAmount = SceneEngine.rollLoot(template.lootRanges.decouverte, run.depth, Math.random(), 1, this._runLootMult(run));
@@ -1233,7 +1233,7 @@ var SceneRunManager = {
   resolveSource: function () {
     var run = this.getRun();
     if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "source") {
-      return { ok: false, reason: "Aucune source à résoudre" };
+      return { ok: false, reason: _t("Aucune source à résoudre") };
     }
     // v3.198.0 : meme regle que l'autel — la source ne lave qu'une blessure legere.
     // v3.361.0 : une source scriptée « fullBreath » rend tout le Souffle et lave la pire blessure.
@@ -1375,7 +1375,7 @@ var SceneRunManager = {
     if (!window.WarehouseManager || typeof WarehouseManager.addResource !== "function" || amount <= 0) return;
     WarehouseManager.addResource(resourceId, amount);
     var resDef = (window.WAREHOUSE_RESOURCES || {})[resourceId];
-    addLog("✨ Trouvaille : +" + amount + " " + ((resDef && resDef.name) || resourceId), "event");
+    addLog("✨ " + _t("Trouvaille : +{n} {x}", { n: amount, x: (resDef && resDef.name) ? _td(resDef.name) : resourceId }), "event");
   },
 
   /* leaveNow() -> rentre volontairement, banque via SortieManager("success") — voir décision
@@ -1385,7 +1385,7 @@ var SceneRunManager = {
   leaveNow: function () {
     var run = this.getRun();
     if (!run || (run.status !== "gate" && run.status !== "preparation")) {
-      return { ok: false, reason: "Impossible de rentrer maintenant" };
+      return { ok: false, reason: _t("Impossible de rentrer maintenant") };
     }
     run.status = "completed";
     // v3.306.2 : sans aucun palier franchi, pas de mission accomplie -> "return" (butin gardé, 0 XP).
@@ -1410,7 +1410,7 @@ var SceneRunManager = {
      totale hors mort en combat). Idempotent : sans run actif, ne fait rien. */
   abandon: function () {
     var run = this.getRun();
-    if (!run || run.status === "completed") return { ok: false, reason: "Aucune expédition en cours" };
+    if (!run || run.status === "completed") return { ok: false, reason: _t("Aucune expédition en cours") };
     run.status = "completed";
     var summary = window.SortieManager ? SortieManager.end("flee") : null;
     this._notifyLivingMap(run, "fail"); // v3.256.0 (décision 4) : l'abandon compte comme un échec
@@ -1422,7 +1422,7 @@ var SceneRunManager = {
   /* resolveFinale(choiceId: "sur"|"risque") -> banque via SortieManager("success"). */
   resolveFinale: function (choiceId) {
     var run = this.getRun();
-    if (!run || run.status !== "finale") return { ok: false, reason: "Chambre finale non atteinte" };
+    if (!run || run.status !== "finale") return { ok: false, reason: _t("Chambre finale non atteinte") };
     var template = SceneEngine.getTemplate(run.templateId);
 
     if (choiceId === "sur") {
@@ -1444,7 +1444,7 @@ var SceneRunManager = {
         this._debitLootTo(template, run.loot);
       }
     } else {
-      return { ok: false, reason: "Choix invalide" };
+      return { ok: false, reason: _t("Choix invalide") };
     }
 
     // v3.122.0 (Lot S2a) : déblocage narratif permanent (bâtiment + flags), une seule fois,
@@ -1540,10 +1540,10 @@ var SceneRunManager = {
   enterCombatNode: function () {
     var run = this.getRun();
     if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "combat") {
-      return { ok: false, reason: "Aucun combat à engager" };
+      return { ok: false, reason: _t("Aucun combat à engager") };
     }
     var group = SceneEngine.getNodeBank().combatGroups && SceneEngine.getNodeBank().combatGroups[run.pendingNode.gabaritId];
-    if (!group || !window.QuestEnemyManager || !window.WorldManager || !window.WORLDS) return { ok: false, reason: "Groupe d'ennemis introuvable" };
+    if (!group || !window.QuestEnemyManager || !window.WorldManager || !window.WORLDS) return { ok: false, reason: _t("Groupe d'ennemis introuvable") };
 
     run._combatGroupId = run.pendingNode.gabaritId;
     // v3.132.0 : taille de vague lue sur le canevas (template.combatWaveRange, défaut 6-10 historique) —
@@ -1556,7 +1556,7 @@ var SceneRunManager = {
     run._combatIsFinalWave = (template && template.finalBoss === false) ? false : this._isLastCombatNodeOfRun(run);
 
     var spawned = this._spawnNextCombatEnemy(run, false);
-    if (!spawned) return { ok: false, reason: "Impossible de générer l'ennemi" };
+    if (!spawned) return { ok: false, reason: _t("Impossible de générer l'ennemi") };
     this._applyEventEcho(run, "combat"); // v3.312.0 : la pierre depuis les dunes
 
     run.status = "combat"; // en pause sur le scene-engine tant que le combat n'est pas résolu
@@ -1695,7 +1695,7 @@ var SceneRunManager = {
     if (run._combatIsFinalWave) {
       // Dernier kill de la dernière vague du run : le boss de l'aventure apparaît.
       run._combatBossSpawned = true;
-      addLog("👑 Le silence, d'un coup. Quelque chose de plus lourd arrive.", "event"); // v3.197.0 (bible B §4.4)
+      addLog("👑 " + _t("Le silence, d'un coup. Quelque chose de plus lourd arrive."), "event"); // v3.197.0 (bible B §4.4)
       this._spawnNextCombatEnemy(run, true);
       if (typeof saveGame === "function") saveGame();
       return;
@@ -1720,7 +1720,7 @@ var SceneRunManager = {
     game.heroHp = 0; // v3.327.0 : Sang-froid retiré (décision T9)
     // v3.197.0 (bible B §4.4) ; v3.304.0 : un canevas peut déclarer sa ligne (deathLine), le Désert n'est pas la forêt
     var deathTpl = SceneEngine.getTemplate(run.templateId);
-    addLog("💀 " + ((deathTpl && deathTpl.deathLine) || "Le parcours s'arrête là. Ce que tu portais reste dans la forêt. Retour au feu."), "event");
+    addLog("💀 " + ((deathTpl && deathTpl.deathLine) ? _td(deathTpl.deathLine) : _t("Le parcours s'arrête là. Ce que tu portais reste dans la forêt. Retour au feu.")), "event");
     vibrate([80, 40, 80]);
 
     run.status = "completed";
@@ -1736,7 +1736,7 @@ var SceneRunManager = {
 window.SceneRunManager = SceneRunManager;
 
 /* v3.307.0 : raison affichable du verrou héros, ou null. Lu par les systèmes et les vues. */
-var HERO_LOCK_REASON = "Ton héros est en expédition : termine-la d'abord.";
+var HERO_LOCK_REASON = _t("Ton héros est en expédition : termine-la d'abord."); // v3.370.0 : traduit à la définition (i18n D2)
 function heroLockReason() {
   return (window.SceneRunManager && SceneRunManager.isHeroEngaged()) ? HERO_LOCK_REASON : null;
 }

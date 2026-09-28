@@ -61,12 +61,12 @@ function formatSetBonusEffect(effect) {
 
   var parts = [];
 
-  if (effect.tapDamage != null) parts.push("+" + formatNumber(effect.tapDamage) + " dégâts d'Attaque");
-  if (effect.tapMult != null) parts.push("+" + Math.round(effect.tapMult * 100) + "% dégâts");
-  if (effect.goldMult != null) parts.push("+" + Math.round(effect.goldMult * 100) + "% or");
-  if (effect.critChance != null) parts.push("+" + formatNumber(effect.critChance) + "% critique");
-  if (effect.critMult != null) parts.push("+" + formatNumber(effect.critMult) + "x dégâts crit");
-  if (effect.autoDps != null) parts.push("+" + formatNumber(effect.autoDps) + " célérité");
+  if (effect.tapDamage != null) parts.push(_t("+{n} dégâts d'Attaque", { n: formatNumber(effect.tapDamage) }));
+  if (effect.tapMult != null) parts.push(_t("+{n}% dégâts", { n: Math.round(effect.tapMult * 100) }));
+  if (effect.goldMult != null) parts.push(_t("+{n}% or", { n: Math.round(effect.goldMult * 100) }));
+  if (effect.critChance != null) parts.push(_t("+{n}% critique", { n: formatNumber(effect.critChance) }));
+  if (effect.critMult != null) parts.push(_t("+{n}x dégâts crit", { n: formatNumber(effect.critMult) }));
+  if (effect.autoDps != null) parts.push(_t("+{n} célérité", { n: formatNumber(effect.autoDps) }));
 
   return parts.join(" • ");
 }

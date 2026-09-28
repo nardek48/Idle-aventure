@@ -109,7 +109,7 @@ var PwaInstall = {
       self.deferred = null;
       self.persist();
       self.refreshViews();
-      if (typeof showToast === "function") showToast("Aethervale est installé : tu le retrouves sur ton écran d'accueil.", 2600);
+      if (typeof showToast === "function") showToast(_t("Aethervale est installé : tu le retrouves sur ton écran d'accueil."), 2600);
     });
     if (this.isStandalone()) this.persist();
   },
@@ -173,7 +173,7 @@ function buildPwaInstallButtonHTML(where) {
   var st = PwaInstall.status();
   if (st === "installed" || st === "none") return "";
   if (where === "title" && window.Prefs && !Prefs.get("installHint")) return "";
-  var label = st === "ios" ? "Installer sur iPhone / iPad" : "Installer le jeu";
+  var label = st === "ios" ? _t("Installer sur iPhone / iPad") : _t("Installer le jeu");
   var cls = where === "title" ? "pwa-install-btn pwa-install-btn-title" : "settings-btn";
   return '<button type="button" class="' + cls + '" onclick="PwaInstall.install()">'
     + '<img class="ico-inline" src="images/Icons/apple-touch-icon.png" alt=""> ' + label + '</button>';
@@ -183,13 +183,13 @@ function buildPwaInstallButtonHTML(where) {
 function buildPwaSettingsCardHTML() {
   var st = PwaInstall.status();
   var h = '<div class="panel-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/apple-touch-icon.png> Application</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/apple-touch-icon.png> ' + _t("Application") + '</h3>';
   if (st === "installed") {
-    h += '<p class="panel-sub">Aethervale est installé sur cet appareil. Il s\'ouvre en plein écran, comme une application, et fonctionne sans connexion.</p>';
+    h += '<p class="panel-sub">' + _t("Aethervale est installé sur cet appareil. Il s'ouvre en plein écran, comme une application, et fonctionne sans connexion.") + '</p>';
   } else if (st === "none") {
-    h += '<p class="panel-sub">Ce navigateur ne propose pas l\'installation. Avec Chrome ou Edge (ordinateur, Android), ou Safari sur iPhone, Aethervale s\'installe comme une application.</p>';
+    h += '<p class="panel-sub">' + _t("Ce navigateur ne propose pas l'installation. Avec Chrome ou Edge (ordinateur, Android), ou Safari sur iPhone, Aethervale s'installe comme une application.") + '</p>';
   } else {
-    h += '<p class="panel-sub">Installe Aethervale sur cet appareil : une icône sur l\'écran d\'accueil, le jeu en plein écran, et ta sauvegarde protégée du nettoyage du navigateur.</p>';
+    h += '<p class="panel-sub">' + _t("Installe Aethervale sur cet appareil : une icône sur l'écran d'accueil, le jeu en plein écran, et ta sauvegarde protégée du nettoyage du navigateur.") + '</p>';
     h += buildPwaInstallButtonHTML("settings");
   }
   h += '</div>';
@@ -201,15 +201,15 @@ function buildPwaIosSheetHTML() {
   var h = '<div class="pwa-install-layer">';
   h += '<div class="ksheet-backdrop" onclick="PwaInstall.closeIosSheet()"></div>';
   h += '<div class="ksheet pwa-install-sheet"><div class="ksheet-handle"></div>';
-  h += '<div class="ksheet-title"><img src="images/Icons/apple-touch-icon.png" alt=""><span>Installer sur iPhone ou iPad</span></div>';
+  h += '<div class="ksheet-title"><img src="images/Icons/apple-touch-icon.png" alt=""><span>' + _t("Installer sur iPhone ou iPad") + '</span></div>';
   h += '<div class="ksheet-body"><ol class="pwa-install-steps">';
-  h += '<li>Ouvre le jeu dans <b>Safari</b>.</li>';
-  h += '<li>Touche le bouton <b>Partager</b> (le carré avec une flèche vers le haut).</li>';
-  h += '<li>Choisis <b>Sur l\'écran d\'accueil</b>, puis <b>Ajouter</b>.</li>';
-  h += '</ol><p class="pwa-install-note">Le jeu s\'ouvre alors en plein écran, et ta sauvegarde est mieux protégée.</p></div>';
+  h += '<li>' + _t("Ouvre le jeu dans <b>Safari</b>.") + '</li>';
+  h += '<li>' + _t("Touche le bouton <b>Partager</b> (le carré avec une flèche vers le haut).") + '</li>';
+  h += '<li>' + _t("Choisis <b>Sur l'écran d'accueil</b>, puis <b>Ajouter</b>.") + '</li>';
+  h += '</ol><p class="pwa-install-note">' + _t("Le jeu s'ouvre alors en plein écran, et ta sauvegarde est mieux protégée.") + '</p></div>';
   h += '<div class="pwa-install-actions">';
-  h += '<button type="button" class="pwa-install-later" onclick="PwaInstall.later()">Plus tard</button>';
-  h += '<button type="button" class="ksheet-close" onclick="PwaInstall.closeIosSheet()">Compris</button>';
+  h += '<button type="button" class="pwa-install-later" onclick="PwaInstall.later()">' + _t("Plus tard") + '</button>';
+  h += '<button type="button" class="ksheet-close" onclick="PwaInstall.closeIosSheet()">' + _t("Compris") + '</button>';
   h += '</div></div></div>';
   return h;
 }

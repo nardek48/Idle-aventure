@@ -9,8 +9,8 @@ function chooseMemoryOption(level, optionId) {
   if (current && current !== optionId && typeof showConfirmModal === "function") {
     var cost = MemoryManager.getRepriseCost();
     showConfirmModal(
-      "Reprendre ce choix ?",
-      "Changer d'avis coûte " + formatNumber(cost) + " or (tu en as " + formatNumber(game.gold || 0) + "). La prochaine reprise coûtera trois fois plus.",
+      _t("Reprendre ce choix ?"),
+      _t("Changer d'avis coûte {n} or (tu en as {g}). La prochaine reprise coûtera trois fois plus.", { n: formatNumber(cost), g: formatNumber(game.gold || 0) }),
       "images/Icons/gold_icon.png",
       function () { MemoryManager.choose(level, optionId); }
     );
@@ -23,10 +23,10 @@ window.chooseMemoryOption = chooseMemoryOption;
 function buildMemoryGaugeHTML(p) {
   var pct = p.maxed ? 100 : (p.need > 0 ? Math.min(100, Math.floor(100 * p.into / p.need)) : 0);
   var h = '<div class="mem-gauge">';
-  h += '<div class="mem-gauge-head"><span class="mem-gauge-lvl">Mémoire ' + p.level + '</span>';
-  h += '<span class="mem-gauge-num">' + (p.maxed ? "Tout est retenu" : formatNumber(p.into) + ' / ' + formatNumber(p.need) + ' Aether') + '</span></div>';
+  h += '<div class="mem-gauge-head"><span class="mem-gauge-lvl">' + _t("Mémoire {n}", { n: p.level }) + '</span>';
+  h += '<span class="mem-gauge-num">' + (p.maxed ? _t("Tout est retenu") : _t("{a} / {b} Aether", { a: formatNumber(p.into), b: formatNumber(p.need) })) + '</span></div>';
   h += '<div class="mem-gauge-bar"><div class="mem-gauge-fill" style="width:' + pct + '%"></div></div>';
-  if (p.capped) h += '<div class="mem-gauge-note">La jauge est pleine pour ce monde : le niveau suivant s\'ouvrira dans le prochain monde.</div>';
+  if (p.capped) h += '<div class="mem-gauge-note">' + _t("La jauge est pleine pour ce monde : le niveau suivant s'ouvrira dans le prochain monde.") + '</div>';
   h += '</div>';
   return h;
 }
@@ -36,10 +36,10 @@ function buildMemoryLevelHTML(def, p) {
   var reached = level <= p.level;
   var worldLocked = !reached && level > p.cap;
   var h = '<div class="mem-level' + (reached ? '' : ' is-locked') + (reached && !chosen ? ' is-pending' : '') + '">';
-  h += '<div class="mem-level-head"><span class="mem-level-num">Niveau ' + level + '</span>';
-  h += '<span class="mem-level-theme">' + esc(def.theme) + (def.jalon ? ' · jalon' : '') + '</span></div>';
+  h += '<div class="mem-level-head"><span class="mem-level-num">' + _t("Niveau {n}", { n: level }) + '</span>';
+  h += '<span class="mem-level-theme">' + esc(_td(def.theme)) + (def.jalon ? ' · ' + _t("jalon") : '') + '</span></div>';
   if (!reached) {
-    h += '<div class="mem-level-lock">' + (worldLocked ? 'S\'ouvre dans un monde plus lointain.' : 'Encore un peu d\'Aether à rassembler.') + '</div>';
+    h += '<div class="mem-level-lock">' + (worldLocked ? _t("S'ouvre dans un monde plus lointain.") : _t("Encore un peu d'Aether à rassembler.")) + '</div>';
   }
   h += '<div class="mem-options">';
   def.options.forEach(function (o) {
@@ -47,9 +47,9 @@ function buildMemoryLevelHTML(def, p) {
     var cls = 'mem-option' + (isChosen ? ' is-chosen' : '') + (chosen && !isChosen ? ' is-other' : '');
     if (reached) h += '<button type="button" class="' + cls + '" onclick="chooseMemoryOption(' + level + ',\'' + esc(o.id) + '\')">';
     else h += '<div class="' + cls + '">';
-    h += '<span class="mem-option-ico">' + renderIconOrEmojiHTML(o.icon, "mem-option-img", o.name) + '</span>';
-    h += '<span class="mem-option-txt"><span class="mem-option-name">' + esc(o.name) + (isChosen ? ' ✓' : '') + '</span>';
-    h += '<span class="mem-option-desc">' + esc(o.desc) + '</span></span>';
+    h += '<span class="mem-option-ico">' + renderIconOrEmojiHTML(o.icon, "mem-option-img", _td(o.name)) + '</span>';
+    h += '<span class="mem-option-txt"><span class="mem-option-name">' + esc(_td(o.name)) + (isChosen ? ' ✓' : '') + '</span>';
+    h += '<span class="mem-option-desc">' + esc(_td(o.desc)) + '</span></span>';
     h += reached ? '</button>' : '</div>';
   });
   h += '</div></div>';
@@ -57,7 +57,7 @@ function buildMemoryLevelHTML(def, p) {
 }
 
 function buildAscensionHTML() {
-  if (!window.MemoryManager) return '<div class="panel">Mémoire indisponible</div>';
+  if (!window.MemoryManager) return '<div class="panel">' + _t("Mémoire indisponible") + '</div>';
   MemoryManager.ensure();
   var p = MemoryManager.getProgress();
   var pending = MemoryManager.getPendingLevels();
@@ -65,11 +65,11 @@ function buildAscensionHTML() {
   var h = (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("ascension") : "";
   h += '<div class="prestige-section">';
   h += '<div class="prestige-icon">' + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "prestige-icon-img", "Aether") + '</div>';
-  h += '<div class="prestige-title">Mémoire</div>';
-  h += '<div class="prestige-desc">Ce que tu offres et ce que tu vis, l\'Aether le retient. Offre les objets dont tu te sépares depuis ton sac ; tes grandes victoires comptent aussi.</div>';
+  h += '<div class="prestige-title">' + _t("Mémoire") + '</div>';
+  h += '<div class="prestige-desc">' + _t("Ce que tu offres et ce que tu vis, l'Aether le retient. Offre les objets dont tu te sépares depuis ton sac ; tes grandes victoires comptent aussi.") + '</div>';
   h += buildMemoryGaugeHTML(p);
-  h += '<div class="prestige-desc">Reprendre un choix coûte de l\'or : ' + formatNumber(MemoryManager.getRepriseCost()) + ' pour la prochaine reprise, trois fois plus ensuite.</div>'; // v3.358.0 (D7)
-  if (pending.length) h += '<div class="mem-pending">🌟 ' + (pending.length > 1 ? pending.length + ' choix t\'attendent.' : 'Un choix t\'attend.') + '</div>';
+  h += '<div class="prestige-desc">' + _t("Reprendre un choix coûte de l'or : {n} pour la prochaine reprise, trois fois plus ensuite.", { n: formatNumber(MemoryManager.getRepriseCost()) }) + '</div>'; // v3.358.0 (D7)
+  if (pending.length) h += '<div class="mem-pending">🌟 ' + (pending.length > 1 ? _t("{n} choix t'attendent.", { n: pending.length }) : _t("Un choix t'attend.")) + '</div>';
   h += '</div>';
 
   (window.MEMORY_LEVELS || []).forEach(function (def) { h += buildMemoryLevelHTML(def, p); });

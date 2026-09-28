@@ -160,10 +160,10 @@ var ForgeManager = {
   /* Raison de blocage, jamais un simple faux : l'écran doit pouvoir dire quoi
      faire. */
   getBlockReason: function (slot) {
-    if (this.getBuildingLevel() <= 0) return "Forge non construite";
-    if (window.heroLockReason && heroLockReason()) return "Héros en expédition"; // v3.307.0 : la Forge travaille l'équipement porté
-    if (this.getLevel(slot) >= this.getMaxLevel()) return "Améliore la Forge";
-    if (!this.canAfford(slot)) return "Matériaux manquants";
+    if (this.getBuildingLevel() <= 0) return _t("Forge non construite");
+    if (window.heroLockReason && heroLockReason()) return _t("Héros en expédition"); // v3.307.0 : la Forge travaille l'équipement porté
+    if (this.getLevel(slot) >= this.getMaxLevel()) return _t("Améliore la Forge");
+    if (!this.canAfford(slot)) return _t("Matériaux manquants");
     return null;
   },
 
@@ -195,9 +195,9 @@ var ForgeManager = {
 
     game.forge.levels[slot] = this.getLevel(slot) + 1;
 
-    var label = (EQUIPMENT_SLOT_CONFIG[slot] && EQUIPMENT_SLOT_CONFIG[slot].label) || slot;
-    addLog("⚒️ " + label + " reforgé — niveau " + game.forge.levels[slot] + ".", "event");
-    showToast("⚒️ Niveau " + game.forge.levels[slot], 1300);
+    var label = (EQUIPMENT_SLOT_CONFIG[slot] && EQUIPMENT_SLOT_CONFIG[slot].label) ? _td(EQUIPMENT_SLOT_CONFIG[slot].label) : slot;
+    addLog("⚒️ " + _t("{x} reforgé — niveau {n}.", { x: label, n: game.forge.levels[slot] }), "event");
+    showToast("⚒️ " + _t("Niveau {n}", { n: game.forge.levels[slot] }), 1300);
 
     if (typeof StatsSystem !== "undefined") StatsSystem.recalcStats();
     if (typeof renderAll === "function") renderAll();

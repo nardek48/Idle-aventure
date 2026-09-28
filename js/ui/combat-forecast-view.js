@@ -39,11 +39,11 @@ function buildCombatForecastLineHTML(f) {
   if (!f || !window.CombatForecast) return "";
   var def = CombatForecast.getLevelDef(f.id);
   var h = '<div class="cf-line ' + getForecastLevelClass(f) + '">';
-  h += '<span class="cf-line-verdict">' + esc(def.label) + '</span>';
+  h += '<span class="cf-line-verdict">' + esc(_td(def.label)) + '</span>';
   if (f.unwinnable) {
-    h += '<span class="cf-line-detail">il se soigne plus vite que tu ne frappes</span>';
+    h += '<span class="cf-line-detail">' + _t("il se soigne plus vite que tu ne frappes") + '</span>';
   } else if (f.roundsToKill) {
-    h += '<span class="cf-line-detail">~' + f.roundsToKill + ' rounds pour le vaincre, ~' + f.roundsToDie + ' pour tomber</span>';
+    h += '<span class="cf-line-detail">' + _t("~{a} rounds pour le vaincre, ~{b} pour tomber", { a: f.roundsToKill, b: f.roundsToDie }) + '</span>';
   }
   h += '</div>';
   return h;
@@ -56,35 +56,35 @@ function buildCombatForecastHTML(f, opts) {
   var def = CombatForecast.getLevelDef(f.id);
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu cf-card ' + getForecastLevelClass(f) + '">';
-  h += '    <div class="cf-title">' + esc(opts.title || "Avant de partir") + '</div>';
+  h += '    <div class="cf-title">' + esc(opts.title ? _td(opts.title) : _t("Avant de partir")) + '</div>';
   if (opts.lowHp) {
     h += '    <div class="cf-lowhp"><img class="cf-lowhp-ico" src="images/Icons/combat_stats/stat_health.png" alt="">'
-      + '<span><b>Attention, il faut te soigner.</b> Tu pars à ' + Math.round(getHeroHpRatio() * 100) + ' % de tes PV : '
-      + 'mange une ration au Campement ou laisse le feu te remettre sur pied.</span></div>';
+      + '<span><b>' + _t("Attention, il faut te soigner.") + '</b> '
+      + _t("Tu pars à {n} % de tes PV : mange une ration au Campement ou laisse le feu te remettre sur pied.", { n: Math.round(getHeroHpRatio() * 100) }) + '</span></div>';
   }
-  h += '    <div class="cf-verdict">' + esc(def.label) + '</div>';
-  if (f.enemyName) h += '    <div class="cf-enemy">Adversaire annoncé : ' + esc(f.enemyName) + '</div>';
+  h += '    <div class="cf-verdict">' + esc(_td(def.label)) + '</div>';
+  if (f.enemyName) h += '    <div class="cf-enemy">' + esc(_t("Adversaire annoncé : {x}", { x: _td(f.enemyName) })) + '</div>';
 
   h += '    <div class="cf-rows">';
-  h += '      <div class="cf-row"><span>Tes dégâts</span><span>' + formatNumber(f.heroDamagePerRound) + ' / round</span></div>';
-  h += '      <div class="cf-row"><span>Ses dégâts</span><span>' + formatNumber(f.enemyDamagePerRound) + ' / round</span></div>';
-  h += '      <div class="cf-row"><span>Ses PV</span><span>' + formatNumber(f.enemyHp) + '</span></div>';
+  h += '      <div class="cf-row"><span>' + _t("Tes dégâts") + '</span><span>' + _t("{n} / round", { n: formatNumber(f.heroDamagePerRound) }) + '</span></div>';
+  h += '      <div class="cf-row"><span>' + _t("Ses dégâts") + '</span><span>' + _t("{n} / round", { n: formatNumber(f.enemyDamagePerRound) }) + '</span></div>';
+  h += '      <div class="cf-row"><span>' + _t("Ses PV") + '</span><span>' + formatNumber(f.enemyHp) + '</span></div>';
   if (f.healThreshold > 0) {
-    h += '      <div class="cf-row' + (f.unwinnable ? ' is-blocking' : '') + '"><span>Il se soigne</span><span>il faut plus de ' + formatNumber(f.healThreshold) + ' dégâts / round</span></div>';
+    h += '      <div class="cf-row' + (f.unwinnable ? ' is-blocking' : '') + '"><span>' + _t("Il se soigne") + '</span><span>' + _t("il faut plus de {n} dégâts / round", { n: formatNumber(f.healThreshold) }) + '</span></div>';
   }
   if (!f.unwinnable) {
-    h += '      <div class="cf-row"><span>Estimation</span><span>~' + f.roundsToKill + ' rounds contre ~' + f.roundsToDie + '</span></div>';
+    h += '      <div class="cf-row"><span>' + _t("Estimation") + '</span><span>' + _t("~{a} rounds contre ~{b}", { a: f.roundsToKill, b: f.roundsToDie }) + '</span></div>';
   }
   h += '    </div>';
 
-  if (f.reason) h += '    <div class="cf-reason">' + esc(f.reason) + '</div>';
-  if (f.advice) h += '    <div class="cf-advice">' + esc(f.advice) + '</div>';
-  if (def.hint) h += '    <div class="cf-hint">' + esc(def.hint) + '</div>';
+  if (f.reason) h += '    <div class="cf-reason">' + esc(_td(f.reason)) + '</div>';
+  if (f.advice) h += '    <div class="cf-advice">' + esc(_td(f.advice)) + '</div>';
+  if (def.hint) h += '    <div class="cf-hint">' + esc(_td(def.hint)) + '</div>';
 
   h += '    <div class="cf-actions">';
-  if (opts.lowHp) h += '      <button class="settings-btn" type="button" onclick="goHealFromForecast()">Me soigner</button>';
-  else h += '      <button class="settings-btn" type="button" onclick="closeCombatForecast()">Annuler</button>';
-  h += '      <button class="settings-btn primary" type="button" onclick="confirmCombatForecast()">' + esc(opts.confirmLabel || "Partir quand même") + '</button>';
+  if (opts.lowHp) h += '      <button class="settings-btn" type="button" onclick="goHealFromForecast()">' + _t("Me soigner") + '</button>';
+  else h += '      <button class="settings-btn" type="button" onclick="closeCombatForecast()">' + _t("Annuler") + '</button>';
+  h += '      <button class="settings-btn primary" type="button" onclick="confirmCombatForecast()">' + esc(opts.confirmLabel ? _td(opts.confirmLabel) : _t("Partir quand même")) + '</button>';
   h += '    </div>';
   h += '  </div>';
   h += '</div>';
@@ -129,8 +129,8 @@ function launchWithForecast(mission, action) {
   var lowHp = getHeroHpRatio() < FORECAST_LOW_HP_PCT;
   if (!lowHp && CombatForecast.getLevelDef(f.id).level < 2) return action();
   openCombatForecastConfirm(f, {
-    title: mission.title || "Avant de partir",
-    confirmLabel: (f.unwinnable || lowHp) ? "Partir quand même" : "Partir",
+    title: mission.title || _t("Avant de partir"),
+    confirmLabel: (f.unwinnable || lowHp) ? _t("Partir quand même") : _t("Partir"),
     lowHp: lowHp,
     onConfirm: action
   });

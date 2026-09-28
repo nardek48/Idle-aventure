@@ -73,29 +73,32 @@ var TalentManager = {
   },
 
   /* Raison du refus d'un achat, ou null. `closed` = clé fermée par l'autre clé. */
-  blockReason: function (id) {
+  /* v3.372.0 (i18n) : la raison porte un code stable (`kind`) à côté de son texte
+     traduit — les tests ne lisent plus le texte (« Fermée… », « Plafond de l'acte… »). */
+  blockInfo: function (id) {
     var e = this.find(id);
-    if (!e) return "Talent introuvable.";
+    if (!e) return { kind: "missing", text: _t("Talent introuvable.") };
     var n = e.node, t = this.getTree();
-    if (this.rank(id) >= this.maxRank(n)) return "Rang maximum atteint.";
+    if (this.rank(id) >= this.maxRank(n)) return { kind: "maxRank", text: _t("Rang maximum atteint.") };
     if (e.zone !== "trunk") {
       var gate = window.TALENT_TRUNK_GATE || 2;
-      if (this.trunkSpent() < gate) return "Les voies s'ouvrent après " + gate + " points dans le tronc.";
+      if (this.trunkSpent() < gate) return { kind: "trunk", text: _t("Les voies s'ouvrent après {n} points dans le tronc.", { n: gate }) };
       if (n.key) {
         var other = t.paths[1 - e.zone];
         var otherKey = other.nodes.filter(function (x) { return x.key; })[0];
-        if (otherKey && this.has(otherKey.id)) return "Fermée : tu as choisi « " + otherKey.name + " ». Réinitialise pour changer.";
+        if (otherKey && this.has(otherKey.id)) return { kind: "closed", text: _t("Fermée : tu as choisi « {x} ». Réinitialise pour changer.", { x: _td(otherKey.name) }) };
         var need = window.TALENT_KEY_GATE || 3;
-        if (this.pathSpent(e.path) < need) return "Demande " + need + " nœuds de la voie " + e.path.name + ".";
+        if (this.pathSpent(e.path) < need) return { kind: "keyGate", text: _t("Demande {n} nœuds de la voie {x}.", { n: need, x: _td(e.path.name) }) };
       }
     }
     if (this.available() < 1) {
-      if (this.earned() > this.spent() && this.spent() >= this.cap()) return "Plafond de l'acte atteint (" + this.cap() + " points).";
-      return "Pas de point disponible.";
+      if (this.earned() > this.spent() && this.spent() >= this.cap()) return { kind: "actCap", text: _t("Plafond de l'acte atteint ({n} points).", { n: this.cap() }) };
+      return { kind: "noPoint", text: _t("Pas de point disponible.") };
     }
     return null;
   },
-  isClosed: function (id) { return /^Fermée/.test(this.blockReason(id) || ""); },
+  blockReason: function (id) { var b = this.blockInfo(id); return b ? b.text : null; },
+  isClosed: function (id) { var b = this.blockInfo(id); return !!b && b.kind === "closed"; },
   canBuy: function (id) { return !this.blockReason(id); },
   hasAffordable: function () {
     var self = this;
@@ -107,23 +110,25 @@ var TalentManager = {
     if (typeof heroLockReason === "function" && heroLockReason()) return heroLockReason();
     var busy = (game.dungeonRun && game.dungeonRun.active) || (game.huntRun && game.huntRun.active)
       || (game.adventureQuestRun && game.adventureQuestRun.active);
-    return busy ? "Termine ta sortie en cours d'abord." : null;
+    return busy ? _t("Termine ta sortie en cours d'abord.") : null;
   },
 
   buy: function (id) {
     if (window.heroLockToast && heroLockToast()) return false;
-    var reason = this.blockReason(id);
+    var block = this.blockInfo(id), reason = block ? block.text : null;
     if (reason) {
       // v3.336.0 (F-2) : plafond de l'acte -> où s'ouvre le palier suivant
-      if (/^Plafond de l'acte/.test(reason) && typeof showHowToToast === "function") showHowToToast(reason, "talentCap");
+      if (block.kind === "actCap" && typeof showHowToToast === "function") showHowToToast(reason, "talentCap");
       else if (typeof showToast === "function") showToast(reason, 1800);
       return false;
     }
     var n = this.find(id).node;
     game.talents[id] = this.rank(id) + 1;
     this.afterChange();
-    addLog("Talent appris : " + n.name + (this.maxRank(n) > 1 ? " (rang " + game.talents[id] + "/" + this.maxRank(n) + ")" : ""), "event");
-    if (typeof showToast === "function") showToast(n.name, 1400);
+    addLog(this.maxRank(n) > 1
+      ? _t("Talent appris : {x} (rang {a}/{b})", { x: _td(n.name), a: game.talents[id], b: this.maxRank(n) })
+      : _t("Talent appris : {x}", { x: _td(n.name) }), "event");
+    if (typeof showToast === "function") showToast(_td(n.name), 1400);
     if (typeof vibrate === "function") vibrate([40, 20, 40]);
     if (typeof saveGame === "function") saveGame();
     if (typeof renderAll === "function") renderAll();
@@ -134,11 +139,11 @@ var TalentManager = {
     var lock = this.runLockReason();
     if (lock) { if (typeof showToast === "function") showToast("🧭 " + lock, 1800); return false; }
     var n = this.spent();
-    if (!n) { if (typeof showToast === "function") showToast("Aucun talent à réinitialiser", 1200); return false; }
+    if (!n) { if (typeof showToast === "function") showToast(_t("Aucun talent à réinitialiser"), 1200); return false; }
     game.talents = {};
     this.afterChange();
-    addLog("🔄 Talents réinitialisés (" + n + " point" + (n > 1 ? "s" : "") + " rendu" + (n > 1 ? "s" : "") + ")", "event");
-    if (typeof showToast === "function") showToast("Talents réinitialisés", 1400);
+    addLog("🔄 " + _tn(n, "Talents réinitialisés ({n} point rendu)", "Talents réinitialisés ({n} points rendus)"), "event");
+    if (typeof showToast === "function") showToast(_t("Talents réinitialisés"), 1400);
     if (typeof saveGame === "function") saveGame();
     if (typeof renderAll === "function") renderAll();
     return true;
@@ -191,7 +196,7 @@ var TalentManager = {
   showMigrationNotice: function () {
     if (!game._talentsMigrationNotice) return;
     delete game._talentsMigrationNotice;
-    var msg = "Tes talents ont été refaits pour ta classe. Tes points t'attendent dans Héros › Talents.";
+    var msg = _t("Tes talents ont été refaits pour ta classe. Tes points t'attendent dans Héros › Talents.");
     addLog("🌱 " + msg, "event");
     if (typeof showToast === "function") showToast("🌱 " + msg, 4000);
   },
@@ -288,7 +293,7 @@ var TalentManager = {
     if (alive && ctx.defenseType === "damageReduction" && ctx.blocked > 0 && this.has("k_riposte")) {
       var back = Math.floor(ctx.blocked * this.V("k_riposte_pct"));
       if (back > 0 && window.CombatEngine) {
-        addLog("🛡️ Riposte : " + formatNumber(back) + " dégâts renvoyés", "normal");
+        addLog("🛡️ " + _t("Riposte : {n} dégâts renvoyés", { n: formatNumber(back) }), "normal");
         CombatEngine.dealDamage(back, false, false, true, ctx.enemy);
       }
     }
@@ -297,7 +302,7 @@ var TalentManager = {
         game.heroGauge = Math.min(CELERITY_GAUGE_MAX - 0.01, Number(game.heroGauge || 0) + this.V("a_danse_gauge"));
       }
       if (this.has("a_contre_tir") && game.enemy && game.enemy.hp > 0 && (game.heroHp || 0) > 0 && window.CombatEngine) {
-        addLog("🏹 Contre-tir !", "event");
+        addLog(_t("🏹 Contre-tir !"), "event");
         CombatEngine.playerAttack(true, 1);
       }
     }
@@ -320,7 +325,7 @@ var TalentManager = {
       var burn = { perRound: enemy.dot.perRound, rounds: enemy.dot.rounds };
       var others = window.CombatActors ? CombatActors.aliveEnemies().filter(function (e) { return e !== enemy && e.hp > 0; }) : [];
       if (others.length) {
-        if (!others[0].dot) { others[0].dot = burn; addLog("🔥 Brasier : la brûlure se propage", "normal"); }
+        if (!others[0].dot) { others[0].dot = burn; addLog(_t("🔥 Brasier : la brûlure se propage"), "normal"); }
       } else {
         game._talentBurnPending = burn; // prochain ennemi du même enchaînement
       }
@@ -343,7 +348,7 @@ var TalentManager = {
     if (!def || def.effectType !== "damageAbsorption" || !this.has("m_surcharge")) return;
     var dmg = Math.floor(absorbed * this.V("m_surcharge_pct"));
     if (dmg > 0 && game.enemy && game.enemy.hp > 0 && window.CombatEngine) {
-      addLog("💥 Surcharge : la Barrière explose (" + formatNumber(dmg) + ")", "event");
+      addLog("💥 " + _t("Surcharge : la Barrière explose ({n})", { n: formatNumber(dmg) }), "event");
       CombatEngine.dealDamage(dmg, false, true, true, game.enemy);
     }
   },
@@ -377,8 +382,8 @@ function respecTalents() {
   var n = TalentManager.spent();
   var go = function () { TalentManager.respec(); };
   if (typeof showConfirmModal === "function") {
-    showConfirmModal("Réinitialiser les talents ?", "C'est gratuit : tes " + n + " point" + (n > 1 ? "s" : "") + " te sont rendus.", "🔄", go);
-  } else if (window.confirm("Réinitialiser les talents ?")) go();
+    showConfirmModal(_t("Réinitialiser les talents ?"), _tn(n, "C'est gratuit : tes {n} point te sont rendus.", "C'est gratuit : tes {n} points te sont rendus."), "🔄", go);
+  } else if (window.confirm(_t("Réinitialiser les talents ?"))) go();
 }
 function getTalentRespecCost() { return 0; }
 

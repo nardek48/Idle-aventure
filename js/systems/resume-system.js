@@ -143,32 +143,32 @@ var ResumeManager = {
     var parts = [];
     function libelle(key) {
       var def = (typeof WAREHOUSE_RESOURCES !== "undefined") ? WAREHOUSE_RESOURCES[key] : null;
-      return def ? def.name : key;
+      return def ? _td(def.name) : key;
     }
     Object.keys(gains.zones).forEach(function (k) {
       parts.push("+" + formatNumber(gains.zones[k]) + " " + libelle(k));
     });
     Object.keys(gains.entrepot).forEach(function (k) {
-      parts.push("+" + formatNumber(gains.entrepot[k]) + " " + libelle(k) + " (atelier)");
+      parts.push("+" + formatNumber(gains.entrepot[k]) + " " + libelle(k) + " " + _t("(atelier)"));
     });
     if (!parts.length) return;
 
     var duree = this.formatAbsence(ms);
-    var texte = "Absence de " + duree + " — le village a produit : " + parts.join(", ") + ".";
+    var texte = _t("Absence de {d} — le village a produit : {x}.", { d: duree, x: parts.join(", ") });
 
     if (typeof addLog === "function") addLog(texte, "event");
-    if (typeof showToast === "function") showToast("⏳ " + duree + " d'absence : " + parts.join(", "), 3200);
+    if (typeof showToast === "function") showToast("⏳ " + _t("{d} d'absence : {x}", { d: duree, x: parts.join(", ") }), 3200);
   },
 
   /* Durée lisible, arrondie à l'unité au-dessus de la minute. */
   formatAbsence: function (ms) {
     var min = Math.round(ms / 60000);
-    if (min < 60) return min + " min";
+    if (min < 60) return _t("{n} min", { n: min });
     var h = Math.floor(min / 60);
     var reste = min % 60;
-    if (h < 24) return h + " h" + (reste ? " " + reste + " min" : "");
+    if (h < 24) return _t("{n} h", { n: h }) + (reste ? " " + _t("{n} min", { n: reste }) : "");
     var j = Math.floor(h / 24);
-    return j + " j" + (h % 24 ? " " + (h % 24) + " h" : "");
+    return _t("{n} j", { n: j }) + (h % 24 ? " " + _t("{n} h", { n: h % 24 }) : "");
   }
 };
 

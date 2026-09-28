@@ -52,15 +52,15 @@ function buildWorkshopSummaryBodyHTML() {
     h += '<div class="workshop-summary-row-icon">' + renderIconOrEmojiHTML(def.icon, "workshop-sum-ico", "") + '</div>';
     h += '<div class="workshop-summary-row-body">';
     h += '<div class="workshop-summary-row-top">';
-    h += '<span class="workshop-summary-row-name">' + esc(def.name) + '</span>';
-    if (entry.auto) h += '<span class="workshop-summary-row-auto-badge"><img class=ico-inline src=images/Icons/system/auto_repeat.png> auto</span>';
-    h += '<span class="workshop-summary-row-building">' + esc(buildingDef ? buildingDef.name : def.buildingId) + '</span>';
+    h += '<span class="workshop-summary-row-name">' + esc(_td(def.name)) + '</span>';
+    if (entry.auto) h += '<span class="workshop-summary-row-auto-badge"><img class=ico-inline src=images/Icons/system/auto_repeat.png> ' + _t("auto") + '</span>';
+    h += '<span class="workshop-summary-row-building">' + esc(buildingDef ? _td(buildingDef.name) : def.buildingId) + '</span>';
     h += '</div>';
-    h += '<div class="workshop-summary-row-recipe">' + esc(outputDef ? outputDef.name : (recipe ? recipe.id : "?")) + ' ×' + formatNumber(entry.times) + '</div>';
+    h += '<div class="workshop-summary-row-recipe">' + esc(outputDef ? _td(outputDef.name) : (recipe ? recipe.id : "?")) + ' ×' + formatNumber(entry.times) + '</div>';
     h += '<div class="map-quest-step-bar workshop-summary-row-bar"><div class="map-quest-step-fill" style="width:' + pct + '%"></div></div>';
     h += '<div class="workshop-summary-row-bottom">';
-    h += '<span>' + formatCraftDuration(entry.msRemaining) + ' restantes</span>';
-    if (waitingCount > 0) h += '<span>+' + waitingCount + ' en attente</span>';
+    h += '<span>' + _t("{d} restantes", { d: formatCraftDuration(entry.msRemaining) }) + '</span>';
+    if (waitingCount > 0) h += '<span>' + _t("+{n} en attente", { n: waitingCount }) + '</span>';
     h += '</div>';
     h += '</div>';
     h += '</button>';
@@ -69,14 +69,14 @@ function buildWorkshopSummaryBodyHTML() {
   });
 
   if (rows.length) return '<div class="workshop-summary-list">' + rows.join("") + '</div>';
-  return '<div class="workshop-summary-empty">Aucune fabrication en cours pour le moment.</div>';
+  return '<div class="workshop-summary-empty">' + _t("Aucune fabrication en cours pour le moment.") + '</div>';
 }
 
 function buildWorkshopSummaryHTML() {
   var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeWorkshopSummaryModal();">';
   h += '  <div class="full-menu workshop-summary-card">';
   h += '    <div class="full-menu-header">';
-  h += '      <h2>Files en cours</h2>';
+  h += '      <h2>' + _t("Files en cours") + '</h2>';
   h += '      <button class="full-menu-close" type="button" onclick="closeWorkshopSummaryModal()"><img class=ico-inline src=images/Icons/system/close.png></button>';
   h += '    </div>';
   h += '    <div id="workshop-summary-body">' + buildWorkshopSummaryBodyHTML() + '</div>';

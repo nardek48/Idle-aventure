@@ -22,11 +22,12 @@ function updateQuestBadge() {}
 var activeQuestsFilter = "active"; // "active" | "completed"
 var activeQuestCategory = "histoire"; // histoire | secondaires | chasse | aventure
 
+/* v3.370.0 : libellés traduits à la définition (changer de langue relance le jeu, i18n D2). */
 var QUEST_BOARD_CATEGORIES = [
-  { key: "histoire", label: "Histoire", icon: "images/Icons/quests/quest_story.png", kinds: ["story"], emptyText: "Aucune quête d'histoire pour le moment." },
-  { key: "secondaires", label: "Secondaires", icon: "images/Icons/quests/quest_side.png", kinds: ["village", "workshop", "exploration", "scene"], emptyText: "Aucune quête secondaire disponible pour le moment." }, // v3.122.0 (Lot S2a) : "scene" ajouté (quêtes migrées vers le scene-engine)
-  { key: "chasse", label: "Chasse", icon: "images/Icons/quests/quest_hunt.png", kinds: ["hunt"], emptyText: "Aucune chasse disponible pour le moment." },
-  { key: "aventure", label: "Aventure", icon: "images/Icons/quests/quest_adventure.png", kinds: ["adventure", "dungeon"], emptyText: "Aucune aventure disponible pour le moment." }
+  { key: "histoire", label: _t("Histoire", "catégorie"), icon: "images/Icons/quests/quest_story.png", kinds: ["story"], emptyText: _t("Aucune quête d'histoire pour le moment.") },
+  { key: "secondaires", label: _t("Secondaires"), icon: "images/Icons/quests/quest_side.png", kinds: ["village", "workshop", "exploration", "scene"], emptyText: _t("Aucune quête secondaire disponible pour le moment.") }, // v3.122.0 (Lot S2a) : "scene" ajouté (quêtes migrées vers le scene-engine)
+  { key: "chasse", label: _t("Chasse"), icon: "images/Icons/quests/quest_hunt.png", kinds: ["hunt"], emptyText: _t("Aucune chasse disponible pour le moment.") },
+  { key: "aventure", label: _t("Aventure"), icon: "images/Icons/quests/quest_adventure.png", kinds: ["adventure", "dungeon"], emptyText: _t("Aucune aventure disponible pour le moment.") }
 ];
 
 function setQuestCategory(key) {
@@ -39,14 +40,14 @@ window.setQuestCategory = setQuestCategory;
 var expandedQuestCardIds = {};
 var expandedQuestSectionIds = {}; // v3.89 : cartes-catégories (Histoire/Ressources/Aventure/Expéditions), repliées par défaut
 
-var DIFFICULTY_LABELS = { easy: "Facile", medium: "Moyen", hard: "Difficile" };
+var DIFFICULTY_LABELS = { easy: _t("Facile"), medium: _t("Moyen"), hard: _t("Difficile") };
 var DIFFICULTY_COLORS = { easy: "#4ade80", medium: "#f0b429", hard: "#ef4444" };
 
 var QUEST_SECTIONS = [
-  { key: "worldexpedition", label: "Histoire", icon: "images/Icons/quests/quest_story.png", emptyText: "Aucune questline de monde disponible pour le moment." },
-  { key: "resource", label: "Ressources", icon: "images/Icons/quests/quest_resources.png", emptyText: "Aucune quête de ressource disponible pour le moment." },
-  { key: "adventure", label: "Aventure", icon: "images/Icons/quests/quest_adventure.png", emptyText: "Aucune quête d'aventure disponible pour le moment." },
-  { key: "expedition", label: "Expéditions", icon: "images/Icons/scene/journey_long.png", emptyText: "Aucune quête disponible pour le moment." }
+  { key: "worldexpedition", label: _t("Histoire", "catégorie"), icon: "images/Icons/quests/quest_story.png", emptyText: _t("Aucune questline de monde disponible pour le moment.") },
+  { key: "resource", label: _t("Ressources"), icon: "images/Icons/quests/quest_resources.png", emptyText: _t("Aucune quête de ressource disponible pour le moment.") },
+  { key: "adventure", label: _t("Aventure"), icon: "images/Icons/quests/quest_adventure.png", emptyText: _t("Aucune quête d'aventure disponible pour le moment.") },
+  { key: "expedition", label: _t("Expéditions"), icon: "images/Icons/scene/journey_long.png", emptyText: _t("Aucune quête disponible pour le moment.") }
 ];
 
 function toggleQuestSectionExpand(sectionKey) {
@@ -95,24 +96,24 @@ function buildQuestCategoryTabsHTML(missions) {
 
 /* Bouton d'action d'une carte du tableau — mêmes verbes que le Campement (campMissionAction). */
 function buildQuestBoardActionHTML(m) {
-  if (m.claim) return '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'claim\')"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> Réclamer</button>';
+  if (m.claim) return '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'claim\')"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> ' + _t("Réclamer") + '</button>';
   if (m.status === "running" || m.status === "accepted") {
     var h = '';
     // v3.117.0 : "accepted" (pas encore lancée) -> Partir ; "running" (déjà en cours) -> Continuer.
-    var launchLabel = m.status === "running" ? '<img class="ico-btn" src="images/Icons/quests/continue.png" alt=""> Continuer' : '<img class="ico-btn" src="images/Icons/quests/start_expedition.png" alt=""> Partir';
+    var launchLabel = m.status === "running" ? '<img class="ico-btn" src="images/Icons/quests/continue.png" alt=""> ' + _t("Continuer") : '<img class="ico-btn" src="images/Icons/quests/start_expedition.png" alt=""> ' + _t("Partir");
     if (m.launch) h += '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'launch\')">' + launchLabel + '</button>';
-    if (m.abandon) h += '<button class="settings-btn danger qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'abandon\')">Abandonner</button>';
+    if (m.abandon) h += '<button class="settings-btn danger qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'abandon\')">' + _t("Abandonner") + '</button>';
     return h;
   }
-  if (m.accept) return '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'accept\')">Accepter</button>';
-  if (m.status === "locked") return '<span class="qb-card-locked">Occupé ailleurs</span>';
+  if (m.accept) return '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'accept\')">' + _t("Accepter") + '</button>';
+  if (m.status === "locked") return '<span class="qb-card-locked">' + _t("Occupé ailleurs") + '</span>';
   // v3.141.0 (audit Forêt, cap journalier de la Petite Aventure) : sans ce cas, une carte
   // "unavailable" (cap des 3 runs/jour atteint) retombait dans le "" final — ni bouton ni texte,
   // la carte semblait inerte plutôt que clairement indisponible pour aujourd'hui. Réutilise le
   // même habillage visuel que "locked" (qb-card-locked, is-locked sur la carte).
   // v3.366.0 : les places se rechargent une à une — on dit quand revient la prochaine
   if (m.status === "unavailable") return '<span class="qb-card-locked"><img class=ico-inline src=images/Icons/system/hourglass_waiting.png> '
-    + (m.isPetiteAventure && window.SceneRunManager ? "Dans " + esc(SceneRunManager.formatPetiteAventureWait(SceneRunManager.petiteAventureNextInMs())) : "Revenez demain") + '</span>';
+    + (m.isPetiteAventure && window.SceneRunManager ? esc(_t("Dans {d}", { d: SceneRunManager.formatPetiteAventureWait(SceneRunManager.petiteAventureNextInMs()) })) : _t("Revenez demain")) + '</span>';
   return "";
 }
 
@@ -131,12 +132,12 @@ function buildQuestBoardCardHTML(m) {
     // "pas aujourd'hui" saute aux yeux au lieu de ressembler à une mission normale sans action.
     : (m.status === "locked" || m.status === "unavailable") ? " is-locked" : "";
   var h = '<div class="qb-card' + statusCls + (m.isMain ? ' is-main' : '') + (questsHighlightId && questsHighlightId === m.id ? ' is-highlight' : '') + '" data-mission-id="' + esc(m.id) + '">';
-  h += '<div class="qb-card-banner qb-banner-' + esc(m.type || "combat") + '">' + renderIconOrEmojiHTML(MissionBoard.typeIcon(m.type), "qb-card-banner-img", m.title) + '</div>';
+  h += '<div class="qb-card-banner qb-banner-' + esc(m.type || "combat") + '">' + renderIconOrEmojiHTML(MissionBoard.typeIcon(m.type), "qb-card-banner-img", _td(m.title)) + '</div>';
   h += '<div class="qb-card-body">';
-  h += '<div class="qb-card-title-row"><span class="qb-card-title">' + esc(m.title) + '</span>';
-  if (m.isMain) h += '<span class="quest-badge quest-badge-main">Principale</span>';
+  h += '<div class="qb-card-title-row"><span class="qb-card-title">' + esc(_td(m.title)) + '</span>';
+  if (m.isMain) h += '<span class="quest-badge quest-badge-main">' + _t("Principale") + '</span>';
   h += '</div>';
-  var desc = m.blurb || m.objectiveLabel || "";
+  var desc = m.blurb ? _td(m.blurb) : (m.objectiveLabel || "");
   if (desc) h += '<div class="qb-card-desc">' + esc(desc) + '</div>';
   var hasStepsDetail = Array.isArray(m.stepsDetail) && m.stepsDetail.length > 0;
   // v3.131.3 : progressLabel masqué ici quand stepsDetail est présent — le détail par étape
@@ -156,7 +157,7 @@ function buildQuestBoardCardHTML(m) {
       var icon = s.done ? "<img class=ico-inline src=images/Icons/system/check_valid.png>" : s.current ? "<img class=ico-inline src=images/Icons/quests/continue.png>" : "○";
       h += '<div class="qb-card-step ' + stateCls + '">';
       h += '<span class="qb-card-step-icon">' + icon + '</span>';
-      h += '<span class="qb-card-step-label">' + esc(s.label) + '</span>';
+      h += '<span class="qb-card-step-label">' + esc(_td(s.label)) + '</span>';
       if (s.current && s.progress) h += '<span class="qb-card-step-progress">' + esc(s.progress) + '</span>';
       h += '</div>';
     });
@@ -188,7 +189,7 @@ function buildActiveQuestCapIndicatorHTML() {
   var cap = (typeof ACTIVE_QUEST_CAP === "number") ? ACTIVE_QUEST_CAP : 3;
   var atCap = count >= cap;
   return '<div class="qb-cap-indicator' + (atCap ? ' is-full' : '') + '">'
-    + (atCap ? '<img class="ico-sys" src="images/Icons/quests/quest_capacity_full.png" alt="">' : '<img class="ico-sys" src="images/Icons/quests/quest_list.png" alt="">') + ' Quêtes actives : ' + count + '/' + cap
+    + (atCap ? '<img class="ico-sys" src="images/Icons/quests/quest_capacity_full.png" alt="">' : '<img class="ico-sys" src="images/Icons/quests/quest_list.png" alt="">') + ' ' + _t("Quêtes actives : {a}/{b}", { a: count, b: cap })
     + '</div>';
 }
 
@@ -201,7 +202,7 @@ function buildQuestsGeneralSubTabHTML() {
   h += buildActiveQuestCapIndicatorHTML();
 
   if (activeQuestsFilter === "completed") {
-    h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'active\')">◂ Retour aux quêtes actives</button></div>';
+    h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'active\')">◂ ' + _t("Retour aux quêtes actives") + '</button></div>';
     h += buildCompletedQuestCardsHTML();
     return h;
   }
@@ -221,7 +222,7 @@ function buildQuestsGeneralSubTabHTML() {
   }
 
   h += buildOtherWorldQuestsHTML();
-  h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'completed\')">Voir les quêtes terminées ▸</button></div>';
+  h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'completed\')">' + _t("Voir les quêtes terminées") + ' ▸</button></div>';
   return h;
 }
 
@@ -235,10 +236,10 @@ function buildOtherWorldQuestsHTML() {
     var w = WORLDS.find(function (x) { return x.id === worldId; });
     if (!w) return;
     var n = hidden[worldId];
-    var refusal = window.WorldTravel ? WorldTravel.refusalReason(worldId) : "Voyage indisponible";
+    var refusal = window.WorldTravel ? WorldTravel.refusalReason(worldId) : _t("Voyage indisponible");
     h += '<div class="qb-other-world">';
-    h += '<span class="qb-other-world-text">' + n + ' quête' + (n > 1 ? 's' : '') + ' ' + esc(worldInPrep(WORLDS.indexOf(w))) + '</span>';
-    if (!refusal) h += '<button class="settings-btn" type="button" onclick="travelToWorldFromUI(\'' + esc(worldId) + '\')">Y aller</button>';
+    h += '<span class="qb-other-world-text">' + esc(_tn(n, "{n} quête {lieu}", "{n} quêtes {lieu}", { lieu: worldInPrep(WORLDS.indexOf(w)) })) + '</span>';
+    if (!refusal) h += '<button class="settings-btn" type="button" onclick="travelToWorldFromUI(\'' + esc(worldId) + '\')">' + _t("Y aller") + '</button>';
     h += '</div>';
   });
   return h;
@@ -246,10 +247,11 @@ function buildOtherWorldQuestsHTML() {
 window.buildOtherWorldQuestsHTML = buildOtherWorldQuestsHTML;
 
 /* « dans la Forêt enchantée », « au Désert oublié » — où se trouvent les quêtes masquées. */
-var WORLD_IN_PREP = ["dans la", "au", "dans les", "dans la", "sur la", "dans la"];
+/* v3.370.0 : la préposition dépend de la langue : chaque tournure est un texte entier, {w} = nom du monde. */
+var WORLD_IN_PREP = [_t("dans la {w}"), _t("au {w}"), _t("dans les {w}"), _t("dans la {w}"), _t("sur la {w}"), _t("dans la {w}")];
 function worldInPrep(index) {
   var w = WORLDS[index];
-  return w ? (WORLD_IN_PREP[index] || "dans") + " " + w.name : "";
+  return w ? I18n.fill(WORLD_IN_PREP[index] || _t("dans {w}"), { w: _td(w.name) }) : "";
 }
 window.worldInPrep = worldInPrep;
 
@@ -262,7 +264,7 @@ function travelToWorldFromUI(worldId) {
   if (done) {
     var w = WORLDS[WorldTravel.indexOf(worldId)];
     if (typeof closeWorldPopup === "function") closeWorldPopup();
-    if (typeof showToast === "function") showToast("Tu rejoins " + (w ? w.name : worldId), 1600);
+    if (typeof showToast === "function") showToast(_t("Tu rejoins {w}", { w: w ? _td(w.name) : worldId }), 1600);
     if (typeof renderAll === "function") renderAll();
   }
   return done;
@@ -272,7 +274,7 @@ window.travelToWorldFromUI = travelToWorldFromUI;
 function buildQuestsHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
-  h += '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/quests/quest_story.png|Qu\u00eates">';
+  h += '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/quests/quest_story.png|' + _t("Quêtes") + '">';
 
   h += buildQuestsGeneralSubTabHTML();
 
@@ -293,12 +295,12 @@ function buildAdventureQuestIntroHTML(questId) {
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card">';
-  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(quest.icon || "images/Icons/quests/quest_story.png", "dungeon-story-icon-img", quest.name) + '</div>';
-  h += '    <div class="dungeon-story-title">' + esc(quest.name) + '</div>';
-  if (quest.story) h += '    <div class="dungeon-story-text">' + esc(quest.story) + '</div>';
+  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(quest.icon || "images/Icons/quests/quest_story.png", "dungeon-story-icon-img", _td(quest.name)) + '</div>';
+  h += '    <div class="dungeon-story-title">' + esc(_td(quest.name)) + '</div>';
+  if (quest.story) h += '    <div class="dungeon-story-text">' + esc(_td(quest.story)) + '</div>';
   h += '    <div class="dungeon-story-actions">';
-  h += '      <button class="settings-btn" type="button" onclick="closeAdventureQuestIntro()">Annuler</button>';
-  h += '      <button class="settings-btn primary" type="button" onclick="confirmAdventureQuestStart()">Commencer</button>';
+  h += '      <button class="settings-btn" type="button" onclick="closeAdventureQuestIntro()">' + _t("Annuler") + '</button>';
+  h += '      <button class="settings-btn primary" type="button" onclick="confirmAdventureQuestStart()">' + _t("Commencer") + '</button>';
   h += '    </div>';
   h += '  </div>';
   h += '</div>';
@@ -335,7 +337,7 @@ function buildAdventureQuestDetailHTML(quest, claimed, runningQuest) {
     var progress = AdventureQuestManager.getStepProgress(quest, step);
     var done = progress >= step.target;
     var pct = Math.min(100, Math.floor((progress / step.target) * 100));
-    var desc = String(step.desc || "").replace("{target}", step.target);
+    var desc = String(_td(step.desc || "")).replace("{target}", step.target);
 
     h += '<div class="map-quest-step' + (done ? " is-done" : "") + '">';
     h += '<div class="map-quest-step-row">';
@@ -348,23 +350,23 @@ function buildAdventureQuestDetailHTML(quest, claimed, runningQuest) {
 
   var reward = quest.reward || {};
   h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Récompense</span>';
+  h += '<span class="map-quest-reward-label">' + _t("Récompense") + '</span>';
   h += '<span class="map-quest-reward-value">';
-  if (reward.gold) h += esc(formatNumber(reward.gold)) + ' or';
+  if (reward.gold) h += esc(_t("{n} or", { n: formatNumber(reward.gold) }));
   h += '</span>';
   h += '</div>';
 
   if (claimed) {
-    h += '<div class="map-quest-claimed-label"><img class=ico-inline src=images/Icons/system/check_valid.png> Terminée</div>';
+    h += '<div class="map-quest-claimed-label"><img class=ico-inline src=images/Icons/system/check_valid.png> ' + _t("Terminée") + '</div>';
   } else if (isRunning) {
     h += '<div class="map-quest-run-actions">';
-    h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); switchTab(\'combat\')">Voir le combat</button>';
-    h += '<button class="settings-btn danger" type="button" onclick="event.stopPropagation(); AdventureQuestManager.forfeit(); if (typeof renderPanel === \'function\') renderPanel();">Abandonner</button>';
+    h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); switchTab(\'combat\')">' + _t("Voir le combat") + '</button>';
+    h += '<button class="settings-btn danger" type="button" onclick="event.stopPropagation(); AdventureQuestManager.forfeit(); if (typeof renderPanel === \'function\') renderPanel();">' + _t("Abandonner") + '</button>';
     h += '</div>';
   } else if (runningQuest) {
-    h += '<div class="map-quest-claimed-label">Termine ta quête en cours d\'abord</div>';
+    h += '<div class="map-quest-claimed-label">' + _t("Termine ta quête en cours d'abord") + '</div>';
   } else {
-    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openAdventureQuestIntro(\'' + quest.id + '\')">Lancer</button>';
+    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openAdventureQuestIntro(\'' + quest.id + '\')">' + _t("Lancer") + '</button>';
   }
 
   return h;
@@ -376,9 +378,9 @@ function buildQuestBadgesHTML(quest) {
     h += '<span class="quest-badge quest-badge-difficulty" style="color:' + (DIFFICULTY_COLORS[quest.difficulty] || 'inherit') + '">' + esc(DIFFICULTY_LABELS[quest.difficulty]) + '</span>';
   }
   if (quest.category === "main") {
-    h += '<span class="quest-badge quest-badge-main">Principale</span>';
+    h += '<span class="quest-badge quest-badge-main">' + _t("Principale") + '</span>';
   } else if (quest.category === "side") {
-    h += '<span class="quest-badge quest-badge-side">Secondaire</span>';
+    h += '<span class="quest-badge quest-badge-side">' + _t("Secondaire") + '</span>';
   }
   return h;
 }
@@ -387,8 +389,8 @@ function buildCollapsibleQuestCardHTML(cardId, icon, name, detailHTML, extraClas
   var expanded = !!expandedQuestCardIds[cardId];
   var h = '<div class="map-quest-card quest-card-collapsible' + (expanded ? ' is-expanded' : '') + (extraClass ? ' ' + extraClass : '') + '">';
   h += '<div class="map-quest-head quest-card-header" onclick="toggleQuestCardExpand(\'' + esc(cardId) + '\')">';
-  h += '<span class="map-quest-icon">' + renderIconOrEmojiHTML(icon, "map-quest-icon-img", name) + '</span>';
-  h += '<span class="map-quest-name">' + esc(name) + '</span>';
+  h += '<span class="map-quest-icon">' + renderIconOrEmojiHTML(icon, "map-quest-icon-img", _td(name)) + '</span>';
+  h += '<span class="map-quest-name">' + esc(_td(name)) + '</span>';
   if (quest) h += buildQuestBadgesHTML(quest);
   h += '<span class="quest-card-chevron">' + (expanded ? '▾' : '▸') + '</span>';
   h += '</div>';
@@ -485,7 +487,7 @@ function buildQuestCardsGroupedByWorldHTML(entries) {
     var cards = byWorld[world.id];
     if (!cards || !cards.length) return;
     h += '<div class="quest-world-section">';
-    h += '<div class="quest-world-section-title">' + esc(world.name) + '</div>';
+    h += '<div class="quest-world-section-title">' + esc(_td(world.name)) + '</div>';
     h += cards.join("");
     h += '</div>';
     delete byWorld[world.id];
@@ -493,7 +495,7 @@ function buildQuestCardsGroupedByWorldHTML(entries) {
 
   Object.keys(byWorld).forEach(function (key) {
     h += '<div class="quest-world-section">';
-    h += '<div class="quest-world-section-title">Autres</div>';
+    h += '<div class="quest-world-section-title">' + _t("Autres") + '</div>';
     h += byWorld[key].join("");
     h += '</div>';
   });
@@ -560,32 +562,32 @@ function buildQuestCardsGroupedBySectionHTML(entries) {
 function buildStoryStepRewardText(reward) {
   var parts = [];
   reward = reward || {};
-  if (reward.gold) parts.push(formatNumber(reward.gold) + " or");
+  if (reward.gold) parts.push(_t("{n} or", { n: formatNumber(reward.gold) }));
   if (reward.healingPotion) {
     var potion = (window.PotionManager && typeof PotionManager.getHealingPotion === "function") ? PotionManager.getHealingPotion(reward.healingPotion.id) : null;
-    parts.push((reward.healingPotion.count || 1) + " " + (potion ? potion.name : "potion"));
+    parts.push((reward.healingPotion.count || 1) + " " + (potion ? _td(potion.name) : _t("potion")));
   }
   if (reward.resources && typeof reward.resources === "object") {
     Object.keys(reward.resources).forEach(function (key) {
       var def = (window.WAREHOUSE_RESOURCES || {})[key];
-      parts.push(formatNumber(reward.resources[key]) + " " + (def ? def.name : key));
+      parts.push(formatNumber(reward.resources[key]) + " " + (def ? _td(def.name) : key));
     });
   }
-  if (reward.equipmentRarity) parts.push((reward.equipmentCount || 1) + " objet " + ((window.RARITY_LABELS || {})[reward.equipmentRarity] || reward.equipmentRarity));
+  if (reward.equipmentRarity) parts.push(_tn(reward.equipmentCount || 1, "{n} objet {r}", "{n} objets {r}", { r: _td((window.RARITY_LABELS || {})[reward.equipmentRarity] || reward.equipmentRarity) }));
   return parts.join(" · ") || "—";
 }
 
 function buildStoryStepUnlockText(step) {
   var labels = window.STORY_TAB_LABELS || {};
-  return (step.unlockTabs || []).map(function (t) { return labels[t] || t; }).join(", ");
+  return (step.unlockTabs || []).map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
 }
 
 function buildStoryClaimedStepHTML(chapterId, step, index) {
   var cardId = "story_" + step.id;
   var expanded = !!expandedQuestCardIds[cardId];
   var h = '<div class="story-step story-step-claimed' + (expanded ? ' is-expanded' : '') + '" onclick="toggleQuestCardExpand(\'' + esc(cardId) + '\')">';
-  h += '<div class="story-step-row"><span class="story-step-num"><img class=ico-inline src=images/Icons/system/check_valid.png> ' + (index + 1) + '</span><span class="story-step-title">' + esc(step.title) + '</span><span class="quest-card-chevron">' + (expanded ? '▾' : '▸') + '</span></div>';
-  if (expanded) h += '<div class="story-step-text">' + esc(step.narrative.completion) + '</div>';
+  h += '<div class="story-step-row"><span class="story-step-num"><img class=ico-inline src=images/Icons/system/check_valid.png> ' + (index + 1) + '</span><span class="story-step-title">' + esc(_td(step.title)) + '</span><span class="quest-card-chevron">' + (expanded ? '▾' : '▸') + '</span></div>';
+  if (expanded) h += '<div class="story-step-text">' + esc(_td(step.narrative.completion)) + '</div>';
   h += '</div>';
   return h;
 }
@@ -602,9 +604,9 @@ function buildStoryDialogueHTML(step) {
   lines.forEach(function (line) {
     if (!line) return;
     if (line.who) {
-      h += '<div class="story-dialogue-line"><span class="story-dialogue-who">' + esc(line.who) + '</span><span class="story-dialogue-text">' + esc(line.text || "") + '</span></div>';
+      h += '<div class="story-dialogue-line"><span class="story-dialogue-who">' + esc(_td(line.who)) + '</span><span class="story-dialogue-text">' + esc(_td(line.text || "")) + '</span></div>';
     } else {
-      h += '<div class="story-dialogue-line story-dialogue-aside">' + esc(line.text || "") + '</div>';
+      h += '<div class="story-dialogue-line story-dialogue-aside">' + esc(_td(line.text || "")) + '</div>';
     }
   });
   h += '</div>';
@@ -618,37 +620,37 @@ function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
   var unlockText = buildStoryStepUnlockText(step);
 
   var h = '<div class="story-step story-step-current' + (ready ? ' is-ready' : accepted ? ' is-accepted' : '') + '">';
-  if (step.act) h += '<div class="story-step-act">' + esc(step.act) + '</div>';
-  h += '<div class="story-step-row"><span class="story-step-num">' + (index + 1) + '/' + chapter.steps.length + '</span><span class="story-step-title">' + esc(step.title) + '</span><span class="quest-badge quest-badge-main">Principale</span></div>';
-  h += '<div class="story-step-text">' + esc(step.narrative.objective) + '</div>';
+  if (step.act) h += '<div class="story-step-act">' + esc(_td(step.act)) + '</div>';
+  h += '<div class="story-step-row"><span class="story-step-num">' + (index + 1) + '/' + chapter.steps.length + '</span><span class="story-step-title">' + esc(_td(step.title)) + '</span><span class="quest-badge quest-badge-main">' + _t("Principale") + '</span></div>';
+  h += '<div class="story-step-text">' + esc(_td(step.narrative.objective)) + '</div>';
   if (accepted) h += buildStoryDialogueHTML(step); // v3.197.0 : dialogue une fois l'étape acceptée
 
   h += '<div class="map-quest-step">';
-  h += '<div class="map-quest-step-row"><span class="map-quest-step-desc">' + (ready ? "<img class=ico-inline src=images/Icons/system/check_valid.png> " : "") + esc(step.objectiveLabel || "") + '</span></div>';
+  h += '<div class="map-quest-step-row"><span class="map-quest-step-desc">' + (ready ? "<img class=ico-inline src=images/Icons/system/check_valid.png> " : "") + esc(_td(step.objectiveLabel || "")) + '</span></div>';
   var progressText = accepted ? step.progress(game) : "";
   if (progressText) h += '<div class="story-step-progress">' + esc(progressText) + '</div>';
   h += '</div>';
 
-  if (unlockText) h += '<div class="story-step-unlock"><img class=ico-inline src=images/Icons/system/lock_open.png> Débloque : ' + esc(unlockText) + '</div>';
-  h += '<div class="map-quest-reward"><span class="map-quest-reward-label">Récompense</span><span class="map-quest-reward-value">' + esc(buildStoryStepRewardText(step.reward)) + '</span></div>';
+  if (unlockText) h += '<div class="story-step-unlock"><img class=ico-inline src=images/Icons/system/lock_open.png> ' + esc(_t("Débloque : {x}", { x: unlockText })) + '</div>';
+  h += '<div class="map-quest-reward"><span class="map-quest-reward-label">' + _t("Récompense") + '</span><span class="map-quest-reward-value">' + esc(buildStoryStepRewardText(step.reward)) + '</span></div>';
 
   h += '<div class="story-step-actions">';
   if (!accepted) {
-    h += '<button class="settings-btn primary" type="button" onclick="StoryQuestManager.acceptStep(\'' + esc(chapterId) + '\')">Accepter</button>';
+    h += '<button class="settings-btn primary" type="button" onclick="StoryQuestManager.acceptStep(\'' + esc(chapterId) + '\')">' + _t("Accepter") + '</button>';
   } else if (ready) {
-    h += '<button class="settings-btn primary" type="button" onclick="StoryQuestManager.claimStep(\'' + esc(chapterId) + '\')"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> Réclamer</button>';
+    h += '<button class="settings-btn primary" type="button" onclick="StoryQuestManager.claimStep(\'' + esc(chapterId) + '\')"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> ' + _t("Réclamer") + '</button>';
   } else {
     // v3.311.0 : choix posé sur la carte d'étape (ex. la voie de Maddoc), avant tout le reste
     var cardChoice = (typeof storyPendingCardChoice === "function") ? storyPendingCardChoice(chapterId) : null;
-    if (cardChoice) h += '<button class="settings-btn primary" type="button" onclick="openStoryChoiceModal(\'' + esc(chapterId) + '\')">' + esc(cardChoice.choice.buttonLabel || "Choisir") + '</button>';
+    if (cardChoice) h += '<button class="settings-btn primary" type="button" onclick="openStoryChoiceModal(\'' + esc(chapterId) + '\')">' + esc(cardChoice.choice.buttonLabel ? _td(cardChoice.choice.buttonLabel) : _t("Choisir")) + '</button>';
     // v3.310.0 : offrande faite depuis la carte d'étape (step.offeringUi.where === "story")
     var offer = StoryQuestManager.getOfferingInfo(chapterId, "story");
     if (offer) {
-      h += '<button class="settings-btn primary" type="button"' + (offer.canOffer ? ' onclick="StoryQuestManager.offerToEmbers(\'' + esc(chapterId) + '\')"' : ' disabled') + '>' + esc(offer.step.offeringUi.buttonLabel) + '</button>';
-      if (!offer.canOffer) h += '<div class="story-step-progress">' + esc(offer.step.offeringUi.lackToast) + '</div>';
+      h += '<button class="settings-btn primary" type="button"' + (offer.canOffer ? ' onclick="StoryQuestManager.offerToEmbers(\'' + esc(chapterId) + '\')"' : ' disabled') + '>' + esc(_td(offer.step.offeringUi.buttonLabel)) + '</button>';
+      if (!offer.canOffer) h += '<div class="story-step-progress">' + esc(_td(offer.step.offeringUi.lackToast)) + '</div>';
     }
     if (step.linkTo && !(offer && offer.canOffer)) {
-      h += '<button class="settings-btn" type="button" onclick="StoryQuestManager.goToLink(\'' + esc(chapterId) + '\')"><img class=ico-inline src=images/Icons/system/forward.png> ' + esc(step.linkTo.label || "Aller à la quête") + '</button>';
+      h += '<button class="settings-btn" type="button" onclick="StoryQuestManager.goToLink(\'' + esc(chapterId) + '\')"><img class=ico-inline src=images/Icons/system/forward.png> ' + esc(step.linkTo.label ? _td(step.linkTo.label) : _t("Aller à la quête")) + '</button>';
     }
   }
   h += '</div>';
@@ -672,8 +674,8 @@ function buildStoryChainHTML() {
     if (completedMode && !claimed.length) return;
 
     h += '<div class="story-chain">';
-    h += '<div class="story-chain-head"><span class="story-chain-icon">' + renderIconOrEmojiHTML(chapter.icon || "images/Icons/quests/quest_story.png", "story-chain-ico", "") + '</span><span class="story-chain-title">' + esc(chapter.title) + '</span><span class="story-chain-progress">' + claimed.length + '/' + chapter.steps.length + '</span></div>';
-    if (chapter.subtitle) h += '<div class="story-chain-sub">' + esc(chapter.subtitle) + '</div>';
+    h += '<div class="story-chain-head"><span class="story-chain-icon">' + renderIconOrEmojiHTML(chapter.icon || "images/Icons/quests/quest_story.png", "story-chain-ico", "") + '</span><span class="story-chain-title">' + esc(_td(chapter.title)) + '</span><span class="story-chain-progress">' + claimed.length + '/' + chapter.steps.length + '</span></div>';
+    if (chapter.subtitle) h += '<div class="story-chain-sub">' + esc(_td(chapter.subtitle)) + '</div>';
 
     if (completedMode) {
       claimed.forEach(function (step) { h += buildStoryClaimedStepHTML(chapterId, step, chapter.steps.indexOf(step)); });
@@ -682,7 +684,7 @@ function buildStoryChainHTML() {
         // Étapes passées derrière une seule ligne repliable (jusqu'à 14 lignes sinon).
         var listId = "story_claimed_" + chapterId;
         var listOpen = !!expandedQuestCardIds[listId];
-        h += '<div class="story-claimed-toggle" onclick="toggleQuestCardExpand(\'' + esc(listId) + '\')"><span><img class=ico-inline src=images/Icons/system/check_valid.png> ' + claimed.length + ' étape' + (claimed.length > 1 ? 's' : '') + ' terminée' + (claimed.length > 1 ? 's' : '') + '</span><span class="quest-card-chevron">' + (listOpen ? '▾' : '▸') + '</span></div>';
+        h += '<div class="story-claimed-toggle" onclick="toggleQuestCardExpand(\'' + esc(listId) + '\')"><span><img class=ico-inline src=images/Icons/system/check_valid.png> ' + _tn(claimed.length, "{n} étape terminée", "{n} étapes terminées") + '</span><span class="quest-card-chevron">' + (listOpen ? '▾' : '▸') + '</span></div>';
         if (listOpen) {
           h += '<div class="story-claimed-list">';
           claimed.forEach(function (step) { h += buildStoryClaimedStepHTML(chapterId, step, chapter.steps.indexOf(step)); });
@@ -692,7 +694,7 @@ function buildStoryChainHTML() {
       if (current) {
         h += buildStoryCurrentStepHTML(chapterId, chapter, current, st.currentStep);
       } else {
-        h += '<div class="story-step story-step-end">' + (StoryQuestManager.isChapterCompleted(chapterId) ? (chapter.endText || "Chapitre terminé.") : "La suite de l'histoire arrive bientôt…") + '</div>';
+        h += '<div class="story-step story-step-end">' + (StoryQuestManager.isChapterCompleted(chapterId) ? (chapter.endText ? _td(chapter.endText) : _t("Chapitre terminé.")) : _t("La suite de l'histoire arrive bientôt…")) + '</div>';
       }
     }
     h += '</div>';
@@ -733,25 +735,25 @@ function buildVillageQuestDetailHTML(quest) {
   var h = '';
   h += '<div class="map-quest-step">';
   h += '<div class="map-quest-step-row">';
-  h += '<span class="map-quest-step-desc">' + esc((quest.narrative && quest.narrative.completion) || quest.objectiveLabel || '') + '</span>';
+  h += '<span class="map-quest-step-desc">' + esc(_td((quest.narrative && quest.narrative.completion) || quest.objectiveLabel || '')) + '</span>';
   h += '</div>';
   h += '</div>';
 
   var reward = quest.reward || {};
   var parts = [];
-  if (reward.gold) parts.push(formatNumber(reward.gold) + ' or');
+  if (reward.gold) parts.push(_t("{n} or", { n: formatNumber(reward.gold) }));
   if (reward.resources && typeof reward.resources === 'object') {
     Object.keys(reward.resources).forEach(function (key) {
       var def = (window.WAREHOUSE_RESOURCES || {})[key];
-      parts.push(formatNumber(reward.resources[key]) + ' ' + (def ? def.name : key));
+      parts.push(formatNumber(reward.resources[key]) + ' ' + (def ? _td(def.name) : key));
     });
   }
   h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Récompense</span>';
+  h += '<span class="map-quest-reward-label">' + _t("Récompense") + '</span>';
   h += '<span class="map-quest-reward-value">' + esc(parts.join(' · ') || '—') + '</span>';
   h += '</div>';
 
-  h += '<div class="map-quest-claimed-label"><img class=ico-inline src=images/Icons/system/check_valid.png> Terminée</div>';
+  h += '<div class="map-quest-claimed-label"><img class=ico-inline src=images/Icons/system/check_valid.png> ' + _t("Terminée") + '</div>';
   return h;
 }
 
@@ -759,17 +761,17 @@ function buildSceneQuestCompletedDetailHTML(template) {
   var h = '';
   h += '<div class="map-quest-step">';
   h += '<div class="map-quest-step-row">';
-  h += '<span class="map-quest-step-desc">' + esc(template.title) + '</span>';
+  h += '<span class="map-quest-step-desc">' + esc(_td(template.title)) + '</span>';
   h += '</div>';
   h += '</div>';
 
   var resDef = (window.WAREHOUSE_RESOURCES || {})[template.lootResource];
   h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Ressource</span>';
-  h += '<span class="map-quest-reward-value">' + esc((resDef && resDef.name) || template.lootResource) + '</span>';
+  h += '<span class="map-quest-reward-label">' + _t("Ressource") + '</span>';
+  h += '<span class="map-quest-reward-value">' + esc((resDef && resDef.name) ? _td(resDef.name) : template.lootResource) + '</span>';
   h += '</div>';
 
-  h += '<div class="map-quest-claimed-label"><img class=ico-inline src=images/Icons/system/check_valid.png> Terminée</div>';
+  h += '<div class="map-quest-claimed-label"><img class=ico-inline src=images/Icons/system/check_valid.png> ' + _t("Terminée") + '</div>';
   return h;
 }
 
@@ -785,7 +787,7 @@ function buildHuntQuestDetailHTML(quest, runningHunt) {
   var h = '';
   h += '<div class="map-quest-step">';
   h += '<div class="map-quest-step-row">';
-  h += '<span class="map-quest-step-desc">' + (resDef ? renderIconOrEmojiHTML(resDef.icon, "inline-res-ico", resDef.name) + ' ' + esc(resDef.name) : "Ressource") + ' en Entrepôt</span>';
+  h += '<span class="map-quest-step-desc">' + _t("{x} en Entrepôt", { x: resDef ? renderIconOrEmojiHTML(resDef.icon, "inline-res-ico", _td(resDef.name)) + ' ' + esc(_td(resDef.name)) : _t("Ressource") }) + '</span>';
   h += '<span class="map-quest-step-count">' + formatNumber(stock) + '</span>';
   h += '</div>';
   h += '</div>';
@@ -795,7 +797,7 @@ function buildHuntQuestDetailHTML(quest, runningHunt) {
     var pct = Math.min(100, Math.floor((inLot / quest.lotSize) * 100));
     h += '<div class="map-quest-step is-done">';
     h += '<div class="map-quest-step-row">';
-    h += '<span class="map-quest-step-desc">Lot en cours</span>';
+    h += '<span class="map-quest-step-desc">' + _t("Lot en cours") + '</span>';
     h += '<span class="map-quest-step-count">' + inLot + '/' + quest.lotSize + '</span>';
     h += '</div>';
     h += '<div class="map-quest-step-bar"><div class="map-quest-step-fill" style="width:' + pct + '%"></div></div>';
@@ -803,19 +805,19 @@ function buildHuntQuestDetailHTML(quest, runningHunt) {
   }
 
   h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">Chance par kill</span>';
-  h += '<span class="map-quest-reward-value">' + quest.dropChancePct + '% · lot de ' + quest.lotSize + '</span>';
+  h += '<span class="map-quest-reward-label">' + _t("Chance par kill") + '</span>';
+  h += '<span class="map-quest-reward-value">' + _t("{p}% · lot de {n}", { p: quest.dropChancePct, n: quest.lotSize }) + '</span>';
   h += '</div>';
 
   if (isRunning) {
     h += '<div class="map-quest-run-actions">';
-    h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); switchTab(\'combat\')">Voir le combat</button>';
-    h += '<button class="settings-btn danger" type="button" onclick="event.stopPropagation(); HuntQuestManager.stop(); if (typeof renderPanel === \'function\') renderPanel();">Arrêter la chasse</button>';
+    h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); switchTab(\'combat\')">' + _t("Voir le combat") + '</button>';
+    h += '<button class="settings-btn danger" type="button" onclick="event.stopPropagation(); HuntQuestManager.stop(); if (typeof renderPanel === \'function\') renderPanel();">' + _t("Arrêter la chasse") + '</button>';
     h += '</div>';
   } else if (runningHunt) {
-    h += '<div class="map-quest-claimed-label">Termine ta chasse en cours d\'abord</div>';
+    h += '<div class="map-quest-claimed-label">' + _t("Termine ta chasse en cours d'abord") + '</div>';
   } else {
-    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openHuntQuestIntro(\'' + quest.id + '\')">Chasser</button>';
+    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openHuntQuestIntro(\'' + quest.id + '\')">' + _t("Chasser") + '</button>';
   }
 
   return h;
@@ -829,13 +831,13 @@ function buildHuntQuestIntroHTML(questId) {
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card">';
-  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(quest.icon || "images/Icons/classes/class_ranger.png", "dungeon-story-icon-img", quest.name) + '</div>';
-  h += '    <div class="dungeon-story-title">' + esc(quest.name) + '</div>';
-  if (quest.story) h += '    <div class="dungeon-story-text">' + esc(quest.story) + '</div>';
+  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(quest.icon || "images/Icons/classes/class_ranger.png", "dungeon-story-icon-img", _td(quest.name)) + '</div>';
+  h += '    <div class="dungeon-story-title">' + esc(_td(quest.name)) + '</div>';
+  if (quest.story) h += '    <div class="dungeon-story-text">' + esc(_td(quest.story)) + '</div>';
   if (window.ProvisionsManager) h += ProvisionsManager.buildLineHTML("hunt", quest); // v3.330.1 : vivres de sortie
   h += '    <div class="dungeon-story-actions">';
-  h += '      <button class="settings-btn" type="button" onclick="closeHuntQuestIntro()">Annuler</button>';
-  h += '      <button class="settings-btn primary" type="button" onclick="confirmHuntQuestStart()">Commencer</button>';
+  h += '      <button class="settings-btn" type="button" onclick="closeHuntQuestIntro()">' + _t("Annuler") + '</button>';
+  h += '      <button class="settings-btn primary" type="button" onclick="confirmHuntQuestStart()">' + _t("Commencer") + '</button>';
   h += '    </div>';
   h += '  </div>';
   h += '</div>';
@@ -870,16 +872,17 @@ function buildQuestCompleteHTML(config) {
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu dungeon-story-card is-success">';
-  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(config.icon || "images/Icons/quests/quest_story.png", "dungeon-story-icon-img", config.title || "") + '</div>';
-  h += '    <div class="dungeon-story-title">' + esc(config.title || "Quête terminée !") + '</div>';
-  if (config.text) h += '    <div class="dungeon-story-text">' + esc(config.text) + '</div>';
+  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(config.icon || "images/Icons/quests/quest_story.png", "dungeon-story-icon-img", _td(config.title || "")) + '</div>';
+  // v3.370.0 : titre et texte peuvent venir d'un fichier protégé (adventure-quest-system.js) : traduits ici
+  h += '    <div class="dungeon-story-title">' + esc(config.title ? _td(config.title) : _t("Quête terminée !")) + '</div>';
+  if (config.text) h += '    <div class="dungeon-story-text">' + esc(_td(config.text)) + '</div>';
   // v3.297.0 (W-1a) : dialogue de complétion d'une étape d'Histoire (narrative.completionDialogue)
   if (Array.isArray(config.dialogue) && config.dialogue.length) h += buildStoryDialogueHTML({ narrative: { dialogue: config.dialogue } });
 
   if (Array.isArray(config.rewardRows) && config.rewardRows.length) {
     h += '    <div class="dungeon-summary-rewards">';
     config.rewardRows.forEach(function (row) {
-      h += '      <div class="dungeon-summary-row"><span>' + esc(row.label) + '</span><span>' + esc(row.value) + '</span></div>';
+      h += '      <div class="dungeon-summary-row"><span>' + esc(_td(row.label)) + '</span><span>' + esc(_td(row.value)) + '</span></div>';
     });
     h += '    </div>';
   }
@@ -888,9 +891,9 @@ function buildQuestCompleteHTML(config) {
   // v3.208.0 (bug Seb) : le bouton de fermeture était câblé en dur sur closeQuestCompletePopup(),
   // qui vide la modale sans toucher à la navigation — après une chasse, le joueur restait donc sur
   // l'écran Combat. config.closeOnclick permet à l'appelant de router la fermeture (voir les chasses).
-  h += '      <button class="settings-btn primary" type="button" onclick="' + (config.closeOnclick || "closeQuestCompletePopup()") + '">' + esc(config.closeLabel || "Fermer") + '</button>';
+  h += '      <button class="settings-btn primary" type="button" onclick="' + (config.closeOnclick || "closeQuestCompletePopup()") + '">' + esc(config.closeLabel ? _td(config.closeLabel) : _t("Fermer")) + '</button>';
   if (config.extraActionLabel && config.extraActionOnclick) {
-    h += '      <button class="settings-btn" type="button" onclick="' + config.extraActionOnclick + '">' + esc(config.extraActionLabel) + '</button>';
+    h += '      <button class="settings-btn" type="button" onclick="' + config.extraActionOnclick + '">' + esc(_td(config.extraActionLabel)) + '</button>';
   }
   h += '    </div>';
   h += '  </div>';
@@ -942,7 +945,7 @@ window.closeQuestCompletePopup = closeQuestCompletePopup;
    ressource (résumé de sortie). Une chasse à ressource unique garde sa ligne « en stock ». */
 function buildHuntLotRewardRows(quest, resource, stock) {
   if (!(quest.resourcePool && quest.resourcePool.length > 1)) {
-    return [{ label: (resource ? resource.name : quest.resourceKey) + " en stock", value: formatNumber(stock) }];
+    return [{ label: _t("{x} en stock", { x: resource ? _td(resource.name) : quest.resourceKey }), value: formatNumber(stock) }];
   }
   var kept = (game.lastSortieSummary && game.lastSortieSummary.kept && game.lastSortieSummary.kept.resources) || {};
   var rows = [];
@@ -950,9 +953,9 @@ function buildHuntLotRewardRows(quest, resource, stock) {
     var n = Number(kept[key] || 0);
     if (n <= 0) return;
     var def = (window.WAREHOUSE_RESOURCES || {})[key];
-    rows.push({ label: def ? def.name : key, value: "+" + formatNumber(n) });
+    rows.push({ label: def ? _td(def.name) : key, value: "+" + formatNumber(n) });
   });
-  if (!rows.length) rows.push({ label: "Butin", value: "rien cette fois" });
+  if (!rows.length) rows.push({ label: _t("Butin"), value: _t("rien cette fois") });
   return rows;
 }
 
@@ -963,12 +966,12 @@ function buildHuntLotCompleteHTML(quest) {
 
   return buildQuestCompleteHTML({
     icon: quest.icon || "images/Icons/classes/class_ranger.png",
-    title: "Chasse terminée !",
-    text: quest.lotSize + " bêtes abattues. Le gibier se fait plus rare pour l\u2019instant — reviens plus tard, ou relance une nouvelle chasse tout de suite.",
+    title: _t("Chasse terminée !"),
+    text: _t("{n} bêtes abattues. Le gibier se fait plus rare pour l’instant — reviens plus tard, ou relance une nouvelle chasse tout de suite.", { n: quest.lotSize }),
     rewardRows: buildHuntLotRewardRows(quest, resource, stock),
-    closeLabel: "Fermer",
+    closeLabel: _t("Fermer"),
     closeOnclick: "closeHuntLotComplete()", // v3.208.0 : ramène au Campement (le lot est fini, plus rien à faire en Combat)
-    extraActionLabel: "Chasser à nouveau",
+    extraActionLabel: _t("Chasser à nouveau"),
     extraActionOnclick: "restartHuntQuest(\'" + quest.id + "\')"
   });
 }

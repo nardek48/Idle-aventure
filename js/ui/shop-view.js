@@ -17,18 +17,18 @@ function setShopSubTab(tab) {
 }
 
 function getUpgradePreviewMeta(upgrade) {
-  if (!upgrade) return { cls: "neutral", icon: "", label: "Bonus" };
+  if (!upgrade) return { cls: "neutral", icon: "", label: _t("Bonus", "catégorie boutique") };
 
-  if (upgrade.id === "utrain_power") return { cls: "damage", icon: "images/Icons/improvement_icons/power.png", label: "Force" };
-  if (upgrade.id === "utrain_celerity") return { cls: "speed", icon: "images/Icons/combat_stats/stat_speed.png", label: "Célérité" };
-  if (upgrade.id === "utrain_precision") return { cls: "crit", icon: "images/Icons/combat_stats/stat_critical.png", label: "Précision" };
-  if (upgrade.id === "utrain_will") return { cls: "crit", icon: "images/Icons/scene/node_discovery.png", label: "Volonté" };
-  if (upgrade.id === "utrain_endurance") return { cls: "tank", icon: "images/Icons/combat_stats/stat_defense.png", label: "Endurance" };
+  if (upgrade.id === "utrain_power") return { cls: "damage", icon: "images/Icons/improvement_icons/power.png", label: _t("Force", "catégorie boutique") };
+  if (upgrade.id === "utrain_celerity") return { cls: "speed", icon: "images/Icons/combat_stats/stat_speed.png", label: _t("Célérité", "catégorie boutique") };
+  if (upgrade.id === "utrain_precision") return { cls: "crit", icon: "images/Icons/combat_stats/stat_critical.png", label: _t("Précision", "catégorie boutique") };
+  if (upgrade.id === "utrain_will") return { cls: "crit", icon: "images/Icons/scene/node_discovery.png", label: _t("Volonté", "catégorie boutique") };
+  if (upgrade.id === "utrain_endurance") return { cls: "tank", icon: "images/Icons/combat_stats/stat_defense.png", label: _t("Endurance", "catégorie boutique") };
 
-  if (upgrade.id === "u_gold") return { cls: "gold", icon: "images/Icons/gold_icon.png", label: "Or" };
-  if (upgrade.id === "u_bounty") return { cls: "gold", icon: "images/Icons/quests/quest_story.png", label: "Boss gold" };
+  if (upgrade.id === "u_gold") return { cls: "gold", icon: "images/Icons/gold_icon.png", label: _t("Or", "catégorie boutique") };
+  if (upgrade.id === "u_bounty") return { cls: "gold", icon: "images/Icons/quests/quest_story.png", label: _t("Boss gold", "catégorie boutique") };
 
-  return { cls: "neutral", icon: "", label: "Bonus" };
+  return { cls: "neutral", icon: "", label: _t("Bonus", "catégorie boutique") };
 }
 
 function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
@@ -62,7 +62,7 @@ function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
     var nextPower = currentPower + (nextLevel - currentLevel);
     var currentDmg = (baseTap + currentPower * FORCE_TAP_COEF).toFixed(1);
     var nextDmg = (baseTap + nextPower * FORCE_TAP_COEF).toFixed(1);
-    return "Force " + currentPower + " → " + nextPower + "  (+" + currentDmg + " → +" + nextDmg + " dgts)";
+    return _t("Force {a} → {b}  (+{c} → +{d} dgts)", { a: currentPower, b: nextPower, c: currentDmg, d: nextDmg });
   }
 
   if (upgrade.id === "utrain_celerity") {
@@ -71,7 +71,7 @@ function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
     var nextCel = currentCel + (nextLevel - currentLevel);
     var currentDps = (currentCel * CELERITY_DPS_COEF).toFixed(1);
     var nextDps = (nextCel * CELERITY_DPS_COEF).toFixed(1);
-    return "Célérité " + currentCel + " → " + nextCel + "  (+" + currentDps + " → +" + nextDps + " DPS)";
+    return _t("Célérité {a} → {b}  (+{c} → +{d} DPS)", { a: currentCel, b: nextCel, c: currentDps, d: nextDps });
   }
 
   if (upgrade.id === "utrain_precision") {
@@ -80,7 +80,7 @@ function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
     var nextCritStat = currentCritStat + (nextLevel - currentLevel);
     var currentCrit = (baseCritChance + currentCritStat * PRECISION_CRIT_COEF).toFixed(1);
     var nextCrit = (baseCritChance + nextCritStat * PRECISION_CRIT_COEF).toFixed(1);
-    return "Précision " + currentCritStat + " → " + nextCritStat + "  (" + currentCrit + "% → " + nextCrit + "%)";
+    return _t("Précision {a} → {b}  ({c}% → {d}%)", { a: currentCritStat, b: nextCritStat, c: currentCrit, d: nextCrit });
   }
 
   if (upgrade.id === "utrain_endurance") {
@@ -89,7 +89,7 @@ function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
     var nextEndurance = currentEndurance + (nextLevel - currentLevel);
     var currentHp = Math.floor(currentEndurance * ENDURANCE_HP_COEF);
     var nextHp = Math.floor(nextEndurance * ENDURANCE_HP_COEF);
-    return "Endurance " + currentEndurance + " → " + nextEndurance + "  (+" + currentHp + " → +" + nextHp + " PV)";
+    return _t("Endurance {a} → {b}  (+{c} → +{d} PV)", { a: currentEndurance, b: nextEndurance, c: currentHp, d: nextHp });
   }
 
   if (upgrade.id === "utrain_will") {
@@ -98,19 +98,19 @@ function getUpgradePreviewText(upgrade, currentLevel, nextLevel) {
     var nextWillStat = currentWillStat + (nextLevel - currentLevel);
     var currentWill = (baseCritMult + currentWillStat * WILL_CRIT_MULT_COEF).toFixed(2);
     var nextWill = (baseCritMult + nextWillStat * WILL_CRIT_MULT_COEF).toFixed(2);
-    return "Volonté " + currentWillStat + " → " + nextWillStat + "  (x" + currentWill + " → x" + nextWill + ")";
+    return _t("Volonté {a} → {b}  (x{c} → x{d})", { a: currentWillStat, b: nextWillStat, c: currentWill, d: nextWill });
   }
 
   if (upgrade.id === "u_gold") {
     var currentGold = (1 + currentLevel * 0.03).toFixed(2);
     var nextGold = (1 + nextLevel * 0.03).toFixed(2);
-    return "Or x" + currentGold + " → x" + nextGold;
+    return _t("Or x{a} → x{b}", { a: currentGold, b: nextGold });
   }
 
   if (upgrade.id === "u_bounty") {
     var currentBoss = Math.round(currentLevel * 10);
     var nextBoss = Math.round(nextLevel * 10);
-    return "Or boss +" + currentBoss + "% → +" + nextBoss + "%";
+    return _t("Or boss +{a}% → +{b}%", { a: currentBoss, b: nextBoss });
   }
 
   return "";
@@ -146,13 +146,13 @@ function buildUpgradeCardHTML(u, buyAmount) {
 
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">';
     if (u.icon) {
-      h += renderIconOrEmojiHTML(u.icon, "nb-purchase-icon", u.name);
+      h += renderIconOrEmojiHTML(u.icon, "nb-purchase-icon", _td(u.name));
     }
   h += '</div></div>';
 
   h += '<div class="nb-purchase-info-col">';
-    h += '<div class="nb-purchase-name">' + esc(u.name) + '</div>';
-    h += '<div class="nb-purchase-desc">' + esc(u.desc) + '</div>';
+    h += '<div class="nb-purchase-name">' + esc(_td(u.name)) + '</div>';
+    h += '<div class="nb-purchase-desc">' + esc(_td(u.desc)) + '</div>';
 
     h += '<div class="nb-purchase-level-row">';
       h += '<div class="nb-purchase-level-badge kbadge kbadge-shield"><span>' + esc(level) + '</span></div>';
@@ -172,7 +172,7 @@ function buildUpgradeCardHTML(u, buyAmount) {
 
   h += '<div class="nb-purchase-buy-col">';
 
-    h += '<div class="nb-purchase-buy-label">COÛT</div>';
+    h += '<div class="nb-purchase-buy-label">' + _t("COÛT") + '</div>';
 
     if (maxed) {
       h += '<button class="btn-buy locked" disabled>MAX</button>';
@@ -212,8 +212,8 @@ function buildUpgradeCardHTML(u, buyAmount) {
 function buildShopSubTabBarHTML() {
   if (!shopHasEconomyUpgrades()) return ""; // v3.313.0 : un seul sous-onglet, pas de barre
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "upgrades" ? ' is-active' : '') + '" onclick="setShopSubTab(\'upgrades\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/economy.png" alt=""><span>Économie</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "potions" ? ' is-active' : '') + '" onclick="setShopSubTab(\'potions\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/potions.png" alt=""><span>Potions</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "upgrades" ? ' is-active' : '') + '" onclick="setShopSubTab(\'upgrades\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/economy.png" alt=""><span>' + _t("Économie") + '</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeShopSubTab === "potions" ? ' is-active' : '') + '" onclick="setShopSubTab(\'potions\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/potions.png" alt=""><span>' + _t("Potions") + '</span></button>';
   h += '</div>';
   return h;
 }
@@ -222,13 +222,13 @@ function buildShopHTML() {
   var buyAmount = Number(game.shopBuyAmount || 1);
   if (![1, 10, 25, -1].includes(buyAmount)) buyAmount = 1;
 
-  var modeLabel = buyAmount === -1 ? "MAX" : ("x" + buyAmount);
+  var modeLabel = buyAmount === -1 ? _t("MAX") : ("x" + buyAmount);
 
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
   if (!shopHasEconomyUpgrades()) activeShopSubTab = "potions"; // v3.313.0
   // v3.194.0 (Seb) : le bandeau suit le sous-onglet actif.
-  var kfTitle = activeShopSubTab === "potions" ? "Potions" : "Économie";
+  var kfTitle = activeShopSubTab === "potions" ? _t("Potions") : _t("Économie");
   h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + kfTitle + '">'; // v2.83.44 : ouverte ici (pas ré-enveloppée après coup, voir CHANGELOG)
 
   if (activeShopSubTab === "potions") {
@@ -238,10 +238,10 @@ function buildShopHTML() {
     h += '<button class="settings-btn ' + (buyAmount === 1 ? 'active' : '') + '" onclick="setShopBuyAmount(1)">x1</button>';
     h += '<button class="settings-btn ' + (buyAmount === 10 ? 'active' : '') + '" onclick="setShopBuyAmount(10)">x10</button>';
     h += '<button class="settings-btn ' + (buyAmount === 25 ? 'active' : '') + '" onclick="setShopBuyAmount(25)">x25</button>';
-    h += '<button class="settings-btn ' + (buyAmount === -1 ? 'active' : '') + '" onclick="setShopBuyAmount(-1)">MAX</button>';
+    h += '<button class="settings-btn ' + (buyAmount === -1 ? 'active' : '') + '" onclick="setShopBuyAmount(-1)">' + _t("MAX") + '</button>';
     h += '</div>';
 
-    h += '<div class="shop-mode-info" style="margin:0 0 12px 0;opacity:.85;width:100%;text-align:right;">Mode d’achat : <strong>' + modeLabel + '</strong></div>';
+    h += '<div class="shop-mode-info" style="margin:0 0 12px 0;opacity:.85;width:100%;text-align:right;">' + _t("Mode d’achat :") + ' <strong>' + modeLabel + '</strong></div>';
 
     h += '<div class="shop-grid">';
     (UPGRADES || []).forEach(function (u) {

@@ -65,14 +65,14 @@ var WarehouseManager = {
     var applied = Math.max(0, Math.min(amount, cap - current));
     // v3.330.1 (E1) : ce qui ne rentre pas est perdu — on le dit au journal (chasses, sorties, récompenses)
     if (applied < amount && typeof addLog === "function") {
-      addLog("📦 Entrepôt plein : " + formatNumber(amount - applied) + " " + def.name + " perdu(s)", "event");
+      addLog("📦 " + _t("Entrepôt plein : {n} {x} perdu(s)", { n: formatNumber(amount - applied), x: _td(def.name) }), "event");
     }
     if (applied <= 0) return 0;
 
     game.resources[key] = current + applied;
 
     if (!silent) {
-      addLog(def.name + " +" + formatNumber(applied) + " (Entrepôt)", "event");
+      addLog(_t("{x} +{n} (Entrepôt)", { x: _td(def.name), n: formatNumber(applied) }), "event");
     }
 
     if ((key === "bois" || key === "pierre") && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.checkCurrentStep === "function") {
@@ -121,7 +121,7 @@ var WarehouseManager = {
   sellResource: function (key, amount) {
     this.ensure();
     if (!this.SELLING_ENABLED) {
-      if (typeof showToast === "function") showToast("L'Entrepôt ne rachète plus rien : livre tes ressources à la Taverne", 2200);
+      if (typeof showToast === "function") showToast(_t("L'Entrepôt ne rachète plus rien : livre tes ressources à la Taverne"), 2200);
       return 0;
     }
     if (typeof WAREHOUSE_RESOURCES === "undefined" || !WAREHOUSE_RESOURCES[key]) return 0;
@@ -129,7 +129,7 @@ var WarehouseManager = {
     var available = this.getAmount(key);
     var qty = Math.floor(Math.min(available, Number(amount || 0)));
     if (qty <= 0) {
-      showToast("Rien à vendre", 1000);
+      showToast(_t("Rien à vendre"), 1000);
       return 0;
     }
 
@@ -145,8 +145,8 @@ var WarehouseManager = {
       QuestManager.track("goldEarned", goldGain);
     }
 
-    addLog(def.name + " vendue ×" + formatNumber(qty) + " (+" + formatNumber(goldGain) + " or)", "event");
-    showToast("+" + formatNumber(goldGain) + " or", 1300);
+    addLog(_t("{x} vendue ×{n} (+{g} or)", { x: _td(def.name), n: formatNumber(qty), g: formatNumber(goldGain) }), "event");
+    showToast(_t("+{n} or", { n: formatNumber(goldGain) }), 1300);
 
     if (typeof renderPanel === "function") renderPanel();
     if (typeof renderHud === "function") renderHud();

@@ -50,7 +50,7 @@ var PotionManager = {
     if (!ids.length) return false;
     game.activePotions = {};
     if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
-    addLog("🧪 Effets de potions dissipés (fin du run).", "event");
+    addLog(_t("🧪 Effets de potions dissipés (fin du run)."), "event");
     return true;
   },
 
@@ -77,18 +77,18 @@ var PotionManager = {
   buyPotion: function (id) {
     this.ensure();
     var potion = this.getPotion(id);
-    if (!potion) return showToast("Potion introuvable", 1000);
+    if (!potion) return showToast(_t("Potion introuvable"), 1000);
 
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
-      return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
+      return showToast(_t("🚫 Potions interdites (Ascétisme actif)"), 1600);
     }
 
     var cost = this.getCost(potion);
-    if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
+    if ((game.gold || 0) < cost) return showToast(_t("Pas assez d'or"), 1000);
 
     var cap = typeof getPotionStockCap === "function" ? getPotionStockCap() : 9; // v3.322.0
     if (potion.perRun && this.getStock(id) >= cap) {
-      return showToast("Stock plein (" + cap + " max)", 1400);
+      return showToast(_t("Stock plein ({n} max)", { n: cap }), 1400);
     }
 
     game.gold -= cost;
@@ -99,8 +99,8 @@ var PotionManager = {
       QuestManager.track("goldSpent", cost);
     }
 
-    addLog("🧪 " + potion.name + " achetée (stock : " + game.potionsOwned[id] + ")", "event");
-    showToast(potion.name + " +1", 1300);
+    addLog("🧪 " + _t("{x} achetée (stock : {n})", { x: _td(potion.name), n: game.potionsOwned[id] }), "event");
+    showToast(_td(potion.name) + " +1", 1300);
     if (typeof renderAll === "function") renderAll();
     saveGame();
   },
@@ -108,18 +108,18 @@ var PotionManager = {
   usePotion: function (id) {
     this.ensure();
     var potion = this.getPotion(id);
-    if (!potion) return showToast("Potion introuvable", 1000);
+    if (!potion) return showToast(_t("Potion introuvable"), 1000);
     if (potion.perRun && window.heroLockToast && heroLockToast()) return; // v3.307.0 : pas d'armement en expédition
 
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
-      return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
+      return showToast(_t("🚫 Potions interdites (Ascétisme actif)"), 1600);
     }
 
     var stock = this.getStock(id);
-    if (stock <= 0) return showToast("Aucune potion en stock", 1000);
+    if (stock <= 0) return showToast(_t("Aucune potion en stock"), 1000);
 
     if (potion.perRun && this.isArmed(id)) {
-      return showToast("Déjà armée pour ce run — 1 par type et par run", 1600);
+      return showToast(_t("Déjà armée pour ce run — 1 par type et par run"), 1600);
     }
 
     game.potionsOwned[id] = stock - 1;
@@ -128,20 +128,20 @@ var PotionManager = {
     if (potion.perRun) {
       game.activePotions[id] = true;
       if (this.isEffectLive()) {
-        addLog("🧪 " + potion.name + " bue — active pour la mission en cours.", "event");
+        addLog("🧪 " + _t("{x} bue — active pour la mission en cours.", { x: _td(potion.name) }), "event");
       } else {
-        addLog("🧪 " + potion.name + " bue — armée pour la prochaine mission.", "event");
+        addLog("🧪 " + _t("{x} bue — armée pour la prochaine mission.", { x: _td(potion.name) }), "event");
       }
     } else {
       game.pendingPotionBonuses.aetherNext = Number(game.pendingPotionBonuses.aetherNext || 0) + potion.bonus;
-      addLog("🌀 " + potion.name + " bu — bonus prêt pour la prochaine ascension", "event");
+      addLog("🌀 " + _t("{x} bu — bonus prêt pour la prochaine ascension", { x: _td(potion.name) }), "event");
     }
 
     if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
       StatsSystem.recalcStats();
     }
 
-    showToast(potion.name + " utilisée", 1500);
+    showToast(_t("{x} utilisée", { x: _td(potion.name) }), 1500);
     if (typeof renderAll === "function") renderAll();
     saveGame();
   },
@@ -150,19 +150,19 @@ var PotionManager = {
     this.ensure();
     this.ensureHealing();
     var potion = this.getPotion(id) || this.getHealingPotion(id);
-    if (!potion) return showToast("Potion introuvable", 1000);
+    if (!potion) return showToast(_t("Potion introuvable"), 1000);
 
     var isHealing = !this.getPotion(id);
     var stock = isHealing ? this.getHealingStock(id) : this.getStock(id);
-    if (stock <= 0) return showToast("Aucune potion à vendre", 1000);
+    if (stock <= 0) return showToast(_t("Aucune potion à vendre"), 1000);
 
     var value = Math.floor(this.getCost(potion) / 2);
     if (isHealing) game.healingPotionsOwned[id] = stock - 1;
     else game.potionsOwned[id] = stock - 1;
     game.gold += value;
 
-    addLog("💰 " + potion.name + " vendue (+" + formatNumber(value) + " or)", "event");
-    showToast("+" + formatNumber(value) + " or", 1300);
+    addLog("💰 " + _t("{x} vendue (+{n} or)", { x: _td(potion.name), n: formatNumber(value) }), "event");
+    showToast(_t("+{n} or", { n: formatNumber(value) }), 1300);
     if (typeof renderAll === "function") renderAll();
     saveGame();
   },
@@ -214,15 +214,15 @@ var PotionManager = {
     if (!potion) return;
 
     if (this.getHealingBuyRemaining(id) <= 0) {
-      return showToast("Le colporteur n'en a plus aujourd'hui (" + potion.dailyBuyLimit + " max)", 1600);
+      return showToast(_t("Le colporteur n'en a plus aujourd'hui ({n} max)", { n: potion.dailyBuyLimit }), 1600);
     }
 
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
-      return showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
+      return showToast(_t("🚫 Potions interdites (Ascétisme actif)"), 1600);
     }
 
     var cost = this.getCost(potion);
-    if ((game.gold || 0) < cost) return showToast("Pas assez d'or", 1000);
+    if ((game.gold || 0) < cost) return showToast(_t("Pas assez d'or"), 1000);
 
     game.gold -= cost;
     game.healingPotionsOwned[id] = this.getHealingStock(id) + 1;
@@ -231,8 +231,8 @@ var PotionManager = {
       daily.bought[id] = Number(daily.bought[id] || 0) + 1;
     }
 
-    addLog("🩹 " + potion.name + " achetée (stock : " + game.healingPotionsOwned[id] + ")", "event");
-    showToast(potion.name + " +1", 1300);
+    addLog("🩹 " + _t("{x} achetée (stock : {n})", { x: _td(potion.name), n: game.healingPotionsOwned[id] }), "event");
+    showToast(_td(potion.name) + " +1", 1300);
     if (typeof renderAll === "function") renderAll();
     saveGame();
   },
@@ -256,16 +256,16 @@ var PotionManager = {
     if (window.heroLockToast && heroLockToast()) return false; // v3.307.0 : libre au combat de nœud (verrou levé)
 
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden()) {
-      showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
+      showToast(_t("🚫 Potions interdites (Ascétisme actif)"), 1600);
       return false;
     }
 
     var stock = this.getHealingStock(id);
-    if (stock <= 0) { showToast("Aucune potion en stock", 1000); return false; }
+    if (stock <= 0) { showToast(_t("Aucune potion en stock"), 1000); return false; }
 
     var maxHp = Number(game.heroMaxHp || 1);
     var currentHp = Number(game.heroHp != null ? game.heroHp : maxHp);
-    if (currentHp >= maxHp) { showToast("PV déjà au maximum", 1000); return false; }
+    if (currentHp >= maxHp) { showToast(_t("PV déjà au maximum"), 1000); return false; }
 
     game.healingPotionsOwned[id] = stock - 1;
     if (window.AchievementManager) AchievementManager.onPotionUsed(); // v3.338.0 : « Sans une gorgée »
@@ -273,8 +273,8 @@ var PotionManager = {
     game.heroHp = Math.min(maxHp, currentHp + healed);
     game.lastHealUse = Date.now();
 
-    addLog("🩹 " + potion.name + " utilisée (+" + formatNumber(healed) + " PV)", "event");
-    showToast("+" + formatNumber(healed) + " PV", 1200);
+    addLog("🩹 " + _t("{x} utilisée (+{n} PV)", { x: _td(potion.name), n: formatNumber(healed) }), "event");
+    showToast(_t("+{n} PV", { n: formatNumber(healed) }), 1200);
     if (typeof renderHeroHp === "function") renderHeroHp();
     if (typeof renderHud === "function") renderHud();
     if (typeof renderHealButtons === "function") renderHealButtons();

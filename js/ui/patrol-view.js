@@ -6,7 +6,7 @@
 var patrolUi = {};       // choix en cours par compagnon : { sectorId, hours }
 var patrolLastResult = {}; // dernier butin pris, affiché sur la fiche jusqu'au prochain départ
 
-function patrolResName(k) { var d = (window.WAREHOUSE_RESOURCES || {})[k]; return d ? d.name : k; }
+function patrolResName(k) { var d = (window.WAREHOUSE_RESOURCES || {})[k]; return d ? _td(d.name) : k; }
 
 function buildPatrolLootHTML(loot, gold, done) {
   var h = '<div class="ret-gains">';
@@ -15,14 +15,15 @@ function buildPatrolLootHTML(loot, gold, done) {
     h += '<span class="ret-gain' + (done ? ' is-done' : '') + '">' + renderIconOrEmojiHTML(d.icon || "images/Icons/system/warehouse_supplies.png", "ret-gain-ico", patrolResName(k))
       + (done ? '+' : '≈ ') + formatNumber(loot[k]) + ' ' + esc(patrolResName(k)) + '</span>';
   });
-  if (gold) h += '<span class="ret-gain' + (done ? ' is-done' : '') + '">' + renderIconOrEmojiHTML("images/Icons/gold_icon.png", "ret-gain-ico", "Or") + (done ? '+' : '≈ ') + formatNumber(gold) + ' or</span>';
+  if (gold) h += '<span class="ret-gain' + (done ? ' is-done' : '') + '">' + renderIconOrEmojiHTML("images/Icons/gold_icon.png", "ret-gain-ico", _t("Or")) + (done ? '+' : '≈ ') + _t("{n} or", { n: formatNumber(gold) }) + '</span>';
   return h + '</div>';
 }
 
 function buildPatrolLostHTML(lost) {
   var k = Object.keys(lost || {});
   if (!k.length) return "";
-  return '<div class="ret-warn">Entrepôt plein : ' + k.map(function (x) { return formatNumber(lost[x]) + ' ' + esc(patrolResName(x)); }).join(", ") + ' perdu' + (k.length > 1 || lost[k[0]] > 1 ? 's' : '') + '.</div>';
+  var liste = k.map(function (x) { return formatNumber(lost[x]) + ' ' + esc(patrolResName(x)); }).join(", ");
+  return '<div class="ret-warn">' + ((k.length > 1 || lost[k[0]] > 1) ? _t("Entrepôt plein : {liste} perdus.", { liste: liste }) : _t("Entrepôt plein : {liste} perdu.", { liste: liste })) + '</div>';
 }
 
 /* ---------- Fiche du compagnon ---------- */
@@ -31,19 +32,19 @@ function buildCompanionPatrolHTML(companionId) {
   var PM = window.PatrolManager;
   if (!PM || !PM.isUnlocked()) return "";
   var p = PM.get(companionId);
-  var h = '<div class="pt-box"><div class="pt-title"><img src="images/Icons/quests/mission_exploration.png" alt=""> Patrouille</div>';
+  var h = '<div class="pt-box"><div class="pt-title"><img src="images/Icons/quests/mission_exploration.png" alt=""> ' + _t("Patrouille") + '</div>';
 
   if (p) {
     var sec = PM.getSectorDef(p.mapId, p.sectorId);
-    var sName = sec ? sec.name : p.sectorId;
+    var sName = sec ? _td(sec.name) : p.sectorId;
     if (Date.now() >= p.endsAt) {
-      h += '<div class="pt-line">Rentré' + (PATROL_COMPANION_FEMININE[companionId] ? 'e' : '') + ' de <b>' + esc(sName) + '</b>.</div>';
-      h += '<button type="button" class="kbtn pt-go" onclick="patrolCollect(\'' + companionId + '\')">Prendre le butin</button>';
+      h += '<div class="pt-line">' + (PATROL_COMPANION_FEMININE[companionId] ? _t("Rentrée de <b>{x}</b>.", { x: esc(sName) }) : _t("Rentré de <b>{x}</b>.", { x: esc(sName) })) + '</div>';
+      h += '<button type="button" class="kbtn pt-go" onclick="patrolCollect(\'' + companionId + '\')">' + _t("Prendre le butin") + '</button>';
     } else {
       var left = window.ResumeManager ? ResumeManager.formatAbsence(p.endsAt - Date.now()) : "";
-      h += '<div class="pt-line">En route : <b>' + esc(sName) + '</b> · retour dans ' + esc(left) + '.</div>';
-      h += '<div class="pt-hint">Absent des combats jusqu\u2019à son retour.</div>';
-      h += '<button type="button" class="kbtn pt-recall" onclick="patrolRecall(\'' + companionId + '\')">Rappeler (butin au prorata)</button>';
+      h += '<div class="pt-line">' + _t("En route : <b>{x}</b> · retour dans {d}.", { x: esc(sName), d: esc(left) }) + '</div>';
+      h += '<div class="pt-hint">' + _t("Absent des combats jusqu’à son retour.") + '</div>';
+      h += '<button type="button" class="kbtn pt-recall" onclick="patrolRecall(\'' + companionId + '\')">' + _t("Rappeler (butin au prorata)") + '</button>';
     }
     return h + '</div>';
   }
@@ -51,12 +52,12 @@ function buildCompanionPatrolHTML(companionId) {
   var last = patrolLastResult[companionId];
   if (last) {
     h += buildPatrolLootHTML(last.loot, last.gold, true) + buildPatrolLostHTML(last.lost);
-    if (last.story) h += '<div class="ret-story">« ' + esc(last.story) + ' »</div>';
+    if (last.story) h += '<div class="ret-story">« ' + esc(_td(last.story)) + ' »</div>';
   }
 
   var dests = PM.getDestinations();
   if (!dests.length) {
-    h += '<div class="pt-hint">Libère un secteur de la carte pour l\u2019envoyer en patrouille.</div>';
+    h += '<div class="pt-hint">' + _t("Libère un secteur de la carte pour l’envoyer en patrouille.") + '</div>';
     return h + '</div>';
   }
   var ui = patrolUi[companionId] || {};
@@ -67,7 +68,7 @@ function buildCompanionPatrolHTML(companionId) {
   h += '<select class="pt-select" onchange="patrolPick(\'' + companionId + '\', \'sectorId\', this.value)">';
   dests.forEach(function (d) {
     h += '<option value="' + esc(d.sectorId) + '"' + (d.sectorId === ui.sectorId ? ' selected' : '') + '>'
-      + esc(d.name + ' — ' + patrolResName(d.main) + ', ' + patrolResName(d.second)) + '</option>';
+      + esc(_td(d.name) + ' — ' + patrolResName(d.main) + ', ' + patrolResName(d.second)) + '</option>';
   });
   h += '</select>';
   h += '<div class="kseg pt-seg">';
@@ -78,10 +79,10 @@ function buildCompanionPatrolHTML(companionId) {
   var mapId = PM.currentMapId();
   var est = PM.estimate(companionId, mapId, ui.sectorId, ui.hours);
   h += buildPatrolLootHTML(est.loot, est.gold, false);
-  h += '<div class="pt-hint">Absent des combats pendant la patrouille. Aucun risque : il revient toujours.</div>';
+  h += '<div class="pt-hint">' + _t("Absent des combats pendant la patrouille. Aucun risque : il revient toujours.") + '</div>';
   var why = PM.canStart(companionId);
   h += '<button type="button" class="kbtn pt-go' + (why ? ' is-disabled' : '') + '"' + (why ? ' disabled title="' + esc(why) + '"' : '')
-    + ' onclick="patrolStart(\'' + companionId + '\')">Envoyer</button>';
+    + ' onclick="patrolStart(\'' + companionId + '\')">' + _t("Envoyer") + '</button>';
   if (why) h += '<div class="pt-hint">' + esc(why) + '</div>';
   return h + '</div>';
 }
@@ -130,27 +131,27 @@ function buildReturnPatrolsHTML() {
 
   var body = "";
   back.forEach(function (r) {
-    body += '<div class="pt-ret-row"><b>' + esc(r.companionName) + '</b> est rentré' + (r.feminine ? 'e' : '') + ' de ' + esc(r.sectorName) + '.</div>';
+    body += '<div class="pt-ret-row">' + (r.feminine ? _t("<b>{x}</b> est rentrée de {y}.", { x: esc(_td(r.companionName)), y: esc(_td(r.sectorName)) }) : _t("<b>{x}</b> est rentré de {y}.", { x: esc(_td(r.companionName)), y: esc(_td(r.sectorName)) })) + '</div>';
   });
-  if (back.length) body += '<button type="button" class="ret-link" onclick="returnCollectPatrols()">Prendre le butin</button>';
+  if (back.length) body += '<button type="button" class="ret-link" onclick="returnCollectPatrols()">' + _t("Prendre le butin") + '</button>';
 
   ids.forEach(function (id) {
     var res = results[id];
     var def = window.getCompanionDef ? getCompanionDef(id) : null;
     var sec = PatrolManager.getSectorDef(res.mapId, res.sectorId);
-    body += '<div class="pt-ret-row"><b>' + esc(def ? def.name : id) + '</b> · ' + esc(sec ? sec.name : "") + '</div>';
+    body += '<div class="pt-ret-row"><b>' + esc(def ? _td(def.name) : id) + '</b> · ' + esc(sec ? _td(sec.name) : "") + '</div>';
     body += buildPatrolLootHTML(res.loot, res.gold, true) + buildPatrolLostHTML(res.lost);
     if (res.story) {
-      if (st.storyOpen && st.storyOpen[id]) body += '<div class="ret-story">« ' + esc(res.story) + ' »</div>';
-      else body += '<button type="button" class="ret-link" onclick="returnOpenPatrolStory(\'' + id + '\')">Lire son récit</button> ';
+      if (st.storyOpen && st.storyOpen[id]) body += '<div class="ret-story">« ' + esc(_td(res.story)) + ' »</div>';
+      else body += '<button type="button" class="ret-link" onclick="returnOpenPatrolStory(\'' + id + '\')">' + _t("Lire son récit") + '</button> ';
     }
     if (!PatrolManager.isOnPatrol(id) && !res.relaunched) {
-      body += '<button type="button" class="ret-link" onclick="returnRelaunchPatrol(\'' + id + '\')">Repartir (même route, ' + res.hours + ' h)</button>';
+      body += '<button type="button" class="ret-link" onclick="returnRelaunchPatrol(\'' + id + '\')">' + _t("Repartir (même route, {h} h)", { h: res.hours }) + '</button>';
     } else if (res.relaunched) {
-      body += '<div class="ret-done">✓ Reparti' + (PATROL_COMPANION_FEMININE[id] ? 'e' : '') + '.</div>';
+      body += '<div class="ret-done">✓ ' + (PATROL_COMPANION_FEMININE[id] ? _t("Repartie.") : _t("Reparti.")) + '</div>';
     }
   });
-  return buildReturnSectionHTML("images/Icons/quests/mission_exploration.png", "Patrouilles", body);
+  return buildReturnSectionHTML("images/Icons/quests/mission_exploration.png", _t("Patrouilles"), body);
 }
 
 function returnCollectPatrols() {

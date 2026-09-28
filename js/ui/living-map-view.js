@@ -129,7 +129,7 @@ window.startLivingMapSector = startLivingMapSector;
 
 function livingMapIntensityLabel(intensityId) {
   var it = window.SCENE_INTENSITY && SCENE_INTENSITY[intensityId];
-  return it ? it.label : intensityId;
+  return it ? _td(it.label) : intensityId;
 }
 
 function livingMapContentLabel(mapId, def) {
@@ -139,9 +139,10 @@ function livingMapContentLabel(mapId, def) {
   if (!content) return intensity;
   if (content.type === "elite") {
     var e = window.ELITE_DB && ELITE_DB[content.eliteId];
-    return (content.repeatable ? "Élite répétable : " : "Élite : ") + (e ? e.name : content.eliteId) + " · " + intensity;
+    var nom = e ? _td(e.name) : content.eliteId;
+    return (content.repeatable ? _t("Élite répétable : {x}", { x: nom }) : _t("Élite : {x}", { x: nom })) + " · " + intensity;
   }
-  return "Expédition · " + intensity;
+  return _t("Expédition") + " · " + intensity;
 }
 
 function livingMapMask(map, ids) {
@@ -369,7 +370,7 @@ function buildLivingMapHTML(mapId) {
 
   /* Village */
   h += '<button type="button" class="lm-node is-village' + (livingMapSelected === "village" ? " is-selected" : "") + '" style="left:' + map.village.x + '%;top:' + map.village.y + '%;" onclick="event.stopPropagation();lmxTapSector(\'village\')">';
-  h += '<span class="lm-node-disc">★</span><span class="lm-node-name">' + esc(map.village.name) + '</span></button>';
+  h += '<span class="lm-node-disc">★</span><span class="lm-node-name">' + esc(_td(map.village.name)) + '</span></button>';
 
   /* Secteurs */
   map.sectors.forEach(function (d, i) {
@@ -386,7 +387,7 @@ function buildLivingMapHTML(mapId) {
     if (d.labelTop) cls += " is-label-top";
     h += '<button type="button" class="' + cls + '" style="left:' + d.x + '%;top:' + d.y + '%;" onclick="event.stopPropagation();lmxTapSector(\'' + d.id + '\')">';
     h += '<span class="lm-node-disc">' + (s.state === "voile" ? "?" : String(i + 1)) + '</span>';
-    h += '<span class="lm-node-name">' + esc(d.name) + '</span>';
+    h += '<span class="lm-node-name">' + esc(_td(d.name)) + '</span>';
     h += '</button>';
   });
 
@@ -399,24 +400,24 @@ function buildLivingMapHTML(mapId) {
 
   /* En-tête posé sur la carte : retour, pastilles, popup du monde */
   h += '<div class="lmx-hud">';
-  h += '<button class="lmx-btn" type="button" aria-label="Carte du monde" onclick="closeLivingMap()">‹</button>';
+  h += '<button class="lmx-btn" type="button" aria-label="' + _t("Carte du monde") + '" onclick="closeLivingMap()">‹</button>';
   h += '<div class="lmx-pills">';
-  h += '<span class="lmx-pill is-title">' + sum.libere + '/' + sum.total + ' libérés' + (sum.recouvert ? ' <small>· ' + sum.recouvert + ' repris</small>' : '') + '</span>';
+  h += '<span class="lmx-pill is-title">' + _t("{a}/{b} libérés", { a: sum.libere, b: sum.total }) + (sum.recouvert ? ' <small>· ' + _t("{n} repris", { n: sum.recouvert }) + '</small>' : '') + '</span>';
   h += '<span class="lmx-pill"><img class=ico-inline src=' + esc((rewardDef && rewardDef.icon) || "images/Icons/resources/seve_aeswyn_icon.png") + ' alt=""> ' + seve + '</span>';
-  h += '<span class="lmx-pill is-pal">Palissade ' + pal + '</span>';
+  h += '<span class="lmx-pill is-pal">' + _t("Palissade {n}", { n: pal }) + '</span>';
   h += '</div>';
-  if (worldIndex >= 0) h += '<button class="lmx-btn is-info" type="button" aria-label="Le monde" onclick="openWorldPopup(' + worldIndex + ')">i</button>';
+  if (worldIndex >= 0) h += '<button class="lmx-btn is-info" type="button" aria-label="' + _t("Le monde") + '" onclick="openWorldPopup(' + worldIndex + ')">i</button>';
   h += '</div>';
 
-  h += '<button class="lmx-btn lmx-recenter" type="button" aria-label="Recentrer" onclick="lmxRecenter()">◎</button>';
+  h += '<button class="lmx-btn lmx-recenter" type="button" aria-label="' + _t("Recentrer") + '" onclick="lmxRecenter()">◎</button>';
 
   /* Légende et repère hors écran (placés par lmxAfterRender) */
-  h += '<button class="lmx-btn lmx-legend-btn" id="lmx-legend-btn" type="button" aria-label="Légende" onclick="lmxToggleLegend()">?</button>';
+  h += '<button class="lmx-btn lmx-legend-btn" id="lmx-legend-btn" type="button" aria-label="' + _t("Légende") + '" onclick="lmxToggleLegend()">?</button>';
   if (lmxLegendOpen) h += buildLivingMapLegendHTML();
   if (running) {
     var rd = LM.getSectorDef(mapId, running);
     h += '<button class="lmx-offscreen" id="lmx-offscreen" type="button" data-x="' + rd.x + '" data-y="' + rd.y + '" onclick="lmxGoTo(' + rd.x + ',' + rd.y + ')">'
-       + '<span class="lmx-off-arrow" id="lmx-off-arrow">➜</span><span class="lmx-off-txt">Expédition : ' + esc(LM.isNameRevealed(mapId, running) ? rd.name : "secteur voilé") + '</span></button>';
+       + '<span class="lmx-off-arrow" id="lmx-off-arrow">➜</span><span class="lmx-off-txt">' + esc(_t("Expédition : {x}", { x: LM.isNameRevealed(mapId, running) ? _td(rd.name) : _t("secteur voilé") })) + '</span></button>';
   }
 
   /* Volet du secteur, au-dessus du menu */
@@ -424,7 +425,7 @@ function buildLivingMapHTML(mapId) {
     var entering = lmxLastSheetSel !== livingMapSelected ? " is-entering" : "";
     h += '<div class="lmx-sheet' + entering + '" id="lmx-sheet">';
     h += '<div class="lmx-sheet-grab"><span></span></div>';
-    h += '<button class="lmx-sheet-close" type="button" aria-label="Fermer" onclick="selectLivingMapSector(null)">✕</button>';
+    h += '<button class="lmx-sheet-close" type="button" aria-label="' + _t("Fermer") + '" onclick="selectLivingMapSector(null)">✕</button>';
     h += '<div class="lmx-sheet-body">' + buildLivingMapPanelHTML(mapId, running) + '</div>';
     h += '</div>';
   }
@@ -447,21 +448,23 @@ function livingMapWords() {
 function buildLivingMapLegendHTML() {
   function node(cls, glyph) { return '<span class="lm-node ' + cls + '"><span class="lm-node-disc">' + glyph + '</span></span>'; }
   function row(n, label, sub) { return '<div class="lmx-legend-row">' + n + '<span>' + label + (sub ? '<small>' + sub + '</small>' : '') + '</span></div>'; }
-  var h = '<div class="lmx-legend" id="lmx-legend"><h5>Légende</h5>';
-  h += row(node("is-village", "★"), "Foyer", "point de départ, toujours sûr");
-  h += row(node("is-voile", "?"), "Voilé", "à découvrir, atteignable");
-  h += row(node("is-voile is-far", "?"), "Voilé, trop loin", "libère d'abord un voisin");
-  h += row(node("is-libere", "1"), "Libéré", "son effet s'applique");
-  h += row(node("is-recouvert", "3"), esc(livingMapWords().coveredState), "effet perdu, à reprendre"); // v3.305.0
-  h += row(node("is-libere is-protege", "1"), "Tenu par la Palissade", "un échec ne le reprend pas"); // v3.335.0
-  h += row(node("is-libere is-running", "4"), "Expédition en cours", "");
+  var h = '<div class="lmx-legend" id="lmx-legend"><h5>' + _t("Légende") + '</h5>';
+  h += row(node("is-village", "★"), _t("Foyer"), _t("point de départ, toujours sûr"));
+  h += row(node("is-voile", "?"), _t("Voilé"), _t("à découvrir, atteignable"));
+  h += row(node("is-voile is-far", "?"), _t("Voilé, trop loin"), _t("libère d'abord un voisin"));
+  h += row(node("is-libere", "1"), _t("Libéré"), _t("son effet s'applique"));
+  h += row(node("is-recouvert", "3"), esc(_td(livingMapWords().coveredState)), _t("effet perdu, à reprendre")); // v3.305.0
+  h += row(node("is-libere is-protege", "1"), _t("Tenu par la Palissade"), _t("un échec ne le reprend pas")); // v3.335.0
+  h += row(node("is-libere is-running", "4"), _t("Expédition en cours"), "");
   return h + '</div>';
 }
 
 /* ---------- Vue : géométrie, zoom, recadrage ---------- */
 
 function lmxVp() { return document.getElementById("lmx-vp"); }
-function lmxSheetH() { var s = document.getElementById("lmx-sheet"); return s ? s.getBoundingClientRect().height : 0; }
+/* v3.367.0 : mesures d'écran ramenées en px CSS (mode PC zoomé, voir ui/desktop-scale.js). */
+function lmxScale(el) { return window.DesktopScale ? DesktopScale.factorOf(el) : 1; }
+function lmxSheetH() { var s = document.getElementById("lmx-sheet"); return s ? s.getBoundingClientRect().height / lmxScale(s) : 0; }
 /* Couvrant : la carte (carrée) remplit toute la zone, jamais de bandes noires. */
 function lmxCoverW() { var vp = lmxVp(); return vp ? Math.max(vp.clientWidth, vp.clientHeight) : 0; }
 function lmxMaxW() { return lmxCoverW() * LMX_ZOOM_MAX; }
@@ -492,7 +495,7 @@ function lmxGeo() {
   var g = typeof lmxGesture !== "undefined" ? lmxGesture : null;
   if (g && g.geo) return g.geo;
   var vp = lmxVp();
-  return vp ? { W: vp.clientWidth, H: vp.clientHeight - lmxSheetH(), rect: vp.getBoundingClientRect() } : null;
+  return vp ? { W: vp.clientWidth, H: vp.clientHeight - lmxSheetH(), rect: vp.getBoundingClientRect(), f: lmxScale(vp) } : null;
 }
 function lmxZoomAt(nw, px, py, anim) {
   nw = Math.max(lmxCoverW(), Math.min(lmxMaxW(), nw));
@@ -565,7 +568,7 @@ function lmxUpdateOffscreen() {
 
 var lmxGesture = { pts: {}, mode: null, start: null, moved: false, suppressClick: false, lastTap: 0, vel: { x: 0, y: 0 }, lastMove: 0, raf: 0, geo: null, frame: 0 };
 
-function lmxLocal(e) { var r = (lmxGesture.geo && lmxGesture.geo.rect) || lmxVp().getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+function lmxLocal(e) { var g = lmxGesture.geo || lmxGeo(), r = g.rect, f = g.f || 1; return { x: (e.clientX - r.left) / f, y: (e.clientY - r.top) / f }; }
 /* v3.306.1 : un seul lmxApply par image, quel que soit le nombre de mouvements reçus (l'écran
    tactile en envoie jusqu'à 120 par seconde). */
 function lmxSchedule() {
@@ -675,17 +678,17 @@ function buildLivingMapPanelHTML(mapId, running) {
   var h = '<div class="lm-panel">';
 
   if (!livingMapSelected) {
-    h += '<div class="lm-panel-name">' + esc(W.homeTitle) + '</div>';
-    h += '<p class="lm-panel-lore">' + esc(W.intro) + '</p>';
+    h += '<div class="lm-panel-name">' + esc(_td(W.homeTitle)) + '</div>';
+    h += '<p class="lm-panel-lore">' + esc(_td(W.intro)) + '</p>';
     return h + '</div>';
   }
 
   if (livingMapSelected === "village") {
     var pal = LM.getPalisadeLevel(), held = LM.getHeldRing(pal);
-    h += '<div class="lm-panel-name">' + esc(map.village.name) + '</div>';
-    h += '<p class="lm-panel-lore">' + esc(W.homeLore) + '</p>';
-    h += '<p class="lm-panel-line"><b>Palissade niveau ' + pal + '</b> · frein ' + Math.round(LM.getBrakeChance(mapId) * 100) + ' % sur l\'échec · '
-      + (held ? 'tient l\'anneau ' + (held === 3 ? '1 à 3' : held === 2 ? '1 et 2' : '1') + ' : un échec n\'y reprend rien' : 'ne tient aucun anneau (niveau 3)') // v3.335.0 + '</p>';
+    h += '<div class="lm-panel-name">' + esc(_td(map.village.name)) + '</div>';
+    h += '<p class="lm-panel-lore">' + esc(_td(W.homeLore)) + '</p>';
+    h += '<p class="lm-panel-line"><b>' + _t("Palissade niveau {n}", { n: pal }) + '</b> · ' + _t("frein {p} % sur l'échec", { p: Math.round(LM.getBrakeChance(mapId) * 100) }) + ' · '
+      + (held === 3 ? _t("tient l'anneau 1 à 3 : un échec n'y reprend rien") : held === 2 ? _t("tient l'anneau 1 et 2 : un échec n'y reprend rien") : held ? _t("tient l'anneau 1 : un échec n'y reprend rien") : _t("ne tient aucun anneau (niveau 3)")); // v3.335.0 ; v3.370.0 : une phrase entière par cas
     return h + '</div>';
   }
 
@@ -697,48 +700,48 @@ function buildLivingMapPanelHTML(mapId, running) {
   var intensity = livingMapIntensityLabel(LM.getIntensity(d));
 
   h += '<div class="lm-panel-head">';
-  h += '<div class="lm-panel-name">' + (known ? esc(d.name) : "Secteur inconnu") + '</div>';
-  h += '<div class="lm-panel-meta">Anneau ' + d.ring + ' · ' + esc(intensity) + '</div>';
+  h += '<div class="lm-panel-name">' + (known ? esc(_td(d.name)) : _t("Secteur inconnu")) + '</div>';
+  h += '<div class="lm-panel-meta">' + _t("Anneau {n}", { n: d.ring }) + ' · ' + esc(intensity) + '</div>';
   h += '</div>';
   var stCls = protege ? "is-protege" : "is-" + s.state;
-  var stTxt = protege ? "Libéré · tenu par la Palissade" : s.state === "voile" ? "Voilé" : s.state === "libere" ? "Libéré" : W.coveredState;
+  var stTxt = protege ? _t("Libéré · tenu par la Palissade") : s.state === "voile" ? _t("Voilé") : s.state === "libere" ? _t("Libéré") : esc(_td(W.coveredState));
   h += '<span class="lm-panel-state ' + stCls + '">' + stTxt + '</span>';
-  if (known) h += '<p class="lm-panel-lore">' + esc(d.lore || "") + '</p>';
-  else h += '<p class="lm-panel-lore">' + esc(W.fogLore) + ' On sait seulement que le chemin est ' + (d.ring === 1 ? "court" : d.ring === 2 ? "long" : "très long") + '.</p>';
-  h += '<p class="lm-panel-line"><b>Contenu :</b> ' + (known ? esc(livingMapContentLabel(mapId, d)) : esc(intensity) + ' (contenu inconnu)') + '</p>';
+  if (known) h += '<p class="lm-panel-lore">' + esc(_td(d.lore || "")) + '</p>';
+  else h += '<p class="lm-panel-lore">' + esc(_td(W.fogLore)) + ' ' + (d.ring === 1 ? _t("On sait seulement que le chemin est court.") : d.ring === 2 ? _t("On sait seulement que le chemin est long.") : _t("On sait seulement que le chemin est très long.")) + '</p>';
+  h += '<p class="lm-panel-line"><b>' + _t("Contenu :") + '</b> ' + (known ? esc(livingMapContentLabel(mapId, d)) : esc(_t("{x} (contenu inconnu)", { x: intensity }))) + '</p>';
   if (d.heldEffect && LM.isEffectLostByChoice(d)) {
-    h += '<p class="lm-panel-line is-lost"><b>Effet :</b> aucun. La stèle est vide.</p>'; // v3.306.0 : perdu pour de bon
+    h += '<p class="lm-panel-line is-lost"><b>' + _t("Effet :") + '</b> ' + _t("aucun. La stèle est vide.") + '</p>'; // v3.306.0 : perdu pour de bon
   } else if (d.heldEffect) {
-    if (s.state === "libere") h += '<p class="lm-panel-line"><b>Effet en cours :</b> ' + esc(d.heldEffect.label) + '</p>';
-    else if (s.state === "recouvert") h += '<p class="lm-panel-line is-lost"><b>Effet perdu :</b> ' + esc(d.heldEffect.label) + '</p>';
-    else h += '<p class="lm-panel-line"><b>Effet :</b> ' + (known ? esc(d.heldEffect.label) : "inconnu") + '</p>';
+    if (s.state === "libere") h += '<p class="lm-panel-line"><b>' + _t("Effet en cours :") + '</b> ' + esc(_td(d.heldEffect.label)) + '</p>';
+    else if (s.state === "recouvert") h += '<p class="lm-panel-line is-lost"><b>' + _t("Effet perdu :") + '</b> ' + esc(_td(d.heldEffect.label)) + '</p>';
+    else h += '<p class="lm-panel-line"><b>' + _t("Effet :") + '</b> ' + (known ? esc(_td(d.heldEffect.label)) : _t("inconnu")) + '</p>';
   }
   var repeatable = LM.isRepeatable(mapId, d.id);
-  if (!s.firstRewardClaimed) h += '<p class="lm-panel-line"><b>Première libération :</b> +' + LM.getFirstReward(d) + ' ' + esc(rName) + '</p>';
-  else if (s.state !== "libere") h += '<p class="lm-panel-line"><b>Reprise :</b> ' + esc(W.runLoot) + ', pas de récompense de secteur.</p>';
-  else if (!repeatable) h += '<p class="lm-panel-line"><b>Rejeu :</b> Petite Aventure ordinaire, ' + esc(W.runLoot) + '.</p>';
+  if (!s.firstRewardClaimed) h += '<p class="lm-panel-line"><b>' + _t("Première libération :") + '</b> +' + LM.getFirstReward(d) + ' ' + esc(_td(rName)) + '</p>';
+  else if (s.state !== "libere") h += '<p class="lm-panel-line"><b>' + _t("Reprise :") + '</b> ' + esc(_t("{x}, pas de récompense de secteur.", { x: _td(W.runLoot) })) + '</p>';
+  else if (!repeatable) h += '<p class="lm-panel-line"><b>' + _t("Rejeu :") + '</b> ' + esc(_t("Petite Aventure ordinaire, {x}.", { x: _td(W.runLoot) })) + '</p>';
   if (repeatable && known) {
     // v3.258.0 (C-5) : élite répétable — Sève par victoire, frein du jour affiché avant de partir.
     var re = LM.getRules().repeatableElite || {}, wins = LM.getDailyWins(mapId, d.id);
-    h += '<p class="lm-panel-line"><b>Chaque victoire :</b> +' + Number(re.sevePerWin || 0) + ' ' + esc(rName) + '. Sans ration, hors cap. Fuir ou tomber reste un échec.</p>';
-    h += '<p class="lm-panel-line"><b>Aujourd\'hui :</b> ' + wins + ' victoire' + (wins > 1 ? 's' : '') + ' · prochain combat ' + (wins ? '+' + Math.round((LM.getBrakeMult(mapId, d.id) - 1) * 100) + ' % PV et dégâts' : 'à sa force de base') + '</p>';
+    h += '<p class="lm-panel-line"><b>' + _t("Chaque victoire :") + '</b> ' + esc(_t("+{n} {x}. Sans ration, hors cap. Fuir ou tomber reste un échec.", { n: Number(re.sevePerWin || 0), x: _td(rName) })) + '</p>';
+    h += '<p class="lm-panel-line"><b>' + _t("Aujourd'hui :") + '</b> ' + _tn(wins, "{n} victoire", "{n} victoires") + ' · ' + (wins ? _t("prochain combat +{p} % PV et dégâts", { p: Math.round((LM.getBrakeMult(mapId, d.id) - 1) * 100) }) : _t("prochain combat à sa force de base")) + '</p>';
   }
   if (s.state === "recouvert") {
     var gw = LM.getGateway(mapId, d.id);
-    h += '<p class="lm-panel-line is-lost">' + esc(W.coverCap) + ' le tient. Reprends-le depuis ' + esc(d.ring === 1 || !gw ? W.home : gw.name) + '.</p>';
+    h += '<p class="lm-panel-line is-lost">' + esc(_t("{x} le tient. Reprends-le depuis {lieu}.", { x: _td(W.coverCap), lieu: _td(d.ring === 1 || !gw ? W.home : gw.name) })) + '</p>';
   }
 
   // v3.306.0 : un choix pesant qui se pose ici (étape en cours, secteur libéré) passe avant le départ
   var pending = (typeof storyPendingChoiceAt === "function") ? storyPendingChoiceAt(mapId, d.id) : null;
   if (pending) {
-    h += '<button class="settings-btn primary" type="button" onclick="openStoryChoiceModal(\'' + esc(pending.chapterId) + '\')">' + esc(pending.choice.buttonLabel || "Choisir") + '</button>';
+    h += '<button class="settings-btn primary" type="button" onclick="openStoryChoiceModal(\'' + esc(pending.chapterId) + '\')">' + esc(pending.choice.buttonLabel ? _td(pending.choice.buttonLabel) : _t("Choisir")) + '</button>';
   }
   var content = LM.getContentFor(mapId, d.id);
   var isElite = content && content.type === "elite";
   // Le verbe ne trahit pas un contenu inconnu : « Affronter l'élite » seulement quand le nom est révélé.
-  var verb = s.state === "libere" ? (isElite && repeatable ? "Affronter l\'élite" : "Rejouer le secteur") : s.state === "recouvert" ? "Reprendre le secteur" : (isElite && known ? "Affronter l\'élite" : "Partir");
+  var verb = s.state === "libere" ? (isElite && repeatable ? _t("Affronter l'élite") : _t("Rejouer le secteur")) : s.state === "recouvert" ? _t("Reprendre le secteur") : (isElite && known ? _t("Affronter l'élite") : _t("Partir"));
   if (running === d.id) {
-    h += '<button class="settings-btn is-running" type="button" disabled>' + (isElite ? "Combat en cours" : "Expédition en cours") + '</button>';
+    h += '<button class="settings-btn is-running" type="button" disabled>' + (isElite ? _t("Combat en cours") : _t("Expédition en cours")) + '</button>';
   } else {
     var cs = LM.canStart(mapId, d.id);
     // v3.330.1 : vivres d'une élite rejouée
@@ -748,9 +751,9 @@ function buildLivingMapPanelHTML(mapId, running) {
     }
     if (cs.ok) h += '<button class="settings-btn primary" type="button" onclick="startLivingMapSector(\'' + d.id + '\')">' + verb + '</button>';
     else {
-      h += '<p class="lm-panel-wall">' + esc(cs.reason) + '</p>';
+      h += '<p class="lm-panel-wall">' + esc(_td(cs.reason)) + '</p>';
       // v3.260.0 : ressource d'entrée manquante -> raccourci vers les Ateliers plutôt qu'un bouton mort
-      if (cs.missingResource && typeof goToSceneCostWorkshop === "function") h += '<button class="settings-btn primary" type="button" onclick="goToSceneCostWorkshop()">Préparer aux Ateliers</button>';
+      if (cs.missingResource && typeof goToSceneCostWorkshop === "function") h += '<button class="settings-btn primary" type="button" onclick="goToSceneCostWorkshop()">' + _t("Préparer aux Ateliers") + '</button>';
       else h += '<button class="settings-btn" type="button" disabled>' + verb + '</button>';
     }
   }
@@ -767,15 +770,15 @@ function buildStoryChoiceModalHTML(chapterId) {
   if (!c) return "";
   var h = '<div class="full-menu-overlay tutorial-overlay">';
   h += '  <div class="full-menu dungeon-story-card tutorial-card story-choice-card">';
-  h += '    <div class="dungeon-story-title">' + esc(c.title || step.title) + '</div>';
-  if (c.text) h += '    <p class="story-choice-text">' + esc(c.text) + '</p>';
+  h += '    <div class="dungeon-story-title">' + esc(_td(c.title || step.title)) + '</div>';
+  if (c.text) h += '    <p class="story-choice-text">' + esc(_td(c.text)) + '</p>';
   c.options.forEach(function (o) {
     h += '    <div class="story-choice-option">';
-    h += '      <button class="settings-btn primary" type="button" onclick="chooseStoryOption(\'' + esc(chapterId) + '\', \'' + esc(o.value) + '\')">' + esc(o.label) + '</button>';
-    h += '      <p class="story-choice-desc">' + esc(o.desc || "") + '</p>';
+    h += '      <button class="settings-btn primary" type="button" onclick="chooseStoryOption(\'' + esc(chapterId) + '\', \'' + esc(o.value) + '\')">' + esc(_td(o.label)) + '</button>';
+    h += '      <p class="story-choice-desc">' + esc(_td(o.desc || "")) + '</p>';
     h += '    </div>';
   });
-  h += '    <div class="dungeon-story-actions"><button class="settings-btn" type="button" onclick="closeStoryChoiceModal()">Plus tard</button></div>';
+  h += '    <div class="dungeon-story-actions"><button class="settings-btn" type="button" onclick="closeStoryChoiceModal()">' + _t("Plus tard") + '</button></div>';
   h += '  </div>';
   h += '</div>';
   return h;

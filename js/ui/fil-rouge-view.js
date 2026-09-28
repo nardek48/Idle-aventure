@@ -12,7 +12,7 @@ var filRougeLastKey = null;
 var filRougeShown = []; // propositions affichées dans la bulle : le toucher agit sur CE qui est vu
 
 function buildHudFilRougeButtonHTML() {
-  return '<button type="button" class="nb-hud-bag-btn hud-fr-btn" id="hud-filrouge-btn" onclick="openFilRougeBubble()" aria-label="Fil rouge : que faire maintenant">'
+  return '<button type="button" class="nb-hud-bag-btn hud-fr-btn" id="hud-filrouge-btn" onclick="openFilRougeBubble()" aria-label="' + _t("Fil rouge : que faire maintenant") + '">'
     + '<span class="hud-fr-disc" id="hud-filrouge-disc"></span><span class="hud-fr-thread"></span>'
     + '<span id="hud-filrouge-badge" class="nb-hud-bag-badge" style="display:none;">!</span></button>';
 }
@@ -32,7 +32,7 @@ function renderHudFilRouge() {
   filRougeLastKey = key;
 
   var disc = document.getElementById("hud-filrouge-disc");
-  if (disc) disc.innerHTML = renderIconOrEmojiHTML(a.icon, "hud-fr-ico", a.title);
+  if (disc) disc.innerHTML = renderIconOrEmojiHTML(a.icon, "hud-fr-ico", _td(a.title));
   var badge = document.getElementById("hud-filrouge-badge");
   if (badge) badge.style.display = a.urgent ? "flex" : "none";
   // Une seule lueur quand la proposition change, jamais en boucle (pas de pression)
@@ -56,13 +56,13 @@ function openFilRougeBubble() {
   var also = FilRouge.also();
   filRougeShown = [a].concat(also);
   var h = '<div class="fr-bubble-bg" onclick="if(event.target===this)closeFilRougeBubble()">';
-  h += '<div class="fr-bubble" id="fr-bubble"><div class="fr-kicker">Fil rouge</div>';
-  h += '<div class="fr-row">' + renderIconOrEmojiHTML(a.icon, "fr-row-ico", a.title) + '<div><div class="fr-title">' + esc(a.title) + '</div>'
+  h += '<div class="fr-bubble" id="fr-bubble"><div class="fr-kicker">' + _t("Fil rouge") + '</div>';
+  h += '<div class="fr-row">' + renderIconOrEmojiHTML(a.icon, "fr-row-ico", _td(a.title)) + '<div><div class="fr-title">' + esc(_td(a.title)) + '</div>'
     + '<div class="fr-reason">' + esc(a.reason) + '</div></div></div>';
   h += '<button type="button" class="settings-btn primary fr-go" onclick="filRougeGo(0)">' + esc(a.goLabel) + '</button>';
   if (also.length) {
-    h += '<div class="fr-also"><span>Aussi :</span> ' + also.map(function (x, i) {
-      return '<button type="button" class="fr-also-btn" onclick="filRougeGo(' + (i + 1) + ')">' + esc(x.title) + '</button>';
+    h += '<div class="fr-also"><span>' + _t("Aussi :") + '</span> ' + also.map(function (x, i) {
+      return '<button type="button" class="fr-also-btn" onclick="filRougeGo(' + (i + 1) + ')">' + esc(_td(x.title)) + '</button>';
     }).join(" · ") + '</div>';
   }
   h += '</div></div>';
@@ -77,8 +77,10 @@ function positionFilRougeBubble() {
   var bub = document.getElementById("fr-bubble");
   var btn = document.getElementById("hud-filrouge-btn");
   if (!bub || !btn || typeof btn.getBoundingClientRect !== "function") return;
-  var r = btn.getBoundingClientRect();
-  var vw = window.innerWidth || 390;
+  var f = window.DesktopScale ? DesktopScale.factorOf(btn) : 1; // v3.367.0 : mode PC zoomé, px d'écran -> px CSS
+  var b = btn.getBoundingClientRect();
+  var r = { left: b.left / f, width: b.width / f, bottom: b.bottom / f };
+  var vw = (window.innerWidth || 390) / f;
   var w = bub.offsetWidth || 300;
   var cx = r.left + r.width / 2;
   var left = Math.max(8, Math.min(vw - w - 8, cx - w + 40));
@@ -123,10 +125,10 @@ function showHowToToast(message, kind, ctx) {
   if (!root) return how;
   root.innerHTML = '<div class="howto-toast" role="status">'
     + '<div class="howto-msg">' + esc(message) + '</div>'
-    + (how.text && how.text !== message ? '<div class="howto-why">' + esc(how.text) + '</div>' : '')
-    + '<div class="howto-row"><span class="howto-kicker">Pour y arriver</span>'
-    + '<button type="button" class="howto-go" onclick="howToGo()">' + esc(how.label) + ' ›</button>'
-    + '<button type="button" class="howto-close" aria-label="Fermer" onclick="closeHowToToast()">✕</button></div></div>';
+    + (how.text && how.text !== message ? '<div class="howto-why">' + esc(_td(how.text)) + '</div>' : '')
+    + '<div class="howto-row"><span class="howto-kicker">' + _t("Pour y arriver") + '</span>'
+    + '<button type="button" class="howto-go" onclick="howToGo()">' + esc(_td(how.label)) + ' ›</button>'
+    + '<button type="button" class="howto-close" aria-label="' + _t("Fermer") + '" onclick="closeHowToToast()">✕</button></div></div>';
   if (howToTimer) clearTimeout(howToTimer);
   howToTimer = setTimeout(closeHowToToast, HOWTO_TOAST_MS);
   return how;

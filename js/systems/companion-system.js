@@ -71,12 +71,12 @@ var CompanionManager = {
     // v3.322.0 : Voie libre (Mémoire niveau 7) — un changement gratuit par jour, hors multiplicateur
     var free = !!(window.MemoryManager && MemoryManager.isVoieFreeToday());
     var cost = free ? 0 : getVoieChangeCost(st.voieChanges);
-    if ((game.gold || 0) < cost) { if (typeof showToast === "function") showToast("Pas assez d'or", 1200); return false; }
+    if ((game.gold || 0) < cost) { if (typeof showToast === "function") showToast(_t("Pas assez d'or"), 1200); return false; }
     game.gold -= cost;
     st.voie = voieId;
     if (free) MemoryManager.useVoieFree(); else st.voieChanges += 1;
     st.hp = this.maxHpOf(companionId);
-    if (typeof addLog === "function") addLog("🔁 " + raw.name + " : " + raw.voies[voieId].label + ".", "event");
+    if (typeof addLog === "function") addLog("🔁 " + _td(raw.name) + " : " + _td(raw.voies[voieId].label) + ".", "event");
     if (typeof saveGame === "function") saveGame();
     if (typeof renderAll === "function") renderAll();
     return true;
@@ -96,7 +96,7 @@ var CompanionManager = {
     st.present = true;
     st.hp = this.maxHpOf(companionId);
     if (def.lines && def.lines.join && typeof addLog === "function") {
-      addLog("🤝 " + def.name + " — « " + def.lines.join + " »", "event");
+      addLog("🤝 " + _td(def.name) + " — « " + _td(def.lines.join) + " »", "event");
     }
     if (typeof saveGame === "function") saveGame();
     return true;
@@ -125,7 +125,7 @@ var CompanionManager = {
     var st = this.state(companionId);
     if (!st || !st.unlocked) return false;
     if (present && this.partyIds().length >= COMPANION_MAX_PRESENT && !st.present) {
-      if (typeof showToast === "function") showToast("Deux compagnons au maximum", 1400);
+      if (typeof showToast === "function") showToast(_t("Deux compagnons au maximum"), 1400);
       return false;
     }
     st.present = !!present;
@@ -420,8 +420,7 @@ var CompanionManager = {
        de l'ennemi tombaient plus vite sans explication. Une ligne de journal, comme
        pour le soin et pour les coups qu'il encaisse. */
     if (typeof addLog === "function") {
-      addLog("🗡️ " + (actor.name || "Compagnon") + " frappe " + (target.name || "l'ennemi")
-        + " (-" + (typeof formatNumber === "function" ? formatNumber(dmg) : dmg) + ")", "normal");
+      addLog("🗡️ " + _t("{x} frappe {y} (-{n})", { x: actor.name ? _td(actor.name) : _t("Compagnon"), y: target.name ? _td(target.name) : _t("l'ennemi"), n: (typeof formatNumber === "function" ? formatNumber(dmg) : dmg) }), "normal");
     }
     return true;
   },
@@ -442,7 +441,7 @@ var CompanionManager = {
       actor.cooldown = Number(skill.cooldown || 0);
       if (typeof actor.charges === "number") actor.charges = Math.max(0, actor.charges - 1);
       if (typeof addLog === "function") {
-        addLog("💚 " + def.name + " — " + skill.name + " : +" + (typeof formatNumber === "function" ? formatNumber(healed) : healed) + " PV à " + (t.name || "toi"), "event");
+        addLog("💚 " + _t("{x} — {s} : +{n} PV à {y}", { x: _td(def.name), s: _td(skill.name), n: (typeof formatNumber === "function" ? formatNumber(healed) : healed), y: t.name ? _td(t.name) : _t("toi") }), "event");
       }
       if (typeof renderHeroHp === "function") renderHeroHp();
       return true;
@@ -460,7 +459,7 @@ var CompanionManager = {
       var soin = Math.max(1, Math.floor(actor.maxHp * Number(skill.value || 0)));
       actor.hp = Math.min(actor.maxHp, actor.hp + soin);
       actor.cooldown = Number(skill.cooldown || 0);
-      if (typeof addLog === "function") addLog("🛡️ " + def.name + " — " + skill.name + " : il attire les coups (+" + (typeof formatNumber === "function" ? formatNumber(soin) : soin) + " PV)", "event");
+      if (typeof addLog === "function") addLog("🛡️ " + _t("{x} — {s} : il attire les coups (+{n} PV)", { x: _td(def.name), s: _td(skill.name), n: (typeof formatNumber === "function" ? formatNumber(soin) : soin) }), "event");
       return true;
     }
 
@@ -471,7 +470,7 @@ var CompanionManager = {
       var dmg = Math.max(1, Math.floor(Number(actor.damage || 1) * Number(skill.value || 1)));
       CombatEngine.dealDamage(dmg, false, true, true, cible);
       actor.cooldown = Number(skill.cooldown || 0);
-      if (typeof addLog === "function") addLog("🎯 " + def.name + " — " + skill.name + " sur " + (cible.name || "l'ennemi") + " (-" + (typeof formatNumber === "function" ? formatNumber(dmg) : dmg) + ")", "event");
+      if (typeof addLog === "function") addLog("🎯 " + _t("{x} — {s} sur {y} (-{n})", { x: _td(def.name), s: _td(skill.name), y: cible.name ? _td(cible.name) : _t("l'ennemi"), n: (typeof formatNumber === "function" ? formatNumber(dmg) : dmg) }), "event");
       return true;
     }
 
@@ -491,7 +490,7 @@ var CompanionManager = {
     var def = actor && getCompanionDef(actor.companionId);
     if (!def) return;
     if (typeof addLog === "function") {
-      addLog("💤 " + (def.lines && def.lines.ko ? def.lines.ko : def.name + " est hors de combat."), "event");
+      addLog("💤 " + (def.lines && def.lines.ko ? _td(def.lines.ko) : _t("{x} est hors de combat.", { x: _td(def.name) })), "event");
     }
     actor.threat = 0;
   },
@@ -504,11 +503,11 @@ var CompanionManager = {
     if (!st || !st.unlocked) return false;
     var cost = getCompanionUpgradeCost(companionId, st.upgrades);
     if (cost == null) {
-      if (typeof showToast === "function") showToast("Ligne d'améliorations terminée", 1400);
+      if (typeof showToast === "function") showToast(_t("Ligne d'améliorations terminée"), 1400);
       return false;
     }
     if ((game.gold || 0) < cost) {
-      if (typeof showToast === "function") showToast("Pas assez d'or", 1200);
+      if (typeof showToast === "function") showToast(_t("Pas assez d'or"), 1200);
       return false;
     }
     game.gold -= cost;

@@ -29,12 +29,12 @@ function sceneEstimateClass(estimate) {
 }
 
 function sceneEstimateLabel(estimate) {
-  if (estimate === "high") return "Bonne chance";
-  if (estimate === "medium") return "Chance moyenne";
-  return "Faible chance";
+  if (estimate === "high") return _t("Bonne chance");
+  if (estimate === "medium") return _t("Chance moyenne");
+  return _t("Faible chance");
 }
 
-var SCENE_STAT_LABELS = { power: "Puissance", precision: "Précision", endurance: "Endurance" };
+var SCENE_STAT_LABELS = { power: _t("Puissance"), precision: _t("Précision"), endurance: _t("Endurance") }; // v3.370.0 : traduits à la définition (i18n D2)
 
 /* --- Routeur principal de l'onglet "scene" (appelé par renderPanel(), case "scene") --- */
 
@@ -94,38 +94,38 @@ window.findSceneCostRecipe = findSceneCostRecipe;
 function buildSceneStartBlockHTML(block) {
   var template = (window.SceneEngine && SceneEngine.getTemplate) ? SceneEngine.getTemplate(block.templateId) : null;
   var cost = template && template.entryCost;
-  var h = '<div class="panel-title">Expédition</div>';
+  var h = '<div class="panel-title">' + _t("Expédition") + '</div>';
   h += '<div class="scene-landing scene-landing-blocked">';
   if (cost) {
     var def = (window.WAREHOUSE_RESOURCES || {})[cost.resourceId] || {};
     var need = Number(cost.amount || 0);
     var have = (window.WarehouseManager && WarehouseManager.getAmount) ? Number(WarehouseManager.getAmount(cost.resourceId) || 0) : 0;
-    var name = def.name || cost.resourceId;
+    var name = def.name ? _td(def.name) : cost.resourceId;
     h += '<div class="scene-landing-icon scene-cost-icon' + (have >= need ? ' is-ok' : '') + '">' + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.png", "scene-cost-img", name) + '</div>';
     if (have < need) {
-      h += '<div class="scene-cost-title">Il te manque ' + (need - have > 1 ? (need - have) + ' ' : 'une ') + esc(name) + '</div>';
-      h += '<p class="scene-landing-text">' + esc((template.title || "Cette expédition") + " consomme " + need + " " + name + " au départ. Tu en as " + have + ".") + '</p>';
+      h += '<div class="scene-cost-title">' + esc(need - have > 1 ? _t("Il te manque {n} {x}", { n: need - have, x: name }) : _t("Il te manque une {x}", { x: name })) + '</div>';
+      h += '<p class="scene-landing-text">' + esc(_t("{q} consomme {n} {x} au départ. Tu en as {h}.", { q: template.title ? _td(template.title) : _t("Cette expédition"), n: need, x: name, h: have })) + '</p>';
       var recipe = findSceneCostRecipe(cost.resourceId);
       if (recipe) {
-        h += '<div class="scene-cost-recipe"><span class="scene-cost-recipe-label">' + esc(recipe.workshopName) + '</span>';
+        h += '<div class="scene-cost-recipe"><span class="scene-cost-recipe-label">' + esc(_td(recipe.workshopName)) + '</span>';
         recipe.inputs.forEach(function (inp) {
           var rd = (window.WAREHOUSE_RESOURCES || {})[inp.resourceId] || {};
           var got = (window.WarehouseManager && WarehouseManager.getAmount) ? Number(WarehouseManager.getAmount(inp.resourceId) || 0) : 0;
-          h += '<span class="scene-cost-input' + (got >= inp.quantity ? '' : ' is-missing') + '">' + renderIconOrEmojiHTML(rd.icon || "", "scene-cost-input-img", rd.name || inp.resourceId) + formatNumber(got) + '/' + formatNumber(inp.quantity) + '</span>';
+          h += '<span class="scene-cost-input' + (got >= inp.quantity ? '' : ' is-missing') + '">' + renderIconOrEmojiHTML(rd.icon || "", "scene-cost-input-img", rd.name ? _td(rd.name) : inp.resourceId) + formatNumber(got) + '/' + formatNumber(inp.quantity) + '</span>';
         });
         h += '</div>';
-        h += '<button class="settings-btn primary" type="button" onclick="goToSceneCostWorkshop()">Préparer aux Ateliers</button>';
+        h += '<button class="settings-btn primary" type="button" onclick="goToSceneCostWorkshop()">' + _t("Préparer aux Ateliers") + '</button>';
       }
     } else {
-      h += '<div class="scene-cost-title">' + esc(name) + ' prête</div>';
-      h += '<p class="scene-landing-text">Tu as ce qu\u2019il faut pour partir.</p>';
-      h += '<button class="settings-btn primary" type="button" onclick="retrySceneStart()">Partir</button>';
+      h += '<div class="scene-cost-title">' + esc(_t("{x} prête", { x: name })) + '</div>';
+      h += '<p class="scene-landing-text">' + _t("Tu as ce qu’il faut pour partir.") + '</p>';
+      h += '<button class="settings-btn primary" type="button" onclick="retrySceneStart()">' + _t("Partir") + '</button>';
     }
   } else {
     h += '<div class="scene-landing-icon"><img class=ico-inline src=images/Icons/system/warning.png></div>';
-    h += '<p class="scene-landing-text">' + esc(block.reason || "Départ impossible pour l\u2019instant.") + '</p>';
+    h += '<p class="scene-landing-text">' + esc(block.reason ? _td(block.reason) : _t("Départ impossible pour l’instant.")) + '</p>';
   }
-  h += '<button class="settings-btn" type="button" onclick="leaveSceneStartBlock()">Voir le tableau de missions</button>';
+  h += '<button class="settings-btn" type="button" onclick="leaveSceneStartBlock()">' + _t("Voir le tableau de missions") + '</button>';
   h += '</div>';
   return h;
 }
@@ -156,11 +156,11 @@ function buildSceneLandingHTML() {
     return buildSceneCompleteHTML(); // bilan pas encore consulté (ex. reprise post-rechargement)
   }
   if (sceneStartBlock) return buildSceneStartBlockHTML(sceneStartBlock); // v3.260.0
-  var h = '<div class="panel-title">Expédition</div>';
+  var h = '<div class="panel-title">' + _t("Expédition") + '</div>';
   h += '<div class="scene-landing">';
   h += '<div class="scene-landing-icon"><img class=ico-inline src=images/Icons/scene/scene_cavern.png></div>';
-  h += '<p class="scene-landing-text">Aucune expédition en cours, direction le tableau de missions.</p>';
-  h += '<button class="settings-btn primary" type="button" onclick="switchTab(\'quests\')">Voir le tableau de missions</button>';
+  h += '<p class="scene-landing-text">' + _t("Aucune expédition en cours, direction le tableau de missions.") + '</p>';
+  h += '<button class="settings-btn primary" type="button" onclick="switchTab(\'quests\')">' + _t("Voir le tableau de missions") + '</button>';
   h += '</div>';
   return h;
 }
@@ -346,10 +346,10 @@ function buildSceneStatusBarHTML(run, opts) {
     : Math.floor((game.sortie && game.sortie.loot && game.sortie.loot.resources && game.sortie.loot.resources[template.lootResource]) || 0);
   var lootLabel;
   if (isGold) {
-    lootLabel = "Or";
+    lootLabel = _t("Or");
   } else {
     var resDef = (window.WAREHOUSE_RESOURCES || {})[template.lootResource];
-    lootLabel = (resDef && resDef.name) || template.lootResource;
+    lootLabel = (resDef && resDef.name) ? _td(resDef.name) : template.lootResource;
   }
 
   // v3.195.0 : depthMax RÉEL du run = intensité si présente (même règle que
@@ -360,30 +360,30 @@ function buildSceneStatusBarHTML(run, opts) {
 
   var h = SCENE_PATH_TEMPLATE_IDS.indexOf(run.templateId) !== -1 ? buildScenePathHTML(run) : buildSceneProgressHTML(run);
   h += '<div class="scene-status-bar">';
-  h += '<span class="scene-status-pill scene-status-depth">Profondeur ' + (run.depth + 1) + '/' + displayDepthMax + '</span>';
+  h += '<span class="scene-status-pill scene-status-depth">' + _t("Profondeur {a}/{b}", { a: run.depth + 1, b: displayDepthMax }) + '</span>';
   h += '<span class="scene-status-pill scene-status-loot">' + esc(lootLabel) + ' : ' + lootAmount + '</span>';
   // v3.198.0 : le plafond vient du canevas (template.maxInjuries) — la Petite Aventure
   // evacue a 2, expedition_faille et les quetes migrees restent a 3.
   var injuryMax = SceneRunManager.getMaxInjuries(run.templateId);
-  h += '<span class="scene-status-pill scene-status-injury' + (run.injuries.length >= injuryMax - 1 ? ' is-low' : '') + '">Blessures : ' + run.injuries.length + '/' + injuryMax + '</span>';
+  h += '<span class="scene-status-pill scene-status-injury' + (run.injuries.length >= injuryMax - 1 ? ' is-low' : '') + '">' + _t("Blessures : {a}/{b}", { a: run.injuries.length, b: injuryMax }) + '</span>';
   // v3.195.0 : pastille Souffle — seuils visuels (is-low sous 30, cohérent avec le seuil qui
   // rend l'option "power" indisponible pour la plupart des gabarits, breathCost 3).
   if (typeof run.breath === "number") {
     // v3.199.0 : seuil d'alerte relevé de 30 à 40. La voie d'endurance coûte 20 et le passage
     // de palier 5 : sous 40, le joueur est déjà à deux paliers de l'épuisement, c'est là qu'il
     // doit le voir, pas quand il est trop tard pour boire ou viser une source.
-    h += '<span class="scene-status-pill scene-status-breath' + (run.breath < 40 ? ' is-low' : '') + '">Souffle : ' + Math.round(run.breath) + '/100</span>';
+    h += '<span class="scene-status-pill scene-status-breath' + (run.breath < 40 ? ' is-low' : '') + '">' + _t("Souffle : {n}/100", { n: Math.round(run.breath) }) + '</span>';
   }
-  if (run.torchCharges > 0) h += '<span class="scene-status-pill">Torche x' + run.torchCharges + '</span>';
+  if (run.torchCharges > 0) h += '<span class="scene-status-pill">' + _t("Torche x{n}", { n: run.torchCharges }) + '</span>';
   // v3.198.0 : corde et provisions ont des charges — le joueur doit les voir fondre.
-  if (Number(run.ropeCharges || 0) > 0) h += '<span class="scene-status-pill">Corde x' + run.ropeCharges + '</span>';
-  if (Number(run.provisionCharges || 0) > 0) h += '<span class="scene-status-pill">Provisions x' + run.provisionCharges + '</span>';
+  if (Number(run.ropeCharges || 0) > 0) h += '<span class="scene-status-pill">' + _t("Corde x{n}", { n: run.ropeCharges }) + '</span>';
+  if (Number(run.provisionCharges || 0) > 0) h += '<span class="scene-status-pill">' + _t("Provisions x{n}", { n: run.provisionCharges }) + '</span>';
   // v3.196.0 : pastille mutateur, visible tout le run (pas seulement à l'annonce) — omise si
   // "aucun" (rien à rappeler au joueur dans ce cas, cohérent avec les autres pastilles qui
   // n'apparaissent que si pertinentes, ex. torche).
   var statusMutator = SceneRunManager.getActiveMutator();
   if (statusMutator.id && statusMutator.id !== "aucun") {
-    h += '<span class="scene-status-pill scene-status-mutator">' + renderIconOrEmojiHTML(statusMutator.icon, "scene-pill-ico", "") + ' ' + esc(statusMutator.label) + '</span>';
+    h += '<span class="scene-status-pill scene-status-mutator">' + renderIconOrEmojiHTML(statusMutator.icon, "scene-pill-ico", "") + ' ' + esc(_td(statusMutator.label)) + '</span>';
   }
   h += '</div>';
   // v3.195.0 : bouton Gourde, utilisable à tout moment tant qu'elle est en loadout et que le
@@ -392,8 +392,8 @@ function buildSceneStatusBarHTML(run, opts) {
   if (run.gourdeAvailable && run.breath < 100) {
     h += '<div class="scene-actions" style="margin-top:0;margin-bottom:8px;">';
     // v3.304.0 : montant réel (40 avec l'Autel de pierre tenu), gorgées restantes si comptées
-    var gorgees = run.gourdeUses != null ? (run.gourdeUses > 1 ? ", " + run.gourdeUses + " gorgées" : ", dernière gorgée") : "";
-    h += '  <button class="settings-btn" type="button" onclick="useSceneGourde()">Boire à la gourde (+' + SceneRunManager.getGourdeAmount() + ' Souffle' + gorgees + ')</button>';
+    var gorgees = run.gourdeUses != null ? (run.gourdeUses > 1 ? ", " + _t("{n} gorgées", { n: run.gourdeUses }) : ", " + _t("dernière gorgée")) : "";
+    h += '  <button class="settings-btn" type="button" onclick="useSceneGourde()">' + _t("Boire à la gourde (+{n} Souffle{g})", { n: SceneRunManager.getGourdeAmount(), g: gorgees }) + '</button>';
     h += '</div>';
   }
   // v3.303.0 : objets à boire (l'Outre pleine), une charge par exemplaire emporté
@@ -402,8 +402,7 @@ function buildSceneStatusBarHTML(run, opts) {
     Object.keys(run.breathItems).forEach(function (itemId) {
       if (!(Number(run.breathItems[itemId] || 0) > 0) || !tplB.items[itemId]) return;
       h += '<div class="scene-actions" style="margin-top:0;margin-bottom:8px;">';
-      h += '  <button class="settings-btn" type="button" onclick="useSceneBreathItem(\'' + esc(itemId) + '\')">Boire : ' + esc(tplB.items[itemId].name)
-        + ' (+' + SceneRunManager.getBreathItemAmount(itemId, tplB) + ' Souffle' + (run.breathItems[itemId] > 1 ? ', x' + run.breathItems[itemId] : '') + ')</button>';
+      h += '  <button class="settings-btn" type="button" onclick="useSceneBreathItem(\'' + esc(itemId) + '\')">' + esc(_t("Boire : {x} (+{n} Souffle{c})", { x: _td(tplB.items[itemId].name), n: SceneRunManager.getBreathItemAmount(itemId, tplB), c: run.breathItems[itemId] > 1 ? ', x' + run.breathItems[itemId] : '' })) + '</button>';
       h += '</div>';
     });
   }
@@ -412,7 +411,7 @@ function buildSceneStatusBarHTML(run, opts) {
   // grave : l'autel et la source ne retirent que les legeres.
   if (Number(run.provisionCharges || 0) > 0 && run.injuries.length > 0) {
     h += '<div class="scene-actions" style="margin-top:0;margin-bottom:8px;">';
-    h += '  <button class="settings-btn" type="button" onclick="useSceneProvision()">Manger les provisions (soigne la pire blessure)</button>';
+    h += '  <button class="settings-btn" type="button" onclick="useSceneProvision()">' + _t("Manger les provisions (soigne la pire blessure)") + '</button>';
     h += '</div>';
   }
   // Bouton "Rentrer" toujours accessible tant que le run est engagé (décision Seb : le
@@ -421,7 +420,7 @@ function buildSceneStatusBarHTML(run, opts) {
   // (rentrer n'a plus de sens, il ne reste que les deux coffres) via opts.hideLeave.
   if (!opts.hideLeave) {
     h += '<div class="scene-actions scene-actions-leave">';
-    h += '  <button class="settings-btn scene-btn-leave" type="button" onclick="leaveSceneNow()">Rentrer au camp</button>';
+    h += '  <button class="settings-btn scene-btn-leave" type="button" onclick="leaveSceneNow()">' + _t("Rentrer au camp") + '</button>';
     h += '</div>';
   }
   return h;
@@ -437,29 +436,29 @@ function buildSceneProfileChoiceHTML() {
   if (!run) return "";
   var template = SceneEngine.getTemplate(run.templateId);
 
-  var h = '<div class="panel-title">' + esc(template.title) + '</div>';
+  var h = '<div class="panel-title">' + esc(_td(template.title)) + '</div>';
   h += '<div class="scene-screen">';
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-title">Choisis ton approche</div>';
+  h += '    <div class="scene-heading-title">' + _t("Choisis ton approche") + '</div>';
   // v3.256.0 (Cartes Vivantes, C-2) : run ciblé — le secteur, sa ligne de lore, et l'intensité que l'anneau impose.
   if (run.livingMap && window.LivingMapManager) {
     var lmDef = LivingMapManager.getSectorDef(run.livingMap.mapId, run.livingMap.sectorId);
     var lmInt = lmDef && window.SCENE_INTENSITY && SCENE_INTENSITY[LivingMapManager.getIntensity(lmDef)];
-    if (lmDef) h += '    <div class="scene-map-target"><b>' + esc(lmDef.name) + '</b> · ' + esc(lmInt ? lmInt.label : "") + ' — ' + esc(lmDef.lore || "") + '</div>';
+    if (lmDef) h += '    <div class="scene-map-target"><b>' + esc(_td(lmDef.name)) + '</b> · ' + esc(lmInt ? _td(lmInt.label) : "") + ' — ' + esc(_td(lmDef.lore || "")) + '</div>';
   }
-  h += '    <div class="scene-heading-text">Le butin final est identique quel que soit ton choix — seul le chemin change.</div>';
+  h += '    <div class="scene-heading-text">' + _t("Le butin final est identique quel que soit ton choix — seul le chemin change.") + '</div>';
   h += '  </div>';
 
   h += '  <div class="scene-card-grid">';
   h += '<button type="button" class="scene-card" onclick="chooseSceneProfile(\'bourrin\')">';
   h += '<span class="scene-card-icon"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png></span>';
-  h += '<span class="scene-card-label">Bourrin</span>';
-  h += '<span class="scene-card-sub">Rapide, plus de combats, aucune attente.</span>';
+  h += '<span class="scene-card-label">' + _t("Bourrin") + '</span>';
+  h += '<span class="scene-card-sub">' + _t("Rapide, plus de combats, aucune attente.") + '</span>';
   h += '</button>';
   h += '<button type="button" class="scene-card" onclick="chooseSceneProfile(\'prudent\')">';
   h += '<span class="scene-card-icon"><img class=ico-inline src=images/Icons/combat_stats/stat_defense.png></span>';
-  h += '<span class="scene-card-label">Prudent</span>';
-  h += '<span class="scene-card-sub">Plus long, peu de combats, quelques attentes à faire pendant que tu vaques à autre chose.</span>';
+  h += '<span class="scene-card-label">' + _t("Prudent") + '</span>';
+  h += '<span class="scene-card-sub">' + _t("Plus long, peu de combats, quelques attentes à faire pendant que tu vaques à autre chose.") + '</span>';
   h += '</button>';
   h += '  </div>';
   h += '</div>';
@@ -472,7 +471,7 @@ function chooseSceneProfile(profileId) {
     showToast(result.reason, 1600);
     return;
   }
-  sceneLog(profileId === "bourrin" ? "Tu pars en terrain conquérant." : "Tu pars à pas mesurés.");
+  sceneLog(profileId === "bourrin" ? _t("Tu pars en terrain conquérant.") : _t("Tu pars à pas mesurés."));
   refreshSceneScreen();
 }
 window.chooseSceneProfile = chooseSceneProfile;
@@ -487,11 +486,11 @@ function buildSceneIntensityChoiceHTML() {
   if (!run) return "";
   var template = SceneEngine.getTemplate(run.templateId);
 
-  var h = '<div class="panel-title">' + esc(template.title) + '</div>';
+  var h = '<div class="panel-title">' + esc(_td(template.title)) + '</div>';
   h += '<div class="scene-screen">';
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-title">Choisis ton intensité</div>';
-  h += '    <div class="scene-heading-text">Plus le parcours est long et périlleux, plus le butin final est important.</div>';
+  h += '    <div class="scene-heading-title">' + _t("Choisis ton intensité") + '</div>';
+  h += '    <div class="scene-heading-text">' + _t("Plus le parcours est long et périlleux, plus le butin final est important.") + '</div>';
   h += '  </div>';
 
   h += '  <div class="scene-card-grid">';
@@ -499,8 +498,8 @@ function buildSceneIntensityChoiceHTML() {
     var intensity = SCENE_INTENSITY[key];
     h += '<button type="button" class="scene-card" onclick="chooseSceneIntensity(\'' + esc(key) + '\')">';
     h += '<span class="scene-card-icon">' + renderIconOrEmojiHTML(intensity.icon, "scene-card-ico", "") + '</span>';
-    h += '<span class="scene-card-label">' + esc(intensity.label) + '</span>';
-    h += '<span class="scene-card-sub">' + esc(intensity.desc) + '</span>';
+    h += '<span class="scene-card-label">' + esc(_td(intensity.label)) + '</span>';
+    h += '<span class="scene-card-sub">' + esc(_td(intensity.desc)) + '</span>';
     h += '</button>';
   });
   h += '  </div>';
@@ -515,7 +514,7 @@ function chooseSceneIntensity(intensityId) {
     return;
   }
   var intensity = SCENE_INTENSITY[intensityId];
-  sceneLog(intensity.label + ". Le chemin est posé."); // v3.197.0 (bible B §4.4)
+  sceneLog(_t("{x}. Le chemin est posé.", { x: _td(intensity.label) })); // v3.197.0 (bible B §4.4)
   refreshSceneScreen();
 }
 window.chooseSceneIntensity = chooseSceneIntensity;
@@ -531,15 +530,15 @@ function buildSceneMutatorAnnounceHTML() {
   var template = SceneEngine.getTemplate(run.templateId);
   var mutator = SceneRunManager.getActiveMutator();
 
-  var h = '<div class="panel-title">' + esc(template.title) + '</div>';
+  var h = '<div class="panel-title">' + esc(_td(template.title)) + '</div>';
   h += '<div class="scene-screen">';
   h += '  <div class="scene-mutator-announce">';
   h += '    <span class="scene-mutator-icon">' + renderIconOrEmojiHTML(mutator.icon || "images/Icons/scene/weather_clear.png", "scene-mutator-img", "") + '</span>';
-  h += '    <div class="scene-mutator-label">' + esc(mutator.label || "Rien à signaler") + '</div>';
-  h += '    <div class="scene-mutator-desc">' + esc(mutator.desc || "") + '</div>';
+  h += '    <div class="scene-mutator-label">' + esc(mutator.label ? _td(mutator.label) : _t("Rien à signaler")) + '</div>';
+  h += '    <div class="scene-mutator-desc">' + esc(_td(mutator.desc || "")) + '</div>';
   h += '  </div>';
   h += '  <div class="scene-actions">';
-  h += '    <button type="button" class="settings-btn" onclick="acknowledgeSceneMutator()">Continuer</button>';
+  h += '    <button type="button" class="settings-btn" onclick="acknowledgeSceneMutator()">' + _t("Continuer") + '</button>';
   h += '  </div>';
   h += '</div>';
   return h;
@@ -565,11 +564,11 @@ function buildScenePreparationHTML() {
   var template = SceneEngine.getTemplate(run.templateId);
   var slots = Number(template.loadoutSlots || 3);
 
-  var h = '<div class="panel-title">Préparation de l\u2019expédition</div>';
+  var h = '<div class="panel-title">' + _t("Préparation de l’expédition") + '</div>';
   h += '<div class="scene-screen">';
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-title">' + esc(template.title) + '</div>';
-  h += '    <div class="scene-heading-text">Choisis ' + slots + ' objets pour ton départ (' + scenePrepSelected.length + '/' + slots + '). Ton équipement décide de ton style d\u2019expédition.</div>';
+  h += '    <div class="scene-heading-title">' + esc(_td(template.title)) + '</div>';
+  h += '    <div class="scene-heading-text">' + _t("Choisis {n} objets pour ton départ ({a}/{n}). Ton équipement décide de ton style d’expédition.", { n: slots, a: scenePrepSelected.length }) + '</div>';
   h += '  </div>';
 
   h += '  <div class="scene-card-grid">';
@@ -588,14 +587,14 @@ function buildScenePreparationHTML() {
     h += '<button type="button" class="scene-card' + (selectedCount > 0 ? ' is-selected' : '') + '"'
       + ' onclick="toggleScenePrepItem(\'' + esc(itemId) + '\')"' + (disabled && selectedCount === 0 ? ' disabled' : '') + '>';
     h += '<span class="scene-card-icon">' + renderIconOrEmojiHTML(item.icon, "scene-card-ico", "") + '</span>';
-    h += '<span class="scene-card-label">' + esc(item.name) + esc(badge) + '</span>';
-    h += '<span class="scene-card-sub">' + esc(item.desc) + (maxCopies > 1 ? ' (max ' + maxCopies + ')' : '') + (stock !== null ? ' — en stock : ' + stock : '') + '</span>';
+    h += '<span class="scene-card-label">' + esc(_td(item.name)) + esc(badge) + '</span>';
+    h += '<span class="scene-card-sub">' + esc(_td(item.desc)) + (maxCopies > 1 ? ' ' + _t("(max {n})", { n: maxCopies }) : '') + (stock !== null ? ' — ' + _t("en stock : {n}", { n: stock }) : '') + '</span>';
     h += '</button>';
   });
   h += '  </div>';
 
   h += '  <div class="scene-actions">';
-  h += '    <button class="settings-btn primary" type="button"' + (scenePrepSelected.length === slots ? '' : ' disabled') + ' onclick="confirmScenePreparation()">' + esc(template.departLabel || "Descendre dans la faille") + '</button>'; // v3.304.0 : libellé par canevas
+  h += '    <button class="settings-btn primary" type="button"' + (scenePrepSelected.length === slots ? '' : ' disabled') + ' onclick="confirmScenePreparation()">' + esc(template.departLabel ? _td(template.departLabel) : _t("Descendre dans la faille")) + '</button>'; // v3.304.0 : libellé par canevas
   h += '  </div>';
   h += '</div>';
   return h;
@@ -625,7 +624,7 @@ function confirmScenePreparation() {
     showToast(result.reason, 1600);
     return;
   }
-  sceneLog("Départ, équipé de : " + scenePrepSelected.map(function (id) { return template.items[id].name; }).join(", "));
+  sceneLog(_t("Départ, équipé de : {x}", { x: scenePrepSelected.map(function (id) { return _td(template.items[id].name); }).join(", ") }));
   refreshSceneScreen();
 }
 window.confirmScenePreparation = confirmScenePreparation;
@@ -641,7 +640,7 @@ function buildSceneSlotInfo(run, slot, torchOn) {
   var icon = SCENE_NODES.icons[slot.type] || "?";
   if (slot.type === "mystere") {
     label = "???";
-    sub = SCENE_NODES.silhouettes.mystere + "\u2026";
+    sub = _td(SCENE_NODES.silhouettes.mystere) + "\u2026";
   } else if (slot.type === "obstacle") {
     var gabarit = SCENE_NODES.obstacles[slot.gabaritId];
     var bestEstimate = "low";
@@ -659,25 +658,25 @@ function buildSceneSlotInfo(run, slot, torchOn) {
       if (order[e] > order[bestEstimate]) bestEstimate = e;
     });
     var riskLvl = SceneEngine.riskLevel(slot.riskMod);
-    var gainLabel = SCENE_NODES.gainHints[riskLvl];
+    var gainLabel = _td(SCENE_NODES.gainHints[riskLvl]);
     if (torchOn) {
-      label = gabarit.name;
+      label = _td(gabarit.name);
       sub = sceneEstimateLabel(bestEstimate) + " — " + gainLabel;
     } else {
       // Sans torche : indice qualitatif au lieu d'un simple "???" (décision Seb 03/09/2026 :
       // un "???" pur ne donnait aucune base de décision). v3.121.0 : le gain relatif à la
       // porte (SCENE_NODES.gainHints) est TOUJOURS visible, torche ou non — c'est lui qui
       // rend le choix risque/récompense réel, la torche ne précise que la chance de réussite.
-      label = SCENE_NODES.labels.obstacle;
-      sub = SCENE_NODES.hints.obstacle[bestEstimate] + " — " + gainLabel;
+      label = _td(SCENE_NODES.labels.obstacle);
+      sub = _td(SCENE_NODES.hints.obstacle[bestEstimate]) + " — " + gainLabel;
     }
     subClass = sceneEstimateClass(bestEstimate);
   } else if (torchOn) {
-    label = SCENE_NODES.labels[slot.type] || "???";
-    sub = SCENE_NODES.silhouettes[slot.type];
+    label = _td(SCENE_NODES.labels[slot.type] || "???");
+    sub = _td(SCENE_NODES.silhouettes[slot.type]);
   } else {
-    label = SCENE_NODES.labels[slot.type] || "???";
-    sub = SCENE_NODES.hints[slot.type] || SCENE_NODES.silhouettes[slot.type];
+    label = _td(SCENE_NODES.labels[slot.type] || "???");
+    sub = _td(SCENE_NODES.hints[slot.type] || SCENE_NODES.silhouettes[slot.type]);
   }
   return { icon: icon, label: label, sub: sub, subClass: subClass };
 }
@@ -685,7 +684,7 @@ function buildSceneSlotInfo(run, slot, torchOn) {
 /* v3.298.0 (W-1b) : lignes du journal scripté dues à ce moment du run (canevas à journalByDepth). */
 function sceneFlushScriptedJournal(run) {
   if (!window.SceneRunManager || typeof SceneRunManager.takeJournalLines !== "function") return;
-  SceneRunManager.takeJournalLines(run).forEach(function (line) { sceneLog(esc(line)); });
+  SceneRunManager.takeJournalLines(run).forEach(function (line) { sceneLog(esc(_td(line))); });
 }
 
 function buildSceneGateChoiceHTML() {
@@ -696,17 +695,17 @@ function buildSceneGateChoiceHTML() {
   var level = SceneRunManager.getCurrentLevel();
   var torchOn = SceneRunManager.torchActiveThisLevel();
 
-  var h = '<div class="panel-title">' + esc(template.title) + '</div>';
+  var h = '<div class="panel-title">' + esc(_td(template.title)) + '</div>';
   h += '<div class="scene-screen">';
   h += buildSceneStatusBarHTML(run);
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-title">Profondeur ' + (run.depth + 1) + '</div>';
-  h += '    <div class="scene-heading-text">' + level.length + ' passages s\u2019ouvrent devant toi' + (torchOn ? ' (torche active).' : '.') + '</div>';
+  h += '    <div class="scene-heading-title">' + _t("Profondeur {n}", { n: run.depth + 1 }) + '</div>';
+  h += '    <div class="scene-heading-text">' + (torchOn ? _t("{n} passages s’ouvrent devant toi (torche active).", { n: level.length }) : _t("{n} passages s’ouvrent devant toi.", { n: level.length })) + '</div>';
   h += '  </div>';
 
   if (!torchOn && run.torchCharges > 0) {
     h += '  <div class="scene-actions" style="margin-top:0;margin-bottom:8px;">';
-    h += '    <button class="settings-btn" type="button" onclick="useSceneTorch()">Utiliser la torche (' + run.torchCharges + ' restante' + (run.torchCharges > 1 ? 's' : '') + ')</button>';
+    h += '    <button class="settings-btn" type="button" onclick="useSceneTorch()">' + _tn(run.torchCharges, "Utiliser la torche ({n} restante)", "Utiliser la torche ({n} restantes)") + '</button>';
     h += '  </div>';
   }
 
@@ -719,7 +718,7 @@ function buildSceneGateChoiceHTML() {
     h += '<span class="scene-card-icon">' + renderIconOrEmojiHTML(info.icon, "scene-card-ico", "") + '</span>';
     h += '<span class="scene-card-label">' + esc(info.label) + '</span>';
     h += '<span class="scene-card-sub' + (info.subClass ? ' ' + info.subClass : '') + '">' + esc(info.sub) + '</span>';
-    h += '<span class="scene-card-solo-hint">Touche le nœud sur le chemin pour t\u2019y engager.</span>';
+    h += '<span class="scene-card-solo-hint">' + _t("Touche le nœud sur le chemin pour t’y engager.") + '</span>';
     h += '  </div>';
   } else {
     h += '  <div class="scene-card-grid">';
@@ -748,7 +747,7 @@ window.useSceneTorch = useSceneTorch;
 function useSceneProvision() {
   var result = SceneRunManager.useSceneProvision();
   if (!result.ok) { showToast(result.reason, 1600); return; }
-  sceneLog('Tu manges. La plaie se referme.'); // v3.197.0 (bible B : narrateur proche, concret)
+  sceneLog(_t("Tu manges. La plaie se referme.")); // v3.197.0 (bible B : narrateur proche, concret)
   refreshSceneScreen();
 }
 window.useSceneProvision = useSceneProvision;
@@ -759,7 +758,7 @@ function useSceneGourde() {
     showToast(result.reason, 1600);
     return;
   }
-  sceneLog("Tu reprends ton souffle.");
+  sceneLog(_t("Tu reprends ton souffle."));
   refreshSceneScreen();
 }
 window.useSceneGourde = useSceneGourde;
@@ -772,7 +771,7 @@ function enterSceneGate(idx) {
   }
   // v3.199.0 : le franchissement peut vider le Souffle (coût de palier) ou tomber sur un
   // obstacle dont aucune voie n'est payable. Le run est déjà clos côté manager, on annonce.
-  if (result.outcome === "epuisement") sceneLog("Tu n\u2019en peux plus. On te ramène.");
+  if (result.outcome === "epuisement") sceneLog(_t("Tu n’en peux plus. On te ramène."));
   refreshSceneScreen();
 }
 window.enterSceneGate = enterSceneGate;
@@ -808,14 +807,14 @@ function buildSceneNodeHTML() {
 function buildSceneEventHTML(run) {
   var ev = SceneRunManager.getPendingEvent();
   if (!ev) return buildSceneGateChoiceHTML();
-  var h = '<div class="panel-title">' + esc(ev.title || "Quelqu'un") + '</div>';
+  var h = '<div class="panel-title">' + esc(ev.title ? _td(ev.title) : _t("Quelqu'un")) + '</div>';
   h += '<div class="scene-screen">';
   h += buildSceneStatusBarHTML(run);
-  h += '  <div class="scene-heading"><div class="scene-heading-text">' + esc(ev.annonce) + '</div></div>';
+  h += '  <div class="scene-heading"><div class="scene-heading-text">' + esc(_td(ev.annonce)) + '</div></div>';
   h += '  <div class="scene-actions scene-event-actions">';
   ev.branches.forEach(function (b) {
     var ok = SceneRunManager.canTakeEventBranch(b);
-    h += '    <button class="settings-btn' + (b.id === "passer" ? '' : ' primary') + '" type="button"' + (ok ? ' onclick="resolveSceneEvent(\'' + esc(b.id) + '\')"' : ' disabled') + '>' + esc(b.label) + '</button>';
+    h += '    <button class="settings-btn' + (b.id === "passer" ? '' : ' primary') + '" type="button"' + (ok ? ' onclick="resolveSceneEvent(\'' + esc(b.id) + '\')"' : ' disabled') + '>' + esc(_td(b.label)) + '</button>';
   });
   h += '  </div>';
   h += buildSceneLogHTML();
@@ -826,7 +825,7 @@ function buildSceneEventHTML(run) {
 function resolveSceneEvent(branchId) {
   var result = SceneRunManager.resolveEvent(branchId);
   if (!result.ok) { showToast(result.reason, 1600); return; }
-  sceneLog(esc(result.text));
+  sceneLog(esc(_td(result.text)));
   refreshSceneScreen();
 }
 window.resolveSceneEvent = resolveSceneEvent;
@@ -835,15 +834,15 @@ window.buildSceneEventHTML = buildSceneEventHTML;
 /* v3.195.0 : icônes/labels de gain relatif par profil d'option (power/precision/endurance),
    affichés sur chaque carte d'obstacle pour rendre le triangle risque/gain/coût lisible
    d'un coup d'œil, sans dupliquer les chiffres exacts de SCENE_NODES.optionProfiles. */
-var SCENE_OPTION_GAIN_LABELS = { power: "Gros butin", precision: "Bon butin", endurance: "Butin modeste" };
+var SCENE_OPTION_GAIN_LABELS = { power: _t("Gros butin"), precision: _t("Bon butin"), endurance: _t("Butin modeste") }; // v3.370.0 : traduits à la définition
 
 function buildSceneObstacleHTML(run) {
   var gabarit = SCENE_NODES.obstacles[run.pendingNode.gabaritId];
-  var h = '<div class="panel-title">' + esc(gabarit.name) + '</div>';
+  var h = '<div class="panel-title">' + esc(_td(gabarit.name)) + '</div>';
   h += '<div class="scene-screen">';
   h += buildSceneStatusBarHTML(run);
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-text">Choisis ton approche.</div>';
+  h += '    <div class="scene-heading-text">' + _t("Choisis ton approche.") + '</div>';
   h += '  </div>';
 
   h += '  <div class="scene-card-grid">';
@@ -858,17 +857,17 @@ function buildSceneObstacleHTML(run) {
     var gainLabel = SCENE_OPTION_GAIN_LABELS[key] || "";
     h += '<button type="button" class="scene-card"'
       + (canAfford ? ' onclick="resolveSceneObstacleChoice(\'' + esc(key) + '\')"' : ' disabled') + '>';
-    h += '<span class="scene-card-label">' + esc(option.label) + '</span>';
+    h += '<span class="scene-card-label">' + esc(_td(option.label)) + '</span>';
     h += '<span class="scene-card-sub">' + SCENE_STAT_LABELS[option.stat] + ' — <span class="' + sceneEstimateClass(estimate) + '">' + esc(sceneEstimateLabel(estimate)) + '</span></span>';
-    h += '<span class="scene-card-sub scene-card-cost">' + esc(gainLabel) + ' · Souffle ' + factors.breathCost + (canAfford ? '' : ' (insuffisant)') + '</span>';
+    h += '<span class="scene-card-sub scene-card-cost">' + esc(gainLabel) + ' · ' + _t("Souffle {n}", { n: factors.breathCost }) + (canAfford ? '' : ' ' + _t("(insuffisant)")) + '</span>';
     h += '</button>';
   });
   if (gabarit.ropeOption && Number(run.ropeCharges || 0) > 0) {
     h += '<button type="button" class="scene-card" onclick="resolveSceneObstacleChoice(\'corde\')">';
-    h += '<span class="scene-card-label">Assurer à la corde</span>';
-    h += '<span class="scene-card-sub is-good">Réussite garantie, gain réduit</span>';
+    h += '<span class="scene-card-label">' + _t("Assurer à la corde") + '</span>';
+    h += '<span class="scene-card-sub is-good">' + _t("Réussite garantie, gain réduit") + '</span>';
     // v3.198.0 : la corde se consomme — l'afficher evite que le joueur la croie illimitee.
-    h += '<span class="scene-card-sub scene-card-cost">Consomme la corde (x' + run.ropeCharges + ')</span>';
+    h += '<span class="scene-card-sub scene-card-cost">' + _t("Consomme la corde (x{n})", { n: run.ropeCharges }) + '</span>';
     h += '</button>';
   }
   h += '  </div>';
@@ -888,11 +887,11 @@ function resolveSceneObstacleChoice(optionKey) {
     showToast(result.reason, 1600);
     return;
   }
-  if (result.outcome === "setback") sceneLog('Échec, blessure. +' + result.gainAmount);
-  else if (result.outcome === "perfect") sceneLog('Parfait ! +' + result.gainAmount);
+  if (result.outcome === "setback") sceneLog(_t("Échec, blessure. +{n}", { n: result.gainAmount }));
+  else if (result.outcome === "perfect") sceneLog(_t("Parfait ! +{n}", { n: result.gainAmount }));
   // v3.198.0 : le seuil vient du canevas, le texte ne l'ecrit plus en dur.
-  else if (result.outcome === "evacuation") sceneLog('Tu ne tiens plus debout. On te ramène.'); // v3.197.0 (bible B §4.4)
-  else sceneLog('Réussi. +' + result.gainAmount);
+  else if (result.outcome === "evacuation") sceneLog(_t("Tu ne tiens plus debout. On te ramène.")); // v3.197.0 (bible B §4.4)
+  else sceneLog(_t("Réussi. +{n}", { n: result.gainAmount }));
 
   refreshSceneScreen();
 }
@@ -903,15 +902,15 @@ function buildSceneAutelHTML(run) {
   // au joueur qui ne porte qu'une plaie grave, elle lui couterait de l'or pour rien.
   var canHeal = SceneRunManager.canHealHere(run);
   var cost = canHeal ? Math.max(5, Math.round(run.loot * 0.2)) : 0;
-  var h = '<div class="panel-title">Autel oublié</div>';
+  var h = '<div class="panel-title">' + _t("Autel oublié") + '</div>';
   h += '<div class="scene-screen">';
   h += buildSceneStatusBarHTML(run);
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-text">' + (canHeal ? 'L\u2019autel demande ' + cost + '. Il rend une plaie.' : (run.injuries.length ? 'Il ne peut rien pour cette plaie-là.' : 'Tu n\u2019as rien à lui rendre.')) /* v3.197.0 (bible B §4.5) */ + '</div>';
+  h += '    <div class="scene-heading-text">' + (canHeal ? _t("L’autel demande {n}. Il rend une plaie.", { n: cost }) : (run.injuries.length ? _t("Il ne peut rien pour cette plaie-là.") : _t("Tu n’as rien à lui rendre."))) /* v3.197.0 (bible B §4.5) */ + '</div>';
   h += '  </div>';
   h += '  <div class="scene-actions">';
-  if (canHeal) h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneAutel(true)">Faire l\u2019offrande</button>';
-  h += '    <button class="settings-btn" type="button" onclick="resolveSceneAutel(false)">Passer son chemin</button>';
+  if (canHeal) h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneAutel(true)">' + _t("Faire l’offrande") + '</button>';
+  h += '    <button class="settings-btn" type="button" onclick="resolveSceneAutel(false)">' + _t("Passer son chemin") + '</button>';
   h += '  </div>';
   h += '</div>';
   return h;
@@ -920,20 +919,20 @@ function buildSceneAutelHTML(run) {
 function resolveSceneAutel(accept) {
   var result = SceneRunManager.resolveAutel(accept);
   if (!result.ok) { showToast(result.reason, 1600); return; }
-  sceneLog(accept ? "L\u2019autel absorbe l\u2019offrande. Une blessure se referme." : "Tu ignores l\u2019autel.");
+  sceneLog(accept ? _t("L’autel absorbe l’offrande. Une blessure se referme.") : _t("Tu ignores l’autel."));
   refreshSceneScreen();
 }
 window.resolveSceneAutel = resolveSceneAutel;
 
 function buildSceneDecouverteHTML(run) {
-  var h = '<div class="panel-title">Découverte</div>';
+  var h = '<div class="panel-title">' + _t("Découverte") + '</div>';
   h += '<div class="scene-screen">';
   h += buildSceneStatusBarHTML(run);
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-text">Quelque chose a été laissé là. Pas pour toi, mais tu es là.</div>';
+  h += '    <div class="scene-heading-text">' + _t("Quelque chose a été laissé là. Pas pour toi, mais tu es là.") + '</div>';
   h += '  </div>';
   h += '  <div class="scene-actions">';
-  h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneDecouverte()">Continuer</button>';
+  h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneDecouverte()">' + _t("Continuer") + '</button>';
   h += '  </div>';
   h += '</div>';
   return h;
@@ -942,20 +941,20 @@ function buildSceneDecouverteHTML(run) {
 function resolveSceneDecouverte() {
   var result = SceneRunManager.resolveDecouverte();
   if (!result.ok) { showToast(result.reason, 1600); return; }
-  sceneLog('Découverte : +' + result.gainAmount);
+  sceneLog(_t("Découverte : +{n}", { n: result.gainAmount }));
   refreshSceneScreen();
 }
 window.resolveSceneDecouverte = resolveSceneDecouverte;
 
 function buildSceneSourceHTML(run) {
-  var h = '<div class="panel-title">Source claire</div>';
+  var h = '<div class="panel-title">' + _t("Source claire") + '</div>';
   h += '<div class="scene-screen">';
   h += buildSceneStatusBarHTML(run);
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-text">De l\u2019eau, entre les racines. Elle est bonne.</div>';
+  h += '    <div class="scene-heading-text">' + _t("De l’eau, entre les racines. Elle est bonne.") + '</div>';
   h += '  </div>';
   h += '  <div class="scene-actions">';
-  h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneSource()">Continuer</button>';
+  h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneSource()">' + _t("Continuer") + '</button>';
   h += '  </div>';
   h += '</div>';
   return h;
@@ -964,7 +963,7 @@ function buildSceneSourceHTML(run) {
 function resolveSceneSource() {
   var result = SceneRunManager.resolveSource();
   if (!result.ok) { showToast(result.reason, 1600); return; }
-  sceneLog(result.healed ? "Tu bois longuement : une blessure se referme." : "Tu remplis ta gourde.");
+  sceneLog(result.healed ? _t("Tu bois longuement : une blessure se referme.") : _t("Tu remplis ta gourde."));
   refreshSceneScreen();
 }
 window.resolveSceneSource = resolveSceneSource;
@@ -991,20 +990,20 @@ function buildSceneBloqueurHTML(run) {
   var remainingMs = SceneRunManager.blockerRemainingMs();
   var remainingLabel = sceneFormatRemaining(remainingMs);
 
-  var h = '<div class="panel-title">Chemin long</div>';
+  var h = '<div class="panel-title">' + _t("Chemin long") + '</div>';
   h += '<div class="scene-screen">';
   h += buildSceneStatusBarHTML(run, { hideLeave: true }); // v3.125.0 : Rentrer masqué ici, voir note ci-dessous
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-title">' + (ready ? "Le chemin est dégagé." : "Le chemin est long.") + '</div>';
+  h += '    <div class="scene-heading-title">' + (ready ? _t("Le chemin est dégagé.") : _t("Le chemin est long.")) + '</div>';
   h += '    <div class="scene-heading-text">' + (ready
-    ? "Tu peux continuer ta route."
-    : "Encore " + esc(remainingLabel) + " (mm:ss) — profites-en pour avancer au village, la route t\u2019attendra.") + '</div>';
+    ? _t("Tu peux continuer ta route.")
+    : _t("Encore {d} (mm:ss) — profites-en pour avancer au village, la route t’attendra.", { d: esc(remainingLabel) })) + '</div>';
   h += '  </div>';
   h += '  <div class="scene-actions">';
   if (ready) {
-    h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneBloqueur()">Continuer</button>';
+    h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneBloqueur()">' + _t("Continuer") + '</button>';
   } else {
-    h += '    <button class="settings-btn primary" type="button" onclick="switchTab(\'village\')">Aller au village</button>';
+    h += '    <button class="settings-btn primary" type="button" onclick="switchTab(\'village\')">' + _t("Aller au village") + '</button>';
   }
   h += '  </div>';
   h += '</div>';
@@ -1019,7 +1018,7 @@ function buildSceneBloqueurHTML(run) {
 function resolveSceneBloqueur() {
   var result = SceneRunManager.resolveBloqueur();
   if (!result.ok) { showToast(result.reason, 1600); return; }
-  sceneLog("Le chemin est enfin dégagé. +" + result.gainAmount);
+  sceneLog(_t("Le chemin est enfin dégagé. +{n}", { n: result.gainAmount }));
   refreshSceneScreen();
 }
 window.resolveSceneBloqueur = resolveSceneBloqueur;
@@ -1029,13 +1028,13 @@ window.resolveSceneBloqueur = resolveSceneBloqueur;
    cours (enterGate a déjà fait switchTab("combat") — ce cas est donc rare, ex. navigation
    arrière). Aucune action ici : le combat doit être résolu ou fui depuis l'onglet Combat lui-même. */
 function buildSceneCombatPendingHTML(run) {
-  var h = '<div class="panel-title">Combat en cours</div>';
+  var h = '<div class="panel-title">' + _t("Combat en cours") + '</div>';
   h += '<div class="scene-screen">';
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-text">Un affrontement t\u2019attend.</div>';
+  h += '    <div class="scene-heading-text">' + _t("Un affrontement t’attend.") + '</div>';
   h += '  </div>';
   h += '  <div class="scene-actions">';
-  h += '    <button class="settings-btn primary" type="button" onclick="switchTab(\'combat\')">Reprendre le combat</button>';
+  h += '    <button class="settings-btn primary" type="button" onclick="switchTab(\'combat\')">' + _t("Reprendre le combat") + '</button>';
   h += '  </div>';
   h += '</div>';
   return h;
@@ -1046,19 +1045,19 @@ function buildSceneCombatPendingHTML(run) {
 function buildSceneFinaleHTML(run) {
   run = run || SceneRunManager.getRun();
   sceneFlushScriptedJournal(run);
-  var h = '<div class="panel-title">La chambre du trésor</div>';
+  var h = '<div class="panel-title">' + _t("La chambre du trésor") + '</div>';
   h += '<div class="scene-screen">';
   h += buildSceneStatusBarHTML(run, { hideLeave: true });
   h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-text">Deux coffres t\u2019attendent.</div>';
+  h += '    <div class="scene-heading-text">' + _t("Deux coffres t’attendent.") + '</div>';
   h += '  </div>';
   h += '  <div class="scene-card-grid">';
   h += '<button type="button" class="scene-card" onclick="resolveSceneFinale(\'sur\')">';
-  h += '<span class="scene-card-label">Coffre patiné</span>';
-  h += '<span class="scene-card-sub is-good">Gain garanti</span></button>';
+  h += '<span class="scene-card-label">' + _t("Coffre patiné") + '</span>';
+  h += '<span class="scene-card-sub is-good">' + _t("Gain garanti") + '</span></button>';
   h += '<button type="button" class="scene-card" onclick="resolveSceneFinale(\'risque\')">';
-  h += '<span class="scene-card-label">Coffre scellé</span>';
-  h += '<span class="scene-card-sub is-medium">50% : butin doublé, 50% : moitié perdue</span></button>';
+  h += '<span class="scene-card-label">' + _t("Coffre scellé") + '</span>';
+  h += '<span class="scene-card-sub is-medium">' + _t("50% : butin doublé, 50% : moitié perdue") + '</span></button>';
   h += '  </div>';
   h += '</div>';
   return h;
@@ -1084,7 +1083,7 @@ function buildSceneCompleteHTML() {
   // v3.199.0 : l'épuisement est une seconde cause de fin ratée, distincte des blessures.
   var isEvacuation = run.exhausted === true || run.injuries.length >= SceneRunManager.getMaxInjuries(run.templateId);
 
-  var h = '<div class="panel-title">Résumé de l\u2019expédition</div>';
+  var h = '<div class="panel-title">' + _t("Résumé de l’expédition") + '</div>';
   h += '<div class="scene-screen">';
   h += '  <div class="scene-end-card' + (isEvacuation ? ' is-failure' : '') + '">';
   // v3.263.0 (retour Seb) : icônes du kit au lieu des emoji (Campement de la barre de navigation, héros à terre)
@@ -1092,13 +1091,13 @@ function buildSceneCompleteHTML() {
   h += '  </div>';
 
   h += '  <div class="dungeon-summary-rewards">';
-  h += '    <div class="dungeon-summary-row"><span>Profondeur atteinte</span><span>' + (run.depth + 1) + '</span></div>';
-  h += '    <div class="dungeon-summary-row"><span>Blessures</span><span>' + run.injuries.length + '</span></div>';
+  h += '    <div class="dungeon-summary-row"><span>' + _t("Profondeur atteinte") + '</span><span>' + (run.depth + 1) + '</span></div>';
+  h += '    <div class="dungeon-summary-row"><span>' + _t("Blessures") + '</span><span>' + run.injuries.length + '</span></div>';
   if (kept && window.SortieManager) {
-    h += '    <div class="dungeon-summary-row"><span>Butin rapporté</span><span>' + esc(SortieManager.getLootSummary(kept)) + '</span></div>';
+    h += '    <div class="dungeon-summary-row"><span>' + _t("Butin rapporté") + '</span><span>' + esc(SortieManager.getLootSummary(kept)) + '</span></div>';
   }
   if (lost && window.SortieManager && (lost.gold || (lost.resources && Object.keys(lost.resources).some(function (k) { return lost.resources[k] > 0; })))) {
-    h += '    <div class="dungeon-summary-row"><span>Perdu</span><span>' + esc(SortieManager.getLootSummary(lost)) + '</span></div>';
+    h += '    <div class="dungeon-summary-row"><span>' + _t("Perdu") + '</span><span>' + esc(SortieManager.getLootSummary(lost)) + '</span></div>';
   }
   h += '  </div>';
 
@@ -1107,7 +1106,7 @@ function buildSceneCompleteHTML() {
     var rep = run.livingMapReport;
     if (rep && rep.message) h += '  <div class="scene-map-report' + (rep.regressed ? ' is-loss' : '') + '">' + esc(rep.message) + '</div>';
     h += '  <div class="scene-actions">';
-    h += '    <button class="settings-btn primary" type="button" onclick="leaveSceneScreen()">Retour à la carte</button>';
+    h += '    <button class="settings-btn primary" type="button" onclick="leaveSceneScreen()">' + _t("Retour à la carte") + '</button>';
     h += '  </div>';
     h += '</div>';
     return h;
@@ -1116,7 +1115,7 @@ function buildSceneCompleteHTML() {
   /* v3.260.0 (retour Seb) : « Nouvelle expédition » retirée. Elle relançait toujours
      expedition_faille (bac à sable admin), quel que soit le run terminé. Retour au Campement seul. */
   h += '  <div class="scene-actions">';
-  h += '    <button class="settings-btn primary" type="button" onclick="leaveSceneScreen()">Retour au Campement</button>';
+  h += '    <button class="settings-btn primary" type="button" onclick="leaveSceneScreen()">' + _t("Retour au Campement") + '</button>';
   h += '  </div>';
   h += '</div>';
   return h;
@@ -1149,7 +1148,7 @@ window.resumeSceneRun = resumeSceneRun;
 function useSceneBreathItem(itemId) {
   var r = SceneRunManager.useBreathItem(itemId);
   if (!r.ok) { if (typeof showToast === "function") showToast(r.reason, 1400); return; }
-  sceneLog("Tu bois à l\u2019outre. +" + r.gained + " Souffle.");
+  sceneLog(_t("Tu bois à l’outre. +{n} Souffle.", { n: r.gained }));
   if (typeof refreshSceneScreen === "function") refreshSceneScreen(); else if (typeof renderPanel === "function") renderPanel();
 }
 window.useSceneBreathItem = useSceneBreathItem;

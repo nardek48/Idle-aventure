@@ -664,7 +664,7 @@ button.nb-entry-card {
   margin-top: 0;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 640px), (min-width: 1000px) and (hover: hover) and (pointer: fine) { /* v3.367.0 : + mode PC (colonne mobile) */
   .nb-entry-name {
     font-size: 13px;
   }
@@ -687,7 +687,7 @@ button.nb-entry-card {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 640px), (min-width: 1000px) and (hover: hover) and (pointer: fine) { /* v3.367.0 : + mode PC (colonne mobile) */
   .nb-purchase-name {
     font-size: 12px;
   }

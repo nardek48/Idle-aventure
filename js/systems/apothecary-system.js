@@ -76,16 +76,16 @@ var ApothecaryManager = {
   deliverOrder: function (potionId) {
     var r = this.getRecipe(potionId);
     if (!r || !r.order) return false;
-    if (this.getLevel() <= 0) { showToast("Construis d'abord l'Apothicaire", 1400); return false; }
+    if (this.getLevel() <= 0) { showToast(_t("Construis d'abord l'Apothicaire"), 1400); return false; }
     if (!this.isOrderOpen(potionId)) return false;
-    if (!this.canDeliver(potionId)) { showToast("Ingrédients manquants", 1300); return false; }
+    if (!this.canDeliver(potionId)) { showToast(_t("Ingrédients manquants"), 1300); return false; }
 
     Object.keys(r.order).forEach(function (k) { WarehouseManager.removeResource(k, r.order[k]); });
     this.ensureState().learned[potionId] = true;
 
     var potion = this._getPotion(r);
-    addLog("⚗️ Commande livrée : l'Apothicaire sait préparer " + (potion ? potion.name : potionId) + ".", "event");
-    showToast("⚗️ Recette acquise", 1500);
+    addLog("⚗️ " + _t("Commande livrée : l'Apothicaire sait préparer {x}.", { x: potion ? _td(potion.name) : potionId }), "event");
+    showToast(_t("⚗️ Recette acquise"), 1500);
     if (typeof renderAll === "function") renderAll();
     saveGame();
     return true;
@@ -97,9 +97,9 @@ var ApothecaryManager = {
     if (!r) return "";
     if (this.isLearned(potionId)) return "";
     if (!this.isOrderOpen(potionId)) {
-      return "S'ouvre " + (window.WorldCaps ? WorldCaps.withPrep(Number(r.worldIndex || 0)) : "plus tard");
+      return _t("S'ouvre {lieu}", { lieu: window.WorldCaps ? WorldCaps.withPrep(Number(r.worldIndex || 0)) : _t("plus tard") });
     }
-    return "Commande à l'Apothicaire";
+    return _t("Commande à l'Apothicaire");
   },
 
   _getPotion: function (recipe) {
@@ -198,13 +198,13 @@ var ApothecaryManager = {
     if (!recipe) return false;
 
     if (!this.isUnlocked(potionId)) {
-      showToast(this.getLevel() <= 0 ? "Construis d'abord l'Apothicaire" : "Recette à gagner par commande à l'Apothicaire", 1600);
+      showToast(this.getLevel() <= 0 ? _t("Construis d'abord l'Apothicaire") : _t("Recette à gagner par commande à l'Apothicaire"), 1600);
       return false;
     }
 
     // v3.291.0 : plafond quotidien, Soin mineur libre
     if (recipe.capped && this.getDailyRemaining() <= 0) {
-      showToast("L'Apothicaire a fini pour aujourd'hui (" + this.getDailyCap() + " max)", 1600);
+      showToast(_t("L'Apothicaire a fini pour aujourd'hui ({n} max)", { n: this.getDailyCap() }), 1600);
       return false;
     }
 
@@ -212,7 +212,7 @@ var ApothecaryManager = {
        l'affliction serait contournable en construisant un bâtiment. */
     if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function"
         && AfflictionManager.arePotionsForbidden()) {
-      showToast("🚫 Potions interdites (Ascétisme actif)", 1600);
+      showToast(_t("🚫 Potions interdites (Ascétisme actif)"), 1600);
       return false;
     }
 
@@ -226,7 +226,7 @@ var ApothecaryManager = {
     if (potion.perRun) {
       var cap = typeof getPotionStockCap === "function" ? getPotionStockCap() : 9; // v3.322.0
       if (PotionManager.getStock(potionId) >= cap) {
-        showToast("Stock plein (" + cap + " max)", 1400);
+        showToast(_t("Stock plein ({n} max)", { n: cap }), 1400);
         return false;
       }
     }
@@ -234,7 +234,7 @@ var ApothecaryManager = {
     var missing = this.getMissingInput(potionId);
     if (missing) {
       var def = WAREHOUSE_RESOURCES[missing];
-      showToast("Pas assez de " + (def ? def.name : missing), 1400);
+      showToast(_t("Pas assez de {x}", { x: def ? _td(def.name) : missing }), 1400);
       return false;
     }
 
@@ -255,8 +255,8 @@ var ApothecaryManager = {
       game.potionsOwned[potionId] = PotionManager.getStock(potionId) + 1;
     }
 
-    addLog("⚗️ " + potion.name + " préparée à l'Apothicaire.", "event");
-    showToast(potion.name + " +1", 1300);
+    addLog("⚗️ " + _t("{x} préparée à l'Apothicaire.", { x: _td(potion.name) }), "event");
+    showToast(_td(potion.name) + " +1", 1300);
 
     if (typeof renderAll === "function") renderAll();
     saveGame();

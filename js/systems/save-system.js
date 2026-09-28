@@ -583,7 +583,7 @@ function restoreBaseState(d) {
   if (essenceConvertie + aetherConverti > 0) {
     game.gold += essenceConvertie + aetherConverti;
     game.legacyCurrencyConverted = { essence: Number(d.essence || 0), aether: Number(d.aether || 0), gold: essenceConvertie + aetherConverti };
-    if (typeof addLog === "function") addLog("🪙 L'essence et l'Aether de réserve disparaissent : +" + formatNumber(essenceConvertie + aetherConverti) + " or", "event");
+    if (typeof addLog === "function") addLog("🪙 " + _t("L'essence et l'Aether de réserve disparaissent : +{n} or", { n: formatNumber(essenceConvertie + aetherConverti) }), "event");
   }
   game.memory = (d.memory && typeof d.memory === "object") ? d.memory : null; // v3.322.0 : complété par MemoryManager.ensure()
   // v3.333.0 : trophées de boss — une sauvegarde d'avant n'en a pas : {}
@@ -1475,17 +1475,17 @@ function resetGame() {
     if (typeof updateQuestBadge === "function") updateQuestBadge();
 
     saveGame();
-    if (typeof showToast === "function") showToast("Partie réinitialisée", 1200);
+    if (typeof showToast === "function") showToast(_t("Partie réinitialisée"), 1200);
   };
 
   if (typeof showConfirmModal === "function") {
     showConfirmModal(
-      "Réinitialiser TOUT ?",
-      "Cette action efface toute la progression, y compris l'Aether et les ascensions. Cette action est irréversible.",
+      _t("Réinitialiser TOUT ?"),
+      _t("Cette action efface toute la progression, y compris l'Aether et les ascensions. Cette action est irréversible."),
       "⚠️",
       doReset
     );
-  } else if (window.confirm("Réinitialiser toute la progression ?")) {
+  } else if (window.confirm(_t("Réinitialiser toute la progression ?"))) {
     doReset();
   }
 }
@@ -1551,7 +1551,7 @@ function exportSaveToFile() {
   URL.revokeObjectURL(url);
 
   var slotCount = Object.keys(payload.slots).length;
-  showToast("💾 Sauvegarde exportée (" + slotCount + " héros)", 1800);
+  showToast("💾 " + _t("Sauvegarde exportée ({n} héros)", { n: slotCount }), 1800);
 }
 
 /* Affiche le JSON de sauvegarde dans une modale texte à copier manuellement — repli si le téléchargement de fichier ne convient pas. */
@@ -1565,11 +1565,11 @@ function showExportTextModal() {
   host.innerHTML = ''
     + '<div class="full-menu-overlay" onclick="if (event.target === this) closeExportTextModal();">'
     +   '<div class="full-menu" style="max-height:75vh;">'
-    +     '<div class="full-menu-header"><h2>Code de sauvegarde</h2><button class="full-menu-close" type="button" onclick="closeExportTextModal()">✕</button></div>'
+    +     '<div class="full-menu-header"><h2>' + _t("Code de sauvegarde") + '</h2><button class="full-menu-close" type="button" onclick="closeExportTextModal()">✕</button></div>'
     +     '<div class="export-text-body">'
-    +       '<p>Copie ce texte et garde-le en lieu sûr. Tu pourras le recoller via "Importer un code" pour restaurer cette progression.</p>'
+    +       '<p>' + _t("Copie ce texte et garde-le en lieu sûr. Tu pourras le recoller via \"Importer un code\" pour restaurer cette progression.") + '</p>'
     +       '<textarea readonly id="export-text-area" class="export-textarea">' + esc(json) + '</textarea>'
-    +       '<button class="settings-btn" type="button" onclick="copyExportText()">📋 Copier</button>'
+    +       '<button class="settings-btn" type="button" onclick="copyExportText()">' + _t("📋 Copier") + '</button>'
     +     '</div>'
     +   '</div>'
     + '</div>';
@@ -1583,11 +1583,11 @@ function showImportTextModal() {
   host.innerHTML = ''
     + '<div class="full-menu-overlay" onclick="if (event.target === this) closeExportTextModal();">'
     +   '<div class="full-menu" style="max-height:75vh;">'
-    +     '<div class="full-menu-header"><h2>Importer un code</h2><button class="full-menu-close" type="button" onclick="closeExportTextModal()">✕</button></div>'
+    +     '<div class="full-menu-header"><h2>' + _t("Importer un code") + '</h2><button class="full-menu-close" type="button" onclick="closeExportTextModal()">✕</button></div>'
     +     '<div class="export-text-body">'
-    +       '<p>Colle ici un code de sauvegarde exporté précédemment. Ça remplacera ta progression actuelle.</p>'
-    +       '<textarea id="import-text-area" class="export-textarea" placeholder="Colle le code ici..."></textarea>'
-    +       '<button class="settings-btn" type="button" onclick="importSaveFromText(document.getElementById(\'import-text-area\').value)">📥 Importer ce code</button>'
+    +       '<p>' + _t("Colle ici un code de sauvegarde exporté précédemment. Ça remplacera ta progression actuelle.") + '</p>'
+    +       '<textarea id="import-text-area" class="export-textarea" placeholder="' + esc(_t("Colle le code ici...")) + '"></textarea>'
+    +       '<button class="settings-btn" type="button" onclick="importSaveFromText(document.getElementById(\'import-text-area\').value)">' + _t("📥 Importer ce code") + '</button>'
     +     '</div>'
     +   '</div>'
     + '</div>';
@@ -1605,14 +1605,14 @@ function copyExportText() {
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(area.value)
-      .then(function () { showToast("📋 Copié !", 1200); })
-      .catch(function () { showToast("Sélectionne et copie manuellement", 1500); });
+      .then(function () { showToast(_t("📋 Copié !"), 1200); })
+      .catch(function () { showToast(_t("Sélectionne et copie manuellement"), 1500); });
   } else {
     try {
       document.execCommand("copy");
-      showToast("📋 Copié !", 1200);
+      showToast(_t("📋 Copié !"), 1200);
     } catch (e) {
-      showToast("Sélectionne et copie manuellement", 1500);
+      showToast(_t("Sélectionne et copie manuellement"), 1500);
     }
   }
 }
@@ -1639,7 +1639,7 @@ function applyImportedSave(data) {
   var isSingle = !isMulti && looksLikeQuestIdleSave(data);
 
   if (!isMulti && !isSingle) {
-    showToast("❌ Fichier invalide (pas une sauvegarde Aethervale)", 2200);
+    showToast(_t("❌ Fichier invalide (pas une sauvegarde Aethervale)"), 2200);
     return;
   }
 
@@ -1677,8 +1677,8 @@ function applyImportedSave(data) {
       if (typeof resumeCombatAfterSlotChange === "function") resumeCombatAfterSlotChange();
 
       if (typeof renderAll === "function") renderAll();
-      showToast("✅ Sauvegarde importée (" + importedCount + " héros)", 2000);
-      addLog("📥 Sauvegarde multi-héros importée (" + importedCount + " héros).", "event");
+      showToast("✅ " + _t("Sauvegarde importée ({n} héros)", { n: importedCount }), 2000);
+      addLog("📥 " + _t("Sauvegarde multi-héros importée ({n} héros).", { n: importedCount }), "event");
     } else {
       // Ancien format (un seul héros) — importe dans l'EMPLACEMENT
       // ACTIF uniquement, comportement identique à avant ce correctif.
@@ -1696,8 +1696,8 @@ function applyImportedSave(data) {
 
       saveGame();
       if (typeof renderAll === "function") renderAll();
-      showToast("✅ Sauvegarde importée", 1800);
-      addLog("📥 Sauvegarde importée.", "event");
+      showToast(_t("✅ Sauvegarde importée"), 1800);
+      addLog(_t("📥 Sauvegarde importée."), "event");
     }
   };
 
@@ -1706,11 +1706,11 @@ function applyImportedSave(data) {
   if (typeof closeExportTextModal === "function") closeExportTextModal();
 
   var confirmMsg = isMulti
-    ? "Ceci va REMPLACER la progression des héros présents dans ce fichier (" + Object.keys(data.slots).length + "). Cette action est irréversible."
-    : "Ceci va REMPLACER toute la progression de l'emplacement ACTIF par celle importée. Cette action est irréversible.";
+    ? _t("Ceci va REMPLACER la progression des héros présents dans ce fichier ({n}). Cette action est irréversible.", { n: Object.keys(data.slots).length })
+    : _t("Ceci va REMPLACER toute la progression de l'emplacement ACTIF par celle importée. Cette action est irréversible.");
 
   if (typeof showConfirmModal === "function") {
-    showConfirmModal("Importer cette sauvegarde ?", confirmMsg, "📥", doImport);
+    showConfirmModal(_t("Importer cette sauvegarde ?"), confirmMsg, "📥", doImport);
   } else if (window.confirm(confirmMsg)) {
     doImport();
   }
@@ -1728,12 +1728,12 @@ function importSaveFromFile(fileInput) {
       var data = JSON.parse(e.target.result);
       applyImportedSave(data);
     } catch (err) {
-      showToast("❌ Fichier illisible (JSON invalide)", 2200);
+      showToast(_t("❌ Fichier illisible (JSON invalide)"), 2200);
     }
     fileInput.value = "";
   };
   reader.onerror = function () {
-    showToast("❌ Erreur de lecture du fichier", 1800);
+    showToast(_t("❌ Erreur de lecture du fichier"), 1800);
   };
   reader.readAsText(file);
 }
@@ -1743,7 +1743,7 @@ function importSaveFromText(text) {
     var data = JSON.parse(text);
     applyImportedSave(data);
   } catch (err) {
-    showToast("❌ Texte invalide (JSON incorrect)", 2200);
+    showToast(_t("❌ Texte invalide (JSON incorrect)"), 2200);
   }
 }
 

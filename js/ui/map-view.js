@@ -19,10 +19,10 @@ function isWorldUnlocked(index) {
 }
 
 function getWorldProgressText(index) {
-  if (index === (WorldManager.worldIndex || 0)) return "Tu es ici";
-  if (isWorldUnlocked(index)) return "Atteint";
+  if (index === (WorldManager.worldIndex || 0)) return _t("Tu es ici");
+  if (isWorldUnlocked(index)) return _t("Atteint");
   // v3.299.0 (W-1c) : plus de questline de monde — un monde s'ouvre par sa traversée.
-  return "Verrouillé";
+  return _t("Verrouillé");
 }
 
 function getWorldThumb(world) {
@@ -102,11 +102,11 @@ function buildMapNodeHTML(world, index) {
   if (isDone) classes.push("is-done");
 
   var h = '<button type="button" class="' + classes.join(" ") + '" style="left:' + pos.x + '%;top:' + pos.y + '%;" onclick="tapMapWorld(' + index + ')">';
-  h += '<span class="map-node-circle"><img src="' + esc(getWorldThumb(world)) + '" alt="' + esc(world.name) + '" draggable="false">';
-  if (isCurrent) h += '<span class="map-node-badge">Actuel</span>';
+  h += '<span class="map-node-circle"><img src="' + esc(getWorldThumb(world)) + '" alt="' + esc(_td(world.name)) + '" draggable="false">';
+  if (isCurrent) h += '<span class="map-node-badge">' + _t("Actuel") + '</span>';
   if (!unlocked) h += '<span class="map-node-lock"><img class=ico-inline src=images/Icons/system/lock_closed.png></span>';
   h += '</span>';
-  h += '<span class="map-node-name">' + esc(world.name) + '</span>';
+  h += '<span class="map-node-name">' + esc(_td(world.name)) + '</span>';
   h += '</button>';
   return h;
 }
@@ -120,7 +120,7 @@ function buildMapHTML() {
     if (lm) return lm;
   }
   var h = '<div class="map-path-frame">';
-  h += '<img class="map-path-bg" src="images/Map/world_map.jpg" alt="Carte du monde" draggable="false">';
+  h += '<img class="map-path-bg" src="images/Map/world_map.jpg" alt="' + _t("Carte du monde") + '" draggable="false">';
   h += buildMapPathSvgHTML(WORLDS.length);
   WORLDS.forEach(function (world, index) {
     h += buildMapNodeHTML(world, index);
@@ -141,8 +141,8 @@ function buildWorldPopupHTML(index) {
 
   var h = '<div class="full-menu-overlay">';
   h += '  <div class="full-menu map-popup-card">';
-  h += '    <img class="map-popup-thumb" src="' + esc(getWorldThumb(world)) + '" alt="' + esc(world.name) + '">';
-  h += '    <div class="map-popup-title">' + esc(world.name) + '</div>';
+  h += '    <img class="map-popup-thumb" src="' + esc(getWorldThumb(world)) + '" alt="' + esc(_td(world.name)) + '">';
+  h += '    <div class="map-popup-title">' + esc(_td(world.name)) + '</div>';
   h += '    <div class="map-popup-status status-' + statusClass + '">' + esc(getWorldProgressText(index)) + '</div>';
 
   h += buildWorldLoreExcerptHTML(index);
@@ -151,7 +151,7 @@ function buildWorldPopupHTML(index) {
     var currentAdventure = world.adventures[currentAdventureIndex];
     if (currentAdventure) {
       h += '<div class="map-current-adventure">';
-      h += '<strong>Aventure actuelle :</strong> ' + esc(currentAdventure.name); // v3.299.0 : plus de compteur d'ennemis (farm libre retiré)
+      h += '<strong>' + _t("Aventure actuelle :") + '</strong> ' + esc(_td(currentAdventure.name)); // v3.299.0 : plus de compteur d'ennemis (farm libre retiré)
       h += '</div>';
     }
   }
@@ -160,9 +160,9 @@ function buildWorldPopupHTML(index) {
   if (monsters.length) {
     h += '<div class="map-monster-row">';
     monsters.forEach(function (m) {
-      h += '<div class="map-monster-chip' + (m.isBoss ? " is-boss" : "") + (m.image ? " has-icon-img" : "") + '" title="' + esc(m.name) + '">';
+      h += '<div class="map-monster-chip' + (m.isBoss ? " is-boss" : "") + (m.image ? " has-icon-img" : "") + '" title="' + esc(_td(m.name)) + '">';
       if (m.image) {
-        h += '<img src="' + esc(m.image) + '" alt="' + esc(m.name) + '" onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">';
+        h += '<img src="' + esc(m.image) + '" alt="' + esc(_td(m.name)) + '" onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">';
         h += '<span class="icon-img-fallback">' + renderIconOrEmojiHTML(m.icon, "map-fallback-ico", "") + '</span>';
       } else {
         h += m.icon;
@@ -188,12 +188,12 @@ function buildWorldPopupHTML(index) {
 
     h += '<div class="' + advClasses.join(" ") + '">';
     h += '<div class="map-adventure-top">';
-    h += '<span class="map-adventure-name">' + esc(adv.name) + '</span>';
+    h += '<span class="map-adventure-name">' + esc(_td(adv.name)) + '</span>';
     if (BOSS_DB[adv.boss]) {
-      h += '<span class="map-adventure-boss">' + esc(BOSS_DB[adv.boss].name) + '</span>';
+      h += '<span class="map-adventure-boss">' + esc(_td(BOSS_DB[adv.boss].name)) + '</span>';
     }
     h += '</div>';
-    h += '<div class="map-adventure-text">' + esc(adv.introText || "") + '</div>';
+    h += '<div class="map-adventure-text">' + esc(_td(adv.introText || "")) + '</div>';
     h += '</div>';
   });
   h += '</div>';
@@ -202,12 +202,12 @@ function buildWorldPopupHTML(index) {
   if (reached && !isCurrent && window.WorldTravel) {
     var refusal = WorldTravel.refusalReason(world.id);
     if (refusal) h += '<div class="map-current-adventure">' + esc(refusal) + '</div>';
-    h += '    <button class="settings-btn primary" type="button"' + (refusal ? ' disabled' : ' onclick="travelToWorldFromUI(\'' + esc(world.id) + '\')"') + '>Y voyager</button>';
+    h += '    <button class="settings-btn primary" type="button"' + (refusal ? ' disabled' : ' onclick="travelToWorldFromUI(\'' + esc(world.id) + '\')"') + '>' + _t("Y voyager") + '</button>';
     if (window.LivingMapManager && LivingMapManager.getMapForWorld(world.id)) {
-      h += '    <button class="settings-btn" type="button" onclick="closeWorldPopup(); openLivingMap(\'' + esc(LivingMapManager.getMapForWorld(world.id).id) + '\')">Voir la carte</button>';
+      h += '    <button class="settings-btn" type="button" onclick="closeWorldPopup(); openLivingMap(\'' + esc(LivingMapManager.getMapForWorld(world.id).id) + '\')">' + _t("Voir la carte") + '</button>';
     }
   }
-  h += '    <button class="settings-btn" type="button" onclick="closeWorldPopup()">Fermer</button>';
+  h += '    <button class="settings-btn" type="button" onclick="closeWorldPopup()">' + _t("Fermer") + '</button>';
   h += '  </div>';
   h += '</div>';
   return h;

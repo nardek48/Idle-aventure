@@ -307,10 +307,10 @@ window.getUpgradeCap = getUpgradeCap;
 function buyUpgrade(id, amount) {
   if (isTrainingUpgradeId(id) && window.heroLockToast && heroLockToast()) return; // v3.307.0 : entraînements seulement
   var upgrade = (UPGRADES || []).find(function (u) { return u.id === id; });
-  if (!upgrade) return showToast("Amélioration introuvable", 1000);
+  if (!upgrade) return showToast(_t("Amélioration introuvable"), 1000);
 
   if ((WorldManager.worldIndex || 0) < (upgrade.unlockWorld || 0)) {
-    return showToast("Monde requis non débloqué", 1200);
+    return showToast(_t("Monde requis non débloqué"), 1200);
   }
 
   amount = Number(amount || 1);
@@ -337,13 +337,13 @@ function buyUpgrade(id, amount) {
   if (bought <= 0) {
     var currentLevel = game.upgrades[id] || 0;
     if (currentLevel >= (upgrade.maxLevel || Infinity)) {
-      return showToast("Niveau maximum", 1200);
+      return showToast(_t("Niveau maximum"), 1200);
     }
     if (currentLevel >= cap) {
       /* Le mur n'est jamais silencieux : on dit QUOI faire, pas juste non. */
-      return showToast("Plafond atteint — améliore le Terrain d'entraînement", 1800);
+      return showToast(_t("Plafond atteint — améliore le Terrain d'entraînement"), 1800);
     }
-    return showToast("Pas assez d'or", 1000);
+    return showToast(_t("Pas assez d'or"), 1000);
   }
 
   if (typeof upgrade.apply === "function") {
@@ -353,10 +353,10 @@ function buyUpgrade(id, amount) {
   if (window.StatsSystem) StatsSystem.recalcStats();
 
   addLog(
-    "Amélioration achetée : " + upgrade.name + " +" + bought + " (niv. " + game.upgrades[id] + ")",
+    _t("Amélioration achetée : {x} +{n} (niv. {l})", { x: _td(upgrade.name), n: bought, l: game.upgrades[id] }),
     "event"
   );
-  showToast(upgrade.name + " +" + bought, 1200);
+  showToast(_td(upgrade.name) + " +" + bought, 1200);
 
   if (typeof renderAll === "function") renderAll();
   saveGame();
@@ -453,18 +453,18 @@ function grantHeroXp(amount, source) {
 
     // v3.327.0 : au-delà du plafond de l'acte, le point part en réserve
     var capped = window.TalentManager && TalentManager.earned() > TalentManager.cap();
-    var what = capped ? "+1 point de talent en réserve" : "+1 point de talent";
-    addLog("Niveau du héros : " + game.heroLevel + " (" + what + ")", "event");
-    showToast("Niveau " + game.heroLevel + " ! " + what, 1800);
+    var what = capped ? _t("+1 point de talent en réserve") : _t("+1 point de talent");
+    addLog(_t("Niveau du héros : {n} ({x})", { n: game.heroLevel, x: what }), "event");
+    showToast(_t("Niveau {n} ! {x}", { n: game.heroLevel, x: what }), 1800);
     vibrate([30, 20, 30]);
   }
   if (window.TalentManager) TalentManager.sync(); else game.talentPoints += levelsGained;
 
   if (levelsGained === 0) {
-    addLog("+" + Math.floor(amount) + " XP héros", "event");
+    addLog(_t("+{n} XP héros", { n: Math.floor(amount) }), "event");
   } else {
     addLog(
-      "+" + Math.floor(amount) + " XP héros (" + previousLevel + " → " + game.heroLevel + ")",
+      _t("+{n} XP héros ({a} → {b})", { n: Math.floor(amount), a: previousLevel, b: game.heroLevel }),
       "event"
     );
   }
@@ -482,11 +482,11 @@ function grantHeroXp(amount, source) {
 var AscensionManager = {
   previewGain: function () { return 0; },
   canAscend: function () { return false; },
-  doAscend: function () { showToast("L'Ascension a laissé place à la Mémoire", 1600); }
+  doAscend: function () { showToast(_t("L'Ascension a laissé place à la Mémoire"), 1600); }
 };
 
 function ascendNow() {
-  if (typeof showToast === "function") showToast("L'Ascension a laissé place à la Mémoire", 1600);
+  if (typeof showToast === "function") showToast(_t("L'Ascension a laissé place à la Mémoire"), 1600);
 }
 
 window.WorldManager = WorldManager;

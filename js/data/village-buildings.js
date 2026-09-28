@@ -117,7 +117,7 @@ var VILLAGE_BUILDINGS = {
     ],
     effectLabel: function (level) {
       // v3.330.0 (E6) : la vente à l'Entrepôt n'existe plus, le bonus passe aux contrats de la Taverne
-      return "+" + Math.round(level * 3) + " % sur les contrats de la Taverne";
+      return _t("+{p} % sur les contrats de la Taverne", { p: Math.round(level * 3) });
     },
     sellBonusAtLevel: function (level) {
       return 1 + 0.03 * level;
@@ -174,7 +174,7 @@ var VILLAGE_BUILDINGS = {
     effectLabel: function (level) {
       // v3.248.0 : le socle sans bâtiment est passé à 20 (voir getTrainingCapLevels)
       var base = (typeof TRAINING_BASE_CAP === "number") ? TRAINING_BASE_CAP : 20;
-      return "Plafond d'entraînement : " + Math.min(150, base + 10 * level) + " par caractéristique";
+      return _t("Plafond d'entraînement : {n} par caractéristique", { n: Math.min(150, base + 10 * level) });
     }
   },
 
@@ -227,8 +227,8 @@ var VILLAGE_BUILDINGS = {
       // v3.289.0 : 2 niveaux de reforge par niveau de bâtiment (FORGE_LEVELS_PER_BUILDING_LEVEL)
       var per = (typeof FORGE_LEVELS_PER_BUILDING_LEVEL === "number") ? FORGE_LEVELS_PER_BUILDING_LEVEL : 2;
       var max = level * per;
-      return max <= 0 ? "Aucune reforge possible"
-        : ("Reforge jusqu'au niveau " + max + " sur chaque emplacement");
+      return max <= 0 ? _t("Aucune reforge possible")
+        : _t("Reforge jusqu'au niveau {n} sur chaque emplacement", { n: max });
     }
   },
 
@@ -260,7 +260,7 @@ var VILLAGE_BUILDINGS = {
     effectLabel: function (level) {
       // v3.291.0 : 4 au niveau 1, +2 par niveau suivant (ApothecaryManager.getDailyCap)
       var cap = (window.ApothecaryManager) ? ApothecaryManager.getDailyCap(level) : 0;
-      return cap <= 0 ? "Aucune préparation" : (cap + " préparations par jour (Soin mineur libre)");
+      return cap <= 0 ? _t("Aucune préparation") : _t("{n} préparations par jour (Soin mineur libre)", { n: cap });
     }
   },
 
@@ -302,11 +302,11 @@ var VILLAGE_BUILDINGS = {
     ],
     effectLabel: function (level) {
       var labels = (typeof ENCHANT_RARITY_BY_LEVEL !== "undefined") ? ENCHANT_RARITY_BY_LEVEL : null;
-      if (level <= 0 || !labels) return "Aucune relance possible";
+      if (level <= 0 || !labels) return _t("Aucune relance possible");
       var list = labels.slice(0, level).map(function (group) {
-        return group.map(function (r) { return (RARITY_LABELS && RARITY_LABELS[r]) || r; }).join(", ");
+        return group.map(function (r) { return (RARITY_LABELS && RARITY_LABELS[r]) ? _td(RARITY_LABELS[r]) : r; }).join(", ");
       }).join(", ");
-      return "Relance les bonus : " + list;
+      return _t("Relance les bonus : {liste}", { liste: list });
     }
   },
 
@@ -342,7 +342,7 @@ var VILLAGE_BUILDINGS = {
         ? EquipShopManager.getShopSize(level)
         : 6;
       var remise = Math.round((1 - Math.pow(0.95, level)) * 100);
-      return slots + " objets en vitrine" + (remise > 0 ? " · -" + remise + " % sur le renouvellement" : "");
+      return _t("{n} objets en vitrine", { n: slots }) + (remise > 0 ? " · " + _t("-{p} % sur le renouvellement", { p: remise }) : "");
     }
   },
 
@@ -374,7 +374,7 @@ var VILLAGE_BUILDINGS = {
     effectLabel: function (level) {
       var n = (window.TavernManager && typeof TavernManager.getSlotCount === "function")
         ? TavernManager.getSlotCount(level) : 0;
-      return n <= 0 ? "Aucun contrat" : (n + (n > 1 ? " contrats simultanés" : " contrat à la fois"));
+      return n <= 0 ? _t("Aucun contrat") : _tn(n, "{n} contrat à la fois", "{n} contrats simultanés");
     }
   },
 
@@ -406,7 +406,7 @@ var VILLAGE_BUILDINGS = {
       var par = (typeof WAREHOUSE_CAP_PER_LEVEL === "number") ? WAREHOUSE_CAP_PER_LEVEL : 250;
       var base = 999, raw = (typeof RAW_STOCK_BASE === "number") ? RAW_STOCK_BASE : 500;
       // v3.330.0 (E1) : le bâtiment relève aussi le plafond des ressources brutes
-      return "Plafond : ressources brutes " + (raw + level * par) + ", fabriquées " + (base + level * par)
+      return _t("Plafond : ressources brutes {a}, fabriquées {b}", { a: raw + level * par, b: base + level * par })
         + (level > 0 ? " (+" + (level * par) + ")" : "");
     }
   },
@@ -453,17 +453,17 @@ var VILLAGE_BUILDINGS = {
     ],
     effectLabel: function (level) {
       var LM = window.LivingMapManager;
-      if (!LM) return "Frein du Recouvrement : niveau " + level;
+      if (!LM) return _t("Frein du Recouvrement : niveau {n}", { n: level });
       var pal = LM.getRules().palisade || {};
       var brake = Math.round(Number(pal.brakePerLevel || 0) * level * 100);
       var held = LM.getHeldRing(level);
-      var txt = "Frein sur l'échec : " + brake + " %";
-      if (held >= 3) txt += " · anneaux 1 à 3 tenus : le Recouvrement ne reprend plus rien";
+      var txt = _t("Frein sur l'échec : {p} %", { p: brake });
+      if (held >= 3) txt += " · " + _t("anneaux 1 à 3 tenus : le Recouvrement ne reprend plus rien");
       // v3.335.0 : l'Ascension n'existe plus (v3.322.0) — un anneau tenu protège de l'échec
-      else if (held === 2) txt += " · anneaux 1 et 2 tenus : un échec ne les reprend plus";
-      else if (held === 1) txt += " · anneau 1 tenu : un échec ne le reprend plus";
-      else txt += " · niveau 3 : l'anneau 1 sera tenu";
-      if (level >= Number(pal.revealLevel || 99)) txt += " · noms révélés au front";
+      else if (held === 2) txt += " · " + _t("anneaux 1 et 2 tenus : un échec ne les reprend plus");
+      else if (held === 1) txt += " · " + _t("anneau 1 tenu : un échec ne le reprend plus");
+      else txt += " · " + _t("niveau 3 : l'anneau 1 sera tenu");
+      if (level >= Number(pal.revealLevel || 99)) txt += " · " + _t("noms révélés au front");
       return txt;
     }
   }

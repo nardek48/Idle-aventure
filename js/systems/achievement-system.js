@@ -22,7 +22,7 @@
 
 var ACH_REFRESH_MS = 2000;
 var ACH_TIER_ORDER = ["bronze", "silver", "gold"];
-var ACH_TIER_LABELS = { bronze: "Bronze", silver: "Argent", gold: "Or" };
+var ACH_TIER_LABELS = { bronze: _t("Bronze", "palier"), silver: _t("Argent", "palier"), gold: _t("Or", "palier") };
 
 var AchievementManager = {
   _lastRefresh: 0,
@@ -92,7 +92,7 @@ var AchievementManager = {
     if (reward.gold) {
       game.gold = Number(game.gold || 0) + reward.gold;
       if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("goldEarned", reward.gold);
-      parts.push("+" + formatNumber(reward.gold) + " or");
+      parts.push(_t("+{n} or", { n: formatNumber(reward.gold) }));
     }
   },
 
@@ -106,7 +106,7 @@ var AchievementManager = {
     var to = have.tier ? ACH_TIER_ORDER.indexOf(have.tier) : -1;
     for (var i = from; i <= to; i++) {
       this._pay(cat.tierRewards[i], parts);
-      if (cat.tierRewards[i] && cat.tierRewards[i].title) parts.push("titre « " + cat.tierRewards[i].title + " »");
+      if (cat.tierRewards[i] && cat.tierRewards[i].title) parts.push(_t("titre « {x} »", { x: _td(cat.tierRewards[i].title) }));
       got.push(ACH_TIER_ORDER[i]);
     }
     if (got.length) st.tiers[catId] = got[got.length - 1];
@@ -124,11 +124,11 @@ var AchievementManager = {
     var parts = [];
     this._pay(ach.reward, parts);
     var tiers = this._payTiers(ach.category, parts);
-    if (typeof addLog === "function") addLog("🏆 Haut fait : " + ach.name + (parts.length ? " (" + parts.join(", ") + ")" : ""), "event");
+    if (typeof addLog === "function") addLog("🏆 " + _t("Haut fait : {x}", { x: _td(ach.name) }) + (parts.length ? " (" + parts.join(", ") + ")" : ""), "event");
     if (!quiet) {
       var cat = this.getCategory(ach.category);
-      var tierTxt = tiers.length ? " · palier " + ACH_TIER_LABELS[tiers[tiers.length - 1]] + (cat ? " — " + cat.label : "") : "";
-      if (typeof showToast === "function") showToast("🏆 " + ach.name + (parts.length ? " · " + parts.join(", ") : "") + tierTxt, 2200);
+      var tierTxt = tiers.length ? " · " + _t("palier {x}", { x: ACH_TIER_LABELS[tiers[tiers.length - 1]] }) + (cat ? " — " + _td(cat.label) : "") : "";
+      if (typeof showToast === "function") showToast("🏆 " + _td(ach.name) + (parts.length ? " · " + parts.join(", ") : "") + tierTxt, 2200);
       this._after();
     }
     return { parts: parts, tiers: tiers };
@@ -145,11 +145,11 @@ var AchievementManager = {
       gold += (a.reward && a.reward.gold) || 0;
       if (r.tiers.length) {
         var cat = self.getCategory(a.category);
-        tierMsgs.push("palier " + ACH_TIER_LABELS[r.tiers[r.tiers.length - 1]] + " — " + (cat ? cat.label : a.category));
+        tierMsgs.push(_t("palier {x}", { x: ACH_TIER_LABELS[r.tiers[r.tiers.length - 1]] }) + " — " + (cat ? _td(cat.label) : a.category));
       }
     });
     if (n && typeof showToast === "function") {
-      showToast("🏆 " + n + " haut" + (n > 1 ? "s faits" : " fait") + (gold ? " · +" + formatNumber(gold) + " or" : "")
+      showToast("🏆 " + _tn(n, "{n} haut fait", "{n} hauts faits") + (gold ? " · " + _t("+{n} or", { n: formatNumber(gold) }) : "")
         + (tierMsgs.length ? " · " + tierMsgs.join(", ") : ""), 2600);
     }
     if (n) this._after();
@@ -185,9 +185,9 @@ var AchievementManager = {
   getAllTitles: function () {
     var out = [];
     (window.ACHIEVEMENT_CATEGORIES || []).forEach(function (c) {
-      if (c.tierRewards) c.tierRewards.forEach(function (r) { if (r && r.title) out.push({ title: r.title, from: "Palier or — " + c.label, cat: c.id }); });
+      if (c.tierRewards) c.tierRewards.forEach(function (r) { if (r && r.title) out.push({ title: r.title, from: _t("Palier or — {x}", { x: _td(c.label) }), cat: c.id }); });
     });
-    (ACHIEVEMENTS_DB || []).forEach(function (a) { if (a.title) out.push({ title: a.title, from: "Haut fait « " + a.name + " »", id: a.id }); });
+    (ACHIEVEMENTS_DB || []).forEach(function (a) { if (a.title) out.push({ title: a.title, from: _t("Haut fait « {x} »", { x: _td(a.name) }), id: a.id }); });
     return out;
   },
 

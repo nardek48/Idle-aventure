@@ -13,7 +13,7 @@ function buildLogTotalsHTML() {
   if (typeof buildAchievementTotalsHTML !== "function") return "";
   var open = !window.Prefs || Prefs.get("logTotals") !== false;
   var h = '<div class="hf-old log-totals"><button type="button" class="hf-old-h" aria-expanded="' + (open ? 'true' : 'false') + '" onclick="toggleLogTotals()">'
-    + (open ? '▾' : '▸') + ' Bilan de la partie</button>';
+    + (open ? '▾' : '▸') + ' ' + _t("Bilan de la partie") + '</button>';
   if (open) h += buildAchievementTotalsHTML();
   return h + '</div>';
 }
@@ -23,15 +23,15 @@ function buildLogHTML() {
   var h = buildLogTotalsHTML() + '<div id="log-container">';
 
   if (!entries.length) {
-    h += '<div style="color:var(--nb-ink-dim);text-align:center;padding:20px;">Aucun événement.</div>';
+    h += '<div style="color:var(--nb-ink-dim);text-align:center;padding:20px;">' + _t("Aucun événement.") + '</div>';
   } else {
     entries.slice(0, 50).forEach(function (e) {
-      h += '<div class="log-entry ' + esc(e.type || "normal") + '">' + esc(e.text) + '</div>';
+      h += '<div class="log-entry ' + esc(e.type || "normal") + '">' + esc(_td(e.text)) + '</div>';
     });
   }
 
   h += '</div>';
-  return '<div class="nb-page-frame kframe-page" data-kf-title="images/Icons/codex/codex_lore.png|Journal">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/codex/codex_lore.png|" + _t("Journal")) + '">' + h + '</div>';
 }
 
 window.buildLogHTML = buildLogHTML;

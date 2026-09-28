@@ -60,13 +60,13 @@ var HuntQuestManager = {
     this.ensureDefaults();
 
     var quest = HUNT_QUESTS[questId];
-    if (!quest) return showToast("Chasse introuvable", 1200);
-    if (game.huntRun.active) return showToast("Une chasse est déjà en cours", 1200);
+    if (!quest) return showToast(_t("Chasse introuvable"), 1200);
+    if (game.huntRun.active) return showToast(_t("Une chasse est déjà en cours"), 1200);
     if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
-      return showToast("Termine ou abandonne ton donjon avant de chasser", 1600);
+      return showToast(_t("Termine ou abandonne ton donjon avant de chasser"), 1600);
     }
     if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active) {
-      return showToast("Termine ou abandonne ta quête avant de chasser", 1600);
+      return showToast(_t("Termine ou abandonne ta quête avant de chasser"), 1600);
     }
 
     if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
@@ -78,7 +78,7 @@ var HuntQuestManager = {
     }
     game.huntRun = { active: true, questId: questId, killsInLot: 0 };
     if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("hunt"); } // v3.102.1 : la chasse est une sortie
-    addLog("🏹 Départ en chasse : " + quest.name, "event");
+    addLog("🏹 " + _t("Départ en chasse : {x}", { x: _td(quest.name) }), "event");
     this.spawnRunEnemy(quest);
     if (typeof switchTab === "function") switchTab("combat");
     saveGame();
@@ -121,10 +121,10 @@ var HuntQuestManager = {
     // de sortie, et c'est ce qui rend le lot de 20 engageant.
     if (quest.rewardGold) {
       game.gold += quest.rewardGold;
-      addLog("🪙 Prime de battue : +" + formatNumber(quest.rewardGold) + " or", "event");
+      addLog("🪙 " + _t("Prime de battue : +{n} or", { n: formatNumber(quest.rewardGold) }), "event");
     }
 
-    addLog("🏹 Chasse terminée : " + quest.name + " (" + quest.lotSize + "/" + quest.lotSize + ")", "event");
+    addLog("🏹 " + _t("Chasse terminée : {x} ({n}/{n})", { x: _td(quest.name), n: quest.lotSize }), "event");
     game.huntRun = { active: false, questId: null, killsInLot: 0 };
     if (window.SortieManager) SortieManager.end("success");
 
@@ -142,7 +142,7 @@ var HuntQuestManager = {
     if (!game.huntRun.active) return;
     var quest = HUNT_QUESTS[game.huntRun.questId];
     if (window.SortieManager) SortieManager.end("flee"); // v3.102.1 : arrêt volontaire = fuite (50 % de la viande) ; après une mort, déjà clos
-    addLog("🏹 Chasse arrêtée" + (quest ? " : " + quest.name : ""), "event");
+    addLog("🏹 " + (quest ? _t("Chasse arrêtée : {x}", { x: _td(quest.name) }) : _t("Chasse arrêtée")), "event");
     game.huntRun = { active: false, questId: null, killsInLot: 0 };
 
     if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
@@ -159,7 +159,7 @@ var HuntQuestManager = {
     var quest = HUNT_QUESTS[game.huntRun.questId];
     // v3.102.0 (P2) : même règle de mort qu'ailleurs (PV 0, Sang-froid, retour Campement)
     game.heroHp = 0; // v3.327.0 : Sang-froid retiré (décision T9)
-    addLog("💀 Chasse interrompue" + (quest ? " : " + quest.name : "") + " — le butin de la sortie est perdu. Retour au Campement.", "event");
+    addLog("💀 " + (quest ? _t("Chasse interrompue : {x} — le butin de la sortie est perdu. Retour au Campement.", { x: _td(quest.name) }) : _t("Chasse interrompue — le butin de la sortie est perdu. Retour au Campement.")), "event");
     vibrate([80, 40, 80]);
     this.stop();
     game.justDied = true;

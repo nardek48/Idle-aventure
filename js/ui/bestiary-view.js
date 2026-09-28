@@ -11,8 +11,8 @@ window.setBestiaryCodexSubTab = setBestiaryCodexSubTab;
 
 function buildBestiaryCodexSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeBestiaryCodexSubTab === "bestiary" ? ' is-active' : '') + '" onclick="setBestiaryCodexSubTab(\'bestiary\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/bestiary.png" alt=""><span>Bestiaire</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeBestiaryCodexSubTab === "codex" ? ' is-active' : '') + '" onclick="setBestiaryCodexSubTab(\'codex\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/codex.png" alt=""><span>Codex</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeBestiaryCodexSubTab === "bestiary" ? ' is-active' : '') + '" onclick="setBestiaryCodexSubTab(\'bestiary\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/bestiary.png" alt=""><span>' + _t("Bestiaire") + '</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeBestiaryCodexSubTab === "codex" ? ' is-active' : '') + '" onclick="setBestiaryCodexSubTab(\'codex\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/codex.png" alt=""><span>' + _t("Codex") + '</span></button>';
   h += '</div>';
   return h;
 }
@@ -124,21 +124,21 @@ function buildBestiaryEntryCardHTML(id) {
   h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame">';
   var imagePath = data.image || "";
   if (imagePath) {
-    h += '<img src="' + esc(imagePath) + '" alt="' + esc(data.name || "Créature") + '">';
+    h += '<img src="' + esc(imagePath) + '" alt="' + esc(data.name ? _td(data.name) : _t("Créature")) + '">';
   } else {
     h += '<span class="nb-entry-icon-emoji">' + renderIcon(isBoss ? "bosses" : "enemies", data.asset || "") + '</span>';
   }
   h += '</div></div>';
 
   h += '<div class="nb-entry-info-col">';
-  h += '<div class="nb-entry-name">' + esc(met ? data.name : "???") + (isBoss ? ' <span class="nb-entry-badge">BOSS</span>' : '') + '</div>';
+  h += '<div class="nb-entry-name">' + esc(met ? _td(data.name) : "???") + (isBoss ? ' <span class="nb-entry-badge">' + _t("BOSS") + '</span>' : '') + '</div>';
 
   if (met) {
     var resists = Array.isArray(data.resists) ? data.resists : [];
     var weak = Array.isArray(data.weak) ? data.weak : [];
-    if (resists.length) h += '<div class="nb-entry-desc">Résiste : ' + esc(resists.join(", ")) + '</div>';
-    if (weak.length) h += '<div class="nb-entry-desc">Faible : ' + esc(weak.join(", ")) + '</div>';
-    if (data.lore) h += '<div class="nb-entry-desc nb-entry-lore">' + esc(data.lore) + '</div>'; // v3.360.0 : une ligne de bestiaire
+    if (resists.length) h += '<div class="nb-entry-desc">' + esc(_t("Résiste : {liste}", { liste: resists.map(_td).join(", ") })) + '</div>';
+    if (weak.length) h += '<div class="nb-entry-desc">' + esc(_t("Faible : {liste}", { liste: weak.map(_td).join(", ") })) + '</div>';
+    if (data.lore) h += '<div class="nb-entry-desc nb-entry-lore">' + esc(_td(data.lore)) + '</div>'; // v3.360.0 : une ligne de bestiaire
 
     var combat = estimateCreatureCombatStats(id, data, isBoss);
     if (combat) {
@@ -149,14 +149,14 @@ function buildBestiaryEntryCardHTML(id) {
       h += '</div>';
     }
   } else {
-    h += '<div class="nb-entry-desc">Pas encore rencontrée.</div>';
+    h += '<div class="nb-entry-desc">' + _t("Pas encore rencontrée.") + '</div>';
   }
 
   h += '</div>'; // /nb-entry-info-col
 
   h += '<div class="nb-entry-status-col">';
   h += '<span class="nb-entry-status-label' + (met ? ' is-complete' : '') + '">' + (met ? formatNumber(kills) : "—") + '</span>';
-  if (met) h += '<span class="nb-entry-meta">tués</span>';
+  if (met) h += '<span class="nb-entry-meta">' + _t("tués") + '</span>';
   h += '</div>';
 
   h += '</div>';
@@ -188,7 +188,7 @@ function buildBestiaryWorldHeaderHTML(worldIndex, ids, isExpanded) {
   var world = WORLDS[worldIndex];
   var metCount = ids.filter(function (id) { return (game.killCounts[id] || 0) > 0; }).length;
   var h = '<button type="button" class="nb-accordion-head' + (isExpanded ? ' is-expanded' : '') + '" onclick="toggleBestiaryWorld(' + worldIndex + ')">';
-  h += '<span class="nb-accordion-name">' + esc(world ? world.name : "Monde inconnu") + '</span>';
+  h += '<span class="nb-accordion-name">' + esc(world ? _td(world.name) : _t("Monde inconnu")) + '</span>';
   h += '<span class="nb-accordion-count">' + metCount + ' / ' + ids.length + '</span>';
   h += '<span class="nb-accordion-chevron">' + (isExpanded ? "▲" : "▼") + '</span>';
   h += '</button>';
@@ -231,7 +231,7 @@ function buildBestiaryTrophiesHTML() {
   if (!list.length) return "";
   var h = '<div class="nb-accordion-section' + (bestiaryTrophiesOpen ? ' is-expanded' : '') + '">';
   h += '<button type="button" class="nb-accordion-head' + (bestiaryTrophiesOpen ? ' is-expanded' : '') + '" onclick="toggleBestiaryTrophies()">'
-    + '<span class="nb-accordion-name">🏆 Trophées</span><span class="nb-accordion-count">' + list.length + '</span>'
+    + '<span class="nb-accordion-name">' + _t("🏆 Trophées") + '</span><span class="nb-accordion-count">' + list.length + '</span>'
     + '<span class="nb-accordion-chevron">' + (bestiaryTrophiesOpen ? "▲" : "▼") + '</span></button>';
   if (bestiaryTrophiesOpen && typeof buildBossTrophyCardHTML === "function") {
     h += '<div class="nb-accordion-body bm-trophies">' + list.map(buildBossTrophyCardHTML).join("") + '</div>';
@@ -245,7 +245,7 @@ function buildBestiaryHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
   // v3.194.0 (Seb) : le bandeau suit le sous-onglet actif.
-  var kfTitle = activeBestiaryCodexSubTab === "codex" ? "Codex" : "Bestiaire";
+  var kfTitle = activeBestiaryCodexSubTab === "codex" ? _t("Codex") : _t("Bestiaire");
   h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + kfTitle + '">';
 
   if (activeBestiaryCodexSubTab === "codex") {

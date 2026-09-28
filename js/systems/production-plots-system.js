@@ -106,7 +106,7 @@ var ProductionPlotsSystem = {
   /* Monde qui ouvre la ligne de cette zone, avec sa préposition (« au Désert oublié »). */
   getPlotRowOpening: function (plotIndex) {
     var row = Math.floor(Number(plotIndex) / 3);
-    return window.WorldCaps ? WorldCaps.withPrep(row) : "dans un prochain monde";
+    return window.WorldCaps ? WorldCaps.withPrep(row) : _t("dans un prochain monde");
   },
 
   /* Totaux agrégés, utilisés par ProductionManager. getTotalStock() somme
@@ -197,23 +197,23 @@ var ProductionPlotsSystem = {
   unlockPlot: function (buildingId, plotIndex) {
     var plots = this.getPlots(buildingId);
     var plot = plots[plotIndex];
-    if (!plot || plot.state !== "locked") return { ok: false, reason: "Zone invalide" };
-    if (!this.isPlotRowOpen(plotIndex)) return { ok: false, reason: "S'ouvre " + this.getPlotRowOpening(plotIndex) };
+    if (!plot || plot.state !== "locked") return { ok: false, reason: _t("Zone invalide") };
+    if (!this.isPlotRowOpen(plotIndex)) return { ok: false, reason: _t("S'ouvre {lieu}", { lieu: this.getPlotRowOpening(plotIndex) }) };
 
     var cost = getProductionPlotUnlockCost(buildingId, plotIndex);
-    if (!cost) return { ok: false, reason: "Zone invalide" };
+    if (!cost) return { ok: false, reason: _t("Zone invalide") };
 
     var canAfford = Object.keys(cost).every(function (key) {
       return WarehouseManager.getAmount(key) >= cost[key];
     });
-    if (!canAfford) return { ok: false, reason: "Ressources insuffisantes" };
+    if (!canAfford) return { ok: false, reason: _t("Ressources insuffisantes") };
 
     Object.keys(cost).forEach(function (key) { WarehouseManager.removeResource(key, cost[key]); });
     plot.state = "open";
     plot.lastTick = Date.now();
 
     var buildingDef = PRODUCTION_BUILDINGS[buildingId];
-    addLog("🗺️ " + (buildingDef ? buildingDef.name : buildingId) + " : nouvelle zone défrichée (" + (plotIndex + 1) + ")", "event");
+    addLog("🗺️ " + _t("{x} : nouvelle zone défrichée ({n})", { x: buildingDef ? _td(buildingDef.name) : buildingId, n: plotIndex + 1 }), "event");
     if (typeof renderPanel === "function") renderPanel();
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null };
@@ -223,20 +223,20 @@ var ProductionPlotsSystem = {
   upgradePlot: function (buildingId, plotIndex) {
     var plots = this.getPlots(buildingId);
     var plot = plots[plotIndex];
-    if (!plot || plot.state !== "open") return { ok: false, reason: "Zone invalide" };
-    if (this.isPlotMaxLevel(plot)) return { ok: false, reason: this.isPlotLevelWorldCapped(plot) ? "Plafond de ce monde" : "Niveau maximum" };
+    if (!plot || plot.state !== "open") return { ok: false, reason: _t("Zone invalide") };
+    if (this.isPlotMaxLevel(plot)) return { ok: false, reason: this.isPlotLevelWorldCapped(plot) ? _t("Plafond de ce monde") : _t("Niveau maximum") };
 
     var cost = getProductionPlotUpgradeCost(buildingId, plot.level, plotIndex);
     var canAfford = Object.keys(cost).every(function (key) {
       return WarehouseManager.getAmount(key) >= cost[key];
     });
-    if (!canAfford) return { ok: false, reason: "Ressources insuffisantes" };
+    if (!canAfford) return { ok: false, reason: _t("Ressources insuffisantes") };
 
     Object.keys(cost).forEach(function (key) { WarehouseManager.removeResource(key, cost[key]); });
     plot.level += 1;
 
     var buildingDef = PRODUCTION_BUILDINGS[buildingId];
-    addLog("🗺️ Zone " + (plotIndex + 1) + " améliorée (niv. " + plot.level + ") — " + (buildingDef ? buildingDef.name : buildingId), "event");
+    addLog("🗺️ " + _t("Zone {n} améliorée (niv. {l}) — {x}", { n: plotIndex + 1, l: plot.level, x: buildingDef ? _td(buildingDef.name) : buildingId }), "event");
     if (typeof renderPanel === "function") renderPanel();
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null };
@@ -245,27 +245,27 @@ var ProductionPlotsSystem = {
   /* Active l'amélioration fertile/irriguée sur la zone d'index `plotIndex`, pour le
      bâtiment `buildingId` (payante, cumulable, non réversible). */
   toggleImprovement: function (buildingId, plotIndex, kind) {
-    if (kind !== "fertile" && kind !== "irrigated") return { ok: false, reason: "Amélioration invalide" };
+    if (kind !== "fertile" && kind !== "irrigated") return { ok: false, reason: _t("Amélioration invalide") };
     var plots = this.getPlots(buildingId);
     var plot = plots[plotIndex];
-    if (!plot || plot.state !== "open") return { ok: false, reason: "Zone invalide" };
-    if (plot[kind]) return { ok: false, reason: "Déjà appliquée" };
+    if (!plot || plot.state !== "open") return { ok: false, reason: _t("Zone invalide") };
+    if (plot[kind]) return { ok: false, reason: _t("Déjà appliquée") };
 
     var buildingCfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
-    if (!buildingCfg) return { ok: false, reason: "Bâtiment invalide" };
+    if (!buildingCfg) return { ok: false, reason: _t("Bâtiment invalide") };
     var def = buildingCfg.improvementCost[kind];
     var cost = def.cost;
     var canAfford = Object.keys(cost).every(function (key) {
       return WarehouseManager.getAmount(key) >= cost[key];
     });
-    if (!canAfford) return { ok: false, reason: "Ressources insuffisantes" };
+    if (!canAfford) return { ok: false, reason: _t("Ressources insuffisantes") };
 
     Object.keys(cost).forEach(function (key) { WarehouseManager.removeResource(key, cost[key]); });
     plot[kind] = true;
 
-    var label = kind === "fertile" ? "Terre fertile" : "Sillon irrigué";
+    var label = kind === "fertile" ? _t("Terre fertile") : _t("Sillon irrigué");
     var buildingDef = PRODUCTION_BUILDINGS[buildingId];
-    addLog("🗺️ Zone " + (plotIndex + 1) + " : " + label + " — " + (buildingDef ? buildingDef.name : buildingId), "event");
+    addLog("🗺️ " + _t("Zone {n} : {y} — {x}", { n: plotIndex + 1, y: label, x: buildingDef ? _td(buildingDef.name) : buildingId }), "event");
     if (typeof renderPanel === "function") renderPanel();
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null };
