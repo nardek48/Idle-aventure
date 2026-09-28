@@ -413,7 +413,7 @@ var LivingMapManager = {
     if (capTpl && capTpl.profileWeights && window.SceneRunManager
         && typeof SceneRunManager.canStartPetiteAventureToday === "function"
         && !SceneRunManager.canStartPetiteAventureToday()) {
-      return { ok: false, reason: "Plus d'expédition aujourd'hui. Reviens demain.", content: content, intensity: intensity };
+      return { ok: false, reason: SceneRunManager.petiteAventureWaitLabel() + ".", content: content, intensity: intensity, waitMs: SceneRunManager.petiteAventureNextInMs() }; // v3.366.0
     }
     /* v3.260.0 (retour Seb) : le coût d'entrée de l'expédition se dit dans le panneau, avant
        le départ, au lieu d'un refus de SceneRunManager.startRun après coup. */
@@ -613,15 +613,16 @@ var LivingMapManager = {
       if (brake > 0 && this._rand() < brake) {
         report.braked = true;
         report.message += " La Palissade a tenu.";
+      } else if (this.isLiberated(mapId, sectorId) && !this.isProtected(mapId, sectorId)) {
+        /* v3.366.0 (décision Seb 28/09/2026, option A) : un échec ne reprend QUE le secteur tenté,
+           et seulement s'il était déjà libéré (un rejeu). Une première tentative ratée ne coûte
+           que la sortie : on n'avance pas, on ne recule pas. pickRegression() (§5.2, le voisin le
+           plus lointain) n'est plus appelé : il refermait le chemin vers le secteur visé. */
+        this.regress(mapId, sectorId, "echec devant " + sectorId);
+        report.regressed = sectorId;
+        report.message += " " + this.buildRegressionMessage(mapId, sectorId);
       } else {
-        var victim = this.pickRegression(mapId, sectorId);
-        if (victim) {
-          this.regress(mapId, victim.id, "echec devant " + sectorId);
-          report.regressed = victim.id;
-          report.message += " " + this.buildRegressionMessage(mapId, victim.id);
-        } else {
-          report.message += " Rien à reprendre pour " + this.getWords(mapId).cover + ".";
-        }
+        report.message += " Rien n'est perdu : tu n'as pas avancé, c'est tout.";
       }
       if (typeof addLog === "function") addLog("Carte : " + report.message, "event");
       return report;

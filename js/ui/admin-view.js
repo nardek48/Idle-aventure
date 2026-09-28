@@ -336,43 +336,41 @@ function adminRecruitCompanions() {
 
 /* ---------- Petites Aventures ---------- */
 
-/* Le compteur du jour peut passer sous zéro : chaque cran négatif est une tentative de plus
-   que le cap. Il repart de lui-même au changement de jour civil (SceneRunManager). */
+/* Le compteur peut passer sous zéro : chaque cran négatif est une tentative de plus que la
+   réserve. v3.366.0 : les places se rechargent une à une (SceneRunManager), plus au jour civil. */
 function buildAdminPetiteAventureHTML() {
   if (!window.SceneRunManager || typeof SceneRunManager.getPetiteAventureCap !== "function") return "";
   var cap = SceneRunManager.getPetiteAventureCap();
   var restantes = cap - SceneRunManager.petiteAventureCountToday();
   var h = '<div class="panel-card admin-card">';
   h += '<h3><img class=ico-inline src=images/Icons/scene/path_easy.png> Petites Aventures</h3>';
-  h += '<p class="panel-sub">Tentatives restantes aujourd\'hui : ' + restantes + ' (cap du jour : ' + cap + ')</p>';
+  h += '<p class="panel-sub">Tentatives disponibles : ' + restantes + ' (réserve : ' + cap + ')'
+    + (restantes < cap ? ' · prochaine dans ' + SceneRunManager.formatPetiteAventureWait(SceneRunManager.petiteAventureNextInMs() || SceneRunManager.PETITE_AVENTURE_RECHARGE_MS) : '') + '</p>';
   h += '<div class="admin-quick-row">';
   h += '<button class="settings-btn admin-btn" onclick="adminAddPetiteAventure(1)">+1 tentative</button>';
   h += '<button class="settings-btn admin-btn" onclick="adminAddPetiteAventure(5)">+5 tentatives</button>';
-  h += '<button class="settings-btn admin-btn" onclick="adminResetPetiteAventure()"><img class=ico-inline src=images/Icons/system/reset.png> Remettre le jour à zéro</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminResetPetiteAventure()"><img class=ico-inline src=images/Icons/system/reset.png> Remplir la réserve</button>';
   h += '</div>';
   h += '</div>';
   return h;
 }
 
 function adminPetiteAventureState() {
-  SceneRunManager.ensureDefaults();
-  var pa = game.explorationProgression.petiteAventure, today = SceneRunManager._today();
-  if (pa.day !== today) { pa.day = today; pa.count = 0; }
-  return pa;
+  return SceneRunManager._paState(); // v3.366.0 : réserve rechargeable (spent / since)
 }
 
 function adminAddPetiteAventure(n) {
   if (!window.SceneRunManager) return;
   var pa = adminPetiteAventureState();
-  pa.count = Number(pa.count || 0) - Math.max(1, Number(n) || 1);
+  pa.spent = Number(pa.spent || 0) - Math.max(1, Number(n) || 1);
   showToast("+" + n + " Petite" + (n > 1 ? "s" : "") + " Aventure" + (n > 1 ? "s" : ""), 1200);
   adminRefresh();
 }
 
 function adminResetPetiteAventure() {
   if (!window.SceneRunManager) return;
-  adminPetiteAventureState().count = 0;
-  showToast("Compteur du jour remis à zéro", 1200);
+  var pa = adminPetiteAventureState(); pa.spent = 0; pa.since = null;
+  showToast("Réserve de Petites Aventures pleine", 1200);
   adminRefresh();
 }
 

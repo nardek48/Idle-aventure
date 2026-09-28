@@ -110,7 +110,9 @@ function buildQuestBoardActionHTML(m) {
   // "unavailable" (cap des 3 runs/jour atteint) retombait dans le "" final — ni bouton ni texte,
   // la carte semblait inerte plutôt que clairement indisponible pour aujourd'hui. Réutilise le
   // même habillage visuel que "locked" (qb-card-locked, is-locked sur la carte).
-  if (m.status === "unavailable") return '<span class="qb-card-locked"><img class=ico-inline src=images/Icons/system/hourglass_waiting.png> Revenez demain</span>';
+  // v3.366.0 : les places se rechargent une à une — on dit quand revient la prochaine
+  if (m.status === "unavailable") return '<span class="qb-card-locked"><img class=ico-inline src=images/Icons/system/hourglass_waiting.png> '
+    + (m.isPetiteAventure && window.SceneRunManager ? "Dans " + esc(SceneRunManager.formatPetiteAventureWait(SceneRunManager.petiteAventureNextInMs())) : "Revenez demain") + '</span>';
   return "";
 }
 

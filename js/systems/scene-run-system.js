@@ -18,26 +18,53 @@ var SceneRunManager = {
     // (toDateString), pas un timestamp — évite tout souci de fuseau/minuit ambigu.
     if (!game.explorationProgression) game.explorationProgression = {};
     if (!game.explorationProgression.petiteAventure || typeof game.explorationProgression.petiteAventure !== "object") {
-      game.explorationProgression.petiteAventure = { day: "", count: 0 };
+      game.explorationProgression.petiteAventure = { spent: 0, since: null }; // v3.366.0 : réserve rechargeable
     }
   },
 
   PETITE_AVENTURE_DAILY_CAP: 3,
 
+  /* v3.366.0 (décision Seb 28/09/2026) — RECHARGE au lieu du plafond du jour civil. La réserve
+     vaut le cap du monde (3 en Forêt, 4 au Désert, + Carte de l'éclaireur) ; chaque place
+     dépensée revient une à une, une toutes les PETITE_AVENTURE_RECHARGE_MS (une seule horloge,
+     comme une jauge). Persisté dans explorationProgression.petiteAventure : spent (places
+     dépensées, négatif = bonus de l'Admin) et since (départ de l'horloge, null si réserve pleine). */
+  PETITE_AVENTURE_RECHARGE_MS: 4 * 3600e3,
+
   _today: function () { return new Date().toDateString(); },
 
-  /* v3.125.0 : nombre de Petites Aventures déjà lancées aujourd'hui (reset automatique au
-     changement de jour civil, pas de tâche de minuit à programmer). */
-  petiteAventureCountToday: function () {
+  /* Lecture de l'état, migration de l'ancien compteur du jour (day/count), puis recharge due. */
+  _paState: function () {
     this.ensureDefaults();
-    var pa = game.explorationProgression.petiteAventure;
-    if (pa.day !== this._today()) return 0;
-    return Number(pa.count || 0);
+    var pa = game.explorationProgression.petiteAventure, now = Date.now();
+    if (typeof pa.spent !== "number") {
+      // ancienne forme : le compteur du jour devient des places dépensées, l'horloge part maintenant
+      pa.spent = (pa.day === this._today()) ? Number(pa.count || 0) : 0;
+      pa.since = pa.spent > 0 ? now : null;
+      delete pa.day; delete pa.count;
+    }
+    if (pa.spent > 0) {
+      if (typeof pa.since !== "number" || pa.since > now) pa.since = now;
+      var k = Math.floor((now - pa.since) / this.PETITE_AVENTURE_RECHARGE_MS);
+      if (k > 0) {
+        var back = Math.min(k, pa.spent);
+        pa.spent -= back;
+        pa.since += back * this.PETITE_AVENTURE_RECHARGE_MS;
+      }
+    }
+    if (pa.spent <= 0) pa.since = null;
+    return pa;
+  },
+
+  /* Places dépensées et pas encore revenues (nom historique conservé : l'Admin et le tableau le lisent). */
+  petiteAventureCountToday: function () {
+    return Number(this._paState().spent || 0);
   },
 
   /* v3.298.0 (W-1b, D10) : cap du jour lu sur le plus haut monde atteint (WORLD_CAPS,
      petiteAventureCap) : 3 en Forêt, 4 au Désert. Recalculé à chaque lecture, donc dès la
-     traversée. PETITE_AVENTURE_DAILY_CAP reste la valeur de repli (et l'ancre des bancs). */
+     traversée. PETITE_AVENTURE_DAILY_CAP reste la valeur de repli (et l'ancre des bancs).
+     v3.366.0 : c'est désormais la RÉSERVE de places, rechargées une à une. */
   getPetiteAventureCap: function () {
     var c = (window.WorldCaps && typeof WorldCaps.getPetiteAventureCap === "function") ? WorldCaps.getPetiteAventureCap() : null;
     var base = (typeof c === "number" && isFinite(c)) ? c : this.PETITE_AVENTURE_DAILY_CAP;
@@ -50,20 +77,40 @@ var SceneRunManager = {
     return this.petiteAventureCountToday() < this.getPetiteAventureCap();
   },
 
-  _consumePetiteAventureSlot: function () {
-    this.ensureDefaults();
-    var pa = game.explorationProgression.petiteAventure;
-    var today = this._today();
-    if (pa.day !== today) { pa.day = today; pa.count = 0; }
-    pa.count += 1;
+  /* v3.366.0 : délai avant la prochaine place (ms), 0 si une place est libre ou si rien ne recharge. */
+  petiteAventureNextInMs: function () {
+    var pa = this._paState();
+    if (this.canStartPetiteAventureToday() || !(pa.spent > 0) || typeof pa.since !== "number") return 0;
+    return Math.max(0, pa.since + this.PETITE_AVENTURE_RECHARGE_MS - Date.now());
   },
 
-  /* v3.355.0 (D6) : un échec SUBI (évacuation, Souffle épuisé, mort) rend la place du jour.
-     L'abandon volontaire la garde : sinon on relancerait le tirage sans limite. */
+  /* v3.366.0 : « 2 h 13 », « 45 min » — pour les refus et le tableau. */
+  formatPetiteAventureWait: function (ms) {
+    var m = Math.max(1, Math.ceil(Number(ms || 0) / 60000));
+    var h = Math.floor(m / 60);
+    m = m % 60;
+    return h ? (h + " h" + (m ? " " + (m < 10 ? "0" : "") + m : "")) : (m + " min");
+  },
+
+  /* Phrase de refus commune (carte vivante, tableau, départ) */
+  petiteAventureWaitLabel: function () {
+    return "Prochaine expédition dans " + this.formatPetiteAventureWait(this.petiteAventureNextInMs());
+  },
+
+  _consumePetiteAventureSlot: function () {
+    var pa = this._paState();
+    if (!(pa.spent > 0)) pa.since = Date.now(); // réserve pleine : l'horloge part avec cette place
+    pa.spent = Number(pa.spent || 0) + 1;
+  },
+
+  /* v3.355.0 (D6) : un échec SUBI (évacuation, Souffle épuisé, mort) rend la place.
+     L'abandon volontaire la garde : sinon on relancerait le tirage sans limite.
+     v3.366.0 : la place revient tout de suite dans la réserve, quel que soit le jour. */
   _refundPetiteAventureSlot: function (run) {
     if (!run || !run.paSlotDay) return;
-    var pa = game.explorationProgression && game.explorationProgression.petiteAventure;
-    if (pa && pa.day === run.paSlotDay && Number(pa.count || 0) > 0) pa.count -= 1;
+    var pa = this._paState();
+    if (Number(pa.spent || 0) > 0) pa.spent -= 1;
+    if (pa.spent <= 0) pa.since = null;
     run.paSlotDay = null;
   },
 
@@ -238,7 +285,7 @@ var SceneRunManager = {
 
     var needsProfile = !!template.profileWeights;
     if (needsProfile && !this.canStartPetiteAventureToday()) {
-      return { ok: false, reason: "Plus de petite aventure disponible aujourd'hui (revenir demain)", run: null };
+      return { ok: false, reason: this.petiteAventureWaitLabel(), run: null }; // v3.366.0 : recharge
     }
 
     if (template.entryCost) {

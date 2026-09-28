@@ -470,7 +470,7 @@ function ensureGameStateDefaults() {
   // ci-dessus, pour que toute save (ancienne ou neuve) ait la forme correcte dès le boot,
   // pas seulement après le premier appel à SceneRunManager.ensureDefaults().
   if (!game.explorationProgression.petiteAventure || typeof game.explorationProgression.petiteAventure !== "object") {
-    game.explorationProgression.petiteAventure = { day: "", count: 0 };
+    game.explorationProgression.petiteAventure = { spent: 0, since: null }; // v3.366.0 : réserve rechargeable
   }
   if (!game.gatheringActivity || typeof game.gatheringActivity !== "object") {
     game.gatheringActivity = createDefaultGatheringActivity();

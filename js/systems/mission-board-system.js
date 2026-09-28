@@ -559,14 +559,14 @@ var MissionBoard = {
     var hasMap = !!(map && typeof openLivingMap === "function");
     var mapId = map ? (map.id || worldId) : null;
     var blurb = hasMap ? LivingMapManager.getWords(mapId).mapBlurb : this._PA_BLURB; // v3.305.0 : texte de la carte
-    if (!isRunning && !canStart) blurb += " Plus de tentative aujourd'hui, reviens demain.";
+    if (!isRunning && !canStart) blurb += " " + SceneRunManager.petiteAventureWaitLabel() + "."; // v3.366.0 : recharge
     var m = {
       id: templateId, sourceKind: "scene", worldId: worldId, isPetiteAventure: true,
       title: template.title, blurb: blurb,
       type: "expedition", place: "", objectiveLabel: "",
       // v3.125.0 : le compteur "X/N aujourd'hui" passe par rewardSummary (progressLabel = running seulement)
       progressLabel: isRunning ? "En cours" : "",
-      rewardSummary: (canStart && !isRunning) ? (remaining + "/" + cap + " aujourd'hui") : "",
+      rewardSummary: (canStart && !isRunning) ? (remaining + "/" + cap + " disponibles") : "", // v3.366.0
       badge: "contract",
       status: isRunning ? "running" : (canStart ? "available" : "unavailable"),
       isMain: false
