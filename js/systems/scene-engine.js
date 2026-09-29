@@ -52,10 +52,7 @@ var SceneEngine = {
      gain — deux portes d'un même palier peuvent donc avoir des profils risque/récompense très
      différents, au lieu de la même difficulté de base pour toutes (ce qui rendait le choix
      mécanique : toujours prendre la porte annoncée "aisée").
-     v3.125.0 (Petites Aventures, Lot PA1) : slotWeightsOverride remplace template.slotWeights
-     UNIQUEMENT pour ce build — permet à un même canevas de générer une carte différente selon
-     le profil choisi (Bourrin/Prudent, voir template.profileWeights). Absent : comportement
-     inchangé (template.slotWeights). */
+     slotWeightsOverride (facultatif) remplace template.slotWeights pour ce build. */
   buildCard: function (template, randomValues, slotWeightsOverride) {
     if (!template) return [];
     var self = this;
@@ -117,12 +114,6 @@ var SceneEngine = {
           // (template.pools.combat), pas vers SCENE_NODES.obstacles — résolu par CombatEngine,
           // pas par SceneEngine.resolveObstacle().
           slot.gabaritId = this.pickFromArray(template.pools.combat, nextRandom());
-        } else if (type === "bloqueur") {
-          // v3.125.0 (Lot PA1) : durée tirée dans template.blockerDurationRange (ms), pas de
-          // gabarit — le nœud est purement temporel, résolu par un timestamp (readyAt).
-          var durMin = (template.blockerDurationRange && template.blockerDurationRange[0]) || 300000;
-          var durMax = (template.blockerDurationRange && template.blockerDurationRange[1]) || 600000;
-          slot.durationMs = Math.round(durMin + nextRandom() * (durMax - durMin));
         }
         level.push(slot);
       }

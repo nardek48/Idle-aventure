@@ -1,6 +1,6 @@
 "use strict";
 /* systems/pa2-run.js — v3.381.0 (Petites Aventures v2, lot PA2-0) : règles d'un run v2, sans écran.
-   Conception Petites Aventures v2 v1.1. Un canevas marqué paVersion: 2 est délégué ici par
+   Conception Petites Aventures v2 v1.1. Un canevas mode "pa2" est délégué ici par
    SceneRunManager.startRun ; le run vit dans game.sceneRun (déjà sauvegardé et repris), avec
    run.pa2 = true. Statuts : pa2-prep (besace, pactes) -> pa2-map <-> pa2-node -> completed.
    Données : data/pa2-maps.js (tracés), data/pa2-content.js (contenu, réglages « banc »). */
@@ -24,7 +24,7 @@ var Pa2Run = {
   _clamp: function (v, a, b) { return Math.max(a, Math.min(b, v)); },
   _save: function () { if (typeof saveGame === "function") saveGame(); },
 
-  isTemplate: function (template) { return !!(template && Number(template.paVersion) === 2); },
+  isTemplate: function (template) { return !!(template && template.mode === "pa2"); }, // v3.388.0 : drapeau paVersion retiré
   getRun: function () { var r = game.sceneRun; return (r && r.pa2) ? r : null; },
   getMap: function (run) { return PA2_MAPS[(run || this.getRun() || {}).mapId] || null; },
   node: function (key, run) { run = run || this.getRun(); return (run && run.nodes) ? run.nodes[key] || null : null; },
@@ -32,6 +32,15 @@ var Pa2Run = {
   hasRelic: function (id, run) { run = run || this.getRun(); return !!run && run.relics.indexOf(id) >= 0; },
   hasPact: function (id, run) { run = run || this.getRun(); return !!run && run.pacts.indexOf(id) >= 0; },
   ring: function (run) { return PA2_RINGS[(run || this.getRun()).ring] || PA2_RINGS.sentier; },
+  /* v3.386.0 : réglage propre au tracé (tune: { foeMult, lootMult }), pour qu'une carte longue pèse autant qu'une courte. */
+  tune: function (run, key) { var m = this.getMap(run), t = m && m.tune; return Number((t && t[key]) || 1); },
+  /* Profondeur des jets ramenée à l'échelle de la carte courte (destination en 9) : même courbe sur une carte longue. */
+  _depth: function (n, run) { return n.row * 9 / this.rows(this.getMap(run)).dest; },
+  // v3.387.0 (PA2-5) : règles, lieux et objets propres à un monde (soif du Désert, oasis, Outre).
+  worldRule: function (run, key) { var r = window.PA2_WORLD_RULES && PA2_WORLD_RULES[(run || this.getRun()).worldId]; return r ? r[key] : undefined; },
+  place: function (run, key) { var w = window.PA2_PLACES_BY_WORLD && PA2_PLACES_BY_WORLD[(run || this.getRun()).worldId]; return (w && w[key]) || PA2_PLACES[key]; },
+  itemInWorld: function (itemId, run) { var it = PA2_ITEMS[itemId]; return !!it && (!it.worlds || it.worlds.indexOf((run || this.getRun()).worldId) >= 0); },
+  lootMult: function (run) { return this.ring(run).lootMult * this.tune(run, "lootMult"); },
   // v3.385.0 (PA2-4, E1) : les rangées du camp, du seuil et des destinations viennent du tracé
   // (map.rows), pour les cartes longues. Sans rows : 3 / 7 / 9, le tracé court de foret_1.
   rows: function (map) {
@@ -160,7 +169,16 @@ var Pa2Run = {
 
   // E3 (PA2-4) : jamais la même accroche deux fois de suite (dernière retenue dans le coffre).
   _drawHook: function (hooks) {
+    // v3.387.0 (F3) : une accroche liée à l'Histoire n'est tirée qu'une fois par partie, quand l'étape le permet, et avant les autres.
+    hooks = hooks.filter(function (h) {
+      var d = PA2_HOOKS[h];
+      if (!d || !d.storyFlag) return true;
+      var ep = game.explorationProgression || {};
+      return !ep[d.storyFlag.key] && (typeof d.eligible !== "function" || d.eligible());
+    });
     if (!hooks.length) return null;
+    var first = hooks.filter(function (h) { return PA2_HOOKS[h].priority; });
+    if (first.length) { this.ensureChest().stats.lastHook = first[0]; return first[0]; }
     var st = this.ensureChest().stats, pool = hooks.filter(function (h) { return h !== st.lastHook; });
     var id = this._pick(pool.length ? pool : hooks);
     st.lastHook = id;
@@ -224,6 +242,7 @@ var Pa2Run = {
   canAdd: function (itemId) {
     var run = this.getRun(), it = PA2_ITEMS[itemId];
     if (!run || run.status !== PA2_STATUS.prep || !it) return { ok: false, reason: _t("Choix impossible") };
+    if (!this.itemInWorld(itemId, run)) return { ok: false, reason: _t("Pas dans ce monde.") };
     if (!this.isUnlocked(itemId)) return { ok: false, reason: _td(it.lockedHint || "") };
     if (!it.uses && run.bag.indexOf(itemId) >= 0) return { ok: false, reason: _t("Déjà dans la besace.") };
     if (this.bagUsed(run) + it.size > PA2_BAG_SIZE) return { ok: false, reason: _t("La besace est pleine.") };
@@ -278,7 +297,8 @@ var Pa2Run = {
     }
     run.taken = taken;
     run.stock = {};
-    run.bag.forEach(function (id) { var it = PA2_ITEMS[id]; if (it.uses) run.stock[id] = (run.stock[id] || 0) + it.uses; });
+    var gUses = this.worldRule(run, "gourdeUses");
+    run.bag.forEach(function (id) { var it = PA2_ITEMS[id]; if (it.uses) run.stock[id] = (run.stock[id] || 0) + (id === "gourde" && gUses ? gUses : it.uses); });
     // Q11 : Seconde gorgée (Mémoire) +1 gorgée, Gué tenu +1 corde.
     if (run.stock.gourde && window.MemoryManager && MemoryManager.has("seconde_gorgee")) run.stock.gourde += 1;
     if (run.stock.corde && window.LivingMapManager && LivingMapManager.hasEffect("corde_plus")) {
@@ -366,7 +386,8 @@ var Pa2Run = {
     if (this.openMoves().indexOf(key) < 0) return { ok: false, reason: _t("Ce chemin n'est pas praticable d'ici.") };
     run.path.push([run.at, key]);
     run.at = key;
-    var step = (this.hasPact("lourd", run) ? PA2_RULES.heavyStep : 0) + (this.hasRelic("ronce", run) ? PA2_RULES.ronceStep : 0);
+    var step = (this.hasPact("lourd", run) ? PA2_RULES.heavyStep : 0) + (this.hasRelic("ronce", run) ? PA2_RULES.ronceStep : 0)
+      + Number(this.worldRule(run, "stepBreath") || 0); // v3.387.0 : la soif du Désert
     if (step) run.breath = Math.max(0, run.breath - step);
     if (this.hasRelic("braise", run)) this._heal(game.heroMaxHp * PA2_RULES.braiseHealPct);
     this._prepareNode(run, this.node(key, run));
@@ -379,11 +400,11 @@ var Pa2Run = {
   _prepareNode: function (run, n) {
     var t = n.type;
     if (t === "obstacle" || t === "tertre") {
-      var gid = (t === "tertre") ? PA2_OBSTACLE_TERTRE.gabaritId : this._pick(PA2_OBSTACLES[run.worldId] || PA2_OBSTACLES.forest);
+      var gid = (t === "tertre") ? ((PA2_OBSTACLE_TERTRE.byWorld || {})[run.worldId] || PA2_OBSTACLE_TERTRE.gabaritId) : this._pick(PA2_OBSTACLES[run.worldId] || PA2_OBSTACLES.forest);
       var gab = SceneEngine.getNodeBank().obstacles[gid];
       var base = (t === "tertre") ? PA2_OBSTACLE_TERTRE.baseDifficulty : Number(gab.baseDifficulty || 4);
       n.gabaritId = gid;
-      n.diff = SceneCheckSystem.depthDifficulty(base, n.row) * this.ring(run).diffMult * Number(run.band.obstacleScale || 1);
+      n.diff = SceneCheckSystem.depthDifficulty(base, this._depth(n, run)) * this.ring(run).diffMult * Number(run.band.obstacleScale || 1);
     } else if (t === "combat") {
       var hook = run.hookId ? PA2_HOOKS[run.hookId] : null;
       if (hook && hook.revenge && run.flags.vole && n.act >= 2 && !run.flags.revenge) {
@@ -391,12 +412,12 @@ var Pa2Run = {
       } else {
         n.foeId = this._pick(((PA2_FOES[run.worldId] || PA2_FOES.forest)[n.act]));
         n.pack = PA2_ACTS[n.act].pack;
-        // Maddoc aidé : au premier combat de l'acte II ou III, une pierre depuis les fourrés.
+        // L'homme du gouffre aidé : au premier combat de l'acte II ou III, une pierre depuis les fourrés.
         if (hook && hook.assist && this.hookBranch(run) && hook.assist.branches.indexOf(this.hookBranch(run)) >= 0 && n.act >= 2 && !run.flags.assisted) {
           run.flags.assisted = true; n.assist = true; n.pack = Math.max(1, n.pack - 1); n.echo = hook.echo.assist;
         }
       }
-      n.diff = SceneCheckSystem.depthDifficulty(5, n.row) * this.ring(run).diffMult * Number(run.band.obstacleScale || 1);
+      n.diff = SceneCheckSystem.depthDifficulty(5, this._depth(n, run)) * this.ring(run).diffMult * Number(run.band.obstacleScale || 1);
     } else if (t === "boss") {
       n.pack = 1;
     } else if (t === "trouvaille") {
@@ -461,6 +482,7 @@ var Pa2Run = {
       if (run.breath >= 100) return { ok: false, reason: _t("Ton Souffle est déjà plein.") };
       var amt = it.breath;
       if (itemId === "gourde" && window.LivingMapManager && LivingMapManager.hasEffect("gourde_40")) amt = Number(LivingMapManager.getEffectValue("gourdeBreath", 40));
+      amt = this.drinkAmount(itemId, amt);
       run.breath = Math.min(100, run.breath + amt);
     } else {
       if (game.heroHp >= game.heroMaxHp && !(it.healsWound && run.wounds > 0)) return { ok: false, reason: _t("Tu es en pleine forme.") };
@@ -470,6 +492,14 @@ var Pa2Run = {
     run.stock[itemId] -= 1;
     this._save();
     return { ok: true, reason: null };
+  },
+  // v3.387.0 (F2) : l'Outre, comme en v1 : puits sec tenu +15, puis Outre de cuir (Mémoire) ×1,5.
+  drinkAmount: function (itemId, amt) {
+    var it = PA2_ITEMS[itemId];
+    if (amt == null) amt = Number(it.breath || 0);
+    if (it.bonusEffect && window.LivingMapManager && LivingMapManager.hasEffect(it.bonusEffect)) amt += Number(LivingMapManager.getEffectValue("outreBreathBonus", 15));
+    if (itemId === "outre" && window.MemoryManager && MemoryManager.has("outre_cuir")) amt = Math.floor(amt * 1.5);
+    return amt;
   },
   _rationInStock: function (run) {
     var ids = ["petite_ration", "ration", "grande_ration"];
@@ -537,7 +567,7 @@ var Pa2Run = {
     if (useRope) { run.stock.corde -= 1; res = { roll: 6, kind: "ok", rope: true }; }
     else { run.breath = Math.max(0, run.breath - opt.cost); res = this.roll(opt.thr); }
     res.voie = voie; res.thr = opt.thr; res.cran = opt.cran;
-    var base = run.refGold * PA2_GOLD.obstacle * Number(opt.lootMod || 1) * this.ring(run).lootMult;
+    var base = run.refGold * PA2_GOLD.obstacle * Number(opt.lootMod || 1) * this.lootMult(run);
     if (res.kind === "ok") res.gain = this._gold(run, base);
     if (res.kind === "mid") { res.gain = this._gold(run, base * PA2_GOLD.obstacleMid); run.breath = Math.max(0, run.breath - PA2_RULES.mistBreath); }
     if (res.kind === "ko") {
@@ -548,7 +578,7 @@ var Pa2Run = {
     if (n.type === "tertre") {
       res.opened = res.kind !== "ko";
       if (res.opened) {
-        res.chestGain = this._gold(run, run.refGold * PA2_GOLD.tertre * this.ring(run).lootMult * this.destGoldMult(run));
+        res.chestGain = this._gold(run, run.refGold * PA2_GOLD.tertre * this.lootMult(run) * this.destGoldMult(run));
         var extra = this.drawRelics(run, 1)[0];
         if (extra) { run.relics.push(extra); res.relic = extra; }
       }
@@ -587,7 +617,7 @@ var Pa2Run = {
     var e = guard ? this._spawn(run, guard.foe, false) : this._spawn(run, boss ? null : n.foeId, boss);
     if (!e) return null;
     // Le gardien a ses propres multiplicateurs : régler les actes ne le touche pas.
-    var mult = (guard ? 1 : PA2_ACTS[boss ? 3 : n.act].foeMult) * this.ring(run).foeMult * Number(run.band.foeScale || 1);
+    var mult = (guard ? 1 : PA2_ACTS[boss ? 3 : n.act].foeMult * this.tune(run, "foeMult")) * this.ring(run).foeMult * Number(run.band.foeScale || 1);
     e = JSON.parse(JSON.stringify(e));
     e.maxHp = Math.max(1, Math.round(Number(e.maxHp || 1) * mult * (guard ? guard.hpMult : 1)));
     e.hp = e.maxHp;
@@ -631,8 +661,8 @@ var Pa2Run = {
     var pack = Number(n.pack || 1);
     var hpLoss = unwinnable ? Number(game.heroHp || 0) : Math.round(rounds * foeDmg * pack * this._dmgMult(run, n, apId));
     var gold = (n.type === "boss")
-      ? run.refGold * PA2_GOLD.boss * this.ring(run).lootMult * this.destGoldMult(run)
-      : run.refGold * PA2_GOLD.combat * pack * PA2_APPROACHES[apId].loot * this.ring(run).lootMult; // C3 : or de la carte
+      ? run.refGold * PA2_GOLD.boss * this.lootMult(run) * this.destGoldMult(run)
+      : run.refGold * PA2_GOLD.combat * pack * PA2_APPROACHES[apId].loot * this.lootMult(run); // C3 : or de la carte
     return {
       approach: apId, foe: e.id, foeName: e.name, rounds: unwinnable ? null : rounds * pack, unwinnable: unwinnable,
       hpLoss: hpLoss, verdict: this.verdictOf(hpLoss), gold: Math.round(gold * (this.hasRelic("ronce", run) ? PA2_RULES.ronceLoot : 1))
@@ -797,7 +827,7 @@ var Pa2Run = {
       if (!this._hurt(run, res.dmg)) return { ok: true, reason: null, result: res };
     } else if (branch === "arc") {
       run.flags.vole = true;
-      res.gain = this._gold(run, run.refGold * PA2_GOLD.event * this.ring(run).lootMult);
+      res.gain = this._gold(run, run.refGold * PA2_GOLD.event * this.lootMult(run));
     }
     return this._done(run, n, res);
   },
@@ -826,6 +856,10 @@ var Pa2Run = {
     if (c.breath) run.breath = Math.max(0, run.breath - c.breath);
     if (b.gainBreath) run.breath = Math.min(100, run.breath + b.gainBreath);
     run.flags.hookBranch = branch;
+    if (hook.storyFlag) { // v3.387.0 : Maddoc, noté pour la partie (étapes du Désert, storyMaddocMet)
+      if (!game.explorationProgression) game.explorationProgression = {};
+      game.explorationProgression[hook.storyFlag.key] = hook.storyFlag.values[branch] || branch;
+    }
     return this._done(run, n, res);
   },
 
@@ -879,7 +913,7 @@ var Pa2Run = {
     if (!n) return { ok: false, reason: _t("Choix impossible") };
     var run = this.getRun();
     var share = run.flags.sauve ? PA2_GOLD.clairiereSauve : PA2_GOLD.clairiere;
-    var res = { kind: "clairiere", gain: this._gold(run, run.refGold * share * this.ring(run).lootMult * this.destGoldMult(run)) };
+    var res = { kind: "clairiere", gain: this._gold(run, run.refGold * share * this.lootMult(run) * this.destGoldMult(run)) };
     n.done = true; run.lastResult = res;
     this.finish("dest");
     return { ok: true, reason: null, result: res };
@@ -900,7 +934,10 @@ var Pa2Run = {
       var hk = this._hook(run);
       if (hk && hk.destRare && hk.destRare[this.hookBranch(run)]) amt += Number(hk.destRare[this.hookBranch(run)]); // le feu nourri
       end.rare = this._creditRare(run, amt);
-      var chestItem = PA2_CHEST_REWARDS[dest.type];
+      var chestItem = (PA2_CHEST_REWARDS[run.worldId] || {})[dest.type];
+      // v3.387.0 : le drapeau de l'Histoire (étape « L'outre ») est posé à une destination atteinte, comme la chambre finale en v1.
+      var tpl = window.SceneEngine ? SceneEngine.getTemplate(run.templateId) : null;
+      if (tpl && tpl.successFlag) { if (!game.explorationProgression) game.explorationProgression = {}; game.explorationProgression[tpl.successFlag] = true; }
       if (chestItem && (dest.type !== "boss" || run.flags.bossDown)) {
         var chest = this.ensureChest();
         end.chest = { item: chestItem, isNew: !chest.unlocked[chestItem] };

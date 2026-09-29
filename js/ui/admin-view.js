@@ -81,18 +81,6 @@ function buildAdminHTML() {
   h += '<button class="settings-btn admin-btn" onclick="switchTab(\'combat-sandbox\')"><img class=ico-inline src=images/Icons/subtabs/potions.png> Ouvrir le bac à sable</button>';
   h += '</div>';
 
-  // v3.122.0 (Lot S2a) : expedition_faille (canevas génératif du scene-engine) n'est plus
-  // accessible depuis le menu ☰ (décision Seb : l'onglet Expédition sert uniquement à
-  // afficher un run en cours, lancé depuis le tableau de missions) — conservé ici comme outil
-  // de test/démo du moteur, réserve pour une future feature répétable (Petites Aventures).
-  if (window.SceneRunManager && window.SCENE_TEMPLATES && SCENE_TEMPLATES.expedition_faille) {
-    h += '<div class="panel-card admin-card">';
-    h += '<h3><img class=ico-inline src=images/Icons/scene/scene_cavern.png> Bac à sable d\'expédition</h3>';
-    h += '<p class="panel-sub">Canevas génératif du scene-engine (8 profondeurs, push-your-luck) — hors catalogue de quêtes, réserve pour une future feature.</p>';
-    h += '<button class="settings-btn admin-btn" onclick="adminStartSandboxExpedition()"><img class=ico-inline src=images/Icons/scene/scene_cavern.png> Lancer l\'expédition sandbox</button>';
-    h += '</div>';
-  }
-
   /* v3.279.0 (demande Seb) : relancer n'importe quelle quête de COMBAT pour la tester.
      Les quêtes d'aventure et de chasse ont chacune leur moteur de run ; on remet leur
      progression à zéro avant de lancer, sinon une quête déjà terminée refuserait de
@@ -282,18 +270,6 @@ function adminApplyCycleCount() {
   adminRefresh();
 }
 
-/* v3.122.0 (Lot S2a) : lance expedition_faille (scene-engine générique) directement, sans
-   passer par le tableau de missions (le canevas n'y figure plus). Réutilise startSceneExpedition()
-   de scene-view.js (fixée sur "expedition_faille"). */
-function adminStartSandboxExpedition() {
-  if (window.SceneRunManager && SceneRunManager.isRunActive()) {
-    showToast("Une expédition est déjà en cours", 1600);
-    return;
-  }
-  if (typeof switchTab === "function") switchTab("scene");
-  if (typeof startSceneExpedition === "function") startSceneExpedition();
-}
-
 window.buildAdminHTML = buildAdminHTML;
 window.getAdminCombatQuests = getAdminCombatQuests;
 window.buildAdminCombatQuestHTML = buildAdminCombatQuestHTML;
@@ -308,7 +284,6 @@ window.adminHeroHpMax = adminHeroHpMax;
 window.adminKillEnemy = adminKillEnemy;
 window.adminApplyWorldIndex = adminApplyWorldIndex;
 window.adminApplyCycleCount = adminApplyCycleCount;
-window.adminStartSandboxExpedition = adminStartSandboxExpedition;
 
 /* ================= v3.324.0 (demande Seb) — RACCOURCIS DE TEST =================
    Trois cartes : recruter les compagnons, rendre des Petites Aventures du jour, avancer

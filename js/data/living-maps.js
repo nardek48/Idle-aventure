@@ -23,7 +23,7 @@
    La récompense de première libération se lit sur l'anneau (LIVING_MAP_RULES.firstReward). */
 
 var LIVING_MAP_RULES = {
-  /* §6.2 : l'anneau fixe l'intensité — ids de SCENE_INTENSITY. */
+  /* §6.2 : l'anneau fixe la difficulté — ids de PA2_RINGS (data/pa2-content.js). */
   ringIntensity: { 1: "sentier", 2: "chemin", 3: "periple" },
   /* §4.4 : Sève d'Aeswyn à la première libération, jamais aux reprises. À confirmer au banc (sim/map-bench.js). */
   firstReward: { 1: 5, 2: 8, 3: 12 },

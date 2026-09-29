@@ -516,22 +516,22 @@ var MissionBoard = {
   },
 
   /* ---------- Petite Aventure (v3.125.0, Petites Aventures Lot PA1) ---------- */
-  /* Distincte de _sceneMissions() : canevas répétable (mode generative + profileWeights),
+  /* Distincte de _sceneMissions() : canevas répétable (mode "pa2"),
      pas de unlockOnSuccess/isQuestCompleted — le seul gate est le cap journalier
      (SceneRunManager.canStartPetiteAventureToday). Pas de flux accept/launch classique non
      plus : lancement direct comme startSceneExpedition(), le tableau affiche juste le
      compteur restant du jour. */
-  /* v3.304.0 (W-2) : UNE MISSION PAR CANEVAS DE PETITE AVENTURE (profileWeights + mode generative),
+  /* v3.304.0 (W-2) : UNE MISSION PAR CANEVAS DE PETITE AVENTURE (v3.388.0 : mode "pa2"),
      plus seulement celle de la Forêt. Chacune porte son monde : le filtre du tableau montre celle
      du monde où tu es. Visibilité par boardRequires du canevas ; cap journalier partagé. La carte
      vivante sert de porte d'entrée si le monde en a une (la Forêt ; le Désert à l'étape 4). */
-  _PA_BLURB: _t("Un parcours court, choisis ton style : rapide et risqué, ou lent et sûr."),
+  _PA_BLURB: _t("Une nuit, une carte, trois fins possibles. Prépare ta besace."), // v3.388.0 : texte de la v2
 
   _petiteAventureTemplateIds: function () {
     if (!window.SCENE_TEMPLATES) return [];
     return Object.keys(SCENE_TEMPLATES).filter(function (id) {
       var t = SCENE_TEMPLATES[id];
-      return t && t.mode === "generative" && !!t.profileWeights;
+      return !!(t && window.Pa2Run && Pa2Run.isTemplate(t)); // v3.388.0 : canevas mode "pa2"
     });
   },
 

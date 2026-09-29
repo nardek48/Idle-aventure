@@ -128,7 +128,7 @@ window.startLivingMapSector = startLivingMapSector;
 /* ---------- Helpers de rendu ---------- */
 
 function livingMapIntensityLabel(intensityId) {
-  var it = window.SCENE_INTENSITY && SCENE_INTENSITY[intensityId];
+  var it = window.PA2_RINGS && PA2_RINGS[intensityId]; // v3.388.0 : nom de l'anneau
   return it ? _td(it.label) : intensityId;
 }
 

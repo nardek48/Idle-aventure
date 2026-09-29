@@ -409,9 +409,9 @@ var LivingMapManager = {
         return { ok: false, reason: this.getWords(mapId).openElsewhere + " : " + (next ? _td(next.name) : open[0]) + ".", content: content, intensity: intensity };
       }
     }
-    // v3.310.0 : seul un canevas de Petite Aventure (à profils) compte dans le cap journalier
+    // v3.310.0 : seul un canevas de Petite Aventure compte dans le cap (v3.388.0 : mode "pa2")
     var capTpl = (content && content.type === "expedition" && window.SceneEngine) ? SceneEngine.getTemplate(content.templateId) : null;
-    if (capTpl && capTpl.profileWeights && window.SceneRunManager
+    if (capTpl && window.Pa2Run && Pa2Run.isTemplate(capTpl) && window.SceneRunManager
         && typeof SceneRunManager.canStartPetiteAventureToday === "function"
         && !SceneRunManager.canStartPetiteAventureToday()) {
       return { ok: false, reason: SceneRunManager.petiteAventureWaitLabel() + ".", content: content, intensity: intensity, waitMs: SceneRunManager.petiteAventureNextInMs() }; // v3.366.0
@@ -420,7 +420,7 @@ var LivingMapManager = {
        le départ, au lieu d'un refus de SceneRunManager.startRun après coup. */
     if (content && content.type === "expedition" && window.SceneEngine && window.WarehouseManager) {
       var tpl = SceneEngine.getTemplate(content.templateId);
-      var cost = (tpl && !(window.Pa2Run && Pa2Run.isTemplate(tpl))) ? tpl.entryCost : null; // v3.381.0 : plus de ration d'entrée en v2 (Q6)
+      var cost = (tpl && !(window.Pa2Run && Pa2Run.isTemplate(tpl))) ? tpl.entryCost : null; // v3.381.0 : pas de ration d'entrée en Petite Aventure (Q6)
       if (cost && WarehouseManager.getAmount(cost.resourceId) < Number(cost.amount || 0)) {
         var resDef = (window.WAREHOUSE_RESOURCES || {})[cost.resourceId];
         var rName = (resDef && resDef.name) ? _td(resDef.name) : cost.resourceId;

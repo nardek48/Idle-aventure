@@ -46,9 +46,6 @@ function buildSceneScreenHTML() {
   if (!run || run.status === "completed") {
     return buildSceneLandingHTML();
   }
-  if (run.status === "profile") return buildSceneProfileChoiceHTML(); // v3.125.0 (Petites Aventures)
-  if (run.status === "intensity") return buildSceneIntensityChoiceHTML(); // v3.195.0
-  if (run.status === "mutator-announce") return buildSceneMutatorAnnounceHTML(); // v3.196.0
   if (run.status === "preparation") return buildScenePreparationHTML();
   if (run.status === "gate") return buildSceneGateChoiceHTML();
   if (run.status === "node") return buildSceneNodeHTML();
@@ -191,16 +188,6 @@ function openSceneQuestEntry(templateId) {
 }
 window.openSceneQuestEntry = openSceneQuestEntry;
 
-function startSceneExpedition() {
-  sceneRunLog = [];
-  var result = SceneRunManager.startRun("expedition_faille");
-  if (!result.ok) {
-    showToast(result.reason, 1600);
-    return;
-  }
-  refreshSceneScreen();
-}
-window.startSceneExpedition = startSceneExpedition;
 
 /* --- Bandeau d'état permanent --- */
 
@@ -314,11 +301,7 @@ function buildScenePathHTML(run) {
 
 function buildSceneProgressHTML(run) {
   var template = SceneEngine.getTemplate(run.templateId);
-  // v3.195.0 : depthMax RÉEL du run = intensité choisie si présente (SCENE_INTENSITY), sinon
-  // template.depthMax (canevas sans intensité, ex. expedition_faille — inchangé). Même règle
-  // que SceneRunManager._advanceOrFinish, jamais désynchronisée.
-  var intensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
-  var depthMax = (intensity && intensity.depthMax) || Number(template.depthMax || 1);
+  var depthMax = Number(template.depthMax || 1); // même règle que SceneRunManager._advanceOrFinish
   var horizon = SceneRunManager.getVisibilityHorizon(); // v3.196.0 (centralisé, Brouillard)
 
   var h = '<div class="scene-progress">';
@@ -355,18 +338,13 @@ function buildSceneStatusBarHTML(run, opts) {
     lootLabel = (resDef && resDef.name) ? _td(resDef.name) : template.lootResource;
   }
 
-  // v3.195.0 : depthMax RÉEL du run = intensité si présente (même règle que
-  // buildSceneProgressHTML/_advanceOrFinish) — corrige un affichage figé sur template.depthMax
-  // resté en dur depuis le lot précédent (repéré en posant le mutateur "Nuit noire" ici).
-  var displayIntensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
-  var displayDepthMax = (displayIntensity && displayIntensity.depthMax) || Number(template.depthMax || 1);
+  var displayDepthMax = Number(template.depthMax || 1);
 
   var h = SCENE_PATH_TEMPLATE_IDS.indexOf(run.templateId) !== -1 ? buildScenePathHTML(run) : buildSceneProgressHTML(run);
   h += '<div class="scene-status-bar">';
   h += '<span class="scene-status-pill scene-status-depth">' + _t("Profondeur {a}/{b}", { a: run.depth + 1, b: displayDepthMax }) + '</span>';
   h += '<span class="scene-status-pill scene-status-loot">' + esc(lootLabel) + ' : ' + lootAmount + '</span>';
-  // v3.198.0 : le plafond vient du canevas (template.maxInjuries) — la Petite Aventure
-  // evacue a 2, expedition_faille et les quetes migrees restent a 3.
+  // v3.198.0 : le plafond vient du canevas (template.maxInjuries), 3 par défaut.
   var injuryMax = SceneRunManager.getMaxInjuries(run.templateId);
   h += '<span class="scene-status-pill scene-status-injury' + (run.injuries.length >= injuryMax - 1 ? ' is-low' : '') + '">' + _t("Blessures : {a}/{b}", { a: run.injuries.length, b: injuryMax }) + '</span>';
   // v3.195.0 : pastille Souffle — seuils visuels (is-low sous 30, cohérent avec le seuil qui
@@ -381,13 +359,6 @@ function buildSceneStatusBarHTML(run, opts) {
   // v3.198.0 : corde et provisions ont des charges — le joueur doit les voir fondre.
   if (Number(run.ropeCharges || 0) > 0) h += '<span class="scene-status-pill">' + _t("Corde x{n}", { n: run.ropeCharges }) + '</span>';
   if (Number(run.provisionCharges || 0) > 0) h += '<span class="scene-status-pill">' + _t("Provisions x{n}", { n: run.provisionCharges }) + '</span>';
-  // v3.196.0 : pastille mutateur, visible tout le run (pas seulement à l'annonce) — omise si
-  // "aucun" (rien à rappeler au joueur dans ce cas, cohérent avec les autres pastilles qui
-  // n'apparaissent que si pertinentes, ex. torche).
-  var statusMutator = SceneRunManager.getActiveMutator();
-  if (statusMutator.id && statusMutator.id !== "aucun") {
-    h += '<span class="scene-status-pill scene-status-mutator">' + renderIconOrEmojiHTML(statusMutator.icon, "scene-pill-ico", "") + ' ' + esc(_td(statusMutator.label)) + '</span>';
-  }
   h += '</div>';
   // v3.195.0 : bouton Gourde, utilisable à tout moment tant qu'elle est en loadout et que le
   // Souffle n'est pas déjà au maximum (même emplacement que le bouton torche, juste après la
@@ -429,133 +400,11 @@ function buildSceneStatusBarHTML(run, opts) {
   return h;
 }
 
-/* --- Choix de profil (Petites Aventures uniquement, v3.125.0) --- */
-/* Concept §2 : Bourrin (rapide, plus de combats, aucun bloqueur) vs Prudent (plus long,
-   peu/pas de combat, 1-2 bloqueurs "carotte"). Choisi une seule fois, avant la préparation
-   — génère réellement la carte (voir SceneRunManager.chooseProfile). */
 
-function buildSceneProfileChoiceHTML() {
-  var run = SceneRunManager.getRun();
-  if (!run) return "";
-  var template = SceneEngine.getTemplate(run.templateId);
 
-  var h = '<div class="panel-title">' + esc(_td(template.title)) + '</div>';
-  h += '<div class="scene-screen">';
-  h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-title">' + _t("Choisis ton approche") + '</div>';
-  // v3.256.0 (Cartes Vivantes, C-2) : run ciblé — le secteur, sa ligne de lore, et l'intensité que l'anneau impose.
-  if (run.livingMap && window.LivingMapManager) {
-    var lmDef = LivingMapManager.getSectorDef(run.livingMap.mapId, run.livingMap.sectorId);
-    var lmInt = lmDef && window.SCENE_INTENSITY && SCENE_INTENSITY[LivingMapManager.getIntensity(lmDef)];
-    if (lmDef) h += '    <div class="scene-map-target"><b>' + esc(_td(lmDef.name)) + '</b> · ' + esc(lmInt ? _td(lmInt.label) : "") + ' — ' + esc(_td(lmDef.lore || "")) + '</div>';
-  }
-  h += '    <div class="scene-heading-text">' + _t("Le butin final est identique quel que soit ton choix — seul le chemin change.") + '</div>';
-  h += '  </div>';
 
-  h += '  <div class="scene-card-grid">';
-  h += '<button type="button" class="scene-card" onclick="chooseSceneProfile(\'bourrin\')">';
-  h += '<span class="scene-card-icon"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png></span>';
-  h += '<span class="scene-card-label">' + _t("Bourrin") + '</span>';
-  h += '<span class="scene-card-sub">' + _t("Rapide, plus de combats, aucune attente.") + '</span>';
-  h += '</button>';
-  h += '<button type="button" class="scene-card" onclick="chooseSceneProfile(\'prudent\')">';
-  h += '<span class="scene-card-icon"><img class=ico-inline src=images/Icons/combat_stats/stat_defense.png></span>';
-  h += '<span class="scene-card-label">' + _t("Prudent") + '</span>';
-  h += '<span class="scene-card-sub">' + _t("Plus long, peu de combats, quelques attentes à faire pendant que tu vaques à autre chose.") + '</span>';
-  h += '</button>';
-  h += '  </div>';
-  h += '</div>';
-  return h;
-}
 
-function chooseSceneProfile(profileId) {
-  var result = SceneRunManager.chooseProfile(profileId);
-  if (!result.ok) {
-    showToast(result.reason, 1600);
-    return;
-  }
-  sceneLog(profileId === "bourrin" ? _t("Tu pars en terrain conquérant.") : _t("Tu pars à pas mesurés."));
-  refreshSceneScreen();
-}
-window.chooseSceneProfile = chooseSceneProfile;
 
-/* --- Choix d'intensité (v3.195.0) --- */
-/* ORTHOGONAL au profil (déjà choisi juste avant) : profil = nature du parcours (combats,
-   bloqueurs), intensité = ampleur du risque/gain sur ce parcours (longueur, difficulté,
-   multiplicateur de butin). SCENE_INTENSITY, data/scene-templates.js. */
-
-function buildSceneIntensityChoiceHTML() {
-  var run = SceneRunManager.getRun();
-  if (!run) return "";
-  var template = SceneEngine.getTemplate(run.templateId);
-
-  var h = '<div class="panel-title">' + esc(_td(template.title)) + '</div>';
-  h += '<div class="scene-screen">';
-  h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-title">' + _t("Choisis ton intensité") + '</div>';
-  h += '    <div class="scene-heading-text">' + _t("Plus le parcours est long et périlleux, plus le butin final est important.") + '</div>';
-  h += '  </div>';
-
-  h += '  <div class="scene-card-grid">';
-  Object.keys(SCENE_INTENSITY).forEach(function (key) {
-    var intensity = SCENE_INTENSITY[key];
-    h += '<button type="button" class="scene-card" onclick="chooseSceneIntensity(\'' + esc(key) + '\')">';
-    h += '<span class="scene-card-icon">' + renderIconOrEmojiHTML(intensity.icon, "scene-card-ico", "") + '</span>';
-    h += '<span class="scene-card-label">' + esc(_td(intensity.label)) + '</span>';
-    h += '<span class="scene-card-sub">' + esc(_td(intensity.desc)) + '</span>';
-    h += '</button>';
-  });
-  h += '  </div>';
-  h += '</div>';
-  return h;
-}
-
-function chooseSceneIntensity(intensityId) {
-  var result = SceneRunManager.chooseIntensity(intensityId);
-  if (!result.ok) {
-    showToast(result.reason, 1600);
-    return;
-  }
-  var intensity = SCENE_INTENSITY[intensityId];
-  sceneLog(_t("{x}. Le chemin est posé.", { x: _td(intensity.label) })); // v3.197.0 (bible B §4.4)
-  refreshSceneScreen();
-}
-window.chooseSceneIntensity = chooseSceneIntensity;
-
-/* --- Annonce du mutateur de run (v3.196.0) --- */
-/* Écran court, sans choix : juste faire savoir au joueur ce qui l'attend AVANT la préparation
-   (loadout), pour qu'il compose en connaissance de cause (ex. prendre la Gourde s'il sait que
-   la Pluie va augmenter le coût en Souffle). */
-
-function buildSceneMutatorAnnounceHTML() {
-  var run = SceneRunManager.getRun();
-  if (!run) return "";
-  var template = SceneEngine.getTemplate(run.templateId);
-  var mutator = SceneRunManager.getActiveMutator();
-
-  var h = '<div class="panel-title">' + esc(_td(template.title)) + '</div>';
-  h += '<div class="scene-screen">';
-  h += '  <div class="scene-mutator-announce">';
-  h += '    <span class="scene-mutator-icon">' + renderIconOrEmojiHTML(mutator.icon || "images/Icons/scene/weather_clear.png", "scene-mutator-img", "") + '</span>';
-  h += '    <div class="scene-mutator-label">' + esc(mutator.label ? _td(mutator.label) : _t("Rien à signaler")) + '</div>';
-  h += '    <div class="scene-mutator-desc">' + esc(_td(mutator.desc || "")) + '</div>';
-  h += '  </div>';
-  h += '  <div class="scene-actions">';
-  h += '    <button type="button" class="settings-btn" onclick="acknowledgeSceneMutator()">' + _t("Continuer") + '</button>';
-  h += '  </div>';
-  h += '</div>';
-  return h;
-}
-
-function acknowledgeSceneMutator() {
-  var result = SceneRunManager.acknowledgeMutator();
-  if (!result.ok) {
-    showToast(result.reason, 1600);
-    return;
-  }
-  refreshSceneScreen();
-}
-window.acknowledgeSceneMutator = acknowledgeSceneMutator;
 
 /* --- Préparation : choix de 3 objets --- */
 
@@ -799,40 +648,10 @@ function buildSceneNodeHTML() {
   if (type === "autel") return buildSceneAutelHTML(run);
   if (type === "decouverte") return buildSceneDecouverteHTML(run);
   if (type === "source") return buildSceneSourceHTML(run);
-  if (type === "bloqueur") return buildSceneBloqueurHTML(run); // v3.125.0 (Petites Aventures)
-  if (type === "evenement") return buildSceneEventHTML(run); // v3.312.0 (W-3d)
   return buildSceneGateChoiceHTML();
 }
 
-/* --- Événement à branches (v3.312.0, W-3d, bible B §5) ---
-   L'annonce, puis une branche par bouton ; le coût est dans le libellé, jamais de jugement.
-   Une branche impayable reste visible, grisée. La conséquence immédiate va au journal. */
-function buildSceneEventHTML(run) {
-  var ev = SceneRunManager.getPendingEvent();
-  if (!ev) return buildSceneGateChoiceHTML();
-  var h = '<div class="panel-title">' + esc(ev.title ? _td(ev.title) : _t("Quelqu'un")) + '</div>';
-  h += '<div class="scene-screen">';
-  h += buildSceneStatusBarHTML(run);
-  h += '  <div class="scene-heading"><div class="scene-heading-text">' + esc(_td(ev.annonce)) + '</div></div>';
-  h += '  <div class="scene-actions scene-event-actions">';
-  ev.branches.forEach(function (b) {
-    var ok = SceneRunManager.canTakeEventBranch(b);
-    h += '    <button class="settings-btn' + (b.id === "passer" ? '' : ' primary') + '" type="button"' + (ok ? ' onclick="resolveSceneEvent(\'' + esc(b.id) + '\')"' : ' disabled') + '>' + esc(_td(b.label)) + '</button>';
-  });
-  h += '  </div>';
-  h += buildSceneLogHTML();
-  h += '</div>';
-  return h;
-}
 
-function resolveSceneEvent(branchId) {
-  var result = SceneRunManager.resolveEvent(branchId);
-  if (!result.ok) { showToast(result.reason, 1600); return; }
-  sceneLog(esc(_td(result.text)));
-  refreshSceneScreen();
-}
-window.resolveSceneEvent = resolveSceneEvent;
-window.buildSceneEventHTML = buildSceneEventHTML;
 
 /* v3.195.0 : icônes/labels de gain relatif par profil d'option (power/precision/endurance),
    affichés sur chaque carte d'obstacle pour rendre le triangle risque/gain/coût lisible
@@ -971,62 +790,7 @@ function resolveSceneSource() {
 }
 window.resolveSceneSource = resolveSceneSource;
 
-/* --- Nœud bloqueur (Petites Aventures, profil Prudent, v3.125.0) --- */
-/* Concept §2 "fonction du bloqueur" : pensé comme une carotte, pas une attente morte —
-   pendant ces 5-10 min le joueur est encouragé à faire autre chose au village. Le minuteur
-   tourne en fond (timestamp, voir SceneRunManager.isBlockerReady) : rien n'empêche de quitter
-   l'écran, changer d'onglet, revenir plus tard — cet écran affiche juste où en est l'attente
-   si le joueur reste dessus, sans setInterval ni polling forcé (refreshSceneScreen suffit à
-   chaque retour sur l'onglet "scene", voir switchTab). */
-
-/* mm:ss simple — pas de dépendance à un formateur global (aucun formatDuration* dans le
-   codebase à ce jour, voir grep effectué avant écriture). */
-function sceneFormatRemaining(ms) {
-  var totalSec = Math.max(0, Math.ceil(ms / 1000));
-  var min = Math.floor(totalSec / 60);
-  var sec = totalSec % 60;
-  return min + ":" + (sec < 10 ? "0" : "") + sec;
-}
-
-function buildSceneBloqueurHTML(run) {
-  var ready = SceneRunManager.isBlockerReady();
-  var remainingMs = SceneRunManager.blockerRemainingMs();
-  var remainingLabel = sceneFormatRemaining(remainingMs);
-
-  var h = '<div class="panel-title">' + _t("Chemin long") + '</div>';
-  h += '<div class="scene-screen">';
-  h += buildSceneStatusBarHTML(run, { hideLeave: true }); // v3.125.0 : Rentrer masqué ici, voir note ci-dessous
-  h += '  <div class="scene-heading">';
-  h += '    <div class="scene-heading-title">' + (ready ? _t("Le chemin est dégagé.") : _t("Le chemin est long.")) + '</div>';
-  h += '    <div class="scene-heading-text">' + (ready
-    ? _t("Tu peux continuer ta route.")
-    : _t("Encore {d} (mm:ss) — profites-en pour avancer au village, la route t’attendra.", { d: esc(remainingLabel) })) + '</div>';
-  h += '  </div>';
-  h += '  <div class="scene-actions">';
-  if (ready) {
-    h += '    <button class="settings-btn primary" type="button" onclick="resolveSceneBloqueur()">' + _t("Continuer") + '</button>';
-  } else {
-    h += '    <button class="settings-btn primary" type="button" onclick="switchTab(\'village\')">' + _t("Aller au village") + '</button>';
-  }
-  h += '  </div>';
-  h += '</div>';
-  return h;
-}
-
-/* Rentrer masqué pendant un bloqueur : l'expédition est engagée, le joueur PEUT quitter
-   l'onglet (aucun blocage réel), mais "Rentrer au camp" abandonnerait le run et perdrait la
-   position — cohérent avec le hideLeave déjà utilisé pour la chambre finale/préparation. Le
-   joueur revient simplement sur l'onglet "scene" plus tard, le bloqueur l'y attend. */
-
-function resolveSceneBloqueur() {
-  var result = SceneRunManager.resolveBloqueur();
-  if (!result.ok) { showToast(result.reason, 1600); return; }
-  sceneLog(_t("Le chemin est enfin dégagé. +{n}", { n: result.gainAmount }));
-  refreshSceneScreen();
-}
-window.resolveSceneBloqueur = resolveSceneBloqueur;
-
-/* --- Combat en cours (Petites Aventures, profil Bourrin, v3.126.0) --- */
+/* --- Combat en cours (v3.126.0) --- */
 /* Écran affiché seulement si le joueur revient sur l'onglet "scene" pendant un combat en
    cours (enterGate a déjà fait switchTab("combat") — ce cas est donc rare, ex. navigation
    arrière). Aucune action ici : le combat doit être résolu ou fui depuis l'onglet Combat lui-même. */

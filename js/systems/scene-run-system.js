@@ -5,7 +5,7 @@
    route TOUT le loot/XP via SortieManager (context "scene", voir sortie-system.js) plutôt que
    de gérer un banking séparé. Ne charge JAMAIS CombatEngine, n'écrit jamais dans
    game.resources directement (uniquement via WarehouseManager, lui-même appelé par
-   SortieManager.bank()). v3.120.0 (Lot S1) : sandbox — un seul canevas (expedition_faille),
+   SortieManager.bank()). v3.120.0 (Lot S1) : sandbox — un seul canevas (expedition_faille, retiré en v3.388.0),
    pas encore branché à MissionBoard (Lot S2). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var SceneRunManager = {
@@ -117,8 +117,22 @@ var SceneRunManager = {
   getRun: function () {
     this.ensureDefaults();
     var run = game.sceneRun;
+    if (run && this._retireLegacyRun(run)) return null;
     if (run) this._migrateRun(run);
     return run;
+  },
+
+  /* v3.388.0 (PA2-6) : un run de Petite Aventure v1 (ou du bac à sable retiré) repris d'une
+     ancienne sauvegarde se clôt proprement : le butin ramassé est rapporté, la place rendue. */
+  _retireLegacyRun: function (run) {
+    if (run.pa2 || run.status === "completed") return false;
+    var tpl = window.SceneEngine ? SceneEngine.getTemplate(run.templateId) : null;
+    if (tpl && !(window.Pa2Run && Pa2Run.isTemplate(tpl))) return false;
+    this._refundPetiteAventureSlot(run);
+    game.sceneRun = null;
+    if (window.SortieManager && SortieManager.isActive()) SortieManager.end("success");
+    if (typeof addLog === "function") addLog(_t("L'ancienne Petite aventure en cours est close : ton butin est rapporté."), "event");
+    return true;
   },
 
   /* v3.198.0 : reprise d'un run demarre sous une version anterieure (le run entier est
@@ -132,8 +146,7 @@ var SceneRunManager = {
   },
 
   /* getMaxInjuries(templateId) -> nombre de blessures qui declenche l'evacuation. Defaut 3
-     (regle DESIGN_Scene_Engine_v1.md §4, conservee pour expedition_faille et les quetes de
-     deblocage migrees) ; la Petite Aventure declare 2 depuis v3.198.0. */
+     (regle DESIGN_Scene_Engine_v1.md §4) ; un canevas peut declarer template.maxInjuries. */
   getMaxInjuries: function (templateId) {
     var template = SceneEngine.getTemplate(templateId);
     return Math.max(1, Number((template && template.maxInjuries) || 3));
@@ -246,13 +259,6 @@ var SceneRunManager = {
       return sum + Number((bank.injurySeverityMalus && bank.injurySeverityMalus[inj.severity]) || 4);
     }, 0);
     var effective = Math.max(1, base - malus);
-    // v3.196.0 (mutateur "Pluie battante") : +15% sur l'Endurance effective SEULEMENT —
-    // appliqué après le malus de blessure, jamais avant (la pluie renforce la stat de base,
-    // elle ne rend pas une blessure moins grave).
-    var mutator = this.getActiveMutator();
-    if (statKey === "endurance" && mutator.enduranceStatMult) {
-      effective = Math.round(effective * mutator.enduranceStatMult);
-    }
     return effective;
   },
 
@@ -263,14 +269,9 @@ var SceneRunManager = {
      (WarehouseManager, avant toute création de run — échec propre si insuffisant, comme
      ExplorationManager.startRun). Si template.loadoutSlots est 0/absent, saute l'étape
      "preparation" (aucun équipement à choisir pour une quête simple à 1 palier).
-     v3.125.0 (Petites Aventures, Lot PA1) : si template.profileWeights est déclaré, la carte
-     n'est PAS générée ici — le run démarre en status "profile" (choix Bourrin/Prudent avant
-     préparation), la génération réelle se fait dans chooseProfile(). Vérifie aussi le cap
-     journalier (voir canStartPetiteAventureToday) AVANT tout débit de ressource. */
-  /* v3.256.0 (Cartes Vivantes, C-2) : opts.livingMap = { mapId, sectorId } — run ciblé sur un
-     secteur. L'anneau fixe l'intensité (chooseProfile la pose sans écran), les pools du secteur
-     surchargent le gabarit (_generateCard), et la fin du run est rapportée à
-     LivingMapManager.onRunEnd (_notifyLivingMap). Le run ne connaît pas la carte au-delà. */
+     v3.388.0 (PA2-6) : les Petites Aventures v1 (profils, intensités, mutateurs, bloqueurs) sont
+     retirées ; un canevas mode "pa2" est mené par Pa2Run. opts.livingMap = { mapId, sectorId } :
+     run ciblé sur un secteur, fin rapportée à LivingMapManager.onRunEnd (_notifyLivingMap). */
   startRun: function (templateId, opts) {
     this.ensureDefaults();
 
@@ -285,13 +286,8 @@ var SceneRunManager = {
       return { ok: false, reason: _t("Expédition déjà terminée"), run: null };
     }
 
-    // v3.381.0 (PA2-0) : un canevas paVersion 2 est une Petite Aventure v2, menée par Pa2Run.
+    // Petite Aventure (canevas mode "pa2") : menée par Pa2Run.
     if (window.Pa2Run && Pa2Run.isTemplate(template)) return Pa2Run.start(templateId, opts);
-
-    var needsProfile = !!template.profileWeights;
-    if (needsProfile && !this.canStartPetiteAventureToday()) {
-      return { ok: false, reason: this.petiteAventureWaitLabel(), run: null }; // v3.366.0 : recharge
-    }
 
     if (template.entryCost) {
       var costResource = template.entryCost.resourceId;
@@ -308,7 +304,7 @@ var SceneRunManager = {
     }
 
     var hasLoadout = Number(template.loadoutSlots || 0) > 0;
-    var card = needsProfile ? [] : (function () {
+    var card = (function () {
       var randCount = SceneEngine.estimateRandomCount(template);
       var randomValues = [];
       for (var i = 0; i < randCount; i++) randomValues.push(Math.random());
@@ -318,10 +314,7 @@ var SceneRunManager = {
     var run = {
       id: "scene_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
       templateId: templateId,
-      // profile -> preparation -> gate -> node -> completed (Petites Aventures)
-      // preparation -> gate -> node -> completed (canevas sans profil, inchangé)
-      status: needsProfile ? "profile" : (hasLoadout ? "preparation" : "gate"),
-      profile: null, // "bourrin" | "prudent" — figé une fois choisi, jamais recalculé
+      status: hasLoadout ? "preparation" : "gate", // preparation -> gate -> node -> finale -> completed
 
       startedAt: Date.now(),
       heroSnapshot: this.buildHeroSnapshot(),
@@ -342,165 +335,20 @@ var SceneRunManager = {
       breath: 100, // v3.195.0 : ressource de run visible, 0-100, consommée par les options
                     // d'obstacle (voir SCENE_NODES.optionProfiles), restaurée par
                     // autel/source/gourde (voir resolveAutel/resolveSource/useSceneGourde)
-      intensity: null, // v3.195.0 : "sentier"|"chemin"|"periple" — figé au choix, comme profile
-      mutator: null, // v3.196.0 : "aucun"|"brouillard"|"pluie"|"nuit" — figé au tirage (chooseIntensity)
       livingMap: (opts && opts.livingMap) ? { mapId: opts.livingMap.mapId, sectorId: opts.livingMap.sectorId } : null, // v3.256.0 (C-2)
       livingMapReport: null, // v3.256.0 : compte rendu de LivingMapManager.onRunEnd, affiché au bilan
       loot: 0, // ressource lootResource, non banquée tant que SortieManager n'a pas end()
 
       currentGate: null, // index de porte sélectionnée en attente de résolution (idempotence)
-      pendingNode: null, // { type, gabaritId?, optionKey?, readyAt? } — nœud en cours de résolution
-      blockerReadyAt: null // v3.125.0 : timestamp de fin du bloqueur courant (nœud "bloqueur")
+      pendingNode: null // { type, gabaritId?, optionKey? } — nœud en cours de résolution
     };
 
     game.sceneRun = run;
 
-    if (needsProfile) { this._consumePetiteAventureSlot(); run.paSlotDay = this._today(); } // consommé au lancement, pas au succès (même esprit que l'entryCost)
     if (window.SortieManager) SortieManager.start("scene");
 
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null, run: run };
-  },
-
-  /* v3.125.0 (Petites Aventures, Lot PA1) : choix du profil (Bourrin/Prudent), génère
-     RÉELLEMENT la carte avec les poids du profil (SceneEngine.buildCard slotWeightsOverride).
-     Concept §2 : le profil détermine la NATURE du parcours — décidé une fois, jamais recalculé
-     ensuite (run.profile figé, comme heroSnapshot). */
-  /* v3.143.0 (variance des runs, audit Forêt) : garantit AU MOINS 1 palier combat pour le
-     profil BOURRIN spécifiquement (pas "tout profil avec un poids combat > 0" — Prudent a un
-     poids combat de 4 % non nul mais volontairement rare, pas garanti ; forcer un combat sur
-     Prudent aurait dérivé sa promesse "peu/pas de combat"). Sim 3000 runs : sans cette
-     garantie, 6.7 % des runs Bourrin n'avaient AUCUN combat, contredisant la promesse du
-     profil ("run qui se déroule activement"). Convertit un palier tiré au hasard PARMI CEUX
-     QUI NE SONT PAS le palier 0 (respecte firstDepthType, toujours lisible) — écrase le type
-     qui y était, cohérent avec le principe déjà en place de maxSlotsPerRun (un slot peut
-     retomber à un autre type que celui tiré). */
-  _ensureMinCombat: function (run, template, profileId) {
-    if (profileId !== "bourrin") return;
-    if (!template.pools || !template.pools.combat || !template.pools.combat.length) return;
-    var hasCombat = run.card.some(function (level) {
-      return level.some(function (slot) { return slot.type === "combat"; });
-    });
-    if (hasCombat) return;
-
-    var eligibleDepths = [];
-    for (var d = 1; d < run.card.length; d++) eligibleDepths.push(d); // jamais le palier 0 (firstDepthType)
-    if (!eligibleDepths.length) return;
-    var pickedDepth = eligibleDepths[Math.floor(Math.random() * eligibleDepths.length)];
-    var pickedGate = Math.floor(Math.random() * run.card[pickedDepth].length);
-    var gabaritId = template.pools.combat[Math.floor(Math.random() * template.pools.combat.length)];
-    run.card[pickedDepth][pickedGate] = { type: "combat", gabaritId: gabaritId };
-  },
-
-  /* v3.195.0 : chooseProfile ne génère plus la carte immédiatement — decoupé en deux étapes
-     (profile -> intensity -> preparation/gate) car depthMax dépend désormais de l'intensité
-     choisie (SCENE_INTENSITY, data/scene-templates.js), pas seulement du template. Le profil
-     reste figé ici comme avant (run.profile), juste le statut suivant change. Canevas SANS
-     window.SCENE_INTENSITY ou sans intensité pertinente (aucun aujourd'hui hors Petite
-     Aventure, mais garde générique) : saute directement à l'ancien comportement. */
-  chooseProfile: function (profileId) {
-    var run = this.getRun();
-    if (!run || run.status !== "profile") return { ok: false, reason: _t("Aucun choix de profil en cours") };
-    var template = SceneEngine.getTemplate(run.templateId);
-    if (!template || !template.profileWeights) return { ok: false, reason: _t("Expédition introuvable") };
-    var weights = template.profileWeights[profileId];
-    if (!weights) return { ok: false, reason: _t("Profil invalide") };
-
-    run.profile = profileId;
-    run._pendingProfileWeights = weights; // consommé par chooseIntensity, jamais persisté au-delà
-
-    run.status = window.SCENE_INTENSITY ? "intensity" : "preparation";
-    if (!window.SCENE_INTENSITY) this._generateCard(run, template, weights); // repli ancien flow
-
-    // v3.256.0 (C-2, décision 8) : sur un run ciblé, l'anneau du secteur fixe l'intensité — pas
-    // d'écran de choix, la géographie décide.
-    if (run.status === "intensity" && run.livingMap && window.LivingMapManager) {
-      var sectorDef = LivingMapManager.getSectorDef(run.livingMap.mapId, run.livingMap.sectorId);
-      if (sectorDef) return this.chooseIntensity(LivingMapManager.getIntensity(sectorDef));
-    }
-
-    if (typeof saveGame === "function") saveGame();
-    return { ok: true, reason: null, run: run };
-  },
-
-  /* v3.195.0 : choix du curseur d'intensité ("sentier"|"chemin"|"periple", SCENE_INTENSITY) —
-     ORTHOGONAL au profil Bourrin/Prudent (décision Seb : profil = nature du parcours,
-     intensité = ampleur du risque/gain). Génère RÉELLEMENT la carte ici (depthMax dépend de
-     l'intensité), avec les poids du profil déjà choisi (run._pendingProfileWeights). Figé
-     comme profile, jamais recalculé ensuite. */
-  chooseIntensity: function (intensityId) {
-    var run = this.getRun();
-    if (!run || run.status !== "intensity") return { ok: false, reason: _t("Aucun choix d'intensité en cours") };
-    var intensity = window.SCENE_INTENSITY && window.SCENE_INTENSITY[intensityId];
-    if (!intensity) return { ok: false, reason: _t("Intensité invalide") };
-    var template = SceneEngine.getTemplate(run.templateId);
-    if (!template) return { ok: false, reason: _t("Expédition introuvable") };
-
-    run.intensity = intensityId;
-    run.mutator = this._rollMutator(template); // v3.196.0 (v3.304.0 : table du canevas) : tiré ici, AVANT _generateCard (Nuit noire
-                                        // influence la génération de carte elle-même)
-    this._generateCard(run, template, run._pendingProfileWeights, intensity.depthMax);
-    delete run._pendingProfileWeights;
-
-    // v3.196.0 : écran d'annonce si un mutateur actif (pas "aucun") — court-circuite le statut
-    // posé par _generateCard (preparation/gate), restauré par acknowledgeMutator() ci-dessous.
-    // Toujours affiché (même "aucun", pour cohérence de rythme) sauf si SCENE_MUTATORS absent.
-    if (window.SCENE_MUTATORS) {
-      run._statusAfterMutator = run.status;
-      run.status = "mutator-announce";
-    }
-
-    if (typeof saveGame === "function") saveGame();
-    return { ok: true, reason: null, run: run };
-  },
-
-  /* v3.196.0 : accusé de lecture de l'écran d'annonce du mutateur — restaure le statut que
-     _generateCard avait posé (preparation ou gate selon loadoutSlots), jamais recalculé. */
-  acknowledgeMutator: function () {
-    var run = this.getRun();
-    if (!run || run.status !== "mutator-announce") return { ok: false, reason: _t("Aucune annonce en cours") };
-    run.status = run._statusAfterMutator || "gate";
-    delete run._statusAfterMutator;
-    if (typeof saveGame === "function") saveGame();
-    return { ok: true, reason: null, run: run };
-  },
-
-  /* v3.196.0 (lot C2, mutateurs de run) : tirage pondéré sur SCENE_MUTATORS (poids égaux,
-     20% chacun avec "aucun" inclus — décision Seb). Repli "aucun" si SCENE_MUTATORS absent
-     (canevas hors Petite Aventure, comportement inchangé). */
-  /* v3.304.0 (Désert §8.3) : un canevas peut déclarer SA table (template.mutatorWeights,
-     { id: poids }) ; sinon les poids du catalogue, comme avant (même tirage, même ordre). */
-  _rollMutator: function (template) {
-    if (!window.SCENE_MUTATORS) return "aucun";
-    var own = template && template.mutatorWeights;
-    var entries = Object.keys(own || window.SCENE_MUTATORS).filter(function (k) { return !!window.SCENE_MUTATORS[k]; })
-      .map(function (k) { return { id: k, weight: own ? own[k] : window.SCENE_MUTATORS[k].weight }; });
-    var totalWeight = entries.reduce(function (sum, m) { return sum + Number(m.weight || 0); }, 0);
-    var roll = Math.random() * totalWeight;
-    var acc = 0;
-    for (var i = 0; i < entries.length; i++) {
-      acc += Number(entries[i].weight || 0);
-      if (roll < acc) return entries[i].id;
-    }
-    return "aucun";
-  },
-
-  /* v3.196.0 : mutateur actif du run courant (objet complet, ou l'entrée "aucun" par défaut
-     — jamais null, pour que les lectures des consommateurs n'aient pas à re-tester l'absence). */
-  getActiveMutator: function () {
-    var run = this.getRun();
-    var id = (run && run.mutator) || "aucun";
-    return (window.SCENE_MUTATORS && window.SCENE_MUTATORS[id]) || { id: "aucun" };
-  },
-
-  /* Génère la carte réelle et avance au statut suivant (preparation ou gate) — factorisé car
-     appelé depuis chooseIntensity (flow normal) ET chooseProfile (repli si SCENE_INTENSITY
-     absent, canevas hors Petite Aventure). depthMaxOverride facultatif : sinon template.depthMax. */
-  /* v3.256.0 (C-2) : pools du secteur ciblé (data/living-maps.js), ou null. */
-  _livingMapPools: function (run) {
-    if (!run || !run.livingMap || !window.LivingMapManager) return null;
-    var content = LivingMapManager.getContentFor(run.livingMap.mapId, run.livingMap.sectorId);
-    return (content && content.type === "expedition" && content.pools) ? content.pools : null;
   },
 
   /* v3.256.0 (C-2) : rapporte la fin d'un run ciblé à la carte, une seule fois par run.
@@ -508,75 +356,6 @@ var SceneRunManager = {
   _notifyLivingMap: function (run, result) {
     if (!run || !run.livingMap || run.livingMapReport || !window.LivingMapManager) return;
     run.livingMapReport = LivingMapManager.onRunEnd(run.livingMap.mapId, run.livingMap.sectorId, result);
-  },
-
-  _generateCard: function (run, template, profileWeights, depthMaxOverride) {
-    var effectiveTemplate = template;
-    if (depthMaxOverride) {
-      // Ne mute jamais l'objet SCENE_TEMPLATES partagé : clone léger avec depthMax substitué.
-      effectiveTemplate = Object.assign ? Object.assign({}, template, { depthMax: depthMaxOverride })
-        : (function () { var c = {}; for (var k in template) c[k] = template[k]; c.depthMax = depthMaxOverride; return c; })();
-    }
-    // v3.256.0 (C-2) : surcharge de gabarit par secteur — seuls les pools déclarés par le secteur
-    // remplacent ceux du gabarit (obstacle et/ou combat), le reste du canevas est inchangé.
-    var sectorPools = this._livingMapPools(run);
-    if (sectorPools) {
-      var mergedPools = Object.assign({}, effectiveTemplate.pools || {});
-      Object.keys(sectorPools).forEach(function (k) { if (Array.isArray(sectorPools[k]) && sectorPools[k].length) mergedPools[k] = sectorPools[k]; });
-      effectiveTemplate = Object.assign({}, effectiveTemplate, { pools: mergedPools });
-    }
-    var randCount = SceneEngine.estimateRandomCount(effectiveTemplate);
-    var randomValues = [];
-    for (var i = 0; i < randCount; i++) randomValues.push(Math.random());
-    run.card = SceneEngine.buildCard(effectiveTemplate, randomValues, profileWeights);
-    if (profileWeights) this._ensureMinCombat(run, template, run.profile);
-    if (profileWeights) this._applyMutatorToCard(run, template); // v3.196.0
-    if (profileWeights) this._injectEvent(run, template); // v3.312.0 (W-3d) : événement à branches
-
-    var hasLoadout = Number(template.loadoutSlots || 0) > 0;
-    run.status = hasLoadout ? "preparation" : "gate";
-  },
-
-  /* v3.196.0 (lot C2, mutateur "Nuit noire") : ajoute UN nœud danger supplémentaire — combat
-     pour Bourrin (même pool que _ensureMinCombat), bloqueur pour Prudent (le "carrot" habituel
-     de ce profil). Appelé APRÈS _ensureMinCombat pour ne jamais interférer avec sa garantie
-     plancher/plafond déjà validée (session lot v3.195.0). Ne remplace jamais le palier 0
-     (firstDepthType), même règle que _ensureMinCombat. Silencieux si le mutateur actif n'est
-     pas "nuit" ou si aucun palier éligible. */
-  _applyMutatorToCard: function (run, template) {
-    var mutator = this.getActiveMutator();
-    if (!mutator.extraDangerNode || !run.card.length) return;
-
-    var eligibleDepths = [];
-    for (var d = 1; d < run.card.length; d++) eligibleDepths.push(d);
-    if (!eligibleDepths.length) return;
-
-    // Respecte le plafond déjà validé (template.maxSlotsPerRun, lot v3.195.0/v3.143.0) — un
-    // mutateur ne doit jamais faire dépasser la garantie ≤2 combat(s)/≤2 bloqueur(s) testée
-    // au harness. Si le plafond est déjà atteint, le mutateur n'ajoute simplement rien ce run.
-    var maxSlots = template.maxSlotsPerRun || {};
-    var targetType = (run.profile === "bourrin") ? "combat" : "bloqueur";
-    var cap = Number(maxSlots[targetType] || 99);
-    var current = 0;
-    run.card.forEach(function (level) {
-      level.forEach(function (slot) { if (slot.type === targetType) current++; });
-    });
-    if (current >= cap) return;
-
-    var pickedDepth = eligibleDepths[Math.floor(Math.random() * eligibleDepths.length)];
-    var pickedGate = Math.floor(Math.random() * run.card[pickedDepth].length);
-
-    if (run.profile === "bourrin" && template.pools && template.pools.combat && template.pools.combat.length) {
-      var gabaritId = template.pools.combat[Math.floor(Math.random() * template.pools.combat.length)];
-      run.card[pickedDepth][pickedGate] = { type: "combat", gabaritId: gabaritId };
-    } else if (run.profile === "prudent") {
-      // Même tirage que SceneEngine.buildCard pour un bloqueur naturel (template.
-      // blockerDurationRange), pour ne jamais désynchroniser la durée de ce bloqueur
-      // "manuel" de celle d'un bloqueur généré normalement par le tirage pondéré.
-      var durMin = (template.blockerDurationRange && template.blockerDurationRange[0]) || 300000;
-      var durMax = (template.blockerDurationRange && template.blockerDurationRange[1]) || 600000;
-      run.card[pickedDepth][pickedGate] = { type: "bloqueur", durationMs: Math.round(durMin + Math.random() * (durMax - durMin)) };
-    }
   },
 
   /* Valide l'équipement choisi en préparation (exactement loadoutSlots objets) et passe au
@@ -672,10 +451,6 @@ var SceneRunManager = {
   getVisibilityHorizon: function () {
     var run = this.getRun();
     if (!run) return 0;
-    var mutator = this.getActiveMutator();
-    if (typeof mutator.horizonOverride === "number") {
-      return run.depth + mutator.horizonOverride;
-    }
     var torchOn = this.torchActiveThisLevel();
     return run.depth + (torchOn ? 2 : 1);
   },
@@ -824,11 +599,7 @@ var SceneRunManager = {
 
   /* enterGate(gateIndex) -> { ok, reason, node } — sélectionne une porte du palier courant,
      révèle le mystère si besoin, prépare le nœud à résoudre côté vue.
-     v3.125.0 (Petites Aventures, Lot PA1) : un slot "bloqueur" démarre son minuteur ICI
-     (run.blockerReadyAt = maintenant + slot.durationMs) — tourne en fond par construction
-     (aucun setInterval/hook game-loop, juste un timestamp comparé à Date.now() à l'affichage,
-     voir isBlockerReady()), cohérent avec la reco du concept ("carotte", pas un blocage strict
-     d'écran). */
+     */
   enterGate: function (gateIndex) {
     var run = this.getRun();
     if (!run || run.status !== "gate") return { ok: false, reason: _t("Aucun palier à choisir") };
@@ -870,11 +641,6 @@ var SceneRunManager = {
     run.status = "node";
     run.pendingNode = { type: slot.type, gabaritId: slot.gabaritId || null, riskMod: slot.riskMod || null };
     if (slot.fullBreath) run.pendingNode.fullBreath = true; // v3.361.0 : source scriptée (le Veilleur, étape 16)
-    if (slot.eventId) run.pendingNode.eventId = slot.eventId; // v3.312.0 : événement à branches
-
-    if (slot.type === "bloqueur") {
-      run.blockerReadyAt = Date.now() + Number(slot.durationMs || 300000);
-    }
 
     if (typeof saveGame === "function") saveGame();
 
@@ -891,160 +657,23 @@ var SceneRunManager = {
     return { ok: true, reason: null, node: run.pendingNode };
   },
 
-  /* ---------- Événements à branches (v3.312.0, W-3d, bible B §5) ---------- */
-
-  /* À la génération d'une carte de Petite Aventure : au plus un événement, sur une porte du
-     milieu du run qui n'est ni un combat ni un bloqueur (données : SCENE_NODES.events). */
-  _injectEvent: function (run, template) {
-    var events = (SceneEngine.getNodeBank().events) || {};
-    var ep = game.explorationProgression || {};
-    var ids = Object.keys(events).filter(function (id) {
-      var ev = events[id];
-      return ev.templateIds.indexOf(run.templateId) !== -1 && !ep[ev.flag] && (typeof ev.eligible !== "function" || ev.eligible());
-    });
-    if (!ids.length || !run.card || run.card.length < 3) return;
-    var ev = events[ids[0]];
-    if (Math.random() >= Number(ev.chance == null ? 1 : ev.chance)) return;
-    var mid = Math.floor(run.card.length / 2);
-    var depths = [mid, mid - 1, mid + 1].filter(function (d) { return d >= 1 && d < run.card.length - 1; });
-    for (var i = 0; i < depths.length; i++) {
-      var level = run.card[depths[i]];
-      for (var g = 0; g < level.length; g++) {
-        if (level[g].type === "combat" || level[g].type === "bloqueur") continue;
-        level[g] = { type: "evenement", eventId: ev.id };
-        return;
-      }
-    }
-  },
-
-  getPendingEvent: function () {
-    var run = this.getRun();
-    if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "evenement") return null;
-    var events = SceneEngine.getNodeBank().events || {};
-    return events[run.pendingNode.eventId] || null;
-  },
-
-  /* Une branche est-elle payable ? (gourde encore pleine, Souffle au-dessus du coût) */
-  canTakeEventBranch: function (branch) {
-    var run = this.getRun();
-    if (!run || !branch) return false;
-    var c = branch.cost || {};
-    if (c.gourde && !run.gourdeAvailable) return false;
-    if (c.breath && Number(run.breath || 0) <= Number(c.breath)) return false;
-    return true;
-  },
-
-  resolveEvent: function (branchId) {
-    var run = this.getRun(), ev = this.getPendingEvent();
-    if (!ev) return { ok: false, reason: _t("Aucun événement à résoudre") };
-    var branch = ev.branches.filter(function (b) { return b.id === branchId; })[0];
-    if (!branch) return { ok: false, reason: _t("Choix invalide") };
-    if (!this.canTakeEventBranch(branch)) return { ok: false, reason: _t("Tu ne peux pas payer ça") };
-    var c = branch.cost || {};
-    if (c.gourde) { // la gourde part avec lui, gorgées comprises
-      run.gourdeAvailable = false;
-      if (run.gourdeUses != null) run.gourdeUses = 0;
-    }
-    if (c.breath) run.breath = Math.max(0, Number(run.breath || 0) - Number(c.breath));
-    if (!game.explorationProgression) game.explorationProgression = {};
-    game.explorationProgression[ev.flag] = branch.outcome;
-    run.eventEcho = { id: ev.id, outcome: branch.outcome, done: false };
-    run.pendingNode = null; run.currentGate = null;
-    this._advanceOrFinish(run);
-    if (typeof saveGame === "function") saveGame();
-    return { ok: true, reason: null, text: branch.text, outcome: branch.outcome };
-  },
-
-  /* L'écho d'un événement, plus loin dans le même run (une fois). moment : "combat" | "finale". */
-  _applyEventEcho: function (run, moment, template) {
-    var e = run && run.eventEcho;
-    if (!e || e.done) return null;
-    var ev = (SceneEngine.getNodeBank().events || {})[e.id];
-    var echo = ev && ev.echo && ev.echo[e.outcome];
-    if (!echo || echo.at !== moment) return null;
-    var text = _td(echo.text);
-    if (moment === "combat") {
-      var foes = (game.combat && game.combat.enemies && game.combat.enemies.length) ? game.combat.enemies : (game.enemy ? [game.enemy] : []);
-      var cible = foes.filter(function (x) { return Number(x.hp || 0) > 0; })[0];
-      if (!cible) return null;
-      cible.hp = Math.max(1, Number(cible.hp) - Math.floor(Number(cible.maxHp || 0) * Number(echo.hpPct || 0)));
-      var nom = String(cible.name ? _td(cible.name) : _t("bête"));
-      text = text.replace("{enemy}", _t("un {x}", { x: nom.charAt(0).toLowerCase() + nom.slice(1) }));
-      if (typeof renderEnemy === "function") renderEnemy();
-    } else if (moment === "finale" && template) {
-      var reste = Math.floor(Number(run.loot || 0) * (1 - Number(echo.lootPct || 0)));
-      if (reste < run.loot) { run.loot = reste; this._debitLootTo(template, run.loot); }
-    }
-    e.done = true;
-    if (!Array.isArray(run.extraLines)) run.extraLines = [];
-    run.extraLines.push(text);
-    if (typeof addLog === "function") addLog(text, "event");
-    return text;
-  },
-
-  /* ---------- Nœud bloqueur (Prudent uniquement) ---------- */
-  /* v3.125.0 : true si le minuteur du bloqueur courant est écoulé — pure lecture de
-     timestamp, aucun état à faire évoluer (le temps réel fait le travail, offline compris :
-     un joueur qui revient après 20 min voit le bloqueur déjà prêt, comme tout cooldown basé
-     sur Date.now() ailleurs dans le jeu). */
-  isBlockerReady: function () {
-    var run = this.getRun();
-    if (!run || !run.pendingNode || run.pendingNode.type !== "bloqueur") return false;
-    return Date.now() >= Number(run.blockerReadyAt || 0);
-  },
-
-  blockerRemainingMs: function () {
-    var run = this.getRun();
-    if (!run || !run.blockerReadyAt) return 0;
-    return Math.max(0, run.blockerReadyAt - Date.now());
-  },
-
-  /* resolveBloqueur() -> { ok, reason, gainAmount }. Refuse tant que le minuteur n'est pas
-     écoulé (idempotence naturelle : le bouton de la vue n'est actionnable qu'une fois prêt,
-     mais le garde est aussi côté manager — jamais confiance aveugle en la vue). Gain modeste,
-     type "decouverte" (pas d'échec possible, contrairement à un obstacle — c'est une attente,
-     pas un jet de stat, cohérent avec le concept "carotte" plutôt que risque). */
-  resolveBloqueur: function () {
-    var run = this.getRun();
-    if (!run || run.status !== "node" || !run.pendingNode || run.pendingNode.type !== "bloqueur") {
-      return { ok: false, reason: _t("Aucun bloqueur à résoudre") };
-    }
-    if (!this.isBlockerReady()) return { ok: false, reason: _t("L'attente n'est pas terminée") };
-
-    var template = SceneEngine.getTemplate(run.templateId);
-    var gainAmount = SceneEngine.rollLoot(template.lootRanges.decouverte, run.depth, Math.random(), 1, this._runLootMult(run));
-    run.loot += gainAmount;
-    this._creditLoot(template, gainAmount);
-
-    run.pendingNode = null; run.currentGate = null; run.blockerReadyAt = null;
-    this._advanceOrFinish(run);
-    if (typeof saveGame === "function") saveGame();
-    return { ok: true, reason: null, gainAmount: gainAmount };
-  },
-
   /* ---------- Résolution d'un obstacle (nœud "check") ---------- */
   /* v3.195.0 : facteurs de difficulté/gain de l'option choisie (SCENE_NODES.optionProfiles —
-     power/precision/endurance, générique à tous les gabarits) composés avec l'intensité de
-     run (SCENE_INTENSITY, Petite Aventure uniquement — repli 1 pour les autres canevas comme
-     expedition_faille). Centralisé ici, appelé par getObstacleEstimate ET resolveObstacle
+     power/precision/endurance, générique à tous les gabarits) composés avec template.diffMult
+     et l'échelle du héros. Centralisé ici, appelé par getObstacleEstimate ET resolveObstacle
      pour ne jamais désynchroniser l'affichage AVANT résolution du calcul RÉEL. */
   _obstacleFactors: function (run, optionKey) {
     var bank = SceneEngine.getNodeBank();
     // v3.198.0 : un canevas peut surcharger localement les profils d'option
-    // (template.optionProfiles) — la Petite Aventure a un triangle bien plus tranche que le
-    // defaut partage, sans imposer ce calibrage a expedition_faille ni aux quetes migrees.
+    // (template.optionProfiles), sans imposer son calibrage aux quetes migrees.
     var template = SceneEngine.getTemplate(run.templateId);
     var profiles = (template && template.optionProfiles) || bank.optionProfiles || {};
     var profile = profiles[optionKey] || { diffMod: 1, lootMod: 1, breathCost: 0, injurySeverity: "normale" };
-    var intensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
-    var mutator = this.getActiveMutator(); // v3.196.0
     return {
-      // v3.199.0 : repli sur template.diffMult quand le run n'a pas d'intensité —
-      // SCENE_INTENSITY est réservé à la Petite Aventure, expedition_faille porte le sien.
-      diffMult: profile.diffMod * ((intensity && intensity.diffMult) || template.diffMult || 1) * this.heroScale(run),
-      lootMult: profile.lootMod * ((intensity && intensity.lootMult) || 1) * (mutator.lootMult || 1),
+      diffMult: profile.diffMod * (template.diffMult || 1) * this.heroScale(run),
+      lootMult: profile.lootMod,
       // v3.230.0 : Endurance du marcheur (pouvoir légendaire de bottes) — Souffle 15 % moins cher.
-      breathCost: profile.breathCost * (mutator.breathCostMult || 1)
+      breathCost: profile.breathCost
         * ((typeof hasLegendaryPower === "function" && hasLegendaryPower("leg_marcheur")) ? 0.85 : 1),
       injurySeverity: profile.injurySeverity
     };
@@ -1173,14 +802,10 @@ var SceneRunManager = {
 
   /* ---------- Salles non-obstacle ---------- */
   /* resolveAutel(accept) -> soigne 1 blessure contre un pourcentage du loot courant. */
-  /* v3.195.0 : lootMult de run = intensité seule (SCENE_INTENSITY, Petite Aventure
-     uniquement — 1 pour les autres canevas), appliqué aux nœuds SANS option choisie par le
-     joueur (découverte, bloqueur) : distinct de _obstacleFactors qui compose EN PLUS le
-     lootMod de l'option prise. */
+  /* Multiplicateur de butin des nœuds sans option (découverte). Gardé à 1 pour les appels
+     existants depuis le retrait des intensités (v3.388.0). */
   _runLootMult: function (run) {
-    var intensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
-    var mutator = this.getActiveMutator(); // v3.196.0
-    return ((intensity && intensity.lootMult) || 1) * (mutator.lootMult || 1);
+    return 1; // v3.388.0 : plus d'intensité ni de mutateur (Petites Aventures v1 retirées)
   },
 
   /* v3.195.0 : restauration de Souffle à un nœud "carotte" (autel accepté, source) — donne
@@ -1304,83 +929,14 @@ var SceneRunManager = {
 
   /* ---------- Progression ---------- */
   _advanceOrFinish: function (run) {
-    this._rollSeveAeswynPerNode(run); // v3.127.0 (Lot PA3) : chance faible à CHAQUE nœud résolu
     run.depth += 1;
     var template = SceneEngine.getTemplate(run.templateId);
-    // v3.195.0 : depthMax RÉEL du run = intensité choisie si présente (SCENE_INTENSITY),
-    // sinon template.depthMax (canevas sans intensité, ex. expedition_faille — inchangé). Le
-    // run.card généré par _generateCard a déjà la bonne longueur, mais _advanceOrFinish doit
-    // savoir OÙ s'arrêter sans dépendre de card.length pour rester cohérent avec l'affichage
-    // "Profondeur X/depthMax" de la vue (buildSceneStatusBarHTML).
-    var intensity = (run.intensity && window.SCENE_INTENSITY) ? window.SCENE_INTENSITY[run.intensity] : null;
-    var depthMax = (intensity && intensity.depthMax) || Number(template.depthMax || 1);
+    var depthMax = Number(template.depthMax || 1);
     if (run.depth >= depthMax) {
       run.status = "finale";
     } else {
       run.status = "gate";
     }
-  },
-
-  /* v3.127.0 (Petites Aventures, Lot PA3) : tirage Sève d'Aeswyn au passage de CHAQUE nœud
-     (obstacle/autel/découverte/source/bloqueur/combat — tous passent par _advanceOrFinish,
-     directement ou via onCombatWon). Silencieux si le template n'a pas de config seveAeswyn
-     (canevas hors Petites Aventures, ex. expedition_faille) — n'affecte qu'un seul canevas
-     par construction (lecture de template.seveAeswyn). Crédité via WarehouseManager
-     DIRECTEMENT (pas SortieManager) : décision Seb — contrairement au loot chiffré principal
-     (or/ressource de la quête), la Sève d'Aeswyn n'est PAS mise en jeu en cas de mort ou de
-     fuite (c'est une trouvaille de collection, pas un butin de sortie ordinaire). Log discret,
-     pas de popup pour ne pas alourdir un flux déjà chargé (obstacle/autel/etc. ont chacun
-     leur propre feedback). */
-  /* v3.304.0 : la ressource rare se déclare par canevas (template.rareDrop : Verre des dunes au
-     Désert) ; la Forêt garde son champ seveAeswyn, lu par les bancs. Même forme, mêmes tirages. */
-  _rareDropCfg: function (template) {
-    return (template && (template.rareDrop || template.seveAeswyn)) || null;
-  },
-
-  _rollSeveAeswynPerNode: function (run) {
-    var template = SceneEngine.getTemplate(run.templateId);
-    var cfg = this._rareDropCfg(template);
-    if (!cfg || !run.profile) return;
-    var chancePct = Number((cfg.perNodeChancePct && cfg.perNodeChancePct[run.profile]) || 0);
-    if (chancePct <= 0 || Math.random() * 100 >= chancePct) return;
-    var min = (cfg.perNodeAmount && cfg.perNodeAmount[0]) || 1;
-    var max = (cfg.perNodeAmount && cfg.perNodeAmount[1]) || 1;
-    var amount = min + Math.floor(Math.random() * (max - min + 1));
-    this._creditSeveAeswyn(cfg.resourceId, amount);
-  },
-
-  /* Bonus garanti à la chambre finale (voir resolveFinale ci-dessous) — quel que soit le choix
-     de coffre (sûr ou risqué), la Sève n'est jamais remise en jeu par le double-ou-rien. */
-  _rollSeveAeswynFinale: function (run) {
-    var template = SceneEngine.getTemplate(run.templateId);
-    var cfg = this._rareDropCfg(template);
-    if (!cfg || !run.profile) return;
-    var amount = this._seveFinaleAmount(cfg, run.profile, run.intensity);
-    // v3.322.0 : Récolte (Mémoire niveau 4) — +1 matériau de monde par Petite Aventure réussie
-    if (window.MemoryManager && MemoryManager.has("recolte")) amount += 1;
-    if (amount > 0) this._creditSeveAeswyn(cfg.resourceId, amount);
-  },
-
-  /* v3.235.0 : le bonus de finale dépend maintenant de l'INTENSITÉ en plus du profil
-     (voir data/scene-templates.js pour le pourquoi). Deux formes acceptées, pour ne
-     casser aucun canevas et permettre un retour en arrière sans toucher au code :
-       - nombre          -> ancienne forme plate, rendue telle quelle
-       - objet par intensité -> valeur de l'intensité du run, repli sur la plus courte
-     Un run sans intensité (canevas sans SCENE_INTENSITY) prend la première valeur. */
-  _seveFinaleAmount: function (cfg, profil, intensite) {
-    var parProfil = cfg.finaleGuaranteedAmount && cfg.finaleGuaranteedAmount[profil];
-    if (parProfil == null) return 0;
-    if (typeof parProfil === "number") return Number(parProfil) || 0;
-    if (intensite && parProfil[intensite] != null) return Number(parProfil[intensite]) || 0;
-    var cles = Object.keys(parProfil);
-    return cles.length ? (Number(parProfil[cles[0]]) || 0) : 0;
-  },
-
-  _creditSeveAeswyn: function (resourceId, amount) {
-    if (!window.WarehouseManager || typeof WarehouseManager.addResource !== "function" || amount <= 0) return;
-    WarehouseManager.addResource(resourceId, amount);
-    var resDef = (window.WAREHOUSE_RESOURCES || {})[resourceId];
-    addLog("✨ " + _t("Trouvaille : +{n} {x}", { n: amount, x: (resDef && resDef.name) ? _td(resDef.name) : resourceId }), "event");
   },
 
   /* leaveNow() -> rentre volontairement, banque via SortieManager("success") — voir décision
@@ -1466,15 +1022,7 @@ var SceneRunManager = {
     // v3.127.0 (Lot PA3) : bonus Sève d'Aeswyn garanti à la finale, quel que soit le choix de
     // coffre — AVANT le SortieManager.end("success") ci-dessous (déjà créditée directement via
     // WarehouseManager, pas affectée par le double-ou-rien ni par le "success" de la sortie).
-    this._rollSeveAeswynFinale(run);
-    this._applyEventEcho(run, "finale", template); // v3.312.0 : le coffre entamé
 
-    // v3.304.0 : drapeau permanent posé à chaque chambre finale résolue (template.successFlag),
-    // lu par l'Histoire (étape « L'outre »). Ne rend jamais le canevas « terminé ».
-    if (template.successFlag) {
-      if (!game.explorationProgression) game.explorationProgression = {};
-      game.explorationProgression[template.successFlag] = true;
-    }
 
     run.status = "completed";
     var summary = window.SortieManager ? SortieManager.end("success") : null;
@@ -1511,7 +1059,7 @@ var SceneRunManager = {
      palier courant) — sert à savoir si le nœud combat en cours doit culminer sur le boss de
      l'aventure plutôt qu'une vague normale (décision Seb : boss seulement au tout dernier
      point combat du parcours complet, pas à chaque rencontre). run.card est entièrement
-     généré à l'avance par chooseProfile() : un simple scan des paliers futurs suffit, pas
+     généré à l'avance par startRun() : un simple scan des paliers futurs suffit, pas
      besoin de recalculer quoi que ce soit dynamiquement. */
   _isLastCombatNodeOfRun: function (run) {
     if (!run || !run.card) return true;
@@ -1564,7 +1112,6 @@ var SceneRunManager = {
 
     var spawned = this._spawnNextCombatEnemy(run, false);
     if (!spawned) return { ok: false, reason: _t("Impossible de générer l'ennemi") };
-    this._applyEventEcho(run, "combat"); // v3.312.0 : la pierre depuis les dunes
 
     run.status = "combat"; // en pause sur le scene-engine tant que le combat n'est pas résolu
     if (typeof switchTab === "function") switchTab("combat");

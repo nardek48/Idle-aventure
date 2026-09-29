@@ -887,7 +887,7 @@ STORY_QUESTS.desert = {
           { who: "Aldric", text: "Une outre, quatre mesures. Je note." }
         ]
       },
-      objectiveLabel: "Remplir 1 Outre au Réservoir, puis terminer une Petite aventure du Désert",
+      objectiveLabel: "Remplir 1 Outre au Réservoir, puis atteindre une destination en Petite aventure du Désert",
       unlockTabs: [],
       reward: STORY_REWARDS.desert_03,
       linkTo: { section: "expedition", cardId: "petite_aventure_desert" },
@@ -897,8 +897,8 @@ STORY_QUESTS.desert = {
         title: "L'outre",
         points: [
           { icon: "images/Icons/workshops/water_reservoir.png", text: "Le Réservoir est un atelier du Puits, au Village. Il transforme ton eau en Outres pleines." },
-          { icon: "images/Icons/resources/outre_pleine_icon.png", text: "Avant un parcours au Désert, emporte une Outre dans ta préparation : elle te rendra du Souffle quand tu en manques." },
-          { icon: "images/Icons/scene/journey_long.png", text: "Le Désert coûte plus de Souffle par palier que la Forêt. Sans Outre, tu passes quand même, mais tu vas moins loin." }
+          { icon: "images/Icons/resources/outre_pleine_icon.png", text: "Avant une Petite aventure du Désert, mets une Outre dans ta besace : elle te rendra du Souffle quand tu en manques." },
+          { icon: "images/Icons/scene/journey_long.png", text: "Au Désert, chaque pas coûte du Souffle et la gourde n'a qu'une gorgée. Sans Outre, tu passes quand même, mais tu arrives à sec." }
         ]
       },
       check: function () { return storyDesertFlag("outreFilled") && storyDesertFlag("desertPaCompleted"); },

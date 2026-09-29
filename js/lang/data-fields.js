@@ -102,9 +102,7 @@ var DATA_TEXT_FIELDS = {
   AMBIANCE_TEXTS: [""],
   LIVING_MAPS: ["*.name", "*.village.name", "*.landmarks.*.name", "*.sectors.*.name", "*.sectors.*.lore", "*.sectors.*.heldEffect.label", "*.words"],
   SCENE_NODES: ["obstacles.*.name", "obstacles.*.options.*.label", "silhouettes", "hints", "gainHints", "labels",
-    "combatGroups.*.name", "events.*.title", "events.*.annonce", "events.*.branches.*.label", "events.*.branches.*.text", "events.*.echo.*.text"],
-  SCENE_INTENSITY: ["*.label", "*.desc"],
-  SCENE_MUTATORS: ["*.label", "*.desc"],
+    "combatGroups.*.name"],
   SCENE_TEMPLATES: ["*.title", "*.departLabel", "*.deathLine", "*.items.*.name", "*.items.*.desc", "*.journalByDepth"],
   CODEX_ENTRIES: ["*.title", "*.text"],
   /* v3.381.0 (PA2-0) : Petites Aventures v2 (data/pa2-content.js) */
@@ -114,6 +112,8 @@ var DATA_TEXT_FIELDS = {
   PA2_FOE_LINES: ["*"],
   PA2_OBSTACLE_LINES: ["*"],
   PA2_PLACES: ["*.name", "*.text"],
+  PA2_RINGS: ["*.label"], // v3.388.0 : noms des anneaux (carte vivante)
+  PA2_PLACES_BY_WORLD: ["*.*.name", "*.*.text"], // v3.387.0 (PA2-5)
   PA2_DESTS: ["*.*.name", "*.*.line", "*.*.win", "*.*.fail"],
   PA2_HOOKS: ["*.title", "*.lede", "*.event.name", "*.event.text", "*.event.branches.*.label", "*.event.branches.*.text",
     "*.campGift.text", "*.revenge.name", "*.revenge.line", "*.clairiere.*", "*.echo.*"],

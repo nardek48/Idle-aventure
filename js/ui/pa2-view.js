@@ -312,6 +312,7 @@ function pa2RenderPicker() {
     h += '<div class="pa2-sheet-head"><div class="pa2-medal">' + pa2Img(PA2_ICONS.bag) + '</div><div><div class="pa2-kicker">' +
       esc(_tn(free, "{n} place libre", "{n} places libres", { n: free })) + '</div><h2 class="pa2-h2">' + esc(_t("Ajouter à la besace")) + '</h2></div></div><div class="pa2-choices">';
     PA2_ITEM_ORDER.forEach(function (id) {
+      if (!Pa2Run.itemInWorld(id, run)) return; // v3.387.0 : l'Outre n'existe qu'au Désert
       var it = PA2_ITEMS[id], c = Pa2Run.canAdd(id), n = run.bag.filter(function (x) { return x === id; }).length, sz = "";
       for (var k = 0; k < it.size; k++) sz += "<i></i>";
       var locked = !Pa2Run.isUnlocked(id);
@@ -357,7 +358,7 @@ function pa2Snapshot(run) {
 function pa2HudHTML(run) {
   var v = pa2HudValues(run), hero = pa2Hero(), n = Pa2Run.node(run.at, run), chips = "";
   if (v.wounds) chips += '<span class="pa2-chip is-wound" title="' + esc(_t("Blessures : −1 cran par blessure")) + '">' + pa2Img(PA2_ICONS.wound) + '×' + v.wounds + '</span>';
-  ["petite_ration", "ration", "grande_ration", "gourde"].forEach(function (id) {
+  ["petite_ration", "ration", "grande_ration", "gourde", "outre"].forEach(function (id) {
     if (run.stock[id] > 0) chips += '<button type="button" class="pa2-chip" onclick="pa2Use(\'' + id + '\')" aria-label="' + esc(_t("Utiliser : {n}", { n: pa2ItemName(id) })) + '">' + pa2Img(PA2_ITEMS[id].icon) + '×' + run.stock[id] + '</button>';
   });
   if (run.stock.corde > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("corde")) + '">' + pa2Img(PA2_ITEMS.corde.icon) + '×' + run.stock.corde + '</span>';
@@ -397,18 +398,20 @@ function pa2MapHTML(run) {
   var open = run.status === PA2_STATUS.map ? Pa2Run.openMoves() : [];
   var walked = {};
   run.path.forEach(function (e) { walked[e[0] + ">" + e[1]] = true; });
-  var light = Pa2Run.hasItem("veilleurs", run) ? 275 : (Pa2Run.hasItem("torche", run) ? 230 : 190);
+  // Rayons pensés pour foret_1 (848 px de large) : mis à l'échelle de chaque illustration.
+  var K = W / 848;
+  var light = (Pa2Run.hasItem("veilleurs", run) ? 275 : (Pa2Run.hasItem("torche", run) ? 230 : 190)) * K;
 
   var svg = '<svg class="pa2-map-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">';
   svg += '<defs><radialGradient id="pa2-halo"><stop offset="0" stop-color="#000"/><stop offset=".55" stop-color="#000" stop-opacity=".92"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>' +
     '<radialGradient id="pa2-glow"><stop offset="0" stop-color="#f0aa3e" stop-opacity=".38"/><stop offset="1" stop-color="#f0aa3e" stop-opacity="0"/></radialGradient>' +
     '<mask id="pa2-fog"><rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#fff"/>' +
     '<circle cx="' + cur.x + '" cy="' + cur.y + '" r="' + light + '" fill="url(#pa2-halo)"/>';
-  run.path.forEach(function (e) { var q = map.nodes[e[1]]; svg += '<circle cx="' + q.x + '" cy="' + q.y + '" r="75" fill="url(#pa2-halo)" opacity=".75"/>'; });
+  run.path.forEach(function (e) { var q = map.nodes[e[1]]; svg += '<circle cx="' + q.x + '" cy="' + q.y + '" r="' + Math.round(75 * K) + '" fill="url(#pa2-halo)" opacity=".75"/>'; });
   Object.keys(map.nodes).forEach(function (k) {
     var d = map.nodes[k];
-    if (Pa2Run.isDest(run.nodes[k], run)) svg += '<circle cx="' + d.x + '" cy="' + d.y + '" r="66" fill="url(#pa2-halo)" opacity=".6"/>';
-    else if (d.row >= 0 && run.reveal[Pa2Run.actOf(d.row, map)]) svg += '<circle cx="' + d.x + '" cy="' + d.y + '" r="58" fill="url(#pa2-halo)" opacity=".45"/>';
+    if (Pa2Run.isDest(run.nodes[k], run)) svg += '<circle cx="' + d.x + '" cy="' + d.y + '" r="' + Math.round(66 * K) + '" fill="url(#pa2-halo)" opacity=".6"/>';
+    else if (d.row >= 0 && run.reveal[Pa2Run.actOf(d.row, map)]) svg += '<circle cx="' + d.x + '" cy="' + d.y + '" r="' + Math.round(58 * K) + '" fill="url(#pa2-halo)" opacity=".45"/>';
   });
   svg += '</mask></defs>';
   svg += '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#050302" opacity="' + (here && here.act === 3 ? '.9' : '.84') + '" mask="url(#pa2-fog)"/>';
@@ -420,7 +423,7 @@ function pa2MapHTML(run) {
       if (!w && !o) return;
       var A = map.nodes[a], B = map.nodes[b];
       var isNew = pa2View.fromKey && a === pa2View.fromKey && b === run.at;
-      var st = w ? 'stroke="#ffcf7a" stroke-width="5" stroke-opacity=".9"' : 'stroke="#f0aa3e" stroke-width="4.5" stroke-dasharray="2 12"';
+      var st = w ? 'stroke="#ffcf7a" stroke-width="' + (5 * K).toFixed(1) + '" stroke-opacity=".9"' : 'stroke="#f0aa3e" stroke-width="' + (4.5 * K).toFixed(1) + '" stroke-dasharray="' + (2 * K).toFixed(1) + ' ' + (12 * K).toFixed(1) + '"';
       svg += '<line class="pa2-edge' + (isNew ? ' is-drawing' : '') + '" x1="' + A.x + '" y1="' + A.y + '" x2="' + B.x + '" y2="' + B.y + '" ' + st + ' stroke-linecap="round"/>';
     });
   });
@@ -679,7 +682,7 @@ function pa2SheetBody(run, n, st) {
     }
 
     case "source": {
-      var dry = Pa2Run.hasPact("tarie", run), place = dry ? PA2_PLACES.sourceDry : PA2_PLACES.source, amt = Pa2Run.sourceAmount(run);
+      var dry = Pa2Run.hasPact("tarie", run), place = dry ? Pa2Run.place(run, "sourceDry") : Pa2Run.place(run, "source"), amt = Pa2Run.sourceAmount(run);
       h += pa2Head(run, n, _td(place.name), pa2ActKicker(n, _t("Source")));
       h += '<p class="pa2-narr">' + esc(_td(place.text)) + '</p><div class="pa2-choices">';
       h += '<button type="button" class="pa2-choice is-noicon" onclick="pa2Drink()"><span class="pa2-t">' + esc(_t("Boire")) + '</span><span class="pa2-cost">' + esc(_t("+{n} % PV · +{n} Souffle", { n: amt })) + '</span></button></div>';
@@ -688,7 +691,7 @@ function pa2SheetBody(run, n, st) {
 
     case "autel": {
       var free = Pa2Run._altarFree(run), cost = Pa2Run.altarCost(run), can = free || run.loot >= cost;
-      var ap = free ? PA2_PLACES.autelFree : PA2_PLACES.autel;
+      var ap = free ? Pa2Run.place(run, "autelFree") : Pa2Run.place(run, "autel");
       h += pa2Head(run, n, _td(ap.name), pa2ActKicker(n, _t("Autel")));
       h += '<p class="pa2-narr">' + esc(_td(ap.text).replace("{cost}", cost)) + '</p><div class="pa2-choices">';
       h += '<button type="button" class="pa2-choice is-noicon"' + (can ? '' : ' disabled') + ' onclick="pa2Altar(true)"><span class="pa2-t">' + esc(free ? _t("Poser la main sur la pierre") : _t("Déposer {n} or", { n: cost })) + '</span>' +
@@ -699,8 +702,8 @@ function pa2SheetBody(run, n, st) {
 
     case "trouvaille": {
       var draw = n.draw || [];
-      h += pa2Head(run, n, st.flipped ? _t("Une trouvaille") : _td(PA2_PLACES.trouvaille.name), pa2ActKicker(n, _t("Trouvaille")));
-      h += '<p class="pa2-narr">' + esc(st.flipped ? (draw.length > 1 ? _t("Deux objets. Tu n'en portes qu'un.") : _t("Pas pour toi. Mais tu es là.")) : _td(PA2_PLACES.trouvaille.text)) + '</p>';
+      h += pa2Head(run, n, st.flipped ? _t("Une trouvaille") : _td(Pa2Run.place(run, "trouvaille").name), pa2ActKicker(n, _t("Trouvaille")));
+      h += '<p class="pa2-narr">' + esc(st.flipped ? (draw.length > 1 ? _t("Deux objets. Tu n'en portes qu'un.") : _t("Pas pour toi. Mais tu es là.")) : _td(Pa2Run.place(run, "trouvaille").text)) + '</p>';
       h += '<div class="pa2-cards">' + draw.map(function (id, i) {
         var r = PA2_RELICS[id];
         return '<button type="button" class="pa2-card is-' + r.rar + (st.flipped ? ' is-flipped' : '') + (st.picked === id ? ' is-picked' : '') + '" onclick="' + (st.flipped ? "pa2PickRelic('" + id + "')" : "pa2Flip()") + '" aria-label="' + esc(st.flipped ? _td(r.name) : _t("Carte cachée {n}", { n: i + 1 })) + '">' +
@@ -751,7 +754,7 @@ function pa2SheetBody(run, n, st) {
 
     case "camp":
     case "seuil": {
-      var camp = n.type === "camp", pl = camp ? PA2_PLACES.camp : PA2_PLACES.seuil, pct = camp ? R.campRestPct : R.seuilRestPct;
+      var camp = n.type === "camp", pl = camp ? Pa2Run.place(run, "camp") : Pa2Run.place(run, "seuil"), pct = camp ? R.campRestPct : R.seuilRestPct;
       var hasR = !!Pa2Run._rationInStock(run);
       h += pa2Head(run, n, _td(pl.name), camp ? _t("Fin de l'acte I") : _t("Fin de l'acte II"), true);
       h += '<p class="pa2-narr">' + esc(_td(pl.text)) + '</p>';
