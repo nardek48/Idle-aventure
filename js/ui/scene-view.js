@@ -40,6 +40,9 @@ var SCENE_STAT_LABELS = { power: _t("Puissance"), precision: _t("Précision"), e
 
 function buildSceneScreenHTML() {
   var run = SceneRunManager.getRun();
+  // v3.382.0 (PA2-1) : run des Petites Aventures v2 -> ui/pa2-view.js (préparation, carte, bilan).
+  if (run && run.pa2 && run.end && run.end.how === "cancel") { SceneRunManager.clearRun(); run = null; } // préparation abandonnée : rien à montrer
+  if (run && run.pa2 && window.buildPa2ScreenHTML) return buildPa2ScreenHTML(run);
   if (!run || run.status === "completed") {
     return buildSceneLandingHTML();
   }

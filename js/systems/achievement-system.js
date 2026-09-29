@@ -281,8 +281,10 @@ var AchievementManager = {
   },
 
   /* scene-run-system.js : chambre finale résolue. */
-  onRunSuccess: function () {
+  onRunSuccess: function (worldId) {
     var idx = window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0;
+    // v3.384.0 (PA2-2) : la Petite Aventure v2 donne le monde de SA carte (refaire la Forêt depuis le Désert).
+    if (worldId && window.WORLDS) WORLDS.forEach(function (w, i) { if (w.id === worldId) idx = i; });
     if (idx === 0) this.bump("runForest");
     else if (idx === 1) this.bump("runDesert");
   },

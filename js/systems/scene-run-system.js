@@ -126,6 +126,7 @@ var SceneRunManager = {
      provisions passent d'un booleen de disponibilite a un compteur de charges ; sans ce
      repli, un run en cours au moment de la mise a jour perdrait sa corde. Idempotent. */
   _migrateRun: function (run) {
+    if (run.pa2) return; // v3.381.0 : un run v2 n'a ni corde ni provisions à migrer
     if (run.ropeCharges == null) run.ropeCharges = run.ropeAvailable ? 1 : 0;
     if (run.provisionCharges == null) run.provisionCharges = 0;
   },
@@ -196,7 +197,8 @@ var SceneRunManager = {
      ailleurs (combats, soins, équipement, talents…). Le combat de nœud reste libre (potion). */
   isHeroEngaged: function () {
     var run = this.getRun();
-    return !!(run && run.status !== "completed" && run.status !== "combat");
+    // v3.384.0 (PA2-2, D4) : en préparation v2, rien n'est engagé (le héros part au « Entrer »).
+    return !!(run && run.status !== "completed" && run.status !== "combat" && run.status !== "pa2-prep");
   },
 
   /* v3.122.0 (Lot S2a) : vrai si la quête (canevas à unlockOnSuccess) est déjà réussie de
@@ -282,6 +284,9 @@ var SceneRunManager = {
     if (this.isQuestCompleted(templateId)) {
       return { ok: false, reason: _t("Expédition déjà terminée"), run: null };
     }
+
+    // v3.381.0 (PA2-0) : un canevas paVersion 2 est une Petite Aventure v2, menée par Pa2Run.
+    if (window.Pa2Run && Pa2Run.isTemplate(template)) return Pa2Run.start(templateId, opts);
 
     var needsProfile = !!template.profileWeights;
     if (needsProfile && !this.canStartPetiteAventureToday()) {
@@ -1384,6 +1389,7 @@ var SceneRunManager = {
      v3.306.2 : exception — rentrer avant le premier palier (depth 0) ne donne aucune XP. */
   leaveNow: function () {
     var run = this.getRun();
+    if (run && run.pa2) return { ok: false, reason: _t("Impossible de rentrer maintenant") }; // v3.381.0 : en v2, on rentre du camp ou du seuil
     if (!run || (run.status !== "gate" && run.status !== "preparation")) {
       return { ok: false, reason: _t("Impossible de rentrer maintenant") };
     }
@@ -1410,6 +1416,7 @@ var SceneRunManager = {
      totale hors mort en combat). Idempotent : sans run actif, ne fait rien. */
   abandon: function () {
     var run = this.getRun();
+    if (run && run.pa2 && window.Pa2Run) return Pa2Run.abandon(); // v3.381.0 (PA2-0)
     if (!run || run.status === "completed") return { ok: false, reason: _t("Aucune expédition en cours") };
     run.status = "completed";
     var summary = window.SortieManager ? SortieManager.end("flee") : null;

@@ -504,6 +504,7 @@ function buildSaveData() {
     // v3.120.0 (Lot S1) : scene-engine générique (voir systems/scene-run-system.js) — même règle
     // de persistance que explorationRun (survit à un rechargement de page, PAS à une ascension).
     sceneRun: game.sceneRun || null,
+    expeditionChest: game.expeditionChest || { unlocked: {} }, // v3.381.0 (PA2, Q8) : coffre d'expédition, permanent
     // v3.92.0 : session de minijeu de minage (quête "La Veine Instable" ou activité bonus
     // Carrière) — même règle de persistance que explorationRun (survit au rechargement).
     // v3.94.0 : bloc "well" ajouté pour le minijeu du Puits (systems/well-system.js).
@@ -828,6 +829,7 @@ function restoreBaseState(d) {
   game.explorationRun = d.explorationRun && typeof d.explorationRun === "object" ? d.explorationRun : null;
   // v3.120.0 (Lot S1) : scene-engine générique — ancienne sauvegarde sans ce champ = aucun run à reprendre.
   game.sceneRun = d.sceneRun && typeof d.sceneRun === "object" ? d.sceneRun : null;
+  game.expeditionChest = d.expeditionChest && typeof d.expeditionChest === "object" ? d.expeditionChest : { unlocked: {} }; // v3.381.0 (PA2, Q8)
   game.explorationProgression = d.explorationProgression && typeof d.explorationProgression === "object"
     ? d.explorationProgression
     : { blockedPathCompleted: false, forgottenClearingUnlocked: false, unstableVeinDiscoveryCompleted: false, quarryUnlocked: false, huntBuildingUnlocked: false, driedSpringDiscoveryCompleted: false, wellUnlocked: false };
@@ -1224,6 +1226,7 @@ function hardResetState() {
   game.huntStats = keptHuntStats;
   // v3.90.0 : progression permanente d'Expédition (déblocages) conservée à l'ascension.
   game.explorationProgression = keptExplorationProgression;
+  game.expeditionChest = game.expeditionChest || { unlocked: {} }; // v3.381.0 (PA2, Q8) : le coffre survit à l'ascension
   game.production = keptProduction;
   game.construction = keptConstruction;
   game.village = keptVillage;
@@ -1394,6 +1397,7 @@ function fullResetState() {
   game.adventureQuestsCompleted = {};
   game.huntStats = {}; // v3.30
   game.explorationProgression = { blockedPathCompleted: false, forgottenClearingUnlocked: false, unstableVeinDiscoveryCompleted: false, quarryUnlocked: false, huntBuildingUnlocked: false, driedSpringDiscoveryCompleted: false, wellUnlocked: false }; // v3.90.0/v3.92.0/v3.93.0/v3.94.0
+  game.expeditionChest = { unlocked: {} }; // v3.381.0 (PA2, Q8) : nouvelle partie = coffre vide
   game.craftQueue = []; // v3.43 : repart à zéro, aucun remboursement à faire sur un reset complet (tout repart de zéro de toute façon)
   game.production = {}; // v3.31 : repart à zéro, ProductionManager.ensure() recrée les 4 bâtiments au niveau 1
   game.construction = {}; // v3.37 : repart à zéro, ConstructionManager.ensure() recrée workshop au niveau 0
@@ -1442,7 +1446,7 @@ function fullResetState() {
   // ne les touche dans hardResetState), remise à vide seulement ici.
   game.grimoirePresets = [];
   // v3.379.0 : partie neuve = potion automatique « Normal », dernière gardée pour le boss
-  game.potionAuto = { threshold: "normal", keepForBoss: true };
+  game.potionAuto = { threshold: "tard", keepForBoss: true }; // v3.380.0 : « Tard » par défaut
   game.hasSeenOnboarding = false;
   game.genericTutorialsSeen = {}; // v3.107.9
 

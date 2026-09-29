@@ -107,6 +107,16 @@ var DATA_TEXT_FIELDS = {
   SCENE_MUTATORS: ["*.label", "*.desc"],
   SCENE_TEMPLATES: ["*.title", "*.departLabel", "*.deathLine", "*.items.*.name", "*.items.*.desc", "*.journalByDepth"],
   CODEX_ENTRIES: ["*.title", "*.text"],
+  /* v3.381.0 (PA2-0) : Petites Aventures v2 (data/pa2-content.js) */
+  PA2_ITEMS: ["*.name", "*.pro", "*.con", "*.lockedHint"],
+  PA2_PACTS: ["*.name", "*.desc"],
+  PA2_RELICS: ["*.name", "*.fx"],
+  PA2_FOE_LINES: ["*"],
+  PA2_OBSTACLE_LINES: ["*"],
+  PA2_PLACES: ["*.name", "*.text"],
+  PA2_DESTS: ["*.*.name", "*.*.line", "*.*.win", "*.*.fail"],
+  PA2_HOOKS: ["*.title", "*.lede", "*.event.name", "*.event.text", "*.event.branches.*.label", "*.event.branches.*.text",
+    "*.campGift.text", "*.revenge.name", "*.revenge.line", "*.clairiere.*", "*.echo.*"],
 
   /* --- Hors js/data/ (DATA_TEXT_SOURCES) --- */
   RETIRED_UPGRADES: ["*.name"],                                   // core/state.js : remboursement des anciennes améliorations
@@ -125,7 +135,8 @@ var DATA_TEXT_IGNORED = {
   WORLD_CAPS_DE: [""],                // gabarits déjà passés par _t() à la définition (world-caps.js)
   WORLD_CAPS_PREP: [""],
   TALENT_TREES: ["**.mods.*.path"],   // chemins techniques (« actions.defense.resourceGain »)
-  STORY_QUESTS: ["*.steps.*.linkTo.cardId"]
+  STORY_QUESTS: ["*.steps.*.linkTo.cardId"],
+  PA2_MAPS: ["**"]                    // v3.381.0 : identifiants de nœuds des tracés (« CAMP », « SEUIL »…)
 };
 
 if (typeof module !== "undefined") module.exports = { DATA_TEXT_FIELDS: DATA_TEXT_FIELDS, DATA_TEXT_IGNORED: DATA_TEXT_IGNORED, DATA_TEXT_SOURCES: DATA_TEXT_SOURCES };

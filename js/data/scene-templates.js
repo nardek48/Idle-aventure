@@ -596,6 +596,9 @@ var SCENE_TEMPLATES = {
   petite_aventure_foret: {
     id: "petite_aventure_foret",
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
+    // v3.382.0 (PA2-1) : la Forêt passe aux Petites Aventures v2 (systems/pa2-run.js, ui/pa2-view.js).
+    // Le reste du canevas ne sert plus qu'aux bancs v1 et au Désert qui en hérite, jusqu'à PA2-6.
+    paVersion: 2,
     mode: "generative",
     title: "Petite aventure — Forêt",
     icon: "images/Icons/scene/path_easy.png",

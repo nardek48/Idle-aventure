@@ -72,7 +72,7 @@ var LIVING_MAPS = {
         lore: "L'eau est claire jusqu'au fond. Rien n'y bouge, ce qui n'est pas normal." },
       { id: "menhirs", name: "Cercle des menhirs", x: 16.0, y: 53.3, ring: 2, neighbors: ["gue", "toiles", "arbremere"], labelTop: true,
         content: { type: "expedition", templateId: "petite_aventure_foret", pools: { obstacle: ["porte_scellee", "paroi"] } },
-        heldEffect: { id: "autel_normale", label: "L'autel soigne aussi une blessure normale." },
+        heldEffect: { id: "autel_normale", label: "L'autel de pierre ne demande rien, une fois par aventure." }, // v3.382.0 : effet v2 (Q11)
         lore: "Neuf pierres debout. La dixième est couchée et personne ne se souvient l'avoir vue tomber." },
       { id: "arbredore", name: "Arbre doré", x: 37.9, y: 73.0, ring: 2, neighbors: ["etang", "toiles"],
         content: { type: "expedition", templateId: "petite_aventure_foret", pools: { combat: ["araignees_foret"] } },

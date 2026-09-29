@@ -159,6 +159,12 @@ function switchTab(tabName) {
   // timestamp, jamais interrompu par la navigation). Symétrique de l'exception combat : identifie
   // le nœud bloqueur non prêt via isBlockerReady() === false plutôt que de lister tabName, pour
   // couvrir tout onglet cible (village, campement, menu...), pas seulement "village".
+  // v3.384.0 (PA2-2, D4) : quitter la préparation d'une Petite Aventure v2, c'est y renoncer, sans perte.
+  if (game.activeTab === "scene" && tabName !== "scene" && game.sceneRun && game.sceneRun.pa2 && game.sceneRun.status === "pa2-prep" && window.Pa2Run) {
+    Pa2Run.abandon();
+    if (window.SceneRunManager) SceneRunManager.clearRun();
+    if (typeof pa2ClearChrome === "function") pa2ClearChrome();
+  }
   if (game.activeTab === "scene" && tabName !== "scene"
       && !(tabName === "combat" && game.sceneRun && game.sceneRun.status === "combat")
       && !(game.sceneRun && game.sceneRun.pendingNode && game.sceneRun.pendingNode.type === "bloqueur"
@@ -231,6 +237,9 @@ function switchTab(tabName) {
   // les bandeaux figés des kframes portent le titre de chaque écran.
   refreshTabBarVisibility();
   renderPanel();
+  // v3.380.0 : héros libéré (fin de combat, d'expédition) → le retour en attente s'ouvre tout de suite,
+  // sans attendre la vérification d'une seconde de return-view.js (qui reste en filet).
+  if (window.ReturnManager && ReturnManager.hasPending()) ReturnManager.flushPending();
 
   // v3.350.0 : un boss ou une élite posé AVANT l'arrivée sur l'écran de combat (carte vivante,
   // quête qui commence par son boss) n'était jamais « vu » : renderEnemy() ne lance la carte

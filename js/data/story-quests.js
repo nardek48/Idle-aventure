@@ -694,7 +694,7 @@ var STORY_QUESTS = {
           icon: "images/Icons/camp/campfire.png",
           title: "Les braises d'Aeswyn",
           points: [
-            { icon: "images/Icons/scene/path_easy.png", text: "La Sève d'Aeswyn se trouve en Petite Aventure (tableau de missions, 3 par jour) — 1 à 2 par parcours, davantage en profil Bourrin." },
+            { icon: "images/Icons/scene/path_easy.png", text: "La Sève d'Aeswyn se trouve en Petite Aventure (carte de la Forêt) : parfois en route, surtout en atteignant une destination." },
             { icon: "images/Icons/quests/ration_reward.png", text: "La Ration moyenne se cuisine à la Cuisine de camp (bâtiment Chasse) : 10 Viande séchée (Séchoir) + 1 Pain (Moulin puis Boulangerie du Champs)." },
             { icon: "images/Icons/camp/campfire.png", text: "Quand tout est réuni, reviens au Campement : le bloc « Les braises » te laisse faire l'offrande." }
           ]

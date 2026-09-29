@@ -1,0 +1,321 @@
+/* ============================================================
+   Aethervale — css/04-panel-pa2.css
+   v3.382.0 (Petites Aventures v2, lot PA2-1) : écrans du mode v2
+   (ui/pa2-view.js). Habillage « Nuit » validé par Seb dans l'atelier
+   (29/09/2026), posé sur le kit du jeu : cadre de page .kframe-page,
+   .kbtn, .kgauge-thin, cadres de slot (images/UI/slots), badge rond,
+   bouton de fermeture rond, texture pierre. Tout est préfixé pa2-.
+   Portée : body.scene-active.pa2-run (onglet scene, run v2).
+   ============================================================ */
+
+.pa2-page,
+#pa2-overlay {
+  --pa2-gold: #f0aa3e;
+  --pa2-gold-dark: #c27f1f;
+  --pa2-gold-deep: #8a5c14;
+  --pa2-ink: #f4e9d0;
+  --pa2-ink-dim: rgba(244, 233, 208, 0.72);
+  --pa2-breath: #4fa8e8;
+  --pa2-moss: #8fbf5a;
+  --pa2-danger: #ff8a7a;
+  --pa2-r-com: #9ca3af;
+  --pa2-r-rare: #3b82f6;
+  --pa2-r-leg: #f59e0b;
+  --pa2-radius: 14px;
+}
+
+/* --- Habillage de l'écran pendant le run --- */
+body.scene-active.pa2-run #hud { display: none; }
+/* La nuit tombe : voile sur le fond du monde, cadre de page assombri. */
+body.scene-active.pa2-night #panel-container { background-color: rgba(6, 4, 10, 0.66); }
+body.scene-active.pa2-night .kframe .kf-top::before,
+body.scene-active.pa2-night .kframe .kf-mid::before,
+body.scene-active.pa2-night .kframe .kf-bot::before,
+body.scene-active.pa2-night .kfp-top-holder .kf-top::before {
+  background-color: #120e0a;
+  background-blend-mode: multiply;
+}
+body:not(.scene-active) #pa2-overlay { display: none; }
+
+.pa2-page { color: var(--pa2-ink); }
+.pa2-col { display: flex; flex-direction: column; gap: 12px; }
+.pa2-center { text-align: center; }
+.pa2-dim { color: var(--pa2-ink-dim); }
+.pa2-small { font-size: 12px; margin: 6px 0 0; }
+.pa2-mt4 { margin-top: 4px; }
+.pa2-kicker { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--pa2-gold); }
+.pa2-kicker-ico { display: flex; align-items: center; gap: 6px; }
+.pa2-kicker-ico img { width: 22px; height: 22px; object-fit: contain; }
+.pa2-h1 { margin: 4px 0 0; font-size: 22px; line-height: 1.15; font-weight: 800; text-wrap: balance; color: var(--pa2-ink); }
+.pa2-h2 { margin: 0; font-size: 18px; line-height: 1.2; font-weight: 800; color: var(--pa2-ink); }
+.pa2-h3 { margin: 0; font-size: 15px; font-weight: 800; color: var(--pa2-ink); }
+.pa2-narr { margin: 8px 0 0; font-style: italic; color: var(--pa2-ink); }
+.pa2-p { margin: 0 0 6px; }
+.pa2-pro { color: var(--pa2-moss); }
+.pa2-con { color: var(--pa2-danger); }
+.pa2-ring { margin: 8px 0 0; font-size: 12.5px; font-weight: 700; color: var(--pa2-gold); }
+.pa2-note { margin: -4px 4px 0; font-size: 12px; font-weight: 600; color: #3a2c1a; }
+/* Hors des panneaux, l'encre suit le fond du cadre : parchemin le jour, pierre sombre la nuit. */
+body.pa2-night .pa2-link, body.pa2-night .pa2-note { color: var(--pa2-ink-dim); }
+.pa2-link { display: block; margin: 0 auto; padding: 6px 10px; border: 0; background: none; color: #3a2c1a; font-size: 12.5px; font-weight: 600; text-decoration: underline; cursor: pointer; }
+.pa2-ic { display: block; object-fit: contain; }
+
+/* Panneau pierre (équivalent nuit de .nb-card) */
+.pa2-panel {
+  position: relative;
+  padding: 14px;
+  border-radius: var(--pa2-radius);
+  border: 1.5px solid var(--pa2-gold-dark);
+  background-color: rgba(14, 11, 8, 0.86);
+  background-image: linear-gradient(rgba(14, 11, 8, 0.78), rgba(14, 11, 8, 0.86)), url('../images/UI/textures/bg-stone-tile.png');
+  background-size: auto, 384px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+.pa2-btnrow { display: flex; gap: 8px; }
+.pa2-btnrow .kbtn { max-width: none; margin-bottom: 0; }
+
+/* Jauges : cadre du kit, remplissage du run */
+.pa2-gauge.is-hp { --kgauge-fill: linear-gradient(90deg, #8e1f17, #e0533f); }
+.pa2-gauge.is-breath { --kgauge-fill: linear-gradient(90deg, #1f5f94, #6cc0f5); }
+
+/* --- Héros (préparation) --- */
+.pa2-hero { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; align-items: center; }
+.pa2-portrait { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid var(--pa2-gold-dark); background: #000; }
+.pa2-hero-info { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pa2-stats { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--pa2-ink-dim); }
+.pa2-stats span { display: flex; align-items: center; gap: 3px; }
+.pa2-stats img { width: 20px; height: 20px; object-fit: contain; }
+.pa2-stats b { color: var(--pa2-ink); font-variant-numeric: tabular-nums; }
+
+/* --- Trophées (PA2-2) --- */
+.pa2-trophies { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.pa2-troph { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.pa2-troph img { width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .8)); }
+.pa2-troph b { font-size: 15px; color: var(--pa2-gold); }
+.pa2-troph span { font-size: 11px; line-height: 1.2; color: var(--pa2-ink-dim); }
+.pa2-troph.is-empty img { filter: grayscale(1) brightness(.45); }
+.pa2-troph.is-empty b { color: var(--pa2-ink-dim); }
+.pa2-result.is-drop { color: var(--pa2-gold); }
+/* Écho d'une accroche (PA2-4) : la suite d'un choix, sans en rappeler la cause. */
+.pa2-echo { margin: 0 0 12px; padding: 8px 10px; border-left: 2px solid var(--pa2-gold); font-style: italic; color: var(--pa2-gold); background: rgba(240, 170, 62, .06); border-radius: 0 8px 8px 0; }
+
+/* --- Besace --- */
+.pa2-bag { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 10px; }
+.pa2-cell { aspect-ratio: 1; position: relative; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; cursor: pointer;
+  background: url('../images/UI/frames/frame-icon-simple.png') center / 100% 100% no-repeat; background-color: transparent; color: var(--pa2-ink-dim); font: inherit; }
+.pa2-cell img { width: 62%; height: 62%; object-fit: contain; }
+.pa2-cell.is-full { background-size: calc(100% / var(--n)) 100%; background-repeat: repeat-x; aspect-ratio: var(--n) / 1; }
+.pa2-cell.is-full img { height: 62%; width: auto; max-width: 90%; }
+.pa2-cell.is-free span { font-size: 22px; font-weight: 800; color: var(--pa2-gold); opacity: .55; }
+.pa2-cell.is-free:hover span, .pa2-cell.is-free:focus-visible span { opacity: 1; }
+.pa2-cell.is-pop img { animation: pa2-pop .35s cubic-bezier(.3, 1.6, .5, 1); }
+.pa2-bag-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--pa2-ink-dim); margin-top: 6px; }
+
+/* --- Pactes --- */
+.pa2-list { display: flex; flex-direction: column; gap: 6px; }
+.pa2-pact { width: 100%; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; padding: 8px 10px;
+  border-radius: 12px; border: 1.5px solid var(--pa2-gold-deep); background: rgba(20, 15, 10, 0.92); color: var(--pa2-ink); font: inherit; cursor: pointer; }
+.pa2-pact img { width: 52px; height: 52px; object-fit: contain; }
+.pa2-pact[aria-pressed="true"] { border-color: #c0392b; background: linear-gradient(rgba(192, 57, 43, .2), rgba(192, 57, 43, .08)), rgba(20, 15, 10, .92); }
+.pa2-nm { display: block; font-weight: 800; }
+.pa2-ds { display: block; font-size: 12.5px; color: var(--pa2-ink-dim); }
+.pa2-bonus { font-weight: 800; color: var(--pa2-gold); }
+.pa2-mult { display: flex; justify-content: space-between; align-items: baseline; }
+.pa2-mult b { font-size: 26px; color: var(--pa2-gold); }
+
+/* --- HUD du run (collé en haut de la zone qui défile) --- */
+.pa2-hud { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center;
+  padding: 8px 10px; border-radius: var(--pa2-radius); border: 1.5px solid var(--pa2-gold-dark); background: rgba(14, 11, 8, 0.95); box-shadow: 0 8px 18px -8px #000; }
+.pa2-hud .pa2-portrait { width: 46px; height: 46px; }
+.pa2-gauges { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pa2-hud-side { text-align: right; }
+.pa2-gold { display: flex; align-items: center; justify-content: flex-end; gap: 3px; font-weight: 800; color: var(--pa2-gold); font-variant-numeric: tabular-nums; }
+.pa2-gold img { width: 22px; height: 22px; object-fit: contain; }
+.pa2-act { font-size: 10px; letter-spacing: .12em; color: var(--pa2-ink-dim); text-transform: uppercase; }
+.pa2-hud-row { grid-column: 1 / -1; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; min-height: 30px; }
+.pa2-chip { display: inline-flex; align-items: center; gap: 3px; height: 30px; padding: 0 8px 0 3px; border-radius: 999px; border: 1px solid var(--pa2-gold-deep);
+  background: rgba(0, 0, 0, 0.4); color: var(--pa2-ink); font: 700 12px/1 inherit; font-family: inherit; cursor: pointer; }
+span.pa2-chip { cursor: default; }
+.pa2-chip img { width: 24px; height: 24px; object-fit: contain; }
+.pa2-chip.is-wound { border-color: #8e1f17; color: var(--pa2-danger); }
+.pa2-chip.is-relic { padding: 0 3px; width: 30px; justify-content: center; }
+.pa2-chip.is-relic.is-wide { width: auto; padding: 0 8px 0 3px; }
+.pa2-chip.is-com { border-color: var(--pa2-r-com); }
+.pa2-chip.is-rare { border-color: var(--pa2-r-rare); }
+.pa2-chip.is-leg { border-color: var(--pa2-r-leg); box-shadow: 0 0 8px rgba(245, 158, 11, .5); }
+.pa2-spacer { flex: 1; }
+.pa2-relics { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+/* --- Carte : illustration + voile SVG + nœuds HTML --- */
+.pa2-map { position: relative; width: 100%; border-radius: var(--pa2-radius); overflow: hidden; border: 1.5px solid var(--pa2-gold-dark); background: #0b0806; box-shadow: 0 12px 30px -12px #000; }
+.pa2-map-img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: fill; filter: brightness(.82); }
+.pa2-map-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.pa2-node { position: absolute; z-index: 2; width: 9%; aspect-ratio: 1; transform: translate(-50%, -50%); padding: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; border: 2px solid var(--pa2-gold-dark); background: rgba(18, 13, 8, 0.86);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .8); cursor: default; -webkit-tap-highlight-color: transparent; }
+.pa2-node img { width: 78%; height: 78%; object-fit: contain; pointer-events: none; }
+.pa2-node.is-mark { width: 12%; }
+.pa2-node.is-dest { width: 17%; border: 0; background: none; box-shadow: none; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .85)); }
+.pa2-node.is-dest img { width: 100%; height: 100%; }
+.pa2-node.is-done { opacity: .55; }
+.pa2-node.is-open { cursor: pointer; border-color: var(--pa2-gold); }
+/* Zone de toucher élargie et anneau qui pulse sur les nœuds atteignables */
+.pa2-node.is-open::before { content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 3px solid var(--pa2-gold); animation: pa2-pulse 1.4s ease-in-out infinite; }
+.pa2-node.is-dest.is-open::before { inset: -2px; }
+/* Repère du héros : en bas à droite du nœud, côté d'où l'on vient (les sentiers montent vers le nord). */
+.pa2-hero-mark { position: absolute; z-index: 3; width: 7.5%; aspect-ratio: 1; transform: translate(0%, -20%); pointer-events: none; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .9)); }
+.pa2-hero-mark.is-moving { transition: left .65s cubic-bezier(.3, .7, .3, 1), top .65s cubic-bezier(.3, .7, .3, 1); }
+.pa2-maphint { font-size: 13px; color: var(--pa2-ink-dim); text-align: center; margin: 0; padding-inline: 44px; min-height: 18px; }
+
+/* --- Légende (bouton rond du kit carte du monde) --- */
+.pa2-legend-btn { position: fixed; left: max(12px, calc(50% - 203px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 240; font-family: Georgia, serif; }
+.pa2-legend-btn[aria-expanded="true"] { background: radial-gradient(circle at 35% 30%, #6b5226, #2c200d); }
+.pa2-legend { position: fixed; left: max(12px, calc(50% - 203px)); bottom: calc(62px + env(safe-area-inset-bottom, 0px)); z-index: 240; width: 250px; padding: 10px 12px;
+  border-radius: 12px; border: 1.5px solid var(--pa2-gold-dark); background: rgba(18, 13, 9, 0.97); color: var(--pa2-ink); box-shadow: 0 4px 14px rgba(0, 0, 0, .65); animation: pa2-rise .2s; }
+.pa2-legend h5 { margin: 0 0 8px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--pa2-gold); }
+.pa2-legend-row { display: flex; align-items: center; gap: 9px; margin: 0 0 6px; font-size: 13px; font-weight: 700; }
+.pa2-disc { width: 32px; height: 32px; flex: none; border-radius: 50%; border: 2px solid var(--pa2-gold-dark); background: #120d08; display: flex; align-items: center; justify-content: center; }
+.pa2-disc img { width: 24px; height: 24px; object-fit: contain; }
+.pa2-legend-row small { display: block; font-size: 11px; font-weight: 600; color: var(--pa2-ink-dim); }
+
+/* --- Feuille d'action (calque #pa2-overlay, enfant de body) --- */
+#pa2-overlay { color: var(--pa2-ink); font-size: 15px; line-height: 1.45; }
+.pa2-scrim { position: fixed; inset: 0; z-index: 250; display: flex; align-items: flex-end; justify-content: center; background: rgba(5, 3, 2, 0.55); animation: pa2-fade .2s; }
+.pa2-sheet { position: relative; width: 100%; max-width: 430px; max-height: 88%; overflow: auto; -webkit-overflow-scrolling: touch;
+  padding: 18px 16px calc(20px + env(safe-area-inset-bottom, 0px)); border-radius: 20px 20px 0 0; border: 1.5px solid var(--pa2-gold-dark); border-bottom: 0;
+  background-color: #120e0a; background-image: linear-gradient(rgba(16, 12, 9, .86), rgba(16, 12, 9, .94)), url('../images/UI/textures/bg-stone-tile.png'); background-size: auto, 384px;
+  box-shadow: 0 -20px 50px -18px rgba(240, 170, 62, .28); animation: pa2-rise .28s cubic-bezier(.2, .8, .2, 1); }
+.pa2-sheet.is-shake { animation: pa2-shake .35s; }
+.pa2-xclose { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; padding: 0; border: 0; cursor: pointer;
+  background: url('../images/UI/buttons/btn-round-close.png') center / contain no-repeat; }
+.pa2-sheet-head { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; padding-right: 30px; }
+.pa2-sheet .pa2-narr { margin: 0 0 12px; }
+.pa2-sheet .kbtn { margin-bottom: 0; }
+.pa2-medal { position: relative; flex: none; width: 58px; height: 58px; display: flex; align-items: center; justify-content: center; }
+.pa2-medal::before { content: ""; position: absolute; inset: -6px; background: url('../images/UI/badges/badge-round.png') center / contain no-repeat; filter: brightness(.55) sepia(.2); }
+.pa2-medal img { position: relative; width: 78%; height: 78%; object-fit: contain; }
+.pa2-medal.is-big { width: 84px; height: 84px; }
+.pa2-medal.is-huge { width: 120px; height: 120px; margin: 0 auto 6px; }
+.pa2-medal.is-dest::before { display: none; }
+.pa2-medal.is-dest img { width: 100%; height: 100%; }
+
+.pa2-choices { display: flex; flex-direction: column; gap: 8px; }
+.pa2-choice { width: 100%; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 3px 10px; align-items: center; text-align: left; padding: 10px;
+  border-radius: 12px; border: 1.5px solid var(--pa2-gold-deep); background: rgba(10, 8, 6, 0.88); color: var(--pa2-ink); font: inherit; cursor: pointer; }
+.pa2-choice.is-noicon { grid-template-columns: minmax(0, 1fr) auto; }
+.pa2-choice:not(:disabled):active { transform: scale(.99); }
+.pa2-choice:disabled { opacity: .45; cursor: not-allowed; }
+.pa2-choice > img { width: 40px; height: 40px; object-fit: contain; grid-row: span 2; }
+.pa2-t { font-weight: 800; font-size: 15px; }
+.pa2-s { grid-column: 2 / -1; font-size: 12.5px; color: var(--pa2-ink-dim); }
+.pa2-choice.is-noicon .pa2-s { grid-column: 1 / -1; }
+.pa2-cost { font-size: 12px; font-weight: 800; color: var(--pa2-breath); white-space: nowrap; text-align: right; }
+.pa2-cost.is-red { color: var(--pa2-danger); }
+.pa2-cost.is-gold { color: var(--pa2-gold); }
+.pa2-cost.is-deadly { text-transform: uppercase; letter-spacing: .06em; }
+.pa2-breath { color: var(--pa2-breath); }
+.pa2-pickrow { grid-template-columns: 40px minmax(0, 1fr) auto; }
+.pa2-size { display: flex; gap: 3px; }
+.pa2-size i { width: 8px; height: 8px; border: 1.5px solid var(--pa2-gold-dark); border-radius: 2px; }
+.pa2-pickrow.is-locked img { filter: grayscale(1) brightness(.6); }
+
+/* Crans de chance (4 barres) */
+.pa2-odds { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+.pa2-cran { display: flex; gap: 2px; }
+.pa2-cran i { width: 7px; height: 14px; border-radius: 2px; background: rgba(255, 255, 255, .12); }
+.pa2-odds.o4 .pa2-cran i { background: #6cbf4a; }
+.pa2-odds.o3 .pa2-cran i:nth-child(-n+3) { background: #c9c24a; }
+.pa2-odds.o2 .pa2-cran i:nth-child(-n+2) { background: #e08a2e; }
+.pa2-odds.o1 .pa2-cran i:nth-child(1) { background: #e0453a; }
+.pa2-w { font-size: 12px; font-weight: 800; }
+.pa2-odds.o4 .pa2-w { color: #8fd46a; }
+.pa2-odds.o3 .pa2-w { color: #dcd46a; }
+.pa2-odds.o2 .pa2-w { color: #f0a04a; }
+.pa2-odds.o1 .pa2-w { color: #ff7a6a; }
+
+/* Dé (dessiné en CSS) */
+.pa2-dierow { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 4px 0 12px; }
+.pa2-die { width: 66px; height: 66px; border-radius: 13px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 10px; gap: 2px;
+  background: #0f0b08; color: var(--pa2-gold); border: 2px solid var(--pa2-gold-dark); box-shadow: 0 0 22px -2px rgba(240, 170, 62, .5); }
+.pa2-die i { border-radius: 50%; }
+.pa2-die i.on { background: currentColor; }
+.pa2-die.is-rolling { animation: pa2-roll .5s linear infinite; }
+.pa2-target { text-align: center; font-size: 12px; color: var(--pa2-ink-dim); }
+.pa2-target b { display: block; font-size: 24px; color: var(--pa2-ink); }
+.pa2-verdict { text-align: center; font-size: 20px; font-weight: 800; margin: 2px 0 6px; }
+.pa2-verdict.is-ok { color: #8fd46a; }
+.pa2-verdict.is-mid { color: var(--pa2-gold); }
+.pa2-verdict.is-ko { color: #ff7a6a; }
+.pa2-result { text-align: center; margin: 0 0 12px; color: var(--pa2-ink-dim); }
+#pa2-outcome.is-hidden { visibility: hidden; }
+
+/* Combat résolu */
+.pa2-foe { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: center; margin-bottom: 12px; padding-right: 20px; }
+.pa2-pic { width: 96px; height: 96px; position: relative; }
+.pa2-pic .pa2-foe-img { position: absolute; inset: 11%; width: 78%; height: 78%; object-fit: cover; border-radius: 6px; }
+.pa2-pic::after { content: ""; position: absolute; inset: 0; background: url('../images/UI/slots/slot-common.png') center / contain no-repeat; pointer-events: none; }
+.pa2-foe.is-boss .pa2-pic::after { background-image: url('../images/UI/slots/slot-legendary.png'); }
+.pa2-foe.is-boss .pa2-foe-img { object-fit: contain; }
+.pa2-pack { font-size: 14px; color: var(--pa2-danger); }
+.pa2-sim { font-size: 11.5px; color: var(--pa2-ink-dim); border-left: 2px solid var(--pa2-gold-deep); padding-left: 8px; margin: 0 0 12px; }
+.pa2-sim.is-red { border-color: #c0392b; }
+.pa2-rounds { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.pa2-round { display: flex; justify-content: space-between; padding: 8px 10px; border-radius: 10px; background: rgba(0, 0, 0, .45); border: 1px solid rgba(240, 170, 62, .2); animation: pa2-rise .25s; }
+.pa2-round b { color: var(--pa2-danger); }
+
+/* Trouvailles : cartes à retourner, cadre de slot par rareté */
+.pa2-cards { display: flex; gap: 12px; justify-content: center; perspective: 900px; margin: 4px 0 14px; }
+.pa2-card { width: 148px; height: 212px; position: relative; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.2, .8, .2, 1); cursor: pointer; border: 0; background: transparent; padding: 0; font: inherit; color: inherit; }
+.pa2-card.is-flipped { transform: rotateY(180deg); }
+.pa2-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px 10px 12px; text-align: center; gap: 4px; }
+.pa2-back { border: 2px solid var(--pa2-gold-dark); background-color: #120e0a; background-image: linear-gradient(rgba(14, 11, 8, .55), rgba(14, 11, 8, .8)), url('../images/UI/textures/bg-stone-tile.png'); background-size: auto, 200px; justify-content: center; }
+.pa2-back img { width: 70px; height: 70px; object-fit: contain; }
+.pa2-front { transform: rotateY(180deg); border: 2px solid var(--pa2-gold-deep); background: #120e0a; }
+.pa2-slot { position: relative; width: 100px; height: 100px; flex: none; }
+.pa2-slot::after { content: ""; position: absolute; inset: 0; background: center / contain no-repeat; }
+.pa2-slot img { position: absolute; inset: 18%; width: 64%; height: 64%; object-fit: contain; }
+.pa2-card.is-com .pa2-slot::after { background-image: url('../images/UI/slots/slot-common.png'); }
+.pa2-card.is-rare .pa2-slot::after { background-image: url('../images/UI/slots/slot-rare.png'); }
+.pa2-card.is-leg .pa2-slot::after { background-image: url('../images/UI/slots/slot-legendary.png'); }
+.pa2-rar { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.pa2-card.is-com .pa2-rar { color: var(--pa2-r-com); }
+.pa2-card.is-rare .pa2-rar { color: #7fb0ff; }
+.pa2-card.is-leg .pa2-rar { color: var(--pa2-r-leg); }
+.pa2-card.is-leg .pa2-front { border-color: var(--pa2-r-leg); box-shadow: 0 0 26px -4px var(--pa2-r-leg); }
+.pa2-card .pa2-nm { font-weight: 800; font-size: 14px; line-height: 1.15; }
+.pa2-fx { font-size: 11.5px; color: var(--pa2-ink-dim); line-height: 1.3; }
+.pa2-card.is-picked .pa2-front { outline: 3px solid var(--pa2-gold); outline-offset: 2px; }
+.pa2-card.is-flipped.is-leg .pa2-front { animation: pa2-glint 1.2s ease-out .6s; }
+
+/* Bilan */
+.pa2-tally { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; }
+.pa2-tot { font-size: 26px; font-weight: 800; color: var(--pa2-gold); }
+.pa2-sep { border-top: 1px solid var(--pa2-gold-deep); padding-top: 8px; }
+.pa2-trophy { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+.pa2-page .pa2-trophy { margin-bottom: 0; }
+.pa2-trophy > img { width: 64px; height: 64px; flex: none; object-fit: contain; }
+
+/* Chiffres qui s'envolent */
+.pa2-float { position: fixed; z-index: 260; left: 50%; pointer-events: none; font-size: 22px; font-weight: 800; text-shadow: 0 2px 3px #000; animation: pa2-float-up 1.1s ease-out forwards; }
+.pa2-float.is-gold { color: #f0aa3e; }
+.pa2-float.is-hurt { color: #ff8a7a; }
+.pa2-float.is-heal { color: #8fbf5a; }
+.pa2-float.is-breath { color: #6cc0f5; }
+
+@keyframes pa2-pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@keyframes pa2-rise { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pa2-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pa2-shake { 0%, 100% { transform: none; } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@keyframes pa2-roll { to { transform: rotate(360deg); } }
+@keyframes pa2-pop { from { transform: scale(.3); } to { transform: scale(1); } }
+@keyframes pa2-float-up { from { transform: translate(-50%, 0); opacity: 1; } to { transform: translate(-50%, -70px); opacity: 0; } }
+@keyframes pa2-glint { 30% { filter: brightness(1.6); } }
+
+@media (max-width: 350px) {
+  .pa2-card { width: 128px; height: 200px; }
+  .pa2-slot { width: 84px; height: 84px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pa2-page *, #pa2-overlay * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

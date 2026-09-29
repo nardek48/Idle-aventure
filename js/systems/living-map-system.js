@@ -420,7 +420,7 @@ var LivingMapManager = {
        le départ, au lieu d'un refus de SceneRunManager.startRun après coup. */
     if (content && content.type === "expedition" && window.SceneEngine && window.WarehouseManager) {
       var tpl = SceneEngine.getTemplate(content.templateId);
-      var cost = tpl && tpl.entryCost;
+      var cost = (tpl && !(window.Pa2Run && Pa2Run.isTemplate(tpl))) ? tpl.entryCost : null; // v3.381.0 : plus de ration d'entrée en v2 (Q6)
       if (cost && WarehouseManager.getAmount(cost.resourceId) < Number(cost.amount || 0)) {
         var resDef = (window.WAREHOUSE_RESOURCES || {})[cost.resourceId];
         var rName = (resDef && resDef.name) ? _td(resDef.name) : cost.resourceId;
