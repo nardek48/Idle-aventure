@@ -150,6 +150,11 @@ span.pa2-chip { cursor: default; }
 /* --- Carte : illustration + voile SVG + nœuds HTML --- */
 .pa2-map { position: relative; width: 100%; border-radius: var(--pa2-radius); overflow: hidden; border: 1.5px solid var(--pa2-gold-dark); background: #0b0806; box-shadow: 0 12px 30px -12px #000; }
 .pa2-map-img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: fill; filter: brightness(.82); }
+/* v3.389.0 (chantier P) : fond d'un parcours sans illustration — parchemin du kit, grain et bords brunis. */
+.pa2-parchment { filter: none; background:
+  radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(58, 44, 26, .45) 100%),
+  repeating-linear-gradient(0deg, transparent 0 7px, rgba(58, 44, 26, .035) 7px 8px),
+  linear-gradient(170deg, var(--nb-cream, #f6ecd9), var(--nb-cream-alt, #efe0c2)); }
 .pa2-map-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .pa2-node { position: absolute; z-index: 2; width: 9%; aspect-ratio: 1; transform: translate(-50%, -50%); padding: 0; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; border: 2px solid var(--pa2-gold-dark); background: rgba(18, 13, 8, 0.86);

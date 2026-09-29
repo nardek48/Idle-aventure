@@ -9,29 +9,20 @@
    vivante sont décrits par PA2_RINGS (data/pa2-content.js). */
 
 var SCENE_TEMPLATES = {
-  /* ================= v3.122.0 (Lot S2a) — quêtes de déblocage migrées =================
-     Mécanique identique à expedition_faille (paliers, push-your-luck, blessures typées,
-     chambre finale) — décision Seb : ces quêtes bénéficient du même moteur, juste raccourci
-     (2-3 paliers au lieu de 8) et thématisé. unlockOnSuccess (bâtiment + flags) s'applique
-     uniquement à la résolution de la chambre finale (le run doit aller jusqu'au bout) ; un
-     échec en cours de route fait perdre un peu de loot et continuer, jamais échouer net. */
+  /* ================= Quêtes de déblocage (v3.122.0 ; parcours v2 depuis v3.389.0) =================
+     Deux obstacles en ligne droite, joués par Pa2Run (mode "parcours"). unlockOnSuccess
+     (bâtiment + drapeaux) s'applique à l'arrivée. Butin : lootResource, au barème de lootRanges
+     (obstacleSuccess par obstacle réussi, finalSafe à l'arrivée). */
 
   sentier_obstrue: {
     id: "sentier_obstrue",
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
-    mode: "semi",
+    mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "Le Sentier Obstrué",
+    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }] }, // gabarits tirés dans pools.obstacle
     icon: "images/Icons/codex/world_forest.png",
 
-    depthMax: 2,
-    firstDepthType: "obstacle",
-    gatesPerDepth: [1, 1], // canevas court : un seul passage par palier, pas de choix de porte
-
-    slotWeights: { obstacle: 100 }, // que des obstacles, pas d'autel/découverte/source sur 2 paliers
     pools: { obstacle: ["tronc_deracine", "racines"] },
-    riskModRange: [0.7, 1.3], // plage resserrée : quête courte, moins de variance que l'expédition longue
-
-    loadoutOffer: [], loadoutSlots: 0, // pas d'équipement : quête simple, va droit au but
 
     entryCost: { resourceId: "petite_ration", amount: 1 }, // même coût que l'ancien moteur (exploration-quests.js, retiré)
 
@@ -50,7 +41,6 @@ var SCENE_TEMPLATES = {
       finalSafe: [8, 8],
       finalRiskyBase: [0, 0]
     },
-    autelCostRatio: 0.2,
 
     unlockOnSuccess: {
       buildingId: null, // le Sentier Obstrué débloque la Clairière (pas un bâtiment de production), voir note ci-dessous
@@ -62,19 +52,12 @@ var SCENE_TEMPLATES = {
   bosquet_silencieux: {
     id: "bosquet_silencieux",
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
-    mode: "semi",
+    mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "Le Bosquet Silencieux",
+    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }] }, // gabarits tirés dans pools.obstacle
     icon: "images/Icons/scene/scene_woodland.png",
 
-    depthMax: 2,
-    firstDepthType: "obstacle",
-    gatesPerDepth: [1, 1],
-
-    slotWeights: { obstacle: 100 },
     pools: { obstacle: ["troncs_jumeaux", "fute_dense"] },
-    riskModRange: [0.7, 1.3],
-
-    loadoutOffer: [], loadoutSlots: 0,
 
     // Pas de coût : à l'ouverture du Village, le Puits n'existe pas encore, la petite ration
     // est infabricable (même raison que l'ancien canevas exploration-quests.js:silentGrove).
@@ -91,7 +74,6 @@ var SCENE_TEMPLATES = {
       finalSafe: [8, 8],
       finalRiskyBase: [0, 0]
     },
-    autelCostRatio: 0.2,
 
     unlockOnSuccess: {
       buildingId: "sawmill",
@@ -103,19 +85,12 @@ var SCENE_TEMPLATES = {
   terre_en_friche: {
     id: "terre_en_friche",
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
-    mode: "semi",
+    mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "La Terre en Friche",
+    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }] }, // gabarits tirés dans pools.obstacle
     icon: "images/Icons/scene/scene_harvest.png",
 
-    depthMax: 2,
-    firstDepthType: "obstacle",
-    gatesPerDepth: [1, 1],
-
-    slotWeights: { obstacle: 100 },
     pools: { obstacle: ["ronces_epaisses", "sillons_geles", "talus_boueux"] },
-    riskModRange: [0.7, 1.3],
-
-    loadoutOffer: [], loadoutSlots: 0,
 
     entryCost: { resourceId: "petite_ration", amount: 1 },
 
@@ -130,7 +105,6 @@ var SCENE_TEMPLATES = {
       finalSafe: [8, 8],
       finalRiskyBase: [0, 0]
     },
-    autelCostRatio: 0.2,
 
     unlockOnSuccess: {
       buildingId: "farm",
@@ -149,19 +123,12 @@ var SCENE_TEMPLATES = {
   veine_instable: {
     id: "veine_instable",
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
-    mode: "semi",
+    mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "La Veine Instable",
+    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }] }, // gabarits tirés dans pools.obstacle
     icon: "images/Icons/scene/scene_mine.png",
 
-    depthMax: 2,
-    firstDepthType: "obstacle",
-    gatesPerDepth: [1, 1],
-
-    slotWeights: { obstacle: 100 },
     pools: { obstacle: ["filon_fragile", "paroi_instable"] },
-    riskModRange: [0.7, 1.3],
-
-    loadoutOffer: [], loadoutSlots: 0,
 
     entryCost: { resourceId: "petite_ration", amount: 1 },
 
@@ -176,7 +143,6 @@ var SCENE_TEMPLATES = {
       finalSafe: [8, 8],
       finalRiskyBase: [0, 0]
     },
-    autelCostRatio: 0.2,
 
     unlockOnSuccess: {
       buildingId: "quarry",
@@ -188,19 +154,12 @@ var SCENE_TEMPLATES = {
   eboulis_ferreux: {
     id: "eboulis_ferreux",
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
-    mode: "semi",
+    mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "L'Éboulis Ferreux",
+    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }] }, // gabarits tirés dans pools.obstacle
     icon: "images/Icons/scene/scene_mine.png",
 
-    depthMax: 2,
-    firstDepthType: "obstacle",
-    gatesPerDepth: [1, 1],
-
-    slotWeights: { obstacle: 100 },
     pools: { obstacle: ["veine_rougeatre", "eboulis_recent"] },
-    riskModRange: [0.7, 1.3],
-
-    loadoutOffer: [], loadoutSlots: 0,
 
     entryCost: { resourceId: "petite_ration", amount: 1 },
 
@@ -215,7 +174,6 @@ var SCENE_TEMPLATES = {
       finalSafe: [8, 8],
       finalRiskyBase: [0, 0]
     },
-    autelCostRatio: 0.2,
 
     unlockOnSuccess: {
       buildingId: "mine",
@@ -227,24 +185,17 @@ var SCENE_TEMPLATES = {
   source_tarie: {
     id: "source_tarie",
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
-    mode: "semi",
+    mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "La Source Tarie",
+    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }] }, // gabarits tirés dans pools.obstacle
     icon: "images/Icons/scene/node_clear_spring.png",
-
-    depthMax: 2,
-    firstDepthType: "obstacle",
-    gatesPerDepth: [1, 1],
 
     // v3.131.0 : seul canevas sans boardRequires (oubli) — disponible dès le lancement d'une
     // nouvelle partie, avant même Le Bosquet Silencieux. Gate désormais sur sawmillUnlocked
     // (débloqué par bosquet_silencieux), pour arriver après la toute première petite quête.
     boardRequires: { progressFlag: "sawmillUnlocked" },
 
-    slotWeights: { obstacle: 100 },
     pools: { obstacle: ["source_irreguliere", "bassin_trouble"] },
-    riskModRange: [0.7, 1.3],
-
-    loadoutOffer: [], loadoutSlots: 0,
 
     // Gratuit — même raison que l'ancien canevas : le Puits produit justement l'Eau,
     // intrant de la petite ration ; un coût ici créerait un verrou circulaire.
@@ -259,7 +210,6 @@ var SCENE_TEMPLATES = {
       finalSafe: [8, 8],
       finalRiskyBase: [0, 0]
     },
-    autelCostRatio: 0.2,
 
     unlockOnSuccess: {
       buildingId: "well",

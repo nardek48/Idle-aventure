@@ -28,11 +28,41 @@ scripts.forEach(function (s) {
   try { vm.runInContext(code, sandbox, { filename: s }); } catch (e) { console.error("LOAD FAIL", s, e.message); process.exit(1); }
 });
 console.log("Chargé " + scripts.length + " scripts");
+/* v3.388.0 (PA2-6) : les Petites Aventures v1 et le bac à sable expedition_faille sont retirés du
+   jeu. Le moteur de scènes reste (quêtes de déblocage, parcours d'Histoire) : ses sections le testent
+   sur ce canevas de test, copie de l'ancien expedition_faille, injecté ici et jamais livré. */
+sandbox.SCENE_TEMPLATES.expedition_faille = {"id": "expedition_faille", "mode": "generative", "title": "Expédition en profondeur", "icon": "images/Icons/scene/scene_cavern.png", "depthMax": 8, "firstDepthType": "obstacle", "gatesPerDepth": [2, 3], "optionsPerNode": 2, "maxInjuries": 2, "heroScaling": {"ref": 21, "coef": 0.6, "max": 3.5}, "breathPerDepth": 5, "diffMult": 2.6, "slotWeights": {"obstacle": 56, "autel": 12, "decouverte": 12, "source": 8, "mystere": 12}, "pools": {"obstacle": ["eboulis", "gouffre", "porte_scellee", "paroi", "riviere", "racines"]}, "riskModRange": [0.6, 1.6], "loadoutOffer": ["torche", "corde", "provisions", "amulette", "gourde"], "loadoutSlots": 3, "items": {"torche": {"id": "torche", "icon": "images/Icons/scene/torch.png", "name": "Torche", "desc": "Révèle le détail des portes du niveau courant (3 charges).", "charges": 3}, "corde": {"id": "corde", "icon": "images/Icons/scene/rope.png", "name": "Corde", "desc": "Passe un obstacle compatible sans jet (1 usage, gain réduit).", "charges": 1}, "provisions": {"id": "provisions", "icon": "images/Icons/scene/provisions.png", "name": "Provisions", "desc": "Soigne la blessure la plus grave (1 usage).", "charges": 1}, "amulette": {"id": "amulette", "icon": "images/Icons/scene/protective_amulet.png", "name": "Amulette", "desc": "Relance automatiquement le premier jet raté (1 fois)."}, "gourde": {"id": "gourde", "icon": "images/Icons/scene/water_flask.png", "name": "Gourde", "desc": "Restaure 30 Souffle (consommable, à utiliser quand tu veux)."}}, "lootResource": "gold", "lootRanges": {"obstacleSuccess": [6, 14], "obstacleRope": [3, 7], "obstacleSetback": [1, 3], "decouverte": [8, 16], "finalSafe": [20, 20], "finalRiskyBase": [0, 0]}, "autelCostRatio": 0.2, "optionProfiles": {"power": {"diffMod": 1.12, "lootMod": 2.6, "breathCost": 10, "injurySeverity": "grave"}, "precision": {"diffMod": 1, "lootMod": 1.15, "breathCost": 5, "injurySeverity": "normale"}, "endurance": {"diffMod": 0.95, "lootMod": 0.5, "breathCost": 20, "injurySeverity": "legere"}}};
 
 var g = sandbox;
 var failures = 0, passes = 0;
 function ok(cond, msg) { if (cond) { passes++; console.log("  ✔ " + msg); } else { failures++; console.log("  ✘ " + msg); } }
 function run(code) { return vm.runInContext(code, g); }
+/* v3.199.0 : première voie réellement exposée (et payable) par le nœud courant du moteur de scènes. */
+function anyVoie() {
+  var run = g.game.sceneRun;
+  if (!run || !run.pendingNode || run.pendingNode.type !== "obstacle") return "power";
+  var gab = g.window.SCENE_NODES.obstacles[run.pendingNode.gabaritId];
+  var slot = (g.SceneRunManager.getCurrentLevel() || [])[run.currentGate] || run.pendingNode;
+  var afford = g.SceneRunManager.affordableVoies(run, gab, slot);
+  if (afford.length) return afford[0];
+  return g.window.SceneEngine.nodeVoies(gab, slot)[0] || "power";
+}
+/* v3.389.0 (chantier P) : joue un parcours (Pa2Run) jusqu'au bout. win : dés forcés au maximum. */
+function playParcours(win) {
+  var P = g.Pa2Run, r = g.game.sceneRun, saved = P.rand, guard = 60;
+  if (win) P.rand = function () { return 0.999; };
+  try {
+    while (r && r.status !== "completed" && guard-- > 0) {
+      if (r.status === "pa2-map") { P.moveTo(P.openMoves()[0]); continue; }
+      var n = P.node(r.at, r), res = null;
+      if (n.type === "obstacle") { var o = P.obstacleOptions().filter(function (x) { return x.affordable; }); res = o.length ? P.resolveObstacle(o[0].voie) : P.bruteForce(); }
+      else if (n.type === "combat") res = P.fight("tenir", !!(r.lastResult && r.lastResult.surprised));
+      else if (n.type === "source") res = P.drink();
+      if (!res || !res.ok) break;
+    }
+  } finally { P.rand = saved; }
+  return r;
+}
 
 /* Nouvelle partie prête à combattre, sur l'onglet Combat, ennemi généré. */
 function freshCombat(heroId) {
@@ -1575,36 +1605,15 @@ ok(!!m71.find(function (m) { return m.id === "scene_terre_en_friche"; }) && !!m7
 game = freshCombat("knight");
 game.unlockedTabs.village = true;
 var startRes = g.SceneRunManager.startRun("bosquet_silencieux");
-ok(startRes.ok === true, "bosquet_silencieux : départ sans ration (gratuit)");
-g.SceneRunManager.enterGate(0);
-run("var _mr = Math.random; Math.random = function () { return 0; };"); // force la réussite du jet
-/* v3.199.0 : optionsPerNode masque une voie par nœud sur les canevas génératifs. Un test qui
-   force "power" tombe désormais sur des refus légitimes. Ce helper prend la première voie
-   réellement exposée par le nœud courant, ce qui teste la mécanique et non un nom d'option. */
-function anyVoie() {
-  var run = g.game.sceneRun;
-  if (!run || !run.pendingNode || run.pendingNode.type !== "obstacle") return "power";
-  var gab = g.window.SCENE_NODES.obstacles[run.pendingNode.gabaritId];
-  var slot = (g.SceneRunManager.getCurrentLevel() || [])[run.currentGate] || run.pendingNode;
-  var afford = g.SceneRunManager.affordableVoies(run, gab, slot);
-  if (afford.length) return afford[0];
-  return g.window.SceneEngine.nodeVoies(gab, slot)[0] || "power";
-}
-var choiceRes = g.SceneRunManager.resolveObstacle(anyVoie());
-run("Math.random = _mr;");
-ok(choiceRes.ok === true && choiceRes.outcome !== "setback", "jet résolu en succès (tirage forcé)");
+ok(startRes.ok === true && g.game.sceneRun.parcours && g.game.sceneRun.status === "pa2-map", "bosquet_silencieux : départ sans ration (gratuit), parcours v2 lancé sans préparation (v3.389.0)");
 var bois71 = g.WarehouseManager.getAmount("bois");
-var guard71 = 0;
-while (g.game.sceneRun.status !== "completed" && guard71 < 20) {
-  guard71++;
-  if (g.game.sceneRun.status === "gate") g.SceneRunManager.enterGate(0);
-  else if (g.game.sceneRun.status === "node") g.SceneRunManager.resolveObstacle(anyVoie());
-  else if (g.game.sceneRun.status === "finale") g.SceneRunManager.resolveFinale("sur");
-}
+var r71 = playParcours(true);
+ok(r71.status === "completed" && r71.end.how === "parcours", "parcours joué jusqu'au bout (dés forcés)");
 ok(game.explorationProgression.sawmillUnlocked === true && game.explorationProgression.silentGroveDiscoveryCompleted === true, "run complet : sawmillUnlocked + completionFlag posés");
 ok(g.ProductionManager.isBuildingUnlocked("sawmill") && game.production.sawmill, "Scierie débloquée + bucket initialisé (ProductionManager.unlockBuilding)");
 ok(g.WarehouseManager.getAmount("bois") > bois71, "bois crédité via WarehouseManager");
 ok(g.SceneRunManager.isQuestCompleted("bosquet_silencieux") === true, "quête marquée terminée");
+g.SceneRunManager.clearRun();
 
 // --- La Terre en Friche : verrou de lancement (Puits pas débloqué) ---
 game = freshCombat("knight");
@@ -2057,61 +2066,20 @@ run("__sceneConfirmCb();");
 ok(g.game.activeTab === "campement", "après confirmation : navigation effective ; sans run de quête, Combat renvoie au Campement (v3.293.0)");
 ok(g.game.sceneRun.status === "completed", "le run a été abandonné (flee) avant la navigation");
 
-console.log("\n[S1b] ui-root.js:switchTab — EXCEPTION nœud bloqueur pas prêt (bug remonté Seb 04/09/2026)");
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; game.resources.petite_ration = 10;");
-run("SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('prudent'); SceneRunManager.chooseIntensity('chemin'); SceneRunManager.acknowledgeMutator();");
-run("SceneRunManager.confirmLoadout(['provisions', 'provisions', 'amulette']);");
-ok(g.game.sceneRun.status === "gate", "contrôle : run en statut 'gate' après confirmation du loadout");
-// Carte déterministe : un bloqueur au palier 0, pour ne pas dépendre du tirage aléatoire de profil.
-run("game.sceneRun.card[0] = [{type: 'bloqueur', durationMs: 300000}];");
-run("SceneRunManager.enterGate(0);");
-ok(g.game.sceneRun.pendingNode.type === "bloqueur", "contrôle : nœud bloqueur bien engagé");
-ok(g.SceneRunManager.isBlockerReady() === false, "contrôle : minuteur pas encore écoulé (5 min tout juste lancées)");
-run("game.activeTab = 'scene'; window.showConfirmModal = function () { window.__blockerConfirmCalled = true; };");
-run("window.__blockerConfirmCalled = false;");
-run("switchTab('village');");
-ok(g.game.activeTab === "village", "bug corrigé : 'Aller au village' pendant un bloqueur non prêt change bien d'onglet");
-ok(g.window.__blockerConfirmCalled === false, "aucune confirmation d'abandon déclenchée");
-ok(g.game.sceneRun.status !== "completed" && g.SceneRunManager.isRunActive() === true, "le run reste ACTIF (pas d'abandon, pas de perte de loot) — le minuteur continue en fond");
-// Retour sur l'écran scene : le bloqueur est toujours là, non affecté par le passage au village.
-run("switchTab('scene');");
-ok(g.game.sceneRun.pendingNode && g.game.sceneRun.pendingNode.type === "bloqueur", "de retour sur l'expédition : le nœud bloqueur est intact, minuteur inchangé");
-
-// Contrôle négatif : une fois le bloqueur PRÊT, quitter l'écran redevient un abandon normal
-// (le bouton devient "Continuer", quitter n'est plus un aller-retour anodin).
-run("game.sceneRun.blockerReadyAt = Date.now() - 1000;"); // simule le minuteur écoulé
-ok(g.SceneRunManager.isBlockerReady() === true, "contrôle : bloqueur désormais prêt");
-run("game.activeTab = 'scene'; window.__blockerConfirmCalled = false;");
-run("switchTab('village');");
-ok(g.game.activeTab === "scene", "bloqueur PRÊT : switchTab bloqué normalement (redevient une vraie sortie à confirmer)");
-ok(g.window.__blockerConfirmCalled === true, "bloqueur PRÊT : confirmation d'abandon redemandée comme pour tout autre nœud");
-
 console.log("\n[S2b] veine_instable / eboulis_ferreux / source_tarie — déblocage + ressources dédiées");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.explorationProgression.forgottenClearingUnlocked = true;");
 var s2bNoRation = g.SceneRunManager.startRun("veine_instable");
 ok(s2bNoRation.ok === false && /ration/i.test(s2bNoRation.reason), "veine_instable : refusé sans petite_ration (entryCost)");
 g.WarehouseManager.addResource("petite_ration", 1);
 g.SceneRunManager.startRun("veine_instable");
-var s2bGuard = 0;
-while (g.game.sceneRun.status !== "completed" && s2bGuard < 20) {
-  s2bGuard++;
-  if (g.game.sceneRun.status === "gate") g.SceneRunManager.enterGate(0);
-  else if (g.game.sceneRun.status === "node") g.SceneRunManager.resolveObstacle(anyVoie());
-  else if (g.game.sceneRun.status === "finale") g.SceneRunManager.resolveFinale("sur");
-}
+var s2bGuard = 0; playParcours(true); g.SceneRunManager.clearRun(); // v3.389.0 : parcours v2
 ok(g.game.explorationProgression.quarryUnlocked === true, "veine_instable : quarryUnlocked posé au succès");
 ok(g.ProductionManager.isBuildingUnlocked("quarry") && !!g.game.production.quarry, "Carrière débloquée + bucket initialisé");
 ok(g.WarehouseManager.getAmount("pierre") > 0, "pierre créditée (lootResource dédié, pas or générique)");
 
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.explorationProgression.quarryUnlocked = true; WarehouseManager.addResource('petite_ration', 1);");
 g.SceneRunManager.startRun("eboulis_ferreux");
-var s2cGuard = 0;
-while (g.game.sceneRun.status !== "completed" && s2cGuard < 20) {
-  s2cGuard++;
-  if (g.game.sceneRun.status === "gate") g.SceneRunManager.enterGate(0);
-  else if (g.game.sceneRun.status === "node") g.SceneRunManager.resolveObstacle(anyVoie());
-  else if (g.game.sceneRun.status === "finale") g.SceneRunManager.resolveFinale("sur");
-}
+var s2cGuard = 0; playParcours(true); g.SceneRunManager.clearRun(); // v3.389.0 : parcours v2
 ok(g.game.explorationProgression.mineUnlocked === true, "eboulis_ferreux : mineUnlocked posé au succès");
 ok(g.WarehouseManager.getAmount("fer") > 0, "fer crédité (fer seul, pas de bonus pierre — décision Seb)");
 
@@ -2119,13 +2087,7 @@ run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentMa
 ok(g.WarehouseManager.getAmount("petite_ration") === 0, "aucune ration en stock (contrôle)");
 var s2dStart = g.SceneRunManager.startRun("source_tarie");
 ok(s2dStart.ok === true, "source_tarie : démarré SANS petite_ration (gratuit, même raison que driedSpring d'origine)");
-var s2dGuard = 0;
-while (g.game.sceneRun.status !== "completed" && s2dGuard < 20) {
-  s2dGuard++;
-  if (g.game.sceneRun.status === "gate") g.SceneRunManager.enterGate(0);
-  else if (g.game.sceneRun.status === "node") g.SceneRunManager.resolveObstacle(anyVoie());
-  else if (g.game.sceneRun.status === "finale") g.SceneRunManager.resolveFinale("sur");
-}
+var s2dGuard = 0; playParcours(true); g.SceneRunManager.clearRun(); // v3.389.0 : parcours v2
 ok(g.game.explorationProgression.wellUnlocked === true, "source_tarie : wellUnlocked posé au succès");
 ok(g.WarehouseManager.getAmount("eau") > 0, "eau créditée");
 
@@ -2161,16 +2123,10 @@ ok(s2aNoRation.ok === false && /ration/i.test(s2aNoRation.reason), "refusé sans
 g.WarehouseManager.addResource("petite_ration", 1);
 var s2aStart = g.SceneRunManager.startRun("sentier_obstrue");
 ok(s2aStart.ok === true, "démarré avec 1 petite_ration en stock");
-ok(g.game.sceneRun.status === "gate", "loadoutSlots=0 -> statut direct 'gate', pas de 'preparation'");
+ok(g.game.sceneRun.status === "pa2-map" && g.game.sceneRun.parcours, "rien à préparer -> parcours lancé directement sur son tracé (v3.389.0)");
 ok(g.WarehouseManager.getAmount("petite_ration") === 0, "1 petite_ration débitée au départ");
-ok(g.game.sceneRun.card.length === 2, "carte à 2 paliers (depthMax)");
-var s2aGuard = 0;
-while (g.game.sceneRun.status !== "completed" && s2aGuard < 20) {
-  s2aGuard++;
-  if (g.game.sceneRun.status === "gate") g.SceneRunManager.enterGate(0);
-  else if (g.game.sceneRun.status === "node") g.SceneRunManager.resolveObstacle(anyVoie());
-  else if (g.game.sceneRun.status === "finale") g.SceneRunManager.resolveFinale("sur");
-}
+ok(g.game.sceneRun.map.rows.dest === 1 && Object.keys(g.game.sceneRun.nodes).length === 3, "tracé de 2 étapes (plus le départ)");
+var s2aGuard = 0; playParcours(true); g.SceneRunManager.clearRun(); // v3.389.0 : parcours v2
 ok(s2aGuard < 20, "run résolu sans dépasser le garde-fou");
 ok(g.game.explorationProgression.forgottenClearingUnlocked === true, "forgottenClearingUnlocked posé au succès (chambre finale résolue)");
 ok(g.game.explorationProgression.blockedPathCompleted === true, "completionFlag posé");
@@ -2183,13 +2139,7 @@ run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentMa
 ok(g.WarehouseManager.getAmount("petite_ration") === 0, "aucune ration en stock au départ (contrôle)");
 var s2bStart = g.SceneRunManager.startRun("bosquet_silencieux");
 ok(s2bStart.ok === true, "démarré SANS petite_ration (gratuit, entryCost: null)");
-var s2bGuard = 0;
-while (g.game.sceneRun.status !== "completed" && s2bGuard < 20) {
-  s2bGuard++;
-  if (g.game.sceneRun.status === "gate") g.SceneRunManager.enterGate(0);
-  else if (g.game.sceneRun.status === "node") g.SceneRunManager.resolveObstacle(anyVoie());
-  else if (g.game.sceneRun.status === "finale") g.SceneRunManager.resolveFinale("sur");
-}
+var s2bGuard = 0; playParcours(true); g.SceneRunManager.clearRun(); // v3.389.0 : parcours v2
 ok(g.game.explorationProgression.sawmillUnlocked === true, "sawmillUnlocked posé au succès");
 ok(g.ProductionManager.isBuildingUnlocked("sawmill") && !!g.game.production.sawmill, "Scierie débloquée + bucket initialisé (ProductionManager.unlockBuilding)");
 
@@ -2198,14 +2148,17 @@ run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentMa
 g.game.explorationProgression.wellUnlocked = true; // prérequis de lancement
 g.WarehouseManager.addResource("petite_ration", 1);
 g.SceneRunManager.startRun("terre_en_friche");
-g.SceneRunManager.enterGate(0);
-run("var _mrS2a = Math.random; Math.random = function () { return 0.99; };"); // force le pire résultat (setback)
-var s2cFail = g.SceneRunManager.resolveObstacle(anyVoie());
-run("Math.random = _mrS2a;");
-ok(s2cFail.outcome === "setback", "premier jet forcé en échec (tirage 0.99)");
-ok(g.game.sceneRun.status === "gate", "après un setback (1 blessure) : le run CONTINUE (statut 'gate'), pas d'échec net (décision Seb)");
-ok(g.game.sceneRun.injuries.length === 1, "1 blessure typée enregistrée");
-ok(g.game.explorationProgression.farmUnlocked !== true, "farmUnlocked PAS encore posé (chambre finale non atteinte)");
+/* v3.389.0 : parcours v2. Un jet raté coûte des PV et une blessure, le parcours continue. */
+var P2a = g.Pa2Run, r2a = g.game.sceneRun, rand2a = P2a.rand;
+g.game.heroHp = g.game.heroMaxHp;
+P2a.moveTo(P2a.openMoves()[0]);
+P2a.rand = function () { return 0; }; // dés au plus bas : échec
+var s2cFail = P2a.resolveObstacle(P2a.obstacleOptions()[0].voie);
+P2a.rand = rand2a;
+ok(s2cFail.ok && s2cFail.result && /fail|rate|ko/.test(String(s2cFail.result.kind || s2cFail.result.outcome || "")), "premier jet forcé en échec (" + JSON.stringify(s2cFail.result && (s2cFail.result.kind || s2cFail.result.outcome)) + ")");
+ok(r2a.status === "pa2-map" && r2a.wounds >= 1, "après un échec (une blessure) : le parcours CONTINUE, pas d'échec net (décision Seb)");
+ok(g.game.explorationProgression.farmUnlocked !== true, "farmUnlocked PAS encore posé (arrivée non atteinte)");
+g.SceneRunManager.abandon(); g.SceneRunManager.clearRun();
 
 console.log("\n[S2a] MissionBoard._sceneMissions() — gating d'affichage repris de boardRequires (EXPLORATION_QUESTS)");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
@@ -2233,336 +2186,6 @@ run("game.explorationProgression.blockedPathCompleted = true; game.explorationPr
 var questsHtmlDone76 = run("buildQuestsHTML()");
 ok(questsHtmlDone76.indexOf("Sentier Obstrué") !== -1, "carte terminée visible dans l'historique une fois la section 'Expéditions' dépliée");
 
-console.log("\n[PA1] Petites Aventures — profil, cap journalier, nœud bloqueur (v3.125.0, Lot PA1)");
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; game.resources.petite_ration = 10;");
-ok(g.SceneRunManager.canStartPetiteAventureToday(), "cap dispo au départ");
-ok(g.SceneRunManager.petiteAventureCountToday() === 0, "compteur à 0 au départ");
-
-var paR1 = run("SceneRunManager.startRun('petite_aventure_foret')");
-ok(paR1.ok, "startRun ok");
-ok(g.game.sceneRun.status === "profile", "status = 'profile' après startRun (pas de carte générée avant le choix)");
-ok(g.SceneRunManager.petiteAventureCountToday() === 1, "compteur consommé au lancement (=1), pas au succès");
-
-var paR2 = run("SceneRunManager.chooseProfile('prudent')");
-ok(paR2.ok, "chooseProfile('prudent') ok");
-ok(g.game.sceneRun.profile === "prudent", "profile figé = 'prudent'");
-// v3.195.0 : chooseProfile ne génère plus la carte (dépend désormais de l'intensité,
-// pas encore choisie) — status intermédiaire 'intensity' avant 'preparation'.
-ok(g.game.sceneRun.status === "intensity", "status = 'intensity' après chooseProfile (avant génération de carte)");
-ok(g.game.sceneRun.card.length === 0, "carte pas encore générée avant le choix d'intensité");
-
-var paR2b = run("SceneRunManager.chooseIntensity('chemin')");
-ok(paR2b.ok, "chooseIntensity('chemin') ok");
-ok(g.game.sceneRun.intensity === "chemin", "intensity figée = 'chemin'");
-ok(g.game.sceneRun.card.length === 8, "carte à 8 paliers (SCENE_INTENSITY.chemin.depthMax)");
-// v3.196.0 : chooseIntensity tire aussi le mutateur et court-circuite vers 'mutator-announce'
-// (restauré par acknowledgeMutator) — le statut posé par _generateCard (preparation/gate)
-// n'est donc plus immédiatement lisible ici, il est mémorisé dans run._statusAfterMutator.
-ok(g.game.sceneRun.status === "mutator-announce", "status = 'mutator-announce' après chooseIntensity (avant preparation/gate)");
-ok(g.game.sceneRun._statusAfterMutator === "preparation", "statut mémorisé = 'preparation' (loadoutSlots=3), restauré par acknowledgeMutator()");
-var paR2c = run("SceneRunManager.acknowledgeMutator()");
-ok(paR2c.ok, "acknowledgeMutator() ok");
-ok(g.game.sceneRun.status === "preparation", "status = 'preparation' après acknowledgeMutator");
-
-var paBadProfile = run("SceneRunManager.chooseProfile('foo')");
-ok(!paBadProfile.ok, "chooseProfile refuse un profil invalide");
-
-// Sur plusieurs tirages : profil prudent doit pouvoir produire un bloqueur, bourrin un combat.
-var sawBloqueur = false, sawCombat = false, t;
-for (t = 0; t < 40 && !sawBloqueur; t++) {
-  run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 }; SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('prudent'); SceneRunManager.chooseIntensity('chemin');");
-  var cardP = g.game.sceneRun.card;
-  cardP.forEach(function (level) { level.forEach(function (slot) { if (slot.type === "bloqueur") sawBloqueur = true; }); });
-}
-ok(sawBloqueur, "profil prudent : au moins un slot 'bloqueur' observé sur " + t + " tirages");
-
-for (t = 0; t < 40 && !sawCombat; t++) {
-  run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 }; SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('bourrin'); SceneRunManager.chooseIntensity('chemin');");
-  var cardB = g.game.sceneRun.card;
-  cardB.forEach(function (level) { level.forEach(function (slot) { if (slot.type === "combat") sawCombat = true; }); });
-}
-ok(sawCombat, "profil bourrin : au moins un slot 'combat' observé sur " + t + " tirages");
-
-// v3.143.0 (variance des runs) : garanties chiffrées — vérifiées sur N tirages, pas juste "au
-// moins une fois". Bourrin : TOUJOURS au moins 1 combat (sim 3000 runs, 0% à 0 combat après
-// correctif, contre 6.7% avant). Prudent : JAMAIS plus de 2 bloqueurs (0% après, contre 9.9%
-// de runs à ≥3 avant, jusqu'à 45 min d'attente cumulée observés).
-var N_VARIANCE = 150, minCombatFails = 0, maxBloqueurFails = 0, prudentCombatUnaffected = false;
-for (var vt = 0; vt < N_VARIANCE; vt++) {
-  run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 }; SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('bourrin'); SceneRunManager.chooseIntensity('chemin');");
-  var cardV = g.game.sceneRun.card;
-  var nCombatV = 0;
-  cardV.forEach(function (level) { level.forEach(function (slot) { if (slot.type === "combat") nCombatV++; }); });
-  if (nCombatV < 1) minCombatFails++;
-  if (nCombatV > 2) minCombatFails++; // le plafond existant (v3.132.0) doit rester respecté
-}
-ok(minCombatFails === 0, "profil bourrin : garantie ≥1 et ≤2 combat(s) respectée sur " + N_VARIANCE + " tirages (0 échec)");
-ok(g.game.sceneRun.card[0][0].type === "obstacle", "contrôle : le palier 0 (firstDepthType) n'est jamais celui forcé en combat");
-
-for (vt = 0; vt < N_VARIANCE; vt++) {
-  run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 }; SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('prudent'); SceneRunManager.chooseIntensity('chemin');");
-  var cardV2 = g.game.sceneRun.card;
-  var nBloqueurV = 0, nCombatV2 = 0;
-  cardV2.forEach(function (level) { level.forEach(function (slot) { if (slot.type === "bloqueur") nBloqueurV++; if (slot.type === "combat") nCombatV2++; }); });
-  if (nBloqueurV > 2) maxBloqueurFails++;
-  if (nCombatV2 === 0) prudentCombatUnaffected = true; // confirme que le plancher combat NE s'applique PAS à prudent
-}
-ok(maxBloqueurFails === 0, "profil prudent : jamais plus de 2 bloqueurs sur " + N_VARIANCE + " tirages (0 échec)");
-ok(prudentCombatUnaffected, "profil prudent : conserve des runs à 0 combat (le plancher ne cible QUE bourrin, pas de dérive de sa promesse 'peu/pas de combat')");
-
-// Cap journalier : 3 lancements OK, le 4e refusé.
-run("game.explorationProgression.petiteAventure = { day: '', count: 0 }; SceneRunManager.clearRun();");
-var capOkCount = 0;
-for (var i = 0; i < 3; i++) {
-  run("game.resources.petite_ration = 10;");
-  var capRes = run("SceneRunManager.startRun('petite_aventure_foret')");
-  if (capRes.ok) capOkCount++;
-  run("SceneRunManager.clearRun();");
-}
-ok(capOkCount === 3, "3 lancements du jour acceptés (" + capOkCount + "/3)");
-run("game.resources.petite_ration = 10;");
-var capRes4 = run("SceneRunManager.startRun('petite_aventure_foret')");
-ok(!capRes4.ok, "4e lancement du jour refusé (cap atteint) — raison : " + capRes4.reason);
-
-// Changement de jour civil : le compteur doit repartir à 0 (simulate en forçant 'day' à hier).
-run("game.explorationProgression.petiteAventure = { day: 'hier-simule', count: 3 };");
-ok(g.SceneRunManager.petiteAventureCountToday() === 0, "compteur repart à 0 sur un jour civil différent");
-ok(g.SceneRunManager.canStartPetiteAventureToday(), "cap de nouveau dispo après changement de jour");
-
-// Nœud bloqueur : refus tant que le minuteur n'est pas écoulé, résolution ok une fois échu.
-run("game.explorationProgression.petiteAventure = { day: '', count: 0 }; game.resources.petite_ration = 10; SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('prudent'); SceneRunManager.chooseIntensity('chemin'); SceneRunManager.acknowledgeMutator(); SceneRunManager.confirmLoadout(['torche','torche','torche']);");
-run("game.sceneRun.card[game.sceneRun.depth] = [{ type: 'bloqueur', durationMs: 200 }];");
-var egRes = run("SceneRunManager.enterGate(0)");
-ok(egRes.ok, "enterGate sur un slot bloqueur accepté");
-ok(g.game.sceneRun.pendingNode.type === "bloqueur", "pendingNode.type = 'bloqueur'");
-ok(g.game.sceneRun.blockerReadyAt > Date.now(), "blockerReadyAt posé dans le futur");
-var tooEarly = run("SceneRunManager.resolveBloqueur()");
-ok(!tooEarly.ok, "resolveBloqueur refusé avant l'échéance du minuteur");
-var depthBefore = g.game.sceneRun.depth;
-run("game.sceneRun.blockerReadyAt = Date.now() - 10;"); // simule l'écoulement du temps (tourne en fond, pas de setInterval)
-var resolvedOk = run("SceneRunManager.resolveBloqueur()");
-ok(resolvedOk.ok, "resolveBloqueur accepté une fois le minuteur écoulé");
-ok(g.game.sceneRun.depth === depthBefore + 1, "run avance d'un palier après résolution du bloqueur");
-ok(g.game.sceneRun.pendingNode === null, "pendingNode nettoyé après résolution");
-
-// Mission board : la carte répétable apparaît, avec le compteur restant, jusqu'au cap.
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; game.resources.petite_ration = 10;");
-var paBoard1 = run("MissionBoard.list()").find(function (m) { return m.id === "petite_aventure_foret"; });
-ok(!!paBoard1, "carte 'petite_aventure_foret' présente au tableau (village débloqué)");
-ok(paBoard1.status === "available" && typeof paBoard1.accept === "function", "carte disponible avec accept() (pas d'étape 'accepter' séparée)");
-run("game.explorationProgression.petiteAventure = { spent: 3, since: Date.now() };"); // v3.366.0 : réserve vide, rien de rechargé encore
-var paBoard2 = run("MissionBoard.list()").find(function (m) { return m.id === "petite_aventure_foret"; });
-ok(paBoard2.status === "unavailable" && !paBoard2.accept, "carte devient indisponible une fois le cap atteint, aucune action");
-// v3.141.0 : rendu HTML réel de la carte au statut "unavailable" — avant ce fix, ni bouton ni
-// texte (retombait dans le "" final de buildQuestBoardActionHTML), la carte semblait inerte.
-var paBoard2Html = run("buildQuestBoardCardHTML(MissionBoard.list().find(function (m) { return m.id === 'petite_aventure_foret'; }))");
-ok(paBoard2Html.indexOf("is-locked") !== -1, "carte 'unavailable' porte le style estompé is-locked (même habillage que 'locked')");
-ok(/Dans 4 h|Dans 3 h 59/.test(paBoard2Html), "carte 'unavailable' dit quand revient la prochaine place (v3.366.0 : recharge)");
-ok(paBoard2Html.indexOf("Prochaine expédition dans") !== -1, "le blurb explicatif (posé par _petiteAventureMissions) reste visible sur la carte");
-run("game.unlockedTabs.village = false;");
-var paBoard3 = run("MissionBoard.list()").find(function (m) { return m.id === "petite_aventure_foret"; });
-ok(!paBoard3, "carte absente si le Village n'est pas débloqué (boardRequires)");
-
-// Sauvegarde : petiteAventure survit à un cycle localStorage/loadGame et à hardResetState (ascension).
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.explorationProgression.petiteAventure = { spent: 2, since: Date.now() };");
-var paSaved = run("buildSaveData()");
-ok(paSaved.explorationProgression.petiteAventure.spent === 2, "buildSaveData inclut petiteAventure (via explorationProgression, sans whitelist dédiée)");
-run("localStorage.setItem(getActiveSaveKey(), JSON.stringify(buildSaveData()));");
-run("game.explorationProgression.petiteAventure = { spent: 0, since: null };");
-run("loadGame();");
-ok(g.game.explorationProgression.petiteAventure.spent === 2, "loadGame() restaure petiteAventure depuis le localStorage");
-run("hardResetState();");
-ok(g.game.explorationProgression.petiteAventure.spent === 2, "hardResetState (ascension) préserve petiteAventure — cap journalier permanent, comme les autres déblocages");
-
-console.log("\n[PA2] Petites Aventures — nœud combat (profil Bourrin, v3.126.0, Lot PA2)");
-
-// Prépare un run Petite Aventure en profil Bourrin, force un slot combat au palier courant,
-// force un ennemi trivial pour un test déterministe (comme freshCombat le fait ailleurs).
-function setupScenePACombat(profileId) {
-  run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; game.unlockedTabs.village = true; game.unlockedTabs.combat = true; game.resources.petite_ration = 10;");
-  run("SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('" + profileId + "'); SceneRunManager.chooseIntensity('chemin'); SceneRunManager.acknowledgeMutator(); SceneRunManager.confirmLoadout(['torche','torche','torche']);");
-  run("game.sceneRun.card[game.sceneRun.depth] = [{ type: 'combat', gabaritId: 'gobelins_foret' }];");
-}
-
-setupScenePACombat("bourrin");
-var egCombat = run("SceneRunManager.enterGate(0)");
-ok(egCombat.ok, "enterGate sur un slot combat accepté");
-ok(g.game.sceneRun.status === "combat", "run.status = 'combat' après enterGate sur un slot combat");
-ok(g.game.activeTab === "combat", "switchTab('combat') effectif (pas bloqué par le garde anti-sortie de ui-root.js)");
-ok(!!g.game.enemy, "un ennemi est bien apparu (QuestEnemyManager.spawnFor via pseudo-quête forest)");
-ok(["goblin"].indexOf(g.game.enemy.id) !== -1, "l'ennemi appartient bien au groupe 'gobelins_foret' (enemyFilter respecté)");
-
-// Victoire (vague simple, run.card avec un AUTRE nœud combat garanti plus loin -> pas de boss
-// à la fin de CETTE vague) : la vague cible est tirée aléatoirement 6-10 à l'entrée du nœud
-// (v3.130.0) — on la lit puis on tue exactement ce nombre d'ennemis, un par un, en vérifiant
-// que le run reste en 'combat' jusqu'au dernier kill. Un second combat est forcé plus loin
-// dans la carte pour garantir _isLastCombatNodeOfRun() = false (sinon le tirage aléatoire de
-// chooseProfile() pourrait, par hasard, ne poser aucun autre combat sur les 8 paliers — le
-// dernier kill ferait alors apparaître le boss au lieu de terminer simplement le nœud, cassant
-// ce test précis qui veut isoler le cas "vague normale, pas la dernière du run").
-setupScenePACombat("bourrin");
-run("if (game.sceneRun.card.length <= game.sceneRun.depth + 1) game.sceneRun.card.push([{ type: 'combat', gabaritId: 'gobelins_foret' }]); else game.sceneRun.card[game.sceneRun.depth + 1] = [{ type: 'combat', gabaritId: 'gobelins_foret' }];");
-run("SceneRunManager.enterGate(0);");
-ok(g.game.sceneRun._combatIsFinalWave === false, "un second combat garanti plus loin -> pas la dernière vague du run (contrôle avant le test de victoire)");
-var waveTarget = g.game.sceneRun._combatWaveTarget;
-ok(waveTarget >= 4 && waveTarget <= 6, "cible de vague tirée dans la fourchette 4-6 du canevas (combatWaveRange, v3.132.0 — obtenu " + waveTarget + ")");
-var depthBeforeWin = g.game.sceneRun.depth;
-for (var w = 1; w <= waveTarget; w++) {
-  run("game.enemy.hp = 1; game.enemy.maxHp = 1; CombatEngine.killEnemy();");
-  if (w < waveTarget) {
-    ok(g.game.sceneRun.status === "combat", "vague en cours (" + w + "/" + waveTarget + ") : run reste en statut 'combat', ennemi suivant apparu");
-  }
-}
-ok(g.game.sceneRun.status !== "combat", "run.status quitte 'combat' après la vague entière (killEnemy dispatch vers SceneRunManager.onCombatWon)");
-ok(g.game.sceneRun.depth === depthBeforeWin + 1 || g.game.sceneRun.status === "finale", "run avance d'un palier (ou atteint la chambre finale) après la vague");
-ok(g.game.activeTab === "scene", "retour automatique sur l'onglet 'scene' après la vague");
-
-// Défaite : simule un run en combat, mort du héros -> perte totale, run terminé, retour Campement.
-setupScenePACombat("bourrin");
-run("SceneRunManager.enterGate(0);");
-ok(g.game.sceneRun.status === "combat", "run en statut 'combat' avant le test de défaite");
-run("game.sortie.loot.gold = 999;"); // simule du butin déjà accumulé avant la mort
-// justDied est un flag "à consommer" : buildCampHTML() (déclenché par le switchTab interne à
-// onCombatDefeat) le remet à false dès son premier rendu — capté via une sonde posée AVANT ce
-// switchTab (patch temporaire), plutôt que de le lire après coup (déjà consommé à ce moment).
-run("window._probeJustDied = null; window._realSwitchTab = switchTab; window.switchTab = function(t){ window._probeJustDied = game.justDied; return window._realSwitchTab(t); };");
-run("CombatEngine.onHeroDefeated();");
-ok(g.window._probeJustDied === true, "justDied posé avant le switchTab (même traitement que Donjon/Aventure/Chasse)");
-run("window.switchTab = window._realSwitchTab;"); // restaure la vraie fonction pour la suite du fichier
-ok(g.game.sceneRun.status === "completed", "run marqué 'completed' après une mort en nœud combat");
-ok(g.game.activeTab === "campement", "retour au Campement après la mort");
-ok(g.game.sortie.loot.gold === 0, "butin de la sortie remis à zéro (SortieManager.end('death') = perte totale, appelé avant le dispatch)");
-
-// Fuite en plein combat : le bouton Fuir (confirmFlee -> SortieManager.flee()) doit terminer
-// proprement le run scene-engine, pas seulement la sortie (trou corrigé dans sortie-system.js).
-setupScenePACombat("bourrin");
-run("SceneRunManager.enterGate(0);");
-ok(g.game.sceneRun.status === "combat", "run en statut 'combat' avant le test de fuite");
-run("game.sortie.loot.gold = 100;");
-run("SortieManager.flee();");
-ok(g.game.sceneRun.status === "completed", "run marqué 'completed' après une fuite en plein combat (trou corrigé : SortieManager.flee() route désormais vers SceneRunManager.abandon())");
-ok(g.game.gold === 50, "50% du butin banqué dans game.gold (règle de fuite universelle, pas une perte totale ni un retour complet)");
-ok(g.game.activeTab === "campement", "retour au Campement après la fuite");
-
-// Profil Prudent : très peu de combats attendus (poids 4), mais le mécanisme doit rester
-// identique si un combat est malgré tout tiré — pas de code dupliqué par profil.
-setupScenePACombat("prudent");
-var egCombatPrudent = run("SceneRunManager.enterGate(0)");
-ok(egCombatPrudent.ok, "un slot combat forcé fonctionne aussi en profil prudent (mécanique non dupliquée par profil)");
-ok(g.game.sceneRun.status === "combat", "run.status = 'combat' identique quel que soit le profil");
-
-console.log("\n[PA2b] Petites Aventures — vague 6-10 + boss sur le dernier point combat (v3.130.0)");
-
-// setupScenePACombat force UN SEUL slot combat au palier courant (game.sceneRun.card[depth]),
-// les autres paliers restent tels que générés par chooseProfile() (aléatoires) — pour un test
-// déterministe du boss, il faut garantir qu'AUCUN autre slot combat n'existe dans le reste de
-// la carte, sinon _isLastCombatNodeOfRun() pourrait être vrai ou faux selon le tirage.
-function setupScenePAFinalCombat(profileId) {
-  setupScenePACombat(profileId);
-  run("for (var d = game.sceneRun.depth + 1; d < game.sceneRun.card.length; d++) { game.sceneRun.card[d].forEach(function(s){ if (s.type === 'combat') s.type = 'decouverte'; }); }");
-}
-
-// Cas A : le nœud combat forcé n'est PAS le dernier de la carte (un autre combat existe plus
-// loin) -> pas de boss à la fin de cette vague.
-setupScenePACombat("bourrin");
-run("if (game.sceneRun.card.length <= game.sceneRun.depth + 1) game.sceneRun.card.push([{ type: 'combat', gabaritId: 'gobelins_foret' }]); else game.sceneRun.card[game.sceneRun.depth + 1] = [{ type: 'combat', gabaritId: 'gobelins_foret' }];");
-run("SceneRunManager.enterGate(0);");
-ok(g.game.sceneRun._combatIsFinalWave === false, "un autre nœud combat existe plus loin dans la carte -> _combatIsFinalWave = false, pas de boss prévu");
-
-// Cas B : le nœud combat forcé EST le dernier de la carte -> le dernier kill de la vague fait
-// apparaître le boss de l'aventure courante, pas un ennemi normal.
-setupScenePAFinalCombat("bourrin");
-run("SceneRunManager.enterGate(0);");
-ok(g.game.sceneRun._combatIsFinalWave === true, "aucun autre nœud combat dans la carte -> _combatIsFinalWave = true (dernier point combat du run)");
-var finalWaveTarget = g.game.sceneRun._combatWaveTarget;
-for (var wf = 1; wf < finalWaveTarget; wf++) {
-  run("game.enemy.hp = 1; game.enemy.maxHp = 1; CombatEngine.killEnemy();");
-}
-ok(g.game.sceneRun.status === "combat", "run reste en 'combat' juste avant le dernier kill de la vague finale");
-ok(!g.game.enemy.isBoss, "l'ennemi courant (avant-dernier de la vague) n'est PAS un boss");
-run("game.enemy.hp = 1; game.enemy.maxHp = 1; CombatEngine.killEnemy();"); // dernier kill de la vague
-ok(g.game.sceneRun.status === "combat", "run reste en 'combat' après le dernier kill normal (le boss vient d'apparaître, pas encore vaincu)");
-ok(!!g.game.enemy.isBoss, "le BOSS de l'aventure courante est apparu à la place d'un ennemi normal (dernier kill de la dernière vague du run)");
-run("game.enemy.hp = 1; game.enemy.maxHp = 1; CombatEngine.killEnemy();"); // kill du boss
-ok(g.game.sceneRun.status !== "combat", "run quitte 'combat' après avoir vaincu le boss (fin réelle du dernier point combat)");
-ok(g.game.activeTab === "scene", "retour sur l'onglet 'scene' après le boss");
-
-// Mort pendant le boss = toujours perte totale (aucune exception à la règle universelle).
-setupScenePAFinalCombat("bourrin");
-run("SceneRunManager.enterGate(0);");
-var finalWaveTarget2 = g.game.sceneRun._combatWaveTarget;
-for (var wf2 = 1; wf2 < finalWaveTarget2; wf2++) {
-  run("game.enemy.hp = 1; game.enemy.maxHp = 1; CombatEngine.killEnemy();");
-}
-run("game.enemy.hp = 1; game.enemy.maxHp = 1; CombatEngine.killEnemy();"); // fait apparaître le boss
-ok(!!g.game.enemy.isBoss, "boss bien apparu avant le test de mort");
-run("game.sortie.loot.gold = 500;");
-run("CombatEngine.onHeroDefeated();");
-ok(g.game.sceneRun.status === "completed", "mort face au boss = run terminé (perte totale, même règle universelle)");
-ok(g.game.gold === 0 || run("game.sortie.loot.gold") === 0, "butin de sortie remis à zéro à la mort face au boss");
-
-console.log("\n[PA4] Petites Aventures — horizon de visibilité de la carte (v3.139.0, audit Forêt §3.6)");
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; game.resources.petite_ration = 10;");
-run("SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('bourrin'); SceneRunManager.chooseIntensity('chemin'); game.sceneRun.mutator = 'aucun';");
-// v3.196.0 : mutateur forcé à 'aucun' ici — ce test vérifie la formule d'horizon standard
-// (dépendante uniquement de la torche), un tirage 'brouillard' la fausserait (horizon forcé
-// à 0). Le mutateur "Brouillard" a son propre test dédié plus bas.
-// Carte déterministe (8 paliers) pour tester l'horizon sans dépendre du hasard de génération —
-// types choisis pour couvrir obstacle/combat/mystere/bloqueur/source, distincts palier par palier.
-run("game.sceneRun.card = [[{type:'obstacle',gabaritId:'eboulis',riskMod:1}],[{type:'combat',gabaritId:'gobelins_foret'}],[{type:'mystere'}],[{type:'source'}],[{type:'autel'}],[{type:'decouverte'}],[{type:'combat',gabaritId:'loups_foret'}],[{type:'obstacle',gabaritId:'gouffre',riskMod:1}]]; game.sceneRun.depth = 0; game.sceneRun.torchCharges = 3; game.sceneRun._torchUsedAtDepth = -1;");
-
-var progNoTorch = run("buildSceneProgressHTML(game.sceneRun)");
-ok(progNoTorch.indexOf("is-current") !== -1, "palier courant (0) marqué is-current");
-ok((progNoTorch.match(/is-upcoming/g) || []).length === 1, "sans torche : horizon = palier courant + 1 seul suivant marqué is-upcoming (" + (progNoTorch.match(/is-upcoming/g) || []).length + ")");
-ok((progNoTorch.match(/is-hidden/g) || []).length === 7, "sans torche : 6 paliers restants (2..7) + la finale hors horizon, marqués is-hidden (" + (progNoTorch.match(/is-hidden/g) || []).length + ")");
-ok(progNoTorch.indexOf(g.SCENE_NODES.icons.combat) !== -1, "palier 1 (combat) dans l'horizon : icône ⚔️ visible");
-// Le palier 2 est un mystère non révélé : son icône reste celle du TYPE mystere (❓), jamais le
-// type réel caché derrière — mais il est hors horizon (+1 seulement) donc de toute façon masqué ici.
-
-var torchRes = run("SceneRunManager.useTorchForLevel()");
-ok(torchRes === true, "torche activée sur le palier courant");
-var progTorch = run("buildSceneProgressHTML(game.sceneRun)");
-ok((progTorch.match(/is-upcoming/g) || []).length === 2, "avec torche active : horizon étendu à +2 (2 paliers upcoming, " + (progTorch.match(/is-upcoming/g) || []).length + ")");
-ok((progTorch.match(/is-hidden/g) || []).length === 6, "avec torche : 5 paliers restants (3..7) + la finale hors horizon (" + (progTorch.match(/is-hidden/g) || []).length + ")");
-ok(progTorch.indexOf(g.SCENE_NODES.icons.mystere) !== -1, "palier 2 (mystère non résolu) désormais dans l'horizon étendu : icône ❓ visible (type mystere, pas le type réel)");
-
-// Avancée au dernier palier réel (index 7, "Profondeur 8/8") : la finale doit apparaître dans l'horizon +1.
-run("game.sceneRun.depth = 7; game.sceneRun._torchUsedAtDepth = -1;");
-var progNearFinale = run("buildSceneProgressHTML(game.sceneRun)");
-ok(progNearFinale.indexOf("scene-progress-finale is-upcoming") !== -1, "au dernier palier réel (profondeur 8/8) : chambre finale visible dans l'horizon (🏆)");
-
-// Progression : les paliers déjà résolus restent is-done avec leur icône réelle, jamais masqués
-// rétroactivement (contrairement aux paliers futurs hors horizon).
-run("game.sceneRun.depth = 3;");
-var progMid = run("buildSceneProgressHTML(game.sceneRun)");
-ok((progMid.match(/is-done/g) || []).length === 3, "3 paliers déjà franchis (0,1,2) marqués is-done");
-ok(progMid.indexOf(g.SCENE_NODES.icons.combat) !== -1 && progMid.indexOf(g.SCENE_NODES.icons.obstacle) !== -1, "paliers is-done affichent toujours leur icône réelle (jamais de retour à un état masqué)");
-
-console.log("\n[PA5] Petite Aventure — grille multi-portes (v3.195.0, remplace le chemin illustré à 1 porte)");
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; game.resources.petite_ration = 10;");
-run("SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('bourrin'); SceneRunManager.chooseIntensity('chemin'); SceneRunManager.acknowledgeMutator(); SceneRunManager.confirmLoadout(['provisions', 'provisions', 'provisions']);");
-// Carte déterministe à 2 portes/palier (gatesPerDepth [2,2] depuis v3.195.0) — remplace l'ancien
-// mock à 1 porte, devenu incompatible avec la grille multi-portes désormais active.
-run("game.sceneRun.card = [[{type:'obstacle',gabaritId:'eboulis',riskMod:1},{type:'obstacle',gabaritId:'paroi',riskMod:1}],[{type:'combat',gabaritId:'gobelins_foret'},{type:'obstacle',gabaritId:'racines',riskMod:1}],[{type:'mystere'},{type:'source'}],[{type:'source'},{type:'obstacle',gabaritId:'riviere',riskMod:1}],[{type:'autel'},{type:'obstacle',gabaritId:'eboulis',riskMod:1}],[{type:'decouverte'},{type:'obstacle',gabaritId:'paroi',riskMod:1}],[{type:'combat',gabaritId:'loups_foret'},{type:'obstacle',gabaritId:'racines',riskMod:1}],[{type:'obstacle',gabaritId:'gouffre',riskMod:1},{type:'obstacle',gabaritId:'riviere',riskMod:1}]]; game.sceneRun.depth = 0;");
-
-var gateHtml = run("buildSceneGateChoiceHTML()");
-ok(gateHtml.indexOf("scene-path-frame") === -1, "petite_aventure_foret n'utilise plus le chemin illustré (SCENE_PATH_TEMPLATE_IDS vidé, v3.195.0)");
-ok(gateHtml.indexOf("scene-card-grid") !== -1, "grille de boutons multi-portes active pour ce canevas (2 portes, gatesPerDepth [2,2])");
-ok(gateHtml.indexOf("scene-card-solo") === -1, "plus de fiche unique en lecture seule (mode solo désactivé pour ce canevas)");
-ok((gateHtml.match(/onclick="enterSceneGate\(/g) || []).length === 2, "2 portes cliquables rendues sur le palier 0");
-ok(gateHtml.indexOf("onclick=\"enterSceneGate(0)\"") !== -1 && gateHtml.indexOf("onclick=\"enterSceneGate(1)\"") !== -1, "les deux portes (index 0 et 1) sont bien cliquables");
-
-// Clic sur la première porte = comportement identique à avant (enterGate index 0).
-run("enterSceneGate(0);");
-ok(g.game.sceneRun.depth === 0 && g.game.sceneRun.pendingNode && g.game.sceneRun.pendingNode.type === "obstacle", "clic sur la première porte engage bien le palier (obstacle résolu au palier 0)");
-
-// Contrôle : un canevas à plusieurs portes (expedition_faille, hors SCENE_PATH_TEMPLATE_IDS)
-// garde l'ancien rendu en grille — aucune régression sur les canevas non couverts par ce lot.
-run("SceneRunManager.clearRun(); SceneRunManager.startRun('expedition_faille'); SceneRunManager.confirmLoadout(['provisions', 'provisions', 'provisions']);");
-var gateHtmlFaille = run("buildSceneGateChoiceHTML()");
-ok(gateHtmlFaille.indexOf("scene-path-frame") === -1, "expedition_faille (hors périmètre) NE bascule PAS sur le chemin illustré");
-ok(gateHtmlFaille.indexOf("scene-card-grid") !== -1, "expedition_faille garde la grille de cartes historique");
-
 console.log("\n[TON] Passe de ton Forêt (v3.197.0, bible B) — dialogues d'anciens, graines du Veilleur, voix du narrateur");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight';");
 var tonSteps = g.STORY_QUESTS.forest.steps;
@@ -2587,128 +2210,6 @@ ok(tonIntros.every(function (t) { return t.indexOf("...") === -1; }), "aucune in
 ok(g.AMBIANCE_TEXTS.every(function (t) { return !/\bvous\b|\bvotre\b|\bvos\b/i.test(t) && t.indexOf("...") === -1; }), "ambiance de combat : ni vouvoiement ni points de suspension");
 var tonBanned = /mystérieu|étrange|sinistre|lugubre|maléfique|inquiétant/i;
 ok(tonIntros.concat(g.AMBIANCE_TEXTS).every(function (t) { return !tonBanned.test(t); }), "aucun mot banni (bible B) dans les intros et l'ambiance");
-
-console.log("\n[PA6] Petite Aventure — mutateurs de run (v3.196.0, lot C2)");
-
-// Tirage pondéré : force les poids pour un test déterministe sur la distribution elle-même,
-// sans dépendre de Math.random pour vérifier que TOUS les mutateurs sont bien atteignables.
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; game.resources.petite_ration = 10;");
-var seenMutators = {};
-for (var mt = 0; mt < 200; mt++) {
-  run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 }; SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('prudent'); SceneRunManager.chooseIntensity('chemin');");
-  seenMutators[g.game.sceneRun.mutator] = true;
-}
-ok(seenMutators.aucun && seenMutators.brouillard && seenMutators.pluie && seenMutators.nuit, "les 4 issues (aucun/brouillard/pluie/nuit) observées sur 200 tirages (poids 20% chacun)");
-
-// Statut d'annonce : chooseIntensity court-circuite vers 'mutator-announce', acknowledgeMutator restaure.
-run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 }; SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('prudent'); SceneRunManager.chooseIntensity('chemin');");
-ok(g.game.sceneRun.status === "mutator-announce", "statut 'mutator-announce' juste après chooseIntensity");
-var ackBad = run("SceneRunManager.confirmLoadout(['torche','torche','torche'])");
-ok(!ackBad.ok, "confirmLoadout refusé tant que l'annonce n'est pas accusée (statut incorrect)");
-var ackRes = run("SceneRunManager.acknowledgeMutator()");
-ok(ackRes.ok, "acknowledgeMutator() accepté");
-ok(g.game.sceneRun.status === "preparation", "statut 'preparation' restauré après acknowledgeMutator");
-var ackTwice = run("SceneRunManager.acknowledgeMutator()");
-ok(!ackTwice.ok, "acknowledgeMutator() refusé en double-appel (idempotence)");
-
-// Brouillard : horizon forcé à 0, même torche active.
-run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 }; SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('bourrin'); SceneRunManager.chooseIntensity('chemin'); game.sceneRun.mutator = 'brouillard'; SceneRunManager.acknowledgeMutator(); SceneRunManager.confirmLoadout(['torche','torche','torche']);");
-run("game.sceneRun.torchCharges = 3; game.sceneRun._torchUsedAtDepth = game.sceneRun.depth;"); // torche "active" ce palier
-ok(g.SceneRunManager.getVisibilityHorizon() === g.game.sceneRun.depth, "Brouillard : horizon = palier courant seulement, MÊME torche active");
-
-// Pluie : endurance effective +15%, coût Souffle des options +50%.
-run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 }; SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('prudent'); SceneRunManager.chooseIntensity('chemin'); game.sceneRun.mutator = 'pluie'; SceneRunManager.acknowledgeMutator(); SceneRunManager.confirmLoadout(['torche','torche','torche']);");
-var enduranceBase = g.game.sceneRun.heroSnapshot.endurance;
-var enduranceEff = run("SceneRunManager.statEffective(game.sceneRun, 'endurance')");
-ok(enduranceEff === Math.round(enduranceBase * 1.15), "Pluie : endurance effective = base × 1.15 (" + enduranceEff + " attendu " + Math.round(enduranceBase * 1.15) + ")");
-var powerEff = run("SceneRunManager.statEffective(game.sceneRun, 'power')");
-ok(powerEff === g.game.sceneRun.heroSnapshot.power, "Pluie : la Puissance n'est PAS affectée (seule l'Endurance l'est)");
-var breathFactorsEndurance = run("SceneRunManager._obstacleFactors(game.sceneRun, 'endurance')");
-// v3.199.0 : le coût de base est passé de 1 à 20 (régime de Souffle). L'assertion lit la
-// donnée et teste la COMPOSITION base × mutateur, pas la valeur du calibrage du moment.
-var enduranceBaseCost = g.window.SCENE_TEMPLATES.petite_aventure_foret.optionProfiles.endurance.breathCost;
-ok(Math.abs(breathFactorsEndurance.breathCost - enduranceBaseCost * 1.5) < 1e-9, "Pluie : coût Souffle de l'option Endurance = " + enduranceBaseCost + " × 1.5 (base × mutateur)");
-
-// Nuit : +1 nœud danger garanti (combat pour bourrin, bloqueur pour prudent), respecte le plafond existant.
-run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 }; SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('bourrin'); SceneRunManager.chooseIntensity('chemin'); game.sceneRun.mutator = 'nuit';");
-var nightCombatCount = 0;
-g.game.sceneRun.card.forEach(function (level) { level.forEach(function (slot) { if (slot.type === "combat") nightCombatCount++; }); });
-ok(nightCombatCount >= 1 && nightCombatCount <= 2, "Nuit (bourrin) : au moins 1 combat sur la carte, plafond ≤2 toujours respecté (" + nightCombatCount + ")");
-var nightLootMult = run("SceneRunManager._runLootMult(game.sceneRun)");
-// v3.198.0 : le lootMult de Chemin est passé de 2.0 à 2.6 (recalibrage). L'assertion lit
-// désormais SCENE_INTENSITY au lieu de figer la constante — elle teste la COMPOSITION
-// intensité × mutateur, pas la valeur du calibrage du moment.
-var cheminLootMult = g.window.SCENE_INTENSITY.chemin.lootMult;
-ok(Math.abs(nightLootMult - cheminLootMult * 1.15) < 1e-9, "Nuit : lootMult composé = intensité(chemin ×" + cheminLootMult + ") × mutateur(×1.15) = " + (cheminLootMult * 1.15).toFixed(3) + " (obtenu " + nightLootMult.toFixed(3) + ")");
-
-console.log("\n[PA3] Petites Aventures — Sève d'Aeswyn (v3.127.0, Lot PA3)");
-
-// Taux à 100% par nœud pour un test déterministe (pas de dépendance à Math.random pour VALIDER
-// le mécanisme lui-même — la calibration probabiliste réelle a été vérifiée par simulation
-// Monte Carlo séparée, 200k runs, valeurs figées par Seb 03/09/2026).
-function setupScenePASeve(profileId, chancePct) {
-  run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; game.unlockedTabs.village = true; game.resources.petite_ration = 10;");
-  run("SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('" + profileId + "'); SceneRunManager.chooseIntensity('chemin'); SceneRunManager.acknowledgeMutator(); SceneRunManager.confirmLoadout(['torche','torche','torche']);");
-  run("SCENE_TEMPLATES.petite_aventure_foret.seveAeswyn.perNodeChancePct." + profileId + " = " + chancePct + ";");
-}
-
-setupScenePASeve("bourrin", 100);
-ok(g.game.resources.seve_aeswyn === undefined || g.game.resources.seve_aeswyn === 0, "aucune Sève au départ (contrôle)");
-run("game.sceneRun.card[game.sceneRun.depth] = [{ type: 'decouverte' }]; SceneRunManager.enterGate(0); SceneRunManager.resolveDecouverte();");
-ok(g.game.resources.seve_aeswyn === 1, "Sève créditée à 100% de chance sur un nœud découverte résolu (+1, perNodeAmount [1,1])");
-
-setupScenePASeve("prudent", 0);
-run("game.sceneRun.card[game.sceneRun.depth] = [{ type: 'decouverte' }]; SceneRunManager.enterGate(0); SceneRunManager.resolveDecouverte();");
-ok(!g.game.resources.seve_aeswyn, "aucune Sève à 0% de chance (pas de faux positif)");
-
-// Bonus garanti à la chambre finale, indépendant du choix de coffre (sûr ou risqué) et du
-// double-ou-rien (jamais remis en jeu — crédité directement via WarehouseManager, pas SortieManager).
-// v3.235.0 : le montant dépend désormais de l'intensité (setupScenePASeve joue « chemin »),
-// on le LIT dans la table au lieu de le figer — ces assertions vérifient le mécanisme, la
-// valeur est vérifiée par le bloc [43] et par sim/seve-bench.js.
-var finaleChemin = function (profil) {
-  return g.SceneRunManager._seveFinaleAmount(
-    g.SCENE_TEMPLATES.petite_aventure_foret.seveAeswyn, profil, "chemin");
-};
-
-setupScenePASeve("bourrin", 0); // 0% par nœud : seul le bonus finale doit s'appliquer
-run("game.sceneRun.depth = SCENE_TEMPLATES.petite_aventure_foret.depthMax - 1; game.sceneRun.status = 'finale';");
-run("SceneRunManager.resolveFinale('sur');");
-ok(g.game.resources.seve_aeswyn === finaleChemin("bourrin"),
-  "bonus finale garanti (+" + finaleChemin("bourrin") + " en profil bourrin, Chemin) même à 0% de chance par nœud, choix coffre sûr");
-
-setupScenePASeve("prudent", 0);
-run("game.sceneRun.depth = SCENE_TEMPLATES.petite_aventure_foret.depthMax - 1; game.sceneRun.status = 'finale';");
-run("SceneRunManager.resolveFinale('risque');");
-ok(g.game.resources.seve_aeswyn === finaleChemin("prudent"),
-  "bonus finale garanti (+" + finaleChemin("prudent") + " en profil prudent, Chemin) même avec le choix de coffre risqué");
-
-/* v3.235.0 : et la valeur DOIT changer avec l'intensité — sinon la table est
-   ignorée quelque part et on revient au bonus plat sans s'en apercevoir. */
-setupScenePASeve("bourrin", 0);
-run("game.sceneRun.intensity = 'periple'; game.sceneRun.depth = SCENE_TEMPLATES.petite_aventure_foret.depthMax - 1; game.sceneRun.status = 'finale';");
-run("SceneRunManager.resolveFinale('sur');");
-ok(g.game.resources.seve_aeswyn === g.SceneRunManager._seveFinaleAmount(
-     g.SCENE_TEMPLATES.petite_aventure_foret.seveAeswyn, "bourrin", "periple"),
-  "le Périple crédite bien SA valeur, pas celle du Chemin");
-
-// Évacuation (3 blessures) : PAS de tirage — l'évacuation n'est pas une résolution de nœud
-// normale (_evacuate() ne passe pas par _advanceOrFinish, voir scene-run-system.js).
-setupScenePASeve("bourrin", 100);
-run("game.sceneRun.injuries = ['power', 'power'];"); // 2 blessures déjà présentes, la 3e évacue
-run("game.sceneRun.card[game.sceneRun.depth] = [{ type: 'obstacle', gabaritId: 'eboulis', riskMod: 1 }];");
-run("SceneRunManager.enterGate(0);");
-run("var _origRandom = Math.random; Math.random = function(){ return 0.99; };"); // force le setback
-var evacRes = run("SceneRunManager.resolveObstacle('power')");
-run("Math.random = _origRandom;");
-ok(evacRes.outcome === "evacuation", "évacuation déclenchée (3e blessure)");
-ok(!g.game.resources.seve_aeswyn, "aucune Sève créditée lors d'une évacuation (pas un nœud résolu normalement)");
-
-// Canevas hors Petites Aventures (ex. expedition_faille) : aucun tirage, aucune régression.
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; game.unlockedTabs.village = true;");
-run("SceneRunManager.startRun('expedition_faille'); SceneRunManager.confirmLoadout(['torche','torche','torche']);");
-run("game.sceneRun.card[game.sceneRun.depth] = [{ type: 'decouverte' }]; SceneRunManager.enterGate(0); SceneRunManager.resolveDecouverte();");
-ok(!g.game.resources.seve_aeswyn, "aucune Sève sur un canevas sans config seveAeswyn (expedition_faille), aucune régression");
 
 console.log("\n[PA3b] Entrepôt — 3e onglet 'Rares' pour la Sève d'Aeswyn (v3.128.0)");
 
@@ -2737,44 +2238,6 @@ var detailHtml = run("buildWarehouseDetailPanelHTML()");
 ok(detailHtml.indexOf("Sève d") !== -1, "le panneau détail affiche bien le nom de la ressource sélectionnée");
 ok(detailHtml.indexOf("Stock : 5") !== -1, "le stock affiché correspond (5)");
 ok(detailHtml.indexOf("Ne se vend pas") !== -1 && detailHtml.indexOf("Vendre") === -1, "pas d'option de vente (sellPrice: 0, ressource de collection)");
-
-console.log("\n[PA2-fix] Petites Aventures — combat scale avec la vraie progression (v3.129.0)");
-
-// Reproduction exacte du bug rapporté par Seb (03/09/2026) : combat résolu en un seul coup
-// avant que le joueur ait pu agir. Cause racine : l'ennemi du nœud combat était généré sur
-// worldId "forest"/adventureIndex 0 EN DUR, quel que soit le monde réel du joueur — un joueur
-// avancé (cycles, monde 3) recevait un ennemi de tout début de partie, largement sous ses
-// dégâts par coup.
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; game.cycleCount = 5; game.unlockedTabs.village = true; game.unlockedTabs.combat = true; game.resources.petite_ration = 10;");
-run("game.equipped.weapon = { id:'w', name:'Grande Epée', rarity:'legendary', slot:'weapon', stat:'tapDmg', value: 500 }; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
-run("WorldManager.worldIndex = 2; WorldManager.adventureIndex = 0; WorldManager.enemyIndex = 0;");
-// Comparaison sur un ennemi FIXE des deux côtés (pas un tirage aléatoire dans le pool, qui a
-// une endurance de base différente par ennemi — ça fausserait la comparaison des PV finaux).
-// zombie et skeleton (monde Ruines) ont une endurance différente (42 vs 34) : on isole le
-// SCALE (fonction du monde/aventure/cycle uniquement), identique quel que soit l'ennemi tiré.
-var expectedScale = run("Math.pow(1 + WorldManager.worldIndex * (WORLD_MULT_BY_WORLD[WorldManager.worldIndex] || 1), ENEMY_PV_WORLD_EXP) + WorldManager.adventureIndex * 0.30 + (game.cycleCount || 0) * 0.45");
-
-run("SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('bourrin'); SceneRunManager.chooseIntensity('chemin'); SceneRunManager.acknowledgeMutator(); SceneRunManager.confirmLoadout(['torche','torche','torche']);");
-run("game.sceneRun.card[game.sceneRun.depth] = [{ type: 'combat', gabaritId: 'gobelins_foret' }];");
-run("SceneRunManager.enterGate(0);");
-/* v3.298.0 (W-1b, D6) : le canevas déclare son monde. La Petite Aventure de la FORÊT tire des
-   ennemis de la Forêt même pour un joueur qui réside aux Ruines — décision de la conception
-   Désert §4.2 : chaque canevas nomme son monde au lieu de le supposer. Le bug v3.129.0 (ennemis
-   figés sur la Forêt pour TOUT canevas) ne revient pas : un canevas sans worldId suit toujours
-   le monde de résidence (contrôlé en [93]), et le cycle continue de peser sur l'échelle. */
-ok(["goblin"].indexOf(g.game.enemy.id) !== -1, "résidant aux Ruines, la Petite Aventure de la Forêt tire le groupe « gobelins_foret » (monde du canevas)");
-var paEnemyEndurance = run("(ENEMY_DB[game.enemy.id] && ENEMY_DB[game.enemy.id].stats.endurance) || 0");
-var impliedScale = g.game.enemy.maxHp / (paEnemyEndurance * run("ENEMY_PV_MULT"));
-var forestScale = 1 + 5 * 0.45; // monde 0, aventure 0, cycle 5
-ok(Math.abs(impliedScale - forestScale) / forestScale < 0.15, "échelle de la Forêt, cycle compris (attendu ~" + forestScale.toFixed(2) + ", obtenu ~" + impliedScale.toFixed(2) + ")");
-
-// Contrôle : sur une partie FRAÎCHE (monde 0, cycle 0), le comportement reste identique à
-// avant le correctif — aucune régression pour un joueur en tout début de jeu.
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; game.unlockedTabs.village = true; game.unlockedTabs.combat = true; game.resources.petite_ration = 10;");
-run("SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('bourrin'); SceneRunManager.chooseIntensity('chemin'); SceneRunManager.acknowledgeMutator(); SceneRunManager.confirmLoadout(['torche','torche','torche']);");
-run("game.sceneRun.card[game.sceneRun.depth] = [{ type: 'combat', gabaritId: 'gobelins_foret' }];");
-run("SceneRunManager.enterGate(0);");
-ok(["goblin"].indexOf(g.game.enemy.id) !== -1, "sur une partie fraîche (monde 0 = Forêt), l'ennemi reste bien issu du groupe 'gobelins_foret' (enemyFilter toujours respecté quand il correspond au monde courant)");
 
 console.log("\n[60] Cap de 3 quêtes actives simultanées + abandon (v3.131.0, retour Seb)");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
@@ -2870,38 +2333,6 @@ ok(step12.check(game) === false, "point 3 : règle seule, run non fait : étape 
 game.adventureQuestsCompleted.aq_story_coeur = true;
 g.game.grimoireRules = [{ conditionId: "charge_announced", actionSlot: "defense" }]; // le rendu du tableau normalise les règles
 ok(step12.check(g.game) === true && step12.progress(game) === "Cœur 10/10 · Règle 1/1", "point 3 : run fait + règle : étape prête (" + step12.check(game) + " / " + step12.progress(game) + ")");
-
-/* ================= v3.132.0 — Petite Aventure : plafond 2 nœuds combat par run (audit Forêt) ================= */
-console.log("\n== v3.132.0 : cap de nœuds combat + vagues 4-6 (Petite Aventure) ==");
-(function () {
-  var tpl = g.SCENE_TEMPLATES.petite_aventure_foret;
-  ok(tpl.maxSlotsPerRun && tpl.maxSlotsPerRun.combat === 2, "canevas : maxSlotsPerRun.combat = 2");
-  ok(tpl.combatWaveRange && tpl.combatWaveRange[0] === 4 && tpl.combatWaveRange[1] === 6, "canevas : combatWaveRange = [4, 6]");
-  var maxSeen = 0, withCombat = 0, obstaclesOk = true, N = 300;
-  for (var t = 0; t < N; t++) {
-    var rv = []; var cnt = g.SceneEngine.estimateRandomCount(tpl);
-    for (var r = 0; r < cnt; r++) rv.push(Math.random());
-    var card = g.SceneEngine.buildCard(tpl, rv, tpl.profileWeights.bourrin);
-    var combats = 0;
-    card.forEach(function (lvl) { lvl.forEach(function (sl) {
-      if (sl.type === "combat") combats++;
-      if (sl.type === "obstacle" && (!sl.gabaritId || typeof sl.riskMod !== "number")) obstaclesOk = false;
-    }); });
-    if (combats > maxSeen) maxSeen = combats;
-    if (combats > 0) withCombat++;
-  }
-  ok(maxSeen <= 2, "Bourrin, " + N + " cartes : jamais plus de 2 nœuds combat (max observé " + maxSeen + ")");
-  ok(maxSeen === 2, "Bourrin : le plafond de 2 est bien atteint sur au moins une carte (le cap ne sous-génère pas)");
-  ok(withCombat / N > 0.85, "Bourrin : la grande majorité des cartes gardent au moins 1 combat (" + Math.round(withCombat / N * 100) + " %)");
-  // Note v3.143.0 : ce test appelle SceneEngine.buildCard() DIRECTEMENT (moteur pur), qui ne
-  // connaît pas _ensureMinCombat (vit dans SceneRunManager.chooseProfile, glue jeu) — la
-  // garantie ABSOLUE (100%) est testée via chooseProfile() dans la section [PA1] plus haut,
-  // pas ici. Ce test-ci documente le comportement du moteur SEUL, sans le garde-fou.
-  ok(obstaclesOk, "les slots retombés en obstacle ont bien gabaritId + riskMod (résolubles par SceneEngine.resolveObstacle)");
-  // Les canevas sans maxSlotsPerRun sont inchangés (expedition_faille ne déclare pas de combat de toute façon).
-  var tplF = g.SCENE_TEMPLATES.expedition_faille;
-  ok(!tplF.maxSlotsPerRun, "expedition_faille : pas de plafond déclaré, comportement historique conservé");
-})();
 
 /* ================= v3.133.0 — forest_15 : offrande aux braises (audit Forêt, décision Seb) ================= */
 console.log("\n== v3.133.0 : forest_15, offrande aux braises ==");
@@ -3210,11 +2641,11 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
 (function () {
   console.log("\n[PA] Petite Aventure — plafond de blessures, voies, charges, soins, heroScale");
 
-  var PA = g.window.SCENE_TEMPLATES.petite_aventure_foret;
+  var PA = g.window.SCENE_TEMPLATES.expedition_faille;
   var EF = g.window.SCENE_TEMPLATES.expedition_faille;
 
   // --- plafond de blessures : par canevas, pas en dur ---
-  ok(run("SceneRunManager.getMaxInjuries('petite_aventure_foret')") === PA.maxInjuries,
+  ok(run("SceneRunManager.getMaxInjuries('expedition_faille')") === PA.maxInjuries,
     "[PA] getMaxInjuries lit template.maxInjuries (" + PA.maxInjuries + ")");
   // v3.199.0 : expedition_faille est calibré à son tour. Le canevas témoin « intouché » est
   // désormais une quête de déblocage migrée (2 paliers, rôle de tutoriel).
@@ -3225,14 +2656,14 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
 
   // --- voies restreintes : le nœud n'expose que optionsPerNode approches ---
   run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 };");
-  run("SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('prudent'); SceneRunManager.chooseIntensity('periple'); SceneRunManager.acknowledgeMutator();");
+  run("SceneRunManager.startRun('expedition_faille');");
   var voiesOk = run("(function () {" +
     "var bad = 0, seen = 0;" +
     "game.sceneRun.card.forEach(function (lvl) { lvl.forEach(function (sl) {" +
     "  if (sl.type !== 'obstacle') return; seen++;" +
     "  var gab = SCENE_NODES.obstacles[sl.gabaritId];" +
     "  var v = SceneEngine.nodeVoies(gab, sl);" +
-    "  if (v.length !== SCENE_TEMPLATES.petite_aventure_foret.optionsPerNode) bad++;" +
+    "  if (v.length !== SCENE_TEMPLATES.expedition_faille.optionsPerNode) bad++;" +
     "}); });" +
     "return { bad: bad, seen: seen }; })()");
   ok(voiesOk.seen > 0, "[PA] la carte générée contient au moins un obstacle (" + voiesOk.seen + ")");
@@ -3274,13 +2705,13 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   ok(run("SceneRunManager.useSceneProvision().ok") === false, "[PA] provisions épuisées : refus propre");
 
   // l'offre de préparation ne contient plus de doublon (annulait le plafond de blessures)
-  var dupPA = run("(function () { var o = SCENE_TEMPLATES.petite_aventure_foret.loadoutOffer;" +
+  var dupPA = run("(function () { var o = SCENE_TEMPLATES.expedition_faille.loadoutOffer;" +
     "var c = {}; var d = 0; o.forEach(function (id) { c[id] = (c[id] || 0) + 1; if (c[id] > 1) d++; }); return d; })()");
   ok(dupPA === 0, "[PA] loadoutOffer sans doublon (un seul exemplaire de chaque objet)");
 
   // --- corde : charges, plus illimitée ---
   run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 };");
-  run("SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('prudent'); SceneRunManager.chooseIntensity('sentier'); SceneRunManager.acknowledgeMutator(); SceneRunManager.confirmLoadout(['corde', 'provisions', 'torche']);");
+  run("SceneRunManager.startRun('expedition_faille'); SceneRunManager.confirmLoadout(['corde', 'provisions', 'torche']);");
   ok(run("game.sceneRun.ropeCharges") === 1, "[PA] confirmLoadout compte les charges de corde (1)");
   ok(run("game.sceneRun.provisionCharges") === 1, "[PA] confirmLoadout compte les charges de provisions (1)");
   run("game.sceneRun.ropeCharges = 0; game.sceneRun.ropeAvailable = false;");
@@ -3294,9 +2725,9 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
     "[PA] run repris d'une version antérieure : ropeAvailable converti en 1 charge, provisions à 0");
 
   // --- heroScale : indexé sur le bonus plafonné, jamais sous 1, plafonné ---
-  var scaleNeuf = run("(function () { var r = { templateId: 'petite_aventure_foret', heroSnapshot: { power: 60, precision: 40, endurance: 62 } };" +
+  var scaleNeuf = run("(function () { var r = { templateId: 'expedition_faille', heroSnapshot: { power: 60, precision: 40, endurance: 62 } };" +
     "return SceneRunManager.heroScale(r); })()");
-  var scaleMax = run("(function () { var r = { templateId: 'petite_aventure_foret', heroSnapshot: { power: 210, precision: 100, endurance: 212 } };" +
+  var scaleMax = run("(function () { var r = { templateId: 'expedition_faille', heroSnapshot: { power: 210, precision: 100, endurance: 212 } };" +
     "return SceneRunManager.heroScale(r); })()");
   ok(scaleNeuf >= 1 && scaleNeuf < 1.2, "[PA] heroScale ≈ 1 pour un héros neuf (" + scaleNeuf.toFixed(3) + ")");
   ok(scaleMax > scaleNeuf, "[PA] heroScale croît avec le développement (" + scaleMax.toFixed(3) + ")");
@@ -3315,7 +2746,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
     "[PA] la voie d'endurance rapporte moins que la voie de puissance");
   ok(PA.optionProfiles.endurance.diffMod < PA.optionProfiles.power.diffMod,
     "[PA] la voie d'endurance reste la plus sûre (le triangle n'est pas inversé)");
-  var facPA = run("(function () { var r = { templateId: 'petite_aventure_foret', intensity: 'chemin', heroSnapshot: { power: 60, precision: 40, endurance: 62 } };" +
+  var facPA = run("(function () { var r = { templateId: 'expedition_faille', intensity: 'chemin', heroSnapshot: { power: 60, precision: 40, endurance: 62 } };" +
     "return SceneRunManager._obstacleFactors(r, 'power'); })()");
   var facEF = run("(function () { var r = { templateId: 'sentier_obstrue', intensity: null, heroSnapshot: { power: 60, precision: 40, endurance: 62 } };" +
     "return SceneRunManager._obstacleFactors(r, 'power'); })()");
@@ -3330,7 +2761,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
 (function () {
   console.log("\n[SOUFFLE] coût de palier, épuisement, cul-de-sac, axe inversé");
 
-  var PA = g.window.SCENE_TEMPLATES.petite_aventure_foret;
+  var PA = g.window.SCENE_TEMPLATES.expedition_faille;
   var PROF = PA.optionProfiles;
 
   // --- axe inversé : la voie sûre est la plus chère en Souffle ---
@@ -3339,17 +2770,16 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   ok(PROF.precision.breathCost < PROF.power.breathCost,
     "[SOUFFLE] la voie de précision est la moins chère (option soutenable)");
 
-  // --- le budget est réellement contraignant sur un run long ---
-  var periple = g.window.SCENE_INTENSITY.periple;
-  var plancher = PA.breathPerDepth * periple.depthMax;
-  ok(plancher > 0 && plancher < 100, "[SOUFFLE] plancher de progression au Périple = " + plancher + "/100");
-  ok(plancher + PROF.endurance.breathCost * 3 > 100,
-    "[SOUFFLE] impossible de tenir le Périple en jouant l'endurance à chaque obstacle");
+  // --- le budget est réellement contraignant sur un run long (v3.388.0 : sur la longueur du canevas) ---
+  var plancher = PA.breathPerDepth * PA.depthMax;
+  ok(plancher > 0 && plancher < 100, "[SOUFFLE] plancher de progression sur " + PA.depthMax + " paliers = " + plancher + "/100");
+  ok(plancher + PROF.endurance.breathCost * (PA.depthMax / 2) > 100,
+    "[SOUFFLE] impossible de tenir le run en jouant l'endurance à chaque obstacle");
 
   // --- coût de palier prélevé à l'entrée de la porte ---
   run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 };");
-  run("SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('prudent'); SceneRunManager.chooseIntensity('periple'); SceneRunManager.acknowledgeMutator(); SceneRunManager.confirmLoadout(['torche', 'gourde', 'amulette']);");
-  run("game.sceneRun.mutator = 'aucun'; game.sceneRun.breath = 100;");
+  run("SceneRunManager.startRun('expedition_faille'); SceneRunManager.confirmLoadout(['torche', 'gourde', 'amulette']);");
+  run("game.sceneRun.breath = 100;");
   run("SceneRunManager.enterGate(0);");
   ok(run("game.sceneRun.breath") === 100 - PA.breathPerDepth,
     "[SOUFFLE] franchir un palier retire " + PA.breathPerDepth + " Souffle (obtenu " + run("game.sceneRun.breath") + ")");
@@ -3363,8 +2793,8 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
 
   // --- affordableVoies : filtre réel, la corde n'est pas concernée ---
   run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 };");
-  run("SceneRunManager.startRun('petite_aventure_foret'); SceneRunManager.chooseProfile('prudent'); SceneRunManager.chooseIntensity('chemin'); SceneRunManager.acknowledgeMutator(); SceneRunManager.confirmLoadout(['torche', 'gourde', 'amulette']);");
-  run("game.sceneRun.mutator = 'aucun'; game.sceneRun.breath = 100;");
+  run("SceneRunManager.startRun('expedition_faille'); SceneRunManager.confirmLoadout(['torche', 'gourde', 'amulette']);");
+  run("game.sceneRun.breath = 100;");
   var toutes = run("(function () { var sl = { type: 'obstacle', gabaritId: 'gouffre', riskMod: 1, voies: ['power', 'endurance'] };" +
     "return SceneRunManager.affordableVoies(game.sceneRun, SCENE_NODES.obstacles.gouffre, sl).length; })()");
   ok(toutes === 2, "[SOUFFLE] à 100 de Souffle, les deux voies exposées sont payables");
@@ -6064,42 +5494,6 @@ console.log("\n[42] Libellé d'objectif sur les cartes de mission");
    Périple (10 nœuds, 35 %), donc le risque ne payait pas. La table doit rester
    croissante avec la longueur du parcours, et l'ancienne forme plate doit encore
    être lue pour pouvoir revenir en arrière sans toucher au code. */
-console.log("\n[43] Bonus de Sève par intensité");
-(function () {
-  var cfg = g.SCENE_TEMPLATES.petite_aventure_foret.seveAeswyn;
-  var lire = function (profil, intensite) {
-    return g.SceneRunManager._seveFinaleAmount(cfg, profil, intensite);
-  };
-  var intensites = ["sentier", "chemin", "periple"];
-
-  ["bourrin", "prudent"].forEach(function (profil) {
-    var vals = intensites.map(function (i) { return lire(profil, i); });
-    ok(vals.every(function (v) { return v > 0; }),
-      profil + " : un bonus défini pour les 3 intensités (" + vals.join(" / ") + ")");
-    ok(vals[0] <= vals[1] && vals[1] <= vals[2],
-      profil + " : le bonus croît avec la longueur du parcours — le risque paie");
-  });
-
-  ok(lire("bourrin", "periple") > lire("prudent", "periple"),
-    "Bourrin reste mieux payé que Prudent à intensité égale");
-
-  /* Repli sur l'ancienne forme plate (nombre simple). */
-  var plat = { finaleGuaranteedAmount: { bourrin: 4, prudent: 2 } };
-  ok(g.SceneRunManager._seveFinaleAmount(plat, "bourrin", "periple") === 4,
-    "forme plate (nombre) encore lue telle quelle");
-  /* Intensité inconnue : on retombe sur une valeur, jamais sur 0. */
-  ok(lire("bourrin", "intensite_inexistante") > 0,
-    "intensité inconnue : repli sur une valeur, jamais zéro");
-  ok(g.SceneRunManager._seveFinaleAmount({ finaleGuaranteedAmount: {} }, "bourrin", "chemin") === 0,
-    "profil absent : zéro, sans exception");
-})();
-
-/* [44] v3.236.0 — chasse à la Sève « Ce que les bêtes ont bu ». Elle existe parce
-   que les deux autres sources sont insensibles à l'effort (cap journalier pour la
-   Petite Aventure, prix des tickets en 1,2^n pour le Donjon). Ces assertions
-   verrouillent ce qui la rend utile : elle donne bien de la Sève, elle est
-   rattachée au Cœur (son seul verrou de difficulté disponible), et elle reste
-   fermée tant que le Cœur ne l'est pas. */
 console.log("\n[44] Chasse à la Sève");
 (function () {
   var q = g.HUNT_QUESTS.hq_forest_seve;
@@ -6974,10 +6368,10 @@ console.log("\n[57] v3.255.0 \u2014 Cartes Vivantes C-1 : donn\u00e9es, LivingMa
   ok(!LM.isReachable(M, "menhirs") && !LM.isReachable(M, "arbremere"), "anneaux 2 et 3 inatteignables au départ");
   var cs = LM.canStart(M, "menhirs");
   ok(!cs.ok && /Lib\u00e8re d'abord Pont du gu\u00e9/.test(cs.reason), "mur : « " + cs.reason + " »");
-  // v3.260.0 : le coût d'entrée (Petite ration) est vérifié par canStart
+  // v3.388.0 : la Petite Aventure n'a plus de ration d'entrée (Q6) : aucun mur de ration
   game.resources.petite_ration = 0;
   var csRation = LM.canStart(M, "gue");
-  ok(!csRation.ok && /Il te manque une Petite ration/.test(csRation.reason) && csRation.missingResource === "petite_ration", "mur : ration manquante dite avant le départ (« " + csRation.reason + " »)");
+  ok(csRation.ok && !csRation.missingResource, "pas de ration d'entrée : le gué se lance sans Petite ration");
   game.resources.petite_ration = 5;
   ok(LM.canStart(M, "gue").ok && LM.canStart(M, "gue").intensity === "sentier", "Pont du gué : départ possible, intensité Sentier (anneau 1)");
 
@@ -7128,55 +6522,47 @@ console.log("\n[58] v3.256.0 \u2014 Cartes Vivantes C-2 : vue, runs cibl\u00e9s,
   missions[0].accept();
   ok(g.game.activeTab === "map" && g.isLivingMapOpen(), "accept() ouvre la carte de la Forêt au lieu de lancer un run");
 
-  /* Run ciblé : intensité par anneau, pools du secteur, écran de profil. */
+  /* Run ciblé (v3.388.0 : Petite Aventure v2) : l'anneau fixe la difficulté, la fin est rapportée à la carte. */
+  var P = g.Pa2Run;
   var st = LM.start(M, "gue");
-  ok(st.ok && g.game.activeTab === "scene" && g.game.sceneRun && g.game.sceneRun.livingMap && g.game.sceneRun.livingMap.sectorId === "gue", "départ du gué : run scene ciblé, onglet Expédition");
-  ok(g.game.sceneRun.status === "profile" && g.SceneRunManager.petiteAventureCountToday() === 1, "statut profil, un cran du cap consommé");
-  html = run("buildSceneScreenHTML()");
-  ok(/scene-map-target/.test(html) && /Pont du gu\u00e9/.test(html) && /Sentier/.test(html), "écran de profil : secteur, intensité imposée et lore");
+  ok(st.ok && g.game.activeTab === "scene" && g.game.sceneRun && g.game.sceneRun.pa2 && g.game.sceneRun.livingMap && g.game.sceneRun.livingMap.sectorId === "gue", "départ du gué : Petite Aventure ciblée, onglet Expédition");
+  ok(g.game.sceneRun.status === "pa2-prep" && g.game.sceneRun.ring === "sentier", "préparation, anneau 1 : Sentier");
   ok(!LM.canStart(M, "camp").ok && /d\u00e9j\u00e0 en cours/.test(LM.canStart(M, "camp").reason), "un autre secteur ne se lance pas pendant le run");
-  g.SceneRunManager.chooseProfile("bourrin");
+  P.depart();
+  ok(g.SceneRunManager.petiteAventureCountToday() === 1, "le départ consomme une place de la réserve");
   var r = g.game.sceneRun;
-  ok(r.intensity === "sentier" && r.status === "mutator-announce" && r.card.length === 6, "profil choisi : intensité Sentier posée sans écran (anneau 1), carte à 6 paliers");
-  var poolsOk = true;
-  r.card.forEach(function (lvl) { lvl.forEach(function (slot) { if (slot.type === "obstacle" && ["riviere", "gouffre"].indexOf(slot.gabaritId) < 0) poolsOk = false; }); });
-  ok(poolsOk, "obstacles tirés dans le pool du secteur seulement (rivière, gouffre)");
   /* Fin par abandon : échec, rien à reprendre, bilan avec retour à la carte. */
-  g.SceneRunManager.acknowledgeMutator();
   g.SceneRunManager.abandon();
   ok(r.status === "completed" && r.livingMapReport && r.livingMapReport.result === "fail" && r.livingMapReport.regressed === null, "abandon : échec rapporté à la carte, rien à reprendre");
   ok(LM.getState(M, "gue").state === "voile", "le gué reste voilé");
   html = run("buildSceneScreenHTML()");
-  ok(/scene-map-report/.test(html) && /Retour \u00e0 la carte/.test(html) && !/Nouvelle exp\u00e9dition/.test(html), "bilan : ligne de carte et un seul bouton, Retour à la carte");
-  run("leaveSceneScreen()");
-  ok(g.game.activeTab === "map" && g.isLivingMapOpen() && g.livingMapSelected === "gue" && g.game.sceneRun === null, "Retour : carte ouverte sur le gué, run nettoyé");
+  ok(/Retour \u00e0 la carte/.test(html), "bilan : retour à la carte");
+  run("pa2Leave()");
+  ok(g.game.activeTab === "map" && g.isLivingMapOpen() && g.game.sceneRun === null, "Retour : carte ouverte, run nettoyé");
 
-  /* Fin par finale résolue : succès, libération, Sève. */
+  /* Fin par destination atteinte : succès, libération, Sève. */
   var seve0 = g.WarehouseManager.getAmount("seve_aeswyn");
-  LM.start(M, "gue");
-  g.SceneRunManager.chooseProfile("prudent"); g.SceneRunManager.acknowledgeMutator();
-  g.game.sceneRun.status = "finale"; // raccourci : la chambre finale atteinte
-  g.SceneRunManager.resolveFinale("sur");
+  game.explorationProgression.petiteAventure = { spent: 0, since: null };
+  LM.start(M, "gue"); P.depart();
   r = g.game.sceneRun;
-  ok(r.status === "completed" && r.livingMapReport && r.livingMapReport.liberated && r.livingMapReport.firstReward === 5, "finale résolue : secteur libéré, +5 Sève de secteur");
-  ok(LM.getState(M, "gue").state === "libere" && g.WarehouseManager.getAmount("seve_aeswyn") >= seve0 + 5, "état libéré, Sève à l'Entrepôt (secteur + finale)");
-  ok(g.SceneRunManager.resolveFinale("sur").ok === false && r.livingMapReport.firstReward === 5, "une seconde notification est impossible (un seul compte rendu par run)");
-  run("leaveSceneScreen()");
+  r.at = "CLAIRIERE"; r.status = "pa2-node"; r.nodes.CLAIRIERE.done = false;
+  P.clairiere();
+  ok(r.status === "completed" && r.livingMapReport && r.livingMapReport.liberated && r.livingMapReport.firstReward === 5, "destination atteinte : secteur libéré, +5 Sève de secteur");
+  ok(LM.getState(M, "gue").state === "libere" && g.WarehouseManager.getAmount("seve_aeswyn") >= seve0 + 5, "état libéré, Sève à l'Entrepôt (secteur + destination)");
+  run("pa2Leave()");
   html = run("buildMapHTML()");
   ok((html.match(/class="lm-node is-libere/g) || []).length === 1 && (html.match(/radial-gradient/g) || []).length === 16, "carte : 1 libéré, brume sur 8");
 
-  /* Fin par mort en nœud combat : échec, retour au Campement. */
-  LM.onRunEnd(M, "menhirs", "success"); // menhirs libéré pour avoir quelque chose à perdre
-  LM.start(M, "camp"); // v3.258.0 : l'Arbre-mère est devenue une élite, on meurt au Campement (repli : le libéré le plus lointain tombe)
-  g.SceneRunManager.chooseProfile("bourrin"); g.SceneRunManager.acknowledgeMutator();
-  g.game.sceneRun.status = "combat";
-  g.game.activeTab = "combat";
+  /* Fin par KO : échec, rien ne régresse ailleurs (v3.366.0). */
+  LM.onRunEnd(M, "menhirs", "success");
+  game.explorationProgression.petiteAventure = { spent: 0, since: null };
+  LM.start(M, "camp"); P.depart();
   LM._rand = function () { return 0.99; };
-  run("CombatEngine.onHeroDefeated();");
-  ok(g.game.sceneRun.status === "completed" && g.game.sceneRun.livingMapReport.result === "fail" && g.game.sceneRun.livingMapReport.regressed === null && LM.getState(M, "menhirs").state === "libere", "mort en expédition : échec, rien ne régresse ailleurs (v3.366.0)");
-  ok(g.game.activeTab === "campement", "mort : retour au Campement comme partout");
+  P.finish("ko");
+  ok(g.game.sceneRun.status === "completed" && g.game.sceneRun.livingMapReport.result === "fail" && g.game.sceneRun.livingMapReport.regressed === null && LM.getState(M, "menhirs").state === "libere", "KO en expédition : échec, rien ne régresse ailleurs (v3.366.0)");
   run("SceneRunManager.clearRun();");
-  ok(!LM.canStart(M, "camp").ok && /PV sont à zéro/.test(LM.canStart(M, "camp").reason), "à 0 PV : aucun départ, le mur le dit");
+  game.heroHp = 0;
+  ok(!LM.canStart(M, "camp").ok && /PV sont \u00e0 z\u00e9ro/.test(LM.canStart(M, "camp").reason), "à 0 PV : aucun départ, le mur le dit");
   game.heroHp = game.heroMaxHp;
   LM._rand = Math.random;
 
@@ -7300,33 +6686,28 @@ console.log("\n[59] v3.257.0 \u2014 Cartes Vivantes C-3 : Palissade, effets tenu
   var c1 = g.TavernManager.getContracts()[1];
   ok(new RegExp(String(Math.floor(c1.reward * 1.10))).test(run("buildTavernContractsHTML()")), "le tableau affiche le paiement major\u00e9 (" + Math.floor(c1.reward * 1.10) + " or), pas la valeur de base");
 
-  /* Corde +1 (Pont du gué), gourde 40 (Autel de pierre), autel soigne une normale (Menhirs). */
+  /* Corde +1 (Pont du gué), gourde 40 (Autel de pierre), autel gratuit (Menhirs) — v3.388.0 : sur la Petite Aventure v2. */
+  var P = g.Pa2Run;
   LM.onRunEnd(M, "gue", "success");
+  game.explorationProgression.petiteAventure = { spent: 0, since: null };
   g.SceneRunManager.startRun("petite_aventure_foret");
-  g.SceneRunManager.chooseProfile("prudent"); g.SceneRunManager.chooseIntensity("chemin"); g.SceneRunManager.acknowledgeMutator();
-  g.SceneRunManager.confirmLoadout(["corde", "gourde", "provisions"]);
+  P.addItem("corde"); P.addItem("gourde"); P.depart();
   var run1 = g.game.sceneRun;
-  ok(run1.ropeCharges === 2, "Pont du gu\u00e9 tenu : une corde embarqu\u00e9e = 2 usages");
-  ok(g.SceneRunManager.getGourdeAmount() === 25, "Autel de pierre non tenu : gourde 25");
-  run1.breath = 50; g.SceneRunManager.useSceneGourde();
-  ok(run1.breath === 75, "gourde : +25");
+  ok(run1.stock.corde === 2, "Pont du gu\u00e9 tenu : une corde embarqu\u00e9e = 2 usages");
+  run1.breath = 50; P.useItem("gourde");
+  ok(run1.breath === 75, "Autel de pierre non tenu : gourde +25");
   LM.onRunEnd(M, "autel", "success");
-  ok(g.SceneRunManager.getGourdeAmount() === 40, "Autel de pierre tenu : gourde 40");
-  run1.breath = 50; run1.gourdeAvailable = true; g.SceneRunManager.useSceneGourde();
-  ok(run1.breath === 90, "gourde : +40");
-  run1.injuries = [{ severity: "normale", stat: "power" }, { severity: "grave", stat: "power" }];
-  ok(g.SceneRunManager.canHealHere(run1) === false, "sans Menhirs : l'autel ne peut rien sur une blessure normale");
+  run1.breath = 50; P.useItem("gourde");
+  ok(run1.breath === 90, "Autel de pierre tenu : gourde +40");
+  ok(P._altarFree(run1) === false, "sans Menhirs : l'autel se paie");
   LM.onRunEnd(M, "menhirs", "success");
-  ok(g.SceneRunManager.canHealHere(run1) === true, "Menhirs tenus : l'autel peut soigner la normale");
-  var healed = g.SceneRunManager._healOneInjury(run1, "legere");
-  ok(healed && healed.severity === "normale" && run1.injuries.length === 1 && run1.injuries[0].severity === "grave", "...il retire la normale, jamais la grave");
-  run1.injuries = [{ severity: "normale", stat: "power" }, { severity: "legere", stat: "power" }];
-  ok(g.SceneRunManager._healOneInjury(run1, "legere").severity === "legere", "une l\u00e9g\u00e8re pr\u00e9sente passe toujours avant la normale");
-  g.SceneRunManager.abandon();
-  g.SceneRunManager.startRun("petite_aventure_foret"); g.SceneRunManager.chooseProfile("prudent"); g.SceneRunManager.chooseIntensity("sentier"); g.SceneRunManager.acknowledgeMutator();
-  g.SceneRunManager.confirmLoadout(["torche", "gourde", "provisions"]);
-  ok(g.game.sceneRun.ropeCharges === 0, "sans corde embarqu\u00e9e, l'effet n'en invente pas une");
-  g.SceneRunManager.abandon();
+  ok(P._altarFree(run1) === true, "Menhirs tenus : l'autel est gratuit une fois par run");
+  g.SceneRunManager.abandon(); g.SceneRunManager.clearRun();
+  game.explorationProgression.petiteAventure = { spent: 0, since: null };
+  g.SceneRunManager.startRun("petite_aventure_foret");
+  P.addItem("torche"); P.addItem("gourde"); P.depart();
+  ok(!(g.game.sceneRun.stock.corde > 0), "sans corde embarqu\u00e9e, l'effet n'en invente pas une");
+  g.SceneRunManager.abandon(); g.SceneRunManager.clearRun();
 
   /* Carte : la fiche du village annonce la Palissade et les effets tenus. */
   run("switchTab('map'); openLivingMap('forest','etang')");
@@ -9786,14 +9167,14 @@ console.log("\n[98] v3.303.0 — Réservoir, Outre pleine, objets payés et obje
 
   /* Objets payés en ressource, objets à boire (canevas de test). */
   var T = g.SCENE_TEMPLATES;
-  T.test_outre = JSON.parse(JSON.stringify(T.petite_aventure_foret));
+  T.test_outre = JSON.parse(JSON.stringify(T.expedition_faille)); // v3.388.0 : canevas de test du moteur
   T.test_outre.id = "test_outre";
   T.test_outre.items.outre = { id: "outre", name: "Outre pleine", desc: "Rend 40 Souffle.", icon: "images/Icons/scene/water_flask.png", consumes: { resourceId: "outre_pleine", amount: 1 }, breath: 40 };
   T.test_outre.loadoutOffer = ["torche", "corde", "provisions", "gourde", "amulette", "outre", "outre"];
   try {
     game = freshCombat("knight");
     run("WarehouseManager.addResource('petite_ration', 3, true); game.unlockedTabs.village = true;");
-    var go = function () { R.startRun("test_outre"); R.chooseProfile("prudent"); R.chooseIntensity("sentier"); R.acknowledgeMutator(); };
+    var go = function () { R.startRun("test_outre"); };
     go();
     ok(game.sceneRun.status === "preparation", "préparation atteinte");
     ok(R.confirmLoadout(["torche", "corde", "outre"]).ok === false && game.sceneRun.status === "preparation", "sans Outre au stock : départ refusé, rien retiré");
@@ -9812,7 +9193,7 @@ console.log("\n[98] v3.303.0 — Réservoir, Outre pleine, objets payés et obje
 /* [99] v3.304.0 — W-2 : la Petite Aventure du Désert, l'étape « L'outre », l'icône générique. */
 console.log("\n[99] v3.304.0 — Petite Aventure du Désert, étape 3, icône générique");
 (function () {
-  var R = g.SceneRunManager, T = g.SCENE_TEMPLATES, N = g.SCENE_NODES, MU = g.SCENE_MUTATORS, MB = g.MissionBoard;
+  var R = g.SceneRunManager, T = g.SCENE_TEMPLATES, N = g.SCENE_NODES, MB = g.MissionBoard;
   var D = T.petite_aventure_desert;
 
   /* Données : obstacles, groupes, mutateurs. */
@@ -9821,54 +9202,47 @@ console.log("\n[99] v3.304.0 — Petite Aventure du Désert, étape 3, icône g�
     "quatre obstacles du Désert, trois voies chacun");
   ok(N.obstacles.puits_effondre.ropeOption === true && N.obstacles.puits_effondre.options.precision.label === "Longer la margelle", "le puits ouvre la voie de la corde ; la précision longe la margelle");
   ok(N.combatGroups.guerriers_desert.group.length === 2 && !N.combatGroups.ver_desert.group, "guerriers par deux, ver seul");
-  ok(D && D.worldId === "desert" && D.finalBoss === false && D.pools.combat.length === 3 && D.loadoutOffer.length === 6 && D.loadoutOffer[5] === "outre", "canevas : monde du Désert, pas de boss, trois groupes, l'Outre en 6e place");
-  ok(MU.tempete.weight === 0 && MU.chaleur.weight === 0, "tempête et chaleur hors de la table par défaut");
-
-  /* Tirage des mutateurs : la Forêt ne sort jamais ceux du Désert, et inversement. */
-  var vusF = {}, vusD = {};
-  for (var i = 0; i < 400; i++) { vusF[R._rollMutator(T.petite_aventure_foret)] = 1; vusD[R._rollMutator(D)] = 1; }
-  ok(!vusF.tempete && !vusF.chaleur && vusF.pluie && vusF.brouillard, "Forêt : sa table d'origine (pluie, brouillard…), jamais tempête ni chaleur");
-  ok(Object.keys(vusD).sort().join() === "aucun,chaleur,nuit,tempete", "Désert : rien, nuit, tempête, chaleur — ni pluie ni brouillard");
-
-  /* Un run du Désert : tempête, horizon, coût, Verre des dunes, drapeau. */
-  game = freshCombat("knight");
-  run("StoryQuestManager.ensure(); WarehouseManager.addResource('petite_ration', 3, true); WarehouseManager.addResource('outre_pleine', 1, true); game.unlockedTabs.village = true;");
-  game.explorationProgression.petiteAventure = { day: "", count: 0 };
-  var saved = D.mutatorWeights; D.mutatorWeights = { tempete: 1 };
+  /* v3.388.0 (PA2-6) : la Petite Aventure du Désert est en v2 ([164]). Le moteur de scènes garde ses
+     règles du Désert (gourde à une gorgée, ligne de mort, groupes) pour la remontée du fleuve : on
+     les teste sur un canevas de test bâti comme elle. */
+  ok(D && D.mode === "pa2" && D.worldId === "desert" && D.successFlag === "desertPaCompleted", "canevas : Petite Aventure v2 du Désert, drapeau de l'étape « L'outre »");
+  T.test_desert = JSON.parse(JSON.stringify(T.expedition_faille));
+  Object.assign(T.test_desert, { id: "test_desert", worldId: "desert", adventureIndex: 0, finalBoss: false, combatWaveRange: [1, 1], gourdeUses: 1,
+    pools: { obstacle: ["dune"], combat: ["guerriers_desert"] }, deathLine: T.remontee_fleuve.deathLine });
   try {
-    R.startRun("petite_aventure_desert"); R.chooseProfile("prudent"); R.chooseIntensity("sentier");
-    ok(game.sceneRun.mutator === "tempete" && game.sceneRun.status === "mutator-announce", "le canevas tire dans sa table (tempête forcée)");
-    R.acknowledgeMutator();
-    ok(R.confirmLoadout(["torche", "gourde", "outre"]).ok && g.WarehouseManager.getAmount("outre_pleine") === 0, "l'Outre se prend dans l'offre du Désert");
-    game.sceneRun._torchUsedAtDepth = game.sceneRun.depth;
-    ok(R.getVisibilityHorizon() === game.sceneRun.depth + 1, "tempête : un palier d'avance, même torche allumée");
-    ok(R._obstacleFactors(game.sceneRun, "endurance").breathCost === 30, "tempête : la voie d'endurance coûte 30 au lieu de 20");
-    game.sceneRun.status = "finale";
-    var seve0 = g.WarehouseManager.getAmount("seve_aeswyn");
-    R.resolveFinale("sur");
-    ok(g.WarehouseManager.getAmount("verre_des_dunes") >= 1 && g.WarehouseManager.getAmount("seve_aeswyn") === seve0, "finale : du Verre des dunes, pas de Sève");
-    ok(game.explorationProgression.desertPaCompleted === true && R.isQuestCompleted("petite_aventure_desert") === false, "drapeau « desertPaCompleted » posé, le canevas reste rejouable");
-  } finally { D.mutatorWeights = saved; }
-  ok(T.petite_aventure_foret.seveAeswyn && R._rareDropCfg(T.petite_aventure_foret).resourceId === "seve_aeswyn", "la Forêt garde la Sève");
+    /* Mort au Désert : pas « dans la forêt ». */
+    game = freshCombat("knight");
+    R.startRun("test_desert");
+    game.sceneRun.status = "combat";
+    var logs = []; var addLog0 = g.addLog; g.addLog = function (t) { logs.push(t); };
+    try { R.onCombatDefeat(); } finally { g.addLog = addLog0; }
+    ok(logs.some(function (t) { return /dans le sable/.test(t); }) && !logs.some(function (t) { return /dans la for/.test(t); }), "mort au Désert : « reste dans le sable »");
 
-  /* Mort au Désert : pas « dans la forêt ». */
-  game = freshCombat("knight");
-  run("WarehouseManager.addResource('petite_ration', 3, true); game.unlockedTabs.village = true;");
-  game.explorationProgression.petiteAventure = { day: "", count: 0 };
-  R.startRun("petite_aventure_desert"); R.chooseProfile("bourrin"); R.chooseIntensity("sentier");
-  game.sceneRun.status = "combat";
-  var logs = []; var addLog0 = g.addLog; g.addLog = function (t) { logs.push(t); };
-  try { R.onCombatDefeat(); } finally { g.addLog = addLog0; }
-  ok(logs.some(function (t) { return /dans le sable/.test(t); }) && !logs.some(function (t) { return /dans la for/.test(t); }), "mort au Désert : « reste dans le sable »");
+    /* Combat : la paire de guerriers sort du Désert. */
+    game = freshCombat("knight");
+    R.startRun("test_desert");
+    game.sceneRun.status = "node"; game.sceneRun.pendingNode = { type: "combat", gabaritId: "guerriers_desert" };
+    ok(R.enterCombatNode().ok && g.CombatActors.aliveEnemies().length === 2 && g.CombatActors.aliveEnemies().every(function (e) { return /sandwarrior|Guerrier/.test(e.id + " " + e.name + " " + (e.asset || "")); }), "« Deux guerriers des sables » : deux guerriers en combat");
+    ok(game.sceneRun._combatIsFinalWave === false, "pas de boss en fin de vague");
+    R.clearRun();
 
-  /* Combat : la paire de guerriers sort du Désert. */
-  game = freshCombat("knight");
-  run("WarehouseManager.addResource('petite_ration', 3, true); game.unlockedTabs.village = true;");
-  game.explorationProgression.petiteAventure = { day: "", count: 0 };
-  R.startRun("petite_aventure_desert"); R.chooseProfile("bourrin"); R.chooseIntensity("sentier"); R.acknowledgeMutator();
-  game.sceneRun.status = "node"; game.sceneRun.pendingNode = { type: "combat", gabaritId: "guerriers_desert" };
-  ok(R.enterCombatNode().ok && g.CombatActors.aliveEnemies().length === 2 && g.CombatActors.aliveEnemies().every(function (e) { return /sandwarrior|Guerrier/.test(e.id + " " + e.name + " " + (e.asset || "")); }), "« Deux guerriers des sables » : deux guerriers en combat");
-  ok(game.sceneRun._combatIsFinalWave === false, "pas de boss en fin de vague");
+    /* Gourde (décision Seb, option B) : une gorgée au Désert (gourdeUses), illimitée ailleurs. */
+    game = freshCombat("knight");
+    R.startRun("test_desert");
+    R.confirmLoadout(["torche", "gourde", "amulette"]);
+    game.sceneRun.breath = 40;
+    ok(g.buildSceneStatusBarHTML(game.sceneRun).indexOf("dernière gorgée") !== -1, "Désert : le bouton annonce la dernière gorgée");
+    ok(R.useSceneGourde().ok && game.sceneRun.gourdeAvailable === false, "Désert : une gorgée, puis la gourde est vide");
+    game.sceneRun.breath = 40;
+    ok(R.useSceneGourde().ok === false && g.buildSceneStatusBarHTML(game.sceneRun).indexOf("useSceneGourde()") === -1, "Désert : plus de gorgée, plus de bouton");
+    R.clearRun();
+    game = freshCombat("knight");
+    R.startRun("expedition_faille");
+    R.confirmLoadout(["torche", "gourde", "amulette"]);
+    game.sceneRun.breath = 20; R.useSceneGourde(); game.sceneRun.breath = 20;
+    ok(R.useSceneGourde().ok && game.sceneRun.gourdeAvailable === true && game.sceneRun.gourdeUses == null, "sans gourdeUses : la gourde reste illimitée");
+    R.clearRun();
+  } finally { delete T.test_desert; }
 
   /* Étape « L'outre » et tableau. */
   game = freshCombat("knight");
@@ -9892,25 +9266,6 @@ console.log("\n[99] v3.304.0 — Petite Aventure du Désert, étape 3, icône g�
   game.explorationProgression.desertPaCompleted = true;
   ok(st.check(game) === true, "Outre remplie et Petite Aventure du Désert terminée : étape validée");
   ok(g.WORKSHOPS_CONFIG.reservoir.active === true, "le Réservoir est ouvert à l'étape 3");
-
-  /* Gourde (décision Seb, option B) : une gorgée au Désert, illimitée en Forêt. */
-  game = freshCombat("knight");
-  run("WarehouseManager.addResource('petite_ration', 3, true); game.unlockedTabs.village = true;");
-  game.explorationProgression.petiteAventure = { day: "", count: 0 };
-  R.startRun("petite_aventure_desert"); R.chooseProfile("prudent"); R.chooseIntensity("sentier"); R.acknowledgeMutator();
-  R.confirmLoadout(["torche", "gourde", "amulette"]);
-  game.sceneRun.breath = 40;
-  ok(g.buildSceneStatusBarHTML(game.sceneRun).indexOf("dernière gorgée") !== -1, "Désert : le bouton annonce la dernière gorgée");
-  ok(R.useSceneGourde().ok && game.sceneRun.breath === 65 && game.sceneRun.gourdeAvailable === false, "Désert : une gorgée, puis la gourde est vide");
-  game.sceneRun.breath = 40;
-  ok(R.useSceneGourde().ok === false && g.buildSceneStatusBarHTML(game.sceneRun).indexOf("useSceneGourde()") === -1, "Désert : plus de gorgée, plus de bouton");
-  game = freshCombat("knight");
-  run("WarehouseManager.addResource('petite_ration', 3, true); game.unlockedTabs.village = true;");
-  game.explorationProgression.petiteAventure = { day: "", count: 0 };
-  R.startRun("petite_aventure_foret"); R.chooseProfile("prudent"); R.chooseIntensity("sentier"); R.acknowledgeMutator();
-  R.confirmLoadout(["torche", "gourde", "amulette"]);
-  game.sceneRun.breath = 20; R.useSceneGourde(); game.sceneRun.breath = 20;
-  ok(R.useSceneGourde().ok && game.sceneRun.gourdeAvailable === true && game.sceneRun.gourdeUses == null, "Forêt : la gourde reste illimitée");
 
   /* Icône générique. */
   var img = { tagName: "IMG", _a: { src: "images/Icons/x/absente.png" }, src: "images/Icons/x/absente.png",
@@ -9945,7 +9300,7 @@ console.log("\n[100] v3.305.0 — Carte du Désert, Ensablement, étape 4");
   game.storyQuests.desert.currentStep = i4 - 1;
   ok(LM.getMapForWorld("desert") === null && LM.getMapForWorld("forest") !== null, "étape 3 : pas encore de carte du Désert (la Forêt garde la sienne)");
   var pa = MB._petiteAventureMission("petite_aventure_desert");
-  ok(pa && !/carte/.test(pa.blurb), "étape 3 : la Petite Aventure du Désert se lance directement");
+  ok(pa && pa.blurb.indexOf(MB._PA_BLURB) === 0, "étape 3 : la Petite Aventure du Désert se lance directement");
   game.storyQuests.desert.currentStep = i4;
   ok(LM.getMapForWorld("desert") === MAP, "étape 4 : la carte s'ouvre");
   pa = MB._petiteAventureMission("petite_aventure_desert");
@@ -9969,7 +9324,7 @@ console.log("\n[100] v3.305.0 — Carte du Désert, Ensablement, étape 4");
   ok(steps[i4].check(game) === false && /1\/2/.test(steps[i4].progress(game)), "étape 4 : 1/2");
 
   /* Effets tenus : Outre renforcée, Réservoir plus rapide */
-  ok(g.SceneRunManager.getBreathItemAmount("outre", g.SCENE_TEMPLATES.petite_aventure_desert) === 55, "puits sec tenu : l'Outre rend 55");
+  ok(g.SceneRunManager.getBreathItemAmount("outre", g.SCENE_TEMPLATES.remontee_fleuve) === 55, "puits sec tenu : l'Outre rend 55");
   LM.onRunEnd("desert", "steles", "success");
   ok(steps[i4].check(game) === true, "deux secteurs libérés : étape validée");
   LM.onRunEnd("desert", "oasis", "success");
@@ -9985,7 +9340,7 @@ console.log("\n[100] v3.305.0 — Carte du Désert, Ensablement, étape 4");
     var fail = LM.onRunEnd("desert", "puits_sec", "fail");
     ok(fail.regressed === "puits_sec" && /L'Ensablement a repris Le puits sec/.test(fail.message) && /depuis le camp/.test(fail.message) && LM.getState("desert", "puits_sec").state === "recouvert",
       "rejeu raté du puits sec : l'Ensablement le reprend, « reprends-le depuis le camp »");
-    ok(g.SceneRunManager.getBreathItemAmount("outre", g.SCENE_TEMPLATES.petite_aventure_desert) === 40 && g.WorkshopsSystem.getLivingMapSpeedMult("reservoir") === 1.10, "l'Outre perd son bonus, le Réservoir garde le sien");
+    ok(g.SceneRunManager.getBreathItemAmount("outre", g.SCENE_TEMPLATES.remontee_fleuve) === 40 && g.WorkshopsSystem.getLivingMapSpeedMult("reservoir") === 1.10, "l'Outre perd son bonus, le Réservoir garde le sien");
     LM.onRunEnd("desert", "oasis", "fail"); LM.onRunEnd("desert", "steles", "fail");
     ok(steps[i4].check(game) === true, "l'étape reste acquise même si le sable reprend tout");
   } finally { LM._rand = rand0; }
@@ -10374,82 +9729,6 @@ console.log("\n[107] v3.311.0 — Maddoc, voies, étapes 8 à 10");
 })();
 
 /* [108] v3.312.0 — W-3d : événements à branches en Petite Aventure, Maddoc en surface. */
-console.log("\n[108] v3.312.0 — Événement Maddoc en Petite Aventure");
-(function () {
-  var R = g.SceneRunManager, EV = g.SCENE_NODES.events.maddoc;
-  var steps = g.STORY_QUESTS.desert.steps, i3 = steps.findIndex(function (x) { return x.id === "desert_03"; });
-  var chance0 = EV.chance; EV.chance = 1;
-  function freshPA(stepIdx) {
-    game = freshCombat("knight");
-    run("StoryQuestManager.ensure(); WarehouseManager.addResource('petite_ration', 3, true);");
-    game.unlockedTabs.village = true;
-    game.storyQuests.forest.currentStep = g.STORY_QUESTS.forest.steps.length;
-    game.storyQuests.desert.currentStep = stepIdx; game.storyQuests.desert.accepted = true;
-    g.WorldTravel.arrive("desert", 0);
-    game.explorationProgression.petiteAventure = { day: "", count: 0 };
-    game.explorationProgression.maddocMet = null;
-    R.startRun("petite_aventure_desert"); R.chooseProfile("prudent"); R.chooseIntensity("sentier");
-    if (game.sceneRun.status === "mutator-announce") R.acknowledgeMutator();
-    if (game.sceneRun.status === "preparation") R.confirmLoadout([]);
-  }
-  function findEvent() {
-    for (var d = 0; d < game.sceneRun.card.length; d++) for (var k = 0; k < game.sceneRun.card[d].length; k++) {
-      if (game.sceneRun.card[d][k].type === "evenement") return { d: d, k: k };
-    }
-    return null;
-  }
-  try {
-    ok(EV.templateIds[0] === "petite_aventure_desert" && EV.branches.length === 3 && EV.branches[2].label === "Passer", "gabarit bible §5 : annonce, trois branches, « Passer » sans jugement");
-    freshPA(i3 - 1);
-    ok(findEvent() === null, "avant l'étape 3 : pas d'événement");
-    freshPA(i3);
-    var pos = findEvent();
-    ok(pos && pos.d >= 1 && pos.d < game.sceneRun.card.length - 1, "étape 3 atteinte : un homme sur le chemin, au milieu du run (palier " + (pos ? pos.d + 1 : "?") + ")");
-    game.sceneRun.depth = pos.d; game.sceneRun.status = "gate";
-    R.enterGate(pos.k);
-    ok(R.getPendingEvent() === EV, "porte franchie : l'événement se pose");
-    var html = g.buildSceneNodeHTML();
-    ok(html.indexOf("Sa jambe ne va pas dans le bon sens") !== -1 && /disabled>Lui donner la gourde/.test(html), "écran : l'annonce, la gourde grisée sans gourde");
-    game.sceneRun.breath = 60;
-    var r = R.resolveEvent("souffle");
-    ok(r.ok && /Maddoc, de l'autre côté du gouffre/.test(r.text) && game.sceneRun.breath === 40, "Souffle donné : −20, il dit son nom");
-    ok(game.explorationProgression.maddocMet === "aided" && game.sceneRun.eventEcho.outcome === "aided", "aidé : noté pour la partie et pour ce run");
-    /* L'écho : une pierre au prochain combat */
-    game.sceneRun.status = "node"; game.sceneRun.pendingNode = { type: "combat", gabaritId: "ver_desert" };
-    R.enterCombatNode();
-    var ver = (game.combat && game.combat.enemies && game.combat.enemies[0]) || game.enemy;
-    ok(ver.hp <= Math.ceil(ver.maxHp * 0.75) && game.sceneRun.eventEcho.done === true, "au combat suivant : une pierre depuis les dunes (−25 % PV)");
-    var lines = R.takeJournalLines(game.sceneRun);
-    ok(lines.some(function (t) { return /Quelqu'un, derrière, qui boite/.test(t) && /un ver/.test(t); }), "journal : « prend un ver des sables à la tempe »");
-    /* Une fois par partie */
-    R.abandon(); R.clearRun();
-    game.explorationProgression.petiteAventure = { day: "", count: 0 };
-    R.startRun("petite_aventure_desert"); R.chooseProfile("prudent"); R.chooseIntensity("sentier");
-    ok(findEvent() === null, "une fois croisé : plus d'événement");
-
-    /* Passer : le coffre entamé */
-    freshPA(i3 + 2);
-    pos = findEvent();
-    game.sceneRun.depth = pos.d; game.sceneRun.status = "gate"; R.enterGate(pos.k);
-    ok(R.resolveEvent("passer").ok && game.explorationProgression.maddocMet === "passed", "passé : noté");
-    game.sceneRun.loot = 200; game.sceneRun.status = "finale";
-    R.resolveFinale("sur");
-    ok(game.sceneRun.eventEcho.done === true && R.takeJournalLines(game.sceneRun).some(function (t) { return /Il manque ce qu'un homme peut porter/.test(t); }), "à la finale : le coffre est entamé");
-
-    /* La gourde */
-    freshPA(i3);
-    pos = findEvent();
-    game.sceneRun.depth = pos.d; game.sceneRun.status = "gate"; R.enterGate(pos.k);
-    game.sceneRun.gourdeAvailable = true; game.sceneRun.gourdeUses = 1;
-    ok(R.resolveEvent("gourde").ok && game.sceneRun.gourdeAvailable === false && game.explorationProgression.maddocMet === "aided", "la gourde part avec lui");
-
-    /* Fenêtre fermée à l'étape 8 */
-    freshPA(steps.findIndex(function (x) { return x.id === "desert_08"; }));
-    ok(findEvent() === null, "étape 8 atteinte : l'événement ne se pose plus");
-  } finally { EV.chance = chance0; }
-})();
-
-/* [109] v3.313.0 — Bourse lourde et Contrats lucratifs retirés, or rendu. */
 console.log("\n[109] v3.313.0 — Boutique : Bourse et Contrats retirés, remboursement");
 (function () {
   game = freshCombat("knight");
@@ -11422,8 +10701,8 @@ console.log("\n[125] v3.330.0 — Plafond de stock brut, niveaux d'Histoire, Blo
 console.log("\n[126] v3.331.0 — Suite du recalage : Petite Aventure du Désert, Arbre-mère");
 (function () {
   var T = g.SCENE_TEMPLATES.petite_aventure_desert, F = g.SCENE_TEMPLATES.petite_aventure_foret;
-  ok(T.combatPowerMult === 3.5 && T.combatHpMult === 2.3, "R1 : combats de la PA du Désert ×3,5 dégâts, ×2,3 PV");
-  ok(!F.combatPowerMult && !F.combatHpMult, "R1 : la PA de la Forêt ne change pas");
+  // v3.388.0 : les deux Petites Aventures sont en v2 (force par PA2_ACTS) ; le réglage de canevas reste pour la remontée.
+  ok(g.SCENE_TEMPLATES.remontee_fleuve.combatPowerMult === 3.5 && g.SCENE_TEMPLATES.remontee_fleuve.combatHpMult === 2.3, "R1 : la remontée du fleuve garde ×3,5 dégâts, ×2,3 PV");
   var src = require("fs").readFileSync(ROOT + "/js/systems/scene-run-system.js", "utf8");
   ok(src.indexOf("tplCombat.combatPowerMult") !== -1 && src.indexOf("pseudoQuest.groupHpMult * tplCombat.combatHpMult") !== -1, "R1 : le canevas règle la force de ses combats (groupes compris)");
   var A = g.ELITE_DB.arbre_mere.statMult;
@@ -12369,7 +11648,7 @@ console.log("\n[139] v3.361.0 — Acte IV, étape 16 : Personne ne remonte le fl
   S.acceptStep("desert");
 
   var T = g.SCENE_TEMPLATES.remontee_fleuve;
-  ok(!T.profileWeights && T.entryCost.resourceId === "ration" && T.items === g.SCENE_TEMPLATES.petite_aventure_desert.items, "hors cap, une Ration moyenne, le sac de la Petite Aventure du Désert");
+  ok(!T.profileWeights && T.entryCost.resourceId === "ration" && !!T.items && T.items.outre.breathBonusEffect === "outre_plus" && T.loadoutOffer.every(function (id) { return !!T.items[id]; }) && /dans le sable/.test(T.deathLine), "hors cap, une Ration moyenne, son propre sac (Outre comprise) depuis la v3.388.0");
   game.resources.ration = 0;
   ok(R.startRun("remontee_fleuve").ok === false, "sans Ration moyenne : départ refusé");
   run("WarehouseManager.addResource('ration', 1, true);");
@@ -12795,13 +12074,1166 @@ console.log("\n[151] v3.375.0 — Multilangue, EN-1 : interface traduite en angl
   ok(g._t("Fermer") === "Close" && g._t("Partir", "quête") !== undefined, "anglais : texte simple");
   ok(g._tn(1, "{n} objet", "{n} objets") === "1 item" && g._tn(3, "{n} objet", "{n} objets") === "3 items", "anglais : pluriels (1 item, 3 items)");
   ok(g._t("Pas assez de {x}", { x: "gold" }) === "Not enough gold", "anglais : gabarit à paramètre");
-  ok(g._td(g.ENEMY_DB.slime.name) === g.ENEMY_DB.slime.name || g._td(g.ENEMY_DB.slime.name) === "Slime", "anglais : une donnée pas encore traduite s'affiche en français");
+  ok(g._td("Texte absent du dictionnaire") === "Texte absent du dictionnaire", "anglais : un texte absent du dictionnaire s'affiche en français");
   var st = g.buildSettingsHTML();
-  ok(st.indexOf("English (beta)") !== -1 && st.indexOf("Language") !== -1 && st.indexOf("Save") !== -1, "anglais : Paramètres traduits, choix de langue présent");
+  ok(st.indexOf("English") !== -1 && st.indexOf("Language") !== -1 && st.indexOf("Save") !== -1, "anglais : Paramètres traduits, choix de langue présent");
   I._lang = "fr";
   var fr = g.buildSettingsHTML();
-  ok(fr.indexOf("Langue") !== -1 && fr.indexOf("English (beta)") !== -1 && fr.indexOf("confirmLanguageChange('en')") !== -1, "français : choix de langue dans les Paramètres (D3)");
+  ok(fr.indexOf("Langue") !== -1 && fr.indexOf("English") !== -1 && fr.indexOf("confirmLanguageChange('en')") !== -1, "français : choix de langue dans les Paramètres (D3)");
   I._lang = null;
+})();
+
+console.log("\n[152] v3.376.0 — Multilangue, EN-2 : la Forêt en anglais, langue du navigateur au premier lancement");
+(function () {
+  var I = g.I18n, path = require("path"), fs = require("fs"), cp = require("child_process");
+  var tmp = path.join(require("os").tmpdir(), "aethervale-i18n2-" + process.pid + ".json");
+  try { cp.execFileSync(process.execPath, [path.resolve(ROOT, "sim", "i18n-audit.js"), ROOT, "--json", tmp], { encoding: "utf8" }); } catch (e) {}
+  var rows = fs.existsSync(tmp) ? JSON.parse(fs.readFileSync(tmp, "utf8")) : [];
+  try { fs.unlinkSync(tmp); } catch (e) {}
+  // Tables entièrement traduites : aucun texte du Désert n'y vit hors des noms (déjà traduits)
+  var pleines = /data:(ENEMY_DB|BOSS_DB|ELITE_DB|CODEX_ENTRIES|VILLAGE_QUESTS|WORKSHOP_UNLOCK_STEPS|WAREHOUSE_RESOURCES|PRODUCTION_BUILDINGS|VILLAGE_BUILDINGS|TALENT_TREES|CLASS_SKILLS|GENERIC_TUTORIALS|MEMORY_LEVELS|POTIONS_DB|UPGRADES|AMBIANCE_TEXTS)$/;
+  var trou = rows.filter(function (r) { return r.kind === "data" && !r.done && r.files.some(function (f) { return pleines.test(f); }); });
+  ok(rows.length > 3000 && trou.length === 0, "anglais : ennemis, Codex, quêtes de village, bâtiments, ressources, talents, tutoriels traduits (" + trou.length + " manquant(s)" + (trou.length ? ", ex. « " + trou[0].key + " »" : "") + ")");
+  var reste = rows.filter(function (r) { return r.kind === "data" && !r.done; }).length;
+  ok(reste < 450, "anglais : au plus le récit du Désert reste à traduire (" + reste + " texte(s))");
+  // Histoire de la Forêt : chaque texte déclaré a son anglais
+  var D = I.dicts.en, sq = g.STORY_QUESTS.forest, manque = [];
+  var voir = function (s) { if (typeof s === "string" && s && !D.hasOwnProperty(s)) manque.push(s); };
+  voir(sq.title); voir(sq.subtitle); voir(sq.endText);
+  sq.steps.forEach(function (st) {
+    voir(st.title); voir(st.act); voir(st.objectiveLabel);
+    if (st.narrative) { voir(st.narrative.objective); voir(st.narrative.completion); (st.narrative.dialogue || []).forEach(function (d) { voir(d.text); }); }
+    if (st.tutorial) { voir(st.tutorial.title); (st.tutorial.points || []).forEach(function (pt) { voir(pt.text); }); }
+  });
+  ok(manque.length === 0, "anglais : Histoire du chapitre 1 entièrement traduite" + (manque.length ? " (manque « " + manque[0] + " »)" : ""));
+  I._lang = "en";
+  ok(g._td(g.ENEMY_DB.wolf.name) === "Wild wolf" && g._td(g.STORY_QUESTS.forest.title) === "The Embers of Aeswyn", "anglais : « Loup sauvage » → Wild wolf, « Les Braises d'Aeswyn » → The Embers of Aeswyn");
+  ok(g.ENEMY_DB.wolf.name === "Loup sauvage", "anglais : la donnée reste en français dans l'objet (sauvegarde inchangée)");
+  var codex0 = g._td(g.CODEX_ENTRIES[0].text);
+  ok(codex0.indexOf("Sundering") !== -1 && codex0.split("\n\n").length === g.CODEX_ENTRIES[0].text.split("\n\n").length, "anglais : Codex traduit, paragraphes conservés");
+  I._lang = "fr";
+  ok(g._td(g.ENEMY_DB.wolf.name) === "Loup sauvage", "français : les données s'affichent comme avant");
+  // D3 : premier lancement
+  var nav = g.navigator, sav = {};
+  Object.keys(storage).forEach(function (k) { sav[k] = storage[k]; delete storage[k]; });
+  var essai = function (code, avecPartie) {
+    Object.keys(storage).forEach(function (k) { delete storage[k]; });
+    if (avecPartie) storage["quest_idle_save_v6_slot1"] = "{}";
+    g.navigator = { language: code, languages: code ? [code] : [] };
+    g.Prefs._cache = null; I._lang = null;
+    var l = I.lang();
+    return l + "/" + g.Prefs.has("lang");
+  };
+  ok(essai("en-US", false) === "en/true", "D3 : appareil neuf, navigateur anglais → anglais, choix enregistré");
+  ok(essai("fr-FR", false) === "fr/true" && essai("de-DE", false) === "en/true" && essai("", false) === "fr/true", "D3 : navigateur français → français ; autre langue → anglais ; inconnue → français");
+  ok(essai("en-GB", true) === "fr/true", "D3 : une partie existe déjà → reste en français");
+  Object.keys(storage).forEach(function (k) { delete storage[k]; });
+  storage.aethervale_prefs = JSON.stringify({ lang: "fr" });
+  g.navigator = { language: "en-US" }; g.Prefs._cache = null; I._lang = null;
+  ok(I.lang() === "fr", "D3 : une langue déjà choisie n'est jamais remplacée par celle du navigateur");
+  Object.keys(storage).forEach(function (k) { delete storage[k]; });
+  Object.keys(sav).forEach(function (k) { storage[k] = sav[k]; });
+  g.navigator = nav; g.Prefs._cache = null; I._lang = null;
+})();
+
+console.log("\n[153] v3.377.0 — Multilangue, EN-3 : le récit du Désert en anglais, tout le contenu traduit");
+(function () {
+  var I = g.I18n, path = require("path"), fs = require("fs"), cp = require("child_process");
+  var tmp = path.join(require("os").tmpdir(), "aethervale-i18n3-" + process.pid + ".json");
+  try { cp.execFileSync(process.execPath, [path.resolve(ROOT, "sim", "i18n-audit.js"), ROOT, "--json", tmp], { encoding: "utf8" }); } catch (e) {}
+  var rows = fs.existsSync(tmp) ? JSON.parse(fs.readFileSync(tmp, "utf8")) : [];
+  try { fs.unlinkSync(tmp); } catch (e) {}
+  var manque = rows.filter(function (r) { return r.kind === "data" && !r.done; });
+  ok(rows.length > 3000 && manque.length === 0, "anglais : aucun texte de données ne manque (" + manque.length + (manque.length ? ", ex. « " + manque[0].key + " »" : "") + ")");
+  var D = I.dicts.en, sq = g.STORY_QUESTS.desert, trou = [];
+  var voir = function (s) { if (typeof s === "string" && s && !D.hasOwnProperty(s)) trou.push(s); };
+  voir(sq.title); voir(sq.subtitle); voir(sq.endText);
+  sq.steps.forEach(function (st) {
+    voir(st.title); voir(st.act); voir(st.objectiveLabel);
+    ["dialogue", "completionDialogue"].forEach(function (k) { if (st.narrative) (st.narrative[k] || []).forEach(function (d) { voir(d.text); }); });
+    if (st.narrative) { voir(st.narrative.objective); voir(st.narrative.completion); }
+    if (st.choice) { voir(st.choice.title); voir(st.choice.text); (st.choice.options || []).forEach(function (o) { voir(o.label); voir(o.desc); }); }
+    if (st.tutorial) { voir(st.tutorial.title); (st.tutorial.points || []).forEach(function (pt) { voir(pt.text); }); }
+  });
+  ok(trou.length === 0, "anglais : Histoire du chapitre 2 entièrement traduite (dialogues, choix, tutoriels)" + (trou.length ? " — manque « " + trou[0] + " »" : ""));
+  I._lang = "en";
+  ok(g._td(sq.title) === "What the Sand Keeps" && g._td("Le Veilleur") === "The Watcher", "anglais : « Ce que le sable garde » → What the Sand Keeps, le Veilleur → the Watcher");
+  var ps = [], pd = (g.PATROL_STORIES.maddoc || {}).desert || {};
+  Object.keys(pd).forEach(function (k) { [].concat(pd[k]).forEach(function (x) { if (typeof x === "string") ps.push(x); }); });
+  ok(ps.length > 0 && ps.every(function (x) { return D.hasOwnProperty(x); }), "anglais : récits de patrouille de Maddoc au Désert traduits (" + ps.length + ")");
+  var st = g.buildSettingsHTML();
+  ok(st.indexOf("(beta)") === -1 && st.indexOf("The game restarts to change language.") !== -1, "anglais : « English » sans « (beta) », note de relance seule");
+  I._lang = "fr";
+  var fr = g.buildSettingsHTML();
+  ok(fr.indexOf("Désert reste en français") === -1 && fr.indexOf("Le jeu redémarre pour changer de langue.") !== -1, "français : la note sur le Désert a disparu");
+  ok(g._td(sq.title) === "Ce que le sable garde", "français : le Désert s'affiche comme avant");
+  I._lang = null;
+})();
+
+console.log("\n[154] v3.378.0 — « Ce que tu vas affronter » : traits connus avant le combat, mode Grimoire");
+(function () {
+  game = freshCombat("knight");
+  var G = g.game;
+  G.unlockedTabs.grimoire = true;
+  G.killCounts = {};
+  G.grimoireRules = [];
+  G.grimoirePresets = [];
+  G.combatMode = "grimoire";
+  var card = function (ctx) { return g.buildEnemyTraitsCardHTML(ctx); };
+  var coeur = { type: "adventure", id: "aq_story_coeur" };   // filtre : slime, gobelin, araignée, troll (bouclier), ronce (silence)
+
+  ok(card(coeur) === "", "aucune créature vaincue : pas d'encart");
+  G.killCounts.slime = 3;
+  ok(card(coeur) === "", "créatures vaincues sans trait fixe : pas d'encart");
+  G.killCounts.foresttroll = 1;
+  var h = card(coeur);
+  ok(h.indexOf("Ce que tu vas affronter") !== -1 && h.indexOf("Bouclier") !== -1 && h.indexOf(g._td(g.ENEMY_DB.foresttroll.name)) !== -1, "troll vaincu : son trait « Bouclier » s'affiche");
+  ok(h.indexOf("Silence") === -1 && /créatures jamais vaincues/.test(h), "ronce jamais vaincue : trait caché, compté parmi les créatures jamais vaincues");
+  ok(h.indexOf("Aucune règle active ne répond") !== -1, "aucune règle : « Aucune règle active ne répond »");
+
+  // Une règle qui CONTRE le bouclier, et une qui y réagit sans contrer
+  var kit = g.getClassSkills(g.ClassCombatManager.getCurrentClassId());
+  var slots = Object.keys(kit.actions);
+  var contre = slots.filter(function (k) { return g.getAllGrimoireCounterIds(kit.actions[k]).indexOf("shieldIncoming") !== -1; })[0];
+  var neutre = slots.filter(function (k) { return g.getAllGrimoireCounterIds(kit.actions[k]).indexOf("shieldIncoming") === -1 && (g.GRIMOIRE_ASSIGNABLE_SLOTS || slots).indexOf(k) !== -1; })[0];
+  G.grimoireRules = [{ conditionId: "shieldIncoming", actionSlot: neutre }];
+  ok(/réagit, sans le contrer/.test(card(coeur)), "règle sans contre : « réagit, sans le contrer »");
+  if (contre) {
+    G.grimoireRules = [{ conditionId: "shieldIncoming", actionSlot: contre }];
+    ok(/le contre\./.test(card(coeur)) && card(coeur).indexOf("is-counter") !== -1, "règle qui contre : « Ta règle … le contre. »");
+  }
+  // Règle au-delà des emplacements débloqués : ne compte pas
+  G.grimoireRules = [{ conditionId: null, actionSlot: null }, { conditionId: null, actionSlot: null }, { conditionId: "shieldIncoming", actionSlot: contre || neutre }];
+  ok(/Aucune règle active ne répond/.test(card(coeur)), "règle hors des emplacements actifs : ignorée");
+
+  // Presets : puce avec le compte de contres, chargement sur place
+  G.grimoireRules = [];
+  G.grimoirePresets = [{ id: "p1", name: "Forêt", icon: "", rules: [{ conditionId: "shieldIncoming", actionSlot: contre || neutre }], lastModified: 0 }];
+  h = card(coeur);
+  ok(h.indexOf("loadEnemyTraitsPreset('p1')") !== -1 && h.indexOf("⚡ " + (contre ? 1 : 0) + "/1") !== -1, "preset proposé avec ce qu'il contre ici");
+  g.loadEnemyTraitsPreset("p1");
+  ok(G.grimoireRules[0] && G.grimoireRules[0].conditionId === "shieldIncoming", "charger le preset depuis l'encart remplace les règles");
+  ok(card(coeur).indexOf("is-current") !== -1, "le preset chargé est marqué comme actif");
+
+  // Mode Tactique : rien
+  G.combatMode = "tactique";
+  ok(card(coeur) === "", "mode Tactique : pas d'encart (le trait se lit en direct)");
+  G.combatMode = "grimoire";
+
+  // Boss : trait de base après la victoire, jamais les phases
+  var trone = { type: "adventure", id: "aq_desert_trone" };
+  G.killCounts = { sandwarrior: 2, scarab: 5, sandworm: 1 };
+  h = card(trone);
+  ok(h.indexOf("Blindé") !== -1 && h.indexOf("Vampirique") === -1 && /1 créature jamais vaincue/.test(h), "Nezzam jamais vaincu : trait caché ; Guerrier des sables : Blindé");
+  G.killCounts.nezzam = 1;
+  h = card(trone);
+  ok(h.indexOf("Vampirique") !== -1 && h.indexOf("Silence") === -1, "Nezzam vaincu : « Vampirique » ; sa phase de silence reste une surprise");
+  ok(h.split("et-row").length - 1 === 2, "scarabée et ver des sables (silence tiré au hasard) : aucun trait affiché");
+
+  // Donjon : élites et boss seulement ; boss connu une fois le donjon terminé
+  G.killCounts = { serment_armure: 1, sandwarrior: 4 };
+  G.dungeonTierCleared = {};
+  h = card({ type: "dungeon", id: 2 });
+  ok(h.indexOf("Blindé") !== -1 && h.indexOf("Serment sous") !== -1 && h.indexOf("sphinx") === -1, "Cité engloutie : élite vaincue affichée, sphinx caché tant que le donjon n'est pas terminé");
+  G.dungeonTierCleared = { 2: true };
+  ok(card({ type: "dungeon", id: 2 }).indexOf("sphinx") !== -1, "donjon terminé : le trait du sphinx s'affiche");
+  ok(card({ type: "elite", id: "serment_armure" }).indexOf("Blindé") !== -1, "élite de la carte : trait affiché");
+
+  // Anglais
+  g.I18n._lang = "en";
+  h = card(trone);
+  ok(h.indexOf("What you're about to face") !== -1 && h.indexOf("Armoured") !== -1, "anglais : encart traduit");
+  g.I18n._lang = null;
+})();
+
+console.log("\n[155] v3.379.0 — Potion automatique du mode Grimoire (hors règles)");
+(function () {
+  var P = g.PotionAutoManager;
+  game = freshCombat("knight");
+  var G = g.game;
+  ok(G.potionAuto && G.potionAuto.threshold === "tard" && G.potionAuto.keepForBoss === true, "partie neuve : « Tard » (v3.380.0), dernière gardée pour le boss");
+  var neuf = g.createInitialGameState();
+  ok(neuf.potionAuto && neuf.potionAuto.threshold === "tard", "nouvel emplacement (createInitialGameState) : « Tard »");
+
+  // Sauvegarde : aller-retour, et sauvegarde d'avant sans le champ -> « Jamais »
+  G.potionAuto = { threshold: "tot", keepForBoss: false };
+  run("localStorage.setItem(getActiveSaveKey(), JSON.stringify(buildSaveData()));");
+  G.potionAuto = null;
+  run("loadGame();");
+  ok(g.game.potionAuto.threshold === "tot" && g.game.potionAuto.keepForBoss === false, "sauvegarde : le réglage survit à un rechargement");
+  run("var __d = buildSaveData(); delete __d.potionAuto; localStorage.setItem(getActiveSaveKey(), JSON.stringify(__d));");
+  run("loadGame();");
+  ok(g.game.potionAuto.threshold === "jamais" && g.game.potionAuto.keepForBoss === true, "sauvegarde d'avant cette version : « Jamais » (rien ne change pour elle)");
+  g.game.potionAuto = { threshold: "tard", keepForBoss: true };
+  run("hardResetState();");
+  ok(g.game.potionAuto.threshold === "tard", "ascension : le réglage est préservé");
+
+  game = freshCombat("knight");
+  G = g.game;
+  G.unlockedTabs.grimoire = true;
+  G.combatMode = "grimoire";
+  G.healingPotionsOwned = { potion_soin_mineur: 2, potion_soin_majeur: 1 };
+  G.potionAuto = { threshold: "normal", keepForBoss: false };
+  var setHp = function (pct) { G.heroHp = Math.floor(G.heroMaxHp * pct); };
+
+  setHp(0.5);  ok(P.pick() === null, "Normal : à 50 % de PV, pas de potion");
+  setHp(0.38); ok(P.pick() === "potion_soin_mineur", "Normal : à 38 %, la Mineure suffit (remonte à 60 %)");
+  setHp(0.15); ok(P.pick() === "potion_soin_majeur", "à 15 %, la Mineure ne suffit pas : la Majeure");
+  G.healingPotionsOwned.potion_soin_majeur = 0;
+  ok(P.pick() === "potion_soin_mineur", "sans Majeure : la plus forte qui reste");
+  G.healingPotionsOwned.potion_soin_majeur = 1;
+  G.potionAuto.threshold = "tard"; setHp(0.30); ok(P.pick() === null, "Tard : rien à 30 %");
+  setHp(0.24); ok(P.pick() !== null, "Tard : potion sous 25 %");
+  G.potionAuto.threshold = "tot"; setHp(0.54); ok(P.pick() !== null, "Tôt : potion sous 55 %");
+  G.potionAuto.threshold = "jamais"; setHp(0.05); ok(P.pick() === null, "Jamais : aucune potion automatique");
+  G.potionAuto.threshold = "normal";
+  G.combatMode = "tactique"; ok(P.pick() === null, "mode Tactique : aucune potion automatique");
+  G.combatMode = "grimoire";
+
+  // Plafond par sortie
+  g.SortieManager.start("adventure");
+  G.sortie.potionsUsed = g.getSortiePotionCap();
+  setHp(0.2); ok(P.pick() === null, "plafond de la sortie atteint : plus de potion");
+  G.sortie.potionsUsed = 0;
+
+  // Garder la dernière pour le boss : quête d'aventure dont l'étape boss n'est pas faite
+  G.potionAuto.keepForBoss = true;
+  var q = g.ADVENTURE_QUESTS.aq_desert_trone;
+  var runSauve = G.adventureQuestRun;
+  G.adventureQuestRun = { active: true, questId: q.id, progress: {} };
+  var bossDevant = P.hasBossAhead();
+  ok(bossDevant === true, "Le trône de sable : Nezzam est encore devant");
+  G.sortie.potionsUsed = g.getSortiePotionCap() - 1;   // une seule potion permise encore
+  setHp(0.2); ok(P.pick() === null, "garder pour le boss : la dernière potion attend Nezzam");
+  G.sortie.potionsUsed = 0;
+  ok(P.pick() !== null, "deux potions permises : il en boit une, la dernière reste");
+  G.healingPotionsOwned = { potion_soin_mineur: 1, potion_soin_majeur: 0 };
+  ok(P.pick() === null, "une seule en stock : gardée pour le boss");
+  var ennemiSauve = G.enemy;
+  G.enemy = Object.assign({}, G.enemy, { isBoss: true, hp: 100 });
+  ok(P.isFacingBoss() && P.pick() === "potion_soin_mineur", "face au boss : il boit la dernière");
+  G.enemy = ennemiSauve;
+  G.potionAuto.keepForBoss = false;
+  ok(P.pick() === "potion_soin_mineur", "case décochée : il boit sans réserve");
+  G.adventureQuestRun = runSauve;
+  G.healingPotionsOwned = { potion_soin_mineur: 2, potion_soin_majeur: 1 };
+
+  // Moteur : l'horloge du Grimoire boit avant les règles, et la potion prend le tour
+  game = freshCombat("knight");
+  G = g.game;
+  G.unlockedTabs.grimoire = true;
+  G.combatMode = "grimoire";
+  G.healingPotionsOwned = { potion_soin_mineur: 2 };
+  G.potionAuto = { threshold: "normal", keepForBoss: false };
+  var hasCtx = g.hasCombatQuestContext;
+  g.hasCombatQuestContext = function () { return true; };
+  G.heroHp = Math.floor(G.heroMaxHp * 0.3);
+  var hp0 = G.heroHp;
+  g.CombatEngine.ensureState();
+  G.combatRound.clockMs = 0;
+  g.CombatEngine.tickRoundClock((g.ROUND_INTERVAL_MS || 1500) / 1000 + 0.01);
+  ok(G.healingPotionsOwned.potion_soin_mineur === 1 && G.heroHp > hp0, "horloge du Grimoire : sous le seuil, il boit (Mineure −1, PV remontés)");
+  g.hasCombatQuestContext = hasCtx;
+
+  // Grimoire : la carte « Potions »
+  var html = g.buildGrimoireHTML();
+  ok(html.indexOf("setGrimoirePotionAuto('threshold', 'tard')") !== -1 && html.indexOf("Garder la dernière pour le boss") !== -1, "Grimoire : carte « Potions » avec les quatre seuils et la case du boss");
+  g.I18n._lang = "en";
+  html = g.buildGrimoireHTML();
+  ok(html.indexOf("Keep the last one for the boss") !== -1 && html.indexOf(">Drink<") !== -1, "anglais : carte traduite");
+  g.I18n._lang = null;
+})();
+
+console.log("\n[156] v3.380.0 — Donjon : les vagues normales portent le trait fixe de leur créature");
+(function () {
+  game = freshCombat("knight"); giveWeapon();
+  var G = g.game, D = g.DungeonManager;
+  D.ensure();
+  G.dungeonRun = { active: true, wave: 0, dungeonId: 2, marks: [], shardsEarned: 0 };   // run posé à la main : le donjon est verrouillé sur une partie neuve
+  var vus = {}, mauvais = [];
+  for (var t = 0; t < 40; t++) {
+    for (var w = 1; w <= g.DUNGEON_CONFIG.waveCount; w++) {
+      var e = D.buildWaveEnemy(w);
+      (Array.isArray(e) ? e : [e]).forEach(function (x) {
+        if (x.isBoss || x.isElite) return;
+        vus[x.id] = true;
+        var attendu = g.FIXED_ENEMY_ARCHETYPES[x.id] || null;
+        if (x.archetype !== attendu) mauvais.push(x.id + "=" + x.archetype);
+      });
+    }
+  }
+  ok(vus.sandwarrior === true, "le Guerrier des sables sort bien dans les vagues du donjon du Désert");
+  ok(mauvais.length === 0, "chaque ennemi de vague porte son trait fixe, et rien d'autre (" + mauvais.slice(0, 3).join(", ") + ")");
+  var boss = D.buildWaveEnemy(g.DUNGEON_CONFIG.waveCount + 1);
+  boss = Array.isArray(boss) ? boss[0] : boss;
+  ok(boss.archetype === ((g.DUNGEONS.filter(function (d) { return d.id === 2; })[0].boss || {}).archetype || null), "le boss garde son trait signature");
+  G.dungeonRun = { active: false, wave: 0, dungeonId: null, marks: [], shardsEarned: 0 };
+
+  // L'encart avant combat les montre désormais (mode Grimoire, créature déjà vaincue)
+  G.unlockedTabs.grimoire = true; G.combatMode = "grimoire"; G.grimoireRules = []; G.grimoirePresets = [];
+  G.killCounts = { sandwarrior: 1 };
+  var h = g.buildEnemyTraitsCardHTML({ type: "dungeon", id: 2 });
+  ok(h.indexOf(g._td(g.ENEMY_DB.sandwarrior.name)) !== -1 && h.indexOf("Blindé") !== -1, "encart du donjon : le Guerrier des sables et son Blindage");
+  G.killCounts = {};
+})();
+
+console.log("\n[157] v3.380.0 — Retour en attente : il s'ouvre dès que le héros quitte le combat");
+(function () {
+  game = freshCombat("knight"); giveWeapon();
+  var G = g.game, RM = g.ReturnManager;
+  var ouverts = [], orig = g.openReturnScreen;
+  g.openReturnScreen = function (s) { ouverts.push(s); };
+  try {
+    G.activeTab = "combat";
+    var s = { produced: { bois: 5 }, crafted: {}, ms: 40 * 60e3 };
+    RM.request(s);
+    ok(RM.hasPending() && ouverts.length === 0, "en plein combat : le retour attend");
+    G.enemy = null;
+    g.switchTab("campement");
+    ok(!RM.hasPending() && ouverts.length === 1 && ouverts[0] === s, "fin du combat (changement d'onglet) : il s'ouvre aussitôt, sans attendre la seconde");
+    g.switchTab("village");
+    ok(ouverts.length === 1, "et une seule fois");
+  } finally { g.openReturnScreen = orig; RM._pending = null; }
+})();
+
+/* v3.386.0 : [158] à [162] visent la carte courte foret_1 ; foret_2 a sa section [163]. */
+var PA2_FOREST_MAPS_SAVED = g.PA2_MAPS_BY_WORLD.forest.slice();
+g.PA2_MAPS_BY_WORLD.forest = ["foret_1"];
+
+console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans écran, délégation, besace, carte, combat résolu, fin de run");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, T = g.SCENE_TEMPLATES.petite_aventure_foret;
+  var W = g.WarehouseManager, R = g.PA2_RULES;
+  var savedRand = P.rand;
+  /* Nouvelle partie, rations en réserve, réserve de places pleine. */
+  function prep(level) {
+    game = freshCombat("knight"); giveWeapon();
+    run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5; game.resources.ration = 2; game.resources.grande_ration = 0;
+    game.heroLevel = level || 1;
+    game.heroHp = game.heroMaxHp;
+    game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+  try {
+    ok(g.SCENE_TEMPLATES.petite_aventure_foret.mode === "pa2" && g.Pa2Run.isTemplate(g.SCENE_TEMPLATES.petite_aventure_foret), "v3.388.0 : la Petite Aventure de la Forêt est un canevas mode « pa2 » (paVersion retiré)");
+    /* v3.388.0 : un run v1 repris d'une ancienne sauvegarde se clôt proprement (butin rapporté, place rendue). */
+    prep();
+    game.explorationProgression.petiteAventure = { spent: 1, since: Date.now() };
+    g.SortieManager.start("scene"); g.SortieManager.addGold(40);
+    var gold0 = game.gold;
+    game.sceneRun = { id: "old", templateId: "petite_aventure_foret", status: "gate", profile: "prudent", paSlotDay: S._today(), card: [], depth: 2, injuries: [], loot: 40 };
+    ok(S.getRun() === null && game.sceneRun === null && !g.SortieManager.isActive() && game.gold >= gold0 + 40 && S.petiteAventureCountToday() === 0, "ancien run v1 repris : clos, butin rapporté, place rendue");
+
+    /* Délégation et préparation : rien n'est pris avant le départ */
+    prep();
+    var spent0 = S.petiteAventureCountToday(), pr0 = game.resources.petite_ration;
+    var r = S.startRun("petite_aventure_foret");
+    var runv = game.sceneRun;
+    ok(r.ok && runv.pa2 && runv.status === "pa2-prep" && runv.mapId === "foret_1", "canevas pa2 : Pa2Run prend le run, préparation sur la carte foret_1");
+    ok(S.petiteAventureCountToday() === spent0 && game.resources.petite_ration === pr0 && !g.SortieManager.isActive(), "préparation : ni place, ni ration, ni sortie engagées");
+    ok(S.leaveNow().ok === false, "en v2, on ne rentre pas n'importe où (camp ou seuil seulement)");
+
+    /* Besace : place, stock de l'Entrepôt, objet unique, coffre */
+    ok(P.addItem("armure").ok && P.addItem("armure").ok === false, "matériel : une seule armure");
+    ok(P.bagUsed() === 3 && P.addItem("ration").ok && P.bagUsed() === 5, "l'armure prend 3 places, la ration moyenne 2");
+    ok(P.addItem("ration").ok === false, "besace pleine : la seconde ration moyenne est refusée");
+    P.removeItem(0);
+    ok(P.addItem("ration").ok && P.addItem("ration").ok === false && P.canAdd("ration").reason === "Plus en réserve à l'Entrepôt.", "deux rations moyennes (stock 2), pas une de plus");
+    P.removeItem(0); P.removeItem(0);
+    game.resources.ration = 1;
+    ok(P.addItem("ration").ok && P.addItem("ration").ok === false && P.canAdd("ration").reason === "Plus en réserve à l'Entrepôt.", "une ration par exemplaire en réserve à l'Entrepôt");
+    ok(P.canAdd("bois").ok === false && P.canAdd("veilleurs").ok === false, "objets du coffre verrouillés tant qu'ils ne sont pas gagnés");
+    P.removeItem(0);
+    ["petite_ration", "petite_ration", "gourde", "corde", "torche", "fiole"].forEach(function (id) { P.addItem(id); });
+    ok(P.bagUsed() === 6, "besace composée : 6 places sur 6");
+    P.togglePact("lourd"); P.togglePact("enrage");
+    ok(Math.abs(P.pactMult() - 1.6) < 1e-9, "pactes : ×1,60 avec « Pas lourd » et « La bête est éveillée »");
+
+    /* Départ */
+    ok(P.depart().ok && runv.status === "pa2-map", "départ : le run passe sur la carte");
+    ok(game.resources.petite_ration === pr0 - 2 && runv.stock.petite_ration === 2 && runv.stock.gourde === 2 && runv.stock.corde === 1, "vivres prélevés à l'Entrepôt, charges en besace (gourde 2, corde 1)");
+    ok(S.petiteAventureCountToday() === spent0 + 1 && g.SortieManager.isActive() && runv.refGold >= 1, "la place et la sortie sont prises au départ");
+    var nodes = runv.nodes, keys = Object.keys(nodes);
+    ok(keys.every(function (k) { return !!nodes[k].type; }), "génération : chaque nœud du tracé a un type");
+    [1, 2, 3].forEach(function (a) {
+      var inAct = keys.filter(function (k) { return nodes[k].act === a && nodes[k].row >= 0 && nodes[k].row < 9; });
+      ok(inAct.some(function (k) { return nodes[k].type === "combat"; }) && inAct.some(function (k) { return nodes[k].type === "trouvaille"; }), "acte " + a + " : au moins un combat et une trouvaille");
+    });
+    ok(keys.filter(function (k) { return nodes[k].type === "evenement"; }).length === 1 && keys.some(function (k) { return nodes[k].type === "evenement" && (nodes[k].row === 1 || nodes[k].row === 2); }), "la rencontre du chasseur tombe à l'acte I");
+    var badMaps = 0;
+    for (var gm = 0; gm < 2000; gm++) {
+      var nm = P.generate({ mapId: "foret_1", hookId: "chasseur" }), km = Object.keys(nm);
+      [1, 2, 3].forEach(function (a) {
+        var ia = km.filter(function (x) { return nm[x].act === a && nm[x].row >= 0 && nm[x].row < 9; });
+        if (!ia.some(function (x) { return nm[x].type === "combat"; }) || !ia.some(function (x) { return nm[x].type === "trouvaille"; })) badMaps++;
+      });
+      if (!km.some(function (x) { return nm[x].act === 2 && nm[x].type === "source"; }) || km.filter(function (x) { return nm[x].type === "evenement"; }).length !== 1) badMaps++;
+    }
+    ok(badMaps === 0, "2 000 cartes tirées : garanties toujours tenues (combat et trouvaille par acte, source à l'acte II, une rencontre)");
+    ok(nodes.BOSS.type === "boss" && nodes.CLAIRIERE.type === "clairiere" && nodes.TERTRE.type === "tertre" && nodes.CAMP.type === "camp" && nodes.SEUIL.type === "seuil", "repères du tracé : camp, seuil et trois destinations");
+
+    /* Visibilité : deux rangées (+1 à la torche), repères toujours là */
+    ok(P.isVisible("C1") && P.isVisible("L2") && P.isVisible("CAMP") && P.isVisible("BOSS"), "au village : rangées 0 à 2 (torche), camp et destinations visibles");
+    ok(!P.isVisible("C4") && !P.isShown("C4"), "l'acte II reste dans le noir");
+    ok(JSON.stringify(P.openMoves()) === JSON.stringify(["L0", "C0", "R0"]), "trois sentiers au départ du village");
+    ok(P.moveTo("C4").ok === false, "impossible de sauter une rangée");
+
+    /* Un obstacle : crans, blessures, corde */
+    runv.nodes.C0.type = "obstacle"; runv.nodes.C0.done = false;
+    ok(P.moveTo("C0").ok && runv.status === "pa2-node" && runv.breath === 100 - R.heavyStep, "un pas : « Pas lourd » coûte 4 Souffle");
+    var opts = P.obstacleOptions();
+    ok(opts.length === 3 && opts.every(function (o) { return o.thr >= 2 && o.thr <= 6 && typeof o.cran === "string"; }), "trois voies, seuil de dé entre 2 et 6");
+    var before = opts.map(function (o) { return o.thr; });
+    runv.wounds = 1;
+    var after = P.obstacleOptions().map(function (o) { return o.thr; });
+    ok(after.every(function (t, i) { return t === Math.min(6, before[i] + 1); }), "une blessure = un cran de moins sur chaque voie");
+    runv.wounds = 0;
+    var gold0 = runv.loot;
+    var ro = P.resolveObstacle("precision", true);
+    ok(ro.ok && ro.result.kind === "ok" && ro.result.rope && runv.stock.corde === 0 && runv.loot > gold0 && runv.status === "pa2-map", "corde : réussite assurée, une charge consommée, butin gagné");
+    ok(P.isShown("C0") && P.isVisible("L2") && !P.isShown("L0"), "le chemin laissé derrière disparaît, le nœud parcouru reste");
+
+    /* Combat résolu : estimation = application (au ±15 % près), niveau du héros */
+    runv.nodes.C1.type = "combat"; runv.nodes.C1.done = false;
+    P.moveTo("C1");
+    var pv = P.combatPreview();
+    ok(pv && pv.charger && pv.tenir && pv.ruse && pv.flee, "aperçu : Charger, Tenir, Ruser et Fuir");
+    ok(pv.charger.hpLoss > pv.tenir.hpLoss && pv.charger.gold > pv.tenir.gold, "Charger coûte plus de PV et rapporte plus que Tenir");
+    var hp0 = game.heroHp, est = pv.tenir.hpLoss;
+    var f = P.fight("tenir");
+    var lost = hp0 - game.heroHp;
+    ok(f.ok && lost >= Math.floor(est * 0.84) && lost <= Math.ceil(est * 1.16) + 3, "dégâts appliqués au ±15 % de l'estimation affichée (" + est + " annoncés, " + lost + " perdus)");
+    ok(f.result.parts.length === 3 && runv.nodes.C1.done, "Tenir se raconte en trois échanges");
+
+    /* Indexation sur le niveau (Q3) : même héros, niveau 12 = ennemis du Désert */
+    ok(P.levelBand(1, "forest").worldId === "forest" && P.levelBand(12, "forest").worldId === "desert", "tranche de niveau : 1 en Forêt, 12 au Désert");
+    ok(P.levelBand(1, "desert").worldId === "desert", "plancher : jamais sous le monde de la carte");
+    var lvlLow = runv.band, eLow = P._foe(runv, { type: "combat", act: 2, foeId: "wolf" });
+    runv.band = P.levelBand(12, "forest");
+    var eHigh = P._foe(runv, { type: "combat", act: 2, foeId: "wolf" });
+    runv.band = lvlLow;
+    ok(eHigh.maxHp > eLow.maxHp * 1.5 && eHigh.stats.power > eLow.stats.power, "à niveau 12, le loup de la Forêt a les forces du Désert");
+    var comp = game.companions;
+    game.companions = { wenna: { hired: true, active: true } };
+    runv.nodes.C1.done = false; runv.status = "pa2-node";
+    var withComp = P.combatEstimate("tenir").hpLoss;
+    game.companions = comp;
+    var withoutComp = P.combatEstimate("tenir").hpLoss;
+    runv.nodes.C1.done = true; runv.status = "pa2-map";
+    ok(withComp === withoutComp, "les compagnons ne comptent pas dans le combat résolu");
+
+    /* Camp : le chasseur sauvé attend, rentrer banque tout */
+    runv.at = "CAMP"; runv.status = "pa2-map"; runv.flags.sauve = true; runv.hookId = "chasseur"; // v3.385.0 : 4 accroches tirées
+    runv.status = "pa2-node";
+    var gift = P.placeAction("rest");
+    ok(gift.ok && gift.result.gift === "fleche" && runv.relics.indexOf("fleche") >= 0, "au camp : le chasseur sauvé donne la Flèche du veneur");
+    runv.nodes.CAMP.done = false; runv.status = "pa2-node";
+    var lootBefore = g.game.sortie.loot.gold, pBefore = game.resources.petite_ration, stockLeft = runv.stock.petite_ration;
+    var home = P.placeAction("home");
+    ok(home.ok && runv.status === "completed" && runv.end.how === "home", "rentrer du camp : fin du run");
+    ok(game.resources.petite_ration === pBefore + stockLeft, "rations non mangées rendues à l'Entrepôt (" + stockLeft + ")");
+    ok(runv.end.summary && runv.end.summary.kept.gold === Math.floor(lootBefore * 1.6), "or banqué à 100 %, multiplié par les pactes (×1,60)");
+
+    /* KO : moitié du butin, place rendue ; « Pas de retour » = tout perdu ; Fiole noire */
+    prep(); S.startRun("petite_aventure_foret");
+    runv = game.sceneRun; P.addItem("fiole"); P.depart();
+    runv.nodes.C0.type = "obstacle"; P.moveTo("C0");
+    game.heroHp = 1;
+    runv.wounds = 0;
+    P.rand = function () { return 0; };
+    P.resolveObstacle("power");
+    P.rand = savedRand;
+    ok(runv.status !== "completed" && runv.fioleUsed && game.heroHp === Math.round(game.heroMaxHp * R.fioleHpPct), "Fiole noire : à 0 PV, le héros se relève à 40 %");
+    runv.nodes.C1.type = "obstacle"; runv.status = "pa2-map"; P.moveTo("C1");
+    g.SortieManager.addGold(100); runv.loot += 100;
+    var spentKo = S.petiteAventureCountToday();
+    game.heroHp = 1;
+    P.rand = function () { return 0; };
+    P.resolveObstacle("power");
+    P.rand = savedRand;
+    ok(runv.status === "completed" && runv.end.how === "ko" && game.heroHp === 0, "KO : fin du run, héros à terre");
+    ok(runv.end.summary.outcome === "flee" && S.petiteAventureCountToday() === spentKo - 1, "KO : on te ramène avec la moitié du butin, la place est rendue");
+    ok(runv.end.mult === 0.5, "Fiole utilisée : butin final divisé par deux");
+
+    prep(); S.startRun("petite_aventure_foret");
+    runv = game.sceneRun; P.togglePact("retour"); P.depart();
+    runv.nodes.C0.type = "obstacle"; P.moveTo("C0");
+    g.SortieManager.addGold(80); runv.loot += 80;
+    game.heroHp = 1;
+    P.rand = function () { return 0; };
+    P.resolveObstacle("power");
+    P.rand = savedRand;
+    ok(runv.end.how === "ko" && runv.end.summary.outcome === "death" && runv.end.summary.kept.gold === 0, "« Pas de retour » : tomber, c'est tout perdre");
+
+    /* Destination : le gardien abattu débloque le Bois de cerf, compte « Un Périple » et donne la Sève */
+    prep(); S.startRun("petite_aventure_foret");
+    runv = game.sceneRun; P.depart();
+    run("game.achievementStats = game.achievementStats || {}; ");
+    var ach0 = g.AchievementManager ? Number(((game.achievementStats || {}).counters || {}).runForest || 0) : 0;
+    var seve0 = Number(game.resources.seve_aeswyn || 0);
+    runv.at = "C8"; runv.status = "pa2-map";
+    P.moveTo("BOSS");
+    game.equipped.weapon.value = 400; g.EquipmentManager.recalcStats(); // héros assez fort pour gagner à coup sûr
+    game.heroHp = game.heroMaxHp;
+    var bossFight = P.fight("charger");
+    ok(bossFight.ok && runv.status === "completed" && runv.end.how === "dest" && runv.end.dest === "boss", "le gardien vaincu : destination atteinte");
+    ok(runv.end.chest && runv.end.chest.item === "bois" && runv.end.chest.isNew && P.isUnlocked("bois"), "coffre d'expédition : le Bois de cerf est débloqué");
+    ok(Number(game.resources.seve_aeswyn || 0) === seve0 + g.PA2_RARE.forest.dest[1], "Sève d'Aeswyn de destination créditée à l'Entrepôt (anneau 1 : " + g.PA2_RARE.forest.dest[1] + ")");
+    ok(!g.AchievementManager || Number(((game.achievementStats || {}).counters || {}).runForest || 0) === ach0 + 1, "« Un Périple » avance d'un run");
+
+    /* Coffre : sauvegardé, gardé à l'Ascension, vidé par une nouvelle partie */
+    ok(g.buildSaveData().expeditionChest.unlocked.bois === true, "le coffre est dans la sauvegarde");
+    run("hardResetState();");
+    ok(game.expeditionChest && game.expeditionChest.unlocked.bois === true, "Ascension : le coffre est gardé");
+    run("fullResetState();");
+    ok(game.expeditionChest && !game.expeditionChest.unlocked.bois, "nouvelle partie : coffre vide");
+
+    /* Anneau du secteur (Q1) et abandon */
+    prep();
+    S.startRun("petite_aventure_foret", { livingMap: { mapId: "forest", sectorId: "menhirs" } });
+    runv = game.sceneRun;
+    ok(runv.ring === "chemin" && runv.livingMap.sectorId === "menhirs", "secteur de l'anneau 2 : difficulté « chemin » imposée");
+    var pr1 = game.resources.petite_ration;
+    ok(S.abandon().ok && runv.end.how === "cancel" && game.resources.petite_ration === pr1 && !g.SortieManager.isActive(), "renoncer en préparation ne coûte rien");
+
+    /* 300 runs au hasard : tout run se termine, sans valeur absurde */
+    var bad = 0, finished = 0, guardHit = 0;
+    for (var k = 0; k < 300; k++) {
+      prep(1 + (k % 13)); game.sceneRun = null;
+      S.startRun("petite_aventure_foret");
+      runv = game.sceneRun;
+      g.PA2_ITEM_ORDER.forEach(function (id) { if (Math.random() < 0.5) P.addItem(id); });
+      if (Math.random() < 0.3) P.togglePact("enrage");
+      P.depart();
+      var guard = 200;
+      while (runv.status !== "completed" && guard-- > 0) {
+        if (runv.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(mv[Math.floor(Math.random() * mv.length)]); continue; }
+        var n = P.node(runv.at), t = n.type, res = null;
+        if (t === "obstacle" || t === "tertre") { var o = P.obstacleOptions().filter(function (x) { return x.affordable; }), rp = P.obstacleOptions().filter(function (x) { return x.rope; })[0]; res = o.length ? P.resolveObstacle(o[0].voie) : (rp ? P.resolveObstacle(rp.voie, true) : P.bruteForce()); }
+        else if (t === "combat") { res = (runv.lastResult && runv.lastResult.surprised) ? P.fight("tenir", true) : P.fight(Math.random() < 0.5 ? "charger" : "tenir"); }
+        else if (t === "boss") res = P.fight("tenir");
+        else if (t === "source") res = P.drink();
+        else if (t === "autel") res = P.altar(false);
+        else if (t === "trouvaille") res = P.takeRelic();
+        else if (t === "evenement") { var hb = P.hookBranches().filter(function (b) { return b.ok; }); res = P.eventChoice(hb[Math.floor(Math.random() * hb.length)].id); }
+        else if (t === "camp" || t === "seuil") res = P.placeAction(Math.random() < 0.15 ? "home" : "rest");
+        else if (t === "clairiere") res = P.clairiere();
+        if (!res || !res.ok) { bad++; break; }
+      }
+      if (guard <= 0) guardHit++;
+      if (runv.status === "completed") finished++;
+      if (!(game.heroHp >= 0) || !isFinite(runv.loot) || runv.breath < 0) bad++;
+    }
+    ok(finished === 300 && bad === 0 && guardHit === 0, "300 runs au hasard : tous terminés, aucun blocage ni valeur absurde (" + finished + " / 300)");
+  } finally {
+    P.rand = savedRand;
+    game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+})();
+
+console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (préparation, carte, feuilles, bilan), icônes, Forêt en v2");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, T = g.SCENE_TEMPLATES.petite_aventure_foret;
+  var savedRand = P.rand;
+  /* Chaque image citée par un écran existe dans le zip (règle des icônes : jamais d'image empruntée). */
+  function srcs(html) { var out = [], re = /src="([^"]+)"/g, m; while ((m = re.exec(html))) out.push(m[1].replace(/^\.\//, "")); return out; }
+  function missing(html) { return srcs(html).filter(function (s) { return s.indexOf("data:") !== 0 && !fs.existsSync(path.join(ROOT, s)); }); }
+  function prep(level) {
+    game = freshCombat("knight"); giveWeapon();
+    run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5; game.resources.ration = 2; game.resources.grande_ration = 0;
+    game.heroLevel = level || 1;
+    game.heroHp = game.heroMaxHp;
+    game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+    g.pa2View.runId = null;
+    g.pa2View.sheet = null;
+    g.pa2View.hud = null;
+  }
+  try {
+   
+    prep(4);
+    S.startRun("petite_aventure_foret");
+    game.sceneRun.hookId = "chasseur"; // v3.385.0 : 4 accroches tirées, le contrôle vise celle-ci
+    var runv = game.sceneRun, html = g.buildSceneScreenHTML();
+    ok(html.indexOf('class="pa2-bag"') > 0 && (html.match(/pa2-cell is-free/g) || []).length === 6, "préparation : l'onglet scene route vers l'écran v2, besace vide de 6 cases");
+    ok(html.indexOf(g.esc("Un chasseur n'est pas revenu")) > 0 && html.indexOf("kframe-page") > 0, "préparation : l'accroche du run et le cadre de page du jeu");
+    P.addItem("petite_ration"); P.addItem("ration"); P.addItem("gourde"); P.addItem("corde");
+    html = g.buildSceneScreenHTML();
+    ok((html.match(/pa2-cell is-full/g) || []).length === 4 && (html.match(/pa2-cell is-free/g) || []).length === 1 && html.indexOf("span 2") > 0, "besace : un objet par case, la ration moyenne sur deux places, une case libre");
+    g.pa2View.prepStep = "pacts"; P.togglePact("lourd");
+    html = g.buildSceneScreenHTML();
+    ok(html.indexOf('aria-pressed="true"') > 0 && html.indexOf("×1,20") > 0, "pactes : le pacte choisi est marqué, butin final ×1,20");
+    ok(missing(html).length === 0, "préparation : aucune image manquante" + (missing(html).length ? " (" + missing(html).join(", ") + ")" : ""));
+    g.pa2View.prepStep = "bag";
+
+    P.depart();
+    html = g.buildSceneScreenHTML();
+    var map = P.getMap(runv), shown = Object.keys(map.nodes).filter(function (k) { return P.isShown(k, runv); });
+    ok(html.indexOf('id="pa2-hud"') > 0 && html.indexOf("images/Maps/pa2/foret_1.jpg") > 0, "carte : HUD du run et illustration de la Forêt");
+    ok((html.match(/class="pa2-node /g) || []).length === shown.length, "carte : seuls les nœuds visibles sont posés (" + shown.length + ")");
+    ok((html.match(/is-open/g) || []).length === P.openMoves().length && html.indexOf("pa2Move('") > 0, "carte : les nœuds atteignables sont cliquables, et eux seuls");
+    ok(html.indexOf("pa2Use('petite_ration')") > 0 && html.indexOf("pa2Use('gourde')") > 0, "HUD : rations et gourde utilisables depuis la carte");
+    ok(missing(html).length === 0, "carte : aucune image manquante");
+
+    /* Une feuille par type de nœud, sur un vrai nœud préparé par le moteur. */
+    var types = ["obstacle", "combat", "source", "autel", "trouvaille", "evenement", "camp", "seuil", "boss", "clairiere", "tertre"];
+    var expect = { obstacle: "pa2Obstacle(", combat: "pa2Ruse()", source: "pa2Drink()", autel: "pa2Altar(false)", trouvaille: "pa2Flip()",
+      evenement: "pa2Event('arc')", camp: "pa2Place('home')", seuil: "pa2Place('listen')", boss: "pa2Fight('tenir',false)", clairiere: "pa2Clairiere()", tertre: "pa2Obstacle(" };
+    var bad = [], miss = [];
+    types.forEach(function (t) {
+      var fixed = ["camp", "seuil", "boss", "clairiere", "tertre"].indexOf(t) >= 0;
+      var key = Object.keys(runv.nodes).filter(function (k) {
+        var n = runv.nodes[k];
+        return fixed ? n.type === t : (n.row >= 0 && n.row < 9 && n.type !== "camp" && n.type !== "seuil");
+      })[0];
+      var n = runv.nodes[key], saved = n.type;
+      n.type = t; n.done = false;
+      runv.at = key; runv.status = "pa2-node"; runv.lastResult = null;
+      P._prepareNode(runv, n);
+      var h = g.pa2SheetBody(runv, n, { key: key, step: "intro" });
+      if (h.indexOf(expect[t]) < 0 || h.indexOf("undefined") >= 0 || h.indexOf("NaN") >= 0) bad.push(t);
+      miss = miss.concat(missing(h));
+      n.type = saved;
+    });
+    ok(bad.length === 0, "feuilles : les 11 types de nœud ont leurs choix, sans undefined ni NaN" + (bad.length ? " (" + bad.join(", ") + ")" : ""));
+    ok(miss.length === 0, "feuilles : aucune image manquante" + (miss.length ? " (" + miss.slice(0, 3).join(", ") + ")" : ""));
+
+    /* Issue affichée = issue du moteur : obstacle joué, la feuille montre le dé et le verdict. */
+    var ok1 = Object.keys(runv.nodes).filter(function (k) { return runv.nodes[k].row === 1; })[0];
+    var no = runv.nodes[ok1]; no.type = "obstacle"; no.done = false; runv.at = ok1; runv.status = "pa2-node"; P._prepareNode(runv, no);
+    P.rand = function () { return 0.99; };
+    var rr = P.resolveObstacle(P.obstacleOptions()[0].voie);
+    var hr = g.pa2SheetBody(runv, no, { key: ok1, step: "roll", res: rr.result });
+    ok(rr.ok && hr.indexOf('id="pa2-die"') > 0 && hr.indexOf("Réussi") > 0 && hr.indexOf("pa2CloseSheet()") > 0, "obstacle : la feuille montre le dé, « Réussi » et « Continuer »");
+    P.rand = savedRand;
+
+    /* Bilan : destination atteinte (gardien abattu), coffre d'expédition, Sève. */
+    var bossKey = Object.keys(runv.nodes).filter(function (k) { return runv.nodes[k].type === "boss"; })[0];
+    runv.at = bossKey; runv.status = "pa2-node"; runv.nodes[bossKey].done = false; runv.flags.bossDown = true;
+    P.finish("dest");
+    g.pa2View.sheet = null;
+    html = g.buildSceneScreenHTML();
+    ok(html.indexOf("est tombé") > 0 && html.indexOf(g.esc("Nouveau dans le coffre d'expédition")) > 0 && html.indexOf("pa2Leave()") > 0, "bilan : le Cerf-Racine est tombé, Bois de cerf au coffre, bouton de retour");
+    ok(html.indexOf(g.esc("Sève d'Aeswyn")) > 0 && missing(html).length === 0, "bilan : Sève du run affichée, aucune image manquante");
+    g.pa2View.sheet = { key: bossKey, step: "fight" };
+    ok(g.buildSceneScreenHTML().indexOf('id="pa2-map"') > 0, "fin de run pendant l'animation : la carte reste derrière la feuille (pas de bilan dévoilé)");
+    g.pa2View.sheet = null;
+
+    /* Préparation abandonnée : l'accueil de l'onglet reprend, rien de consommé. */
+    prep(4); S.startRun("petite_aventure_foret"); P.abandon();
+    ok(g.buildSceneScreenHTML().indexOf("pa2-") < 0, "préparation abandonnée : l'écran v2 ne s'affiche plus");
+
+    /* Libellés : « Charger » du combat distinct du « Charger » (sauvegarde), icônes des données présentes. */
+    ok(g.I18n.dicts.en["combat|Charger"] === "Charge" && g.I18n.dicts.en["Charger"] === "Load", "anglais : « Charger » en combat se traduit Charge, sans toucher à Load");
+    var dataIcons = [];
+    Object.keys(g.PA2_ITEMS).forEach(function (k) { dataIcons.push(g.PA2_ITEMS[k].icon); });
+    Object.keys(g.PA2_RELICS).forEach(function (k) { dataIcons.push(g.PA2_RELICS[k].icon); });
+    Object.keys(g.PA2_PACTS).forEach(function (k) { dataIcons.push(g.PA2_PACTS[k].icon); });
+    Object.keys(g.PA2_ICONS).forEach(function (k) { dataIcons.push(g.PA2_ICONS[k]); });
+    var absent = dataIcons.filter(function (s) { return !fs.existsSync(path.join(ROOT, s)); });
+    ok(absent.length === 0, "icônes du mode v2 : toutes présentes (" + dataIcons.length + ")" + (absent.length ? " — manquent " + absent.join(", ") : ""));
+  } catch (e) {
+    ok(false, "[159] exception : " + e.message);
+  } finally {
+    P.rand = savedRand;
+    game.sceneRun = null;
+  }
+})();
+
+console.log("\n[160] v3.383.0 — Petites Aventures v2 (PA2-3) : gardien recalé, or plafonné au monde de la carte, estimation au seuil");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, T = g.SCENE_TEMPLATES.petite_aventure_foret;
+;
+  function start(level) {
+    game = freshCombat("knight"); giveWeapon();
+    run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5;
+    game.heroLevel = level; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+   
+    S.startRun("petite_aventure_foret"); P.depart();
+    return game.sceneRun;
+  }
+  try {
+    var r12 = start(12), boss = r12.nodes.BOSS;
+    var guard = g.PA2_GUARDIAN.forest, foe = P._foe(r12, boss);
+    var troll = P._spawn(r12, guard.foe, false);
+    ok(foe && foe.id === guard.foe && !foe.isBoss, "C1 : le gardien est un " + guard.foe + " renforcé, plus le boss d'aventure de la tranche (Sphinx au niveau 12)");
+    ok(foe && Math.abs(foe.maxHp - Math.round(troll.maxHp * guard.hpMult)) <= 1, "C1 : PV du gardien = PV de référence × " + guard.hpMult + " (les actes ne le touchent pas)");
+    var gp = P.guardianPreview();
+    ok(gp && gp.tenir && !gp.tenir.unwinnable, "C1 : au niveau 12, le gardien se bat (plus « mortel » d'office)");
+    r12.at = "BOSS"; r12.status = "pa2-node"; boss.done = false;
+    var est = P.combatEstimate("tenir");
+    ok(est && gp.tenir.hpLoss === est.hpLoss && gp.tenir.gold === est.gold, "C1 : l'estimation montrée au seuil est celle du combat");
+    ok(P.goldBand(r12).worldId === "forest" && r12.band.worldId === "desert", "C3 : au niveau 12 les ennemis sont du Désert, l'or de référence reste celui de la Forêt");
+    var r3 = start(3);
+    ok(P.goldBand(r3) === r3.band && r3.band.foeScale === 0.8, "C3 : sous la tranche du monde, l'or suit la tranche ; niveaux 1 à 4 adoucis ×0,8");
+    var seuil = Object.keys(r3.nodes).filter(function (k) { return r3.nodes[k].type === "seuil"; })[0];
+    r3.at = seuil; r3.status = "pa2-node";
+    var h = g.pa2SheetBody(r3, r3.nodes[seuil], { key: seuil, step: "intro" });
+    ok(h.indexOf("pa2-guardian") > 0 && h.indexOf(g.esc(g._t("Les deux autres destinations ne demandent pas de combat."))) > 0, "C1 : la feuille du seuil annonce le coût du gardien");
+    ok(g.PA2_RULES.campRestPct < 0.3 && g.PA2_RULES.seuilRestPct < 0.2, "C2 : le camp et le seuil soignent moins (les rations comptent)");
+  } catch (e) {
+    ok(false, "[160] exception : " + e.message);
+  } finally {
+    game.sceneRun = null;
+  }
+})();
+
+console.log("\n[161] v3.384.0 — Petites Aventures v2 (PA2-2) : victoires comptées, objet du gardien, trophées, préparation libre");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, T = g.SCENE_TEMPLATES.petite_aventure_foret;
+  var savedRand = P.rand;
+  function prep(level) {
+    game = freshCombat("knight"); giveWeapon();
+    run("game.enemy = null; game.combat = null;");
+    game.equipped.weapon.value = 400; run("EquipmentManager.recalcStats();");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5;
+    game.heroLevel = level || 6; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+   
+  }
+  function goTo(runv, key, type) {
+    var n = runv.nodes[key]; n.type = type; n.done = false; runv.at = key; runv.status = "pa2-node"; runv.lastResult = null;
+    P._prepareNode(runv, n); return n;
+  }
+  try {
+    /* D4 : la préparation n'engage pas le héros ; quitter l'écran y renonce sans perte. */
+    prep(); S.startRun("petite_aventure_foret");
+    ok(game.sceneRun.status === "pa2-prep" && !S.isHeroEngaged(), "D4 : en préparation, le héros n'est pas engagé");
+    game.activeTab = "scene"; P.addItem("petite_ration");
+    var pr = game.resources.petite_ration;
+    g.switchTab("campement");
+    ok(!game.sceneRun && game.activeTab === "campement" && game.resources.petite_ration === pr && !g.SortieManager.isActive(), "D4 : quitter la préparation renonce, sans confirmation ni perte");
+    prep(); S.startRun("petite_aventure_foret"); P.depart();
+    ok(S.isHeroEngaged(), "D4 : après le départ, le héros est engagé");
+
+    /* D1 : une meute abattue compte comme des victoires. */
+    var runv = game.sceneRun, key = Object.keys(runv.nodes).filter(function (k) { return runv.nodes[k].row === 1; })[0];
+    var n = goTo(runv, key, "combat");
+    var k0 = Number(game.totalKills || 0), c0 = Number((game.killCounts || {})[n.foeId] || 0);
+    var fr = P.fight("tenir");
+    ok(fr.ok && !fr.result.ko && game.totalKills === k0 + n.pack && game.killCounts[n.foeId] === c0 + n.pack, "D1 : la meute de " + n.pack + " compte au total et au Bestiaire (" + n.foeId + ")");
+
+    /* D2 : le gardien lâche un objet dans le butin de sortie (tirage forcé). */
+    P.rand = function () { return 0.01; };
+    var items0 = g.SortieManager.ensure().loot.items.length;
+    goTo(runv, "BOSS", "boss");
+    var br = P.fight("tenir");
+    ok(br.ok && br.result.drop && g.SortieManager.ensure().loot.items.length === items0 + 1 || (br.result.drop && runv.end), "D2 : le gardien lâche un objet, rangé dans le butin de sortie");
+    ok(runv.end && runv.end.how === "dest" && runv.end.summary && (runv.end.summary.kept.items || []).length >= 1, "D2 : l'objet revient au village avec le butin");
+    P.rand = savedRand;
+
+    /* D3 : trophées. */
+    var t = P.trophies("forest");
+    ok(t.success === 1 && t.dests.boss === 1 && P.ensureChest().stats.runs === 1, "D3 : réussite et destination comptées dans le coffre");
+    var saved = g.buildSaveData();
+    ok(saved.expeditionChest && saved.expeditionChest.stats && saved.expeditionChest.stats.byWorld.forest.dests.boss === 1, "D3 : les trophées sont sauvegardés avec le coffre (aucune ligne de save-system en plus)");
+    g.pa2View.runId = null; g.pa2View.sheet = null;
+    var chest = JSON.parse(JSON.stringify(game.expeditionChest));
+    prep(); game.expeditionChest = chest; S.startRun("petite_aventure_foret");
+    var hp = g.buildSceneScreenHTML();
+    ok(hp.indexOf("pa2-trophies") > 0 && hp.indexOf("×1") > 0, "D3 : la préparation affiche les trophées de la Forêt");
+    P.abandon(); game.sceneRun = null;
+
+    /* Monde de la carte pour « Un Périple » ; KO = héros tombé. */
+    prep(); S.startRun("petite_aventure_foret"); P.depart();
+    var ach = g.AchievementManager.ensure().counters, rf = Number(ach.runForest || 0), rd = Number(ach.runDesert || 0), wi = g.WorldManager.worldIndex;
+    g.WorldManager.worldIndex = 1;
+    runv = game.sceneRun; goTo(runv, "CLAIRIERE", "clairiere"); P.clairiere();
+    g.WorldManager.worldIndex = wi;
+    ach = g.AchievementManager.ensure().counters;
+    ok(Number(ach.runForest || 0) === rf + 1 && Number(ach.runDesert || 0) === rd, "Haut fait : la Forêt refaite depuis le Désert compte pour la Forêt");
+    prep(); S.startRun("petite_aventure_foret"); P.depart(); game.justDied = false;
+    game.heroHp = 1; runv = game.sceneRun; goTo(runv, Object.keys(runv.nodes).filter(function (k) { return runv.nodes[k].row === 8; })[0], "combat");
+    P.fight("charger");
+    ok(runv.end && runv.end.how === "ko" && game.justDied === true, "KO : le héros est marqué tombé, comme une mort en v1");
+  } catch (e) {
+    ok(false, "[161] exception : " + e.message);
+  } finally {
+    P.rand = savedRand;
+    game.sceneRun = null;
+  }
+})();
+
+console.log("\n[162] v3.385.0 — Petites Aventures v2 (PA2-4) : quatre accroches, suites différées, tirage sans répétition, actes de longueur variable");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, T = g.SCENE_TEMPLATES.petite_aventure_foret;
+  var savedRand = P.rand;
+  function prep() {
+    game = freshCombat("knight"); giveWeapon();
+    run("game.enemy = null; game.combat = null;");
+    game.equipped.weapon.value = 400; run("EquipmentManager.recalcStats();");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5;
+    game.heroLevel = 6; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+   
+  }
+  // Départ avec une accroche imposée, et la rencontre jouée tout de suite.
+  function withHook(hookId, items, branch) {
+    prep(); S.startRun("petite_aventure_foret");
+    var r = game.sceneRun; r.hookId = hookId;
+    (items || []).forEach(function (id) { P.addItem(id); });
+    P.depart();
+    var ev = Object.keys(r.nodes).filter(function (k) { return r.nodes[k].type === "evenement"; })[0];
+    r.at = ev; r.status = "pa2-node"; r.nodes[ev].done = false;
+    var res = branch ? P.eventChoice(branch) : null;
+    return { run: r, res: res, ev: ev };
+  }
+  function nodeAt(r, type, row) {
+    var k = Object.keys(r.nodes).filter(function (x) { return r.nodes[x].row === row && ["camp", "seuil", "evenement"].indexOf(r.nodes[x].type) < 0; })[0];
+    var n = r.nodes[k]; n.type = type; n.done = false; delete n.echo; r.at = k; r.status = "pa2-node"; r.lastResult = null; P._prepareNode(r, n); return n;
+  }
+  try {
+    ok(g.PA2_HOOKS_BY_WORLD.forest.length === 4 && ["gouffre", "pierre", "feu"].every(function (h) { return !!g.PA2_HOOKS[h]; }), "E2 : quatre accroches en Forêt (chasseur, l'homme du gouffre, la pierre, le feu)");
+
+    /* E3 : jamais la même accroche deux fois de suite */
+    prep(); var last = null, repeat = 0, seen = {};
+    for (var i = 0; i < 80; i++) { game.sceneRun = null; S.startRun("petite_aventure_foret"); var h = game.sceneRun.hookId; if (h === last) repeat++; seen[h] = 1; last = h; P.abandon(); }
+    ok(repeat === 0 && Object.keys(seen).length === 4, "E3 : 80 départs, jamais deux fois la même accroche, les quatre sortent");
+
+    /* Maddoc */
+    var m = withHook("gouffre", ["gourde"], "gourde");
+    ok(m.res.ok && m.run.stock.gourde === 1 && m.run.flags.hookBranch === "gourde", "L'homme du gouffre : la gourde donnée coûte une gorgée");
+    var c1 = nodeAt(m.run, "combat", 1);
+    ok(!c1.assist && c1.pack === 2, "L'homme du gouffre : pas d'aide à l'acte I");
+    var c2 = nodeAt(m.run, "combat", 5);
+    ok(c2.assist && c2.pack === 1 && /pierre siffle/.test(c2.echo), "L'homme du gouffre aidé : au premier combat de l'acte II, un ennemi de moins et l'écho");
+    var c3 = nodeAt(m.run, "combat", 6);
+    ok(!c3.assist && c3.pack === 2, "L'homme du gouffre : l'aide ne vient qu'une fois");
+    var m0 = withHook("gouffre", [], null);
+    ok(P.hookBranches().filter(function (b) { return b.id === "gourde"; })[0].ok === false, "L'homme du gouffre : sans gourde dans la besace, la branche est fermée");
+    P.eventChoice("passer");
+    var clr = m0.run.nodes.CLAIRIERE; m0.run.at = "CLAIRIERE"; m0.run.status = "pa2-node"; clr.done = false; P._prepareNode(m0.run, clr);
+    ok(P.destGoldMult(m0.run) === 0.7 && /Quelqu'un est passé avant toi/.test(clr.echo), "L'homme du gouffre passé : −30 % d'or de destination, et l'écho à la destination");
+
+    /* La pierre marquée */
+    var pr = withHook("pierre", [], null), b0 = pr.run.breath;
+    var ref = nodeAt(pr.run, "obstacle", 1), thr0 = P.obstacleOptions()[0].thr;
+    pr.run.at = pr.ev; pr.run.status = "pa2-node"; pr.run.nodes[pr.ev].done = false;
+    P.eventChoice("main");
+    ok(pr.run.flags.hookBranch === "main" && pr.run.breath === Math.min(100, b0 + 40), "La pierre : la main posée rend 40 Souffle");
+    ref.done = false; pr.run.at = ref.key; pr.run.status = "pa2-node";
+    var thr1 = P.obstacleOptions()[0].thr;
+    ok(thr1 === Math.max(2, thr0 - 1) || thr0 === 2, "La pierre : +1 cran sur les jets (" + thr0 + "+ → " + thr1 + "+)");
+    var cm = nodeAt(pr.run, "combat", 2);
+    ok(P._dmgMult(pr.run, cm, "tenir") > g.PA2_APPROACHES.tenir.dmg * 1.19 * (P.hasItem("torche", pr.run) ? 1.15 : 1) - 1e-9, "La pierre : la marque pique, les combats font +20 % de dégâts");
+    var pr2 = withHook("pierre", [], "main");
+    var nx = nodeAt(pr2.run, "obstacle", 2);
+    ok(/trait sur ta paume/.test(nx.echo || ""), "La pierre : au nœud suivant, le trait sur la paume");
+
+    /* Le feu sans fumée */
+    var f = withHook("feu", ["petite_ration"], "nourrir");
+    ok(f.res.ok && f.run.stock.petite_ration === 0, "Le feu : le nourrir coûte une ration");
+    var seve0 = Number(game.resources.seve_aeswyn || 0);
+    f.run.at = "CLAIRIERE"; f.run.status = "pa2-node"; f.run.nodes.CLAIRIERE.done = false;
+    var cr = P.clairiere();
+    ok(cr.ok && f.run.end.rare === g.PA2_RARE.forest.dest[1] + 1 && P.destGoldMult(f.run) === 1.25, "Le feu nourri : +1 Sève et +25 % d'or à la destination");
+    var f2 = withHook("feu", [], "passer");
+    f2.run.at = "CAMP"; f2.run.status = "pa2-node"; f2.run.nodes.CAMP.done = false;
+    var gift = P.placeAction("rest");
+    ok(gift.ok && gift.result.gift === "braise" && f2.run.relics.indexOf("braise") >= 0, "Le feu passé : au camp, une braise que tu n'as pas allumée (Braise tenace)");
+
+    /* Écrans */
+    var e = withHook("gouffre", ["gourde"], null), evn = e.run.nodes[e.ev];
+    var hh = g.pa2SheetBody(e.run, evn, { key: e.ev, step: "intro" });
+    ok(hh.indexOf("pa2Event('gourde')") > 0 && hh.indexOf("pa2Event('passer')") > 0 && hh.indexOf("undefined") < 0, "écran : la rencontre de l'homme du gouffre propose ses trois branches");
+    var cc = nodeAt(e.run, "combat", 8); cc.echo = "Une pierre siffle";
+    ok(g.pa2SheetBody(e.run, cc, { key: cc.key, step: "intro" }).indexOf("pa2-echo") > 0, "écran : l'écho s'affiche en tête de la feuille");
+
+    /* E1 : actes de longueur variable (carte longue) */
+    var fake = { rows: { camp: 4, seuil: 9, dest: 12 } };
+    ok(P.actOf(4, fake) === 1 && P.actOf(5, fake) === 2 && P.actOf(9, fake) === 2 && P.actOf(10, fake) === 3 && P.actOf(3) === 1 && P.actOf(8) === 3, "E1 : les actes suivent les rangées du tracé (carte longue), la carte courte ne change pas");
+  } catch (err) {
+    ok(false, "[162] exception : " + err.message);
+  } finally {
+    P.rand = savedRand;
+    game.sceneRun = null;
+  }
+})();
+
+g.PA2_MAPS_BY_WORLD.forest = PA2_FOREST_MAPS_SAVED;
+
+console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte de la Forêt (foret_2), homme du gouffre anonyme");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, T = g.SCENE_TEMPLATES.petite_aventure_foret;
+  var savedMaps = g.PA2_MAPS_BY_WORLD.forest;
+  var M = g.PA2_MAPS.foret_2;
+  function prep(level) {
+    run("game.enemy = null; game.combat = null;");
+    game.equipped.weapon.value = 400; run("EquipmentManager.recalcStats();");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5;
+    game.heroLevel = level || 6; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+   
+  }
+  try {
+    ok(!!M && savedMaps.indexOf("foret_2") >= 0 && savedMaps.indexOf("foret_1") >= 0, "foret_2 est proposée en Forêt, à côté de foret_1");
+    ok(fs.existsSync(path.join(ROOT, M.image)), "l'image de foret_2 est livrée (" + M.image + ")");
+    /* Tracé : liens de rangée en rangée, tout nœud atteignable depuis le départ et menant à une destination */
+    var keys = Object.keys(M.nodes), badLink = 0, seen = { S: true }, todo = ["S"];
+    keys.forEach(function (k) { (M.links[k] || []).forEach(function (t) { if (!M.nodes[t] || M.nodes[t].row !== M.nodes[k].row + 1) badLink++; }); });
+    while (todo.length) (M.links[todo.pop()] || []).forEach(function (t) { if (!seen[t]) { seen[t] = true; todo.push(t); } });
+    var dead = keys.filter(function (k) { return M.nodes[k].row < M.rows.dest && !(M.links[k] || []).length; });
+    ok(badLink === 0 && keys.every(function (k) { return seen[k]; }) && dead.length === 0, "tracé : liens d'une rangée à la suivante, tout est atteignable, aucune impasse");
+    var fin = keys.filter(function (k) { return M.nodes[k].row === M.rows.dest; }).map(function (k) { return M.nodes[k].type; }).sort().join(",");
+    ok(fin === "boss,clairiere,tertre" && M.nodes.CAMP.row === M.rows.camp && M.nodes.SEUIL.row === M.rows.seuil, "rangées : camp " + M.rows.camp + ", seuil " + M.rows.seuil + ", trois destinations en " + M.rows.dest);
+    var minD = 1e9;
+    keys.forEach(function (a, i) { keys.slice(i + 1).forEach(function (b) { minD = Math.min(minD, Math.hypot(M.nodes[a].x - M.nodes[b].x, M.nodes[a].y - M.nodes[b].y)); }); });
+    ok(minD / M.width >= 0.07 && keys.every(function (k) { var n = M.nodes[k]; return n.x > 0 && n.x < M.width && n.y > 0 && n.y < M.height; }), "lisibilité : nœuds dans l'image, écart minimal " + Math.round(minD / M.width * 360) + " px sur un écran de 360 px");
+    ok(P.actOf(2, M) === 1 && P.actOf(4, M) === 2 && P.actOf(7, M) === 2 && P.actOf(9, M) === 3 && P.actOf(10, M) === 3, "actes : 3 rangées en acte I, 4 en acte II, 2 en acte III");
+
+    /* 200 runs au hasard sur foret_2 */
+    g.PA2_MAPS_BY_WORLD.forest = ["foret_2"];
+    var bad = 0, finished = 0, dests = 0, evRow = 0, lens = [];
+    for (var k = 0; k < 200; k++) {
+      prep(1 + (k % 13));
+      S.startRun("petite_aventure_foret");
+      var r = game.sceneRun;
+      if (r.mapId !== "foret_2") { bad++; break; }
+      g.PA2_ITEM_ORDER.forEach(function (id) { if (Math.random() < 0.5) P.addItem(id); });
+      P.depart();
+      var ev = Object.keys(r.nodes).filter(function (x) { return r.nodes[x].type === "evenement"; })[0];
+      if (!ev || r.nodes[ev].row < 1 || r.nodes[ev].row >= M.rows.camp) evRow++;
+      var guard = 200, played = 0;
+      while (r.status !== "completed" && guard-- > 0) {
+        if (r.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(mv[Math.floor(Math.random() * mv.length)]); played++; continue; }
+        var n = P.node(r.at), t = n.type, res = null;
+        if (t === "obstacle" || t === "tertre") { var o = P.obstacleOptions().filter(function (x) { return x.affordable; }), rp = P.obstacleOptions().filter(function (x) { return x.rope; })[0]; res = o.length ? P.resolveObstacle(o[0].voie) : (rp ? P.resolveObstacle(rp.voie, true) : P.bruteForce()); }
+        else if (t === "combat") { res = (r.lastResult && r.lastResult.surprised) ? P.fight("tenir", true) : P.fight("tenir"); }
+        else if (t === "boss") res = P.fight("tenir");
+        else if (t === "source") res = P.drink();
+        else if (t === "autel") res = P.altar(false);
+        else if (t === "trouvaille") res = P.takeRelic();
+        else if (t === "evenement") { var hb = P.hookBranches().filter(function (b) { return b.ok; }); res = P.eventChoice(hb[Math.floor(Math.random() * hb.length)].id); }
+        else if (t === "camp" || t === "seuil") res = P.placeAction("rest");
+        else if (t === "clairiere") res = P.clairiere();
+        if (!res || !res.ok) { bad++; break; }
+      }
+      if (guard <= 0) bad++;
+      if (r.status === "completed") finished++;
+      if (r.end && r.end.dest) { dests++; lens.push(played); }
+      if (!(game.heroHp >= 0) || !isFinite(r.loot) || r.breath < 0) bad++;
+    }
+    ok(finished === 200 && bad === 0, "200 runs au hasard sur foret_2 : tous terminés, aucune valeur absurde (" + finished + " / 200)");
+    ok(evRow === 0, "la rencontre tombe dans l'acte I, avant le camp");
+    ok(dests > 0 && lens.every(function (x) { return x === M.rows.dest + 1; }), "un run qui atteint sa destination traverse " + (M.rows.dest + 1) + " nœuds (" + dests + " destinations)");
+
+    /* Écran : l'image et les nœuds de foret_2 */
+    prep(6); S.startRun("petite_aventure_foret"); P.depart();
+    var hm = g.buildPa2ScreenHTML(game.sceneRun);
+    ok(hm.indexOf("foret_2.jpg") > 0 && hm.indexOf("undefined") < 0 && hm.indexOf("NaN") < 0, "écran : la carte affiche foret_2, sans valeur vide");
+
+    /* L'homme du gouffre reste sans nom en Forêt (Maddoc garde sa rencontre du Désert) */
+    var txt = JSON.stringify(g.PA2_HOOKS.gouffre || {});
+    ok(!!g.PA2_HOOKS.gouffre && g.PA2_HOOKS.gouffre.worldId === "forest" && txt.indexOf("Maddoc") < 0 && g.PA2_HOOKS_BY_WORLD.forest.indexOf("maddoc") < 0, "l'homme du gouffre n'a pas de nom en Forêt");
+  } catch (err) {
+    ok(false, "[163] exception : " + err.message);
+  } finally {
+    g.PA2_MAPS_BY_WORLD.forest = savedMaps;
+    game.sceneRun = null;
+  }
+})();
+
+console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (carte, soif, Outre, Maddoc, contenu)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, T = g.SCENE_TEMPLATES.petite_aventure_desert;
+  var M = g.PA2_MAPS.desert_1;
+  var ids = g.STORY_QUESTS.desert.steps.map(function (x) { return x.id; });
+  function prep(level, step) {
+    run("game.enemy = null; game.combat = null;");
+    game.equipped.weapon.value = 600; run("EquipmentManager.recalcStats();");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.explorationProgression.maddocMet = null;
+    game.explorationProgression.desertPaCompleted = false;
+    run("StoryQuestManager.ensure();");
+    game.storyQuests.forest.currentStep = g.STORY_QUESTS.forest.steps.length;
+    game.storyQuests.desert.currentStep = ids.indexOf(step || "desert_02"); game.storyQuests.desert.accepted = true;
+    game.resources.petite_ration = 5; game.resources.outre_pleine = 2;
+    game.heroLevel = level || 9; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+   
+  }
+  function play(r, pick) {
+    var guard = 200;
+    while (r.status !== "completed" && guard-- > 0) {
+      if (r.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(pick ? pick(mv) : mv[Math.floor(Math.random() * mv.length)]); continue; }
+      var n = P.node(r.at), t = n.type, res = null;
+      if (t === "obstacle" || t === "tertre") { var o = P.obstacleOptions().filter(function (x) { return x.affordable; }), rp = P.obstacleOptions().filter(function (x) { return x.rope; })[0]; res = o.length ? P.resolveObstacle(o[0].voie) : (rp ? P.resolveObstacle(rp.voie, true) : P.bruteForce()); }
+      else if (t === "combat") res = (r.lastResult && r.lastResult.surprised) ? P.fight("tenir", true) : P.fight("tenir");
+      else if (t === "boss") res = P.fight("tenir");
+      else if (t === "source") res = P.drink();
+      else if (t === "autel") res = P.altar(false);
+      else if (t === "trouvaille") res = P.takeRelic();
+      else if (t === "evenement") { var hb = P.hookBranches().filter(function (b) { return b.ok; }); res = P.eventChoice(hb[Math.floor(Math.random() * hb.length)].id); }
+      else if (t === "camp" || t === "seuil") res = P.placeAction("rest");
+      else if (t === "clairiere") res = P.clairiere();
+      if (!res || !res.ok) return false;
+    }
+    return guard > 0;
+  }
+  try {
+    ok(T.mode === "pa2" && g.PA2_MAPS_BY_WORLD.desert[0] === "desert_1", "F1 : le Désert est livré en v2, sur la carte desert_1");
+    ok(fs.existsSync(path.join(ROOT, M.image)), "l'image de desert_1 est livrée");
+    var keys = Object.keys(M.nodes), badLink = 0, seen = { S: true }, todo = ["S"];
+    keys.forEach(function (k) { (M.links[k] || []).forEach(function (t) { if (!M.nodes[t] || M.nodes[t].row !== M.nodes[k].row + 1) badLink++; }); });
+    while (todo.length) (M.links[todo.pop()] || []).forEach(function (t) { if (!seen[t]) { seen[t] = true; todo.push(t); } });
+    var fin = keys.filter(function (k) { return M.nodes[k].row === 9; }).map(function (k) { return M.nodes[k].type; }).sort().join(",");
+    ok(badLink === 0 && keys.every(function (k) { return seen[k]; }) && fin === "boss,clairiere,tertre", "tracé : liens de rangée en rangée, tout atteignable, trois destinations");
+
+    /* Départ : carte, accroche, Outre, gourde */
+    prep(9);
+    S.startRun("petite_aventure_desert");
+    var r = game.sceneRun;
+    ok(r && r.pa2 && r.worldId === "desert" && r.mapId === "desert_1" && g.PA2_HOOKS_BY_WORLD.desert.indexOf(r.hookId) >= 0 && r.hookId !== "maddoc", "départ : Pa2Run, carte du Désert, accroche du Désert (pas Maddoc avant l'étape 3)");
+    ok(P.addItem("outre").ok && P.addItem("gourde").ok, "F2 : l'Outre se met dans la besace");
+    P.depart();
+    ok(game.resources.outre_pleine === 1 && r.stock.outre === 1 && r.stock.gourde === 1, "l'Outre est prise à l'Entrepôt ; la gourde n'a qu'une gorgée au Désert");
+    var b0 = r.breath; P.moveTo(P.openMoves()[0]);
+    ok(r.breath === b0 - 3, "la soif : chaque pas coûte 3 Souffle");
+    r.breath = 30; P.useItem("outre");
+    ok(r.breath === 70 && r.stock.outre === 0, "l'Outre rend 40 Souffle");
+    var gab = Object.keys(r.nodes).map(function (k) { return r.nodes[k]; });
+    ok(gab.filter(function (n) { return n.type === "obstacle"; }).every(function (n) { return !n.gabaritId || g.PA2_OBSTACLES.desert.indexOf(n.gabaritId) >= 0; }), "F4 : les obstacles sont ceux du Désert");
+    var cb = P.node("L4", r); cb.type = "combat"; cb.done = false; P._prepareNode(r, cb);
+    ok(["sandwarrior", "scarab"].indexOf(cb.foeId) >= 0, "F4 : l'acte II oppose guerriers des sables et scarabées");
+    var gp = P.guardianPreview();
+    ok(!!gp && g.PA2_GUARDIAN.desert.foe === "sandworm", "F4 : le gardien est le Ver du plateau (estimation au seuil)");
+    S.abandon();
+    ok(game.resources.outre_pleine === 1, "une Outre bue n'est pas rendue");
+
+    /* L'Outre n'existe pas en Forêt */
+    var TF = g.SCENE_TEMPLATES.petite_aventure_foret;
+    game.explorationProgression.petiteAventure = { spent: 0, since: null }; game.sceneRun = null;
+    S.startRun("petite_aventure_foret");
+    ok(!P.canAdd("outre").ok && g.pa2RenderPicker && true, "l'Outre n'est pas proposée en Forêt");
+    S.abandon(); game.sceneRun = null;
+
+    /* F3 : Maddoc passe en premier dès l'étape 3, une seule fois */
+    prep(9, "desert_04");
+    S.startRun("petite_aventure_desert"); r = game.sceneRun;
+    ok(r.hookId === "maddoc", "F3 : à l'étape 4, l'accroche est Maddoc");
+    P.addItem("gourde"); P.depart();
+    var ev = Object.keys(r.nodes).filter(function (k) { return r.nodes[k].type === "evenement"; })[0];
+    r.at = ev; r.status = "pa2-node"; r.nodes[ev].done = false;
+    var mr = P.eventChoice("gourde");
+    ok(mr.ok && game.explorationProgression.maddocMet === "aided" && g.storyMaddocMet() === "aided", "la gourde donnée : Maddoc aidé, noté pour l'Histoire");
+    S.abandon(); game.sceneRun = null;
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    S.startRun("petite_aventure_desert");
+    ok(game.sceneRun.hookId !== "maddoc", "une fois croisé, Maddoc n'est plus tiré");
+    S.abandon(); game.sceneRun = null;
+    prep(9, "desert_08");
+    S.startRun("petite_aventure_desert");
+    ok(game.sceneRun.hookId !== "maddoc", "à l'étape 8, Maddoc n'est plus sur la route");
+    S.abandon(); game.sceneRun = null;
+
+    /* Destination : drapeau de l'étape « L'outre », Verre des dunes */
+    prep(12, "desert_05");
+    S.startRun("petite_aventure_desert"); r = game.sceneRun; P.depart();
+    var verre0 = Number(game.resources.verre_des_dunes || 0);
+    r.at = "CLAIRIERE"; r.status = "pa2-node"; r.nodes.CLAIRIERE.done = false;
+    var cl = P.clairiere();
+    ok(cl.ok && game.explorationProgression.desertPaCompleted === true && Number(game.resources.verre_des_dunes || 0) > verre0 && r.end.rare > 0, "destination atteinte : drapeau de l'étape « L'outre » et Verre des dunes");
+    ok(!r.end.chest, "le Désert n'ouvre pas le coffre de la Forêt");
+
+    /* 150 runs au hasard */
+    var done = 0, bad = 0;
+    for (var k = 0; k < 150; k++) {
+      prep(8 + (k % 6), k % 3 ? "desert_02" : "desert_04");
+      S.startRun("petite_aventure_desert"); r = game.sceneRun;
+      ["outre", "gourde", "corde", "petite_ration"].forEach(function (id) { if (Math.random() < 0.6) P.addItem(id); });
+      P.depart();
+      if (!play(r)) bad++;
+      if (r.status === "completed") done++;
+      if (!(game.heroHp >= 0) || !isFinite(r.loot) || r.breath < 0) bad++;
+    }
+    ok(done === 150 && bad === 0, "150 runs au hasard au Désert : tous terminés, aucune valeur absurde (" + done + " / 150)");
+
+    /* Écrans */
+    prep(9);
+    S.startRun("petite_aventure_desert"); r = game.sceneRun; P.depart();
+    var hm = g.buildPa2ScreenHTML(r);
+    ok(hm.indexOf("desert_1.jpg") > 0 && hm.indexOf("undefined") < 0 && hm.indexOf("NaN") < 0, "écran : la carte de nuit du Désert");
+    r.at = "CAMP"; r.status = "pa2-node"; r.nodes.CAMP.done = false;
+    var hc = g.pa2SheetBody(r, r.nodes.CAMP, { key: "CAMP", step: "intro" });
+    ok(hc.indexOf(g.esc("L'oasis")) >= 0 && hc.indexOf("clairière basse") < 0, "écran : le camp du Désert est l'oasis");
+    S.abandon();
+  } catch (err) {
+    ok(false, "[164] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    game.sceneRun = null;
+  }
+})();
+
+console.log("\n[165] v3.389.0 — Chantier P, lot P-1 : les quêtes de déblocage deviennent des parcours v2");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, T = g.SCENE_TEMPLATES;
+  var Q = ["sentier_obstrue", "bosquet_silencieux", "terre_en_friche", "veine_instable", "eboulis_ferreux", "source_tarie"];
+  var NEEDS = { terre_en_friche: ["wellUnlocked"], eboulis_ferreux: ["quarryUnlocked"] };
+  function fresh(id) {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    game.heroHp = game.heroMaxHp; game.unlockedTabs.village = true;
+    ["huntBuildingUnlocked", "forgottenClearingUnlocked"].concat(NEEDS[id] || []).forEach(function (f) { game.explorationProgression[f] = true; });
+    g.WarehouseManager.addResource("petite_ration", 5);
+  }
+  try {
+    ok(Q.every(function (id) { var t = T[id]; return t.mode === "parcours" && t.parcours.steps.length === 2 && P.isTemplate(t) && !P.isPaTemplate(t) && !t.depthMax && !t.loadoutSlots; }), "les six quêtes : canevas « parcours » de deux étapes, sans champ du moteur v1");
+    ok(Q.every(function (id) { return T[id].pools.obstacle.every(function (gid) { return !!g.PA2_OBSTACLE_LINES[gid] && !!g.SCENE_NODES.obstacles[gid]; }); }), "chaque obstacle de quête a sa phrase d'ambiance");
+    Q.forEach(function (id) {
+      fresh(id);
+      var res = T[id].lootResource, before = g.WarehouseManager.getAmount(res), pa0 = S.petiteAventureCountToday();
+      var st = S.startRun(id), r = g.game.sceneRun;
+      var okStart = st.ok && r.parcours && r.status === "pa2-map" && !r.map.image;
+      var r2 = playParcours(true);
+      ok(okStart && r2.end.how === "parcours" && S.isQuestCompleted(id) && T[id].unlockOnSuccess.completionFlag && game.explorationProgression[T[id].unlockOnSuccess.completionFlag] === true
+        && g.WarehouseManager.getAmount(res) >= before + T[id].lootRanges.finalSafe[0] + 2 && S.petiteAventureCountToday() === pa0,
+        id + " : parcours joué, déblocage posé, " + res + " +" + (g.WarehouseManager.getAmount(res) - before) + ", aucune place de Petite Aventure prise");
+      S.clearRun();
+      ok(S.startRun(id).ok === false, id + " : une fois terminée, la quête ne se relance pas");
+    });
+    /* Écrans : parchemin, étapes, bilan */
+    fresh();
+    S.startRun("sentier_obstrue");
+    var r = g.game.sceneRun, hm = g.buildPa2ScreenHTML(r);
+    ok(hm.indexOf("pa2-parchment") > 0 && hm.indexOf(g.esc("Le Sentier Obstrué")) > 0 && hm.indexOf("undefined") < 0 && hm.indexOf("NaN") < 0, "écran : le tracé sur parchemin, titre de la quête");
+    P.moveTo(P.openMoves()[0]);
+    var hs = g.pa2SheetBody(r, P.node(r.at, r), { key: r.at, step: "intro" });
+    ok(hs.indexOf(g.esc(g.PA2_OBSTACLE_LINES[P.node(r.at, r).gabaritId])) > 0 && hs.indexOf("pa2Obstacle(") > 0, "feuille d'obstacle : phrase d'ambiance et trois voies");
+    playParcours(true);
+    var he = g.buildPa2ScreenHTML(r);
+    ok(he.indexOf(g.esc("Parcours terminé")) > 0 && he.indexOf("pa2Leave()") > 0, "bilan : parcours terminé, retour");
+    S.clearRun();
+    ok(g.MissionBoard._petiteAventureMissions().every(function (m) { return Q.indexOf(m.id) < 0; }), "les quêtes ne sont pas des Petites Aventures au tableau");
+    /* Un run v1 de quête repris d'une sauvegarde : reprend du début, ration rendue */
+    fresh();
+    var pr = g.WarehouseManager.getAmount("petite_ration");
+    g.SortieManager.start("scene");
+    game.sceneRun = { id: "old", templateId: "veine_instable", status: "gate", card: [], depth: 1, injuries: [], loot: 3 };
+    var gone = S.getRun() === null && game.sceneRun === null, pr2 = g.WarehouseManager.getAmount("petite_ration"), again = S.startRun("veine_instable");
+    ok(gone && pr2 === pr + 1 && again.ok, "run v1 d'une quête repris : clos, ration rendue, la quête se relance (" + gone + "/" + (pr2 - pr) + "/" + again.reason + ")");
+    S.abandon(); S.clearRun();
+  } catch (err) {
+    ok(false, "[165] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    game.sceneRun = null;
+  }
 })();
 
 console.log("\n" + passes + " OK, " + failures + " échec(s)");

@@ -24,9 +24,11 @@ var Pa2Run = {
   _clamp: function (v, a, b) { return Math.max(a, Math.min(b, v)); },
   _save: function () { if (typeof saveGame === "function") saveGame(); },
 
-  isTemplate: function (template) { return !!(template && template.mode === "pa2"); }, // v3.388.0 : drapeau paVersion retiré
+  isTemplate: function (template) { return !!(template && (template.mode === "pa2" || template.mode === "parcours")); }, // v3.389.0 : parcours
+  isParcours: function (run) { return !!(run && run.parcours); },
+  isPaTemplate: function (template) { return !!(template && template.mode === "pa2"); }, // une Petite Aventure (réserve de places)
   getRun: function () { var r = game.sceneRun; return (r && r.pa2) ? r : null; },
-  getMap: function (run) { return PA2_MAPS[(run || this.getRun() || {}).mapId] || null; },
+  getMap: function (run) { run = run || this.getRun() || {}; return run.map || PA2_MAPS[run.mapId] || null; }, // parcours : tracé dans le run
   node: function (key, run) { run = run || this.getRun(); return (run && run.nodes) ? run.nodes[key] || null : null; },
   hasItem: function (id, run) { run = run || this.getRun(); return !!run && run.bag.indexOf(id) >= 0; },
   hasRelic: function (id, run) { run = run || this.getRun(); return !!run && run.relics.indexOf(id) >= 0; },
@@ -35,7 +37,7 @@ var Pa2Run = {
   /* v3.386.0 : réglage propre au tracé (tune: { foeMult, lootMult }), pour qu'une carte longue pèse autant qu'une courte. */
   tune: function (run, key) { var m = this.getMap(run), t = m && m.tune; return Number((t && t[key]) || 1); },
   /* Profondeur des jets ramenée à l'échelle de la carte courte (destination en 9) : même courbe sur une carte longue. */
-  _depth: function (n, run) { return n.row * 9 / this.rows(this.getMap(run)).dest; },
+  _depth: function (n, run) { return this.isParcours(run || this.getRun()) ? n.row : n.row * 9 / this.rows(this.getMap(run)).dest; },
   // v3.387.0 (PA2-5) : règles, lieux et objets propres à un monde (soif du Désert, oasis, Outre).
   worldRule: function (run, key) { var r = window.PA2_WORLD_RULES && PA2_WORLD_RULES[(run || this.getRun()).worldId]; return r ? r[key] : undefined; },
   place: function (run, key) { var w = window.PA2_PLACES_BY_WORLD && PA2_PLACES_BY_WORLD[(run || this.getRun()).worldId]; return (w && w[key]) || PA2_PLACES[key]; },
@@ -189,6 +191,7 @@ var Pa2Run = {
 
   start: function (templateId, opts) {
     var template = SceneEngine.getTemplate(templateId);
+    if (template.mode === "parcours") return this._startParcours(template, opts);
     if (!SceneRunManager.canStartPetiteAventureToday()) {
       return { ok: false, reason: SceneRunManager.petiteAventureWaitLabel(), run: null };
     }
@@ -230,6 +233,70 @@ var Pa2Run = {
     return { ok: true, reason: null, run: run };
   },
 
+  /* ---------- Parcours (v3.389.0, chantier P) : quêtes et étapes d'Histoire en ligne droite ---------- */
+
+  /* Tracé calculé depuis template.parcours.steps : un nœud par étape, en lacet vers le nord.
+     Une étape : { type, gabaritId?, foe?, pack?, act?, fullBreath?, text? }. Sans gabaritId,
+     l'obstacle est tiré dans template.pools.obstacle. image : illustration de fond (facultative). */
+  _parcoursMap: function (template) {
+    var steps = template.parcours.steps, W = 848, H = 200 + steps.length * 190, nodes = {}, links = {};
+    nodes.S = { row: -1, x: 424, y: H - 90, type: "depart" };
+    var prev = "S";
+    steps.forEach(function (st, i) {
+      var key = "P" + i;
+      nodes[key] = { row: i, x: Math.round(424 + 190 * Math.sin((i + 1) * 1.25)), y: Math.round(H - 90 - (i + 1) * 190), type: st.type, act: st.act || 1 };
+      links[prev] = [key];
+      prev = key;
+    });
+    return { id: "parcours_" + template.id, worldId: template.worldId || "forest", image: template.parcours.image || null,
+      width: W, height: H, start: "S", rows: { camp: 99, seuil: 99, dest: steps.length - 1 }, nodes: nodes, links: links };
+  },
+  _startParcours: function (template, opts) {
+    var worldId = template.worldId || "forest", level = Math.max(1, Number(game.heroLevel || 1));
+    var run = {
+      id: "par_" + Date.now() + "_" + Math.floor(this.rand() * 100000),
+      templateId: template.id, pa2: true, parcours: true,
+      status: PA2_STATUS.prep, worldId: worldId, mapId: null, map: this._parcoursMap(template), hookId: null,
+      ring: "sentier", level: level, band: this.levelBand(level, worldId),
+      bagSize: Number(template.parcours.bag || 0),
+      startedAt: Date.now(), heroSnapshot: SceneRunManager.buildHeroSnapshot(),
+      bag: [], pacts: [], stock: {}, taken: {}, nodes: null, at: null, path: [],
+      breath: PA2_RULES.breathStart, wounds: 0, relics: [], flags: {}, reveal: {},
+      fioleUsed: false, altarFreeUsed: false, refGold: 1, loot: 0, rareFound: 0,
+      livingMap: (opts && opts.livingMap) ? { mapId: opts.livingMap.mapId, sectorId: opts.livingMap.sectorId } : null,
+      livingMapReport: null, lastResult: null, end: null
+    };
+    game.sceneRun = run;
+    if (!run.bagSize) { // rien à préparer : on part tout de suite
+      var d = this.depart();
+      if (d && d.ok === false) { game.sceneRun = null; return { ok: false, reason: d.reason, run: null }; }
+    }
+    this._save();
+    return { ok: true, reason: null, run: run };
+  },
+  bagSize: function (run) { run = run || this.getRun(); return run && run.bagSize != null ? run.bagSize : PA2_BAG_SIZE; },
+  // Coût d'entrée du canevas (Petite ration, Ration moyenne), pris au départ.
+  _payEntry: function (run) {
+    var t = SceneEngine.getTemplate(run.templateId), c = t && t.entryCost;
+    if (!c || !window.WarehouseManager) return { ok: true };
+    var amt = Number(c.amount || 0);
+    if (WarehouseManager.getAmount(c.resourceId) < amt) {
+      var def = (window.WAREHOUSE_RESOURCES || {})[c.resourceId];
+      return { ok: false, reason: _t("Pas assez de {x}", { x: def && def.name ? _td(def.name) : c.resourceId }) };
+    }
+    WarehouseManager.removeResource(c.resourceId, amt);
+    return { ok: true };
+  },
+  // Fin d'un parcours : déblocage, voyage, carte vivante, Hauts faits (comme la chambre finale v1).
+  _finishParcours: function (run) {
+    var t = SceneEngine.getTemplate(run.templateId) || {};
+    var res = this._parcoursResource(run);
+    if (res) { this._creditResource(res, Number(t.lootRanges.finalSafe[0] || 0)); run.loot += Number(t.lootRanges.finalSafe[0] || 0); } // le bonus d'arrivée de la v1
+    if (t.unlockOnSuccess) SceneRunManager._applyUnlock(t.unlockOnSuccess);
+    if (t.travelOnSuccess && window.WorldTravel) WorldTravel.arrive(t.travelOnSuccess.worldId, t.travelOnSuccess.adventureIndex);
+    return this.finish("parcours");
+  },
+
   /* ---------- Préparation : besace (V11, Q5) et pactes (V14) ---------- */
 
   bagUsed: function (run) {
@@ -245,7 +312,7 @@ var Pa2Run = {
     if (!this.itemInWorld(itemId, run)) return { ok: false, reason: _t("Pas dans ce monde.") };
     if (!this.isUnlocked(itemId)) return { ok: false, reason: _td(it.lockedHint || "") };
     if (!it.uses && run.bag.indexOf(itemId) >= 0) return { ok: false, reason: _t("Déjà dans la besace.") };
-    if (this.bagUsed(run) + it.size > PA2_BAG_SIZE) return { ok: false, reason: _t("La besace est pleine.") };
+    if (this.bagUsed(run) + it.size > this.bagSize(run)) return { ok: false, reason: _t("La besace est pleine.") };
     if (it.resource && window.WarehouseManager && this._countInBag(run, itemId) >= WarehouseManager.getAmount(it.resource)) {
       return { ok: false, reason: _t("Plus en réserve à l'Entrepôt.") };
     }
@@ -282,7 +349,8 @@ var Pa2Run = {
   depart: function () {
     var run = this.getRun();
     if (!run || run.status !== PA2_STATUS.prep) return { ok: false, reason: _t("Choix impossible") };
-    if (!SceneRunManager.canStartPetiteAventureToday()) return { ok: false, reason: SceneRunManager.petiteAventureWaitLabel() };
+    var par = this.isParcours(run);
+    if (!par && !SceneRunManager.canStartPetiteAventureToday()) return { ok: false, reason: SceneRunManager.petiteAventureWaitLabel() };
     if (!(Number(game.heroHp || 0) > 0)) return { ok: false, reason: _t("Ton héros est à terre : soigne-le au Campement avant de partir.") };
     var taken = {}, self = this, fail = null;
     run.bag.forEach(function (id) {
@@ -294,6 +362,10 @@ var Pa2Run = {
     if (fail) {
       Object.keys(taken).forEach(function (k) { WarehouseManager.refundResource(k, taken[k]); });
       return { ok: false, reason: _t("Plus en réserve à l'Entrepôt.") };
+    }
+    if (par) { // parcours : son coût d'entrée, après la besace (tout-ou-rien)
+      var pe = this._payEntry(run);
+      if (!pe.ok) { Object.keys(taken).forEach(function (k) { WarehouseManager.refundResource(k, taken[k]); }); return pe; }
     }
     run.taken = taken;
     run.stock = {};
@@ -309,8 +381,7 @@ var Pa2Run = {
     run.nodes = this.generate(run);
     run.at = this.getMap(run).start;
     run.path = [];
-    SceneRunManager._consumePetiteAventureSlot();
-    run.paSlotDay = SceneRunManager._today();
+    if (!par) { SceneRunManager._consumePetiteAventureSlot(); run.paSlotDay = SceneRunManager._today(); }
     if (window.SortieManager) SortieManager.start("scene");
     run.status = PA2_STATUS.map;
     this._save();
@@ -323,7 +394,7 @@ var Pa2Run = {
     var map = this.getMap(run), nodes = {}, free = [], self = this;
     Object.keys(map.nodes).forEach(function (key) {
       var d = map.nodes[key];
-      var n = { key: key, row: d.row, act: self.actOf(d.row, map), type: d.type || null, done: false };
+      var n = { key: key, row: d.row, act: d.act || self.actOf(d.row, map), type: d.type || null, done: false };
       nodes[key] = n;
       if (!n.type) free.push(n);
     });
@@ -348,7 +419,19 @@ var Pa2Run = {
     };
     [1, 2, 3].forEach(function (a) { ensure(a, "combat"); ensure(a, "trouvaille"); });
     ensure(2, "source");
+    if (this.isParcours(run)) this._parcoursSteps(run, nodes);
     return nodes;
+  },
+  // Étapes d'un parcours : gabarit, ennemi, source pleine et texte, posés depuis le canevas.
+  _parcoursSteps: function (run, nodes) {
+    var t = SceneEngine.getTemplate(run.templateId), pool = (t.pools && t.pools.obstacle) || PA2_OBSTACLES[run.worldId] || PA2_OBSTACLES.forest, self = this;
+    t.parcours.steps.forEach(function (st, i) {
+      var n = nodes["P" + i];
+      if (st.type === "obstacle") n.gabaritId = st.gabaritId || self._pick(pool);
+      if (st.type === "combat") { n.foeId = st.foe; n.pack = Number(st.pack || 1); }
+      if (st.fullBreath) n.fullBreath = true;
+      if (st.text) n.narr = st.text;
+    });
   },
 
   /* ---------- Carte : visibilité (V7) et déplacement ---------- */
@@ -358,6 +441,7 @@ var Pa2Run = {
     run = run || this.getRun();
     var n = this.node(key, run), here = this.node(run.at, run);
     if (!n || !here) return false;
+    if (this.isParcours(run)) return true; // un parcours se voit en entier
     if (this.hasItem("veilleurs", run) || this.hasRelic("oeil", run)) return true;
     if (this.isDest(n, run) || n.type === "camp" || n.type === "seuil" || n.type === "depart") return true;
     if (key === run.at || this._walked(run, key)) return true;
@@ -370,7 +454,7 @@ var Pa2Run = {
     run = run || this.getRun();
     var n = this.node(key, run), here = this.node(run.at, run);
     if (!n || !here) return false;
-    if (key === run.at || this._walked(run, key) || n.type === "depart") return true;
+    if (key === run.at || this._walked(run, key) || n.type === "depart" || this.isParcours(run)) return true;
     if (this.isDest(n, run) || n.type === "camp" || n.type === "seuil") return true;
     return n.row > here.row && this.isVisible(key, run);
   },
@@ -400,14 +484,16 @@ var Pa2Run = {
   _prepareNode: function (run, n) {
     var t = n.type;
     if (t === "obstacle" || t === "tertre") {
-      var gid = (t === "tertre") ? ((PA2_OBSTACLE_TERTRE.byWorld || {})[run.worldId] || PA2_OBSTACLE_TERTRE.gabaritId) : this._pick(PA2_OBSTACLES[run.worldId] || PA2_OBSTACLES.forest);
+      var gid = n.gabaritId || ((t === "tertre") ? ((PA2_OBSTACLE_TERTRE.byWorld || {})[run.worldId] || PA2_OBSTACLE_TERTRE.gabaritId) : this._pick(PA2_OBSTACLES[run.worldId] || PA2_OBSTACLES.forest));
       var gab = SceneEngine.getNodeBank().obstacles[gid];
       var base = (t === "tertre") ? PA2_OBSTACLE_TERTRE.baseDifficulty : Number(gab.baseDifficulty || 4);
       n.gabaritId = gid;
       n.diff = SceneCheckSystem.depthDifficulty(base, this._depth(n, run)) * this.ring(run).diffMult * Number(run.band.obstacleScale || 1);
     } else if (t === "combat") {
       var hook = run.hookId ? PA2_HOOKS[run.hookId] : null;
-      if (hook && hook.revenge && run.flags.vole && n.act >= 2 && !run.flags.revenge) {
+      if (n.foeId && this.isParcours(run)) {
+        // parcours : l'ennemi est celui de l'étape
+      } else if (hook && hook.revenge && run.flags.vole && n.act >= 2 && !run.flags.revenge) {
         run.flags.revenge = true; n.revenge = true; n.foeId = hook.revenge.foe; n.pack = 1;
       } else {
         n.foeId = this._pick(((PA2_FOES[run.worldId] || PA2_FOES.forest)[n.act]));
@@ -448,9 +534,27 @@ var Pa2Run = {
   _gold: function (run, amount) {
     var v = Math.max(0, Math.round(amount * (this.hasRelic("ronce", run) ? PA2_RULES.ronceLoot : 1)));
     if (v <= 0) return 0;
+    var res = this._parcoursResource(run);
+    if (res) { // quête de déblocage : son butin est une ressource (bois, blé…), barème de la v1
+      var n = this.node(run.at, run), t = SceneEngine.getTemplate(run.templateId), r = t.lootRanges.obstacleSuccess;
+      var units = Math.max(1, Math.round(v / (run.refGold * PA2_GOLD.obstacle) * (r[0] + r[1]) / 2 * SceneCheckSystem.depthLootMultiplier(n ? n.row : 0)));
+      this._creditResource(res, units);
+      run.loot += units; // le compteur du run suit la ressource de la quête
+      return units;
+    }
     run.loot += v;
     if (window.SortieManager) SortieManager.addGold(v);
     return v;
+  },
+  // Ressource de butin d'un parcours (template.lootResource autre que l'or), ou null.
+  _parcoursResource: function (run) {
+    if (!this.isParcours(run)) return null;
+    var t = SceneEngine.getTemplate(run.templateId);
+    return (t && t.lootResource && t.lootResource !== "gold" && t.lootRanges) ? t.lootResource : null;
+  },
+  _creditResource: function (res, units) {
+    if (typeof hasLegendaryPower === "function" && hasLegendaryPower("leg_collectionneur")) units += 1; // Collectionneur, comme en v1
+    if (window.SortieManager) SortieManager.addResource(res, units);
   },
   _pay: function (run, amount) {
     var s = window.SortieManager ? SortieManager.ensure() : null;
@@ -461,6 +565,7 @@ var Pa2Run = {
     n.done = true;
     run.lastResult = result || null;
     if (run.status !== PA2_STATUS.done) run.status = PA2_STATUS.map;
+    if (this.isParcours(run) && run.status !== PA2_STATUS.done && this.isDest(n, run)) this._finishParcours(run);
     this._save();
     return { ok: true, reason: null, result: result || null };
   },
@@ -745,6 +850,7 @@ var Pa2Run = {
     if (!n) return { ok: false, reason: _t("Choix impossible") };
     var run = this.getRun(), amt = this.sourceAmount(run);
     var healed = this._heal(game.heroMaxHp * amt / 100);
+    if (n.fullBreath) amt = Math.max(amt, 100 - run.breath); // parcours : la source qui rend tout le Souffle
     run.breath = Math.min(100, run.breath + amt);
     return this._done(run, n, { kind: "source", amount: amt, healed: healed });
   },
@@ -926,7 +1032,8 @@ var Pa2Run = {
     var run = this.getRun();
     if (!run || run.status === PA2_STATUS.done) return null;
     var dest = this.node(run.at, run), end = { how: how, dest: null, chest: null, rare: 0, mult: 1 };
-    if (how === "dest" && dest) {
+    var par = this.isParcours(run);
+    if (how === "dest" && dest && !par) {
       end.dest = dest.type;
       var rare = PA2_RARE[run.worldId];
       var amt = rare ? Number(rare.dest[this.ring(run).ring] || 0) : 0;
@@ -957,18 +1064,20 @@ var Pa2Run = {
     run.end = end;
     var outcome = how === "ko" ? (this.hasPact("retour", run) ? "death" : "flee") : "success";
     if (how === "ko") {
-      SceneRunManager._refundPetiteAventureSlot(run);
+      if (!par) SceneRunManager._refundPetiteAventureSlot(run);
       game.justDied = true; // comme une mort en v1 : bandeau du Campement
       this._log("💀 " + _t("On te ramène. Une part de ce que tu portais reste en route."));
     } else if (how === "home") this._log("🔥 " + _t("Retour au feu avant la nuit profonde. Le butin est sauf."));
+    else if (how === "parcours") this._log("🏁 " + _t("{t} : parcours terminé.", { t: _td((SceneEngine.getTemplate(run.templateId) || {}).title || "") }));
     else if (dest) this._log("🏁 " + _t("Petite Aventure : {d} atteint.", { d: _td(((PA2_DESTS[run.worldId] || PA2_DESTS.forest)[dest.type] || {}).name || "") }));
     if (end.rare > 0 || run.rareFound > 0) this._log("✨ " + _t("Trouvaille : +{n} {x}", { n: run.rareFound, x: this._rareName(run) }));
     if (end.chest && end.chest.isNew) this._log("🧰 " + _t("Coffre d'expédition : {x}", { x: _td((PA2_ITEMS[end.chest.item] || {}).name || "") }));
     end.summary = window.SortieManager ? SortieManager.end(outcome) : null;
-    SceneRunManager._notifyLivingMap(run, how === "dest" ? "success" : (how === "ko" ? "fail" : "neutral"));
+    SceneRunManager._notifyLivingMap(run, (how === "dest" || how === "parcours") ? "success" : (how === "ko" ? "fail" : "neutral"));
     // Q12 : « Un Périple » ; v3.384.0 : compté pour le monde de la carte jouée, pas celui où réside le héros.
     if (how === "dest" && window.AchievementManager) AchievementManager.onRunSuccess(run.worldId);
-    this._recordTrophy(run, end);
+    if (how === "parcours" && window.AchievementManager) AchievementManager.onRunSuccess(); // comme la chambre finale v1 : monde de résidence
+    if (!par) this._recordTrophy(run, end);
     this._save();
     return end;
   },

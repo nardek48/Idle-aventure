@@ -531,7 +531,7 @@ var MissionBoard = {
     if (!window.SCENE_TEMPLATES) return [];
     return Object.keys(SCENE_TEMPLATES).filter(function (id) {
       var t = SCENE_TEMPLATES[id];
-      return !!(t && window.Pa2Run && Pa2Run.isTemplate(t)); // v3.388.0 : canevas mode "pa2"
+      return !!(t && window.Pa2Run && Pa2Run.isPaTemplate(t)); // v3.388.0 : canevas mode "pa2"
     });
   },
 

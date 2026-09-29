@@ -366,11 +366,11 @@ function pa2HudHTML(run) {
     var r = PA2_RELICS[id];
     return '<button type="button" class="pa2-chip is-relic is-' + r.rar + '" onclick="pa2RelicInfo(\'' + id + '\')" aria-label="' + esc(_td(r.name)) + '">' + pa2Img(r.icon) + '</button>';
   }).join("");
-  var act = n && n.row >= 0 ? PA2_ACT_WORD[n.act] : _t("Départ");
+  var act = n && n.row >= 0 ? (run.parcours ? _t("Étape {a}/{b}", { a: n.row + 1, b: Pa2Run.rows(Pa2Run.getMap(run)).dest + 1 }) : PA2_ACT_WORD[n.act]) : _t("Départ");
   return '<div class="pa2-hud" id="pa2-hud">' + pa2Img(hero.image, "pa2-portrait", hero.name) +
     '<div class="pa2-gauges">' + pa2GaugeHTML("hp", v.hp, v.max, _t("{a} / {b} PV", { a: pa2Num(v.hp), b: pa2Num(v.max) })) +
     pa2GaugeHTML("breath", v.breath, 100, _t("Souffle {n}", { n: pa2Num(v.breath) })) + '</div>' +
-    '<div class="pa2-hud-side"><div class="pa2-gold">' + pa2Img(PA2_ICONS.gold) + pa2Num(v.loot) + '</div><div class="pa2-act">' + esc(act) + '</div></div>' +
+    '<div class="pa2-hud-side"><div class="pa2-gold">' + pa2Img(pa2LootRes(run) ? pa2LootRes(run).icon : PA2_ICONS.gold) + pa2Num(v.loot) + '</div><div class="pa2-act">' + esc(act) + '</div></div>' +
     '<div class="pa2-hud-row">' + chips + '<span class="pa2-spacer"></span>' + rel + '</div></div>';
 }
 function pa2RefreshHud() {
@@ -380,13 +380,15 @@ function pa2RefreshHud() {
 
 function buildPa2MapScreenHTML(run) {
   var n = Pa2Run.node(run.at, run);
-  var title = pa2WorldName(run.worldId) + " · " + (n && n.row >= 0 ? PA2_ACT_WORD[n.act] : _t("départ"));
+  var title = run.parcours ? _td((SceneEngine.getTemplate(run.templateId) || {}).title || "")
+    : pa2WorldName(run.worldId) + " · " + (n && n.row >= 0 ? PA2_ACT_WORD[n.act] : _t("départ"));
   var h = pa2PageOpen(title) + '<div class="pa2-col">';
   h += pa2HudHTML(run);
   h += pa2MapHTML(run);
-  var hint = run.status !== PA2_STATUS.map ? "" : (n.type === "depart" ? _t("Touche un sentier doré pour quitter le village.") : _t("Choisis ta route. Les trois destinations brillent au nord."));
+  var hint = run.status !== PA2_STATUS.map ? "" : (run.parcours ? _t("Touche l'étape suivante pour avancer.")
+    : (n.type === "depart" ? _t("Touche un sentier doré pour quitter le village.") : _t("Choisis ta route. Les trois destinations brillent au nord.")));
   h += '<p class="pa2-maphint">' + esc(hint) + '</p>';
-  h += '<button type="button" class="pa2-link" onclick="pa2AskAbandon()">' + esc(_t("Abandonner l'aventure")) + '</button>';
+  h += '<button type="button" class="pa2-link" onclick="pa2AskAbandon()">' + esc(run.parcours ? _t("Abandonner le parcours") : _t("Abandonner l'aventure")) + '</button>';
   h += '</div></div>';
   return h;
 }
@@ -414,7 +416,8 @@ function pa2MapHTML(run) {
     else if (d.row >= 0 && run.reveal[Pa2Run.actOf(d.row, map)]) svg += '<circle cx="' + d.x + '" cy="' + d.y + '" r="' + Math.round(58 * K) + '" fill="url(#pa2-halo)" opacity=".45"/>';
   });
   svg += '</mask></defs>';
-  svg += '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#050302" opacity="' + (here && here.act === 3 ? '.9' : '.84') + '" mask="url(#pa2-fog)"/>';
+  var veil = run.parcours ? (map.image ? '.45' : '0') : (here && here.act === 3 ? '.9' : '.84'); // parcours : le chemin se voit en entier
+  svg += '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#050302" opacity="' + veil + '" mask="url(#pa2-fog)"/>';
   svg += '<circle cx="' + cur.x + '" cy="' + cur.y + '" r="' + Math.round(light * 0.8) + '" fill="url(#pa2-glow)"/>';
   // Seuls les sentiers possibles (pointillés dorés) et la trace parcourue sont dessinés.
   Object.keys(map.links).forEach(function (a) {
@@ -443,7 +446,7 @@ function pa2MapHTML(run) {
   var from = pa2View.fromKey ? map.nodes[pa2View.fromKey] : cur;
   var marker = '<img class="pa2-hero-mark" id="pa2-hero-mark" src="' + esc(PA2_ICONS.hero) + '" alt="" style="left:' + (100 * from.x / W).toFixed(2) + '%;top:' + (100 * from.y / H).toFixed(2) + '%">';
   return '<div class="pa2-map" id="pa2-map" style="aspect-ratio:' + W + ' / ' + H + '">' +
-    '<img class="pa2-map-img" src="' + esc(map.image) + '" alt="">' + svg + nodes + marker + '</div>';
+    (map.image ? '<img class="pa2-map-img" src="' + esc(map.image) + '" alt="">' : '<div class="pa2-map-img pa2-parchment"></div>') + svg + nodes + marker + '</div>';
 }
 
 function pa2NodeLabel(run, n) {
@@ -607,7 +610,11 @@ function pa2WhyHTML(o, run) {
   if (run.wounds) parts.push(_tn(run.wounds, "{n} blessure", "{n} blessures", { n: run.wounds }));
   return esc(parts.join(" · "));
 }
-function pa2ActKicker(n, what) { return what + " · " + (n.row >= 0 ? PA2_ACT_WORD[n.act].toLowerCase() : ""); }
+function pa2ActKicker(n, what) {
+  var run = Pa2Run.getRun();
+  if (run && run.parcours && n.row >= 0) return what + " · " + _t("étape {n}", { n: n.row + 1 }); // parcours : pas d'actes
+  return what + " · " + (n.row >= 0 ? PA2_ACT_WORD[n.act].toLowerCase() : "");
+}
 
 function pa2SheetBody(run, n, st) {
   var h = pa2EchoHTML(n, st), dests = pa2Dests(run), hook = pa2Hook(run), R = PA2_RULES;
@@ -799,7 +806,8 @@ function pa2GuardianHint(run) {
 
 /* Écho d'une accroche (PA2-4) : une ligne en tête de la feuille, sans rappel de la cause. */
 function pa2EchoHTML(n, st) {
-  return (n && n.echo && st && (st.step === "intro" || st.step === "surprised")) ? '<p class="pa2-echo">' + esc(_td(n.echo)) + '</p>' : "";
+  if (!n || !st || (st.step !== "intro" && st.step !== "surprised")) return "";
+  return (n.narr ? '<p class="pa2-echo">' + esc(_td(n.narr)) + '</p>' : "") + (n.echo ? '<p class="pa2-echo">' + esc(_td(n.echo)) + '</p>' : ""); // narr : texte d'étape d'un parcours
 }
 
 function pa2FoeInfo(run, n, pv) {
@@ -835,10 +843,14 @@ function pa2ContinueButton(run) {
   return '<button type="button" class="kbtn primary" onclick="pa2CloseSheet()">' + esc(ended ? _t("Voir le bilan") : _t("Continuer")) + '</button>';
 }
 
+// Unité du butin d'un run : l'or, ou la ressource d'une quête de déblocage (bois, blé…).
+function pa2LootRes(run) { var id = Pa2Run._parcoursResource(run); return id && window.WAREHOUSE_RESOURCES ? WAREHOUSE_RESOURCES[id] : null; }
+function pa2Unit(run) { var r = pa2LootRes(run); return r ? _td(r.name) : _t("or"); }
+
 function pa2ObstacleOutcome(run, n, r) {
   var h;
-  if (r.kind === "ok") h = '<div class="pa2-verdict is-ok">' + esc(r.rope ? _t("La corde tient") : _t("Réussi")) + '</div><p class="pa2-result">+' + pa2Num(r.gain) + ' ' + esc(_t("or")) + '</p>';
-  else if (r.kind === "mid") h = '<div class="pa2-verdict is-mid">' + esc(_t("De justesse")) + '</div><p class="pa2-result">' + esc(_t("Tu passes, épuisé. −{b} Souffle · +{g} or", { b: PA2_RULES.mistBreath, g: pa2Num(r.gain) })) + '</p>';
+  if (r.kind === "ok") h = '<div class="pa2-verdict is-ok">' + esc(r.rope ? _t("La corde tient") : _t("Réussi")) + '</div><p class="pa2-result">+' + pa2Num(r.gain) + ' ' + esc(pa2Unit(run)) + '</p>';
+  else if (r.kind === "mid") h = '<div class="pa2-verdict is-mid">' + esc(_t("De justesse")) + '</div><p class="pa2-result">' + esc(pa2LootRes(run) ? _t("Tu passes, épuisé. −{b} Souffle · +{g} {x}", { b: PA2_RULES.mistBreath, g: pa2Num(r.gain), x: pa2Unit(run) }) : _t("Tu passes, épuisé. −{b} Souffle · +{g} or", { b: PA2_RULES.mistBreath, g: pa2Num(r.gain) })) + '</p>';
   else h = '<div class="pa2-verdict is-ko">' + esc(_t("Raté")) + '</div><p class="pa2-result">' + esc(_t("Tu passes quand même, mais pas entier. −{d} PV · une blessure", { d: r.dmg })) + '</p>';
   if (n.type === "tertre") {
     var d = pa2Dests(run).tertre;
@@ -904,7 +916,7 @@ function pa2Reveal(run) {
   pa2View.hud = null;
   if (snap) {
     var dl = Math.round(run.loot - snap.loot), dh = Math.round(game.heroHp - snap.hp), db = Math.round(run.breath - snap.breath);
-    if (dl > 0) pa2Float("+" + dl + " " + _t("or"), "gold");
+    if (dl > 0) pa2Float("+" + dl + " " + pa2Unit(run), "gold");
     if (dh < 0) { pa2Float(dh + " " + _t("PV"), "hurt"); pa2Shake(); pa2Buzz([40, 30, 60]); }
     if (dh > 0) pa2Float("+" + dh + " " + _t("PV"), "heal");
     if (db > 0) pa2Float("+" + db + " " + _t("Souffle"), "breath");
@@ -1050,6 +1062,7 @@ function pa2Clairiere() { if (pa2Quick(function () { return Pa2Run.clairiere(); 
 /* ---------- Bilan ---------- */
 
 function buildPa2EndHTML(run) {
+  if (run.parcours) return buildPa2ParcoursEndHTML(run);
   var e = run.end || {}, dests = pa2Dests(run), n = Pa2Run.node(run.at, run) || {};
   var title, text, icon = null;
   if (e.how === "ko") {
@@ -1100,6 +1113,28 @@ function buildPa2EndHTML(run) {
     h += '<div class="pa2-panel pa2-trophy">' + pa2Img(it.icon) + '<div><div class="pa2-kicker">' + esc(e.chest.isNew ? _t("Nouveau dans le coffre d'expédition") : _t("Déjà dans ton coffre")) + '</div>' +
       '<h3 class="pa2-h3">' + esc(pa2ItemName(e.chest.item)) + '</h3><div class="pa2-dim pa2-small">' + esc(_td(it.pro)) + ' ' + esc(_t("Disponible dans ta besace dès le prochain départ.")) + '</div></div></div>';
   }
+  var rep = run.livingMapReport;
+  if (rep && rep.message) h += '<div class="scene-map-report' + (rep.regressed ? ' is-loss' : '') + '">' + esc(rep.message) + '</div>';
+  h += '<button type="button" class="kbtn primary" onclick="pa2Leave()">' + esc(run.livingMap ? _t("Retour à la carte") : _t("Retour au Campement")) + '</button>';
+  h += '</div></div>';
+  return h;
+}
+
+// Bilan d'un parcours (quête de déblocage, étape d'Histoire) : arrivée ou évacuation, butin rapporté.
+function buildPa2ParcoursEndHTML(run) {
+  var e = run.end || {}, t = SceneEngine.getTemplate(run.templateId) || {}, sum = e.summary || {};
+  var ok = e.how === "parcours";
+  var text = ok ? _t("Tu es au bout du chemin. Ce qui bloquait ne bloque plus.")
+    : (e.how === "ko" ? _t("Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste en route.") : _t("Tu rentres sans finir. Une part du butin reste en route."));
+  var h = pa2PageOpen(_t("Retour du parcours")) + '<div class="pa2-col">';
+  h += '<div class="pa2-panel pa2-center"><div class="pa2-kicker">' + esc(ok ? _t("Parcours terminé") : (e.how === "ko" ? _t("Évacuation") : _t("Retour anticipé"))) + '</div>' +
+    '<h1 class="pa2-h1">' + esc(_td(t.title || "")) + '</h1><p class="pa2-narr pa2-dim">' + esc(text) + '</p></div>';
+  var kept = sum.kept && window.SortieManager ? SortieManager.getLootSummary(sum.kept) : "";
+  var L = sum.lost || {}, hasLost = Number(L.gold || 0) > 0 || Object.keys(L.resources || {}).some(function (k) { return Number(L.resources[k]) > 0; });
+  var lost = hasLost && window.SortieManager ? SortieManager.getLootSummary(L) : "";
+  h += '<div class="pa2-panel pa2-tally"><span class="pa2-sep">' + esc(_t("Butin rapporté")) + '</span><span class="pa2-sep pa2-tot">' + esc(kept || "—") + '</span>';
+  if (lost) h += '<span>' + esc(_t("Perdu en route")) + '</span><span class="pa2-con">' + esc(lost) + '</span>';
+  h += '</div>';
   var rep = run.livingMapReport;
   if (rep && rep.message) h += '<div class="scene-map-report' + (rep.regressed ? ' is-loss' : '') + '">' + esc(rep.message) + '</div>';
   h += '<button type="button" class="kbtn primary" onclick="pa2Leave()">' + esc(run.livingMap ? _t("Retour à la carte") : _t("Retour au Campement")) + '</button>';

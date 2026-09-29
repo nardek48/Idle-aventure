@@ -131,6 +131,12 @@ var SceneRunManager = {
     this._refundPetiteAventureSlot(run);
     game.sceneRun = null;
     if (window.SortieManager && SortieManager.isActive()) SortieManager.end("success");
+    // v3.389.0 : un parcours (quête, étape d'Histoire) repris d'avant sa bascule reprend du début, sans être repayé.
+    if (tpl && tpl.mode === "parcours") {
+      if (tpl.entryCost && window.WarehouseManager) WarehouseManager.refundResource(tpl.entryCost.resourceId, Number(tpl.entryCost.amount || 0));
+      if (typeof addLog === "function") addLog(_t("{t} : le parcours a changé. Il reprend du début, sans nouveau coût.", { t: _td(tpl.title || "") }), "event");
+      return true;
+    }
     if (typeof addLog === "function") addLog(_t("L'ancienne Petite aventure en cours est close : ton butin est rapporté."), "event");
     return true;
   },

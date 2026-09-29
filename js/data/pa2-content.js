@@ -218,7 +218,20 @@ var PA2_OBSTACLE_LINES = {
   dalle_scellee: "Une dalle, à plat dans le sable. Des signes gravés. Elle sonne creux.",
   puits_effondre: "Le puits s'est effondré sur le chemin. En bas, pas d'eau. Du froid.",
   vent_de_face: "Le vent se lève d'un coup. Il porte du sable, et il ne tourne pas.",
-  dalles_ensablees: "Des dalles sous le sable, bien alignées. Quelqu'un a construit une route ici. Elle s'enfonce."
+  dalles_ensablees: "Des dalles sous le sable, bien alignées. Quelqu'un a construit une route ici. Elle s'enfonce.",
+  // v3.389.0 (chantier P) : les obstacles des quêtes de déblocage
+  tronc_deracine: "Un tronc en travers du sentier. Ses racines tiennent encore une motte de terre.",
+  troncs_jumeaux: "Deux troncs poussés l'un contre l'autre. Entre eux, à peine la place d'un bras.",
+  fute_dense: "Les arbres serrés ne laissent passer ni lumière ni bruit. Le sentier s'y perd.",
+  ronces_epaisses: "Des ronces plus hautes qu'un homme. Quelqu'un a essayé avant toi : il reste un bout de manche.",
+  sillons_geles: "Les sillons d'un champ oublié, durcis comme de la pierre. On a labouré ici, il y a longtemps.",
+  talus_boueux: "Le talus glisse sous la main. En haut, le champ. En bas, toi.",
+  filon_fragile: "Un filon qui brille dans la roche. La roche autour s'effrite quand on la regarde.",
+  paroi_instable: "La paroi craque doucement, comme un plancher la nuit.",
+  veine_rougeatre: "Une veine rouge court dans la pierre. Elle tache les doigts.",
+  eboulis_recent: "Des pierres fraîchement tombées. La poussière n'est pas encore retombée.",
+  source_irreguliere: "L'eau sort par à-coups, puis s'arrête. Puis reprend.",
+  bassin_trouble: "Un bassin d'eau grise. On ne voit pas le fond. On ne voit pas non plus où il finit."
 };
 
 /* Lieux sans choix de voie (bible narrative §4.5). */

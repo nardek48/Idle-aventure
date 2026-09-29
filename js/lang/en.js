@@ -4177,3 +4177,30 @@ I18n.register("en", {
   "Avant une Petite aventure du Désert, mets une Outre dans ta besace : elle te rendra du Souffle quand tu en manques.": "Before a Desert Short adventure, put a Waterskin in your satchel: it gives you Breath back when you run low.",
   "Au Désert, chaque pas coûte du Souffle et la gourde n'a qu'une gorgée. Sans Outre, tu passes quand même, mais tu arrives à sec.": "In the Desert, every step costs Breath and the flask holds a single drink. Without a Waterskin you still get through, but you arrive parched."
 });
+
+/* v3.389.0 (chantier P, lot P-1) : parcours sur le moteur v2, quêtes de déblocage. */
+I18n.register("en", {
+  "{t} : parcours terminé.": "{t}: route completed.",
+  "{t} : le parcours a changé. Il reprend du début, sans nouveau coût.": "{t}: the route has changed. It starts over from the beginning, at no new cost.",
+  "Touche l'étape suivante pour avancer.": "Tap the next step to move on.",
+  "Tu es au bout du chemin. Ce qui bloquait ne bloque plus.": "You have reached the end of the path. What was in the way is not any more.",
+  "Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste en route.": "Silence, all at once. Then voices, hands. Half of what you carried stays on the road.",
+  "Retour du parcours": "Back from the route",
+  "Parcours terminé": "Route completed",
+  "Un tronc en travers du sentier. Ses racines tiennent encore une motte de terre.": "A trunk across the trail. Its roots still hold a clump of earth.",
+  "Deux troncs poussés l'un contre l'autre. Entre eux, à peine la place d'un bras.": "Two trunks grown against each other. Between them, barely room for an arm.",
+  "Les arbres serrés ne laissent passer ni lumière ni bruit. Le sentier s'y perd.": "The packed trees let through neither light nor sound. The trail gets lost in them.",
+  "Des ronces plus hautes qu'un homme. Quelqu'un a essayé avant toi : il reste un bout de manche.": "Brambles taller than a man. Someone tried before you: a scrap of sleeve is still there.",
+  "Les sillons d'un champ oublié, durcis comme de la pierre. On a labouré ici, il y a longtemps.": "The furrows of a forgotten field, hard as stone. Someone ploughed here, long ago.",
+  "Le talus glisse sous la main. En haut, le champ. En bas, toi.": "The bank slides under your hand. Up top, the field. Down below, you.",
+  "Un filon qui brille dans la roche. La roche autour s'effrite quand on la regarde.": "A seam glinting in the rock. The rock around it crumbles when you look at it.",
+  "La paroi craque doucement, comme un plancher la nuit.": "The rock face creaks softly, like floorboards at night.",
+  "Une veine rouge court dans la pierre. Elle tache les doigts.": "A red vein runs through the stone. It stains your fingers.",
+  "Des pierres fraîchement tombées. La poussière n'est pas encore retombée.": "Freshly fallen stones. The dust has not settled yet.",
+  "L'eau sort par à-coups, puis s'arrête. Puis reprend.": "The water comes out in spurts, then stops. Then starts again.",
+  "Un bassin d'eau grise. On ne voit pas le fond. On ne voit pas non plus où il finit.": "A pool of grey water. You cannot see the bottom. You cannot see where it ends either.",
+  "Étape {a}/{b}": "Step {a}/{b}",
+  "Abandonner le parcours": "Abandon the route",
+  "étape {n}": "step {n}",
+  "Tu passes, épuisé. −{b} Souffle · +{g} {x}": "You get through, exhausted. −{b} Breath · +{g} {x}"
+});
