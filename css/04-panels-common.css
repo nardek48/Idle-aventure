@@ -138,13 +138,13 @@
 
 .talent-cost {
   margin-top: 4px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-dim);
 }
 
 .talent-name {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
   line-height: 1.1;
@@ -171,6 +171,6 @@
 
   .talent-name,
   .talent-cost {
-    font-size: 10px;
+    font-size: 12px;
   }
 }

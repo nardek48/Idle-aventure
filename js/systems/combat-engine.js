@@ -1509,7 +1509,7 @@ var CombatEngine = {
       }
     }
 
-    addLog(_t("💀 Vous avez été terrassé ! Retour au Campement : mange ou laisse le feu te remettre debout."), "event");
+    addLog(_t("💀 Tu as été terrassé ! Retour au campement : mange ou laisse le feu te remettre debout."), "event");
     showToast(_t("💀 Terrassé !"), 1800);
     vibrate([80, 40, 80]);
 

@@ -19,8 +19,8 @@ var pa2View = {
   sheet: null,          // { key, step, res, ... } : feuille ouverte
   hud: null,            // valeurs affichées pendant une animation (le moteur a déjà tout appliqué)
   fromKey: null,        // nœud quitté : le repère du héros glisse depuis lui
-  scrollTo: null,       // nœud à centrer après le prochain rendu
   keepScroll: null,
+  cam: { w: 0, tx: 0, ty: 0, key: null }, // v3.394.0 : vue de la carte plein écran (key = run + carte)
   legend: false,
   justAdded: null,
   timers: []
@@ -110,7 +110,8 @@ function pa2SyncViewRun(run) {
   pa2View.sheet = null;
   pa2View.hud = null;
   pa2View.fromKey = null;
-  pa2View.scrollTo = run.status === PA2_STATUS.map || run.status === PA2_STATUS.node ? run.at : null;
+  pa2View.cam.key = null; // v3.394.0 : nouveau run, cadrage d'ouverture sur le héros
+  pa2View.camSheet = 0;
   pa2View.legend = false;
 }
 
@@ -142,7 +143,9 @@ function pa2AfterRender() {
   var body = document.body;
   if (!body || !body.classList) return;
   body.classList.toggle("pa2-run", onScene);
-  body.classList.toggle("pa2-night", onScene && (run.status === PA2_STATUS.map || run.status === PA2_STATUS.node || (run.status === PA2_STATUS.done && !!pa2View.sheet)));
+  var onMap = onScene && (run.status === PA2_STATUS.map || run.status === PA2_STATUS.node || (run.status === PA2_STATUS.done && !!pa2View.sheet));
+  body.classList.toggle("pa2-night", onMap);
+  body.classList.toggle("pa2-full", onMap && !!document.getElementById("pa2-vp")); // v3.394.0 : carte plein écran
   if (!onScene) { pa2RemoveOverlay(); return; }
   pa2EnsureOverlay();
   pa2RenderLegend();
@@ -150,10 +153,8 @@ function pa2AfterRender() {
   if (run.status === PA2_STATUS.prep) pa2RenderPicker();
   else if (!pa2View.sheet) pa2SetSheetHTML(null);
   var zone = document.querySelector("#panel-container .kfp-scrollzone");
-  if (zone) {
-    if (pa2View.scrollTo) { pa2ScrollToNode(pa2View.scrollTo, false); pa2View.scrollTo = null; }
-    else if (pa2View.keepScroll != null) zone.scrollTop = pa2View.keepScroll;
-  }
+  if (zone && pa2View.keepScroll != null) zone.scrollTop = pa2View.keepScroll;
+  if (document.getElementById("pa2-vp")) pa2CamAfterRender(run);
   if (pa2View.fromKey) pa2AnimateMove();
 }
 
@@ -174,7 +175,7 @@ function pa2RemoveOverlay() {
 function pa2ClearChrome() {
   pa2ClearTimers();
   pa2RemoveOverlay();
-  if (document.body && document.body.classList) { document.body.classList.remove("pa2-run"); document.body.classList.remove("pa2-night"); }
+  if (document.body && document.body.classList) { document.body.classList.remove("pa2-run"); document.body.classList.remove("pa2-night"); document.body.classList.remove("pa2-full"); }
 }
 window.pa2ClearChrome = pa2ClearChrome;
 
@@ -187,11 +188,13 @@ function pa2PageOpen(title) {
 function buildPa2PrepHTML(run) {
   var hook = pa2Hook(run), hero = pa2Hero(), snap = run.heroSnapshot || {};
   var ring = Pa2Run.ring(run), ringId = run.ring;
-  var h = pa2PageOpen(pa2View.prepStep === "pacts" ? _t("Les pactes") : _t("Petite aventure")) + '<div class="pa2-col">';
+  var tpl = SceneEngine.getTemplate(run.templateId) || {}, par = !!run.parcours, size = Pa2Run.bagSize(run);
+  if (par) pa2View.prepStep = "bag"; // un parcours n'a pas de pactes
+  var h = pa2PageOpen(pa2View.prepStep === "pacts" ? _t("Les pactes") : (par ? _td(tpl.title || "") : _t("Petite aventure"))) + '<div class="pa2-col">';
 
   if (pa2View.prepStep === "bag") {
     h += '<div class="pa2-panel pa2-center">';
-    h += '<div class="pa2-kicker">' + esc(_t("{w} · de nuit", { w: pa2WorldName(run.worldId) })) + '</div>';
+    h += '<div class="pa2-kicker">' + esc(par ? pa2WorldName(run.worldId) : _t("{w} · de nuit", { w: pa2WorldName(run.worldId) })) + '</div>';
     if (hook) {
       h += '<h1 class="pa2-h1">' + esc(_td(hook.title)) + '</h1>';
       h += '<p class="pa2-narr pa2-dim">' + esc(_td(hook.lede)) + '</p>';
@@ -214,24 +217,29 @@ function buildPa2PrepHTML(run) {
       h += '<p class="pa2-note">' + esc(_t("Tu pars avec tes PV actuels. Les rations de la besace soignent en route.")) + '</p>';
     }
 
-    h += pa2TrophiesHTML(run);
+    if (!par) h += pa2TrophiesHTML(run);
 
-    // Besace : chaque objet occupe une case large de sa taille ; une case libre ouvre la liste.
+    // Besace : l'objet dans une case ; ses autres places sont bloquées (v3.394.0, retour Seb).
+    // Une case libre ouvre la liste ; une case bloquée ouvre la fiche de son objet.
     var cells = "", used = Pa2Run.bagUsed(run);
     run.bag.forEach(function (id, idx) {
-      var it = PA2_ITEMS[id];
-      cells += '<button type="button" class="pa2-cell is-full' + (pa2View.justAdded === idx ? ' is-pop' : '') + '" style="grid-column:span ' + it.size + ';--n:' + it.size + '" onclick="pa2OpenItem(' + idx + ')" aria-label="' + esc(pa2ItemName(id)) + '">' + pa2Img(it.icon, "", pa2ItemName(id)) + '</button>';
+      var it = PA2_ITEMS[id], nm = pa2ItemName(id);
+      cells += '<button type="button" class="pa2-cell is-full' + (pa2View.justAdded === idx ? ' is-pop' : '') + '" onclick="pa2OpenItem(' + idx + ')" aria-label="' + esc(nm) + '">' + pa2Img(it.icon, "", nm) + '</button>';
+      for (var k = 1; k < it.size; k++) {
+        cells += '<button type="button" class="pa2-cell is-held' + (pa2View.justAdded === idx ? ' is-pop' : '') + '" onclick="pa2OpenItem(' + idx + ')" aria-label="' + esc(_t("Place prise : {n}", { n: nm })) + '"></button>';
+      }
     });
-    for (var i = used; i < PA2_BAG_SIZE; i++) {
+    for (var i = used; i < size; i++) {
       cells += '<button type="button" class="pa2-cell is-free" onclick="pa2OpenPicker()" aria-label="' + esc(_t("Case libre : ajouter un objet")) + '"><span>+</span></button>';
     }
     pa2View.justAdded = null;
     h += '<div class="pa2-panel"><div class="pa2-kicker pa2-kicker-ico">' + pa2Img(PA2_ICONS.bag) + esc(_t("Ta besace")) + '</div>';
     h += '<div class="pa2-bag" id="pa2-bag">' + cells + '</div>';
-    h += '<div class="pa2-bag-meta"><span>' + esc(_t("{a} / {b} places", { a: used, b: PA2_BAG_SIZE })) + '</span><span>' +
+    h += '<div class="pa2-bag-meta"><span>' + esc(_t("{a} / {b} places", { a: used, b: size })) + '</span><span>' +
       esc(run.bag.length ? _t("Touche un objet pour le retirer") : _t("Touche une case pour la remplir")) + '</span></div>';
     h += '<p class="pa2-small pa2-dim">' + esc(_t("Les rations viennent de l'Entrepôt ; celles que tu ne manges pas y retournent.")) + '</p></div>';
-    h += '<button type="button" class="kbtn primary" onclick="pa2PrepStep(\'pacts\')">' + esc(_t("Choisir mes pactes")) + '</button>';
+    if (par) h += '<button type="button" class="kbtn primary" onclick="pa2Depart()">' + esc(tpl.departLabel ? _td(tpl.departLabel) : _t("Partir")) + '</button>';
+    else h += '<button type="button" class="kbtn primary" onclick="pa2PrepStep(\'pacts\')">' + esc(_t("Choisir mes pactes")) + '</button>';
   } else {
     h += '<div class="pa2-panel"><p class="pa2-narr pa2-dim pa2-center">' + esc(_t("Aucun n'est obligatoire. Chacun rend la nuit plus dure, et le retour plus riche.")) + '</p></div>';
     h += '<div class="pa2-list">';
@@ -246,7 +254,7 @@ function buildPa2PrepHTML(run) {
     h += '<div class="pa2-btnrow"><button type="button" class="kbtn" onclick="pa2PrepStep(\'bag\')">' + esc(_t("Besace")) + '</button>' +
       '<button type="button" class="kbtn primary" onclick="pa2Depart()">' + esc(_t("Entrer dans la forêt")) + '</button></div>';
   }
-  h += '<button type="button" class="pa2-link" onclick="pa2CancelPrep()">' + esc(_t("Renoncer à cette aventure")) + '</button>';
+  h += '<button type="button" class="pa2-link" onclick="pa2CancelPrep()">' + esc(par ? _t("Renoncer") : _t("Renoncer à cette aventure")) + '</button>';
   h += '</div></div>';
   return h;
 }
@@ -293,8 +301,6 @@ function pa2TogglePact(id) { Pa2Run.togglePact(id); pa2Rerender(); }
 function pa2Depart() {
   var r = Pa2Run.depart();
   if (!r.ok) { if (typeof showToast === "function") showToast(r.reason, 2200); return; }
-  var run = Pa2Run.getRun();
-  pa2View.scrollTo = run.at;
   pa2Rerender();
 }
 function pa2CancelPrep() {
@@ -307,7 +313,7 @@ function pa2CancelPrep() {
 function pa2RenderPicker() {
   var run = Pa2Run.getRun();
   if (!run || run.status !== PA2_STATUS.prep || !pa2View.picker) { pa2SetSheetHTML(null); return; }
-  var h = "", free = PA2_BAG_SIZE - Pa2Run.bagUsed(run);
+  var h = "", free = Pa2Run.bagSize(run) - Pa2Run.bagUsed(run);
   if (pa2View.picker.mode === "add") {
     h += '<div class="pa2-sheet-head"><div class="pa2-medal">' + pa2Img(PA2_ICONS.bag) + '</div><div><div class="pa2-kicker">' +
       esc(_tn(free, "{n} place libre", "{n} places libres", { n: free })) + '</div><h2 class="pa2-h2">' + esc(_t("Ajouter à la besace")) + '</h2></div></div><div class="pa2-choices">';
@@ -367,30 +373,101 @@ function pa2HudHTML(run) {
     return '<button type="button" class="pa2-chip is-relic is-' + r.rar + '" onclick="pa2RelicInfo(\'' + id + '\')" aria-label="' + esc(_td(r.name)) + '">' + pa2Img(r.icon) + '</button>';
   }).join("");
   var act = n && n.row >= 0 ? (run.parcours ? _t("Étape {a}/{b}", { a: n.row + 1, b: Pa2Run.rows(Pa2Run.getMap(run)).dest + 1 }) : PA2_ACT_WORD[n.act]) : _t("Départ");
+  // v3.394.0 : plus de cadre de page — le monde (ou le parcours) se lit dans l'en-tête.
+  var where = (run.parcours ? _td((SceneEngine.getTemplate(run.templateId) || {}).title || "") : pa2WorldName(run.worldId)) + " · " + act;
   return '<div class="pa2-hud" id="pa2-hud">' + pa2Img(hero.image, "pa2-portrait", hero.name) +
     '<div class="pa2-gauges">' + pa2GaugeHTML("hp", v.hp, v.max, _t("{a} / {b} PV", { a: pa2Num(v.hp), b: pa2Num(v.max) })) +
     pa2GaugeHTML("breath", v.breath, 100, _t("Souffle {n}", { n: pa2Num(v.breath) })) + '</div>' +
-    '<div class="pa2-hud-side"><div class="pa2-gold">' + pa2Img(pa2LootRes(run) ? pa2LootRes(run).icon : PA2_ICONS.gold) + pa2Num(v.loot) + '</div><div class="pa2-act">' + esc(act) + '</div></div>' +
-    '<div class="pa2-hud-row">' + chips + '<span class="pa2-spacer"></span>' + rel + '</div></div>';
+    '<div class="pa2-hud-side"><div class="pa2-gold">' + pa2Img(pa2LootRes(run) ? pa2LootRes(run).icon : PA2_ICONS.gold) + pa2Num(v.loot) + '</div><div class="pa2-act">' + esc(where) + '</div></div>' +
+    (chips || rel ? '<div class="pa2-hud-row">' + chips + '<span class="pa2-spacer"></span>' + rel + '</div>' : '') + '</div>';
 }
 function pa2RefreshHud() {
   var run = Pa2Run.getRun(), el = document.getElementById("pa2-hud");
   if (run && el) el.outerHTML = pa2HudHTML(run);
+  pa2CamTop(); // l'en-tête a pu changer de hauteur (rangée d'objets vidée)
 }
 
+/* v3.394.0 : carte plein écran, sans cadre de page (atelier validé par Seb le 30/09/2026) :
+   la carte en « Couvrant », l'en-tête flottant, zoom et caméra communs (ui/map-camera.js).
+   La scène reprend la vue de pa2View.cam : un nouveau rendu ne fait pas sauter la carte. */
 function buildPa2MapScreenHTML(run) {
-  var n = Pa2Run.node(run.at, run);
-  var title = run.parcours ? _td((SceneEngine.getTemplate(run.templateId) || {}).title || "")
-    : pa2WorldName(run.worldId) + " · " + (n && n.row >= 0 ? PA2_ACT_WORD[n.act] : _t("départ"));
-  var h = pa2PageOpen(title) + '<div class="pa2-col">';
+  var n = Pa2Run.node(run.at, run), v = pa2View.cam, map = Pa2Run.getMap(run);
+  var keep = v.key === pa2CamKey(run) && v.w;
+  var h = '<div class="pa2-fs pa2-page" id="pa2-fs">';
+  h += '<div class="pa2-vp" id="pa2-vp"><div class="pa2-stage" id="pa2-stage" style="' + (keep
+    ? 'width:' + v.w + 'px;height:' + (v.w * map.height / map.width) + 'px;transform:translate3d(' + v.tx + 'px,' + v.ty + 'px,0);--nk:' + pa2CamNk()
+    : 'visibility:hidden') + '">' + pa2MapHTML(run) + '</div></div>';
   h += pa2HudHTML(run);
-  h += pa2MapHTML(run);
-  var hint = run.status !== PA2_STATUS.map ? "" : (run.parcours ? _t("Touche l'étape suivante pour avancer.")
-    : (n.type === "depart" ? _t("Touche un sentier doré pour quitter le village.") : _t("Choisis ta route. Les trois destinations brillent au nord.")));
-  h += '<p class="pa2-maphint">' + esc(hint) + '</p>';
-  h += '<button type="button" class="pa2-link" onclick="pa2AskAbandon()">' + esc(run.parcours ? _t("Abandonner le parcours") : _t("Abandonner l'aventure")) + '</button>';
-  h += '</div></div>';
+  // Consigne : seulement avant le premier pas, elle s'efface d'elle-même.
+  if (run.status === PA2_STATUS.map && !run.path.length) {
+    var hint = run.parcours ? _t("Touche l'étape suivante pour avancer.") : (n.type === "depart" ? _t("Touche un sentier doré pour quitter le village.") : _t("Choisis ta route. Les trois destinations brillent au nord."));
+    h += '<p class="pa2-maphint">' + esc(hint) + '</p>';
+  }
+  h += '<button type="button" class="pa2-offmark" id="pa2-offmark" onclick="pa2CamFollow(true)" aria-label="' + esc(_t("Revenir au héros")) + '"><i id="pa2-offarrow"></i>' + pa2Img(PA2_ICONS.hero) + '</button>';
+  h += '<button type="button" class="lmx-btn pa2-fs-btn is-quit" onclick="pa2AskAbandon()" aria-label="' + esc(run.parcours ? _t("Abandonner le parcours") : _t("Abandonner l'aventure")) + '">⚑</button>';
+  h += '<button type="button" class="lmx-btn pa2-fs-btn is-center" onclick="pa2CamFollow(true)" aria-label="' + esc(_t("Recentrer sur le héros")) + '">◎</button>';
+  h += '</div>';
   return h;
+}
+
+/* ---------- Caméra de la carte (moteur commun, ui/map-camera.js) ---------- */
+
+var PA2_ZOOM_MAX = 2;       // choix de Seb (atelier) : ×2 par rapport au cadrage Couvrant
+var PA2_NODE_GROW = 0.4;    // choix de Seb (atelier) : les repères grossissent peu (taille ∝ zoom^0,4)
+
+var pa2Cam = window.MapCamera ? MapCamera.create({
+  vpId: "pa2-vp", stageId: "pa2-stage", view: pa2View.cam, ignoreButtonTaps: true,
+  ratio: function () { var m = window.Pa2Run && Pa2Run.getMap(); return m ? m.height / m.width : 1; },
+  zoomMax: function () { return PA2_ZOOM_MAX; },
+  topSlack: function () { return pa2View.camTop || 0; },
+  bottomSlack: function () { return pa2CamSheetH(); },
+  onSettle: function () { pa2CamOffscreen(); },
+  onReset: function () { pa2CamFollow(true); },
+  onResize: function (st) { st.style.setProperty("--nk", pa2CamNk()); }
+}) : null;
+
+function pa2CamKey(run) { return run.id + "|" + (run.mapId || (run.map && run.map.image) || ""); }
+// Compensation de taille des repères : 1 en Couvrant, (Couvrant / largeur)^0,6 en zoomant.
+function pa2CamNk() { var c = pa2Cam ? pa2Cam.coverW() : 0, w = pa2View.cam.w; return c && w ? Math.pow(c / w, 1 - PA2_NODE_GROW).toFixed(3) : "1"; }
+// Feuille d'action ouverte : la zone utile s'arrête à son bord haut.
+function pa2CamSheetH() {
+  var sh = document.querySelector ? document.querySelector("#pa2-sheetbox .pa2-sheet") : null;
+  return sh && sh.getBoundingClientRect ? sh.getBoundingClientRect().height / MapCamera.scaleOf(sh) : 0;
+}
+// Bas de l'en-tête flottant, en px de la fenêtre : la carte peut descendre jusque-là.
+function pa2CamTop() {
+  var hud = document.getElementById("pa2-hud"), vp = document.getElementById("pa2-vp");
+  if (!hud || !vp || !hud.getBoundingClientRect) return;
+  var f = MapCamera.scaleOf(vp);
+  pa2View.camTop = (hud.getBoundingClientRect().bottom - vp.getBoundingClientRect().top) / f + 6;
+}
+function pa2CamAfterRender(run) {
+  if (!pa2Cam) return;
+  pa2CamTop();
+  var v = pa2View.cam, key = pa2CamKey(run);
+  if (v.key !== key || !v.w) { v.key = key; pa2Cam.resetCover(); pa2CamFollow(false); }
+  else pa2Cam.refit();
+}
+// Centre le nœud du héros dans la zone utile (sous l'en-tête, au-dessus de la feuille).
+function pa2CamFollow(anim) {
+  var run = Pa2Run.getRun(); if (!pa2Cam || !run || !document.getElementById("pa2-vp")) return;
+  var map = Pa2Run.getMap(run), d = map.nodes[run.at];
+  if (d) pa2Cam.centerOn(d.x / map.width, d.y / map.height, anim);
+}
+window.pa2CamFollow = pa2CamFollow;
+// Héros hors de la zone utile : pastille au bord, flèche vers lui.
+function pa2CamOffscreen() {
+  var el = document.getElementById("pa2-offmark"), vp = document.getElementById("pa2-vp"), run = Pa2Run.getRun();
+  if (!el || !vp || !run || !el.classList) return;
+  var map = Pa2Run.getMap(run), d = map.nodes[run.at], v = pa2View.cam;
+  var W = vp.clientWidth, H = vp.clientHeight - pa2CamSheetH(), T = (pa2View.camTop || 0) + 20, M = 24;
+  var sx = v.tx + v.w * d.x / map.width, sy = v.ty + v.w * d.y / map.width;
+  if (pa2View.sheet || (sx > M && sx < W - M && sy > T && sy < H - M)) { el.classList.remove("is-on"); return; }
+  var ang = Math.atan2(sy - (T + H) / 2, sx - W / 2), arrow = document.getElementById("pa2-offarrow");
+  if (arrow) arrow.style.transform = "rotate(" + (ang + Math.PI / 2) + "rad)";
+  el.style.left = Math.max(70, Math.min(W - 70, sx)) + "px";
+  el.style.top = Math.max(T + 10, Math.min(H - 130, sy)) + "px"; // au-dessus des boutons ronds du bas
+  el.classList.add("is-on");
 }
 
 // Carte : illustration, voile de nuit (masque SVG), sentiers ouverts et parcourus, nœuds en HTML.
@@ -445,7 +522,7 @@ function pa2MapHTML(run) {
   });
   var from = pa2View.fromKey ? map.nodes[pa2View.fromKey] : cur;
   var marker = '<img class="pa2-hero-mark" id="pa2-hero-mark" src="' + esc(PA2_ICONS.hero) + '" alt="" style="left:' + (100 * from.x / W).toFixed(2) + '%;top:' + (100 * from.y / H).toFixed(2) + '%">';
-  return '<div class="pa2-map" id="pa2-map" style="aspect-ratio:' + W + ' / ' + H + '">' +
+  return '<div class="pa2-map" id="pa2-map">' +
     (map.image ? '<img class="pa2-map-img" src="' + esc(map.image) + '" alt="">' : '<div class="pa2-map-img pa2-parchment"></div>') + svg + nodes + marker + '</div>';
 }
 
@@ -465,6 +542,7 @@ function pa2AnimateMove() {
   pa2View.fromKey = null;
   if (!run || !map || !mark) return;
   var cur = map.nodes[run.at];
+  pa2CamFollow(true); // la caméra suit le héros
   var edge = document.querySelector("#pa2-map .pa2-edge.is-drawing");
   if (edge) {
     var L = Math.hypot(edge.x2.baseVal.value - edge.x1.baseVal.value, edge.y2.baseVal.value - edge.y1.baseVal.value);
@@ -478,24 +556,12 @@ function pa2AnimateMove() {
       mark.style.top = (100 * cur.y / map.height).toFixed(2) + "%";
     });
   });
-  pa2ScrollToNode(run.at, true);
   pa2Later(function () { if (Pa2Run.getRun() && Pa2Run.getRun().status === PA2_STATUS.node) pa2OpenSheet(); }, 700);
-}
-
-function pa2ScrollToNode(key, smooth) {
-  var run = Pa2Run.getRun(), zone = document.querySelector("#panel-container .kfp-scrollzone"), mapEl = document.getElementById("pa2-map");
-  if (!run || !zone || !mapEl) return;
-  var map = Pa2Run.getMap(run), d = map.nodes[key];
-  if (!d) return;
-  var r = mapEl.getBoundingClientRect(), zr = zone.getBoundingClientRect();
-  var y = r.top - zr.top + zone.scrollTop + r.height * d.y / map.height - zone.clientHeight * 0.6;
-  if (typeof zone.scrollTo === "function") zone.scrollTo({ top: Math.max(0, y), behavior: smooth ? "smooth" : "auto" });
-  else zone.scrollTop = Math.max(0, y);
 }
 
 function pa2Move(key) {
   var run = Pa2Run.getRun();
-  if (!run || pa2View.sheet) return;
+  if (!run || pa2View.sheet || (pa2Cam && pa2Cam.gesture.suppressClick)) return; // fin d'un glissé : pas un tap
   var from = run.at, r = Pa2Run.moveTo(key);
   if (!r.ok) { if (typeof showToast === "function") showToast(r.reason, 1600); return; }
   pa2View.fromKey = from;
@@ -558,11 +624,25 @@ function pa2ToggleLegend() { pa2View.legend = !pa2View.legend; pa2RenderLegend()
 function pa2SetSheetHTML(inner, label, closable) {
   var box = document.getElementById("pa2-sheetbox");
   if (!box) return;
-  if (inner == null) { box.innerHTML = ""; return; }
+  if (inner == null) { box.innerHTML = ""; pa2CamSheetChanged(); return; }
   var sheet = box.querySelector(".pa2-sheet");
   var body = (closable ? '<button type="button" class="pa2-xclose" onclick="pa2ClosePicker()" aria-label="' + esc(_t("Fermer")) + '"></button>' : '') + inner;
-  if (sheet) { sheet.innerHTML = body; return; }
+  if (sheet) { sheet.innerHTML = body; pa2CamSheetChanged(); return; }
+  pa2CamSheetChanged();
   box.innerHTML = '<div class="pa2-scrim"' + (closable ? ' onclick="if(event.target===this)pa2ClosePicker()"' : '') + '><div class="pa2-sheet" role="dialog" aria-modal="true" aria-label="' + esc(label || "") + '">' + body + '</div></div>';
+}
+
+/* v3.394.0 : la feuille ouverte (ou changée de taille) réduit la zone utile ; le nœud du héros
+   est ramené au-dessus d'elle. Feuille fermée : la carte reprend toute la hauteur. */
+function pa2CamSheetChanged() {
+  if (!pa2Cam || !document.getElementById("pa2-vp")) return;
+  var go = function () {
+    var h = pa2CamSheetH();
+    if (Math.abs(h - (pa2View.camSheet || 0)) < 2) return;
+    pa2View.camSheet = h;
+    if (h) pa2CamFollow(true); else pa2Cam.refit();
+  };
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(go); else go();
 }
 
 function pa2OpenSheet() {
@@ -869,7 +949,8 @@ function pa2RuseOutcome(run, r) {
 }
 function pa2FightOutcome(run, n, r) {
   if (r.ko) return '<div class="pa2-verdict is-ko">' + esc(_t("À terre")) + '</div><p class="pa2-result">' + esc(_t("Tu ne te relèves pas.")) + '</p>' + pa2ContinueButton(run);
-  var h = '<div class="pa2-verdict is-ok">' + esc(n.type === "boss" ? _t("Le gardien s'effondre") : _t("Victoire")) + '</div><p class="pa2-result">+' + pa2Num(r.gain) + ' ' + esc(_t("or")) + '</p>';
+  var h = '<div class="pa2-verdict is-ok">' + esc(n.type === "boss" ? _t("Le gardien s'effondre") : _t("Victoire")) + '</div><p class="pa2-result">+' + pa2Num(r.gain) + ' ' + esc(pa2Unit(run)) + '</p>';
+  if (n.after) h += '<p class="pa2-echo">' + esc(_td(n.after)) + '</p>'; // parcours : la suite du combat
   if (n.type === "boss") h += '<p class="pa2-narr pa2-center">' + esc(_td(pa2Dests(run).boss.win)) + '</p>';
   if (r.drop) h += '<p class="pa2-result is-drop">🎁 ' + esc(_t("Objet trouvé : {x} ({r})", { x: _td(r.drop.name), r: r.drop.rarity })) + '</p>';
   return h + pa2ContinueButton(run);

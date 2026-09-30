@@ -200,16 +200,16 @@ function buildPwaSettingsCardHTML() {
 function buildPwaIosSheetHTML() {
   var h = '<div class="pwa-install-layer">';
   h += '<div class="ksheet-backdrop" onclick="PwaInstall.closeIosSheet()"></div>';
-  h += '<div class="ksheet pwa-install-sheet"><div class="ksheet-handle"></div>';
-  h += '<div class="ksheet-title"><img src="images/Icons/apple-touch-icon.png" alt=""><span>' + _t("Installer sur iPhone ou iPad") + '</span></div>';
+  h += '<div class="ksheet pwa-install-sheet">';
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/apple-touch-icon.png" alt="">', title: _t("Installer sur iPhone ou iPad"), close: "PwaInstall.closeIosSheet()" });
   h += '<div class="ksheet-body"><ol class="pwa-install-steps">';
   h += '<li>' + _t("Ouvre le jeu dans <b>Safari</b>.") + '</li>';
   h += '<li>' + _t("Touche le bouton <b>Partager</b> (le carré avec une flèche vers le haut).") + '</li>';
   h += '<li>' + _t("Choisis <b>Sur l'écran d'accueil</b>, puis <b>Ajouter</b>.") + '</li>';
   h += '</ol><p class="pwa-install-note">' + _t("Le jeu s'ouvre alors en plein écran, et ta sauvegarde est mieux protégée.") + '</p></div>';
-  h += '<div class="pwa-install-actions">';
-  h += '<button type="button" class="pwa-install-later" onclick="PwaInstall.later()">' + _t("Plus tard") + '</button>';
-  h += '<button type="button" class="ksheet-close" onclick="PwaInstall.closeIosSheet()">' + _t("Compris") + '</button>';
+  h += '<div class="ksheet-foot">';
+  h += '<button type="button" class="kbtn pwa-install-later" onclick="PwaInstall.later()">' + _t("Plus tard") + '</button>';
+  h += '<button type="button" class="kbtn primary" onclick="PwaInstall.closeIosSheet()">' + _t("Compris") + '</button>';
   h += '</div></div></div>';
   return h;
 }

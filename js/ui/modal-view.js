@@ -364,11 +364,11 @@ function buildHeroStepHeaderHTML(title, subtitle) {
 function buildNameStepHTML() {
   var currentName = pendingPlayerName || game.playerName || "";
 
-  var html = buildHeroStepHeaderHTML(_t("Choix du nom"), _t("Entrez le nom de votre héros."));
+  var html = buildHeroStepHeaderHTML(_t("Choix du nom"), _t("Entre le nom de ton héros."));
 
   html += '<div class="hc-name-wrap">';
   html += '  <img src="images/TitleScreen/bouton_titre.png" alt="" class="hc-name-bg">';
-  html += '  <input id="player-name-input" type="text" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="' + esc(_t("Entrez le nom…")) + '" value="' + esc(currentName) + '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();goToHeroStep();}">';
+  html += '  <input id="player-name-input" type="text" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="' + esc(_t("Entre un nom…")) + '" value="' + esc(currentName) + '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();goToHeroStep();}">';
   html += '</div>';
 
   html += '<div class="hc-actions">';
@@ -388,7 +388,7 @@ function buildHeroStepHTML(selectedHero) {
   var selectedIsChaos = selectedHero ? isChaosHeroId(selectedHero.id) : false;
   var gender = getPendingHeroGender();
 
-  var html = buildHeroStepHeaderHTML(_t("Choix de la classe"), _t("Choisissez la voie que suivra votre héros."));
+  var html = buildHeroStepHeaderHTML(_t("Choix de la classe"), _t("Choisis la voie que suivra ton héros."));
 
   html += '<div class="hc-class-grid">';
   if (typeof CLASSES !== "undefined") {
@@ -490,7 +490,7 @@ function buildConfirmStepHTML(selectedHero) {
   var className = baseHero ? _td(baseHero.name) : (selectedHero ? _td(selectedHero.name) : "");
   var tagline = (cls && HERO_CLASS_TAGLINES[cls.id]) || "";
 
-  var html = buildHeroStepHeaderHTML(_t("Confirmation"), _t("Vérifiez votre héros avant de commencer l'aventure."));
+  var html = buildHeroStepHeaderHTML(_t("Confirmation"), _t("Vérifie ton héros avant de commencer l'aventure."));
 
   html += '<div class="hc-confirm-portrait">';
   var confirmImg = getHeroImageForGender(selectedHero, getPendingHeroGender());

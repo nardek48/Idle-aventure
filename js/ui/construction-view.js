@@ -31,10 +31,10 @@ function buildConstructionModalHTML(id) {
   var maxed = ConstructionManager.isMaxLevel(id);
   var currentBonusPct = Math.round((ConstructionManager.getCurrentBonusMultiplier(id) - 1) * 100);
 
-  var h = '<div class="full-menu-overlay">';
+  var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeConstructionModal();">';
   h += '  <div class="full-menu construction-popup-card">';
-  h += '    <div class="construction-popup-icon"><img class=ico-inline src=images/Icons/workshops/masonry.png></div>';
-  h += '    <div class="construction-popup-title">' + esc(_td(def.name)) + '</div>';
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/workshops/masonry.png" alt="">', title: esc(_td(def.name)), close: "closeConstructionModal()" });
+  h += '  <div class="ksheet-body">';
   h += '    <div class="construction-popup-text">' + esc(_td(def.desc)) + '</div>';
   h += '    <div class="construction-popup-meta">' + _t("Niveau {a} / {b}", { a: level, b: VillageBuildingManager.getMaxLevel(id) }) + '</div>';
   h += '    <div class="construction-popup-meta"><strong>' + _t("Bonus actuel : +{p}% or de vente à l'Entrepôt", { p: currentBonusPct }) + '</strong></div>';
@@ -42,7 +42,6 @@ function buildConstructionModalHTML(id) {
   if (maxed) {
     h += '    <div class="construction-popup-meta">' + _t("Niveau maximum atteint.") + '</div>';
     h += '    <div class="construction-popup-actions">';
-    h += '      <button class="settings-btn" type="button" onclick="closeConstructionModal()">' + _t("Fermer") + '</button>';
     h += '      <button class="settings-btn primary is-maxed" type="button" disabled>' + _t("Niveau maximum") + '</button>';
     h += '    </div>';
   } else {
@@ -66,7 +65,6 @@ function buildConstructionModalHTML(id) {
     h += '    </div>';
 
     h += '    <div class="construction-popup-actions">';
-    h += '      <button class="settings-btn" type="button" onclick="closeConstructionModal()">' + _t("Fermer") + '</button>';
     if (afford.all) {
       h += '      <button class="settings-btn primary" type="button" onclick="buyConstructionFromModal(\'' + id + '\')">' + _t("Améliorer") + '</button>';
     } else {
@@ -75,6 +73,7 @@ function buildConstructionModalHTML(id) {
     h += '    </div>';
   }
 
+  h += '  </div>'; // ksheet-body
   h += '  </div>';
   h += '</div>';
   return h;

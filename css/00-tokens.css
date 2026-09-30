@@ -2,9 +2,7 @@
   /* =========================
      Couleurs de fond
      ========================= */
-  --bg-dark: #0d0a1a;         /* Fond principal très sombre */
-  --bg-panel: #1a1530;        /* Fond des panneaux */
-  --bg-panel-light: #251e3f;  /* Variante plus claire pour les zones secondaires */
+  --bg-dark: #0b0806;         /* Fond global — v3.397.0 : brun-noir de la pierre de nuit (avant : violet de Quest Idle) */
   --bg-card: #2a2348;         /* Fond des cartes */
 
   /* =========================
@@ -13,7 +11,6 @@
   --gold: #ffc83d;            /* Or principal */
   --gold-dark: #d4a017;       /* Or foncé pour hover, bordures ou ombres */
   --essence: #c77dff;         /* Couleur essence / énergie magique */
-  --essence-dark: #9d4edd;    /* Variante foncée de l’essence */
   --aether: #217da5;          /* Couleur aether / ressource bleue */
   --aether-dark: #033c58;     /* Variante foncée de l’aether */
 
@@ -36,7 +33,6 @@
   /* =========================
      Bordures
      ========================= */
-  --border: #3d3461;          /* Couleur de bordure principale */
 
   /* =========================
      Couleurs de rareté
@@ -57,8 +53,6 @@
      Rayons de bordure
      ========================= */
   --radius-sm: 10px;          /* Petit arrondi */
-  --radius-md: 14px;          /* Arrondi moyen */
-  --radius-lg: 16px;          /* Grand arrondi */
 
   /* =========================
      Ombres
@@ -76,7 +70,7 @@
      ============================================================ */
 
   /* Fonds */
-  --nb-shell: #171224;        /* cadre sombre autour de l'app (visible aux bords, comme le "téléphone" de la maquette) */
+  --nb-shell: #120e0a;        /* cadre sombre autour de l'app et écran de chargement — v3.397.0 : pierre de nuit (avant : violet #171224) */
   --nb-cream: #f6ecd9;         /* fond crème principal des cartes */
   --nb-cream-alt: #efe0c2;     /* variante légèrement plus foncée (zones secondaires, rayures) */
   --nb-cream-deep: #e4cfa0;    /* encore plus foncée, pour les zones creusées/inactives */
@@ -113,4 +107,18 @@
   --nb-radius-pill: 999px;
   --nb-shadow-card: 0 3px 0 rgba(36, 27, 58, 0.9), 0 6px 14px rgba(0, 0, 0, 0.25);
   --nb-shadow-btn: 0 3px 0 var(--nb-gold-deep);
+
+  /* v3.399.0 (lot F-1) : habillage des feuilles du bas, choix de Seb « C · Mixte »
+     (en-tête pierre, corps parchemin). Une seule source : passer à l'habillage B (pierre)
+     plus tard reviendra à changer ces jetons. */
+  --sheet-veil: rgba(12, 8, 5, 0.62);
+  --sheet-radius: 18px;
+  --sheet-body-bg: linear-gradient(rgba(246, 236, 217, 0.55), rgba(239, 224, 194, 0.4)), url('../images/UI/frames/parchment-tile.png') 0 0 / 300px;
+  --sheet-ink: #3a2c1a;
+  --sheet-ink-dim: #6b5a40;
+  --sheet-head-bg: linear-gradient(rgba(16, 12, 8, 0.78), rgba(16, 12, 8, 0.9)), url('../images/UI/textures/bg-stone-tile.png') 0 0 / 256px;
+  --sheet-head-ink: #f4e9d0;
+  --sheet-accent: #c27f1f;
+  --sheet-card-bg: rgba(251, 245, 232, 0.9);
+  --sheet-card-bd: #d8c49a;
 }

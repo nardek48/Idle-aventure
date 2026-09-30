@@ -17,23 +17,23 @@
 .tt-points-main { flex: 1 1 auto; min-width: 0; }
 .tt-points-big { font-size: 14px; font-weight: 800; color: #6b4a22; }
 .tt-points-big b { color: #b7791f; font-size: 17px; }
-.tt-points-sub { font-size: 10px; color: #8a7a5c; margin-top: 1px; line-height: 1.3; }
+.tt-points-sub { font-size: 12px; color: #8a7a5c; margin-top: 1px; line-height: 1.3; }
 .tt-res { color: #4a6b2a; font-weight: 800; }
 .tt-reset {
-  flex: 0 0 auto; font: inherit; font-size: 10.5px; font-weight: 800;
+  flex: 0 0 auto; font: inherit; font-size: 12px; font-weight: 800;
   padding: 6px 8px; border-radius: 9px; cursor: pointer;
   border: 1px solid #b98a4a; background: #efe0c2; color: #6b4a22;
 }
 .tt-reset:disabled { opacity: 0.45; }
-.tt-reset small { display: block; font-size: 9px; font-weight: 700; color: #4a6b2a; }
+.tt-reset small { display: block; font-size: 12px; font-weight: 700; color: #4a6b2a; }
 
 /* Titres de section */
 .tt-sec {
   display: flex; align-items: baseline; gap: 6px;
-  font-size: 11.5px; font-weight: 800; color: #4a3520;
+  font-size: 12px; font-weight: 800; color: #4a3520;
   margin: 10px 2px 5px;
 }
-.tt-sec small { font-weight: 600; color: #7a6444; font-size: 10px; }
+.tt-sec small { font-weight: 600; color: #7a6444; font-size: 12px; }
 
 /* Nœud */
 .tt-node {
@@ -51,8 +51,8 @@
 }
 .tt-ico img { width: 100%; height: 100%; object-fit: contain; }
 .tt-node-col { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.tt-node-name { font-size: 11px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
-.tt-node-short { font-size: 9.5px; line-height: 1.25; color: #6b5a3c; margin-top: 1px; }
+.tt-node-name { font-size: 12px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.tt-node-short { font-size: 12px; line-height: 1.25; color: #6b5a3c; margin-top: 1px; }
 .tt-pips { display: flex; gap: 3px; margin-top: 3px; }
 .tt-pips i { width: 10px; height: 4px; border-radius: 2px; background: #e0cfa8; }
 .tt-pips i.is-on { background: var(--cl); }
@@ -85,25 +85,25 @@
   background: var(--cl-bg); border: 1px solid var(--cl); color: var(--cl-ink);
 }
 .tt-path-head.is-locked { opacity: 0.6; }
-.tt-path-name { font-size: 11.5px; font-weight: 800; }
-.tt-path-tag { font-size: 9.5px; line-height: 1.25; opacity: 0.9; }
-.tt-path-count { font-size: 9.5px; font-weight: 800; margin-top: 2px; }
+.tt-path-name { font-size: 12px; font-weight: 800; }
+.tt-path-tag { font-size: 12px; line-height: 1.25; opacity: 0.9; }
+.tt-path-count { font-size: 10px; font-weight: 800; margin-top: 2px; }
 .tt-gap { height: 5px; }
 .tt-link { width: 2px; height: 9px; margin: 0 auto; background: #c9a227; }
 
 /* Clé de voûte */
 .tt-node.is-key { border-width: 2px; border-color: #c9a227; background: linear-gradient(#fbf1d6, #f1e0b3); }
-.tt-key-tag { font-size: 8.5px; font-weight: 900; color: #9a7a14; letter-spacing: 0.3px; text-transform: uppercase; }
+.tt-key-tag { font-size: 12px; font-weight: 900; color: #9a7a14; letter-spacing: 0.3px; text-transform: uppercase; }
 .tt-node.is-key.is-owned { box-shadow: inset 0 0 0 1px #c9a227, 0 0 8px #f0cf5a88; }
 
 /* Feuille basse (contenu de .ksheet-body) */
 .tt-sheet-top { display: flex; gap: 10px; align-items: center; }
 .tt-sheet-top .tt-ico { flex-basis: 44px; width: 44px; height: 44px; }
 .tt-sheet-title { font-size: 16px; font-weight: 800; }
-.tt-sheet-where { font-size: 10.5px; color: #8a7a5c; font-weight: 700; }
+.tt-sheet-where { font-size: 12px; color: #8a7a5c; font-weight: 700; }
 .tt-sheet-effect { font-size: 13px; line-height: 1.45; margin: 10px 0 6px; }
-.tt-sheet-now { font-size: 11px; color: #4a6b2a; font-weight: 700; margin-bottom: 6px; }
-.tt-sheet-state { font-size: 11px; font-weight: 700; color: #8a2f20; margin-bottom: 8px; }
+.tt-sheet-now { font-size: 12px; color: #4a6b2a; font-weight: 700; margin-bottom: 6px; }
+.tt-sheet-state { font-size: 12px; font-weight: 700; color: #8a2f20; margin-bottom: 8px; }
 .tt-go {
   width: 100%; font: inherit; font-size: 13px; font-weight: 800;
   padding: 10px; border-radius: 11px; cursor: pointer; margin-top: 4px;

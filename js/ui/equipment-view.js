@@ -239,11 +239,14 @@ function buildEquipCompareSheetHTML(uid) {
   var sum = getEquipmentCompareSummary(item, equipped);
 
   var h = '<div class="ksheet-backdrop" onclick="closeEquipCompareSheet()"></div>';
-  h += '<div class="ksheet"><div class="ksheet-handle"></div>';
-  h += '<div class="ksheet-title">' + buildEquipmentIconHTML(item, "eqs-title-icon rframe")
-    + '<span class="rarity-' + esc(item.rarity) + '">' + esc(_td(item.name)) + '</span></div>';
-  h += '<div class="eqs-sub">' + esc(_td(EQUIPMENT_SLOT_LABELS[item.slot] || item.slot))
-    + (equipped ? ' · ' + esc(_t("comparé à {x}", { x: _td(equipped.name) })) : ' · ' + _t("emplacement vide")) + '</div>';
+  h += '<div class="ksheet eqs-sheet">';
+  h += kSheetHeadHTML({
+    icon: buildEquipmentIconHTML(item, "eqs-title-icon rframe"),
+    title: '<span class="rarity-' + esc(item.rarity) + '">' + esc(_td(item.name)) + '</span>',
+    sub: esc(_td(EQUIPMENT_SLOT_LABELS[item.slot] || item.slot))
+      + (equipped ? ' · ' + esc(_t("comparé à {x}", { x: _td(equipped.name) })) : ' · ' + _t("emplacement vide")),
+    close: "closeEquipCompareSheet()"
+  });
   h += '<div class="ksheet-body">';
 
   if (sum && sum.lines.length) {
@@ -267,7 +270,7 @@ function buildEquipCompareSheetHTML(uid) {
   if (power) h += '<div class="eqs-power">' + power + '</div>';
   h += buildItemOriginHTML(item);
   h += '</div>';
-  h += '<button type="button" class="ksheet-close" onclick="equipFromCompareSheet(\'' + esc(uid) + '\')">' + _t("Équiper") + '</button>';
+  h += '<div class="ksheet-foot"><button type="button" class="kbtn primary" onclick="equipFromCompareSheet(\'' + esc(uid) + '\')">' + _t("Équiper") + '</button></div>';
   h += '</div>';
   return h;
 }
@@ -307,7 +310,7 @@ function buildEquipDetailPanelHTML() {
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.unequip(\'' + esc(slot) + '\')">' + _t("Déséquiper") + '</button>';
   } else {
     h += '<div class="eq-detail-icon eq-detail-icon-empty">' + renderIconOrEmojiHTML(emoji, "eq-detail-empty-img", "") + '</div>';
-    h += '<div class="eq-detail-name">' + esc(_t("{x} — Vide", { x: label })) + '</div>';
+    h += '<div class="eq-detail-name">' + esc(_t("{x} — vide", { x: label })) + '</div>';
     h += '<div class="eq-detail-hint">' + _t("Équipe un objet depuis l’Inventaire pour remplir cet emplacement.") + '</div>';
   }
 

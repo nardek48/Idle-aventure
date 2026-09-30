@@ -43,7 +43,7 @@ body:not(.scene-active) #pa2-overlay { display: none; }
 .pa2-dim { color: var(--pa2-ink-dim); }
 .pa2-small { font-size: 12px; margin: 6px 0 0; }
 .pa2-mt4 { margin-top: 4px; }
-.pa2-kicker { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--pa2-gold); }
+.pa2-kicker { font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--pa2-gold); }
 .pa2-kicker-ico { display: flex; align-items: center; gap: 6px; }
 .pa2-kicker-ico img { width: 22px; height: 22px; object-fit: contain; }
 .pa2-h1 { margin: 4px 0 0; font-size: 22px; line-height: 1.15; font-weight: 800; text-wrap: balance; color: var(--pa2-ink); }
@@ -93,7 +93,7 @@ body.pa2-night .pa2-link, body.pa2-night .pa2-note { color: var(--pa2-ink-dim); 
 .pa2-troph { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
 .pa2-troph img { width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .8)); }
 .pa2-troph b { font-size: 15px; color: var(--pa2-gold); }
-.pa2-troph span { font-size: 11px; line-height: 1.2; color: var(--pa2-ink-dim); }
+.pa2-troph span { font-size: 12px; line-height: 1.2; color: var(--pa2-ink-dim); }
 .pa2-troph.is-empty img { filter: grayscale(1) brightness(.45); }
 .pa2-troph.is-empty b { color: var(--pa2-ink-dim); }
 .pa2-result.is-drop { color: var(--pa2-gold); }
@@ -102,11 +102,21 @@ body.pa2-night .pa2-link, body.pa2-night .pa2-note { color: var(--pa2-ink-dim); 
 
 /* --- Besace --- */
 .pa2-bag { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 10px; }
+/* v3.393.0 : hauteur de rangée = largeur d'une colonne (6 colonnes, 5 écarts de 4 px), même
+   quand la rangée ne porte que des objets de 2 ou 3 places. */
+@supports (width: 1cqw) {
+  .pa2-bag { container-type: inline-size; }
+  .pa2-bag .pa2-cell { aspect-ratio: auto; height: calc((100cqw - 20px) / 6); }
+}
 .pa2-cell { aspect-ratio: 1; position: relative; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; cursor: pointer;
   background: url('../images/UI/frames/frame-icon-simple.png') center / 100% 100% no-repeat; background-color: transparent; color: var(--pa2-ink-dim); font: inherit; }
 .pa2-cell img { width: 62%; height: 62%; object-fit: contain; }
-.pa2-cell.is-full { background-size: calc(100% / var(--n)) 100%; background-repeat: repeat-x; aspect-ratio: var(--n) / 1; }
-.pa2-cell.is-full img { height: 62%; width: auto; max-width: 90%; }
+/* v3.394.0 (retour Seb) : l'objet tient dans une case ; ses autres places sont des cases
+   bloquées — cadre éteint et hachures, sans image empruntée. */
+.pa2-cell.is-held { filter: brightness(.55) saturate(.6); }
+.pa2-cell.is-held::after { content: ""; position: absolute; inset: 16%; border-radius: 4px;
+  background: repeating-linear-gradient(135deg, rgba(240, 170, 62, .28) 0 3px, transparent 3px 8px); }
+.pa2-cell.is-held.is-pop::after { animation: pa2-pop .35s cubic-bezier(.3, 1.6, .5, 1); }
 .pa2-cell.is-free span { font-size: 22px; font-weight: 800; color: var(--pa2-gold); opacity: .55; }
 .pa2-cell.is-free:hover span, .pa2-cell.is-free:focus-visible span { opacity: 1; }
 .pa2-cell.is-pop img { animation: pa2-pop .35s cubic-bezier(.3, 1.6, .5, 1); }
@@ -132,7 +142,7 @@ body.pa2-night .pa2-link, body.pa2-night .pa2-note { color: var(--pa2-ink-dim); 
 .pa2-hud-side { text-align: right; }
 .pa2-gold { display: flex; align-items: center; justify-content: flex-end; gap: 3px; font-weight: 800; color: var(--pa2-gold); font-variant-numeric: tabular-nums; }
 .pa2-gold img { width: 22px; height: 22px; object-fit: contain; }
-.pa2-act { font-size: 10px; letter-spacing: .12em; color: var(--pa2-ink-dim); text-transform: uppercase; }
+.pa2-act { font-size: 12px; letter-spacing: .12em; color: var(--pa2-ink-dim); text-transform: uppercase; }
 .pa2-hud-row { grid-column: 1 / -1; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; min-height: 30px; }
 .pa2-chip { display: inline-flex; align-items: center; gap: 3px; height: 30px; padding: 0 8px 0 3px; border-radius: 999px; border: 1px solid var(--pa2-gold-deep);
   background: rgba(0, 0, 0, 0.4); color: var(--pa2-ink); font: 700 12px/1 inherit; font-family: inherit; cursor: pointer; }
@@ -173,16 +183,62 @@ span.pa2-chip { cursor: default; }
 .pa2-hero-mark.is-moving { transition: left .65s cubic-bezier(.3, .7, .3, 1), top .65s cubic-bezier(.3, .7, .3, 1); }
 .pa2-maphint { font-size: 13px; color: var(--pa2-ink-dim); text-align: center; margin: 0; padding-inline: 44px; min-height: 18px; }
 
+/* --- v3.394.0 : carte plein écran (atelier validé par Seb le 30/09/2026) ---
+   Même principe que la carte vivante : le panneau perd ses marges et ne défile plus, la carte
+   remplit l'écran (« Couvrant »), l'en-tête flotte dessus. Caméra : ui/map-camera.js. */
+body.pa2-full #panel-container { padding: 0; overflow: hidden; max-width: none; }
+.pa2-fs { position: absolute; inset: 0; overflow: hidden; background-color: #0b0806; }
+.pa2-vp { position: absolute; inset: 0; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
+/* touch-action ne s'hérite pas : sans cette règle, le navigateur reprend le pincement. */
+.pa2-vp * { touch-action: none; }
+.pa2-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+.pa2-stage.is-anim { transition: transform .45s cubic-bezier(.3, .7, .3, 1), width .45s cubic-bezier(.3, .7, .3, 1), height .45s cubic-bezier(.3, .7, .3, 1); }
+.pa2-fs .pa2-map { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 0; box-shadow: none; }
+/* Repères : ils grossissent moins vite que la carte (--nk posé par la caméra) */
+.pa2-fs .pa2-node { width: calc(9% * var(--nk, 1)); }
+.pa2-fs .pa2-node.is-mark { width: calc(12% * var(--nk, 1)); }
+.pa2-fs .pa2-node.is-dest { width: calc(17% * var(--nk, 1)); }
+.pa2-fs .pa2-hero-mark { width: calc(7.5% * var(--nk, 1)); }
+/* En-tête flottant, compact */
+.pa2-fs .pa2-hud { position: absolute; left: 8px; right: 8px; top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 8px); z-index: 10;
+  grid-template-columns: 40px minmax(0, 1fr) auto; gap: 3px 9px; padding: 6px 10px 6px 6px; background: rgba(12, 9, 6, 0.84);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 6px 16px -6px #000; }
+.pa2-fs .pa2-hud .pa2-portrait { width: 40px; height: 40px; }
+.pa2-fs .pa2-gauges { gap: 2px; }
+.pa2-fs .pa2-hud-row { min-height: 0; }
+.pa2-fs .pa2-chip { height: 26px; }
+.pa2-fs .pa2-chip img { width: 21px; height: 21px; }
+.pa2-fs .pa2-chip.is-relic { width: 26px; }
+.pa2-fs .pa2-act { font-size: 12px; letter-spacing: .1em; white-space: nowrap; }
+/* Consigne du départ : pastille en bas, s'efface d'elle-même */
+.pa2-fs .pa2-maphint { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); z-index: 10; transform: translateX(-50%);
+  width: max-content; max-width: calc(100% - 124px); min-height: 0; padding: 7px 12px; border-radius: 14px; border: 1px solid var(--pa2-gold-deep);
+  background: rgba(12, 9, 6, 0.86); color: var(--pa2-ink); font-size: 12.5px; line-height: 1.3; pointer-events: none; animation: pa2-hint-out 5.5s forwards; }
+@keyframes pa2-hint-out { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
+/* Boutons ronds (kit .lmx-btn) : recentrer, abandonner */
+.pa2-fs-btn { position: absolute; right: 10px; z-index: 11; }
+.pa2-fs-btn.is-center { bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); font-size: 18px; }
+.pa2-fs-btn.is-quit { bottom: calc(env(safe-area-inset-bottom, 0px) + 62px); font-size: 16px; }
+/* Héros hors de la zone visible : pastille au bord, flèche vers lui */
+.pa2-offmark { position: absolute; z-index: 11; display: none; width: 36px; height: 36px; padding: 0; border-radius: 50%; border: 2px solid var(--pa2-gold);
+  background: rgba(18, 13, 8, 0.92); transform: translate(-50%, -50%); box-shadow: 0 2px 8px rgba(0, 0, 0, .6); cursor: pointer; align-items: center; justify-content: center; }
+.pa2-offmark.is-on { display: flex; }
+.pa2-offmark img { width: 24px; height: 24px; object-fit: contain; }
+.pa2-offmark i { position: absolute; inset: -9px; pointer-events: none; }
+.pa2-offmark i::after { content: ""; position: absolute; left: 50%; top: 0; margin-left: -5px; border: 5px solid transparent; border-bottom: 7px solid var(--pa2-gold); border-top: 0; }
+/* Feuille d'action : voile léger, le nœud reste lisible au-dessus d'elle */
+body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
+
 /* --- Légende (bouton rond du kit carte du monde) --- */
 .pa2-legend-btn { position: fixed; left: max(12px, calc(50% - 203px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 240; font-family: Georgia, serif; }
 .pa2-legend-btn[aria-expanded="true"] { background: radial-gradient(circle at 35% 30%, #6b5226, #2c200d); }
 .pa2-legend { position: fixed; left: max(12px, calc(50% - 203px)); bottom: calc(62px + env(safe-area-inset-bottom, 0px)); z-index: 240; width: 250px; padding: 10px 12px;
   border-radius: 12px; border: 1.5px solid var(--pa2-gold-dark); background: rgba(18, 13, 9, 0.97); color: var(--pa2-ink); box-shadow: 0 4px 14px rgba(0, 0, 0, .65); animation: pa2-rise .2s; }
-.pa2-legend h5 { margin: 0 0 8px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--pa2-gold); }
+.pa2-legend h5 { margin: 0 0 8px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--pa2-gold); }
 .pa2-legend-row { display: flex; align-items: center; gap: 9px; margin: 0 0 6px; font-size: 13px; font-weight: 700; }
 .pa2-disc { width: 32px; height: 32px; flex: none; border-radius: 50%; border: 2px solid var(--pa2-gold-dark); background: #120d08; display: flex; align-items: center; justify-content: center; }
 .pa2-disc img { width: 24px; height: 24px; object-fit: contain; }
-.pa2-legend-row small { display: block; font-size: 11px; font-weight: 600; color: var(--pa2-ink-dim); }
+.pa2-legend-row small { display: block; font-size: 12px; font-weight: 600; color: var(--pa2-ink-dim); }
 
 /* --- Feuille d'action (calque #pa2-overlay, enfant de body) --- */
 #pa2-overlay { color: var(--pa2-ink); font-size: 15px; line-height: 1.45; }
@@ -263,7 +319,7 @@ span.pa2-chip { cursor: default; }
 .pa2-foe.is-boss .pa2-pic::after { background-image: url('../images/UI/slots/slot-legendary.png'); }
 .pa2-foe.is-boss .pa2-foe-img { object-fit: contain; }
 .pa2-pack { font-size: 14px; color: var(--pa2-danger); }
-.pa2-sim { font-size: 11.5px; color: var(--pa2-ink-dim); border-left: 2px solid var(--pa2-gold-deep); padding-left: 8px; margin: 0 0 12px; }
+.pa2-sim { font-size: 12px; color: var(--pa2-ink-dim); border-left: 2px solid var(--pa2-gold-deep); padding-left: 8px; margin: 0 0 12px; }
 .pa2-sim.is-red { border-color: #c0392b; }
 .pa2-rounds { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
 .pa2-round { display: flex; justify-content: space-between; padding: 8px 10px; border-radius: 10px; background: rgba(0, 0, 0, .45); border: 1px solid rgba(240, 170, 62, .2); animation: pa2-rise .25s; }
@@ -283,13 +339,13 @@ span.pa2-chip { cursor: default; }
 .pa2-card.is-com .pa2-slot::after { background-image: url('../images/UI/slots/slot-common.png'); }
 .pa2-card.is-rare .pa2-slot::after { background-image: url('../images/UI/slots/slot-rare.png'); }
 .pa2-card.is-leg .pa2-slot::after { background-image: url('../images/UI/slots/slot-legendary.png'); }
-.pa2-rar { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.pa2-rar { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .pa2-card.is-com .pa2-rar { color: var(--pa2-r-com); }
 .pa2-card.is-rare .pa2-rar { color: #7fb0ff; }
 .pa2-card.is-leg .pa2-rar { color: var(--pa2-r-leg); }
 .pa2-card.is-leg .pa2-front { border-color: var(--pa2-r-leg); box-shadow: 0 0 26px -4px var(--pa2-r-leg); }
 .pa2-card .pa2-nm { font-weight: 800; font-size: 14px; line-height: 1.15; }
-.pa2-fx { font-size: 11.5px; color: var(--pa2-ink-dim); line-height: 1.3; }
+.pa2-fx { font-size: 12px; color: var(--pa2-ink-dim); line-height: 1.3; }
 .pa2-card.is-picked .pa2-front { outline: 3px solid var(--pa2-gold); outline-offset: 2px; }
 .pa2-card.is-flipped.is-leg .pa2-front { animation: pa2-glint 1.2s ease-out .6s; }
 

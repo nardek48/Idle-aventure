@@ -1,8 +1,8 @@
 "use strict";
 /* ui/title-screen-view.js — écran titre plein écran affiché avant tout boot du jeu
    (voir main/boot.js). 2 boutons : Nouvelle Partie / Charger la Partie.
-   "Charger la Partie" ouvre la liste des 3 emplacements existants (HeroSlotManager,
-   voir systems/save-system.js). "Nouvelle Partie" cherche le 1er emplacement vide et
+   "Charger la partie" ouvre la liste des 3 emplacements existants (HeroSlotManager,
+   voir systems/save-system.js). "Nouvelle partie" cherche le 1er emplacement vide et
    ouvre directement la création de héros (modal-view.js, système déjà en place).
    v3.99.0. v3.341.0 : « Continuer » en tête (dernier héros joué, nommé sur le bouton),
    « Nouvelle Partie » et « Charger » passent côte à côte en dessous. */
@@ -17,7 +17,7 @@ var titleScreenDeleteConfirmSlot = null; // v3.99.11 : emplacement en attente de
    Sans ça, HeroSlotManager.hasSlot() (systems/save-system.js) retourne toujours
    false tant que initSaveSystem() n'a pas tourné — normalement fait dans
    boot.js:init(), qui ne se lance qu'APRÈS que l'écran titre soit résolu. Résultat
-   observé : "Charger la Partie" affichait 6 emplacements vides même avec des
+   observé : "Charger la partie" affichait 6 emplacements vides même avec des
    parties existantes en localStorage. Même test que initSaveSystem() (juste la
    détection, pas l'autosave/migration — ceux-là restent dans init(), inchangés,
    pour ne pas les déclencher avant qu'un emplacement soit choisi). */
@@ -64,7 +64,7 @@ function resolveTitleScreen() {
 /* Nouvelle Partie : 1er slot vide -> création de héros direct. Tous pleins -> vers Charger. */
 /* v3.99.16 : s'assure que `game` reflète bien le CONTENU RÉEL du slot actif avant
    tout changement de slot depuis l'écran titre. Sans ça : si le joueur clique
-   "Nouvelle Partie" ou "Charger la Partie" alors que `game` est encore l'état par
+   "Nouvelle partie" ou "Charger la partie" alors que `game` est encore l'état par
    défaut vierge (jamais chargé dans cette session, ce qui est le cas normal sur
    l'écran titre puisque init()/loadGame() n'a pas encore tourné), HeroSlotManager.
    createHeroInSlot()/switchToSlot() (systems/save-system.js) sauvegardent ce game
@@ -353,11 +353,11 @@ function buildTitleScreenMainHTML() {
   if (continueSlot) html += '<div class="title-screen-btn-row">';
   html += '        <button type="button" class="title-screen-img-btn" onclick="titleScreenNewGame()">';
   html += '          <img src="images/TitleScreen/bouton_titre.png" alt="" class="title-screen-img-btn-bg">';
-  html += '          <span>' + _t("Nouvelle Partie") + '</span>';
+  html += '          <span>' + _t("Nouvelle partie") + '</span>';
   html += '        </button>';
   html += '        <button type="button" class="title-screen-img-btn" onclick="titleScreenShowLoad()">';
   html += '          <img src="images/TitleScreen/bouton_titre.png" alt="" class="title-screen-img-btn-bg">';
-  html += '          <span>' + (continueSlot ? _t("Charger") : _t("Charger la Partie")) + '</span>';
+  html += '          <span>' + (continueSlot ? _t("Charger") : _t("Charger la partie")) + '</span>';
   html += '        </button>';
   if (continueSlot) html += '</div>';
   html += '      </div>';

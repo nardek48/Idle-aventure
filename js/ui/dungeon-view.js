@@ -154,9 +154,13 @@ function buildDungeonSheetHTML(dungeonId) {
   var storyFree = typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(dungeon.id);
 
   var h = '<div class="ksheet-backdrop" onclick="closeDungeonSheet()"></div>';
-  h += '<div class="ksheet dungeon-sheet"><div class="ksheet-handle"></div>';
-  h += '<div class="ksheet-title">' + renderIconOrEmojiHTML(dungeon.icon || "images/Icons/subtabs/dungeon.png", "", _td(dungeon.name)) + '<span>' + esc(_td(dungeon.name)) + '</span></div>';
-  h += '<div class="dsheet-sub">' + (world ? esc(_td(world.name)) + ' · ' : '') + _t("{n} vagues + boss · {r} max", { n: DUNGEON_CONFIG.waveCount, r: '<span style="color:' + rarityColor + ';font-weight:800">' + esc(rarityLabel) + '</span>' }) + '</div>';
+  h += '<div class="ksheet dungeon-sheet">';
+  h += kSheetHeadHTML({
+    icon: renderIconOrEmojiHTML(dungeon.icon || "images/Icons/subtabs/dungeon.png", "", _td(dungeon.name)),
+    title: esc(_td(dungeon.name)),
+    sub: (world ? esc(_td(world.name)) + ' · ' : '') + _t("{n} vagues + boss · {r} max", { n: DUNGEON_CONFIG.waveCount, r: '<span class="dsheet-rarity" style="color:' + rarityColor + '">' + esc(rarityLabel) + '</span>' }),
+    close: "closeDungeonSheet()"
+  });
   h += '<div class="ksheet-body">';
   if (dungeon.story) h += '<div class="dsheet-story">' + esc(_td(dungeon.story)) + '</div>';
   h += buildDungeonSceauLoreHTML(dungeon.id);
@@ -205,7 +209,7 @@ function buildDungeonSheetHTML(dungeonId) {
   var dDef = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(dungeonId); })[0];
   if (window.ProvisionsManager && dDef) h += ProvisionsManager.buildLineHTML("dungeon", dDef);
   h += '</div>'; // ksheet-body
-  h += '<button type="button" class="ksheet-close" onclick="confirmDungeonStart()">' + _t("Entrer") + '</button>';
+  h += '<div class="ksheet-foot"><button type="button" class="kbtn primary" onclick="confirmDungeonStart()">' + _t("Entrer") + '</button></div>';
   h += '</div>';
   return h;
 }

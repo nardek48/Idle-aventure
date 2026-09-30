@@ -101,9 +101,8 @@ var DATA_TEXT_FIELDS = {
   WORLDS: ["*.name", "*.adventures.*.name", "*.adventures.*.introText"],
   AMBIANCE_TEXTS: [""],
   LIVING_MAPS: ["*.name", "*.village.name", "*.landmarks.*.name", "*.sectors.*.name", "*.sectors.*.lore", "*.sectors.*.heldEffect.label", "*.words"],
-  SCENE_NODES: ["obstacles.*.name", "obstacles.*.options.*.label", "silhouettes", "hints", "gainHints", "labels",
-    "combatGroups.*.name"],
-  SCENE_TEMPLATES: ["*.title", "*.departLabel", "*.deathLine", "*.items.*.name", "*.items.*.desc", "*.journalByDepth"],
+  SCENE_NODES: ["obstacles.*.name", "obstacles.*.options.*.label", "combatGroups.*.name"],
+  SCENE_TEMPLATES: ["*.title", "*.departLabel", "*.parcours.steps.*.text", "*.parcours.steps.*.after"], // v3.390.0 : textes des étapes de parcours
   CODEX_ENTRIES: ["*.title", "*.text"],
   /* v3.381.0 (PA2-0) : Petites Aventures v2 (data/pa2-content.js) */
   PA2_ITEMS: ["*.name", "*.pro", "*.con", "*.lockedHint"],

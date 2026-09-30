@@ -60,7 +60,7 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .cb-alert-sep { opacity: 0.5; }
 /* Deux télégraphes simultanés : on rétrécit le texte plutôt que de couper ou d'aller à la
    ligne — un bandeau sur deux lignes cesse d'être lu comme une alerte. */
-.cb-alert.is-multi { font-size: 11px; padding: 5px 10px; gap: 4px; }
+.cb-alert.is-multi { font-size: 12px; padding: 5px 10px; gap: 4px; }
 .cb-alert.is-multi img { width: 17px; height: 17px; }
 /* Le soin ne menace pas le héros : il annule son travail. Couleur distincte pour qu'on ne
    l'assimile pas à une attaque. */
@@ -90,7 +90,7 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .cb-state-n {
   position: absolute; bottom: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 3px;
   border-radius: 999px; background: #2b2117; border: 1px solid var(--nb-gold-dark, #8a5a1a);
-  color: #f4e9d0; font-size: 10px; font-weight: 800; line-height: 15px; text-align: center;
+  color: #f4e9d0; font-size: 12px; font-weight: 800; line-height: 15px; text-align: center;
 }
 /* Trois familles, trois teintes : le joueur voit d'un coup d'œil ce qui vient de LUI. */
 .cb-state.is-enemy { border-color: #b8622e; }
@@ -102,14 +102,13 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
   border-radius: 999px;
   border: 1.5px solid var(--nb-gold-dark, #8a5a1a);
   background: rgba(10, 8, 6, 0.78);
-  color: #f4e9d0; font-size: 11.5px; font-weight: 800;
+  color: #f4e9d0; font-size: 12px; font-weight: 800;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 /* --- Feuille d'explication --- */
-.st-sheet-sub { font-size: 11px; color: var(--nb-ink-dim); margin: -6px 0 8px; }
 .st-group-title {
-  font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
+  font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
   color: var(--nb-ink-dim); margin: 10px 0 4px;
 }
 .st-row {
@@ -121,9 +120,9 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .st-row-ico { width: 32px; height: 32px; object-fit: contain; flex: 0 0 auto; }
 .st-row-body { flex: 1 1 auto; min-width: 0; }
 .st-row-name { font-size: 12.5px; font-weight: 800; color: var(--nb-ink); }
-.st-row-desc { font-size: 11px; line-height: 1.35; color: var(--nb-ink-dim); }
-.st-row-hint { font-size: 11px; line-height: 1.35; color: var(--nb-gold-dark, #8a5a1a); font-weight: 700; margin-top: 2px; }
-.st-row-n { flex: 0 0 auto; font-size: 11px; font-weight: 800; color: var(--nb-ink); padding-top: 2px; }
+.st-row-desc { font-size: 12px; line-height: 1.35; color: var(--nb-ink-dim); }
+.st-row-hint { font-size: 12px; line-height: 1.35; color: var(--nb-gold-dark, #8a5a1a); font-weight: 700; margin-top: 2px; }
+.st-row-n { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: var(--nb-ink); padding-top: 2px; }
 .st-row.is-alert { border-color: var(--danger, #c0392b); background: #fff0ec; }
 .st-empty { font-size: 12px; color: var(--nb-ink-dim); font-style: italic; padding: 10px 2px; }
 
@@ -138,7 +137,7 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
   border-width: 2.5px; background: rgba(10, 8, 6, 0.85);
 }
 .cb-arena .enemy-status-img { width: 74%; height: 74%; }
-.cb-arena .enemy-status-timer { min-width: 18px; height: 18px; font-size: 11px; bottom: -6px; right: -6px; }
+.cb-arena .enemy-status-timer { min-width: 18px; height: 18px; font-size: 12px; bottom: -6px; right: -6px; }
 
 /* Ennemi : occupe l'espace restant, bords fondus (les JPG n'ont pas d'alpha) */
 .cb-arena #enemy-emoji {
@@ -190,7 +189,7 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .cb-ctl-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; margin-top: clamp(5px, 1.5vw, 8px); }
 .cb-ctl-row .combat-controls { position: static; bottom: auto; padding: 0; justify-content: flex-start; gap: 6px; flex-wrap: wrap; }
 .cb-ctl-row .combat-speed-inline { display: inline-flex; gap: 2px; }
-.cb-ctl-row .combat-speed-btn { padding: 4px 8px; font-size: clamp(10px, 2.8vw, 11px); }
+.cb-ctl-row .combat-speed-btn { padding: 4px 8px; font-size: max(12px, clamp(10px, 2.8vw, 11px)); }
 
 /* ---------- Panneau héros (bas) ---------- */
 .cb-hero {
@@ -214,13 +213,13 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
    se resserre ; le portrait garde sa place, seule la pastille bouge. */
 .cb-hero .combat-hero-mini-level {
   bottom: -9px;
-  font-size: 9.5px;
+  font-size: 10px;
   padding: 1px 6px;
 }
 .cb-hero #combat-hero-mini { padding-bottom: 5px; }
 .cb-hero .combat-hero-mini-hp-bar { flex: 1 1 auto; min-width: 0; }
 .cb-hero .combat-sortie-row { position: static; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding: 0; }
-.cb-hero .combat-sortie-row .combat-loot-pill { font-size: 10.5px; }
+.cb-hero .combat-sortie-row .combat-loot-pill { font-size: 12px; }
 
 .cb-hero .class-resource-bar { position: static; bottom: auto; padding: 0; pointer-events: auto; }
 .cb-hero .class-resource-track { width: 100%; }

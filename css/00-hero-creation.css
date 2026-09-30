@@ -338,7 +338,7 @@
 }
 
 .hc-class-tagline {
-  font-size: 9.5px;
+  font-size: 12px;
   line-height: 1.25;
   color: rgba(58, 36, 16, 0.85);
   text-align: center;
@@ -404,7 +404,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1;
 }
 
@@ -435,7 +435,7 @@
 }
 
 .hc-stat-label {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.5px;
   color: rgba(240, 224, 190, 0.7);
 }
@@ -511,7 +511,7 @@
 }
 
 .hc-skill-desc {
-  font-size: 10.5px;
+  font-size: 12px;
   line-height: 1.3;
   color: rgba(58, 36, 16, 0.85);
 }
@@ -584,8 +584,8 @@
 
 /* ---- Petits écrans (320px) ---- */
 @media (max-width: 360px) {
-  .hc-class-tagline { font-size: 8.5px; }
-  .hc-class-name { font-size: 11.5px; }
+  .hc-class-tagline { font-size: 12px; }
+  .hc-class-name { font-size: 12px; }
   .hc-confirm-name { font-size: 26px; }
   .hc-img-btn span { font-size: 14px; }
   .hc-logo { width: 56%; }

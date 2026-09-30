@@ -21,200 +21,184 @@
   max-width: 100%;
   box-sizing: border-box;
   margin: 0 auto;
-  padding: calc(var(--safe-top) + 1px) 12px 0;
+  padding: 0; /* v3.396.0 : le bandeau (.hud-band) porte le fond, l'encoche et ses marges */
   background: transparent;
   border-bottom: none;
 }
 
-/* v2.37 : sur l'écran Combat, les pastilles de ressources passent en
-   version translucide sur fond sombre (au lieu du fond crème plein)
-   pour rester lisibles par-dessus l'illustration du monde — toujours
-   valable même maintenant que #hud lui-même est transparent, car
-   c'est #game-area qui porte le fond illustré juste en dessous.
-   v2.42 : le fond dégradé + image du monde qui était posé ICI sur
-   #hud a été retiré (redondant avec #game-area, et #hud est
-   maintenant transparent partout, pas seulement en combat). */
-
-/* v2.57 : les overrides ".nb-pill" et ".nb-pill-icon" spécifiques à
-   l'écran Combat ont été retirés — le cadre unique posé sur
-   .nb-hud-resources assure maintenant la même lisibilité partout,
-   combat ou non, donc plus besoin de variante translucide. */
-
-/* v2.57 : cadre doré fourni par l'utilisateur
-   (images/Borders/zone-haut-ressources.png) posé derrière TOUTE la
-   ligne de ressources — remplace les 3 pastilles individuelles
-   (chacune avec son propre fond crème + bordure). Les 3 icônes/nombres
-   flottent maintenant directement sur ce cadre unique, donc les
-   styles de fond/bordure par pastille (.nb-pill) sont retirés
-   ci-dessous, y compris la variante translucide spécifique à l'écran
-   Combat (plus nécessaire : le cadre assure la lisibilité partout). */
-/* v2.61 : largeur passée de "fit-content" à 50% de l'écran (au lieu
-   de s'ajuster juste à la taille du contenu) à la demande de
-   l'utilisateur — justify-content:space-around réparti les 3
-   ressources dans cet espace élargi au lieu de les laisser tassées à
-   gauche. */
-.nb-hud-resources {
+/* =========================
+   v3.396.0 (lot HUD-1, atelier HUD validé par Seb le 30/09/2026, variante « C · Ornée ») :
+   bandeau de pierre de 60 px, filet d'or double et losange central. Remplace les ressources
+   sur cadre parchemin, la colonne de raccourcis (sac, fil rouge) et le mini-héros du HUD
+   (resté pour le combat, rangé caché dans #hud-mini-park hors combat).
+   ========================= */
+.hud-band {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  gap: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
-  width: 100%; /* v2.77 : 100% de .nb-hud-left-col (avant : 75% du HUD entier, quand ce bloc était encore côte à côte avec le portrait au même niveau) */
-  padding: 12px clamp(18.4px, calc(9.09px + 2.91vw), 21.6px); /* ↑ padding vertical */
-  background: url('../images/Borders/zone-haut-ressources.png') center / 100% 100% no-repeat;
+  gap: 10px;
+  min-height: calc(60px + var(--safe-top));
+  padding: var(--safe-top) 12px 0 8px;
+  color: #f4e9d0;
+  background: linear-gradient(rgba(16, 12, 8, 0.72), rgba(16, 12, 8, 0.86)), url('../images/UI/textures/bg-stone-tile.png') 0 0 / 256px;
+  box-shadow: 0 6px 14px -4px rgba(0, 0, 0, 0.7);
 }
-
-.nb-hud-resources .nb-pill {
-  padding: 0;
-  font-size: clamp(12.88px, calc(6.36px + 2.04vw), 15.12px);
-  font-weight: 800;
-  background: none;
-  border: none;
-  color: var(--nb-ink);
-  box-shadow: none;
+/* Filet d'or double sous le bandeau */
+.hud-band::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 8px;
+  pointer-events: none;
+  background: linear-gradient(#e2b14a, #8a5c14) 0 0 / 100% 2px no-repeat, linear-gradient(#8a5c14, #8a5c14) 0 5px / 100% 1px no-repeat;
 }
-
-.nb-hud-resources .nb-pill-icon {
-  width: clamp(22.08px, calc(10.91px + 3.49vw), 25.92px);
-  height: clamp(22.08px, calc(10.91px + 3.49vw), 25.92px);
-  font-size: clamp(13.8px, calc(6.82px + 2.18vw), 16.2px);
-  background: var(--nb-cream-deep);
+/* Losange central */
+.hud-band::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -11px;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  transform: rotate(45deg);
+  pointer-events: none;
+  background: linear-gradient(135deg, #ffe08a, #c27f1f 60%, #8a5c14);
+  border: 1px solid #5a3a0c;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
-
-/* v2.79 : la pilule Or utilise maintenant une vraie image
-   (images/Icons/gold_icon.png, fournie par l'utilisateur) au lieu de
-   l'emoji 💰 — même empreinte que .nb-pill-icon, juste un object-fit
-   pour que l'image ne soit pas déformée. */
-.nb-hud-resources img.nb-pill-icon {
-  object-fit: contain;
-  padding: 3px;
-}
-
-.nb-pill-gold .nb-pill-icon { color: var(--nb-gold-deep); }
-
-/* v2.72 : ligne du haut du HUD — contient les ressources ET la
-   mini-carte héros côte à côte (voir ci-dessous), à la demande de
-   l'utilisateur (avant : héros en survol flottant sur la zone de
-   combat, ressources seules dans le HUD). */
-.nb-hud-top-row {
-  display: flex;
-  align-items: flex-start;    /* aligner les enfants en haut, pas au centre */
-  justify-content: space-between;
-  width: 100%;
-  margin-top: 0;
-  padding-top: 0;
-}
-
-/* v2.77 : colonne qui empile les ressources et le titre de page,
-   pour que le titre colle juste sous les ressources au lieu d'être
-   une ligne à part sur toute la largeur du HUD. Reste à gauche du
-   portrait mini du héros, qui garde sa propre largeur fixe à droite.
-   v3.200.0 : ne contient plus que les ressources, le titre de page
-   ayant été retiré. */
-.nb-hud-left-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-}
-
-/* v3.200.0 : .nb-hud-title-row et .nb-hud-page-title retirés avec le
-   titre de page du HUD (voir ui/hud-view.js). La rangée ne contenait
-   plus que le titre depuis que le bouton sac est passé dans
-   .nb-hud-shortcuts, elle serait restée un conteneur vide.
-   .nb-hud-left-col est conservé : il porte encore les ressources et
-   sert de cible à la règle body.combat-active plus bas. */
-
-/* v3.17 : raccourcis Équipement + Ascension, sortis de la rangée de
-   titre du HUD (où ils étaient nichés à gauche, sous les ressources ;
-   cette rangée a été retirée en v3.200.0) — colonne dédiée entre
-   .nb-hud-left-col et le portrait du héros, empilée verticalement,
-   centrée sur la hauteur du HUD pour s'aligner avec le portrait juste
-   à côté. */
-.nb-hud-shortcuts {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  align-self: center;
-  margin-right: 8px;
-}
-
-.nb-hud-bag-btn {
+/* Portrait : ouvre Héros › Résumé ; porte le liseré de palier des Hauts faits */
+.hud-pt {
   position: relative;
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  border: none;
+  width: 46px;
+  height: 46px;
+  padding: 0;
   border-radius: 50%;
-  line-height: 1;
+  border: 2px solid #d4a017;
+  background: #1b1510;
   cursor: pointer;
-  display: flex;
-  align-items: center;       /* centrage vertical */
-  justify-content: flex-end; /* alignement à droite */
 }
+.hud-pt-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 15%; display: block; }
+.hud-pt-lvl {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 7px;
+  background: #1b1510;
+  border: 1px solid #c27f1f;
+  color: #ffe9b0;
+}
+.hud-pt[class*="hf-tier-"]::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; pointer-events: none; }
+.hud-pt.hf-tier-bronze::after { box-shadow: 0 0 0 2px #b07a3c; }
+.hud-pt.hf-tier-silver::after { box-shadow: 0 0 0 2px #c9d2da, 0 0 8px rgba(201, 210, 218, 0.5); }
+.hud-pt.hf-tier-gold::after { box-shadow: 0 0 0 2px #f0c64a, 0 0 12px rgba(240, 198, 74, 0.65); }
+/* Jauges PV et XP (cadre fin du kit) */
+.hud-gauges { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.hud-gauge.is-hp { --kgauge-fill: linear-gradient(90deg, #15803d, #4ade80); }
+.hud-gauge.is-hp.is-low { --kgauge-fill: linear-gradient(90deg, #8e1f17, #e0533f); }
+.hud-gauge.is-xp { --kgauge-fill: linear-gradient(90deg, #8a5c14, #f0aa3e); }
+.hud-gauge .kgauge-text { font-size: 10.5px; white-space: nowrap; }
+/* Or et ressource de la carte du monde */
+.hud-res { display: flex; flex-direction: column; gap: 4px; flex: 0 0 auto; }
+.hud-res-item { display: flex; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 800; line-height: 1; color: #ffe9b0; font-variant-numeric: tabular-nums; }
+.hud-res-item img { width: 19px; height: 19px; object-fit: contain; }
+/* Mini-héros du combat : rangé caché hors combat (relocateCombatHeroMini) */
+#hud-mini-park { display: none; }
 
-/* v3.9 : icône dédiée (même illustration que la carte "Équipement" du
-   Menu ☰) à la place de l'emoji 🎒 générique. v3.10 : agrandie (20px ->
-   30px, remplit tout le bouton) et le fond crème/liseré doré retirés
-   (bouton devenu icône pure, plus de cadre décoratif autour). v3.12 :
-   encore agrandie (30px -> 40px, bouton et icône). */
-.nb-hud-bag-icon {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
+/* =========================
+   v3.396.0 : bulles de raccourci (ui/hud-dock-view.js), en bas à droite de la colonne de jeu,
+   au-dessus de la barre du menu (hauteur = largeur × 971 / 4064, voir #tab-bar).
+   ========================= */
+.hud-dock {
+  position: fixed;
+  right: max(10px, calc(50% - 185px));
+  bottom: calc(var(--safe-bottom) + min(430px, 99vw) * 0.239 + 12px);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
   pointer-events: none;
 }
-
-.nb-hud-bag-btn:active {
-  transform: scale(0.94);
+body.combat-active .hud-dock,
+body.scene-active .hud-dock,
+body.living-map-active .hud-dock { display: none; }
+.hud-bub {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #d4a017;
+  background: radial-gradient(circle at 35% 30%, #3d3226, #1c150d);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
 }
-
-/* v2.83.53 : badge de compte sur le bouton sac — même style que
-   .full-menu-card-badge (menu ☰), voir css/05-overlays.css. */
-.nb-hud-bag-badge {
+.hud-bub:active { transform: scale(0.94); }
+.hud-bub .hud-bub-ico { width: 30px; height: 30px; object-fit: contain; pointer-events: none; }
+.hud-bub-badge {
   position: absolute;
   top: -4px;
   right: -4px;
-  z-index: 4; /* v2.83.54 : au-dessus du cadre décoratif du portrait (::after, z-index:2) */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 8px;
-  background: var(--danger);
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: #b3261e;
+  border: 1.5px solid #fff3d6;
   color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  border: 1px solid var(--nb-cream);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
 }
-
-/* v2.90.7 : le badge de point de talent disponible (portrait héros
-   du HUD) est en bas-gauche du portrait, contrairement au badge du
-   sac (haut-droite, .nb-hud-bag-badge) — à la demande de l'utilisateur.
-   v3.8 : n'hérite plus de .nb-hud-bag-badge (c'est maintenant une
-   image dédiée, pas une pastille numérique) — porte donc son propre
-   positionnement complet ici plutôt qu'un simple override. */
-.hud-hero-levelup-badge {
+/* Libellé : affiché deux secondes à l'apparition */
+.hud-bub-tip {
   position: absolute;
-  top: auto;
-  right: auto;
-  bottom: -6px;
-  left: -6px;
-  z-index: 4;
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
+  right: 56px;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  padding: 5px 9px;
+  border-radius: 9px;
+  background: rgba(12, 9, 6, 0.92);
+  border: 1px solid #8a5c14;
+  color: #ffe9b0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
 }
-
-/* v3.131.0 : .workshop-unlock-banner retiré (bandeau HUD "Les fondations", jugé inutile —
-   voir hud-view.js). Règle CSS supprimée avec lui ; le détail vit maintenant dans la carte
-   de quête (qb-card-steps, css/04-panel-quests.css). */
+.hud-bub.show-tip .hud-bub-tip { opacity: 1; }
+/* Fil rouge au calme : petite bulle discrète */
+.hud-bub.is-quiet { width: 36px; height: 36px; border-width: 1.5px; border-color: #8a5c14; opacity: 0.8; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
+.hud-bub.is-quiet .hud-bub-ico { width: 22px; height: 22px; }
+.hud-bub.is-quiet .hud-bub-tip { right: 44px; }
+/* Apparition : un rebond et une lueur, une seule fois */
+.hud-bub.is-new { animation: hud-bub-in 0.45s cubic-bezier(0.3, 1.6, 0.5, 1), hud-bub-glow 1.4s ease-out 0.1s; }
+@keyframes hud-bub-in { from { transform: scale(0.2); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes hud-bub-glow {
+  0% { box-shadow: 0 0 0 0 rgba(240, 170, 62, 0.85), 0 3px 10px rgba(0, 0, 0, 0.65); }
+  100% { box-shadow: 0 0 0 18px rgba(240, 170, 62, 0), 0 3px 10px rgba(0, 0, 0, 0.65); }
+}
+@media (prefers-reduced-motion: reduce) { .hud-bub.is-new { animation: none; } }
 
 /* =========================
    Mini-carte héros (v2.40 — portrait + niveau + PV réduits).
@@ -294,7 +278,7 @@
   background: url('../images/Borders/niveau-hero.png') center / 100% 100% no-repeat;
   border: none;
   color: var(--nb-ink);
-  font-size: clamp(9.52px, calc(4.7px + 1.51vw), 11.18px);
+  font-size: max(10px, clamp(9.52px, calc(4.7px + 1.51vw), 11.18px));
   font-weight: 800;
   white-space: nowrap;
 }
@@ -309,7 +293,7 @@
 }
 
 .combat-hero-mini-hp-bar .kgauge-text {
-  font-size: clamp(9px, calc(4.5px + 1.4vw), 10.5px);
+  font-size: max(10px, clamp(9px, calc(4.5px + 1.4vw), 10.5px));
   white-space: nowrap; /* v3.379.1 : jamais sur deux lignes (« 623 / 895 » coupé sous l'avatar) */
   letter-spacing: -0.2px;
 }
@@ -405,7 +389,7 @@
     url('../images/Borders/affichage-des-stats.png') center / 100% 100% no-repeat,
     linear-gradient(var(--nb-cream), var(--nb-cream)) center / calc(100% - 4px) calc(100% - 4px) no-repeat;
   border-top: none;
-  font-size: clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
+  font-size: max(12px, clamp(11.04px, calc(5.46px + 1.75vw), 12.96px));
 }
 
 /* v2.62 : justify-content:center ajouté — #stats-bar n'a pas
@@ -422,7 +406,7 @@
 }
 
 .stat-item .stat-label {
-  font-size: clamp(8.28px, calc(4.09px + 1.31vw), 9.72px);
+  font-size: max(12px, clamp(8.28px, calc(4.09px + 1.31vw), 9.72px));
   color: var(--nb-ink-dim);
   white-space: nowrap;
 }
@@ -438,7 +422,7 @@
 }
 
 .stat-item .stat-value {
-  font-size: clamp(11.04px, calc(5.46px + 1.75vw), 12.96px);
+  font-size: max(12px, clamp(11.04px, calc(5.46px + 1.75vw), 12.96px));
   font-weight: 700;
   color: var(--nb-ink);
   white-space: nowrap;
@@ -562,7 +546,7 @@
   border-radius: 8px;
   background: var(--danger);
   color: #fff;
-  font-size: clamp(8.28px, calc(4.09px + 1.31vw), 9.72px);
+  font-size: max(10px, clamp(8.28px, calc(4.09px + 1.31vw), 9.72px));
   font-weight: 700;
 }
 
@@ -649,7 +633,7 @@
   right: 8%;
   bottom: 8%;
   text-align: center;
-  font-size: clamp(8.5px, calc(4px + 1.4vw), 10px);
+  font-size: max(12px, clamp(8.5px, calc(4px + 1.4vw), 10px));
   font-weight: 700;
   line-height: 1.1;
   color: rgba(230, 210, 170, 0.9);
@@ -670,15 +654,6 @@
    ========================= */
 body.combat-active #tab-bar {
   display: none;
-}
-
-body.combat-active #hud .nb-hud-left-col,
-body.combat-active #hud .nb-hud-shortcuts {
-  display: none !important;
-}
-
-body.combat-active #hud .nb-hud-top-row {
-  justify-content: flex-end;
 }
 
 body.combat-active #combat-hero-mini {

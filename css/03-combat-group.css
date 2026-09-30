@@ -70,7 +70,7 @@ Deux contraintes mesurées à l'atelier :
   left: 0;
   right: 0;
   bottom: 0;
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 800;
   text-align: center;
   overflow: hidden;
@@ -194,7 +194,7 @@ Deux contraintes mesurées à l'atelier :
   align-items: center;
   justify-content: space-between;
   gap: 4px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: #f4e9d3;
 }
@@ -208,7 +208,7 @@ Deux contraintes mesurées à l'atelier :
 
 .cbg-ally-cd {
   flex: 0 0 auto;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
   padding: 1px 5px;
   border-radius: 8px;
@@ -276,7 +276,7 @@ Deux contraintes mesurées à l'atelier :
 
 .cbg-ally-tick {
   flex: 0 0 auto;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   color: #7ee08a;
 }
@@ -390,7 +390,7 @@ Deux contraintes mesurées à l'atelier :
 
 .cbg-heal-txt span {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   opacity: .8;
 }
 
@@ -481,7 +481,7 @@ Deux contraintes mesurées à l'atelier :
   left: 50%;
   bottom: -1px;
   transform: translateX(-50%);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
   padding: 0 5px;
   border-radius: 7px;
@@ -500,7 +500,7 @@ Deux contraintes mesurées à l'atelier :
   align-items: center;
   justify-content: center;
   gap: 12px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: #f4e9d3;
 }
@@ -512,7 +512,7 @@ Deux contraintes mesurées à l'atelier :
 /* ---------- Feuille de sortie (butin + potions) ---------- */
 
 .cbs-sub {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   opacity: .75;
   margin: 8px 0 4px;
@@ -547,7 +547,7 @@ Deux contraintes mesurées à l'atelier :
 /* 2. La barre de PV du compagnon occupe toute sa colonne, comme celle du héros — elle
    héritait d'une largeur de jauge fine et se retrouvait minuscule. */
 .cbg-band-hp { width: 100%; }
-.cbg-band-hp .kgauge-text { font-size: clamp(9px, calc(5px + 1.2vw), 11px); }
+.cbg-band-hp .kgauge-text { font-size: max(10px, clamp(9px, calc(5px + 1.2vw), 11px)); }
 
 /* 3. Toutes les pastilles de la rangée de commandes au MÊME gabarit que « Tactique » :
    les vitesses venaient de l'écran de vitesse (fond crème, bordure épaisse, taille
@@ -560,7 +560,7 @@ Deux contraintes mesurées à l'atelier :
   border: 1px solid rgba(212, 175, 55, .6);
   background: rgba(15, 20, 32, .85);
   color: #f3e6c4;
-  font-size: clamp(10px, calc(6px + 1.2vw), 12px);
+  font-size: max(12px, clamp(10px, calc(6px + 1.2vw), 12px));
   font-weight: 700;
   box-shadow: none;
 }
@@ -585,7 +585,7 @@ Deux contraintes mesurées à l'atelier :
   gap: 4px;
   padding: 0 9px;
   border-radius: 999px;
-  font-size: clamp(10px, calc(6px + 1.2vw), 12px);
+  font-size: max(12px, clamp(10px, calc(6px + 1.2vw), 12px));
   font-weight: 700;
   line-height: 1;
 }

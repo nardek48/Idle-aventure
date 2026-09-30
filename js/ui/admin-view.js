@@ -19,6 +19,13 @@ function buildAdminHTML() {
   h += '</div>';
   h += '</div>';
 
+  // v3.395.0 (décision Seb, audit design) : raccourci de test, retiré des Paramètres du joueur.
+  h += '<div class="panel-card admin-card">';
+  h += '<h3><img class=ico-inline src=images/Icons/system/lock_open.png> Onglets</h3>';
+  h += '<p class="panel-sub">Débloque tous les onglets sans passer par la chaîne Histoire.</p>';
+  h += '<div class="admin-quick-row"><button class="settings-btn admin-btn" onclick="unlockAllTabsFromSettings()">' + _t("Débloquer tous les onglets") + '</button></div>';
+  h += '</div>';
+
   // v3.368.0 (i18n, D3) : choix de langue réservé à l'Admin tant que l'interface n'est pas traduite
   if (window.I18n) {
     var cur = I18n.lang();

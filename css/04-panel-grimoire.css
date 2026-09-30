@@ -68,7 +68,7 @@
 .grimoire-mode-desc {
   margin: 0 0 10px;
   padding: 0 6px;
-  font-size: 0.73rem;
+  font-size: 12px;
   line-height: 1.35;
   color: var(--nb-ink);
   opacity: 0.85;
@@ -155,7 +155,7 @@
 .grimoire-rule-sub {
   display: block;
   margin-top: 2px;
-  font-size: 0.7rem;
+  font-size: 12px;
   color: var(--nb-ink-dim);
 }
 
@@ -177,7 +177,7 @@
   background-color: rgba(47, 158, 90, 0.16);
   border: 1px solid rgba(47, 158, 90, 0.55);
   color: #1f6b3d;
-  font-size: 0.66rem;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -218,7 +218,7 @@
   gap: 8px;
   margin: 12px 0 8px;
   color: var(--nb-ink);
-  font-size: 0.74rem;
+  font-size: 12px;
   font-weight: 700;
   opacity: 0.85;
 }
@@ -290,7 +290,7 @@
 }
 
 .grimoire-card-title {
-  font-size: 0.72rem;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -324,7 +324,7 @@
   align-items: flex-start;
   gap: 7px;
   margin-top: 6px;
-  font-size: 0.74rem;
+  font-size: 12px;
   font-style: italic;
   color: var(--nb-ink-dim);
   line-height: 1.35;
@@ -365,7 +365,7 @@
 
 .grimoire-hint {
   margin: 8px 0 0;
-  font-size: 0.72rem;
+  font-size: 12px;
   color: var(--nb-ink-dim);
   line-height: 1.35;
 }
@@ -390,68 +390,7 @@
    (voir buildGrimoireHTML) pour que position:fixed ne soit pas piégé
    par un ancêtre transformé.
    ============================================================ */
-.grimoire-sheet-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 900;
-  background-color: rgba(10, 7, 18, 0.66);
-}
-
-.grimoire-sheet {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 901;
-  max-height: 82vh;
-  display: flex;
-  flex-direction: column;
-  padding: 8px 14px calc(16px + var(--safe-bottom));
-  border-top: 3px solid var(--nb-frame);
-  border-radius: var(--nb-radius-lg) var(--nb-radius-lg) 0 0;
-  background-color: var(--nb-cream);
-  color: var(--nb-ink);
-  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.45);
-}
-
-.grimoire-sheet-handle {
-  width: 44px;
-  height: 5px;
-  margin: 2px auto 10px;
-  border-radius: var(--nb-radius-pill);
-  background-color: var(--nb-frame-light);
-  flex: 0 0 auto;
-}
-
-.grimoire-sheet-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-size: 1rem;
-  font-weight: 800;
-  flex: 0 0 auto;
-}
-
-.grimoire-sheet-body {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  flex: 1 1 auto;
-}
-
-.grimoire-sheet-close {
-  width: 100%;
-  margin-top: 12px;
-  padding: 11px;
-  border: 2px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  background-color: var(--nb-gold);
-  color: #3a2c1a;
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 800;
-  flex: 0 0 auto;
-}
+/* v3.399.0 (F-1) : la feuille est une .ksheet du kit (css/00-components.css). */
 
 /* --- Contenu de la feuille d'aide --- */
 .grimoire-help-point {
@@ -551,7 +490,7 @@
 
 .grimoire-preset-date {
   margin-bottom: 8px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .grimoire-preset-actions {
@@ -697,7 +636,7 @@
 .grimoire-rule-status-detail {
   margin-top: 4px;
   margin-bottom: 0;
-  font-size: 11px;
+  font-size: 12px;
   font-family: monospace;
   color: var(--nb-ink-dim);
 }

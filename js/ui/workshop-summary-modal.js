@@ -75,11 +75,8 @@ function buildWorkshopSummaryBodyHTML() {
 function buildWorkshopSummaryHTML() {
   var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeWorkshopSummaryModal();">';
   h += '  <div class="full-menu workshop-summary-card">';
-  h += '    <div class="full-menu-header">';
-  h += '      <h2>' + _t("Files en cours") + '</h2>';
-  h += '      <button class="full-menu-close" type="button" onclick="closeWorkshopSummaryModal()"><img class=ico-inline src=images/Icons/system/close.png></button>';
-  h += '    </div>';
-  h += '    <div id="workshop-summary-body">' + buildWorkshopSummaryBodyHTML() + '</div>';
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/subtabs/workshops.png" alt="">', title: _t("Files en cours"), close: "closeWorkshopSummaryModal()" });
+  h += '    <div class="ksheet-body" id="workshop-summary-body">' + buildWorkshopSummaryBodyHTML() + '</div>';
   h += '  </div>';
   h += '</div>';
   return h;

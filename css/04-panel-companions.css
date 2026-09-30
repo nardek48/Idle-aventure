@@ -131,7 +131,7 @@ seules les classes propres aux compagnons sont définies ici.
 
 .cp-upgrade-hint {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--nb-ink);
 }
 
@@ -164,7 +164,7 @@ seules les classes propres aux compagnons sont définies ici.
 /* En Manuel, les réglages restent lisibles mais annoncent qu'ils ne jouent pas. */
 .cp-behavior-off {
   font-weight: 600;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--nb-ink);
   opacity: .7;
 }
@@ -188,7 +188,7 @@ seules les classes propres aux compagnons sont définies ici.
 }
 
 .cp-behavior-hint {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--nb-ink);
   opacity: .8;
   margin-bottom: 8px;
@@ -212,7 +212,7 @@ seules les classes propres aux compagnons sont définies ici.
 /* v3.276.0 : l'interrupteur Auto/Manuel a disparu — le mode de combat décide. On le dit
    plutôt que de laisser un vide à sa place. */
 .cp-controlnote {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--nb-ink);
   background: var(--nb-cream-alt);
   border: 1px solid var(--nb-frame-light);

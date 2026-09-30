@@ -118,12 +118,13 @@ function buildVillageBuildingSheetHTML(id) {
   var h = '<div class="full-menu-overlay" onclick="closeVillageBuildingSheetFromBackdrop(event)">';
   h += '<div class="full-menu vb-sheet-card" onclick="event.stopPropagation()">';
 
-  h += '<div class="vb-sheet-head">';
-  h += buildVillageBuildingIconHTML(def, "vb-sheet-icon");
-  h += '<div class="vb-sheet-head-text">';
-  h += '<div class="vb-sheet-title">' + esc(_td(def.name)) + '</div>';
-  h += '<div class="vb-sheet-level">' + (level === 0 ? _t("Non construit") : _t("Niveau {a} / {b}", { a: level, b: VillageBuildingManager.getMaxLevel(id) })) + '</div>';
-  h += '</div></div>';
+  h += kSheetHeadHTML({
+    icon: buildVillageBuildingIconHTML(def, "vb-sheet-icon"),
+    title: esc(_td(def.name)),
+    sub: level === 0 ? _t("Non construit") : _t("Niveau {a} / {b}", { a: level, b: VillageBuildingManager.getMaxLevel(id) }),
+    close: "closeVillageBuildingSheet()"
+  });
+  h += '<div class="ksheet-body">';
 
   h += '<div class="vb-sheet-text">' + esc(_td(def.desc)) + '</div>';
 
@@ -220,13 +221,9 @@ function buildVillageBuildingSheetHTML(id) {
        + '<div class="kgauge-fill" id="vb-sheet-bar" style="width:' + pct.toFixed(1) + '%"></div>'
        + '</div></div>';
     h += '</div>';
-    h += '<div class="vb-sheet-actions">';
-    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">' + _t("Fermer") + '</button>';
-    h += '</div>';
 
   } else if (maxed) {
     h += '<div class="vb-sheet-actions">';
-    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">' + _t("Fermer") + '</button>';
     // v3.289.0 : plafond du monde -> le bouton dit où se trouve la suite
     h += '<button class="settings-btn primary is-maxed" type="button" disabled>'
        + esc(VillageBuildingManager.isWorldCapped(id) ? VillageBuildingManager.getWorldCapLabel(id) : _t("Niveau maximum")) + '</button>';
@@ -234,9 +231,6 @@ function buildVillageBuildingSheetHTML(id) {
 
   } else if (!def.implemented) {
     h += '<div class="vb-sheet-effect">' + _t("Ce bâtiment arrive dans une prochaine mise à jour.") + '</div>';
-    h += '<div class="vb-sheet-actions">';
-    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">' + _t("Fermer") + '</button>';
-    h += '</div>';
 
   } else {
     var target = level + 1;
@@ -249,7 +243,6 @@ function buildVillageBuildingSheetHTML(id) {
        + esc(_t("Durée du chantier : {d}", { d: formatTime(VillageBuildingManager.getNextBuildSeconds(id)) })) + '</div>';
 
     h += '<div class="vb-sheet-actions">';
-    h += '<button class="settings-btn" type="button" onclick="closeVillageBuildingSheet()">' + _t("Fermer") + '</button>';
     if (reason) {
       h += '<button class="settings-btn primary is-unaffordable" type="button" disabled>' + esc(reason) + '</button>';
     } else {
@@ -259,7 +252,7 @@ function buildVillageBuildingSheetHTML(id) {
     h += '</div>';
   }
 
-  h += '</div></div>';
+  h += '</div></div></div>'; // ksheet-body, carte, voile
   return h;
 }
 

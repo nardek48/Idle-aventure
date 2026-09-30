@@ -139,10 +139,11 @@ function buildWorldPopupHTML(index) {
   var reached = isWorldUnlocked(index);
   var statusClass = isCurrent ? "current" : reached ? "done" : "locked";
 
-  var h = '<div class="full-menu-overlay">';
+  var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeWorldPopup();">';
   h += '  <div class="full-menu map-popup-card">';
+  h += kSheetHeadHTML({ title: esc(_td(world.name)), close: "closeWorldPopup()" });
+  h += '  <div class="ksheet-body">';
   h += '    <img class="map-popup-thumb" src="' + esc(getWorldThumb(world)) + '" alt="' + esc(_td(world.name)) + '">';
-  h += '    <div class="map-popup-title">' + esc(_td(world.name)) + '</div>';
   h += '    <div class="map-popup-status status-' + statusClass + '">' + esc(getWorldProgressText(index)) + '</div>';
 
   h += buildWorldLoreExcerptHTML(index);
@@ -199,15 +200,17 @@ function buildWorldPopupHTML(index) {
   h += '</div>';
 
   /* v3.301.0 (W-2b, D7) : voyage libre vers un monde déjà atteint. */
+  h += '  </div>'; // ksheet-body
   if (reached && !isCurrent && window.WorldTravel) {
     var refusal = WorldTravel.refusalReason(world.id);
-    if (refusal) h += '<div class="map-current-adventure">' + esc(refusal) + '</div>';
+    if (refusal) h += '<div class="ksheet-body map-popup-refusal"><div class="map-current-adventure">' + esc(refusal) + '</div></div>';
+    h += '    <div class="ksheet-foot">';
     h += '    <button class="settings-btn primary" type="button"' + (refusal ? ' disabled' : ' onclick="travelToWorldFromUI(\'' + esc(world.id) + '\')"') + '>' + _t("Y voyager") + '</button>';
     if (window.LivingMapManager && LivingMapManager.getMapForWorld(world.id)) {
       h += '    <button class="settings-btn" type="button" onclick="closeWorldPopup(); openLivingMap(\'' + esc(LivingMapManager.getMapForWorld(world.id).id) + '\')">' + _t("Voir la carte") + '</button>';
     }
+    h += '    </div>';
   }
-  h += '    <button class="settings-btn" type="button" onclick="closeWorldPopup()">' + _t("Fermer") + '</button>';
   h += '  </div>';
   h += '</div>';
   return h;

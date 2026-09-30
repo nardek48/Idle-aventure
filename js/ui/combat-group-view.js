@@ -258,7 +258,7 @@ function openHealTargetSheet(actor, blesses) {
   var root = document.getElementById("combat-sortie-sheet-root");
   if (!root) return;
   var h = '<div class="ksheet-backdrop" onclick="closeHealTargetSheet()"></div>';
-  h += '<div class="ksheet cbg-heal-sheet"><div class="ksheet-title"><span>' + _t("Qui soigner ?") + '</span></div>';
+  h += '<div class="ksheet cbg-heal-sheet">' + kSheetHeadHTML({ title: _t("Qui soigner ?"), close: "closeHealTargetSheet()" });
   h += '<div class="ksheet-body">';
   var bas = blesses.slice().sort(function (x, y) { return (x.hp / x.maxHp) - (y.hp / y.maxHp); })[0];
   blesses.forEach(function (t) {
@@ -269,7 +269,7 @@ function openHealTargetSheet(actor, blesses) {
       + '<span>' + formatNumber(Math.ceil(t.hp)) + " / " + formatNumber(t.maxHp) + ' (' + pct + ' %)</span>'
       + '<i class="cbg-heal-bar"><b style="width:' + pct + '%"></b></i></div></button>';
   });
-  h += '</div><button type="button" class="ksheet-close" onclick="closeHealTargetSheet()">' + _t("Annuler") + '</button></div>';
+  h += '</div></div>';
   root.innerHTML = h;
 }
 

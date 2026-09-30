@@ -142,16 +142,8 @@ function switchTab(tabName) {
     tabName = "campement";
   }
 
-  // v3.120.0 (Lot S1) : l'expédition (scene-engine) est une activité engageante exclusive,
-  // comme le combat — décision Seb 03/09/2026 : "soit on abandonne prématurément, soit on va
-  // au bout, le joueur doit être concentré sur la quête en cours". Toute tentative de quitter
-  // l'onglet "scene" en pleine expédition ouvre une confirmation (perte de 50% du loot non
-  // sécurisé, comme une fuite — SortieManager.end("flee")) au lieu de naviguer directement.
-  // v3.126.0 (Petites Aventures, Lot PA2) : EXCEPTION pour tabName === "combat" quand
-  // game.sceneRun.status === "combat" — c'est SceneRunManager.enterCombatNode() lui-même qui
-  // vient de basculer vers l'onglet Combat pour un nœud combat légitime (profil Bourrin), pas
-  // un abandon du joueur. Sans cette exception, la modale d'abandon interromprait le
-  // basculement et le combat ne démarrerait jamais.
+  // v3.120.0 (Lot S1) : l'expédition est une activité exclusive (décision Seb 03/09/2026) :
+  // quitter l'onglet "scene" en pleine expédition demande confirmation (abandon).
   // v3.384.0 (PA2-2, D4) : quitter la préparation d'une Petite Aventure v2, c'est y renoncer, sans perte.
   if (game.activeTab === "scene" && tabName !== "scene" && game.sceneRun && game.sceneRun.pa2 && game.sceneRun.status === "pa2-prep" && window.Pa2Run) {
     Pa2Run.abandon();
@@ -159,7 +151,6 @@ function switchTab(tabName) {
     if (typeof pa2ClearChrome === "function") pa2ClearChrome();
   }
   if (game.activeTab === "scene" && tabName !== "scene"
-      && !(tabName === "combat" && game.sceneRun && game.sceneRun.status === "combat")
       && window.SceneRunManager && typeof SceneRunManager.isRunActive === "function" && SceneRunManager.isRunActive()) {
     var targetTab = tabName;
     if (typeof showConfirmModal === "function") {
@@ -169,7 +160,6 @@ function switchTab(tabName) {
         "⚠️",
         function () {
           if (window.SceneRunManager && typeof SceneRunManager.abandon === "function") SceneRunManager.abandon();
-          if (typeof closeSceneModal === "function") closeSceneModal();
           switchTab(targetTab);
         }
       );

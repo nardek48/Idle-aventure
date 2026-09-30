@@ -166,5 +166,28 @@ var PA2_MAPS_BY_WORLD = {
   desert: ["desert_1"]             // v3.387.0 (PA2-5)
 };
 
+/* v3.390.0 (chantier P, lot P-2) : fonds illustrés des parcours (images de Seb du 29/09/2026).
+   Chaque fond déclare ses pistes : des points posés sur le chemin peint, du sud vers le nord.
+   Un canevas les choisit par template.parcours = { image, track, points: [indices] }. */
+var PA2_PARCOURS_IMAGES = {
+  foret_quetes: {
+    image: "images/Maps/parcours/foret_quetes.jpg", width: 1024, height: 1536, start: [512, 1245],
+    tracks: { sentier: [[460, 1160], [505, 1015], [440, 870], [495, 720], [460, 590], [485, 480], [585, 455], [530, 320], [515, 210]] }
+  },
+  desert_route: {
+    image: "images/Maps/parcours/desert_route.jpg", width: 1024, height: 1536, start: [520, 1270],
+    tracks: {
+      route: [[520, 1150], [560, 1000], [560, 860], [575, 700], [540, 560], [470, 420], [520, 260]], // la piste de sable
+      oued: [[760, 1180], [700, 1030], [640, 880], [690, 730], [640, 560], [600, 400], [560, 260]]    // le lit asséché
+    }
+  },
+  // v3.392.0 : du village au pied du Temple ensablé, la piste jusqu'aux marches de la porte
+  desert_temple: {
+    image: "images/Maps/parcours/desert_temple.jpg", width: 1024, height: 1536, start: [528, 1290],
+    tracks: { allee: [[546, 1140], [590, 880], [505, 710], [545, 590], [465, 460], [528, 318], [540, 215]] }
+  }
+};
+
 window.PA2_MAPS = PA2_MAPS;
+window.PA2_PARCOURS_IMAGES = PA2_PARCOURS_IMAGES;
 window.PA2_MAPS_BY_WORLD = PA2_MAPS_BY_WORLD;

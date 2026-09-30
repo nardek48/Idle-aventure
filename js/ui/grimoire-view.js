@@ -386,14 +386,13 @@ function buildGrimoireHelpSheetHTML() {
   var tut = getGrimoireHelpTutorial();
   if (!tut) return "";
 
-  var h = '<div class="grimoire-sheet-title"><span>' + renderIconOrEmojiHTML(tut.icon, "grimoire-sheet-ico", "") + '</span><span>' + esc(_td(tut.title)) + '</span></div>';
-  h += '<div class="grimoire-sheet-body">';
+  var h = kSheetHeadHTML({ icon: renderIconOrEmojiHTML(tut.icon, "grimoire-sheet-ico", ""), title: esc(_td(tut.title)), close: "closeGrimoireSheet()" });
+  h += '<div class="ksheet-body grimoire-sheet-body">';
   (tut.points || []).forEach(function (p) {
     h += '<div class="grimoire-help-point"><span class="grimoire-help-point-icon">' + renderIconOrEmojiHTML(p.icon, "tutorial-point-ico", "") + '</span>'
       + '<span class="grimoire-help-point-text">' + esc(_td(p.text)) + '</span></div>';
   });
   h += '</div>';
-  h += '<button type="button" class="grimoire-sheet-close" onclick="closeGrimoireSheet()">' + _t("Compris") + '</button>';
   return h;
 }
 
@@ -402,14 +401,13 @@ function buildGrimoireHelpSheetHTML() {
    superposition plein écran garde le même contenu, qu'elle utilise pour l'ouverture
    automatique à la mort. Une seule source, deux habillages. */
 function buildGrimoireReportSheetHTML() {
-  var h = '<div class="grimoire-sheet-title"><span><img class=ico-inline src=images/Icons/subtabs/hero_stats.png></span><span>' + _t("Rapport de combat") + '</span></div>';
-  h += '<div class="grimoire-sheet-body grimoire-report-body">';
+  var h = kSheetHeadHTML({ icon: '<img src="images/Icons/subtabs/hero_stats.png" alt="">', title: _t("Rapport de combat"), close: "closeGrimoireSheet()" });
+  h += '<div class="ksheet-body grimoire-sheet-body grimoire-report-body">';
   h += (typeof buildCombatReportBodyHTML === "function")
     ? buildCombatReportBodyHTML()
     : '<p class="grimoire-hint">' + _t("Rapport indisponible.") + '</p>';
   h += '<button type="button" class="grimoire-clear-btn" onclick="resetCombatReport()"><img class=ico-inline src=images/Icons/system/trash.png> ' + _t("Réinitialiser le rapport") + '</button>';
   h += '</div>';
-  h += '<button type="button" class="grimoire-sheet-close" onclick="closeGrimoireSheet()">' + _t("Fermer") + '</button>';
   return h;
 }
 
@@ -417,8 +415,8 @@ function buildGrimoirePresetsSheetHTML() {
   var presets = ensureGrimoirePresets();
   var suggested = (typeof getSuggestedGrimoirePreset === "function") ? getSuggestedGrimoirePreset() : null;
 
-  var h = '<div class="grimoire-sheet-title"><span><img class=ico-inline src=images/Icons/system/save.png></span><span>' + _t("Presets") + '</span></div>';
-  h += '<div class="grimoire-sheet-body">';
+  var h = kSheetHeadHTML({ icon: '<img src="images/Icons/system/save.png" alt="">', title: _t("Presets"), close: "closeGrimoireSheet()" });
+  h += '<div class="ksheet-body grimoire-sheet-body">';
   h += '<p class="grimoire-hint" style="margin-top:0">' + _t("Enregistre ta configuration sous un nom pour la retrouver selon le contexte.") + '</p>';
 
   if (presets.length) {
@@ -437,7 +435,6 @@ function buildGrimoirePresetsSheetHTML() {
   }
 
   h += '</div>';
-  h += '<button type="button" class="grimoire-sheet-close" onclick="closeGrimoireSheet()">' + _t("Fermer") + '</button>';
   return h;
 }
 
@@ -449,8 +446,9 @@ var GRIMOIRE_SHEETS = {
 
 function buildGrimoireSheetHTML() {
   if (!grimoireOpenSheet || !GRIMOIRE_SHEETS[grimoireOpenSheet]) return "";
-  return '<div class="grimoire-sheet-backdrop" onclick="closeGrimoireSheet()"></div>'
-    + '<div class="grimoire-sheet"><div class="grimoire-sheet-handle"></div>'
+  // v3.399.0 (F-1) : feuille du kit (.ksheet), habillage commun
+  return '<div class="ksheet-backdrop grimoire-sheet-backdrop" onclick="closeGrimoireSheet()"></div>'
+    + '<div class="ksheet grimoire-sheet">'
     + GRIMOIRE_SHEETS[grimoireOpenSheet]() + '</div>';
 }
 

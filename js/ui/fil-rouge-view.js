@@ -1,5 +1,6 @@
 "use strict";
-/* ui/fil-rouge-view.js — v3.332.0 (Évolutions, lot F-1) : bouton du fil rouge et sa bulle.
+/* ui/fil-rouge-view.js — v3.332.0 (Évolutions, lot F-1) : bulle du fil rouge (v3.396.0 : son
+   bouton est devenu une bulle de raccourci, voir ui/hud-dock-view.js).
    F1 (Seb, 24/09/2026) : le bouton REMPLACE le raccourci Ascension du HUD, à côté du
    portrait. Son badge était mort depuis la v3.322.0 (canAscend() rend toujours false) et
    la Mémoire reste ouverte depuis Héros › Résumé ; un choix de Mémoire en attente passe
@@ -11,33 +12,11 @@
 var filRougeLastKey = null;
 var filRougeShown = []; // propositions affichées dans la bulle : le toucher agit sur CE qui est vu
 
-function buildHudFilRougeButtonHTML() {
-  return '<button type="button" class="nb-hud-bag-btn hud-fr-btn" id="hud-filrouge-btn" onclick="openFilRougeBubble()" aria-label="' + _t("Fil rouge : que faire maintenant") + '">'
-    + '<span class="hud-fr-disc" id="hud-filrouge-disc"></span><span class="hud-fr-thread"></span>'
-    + '<span id="hud-filrouge-badge" class="nb-hud-bag-badge" style="display:none;">!</span></button>';
-}
-
-/* Appelé par renderHud à chaque image. */
-function renderHudFilRouge() {
-  var btn = document.getElementById("hud-filrouge-btn");
-  if (!btn) return;
-  var show = !window.Prefs || Prefs.get("filRouge");
-  btn.style.display = show ? "" : "none";
-  if (!show || !window.FilRouge) return;
-
-  var a = FilRouge.get();
-  var key = a.id + "|" + a.icon + "|" + (a.urgent ? 1 : 0);
-  if (key === filRougeLastKey) return;
-  var changed = filRougeLastKey !== null && filRougeLastKey.split("|")[0] !== a.id;
-  filRougeLastKey = key;
-
-  var disc = document.getElementById("hud-filrouge-disc");
-  if (disc) disc.innerHTML = renderIconOrEmojiHTML(a.icon, "hud-fr-ico", _td(a.title));
-  var badge = document.getElementById("hud-filrouge-badge");
-  if (badge) badge.style.display = a.urgent ? "flex" : "none";
-  // Une seule lueur quand la proposition change, jamais en boucle (pas de pression)
-  if (changed) { btn.classList.remove("is-new"); void btn.offsetWidth; btn.classList.add("is-new"); }
-}
+/* v3.396.0 (lot HUD-1) : le bouton du fil rouge quitte le bandeau du HUD ; c'est une bulle de
+   ui/hud-dock-view.js (petite et discrète au calme, plus grande avec « ! » si urgent).
+   Nom gardé pour les appels extérieurs. */
+function renderHudFilRouge() { if (typeof renderHudDock === "function") renderHudDock(); }
+window.renderHudFilRouge = renderHudFilRouge;
 
 function getFilRougeRoot() {
   var root = document.getElementById("filrouge-bubble-root");
@@ -151,7 +130,6 @@ window.showHowToToast = showHowToToast;
 window.closeHowToToast = closeHowToToast;
 window.howToGo = howToGo;
 
-window.buildHudFilRougeButtonHTML = buildHudFilRougeButtonHTML;
 window.renderHudFilRouge = renderHudFilRouge;
 window.openFilRougeBubble = openFilRougeBubble;
 window.closeFilRougeBubble = closeFilRougeBubble;

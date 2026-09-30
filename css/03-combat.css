@@ -55,7 +55,7 @@
 }
 
 .enemy-status-emoji {
-  font-size: clamp(11px, 2.8vw, 13px);
+  font-size: max(12px, clamp(11px, 2.8vw, 13px));
   line-height: 1;
 }
 
@@ -141,7 +141,7 @@
   background: #0f1420;
   border: 1px solid var(--nb-gold-dark);
   color: #fff;
-  font-size: 8.5px;
+  font-size: 12px;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -246,7 +246,7 @@
   background: #0f1420;
   border: 1px solid var(--nb-gold-dark);
   color: #4ade80;
-  font-size: 8.5px;
+  font-size: 12px;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -393,7 +393,7 @@
 /* v3.172.0 : positionnement/centrage retirés (portés par .kgauge-text),
    seuls les réglages typographiques locaux restent. */
 #enemy-hp-text {
-  font-size: clamp(10.12px, calc(5px + 1.6vw), 11.88px);
+  font-size: max(12px, clamp(10.12px, calc(5px + 1.6vw), 11.88px));
   font-weight: 800;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -711,7 +711,7 @@ img.combat-action-icon {
   padding: 0 4px;
   border-radius: 4px;
   background: rgba(15, 20, 32, 0.85);
-  font-size: clamp(7px, calc(4px + 1vw), 8.5px);
+  font-size: max(12px, clamp(7px, calc(4px + 1vw), 8.5px));
   font-weight: 800;
   letter-spacing: 0.4px;
   color: #93c5fd;
@@ -739,7 +739,7 @@ img.combat-action-icon {
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(240, 170, 62, 0.5);
     color: rgba(255, 255, 255, 0.75);
-    font-size: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
+    font-size: max(12px, clamp(7.36px, calc(3.64px + 1.16vw), 8.64px));
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -904,7 +904,7 @@ img.combat-action-icon {
   background: #0f1420;
   border: 1px solid var(--nb-gold-dark);
   color: #4ade80;
-  font-size: clamp(8.28px, calc(4.09px + 1.31vw), 9.72px);
+  font-size: max(10px, clamp(8.28px, calc(4.09px + 1.31vw), 9.72px));
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -931,7 +931,7 @@ img.combat-action-icon {
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(240, 170, 62, 0.5);
     color: rgba(255, 255, 255, 0.75);
-    font-size: clamp(7.36px, calc(3.64px + 1.16vw), 8.64px);
+    font-size: max(12px, clamp(7.36px, calc(3.64px + 1.16vw), 8.64px));
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -975,7 +975,7 @@ img.combat-action-icon {
 }
 
 .class-resource-track .kgauge-text {
-  font-size: clamp(9px, calc(4.5px + 1.4vw), 10.5px);
+  font-size: max(10px, clamp(9px, calc(4.5px + 1.4vw), 10.5px));
 }
 
 
@@ -1105,7 +1105,7 @@ img.combat-action-icon {
   border: 1px solid rgba(212, 175, 55, 0.55);
   background: rgba(15, 20, 32, 0.78);
   color: #f3e6c4;
-  font-size: clamp(10px, calc(6px + 1.2vw), 12px);
+  font-size: max(12px, clamp(10px, calc(6px + 1.2vw), 12px));
   font-weight: 800;
   letter-spacing: 0.3px;
 }
@@ -1119,7 +1119,7 @@ img.combat-action-icon {
 }
 
 .combat-gauge .kgauge-text {
-  font-size: clamp(9px, calc(5px + 1.2vw), 11px);
+  font-size: max(10px, clamp(9px, calc(5px + 1.2vw), 11px));
 }
 
 
@@ -1131,7 +1131,7 @@ img.combat-action-icon {
   border: 1px solid rgba(212, 175, 55, 0.6);
   background: rgba(15, 20, 32, 0.85);
   color: #f3e6c4;
-  font-size: clamp(10px, calc(6px + 1.2vw), 12px);
+  font-size: max(12px, clamp(10px, calc(6px + 1.2vw), 12px));
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -1163,7 +1163,7 @@ img.combat-action-icon {
   top: -2px;
   right: -2px;
   z-index: 2;
-  font-size: clamp(9px, calc(5px + 1.2vw), 11px);
+  font-size: max(12px, clamp(9px, calc(5px + 1.2vw), 11px));
   line-height: 1;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
 }
@@ -1208,7 +1208,7 @@ img.combat-action-icon {
   border: 1px solid rgba(212, 175, 55, 0.45);
   background: rgba(15, 20, 32, 0.78);
   color: #f3e6c4;
-  font-size: clamp(9.5px, calc(5.5px + 1.2vw), 11.5px);
+  font-size: max(12px, clamp(9.5px, calc(5.5px + 1.2vw), 11.5px));
   font-weight: 700;
 }
 
@@ -1223,7 +1223,7 @@ img.combat-action-icon {
   border: 1px solid rgba(212, 175, 55, 0.7);
   background: rgba(60, 40, 10, 0.88);
   color: #fde68a;
-  font-size: clamp(10px, calc(6px + 1.2vw), 12px);
+  font-size: max(12px, clamp(10px, calc(6px + 1.2vw), 12px));
   font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
@@ -1251,7 +1251,7 @@ img.combat-action-icon {
    remonter PAR-DESSUS ce qui les précède dans le flex-column, indépendamment du flux — sans marge
    compensatoire, le compteur se retrouvait quasi recouvert par le nom malgré l'ordre DOM correct. */
 .combat-mission-progress {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--nb-gold-dark);
   background: rgba(0, 0, 0, 0.4);

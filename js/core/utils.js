@@ -32,14 +32,27 @@ function cloneQuestProgress() {
   return Object.assign({}, DEFAULT_QUEST_PROGRESS);
 }
 
+/* v3.397.0 (socle, audit design) : nombres à la française. Espace fine insécable entre les
+   milliers (5 000), virgule décimale (12,5) ; au-delà de 10 000, trois chiffres et l'unité :
+   12,3 k · 123 k · 1,23 M · 1,5 Md (avant : 5.00K, 1.23M, 1.50B). */
+var NUM_THIN_SPACE = "\u202f";
+function formatNumberGroup(intStr) { return intStr.replace(/\B(?=(\d{3})+(?!\d))/g, NUM_THIN_SPACE); }
 function formatNumber(value) {
-  var n = Number(value || 0);
-  if (n >= 1e12) return (n / 1e12).toFixed(2) + "T";
-  if (n >= 1e9) return (n / 1e9).toFixed(2) + "B";
-  if (n >= 1e6) return (n / 1e6).toFixed(2) + "M";
-  if (n >= 1e3) return (n / 1e3).toFixed(2) + "K";
-  if (n % 1 !== 0) return n.toFixed(1);
-  return String(Math.floor(n));
+  var n = Number(value || 0), sign = n < 0 ? "-" : "";
+  n = Math.abs(n);
+  if (n >= 1e4) {
+    var unit = n >= 1e9 ? [1e9, "Md"] : (n >= 1e6 ? [1e6, "M"] : [1e3, "k"]);
+    var v = n / unit[0], digits = v >= 100 ? 0 : (v >= 10 ? 1 : 2);
+    var txt = v.toFixed(digits);
+    if (digits) txt = txt.replace(/\.?0+$/, "");           // 12,0 k → 12 k ; 1,50 M → 1,5 M
+    var parts = txt.split(".");
+    return sign + formatNumberGroup(parts[0]) + (parts[1] ? "," + parts[1] : "") + NUM_THIN_SPACE + unit[1];
+  }
+  if (n % 1 !== 0) {
+    var d = n.toFixed(1).split(".");
+    return sign + formatNumberGroup(d[0]) + (d[1] !== "0" ? "," + d[1] : "");
+  }
+  return sign + formatNumberGroup(String(Math.floor(n)));
 }
 
 function formatTime(totalSeconds) {

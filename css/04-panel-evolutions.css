@@ -73,13 +73,13 @@ Maquette de référence : atelier-evolutions.html.
   transform: rotate(45deg);
 }
 
-.fr-kicker { font-size: 9.5px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; color: #b3261e; }
+.fr-kicker { font-size: 12px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; color: #b3261e; }
 .fr-row { display: flex; gap: 9px; align-items: flex-start; margin: 4px 0 8px; }
 .fr-row-ico { width: 36px; height: 36px; flex: 0 0 36px; object-fit: contain; }
 .fr-title { font-size: 15px; font-weight: 800; line-height: 1.2; color: #3a2c1a; }
 .fr-reason { font-size: 12px; line-height: 1.4; color: #5a4a30; margin-top: 2px; }
 .fr-bubble .fr-go { max-width: 220px; min-height: 42px; font-size: 13px; }
-.fr-also { font-size: 11px; color: #7a6444; margin: 0 0 4px; line-height: 1.5; }
+.fr-also { font-size: 12px; color: #7a6444; margin: 0 0 4px; line-height: 1.5; }
 .fr-also > span { font-weight: 800; }
 .fr-also-btn {
   font: inherit;
@@ -125,7 +125,7 @@ Maquette de référence : atelier-evolutions.html.
 .ret-line { font-size: 12px; font-style: italic; line-height: 1.45; color: #5a4a30; margin: 8px 6px 10px; text-align: center; }
 
 .ret-sec { background: #fbf3e4; border: 1px solid #dcc79c; border-radius: 11px; padding: 7px 9px; margin-bottom: 6px; }
-.ret-sec-h { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 800; color: #6b4a22; }
+.ret-sec-h { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: #6b4a22; }
 .ret-sec-h img { width: 20px; height: 20px; object-fit: contain; }
 .ret-sec-b { font-size: 12px; line-height: 1.4; margin-top: 3px; }
 .ret-warn { color: #9a3412; font-weight: 700; }
@@ -135,7 +135,7 @@ Maquette de référence : atelier-evolutions.html.
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 800;
   background: #efe0c2;
   border-radius: 999px;
@@ -145,20 +145,20 @@ Maquette de référence : atelier-evolutions.html.
 .ret-gain.is-done { background: #dcebd0; color: #2f5a1a; }
 .ret-gain-ico { width: 18px; height: 18px; object-fit: contain; }
 
-.ret-link { font: inherit; font-size: 11.5px; font-weight: 800; color: #8a5a14; background: none; border: none; padding: 2px 0; cursor: pointer; text-decoration: underline; }
+.ret-link { font: inherit; font-size: 12px; font-weight: 800; color: #8a5a14; background: none; border: none; padding: 2px 0; cursor: pointer; text-decoration: underline; }
 .ret-story { font-size: 12px; line-height: 1.5; font-style: italic; color: #4a3a20; border-left: 2px solid #c9a86a; padding-left: 8px; margin-top: 5px; }
 
 .ret-acts { margin-top: 8px; }
 .ret-acts .settings-btn { max-width: 300px; font-size: 13px; }
 .ret-btn-col { display: flex; flex-direction: column; align-items: center; }
-.ret-btn-col small { font-size: 10.5px; font-weight: 700; color: #fff4d6; }
+.ret-btn-col small { font-size: 12px; font-weight: 700; color: #fff4d6; }
 .ret-done { text-align: center; font-size: 12px; font-weight: 800; color: #2f5a1a; margin: 2px 0 8px; }
 
 .ret-next { display: flex; align-items: center; gap: 8px; margin-top: 4px; border-top: 1px dashed #c9a86a; padding-top: 8px; }
 .ret-next img { width: 30px; height: 30px; object-fit: contain; }
 .ret-next-t { flex: 1 1 auto; font-size: 12px; line-height: 1.3; min-width: 0; }
 .ret-next-t b { display: block; font-size: 13px; }
-.ret-next-t small { font-size: 9.5px; font-weight: 900; color: #b3261e; letter-spacing: 0.4px; text-transform: uppercase; }
+.ret-next-t small { font-size: 12px; font-weight: 900; color: #b3261e; letter-spacing: 0.4px; text-transform: uppercase; }
 .ret-next button {
   flex: 0 0 auto;
   font: inherit;
@@ -235,13 +235,13 @@ Maquette de référence : atelier-evolutions.html.
 @keyframes bm-zoom { from { transform: scale(1.12); } to { transform: scale(1); } }
 .bm-pic-empty { background: #3a2a18; }
 
-.bm-kicker { margin-top: 14px; font-size: 10.5px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #f0aa3e; }
+.bm-kicker { margin-top: 14px; font-size: 12px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #f0aa3e; }
 .bm-name { font-size: 24px; font-weight: 900; color: #ffe9b0; text-shadow: 0 2px 6px #000; margin-top: 2px; }
 .bm-title { font-size: 13px; font-style: italic; color: #d9c49a; margin-top: 2px; }
 .bm-line { font-size: 13.5px; line-height: 1.45; color: #f3e0b0; margin-top: 14px; max-width: 320px; }
 .bm-ally { display: flex; gap: 8px; align-items: center; margin-top: 10px; max-width: 320px; text-align: left; font-size: 12.5px; line-height: 1.4; color: #d8f5d0; }
 .bm-ally img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; object-position: top; border: 2px solid #4a8a3a; flex: 0 0 36px; }
-.bm-skip { position: absolute; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); font-size: 11px; color: #a08a60; }
+.bm-skip { position: absolute; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); font-size: 12px; color: #a08a60; }
 .bm-bar { position: absolute; bottom: 0; left: 0; height: 3px; width: 0; background: #f0aa3e; animation-name: bm-bar; animation-timing-function: linear; animation-fill-mode: forwards; }
 @keyframes bm-bar { to { width: 100%; } }
 
@@ -299,7 +299,7 @@ Maquette de référence : atelier-evolutions.html.
 .bm-win { position: fixed; inset: 0; z-index: 9500; background: rgba(0, 0, 0, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; animation: bm-in 0.3s ease-out; }
 .bm-win-card { width: 100%; max-width: 380px; background: #f3e6c8; color: #3a2c1a; border: 2px solid #c9a86a; border-radius: 18px; padding: 14px; text-align: center; }
 .bm-win-t { font-size: 21px; font-weight: 900; color: #6b4a22; }
-.bm-new { font-size: 10px; font-weight: 900; letter-spacing: 0.6px; text-transform: uppercase; color: #9a7a14; margin-top: 6px; }
+.bm-new { font-size: 12px; font-weight: 900; letter-spacing: 0.6px; text-transform: uppercase; color: #9a7a14; margin-top: 6px; }
 .bm-win-line { font-size: 12.5px; font-style: italic; color: #4a6b2a; margin: 4px 0 10px; }
 
 .bm-trophy {
@@ -315,9 +315,9 @@ Maquette de référence : atelier-evolutions.html.
   color: #3a2c1a;
 }
 .bm-trophy img, .bm-trophy-empty { width: 56px; height: 56px; flex: 0 0 56px; border-radius: 10px; object-fit: cover; border: 2px solid #c9a227; background: #3a2a18; }
-.bm-trophy-k { font-size: 9.5px; font-weight: 900; color: #9a7a14; letter-spacing: 0.5px; text-transform: uppercase; }
+.bm-trophy-k { font-size: 12px; font-weight: 900; color: #9a7a14; letter-spacing: 0.5px; text-transform: uppercase; }
 .bm-trophy-n { font-size: 14px; font-weight: 800; }
-.bm-trophy-d { font-size: 11px; color: #6b5a3c; line-height: 1.35; }
+.bm-trophy-d { font-size: 12px; color: #6b5a3c; line-height: 1.35; }
 .bm-trophies { padding-top: 4px; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -334,7 +334,7 @@ Maquette de référence : atelier-evolutions.html.
 .pt-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: #6b4a22; margin-bottom: 4px; }
 .pt-title img { width: 20px; height: 20px; }
 .pt-line { font-size: 12px; line-height: 1.4; }
-.pt-hint { font-size: 10.5px; line-height: 1.35; color: #7a6444; margin: 3px 0; }
+.pt-hint { font-size: 12px; line-height: 1.35; color: #7a6444; margin: 3px 0; }
 .pt-select {
   width: 100%;
   font: inherit;
@@ -373,7 +373,7 @@ Maquette de référence : atelier-evolutions.html.
 .howto-msg { font-size: 13px; font-weight: 800; line-height: 1.3; }
 .howto-why { font-size: 12px; line-height: 1.35; color: #d9c49a; margin-top: 3px; }
 .howto-row { display: flex; align-items: center; gap: 8px; margin-top: 7px; }
-.howto-kicker { font-size: 9.5px; font-weight: 900; letter-spacing: 0.4px; text-transform: uppercase; color: #f0aa3e; flex: 1 1 auto; }
+.howto-kicker { font-size: 12px; font-weight: 900; letter-spacing: 0.4px; text-transform: uppercase; color: #f0aa3e; flex: 1 1 auto; }
 .howto-go {
   font: inherit; font-size: 12.5px; font-weight: 800;
   padding: 6px 11px; border-radius: 10px; cursor: pointer;

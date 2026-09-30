@@ -19,10 +19,7 @@ var MENU_ITEMS = [
 function buildFullMenuHTML() {
   var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeFullMenu();">';
   h += '  <div class="full-menu">';
-  h += '    <div class="full-menu-header">';
-  h += '      <h2>' + _t("Menu") + '</h2>';
-  h += '      <button class="full-menu-close" type="button" onclick="closeFullMenu()"><img class=ico-inline src=images/Icons/system/close.png></button>';
-  h += '    </div>';
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/menu_icons/menu_menu.png" alt="">', title: _t("Menu"), close: "closeFullMenu()" });
   h += '    <div class="full-menu-grid">';
 
   MENU_ITEMS.forEach(function (item) {

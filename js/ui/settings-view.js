@@ -7,7 +7,7 @@ function buildSettingsHTML() {
   // v3.99.15 : onglets cachés par défaut (voir core/state.js:unlockedTabs). v3.100.0 : le
   // déblocage normal passe par la chaîne Histoire (systems/story-quest-system.js) ; ce bouton
   // reste un raccourci qui court-circuite le chapitre (StoryQuestManager.skipAll).
-  h += '<button class="settings-btn" onclick="unlockAllTabsFromSettings()"><img class=ico-inline src=images/Icons/system/lock_open.png> ' + _t("Débloquer tous les onglets") + '</button>';
+  // v3.395.0 (décision Seb, audit design) : « Débloquer tous les onglets » passe dans l'Admin.
 
   h += '<div class="panel-card">';
   h += '<h3><img class=ico-inline src=images/Icons/system/save.png> ' + _t("Sauvegarde") + '</h3>';

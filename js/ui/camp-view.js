@@ -105,7 +105,7 @@ function buildCampHTML() {
 
   // v3.116.0 (Lot C, maquette Seb) : bloc Santé du Héros — barre de PV pleine largeur.
   h += '<div class="camp-card camp-health-card">';
-  h += '<div class="camp-section-title"><img class="ico-lg" src="images/Icons/combat_stats/stat_health.png" alt=""> ' + _t("Santé du Héros") + '</div>';
+  h += '<div class="camp-section-title"><img class="ico-lg" src="images/Icons/combat_stats/stat_health.png" alt=""> ' + _t("Santé du héros") + '</div>';
   // v3.173.0 : jauge fine du kit (vert, aligné sur les PV héros du combat — avant : rouge).
   // v3.174.0 (retour Seb) : PV courants/max affichés DANS la barre (kgauge-text)
   // au lieu d'une ligne séparée dessous — l'id camp-fire-hp-value migre sur le

@@ -53,7 +53,8 @@
   z-index: 9999;
   align-items: center;
   justify-content: center;
-  background: var(--nb-shell);
+  /* v3.397.0 (audit design) : la première image du jeu prend la pierre de nuit du HUD */
+  background: linear-gradient(rgba(16, 12, 8, 0.8), rgba(16, 12, 8, 0.92)), url('../images/UI/textures/bg-stone-tile.png') 0 0 / 256px, var(--nb-shell);
 }
 
 #pwa-boot-gate.show {
@@ -120,7 +121,7 @@
   padding: 5px 14px;
   background: var(--nb-ink);
   color: var(--nb-gold);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -720,9 +721,7 @@
   align-items: flex-end;
   justify-content: center;
   padding: 0;
-  background: rgba(10, 8, 18, 0.75);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background: var(--sheet-veil); /* v3.399.0 (F-1) : voile commun des feuilles, plus de violet ni de flou */
 }
 
 .full-menu {
@@ -734,13 +733,13 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;  /* scroll fluide au doigt sur iOS/mobile */
   padding: 0;
-  color: var(--nb-ink);
-  background: var(--nb-cream);
-  border: 3px solid var(--nb-frame);
-  border-bottom: none;
-  border-radius: 24px 24px 0 0;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45);
-  padding-bottom: var(--safe-bottom);
+  /* v3.399.0 (F-1) : habillage commun des feuilles (jetons --sheet-*, css/00-tokens.css) */
+  color: var(--sheet-ink);
+  background: var(--sheet-body-bg);
+  border: 0;
+  border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.55);
+  padding-bottom: calc(14px + var(--safe-bottom));
 }
 
 /* v2.38 — Projet figé sur mobile uniquement (320–430px) : la règle
@@ -748,36 +747,44 @@
    car elle ne peut plus jamais se déclencher. Le comportement mobile
    (feuille qui glisse depuis le bas) devient le seul comportement. */
 
+/* v3.399.0 (F-1) : l'en-tête des menus est celui des feuilles (.ksheet-head,
+   css/00-components.css) ; il reste collé en haut quand le menu défile. */
+.full-menu > .ksheet-head,
 .full-menu-header {
   position: sticky;
   top: 0;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px 10px;
-  background: linear-gradient(180deg, var(--nb-cream) 60%, transparent);
 }
+
+.full-menu > .ksheet-body { overflow: visible; }
+
+/* Ancien en-tête (encore produit par save-system.js, fichier protégé) */
+.full-menu-header { display: flex; align-items: center; min-height: 58px; }
 
 .full-menu-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 800;
-  color: var(--nb-ink);
+  color: inherit;
 }
 
 /* v3.175.0 : visuel porté par le bouton rond du kit (css/00-kbtn.css,
-   btn-round-close.png + état pressé) — ne reste que la taille. */
+   btn-round-close.png + état pressé) — ne reste que la taille et la place. */
 .full-menu-close {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
+}
+
+.full-menu-header .full-menu-close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
 }
 
 .full-menu-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  padding: 6px 20px 24px;
+  padding: 18px 16px 10px;
 }
 
 .full-menu-card {
@@ -788,10 +795,10 @@
   justify-content: center;
   gap: 8px;
   padding: 16px 10px;
-  background: var(--nb-cream-alt);
-  border: 2px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  box-shadow: 0 3px 0 var(--nb-frame-light);
+  background: var(--sheet-card-bg);
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 12px;
+  box-shadow: 0 2px 0 rgba(138, 92, 20, 0.35);
   color: var(--nb-ink);
   cursor: pointer;
   transition: transform 0.08s ease, box-shadow 0.08s ease;
@@ -872,7 +879,7 @@
   background: var(--nb-cream-alt);
   color: var(--nb-ink);
   font-family: "Consolas", monospace;
-  font-size: 11px;
+  font-size: 12px;
   resize: vertical;
   margin-bottom: 10px;
 }
@@ -962,18 +969,4 @@
 .pwa-install-steps { margin: 0 0 8px; padding-left: 22px; line-height: 1.5; font-size: 0.92rem; }
 .pwa-install-steps li { margin-bottom: 6px; }
 .pwa-install-note { margin: 0; font-size: 0.82rem; color: var(--nb-ink-dim); }
-.pwa-install-actions { display: flex; gap: 8px; align-items: stretch; }
-.pwa-install-actions .ksheet-close { flex: 1 1 auto; }
-.pwa-install-later {
-  flex: 0 0 auto;
-  margin-top: 12px;
-  padding: 11px 14px;
-  border: 2px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  background-color: transparent;
-  color: var(--nb-ink);
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 800;
-  cursor: pointer;
-}
+/* v3.399.0 (F-1) : actions dans .ksheet-foot (boutons du kit). */

@@ -204,7 +204,7 @@
 
   .prestige-desc,
   .ascension-conditions {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .prestige-btn {
@@ -219,7 +219,7 @@
   .btn-buy {
     min-height: 34px;
     padding: 7px 9px;
-    font-size: 11px;
+    font-size: 12px;
   }
 }
 /* v3.322.0 (Offrande) : écran de Mémoire — jauge, niveaux et choix.
@@ -230,7 +230,7 @@
 .mem-gauge-num { font-size: 12px; color: var(--nb-ink-dim); }
 .mem-gauge-bar { height: 10px; margin-top: 6px; border-radius: 6px; background: var(--aether-tint-strong); overflow: hidden; }
 .mem-gauge-fill { height: 100%; background: var(--aether); border-radius: 6px; transition: width 0.3s ease; }
-.mem-gauge-note { margin-top: 6px; font-size: 11px; color: var(--nb-ink-dim); }
+.mem-gauge-note { margin-top: 6px; font-size: 12px; color: var(--nb-ink-dim); }
 .mem-pending { margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--aether); }
 
 .mem-level { margin: 10px 0; padding: 10px; border: 1px solid var(--nb-frame); border-radius: var(--nb-radius-md); background: var(--nb-cream); }
@@ -238,8 +238,8 @@
 .mem-level.is-locked { opacity: 0.6; }
 .mem-level-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
 .mem-level-num { font-weight: 800; color: var(--nb-ink); font-size: 13px; }
-.mem-level-theme { font-size: 11px; color: var(--nb-ink-dim); }
-.mem-level-lock { font-size: 11px; color: var(--nb-ink-dim); margin-bottom: 6px; }
+.mem-level-theme { font-size: 12px; color: var(--nb-ink-dim); }
+.mem-level-lock { font-size: 12px; color: var(--nb-ink-dim); margin-bottom: 6px; }
 
 .mem-options { display: flex; flex-direction: column; gap: 6px; }
 .mem-option {

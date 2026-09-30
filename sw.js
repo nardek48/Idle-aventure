@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.389.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.399.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -136,6 +136,7 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/pa2-run.js", // v3.381.0 (PA2-0) : NOUVEAU fichier
   "./js/data/pa2-maps.js", // v3.381.0 (PA2-0) : NOUVEAU fichier
   "./js/data/pa2-content.js", // v3.381.0 (PA2-0) : NOUVEAU fichier
+  "./js/ui/map-camera.js", // v3.394.0 : NOUVEAU fichier (caméra commune des cartes)
   "./js/ui/pa2-view.js", // v3.382.0 (PA2-1) : NOUVEAU fichier
   "./js/systems/combat-resource-system.js",
   "./js/systems/combat-cooldown-system.js",
@@ -185,6 +186,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/heros-view.js",
   "./js/ui/hud-view.js",
   "./js/ui/fil-rouge-view.js",
+  "./js/ui/hud-dock-view.js", // v3.396.0 : NOUVEAU fichier (bulles de raccourci du HUD)
   "./js/ui/return-view.js",
   "./js/ui/boss-moment-view.js",
   "./js/ui/patrol-view.js",

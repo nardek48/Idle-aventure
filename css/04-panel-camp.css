@@ -109,7 +109,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 }
 
 .camp-ration-stock {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--nb-ink-dim);
 }
@@ -174,7 +174,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 }
 
 .camp-regen-desc {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--nb-ink-dim);
   margin-top: 6px;
 }
@@ -322,13 +322,13 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 }
 
 .camp-mission-place {
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--nb-ink-dim);
   margin-top: 1px;
 }
 
 .camp-mission-badge {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
   padding: 1px 6px;
   border-radius: 999px;
@@ -351,7 +351,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 }
 
 .camp-mission-reward {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--nb-gold-dark);
   font-weight: 600;
   margin-bottom: 8px;
@@ -417,7 +417,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 
 .camp-grimoire-mode {
   margin-bottom: 8px;
-  font-size: 0.74rem;
+  font-size: 12px;
   color: var(--nb-ink-dim);
 }
 
@@ -470,7 +470,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 }
 
 .camp-door-t { font-size: 13px; font-weight: 800; }
-.camp-door-s { font-size: 10.5px; color: var(--nb-ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.camp-door-s { font-size: 12px; color: var(--nb-ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .camp-door-chev { flex: 0 0 auto; font-size: 18px; color: var(--nb-gold-dark); }
 
 .camp-door-badge {
@@ -484,8 +484,8 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 /* v3.260.0 : petits écrans (320-359 px) — rations et ligne de régénération tiennent sans déborder */
 @media (max-width: 359px) {
   .camp-ration-item { padding: 8px 3px; }
-  .camp-ration-btn { font-size: 11px; padding: 0 1px; border-width: 8px 10px; border-image-width: 8px 10px; }
-  .camp-regen-line { gap: 4px; font-size: 10.5px; }
+  .camp-ration-btn { font-size: 12px; padding: 0 1px; border-width: 8px 10px; border-image-width: 8px 10px; }
+  .camp-regen-line { gap: 4px; font-size: 12px; }
   .camp-regen-line .ico-lg { width: 20px; height: 20px; }
   .camp-help-btn { width: 24px; height: 24px; font-size: 0.8rem; }
 }

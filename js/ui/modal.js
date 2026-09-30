@@ -85,3 +85,18 @@ function closeOfflineModal() {
 
 window.showOfflineModal = showOfflineModal;
 window.closeOfflineModal = closeOfflineModal;
+
+/* v3.399.0 (lot F-1, habillage C · Mixte validé par Seb) : en-tête commun des feuilles du bas.
+   Bandeau de pierre (poignée, icône, titre, sous-titre) et bouton rond de fermeture en haut
+   à droite ; le corps reste en parchemin. Une seule source pour toutes les feuilles : changer
+   d'habillage plus tard ne touche que les jetons --sheet-* de css/00-tokens.css.
+   o.title, o.icon, o.sub : HTML déjà échappé par l'appelant. o.close : code JS du onclick. */
+function kSheetHeadHTML(o) {
+  o = o || {};
+  var h = '<div class="ksheet-head' + (o.cls ? ' ' + o.cls : '') + '"><div class="ksheet-handle"></div>';
+  h += '<div class="ksheet-title">' + (o.icon || '') + '<span class="ksheet-ttl">' + (o.title || '')
+    + (o.sub ? '<small class="ksheet-sub">' + o.sub + '</small>' : '') + '</span></div>';
+  if (o.close) h += '<button type="button" class="ksheet-x" onclick="' + o.close + '" aria-label="' + esc(_t("Fermer")) + '"></button>';
+  return h + '</div>';
+}
+window.kSheetHeadHTML = kSheetHeadHTML;

@@ -239,16 +239,20 @@ var Pa2Run = {
      Une étape : { type, gabaritId?, foe?, pack?, act?, fullBreath?, text? }. Sans gabaritId,
      l'obstacle est tiré dans template.pools.obstacle. image : illustration de fond (facultative). */
   _parcoursMap: function (template) {
-    var steps = template.parcours.steps, W = 848, H = 200 + steps.length * 190, nodes = {}, links = {};
-    nodes.S = { row: -1, x: 424, y: H - 90, type: "depart" };
+    var pc = template.parcours, steps = pc.steps, bg = pc.image && window.PA2_PARCOURS_IMAGES ? PA2_PARCOURS_IMAGES[pc.image] : null;
+    var track = bg && bg.tracks[pc.track || Object.keys(bg.tracks)[0]];
+    var W = bg ? bg.width : 848, H = bg ? bg.height : 200 + steps.length * 190, nodes = {}, links = {};
+    // Fond illustré : points posés sur le chemin peint. Sans fond : lacet calculé sur le parchemin.
+    nodes.S = bg ? { row: -1, x: bg.start[0], y: bg.start[1], type: "depart" } : { row: -1, x: 424, y: H - 90, type: "depart" };
     var prev = "S";
     steps.forEach(function (st, i) {
-      var key = "P" + i;
-      nodes[key] = { row: i, x: Math.round(424 + 190 * Math.sin((i + 1) * 1.25)), y: Math.round(H - 90 - (i + 1) * 190), type: st.type, act: st.act || 1 };
+      var key = "P" + i, pt = track && track[pc.points ? pc.points[i] : i];
+      nodes[key] = pt ? { row: i, x: pt[0], y: pt[1], type: st.type, act: st.act || 1 }
+        : { row: i, x: Math.round(424 + 190 * Math.sin((i + 1) * 1.25)), y: Math.round(H - 90 - (i + 1) * 190), type: st.type, act: st.act || 1 };
       links[prev] = [key];
       prev = key;
     });
-    return { id: "parcours_" + template.id, worldId: template.worldId || "forest", image: template.parcours.image || null,
+    return { id: "parcours_" + template.id, worldId: template.worldId || "forest", image: bg ? bg.image : null,
       width: W, height: H, start: "S", rows: { camp: 99, seuil: 99, dest: steps.length - 1 }, nodes: nodes, links: links };
   },
   _startParcours: function (template, opts) {
@@ -431,6 +435,8 @@ var Pa2Run = {
       if (st.type === "combat") { n.foeId = st.foe; n.pack = Number(st.pack || 1); }
       if (st.fullBreath) n.fullBreath = true;
       if (st.text) n.narr = st.text;
+      if (st.after) n.after = st.after;       // texte après le combat
+      if (st.foeMult) n.foeMult = st.foeMult; // force propre à l'étape (la nuée de la traversée)
     });
   },
 
@@ -648,6 +654,8 @@ var Pa2Run = {
       if (v === "power") bonus += (self.hasRelic("pierre", run) ? 1 : 0) + (self.hasRelic("fleche", run) ? 1 : 0) + (self.hasItem("bois", run) ? 1 : 0);
       var ck = self._check(run, gab.options[v].stat, n.diff * p.diffMod, bonus);
       var cost = Number(p.breathCost || 0) + (self.hasItem("armure", run) ? PA2_RULES.armorBreath : 0);
+      // v3.391.0 : Endurance du marcheur (pouvoir légendaire), câblée en v1 seulement jusque-là
+      if (typeof hasLegendaryPower === "function" && hasLegendaryPower("leg_marcheur")) cost = Math.round(cost * 0.85);
       if (v === "precision" && self.hasRelic("plume", run)) cost = 0;
       ck.voie = v; ck.label = gab.options[v].label; ck.cost = cost; ck.lootMod = p.lootMod;
       ck.rope = (v === "precision" && run.stock.corde > 0);
@@ -722,7 +730,7 @@ var Pa2Run = {
     var e = guard ? this._spawn(run, guard.foe, false) : this._spawn(run, boss ? null : n.foeId, boss);
     if (!e) return null;
     // Le gardien a ses propres multiplicateurs : régler les actes ne le touche pas.
-    var mult = (guard ? 1 : PA2_ACTS[boss ? 3 : n.act].foeMult * this.tune(run, "foeMult")) * this.ring(run).foeMult * Number(run.band.foeScale || 1);
+    var mult = (guard ? 1 : PA2_ACTS[boss ? 3 : n.act].foeMult * this.tune(run, "foeMult") * Number(n.foeMult || 1)) * this.ring(run).foeMult * Number(run.band.foeScale || 1);
     e = JSON.parse(JSON.stringify(e));
     e.maxHp = Math.max(1, Math.round(Number(e.maxHp || 1) * mult * (guard ? guard.hpMult : 1)));
     e.hp = e.maxHp;

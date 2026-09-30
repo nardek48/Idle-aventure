@@ -424,8 +424,7 @@ function buildLivingMapHTML(mapId) {
   if (livingMapSelected) {
     var entering = lmxLastSheetSel !== livingMapSelected ? " is-entering" : "";
     h += '<div class="lmx-sheet' + entering + '" id="lmx-sheet">';
-    h += '<div class="lmx-sheet-grab"><span></span></div>';
-    h += '<button class="lmx-sheet-close" type="button" aria-label="' + _t("Fermer") + '" onclick="selectLivingMapSector(null)">✕</button>';
+    h += buildLivingMapSheetHeadHTML(mapId); // v3.399.0 (F-1) : en-tête commun des feuilles
     h += '<div class="lmx-sheet-body">' + buildLivingMapPanelHTML(mapId, running) + '</div>';
     h += '</div>';
   }
@@ -461,56 +460,32 @@ function buildLivingMapLegendHTML() {
 
 /* ---------- Vue : géométrie, zoom, recadrage ---------- */
 
+/* v3.394.0 : le moteur (bornes, zoom, gestes) vit dans ui/map-camera.js, commun avec la carte
+   des Petites Aventures. Les noms lmx* restent des relais : le reste du fichier, le harnais et
+   les outils de capture n'ont pas changé. La carte vivante est carrée (ratio 1). */
+var lmxCam = MapCamera.create({
+  vpId: "lmx-vp", stageId: "lmx-stage", view: lmxView, fitCenter: true,
+  ratio: function () { return 1; },
+  zoomMax: function () { return LMX_ZOOM_MAX; },
+  topSlack: function () { return LMX_TOP_SLACK; },
+  bottomSlack: function () { return lmxSheetH(); },
+  onSettle: function () { lmxUpdateOffscreen(); }
+});
+var lmxGesture = lmxCam.gesture;
+
 function lmxVp() { return document.getElementById("lmx-vp"); }
 /* v3.367.0 : mesures d'écran ramenées en px CSS (mode PC zoomé, voir ui/desktop-scale.js). */
-function lmxScale(el) { return window.DesktopScale ? DesktopScale.factorOf(el) : 1; }
+function lmxScale(el) { return MapCamera.scaleOf(el); }
 function lmxSheetH() { var s = document.getElementById("lmx-sheet"); return s ? s.getBoundingClientRect().height / lmxScale(s) : 0; }
-/* Couvrant : la carte (carrée) remplit toute la zone, jamais de bandes noires. */
-function lmxCoverW() { var vp = lmxVp(); return vp ? Math.max(vp.clientWidth, vp.clientHeight) : 0; }
-function lmxMaxW() { return lmxCoverW() * LMX_ZOOM_MAX; }
-
-/* Bornes : la carte ne quitte jamais l'écran. Elle peut descendre de LMX_TOP_SLACK sous
-   l'en-tête ; volet ouvert, la zone utile s'arrête au haut du volet. */
-function lmxClamp() {
-  var geo = lmxGeo(); if (!geo) return;
-  var W = geo.W, H = geo.H, w = lmxView.w;
-  lmxView.tx = w <= W ? (W - w) / 2 : Math.min(0, Math.max(W - w, lmxView.tx));
-  lmxView.ty = w <= H ? (H - w) / 2 : Math.min(LMX_TOP_SLACK, Math.max(H - w, lmxView.ty));
-}
-/* v3.306.1 : la taille n'est réécrite que si elle change (un glissé ne touche que la
-   translation, déplacée par le compositeur sans repeindre). */
-function lmxApply(anim) {
-  var st = document.getElementById("lmx-stage"); if (!st) return;
-  st.classList.toggle("is-anim", !!anim);
-  st.style.visibility = "";
-  var wpx = lmxView.w + "px";
-  if (st.style.width !== wpx) { st.style.width = wpx; st.style.height = wpx; }
-  st.style.transform = "translate3d(" + lmxView.tx + "px," + lmxView.ty + "px,0)";
-  if (anim) setTimeout(lmxUpdateOffscreen, 300); else if (!lmxGesture.mode) lmxUpdateOffscreen();
-}
-
-/* v3.306.1 : géométrie figée pendant un geste — la relire à chaque mouvement forçait le
-   navigateur à recalculer la page entre deux écritures. */
-function lmxGeo() {
-  var g = typeof lmxGesture !== "undefined" ? lmxGesture : null;
-  if (g && g.geo) return g.geo;
-  var vp = lmxVp();
-  return vp ? { W: vp.clientWidth, H: vp.clientHeight - lmxSheetH(), rect: vp.getBoundingClientRect(), f: lmxScale(vp) } : null;
-}
-function lmxZoomAt(nw, px, py, anim) {
-  nw = Math.max(lmxCoverW(), Math.min(lmxMaxW(), nw));
-  var u = (px - lmxView.tx) / lmxView.w, v = (py - lmxView.ty) / lmxView.w;
-  lmxView.w = nw; lmxView.tx = px - u * nw; lmxView.ty = py - v * nw;
-  lmxClamp(); lmxApply(anim);
-}
+function lmxCoverW() { return lmxCam.coverW(); }
+function lmxMaxW() { return lmxCam.maxW(); }
+function lmxClamp() { lmxCam.clamp(); }
+function lmxApply(anim) { lmxCam.apply(anim); }
+function lmxGeo() { return lmxCam.geo(); }
+function lmxLocal(e) { return lmxCam.local(e); }
+function lmxZoomAt(nw, px, py, anim) { lmxCam.zoomAt(nw, px, py, anim); }
 /* Place un point de la carte (x %, y %) au centre de la zone utile (sous l'en-tête, au-dessus du volet). */
-function lmxCenterOn(xp, yp, anim) {
-  var vp = lmxVp(); if (!vp) return;
-  var W = vp.clientWidth, H = vp.clientHeight - lmxSheetH();
-  lmxView.tx = W / 2 - xp / 100 * lmxView.w;
-  lmxView.ty = (LMX_TOP_SLACK + H) / 2 - yp / 100 * lmxView.w;
-  lmxClamp(); lmxApply(anim);
-}
+function lmxCenterOn(xp, yp, anim) { lmxCam.centerOn(xp / 100, yp / 100, anim); }
 function lmxRecenter() {
   var map = window.LivingMapManager && LivingMapManager.getMap(livingMapOpenId); if (!map) return;
   lmxView.w = lmxCoverW(); lmxCenterOn(map.village.x, map.village.y, true);
@@ -564,106 +539,8 @@ function lmxUpdateOffscreen() {
   el.style.top = Math.max(TOP, Math.min(H - bh / 2 - 8, sy)) + "px";
 }
 
-/* ---------- Gestes (délégués sur document : survivent à un nouveau rendu) ---------- */
+/* ---------- Écran redimensionné ---------- */
 
-var lmxGesture = { pts: {}, mode: null, start: null, moved: false, suppressClick: false, lastTap: 0, vel: { x: 0, y: 0 }, lastMove: 0, raf: 0, geo: null, frame: 0 };
-
-function lmxLocal(e) { var g = lmxGesture.geo || lmxGeo(), r = g.rect, f = g.f || 1; return { x: (e.clientX - r.left) / f, y: (e.clientY - r.top) / f }; }
-/* v3.306.1 : un seul lmxApply par image, quel que soit le nombre de mouvements reçus (l'écran
-   tactile en envoie jusqu'à 120 par seconde). */
-function lmxSchedule() {
-  var g = lmxGesture;
-  if (g.frame || typeof requestAnimationFrame !== "function") { if (!g.frame) lmxApply(false); return; }
-  g.frame = requestAnimationFrame(function () { g.frame = 0; lmxApply(false); });
-}
-function lmxPts() { return Object.keys(lmxGesture.pts).map(function (k) { return lmxGesture.pts[k]; }); }
-function lmxBegin() {
-  var p = lmxPts(), g = lmxGesture;
-  if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(g.raf);
-  if (p.length >= 2) {
-    g.mode = "pinch";
-    g.start = { d: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y), m: { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 }, w: lmxView.w, tx: lmxView.tx, ty: lmxView.ty };
-  } else if (p.length === 1) {
-    g.mode = "pan"; g.start = { x: p[0].x, y: p[0].y, tx: lmxView.tx, ty: lmxView.ty };
-    g.vel = { x: 0, y: 0 }; g.lastMove = performance.now();
-  }
-}
-function lmxOnDown(e) {
-  if (!e.target || !e.target.closest || !e.target.closest("#lmx-vp")) return;
-  var g = lmxGesture;
-  if (!lmxPts().length) { g.geo = null; g.geo = lmxGeo(); } // lue une fois, au premier doigt
-  g.pts[e.pointerId] = lmxLocal(e);
-  if (lmxPts().length === 1) { g.moved = false; g.suppressClick = false; }
-  lmxBegin();
-}
-function lmxOnMove(e) {
-  var g = lmxGesture;
-  if (!g.pts[e.pointerId] || !lmxVp()) return;
-  var prev = g.pts[e.pointerId]; g.pts[e.pointerId] = lmxLocal(e);
-  var p = lmxPts(), s = g.start;
-  if (g.mode === "pan" && p.length === 1) {
-    var dx = p[0].x - s.x, dy = p[0].y - s.y;
-    if (!g.moved && Math.hypot(dx, dy) < LMX_TAP_SLOP) return;
-    g.moved = true;
-    var now = performance.now(), dt = Math.max(1, now - g.lastMove);
-    g.vel = { x: (p[0].x - prev.x) / dt, y: (p[0].y - prev.y) / dt }; g.lastMove = now;
-    lmxView.tx = s.tx + dx; lmxView.ty = s.ty + dy; lmxClamp(); lmxSchedule();
-  } else if (g.mode === "pinch" && p.length >= 2) {
-    g.moved = true;
-    var m = { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 };
-    var f = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) / s.d;
-    var nw = Math.max(lmxCoverW(), Math.min(lmxMaxW(), s.w * f));
-    var u = (s.m.x - s.tx) / s.w, v = (s.m.y - s.ty) / s.w;   // point de la carte sous les doigts au départ
-    lmxView.w = nw; lmxView.tx = m.x - u * nw; lmxView.ty = m.y - v * nw;
-    lmxClamp(); lmxSchedule();
-  }
-}
-function lmxOnUp(e) {
-  var g = lmxGesture;
-  if (!g.pts[e.pointerId]) return;
-  var up = g.pts[e.pointerId]; delete g.pts[e.pointerId];
-  if (g.moved) { g.suppressClick = true; setTimeout(function () { g.suppressClick = false; }, 0); }
-  if (lmxPts().length) { lmxBegin(); return; }
-  if (g.frame && typeof cancelAnimationFrame === "function") { cancelAnimationFrame(g.frame); g.frame = 0; }
-  var momentum = g.mode === "pan" && g.moved && performance.now() - g.lastMove < 60;
-  if (!momentum) { g.geo = null; lmxApply(false); lmxUpdateOffscreen(); } // position finale posée, repère hors écran à jour
-  if (momentum) lmxMomentum();
-  else if (!g.moved) {
-    var now = performance.now();
-    if (now - g.lastTap < LMX_DOUBLE_TAP_MS) {   // double tap : ×1,8 ; au max, retour Couvrant
-      g.lastTap = 0;
-      if (lmxView.w >= lmxMaxW() - 1) { lmxView.w = lmxCoverW(); lmxClamp(); lmxApply(true); }
-      else lmxZoomAt(lmxView.w * 1.8, up.x, up.y, true);
-    } else g.lastTap = now;
-  }
-  g.mode = null;
-}
-/* Élan : la carte continue sur sa lancée et ralentit. */
-function lmxMomentum() {
-  var g = lmxGesture, v = { x: g.vel.x * 16, y: g.vel.y * 16 };
-  function step() {
-    v.x *= 0.92; v.y *= 0.92;
-    if ((Math.abs(v.x) < 0.3 && Math.abs(v.y) < 0.3) || !lmxVp()) { g.geo = null; lmxUpdateOffscreen(); return; }
-    lmxView.tx += v.x; lmxView.ty += v.y; lmxClamp(); lmxApply(false);
-    g.raf = requestAnimationFrame(step);
-  }
-  g.raf = requestAnimationFrame(step);
-}
-function lmxOnWheel(e) {
-  if (!e.target || !e.target.closest || !e.target.closest("#lmx-vp")) return;
-  e.preventDefault();
-  var pt = lmxLocal(e);
-  lmxZoomAt(lmxView.w * Math.pow(1.0015, -e.deltaY), pt.x, pt.y, false);
-}
-if (typeof document !== "undefined" && document.addEventListener) {
-  document.addEventListener("pointerdown", lmxOnDown);
-  document.addEventListener("pointermove", lmxOnMove);
-  document.addEventListener("pointerup", lmxOnUp);
-  document.addEventListener("pointercancel", lmxOnUp);
-  document.addEventListener("wheel", lmxOnWheel, { passive: false });
-  /* iOS : pas de zoom de la page entière par pincement sur la carte. */
-  document.addEventListener("gesturestart", function (e) { if (lmxVp()) e.preventDefault(); });
-}
 if (typeof window !== "undefined" && window.addEventListener) {
   window.addEventListener("resize", function () { if (lmxVp()) lmxAfterRender(); });
 }
@@ -671,6 +548,22 @@ if (typeof window !== "undefined" && window.addEventListener) {
 /* Contenu du volet (v3.292.0, anciennement panneau sous la carte) : nom, anneau et intensité,
    état, lore, contenu, effet, récompense, bouton ou raison du mur (§2 : le mur n'est jamais
    silencieux). */
+/* v3.399.0 (F-1) : le nom du lieu passe dans l'en-tête de pierre du volet (kSheetHeadHTML),
+   comme toutes les feuilles du bas ; le panneau ne garde que le contenu. */
+function buildLivingMapSheetHeadHTML(mapId) {
+  var LM = LivingMapManager, title = "", sub = "";
+  if (livingMapSelected === "village") {
+    title = esc(_td(LM.getMap(mapId).village.name));
+  } else if (livingMapSelected) {
+    var d = LM.getSectorDef(mapId, livingMapSelected);
+    if (d) {
+      title = LM.isNameRevealed(mapId, d.id) ? esc(_td(d.name)) : _t("Secteur inconnu");
+      sub = _t("Anneau {n}", { n: d.ring }) + ' · ' + esc(livingMapIntensityLabel(LM.getIntensity(d)));
+    }
+  }
+  return kSheetHeadHTML({ title: title, sub: sub, close: "selectLivingMapSector(null)" });
+}
+
 function buildLivingMapPanelHTML(mapId, running) {
   var LM = LivingMapManager;
   var map = LM.getMap(mapId);
@@ -685,7 +578,6 @@ function buildLivingMapPanelHTML(mapId, running) {
 
   if (livingMapSelected === "village") {
     var pal = LM.getPalisadeLevel(), held = LM.getHeldRing(pal);
-    h += '<div class="lm-panel-name">' + esc(_td(map.village.name)) + '</div>';
     h += '<p class="lm-panel-lore">' + esc(_td(W.homeLore)) + '</p>';
     h += '<p class="lm-panel-line"><b>' + _t("Palissade niveau {n}", { n: pal }) + '</b> · ' + _t("frein {p} % sur l'échec", { p: Math.round(LM.getBrakeChance(mapId) * 100) }) + ' · '
       + (held === 3 ? _t("tient l'anneau 1 à 3 : un échec n'y reprend rien") : held === 2 ? _t("tient l'anneau 1 et 2 : un échec n'y reprend rien") : held ? _t("tient l'anneau 1 : un échec n'y reprend rien") : _t("ne tient aucun anneau (niveau 3)")); // v3.335.0 ; v3.370.0 : une phrase entière par cas
@@ -699,10 +591,6 @@ function buildLivingMapPanelHTML(mapId, running) {
   var protege = LM.isProtected(mapId, d.id);
   var intensity = livingMapIntensityLabel(LM.getIntensity(d));
 
-  h += '<div class="lm-panel-head">';
-  h += '<div class="lm-panel-name">' + (known ? esc(_td(d.name)) : _t("Secteur inconnu")) + '</div>';
-  h += '<div class="lm-panel-meta">' + _t("Anneau {n}", { n: d.ring }) + ' · ' + esc(intensity) + '</div>';
-  h += '</div>';
   var stCls = protege ? "is-protege" : "is-" + s.state;
   var stTxt = protege ? _t("Libéré · tenu par la Palissade") : s.state === "voile" ? _t("Voilé") : s.state === "libere" ? _t("Libéré") : esc(_td(W.coveredState));
   h += '<span class="lm-panel-state ' + stCls + '">' + stTxt + '</span>';

@@ -23,16 +23,13 @@ html.pc-mode .title-screen-stage {
 }
 html.pc-mode .hero-picker { max-height: calc(94vh / var(--pc-zoom, 1)); }
 html.pc-mode .full-menu { max-height: calc(88vh / var(--pc-zoom, 1)); }
-html.pc-mode .grimoire-sheet { max-height: calc(82vh / var(--pc-zoom, 1)); }
 html.pc-mode .ksheet { max-height: calc(84vh / var(--pc-zoom, 1)); }
-html.pc-mode .hf-sheet { max-height: calc(70vh / var(--pc-zoom, 1)); }
+html.pc-mode .ksheet.hf-sheet { max-height: calc(70vh / var(--pc-zoom, 1)); }
 
 /* Feuilles du bas et menus : même largeur que la colonne de jeu (sur téléphone,
    l'écran les bornait déjà ; sur PC elles s'étalaient jusqu'à 640 px). */
 html.pc-mode .full-menu,
-html.pc-mode .ksheet,
-html.pc-mode .grimoire-sheet,
-html.pc-mode .hf-sheet {
+html.pc-mode .ksheet {
   max-width: 390px;
   margin-left: auto;
   margin-right: auto;

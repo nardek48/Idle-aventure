@@ -939,10 +939,9 @@ function buildHerosSheetHTML() {
   var def = herosOpenSheet && HEROS_SHEETS[herosOpenSheet];
   if (!def) return "";
   return '<div class="ksheet-backdrop" onclick="closeHerosSheet()"></div>'
-    + '<div class="ksheet"><div class="ksheet-handle"></div>'
-    + '<div class="ksheet-title"><img src="' + def.icon + '" alt=""><span>' + def.title + '</span></div>'
+    + '<div class="ksheet">'
+    + kSheetHeadHTML({ icon: '<img src="' + def.icon + '" alt="">', title: def.title, close: "closeHerosSheet()" })
     + '<div class="ksheet-body">' + def.build() + '</div>'
-    + '<button type="button" class="ksheet-close" onclick="closeHerosSheet()">' + _t("Fermer") + '</button>'
     + '</div>';
 }
 

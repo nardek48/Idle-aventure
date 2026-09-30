@@ -118,14 +118,14 @@
 }
 
 .village-building-name {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 800;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 .village-building-level {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.85);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
@@ -207,7 +207,7 @@
 .warehouse-hint {
   margin-top: 10px;
   padding: 0 2px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: rgba(58, 44, 26, 0.65);
   text-align: center;
 }
@@ -232,14 +232,14 @@
 }
 
 .warehouse-reserve-label {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--nb-ink);
   margin-bottom: 2px;
 }
 
 .warehouse-reserve-hint {
-  font-size: 9.5px;
+  font-size: 12px;
   color: var(--nb-ink-dim);
   margin-bottom: 6px;
 }
@@ -329,7 +329,7 @@
   border: 2px solid var(--nb-gold-dark);
   background: var(--nb-cream);
   color: var(--nb-gold-deep);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -364,7 +364,7 @@
   border: 2px solid var(--nb-gold-dark);
   background: transparent;
   color: var(--nb-gold-deep);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -405,7 +405,7 @@
 
 .warehouse-craft-recipe {
   margin-top: 4px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: rgba(58, 44, 26, 0.75);
   text-align: center;
 }
@@ -453,7 +453,7 @@
 }
 
 .warehouse-craft-queue-time {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   color: rgba(58, 44, 26, 0.75);
   white-space: nowrap;
@@ -538,7 +538,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.vb-site-banner-sub { font-size: 11px; color: var(--nb-ink-dim); }
+.vb-site-banner-sub { font-size: 12px; color: var(--nb-ink-dim); }
 .vb-site-banner .kgauge { margin-top: 4px; }
 
 /* --- Grille des bâtiments -------------------------------------------- */
@@ -595,8 +595,8 @@
      grille — mesuré à 320 px, pas deviné. */
   overflow-wrap: anywhere;
 }
-.vb-card-level { font-size: 11px; color: var(--nb-ink-dim); }
-.vb-card-status { font-size: 11px; font-weight: 700; color: var(--nb-ink-dim); }
+.vb-card-level { font-size: 12px; color: var(--nb-ink-dim); }
+.vb-card-status { font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); }
 
 .vb-card-flag {
   position: absolute;
@@ -604,7 +604,7 @@
   right: 4px;
   padding: 1px 6px;
   border-radius: 999px;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -630,7 +630,7 @@
   gap: 4px;
   min-width: 0;
   overflow-wrap: anywhere;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.25;
   color: var(--nb-ink-dim);
 }
@@ -649,33 +649,29 @@
    est à padding 0 — et la safe-area du bas, sinon les boutons passent sous
    la barre d'accueil iPhone. */
 .vb-sheet-card {
-  padding: 16px 14px calc(16px + var(--safe-bottom));
+  /* v3.399.0 (F-1) : en-tête et corps du kit (.ksheet-head/.ksheet-body) : plus de rembourrage ici */
   /* La fiche est rendue HORS du .kframe : elle a besoin de sa propre
      restauration d'encre (voir css/00-kframe-scope.css). */
   --nb-ink: #3a2c1a;
   --nb-ink-dim: rgba(58, 44, 26, 0.72);
 }
 
-.vb-sheet-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.vb-sheet-head-text { min-width: 0; }
 .vb-sheet-icon {
   /* Une image manquante afficherait son texte alternatif et pousserait
      la carte : on borne. */
   overflow: hidden;
   flex: 0 0 auto;
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   object-fit: contain;
-  font-size: 26px;
+  font-size: 22px;
   border: 1px solid var(--nb-frame-light);
   border-radius: 10px;
   background: var(--nb-cream-alt);
 }
-.vb-sheet-title { font-size: 15px; font-weight: 800; color: var(--nb-ink); line-height: 1.2; }
-.vb-sheet-level { font-size: 11px; color: var(--nb-ink-dim); }
 .vb-sheet-text { font-size: 12px; line-height: 1.45; color: var(--nb-ink); margin-bottom: 8px; }
 
 .vb-sheet-effect {
@@ -714,15 +710,15 @@
 .vb-cost-where {
   margin-top: 2px;
   padding-left: 24px;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.3;
   color: var(--nb-ink-dim);
 }
 .vb-cost-check { flex: 0 0 auto; }
 
-.vb-sheet-timer { font-size: 11px; color: var(--nb-ink-dim); margin-bottom: 8px; }
+.vb-sheet-timer { font-size: 12px; color: var(--nb-ink-dim); margin-bottom: 8px; }
 .vb-sheet-progress { margin-bottom: 8px; }
-.vb-sheet-progress-label { font-size: 11px; color: var(--nb-ink-dim); margin-bottom: 3px; }
+.vb-sheet-progress-label { font-size: 12px; color: var(--nb-ink-dim); margin-bottom: 3px; }
 
 .vb-sheet-actions { display: flex; gap: 8px; }
 /* .settings-btn porte width:100% : en conteneur flex, sa base auto reprend
@@ -750,7 +746,7 @@
   border-top: none;
   border-radius: 0 0 var(--nb-radius-sm, 10px) var(--nb-radius-sm, 10px);
   background: var(--nb-cream-alt);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--nb-ink);
 }
 .potion-craft-row.is-locked { opacity: 0.7; }
@@ -760,7 +756,7 @@
 .potion-craft-item { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; }
 .potion-craft-item.is-missing { color: var(--danger); }
 .potion-craft-icon { width: 16px; height: 16px; object-fit: contain; }
-.potion-craft-locked { font-size: 10px; font-weight: 700; color: var(--nb-ink-dim); flex: 0 0 auto; }
+.potion-craft-locked { font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); flex: 0 0 auto; }
 .potion-craft-btn { flex: 0 0 auto; }
 
 
@@ -771,7 +767,7 @@
   border: 1px solid var(--nb-frame-light);
   border-radius: var(--nb-radius-sm, 10px);
   background: var(--nb-cream-alt);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
   color: var(--nb-ink);
@@ -802,9 +798,9 @@
   font-weight: 800;
   color: var(--nb-ink);
 }
-.tavern-board-timer { font-size: 10px; font-weight: 700; color: var(--nb-ink-dim); }
+.tavern-board-timer { font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); }
 
-.tavern-empty { font-size: 11px; color: var(--nb-ink-dim); text-align: center; padding: 6px 0; }
+.tavern-empty { font-size: 12px; color: var(--nb-ink-dim); text-align: center; padding: 6px 0; }
 
 .tavern-contract {
   display: grid;
@@ -830,7 +826,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--nb-ink-dim);
 }
 .tavern-contract-need .is-missing { color: var(--danger); font-weight: 700; }
@@ -853,7 +849,7 @@
   border: 1px solid var(--nb-frame);
   background: var(--nb-gold);
   color: #241a00;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
@@ -887,8 +883,8 @@
   font-weight: 800;
   color: var(--nb-ink);
 }
-.forge-board-max { font-size: 10px; font-weight: 700; color: var(--nb-ink-dim); }
-.forge-board-note { margin: 2px 0 6px; font-size: 10px; line-height: 1.3; color: var(--nb-ink-dim); }
+.forge-board-max { font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); }
+.forge-board-note { margin: 2px 0 6px; font-size: 12px; line-height: 1.3; color: var(--nb-ink-dim); }
 
 .forge-row {
   display: grid;
@@ -901,9 +897,9 @@
 .forge-row + .forge-row { border-top: 1px dashed var(--nb-frame-light); }
 .forge-row-main { min-width: 0; }
 .forge-row-name { font-size: 12px; font-weight: 800; color: var(--nb-ink); }
-.forge-row-level { font-size: 10px; font-weight: 700; color: var(--nb-ink-dim); }
+.forge-row-level { font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); }
 .forge-row-effect {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--nb-ink-dim);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -913,7 +909,7 @@
 .forge-row-gain { color: #1f7a3d; font-weight: 800; }
 
 .forge-row-cost { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
-.forge-cost-item { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: var(--nb-ink); }
+.forge-cost-item { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; color: var(--nb-ink); }
 .forge-cost-item.is-missing { color: var(--danger); }
 .forge-cost-item .vb-cost-icon { width: 14px; height: 14px; }
 
@@ -935,7 +931,7 @@
   border: 1px solid var(--nb-frame);
   background: var(--nb-gold);
   color: #241a00;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   line-height: 1.15;
   text-align: center;
@@ -962,7 +958,7 @@
 .vb-sheet-card .vb-sheet-seg button.is-on { opacity: 1; }
 .vb-sheet-card .vb-sheet-seg button:disabled { opacity: 0.4; cursor: default; }
 .vb-shard-count { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: var(--nb-ink); margin: 0 0 8px; }
-.vb-board-sub { font-size: 11px; color: var(--nb-ink-dim); margin: 0 0 8px; line-height: 1.35; }
+.vb-board-sub { font-size: 12px; color: var(--nb-ink-dim); margin: 0 0 8px; line-height: 1.35; }
 
 /* v3.330.0 (E6) : mot du tavernier à la première visite de l'Entrepôt (fin de la vente) */
 .warehouse-note {

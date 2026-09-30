@@ -253,9 +253,8 @@ function buildCombatStatesSheetHTML() {
   var states = getActiveCombatStates();
   var familles = window.COMBAT_STATE_FAMILIES || [];
   var h = '<div class="ksheet-backdrop" onclick="closeCombatStatesSheet()"></div>';
-  h += '<div class="ksheet"><div class="ksheet-handle"></div>';
-  h += '<div class="ksheet-title"><span>' + _t("États du combat") + '</span></div>';
-  h += '<div class="st-sheet-sub">' + _t("Ce qui pèse sur ce combat, et quoi en faire.") + '</div>';
+  h += '<div class="ksheet">';
+  h += kSheetHeadHTML({ title: _t("États du combat"), sub: _t("Ce qui pèse sur ce combat, et quoi en faire."), close: "closeCombatStatesSheet()" });
   h += '<div class="ksheet-body">';
 
   var vide = true;
@@ -293,7 +292,6 @@ function buildCombatStatesSheetHTML() {
   if (vide) h += '<div class="st-empty">' + _t("Rien de particulier pour l’instant.") + '</div>';
 
   h += '</div>';
-  h += '<button type="button" class="ksheet-close" onclick="closeCombatStatesSheet()">' + _t("Fermer") + '</button>';
   h += '</div>';
   return h;
 }
@@ -427,7 +425,8 @@ function openSortieSheet() {
   var loot = s.loot || {};
 
   var h = '<div class="ksheet-backdrop" onclick="closeSortieSheet()"></div>';
-  h += '<div class="ksheet"><div class="ksheet-title"><img src="images/Icons/subtabs/inventory.png" alt=""><span>' + _t("Sortie en cours") + '</span></div>';
+  h += '<div class="ksheet">';
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/subtabs/inventory.png" alt="">', title: _t("Sortie en cours"), close: "closeSortieSheet()" });
   h += '<div class="ksheet-body">';
 
   h += '<div class="cbs-sub">' + _t("Butin ramassé") + '</div>';
@@ -448,7 +447,7 @@ function openSortieSheet() {
   h += buildSortieLineHTML("images/Icons/subtabs/potions.png", _t("Il t'en reste"),
     _t("{a} sur {b}", { a: SortieManager.getPotionsLeft(), b: (typeof getSortiePotionCap === "function" ? getSortiePotionCap() : "?") }));
 
-  h += '</div><button type="button" class="ksheet-close" onclick="closeSortieSheet()">' + _t("Fermer") + '</button></div>';
+  h += '</div></div>';
   root.innerHTML = h;
 }
 

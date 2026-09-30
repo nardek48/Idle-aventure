@@ -179,15 +179,17 @@ function getAchievementSheetRoot() {
 
 function openAchievementTitleSheet() {
   var AM = AchievementManager, cur = AM.getTitle();
-  var h = '<div class="hf-sheet-bg" onclick="if(event.target===this)closeAchievementTitleSheet()"><div class="hf-sheet" role="dialog" aria-label="' + esc(_t("Choisir un titre")) + '">';
-  h += '<h3>' + _t("Choisir un titre") + '</h3>';
+  // v3.399.0 (F-1) : feuille du kit (.ksheet) dans sa couche au-dessus du reste
+  var h = '<div class="hf-sheet-bg"><div class="ksheet-backdrop" onclick="closeAchievementTitleSheet()"></div><div class="ksheet hf-sheet" role="dialog" aria-label="' + esc(_t("Choisir un titre")) + '">';
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/menu_icons/achivment_menu.png" alt="">', title: _t("Choisir un titre"), close: "closeAchievementTitleSheet()" });
+  h += '<div class="ksheet-body">';
   h += '<button type="button" class="hf-opt' + (!cur ? ' is-on' : '') + '" onclick="pickAchievementTitle(-1)"><span>' + _t("Aucun titre") + '</span></button>';
   AM.getAllTitles().forEach(function (t, i) {
     var ok = AM.isTitleUnlocked(t);
     h += '<button type="button" class="hf-opt' + (cur === t.title ? ' is-on' : '') + (ok ? '' : ' is-locked') + '"' + (ok ? ' onclick="pickAchievementTitle(' + i + ')"' : ' disabled') + '>'
       + '<span>' + (ok ? '' : '🔒 ') + esc(_td(t.title)) + '</span><small>' + esc(t.from) + '</small></button>';
   });
-  h += '</div></div>';
+  h += '</div></div></div>';
   var root = getAchievementSheetRoot();
   if (root) root.innerHTML = h;
 }

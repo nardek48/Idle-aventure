@@ -1,8 +1,6 @@
 "use strict";
-/* data/scene-templates.js — canevas du scene-engine générique. Un canevas est purement des
-   données (aucune logique) consommées par SceneEngine.buildCard() + scene-run-system.js.
-   v1 : un seul canevas génératif, sandbox (pas encore branché à MissionBoard/SortieManager
-   en usage réel — voir CHANGELOG_v3.120.0.md, Lot S1). Détail : DESIGN_Scene_Engine_v1.md §5 */
+/* data/scene-templates.js — canevas des expéditions, purement des données, menés par Pa2Run :
+   mode "parcours" (quêtes, parcours d'Histoire) ou "pa2" (Petites Aventures). */
 
 /* v3.388.0 (PA2-6) : les intensités (SCENE_INTENSITY), les mutateurs (SCENE_MUTATORS) et le bac
    à sable expedition_faille sont retirés avec les Petites Aventures v1. Les anneaux de la carte
@@ -19,7 +17,7 @@ var SCENE_TEMPLATES = {
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "Le Sentier Obstrué",
-    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }] }, // gabarits tirés dans pools.obstacle
+    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [0, 2] }, // gabarits tirés dans pools.obstacle
     icon: "images/Icons/codex/world_forest.png",
 
     pools: { obstacle: ["tronc_deracine", "racines"] },
@@ -54,7 +52,7 @@ var SCENE_TEMPLATES = {
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "Le Bosquet Silencieux",
-    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }] }, // gabarits tirés dans pools.obstacle
+    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [1, 3] }, // gabarits tirés dans pools.obstacle
     icon: "images/Icons/scene/scene_woodland.png",
 
     pools: { obstacle: ["troncs_jumeaux", "fute_dense"] },
@@ -87,7 +85,7 @@ var SCENE_TEMPLATES = {
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "La Terre en Friche",
-    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }] }, // gabarits tirés dans pools.obstacle
+    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [2, 4] }, // gabarits tirés dans pools.obstacle
     icon: "images/Icons/scene/scene_harvest.png",
 
     pools: { obstacle: ["ronces_epaisses", "sillons_geles", "talus_boueux"] },
@@ -125,7 +123,7 @@ var SCENE_TEMPLATES = {
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "La Veine Instable",
-    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }] }, // gabarits tirés dans pools.obstacle
+    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [3, 5] }, // gabarits tirés dans pools.obstacle
     icon: "images/Icons/scene/scene_mine.png",
 
     pools: { obstacle: ["filon_fragile", "paroi_instable"] },
@@ -156,7 +154,7 @@ var SCENE_TEMPLATES = {
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "L'Éboulis Ferreux",
-    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }] }, // gabarits tirés dans pools.obstacle
+    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [4, 7] }, // gabarits tirés dans pools.obstacle
     icon: "images/Icons/scene/scene_mine.png",
 
     pools: { obstacle: ["veine_rougeatre", "eboulis_recent"] },
@@ -187,7 +185,7 @@ var SCENE_TEMPLATES = {
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "La Source Tarie",
-    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }] }, // gabarits tirés dans pools.obstacle
+    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [5, 6] }, // gabarits tirés dans pools.obstacle
     icon: "images/Icons/scene/node_clear_spring.png",
 
     // v3.131.0 : seul canevas sans boardRequires (oubli) — disponible dès le lancement d'une
@@ -227,48 +225,26 @@ var SCENE_TEMPLATES = {
     id: "traversee_desert",
     worldId: "desert",
     adventureIndex: 0,
-    mode: "semi",
+    mode: "parcours", // v3.390.0 (chantier P, lot P-2) : parcours v2 sur la piste de sable
     title: "La traversée",
     icon: "images/Icons/codex/world_desert.png",
-
-    depthMax: 4,
-    gatesPerDepth: [1, 1],
-    fixedCard: [
-      [{ type: "obstacle", gabaritId: "dalles_ensablees" }],
-      [{ type: "source" }],
-      [{ type: "combat", gabaritId: "scarabees_desert" }],
-      [{ type: "obstacle", gabaritId: "vent_de_face" }]
-    ],
-    combatWaveRange: [1, 1], // une seule rencontre : la nuée
-    finalBoss: false,
-    slotWeights: { obstacle: 100 },
-    pools: { obstacle: ["dalles_ensablees", "vent_de_face"], combat: ["scarabees_desert"] },
-
-    loadoutOffer: [], loadoutSlots: 0,
+    // Journal fixe par étape (texte en tête de feuille ; after : après le combat).
+    parcours: {
+      image: "desert_route", track: "route", points: [0, 2, 4, 6],
+      steps: [
+        { type: "obstacle", gabaritId: "dalles_ensablees", text: "Les dalles du portail. Du sable entre elles, puis dessus, puis plus de dalles du tout." },
+        { type: "source", text: "Un puits. La corde est neuve. Quelqu'un l'entretient, et ce n'est pas Sarkel." },
+        { type: "combat", foe: "scarab", pack: 3, foeMult: 0.5, text: "Le sable bouge à trois endroits à la fois. Sarkel arrête la carriole. Il ne descend pas.",
+          after: "Wenna compte les carapaces. Trois. Elle recompte." },
+        { type: "obstacle", gabaritId: "vent_de_face", text: "Le deuxième puits est sec. Sarkel n'a pas l'air surpris. Il a de l'eau pour deux jours. Il te compte la tienne." }
+      ]
+    },
     entryCost: { resourceId: "ration", amount: 1 },
-
-    journalByDepth: {
-      1: "Les dalles du portail. Du sable entre elles, puis dessus, puis plus de dalles du tout.",
-      2: "Un puits. La corde est neuve. Quelqu'un l'entretient, et ce n'est pas Sarkel.",
-      3: { before: "Le sable bouge à trois endroits à la fois. Sarkel arrête la carriole. Il ne descend pas.",
-           after: "Wenna compte les carapaces. Trois. Elle recompte." },
-      4: "Le deuxième puits est sec. Sarkel n'a pas l'air surpris. Il a de l'eau pour deux jours. Il te compte la tienne."
-    },
-
     lootResource: "gold",
-    lootRanges: {
-      obstacleSuccess: [10, 20],
-      obstacleRope: [5, 10],
-      obstacleSetback: [2, 5],
-      decouverte: [10, 20],
-      finalSafe: [40, 40],
-      finalRiskyBase: [0, 0]
-    },
-    autelCostRatio: 0.2,
-
     unlockOnSuccess: { buildingId: null, unlockFlag: "desertReached", completionFlag: "desertCrossingCompleted" },
     travelOnSuccess: { worldId: "desert", adventureIndex: 0 }
   },
+
 
   /* v3.310.0 (W-3a, acte II §4) — LA DESCENTE. Première libération de la porte du Temple, lancée
      depuis la carte (firstContent du secteur) : hors cap journalier (pas de profileWeights), un seul
@@ -277,47 +253,24 @@ var SCENE_TEMPLATES = {
     id: "descente_temple",
     worldId: "desert",
     adventureIndex: 1,
-    mode: "semi",
+    mode: "parcours", // v3.390.0 (chantier P, lot P-2) : parcours v2
     title: "La descente",
     icon: "images/Icons/codex/world_desert.png",
-
-    depthMax: 4,
-    gatesPerDepth: [1, 1],
-    fixedCard: [
-      [{ type: "obstacle", gabaritId: "dalle_scellee" }],
-      [{ type: "obstacle", gabaritId: "dalles_ensablees" }],
-      [{ type: "combat", gabaritId: "guerrier_seul_desert" }],
-      [{ type: "source" }]
-    ],
-    combatWaveRange: [1, 1],
-    finalBoss: false,
-    slotWeights: { obstacle: 100 },
-    pools: { obstacle: ["dalle_scellee", "dalles_ensablees"], combat: ["guerrier_seul_desert"] },
-
-    loadoutOffer: [], loadoutSlots: 0,
-
-    journalByDepth: {
-      1: "Le battant ouvert laisse passer un homme, pas un sac. Sarkel pose le sien et s'assoit dessus.",
-      2: "Des marches. Le sable les a remplies à moitié. Quelqu'un a dégagé une bande de la largeur d'un pied.",
-      3: { before: "Quelque chose se tient en travers des marches. Il n'attendait pas toi.",
-           after: "Wenna regarde en haut. La lumière de la porte est petite, maintenant." },
-      4: "En bas, une lampe. L'huile est neuve."
+    parcours: {
+      image: "desert_temple", track: "allee", points: [3, 4, 5, 6], // v3.392.0 : les ruines, jusqu'aux marches de la porte
+      steps: [
+        { type: "obstacle", gabaritId: "dalle_scellee", text: "Le battant ouvert laisse passer un homme, pas un sac. Sarkel pose le sien et s'assoit dessus." },
+        { type: "obstacle", gabaritId: "dalles_ensablees", text: "Des marches. Le sable les a remplies à moitié. Quelqu'un a dégagé une bande de la largeur d'un pied." },
+        { type: "combat", foe: "sandwarrior", pack: 1, act: 2, text: "Quelque chose se tient en travers des marches. Il n'attendait pas toi.",
+          after: "Wenna regarde en haut. La lumière de la porte est petite, maintenant." },
+        { type: "source", text: "En bas, une lampe. L'huile est neuve." }
+      ]
     },
-
     lootResource: "gold",
-    lootRanges: {
-      obstacleSuccess: [15, 25],
-      obstacleRope: [8, 12],
-      obstacleSetback: [3, 6],
-      decouverte: [15, 25],
-      finalSafe: [60, 60],
-      finalRiskyBase: [0, 0]
-    },
-    autelCostRatio: 0.2,
-
     unlockOnSuccess: { buildingId: null, unlockFlag: "templeReached", completionFlag: "templeDescended" },
     travelOnSuccess: { worldId: "desert", adventureIndex: 1 }
   },
+
 
   /* v3.361.0 (acte IV §4, textes validés par Seb 28/09/2026) — PERSONNE NE REMONTE LE FLEUVE,
      étape 16. Lancé depuis la carte d'étape (cardId scene_remontee_fleuve), comme la traversée :
@@ -330,78 +283,28 @@ var SCENE_TEMPLATES = {
     id: "remontee_fleuve",
     worldId: "desert",
     adventureIndex: 0, // le lit du fleuve est en surface
-    mode: "semi",
+    mode: "parcours", // v3.390.0 (chantier P, lot P-2) : parcours v2 dans le lit asséché, besace de 3 places (H4)
     title: "Personne ne remonte le fleuve",
     departLabel: "Remonter le lit",
     icon: "images/Icons/codex/world_desert.png",
-
-    depthMax: 6,
-    gatesPerDepth: [1, 1],
-    fixedCard: [
-      [{ type: "obstacle", gabaritId: "vent_de_face" }],
-      [{ type: "combat", gabaritId: "ver_desert" }],
-      [{ type: "obstacle", gabaritId: "sables_mouvants", riskMod: 0.8 }],
-      [{ type: "source", fullBreath: true }],
-      [{ type: "combat", gabaritId: "guerriers_desert" }],
-      [{ type: "obstacle", gabaritId: "dune" }]
-    ],
-    maxInjuries: 2,
-    heroScaling: { ref: 21, coef: 0.60, max: 3.5 },
-    optionProfiles: {
-      power: { diffMod: 1.12, lootMod: 2.60, breathCost: 10, injurySeverity: "grave" },
-      precision: { diffMod: 1.0, lootMod: 1.15, breathCost: 5, injurySeverity: "normale" },
-      endurance: { diffMod: 0.95, lootMod: 0.50, breathCost: 20, injurySeverity: "legere" }
+    parcours: {
+      image: "desert_route", track: "oued", points: [0, 1, 2, 3, 4, 5], bag: 3,
+      steps: [
+        { type: "obstacle", gabaritId: "vent_de_face", text: "Le lit est large comme une rue de la cité. Les pierres rondes roulent sous les bottes. Derrière, le Veilleur ne fait aucun bruit." },
+        { type: "combat", foe: "sandworm", pack: 1, act: 2, text: "Le sable du lit se soulève d'une berge à l'autre. Quelque chose remonte le fleuve, lui aussi.",
+          after: "Maddoc s'assoit sur une pierre ronde. Il se relève avant qu'on le lui demande." },
+        { type: "obstacle", gabaritId: "sables_mouvants", text: "Le lit cède. Pas le sable dessus : le sol dessous. Tu t'enfonces jusqu'à la taille, puis plus." },
+        { type: "source", fullBreath: true, text: "Une main te prend au col et te tire. Le Veilleur te pose sur la berge, te tend son outre, et reprend sa place derrière. Wenna le regarde. Pour une fois, elle ne demande rien." },
+        { type: "combat", foe: "sandwarrior", pack: 2, act: 3, text: "Deux armures sur la berge. Elles ne gardent pas une rue : elles marchent vers le sud, comme toi.",
+          after: "Elles tombent face au sud. Pas face à toi." },
+        { type: "obstacle", gabaritId: "dune", text: "Le lit s'arrête contre une dune. Au sommet, un siège taillé dans le sable, tourné vers le sud. Vide." }
+      ]
     },
-    breathPerDepth: 6,
-    combatWaveRange: [1, 1],
-    combatPowerMult: 3.5,
-    combatHpMult: 2.3,
-    finalBoss: false,
-    slotWeights: { obstacle: 100 },
-    pools: { obstacle: ["vent_de_face", "sables_mouvants", "dune"], combat: ["ver_desert", "guerriers_desert"] },
-    gourdeUses: 1,
-
-    loadoutOffer: ["torche", "corde", "provisions", "gourde", "amulette", "outre"],
-    loadoutSlots: 3,
-    // v3.388.0 (PA2-6) : son propre sac, jadis repris de la Petite Aventure du Désert (v3.361.0).
-    items: {
-      torche: { id: "torche", icon: "images/Icons/scene/torch.png", name: "Torche", desc: "Révèle le détail des portes du niveau courant (3 charges).", charges: 3 },
-      corde: { id: "corde", icon: "images/Icons/scene/rope.png", name: "Corde", desc: "Passe un obstacle compatible sans jet (1 usage, gain réduit).", charges: 1 },
-      provisions: { id: "provisions", icon: "images/Icons/scene/provisions.png", name: "Provisions", desc: "Soigne la blessure la plus grave (1 usage).", charges: 1 },
-      gourde: { id: "gourde", icon: "images/Icons/scene/water_flask.png", name: "Gourde", desc: "Restaure du Souffle une fois, quand tu veux. Au Désert, elle ne se remplit pas en route." },
-      amulette: { id: "amulette", icon: "images/Icons/scene/protective_amulet.png", name: "Amulette", desc: "Relance automatiquement le premier jet raté (1 fois)." },
-      outre: { id: "outre", icon: "images/Icons/resources/outre_pleine_icon.png", name: "Outre pleine",
-        desc: "Se boit une fois, quand tu veux. Prise dans ton Entrepôt au départ.",
-        consumes: { resourceId: "outre_pleine", amount: 1 }, breath: 40,
-        breathBonusEffect: "outre_plus" } // v3.305.0 : puits sec tenu -> +15
-    },
-    deathLine: "Le parcours s'arrête là. Ce que tu portais reste dans le sable. Retour au camp.",
     entryCost: { resourceId: "ration", amount: 1 },
-
-    journalByDepth: {
-      1: "Le lit est large comme une rue de la cité. Les pierres rondes roulent sous les bottes. Derrière, le Veilleur ne fait aucun bruit.",
-      2: { before: "Le sable du lit se soulève d'une berge à l'autre. Quelque chose remonte le fleuve, lui aussi.",
-           after: "Maddoc s'assoit sur une pierre ronde. Il se relève avant qu'on le lui demande." },
-      3: "Le lit cède. Pas le sable dessus : le sol dessous. Tu t'enfonces jusqu'à la taille, puis plus.",
-      4: "Une main te prend au col et te tire. Le Veilleur te pose sur la berge, te tend son outre, et reprend sa place derrière. Wenna le regarde. Pour une fois, elle ne demande rien.",
-      5: { before: "Deux armures sur la berge. Elles ne gardent pas une rue : elles marchent vers le sud, comme toi.",
-           after: "Elles tombent face au sud. Pas face à toi." },
-      6: "Le lit s'arrête contre une dune. Au sommet, un siège taillé dans le sable, tourné vers le sud. Vide."
-    },
-
     lootResource: "gold",
-    lootRanges: {
-      obstacleSuccess: [15, 25],
-      obstacleRope: [8, 12],
-      obstacleSetback: [3, 6],
-      decouverte: [15, 25],
-      finalSafe: [60, 60],
-      finalRiskyBase: [0, 0]
-    },
-    autelCostRatio: 0.2,
-
     unlockOnSuccess: { buildingId: null, unlockFlag: null, completionFlag: "remonteeFleuveDone" }
   },
+
 
   /* ================= Petites Aventures (v3.388.0, PA2-6) =================
      Deux cartes de lancement, menées par Pa2Run (systems/pa2-run.js, ui/pa2-view.js) : le

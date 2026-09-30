@@ -1,9 +1,6 @@
 "use strict";
-/* data/scene-nodes.js — banque de gabarits partagée du scene-engine (obstacles, textes
-   d'ambiance des salles non-obstacle). Purement des données, aucune logique. Un gabarit
-   d'obstacle est réutilisable par plusieurs canevas (data/scene-templates.js) via
-   template.pools.obstacle. Tag "biome" pour permettre plus tard un tirage filtré par monde
-   (non exploité en v1 : un seul biome, "forest"). Détail : DESIGN_Scene_Engine_v1.md §5 */
+/* data/scene-nodes.js — banque de gabarits partagée (profils de voie, obstacles, groupes d'ennemis),
+   lue par Pa2Run. Purement des données. v3.391.0 : textes et icônes de l'ancien moteur retirés. */
 
 var SCENE_NODES = {
   /* v3.195.0 (recalibrage "choix pas intéressant") : profil générique appliqué à CHAQUE
@@ -12,7 +9,7 @@ var SCENE_NODES = {
      triangle). power = voie dure : plus difficile, gain supérieur, coûte plus de Souffle,
      blessure grave en cas d'échec. endurance = voie sûre : plus facile, gain réduit, coûte
      peu de Souffle, blessure légère. precision = équilibré, profil neutre (référence ×1).
-     Lu par SceneRunManager.resolveObstacle()/getObstacleEstimate() via optionKey. Purement
+     Lu par Pa2Run (_profiles) via optionKey. Purement
      des données (aucune logique), cohérent avec le reste de ce fichier. */
   /* v3.199.0 (lot Souffle) : les couts 3/1.5/1 rendaient la ressource inerte — un Periple de
      10 paliers ne pouvait depenser que 30 Souffle sur 100, et la mesure de session le
@@ -32,16 +29,6 @@ var SCENE_NODES = {
     endurance: { diffMod: 0.92, lootMod: 0.8, breathCost: 20, injurySeverity: "legere" }
   },
 
-  /* Malus de stat effective par sévérité de blessure (statEffective, scene-run-system.js) —
-     remplace l'ancien malus fixe -2/blessure (v3.120.0), désormais différencié : une blessure
-     "grave" (issue d'un échec en voie de puissance) pèse bien plus qu'une "légère" (voie
-     d'endurance), cohérent avec le risque pris à l'obstacle. */
-  /* v3.198.0 (recalibrage Seb, "encore trop facile") : 4/8/12 relevés à 6/10/16. Avec le
-     plafond de blessures ramené à 2 sur la Petite Aventure (template.maxInjuries), le heros
-     ne porte au plus qu'UNE blessure a la fois : le malus doit se sentir sur le jet suivant,
-     pas se diluer sur trois cumuls. Une grave (voie de puissance) coute ~6.4 points de
-     chance, une legere (voie d'endurance) ~2.4. */
-  injurySeverityMalus: { legere: 6, normale: 10, grave: 16 },
 
   obstacles: {
     eboulis: {
@@ -276,53 +263,6 @@ var SCENE_NODES = {
         power: { stat: "power", label: "Dégager le conduit obstrué" }
       }
     }
-  },
-
-  /* Textes d'ambiance courts pour les silhouettes (portes non révélées, sans torche).
-     combat : jamais en mystère (non tiré par _revealMystery), fourni pour le contrat
-     SCENE_NODES.*[type]. v3.388.0 : bloqueur et événement retirés avec les Petites Aventures v1. */
-  silhouettes: {
-    obstacle: "Un passage difficile",
-    autel: "Une lueur étrange",
-    decouverte: "Un reflet brillant",
-    source: "Un bruit d'eau",
-    mystere: "Une ombre indistincte",
-    combat: "Des bruits de pas"
-  },
-
-  /* Indices qualitatifs affichés SANS torche (décision Seb 03/09/2026 : un "???" pur sur
-     toutes les portes ne donne aucune base de décision). Le détail précis reste réservé à la
-     torche — ces indices ne donnent jamais le nom du gabarit ni la stat concernée. */
-  hints: {
-    obstacle: { low: "Semble périlleux", medium: "Praticable", high: "Semble aisé" },
-    autel: "Une présence recueillie",
-    decouverte: "Prometteur",
-    source: "Apaisant",
-    combat: "Une présence hostile"
-  },
-
-  /* Indice de gain relatif d'un obstacle (v3.121.0, recalibrage Seb "le choix est trop
-     linéaire") — TOUJOURS visible (torche ou non), c'est lui qui rend le choix risque/
-     récompense réel : une porte au gain élevé compense sa difficulté annoncée plus faible.
-     Voir SceneEngine.riskLevel(riskMod). */
-  gainHints: {
-    low: "Butin modeste",
-    medium: "Bon butin",
-    high: "Gros butin"
-  },
-
-  labels: {
-    obstacle: "Passage",
-    autel: "Autel oublié",
-    decouverte: "Découverte",
-    source: "Source claire",
-    mystere: "Zone inconnue",
-    combat: "Rencontre"
-  },
-
-  icons: {
-    obstacle: "images/Icons/scene/node_obstacle.png", autel: "images/Icons/scene/node_forgotten_altar.png", decouverte: "images/Icons/scene/node_discovery.png", source: "images/Icons/scene/node_clear_spring.png", mystere: "images/Icons/scene/node_unknown.png",
-    combat: "images/Icons/scene/node_encounter.png"
   },
 
   /* v3.125.0 (Lot PA2) : groupes d'ennemis exploitables par un slot combat de scene-engine

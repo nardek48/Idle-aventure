@@ -112,7 +112,7 @@
   transform: translateX(-50%);
   background: var(--nb-gold);
   color: #4a2f06;
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 800;
   border-radius: 999px;
   padding: 1px 7px;
@@ -129,7 +129,7 @@
 }
 
 .map-node-name {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   color: #fff;
   text-align: center;
@@ -171,8 +171,8 @@
 /* =========================
    Popup de détail d'un monde (#map-modal-root)
    ========================= */
-.map-popup-card {
-  padding: 20px 18px;
+.map-popup-card .ksheet-body {
+  padding: 18px 18px 4px;
   text-align: center;
 }
 
@@ -186,19 +186,12 @@
   margin-bottom: 10px;
 }
 
-.map-popup-title {
-  font-size: 17px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  margin-bottom: 6px;
-}
-
 .map-popup-status {
   display: inline-flex;
   margin-bottom: 8px;
   padding: 4px 12px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -287,7 +280,7 @@
 }
 
 .map-quest-step-text {
-  font-size: 11px;
+  font-size: 12px;
   font-style: italic;
   color: var(--nb-ink-dim);
   margin-bottom: 4px;
@@ -336,14 +329,14 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .map-quest-reward-label {
   color: var(--nb-ink-dim);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .map-quest-reward-value {
@@ -382,7 +375,7 @@
 }
 
 .map-adventure-quests-resource {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: normal;
@@ -520,7 +513,7 @@
 }
 
 .map-adventure-boss {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--nb-gold);
 }
