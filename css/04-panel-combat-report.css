@@ -13,14 +13,9 @@
    .panel-card/.panel-sub, voir css/04-panels-common.css).
    ========================= */
 
+/* v3.400.0 (lot F-2) : la carte est une feuille du kit (.full-menu + .ksheet-head). */
 .combat-report-card {
   text-align: left;
-}
-
-.combat-report-card .dungeon-story-icon,
-.combat-report-card .dungeon-story-title,
-.combat-report-card .dungeon-story-meta {
-  text-align: center;
 }
 
 /* Vue d'ensemble (dégâts évités/soin empêché/boucliers retirés) —

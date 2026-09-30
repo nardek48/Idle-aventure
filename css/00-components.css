@@ -1157,6 +1157,116 @@ button.nb-entry-card {
   .ksheet-x:active { transform: none; }
 }
 
+/* =====================================================================
+   v3.400.0 (lot F-2) : FENÊTRE CENTRÉE (.kwin), même habillage que les
+   feuilles du bas (jetons --sheet-*). Pour ce qui attend une réponse ou
+   se lit d'un coup : confirmation, tutoriel, fin de quête, choix, retour.
+   Structure : voile .kwin-veil > .kwin > .kwin-head (kWinHeadHTML,
+   ui/modal.js) + .kwin-body + .kwin-foot.
+   Le voile garde .full-menu-overlay quand il vit dans un hôte de modale :
+   z-index et fermeture au toucher restent ceux de l'hôte.
+   ===================================================================== */
+.kwin-veil,
+.full-menu-overlay.kwin-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(16px + var(--safe-top, 0px)) 16px calc(16px + var(--safe-bottom));
+  background: var(--sheet-veil);
+}
+
+.kwin {
+  position: relative;
+  width: min(344px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 16px;
+  border-radius: var(--sheet-radius);
+  background: var(--sheet-body-bg);
+  color: var(--sheet-ink);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+  animation: kwin-pop 0.22s ease-out;
+  /* Hors du .kframe : encre sombre restaurée, comme .ksheet */
+  --nb-ink: #3a2c1a;
+  --nb-ink-dim: #6b5a40;
+}
+
+@keyframes kwin-pop {
+  from { transform: scale(0.94); opacity: 0; }
+}
+
+.kwin-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 48px 14px;
+  text-align: center;
+  border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+}
+
+.kwin-ico { display: flex; align-items: center; justify-content: center; line-height: 1; font-size: 40px; }
+.kwin-ico img { width: 48px; height: 48px; object-fit: contain; }
+
+.kwin-ttl { font-size: 18px; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+
+.kwin-head .ksheet-x { top: 10px; }
+
+.kwin-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding: 16px 18px 0;
+  text-align: center;
+}
+
+.kwin-foot {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 16px 0;
+}
+
+.kwin-foot .kbtn,
+.kwin-foot .settings-btn {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+}
+
+/* Texte courant d'une fenêtre (message, récit) */
+.kwin-text {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.kwin-quote {
+  margin: 0 0 12px;
+  padding-left: 10px;
+  border-left: 2px solid var(--sheet-accent);
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--sheet-ink-dim);
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kwin { animation: none; }
+}
+
 /* Segment posé en tête d'un cadre de page : fond clair du cadre → contour et
    encre adaptés (le .kseg nu est conçu pour le fond sombre des feuilles). */
 .kframe .kseg-in-frame {

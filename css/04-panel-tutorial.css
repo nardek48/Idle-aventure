@@ -1,6 +1,5 @@
 /* css/04-panel-tutorial.css — popup pédagogique par étape Histoire (v3.107.7, décision Seb).
-   Réutilise .full-menu-overlay/.dungeon-story-card/.dungeon-story-icon/.dungeon-story-title/
-   .dungeon-story-actions (css/05-overlays.css, css/04-panel-dungeon.css) — seules les classes
+   v3.400.0 (lot F-2) : fenêtre du kit (.kwin, css/00-components.css) — seules les classes
    propres au contenu (liste de points) sont définies ici. */
 
 .tutorial-points {
@@ -16,10 +15,13 @@
   align-items: flex-start;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--nb-cream-alt);
-  border-left: 2px solid var(--nb-gold);
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 12px;
+  background: var(--sheet-card-bg);
 }
+
+/* Dans la fenêtre, la liste défile seule entre l'en-tête et le bouton */
+.kwin-body.tutorial-points { margin-bottom: 0; padding-bottom: 2px; }
 
 .tutorial-point-icon {
   font-size: 20px;
@@ -28,9 +30,9 @@
 }
 
 .tutorial-point-text {
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.5;
-  color: rgba(58, 44, 26, 0.85);
+  color: var(--sheet-ink);
 }
 
 /* v3.263.0 : aperçu du bandeau d'alerte (.cb-alert, 03-combat-v2.css), posé sous le texte */
@@ -64,23 +66,16 @@
 
 /* v3.306.0 — écran d'un choix pesant (ui/living-map-view.js, buildStoryChoiceModalHTML).
    Même carte que le tutoriel ; chaque option = son bouton, sa conséquence écrite dessous. */
-.story-choice-text {
-  margin: 0 0 14px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: rgba(58, 44, 26, 0.85);
-}
-
 .story-choice-option {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--nb-cream-alt);
-  border-left: 2px solid var(--nb-gold);
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 12px;
+  background: var(--sheet-card-bg);
 }
 
 .story-choice-desc {

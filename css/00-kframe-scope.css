@@ -57,7 +57,6 @@ Deux responsabilités ici :
 .kframe .farm-plots-panel,
 .kframe .workshop-card,
 .kframe .workshop-summary-row,
-.kframe .workshop-completion-card,
 .kframe .construction-entry-card,
 .kframe .warehouse-reserve-block,
 .kframe .eq-detail-panel,
@@ -75,8 +74,6 @@ Deux responsabilités ici :
 .kframe .codex-reading-card,
 .kframe .codex-excerpt,
 .kframe .settings-info,
-.kframe .confirm-card,
-.kframe .offline-card,
 .kframe .ability-card,
 /* v3.210.0 : conteneurs à fond crème de la refonte du Grimoire. La feuille basse
    (.grimoire-sheet) vit hors du .kframe mais déclare la même restauration dans

@@ -658,17 +658,19 @@ function buildStoryChoiceModalHTML(chapterId) {
   var step = window.StoryQuestManager && StoryQuestManager.getCurrentStep(chapterId);
   var c = step && step.choice;
   if (!c) return "";
-  var h = '<div class="full-menu-overlay tutorial-overlay">';
-  h += '  <div class="full-menu dungeon-story-card tutorial-card story-choice-card">';
-  h += '    <div class="dungeon-story-title">' + esc(_td(c.title || step.title)) + '</div>';
-  if (c.text) h += '    <p class="story-choice-text">' + esc(_td(c.text)) + '</p>';
+  var h = '<div class="full-menu-overlay kwin-veil tutorial-overlay">';
+  h += '  <div class="kwin dungeon-story-card tutorial-card story-choice-card">';
+  h += kWinHeadHTML({ icon: '<img src="images/Icons/codex/codex_lore.png" alt="">', title: esc(_td(c.title || step.title)) }); // v3.400.0 (F-2)
+  h += '    <div class="kwin-body">';
+  if (c.text) h += '    <p class="kwin-quote story-choice-text">' + esc(_td(c.text)) + '</p>';
   c.options.forEach(function (o) {
     h += '    <div class="story-choice-option">';
     h += '      <button class="settings-btn primary" type="button" onclick="chooseStoryOption(\'' + esc(chapterId) + '\', \'' + esc(o.value) + '\')">' + esc(_td(o.label)) + '</button>';
     h += '      <p class="story-choice-desc">' + esc(_td(o.desc || "")) + '</p>';
     h += '    </div>';
   });
-  h += '    <div class="dungeon-story-actions"><button class="settings-btn" type="button" onclick="closeStoryChoiceModal()">' + _t("Plus tard") + '</button></div>';
+  h += '    </div>';
+  h += '    <div class="kwin-foot"><button class="kbtn" type="button" onclick="closeStoryChoiceModal()">' + _t("Plus tard") + '</button></div>';
   h += '  </div>';
   h += '</div>';
   return h;

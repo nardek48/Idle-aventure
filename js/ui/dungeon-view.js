@@ -258,11 +258,12 @@ function confirmDungeonStart() {
 
 /* ---------- Rapport de fin ---------- */
 function buildDungeonSummaryHTML(result) {
-  var h = '<div class="full-menu-overlay">';
-  h += '  <div class="full-menu dungeon-story-card' + (result.success ? ' is-success' : ' is-failure') + '">';
-  h += '    <div class="dungeon-story-icon">' + (result.success ? '<img class=ico-inline src=images/Icons/scene/final_reward.png>' : '<img class=ico-inline src=images/Icons/subtabs/dungeon.png>') + '</div>';
-  h += '    <div class="dungeon-story-title">' + esc(result.success ? _t("{x} terminé !", { x: _td(result.tierName) }) : _t("{x} interrompu", { x: _td(result.tierName) })) + '</div>';
-  h += '    <div class="dungeon-story-text">' + (result.success
+  var h = '<div class="full-menu-overlay kwin-veil">';
+  h += '  <div class="kwin dungeon-story-card' + (result.success ? ' is-success' : ' is-failure') + '">';
+  h += kWinHeadHTML({ icon: '<img src="images/Icons/' + (result.success ? 'scene/final_reward.png' : 'subtabs/dungeon.png') + '" alt="">',
+    title: esc(result.success ? _t("{x} terminé !", { x: _td(result.tierName) }) : _t("{x} interrompu", { x: _td(result.tierName) })) }); // v3.400.0 (F-2)
+  h += '    <div class="kwin-body">';
+  h += '    <div class="kwin-quote dungeon-story-text">' + (result.success
     ? _t("Le boss s’effondre. La salle retrouve son calme — pour cette fois.")
     : _t("La tentative s’arrête à la vague {a} sur {b}. Tu récupères quand même quelque chose avant de te replier.", { a: result.clearedWave, b: result.wavesTotal })) + '</div>';
 
@@ -283,7 +284,8 @@ function buildDungeonSummaryHTML(result) {
   h += '    </div>';
   // v3.245.0 : les éclats se dépensent chez l'Enchanteresse
   h += '    <div class="dungeon-story-meta"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + _t("Les Éclats se dépensent chez l’Enchanteresse, au Village.") + '</div>';
-  h += '    <button class="settings-btn primary dungeon-story-close" type="button" onclick="closeDungeonSummary()">' + _t("Continuer") + '</button>';
+  h += '    </div>';
+  h += '    <div class="kwin-foot"><button class="kbtn primary" type="button" onclick="closeDungeonSummary()">' + _t("Continuer") + '</button></div>';
   h += '  </div>';
   h += '</div>';
   return h;

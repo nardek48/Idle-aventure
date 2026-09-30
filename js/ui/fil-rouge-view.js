@@ -34,38 +34,23 @@ function openFilRougeBubble() {
   var a = FilRouge.get();
   var also = FilRouge.also();
   filRougeShown = [a].concat(also);
-  var h = '<div class="fr-bubble-bg" onclick="if(event.target===this)closeFilRougeBubble()">';
-  h += '<div class="fr-bubble" id="fr-bubble"><div class="fr-kicker">' + _t("Fil rouge") + '</div>';
-  h += '<div class="fr-row">' + renderIconOrEmojiHTML(a.icon, "fr-row-ico", _td(a.title)) + '<div><div class="fr-title">' + esc(_td(a.title)) + '</div>'
-    + '<div class="fr-reason">' + esc(a.reason) + '</div></div></div>';
-  h += '<button type="button" class="settings-btn primary fr-go" onclick="filRougeGo(0)">' + esc(a.goLabel) + '</button>';
+  /* v3.400.0 (lot F-2) : fenêtre centrée du kit. Le bouton du HUD auquel la bulle
+     s'accrochait n'existe plus (bulles du bas, v3.396.0) : plus de positionnement. */
+  var h = '<div class="kwin-veil fr-bubble-bg" onclick="if(event.target===this)closeFilRougeBubble()">';
+  h += '<div class="kwin fr-bubble" id="fr-bubble">';
+  h += kWinHeadHTML({ icon: renderIconOrEmojiHTML(a.icon, "fr-row-ico", _td(a.title)), title: esc(_td(a.title)), sub: _t("Fil rouge"), close: "closeFilRougeBubble()" });
+  h += '<div class="kwin-body"><p class="kwin-text fr-reason">' + esc(a.reason) + '</p>';
   if (also.length) {
     h += '<div class="fr-also"><span>' + _t("Aussi :") + '</span> ' + also.map(function (x, i) {
       return '<button type="button" class="fr-also-btn" onclick="filRougeGo(' + (i + 1) + ')">' + esc(_td(x.title)) + '</button>';
     }).join(" · ") + '</div>';
   }
+  h += '</div>';
+  h += '<div class="kwin-foot"><button type="button" class="kbtn primary fr-go" onclick="filRougeGo(0)">' + esc(a.goLabel) + '</button></div>';
   h += '</div></div>';
   var root = getFilRougeRoot();
   if (!root) return;
   root.innerHTML = h;
-  positionFilRougeBubble();
-}
-
-/* Sous le bouton, la flèche sur son centre, sans sortir de l'écran. */
-function positionFilRougeBubble() {
-  var bub = document.getElementById("fr-bubble");
-  var btn = document.getElementById("hud-filrouge-btn");
-  if (!bub || !btn || typeof btn.getBoundingClientRect !== "function") return;
-  var f = window.DesktopScale ? DesktopScale.factorOf(btn) : 1; // v3.367.0 : mode PC zoomé, px d'écran -> px CSS
-  var b = btn.getBoundingClientRect();
-  var r = { left: b.left / f, width: b.width / f, bottom: b.bottom / f };
-  var vw = (window.innerWidth || 390) / f;
-  var w = bub.offsetWidth || 300;
-  var cx = r.left + r.width / 2;
-  var left = Math.max(8, Math.min(vw - w - 8, cx - w + 40));
-  bub.style.left = left + "px";
-  bub.style.top = (r.bottom + 10) + "px";
-  bub.style.setProperty("--fr-arrow", Math.max(12, Math.min(w - 26, cx - left - 7)) + "px");
 }
 
 function closeFilRougeBubble() {

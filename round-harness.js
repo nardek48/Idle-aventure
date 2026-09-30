@@ -28,25 +28,11 @@ scripts.forEach(function (s) {
   try { vm.runInContext(code, sandbox, { filename: s }); } catch (e) { console.error("LOAD FAIL", s, e.message); process.exit(1); }
 });
 console.log("Chargé " + scripts.length + " scripts");
-/* v3.388.0 (PA2-6) : les Petites Aventures v1 et le bac à sable expedition_faille sont retirés du
-   jeu. Le moteur de scènes reste (quêtes de déblocage, parcours d'Histoire) : ses sections le testent
-   sur ce canevas de test, copie de l'ancien expedition_faille, injecté ici et jamais livré. */
-sandbox.SCENE_TEMPLATES.expedition_faille = {"id": "expedition_faille", "mode": "generative", "title": "Expédition en profondeur", "icon": "images/Icons/scene/scene_cavern.png", "depthMax": 8, "firstDepthType": "obstacle", "gatesPerDepth": [2, 3], "optionsPerNode": 2, "maxInjuries": 2, "heroScaling": {"ref": 21, "coef": 0.6, "max": 3.5}, "breathPerDepth": 5, "diffMult": 2.6, "slotWeights": {"obstacle": 56, "autel": 12, "decouverte": 12, "source": 8, "mystere": 12}, "pools": {"obstacle": ["eboulis", "gouffre", "porte_scellee", "paroi", "riviere", "racines"]}, "riskModRange": [0.6, 1.6], "loadoutOffer": ["torche", "corde", "provisions", "amulette", "gourde"], "loadoutSlots": 3, "items": {"torche": {"id": "torche", "icon": "images/Icons/scene/torch.png", "name": "Torche", "desc": "Révèle le détail des portes du niveau courant (3 charges).", "charges": 3}, "corde": {"id": "corde", "icon": "images/Icons/scene/rope.png", "name": "Corde", "desc": "Passe un obstacle compatible sans jet (1 usage, gain réduit).", "charges": 1}, "provisions": {"id": "provisions", "icon": "images/Icons/scene/provisions.png", "name": "Provisions", "desc": "Soigne la blessure la plus grave (1 usage).", "charges": 1}, "amulette": {"id": "amulette", "icon": "images/Icons/scene/protective_amulet.png", "name": "Amulette", "desc": "Relance automatiquement le premier jet raté (1 fois)."}, "gourde": {"id": "gourde", "icon": "images/Icons/scene/water_flask.png", "name": "Gourde", "desc": "Restaure 30 Souffle (consommable, à utiliser quand tu veux)."}}, "lootResource": "gold", "lootRanges": {"obstacleSuccess": [6, 14], "obstacleRope": [3, 7], "obstacleSetback": [1, 3], "decouverte": [8, 16], "finalSafe": [20, 20], "finalRiskyBase": [0, 0]}, "autelCostRatio": 0.2, "optionProfiles": {"power": {"diffMod": 1.12, "lootMod": 2.6, "breathCost": 10, "injurySeverity": "grave"}, "precision": {"diffMod": 1, "lootMod": 1.15, "breathCost": 5, "injurySeverity": "normale"}, "endurance": {"diffMod": 0.95, "lootMod": 0.5, "breathCost": 20, "injurySeverity": "legere"}}};
 
 var g = sandbox;
 var failures = 0, passes = 0;
 function ok(cond, msg) { if (cond) { passes++; console.log("  ✔ " + msg); } else { failures++; console.log("  ✘ " + msg); } }
 function run(code) { return vm.runInContext(code, g); }
-/* v3.199.0 : première voie réellement exposée (et payable) par le nœud courant du moteur de scènes. */
-function anyVoie() {
-  var run = g.game.sceneRun;
-  if (!run || !run.pendingNode || run.pendingNode.type !== "obstacle") return "power";
-  var gab = g.window.SCENE_NODES.obstacles[run.pendingNode.gabaritId];
-  var slot = (g.SceneRunManager.getCurrentLevel() || [])[run.currentGate] || run.pendingNode;
-  var afford = g.SceneRunManager.affordableVoies(run, gab, slot);
-  if (afford.length) return afford[0];
-  return g.window.SceneEngine.nodeVoies(gab, slot)[0] || "power";
-}
 /* v3.389.0 (chantier P) : joue un parcours (Pa2Run) jusqu'au bout. win : dés forcés au maximum. */
 function playParcours(win) {
   var P = g.Pa2Run, r = g.game.sceneRun, saved = P.rand, guard = 60;
@@ -581,7 +567,7 @@ ok(top3.every(function (m) { return boardHtml.indexOf(g.esc(m.title)) !== -1; })
 ok(boardHtml.indexOf("Accepter") !== -1, "bouton Accepter sur l'étape Histoire disponible");
 ok(campHtml.indexOf("Voir le tableau complet") !== -1, "bouton vers le reste du tableau (encore l'écran Quêtes)");
 // v3.116.0 (Lot C) : nouveaux blocs Santé / Rations / Régénération, rendus sans exception
-ok(campHtml.indexOf("camp-hp-fill") !== -1 && campHtml.indexOf("Santé du Héros") !== -1, "bloc Santé du Héros : barre de PV présente");
+ok(campHtml.indexOf("camp-hp-fill") !== -1 && campHtml.indexOf("Santé du héros") !== -1, "bloc Santé du Héros : barre de PV présente");
 ok(campHtml.indexOf("camp-ration-grid") !== -1, "bloc Rations : grille de 3 rations présente");
 /* v3.233.0 : la barre de régénération est retirée (elle affichait hpPct, soit la
    barre de PV en double). Le bloc garde la phrase, le rythme et l'ETA. */
@@ -1909,159 +1895,33 @@ ok(rows76.some(function (r) { return r.label === "Potion d'Endurance" && r.value
 ok(!rows76.some(function (r) { return r.label === "\u00c9lixir d'Aether"; }), "\u00c9lixir d'Aether non distribuable (perRun=false)");
 
 /* ==================== Lot S1 : scene-engine générique (DESIGN_Scene_Engine_v1.md) ==================== */
-console.log("\n[S1] SceneCheckSystem (module pur) — formule identique à ExplorationCheckSystem");
+console.log("\n[S1] SceneCheckSystem (module pur) — jets d'obstacle lus par Pa2Run");
 ok(g.SceneCheckSystem.successChance(0, 0) === 32, "successChance(0,0) = base 32 (v3.195.0)");
 ok(g.SceneCheckSystem.successChance(1000, 0) === 87, "successChance plafonnée à 87 (32 base + statBonus cap 55, v3.195.0)");
 ok(g.SceneCheckSystem.successChance(0, 1000) === 5, "successChance plancher à 5 (difficulté écrasante, v3.195.0)");
-ok(g.SceneCheckSystem.estimate(30) === "low" && g.SceneCheckSystem.estimate(50) === "medium" && g.SceneCheckSystem.estimate(70) === "high", "estimate() qualitatif low/medium/high");
-var chk76a = g.SceneCheckSystem.resolveCheck({ statValue: 10, difficulty: 4, randomValue: 0.01 });
-ok(chk76a.result === "perfect", "randomValue très bas -> perfect (sous perfectThreshold)");
-var chk76b = g.SceneCheckSystem.resolveCheck({ statValue: 10, difficulty: 4, randomValue: 0.99 });
-ok(chk76b.result === "setback", "randomValue très haut -> setback (au-dessus de successThreshold)");
 ok(g.SceneCheckSystem.depthDifficulty(4, 0) === 4 && Math.abs(g.SceneCheckSystem.depthDifficulty(4, 5) - 11) < 1e-9, "depthDifficulty +1.4/palier (v3.195.0)");
 ok(g.SceneCheckSystem.depthLootMultiplier(0) === 1 && Math.abs(g.SceneCheckSystem.depthLootMultiplier(5) - 2.5) < 1e-9, "depthLootMultiplier +30%/palier");
 
-console.log("\n[S1] SceneEngine (moteur pur) — tirage pondéré et génération de carte, aucun accès game.*");
-ok(g.SceneEngine.weightedPick({ a: 100 }, 0.5) === "a", "weightedPick un seul poids -> toujours lui");
-ok(g.SceneEngine.weightedPick({ a: 50, b: 50 }, 0.1) === "a" && g.SceneEngine.weightedPick({ a: 50, b: 50 }, 0.9) === "b", "weightedPick répartit selon randomValue");
-ok(g.SceneEngine.weightedPick({}, 0.5) === null, "weightedPick objet vide -> null");
-ok(g.SceneEngine.pickFromArray(["x", "y", "z"], 0) === "x" && g.SceneEngine.pickFromArray(["x", "y", "z"], 0.99) === "z", "pickFromArray bornes correctes");
-
-var tpl76 = g.SCENE_TEMPLATES.expedition_faille;
-var randCount76 = g.SceneEngine.estimateRandomCount(tpl76);
-var rv76 = []; for (var i76 = 0; i76 < randCount76; i76++) rv76.push(0.5);
-var card76 = g.SceneEngine.buildCard(tpl76, rv76);
-ok(card76.length === tpl76.depthMax, "buildCard produit exactement depthMax paliers (" + tpl76.depthMax + ")");
-ok(card76.every(function (level) { return level.length >= tpl76.gatesPerDepth[0] && level.length <= tpl76.gatesPerDepth[1]; }), "chaque palier a 2-3 portes");
-ok(card76[0].every(function (slot) { return slot.type === "obstacle"; }), "premier palier toujours 'obstacle' (firstDepthType, lisibilité)");
-ok(card76[0].every(function (slot) { return tpl76.pools.obstacle.indexOf(slot.gabaritId) !== -1; }), "gabaritId d'obstacle toujours dans le pool déclaré");
-
-console.log("\n[S1] SceneEngine — riskMod par porte (v3.121.0, variance de difficulté/gain)");
-ok(card76[0].every(function (slot) { return slot.riskMod >= tpl76.riskModRange[0] && slot.riskMod <= tpl76.riskModRange[1]; }), "riskMod de chaque obstacle dans template.riskModRange");
-var riskValues76 = card76[0].map(function (slot) { return slot.riskMod; });
-var allSame76 = riskValues76.every(function (v) { return v === riskValues76[0]; });
-ok(allSame76, "card76 (randomValues figées à 0.5) donne un riskMod identique sur chaque porte — attendu, sert de témoin");
-var rvVar76 = []; for (var iv76 = 0; iv76 < randCount76; iv76++) rvVar76.push(Math.random());
-var cardVar76 = g.SceneEngine.buildCard(tpl76, rvVar76);
-var riskValuesVar76 = cardVar76[0].map(function (slot) { return slot.riskMod; });
-var allSameVar76 = riskValuesVar76.every(function (v) { return v === riskValuesVar76[0]; });
-ok(!allSameVar76 || riskValuesVar76.length === 1, "avec des randomValues réellement aléatoires, riskMod varie entre les portes d'un même palier");
-ok(g.SceneEngine.riskLevel(0.5) === "low" && g.SceneEngine.riskLevel(1.0) === "medium" && g.SceneEngine.riskLevel(1.5) === "high", "riskLevel : low/medium/high selon riskMod");
-var lootLow76 = g.SceneEngine.rollLoot([10, 10], 0, 0.5, 0.6);
-var lootHigh76 = g.SceneEngine.rollLoot([10, 10], 0, 0.5, 1.6);
-ok(lootHigh76 > lootLow76, "rollLoot : un riskMod plus élevé rapporte visiblement plus (" + lootLow76 + " vs " + lootHigh76 + ")");
-var diffLow76 = g.SceneCheckSystem.depthDifficulty(4, 0) * 0.6;
-var diffHigh76 = g.SceneCheckSystem.depthDifficulty(4, 0) * 1.6;
-ok(g.SceneCheckSystem.successChance(50, diffHigh76) < g.SceneCheckSystem.successChance(50, diffLow76), "difficulté effective : riskMod élevé -> succès moins probable, à stat égale");
-
-var gabarit76 = g.SCENE_NODES.obstacles.eboulis;
-var est76 = g.SceneEngine.estimateObstacle(gabarit76, "power", 10, 0);
-ok(["low", "medium", "high"].indexOf(est76) !== -1, "estimateObstacle renvoie un estimate qualitatif");
-var loot76 = g.SceneEngine.rollLoot([10, 10], 0, 0.5);
-ok(loot76 === 10, "rollLoot base fixe [10,10] profondeur 0 -> 10 (multiplicateur ×1)");
-var loot76b = g.SceneEngine.rollLoot([10, 10], 5, 0.5);
-ok(loot76b === 25, "rollLoot [10,10] profondeur 5 -> 25 (×2.5, +30%/palier)");
-
-console.log("\n[S1] SceneRunManager (glue jeu) — persistance game.sceneRun, délégation SortieManager");
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
-ok(g.SceneRunManager.isRunActive() === false, "aucun run actif après fullResetState");
-var start76 = g.SceneRunManager.startRun("expedition_faille");
-ok(start76.ok === true && start76.run.status === "preparation", "startRun -> statut 'preparation'");
-ok(g.game.sceneRun && g.game.sceneRun.id === start76.run.id, "game.sceneRun persisté");
-ok(g.game.sortie.active === true && g.game.sortie.context === "scene", "SortieManager.start('scene') appelé au démarrage");
-var doubleStart76 = g.SceneRunManager.startRun("expedition_faille");
-ok(doubleStart76.ok === false, "startRun refuse un second run pendant qu'un run est actif");
-
-var badLoadout76 = g.SceneRunManager.confirmLoadout(["torche"]);
-ok(badLoadout76.ok === false, "confirmLoadout refuse un sac incomplet (1/3)");
-var loadout76 = g.SceneRunManager.confirmLoadout(["torche", "corde", "amulette"]);
-ok(loadout76.ok === true && loadout76.run.status === "gate", "confirmLoadout complet -> statut 'gate'");
-ok(g.game.sceneRun.torchCharges === 3, "torche : 3 charges (décision Seb 03/09/2026)");
-ok(g.game.sceneRun.ropeAvailable === true && g.game.sceneRun.amuletAvailable === true, "corde/amulette disponibles selon le sac");
-
-var level76 = g.SceneRunManager.getCurrentLevel();
-ok(level76.length >= 2 && level76.length <= 3 && level76[0].type === "obstacle", "palier 0 : 2-3 portes, toutes obstacle");
-var enter76 = g.SceneRunManager.enterGate(0);
-ok(enter76.ok === true && g.game.sceneRun.status === "node" && g.game.sceneRun.pendingNode.type === "obstacle", "enterGate -> statut 'node', pendingNode posé");
-var badEnter76 = g.SceneRunManager.enterGate(0);
-ok(badEnter76.ok === false, "enterGate refusé hors statut 'gate' (idempotence)");
-
-var lootBefore76 = g.game.sortie.loot.gold || 0;
-var resolve76 = g.SceneRunManager.resolveObstacle(anyVoie());
-ok(resolve76.ok === true, "resolveObstacle(voie exposée) accepté");
-ok(g.game.sceneRun.status === "gate" || g.game.sceneRun.status === "finale" || g.game.sceneRun.status === "completed", "après résolution : avance au palier suivant (ou finale/évacuation)");
-var lootAfter76 = g.game.sortie.loot.gold || 0;
-ok(lootAfter76 >= lootBefore76, "or ajouté dans game.sortie.loot.gold (jamais négatif)");
-var doubleResolve76 = g.SceneRunManager.resolveObstacle(anyVoie());
-ok(doubleResolve76.ok === false, "resolveObstacle refusé si aucun obstacle en attente (idempotence anti double-clic)");
-
-console.log("\n[S1] SceneRunManager — blessures typées, évacuation à 3, corde jamais négative");
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
-g.SceneRunManager.startRun("expedition_faille");
-g.SceneRunManager.confirmLoadout(["provisions", "provisions", "provisions"]); // pas de corde/amulette : force les jets de stat
-var injuries76 = 0, guard76 = 0;
-while (g.game.sceneRun.injuries.length < 3 && guard76 < 60) {
-  guard76++;
-  if (g.game.sceneRun.status === "completed") break;
-  if (g.game.sceneRun.status === "finale") { g.SceneRunManager.resolveFinale("sur"); break; }
-  var lvl = g.SceneRunManager.getCurrentLevel();
-  var obstacleIdx = -1;
-  for (var gi = 0; gi < lvl.length; gi++) { if (lvl[gi].type === "obstacle") { obstacleIdx = gi; break; } }
-  if (obstacleIdx === -1) { g.SceneRunManager.enterGate(0); }
-  else {
-    g.SceneRunManager.enterGate(obstacleIdx);
-    var pending = g.game.sceneRun.pendingNode;
-    if (pending && pending.type === "obstacle") g.SceneRunManager.resolveObstacle(anyVoie());
-  }
-  // Salles non-obstacle : les résoudre pour ne pas bloquer la boucle.
-  var pn = g.game.sceneRun.pendingNode;
-  if (pn) {
-    if (pn.type === "autel") g.SceneRunManager.resolveAutel(false);
-    else if (pn.type === "decouverte") g.SceneRunManager.resolveDecouverte();
-    else if (pn.type === "source") g.SceneRunManager.resolveSource();
-  }
-}
-ok(guard76 < 60, "la boucle de test a convergé sans dépasser le garde-fou (pas de blocage moteur)");
-if (g.game.sceneRun.status === "completed") {
-  // v3.198.0 : seuil lu sur le canevas au lieu d'être figé à 3.
-  var maxInj76 = g.SceneRunManager.getMaxInjuries(g.game.sceneRun.templateId);
-  // v3.265.0 : l'épuisement du Souffle (v3.199.0) est la 3e fin légitime — il rendait ce test instable (~1/10)
-  ok(g.game.sceneRun.injuries.length >= maxInj76 || g.game.sceneRun.depth >= tpl76.depthMax || g.game.sceneRun.exhausted === true, "run terminé par évacuation (" + maxInj76 + " blessures), épuisement ou fin de carte (chambre finale résolue)");
-  ok(g.game.sortie.active === false, "SortieManager.end() appelé -> sortie clôturée");
-}
-
-console.log("\n[S1] SceneRunManager — retour volontaire (leaveNow) : clôture la sortie (XP réglée en [103])");
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
-g.SceneRunManager.startRun("expedition_faille");
-g.SceneRunManager.confirmLoadout(["provisions", "provisions", "provisions"]);
-var leave76 = g.SceneRunManager.leaveNow();
-ok(leave76.ok === true, "leaveNow accepté au statut 'gate'");
-ok(g.game.sceneRun.status === "completed", "run marqué 'completed' après leaveNow");
-ok(g.game.sortie.active === false, "sortie clôturée par SortieManager.end()");
-
+/* v3.391.0 (lot P-3) : l'abandon et la garde de sortie, sur un parcours v2 (bosquet_silencieux, gratuit). */
 console.log("\n[S1] SceneRunManager.abandon() — sortie prématurée via le garde ui-root.js:switchTab");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
-g.SceneRunManager.startRun("expedition_faille");
-g.SceneRunManager.confirmLoadout(["provisions", "provisions", "provisions"]);
+g.SceneRunManager.startRun("bosquet_silencieux");
 ok(g.SceneRunManager.isRunActive() === true, "run actif avant abandon");
 var abandon76 = g.SceneRunManager.abandon();
 ok(abandon76.ok === true, "abandon() accepté sur un run actif");
 ok(g.game.sceneRun.status === "completed", "run marqué 'completed' après abandon");
-ok(g.game.sortie.active === false, "sortie clôturée par SortieManager.end('flee') (50%, 0 XP)");
+ok(g.game.sortie.active === false, "sortie clôturée par SortieManager.end('flee')");
 var doubleAbandon76 = g.SceneRunManager.abandon();
 ok(doubleAbandon76.ok === false, "abandon() refusé sur un run déjà 'completed' (idempotence)");
 
-console.log("\n[S1] ui-root.js:switchTab — garde anti-sortie pendant un run scene-engine actif");
+console.log("\n[S1] ui-root.js:switchTab — garde anti-sortie pendant une expédition");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.scene = true; game.unlockedTabs.combat = true;");
-g.SceneRunManager.startRun("expedition_faille");
-g.SceneRunManager.confirmLoadout(["provisions", "provisions", "provisions"]);
+g.SceneRunManager.startRun("bosquet_silencieux");
 run("game.activeTab = 'scene';");
-var confirmCalled76 = false;
 run("window.showConfirmModal = function(title, text, icon, cb) { window.__sceneConfirmCb = cb; };");
 run("switchTab('combat');");
 ok(g.game.activeTab === "scene", "switchTab('combat') pendant un run actif NE change PAS activeTab tant que la confirmation n'est pas résolue");
 ok(typeof g.__sceneConfirmCb === "function", "showConfirmModal appelé avec un callback d'abandon");
-run("window.closeSceneModal = function(){};"); // stub, non défini dans ce contexte de test isolé
 run("__sceneConfirmCb();");
 ok(g.game.activeTab === "campement", "après confirmation : navigation effective ; sans run de quête, Combat renvoie au Campement (v3.293.0)");
 ok(g.game.sceneRun.status === "completed", "le run a été abandonné (flee) avant la navigation");
@@ -2633,198 +2493,6 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   run("productionViewTab = 'prod'; productionDetailBuildingId = null;");
 })();
 
-/* ================= [PA] v3.198.0 — recalibrage de la Petite Aventure =================
-   Protège les invariants du lot : plafond de blessures par canevas, voies restreintes par
-   nœud, corde et provisions à charges, soins ciblés par sévérité, difficulté indexée sur le
-   héros. Chaque assertion vise un COMPORTEMENT, pas une valeur de calibrage : les constantes
-   sont lues dans les données pour que le prochain recalibrage ne casse pas ces tests. */
-(function () {
-  console.log("\n[PA] Petite Aventure — plafond de blessures, voies, charges, soins, heroScale");
-
-  var PA = g.window.SCENE_TEMPLATES.expedition_faille;
-  var EF = g.window.SCENE_TEMPLATES.expedition_faille;
-
-  // --- plafond de blessures : par canevas, pas en dur ---
-  ok(run("SceneRunManager.getMaxInjuries('expedition_faille')") === PA.maxInjuries,
-    "[PA] getMaxInjuries lit template.maxInjuries (" + PA.maxInjuries + ")");
-  // v3.199.0 : expedition_faille est calibré à son tour. Le canevas témoin « intouché » est
-  // désormais une quête de déblocage migrée (2 paliers, rôle de tutoriel).
-  ok(run("SceneRunManager.getMaxInjuries('sentier_obstrue')") === 3,
-    "[PA] un canevas sans maxInjuries garde le défaut de 3 blessures");
-  ok(run("SceneRunManager.getMaxInjuries('expedition_faille')") === 2,
-    "[PA] expedition_faille évacue à 2 blessures (calibré v3.199.0)");
-
-  // --- voies restreintes : le nœud n'expose que optionsPerNode approches ---
-  run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 };");
-  run("SceneRunManager.startRun('expedition_faille');");
-  var voiesOk = run("(function () {" +
-    "var bad = 0, seen = 0;" +
-    "game.sceneRun.card.forEach(function (lvl) { lvl.forEach(function (sl) {" +
-    "  if (sl.type !== 'obstacle') return; seen++;" +
-    "  var gab = SCENE_NODES.obstacles[sl.gabaritId];" +
-    "  var v = SceneEngine.nodeVoies(gab, sl);" +
-    "  if (v.length !== SCENE_TEMPLATES.expedition_faille.optionsPerNode) bad++;" +
-    "}); });" +
-    "return { bad: bad, seen: seen }; })()");
-  ok(voiesOk.seen > 0, "[PA] la carte générée contient au moins un obstacle (" + voiesOk.seen + ")");
-  ok(voiesOk.bad === 0, "[PA] chaque obstacle n'expose que " + PA.optionsPerNode + " voies (" + voiesOk.bad + " écart(s))");
-
-  // les voies sont MÉMORISÉES : deux lectures successives donnent la même liste
-  var stable = run("(function () {" +
-    "var sl = null; game.sceneRun.card.forEach(function (l) { l.forEach(function (x) { if (!sl && x.type === 'obstacle') sl = x; }); });" +
-    "var gab = SCENE_NODES.obstacles[sl.gabaritId];" +
-    "return SceneEngine.nodeVoies(gab, sl).join(',') === SceneEngine.nodeVoies(gab, sl).join(','); })()");
-  ok(stable === true, "[PA] les voies d'un nœud sont figées dans le slot, jamais retirées à l'affichage");
-
-  // expedition_faille : pas d'optionsPerNode -> toutes les voies restent exposées
-  ok(g.window.SCENE_TEMPLATES.sentier_obstrue.optionsPerNode == null,
-    "[PA] une quête migrée ne déclare pas optionsPerNode (3 voies conservées)");
-  ok(EF.optionsPerNode === 2, "[PA] expedition_faille expose 2 voies par nœud (calibré v3.199.0)");
-  var efAll = run("(function () {" +
-    "var gab = SCENE_NODES.obstacles.gouffre;" +
-    "return SceneEngine.nodeVoies(gab, { type: 'obstacle', gabaritId: 'gouffre' }).length; })()");
-  ok(efAll === 3, "[PA] un slot sans voies retombe sur les 3 options du gabarit (reprise de sauvegarde)");
-
-  // --- soins ciblés par sévérité ---
-  run("game.sceneRun.injuries = [{ stat: 'power', severity: 'grave' }];");
-  ok(run("SceneRunManager.canHealHere(game.sceneRun)") === false,
-    "[PA] autel/source ne peuvent rien sur une blessure grave");
-  run("game.sceneRun.injuries = [{ stat: 'power', severity: 'grave' }, { stat: 'endurance', severity: 'legere' }];");
-  ok(run("SceneRunManager.canHealHere(game.sceneRun)") === true,
-    "[PA] autel/source agissent dès qu'une blessure légère est présente");
-  run("SceneRunManager._healOneInjury(game.sceneRun, 'legere');");
-  ok(run("game.sceneRun.injuries.length") === 1 && run("game.sceneRun.injuries[0].severity") === "grave",
-    "[PA] le soin 'legere' retire la légère et laisse la grave");
-
-  // --- provisions : soignent la PIRE blessure, consomment une charge ---
-  run("game.sceneRun.injuries = [{ stat: 'endurance', severity: 'legere' }, { stat: 'power', severity: 'grave' }]; game.sceneRun.provisionCharges = 1;");
-  var provRes = run("SceneRunManager.useSceneProvision()");
-  ok(provRes.ok === true && provRes.severity === "grave",
-    "[PA] les provisions soignent la blessure la plus grave");
-  ok(run("game.sceneRun.provisionCharges") === 0, "[PA] les provisions consomment une charge");
-  ok(run("SceneRunManager.useSceneProvision().ok") === false, "[PA] provisions épuisées : refus propre");
-
-  // l'offre de préparation ne contient plus de doublon (annulait le plafond de blessures)
-  var dupPA = run("(function () { var o = SCENE_TEMPLATES.expedition_faille.loadoutOffer;" +
-    "var c = {}; var d = 0; o.forEach(function (id) { c[id] = (c[id] || 0) + 1; if (c[id] > 1) d++; }); return d; })()");
-  ok(dupPA === 0, "[PA] loadoutOffer sans doublon (un seul exemplaire de chaque objet)");
-
-  // --- corde : charges, plus illimitée ---
-  run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 };");
-  run("SceneRunManager.startRun('expedition_faille'); SceneRunManager.confirmLoadout(['corde', 'provisions', 'torche']);");
-  ok(run("game.sceneRun.ropeCharges") === 1, "[PA] confirmLoadout compte les charges de corde (1)");
-  ok(run("game.sceneRun.provisionCharges") === 1, "[PA] confirmLoadout compte les charges de provisions (1)");
-  run("game.sceneRun.ropeCharges = 0; game.sceneRun.ropeAvailable = false;");
-  run("game.sceneRun.status = 'node'; game.sceneRun.currentGate = 0; game.sceneRun.pendingNode = { type: 'obstacle', gabaritId: 'gouffre', riskMod: 1 };");
-  ok(run("SceneRunManager.resolveObstacle('corde').ok") === false,
-    "[PA] corde épuisée : l'approche à la corde est refusée par le manager, pas seulement masquée");
-
-  // --- reprise d'un run d'avant v3.198.0 ---
-  run("game.sceneRun.ropeCharges = null; game.sceneRun.provisionCharges = null; game.sceneRun.ropeAvailable = true; SceneRunManager.getRun();");
-  ok(run("game.sceneRun.ropeCharges") === 1 && run("game.sceneRun.provisionCharges") === 0,
-    "[PA] run repris d'une version antérieure : ropeAvailable converti en 1 charge, provisions à 0");
-
-  // --- heroScale : indexé sur le bonus plafonné, jamais sous 1, plafonné ---
-  var scaleNeuf = run("(function () { var r = { templateId: 'expedition_faille', heroSnapshot: { power: 60, precision: 40, endurance: 62 } };" +
-    "return SceneRunManager.heroScale(r); })()");
-  var scaleMax = run("(function () { var r = { templateId: 'expedition_faille', heroSnapshot: { power: 210, precision: 100, endurance: 212 } };" +
-    "return SceneRunManager.heroScale(r); })()");
-  ok(scaleNeuf >= 1 && scaleNeuf < 1.2, "[PA] heroScale ≈ 1 pour un héros neuf (" + scaleNeuf.toFixed(3) + ")");
-  ok(scaleMax > scaleNeuf, "[PA] heroScale croît avec le développement (" + scaleMax.toFixed(3) + ")");
-  ok(scaleMax <= PA.heroScaling.max, "[PA] heroScale respecte son plafond (" + PA.heroScaling.max + ")");
-  var scaleTuto = run("(function () { var r = { templateId: 'sentier_obstrue', heroSnapshot: { power: 210, precision: 100, endurance: 212 } };" +
-    "return SceneRunManager.heroScale(r); })()");
-  ok(scaleTuto === 1, "[PA] aucun canevas sans heroScaling n'est affecté (quête migrée = 1)");
-
-  // --- profils d'option : surcharge locale, défaut préservé ailleurs ---
-  // Le run actif est purgé AVANT ces mesures : _obstacleFactors compose le mutateur via
-  // getActiveMutator(), qui lit game.sceneRun et non le run passé en argument. Sans cette
-  // purge, un run laissé actif plus haut faisait fuiter son lootMult dans la mesure (test
-  // intermittent observé une fois sur huit). Sans run, getActiveMutator renvoie "aucun".
-  run("SceneRunManager.clearRun();");
-  ok(PA.optionProfiles.endurance.lootMod < PA.optionProfiles.power.lootMod,
-    "[PA] la voie d'endurance rapporte moins que la voie de puissance");
-  ok(PA.optionProfiles.endurance.diffMod < PA.optionProfiles.power.diffMod,
-    "[PA] la voie d'endurance reste la plus sûre (le triangle n'est pas inversé)");
-  var facPA = run("(function () { var r = { templateId: 'expedition_faille', intensity: 'chemin', heroSnapshot: { power: 60, precision: 40, endurance: 62 } };" +
-    "return SceneRunManager._obstacleFactors(r, 'power'); })()");
-  var facEF = run("(function () { var r = { templateId: 'sentier_obstrue', intensity: null, heroSnapshot: { power: 60, precision: 40, endurance: 62 } };" +
-    "return SceneRunManager._obstacleFactors(r, 'power'); })()");
-  ok(Math.abs(facEF.lootMult - g.window.SCENE_NODES.optionProfiles.power.lootMod) < 1e-9,
-    "[PA] un canevas sans surcharge utilise les profils par défaut de SCENE_NODES");
-  ok(facPA.lootMult > facEF.lootMult, "[PA] la Petite Aventure applique bien sa surcharge locale");
-})();
-
-/* ================= [SOUFFLE] v3.199.0 — le Souffle devient contraignant =================
-   Protège : coût de palier, épuisement comme seconde fin de run, détection de cul-de-sac,
-   axe inversé des coûts, diffMult de canevas, non-contamination des quêtes migrées. */
-(function () {
-  console.log("\n[SOUFFLE] coût de palier, épuisement, cul-de-sac, axe inversé");
-
-  var PA = g.window.SCENE_TEMPLATES.expedition_faille;
-  var PROF = PA.optionProfiles;
-
-  // --- axe inversé : la voie sûre est la plus chère en Souffle ---
-  ok(PROF.endurance.breathCost > PROF.power.breathCost,
-    "[SOUFFLE] la voie d'endurance coûte plus de Souffle que la voie de puissance (axe inversé)");
-  ok(PROF.precision.breathCost < PROF.power.breathCost,
-    "[SOUFFLE] la voie de précision est la moins chère (option soutenable)");
-
-  // --- le budget est réellement contraignant sur un run long (v3.388.0 : sur la longueur du canevas) ---
-  var plancher = PA.breathPerDepth * PA.depthMax;
-  ok(plancher > 0 && plancher < 100, "[SOUFFLE] plancher de progression sur " + PA.depthMax + " paliers = " + plancher + "/100");
-  ok(plancher + PROF.endurance.breathCost * (PA.depthMax / 2) > 100,
-    "[SOUFFLE] impossible de tenir le run en jouant l'endurance à chaque obstacle");
-
-  // --- coût de palier prélevé à l'entrée de la porte ---
-  run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 };");
-  run("SceneRunManager.startRun('expedition_faille'); SceneRunManager.confirmLoadout(['torche', 'gourde', 'amulette']);");
-  run("game.sceneRun.breath = 100;");
-  run("SceneRunManager.enterGate(0);");
-  ok(run("game.sceneRun.breath") === 100 - PA.breathPerDepth,
-    "[SOUFFLE] franchir un palier retire " + PA.breathPerDepth + " Souffle (obtenu " + run("game.sceneRun.breath") + ")");
-
-  // --- Souffle épuisé -> fin du run, marquée comme telle ---
-  run("game.sceneRun.status = 'gate'; game.sceneRun.pendingNode = null; game.sceneRun.currentGate = null; game.sceneRun.breath = " + PA.breathPerDepth + ";");
-  var epuise = run("SceneRunManager.enterGate(0)");
-  ok(epuise.outcome === "epuisement", "[SOUFFLE] Souffle à zéro en franchissant : le run se termine par épuisement");
-  ok(run("game.sceneRun.exhausted") === true, "[SOUFFLE] run.exhausted marqué (l'écran de fin doit annoncer un échec)");
-  ok(run("game.sceneRun.status") === "completed", "[SOUFFLE] le run est clos, pas laissé dans un état intermédiaire");
-
-  // --- affordableVoies : filtre réel, la corde n'est pas concernée ---
-  run("SceneRunManager.clearRun(); game.resources.petite_ration = 10; game.explorationProgression.petiteAventure = { day: '', count: 0 };");
-  run("SceneRunManager.startRun('expedition_faille'); SceneRunManager.confirmLoadout(['torche', 'gourde', 'amulette']);");
-  run("game.sceneRun.breath = 100;");
-  var toutes = run("(function () { var sl = { type: 'obstacle', gabaritId: 'gouffre', riskMod: 1, voies: ['power', 'endurance'] };" +
-    "return SceneRunManager.affordableVoies(game.sceneRun, SCENE_NODES.obstacles.gouffre, sl).length; })()");
-  ok(toutes === 2, "[SOUFFLE] à 100 de Souffle, les deux voies exposées sont payables");
-  run("game.sceneRun.breath = " + (PROF.power.breathCost + 1) + ";");
-  var restreintes = run("(function () { var sl = { type: 'obstacle', gabaritId: 'gouffre', riskMod: 1, voies: ['power', 'endurance'] };" +
-    "return SceneRunManager.affordableVoies(game.sceneRun, SCENE_NODES.obstacles.gouffre, sl); })()");
-  ok(restreintes.length === 1 && restreintes[0] === "power",
-    "[SOUFFLE] à bout de Souffle, seule la voie abordable reste jouable");
-  run("game.sceneRun.status = 'node'; game.sceneRun.currentGate = 0; game.sceneRun.pendingNode = { type: 'obstacle', gabaritId: 'gouffre', riskMod: 1 };");
-  ok(run("SceneRunManager.resolveObstacle('endurance').ok") === false,
-    "[SOUFFLE] une voie trop chère est refusée par le manager, pas seulement grisée dans la vue");
-
-  // --- diffMult de canevas (repli quand le run n'a pas d'intensité) ---
-  var EF = g.window.SCENE_TEMPLATES.expedition_faille;
-  ok(EF.diffMult > 1, "[SOUFFLE] expedition_faille porte son propre diffMult (" + EF.diffMult + ")");
-  run("SceneRunManager.clearRun();");
-  var facEF = run("(function () { var r = { templateId: 'expedition_faille', intensity: null, heroSnapshot: { power: 60, precision: 40, endurance: 62 } };" +
-    "return SceneRunManager._obstacleFactors(r, 'power'); })()");
-  var facTuto = run("(function () { var r = { templateId: 'sentier_obstrue', intensity: null, heroSnapshot: { power: 60, precision: 40, endurance: 62 } };" +
-    "return SceneRunManager._obstacleFactors(r, 'power'); })()");
-  ok(facEF.diffMult > facTuto.diffMult,
-    "[SOUFFLE] le diffMult de canevas s'applique sans intensité, et pas aux quêtes migrées");
-
-  // --- les quêtes de déblocage migrées ne subissent aucune pression de Souffle ---
-  ok(g.window.SCENE_TEMPLATES.sentier_obstrue.breathPerDepth == null,
-    "[SOUFFLE] une quête migrée ne déclare pas breathPerDepth (rôle de tutoriel préservé)");
-
-  run("SceneRunManager.clearRun();");
-})();
-
 /* ================= [RESUME] v3.202.0 — sous-onglet Résumé ==================
    Protège ce que l'écran apporte (classe visible, raccourcis renseignés) et
    ce qu'il ne doit PAS refaire (carrousel, icônes affichées en chemin brut). */
@@ -2965,7 +2633,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
     run("closeHerosSheet(); setHerosSubTab('" + pair[0] + "');");
     // v3.244.0 : Résumé = titre de cadre ; Stats / Capacités = titre de la feuille basse.
     var html = pair[0] === "hero" ? run("buildHerosHTML()") : run("buildHerosSheetHTML()");
-    var m = pair[0] === "hero" ? html.match(/data-kf-title="([^"]*)"/) : html.match(/ksheet-title"><img[^>]*><span>([^<]*)<\/span>/);
+    var m = pair[0] === "hero" ? html.match(/data-kf-title="([^"]*)"/) : html.match(/ksheet-title"><img[^>]*><span class="ksheet-ttl">([^<]*)</);
     ok(!!m && m[1].indexOf(pair[1]) !== -1,
       "[BILAN] sous-onglet '" + pair[0] + "' : titre « " + pair[1] + " » (obtenu « " + (m ? m[1] : "aucun") + " »)");
   });
@@ -5419,8 +5087,9 @@ console.log("\n[40] v3.230.0 \u2014 Pouvoirs l\u00e9gendaires : effets c\u00e2bl
   ok(/isCrit && game\.enemy\.isElite && this\.hasPower\("leg_faucon"\)/.test(String(g.CombatEngine.playerAttack)), "\u0152il du faucon : condition limit\u00e9e aux critiques sur \u00c9lite");
 
   /* --- Collectionneur et Endurance du marcheur : câblés en Sortie. --- */
-  ok(String(g.SceneRunManager._creditLoot).indexOf("leg_collectionneur") !== -1, "Collectionneur : c\u00e2bl\u00e9 dans le cr\u00e9dit de butin de Sortie");
-  ok(String(g.SceneRunManager._obstacleFactors).indexOf("leg_marcheur") !== -1, "Endurance du marcheur : c\u00e2bl\u00e9e sur le co\u00fbt de Souffle");
+  // v3.391.0 : l'ancien moteur retiré, les deux pouvoirs sont câblés dans Pa2Run.
+  ok(String(g.Pa2Run._creditResource).indexOf("leg_collectionneur") !== -1, "Collectionneur : c\u00e2bl\u00e9 dans le butin de ressource (Pa2Run)");
+  ok(String(g.Pa2Run.obstacleOptions).indexOf("leg_marcheur") !== -1, "Endurance du marcheur : c\u00e2bl\u00e9e sur le co\u00fbt de Souffle (Pa2Run)");
 
   /* --- Aucun pouvoir porté : le combat est strictement celui d'avant. --- */
   withPower("weapon", null);
@@ -6907,9 +6576,7 @@ console.log("\n[62] v3.260.0 \u2014 Retours de jeu : Brume, Colporteur, arme, co
   ok(chapitre.steps[game.storyQuests.forest.currentStep].id === "forest_crossing", "save d'avant v3.259.0 sur forest_crossing : inchang\u00e9e par la nouvelle migration");
 
   /* --- Fin d'une mini-aventure : plus de relance --- */
-  var fin = String(g.buildSceneCompleteHTML);
-  ok(fin.indexOf("startSceneExpeditionAgain") === -1 && typeof g.startSceneExpeditionAgain === "undefined", "bilan : « Nouvelle expédition » retir\u00e9e (elle lan\u00e7ait le bac \u00e0 sable admin)");
-  ok(fin.indexOf("Retour au Campement") !== -1, "bilan : un seul bouton, « Retour au Campement »");
+  ok(typeof g.startSceneExpeditionAgain === "undefined" && typeof g.buildSceneCompleteHTML === "undefined", "bilan : « Nouvelle expédition » retirée, l'ancien bilan aussi (v3.391.0)");
 
   /* --- Colporteur : Potions, soin en tête, potions de mission cachées --- */
   var s04 = chapitre.steps[idxOf("forest_04")];
@@ -7031,8 +6698,6 @@ console.log("\n[63] v3.261.0 \u2014 Bandeau h\u00e9ros du combat, variante B");
 /* [65] v3.263.0 — Retours de jeu, deuxième série. */
 console.log("\n[65] v3.263.0 \u2014 Ic\u00f4nes, vitrine, Roi des marais");
 (function () {
-  var bilan = String(g.buildSceneCompleteHTML);
-  ok(bilan.indexOf("camp_menu.png") !== -1 && bilan.indexOf("hero_defeated.png") !== -1 && bilan.indexOf("1F3D5") === -1, "bilan d'exp\u00e9dition : ic\u00f4nes du kit, plus d'emoji de campement");
   ok(g.buildTutorialPreviewHTML("inconnu") === "", "aper\u00e7u de tutoriel : un \u00e9tat inconnu ne rend rien");
   var boss = g.QuestEnemyManager.spawnFor({ worldId: "forest", adventureIndex: 0, enemyHpMult: 0.8 }, true);
   var bossSolo = g.QuestEnemyManager.spawnFor({ worldId: "forest", adventureIndex: 0, enemyHpMult: 0.8, bossHpMult: 0.4 }, true);
@@ -8328,21 +7993,7 @@ console.log("\n[83] v3.285.0 — Petites Aventures : la meute de loups en est un
   ok(!Array.isArray(sg) && sg.hp > sp[0].hp,
     "un nœud sans groupe reste un ennemi seul, à PV pleins");
 
-  var src = "";
-  try { src = require("fs").readFileSync(ROOT + "/js/systems/scene-run-system.js", "utf8"); } catch (e) { src = ""; }
-  ok(src.indexOf("group: group.group") !== -1 && src.indexOf("groupHpMult: group.groupHpMult") !== -1,
-    "la pseudo-quête porte les trois champs de groupe");
-
-  /* Le comptage en rencontres : un membre qui tombe alors qu'il en reste ne doit PAS
-     prévenir le run, sinon la meute avancerait la vague deux fois. */
-  var eng = "";
-  try { eng = require("fs").readFileSync(ROOT + "/js/systems/combat-engine.js", "utf8"); } catch (e) { eng = ""; }
-  var brancheGroupe = eng.slice(eng.indexOf("CombatActors.enemies().length > 1"));
-  brancheGroupe = brancheGroupe.slice(0, brancheGroupe.indexOf("addLog("));
-  ok(brancheGroupe.indexOf("SceneRunManager.onCombatWon()") === -1,
-    "la branche de groupe ne prévient pas le run de scène tant qu'il reste un membre");
-  ok(src.indexOf("run._combatWaveKills = Number(run._combatWaveKills || 0) + 1;") !== -1,
-    "le run compte donc une rencontre par meute, pas une par tête");
+  // v3.391.0 : le nœud combat de l'ancien moteur (pseudo-quête, vague en rencontres) est retiré.
 })();
 
 console.log("\n[84] v3.286.0 — escorte d'élite : la Fileuse ne garde pas ses toiles seule");
@@ -8913,40 +8564,16 @@ console.log("\n[92] v3.297.0 — W-1a : chapitres enchaînés, endroits « fores
   ok(!g.MissionBoard.list().some(function (m) { return m.id === "story_test2"; }) && g.StoryQuestManager.getCurrentStep("forest").id === "forest_01", "chapitre de test retiré : partie neuve intacte");
 })();
 
-/* [93] v3.298.0 — W-1b : le canevas déclare son monde, journal scripté, voyage, cap par monde. */
+/* [93] v3.298.0 — W-1b : le canevas déclare son monde, voyage, cap par monde (v3.391.0 : le
+   monde des combats et le journal par palier de l'ancien moteur sont retirés). */
 console.log("\n[93] v3.298.0 — W-1b : monde du canevas, journal par palier, traversée, cap journalier");
 (function () {
   var R = g.SceneRunManager, T = g.SCENE_TEMPLATES;
   game = freshCombat("knight");
-  /* Monde des combats d'un run. */
-  run("WorldManager.worldIndex = 1; WorldManager.adventureIndex = 1;");
-  var pl = R._combatPlace({ templateId: "petite_aventure_foret" });
-  ok(pl.world.id === "forest" && pl.adventureIndex === 0, "résidant au Désert : la Petite Aventure de la Forêt combat en Forêt (aventure 0)");
-  pl = R._combatPlace({ templateId: "expedition_faille" });
-  ok(pl.world.id === "desert" && pl.adventureIndex === 1, "canevas sans worldId : monde et aventure de résidence (comportement d'avant)");
-  pl = R._combatPlace({ templateId: "expedition_faille", livingMap: { mapId: "forest", sectorId: "gue" } });
-  ok(pl.world.id === "forest", "canevas sans worldId sur la carte de la Forêt : monde de la carte");
-  run("WorldManager.worldIndex = 0; WorldManager.adventureIndex = 1;");
-  ok(R._combatPlace({ templateId: "petite_aventure_foret" }).adventureIndex === 1, "résidant en Forêt : l'aventure de résidence reste lue (inchangé)");
   ["sentier_obstrue", "bosquet_silencieux", "terre_en_friche", "veine_instable", "eboulis_ferreux", "source_tarie", "petite_aventure_foret"].forEach(function (id) {
     if (T[id].worldId !== "forest") ok(false, id + " sans worldId");
   });
   ok(true, "les sept canevas de la Forêt déclarent worldId « forest »");
-
-  /* Journal scripté par palier. */
-  var fakeRun = { templateId: "test_journal", depth: 0, status: "gate" };
-  T.test_journal = { id: "test_journal", journalByDepth: { 1: "A", 3: { before: "B", after: "C" } } };
-  try {
-    ok(JSON.stringify(R.takeJournalLines(fakeRun)) === '["A"]', "palier 1 : sa ligne");
-    ok(R.takeJournalLines(fakeRun).length === 0, "une ligne ne sort qu'une fois");
-    fakeRun.depth = 2;
-    ok(JSON.stringify(R.takeJournalLines(fakeRun)) === '["B"]', "palier 3 : la ligne d'avant (combat à venir)");
-    fakeRun.depth = 3;
-    ok(JSON.stringify(R.takeJournalLines(fakeRun)) === '["C"]', "palier franchi : la ligne d'après");
-    fakeRun.depth = 1; fakeRun.journalShown = {};
-    ok(JSON.stringify(R.takeJournalLines(fakeRun)) === '["A"]', "journal remis à zéro, palier 2 sans entrée : seule la ligne du palier 1");
-    ok(R.takeJournalLines({ templateId: "petite_aventure_foret", depth: 0, status: "gate" }).length === 0, "canevas sans journalByDepth : rien");
-  } finally { delete T.test_journal; }
 
   /* Voyage et cap. */
   game = freshCombat("knight");
@@ -8964,19 +8591,19 @@ console.log("\n[93] v3.298.0 — W-1b : monde du canevas, journal par palier, tr
   game.huntRun = { active: false, questId: null, killsInLot: 0 };
   ok(g.WorldTravel.travelTo("ruins", 0) === false, "monde jamais atteint : refusé");
 
-  /* Traversée : la chambre finale d'un canevas à travelOnSuccess pose le monde. */
+  /* Traversée : l'arrivée d'un canevas à travelOnSuccess pose le monde. */
   game = freshCombat("knight");
   T.test_traversee = JSON.parse(JSON.stringify(T.source_tarie));
   T.test_traversee.id = "test_traversee"; T.test_traversee.worldId = "desert";
   delete T.test_traversee.unlockOnSuccess; delete T.test_traversee.boardRequires;
   T.test_traversee.travelOnSuccess = { worldId: "desert", adventureIndex: 0 };
+  run("WarehouseManager.addResource('petite_ration', 5, true);");
   try {
     var st = R.startRun("test_traversee");
     ok(st && st.ok, "run de traversée lancé");
     ok(g.WorldManager.worldIndex === 0, "pendant le run : toujours en Forêt");
-    game.sceneRun.status = "finale";
-    var fin = R.resolveFinale("sur");
-    ok(fin.ok && g.WorldManager.worldIndex === 1 && game.worldsEverReached[1] === true && game.sceneRun.status === "completed", "chambre finale résolue : arrivée au Désert");
+    playParcours(true); // v3.391.0 : parcours v2, l'arrivée remplace la chambre finale
+    ok(g.WorldManager.worldIndex === 1 && game.worldsEverReached[1] === true && game.sceneRun.status === "completed", "parcours terminé : arrivée au Désert");
   } finally { delete T.test_traversee; }
 })();
 
@@ -9024,27 +8651,20 @@ console.log("\n[95] v3.300.0 — W-2 : chapitre du Désert, la traversée");
   run("WarehouseManager.addResource('ration', 1, true);");
   var started = R.startRun("traversee_desert");
   ok(started.ok && g.WarehouseManager.getAmount("ration") === 0, "départ : 1 Ration moyenne payée");
-  var types = game.sceneRun.card.map(function (lvl) { return lvl.length + ":" + lvl[0].type + (lvl[0].gabaritId ? "/" + lvl[0].gabaritId : ""); }).join(" ");
-  ok(types === "1:obstacle/dalles_ensablees 1:source 1:combat/scarabees_desert 1:obstacle/vent_de_face", "carte scriptée : " + types);
+  /* v3.390.0 (chantier P, P-2) : parcours v2 sur la piste de sable. */
+  var P = g.Pa2Run, r = game.sceneRun;
+  var types = Object.keys(r.nodes).filter(function (k) { return k !== "S"; }).map(function (k) { var n = r.nodes[k]; return n.type + (n.gabaritId ? "/" + n.gabaritId : "") + (n.foeId ? "/" + n.foeId + "x" + n.pack : ""); }).join(" ");
+  ok(r.parcours && types === "obstacle/dalles_ensablees source combat/scarabx3 obstacle/vent_de_face", "parcours scripté : " + types);
+  ok(r.map.image === "images/Maps/parcours/desert_route.jpg", "fond : la piste de sable (image de Seb)");
   ok(g.WorldManager.worldIndex === 0, "pendant la traversée : toujours résident de la Forêt");
-  var lines = R.takeJournalLines(game.sceneRun);
-  ok(lines.length === 1 && lines[0].indexOf("Les dalles du portail") === 0, "journal du palier 1");
-  game.sceneRun.depth = 2; game.sceneRun.status = "gate";
-  R.enterGate(0);
-  var foes = game.combat && game.combat.enemies ? game.combat.enemies : [game.enemy];
-  ok(foes.length === 3 && foes.every(function (e) { return e.id === "scarab"; }), "palier 3 : une nuée de trois scarabées du Désert");
-  var guard = 20;
-  while (game.sceneRun.status === "combat" && guard-- > 0) { var e = (game.combat && game.combat.enemies && game.combat.enemies[0]) || game.enemy; e.hp = 0; g.CombatEngine.killEnemy(e); }
-  ok(game.sceneRun.status !== "combat" && !game.sceneRun._combatBossSpawned, "nuée vaincue : aucun boss d'aventure (finalBoss: false)");
-  // Le retour sur l'écran d'expédition inscrit les lignes dues au journal de la vue (sceneRunLog).
-  g.buildSceneGateChoiceHTML();
-  var logTxt = (g.sceneRunLog || []).join(" | ");
-  ok(logTxt.indexOf("Wenna compte les carapaces") !== -1 && logTxt.indexOf("Le deuxième puits est sec") !== -1 && logTxt.indexOf("Un puits. La corde est neuve") !== -1, "journal de la vue : palier 2, après la nuée, palier 4");
-
-  /* L'arrivée. */
-  game.sceneRun.status = "finale";
-  var fin = R.resolveFinale("sur");
-  ok(fin.ok && g.WorldManager.worldIndex === 1 && game.worldsEverReached[1] === true, "chambre finale : arrivée au Désert");
+  ok(/Les dalles du portail/.test(r.nodes.P0.narr) && /Wenna compte les carapaces/.test(r.nodes.P2.after), "journal : texte à chaque étape, et après la nuée");
+  var sheet = g.pa2SheetBody(r, r.nodes.P0, { key: "P0", step: "intro" });
+  ok(sheet.indexOf(g.esc("Les dalles du portail")) > 0, "le texte de l'étape s'affiche en tête de la feuille");
+  var est = (function () { P.moveTo("P0"); r.nodes.P0.done = true; r.status = "pa2-map"; r.at = "P1"; r.nodes.P1.done = true; r.at = "P2"; r.status = "pa2-node"; P._prepareNode(r, r.nodes.P2); return P.combatPreview(); })();
+  ok(est && est.tenir && !est.tenir.unwinnable && est.tenir.verdict !== "mortel", "la nuée : trois scarabées, un combat tenable pour un héros de fin de Forêt (" + (est && est.tenir && est.tenir.verdict) + ")");
+  r.at = "S"; r.status = "pa2-map"; r.path = []; ["P0", "P1", "P2"].forEach(function (k) { r.nodes[k].done = false; });
+  playParcours(true);
+  ok(r.end && r.end.how === "parcours" && g.WorldManager.worldIndex === 1 && game.worldsEverReached[1] === true, "arrivée : au Désert");
   ok(game.explorationProgression.desertCrossingCompleted === true && S.isCurrentStepReady("desert") === true, "l'étape est prête à réclamer");
   ok(R.getPetiteAventureCap() === 4, "cap de Petites Aventures passé à 4");
   var popup = null;
@@ -9165,29 +8785,7 @@ console.log("\n[98] v3.303.0 — Réservoir, Outre pleine, objets payés et obje
     ok(g.WarehouseManager.getAmount("outre_pleine") >= 1 && game.explorationProgression.outreFilled === true, "lot terminé : Outre au stock, drapeau « outreFilled » posé");
   } finally { if (!had) steps.pop(); }
 
-  /* Objets payés en ressource, objets à boire (canevas de test). */
-  var T = g.SCENE_TEMPLATES;
-  T.test_outre = JSON.parse(JSON.stringify(T.expedition_faille)); // v3.388.0 : canevas de test du moteur
-  T.test_outre.id = "test_outre";
-  T.test_outre.items.outre = { id: "outre", name: "Outre pleine", desc: "Rend 40 Souffle.", icon: "images/Icons/scene/water_flask.png", consumes: { resourceId: "outre_pleine", amount: 1 }, breath: 40 };
-  T.test_outre.loadoutOffer = ["torche", "corde", "provisions", "gourde", "amulette", "outre", "outre"];
-  try {
-    game = freshCombat("knight");
-    run("WarehouseManager.addResource('petite_ration', 3, true); game.unlockedTabs.village = true;");
-    var go = function () { R.startRun("test_outre"); };
-    go();
-    ok(game.sceneRun.status === "preparation", "préparation atteinte");
-    ok(R.confirmLoadout(["torche", "corde", "outre"]).ok === false && game.sceneRun.status === "preparation", "sans Outre au stock : départ refusé, rien retiré");
-    run("WarehouseManager.addResource('outre_pleine', 1, true);");
-    ok(R.confirmLoadout(["torche", "outre", "outre"]).ok === false && g.WarehouseManager.getAmount("outre_pleine") === 1, "deux Outres pour une en stock : refusé, tout-ou-rien");
-    ok(R.confirmLoadout(["torche", "corde", "outre"]).ok === true && g.WarehouseManager.getAmount("outre_pleine") === 0 && game.sceneRun.breathItems.outre === 1, "départ : l'Outre est payée et emportée");
-    game.sceneRun.breath = 50;
-    ok(g.buildSceneStatusBarHTML(game.sceneRun).indexOf("useSceneBreathItem('outre')") !== -1, "pendant le run : bouton « Boire : Outre pleine »");
-    var used = R.useBreathItem("outre");
-    ok(used.ok && game.sceneRun.breath === 90 && used.gained === 40 && game.sceneRun.breathItems.outre === 0, "boire : +40 Souffle, charge consommée");
-    ok(R.useBreathItem("outre").ok === false, "plus de charge : refusé");
-    ok(g.buildSceneStatusBarHTML(game.sceneRun).indexOf("useSceneBreathItem") === -1, "plus de bouton une fois l'Outre bue");
-  } finally { delete T.test_outre; }
+  // v3.391.0 : l'Outre payée et bue se teste sur la v2 ([164]) ; le canevas de test du moteur est retiré.
 })();
 
 /* [99] v3.304.0 — W-2 : la Petite Aventure du Désert, l'étape « L'outre », l'icône générique. */
@@ -9202,47 +8800,8 @@ console.log("\n[99] v3.304.0 — Petite Aventure du Désert, étape 3, icône g�
     "quatre obstacles du Désert, trois voies chacun");
   ok(N.obstacles.puits_effondre.ropeOption === true && N.obstacles.puits_effondre.options.precision.label === "Longer la margelle", "le puits ouvre la voie de la corde ; la précision longe la margelle");
   ok(N.combatGroups.guerriers_desert.group.length === 2 && !N.combatGroups.ver_desert.group, "guerriers par deux, ver seul");
-  /* v3.388.0 (PA2-6) : la Petite Aventure du Désert est en v2 ([164]). Le moteur de scènes garde ses
-     règles du Désert (gourde à une gorgée, ligne de mort, groupes) pour la remontée du fleuve : on
-     les teste sur un canevas de test bâti comme elle. */
   ok(D && D.mode === "pa2" && D.worldId === "desert" && D.successFlag === "desertPaCompleted", "canevas : Petite Aventure v2 du Désert, drapeau de l'étape « L'outre »");
-  T.test_desert = JSON.parse(JSON.stringify(T.expedition_faille));
-  Object.assign(T.test_desert, { id: "test_desert", worldId: "desert", adventureIndex: 0, finalBoss: false, combatWaveRange: [1, 1], gourdeUses: 1,
-    pools: { obstacle: ["dune"], combat: ["guerriers_desert"] }, deathLine: T.remontee_fleuve.deathLine });
-  try {
-    /* Mort au Désert : pas « dans la forêt ». */
-    game = freshCombat("knight");
-    R.startRun("test_desert");
-    game.sceneRun.status = "combat";
-    var logs = []; var addLog0 = g.addLog; g.addLog = function (t) { logs.push(t); };
-    try { R.onCombatDefeat(); } finally { g.addLog = addLog0; }
-    ok(logs.some(function (t) { return /dans le sable/.test(t); }) && !logs.some(function (t) { return /dans la for/.test(t); }), "mort au Désert : « reste dans le sable »");
-
-    /* Combat : la paire de guerriers sort du Désert. */
-    game = freshCombat("knight");
-    R.startRun("test_desert");
-    game.sceneRun.status = "node"; game.sceneRun.pendingNode = { type: "combat", gabaritId: "guerriers_desert" };
-    ok(R.enterCombatNode().ok && g.CombatActors.aliveEnemies().length === 2 && g.CombatActors.aliveEnemies().every(function (e) { return /sandwarrior|Guerrier/.test(e.id + " " + e.name + " " + (e.asset || "")); }), "« Deux guerriers des sables » : deux guerriers en combat");
-    ok(game.sceneRun._combatIsFinalWave === false, "pas de boss en fin de vague");
-    R.clearRun();
-
-    /* Gourde (décision Seb, option B) : une gorgée au Désert (gourdeUses), illimitée ailleurs. */
-    game = freshCombat("knight");
-    R.startRun("test_desert");
-    R.confirmLoadout(["torche", "gourde", "amulette"]);
-    game.sceneRun.breath = 40;
-    ok(g.buildSceneStatusBarHTML(game.sceneRun).indexOf("dernière gorgée") !== -1, "Désert : le bouton annonce la dernière gorgée");
-    ok(R.useSceneGourde().ok && game.sceneRun.gourdeAvailable === false, "Désert : une gorgée, puis la gourde est vide");
-    game.sceneRun.breath = 40;
-    ok(R.useSceneGourde().ok === false && g.buildSceneStatusBarHTML(game.sceneRun).indexOf("useSceneGourde()") === -1, "Désert : plus de gorgée, plus de bouton");
-    R.clearRun();
-    game = freshCombat("knight");
-    R.startRun("expedition_faille");
-    R.confirmLoadout(["torche", "gourde", "amulette"]);
-    game.sceneRun.breath = 20; R.useSceneGourde(); game.sceneRun.breath = 20;
-    ok(R.useSceneGourde().ok && game.sceneRun.gourdeAvailable === true && game.sceneRun.gourdeUses == null, "sans gourdeUses : la gourde reste illimitée");
-    R.clearRun();
-  } finally { delete T.test_desert; }
+  // v3.391.0 : les règles du Désert se testent sur la v2 ([164], PA2_WORLD_RULES) ; le canevas de test du moteur est retiré.
 
   /* Étape « L'outre » et tableau. */
   game = freshCombat("knight");
@@ -9324,7 +8883,7 @@ console.log("\n[100] v3.305.0 — Carte du Désert, Ensablement, étape 4");
   ok(steps[i4].check(game) === false && /1\/2/.test(steps[i4].progress(game)), "étape 4 : 1/2");
 
   /* Effets tenus : Outre renforcée, Réservoir plus rapide */
-  ok(g.SceneRunManager.getBreathItemAmount("outre", g.SCENE_TEMPLATES.remontee_fleuve) === 55, "puits sec tenu : l'Outre rend 55");
+  ok(g.Pa2Run.drinkAmount("outre") === 55, "puits sec tenu : l'Outre rend 55");
   LM.onRunEnd("desert", "steles", "success");
   ok(steps[i4].check(game) === true, "deux secteurs libérés : étape validée");
   LM.onRunEnd("desert", "oasis", "success");
@@ -9340,7 +8899,7 @@ console.log("\n[100] v3.305.0 — Carte du Désert, Ensablement, étape 4");
     var fail = LM.onRunEnd("desert", "puits_sec", "fail");
     ok(fail.regressed === "puits_sec" && /L'Ensablement a repris Le puits sec/.test(fail.message) && /depuis le camp/.test(fail.message) && LM.getState("desert", "puits_sec").state === "recouvert",
       "rejeu raté du puits sec : l'Ensablement le reprend, « reprends-le depuis le camp »");
-    ok(g.SceneRunManager.getBreathItemAmount("outre", g.SCENE_TEMPLATES.remontee_fleuve) === 40 && g.WorkshopsSystem.getLivingMapSpeedMult("reservoir") === 1.10, "l'Outre perd son bonus, le Réservoir garde le sien");
+    ok(g.Pa2Run.drinkAmount("outre") === 40 && g.WorkshopsSystem.getLivingMapSpeedMult("reservoir") === 1.10, "l'Outre perd son bonus, le Réservoir garde le sien");
     LM.onRunEnd("desert", "oasis", "fail"); LM.onRunEnd("desert", "steles", "fail");
     ok(steps[i4].check(game) === true, "l'étape reste acquise même si le sable reprend tout");
   } finally { LM._rand = rand0; }
@@ -9429,27 +8988,6 @@ console.log("\n[102] v3.306.1 — Carte : brume et Recouvrement pré-calculés, 
   run("LIVING_MAP_BAKE.key = null; LIVING_MAP_BAKE.url = null;");
 })();
 
-/* [103] v3.306.2 — « Rentrer » avant le premier palier ne donne plus d'XP. */
-console.log("\n[103] v3.306.2 — leaveNow : 0 XP à la profondeur 0, 10 XP après un palier");
-(function () {
-  function leaveAt(depth) {
-    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
-    g.SceneRunManager.startRun("expedition_faille");
-    g.SceneRunManager.confirmLoadout(["provisions", "provisions", "provisions"]);
-    g.game.sceneRun.depth = depth; // palier franchi simulé (le chemin réel est couvert en [S1])
-    g.game.sortie.loot.gold = 7;
-    var xp0 = g.game.heroXp || 0, gold0 = g.game.gold;
-    var r = g.SceneRunManager.leaveNow();
-    return { r: r, dxp: (g.game.heroXp || 0) - xp0, dgold: g.game.gold - gold0 };
-  }
-  var a = leaveAt(0);
-  ok(a.r.ok === true && a.r.summary && a.r.summary.outcome === "return", "profondeur 0 : sortie close en 'return'");
-  ok(a.dxp === 0, "profondeur 0 : aucune XP (était 10)");
-  ok(a.dgold === 7, "profondeur 0 : le butin éventuel reste banqué à 100 %");
-  var b = leaveAt(1);
-  ok(b.r.summary && b.r.summary.outcome === "success" && b.dxp > 0, "un palier franchi : mission réussie, XP forfaitaire conservée");
-})();
-
 /* [104] v3.307.0 — Héros en expédition : rien de ce qui le touche ne se fait ailleurs. */
 console.log("\n[104] v3.307.0 — verrou héros pendant une expédition (Chemin long, retour Seb)");
 (function () {
@@ -9457,9 +8995,8 @@ console.log("\n[104] v3.307.0 — verrou héros pendant une expédition (Chemin 
   if (g.SortieManager.isActive()) g.SortieManager.end("return");
   game.activeTab = "village"; game.dungeonRunsUsed = {}; game.gold = 1e7; game.resources.ration = 3;
   game.potionsOwned.potion_power = 2;
-  g.SceneRunManager.startRun("expedition_faille");
-  g.SceneRunManager.confirmLoadout(["provisions", "provisions", "provisions"]);
-  ok(g.SceneRunManager.isHeroEngaged() === true && !!g.heroLockReason(), "expédition au statut 'gate' : héros engagé");
+  g.SceneRunManager.startRun("bosquet_silencieux"); // v3.391.0 : parcours v2
+  ok(g.SceneRunManager.isHeroEngaged() === true && !!g.heroLockReason(), "expédition sur la carte : héros engagé");
 
   g.DungeonManager.start(1);
   ok(game.dungeonRun.active !== true && Object.keys(game.dungeonRunsUsed || {}).length === 0, "donjon refusé, aucune sortie décomptée");
@@ -9492,10 +9029,6 @@ console.log("\n[104] v3.307.0 — verrou héros pendant une expédition (Chemin 
   ok(g.isGrimoireEditable() === false, "Grimoire en lecture seule");
   ok(g.ForgeManager.getBlockReason("weapon") === "Forge non construite" || g.ForgeManager.getBlockReason("weapon") === "Héros en expédition", "Forge : refus (bâtiment absent ou héros engagé)");
   ok(g.EnchantManager._isEquipped(game.equipped.weapon) === true && g.EnchantManager._isEquipped(game.inventory[game.inventory.length - 1]) === false, "Enchanteresse : seule la pièce portée est gelée");
-
-  game.sceneRun.status = "combat";
-  ok(g.SceneRunManager.isHeroEngaged() === false, "combat de nœud : verrou levé (potion de soin au tour)");
-  game.sceneRun.status = "gate";
 
   g.SceneRunManager.abandon();
   ok(g.SceneRunManager.isHeroEngaged() === false && g.heroLockReason() === null, "expédition terminée : verrou levé");
@@ -9559,21 +9092,15 @@ console.log("\n[106] v3.310.0 — W-3a : la descente au Temple, le Veilleur");
 
   /* Le run */
   var rat0 = g.WarehouseManager.getAmount("ration");
-  ok(LM.start("desert", "porte_temple").ok === true && game.sceneRun.templateId === "descente_temple" && game.sceneRun.status === "gate", "départ depuis la carte, sans préparation");
-  ok(g.WarehouseManager.getAmount("ration") === rat0, "aucun coût d'entrée");
-  var types = game.sceneRun.card.map(function (lvl) { return lvl[0].type + (lvl[0].gabaritId ? "/" + lvl[0].gabaritId : ""); }).join(" ");
-  ok(types === "obstacle/dalle_scellee obstacle/dalles_ensablees combat/guerrier_seul_desert source", "carte scriptée : " + types);
-  R.takeJournalLines(game.sceneRun); // la vue a pu les prendre au départ : on lit ce qui est marqué vu
-  ok(game.sceneRun.journalShown && game.sceneRun.journalShown.b1 === true && !game.sceneRun.journalShown.b2, "journal : palier 1 inscrit, pas encore le 2");
-  game.sceneRun.depth = 2; game.sceneRun.status = "gate";
-  R.enterGate(0);
-  var foes = game.combat && game.combat.enemies ? game.combat.enemies : [game.enemy];
-  ok(foes.length === 1 && foes[0].id === "sandwarrior", "palier 3 : un guerrier des sables seul");
-  var guard = 10;
-  while (game.sceneRun.status === "combat" && guard-- > 0) { var e = (game.combat && game.combat.enemies && game.combat.enemies[0]) || game.enemy; e.hp = 0; g.CombatEngine.killEnemy(e); }
-  ok(game.sceneRun.status !== "combat", "guerrier vaincu");
-  game.sceneRun.status = "finale";
-  ok(R.resolveFinale("sur").ok && g.WorldManager.worldIndex === 1 && g.WorldManager.adventureIndex === 1, "arrivée : le Temple ensablé");
+  /* v3.390.0 (chantier P, P-2) : parcours v2 (carte du Temple depuis v3.392.0). Héros au niveau de l'étape 6 (repère de campagne : 9). */
+  game.heroLevel = 9; game.equipped.weapon.value = 600; run("EquipmentManager.recalcStats();"); game.heroHp = game.heroMaxHp;
+  ok(LM.start("desert", "porte_temple").ok === true && game.sceneRun.templateId === "descente_temple" && game.sceneRun.parcours && game.sceneRun.status === "pa2-map", "départ depuis la carte, sans préparation");
+  ok(g.WarehouseManager.getAmount("ration") === rat0 && game.sceneRun.map.image === g.PA2_PARCOURS_IMAGES.desert_temple.image, "aucun coût d'entrée ; carte du Temple");
+  var r = game.sceneRun, types = ["P0", "P1", "P2", "P3"].map(function (k) { var n = r.nodes[k]; return n.type + (n.gabaritId ? "/" + n.gabaritId : "") + (n.foeId ? "/" + n.foeId + "x" + n.pack : ""); }).join(" ");
+  ok(types === "obstacle/dalle_scellee obstacle/dalles_ensablees combat/sandwarriorx1 source", "parcours scripté : " + types);
+  ok(/Le battant ouvert/.test(r.nodes.P0.narr) && /La lumière de la porte est petite/.test(r.nodes.P2.after), "journal : texte à chaque étape, et après le guerrier");
+  playParcours(true);
+  ok(r.end && r.end.how === "parcours" && g.WorldManager.worldIndex === 1 && g.WorldManager.adventureIndex === 1, "arrivée : le Temple ensablé");
   ok(LM.isLiberated("desert", "porte_temple") && LM.getContentFor("desert", "porte_temple").templateId === "petite_aventure_desert", "porte libérée ; elle redevient une Petite Aventure");
   ok(st6.check(game) === true && WT.defaultAdventureFor("desert") === 1, "étape 6 prête ; un voyage retour ramène au Temple");
 
@@ -10702,9 +10229,7 @@ console.log("\n[126] v3.331.0 — Suite du recalage : Petite Aventure du Désert
 (function () {
   var T = g.SCENE_TEMPLATES.petite_aventure_desert, F = g.SCENE_TEMPLATES.petite_aventure_foret;
   // v3.388.0 : les deux Petites Aventures sont en v2 (force par PA2_ACTS) ; le réglage de canevas reste pour la remontée.
-  ok(g.SCENE_TEMPLATES.remontee_fleuve.combatPowerMult === 3.5 && g.SCENE_TEMPLATES.remontee_fleuve.combatHpMult === 2.3, "R1 : la remontée du fleuve garde ×3,5 dégâts, ×2,3 PV");
-  var src = require("fs").readFileSync(ROOT + "/js/systems/scene-run-system.js", "utf8");
-  ok(src.indexOf("tplCombat.combatPowerMult") !== -1 && src.indexOf("pseudoQuest.groupHpMult * tplCombat.combatHpMult") !== -1, "R1 : le canevas règle la force de ses combats (groupes compris)");
+  ok(g.SCENE_TEMPLATES.remontee_fleuve.mode === "parcours" && g.SCENE_TEMPLATES.remontee_fleuve.parcours.steps[4].act === 3, "R1 : la remontée du fleuve est un parcours v2, ses armures à la force de l'acte III (v3.390.0)");
   var A = g.ELITE_DB.arbre_mere.statMult;
   ok(A.endurance === 6 && A.power === 2.5, "R2 : Arbre-mère 6 / 2,5");
   var RE = g.LIVING_MAP_RULES.repeatableElite;
@@ -10727,7 +10252,7 @@ console.log("\n[127] v3.332.0 — Écran de retour unique et fil rouge");
 
   // --- HUD : le fil rouge remplace le raccourci Ascension (F1) ---
   var hud = g.buildHudHTML();
-  ok(hud.indexOf("hud-filrouge-btn") !== -1 && hud.indexOf("hud-ascension-badge") === -1, "F1 : le bouton du fil rouge remplace celui de l'Ascension");
+  ok(typeof g.renderHudDock === "function" && typeof g.renderHudFilRouge === "function" && hud.indexOf("hud-ascension-badge") === -1, "F1 : le fil rouge remplace l'Ascension (v3.396.0 : c'est une bulle de raccourci)");
   ok(typeof g.renderHudAscensionBadge === "function", "F1 : l'ancien nom reste appelable (sans effet de bord)");
 
   // --- Préférences d'affichage (F4) ---
@@ -11143,10 +10668,9 @@ console.log("\n[135] v3.355.0 — Portrait propre, conseil du compagnon, place d
   ok(game.explorationProgression.petiteAventure.spent === 2, "rendue une seule fois");
   S._refundPetiteAventureSlot({ status: "gate" });
   ok(game.explorationProgression.petiteAventure.spent === 2, "une sortie qui n'a pas pris de place (hors cap) ne rend rien");
-  var srs = require("fs").readFileSync(ROOT + "/js/systems/scene-run-system.js", "utf8");
-  var ab = srs.slice(srs.indexOf("  abandon: function"), srs.indexOf("  abandon: function") + 600);
-  var ev = srs.slice(srs.indexOf("  _evacuate: function"), srs.indexOf("  _evacuate: function") + 300);
-  ok(ab.indexOf("_refundPetiteAventureSlot") === -1 && ev.indexOf("_refundPetiteAventureSlot") !== -1, "abandon volontaire : place gardée ; évacuation : place rendue");
+  // v3.391.0 : lu dans Pa2Run (l'ancien moteur est retiré).
+  var prs = String(g.Pa2Run.abandon), pfull = require("fs").readFileSync(ROOT + "/js/systems/pa2-run.js", "utf8");
+  ok(prs.indexOf("_refundPetiteAventureSlot") === -1 && pfull.indexOf("SceneRunManager._refundPetiteAventureSlot") !== -1, "abandon volontaire : place gardée ; échec subi : place rendue");
 
   /* Ateliers : débit et remboursement par l'Entrepôt */
   game = freshCombat("knight");
@@ -11414,7 +10938,7 @@ console.log("\n[133] v3.338.0 — Hauts faits : catalogue, rattrapage, paliers, 
   ok(src("/js/systems/combat-engine.js").indexOf("AchievementManager.onEnemyKilled(enemy)") !== -1, "crochet : killEnemy (une ligne)");
   ok(src("/js/systems/class-combat-system.js").indexOf("AchievementManager.onRuleFired()") !== -1
     && src("/js/systems/tavern-system.js").indexOf("AchievementManager.onTavernDelivered()") !== -1
-    && src("/js/systems/scene-run-system.js").indexOf("AchievementManager.onRunSuccess()") !== -1
+    && src("/js/systems/pa2-run.js").indexOf("AchievementManager.onRunSuccess()") !== -1
     && src("/js/systems/patrol-system.js").indexOf("AchievementManager.onPatrolCollected(p)") !== -1, "crochets : règle, Taverne, expédition, patrouille");
   // secteur repris au sable (le vrai setState)
   var gs = g.LivingMapManager.getState("desert", g.LIVING_MAPS.desert.sectors[0].id);
@@ -11648,39 +11172,34 @@ console.log("\n[139] v3.361.0 — Acte IV, étape 16 : Personne ne remonte le fl
   S.acceptStep("desert");
 
   var T = g.SCENE_TEMPLATES.remontee_fleuve;
-  ok(!T.profileWeights && T.entryCost.resourceId === "ration" && !!T.items && T.items.outre.breathBonusEffect === "outre_plus" && T.loadoutOffer.every(function (id) { return !!T.items[id]; }) && /dans le sable/.test(T.deathLine), "hors cap, une Ration moyenne, son propre sac (Outre comprise) depuis la v3.388.0");
-  game.resources.ration = 0;
-  ok(R.startRun("remontee_fleuve").ok === false, "sans Ration moyenne : départ refusé");
+  /* v3.390.0 (chantier P, P-2) : parcours v2 dans le lit asséché, besace de 3 places (H4). */
+  var P = g.Pa2Run;
+  ok(T.mode === "parcours" && T.entryCost.resourceId === "ration" && T.parcours.bag === 3 && T.parcours.image === "desert_route" && T.parcours.track === "oued", "hors cap, une Ration moyenne, besace de 3 places, fond : le lit asséché");
+  game.resources.ration = 0; game.heroLevel = 15; game.equipped.weapon.value = 900; run("EquipmentManager.recalcStats();"); game.heroHp = game.heroMaxHp;
+  var st0 = R.startRun("remontee_fleuve");
+  ok(st0.ok && game.sceneRun.status === "pa2-prep", "départ : la préparation de la besace s'ouvre (le coût se paie au départ)");
+  run("WarehouseManager.addResource('outre_pleine', 1, true);");
+  ok(P.addItem("outre").ok && P.addItem("gourde").ok && P.addItem("corde").ok && P.addItem("torche").ok === false, "besace : trois places (Outre, gourde, corde), pas une de plus");
+  ok(P.depart().ok === false && game.sceneRun.status === "pa2-prep", "sans Ration moyenne : départ refusé, rien n'est pris");
   run("WarehouseManager.addResource('ration', 1, true);");
   var cap0 = R.petiteAventureCountToday();
-  ok(R.startRun("remontee_fleuve").ok && game.sceneRun.status === "preparation" && R.petiteAventureCountToday() === cap0, "départ : préparation, aucun lancement du jour consommé");
-  var types = game.sceneRun.card.map(function (lvl) { return lvl[0].type + (lvl[0].gabaritId ? "/" + lvl[0].gabaritId : ""); }).join(" ");
-  ok(types === "obstacle/vent_de_face combat/ver_desert obstacle/sables_mouvants source combat/guerriers_desert obstacle/dune", "carte scriptée : " + types);
-  ok(R.confirmLoadout(["torche", "corde", "provisions"]).ok && game.sceneRun.status === "gate", "préparation validée");
+  ok(P.depart().ok && g.WarehouseManager.getAmount("ration") === 0 && g.WarehouseManager.getAmount("outre_pleine") === 0 && R.petiteAventureCountToday() === cap0, "départ : Ration moyenne et Outre prises, aucune place de Petite Aventure");
+  var r = game.sceneRun, types = Object.keys(r.nodes).filter(function (k) { return k !== "S"; }).map(function (k) { var n = r.nodes[k]; return n.type + (n.gabaritId ? "/" + n.gabaritId : "") + (n.foeId ? "/" + n.foeId + "x" + n.pack : ""); }).join(" ");
+  ok(types === "obstacle/vent_de_face combat/sandwormx1 obstacle/sables_mouvants source combat/sandwarriorx2 obstacle/dune", "parcours scripté : " + types);
+  ok(r.stock.gourde === 1 && r.map.image === "images/Maps/parcours/desert_route.jpg", "au Désert : une gorgée de gourde ; fond illustré");
 
-  /* Palier 4 : le Veilleur — tout le Souffle, la pire blessure lavée */
-  game.sceneRun.depth = 3; game.sceneRun.status = "gate"; game.sceneRun.breath = 20;
-  game.sceneRun.injuries = [{ stat: "power", severity: "grave" }];
-  R.enterGate(0);
-  ok(game.sceneRun.pendingNode.type === "source" && game.sceneRun.pendingNode.fullBreath === true, "palier 4 : la source scriptée");
-  var res = R.resolveSource();
-  ok(res.ok && res.healed && game.sceneRun.breath === 100 && game.sceneRun.injuries.length === 0, "le Veilleur rend tout le Souffle et lave la blessure grave");
-  var lines = R.takeJournalLines(game.sceneRun).join(" | ");
-  ok(lines.indexOf("Une main te prend au col") !== -1 && lines.indexOf("Le lit cède") !== -1, "journal : les sables mouvants, puis la main du Veilleur");
-
-  /* Palier 5 : les deux armures, du Désert, à la force de la Petite Aventure */
-  game.sceneRun.status = "gate";
-  R.enterGate(0);
-  var foes = game.combat && game.combat.enemies ? game.combat.enemies : [game.enemy];
-  ok(foes.length === 2 && foes.every(function (e) { return e.id === "sandwarrior"; }), "palier 5 : deux guerriers des sables");
-  var guard = 20;
-  while (game.sceneRun.status === "combat" && guard-- > 0) { var e = (game.combat && game.combat.enemies && game.combat.enemies[0]) || game.enemy; e.hp = 0; g.CombatEngine.killEnemy(e); }
-  ok(game.sceneRun.status !== "combat" && !game.sceneRun._combatBossSpawned, "armures vaincues : pas de boss");
+  /* Étape 4 : le Veilleur rend tout le Souffle */
+  r.at = "P3"; r.status = "pa2-node"; r.breath = 20; r.nodes.P3.done = false;
+  var res = P.drink();
+  ok(res.ok && r.breath === 100 && /Une main te prend au col/.test(r.nodes.P3.narr), "étape 4 : le Veilleur rend tout le Souffle");
+  ok(/Elles tombent face au sud/.test(r.nodes.P4.after), "étape 5 : les deux armures, et la suite après le combat");
 
   /* L'arrivée au trône vide */
-  game.sceneRun.status = "finale";
+  r.at = "S"; r.status = "pa2-map"; r.path = []; Object.keys(r.nodes).forEach(function (k) { r.nodes[k].done = false; });
   var w0 = g.WorldManager.worldIndex;
-  ok(R.resolveFinale("sur").ok && game.explorationProgression.remonteeFleuveDone === true && g.WorldManager.worldIndex === w0, "arrivée : l'étape est remplie, le héros ne voyage pas");
+  playParcours(true);
+  ok(r.end && r.end.how === "parcours" && game.explorationProgression.remonteeFleuveDone === true && g.WorldManager.worldIndex === w0, "arrivée : l'étape est remplie, le héros ne voyage pas");
+  R.clearRun();
   ok(S.isCurrentStepReady("desert") === true && R.isQuestCompleted("remontee_fleuve") && R.startRun("remontee_fleuve").ok === false, "étape prête ; le parcours ne se rejoue pas");
 })();
 
@@ -11868,7 +11387,7 @@ console.log("\n[144] v3.368.0 — Socle multilangue : _t, _tn, repli sur le fran
   /* Français (défaut) : le texte est rendu tel quel, gabarits remplis */
   I._lang = null; delete P._load().lang;
   ok(I.lang() === "fr" && P.getValue("lang") === "fr", "langue par défaut : français, sans rien dans les préférences");
-  ok(g._t("Santé du Héros") === "Santé du Héros", "français : le texte est sa propre traduction");
+  ok(g._t("Santé du héros") === "Santé du héros", "français : le texte est sa propre traduction");
   ok(g._t("Prochaine expédition dans {d}", { d: "2 h 13" }) === "Prochaine expédition dans 2 h 13", "gabarit rempli");
   ok(g._t("Il reste {x}", {}) === "Il reste {x}", "paramètre absent : {x} reste visible (repérable au test)");
   ok(g._tn(1, "{n} place", "{n} places") === "1 place" && g._tn(0, "{n} place", "{n} places") === "0 place" && g._tn(3, "{n} place", "{n} places") === "3 places", "pluriel français : 0 et 1 au singulier");
@@ -11904,15 +11423,15 @@ console.log("\n[145] v3.369.0 — Multilangue, lot L-1 : HUD, Camp, Combat, fen�
   /* Français : textes inchangés, pluriels corrects */
   I._lang = "fr";
   var camp = g.buildCampHTML();
-  ok(camp.indexOf("Santé du Héros") !== -1 && camp.indexOf("Tableau de missions") !== -1 && camp.indexOf("Voir le tableau complet") !== -1, "Camp en français : textes inchangés");
+  ok(camp.indexOf("Santé du héros") !== -1 && camp.indexOf("Tableau de missions") !== -1 && camp.indexOf("Voir le tableau complet") !== -1, "Camp en français : textes inchangés");
   ok(camp.indexOf("⟦") === -1, "français : aucun ⟦ ⟧ dans le Camp");
   ok(g._tn(1, "{n} sortie", "{n} sorties") === "1 sortie" && g._tn(3, "{n} sortie", "{n} sorties") === "3 sorties", "pluriel « sortie » du Camp");
-  ok(g.buildFullMenuHTML().indexOf("<h2>Menu</h2>") !== -1, "menu : titre « Menu »");
+  ok(g.buildFullMenuHTML().indexOf("ksheet-ttl\">Menu<") !== -1, "menu : titre « Menu »");
   ok(g.ResumeManager.formatAbsence(135 * 60000) === "2 h 15 min" && g.ResumeManager.formatAbsence(26 * 3600e3) === "1 j 2 h", "durée d'absence inchangée (2 h 15 min, 1 j 2 h)");
   /* Pseudo-langue : les textes du lot passent par _t */
   I._lang = "xx";
   var campX = g.buildCampHTML();
-  ok(campX.indexOf("⟦Santé du Héros⟧") !== -1 && campX.indexOf("⟦Manger⟧") !== -1 && campX.indexOf("⟦Tableau de missions⟧") !== -1, "pseudo-langue : Camp extrait");
+  ok(campX.indexOf("⟦Santé du héros⟧") !== -1 && campX.indexOf("⟦Manger⟧") !== -1 && campX.indexOf("⟦Tableau de missions⟧") !== -1, "pseudo-langue : Camp extrait");
   ok(g.buildHudHTML().indexOf("⟦Niv. 1⟧") !== -1, "pseudo-langue : HUD extrait (niveau)");
   ok(g.buildCombatHTML().indexOf("⟦ATTAQUER⟧") !== -1, "pseudo-langue : bouton ATTAQUER extrait");
   ok(g.ResumeManager.formatAbsence(135 * 60000) === "⟦2 h⟧ ⟦15 min⟧", "pseudo-langue : unités de durée extraites");
@@ -12434,7 +11953,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     var runv = game.sceneRun;
     ok(r.ok && runv.pa2 && runv.status === "pa2-prep" && runv.mapId === "foret_1", "canevas pa2 : Pa2Run prend le run, préparation sur la carte foret_1");
     ok(S.petiteAventureCountToday() === spent0 && game.resources.petite_ration === pr0 && !g.SortieManager.isActive(), "préparation : ni place, ni ration, ni sortie engagées");
-    ok(S.leaveNow().ok === false, "en v2, on ne rentre pas n'importe où (camp ou seuil seulement)");
+    ok(typeof S.leaveNow === "undefined", "en v2, on ne rentre pas n'importe où (camp ou seuil seulement) : plus de leaveNow");
 
     /* Besace : place, stock de l'Entrepôt, objet unique, coffre */
     ok(P.addItem("armure").ok && P.addItem("armure").ok === false, "matériel : une seule armure");
@@ -12666,7 +12185,7 @@ console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (prépa
     ok(html.indexOf(g.esc("Un chasseur n'est pas revenu")) > 0 && html.indexOf("kframe-page") > 0, "préparation : l'accroche du run et le cadre de page du jeu");
     P.addItem("petite_ration"); P.addItem("ration"); P.addItem("gourde"); P.addItem("corde");
     html = g.buildSceneScreenHTML();
-    ok((html.match(/pa2-cell is-full/g) || []).length === 4 && (html.match(/pa2-cell is-free/g) || []).length === 1 && html.indexOf("span 2") > 0, "besace : un objet par case, la ration moyenne sur deux places, une case libre");
+    ok((html.match(/pa2-cell is-full/g) || []).length === 4 && (html.match(/pa2-cell is-free/g) || []).length === 1 && (html.match(/pa2-cell is-held/g) || []).length === 1 && html.indexOf("span 2") < 0, "besace : un objet par case, la ration moyenne bloque une deuxième case, une case libre (v3.394.0)");
     g.pa2View.prepStep = "pacts"; P.togglePact("lourd");
     html = g.buildSceneScreenHTML();
     ok(html.indexOf('aria-pressed="true"') > 0 && html.indexOf("×1,20") > 0, "pactes : le pacte choisi est marqué, butin final ×1,20");
@@ -13200,7 +12719,7 @@ console.log("\n[165] v3.389.0 — Chantier P, lot P-1 : les quêtes de déblocag
       fresh(id);
       var res = T[id].lootResource, before = g.WarehouseManager.getAmount(res), pa0 = S.petiteAventureCountToday();
       var st = S.startRun(id), r = g.game.sceneRun;
-      var okStart = st.ok && r.parcours && r.status === "pa2-map" && !r.map.image;
+      var okStart = st.ok && r.parcours && r.status === "pa2-map" && r.map.image === "images/Maps/parcours/foret_quetes.jpg"; // v3.390.0 : la carte de Seb
       var r2 = playParcours(true);
       ok(okStart && r2.end.how === "parcours" && S.isQuestCompleted(id) && T[id].unlockOnSuccess.completionFlag && game.explorationProgression[T[id].unlockOnSuccess.completionFlag] === true
         && g.WarehouseManager.getAmount(res) >= before + T[id].lootRanges.finalSafe[0] + 2 && S.petiteAventureCountToday() === pa0,
@@ -13212,7 +12731,7 @@ console.log("\n[165] v3.389.0 — Chantier P, lot P-1 : les quêtes de déblocag
     fresh();
     S.startRun("sentier_obstrue");
     var r = g.game.sceneRun, hm = g.buildPa2ScreenHTML(r);
-    ok(hm.indexOf("pa2-parchment") > 0 && hm.indexOf(g.esc("Le Sentier Obstrué")) > 0 && hm.indexOf("undefined") < 0 && hm.indexOf("NaN") < 0, "écran : le tracé sur parchemin, titre de la quête");
+    ok(hm.indexOf("foret_quetes.jpg") > 0 && hm.indexOf("pa2-parchment") < 0 && hm.indexOf(g.esc("Le Sentier Obstrué")) > 0 && hm.indexOf("undefined") < 0 && hm.indexOf("NaN") < 0, "écran : le tracé sur la carte de la Forêt, titre de la quête (v3.390.0)");
     P.moveTo(P.openMoves()[0]);
     var hs = g.pa2SheetBody(r, P.node(r.at, r), { key: r.at, step: "intro" });
     ok(hs.indexOf(g.esc(g.PA2_OBSTACLE_LINES[P.node(r.at, r).gabaritId])) > 0 && hs.indexOf("pa2Obstacle(") > 0, "feuille d'obstacle : phrase d'ambiance et trois voies");
@@ -13233,6 +12752,294 @@ console.log("\n[165] v3.389.0 — Chantier P, lot P-1 : les quêtes de déblocag
     ok(false, "[165] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
     game.sceneRun = null;
+  }
+})();
+
+console.log("\n[166] v3.390.0 — Chantier P, lot P-2 : les parcours d'Histoire, les cartes de Seb");
+(function () {
+  var P = g.Pa2Run, T = g.SCENE_TEMPLATES, IMG = g.PA2_PARCOURS_IMAGES;
+  try {
+    ok(["foret_quetes", "desert_route", "desert_temple"].every(function (k) { return fs.existsSync(path.join(ROOT, IMG[k].image)) && IMG[k].width === 1024 && IMG[k].height === 1536; }), "les trois cartes de Seb sont livrées (1024 × 1536)");
+    var inside = true;
+    Object.keys(IMG).forEach(function (k) { Object.keys(IMG[k].tracks).forEach(function (t) { IMG[k].tracks[t].forEach(function (pt) { if (!(pt[0] > 0 && pt[0] < IMG[k].width && pt[1] > 0 && pt[1] < IMG[k].height)) inside = false; }); }); });
+    ok(inside, "chaque point de piste est dans son image");
+    var story = ["traversee_desert", "descente_temple", "remontee_fleuve"];
+    ok(Object.keys(T).every(function (id) { return T[id].mode === "pa2" || T[id].mode === "parcours"; }), "plus aucun canevas du moteur de scènes (ni de test du harnais) : Petites Aventures et parcours seulement");
+    ok(story.every(function (id) { var pc = T[id].parcours; return pc.steps.every(function (st) { return !!st.text; }) && (!pc.image || (IMG[pc.image] && (!pc.points || pc.points.every(function (i) { return !!IMG[pc.image].tracks[pc.track][i]; })))); }), "parcours d'Histoire : un texte par étape, points valides sur leur fond");
+    var M = P._parcoursMap(T.traversee_desert);
+    ok(M.image === IMG.desert_route.image && M.nodes.P0.x === IMG.desert_route.tracks.route[0][0] && M.nodes.P3.y === IMG.desert_route.tracks.route[6][1], "la traversée suit la piste de sable");
+    var M2 = P._parcoursMap(T.descente_temple);
+    ok(M2.image === IMG.desert_temple.image && M2.nodes.P0.y === IMG.desert_temple.tracks.allee[3][1] && M2.nodes.P3.x === IMG.desert_temple.tracks.allee[6][0], "la descente a sa carte : les ruines, jusqu'aux marches (v3.392.0)");
+    ok(!g.SceneRunManager || typeof g.SceneRunManager.startRun === "function", "le lancement passe toujours par SceneRunManager.startRun");
+  } catch (err) {
+    ok(false, "[166] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+/* [167] v3.391.0 — Chantier P, lot P-3 : l'ancien moteur de scènes est retiré. */
+console.log("\n[167] v3.391.0 — Chantier P, lot P-3 : retrait de l'ancien moteur de scènes");
+(function () {
+  try {
+    var S = g.SceneRunManager, E = g.SceneEngine, C = g.SceneCheckSystem, N = g.SCENE_NODES;
+    ok(Object.keys(E).sort().join() === "getNodeBank,getTemplate", "SceneEngine : ne reste que getTemplate et getNodeBank");
+    ok(Object.keys(C).sort().join() === "clamp,depthDifficulty,depthLootMultiplier,successChance", "SceneCheckSystem : les jets lus par Pa2Run seulement");
+    ok(["confirmLoadout", "enterGate", "resolveObstacle", "resolveFinale", "leaveNow", "useSceneGourde", "enterCombatNode", "statEffective", "getMaxInjuries"].every(function (k) { return typeof S[k] === "undefined"; }), "SceneRunManager : plus de paliers, portes, chambre finale ni nœud combat");
+    ok(typeof S.onCombatWon === "function" && typeof S.onCombatDefeat === "function", "les deux points d'appel de combat-engine (protégé) restent inoffensifs");
+    ok(Object.keys(N).sort().join() === "combatGroups,obstacles,optionProfiles", "SCENE_NODES : profils, obstacles, groupes");
+    ok(typeof g.buildSceneGateChoiceHTML === "undefined" && typeof g.buildScenePreparationHTML === "undefined" && typeof g.sceneRunLog === "undefined", "scene-view : plus d'écrans de l'ancien moteur");
+
+    /* Vieux runs d'une ancienne sauvegarde : un bilan jamais consulté se range, une quête en cours se rend. */
+    var game = freshCombat("knight");
+    game.sceneRun = { id: "old", templateId: "sentier_obstrue", status: "completed", loot: 0 };
+    ok(S.getRun() === null && game.sceneRun === null, "bilan v1 jamais consulté : rangé sans bruit");
+    ok(g.buildSceneScreenHTML().indexOf("scene-landing") !== -1, "l'écran retombe sur l'accueil");
+    game = freshCombat("knight");
+    run("SortieManager.start('scene');");
+    game.sceneRun = { id: "old2", templateId: "sentier_obstrue", status: "combat", loot: 3 };
+    var r0 = g.WarehouseManager.getAmount("petite_ration");
+    S.onCombatWon();
+    ok(game.sceneRun === null && !g.SortieManager.isActive() && g.WarehouseManager.getAmount("petite_ration") === r0 + 1, "quête v1 au statut « combat » : close au premier passage, ration rendue");
+    ok(S.isHeroEngaged() === false && S.startRun("sentier_obstrue").ok === true && game.sceneRun.pa2, "le héros est libre, la quête repart en v2");
+    S.abandon(); S.clearRun();
+
+    /* Endurance du marcheur : câblée sur la v2. */
+    game = freshCombat("knight");
+    run("WarehouseManager.addResource('petite_ration', 2, true);");
+    S.startRun("sentier_obstrue");
+    var P = g.Pa2Run; P.moveTo(P.openMoves()[0]);
+    var base = P.obstacleOptions().map(function (o) { return o.cost; });
+    var hlp0 = g.hasLegendaryPower; g.hasLegendaryPower = function (id) { return id === "leg_marcheur"; };
+    var red = P.obstacleOptions().map(function (o) { return o.cost; });
+    g.hasLegendaryPower = hlp0;
+    ok(base.length > 0 && red.every(function (c, i) { return c === Math.round(base[i] * 0.85); }) && red.some(function (c, i) { return c < base[i]; }), "Endurance du marcheur : les voies coûtent 15 % de Souffle en moins (" + base.join("/") + " → " + red.join("/") + ")");
+    S.abandon(); S.clearRun();
+  } catch (err) {
+    ok(false, "[167] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[168] v3.394.0 — Petites Aventures : carte plein écran, caméra commune, besace à cases bloquées");
+(function () {
+  try {
+    var fs = require("fs");
+    var camSrc = fs.readFileSync(ROOT + "/js/ui/map-camera.js", "utf8"), lmSrc = fs.readFileSync(ROOT + "/js/ui/living-map-view.js", "utf8");
+    var idx = fs.readFileSync(ROOT + "/index.html", "utf8"), sw = fs.readFileSync(ROOT + "/sw.js", "utf8");
+    ok(typeof g.MapCamera === "object" && g.MapCamera.list.length === 2, "une caméra commune, deux cartes branchées (carte vivante, Petites Aventures)");
+    ok(idx.indexOf("js/ui/map-camera.js") > 0 && idx.indexOf("js/ui/map-camera.js") < idx.indexOf("js/ui/living-map-view.js") && sw.indexOf("./js/ui/map-camera.js") > 0,
+      "map-camera.js chargé avant les deux vues et précaché");
+    ok(lmSrc.indexOf("document.addEventListener(\"pointerdown\"") < 0 && camSrc.indexOf("pointerdown") > 0 && g.lmxGesture === g.lmxCam.gesture,
+      "carte vivante : ses gestes passent par la caméra commune (relais lmx* conservés)");
+    /* Rectangulaire : Couvrant sur une fenêtre 390 × 844 et une carte 848 × 1264. */
+    var cam = g.MapCamera.create({ vpId: "x-vp", stageId: "x-stage", ratio: function () { return 1264 / 848; }, zoomMax: function () { return 2; }, topSlack: function () { return 90; } });
+    g.MapCamera.list.pop();
+    var vp0 = g.document.getElementById;
+    g.document.getElementById = function (id) { var e = vp0(id); if (id === "x-vp") { e.clientWidth = 390; e.clientHeight = 844; e.getBoundingClientRect = function () { return { left: 0, top: 0, width: 390, height: 844 }; }; } return e; };
+    cam.resetCover();
+    ok(Math.round(cam.view.w) === 566 && Math.round(cam.maxW()) === 1132, "carte en hauteur : Couvrant remplit la hauteur (566 px de large), zoom max ×2");
+    cam.centerOn(0.5, 0.05, false);
+    ok(cam.view.ty === 90, "la carte peut descendre sous l'en-tête, pas plus");
+    cam.centerOn(0.5, 0.99, false);
+    ok(Math.round(cam.view.ty) === 0 && cam.view.tx <= 0 && cam.view.tx >= 390 - 566, "jamais de bande noire en bas ni sur les côtés");
+    g.document.getElementById = vp0;
+
+    /* Écran de la carte : plein écran, sans cadre de page. */
+    var game = freshCombat("knight"), S = g.SceneRunManager, P = g.Pa2Run;
+    run("WarehouseManager.addResource('petite_ration', 3, true); WarehouseManager.addResource('ration', 2, true);");
+    game.lastPetiteAventureAt = 0;
+    var st = S.startRun("petite_aventure_foret");
+    if (st && st.ok !== false && game.sceneRun && game.sceneRun.pa2) {
+      P.addItem("ration"); P.addItem("petite_ration");
+      var prep = g.buildSceneScreenHTML();
+      ok((prep.match(/pa2-cell is-full/g) || []).length === 2 && (prep.match(/pa2-cell is-held/g) || []).length === 1 && (prep.match(/pa2-cell is-free/g) || []).length === 3,
+        "besace : la ration tient dans une case et bloque la suivante, trois cases libres");
+      P.depart();
+      var html = g.buildSceneScreenHTML();
+      ok(html.indexOf('id="pa2-vp"') > 0 && html.indexOf('id="pa2-stage"') > 0 && html.indexOf("kframe-page") < 0, "carte : plein écran, plus de cadre de page");
+      ok(html.indexOf("pa2-fs-btn is-center") > 0 && html.indexOf("pa2AskAbandon()") > 0 && html.indexOf('id="pa2-offmark"') > 0, "recentrer, abandonner, repère du héros hors écran");
+      ok(html.indexOf(g.esc(g.pa2WorldName("forest"))) > 0 && html.indexOf("pa2-maphint") > 0, "l'en-tête dit le monde ; la consigne s'affiche avant le premier pas");
+      P.moveTo(P.openMoves()[0]);
+      ok(g.buildSceneScreenHTML().indexOf("pa2-maphint") < 0, "la consigne ne revient plus après le premier pas");
+      S.abandon(); S.clearRun();
+    } else ok(false, "[168] départ de la Petite Aventure impossible : " + (st && st.reason));
+  } catch (err) {
+    ok(false, "[168] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[169] v3.396.0 — HUD-1 : bandeau « C · Ornée » et bulles de raccourci");
+(function () {
+  try {
+    var fs = require("fs");
+    var hud = g.buildHudHTML(), css = fs.readFileSync(ROOT + "/css/02-layout.css", "utf8");
+    var idx = fs.readFileSync(ROOT + "/index.html", "utf8"), sw = fs.readFileSync(ROOT + "/sw.js", "utf8");
+    ok(hud.indexOf('class="hud-band"') >= 0 && hud.indexOf('id="hud-hp-text"') > 0 && hud.indexOf('id="hud-xp-text"') > 0 && hud.indexOf('id="hud-gold"') > 0 && hud.indexOf('id="hud-wres"') > 0,
+      "bandeau : portrait, PV, XP, or et ressource de la carte du monde");
+    ok(hud.indexOf("hud-filrouge-btn") < 0 && hud.indexOf("nb-hud-bag-btn") < 0, "plus aucun raccourci dans le bandeau");
+    ok(hud.indexOf('id="hud-mini-park"') > 0 && hud.indexOf('id="hud-mini-park"') < hud.indexOf('id="combat-hero-mini"') && /#hud-mini-park \{ display: none; \}/.test(css),
+      "le mini-héros du combat reste dans le HUD, rangé caché hors combat");
+    ok(hud.indexOf('onclick="openHeroFromHud()"') > 0, "toucher le portrait ouvre Héros");
+    ok(css.indexOf(".hud-band::after") > 0 && css.indexOf(".hud-band::before") > 0 && css.indexOf("nb-hud-resources {") < 0, "filet d'or et losange ; l'ancien HUD est retiré du CSS");
+    ok(idx.indexOf("js/ui/hud-dock-view.js") > idx.indexOf("js/ui/fil-rouge-view.js") && idx.indexOf("js/ui/hud-dock-view.js") < idx.indexOf("js/main/boot.js") && sw.indexOf("./js/ui/hud-dock-view.js") > 0,
+      "hud-dock-view.js chargé avant le boot et précaché");
+    ok(g.hudNum(5000) === "5\u202f000" && g.hudNum(45678) === "45\u202f678" && g.hudNum(123456) === "123\u202fk" && g.hudNum(3200000) === "3,2\u202fM" && g.hudNum(42) === "42", "nombres du HUD à la française (5 000 ; 45 678 ; 123 k ; 3,2 M ; v3.397.0 : règle de formatNumber)");
+
+    /* Ordre des bulles : la plus importante en bas, trois au plus */
+    var F = function (u) { return { k: "fil", urgent: u, id: "x", icon: "i" }; }, T = { k: "talent" }, B = { k: "bag" }, R = { k: "plots" };
+    var ks = function (l) { return l.map(function (x) { return x.k; }).join(","); };
+    ok(ks(g.hudDockOrder(F(false), [T, B])) === "fil,bag,talent", "fil rouge au calme : petite bulle en haut, les talents en bas");
+    ok(ks(g.hudDockOrder(F(true), [T, B, R])) === "bag,talent,fil", "fil rouge urgent : en bas, trois bulles au plus");
+    ok(ks(g.hudDockOrder(F(false), [T, B, R])) === "fil,bag,talent", "au calme : fil rouge + deux situations au plus");
+    ok(ks(g.hudDockOrder(null, [B])) === "bag", "fil rouge désactivé dans les préférences : pas de bulle");
+
+    /* Situations : sac comme avant (nombre d'objets), talents quand un point est à placer */
+    var game = freshCombat("knight");
+    game.inventory = [];
+    var tc0 = g.getTalentsAvailableCount;
+    g.getTalentsAvailableCount = function () { return 0; };
+    ok(g.hudDockItems().length === 0, "rien à faire : aucune bulle hors fil rouge");
+    game.inventory = [{}, {}, {}];
+    g.getTalentsAvailableCount = function () { return 2; };
+    var it = g.hudDockItems();
+    ok(it.length === 2 && it[0].k === "talent" && it[0].badge === "2" && it[1].k === "bag" && it[1].badge === "3", "talents (2 points) puis sac (3 objets), avec leurs nombres");
+    g.getTalentsAvailableCount = tc0;
+  } catch (err) {
+    ok(false, "[169] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[170] v3.397.0 — Socle S-1 : nombres à la française");
+(function () {
+  try {
+    var F = g.formatNumber, T = " ";
+    ok(F(0) === "0" && F(999) === "999" && F(5000) === "5" + T + "000" && F(9999) === "9" + T + "999", "sous 10 000 : le nombre entier, espace fine entre les milliers (5 000)");
+    ok(F(12345) === "12,3" + T + "k" && F(123456) === "123" + T + "k" && F(10000) === "10" + T + "k", "de 10 000 à un million : trois chiffres et « k » (12,3 k · 123 k)");
+    ok(F(1234567) === "1,23" + T + "M" && F(12345678) === "12,3" + T + "M" && F(1.5e9) === "1,5" + T + "Md", "millions et milliards : « M » et « Md » (avant : « B »)");
+    ok(F(12.5) === "12,5" && F(1234.5) === "1" + T + "234,5" && F(-2500) === "-2" + T + "500", "virgule décimale ; négatifs");
+    ok(g.hudHpShort(1234) === "1,2k" && g.hudHpShort(45678) === "45k", "PV du mini-héros du combat : court, à la française (1,2k)");
+  } catch (err) {
+    ok(false, "[170] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[171] v3.398.0 — Socle S-2 : plus aucun texte de lecture sous 12 px");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    /* Exceptions voulues (10-11 px) : compteurs et niveaux sur icônes, textes de jauge, onglets des Quêtes
+       (refaits à l'étape Onglets) ; outils de développement non concernés. */
+    var SMALL = /badge|kgauge|gauge-text|-count\b|count-|-dot\b|hud-pt-lvl|mini-level|\.qb-tab\b|\.hf-count small/;
+    var SKIP = { "04-panel-combat-sandbox.css": 1, "04-panel-admin.css": 1 };
+    var under = [], tooSmall = [];
+    fs.readdirSync(path.join(ROOT, "css")).filter(function (f) { return /\.css$/.test(f) && !SKIP[f]; }).forEach(function (f) {
+      var css = fs.readFileSync(path.join(ROOT, "css", f), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+      var re = /([^{}]+)\{([^{}]*)\}/g, m;
+      while ((m = re.exec(css))) {
+        var sel = m[1].replace(/\s+/g, " ").trim(), fm, fr = /font-size\s*:\s*([^;]+);/g;
+        while ((fm = fr.exec(m[2]))) {
+          var v = fm[1].trim(), px = /^max\(/.test(v) ? 99 : parseFloat((v.match(/^([\d.]+)px/) || [])[1] || (/^clamp\(\s*([\d.]+)px/.exec(v) || [])[1] || 99);
+          if (px < 12 && !SMALL.test(sel)) under.push(f + " " + sel + " " + v);
+          if (px < 10) tooSmall.push(f + " " + sel + " " + v);
+        }
+      }
+    });
+    ok(under.length === 0, "texte de lecture : 12 px au moins partout" + (under.length ? " (" + under.slice(0, 3).join(" | ") + ")" : ""));
+    ok(tooSmall.length === 0, "compteurs, niveaux et jauges : 10 px au moins" + (tooSmall.length ? " (" + tooSmall.slice(0, 3).join(" | ") + ")" : ""));
+    var ce = fs.readFileSync(path.join(ROOT, "js/systems/combat-engine.js"), "utf8");
+    ok(ce.indexOf("Tu as été terrassé ! Retour au campement") > 0 && ce.indexOf("Vous avez été terrassé") < 0, "message de mort au tutoiement (combat-engine.js, accord de Seb)");
+  } catch (err) {
+    ok(false, "[171] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[172] v3.399.0 — Lot F-1 : feuilles du bas unifiées (habillage C · Mixte)");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var head = g.kSheetHeadHTML({ icon: "<img>", title: "T", sub: "S", close: "fermerX()" });
+    ok(/^<div class="ksheet-head"><div class="ksheet-handle"><\/div><div class="ksheet-title"><img><span class="ksheet-ttl">T<small class="ksheet-sub">S<\/small><\/span><\/div><button type="button" class="ksheet-x" onclick="fermerX\(\)"/.test(head),
+      "kSheetHeadHTML : poignée, icône, titre, sous-titre et croix de fermeture");
+    ok(g.kSheetHeadHTML({ title: "T" }).indexOf("ksheet-x") === -1, "sans action de fermeture : pas de croix");
+    var H = /class="ksheet-head"[\s\S]*class="ksheet-x"/, FERMER = />\s*(Fermer|Annuler)\s*<\/button>/;
+    function check(nom, html) {
+      ok(H.test(html) && !FERMER.test(html) && html.indexOf("ksheet-close") === -1,
+        nom + " : en-tête commun avec croix, plus de bouton « Fermer » en bas");
+    }
+    run("closeHerosSheet(); setHerosSubTab('amelioration');");
+    check("Résumé › Stats", run("buildHerosSheetHTML()"));
+    run("closeHerosSheet(); setHerosSubTab('hero');");
+    check("Menu", g.buildFullMenuHTML());
+    check("Files en cours", g.buildWorkshopSummaryHTML());
+    check("Carte du monde", g.buildWorldPopupHTML(0));
+    check("Bâtiment du village", g.buildVillageBuildingSheetHTML(Object.keys(g.VILLAGE_BUILDINGS)[0]));
+    check("États du combat", g.buildCombatStatesSheetHTML());
+    ["help", "presets", "report"].forEach(function (n) {
+      run("grimoireOpenSheet = '" + n + "';");
+      check("Grimoire › " + n, g.buildGrimoireSheetHTML());
+    });
+    run("grimoireOpenSheet = null;");
+    var d = (g.DUNGEONS || [])[0];
+    if (d) {
+      var dh = g.buildDungeonSheetHTML(d.id);
+      check("Donjon", dh);
+      ok(/class="ksheet-foot"><button type="button" class="kbtn primary" onclick="confirmDungeonStart\(\)"/.test(dh), "Donjon : « Entrer » devient le bouton principal du pied");
+    }
+    /* Toutes les feuilles du jeu passent par l'en-tête commun : plus aucune ancienne classe */
+    var js = [], walk = function (dir) {
+      fs.readdirSync(dir).forEach(function (f) {
+        var p = path.join(dir, f);
+        if (fs.statSync(p).isDirectory()) walk(p); else if (/\.js$/.test(f)) js.push(p);
+      });
+    };
+    walk(path.join(ROOT, "js"));
+    var vieux = js.filter(function (p) {
+      var t = fs.readFileSync(p, "utf8");
+      return /ksheet-close|grimoire-sheet-close|grimoire-sheet-title|lmx-sheet-close|lmx-sheet-grab|<h3>' \+ _t\("Choisir un titre/.test(t);
+    });
+    ok(vieux.length === 0, "anciennes classes de feuille retirées du JS" + (vieux.length ? " (" + vieux.join(", ") + ")" : ""));
+    var tok = fs.readFileSync(path.join(ROOT, "css/00-tokens.css"), "utf8");
+    ok(/--sheet-body-bg:/.test(tok) && /--sheet-head-bg:/.test(tok) && /--sheet-veil:/.test(tok), "jetons --sheet-* réunis dans 00-tokens.css (bascule vers B en un endroit)");
+    var ov = fs.readFileSync(path.join(ROOT, "css/05-overlays.css"), "utf8");
+    ok(ov.indexOf("rgba(10, 8, 18, 0.75)") === -1, "voile des menus : plus de violet");
+  } catch (err) {
+    ok(false, "[172] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[173] v3.400.0 — Lot F-2 : fenêtres centrées (.kwin)");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var head = g.kWinHeadHTML({ icon: "<img>", title: "T", sub: "S" });
+    ok(/^<div class="ksheet-head kwin-head"><div class="kwin-ico"><img><\/div><div class="kwin-ttl">T<small class="ksheet-sub">S<\/small><\/div><\/div>$/.test(head),
+      "kWinHeadHTML : en-tête de pierre centré (icône, titre, sous-titre), sans croix par défaut");
+    ok(g.kWinHeadHTML({ title: "T", close: "x()" }).indexOf('class="ksheet-x" onclick="x()"') !== -1, "croix sur demande");
+    var W = /class="[^"]*kwin-veil[^"]*"[\s\S]*class="kwin[ "][\s\S]*class="ksheet-head kwin-head"[\s\S]*class="kwin-foot"/;
+    function win(nom, html) { ok(W.test(html) && html.indexOf("dungeon-story-actions") === -1 && html.indexOf("dungeon-story-title") === -1, nom + " : fenêtre du kit (voile, en-tête, pied)"); }
+    win("Tutoriel", g.buildTutorialModalHTML("x()", g.GENERIC_TUTORIALS.grimoire_rules));
+    win("Quête d'aventure", g.buildAdventureQuestIntroHTML(Object.keys(g.ADVENTURE_QUESTS)[0]));
+    win("Chasse", g.buildHuntQuestIntroHTML(Object.keys(g.HUNT_QUESTS)[0]));
+    win("Fin de quête", g.buildQuestCompleteHTML({ title: "T", text: "x" }));
+    win("Fin de donjon", g.buildDungeonSummaryHTML({ success: true, tierName: "T", clearedWave: 15, wavesTotal: 15, goldReward: 1, shardsGained: 1 }));
+    var fc = g.buildCombatForecastHTML({ id: "tresdur", heroDamagePerRound: 1, enemyDamagePerRound: 1, enemyHp: 1, roundsToKill: 1, roundsToDie: 1 }, { title: "T" });
+    win("Avant de partir", fc);
+    ok(g.buildQuestCompleteHTML({ title: "T" }).indexOf(">Continuer</button>") !== -1, "fin de quête : « Continuer » plutôt que « Fermer »");
+    var st = g.buildWorkshopStepPopupHTML();
+    ok(/kwin-veil/.test(st) && /ksheet-x/.test(st) && !/>Fermer<\/button>/.test(st), "objectif de l'Atelier : croix et voile, plus de « Fermer »");
+    var inv = g.buildInventorySettingsHTML();
+    ok(/class="ksheet-head"/.test(inv) && /ksheet-x/.test(inv) && !/>Fermer<\/button>/.test(inv), "réglages du sac : feuille du bas avec croix");
+    var rep = g.buildCombatReportHTML("defeat", "Araignée");
+    ok(/class="ksheet-head"/.test(rep) && /combat-report-overlay/.test(rep) && !/>Continuer<\/button>/.test(rep), "rapport de combat : feuille du bas avec croix");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+    ok(/id="confirm-modal" class="kwin-veil"/.test(idx) && /id="offline-modal" class="kwin-veil"/.test(idx) && /id="workshop-completion-modal" class="kwin-veil"/.test(idx)
+      && /id="confirm-title"/.test(idx) && /id="confirm-text"/.test(idx) && /id="confirm-icon"/.test(idx), "modales système : fenêtres du kit, identifiants conservés");
+    var fr = fs.readFileSync(path.join(ROOT, "js/ui/fil-rouge-view.js"), "utf8");
+    ok(fr.indexOf("positionFilRougeBubble") === -1 && /kwin fr-bubble/.test(fr), "fil rouge : fenêtre centrée, plus d'accroche au bouton disparu du HUD");
+    var rv = fs.readFileSync(path.join(ROOT, "js/ui/return-view.js"), "utf8");
+    ok(/kwin ret-card/.test(rv) && /kwin-veil ret-bg/.test(rv), "écran de retour : fenêtre du kit");
+    var ov = fs.readFileSync(path.join(ROOT, "css/05-overlays.css"), "utf8");
+    ok(ov.indexOf(".confirm-btn {") === -1 && ov.indexOf(".offline-btn {") === -1, "anciens boutons des modales système retirés du CSS");
+  } catch (err) {
+    ok(false, "[173] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

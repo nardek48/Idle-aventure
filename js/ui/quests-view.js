@@ -293,15 +293,16 @@ function buildAdventureQuestIntroHTML(questId) {
   var quest = window.ADVENTURE_QUESTS ? ADVENTURE_QUESTS[questId] : null;
   if (!quest) return "";
 
-  var h = '<div class="full-menu-overlay">';
-  h += '  <div class="full-menu dungeon-story-card">';
-  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(quest.icon || "images/Icons/quests/quest_story.png", "dungeon-story-icon-img", _td(quest.name)) + '</div>';
-  h += '    <div class="dungeon-story-title">' + esc(_td(quest.name)) + '</div>';
-  if (quest.story) h += '    <div class="dungeon-story-text">' + esc(_td(quest.story)) + '</div>';
+  var h = '<div class="full-menu-overlay kwin-veil">';
+  h += '  <div class="kwin dungeon-story-card">';
+  h += kWinHeadHTML({ icon: renderIconOrEmojiHTML(quest.icon || "images/Icons/quests/quest_story.png", "dungeon-story-icon-img", _td(quest.name)), title: esc(_td(quest.name)) }); // v3.400.0 (F-2)
+  h += '    <div class="kwin-body">';
+  if (quest.story) h += '    <div class="kwin-quote dungeon-story-text">' + esc(_td(quest.story)) + '</div>';
   if (typeof buildEnemyTraitsCardHTML === "function") h += buildEnemyTraitsCardHTML({ type: "adventure", id: questId }); // v3.378.0
-  h += '    <div class="dungeon-story-actions">';
-  h += '      <button class="settings-btn" type="button" onclick="closeAdventureQuestIntro()">' + _t("Annuler") + '</button>';
-  h += '      <button class="settings-btn primary" type="button" onclick="confirmAdventureQuestStart()">' + _t("Commencer") + '</button>';
+  h += '    </div>';
+  h += '    <div class="kwin-foot">';
+  h += '      <button class="kbtn" type="button" onclick="closeAdventureQuestIntro()">' + _t("Annuler") + '</button>';
+  h += '      <button class="kbtn primary" type="button" onclick="confirmAdventureQuestStart()">' + _t("Commencer") + '</button>';
   h += '    </div>';
   h += '  </div>';
   h += '</div>';
@@ -830,16 +831,17 @@ function buildHuntQuestIntroHTML(questId) {
   var quest = window.HUNT_QUESTS ? HUNT_QUESTS[questId] : null;
   if (!quest) return "";
 
-  var h = '<div class="full-menu-overlay">';
-  h += '  <div class="full-menu dungeon-story-card">';
-  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(quest.icon || "images/Icons/classes/class_ranger.png", "dungeon-story-icon-img", _td(quest.name)) + '</div>';
-  h += '    <div class="dungeon-story-title">' + esc(_td(quest.name)) + '</div>';
-  if (quest.story) h += '    <div class="dungeon-story-text">' + esc(_td(quest.story)) + '</div>';
+  var h = '<div class="full-menu-overlay kwin-veil">';
+  h += '  <div class="kwin dungeon-story-card">';
+  h += kWinHeadHTML({ icon: renderIconOrEmojiHTML(quest.icon || "images/Icons/classes/class_ranger.png", "dungeon-story-icon-img", _td(quest.name)), title: esc(_td(quest.name)) }); // v3.400.0 (F-2)
+  h += '    <div class="kwin-body">';
+  if (quest.story) h += '    <div class="kwin-quote dungeon-story-text">' + esc(_td(quest.story)) + '</div>';
   if (window.ProvisionsManager) h += ProvisionsManager.buildLineHTML("hunt", quest); // v3.330.1 : vivres de sortie
   if (typeof buildEnemyTraitsCardHTML === "function") h += buildEnemyTraitsCardHTML({ type: "hunt", id: questId }); // v3.378.0
-  h += '    <div class="dungeon-story-actions">';
-  h += '      <button class="settings-btn" type="button" onclick="closeHuntQuestIntro()">' + _t("Annuler") + '</button>';
-  h += '      <button class="settings-btn primary" type="button" onclick="confirmHuntQuestStart()">' + _t("Commencer") + '</button>';
+  h += '    </div>';
+  h += '    <div class="kwin-foot">';
+  h += '      <button class="kbtn" type="button" onclick="closeHuntQuestIntro()">' + _t("Annuler") + '</button>';
+  h += '      <button class="kbtn primary" type="button" onclick="confirmHuntQuestStart()">' + _t("Commencer") + '</button>';
   h += '    </div>';
   h += '  </div>';
   h += '</div>';
@@ -872,12 +874,13 @@ function confirmHuntQuestStart() {
 function buildQuestCompleteHTML(config) {
   if (!config) return "";
 
-  var h = '<div class="full-menu-overlay">';
-  h += '  <div class="full-menu dungeon-story-card is-success">';
-  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(config.icon || "images/Icons/quests/quest_story.png", "dungeon-story-icon-img", _td(config.title || "")) + '</div>';
+  var h = '<div class="full-menu-overlay kwin-veil">';
+  h += '  <div class="kwin dungeon-story-card is-success">';
   // v3.370.0 : titre et texte peuvent venir d'un fichier protégé (adventure-quest-system.js) : traduits ici
-  h += '    <div class="dungeon-story-title">' + esc(config.title ? _td(config.title) : _t("Quête terminée !")) + '</div>';
-  if (config.text) h += '    <div class="dungeon-story-text">' + esc(_td(config.text)) + '</div>';
+  h += kWinHeadHTML({ icon: renderIconOrEmojiHTML(config.icon || "images/Icons/quests/quest_story.png", "dungeon-story-icon-img", _td(config.title || "")),
+    title: esc(config.title ? _td(config.title) : _t("Quête terminée !")), sub: config.title ? _t("Quête terminée !") : "" }); // v3.400.0 (F-2)
+  h += '    <div class="kwin-body">';
+  if (config.text) h += '    <div class="kwin-quote dungeon-story-text">' + esc(_td(config.text)) + '</div>';
   // v3.297.0 (W-1a) : dialogue de complétion d'une étape d'Histoire (narrative.completionDialogue)
   if (Array.isArray(config.dialogue) && config.dialogue.length) h += buildStoryDialogueHTML({ narrative: { dialogue: config.dialogue } });
 
@@ -889,13 +892,14 @@ function buildQuestCompleteHTML(config) {
     h += '    </div>';
   }
 
-  h += '    <div class="dungeon-story-actions">';
+  h += '    </div>';
+  h += '    <div class="kwin-foot">';
   // v3.208.0 (bug Seb) : le bouton de fermeture était câblé en dur sur closeQuestCompletePopup(),
   // qui vide la modale sans toucher à la navigation — après une chasse, le joueur restait donc sur
   // l'écran Combat. config.closeOnclick permet à l'appelant de router la fermeture (voir les chasses).
-  h += '      <button class="settings-btn primary" type="button" onclick="' + (config.closeOnclick || "closeQuestCompletePopup()") + '">' + esc(config.closeLabel ? _td(config.closeLabel) : _t("Fermer")) + '</button>';
+  h += '      <button class="kbtn primary" type="button" onclick="' + (config.closeOnclick || "closeQuestCompletePopup()") + '">' + esc(config.closeLabel ? _td(config.closeLabel) : _t("Continuer")) + '</button>';
   if (config.extraActionLabel && config.extraActionOnclick) {
-    h += '      <button class="settings-btn" type="button" onclick="' + config.extraActionOnclick + '">' + esc(_td(config.extraActionLabel)) + '</button>';
+    h += '      <button class="kbtn" type="button" onclick="' + config.extraActionOnclick + '">' + esc(_td(config.extraActionLabel)) + '</button>';
   }
   h += '    </div>';
   h += '  </div>';

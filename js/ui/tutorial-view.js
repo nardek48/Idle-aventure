@@ -18,11 +18,11 @@ function buildTutorialPreviewHTML(kind) {
 }
 
 function buildTutorialModalHTML(closeHandlerJs, tutorial) {
-  var h = '<div class="full-menu-overlay tutorial-overlay">';
-  h += '  <div class="full-menu dungeon-story-card tutorial-card">';
-  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(tutorial.icon || "images/Icons/codex/codex_lore.png", "dungeon-story-icon-img", "") + '</div>';
-  h += '    <div class="dungeon-story-title">' + esc(_td(tutorial.title || "")) + '</div>';
-  h += '    <div class="tutorial-points">';
+  // v3.400.0 (lot F-2) : fenêtre centrée du kit (.kwin)
+  var h = '<div class="full-menu-overlay kwin-veil tutorial-overlay">';
+  h += '  <div class="kwin dungeon-story-card tutorial-card">';
+  h += kWinHeadHTML({ icon: renderIconOrEmojiHTML(tutorial.icon || "images/Icons/codex/codex_lore.png", "dungeon-story-icon-img", ""), title: esc(_td(tutorial.title || "")) });
+  h += '    <div class="kwin-body tutorial-points">';
   (tutorial.points || []).forEach(function (p) {
     h += '<div class="tutorial-point">';
     h += '<span class="tutorial-point-icon">' + renderIconOrEmojiHTML(p.icon, "tutorial-point-ico", "") + '</span>';
@@ -32,8 +32,8 @@ function buildTutorialModalHTML(closeHandlerJs, tutorial) {
     h += '</div>';
   });
   h += '    </div>';
-  h += '    <div class="dungeon-story-actions">';
-  h += '      <button class="settings-btn primary" type="button" onclick="' + closeHandlerJs + '">' + _t("Compris") + '</button>';
+  h += '    <div class="kwin-foot">';
+  h += '      <button class="kbtn primary" type="button" onclick="' + closeHandlerJs + '">' + _t("Compris") + '</button>';
   h += '    </div>';
   h += '  </div>';
   h += '</div>';

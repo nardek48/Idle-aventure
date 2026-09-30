@@ -133,23 +133,17 @@ function buildCombatReportBodyHTML() {
 window.buildCombatReportBodyHTML = buildCombatReportBodyHTML;
 
 function buildCombatReportHTML(trigger, enemyName) {
-  var h = '<div class="full-menu-overlay combat-report-overlay">';
-  h += '  <div class="full-menu dungeon-story-card combat-report-card">';
+  // v3.400.0 (lot F-2) : feuille du bas du kit (en-tête de pierre, croix, voile)
+  var h = '<div class="full-menu-overlay combat-report-overlay" onclick="if (event.target === this) closeCombatReport();">';
+  h += '  <div class="full-menu combat-report-card">';
 
   var icon = trigger === "defeat" ? "images/Icons/camp/hero_defeated.png" : trigger === "boss" ? "images/Icons/dungeon/boss_crown.png" : "images/Icons/subtabs/hero_stats.png";
   var title = trigger === "defeat" ? _t("Rapport de combat — défaite")
     : trigger === "boss" ? _t("Rapport de combat — boss vaincu")
     : _t("Rapport de combat");
-  h += '    <div class="dungeon-story-icon">' + renderIconOrEmojiHTML(icon, "dungeon-story-icon-img", "") + '</div>';
-  h += '    <div class="dungeon-story-title">' + esc(title) + '</div>';
-  if (enemyName) {
-    h += '    <div class="dungeon-story-meta">' + esc(_td(enemyName)) + '</div>';
-  }
-
-  h += buildCombatReportBodyHTML();
-
-  h += '    <button class="settings-btn primary dungeon-story-close" type="button" onclick="closeCombatReport()">' + _t("Continuer") + '</button>';
-  h += '    <button class="settings-btn combat-report-reset-btn" type="button" onclick="resetCombatReport()"><img class=ico-inline src=images/Icons/system/trash.png> ' + _t("Réinitialiser le rapport") + '</button>';
+  h += kSheetHeadHTML({ icon: renderIconOrEmojiHTML(icon, "", ""), title: esc(title), sub: enemyName ? esc(_td(enemyName)) : "", close: "closeCombatReport()" });
+  h += '  <div class="ksheet-body">' + buildCombatReportBodyHTML() + '</div>';
+  h += '  <div class="ksheet-foot"><button class="kbtn danger combat-report-reset-btn" type="button" onclick="resetCombatReport()"><img class=ico-inline src=images/Icons/system/trash.png> ' + _t("Réinitialiser le rapport") + '</button></div>';
   h += '  </div>';
   h += '</div>';
   return h;

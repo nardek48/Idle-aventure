@@ -129,94 +129,31 @@
 /* =========================
    Modales système
    ========================= */
+/* v3.400.0 (lot F-2) : les trois modales système (index.html) sont des fenêtres
+   .kwin (css/00-components.css). Ne restent ici que l'affichage (.show) et
+   l'étagement : bloquantes, fermables uniquement par leurs boutons. */
 #offline-modal,
-#confirm-modal {
-  position: fixed;
-  inset: 0;
+#confirm-modal,
+#workshop-completion-modal {
   display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.85);
 }
 
-#offline-modal {
-  z-index: 200;
-}
-
-#confirm-modal {
-  z-index: 3250;
-}
+#offline-modal { z-index: 200; }
+#workshop-completion-modal { z-index: 260; }
+#confirm-modal { z-index: 3250; }
 
 #offline-modal.show,
-#confirm-modal.show {
-  display: flex;
-}
-
-/* v3.39 : popup de complétion d'étape (chaîne de déblocage de
-   l'Atelier, voir ui/workshop-quest-modal.js) — même principe que
-   #offline-modal/#confirm-modal ci-dessus : bloquant, fond plein
-   écran opaque, fermable UNIQUEMENT via le bouton Continuer. z-index
-   au-dessus de #confirm-modal. */
-#workshop-completion-modal {
-  position: fixed;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.85);
-  z-index: 260;
-}
-
+#confirm-modal.show,
 #workshop-completion-modal.show {
   display: flex;
 }
 
-.offline-card,
-.confirm-card {
-  width: 100%;
-  padding: 24px;
-  text-align: center;
-  background: var(--nb-cream-alt);
-  border-radius: var(--nb-radius-lg);
-  box-shadow: var(--nb-shadow-card);
-  color: var(--nb-ink);
-}
-
-.offline-card {
-  max-width: 340px;
-  border: 1px solid var(--nb-frame);
-}
-
-.confirm-card {
-  max-width: 320px;
-  border: 1px solid var(--nb-frame);
-}
-
-.offline-icon {
-  margin-bottom: 8px;
-  font-size: 48px;
-}
-
-.offline-title {
-  margin-bottom: 4px;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--aether);
-}
-
-.offline-time {
-  margin-bottom: 12px;
-  font-size: 13px;
-  color: var(--nb-ink-dim);
-}
-
 .offline-rewards {
-  margin-bottom: 12px;
-  padding: 12px;
-  border-radius: var(--nb-radius-sm);
-  background: var(--nb-cream);
+  padding: 10px 12px;
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 12px;
+  background: var(--sheet-card-bg);
+  text-align: left;
 }
 
 .offline-reward-row {
@@ -226,8 +163,7 @@
   font-size: 14px;
 }
 
-/* v2.83.10 : petite icône inline (Essence/Aether) dans le résumé
-   hors-ligne. */
+/* v2.83.10 : petite icône inline dans le résumé hors-ligne. */
 .offline-reward-icon {
   width: 14px;
   height: 14px;
@@ -235,136 +171,11 @@
   vertical-align: -2px;
 }
 
-.offline-btn {
-  width: 100%;
-  min-height: 48px;
-  padding: 14px;
-  border: none;
-  border-radius: var(--nb-radius-sm);
-  background: var(--aether-dark);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    transform 0.15s ease,
-    opacity 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.offline-btn:active {
-  transform: scale(0.96);
-}
-
-/* v3.39 : carte du popup de complétion — même structure que
-   .offline-card, classes propres. Bouton "Continuer" réutilise
-   .offline-btn directement dans le HTML (index.html), pas dupliqué
-   ici. */
-.workshop-completion-card {
-  width: 100%;
-  max-width: 340px;
-  padding: 24px;
-  text-align: center;
-  background: var(--nb-cream-alt);
-  border-radius: var(--nb-radius-lg);
-  box-shadow: var(--nb-shadow-card);
-  color: var(--nb-ink);
-  border: 1px solid var(--nb-frame);
-}
-
-.workshop-completion-icon {
-  margin-bottom: 8px;
-  font-size: 44px;
-}
-
-.workshop-completion-title {
-  margin-bottom: 10px;
-  font-size: 18px;
-  font-weight: 800;
-  color: #16a34a;
-}
-
-.workshop-completion-text {
-  margin-bottom: 14px;
-  padding: 12px;
-  border-radius: var(--nb-radius-sm);
-  background: var(--nb-cream);
-  font-size: 13.5px;
-  line-height: 1.6;
-  font-style: italic;
-  color: rgba(58, 44, 26, 0.85);
-}
-
 .workshop-completion-next {
-  margin-bottom: 14px;
+  margin-bottom: 4px;
   font-size: 13px;
-  font-weight: 700;
-  color: var(--nb-gold-deep);
-}
-
-.confirm-icon {
-  margin-bottom: 8px;
-  font-size: 40px;
-}
-
-/* v2.83.10 : variante image (voir renderIconOrEmojiHTML dans
-   modal.js showConfirmModal), même empreinte que l'emoji 40px
-   qu'elle peut remplacer. */
-.confirm-icon-img {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  display: inline-block;
-}
-
-.confirm-title {
-  margin-bottom: 8px;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--nb-ink);
-}
-
-.confirm-text {
-  margin-bottom: 16px;
-  white-space: pre-line;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--nb-ink-dim);
-}
-
-.confirm-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.confirm-btn {
-  flex: 1;
-  min-height: 46px;
-  padding: 12px;
-  border: none;
-  border-radius: var(--nb-radius-sm);
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    transform 0.15s ease,
-    opacity 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.confirm-btn:active {
-  transform: scale(0.96);
-}
-
-.confirm-btn.cancel {
-  background: var(--nb-cream);
-  color: var(--nb-ink);
-  border: 1px solid var(--nb-frame);
-}
-
-.confirm-btn.ok {
-  background: var(--aether-dark);
-  color: #fff;
+  font-weight: 800;
+  color: #8a5c14;
 }
 
 /* =========================
@@ -672,9 +483,6 @@
      détaillée dans la media-query "Petit mobile" de css/07-responsive.css) —
      avant, ce palier forçait 2 colonnes, ce qui écrasait ma règle
      principale (mobile-first, toujours sous ce seuil de 768px). */
-  .confirm-buttons {
-    flex-direction: column;
-  }
 }
 
 @media (max-width: 520px), (min-width: 1000px) and (hover: hover) and (pointer: fine) { /* v3.367.0 : + mode PC (colonne mobile) */
@@ -860,7 +668,7 @@
    Modale export/import (code texte)
    ========================= */
 .export-text-body {
-  padding: 0 20px 24px;
+  padding: 16px 20px 10px; /* v3.399.0 : sous l'en-tête de pierre des feuilles */
 }
 
 .export-text-body p {
@@ -949,8 +757,6 @@
    ========================= */
 @media (prefers-reduced-motion: reduce) {
   #toast,
-  .confirm-btn,
-  .offline-btn,
   #player-name-input,
   .hero-card,
   .hero-picker-confirm-btn {

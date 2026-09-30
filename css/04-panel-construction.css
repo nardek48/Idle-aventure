@@ -199,44 +199,17 @@
    ci-dessus, classes propres pour ce popup précis.
    v3.233.0 : le "*" suivi d'un "/" fermait le commentaire ici même,
    et .workshop-step-popup-card était avalée par un sélecteur invalide. */
-.workshop-step-popup-card {
-  padding: 24px 22px;
-  text-align: center;
-}
-
-.workshop-step-popup-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  margin-bottom: 10px;
-}
-
-.workshop-step-popup-text {
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: rgba(58, 44, 26, 0.85);
-  font-style: italic;
-  margin-bottom: 14px;
-}
-
+/* v3.400.0 (lot F-2) : fenêtre du kit (.kwin) ; titre dans l'en-tête, récit en .kwin-quote. */
 .workshop-step-popup-condition {
   display: inline-block;
   padding: 6px 14px;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
   border-radius: 999px;
-  background: var(--nb-cream-alt);
+  background: var(--sheet-card-bg);
   border: 1px solid var(--nb-gold-dark);
   color: var(--nb-gold-deep);
   font-size: 13px;
   font-weight: 800;
 }
 
-.workshop-step-popup-actions {
-  display: flex;
-  justify-content: center;
-}
 
-.workshop-step-popup-actions .settings-btn {
-  min-width: 140px;
-  margin-bottom: 0;
-}

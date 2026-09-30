@@ -245,90 +245,29 @@
    Fenêtre d'introduction / résumé de fin (v2.18)
    Réutilisent .full-menu-overlay / .full-menu (voir css/05-overlays.css)
    ========================= */
-.dungeon-story-card {
-  padding: 24px 22px;
-  text-align: center;
-}
-
-.dungeon-story-icon {
-  font-size: 44px;
-  margin-bottom: 10px;
-}
-
-/* v2.83.10 : variante image (voir cycle-summary-view.js), même
-   empreinte que l'emoji 44px qu'elle peut remplacer — les autres
-   usages de .dungeon-story-icon (intro/résumé de palier) restent en
-   emoji, inchangés. */
-.dungeon-story-icon-img {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  display: inline-block;
-}
-
-.dungeon-story-title {
-  font-size: 19px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  margin-bottom: 12px;
-}
-
-.dungeon-story-card.is-success .dungeon-story-title {
-  color: #efc775;
-}
-
-.dungeon-story-card.is-failure .dungeon-story-title {
-  color: #fca5a5;
-}
-
-.dungeon-story-text {
-  font-size: 13px;
-  line-height: 1.6;
-  color: rgba(58, 44, 26, 0.8300000000000001);
-  font-style: italic;
-  margin-bottom: 16px;
-}
-
-.dungeon-story-lore {
-  margin-bottom: 14px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--nb-cream-alt);
-  border-left: 2px solid var(--nb-gold);
-  font-size: 12px;
-  font-style: italic;
-  line-height: 1.6;
-  color: rgba(58, 44, 26, 0.75);
-  text-align: left;
-}
-
+/* v3.400.0 (lot F-2) : la carte est une fenêtre du kit (.kwin, css/00-components.css) :
+   icône, titre et boutons passent par kWinHeadHTML et .kwin-foot, le récit par .kwin-quote.
+   Ne restent ici que les éléments propres au contenu. */
 .dungeon-story-meta {
   font-size: 12px;
-  color: rgba(58, 44, 26, 0.7000000000000001);
-  margin-bottom: 18px;
+  color: var(--sheet-ink-dim);
+  margin-bottom: 4px;
 }
 
 .dungeon-story-meta strong {
   color: var(--nb-gold);
 }
 
-.dungeon-story-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.dungeon-story-actions .settings-btn {
-  margin-bottom: 0;
-}
-
 .dungeon-summary-rewards {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   padding: 10px 12px;
+  border: 1.5px solid var(--sheet-card-bd);
   border-radius: 12px;
-  background: var(--nb-cream-alt);
+  background: var(--sheet-card-bg);
+  text-align: left;
 }
 
 .dungeon-summary-row {
@@ -354,11 +293,6 @@
 
 .dungeon-summary-loot span:last-child {
   color: var(--nb-gold);
-}
-
-.dungeon-story-close {
-  width: 100%;
-  margin-bottom: 0;
 }
 
 /* =========================

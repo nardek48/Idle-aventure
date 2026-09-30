@@ -152,24 +152,28 @@
 <input type="file" id="import-save-file-input" accept=".json,application/json" style="display:none" onchange="importSaveFromFile(this)">
 
 
-<div id="offline-modal">
-  <div class="offline-card">
-    <div class="offline-icon"><img class=ico-inline src=images/Icons/system/offline_progress.png></div>
-    <div class="offline-title" data-i18n="">Le village a travaillé !</div>
-    <div class="offline-time" id="offline-time">Absent depuis 0m</div>
-    <div class="offline-rewards" id="offline-rewards"></div>
-    <button class="offline-btn" onclick="closeOfflineModal()" data-i18n="">Continuer</button>
+<!-- v3.400.0 (lot F-2) : les trois modales système sont des fenêtres .kwin (css/00-components.css) -->
+<div id="offline-modal" class="kwin-veil">
+  <div class="kwin offline-card">
+    <div class="ksheet-head kwin-head">
+      <div class="kwin-ico"><img src="images/Icons/system/offline_progress.png" alt=""></div>
+      <div class="kwin-ttl"><span data-i18n="">Le village a travaillé !</span><small class="ksheet-sub" id="offline-time">Absent depuis 0m</small></div>
+    </div>
+    <div class="kwin-body"><div class="offline-rewards" id="offline-rewards"></div></div>
+    <div class="kwin-foot"><button class="kbtn primary offline-btn" onclick="closeOfflineModal()" data-i18n="">Continuer</button></div>
   </div>
 </div>
 
-<div id="confirm-modal">
-  <div class="confirm-card">
-    <div class="confirm-icon" id="confirm-icon"><img class=ico-inline src=images/Icons/system/ascension.png></div>
-    <div class="confirm-title" id="confirm-title">Confirmer</div>
-    <div class="confirm-text" id="confirm-text"></div>
-    <div class="confirm-buttons">
-      <button class="confirm-btn cancel" onclick="closeConfirmModal(false)" data-i18n="">Annuler</button>
-      <button class="confirm-btn ok" onclick="closeConfirmModal(true)" data-i18n="">Confirmer</button>
+<div id="confirm-modal" class="kwin-veil">
+  <div class="kwin confirm-card">
+    <div class="ksheet-head kwin-head">
+      <div class="kwin-ico" id="confirm-icon"><img src="images/Icons/system/ascension.png" alt=""></div>
+      <div class="kwin-ttl" id="confirm-title">Confirmer</div>
+    </div>
+    <div class="kwin-body"><p class="kwin-text confirm-text" id="confirm-text"></p></div>
+    <div class="kwin-foot confirm-buttons">
+      <button class="kbtn confirm-btn cancel" onclick="closeConfirmModal(false)" data-i18n="">Annuler</button>
+      <button class="kbtn primary confirm-btn ok" onclick="closeConfirmModal(true)" data-i18n="">Confirmer</button>
     </div>
   </div>
 </div>
@@ -181,13 +185,17 @@
      (aucun bouton "fermer en cliquant à côté" ici, contrairement au
      popup d'objectif non-bloquant). Fermé uniquement via le bouton
      "Continuer" -> closeWorkshopCompletionPopup(). -->
-<div id="workshop-completion-modal">
-  <div class="workshop-completion-card">
-    <div class="workshop-completion-icon"><img class=ico-inline src=images/Icons/system/check_valid.png></div>
-    <div class="workshop-completion-title" id="workshop-completion-title">Étape terminée</div>
-    <div class="workshop-completion-text" id="workshop-completion-text"></div>
-    <div class="workshop-completion-next" id="workshop-completion-next"></div>
-    <button class="offline-btn" onclick="closeWorkshopCompletionPopup()" data-i18n="">Continuer</button>
+<div id="workshop-completion-modal" class="kwin-veil">
+  <div class="kwin workshop-completion-card">
+    <div class="ksheet-head kwin-head">
+      <div class="kwin-ico"><img src="images/Icons/system/check_valid.png" alt=""></div>
+      <div class="kwin-ttl" id="workshop-completion-title">Étape terminée</div>
+    </div>
+    <div class="kwin-body">
+      <p class="kwin-quote" id="workshop-completion-text"></p>
+      <div class="workshop-completion-next" id="workshop-completion-next"></div>
+    </div>
+    <div class="kwin-foot"><button class="kbtn primary" onclick="closeWorkshopCompletionPopup()" data-i18n="">Continuer</button></div>
   </div>
 </div>
 

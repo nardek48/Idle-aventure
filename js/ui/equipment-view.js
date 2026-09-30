@@ -551,10 +551,11 @@ function buildInventorySettingsHTML() {
   var threshold = game.autoSellRarityThreshold || "common";
   var rarities = (typeof RARITY_ORDER !== "undefined") ? RARITY_ORDER : ["common", "green", "rare", "epic", "legendary"];
 
-  var h = '<div class="full-menu-overlay">';
-  h += '  <div class="full-menu dungeon-story-card">';
-  h += '    <div class="dungeon-story-icon"><img class=ico-inline src=images/Icons/system/settings.png></div>';
-  h += '    <div class="dungeon-story-title">' + _t("Réglages du sac") + '</div>';
+  // v3.400.0 (lot F-2) : réglages = feuille du bas du kit (en-tête de pierre, croix, voile)
+  var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeInventorySettings();">';
+  h += '  <div class="full-menu inv-settings-sheet">';
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/system/auto_sell.png" alt="">', title: _t("Réglages du sac"), close: "closeInventorySettings()" });
+  h += '  <div class="ksheet-body">';
 
   h += '    <div class="auto-sell-toggle-row">';
   h += '      <button class="auto-sell-toggle' + (game.autoSellEquipment ? ' is-on' : '') + '" type="button" onclick="toggleAutoSellEquipment();openInventorySettings();">';
@@ -574,11 +575,8 @@ function buildInventorySettingsHTML() {
   // v3.228.0 : l'autovente ne regarde que la rareté, pas les affixes — le dire pour éviter la mauvaise surprise.
   h += '    <div class="inv-threshold-hint">' + _t("Le tri se fait sur la rareté seule : un objet de cette rareté part même si ses bonus sont excellents. Une arme d'élite n'est jamais offerte d'office.") + '</div>';
 
-  h += '    <div class="dungeon-story-actions">';
-  h += '      <button class="settings-btn" type="button" onclick="closeInventorySettings()">' + _t("Fermer") + '</button>';
-  h += '    </div>';
-
-  h += '    <button class="inv-sell-all-btn" type="button" onclick="confirmSellAllInventory()"><img class=ico-inline src=images/Icons/system/bulk_sell.png> ' + _t("Tout offrir") + '</button>';
+  h += '  </div>'; // ksheet-body
+  h += '  <div class="ksheet-foot"><button class="kbtn danger" type="button" onclick="confirmSellAllInventory()"><img class=ico-inline src=images/Icons/system/bulk_sell.png> ' + _t("Tout offrir") + '</button></div>';
 
   h += '  </div>';
   h += '</div>';

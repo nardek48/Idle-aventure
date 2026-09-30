@@ -6,22 +6,20 @@ function buildWorkshopStepPopupHTML() {
   WorkshopUnlockManager.ensure();
   var wu = game.workshopUnlock;
 
-  var h = '<div class="full-menu-overlay" onclick="if(event.target===this)closeWorkshopStepPopup()">';
-  h += '  <div class="full-menu workshop-step-popup-card">';
+  // v3.400.0 (lot F-2) : fenêtre du kit, fermée par la croix ou le voile
+  var h = '<div class="full-menu-overlay kwin-veil" onclick="if(event.target===this)closeWorkshopStepPopup()">';
+  h += '  <div class="kwin workshop-step-popup-card">';
+  var ico = '<img src="images/Icons/workshops/masonry.png" alt="">';
 
   if (wu.completed) {
-    h += '    <div class="workshop-step-popup-title">' + _t("Chaîne terminée") + '</div>';
-    h += '    <div class="workshop-step-popup-text">' + _t("L'Atelier de Construction est débloqué en permanence.") + '</div>';
+    h += kWinHeadHTML({ icon: ico, title: _t("Chaîne terminée"), close: "closeWorkshopStepPopup()" });
+    h += '    <div class="kwin-body"><p class="kwin-text">' + _t("L'Atelier de Construction est débloqué en permanence.") + '</p></div>';
   } else {
     var step = WORKSHOP_UNLOCK_STEPS[wu.currentStep];
-    h += '    <div class="workshop-step-popup-title">' + esc(_td(step.label)) + '</div>';
-    h += '    <div class="workshop-step-popup-text">' + esc(_td(step.narrative.objective)) + '</div>';
-    h += '    <div class="workshop-step-popup-condition">' + esc(formatWorkshopStepCondition(step)) + '</div>';
+    h += kWinHeadHTML({ icon: ico, title: esc(_td(step.label)), close: "closeWorkshopStepPopup()" });
+    h += '    <div class="kwin-body"><p class="kwin-quote">' + esc(_td(step.narrative.objective)) + '</p>';
+    h += '    <div class="workshop-step-popup-condition">' + esc(formatWorkshopStepCondition(step)) + '</div></div>';
   }
-
-  h += '    <div class="workshop-step-popup-actions">';
-  h += '      <button class="settings-btn primary" type="button" onclick="closeWorkshopStepPopup()">' + _t("Fermer") + '</button>';
-  h += '    </div>';
   h += '  </div>';
   h += '</div>';
   return h;

@@ -46,11 +46,12 @@ function getReturnStockLeft() {
 function buildReturnScreenHTML() {
   var st = returnScreenState;
   var s = st.summary;
-  var h = '<div class="ret-card" role="dialog" aria-label="' + _t("Pendant ton absence") + '">';
-  h += '<div class="ret-top"><img src="images/Icons/system/offline_progress.png" alt="">'
-    + '<div class="ret-title">' + _t("Pendant ton absence") + '</div>'
-    + '<div class="ret-time">' + esc(_t("Tu es parti {d}.", { d: window.ResumeManager ? ResumeManager.formatAbsence(s.ms || 0) : "" })) + '</div></div>';
-  if (st.line) h += '<div class="ret-line">' + esc(_td(st.line)) + '</div>';
+  // v3.400.0 (lot F-2) : fenêtre centrée du kit (.kwin)
+  var h = '<div class="kwin ret-card" role="dialog" aria-label="' + _t("Pendant ton absence") + '">';
+  h += kWinHeadHTML({ icon: '<img src="images/Icons/system/offline_progress.png" alt="">', title: _t("Pendant ton absence"),
+    sub: esc(_t("Tu es parti {d}.", { d: window.ResumeManager ? ResumeManager.formatAbsence(s.ms || 0) : "" })) });
+  h += '<div class="kwin-body">';
+  if (st.line) h += '<div class="kwin-quote ret-line">' + esc(_td(st.line)) + '</div>';
 
   // Village (production des zones)
   var produced = Object.keys(s.produced || {});
@@ -117,7 +118,8 @@ function buildReturnScreenHTML() {
     h += '<div class="ret-next"><img src="' + a.icon + '" alt=""><div class="ret-next-t"><small>' + _t("Ensuite") + '</small><b>' + esc(_td(a.title)) + '</b></div>'
       + '<button type="button" onclick="returnGoFilRouge()">' + esc(_td(a.goLabel)) + '</button></div>';
   }
-  h += '<button type="button" class="ret-close" onclick="closeReturnScreen()">' + _t("Continuer") + '</button>';
+  h += '</div>'; // kwin-body
+  h += '<div class="kwin-foot"><button type="button" class="kbtn ret-close" onclick="closeReturnScreen()">' + _t("Continuer") + '</button></div>';
   h += '</div>';
   return h;
 }
@@ -135,7 +137,7 @@ function getReturnRoot() {
 function renderReturnScreen() {
   var root = getReturnRoot();
   if (!root || !returnScreenState) return;
-  root.innerHTML = '<div class="ret-bg">' + buildReturnScreenHTML() + '</div>';
+  root.innerHTML = '<div class="kwin-veil ret-bg">' + buildReturnScreenHTML() + '</div>';
 }
 
 function openReturnScreen(summary) {

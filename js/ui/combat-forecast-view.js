@@ -54,9 +54,10 @@ var pendingForecastAction = null;
 
 function buildCombatForecastHTML(f, opts) {
   var def = CombatForecast.getLevelDef(f.id);
-  var h = '<div class="full-menu-overlay">';
-  h += '  <div class="full-menu cf-card ' + getForecastLevelClass(f) + '">';
-  h += '    <div class="cf-title">' + esc(opts.title ? _td(opts.title) : _t("Avant de partir")) + '</div>';
+  var h = '<div class="full-menu-overlay kwin-veil">';
+  h += '  <div class="kwin cf-card ' + getForecastLevelClass(f) + '">';
+  h += kWinHeadHTML({ title: esc(opts.title ? _td(opts.title) : _t("Avant de partir")), sub: opts.title ? _t("Avant de partir") : "" }); // v3.400.0 (F-2)
+  h += '    <div class="kwin-body">';
   if (opts.lowHp) {
     h += '    <div class="cf-lowhp"><img class="cf-lowhp-ico" src="images/Icons/combat_stats/stat_health.png" alt="">'
       + '<span><b>' + _t("Attention, il faut te soigner.") + '</b> '
@@ -82,10 +83,11 @@ function buildCombatForecastHTML(f, opts) {
   if (f.advice) h += '    <div class="cf-advice">' + esc(_td(f.advice)) + '</div>';
   if (def.hint) h += '    <div class="cf-hint">' + esc(_td(def.hint)) + '</div>';
 
-  h += '    <div class="cf-actions">';
-  if (opts.lowHp) h += '      <button class="settings-btn" type="button" onclick="goHealFromForecast()">' + _t("Me soigner") + '</button>';
-  else h += '      <button class="settings-btn" type="button" onclick="closeCombatForecast()">' + _t("Annuler") + '</button>';
-  h += '      <button class="settings-btn primary" type="button" onclick="confirmCombatForecast()">' + esc(opts.confirmLabel ? _td(opts.confirmLabel) : _t("Partir quand même")) + '</button>';
+  h += '    </div>';
+  h += '    <div class="kwin-foot">';
+  if (opts.lowHp) h += '      <button class="kbtn" type="button" onclick="goHealFromForecast()">' + _t("Me soigner") + '</button>';
+  else h += '      <button class="kbtn" type="button" onclick="closeCombatForecast()">' + _t("Annuler") + '</button>';
+  h += '      <button class="kbtn primary" type="button" onclick="confirmCombatForecast()">' + esc(opts.confirmLabel ? _td(opts.confirmLabel) : _t("Partir quand même")) + '</button>';
   h += '    </div>';
   h += '  </div>';
   h += '</div>';
@@ -199,8 +201,8 @@ function etQuestCreatures(quest) {
   return out;
 }
 
-/* Créatures d'un contexte de lancement. Donjon : les vagues normales n'ont pas de trait
-   (dungeon-system.js les crée sans), seules comptent les élites et le boss. */
+/* Créatures d'un contexte de lancement. Donjon (v3.380.0) : des vagues normales, seules
+   celles qui portent un trait fixe (même pool que dungeon-system.js), puis élites et boss. */
 function etCreaturesFor(ctx) {
   if (!ctx) return [];
   if (ctx.type === "adventure") {
@@ -216,6 +218,9 @@ function etCreaturesFor(ctx) {
     var d = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(ctx.id); })[0];
     if (!d) return [];
     var out = [];
+    etDungeonPool(d).forEach(function (id) {
+      if (window.FIXED_ENEMY_ARCHETYPES && FIXED_ENEMY_ARCHETYPES[id]) out.push({ kind: "enemy", id: id });
+    });
     Object.keys(d.eliteWaves || {}).forEach(function (w) {
       var eid = d.eliteWaves[w];
       if (!out.some(function (x) { return x.id === eid; })) out.push({ kind: "elite", id: eid });
@@ -224,6 +229,18 @@ function etCreaturesFor(ctx) {
     return out;
   }
   return [];
+}
+
+/* Pool des vagues normales d'un donjon : le sien, sinon les aventures des mondes jusqu'à sa puissance. */
+function etDungeonPool(d) {
+  if (Array.isArray(d.enemyPool) && d.enemyPool.length) return d.enemyPool.slice();
+  var pool = [];
+  for (var w = 0; w <= (d.worldPower || 0) && w < (window.WORLDS || []).length; w++) {
+    (WORLDS[w].adventures || []).forEach(function (adv) {
+      (adv.enemyPool || []).forEach(function (eid) { if (pool.indexOf(eid) === -1) pool.push(eid); });
+    });
+  }
+  return pool;
 }
 
 /* Nom, trait fixe et « déjà vaincu » d'une créature. */

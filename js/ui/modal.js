@@ -100,3 +100,17 @@ function kSheetHeadHTML(o) {
   return h + '</div>';
 }
 window.kSheetHeadHTML = kSheetHeadHTML;
+
+/* v3.400.0 (lot F-2) : en-tête des fenêtres centrées (.kwin). Même pierre que les feuilles,
+   centré : grande icône, titre, sous-titre. La croix est facultative : une fenêtre qui attend
+   une réponse (confirmation, choix, fin de quête) se ferme par ses propres boutons.
+   o.icon, o.title, o.sub : HTML déjà échappé par l'appelant. o.close : code JS du onclick. */
+function kWinHeadHTML(o) {
+  o = o || {};
+  var h = '<div class="ksheet-head kwin-head' + (o.cls ? ' ' + o.cls : '') + '">';
+  if (o.icon) h += '<div class="kwin-ico">' + o.icon + '</div>';
+  h += '<div class="kwin-ttl">' + (o.title || '') + (o.sub ? '<small class="ksheet-sub">' + o.sub + '</small>' : '') + '</div>';
+  if (o.close) h += '<button type="button" class="ksheet-x" onclick="' + o.close + '" aria-label="' + esc(_t("Fermer")) + '"></button>';
+  return h + '</div>';
+}
+window.kWinHeadHTML = kWinHeadHTML;

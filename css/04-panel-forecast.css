@@ -29,13 +29,7 @@
 .cf-line.is-horsportee { border-color: var(--danger); }
 
 /* --- Carte de confirmation --- */
-.cf-card {
-  padding: 16px 14px calc(16px + var(--safe-bottom));
-  /* Rendue HORS du .kframe : restauration d'encre, comme .vb-sheet-card. */
-  --nb-ink: #3a2c1a;
-  --nb-ink-dim: rgba(58, 44, 26, 0.72);
-}
-.cf-title { font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); text-align: center; }
+/* v3.400.0 (lot F-2) : fenêtre du kit (.kwin) ; le titre passe dans l'en-tête de pierre */
 .cf-verdict { font-size: 20px; font-weight: 800; text-align: center; margin: 2px 0 6px; color: var(--nb-ink); }
 .cf-card.is-risque .cf-verdict { color: #8a5a1a; }
 .cf-card.is-tresdur .cf-verdict { color: #b4560f; }
@@ -43,9 +37,10 @@
 .cf-enemy { font-size: 12px; text-align: center; color: var(--nb-ink-dim); margin-bottom: 10px; }
 
 .cf-rows {
-  border: 1px solid var(--nb-frame-light);
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream-alt);
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 12px;
+  background: var(--sheet-card-bg);
+  text-align: left;
   padding: 4px 10px;
   margin-bottom: 10px;
 }
@@ -67,8 +62,6 @@
   background: #fff3d6;
 }
 .cf-hint { font-size: 12px; font-style: italic; color: var(--nb-ink-dim); margin-bottom: 8px; }
-.cf-actions { display: flex; gap: 8px; }
-.cf-actions .settings-btn { flex: 1 1 0; width: auto; min-width: 0; }
 
 /* v3.265.0 : avertissement PV bas (sous FORECAST_LOW_HP_PCT), en tête de la carte */
 .cf-lowhp {
@@ -125,3 +118,4 @@
 .et-chip.is-current { border-color: var(--nb-gold); background: #fff0c8; font-weight: 800; cursor: default; }
 .et-chip-n { color: var(--nb-ink-dim); font-weight: 700; }
 .et-card .et-open { margin-top: 8px; width: 100%; }
+.cf-card .kwin-body { text-align: left; }

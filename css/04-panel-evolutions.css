@@ -44,42 +44,10 @@ Maquette de référence : atelier-evolutions.html.
   100% { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.65); }
 }
 
-/* ---------- 1. Fil rouge : bulle ---------- */
-.fr-bubble-bg { position: fixed; inset: 0; z-index: 9000; }
-
-.fr-bubble {
-  position: fixed;
-  top: 80px;
-  left: 8px;
-  width: min(300px, calc(100vw - 16px));
-  background: #f6ecd9;
-  color: #3a2c1a;
-  border: 1.5px solid #b98a4a;
-  border-radius: 14px;
-  padding: 10px 11px 6px;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.7);
-}
-
-.fr-bubble::before {
-  content: "";
-  position: absolute;
-  top: -8px;
-  left: var(--fr-arrow, 240px);
-  width: 14px;
-  height: 14px;
-  background: #f6ecd9;
-  border-left: 1.5px solid #b98a4a;
-  border-top: 1.5px solid #b98a4a;
-  transform: rotate(45deg);
-}
-
-.fr-kicker { font-size: 12px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; color: #b3261e; }
-.fr-row { display: flex; gap: 9px; align-items: flex-start; margin: 4px 0 8px; }
-.fr-row-ico { width: 36px; height: 36px; flex: 0 0 36px; object-fit: contain; }
-.fr-title { font-size: 15px; font-weight: 800; line-height: 1.2; color: #3a2c1a; }
-.fr-reason { font-size: 12px; line-height: 1.4; color: #5a4a30; margin-top: 2px; }
-.fr-bubble .fr-go { max-width: 220px; min-height: 42px; font-size: 13px; }
-.fr-also { font-size: 12px; color: #7a6444; margin: 0 0 4px; line-height: 1.5; }
+/* ---------- 1. Fil rouge : fenêtre centrée (.kwin, v3.400.0 lot F-2) ---------- */
+.fr-bubble-bg.kwin-veil { z-index: 9000; }
+.fr-reason { font-size: 14px; }
+.fr-also { font-size: 13px; color: var(--sheet-ink-dim); margin: 0 0 4px; line-height: 1.5; }
 .fr-also > span { font-weight: 800; }
 .fr-also-btn {
   font: inherit;
@@ -93,38 +61,12 @@ Maquette de référence : atelier-evolutions.html.
 }
 
 /* ---------- 2. Écran de retour ---------- */
-.ret-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 8500;
-  background: rgba(0, 0, 0, 0.66);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: max(14px, env(safe-area-inset-top, 0px)) 14px max(14px, env(safe-area-inset-bottom, 0px));
-}
+/* v3.400.0 (lot F-2) : fenêtre .kwin ; ne restent que l'étagement et le contenu */
+.ret-bg.kwin-veil { z-index: 8500; }
+.ret-card .kwin-body { text-align: left; }
+.ret-line { text-align: left; }
 
-.ret-card {
-  width: 100%;
-  max-width: 400px;
-  max-height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  background: #f3e6c8;
-  color: #3a2c1a;
-  border: 2px solid #c9a86a;
-  border-radius: 18px;
-  padding: 14px 13px 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-}
-
-.ret-top { text-align: center; }
-.ret-top img { width: 44px; height: 44px; }
-.ret-title { font-size: 19px; font-weight: 800; color: #6b4a22; margin-top: 2px; }
-.ret-time { font-size: 12.5px; font-weight: 700; color: #8a6a3c; }
-.ret-line { font-size: 12px; font-style: italic; line-height: 1.45; color: #5a4a30; margin: 8px 6px 10px; text-align: center; }
-
-.ret-sec { background: #fbf3e4; border: 1px solid #dcc79c; border-radius: 11px; padding: 7px 9px; margin-bottom: 6px; }
+.ret-sec { background: var(--sheet-card-bg); border: 1.5px solid var(--sheet-card-bd); border-radius: 12px; padding: 7px 9px; margin-bottom: 6px; }
 .ret-sec-h { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: #6b4a22; }
 .ret-sec-h img { width: 20px; height: 20px; object-fit: contain; }
 .ret-sec-b { font-size: 12px; line-height: 1.4; margin-top: 3px; }
@@ -172,7 +114,6 @@ Maquette de référence : atelier-evolutions.html.
   color: #fff8e8;
 }
 
-.ret-close { display: block; margin: 8px auto 2px; font: inherit; font-size: 13px; font-weight: 800; color: #6b4a22; background: none; border: none; cursor: pointer; padding: 6px 14px; }
 
 /* Pastille « Retour » : le héros est engagé, l'écran attend */
 .ret-pending {
