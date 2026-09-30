@@ -722,40 +722,7 @@
 
 /* v2.83.46 : rangée de filtre Tout/Équipement/Potions, sous la
    toolbar — voir buildInventoryFilterRowHTML. */
-.inv-filter-row {
-  display: flex;
-  gap: 6px;
-  margin: 0 0 12px;
-}
-
-/* v3.182.0 : pilules de filtre (inventaire + Entrepôt) alignées sur le
-   composant sous-onglet du kit — famille oubliée par le chantier
-   v3.154. */
-.inv-filter-btn {
-  flex: 1 1 0;
-  min-width: 0;
-  aspect-ratio: 592 / 224;
-  height: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: url('../images/UI/buttons/btn-subtab-normal.png') center / 100% 100% no-repeat;
-  color: #e8d9b5;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.inv-filter-btn.is-active {
-  background-image: url('../images/UI/buttons/btn-subtab-selected.png');
-  color: #2a1a08;
-  text-shadow: none;
-}
+/* v3.401.0 (lot O-1) : filtres = pastilles (.kchips), Entrepôt = rail (.kseg) — css/00-components.css */
 
 /* Le bouton ⚙ n'a pas besoin de flex:1 1 auto (juste assez large
    pour l'icône) — .inv-toolbar-sort-wrap prend le reste. */

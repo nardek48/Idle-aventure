@@ -122,7 +122,9 @@
 .hud-dock {
   position: fixed;
   right: max(10px, calc(50% - 185px));
-  bottom: calc(var(--safe-bottom) + min(430px, 99vw) * 0.239 + 12px);
+  /* v3.401.0 (lot O-1) : + --hud-dock-lift, hauteur des sous-onglets du bas quand l'écran en a
+     (ui/hud-dock-view.js, liftHudDock) : les bulles ne les recouvrent plus */
+  bottom: calc(var(--safe-bottom) + min(430px, 99vw) * 0.239 + 12px + var(--hud-dock-lift, 0px));
   z-index: 60;
   display: flex;
   flex-direction: column;

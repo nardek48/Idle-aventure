@@ -2395,7 +2395,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   // 1. routeur : vue Production par défaut (double bouton + cartes compactes, plus d'anciens toggles)
   run("productionViewTab = 'prod'; productionDetailBuildingId = null;");
   var html = run("buildProductionHTML()");
-  ok(html.indexOf("pc-subtab-bar production-switch") !== -1, "double bouton Production|Ateliers présent");
+  ok(html.indexOf("kseg production-switch") !== -1, "double bouton Production|Ateliers présent");
   ok(html.indexOf("production-dash-card") !== -1, "cartes compactes du tableau de bord présentes");
   ok(html.indexOf("prod-harvest-all-btn") !== -1, "id prod-harvest-all-btn conservé (updateDOM)");
   ok(html.indexOf("prod-bar-farm") !== -1 && html.indexOf("prod-stock-label-farm") !== -1, "ids de jauge/stock conservés (updateDOM)");
@@ -13040,6 +13040,26 @@ console.log("\n[173] v3.400.0 — Lot F-2 : fenêtres centrées (.kwin)");
     ok(ov.indexOf(".confirm-btn {") === -1 && ov.indexOf(".offline-btn {") === -1, "anciens boutons des modales système retirés du CSS");
   } catch (err) {
     ok(false, "[173] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[174] v3.401.0 — Lot O-1 : onglets de page (rail), filtres (pastilles), bulles remontées");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var q = g.buildQuestsHTML ? g.buildQuestsHTML() : "";
+    ok(/class="kseg is-stack qb-tabs"/.test(q) && /class="qb-tab is-on"/.test(q) && q.indexOf("qb-tab is-active") === -1, "Quêtes : rail du kit, icône au-dessus du libellé");
+    ok(/class="kseg grimoire-mode/.test(g.buildGrimoireHTML()), "Grimoire : Tactique | Grimoire sur le rail");
+    var css = fs.readFileSync(path.join(ROOT, "css/00-components.css"), "utf8");
+    ok(/\.kseg \{[\s\S]*?box-shadow: inset/.test(css) && /\.kseg\.is-stack button/.test(css) && /\.kchips button\.is-on/.test(css), "kit : rail (.kseg, .is-stack) et pastilles (.kchips)");
+    ok(css.indexOf("kseg-in-frame") === -1, "plus d'adaptation « posé sur crème » : le rail est dessiné pour le parchemin");
+    var js = ["quests-view.js", "production-view.js", "warehouse-view.js", "equipment-view.js", "achievement-view.js", "grimoire-view.js", "heros-view.js"].map(function (f) { return fs.readFileSync(path.join(ROOT, "js/ui", f), "utf8"); }).join("\n");
+    ok(js.indexOf("inv-filter-btn") === -1 && js.indexOf("pc-subtab-bar production-switch") === -1 && js.indexOf("hf-dot") === -1, "anciens dessins d'onglets retirés (filtres sombres, double bouton, pastilles des Hauts faits)");
+    ok(/kseg production-switch/.test(js) && /kseg warehouse-seg/.test(js) && /kchips inv-filter-row/.test(js) && /kchips is-scroll hf-tabs/.test(js), "Production, Entrepôt : rail ; Inventaire, Hauts faits : pastilles");
+    var lay = fs.readFileSync(path.join(ROOT, "css/02-layout.css"), "utf8");
+    ok(/var\(--hud-dock-lift, 0px\)/.test(lay) && typeof g.liftHudDock === "function", "bulles du HUD : remontées au-dessus des sous-onglets du bas");
+  } catch (err) {
+    ok(false, "[174] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

@@ -865,10 +865,10 @@ function buildHerosEquipHTML() {
   var bagCount = Array.isArray(game.inventory) ? game.inventory.length : 0;
   // Le segment est passé EN TÊTE DU CADRE (topHTML) : posé avant, il tomberait entre le
   // bandeau, que kframe-decorator sort du flux, et le corps du cadre.
-  var seg = '<div class="kseg kseg-in-frame">';
-  seg += '<button type="button" class="' + (cur === "equipment" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'equipment\')">' + _t("Équipé") + '</button>';
-  seg += '<button type="button" class="' + (cur === "inventory" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'inventory\')">' + _t("Sac") + '<span class="kseg-count">' + bagCount + '</span></button>';
-  seg += '<button type="button" class="' + (cur === "shop" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'shop\')">' + _t("Boutique") + '</button>';
+  var seg = '<div class="kseg">'; // v3.401.0 (lot O-1) : rail du kit, déjà taillé pour le parchemin
+  seg += '<button type="button" class="' + (cur === "equipment" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'equipment\')"><span>' + _t("Équipé") + '</span></button>';
+  seg += '<button type="button" class="' + (cur === "inventory" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'inventory\')"><span>' + _t("Sac") + '<span class="kseg-count">' + bagCount + '</span></span></button>';
+  seg += '<button type="button" class="' + (cur === "shop" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'shop\')"><span>' + _t("Boutique") + '</span></button>';
   seg += '</div>';
 
   var h = '';

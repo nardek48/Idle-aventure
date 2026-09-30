@@ -869,9 +869,10 @@ window.cancelWorkshopCraft = cancelWorkshopCraft;
    barre du bas du Village), en TÊTE du contenu. Décision Seb : un interrupteur à 2
    positions dans l'écran, pas de 4e sous-onglet Village. */
 function buildProductionSwitchHTML() {
-  var h = '<div class="pc-subtab-bar production-switch">';
-  h += '<button type="button" class="pc-subtab-btn' + (productionViewTab === "prod" ? ' is-active' : '') + '" onclick="setProductionViewTab(\'prod\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/production.png" alt=""><span>' + _t("Production") + '</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (productionViewTab === "shops" ? ' is-active' : '') + '" onclick="setProductionViewTab(\'shops\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/workshops.png" alt=""><span>' + _t("Ateliers") + '</span></button>';
+  // v3.401.0 (lot O-1) : onglets de page du kit (.kseg, rail) — un seul dessin d'onglet de page
+  var h = '<div class="kseg production-switch">';
+  h += '<button type="button" class="' + (productionViewTab === "prod" ? 'is-on' : '') + '" onclick="setProductionViewTab(\'prod\')"><img src="images/Icons/subtabs/production.png" alt=""><span>' + _t("Production") + '</span></button>';
+  h += '<button type="button" class="' + (productionViewTab === "shops" ? 'is-on' : '') + '" onclick="setProductionViewTab(\'shops\')"><img src="images/Icons/subtabs/workshops.png" alt=""><span>' + _t("Ateliers") + '</span></button>';
   h += '</div>';
   return h;
 }

@@ -601,9 +601,9 @@ function buildGrimoireModeHTML() {
   var lock = editable ? '' : ' disabled';
 
   var h = '<div class="grimoire-head">';
-  h += '<div class="grimoire-mode' + (editable ? '' : ' is-locked') + '">';
-  h += '<button type="button" class="' + (on ? '' : 'is-on') + '"' + lock + ' onclick="setGrimoireCombatMode(\'tactique\')"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> ' + _t("Tactique") + '</button>';
-  h += '<button type="button" class="' + (on ? 'is-on' : '') + '"' + lock + ' onclick="setGrimoireCombatMode(\'grimoire\')"><img class=ico-inline src=images/Icons/codex/codex_lore.png> ' + _t("Grimoire") + '</button>';
+  h += '<div class="kseg grimoire-mode' + (editable ? '' : ' is-locked') + '">'; // v3.401.0 (lot O-1) : onglets du kit
+  h += '<button type="button" class="' + (on ? '' : 'is-on') + '"' + lock + ' onclick="setGrimoireCombatMode(\'tactique\')"><img src="images/Icons/combat_stats/stat_critical.png" alt=""><span>' + _t("Tactique") + '</span></button>';
+  h += '<button type="button" class="' + (on ? 'is-on' : '') + '"' + lock + ' onclick="setGrimoireCombatMode(\'grimoire\')"><img src="images/Icons/codex/codex_lore.png" alt=""><span>' + _t("Grimoire") + '</span></button>';
   h += '</div>';
   h += '<button type="button" class="grimoire-help-btn" onclick="openGrimoireSheet(\'help\')">?</button>';
   h += '</div>';

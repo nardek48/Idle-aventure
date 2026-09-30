@@ -953,10 +953,7 @@
    .kseg est conçu pour le fond sombre des feuilles du Grimoire ; la fiche est
    crème : même adaptation que .kframe .kseg-in-frame, portée par la fiche.
    ===================================================================== */
-.vb-sheet-card .vb-sheet-seg { margin: 2px 0 10px; background-color: rgba(58, 44, 26, 0.16); border-color: var(--nb-frame); }
-.vb-sheet-card .vb-sheet-seg button { color: #3a2c1a; opacity: 0.85; }
-.vb-sheet-card .vb-sheet-seg button.is-on { opacity: 1; }
-.vb-sheet-card .vb-sheet-seg button:disabled { opacity: 0.4; cursor: default; }
+/* v3.401.0 (lot O-1) : le rail .kseg est dessiné pour le parchemin : plus d'adaptation ici. */
 .vb-shard-count { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: var(--nb-ink); margin: 0 0 8px; }
 .vb-board-sub { font-size: 12px; color: var(--nb-ink-dim); margin: 0 0 8px; line-height: 1.35; }
 

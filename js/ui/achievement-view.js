@@ -134,10 +134,11 @@ function buildAchievementsHTML() {
     + '<button type="button" class="hf-title-btn" onclick="openAchievementTitleSheet()"><small>' + _t("Titre porté") + '</small><b>' + esc(title ? _td(title) : _t("Aucun — choisir")) + '</b></button>'
     + (ready ? '<button type="button" class="hf-claim-all" onclick="AchievementManager.claimAll()">' + _t("Tout réclamer ({n})", { n: ready }) + '</button>' : '') + '</div>';
 
-  h += '<div class="hf-tabs">' + cats.map(function (c) {
+  // v3.401.0 (lot O-1) : les catégories filtrent la liste : pastilles du kit (.kchips), qui défilent
+  h += '<div class="kchips is-scroll hf-tabs">' + cats.map(function (c) {
     var r = AM.getAvailableToClaimCount(c.id);
     return '<button type="button" class="hf-tab' + (c.id === cat.id ? ' is-on' : '') + '" onclick="setAchievementTab(\'' + c.id + '\')">'
-      + esc(_td(c.label)) + (r ? '<span class="hf-dot">' + r + '</span>' : '') + '</button>';
+      + esc(_td(c.label)) + (r ? '<span class="kseg-dot">' + r + '</span>' : '') + '</button>';
   }).join("") + '</div>';
 
   if (cat.tiers) h += buildAchievementTiersHTML(cat);

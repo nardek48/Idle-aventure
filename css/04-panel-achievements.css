@@ -87,12 +87,8 @@
 .hf-title-btn b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 .hf-claim-all { flex: 0 0 auto; font: inherit; font-size: 12px; font-weight: 800; padding: 8px 10px; border-radius: 10px; cursor: pointer; border: 1px solid #8a5a14; background: #c27f1f; color: #fff8e8; }
 
-.hf-tabs { display: flex; gap: 5px; overflow-x: auto; padding: 4px 0 6px; margin-bottom: 4px; scrollbar-width: none; }
-.hf-tabs::-webkit-scrollbar { display: none; }
-.hf-tab { position: relative; flex: 0 0 auto; font: inherit; font-size: 12px; font-weight: 800; padding: 6px 10px; border-radius: 999px; cursor: pointer; border: 1px solid #b98a4a; background: #f3e6c8; color: #6b4a22; }
-.hf-tab.is-on { background: #6b4a22; color: #fff4d6; border-color: #6b4a22; }
-.hf-dot { position: absolute; top: -4px; right: -3px; min-width: 15px; height: 15px; border-radius: 8px; background: var(--danger, #c0392b); color: #fff; font-size: 10px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1px solid #f3e6c8; }
 
+/* v3.401.0 (lot O-1) : catégories = pastilles du kit (.kchips, css/00-components.css) */
 .hf-tiers { background: #f6ecd9; border: 1px solid #dcc79c; border-radius: 12px; padding: 9px 10px 8px; color: #3a2c1a; margin-bottom: 8px; }
 .hf-tiers-h { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; color: #6b4a22; margin-bottom: 6px; }
 .hf-track { position: relative; height: 8px; border-radius: 4px; background: #e2d1ae; margin: 6px 11px 22px; }

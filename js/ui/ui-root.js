@@ -364,7 +364,8 @@ function renderPanel() {
     }
   }
   lastRenderedTab = game.activeTab;
-
+  // v3.401.0 (lot O-1) : les bulles du HUD remontent au-dessus des sous-onglets du bas
+  if (typeof liftHudDock === "function") liftHudDock();
 }
 
 window.esc = esc;

@@ -539,10 +539,11 @@ function buildInventoryCompactToolbarHTML() {
 }
 
 function buildInventoryFilterRowHTML() {
-  var h = '<div class="inv-filter-row">';
-  h += '<button type="button" class="inv-filter-btn' + (inventoryFilter === "all" ? ' is-active' : '') + '" onclick="setInventoryFilter(\'all\')">' + _t("Tout") + '</button>';
-  h += '<button type="button" class="inv-filter-btn' + (inventoryFilter === "equipment" ? ' is-active' : '') + '" onclick="setInventoryFilter(\'equipment\')"><img class=ico-inline src=images/Icons/combat_stats/stat_defense.png> ' + _t("Équipement") + '</button>';
-  h += '<button type="button" class="inv-filter-btn' + (inventoryFilter === "potions" ? ' is-active' : '') + '" onclick="setInventoryFilter(\'potions\')"><img class=ico-inline src=images/Icons/subtabs/potions.png> ' + _t("Potions") + '</button>';
+  // v3.401.0 (lot O-1) : filtres = pastilles du kit (.kchips), pas des onglets
+  var h = '<div class="kchips inv-filter-row">';
+  h += '<button type="button" class="' + (inventoryFilter === "all" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'all\')">' + _t("Tout") + '</button>';
+  h += '<button type="button" class="' + (inventoryFilter === "equipment" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'equipment\')"><img src="images/Icons/combat_stats/stat_defense.png" alt="">' + _t("Équipement") + '</button>';
+  h += '<button type="button" class="' + (inventoryFilter === "potions" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'potions\')"><img src="images/Icons/subtabs/potions.png" alt="">' + _t("Potions") + '</button>';
   h += '</div>';
   return h;
 }

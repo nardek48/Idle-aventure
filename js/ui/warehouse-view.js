@@ -144,9 +144,10 @@ function buildWarehouseDetailPanelHTML() {
 }
 
 function buildWarehouseFilterRowHTML() {
-  var h = '<div class="inv-filter-row">';
-  h += '<button type="button" class="inv-filter-btn' + (warehouseFilter === "raw" ? ' is-active' : '') + '" onclick="setWarehouseFilter(\'raw\')">' + _t("Bruts") + '</button>';
-  h += '<button type="button" class="inv-filter-btn' + (warehouseFilter === "crafted" ? ' is-active' : '') + '" onclick="setWarehouseFilter(\'crafted\')"><img class=ico-inline src=images/Icons/quests/mission_construction.png> ' + _t("Tier 1") + '</button>';
+  // v3.401.0 (lot O-1) : onglets de page du kit (.kseg, rail)
+  var h = '<div class="kseg warehouse-seg">';
+  h += '<button type="button" class="' + (warehouseFilter === "raw" ? 'is-on' : '') + '" onclick="setWarehouseFilter(\'raw\')"><img src="images/Icons/resources/wood_icon.png" alt=""><span>' + _t("Bruts") + '</span></button>';
+  h += '<button type="button" class="' + (warehouseFilter === "crafted" ? 'is-on' : '') + '" onclick="setWarehouseFilter(\'crafted\')"><img src="images/Icons/quests/mission_construction.png" alt=""><span>' + _t("Tier 1") + '</span></button>';
   // v3.128.0 : 3e filtre "Rares" (tier "special") — Sève d'Aeswyn (Petites Aventures, Lot PA3)
   // et toute future ressource de collection hors circuit vente/craft classique. N'apparaît que
   // si au moins une ressource special existe dans WAREHOUSE_RESOURCES (évite un onglet vide
@@ -154,7 +155,7 @@ function buildWarehouseFilterRowHTML() {
   // Sève en stock, contrairement à sa présence : ici on masque seulement si la DÉFINITION
   // n'existe pas du tout, pas si le stock est à 0).
   if (Object.keys(WAREHOUSE_RESOURCES).some(function (k) { return WAREHOUSE_RESOURCES[k].tier === "special"; })) {
-    h += '<button type="button" class="inv-filter-btn' + (warehouseFilter === "special" ? ' is-active' : '') + '" onclick="setWarehouseFilter(\'special\')"><img class=ico-inline src=images/Icons/scene/node_discovery.png> ' + _t("Rares") + '</button>';
+    h += '<button type="button" class="' + (warehouseFilter === "special" ? 'is-on' : '') + '" onclick="setWarehouseFilter(\'special\')"><img src="images/Icons/scene/node_discovery.png" alt=""><span>' + _t("Rares") + '</span></button>';
   }
   h += '</div>';
   return h;

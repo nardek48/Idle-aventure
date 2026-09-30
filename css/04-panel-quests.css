@@ -433,13 +433,8 @@
    v3.116.0 (Lot B) — onglets de catégorie façon maquette
    (Histoire/Secondaires/Chasse/Aventure) + cartes bannière.
    ============================================================ */
-.qb-tabs {
-  display: flex;
-  gap: 6px;
-  width: 100%;
-  max-width: 720px;
-  margin: 4px auto 8px;
-}
+/* v3.401.0 (lot O-1) : onglets de catégorie = rail du kit (.kseg.is-stack, css/00-components.css) */
+.qb-tabs { max-width: 720px; margin-left: auto; margin-right: auto; }
 
 /* v3.131.0 (retour Seb) : indicateur du cap de 3 quêtes actives — discret par défaut,
    passe en alerte (couleur danger) une fois le cap atteint. */
@@ -469,67 +464,6 @@
    par le chantier v3.154. Icône emoji réduite et posée EN LIGNE avec le
    libellé (l'ancienne pile verticale déborde du cadre à ce ratio) ;
    pastille "réclamable" conservée. CSS uniquement, markup inchangé. */
-.qb-tab {
-  position: relative;
-  flex: 1 1 0;
-  min-width: 0;
-  aspect-ratio: 592 / 224;
-  height: auto;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: url('../images/UI/buttons/btn-subtab-normal.png') center / 100% 100% no-repeat;
-  color: #e8d9b5;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
-  font-size: 10.5px; /* v3.398.0 : hors plancher de 12 px — libellés déjà coupés, refaits à l'étape Onglets */
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-
-.qb-tab:active {
-  transform: scale(0.97);
-}
-
-.qb-tab-icon {
-  font-size: 13px;
-  line-height: 1;
-}
-
-.qb-tab-label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.qb-tab.is-active {
-  flex: 1.15 1 0;
-  background-image: url('../images/UI/buttons/btn-subtab-selected.png');
-  color: #2a1a08;
-  text-shadow: none;
-  transform: none;
-}
-
-/* Pastille "réclamable" sur l'onglet */
-.qb-tab-dot {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ef4444;
-  border: 1px solid #7f1d1d;
-}
-
 /* Carte de mission façon maquette : bannière à gauche, contenu à droite */
 .qb-card {
   display: flex;

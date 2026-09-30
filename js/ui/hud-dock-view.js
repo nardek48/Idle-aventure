@@ -84,5 +84,28 @@ function renderHudDock() {
   });
 }
 window.renderHudDock = renderHudDock;
+
+/* v3.401.0 (lot O-1, choix de Seb « bulles remontées ») : sur un écran à sous-onglets du bas
+   (Village, Héros, Bestiaire…), les bulles recouvraient le 3e sous-onglet. On mesure l'écart
+   entre la barre du menu et la barre des sous-onglets, et les bulles montent d'autant
+   (variable --hud-dock-lift lue par .hud-dock, css/02-layout.css). Appelé après chaque
+   rendu du panneau et au redimensionnement ; n'écrit que si la valeur change. */
+var hudDockLift = null;
+function liftHudDock() {
+  if (typeof document === "undefined" || !document.body || !document.body.style || typeof document.querySelector !== "function") return;
+  var bar = document.querySelector("#panel-container .subtab-bar-wrapper .pc-subtab-bar");
+  var tab = document.getElementById("tab-bar");
+  var lift = 0;
+  if (bar && tab && typeof bar.getBoundingClientRect === "function" && typeof tab.getBoundingClientRect === "function") {
+    var f = (window.DesktopScale && typeof DesktopScale.factorOf === "function") ? (DesktopScale.factorOf(bar) || 1) : 1;
+    var dy = (tab.getBoundingClientRect().top - bar.getBoundingClientRect().top) / f;
+    if (dy > 0 && dy < 240) lift = Math.round(dy);
+  }
+  if (lift === hudDockLift) return;
+  hudDockLift = lift;
+  document.body.style.setProperty("--hud-dock-lift", lift + "px");
+}
+window.liftHudDock = liftHudDock;
+if (typeof window.addEventListener === "function") window.addEventListener("resize", function () { hudDockLift = null; liftHudDock(); });
 window.hudDockOrder = hudDockOrder;
 window.hudDockItems = hudDockItems;

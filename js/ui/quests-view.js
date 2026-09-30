@@ -82,12 +82,13 @@ function buildQuestCategoryTabsHTML(missions) {
     claimableByCat.histoire = true;
   }
 
-  var h = '<div class="qb-tabs">';
+  // v3.401.0 (lot O-1) : onglets du kit (.kseg, rail), icône au-dessus du libellé
+  var h = '<div class="kseg is-stack qb-tabs">';
   QUEST_BOARD_CATEGORIES.forEach(function (cat) {
-    h += '<button type="button" class="qb-tab' + (activeQuestCategory === cat.key ? ' is-active' : '') + '" onclick="setQuestCategory(\'' + cat.key + '\')">';
-    h += '<span class="qb-tab-icon">' + renderIconOrEmojiHTML(cat.icon, "qb-tab-icon-img", cat.label) + '</span>';
+    h += '<button type="button" class="qb-tab' + (activeQuestCategory === cat.key ? ' is-on' : '') + '" onclick="setQuestCategory(\'' + cat.key + '\')">';
+    h += renderIconOrEmojiHTML(cat.icon, "qb-tab-icon-img", cat.label);
     h += '<span class="qb-tab-label">' + esc(cat.label) + '</span>';
-    if (claimableByCat[cat.key]) h += '<span class="qb-tab-dot"></span>';
+    if (claimableByCat[cat.key]) h += '<span class="kseg-dot qb-tab-dot"></span>';
     h += '</button>';
   });
   h += '</div>';
