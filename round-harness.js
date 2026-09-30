@@ -13063,5 +13063,26 @@ console.log("\n[174] v3.401.0 — Lot O-1 : onglets de page (rail), filtres (pas
   }
 })();
 
+console.log("\n[175] v3.402.0 — Lot B-1 : boutons (bleu + filaire, pièce d'or) et titres de section");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var kb = fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8");
+    ok(/\.kframe \.settings-btn:not\(\.primary\):not\(\.danger\)/.test(kb) && /\.kwin \.kbtn:not\(\.primary\):not\(\.danger\)/.test(kb) && /border: 2px solid #8a5c14/.test(kb),
+      "secondaire filaire : tout bouton non principal d'une page, feuille ou fenêtre");
+    ok(/\.kbuy,\n\.btn-buy\.kbuy \{[\s\S]*?linear-gradient\(#f6d27a, #d99a34\)/.test(kb), "achat : pastille pièce d'or (.kbuy)");
+    var co = fs.readFileSync(path.join(ROOT, "css/00-components.css"), "utf8");
+    ok(/\.ksec \{[\s\S]*?justify-content: center;[\s\S]*?color: #3a2c1a;/.test(co) && /\.ksec::before,\n\.ksec::after/.test(co) && /\.kkick \{/.test(co), "titre de section centré à filets (.ksec) et surtitre (.kkick)");
+    ok(/settings-btn primary" onclick="saveGame\(\)"/.test(fs.readFileSync(path.join(ROOT, "js/ui/settings-view.js"), "utf8")), "Paramètres : « Sauvegarder » est le bouton principal");
+    var html = g.buildEquipShopHTML ? g.buildEquipShopHTML() : "";
+    ok(!html || /btn-buy kbuy/.test(html), "Boutique d'équipement : prix en pièce d'or");
+    ok(/class="kseg shop-buy-toolbar/.test(fs.readFileSync(path.join(ROOT, "js/ui/heros-view.js"), "utf8")), "quantité d'achat (×1…MAX) : rail du kit");
+    ok(/class="ksec camp-section-title/.test(g.buildCampHTML()), "Camp : titres de section du kit");
+    ok(/class="kbtn primary hf-claim-all"/.test(fs.readFileSync(path.join(ROOT, "js/ui/achievement-view.js"), "utf8")), "Hauts faits : « Tout réclamer » en bouton principal (plus d'orange plat)");
+  } catch (err) {
+    ok(false, "[175] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

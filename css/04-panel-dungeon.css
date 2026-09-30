@@ -472,7 +472,7 @@
 .dsheet-rarity { font-weight: 800; text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6); } /* v3.399.0 : rareté lisible sur la pierre */
 .dsheet-story { font-size: 12px; line-height: 1.4; color: var(--nb-ink); margin-bottom: 8px; }
 .dsheet-lore { font-size: 12px; font-style: italic; color: var(--nb-ink-dim); margin-bottom: 8px; padding-left: 8px; border-left: 2px solid var(--nb-frame-light); }
-.dsheet-marks-title { font-size: 12px; font-weight: 800; color: var(--nb-ink); margin: 6px 0 4px; display: flex; justify-content: space-between; }
+.dsheet-marks-title { color: #8a5c14; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin: 6px 0 4px; display: flex; justify-content: space-between; } /* v3.402.0 : surtitre du kit */
 .dsheet-marks-title span:last-child { color: var(--nb-ink-dim); font-weight: 700; }
 
 /* Une Marque = une ligne à bascule de 48 px. Cinq lignes = 240 px, sans scroll. */

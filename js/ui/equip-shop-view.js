@@ -21,9 +21,9 @@ function buildEquipShopCardHTML(item) {
 
   h += '<div class="nb-purchase-buy-col">';
   if (item.bought) {
-    h += '<button class="btn-buy is-bought" type="button" disabled>' + _t("Acheté") + '</button>';
+    h += '<button class="btn-buy kbuy is-bought" type="button" disabled>' + _t("Acheté") + '</button>';
   } else {
-    h += '<button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="EquipShopManager.buy(\'' + esc(item.uid) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(item.price) + '</button>';
+    h += '<button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="EquipShopManager.buy(\'' + esc(item.uid) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(item.price) + '</button>';
   }
   h += '</div>';
 

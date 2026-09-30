@@ -2,7 +2,7 @@
 /* ui/settings-view.js — écran Paramètres : sauvegarde/export/import, toggle combat auto, reset complet. Détail : COMMENTAIRES_ORIGINAUX.md */
 
 function buildSettingsHTML() {
-  var h = '<button class="settings-btn" onclick="saveGame()">' + _t("Sauvegarder") + '</button>';
+  var h = '<button class="settings-btn primary" onclick="saveGame()">' + _t("Sauvegarder") + '</button>';
   h += '<button class="settings-btn" onclick="switchTab(\'log\')"><img class=ico-inline src=images/Icons/quests/quest_story.png> ' + _t("Journal") + '</button>';
   // v3.99.15 : onglets cachés par défaut (voir core/state.js:unlockedTabs). v3.100.0 : le
   // déblocage normal passe par la chaîne Histoire (systems/story-quest-system.js) ; ce bouton

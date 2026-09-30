@@ -85,12 +85,13 @@
 .hf-title-btn { flex: 1 1 auto; min-width: 0; text-align: left; font: inherit; background: #eddcb9; border: 1px dashed #b98a4a; border-radius: 10px; padding: 5px 8px; cursor: pointer; color: #3a2c1a; }
 .hf-title-btn small { display: block; font-size: 12px; font-weight: 900; color: #8a6a3c; text-transform: uppercase; letter-spacing: 0.3px; }
 .hf-title-btn b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-.hf-claim-all { flex: 0 0 auto; font: inherit; font-size: 12px; font-weight: 800; padding: 8px 10px; border-radius: 10px; cursor: pointer; border: 1px solid #8a5a14; background: #c27f1f; color: #fff8e8; }
+/* v3.402.0 (lot B-1) : bouton principal du kit (.kbtn.primary), en taille compacte */
+.hf-claim-all.kbtn { flex: 0 0 auto; width: auto; min-height: 40px; margin: 0; padding: 6px 12px; font-size: 12px; }
 
 
 /* v3.401.0 (lot O-1) : catégories = pastilles du kit (.kchips, css/00-components.css) */
 .hf-tiers { background: #f6ecd9; border: 1px solid #dcc79c; border-radius: 12px; padding: 9px 10px 8px; color: #3a2c1a; margin-bottom: 8px; }
-.hf-tiers-h { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; color: #6b4a22; margin-bottom: 6px; }
+.hf-tiers-h { display: flex; justify-content: space-between; color: #8a5c14; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; } /* v3.402.0 : surtitre du kit */
 .hf-track { position: relative; height: 8px; border-radius: 4px; background: #e2d1ae; margin: 6px 11px 22px; }
 .hf-track-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: linear-gradient(90deg, #b07a3c, #c9d2da 60%, #f0c64a); }
 .hf-notch { position: absolute; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; border: 2px solid #b9a582; background: #f3e6c8; color: #8a7a64; }

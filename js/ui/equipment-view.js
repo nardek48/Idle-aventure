@@ -190,7 +190,7 @@ function buildCompatibleItemsListHTML(slot) {
 
   var equipped = game.equipped[slot];
   var h = '<div class="eq-compat-list">';
-  h += '<div class="eq-compat-title"><img class=ico-inline src=images/Icons/subtabs/inventory.png> ' + _t("Dans le sac ({n})", { n: items.length }) + '</div>';
+  h += '<div class="ksec eq-compat-title"><img class=ico-inline src=images/Icons/subtabs/inventory.png> ' + _t("Dans le sac ({n})", { n: items.length }) + '</div>';
 
   items.slice(0, 5).forEach(function (item) {
     var sum = getEquipmentCompareSummary(item, equipped);
@@ -307,7 +307,7 @@ function buildEquipDetailPanelHTML() {
     h += buildEquipmentAffixLinesHTML(item);
     h += buildEquipmentPowerHTML(item); // v3.230.0
     h += buildItemOriginHTML(item);
-    h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.unequip(\'' + esc(slot) + '\')">' + _t("Déséquiper") + '</button>';
+    h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="EquipmentManager.unequip(\'' + esc(slot) + '\')">' + _t("Déséquiper") + '</button>';
   } else {
     h += '<div class="eq-detail-icon eq-detail-icon-empty">' + renderIconOrEmojiHTML(emoji, "eq-detail-empty-img", "") + '</div>';
     h += '<div class="eq-detail-name">' + esc(_t("{x} — vide", { x: label })) + '</div>';
@@ -416,7 +416,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">' + _t("Équiper") + '</button>';
     // v3.322.0 (O2) : la vente devient l'Offrande ; la valeur s'affiche, 0 compris (O9)
     var offerVal = window.MemoryManager ? MemoryManager.getOfferingValue(item) : 0;
-    h += '<button class="btn-buy eq-detail-action" type="button" onclick="confirmSellItem(\'' + esc(item.uid) + '\')">' + (offerVal > 0 ? _t("Offrir (+{n} Aether)", { n: offerVal }) : _t("Offrir (aucun souvenir)")) + '</button>';
+    h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="confirmSellItem(\'' + esc(item.uid) + '\')">' + (offerVal > 0 ? _t("Offrir (+{n} Aether)", { n: offerVal }) : _t("Offrir (aucun souvenir)")) + '</button>';
     h += buildEquippedComparisonHTML(item);
   } else {
     var potion = entry.potion;
@@ -434,7 +434,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     } else {
       h += '<button class="btn-buy eq-detail-action" type="button" onclick="PotionManager.usePotion(\'' + esc(potion.id) + '\')">' + _t("Utiliser") + '</button>';
     }
-    h += '<button class="btn-buy eq-detail-action" type="button" onclick="PotionManager.sellPotion(\'' + esc(potion.id) + '\')">' + _t("Vendre") + '</button>';
+    h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="PotionManager.sellPotion(\'' + esc(potion.id) + '\')">' + _t("Vendre") + '</button>';
   }
 
   h += '</div>';
@@ -661,7 +661,7 @@ function buildInventoryTabContentHTML(topHTML) {
   var entries = getUnifiedInventoryEntries();
   var equipCount = (Array.isArray(game.inventory) ? game.inventory.length : 0);
 
-  h += '<div class="panel-title" style="margin:0 0 10px;">' + _t("Sac ({a}/{b})", { a: equipCount, b: (typeof getInventoryCap === "function" ? getInventoryCap() : 25) }) + '</div>'; // v3.322.0
+  h += '<div class="ksec eq-bag-title">' + _t("Sac ({a}/{b})", { a: equipCount, b: (typeof getInventoryCap === "function" ? getInventoryCap() : 25) }) + '</div>'; // v3.322.0
 
   if (!entries.length) {
     var emptyMsg = inventoryFilter === "potions"

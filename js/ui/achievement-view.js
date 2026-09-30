@@ -132,7 +132,7 @@ function buildAchievementsHTML() {
 
   var h = '<div class="hf-top"><div class="hf-count">' + claimed + ' / ' + total + '<small>' + _t("obtenus") + '</small></div>'
     + '<button type="button" class="hf-title-btn" onclick="openAchievementTitleSheet()"><small>' + _t("Titre porté") + '</small><b>' + esc(title ? _td(title) : _t("Aucun — choisir")) + '</b></button>'
-    + (ready ? '<button type="button" class="hf-claim-all" onclick="AchievementManager.claimAll()">' + _t("Tout réclamer ({n})", { n: ready }) + '</button>' : '') + '</div>';
+    + (ready ? '<button type="button" class="kbtn primary hf-claim-all" onclick="AchievementManager.claimAll()">' + _t("Tout réclamer ({n})", { n: ready }) + '</button>' : '') + '</div>';
 
   // v3.401.0 (lot O-1) : les catégories filtrent la liste : pastilles du kit (.kchips), qui défilent
   h += '<div class="kchips is-scroll hf-tabs">' + cats.map(function (c) {

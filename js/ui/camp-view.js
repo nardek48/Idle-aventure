@@ -105,7 +105,7 @@ function buildCampHTML() {
 
   // v3.116.0 (Lot C, maquette Seb) : bloc Santé du Héros — barre de PV pleine largeur.
   h += '<div class="camp-card camp-health-card">';
-  h += '<div class="camp-section-title"><img class="ico-lg" src="images/Icons/combat_stats/stat_health.png" alt=""> ' + _t("Santé du héros") + '</div>';
+  h += '<div class="ksec camp-section-title"><img class="ico-lg" src="images/Icons/combat_stats/stat_health.png" alt=""> ' + _t("Santé du héros") + '</div>';
   // v3.173.0 : jauge fine du kit (vert, aligné sur les PV héros du combat — avant : rouge).
   // v3.174.0 (retour Seb) : PV courants/max affichés DANS la barre (kgauge-text)
   // au lieu d'une ligne séparée dessous — l'id camp-fire-hp-value migre sur le
@@ -114,7 +114,7 @@ function buildCampHTML() {
     + '<span class="kgauge-text" id="camp-fire-hp-value">' + formatNumber(Math.floor(hp)) + ' / ' + formatNumber(maxHp) + '</span></div>';
 
   // Bloc Rations — 3 cartes côte à côte (icône, soin, stock, bouton Manger).
-  h += '<div class="camp-section-title camp-section-sub"><img class="ico-lg" src="images/Icons/quests/ration_reward.png" alt=""> ' + _t("Rations") + '</div>';
+  h += '<div class="ksec camp-section-title camp-section-sub"><img class="ico-lg" src="images/Icons/quests/ration_reward.png" alt=""> ' + _t("Rations") + '</div>';
   var campLock = (window.heroLockReason && heroLockReason()) || null; // v3.307.0
   if (campLock) h += '<div class="camp-lock-note">🧭 ' + esc(campLock) + '</div>';
   h += '<div class="camp-ration-grid">';
@@ -154,7 +154,7 @@ function buildCampHTML() {
   var offering = (window.StoryQuestManager && typeof StoryQuestManager.getOfferingInfo === "function") ? StoryQuestManager.getOfferingInfo(null, "camp") : null; // v3.297.0 : chapitre actif ; v3.310.0 : offrandes du Camp seulement
   if (offering) {
     h += '<div class="camp-card camp-embers-card">';
-    h += '<div class="camp-section-title"><img class="ico-lg" src="images/Icons/camp/campfire.png" alt=""> ' + _t("Les braises") + '</div>';
+    h += '<div class="ksec camp-section-title"><img class="ico-lg" src="images/Icons/camp/campfire.png" alt=""> ' + _t("Les braises") + '</div>';
     h += '<div class="camp-embers-desc">' + esc(_td(offering.step.narrative.objective)) + '</div>';
     // v3.197.0 (passe de ton) : les anciens parlent avant l'offrande (buildStoryDialogueHTML, quests-view.js).
     if (typeof buildStoryDialogueHTML === "function") h += buildStoryDialogueHTML(offering.step);

@@ -59,11 +59,11 @@ function buildTalentBoardHTML() {
   var h = '<div class="tt-board tt-class-' + esc(TM.getClassId()) + '">';
   h += buildTalentPointsHTML();
 
-  h += '<div class="tt-sec">' + _t("Tronc") + (cls ? ' · ' + esc(_td(cls.label)) : '')
-    + '<small>' + _t("{a} / {b} pour ouvrir les voies", { a: Math.min(gate, TM.trunkSpent()), b: gate }) + '</small></div>';
+  h += '<div class="ksec tt-sec"><span>' + _t("Tronc") + (cls ? ' · ' + esc(_td(cls.label)) : '')
+    + ' <small>' + _t("{a} / {b} pour ouvrir les voies", { a: Math.min(gate, TM.trunkSpent()), b: gate }) + '</small></span></div>';
   h += '<div class="tt-trunk">' + t.trunk.map(talentNodeHTML).join("") + '</div>';
 
-  h += '<div class="tt-sec">' + _t("Voies") + '<small>' + _t("une seule clé de voûte") + '</small></div><div class="tt-paths">';
+  h += '<div class="ksec tt-sec"><span>' + _t("Voies") + ' <small>' + _t("une seule clé de voûte") + '</small></span></div><div class="tt-paths">';
   var open = TM.trunkSpent() >= gate;
   t.paths.forEach(function (p) {
     var keyOwned = p.nodes.some(function (n) { return n.key && TM.has(n.id); });

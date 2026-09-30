@@ -17,28 +17,4 @@
   color: var(--nb-ink-dim);
 }
 
-.shop-buy-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-  margin: 8px 0 10px 0;
-  flex-wrap: wrap;
-}
-
-.shop-buy-toolbar .settings-btn {
-  width: auto;
-  min-width: 60px;
-  min-height: 36px;
-  margin-bottom: 0;
-  padding: 8px 10px;
-  font-size: 12px;
-}
-
-/* v3.168.0 : l'ancien fond plat bleu écraserait l'image du cadre du
-   kit (raccourci background:) -> état actif = asset pressé + anneau
-   bleu, texte inchangé (blanc du composant). */
-.shop-buy-toolbar .settings-btn.active {
-  background-image: url('../images/UI/buttons/btn-rect-pressed.png');
-  box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.55);
-  border-radius: 8px;
-}
+/* v3.402.0 (lot B-1) : quantité d'achat = rail du kit (.kseg, css/00-components.css). */

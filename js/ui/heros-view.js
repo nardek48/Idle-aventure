@@ -178,7 +178,7 @@ function buildHeroSummaryCombatHTML() {
   var critMult = (typeof EquipmentManager !== "undefined")
     ? (Math.round(EquipmentManager.effectiveCritMult() * 100) / 100) : 1;
 
-  var h = '<div class="pc-section-label">' + _t("En combat") + '</div>';
+  var h = '<div class="ksec pc-section-label">' + _t("En combat") + '</div>';
   h += '<div class="pc-sum-combat">';
   h += buildHeroSummaryCellHTML(_t("PV", "unité"), formatNumber(heroMaxHp));
   h += buildHeroSummaryCellHTML(_t("ATK", "unité"), formatNumber(atk), getHeroMainStatLabel()); // v3.228.0 : quelle stat porte les dégâts
@@ -195,7 +195,7 @@ function buildHeroSummaryCombatHTML() {
    qui donne une raison d'y aller : marge d'entraînement d'un côté, aperçu du
    kit de classe de l'autre. */
 function buildHeroSummaryJumpsHTML() {
-  var h = '<div class="pc-section-label">' + _t("Aller plus loin") + '</div>';
+  var h = '<div class="ksec pc-section-label">' + _t("Aller plus loin") + '</div>';
 
   var prog = getHeroTrainingProgress();
   h += '<button type="button" class="pc-sum-jump" onclick="openHerosSheet(\'stats\')">';
@@ -265,7 +265,7 @@ function buildHeroSummaryJumpsHTML() {
 function buildHeroSummaryTraitsHTML() {
   var soi = !!(window.StoryQuestManager && StoryQuestManager.getChoice("roi") === "soi");
   if (!soi) return "";
-  var h = '<div class="pc-section-label">' + _t("Ce que tu portes") + '</div>';
+  var h = '<div class="ksec pc-section-label">' + _t("Ce que tu portes") + '</div>';
   h += '<div class="pc-sum-jump is-static">';
   h += '<span class="pc-sum-jump-ico"><img class="ico-inline" src="images/Icons/memory/forme_du_roi.png" alt=""></span>';
   h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">' + _t("La forme du roi") + '</span>';
@@ -625,10 +625,10 @@ function buildHeroStatCardHTML(row, buyAmount) {
   } else if (locked) {
     h += '<div class="pc-stat-card-buy is-locked">' + _t("Monde") + '<small>' + ((upgrade.unlockWorld || 0) + 1) + '</small></div>';
   } else if (gain) {
-    h += '<button type="button" class="pc-stat-card-buy" onclick="buyUpgrade(\'' + esc(row.upgradeId) + '\', ' + buyAmount + ')">';
-    h += formatNumber(gain.totalCost) + '<small>' + _t("or · x{n}", { n: gain.count }) + '</small></button>';
+    h += '<button type="button" class="pc-stat-card-buy kbuy" onclick="buyUpgrade(\'' + esc(row.upgradeId) + '\', ' + buyAmount + ')">';
+    h += '<img src="images/Icons/gold_icon.png" alt="">' + formatNumber(gain.totalCost) + '<small>×' + gain.count + '</small></button>';
   } else {
-    h += '<div class="pc-stat-card-buy is-poor">' + formatNumber(nextCost) + '<small>' + _t("or manquant") + '</small></div>';
+    h += '<div class="pc-stat-card-buy kbuy is-poor"><img src="images/Icons/gold_icon.png" alt="">' + formatNumber(nextCost) + '</div>';
   }
   h += '</div>';
 
@@ -696,11 +696,12 @@ function buildHerosAmeliorationHTML() {
 
   // .shop-buy-toolbar : c'est ce conteneur qui porte l'état actif du bouton
   // (css/04-panel-village-shop.css). Conservé tel quel de l'ancien écran.
-  h += '<div class="pc-heros-train-toolbar"><div class="shop-buy-toolbar">';
-  [[1, "x1"], [10, "x10"], [25, "x25"], [-1, _t("MAX")]].forEach(function (b) {
-    h += '<button class="settings-btn ' + (buyAmount === b[0] ? 'active' : '') + '" onclick="setShopBuyAmount(' + b[0] + ')">' + b[1] + '</button>';
+  // v3.402.0 (lot B-1) : quantité d'achat = rail du kit (.kseg)
+  h += '<div class="kseg shop-buy-toolbar pc-heros-train-toolbar">';
+  [[1, "×1"], [10, "×10"], [25, "×25"], [-1, _t("MAX")]].forEach(function (b) {
+    h += '<button type="button" class="' + (buyAmount === b[0] ? 'is-on' : '') + '" onclick="setShopBuyAmount(' + b[0] + ')">' + b[1] + '</button>';
   });
-  h += '</div></div>';
+  h += '</div>';
 
   h += '<div class="pc-stat-list-v2">';
   HEROS_STAT_ROWS.forEach(function (row) { h += buildHeroStatCardHTML(getHeroStatRowView(row), buyAmount); });
@@ -818,7 +819,7 @@ function buildHerosStatsHTML() {
     h += '<div class="pc-empty">' + _t("Aucune capacité disponible pour le moment.") + '</div>';
   } else {
     var cls = (typeof getClassForHero === "function") ? getClassForHero(getSelectedHero()) : null;
-    if (cls) h += '<div class="pc-section-label">' + renderIconOrEmojiHTML(cls.icon, "pc-section-ico", "") + ' ' + esc(_t("Kit du {x}", { x: _td(cls.label) })) + '</div>';
+    if (cls) h += '<div class="ksec pc-section-label">' + renderIconOrEmojiHTML(cls.icon, "pc-section-ico", "") + ' ' + esc(_t("Kit du {x}", { x: _td(cls.label) })) + '</div>';
 
     var cards = "";
     ["skill1", "skill2", "skill3", "defense"].forEach(function (slot) {

@@ -211,14 +211,7 @@
 }
 
 /* ===== Sections (labels au-dessus du carrousel, stats cumulées...) ===== */
-.pc-section-label {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--nb-ink-dim);
-  margin: 2px 0 4px;  /* moins d’espace sous le label */
-}
+/* v3.402.0 (lot B-1) : titre de section du kit (.ksec, css/00-components.css). */
 
 /* v3.202.1 : .pc-cumulative-card retirée — plus aucun écran ne la produit
    depuis que les statistiques cumulées sont passées chez les Hauts faits
@@ -349,18 +342,7 @@
   box-sizing: border-box;
 }
 
-.pc-heros-train-toolbar .settings-btn {
-  font-size: 12px;
-  padding: 2px 6px;
-  min-width: 32px;
-  min-height: 22px;
-}
-
-.pc-heros-train-toolbar .shop-buy-toolbar {
-  gap: 4px;
-  padding: 0 8px;
-  margin: 0;
-}
+/* v3.402.0 (lot B-1) : la quantité d'achat (×1…MAX) est le rail du kit (.kseg). */
 
 /* Grille des upgrades dans la section Héros */
 .pc-heros-train-list .shop-grid {
@@ -679,27 +661,22 @@
 .pc-stat-card-chev { font-size: 12px; color: var(--nb-ink-dim); transition: transform 0.16s ease; }
 .pc-stat-card.is-open .pc-stat-card-chev { transform: rotate(90deg); }
 
-.pc-stat-card-buy {
-  flex: 0 0 auto; min-width: 62px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  border: 1px solid var(--nb-gold-deep); border-radius: 8px;
-  background: var(--nb-cream-deep); color: var(--nb-ink);
-  font-size: 12px; font-weight: 800; padding: 5px 8px;
-  cursor: pointer; text-align: center;
-}
-.pc-stat-card-buy small { font-size: 12px; font-weight: 700; opacity: 0.72; }
-.pc-stat-card-buy:active { transform: translateY(1px); }
+/* v3.402.0 (lot B-1) : le prix est la pastille « pièce d'or » du kit (.kbuy, css/00-kbtn.css).
+   Restent ici les états qui ne sont pas un prix : plafond, monde, mur du Terrain. */
+.pc-stat-card-buy { flex: 0 0 auto; min-width: 66px; }
 .pc-stat-card-buy.is-capped,
-.pc-stat-card-buy.is-locked { background: var(--nb-cream-alt); color: var(--nb-ink-dim); cursor: default; }
-/* v3.213.1 : mur du Terrain d'entraînement. Cliquable, contrairement aux deux
-   au-dessus : il mène au chantier qui le lève. */
+.pc-stat-card-buy.is-locked,
 .pc-stat-card-buy.is-training-wall {
-  background: var(--aether);
-  color: #eaf6ff;
-  border-color: var(--aether-dark);
-  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 5px 8px; border-radius: 10px; font-size: 12px; font-weight: 800; text-align: center;
 }
-.pc-stat-card-buy.is-poor { opacity: 0.5; cursor: default; }
+.pc-stat-card-buy.is-capped small,
+.pc-stat-card-buy.is-locked small,
+.pc-stat-card-buy.is-training-wall small { font-size: 12px; font-weight: 700; opacity: 0.8; }
+.pc-stat-card-buy.is-capped,
+.pc-stat-card-buy.is-locked { border: 1.5px solid var(--sheet-card-bd); background: rgba(58, 44, 26, 0.08); color: #6b5a40; cursor: default; }
+/* v3.213.1 : mur du Terrain d'entraînement. Cliquable : il mène au chantier qui le lève. */
+.pc-stat-card-buy.is-training-wall { border: 2px solid #8a5c14; background: rgba(255, 248, 232, 0.35); color: #4a3218; cursor: pointer; }
 
 /* Progression vers le plafond RÉEL d'upgrades.js, pas vers un maximum
    inventé : l'ancien CHARACTER_STAT_MAX (500/300/400/200/250) ne

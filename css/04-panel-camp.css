@@ -49,13 +49,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 
 /* v3.179.0 : banderoles retirées (retour Seb — nouvel asset à venir),
    retour au titre texte d'avant v3.178. */
-.camp-section-title {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  letter-spacing: 0.03em;
-  margin-bottom: 10px;
-}
+/* v3.402.0 (lot B-1) : titre de section du kit (.ksec, css/00-components.css). */
 
 .camp-section-sub {
   font-size: 13px;

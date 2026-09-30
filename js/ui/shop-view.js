@@ -175,9 +175,9 @@ function buildUpgradeCardHTML(u, buyAmount) {
     h += '<div class="nb-purchase-buy-label">' + _t("COÛT") + '</div>';
 
     if (maxed) {
-      h += '<button class="btn-buy locked" disabled>MAX</button>';
+      h += '<button class="btn-buy kbuy locked" disabled>' + _t("MAX") + '</button>';
     } else if (locked) {
-      h += '<button class="btn-buy locked" disabled>Monde ' + ((u.unlockWorld || 0) + 1) + '</button>';
+      h += '<button class="btn-buy kbuy locked" disabled>' + _t("Monde {n}", { n: (u.unlockWorld || 0) + 1 }) + '</button>';
     } else {
       var label = '';
 
@@ -188,12 +188,12 @@ function buildUpgradeCardHTML(u, buyAmount) {
       }
 
       if (afford) {
-        h += '<button class="btn-buy" onclick="buyUpgrade(\'' + u.id + '\', ' + buyAmount + ')">';
+        h += '<button class="btn-buy kbuy" onclick="buyUpgrade(\'' + u.id + '\', ' + buyAmount + ')">';
           h += '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">';
           h += '<span class="upgrade-buy-price">' + label + '</span>';
         h += '</button>';
       } else {
-        h += '<button class="btn-buy cant-afford" disabled>';
+        h += '<button class="btn-buy kbuy cant-afford" disabled>';
           h += '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">';
           h += '<span class="upgrade-buy-price">' + label + '</span>';
         h += '</button>';
@@ -234,11 +234,11 @@ function buildShopHTML() {
   if (activeShopSubTab === "potions") {
     h += typeof buildPotionShopHTML === "function" ? buildPotionShopHTML() : "";
   } else {
-    h += '<div class="shop-buy-toolbar">';
-    h += '<button class="settings-btn ' + (buyAmount === 1 ? 'active' : '') + '" onclick="setShopBuyAmount(1)">x1</button>';
-    h += '<button class="settings-btn ' + (buyAmount === 10 ? 'active' : '') + '" onclick="setShopBuyAmount(10)">x10</button>';
-    h += '<button class="settings-btn ' + (buyAmount === 25 ? 'active' : '') + '" onclick="setShopBuyAmount(25)">x25</button>';
-    h += '<button class="settings-btn ' + (buyAmount === -1 ? 'active' : '') + '" onclick="setShopBuyAmount(-1)">' + _t("MAX") + '</button>';
+    // v3.402.0 (lot B-1) : quantité d'achat = rail du kit (.kseg)
+    h += '<div class="kseg shop-buy-toolbar">';
+    [[1, "×1"], [10, "×10"], [25, "×25"], [-1, _t("MAX")]].forEach(function (b) {
+      h += '<button type="button" class="' + (buyAmount === b[0] ? 'is-on' : '') + '" onclick="setShopBuyAmount(' + b[0] + ')">' + b[1] + '</button>';
+    });
     h += '</div>';
 
     h += '<div class="shop-mode-info" style="margin:0 0 12px 0;opacity:.85;width:100%;text-align:right;">' + _t("Mode d’achat :") + ' <strong>' + modeLabel + '</strong></div>';

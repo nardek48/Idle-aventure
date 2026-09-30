@@ -40,15 +40,7 @@
    -bar-wrapper + .pc-subtab-bar/.pc-subtab-btn dans
    css/00-components.css, partagées avec Personnage et Donjon). */
 
-.shop-buy-toolbar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin: 0 auto 10px;
-  width: 100%;
-  flex-wrap: wrap;
-}
+/* v3.402.0 (lot B-1) : .shop-buy-toolbar est un rail du kit (.kseg) : plus de gabarit propre. */
 
 /* =========================
    Potions
@@ -108,21 +100,7 @@
    ".btn-buy" (voir css/00-components.css), comme tous les autres
    boutons d'achat du jeu. */
 
-.shop-buy-toolbar .settings-btn {
-  display: inline-flex;
-  width: auto;
-  min-width: 48px;        /* largeur minimale plus petite */
-  height: 26px;           /* hauteur réduite */
-  padding: 3px 8px;       /* moins de padding interne */
-  border-radius: 12px;    /* arrondi plus compact */
-  font-size: 12px;        /* texte un peu plus petit */
-  font-weight: 700;
-  margin: 0;
-  padding: 10px 14px;
-  justify-content: center;
-  align-items: center;
-  flex: 0 0 auto;
-}
+
 
 .shop-mode-info {
   text-align: center;

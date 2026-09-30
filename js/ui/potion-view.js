@@ -82,9 +82,9 @@ function buildPotionCardHTML(potion) {
 
   h += '</div>';
   if (isStockCapped) {
-    h += '<div class="nb-purchase-buy-col"><button class="btn-buy cant-afford" type="button" disabled>' + _t("STOCK PLEIN") + '</button></div>';
+    h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy cant-afford" type="button" disabled>' + _t("STOCK PLEIN") + '</button></div>';
   } else {
-    h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
+    h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
   }
   h += '</div>'; // fin .nb-purchase-card
 
@@ -139,9 +139,9 @@ function buildHealingPotionCardHTML(potion) {
   }
   h += '</div>';
   if (buyLeft <= 0) {
-    h += '<div class="nb-purchase-buy-col"><button class="btn-buy cant-afford" type="button" disabled>' + _t("ÉPUISÉ") + '</button></div>';
+    h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy cant-afford" type="button" disabled>' + _t("ÉPUISÉ") + '</button></div>';
   } else {
-    h += '<div class="nb-purchase-buy-col"><button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
+    h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
   }
   h += '</div>'; // fin .nb-purchase-card
 

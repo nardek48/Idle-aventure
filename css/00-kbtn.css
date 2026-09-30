@@ -461,3 +461,120 @@
 
 /* v3.200.0 : la neutralisation CSS de #hud-page-title est retirée en même
    temps que l'élément lui-même (voir ui/hud-view.js). Plus rien à masquer. */
+
+/* =====================================================================
+   v3.402.0 (lot B-1, choix de Seb dans atelier-boutons.html) :
+   HIÉRARCHIE DES BOUTONS « H2 · bleu + filaire », ACHAT « P2 · pièce d'or »,
+   DANGER « D1 » inchangé (bleu, texte rouge).
+   - Principal : le bouton bleu serti (.kbtn.primary / .settings-btn.primary),
+     un seul par carte.
+   - Secondaire : filaire bronze sur le parchemin. Par défaut, tout .kbtn ou
+     .settings-btn qui n'est ni .primary ni .danger, posé dans une page
+     (.kframe), une feuille (.ksheet, .full-menu) ou une fenêtre (.kwin), est
+     secondaire. Ailleurs (combat, Petites Aventures : la nuit), rien ne change.
+     Hors de ces conteneurs : classe .is-sec.
+   - Discret : .klink (lien souligné bronze).
+   ===================================================================== */
+.kframe .kbtn:not(.primary):not(.danger),
+.kframe .settings-btn:not(.primary):not(.danger),
+.ksheet .kbtn:not(.primary):not(.danger),
+.ksheet .settings-btn:not(.primary):not(.danger),
+.full-menu .kbtn:not(.primary):not(.danger),
+.full-menu .settings-btn:not(.primary):not(.danger),
+.kwin .kbtn:not(.primary):not(.danger),
+.kwin .settings-btn:not(.primary):not(.danger),
+.kbtn.is-sec,
+.settings-btn.is-sec,
+.btn-buy.is-sec,
+.kframe .inv-toolbar-btn {
+  border: 2px solid #8a5c14;
+  border-radius: 10px;
+  background: rgba(255, 248, 232, 0.35);
+  color: #4a3218;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.kframe .kbtn:not(.primary):not(.danger):not(:disabled):active,
+.kframe .settings-btn:not(.primary):not(.danger):not(:disabled):active,
+.ksheet .kbtn:not(.primary):not(.danger):not(:disabled):active,
+.ksheet .settings-btn:not(.primary):not(.danger):not(:disabled):active,
+.full-menu .kbtn:not(.primary):not(.danger):not(:disabled):active,
+.full-menu .settings-btn:not(.primary):not(.danger):not(:disabled):active,
+.kwin .kbtn:not(.primary):not(.danger):not(:disabled):active,
+.kwin .settings-btn:not(.primary):not(.danger):not(:disabled):active,
+.kbtn.is-sec:not(:disabled):active,
+.settings-btn.is-sec:not(:disabled):active,
+.btn-buy.is-sec:not(:disabled):active,
+.kframe .inv-toolbar-btn:not(:disabled):active {
+  background: rgba(138, 92, 20, 0.15);
+  background-image: none;
+}
+
+/* Lien discret */
+.klink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  color: #7a4e12;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ---------- Achat : pastille « pièce d'or » (P2) ----------
+   Tout bouton qui affiche un prix : .kbuy (avec .btn-buy pour le gabarit
+   existant). Grisé quand le prix n'est pas payable. */
+.kbuy,
+.btn-buy.kbuy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 72px;
+  min-height: 38px;
+  padding: 4px 12px;
+  border: 1px solid #8a5c14;
+  border-radius: 19px;
+  background: linear-gradient(#f6d27a, #d99a34);
+  color: #2a1a08;
+  text-shadow: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 2px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.kbuy img,
+.btn-buy.kbuy img,
+.btn-buy.kbuy .btn-buy-icon { width: 18px; height: 18px; object-fit: contain; }
+
+.kbuy small { font-size: 12px; font-weight: 700; opacity: 0.8; }
+
+.kbuy:not(:disabled):active,
+.btn-buy.kbuy:not(:disabled):active {
+  background: linear-gradient(#d99a34, #b97a1c);
+  background-image: linear-gradient(#d99a34, #b97a1c);
+  transform: translateY(1px);
+}
+
+.kbuy:disabled,
+.kbuy.cant-afford,
+.kbuy.is-poor,
+.kbuy.is-maxed,
+.kbuy.is-bought,
+.kbuy.locked {
+  filter: grayscale(0.8);
+  opacity: 0.6;
+  cursor: default;
+}

@@ -657,9 +657,9 @@ function buildShardShopBoardHTML() {
     h += '</div>';
     h += '<div class="nb-purchase-buy-col">';
     if (maxed) {
-      h += '<button class="btn-buy is-maxed" type="button" disabled>' + _t("Max") + '</button>';
+      h += '<button class="btn-buy kbuy is-maxed" type="button" disabled>' + _t("Max") + '</button>';
     } else {
-      h += '<button class="btn-buy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="buyShardUpgradeFromSheet(\'' + esc(item.id) + '\')"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + formatNumber(cost) + '</button>';
+      h += '<button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="buyShardUpgradeFromSheet(\'' + esc(item.id) + '\')"><img src="images/Icons/subtabs/shard_shop.png" alt="">' + formatNumber(cost) + '</button>';
     }
     h += '</div>';
     h += '</div>';

@@ -630,7 +630,7 @@ function buildGrimoireListHTML(kit, unlockedCount) {
 
   game.grimoireRules.forEach(function (rule, index) {
     if (index === unlockedCount) {
-      h += '<div class="grimoire-divider">' + _t("Emplacements à venir") + '</div>';
+      h += '<div class="ksec grimoire-divider">' + _t("Emplacements à venir") + '</div>';
     }
     h += buildGrimoireRuleRowHTML(index, rule, kit, index >= unlockedCount);
   });

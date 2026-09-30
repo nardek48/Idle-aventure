@@ -185,25 +185,9 @@
 .grimoire-rule-row.is-locked .grimoire-rule-icon { filter: grayscale(1); }
 .grimoire-rule-row.is-locked .grimoire-rule-chevron { visibility: hidden; }
 
-.grimoire-divider {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 12px 0 8px;
-  color: var(--nb-ink);
-  font-size: 12px;
-  font-weight: 700;
-  opacity: 0.85;
-}
+/* v3.402.0 (lot B-1) : titre de section du kit (.ksec, css/00-components.css). */
 
-.grimoire-divider::before,
-.grimoire-divider::after {
-  content: "";
-  flex: 1;
-  height: 2px;
-  background-color: currentColor;
-  opacity: 0.35;
-}
+
 
 .grimoire-foot {
   display: flex;

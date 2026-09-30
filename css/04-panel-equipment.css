@@ -327,12 +327,7 @@
   text-align: left;
 }
 
-.eq-compat-title {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--nb-ink-dim);
-  margin-bottom: 6px;
-}
+/* v3.402.0 (lot B-1) : titre de section du kit (.ksec, css/00-components.css). */
 
 .eq-compat-row {
   display: flex;
@@ -419,10 +414,8 @@
   text-align: left;
 }
 
-.eq-compare-title {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--nb-ink-dim);
+.eq-compare-title { /* v3.402.0 (lot B-1) : surtitre du kit */
+  color: #8a5c14; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
   margin-bottom: 6px;
 }
 
