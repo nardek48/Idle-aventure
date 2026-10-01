@@ -151,6 +151,8 @@ function switchTab(tabName) {
   }
 
   var leavingCombat = game.activeTab === "combat" && tabName !== "combat";
+  // v3.414.0 (VUI-1) : arriver sur le Village ouvre toujours Production (décision Seb)
+  if (tabName === "village" && game.activeTab !== "village" && typeof onVillageTabEnter === "function") onVillageTabEnter();
   game.activeTab = tabName;
   // v3.102.1 : revenir au Campement pendant une exploration = rentrer (butin banqué)
   if (window.SortieManager && typeof SortieManager.onTabChange === "function") SortieManager.onTabChange(tabName);

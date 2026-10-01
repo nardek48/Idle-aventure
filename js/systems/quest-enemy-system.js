@@ -185,7 +185,6 @@ function hasCombatQuestContext() {
   if (game.adventureQuestRun && game.adventureQuestRun.active) return true;
   if (game.huntRun && game.huntRun.active) return true;
   if (game.livingMaps && game.livingMaps.fight) return true;
-  if (game.sceneRun && game.sceneRun.status === "combat") return true;
   return false;
 }
 window.hasCombatQuestContext = hasCombatQuestContext;

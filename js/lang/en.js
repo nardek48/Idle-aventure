@@ -367,7 +367,6 @@ I18n.register("en", {
   "Chasse interrompue — le butin de la sortie est perdu. Retour au Campement.": "Hunt interrupted — the run's loot is lost. Back to Camp.",
 
   // js/systems/living-map-system.js
-  "Ascension : le Cycle reprend {x}.": "Ascension: the Cycle takes back {x}.",
   "Secteur inconnu": "Unknown sector",
   "Aeswyn n'a pas encore ouvert ses portes. Avance l'Histoire.": "Aeswyn hasn't opened its gates yet. Move the Story forward.",
   "Pas encore. L'Histoire t'y mènera plus tard.": "Not yet. The Story will lead you there later.",
@@ -474,7 +473,6 @@ I18n.register("en", {
   "Déjà armée pour ce run — 1 par type et par run": "Already armed for this run — 1 per type per run",
   "{x} bue — active pour la mission en cours.": "{x} drunk — active for the current mission.",
   "{x} bue — armée pour la prochaine mission.": "{x} drunk — armed for the next mission.",
-  "{x} bu — bonus prêt pour la prochaine ascension": "{x} drunk — bonus ready for the next ascension",
   "{x} utilisée": "{x} used",
   "Aucune potion à vendre": "No potions to sell",
   "{x} vendue (+{n} or)": "{x} sold (+{n} gold)",
@@ -521,7 +519,6 @@ I18n.register("en", {
   "Niveau {n} ! {x}": "Level {n}! {x}",
   "+{n} XP héros": "+{n} hero XP",
   "+{n} XP héros ({a} → {b})": "+{n} hero XP ({a} → {b})",
-  "L'Ascension a laissé place à la Mémoire": "Ascension has given way to Memory",
 
   // js/systems/provisions-system.js
   "Vivres : il te faut {x} pour repartir (Cuisine de camp, à la Chasse)": "Provisions: you need {x} to set out again (Camp Kitchen, at the Hunting Lodge)",
@@ -554,7 +551,7 @@ I18n.register("en", {
   "L'essence et l'Aether de réserve disparaissent : +{n} or": "Essence and reserve Aether are gone: +{n} gold",
   "Partie réinitialisée": "Game reset",
   "Réinitialiser TOUT ?": "Reset EVERYTHING?",
-  "Cette action efface toute la progression, y compris l'Aether et les ascensions. Cette action est irréversible.": "This erases all progress, including Aether and ascensions. This cannot be undone.",
+  "Cette action efface toute la progression, y compris l'Aether et la Mémoire. Cette action est irréversible.": "This erases all progress, including Aether and Memory. This cannot be undone.",
   "Réinitialiser toute la progression ?": "Reset all progress?",
   "Sauvegarde exportée ({n} héros)": "Save exported ({n} heroes)",
   "Code de sauvegarde": "Save code",
@@ -1419,7 +1416,6 @@ I18n.register("en", {
   "Stock : {n} / {c}": "Stock: {n} / {c}",
   "Active — mission en cours": "Active — mission in progress",
   "Armée pour la prochaine mission": "Armed for the next mission",
-  "Bonus prêt : +{p}% à la prochaine ascension": "Bonus ready: +{p}% on the next ascension",
   "STOCK PLEIN": "STOCK FULL",
   "Potions de mission": "Mission potions",
   "Restaure {p}% des PV max, à la demande depuis l’écran Combat.": "Restores {p}% of max HP, on demand from the Combat screen.",
@@ -1428,9 +1424,6 @@ I18n.register("en", {
   "Potions de soin (usage instantané)": "Healing potions (instant use)",
 
   // js/ui/production-view.js
-  "PLEIN": "FULL",
-  "AMÉLIORABLE": "UPGRADABLE",
-  "+{n}/min": "+{n}/min",
   "{a}/{b} zones": "{a}/{b} zones",
   "Défricher": "Clear",
   "Rend cette zone exploitable.": "Makes this zone workable.",
@@ -1442,7 +1435,6 @@ I18n.register("en", {
   "Défricher une zone": "Clear a zone",
   "« {x} » améliorée": "“{x}” upgraded",
   "Zones": "Zones",
-  "Les ateliers de ce bâtiment se pilotent depuis la vue Ateliers": "This building's workshops are run from the Workshops view",
   "Bientôt": "Soon",
   "{d}/lot": "{d}/batch",
   "Continue": "Continuous",
@@ -1458,16 +1450,13 @@ I18n.register("en", {
   "Production": "Production",
   "Ateliers": "Workshops",
   "Tout récolter": "Harvest all",
-  "Touche un bâtiment pour gérer ses zones": "Tap a building to manage its zones",
   "À débloquer": "To unlock",
-  "{x} — par l’expédition :": "{x} — through the expedition:",
   "Acceptée · touche pour partir": "Accepted · tap to set out",
   "Touche pour voir la quête": "Tap to see the quest",
   "Tous les ateliers suivis tournent": "All tracked workshops are running",
   "Files": "Queues",
   "{n} ateliers à venir : {x}": "{n} workshops to come: {x}",
   "file vide · {n} emplacement||file vide · {n} emplacements": ["queue empty · {n} slot", "queue empty · {n} slots"],
-  "{n} bâtiment a une amélioration abordable · touche un bâtiment pour gérer ses zones||{n} bâtiments ont une amélioration abordable · touche un bâtiment pour gérer ses zones": ["{n} building has an affordable upgrade · tap a building to manage its zones", "{n} buildings have an affordable upgrade · tap a building to manage its zones"],
   "{n} atelier à l'arrêt — intrants ou réserve||{n} ateliers à l'arrêt — intrants ou réserve": ["{n} workshop stopped — inputs or reserve", "{n} workshops stopped — inputs or reserve"],
 
   // js/ui/quests-view.js
@@ -4067,5 +4056,17 @@ I18n.register("en", {
   "Recentrer sur le héros": "Recentre on the hero", // v3.394.0 : bouton ◎ de la carte plein écran
   "étape {n}": "step {n}",
   "Tu passes, épuisé. −{b} Souffle · +{g} {x}": "You get through, exhausted. −{b} Breath · +{g} {x}",
-  "Renoncer": "Give up"
+  "Renoncer": "Give up",
+
+  // v3.414.0 (VUI-1) : rail du Village, vignettes de production, feuille d'un bâtiment
+  "Bâtiments": "Buildings",
+  "Niveau {a} → {b}": "Level {a} → {b}",
+  "Non construit · chantier possible": "Not built · can start",
+  "Plein": "Full",
+  "zone": "zone",
+  "+{n}/min · {a}/{b} zones": "+{n}/min · {a}/{b} zones",
+  "Entrepôt : {a}": "Warehouse: {a}",
+  "L'Entrepôt est plein de {x} : la récolte attendra. Ses ateliers en consomment.": "The Warehouse is full of {x}: harvesting will wait. Its workshops use it up.",
+  "Ateliers · {n}": "Workshops · {n}",
+  "Touche un bâtiment pour ses ateliers et ses zones": "Tap a building for its workshops and zones",
 });

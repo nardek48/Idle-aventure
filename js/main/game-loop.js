@@ -65,10 +65,6 @@ function gameLoop() {
     ProductionManager.tick(dt);
   }
 
-  if (window.WarehouseManager && typeof WarehouseManager.tickCraftQueue === "function") {
-    WarehouseManager.tickCraftQueue(dt);
-  }
-
   if (window.PotionManager && typeof PotionManager.tick === "function") {
     var potionExpired = PotionManager.tick();
     game._potionUiTimer = (game._potionUiTimer || 0) + dt;

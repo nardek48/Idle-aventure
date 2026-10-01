@@ -1018,7 +1018,7 @@
   cursor: pointer;
   border: 1px solid var(--nb-frame, var(--c-bronze-500));
   border-radius: 20px;
-  background: var(--c-cream-150-soft);
+  background: var(--c-cream-150-2);
   color: var(--nb-ink-dim, var(--c-brown-700-soft));
   font-size: 12px;
   font-weight: 800;
@@ -1078,7 +1078,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--c-cream-150-soft);
+  background: var(--c-cream-150-2);
   position: relative;
   flex: 0 0 auto;
 }
@@ -1268,3 +1268,83 @@
 .production-dash-lock-badge .ico-sys { width: 12px; height: 12px; }
 .production-dash-lock-text { font-size: 12px; color: var(--c-brown-650-vivid); margin-top: 6px; } /* couleurs en dur, comme le reste de la carte : --nb-ink est redéfini dans ce cadre */
 .production-dash-lock-quest { font-size: 12px; font-weight: 800; color: var(--c-brown-850-soft); margin-top: 1px; }
+
+/* =====================================================================
+   v3.414.0 (lot VUI-1) : VIGNETTES de production et FEUILLE d'un bâtiment
+   (atelier village A2 validé par Seb, 01/10/2026).
+   ===================================================================== */
+.production-dash-card.prod-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  min-height: 168px;
+  padding: 8px 6px 9px;
+  border: 1px solid var(--nb-frame-light, var(--c-bronze-500));
+  border-radius: 12px;
+  background: linear-gradient(var(--c-cream-50-soft), var(--c-cream-150-2));
+  font: inherit;
+  text-align: center;
+  overflow: visible;
+}
+.prod-tile .prod-tile-img { width: 78px; height: 88px; object-fit: contain; }
+.prod-tile .production-dash-name { font-size: 14px; font-weight: 800; line-height: 1.15; }
+.prod-tile .prod-tile-gauge { width: 100%; margin-top: 2px; }
+.prod-tile-meta { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: 12px; line-height: 1.3; color: var(--c-brown-750); }
+.prod-tile-meta .ico-inline { width: 16px; height: 16px; }
+.prod-tile-meta.is-store-full { color: var(--c-red-600); font-weight: 800; }
+.production-dash-card.prod-tile.is-full { border-color: var(--c-red-550); box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.25); }
+.production-dash-card.prod-tile.is-locked { border-style: dashed; background: linear-gradient(var(--c-cream-150-soft), var(--c-bronze-200-soft)); }
+.prod-tile.is-locked .prod-tile-img { filter: grayscale(1); opacity: 0.6; }
+
+/* Ruban d'état, en haut à droite */
+.prod-tile-rib {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 22px;
+  z-index: 1;
+}
+.prod-tile-rib .ico-sys { width: 12px; height: 12px; }
+.prod-tile-rib.is-full { background: var(--c-red-550); color: var(--c-white-50); }
+.prod-tile-rib.is-ready { background: var(--c-green-650-2); color: var(--c-white-50); }
+.prod-tile-rib.is-up { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); color: var(--c-brown-900-soft); }
+.prod-tile-rib.is-lock { background: var(--c-brown-750-soft); color: var(--c-cream-100-2); }
+
+/* --- Feuille d'un bâtiment de production --- */
+.prod-sheet .prod-sheet-icon { width: 44px; height: 50px; object-fit: contain; }
+.prod-sheet-harvest {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin: 0 0 10px;
+  border: 1px solid var(--nb-frame-light, var(--c-bronze-500));
+  border-radius: 12px;
+  background: var(--sheet-card-bg, var(--c-cream-100-soft));
+}
+.prod-sheet-res { width: 34px; height: 34px; object-fit: contain; flex: none; }
+.prod-sheet-harvest-mid { flex: 1 1 auto; min-width: 0; }
+.prod-sheet-store { font-size: 12px; color: var(--c-brown-750); margin-top: 3px; }
+.kbtn.prod-sheet-harvest-btn { flex: none; width: auto; min-width: 0; margin: 0; padding: 6px 14px; white-space: nowrap; }
+.prod-sheet-warn {
+  padding: 8px 10px;
+  margin: 0 0 10px;
+  border-radius: 10px;
+  border: 1px solid #e3a59e;
+  background: #fdecea;
+  color: #5a1e18;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.prod-sheet-tabs { margin-bottom: 10px; }
+.prod-sheet .farm-plots-panel { margin-top: 0; }

@@ -99,4 +99,4 @@ var UPGRADES = [
 ];
 
 /* v3.355.0 : AETHER_SHOP et son achat retirés (boutique vide depuis la v3.322.0, remplacée par
-   la Mémoire). game.aetherUpgrades reste lu par la sauvegarde, sans effet. */
+   la Mémoire). v3.412.0 : game.aetherUpgrades n’est plus lu ni écrit. */

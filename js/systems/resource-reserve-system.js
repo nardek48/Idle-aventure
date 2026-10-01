@@ -9,9 +9,8 @@
 
    Persistance dans game.production._resourceReserves = { [resourceKey]: number|null } —
    DÉTOURNÉ de son usage habituel (game.production[buildingId] par bâtiment) : choix
-   validé avec Seb pour éviter de modifier save-system.js (fichier protégé, les 4
-   emplacements obligatoires — buildSaveData/loadGame/hardResetState/fullResetState — ne
-   listent pas ce champ). game.production dans son ensemble est déjà traité comme un bloc
+   validé avec Seb pour éviter de modifier save-system.js (fichier protégé, les
+   emplacements obligatoires — buildSaveData/loadGame/fullResetState — ne listent pas ce champ). game.production dans son ensemble est déjà traité comme un bloc
    opaque, entièrement sérialisé sans que save-system.js connaisse sa structure interne
    (voir COMMENTAIRES_ORIGINAUX.md), donc _resourceReserves y voyage "gratuitement" sans
    aucune modification de fichier protégé. La clé "_resourceReserves" ne collisionne

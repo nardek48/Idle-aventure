@@ -943,7 +943,7 @@ img.combat-action-icon {
   border-radius: 999px;
   border: 1px solid rgba(212, 175, 55, 0.6);
   background: rgba(15, 20, 32, 0.85);
-  color: var(--c-cream-150);
+  color: var(--c-cream-150-3);
   font-size: max(12px, clamp(10px, calc(6px + 1.2vw), 12px));
   font-weight: 700;
   cursor: pointer;
@@ -1016,7 +1016,7 @@ img.combat-action-icon {
   border-radius: 999px;
   border: 1px solid rgba(212, 175, 55, 0.45);
   background: rgba(15, 20, 32, 0.78);
-  color: var(--c-cream-150);
+  color: var(--c-cream-150-3);
   font-size: max(12px, clamp(9.5px, calc(5.5px + 1.2vw), 11.5px));
   font-weight: 700;
 }

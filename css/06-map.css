@@ -202,7 +202,7 @@
 
 .map-popup-status.status-done {
   background: rgba(74, 222, 128, 0.15);
-  color: var(--c-green-650-2);
+  color: var(--c-green-650-3);
 }
 
 .map-popup-status.status-locked {

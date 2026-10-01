@@ -161,9 +161,8 @@ var EquipShopManager = {
   /* v3.209.0 (bug Seb) — le stock est SAUVEGARDÉ et checkRefresh() ne regardait que
      son minuteur. Un lot fabriqué dans un monde supérieur restait donc en vitrine
      après un retour en arrière : Inhabituel proposé en Forêt, où seul le Commun est
-     censé exister (WORLD_RARITY_UNLOCKS). Reproduit en deux cas — retour au monde
-     précédent, et ascension (hardResetState remet worldIndex à 0 sans toucher au
-     stock). Pire, ces objets étaient achetables au prix du monde MAX atteint, donc
+     censé exister (WORLD_RARITY_UNLOCKS). Reproduit au retour dans un monde
+     précédent. Pire, ces objets étaient achetables au prix du monde MAX atteint, donc
      à la fois hors palier et hors budget.
 
      Asymétrie voulue : on ne réagit qu'aux raretés AU-DESSUS du palier autorisé.

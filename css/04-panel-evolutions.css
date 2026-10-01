@@ -61,7 +61,7 @@ Maquette de référence : atelier-evolutions.html.
   gap: 3px;
   font-size: 12px;
   font-weight: 800;
-  background: var(--c-cream-150-soft);
+  background: var(--c-cream-150-2);
   border-radius: 999px;
   padding: 2px 8px 2px 3px;
   color: var(--c-brown-850-soft);
@@ -106,7 +106,7 @@ Maquette de référence : atelier-evolutions.html.
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--c-cream-150);
+  background: var(--c-cream-150-3);
   color: var(--c-brown-850-soft);
   border: 1.5px solid var(--c-bronze-400-2);
   border-radius: 999px;
@@ -215,7 +215,7 @@ Maquette de référence : atelier-evolutions.html.
 
 /* Victoire + trophée */
 .bm-win { position: fixed; inset: 0; z-index: 9500; background: rgba(0, 0, 0, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; animation: bm-in 0.3s ease-out; }
-.bm-win-card { width: 100%; max-width: 380px; background: var(--c-cream-150); color: var(--c-brown-850-soft); border: 2px solid var(--c-bronze-400-2); border-radius: 18px; padding: 14px; text-align: center; }
+.bm-win-card { width: 100%; max-width: 380px; background: var(--c-cream-150-3); color: var(--c-brown-850-soft); border: 2px solid var(--c-bronze-400-2); border-radius: 18px; padding: 14px; text-align: center; }
 .bm-win-t { font-size: 21px; font-weight: 900; color: var(--c-brown-700-soft); }
 .bm-new { font-size: 12px; font-weight: 900; letter-spacing: 0.6px; text-transform: uppercase; color: var(--c-gold-650); margin-top: 6px; }
 .bm-win-line { font-size: 12.5px; font-style: italic; color: var(--c-green-700-soft); margin: 4px 0 10px; }
@@ -267,7 +267,7 @@ Maquette de référence : atelier-evolutions.html.
 .pt-seg { margin-bottom: 4px; }
 .pt-box .kbtn { margin-top: 6px; }
 .pt-ret-row { font-size: 12px; margin-top: 3px; }
-.cp-patrol-note { font-size: 12px; font-weight: 700; color: var(--c-brown-700-soft); background: var(--c-cream-150-soft); border: 1px dashed var(--c-bronze-500); border-radius: 999px; padding: 7px 12px; text-align: center; margin: 6px 0; }
+.cp-patrol-note { font-size: 12px; font-weight: 700; color: var(--c-brown-700-soft); background: var(--c-cream-150-2); border: 1px dashed var(--c-bronze-500); border-radius: 999px; padding: 7px 12px; text-align: center; margin: 6px 0; }
 
 /* ============================================================
    5. Refus « Pour y arriver » (v3.336.0, lot F-2) — ui/fil-rouge-view.js

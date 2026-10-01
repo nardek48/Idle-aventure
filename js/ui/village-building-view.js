@@ -306,6 +306,7 @@ function openVillageBuildingSheet(id) {
   if (!def) return;
   VillageBuildingManager.ensure();
   openVillageBuildingId = id;
+  if (typeof productionDetailBuildingId !== "undefined") productionDetailBuildingId = null; // v3.414.0 : la feuille de production cède la place
   var host = document.getElementById("village-modal-root");
   if (host) host.innerHTML = buildVillageBuildingSheetHTML(id);
 }

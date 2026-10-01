@@ -1,5 +1,5 @@
 "use strict";
-/* ui/village-view.js — écran Village : sous-onglets Village/Entrepôt/Production.
+/* ui/village-view.js — écran Village : rail Bâtiments · Production · Ateliers · Entrepôt (v3.414.0).
    v3.113.0 : les 6 bâtiments hors-ligne (Mine d'Or, Hutte, Caserne, Tour, Hôtel de Ville,
    Forgeron) ont été SUPPRIMÉS avec leur mécanique (voir offline-system.js) ; le sous-onglet
    Village est alors devenu une vitrine de cartes teaser en attendant du vrai contenu.
@@ -10,33 +10,44 @@
    silencieux). Ancien code (teaser, et avant lui grille 6 cartes + popup) :
    COMMENTAIRES_ORIGINAUX.md */
 
-var activeVillageSubTab = "village"; // "village" | "entrepot" | "production"
+/* v3.414.0 (lot VUI-1, atelier village du 01/10/2026) : quatre onglets en rail EN HAUT
+   (Bâtiments · Production · Ateliers · Entrepôt) remplacent les trois boutons du bas et le
+   double bouton Production | Ateliers. L'onglet Village s'ouvre toujours sur Production
+   (décision Seb : c'est là qu'on récolte). « village » reste accepté comme ancien nom. */
+var activeVillageSubTab = "production"; // "buildings" | "production" | "shops" | "entrepot"
+var VILLAGE_SUBTABS = ["buildings", "production", "shops", "entrepot"];
 
-/* v3.222.0 (retour Seb) : cliquer sur un bouton de sous-onglet ramène TOUJOURS
-   l'écran à sa page d'accueil. Avant, revenir sur Production rouvrait la fiche
-   d'atelier ou le détail de bâtiment où l'on s'était arrêté, et il fallait
-   ressortir à la main pour retrouver la récolte. Un bouton de navigation doit
-   emmener là où son libellé le dit, pas là où on était la dernière fois.
-
-   Même principe appliqué aux autres sections qui gardent un état interne
-   (Entrepôt : ressource sélectionnée). */
+/* v3.222.0 (retour Seb) : changer d'onglet ramène TOUJOURS l'écran à sa page d'accueil
+   (feuille de bâtiment fermée, ressource désélectionnée). */
 function resetVillageSubScreenState() {
-  if (typeof productionViewTab !== "undefined") productionViewTab = "prod";
-  if (typeof productionDetailBuildingId !== "undefined") productionDetailBuildingId = null;
+  if (typeof closeProductionSheet === "function") closeProductionSheet(true);
   if (typeof selectedWarehouseKey !== "undefined") selectedWarehouseKey = null;
   if (typeof closeWorkshopSummaryModal === "function") closeWorkshopSummaryModal();
 }
 window.resetVillageSubScreenState = resetVillageSubScreenState;
 
+function normalizeVillageSubTab(tab) {
+  if (tab === "village") return "buildings";
+  return VILLAGE_SUBTABS.indexOf(tab) !== -1 ? tab : "production";
+}
+
 function setVillageSubTab(tab) {
-  activeVillageSubTab = (tab === "entrepot") ? "entrepot" : (tab === "production") ? "production" : "village";
+  activeVillageSubTab = normalizeVillageSubTab(tab);
   resetVillageSubScreenState();
   if (typeof renderPanel === "function") renderPanel();
 }
 window.setVillageSubTab = setVillageSubTab;
 
+/* Entrée dans l'onglet Village depuis la barre du bas : toujours Production. Appelée par
+   switchTab() quand on ARRIVE sur le Village (pas à chaque rendu). */
+function onVillageTabEnter() {
+  activeVillageSubTab = "production";
+  resetVillageSubScreenState();
+}
+window.onVillageTabEnter = onVillageTabEnter;
+
 function isProductionScreenVisible() {
-  return game.activeTab === "village" && activeVillageSubTab === "production";
+  return game.activeTab === "village" && (activeVillageSubTab === "production" || activeVillageSubTab === "shops");
 }
 window.isProductionScreenVisible = isProductionScreenVisible;
 
@@ -45,16 +56,55 @@ window.isProductionScreenVisible = isProductionScreenVisible;
    deviner où aller. */
 function goToTrainingGround() {
   if (typeof switchTab === "function") switchTab("village");
-  setVillageSubTab("village");
+  setVillageSubTab("buildings");
   if (typeof openVillageBuildingSheet === "function") openVillageBuildingSheet("training");
 }
 window.goToTrainingGround = goToTrainingGround;
 
+/* Pastilles du rail : ce qui attend le joueur dans chaque onglet (0 = pas de pastille). */
+function getVillageSubTabBadges() {
+  var b = { buildings: 0, production: 0, shops: 0, entrepot: 0 };
+  if (window.VillageBuildingManager) {
+    (window.VILLAGE_BUILDING_ORDER || []).forEach(function (id) {
+      var st = VillageBuildingManager.getCardState(id);
+      if (id === "workshop" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.isWorkshopVisible === "function" && !WorkshopUnlockManager.isWorkshopVisible()) return;
+      if (st === "ready" || (st === "built" && VillageBuildingManager.getAffordability(id).all)) b.buildings++;
+    });
+    if (VillageBuildingManager.getSite()) b.buildings = 0; // un seul chantier à la fois : rien à lancer
+  }
+  if (window.ProductionManager) {
+    Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
+      if (!ProductionManager.isBuildingUnlocked(id)) return;
+      var cap = ProductionManager.getCapacity(id);
+      if (cap > 0 && ProductionManager.getStock(id) >= cap) b.production++;
+    });
+  }
+  if (typeof countStalledWorkshops === "function") b.shops = countStalledWorkshops();
+  if (window.WarehouseManager && window.WAREHOUSE_RESOURCES) {
+    Object.keys(WAREHOUSE_RESOURCES).forEach(function (k) {
+      if ((WAREHOUSE_RESOURCES[k].tier || "raw") === "raw" && WarehouseManager.getCap(k) !== Infinity && WarehouseManager.getFreeSpace(k) <= 0) b.entrepot++;
+    });
+  }
+  return b;
+}
+window.getVillageSubTabBadges = getVillageSubTabBadges;
+
+/* Rail du kit (.kseg.is-stack), en tête de page, comme la Bibliothèque. */
 function buildVillageSubTabBarHTML() {
-  var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "village" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'village\')"><img class="pc-subtab-ico" src="images/Icons/quests/village_quest.png" alt=""><span>' + _t("Village") + '</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "entrepot" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'entrepot\')"><img class="pc-subtab-ico" src="images/Icons/system/warehouse_supplies.png" alt=""><span>' + _t("Entrepôt") + '</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeVillageSubTab === "production" ? ' is-active' : '') + '" onclick="setVillageSubTab(\'production\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/production.png" alt=""><span>' + _t("Production") + '</span></button>';
+  var badges = getVillageSubTabBadges();
+  var tabs = [
+    ["buildings", "images/Icons/construction_icon.png", _t("Bâtiments")],
+    ["production", "images/Icons/subtabs/production.png", _t("Production")],
+    ["shops", "images/Icons/subtabs/workshops.png", _t("Ateliers")],
+    ["entrepot", "images/Icons/system/warehouse_supplies.png", _t("Entrepôt")]
+  ];
+  var h = '<div class="kseg is-stack village-tabs">';
+  tabs.forEach(function (t) {
+    h += '<button type="button" class="village-tab' + (activeVillageSubTab === t[0] ? ' is-on' : '') + '" onclick="setVillageSubTab(\'' + t[0] + '\')">';
+    h += '<img src="' + t[1] + '" alt=""><span>' + esc(t[2]) + '</span>';
+    if (badges[t[0]] > 0) h += '<span class="kseg-dot">' + badges[t[0]] + '</span>';
+    h += '</button>';
+  });
   h += '</div>';
   return h;
 }
@@ -129,10 +179,12 @@ function buildVillageBuildingCardHTML(id) {
 
   var locked = (state === "locked");
 
+  // v3.414.0 (VUI-1) : grande vignette — niveau en pastille, ruban d'état, illustration centrée
   var h = '<button type="button" class="vb-card is-' + state + '"'
     + (locked ? ' disabled' : ' onclick="openVillageBuildingSheet(\'' + id + '\')"') + '>';
 
-  if (state === "ready") h += '<span class="vb-card-flag">' + _t("Disponible") + '</span>';
+  if (level > 0) h += '<span class="vb-card-lvl">' + level + '/' + VillageBuildingManager.getMaxLevel(id) + '</span>';
+  if (state === "ready") h += '<span class="vb-card-flag">' + _t("Construire") + '</span>';
   else if (state === "site") h += '<span class="vb-card-flag">' + _t("Chantier") + '</span>';
 
   h += '<div class="vb-card-top">';
@@ -147,7 +199,7 @@ function buildVillageBuildingCardHTML(id) {
   } else if (state === "site") {
     var site = VillageBuildingManager.getSite();
     var pct = VillageBuildingManager.getSiteProgressPct();
-    h += '<div class="vb-card-level">Niveau ' + level + ' → ' + site.targetLevel + '</div>';
+    h += '<div class="vb-card-level">' + _t("Niveau {a} → {b}", { a: level, b: site.targetLevel }) + '</div>';
     h += '<div class="kgauge kgauge-thin kgauge-xp"><div class="kgauge-track">'
        + '<div class="kgauge-fill" id="vb-card-bar" style="width:' + pct.toFixed(1) + '%"></div>'
        + '</div></div>';
@@ -156,18 +208,15 @@ function buildVillageBuildingCardHTML(id) {
 
   } else if (state === "maxed") {
     // v3.289.0 : plafond du monde -> on dit où se trouve la suite
-    h += '<div class="vb-card-level">' + _t("Niveau {a} / {b}", { a: level, b: VillageBuildingManager.getMaxLevel(id) }) + '</div>';
     h += '<div class="vb-card-status">' + esc(VillageBuildingManager.isWorldCapped(id)
       ? VillageBuildingManager.getWorldCapLabel(id) : _t("Niveau maximum")) + '</div>';
 
   } else if (state === "built") {
     var afford = VillageBuildingManager.getAffordability(id);
-    h += '<div class="vb-card-level">' + _t("Niveau {a} / {b}", { a: level, b: VillageBuildingManager.getMaxLevel(id) }) + '</div>';
     h += '<div class="vb-card-status">' + (afford.all ? '<img class=ico-inline src=images/Icons/system/upgrade.png> ' + _t("Améliorable") : _t("Matériaux manquants")) + '</div>';
 
   } else { /* ready */
-    h += '<div class="vb-card-level">' + _t("Non construit") + '</div>';
-    h += '<div class="vb-card-status">' + _t("Chantier possible") + '</div>';
+    h += '<div class="vb-card-status">' + (level > 0 ? _t("Chantier possible") : _t("Non construit · chantier possible")) + '</div>';
   }
 
   h += '</button>';
@@ -199,41 +248,18 @@ function buildVillageMainSubTabHTML() {
 }
 
 function buildVillageHTML() {
-  var h = '<div class="subtab-page">';
-  h += '<div class="subtab-page-content">';
-  // v3.193.0 : titre du bandeau figé selon le sous-onglet actif — et, en
-  // détail bâtiment de Production, le NOM du bâtiment (le bandeau devient
-  // l'en-tête permanent de la fiche).
-  var kfTitle = "images/Icons/quests/village_quest.png|" + _t("Village");
-  if (activeVillageSubTab === "entrepot") {
-    kfTitle = "images/Icons/system/warehouse_supplies.png|" + _t("Entrepôt");
-  } else if (activeVillageSubTab === "production") {
-    if (window.productionDetailBuildingId && PRODUCTION_BUILDINGS[productionDetailBuildingId]) {
-      kfTitle = _td(PRODUCTION_BUILDINGS[productionDetailBuildingId].name);
-    } else {
-      kfTitle = (window.productionViewTab === "shops")
-        ? "images/Icons/subtabs/workshops.png|" + _t("Ateliers")
-        : "images/Icons/subtabs/production.png|" + _t("Production");
-    }
-  }
-  h += '<div class="nb-page-frame village-page-frame kframe-page" data-kf-title="' + esc(kfTitle) + '">';
-
-  if (activeVillageSubTab === "entrepot") {
-    h += buildWarehouseHTML();
-  } else if (activeVillageSubTab === "production") {
-    h += buildProductionHTML();
-  } else {
-    h += buildVillageMainSubTabHTML();
-  }
-
-  h += '</div>'; // fin .nb-page-frame
-  h += '</div>'; // fin .subtab-page-content
-
-  h += '<div class="subtab-bar-wrapper">';
+  activeVillageSubTab = normalizeVillageSubTab(activeVillageSubTab);
+  var h = '<div class="nb-page-frame nb-page-frame-fill village-page-frame kframe-page" data-kf-title="' + esc("images/Icons/menu_icons/village_menu.png|" + _t("Village")) + '">';
   h += buildVillageSubTabBarHTML();
-  h += '</div>';
 
-  h += '</div>'; // fin .subtab-page
+  if (activeVillageSubTab === "entrepot") h += buildWarehouseHTML();
+  else if (activeVillageSubTab === "shops") h += buildShopsViewHTML();
+  else if (activeVillageSubTab === "buildings") h += buildVillageMainSubTabHTML();
+  else h += buildProductionHTML();
+
+  h += '</div>';
+  // La feuille d'un bâtiment de production vit hors du panneau : on la rafraîchit avec lui.
+  if (typeof refreshProductionSheet === "function") refreshProductionSheet();
   return h;
 }
 

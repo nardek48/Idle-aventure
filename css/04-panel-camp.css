@@ -403,7 +403,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .camp-hp-ico { flex: 0 0 auto; width: 24px; height: 24px; object-fit: contain; }
 .camp-hp-line .camp-hp-bar { flex: 1 1 auto; min-width: 0; }
 .camp-health-card .camp-regen-line { margin-top: 4px; padding: 0 2px; }
-.camp-health-card .camp-regen-rate { color: var(--c-green-650-3); }
+.camp-health-card .camp-regen-rate { color: var(--c-green-650-4); }
 .camp-health-card .camp-help-btn { width: 24px; height: 24px; font-size: 0.8rem; }
 
 .camp-ration-row { display: flex; justify-content: center; gap: 12px; margin-top: 10px; }
@@ -418,7 +418,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   padding: 6px 4px 5px;
   border: 1px solid var(--c-brown-700-vivid);
   border-radius: 12px;
-  background: linear-gradient(#fffaf0, var(--c-cream-150-soft));
+  background: linear-gradient(#fffaf0, var(--c-cream-150-2));
   box-shadow: 0 2px 0 var(--c-brown-700-vivid);
   color: inherit;
   font: inherit;
@@ -428,7 +428,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .camp-ration-ib:disabled { cursor: default; }
 .camp-ration-ib.is-empty { opacity: 0.45; box-shadow: none; }
 .camp-ration-ib-img { width: 34px; height: 34px; object-fit: contain; }
-.camp-ration-ib b { font-size: 13px; font-weight: 800; color: var(--c-green-650-3); }
+.camp-ration-ib b { font-size: 13px; font-weight: 800; color: var(--c-green-650-4); }
 .camp-ration-ib-n {
   position: absolute;
   top: -7px;

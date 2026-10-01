@@ -85,7 +85,7 @@ var STORY_TAB_LABELS = {
 
 /* Étape 15 — v3.133.0 (audit Forêt, décision Seb) : les 200 kills (pur temps d'attente, ~100 kills de farm libre non guidé)
    sont remplacés par une OFFRANDE aux braises au Campement : 3 Sève d'Aeswyn (Petite Aventure) + 1 Ration moyenne (chaîne
-   Village). L'Ascension elle-même reste gatée à 200 kills (ASCENSION_CONFIG.minKillsToAscend) — « pas aujourd'hui ».
+   Village).
    Consommée par StoryQuestManager.offerToEmbers(), compteur counters.offeringDone (0/1). */
 var STORY_STEP15_OFFERING = { seve_aeswyn: 3, ration: 1 };
 

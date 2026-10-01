@@ -1,32 +1,9 @@
 "use strict";
 /* systems/stats-system.js — StatsSystem.recalcStats() recompose ENTIÈREMENT les stats du joueur à chaque appel (jamais en continu).
-   Ordre : upgrades -> stats RPG héros -> équipement -> sets -> talents -> ascension -> Aether -> bestiaire -> potions -> afflictions.
+   Ordre : upgrades -> stats RPG héros -> équipement -> sets -> talents -> bestiaire -> potions -> afflictions.
    Détail complet (constantes de balance, historique des bugs de clamp v3.19/v3.29) : COMMENTAIRES_ORIGINAUX.md */
-function getAetherUpgradeLevel(id) {
-  return Number((game.aetherUpgrades && game.aetherUpgrades[id]) || 0);
-}
-
-/* v3.322.0 (O7) : la boutique d'Aether est retirée — plus aucun bonus, quels que soient les
-   niveaux achetés autrefois (ils restent dans la sauvegarde, sans effet). */
-function getAetherBonuses() {
-  return { tapBonus: 0, goldBonus: 0, lootBonus: 0, essenceBonus: 0, vitalityBonus: 0 };
-}
-
-function getAetherMult() {
-  var bonus = getAetherBonuses();
-  return {
-    tap: 1 + (bonus.tapBonus || 0),
-    gold: 1 + (bonus.goldBonus || 0),
-    loot: bonus.lootBonus || 0,
-    essence: bonus.essenceBonus || 0
-  };
-}
-
-function getAetherUpgradeCost(upgrade) {
-  var level = getAetherUpgradeLevel(upgrade.id);
-  return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult || 1.4, level));
-}
-
+/* v3.322.0 (O7) : la boutique d'Aether est retirée ; v3.412.0 : ses fonctions (toujours à zéro) aussi.
+   Les niveaux achetés autrefois restent dans la sauvegarde, sans effet. */
 function getBestiaryBonus(id) {
   var tiers = (typeof BESTIARY_BONUS_CONFIG !== "undefined" && BESTIARY_BONUS_CONFIG[id]) || [];
   var kills = (game.killCounts && game.killCounts[id]) || 0;
@@ -253,13 +230,6 @@ var StatsSystem = {
 
     // v3.322.0 : plus de bonus de dégâts ni d'or par Ascension
 
-    var aether = getAetherBonuses();
-    game.tapMult += aether.tapBonus || 0;
-    game.goldMult *= 1 + (aether.goldBonus || 0);
-    if (aether.vitalityBonus) {
-      game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + aether.vitalityBonus)));
-    }
-
     var potionEffects = (window.PotionManager && typeof PotionManager.getActiveEffects === "function")
       ? PotionManager.getActiveEffects()
       : {};
@@ -387,9 +357,5 @@ var StatsSystem = {
 };
 
 window.StatsSystem = StatsSystem;
-window.getAetherUpgradeLevel = getAetherUpgradeLevel;
-window.getAetherUpgradeCost = getAetherUpgradeCost;
-window.getAetherBonuses = getAetherBonuses;
-window.getAetherMult = getAetherMult;
 window.getBestiaryBonus = getBestiaryBonus;
 window.getTotalBestiaryBonus = getTotalBestiaryBonus;

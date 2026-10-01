@@ -26,69 +26,123 @@
    Les anciens panneaux dépliables par bâtiment (plots/workshops toggles) et les cartes
    horizontales sont RETIRÉS — reconstruction plutôt que patch, comme pour le kit UI. */
 
-var productionViewTab = "prod";        // "prod" | "shops" — vue active du tableau de bord
-var productionDetailBuildingId = null; // buildingId ouvert en détail (zones), null = tableau de bord
+/* v3.414.0 (lot VUI-1) : Production et Ateliers sont deux onglets du rail du Village
+   (ui/village-view.js). Le détail d'un bâtiment n'est plus une sous-page : c'est une FEUILLE
+   (#village-modal-root, hors du panneau) avec la récolte, ses ateliers et ses zones.
+   productionViewTab / productionDetailBuildingId restent lisibles par les anciens appelants. */
+var productionViewTab = "prod";        // reflet de l'onglet du rail : "prod" | "shops"
+var productionDetailBuildingId = null; // bâtiment dont la feuille est ouverte, null sinon
+var productionSheetTab = "shops";      // onglet de la feuille : "shops" (ateliers) | "zones"
 var selectedProductionPlotIndex = {};  // { [buildingId]: number|null } — zone sélectionnée, par bâtiment
 
 function setProductionViewTab(tab) {
   productionViewTab = (tab === "shops") ? "shops" : "prod";
-  productionDetailBuildingId = null; // changer de vue ferme toujours un éventuel détail
-  if (typeof renderPanel === "function") renderPanel();
+  if (typeof setVillageSubTab === "function") setVillageSubTab(productionViewTab === "shops" ? "shops" : "production");
+  else if (typeof renderPanel === "function") renderPanel();
 }
 window.setProductionViewTab = setProductionViewTab;
 
 function openProductionBuildingDetail(buildingId) {
   if (!PRODUCTION_BUILDINGS[buildingId]) return;
+  if (productionDetailBuildingId !== buildingId) productionSheetTab = "shops";
   productionDetailBuildingId = buildingId;
-  if (typeof renderPanel === "function") renderPanel();
+  if (typeof openVillageBuildingId !== "undefined") openVillageBuildingId = null; // un seul habitant pour #village-modal-root
+  renderProductionSheet(false);
 }
 window.openProductionBuildingDetail = openProductionBuildingDetail;
 
-function closeProductionBuildingDetail() {
+/* silent : fermeture de service (changement d'onglet), sans rendu du panneau. */
+function closeProductionSheet(silent) {
+  var wasOpen = !!productionDetailBuildingId;
   productionDetailBuildingId = null;
-  if (typeof renderPanel === "function") renderPanel();
+  if (typeof document === "undefined") return;
+  var host = document.getElementById("village-modal-root");
+  if (wasOpen && host && host.querySelector(".prod-sheet")) host.innerHTML = "";
+  if (!silent && wasOpen && typeof renderPanel === "function") renderPanel();
 }
+window.closeProductionSheet = closeProductionSheet;
+function closeProductionBuildingDetail() { closeProductionSheet(false); }
 window.closeProductionBuildingDetail = closeProductionBuildingDetail;
 
-/* v3.191.0 : carte compacte du tableau de bord (2 colonnes) — remplace les anciennes
-   cartes horizontales à panneaux dépliables. Ids prod-bar-/prod-stock-label-/prod-status-
-   CONSERVÉS : ProductionManager.updateDOM() continue de les rafraîchir en direct sans
-   rien savoir de la refonte. Les drapeaux PLEIN/AMÉLIORABLE sont recalculés au render
-   seulement (léger décalage assumé, la jauge et le libellé restent temps réel).
-   Toute la carte est tapable -> détail du bâtiment (zones). */
+function closeProductionSheetFromBackdrop(e) {
+  if (e && e.target && e.target.classList && e.target.classList.contains("full-menu-overlay")) closeProductionSheet(false);
+}
+window.closeProductionSheetFromBackdrop = closeProductionSheetFromBackdrop;
+
+function setProductionSheetTab(tab) {
+  productionSheetTab = (tab === "zones") ? "zones" : "shops";
+  renderProductionSheet(false);
+}
+window.setProductionSheetTab = setProductionSheetTab;
+
+/* (Re)dessine la feuille ouverte. keepScroll : appelée à chaque renderPanel() du Village,
+   elle garde la position de défilement du corps de feuille. */
+function renderProductionSheet(keepScroll) {
+  if (typeof document === "undefined") return;
+  var host = document.getElementById("village-modal-root");
+  if (!host) return;
+  var id = productionDetailBuildingId;
+  if (!id || !PRODUCTION_BUILDINGS[id]) return;
+  var body = host.querySelector(".prod-sheet .ksheet-body");
+  var top = (keepScroll && body) ? body.scrollTop : 0;
+  host.innerHTML = buildProductionSheetHTML(id);
+  var nb = host.querySelector(".prod-sheet .ksheet-body");
+  if (nb && top) nb.scrollTop = top;
+}
+function refreshProductionSheet() {
+  if (!productionDetailBuildingId || typeof document === "undefined") return;
+  var host = document.getElementById("village-modal-root");
+  if (host && host.querySelector(".prod-sheet")) renderProductionSheet(true);
+}
+window.refreshProductionSheet = refreshProductionSheet;
+
+/* Tick de ProductionManager.updateDOM() : jauge et libellé de la feuille (ids propres à la
+   feuille, la vignette du tableau de bord garde les siens). */
+function refreshProductionSheetDOM() {
+  var id = productionDetailBuildingId;
+  if (!id || typeof document === "undefined") return;
+  var stock = ProductionManager.getStock(id), capacity = ProductionManager.getCapacity(id);
+  var bar = document.getElementById("prod-sheet-bar-" + id);
+  if (bar) bar.style.width = (capacity > 0 ? Math.min(100, (stock / capacity) * 100) : 0) + "%";
+  var lab = document.getElementById("prod-sheet-stock-" + id);
+  if (lab) lab.textContent = formatNumber(Math.floor(stock)) + " / " + formatNumber(capacity);
+}
+window.refreshProductionSheetDOM = refreshProductionSheetDOM;
+
+/* v3.414.0 (VUI-1) : VIGNETTE d'un bâtiment de production (atelier village A2) — grande
+   illustration, ruban d'état, jauge du stock local, ligne Entrepôt + zones. Toute la vignette
+   ouvre la feuille du bâtiment. Ids prod-bar-/prod-stock-label- conservés : le tick
+   ProductionManager.updateDOM() les tient à jour. Ruban : « Plein » (rouge) quand le stock
+   local ET l'Entrepôt sont pleins, « Récolter » quand le stock local attend, sinon « ↑ zone ». */
 function buildProductionDashCardHTML(id) {
   var def = PRODUCTION_BUILDINGS[id];
   if (!def) return "";
   var stock = ProductionManager.getStock(id);
   var capacity = ProductionManager.getCapacity(id);
-  var ratePerMin = ProductionManager.getRatePerMin(id);
   var isFull = capacity > 0 && stock >= capacity;
   var pct = capacity > 0 ? Math.min(100, (stock / capacity) * 100) : 0;
-  var resDef = WAREHOUSE_RESOURCES[def.resourceKey] || {};
+  var resKey = def.resourceKey;
+  var resDef = WAREHOUSE_RESOURCES[resKey] || {};
+  var storeFull = WarehouseManager.getFreeSpace(resKey) <= 0;
   var openCount = window.ProductionPlotsSystem ? ProductionPlotsSystem.getOpenPlotsCount(id) : 0;
   var upgradable = hasAffordableZoneAction(id);
+  var cap = WarehouseManager.getCap(resKey);
 
-  var h = '<div class="production-dash-card' + (isFull ? ' is-full' : '') + ((isFull || upgradable) ? ' has-flag' : '') + '" onclick="openProductionBuildingDetail(\'' + id + '\')">';
-  if (isFull) h += '<span class="production-dash-flag is-full-flag">' + _t("PLEIN") + '</span>';
-  else if (upgradable) h += '<span class="production-dash-flag is-up-flag"><img class="ico-sys" src="images/Icons/system/upgrade.png" alt=""> ' + _t("AMÉLIORABLE") + '</span>';
+  var flag = "";
+  if (isFull && storeFull) flag = '<span class="prod-tile-rib is-full">' + _t("Plein") + '</span>';
+  else if (isFull) flag = '<span class="prod-tile-rib is-ready">' + _t("Récolter") + '</span>';
+  else if (upgradable) flag = '<span class="prod-tile-rib is-up"><img class="ico-sys" src="images/Icons/system/upgrade.png" alt="">' + _t("zone") + '</span>';
 
-  h += '<div class="production-dash-card-top">';
-  h += renderIconOrEmojiHTML(resDef.icon, "production-dash-ico", _td(resDef.name));
+  var h = '<button type="button" class="production-dash-card prod-tile' + (isFull && storeFull ? ' is-full' : '') + '" onclick="openProductionBuildingDetail(\'' + id + '\')">';
+  h += flag;
+  h += renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "prod-tile-img", _td(def.name));
   h += '<span class="production-dash-name">' + esc(_td(def.name)) + '</span>';
-  h += '</div>';
-
-  h += '<div class="production-dash-gauge kgauge kgauge-thin kgauge-xp">';
-  h += '<div class="kgauge-track"><div class="kgauge-fill nb-entry-progress-fill' + (isFull ? ' done' : '') + '" id="prod-bar-' + id + '" style="width:' + pct + '%"></div></div>';
-  h += '</div>';
-  h += '<div class="production-dash-stock" id="prod-stock-label-' + id + '">' + formatNumber(Math.floor(stock)) + ' / ' + formatNumber(capacity) + ' ' + esc(_td(resDef.name || '')) + '</div>';
-
-  h += '<div class="production-dash-meta">';
-  h += '<span class="production-dash-rate">' + _t("+{n}/min", { n: formatNumber(ratePerMin) }) + '</span>';
-  h += '<span class="production-dash-zones">' + _t("{a}/{b} zones", { a: openCount, b: PRODUCTION_PLOTS_SHARED.totalPlots }) + '</span>';
-  h += '</div>';
-  h += '<div class="production-dash-status" id="prod-status-' + id + '">' + (isFull ? '<img class=ico-inline src=images/Icons/system/check_valid.png> ' + _t("Stock plein") : (ratePerMin > 0 ? '<img class="ico-sys" src="images/Icons/system/hourglass_waiting.png" alt=""> ' + esc(_t("Plein dans {d}", { d: formatTime(((capacity - stock) / ratePerMin) * 60) })) : '')) + '</div>';
-
-  h += '</div>';
+  h += '<span class="kgauge kgauge-thin kgauge-xp prod-tile-gauge"><span class="kgauge-track"><span class="kgauge-fill nb-entry-progress-fill' + (isFull ? ' done' : '') + '" id="prod-bar-' + id + '" style="width:' + pct + '%"></span></span>'
+    + '<span class="kgauge-text" id="prod-stock-label-' + id + '">' + formatNumber(Math.floor(stock)) + ' / ' + formatNumber(capacity) + '</span></span>';
+  h += '<span class="prod-tile-meta' + (storeFull ? ' is-store-full' : '') + '">' + renderIconOrEmojiHTML(resDef.icon, "ico-inline", _td(resDef.name))
+    + formatNumber(Math.floor(WarehouseManager.getAmount(resKey))) + (cap !== Infinity ? ' / ' + formatNumber(cap) : '')
+    + ' · ' + _t("{a}/{b} zones", { a: openCount, b: PRODUCTION_PLOTS_SHARED.totalPlots }) + '</span>';
+  h += '</button>';
   return h;
 }
 
@@ -457,52 +511,78 @@ function productionSelectFirstLocked(buildingId) {
 }
 window.productionSelectFirstLocked = productionSelectFirstLocked;
 
-function buildBuildingDetailHTML(buildingId) {
+/* v3.414.0 (VUI-1) : FEUILLE d'un bâtiment de production — en-tête de pierre (illustration,
+   nom), récolte locale, puis un rail Ateliers · Zones. Les zones reprennent la grille 3×3 et
+   les actions groupées d'avant ; les ateliers, les cartes de la vue Ateliers (VUI-2 les
+   passera en vignettes). Rendue dans #village-modal-root, hors du panneau. */
+function buildProductionSheetHTML(buildingId) {
   var def = PRODUCTION_BUILDINGS[buildingId];
   if (!def) return "";
-  var resDef = WAREHOUSE_RESOURCES[def.resourceKey] || {};
+  var resKey = def.resourceKey;
+  var resDef = WAREHOUSE_RESOURCES[resKey] || {};
   var stock = ProductionManager.getStock(buildingId);
   var capacity = ProductionManager.getCapacity(buildingId);
   var hasStock = Math.floor(stock) > 0;
   var pct = capacity > 0 ? Math.min(100, (stock / capacity) * 100) : 0;
   var openCount = ProductionPlotsSystem.getOpenPlotsCount(buildingId);
-  var buildingCfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
+  var cap = WarehouseManager.getCap(resKey);
+  var storeFull = WarehouseManager.getFreeSpace(resKey) <= 0;
+  var shops = getWorkshopsOfBuilding(buildingId);
 
-  var h = '<div class="production-detail">';
+  var h = '<div class="full-menu-overlay" onclick="closeProductionSheetFromBackdrop(event)">';
+  h += '<div class="full-menu vb-sheet-card prod-sheet" onclick="event.stopPropagation()">';
+  h += kSheetHeadHTML({
+    icon: renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "vb-sheet-icon prod-sheet-icon", _td(def.name)),
+    title: esc(_td(def.name)),
+    sub: esc(_t("+{n}/min · {a}/{b} zones", { n: formatNumber(ProductionManager.getRatePerMin(buildingId)), a: openCount, b: PRODUCTION_PLOTS_SHARED.totalPlots })),
+    close: "closeProductionBuildingDetail()"
+  });
+  h += '<div class="ksheet-body">';
 
-  // v3.193.0 : le NOM du bâtiment vit désormais dans le bandeau figé du cadre
-  // (kf-title, voir village-view/kframe-decorator) — l'en-tête de contenu se
-  // réduit à UNE ligne : retour + jauge + récolte locale. Mêmes ids que la
-  // carte du tableau de bord : un seul des deux existe à la fois dans le DOM,
-  // ProductionManager.updateDOM() rafraîchit celui qui est présent.
-  h += '<div class="production-detail-stockline">';
-  h += '<button class="production-detail-back" type="button" onclick="closeProductionBuildingDetail()" aria-label="' + esc(_t("Retour")) + '"></button>';
-  h += '<div class="kgauge kgauge-thin kgauge-xp production-detail-gauge">';
-  h += '<div class="kgauge-track"><div class="kgauge-fill nb-entry-progress-fill" id="prod-bar-' + buildingId + '" style="width:' + pct + '%"></div></div>';
+  // Récolte : ressource, jauge du stock local, bouton (id prod-harvest-btn- tenu par updateDOM)
+  h += '<div class="prod-sheet-harvest">';
+  h += renderIconOrEmojiHTML(resDef.icon, "prod-sheet-res", _td(resDef.name));
+  h += '<div class="prod-sheet-harvest-mid">';
+  h += '<div class="kgauge kgauge-thin kgauge-xp"><div class="kgauge-track"><div class="kgauge-fill nb-entry-progress-fill" id="prod-sheet-bar-' + buildingId + '" style="width:' + pct + '%"></div></div>'
+    + '<span class="kgauge-text" id="prod-sheet-stock-' + buildingId + '">' + formatNumber(Math.floor(stock)) + ' / ' + formatNumber(capacity) + '</span></div>';
+  h += '<div class="prod-sheet-store">' + esc(_t("Entrepôt : {a}", { a: formatNumber(Math.floor(WarehouseManager.getAmount(resKey))) + (cap !== Infinity ? ' / ' + formatNumber(cap) : '') })) + '</div>';
   h += '</div>';
-  h += '<button class="production-action-btn production-harvest-btn production-detail-harvest' + (hasStock ? ' is-ready' : ' is-disabled') + '" id="prod-harvest-btn-' + buildingId + '" type="button" ' + (hasStock ? '' : 'disabled') + ' onclick="ProductionManager.harvest(\'' + buildingId + '\')">';
+  h += '<button class="kbtn primary prod-sheet-harvest-btn' + (hasStock ? '' : ' is-disabled') + '" id="prod-harvest-btn-' + buildingId + '" type="button" ' + (hasStock ? '' : 'disabled') + ' onclick="ProductionManager.harvest(\'' + buildingId + '\')">';
   h += '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + _t("Récolter") + (hasStock ? ' · ' + formatNumber(Math.floor(stock)) : '');
   h += '</button>';
   h += '</div>';
-  h += '<div class="production-detail-stock-label" id="prod-stock-label-' + buildingId + '">' + formatNumber(Math.floor(stock)) + ' / ' + formatNumber(capacity) + ' ' + esc(_td(resDef.name || '')) + '</div>';
+  if (storeFull) h += '<div class="prod-sheet-warn">' + esc(_t("L'Entrepôt est plein de {x} : la récolte attendra. Ses ateliers en consomment.", { x: _td(resDef.name || "") })) + '</div>';
 
-  h += '<div class="production-detail-sec-title">' + esc(buildingCfg ? _td(buildingCfg.sectionLabel) : _t("Zones")) + ' <span class="production-detail-sec-count">' + openCount + ' / ' + PRODUCTION_PLOTS_SHARED.totalPlots + '</span></div>';
-  h += buildPlotsPanelHTML(buildingId);
-  // v3.191.1 (retour Seb — redondance) : les actions groupées ne s'affichent que
-  // quand AUCUNE zone n'est sélectionnée. Zone sélectionnée -> son panneau d'actions
-  // (Améliorer/Défricher/améliorations) est le seul espace d'action ; retap pour
-  // désélectionner et retrouver les actions groupées. Évite le doublon
-  // "Améliorer" (panneau) / "Améliorer la − chère" (groupé) quand la sélection EST
-  // la moins chère.
-  if (typeof selectedProductionPlotIndex[buildingId] !== "number") {
-    h += buildZoneGroupActionsHTML(buildingId);
+  // Rail de la feuille : Ateliers · Zones
+  var tab = shops.length ? productionSheetTab : "zones";
+  // le nom de section porte un emoji en tête (données) : le rail a déjà son icône
+  var label = PRODUCTION_PLOTS_BUILDINGS[buildingId] ? _td(PRODUCTION_PLOTS_BUILDINGS[buildingId].sectionLabel).replace(/^[^A-Za-zÀ-ÿ]+/, "") : _t("Zones");
+  h += '<div class="kseg is-stack prod-sheet-tabs">';
+  if (shops.length) h += '<button type="button" class="' + (tab === "shops" ? 'is-on' : '') + '" onclick="setProductionSheetTab(\'shops\')"><img src="images/Icons/subtabs/workshops.png" alt=""><span>' + esc(_t("Ateliers · {n}", { n: shops.length })) + '</span></button>';
+  h += '<button type="button" class="' + (tab === "zones" ? 'is-on' : '') + '" onclick="setProductionSheetTab(\'zones\')"><img src="images/Icons/subtabs/production.png" alt=""><span>' + esc(label) + ' · ' + openCount + '/' + PRODUCTION_PLOTS_SHARED.totalPlots + '</span></button>';
+  h += '</div>';
+
+  if (tab === "shops") {
+    h += '<div class="workshop-list">';
+    shops.forEach(function (w) { h += buildWorkshopCardHTML(w); });
+    h += '</div>';
+  } else {
+    h += buildPlotsPanelHTML(buildingId);
+    // v3.191.1 : actions groupées seulement quand aucune zone n'est sélectionnée
+    if (typeof selectedProductionPlotIndex[buildingId] !== "number") h += buildZoneGroupActionsHTML(buildingId);
   }
 
-  h += '<div class="production-detail-shops-hint"><img class=ico-inline src=images/Icons/system/settings.png> ' + _t("Les ateliers de ce bâtiment se pilotent depuis la vue Ateliers") + '</div>';
-
-  h += '</div>';
+  h += '</div></div></div>';
   return h;
 }
+window.buildProductionSheetHTML = buildProductionSheetHTML;
+
+/* Ateliers d'un bâtiment, enrichis de leur id (WORKSHOPS_CONFIG n'en porte pas, voir v3.191.1). */
+function getWorkshopsOfBuilding(buildingId) {
+  return Object.keys(WORKSHOPS_CONFIG).filter(function (wid) { return WORKSHOPS_CONFIG[wid].buildingId === buildingId; })
+    .map(function (wid) { return Object.assign({ id: wid }, WORKSHOPS_CONFIG[wid]); });
+}
+window.getWorkshopsOfBuilding = getWorkshopsOfBuilding;
 
 /* ============================================================
    Section "<img class=ico-inline src=images/Icons/system/settings.png> Production" — ateliers de craft locaux au bâtiment
@@ -865,37 +945,22 @@ window.cancelWorkshopCraft = cancelWorkshopCraft;
    buildProductionCardHTML/buildPlotsCardHTML retirés).
    ============================================================ */
 
-/* Double bouton Production | Ateliers — sous-onglets du kit (mêmes classes que la
-   barre du bas du Village), en TÊTE du contenu. Décision Seb : un interrupteur à 2
-   positions dans l'écran, pas de 4e sous-onglet Village. */
-function buildProductionSwitchHTML() {
-  // v3.401.0 (lot O-1) : onglets de page du kit (.kseg, rail) — un seul dessin d'onglet de page
-  var h = '<div class="kseg production-switch">';
-  h += '<button type="button" class="' + (productionViewTab === "prod" ? 'is-on' : '') + '" onclick="setProductionViewTab(\'prod\')"><img src="images/Icons/subtabs/production.png" alt=""><span>' + _t("Production") + '</span></button>';
-  h += '<button type="button" class="' + (productionViewTab === "shops" ? 'is-on' : '') + '" onclick="setProductionViewTab(\'shops\')"><img src="images/Icons/subtabs/workshops.png" alt=""><span>' + _t("Ateliers") + '</span></button>';
-  h += '</div>';
-  return h;
-}
-
 /* Barre d'action de la vue Production : "Tout récolter" en bouton primaire du kit
    (id prod-harvest-all-btn conservé — ProductionManager.updateDOM() le tient à jour)
    + indice du nombre de bâtiments améliorables. Le bouton "Files" a migré en tête de
    la vue Ateliers (buildShopsViewHTML), sa place naturelle. */
 function buildProdActionBarHTML() {
   var totalStock = 0;
-  var upCount = 0;
   Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
     if (!ProductionManager.isBuildingUnlocked(id)) return;
     totalStock += Math.floor(ProductionManager.getStock(id));
-    if (hasAffordableZoneAction(id)) upCount++;
   });
   var hasAnyStock = totalStock > 0;
 
   var h = '<button class="settings-btn primary production-harvest-all-kbtn' + (hasAnyStock ? '' : ' is-locked') + '" id="prod-harvest-all-btn" type="button" ' + (hasAnyStock ? '' : 'disabled') + ' onclick="ProductionManager.harvestAll()">';
   h += '<img class="ico-btn" src="images/Icons/system/collect_all.png" alt=""> ' + _t("Tout récolter");
   h += '</button>';
-  if (upCount > 0) h += '<p class="production-dash-hint">' + _tn(upCount, "{n} bâtiment a une amélioration abordable · touche un bâtiment pour gérer ses zones", "{n} bâtiments ont une amélioration abordable · touche un bâtiment pour gérer ses zones") + '</p>';
-  else h += '<p class="production-dash-hint">' + _t("Touche un bâtiment pour gérer ses zones") + '</p>';
+  h += '<p class="production-dash-hint">' + _t("Touche un bâtiment pour ses ateliers et ses zones") + '</p>';
   return h;
 }
 
@@ -930,16 +995,13 @@ function buildProductionLockedCardHTML(id) {
   var run = game.sceneRun;
   var running = !!(run && run.templateId === questId && run.status !== "completed");
   var accepted = running || !!((game.explorationProgression || {}).boardAccepted || {})[questId];
-  var h = '<div class="production-dash-card is-locked" onclick="goToProductionUnlockQuest(\'' + id + '\')">';
-  h += '<div class="production-dash-card-top">';
-  h += renderIconOrEmojiHTML(resDef.icon, "production-dash-ico", _td(resDef.name));
+  var h = '<button type="button" class="production-dash-card prod-tile is-locked" onclick="goToProductionUnlockQuest(\'' + id + '\')">';
+  h += '<span class="prod-tile-rib is-lock"><img class="ico-sys" src="images/Icons/system/lock_closed.png" alt="">' + _t("À débloquer") + '</span>';
+  h += renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "prod-tile-img", _td(def.name));
   h += '<span class="production-dash-name">' + esc(_td(def.name)) + '</span>';
-  h += '</div>';
-  h += '<div class="production-dash-lock-badge"><img class="ico-sys" src="images/Icons/system/lock_closed.png" alt=""> ' + _t("À débloquer") + '</div>';
-  h += '<div class="production-dash-lock-text">' + esc(_t("{x} — par l’expédition :", { x: _td(resDef.name || "") })) + '</div>';
-  h += '<div class="production-dash-lock-quest">' + esc(tpl.title ? _td(tpl.title) : questId) + '</div>';
-  h += '<div class="production-dash-status">' + (running ? _t("En cours") : accepted ? _t("Acceptée · touche pour partir") : _t("Touche pour voir la quête")) + ' ›</div>';
-  h += '</div>';
+  h += '<span class="production-dash-lock-quest">' + esc(tpl.title ? _td(tpl.title) : questId) + '</span>';
+  h += '<span class="production-dash-status">' + (running ? _t("En cours") : accepted ? _t("Acceptée · touche pour partir") : _t("Touche pour voir la quête")) + ' ›</span>';
+  h += '</button>';
   return h;
 }
 
@@ -989,6 +1051,7 @@ function countStalledWorkshops() {
    dans l'ordre de WORKSHOPS_CONFIG (groupé par bâtiment par construction). Les ateliers
    "Bientôt" sont regroupés en pied compact au lieu de 6 grandes cartes vides. */
 function buildShopsViewHTML() {
+  productionViewTab = "shops";
   var stalled = countStalledWorkshops();
   var h = '';
   if (stalled > 0) {
@@ -1036,14 +1099,8 @@ function buildShopsViewHTML() {
 
 function buildProductionHTML() {
   ProductionManager.ensure();
-
-  if (productionDetailBuildingId && PRODUCTION_BUILDINGS[productionDetailBuildingId]) {
-    return buildBuildingDetailHTML(productionDetailBuildingId);
-  }
-
-  var h = buildProductionSwitchHTML();
-  h += (productionViewTab === "shops") ? buildShopsViewHTML() : buildProdDashboardHTML();
-  return h;
+  productionViewTab = "prod";
+  return buildProdDashboardHTML();
 }
 
 window.buildProductionHTML = buildProductionHTML;

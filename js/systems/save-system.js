@@ -1,5 +1,5 @@
 "use strict";
-/* Quest Idle — systems/save-system.js : sauvegarde/chargement (localStorage), autosave, migrations, hardResetState()/fullResetState().
+/* Quest Idle — systems/save-system.js : sauvegarde/chargement (localStorage), autosave, migrations, fullResetState().
    Détail complet : voir save-system_notes.md #1. */
 
 var SAVE_KEY = "quest_idle_save_v6";
@@ -130,7 +130,6 @@ var HeroSlotManager = {
         heroTitle: (d.achievementStats && typeof d.achievementStats.title === "string") ? d.achievementStats.title : "", // v3.338.0 (H8)
         worldIndex: Number(d.worldIndex || 0),
         cycleCount: Number(d.cycleCount || 0),
-        ascensionCount: Number(d.ascensionCount || 0),
         playTime: Number(d.playTime || 0), // secondes, voir main/game-loop.js
         savedAt: Number(d.savedAt || d.lastOnline || 0) // ms epoch, dernière sauvegarde
       };
@@ -297,11 +296,10 @@ function migrateHeroId(heroId) {
   return map[heroId] || heroId || "";
 }
 
-/* Répare game.upgrades/aetherUpgrades : renomme les vieux ids (upgradeKeyMap) et complète les upgrades manquantes à 0.
+/* Répare game.upgrades : renomme les vieux ids (upgradeKeyMap) et complète les upgrades manquantes à 0.
    Détail : save-system_notes.md #17. */
 function ensureUpgradeDefaults() {
   if (!game.upgrades || typeof game.upgrades !== "object") game.upgrades = {};
-  if (!game.aetherUpgrades || typeof game.aetherUpgrades !== "object") game.aetherUpgrades = {};
 
   var upgradeKeyMap = {
     utap: "utrain_power",
@@ -402,7 +400,6 @@ function buildSaveData() {
     totalDamageDealt: Number(game.totalDamageDealt || 0),
     playTime: Number(game.playTime || 0),
     cycleCount: Number(game.cycleCount || 0),
-    ascensionCount: Number(game.ascensionCount || 0),
     killCounts: game.killCounts || {},
     upgrades: game.upgrades || {},
     talents: game.talents || {},
@@ -413,7 +410,6 @@ function buildSaveData() {
     quests: Array.isArray(game.quests) ? game.quests : [],
     questProgress: game.questProgress || getDefaultQuestProgress(),
     questResetTime: Number(game.questResetTime || 0),
-    aetherUpgrades: game.aetherUpgrades || {},
     activeTab: game.activeTab || "combat",
     playerName: game.playerName,
     heroId: game.heroId,
@@ -426,8 +422,6 @@ function buildSaveData() {
     heroMaxHp: Number(game.heroMaxHp || 10),
     // v3.113.0 : game.village n'est plus persisté (bâtiments hors-ligne supprimés).
     activePotions: game.activePotions || {},
-    pendingPotionBonuses: game.pendingPotionBonuses || { aetherNext: 0 },
-    aetherElixirStackCount: Number(game.aetherElixirStackCount || 0),
     equipShopStock: game.equipShopStock || [],
     equipShopResetTime: Number(game.equipShopResetTime || 0),
     equipShopManualRefreshCount: Number(game.equipShopManualRefreshCount || 0),
@@ -481,8 +475,6 @@ function buildSaveData() {
     achievementsClaimed: game.achievementsClaimed || {},
     achievementStats: game.achievementStats && typeof game.achievementStats === "object" ? game.achievementStats : null, // v3.338.0 : Hauts faits
     worldsEverReached: game.worldsEverReached || {},
-    worldQuestProgress: game.worldQuestProgress || {},
-    worldQuestsCompleted: game.worldQuestsCompleted || {},
     // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
     // v3.35 : planche/lingot (artisanat tier 1, voir data/recipes.js) ajoutés ici.
     // v3.36 : pierre (brute, Carrière) / farine (tier 1, Blé→Farine) ajoutées ici.
@@ -495,26 +487,12 @@ function buildSaveData() {
     // adventureQuestProgress ; huntRun NE survit PAS (comme dungeonRun).
     huntStats: game.huntStats || {},
     huntRun: game.huntRun || { active: false, questId: null, killsInLot: 0 },
-    // v3.90.0 : Expéditions non-combat (voir systems/exploration-engine.js) — même règle
-    // que huntRun/dungeonRun/adventureQuestRun : le run éphémère survit à un simple
-    // rechargement de page (pour reprendre exactement où on en était), mais NE survit PAS
-    // à une ascension (hardResetState) ; explorationProgression (déblocages) est permanent.
-    explorationRun: game.explorationRun || null,
+    // v3.90.0 : explorationProgression (déblocages) est permanent.
     explorationProgression: game.explorationProgression || { blockedPathCompleted: false, forgottenClearingUnlocked: false, unstableVeinDiscoveryCompleted: false, quarryUnlocked: false, huntBuildingUnlocked: false, driedSpringDiscoveryCompleted: false, wellUnlocked: false },
-    // v3.120.0 (Lot S1) : scene-engine générique (voir systems/scene-run-system.js) — même règle
-    // de persistance que explorationRun (survit à un rechargement de page, PAS à une ascension).
+    // v3.120.0 (Lot S1) : run de Petite Aventure ou de parcours (systems/scene-run-system.js),
+    // repris après un rechargement de page.
     sceneRun: game.sceneRun || null,
     expeditionChest: game.expeditionChest || { unlocked: {} }, // v3.381.0 (PA2, Q8) : coffre d'expédition, permanent
-    // v3.92.0 : session de minijeu de minage (quête "La Veine Instable" ou activité bonus
-    // Carrière) — même règle de persistance que explorationRun (survit au rechargement).
-    // v3.94.0 : bloc "well" ajouté pour le minijeu du Puits (systems/well-system.js).
-    gatheringActivity: game.gatheringActivity || { quarry: { cooldownEndsAt: 0, activeSession: null }, well: { cooldownEndsAt: 0, activeSession: null } },
-    // v3.43 : file d'attente de craft de l'Entrepôt (voir
-    // WarehouseManager.enqueueCraft()/tickCraftQueue()) — survit à un
-    // rechargement de page (SANS rattrapage hors-ligne, contrairement
-    // à production.lastTick : la file reprend là où elle était, sans
-    // compenser le temps écoulé pendant que l'app était fermée).
-    craftQueue: Array.isArray(game.craftQueue) ? game.craftQueue : [],
     // v3.31 : bâtiments de production (voir data/production-buildings.js)
     // — niveau/stock persistent TOUJOURS (comme le Village), lastTick
     // sert au rattrapage hors-ligne (voir ProductionManager.catchUpOffline()).
@@ -549,8 +527,6 @@ function buildSaveData() {
     workshopUnlock: game.workshopUnlock || {},
     workshopFoundationsCompleted: !!game.workshopFoundationsCompleted,
     storyQuests: game.storyQuests || {}, // v3.100.0 : chaîne Histoire (data/story-quests.js, systems/story-quest-system.js)
-    campfireLastUsed: game.campfireLastUsed || 0, // v3.7 : cooldown du feu de camp (long repos), voir systems/camp-system.js
-    campfireShortLastUsed: game.campfireShortLastUsed || 0, // v3.14 : cooldown du repos court
     campRegenLastAt: game.campRegenLastAt || 0, // v3.101.0 : repère de régénération au camp (systems/camp-system.js)
     dungeonTiersEntered: game.dungeonTiersEntered || {},
     codexChaosSeen: !!game.codexChaosSeen,
@@ -625,13 +601,11 @@ function restoreBaseState(d) {
   game.totalDamageDealt = Number(d.totalDamageDealt || 0);
   game.playTime = Number(d.playTime || 0);
   game.cycleCount = Number(d.cycleCount || 0);
-  game.ascensionCount = Number(d.ascensionCount || 0);
 
   game.killCounts = d.killCounts && typeof d.killCounts === "object" ? d.killCounts : {};
   game.upgrades = d.upgrades && typeof d.upgrades === "object" ? d.upgrades : {};
   game.talents = d.talents && typeof d.talents === "object" ? d.talents : {};
   game.talentsV2 = !!d.talentsV2; // v3.327.0 : false = ancienne sauvegarde, migrée par loadGame
-  game.aetherUpgrades = d.aetherUpgrades && typeof d.aetherUpgrades === "object" ? d.aetherUpgrades : {};
   // v3.99.15 : onglets débloqués (voir core/state.js). Migration pour les sauvegardes
   // antérieures à cette version (d.unlockedTabs absent) : une partie déjà entamée
   // (playerName déjà rempli à ce stade du chargement) débloque tout directement plutôt
@@ -692,11 +666,6 @@ function restoreBaseState(d) {
   if (typeof game.village !== "undefined") delete game.village;
 
   game.activePotions = d.activePotions && typeof d.activePotions === "object" ? d.activePotions : {};
-  game.pendingPotionBonuses = d.pendingPotionBonuses && typeof d.pendingPotionBonuses === "object"
-    ? d.pendingPotionBonuses
-    : { aetherNext: 0 };
-  if (typeof game.pendingPotionBonuses.aetherNext !== "number") game.pendingPotionBonuses.aetherNext = 0;
-  game.aetherElixirStackCount = Number(d.aetherElixirStackCount || 0);
 
   game.equipShopStock = Array.isArray(d.equipShopStock) ? d.equipShopStock : [];
   game.equipShopResetTime = Number(d.equipShopResetTime || 0);
@@ -800,8 +769,6 @@ function restoreBaseState(d) {
   if (window.AchievementManager && typeof AchievementManager.restore === "function") AchievementManager.restore(d.achievementStats);
   else game.achievementStats = (d.achievementStats && typeof d.achievementStats === "object") ? d.achievementStats : null;
   game.worldsEverReached = d.worldsEverReached && typeof d.worldsEverReached === "object" ? d.worldsEverReached : {};
-  game.worldQuestProgress = d.worldQuestProgress && typeof d.worldQuestProgress === "object" ? d.worldQuestProgress : {};
-  game.worldQuestsCompleted = d.worldQuestsCompleted && typeof d.worldQuestsCompleted === "object" ? d.worldQuestsCompleted : {};
   // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
   game.resources = d.resources && typeof d.resources === "object" ? d.resources : { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0, grande_ration: 0 };
   if (typeof game.resources.grande_ration !== "number") game.resources.grande_ration = 0; // v3.106.0 : migration saves antérieures
@@ -823,10 +790,6 @@ function restoreBaseState(d) {
   // v3.30 : Chasse en boucle (voir data/hunt-quests.js).
   game.huntStats = d.huntStats && typeof d.huntStats === "object" ? d.huntStats : {};
   game.huntRun = d.huntRun && typeof d.huntRun === "object" ? d.huntRun : { active: false, questId: null, killsInLot: 0 };
-  // v3.90.0 : Expéditions non-combat — ancienne sauvegarde sans ces champs = valeurs par
-  // défaut sûres (aucun run à reprendre, aucun déblocage perdu). ensureGameStateDefaults()
-  // (core/state.js) revalide ensuite la forme exacte de explorationProgression.
-  game.explorationRun = d.explorationRun && typeof d.explorationRun === "object" ? d.explorationRun : null;
   // v3.120.0 (Lot S1) : scene-engine générique — ancienne sauvegarde sans ce champ = aucun run à reprendre.
   game.sceneRun = d.sceneRun && typeof d.sceneRun === "object" ? d.sceneRun : null;
   game.expeditionChest = d.expeditionChest && typeof d.expeditionChest === "object" ? d.expeditionChest : { unlocked: {} }; // v3.381.0 (PA2, Q8)
@@ -871,20 +834,6 @@ function restoreBaseState(d) {
   if (typeof game.explorationProgression.wellUnlocked !== "boolean") {
     game.explorationProgression.wellUnlocked = false;
   }
-  // v3.92.0 : session de minijeu de minage (quête ou activité bonus Carrière) — même
-  // règle que explorationRun (run éphémère non trouvé -> valeurs par défaut sûres).
-  // v3.94.0 : bloc "well" ajouté avec garde de forme séparée (une sauvegarde v3.92.x/
-  // v3.93.x a déjà gatheringActivity mais sans la clé "well").
-  game.gatheringActivity = d.gatheringActivity && typeof d.gatheringActivity === "object"
-    ? d.gatheringActivity
-    : { quarry: { cooldownEndsAt: 0, activeSession: null }, well: { cooldownEndsAt: 0, activeSession: null } };
-  if (!game.gatheringActivity.well || typeof game.gatheringActivity.well !== "object") {
-    game.gatheringActivity.well = { cooldownEndsAt: 0, activeSession: null };
-  }
-  // v3.43 : file d'attente de craft — migration douce, une ancienne
-  // sauvegarde sans `craftQueue` repart avec [] (WarehouseManager.ensure()
-  // le recrée de toute façon au premier accès).
-  game.craftQueue = Array.isArray(d.craftQueue) ? d.craftQueue : [];
   // v3.31 : bâtiments de production (voir data/production-buildings.js)
   // — migration douce : une vieille sauvegarde sans `production` (ou
   // avec un bâtiment manquant, ex. ajout d'un 5e bâtiment plus tard)
@@ -943,8 +892,6 @@ function restoreBaseState(d) {
       if (allUnlocked) game.storyQuests.forest = { currentStep: 0, accepted: false, claimedSteps: {}, readyNotified: false, skipped: true };
     }
   }
-  game.campfireLastUsed = typeof d.campfireLastUsed === "number" ? d.campfireLastUsed : 0;
-  game.campfireShortLastUsed = typeof d.campfireShortLastUsed === "number" ? d.campfireShortLastUsed : 0;
   game.campRegenLastAt = typeof d.campRegenLastAt === "number" && d.campRegenLastAt > 0 ? d.campRegenLastAt : Date.now(); // v3.101.0
   delete game.activeAfflictions; // v3.254.0 : clé supprimée — les Marques vivent dans dungeonRun.marks
   game.dungeonTiersEntered = d.dungeonTiersEntered && typeof d.dungeonTiersEntered === "object" ? d.dungeonTiersEntered : {};
@@ -1011,289 +958,6 @@ function clearSaveData() {
   } catch (e) {}
 }
 
-/* Reset "ascension" : réinitialise la run classique mais conserve l'Aether/les ascensions/les améliorations Aether. Appelée par ascendNow(). */
-function hardResetState() {
-  // v3.43 : rembourse intégralement toute commande de craft en cours
-  // (y compris celle déjà démarrée) AVANT de figer keptResources
-  // juste en dessous — décision explicite de Seb : contrairement à
-  // huntRun/dungeonRun/adventureQuestRun (progression en cours perdue
-  // sans remboursement), une ascension ne doit pas faire perdre des
-  // ressources déjà déduites pour un craft jamais livré.
-  if (window.WarehouseManager && typeof WarehouseManager.refundAndClearCraftQueue === "function") {
-    WarehouseManager.refundAndClearCraftQueue();
-  }
-
-  var questDefaults = getDefaultQuestProgress();
-  var keptTotalAetherEarned = game.totalAetherEarned || 0;
-  var keptMemory = game.memory ? JSON.parse(JSON.stringify(game.memory)) : null; // v3.322.0
-  var keptAscensions = game.ascensionCount || 0;
-  var keptAetherUpgrades = Object.assign({}, game.aetherUpgrades || {});
-
-  // v2.26 : la progression VRAIMENT permanente (Codex, hauts faits, boutique du donjon...) doit survivre à l'ascension comme l'Aether.
-  // Détail : save-system_notes.md #28.
-  var keptAchievementsClaimed = Object.assign({}, game.achievementsClaimed || {});
-  var keptAchievementStats = game.achievementStats; // v3.338.0 : conservés à la reprise, comme les réclamés
-  var keptWorldsEverReached = Object.assign({}, game.worldsEverReached || {});
-  var keptWorldQuestProgress = Object.assign({}, game.worldQuestProgress || {});
-  var keptWorldQuestsCompleted = Object.assign({}, game.worldQuestsCompleted || {});
-  // v3.0 : ressources rares et progression des quêtes d'aventure = progression permanente, comme les questlines de monde.
-  // v3.35 : planche/lingot suivent la même règle (conservés à l'ascension, comme Bois/Fer).
-  // v3.36 : pierre/farine idem.
-  // v3.45 : eau/pain/ration idem (6e bâtiment Puits + recettes croisées).
-  var keptResources = Object.assign({ viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0, grande_ration: 0 }, game.resources || {});
-  var keptAdventureQuestProgress = Object.assign({}, game.adventureQuestProgress || {});
-  var keptAdventureQuestsCompleted = Object.assign({}, game.adventureQuestsCompleted || {});
-  // v3.30 : huntStats (compteur de lots) = progression permanente, comme adventureQuestProgress.
-  var keptHuntStats = Object.assign({}, game.huntStats || {});
-  // v3.90.0 : Expéditions non-combat — explorationProgression (déblocages, ex. Clairière
-  // oubliée) = progression permanente, même règle que adventureQuestsCompleted/huntStats.
-  // explorationRun (le run éphémère lui-même), lui, ne survit PAS à l'ascension, comme
-  // huntRun/dungeonRun/adventureQuestRun — décision explicite : pas de remboursement des
-  // rations déjà consommées dans ce cas (même traitement que les 3 runs existants).
-  var keptExplorationProgression = Object.assign(
-    { blockedPathCompleted: false, forgottenClearingUnlocked: false, unstableVeinDiscoveryCompleted: false, quarryUnlocked: false, huntBuildingUnlocked: false, driedSpringDiscoveryCompleted: false, wellUnlocked: false },
-    game.explorationProgression || {}
-  );
-  // v3.31 : bâtiments de production (niveau + stock local) = progression
-  // permanente (v3.113.0 : l'ancien Village hors-ligne a disparu) — un joueur
-  // qui a investi dans sa Chasse/Champs/Scierie/Mine ne perd pas ces niveaux
-  // à l'ascension. deep-copy nécessaire (objet imbriqué par bâtiment).
-  var keptProduction = JSON.parse(JSON.stringify(game.production || {}));
-  // v3.37 : bâtiments de Construction = progression permanente,
-  // même règle que Production (deep-copy pour la même raison : objet
-  // imbriqué par bâtiment).
-  var keptConstruction = JSON.parse(JSON.stringify(game.construction || {}));
-  // v3.213.0 : les bâtiments du Village sont une progression permanente,
-  // même règle que Construction — y compris un chantier en cours, qui
-  // continue de tourner pendant l'ascension.
-  /* v3.222.0 : progression du héros conservée à l'ascension. */
-  var keptHeroLevel = Number(game.heroLevel || 1);
-  var keptHeroXp = Number(game.heroXp || 0);
-  var keptHeroXpToNext = Number(game.heroXpToNext || 20);
-  var keptTalentPoints = Number(game.talentPoints || 0);
-  var keptTalents = JSON.parse(JSON.stringify(game.talents || {}));
-
-  var keptVillage = JSON.parse(JSON.stringify(game.village || {}));
-  // v3.255.0 (C-1) : conservé à l'Ascension — c'est LivingMapManager qui recouvre les secteurs
-  // (repère lastAscensionSeen), pas la sauvegarde ; la Sève de première libération reste acquise.
-  var keptLivingMaps = JSON.parse(JSON.stringify(game.livingMaps || {}));
-  // v3.217.0 : les contrats en cours survivent à l'ascension, comme le stock
-  // de l'échoppe — ce sont des ressources déjà produites qui attendent.
-  var keptTavern = JSON.parse(JSON.stringify(game.tavern || {}));
-  // v3.221.0 : la forge est une progression permanente du village, comme les
-  // bâtiments — elle traverse l'ascension.
-  var keptForge = JSON.parse(JSON.stringify(game.forge || {}));
-  // v3.38 : progression de déblocage de l'Atelier = permanente,
-  // même règle que Construction (une fois débloqué, jamais reverrouillé,
-  // y compris à l'ascension).
-  var keptWorkshopUnlock = JSON.parse(JSON.stringify(game.workshopUnlock || {}));
-  var keptWorkshopFoundationsCompleted = !!game.workshopFoundationsCompleted;
-  // v3.100.0 : chaîne Histoire = permanente à l'ascension, comme unlockedTabs (jamais reverrouillé).
-  var keptStoryQuests = JSON.parse(JSON.stringify(game.storyQuests || {}));
-  var keptDungeonTiersEntered = Object.assign({}, game.dungeonTiersEntered || {});
-  var keptCodexChaosSeen = !!game.codexChaosSeen;
-  var keptCodexRead = Object.assign({}, game.codexRead || {});
-  // v3.14 : les quêtes journalières ne se réinitialisent plus à l'ascension (seulement au reset complet) — rien ne change dans la journée.
-  // Détail : save-system_notes.md #30.
-  var keptQuests = Array.isArray(game.quests) ? game.quests.slice() : [];
-  var keptQuestProgress = Object.assign({}, game.questProgress || {});
-  var keptQuestResetTime = game.questResetTime || 0;
-  var keptDungeonShopLevels = Object.assign({}, game.dungeonShopLevels || {});
-  // v2.90.11 : le déblocage séquentiel des paliers de donjon est une progression permanente, doit survivre à l'ascension.
-  // Détail : save-system_notes.md #31.
-  var keptDungeonTierCleared = Object.assign({}, game.dungeonTierCleared || {});
-  var keptDungeonShards = Number(game.dungeonShards || 0);
-  var keptDungeonBestWave = Number(game.dungeonBestWave || 0);
-  var keptDungeonBossClears = Number(game.dungeonBossClears || 0);
-  var keptDungeonTicketResetTime = Number(game.dungeonTicketResetTime || 0);
-  var keptDungeonRunsUsed = Object.assign({}, game.dungeonRunsUsed || {}); // v3.358.0 (D7)
-  var keptEquipShopStock = game.equipShopStock || [];
-  var keptEquipShopResetTime = Number(game.equipShopResetTime || 0);
-  var keptEquipShopManualRefreshCount = Number(game.equipShopManualRefreshCount || 0);
-  var keptEquipShopStarterServed = !!game.equipShopStarterServed; // v3.247.0 : l'ascension ne redonne pas la vitrine de départ
-  // v3.14 : le réglage d'autovente n'est plus conservé à l'ascension — logique puisque tout l'équipement est perdu à l'ascension.
-  // Détail : save-system_notes.md #32.
-  var keptHasSeenOnboarding = !!game.hasSeenOnboarding;
-  var keptGenericTutorialsSeen = Object.assign({}, game.genericTutorialsSeen || {});
-
-  game.gold = 0;
-  game.totalAetherEarned = keptTotalAetherEarned;
-  game.memory = keptMemory;
-  // v3.333.0 : les trophées de boss sont des souvenirs — conservés à la reprise, comme le Codex
-  if (!game.bossTrophies || typeof game.bossTrophies !== "object") game.bossTrophies = {};
-  // v3.334.0 : une patrouille en cours continue pendant la reprise — les compagnons sont conservés
-  if (!game.patrols || typeof game.patrols !== "object") game.patrols = {};
-
-  game.tapDamage = 1;
-  game.tapMult = 1;
-  game.equipFlatTapBonus = 0;
-  game.autoDps = 0;
-  game.critChance = 5;
-  game.critMult = 2;
-  game.goldMult = 1;
-  game.bossGoldBonusPct = 0;
-  game.essenceGlobalMult = 1;
-  game.heroDefensePct = 0;
-
-  game.trainedStats = { power: 0, endurance: 0, celerity: 0, precision: 0, will: 0 };
-
-  /* v3.222.0 (périmètre confirmé par Seb) — LE HÉROS GARDE SES NIVEAUX ET SES
-     TALENTS À L'ASCENSION. L'expérience est devenue nettement plus lente à
-     gagner, et remettre le niveau à 1 à chaque cycle transformait l'ascension
-     en corvée de rattrapage plutôt qu'en relance.
-
-     Conservés : heroLevel, heroXp, heroXpToNext, talentPoints et game.talents
-     (plus bas). Les points déjà dépensés RESTENT dépensés : pas de reroll
-     gratuit à chaque cycle, la réinitialisation de talents garde son coût.
-
-     Les PV repartent à la base : StatsSystem.recalcStats() les recompose
-     immédiatement à partir du niveau conservé et de l'endurance. */
-  game.heroLevel = keptHeroLevel;
-  game.heroXp = keptHeroXp;
-  game.heroXpToNext = keptHeroXpToNext;
-  game.talentPoints = keptTalentPoints;
-  game.heroHp = 10;
-  game.heroMaxHp = 10;
-
-  game.totalKills = 0;
-  game.totalGoldEarned = 0;
-  game.totalDamageDealt = 0;
-  game.playTime = 0;
-  game.cycleCount = 0;
-  game.ascensionCount = keptAscensions;
-
-  game.killCounts = {};
-  game.upgrades = {};
-  game.talents = keptTalents; // v3.222.0 : conservés à l'ascension (voir plus haut)
-  game.talentsV2 = true;      // v3.327.0
-  game.aetherUpgrades = keptAetherUpgrades;
-  game.inventory = [];
-  game.equipped = getDefaultEquipped();
-  game.quests = keptQuests;
-  game.questProgress = keptQuestProgress;
-  game.questResetTime = keptQuestResetTime;
-  game.activeTab = "combat";
-  game.enemy = null;
-  game.lastOnline = Date.now();
-  game.lastSave = 0;
-  game.equipShopStock = keptEquipShopStock;
-  game.equipShopResetTime = keptEquipShopResetTime;
-  game.equipShopManualRefreshCount = keptEquipShopManualRefreshCount;
-  game.equipShopStarterServed = keptEquipShopStarterServed;
-
-  game.activePotions = {};
-  game.pendingPotionBonuses = { aetherNext: 0 };
-  game.aetherElixirStackCount = 0;
-  game.healingPotionsOwned = {};
-  game.potionsOwned = {};
-  game.lastHealUse = 0;
-
-  game.dungeonTicketResetTime = keptDungeonTicketResetTime;
-  game.dungeonRunsUsed = keptDungeonRunsUsed;
-  game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
-  // v3.2 : le run de quête en cours ne survit pas à l'ascension (la progression déjà enregistrée, elle, est conservée séparément).
-  // Détail : save-system_notes.md #33.
-  game.adventureQuestRun = { active: false, questId: null };
-  // v3.30 : même traitement que adventureQuestRun juste au-dessus — le
-  // run de chasse en cours ne survit pas à l'ascension.
-  game.huntRun = { active: false, questId: null, killsInLot: 0 };
-  // v3.90.0 : même traitement — le run d'Expédition en cours ne survit pas à l'ascension
-  // (pas de remboursement des rations déjà consommées, cohérent avec huntRun/adventureQuestRun).
-  game.explorationRun = null;
-  // v3.120.0 : même règle pour le scene-engine générique — ne survit pas à l'ascension.
-  game.sceneRun = null;
-  // v3.92.0 : même règle pour la session de minijeu de minage — ne survit pas à l'ascension.
-  // Le cooldown de l'activité bonus Carrière est aussi remis à zéro (pas de sens de le
-  // faire survivre à un reset de la run classique) ; quarryUnlocked, lui, reste permanent
-  // (voir keptExplorationProgression ci-dessus). v3.94.0 : même règle pour le Puits.
-  game.gatheringActivity = { quarry: { cooldownEndsAt: 0, activeSession: null }, well: { cooldownEndsAt: 0, activeSession: null } };
-  game.dungeonBestWave = keptDungeonBestWave;
-  game.dungeonBossClears = keptDungeonBossClears;
-  game.dungeonShards = keptDungeonShards;
-  game.dungeonShopLevels = keptDungeonShopLevels;
-  game.dungeonTierCleared = keptDungeonTierCleared;
-
-  game.achievementsClaimed = keptAchievementsClaimed;
-  game.achievementStats = keptAchievementStats;
-
-  game.worldsEverReached = keptWorldsEverReached;
-  game.worldQuestProgress = keptWorldQuestProgress;
-  game.worldQuestsCompleted = keptWorldQuestsCompleted;
-  game.resources = keptResources;
-  game.campRegenLastAt = Date.now(); // v3.101.0 : ascension = pas d'accrual
-  game.adventureQuestProgress = keptAdventureQuestProgress;
-  game.adventureQuestsCompleted = keptAdventureQuestsCompleted;
-  game.huntStats = keptHuntStats;
-  // v3.90.0 : progression permanente d'Expédition (déblocages) conservée à l'ascension.
-  game.explorationProgression = keptExplorationProgression;
-  game.expeditionChest = game.expeditionChest || { unlocked: {} }; // v3.381.0 (PA2, Q8) : le coffre survit à l'ascension
-  game.production = keptProduction;
-  game.construction = keptConstruction;
-  game.village = keptVillage;
-  game.livingMaps = keptLivingMaps;
-  game.tavern = keptTavern;
-  game.forge = keptForge;
-  game.workshopUnlock = keptWorkshopUnlock;
-  game.workshopFoundationsCompleted = keptWorkshopFoundationsCompleted;
-  game.storyQuests = keptStoryQuests;
-  // v3.31 : lastTick de chaque bâtiment doit repartir de "maintenant"
-  // à l'ascension (sinon le premier tick/boot suivant croirait à une
-  // absence de plusieurs secondes égale au temps écoulé DANS
-  // l'ancienne run, et créditerait à tort du stock rattrapé).
-  Object.keys(game.production).forEach(function (id) {
-    if (game.production[id] && typeof game.production[id] === "object") {
-      game.production[id].lastTick = Date.now();
-    }
-  });
-  game.dungeonTiersEntered = keptDungeonTiersEntered;
-  game.codexChaosSeen = keptCodexChaosSeen;
-  game.codexRead = keptCodexRead;
-
-  // v3.34.0 : ressource/cooldowns de classe effacés à l'ascension —
-  // même principe que les potions ("liées à la run", voir guide
-  // d'équilibrage section 19), pas de Rage/Concentration/Mana ni de
-  // cooldown de skill reportés d'une run à l'autre.
-  game.classResource = null;
-  game.classCooldowns = {};
-  game.classActiveDefense = null;
-
-  /* v3.268.0 (L-2) : à l'ascension, les compagnons restent acquis — ils sont débloqués
-     par l'Histoire, elle-même conservée (keptStoryQuests) — mais repartent à PV pleins,
-     comme le héros. Seuls leurs PV courants sont des données de run. */
-  if (window.CompanionManager && typeof CompanionManager.healAll === "function") CompanionManager.healAll();
-  // v3.102.0 (P2) : combatMode = préférence, PRÉSERVÉE à l'ascension (comme autoSkillsEnabled avant) ; état de round remis à zéro
-  if (game.combatMode !== "grimoire") game.combatMode = "tactique";
-  // v3.379.0 : réglage de la potion automatique = préférence, préservée comme combatMode
-  if (window.PotionAutoManager && typeof PotionAutoManager.ensure === "function") PotionAutoManager.ensure();
-  game.combatRound = { number: 0, busy: false, continueAttack: false, clockMs: 0 };
-  game.heroGauge = 0;
-  game.silencedRounds = 0;
-  game.sortie = null; // v3.102.1 : l'ascension part du camp, aucune sortie en cours
-
-  game.autoSellEquipment = false;
-  game.autoSellRarityThreshold = "common";
-  game.hasSeenOnboarding = keptHasSeenOnboarding;
-  game.genericTutorialsSeen = keptGenericTutorialsSeen;
-
-  WorldManager.worldIndex = 0;
-  WorldManager.adventureIndex = 0;
-  WorldManager.enemyIndex = 0;
-  if (typeof WorldManager.markWorldReached === "function") WorldManager.markWorldReached(0);
-
-  if (typeof ensureUpgradeDefaults === "function") ensureUpgradeDefaults();
-
-  if (typeof gameLog !== "undefined" && Array.isArray(gameLog)) gameLog.length = 0;
-
-  // v3.14 : plus de régénération forcée des quêtes journalières ici — ça écrasait le "kept" plus haut ; QuestManager gère déjà leur renouvellement.
-  // Détail : save-system_notes.md #34.
-
-  reapplyProgressEffects();
-
-  if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {StatsSystem.recalcStats();}
-  game.heroHp = game.heroMaxHp;
-
-}
-
 /* Reset "complet" (bouton Paramètres) : efface VRAIMENT tout, y compris l'Aether et le héros. Redonne 1M d'or de départ (réglage debug à surveiller).
    Détail : save-system_notes.md #35. */
 function fullResetState() {
@@ -1337,13 +1001,11 @@ function fullResetState() {
   game.totalDamageDealt = 0;
   game.playTime = 0;
   game.cycleCount = 0;
-  game.ascensionCount = 0;
 
   game.killCounts = {};
   game.upgrades = {};
   game.talents = {};
   game.talentsV2 = true; // v3.327.0 : une partie neuve n'a rien à migrer
-  game.aetherUpgrades = {};
   game.unlockedTabs = { campement: true, quests: true, settings: true, scene: true }; // v3.99.15 / v3.122.0 : "scene" toujours débloqué (infrastructure d'affichage des runs, pas un onglet narratif — même statut que quests/settings)
   game.inventory = [];
   game.equipped = getDefaultEquipped();
@@ -1361,8 +1023,6 @@ function fullResetState() {
   game.equipShopManualRefreshCount = 0;
 
   game.activePotions = {};
-  game.pendingPotionBonuses = { aetherNext: 0 };
-  game.aetherElixirStackCount = 0;
   game.healingPotionsOwned = {};
   game.potionsOwned = {};
   game.lastHealUse = 0;
@@ -1370,11 +1030,7 @@ function fullResetState() {
   game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
   game.adventureQuestRun = { active: false, questId: null };
   game.huntRun = { active: false, questId: null, killsInLot: 0 }; // v3.30
-  game.explorationRun = null; // v3.90.0 : reset complet, tout repart de zéro
-  game.sceneRun = null; // v3.120.0 : idem
-  game.gatheringActivity = { quarry: { cooldownEndsAt: 0, activeSession: null }, well: { cooldownEndsAt: 0, activeSession: null } }; // v3.92.0/v3.94.0
-  game.campfireLastUsed = 0; // v3.7 : repos gratuit du Campement — repart bien à zéro sur un reset complet
-  game.campfireShortLastUsed = 0; // v3.14 : idem pour le repos court
+  game.sceneRun = null; // v3.120.0
   game.campRegenLastAt = Date.now(); // v3.101.0
   game.dungeonBossClears = 0;
   game.dungeonShards = 0;
@@ -1386,10 +1042,7 @@ function fullResetState() {
   game.dungeonTicketResetTime = 0;
 
   game.worldsEverReached = {};
-  game.worldQuestProgress = {};
-  game.worldQuestsCompleted = {};
-  // v3.0 : système Quêtes/Ressources/Territoire — repart bien à zéro
-  // sur un reset complet, comme worldQuestProgress ci-dessus.
+  // v3.0 : système Quêtes/Ressources/Territoire — repart bien à zéro sur un reset complet.
   // v3.35 : planche/lingot repartent aussi à zéro (artisanat tier 1).
   // v3.36 : pierre/farine idem.
   game.resources = { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 3, petite_ration: 0, grande_ration: 0 }; // v3.107.1 : 3 rations de départ (4 -> 3, décision Seb après test)
@@ -1398,7 +1051,6 @@ function fullResetState() {
   game.huntStats = {}; // v3.30
   game.explorationProgression = { blockedPathCompleted: false, forgottenClearingUnlocked: false, unstableVeinDiscoveryCompleted: false, quarryUnlocked: false, huntBuildingUnlocked: false, driedSpringDiscoveryCompleted: false, wellUnlocked: false }; // v3.90.0/v3.92.0/v3.93.0/v3.94.0
   game.expeditionChest = { unlocked: {} }; // v3.381.0 (PA2, Q8) : nouvelle partie = coffre vide
-  game.craftQueue = []; // v3.43 : repart à zéro, aucun remboursement à faire sur un reset complet (tout repart de zéro de toute façon)
   game.production = {}; // v3.31 : repart à zéro, ProductionManager.ensure() recrée les 4 bâtiments au niveau 1
   game.construction = {}; // v3.37 : repart à zéro, ConstructionManager.ensure() recrée workshop au niveau 0
   game.village = {}; // v3.213.0 : bâtiments + chantier du Village, VillageBuildingManager.ensure() recrée l'état initial
@@ -1419,11 +1071,7 @@ function fullResetState() {
 
   game.autoSellEquipment = false;
   game.autoSellRarityThreshold = "common";
-  // v3.47.0 : préférence de confort (pas un état de run) — remise à
-  // sa valeur par défaut (true) sur un reset complet uniquement,
-  // volontairement PRÉSERVÉE à l'ascension (hardResetState, plus haut
-  // dans ce fichier) : contrairement à autoSellEquipment/classResource,
-  // rien ne justifie de forcer le joueur à la réactiver à chaque run.
+  // v3.47.0 : préférence de confort, remise à sa valeur par défaut sur un reset complet.
   game.autoSkillsEnabled = false;
   // v3.102.0 (P2) : nouvelle partie = mode Tactique (décision §10 n°2) ; état de round vierge
   game.combatMode = "tactique";
@@ -1431,19 +1079,12 @@ function fullResetState() {
   game.heroGauge = 0;
   game.silencedRounds = 0;
   game.sortie = null; // v3.102.1
-  // v3.66.0 : Mode Expert — même principe que autoSkillsEnabled
-  // juste au-dessus (préférence d'affichage, préservée à l'ascension),
-  // remise à sa valeur par défaut (off) seulement sur un reset complet.
+  // v3.66.0 : Mode Expert — préférence d'affichage, remise à off sur un reset complet.
   game.expertModeEnabled = false;
-  // v3.50.0 : même principe que autoSkillsEnabled juste au-dessus —
-  // configuration stratégique du joueur (pas un état de run), donc
-  // volontairement PRÉSERVÉE à l'ascension (hardResetState, plus haut
-  // dans ce fichier), remise à vide seulement sur un reset complet ici.
+  // v3.50.0 : configuration stratégique du joueur, remise à vide sur un reset complet.
   game.grimoireRules = [];
   game.companions = {}; // v3.268.0 (L-2) : aucun compagnon dans une partie neuve
-  // v3.65.0 : même principe — les presets sont eux aussi une
-  // configuration stratégique du joueur, préservée à l'ascension (rien
-  // ne les touche dans hardResetState), remise à vide seulement ici.
+  // v3.65.0 : presets du Grimoire, même principe.
   game.grimoirePresets = [];
   // v3.379.0 : partie neuve = potion automatique « Normal », dernière gardée pour le boss
   game.potionAuto = { threshold: "tard", keepForBoss: true }; // v3.380.0 : « Tard » par défaut
@@ -1494,7 +1135,7 @@ function resetGame() {
   if (typeof showConfirmModal === "function") {
     showConfirmModal(
       _t("Réinitialiser TOUT ?"),
-      _t("Cette action efface toute la progression, y compris l'Aether et les ascensions. Cette action est irréversible."),
+      _t("Cette action efface toute la progression, y compris l'Aether et la Mémoire. Cette action est irréversible."),
       "⚠️",
       doReset
     );
@@ -1508,7 +1149,6 @@ window.saveGame = saveGame;
 window.loadGame = loadGame;
 window.resetGame = resetGame;
 window.clearSaveData = clearSaveData;
-window.hardResetState = hardResetState;
 window.fullResetState = fullResetState;
 window.buildSaveData = buildSaveData;
 window.restoreBaseState = restoreBaseState;

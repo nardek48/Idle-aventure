@@ -63,20 +63,6 @@ function createDefaultExplorationProgression() {
   };
 }
 
-function createDefaultGatheringActivity() {
-  return {
-    quarry: {
-      cooldownEndsAt: 0,
-      activeSession: null
-    },
-    // v3.94.0 : même structure que quarry, dédiée à l'activité bonus du Puits.
-    well: {
-      cooldownEndsAt: 0,
-      activeSession: null
-    }
-  };
-}
-
 /* État complet d'une nouvelle partie. Toute nouvelle donnée de jeu
    persistante doit être ajoutée ici ET dans ensureGameStateDefaults()
    ci-dessous (pour réparer les sauvegardes plus anciennes qui ne
@@ -135,12 +121,10 @@ function createInitialGameState() {
     totalDamageDealt: 0,
     playTime: 0,
     cycleCount: 0,
-    ascensionCount: 0,
 
     inventory: [],
     equipped: createDefaultEquipped(),
 
-    aetherUpgrades: {},
     quests: [],
     questProgress: Object.assign({}, DEFAULT_QUEST_PROGRESS),
     questResetTime: 0,
@@ -150,8 +134,6 @@ function createInitialGameState() {
     lastOnline: 0,
 
     activePotions: {},
-    pendingPotionBonuses: { aetherNext: 0 },
-    aetherElixirStackCount: 0,
 
     equipShopStock: [],
     equipShopResetTime: 0,
@@ -181,7 +163,7 @@ function createInitialGameState() {
     grimoireRules: [],
 
     grimoirePresets: [],
-    potionAuto: { threshold: "normal", keepForBoss: true }, // v3.379.0 : potion automatique d'une partie neuve (potion-system.js)
+    potionAuto: { threshold: "tard", keepForBoss: true }, // v3.380.0 : « Tard » par défaut sur une partie neuve (banc, potion-system.js)
 
     classResource: null,
     classCooldowns: {},
@@ -193,8 +175,6 @@ function createInitialGameState() {
     achievementStats: null, // v3.338.0 : Hauts faits (compteurs, obtenus, paliers, titre) — AchievementManager.ensure
 
     worldsEverReached: {},
-    worldQuestProgress: {},
-    worldQuestsCompleted: {},
 
     resources: { viande: 0, eau: 0, ble: 0, bois: 0, fer: 0, pierre: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 3, petite_ration: 0, grande_ration: 0 }, // v3.107.3 : 3 rations de départ (source réelle d'un nouveau slot — corrige v3.106.0/v3.107.1/v3.107.2, qui avaient patché le mauvais endroit)
     adventureQuestProgress: {},
@@ -218,14 +198,8 @@ function createInitialGameState() {
 
     hasSeenOnboarding: false,
 
-    // v3.90.0 : moteur d'Expéditions non-combat (systems/exploration-engine.js) — jamais
-    // de CombatEngine. explorationRun = run éphémère actif (null si aucun), voir la forme
-    // complète dans exploration-engine.js. explorationProgression = déblocages persistants.
-    explorationRun: null,
+    // v3.90.0 : explorationProgression = déblocages persistants (et réserve des Petites Aventures).
     explorationProgression: createDefaultExplorationProgression(),
-    // v3.92.0 : session active du minijeu de minage (quête OU activité bonus Carrière,
-    // voir systems/mining-system.js), séparée de explorationRun (moteur indépendant).
-    gatheringActivity: createDefaultGatheringActivity(),
 
     playerName: "",
     heroId: "",
@@ -293,7 +267,6 @@ function ensureGameStateDefaults() {
   if (game.equipped.boots === undefined) game.equipped.boots = null;
   if (game.equipped.ring === undefined) game.equipped.ring = null;
 
-  if (!game.aetherUpgrades) game.aetherUpgrades = {};
   if (typeof game.totalAetherEarned !== "number") game.totalAetherEarned = Number(game.aether || 0);
   if (window.MemoryManager) MemoryManager.ensure(); // v3.322.0
   if (!Array.isArray(game.quests)) game.quests = [];
@@ -337,11 +310,6 @@ function ensureGameStateDefaults() {
   if ([1, 2, 4].indexOf(Number(game.combatSpeed)) === -1) game.combatSpeed = 1;
 
   if (!game.activePotions || typeof game.activePotions !== "object") game.activePotions = {};
-  if (!game.pendingPotionBonuses || typeof game.pendingPotionBonuses !== "object") {
-    game.pendingPotionBonuses = { aetherNext: 0 };
-  }
-  if (typeof game.pendingPotionBonuses.aetherNext !== "number") game.pendingPotionBonuses.aetherNext = 0;
-  if (typeof game.aetherElixirStackCount !== "number") game.aetherElixirStackCount = 0;
 
   if (!Array.isArray(game.equipShopStock)) game.equipShopStock = [];
   if (typeof game.equipShopResetTime !== "number") game.equipShopResetTime = 0;
@@ -414,11 +382,7 @@ function ensureGameStateDefaults() {
 
   if (typeof game.hasSeenOnboarding !== "boolean") game.hasSeenOnboarding = false;
 
-  // v3.90.0 : migration Expéditions — sauvegarde ancienne sans ces champs = valeurs par
-  // défaut sûres (run absent, aucun déblocage). Ne recrée jamais un run à partir de rien.
-  if (game.explorationRun !== null && typeof game.explorationRun !== "object") {
-    game.explorationRun = null;
-  }
+  // v3.90.0 : sauvegarde ancienne sans déblocages = valeurs par défaut sûres.
   if (!game.explorationProgression || typeof game.explorationProgression !== "object") {
     game.explorationProgression = createDefaultExplorationProgression();
   }
@@ -472,12 +436,6 @@ function ensureGameStateDefaults() {
   // pas seulement après le premier appel à SceneRunManager.ensureDefaults().
   if (!game.explorationProgression.petiteAventure || typeof game.explorationProgression.petiteAventure !== "object") {
     game.explorationProgression.petiteAventure = { spent: 0, since: null }; // v3.366.0 : réserve rechargeable
-  }
-  if (!game.gatheringActivity || typeof game.gatheringActivity !== "object") {
-    game.gatheringActivity = createDefaultGatheringActivity();
-  }
-  if (!game.gatheringActivity.well || typeof game.gatheringActivity.well !== "object") {
-    game.gatheringActivity.well = { cooldownEndsAt: 0, activeSession: null };
   }
 
   if (typeof game.heroLevel !== "number") game.heroLevel = 1;

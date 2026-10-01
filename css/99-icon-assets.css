@@ -28,8 +28,8 @@
 .pc-subtab-ico { width: 22px; height: 22px; margin-bottom: 1px; }
 
 /* Bâtiments du village (rendus via iconImg + le helper existant). */
-img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
-@media (max-width: 360px) { img.vb-card-icon { width: 32px; height: 32px; } }
+img.vb-card-icon { width: 84px; height: 84px; object-fit: contain; } /* v3.414.0 : grandes vignettes */
+@media (max-width: 360px) { img.vb-card-icon { width: 68px; height: 68px; } }
 
 /* Ateliers. */
 .workshop-card-icon-img { width: 26px; height: 26px; }

@@ -556,7 +556,7 @@ Deux contraintes mesurées à l'atelier :
   border-radius: 999px;
   border: 1px solid rgba(212, 175, 55, .6);
   background: rgba(15, 20, 32, .85);
-  color: var(--c-cream-150);
+  color: var(--c-cream-150-3);
   font-size: max(12px, clamp(10px, calc(6px + 1.2vw), 12px));
   font-weight: 700;
   box-shadow: none;
@@ -565,7 +565,7 @@ Deux contraintes mesurées à l'atelier :
 .cb-hero .cb-ctl-row .combat-speed-btn.active {
   background: rgba(120, 80, 10, .85);
   border-color: rgba(253, 230, 138, .9);
-  color: var(--c-cream-150);
+  color: var(--c-cream-150-3);
 }
 
 /* Même hauteur pour tout le monde : les pastilles de butin et le bouton Fuir suivaient

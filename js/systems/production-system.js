@@ -370,6 +370,9 @@ var ProductionManager = {
       harvestAllBtn.classList.toggle("is-disabled", !hasAnyStock);
     }
 
+    // v3.414.0 (VUI-1) : jauge de la feuille d'un bâtiment de production (ids propres à la feuille)
+    if (typeof refreshProductionSheetDOM === "function") refreshProductionSheetDOM();
+
     // Badge du bouton "Files" — nombre d'ateliers ayant une file active.
     var activeQueueCount = Object.keys(WORKSHOPS_CONFIG).filter(function (workshopId) {
       var def = WORKSHOPS_CONFIG[workshopId];

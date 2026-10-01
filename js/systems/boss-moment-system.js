@@ -8,8 +8,7 @@
    B5 : le trophée est un souvenir (Bestiaire), pas un objectif (Hauts faits).
 
    PERSISTANCE : game.bossTrophies = { <clé>: { name, at, level, rounds, allies[], worldId } },
-   aux quatre points de save-system.js. Conservé à la reprise (hardResetState) : c'est un
-   souvenir, comme le Codex.
+   aux points de sauvegarde de save-system.js. C'est un souvenir, comme le Codex.
 
    Deux appels depuis combat-engine.js (fichier protégé, accord Seb 24/09/2026) :
    onPhase() dans checkPhases, onBossKilled() dans killEnemy. L'entrée est vue par

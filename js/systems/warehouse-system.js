@@ -2,15 +2,12 @@
 /* systems/warehouse-system.js — Entrepôt : SEUL point d'écriture sur game.resources (addResource/removeResource/sellResource).
    v3.218.0 : et SEUL point de vérité du plafond, via getCap() — relevé par le bâtiment « Entrepôt agrandi ».
    v3.98.0 : le craft n'est plus géré ici — remplacé par des ateliers locaux par bâtiment
-   (voir WorkshopsSystem, systems/workshops-system.js). game.craftQueue reste initialisé
-   ci-dessous en tableau vide pour rester compatible avec save-system.js (fichier protégé,
-   non modifié, qui lit/écrit encore ce champ) — plus jamais rempli ni lu par le jeu.
+   (voir WorkshopsSystem, systems/workshops-system.js). v3.412.0 : game.craftQueue retiré.
    Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var WarehouseManager = {
   ensure: function () {
     if (!game.resources || typeof game.resources !== "object") game.resources = {};
-    if (!Array.isArray(game.craftQueue)) game.craftQueue = [];
     if (typeof WAREHOUSE_RESOURCES === "undefined") return;
     Object.keys(WAREHOUSE_RESOURCES).forEach(function (key) {
       if (typeof game.resources[key] !== "number") game.resources[key] = 0;
@@ -153,23 +150,6 @@ var WarehouseManager = {
     saveGame();
 
     return goldGain;
-  },
-
-  /* v3.98.0 : le craft générique de l'Entrepôt (RECIPES/game.craftQueue/enqueueCraft/
-     tickCraftQueue/canCraft/cancelCraft) est retiré — remplacé par des ateliers locaux à
-     chaque bâtiment de Production, chacun sa propre file (voir WorkshopsSystem,
-     systems/workshops-system.js). Seul refundAndClearCraftQueue() est conservé ci-dessous
-     comme point d'entrée générique : save-system.js:hardResetState() (fichier protégé)
-     l'appelle par son nom sans connaître son implémentation interne — délègue maintenant
-     au remboursement de TOUTES les files d'ateliers plutôt qu'à l'ancienne file unique.
-     game-loop.js (protégé) vérifie typeof WarehouseManager.tickCraftQueue === "function"
-     avant d'appeler — cette méthode n'existant plus, l'appel est simplement sauté, sans
-     erreur (le tick des ateliers passe désormais par ProductionManager.tick(), lui-même
-     déjà appelé par game-loop.js). */
-  refundAndClearCraftQueue: function () {
-    if (window.WorkshopsSystem && typeof WorkshopsSystem.refundAndClearAll === "function") {
-      WorkshopsSystem.refundAndClearAll();
-    }
   }
 };
 

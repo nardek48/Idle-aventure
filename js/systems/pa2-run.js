@@ -99,7 +99,7 @@ var Pa2Run = {
   // D2 : le gardien lâche un objet comme l'ancien boss final (50 % + bonus), dans le butin de sortie.
   _guardianDrop: function () {
     if (!window.LootSystem || typeof LootSystem.rollDrop !== "function") return null;
-    var pct = 50 + Number((typeof getAetherBonuses === "function" ? getAetherBonuses().lootBonus : 0) || 0) + Number(game.equipDropChancePct || 0);
+    var pct = 50 + Number(game.equipDropChancePct || 0);
     if (this.rand() * 100 >= pct) return null;
     var drop = LootSystem.rollDrop();
     if (!drop) return null;

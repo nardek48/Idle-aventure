@@ -491,24 +491,6 @@ var WorkshopsSystem = {
 
       this._tryAutoEnqueue(workshopId);
     }
-  },
-
-  /* Rembourse et vide TOUTES les files de tous les ateliers — appelé depuis
-     WarehouseManager.refundAndClearCraftQueue() (point d'entrée générique conservé,
-     lui-même appelé par save-system.js:hardResetState(), fichier protégé non modifié). */
-  refundAndClearAll: function () {
-    var self = this;
-    Object.keys(WORKSHOPS_CONFIG).forEach(function (workshopId) {
-      var queue = self.getQueue(workshopId);
-      queue.forEach(function (entry) {
-        var recipe = self.getRecipe(workshopId, entry.recipeId);
-        if (!recipe) return;
-        recipe.inputs.forEach(function (input) {
-          WarehouseManager.refundResource(input.resourceId, input.quantity * entry.times); // v3.355.0 : par l'Entrepôt
-        });
-      });
-      queue.length = 0;
-    });
   }
 };
 

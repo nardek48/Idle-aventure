@@ -1,6 +1,6 @@
 "use strict";
 /* systems/progression-system.js — le plus gros fichier du projet : WorldManager (progression mondes + génération ennemis),
-   achats (upgrades/talents/Aether), XP héros, AscensionManager + ascendNow(). Journalières retirées en v3.116.0.
+   achats (upgrades/talents/Aether), XP héros. Journalières retirées en v3.116.0 ; Ascension retirée en v3.322.0 (Offrande et Mémoire).
    Détail complet (constantes de balance ENEMY_PV_*, historique des exposants) : COMMENTAIRES_ORIGINAUX.md */
 // v3.232.0 (périmètre confirmé par Seb) : 3,33 → 6. Mesuré sur un joueur ÉQUIPÉ (sim/balance-bench.js) :
 // un ennemi normal de Forêt coûtait 2 % de PV, il en coûte 4 — les 9 ennemis avant le boss pèsent enfin.
@@ -238,11 +238,6 @@ var WorldManager = {
   }
 };
 
-/* v3.327.0 : arbre de la classe courante, { trunk, paths } (data/talent-trees.js). */
-function getAllTalentNodes() {
-  return (window.TalentManager && TalentManager.getTree()) || { trunk: [], paths: [] };
-}
-
 function getUpgradeCost(upgrade, atLevel) {
   if (!upgrade) return Infinity;
   var level = (atLevel === undefined || atLevel === null)
@@ -476,29 +471,13 @@ function grantHeroXp(amount, source) {
   return levelsGained;
 }
 
-/* v3.322.0 (Offrande, décision O1 de Seb) : l'Ascension n'existe plus. Plus aucune remise à
-   zéro du héros ; l'Aether vient des Offrandes et des Souvenirs (systems/memory-system.js).
-   Les noms restent pour les appelants et les vieilles sauvegardes : tout répond « non ». */
-var AscensionManager = {
-  previewGain: function () { return 0; },
-  canAscend: function () { return false; },
-  doAscend: function () { showToast(_t("L'Ascension a laissé place à la Mémoire"), 1600); }
-};
-
-function ascendNow() {
-  if (typeof showToast === "function") showToast(_t("L'Ascension a laissé place à la Mémoire"), 1600);
-}
 
 window.WorldManager = WorldManager;
-window.AscensionManager = AscensionManager;
 window.getUpgradeCost = getUpgradeCost;
-window.getAllTalentNodes = getAllTalentNodes;
 window.buyUpgrade = buyUpgrade;
 window.grantHeroXp = grantHeroXp;
-window.ascendNow = ascendNow;
 window.setShopBuyAmount = setShopBuyAmount;
 window.getUpgradePurchasePreview = getUpgradePurchasePreview;
-window.doAscend = function () { AscensionManager.doAscend(); };
 window.ENEMY_PV_MULT = ENEMY_PV_MULT;
 window.ENEMY_PV_WORLD_EXP = ENEMY_PV_WORLD_EXP;
 window.BOSS_PV_MULT = BOSS_PV_MULT;

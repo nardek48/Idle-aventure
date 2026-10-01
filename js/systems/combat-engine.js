@@ -1486,15 +1486,6 @@ var CombatEngine = {
       return;
     }
 
-    // v3.126.0 (Petites Aventures, Lot PA2) : mort en nœud combat du scene-engine = perte
-    // totale du run (SortieManager.end("death") déjà appelé ci-dessus, universel) — décision
-    // Seb confirmée avant ce lot : pas d'échec "doux" à 50% ici, réservé à l'évacuation
-    // (3 blessures) et à l'abandon volontaire. Termine le run proprement (écran de bilan).
-    if (window.SceneRunManager && game.sceneRun && game.sceneRun.status === "combat") {
-      SceneRunManager.onCombatDefeat();
-      return;
-    }
-
     game.heroHp = 0; // v3.327.0 : Sang-froid retiré (décision T9)
 
     if (typeof openCombatReport === "function") openCombatReport("defeat", game.enemy ? game.enemy.name : null);
@@ -1660,11 +1651,6 @@ var CombatEngine = {
           AdventureQuestManager.onEnemyKilled(enemy);
         } else if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
           HuntQuestManager.onEnemyKilled();
-        } else if (window.SceneRunManager && game.sceneRun && game.sceneRun.status === "combat") {
-          /* v3.285.0 : rien à faire. Une vague de Petite Aventure se compte en RENCONTRES :
-             tant qu'il reste un membre, le run ne doit surtout pas être prévenu, sinon la
-             meute avancerait la vague deux fois. Le dernier membre, lui, passe par le flux
-             normal plus bas et appelle onCombatWon(). */
         }
         // v3.293.0 : plus de trackKill de farm libre ici (voir fin de killEnemy)
       } finally {
@@ -1712,7 +1698,7 @@ var CombatEngine = {
       vibrate([50, 30, 50, 30, 100]);
 
       var bestiaryBonus = typeof getBestiaryBonus === "function" ? getBestiaryBonus(enemy.id) : { lootBonus: 0 };
-      var lootChance = 50 + (getAetherBonuses().lootBonus || 0) + (bestiaryBonus.lootBonus || 0)
+      var lootChance = 50 + (bestiaryBonus.lootBonus || 0)
         + (Number(game.equipDropChancePct) || 0); // v3.225.0 (périmètre confirmé par Seb) : affixe Chance de butin, plafonné dans recalcStats
       if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
         lootChance *= AfflictionManager.getCombinedModifiers().lootChanceMult;
@@ -1753,20 +1739,6 @@ var CombatEngine = {
 
     // v3.256.0 (Cartes Vivantes, C-2) : élite d'un secteur vaincue — le butin est déjà routé vers la sortie.
     if (window.LivingMapManager && game.livingMaps && game.livingMaps.fight && LivingMapManager.onFightWon(enemy)) {
-      if (typeof renderAll === "function") renderAll();
-      restoreEquipBagScroll();
-      saveGame();
-      return;
-    }
-
-    // v3.126.0 (Petites Aventures, Lot PA2) : nœud combat du scene-engine (profil Bourrin,
-    // voir js/data/scene-templates.js petite_aventure_foret). Le gold/essence de ce kill a
-    // déjà été routé vers SortieManager par grantGold()/grantEssence() ci-dessus (inSortie()
-    // vrai, contexte "scene" actif depuis SceneRunManager.startRun) — rien à faire de spécial
-    // pour le butin, seulement router la suite du combat vers le run plutôt que vers le farm
-    // libre (WorldQuestManager/WorldManager.advance ci-dessous, qui ne concernent pas Scene).
-    if (window.SceneRunManager && game.sceneRun && game.sceneRun.status === "combat") {
-      SceneRunManager.onCombatWon();
       if (typeof renderAll === "function") renderAll();
       restoreEquipBagScroll();
       saveGame();

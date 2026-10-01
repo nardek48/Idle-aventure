@@ -11,7 +11,6 @@
    État persisté (§10.2), rien d'autre — le front, l'atteignabilité et la
    protection se DÉDUISENT de l'état et du niveau de Palissade :
      game.livingMaps = {
-       lastAscensionSeen: N,
        forest: { sectors: { gue: { state, firstRewardClaimed, liberatedCount } } }
      }
    États : "voile" (jamais libéré), "libere", "recouvert" (libéré puis repris).
@@ -20,15 +19,10 @@
    champ câblé en sauvegarde ; un run d'expédition, lui, est porté par game.sceneRun.
    Un secteur recouvert ne redevient jamais voilé : ce qui a été vu reste vu.
 
-   Le Recouvrement n'a pas d'horloge (décision 2). Il avance sur un ÉCHEC de
-   run ciblé (un seul secteur, jamais en cascade) et sur l'ASCENSION (tout ce
-   que la Palissade ne tient pas). L'Ascension est appliquée paresseusement par
-   ensureDefaults() en comparant game.ascensionCount au repère persisté —
-   aucune accroche dans ascendNow() ni hardResetState().
-   v3.335.0 : depuis la Mémoire (v3.322.0), l'Ascension n'existe plus et ascensionCount ne
-   bouge plus : cette reprise ne se déclenche jamais. Code gardé, inoffensif. Seul l'ÉCHEC fait
-   avancer le Recouvrement ; la Palissade le freine et protège ses anneaux tenus (décision
-   Seb 24/09/2026, option A : textes seuls). */
+   Le Recouvrement n'a pas d'horloge (décision 2). Seul l'ÉCHEC d'un run ciblé le fait avancer
+   (un seul secteur, jamais en cascade) ; la Palissade le freine et protège ses anneaux tenus
+   (décision Seb 24/09/2026, option A : textes seuls). v3.412.0 : l'ancienne reprise par
+   Ascension (repère lastAscensionSeen) est retirée, l'Ascension n'existant plus depuis la v3.322.0. */
 
 var LivingMapManager = {
   STATES: ["voile", "libere", "recouvert"],
@@ -118,13 +112,13 @@ var LivingMapManager = {
   /* ---------- État persisté ---------- */
 
   /* Idempotent. Complète les manques (nouvelle partie, sauvegarde d'avant la version,
-     secteur ajouté aux données) puis applique la régression d'Ascension par repère. */
+     secteur ajouté aux données). */
   ensureDefaults: function () {
     if (!game.livingMaps || typeof game.livingMaps !== "object") game.livingMaps = {};
     var lm = game.livingMaps;
     /* Chemin rapide : l'objet déjà validé est reconnu par identité (getState() passe ici à
        chaque lecture). Un chargement ou un reset pose un nouvel objet et rejoue la validation. */
-    if (this._validated === lm && Number(game.ascensionCount || 0) <= lm.lastAscensionSeen) return [];
+    if (this._validated === lm) return;
     this._validated = lm;
     var ids = this.getMapIds();
     for (var i = 0; i < ids.length; i++) {
@@ -145,43 +139,9 @@ var LivingMapManager = {
         } else { delete s.dailyKey; delete s.dailyWins; }
       }
     }
-    /* Repère absent (première fois) : on s'aligne sur le compteur SANS recouvrir,
-       sinon un joueur qui a déjà ascendé avant la version perdrait... rien, mais
-       le journal mentirait. */
-    if (typeof lm.lastAscensionSeen !== "number") lm.lastAscensionSeen = Number(game.ascensionCount || 0);
+    delete lm.lastAscensionSeen; // v3.412.0 : repère d'une ancienne sauvegarde, sans usage
     if (lm.fight && (typeof lm.fight !== "object" || !this.getSectorDef(lm.fight.mapId, lm.fight.sectorId))) lm.fight = null;
     if (!lm.fight) lm.fight = null;
-    return this._applyPendingAscension();
-  },
-
-  /* §5.2 : le Cycle reprend tout ce qu'Aeswyn ne tient pas. Une seule fois par
-     Ascension, quel que soit le nombre d'appels. Renvoie les secteurs repris. */
-  _applyPendingAscension: function () {
-    var lm = game.livingMaps;
-    var count = Number(game.ascensionCount || 0);
-    if (count <= lm.lastAscensionSeen) return [];
-    lm.lastAscensionSeen = count; // posé AVANT : getState() rappelle ensureDefaults(), qui doit ressortir aussitôt
-    lm.fight = null; // un combat d'élite ne traverse pas l'Ascension (comme dungeonRun)
-    var taken = [];
-    var ids = this.getMapIds();
-    for (var i = 0; i < ids.length; i++) taken = taken.concat(this._regressAllUnprotected(ids[i]));
-    if (taken.length && typeof addLog === "function") {
-      addLog(_t("Ascension : le Cycle reprend {x}.", { x: taken.map(function (t) { return _td(t.name); }).join(", ") }), "event");
-    }
-    return taken;
-  },
-
-  _regressAllUnprotected: function (mapId) {
-    var map = this.getMap(mapId), taken = [];
-    if (!map) return taken;
-    for (var i = 0; i < map.sectors.length; i++) {
-      var def = map.sectors[i];
-      if (this.isLiberated(mapId, def.id) && !this.isProtected(mapId, def.id)) {
-        this.getState(mapId, def.id).state = "recouvert";
-        taken.push(def);
-      }
-    }
-    return taken;
   },
 
   getState: function (mapId, sectorId) {

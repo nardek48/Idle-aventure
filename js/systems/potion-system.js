@@ -3,8 +3,8 @@
    (armées — plus de minuteur) ; l'effet ne s'applique que pendant un run de MISSION
    (SortieManager.isMission(), jamais le farm libre) et les potions armées sont consommées à la
    fin du run (voir hooks dans sortie-system.js). Cumulables : 1 de chaque type par run. Une
-   potion bue au camp reste armée indéfiniment jusqu'au prochain run. Élixir d'Aether inchangé
-   (pendingPotionBonuses, hors runs). Anciennes saves : timestamps normalisés en booléens à
+   potion bue au camp reste armée indéfiniment jusqu'au prochain run. v3.412.0 : l'ancien
+   Élixir d'Aether (pendingPotionBonuses, aetherElixirStackCount) est retiré. Anciennes saves : timestamps normalisés en booléens à
    ensure(). Ancien système 30 min : COMMENTAIRES_ORIGINAUX.md */
 
 var POTION_CYCLE_PRICE_GROWTH = 0.15;
@@ -12,11 +12,6 @@ var POTION_CYCLE_PRICE_GROWTH = 0.15;
 var PotionManager = {
   ensure: function () {
     if (!game.activePotions || typeof game.activePotions !== "object") game.activePotions = {};
-    if (!game.pendingPotionBonuses || typeof game.pendingPotionBonuses !== "object") {
-      game.pendingPotionBonuses = { aetherNext: 0 };
-    }
-    if (typeof game.pendingPotionBonuses.aetherNext !== "number") game.pendingPotionBonuses.aetherNext = 0;
-    if (typeof game.aetherElixirStackCount !== "number") game.aetherElixirStackCount = 0;
     if (!game.potionsOwned || typeof game.potionsOwned !== "object") game.potionsOwned = {};
     // v3.115.0 : normalise l'ancien format {id: timestampExpiry} en {id: true} — une potion
     // encore minutée à la migration devient simplement armée pour le prochain run (généreux).
@@ -36,7 +31,7 @@ var PotionManager = {
 
   isEffectLive: function () {
     // Lecture PASSIVE de game.sortie (jamais SortieManager.isMission() qui passe par ensure()
-    // et recréerait l'objet — hardResetState/fullResetState mettent game.sortie à null et
+    // et recréerait l'objet — fullResetState met game.sortie à null et
     // recalcStats() passe par ici).
     var s = game.sortie;
     return !!(s && s.active && s.context && s.context !== "farm");
@@ -66,10 +61,6 @@ var PotionManager = {
   getCost: function (potion) {
     this.ensure();
     var base = potion.cost;
-    if (potion.costMult) {
-      var stacks = Number(game.aetherElixirStackCount || 0);
-      base = base * Math.pow(potion.costMult, stacks);
-    }
     var cycleMult = Math.pow(1 + POTION_CYCLE_PRICE_GROWTH, Number(game.cycleCount || 0));
     return Math.floor(base * cycleMult);
   },
@@ -93,7 +84,6 @@ var PotionManager = {
 
     game.gold -= cost;
     game.potionsOwned[id] = this.getStock(id) + 1;
-    if (!potion.perRun) game.aetherElixirStackCount = Number(game.aetherElixirStackCount || 0) + 1;
 
     if (window.QuestManager && typeof QuestManager.track === "function") {
       QuestManager.track("goldSpent", cost);
@@ -132,9 +122,6 @@ var PotionManager = {
       } else {
         addLog("🧪 " + _t("{x} bue — armée pour la prochaine mission.", { x: _td(potion.name) }), "event");
       }
-    } else {
-      game.pendingPotionBonuses.aetherNext = Number(game.pendingPotionBonuses.aetherNext || 0) + potion.bonus;
-      addLog("🌀 " + _t("{x} bu — bonus prêt pour la prochaine ascension", { x: _td(potion.name) }), "event");
     }
 
     if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
@@ -304,18 +291,18 @@ window.PotionManager = PotionManager;
 /* =====================================================================
    v3.379.0 — POTION AUTOMATIQUE en mode Grimoire (décisions Seb, 28/09/2026).
    Hors des règles : un seuil (Jamais / Tard / Normal / Tôt) et « garder la dernière pour le boss ».
-   Réglage de partie (game.potionAuto, sauvegardé) : « Normal » sur une partie neuve, « Jamais »
+   Réglage de partie (game.potionAuto, sauvegardé) : « Tard » sur une partie neuve (v3.380.0), « Jamais »
    sur une partie d'avant cette version. Lu par CombatEngine.tickRoundClock, avant les règles ;
    la potion passe par heroAction("potion") : même plafond par sortie, elle prend le tour.
    ===================================================================== */
 
 var POTION_AUTO_THRESHOLDS = [
   { id: "jamais", label: _t("Jamais"), value: 0,    desc: _t("Tu bois à la main, comme en mode Tactique.") },
-  { id: "tard",   label: _t("Tard"),   value: 0.25, desc: _t("Sous 25 % de tes PV, pour ménager ton stock.") },
-  { id: "normal", label: _t("Normal"), value: 0.40, desc: _t("Sous 40 % de tes PV — le réglage conseillé.") },
+  { id: "tard",   label: _t("Tard"),   value: 0.25, desc: _t("Sous 25 % de tes PV — le réglage conseillé, il ménage ton stock.") },
+  { id: "normal", label: _t("Normal"), value: 0.40, desc: _t("Sous 40 % de tes PV, plus prudent mais plus gourmand.") },
   { id: "tot",    label: _t("Tôt"),    value: 0.55, desc: _t("Sous 55 % de tes PV, pour ne jamais frôler la chute.") }
 ];
-var POTION_AUTO_NEW_GAME = { threshold: "normal", keepForBoss: true };   // partie neuve (fullResetState)
+var POTION_AUTO_NEW_GAME = { threshold: "tard", keepForBoss: true };   // partie neuve (v3.380.0 : « Tard », meilleur au banc)
 var POTION_AUTO_OLD_SAVE = { threshold: "jamais", keepForBoss: true };   // sauvegarde sans le réglage
 var POTION_AUTO_TARGET_PCT = 0.60; // « suffit » = te remonte au moins à 60 % de tes PV
 

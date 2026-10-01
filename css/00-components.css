@@ -489,7 +489,7 @@ button.nb-entry-card {
 
 .nb-entry-status-label.is-ready,
 .nb-entry-status-label.is-complete {
-  color: var(--c-green-650-2);
+  color: var(--c-green-650-3);
   font-style: normal;
   font-weight: 800;
 }

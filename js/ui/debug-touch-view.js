@@ -66,7 +66,6 @@ var TouchDebug = {
     if (game.huntRun && game.huntRun.active) parts.push("chasse");
     if (game.dungeonRun && game.dungeonRun.active) parts.push("donjon");
     if (game.livingMaps && game.livingMaps.fight) parts.push("élite carte");
-    if (game.sceneRun && game.sceneRun.status === "combat") parts.push("scène");
     return parts.length ? parts.join("+") : "aucun run";
   },
 

@@ -218,12 +218,7 @@ var SceneRunManager = {
   clearRun: function () {
     game.sceneRun = null;
     if (typeof saveGame === "function") saveGame();
-  },
-
-  /* combat-engine.js (protégé) appelle encore ces deux points sous la garde status "combat",
-     qu'aucun run ne porte plus : ils ne font que clore un vieux run qui passerait par là. */
-  onCombatWon: function () { this.getRun(); },
-  onCombatDefeat: function () { this.getRun(); }
+  }
 };
 
 window.SceneRunManager = SceneRunManager;

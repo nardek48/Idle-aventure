@@ -166,7 +166,7 @@ span.pa2-chip { cursor: default; }
 .pa2-parchment { filter: none; background:
   radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(58, 44, 26, .45) 100%),
   repeating-linear-gradient(0deg, transparent 0 7px, rgba(58, 44, 26, .035) 7px 8px),
-  linear-gradient(170deg, var(--nb-cream, var(--c-cream-100-soft)), var(--nb-cream-alt, var(--c-cream-150-soft))); }
+  linear-gradient(170deg, var(--nb-cream, var(--c-cream-100-soft)), var(--nb-cream-alt, var(--c-cream-150-2))); }
 .pa2-map-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .pa2-node { position: absolute; z-index: 2; width: 9%; aspect-ratio: 1; transform: translate(-50%, -50%); padding: 0; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; border: 2px solid var(--pa2-gold-dark); background: rgba(18, 13, 8, 0.86);

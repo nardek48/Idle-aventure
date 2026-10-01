@@ -10,7 +10,7 @@ var MEMORY_INVENTORY_BASE = 25;  // O8 : sac de base
 var MEMORY_INVENTORY_BONUS = 25; // Sac profond : 25 -> 50
 
 var MemoryManager = {
-  /* État persistant (save-system.js : buildSaveData, loadGame, hardResetState, fullResetState). */
+  /* État persistant (save-system.js : buildSaveData, loadGame, fullResetState). */
   ensure: function () {
     var m = game.memory;
     if (!m || typeof m !== "object") m = game.memory = {};

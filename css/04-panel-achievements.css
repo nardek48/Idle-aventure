@@ -85,7 +85,7 @@
 .hf-tiers-h { display: flex; justify-content: space-between; color: var(--c-brown-700-vivid); font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; } /* v3.402.0 : surtitre du kit */
 .hf-track { position: relative; height: 8px; border-radius: 4px; background: var(--c-bronze-200-soft); margin: 6px 11px 22px; }
 .hf-track-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: linear-gradient(90deg, var(--c-brown-550-2), var(--c-blue-200) 60%, var(--c-bronze-400-4)); }
-.hf-notch { position: absolute; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; border: 2px solid var(--c-bronze-400-soft); background: var(--c-cream-150); color: #8a7a64; }
+.hf-notch { position: absolute; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; border: 2px solid var(--c-bronze-400-soft); background: var(--c-cream-150-3); color: #8a7a64; }
 .hf-notch.is-bronze.is-got { background: var(--c-brown-550-2); border-color: var(--c-brown-700-soft); color: var(--c-white-50); }
 .hf-notch.is-silver.is-got { background: var(--c-blue-200); border-color: var(--c-grey-600); color: #2a3036; }
 .hf-notch.is-gold.is-got { background: var(--c-bronze-400-4); border-color: var(--c-brown-750-vivid); color: #3a2a06; }
@@ -95,7 +95,7 @@
 .hf-card { display: flex; gap: 9px; align-items: flex-start; background: var(--c-cream-50-soft); border: 1px solid var(--c-bronze-250-soft); border-radius: 12px; padding: 8px 9px; margin-bottom: 7px; color: var(--c-brown-850-soft); }
 .hf-card.is-ready { border: 1.5px solid var(--c-brown-550-3); box-shadow: 0 0 0 2px rgba(240, 170, 62, 0.2); background: var(--c-cream-50-soft); }
 .hf-card.is-done { background: var(--c-cream-100-soft); }
-.hf-card.is-hidden { background: #eee5d2; border-style: dashed; }
+.hf-card.is-hidden { background: var(--c-cream-150-soft); border-style: dashed; }
 /* v3.339.0 : les icônes portent leur cadre peint (coins transparents) : plus de bordure ni de fond CSS, sinon double cadre */
 .hf-ico { width: 44px; height: 44px; flex: 0 0 44px; object-fit: contain; filter: grayscale(0.85) opacity(0.75); }
 .hf-card.is-ready .hf-ico, .hf-card.is-done .hf-ico { filter: none; }
@@ -112,7 +112,7 @@
 .hf-title-tag { display: inline-block; font-size: 12px; font-weight: 900; color: var(--c-brown-750-vivid); background: #f6e3a8; border-radius: 6px; padding: 0 5px; margin-left: 4px; vertical-align: 1px; }
 
 .hf-old { margin-top: 6px; }
-.hf-old-h { width: 100%; text-align: left; font: inherit; font-size: 12px; font-weight: 800; color: var(--c-brown-700-soft); background: var(--c-cream-150-soft); border: 1px solid var(--c-bronze-250-soft); border-radius: 10px; padding: 7px 10px; cursor: pointer; }
+.hf-old-h { width: 100%; text-align: left; font: inherit; font-size: 12px; font-weight: 800; color: var(--c-brown-700-soft); background: var(--c-cream-150-2); border: 1px solid var(--c-bronze-250-soft); border-radius: 10px; padding: 7px 10px; cursor: pointer; }
 .hf-old-row { font-size: 12px; color: var(--c-brown-750-soft); background: var(--c-cream-50-soft); padding: 5px 10px; border-bottom: 1px dotted var(--c-bronze-250-soft); }
 .hf-old .achievement-totals { margin-top: 6px; }
 
