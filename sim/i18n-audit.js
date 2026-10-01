@@ -135,9 +135,13 @@ console.log("Textes traduisibles relevés : " + keys.length + " (" + keys.filter
 console.log("Orphelins (dans le dictionnaire, plus dans le jeu) : " + orphans.length);
 console.log("{paramètres} différents : " + badParams.length);
 console.log("Appels non littéraux : " + nonLiteral.length);
-var hc = Object.keys(hardcoded).filter(function (f) { return hardcoded[f] > 0; }).sort(function (a, b) { return hardcoded[b] - hardcoded[a]; });
+/* v3.422.0 (décision Seb) : les écrans de développement (Admin, bac à sable, débogage) ne sont
+   jamais vus par le joueur. Ils restent en français et sortent de l'estimation (comptés à part). */
+var DEV_SCREENS = ["js/ui/admin-view.js", "js/ui/combat-round-sandbox-view.js", "js/ui/debug-touch-view.js"];
+var devTotal = DEV_SCREENS.reduce(function (s, f) { return s + Number(hardcoded[f] || 0); }, 0);
+var hc = Object.keys(hardcoded).filter(function (f) { return hardcoded[f] > 0 && DEV_SCREENS.indexOf(f) < 0; }).sort(function (a, b) { return hardcoded[b] - hardcoded[a]; });
 var hcTotal = hc.reduce(function (s, f) { return s + hardcoded[f]; }, 0);
-console.log("Texte français encore en dur (estimation) : ~" + hcTotal + " dans " + hc.length + " fichier(s) ; les plus chargés :");
+console.log("Texte français encore en dur (estimation, écrans du joueur) : ~" + hcTotal + " dans " + hc.length + " fichier(s) ; écrans de développement exclus : ~" + devTotal + " ; les plus chargés :");
 hc.slice(0, ARGS.indexOf("--all") >= 0 ? hc.length : 8).forEach(function (f) { console.log("  " + String(hardcoded[f]).padStart(5) + "  " + f); });
 if (DETAIL) {
   if (missing.length) { console.log("\nMANQUANTS"); missing.forEach(function (k) { console.log("  " + JSON.stringify(k) + "  (" + Object.keys(found[k].files).join(", ") + ")"); }); }

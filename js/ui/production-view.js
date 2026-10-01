@@ -294,6 +294,15 @@ function buildZoneActionHTML(opts) {
   return h + '</button>';
 }
 
+/* v3.422.0 : un débit sous 1/min garde deux décimales (0,28 et 0,35 s'affichaient tous deux 0,3). */
+function formatRatePerMin(v) {
+  v = Number(v || 0);
+  var two = Math.round(v * 100) / 100;
+  if (two >= 1 || two === 0) return formatNumber(Math.round(v * 10) / 10);
+  return String(two).replace(".", ",");
+}
+window.formatRatePerMin = formatRatePerMin;
+
 function buildZoneWindowHTML(buildingId, index) {
   var plots = ProductionPlotsSystem.getPlots(buildingId);
   var plot = plots[index];
@@ -318,6 +327,8 @@ function buildZoneWindowHTML(buildingId, index) {
       label: _t("Défricher"), desc: _t("Rend cette zone exploitable."), cost: uc, canAfford: affordable(uc) });
   } else {
     var capacity = ProductionPlotsSystem.getPlotCapacity(index, plot);
+    // v3.422.0 : le débit de la zone, toujours visible (aussi au niveau max)
+    h += '<div class="zone-win-rate"><span>' + esc(_t("Débit")) + '</span><b>' + esc(_t("{n} {x}/min", { n: formatRatePerMin(ProductionPlotsSystem.getPlotRatePerMin(index, plot, buildingId)), x: resName })) + '</b></div>';
     h += '<div class="kgauge kgauge-thin kgauge-xp zone-win-gauge"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + (capacity > 0 ? Math.min(100, (plot.stock / capacity) * 100) : 0) + '%"></div></div>'
       + '<span class="kgauge-text">' + formatNumber(Math.floor(plot.stock)) + ' / ' + formatNumber(capacity) + '</span></div>';
     if (ProductionPlotsSystem.isPlotMaxLevel(plot)) {
@@ -330,7 +341,7 @@ function buildZoneWindowHTML(buildingId, index) {
       var rateNow = ProductionPlotsSystem.getPlotRatePerMin(index, plot, buildingId);
       var rateNext = ProductionPlotsSystem.getPlotRatePerMin(index, { level: plot.level + 1, fertile: plot.fertile, irrigated: plot.irrigated }, buildingId);
       h += buildZoneActionHTML({ main: true, onclick: "productionPlotUpgrade('" + buildingId + "', " + index + ")", iconHTML: '<img class="zone-act-ico" src="images/Icons/system/upgrade.png" alt="">',
-        label: _t("Niveau {n}", { n: plot.level + 1 }), desc: _t("{x}/min : {a} → {b}", { x: resName, a: formatNumber(rateNow), b: formatNumber(rateNext) }), cost: up, canAfford: affordable(up) });
+        label: _t("Niveau {n}", { n: plot.level + 1 }), desc: _t("{x}/min : {a} → {b}", { x: resName, a: formatRatePerMin(rateNow), b: formatRatePerMin(rateNext) }), cost: up, canAfford: affordable(up) });
     }
     ["fertile", "irrigated"].forEach(function (kind) {
       var d = buildingCfg ? buildingCfg.improvementCost[kind] : null;

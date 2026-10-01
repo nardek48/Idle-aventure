@@ -97,6 +97,7 @@
   background: var(--c-brown-900-soft);
   border: 1px solid var(--c-brown-550-3);
   color: var(--c-cream-150-vivid);
+  z-index: 1; /* v3.422.0 : le niveau passe devant le cadre du portrait */
 }
 .hud-pt[class*="hf-tier-"]::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; pointer-events: none; }
 .hud-pt.hf-tier-bronze::after { box-shadow: 0 0 0 2px var(--c-brown-550-2); }
@@ -547,7 +548,11 @@ body.living-map-active .hud-dock { display: none; }
   max-width: 390px;
   margin: 0 auto;
 
-  padding: 0px 12px calc(2px + var(--safe-bottom));
+  /* v3.422.0 (bug Seb, iPhone) : plus de marge de zone sûre ici. #tab-bar la porte déjà
+     (padding-bottom: var(--safe-bottom)) : sur iPhone, elle comptait deux fois et laissait un
+     vide d'environ 34 px sous le cadre du Camp et du Village (pages .kfp-wrap à hauteur 100 %).
+     Sans barre du bas (scene-active), la règle plus bas la remet. */
+  padding: 0px 12px 2px;
 }
 
 /* v3.131.0 (retour Seb, mobile) : sur les écrans à sous-onglets (.subtab-page, hauteur 100%

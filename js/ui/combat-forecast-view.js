@@ -135,6 +135,7 @@ function launchWithForecast(mission, action) {
   var traitsHTML = (mission.sourceKind === "dungeon" && typeof buildEnemyTraitsCardHTML === "function")
     ? buildEnemyTraitsCardHTML({ type: "dungeon", id: Number(String(mission.id).replace("dungeon_", "")) }) : "";
   if (!lowHp && !traitsHTML && CombatForecast.getLevelDef(f.id).level < 2) return action();
+  lastForecastLaunch = { mission: mission, action: action }; // v3.422.0 : retour depuis le Grimoire
   openCombatForecastConfirm(f, {
     title: mission.title || _t("Avant de partir"),
     confirmLabel: (f.unwinnable || lowHp) ? _t("Partir quand même") : _t("Partir"),
@@ -367,10 +368,57 @@ function loadEnemyTraitsPreset(presetId) {
 window.loadEnemyTraitsPreset = loadEnemyTraitsPreset;
 
 /* Ferme l'écran de lancement en cours et ouvre le Grimoire (le joueur relancera ensuite). */
+/* v3.422.0 (amélioration Seb) : depuis l'encart, le Grimoire garde le chemin du retour.
+   On note, AVANT de fermer, la fenêtre de départ et l'onglet d'où l'on vient ; l'écran du
+   Grimoire affiche alors « ↩ Revenir au combat », qui rouvre exactement cette fenêtre. */
+var grimoireReturn = null; // { fromTab, reopen }
+var lastForecastLaunch = null; // { mission, action } du dernier écran « Avant de partir »
+
+function captureGrimoireReturn() {
+  var fromTab = game.activeTab;
+  var reopen = null;
+  if (typeof pendingAdventureQuestId !== "undefined" && pendingAdventureQuestId) {
+    var aq = pendingAdventureQuestId; reopen = function () { openAdventureQuestIntro(aq); };
+  } else if (typeof pendingHuntQuestId !== "undefined" && pendingHuntQuestId) {
+    var hq = pendingHuntQuestId; reopen = function () { openHuntQuestIntro(hq); };
+  } else if (typeof pendingDungeonId !== "undefined" && pendingDungeonId) {
+    var dg = pendingDungeonId; reopen = function () { openDungeonSheet(dg); };
+  } else if (pendingForecastAction && lastForecastLaunch) {
+    var fl = lastForecastLaunch; reopen = function () { launchWithForecast(fl.mission, fl.action); };
+  } else if (enemyTraitsLastCtx && enemyTraitsLastCtx.type === "elite" && typeof livingMapOpenId !== "undefined" && livingMapOpenId) {
+    var lm = livingMapOpenId, sec = livingMapSelected; reopen = function () { openLivingMap(lm, sec); };
+  }
+  return reopen ? { fromTab: fromTab, reopen: reopen } : null;
+}
+
 function openGrimoireFromTraits() {
+  var back = captureGrimoireReturn();
   ["closeAdventureQuestIntro", "closeHuntQuestIntro", "closeDungeonSheet", "closeCombatForecast"].forEach(function (f) {
     if (typeof window[f] === "function") window[f]();
   });
   if (typeof switchTab === "function") switchTab("grimoire");
+  grimoireReturn = (game.activeTab === "grimoire") ? back : null;
+  if (grimoireReturn && typeof renderPanel === "function") renderPanel();
 }
 window.openGrimoireFromTraits = openGrimoireFromTraits;
+
+function hasGrimoireReturn() {
+  if (grimoireReturn && game.activeTab !== "grimoire") grimoireReturn = null; // parti ailleurs : oublié
+  return !!grimoireReturn;
+}
+window.hasGrimoireReturn = hasGrimoireReturn;
+
+function buildGrimoireReturnHTML() {
+  if (!hasGrimoireReturn()) return "";
+  return '<button type="button" class="kbtn primary grimoire-return-btn" onclick="grimoireGoBack()">↩ ' + esc(_t("Revenir au combat")) + '</button>';
+}
+window.buildGrimoireReturnHTML = buildGrimoireReturnHTML;
+
+function grimoireGoBack() {
+  var back = grimoireReturn;
+  grimoireReturn = null;
+  if (!back) return;
+  if (back.fromTab && back.fromTab !== "grimoire" && typeof switchTab === "function") switchTab(back.fromTab);
+  back.reopen();
+}
+window.grimoireGoBack = grimoireGoBack;

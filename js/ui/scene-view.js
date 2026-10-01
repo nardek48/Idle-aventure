@@ -3,6 +3,15 @@
    moteur est retiré ; l'écran route vers pa2-view.js et garde l'accueil et le départ refusé. */
 
 var SCENE_STAT_LABELS = { power: _t("Puissance"), precision: _t("Précision"), endurance: _t("Endurance") }; // v3.370.0 : traduits à la définition (i18n D2)
+/* v3.422.0 : libellé traduit AU RENDU (la table ci-dessus est figée au chargement, dans la
+   langue de ce moment-là ; la pseudo-langue du scan l'a montré). */
+function sceneStatLabel(stat) {
+  if (stat === "power") return _t("Puissance");
+  if (stat === "precision") return _t("Précision");
+  if (stat === "endurance") return _t("Endurance");
+  return stat;
+}
+window.sceneStatLabel = sceneStatLabel;
 
 /* --- Routeur de l'onglet "scene" (renderPanel(), case "scene") --- */
 function buildSceneScreenHTML() {

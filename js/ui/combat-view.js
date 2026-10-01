@@ -27,7 +27,7 @@ function buildCombatHTML() {
     +   '<div class="combat-action-row"><div id="class-skills-root"></div></div>'
     +   '<div class="combat-attack-row">'
     +     '<div id="heal-quick-root-left"></div>'
-    +     '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="heroBasicAttack()" aria-label="' + _t("Attaque") + '">' + _t("ATTAQUER") + '</button>'
+    +     '<button id="combat-attack-btn" class="combat-attack-btn" type="button" onclick="heroBasicAttack()" aria-label="' + _t("Attaque (barre espace)") + '"><span>' + _t("ATTAQUER") + '</span><span class="cb-key-hint" aria-hidden="true">' + _t("Espace") + '</span></button>'
     +     '<div id="heal-quick-root"></div>'
     +   '</div>'
     + '</div>'
@@ -613,6 +613,21 @@ window.mountCombatArea = mountCombatArea;
 window.buildHealButtonHTML = buildHealButtonHTML;
 window.renderHealButtons = renderHealButtons;
 
+/* v3.422.0 : garde-fous de la v3.287.0 remis (perdus en route, harnais [85]).
+   Une feuille, une fenêtre ou une modale ouverte : le clavier ne joue pas le combat derrière. */
+var COMBAT_SHEET_SELECTOR = ".ksheet, .ksheet-backdrop, .kwin-veil, .full-menu-overlay, .modal-overlay";
+function isCombatSheetOpen() {
+  if (typeof document === "undefined" || !document.querySelectorAll) return false;
+  // Les modales fixes d'index.html (#offline-modal, #confirm-modal...) restent dans le
+  // document, masquées : seule une feuille réellement affichée compte.
+  var list = document.querySelectorAll(COMBAT_SHEET_SELECTOR);
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].getClientRects && list[i].getClientRects().length > 0) return true;
+  }
+  return false;
+}
+window.isCombatSheetOpen = isCombatSheetOpen;
+
 function initHealKeyboardShortcuts() {
   document.addEventListener("keydown", function (e) {
     var active = document.activeElement;
@@ -620,6 +635,9 @@ function initHealKeyboardShortcuts() {
     if (tag === "INPUT" || tag === "TEXTAREA" || (active && active.isContentEditable)) return;
 
     if (game.activeTab !== "combat" || !window.CombatEngine) return;
+    if (isCombatSheetOpen()) return;
+    // Une touche maintenue ne se répète pas : un appui, une action.
+    if (e.repeat) { if (e.key === " ") e.preventDefault(); return; }
 
     if (e.key === " " || e.key === "Enter" || e.key === "a" || e.key === "A") {
       e.preventDefault();

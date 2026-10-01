@@ -41,7 +41,10 @@ function scanPage() {
     if (!el || /^(SCRIPT|STYLE|NOSCRIPT)$/.test(el.tagName)) continue;
     var r = el.getBoundingClientRect(), cs = getComputedStyle(el);
     if (!r.width || !r.height || cs.visibility === "hidden" || cs.display === "none" || Number(cs.opacity) === 0) continue;
-    var bare = n.textContent.replace(/⟦[^⟧]*⟧/g, " ").replace(/\s+/g, " ").trim();
+    // v3.422.0 : les gabarits imbriqués (« ⟦⟦Puissance⟧ 40 contre 5⟧ ») se retirent de l'intérieur
+    var bare = n.textContent, prev;
+    do { prev = bare; bare = bare.replace(/⟦[^⟦⟧]*⟧/g, " "); } while (bare !== prev);
+    bare = bare.replace(/\s+/g, " ").trim();
     if (/[A-Za-zÀ-ÿ]{2,}/.test(bare)) out.push(bare);
   }
   ["placeholder", "title", "aria-label"].forEach(function (a) {
@@ -86,14 +89,21 @@ var SCREENS = {
     await p.waitForTimeout(400);
     await p.evaluate(function () { var d = LivingMapManager.getMap("forest").sectors[0]; selectLivingMapSector(d.id); lmxToggleLegend(); });
   },
+  /* v3.422.0 : Petite Aventure v2 — préparation (sac, pactes), départ, puis deux pas sur la
+     carte et l'écran du nœud atteint (les boutons v1 « Bourrin / Prudent » n'existent plus). */
   aventure: async function (p) {
     await newHero(p);
     await p.evaluate(function () { switchTab("campement"); SceneRunManager.startRun("petite_aventure_foret"); switchTab("scene"); });
     await p.waitForTimeout(300);
-    for (var i = 0; i < 6; i++) {
-      var b = p.locator("button:visible", { hasText: /Bourrin|Prudent|Continuer/ });
-      var c = p.locator(".scene-card:visible:not([disabled])");
-      if (await b.count()) await b.first().click(); else if (await c.count()) await c.first().click(); else break;
+    await p.evaluate(function () { pa2PrepStep("pacts"); });
+    await p.waitForTimeout(200);
+    await p.evaluate(function () { pa2Depart(); });
+    await p.waitForTimeout(300);
+    for (var i = 0; i < 2; i++) {
+      await p.evaluate(function () {
+        var next = Pa2Run.openMoves();
+        if (next.length) pa2Move(next[0]);
+      });
       await p.waitForTimeout(300);
     }
   },

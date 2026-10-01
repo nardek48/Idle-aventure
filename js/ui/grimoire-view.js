@@ -690,7 +690,9 @@ function buildGrimoireHTML() {
     ? buildGrimoireEditHTML(grimoireEditIndex, kit)
     : buildGrimoireListHTML(kit, unlockedCount);
 
-  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/codex/codex_lore.png|" + _t("Grimoire")) + '">' + h + '</div>';
+  // v3.422.0 : venu de l'encart « avant le combat » -> bouton de retour en tête
+  var back = (typeof buildGrimoireReturnHTML === "function") ? buildGrimoireReturnHTML() : "";
+  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/codex/codex_lore.png|" + _t("Grimoire")) + '">' + back + h + '</div>';
 }
 
 function setGrimoireRuleCondition(index, conditionId) {

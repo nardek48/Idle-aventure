@@ -773,3 +773,17 @@ Deux contraintes mesurées à l'atelier :
 }
 
 .cb-cmd .combat-action-btn.on-cooldown { opacity: .55; }
+
+/* v3.422.0 : pastille du raccourci clavier sur le bouton d'attaque (remise, v3.287.0).
+   Elle ne s'affiche que là où il y a un clavier, jamais sur un téléphone. */
+.combat-attack-btn .cb-key-hint { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  /* posée à cheval sur le coin, comme les numéros des compétences : le libellé reste centré */
+  .cb-cmd .combat-attack-btn { overflow: visible; }
+  .combat-attack-btn .cb-key-hint {
+    display: inline-block; position: absolute; top: -10px; right: -10px;
+    padding: 1px 6px; border-radius: 5px; color: var(--c-brown-900); background-color: var(--c-cream-150-vivid);
+    border: 1px solid var(--c-brown-700-vivid);
+    font-size: 12px; font-weight: 700; letter-spacing: 0; line-height: 1.3;
+  }
+}

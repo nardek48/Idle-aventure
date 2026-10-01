@@ -95,6 +95,7 @@ var CompanionManager = {
     st.unlocked = true;
     st.present = true;
     st.hp = this.maxHpOf(companionId);
+    this.refreshParty(); // v3.422.0 : il est là dès le combat déjà engagé
     if (def.lines && def.lines.join && typeof addLog === "function") {
       addLog("🤝 " + _td(def.name) + " — « " + _td(def.lines.join) + " »", "event");
     }
@@ -129,6 +130,7 @@ var CompanionManager = {
       return false;
     }
     st.present = !!present;
+    this.refreshParty(); // v3.422.0
     if (typeof saveGame === "function") saveGame();
     return true;
   },
@@ -222,6 +224,32 @@ var CompanionManager = {
       c.allies.push(self.buildActor(id));
     });
     return c.allies;
+  },
+
+  /* v3.422.0 (bug Seb) : le groupe allié n'était reconstruit qu'au SPAWN d'un ennemi. Un
+     compagnon qui rejoint (Maddoc, Wenna), rentre de patrouille ou est remis « présent »
+     après que l'ennemi suivant est déjà là manquait donc au premier combat.
+     On ajuste le groupe en place : les arrivants entrent, les partants sortent, et les
+     acteurs déjà en jeu gardent leur état (recharges, charges). */
+  refreshParty: function () {
+    if (!window.CombatActors || typeof game === "undefined" || !game) return false;
+    var c = CombatActors.ensure();
+    if (!c) return false;
+    var self = this, want = this.partyIds();
+    var have = c.allies.filter(function (a) { return a && a.companionId; }).map(function (a) { return a.companionId; });
+    if (want.join() === have.join()) return false;
+    var keep = {};
+    c.allies.forEach(function (a) { if (a && a.companionId) keep[a.companionId] = a; });
+    c.allies.length = 0;
+    c.allies.push(CombatActors.heroActor());
+    want.forEach(function (id) {
+      var st = self.state(id), max = self.maxHpOf(id);
+      if (!keep[id] && st && (typeof st.hp !== "number" || !isFinite(st.hp) || st.hp <= 0)) st.hp = max;
+      var actor = keep[id] || self.buildActor(id);
+      if (actor) c.allies.push(actor);
+    });
+    if (typeof renderAllyRow === "function") renderAllyRow();
+    return true;
   },
 
   buildActor: function (companionId) {

@@ -595,3 +595,6 @@
 .grimoire-mode.is-locked {
   opacity: 0.55;
 }
+
+/* v3.422.0 : retour vers la fenêtre « avant le combat » d'où l'on vient */
+.grimoire-return-btn { display: flex; width: 100%; margin: 0 auto 10px; justify-content: center; }

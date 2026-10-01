@@ -154,13 +154,12 @@ var ProductionManager = {
   },
 
   getRatePerMin: function (id) {
-    var rate;
+    // v3.422.0 : les zones portent déjà le bonus de carte vivante (getPlotRatePerMin)
     if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
-      rate = ProductionPlotsSystem.getTotalRatePerMin(id);
-    } else {
-      var level = this.getLevel(id);
-      rate = PRODUCTION_CONFIG.baseRatePerMin * Math.pow(PRODUCTION_CONFIG.rateGrowthPerLevel, level - 1);
+      return ProductionPlotsSystem.getTotalRatePerMin(id);
     }
+    var level = this.getLevel(id);
+    var rate = PRODUCTION_CONFIG.baseRatePerMin * Math.pow(PRODUCTION_CONFIG.rateGrowthPerLevel, level - 1);
     return rate * this.getLivingMapMult(id);
   },
 

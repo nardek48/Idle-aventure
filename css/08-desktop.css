@@ -70,6 +70,15 @@ html.pc-mode * {
   scrollbar-width: thin;
   scrollbar-color: rgba(120, 88, 48, 0.55) transparent;
 }
+/* v3.422.0 (retour Seb, onglet Production) : la barre fine était trop dure à attraper sur
+   les pages elles-mêmes. Les zones de défilement principales passent à la largeur normale
+   (environ le double) ; les petites listes internes restent fines. */
+html.pc-mode .kfp-scrollzone,
+html.pc-mode .subtab-page-content,
+html.pc-mode #panel-container {
+  scrollbar-width: auto;
+  scrollbar-color: rgba(120, 88, 48, 0.7) rgba(60, 40, 20, 0.15);
+}
 
 /* Écran titre : l'illustration déborde, floutée et assombrie, sur les côtés de la colonne. */
 html.pc-mode .title-screen-overlay {

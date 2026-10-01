@@ -2880,13 +2880,6 @@ I18n.register("en", {
   "Cibler l'eau claire": "Aim for the clear water",
   "Dégager le conduit obstrué": "Clear the blocked pipe",
   "Rencontre": "Encounter",
-  "Une bande de gobelins": "A band of goblins",
-  "Une meute de loups": "A pack of wolves",
-  "Un nid d'araignées": "A spiders' nest",
-  "Une nuée de scarabées": "A swarm of scarabs",
-  "Deux guerriers des sables": "Two sand warriors",
-  "Un ver des sables": "A sandworm",
-  "Un guerrier des sables": "A sand warrior",
 
   // SCENE_TEMPLATES
   "Le Sentier Obstrué": "The Blocked Trail",
@@ -4151,4 +4144,10 @@ I18n.register("en", {
   "Installé": "Installed",
   "↑ La moins chère": "↑ Cheapest",
   "Touche une zone pour ses actions.": "Tap a zone for its actions.",
+  // v3.422.0
+  "Débit": "Output",
+  "{n} {x}/min": "{n} {x}/min",
+  "Attaque (barre espace)": "Attack (space bar)",
+  "Espace": "Space",
+  "Revenir au combat": "Back to the fight",
 });

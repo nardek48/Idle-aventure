@@ -263,31 +263,10 @@ var SCENE_NODES = {
         power: { stat: "power", label: "Dégager le conduit obstrué" }
       }
     }
-  },
-
-  /* v3.125.0 (Lot PA2) : groupes d'ennemis exploitables par un slot combat de scene-engine
-     (template.pools.combat -> gabaritId ici). enemyFilter passé tel quel à
-     QuestEnemyManager.spawnFor() — mêmes ids que ENEMY_DB (world "forest"). Purement des
-     données : aucune logique, cohérent avec le reste de ce fichier. */
-  combatGroups: {
-    gobelins_foret: { name: "Une bande de gobelins", enemyFilter: ["goblin"] },
-    /* v3.285.0 : « une meute de loups » en est vraiment une — deux bêtes à la fois. La
-       vague se comptant en rencontres (scene-run-system.js), elle garde sa longueur : une
-       meute rend la rencontre plus rude, elle ne raccourcit pas la vague.
-       Les gobelins et les araignées restent à l'unité pour l'instant : une bande et un nid
-       appellent des effectifs plus nombreux, donc leur propre mesure. */
-    loups_foret: { name: "Une meute de loups", enemyFilter: ["wolf"], group: ["wolf", "wolf"], groupHpMult: 0.40, groupGoldMult: 0.40 },
-    araignees_foret: { name: "Un nid d'araignées", enemyFilter: ["spider"] },
-    /* v3.300.0 (W-2, grammaire du Désert D2) : les scarabées vont par trois. PV de chaque
-       membre ×0,35 (mesuré à trois pendant le chantier de groupe), butin au même facteur. */
-    scarabees_desert: { name: "Une nuée de scarabées", enemyFilter: ["scarab"], group: ["scarab", "scarab", "scarab"], groupHpMult: 0.35, groupGoldMult: 0.35 },
-    /* v3.304.0 (Petite Aventure du Désert) : le Guerrier des sables va au plus par deux (D2),
-       le ver toujours seul. Facteurs de la paire mesurés au banc (sim/desert-pa-bench.js). */
-    guerriers_desert: { name: "Deux guerriers des sables", enemyFilter: ["sandwarrior"], group: ["sandwarrior", "sandwarrior"], groupHpMult: 0.55, groupGoldMult: 0.55 },
-    ver_desert: { name: "Un ver des sables", enemyFilter: ["sandworm"] },
-    // v3.310.0 (acte II, étape 6) : le guerrier des sables seul, en travers des marches
-    guerrier_seul_desert: { name: "Un guerrier des sables", enemyFilter: ["sandwarrior"] }
   }
+  /* v3.422.0 : combatGroups retiré (plus lu en jeu depuis la v3.391.0 ; les combats des
+     Petites Aventures v2 viennent de PA2_FOES, data/pa2-content.js). */
+
 };
 
 window.SCENE_NODES = SCENE_NODES;

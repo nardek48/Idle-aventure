@@ -320,7 +320,9 @@ function renderActorBand() {
   var btn = document.getElementById("combat-attack-btn");
   if (btn && window.CombatEngine && typeof CombatEngine.hasManualAllies === "function") {
     var sel = CombatEngine.hasManualAllies() ? CombatEngine.selectedActor() : null;
-    btn.textContent = (sel && sel.companionId) ? _t("ATTAQUER ({x})", { x: _td(sel.name || "") }) : _t("ATTAQUER");
+    // v3.422.0 : seul le libellé change, la pastille du raccourci reste
+    var lbl = btn.querySelector("span:first-child") || btn;
+    lbl.textContent = (sel && sel.companionId) ? _t("ATTAQUER ({x})", { x: _td(sel.name || "") }) : _t("ATTAQUER");
   }
 
   var slot = document.getElementById("combat-hero-slot");

@@ -487,10 +487,28 @@ var Pa2Run = {
     return { ok: true, reason: null, node: this.node(key, run) };
   },
 
+  /* v3.422.0 (point ouvert 4.2, option A de Seb) : une Petite Aventure lancée depuis un
+     secteur de carte vivante tire ses obstacles d'abord dans le pool du secteur
+     (living-maps.js, content.pools.obstacle) : 3 fois sur 4, le reste dans le pool du monde
+     pour la variété. Calculé à la volée : rien de nouveau dans la sauvegarde. */
+  SECTOR_OBSTACLE_SHARE: 0.75,
+  _sectorObstacles: function (run) {
+    var lm = run && run.livingMap;
+    if (!lm || !window.LivingMapManager || typeof LivingMapManager.getContentFor !== "function") return [];
+    var c = LivingMapManager.getContentFor(lm.mapId, lm.sectorId);
+    var bank = SceneEngine.getNodeBank().obstacles || {};
+    return ((c && c.pools && c.pools.obstacle) || []).filter(function (id) { return !!bank[id]; });
+  },
+  _obstaclePool: function (run) {
+    var own = this._sectorObstacles(run);
+    if (own.length && this.rand() < this.SECTOR_OBSTACLE_SHARE) return own;
+    return PA2_OBSTACLES[run.worldId] || PA2_OBSTACLES.forest;
+  },
+
   _prepareNode: function (run, n) {
     var t = n.type;
     if (t === "obstacle" || t === "tertre") {
-      var gid = n.gabaritId || ((t === "tertre") ? ((PA2_OBSTACLE_TERTRE.byWorld || {})[run.worldId] || PA2_OBSTACLE_TERTRE.gabaritId) : this._pick(PA2_OBSTACLES[run.worldId] || PA2_OBSTACLES.forest));
+      var gid = n.gabaritId || ((t === "tertre") ? ((PA2_OBSTACLE_TERTRE.byWorld || {})[run.worldId] || PA2_OBSTACLE_TERTRE.gabaritId) : this._pick(this._obstaclePool(run)));
       var gab = SceneEngine.getNodeBank().obstacles[gid];
       var base = (t === "tertre") ? PA2_OBSTACLE_TERTRE.baseDifficulty : Number(gab.baseDifficulty || 4);
       n.gabaritId = gid;

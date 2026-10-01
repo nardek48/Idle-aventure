@@ -25,7 +25,7 @@ function buildHudHTML() {
     +   '</div>'
     +   '<div class="hud-res">'
     +     '<span class="hud-res-item"><img src="images/Icons/gold_icon.png" alt="' + _t("Or") + '"><span id="hud-gold">0</span></span>'
-    +     '<span class="hud-res-item" id="hud-wres" style="display:none"><img id="hud-wres-img" src="" alt=""><span id="hud-wres-num">0</span></span>'
+    // v3.422.0 (Seb) : la ressource de la carte du monde quitte le bandeau, l'or reste seul
     +   '</div>'
     + '</div>'
     + '<div id="hud-mini-park">'
@@ -98,13 +98,6 @@ function hudSet(id, prop, val) {
   else if (prop === "display") el.style.display = val;
   else if (prop === "src") el.src = val;
 }
-/* Ressource de la carte du monde en cours (Sève d'Aeswyn en Forêt, Verre des dunes au Désert) ;
-   rien tant que le monde n'a pas de carte ouverte. */
-function hudWorldResourceId() {
-  if (!window.LivingMapManager || !window.WORLDS || !window.WorldManager) return null;
-  var w = WORLDS[WorldManager.worldIndex || 0], map = w ? LivingMapManager.getMapForWorld(w.id) : null;
-  return map ? LivingMapManager.getRewardResourceId(map.id) : null;
-}
 function renderHudBand() {
   hudSet("hud-gold", "text", hudNum(game.gold));
   var hp = Math.max(0, Math.ceil(Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1)));
@@ -119,14 +112,6 @@ function renderHudBand() {
   hudSet("hud-xp-fill", "width", Math.max(0, Math.min(100, Math.round(100 * xp / next))) + "%");
   hudSet("hud-xp-text", "text", _t("{a} / {b} XP", { a: hudNum(xp), b: hudNum(next) }));
   hudSet("hud-pt-lvl", "text", _t("Niv. {n}", { n: Number(game.heroLevel || 1) }));
-  var rid = hudWorldResourceId(), def = rid && window.WAREHOUSE_RESOURCES ? WAREHOUSE_RESOURCES[rid] : null;
-  hudSet("hud-wres", "display", def ? "" : "none");
-  if (def) {
-    hudSet("hud-wres-img", "src", def.icon);
-    var img = document.getElementById("hud-wres-img");
-    if (img && img.alt !== _td(def.name)) img.alt = _td(def.name);
-    hudSet("hud-wres-num", "text", hudNum(window.WarehouseManager ? WarehouseManager.getAmount(rid) : 0));
-  }
 }
 
 /* v3.338.0 (Hauts faits, H4) : liseré du portrait selon le palier du monde courant.
@@ -137,7 +122,8 @@ function renderHudAchievementTier() {
   if (now - hudAchTierAt < 1000) return;
   hudAchTierAt = now;
   // v3.396.0 : liseré posé sur le portrait du bandeau ET sur le mini-héros du combat
-  var els = [document.querySelector ? document.querySelector("#combat-hero-mini .combat-hero-mini-portrait") : null, document.getElementById("hud-pt")].filter(Boolean);
+  // v3.422.0 (Seb) : plus de liseré sur le portrait du bandeau (il recouvrait le niveau) ; le mini-héros du combat le garde
+  var els = [document.querySelector ? document.querySelector("#combat-hero-mini .combat-hero-mini-portrait") : null].filter(Boolean);
   if (!els.length || !window.AchievementManager) return;
   var tier = AchievementManager.getCurrentWorldTier() || "none";
   if (tier === hudAchTierLast) return;

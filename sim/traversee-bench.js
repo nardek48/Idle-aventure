@@ -24,7 +24,8 @@ var PROFILS = [
 function nuee(c, p) {
   B.setup(c.hero, c.id, p);
   if (p.wenna) B.run("CompanionManager.unlock('wenna'); game.combatMode = 'grimoire'; game.unlockedTabs.grimoire = true;");
-  var grp = g.SCENE_NODES.combatGroups.scarabees_desert;
+  // v3.422.0 : SCENE_NODES.combatGroups retiré, la nuée de scarabées est posée ici
+  var grp = { enemyFilter: ["scarab"], group: ["scarab", "scarab", "scarab"], groupHpMult: 0.35, groupGoldMult: 0.35 };
   var spawned = g.QuestEnemyManager.spawnFor({ worldId: "desert", adventureIndex: 0, enemyFilter: grp.enemyFilter, group: grp.group, groupHpMult: grp.groupHpMult, groupGoldMult: grp.groupGoldMult }, false);
   g.CombatEngine.spawnGroup(spawned);
   g.game.activeTab = "combat";

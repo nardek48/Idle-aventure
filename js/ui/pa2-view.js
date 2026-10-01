@@ -210,7 +210,7 @@ function buildPa2PrepHTML(run) {
     h += pa2GaugeHTML("hp", game.heroHp, game.heroMaxHp, _t("{a} / {b} PV", { a: pa2Num(game.heroHp), b: pa2Num(game.heroMaxHp) }));
     h += '<div class="pa2-stats">';
     ["power", "precision", "endurance"].forEach(function (s) {
-      h += '<span title="' + esc(SCENE_STAT_LABELS[s]) + '">' + pa2Img(PA2_ICONS[s]) + '<b>' + pa2Num(snap[s]) + '</b></span>';
+      h += '<span title="' + esc(sceneStatLabel(s)) + '">' + pa2Img(PA2_ICONS[s]) + '<b>' + pa2Num(snap[s]) + '</b></span>';
     });
     h += '</div></div></div>';
     if (Number(game.heroHp || 0) < Number(game.heroMaxHp || 1)) {
@@ -687,7 +687,7 @@ function pa2DieBlock(thr, cran, rope) {
     '<b>' + (rope ? esc(_t("corde")) : thr + (thr < 6 ? "+" : "")) + '</b>' + esc(rope ? _t("Assuré") : PA2_CRAN_WORD[cran]) + '</div></div>';
 }
 function pa2WhyHTML(o, run) {
-  var parts = [_t("{s} {v} contre {d}", { s: SCENE_STAT_LABELS[o.stat] || o.stat, v: pa2Num(o.statValue), d: pa2Num(o.difficulty) })];
+  var parts = [_t("{s} {v} contre {d}", { s: sceneStatLabel(o.stat), v: pa2Num(o.statValue), d: pa2Num(o.difficulty) })];
   if (o.bonus) parts.push(_tn(o.bonus, "+{n} cran", "+{n} crans", { n: o.bonus }));
   if (run.wounds) parts.push(_tn(run.wounds, "{n} blessure", "{n} blessures", { n: run.wounds }));
   return esc(parts.join(" · "));

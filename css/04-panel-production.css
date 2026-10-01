@@ -933,6 +933,9 @@
 /* Fenêtre d'une zone (.kwin du kit) */
 .zone-win .kwin-body { padding: 4px 14px 0; }
 .zone-win-gauge { margin: 0 0 10px; }
+/* v3.422.0 : ligne Débit de la zone, toujours visible */
+.zone-win-rate { display: flex; justify-content: space-between; align-items: baseline; margin: 2px 0 6px; font-size: 13px; color: var(--c-brown-750-2); }
+.zone-win-rate b { font-size: 14px; font-weight: 800; color: var(--c-brown-700-vivid); }
 .zone-win-txt { margin: 4px 0 8px; font-size: 13px; text-align: center; color: var(--c-brown-750-2); }
 .zone-act {
   display: flex;

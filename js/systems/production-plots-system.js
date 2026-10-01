@@ -72,6 +72,12 @@ var ProductionPlotsSystem = {
     var profile = this.getProfile(plotIndex);
     var cfg = buildingId ? PRODUCTION_PLOTS_BUILDINGS[buildingId] : null;
     var rate = profile.baseRatePerMin * Math.pow(profile.rateGrowthPerLevel, plot.level - 1) * ((cfg && cfg.rateMult) || 1);
+    /* v3.422.0 : le bonus de carte vivante (Puits, Scierie +10 %) s'applique ICI, à la zone.
+       Avant, seul l'affichage du total (ProductionManager.getRatePerMin) le comptait : depuis
+       la v3.97.0, les 6 bâtiments passent par les zones et le bonus n'était jamais produit. */
+    if (buildingId && window.ProductionManager && typeof ProductionManager.getLivingMapMult === "function") {
+      rate *= ProductionManager.getLivingMapMult(buildingId);
+    }
     var bonus = 1;
     if (plot.fertile) bonus += PRODUCTION_PLOTS_SHARED.bonusPerImprovement.fertile;
     if (plot.irrigated) bonus += PRODUCTION_PLOTS_SHARED.bonusPerImprovement.irrigated;

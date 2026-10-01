@@ -246,6 +246,8 @@ var PatrolManager = {
   },
 
   _refresh: function () {
+    // v3.422.0 (bug Seb) : départ, retour ou rappel -> le groupe du combat suit tout de suite
+    if (window.CompanionManager && typeof CompanionManager.refreshParty === "function") CompanionManager.refreshParty();
     if (window.FilRouge) FilRouge.invalidate();
     if (typeof saveGame === "function") saveGame();
     if (typeof renderAll === "function") renderAll();

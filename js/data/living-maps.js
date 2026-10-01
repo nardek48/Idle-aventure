@@ -12,6 +12,8 @@
      ring        anneau 1/2/3 — fixe l'intensité (voir LIVING_MAP_RULES.ringIntensity)
      neighbors   secteurs adjacents ; le village est voisin implicite de l'anneau 1
      content     { type: "expedition", templateId, pools } ou
+                 (v3.422.0 : pools.obstacle seul est lu, par Pa2Run._obstaclePool, 3 obstacles
+                 sur 4 tirés dedans ; les anciens pools.combat sont retirés)
                  { type: "elite", eliteId, then: {expedition} } — l'élite se joue
                  UNE fois (première libération), les reprises jouent `then` ; ou
                  { type: "elite", eliteId, repeatable: true } — se rejoue à volonté (C-5)
@@ -76,7 +78,7 @@ var LIVING_MAPS = {
         heldEffect: { id: "autel_normale", label: "L'autel de pierre ne demande rien, une fois par aventure." }, // v3.382.0 : effet v2 (Q11)
         lore: "Neuf pierres debout. La dixième est couchée et personne ne se souvient l'avoir vue tomber." },
       { id: "arbredore", name: "Arbre doré", x: 37.9, y: 73.0, ring: 2, neighbors: ["etang", "toiles"],
-        content: { type: "expedition", templateId: "petite_aventure_foret", pools: { combat: ["araignees_foret"] } },
+        content: { type: "expedition", templateId: "petite_aventure_foret", pools: {} },
         heldEffect: { id: "scierie_plus", label: "Scierie +10 %." },
         lore: "Une maison dans les branches, une échelle, une lanterne encore chaude." },
       { id: "autel", name: "Autel de pierre", x: 74.1, y: 23.7, ring: 2, neighbors: ["camp", "arbremere"],
@@ -93,7 +95,7 @@ var LIVING_MAPS = {
       // Camp des toiles : l'élite une fois, puis expédition Périple aux reprises (décision Seb, 15/09/2026).
       { id: "toiles", name: "Camp des toiles", x: 10.5, y: 78.5, ring: 3, neighbors: ["menhirs", "arbredore"],
         content: { type: "elite", eliteId: "araignee_marquee",
-          then: { type: "expedition", templateId: "petite_aventure_foret", pools: { combat: ["araignees_foret"] } } },
+          then: { type: "expedition", templateId: "petite_aventure_foret", pools: {} } },
         heldEffect: null,
         lore: "Les fils vont d'un arbre à l'autre à hauteur de gorge." },
       // Portail en ruine : porte narrative du Désert (colporteur). Aucun effet en v1, réservé à la carte du Désert.
@@ -162,7 +164,7 @@ var LIVING_MAPS = {
       // Fermé jusqu'à l'étape 10 « La nuée » : son contenu est une nuée (acte I §6)
       { id: "scarabees", name: "Le champ de scarabées", x: 60.5, y: 63.5, ring: 1, neighbors: ["tour_guet"],
         requiresStoryStep: "desert_10",
-        content: { type: "expedition", templateId: "petite_aventure_desert", pools: { combat: ["scarabees_desert"] } },
+        content: { type: "expedition", templateId: "petite_aventure_desert", pools: {} },
         heldEffect: null,
         lore: "Le sable crépite au soleil. De près, ce n'est pas le sable." },
 
@@ -183,7 +185,7 @@ var LIVING_MAPS = {
       { id: "tour_guet", name: "La tour de guet", x: 75.5, y: 54, ring: 2, neighbors: ["scarabees", "trone"],
         requiresStoryStep: "desert_11",
         content: { type: "elite", eliteId: "serment_armure",
-          then: { type: "expedition", templateId: "petite_aventure_desert", pools: { combat: ["guerriers_desert"] } } },
+          then: { type: "expedition", templateId: "petite_aventure_desert", pools: {} } },
         /* v3.314.0 (W-4a1) : l'effet de la tour EST le frein déclaré plus haut en choiceBrakes.
            heldEffect ne sert ici qu'à l'afficher sur le panneau du secteur (living-map-view.js) :
            aucun hasEffect("guet_tour") ailleurs dans le code, et il ne faut pas en écrire un,
@@ -192,7 +194,7 @@ var LIVING_MAPS = {
         effectLostOnChoice: { key: "serment", value: "relever" },
         lore: "Quelqu'un monte encore la garde là-haut. Il ne s'est pas retourné." },
       { id: "lit_fleuve", name: "Le lit du fleuve", x: 19.5, y: 60, ring: 2, neighbors: ["steles", "trone"],
-        content: { type: "expedition", templateId: "petite_aventure_desert", pools: { combat: ["ver_desert"] } },
+        content: { type: "expedition", templateId: "petite_aventure_desert", pools: {} },
         heldEffect: null,
         lore: "Un fleuve est passé ici. Les pierres rondes s'en souviennent mieux que l'eau." },
 
@@ -212,7 +214,7 @@ var LIVING_MAPS = {
         heldEffect: null,
         lore: "Deux battants plus hauts que des arbres. L'un est ouvert de la largeur d'un homme." },
       { id: "trone", name: "Le trône de sable", x: 51, y: 81, ring: 3, neighbors: ["lit_fleuve", "tour_guet"],
-        content: { type: "expedition", templateId: "petite_aventure_desert", pools: { combat: ["guerriers_desert"] } },
+        content: { type: "expedition", templateId: "petite_aventure_desert", pools: {} },
         heldEffect: null,
         lore: "Un siège taillé dans la dune, face au sud. Le vent ne l'use pas." }
     ],

@@ -545,8 +545,8 @@ async function P7(browser, base) {
   await tap(page, "#pa2-overlay button[onclick=\"pa2AddItem('gourde')\"]");
   ok(await page.locator(".pa2-cell.is-full").count() === 2, "deux objets posés dans la besace");
   await tap(page, "button[onclick=\"pa2PrepStep('pacts')\"]");
-  // v3.386.0 : Math.random graine (carte, dés, combats) : le héros sans arme ramasse toujours de l'or.
-  await page.evaluate(function () { var t = 20260929; Math.random = function () { t = (t + 0x6D2B79F5) | 0; var x = Math.imul(t ^ (t >>> 15), 1 | t); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; });
+  // v3.386.0 : Math.random graine (carte, dés, combats) : le héros sans arme ramasse toujours de l'or. v3.422.0 : graine changée (le pool du secteur consomme un tirage de plus).
+  await page.evaluate(function () { var t = 20261001; Math.random = function () { t = (t + 0x6D2B79F5) | 0; var x = Math.imul(t ^ (t >>> 15), 1 | t); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; });
   await tap(page, "button[onclick=\"pa2Depart()\"]");
   ok(await visible(page, "#pa2-map") && await visible(page, "#pa2-hud"), "départ : carte de nuit et HUD du run");
   ok(await page.evaluate(function (p0) { return WarehouseManager.getAmount("petite_ration") === p0 - 1; }, pr0), "la ration emportée est prise à l'Entrepôt");

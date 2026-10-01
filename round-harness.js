@@ -5969,13 +5969,13 @@ console.log("\n[57] v3.255.0 \u2014 Cartes Vivantes C-1 : donn\u00e9es, LivingMa
       if (c.type === "expedition") {
         if (!g.SCENE_TEMPLATES[c.templateId]) refOk = false;
         (c.pools.obstacle || []).forEach(function (o) { if (!g.SCENE_NODES.obstacles[o]) refOk = false; });
-        (c.pools.combat || []).forEach(function (o) { if (!g.SCENE_NODES.combatGroups[o]) refOk = false; });
+        if (c.pools && c.pools.combat) refOk = false; // v3.422.0 : pools.combat retirés
       } else if (c.type === "elite") {
         eliteOk = !!(g.ELITE_DB && g.ELITE_DB[c.eliteId]);
       } else refOk = false;
     });
   });
-  ok(refOk, "gabarits, obstacles (SCENE_NODES.obstacles) et groupes (combatGroups) référencés existent");
+  ok(refOk, "gabarits et obstacles (SCENE_NODES.obstacles) référencés existent, plus de pools.combat");
   ok(eliteOk, "Camp des toiles : l'élite araignee_marquee existe dans ELITE_DB");
 
   /* Nouvelle partie : tout voilé. */
@@ -6046,7 +6046,7 @@ console.log("\n[57] v3.255.0 \u2014 Cartes Vivantes C-1 : donn\u00e9es, LivingMa
   ok(LM.canStart(M, "toiles").ok, "...mais le secteur d'élite reste jouable (combat, pas expédition)");
   run("game.explorationProgression.petiteAventure.spent = 0;");
   LM.onRunEnd(M, "toiles", "success");
-  ok(LM.getContentFor(M, "toiles").type === "expedition" && LM.getContentFor(M, "toiles").pools.combat[0] === "araignees_foret", "après la première libération : expédition Périple aux reprises");
+  ok(LM.getContentFor(M, "toiles").type === "expedition" && LM.getContentFor(M, "toiles").templateId === "petite_aventure_foret", "après la première libération : expédition Périple aux reprises");
   ok(LM.getState(M, "toiles").firstRewardClaimed && g.WarehouseManager.getAmount("seve_aeswyn") === seve1 + 12, "+12 Sève (anneau 3)");
 
   /* Palissade : frein en % par niveau, tenue par anneau. Simulée sur game.village (C-3 livrera le bâtiment). */
@@ -7896,13 +7896,11 @@ console.log("\n[82] v3.284.0 — la Chasse en Forêt s'ouvre aux meutes");
 
 console.log("\n[83] v3.285.0 — Petites Aventures : la meute de loups en est une");
 (function () {
-  var bank = g.SCENE_NODES.combatGroups;
-
-  ok(Array.isArray(bank.loups_foret.group) && bank.loups_foret.group.length === 2,
-    "le gabarit « meute de loups » sert deux bêtes");
-  ok(bank.loups_foret.groupHpMult === 0.40, "chaque bête à ×0,40");
-  ok(!bank.gobelins_foret.group && !bank.araignees_foret.group,
-    "bande de gobelins et nid d'araignées restent à l'unité, faute de mesure propre");
+  /* v3.422.0 : SCENE_NODES.combatGroups est retiré (plus lu en jeu). Le mécanisme de groupe
+     de spawnFor, lui, reste : on le teste avec les valeurs de l'ancienne meute. */
+  var bank = { loups_foret: { enemyFilter: ["wolf"], group: ["wolf", "wolf"], groupHpMult: 0.40, groupGoldMult: 0.40 },
+    gobelins_foret: { enemyFilter: ["goblin"] } };
+  ok(typeof g.SCENE_NODES.combatGroups === "undefined", "SCENE_NODES.combatGroups est retiré");
 
   /* La pseudo-quête porte les champs jusqu'à spawnFor. */
   var game = freshCombat("knight"); giveWeapon();
@@ -8002,7 +8000,7 @@ console.log("\n[85] v3.287.0 — raccourcis clavier du combat : garde-fous et af
     "le nom de l'acteur ne réécrit que le libellé, pas la pastille");
 })();
 
-console.log("\n[85] v3.288.0 — Donjon : élites escortées et phases du Basilic");
+console.log("\n[85 bis] v3.288.0 — Donjon : élites escortées et phases du Basilic");
 (function () {
   var game = freshCombat("knight"); giveWeapon();
   var D = g.DungeonManager;
@@ -8724,7 +8722,6 @@ console.log("\n[99] v3.304.0 — Petite Aventure du Désert, étape 3, icône g�
   ok(obs.every(function (id) { var o = N.obstacles[id]; return o && o.biome === "desert" && ["power", "precision", "endurance"].every(function (k) { return o.options[k] && o.options[k].stat === k && o.options[k].label; }); }),
     "quatre obstacles du Désert, trois voies chacun");
   ok(N.obstacles.puits_effondre.ropeOption === true && N.obstacles.puits_effondre.options.precision.label === "Longer la margelle", "le puits ouvre la voie de la corde ; la précision longe la margelle");
-  ok(N.combatGroups.guerriers_desert.group.length === 2 && !N.combatGroups.ver_desert.group, "guerriers par deux, ver seul");
   ok(D && D.mode === "pa2" && D.worldId === "desert" && D.successFlag === "desertPaCompleted", "canevas : Petite Aventure v2 du Désert, drapeau de l'étape « L'outre »");
   // v3.391.0 : les règles du Désert se testent sur la v2 ([164], PA2_WORLD_RULES) ; le canevas de test du moteur est retiré.
 
@@ -12688,7 +12685,7 @@ console.log("\n[167] v3.391.0 — Chantier P, lot P-3 : retrait de l'ancien mote
     ok(Object.keys(C).sort().join() === "clamp,depthDifficulty,depthLootMultiplier,successChance", "SceneCheckSystem : les jets lus par Pa2Run seulement");
     ok(["confirmLoadout", "enterGate", "resolveObstacle", "resolveFinale", "leaveNow", "useSceneGourde", "enterCombatNode", "statEffective", "getMaxInjuries"].every(function (k) { return typeof S[k] === "undefined"; }), "SceneRunManager : plus de paliers, portes, chambre finale ni nœud combat");
     ok(typeof S.onCombatWon === "undefined" && typeof S.onCombatDefeat === "undefined", "v3.412.0 : les anciens points d'appel du combat v1 sont retirés");
-    ok(Object.keys(N).sort().join() === "combatGroups,obstacles,optionProfiles", "SCENE_NODES : profils, obstacles, groupes");
+    ok(Object.keys(N).sort().join() === "obstacles,optionProfiles", "SCENE_NODES : profils et obstacles (v3.422.0 : groupes retirés)");
     ok(typeof g.buildSceneGateChoiceHTML === "undefined" && typeof g.buildScenePreparationHTML === "undefined" && typeof g.sceneRunLog === "undefined", "scene-view : plus d'écrans de l'ancien moteur");
 
     /* Vieux runs d'une ancienne sauvegarde : un bilan jamais consulté se range, une quête en cours se rend. */
@@ -12775,8 +12772,8 @@ console.log("\n[169] v3.396.0 — HUD-1 : bandeau « C · Ornée » et bulles de
     var fs = require("fs");
     var hud = g.buildHudHTML(), css = fs.readFileSync(ROOT + "/css/02-layout.css", "utf8");
     var idx = fs.readFileSync(ROOT + "/index.html", "utf8"), sw = fs.readFileSync(ROOT + "/sw.js", "utf8");
-    ok(hud.indexOf('class="hud-band"') >= 0 && hud.indexOf('id="hud-hp-text"') > 0 && hud.indexOf('id="hud-xp-text"') > 0 && hud.indexOf('id="hud-gold"') > 0 && hud.indexOf('id="hud-wres"') > 0,
-      "bandeau : portrait, PV, XP, or et ressource de la carte du monde");
+    ok(hud.indexOf('class="hud-band"') >= 0 && hud.indexOf('id="hud-hp-text"') > 0 && hud.indexOf('id="hud-xp-text"') > 0 && hud.indexOf('id="hud-gold"') > 0 && hud.indexOf('id="hud-wres"') < 0,
+      "bandeau : portrait, PV, XP et or (v3.422.0 : plus de ressource de la carte du monde)");
     ok(hud.indexOf("hud-filrouge-btn") < 0 && hud.indexOf("nb-hud-bag-btn") < 0, "plus aucun raccourci dans le bandeau");
     ok(hud.indexOf('id="hud-mini-park"') > 0 && hud.indexOf('id="hud-mini-park"') < hud.indexOf('id="combat-hero-mini"') && /#hud-mini-park \{ display: none; \}/.test(css),
       "le mini-héros du combat reste dans le HUD, rangé caché hors combat");
@@ -13387,6 +13384,163 @@ console.log("\n[190] v3.418.0 — Équilibrage : Taverne et Halle à l'Atelier 2
     ok(P.getPlotRatePerMin(0, plot, "sawmill") === base && P.getPlotRatePerMin(0, plot, "mine") === base, "bois et fer : débit inchangé");
   } catch (err) {
     ok(false, "[190] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[191] v3.419.0 — La Caravane de la Halle marchande (R3, version C1 « Surplus auto »)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure(); Prefs._cache = {}; Prefs._save({});");
+    run("game.village.buildings.warehouse.level = 0; game.village.buildings.hall.level = 1; WorldManager.worldIndex = 1;");
+    ok(run("CARAVAN_TRIPS.court.units === 150 && CARAVAN_TRIPS.moyen.units === 400 && CARAVAN_TRIPS.long.units === 800 && CARAVAN_TRIPS.long.rareChance === 0.25 && CARAVAN_TRIPS.long.itemChance === 0.10"), "trois trajets : 150 / 400 / 800 unités, Long 25 % rare et 10 % objet");
+    ok(run("CARAVAN_TRIPS.court.valuePct === 0.6 && CARAVAN_TRIPS.moyen.valuePct === 0.8 && CARAVAN_TRIPS.long.valuePct === 1 && CARAVAN_TRIPS.long.seconds === 28800"), "60 / 80 / 100 % de la valeur (v3.421.0), Long 8 h");
+    ok(run("CaravanManager.isTripOpen('moyen', 1) && !CaravanManager.isTripOpen('long', 2) && CaravanManager.isTripOpen('long', 3)"), "Court et Moyen dès la Halle 1, Long à la Halle 3");
+    ok(run("CaravanManager.getCapacity('court', 1)") === 150 && run("CaravanManager.getCapacity('moyen', 5)") === 560 && run("CaravanManager.getCapacity('long', 10)") === 1520, "+10 % de capacité par niveau : Moyen 560 au niveau 5, Long 1 520 au niveau 10");
+    ok(run("CaravanManager.getEligibleKeys().sort().join(',')") === "ble,eau,pierre,viande", "seules les matières brutes partent, ni Bois ni Fer (v3.421.0)");
+    /* Stock : Blé, Viande, Bois au plafond (500) ; Eau 300 ; Pierre 100 ; Fer 0 ; réserve de Viande 400 */
+    run("['ble','viande','bois'].forEach(function (k) { game.resources[k] = 500; }); game.resources.eau = 300; game.resources.pierre = 100; game.resources.fer = 0; ResourceReserveManager.setReserve('viande', 400); ResourceReserveManager.setReserve('bois', 0); ResourceReserveManager.setReserve('ble', 0);");
+    ok(run("CaravanManager.getSpare('ble')") === 250 && run("CaravanManager.getSpare('viande')") === 100 && run("CaravanManager.getSpare('pierre')") === 0, "part libre : au-dessus de la moitié du plafond et de la réserve (Blé 250, Viande 100, Pierre 0)");
+    var court = run("CaravanManager.computeLoad('court')");
+    ok(court.ble === 75 && court.viande === 75 && !court.bois && !court.eau, "Court : les ressources au plafond d'abord, à parts égales ; le Bois au plafond reste");
+    var moyen = run("CaravanManager.computeLoad('moyen')");
+    ok(run("CaravanManager.getLoadUnits(" + JSON.stringify(moyen) + ")") === 400 && moyen.viande === 100 && moyen.ble === 250 && moyen.eau === 50 && !moyen.bois, "Moyen : la Viande s'arrête à sa réserve, le Blé à la moitié du plafond, l'Eau complète");
+    ok(run("CaravanManager.getBlockReason('long')") !== "" && run("CaravanManager.getBlockReason('moyen')") === "", "Long refusé à la Halle 1, Moyen possible");
+    var gold0 = run("game.gold = 0; game.gold");
+    run("CaravanManager._now = function () { return 1000000; }; CaravanManager.depart('moyen');");
+    var c = run("game.village.caravan");
+    ok(c && c.trip === "moyen" && c.endsAt === 1000000 + 4 * 3600 * 1000 && c.gold === 400, "départ : trajet, retour dans 4 h, 400 or (300 Blé et Eau à 1 or, 100 Viande à 2 or, × 80 %)");
+    ok(run("game.resources.ble") >= 250 && run("game.resources.bois") === 500 && run("game.resources.viande") === 400, "jamais sous la moitié du plafond ni sous la réserve ; le Bois n'est pas touché");
+    ok(run("CaravanManager.getBlockReason('court')") !== "" && run("CaravanManager.depart('court')") === false, "une seule caravane à la fois");
+    ok(run("buildSaveData()").village.caravan.trip === "moyen", "la caravane est dans la sauvegarde (game.village)");
+    run("hallSheetSegment = 'caravan'; openVillageBuildingId = 'hall';");
+    var route = run("buildVillageBuildingSheetHTML('hall')");
+    ok(route.indexOf('data-car="route"') !== -1 && route.indexOf("car-left") !== -1 && route.indexOf("setHallSheetSegment('build')") !== -1, "feuille de la Halle : segment Caravane, en route avec le compte à rebours");
+    ok(run("CaravanManager.unload()") === null, "pas de déchargement avant l'arrivée");
+    run("CaravanManager._now = function () { return 1000000 + 4 * 3600 * 1000 + 5; };");
+    ok(run("CaravanManager.isBack()") && run("CaravanManager.checkArrival()") === true && run("CaravanManager.checkArrival()") === false, "retour hors ligne : annoncé une seule fois");
+    ok(run("getVillageSubTabBadges().buildings") >= 1 && run("buildVillageBuildingCardHTML('hall')").indexOf("is-caravan-back") !== -1, "ruban « De retour » sur la tuile de la Halle, pastille sur Bâtiments");
+    ok(run("buildVillageBuildingSheetHTML('hall')").indexOf("unloadCaravanFromSheet()") !== -1, "de retour : bouton Décharger");
+    var loot = run("CaravanManager.unload()");
+    ok(loot && loot.gold === 400 && run("game.gold") === gold0 + 400 && run("game.village.caravan") === null, "décharger : +400 or, la Halle est libre");
+    /* Trajet Long au niveau 3 : matériau du monde et objet, tirés au départ */
+    run("game.village.buildings.hall.level = 3; ['ble','viande','bois','eau','pierre'].forEach(function (k) { game.resources[k] = 500; }); game.resources.verre_des_dunes = 0; game.inventory = [];");
+    run("var _r = Math.random; Math.random = function () { return 0; }; CaravanManager.depart('long'); Math.random = _r;");
+    c = run("game.village.caravan");
+    ok(c.trip === "long" && c.rare && c.rare.key === "verre_des_dunes" && c.rare.n === 2 && !!c.item, "Long au Désert : Verre des dunes et objet d'équipement tirés au départ");
+    run("CaravanManager._now = function () { return 1e13; };");
+    run("CaravanManager.unload(); CaravanManager._now = function () { return Date.now(); };");
+    ok(run("game.resources.verre_des_dunes") === 2 && run("game.inventory.length") === 1, "au déchargement : le matériau rare à l'Entrepôt, l'objet dans le sac");
+    ok(run("VILLAGE_BUILDINGS.hall.effectLabel(3)").indexOf("trajet Long") !== -1 && run("VILLAGE_BUILDINGS.hall.effectLabel(10)").indexOf("Caravane +90 %") !== -1, "fiche de la Halle : niveau 3 « trajet Long », niveau 10 « Caravane +90 % »");
+    ok(run("buildWarehouseSheetHTML('ble')").indexOf("Caravane de la Halle") !== -1, "Entrepôt : la caravane est citée dans « Où ça part » des matières brutes");
+    var idx = fs.readFileSync(ROOT + "/index.html", "utf8"), sw = fs.readFileSync(ROOT + "/sw.js", "utf8");
+    ok(idx.indexOf("js/systems/caravan-system.js") > 0 && idx.indexOf("js/ui/caravan-view.js") > idx.indexOf("js/ui/village-building-view.js") && sw.indexOf("./js/ui/caravan-view.js") > 0, "fichiers chargés et précachés");
+  } catch (err) {
+    ok(false, "[191] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[192] v3.420.0 — La caravane sur la carte vivante, icône de Seb");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure(); Prefs._cache = {}; Prefs._save({});");
+    run("game.village.buildings.warehouse.level = 0; game.village.buildings.hall.level = 3; WorldManager.worldIndex = 1; ['ble','viande','bois'].forEach(function (k) { game.resources[k] = 500; });");
+    ok(run("Object.keys(LIVING_MAPS).every(function (k) { var m = LIVING_MAPS[k].caravanMarket; return m && m.x > 0 && m.x < 100 && m.y > 0 && m.y < 100; })"), "chaque carte vivante a son marché");
+    ok(run("buildLivingMapHTML('desert')").indexOf("lm-caravan") === -1, "pas de caravane sur la carte quand elle est au village");
+    run("CaravanManager._now = function () { return 5e12; }; CaravanManager.depart('long');");
+    ok(run("game.village.caravan.world") === 1 && run("CaravanManager.getMapId()") === "desert", "la caravane roule sur la carte du monde de départ (Désert)");
+    var v = run("LIVING_MAPS.desert.village"), m = run("LIVING_MAPS.desert.caravanMarket");
+    var p0 = run("CaravanManager.getMapPosition('desert')");
+    ok(Math.abs(p0.x - v.x) < 1e-6 && Math.abs(p0.y - v.y) < 1e-6 && p0.outbound, "au départ : au village, sur l'aller");
+    run("CaravanManager._now = function () { return 5e12 + 4 * 3600 * 1000; };");
+    var p1 = run("CaravanManager.getMapPosition('desert')");
+    ok(Math.abs(p1.x - m.x) < 1e-6 && Math.abs(p1.y - m.y) < 1e-6, "à mi-trajet : au marché");
+    run("CaravanManager._now = function () { return 5e12 + 6 * 3600 * 1000; };");
+    var p2 = run("CaravanManager.getMapPosition('desert')");
+    ok(!p2.outbound && Math.abs(p2.x - (v.x + m.x) / 2) < 1e-6, "aux trois quarts : sur le retour, à mi-chemin");
+    var h = run("buildLivingMapHTML('desert')");
+    ok(h.indexOf('id="lm-caravan"') !== -1 && h.indexOf("is-return") !== -1 && h.indexOf("goToCaravan()") !== -1 && h.indexOf("lm-car-trail") !== -1, "sur la carte : la piste, la caravane qui revient, toucher ouvre la Halle");
+    ok(run("buildLivingMapHTML('forest')").indexOf("lm-caravan") === -1, "pas sur la carte de l'autre monde");
+    run("CaravanManager._now = function () { return 5e12 + 9 * 3600 * 1000; };");
+    ok(run("buildLivingMapHTML('desert')").indexOf("lm-caravan is-back") !== -1, "rentrée : au village, ruban « De retour »");
+    run("hallSheetSegment = 'build'; openVillageBuildingId = null; goToCaravan();");
+    ok(run("openVillageBuildingId") === "hall" && run("hallSheetSegment") === "caravan", "goToCaravan : la feuille de la Halle, segment Caravane");
+    run("CaravanManager.unload(); CaravanManager._now = function () { return Date.now(); };");
+    var b = fs.readFileSync(path.join(ROOT, "images/Icons/village_buildings/caravan.png"));
+    ok(b[25] === 6 && b.readUInt32BE(16) === 256, "icône de la caravane : 256 px, détourée (RGBA)");
+    ok(fs.readFileSync(path.join(ROOT, "js/ui/caravan-view.js"), "utf8").indexOf("CARAVAN_ICON") > 0 && run("buildVillageBuildingSheetHTML('hall')").indexOf("caravan.png") !== -1, "l'icône remplace l'emoji dans la feuille");
+  } catch (err) {
+    ok(false, "[192] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[193] v3.422.0 — Débit des zones, pools des secteurs, groupe des compagnons, retour au combat, bandeau");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    /* Débit : deux décimales sous 1/min, bonus de carte vivante porté par la zone (et compté une fois). */
+    ok(run("formatRatePerMin(0.28)") === "0,28" && run("formatRatePerMin(0.35)") === "0,35" && run("formatRatePerMin(0.5)") === "0,5" && run("formatRatePerMin(2.24)") === "2,2",
+      "débit : 0,28 et 0,35 ne s'affichent plus tous deux 0,3");
+    run("ProductionManager.unlockBuilding('well'); ProductionPlotsSystem.ensurePlots('well');");
+    var r0 = run("ProductionPlotsSystem.getPlotRatePerMin(0, ProductionPlotsSystem.getPlots('well')[0], 'well')");
+    var t0 = run("ProductionManager.getRatePerMin('well')");
+    run("window.__hasEffect = LivingMapManager.hasEffect; LivingMapManager.hasEffect = function (id) { return id === 'puits_plus'; };");
+    var r1 = run("ProductionPlotsSystem.getPlotRatePerMin(0, ProductionPlotsSystem.getPlots('well')[0], 'well')");
+    var t1 = run("ProductionManager.getRatePerMin('well')");
+    run("LivingMapManager.hasEffect = window.__hasEffect;");
+    ok(Math.abs(r1 / r0 - 1.10) < 1e-9, "Étang tenu : la zone du Puits produit vraiment +10 % (avant : affiché seulement)");
+    ok(Math.abs(t1 / t0 - 1.10) < 1e-9, "le total de l'en-tête compte le bonus une seule fois");
+    var zw = run("buildZoneWindowHTML('well', 0)");
+    ok(zw.indexOf("zone-win-rate") !== -1 && zw.indexOf("Débit") !== -1, "fenêtre de zone : ligne « Débit » toujours visible");
+
+    /* Pools des secteurs : obstacles du lieu 3 fois sur 4, jamais de pools.combat. */
+    ok(run("Object.keys(LIVING_MAPS).every(function (k) { return LIVING_MAPS[k].sectors.every(function (s) { var c = [s.content, s.content && s.content.then, s.firstContent].filter(Boolean); return c.every(function (x) { return !x.pools || !x.pools.combat; }); }); })"),
+      "plus aucun pools.combat dans les secteurs");
+    ok(run("typeof SCENE_NODES.combatGroups") === "undefined", "SCENE_NODES.combatGroups retiré");
+    run("window.__rand = Pa2Run.rand; Pa2Run.rand = function () { return 0.1; };");
+    var own = run("Pa2Run._obstaclePool({ worldId: 'forest', livingMap: { mapId: 'forest', sectorId: 'gue' } })");
+    run("Pa2Run.rand = function () { return 0.9; };");
+    var wide = run("Pa2Run._obstaclePool({ worldId: 'forest', livingMap: { mapId: 'forest', sectorId: 'gue' } })");
+    var none = run("Pa2Run._obstaclePool({ worldId: 'forest', livingMap: null })");
+    run("Pa2Run.rand = window.__rand;");
+    ok(own.join() === "riviere,gouffre", "Pont du gué : la rivière et le gouffre, tirés dans le pool du secteur");
+    ok(wide.length === run("PA2_OBSTACLES.forest.length") && none.length === wide.length, "le quart restant, et une PA hors carte : le pool du monde");
+
+    /* Groupe des compagnons : un arrivant entre dans le combat déjà engagé. */
+    run("CombatEngine.spawnEnemy();");
+    ok(run("CombatActors.allies().length") === 1, "combat engagé, héros seul");
+    run("CompanionManager.unlock('wenna');");
+    ok(run("CombatActors.allies().map(function (a) { return a.companionId || 'h'; }).join()") === "h,wenna", "Wenna rejoint : elle est là dès ce combat (bug Seb)");
+    run("var __w = CombatActors.allies()[1]; __w.cooldown = 2;");
+    run("CompanionManager.unlock('maddoc');");
+    ok(run("CombatActors.allies().length") === 3 && run("CombatActors.allies()[1] === __w && __w.cooldown === 2"), "Maddoc arrive aussi ; Wenna garde son acteur et sa recharge");
+    run("PatrolManager.ensure().maddoc = { mapId: 'forest', sectorId: 'gue', hours: 1, startedAt: 1, endsAt: 2, loot: {}, gold: 0, story: '' }; CompanionManager.refreshParty();");
+    ok(run("CombatActors.allies().length") === 2, "en patrouille : il quitte le groupe");
+    run("PatrolManager.collect('maddoc');");
+    ok(run("CombatActors.allies().some(function (a) { return a.companionId === 'maddoc'; })"), "rentré de patrouille : il est là dès le combat en cours (bug Seb)");
+
+    /* Retour au combat depuis le Grimoire. */
+    run("pendingAdventureQuestId = null; pendingHuntQuestId = null; pendingDungeonId = null; game.activeTab = 'quests';");
+    run("pendingAdventureQuestId = Object.keys(ADVENTURE_QUESTS)[0]; var __b = captureGrimoireReturn(); pendingAdventureQuestId = null;");
+    ok(run("!!__b && __b.fromTab === 'quests' && typeof __b.reopen === 'function'"), "Grimoire ouvert depuis une introduction de quête : le chemin du retour est noté");
+    run("grimoireReturn = __b; game.activeTab = 'grimoire';");
+    ok(run("buildGrimoireHTML()").indexOf("grimoireGoBack()") !== -1, "l'écran du Grimoire affiche « Revenir au combat »");
+    run("game.activeTab = 'campement';");
+    ok(run("hasGrimoireReturn()") === false, "parti ailleurs : le retour est oublié");
+
+    /* Bandeau : l'or seul, plus de liseré sur le portrait. */
+    var hud = run("buildHudHTML()");
+    ok(hud.indexOf("hud-wres") === -1 && hud.indexOf('id="hud-gold"') !== -1, "bandeau : l'or seul");
+    ok(fs.readFileSync(path.join(ROOT, "js/ui/hud-view.js"), "utf8").indexOf('document.getElementById("hud-pt")].filter') === -1, "plus de liseré de palier sur le portrait du bandeau");
+
+    /* iPhone : la zone sûre du bas n'est comptée qu'une fois (barre du bas), plus dans le panneau. */
+    var lay = fs.readFileSync(path.join(ROOT, "css/02-layout.css"), "utf8");
+    ok(/#panel-container \{[\s\S]*?padding: 0px 12px 2px;/.test(lay) && /body\.scene-active #panel-container \{\s*padding-bottom: var\(--safe-bottom\);/.test(lay),
+      "iPhone : plus de vide sous le cadre du Camp et du Village (zone sûre comptée une fois)");
+
+    /* Barre de défilement : normale sur les pages en mode PC. */
+    ok(/html\.pc-mode \.kfp-scrollzone,[\s\S]*?scrollbar-width: auto;/.test(fs.readFileSync(path.join(ROOT, "css/08-desktop.css"), "utf8")), "mode PC : barre de défilement de largeur normale sur les pages");
+  } catch (err) {
+    ok(false, "[193] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 
