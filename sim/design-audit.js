@@ -133,6 +133,7 @@ var SCREENS = {
   titre: ["Accueil", "Écran titre", async function (p) { }],
   creation: ["Accueil", "Création du héros", async function (p) { await p.evaluate(function () { titleScreenNewGame(); }); }],
   camp: ["Camp", "Camp (HUD + menu du bas)", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("campement"); }); }],
+  camp_depart: ["Camp", "Camp (HUD + menu du bas)", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("campement"); setCampTab("depart"); }); }],
   menu: ["Navigation", "Menu ☰", async function (p) { await richHero(p); await p.evaluate(function () { openFullMenu(); }); }],
   confirmation: ["Navigation", "Fenêtre de confirmation", async function (p) { await newHero(p); await p.evaluate(function () { showConfirmModal(_t("Abandonner l'aventure ?"), _t("Tu perds la moitié du butin. Les rations non mangées retournent à l'Entrepôt."), "⚠️", function () {}); }); }],
   retour: ["Camp", "Écran de retour", async function (p) {
@@ -164,8 +165,9 @@ var SCREENS = {
     await p.evaluate(function () { pa2Move(Pa2Run.openMoves()[0]); });
     await p.waitForTimeout(1800);
   }],
-  village: ["Village", "Village", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("village"); setVillageSubTab("village"); }); }],
-  batiment: ["Village", "Fiche d'un bâtiment", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("village"); setVillageSubTab("village"); openVillageBuildingSheet(Object.keys(PRODUCTION_BUILDINGS)[0]); }); }],
+  village: ["Village", "Village", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("village"); setVillageSubTab("buildings"); }); }],
+  batiment: ["Village", "Feuille d'un bâtiment de production", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("village"); openProductionBuildingDetail(Object.keys(PRODUCTION_BUILDINGS)[0]); }); }],
+  ateliers: ["Village", "Ateliers", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("village"); setVillageSubTab("shops"); }); }],
   production: ["Village", "Production", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("village"); setVillageSubTab("production"); }); }],
   entrepot: ["Village", "Entrepôt", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("village"); setVillageSubTab("entrepot"); }); }],
   equipement: ["Héros & objets", "Équipement", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("equip"); setEquipSubTab("equipment"); }); }],
@@ -180,15 +182,17 @@ var SCREENS = {
   donjons: ["Combat", "Donjons", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("dungeon"); }); }],
   donjon_fiche: ["Combat", "Fiche d'un donjon", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("dungeon"); openDungeonSheet(DUNGEONS[0].id); }); }],
   hauts_faits: ["Collection", "Hauts faits", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("achievements"); }); }],
-  bestiaire: ["Collection", "Bestiaire", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("bestiary"); toggleBestiaryWorld(0); }); }],
+  bestiaire: ["Collection", "Bestiaire", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("bestiary"); setBestiaryCodexSubTab("bestiary"); toggleBestiaryWorld(0); }); }],
   codex: ["Collection", "Codex", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("bestiary"); setBestiaryCodexSubTab("codex"); toggleCodexCategory("intro"); }); }],
   memoire: ["Collection", "Mémoire (Ascension)", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("ascension"); }); }],
-  tutoriels: ["Système", "Tutoriels", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("tutorials"); }); }],
+  tutoriels: ["Système", "Tutoriels", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("tutorials"); setBestiaryCodexSubTab("tutorials"); }); }],
   journal: ["Système", "Journal", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("log"); }); }],
   parametres: ["Système", "Paramètres", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("settings"); }); }],
+  parametres_jeu: ["Système", "Paramètres › Jeu", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("settings"); setSettingsTab("jeu"); }); }],
+  parametres_appareil: ["Système", "Paramètres › Appareil", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("settings"); setSettingsTab("appareil"); }); }],
   /* v3.399.0 (F-1) : feuilles et fenêtres */
   f_capacites: ["Feuilles", "Héros › Capacités (feuille)", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("more"); setHerosSubTab("hero"); openHerosSheet("abilities"); }); }],
-  f_batiment: ["Feuilles", "Fiche d'un bâtiment", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("village"); setVillageSubTab("village"); openVillageBuildingSheet("workshop"); }); }],
+  f_batiment: ["Feuilles", "Fiche d'un bâtiment", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("village"); setVillageSubTab("buildings"); openVillageBuildingSheet("workshop"); }); }],
   f_grimoire: ["Feuilles", "Grimoire › aide (feuille)", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("grimoire"); openGrimoireSheet("help"); }); }],
   f_presets: ["Feuilles", "Grimoire › presets (feuille)", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("grimoire"); openGrimoireSheet("presets"); }); }],
   f_titre: ["Feuilles", "Hauts faits › choisir un titre", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("achievements"); openAchievementTitleSheet(); }); }],
@@ -203,6 +207,8 @@ var SCREENS = {
     var step = null; Object.keys(STORY_QUESTS).forEach(function (k) { (STORY_QUESTS[k].steps || []).forEach(function (s) { if (!step && s.choice) step = s; }); });
     StoryQuestManager.getCurrentStep = function () { return step; }; openStoryChoiceModal("x"); }); }],
   w_quete_fin: ["Fenêtres", "Fin de quête", async function (p) { await richHero(p); await p.evaluate(function () { openQuestCompletePopup({ title: "Prouver sa valeur", text: "Le Roi Slime s'effondre. La Lisière respire à nouveau.", rewardRows: [{ label: "Or", value: "+120" }, { label: "Expérience", value: "+45" }] }); }); }],
+  w_battue_fin: ["Fenêtres", "Battue › terminée (v3.412.0)", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("quests"); var q = Object.keys(HUNT_QUESTS).map(function (k) { return HUNT_QUESTS[k]; }).filter(function (x) { return x.rewardGold && !x.resourceKey; })[0]; game.lastSortieSummary = { outcome: "success", context: "hunt", kept: { gold: 64, items: [{}], resources: {} } }; openHuntLotComplete(q); }); }],
+  w_chasse_fin: ["Fenêtres", "Chasse › terminée (v3.412.0)", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("quests"); var q = Object.keys(HUNT_QUESTS).map(function (k) { return HUNT_QUESTS[k]; }).filter(function (x) { return x.resourceKey; })[0]; var r = {}; r[q.resourceKey] = 9; game.lastSortieSummary = { outcome: "success", context: "hunt", kept: { gold: 22, items: [], resources: r } }; openHuntLotComplete(q); }); }],
   w_chasse: ["Fenêtres", "Chasse › présentation", async function (p) { await richHero(p); await p.evaluate(function () { switchTab("quests"); openHuntQuestIntro(Object.keys(HUNT_QUESTS)[0]); }); }],
   w_donjon_fin: ["Fenêtres", "Donjon › rapport de fin", async function (p) { await richHero(p); await p.evaluate(function () { openDungeonSummary({ success: true, tierName: "Tanière du Basilic", clearedWave: 15, wavesTotal: 15, goldReward: 820, shardsGained: 6, marks: [] }); }); }],
   w_prevision: ["Fenêtres", "Avant de partir (prévision)", async function (p) { await richHero(p); await p.evaluate(function () { openCombatForecastConfirm({ id: "tresdur", heroDamagePerRound: 42, enemyDamagePerRound: 61, enemyHp: 900, roundsToKill: 22, roundsToDie: 9, enemyName: "Roi Slime", advice: "Monte ta Force ou reviens avec des potions." }, { title: "Prouver sa valeur", lowHp: true, onConfirm: function () {} }); }); }],
@@ -224,8 +230,9 @@ var SCREENS = {
   if (ONLY && fs.existsSync(jsonPath)) result = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
   for (var name of Object.keys(SCREENS)) {
     if (ONLY && ONLY.indexOf(name) < 0) continue;
-    var ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, serviceWorkers: "block", locale: "fr-FR" });
-    await ctx.addInitScript(function () { try { localStorage.setItem("aethervale_prefs", JSON.stringify({ lang: "fr", installHint: false })); } catch (e) {} });
+    var VW = Number(process.env.VW || 390), VH = Number(process.env.VH || 844), DESK = VW > 900 && !process.env.TOUCH; // TOUCH=1 : tablette (tactile) // VW/VH : capture grand écran (ex. VW=1280 VH=800)
+    var ctx = await browser.newContext({ viewport: { width: VW, height: VH }, deviceScaleFactor: (DESK || VW > 700) ? 1 : 2, isMobile: !DESK, hasTouch: !DESK, serviceWorkers: "block", locale: "fr-FR" });
+    await ctx.addInitScript(function (pt) { try { localStorage.setItem("aethervale_prefs", JSON.stringify({ lang: "fr", installHint: false, tabletPortrait: pt })); } catch (e) {} }, process.env.PORTRAIT || "zoom"); // PORTRAIT=rail : tablette en portrait, menu à gauche
     var p = await ctx.newPage(), errs = [];
     p.on("pageerror", function (e) { errs.push(e.message); });
     p.on("dialog", function (d) { d.accept(); });
@@ -234,12 +241,13 @@ var SCREENS = {
     await p.waitForTimeout(700);
     // Service worker bloqué ici : on lève l'écran d'attente du boot, et on masque les toasts (passagers).
     await p.evaluate(function () { if (window.hidePwaBootGate) hidePwaBootGate(); });
-    await p.addStyleTag({ content: "#toast{display:none!important}" + (HIDE_HUD ? "#hud{display:none!important}" : "") });
+    await p.addStyleTag({ content: "#toast{display:none!important}" + (HIDE_HUD ? "#hud{display:none!important}" : "") + (process.env.HIDE_DOCK ? "#hud-dock{display:none!important}" : "") });
     try { await SCREENS[name][2](p); } catch (e) { errs.push("écran : " + e.message.split("\n")[0]); }
     await p.waitForTimeout(700);
     if (["titre", "creation", "confirmation", "retour", "menu"].indexOf(name) < 0 && name.indexOf("w_") !== 0) await closeTut(p); // popups d'explication d'onglet
     await p.waitForTimeout(500);
     await p.screenshot({ path: path.join(OUT, name + ".png") });
+    if (process.env.PROBE) console.log("PROBE " + name + " " + JSON.stringify(await p.evaluate(process.env.PROBE))); // PROBE="expression" : mesure ponctuelle
     if (HIDE_HUD) console.log("TABBAR " + name + " " + JSON.stringify(await p.evaluate(function () { var t = document.getElementById("tab-bar"), r = t && t.getBoundingClientRect(); return r ? [Math.round(r.top), Math.round(r.height)] : null; })));
     var inv = await p.evaluate(inventory);
     inv.group = SCREENS[name][0]; inv.label = SCREENS[name][1]; inv.errors = errs;

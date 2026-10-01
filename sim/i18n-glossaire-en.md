@@ -151,3 +151,45 @@ Principe : **les noms propres des personnages et du village restent tels quels.*
   | Boutique | Shop |
   | Équiper / Équipé | Equip / Equipped |
   | Auto-offrande | Auto-offer |
+
+## Données — Forêt (EN-2, v3.376.0)
+
+| Français | Anglais |
+| --- | --- |
+| la Faille / les Cinq Sceaux | the Rift / the Five Seals |
+| la Rupture | the Sundering |
+| Ascensionner | to Ascend |
+| les Marqués (Bestiaire) | the Marked |
+| la brume (carte) | the mist |
+| Chasse (bâtiment) | Hunting Lodge ; « Chasse » (quête) garde « Hunt », contexte `quête` |
+| Séchoir / Viande séchée | Drying Rack / Dried meat |
+| Scierie fine / Fonderie | Fine Sawmill / Foundry |
+| Moulin / Boulangerie | Mill / Bakery |
+| Champ Béni / Clos d'Aeswyn | Blessed Field / Aeswyn Close |
+| Roi Slime / Roi des marais | Slime King / Marsh King |
+| Seigneur de guerre orc | Orc Warlord |
+| Tanière du Basilic | Basilisk's Den |
+| Loup sauvage | Wild wolf |
+| « petit » (Brannoc, Orwen) | « lad » |
+
+
+## Désert (EN-3, v3.377.0)
+
+| Français | Anglais |
+| --- | --- |
+| la gardienne du puits | the Well-Keeper |
+| le vieux (Sarkel parlant du Veilleur) | the old man |
+| le camp du Portail | the Portal Camp |
+| la Cité engloutie | the Sunken City |
+| le sphinx | the Sphinx |
+| Nezzam le Desséché | Nezzam the Withered |
+| le Serment sous l'armure | the Oath Under the Armour |
+| le Dard des profondeurs | the Deep Sting |
+| le lit du fleuve | the riverbed |
+| outre / Outre pleine | waterskin / Full waterskin |
+| Verre des dunes / Verre trempé | Dune glass / Tempered glass |
+| Tailleur de pierre | Stonecutter |
+| ensablé | sand-buried |
+| Devant — Le tronc / Derrière — L'affût (voies de Maddoc) | In front — The Trunk / Behind — The Hide |
+
+Orwen est une femme (bible narrative) : « she » partout.

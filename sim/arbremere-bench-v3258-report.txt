@@ -1,0 +1,19 @@
+ARBRE-MÈRE — frein interne. 60 journées par cellule, base Troll ×2,6 endurance, échelle Forêt (scaleFor(0,0)).
+Cellule = victoires moyennes avant la première défaite (10 max) · % de journées sans aucune victoire.
+
+Classe      Profil                   +35 %/victoire  +50 %/victoire  +65 %/victoire
+  Chevalier vitrine + 20 niveaux          3.2 (0 %)       2.7 (0 %)       2.0 (0 %)
+  Chevalier arme +40, 50 niveaux          5.4 (0 %)       4.1 (0 %)       3.3 (0 %)
+  Chevalier fin + Cycle 1                 3.2 (0 %)       2.8 (0 %)       2.0 (0 %)
+  Rôdeur    vitrine + 20 niveaux          3.1 (0 %)       2.7 (0 %)       2.0 (0 %)
+  Rôdeur    arme +40, 50 niveaux          5.7 (0 %)       4.2 (0 %)       3.5 (0 %)
+  Rôdeur    fin + Cycle 1                 3.4 (0 %)       2.9 (0 %)       2.0 (0 %)
+  Mage      vitrine + 20 niveaux          3.7 (0 %)       3.0 (0 %)       2.3 (0 %)
+  Mage      arme +40, 50 niveaux          6.0 (0 %)       4.5 (0 %)       3.7 (0 %)
+  Mage      fin + Cycle 1                 3.7 (0 %)       2.9 (0 %)       2.2 (0 %)
+
++35 % : fin de Forêt = 5.7 victoires/jour en moyenne -> à 3 Sève/victoire : 17.1 Sève/jour ; à 2 : 11.4
++50 % : fin de Forêt = 4.3 victoires/jour en moyenne -> à 3 Sève/victoire : 12.8 Sève/jour ; à 2 : 8.5
++65 % : fin de Forêt = 3.5 victoires/jour en moyenne -> à 3 Sève/victoire : 10.6 Sève/jour ; à 2 : 7.1
+
+Référence : Petite Aventure au cap ~11 Sève/jour, offre totale ~32 Sève/jour (seve-bench).

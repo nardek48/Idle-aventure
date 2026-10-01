@@ -1429,10 +1429,7 @@ I18n.register("en", {
   "Rend cette zone exploitable.": "Makes this zone workable.",
   "Plafond de ce monde (niv. {n})": "This world's cap (lvl {n})",
   "Niveau max": "Max level",
-  "{x}/min : {a} → {b} (niv. {n})": "{x}/min: {a} → {b} (lvl {n})",
   "+{p}% {x}, permanent.": "+{p}% {x}, permanent.",
-  "Améliorer la − chère": "Upgrade the cheapest",
-  "Défricher une zone": "Clear a zone",
   "« {x} » améliorée": "“{x}” upgraded",
   "Zones": "Zones",
   "Bientôt": "Soon",
@@ -4109,4 +4106,14 @@ I18n.register("en", {
   "Valider": "Confirm",
   "{n} ressource au plafond : sa production est à l'arrêt.||{n} ressources au plafond : leur production est à l'arrêt.": ["{n} resource at the cap: its production has stopped.", "{n} resources at the cap: their production has stopped."],
   "{n} ressource à zéro masquée||{n} ressources à zéro masquées": ["{n} resource at zero hidden", "{n} resources at zero hidden"],
+
+  // v3.417.0 : zones de production — fenêtre d'une zone, un seul bouton fixe
+  "↑ la − chère": "↑ cheapest",
+  "Zone à défricher": "Zone to clear",
+  "{x} · niveau {n}": "{x} · level {n}",
+  "Touche pour savoir où s'ouvre la suite.": "Tap to see where the next level opens.",
+  "{x}/min : {a} → {b}": "{x}/min: {a} → {b}",
+  "Installé": "Installed",
+  "↑ La moins chère": "↑ Cheapest",
+  "Touche une zone pour ses actions.": "Tap a zone for its actions.",
 });

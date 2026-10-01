@@ -176,26 +176,29 @@ async function winFight(page, doneSelectorOrFn, maxTaps) {
   return false;
 }
 
-/* Petite Aventure : avance en prenant, à chaque écran, le premier geste utile ; s'arrête
-   quand `stop(état)` est vrai. */
-async function driveScene(page, stop, maxSteps) {
-  var PRI = ["acknowledgeSceneMutator", "confirmScenePreparation", "enterSceneGate", "resolveScene", "chooseSceneProfile", "chooseSceneIntensity"];
-  for (var i = 0; i < (maxSteps || 30); i++) {
+/* v3.390.0 : joue un run Pa2Run au doigt (nœud ouvert, premier choix, continuer). Renvoie vrai
+   si `seek` a été lu dans une feuille en route. */
+async function drivePa2(page, seek, maxSteps) {
+  var seen = false;
+  for (var i = 0; i < (maxSteps || 14); i++) {
     await dismissTutorials(page);
-    var st = await page.evaluate(function () {
-      return { tab: game.activeTab, status: game.sceneRun && game.sceneRun.status, loot: (SortieManager.ensure().loot || {}).gold || 0,
-        btns: Array.from(document.querySelectorAll("button")).filter(function (x) { return x.offsetParent && !x.disabled && /Scene/.test(x.getAttribute("onclick") || ""); })
-          .map(function (x) { return { on: x.getAttribute("onclick"), txt: x.innerText }; }) };
-    });
-    if (stop(st)) return st;
-    var pick = null;
-    for (var k = 0; k < PRI.length && !pick; k++) pick = st.btns.filter(function (b) { return b.on.indexOf(PRI[k]) === 0; })[0];
-    if (!pick) pick = st.btns.filter(function (b) { return /^toggleScenePrepItem/.test(b.on) && !/\(x/.test(b.txt); })[0];
-    if (!pick) return st;
-    await page.locator('button[onclick="' + pick.on.replace(/"/g, '\\"') + '"]').first().click();
-    await page.waitForTimeout(350);
+    await page.evaluate(function () { if (typeof closeWorkshopCompletionPopup === "function") closeWorkshopCompletionPopup(); });
+    var st = await page.evaluate(function () { var r = game.sceneRun; return r ? r.status : null; });
+    if (!st || st === "completed") break;
+    if (!(await page.locator(".pa2-node.is-open").count())) break;
+    await tap(page, ".pa2-node.is-open");
+    await page.waitForTimeout(900);
+    if (seek && !seen) seen = await page.evaluate(function (t) { var o = document.getElementById("pa2-overlay"); return !!o && o.innerText.indexOf(t) >= 0; }, seek);
+    // Un combat se fuit (héros sans équipement : l'estimation le dit mortel) ; ailleurs, le premier choix.
+    var choice = page.locator('#pa2-overlay .pa2-choice[onclick="pa2Flee()"]:not([disabled])');
+    if (!(await choice.count())) choice = page.locator("#pa2-overlay .pa2-choice:not([disabled])");
+    if (await choice.count()) await choice.first().click();
+    await page.waitForTimeout(2800);
+    var cont = page.locator("#pa2-overlay .kbtn.primary:not([disabled])");
+    if (await cont.count() && await cont.first().isVisible()) { await page.waitForTimeout(500); await cont.first().click({ force: true }); }
+    await page.waitForTimeout(500);
   }
-  return null;
+  return seen;
 }
 
 /* Tout le monde débloqué comme en fin de Forêt, carte libérée sauf `except`. */
@@ -693,9 +696,12 @@ async function P10(browser, base) {
   var item = page.locator("[onclick*=\"settings\"]", { hasText: "Paramètres" });
   if (await item.count()) await item.first().click(); else await page.evaluate(function () { switchTab("settings"); });
   await page.waitForTimeout(300);
-  var box = page.locator("input[onchange*=\"bossMoments\"]");
-  ok(await box.count() === 1 && await box.isChecked(), "Réglages : mises en scène de boss, cochées par défaut");
-  await box.uncheck(); await page.waitForTimeout(200);
+  // v3.408.0 : Paramètres en trois onglets ; les mises en scène sont dans « Jeu », en interrupteur
+  await tap(page, '.set-tabs button[onclick*="\'jeu\'"]');
+  await page.waitForTimeout(200);
+  var box = page.locator(".kswitch[onclick*=\"bossMoments\"]");
+  ok(await box.count() === 1 && (await box.getAttribute("aria-checked")) === "true", "Réglages : mises en scène de boss, allumées par défaut");
+  await box.click(); await page.waitForTimeout(200);
   await shot(page, "1_reglage");
 
   // Changer de héros : Héros › Mes héros › Nardek
@@ -751,7 +757,7 @@ async function P11(browser, base) {
   ok(!(await page.$(".pwa-install-btn-title")), "app rouverte : le bouton reste retiré sur cet appareil");
   await makeHero(page, "Ios", "knight", function () { game.unlockedTabs.settings = true; });
   await dismissTutorials(page);
-  await page.evaluate(function () { game.activeTab = "settings"; renderAll(); });
+  await page.evaluate(function () { game.activeTab = "settings"; settingsTab = "appareil"; renderAll(); }); // v3.408.0 : onglet Appareil
   await page.waitForTimeout(300);
   ok(await page.evaluate(function () { return /Application/.test(document.body.textContent) && !!document.querySelector('.settings-btn[onclick*="PwaInstall.install"]'); }), "Paramètres › Application : l'installation reste proposée");
   consoleClean(page);
@@ -813,26 +819,17 @@ async function P12(browser, base) {
   await makeHero(page, "Roi", "knight", [prepActeIV]);
   await dismissTutorials(page);
 
-  // Étape 16 : la remontée, lancée depuis la carte d'étape. v3.380.0 : tirages tassés vers le bas
-  // (= épreuves réussies) le temps de la remontée — sinon deux échecs aux sables évacuent avant le palier 4.
-  await page.evaluate(function () { window.__rnd = Math.random; Math.random = function () { return window.__rnd() * 0.3; }; });
-  await page.evaluate(function () { StoryQuestManager.acceptStep("desert"); StoryQuestManager.goToLink("desert"); });
+  // Étape 16 : la remontée, lancée depuis la carte d'étape. v3.390.0 : parcours v2 (besace, feuilles), dés forcés hauts.
+  await page.evaluate(function () { Pa2Run.rand = function () { return 0.999; }; StoryQuestManager.acceptStep("desert"); StoryQuestManager.goToLink("desert"); });
   await page.waitForTimeout(500);
   await dismissTutorials(page);
-  ok(await page.evaluate(function () { return game.sceneRun && game.sceneRun.templateId === "remontee_fleuve"; }), "étape 16 : « Aller à la quête » lance la remontée du fleuve");
-  var vu = false;
-  for (var k = 0; k < 20; k++) {
-    var pop = page.locator("[id$='-modal-root'] button:visible", { hasText: "Continuer" });
-    if (await pop.count()) { await pop.first().click(); await page.waitForTimeout(250); }
-    var st = await driveScene(page, function (x) { return x.tab === "combat" || x.status === "finale" || x.status === "completed" || !x.status; }, 30);
-    var etat = await page.evaluate(function () { return { tab: game.activeTab, status: game.sceneRun && game.sceneRun.status, d: game.sceneRun && game.sceneRun.depth }; });
-    if (etat.tab === "combat") { await winFight(page, function () { return game.activeTab !== "combat"; }, 12); continue; }
-    if (etat.status === "finale") { await page.evaluate(function () { SceneRunManager.resolveFinale("sur"); }); break; }
-    if (!etat.status || etat.status === "completed") break;
-  }
-  await page.evaluate(function () { Math.random = window.__rnd; });
-  vu = await page.evaluate(function () { return /Une main te prend au col/.test((window.sceneRunLog || []).join(" ")); });
-  ok(vu, "palier 4 : « Une main te prend au col » inscrit au journal de l'expédition");
+  ok(await page.evaluate(function () { return game.sceneRun && game.sceneRun.templateId === "remontee_fleuve" && game.sceneRun.status === "pa2-prep"; }), "étape 16 : « Aller à la quête » ouvre la besace de la remontée du fleuve");
+  await tap(page, "button[onclick=\"pa2Depart()\"]");
+  await page.waitForTimeout(500);
+  await shot(page, "0_remontee");
+  var vu = await drivePa2(page, "Une main te prend au col");
+  if (process.env.P12_DEBUG) console.log("  [debug]", await page.evaluate(function () { var r = game.sceneRun; return JSON.stringify(r && { st: r.status, at: r.at, end: r.end, last: r.lastResult, hp: game.heroHp }); }));
+  ok(vu, "étape 4 : « Une main te prend au col » en tête de la feuille");
   ok(await page.evaluate(function () { return !!game.explorationProgression.remonteeFleuveDone; }), "le trône est atteint");
   await page.evaluate(function () { if (SceneRunManager.getRun()) SceneRunManager.clearRun(); switchTab("campement"); });
   var t16 = await claimStoryStep(page);
@@ -904,7 +901,7 @@ async function P13(browser, base) {
   await page.evaluate(function () { var t = 20260929; Math.random = function () { t = (t + 0x6D2B79F5) | 0; var x = Math.imul(t ^ (t >>> 15), 1 | t); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; Pa2Run.rand = function () { return 0.999; }; });
   await page.evaluate(function () { switchTab("scene"); openSceneQuestEntry("sentier_obstrue"); });
   await page.waitForTimeout(600);
-  ok(await visible(page, "#pa2-map .pa2-parchment") && await visible(page, "#pa2-hud"), "parcours : tracé sur parchemin et HUD");
+  ok(await visible(page, "#pa2-map img.pa2-map-img") && await visible(page, "#pa2-hud"), "parcours : tracé sur la carte de la Forêt et HUD");
   ok(await page.locator("#pa2-map .pa2-node").count() === 3, "trois nœuds : le départ et deux étapes");
   await shot(page, "1_trace");
   for (var i = 0; i < 2; i++) {

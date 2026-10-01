@@ -33,7 +33,7 @@
 var productionViewTab = "prod";        // reflet de l'onglet du rail : "prod" | "shops"
 var productionDetailBuildingId = null; // bâtiment dont la feuille est ouverte, null sinon
 var productionSheetTab = "shops";      // onglet de la feuille : "shops" (ateliers) | "zones"
-var selectedProductionPlotIndex = {};  // { [buildingId]: number|null } — zone sélectionnée, par bâtiment
+var productionZoneWin = null;          // v3.417.0 : zone dont la fenêtre d'actions est ouverte { b: buildingId, i: index }
 
 function setProductionViewTab(tab) {
   productionViewTab = (tab === "shops") ? "shops" : "prod";
@@ -44,7 +44,7 @@ window.setProductionViewTab = setProductionViewTab;
 
 function openProductionBuildingDetail(buildingId) {
   if (!PRODUCTION_BUILDINGS[buildingId]) return;
-  if (productionDetailBuildingId !== buildingId) productionSheetTab = "shops";
+  if (productionDetailBuildingId !== buildingId) { productionSheetTab = "shops"; productionZoneWin = null; }
   productionDetailBuildingId = buildingId;
   openWorkshopId = null; workshopSheetBackId = null;
   if (typeof openVillageBuildingId !== "undefined") openVillageBuildingId = null; // un seul habitant pour #village-modal-root
@@ -56,6 +56,7 @@ window.openProductionBuildingDetail = openProductionBuildingDetail;
 function closeProductionSheet(silent) {
   var wasOpen = !!productionDetailBuildingId || !!openWorkshopId;
   productionDetailBuildingId = null;
+  productionZoneWin = null;
   openWorkshopId = null; workshopSheetBackId = null; // v3.415.0 : la feuille d'atelier part avec
   if (typeof document === "undefined") return;
   var host = document.getElementById("village-modal-root");
@@ -73,6 +74,7 @@ window.closeProductionSheetFromBackdrop = closeProductionSheetFromBackdrop;
 
 function setProductionSheetTab(tab) {
   productionSheetTab = (tab === "zones") ? "zones" : "shops";
+  productionZoneWin = null;
   renderProductionSheet(false);
 }
 window.setProductionSheetTab = setProductionSheetTab;
@@ -184,50 +186,50 @@ function buildProductionCostRowHTML(cost, afford) {
   return h;
 }
 
+/* v3.417.0 (atelier zones Z2, choix Seb) : la grille 3×3 reste, sans sélection. Toucher une zone
+   ouvre une FENÊTRE centrée avec ses actions ; sous la grille, un seul bouton fixe
+   « ↑ La moins chère ». La prochaine zone à défricher est signalée sur la grille. */
+function getNextUnlockablePlot(buildingId) {
+  var plots = ProductionPlotsSystem.getPlots(buildingId);
+  for (var i = 0; i < plots.length; i++) {
+    if (plots[i].state === "locked" && ProductionPlotsSystem.isPlotRowOpen(i)) return i;
+  }
+  return null;
+}
+
 function buildPlotsPanelHTML(buildingId) {
   var plots = ProductionPlotsSystem.getPlots(buildingId);
-  var selectedIndex = typeof selectedProductionPlotIndex[buildingId] === "number" ? selectedProductionPlotIndex[buildingId] : null;
-  // v3.191.0 : la zone la moins chère à améliorer est signalée sur la grille (liseré +
-  // drapeau), en écho au bouton groupé "Améliorer la − chère" (voir
-  // getCheapestUpgradablePlot). null si aucune zone ouverte améliorable.
   var cheapestIndex = getCheapestUpgradablePlot(buildingId);
-
+  var nextIndex = getNextUnlockablePlot(buildingId);
   var h = '<div class="farm-plots-panel">';
   h += '<div class="farm-plots-grid">';
   plots.forEach(function (plot, index) {
-    h += buildPlotCardHTML(buildingId, plot, index, selectedIndex, cheapestIndex);
+    h += buildPlotCardHTML(buildingId, plot, index, nextIndex, cheapestIndex);
   });
   h += '</div>';
-
-  if (selectedIndex !== null && selectedIndex < plots.length) {
-    h += buildPlotActionsHTML(buildingId, plots[selectedIndex], selectedIndex);
-  }
-
   h += '</div>';
   return h;
 }
 
-/* Mini-carte de zone allégée : niveau (au-dessus du nom), jauge, icônes d'améliorations
-   (propres à chaque bâtiment) en état visuel seul. Toute la carte est cliquable pour
-   SÉLECTIONNER la zone ; les actions et leurs coûts s'affichent dans une zone commune
-   sous la grille (voir buildPlotActionsHTML).
-   v3.98.19 : nom de lieu dédié par zone (getProductionZoneName, ex. "Bois d'Aeswyn")
-   remplace l'ancien "Préfixe + numéro" générique (ex. "Territoire 7") — retour Seb. */
-function buildPlotCardHTML(buildingId, plot, index, selectedIndex, cheapestIndex) {
+/* Mini-carte de zone : niveau, nom, profil, jauge, icônes d'amélioration (état seul).
+   Toute la carte ouvre la fenêtre de la zone (v3.417.0). Les zones d'un monde pas encore
+   atteint disent quel monde les ouvre et ne s'ouvrent pas. */
+function buildPlotCardHTML(buildingId, plot, index, nextIndex, cheapestIndex) {
   var buildingCfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
   var zoneName = getProductionZoneName(buildingId, index);
-  var isSelected = selectedIndex === index;
-  var classNames = "farm-plot-card" + (isSelected ? " is-selected" : "") + (cheapestIndex === index ? " is-cheapest" : "");
+  var classNames = "farm-plot-card" + (cheapestIndex === index ? " is-cheapest" : "");
+  var open = ' onclick="openZoneWindow(\'' + buildingId + '\', ' + index + ')"';
 
   if (plot.state === "locked") {
-    classNames += " is-locked";
     var rowOpen = ProductionPlotsSystem.isPlotRowOpen(index);
-    var h0 = '<div class="' + classNames + '" onclick="selectProductionPlot(\'' + buildingId + '\', ' + index + ')">';
-    h0 += '<div class="farm-plot-card-lock-icon"><img class=ico-inline src=images/Icons/system/lock_closed.png></div>';
-    h0 += '<div class="farm-plot-card-name">' + esc(zoneName) + '</div>';
+    classNames += " is-locked" + (index === nextIndex ? " is-next" : "");
+    var h0 = '<button type="button" class="' + classNames + '"' + (rowOpen ? open : ' disabled') + '>';
+    h0 += '<span class="farm-plot-card-lock-icon"><img class=ico-inline src=images/Icons/system/lock_closed.png></span>';
+    h0 += '<span class="farm-plot-card-name">' + esc(zoneName) + '</span>';
     // v3.289.0 : une ligne par monde — la zone dit quel monde l'ouvre
-    if (!rowOpen) h0 += '<div class="farm-plot-card-profile">' + esc(_td((WORLDS[Math.floor(index / 3)] || {}).name || '')) + '</div>';
-    h0 += '</div>';
+    if (!rowOpen) h0 += '<span class="farm-plot-card-profile">' + esc(_td((WORLDS[Math.floor(index / 3)] || {}).name || '')) + '</span>';
+    else if (index === nextIndex) h0 += '<span class="farm-plot-card-profile">' + _t("Défricher") + '</span>';
+    h0 += '</button>';
     return h0;
   }
 
@@ -236,24 +238,20 @@ function buildPlotCardHTML(buildingId, plot, index, selectedIndex, cheapestIndex
   var capacity = ProductionPlotsSystem.getPlotCapacity(index, plot);
   var pct = capacity > 0 ? Math.min(100, (plot.stock / capacity) * 100) : 0;
 
-  var h = '<div class="' + classNames + '" onclick="selectProductionPlot(\'' + buildingId + '\', ' + index + ')">';
-  h += '<div class="farm-plot-card-top">';
+  var h = '<button type="button" class="' + classNames + '"' + open + '>';
+  if (cheapestIndex === index) h += '<span class="farm-plot-card-cheap">' + _t("↑ la − chère") + '</span>';
   h += '<span class="farm-plot-card-level-badge">' + _t("Niv. {n}", { n: plot.level }) + '</span>';
-  h += '</div>';
-  h += '<div class="farm-plot-card-name">' + esc(zoneName) + '</div>';
-  h += '<div class="farm-plot-card-profile">' + esc(_td(profile.label)) + '</div>';
-
-  h += '<div class="farm-plot-card-bar kgauge kgauge-thin kgauge-xp">';
-  h += '<div class="kgauge-track"><div class="kgauge-fill nb-entry-progress-fill" id="prod-plot-bar-' + buildingId + '-' + index + '" style="width:' + pct + '%"></div></div>';
-  h += '</div>';
-  h += '<div class="farm-plot-card-stock-label" id="prod-plot-stock-' + buildingId + '-' + index + '">' + formatNumber(Math.floor(plot.stock)) + '/' + formatNumber(capacity) + '</div>';
-
-  h += '<div class="farm-plot-card-improvements">';
+  h += '<span class="farm-plot-card-name">' + esc(zoneName) + '</span>';
+  h += '<span class="farm-plot-card-profile">' + esc(_td(profile.label)) + '</span>';
+  h += '<span class="farm-plot-card-bar kgauge kgauge-thin kgauge-xp">';
+  h += '<span class="kgauge-track"><span class="kgauge-fill nb-entry-progress-fill" id="prod-plot-bar-' + buildingId + '-' + index + '" style="width:' + pct + '%"></span></span>';
+  h += '</span>';
+  h += '<span class="farm-plot-card-stock-label" id="prod-plot-stock-' + buildingId + '-' + index + '">' + formatNumber(Math.floor(plot.stock)) + '/' + formatNumber(capacity) + '</span>';
+  h += '<span class="farm-plot-card-improvements">';
   h += buildPlotImprovementIconHTML(buildingCfg, plot, "fertile");
   h += buildPlotImprovementIconHTML(buildingCfg, plot, "irrigated");
-  h += '</div>';
-
-  h += '</div>';
+  h += '</span>';
+  h += '</button>';
   return h;
 }
 
@@ -270,130 +268,88 @@ function buildPlotImprovementIconHTML(buildingCfg, plot, kind) {
   return '<span class="' + classNames + '" title="' + esc(_td(def.label)) + '">' + renderIconOrEmojiHTML(def.icon, "farm-plot-improvement-img", _td(def.label)) + '</span>';
 }
 
-/* Zone commune d'actions pour la zone sélectionnée : un seul bouton Défricher si
-   verrouillée, ou jusqu'à 3 boutons (Améliorer + 2 améliorations) si ouverte, chacun avec
-   son coût ET une courte description de l'effet. Coûts/libellés/icônes/descriptions lus
-   depuis PRODUCTION_PLOTS_BUILDINGS[buildingId] — propres à chaque bâtiment (v3.97.1 :
-   noms et icônes thématiques par bâtiment, remplace "Fertile"/"Irriguée" génériques). */
-function buildPlotActionsHTML(buildingId, plot, index) {
-  var buildingCfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
-  var zoneName = getProductionZoneName(buildingId, index);
-  var resDef = WAREHOUSE_RESOURCES[(PRODUCTION_BUILDINGS[buildingId] || {}).resourceKey] || {};
-  var resName = _td(resDef.name || "");
+/* v3.417.0 : FENÊTRE d'une zone — une ligne par action, chacune avec son effet et son coût :
+   Défricher (zone verrouillée), Niveau suivant (débit avant → après), puis les deux améliorations
+   propres au bâtiment (installées : grisées, cochées). Coûts, libellés et icônes lus dans
+   PRODUCTION_PLOTS_BUILDINGS. Rendue avec la feuille, elle survit à ses redessins. */
+function openZoneWindow(buildingId, index) {
+  productionZoneWin = { b: buildingId, i: index };
+  renderProductionSheet(true);
+}
+window.openZoneWindow = openZoneWindow;
 
-  var h = '<div class="farm-plot-actions">';
-  h += '<div class="farm-plot-actions-title">' + esc(zoneName) + '</div>';
+function closeZoneWindow() {
+  productionZoneWin = null;
+  renderProductionSheet(true);
+}
+window.closeZoneWindow = closeZoneWindow;
 
-  if (plot.state === "locked" && !ProductionPlotsSystem.isPlotRowOpen(index)) {
-    // v3.289.0 : ligne d'un monde pas encore atteint
-    h += '<div class="farm-plot-action-btn is-disabled"><span class="farm-plot-action-label">'
-       + esc(_t("S'ouvre {lieu}", { lieu: ProductionPlotsSystem.getPlotRowOpening(index) })) + '</span></div>';
-    h += '</div>';
-    return h;
-  }
-
-  if (plot.state === "locked") {
-    var unlockCost = getProductionPlotUnlockCost(buildingId, index);
-    var canAffordUnlock = unlockCost && Object.keys(unlockCost).every(function (key) {
-      return WarehouseManager.getAmount(key) >= unlockCost[key];
-    });
-    h += buildPlotActionButtonHTML({
-      onclick: "productionPlotUnlock('" + buildingId + "', " + index + ")",
-      label: _t("Défricher"),
-      desc: _t("Rend cette zone exploitable."),
-      cost: unlockCost,
-      canAfford: canAffordUnlock
-    });
-    h += '</div>';
-    return h;
-  }
-
-  var isMaxLevel = ProductionPlotsSystem.isPlotMaxLevel(plot);
-  if (isMaxLevel) {
-    // v3.289.0 : le plafond du monde n'est pas le niveau max de la zone
-    // v3.336.0 (F-2) : le plafond du monde se touche et dit où s'ouvre le niveau suivant
-    if (ProductionPlotsSystem.isPlotLevelWorldCapped(plot)) {
-      h += '<div class="farm-plot-action-btn is-disabled is-capped" role="button" onclick="productionZoneCapHowTo(' + plot.level + ')">'
-         + '<span class="farm-plot-action-label">' + _t("Plafond de ce monde (niv. {n})", { n: plot.level }) + ' · ?</span></div>';
-    } else {
-      h += '<div class="farm-plot-action-btn is-disabled"><span class="farm-plot-action-label">' + _t("Niveau max") + '</span></div>';
-    }
-  } else {
-    var upgradeCost = getProductionPlotUpgradeCost(buildingId, plot.level, index);
-    var canAffordUpgrade = Object.keys(upgradeCost).every(function (key) {
-      return WarehouseManager.getAmount(key) >= upgradeCost[key];
-    });
-    var rateNow = ProductionPlotsSystem.getPlotRatePerMin(index, plot);
-    var rateNext = ProductionPlotsSystem.getPlotRatePerMin(index, { level: plot.level + 1, fertile: plot.fertile, irrigated: plot.irrigated });
-    h += buildPlotActionButtonHTML({
-      onclick: "productionPlotUpgrade('" + buildingId + "', " + index + ")",
-      label: _t("Améliorer"),
-      desc: _t("{x}/min : {a} → {b} (niv. {n})", { x: resName, a: formatNumber(rateNow), b: formatNumber(rateNext), n: plot.level + 1 }),
-      cost: upgradeCost,
-      canAfford: canAffordUpgrade
-    });
-  }
-
-  if (!plot.fertile && buildingCfg) {
-    var fertileDef = buildingCfg.improvementCost.fertile;
-    var canAffordFertile = Object.keys(fertileDef.cost).every(function (key) {
-      return WarehouseManager.getAmount(key) >= fertileDef.cost[key];
-    });
-    h += buildPlotActionButtonHTML({
-      onclick: "productionPlotToggleImprovement('" + buildingId + "', " + index + ", 'fertile')",
-      iconHTML: renderIconOrEmojiHTML(fertileDef.icon, "plot-act-ico", ""),
-      label: _td(fertileDef.label),
-      desc: _t("+{p}% {x}, permanent.", { p: Math.round(PRODUCTION_PLOTS_SHARED.bonusPerImprovement.fertile * 100), x: resName }) + " " + _td(fertileDef.desc),
-      cost: fertileDef.cost,
-      canAfford: canAffordFertile
-    });
-  }
-
-  if (!plot.irrigated && buildingCfg) {
-    var irrigatedDef = buildingCfg.improvementCost.irrigated;
-    var canAffordIrrigated = Object.keys(irrigatedDef.cost).every(function (key) {
-      return WarehouseManager.getAmount(key) >= irrigatedDef.cost[key];
-    });
-    h += buildPlotActionButtonHTML({
-      onclick: "productionPlotToggleImprovement('" + buildingId + "', " + index + ", 'irrigated')",
-      iconHTML: renderIconOrEmojiHTML(irrigatedDef.icon, "plot-act-ico", ""),
-      label: _td(irrigatedDef.label),
-      desc: _t("+{p}% {x}, permanent.", { p: Math.round(PRODUCTION_PLOTS_SHARED.bonusPerImprovement.irrigated * 100), x: resName }) + " " + _td(irrigatedDef.desc),
-      cost: irrigatedDef.cost,
-      canAfford: canAffordIrrigated
-    });
-  }
-
-  h += '</div>';
-  return h;
+function buildZoneActionHTML(opts) {
+  var h = '<button type="button" class="zone-act' + (opts.main ? ' is-main' : '') + (opts.done ? ' is-done' : '') + '"'
+    + ((opts.done || !opts.canAfford) ? ' disabled' : '') + (opts.onclick ? ' onclick="' + opts.onclick + '"' : '') + '>';
+  if (opts.iconHTML) h += opts.iconHTML;
+  h += '<span class="zone-act-t"><b>' + esc(opts.label) + '</b><small>' + esc(opts.desc) + '</small></span>';
+  h += opts.done ? '<span class="zone-act-ok">✓</span>' : buildPlotCostRowHTML(opts.cost);
+  return h + '</button>';
 }
 
-/* Bouton d'action générique de la zone .farm-plot-actions : libellé + courte description
-   d'effet sur une ligne dédiée + coût. Factorisé car les 4 actions (Défricher/Améliorer/
-   Fertile/Irriguée) partagent exactement cette structure. */
+function buildZoneWindowHTML(buildingId, index) {
+  var plots = ProductionPlotsSystem.getPlots(buildingId);
+  var plot = plots[index];
+  if (!plot) return "";
+  var buildingCfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
+  var resDef = WAREHOUSE_RESOURCES[(PRODUCTION_BUILDINGS[buildingId] || {}).resourceKey] || {};
+  var resName = _td(resDef.name || "");
+  var zoneName = getProductionZoneName(buildingId, index);
+  var affordable = function (cost) { return !!cost && Object.keys(cost).every(function (k) { return WarehouseManager.getAmount(k) >= cost[k]; }); };
+  var locked = plot.state === "locked";
+  var profile = ProductionPlotsSystem.getProfile(index);
+
+  var h = '<div class="kwin-veil zone-win-veil" onclick="if (event.target === this) closeZoneWindow()"><div class="kwin zone-win" role="dialog">';
+  h += kWinHeadHTML({ title: esc(zoneName), sub: esc(locked ? _t("Zone à défricher") : _t("{x} · niveau {n}", { x: _td(profile.label), n: plot.level })), close: "closeZoneWindow()" });
+  h += '<div class="kwin-body">';
+
+  if (locked && !ProductionPlotsSystem.isPlotRowOpen(index)) {
+    h += '<p class="zone-win-txt">' + esc(_t("S'ouvre {lieu}", { lieu: ProductionPlotsSystem.getPlotRowOpening(index) })) + '</p>';
+  } else if (locked) {
+    var uc = getProductionPlotUnlockCost(buildingId, index);
+    h += buildZoneActionHTML({ main: true, onclick: "productionPlotUnlock('" + buildingId + "', " + index + ")", iconHTML: '<img class="zone-act-ico" src="images/Icons/system/lock_open.png" alt="">',
+      label: _t("Défricher"), desc: _t("Rend cette zone exploitable."), cost: uc, canAfford: affordable(uc) });
+  } else {
+    var capacity = ProductionPlotsSystem.getPlotCapacity(index, plot);
+    h += '<div class="kgauge kgauge-thin kgauge-xp zone-win-gauge"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + (capacity > 0 ? Math.min(100, (plot.stock / capacity) * 100) : 0) + '%"></div></div>'
+      + '<span class="kgauge-text">' + formatNumber(Math.floor(plot.stock)) + ' / ' + formatNumber(capacity) + '</span></div>';
+    if (ProductionPlotsSystem.isPlotMaxLevel(plot)) {
+      // v3.289.0 / v3.336.0 (F-2) : le plafond du monde dit où s'ouvre le niveau suivant
+      h += ProductionPlotsSystem.isPlotLevelWorldCapped(plot)
+        ? '<button type="button" class="zone-act is-info" onclick="productionZoneCapHowTo(' + plot.level + ')"><span class="zone-act-t"><b>' + esc(_t("Plafond de ce monde (niv. {n})", { n: plot.level })) + '</b><small>' + _t("Touche pour savoir où s'ouvre la suite.") + '</small></span><span class="zone-act-ok">?</span></button>'
+        : '<div class="zone-act is-info is-done"><span class="zone-act-t"><b>' + _t("Niveau max") + '</b></span></div>';
+    } else {
+      var up = getProductionPlotUpgradeCost(buildingId, plot.level, index);
+      var rateNow = ProductionPlotsSystem.getPlotRatePerMin(index, plot);
+      var rateNext = ProductionPlotsSystem.getPlotRatePerMin(index, { level: plot.level + 1, fertile: plot.fertile, irrigated: plot.irrigated });
+      h += buildZoneActionHTML({ main: true, onclick: "productionPlotUpgrade('" + buildingId + "', " + index + ")", iconHTML: '<img class="zone-act-ico" src="images/Icons/system/upgrade.png" alt="">',
+        label: _t("Niveau {n}", { n: plot.level + 1 }), desc: _t("{x}/min : {a} → {b}", { x: resName, a: formatNumber(rateNow), b: formatNumber(rateNext) }), cost: up, canAfford: affordable(up) });
+    }
+    ["fertile", "irrigated"].forEach(function (kind) {
+      var d = buildingCfg ? buildingCfg.improvementCost[kind] : null;
+      if (!d) return;
+      var pctB = Math.round(PRODUCTION_PLOTS_SHARED.bonusPerImprovement[kind] * 100);
+      h += buildZoneActionHTML({ done: !!plot[kind], onclick: "productionPlotToggleImprovement('" + buildingId + "', " + index + ", '" + kind + "')",
+        iconHTML: renderIconOrEmojiHTML(d.icon, "zone-act-ico", _td(d.label)), label: _td(d.label),
+        desc: plot[kind] ? _t("Installé") : _t("+{p}% {x}, permanent.", { p: pctB, x: resName }), cost: d.cost, canAfford: affordable(d.cost) });
+    });
+  }
+  h += '</div></div></div>';
+  return h;
+}
+window.buildZoneWindowHTML = buildZoneWindowHTML;
+
 /* v3.371.0 (i18n) : le message traduit n'est plus écrit dans l'onclick (apostrophes). */
 function productionZoneCapHowTo(level) {
   if (typeof showHowToToast === "function") showHowToToast(_t("Plafond de ce monde (niv. {n})", { n: level }), "zoneCap", { level: level });
 }
 window.productionZoneCapHowTo = productionZoneCapHowTo;
-
-function buildPlotActionButtonHTML(opts) {
-  var h = '<button class="farm-plot-action-btn' + (opts.canAfford ? '' : ' is-disabled') + '" type="button" ' + (opts.canAfford ? '' : 'disabled') + ' onclick="' + opts.onclick + '">';
-  h += '<span class="farm-plot-action-btn-text">';
-  h += '<span class="farm-plot-action-label">' + (opts.iconHTML || "") + esc(_td(opts.label)) + '</span>';
-  h += '<span class="farm-plot-action-desc">' + esc(_td(opts.desc)) + '</span>';
-  h += '</span>';
-  h += buildPlotCostRowHTML(opts.cost);
-  h += '</button>';
-  return h;
-}
-
-function selectProductionPlot(buildingId, index) {
-  // retap sur la même zone = désélectionne ; la sélection est propre à CE bâtiment
-  selectedProductionPlotIndex[buildingId] = (selectedProductionPlotIndex[buildingId] === index) ? null : index;
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.selectProductionPlot = selectProductionPlot;
 
 function buildPlotCostRowHTML(cost) {
   if (!cost) return "";
@@ -453,45 +409,21 @@ function getCheapestUpgradablePlot(buildingId) {
   return best;
 }
 
-/* Actions groupées sous la grille : "Améliorer la − chère" (agit directement sur la
-   zone signalée) et "Défricher une zone" (SÉLECTIONNE la première zone verrouillée —
-   décision maquette : on ouvre son panneau Défricher plutôt que de défricher à
-   l'aveugle, les 9 zones ont des noms et le joueur choisit). Le coût de défrichage ne
-   dépend pas de la zone choisie (même montant, voir getProductionPlotUnlockCost). */
+/* v3.417.0 : sous la grille, un seul bouton fixe — « ↑ La moins chère » (la zone est signalée
+   sur la grille) — et une ligne d'aide. Défricher passe par la zone signalée « Défricher ». */
 function buildZoneGroupActionsHTML(buildingId) {
   var h = '<div class="production-group-actions">';
-
   var cheapest = getCheapestUpgradablePlot(buildingId);
   if (cheapest !== null) {
     var plots = ProductionPlotsSystem.getPlots(buildingId);
     var cost = getProductionPlotUpgradeCost(buildingId, plots[cheapest].level, cheapest);
-    var afford = {};
-    var all = true;
-    Object.keys(cost).forEach(function (key) {
-      afford[key] = WarehouseManager.getAmount(key) >= cost[key];
-      if (!afford[key]) all = false;
-    });
-    h += '<button class="settings-btn primary production-group-btn' + (all ? '' : ' is-locked') + '" type="button" ' + (all ? '' : 'disabled') + ' onclick="productionUpgradeCheapest(\'' + buildingId + '\')">';
-    h += '<img class=ico-inline src=images/Icons/system/upgrade.png> ' + _t("Améliorer la − chère") + ' ' + buildProductionCostRowHTML(cost, afford);
+    var afford = {}, all = true;
+    Object.keys(cost).forEach(function (key) { afford[key] = WarehouseManager.getAmount(key) >= cost[key]; if (!afford[key]) all = false; });
+    h += '<button class="kbtn primary production-group-btn" type="button" ' + (all ? '' : 'disabled') + ' onclick="productionUpgradeCheapest(\'' + buildingId + '\')">';
+    h += _t("↑ La moins chère") + ' ' + buildProductionCostRowHTML(cost, afford);
     h += '</button>';
   }
-
-  var firstLocked = null;
-  var allPlots = ProductionPlotsSystem.getPlots(buildingId);
-  for (var i = 0; i < allPlots.length; i++) {
-    if (allPlots[i].state === "locked" && ProductionPlotsSystem.isPlotRowOpen(i)) { firstLocked = i; break; }
-  }
-  if (firstLocked !== null) {
-    var unlockCost = getProductionPlotUnlockCost(buildingId, firstLocked);
-    var uAfford = {};
-    Object.keys(unlockCost).forEach(function (key) {
-      uAfford[key] = WarehouseManager.getAmount(key) >= unlockCost[key];
-    });
-    h += '<button class="settings-btn production-group-btn" type="button" onclick="productionSelectFirstLocked(\'' + buildingId + '\')">';
-    h += '<img class=ico-inline src=images/Icons/system/lock_open.png> ' + _t("Défricher une zone") + ' ' + buildProductionCostRowHTML(unlockCost, uAfford);
-    h += '</button>';
-  }
-
+  h += '<p class="production-group-hint">' + _t("Touche une zone pour ses actions.") + '</p>';
   h += '</div>';
   return h;
 }
@@ -505,17 +437,6 @@ function productionUpgradeCheapest(buildingId) {
 }
 window.productionUpgradeCheapest = productionUpgradeCheapest;
 
-function productionSelectFirstLocked(buildingId) {
-  var plots = ProductionPlotsSystem.getPlots(buildingId);
-  for (var i = 0; i < plots.length; i++) {
-    if (plots[i].state === "locked" && ProductionPlotsSystem.isPlotRowOpen(i)) {
-      selectedProductionPlotIndex[buildingId] = i;
-      if (typeof renderPanel === "function") renderPanel();
-      return;
-    }
-  }
-}
-window.productionSelectFirstLocked = productionSelectFirstLocked;
 
 /* v3.414.0 (VUI-1) : FEUILLE d'un bâtiment de production — en-tête de pierre (illustration,
    nom), récolte locale, puis un rail Ateliers · Zones. Les zones reprennent la grille 3×3 et
@@ -574,11 +495,12 @@ function buildProductionSheetHTML(buildingId) {
     h += '</div>';
   } else {
     h += buildPlotsPanelHTML(buildingId);
-    // v3.191.1 : actions groupées seulement quand aucune zone n'est sélectionnée
-    if (typeof selectedProductionPlotIndex[buildingId] !== "number") h += buildZoneGroupActionsHTML(buildingId);
+    h += buildZoneGroupActionsHTML(buildingId);
   }
 
   h += '</div></div></div>';
+  // v3.417.0 : fenêtre d'une zone, par-dessus la feuille
+  if (productionZoneWin && productionZoneWin.b === buildingId && tab === "zones") h += buildZoneWindowHTML(buildingId, productionZoneWin.i);
   return h;
 }
 window.buildProductionSheetHTML = buildProductionSheetHTML;
