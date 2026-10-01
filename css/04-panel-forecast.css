@@ -22,17 +22,17 @@
 
 /* Le verdict porte la couleur : vert rassurant, ambre prudent, rouge bloquant. */
 .cf-line.is-trivial .cf-line-verdict,
-.cf-line.is-abordable .cf-line-verdict { color: #2f7d32; }
-.cf-line.is-risque .cf-line-verdict { color: #8a5a1a; }
-.cf-line.is-tresdur .cf-line-verdict { color: #b4560f; }
+.cf-line.is-abordable .cf-line-verdict { color: var(--c-green-650-soft); }
+.cf-line.is-risque .cf-line-verdict { color: var(--c-brown-700-vivid); }
+.cf-line.is-tresdur .cf-line-verdict { color: var(--c-brown-600-vivid); }
 .cf-line.is-horsportee .cf-line-verdict { color: var(--danger); }
 .cf-line.is-horsportee { border-color: var(--danger); }
 
 /* --- Carte de confirmation --- */
 /* v3.400.0 (lot F-2) : fenêtre du kit (.kwin) ; le titre passe dans l'en-tête de pierre */
 .cf-verdict { font-size: 20px; font-weight: 800; text-align: center; margin: 2px 0 6px; color: var(--nb-ink); }
-.cf-card.is-risque .cf-verdict { color: #8a5a1a; }
-.cf-card.is-tresdur .cf-verdict { color: #b4560f; }
+.cf-card.is-risque .cf-verdict { color: var(--c-brown-700-vivid); }
+.cf-card.is-tresdur .cf-verdict { color: var(--c-brown-600-vivid); }
 .cf-card.is-horsportee .cf-verdict { color: var(--danger); }
 .cf-enemy { font-size: 12px; text-align: center; color: var(--nb-ink-dim); margin-bottom: 10px; }
 
@@ -59,7 +59,7 @@
   border-radius: var(--nb-radius-md);
   border: 1px solid var(--nb-frame-light);
   border-left: 3px solid var(--nb-gold);
-  background: #fff3d6;
+  background: var(--c-cream-100-4);
 }
 .cf-hint { font-size: 12px; font-style: italic; color: var(--nb-ink-dim); margin-bottom: 8px; }
 
@@ -71,14 +71,14 @@
   margin: 6px 0 10px;
   padding: 8px 10px;
   border-radius: var(--nb-radius-md);
-  border: 1.5px solid var(--danger, #c0392b);
+  border: 1.5px solid var(--danger, var(--c-red-550));
   background: rgba(192, 57, 43, 0.12);
   font-size: 12px;
   line-height: 1.4;
   color: var(--nb-ink);
   text-align: left;
 }
-.cf-lowhp b { color: var(--danger, #c0392b); }
+.cf-lowhp b { color: var(--danger, var(--c-red-550)); }
 .cf-lowhp-ico { flex: 0 0 auto; width: 28px; height: 28px; object-fit: contain; }
 
 /* --- v3.378.0 : « Ce que tu vas affronter » (traits connus, mode Grimoire) --- */
@@ -99,8 +99,8 @@
 .et-name { font-size: 12px; }
 .et-hint { color: var(--nb-ink-dim); font-style: italic; }
 .et-resp { margin-top: 2px; font-weight: 700; }
-.et-row.is-counter .et-resp { color: #2f7d32; }
-.et-row.is-react .et-resp { color: #8a5a1a; }
+.et-row.is-counter .et-resp { color: var(--c-green-650-soft); }
+.et-row.is-react .et-resp { color: var(--c-brown-700-vivid); }
 .et-row.is-none .et-resp { color: var(--danger); }
 .et-unmet { font-size: 12px; color: var(--nb-ink-dim); margin-top: 6px; }
 .et-presets-title { font-size: 12px; font-weight: 800; margin-top: 8px; }
@@ -111,7 +111,7 @@
   padding: 5px 9px;
   border-radius: 999px;
   border: 1px solid var(--nb-frame-light);
-  background: #fff8e8;
+  background: var(--c-cream-50);
   color: var(--nb-ink);
   cursor: pointer;
 }

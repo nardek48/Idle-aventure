@@ -607,9 +607,6 @@ I18n.register("en", {
   "Retour au camp ({x}, {n} ennemi) : {k} rapportés.||Retour au camp ({x}, {n} ennemis) : {k} rapportés.": ["Back to camp ({x}, {n} enemy): {k} brought back.", "Back to camp ({x}, {n} enemies): {k} brought back."],
 
   // js/systems/special-attack-system.js
-  "⏳ Encore un instant...": "⏳ Just a moment...",
-  "{x} ! (+{p}% dégâts pendant {s}s)": "{x}! (+{p}% damage for {s}s)",
-  "{x} activée ({s}s)": "{x} activated ({s}s)",
 
   // js/systems/stats-system.js
   "+{n} dégâts d'Attaque": "+{n} Attack damage",
@@ -779,7 +776,7 @@ I18n.register("en", {
   "Faible : {liste}": "Weak to: {liste}",
   "Pas encore rencontrée.": "Not met yet.",
   "tués": "slain",
-  "🏆 Trophées": "🏆 Trophies",
+  "Trophées": "Trophies",
 
   // js/ui/boss-moment-view.js
   "de retour": "back",
@@ -1336,6 +1333,33 @@ I18n.register("en", {
 
   // js/ui/menu-view.js
   "Bibliothèque": "Library",
+  "Le jeu se sauvegarde tout seul toutes les 30 secondes, dans ce navigateur. Exporte une copie de temps en temps : elle te suit sur un autre appareil.": "The game saves itself every 30 seconds, in this browser. Export a copy now and then: it follows you to another device.",
+  "Sauvegarder maintenant": "Save now",
+  "Exporter": "Export",
+  "Importer": "Import",
+  "Copier le code de sauvegarde": "Copy the save code",
+  "Coller un code": "Paste a code",
+  "Zone de danger": "Danger zone",
+  "Effacer la partie supprime ton héros, ton village et toute ta progression sur cet appareil. C'est définitif.": "Erasing the game deletes your hero, your village and all your progress on this device. It cannot be undone.",
+  "Effacer la partie": "Erase the game",
+  "Mode de combat": "Combat mode",
+  "Les rounds s'enchaînent seuls : tes règles du Grimoire (ou la priorité par défaut) choisissent l'action.": "Rounds play out on their own: your Grimoire rules (or the default priority) choose the action.",
+  "Chaque round attend ton choix : attaque, compétences, défense, potion.": "Each round waits for your choice: attack, skills, defence, potion.",
+  "La petite bulle qui propose ta prochaine action.": "The small bubble that suggests your next action.",
+  "Carte d'entrée, changement de phase, coup final et trophée.": "Entrance card, phase change, final blow and trophy.",
+  "Réglages propres à cet appareil.": "Settings for this device only.",
+  "Version {v}": "Version {v}",
+  "Outils de test (Admin)": "Test tools (Admin)",
+  "Partie": "Game",
+  "Jeu": "Gameplay",
+  "Appareil": "Device",
+  "Le mode Grimoire n'est pas encore débloqué": "Grimoire mode is not unlocked yet",
+  "Un choix t'attend ici.": "A choice awaits you here.",
+  "Choisi": "Chosen",
+  "Tablette en portrait": "Tablet in portrait",
+  "Téléphone agrandi": "Enlarged phone",
+  "Menu à gauche": "Menu on the left",
+  "En paysage, la tablette utilise toujours le menu à gauche. Réglage propre à cet appareil.": "In landscape, the tablet always uses the menu on the left. Setting for this device only.",
   "Ta petite aventure t'attend": "Your short adventure awaits",
   "Une petite aventure est disponible": "A short adventure is available",
   "Une sortie de donjon disponible||{n} sorties de donjon disponibles": ["One dungeon run available", "{n} dungeon runs available"],
@@ -1549,32 +1573,12 @@ I18n.register("en", {
   "Retour au Campement": "Back to Camp",
 
   // js/ui/settings-view.js
-  "Sauvegarder": "Save",
   "Débloquer tous les onglets": "Unlock all tabs",
   "Sauvegarde": "Save",
-  "Le jeu ne sauvegarde que dans ce navigateur. Exporte régulièrement une copie pour ne rien perdre en cas de changement d'appareil ou de nettoyage du cache.": "The game only saves in this browser. Export a copy regularly so you lose nothing if you change device or clear the cache.",
-  "Exporter (fichier)": "Export (file)",
-  "Exporter (code à copier)": "Export (code to copy)",
-  "Importer un fichier": "Import a file",
-  "Mode Grimoire (rounds automatiques)": "Grimoire mode (automatic rounds)",
-  "Tactique : chaque round attend ton choix (Attaque, compétences, Défense, potion). Grimoire : les rounds s'enchaînent seuls et tes règles du Grimoire (ou la priorité par défaut) choisissent l'action.": "Tactics: each round waits for your choice (Attack, skills, Defence, potion). Grimoire: rounds follow on by themselves and your Grimoire rules (or the default priority) choose the action.",
   "Le mode Grimoire se débloque avec la chaîne Histoire.": "Grimoire mode unlocks with the Story chain.",
-  "Affichage": "Display",
-  "Fil rouge (bouton à côté du portrait)": "Next step (button next to the portrait)",
   "Mises en scène des boss": "Boss scenes",
-  "Le fil rouge propose ta prochaine action. Les mises en scène : carte d'entrée, changement de phase, coup final et trophée. Réglages propres à cet appareil.": "Next step suggests your next action. Boss scenes: entrance card, phase change, final blow and trophy. Settings for this device.",
-  "Réinitialiser tout": "Reset everything",
-  "Développement": "Development",
-  "Outil de test, sans effet sur ta partie (pas de sauvegarde, pas de récompense).": "Test tool, with no effect on your game (no save, no reward).",
-  "🛠️ Admin": "🛠️ Admin",
-  "🎨 Atelier UI": "🎨 UI Workshop",
-  "Atelier Héros": "Hero Workshop",
-  "🖼️ Atelier Cadres": "🖼️ Frames Workshop",
   "Sauvegarde : locale navigateur.": "Save: local to this browser.",
   "Sauvegarde : indisponible.": "Save: unavailable.",
-  "La progression hors-ligne, l'équipement et les quêtes sont activés.": "Offline progress, equipment and quests are enabled.",
-  "Options": "Options",
-  "📖 Le mode Grimoire n'est pas encore débloqué": "📖 Grimoire mode isn't unlocked yet",
   "Tous les onglets sont débloqués": "All tabs unlocked",
 
   // js/ui/shop-view.js
@@ -1636,7 +1640,7 @@ I18n.register("en", {
   "{n} point à revoir||{n} points à revoir": ["{n} point to review", "{n} points to review"],
 
   // js/ui/ui-root.js
-  "💀 Tu es à terre — soigne-toi au Campement avant de repartir.": "💀 You're down — heal at Camp before setting out again.",
+  "Tu es à terre — soigne-toi au Campement avant de repartir.": "You're down — heal at Camp before setting out again.",
   "Abandonner l'expédition ?": "Abandon the expedition?",
   "Tu perds la moitié du butin non sécurisé. Le reste sera rapporté au village.": "You lose half of the unsecured loot. The rest will be brought back to the village.",
   "Les Marques se choisissent désormais à l’entrée d’un donjon (Campement → Expédition → Donjon).": "Marks are now chosen when entering a dungeon (Camp → Expedition → Dungeon).",

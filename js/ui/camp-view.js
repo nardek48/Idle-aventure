@@ -116,7 +116,7 @@ function buildCampHTML() {
   // Bloc Rations — 3 cartes côte à côte (icône, soin, stock, bouton Manger).
   h += '<div class="ksec camp-section-title camp-section-sub"><img class="ico-lg" src="images/Icons/quests/ration_reward.png" alt=""> ' + _t("Rations") + '</div>';
   var campLock = (window.heroLockReason && heroLockReason()) || null; // v3.307.0
-  if (campLock) h += '<div class="camp-lock-note">🧭 ' + esc(campLock) + '</div>';
+  if (campLock) h += '<div class="camp-lock-note"><img class="ico-inline" src="images/Icons/system/hero_away.png" alt=""> ' + esc(campLock) + '</div>';
   h += '<div class="camp-ration-grid">';
   rationOptions.forEach(function (r) {
     var def = (window.WAREHOUSE_RESOURCES || {})[r.id] || {};

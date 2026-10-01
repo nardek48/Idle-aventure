@@ -28,7 +28,7 @@
    ===================================================================== */
 
 .kgauge {
-  --kgauge-fill: linear-gradient(90deg, #f59e0b, #fde68a);
+  --kgauge-fill: linear-gradient(90deg, var(--c-bronze-500-vivid), var(--c-bronze-250));
 
   position: relative;
   width: 100%;
@@ -81,7 +81,7 @@
   justify-content: center;
   font-size: 11px;
   font-weight: 800;
-  color: #fff7e0;
+  color: var(--c-cream-50-soft);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
   line-height: 1;
 }
@@ -127,12 +127,12 @@
 }
 
 /* ----- Couleurs de remplissage usuelles ----- */
-.kgauge.kgauge-hp { --kgauge-fill: linear-gradient(90deg, #15803d, #4ade80); }
-.kgauge.kgauge-hp-enemy { --kgauge-fill: linear-gradient(90deg, #991b1b, #ef4444); }
-.kgauge.kgauge-rage { --kgauge-fill: linear-gradient(90deg, #b91c1c, #f97316); }
-.kgauge.kgauge-mana { --kgauge-fill: linear-gradient(90deg, #1d4ed8, #60a5fa); }
+.kgauge.kgauge-hp { --kgauge-fill: linear-gradient(90deg, var(--c-green-700), var(--c-green-400)); }
+.kgauge.kgauge-hp-enemy { --kgauge-fill: linear-gradient(90deg, var(--c-red-650), var(--c-red-400)); }
+.kgauge.kgauge-rage { --kgauge-fill: linear-gradient(90deg, var(--c-red-600-vivid), #f97316); }
+.kgauge.kgauge-mana { --kgauge-fill: linear-gradient(90deg, #1d4ed8, var(--c-blue-300)); }
 .kgauge.kgauge-focus { --kgauge-fill: linear-gradient(90deg, #0f766e, #2dd4bf); }
-.kgauge.kgauge-xp { --kgauge-fill: linear-gradient(90deg, #b45309, #fbbf24); }
+.kgauge.kgauge-xp { --kgauge-fill: linear-gradient(90deg, var(--c-brown-600-vivid), var(--c-bronze-450-vivid)); }
 
 @media (prefers-reduced-motion: reduce) {
   .kgauge-fill {

@@ -39,7 +39,7 @@
   gap: 10px;
   min-height: calc(60px + var(--safe-top));
   padding: var(--safe-top) 12px 0 8px;
-  color: #f4e9d0;
+  color: var(--c-cream-100-2);
   background: linear-gradient(rgba(16, 12, 8, 0.72), rgba(16, 12, 8, 0.86)), url('../images/UI/textures/bg-stone-tile.png') 0 0 / 256px;
   box-shadow: 0 6px 14px -4px rgba(0, 0, 0, 0.7);
 }
@@ -52,7 +52,7 @@
   bottom: -6px;
   height: 8px;
   pointer-events: none;
-  background: linear-gradient(#e2b14a, #8a5c14) 0 0 / 100% 2px no-repeat, linear-gradient(#8a5c14, #8a5c14) 0 5px / 100% 1px no-repeat;
+  background: linear-gradient(var(--c-bronze-400-3), var(--c-brown-700-vivid)) 0 0 / 100% 2px no-repeat, linear-gradient(var(--c-brown-700-vivid), var(--c-brown-700-vivid)) 0 5px / 100% 1px no-repeat;
 }
 /* Losange central */
 .hud-band::before {
@@ -66,8 +66,8 @@
   margin-left: -7px;
   transform: rotate(45deg);
   pointer-events: none;
-  background: linear-gradient(135deg, #ffe08a, #c27f1f 60%, #8a5c14);
-  border: 1px solid #5a3a0c;
+  background: linear-gradient(135deg, var(--c-bronze-250), var(--c-brown-550-3) 60%, var(--c-brown-700-vivid));
+  border: 1px solid var(--c-brown-800-vivid);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 /* Portrait : ouvre Héros › Résumé ; porte le liseré de palier des Hauts faits */
@@ -78,8 +78,8 @@
   height: 46px;
   padding: 0;
   border-radius: 50%;
-  border: 2px solid #d4a017;
-  background: #1b1510;
+  border: 2px solid var(--c-brown-550-vivid);
+  background: var(--c-brown-900-soft);
   cursor: pointer;
 }
 .hud-pt-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 15%; display: block; }
@@ -94,23 +94,23 @@
   line-height: 1;
   padding: 2px 6px;
   border-radius: 7px;
-  background: #1b1510;
-  border: 1px solid #c27f1f;
-  color: #ffe9b0;
+  background: var(--c-brown-900-soft);
+  border: 1px solid var(--c-brown-550-3);
+  color: var(--c-cream-150-vivid);
 }
 .hud-pt[class*="hf-tier-"]::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; pointer-events: none; }
-.hud-pt.hf-tier-bronze::after { box-shadow: 0 0 0 2px #b07a3c; }
-.hud-pt.hf-tier-silver::after { box-shadow: 0 0 0 2px #c9d2da, 0 0 8px rgba(201, 210, 218, 0.5); }
-.hud-pt.hf-tier-gold::after { box-shadow: 0 0 0 2px #f0c64a, 0 0 12px rgba(240, 198, 74, 0.65); }
+.hud-pt.hf-tier-bronze::after { box-shadow: 0 0 0 2px var(--c-brown-550-2); }
+.hud-pt.hf-tier-silver::after { box-shadow: 0 0 0 2px var(--c-blue-200), 0 0 8px rgba(201, 210, 218, 0.5); }
+.hud-pt.hf-tier-gold::after { box-shadow: 0 0 0 2px var(--c-bronze-400-4), 0 0 12px rgba(240, 198, 74, 0.65); }
 /* Jauges PV et XP (cadre fin du kit) */
 .hud-gauges { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
-.hud-gauge.is-hp { --kgauge-fill: linear-gradient(90deg, #15803d, #4ade80); }
-.hud-gauge.is-hp.is-low { --kgauge-fill: linear-gradient(90deg, #8e1f17, #e0533f); }
-.hud-gauge.is-xp { --kgauge-fill: linear-gradient(90deg, #8a5c14, #f0aa3e); }
+.hud-gauge.is-hp { --kgauge-fill: linear-gradient(90deg, var(--c-green-700), var(--c-green-400)); }
+.hud-gauge.is-hp.is-low { --kgauge-fill: linear-gradient(90deg, var(--c-red-700), var(--c-red-450)); }
+.hud-gauge.is-xp { --kgauge-fill: linear-gradient(90deg, var(--c-brown-700-vivid), var(--c-bronze-400-vivid)); }
 .hud-gauge .kgauge-text { font-size: 10.5px; white-space: nowrap; }
 /* Or et ressource de la carte du monde */
 .hud-res { display: flex; flex-direction: column; gap: 4px; flex: 0 0 auto; }
-.hud-res-item { display: flex; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 800; line-height: 1; color: #ffe9b0; font-variant-numeric: tabular-nums; }
+.hud-res-item { display: flex; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 800; line-height: 1; color: var(--c-cream-150-vivid); font-variant-numeric: tabular-nums; }
 .hud-res-item img { width: 19px; height: 19px; object-fit: contain; }
 /* Mini-héros du combat : rangé caché hors combat (relocateCombatHeroMini) */
 #hud-mini-park { display: none; }
@@ -144,8 +144,8 @@ body.living-map-active .hud-dock { display: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #d4a017;
-  background: radial-gradient(circle at 35% 30%, #3d3226, #1c150d);
+  border: 2px solid var(--c-brown-550-vivid);
+  background: radial-gradient(circle at 35% 30%, var(--c-brown-800-soft), var(--c-brown-900-soft));
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.65);
   cursor: pointer;
   pointer-events: auto;
@@ -161,9 +161,9 @@ body.living-map-active .hud-dock { display: none; }
   height: 19px;
   padding: 0 5px;
   border-radius: 10px;
-  background: #b3261e;
-  border: 1.5px solid #fff3d6;
-  color: #fff;
+  background: var(--c-red-600-3);
+  border: 1.5px solid var(--c-cream-100-4);
+  color: var(--c-white-50);
   font-size: 11px;
   font-weight: 800;
   line-height: 16px;
@@ -179,8 +179,8 @@ body.living-map-active .hud-dock { display: none; }
   padding: 5px 9px;
   border-radius: 9px;
   background: rgba(12, 9, 6, 0.92);
-  border: 1px solid #8a5c14;
-  color: #ffe9b0;
+  border: 1px solid var(--c-brown-700-vivid);
+  color: var(--c-cream-150-vivid);
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
@@ -190,7 +190,7 @@ body.living-map-active .hud-dock { display: none; }
 }
 .hud-bub.show-tip .hud-bub-tip { opacity: 1; }
 /* Fil rouge au calme : petite bulle discrète */
-.hud-bub.is-quiet { width: 36px; height: 36px; border-width: 1.5px; border-color: #8a5c14; opacity: 0.8; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
+.hud-bub.is-quiet { width: 36px; height: 36px; border-width: 1.5px; border-color: var(--c-brown-700-vivid); opacity: 0.8; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
 .hud-bub.is-quiet .hud-bub-ico { width: 22px; height: 22px; }
 .hud-bub.is-quiet .hud-bub-tip { right: 44px; }
 /* Apparition : un rebond et une lueur, une seule fois */
@@ -547,7 +547,7 @@ body.living-map-active .hud-dock { display: none; }
 
   border-radius: 8px;
   background: var(--danger);
-  color: #fff;
+  color: var(--c-white-50);
   font-size: max(10px, clamp(8.28px, calc(4.09px + 1.31vw), 9.72px));
   font-weight: 700;
 }

@@ -238,8 +238,8 @@ function heroLockToast() {
   var r = heroLockReason();
   if (r) {
     // v3.336.0 (F-2) : le refus propose de reprendre l'expédition
-    if (typeof showHowToToast === "function") showHowToToast("🧭 " + r, "heroLock");
-    else if (typeof showToast === "function") showToast("🧭 " + r, 1800);
+    if (typeof showHowToToast === "function") showHowToToast(r, "heroLock");
+    else if (typeof showToast === "function") showToast(r, 1800);
   }
   return !!r;
 }

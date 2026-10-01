@@ -8,18 +8,18 @@
    A1-A3 validés par Seb le 18/09/2026). Préfixe .lmx- pour le cadre plein écran.
 ============================================================ */
 
-.lm-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; margin: 0 0 8px; padding: 6px 9px; border: 1px solid #b98a4a; border-radius: 10px; background-color: #f6ecd9; }
-.lm-title { font-size: 13px; font-weight: 800; color: #3a2c1a; min-width: 0; overflow: hidden; }
-.lm-title small { display: block; font-size: 12px; font-weight: 600; color: #6b4a22; }
+.lm-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; margin: 0 0 8px; padding: 6px 9px; border: 1px solid var(--c-bronze-500); border-radius: 10px; background-color: var(--c-cream-100-soft); }
+.lm-title { font-size: 13px; font-weight: 800; color: var(--c-brown-850-soft); min-width: 0; overflow: hidden; }
+.lm-title small { display: block; font-size: 12px; font-weight: 600; color: var(--c-brown-700-soft); }
 .lm-pills { display: flex; gap: 5px; flex: 0 0 auto; }
-.lm-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 800; padding: 2px 6px; border-radius: 10px; border: 1px solid #b98a4a; background-color: #f6ecd9; color: #3a2c1a; white-space: nowrap; }
+.lm-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 800; padding: 2px 6px; border-radius: 10px; border: 1px solid var(--c-bronze-500); background-color: var(--c-cream-100-soft); color: var(--c-brown-850-soft); white-space: nowrap; }
 .lm-pill .ico-inline { width: 14px; height: 14px; }
-.lm-pill.is-pal { border-color: #d4a017; background-color: #fff3cf; }
+.lm-pill.is-pal { border-color: var(--c-brown-550-vivid); background-color: var(--c-cream-100-vivid); }
 
 /* Carte carrée : l'asset fait le décor, quatre calques au-dessus.
    --lm-r (rayon en %) et --lm-fog (opacité) sont posés en inline par la vue. */
 .lm-map {
-  position: absolute; inset: 0; overflow: hidden; background-color: #0d0a1a;
+  position: absolute; inset: 0; overflow: hidden; background-color: var(--c-blue-950);
 }
 .lm-layer { position: absolute; inset: 0; background-repeat: no-repeat; background-size: 100% 100%; }
 /* Calque 1 : VOILÉ. Copie désaturée et éclaircie, teintée de brume claire.
@@ -44,7 +44,7 @@
 
 /* Calque 3 : liens vers les voisins du secteur sélectionné */
 .lm-links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.lm-links path { fill: none; stroke: #ffe9b0; stroke-width: 2; stroke-dasharray: 5 6; stroke-linecap: round; opacity: .9; }
+.lm-links path { fill: none; stroke: var(--c-cream-150-vivid); stroke-width: 2; stroke-dasharray: 5 6; stroke-linecap: round; opacity: .9; }
 
 /* Calque 4 : nœuds. Cible de 44 px, position en %. */
 .lm-node {
@@ -55,48 +55,48 @@
 .lm-node-disc {
   position: absolute; left: 6px; top: 6px; width: 32px; height: 32px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px; font-weight: 900; color: #3a2c1a;
-  background-color: #f6ecd9; border: 2px solid #b98a4a;
+  font-size: 14px; font-weight: 900; color: var(--c-brown-850-soft);
+  background-color: var(--c-cream-100-soft); border: 2px solid var(--c-bronze-500);
   box-shadow: 0 2px 6px rgba(0,0,0,.55);
 }
-.lm-node.is-village .lm-node-disc { width: 38px; height: 38px; left: 3px; top: 3px; background-color: #ffe9b0; border-color: #d4a017; font-size: 17px; }
-.lm-node.is-voile .lm-node-disc { background-color: #d7d9dc; border-color: #8c8f95; color: #5b5f66; }
+.lm-node.is-village .lm-node-disc { width: 38px; height: 38px; left: 3px; top: 3px; background-color: var(--c-cream-150-vivid); border-color: var(--c-brown-550-vivid); font-size: 17px; }
+.lm-node.is-voile .lm-node-disc { background-color: var(--c-grey-150); border-color: #8c8f95; color: var(--c-grey-600); }
 .lm-node.is-voile.is-far .lm-node-disc { opacity: .55; }
-.lm-node.is-libere .lm-node-disc { background-color: #f6ecd9; border-color: #fff3cf; box-shadow: 0 0 0 2px #b98a4a, 0 2px 6px rgba(0,0,0,.55); }
-.lm-node.is-recouvert .lm-node-disc { background-color: #c9d3dd; border-color: #4f6478; color: #2a3846; }
-.lm-node.is-recouvert .lm-node-disc::after { content: "✕"; position: absolute; right: -7px; top: -7px; width: 15px; height: 15px; border-radius: 50%; background-color: #2a3846; color: #dbe6f0; font-size: 12px; line-height: 15px; text-align: center; border: 1px solid #c9d3dd; }
-.lm-node.is-protege .lm-node-disc { box-shadow: 0 0 0 3px #d4a017, 0 0 0 5px #7a5a1a, 0 2px 6px rgba(0,0,0,.55); }
+.lm-node.is-libere .lm-node-disc { background-color: var(--c-cream-100-soft); border-color: var(--c-cream-100-vivid); box-shadow: 0 0 0 2px var(--c-bronze-500), 0 2px 6px rgba(0,0,0,.55); }
+.lm-node.is-recouvert .lm-node-disc { background-color: var(--c-blue-200); border-color: #4f6478; color: var(--c-blue-800); }
+.lm-node.is-recouvert .lm-node-disc::after { content: "✕"; position: absolute; right: -7px; top: -7px; width: 15px; height: 15px; border-radius: 50%; background-color: var(--c-blue-800); color: #dbe6f0; font-size: 12px; line-height: 15px; text-align: center; border: 1px solid var(--c-blue-200); }
+.lm-node.is-protege .lm-node-disc { box-shadow: 0 0 0 3px var(--c-brown-550-vivid), 0 0 0 5px var(--c-brown-700), 0 2px 6px rgba(0,0,0,.55); }
 .lm-node.is-selected .lm-node-disc { transform: scale(1.12); }
-.lm-node.is-running .lm-node-disc { border-color: #f0aa3e; box-shadow: 0 0 0 3px rgba(240, 170, 62, .55), 0 2px 6px rgba(0,0,0,.55); }
+.lm-node.is-running .lm-node-disc { border-color: var(--c-bronze-400-vivid); box-shadow: 0 0 0 3px rgba(240, 170, 62, .55), 0 2px 6px rgba(0,0,0,.55); }
 .lm-node.is-reserve { pointer-events: none; }
 .lm-node.is-reserve .lm-node-disc { background-color: transparent; border: 1px dashed rgba(215, 217, 220, .6); color: rgba(215, 217, 220, .6); font-size: 12px; box-shadow: none; }
 .lm-node-name {
   position: absolute; left: 50%; top: 42px; transform: translateX(-50%);
   font-size: 12px; font-weight: 800; white-space: nowrap; pointer-events: none;
-  color: #fff3d6; background-color: rgba(0,0,0,.62); padding: 1px 5px; border-radius: 6px;
+  color: var(--c-cream-100-4); background-color: rgba(0,0,0,.62); padding: 1px 5px; border-radius: 6px;
 }
 .lm-node.is-edge-r .lm-node-name { left: auto; right: -2px; transform: none; }
 .lm-node.is-edge-l .lm-node-name { left: -2px; transform: none; }
 .lm-node.is-label-top .lm-node-name { top: auto; bottom: 42px; }
 .lm-node.is-voile .lm-node-name { display: none; }
-.lm-node.is-voile.is-named .lm-node-name { display: block; color: #d7d9dc; }
+.lm-node.is-voile.is-named .lm-node-name { display: block; color: var(--c-grey-150); }
 
 /* Panneau de secteur, sous la carte */
 .lm-panel {
-  margin: 10px 0 0; border: 1px solid #b98a4a; border-radius: 10px;
-  background-color: #f6ecd9; color: #3a2c1a; padding: 9px 10px 10px;
+  margin: 10px 0 0; border: 1px solid var(--c-bronze-500); border-radius: 10px;
+  background-color: var(--c-cream-100-soft); color: var(--c-brown-850-soft); padding: 9px 10px 10px;
 }
 .lm-panel-name { font-size: 15px; font-weight: 900; }
 .lm-panel-state { display: inline-block; font-size: 12px; font-weight: 900; letter-spacing: .3px; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; margin: 0 0 6px; }
-.lm-panel-state.is-voile { background-color: #d7d9dc; color: #5b5f66; }
-.lm-panel-state.is-libere { background-color: #cfe3b3; color: #2a3d1c; }
-.lm-panel-state.is-recouvert { background-color: #c9d3dd; color: #2a3846; }
-.lm-panel-state.is-protege { background-color: #fff3cf; color: #7a5a1a; border: 1px solid #d4a017; }
-.lm-panel-lore { font-size: 12px; line-height: 1.45; font-style: italic; color: #5a4a32; margin: 0 0 6px; }
+.lm-panel-state.is-voile { background-color: var(--c-grey-150); color: var(--c-grey-600); }
+.lm-panel-state.is-libere { background-color: #cfe3b3; color: var(--c-green-850); }
+.lm-panel-state.is-recouvert { background-color: var(--c-blue-200); color: var(--c-blue-800); }
+.lm-panel-state.is-protege { background-color: var(--c-cream-100-vivid); color: var(--c-brown-700); border: 1px solid var(--c-brown-550-vivid); }
+.lm-panel-lore { font-size: 12px; line-height: 1.45; font-style: italic; color: var(--c-brown-750-soft); margin: 0 0 6px; }
 .lm-panel-line { font-size: 12px; line-height: 1.45; margin: 0 0 4px; }
-.lm-panel-line b { color: #3a2c1a; }
-.lm-panel-line.is-lost { color: #7a2f22; }
-.lm-panel-wall { font-size: 12px; line-height: 1.45; color: #7a2f22; font-weight: 700; margin: 6px 0 0; }
+.lm-panel-line b { color: var(--c-brown-850-soft); }
+.lm-panel-line.is-lost { color: var(--c-red-700-soft); }
+.lm-panel-wall { font-size: 12px; line-height: 1.45; color: var(--c-red-700-soft); font-weight: 700; margin: 6px 0 0; }
 .lm-panel .settings-btn { margin: 8px auto 0; }
 .lm-panel .settings-btn.is-running { pointer-events: none; }
 
@@ -104,10 +104,10 @@
 .lm-actions .settings-btn { margin: 0; flex: 1 1 auto; min-height: 38px; font-size: 12px; padding: 6px 8px; }
 
 /* Bilan d'expédition : ligne de carte (ui/scene-view.js) */
-.scene-map-report { font-size: 12px; line-height: 1.45; margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; border: 1px solid #b98a4a; background-color: #f6ecd9; color: #3a2c1a; }
-.scene-map-report.is-loss { color: #7a2f22; }
-.scene-map-target { font-size: 12px; line-height: 1.45; margin: 0 0 8px; font-style: italic; color: #5a4a32; }
-.scene-map-target b { color: #3a2c1a; font-style: normal; }
+.scene-map-report { font-size: 12px; line-height: 1.45; margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--c-bronze-500); background-color: var(--c-cream-100-soft); color: var(--c-brown-850-soft); }
+.scene-map-report.is-loss { color: var(--c-red-700-soft); }
+.scene-map-target { font-size: 12px; line-height: 1.45; margin: 0 0 8px; font-style: italic; color: var(--c-brown-750-soft); }
+.scene-map-target b { color: var(--c-brown-850-soft); font-style: normal; }
 
 /* ============================================================
    v3.292.0 — carte vivante plein écran
@@ -116,7 +116,7 @@
 body.living-map-active #hud { display: none; }
 body.living-map-active #panel-container { padding: 0; overflow: hidden; max-width: none; }
 
-.lmx { position: absolute; inset: 0; overflow: hidden; background-color: #0d0a1a; color: #3a2c1a; }
+.lmx { position: absolute; inset: 0; overflow: hidden; background-color: var(--c-blue-950); color: var(--c-brown-850-soft); }
 .lmx-viewport { position: absolute; inset: 0; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
 /* touch-action ne s'hérite pas, et .lm-map (overflow: hidden) est un conteneur de défilement :
    sans cette règle, le navigateur reprend le pincement (pointercancel mesuré en mobile). */
@@ -126,7 +126,7 @@ body.living-map-active #panel-container { padding: 0; overflow: hidden; max-widt
 
 /* Boutons ronds posés sur la carte */
 .lmx-btn { width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; padding: 0;
-  border: 2px solid #d4a017; background: radial-gradient(circle at 35% 30%, #3d3226, #1c150d); color: #ffe9b0; font-size: 19px; font-weight: 900; line-height: 1;
+  border: 2px solid var(--c-brown-550-vivid); background: radial-gradient(circle at 35% 30%, var(--c-brown-800-soft), var(--c-brown-900-soft)); color: var(--c-cream-150-vivid); font-size: 19px; font-weight: 900; line-height: 1;
   box-shadow: 0 2px 8px rgba(0,0,0,.6); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .lmx-btn.is-info { font-family: Georgia, serif; }
 
@@ -136,31 +136,31 @@ body.living-map-active #panel-container { padding: 0; overflow: hidden; max-widt
 .lmx-hud > * { pointer-events: auto; }
 .lmx-pills { flex: 1 1 auto; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; min-width: 0; pointer-events: none; }
 .lmx-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; padding: 4px 9px; border-radius: 12px; white-space: nowrap;
-  border: 1px solid #b98a4a; background-color: rgba(246, 236, 217, .94); color: #3a2c1a; box-shadow: 0 2px 6px rgba(0,0,0,.45); }
+  border: 1px solid var(--c-bronze-500); background-color: rgba(246, 236, 217, .94); color: var(--c-brown-850-soft); box-shadow: 0 2px 6px rgba(0,0,0,.45); }
 .lmx-pill .ico-inline { width: 14px; height: 14px; }
-.lmx-pill.is-pal { border-color: #d4a017; background-color: rgba(255, 243, 207, .96); }
+.lmx-pill.is-pal { border-color: var(--c-brown-550-vivid); background-color: rgba(255, 243, 207, .96); }
 .lmx-pill.is-title { font-weight: 900; }
-.lmx-pill small { font-weight: 700; color: #7a2f22; font-size: 12px; }
+.lmx-pill small { font-weight: 700; color: var(--c-red-700-soft); font-size: 12px; }
 
 .lmx-recenter { position: absolute; right: 10px; top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 104px); z-index: 10; font-size: 17px; }
 
 /* Légende repliable, en bas à gauche (remonte avec le volet, voir lmxAfterRender) */
 .lmx-legend-btn { position: absolute; left: 10px; bottom: 10px; z-index: 11; font-size: 18px; transition: bottom .22s ease-out; }
 .lmx-legend { position: absolute; left: 10px; bottom: 58px; z-index: 13; width: 238px; transition: bottom .22s ease-out;
-  background: rgba(246, 236, 217, .97); border: 1px solid #b98a4a; border-radius: 12px; padding: 8px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.55); }
-.lmx-legend h5 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: #6b4a22; }
-.lmx-legend-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; margin: 0 0 5px; color: #3a2c1a; }
+  background: rgba(246, 236, 217, .97); border: 1px solid var(--c-bronze-500); border-radius: 12px; padding: 8px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.55); }
+.lmx-legend h5 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: var(--c-brown-700-soft); }
+.lmx-legend-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; margin: 0 0 5px; color: var(--c-brown-850-soft); }
 .lmx-legend-row .lm-node { position: relative; margin: 0; width: 34px; height: 34px; flex: 0 0 auto; pointer-events: none; }
 .lmx-legend-row .lm-node-disc { left: 3px; top: 3px; width: 26px; height: 26px; font-size: 12px; }
 .lmx-legend-row .lm-node.is-village .lm-node-disc { width: 28px; height: 28px; left: 2px; top: 2px; font-size: 14px; }
-.lmx-legend-row small { display: block; font-weight: 600; color: #6b4a22; font-size: 12px; }
+.lmx-legend-row small { display: block; font-weight: 600; color: var(--c-brown-700-soft); font-size: 12px; }
 
 /* Repère d'un secteur hors écran (expédition en cours) */
 .lmx-offscreen { position: absolute; z-index: 11; display: none; align-items: center; gap: 5px; max-width: 70%;
-  padding: 5px 10px 5px 6px; border-radius: 16px; border: 2px solid #f0aa3e; background: rgba(29, 21, 12, .92); color: #ffe9b0;
+  padding: 5px 10px 5px 6px; border-radius: 16px; border: 2px solid var(--c-bronze-400-vivid); background: rgba(29, 21, 12, .92); color: var(--c-cream-150-vivid);
   font-size: 12px; font-weight: 800; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.6); cursor: pointer; transform: translate(-50%, -50%); }
 .lmx-offscreen.is-on { display: inline-flex; }
-.lmx-off-arrow { display: inline-flex; width: 20px; height: 20px; border-radius: 50%; background: #f0aa3e; color: #1d150c; align-items: center; justify-content: center; font-size: 13px; }
+.lmx-off-arrow { display: inline-flex; width: 20px; height: 20px; border-radius: 50%; background: var(--c-bronze-400-vivid); color: var(--c-brown-900-soft); align-items: center; justify-content: center; font-size: 13px; }
 .lmx-off-txt { overflow: hidden; text-overflow: ellipsis; }
 
 /* Volet du secteur : bas = haut du menu (le menu est hors de #panel-container) */

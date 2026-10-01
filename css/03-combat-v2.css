@@ -47,7 +47,7 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
   align-self: center; max-width: 96%;
   margin: 4px 0 2px; padding: 5px 12px;
   border-radius: 999px;
-  border: 1.5px solid var(--danger, #c0392b);
+  border: 1.5px solid var(--danger, var(--c-red-550));
   background: rgba(120, 20, 15, 0.88);
   color: #ffe9d6; font-size: 12.5px; font-weight: 800;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
@@ -82,15 +82,15 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 }
 .cb-state {
   position: relative; width: 34px; height: 34px; border-radius: 999px;
-  border: 1.5px solid var(--nb-gold-dark, #8a5a1a);
+  border: 1.5px solid var(--nb-gold-dark, var(--c-brown-700-vivid));
   background: rgba(10, 8, 6, 0.78);
   display: flex; align-items: center; justify-content: center;
 }
 .cb-state img { width: 74%; height: 74%; object-fit: contain; }
 .cb-state-n {
   position: absolute; bottom: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 3px;
-  border-radius: 999px; background: #2b2117; border: 1px solid var(--nb-gold-dark, #8a5a1a);
-  color: #f4e9d0; font-size: 12px; font-weight: 800; line-height: 15px; text-align: center;
+  border-radius: 999px; background: var(--c-brown-850-2); border: 1px solid var(--nb-gold-dark, var(--c-brown-700-vivid));
+  color: var(--c-cream-100-2); font-size: 12px; font-weight: 800; line-height: 15px; text-align: center;
 }
 /* Trois familles, trois teintes : le joueur voit d'un coup d'œil ce qui vient de LUI. */
 .cb-state.is-enemy { border-color: #b8622e; }
@@ -100,15 +100,15 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .cb-states-more {
   display: inline-flex; align-items: center; height: 34px; padding: 0 9px;
   border-radius: 999px;
-  border: 1.5px solid var(--nb-gold-dark, #8a5a1a);
+  border: 1.5px solid var(--nb-gold-dark, var(--c-brown-700-vivid));
   background: rgba(10, 8, 6, 0.78);
-  color: #f4e9d0; font-size: 12px; font-weight: 800;
+  color: var(--c-cream-100-2); font-size: 12px; font-weight: 800;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 /* --- Feuille d'explication --- */
 .st-group-title { /* v3.402.0 (lot B-1) : surtitre du kit */
-  color: #8a5c14; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin: 10px 0 4px;
+  color: var(--c-brown-700-vivid); font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin: 10px 0 4px;
 }
 .st-row {
   display: flex; align-items: flex-start; gap: 10px;
@@ -120,9 +120,9 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .st-row-body { flex: 1 1 auto; min-width: 0; }
 .st-row-name { font-size: 12.5px; font-weight: 800; color: var(--nb-ink); }
 .st-row-desc { font-size: 12px; line-height: 1.35; color: var(--nb-ink-dim); }
-.st-row-hint { font-size: 12px; line-height: 1.35; color: var(--nb-gold-dark, #8a5a1a); font-weight: 700; margin-top: 2px; }
+.st-row-hint { font-size: 12px; line-height: 1.35; color: var(--nb-gold-dark, var(--c-brown-700-vivid)); font-weight: 700; margin-top: 2px; }
 .st-row-n { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: var(--nb-ink); padding-top: 2px; }
-.st-row.is-alert { border-color: var(--danger, #c0392b); background: #fff0ec; }
+.st-row.is-alert { border-color: var(--danger, var(--c-red-550)); background: #fff0ec; }
 .st-empty { font-size: 12px; color: var(--nb-ink-dim); font-style: italic; padding: 10px 2px; }
 
 /* Ancienne barre : plus de hauteur minimale réservée (elle laissait un trou quand rien
@@ -146,8 +146,8 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .cb-arena #enemy-emoji img,
 .cb-arena .enemy-image {
   max-height: 100%; max-width: 84%; width: auto; height: auto; object-fit: contain; border-radius: 0;
-  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 72%, rgba(0, 0, 0, 0) 100%);
-          mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 72%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, var(--c-black-950) 72%, rgba(0, 0, 0, 0) 100%);
+          mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, var(--c-black-950) 72%, rgba(0, 0, 0, 0) 100%);
 }
 
 /* ---------- Commandes ---------- */
@@ -176,9 +176,9 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
    au plus, la largeur de 80 à 64 % de la rangée. */
 .cb-cmd .combat-attack-btn {
   width: 64%; height: auto; aspect-ratio: 168 / 50; max-height: 51px; justify-self: center;
-  background: linear-gradient(180deg, #e8bf5a, #b8791f) !important;
-  border: 1px solid #8a5a1a; border-radius: 12px;
-  color: #2a1e0c; font-weight: 800; font-size: 16px; letter-spacing: .3px;
+  background: linear-gradient(180deg, #e8bf5a, var(--c-brown-600)) !important;
+  border: 1px solid var(--c-brown-700-vivid); border-radius: 12px;
+  color: var(--c-brown-900); font-weight: 800; font-size: 16px; letter-spacing: .3px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, .45);
   display: flex; align-items: center; justify-content: center;
 }
@@ -244,8 +244,8 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .cb-arena #enemy-emoji.has-image img,
 .cb-arena .enemy-image {
   width: auto !important; height: auto !important; max-height: 100% !important; max-width: 84% !important;
-  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 72%, rgba(0, 0, 0, 0) 100%) !important;
-          mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 72%, rgba(0, 0, 0, 0) 100%) !important;
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, var(--c-black-950) 72%, rgba(0, 0, 0, 0) 100%) !important;
+          mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, var(--c-black-950) 72%, rgba(0, 0, 0, 0) 100%) !important;
   -webkit-mask-composite: initial !important; mask-composite: initial !important;
 }
 .cb-arena #enemy-emoji.has-image { flex: 1 1 auto; min-height: 120px !important; }

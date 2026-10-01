@@ -1,0 +1,236 @@
+/* =========================================================
+   09-wide.css — v3.406.0 : FORMAT TABLETTE (mode PC niveau B, décisions Seb 01/10/2026)
+   Actif seulement sous html.wide-mode (posé par js/ui/desktop-scale.js) : PC, tablette en
+   paysage, et tablette en portrait si le réglage « Menu à gauche » est choisi.
+   Une seule grande fenêtre d'environ 1 180 px de jeu, centrée :
+     - le HUD en bandeau sur toute la largeur de la fenêtre ;
+     - le menu (barre du bas) en colonne à gauche ;
+     - la page à droite, sur toute la largeur restante.
+   Le combat, la carte vivante et les Petites aventures restent en colonne de téléphone :
+   toutes les règles portent sur body:not(...) pour ne jamais les toucher.
+   Le téléphone ne lit aucune de ces règles.
+   ========================================================= */
+
+:root {
+  --wide-w: 1180px;       /* largeur de la fenêtre */
+  --wide-rail: 104px;     /* largeur du menu de gauche */
+  --kfh: 62px;            /* hauteur du cap du cadre (celle du téléphone) */
+}
+
+/* ---------- La fenêtre : grille HUD / menu / page ---------- */
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) {
+  display: grid;
+  grid-template-columns: var(--wide-rail) minmax(0, calc(min(var(--wide-w), 100vw / var(--pc-zoom, 1)) - var(--wide-rail)));
+  grid-template-rows: auto minmax(0, 1fr);
+  justify-content: center;
+  height: calc(100vh / var(--pc-zoom, 1));
+  height: calc(100dvh / var(--pc-zoom, 1));
+  /* fond : la carte du monde, assombrie hors de la fenêtre */
+  background:
+    linear-gradient(90deg,
+      rgba(0, 0, 0, 0.62) 0%,
+      rgba(0, 0, 0, 0.30) calc(50% - var(--wide-w) / 2 - 40px),
+      rgba(0, 0, 0, 0.18) calc(50% - var(--wide-w) / 2),
+      rgba(0, 0, 0, 0.18) calc(50% + var(--wide-w) / 2),
+      rgba(0, 0, 0, 0.30) calc(50% + var(--wide-w) / 2 + 40px),
+      rgba(0, 0, 0, 0.62) 100%),
+    var(--world-combat-map, none),
+    var(--world-bg, var(--nb-shell));
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #hud {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  width: 100%;
+}
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #tab-bar {
+  grid-column: 1;
+  grid-row: 2;
+}
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #panel-container,
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #game-area,
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #stats-bar,
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #combat-speed-bar {
+  grid-column: 2;
+  grid-row: 2;
+  max-width: none;
+  width: 100%;
+  min-height: 0;
+}
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #panel-container {
+  padding: 10px 14px 10px 10px;
+}
+
+/* ---------- HUD : bandeau sur toute la fenêtre, jauges à largeur de téléphone ---------- */
+html.wide-mode .hud-band { padding-left: 16px; padding-right: 20px; gap: 14px; }
+html.wide-mode .hud-gauges { flex: 0 1 340px; }
+html.wide-mode .hud-res { margin-left: auto; flex-direction: row; gap: 18px; }
+html.wide-mode .hud-res-item { font-size: 15px; }
+html.wide-mode .hud-res-item img { width: 22px; height: 22px; }
+
+/* ---------- Menu à gauche : la barre du bas devient une colonne ---------- */
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) #tab-bar {
+  width: auto;
+  aspect-ratio: auto;
+  align-self: start;
+  margin: 14px 0 0 10px;
+  padding: 0;
+  border: 1px solid var(--c-brown-700-vivid);
+  border-radius: 14px;
+  background: linear-gradient(rgba(16, 12, 8, 0.78), rgba(16, 12, 8, 0.9)), url('../images/UI/textures/bg-stone-tile.png') 0 0 / 256px;
+  box-shadow: inset 0 0 0 1px rgba(226, 177, 74, 0.25), 0 8px 18px -6px var(--c-black-950);
+}
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) #tab-bar-row {
+  position: static;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 8px;
+}
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .tab-btn {
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 1 / 0.94;
+}
+html.wide-mode .tab-label { font-size: 12.5px; }
+
+/* ---------- Bulles « à faire » : en bas à droite de la fenêtre ---------- */
+html.wide-mode .hud-dock {
+  right: max(14px, calc(50% - min(var(--wide-w), 100vw / var(--pc-zoom, 1)) / 2 + 22px));
+  bottom: calc(var(--safe-bottom) + 18px + var(--hud-dock-lift, 0px));
+}
+
+/* ---------- Pages : toute la largeur, plus de bornes de téléphone ---------- */
+html.wide-mode #panel-container .nb-page-frame,
+html.wide-mode #panel-container .kfp-top-holder,
+html.wide-mode #panel-container .kfp-top-holder.is-subtab,
+html.wide-mode #panel-container .subtab-page-content {
+  max-width: none;
+}
+html.wide-mode #panel-container .subtab-bar-wrapper {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+/* ---------- Le cadre du parchemin à grande largeur ----------
+   Au téléphone, chaque rangée du cadre est une image étirée à 100 % (ratio figé) : à 1 000 px,
+   les ornements doubleraient de taille. Ici, on garde l'échelle du téléphone (cap de 62 px)
+   et on découpe les mêmes images :
+   - cap haut : coins par border-image (490 et 494 px de la source), rail du milieu par une
+     tranche unie de la source (x 220 → 470) étirée, ornement central (x 490 → 1110) posé
+     au centre par .kf-orn (élément ajouté par js/ui/kframe-decorator.js) ;
+   - rails latéraux : bords gauche (60 px) et droit (62 px) de Cadre_Milieux.png ;
+   - cap bas : coins (230 px) par border-image, la barre du milieu s'étire.
+   Échelle commune : 62 / 269 = 0,2305 (= 366 px de cadre au téléphone / 1 604 px de source). */
+html.wide-mode #panel-container .kf-top { aspect-ratio: auto; height: var(--kfh); }
+html.wide-mode #panel-container .kf-bot { aspect-ratio: auto; height: calc(var(--kfh) * 275 / 269); }
+
+html.wide-mode #panel-container .kf-top::before,
+html.wide-mode #panel-container .kf-mid::before,
+html.wide-mode #panel-container .kf-bot::before {
+  left: calc(var(--kfh) * 55 / 269);
+  right: calc(var(--kfh) * 55 / 269);
+}
+
+html.wide-mode #panel-container .kf-top::after {
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--kfh) * 494 / 269) 0 calc(var(--kfh) * 490 / 269);
+  border-image: url('../images/UI/frames/page/Cadre_Haut.png') 0 494 0 490 / 0 calc(var(--kfh) * 494 / 269) 0 calc(var(--kfh) * 490 / 269) stretch;
+  background: url('../images/UI/frames/page/Cadre_Haut.png') 16.25% 0 / 641.6% 100% no-repeat;
+  background-clip: padding-box;
+}
+html.wide-mode #panel-container .kf-orn {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 1;
+  width: calc(var(--kfh) * 620 / 269);
+  height: 100%;
+  transform: translateX(-50%);
+  background: url('../images/UI/frames/page/Cadre_Haut.png') 50% 0 / auto 100% no-repeat;
+  pointer-events: none;
+}
+html.wide-mode #panel-container .kf-mid::after {
+  background: none;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--kfh) * 62 / 269) 0 calc(var(--kfh) * 60 / 269);
+  border-image: url('../images/UI/frames/page/Cadre_Milieux.png') 0 62 0 60 / 0 calc(var(--kfh) * 62 / 269) 0 calc(var(--kfh) * 60 / 269) stretch;
+}
+html.wide-mode #panel-container .kframe-court .kf-mid::after {
+  border-image-source: url('../images/UI/frames/page/Cadre_Milieux_court.png');
+}
+html.wide-mode #panel-container .kf-bot::after {
+  background: none;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 0 calc(var(--kfh) * 230 / 269);
+  border-image: url('../images/UI/frames/page/Cadre_Bas.png') 0 230 0 230 fill / 0 calc(var(--kfh) * 230 / 269) stretch;
+}
+/* marges intérieures : celles du téléphone (6,5 % de 390 ≈ 25 px), pas 6,5 % de 1 000 px */
+html.wide-mode #panel-container .nb-page-frame.kframe > .kf-mid { padding: 8px 28px 10px; }
+html.wide-mode #panel-container .nb-page-frame.kframe.kframe-page > .kf-mid { padding-bottom: 22px; }
+html.wide-mode #panel-container .kf-title { left: 20%; right: 20%; font-size: 16px; }
+
+/* ---------- Feuilles et menus : largeur d'une tablette étroite, centrés ---------- */
+html.wide-mode .ksheet,
+html.wide-mode .full-menu {
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---------- Bulles « à faire » : sous le menu de gauche, libellé à droite ---------- */
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .hud-dock {
+  right: auto;
+  left: calc(50% - min(var(--wide-w), 100vw / var(--pc-zoom, 1)) / 2 + 10px + (var(--wide-rail) - 10px) / 2 - 24px);
+  bottom: calc(var(--safe-bottom) + 18px);
+  align-items: center;
+}
+html.wide-mode .hud-bub-tip,
+html.wide-mode .hud-bub.is-quiet .hud-bub-tip { right: auto; left: 58px; }
+html.wide-mode .hud-bub.is-quiet .hud-bub-tip { left: 46px; }
+
+/* ---------- Jauges : jamais plus larges qu'une tablette étroite ---------- */
+html.wide-mode #panel-container .kf-mid .kgauge { max-width: 460px; margin-left: auto; margin-right: auto; }
+
+/* =========================================================
+   Pages adaptées (prototype v3.406.0) : Camp, Quêtes, Équipement, Village
+   ========================================================= */
+
+/* Camp : les cartes en deux colonnes (ordre de lecture : colonne de gauche, puis de droite) */
+html.wide-mode .camp-page > .kf-mid {
+  column-count: 2;
+  column-gap: 16px;
+}
+html.wide-mode .camp-page > .kf-mid > * {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+html.wide-mode .camp-page > .kf-mid > .camp-death-banner { column-span: all; }
+
+/* Quêtes : les cartes du tableau en deux colonnes */
+html.wide-mode .quest-board-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+html.wide-mode .quest-board-list > * { margin: 0; }
+
+/* Équipement : emplacements à la taille du téléphone, la fiche prend le reste */
+html.wide-mode .eq-hero-right { flex: 0 0 300px; width: 300px; }
+html.wide-mode .eq-hero-main { gap: 20px; }
+
+/* Village : trois colonnes de bâtiments */
+html.wide-mode .vb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+html.wide-mode #panel-container .kf-mid .kgauge:not(.kgauge-thin) { max-width: 300px; }
+
+/* ---------- Écrans plein cadre (PC et tablette) : ce qui se lit garde une largeur de tablette étroite ---------- */
+html.pc-mode .lmx-sheet { width: min(480px, 100%); margin: 0 auto; }
+html.wide-mode .eq-hero-main > :not(.eq-hero-right) { flex: 1 1 auto; min-width: 0; }

@@ -41,7 +41,7 @@
 .quest-mode-btn.is-active {
   background: var(--nb-gold);
   border-color: var(--nb-gold-dark);
-  color: #3a2a12;
+  color: var(--c-brown-850-3);
 }
 
 .quest-timer {
@@ -149,7 +149,7 @@
   padding: 1px 6px;
   border-radius: 999px;
   background: var(--nb-gold);
-  color: #3a2a12;
+  color: var(--c-brown-850-3);
   font-size: 11px;
   font-weight: 700;
   text-align: center;
@@ -454,8 +454,8 @@
 
 .qb-cap-indicator.is-full {
   background: rgba(200, 60, 60, 0.12);
-  border-color: var(--danger, #c83c3c);
-  color: var(--danger, #c83c3c);
+  border-color: var(--danger, var(--c-red-500-soft));
+  color: var(--danger, var(--c-red-500-soft));
 }
 
 /* v3.182.0 : les 4 onglets de catégorie passent sur le composant
@@ -482,7 +482,7 @@
 }
 
 .qb-card.is-claimable {
-  border-color: #4ade80;
+  border-color: var(--c-green-400);
 }
 
 .qb-card.is-locked {
@@ -503,7 +503,7 @@
   clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%);
 }
 
-.qb-banner-chasse { background: linear-gradient(180deg, #4b5e35, #2c3a1e); }
+.qb-banner-chasse { background: linear-gradient(180deg, #4b5e35, var(--c-green-850)); }
 .qb-banner-expedition { background: linear-gradient(180deg, #5b3f6e, #3a2749); }
 .qb-banner-donjon { background: linear-gradient(180deg, #6e3a3a, #442020); }
 .qb-banner-production { background: linear-gradient(180deg, #6e5a2f, #453818); }
@@ -673,11 +673,11 @@
 
 /* v3.265.0 : carte d'arrivée depuis un bâtiment verrouillé (Production) */
 .qb-card.is-highlight {
-  box-shadow: 0 0 0 3px var(--nb-gold, #d9a441), 0 0 14px rgba(217, 164, 65, 0.7);
+  box-shadow: 0 0 0 3px var(--nb-gold, var(--c-bronze-450-2)), 0 0 14px rgba(217, 164, 65, 0.7);
   animation: qb-highlight-pulse 0.9s ease-in-out 3;
 }
 @keyframes qb-highlight-pulse {
-  50% { box-shadow: 0 0 0 3px var(--nb-gold, #d9a441), 0 0 22px rgba(217, 164, 65, 0.95); }
+  50% { box-shadow: 0 0 0 3px var(--nb-gold, var(--c-bronze-450-2)), 0 0 22px rgba(217, 164, 65, 0.95); }
 }
 @media (prefers-reduced-motion: reduce) { .qb-card.is-highlight { animation: none; } }
 

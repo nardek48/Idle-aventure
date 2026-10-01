@@ -37,7 +37,7 @@
   border: none;
   background: url('../images/UI/buttons/btn-rect-normal.png') center / 100% 100% no-repeat;
   box-shadow: none;
-  color: #ffffff;
+  color: var(--c-white-50);
   text-shadow: 0 1px 2px rgba(30, 15, 0, 0.75);
 
   font-size: 14px;
@@ -74,7 +74,7 @@
 .kbtn.danger,
 .settings-btn.danger,
 .combat-report-reset-btn {
-  color: #ffb0a6;
+  color: var(--c-red-150);
   text-shadow: 0 1px 2px rgba(60, 8, 0, 0.85);
 }
 
@@ -83,7 +83,7 @@
    À confirmer par Seb dans l'atelier (spécimen dédié section 9). */
 .kbtn.primary,
 .settings-btn.primary {
-  color: #ffd76a;
+  color: var(--c-bronze-300);
   text-shadow: 0 1px 2px rgba(30, 15, 0, 0.85);
   filter: brightness(1.08) saturate(1.05);
 }
@@ -168,7 +168,7 @@
   justify-content: center;
   background: center / contain no-repeat;
   font-weight: 800;
-  color: #fff7e0;
+  color: var(--c-cream-50-soft);
   text-shadow: 0 1px 2px rgba(30, 15, 0, 0.85);
   text-align: center;
   line-height: 1.1;
@@ -193,7 +193,7 @@
   --kb-l: 20%; --kb-r: 20%; --kb-t: 32%; --kb-b: 36%;   /* centre 48 % (mesuré) */
   /* v3.183.0 (retour Seb, tickets Donjon) : texte NOIR sur la plaque,
      comme l'écu. */
-  color: #1c1006;
+  color: var(--c-brown-950-3);
   text-shadow: 0 1px 0 rgba(255, 235, 190, 0.35);
 }
 
@@ -202,7 +202,7 @@
   background-image: url('../images/UI/badges/badge-shield.png');
   --kb-l: 14%; --kb-r: 14%; --kb-t: 34%; --kb-b: 32%;   /* centre 51 % (plaque mesurée) */
   /* v3.179.0 (retour Seb) : texte NOIR sur la plaque de l'écu. */
-  color: #1c1006;
+  color: var(--c-brown-950-3);
   text-shadow: 0 1px 0 rgba(255, 235, 190, 0.35);
 }
 
@@ -256,8 +256,8 @@
 .kframe {
   display: flex;
   flex-direction: column;
-  color: #2e2214; /* v3.404.0 : encre sombre, l'intérieur du cadre est clair */
-  --kf-fill: #1c2318;
+  color: var(--c-brown-850-2); /* v3.404.0 : encre sombre, l'intérieur du cadre est clair */
+  --kf-fill: var(--c-green-900);
 }
 
 .kframe .kf-top::before,
@@ -336,7 +336,7 @@
    spécimens existants) --- */
 .kframe.kframe-dark {
   --kf-fill: #241a10;
-  color: #f4e9d0;
+  color: var(--c-cream-100-2);
 }
 
 .kframe.kframe-dark .kf-top::before,
@@ -349,8 +349,8 @@
 }
 
 .kframe.kframe-parchment {
-  --kf-fill: var(--nb-cream, #f3e6c8);
-  color: var(--nb-ink, #3a2c1a);
+  --kf-fill: var(--nb-cream, var(--c-cream-150));
+  color: var(--nb-ink, var(--c-brown-850-soft));
 }
 
 /* ============================================================
@@ -384,7 +384,7 @@
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
-  --kf-fill: #1c2318;
+  --kf-fill: var(--c-green-900);
 }
 
 .kfp-top-holder .kf-top::before {
@@ -428,7 +428,7 @@
   font-weight: 800;
   letter-spacing: 0.6px;
   /* v3.404.0 : le titre est posé sur le fond clair du cadre : encre sombre (contraste 1,7 -> 9) */
-  color: #2a1a08;
+  color: var(--c-brown-900);
   text-shadow: 0 1px 0 rgba(255, 240, 200, 0.45);
   white-space: nowrap;
   overflow: hidden;
@@ -488,10 +488,10 @@
 .settings-btn.is-sec,
 .btn-buy.is-sec,
 .kframe .inv-toolbar-btn {
-  border: 2px solid #8a5c14;
+  border: 2px solid var(--c-brown-700-vivid);
   border-radius: 10px;
   background: rgba(255, 248, 232, 0.35);
-  color: #4a3218;
+  color: var(--c-brown-800-2);
   text-shadow: none;
   box-shadow: none;
 }
@@ -542,10 +542,10 @@
   min-width: 72px;
   min-height: 38px;
   padding: 4px 12px;
-  border: 1px solid #8a5c14;
+  border: 1px solid var(--c-brown-700-vivid);
   border-radius: 19px;
-  background: linear-gradient(#f6d27a, #d99a34);
-  color: #2a1a08;
+  background: linear-gradient(var(--c-bronze-300-soft), var(--c-bronze-450-3));
+  color: var(--c-brown-900);
   text-shadow: none;
   font-family: inherit;
   font-size: 14px;
@@ -564,8 +564,8 @@
 
 .kbuy:not(:disabled):active,
 .btn-buy.kbuy:not(:disabled):active {
-  background: linear-gradient(#d99a34, #b97a1c);
-  background-image: linear-gradient(#d99a34, #b97a1c);
+  background: linear-gradient(var(--c-bronze-450-3), var(--c-brown-600));
+  background-image: linear-gradient(var(--c-bronze-450-3), var(--c-brown-600));
   transform: translateY(1px);
 }
 
@@ -579,3 +579,4 @@
   opacity: 0.6;
   cursor: default;
 }
+.kf-orn { display: none; } /* v3.406.0 : ornement du cap, montré au format tablette (09-wide.css) */

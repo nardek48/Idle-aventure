@@ -343,7 +343,7 @@ function buildEnemyTraitsCardHTML(ctx) {
       var n = p.traits.filter(function (t) { return etRuleResponse(ENEMY_TRAIT_DEFS[t.trait].cond, pr.rules, kit).status === "counter"; }).length;
       var isCur = JSON.stringify(etActiveRules(pr.rules).map(function (x) { return [x.conditionId, x.actionSlot]; })) === current;
       h += '<button type="button" class="et-chip' + (isCur ? ' is-current' : '') + '"' + (editable && !isCur ? ' onclick="loadEnemyTraitsPreset(\'' + esc(pr.id) + '\')"' : ' disabled') + '>'
-        + esc(_td(pr.name)) + ' <span class="et-chip-n">⚡ ' + n + '/' + p.traits.length + '</span></button>';
+        + esc(_td(pr.name)) + ' <span class="et-chip-n"><img class="ico-inline" src="images/Icons/combat_stats/stat_speed.png" alt=""> ' + n + '/' + p.traits.length + '</span></button>';
     });
     h += '</div>';
     if (!editable) h += '<div class="et-unmet">' + _t("Grimoire verrouillé pendant une sortie.") + '</div>';

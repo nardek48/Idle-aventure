@@ -153,7 +153,7 @@ function companionChangeVoie(companionId, voieId) {
   if (typeof showConfirmModal === "function") {
     showConfirmModal(_t("Changer de voie ?"), free
       ? _t("{x} passe à « {v} » gratuitement (Voie libre).", { x: _td(raw.name), v: _td(raw.voies[voieId].label) })
-      : _t("{x} passe à « {v} » pour {n} or.", { x: _td(raw.name), v: _td(raw.voies[voieId].label), n: formatNumber(cost) }), "🔁", go);
+      : _t("{x} passe à « {v} » pour {n} or.", { x: _td(raw.name), v: _td(raw.voies[voieId].label), n: formatNumber(cost) }), "images/Icons/system/auto_repeat.png", go);
   } else go();
 }
 window.companionChangeVoie = companionChangeVoie;

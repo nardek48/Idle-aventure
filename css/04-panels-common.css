@@ -52,9 +52,9 @@
 }
 
 .btn.primary {
-  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
+  background: linear-gradient(180deg, var(--c-bronze-300), var(--nb-gold));
   border-color: var(--nb-gold-dark);
-  color: #4a2f06;
+  color: var(--c-brown-850-vivid);
   box-shadow: 0 3px 0 var(--nb-gold-deep);
 }
 
@@ -136,11 +136,6 @@
   font-size: 24px;
 }
 
-.talent-cost {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--text-dim);
-}
 
 .talent-name {
   margin-top: 2px;
@@ -151,7 +146,7 @@
   max-width: 68px;
 }
 
-@media (max-width: 760px), (min-width: 1000px) and (hover: hover) and (pointer: fine) { /* v3.367.0 : + mode PC (colonne mobile) */
+@media all { /* v3.367.0 : + mode PC ; v3.406.0 : règles du téléphone partout (tablette comprise) — le jeu est toujours une mise en page de téléphone */
   .talent-board-bg {
     min-height: 560px;
   }
@@ -169,8 +164,7 @@
     font-size: 20px;
   }
 
-  .talent-name,
-  .talent-cost {
+  .talent-name {
     font-size: 12px;
   }
 }

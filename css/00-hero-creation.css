@@ -15,7 +15,7 @@
   inset: 0;
   z-index: 3001;
   overflow: hidden;
-  background: #1a1006;
+  background: var(--c-brown-950-3);
 }
 
 .hc-bg {
@@ -42,13 +42,13 @@
   margin: 0 0 12px;
   text-align: center;
   font-size: 13px;
-  color: #6b5a40;
+  color: var(--c-brown-650-soft);
 }
 
 /* Étapes : trois traits sous le contenu */
 .hc-dots { display: flex; justify-content: center; gap: 6px; margin: 14px 0 2px; }
 .hc-dots i { width: 22px; height: 4px; border-radius: 2px; background: rgba(58, 44, 26, 0.2); }
-.hc-dots i.on { background: #c27f1f; }
+.hc-dots i.on { background: var(--c-brown-550-3); }
 
 .hc-actions .kbtn { flex: 1 1 0; }
 .hc-actions .hc-back-btn { flex: 0.6 1 0; }
@@ -59,10 +59,10 @@
   width: 100%;
   min-height: 50px;
   padding: 10px 14px;
-  border: 2px solid #8a5c14;
+  border: 2px solid var(--c-brown-700-vivid);
   border-radius: 12px;
   background: rgba(255, 252, 244, 0.85);
-  color: #3a2c1a;
+  color: var(--c-brown-850-soft);
   font-family: inherit;
   font-size: 17px;
   font-weight: 700;
@@ -71,7 +71,7 @@
 }
 
 .hc-name-input::placeholder { color: #9a8a6c; font-weight: 600; }
-.hc-name-input:focus { border-color: #c27f1f; box-shadow: 0 0 0 3px rgba(226, 177, 74, 0.35); }
+.hc-name-input:focus { border-color: var(--c-brown-550-3); box-shadow: 0 0 0 3px rgba(226, 177, 74, 0.35); }
 
 /* ---- Étape 2 : la classe ---- */
 .hc-class-grid {
@@ -90,7 +90,7 @@
   border: 1.5px solid var(--sheet-card-bd);
   border-radius: 12px;
   background: var(--sheet-card-bg);
-  color: #3a2c1a;
+  color: var(--c-brown-850-soft);
   font-family: inherit;
   cursor: pointer;
 }
@@ -98,8 +98,8 @@
 .hc-class-card .lc-med { width: 72px; height: 75px; }
 
 .hc-class-card.active {
-  border: 2px solid #c27f1f;
-  box-shadow: 0 0 0 1px #e2b14a, 0 3px 10px rgba(194, 127, 31, 0.35);
+  border: 2px solid var(--c-brown-550-3);
+  box-shadow: 0 0 0 1px var(--c-bronze-400-3), 0 3px 10px rgba(194, 127, 31, 0.35);
 }
 
 .hc-class-name {
@@ -111,9 +111,9 @@
 
 /* Homme / Femme : le rail du kit (.kseg) ; l'actif garde la classe .active du code */
 .hc-gender-toggle .hc-gender-btn.active {
-  background: linear-gradient(#f6d27a, #d99a34);
-  border-color: #8a5c14;
-  color: #2a1a08;
+  background: linear-gradient(var(--c-bronze-300-soft), var(--c-bronze-450-3));
+  border-color: var(--c-brown-700-vivid);
+  color: var(--c-brown-900);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
@@ -123,7 +123,7 @@
   font-size: 13px;
   font-style: italic;
   line-height: 1.45;
-  color: #6b5a40;
+  color: var(--c-brown-650-soft);
 }
 
 /* Variante du Chaos : une ligne à case, sur le parchemin */
@@ -139,7 +139,7 @@
   border: 1.5px solid var(--sheet-card-bd);
   border-radius: 12px;
   background: var(--sheet-card-bg);
-  color: #3a2c1a;
+  color: var(--c-brown-850-soft);
   font-family: inherit;
   font-size: 13px;
   font-weight: 700;
@@ -149,7 +149,7 @@
 .hc-chaos-toggle.on {
   border: 2px solid #7a3fb8;
   background: rgba(122, 63, 184, 0.1);
-  color: #4a1f78;
+  color: var(--c-violet-700);
 }
 
 .hc-chaos-toggle-box {
@@ -179,8 +179,8 @@
 
 .hc-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 0; }
 .hc-stat-ico-img { width: 20px; height: 20px; object-fit: contain; }
-.hc-stat strong { font-size: 15px; color: #3a2c1a; order: 2; }
-.hc-stat-label { font-size: 12px; font-weight: 700; color: #6b5a40; order: 3; }
+.hc-stat strong { font-size: 15px; color: var(--c-brown-850-soft); order: 2; }
+.hc-stat-label { font-size: 12px; font-weight: 700; color: var(--c-brown-650-soft); order: 3; }
 
 /* Compétences de classe (dépliable, v3.29) */
 .hc-skills-toggle {
@@ -190,17 +190,17 @@
   width: 100%;
   min-height: 40px;
   padding: 6px 12px;
-  border: 2px solid #8a5c14;
+  border: 2px solid var(--c-brown-700-vivid);
   border-radius: 10px;
   background: rgba(255, 248, 232, 0.35);
-  color: #4a3218;
+  color: var(--c-brown-800-2);
   font-family: inherit;
   font-size: 13px;
   font-weight: 800;
   cursor: pointer;
 }
 
-.hc-skills-chevron { color: #8a5c14; }
+.hc-skills-chevron { color: var(--c-brown-700-vivid); }
 
 .hc-skills-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 
@@ -217,8 +217,8 @@
 .hc-skill-icon-wrap { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; }
 .hc-skill-icon { width: 24px; height: 24px; object-fit: contain; }
 .hc-skill-body { min-width: 0; }
-.hc-skill-name { font-size: 13px; font-weight: 800; color: #3a2c1a; }
-.hc-skill-desc { font-size: 12px; line-height: 1.35; color: #6b5a40; }
+.hc-skill-name { font-size: 13px; font-weight: 800; color: var(--c-brown-850-soft); }
+.hc-skill-desc { font-size: 12px; line-height: 1.35; color: var(--c-brown-650-soft); }
 
 /* ---- Étape 3 : confirmation — le médaillon entier, sans cercle ajouté ---- */
 .hc-body { text-align: left; }
@@ -236,7 +236,7 @@
   text-align: center;
   font-size: 24px;
   font-weight: 800;
-  color: #2a1a08;
+  color: var(--c-brown-900);
   overflow-wrap: anywhere;
 }
 
@@ -250,12 +250,12 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #8a5c14;
+  color: var(--c-brown-700-vivid);
 }
 
 .hc-confirm-class-ico { width: 22px; height: 22px; object-fit: contain; }
 
-.hc-confirm-variant { text-align: center; font-size: 13px; font-weight: 700; color: #4a1f78; margin-top: 2px; }
+.hc-confirm-variant { text-align: center; font-size: 13px; font-weight: 700; color: var(--c-violet-700); margin-top: 2px; }
 
 .hc-confirm-tagline {
   margin: 8px 10px 0;
@@ -263,7 +263,7 @@
   font-size: 13px;
   font-style: italic;
   line-height: 1.45;
-  color: #6b5a40;
+  color: var(--c-brown-650-soft);
 }
 
 /* ---- Petits écrans (320px) ---- */

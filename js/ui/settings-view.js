@@ -1,97 +1,131 @@
 "use strict";
-/* ui/settings-view.js — écran Paramètres : sauvegarde/export/import, toggle combat auto, reset complet. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/settings-view.js — écran Paramètres (v3.408.0 : trois onglets en rail) : sauvegarde/export/import, mode de combat, affichage, langue, reset complet. Détail : COMMENTAIRES_ORIGINAUX.md */
 
-function buildSettingsHTML() {
-  var h = '<button class="settings-btn primary" onclick="saveGame()">' + _t("Sauvegarder") + '</button>';
-  h += '<button class="settings-btn" onclick="switchTab(\'log\')"><img class=ico-inline src=images/Icons/quests/quest_story.png> ' + _t("Journal") + '</button>';
-  // v3.99.15 : onglets cachés par défaut (voir core/state.js:unlockedTabs). v3.100.0 : le
-  // déblocage normal passe par la chaîne Histoire (systems/story-quest-system.js) ; ce bouton
-  // reste un raccourci qui court-circuite le chapitre (StoryQuestManager.skipAll).
-  // v3.395.0 (décision Seb, audit design) : « Débloquer tous les onglets » passe dans l'Admin.
+/* v3.408.0 (refonte de l'onglet, atelier-parametres.html : Seb choisit B · Rail et S1 · glissière) :
+   trois onglets en rail du kit — Partie (sauvegarde, zone de danger), Jeu (mode de combat,
+   fil rouge, mises en scène), Appareil (langue, installation, tablette, à propos).
+   Retirés : bouton Journal (dans le Menu), bouton Grimoire (Héros), boutons d'ateliers morts,
+   carte « Développement » (l'Admin devient un lien discret en bas d'Appareil). */
+var settingsTab = "partie"; // "partie" | "jeu" | "appareil"
+function setSettingsTab(tab) {
+  settingsTab = (tab === "jeu" || tab === "appareil") ? tab : "partie";
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setSettingsTab = setSettingsTab;
 
-  h += '<div class="panel-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/system/save.png> ' + _t("Sauvegarde") + '</h3>';
-  h += '<p class="panel-sub">' + _t("Le jeu ne sauvegarde que dans ce navigateur. Exporte régulièrement une copie pour ne rien perdre en cas de changement d'appareil ou de nettoyage du cache.") + '</p>';
-  h += '<button class="settings-btn" onclick="exportSaveToFile()"><img class=ico-inline src=images/Icons/system/export.png> ' + _t("Exporter (fichier)") + '</button>';
-  h += '<button class="settings-btn" onclick="showExportTextModal()"><img class=ico-inline src=images/Icons/quests/quest_list.png> ' + _t("Exporter (code à copier)") + '</button>';
-  h += '<button class="settings-btn" onclick="triggerImportFilePicker()"><img class=ico-inline src=images/Icons/system/import.png> ' + _t("Importer un fichier") + '</button>';
-  h += '<button class="settings-btn" onclick="showImportTextModal()"><img class=ico-inline src=images/Icons/quests/quest_list.png> ' + _t("Importer un code") + '</button>';
-  h += '</div>';
+/* Interrupteur du kit (S1 · glissière bronze et or) */
+function kSwitchHTML(on, onclick, label) {
+  return '<button type="button" class="kswitch' + (on ? ' is-on' : '') + '" role="switch" aria-checked="' + (on ? 'true' : 'false') + '"'
+    + (label ? ' aria-label="' + esc(label) + '"' : '') + ' onclick="' + onclick + '"></button>';
+}
+window.kSwitchHTML = kSwitchHTML;
 
-  h += '<div class="panel-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ' + _t("Combat") + '</h3>';
+function settingsRowHTML(icon, title, sub, ctrl) {
+  return '<div class="set-row"><img class="set-row-ico" src="' + icon + '" alt=""><div class="set-row-txt"><b>' + title + '</b>'
+    + (sub ? '<small>' + sub + '</small>' : '') + '</div>' + (ctrl || '') + '</div>';
+}
+
+function buildSettingsPartieHTML() {
+  var h = '<div class="set-card">';
+  h += '<div class="kkick">' + _t("Sauvegarde") + '</div>';
+  h += '<p>' + _t("Le jeu se sauvegarde tout seul toutes les 30 secondes, dans ce navigateur. Exporte une copie de temps en temps : elle te suit sur un autre appareil.") + '</p>';
+  h += '<div class="set-stack">';
+  h += '<button class="settings-btn primary" onclick="saveGame()"><img class=ico-inline src=images/Icons/system/save.png> ' + _t("Sauvegarder maintenant") + '</button>';
+  h += '<div class="set-pair"><button class="settings-btn" onclick="exportSaveToFile()"><img class=ico-inline src=images/Icons/system/export.png> ' + _t("Exporter") + '</button>';
+  h += '<button class="settings-btn" onclick="triggerImportFilePicker()"><img class=ico-inline src=images/Icons/system/import.png> ' + _t("Importer") + '</button></div>';
+  h += '<div class="set-links"><button type="button" class="klink" onclick="showExportTextModal()">' + _t("Copier le code de sauvegarde") + '</button>';
+  h += '<button type="button" class="klink" onclick="showImportTextModal()">' + _t("Coller un code") + '</button></div>';
+  h += '</div></div>';
+
+  h += '<div class="ksec"><img src="images/Icons/system/warning.png" alt=""><span>' + _t("Zone de danger") + '</span></div>';
+  h += '<div class="set-card"><p>' + _t("Effacer la partie supprime ton héros, ton village et toute ta progression sur cet appareil. C'est définitif.") + '</p>';
+  h += '<button class="settings-btn danger" onclick="resetGame()"><img class=ico-inline src=images/Icons/system/trash.png> ' + _t("Effacer la partie") + '</button></div>';
+  return h;
+}
+
+function buildSettingsJeuHTML() {
   var grimoireUnlocked = (typeof isTabUnlocked === "function") ? isTabUnlocked("grimoire") : true;
-  h += '<label class="settings-toggle-row">';
-  h += '<span>' + _t("Mode Grimoire (rounds automatiques)") + '</span>';
-  h += '<input type="checkbox" id="auto-skills-toggle"' + (game.combatMode === "grimoire" ? ' checked' : '') + (grimoireUnlocked ? '' : ' disabled') + ' onchange="toggleAutoSkills(this.checked)">';
-  h += '</label>';
-  h += '<p class="panel-sub">' + _t("Tactique : chaque round attend ton choix (Attaque, compétences, Défense, potion). Grimoire : les rounds s'enchaînent seuls et tes règles du Grimoire (ou la priorité par défaut) choisissent l'action.")
+  var isGrim = game.combatMode === "grimoire";
+  var h = '<div class="set-card">';
+  h += '<div class="kkick">' + _t("Mode de combat") + '</div>';
+  h += '<div class="kseg set-seg">';
+  h += '<button type="button" class="' + (isGrim ? '' : 'is-on') + '" onclick="toggleAutoSkills(false)"><img src="images/Icons/combat_stats/stat_attack.png" alt=""><span>' + _t("Tactique") + '</span></button>';
+  h += '<button type="button" class="' + (isGrim ? 'is-on' : '') + '"' + (grimoireUnlocked ? '' : ' disabled') + ' onclick="toggleAutoSkills(true)"><img src="images/Icons/codex/codex_lore.png" alt=""><span>' + _t("Grimoire") + '</span></button>';
+  h += '</div>';
+  h += '<p>' + (isGrim ? _t("Les rounds s'enchaînent seuls : tes règles du Grimoire (ou la priorité par défaut) choisissent l'action.")
+    : _t("Chaque round attend ton choix : attaque, compétences, défense, potion."))
     + (grimoireUnlocked ? '' : ' ' + _t("Le mode Grimoire se débloque avec la chaîne Histoire.")) + '</p>';
-  h += '<button class="settings-btn" onclick="switchTab(\'grimoire\')"><img class=ico-inline src=images/Icons/codex/codex_lore.png> ' + _t("Grimoire de tactiques") + '</button>';
   h += '</div>';
 
   // v3.332.0 (Évolutions, F4 et B4) : préférences d'affichage de CET appareil (Prefs, hors sauvegarde)
   if (window.Prefs) {
-    h += '<div class="panel-card">';
-    h += '<h3><img class=ico-inline src=images/Icons/system/settings.png> ' + _t("Affichage") + '</h3>';
-    h += '<label class="settings-toggle-row"><span>' + _t("Fil rouge (bouton à côté du portrait)") + '</span>'
-      + '<input type="checkbox"' + (Prefs.get("filRouge") ? ' checked' : '') + ' onchange="setDisplayPref(\'filRouge\', this.checked)"></label>';
-    h += '<label class="settings-toggle-row"><span>' + _t("Mises en scène des boss") + '</span>'
-      + '<input type="checkbox"' + (Prefs.get("bossMoments") ? ' checked' : '') + ' onchange="setDisplayPref(\'bossMoments\', this.checked)"></label>';
-    h += '<p class="panel-sub">' + _t("Le fil rouge propose ta prochaine action. Les mises en scène : carte d'entrée, changement de phase, coup final et trophée. Réglages propres à cet appareil.") + '</p>';
+    h += '<div class="set-card">';
+    h += settingsRowHTML("images/Icons/aether_icon.png", _t("Fil rouge"), _t("La petite bulle qui propose ta prochaine action."),
+      kSwitchHTML(Prefs.get("filRouge"), "setDisplayPref('filRouge', " + !Prefs.get("filRouge") + ")", _t("Fil rouge")));
+    h += settingsRowHTML("images/Icons/dungeon/boss_crown.png", _t("Mises en scène des boss"), _t("Carte d'entrée, changement de phase, coup final et trophée."),
+      kSwitchHTML(Prefs.get("bossMoments"), "setDisplayPref('bossMoments', " + !Prefs.get("bossMoments") + ")", _t("Mises en scène des boss")));
+    h += '<p class="set-note">' + _t("Réglages propres à cet appareil.") + '</p>';
     h += '</div>';
   }
+  return h;
+}
 
-  // v3.375.0 (i18n, D3) : l'interface est traduite en anglais — le choix de langue sort de l'Admin.
-  // Les libellés des langues restent dans leur propre langue ; la pseudo-langue de test reste à l'Admin.
+function buildSettingsAppareilHTML() {
+  var h = '';
+  // v3.375.0 (i18n, D3) : les libellés des langues restent dans leur propre langue
   if (window.I18n) {
     var curLang = I18n.lang();
-    h += '<div class="panel-card">';
-    h += '<h3><img class=ico-inline src=images/Icons/system/settings.png> ' + _t("Langue") + (curLang === "fr" ? ' · Language' : '') + '</h3>';
-    h += '<div class="settings-lang-row">';
+    h += '<div class="set-card">';
+    h += '<div class="kkick">' + _t("Langue") + (curLang === "fr" ? ' · Language' : '') + '</div>';
+    h += '<div class="kseg set-seg">';
     [["fr", "Français"], ["en", "English"]].forEach(function (l) {
-      h += '<button class="settings-btn' + (l[0] === curLang ? ' active' : '') + '" type="button"' + (l[0] === curLang ? ' disabled' : '')
-        + ' onclick="confirmLanguageChange(\'' + l[0] + '\')">' + l[1] + (l[0] === curLang ? ' ✓' : '') + '</button>';
+      h += '<button type="button" class="' + (l[0] === curLang ? 'is-on' : '') + '" onclick="confirmLanguageChange(\'' + l[0] + '\')"><span>' + l[1] + '</span></button>';
     });
     h += '</div>';
-    // v3.377.0 (EN-3) : tout le contenu est traduit, « (beta) » et la note sur le Désert disparaissent
-    h += '<p class="panel-sub">' + _t("Le jeu redémarre pour changer de langue.") + '</p>';
+    h += '<p>' + _t("Le jeu redémarre pour changer de langue.") + '</p>';
     h += '</div>';
   }
 
   // v3.359.0 : installer le jeu sur l'appareil (main/pwa.js)
   if (typeof buildPwaSettingsCardHTML === "function") h += buildPwaSettingsCardHTML();
 
-  h += '<button class="settings-btn danger" onclick="resetGame()">' + _t("Réinitialiser tout") + '</button>';
+  // v3.406.0 (format tablette) : tablette tenue en portrait — carte visible seulement sur une tablette
+  if (window.DesktopScale && DesktopScale.isTablet()) {
+    var pch = DesktopScale.portraitChoice();
+    h += '<div class="set-card">';
+    h += '<div class="kkick">' + _t("Tablette en portrait") + '</div>';
+    h += '<div class="kseg set-seg">';
+    [["zoom", _t("Téléphone agrandi")], ["rail", _t("Menu à gauche")]].forEach(function (o) {
+      h += '<button type="button" class="' + (o[0] === pch ? 'is-on' : '') + '" onclick="DesktopScale.setPortraitChoice(\'' + o[0] + '\')"><span>' + esc(o[1]) + '</span></button>';
+    });
+    h += '</div>';
+    h += '<p>' + _t("En paysage, la tablette utilise toujours le menu à gauche. Réglage propre à cet appareil.") + '</p>';
+    h += '</div>';
+  }
 
-  h += '<div class="panel-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/subtabs/potions.png> ' + _t("Développement") + '</h3>';
-  h += '<p class="panel-sub">' + _t("Outil de test, sans effet sur ta partie (pas de sauvegarde, pas de récompense).") + '</p>';
-  h += '<button class="settings-btn" onclick="switchTab(\'admin\')">' + _t("🛠️ Admin") + '</button>';
-  // v3.163.0 : Atelier UI — galerie de contrôle des composants (vrai CSS,
-  // vrais assets, tous les états), voir atelier-ui.html à la racine. Ouvre
-  // dans un onglet séparé : page indépendante du jeu, aucun état partagé.
-  h += '<button class="settings-btn" onclick="window.open(\'atelier-ui.html\', \'_blank\')">' + _t("🎨 Atelier UI") + '</button>';
-  // v3.201.0 : maquette de l'écran Personnage (2 onglets), à valider avant tout
-  // code dans heros-view.js. Même logique que l'Atelier UI : consultable depuis
-  // le téléphone, hors du jeu.
-  h += '<button class="settings-btn" onclick="window.open(\'atelier-heros.html\', \'_blank\')"><img class=ico-inline src=images/Icons/combat_stats/stat_defense.png> ' + _t("Atelier Héros") + '</button>';
-  // v3.203.4 : atelier des cadres parchemin, à juger sur téléphone avant tout
-  // usage dans le jeu. Aucun écran ne les utilise à ce stade.
-  h += '<button class="settings-btn" onclick="window.open(\'atelier-cadres.html\', \'_blank\')">' + _t("🖼️ Atelier Cadres") + '</button>';
-  h += '</div>';
+  h += '<div class="set-about"><b>' + _t("Aethervale") + '</b>'
+    + _t("Version {v}", { v: (typeof GAME_VERSION === "string" ? GAME_VERSION : "") }) + ' · '
+    + (game.saveSupported ? _t("Sauvegarde : locale navigateur.") : _t("Sauvegarde : indisponible.")) + '</div>';
+  h += '<div class="set-links"><button type="button" class="klink" onclick="switchTab(\'admin\')">' + _t("Outils de test (Admin)") + '</button></div>';
+  return h;
+}
 
-  h += '<div class="settings-info">';
-  h += '<strong>' + _t("Aethervale") + '</strong><br><br>';
-  h += (game.saveSupported ? _t("Sauvegarde : locale navigateur.") : _t("Sauvegarde : indisponible.")) + '<br>';
-  h += _t("La progression hors-ligne, l'équipement et les quêtes sont activés.");
+/* tab : optionnel (harnais) — sinon l'onglet actif */
+function buildSettingsHTML(tab) {
+  var cur = tab || settingsTab;
+  var R = [["partie", _t("Partie"), "images/Icons/system/save.png"], ["jeu", _t("Jeu"), "images/Icons/combat_stats/stat_attack.png"], ["appareil", _t("Appareil"), "images/Icons/system/settings.png"]];
+  var h = '<div class="kseg is-stack set-tabs">';
+  R.forEach(function (r) {
+    h += '<button type="button" class="' + (cur === r[0] ? 'is-on' : '') + '" onclick="setSettingsTab(\'' + r[0] + '\')"><img src="' + r[2] + '" alt=""><span>' + r[1] + '</span></button>';
+  });
   h += '</div>';
-  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/system/settings.png|" + _t("Options")) + '">' + h + '</div>';
+  h += cur === "jeu" ? buildSettingsJeuHTML() : cur === "appareil" ? buildSettingsAppareilHTML() : buildSettingsPartieHTML();
+  return '<div class="nb-page-frame nb-page-frame-fill kframe-page settings-page" data-kf-title="' + esc("images/Icons/menu_icons/settings_menu.png|" + _t("Paramètres")) + '">' + h + '</div>';
 }
 
 function toggleAutoSkills(enabled) {
   if (!window.CombatEngine || typeof CombatEngine.setCombatMode !== "function") return;
-  if (!CombatEngine.setCombatMode(enabled ? "grimoire" : "tactique")) showToast(_t("📖 Le mode Grimoire n'est pas encore débloqué"), 1400);
+  if (!CombatEngine.setCombatMode(enabled ? "grimoire" : "tactique")) showToast(_t("Le mode Grimoire n'est pas encore débloqué"), 1400);
   if (typeof renderPanel === "function") renderPanel();
 }
 
@@ -142,11 +176,13 @@ function confirmLanguageChange(lang) {
 window.confirmLanguageChange = confirmLanguageChange;
 window.toggleAutoSkills = toggleAutoSkills;
 
-/* v3.332.0 : préférence d'affichage (Prefs). Le HUD relit le fil rouge à l'image suivante. */
+/* v3.332.0 : préférence d'affichage (Prefs). Le HUD relit le fil rouge à l'image suivante.
+   v3.408.0 : l'interrupteur se redessine (plus de case à cocher qui garde son état seule). */
 function setDisplayPref(key, value) {
   if (!window.Prefs) return;
   Prefs.set(key, value);
   if (typeof renderHud === "function") renderHud();
+  if (typeof renderPanel === "function") renderPanel();
 }
 window.setDisplayPref = setDisplayPref;
 window.unlockAllTabsFromSettings = unlockAllTabsFromSettings;

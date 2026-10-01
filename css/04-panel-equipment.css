@@ -254,7 +254,7 @@
 .eq-affix-line { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--nb-ink); }
 .eq-affix-dot {
   flex: 0 0 auto; width: 7px; height: 7px; border-radius: 999px;
-  background: var(--nb-gold-dark, #8a5a1a); border: 1.5px solid var(--nb-gold-dark, #8a5a1a);
+  background: var(--nb-gold-dark, var(--c-brown-700-vivid)); border: 1.5px solid var(--nb-gold-dark, var(--c-brown-700-vivid));
 }
 .eq-affix-line.is-secondary { font-weight: 600; color: var(--nb-ink-dim); }
 .eq-affix-line.is-secondary .eq-affix-dot { background: transparent; }
@@ -271,8 +271,8 @@
 .eq-cmp-row.is-lost small { font-size: 12px; font-weight: 600; }
 .eq-cmp-txt { min-width: 0; text-align: left; }
 .eq-cmp-delta { flex: 0 0 auto; font-size: 12px; font-weight: 800; font-style: normal; white-space: nowrap; }
-.eq-cmp-delta.is-up { color: #16a34a; }
-.eq-cmp-delta.is-down { color: #dc2626; }
+.eq-cmp-delta.is-up { color: var(--c-green-650-vivid); }
+.eq-cmp-delta.is-down { color: var(--c-red-500); }
 .eq-cmp-delta.is-flat { color: var(--nb-ink-dim); font-weight: 600; }
 .nb-purchase-info-col .eq-cmp-lines { margin: 2px 0 0; gap: 1px; }
 .nb-purchase-info-col .eq-cmp-row { font-size: 12px; }
@@ -379,8 +379,8 @@
   color: var(--nb-ink-dim);
 }
 
-.eq-compat-delta.is-up { color: #16a34a; font-weight: 800; }
-.eq-compat-delta.is-down { color: #dc2626; font-weight: 800; }
+.eq-compat-delta.is-up { color: var(--c-green-650-vivid); font-weight: 800; }
+.eq-compat-delta.is-down { color: var(--c-red-500); font-weight: 800; }
 .eq-compat-delta.is-flat { color: var(--nb-ink-dim); }
 
 .eq-compat-equip-btn {
@@ -415,7 +415,7 @@
 }
 
 .eq-compare-title { /* v3.402.0 (lot B-1) : surtitre du kit */
-  color: #8a5c14; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--c-brown-700-vivid); font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
   margin-bottom: 6px;
 }
 
@@ -471,8 +471,8 @@
   font-weight: 800;
 }
 
-.eq-compare-delta.is-up { color: #16a34a; }
-.eq-compare-delta.is-down { color: #dc2626; }
+.eq-compare-delta.is-up { color: var(--c-green-650-vivid); }
+.eq-compare-delta.is-down { color: var(--c-red-500); }
 .eq-compare-delta.is-flat { color: var(--nb-ink-dim); }
 
 .eq-compare-hint {
@@ -648,7 +648,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--c-white-50);
   transition: transform 0.2s ease;
 }
 
@@ -799,7 +799,7 @@
 
 .inv-threshold-pill.is-active {
   background: var(--nb-gold);
-  color: #241a00;
+  color: var(--c-brown-950-vivid);
   border-color: var(--nb-gold-dark);
 }
 
@@ -824,7 +824,7 @@
   padding: 10px 12px;
   border: none;
   background: url('../images/UI/buttons/btn-rect-normal.png') center / 100% 100% no-repeat;
-  color: #ffb0a6;
+  color: var(--c-red-150);
   text-shadow: 0 1px 2px rgba(60, 8, 0, 0.85);
   font-size: 12px;
   font-weight: 800;
@@ -922,7 +922,7 @@
   padding: 1px 3px;
   border-radius: 8px;
   background: var(--nb-gold-dark);
-  color: #fff;
+  color: var(--c-white-50);
   font-size: 12px;
   font-weight: 800;
   text-align: center;
@@ -998,7 +998,7 @@
 
 /* v3.164.0 : références au bloc mort .eq-bag-grid/.eq-bag-main
    retirées des media queries (bloc supprimé plus haut). */
-@media (max-width: 640px), (min-width: 1000px) and (hover: hover) and (pointer: fine) { /* v3.367.0 : + mode PC (colonne mobile) */
+@media all { /* v3.367.0 : + mode PC ; v3.406.0 : règles du téléphone partout (tablette comprise) — le jeu est toujours une mise en page de téléphone */
   .eq-hero-card {
     padding: 12px;
   }
@@ -1031,8 +1031,8 @@
 .eq-compat-name { white-space: normal; overflow: visible; font-size: 12px; }
 .eq-compat-stat { font-size: 12px; white-space: nowrap; }
 .eq-compat-extra { font-size: 12px; font-weight: 700; margin-top: 1px; }
-.eq-compat-extra .is-up { color: #16a34a; }
-.eq-compat-extra .is-down { color: #dc2626; }
+.eq-compat-extra .is-up { color: var(--c-green-650-vivid); }
+.eq-compat-extra .is-down { color: var(--c-red-500); }
 .eq-compat-extra-sep { color: var(--nb-ink-dim); margin: 0 4px; }
 .eq-compat-equip-btn { align-self: center; }
 
@@ -1049,7 +1049,7 @@
 .eqs-row-txt { font-size: 12.5px; font-weight: 800; color: var(--nb-ink); }
 .eqs-row-tier { font-size: 12px; color: var(--nb-ink-dim); text-transform: lowercase; }
 .eqs-row-delta { flex: 0 0 auto; font-size: 12px; font-weight: 800; }
-.eqs-row-delta.is-up { color: #16a34a; }
-.eqs-row-delta.is-down { color: #dc2626; }
+.eqs-row-delta.is-up { color: var(--c-green-650-vivid); }
+.eqs-row-delta.is-down { color: var(--c-red-500); }
 .eqs-row-delta.is-flat { color: var(--nb-ink-dim); }
 .eqs-power { margin: 8px 0 4px; }

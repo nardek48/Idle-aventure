@@ -275,7 +275,7 @@ function buildApothecaryOrdersHTML() {
     var name = potion ? _td(potion.name) : r.potionId;
 
     if (A.isLearned(r.potionId)) {
-      h += '<div class="vb-sheet-effect">✔ ' + esc(_t("{x} — recette acquise", { x: name })) + '</div>';
+      h += '<div class="vb-sheet-effect"><img class="ico-inline" src="images/Icons/system/check_valid.png" alt=""> ' + esc(_t("{x} — recette acquise", { x: name })) + '</div>';
       return;
     }
     if (!A.isOrderOpen(r.potionId)) {

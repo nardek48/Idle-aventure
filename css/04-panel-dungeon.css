@@ -81,12 +81,12 @@
 .dungeon-progress-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #60a5fa, #34d399);
+  background: linear-gradient(90deg, var(--c-blue-300), #34d399);
   transition: width 0.3s ease;
 }
 
 .dungeon-progress-fill.is-boss {
-  background: linear-gradient(90deg, #fb7185, #ef4444);
+  background: linear-gradient(90deg, #fb7185, var(--c-red-400));
 }
 
 /* =========================
@@ -221,7 +221,7 @@
   text-align: center;
   font-size: 16px;
   font-weight: 800;
-  color: #7dd3fc;
+  color: var(--c-blue-250);
   margin: 8px 0 12px;
 }
 
@@ -401,7 +401,7 @@
   bottom: 0;
   padding: 8px 34px 8px 12px;
   background: linear-gradient(0deg, rgba(0, 0, 0, 0.6), transparent);
-  color: #fff;
+  color: var(--c-white-50);
   font-size: 15px;
   font-weight: 800;
   text-align: left;
@@ -414,7 +414,7 @@
   right: 12px;
   top: 10px;
   font-size: 12px;
-  color: #fff;
+  color: var(--c-white-50);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
@@ -423,7 +423,7 @@
   top: 8px;
   right: 10px;
   font-size: 12px;
-  color: #fff;
+  color: var(--c-white-50);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
@@ -460,11 +460,11 @@
    portrait (700 × 1254), il étirait la carte à 170 px. */
 .dungeon-list .dungeon-tier-card.is-full .dungeon-tier-image { height: 96px; align-self: flex-start; }
 .dungeon-tier-world { font-size: 12px; color: var(--nb-ink-dim); font-weight: 700; }
-.dungeon-tier-done { display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 12px; font-weight: 800; color: var(--nb-gold-dark, #8a5a1a); }
+.dungeon-tier-done { display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 12px; font-weight: 800; color: var(--nb-gold-dark, var(--c-brown-700-vivid)); }
 .dungeon-tier-done img { width: 13px; height: 13px; }
 
 /* Marques du run en cours, sur la carte de run actif */
-.dungeon-active-marks { display: flex; align-items: center; gap: 6px; margin: 6px 0 2px; font-size: 12px; font-weight: 800; color: var(--nb-gold-dark, #8a5a1a); }
+.dungeon-active-marks { display: flex; align-items: center; gap: 6px; margin: 6px 0 2px; font-size: 12px; font-weight: 800; color: var(--nb-gold-dark, var(--c-brown-700-vivid)); }
 .dungeon-active-mark-icon { width: 24px; height: 24px; object-fit: contain; }
 
 /* --- Feuille de lancement --- */
@@ -472,7 +472,7 @@
 .dsheet-rarity { font-weight: 800; text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6); } /* v3.399.0 : rareté lisible sur la pierre */
 .dsheet-story { font-size: 12px; line-height: 1.4; color: var(--nb-ink); margin-bottom: 8px; }
 .dsheet-lore { font-size: 12px; font-style: italic; color: var(--nb-ink-dim); margin-bottom: 8px; padding-left: 8px; border-left: 2px solid var(--nb-frame-light); }
-.dsheet-marks-title { color: #8a5c14; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin: 6px 0 4px; display: flex; justify-content: space-between; } /* v3.402.0 : surtitre du kit */
+.dsheet-marks-title { color: var(--c-brown-700-vivid); font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin: 6px 0 4px; display: flex; justify-content: space-between; } /* v3.402.0 : surtitre du kit */
 .dsheet-marks-title span:last-child { color: var(--nb-ink-dim); font-weight: 700; }
 
 /* Une Marque = une ligne à bascule de 48 px. Cinq lignes = 240 px, sans scroll. */
@@ -490,8 +490,8 @@
   flex: 0 0 auto; width: 38px; height: 22px; border-radius: 999px; position: relative;
   background: rgba(58, 44, 26, 0.18); border: 1px solid var(--nb-frame-light); transition: background 0.15s;
 }
-.dmark-state::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff8e8; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); transition: left 0.15s; }
-.dmark.is-on { border-color: var(--nb-gold); background: #fff3d6; }
+.dmark-state::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--c-cream-50); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); transition: left 0.15s; }
+.dmark.is-on { border-color: var(--nb-gold); background: var(--c-cream-100-4); }
 .dmark.is-on .dmark-state { background: var(--nb-gold); }
 .dmark.is-on .dmark-state::after { left: 18px; }
 .dmark.is-locked { opacity: 0.55; cursor: default; }
@@ -506,11 +506,11 @@
   background: var(--nb-cream-alt); border: 1px solid var(--nb-frame-light); font-size: 12px;
 }
 .dsheet-reward > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-.dsheet-reward strong { font-size: 14px; color: var(--nb-gold-dark, #8a5a1a); }
+.dsheet-reward strong { font-size: 14px; color: var(--nb-gold-dark, var(--c-brown-700-vivid)); }
 .dsheet-reward-icon { width: 18px; height: 18px; vertical-align: -4px; object-fit: contain; }
 .dsheet-ticket { font-size: 12px; color: var(--nb-ink-dim); margin: 4px 0 0; }
 .dsheet-ticket strong { color: var(--nb-ink); }
-.dsheet-ticket a { color: var(--nb-gold-dark, #8a5a1a); font-weight: 800; }
+.dsheet-ticket a { color: var(--nb-gold-dark, var(--c-brown-700-vivid)); font-weight: 800; }
 
 /* v3.358.0 (D7) : sorties du jour — le bandeau n'est plus un bouton d'achat, il dit la règle
    (le libellé peut passer à la ligne sur 320 px) ; chaque carte porte son compte. */
@@ -518,5 +518,5 @@
 .dungeon-runs-badge:active { transform: none; }
 .dungeon-runs-badge .dungeon-ticket-badge-label { white-space: normal; font-size: 11px; line-height: 1.3; }
 .dungeon-tier-runs { margin-top: 2px; font-size: 12px; font-weight: 800; color: var(--nb-ink); }
-.dungeon-tier-runs.is-free { color: var(--nb-gold-dark, #8a5a1a); }
+.dungeon-tier-runs.is-free { color: var(--nb-gold-dark, var(--c-brown-700-vivid)); }
 .dungeon-tier-runs.is-empty { color: var(--nb-ink-dim); }

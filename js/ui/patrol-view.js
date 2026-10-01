@@ -148,7 +148,7 @@ function buildReturnPatrolsHTML() {
     if (!PatrolManager.isOnPatrol(id) && !res.relaunched) {
       body += '<button type="button" class="ret-link" onclick="returnRelaunchPatrol(\'' + id + '\')">' + _t("Repartir (même route, {h} h)", { h: res.hours }) + '</button>';
     } else if (res.relaunched) {
-      body += '<div class="ret-done">✓ ' + (PATROL_COMPANION_FEMININE[id] ? _t("Repartie.") : _t("Reparti.")) + '</div>';
+      body += '<div class="ret-done"><img class="ico-inline" src="images/Icons/system/check_valid.png" alt=""> ' + (PATROL_COMPANION_FEMININE[id] ? _t("Repartie.") : _t("Reparti.")) + '</div>';
     }
   });
   return buildReturnSectionHTML("images/Icons/quests/mission_exploration.png", _t("Patrouilles"), body);

@@ -441,7 +441,7 @@ function productionUpgradeCheapest(buildingId) {
   if (index === null) return;
   var result = ProductionPlotsSystem.upgradePlot(buildingId, index);
   if (!result.ok) showToast(result.reason, 1200);
-  else showToast("⬆ " + _t("« {x} » améliorée", { x: getProductionZoneName(buildingId, index) }), 1200);
+  else showToast(_t("« {x} » améliorée", { x: getProductionZoneName(buildingId, index) }), 1200);
 }
 window.productionUpgradeCheapest = productionUpgradeCheapest;
 
@@ -839,7 +839,7 @@ function upgradeWorkshop(workshopId) {
   }
   var lvl = WorkshopsSystem.getLevel(workshopId);
   var eff = recipe ? formatCraftDuration(WorkshopsSystem.getEffectiveCraftTimeMs(workshopId, recipe)) : "";
-  showToast("⬆ " + _t("{x} niv {n}", { x: def ? _td(def.name) : "", n: lvl }) + (eff ? " : " + _t("{d}/lot", { d: eff }) : "") + " · " + _t("file {n}", { n: WorkshopsSystem.getMaxQueueLength(workshopId) }), 1600);
+  showToast(_t("{x} niv {n}", { x: def ? _td(def.name) : "", n: lvl }) + (eff ? " : " + _t("{d}/lot", { d: eff }) : "") + " · " + _t("file {n}", { n: WorkshopsSystem.getMaxQueueLength(workshopId) }), 1600);
 }
 window.upgradeWorkshop = upgradeWorkshop;
 

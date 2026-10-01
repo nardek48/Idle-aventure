@@ -53,7 +53,7 @@ function buildAchievementCardHTML(ach) {
     h += '<div class="hf-meta">' + formatAchievementRewardHTML(ach) + '<button type="button" class="hf-btn" onclick="AchievementManager.claim(\'' + esc(ach.id) + '\')">' + _t("Réclamer") + '</button></div>';
   } else if (claimed) {
     var at = AM.ensure().claimedAt[ach.id];
-    h += '<div class="hf-meta"><span class="hf-got">✓ ' + (at ? _t("Obtenu le {d}", { d: formatAchievementDate(at) }) : _t("Obtenu")) + '</span>' + (ach.title ? '<span class="hf-title-tag">' + _t("Titre") + '</span>' : '') + '</div>';
+    h += '<div class="hf-meta"><span class="hf-got"><img class="ico-inline" src="images/Icons/system/check_valid.png" alt=""> ' + (at ? _t("Obtenu le {d}", { d: formatAchievementDate(at) }) : _t("Obtenu")) + '</span>' + (ach.title ? '<span class="hf-title-tag">' + _t("Titre") + '</span>' : '') + '</div>';
   } else {
     if (target > 1) {
       h += '<div class="hf-bar"><i style="width:' + Math.round(100 * prog / target) + '%"></i></div>';
@@ -188,7 +188,7 @@ function openAchievementTitleSheet() {
   AM.getAllTitles().forEach(function (t, i) {
     var ok = AM.isTitleUnlocked(t);
     h += '<button type="button" class="hf-opt' + (cur === t.title ? ' is-on' : '') + (ok ? '' : ' is-locked') + '"' + (ok ? ' onclick="pickAchievementTitle(' + i + ')"' : ' disabled') + '>'
-      + '<span>' + (ok ? '' : '🔒 ') + esc(_td(t.title)) + '</span><small>' + esc(t.from) + '</small></button>';
+      + '<span>' + (ok ? '' : '<img class="ico-inline" src="images/Icons/system/lock_closed.png" alt=""> ') + esc(_td(t.title)) + '</span><small>' + esc(t.from) + '</small></button>';
   });
   h += '</div></div></div>';
   var root = getAchievementSheetRoot();

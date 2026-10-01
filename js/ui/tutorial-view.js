@@ -104,7 +104,7 @@ var GENERIC_TUTORIALS = {
     icon: "images/Icons/combat_stats/stat_critical.png",
     title: "Le Terrain d'entraînement",
     points: [
-      { icon: "🚧", text: "Tes caractéristiques butent à 10 : c'est la limite de l'entraînement de fortune du campement. Pour aller plus loin, il faut un vrai terrain." },
+      { icon: "images/Icons/system/training_cap.png", text: "Tes caractéristiques butent à 10 : c'est la limite de l'entraînement de fortune du campement. Pour aller plus loin, il faut un vrai terrain." },
       { icon: "images/Icons/workshops/masonry.png", text: "Le Terrain se bâtit ici, au Village, comme l'Atelier : des matériaux, puis un chantier qui prend un peu de temps." },
       { icon: "images/Icons/combat_stats/stat_critical.png", text: "Chaque niveau du Terrain ouvre 10 niveaux de plus sur CHACUNE des cinq caractéristiques — jamais un total à répartir." },
       { icon: "images/Icons/gold_icon.png", text: "L'entraînement lui-même se paie toujours en or, dans Personnage → Stats. Le Terrain décide jusqu'où tu peux monter, pas combien ça coûte." }
@@ -167,7 +167,7 @@ var GENERIC_TUTORIALS = {
     title: "Le Grimoire de tactiques",
     points: [
       { icon: "images/Icons/codex/codex_lore.png", text: "Le Grimoire programme ton combat automatique : si une situation se présente, ton héros joue l'action que tu as choisie en priorité." },
-      { icon: "🔢", text: "Les règles sont lues dans l'ordre, de haut en bas. La première qui s'applique l'emporte." },
+      { icon: "images/Icons/system/sort.png", text: "Les règles sont lues dans l'ordre, de haut en bas. La première qui s'applique l'emporte." },
       { icon: "images/Icons/combat_stats/stat_speed.png", text: "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation." },
       { icon: "images/Icons/system/ascension.png", text: "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas." },
       { icon: "images/Icons/system/lock_closed.png", text: "En combat, ton héros met de côté un peu de ressource pour garantir ton contre le plus prioritaire : il jouera moins d'actions coûteuses en attendant." },

@@ -182,14 +182,15 @@ function buildPwaInstallButtonHTML(where) {
 /* Paramètres › Application : le bouton, ou l'état de l'installation. */
 function buildPwaSettingsCardHTML() {
   var st = PwaInstall.status();
-  var h = '<div class="panel-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/apple-touch-icon.png> ' + _t("Application") + '</h3>';
+  // v3.408.0 : carte des Paramètres refondus (Appareil) — carte crème et surtitre du kit
+  var h = '<div class="set-card">';
+  h += '<div class="kkick">' + _t("Application") + '</div>';
   if (st === "installed") {
-    h += '<p class="panel-sub">' + _t("Aethervale est installé sur cet appareil. Il s'ouvre en plein écran, comme une application, et fonctionne sans connexion.") + '</p>';
+    h += '<p>' + _t("Aethervale est installé sur cet appareil. Il s'ouvre en plein écran, comme une application, et fonctionne sans connexion.") + '</p>';
   } else if (st === "none") {
-    h += '<p class="panel-sub">' + _t("Ce navigateur ne propose pas l'installation. Avec Chrome ou Edge (ordinateur, Android), ou Safari sur iPhone, Aethervale s'installe comme une application.") + '</p>';
+    h += '<p>' + _t("Ce navigateur ne propose pas l'installation. Avec Chrome ou Edge (ordinateur, Android), ou Safari sur iPhone, Aethervale s'installe comme une application.") + '</p>';
   } else {
-    h += '<p class="panel-sub">' + _t("Installe Aethervale sur cet appareil : une icône sur l'écran d'accueil, le jeu en plein écran, et ta sauvegarde protégée du nettoyage du navigateur.") + '</p>';
+    h += '<p>' + _t("Installe Aethervale sur cet appareil : une icône sur l'écran d'accueil, le jeu en plein écran, et ta sauvegarde protégée du nettoyage du navigateur.") + '</p>';
     h += buildPwaInstallButtonHTML("settings");
   }
   h += '</div>';

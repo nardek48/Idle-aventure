@@ -143,7 +143,7 @@
 }
 
 .production-card-status.is-full {
-  color: #16a34a;
+  color: var(--c-green-650-vivid);
 }
 
 /* Colonne actions — 2 boutons empilés, fonds fournis en image. */
@@ -169,7 +169,7 @@
   box-shadow: none;
   -webkit-appearance: none;
   appearance: none;
-  color: #fff;
+  color: var(--c-white-50);
   font-size: 12px;
   font-weight: 800;
   text-align: center;
@@ -501,7 +501,7 @@
    sur bouton à fond image sombre — trop peu lisible sur le fond clair des mini-cartes de
    parcelle. Surcharge locale en rouge foncé lisible sur --nb-cream-deep. */
 .farm-plot-action-btn .production-cost-item.is-missing {
-  color: #b3261e;
+  color: var(--c-red-600-3);
 }
 
 /* =========================
@@ -632,9 +632,9 @@
 }
 
 .workshop-auto-toggle.is-active {
-  border-color: #2f9e44;
+  border-color: var(--c-green-600);
   background: rgba(47, 158, 68, 0.12);
-  color: #206b32;
+  color: var(--c-green-750-2);
 }
 
 .workshop-auto-toggle:active {
@@ -673,7 +673,7 @@
   gap: 8px;
   margin: 0 0 8px;
   padding: 6px 8px;
-  border: 1px solid #2f9e44;
+  border: 1px solid var(--c-green-600);
   border-radius: var(--nb-radius-sm);
   background: rgba(47, 158, 68, 0.08);
 }
@@ -681,7 +681,7 @@
 .workshop-auto-qty-label {
   font-size: 12px;
   font-weight: 700;
-  color: #206b32;
+  color: var(--c-green-750-2);
   flex-shrink: 1;
   min-width: 0;
 }
@@ -836,7 +836,7 @@
   padding: 0 4px;
   border-radius: 999px;
   background: var(--nb-gold-dark);
-  color: #fff;
+  color: var(--c-white-50);
   font-size: 10px;
   font-weight: 800;
   line-height: 16px;
@@ -850,7 +850,7 @@
 .production-auto-badge {
   left: -6px;
   right: auto;
-  background: #2f9e44;
+  background: var(--c-green-600);
   min-width: 24px;
   padding: 0 5px;
 }
@@ -913,9 +913,9 @@
 .workshop-summary-row-auto-badge {
   font-size: 12px;
   font-weight: 700;
-  color: #206b32;
+  color: var(--c-green-750-2);
   background: rgba(47, 158, 68, 0.15);
-  border: 1px solid #2f9e44;
+  border: 1px solid var(--c-green-600);
   border-radius: 999px;
   padding: 1px 6px;
   white-space: nowrap;
@@ -975,7 +975,7 @@
 .production-dash-hint {
   font-size: 12px;
   text-align: center;
-  color: var(--nb-ink-dim, #4f3d26); /* v3.404.0 : lisible sur le parchemin */
+  color: var(--nb-ink-dim, var(--c-brown-750)); /* v3.404.0 : lisible sur le parchemin */
   margin: 0 0 10px;
 }
 
@@ -988,10 +988,10 @@
 
 .production-dash-card {
   position: relative;
-  border: 1px solid #b98a4a;
+  border: 1px solid var(--c-bronze-500);
   border-radius: 10px;
-  background: #f6ecd9;
-  color: #3a2c1a;
+  background: var(--c-cream-100-soft);
+  color: var(--c-brown-850-soft);
   padding: 7px 8px 8px;
   cursor: pointer;
   overflow: hidden;
@@ -1002,7 +1002,7 @@
 }
 
 .production-dash-card.is-full {
-  border-color: #a33b2a;
+  border-color: var(--c-red-600-soft);
   box-shadow: inset 0 0 0 1px #a33b2a55;
 }
 
@@ -1018,13 +1018,13 @@
 }
 
 .production-dash-flag.is-full-flag {
-  color: #fff3d6;
-  background: #a33b2a;
+  color: var(--c-cream-100-4);
+  background: var(--c-red-600-soft);
 }
 
 .production-dash-flag.is-up-flag {
-  color: #2a3d1c;
-  background: #b9d18a;
+  color: var(--c-green-850);
+  background: var(--c-green-300);
 }
 
 /* v3.404.0 : le drapeau ne recouvre plus le nom du bâtiment */
@@ -1061,7 +1061,7 @@
 .production-dash-stock {
   font-size: 12px;
   font-weight: 700;
-  color: #6b4a22;
+  color: var(--c-brown-700-soft);
   margin-bottom: 4px;
 }
 
@@ -1072,23 +1072,23 @@
 }
 
 .production-dash-rate {
-  color: #4a6b2a;
+  color: var(--c-green-700-soft);
   font-weight: 700;
 }
 
 .production-dash-zones {
-  color: #6b4a22;
+  color: var(--c-brown-700-soft);
 }
 
 .production-dash-status {
   font-size: 12px;
-  color: #8a6a30;
+  color: var(--c-brown-650-vivid);
   margin-top: 3px;
   min-height: 12px;
 }
 
 .production-dash-status.is-full {
-  color: #a33b2a;
+  color: var(--c-red-600-soft);
   font-weight: 700;
 }
 
@@ -1108,13 +1108,13 @@
 
 .production-status-banner.is-warn {
   background: rgba(163, 59, 42, 0.16);
-  border: 1px solid #a33b2a;
+  border: 1px solid var(--c-red-600-soft);
   color: #ffb9a6;
 }
 
 .production-status-banner.is-ok {
   background: rgba(74, 107, 42, 0.16);
-  border: 1px solid #4a6b2a;
+  border: 1px solid var(--c-green-700-soft);
   color: #cfe8a8;
 }
 
@@ -1124,7 +1124,7 @@
   gap: 3px;
   font-size: 12px;
   font-weight: 700;
-  color: var(--nb-ink-dim, #6b4a22);
+  color: var(--nb-ink-dim, var(--c-brown-700-soft));
   margin-right: auto;
   padding-left: 2px;
   /* 320px : se rétracte en ellipse plutôt que de chevaucher l'écu de niveau */
@@ -1147,13 +1147,13 @@
 }
 
 .production-shops-locked {
-  border: 1px dashed #8a6a30;
+  border: 1px dashed var(--c-brown-650-vivid);
   border-radius: 10px;
   padding: 7px 10px;
   margin-top: 8px;
   font-size: 12px;
   line-height: 1.4;
-  color: var(--nb-gold-soft, #d9c49a);
+  color: var(--nb-gold-soft, var(--c-bronze-250-soft));
   text-align: center;
 }
 
@@ -1196,7 +1196,7 @@
 .production-detail-name {
   font-size: 16px;
   font-weight: 800;
-  color: var(--nb-gold-bright, #ffe9b0);
+  color: var(--nb-gold-bright, var(--c-cream-150-vivid));
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
 }
 
@@ -1221,7 +1221,7 @@
 .production-detail-stock-label {
   font-size: 12px;
   font-weight: 700;
-  color: var(--nb-gold-soft, #e8d5a8);
+  color: var(--nb-gold-soft, var(--c-bronze-200));
   margin: 3px 0 10px;
 }
 
@@ -1230,7 +1230,7 @@
   font-weight: 900;
   letter-spacing: 0.4px;
   text-transform: uppercase;
-  color: var(--nb-gold, #f0aa3e);
+  color: var(--nb-gold, var(--c-bronze-400-vivid));
   margin: 4px 0 6px;
 }
 
@@ -1238,13 +1238,13 @@
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
-  color: var(--nb-gold-soft, #d9c49a);
+  color: var(--nb-gold-soft, var(--c-bronze-250-soft));
 }
 
 .production-detail-shops-hint {
   font-size: 12px;
   text-align: center;
-  color: var(--nb-gold-soft, #d9c49a);
+  color: var(--nb-gold-soft, var(--c-bronze-250-soft));
   opacity: 0.8;
   margin-top: 10px;
 }
@@ -1266,7 +1266,7 @@
    liseré de sélection si les deux s'appliquent (déclaré après .is-selected). */
 .farm-plot-card.is-cheapest {
   position: relative; /* ancre du drapeau ::after (absent de .farm-plot-card de base) */
-  border-color: #4a6b2a;
+  border-color: var(--c-green-700-soft);
   box-shadow: inset 0 0 0 1px rgba(74, 107, 42, 0.4);
 }
 
@@ -1277,8 +1277,8 @@
   left: -1px;
   font-size: 12px;
   font-weight: 900;
-  color: #2a3d1c;
-  background: #b9d18a;
+  color: var(--c-green-850);
+  background: var(--c-green-300);
   padding: 1px 5px;
   border-radius: 7px 0 7px 0;
   pointer-events: none;
@@ -1340,9 +1340,9 @@
   flex: 0 0 auto;
   cursor: pointer;
   border-radius: 7px;
-  border: 1px solid var(--nb-ink-strong, #6b4a22);
-  background: #e8d5a8;
-  color: var(--nb-ink, #3a2c1a);
+  border: 1px solid var(--nb-ink-strong, var(--c-brown-700-soft));
+  background: var(--c-bronze-200);
+  color: var(--nb-ink, var(--c-brown-850-soft));
   font-size: 12px;
   font-weight: 800;
   padding: 3px 7px;
@@ -1361,16 +1361,16 @@
 }
 
 .wk-up.is-max {
-  border: 1px dashed var(--nb-ink-dim, #8a6a30);
+  border: 1px dashed var(--nb-ink-dim, var(--c-brown-650-vivid));
   background: transparent;
-  color: var(--nb-ink-dim, #8a6a30);
+  color: var(--nb-ink-dim, var(--c-brown-650-vivid));
   cursor: default;
 }
 
 /* le coût compact vit sur fond crème ici : rouge encre au lieu du #ffb4b4
    calibré texte blanc (voir v3.96.0 plus haut) */
 .wk-up .production-cost-item.is-missing {
-  color: #a33b2a;
+  color: var(--c-red-600-soft);
 }
 
 .wk-up .btn-buy-icon {
@@ -1387,19 +1387,19 @@
 
 .wk-pill {
   cursor: pointer;
-  border: 1px solid var(--nb-frame, #b98a4a);
+  border: 1px solid var(--nb-frame, var(--c-bronze-500));
   border-radius: 20px;
-  background: #efe0c2;
-  color: var(--nb-ink-dim, #6b4a22);
+  background: var(--c-cream-150-soft);
+  color: var(--nb-ink-dim, var(--c-brown-700-soft));
   font-size: 12px;
   font-weight: 800;
   padding: 3px 9px;
 }
 
 .wk-pill.is-active {
-  background: var(--nb-ink, #3a2c1a);
-  border-color: var(--nb-ink, #3a2c1a);
-  color: #ffe9b0;
+  background: var(--nb-ink, var(--c-brown-850-soft));
+  border-color: var(--nb-ink, var(--c-brown-850-soft));
+  color: var(--c-cream-150-vivid);
 }
 
 .wk-pill.is-auto::before {
@@ -1428,7 +1428,7 @@
 .wk-time {
   font-size: 12px;
   font-weight: 700;
-  color: var(--nb-ink-dim, #8a6a30);
+  color: var(--nb-ink-dim, var(--c-brown-650-vivid));
   margin-left: 4px;
 }
 
@@ -1444,12 +1444,12 @@
 .wk-slot {
   width: 24px;
   height: 24px;
-  border: 1px dashed var(--nb-frame, #b98a4a);
+  border: 1px dashed var(--nb-frame, var(--c-bronze-500));
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #efe0c2;
+  background: var(--c-cream-150-soft);
   position: relative;
   flex: 0 0 auto;
 }
@@ -1469,8 +1469,8 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #a33b2a;
-  color: #fff3d6;
+  background: var(--c-red-600-soft);
+  color: var(--c-cream-100-4);
   font-size: 12px;
   font-weight: 900;
   line-height: 14px;
@@ -1506,12 +1506,12 @@
 .wk-current-bar-fill {
   display: block;
   height: 100%;
-  background: #4a6b2a;
+  background: var(--c-green-700-soft);
 }
 
 .wk-queue-empty {
   font-size: 12px;
-  color: var(--nb-ink-dim, #8a6a30);
+  color: var(--nb-ink-dim, var(--c-brown-650-vivid));
   margin-left: 4px;
 }
 
@@ -1532,7 +1532,7 @@
   cursor: pointer;
   font-size: 12px;
   font-weight: 800;
-  color: var(--nb-ink, #3a2c1a);
+  color: var(--nb-ink, var(--c-brown-850-soft));
   user-select: none;
 }
 
@@ -1553,13 +1553,13 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #fff7e0;
+  background: var(--c-cream-50-soft);
   transition: left 0.15s ease;
   box-shadow: 0 1px 2px rgba(30, 15, 0, 0.4);
 }
 
 .wk-cont.is-on .wk-cont-sw {
-  background: #4a6b2a;
+  background: var(--c-green-700-soft);
 }
 
 .wk-cont.is-on .wk-cont-sw::after {
@@ -1572,7 +1572,7 @@
   gap: 4px;
   font-size: 12px;
   font-weight: 700;
-  color: #4a6b2a;
+  color: var(--c-green-700-soft);
 }
 
 .wk-manual {
@@ -1585,9 +1585,9 @@
 .wk-craft-btn {
   cursor: pointer;
   border-radius: 8px;
-  border: 1px solid var(--nb-ink-strong, #6b4a22);
-  background: var(--nb-ink, #3a2c1a);
-  color: #ffe9b0;
+  border: 1px solid var(--nb-ink-strong, var(--c-brown-700-soft));
+  background: var(--nb-ink, var(--c-brown-850-soft));
+  color: var(--c-cream-150-vivid);
   font-size: 12px;
   font-weight: 800;
   padding: 5px 12px;
@@ -1605,15 +1605,15 @@
 }
 
 .wk-alert.is-warn {
-  color: #a33b2a;
+  color: var(--c-red-600-soft);
 }
 
 .wk-alert.is-reserve {
-  color: #8a6a30;
+  color: var(--c-brown-650-vivid);
 }
 
 .wk-alert.is-hint {
-  color: var(--nb-ink-dim, #6b4a22);
+  color: var(--nb-ink-dim, var(--c-brown-700-soft));
   font-weight: 700;
 }
 
@@ -1623,7 +1623,7 @@
 .wk-name,
 .wk-recipe,
 .wk-current-label {
-  color: var(--nb-ink, #3a2c1a);
+  color: var(--nb-ink, var(--c-brown-850-soft));
 }
 
 /* v3.265.0 : bâtiment encore verrouillé (fin des déblocages de l'Histoire) — bord pointillé,
@@ -1633,9 +1633,9 @@
 .production-dash-lock-badge {
   display: inline-flex; align-items: center; gap: 4px;
   margin-top: 6px; padding: 2px 8px; border-radius: 999px;
-  background: #6b5a44; color: #fff7e0;
+  background: var(--c-brown-650-soft); color: var(--c-cream-50-soft);
   font-size: 12px; font-weight: 900; letter-spacing: 0.3px;
 }
 .production-dash-lock-badge .ico-sys { width: 12px; height: 12px; }
-.production-dash-lock-text { font-size: 12px; color: #8a6a30; margin-top: 6px; } /* couleurs en dur, comme le reste de la carte : --nb-ink est redéfini dans ce cadre */
-.production-dash-lock-quest { font-size: 12px; font-weight: 800; color: #3a2c1a; margin-top: 1px; }
+.production-dash-lock-text { font-size: 12px; color: var(--c-brown-650-vivid); margin-top: 6px; } /* couleurs en dur, comme le reste de la carte : --nb-ink est redéfini dans ce cadre */
+.production-dash-lock-quest { font-size: 12px; font-weight: 800; color: var(--c-brown-850-soft); margin-top: 1px; }

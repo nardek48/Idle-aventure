@@ -27,7 +27,7 @@ combat/Donjon, juste sous #stats-bar. Réutilise les tokens --nb-*.
 }
 
 .combat-speed-btn.active {
-  background: linear-gradient(180deg, #ffd36b, var(--nb-gold));
+  background: linear-gradient(180deg, var(--c-bronze-300), var(--nb-gold));
   color: var(--nb-ink);
   box-shadow: var(--nb-shadow-btn);
 }

@@ -100,7 +100,7 @@ function buildReturnScreenHTML() {
   h += '<div class="ret-acts">';
   if (produced.length) {
     if (!st.harvested) h += '<button type="button" class="settings-btn primary" onclick="returnHarvestAll()">' + _t("Tout récolter") + '</button>';
-    else h += '<div class="ret-done">✓ ' + _t("Récolte faite.") + '</div>';
+    else h += '<div class="ret-done"><img class="ico-inline" src="images/Icons/system/check_valid.png" alt=""> ' + _t("Récolte faite.") + '</div>';
   }
   if (ready.length && !st.delivered) {
     var cost = ready.map(function (c) { return '−' + formatNumber(c.quantity) + ' ' + returnResName(c.resourceId); }).join(", ");
@@ -108,7 +108,7 @@ function buildReturnScreenHTML() {
     h += '<button type="button" class="settings-btn" onclick="returnDeliverAll()"><span class="ret-btn-col"><span>'
       + _tn(ready.length, "Livrer {n} contrat · +{p} or", "Livrer {n} contrats · +{p} or", { p: formatNumber(pay) }) + '</span><small>' + esc(cost) + '</small></span></button>';
   } else if (st.delivered) {
-    h += '<div class="ret-done">✓ ' + _t("Contrats livrés.") + '</div>';
+    h += '<div class="ret-done"><img class="ico-inline" src="images/Icons/system/check_valid.png" alt=""> ' + _t("Contrats livrés.") + '</div>';
   }
   h += '</div>';
 

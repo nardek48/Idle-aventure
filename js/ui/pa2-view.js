@@ -591,7 +591,7 @@ function pa2AskAbandon() {
   var retour = Pa2Run.hasPact("retour", run);
   showConfirmModal(_t("Abandonner l'aventure ?"),
     retour ? _t("Pacte « Pas de retour » : tout le butin reste en route.") : _t("Tu perds la moitié du butin. Les rations non mangées retournent à l'Entrepôt."),
-    "⚠️", function () {
+    "images/Icons/system/warning.png", function () {
       SceneRunManager.abandon();
       pa2View.sheet = null;
       pa2Rerender();
@@ -954,7 +954,7 @@ function pa2FightOutcome(run, n, r) {
   var h = '<div class="pa2-verdict is-ok">' + esc(n.type === "boss" ? _t("Le gardien s'effondre") : _t("Victoire")) + '</div><p class="pa2-result">+' + pa2Num(r.gain) + ' ' + esc(pa2Unit(run)) + '</p>';
   if (n.after) h += '<p class="pa2-echo">' + esc(_td(n.after)) + '</p>'; // parcours : la suite du combat
   if (n.type === "boss") h += '<p class="pa2-narr pa2-center">' + esc(_td(pa2Dests(run).boss.win)) + '</p>';
-  if (r.drop) h += '<p class="pa2-result is-drop">🎁 ' + esc(_t("Objet trouvé : {x} ({r})", { x: _td(r.drop.name), r: r.drop.rarity })) + '</p>';
+  if (r.drop) h += '<p class="pa2-result is-drop"><img class="ico-inline" src="images/Icons/dungeon/dungeon_guaranteed_loot.png" alt=""> ' + esc(_t("Objet trouvé : {x} ({r})", { x: _td(r.drop.name), r: r.drop.rarity })) + '</p>';
   return h + pa2ContinueButton(run);
 }
 function pa2RoundsHTML(st, count) {

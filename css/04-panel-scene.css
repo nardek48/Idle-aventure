@@ -72,11 +72,11 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #15803d;
+  color: var(--c-green-700);
 }
 
 .scene-cost-input.is-missing {
-  color: #b42318;
+  color: var(--c-red-600-3);
 }
 
 .scene-cost-input-img {

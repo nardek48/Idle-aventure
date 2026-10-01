@@ -6,43 +6,73 @@
    or/bronze, choix figés par Seb dans l'atelier) — l'ancien style
    parchemin est retiré d'ici. Ne restent que les éléments propres à
    l'écran Paramètres. */
-/* v3.47.0 : ligne à bascule (checkbox) — combat auto de base */
-.settings-toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--nb-ink);
+/* v3.408.0 (refonte, atelier B · Rail + S1 · glissière) : onglets en rail du kit (.kseg),
+   cartes crème (.set-card) avec surtitre (.kkick), lignes de réglage (.set-row) et
+   interrupteur du kit (.kswitch). L'ancienne case à cocher et l'encadré d'infos sont retirés. */
+.set-card {
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--c-bronze-500);
+  border-radius: 12px;
+  background: var(--c-cream-100-soft);
+  color: var(--c-brown-850-2);
+  box-shadow: 0 2px 5px rgba(58, 44, 26, 0.15);
+}
+.set-card p { margin: 0 0 10px; font-size: 13px; line-height: 1.45; color: var(--c-brown-750); }
+.set-card p:last-child { margin-bottom: 0; }
+.set-card .kseg { margin-bottom: 8px; }
+.set-card .settings-btn { width: 100%; margin: 0; }
+.set-stack { display: flex; flex-direction: column; gap: 8px; }
+.set-pair { display: flex; gap: 8px; }
+.set-pair > * { flex: 1 1 0; min-width: 0; }
+.set-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 18px; }
+.set-note { font-size: 12px !important; margin-top: 8px !important; }
+
+.set-row { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 0; }
+.set-row + .set-row { border-top: 1px dashed rgba(138, 92, 20, 0.3); }
+.set-row-ico { flex: 0 0 auto; width: 30px; height: 30px; object-fit: contain; }
+.set-row-txt { flex: 1 1 auto; min-width: 0; }
+.set-row-txt b { display: block; font-size: 14px; color: var(--c-brown-850-2); }
+.set-row-txt small { display: block; font-size: 12px; line-height: 1.35; color: var(--c-brown-750); }
+
+.set-about { margin: 10px 0 2px; text-align: center; font-size: 12px; color: var(--c-brown-750); }
+.set-about b { display: block; font-size: 13px; color: var(--c-brown-850-2); }
+
+/* Interrupteur du kit : glissière bronze, pastille crème ; allumé = or */
+.kswitch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 30px;
+  padding: 0;
+  border-radius: 15px;
+  border: 1.5px solid var(--c-brown-700-vivid);
+  background: #d9c7a3;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
   cursor: pointer;
 }
-
-.settings-toggle-row input[type="checkbox"] {
-  width: 40px;
-  height: 24px;
-  flex-shrink: 0;
-  cursor: pointer;
-  accent-color: var(--nb-gold);
+.kswitch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  border: 1px solid var(--c-brown-700-vivid);
+  background: linear-gradient(var(--c-cream-50-soft), #e3cfa4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: left 0.15s ease;
 }
-
-.settings-info {
-  margin-top: 12px;
-  padding: 12px 14px;
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream);
-  border: 2px solid var(--nb-frame);
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--nb-ink-dim);
-}
+.kswitch.is-on { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); }
+.kswitch.is-on::after { left: 24px; }
 
 /* =========================
    Réduction des animations
    ========================= */
 @media (prefers-reduced-motion: reduce) {
-  .settings-btn {
+  .settings-btn,
+  .kswitch::after {
     transition: none;
   }
 }

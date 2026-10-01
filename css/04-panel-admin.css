@@ -24,7 +24,7 @@ du jeu (fond sombre semi-transparent, texte clair, champs compacts).
 }
 
 .admin-card h3 {
-  color: #f0e6ff;
+  color: var(--c-violet-50);
   font-size: 13px;
   font-weight: 800;
   margin: 0 0 8px;
@@ -58,7 +58,7 @@ du jeu (fond sombre semi-transparent, texte clair, champs compacts).
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
-  color: #fff;
+  color: var(--c-white-50);
   font-size: 12px;
   padding: 6px 8px;
 }
@@ -79,7 +79,7 @@ du jeu (fond sombre semi-transparent, texte clair, champs compacts).
 .admin-btn {
   background: rgba(90, 70, 120, 0.6) !important;
   border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  color: #f0e6ff !important;
+  color: var(--c-violet-50) !important;
 }
 
 .admin-btn:active {

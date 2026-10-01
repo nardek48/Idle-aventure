@@ -156,7 +156,7 @@ seules les classes propres aux compagnons sont définies ici.
 
 /* v3.402.0 (lot B-1) : surtitre du kit (petites capitales bronze, comme .kkick) */
 .cp-behavior-title {
-  color: #8a5c14; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--c-brown-700-vivid); font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
   margin-bottom: 6px;
 }
 

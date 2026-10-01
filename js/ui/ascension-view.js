@@ -20,12 +20,15 @@ function chooseMemoryOption(level, optionId) {
 }
 window.chooseMemoryOption = chooseMemoryOption;
 
+/* v3.407.0 (audit design, point 1) : l'écran Mémoire rejoint le kit — cadre de page,
+   carte crème en tête avec la jauge fine du kit (teinte Aether), un titre de section par
+   niveau, des choix en cartes avec icône et coche. Plus de bleu en bordure ni d'emoji. */
 function buildMemoryGaugeHTML(p) {
   var pct = p.maxed ? 100 : (p.need > 0 ? Math.min(100, Math.floor(100 * p.into / p.need)) : 0);
   var h = '<div class="mem-gauge">';
-  h += '<div class="mem-gauge-head"><span class="mem-gauge-lvl">' + _t("Mémoire {n}", { n: p.level }) + '</span>';
-  h += '<span class="mem-gauge-num">' + (p.maxed ? _t("Tout est retenu") : _t("{a} / {b} Aether", { a: formatNumber(p.into), b: formatNumber(p.need) })) + '</span></div>';
-  h += '<div class="mem-gauge-bar"><div class="mem-gauge-fill" style="width:' + pct + '%"></div></div>';
+  h += '<div class="mem-gauge-head"><span class="mem-gauge-lvl">' + _t("Mémoire {n}", { n: p.level }) + '</span></div>';
+  h += '<div class="kgauge kgauge-thin kgauge-aether mem-gauge-bar"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct + '%"></div></div>'
+    + '<span class="kgauge-text">' + (p.maxed ? _t("Tout est retenu") : _t("{a} / {b} Aether", { a: formatNumber(p.into), b: formatNumber(p.need) })) + '</span></div>';
   if (p.capped) h += '<div class="mem-gauge-note">' + _t("La jauge est pleine pour ce monde : le niveau suivant s'ouvrira dans le prochain monde.") + '</div>';
   h += '</div>';
   return h;
@@ -35,11 +38,13 @@ function buildMemoryLevelHTML(def, p) {
   var level = def.level, chosen = MemoryManager.getChoice(level);
   var reached = level <= p.level;
   var worldLocked = !reached && level > p.cap;
-  var h = '<div class="mem-level' + (reached ? '' : ' is-locked') + (reached && !chosen ? ' is-pending' : '') + '">';
-  h += '<div class="mem-level-head"><span class="mem-level-num">' + _t("Niveau {n}", { n: level }) + '</span>';
-  h += '<span class="mem-level-theme">' + esc(_td(def.theme)) + (def.jalon ? ' · ' + _t("jalon") : '') + '</span></div>';
+  var pending = reached && !chosen;
+  var h = '<div class="mem-level' + (reached ? '' : ' is-locked') + (pending ? ' is-pending' : '') + '">';
+  h += '<div class="ksec mem-level-head"><span>' + _t("Niveau {n}", { n: level }) + ' <small>' + esc(_td(def.theme)) + (def.jalon ? ' · ' + _t("jalon") : '') + '</small></span></div>';
   if (!reached) {
-    h += '<div class="mem-level-lock">' + (worldLocked ? _t("S'ouvre dans un monde plus lointain.") : _t("Encore un peu d'Aether à rassembler.")) + '</div>';
+    h += '<div class="mem-level-lock"><img class="ico-inline" src="images/Icons/system/lock_closed.png" alt=""> ' + (worldLocked ? _t("S'ouvre dans un monde plus lointain.") : _t("Encore un peu d'Aether à rassembler.")) + '</div>';
+  } else if (pending) {
+    h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + _t("Un choix t'attend ici.") + '</div>';
   }
   h += '<div class="mem-options">';
   def.options.forEach(function (o) {
@@ -48,8 +53,9 @@ function buildMemoryLevelHTML(def, p) {
     if (reached) h += '<button type="button" class="' + cls + '" onclick="chooseMemoryOption(' + level + ',\'' + esc(o.id) + '\')">';
     else h += '<div class="' + cls + '">';
     h += '<span class="mem-option-ico">' + renderIconOrEmojiHTML(o.icon, "mem-option-img", _td(o.name)) + '</span>';
-    h += '<span class="mem-option-txt"><span class="mem-option-name">' + esc(_td(o.name)) + (isChosen ? ' ✓' : '') + '</span>';
+    h += '<span class="mem-option-txt"><span class="mem-option-name">' + esc(_td(o.name)) + '</span>';
     h += '<span class="mem-option-desc">' + esc(_td(o.desc)) + '</span></span>';
+    if (isChosen) h += '<img class="mem-option-check" src="images/Icons/system/check_valid.png" alt="' + esc(_t("Choisi")) + '">';
     h += reached ? '</button>' : '</div>';
   });
   h += '</div></div>';
@@ -63,16 +69,14 @@ function buildAscensionHTML() {
   var pending = MemoryManager.getPendingLevels();
 
   var h = (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("ascension") : "";
-  h += '<div class="prestige-section">';
-  h += '<div class="prestige-icon">' + renderIconOrEmojiHTML("images/Icons/aether_icon.png", "prestige-icon-img", "Aether") + '</div>';
-  h += '<div class="prestige-title">' + _t("Mémoire") + '</div>';
-  h += '<div class="prestige-desc">' + _t("Ce que tu offres et ce que tu vis, l'Aether le retient. Offre les objets dont tu te sépares depuis ton sac ; tes grandes victoires comptent aussi.") + '</div>';
+  h += '<div class="mem-head">';
+  h += '<p class="mem-head-desc">' + _t("Ce que tu offres et ce que tu vis, l'Aether le retient. Offre les objets dont tu te sépares depuis ton sac ; tes grandes victoires comptent aussi.") + '</p>';
   h += buildMemoryGaugeHTML(p);
-  h += '<div class="prestige-desc">' + _t("Reprendre un choix coûte de l'or : {n} pour la prochaine reprise, trois fois plus ensuite.", { n: formatNumber(MemoryManager.getRepriseCost()) }) + '</div>'; // v3.358.0 (D7)
-  if (pending.length) h += '<div class="mem-pending">🌟 ' + (pending.length > 1 ? _t("{n} choix t'attendent.", { n: pending.length }) : _t("Un choix t'attend.")) + '</div>';
+  if (pending.length) h += '<div class="mem-pending"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + (pending.length > 1 ? _t("{n} choix t'attendent.", { n: pending.length }) : _t("Un choix t'attend.")) + '</div>';
+  h += '<p class="mem-head-note">' + _t("Reprendre un choix coûte de l'or : {n} pour la prochaine reprise, trois fois plus ensuite.", { n: formatNumber(MemoryManager.getRepriseCost()) }) + '</p>'; // v3.358.0 (D7)
   h += '</div>';
 
   (window.MEMORY_LEVELS || []).forEach(function (def) { h += buildMemoryLevelHTML(def, p); });
-  return '<div class="panel mem-panel">' + h + '</div>';
+  return '<div class="nb-page-frame nb-page-frame-fill kframe-page mem-page" data-kf-title="' + esc("images/Icons/aether_icon.png|" + _t("Mémoire")) + '">' + h + '</div>';
 }
 window.buildAscensionHTML = buildAscensionHTML;

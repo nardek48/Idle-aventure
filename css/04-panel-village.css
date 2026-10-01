@@ -120,7 +120,7 @@
 .village-building-name {
   font-size: 12px;
   font-weight: 800;
-  color: #fff;
+  color: var(--c-white-50);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
@@ -379,12 +379,12 @@
    doré "sélectionné", pour rester lisible même quand la tab n'est pas la sélection
    courante (l'auto peut tourner sur une recette qu'on ne regarde pas actuellement). */
 .warehouse-craft-recipe-tab.is-auto {
-  border-color: #2f9e44;
+  border-color: var(--c-green-600);
 }
 
 .warehouse-craft-recipe-tab.is-auto.is-active {
-  background: #2f9e44;
-  border-color: #2f9e44;
+  background: var(--c-green-600);
+  border-color: var(--c-green-600);
 }
 
 .warehouse-craft-title {
@@ -609,8 +609,8 @@
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
-.vb-card.is-ready .vb-card-flag { background: var(--nb-gold); color: #241a00; }
-.vb-card.is-site .vb-card-flag { background: var(--aether); color: #eaf6ff; }
+.vb-card.is-ready .vb-card-flag { background: var(--nb-gold); color: var(--c-brown-950-vivid); }
+.vb-card.is-site .vb-card-flag { background: var(--aether); color: var(--c-blue-50); }
 /* Les deux états à pastille réservent la bande du haut : sinon la pastille
    recouvre le nom sur une carte à nom long. */
 .vb-card.is-ready,
@@ -652,7 +652,7 @@
   /* v3.399.0 (F-1) : en-tête et corps du kit (.ksheet-head/.ksheet-body) : plus de rembourrage ici */
   /* La fiche est rendue HORS du .kframe : elle a besoin de sa propre
      restauration d'encre (voir css/00-kframe-scope.css). */
-  --nb-ink: #3a2c1a;
+  --nb-ink: var(--c-brown-850-soft);
   --nb-ink-dim: rgba(58, 44, 26, 0.72);
 }
 
@@ -848,7 +848,7 @@
   border-radius: 8px;
   border: 1px solid var(--nb-frame);
   background: var(--nb-gold);
-  color: #241a00;
+  color: var(--c-brown-950-vivid);
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
@@ -930,7 +930,7 @@
   border-radius: 8px;
   border: 1px solid var(--nb-frame);
   background: var(--nb-gold);
-  color: #241a00;
+  color: var(--c-brown-950-vivid);
   font-size: 12px;
   font-weight: 800;
   line-height: 1.15;
@@ -961,16 +961,16 @@
 .warehouse-note {
   display: flex; flex-direction: column; align-items: stretch; gap: 6px;
   margin: 0 0 8px; padding: 8px 10px;
-  border: 1px solid #b98a4a; border-radius: 10px;
-  background: #f6ecd9; color: #3a2c1a;
+  border: 1px solid var(--c-bronze-500); border-radius: 10px;
+  background: var(--c-cream-100-soft); color: var(--c-brown-850-soft);
   font-size: 12px; line-height: 1.35;
 }
 .warehouse-note-text { flex: 1 1 auto; min-width: 0; }
 .warehouse-note .settings-btn { flex: 0 0 auto; align-self: flex-end; width: auto; min-width: 0; padding-left: 18px; padding-right: 18px; }
 /* v3.330.0 (E2) : niveau exigé par l'Histoire, matériaux communs fournis */
-.vb-cost-provided { font-weight: 700; color: #4a6b2a; }
+.vb-cost-provided { font-weight: 700; color: var(--c-green-700-soft); }
 
 /* v3.330.1 (E4) : ligne « Vivres » sur les fiches de départ (chasse, donjon, élite rejouée) */
-.provisions-line { margin: 6px 0 4px; font-size: 12px; font-weight: 700; color: #4a6b2a; text-align: center; }
-.provisions-line.is-missing { color: #a33b2a; }
+.provisions-line { margin: 6px 0 4px; font-size: 12px; font-weight: 700; color: var(--c-green-700-soft); text-align: center; }
+.provisions-line.is-missing { color: var(--c-red-600-soft); }
 .provisions-have { font-weight: 600; opacity: 0.85; }

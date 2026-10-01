@@ -57,7 +57,7 @@ function showOfflineModal(offline) {
 
     var pushResourceRow = function (key, amount, suffix) {
       var def = typeof WAREHOUSE_RESOURCES !== "undefined" ? WAREHOUSE_RESOURCES[key] : null;
-      var iconHTML = def && def.icon ? renderIconOrEmojiHTML(def.icon, "offline-reward-icon", _td(def.name)) : "📦";
+      var iconHTML = def && def.icon ? renderIconOrEmojiHTML(def.icon, "offline-reward-icon", _td(def.name)) : '<img class="offline-reward-icon" src="images/Icons/system/warehouse_supplies.png" alt="">';
       rows.push('<div class="offline-reward-row">' + iconHTML + ' +' + formatNumber(amount) + ' ' + esc(def ? _td(def.name) : key) + (suffix || "") + '</div>');
     };
 
@@ -69,7 +69,7 @@ function showOfflineModal(offline) {
     });
 
     if (offline.fullPlots > 0) {
-      rows.push('<div class="offline-reward-row">⚠️ ' + _tn(offline.fullPlots, "{n} zone pleine sur {m} — pense à récolter !", "{n} zones pleines sur {m} — pense à récolter !", { m: offline.openPlots }) + '</div>');
+      rows.push('<div class="offline-reward-row"><img class="ico-inline" src="images/Icons/system/warning.png" alt=""> ' + _tn(offline.fullPlots, "{n} zone pleine sur {m} — pense à récolter !", "{n} zones pleines sur {m} — pense à récolter !", { m: offline.openPlots }) + '</div>');
     }
 
     rewardsEl.innerHTML = rows.join("");

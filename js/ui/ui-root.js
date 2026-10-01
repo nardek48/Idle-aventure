@@ -133,7 +133,7 @@ function switchTab(tabName) {
   // d'un jeu figé sans qu'aucun message n'explique qu'il fallait repasser par le Campement.
   if (tabName === "combat" && (game.heroHp || 0) <= 0) {
     tabName = "campement";
-    if (typeof showToast === "function") showToast(_t("💀 Tu es à terre — soigne-toi au Campement avant de repartir."), 2000);
+    if (typeof showToast === "function") showToast(_t("Tu es à terre — soigne-toi au Campement avant de repartir."), 2000);
   }
 
   // v3.293.0 (règle Seb) : plus de farm libre. Sans run de quête en cours, l'écran Combat
@@ -157,7 +157,7 @@ function switchTab(tabName) {
       showConfirmModal(
         _t("Abandonner l'expédition ?"),
         _t("Tu perds la moitié du butin non sécurisé. Le reste sera rapporté au village."),
-        "⚠️",
+        "images/Icons/system/warning.png",
         function () {
           if (window.SceneRunManager && typeof SceneRunManager.abandon === "function") SceneRunManager.abandon();
           switchTab(targetTab);

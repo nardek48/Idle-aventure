@@ -30,6 +30,10 @@ function decoratePageFrames(root) {
     while (f.firstChild) mid.appendChild(f.firstChild);
     var top = document.createElement("div");
     top.className = "kf-top";
+    // v3.406.0 : ornement central du cap, affiché seulement au format tablette (css/09-wide.css)
+    var orn = document.createElement("i");
+    orn.className = "kf-orn";
+    top.appendChild(orn);
     var isPage = f.classList.contains("kframe-page");
     var title = f.getAttribute("data-kf-title");
     if (title && isPage) {

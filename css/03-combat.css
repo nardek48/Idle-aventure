@@ -60,7 +60,7 @@
 }
 
 .enemy-status-vulnerability {
-  border-color: #fbbf24;
+  border-color: var(--c-bronze-450-vivid);
 }
 
 .enemy-status-dot {
@@ -71,7 +71,7 @@
    distinguer "danger imminent" (1.5s pour réagir) des 2 statuts
    ci-dessus (effets déjà appliqués, pas d'urgence à percevoir). */
 .enemy-status-charge {
-  border-color: #ef4444;
+  border-color: var(--c-red-400);
   animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
 }
 
@@ -91,17 +91,17 @@
    le télégraphe (danger imminent, cohérence visuelle), couleurs
    dédiées par pattern pour rester lisible en un coup d'œil. */
 .enemy-status-shield-telegraph {
-  border-color: #60a5fa;
+  border-color: var(--c-blue-300);
   animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
 }
 
 .enemy-status-shield-active {
-  border-color: #3b82f6;
+  border-color: var(--c-blue-400);
   background: rgba(59, 130, 246, 0.25);
 }
 
 .enemy-status-heal-telegraph {
-  border-color: #4ade80;
+  border-color: var(--c-green-400);
   animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
 }
 
@@ -138,9 +138,9 @@
   height: 14px;
   padding: 0 3px;
   border-radius: 999px;
-  background: #0f1420;
+  background: var(--c-blue-900);
   border: 1px solid var(--nb-gold-dark);
-  color: #fff;
+  color: var(--c-white-50);
   font-size: 12px;
   font-weight: 800;
   display: flex;
@@ -243,9 +243,9 @@
   height: 14px;
   padding: 0 3px;
   border-radius: 999px;
-  background: #0f1420;
+  background: var(--c-blue-900);
   border: 1px solid var(--nb-gold-dark);
-  color: #4ade80;
+  color: var(--c-green-400);
   font-size: 12px;
   font-weight: 800;
   display: flex;
@@ -314,13 +314,13 @@
   object-fit: contain;
 
   -webkit-mask-image:
-    linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%),
-    linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
+    linear-gradient(to right, transparent 0%, var(--c-black-950) 18%, var(--c-black-950) 82%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, var(--c-black-950) 12%, var(--c-black-950) 88%, transparent 100%);
   -webkit-mask-composite: source-in;
 
   mask-image:
-    linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%),
-    linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
+    linear-gradient(to right, transparent 0%, var(--c-black-950) 18%, var(--c-black-950) 82%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, var(--c-black-950) 12%, var(--c-black-950) 88%, transparent 100%);
   mask-composite: intersect;
 }
 
@@ -395,7 +395,7 @@
 #enemy-hp-text {
   font-size: max(12px, clamp(10.12px, calc(5px + 1.6vw), 11.88px));
   font-weight: 800;
-  color: #fff;
+  color: var(--c-white-50);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
@@ -413,7 +413,7 @@
 }
 
 .float-dmg.normal {
-  color: #fff;
+  color: var(--c-white-50);
 }
 
 .float-dmg.crit {
@@ -437,7 +437,7 @@
   pointer-events: none;
   font-size: clamp(18px, calc(9px + 2.8vw), 22px);
   font-weight: 900;
-  color: #7dd3fc;
+  color: var(--c-blue-250);
   text-shadow:
     2px 2px 4px rgba(0, 0, 0, 0.9),
     0 0 10px rgba(56, 189, 248, 0.7);
@@ -471,7 +471,7 @@
   pointer-events: none;
   font-size: clamp(14.72px, calc(7.27px + 2.33vw), 17.28px);
   font-weight: 800;
-  color: #ef4444;
+  color: var(--c-red-400);
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
   animation: goldPop 1s ease forwards;
 }
@@ -681,7 +681,7 @@ img.combat-action-icon {
   justify-content: center;
   font-size: clamp(13px, calc(6px + 2.2vw), 16px);
   font-weight: 800;
-  color: #fff;
+  color: var(--c-white-50);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
   pointer-events: none;
 }
@@ -901,9 +901,9 @@ img.combat-action-icon {
   height: clamp(13.8px, calc(6.82px + 2.18vw), 16.2px);
   padding: 0 clamp(2.76px, calc(1.36px + 0.44vw), 3.24px);
   border-radius: 999px;
-  background: #0f1420;
+  background: var(--c-blue-900);
   border: 1px solid var(--nb-gold-dark);
-  color: #4ade80;
+  color: var(--c-green-400);
   font-size: max(10px, clamp(8.28px, calc(4.09px + 1.31vw), 9.72px));
   font-weight: 800;
   display: flex;
@@ -989,12 +989,12 @@ img.combat-action-icon {
    (😮‍💨 vs 😡, voir buildEnemyStatusBarHTML(), ui/combat-view.js).
    ========================= */
 .enemy-status-enraged {
-  border-color: #dc2626;
+  border-color: var(--c-red-500);
   background: rgba(80, 10, 10, 0.5);
 }
 
 .enemy-status-enraged.is-suppressed {
-  border-color: #60a5fa;
+  border-color: var(--c-blue-300);
   background: rgba(10, 30, 80, 0.4);
 }
 
@@ -1019,7 +1019,7 @@ img.combat-action-icon {
    (rouge/bleu déjà pris par Charge/Bouclier).
    ========================= */
 .enemy-status-silence-telegraph {
-  border-color: #a78bfa;
+  border-color: var(--c-violet-250);
   animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
 }
 
@@ -1050,12 +1050,12 @@ img.combat-action-icon {
    suppressed.
    ========================= */
 .enemy-status-vampiric {
-  border-color: #991b1b;
+  border-color: var(--c-red-650);
   background: rgba(60, 5, 20, 0.5);
 }
 
 .enemy-status-vampiric.is-suppressed {
-  border-color: #60a5fa;
+  border-color: var(--c-blue-300);
   background: rgba(10, 30, 80, 0.4);
 }
 
@@ -1071,7 +1071,7 @@ img.combat-action-icon {
 }
 
 .enemy-status-armored.is-suppressed {
-  border-color: #60a5fa;
+  border-color: var(--c-blue-300);
   background: rgba(10, 30, 80, 0.4);
 }
 
@@ -1104,7 +1104,7 @@ img.combat-action-icon {
   border-radius: 999px;
   border: 1px solid rgba(212, 175, 55, 0.55);
   background: rgba(15, 20, 32, 0.78);
-  color: #f3e6c4;
+  color: var(--c-cream-150);
   font-size: max(12px, clamp(10px, calc(6px + 1.2vw), 12px));
   font-weight: 800;
   letter-spacing: 0.3px;
@@ -1130,7 +1130,7 @@ img.combat-action-icon {
   border-radius: 999px;
   border: 1px solid rgba(212, 175, 55, 0.6);
   background: rgba(15, 20, 32, 0.85);
-  color: #f3e6c4;
+  color: var(--c-cream-150);
   font-size: max(12px, clamp(10px, calc(6px + 1.2vw), 12px));
   font-weight: 700;
   cursor: pointer;
@@ -1207,7 +1207,7 @@ img.combat-action-icon {
   border-radius: 999px;
   border: 1px solid rgba(212, 175, 55, 0.45);
   background: rgba(15, 20, 32, 0.78);
-  color: #f3e6c4;
+  color: var(--c-cream-150);
   font-size: max(12px, clamp(9.5px, calc(5.5px + 1.2vw), 11.5px));
   font-weight: 700;
 }
@@ -1222,7 +1222,7 @@ img.combat-action-icon {
   border-radius: 999px;
   border: 1px solid rgba(212, 175, 55, 0.7);
   background: rgba(60, 40, 10, 0.88);
-  color: #fde68a;
+  color: var(--c-bronze-250);
   font-size: max(12px, clamp(10px, calc(6px + 1.2vw), 12px));
   font-weight: 800;
   cursor: pointer;

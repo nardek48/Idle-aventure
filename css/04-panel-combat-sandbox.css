@@ -130,7 +130,7 @@ Reprend les tokens existants (--nb-*), aucun nouveau token créé.
 
 .sandbox-hp-bar-fill {
   height: 100%;
-  background: #c0392b;
+  background: var(--c-red-550);
   transition: width 0.2s ease;
 }
 
@@ -180,12 +180,12 @@ Reprend les tokens existants (--nb-*), aucun nouveau token créé.
 
 .sandbox-result-victory {
   background: rgba(76, 175, 80, 0.18);
-  color: #2e7d32;
+  color: var(--c-green-650-soft);
 }
 
 .sandbox-result-defeat {
   background: rgba(192, 57, 43, 0.18);
-  color: #a53125;
+  color: var(--c-red-600-2);
 }
 
 .sandbox-actions-grid {
@@ -317,7 +317,7 @@ Reprend les tokens existants (--nb-*), aucun nouveau token créé.
 }
 
 .sandbox-queue-item.is-boss {
-  border-color: #a53125;
+  border-color: var(--c-red-600-2);
   background: rgba(192, 57, 43, 0.10);
 }
 
@@ -335,8 +335,8 @@ Reprend les tokens existants (--nb-*), aucun nouveau token créé.
 
 .sandbox-boss-tag {
   display: inline-block;
-  background: #a53125;
-  color: #fff;
+  background: var(--c-red-600-2);
+  color: var(--c-white-50);
   font-size: 9.5px;
   font-weight: 800;
   padding: 1px 6px;

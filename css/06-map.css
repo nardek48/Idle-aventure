@@ -72,7 +72,7 @@
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid #fff2d0;
+  border: 3px solid var(--c-cream-100-vivid);
   outline: 3px solid var(--nb-gold-dark);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.45);
 }
@@ -111,12 +111,12 @@
   left: 50%;
   transform: translateX(-50%);
   background: var(--nb-gold);
-  color: #4a2f06;
+  color: var(--c-brown-850-vivid);
   font-size: 10px;
   font-weight: 800;
   border-radius: 999px;
   padding: 1px 7px;
-  border: 2px solid #fff2d0;
+  border: 2px solid var(--c-cream-100-vivid);
   white-space: nowrap;
 }
 
@@ -131,7 +131,7 @@
 .map-node-name {
   font-size: 12px;
   font-weight: 800;
-  color: #fff;
+  color: var(--c-white-50);
   text-align: center;
   line-height: 1.15;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
@@ -181,7 +181,7 @@
   height: 88px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #fff2d0;
+  border: 3px solid var(--c-cream-100-vivid);
   outline: 3px solid var(--nb-gold-dark);
   margin-bottom: 10px;
 }
@@ -202,7 +202,7 @@
 
 .map-popup-status.status-done {
   background: rgba(74, 222, 128, 0.15);
-  color: #2f8f4e;
+  color: var(--c-green-650);
 }
 
 .map-popup-status.status-locked {
@@ -296,7 +296,7 @@
 }
 
 .map-quest-step.is-done .map-quest-step-desc {
-  color: #4ade80;
+  color: var(--c-green-400);
 }
 
 .map-quest-step-count {
@@ -319,7 +319,7 @@
 }
 
 .map-quest-step.is-done .map-quest-step-fill {
-  background: #4ade80;
+  background: var(--c-green-400);
 }
 
 .map-quest-reward {
@@ -427,7 +427,7 @@
   margin-top: 10px;
   font-size: 12px;
   font-weight: 700;
-  color: #4ade80;
+  color: var(--c-green-400);
   text-align: center;
 }
 

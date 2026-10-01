@@ -9,11 +9,13 @@
      installHint  true   v3.359.0 : bouton « Installer le jeu » sur l'écran titre ; « Plus tard » le passe à
                          false (l'installation reste proposée dans Paramètres › Application)
      logTotals    true   v3.365.0 : Bilan de la partie ouvert en tête du Journal
+     tabletPortrait "zoom" v3.406.0 : tablette tenue en portrait — "zoom" (téléphone agrandi) ou "rail"
+                         (format tablette, menu à gauche) ; lu par ui/desktop-scale.js
      lang         "fr"   v3.368.0 : langue du jeu (core/i18n.js) ; texte, lu par getValue/setValue.
                          v3.376.0 : absente au premier lancement, elle est fixée par I18n.firstLang() (D3) */
 
 var PREFS_STORAGE_KEY = "aethervale_prefs";
-var PREFS_DEFAULTS = { filRouge: true, bossMoments: true, installHint: true, logTotals: true, lang: "fr" };
+var PREFS_DEFAULTS = { filRouge: true, bossMoments: true, installHint: true, logTotals: true, lang: "fr", tabletPortrait: "zoom" };
 
 var Prefs = {
   _cache: null,

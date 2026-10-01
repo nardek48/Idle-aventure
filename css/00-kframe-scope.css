@@ -35,8 +35,8 @@ Deux responsabilités ici :
    SOMBRE ; les conteneurs listés ci-dessous la redéclarent (sans effet désormais,
    gardés pour ne rien casser si un cadre sombre revient). */
 .nb-page-frame.kframe {
-  --nb-ink: #2e2214;
-  --nb-ink-dim: #4f3d26;
+  --nb-ink: var(--c-brown-850-2);
+  --nb-ink-dim: var(--c-brown-750);
 }
 
 /* --- restauration de l'encre sombre dans les conteneurs clairs ---
@@ -137,6 +137,6 @@ Deux responsabilités ici :
 /* v3.276.0 : rappel du mode de contrôle sur la fiche de compagnon, à fond crème. */
 .kframe .cp-controlnote,
 .kframe .log-entry {
-  --nb-ink: #3a2c1a;
+  --nb-ink: var(--c-brown-850-soft);
   --nb-ink-dim: rgba(58, 44, 26, 0.72);
 }

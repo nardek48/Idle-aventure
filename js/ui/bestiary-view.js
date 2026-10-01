@@ -256,7 +256,7 @@ function buildBestiaryTrophiesHTML() {
   if (!list.length) return "";
   var h = '<div class="nb-accordion-section' + (bestiaryTrophiesOpen ? ' is-expanded' : '') + '">';
   h += '<button type="button" class="nb-accordion-head' + (bestiaryTrophiesOpen ? ' is-expanded' : '') + '" onclick="toggleBestiaryTrophies()">'
-    + '<span class="nb-accordion-name">' + _t("🏆 Trophées") + '</span><span class="nb-accordion-count">' + list.length + '</span>'
+    + '<span class="nb-accordion-name">' + '<img class="ico-inline" src="images/Icons/menu_icons/achivment_menu.png" alt=""> ' + _t("Trophées") + '</span><span class="nb-accordion-count">' + list.length + '</span>'
     + '<span class="nb-accordion-chevron">' + (bestiaryTrophiesOpen ? "▲" : "▼") + '</span></button>';
   if (bestiaryTrophiesOpen && typeof buildBossTrophyCardHTML === "function") {
     h += '<div class="nb-accordion-body bm-trophies">' + list.map(buildBossTrophyCardHTML).join("") + '</div>';
