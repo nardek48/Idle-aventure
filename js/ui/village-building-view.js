@@ -139,7 +139,7 @@ function buildVillageBuildingSheetHTML(id) {
     var hseg = hallSheetSegment === "build" ? "build" : "caravan";
     var back = window.CaravanManager && CaravanManager.isBack();
     h += '<div class="kseg vb-sheet-seg">';
-    h += '<button type="button" class="' + (hseg === "caravan" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'caravan\')">' + _t("Caravane")
+    h += '<button type="button" class="' + (hseg === "caravan" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'caravan\')"><img class="vb-seg-ico" src="images/Icons/village_buildings/caravan.png" alt="">' + _t("Caravane")
        + (back ? '<span class="kseg-dot"></span>' : '') + '</button>';
     h += '<button type="button" class="' + (hseg === "build" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'build\')">'
        + (maxed ? _t("Halle") : _t("Agrandir · niv. {n}", { n: level + 1 })) + '</button>';

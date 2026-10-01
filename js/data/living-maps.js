@@ -57,6 +57,7 @@ var LIVING_MAPS = {
     name: "Forêt enchantée",
     asset: "images/Maps/foret_atelier.jpg",  // provisoire (décision 13), 372 Ko — v3.260.0 : casse du dossier (GitHub Pages distingue maps/Maps)
     village: { x: 51.1, y: 46.7, name: "Aeswyn" },
+    caravanMarket: { x: 51, y: 74 },          // v3.420.0 (E-3) : le marché où va la caravane (route du sud, visible sans déplacer la carte)
     sectors: [
       { id: "gue", name: "Pont du gué", x: 30.3, y: 52.2, ring: 1, neighbors: ["menhirs", "arbremere"],
         content: { type: "expedition", templateId: "petite_aventure_foret", pools: { obstacle: ["riviere", "gouffre"] } },
@@ -141,6 +142,7 @@ var LIVING_MAPS = {
       mapBlurb: "Choisis un secteur sur la carte du Désert : chaque expédition repousse le sable."
     },
     village: { x: 49.4, y: 47, name: "Le camp du Portail" },
+    caravanMarket: { x: 28, y: 47 },          // v3.420.0 (E-3) : le marché où va la caravane (piste de l'ouest, visible sans déplacer la carte)
     sectors: [
       /* Anneau 1 — ce qu'on voit depuis le camp */
       { id: "puits_sec", name: "Le puits sec", x: 39, y: 30, ring: 1, neighbors: ["verrerie", "oasis"],

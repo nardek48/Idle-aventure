@@ -6,12 +6,15 @@
    Taverne. Atelier validé : version C1 « Surplus auto » (atelier-caravane.html).
 
    RÈGLES (décisions Seb) :
-     - trois trajets : Court 1 h · 150 unités · 80 % de la valeur
-                       Moyen 4 h · 400 unités · 100 %
-                       Long  8 h · 800 unités · 120 %, 25 % de chance d'un
+     - trois trajets : Court 1 h · 150 unités · 60 % de la valeur
+                       Moyen 4 h · 400 unités · 80 %
+                       Long  8 h · 800 unités · 100 %, 25 % de chance d'un
                              matériau rare du monde, 10 % d'un objet d'équipement ;
      - Court et Moyen dès la Halle niveau 1, Long au niveau 3 ;
      - +10 % de capacité par niveau de Halle au-delà du premier (×1,9 au niveau 10) ;
+     - v3.421.0 (vérification de campagne, décision Seb « B ») : valeurs baissées
+       (80/100/120 → 60/80/100 %), et ni Bois ni Fer — ils ne sont pas des surplus
+       (99 % et 84 % déjà consommés) : les vendre ralentissait les constructions ;
      - chargement automatique (C1) : seules les matières brutes partent, et seulement
        ce qui dépasse la MOITIÉ du plafond et la réserve protégée de l'Entrepôt.
        Les ressources au plafond passent d'abord, à parts égales ;
@@ -29,11 +32,13 @@
    Toute écriture de ressource passe par WarehouseManager. */
 
 var CARAVAN_TRIPS = {
-  court: { id: "court", name: "Court", seconds: 3600,      units: 150, valuePct: 0.80, rareChance: 0,    itemChance: 0,    minHall: 1 },
-  moyen: { id: "moyen", name: "Moyen", seconds: 4 * 3600,  units: 400, valuePct: 1.00, rareChance: 0,    itemChance: 0,    minHall: 1 },
-  long:  { id: "long",  name: "Long",  seconds: 8 * 3600,  units: 800, valuePct: 1.20, rareChance: 0.25, itemChance: 0.10, minHall: 3 }
+  court: { id: "court", name: "Court", seconds: 3600,      units: 150, valuePct: 0.60, rareChance: 0,    itemChance: 0,    minHall: 1 },
+  moyen: { id: "moyen", name: "Moyen", seconds: 4 * 3600,  units: 400, valuePct: 0.80, rareChance: 0,    itemChance: 0,    minHall: 1 },
+  long:  { id: "long",  name: "Long",  seconds: 8 * 3600,  units: 800, valuePct: 1.00, rareChance: 0.25, itemChance: 0.10, minHall: 3 }
 };
 var CARAVAN_TRIP_ORDER = ["court", "moyen", "long"];
+/* v3.421.0 : matières brutes que la caravane n'emporte jamais (planches, lingots, blocs en dépendent). */
+var CARAVAN_EXCLUDED = ["bois", "fer"];
 var CARAVAN_CAPACITY_PER_LEVEL = 0.10;   // +10 % par niveau de Halle au-delà du premier
 var CARAVAN_KEEP_SHARE = 0.5;            // la moitié basse du plafond ne part jamais
 /* Matériau rare rapporté par le trajet Long : celui du monde où l'on se trouve au départ. */
@@ -78,11 +83,11 @@ var CaravanManager = {
     return t ? Math.floor(t.units * this.getCapacityMult(level) + 1e-9) : 0;
   },
 
-  /* Ressources que la caravane peut emporter : les matières brutes plafonnées. */
+  /* Ressources que la caravane peut emporter : les matières brutes plafonnées, hors Bois et Fer. */
   getEligibleKeys: function () {
     return Object.keys(WAREHOUSE_RESOURCES).filter(function (k) {
       var d = WAREHOUSE_RESOURCES[k];
-      return (d.tier || "raw") === "raw" && Number(d.sellPrice || 0) > 0 && WarehouseManager.getCap(k) !== Infinity;
+      return (d.tier || "raw") === "raw" && CARAVAN_EXCLUDED.indexOf(k) === -1 && Number(d.sellPrice || 0) > 0 && WarehouseManager.getCap(k) !== Infinity;
     });
   },
 
@@ -151,6 +156,27 @@ var CaravanManager = {
   },
 
   get: function () { this.ensure(); return game.village.caravan; },
+
+  /* v3.420.0 (E-3) : la carte vivante où roule la caravane (celle du monde de départ). */
+  getMapId: function () {
+    var c = this.get();
+    if (!c || !window.WORLDS || !window.LIVING_MAPS) return null;
+    var w = WORLDS[typeof c.world === "number" ? c.world : Number((window.WorldManager && WorldManager.worldIndex) || 0)];
+    if (!w) return null;
+    var id = null;
+    Object.keys(LIVING_MAPS).forEach(function (k) { if (LIVING_MAPS[k].worldId === w.id && LIVING_MAPS[k].caravanMarket) id = k; });
+    return id;
+  },
+
+  /* Position sur la carte, en % : aller vers le marché la première moitié du trajet, retour
+     la seconde ; au village une fois rentrée. */
+  getMapPosition: function (mapId) {
+    var map = window.LIVING_MAPS && LIVING_MAPS[mapId];
+    if (!map || !map.caravanMarket || !this.get()) return null;
+    var v = map.village, m = map.caravanMarket, p = this.getProgressPct() / 100;
+    var t = p < 0.5 ? p * 2 : (1 - p) * 2;
+    return { x: v.x + (m.x - v.x) * t, y: v.y + (m.y - v.y) * t, back: this.isBack(), outbound: p < 0.5 };
+  },
   isTraveling: function () { var c = this.get(); return !!c && this._now() < c.endsAt; },
   isBack: function () { var c = this.get(); return !!c && this._now() >= c.endsAt; },
 
@@ -198,6 +224,7 @@ var CaravanManager = {
     var now = this._now();
     game.village.caravan = {
       trip: tripId, startedAt: now, endsAt: now + t.seconds * 1000,
+      world: (window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0), // v3.420.0 : la carte où elle roule
       cargo: load, gold: this.getLoadGold(load, tripId), rare: rare, item: item, notified: false
     };
     if (typeof addLog === "function") {

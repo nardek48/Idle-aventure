@@ -161,3 +161,28 @@ body.living-map-active #panel-container { padding: 0; overflow: hidden; max-widt
 .lmx-sheet .lm-panel { margin: 0; border: 0; padding: 0; background: none; }
 .lmx-sheet .lm-panel-state { font-size: 12px; }
 .lmx-sheet .lm-panel-lore, .lmx-sheet .lm-panel-line, .lmx-sheet .lm-panel-wall { font-size: 13px; }
+
+/* v3.420.0 (lot E-3) — la caravane de la Halle sur sa piste (ui/caravan-view.js).
+   Aller vers le marché la première moitié du trajet, retour la seconde. */
+.lm-car-trail { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.lm-car-trail path { fill: none; stroke: var(--c-bronze-400-vivid); stroke-width: 2.5; stroke-dasharray: 2 7; stroke-linecap: round; opacity: .85; }
+.lm-car-market {
+  position: absolute; transform: translate(-50%, -100%); margin-top: -26px; /* au-dessus du point : la caravane s'y arrête */ padding: 2px 8px; border-radius: 9px;
+  background: rgba(20, 15, 10, .85); border: 1px solid var(--c-brown-550-3); color: var(--c-cream-150-vivid);
+  font-size: 12px; font-weight: 800; white-space: nowrap; pointer-events: none;
+}
+.lm-caravan {
+  position: absolute; z-index: 3; width: 46px; height: 46px; margin: -23px 0 0 -23px;
+  padding: 0; border: 0; background: transparent; cursor: pointer;
+  transition: left 1s linear, top 1s linear; -webkit-tap-highlight-color: transparent;
+}
+.lm-caravan img { width: 46px; height: 46px; border-radius: 50%; box-shadow: 0 3px 8px rgba(0,0,0,.65); }
+.lm-caravan.is-return img { transform: scaleX(-1); }
+.lm-caravan-tag {
+  position: absolute; left: 50%; top: 44px; transform: translateX(-50%);
+  padding: 1px 7px; border-radius: 9px; background: rgba(20, 15, 10, .88); color: var(--c-cream-150-vivid);
+  font-size: 12px; font-weight: 800; line-height: 18px; white-space: nowrap;
+}
+.lm-caravan.is-back { margin: -50px 0 0 4px; } /* rentrée : posée à côté du village, pas dessus */
+.lm-caravan.is-back img { box-shadow: 0 0 0 3px var(--c-green-650-2), 0 3px 8px rgba(0,0,0,.65); }
+.lm-caravan.is-back .lm-caravan-tag { background: var(--c-green-650-2); color: var(--c-white-50-soft); }

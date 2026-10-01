@@ -11,6 +11,8 @@
    rebours est tenu par refreshCaravanDOM(), appelé chaque seconde depuis
    ProductionManager.updateDOM() → refreshProductionSheetDOM(). Logique : CaravanManager. */
 
+var CARAVAN_ICON = "images/Icons/village_buildings/caravan.png"; // icône de Seb (01/10/2026)
+
 /* Trajet choisi au départ : mémorisé sur l'appareil, comme les filtres de l'Entrepôt. */
 function getCaravanSelectedTrip() {
   var t = (window.Prefs && typeof Prefs.getValue === "function") ? Prefs.getValue("caravanTrip") : null;
@@ -108,7 +110,7 @@ function buildCaravanDepartHTML() {
   } else {
     h += '<div class="car-empty">' + _t("Rien à vendre : aucune matière brute ne dépasse la moitié de son plafond.") + '</div>';
   }
-  h += '<p class="car-why">' + _t("La caravane prend d'abord ce qui est au plafond, à parts égales. Elle laisse toujours la moitié du plafond et la réserve protégée de l'Entrepôt.") + '</p></div>';
+  h += '<p class="car-why">' + _t("La caravane prend d'abord ce qui est au plafond, à parts égales. Elle laisse toujours la moitié du plafond et la réserve protégée de l'Entrepôt.") + ' ' + _t("Le Bois et le Fer restent au village.") + '</p></div>';
 
   var reason = CaravanManager.getBlockReason(sel);
   h += '<div class="car-go"><button type="button" class="kbtn primary"' + (reason ? ' disabled' : ' onclick="departCaravanFromSheet()"') + '>'
@@ -122,7 +124,7 @@ function buildCaravanRouteHTML() {
   var c = CaravanManager.get(), t = CARAVAN_TRIPS[c.trip];
   var pct = CaravanManager.getProgressPct();
   var h = '<div class="car-road" style="background-image:url(\'' + caravanRoadImage() + '\')">';
-  h += '<span class="car-pin" id="car-pin" style="left:' + (8 + pct * 0.84).toFixed(1) + '%">🐪</span>';
+  h += '<span class="car-pin" id="car-pin" style="left:' + (8 + pct * 0.84).toFixed(1) + '%"><img src="' + CARAVAN_ICON + '" alt=""></span>';
   h += '<span class="car-line"><i id="car-bar" style="width:' + pct.toFixed(1) + '%"></i></span>';
   h += '<span class="car-lbl"><span>' + _t("Village") + '</span><span>' + _t("Marché") + '</span></span></div>';
   h += '<div class="car-eta"><img class="ico-sys" src="images/Icons/system/hourglass_waiting.png" alt="">'
@@ -179,12 +181,54 @@ function unloadCaravanFromSheet() {
 }
 window.unloadCaravanFromSheet = unloadCaravanFromSheet;
 
+/* v3.420.0 (E-3) : la caravane sur la carte vivante de son monde. Aller vers le marché la
+   première moitié du trajet, retour la seconde ; rentrée, elle attend au village avec son
+   ruban. La toucher ouvre la Halle. */
+function buildLivingMapCaravanHTML(mapId) {
+  if (!window.CaravanManager || CaravanManager.getMapId() !== mapId) return "";
+  var map = LIVING_MAPS[mapId], pos = CaravanManager.getMapPosition(mapId);
+  if (!pos) return "";
+  var v = map.village, m = map.caravanMarket;
+  var h = '<svg class="lm-car-trail" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M' + v.x + ' ' + v.y + ' L' + m.x + ' ' + m.y + '" vector-effect="non-scaling-stroke"></path></svg>';
+  h += '<span class="lm-car-market" style="left:' + m.x + '%;top:' + m.y + '%;">' + _t("Marché") + '</span>';
+  h += '<button type="button" class="lm-caravan' + (pos.back ? ' is-back' : '') + (pos.outbound ? '' : ' is-return') + '" id="lm-caravan"'
+    + ' style="left:' + pos.x.toFixed(2) + '%;top:' + pos.y.toFixed(2) + '%;" onclick="event.stopPropagation();goToCaravan()">'
+    + '<img src="' + CARAVAN_ICON + '" alt="">'
+    + '<span class="lm-caravan-tag" id="lm-caravan-tag">' + esc(pos.back ? _t("De retour") : formatTime(CaravanManager.getSecondsLeft())) + '</span></button>';
+  return h;
+}
+window.buildLivingMapCaravanHTML = buildLivingMapCaravanHTML;
+
+/* De la carte (ou d'ailleurs) vers la feuille de la Halle, segment Caravane. */
+function goToCaravan() {
+  if (typeof isLivingMapOpen === "function" && isLivingMapOpen() && typeof closeLivingMap === "function") closeLivingMap();
+  if (typeof switchTab === "function") switchTab("village");
+  hallSheetSegment = "caravan";
+  if (typeof openVillageBuildingSheet === "function") openVillageBuildingSheet("hall");
+}
+window.goToCaravan = goToCaravan;
+
+function refreshLivingMapCaravanDOM(arrived) {
+  var el = document.getElementById("lm-caravan");
+  if (!el) return;
+  if (arrived) { if (typeof refreshLivingMap === "function") refreshLivingMap(); return; }
+  var root = document.getElementById("lmx-root");
+  var pos = root ? CaravanManager.getMapPosition(root.getAttribute("data-map")) : null;
+  if (!pos) return;
+  el.style.left = pos.x.toFixed(2) + "%";
+  el.style.top = pos.y.toFixed(2) + "%";
+  el.classList.toggle("is-return", !pos.outbound);
+  var tag = document.getElementById("lm-caravan-tag");
+  if (tag && !pos.back) tag.textContent = formatTime(CaravanManager.getSecondsLeft());
+}
+
 /* Chaque seconde : annonce du retour, compte à rebours, et bascule de la feuille
    quand la caravane arrive pendant qu'on la regarde. */
 function refreshCaravanDOM() {
   if (!window.CaravanManager) return;
   var arrived = CaravanManager.checkArrival();
   if (typeof document === "undefined") return;
+  refreshLivingMapCaravanDOM(arrived); // v3.420.0 : la carte vivante, si elle est ouverte
   var box = document.querySelector ? document.querySelector("#village-modal-root .car") : null;
   if (!box) {
     if (arrived && game.activeTab === "village" && typeof renderPanel === "function") renderPanel(); // ruban « De retour »

@@ -694,7 +694,7 @@
    (atelier-caravane.html, version C1). Logique : systems/caravan-system.js.
    ========================================================================== */
 .vb-card.is-caravan-back { border-color: var(--c-green-650-2); box-shadow: 0 0 0 2px rgba(47, 138, 70, 0.35); padding-top: 22px; }
-.vb-card-flag.is-good { background: var(--c-green-650-2); color: var(--c-white-50-soft); }
+.vb-card-flag.is-good { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; background: var(--c-green-650-2); color: var(--c-white-50-soft); }
 
 .car { color: var(--c-brown-850-2); }
 .car-h6 { margin: 4px 0 6px; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-brown-700); }
@@ -741,11 +741,13 @@
 .car-road { position: relative; display: block; height: 150px; border-radius: 14px; overflow: hidden; border: 1.5px solid var(--c-brown-550-3); background: center 60% / cover no-repeat; }
 .car-road::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgba(0, 0, 0, 0.65)); }
 .car-pin {
-  position: absolute; bottom: 34px; z-index: 2; transform: translateX(-50%);
-  width: 40px; height: 40px; border-radius: 50%; background: var(--c-brown-850-2); border: 2px solid var(--c-bronze-400-vivid);
-  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  position: absolute; bottom: 30px; z-index: 2; transform: translateX(-50%);
+  width: 46px; height: 46px; border-radius: 50%;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6); transition: left 1s linear;
 }
+.car-pin img { display: block; width: 46px; height: 46px; }
+.vb-flag-ico { width: 16px; height: 16px; }
+.vb-seg-ico { width: 20px; height: 20px; margin-right: 4px; vertical-align: -5px; }
 .car-line { position: absolute; left: 14px; right: 14px; bottom: 24px; z-index: 2; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.35); }
 .car-line i { display: block; height: 100%; border-radius: 2px; background: var(--c-bronze-400-vivid); }
 .car-lbl { position: absolute; left: 12px; right: 12px; bottom: 4px; z-index: 2; display: flex; justify-content: space-between; color: var(--c-cream-100-2); font-size: 12px; font-weight: 800; }

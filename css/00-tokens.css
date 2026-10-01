@@ -30,7 +30,7 @@
   --c-bronze-500-soft: #a08a60; /* 3 */
   --c-bronze-500-vivid: #f59e0b; /* 3 */
   --c-brown-550-2: #b07a3c; /* 5 */
-  --c-brown-550-3: #c27f1f; /* 30 */
+  --c-brown-550-3: #c27f1f; /* 31 */
   --c-brown-550-soft: #8a7a5c; /* 5 */
   --c-brown-550-vivid: #d4a017; /* 9 */
   --c-brown-600: #b97a1c; /* 4 */
@@ -50,7 +50,7 @@
   --c-brown-800-3: #5a3a14; /* 2 */
   --c-brown-800-soft: #3d3226; /* 2 */
   --c-brown-800-vivid: #5a3a0c; /* 4 */
-  --c-brown-850-2: #2e2214; /* 30 */
+  --c-brown-850-2: #2e2214; /* 29 */
   --c-brown-850-3: #3a2a12; /* 2 */
   --c-brown-850-soft: #3a2c1a; /* 51 */
   --c-brown-850-vivid: #4a2f06; /* 2 */
@@ -67,7 +67,7 @@
   --c-cream-150-2: #efe0c2; /* 11 */
   --c-cream-150-3: #f3e6c4; /* 8 */
   --c-cream-150-soft: #efe4cc; /* 6 */
-  --c-cream-150-vivid: #ffe9b0; /* 15 */
+  --c-cream-150-vivid: #ffe9b0; /* 17 */
   --c-cream-200: #f3e0b0; /* 6 */
   --c-cream-50: #fff8e8; /* 9 */
   --c-cream-50-soft: #fbf3e4; /* 23 */
@@ -78,7 +78,7 @@
   --c-green-450: #8fbf5a; /* 2 */
   --c-green-500: #8ab54a; /* 2 */
   --c-green-600: #2f9e44; /* 4 */
-  --c-green-650-2: #2f8a46; /* 14 */
+  --c-green-650-2: #2f8a46; /* 16 */
   --c-green-650-3: #2f8f4e; /* 2 */
   --c-green-650-4: #23843f; /* 3 */
   --c-green-650-soft: #2f7d32; /* 2 */
@@ -113,7 +113,7 @@
   --c-violet-50: #f0e6ff; /* 2 */
   --c-violet-700: #4a1f78; /* 2 */
   --c-white-50: #fffaf0; /* 4 */
-  --c-white-50-soft: #ffffff; /* 31 */
+  --c-white-50-soft: #ffffff; /* 32 */
 }
 /* === FIN PALETTE BRUTE === */
 

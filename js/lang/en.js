@@ -674,6 +674,7 @@ I18n.register("en", {
   "La caravane est rentrée !": "The caravan is back!",
   "Trajet {x} · {n} unités vendues": "{x} trip · {n} units sold",
   "Décharger": "Unload",
+  "Le Bois et le Fer restent au village.": "Wood and Iron stay in the village.",
   "Caravane": "Caravan",
   "Halle": "Hall",
   "Agrandir · niv. {n}": "Expand · lv. {n}",

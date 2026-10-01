@@ -190,7 +190,7 @@ function buildVillageBuildingCardHTML(id) {
   if (state === "ready") h += '<span class="vb-card-flag">' + _t("Construire") + '</span>';
   else if (state === "site") h += '<span class="vb-card-flag">' + _t("Chantier") + '</span>';
   // v3.419.0 (E-2) : la caravane rentrée attend sur la tuile de la Halle
-  else if (carBack) h += '<span class="vb-card-flag is-good">🐪 ' + _t("De retour") + '</span>';
+  else if (carBack) h += '<span class="vb-card-flag is-good"><img class="vb-flag-ico" src="images/Icons/village_buildings/caravan.png" alt=""> ' + _t("De retour") + '</span>';
 
   h += '<div class="vb-card-top">';
   h += buildVillageBuildingIconHTML(def, "vb-card-icon");
