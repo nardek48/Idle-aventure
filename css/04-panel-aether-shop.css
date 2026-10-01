@@ -93,7 +93,7 @@
 .mem-pending {
   display: inline-flex; align-items: center; gap: 6px;
   margin-top: 10px; padding: 4px 12px; border-radius: 999px;
-  border: 1px solid var(--c-brown-700-vivid); background: var(--c-cream-100-vivid);
+  border: 1px solid var(--c-brown-700-vivid); background: var(--c-cream-100-3);
   font-size: 13px; font-weight: 800; color: var(--c-brown-800-vivid);
 }
 
@@ -115,7 +115,7 @@
 }
 div.mem-option { cursor: default; }
 .mem-level.is-pending .mem-option { border-color: var(--c-brown-550-vivid); box-shadow: 0 0 0 1px var(--c-bronze-400-4), 0 2px 6px rgba(58, 44, 26, 0.2); }
-.mem-option.is-chosen { border-color: var(--c-brown-700-vivid); background-color: var(--c-cream-100-3); box-shadow: 0 0 0 2px var(--c-brown-550-3), 0 2px 6px rgba(58, 44, 26, 0.2); }
+.mem-option.is-chosen { border-color: var(--c-brown-700-vivid); background-color: var(--c-cream-100-vivid); box-shadow: 0 0 0 2px var(--c-brown-550-3), 0 2px 6px rgba(58, 44, 26, 0.2); }
 .mem-option.is-other { opacity: 0.6; }
 .mem-option-ico { flex: 0 0 44px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
 .mem-option-img { max-width: 44px; max-height: 44px; object-fit: contain; border-radius: 6px; }

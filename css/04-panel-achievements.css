@@ -121,7 +121,7 @@
 .hf-sheet-bg { position: fixed; inset: 0; z-index: 9000; }
 .hf-sheet { max-height: 70vh; }
 .hf-opt { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; font: inherit; text-align: left; padding: 9px 10px; margin-bottom: 5px; border-radius: 10px; border: 1px solid var(--c-bronze-250-soft); background: var(--c-cream-50-soft); color: var(--c-brown-850-soft); cursor: pointer; }
-.hf-opt.is-on { border: 1.5px solid var(--c-brown-550-3); background: var(--c-cream-100-vivid); }
+.hf-opt.is-on { border: 1.5px solid var(--c-brown-550-3); background: var(--c-cream-100-3); }
 .hf-opt small { color: var(--c-brown-650); font-size: 12px; text-align: right; }
 .hf-opt.is-locked { opacity: 0.5; cursor: default; }
 

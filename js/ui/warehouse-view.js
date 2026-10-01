@@ -108,6 +108,10 @@ function getWarehouseOtherUses(key) {
   if ((window.TAVERN_CONTRACT_TEMPLATES || []).some(function (t) { return t.resourceId === key; })) {
     out.push({ icon: "images/Icons/village_buildings/tavern.png", text: _t("Contrats de la Taverne") });
   }
+  // v3.419.0 (E-2) : la caravane emporte le surplus des matières brutes
+  if (window.CaravanManager && CaravanManager.getEligibleKeys().indexOf(key) !== -1) {
+    out.push({ icon: "images/Icons/village_buildings/merchant_hall.png", text: _t("Caravane de la Halle (au-delà de la moitié du plafond)") });
+  }
   if (["acier", "resine_durcie", "chitine_profondeurs"].indexOf(key) !== -1) {
     out.push({ icon: "images/Icons/village_buildings/village_forge.png", text: _t("Forge : reforge de l'équipement") });
   }

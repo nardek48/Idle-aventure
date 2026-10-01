@@ -72,6 +72,7 @@ function getVillageSubTabBadges() {
       if (st === "ready" || (st === "built" && VillageBuildingManager.getAffordability(id).all)) b.buildings++;
     });
     if (VillageBuildingManager.getSite()) b.buildings = 0; // un seul chantier à la fois : rien à lancer
+    if (window.CaravanManager && CaravanManager.isBack()) b.buildings++; // v3.419.0 : caravane à décharger
   }
   if (window.ProductionManager) {
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
@@ -181,12 +182,15 @@ function buildVillageBuildingCardHTML(id) {
   var locked = (state === "locked");
 
   // v3.414.0 (VUI-1) : grande vignette — niveau en pastille, ruban d'état, illustration centrée
-  var h = '<button type="button" class="vb-card is-' + state + '"'
+  var carBack = id === "hall" && state !== "site" && !!window.CaravanManager && CaravanManager.isBack(); // v3.419.0
+  var h = '<button type="button" class="vb-card is-' + state + (carBack ? ' is-caravan-back' : '') + '"'
     + (locked ? ' disabled' : ' onclick="openVillageBuildingSheet(\'' + id + '\')"') + '>';
 
   if (level > 0) h += '<span class="vb-card-lvl">' + level + '/' + VillageBuildingManager.getMaxLevel(id) + '</span>';
   if (state === "ready") h += '<span class="vb-card-flag">' + _t("Construire") + '</span>';
   else if (state === "site") h += '<span class="vb-card-flag">' + _t("Chantier") + '</span>';
+  // v3.419.0 (E-2) : la caravane rentrée attend sur la tuile de la Halle
+  else if (carBack) h += '<span class="vb-card-flag is-good">🐪 ' + _t("De retour") + '</span>';
 
   h += '<div class="vb-card-top">';
   h += buildVillageBuildingIconHTML(def, "vb-card-icon");

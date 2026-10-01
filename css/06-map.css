@@ -72,7 +72,7 @@
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid var(--c-cream-100-vivid);
+  border: 3px solid var(--c-cream-100-3);
   outline: 3px solid var(--nb-gold-dark);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.45);
 }
@@ -116,7 +116,7 @@
   font-weight: 800;
   border-radius: 999px;
   padding: 1px 7px;
-  border: 2px solid var(--c-cream-100-vivid);
+  border: 2px solid var(--c-cream-100-3);
   white-space: nowrap;
 }
 
@@ -181,7 +181,7 @@
   height: 88px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid var(--c-cream-100-vivid);
+  border: 3px solid var(--c-cream-100-3);
   outline: 3px solid var(--nb-gold-dark);
   margin-bottom: 10px;
 }

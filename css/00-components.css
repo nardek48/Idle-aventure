@@ -968,7 +968,7 @@ button.nb-entry-card {
 .kchips button.is-on {
   background: var(--c-brown-800-3);
   border-color: var(--c-brown-800-3);
-  color: var(--c-cream-100-3);
+  color: var(--c-cream-100-vivid);
 }
 
 .kchips .kseg-dot { top: -6px; right: -4px; }

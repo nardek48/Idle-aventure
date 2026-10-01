@@ -111,7 +111,7 @@ var WarehouseManager = {
   },
 
   /* v3.330.0 (économie du village, décision E6 option C de Seb) : plus de vente à l'Entrepôt.
-     La Taverne est le seul débouché (contrats) ; sellPrice reste la valeur de référence qui
+     La Taverne (contrats) et, depuis la v3.419.0, la caravane de la Halle sont les débouchés ; sellPrice reste la valeur de référence qui
      calcule les contrats. La fonction reste pour les anciens appelants et répond « non ». */
   SELLING_ENABLED: false,
 

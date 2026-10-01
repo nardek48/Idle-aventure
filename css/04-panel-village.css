@@ -688,3 +688,80 @@
 .wh-pk.is-off::after { content: ""; background: var(--c-bronze-350); }
 .wh-pk small { position: absolute; left: -2px; right: -2px; bottom: -17px; font-size: 12px; line-height: 1; color: var(--c-brown-750-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kbtn.wh-pick-ok { margin: 4px 0 0; }
+
+/* ==========================================================================
+   v3.419.0 (lot E-2) — CARAVANE, segment de la feuille de la Halle marchande
+   (atelier-caravane.html, version C1). Logique : systems/caravan-system.js.
+   ========================================================================== */
+.vb-card.is-caravan-back { border-color: var(--c-green-650-2); box-shadow: 0 0 0 2px rgba(47, 138, 70, 0.35); padding-top: 22px; }
+.vb-card-flag.is-good { background: var(--c-green-650-2); color: var(--c-white-50-soft); }
+
+.car { color: var(--c-brown-850-2); }
+.car-h6 { margin: 4px 0 6px; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-brown-700); }
+.car-why { display: block; margin: 8px 0 0; font-size: 12px; line-height: 1.35; color: var(--c-brown-750-2); }
+
+/* Trois trajets */
+.car-trips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.car-trip {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 4px 7px; border: 1.5px solid var(--c-bronze-500); border-radius: 12px;
+  background: var(--c-cream-50-soft); color: var(--c-brown-850-2); text-align: center; font: inherit;
+}
+.car-trip b { font-size: 14px; }
+.car-trip small { font-size: 12px; line-height: 1.25; color: var(--c-brown-750-2); }
+.car-trip-d { padding: 3px 8px; border-radius: 9px; background: var(--c-brown-850-2); color: var(--c-white-50-soft); font-size: 12px; font-weight: 800; line-height: 1; }
+.car-trip-pct { font-weight: 800; color: var(--c-green-650-4) !important; }
+.car-trip-lock .ico-sys { width: 14px; height: 14px; vertical-align: -2px; }
+.car-trip-bonus { display: flex; gap: 3px; min-height: 20px; }
+.car-trip-bonus img { width: 20px; height: 20px; object-fit: contain; }
+.car-trip.is-on { border-color: var(--c-brown-550-3); background: var(--c-cream-100-3); box-shadow: 0 0 0 2px rgba(194, 127, 31, 0.35); }
+.car-trip:disabled { opacity: 0.55; filter: grayscale(0.6); }
+
+/* Chances du trajet Long */
+.car-hope { display: flex; gap: 6px; margin: 8px 0 0; }
+.car-hope span { flex: 1; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 10px; background: var(--c-cream-150-soft); font-size: 12px; color: var(--c-brown-750-2); }
+.car-hope img { width: 22px; height: 22px; object-fit: contain; }
+
+/* Chargement */
+.car-load { margin: 10px 0 0; padding: 10px; border: 1px solid var(--c-bronze-500); border-radius: 12px; background: var(--c-cream-50-soft); }
+.car-load-h { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+.car-load-h b { flex: 1; font-size: 14px; }
+.car-load-h span { font-size: 13px; font-weight: 800; }
+.car-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.car-chip { display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 9px 0 5px; border-radius: 15px; background: var(--c-brown-850-2); color: var(--c-cream-150-vivid); font-size: 13px; font-weight: 800; line-height: 1; white-space: nowrap; }
+.car-chip img, .car-chip .car-chip-ico { width: 22px; height: 22px; object-fit: contain; }
+.car-empty { font-size: 13px; color: var(--c-brown-750-2); }
+.car-gold { width: 16px; height: 16px; vertical-align: -3px; }
+.car-go { margin-top: 10px; }
+.car-go .kbtn { width: 100%; max-width: none; margin: 0; min-height: 52px; flex-direction: column; gap: 2px; }
+.car-go .kbtn small { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 12px; font-weight: 600; opacity: 0.9; }
+.car-go .kbtn small .car-gold { position: static; width: 16px; height: 16px; margin: 0; }
+
+/* En route */
+.car-road { position: relative; display: block; height: 150px; border-radius: 14px; overflow: hidden; border: 1.5px solid var(--c-brown-550-3); background: center 60% / cover no-repeat; }
+.car-road::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgba(0, 0, 0, 0.65)); }
+.car-pin {
+  position: absolute; bottom: 34px; z-index: 2; transform: translateX(-50%);
+  width: 40px; height: 40px; border-radius: 50%; background: var(--c-brown-850-2); border: 2px solid var(--c-bronze-400-vivid);
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6); transition: left 1s linear;
+}
+.car-line { position: absolute; left: 14px; right: 14px; bottom: 24px; z-index: 2; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.35); }
+.car-line i { display: block; height: 100%; border-radius: 2px; background: var(--c-bronze-400-vivid); }
+.car-lbl { position: absolute; left: 12px; right: 12px; bottom: 4px; z-index: 2; display: flex; justify-content: space-between; color: var(--c-cream-100-2); font-size: 12px; font-weight: 800; }
+.car-eta { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; padding: 10px; border: 1px solid var(--c-bronze-500); border-radius: 12px; background: var(--c-cream-50-soft); }
+.car-eta .ico-sys { width: 22px; height: 22px; }
+.car-eta-t { flex: 1; display: flex; flex-direction: column; }
+.car-eta-t small { font-size: 12px; color: var(--c-brown-750-2); }
+.car-eta-t b { font-size: 18px; }
+
+/* De retour */
+.car-back { padding: 12px 10px; text-align: center; border: 1.5px solid var(--c-brown-550-3); border-radius: 14px; background: radial-gradient(circle at 50% 0, var(--c-cream-100-3), var(--c-cream-50-soft) 70%); }
+.car-back h4 { margin: 0 0 4px; font-size: 17px; }
+.car-back .kbtn { width: 100%; max-width: none; margin: 0; }
+.car-loot { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+.car-lt { width: 92px; padding: 8px 4px; border-radius: 12px; background: var(--c-brown-850-2); color: var(--c-cream-150-vivid); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 13px; font-weight: 800; line-height: 1.15; }
+.car-lt img { width: 44px; height: 44px; object-fit: contain; }
+.car-lt small { font-size: 12px; font-weight: 600; line-height: 1.2; color: var(--c-bronze-200); }
+.car-lt.is-rare { background: linear-gradient(#3b2a6b, #1f1640); box-shadow: 0 0 0 2px #9b7bff; }
+.car-lt.is-item { background: linear-gradient(#173d24, #0e2617); box-shadow: 0 0 0 2px #4fbf6b; }

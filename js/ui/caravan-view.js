@@ -1,0 +1,204 @@
+"use strict";
+/* ui/caravan-view.js — v3.419.0 (lot E-2) : la Caravane, dans la feuille de la Halle marchande
+   (segment « Caravane »). Atelier validé : atelier-caravane.html, version C1 « Surplus auto ».
+
+   Trois moments :
+     - au départ  : trois trajets (Court / Moyen / Long), le chargement calculé, « Partir » ;
+     - en route   : la piste, le compte à rebours, les chances du trajet Long ;
+     - de retour  : le butin et « Décharger ».
+
+   La feuille vit dans #village-modal-root (voir village-building-view.js). Le compte à
+   rebours est tenu par refreshCaravanDOM(), appelé chaque seconde depuis
+   ProductionManager.updateDOM() → refreshProductionSheetDOM(). Logique : CaravanManager. */
+
+/* Trajet choisi au départ : mémorisé sur l'appareil, comme les filtres de l'Entrepôt. */
+function getCaravanSelectedTrip() {
+  var t = (window.Prefs && typeof Prefs.getValue === "function") ? Prefs.getValue("caravanTrip") : null;
+  if (!t || !CARAVAN_TRIPS[t] || !CaravanManager.isTripOpen(t)) t = "moyen";
+  return t;
+}
+
+function selectCaravanTrip(tripId) {
+  if (!CARAVAN_TRIPS[tripId] || !CaravanManager.isTripOpen(tripId)) return;
+  if (window.Prefs && typeof Prefs.setValue === "function") Prefs.setValue("caravanTrip", tripId);
+  rerenderCaravanSheet();
+}
+window.selectCaravanTrip = selectCaravanTrip;
+
+function rerenderCaravanSheet() {
+  if (typeof openVillageBuildingId !== "undefined" && openVillageBuildingId === "hall" && typeof openVillageBuildingSheet === "function") {
+    openVillageBuildingSheet("hall");
+  }
+}
+
+/* Noms des trajets, en toutes lettres pour l'audit de traduction. */
+function caravanTripLabel(t) {
+  var id = t && t.id;
+  return id === "court" ? _t("Court") : id === "long" ? _t("Long") : _t("Moyen");
+}
+
+function caravanRareIcon() {
+  var k = CaravanManager.getRareKey();
+  return k ? WAREHOUSE_RESOURCES[k].icon : "";
+}
+
+function caravanGoldHTML(n) {
+  return '<img class="car-gold" src="images/Icons/gold_icon.png" alt=""> ' + formatNumber(n);
+}
+
+/* Bannière de piste : celle du Désert quand on y est, la Forêt sinon. */
+function caravanRoadImage() {
+  var w = window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0;
+  return w >= 1 ? "images/Maps/parcours/desert_route.jpg" : "images/Maps/parcours/foret_quetes.jpg";
+}
+
+function buildCaravanTripsHTML(sel) {
+  var level = CaravanManager.getHallLevel();
+  var h = '<div class="car-trips">';
+  CARAVAN_TRIP_ORDER.forEach(function (id) {
+    var t = CARAVAN_TRIPS[id], open = CaravanManager.isTripOpen(id, level);
+    h += '<button type="button" class="car-trip' + (sel === id ? ' is-on' : '') + '"'
+      + (open ? ' onclick="selectCaravanTrip(\'' + id + '\')"' : ' disabled') + '>';
+    h += '<b>' + esc(caravanTripLabel(t)) + '</b><span class="car-trip-d">' + esc(formatTime(t.seconds)) + '</span>';
+    if (open) {
+      h += '<small>' + esc(_t("{n} unités", { n: formatNumber(CaravanManager.getCapacity(id, level)) })) + '</small>';
+      h += '<small class="car-trip-pct">' + esc(_t("{p} % de la valeur", { p: Math.round(t.valuePct * 100) })) + '</small>';
+    } else {
+      h += '<small class="car-trip-lock"><img class="ico-sys" src="images/Icons/system/lock_closed.png" alt=""> '
+        + esc(_t("Halle niveau {n}", { n: t.minHall })) + '</small>';
+    }
+    h += '<span class="car-trip-bonus">';
+    if (t.rareChance > 0 && caravanRareIcon()) h += '<img src="' + caravanRareIcon() + '" alt="">';
+    if (t.itemChance > 0) h += '<img src="images/Icons/equipment_icon/casque_rare.png" alt="">';
+    h += '</span></button>';
+  });
+  h += '</div>';
+  return h;
+}
+
+function buildCaravanChancesHTML(t) {
+  if (!(t.rareChance > 0 || t.itemChance > 0)) return "";
+  var rk = CaravanManager.getRareKey();
+  var h = '<div class="car-hope">';
+  if (t.rareChance > 0 && rk) h += '<span><img src="' + WAREHOUSE_RESOURCES[rk].icon + '" alt="">'
+    + esc(_t("{p} % : {x}", { p: Math.round(t.rareChance * 100), x: _td(WAREHOUSE_RESOURCES[rk].name) })) + '</span>';
+  if (t.itemChance > 0) h += '<span><img src="images/Icons/equipment_icon/casque_rare.png" alt="">'
+    + esc(_t("{p} % : un objet", { p: Math.round(t.itemChance * 100) })) + '</span>';
+  return h + '</div>';
+}
+
+function buildCaravanDepartHTML() {
+  var sel = getCaravanSelectedTrip(), t = CARAVAN_TRIPS[sel];
+  var load = CaravanManager.computeLoad(sel);
+  var units = CaravanManager.getLoadUnits(load), cap = CaravanManager.getCapacity(sel);
+  var gold = CaravanManager.getLoadGold(load, sel);
+
+  var h = '<div class="car-h6">' + _t("Trajet") + '</div>' + buildCaravanTripsHTML(sel);
+  h += buildCaravanChancesHTML(t);
+
+  h += '<div class="car-load"><div class="car-load-h"><b>' + _t("Chargement") + '</b><span>'
+    + formatNumber(units) + ' / ' + formatNumber(cap) + '</span></div>';
+  if (units > 0) {
+    h += '<div class="car-chips">';
+    Object.keys(load).forEach(function (k) {
+      var d = WAREHOUSE_RESOURCES[k];
+      h += '<span class="car-chip">' + renderIconOrEmojiHTML(d.icon, "car-chip-ico", _td(d.name)) + formatNumber(load[k]) + '</span>';
+    });
+    h += '</div>';
+  } else {
+    h += '<div class="car-empty">' + _t("Rien à vendre : aucune matière brute ne dépasse la moitié de son plafond.") + '</div>';
+  }
+  h += '<p class="car-why">' + _t("La caravane prend d'abord ce qui est au plafond, à parts égales. Elle laisse toujours la moitié du plafond et la réserve protégée de l'Entrepôt.") + '</p></div>';
+
+  var reason = CaravanManager.getBlockReason(sel);
+  h += '<div class="car-go"><button type="button" class="kbtn primary"' + (reason ? ' disabled' : ' onclick="departCaravanFromSheet()"') + '>'
+    + '<span>' + esc(reason || _t("Partir · {d}", { d: formatTime(t.seconds) })) + '</span>'
+    + (units > 0 ? '<small>' + _t("≈ {g} or au retour", { g: caravanGoldHTML(gold) }) + '</small>' : '')
+    + '</button></div>';
+  return h;
+}
+
+function buildCaravanRouteHTML() {
+  var c = CaravanManager.get(), t = CARAVAN_TRIPS[c.trip];
+  var pct = CaravanManager.getProgressPct();
+  var h = '<div class="car-road" style="background-image:url(\'' + caravanRoadImage() + '\')">';
+  h += '<span class="car-pin" id="car-pin" style="left:' + (8 + pct * 0.84).toFixed(1) + '%">🐪</span>';
+  h += '<span class="car-line"><i id="car-bar" style="width:' + pct.toFixed(1) + '%"></i></span>';
+  h += '<span class="car-lbl"><span>' + _t("Village") + '</span><span>' + _t("Marché") + '</span></span></div>';
+  h += '<div class="car-eta"><img class="ico-sys" src="images/Icons/system/hourglass_waiting.png" alt="">'
+    + '<span class="car-eta-t"><small>' + esc(_t("Trajet {x} · retour dans", { x: caravanTripLabel(t).toLowerCase() })) + '</small>'
+    + '<b id="car-left">' + esc(formatTime(CaravanManager.getSecondsLeft())) + '</b></span>'
+    + '<span class="car-chip">≈ ' + caravanGoldHTML(c.gold) + '</span></div>';
+  h += buildCaravanChancesHTML(t);
+  h += '<p class="car-why">' + _t("Elle continue hors ligne. Une seule caravane à la fois.") + '</p>';
+  return h;
+}
+
+function buildCaravanBackHTML() {
+  var c = CaravanManager.get(), t = CARAVAN_TRIPS[c.trip];
+  var h = '<div class="car-back"><h4>' + _t("La caravane est rentrée !") + '</h4>';
+  h += '<span class="car-why">' + esc(_t("Trajet {x} · {n} unités vendues", { x: caravanTripLabel(t).toLowerCase(), n: formatNumber(CaravanManager.getLoadUnits(c.cargo)) })) + '</span>';
+  h += '<div class="car-loot">';
+  h += '<span class="car-lt"><img src="images/Icons/gold_icon.png" alt="">' + formatNumber(c.gold) + '<small>' + _t("or") + '</small></span>';
+  if (c.rare && WAREHOUSE_RESOURCES[c.rare.key]) {
+    var rd = WAREHOUSE_RESOURCES[c.rare.key];
+    h += '<span class="car-lt is-rare"><img src="' + rd.icon + '" alt="">×' + c.rare.n + '<small>' + esc(_td(rd.name)) + '</small></span>';
+  }
+  if (c.item) {
+    var icon = (typeof getEquipmentIconPath === "function") ? getEquipmentIconPath(c.item) : "images/Icons/equipment_icon/casque_rare.png";
+    h += '<span class="car-lt is-item"><img src="' + icon + '" alt="">' + esc(_td(c.item.name)) + '<small>'
+      + esc(_td((typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[c.item.rarity]) || c.item.rarity)) + '</small></span>';
+  }
+  h += '</div><button type="button" class="kbtn primary" onclick="unloadCaravanFromSheet()">' + _t("Décharger") + '</button></div>';
+  return h;
+}
+
+/* Segment « Caravane » de la feuille de la Halle. */
+function buildCaravanHTML() {
+  if (!window.CaravanManager || !CaravanManager.isAvailable()) return "";
+  if (CaravanManager.isBack()) return '<div class="car" data-car="back">' + buildCaravanBackHTML() + '</div>';
+  if (CaravanManager.isTraveling()) return '<div class="car" data-car="route">' + buildCaravanRouteHTML() + '</div>';
+  return '<div class="car" data-car="depart">' + buildCaravanDepartHTML() + '</div>';
+}
+window.buildCaravanHTML = buildCaravanHTML;
+
+function departCaravanFromSheet() {
+  if (CaravanManager.depart(getCaravanSelectedTrip())) {
+    rerenderCaravanSheet();
+    if (typeof renderPanel === "function") renderPanel(); // stocks de l'Entrepôt, pastilles
+  }
+}
+window.departCaravanFromSheet = departCaravanFromSheet;
+
+function unloadCaravanFromSheet() {
+  var loot = CaravanManager.unload();
+  if (!loot) return;
+  if (typeof showToast === "function") showToast("🐪 " + _t("+{n} or", { n: formatNumber(loot.gold) }), 1800);
+  if (typeof renderAll === "function") renderAll(); else if (typeof renderPanel === "function") renderPanel();
+  rerenderCaravanSheet();
+}
+window.unloadCaravanFromSheet = unloadCaravanFromSheet;
+
+/* Chaque seconde : annonce du retour, compte à rebours, et bascule de la feuille
+   quand la caravane arrive pendant qu'on la regarde. */
+function refreshCaravanDOM() {
+  if (!window.CaravanManager) return;
+  var arrived = CaravanManager.checkArrival();
+  if (typeof document === "undefined") return;
+  var box = document.querySelector ? document.querySelector("#village-modal-root .car") : null;
+  if (!box) {
+    if (arrived && game.activeTab === "village" && typeof renderPanel === "function") renderPanel(); // ruban « De retour »
+    return;
+  }
+  var state = box.getAttribute("data-car");
+  if ((state === "route" && !CaravanManager.isTraveling()) || arrived) { rerenderCaravanSheet(); return; }
+  if (state !== "route") return;
+  var pct = CaravanManager.getProgressPct();
+  var bar = document.getElementById("car-bar");
+  if (bar) bar.style.width = pct.toFixed(1) + "%";
+  var pin = document.getElementById("car-pin");
+  if (pin) pin.style.left = (8 + pct * 0.84).toFixed(1) + "%";
+  var left = document.getElementById("car-left");
+  if (left) left.textContent = formatTime(CaravanManager.getSecondsLeft());
+}
+window.refreshCaravanDOM = refreshCaravanDOM;

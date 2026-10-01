@@ -315,12 +315,12 @@ var VILLAGE_BUILDINGS = {
     name: "Halle marchande",
     icon: "images/Icons/subtabs/equipment_shop.png",
     iconImg: "images/Icons/village_buildings/merchant_hall.png",
-    rank: 2,   // v3.418.0 (R3, décision Seb) : Atelier 2 — la Halle accueille la caravane
+    rank: 2,   // v3.418.0 (R3, décision Seb) : Atelier 2 — la Halle accueille la caravane (v3.419.0, caravan-system.js)
     /* 10 niveaux : 5 emplacements de vitrine gagnés (un tous les deux niveaux)
        et une remise croissante sur le renouvellement. */
     maxLevel: 10,
     implemented: true,
-    desc: "Agrandit l'échoppe d'équipement : plus d'emplacements en vitrine, et un renouvellement moins cher. L'échoppe reste à sa place, dans Équipement → Échoppe.",
+    desc: "Envoie une caravane vendre le surplus de matières brutes au loin, et agrandit l'échoppe d'équipement : plus d'emplacements en vitrine, un renouvellement moins cher. L'échoppe reste dans Équipement → Échoppe.",
     costTiers: [
       {
         minLevel: 0, maxLevel: 4,
@@ -342,7 +342,11 @@ var VILLAGE_BUILDINGS = {
         ? EquipShopManager.getShopSize(level)
         : 6;
       var remise = Math.round((1 - Math.pow(0.95, level)) * 100);
-      return _t("{n} objets en vitrine", { n: slots }) + (remise > 0 ? " · " + _t("-{p} % sur le renouvellement", { p: remise }) : "");
+      /* v3.419.0 (E-2) : la caravane — trajet Long au niveau 3, +10 % de capacité par niveau */
+      var car = "";
+      if (level >= 3) car += " · " + _t("trajet Long");
+      if (level >= 2) car += " · " + _t("Caravane +{p} %", { p: Math.round((level - 1) * 10) });
+      return _t("{n} objets en vitrine", { n: slots }) + (remise > 0 ? " · " + _t("-{p} % sur le renouvellement", { p: remise }) : "") + car;
     }
   },
 
@@ -356,7 +360,7 @@ var VILLAGE_BUILDINGS = {
        (TavernManager.getSlotCount) — chaque chantier se voit tout de suite sur le tableau. */
     maxLevel: 5,
     implemented: true,
-    desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. C'est le seul débouché du surplus de Production : l'Entrepôt ne rachète plus rien.",
+    desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. Avec la caravane de la Halle marchande, c'est le débouché du surplus de Production : l'Entrepôt ne rachète plus rien.",
     costTiers: [
       {
         minLevel: 0, maxLevel: 2,

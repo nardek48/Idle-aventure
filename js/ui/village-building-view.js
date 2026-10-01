@@ -11,6 +11,13 @@
    mêmes lignes de coût, même feuille basse, mais pour N bâtiments. */
 
 var openVillageBuildingId = null;
+var hallSheetSegment = "caravan"; // v3.419.0 (E-2) : segment de la feuille de la Halle
+
+function setHallSheetSegment(seg) {
+  hallSheetSegment = seg === "build" ? "build" : "caravan";
+  if (openVillageBuildingId === "hall") openVillageBuildingSheet("hall");
+}
+window.setHallSheetSegment = setHallSheetSegment;
 
 function getVillageCostMeta(key) {
   if (key === "gold") {
@@ -125,6 +132,24 @@ function buildVillageBuildingSheetHTML(id) {
     close: "closeVillageBuildingSheet()"
   });
   h += '<div class="ksheet-body">';
+
+  /* v3.419.0 (E-2) : la Halle construite porte deux segments — Caravane (par défaut,
+     ce dont on se sert) et Agrandir (la fiche habituelle du bâtiment). */
+  if (id === "hall" && level > 0 && typeof buildCaravanHTML === "function") {
+    var hseg = hallSheetSegment === "build" ? "build" : "caravan";
+    var back = window.CaravanManager && CaravanManager.isBack();
+    h += '<div class="kseg vb-sheet-seg">';
+    h += '<button type="button" class="' + (hseg === "caravan" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'caravan\')">' + _t("Caravane")
+       + (back ? '<span class="kseg-dot"></span>' : '') + '</button>';
+    h += '<button type="button" class="' + (hseg === "build" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'build\')">'
+       + (maxed ? _t("Halle") : _t("Agrandir · niv. {n}", { n: level + 1 })) + '</button>';
+    h += '</div>';
+    if (hseg === "caravan") {
+      h += buildCaravanHTML();
+      h += '</div></div></div>'; // ksheet-body, carte, voile
+      return h;
+    }
+  }
 
   h += '<div class="vb-sheet-text">' + esc(_td(def.desc)) + '</div>';
 
@@ -305,6 +330,7 @@ function openVillageBuildingSheet(id) {
   var def = VILLAGE_BUILDINGS[id];
   if (!def) return;
   VillageBuildingManager.ensure();
+  if (openVillageBuildingId !== id) hallSheetSegment = "caravan"; // v3.419.0 : la Halle s'ouvre sur sa caravane
   openVillageBuildingId = id;
   if (typeof productionDetailBuildingId !== "undefined") productionDetailBuildingId = null; // v3.414.0 : la feuille de production cède la place
   if (typeof openWorkshopId !== "undefined") openWorkshopId = null; // v3.415.0 : la feuille d'atelier aussi

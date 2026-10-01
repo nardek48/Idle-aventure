@@ -89,7 +89,7 @@
 .tt-link { width: 2px; height: 9px; margin: 0 auto; background: var(--c-gold-550); }
 
 /* Clé de voûte */
-.tt-node.is-key { border-width: 2px; border-color: var(--c-gold-550); background: linear-gradient(var(--c-cream-100-3), var(--c-cream-200)); }
+.tt-node.is-key { border-width: 2px; border-color: var(--c-gold-550); background: linear-gradient(var(--c-cream-100-vivid), var(--c-cream-200)); }
 .tt-key-tag { font-size: 12px; font-weight: 900; color: var(--c-gold-650); letter-spacing: 0.3px; text-transform: uppercase; }
 .tt-node.is-key.is-owned { box-shadow: inset 0 0 0 1px var(--c-gold-550), 0 0 8px #f0cf5a88; }
 
