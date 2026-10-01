@@ -46,6 +46,7 @@ function openProductionBuildingDetail(buildingId) {
   if (!PRODUCTION_BUILDINGS[buildingId]) return;
   if (productionDetailBuildingId !== buildingId) productionSheetTab = "shops";
   productionDetailBuildingId = buildingId;
+  openWorkshopId = null; workshopSheetBackId = null;
   if (typeof openVillageBuildingId !== "undefined") openVillageBuildingId = null; // un seul habitant pour #village-modal-root
   renderProductionSheet(false);
 }
@@ -53,11 +54,12 @@ window.openProductionBuildingDetail = openProductionBuildingDetail;
 
 /* silent : fermeture de service (changement d'onglet), sans rendu du panneau. */
 function closeProductionSheet(silent) {
-  var wasOpen = !!productionDetailBuildingId;
+  var wasOpen = !!productionDetailBuildingId || !!openWorkshopId;
   productionDetailBuildingId = null;
+  openWorkshopId = null; workshopSheetBackId = null; // v3.415.0 : la feuille d'atelier part avec
   if (typeof document === "undefined") return;
   var host = document.getElementById("village-modal-root");
-  if (wasOpen && host && host.querySelector(".prod-sheet")) host.innerHTML = "";
+  if (wasOpen && host && (host.querySelector(".prod-sheet") || host.querySelector(".wk-sheet"))) host.innerHTML = "";
   if (!silent && wasOpen && typeof renderPanel === "function") renderPanel();
 }
 window.closeProductionSheet = closeProductionSheet;
@@ -90,7 +92,10 @@ function renderProductionSheet(keepScroll) {
   if (nb && top) nb.scrollTop = top;
 }
 function refreshProductionSheet() {
-  if (!productionDetailBuildingId || typeof document === "undefined") return;
+  if (typeof document === "undefined") return;
+  if (typeof refreshWarehouseSheets === "function" && refreshWarehouseSheets()) return; // v3.416.0 : feuille de l'Entrepôt
+  if (openWorkshopId) { renderWorkshopSheet(true); return; } // v3.415.0 : la feuille d'atelier, si elle est ouverte
+  if (!productionDetailBuildingId) return;
   var host = document.getElementById("village-modal-root");
   if (host && host.querySelector(".prod-sheet")) renderProductionSheet(true);
 }
@@ -99,6 +104,7 @@ window.refreshProductionSheet = refreshProductionSheet;
 /* Tick de ProductionManager.updateDOM() : jauge et libellé de la feuille (ids propres à la
    feuille, la vignette du tableau de bord garde les siens). */
 function refreshProductionSheetDOM() {
+  if (typeof refreshWorkshopTilesDOM === "function") refreshWorkshopTilesDOM(); // v3.415.0 : vignettes d'atelier
   var id = productionDetailBuildingId;
   if (!id || typeof document === "undefined") return;
   var stock = ProductionManager.getStock(id), capacity = ProductionManager.getCapacity(id);
@@ -563,8 +569,8 @@ function buildProductionSheetHTML(buildingId) {
   h += '</div>';
 
   if (tab === "shops") {
-    h += '<div class="workshop-list">';
-    shops.forEach(function (w) { h += buildWorkshopCardHTML(w); });
+    h += '<div class="wk-grid">';
+    shops.forEach(function (w) { h += buildWorkshopTileHTML(w, buildingId); });
     h += '</div>';
   } else {
     h += buildPlotsPanelHTML(buildingId);
@@ -597,151 +603,6 @@ var workshopAutoQty = {};        // { [workshopId]: number } — v3.98.15 : quan
                                   // se confondaient auparavant). Démarre à 1 à chaque activation de l'auto
                                   // sur une recette, ajustable ensuite indépendamment du stepper manuel.
                                   // Une seule recette auto par atelier -> clé par workshopId suffit.
-
-/* ============================================================
-   v3.192.0 : carte atelier COMPACTE (maquette atelier-ecrans.html v4
-   validée par Seb) — ~moitié de la hauteur des anciennes cartes, tout le
-   fonctionnel conservé. 4 décisions actées :
-   (1) <img class=ico-inline src=images/Icons/system/auto_repeat.png> actif sur la recette affichée -> la ligne de craft manuel
-       disparaît (couper le toggle pour forcer un lot à la main) ;
-   (2) quantité par lot auto = mini-stepper inline à côté du toggle
-       (mêmes handlers v3.98.15/16, saisie directe conservée) ;
-   (3) file = cases visuelles + entrée courante (temps + barre fine),
-       <img class=ico-inline src=images/Icons/system/close.png> sur les lots suivants — remplace la liste verticale. Ids
-       prod-workshop-time-/bar- et conteneur workshop-queue-{id}
-       CONSERVÉS : updateDOM() et refreshWorkshopQueueDOM() inchangés.
-       Le badge "File : X/Y" (prod-workshop-queue-badge-) disparaît —
-       les cases portent l'info, setElementText() ignore l'id absent ;
-   (4) amélioration = bouton coût seul en haut à droite, l'effet
-       (vitesse, file) est confirmé au toast après l'achat.
-   Anciennes classes warehouse-craft-queue et warehouse-craft-recipe-tab
-   abandonnées ici (plus aucun usage ailleurs) — règles CSS à balayer plus tard.
-   ============================================================ */
-function buildWorkshopCardHTML(workshop) {
-  if (!workshop.active) {
-    var h0 = '<div class="workshop-card is-inactive">';
-    h0 += '<div class="workshop-card-icon">' + renderIconOrEmojiHTML(workshop.icon, "workshop-card-icon-img", _td(workshop.name)) + '</div>';
-    h0 += '<div class="workshop-card-name">' + esc(_td(workshop.name)) + '</div>';
-    h0 += '<div class="workshop-card-soon">' + _t("Bientôt") + '</div>';
-    h0 += '</div>';
-    return h0;
-  }
-
-  var level = WorkshopsSystem.getLevel(workshop.id);
-  var recipes = workshop.recipes;
-  var selectedRecipeId = selectedWorkshopRecipe[workshop.id] || recipes[0].id;
-  var recipe = recipes.find(function (r) { return r.id === selectedRecipeId; }) || recipes[0];
-  var outputDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
-  var effectiveCraftTimeMs = WorkshopsSystem.getEffectiveCraftTimeMs(workshop.id, recipe);
-
-  var activeAutoId = WorkshopsSystem.getAutoRecipeId(workshop.id);
-  var isAutoHere = activeAutoId === recipe.id;
-  var otherAuto = activeAutoId && !isAutoHere;
-
-  var queue = WorkshopsSystem.getQueue(workshop.id);
-  var maxCrafts = WorkshopsSystem.getMaxCraftTimes(workshop.id, recipe.id);
-
-  var tagDef = PRODUCTION_BUILDINGS[workshop.buildingId];
-  var tagRes = tagDef ? (WAREHOUSE_RESOURCES[tagDef.resourceKey] || {}) : {};
-
-  var h = '<div class="workshop-card is-active">';
-
-  // --- en-tête : icône, nom, tag bâtiment, écu, amélioration compacte ---
-  h += '<div class="wk-head">';
-  h += '<span class="wk-emoji">' + renderIconOrEmojiHTML(workshop.icon, "wk-emoji-img", _td(workshop.name)) + '</span>';
-  h += '<span class="wk-name">' + esc(_td(workshop.name)) + '</span>';
-  if (tagDef) h += '<span class="workshop-building-tag">' + renderIconOrEmojiHTML(tagRes.icon, "workshop-building-tag-ico", _td(tagDef.name)) + esc(_td(tagDef.name)) + '</span>';
-  h += '<span class="kbadge kbadge-shield wk-shield"><span>' + level + '</span></span>';
-  h += buildWorkshopUpgradeCompactHTML(workshop.id);
-  h += '</div>';
-
-  // --- pilules de recettes (ateliers multi-recettes) — la pilule active porte <img class=ico-inline src=images/Icons/system/auto_repeat.png>
-  //     si le chaînage est sur elle ---
-  if (recipes.length > 1) {
-    h += '<div class="wk-pills">';
-    recipes.forEach(function (r) {
-      var out = WAREHOUSE_RESOURCES[r.outputs[0].resourceId];
-      var cls = "wk-pill" + (r.id === recipe.id ? " is-active" : "") + (activeAutoId === r.id ? " is-auto" : "");
-      h += '<button type="button" class="' + cls + '" onclick="selectWorkshopRecipe(\'' + workshop.id + '\', \'' + esc(r.id) + '\')">' + esc(out ? _td(out.name) : r.id) + '</button>';
-    });
-    h += '</div>';
-  }
-
-  // --- recette en icônes + temps effectif ---
-  h += '<div class="wk-recipe">';
-  recipe.inputs.forEach(function (input, i) {
-    var d = WAREHOUSE_RESOURCES[input.resourceId] || {};
-    if (i) h += ' + ';
-    h += formatNumber(input.quantity) + ' ' + renderIconOrEmojiHTML(d.icon, "wk-recipe-ico", _td(d.name));
-  });
-  h += ' → ' + formatNumber(recipe.outputs[0].quantity) + ' ' + renderIconOrEmojiHTML(outputDef.icon, "wk-recipe-ico", _td(outputDef.name));
-  h += '<span class="wk-time">· ' + _t("{d}/lot", { d: formatCraftDuration(effectiveCraftTimeMs) }) + '</span>';
-  h += '</div>';
-
-  // --- file : cases + entrée courante ---
-  h += buildWorkshopQueueHTML(workshop.id);
-
-  // --- pied : toggle <img class=ico-inline src=images/Icons/system/auto_repeat.png> + (quantité auto inline) OU (stepper manuel + Fabriquer) ---
-  h += '<div class="wk-foot">';
-  h += '<span class="wk-cont' + (isAutoHere ? " is-on" : "") + '" onclick="setWorkshopAutoRecipe(\'' + workshop.id + '\', \'' + esc(recipe.id) + '\')">';
-  h += '<span class="wk-cont-sw"></span><img class="ico-sys" src="images/Icons/system/auto_repeat.png" alt=""> ' + _t("Continue") + '</span>';
-
-  if (isAutoHere) {
-    var maxAutoNow = WorkshopsSystem.getMaxAutoCraftTimes(workshop.id, recipe.id);
-    var autoQty = Math.max(1, Math.min(maxAutoNow || 1, workshopAutoQty[workshop.id] || 1));
-    workshopAutoQty[workshop.id] = autoQty;
-    h += '<span class="wk-auto-qty">' + _t("lot ×");
-    h += '<span class="warehouse-qty-stepper workshop-qty-stepper-compact">';
-    h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWorkshopAutoQty(\'' + workshop.id + '\', -1)"' + (autoQty <= 1 ? ' disabled' : '') + '>−</button>';
-    h += '<input class="warehouse-qty-value" type="number" min="1" max="' + (maxAutoNow || 1) + '" step="1" value="' + autoQty + '" onchange="setWorkshopAutoQty(\'' + workshop.id + '\', this.value)">';
-    h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWorkshopAutoQty(\'' + workshop.id + '\', 1)"' + (autoQty >= maxAutoNow ? ' disabled' : '') + '>+</button>';
-    h += '<button class="warehouse-qty-max-btn" type="button" onclick="adjustWorkshopAutoQty(\'' + workshop.id + '\', \'max\')"' + (autoQty >= maxAutoNow ? ' disabled' : '') + '>' + _t("Max") + '</button>';
-    h += '</span></span>';
-  } else if (maxCrafts > 0) {
-    var qty = Math.max(1, Math.min(maxCrafts, workshopCraftQty[workshop.id] || 1));
-    workshopCraftQty[workshop.id] = qty;
-    h += '<span class="wk-manual">';
-    h += '<span class="warehouse-qty-stepper workshop-qty-stepper-compact">';
-    h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWorkshopCraftQty(\'' + workshop.id + '\', -1)"' + (qty <= 1 ? ' disabled' : '') + '>−</button>';
-    h += '<input class="warehouse-qty-value" type="number" min="1" max="' + maxCrafts + '" step="1" value="' + qty + '" onchange="setWorkshopCraftQty(\'' + workshop.id + '\', this.value)">';
-    h += '<button class="warehouse-qty-btn" type="button" onclick="adjustWorkshopCraftQty(\'' + workshop.id + '\', 1)"' + (qty >= maxCrafts ? ' disabled' : '') + '>+</button>';
-    h += '<button class="warehouse-qty-max-btn" type="button" onclick="adjustWorkshopCraftQty(\'' + workshop.id + '\', \'max\')"' + (qty >= maxCrafts ? ' disabled' : '') + '>' + _t("Max") + '</button>';
-    h += '</span>';
-    h += '<button class="wk-craft-btn" type="button" onclick="confirmCraftWorkshop(\'' + workshop.id + '\')">' + _t("Fabriquer ×{n}", { n: formatNumber(qty) }) + '</button>';
-    h += '</span>';
-  }
-  h += '</div>';
-
-  // --- alertes (une seule à la fois, la plus utile) ---
-  if (otherAuto) {
-    var otherRecipe = WorkshopsSystem.getRecipe(workshop.id, activeAutoId);
-    var otherDef = otherRecipe ? WAREHOUSE_RESOURCES[otherRecipe.outputs[0].resourceId] : null;
-    h += '<div class="wk-alert is-hint"><img class=ico-inline src=images/Icons/system/auto_repeat.png> ' + esc(_t("déjà active sur {x} — l'activer ici la remplacera.", { x: otherDef ? _td(otherDef.name) : activeAutoId })) + '</div>';
-  } else if (isAutoHere && !queue.length && WorkshopsSystem.getMaxAutoCraftTimes(workshop.id, recipe.id) <= 0) {
-    if (maxCrafts > 0) {
-      // stock brut suffisant mais pas la version "moins réserve" -> c'est la réserve (v3.98.17)
-      h += '<div class="wk-alert is-reserve"><img class=ico-inline src=images/Icons/system/pause_stop.png> ' + _t("En attente : la réserve protégée empêche un nouveau lot — ajustable dans l'Entrepôt.") + '</div>';
-    } else {
-      h += buildWorkshopMissingInputHTML(recipe);
-    }
-  } else if (!isAutoHere && maxCrafts <= 0) {
-    h += buildWorkshopMissingInputHTML(recipe);
-  }
-
-  h += '</div>';
-  return h;
-}
-
-/* Alerte intrant manquant façon maquette : "Nom insuffisant (possédé/requis)" —
-   plus informatif que l'ancien "Pas assez de X pour fabriquer." */
-function buildWorkshopMissingInputHTML(recipe) {
-  var missing = recipe.inputs.find(function (input) {
-    return WarehouseManager.getAmount(input.resourceId) < input.quantity;
-  });
-  if (!missing) return "";
-  var d = WAREHOUSE_RESOURCES[missing.resourceId] || {};
-  return '<div class="wk-alert is-warn"><img class=ico-inline src=images/Icons/system/warning.png> ' + esc(_t("{x} insuffisant ({a}/{b})", { x: d.name ? _td(d.name) : missing.resourceId, a: formatNumber(WarehouseManager.getAmount(missing.resourceId)), b: formatNumber(missing.quantity) })) + '</div>';
-}
 
 /* Décision (4) : coût seul sur le bouton d'amélioration, en tête de carte —
    l'effet du niveau est confirmé au toast (voir upgradeWorkshop). */
@@ -809,6 +670,11 @@ function buildWorkshopQueueHTML(workshopId) {
    au retour sur cette page) affichera l'état à jour de toute façon. */
 function refreshWorkshopQueueDOM(workshopId) {
   if (typeof document === "undefined") return; // garde défensive (harnais de test Node)
+  // v3.415.0 : la vignette change d'état (En cours -> Libre) sans rendu complet
+  var tile = document.getElementById("wk-tile-" + workshopId);
+  if (tile && WORKSHOPS_CONFIG[workshopId]) {
+    tile.outerHTML = buildWorkshopTileHTML(Object.assign({ id: workshopId }, WORKSHOPS_CONFIG[workshopId]), tile.closest && tile.closest(".prod-sheet") ? productionDetailBuildingId : null);
+  }
   var container = document.getElementById("workshop-queue-" + workshopId);
   if (!container) return;
   container.outerHTML = buildWorkshopQueueHTML(workshopId);
@@ -822,20 +688,6 @@ function selectWorkshopRecipe(workshopId, recipeId) {
 }
 window.selectWorkshopRecipe = selectWorkshopRecipe;
 
-function adjustWorkshopCraftQty(workshopId, delta) {
-  var recipeId = selectedWorkshopRecipe[workshopId];
-  var maxCrafts = WorkshopsSystem.getMaxCraftTimes(workshopId, recipeId);
-  if (maxCrafts <= 0) return;
-
-  var current = workshopCraftQty[workshopId] || 1;
-  if (delta === "max") {
-    workshopCraftQty[workshopId] = maxCrafts;
-  } else {
-    workshopCraftQty[workshopId] = Math.max(1, Math.min(maxCrafts, current + Number(delta || 0)));
-  }
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.adjustWorkshopCraftQty = adjustWorkshopCraftQty;
 
 /* v3.98.16 : saisie directe dans le champ de quantité (retour Seb — un clic accidentel
    sur "Max" doit pouvoir se corriger en tapant le chiffre voulu, pas juste via -/+).
@@ -861,27 +713,6 @@ function confirmCraftWorkshop(workshopId) {
 }
 window.confirmCraftWorkshop = confirmCraftWorkshop;
 
-/* v3.98.15 : stepper DÉDIÉ à la quantité du chaînage auto, séparé du stepper manuel
-   (retour Seb — les deux se confondaient auparavant). Borné par
-   WorkshopsSystem.getMaxAutoCraftTimes (respecte la réserve protégée), pas par le stock
-   brut. `max` ici recalcule le max ACTUEL (pas figé) mais reste une valeur numérique
-   normale ensuite — contrairement à l'ancien système, il n'y a plus de mode "Max
-   dynamique" à part : le joueur ajuste ce chiffre comme il veut, tout simplement. */
-function adjustWorkshopAutoQty(workshopId, delta) {
-  var recipeId = WorkshopsSystem.getAutoRecipeId(workshopId);
-  if (!recipeId) return;
-  var maxAuto = WorkshopsSystem.getMaxAutoCraftTimes(workshopId, recipeId);
-  if (maxAuto <= 0) maxAuto = 1; // permet quand même d'ajuster le réglage même si rien n'est dispo là maintenant
-
-  var current = workshopAutoQty[workshopId] || 1;
-  if (delta === "max") {
-    workshopAutoQty[workshopId] = maxAuto;
-  } else {
-    workshopAutoQty[workshopId] = Math.max(1, Math.min(maxAuto, current + Number(delta || 0)));
-  }
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.adjustWorkshopAutoQty = adjustWorkshopAutoQty;
 
 /* v3.98.16 : saisie directe pour le stepper auto — même logique de correction
    silencieuse que setWorkshopCraftQty. */
@@ -1045,57 +876,320 @@ function countStalledWorkshops() {
   }).length;
 }
 
-/* Vue Ateliers agrégée : bandeau d'état + bouton Files (badges file/auto conservés de
-   v3.98.8/17) + toutes les cartes atelier ACTIVES de tous les bâtiments débloqués
-   (cartes inchangées : recettes, file, auto, amélioration — déjà "dans la carte"),
-   dans l'ordre de WORKSHOPS_CONFIG (groupé par bâtiment par construction). Les ateliers
-   "Bientôt" sont regroupés en pied compact au lieu de 6 grandes cartes vides. */
-function buildShopsViewHTML() {
-  productionViewTab = "shops";
-  var stalled = countStalledWorkshops();
-  var h = '';
-  if (stalled > 0) {
-    h += '<div class="production-status-banner is-warn"><img class=ico-inline src=images/Icons/system/warning.png> ' + _tn(stalled, "{n} atelier à l'arrêt — intrants ou réserve", "{n} ateliers à l'arrêt — intrants ou réserve") + '</div>';
-  } else {
-    h += '<div class="production-status-banner is-ok"><img class="ico-sys" src="images/Icons/system/check_valid.png" alt=""> ' + _t("Tous les ateliers suivis tournent") + '</div>';
-  }
+/* ============================================================
+   v3.415.0 (lot VUI-2, atelier village A2 validé par Seb, 01/10/2026) :
+   ATELIERS EN VIGNETTES + FEUILLE D'ATELIER.
+   - Vignette : illustration, niveau, recette en icônes, ruban d'état (En cours + barre,
+     ×N possible, Bloqué, À l'arrêt), groupées par bâtiment.
+   - Feuille (#village-modal-root, comme la feuille de bâtiment) : recette en grand avec les
+     stocks, choix de recette, file en cases, quantité ×1/×5/×10/Max, Fabriquer, Continu,
+     amélioration. Ouverte depuis la feuille d'un bâtiment, elle porte un lien de retour.
+   Les ids canoniques de file (workshop-queue-, prod-workshop-time-/bar-) ne vivent que
+   dans la feuille ; la vignette a les siens (wk-tile-*), tenus par refreshWorkshopTilesDOM.
+   ============================================================ */
+var openWorkshopId = null;        // atelier dont la feuille est ouverte
+var workshopSheetBackId = null;   // bâtiment de production d'où l'on vient (lien « ‹ retour »)
 
-  var activeQueueCount = Object.keys(WORKSHOPS_CONFIG).filter(function (workshopId) {
-    var def = WORKSHOPS_CONFIG[workshopId];
-    return def.active && ProductionManager.isBuildingUnlocked(def.buildingId) && WorkshopsSystem.getQueue(workshopId).length > 0;
-  }).length;
-  var activeAutoCount = Object.keys(WORKSHOPS_CONFIG).filter(function (workshopId) {
-    var def = WORKSHOPS_CONFIG[workshopId];
-    return def.active && ProductionManager.isBuildingUnlocked(def.buildingId) && !!WorkshopsSystem.getAutoRecipeId(workshopId);
-  }).length;
-  h += '<div class="production-harvest-all-row">';
-  h += '<button class="production-action-btn production-harvest-btn production-queues-btn" id="prod-queues-btn" type="button" onclick="openWorkshopSummaryModal()">';
-  h += '<img class="ico-btn" src="images/Icons/quests/quest_list.png" alt=""> ' + _t("Files");
-  if (activeQueueCount > 0) h += '<span class="production-queues-badge">' + activeQueueCount + '</span>';
-  if (activeAutoCount > 0) h += '<span class="production-queues-badge production-auto-badge"><img class=ico-inline src=images/Icons/system/auto_repeat.png> ' + activeAutoCount + '</span>';
-  h += '</button>';
-  h += '</div>';
+function getWorkshopTileState(w) {
+  if (!w.active) return "soon";
+  var recipe = w.recipes[0];
+  var autoId = WorkshopsSystem.getAutoRecipeId(w.id);
+  if (WorkshopsSystem.getQueue(w.id).length) return "run";
+  if (autoId && WorkshopsSystem.getMaxAutoCraftTimes(w.id, autoId) <= 0) return "stalled";
+  var best = 0;
+  w.recipes.forEach(function (r) { best = Math.max(best, WorkshopsSystem.getMaxCraftTimes(w.id, r.id)); });
+  return best > 0 ? "idle" : "block";
+}
+window.getWorkshopTileState = getWorkshopTileState;
 
-  h += '<div class="workshop-list">';
-  var lockedNames = [];
-  Object.keys(WORKSHOPS_CONFIG).forEach(function (workshopId) {
-    var def = WORKSHOPS_CONFIG[workshopId];
-    if (!ProductionManager.isBuildingUnlocked(def.buildingId)) return;
-    if (!def.active) { lockedNames.push(_td(def.name)); return; }
-    // v3.191.1 : ENRICHIR avec l'id, comme getWorkshopsForBuilding() — les entrées de
-    // WORKSHOPS_CONFIG n'ont PAS de champ id (il est la clé), et buildWorkshopCardHTML
-    // repose sur workshop.id partout. Passer la config brute donnait id=undefined ->
-    // getMaxCraftTimes()=0 -> "Pas assez de ressources" à tort et contrôles morts
-    // (bug signalé par Seb sur build réel, invisible du harnais v3.191.0 qui ne
-    // testait que la présence des classes).
-    h += buildWorkshopCardHTML(Object.assign({ id: workshopId }, def));
+/* Recette en icônes : « 5 [blé] → 1 [farine] », l'intrant manquant en rouge. */
+function buildWorkshopRecipeIconsHTML(recipe) {
+  var h = '<span class="wk-tile-recipe">';
+  recipe.inputs.forEach(function (input, i) {
+    var d = WAREHOUSE_RESOURCES[input.resourceId] || {};
+    var miss = WarehouseManager.getAmount(input.resourceId) < input.quantity;
+    if (i) h += '<span class="wk-tile-op">+</span>';
+    h += '<span class="' + (miss ? 'is-miss' : '') + '">' + formatNumber(input.quantity) + renderIconOrEmojiHTML(d.icon, "wk-tile-ico", _td(d.name)) + '</span>';
   });
-  h += '</div>';
-  if (lockedNames.length) {
-    h += '<div class="production-shops-locked"><img class=ico-inline src=images/Icons/system/lock_closed.png> ' + esc(_t("{n} ateliers à venir : {x}", { n: lockedNames.length, x: lockedNames.join(" · ") })) + '</div>';
+  var out = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId] || {};
+  h += '<span class="wk-tile-op">→</span><span>' + formatNumber(recipe.outputs[0].quantity) + renderIconOrEmojiHTML(out.icon, "wk-tile-ico", _td(out.name)) + '</span>';
+  return h + '</span>';
+}
+
+function getWorkshopMissingInput(recipe) {
+  return recipe.inputs.filter(function (input) { return WarehouseManager.getAmount(input.resourceId) < input.quantity; })[0] || null;
+}
+
+function buildWorkshopTileHTML(w, backId) {
+  var state = getWorkshopTileState(w);
+  var level = w.active ? WorkshopsSystem.getLevel(w.id) : 0;
+  var recipe = w.recipes && w.recipes[0];
+  var h = '<button type="button" class="wk-tile is-' + state + '" id="wk-tile-' + w.id + '"'
+    + (state === "soon" ? ' disabled' : ' onclick="openWorkshopSheet(\'' + w.id + '\'' + (backId ? ', \'' + backId + '\'' : '') + ')"') + '>';
+  if (level) h += '<span class="wk-tile-lvl">' + level + '</span>';
+  var rib = "";
+  if (state === "run") rib = '<span class="wk-tile-rib is-run">' + _t("En cours") + '</span>';
+  else if (state === "stalled") rib = '<span class="wk-tile-rib is-block">' + _t("À l'arrêt") + '</span>';
+  else if (state === "block") rib = '<span class="wk-tile-rib is-block">' + _t("Bloqué") + '</span>';
+  else if (state === "idle") {
+    var n = 0;
+    w.recipes.forEach(function (r) { n = Math.max(n, WorkshopsSystem.getMaxCraftTimes(w.id, r.id)); });
+    rib = '<span class="wk-tile-rib is-idle">×' + formatNumber(n) + '</span>';
   }
+  h += rib;
+  if (w.active && WorkshopsSystem.getAutoRecipeId(w.id)) h += '<span class="wk-tile-auto"><img class="ico-sys" src="images/Icons/system/auto_repeat.png" alt=""></span>';
+  h += renderIconOrEmojiHTML(w.icon, "wk-tile-img", _td(w.name));
+  h += '<span class="wk-tile-name">' + esc(_td(w.name)) + '</span>';
+  if (state === "soon") {
+    h += '<span class="wk-tile-sub"><img class="ico-inline" src="images/Icons/system/lock_closed.png" alt=""> ' + _t("Bientôt") + '</span>';
+  } else {
+    h += buildWorkshopRecipeIconsHTML(recipe);
+    if (state === "run") {
+      var q = WorkshopsSystem.getQueue(w.id)[0];
+      var r = WorkshopsSystem.getRecipe(w.id, q.recipeId);
+      var totalMs = Number(r ? r.craftTimeMs : 0) * q.times;
+      var pct = totalMs > 0 ? Math.min(100, Math.max(0, Math.floor(100 - (q.msRemaining / totalMs) * 100))) : 100;
+      h += '<span class="wk-tile-bar"><span id="wk-tile-bar-' + w.id + '" style="width:' + pct + '%"></span></span>';
+      h += '<span class="wk-tile-sub" id="wk-tile-time-' + w.id + '">' + formatCraftDuration(q.msRemaining) + '</span>';
+    } else if (state === "block" || state === "stalled") {
+      var miss = getWorkshopMissingInput(recipe);
+      var md = miss ? (WAREHOUSE_RESOURCES[miss.resourceId] || {}) : null;
+      h += '<span class="wk-tile-sub is-miss">' + (md ? esc(_t("manque {x}", { x: _td(md.name) })) : esc(_t("Réserve protégée"))) + '</span>';
+    } else {
+      h += '<span class="wk-tile-sub">' + _t("Libre") + '</span>';
+    }
+  }
+  h += '</button>';
   return h;
 }
+window.buildWorkshopTileHTML = buildWorkshopTileHTML;
+
+/* Onglet Ateliers : bandeau d'état, puis une grille de vignettes par bâtiment débloqué. */
+function buildShopsViewHTML() {
+  productionViewTab = "shops";
+  var all = [];
+  Object.keys(PRODUCTION_BUILDINGS).forEach(function (bid) {
+    if (ProductionManager.isBuildingUnlocked(bid)) all = all.concat(getWorkshopsOfBuilding(bid));
+  });
+  var run = all.filter(function (w) { return getWorkshopTileState(w) === "run"; }).length;
+  var free = all.filter(function (w) { return getWorkshopTileState(w) === "idle"; }).length;
+  var stalled = countStalledWorkshops();
+
+  var h = '<div class="wk-banner' + (stalled ? ' is-warn' : '') + '">';
+  h += '<img class="wk-banner-ico" src="images/Icons/subtabs/workshops.png" alt="">';
+  h += '<span class="wk-banner-txt"><b>' + esc(_t("{a} en cours · {b} libres", { a: run, b: free })) + '</b>';
+  h += stalled ? esc(_tn(stalled, "{n} atelier à l'arrêt — intrants ou réserve", "{n} ateliers à l'arrêt — intrants ou réserve")) : esc(_t("Touche un atelier pour fabriquer."));
+  h += '</span>';
+  h += '<button class="kbtn wk-banner-btn" id="prod-queues-btn" type="button" onclick="openWorkshopSummaryModal()"><img src="images/Icons/quests/quest_list.png" alt="">' + _t("Files") + '</button>';
+  h += '</div>';
+
+  Object.keys(PRODUCTION_BUILDINGS).forEach(function (bid) {
+    if (!ProductionManager.isBuildingUnlocked(bid)) return;
+    var def = PRODUCTION_BUILDINGS[bid];
+    var list = getWorkshopsOfBuilding(bid);
+    if (!list.length) return;
+    h += '<div class="wk-group"><img src="' + esc(def.buildingImage || "") + '" alt=""><span>' + esc(_td(def.name)) + '</span></div>';
+    h += '<div class="wk-grid">';
+    list.forEach(function (w) { h += buildWorkshopTileHTML(w); });
+    h += '</div>';
+  });
+  return h;
+}
+window.buildShopsViewHTML = buildShopsViewHTML;
+
+/* ----- Feuille d'un atelier ----- */
+function openWorkshopSheet(workshopId, backId) {
+  if (!WORKSHOPS_CONFIG[workshopId]) return;
+  openWorkshopId = workshopId;
+  workshopSheetBackId = backId || null;
+  if (!selectedWorkshopRecipe[workshopId]) selectedWorkshopRecipe[workshopId] = WORKSHOPS_CONFIG[workshopId].recipes[0].id;
+  if (typeof openVillageBuildingId !== "undefined") openVillageBuildingId = null;
+  renderWorkshopSheet(false);
+}
+window.openWorkshopSheet = openWorkshopSheet;
+
+function closeWorkshopSheet(silent) {
+  var back = workshopSheetBackId;
+  var wasOpen = !!openWorkshopId;
+  openWorkshopId = null;
+  workshopSheetBackId = null;
+  if (typeof document === "undefined") return;
+  var host = document.getElementById("village-modal-root");
+  if (wasOpen && host && host.querySelector(".wk-sheet")) host.innerHTML = "";
+  if (!silent && back && productionDetailBuildingId === back) { renderProductionSheet(false); return; }
+  if (!silent) productionDetailBuildingId = null;
+}
+window.closeWorkshopSheet = closeWorkshopSheet;
+
+/* Lien « ‹ Champs » : retour à la feuille du bâtiment, onglet Ateliers. */
+function backToProductionSheet() {
+  var back = workshopSheetBackId;
+  openWorkshopId = null;
+  workshopSheetBackId = null;
+  if (back) { productionDetailBuildingId = back; productionSheetTab = "shops"; renderProductionSheet(false); }
+}
+window.backToProductionSheet = backToProductionSheet;
+
+function closeWorkshopSheetFromBackdrop(e) {
+  if (e && e.target && e.target.classList && e.target.classList.contains("full-menu-overlay")) { productionDetailBuildingId = null; closeWorkshopSheet(true); }
+}
+window.closeWorkshopSheetFromBackdrop = closeWorkshopSheetFromBackdrop;
+
+function renderWorkshopSheet(keepScroll) {
+  if (typeof document === "undefined" || !openWorkshopId) return;
+  var host = document.getElementById("village-modal-root");
+  if (!host) return;
+  var body = host.querySelector(".wk-sheet .ksheet-body");
+  var top = (keepScroll && body) ? body.scrollTop : 0;
+  host.innerHTML = buildWorkshopSheetHTML(openWorkshopId);
+  var nb = host.querySelector(".wk-sheet .ksheet-body");
+  if (nb && top) nb.scrollTop = top;
+}
+
+/* Qui produit une ressource ? Un bâtiment (sa ressource brute) ou un atelier (sa recette). */
+function findResourceProducer(resKey) {
+  var b = Object.keys(PRODUCTION_BUILDINGS).filter(function (id) { return PRODUCTION_BUILDINGS[id].resourceKey === resKey; })[0];
+  if (b) return { kind: "building", id: b, name: _td(PRODUCTION_BUILDINGS[b].name) };
+  var w = Object.keys(WORKSHOPS_CONFIG).filter(function (id) {
+    return (WORKSHOPS_CONFIG[id].recipes || []).some(function (r) { return r.outputs[0].resourceId === resKey; });
+  })[0];
+  return w ? { kind: "workshop", id: w, name: _td(WORKSHOPS_CONFIG[w].name) } : null;
+}
+window.findResourceProducer = findResourceProducer;
+
+function goToResourceProducer(kind, id) {
+  if (kind === "building") { openWorkshopId = null; openProductionBuildingDetail(id); }
+  else openWorkshopSheet(id, workshopSheetBackId);
+}
+window.goToResourceProducer = goToResourceProducer;
+
+/* Quantité en pastilles : ×1, ×5, ×10, Max. Une pastille au-delà du possible est grisée. */
+function buildWorkshopQtyChipsHTML(workshopId, max, current, isAuto) {
+  var h = '<div class="wk-qty">';
+  [1, 5, 10, "max"].forEach(function (q) {
+    var val = q === "max" ? max : q;
+    var on = q === "max" ? (current === max && max > 10) : current === q;
+    var dis = q !== "max" && q > max;
+    var label = q === "max" ? _t("Max ({n})", { n: formatNumber(max) }) : "×" + q;
+    h += '<button type="button" class="' + (on ? 'is-on' : '') + '"' + (dis ? ' disabled' : '')
+      + ' onclick="' + (isAuto ? 'setWorkshopAutoQty' : 'setWorkshopCraftQty') + '(\'' + workshopId + '\', ' + val + ')">' + label + '</button>';
+  });
+  return h + '</div>';
+}
+
+function buildWorkshopSheetHTML(workshopId) {
+  var w = Object.assign({ id: workshopId }, WORKSHOPS_CONFIG[workshopId]);
+  var bdef = PRODUCTION_BUILDINGS[w.buildingId] || {};
+  var level = WorkshopsSystem.getLevel(workshopId);
+  var recipe = w.recipes.filter(function (r) { return r.id === selectedWorkshopRecipe[workshopId]; })[0] || w.recipes[0];
+  var autoId = WorkshopsSystem.getAutoRecipeId(workshopId);
+  var isAutoHere = autoId === recipe.id;
+  var maxCrafts = WorkshopsSystem.getMaxCraftTimes(workshopId, recipe.id);
+  var queue = WorkshopsSystem.getQueue(workshopId);
+
+  var h = '<div class="full-menu-overlay" onclick="closeWorkshopSheetFromBackdrop(event)">';
+  h += '<div class="full-menu vb-sheet-card wk-sheet" onclick="event.stopPropagation()">';
+  h += kSheetHeadHTML({
+    icon: renderIconOrEmojiHTML(w.icon, "vb-sheet-icon wk-sheet-icon", _td(w.name)),
+    title: esc(_td(w.name)),
+    sub: esc(_t("{x} · niveau {a} / {b}", { x: _td(bdef.name || ""), a: level, b: WorkshopsSystem.getMaxLevel() })),
+    close: "productionDetailBuildingId = null; closeWorkshopSheet(true)"
+  });
+  h += '<div class="ksheet-body">';
+  if (workshopSheetBackId && PRODUCTION_BUILDINGS[workshopSheetBackId]) {
+    h += '<button type="button" class="wk-back" onclick="backToProductionSheet()">‹ ' + esc(_td(PRODUCTION_BUILDINGS[workshopSheetBackId].name)) + '</button>';
+  }
+
+  // Recettes (Cuisine de camp : trois)
+  if (w.recipes.length > 1) {
+    h += '<div class="kchips wk-recipes">';
+    w.recipes.forEach(function (r) {
+      var od = WAREHOUSE_RESOURCES[r.outputs[0].resourceId] || {};
+      h += '<button type="button" class="' + (r.id === recipe.id ? 'is-on' : '') + '" onclick="selectWorkshopRecipe(\'' + workshopId + '\', \'' + esc(r.id) + '\')">'
+        + renderIconOrEmojiHTML(od.icon, "", _td(od.name)) + esc(_td(od.name)) + (autoId === r.id ? ' <img class="ico-sys" src="images/Icons/system/auto_repeat.png" alt="">' : '') + '</button>';
+    });
+    h += '</div>';
+  }
+
+  // Recette en grand, avec les stocks
+  h += '<div class="wk-bigrec">';
+  recipe.inputs.forEach(function (input, i) {
+    var d = WAREHOUSE_RESOURCES[input.resourceId] || {};
+    var have = WarehouseManager.getAmount(input.resourceId);
+    if (i) h += '<span class="wk-bigrec-op">+</span>';
+    h += '<span class="wk-bigrec-ing' + (have < input.quantity ? ' is-miss' : '') + '">' + renderIconOrEmojiHTML(d.icon, "", _td(d.name))
+      + '<b>' + formatNumber(input.quantity) + ' ' + esc(_td(d.name)) + '</b><small>' + esc(_t("stock {n}", { n: formatNumber(Math.floor(have)) })) + '</small></span>';
+  });
+  var out = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId] || {};
+  h += '<span class="wk-bigrec-op">→</span><span class="wk-bigrec-ing">' + renderIconOrEmojiHTML(out.icon, "", _td(out.name))
+    + '<b>' + formatNumber(recipe.outputs[0].quantity) + ' ' + esc(_td(out.name)) + '</b><small>' + esc(_t("{d}/lot", { d: formatCraftDuration(WorkshopsSystem.getEffectiveCraftTimeMs(workshopId, recipe)) })) + '</small></span>';
+  h += '</div>';
+
+  // File d'attente (cases ; ids canoniques conservés)
+  h += '<div class="ksec"><span>' + _t("File d'attente") + '</span></div>';
+  h += buildWorkshopQueueHTML(workshopId);
+
+  // Action : Continu (chaînage) + quantité, puis Fabriquer ou le lot auto
+  h += '<div class="wk-act">';
+  h += '<div class="wk-act-row"><span class="wk-act-lbl">' + (isAutoHere ? _t("Lot automatique") : _t("Quantité")) + '</span>'
+    + '<span class="wk-cont' + (isAutoHere ? ' is-on' : '') + '" role="button" onclick="setWorkshopAutoRecipe(\'' + workshopId + '\', \'' + esc(recipe.id) + '\')"><span class="wk-cont-sw"></span>' + _t("Continue") + '</span></div>';
+  if (isAutoHere) {
+    var maxAuto = Math.max(1, WorkshopsSystem.getMaxAutoCraftTimes(workshopId, recipe.id));
+    var aq = Math.max(1, Math.min(maxAuto, workshopAutoQty[workshopId] || 1));
+    workshopAutoQty[workshopId] = aq;
+    h += buildWorkshopQtyChipsHTML(workshopId, maxAuto, aq, true);
+    h += '<p class="wk-act-hint">' + esc(_t("L'atelier relance un lot de {n} dès qu'il a de quoi, sans entamer la réserve protégée.", { n: formatNumber(aq) })) + '</p>';
+  } else if (maxCrafts > 0) {
+    var qty = Math.max(1, Math.min(maxCrafts, workshopCraftQty[workshopId] || 1));
+    workshopCraftQty[workshopId] = qty;
+    h += buildWorkshopQtyChipsHTML(workshopId, maxCrafts, qty, false);
+    h += '<button class="kbtn primary wk-craft" type="button" onclick="confirmCraftWorkshop(\'' + workshopId + '\')">' + _t("Fabriquer ×{n}", { n: formatNumber(qty) }) + '</button>';
+  }
+  h += '</div>';
+
+  // Alerte : intrant manquant (avec le chemin), réserve, autre recette en Continu
+  if (autoId && !isAutoHere) {
+    var oR = WorkshopsSystem.getRecipe(workshopId, autoId);
+    var oD = oR ? WAREHOUSE_RESOURCES[oR.outputs[0].resourceId] : null;
+    h += '<div class="wk-alert is-hint">' + esc(_t("déjà active sur {x} — l'activer ici la remplacera.", { x: oD ? _td(oD.name) : autoId })) + '</div>';
+  }
+  var missing = getWorkshopMissingInput(recipe);
+  if (isAutoHere && !queue.length && WorkshopsSystem.getMaxAutoCraftTimes(workshopId, recipe.id) <= 0 && !missing) {
+    h += '<div class="wk-alert is-reserve">' + _t("En attente : la réserve protégée empêche un nouveau lot — ajustable dans l'Entrepôt.") + '</div>';
+  } else if (missing && maxCrafts <= 0) {
+    var md = WAREHOUSE_RESOURCES[missing.resourceId] || {};
+    var prod = findResourceProducer(missing.resourceId);
+    h += '<div class="wk-alert is-warn"><span>' + esc(_t("{x} insuffisant ({a}/{b})", { x: _td(md.name || missing.resourceId), a: formatNumber(Math.floor(WarehouseManager.getAmount(missing.resourceId))), b: formatNumber(missing.quantity) })) + '</span>';
+    if (prod) h += '<button type="button" class="kbtn wk-goto" onclick="goToResourceProducer(\'' + prod.kind + '\', \'' + prod.id + '\')">' + esc(_t("Aller à : {x}", { x: prod.name })) + ' ›</button>';
+    h += '</div>';
+  }
+
+  // Amélioration
+  h += '<div class="wk-up-row"><span>' + esc(_t("Niveau {a} : file de {n}", { a: level, n: WorkshopsSystem.getMaxQueueLength(workshopId) })) + '</span>';
+  h += buildWorkshopUpgradeCompactHTML(workshopId);
+  h += '</div>';
+
+  h += '</div></div></div>';
+  return h;
+}
+window.buildWorkshopSheetHTML = buildWorkshopSheetHTML;
+
+/* Tick (ProductionManager.updateDOM) : barre et temps des vignettes « En cours ». */
+function refreshWorkshopTilesDOM() {
+  if (typeof document === "undefined") return;
+  Object.keys(WORKSHOPS_CONFIG).forEach(function (wid) {
+    var bar = document.getElementById("wk-tile-bar-" + wid);
+    if (!bar) return;
+    var q = WorkshopsSystem.getQueue(wid)[0];
+    if (!q) return;
+    var r = WorkshopsSystem.getRecipe(wid, q.recipeId);
+    var totalMs = Number(r ? r.craftTimeMs : 0) * q.times;
+    bar.style.width = (totalMs > 0 ? Math.min(100, Math.max(0, Math.floor(100 - (q.msRemaining / totalMs) * 100))) : 100) + "%";
+    var t = document.getElementById("wk-tile-time-" + wid);
+    if (t) t.textContent = formatCraftDuration(q.msRemaining);
+  });
+}
+window.refreshWorkshopTilesDOM = refreshWorkshopTilesDOM;
 
 function buildProductionHTML() {
   ProductionManager.ensure();

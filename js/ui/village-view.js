@@ -21,7 +21,8 @@ var VILLAGE_SUBTABS = ["buildings", "production", "shops", "entrepot"];
    (feuille de bâtiment fermée, ressource désélectionnée). */
 function resetVillageSubScreenState() {
   if (typeof closeProductionSheet === "function") closeProductionSheet(true);
-  if (typeof selectedWarehouseKey !== "undefined") selectedWarehouseKey = null;
+  if (typeof closeWarehouseSheet === "function") closeWarehouseSheet(); // v3.416.0 : feuille d'une ressource ou « Ma sélection »
+  if (typeof warehouseMenuOpen !== "undefined") warehouseMenuOpen = false;
   if (typeof closeWorkshopSummaryModal === "function") closeWorkshopSummaryModal();
 }
 window.resetVillageSubScreenState = resetVillageSubScreenState;

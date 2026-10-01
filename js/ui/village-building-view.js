@@ -307,6 +307,8 @@ function openVillageBuildingSheet(id) {
   VillageBuildingManager.ensure();
   openVillageBuildingId = id;
   if (typeof productionDetailBuildingId !== "undefined") productionDetailBuildingId = null; // v3.414.0 : la feuille de production cède la place
+  if (typeof openWorkshopId !== "undefined") openWorkshopId = null; // v3.415.0 : la feuille d'atelier aussi
+  if (typeof selectedWarehouseKey !== "undefined") { selectedWarehouseKey = null; warehousePickerOpen = false; } // v3.416.0
   var host = document.getElementById("village-modal-root");
   if (host) host.innerHTML = buildVillageBuildingSheetHTML(id);
 }

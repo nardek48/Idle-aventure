@@ -52,186 +52,12 @@
    par l'état désactivé unique de css/00-kbtn.css (variante filtre,
    choix Seb). */
 
-/* =========================
-   Entrepôt (sous-onglet Village, v3.30 — refonte v3.32) — grille +
-   panneau détail, même pattern EXACT que l'inventaire équipement
-   unifié (.eq-bag-flex/.eq-bag-inv-grid/.eq-detail-panel, voir
-   css/04-panel-equipment.css) — pas de redéfinition de layout ici,
-   seuls les ajustements propres à l'Entrepôt (stepper de quantité).
-   ========================= */
-.warehouse-tile {
-  cursor: pointer;
-}
-
-.warehouse-empty-hint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: rgba(58, 44, 26, 0.6);
-  text-align: center;
-}
-
-/* v3.98.13 : bloc "Réserve protégée" — seuil que le chaînage auto des ateliers ne
-   consommera jamais (voir ResourceReserveManager, ui/warehouse-view.js). */
-.warehouse-reserve-block {
-  width: 100%;
-  margin: 10px 0;
-  padding: 8px 10px;
-  border: 1px dashed var(--nb-frame);
-  border-radius: var(--nb-radius-sm);
-  background: var(--nb-cream-alt);
-  text-align: center;
-}
-
-.warehouse-reserve-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-ink);
-  margin-bottom: 2px;
-}
-
-.warehouse-reserve-hint {
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-  margin-bottom: 6px;
-}
-
-.warehouse-reserve-input {
-  width: 100px;
-  text-align: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--nb-ink);
-  border: 2px solid var(--nb-frame);
-  border-radius: var(--nb-radius-sm);
-  background: var(--nb-cream);
-  padding: 5px 6px;
-  -moz-appearance: textfield;
-}
-
-.warehouse-reserve-input::-webkit-outer-spin-button,
-.warehouse-reserve-input::-webkit-inner-spin-button {
+/* v3.416.0 : la réserve protégée se saisit au clavier ; flèches natives masquées. */
+.wh-resv-n { -moz-appearance: textfield; }
+.wh-resv-n::-webkit-outer-spin-button,
+.wh-resv-n::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
-}
-
-/* Stepper -/valeur/+/Max, sous le stock dans le panneau détail. */
-.warehouse-qty-stepper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin: 10px 0;
-  max-width: 100%;
-}
-
-.warehouse-qty-btn {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid var(--nb-frame);
-  background: var(--nb-cream);
-  color: var(--nb-ink);
-  font-size: 15px;
-  font-weight: 800;
-  line-height: 1;
-  padding: 0;
-  cursor: pointer;
-}
-
-.warehouse-qty-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* v3.98.16 : <input type="number"> plutôt qu'un <span> — éditable directement au clic
-   (retour Seb : corriger un clic accidentel sur "Max" sans repasser par -/+). Bordure et
-   fond neutralisés pour garder l'apparence visuelle d'origine (texte centré, pas de
-   cadre de champ de saisie visible), les flèches natives du navigateur masquées. */
-.warehouse-qty-value {
-  flex-shrink: 0;
-  width: 34px;
-  min-width: 28px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  border: none;
-  background: transparent;
-  padding: 0;
-  -moz-appearance: textfield;
-}
-
-.warehouse-qty-value::-webkit-outer-spin-button,
-.warehouse-qty-value::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.warehouse-qty-value:focus {
-  outline: none;
-  border-bottom: 1px solid var(--nb-gold-dark);
-}
-
-.warehouse-qty-max-btn {
-  flex-shrink: 0;
-  padding: 5px 8px;
-  border-radius: var(--nb-radius-sm);
-  border: 2px solid var(--nb-gold-dark);
-  background: var(--nb-cream);
-  color: var(--nb-gold-deep);
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.warehouse-qty-max-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* v3.35 : bloc Fabriquer (artisanat tier 1) — au-dessus du bloc
-   Vendre dans le panneau détail. Réutilise .warehouse-qty-stepper/
-   .warehouse-qty-btn/.warehouse-qty-max-btn/.btn-buy tels quels, seul
-   le titre + la recette sont propres à ce bloc. */
-
-.warehouse-craft-recipe-tab {
-  padding: 4px 10px;
-  border-radius: var(--nb-radius-sm);
-  border: 2px solid var(--nb-gold-dark);
-  background: transparent;
-  color: var(--nb-gold-deep);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.warehouse-craft-recipe-tab.is-active {
-  background: var(--nb-gold-dark);
-  color: var(--nb-cream);
-}
-
-/* v3.98.13 : tab de recette avec le chaînage auto actif dessus (peut être combiné avec
-   .is-active si c'est aussi la recette affichée). Léger liseré vert distinct du fond
-   doré "sélectionné", pour rester lisible même quand la tab n'est pas la sélection
-   courante (l'auto peut tourner sur une recette qu'on ne regarde pas actuellement). */
-.warehouse-craft-recipe-tab.is-auto {
-  border-color: var(--c-green-600);
-}
-
-.warehouse-craft-recipe-tab.is-auto.is-active {
-  background: var(--c-green-600);
-  border-color: var(--c-green-600);
-}
-
-/* v3.43 : file d'attente de craft — même bordure pointillée que
-   .warehouse-craft-block juste au-dessus, pour marquer une section
-   distincte sans dupliquer le style de carte complet. */
-.warehouse-craft-queue {
-  width: 100%;
-  margin: 8px 0 4px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--nb-frame);
 }
 
 /* ============================================================
@@ -384,7 +210,7 @@
   font-weight: 800;
   line-height: 22px;
 }
-.vb-card.is-ready .vb-card-flag { background: var(--c-green-650-2); color: var(--c-white-50); }
+.vb-card.is-ready .vb-card-flag { background: var(--c-green-650-2); color: var(--c-white-50-soft); }
 .vb-card.is-site .vb-card-flag { background: var(--aether); color: #eaf6ff; }
 
 /* Les deux états qui appellent l'oeil */
@@ -394,7 +220,7 @@
 .vb-card.is-ready, .vb-card.is-site { padding-top: 22px; }
 
 /* Verrouillé : lisible, jamais invisible — la condition est écrite sur la carte. */
-.vb-card.is-locked { background: linear-gradient(var(--c-cream-150-soft), var(--c-bronze-200-soft)); cursor: default; }
+.vb-card.is-locked { background: linear-gradient(var(--c-cream-150-soft), var(--c-bronze-200)); cursor: default; }
 .vb-card.is-locked .vb-card-icon { filter: grayscale(1) brightness(0.85); opacity: 0.6; }
 .vb-card.is-locked .vb-card-name { color: var(--nb-ink-dim); }
 .vb-card-lock {
@@ -740,3 +566,125 @@
 .provisions-line { margin: 6px 0 4px; font-size: 12px; font-weight: 700; color: var(--c-green-700-soft); text-align: center; }
 .provisions-line.is-missing { color: var(--c-red-600-soft); }
 .provisions-have { font-weight: 600; opacity: 0.85; }
+
+/* =====================================================================
+   v3.416.0 (lot VUI-3) : ENTREPÔT — tuiles T3 sombres, liste déroulante,
+   feuille d'une ressource, feuille « Ma sélection » (atelier village v8).
+   ===================================================================== */
+.wh-warn { padding: 8px 10px; margin: 0 0 8px; border-radius: 10px; border: 1px solid var(--c-red-250-soft); background: var(--c-red-50); color: var(--c-red-800); font-size: 13px; line-height: 1.35; }
+
+/* --- Filtre : liste déroulante + interrupteur des zéros --- */
+.wh-filter { position: relative; display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
+.wh-dd { position: relative; flex: 1 1 auto; min-width: 0; z-index: 4; }
+.wh-dd-veil { position: fixed; inset: 0; z-index: 3; }
+.wh-dd-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 5px 12px;
+  border: 1.5px solid var(--c-bronze-500);
+  border-radius: 12px;
+  background: linear-gradient(var(--c-white-50), var(--c-cream-150-3));
+  color: var(--c-brown-850-2);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: left;
+  box-shadow: 0 2px 4px rgba(40, 25, 10, 0.2);
+}
+.wh-dd-btn img { width: 24px; height: 24px; object-fit: contain; flex: none; }
+.wh-dd-btn small { display: block; font-size: 12px; font-weight: 700; color: var(--c-brown-700-vivid); }
+.wh-dd-car { margin-left: auto; font-size: 13px; color: var(--c-brown-700-vivid); }
+.wh-dd.is-open .wh-dd-car { transform: rotate(180deg); }
+.wh-dd-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  padding: 4px;
+  border: 1.5px solid var(--c-brown-700-vivid);
+  border-radius: 12px;
+  background: var(--c-cream-50-soft);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+.wh-dd-menu button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 42px; padding: 6px 10px; border: 0; border-radius: 9px; background: none; color: var(--c-brown-850-2); font: inherit; font-size: 14px; font-weight: 700; text-align: left; }
+.wh-dd-menu button img { width: 24px; height: 24px; object-fit: contain; }
+.wh-dd-menu button.is-on { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); color: var(--c-brown-900-soft); }
+.wh-dd-menu hr { border: 0; border-top: 1px dashed rgba(138, 92, 20, 0.4); margin: 4px 6px; }
+.wh-dd-n { margin-left: auto; min-width: 24px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--c-bronze-200); color: var(--c-brown-750-2); font-size: 12px; font-weight: 800; line-height: 20px; text-align: center; }
+.wh-dd-n.is-red { background: var(--c-red-550); color: var(--c-white-50-soft); }
+.wh-dd-menu .wh-dd-pick { color: var(--c-brown-750-3); text-decoration: underline; }
+.wh-zeros { flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; color: var(--c-brown-750-2); }
+
+/* --- Tuiles T3, fond sombre --- */
+.wh-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.wh-tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--c-brown-700-vivid);
+  border-radius: 12px;
+  overflow: hidden;
+  background: radial-gradient(#5a4128, var(--c-brown-900-soft));
+  font: inherit;
+  cursor: pointer;
+}
+.wh-tile-img { position: absolute; top: 2%; left: 8%; width: 84%; height: 76%; object-fit: contain; }
+.wh-tile-band { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; padding: 3px 4px 6px; background: linear-gradient(rgba(10, 6, 2, 0), rgba(10, 6, 2, 0.92) 40%); }
+.wh-tile-n { font-size: 16px; font-weight: 900; line-height: 1; color: var(--c-white-50-soft); -webkit-text-stroke: 3px var(--c-brown-950-3); paint-order: stroke fill; letter-spacing: -0.02em; }
+.wh-tile-name { max-width: 100%; font-size: 12px; font-weight: 700; line-height: 1.1; color: #e8d8b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wh-tile-bar { position: absolute; left: 10%; right: 10%; bottom: 2px; height: 3px; border-radius: 2px; background: rgba(0, 0, 0, 0.45); overflow: hidden; }
+.wh-tile-bar > span { display: block; height: 100%; background: var(--c-bronze-400-4); }
+.wh-tile.is-full { border-color: var(--c-red-450); box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.5); }
+.wh-tile.is-full .wh-tile-n { color: #ffb4a8; }
+.wh-tile.is-full .wh-tile-bar > span { background: #ff6b5a; }
+.wh-tile.is-zero .wh-tile-img { filter: grayscale(1) brightness(0.9); opacity: 0.5; }
+.wh-tile.is-zero .wh-tile-n { color: #d6c4a0; }
+.wh-tile-gear { position: absolute; top: 4px; left: 4px; z-index: 1; width: 20px; height: 20px; border-radius: 50%; background: var(--c-green-650-2); border: 1.5px solid var(--c-white-50-soft); display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+.wh-tile-gear img { width: 12px; height: 12px; filter: brightness(10); }
+.wh-zero-note { margin: 8px 0 0; font-size: 12px; text-align: center; color: var(--c-brown-750-2); }
+
+/* --- Feuille d'une ressource --- */
+.wh-desc { margin: 0 0 10px; font-size: 13px; line-height: 1.45; color: var(--c-brown-750-2); }
+.wh-cap { padding: 10px 12px; margin: 0 0 10px; border: 1px solid var(--c-bronze-500); border-radius: 12px; background: var(--sheet-card-bg, var(--c-cream-100-soft)); }
+.wh-cap-warn { margin: 6px 0 0; font-size: 12.5px; font-weight: 800; color: var(--c-red-600); }
+.wh-line { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; margin: 0 0 6px; border: 1px solid var(--c-bronze-500); border-radius: 12px; background: var(--c-cream-50-soft); color: var(--c-brown-850-2); font: inherit; text-align: left; }
+.wh-line:disabled { opacity: 0.75; }
+.wh-line-img { width: 42px; height: 42px; object-fit: contain; flex: none; }
+.wh-line-ico { width: 24px; height: 24px; object-fit: contain; flex: none; }
+.wh-line-t { flex: 1 1 auto; min-width: 0; }
+.wh-line-t b { display: block; font-size: 14px; }
+.wh-line-t small { display: block; font-size: 12px; line-height: 1.35; color: var(--c-brown-750-2); }
+.wh-line-chev { color: var(--c-brown-700-vivid); font-weight: 800; font-size: 18px; }
+.wh-line.is-text { padding: 6px 10px; border-style: dashed; background: var(--c-white-50); }
+.wh-pill { flex: none; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 800; line-height: 22px; }
+.wh-pill.is-run { background: var(--c-green-650-2); color: var(--c-white-50-soft); }
+.wh-pill.is-idle { background: var(--c-brown-700-vivid); color: var(--c-white-50-soft); }
+.wh-pill.is-block { background: var(--c-red-600); color: var(--c-white-50-soft); }
+.wh-pill.is-soon { background: var(--c-brown-750-soft); color: var(--c-cream-100-2); }
+.wh-resv { padding: 10px 12px; margin: 0 0 10px; border: 1px solid var(--c-bronze-500); border-radius: 12px; background: var(--sheet-card-bg, var(--c-cream-100-soft)); }
+.wh-resv-row { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.wh-step { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--c-brown-700-vivid); background: var(--c-cream-50); color: var(--c-brown-850-2); font: inherit; font-size: 22px; font-weight: 800; line-height: 1; }
+.wh-step:disabled { opacity: 0.4; }
+.wh-resv-n { width: 90px; height: 44px; border: 1.5px solid var(--c-bronze-500); border-radius: 10px; background: var(--c-white-50); color: var(--c-brown-850-2); font: inherit; font-size: 22px; font-weight: 800; text-align: center; }
+.wh-resv-hint { margin: 8px 0 0; font-size: 12px; line-height: 1.35; text-align: center; color: var(--c-brown-750-2); }
+.wh-ref { margin: 4px 0 0; font-size: 12px; line-height: 1.35; text-align: center; color: var(--c-brown-750-2); }
+
+/* --- Feuille « Ma sélection » --- */
+.wh-pick-q { display: flex; gap: 8px; margin: 0 0 6px; }
+.wh-pick-q .kbtn { flex: 1 1 0; margin: 0; min-height: 38px; font-size: 13px; }
+.wh-pick { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 22px 6px; margin: 0 0 18px; }
+.wh-pk { position: relative; padding: 0; aspect-ratio: 1; border: 2px solid var(--c-green-650-2); border-radius: 12px; background: var(--c-cream-50-soft); }
+.wh-pk img { width: 86%; height: 86%; margin-top: 7%; object-fit: contain; }
+.wh-pk::after { content: "✓"; position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--c-green-650-2); color: var(--c-white-50-soft); font-size: 12px; font-weight: 800; line-height: 20px; text-align: center; }
+.wh-pk.is-off { border-color: var(--c-bronze-350); background: var(--c-cream-150-soft); }
+.wh-pk.is-off img { filter: grayscale(1); opacity: 0.4; }
+.wh-pk.is-off::after { content: ""; background: var(--c-bronze-350); }
+.wh-pk small { position: absolute; left: -2px; right: -2px; bottom: -17px; font-size: 12px; line-height: 1; color: var(--c-brown-750-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kbtn.wh-pick-ok { margin: 4px 0 0; }

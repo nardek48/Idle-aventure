@@ -594,7 +594,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--c-white-50);
+  background: var(--c-white-50-soft);
   transition: transform 0.2s ease;
 }
 
@@ -830,7 +830,7 @@
   padding: 1px 3px;
   border-radius: 8px;
   background: var(--nb-gold-dark);
-  color: var(--c-white-50);
+  color: var(--c-white-50-soft);
   font-size: 12px;
   font-weight: 800;
   text-align: center;

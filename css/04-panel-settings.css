@@ -18,7 +18,7 @@
   color: var(--c-brown-850-2);
   box-shadow: 0 2px 5px rgba(58, 44, 26, 0.15);
 }
-.set-card p { margin: 0 0 10px; font-size: 13px; line-height: 1.45; color: var(--c-brown-750); }
+.set-card p { margin: 0 0 10px; font-size: 13px; line-height: 1.45; color: var(--c-brown-750-2); }
 .set-card p:last-child { margin-bottom: 0; }
 .set-card .kseg { margin-bottom: 8px; }
 .set-card .settings-btn { width: 100%; margin: 0; }
@@ -33,9 +33,9 @@
 .set-row-ico { flex: 0 0 auto; width: 30px; height: 30px; object-fit: contain; }
 .set-row-txt { flex: 1 1 auto; min-width: 0; }
 .set-row-txt b { display: block; font-size: 14px; color: var(--c-brown-850-2); }
-.set-row-txt small { display: block; font-size: 12px; line-height: 1.35; color: var(--c-brown-750); }
+.set-row-txt small { display: block; font-size: 12px; line-height: 1.35; color: var(--c-brown-750-2); }
 
-.set-about { margin: 10px 0 2px; text-align: center; font-size: 12px; color: var(--c-brown-750); }
+.set-about { margin: 10px 0 2px; text-align: center; font-size: 12px; color: var(--c-brown-750-2); }
 .set-about b { display: block; font-size: 13px; color: var(--c-brown-850-2); }
 
 /* Interrupteur du kit : glissière bronze, pastille crème ; allumé = or */

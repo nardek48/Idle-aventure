@@ -36,7 +36,7 @@ Deux responsabilités ici :
    gardés pour ne rien casser si un cadre sombre revient). */
 .nb-page-frame.kframe {
   --nb-ink: var(--c-brown-850-2);
-  --nb-ink-dim: var(--c-brown-750);
+  --nb-ink-dim: var(--c-brown-750-2);
 }
 
 /* --- restauration de l'encre sombre dans les conteneurs clairs ---
@@ -58,13 +58,10 @@ Deux responsabilités ici :
 .kframe .dungeon-card,
 .kframe .dungeon-tier-card,
 .kframe .dungeon-shop-card,
-.kframe .production-card,
 .kframe .farm-plot-card,
 .kframe .farm-plots-panel,
-.kframe .workshop-card,
 .kframe .workshop-summary-row,
 .kframe .construction-entry-card,
-.kframe .warehouse-reserve-block,
 .kframe .eq-detail-panel,
 .kframe .eq-hero-card,
 .kframe .talent-tier-card,
@@ -136,7 +133,7 @@ Deux responsabilités ici :
 .kframe .cp-card,
 /* v3.276.0 : rappel du mode de contrôle sur la fiche de compagnon, à fond crème. */
 .kframe .cp-controlnote,
-.kframe .log-entry {
+.kframe .log-entry  {
   --nb-ink: var(--c-brown-850-soft);
   --nb-ink-dim: rgba(58, 44, 26, 0.72);
 }

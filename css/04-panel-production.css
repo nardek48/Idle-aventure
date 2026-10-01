@@ -33,71 +33,6 @@
    markup). L'état .done (stock plein, vert) continue de fonctionner
    via la classe nb-entry-progress-fill conservée sur le remplissage. */
 
-/* Colonne actions — 2 boutons empilés, fonds fournis en image. */
-
-.production-action-btn {
-  width: 100%;
-  min-height: 40px;
-  margin: 0;
-  border: none;
-  outline: none;
-  border-radius: 0;
-  background-color: transparent;
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  background-position: center;
-  box-shadow: none;
-  -webkit-appearance: none;
-  appearance: none;
-  color: var(--c-white-50);
-  font-size: 12px;
-  font-weight: 800;
-  text-align: center;
-  line-height: 1.25;
-  padding: 4px 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.production-action-btn:active {
-  transform: scale(0.97);
-}
-
-.production-action-btn .btn-buy-icon {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-}
-
-.production-harvest-btn {
-  background-image: url("../images/Production/btn_harvest.png");
-}
-
-.production-action-btn.is-disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  filter: grayscale(35%);
-}
-
-/* v3.98.7 : halo doré retiré (retour Seb) — .is-ready reste utilisé pour la logique
-   (hasStock) mais n'a plus d'effet visuel de son propre chef. */
-
-/* v3.96.0 : Champs n'a plus de bouton "Améliorer" de bâtiment — le bouton Récolter
-   occupe alors toute la largeur de la colonne actions (au lieu de 2 boutons empilés). */
-
-@media (max-width: 360px) {
-
-  .production-action-btn {
-    font-size: 12px;
-    min-height: 34px;
-    padding: 3px 4px;
-  }
-}
-
 /* =========================
    v3.95.0 : coût d'amélioration multi-ressources (jusqu'à 3 items : or + 2 ressources)
    — le bouton Améliorer garde son image de fond existante, seul le contenu texte change
@@ -339,39 +274,6 @@
    tels quels). Cartes d'atelier empilées verticalement (pas de grille 3×3 comme les
    zones — 2 ateliers par bâtiment, contenu plus riche par carte).
    ========================= */
-.workshop-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.workshop-card {
-  border-radius: var(--nb-radius-sm);
-  border: 1px solid var(--nb-frame);
-  background: var(--nb-cream);
-  padding: 9px 10px;
-}
-
-.workshop-card.is-inactive {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  opacity: 0.65;
-  background: rgba(0, 0, 0, 0.04);
-  border-style: dashed;
-}
-
-.workshop-card-icon {
-  font-size: 1.2rem;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.workshop-card-name {
-  font-size: 12.5px;
-  font-weight: 800;
-  color: var(--nb-ink);
-}
 
 /* v3.98.6 : badge "Niv. X" juste après le nom (comme la maquette fournie par Seb) —
    même style que .production-card-level-badge (cartes de bâtiment). */
@@ -379,18 +281,6 @@
 
 /* v3.98.2 : badge "File : X" à côté du nom (agencement repris du prototype fourni par
    Seb, style propre au thème du jeu — pas de CSS importé du prototype). */
-
-.workshop-card-soon {
-  margin-left: auto;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-ink-dim);
-  border: 1px solid var(--nb-frame);
-  border-radius: 999px;
-  padding: 2px 8px;
-  background: var(--nb-cream-alt);
-  white-space: nowrap;
-}
 
 /* v3.98.13 : toggle "Production automatique" — pleine largeur, vert quand actif (même
    teinte que le liseré des tabs .is-auto), gris/neutre sinon. Placé sous la ligne de
@@ -417,65 +307,11 @@
    (boutons ronds réduits) pour laisser assez de place au bouton Fabriquer, qui reprend
    le visuel fond-image de .production-harvest-btn plutôt que .btn-buy. */
 
-.workshop-qty-stepper-compact {
-  margin: 0;
-  justify-content: flex-start;
-  flex-shrink: 0;
-  gap: 4px;
-}
-
-.workshop-qty-stepper-compact .warehouse-qty-btn {
-  width: 24px;
-  height: 24px;
-  font-size: 13px;
-}
-
-.workshop-qty-stepper-compact .warehouse-qty-value {
-  width: 26px;
-  min-width: 20px;
-  font-size: 12.5px;
-}
-
-.workshop-qty-stepper-compact .warehouse-qty-max-btn {
-  padding: 4px 6px;
-  font-size: 12px;
-}
-
-@media (max-width: 360px) {
-
-  .workshop-qty-stepper-compact {
-    gap: 3px;
-  }
-
-  .workshop-qty-stepper-compact .warehouse-qty-btn {
-    width: 21px;
-    height: 21px;
-    font-size: 12px;
-  }
-
-  .workshop-qty-stepper-compact .warehouse-qty-max-btn {
-    padding: 3px 5px;
-    font-size: 12px;
-  }
-
-}
-
 /* v3.98.5 : bouton "Tout récolter" en tête de page Production — même style que
    .production-harvest-btn (fond image), taille compacte alignée à droite plutôt que
    pleine largeur .btn-buy (retour Seb).
    v3.98.8 : bouton "Files" ajouté à côté, gap entre les deux, row toujours alignée à
    droite. */
-.production-harvest-all-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.production-queues-btn {
-  position: relative;
-  width: 96px;
-}
 
 .production-queues-badge {
   position: absolute;
@@ -486,7 +322,7 @@
   padding: 0 4px;
   border-radius: 999px;
   background: var(--nb-gold-dark);
-  color: var(--c-white-50);
+  color: var(--c-white-50-soft);
   font-size: 10px;
   font-weight: 800;
   line-height: 16px;
@@ -497,13 +333,6 @@
 /* v3.98.17 : second badge "🔁 X auto" — décalé à gauche pour ne pas chevaucher le
    badge de file existant (top-droit). Vert, cohérent avec le reste des indicateurs
    auto (tabs de recette, toggle) déjà en place. */
-.production-auto-badge {
-  left: -6px;
-  right: auto;
-  background: var(--c-green-600);
-  min-width: 24px;
-  padding: 0 5px;
-}
 
 /* =========================
    v3.98.8 : popup "Voir les files" (ui/workshop-summary-modal.js) — réutilise
@@ -613,10 +442,6 @@
    bloc autoporté, pas de 2e fichier CSS dans le delta.
    ============================================================ */
 
-.production-switch {
-  margin: 0 0 10px;
-}
-
 /* --- barre d'action de la vue Production --- */
 .production-harvest-all-kbtn {
   margin-bottom: 2px;
@@ -625,7 +450,7 @@
 .production-dash-hint {
   font-size: 12px;
   text-align: center;
-  color: var(--nb-ink-dim, var(--c-brown-750)); /* v3.404.0 : lisible sur le parchemin */
+  color: var(--nb-ink-dim, var(--c-brown-750-2)); /* v3.404.0 : lisible sur le parchemin */
   margin: 0 0 10px;
 }
 
@@ -656,44 +481,8 @@
   box-shadow: inset 0 0 0 1px #a33b2a55;
 }
 
-.production-dash-flag {
-  position: absolute;
-  top: 0;
-  right: 0;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.4px;
-  padding: 2px 7px 2px 8px;
-  border-radius: 0 0 0 8px;
-}
-
-.production-dash-flag.is-full-flag {
-  color: var(--c-cream-100-3);
-  background: var(--c-red-600-soft);
-}
-
-.production-dash-flag.is-up-flag {
-  color: var(--c-green-850);
-  background: var(--c-green-300);
-}
-
 /* v3.404.0 : le drapeau ne recouvre plus le nom du bâtiment */
 .production-dash-card.has-flag { padding-top: 22px; }
-
-.production-dash-card-top {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 5px;
-}
-
-.production-dash-ico {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-  font-size: 20px;
-  line-height: 1;
-}
 
 .production-dash-name {
   font-size: 13px;
@@ -702,32 +491,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.production-dash-gauge {
-  margin: 2px 0 3px;
-}
-
-.production-dash-stock {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--c-brown-700-soft);
-  margin-bottom: 4px;
-}
-
-.production-dash-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-}
-
-.production-dash-rate {
-  color: var(--c-green-700-soft);
-  font-weight: 700;
-}
-
-.production-dash-zones {
-  color: var(--c-brown-700-soft);
 }
 
 .production-dash-status {
@@ -743,140 +506,11 @@
 }
 
 /* --- vue Ateliers agrégée --- */
-.production-status-banner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 800;
-  text-align: center;
-  border-radius: 9px;
-  padding: 7px 10px;
-  margin: 2px 0 8px;
-}
-
-.production-status-banner.is-warn {
-  background: rgba(163, 59, 42, 0.16);
-  border: 1px solid var(--c-red-600-soft);
-  color: #ffb9a6;
-}
-
-.production-status-banner.is-ok {
-  background: rgba(74, 107, 42, 0.16);
-  border: 1px solid var(--c-green-700-soft);
-  color: #cfe8a8;
-}
-
-.workshop-building-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-ink-dim, var(--c-brown-700-soft));
-  margin-right: auto;
-  padding-left: 2px;
-  /* 320px : se rétracte en ellipse plutôt que de chevaucher l'écu de niveau */
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.workshop-building-tag-ico {
-  flex: 0 0 auto;
-}
-
-.workshop-building-tag-ico {
-  width: 13px;
-  height: 13px;
-  object-fit: contain;
-  font-size: 12px;
-  line-height: 1;
-}
-
-.production-shops-locked {
-  border: 1px dashed var(--c-brown-650-vivid);
-  border-radius: 10px;
-  padding: 7px 10px;
-  margin-top: 8px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--nb-gold-soft, var(--c-bronze-250-soft));
-  text-align: center;
-}
 
 /* --- détail bâtiment (zones seules) --- */
 
 /* Retour rond : assets du kit, LONGHANDS uniquement (jamais background: raccourci sur
    un composant à image — leçon v3.183, voir Guide UI §5). */
-.production-detail-back {
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  background-color: transparent;
-  background-image: url('../images/UI/buttons/btn-round-back.png');
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.production-detail-back:active {
-  background-image: url('../images/UI/buttons/btn-round-back-pressed.png');
-}
-
-.production-detail-stockline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.production-detail-gauge {
-  flex: 1 1 auto;
-}
-
-.production-detail-harvest {
-  flex: 0 0 auto;
-  width: auto; /* contrer le width:100% de .production-action-btn — à CÔTÉ de la jauge */
-  padding-left: 14px;
-  padding-right: 14px;
-  white-space: nowrap;
-}
-
-.production-detail-stock-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-gold-soft, var(--c-bronze-200));
-  margin: 3px 0 10px;
-}
-
-.production-detail-sec-title {
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: var(--nb-gold, var(--c-bronze-400-vivid));
-  margin: 4px 0 6px;
-}
-
-.production-detail-sec-count {
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--nb-gold-soft, var(--c-bronze-250-soft));
-}
-
-.production-detail-shops-hint {
-  font-size: 12px;
-  text-align: center;
-  color: var(--nb-gold-soft, var(--c-bronze-250-soft));
-  opacity: 0.8;
-  margin-top: 10px;
-}
 
 /* Actions groupées : boutons du kit empilés ; le coût compact passe à la ligne dans le
    bouton (production-cost-row hérite du blanc du kbtn, is-missing #ffb4b4 déjà calibré
@@ -907,7 +541,7 @@
   font-size: 12px;
   font-weight: 900;
   color: var(--c-green-850);
-  background: var(--c-green-300);
+  background: #b9d18a;
   padding: 1px 5px;
   border-radius: 7px 0 7px 0;
   pointer-events: none;
@@ -916,17 +550,6 @@
 /* 320px : la grille 3 colonnes débordait dans le détail — minmax(0,1fr) + min-width:0
    neutralisent le min-content des noms de zones longs (piège grid classique), scopé au
    détail pour ne pas toucher d'autres usages éventuels de la grille. */
-.production-detail .farm-plots-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.production-detail .farm-plot-card {
-  min-width: 0;
-}
-
-.production-detail .farm-plot-card-name {
-  overflow-wrap: anywhere;
-}
 
 /* ============================================================
    v3.192.0 : carte atelier COMPACTE (maquette v4 validée) — préfixe wk-.
@@ -937,40 +560,12 @@
    pour garder le delta minimal).
    ============================================================ */
 
-.wk-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.wk-emoji {
-  font-size: 16px;
-  line-height: 1;
-  flex: 0 0 auto;
-}
-
-.wk-name {
-  font-size: 13px;
-  font-weight: 800;
-  flex: 0 0 auto;
-}
-
-.wk-head .workshop-building-tag {
-  flex: 1 1 auto;
-}
-
-.wk-shield {
-  width: 24px;
-  font-size: 12px;
-  flex: 0 0 auto;
-}
-
 .wk-up {
   flex: 0 0 auto;
   cursor: pointer;
   border-radius: 7px;
   border: 1px solid var(--nb-ink-strong, var(--c-brown-700-soft));
-  background: var(--c-bronze-200);
+  background: #e8d5a8;
   color: var(--nb-ink, var(--c-brown-850-soft));
   font-size: 12px;
   font-weight: 800;
@@ -1007,34 +602,6 @@
   height: 12px;
 }
 
-.wk-pills {
-  display: flex;
-  gap: 4px;
-  margin: 6px 0 0;
-  flex-wrap: wrap;
-}
-
-.wk-pill {
-  cursor: pointer;
-  border: 1px solid var(--nb-frame, var(--c-bronze-500));
-  border-radius: 20px;
-  background: var(--c-cream-150-2);
-  color: var(--nb-ink-dim, var(--c-brown-700-soft));
-  font-size: 12px;
-  font-weight: 800;
-  padding: 3px 9px;
-}
-
-.wk-pill.is-active {
-  background: var(--nb-ink, var(--c-brown-850-soft));
-  border-color: var(--nb-ink, var(--c-brown-850-soft));
-  color: var(--c-cream-150-vivid);
-}
-
-.wk-pill.is-auto::before {
-  content: "♻️ ";
-}
-
 .wk-recipe {
   display: flex;
   align-items: center;
@@ -1043,22 +610,6 @@
   font-size: 12px;
   font-weight: 700;
   margin: 6px 0 4px;
-}
-
-.wk-recipe-ico {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  font-size: 15px;
-  line-height: 1;
-  vertical-align: middle;
-}
-
-.wk-time {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-ink-dim, var(--c-brown-650-vivid));
-  margin-left: 4px;
 }
 
 /* --- file : cases + entrée courante --- */
@@ -1145,14 +696,6 @@
 }
 
 /* --- pied : toggle + steppers --- */
-.wk-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 5px;
-  flex-wrap: wrap;
-}
 
 .wk-cont {
   display: inline-flex;
@@ -1195,37 +738,6 @@
   left: 18px;
 }
 
-.wk-auto-qty {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--c-green-700-soft);
-}
-
-.wk-manual {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.wk-craft-btn {
-  cursor: pointer;
-  border-radius: 8px;
-  border: 1px solid var(--nb-ink-strong, var(--c-brown-700-soft));
-  background: var(--nb-ink, var(--c-brown-850-soft));
-  color: var(--c-cream-150-vivid);
-  font-size: 12px;
-  font-weight: 800;
-  padding: 5px 12px;
-}
-
-.wk-craft-btn:active {
-  transform: translateY(1px);
-}
-
 .wk-alert {
   font-size: 12px;
   font-weight: 800;
@@ -1249,24 +761,14 @@
 /* encre explicite : dans le kframe, la couleur héritée est l'or clair du décor —
    le nom et les quantités de recette devenaient invisibles sur la carte crème
    (constaté en Playwright v3.192.0). */
-.wk-name,
 .wk-recipe,
-.wk-current-label {
+.wk-current-label  {
   color: var(--nb-ink, var(--c-brown-850-soft));
 }
 
 /* v3.265.0 : bâtiment encore verrouillé (fin des déblocages de l'Histoire) — bord pointillé,
    icône grisée, texte lisible ; cliquable vers la quête qui l'ouvre. */
-.production-dash-card.is-locked { border-style: dashed; }
-.production-dash-card.is-locked .production-dash-ico { filter: grayscale(1); opacity: 0.7; }
-.production-dash-lock-badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  margin-top: 6px; padding: 2px 8px; border-radius: 999px;
-  background: var(--c-brown-650-soft); color: var(--c-cream-50-soft);
-  font-size: 12px; font-weight: 900; letter-spacing: 0.3px;
-}
-.production-dash-lock-badge .ico-sys { width: 12px; height: 12px; }
-.production-dash-lock-text { font-size: 12px; color: var(--c-brown-650-vivid); margin-top: 6px; } /* couleurs en dur, comme le reste de la carte : --nb-ink est redéfini dans ce cadre */
+.production-dash-card.is-locked { border-style: dashed; } /* couleurs en dur, comme le reste de la carte : --nb-ink est redéfini dans ce cadre */
 .production-dash-lock-quest { font-size: 12px; font-weight: 800; color: var(--c-brown-850-soft); margin-top: 1px; }
 
 /* =====================================================================
@@ -1288,14 +790,14 @@
   text-align: center;
   overflow: visible;
 }
-.prod-tile .prod-tile-img { width: 78px; height: 88px; object-fit: contain; }
+.prod-tile .prod-tile-img { width: 100px; height: 88px; object-fit: contain; filter: drop-shadow(0 4px 3px rgba(40, 25, 10, 0.35)); } /* v3.416.0 : illustrations isométriques */
 .prod-tile .production-dash-name { font-size: 14px; font-weight: 800; line-height: 1.15; }
 .prod-tile .prod-tile-gauge { width: 100%; margin-top: 2px; }
-.prod-tile-meta { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: 12px; line-height: 1.3; color: var(--c-brown-750); }
+.prod-tile-meta { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: 12px; line-height: 1.3; color: var(--c-brown-750-2); }
 .prod-tile-meta .ico-inline { width: 16px; height: 16px; }
 .prod-tile-meta.is-store-full { color: var(--c-red-600); font-weight: 800; }
 .production-dash-card.prod-tile.is-full { border-color: var(--c-red-550); box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.25); }
-.production-dash-card.prod-tile.is-locked { border-style: dashed; background: linear-gradient(var(--c-cream-150-soft), var(--c-bronze-200-soft)); }
+.production-dash-card.prod-tile.is-locked { border-style: dashed; background: linear-gradient(var(--c-cream-150-soft), var(--c-bronze-200)); }
 .prod-tile.is-locked .prod-tile-img { filter: grayscale(1); opacity: 0.6; }
 
 /* Ruban d'état, en haut à droite */
@@ -1315,13 +817,13 @@
   z-index: 1;
 }
 .prod-tile-rib .ico-sys { width: 12px; height: 12px; }
-.prod-tile-rib.is-full { background: var(--c-red-550); color: var(--c-white-50); }
-.prod-tile-rib.is-ready { background: var(--c-green-650-2); color: var(--c-white-50); }
+.prod-tile-rib.is-full { background: var(--c-red-550); color: var(--c-white-50-soft); }
+.prod-tile-rib.is-ready { background: var(--c-green-650-2); color: var(--c-white-50-soft); }
 .prod-tile-rib.is-up { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); color: var(--c-brown-900-soft); }
 .prod-tile-rib.is-lock { background: var(--c-brown-750-soft); color: var(--c-cream-100-2); }
 
 /* --- Feuille d'un bâtiment de production --- */
-.prod-sheet .prod-sheet-icon { width: 44px; height: 50px; object-fit: contain; }
+.prod-sheet .prod-sheet-icon { width: 54px; height: 50px; object-fit: contain; }
 .prod-sheet-harvest {
   display: flex;
   align-items: center;
@@ -1334,17 +836,158 @@
 }
 .prod-sheet-res { width: 34px; height: 34px; object-fit: contain; flex: none; }
 .prod-sheet-harvest-mid { flex: 1 1 auto; min-width: 0; }
-.prod-sheet-store { font-size: 12px; color: var(--c-brown-750); margin-top: 3px; }
+.prod-sheet-store { font-size: 12px; color: var(--c-brown-750-2); margin-top: 3px; }
 .kbtn.prod-sheet-harvest-btn { flex: none; width: auto; min-width: 0; margin: 0; padding: 6px 14px; white-space: nowrap; }
 .prod-sheet-warn {
   padding: 8px 10px;
   margin: 0 0 10px;
   border-radius: 10px;
-  border: 1px solid #e3a59e;
-  background: #fdecea;
-  color: #5a1e18;
+  border: 1px solid var(--c-red-250-soft);
+  background: var(--c-red-50);
+  color: var(--c-red-800);
   font-size: 12.5px;
   line-height: 1.35;
 }
 .prod-sheet-tabs { margin-bottom: 10px; }
 .prod-sheet .farm-plots-panel { margin-top: 0; }
+
+/* =====================================================================
+   v3.415.0 (lot VUI-2) : ATELIERS EN VIGNETTES et FEUILLE D'ATELIER
+   ===================================================================== */
+.wk-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 12px;
+  margin: 0 0 4px;
+  border: 1px dashed var(--nb-frame-light, var(--c-bronze-500));
+  border-radius: 12px;
+  background: var(--c-cream-50-soft);
+  color: var(--c-brown-850-2);
+  font-size: 13px;
+  line-height: 1.3;
+}
+.wk-banner.is-warn { border-style: solid; border-color: var(--c-red-250-soft); background: var(--c-red-50); }
+.wk-banner-ico { width: 30px; height: 30px; object-fit: contain; flex: none; }
+.wk-banner-txt { flex: 1 1 auto; min-width: 0; }
+.wk-banner-txt b { display: block; font-size: 14px; }
+.kbtn.wk-banner-btn { flex: none; width: auto; margin: 0; padding: 6px 12px; min-height: 36px; font-size: 13px; }
+.kbtn.wk-banner-btn img { width: 18px; height: 18px; }
+
+.wk-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 2px 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-brown-700-vivid);
+}
+.wk-group img { width: 24px; height: 24px; object-fit: contain; }
+.wk-group::after { content: ""; flex: 1; height: 1px; background: rgba(138, 92, 20, 0.4); }
+
+.wk-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+
+.wk-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 160px;
+  padding: 8px 6px 9px;
+  border: 1px solid var(--nb-frame-light, var(--c-bronze-500));
+  border-radius: 12px;
+  background: linear-gradient(var(--c-cream-50-soft), var(--c-cream-150-2));
+  color: var(--c-brown-850-2);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.wk-tile:active { transform: translateY(1px); }
+.wk-tile-img { width: 76px; height: 76px; object-fit: contain; filter: drop-shadow(0 4px 3px rgba(40, 25, 10, 0.35)); }
+.wk-tile-name { font-size: 14px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.wk-tile-recipe { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px; font-size: 13px; font-weight: 700; }
+.wk-tile-recipe > span { display: inline-flex; align-items: center; gap: 1px; }
+.wk-tile-recipe .is-miss { color: var(--c-red-600); }
+.wk-tile-ico { width: 18px; height: 18px; object-fit: contain; }
+.wk-tile-op { color: var(--c-brown-700-vivid); margin: 0 1px; }
+.wk-tile-sub { font-size: 12px; line-height: 1.3; color: var(--c-brown-750-2); }
+.wk-tile-sub.is-miss { color: var(--c-red-600); font-weight: 700; }
+.wk-tile-sub .ico-inline { width: 14px; height: 14px; vertical-align: -2px; }
+.wk-tile-bar { display: block; width: 84%; height: 5px; margin-top: 4px; border-radius: 3px; background: var(--c-bronze-200); overflow: hidden; }
+.wk-tile-bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--c-green-650-2), #6fcf7f); }
+.wk-tile-lvl {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--c-brown-850-2);
+  color: var(--c-cream-150-vivid);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 22px;
+}
+.wk-tile-rib {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 22px;
+}
+.wk-tile-rib.is-run { background: var(--c-green-650-2); color: var(--c-white-50-soft); }
+.wk-tile-rib.is-idle { background: var(--c-brown-700-vivid); color: var(--c-white-50-soft); }
+.wk-tile-rib.is-block { background: var(--c-red-600); color: var(--c-white-50-soft); }
+.wk-tile-auto { position: absolute; top: 32px; right: 8px; width: 22px; height: 22px; border-radius: 50%; background: var(--c-cream-50); border: 1px solid var(--c-brown-550-3); display: flex; align-items: center; justify-content: center; }
+.wk-tile-auto .ico-sys { width: 14px; height: 14px; }
+.wk-tile.is-run { border-color: var(--c-green-650-2); box-shadow: 0 0 0 2px rgba(47, 138, 70, 0.3); }
+.wk-tile.is-stalled { border-color: var(--c-red-600); }
+.wk-tile.is-block .wk-tile-img { filter: grayscale(0.6) drop-shadow(0 4px 3px rgba(40, 25, 10, 0.3)); opacity: 0.85; }
+.wk-tile.is-soon { cursor: default; background: linear-gradient(var(--c-cream-150-soft), var(--c-bronze-200)); }
+.wk-tile.is-soon .wk-tile-img { filter: grayscale(1); opacity: 0.5; }
+.prod-sheet .wk-tile { min-height: 140px; }
+.prod-sheet .wk-tile-img { width: 62px; height: 62px; }
+
+/* --- Feuille d'un atelier --- */
+.wk-sheet .wk-sheet-icon { width: 46px; height: 46px; object-fit: contain; }
+.wk-back { border: 0; background: none; padding: 0 0 10px; color: var(--c-brown-750-3); font: inherit; font-size: 14px; font-weight: 800; text-decoration: underline; cursor: pointer; }
+.wk-recipes { margin-bottom: 8px; }
+.wk-recipes button img { width: 20px; height: 20px; }
+.wk-bigrec {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 6px;
+  margin: 0 0 10px;
+  border: 1px solid var(--nb-frame-light, var(--c-bronze-500));
+  border-radius: 12px;
+  background: var(--c-cream-50-soft);
+}
+.wk-bigrec-ing { display: flex; flex-direction: column; align-items: center; min-width: 0; max-width: 34%; text-align: center; color: var(--c-brown-850-2); }
+.wk-bigrec-ing img { width: 44px; height: 44px; object-fit: contain; }
+.wk-bigrec-ing b { font-size: 13px; line-height: 1.2; }
+.wk-bigrec-ing small { font-size: 12px; color: var(--c-brown-750-2); }
+.wk-bigrec-ing.is-miss b, .wk-bigrec-ing.is-miss small { color: var(--c-red-600); }
+.wk-bigrec-op { align-self: center; margin-top: -18px; font-size: 20px; font-weight: 800; color: var(--c-brown-700-vivid); }
+.wk-act { padding: 10px 12px; margin: 10px 0; border: 1px solid var(--nb-frame-light, var(--c-bronze-500)); border-radius: 12px; background: var(--sheet-card-bg, var(--c-cream-100-soft)); }
+.wk-act-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wk-act-lbl { font-size: 13px; font-weight: 800; color: var(--c-brown-850-2); }
+.wk-act-hint { margin: 8px 0 0; font-size: 12px; line-height: 1.35; color: var(--c-brown-750-2); }
+.wk-qty { display: flex; gap: 6px; margin: 10px 0; }
+.wk-qty button { flex: 1 1 0; min-width: 0; min-height: 38px; padding: 4px 2px; border: 1px solid var(--c-brown-700-vivid); border-radius: 10px; background: var(--c-cream-50); color: var(--c-brown-850-2); font: inherit; font-size: 14px; font-weight: 800; white-space: nowrap; }
+.wk-qty button.is-on { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); color: var(--c-brown-900-soft); }
+.wk-qty button:disabled { opacity: 0.4; }
+.kbtn.wk-craft { margin: 0; }
+.wk-alert .kbtn.wk-goto { width: auto; margin: 8px 0 0; min-height: 34px; padding: 4px 12px; font-size: 13px; }
+.wk-up-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--c-brown-750-2); }

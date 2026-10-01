@@ -51,7 +51,7 @@
 .tt-node-name { font-size: 12px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
 .tt-node-short { font-size: 12px; line-height: 1.25; color: var(--c-brown-650-soft); margin-top: 1px; }
 .tt-pips { display: flex; gap: 3px; margin-top: 3px; }
-.tt-pips i { width: 10px; height: 4px; border-radius: 2px; background: var(--c-bronze-200-soft); }
+.tt-pips i { width: 10px; height: 4px; border-radius: 2px; background: var(--c-bronze-200); }
 .tt-pips i.is-on { background: var(--cl); }
 
 /* États */

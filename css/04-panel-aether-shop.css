@@ -84,12 +84,12 @@
   box-shadow: 0 2px 6px rgba(58, 44, 26, 0.18);
 }
 .mem-head-desc { margin: 0 0 10px; font-size: 13px; line-height: 1.45; }
-.mem-head-note { margin: 8px 0 0; font-size: 12px; color: var(--c-brown-750); }
+.mem-head-note { margin: 8px 0 0; font-size: 12px; color: var(--c-brown-750-2); }
 .mem-gauge { margin: 0 auto; max-width: 340px; text-align: left; }
 .mem-gauge-head { display: flex; justify-content: center; margin-bottom: 4px; }
 .mem-gauge-lvl { font-weight: 800; color: #5b3a9e; font-size: 14px; }
 .mem-gauge-bar .kgauge-text { font-size: 11px; }
-.mem-gauge-note { margin-top: 6px; font-size: 12px; color: var(--c-brown-750); text-align: center; }
+.mem-gauge-note { margin-top: 6px; font-size: 12px; color: var(--c-brown-750-2); text-align: center; }
 .mem-pending {
   display: inline-flex; align-items: center; gap: 6px;
   margin-top: 10px; padding: 4px 12px; border-radius: 999px;
@@ -100,7 +100,7 @@
 .mem-level { margin: 4px 0 6px; }
 .mem-level.is-locked .mem-options { opacity: 0.75; }
 .mem-level-head small { color: var(--c-brown-700-vivid); }
-.mem-level-lock { display: flex; align-items: center; justify-content: center; gap: 6px; margin: -4px 0 8px; font-size: 12px; color: var(--c-brown-750); }
+.mem-level-lock { display: flex; align-items: center; justify-content: center; gap: 6px; margin: -4px 0 8px; font-size: 12px; color: var(--c-brown-750-2); }
 .mem-level-lock.is-pending { font-weight: 800; color: var(--c-brown-800-vivid); }
 
 .mem-options { display: flex; flex-direction: column; gap: 8px; }
@@ -121,5 +121,5 @@ div.mem-option { cursor: default; }
 .mem-option-img { max-width: 44px; max-height: 44px; object-fit: contain; border-radius: 6px; }
 .mem-option-txt { flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .mem-option-name { font-weight: 800; font-size: 14px; }
-.mem-option-desc { font-size: 12.5px; line-height: 1.4; color: var(--c-brown-750); }
+.mem-option-desc { font-size: 12.5px; line-height: 1.4; color: var(--c-brown-750-2); }
 .mem-option-check { flex: 0 0 auto; width: 24px; height: 24px; object-fit: contain; }

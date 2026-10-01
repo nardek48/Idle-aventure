@@ -131,7 +131,7 @@
 .map-node-name {
   font-size: 12px;
   font-weight: 800;
-  color: var(--c-white-50);
+  color: var(--c-white-50-soft);
   text-align: center;
   line-height: 1.15;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);

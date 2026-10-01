@@ -51,7 +51,7 @@ les classes de l'ancien thème pendant la migration progressive.
   gap: 4px;
   flex-wrap: wrap;
 
-  color: var(--c-white-50);
+  color: var(--c-white-50-soft);
   font-size: 12px;
   font-weight: 700;
   line-height: 1.3;
@@ -918,7 +918,7 @@ button.nb-entry-card {
   border: 1.5px solid var(--c-cream-100-2);
   border-radius: 8px;
   background: var(--c-red-550);
-  color: var(--c-white-50);
+  color: var(--c-white-50-soft);
   font-size: 10px;
   font-weight: 800;
 }

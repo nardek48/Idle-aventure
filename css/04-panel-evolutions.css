@@ -210,7 +210,7 @@ Maquette de référence : atelier-evolutions.html.
 .bm-final.is-hit .bm-final-pic { transform: scale(1.14); filter: brightness(1.6) saturate(0.4); }
 .bm-final.is-hit .bm-flash { animation: bm-white 0.7s ease-out; }
 .bm-final.is-down .bm-final-pic { transform: scale(0.96); filter: grayscale(1) brightness(0.55); }
-@keyframes bm-white { 0% { opacity: 0.9; background: var(--c-white-50); } 100% { opacity: 0; background: var(--c-white-50); } }
+@keyframes bm-white { 0% { opacity: 0.9; background: var(--c-white-50-soft); } 100% { opacity: 0; background: var(--c-white-50-soft); } }
 .bm-final-line { font-size: 13.5px; font-style: italic; color: var(--c-cream-200); text-align: center; max-width: 320px; }
 
 /* Victoire + trophée */

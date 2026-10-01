@@ -83,10 +83,10 @@
 /* v3.401.0 (lot O-1) : catégories = pastilles du kit (.kchips, css/00-components.css) */
 .hf-tiers { background: var(--c-cream-100-soft); border: 1px solid var(--c-bronze-250-soft); border-radius: 12px; padding: 9px 10px 8px; color: var(--c-brown-850-soft); margin-bottom: 8px; }
 .hf-tiers-h { display: flex; justify-content: space-between; color: var(--c-brown-700-vivid); font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; } /* v3.402.0 : surtitre du kit */
-.hf-track { position: relative; height: 8px; border-radius: 4px; background: var(--c-bronze-200-soft); margin: 6px 11px 22px; }
+.hf-track { position: relative; height: 8px; border-radius: 4px; background: var(--c-bronze-200); margin: 6px 11px 22px; }
 .hf-track-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: linear-gradient(90deg, var(--c-brown-550-2), var(--c-blue-200) 60%, var(--c-bronze-400-4)); }
 .hf-notch { position: absolute; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; border: 2px solid var(--c-bronze-400-soft); background: var(--c-cream-150-3); color: #8a7a64; }
-.hf-notch.is-bronze.is-got { background: var(--c-brown-550-2); border-color: var(--c-brown-700-soft); color: var(--c-white-50); }
+.hf-notch.is-bronze.is-got { background: var(--c-brown-550-2); border-color: var(--c-brown-700-soft); color: var(--c-white-50-soft); }
 .hf-notch.is-silver.is-got { background: var(--c-blue-200); border-color: var(--c-grey-600); color: #2a3036; }
 .hf-notch.is-gold.is-got { background: var(--c-bronze-400-4); border-color: var(--c-brown-750-vivid); color: #3a2a06; }
 .hf-notch span { position: absolute; top: 24px; white-space: nowrap; font-size: 12px; font-weight: 800; color: var(--c-brown-650-soft); }
@@ -103,7 +103,7 @@
 .hf-body { flex: 1 1 auto; min-width: 0; }
 .hf-name { font-size: 13.5px; font-weight: 800; line-height: 1.2; }
 .hf-desc { font-size: 12px; line-height: 1.35; color: var(--c-brown-750-soft); margin-top: 2px; }
-.hf-bar { height: 6px; border-radius: 3px; background: var(--c-bronze-200-soft); margin-top: 5px; overflow: hidden; }
+.hf-bar { height: 6px; border-radius: 3px; background: var(--c-bronze-200); margin-top: 5px; overflow: hidden; }
 .hf-bar > i { display: block; height: 100%; background: #6b9a3a; }
 .hf-meta { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; color: var(--c-brown-650); }
 .hf-rew { font-weight: 800; color: var(--c-brown-700-vivid); }

@@ -6,8 +6,6 @@
 .ico-lg,
 .pc-subtab-ico,
 .farm-plot-improvement-img,
-.workshop-card-icon-img,
-.wk-emoji-img,
 .qb-tab-icon-img,
 .eq-orbit-slot-img,
 .pc-sum-class-ico,
@@ -31,9 +29,6 @@
 img.vb-card-icon { width: 84px; height: 84px; object-fit: contain; } /* v3.414.0 : grandes vignettes */
 @media (max-width: 360px) { img.vb-card-icon { width: 68px; height: 68px; } }
 
-/* Ateliers. */
-.workshop-card-icon-img { width: 26px; height: 26px; }
-.wk-emoji-img { width: 20px; height: 20px; }
 
 /* Améliorations de parcelle (pastilles sur la vignette). */
 .farm-plot-improvement-img { width: 17px; height: 17px; }

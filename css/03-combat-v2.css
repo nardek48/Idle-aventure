@@ -122,7 +122,7 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .st-row-desc { font-size: 12px; line-height: 1.35; color: var(--nb-ink-dim); }
 .st-row-hint { font-size: 12px; line-height: 1.35; color: var(--nb-gold-dark, var(--c-brown-700-vivid)); font-weight: 700; margin-top: 2px; }
 .st-row-n { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: var(--nb-ink); padding-top: 2px; }
-.st-row.is-alert { border-color: var(--danger, var(--c-red-550)); background: #fff0ec; }
+.st-row.is-alert { border-color: var(--danger, var(--c-red-550)); background: var(--c-red-50); }
 .st-empty { font-size: 12px; color: var(--nb-ink-dim); font-style: italic; padding: 10px 2px; }
 
 /* Ancienne barre : plus de hauteur minimale réservée (elle laissait un trou quand rien

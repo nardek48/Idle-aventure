@@ -227,6 +227,8 @@ html.wide-mode .eq-hero-main { gap: 20px; }
 /* Village : trois colonnes de bâtiments */
 html.wide-mode .vb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 html.wide-mode .production-dash-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } /* v3.414.0 : vignettes de production */
+html.wide-mode .wk-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } /* v3.415.0 : vignettes d'atelier */
+html.wide-mode .wh-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); } /* v3.416.0 : tuiles de l'Entrepôt */
 html.wide-mode #panel-container .kf-mid .kgauge:not(.kgauge-thin) { max-width: 300px; }
 
 /* ---------- Écrans plein cadre (PC et tablette) : ce qui se lit garde une largeur de tablette étroite ---------- */

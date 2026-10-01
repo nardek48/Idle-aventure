@@ -315,7 +315,7 @@
 #enemy-hp-text {
   font-size: max(12px, clamp(10.12px, calc(5px + 1.6vw), 11.88px));
   font-weight: 800;
-  color: var(--c-white-50);
+  color: var(--c-white-50-soft);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
@@ -333,7 +333,7 @@
 }
 
 .float-dmg.normal {
-  color: var(--c-white-50);
+  color: var(--c-white-50-soft);
 }
 
 .float-dmg.crit {
@@ -599,7 +599,7 @@ img.combat-action-icon {
   justify-content: center;
   font-size: clamp(13px, calc(6px + 2.2vw), 16px);
   font-weight: 800;
-  color: var(--c-white-50);
+  color: var(--c-white-50-soft);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
   pointer-events: none;
 }

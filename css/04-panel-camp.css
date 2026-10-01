@@ -418,7 +418,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   padding: 6px 4px 5px;
   border: 1px solid var(--c-brown-700-vivid);
   border-radius: 12px;
-  background: linear-gradient(#fffaf0, var(--c-cream-150-2));
+  background: linear-gradient(var(--c-white-50), var(--c-cream-150-2));
   box-shadow: 0 2px 0 var(--c-brown-700-vivid);
   color: inherit;
   font: inherit;

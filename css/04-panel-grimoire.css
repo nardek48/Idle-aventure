@@ -170,7 +170,7 @@
 .grimoire-rule-row.is-empty .grimoire-rule-text,
 .grimoire-rule-row.is-empty .grimoire-rule-order,
 .grimoire-rule-row.is-empty .grimoire-rule-sub {
-  color: var(--c-brown-750); /* v3.404.0 : encre sombre, le cadre est clair */
+  color: var(--c-brown-750-2); /* v3.404.0 : encre sombre, le cadre est clair */
   opacity: 1;
   font-weight: 600;
 }
@@ -331,7 +331,7 @@
   border: 2px dashed var(--nb-frame);
   border-radius: var(--nb-radius-sm);
   background-color: transparent;
-  color: var(--c-brown-750); /* v3.404.0 */
+  color: var(--c-brown-750-2); /* v3.404.0 */
   font-family: inherit;
   font-size: 0.78rem;
   font-weight: 700;
