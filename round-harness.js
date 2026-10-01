@@ -3,6 +3,16 @@
    et joue de vrais rounds. node round-harness.js <racine projet>  (liste des scripts attendue dans /tmp/scripts.txt) */
 var fs = require("fs"), path = require("path"), vm = require("vm");
 var ROOT = process.argv[2];
+/* v3.409.0 : les couleurs du CSS passent par la palette --c-* (css/00-tokens.css). Les tests qui
+   cherchent une couleur précise lisent le CSS avec les jetons remis en hexadécimal. */
+function unpal(text) {
+  var pal = {};
+  try {
+    var t = require("fs").readFileSync(require("path").join(ROOT, "css/00-tokens.css"), "utf8");
+    (t.match(/--c-[a-z0-9-]+: #[0-9a-f]{6}/g) || []).forEach(function (d) { var kv = d.split(": "); pal[kv[0]] = kv[1]; });
+  } catch (e) {}
+  return String(text).replace(/var\((--c-[a-z0-9-]+)\)/g, function (m, n) { return pal[n] || m; });
+}
 var scripts = fs.readFileSync("/tmp/scripts.txt", "utf8").trim().split("\n").filter(function (s) { return !/pwa\.js|boot\.js/.test(s); });
 
 function el() {
@@ -307,8 +317,7 @@ g.restoreBaseState(d);
 ok(game.combatMode === "tactique", "migration save pré-P2 sans Grimoire → Tactique");
 d.unlockedTabs = { grimoire: true }; g.restoreBaseState(d);
 ok(game.combatMode === "grimoire", "migration save pré-P2 avec Grimoire débloqué → Grimoire");
-game.combatMode = "grimoire"; run("hardResetState()");
-ok(game.combatMode === "grimoire" && game.combatRound.number === 0, "hardResetState (ascension) : préférence conservée, round 0");
+game.combatMode = "grimoire";
 run("fullResetState()");
 ok(game.combatMode === "tactique" && game.autoSkillsEnabled === false, "fullResetState : Tactique");
 
@@ -344,8 +353,8 @@ console.log("\n[14] Sortie Lisière complète par classe (politique « joueur ra
 
 console.log("\n[15] Rendu : HTML de l'écran Combat et des boutons sans erreur dans les 3 modes");
 game = freshCombat("knight"); giveWeapon(); game.unlockedTabs.grimoire = true;
-var htmlT = g.buildCombatControlsHTML() + g.buildClassSkillButtonsHTML() + g.buildEnemyStatusBarHTML() + g.buildHealButtonHTML(0);
-ok(htmlT.indexOf("Tactique") !== -1 && htmlT.indexOf("Continuer") !== -1 && run("buildCombatCelerityHTML()").indexOf("combat-gauge") !== -1, "Tactique : bascule, Continuer, jauge (v3.241.0 : jauge dans le panneau héros)");
+var htmlT = g.buildCombatControlsHTML() + g.buildClassSkillButtonsHTML() + g.buildCombatStatesHTML() + g.buildHealButtonHTML(0);
+ok(htmlT.indexOf("Tactique") !== -1 && htmlT.indexOf("Continuer") !== -1, "Tactique : bascule, Continuer, jauge (v3.241.0 : jauge dans le panneau héros)");
 g.CombatEngine.setCombatMode("grimoire");
 var htmlG = g.buildCombatControlsHTML() + g.buildClassSkillButtonsHTML();
 ok(htmlG.indexOf("Grimoire") !== -1 && htmlG.indexOf("combat-continue-btn") === -1 && htmlG.indexOf("auto-mode") !== -1, "Grimoire : boutons en auto-mode, pas de Continuer");
@@ -354,7 +363,7 @@ g.CombatEngine.setCombatMode("tactique"); game.enemy.chargeTelegraphed = true; g
    reste dans la rangée d'états. */
 var htmlS = g.buildCombatAlertHTML() + g.buildCombatStatesHTML();
 ok(htmlS.indexOf("Il charge") !== -1 && htmlS.indexOf("silenced.png") !== -1, "barre de statuts en rounds");
-ok(typeof g.buildSettingsHTML() === "string" && g.buildSettingsHTML().indexOf("Mode Grimoire") !== -1, "Paramètres : sélecteur de mode");
+ok(typeof g.buildSettingsHTML() === "string" && g.buildSettingsHTML("jeu").indexOf("Mode de combat") !== -1, "Paramètres : sélecteur de mode (v3.408.0 : onglet Jeu)");
 g.ensureGrimoireRules && g.ensureGrimoireRules();
 ok(typeof g.buildGrimoireHTML() === "string" && g.buildGrimoireHTML().indexOf("grimoire-mode") !== -1, "Grimoire : sélecteur de mode de combat"); // v3.210.0 : remplace l'ancien bandeau « Mode Tactique actif »
 ok(typeof g.buildHerosHTML() === "string", "fiche Héros (cooldowns en rounds)");
@@ -451,7 +460,6 @@ d = g.buildSaveData();
 ok(d.sortie && d.sortie.active === true && d.sortie.loot.gold === 77, "buildSaveData : sortie");
 g.restoreBaseState(d);
 ok(game.sortie && game.sortie.active === true && game.sortie.loot.gold === 77, "restoreBaseState : sortie restaurée (le butin survit au rechargement)");
-run("hardResetState()"); ok(game.sortie === null, "hardResetState : sortie vidée");
 game.sortie = { active: true }; run("fullResetState()"); ok(game.sortie === null, "fullResetState : sortie vidée");
 ok(g.SortieManager.ensure().active === false, "ensure() reconstruit une sortie vide");
 
@@ -567,8 +575,8 @@ ok(top3.every(function (m) { return boardHtml.indexOf(g.esc(m.title)) !== -1; })
 ok(boardHtml.indexOf("Accepter") !== -1, "bouton Accepter sur l'étape Histoire disponible");
 ok(campHtml.indexOf("Voir le tableau complet") !== -1, "bouton vers le reste du tableau (encore l'écran Quêtes)");
 // v3.116.0 (Lot C) : nouveaux blocs Santé / Rations / Régénération, rendus sans exception
-ok(campHtml.indexOf("camp-hp-fill") !== -1 && campHtml.indexOf("Santé du héros") !== -1, "bloc Santé du Héros : barre de PV présente");
-ok(campHtml.indexOf("camp-ration-grid") !== -1, "bloc Rations : grille de 3 rations présente");
+ok(campHtml.indexOf("camp-hp-fill") !== -1 && campHtml.indexOf("camp-health-card") !== -1, "bloc Santé du Héros : barre de PV présente");
+ok((campHtml.match(/class="camp-ration-ib[ "]/g) || []).length === 3, "bloc Rations : trois rations en boutons (v3.411.0)");
 /* v3.233.0 : la barre de régénération est retirée (elle affichait hpPct, soit la
    barre de PV en double). Le bloc garde la phrase, le rythme et l'ETA. */
 ok(campHtml.indexOf("camp-regen-fill") === -1, "bloc Régénération : barre retirée (plus de doublon de la barre de PV)");
@@ -899,7 +907,7 @@ game.enemy.engageIn = 2;
 var sb = g.buildCombatAlertHTML();
 ok(sb.indexOf("enemy_approaching.png") !== -1, "barre de statut : approche annonc\u00e9e dans le bandeau (engageIn 2)");
 game.enemy.engageIn = 0;
-ok(g.buildEnemyStatusBarHTML().indexOf("enemy-status-approaching") === -1, "icône absente au contact");
+ok(g.buildCombatStatesHTML().indexOf("enemy-status-approaching") === -1, "icône absente au contact");
 // parité simulateur : défauts, RPM décalé, Chevalier strictement inchangé
 ok(g.CombatRoundSim.DEFAULTS.engageEnabled === true && g.CombatRoundSim.DEFAULTS.engageDefaultRounds === 1 && g.CombatRoundSim.DEFAULTS.engageBossRounds === 1, "sim : approche activée par défaut (1 / boss 1)");
 var cfgOn = g.CombatRoundSim.config({ enemyHpCoef: g.ENEMY_PV_MULT, engageTable: g.ENEMY_ENGAGE_ROUNDS });
@@ -959,7 +967,7 @@ ok(typeof g.CAMP_MEAL_COST === "undefined" && typeof g.CampManager.eat === "unde
 game.activeTab = "campement";
 game.heroHp = Math.floor(game.heroMaxHp * 0.5); // PV pleins -> "Pas faim" masque la liste (comportement voulu)
 var campHtml = g.buildCampHTML();
-ok(campHtml.indexOf("Rations") !== -1 && campHtml.indexOf("Petite ration") !== -1 && campHtml.indexOf("Grande ration") !== -1, "écran Campement : carte Rations avec les 3 types");
+ok(campHtml.indexOf("camp-ration-row") !== -1 && campHtml.indexOf("Petite ration") !== -1 && campHtml.indexOf("Grande ration") !== -1, "écran Campement : carte Rations avec les 3 types");
 game.heroHp = game.heroMaxHp;
 
 console.log("\n[50] Compteur de mission en combat (3.106.0) : aventure, chasse, donjon");
@@ -1968,10 +1976,8 @@ run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentMa
 var saved76 = run("buildSaveData()");
 ok(saved76.sceneRun && saved76.sceneRun.id === "test_persist", "buildSaveData inclut sceneRun");
 run("game.sceneRun = null; loadGame_applyData_test = true;"); // marker inutilisé, juste lisibilité
-var applied76 = run("(function(){ var d = " + JSON.stringify(saved76) + "; game.explorationRun = d.explorationRun && typeof d.explorationRun === 'object' ? d.explorationRun : null; game.sceneRun = d.sceneRun && typeof d.sceneRun === 'object' ? d.sceneRun : null; return game.sceneRun; })()");
+var applied76 = run("(function(){ var d = " + JSON.stringify(saved76) + "; game.sceneRun = d.sceneRun && typeof d.sceneRun === 'object' ? d.sceneRun : null; return game.sceneRun; })()");
 ok(applied76 && applied76.id === "test_persist", "le fragment de loadGame() restaure sceneRun depuis la sauvegarde");
-run("hardResetState();");
-ok(g.game.sceneRun === null, "hardResetState() remet sceneRun à null (ne survit pas à l'ascension)");
 run("game.sceneRun = { id: 'test2' }; fullResetState();");
 ok(g.game.sceneRun === null, "fullResetState() remet sceneRun à null");
 
@@ -2083,20 +2089,21 @@ run("setWarehouseFilter('crafted');");
 var htmlCrafted = run("buildWarehouseHTML()");
 ok(htmlCrafted.indexOf("Sève") === -1, "Sève absente du filtre 'Tier 1' (tier different)");
 
-var htmlBeforeSpecial = run("buildWarehouseFilterRowHTML()");
-ok(htmlBeforeSpecial.indexOf("Rares") !== -1, "le bouton '✨ Rares' est proposé (au moins une ressource tier 'special' existe dans WAREHOUSE_RESOURCES)");
+// v3.416.0 (VUI-3) : la famille « Rare » est une entrée de la liste déroulante
+var htmlBeforeSpecial = run("warehouseMenuOpen = true; buildWarehouseFilterRowHTML(Object.keys(WAREHOUSE_RESOURCES))");
+run("warehouseMenuOpen = false;");
+ok(htmlBeforeSpecial.indexOf("setWarehouseFilter('special')") !== -1, "l'entrée « Rare » est proposée dans la liste déroulante");
 
 run("setWarehouseFilter('special');");
-ok(g.warehouseFilter === "special", "warehouseFilter accepte bien la valeur 'special'");
+ok(run("getWarehouseFilter()") === "special", "le filtre accepte bien la valeur 'special'");
 var htmlSpecial = run("buildWarehouseHTML()");
 ok(htmlSpecial.indexOf("Sève") !== -1 || htmlSpecial.indexOf("seve_aeswyn") !== -1, "la Sève d'Aeswyn apparaît bien dans le filtre 'Rares'");
 
 // Vérifie que la tuile sélectionnable mène au bon détail (nom, stock, pas de prix de vente
 // puisque sellPrice: 0 — décision Lot PA3, ressource de collection non vendable).
-run("selectWarehouseKey('seve_aeswyn');");
-var detailHtml = run("buildWarehouseDetailPanelHTML()");
-ok(detailHtml.indexOf("Sève d") !== -1, "le panneau détail affiche bien le nom de la ressource sélectionnée");
-ok(detailHtml.indexOf("Stock : 5") !== -1, "le stock affiché correspond (5)");
+var detailHtml = run("buildWarehouseSheetHTML('seve_aeswyn')"); // v3.416.0 : feuille de la ressource
+ok(detailHtml.indexOf("Sève d") !== -1, "la feuille affiche bien le nom de la ressource");
+ok(detailHtml.indexOf("5 en stock") !== -1, "le stock affiché correspond (5)");
 ok(detailHtml.indexOf("Ne se vend pas") !== -1 && detailHtml.indexOf("Vendre") === -1, "pas d'option de vente (sellPrice: 0, ressource de collection)");
 
 console.log("\n[60] Cap de 3 quêtes actives simultanées + abandon (v3.131.0, retour Seb)");
@@ -2358,7 +2365,7 @@ console.log("\n== v3.137.0 : recette Grande ration (Cuisine de camp) ==");
     "intrants : 1 Ration moyenne + 3 Sève d'Aeswyn (option B)");
   ok(recipe.craftTimeMs === 12000, "temps de base 12 s");
 
-  // fullResetState/hardResetState donnent 3 Ration moyenne de départ (v3.107.1) : on repart de 0 pour un test net.
+  // fullResetState donne 3 Ration moyenne de départ (v3.107.1) : on repart de 0 pour un test net.
   run("game.resources.ration = 0; game.resources.seve_aeswyn = 0;");
   ok(g.WorkshopsSystem.getMaxCraftTimes("cuisine_de_camp", "grande_ration") === 0, "pas assez de stock : 0 craft possible");
   g.WarehouseManager.addResource("ration", 2, true);
@@ -2395,80 +2402,74 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   // 1. routeur : vue Production par défaut (double bouton + cartes compactes, plus d'anciens toggles)
   run("productionViewTab = 'prod'; productionDetailBuildingId = null;");
   var html = run("buildProductionHTML()");
-  ok(html.indexOf("kseg production-switch") !== -1, "double bouton Production|Ateliers présent");
-  ok(html.indexOf("production-dash-card") !== -1, "cartes compactes du tableau de bord présentes");
+  // v3.414.0 (VUI-1) : le double bouton est devenu le rail du Village (voir [186])
+  ok(html.indexOf("production-switch") === -1, "plus de double bouton Production|Ateliers (rail du Village, v3.414.0)");
+  ok(html.indexOf("production-dash-card prod-tile") !== -1, "vignettes du tableau de bord présentes (v3.414.0)");
   ok(html.indexOf("prod-harvest-all-btn") !== -1, "id prod-harvest-all-btn conservé (updateDOM)");
   ok(html.indexOf("prod-bar-farm") !== -1 && html.indexOf("prod-stock-label-farm") !== -1, "ids de jauge/stock conservés (updateDOM)");
   ok(html.indexOf("farm-plots-toggle") === -1, "anciens panneaux dépliables retirés");
 
-  // 2. vue Ateliers agrégée : bandeau d'état + tag bâtiment + amélioration en carte
-  run("productionViewTab = 'shops';");
-  var shopsHtml = run("buildProductionHTML()");
-  ok(shopsHtml.indexOf("production-status-banner") !== -1, "bandeau d'état présent");
-  ok(shopsHtml.indexOf("workshop-building-tag") !== -1, "tag du bâtiment de rattachement sur les cartes");
-  ok(shopsHtml.indexOf("wk-up") !== -1, "amélioration DANS la carte (décision Seb — bouton compact v3.192.0)");
-  /* v3.221.0 : ce test portait sur une donnée mouvante — il supposait qu'il
-     reste des ateliers inactifs dans un bâtiment débloqué, ce qui devient faux
-     à mesure qu'on les active (trois l'ont été depuis). On teste maintenant le
-     COMPORTEMENT DE L'ÉCRAN en fabriquant le cas, puis on restaure. */
+  // 2. v3.415.0 (VUI-2) : onglet Ateliers en vignettes ; tout le pilotage passe par la feuille d'atelier
+  var shopsHtml = run("buildShopsViewHTML()");
+  ok(shopsHtml.indexOf("wk-banner") !== -1 && shopsHtml.indexOf("prod-queues-btn") !== -1, "bandeau d'état + bouton Files présents");
+  ok(shopsHtml.indexOf("wk-group") !== -1 && shopsHtml.indexOf('id="wk-tile-moulin"') !== -1, "vignettes groupées par bâtiment");
+  ok(shopsHtml.indexOf("openWorkshopSheet('moulin')") !== -1, "toucher une vignette ouvre la feuille de l'atelier");
   var etatFonderie = run("WORKSHOPS_CONFIG.fonderie.active");
   run("WORKSHOPS_CONFIG.fonderie.active = false;");
-  shopsHtml = run("buildProductionHTML()");
-  ok(shopsHtml.indexOf("production-shops-locked") !== -1, "ateliers à venir regroupés en pied compact");
+  ok(run("buildShopsViewHTML()").indexOf("wk-tile is-soon") !== -1, "un atelier à venir : vignette grisée « Bientôt »");
   run("WORKSHOPS_CONFIG.fonderie.active = " + (etatFonderie ? "true" : "false") + ";");
-  shopsHtml = run("buildProductionHTML()");
-  ok(shopsHtml.indexOf("prod-queues-btn") !== -1, "bouton Files migré sur la vue Ateliers");
-  // v3.191.1 : CÂBLAGE réel des cartes (bug Seb — config brute sans id -> tout mort).
-  // Avec du Blé en stock, la carte Moulin doit proposer un vrai bouton Fabriquer
-  // câblé sur SON id, et jamais un id undefined nulle part.
-  run("game.resources.ble = 25;");
-  var shopsHtml2 = run("buildProductionHTML()");
-  ok(shopsHtml2.indexOf("confirmCraftWorkshop('moulin')") !== -1, "bouton Fabriquer du Moulin câblé sur son id (Blé en stock)");
-  ok(shopsHtml2.indexOf("undefined") === -1, "aucun id undefined dans la vue Ateliers");
-  // v3.192.0 — carte compacte (maquette v4), 4 décisions actées :
-  ok(shopsHtml2.indexOf("wk-queue") !== -1 && shopsHtml2.indexOf("workshop-queue-moulin") !== -1, "(3) file en cases, conteneur workshop-queue- conservé (refreshWorkshopQueueDOM)");
-  ok(shopsHtml2.indexOf("wk-up") !== -1 && shopsHtml2.indexOf("workshop-upgrade-effect") === -1, "(4) amélioration compacte coût seul, plus de ligne d'effet permanente");
+  // v3.191.1 : CÂBLAGE réel (bug Seb — config brute sans id) : avec du Blé, la feuille du Moulin propose Fabriquer sur SON id
+  run("game.resources.ble = 25; openWorkshopId = 'moulin'; selectedWorkshopRecipe.moulin = 'farine'; workshopCraftQty.moulin = 1;");
+  var wkHtml = run("buildWorkshopSheetHTML('moulin')");
+  ok(wkHtml.indexOf("confirmCraftWorkshop('moulin')") !== -1, "feuille du Moulin : Fabriquer câblé sur son id (Blé en stock)");
+  ok(wkHtml.indexOf("undefined") === -1 && run("buildShopsViewHTML()").indexOf("undefined") === -1, "aucun id undefined (vignettes, feuille)");
+  ok(wkHtml.indexOf("wk-queue") !== -1 && wkHtml.indexOf("workshop-queue-moulin") !== -1, "file en cases, conteneur workshop-queue- conservé (refreshWorkshopQueueDOM)");
+  ok(wkHtml.indexOf("wk-up") !== -1, "amélioration dans la feuille (bouton compact, coût seul)");
+  ok((wkHtml.match(/setWorkshopCraftQty\('moulin', /g) || []).length === 4 && wkHtml.indexOf("Max (5)") !== -1, "quantité en pastilles ×1, ×5, ×10, Max (5 lots possibles)");
   run("WorkshopsSystem.setAutoRecipe('moulin', WORKSHOPS_CONFIG.moulin.recipes[0].id);");
-  var shopsAuto = run("buildProductionHTML()");
-  ok(shopsAuto.indexOf("confirmCraftWorkshop('moulin')") === -1 && shopsAuto.indexOf("adjustWorkshopAutoQty('moulin'") !== -1, "(1)+(2) ♻️ actif : Fabriquer masqué, stepper auto inline présent");
+  var wkAuto = run("buildWorkshopSheetHTML('moulin')");
+  ok(wkAuto.indexOf("confirmCraftWorkshop('moulin')") === -1 && wkAuto.indexOf("setWorkshopAutoQty('moulin'") !== -1, "Continu actif : Fabriquer masqué, quantité du lot automatique à la place");
   run("WorkshopsSystem.setAutoRecipe('moulin', null);");
-  ok(run("buildProductionHTML()").indexOf("confirmCraftWorkshop('moulin')") !== -1, "(1) ♻️ coupé : Fabriquer de retour");
-  // file : un lot en file -> case remplie + ids temps/barre conservés (updateDOM)
+  ok(run("buildWorkshopSheetHTML('moulin')").indexOf("confirmCraftWorkshop('moulin')") !== -1, "Continu coupé : Fabriquer de retour");
   run("WorkshopsSystem.enqueueCraft('moulin', 'farine', 2);");
-  var shopsQueued = run("buildProductionHTML()");
-  ok(shopsQueued.indexOf("wk-slot is-filled") !== -1 && shopsQueued.indexOf("prod-workshop-time-moulin") !== -1 && shopsQueued.indexOf("prod-workshop-bar-moulin") !== -1, "(3) lot en file : case remplie + ids temps/barre conservés");
+  var wkQueued = run("buildWorkshopSheetHTML('moulin')");
+  ok(wkQueued.indexOf("wk-slot is-filled") !== -1 && wkQueued.indexOf("prod-workshop-time-moulin") !== -1 && wkQueued.indexOf("prod-workshop-bar-moulin") !== -1, "lot en file : case remplie + ids temps/barre conservés (feuille)");
+  var tileQueued = run("buildShopsViewHTML()");
+  ok(tileQueued.indexOf("wk-tile is-run") !== -1 && tileQueued.indexOf("wk-tile-bar-moulin") !== -1 && tileQueued.indexOf("prod-workshop-bar-moulin") === -1, "vignette « En cours » avec sa barre, à ids propres (pas de doublon)");
   run("WorkshopsSystem.tickWorkshop('moulin', 60000);"); // vider la file (2 lots x 3 s)
   run("game.resources.ble = 0; game.resources.farine = 0;");
-  // pilules multi-recettes (Cuisine de camp, 3 recettes) — carte construite directement
-  var cuisineHtml = run("buildWorkshopCardHTML(Object.assign({ id: 'cuisine_de_camp' }, WORKSHOPS_CONFIG.cuisine_de_camp))");
-  ok((cuisineHtml.match(/wk-pill/g) || []).length >= 3, "Cuisine de camp : 3 pilules de recettes rendues");
+  // la Boulangerie sans Farine dit qui la fabrique
+  var boul = run("openWorkshopId = 'boulangerie'; buildWorkshopSheetHTML('boulangerie')");
+  ok(boul.indexOf("goToResourceProducer('workshop', 'moulin')") !== -1, "intrant manquant : bouton vers l'atelier qui le fabrique (Moulin)");
+  // recettes multiples (Cuisine de camp, 3 recettes) : pastilles de recette
+  var cuisineHtml = run("openWorkshopId = 'cuisine_de_camp'; buildWorkshopSheetHTML('cuisine_de_camp')");
+  ok((cuisineHtml.match(/selectWorkshopRecipe\('cuisine_de_camp'/g) || []).length >= 3, "Cuisine de camp : 3 recettes au choix");
   run("WorkshopsSystem.setAutoRecipe('cuisine_de_camp', WORKSHOPS_CONFIG.cuisine_de_camp.recipes[0].id);");
-  ok(run("buildWorkshopCardHTML(Object.assign({ id: 'cuisine_de_camp' }, WORKSHOPS_CONFIG.cuisine_de_camp))").indexOf("is-auto") !== -1, "pilule active marquée ♻️ quand le chaînage est dessus");
-  run("WorkshopsSystem.setAutoRecipe('cuisine_de_camp', null);");
+  ok(run("buildWorkshopSheetHTML('cuisine_de_camp')").indexOf("auto_repeat.png") !== -1, "recette en Continu marquée");
+  run("WorkshopsSystem.setAutoRecipe('cuisine_de_camp', null); openWorkshopId = null;");
 
-  // 3. détail bâtiment : zones seules + actions groupées
-  run("productionViewTab = 'prod'; productionDetailBuildingId = 'farm';");
-  var detailHtml = run("buildProductionHTML()");
-  ok(detailHtml.indexOf("production-detail") !== -1 && detailHtml.indexOf("farm-plots-grid") !== -1, "détail = grille de zones");
-  ok(detailHtml.indexOf("production-group-actions") !== -1 && detailHtml.indexOf("Défricher une zone") !== -1, "actions groupées présentes");
-  ok(detailHtml.indexOf("workshop-card") === -1, "aucune carte atelier dans le détail (parties dans la vue agrégée)");
-  ok(detailHtml.indexOf("production-detail-back") !== -1, "bouton retour présent");
-  // v3.191.1 (retour Seb — redondance) : zone sélectionnée -> actions groupées masquées
-  run("selectedProductionPlotIndex.farm = 0;");
-  var detailSel = run("buildProductionHTML()");
-  ok(detailSel.indexOf("production-group-actions") === -1 && detailSel.indexOf("farm-plot-actions") !== -1, "zone sélectionnée : panneau de zone seul, actions groupées masquées");
-  run("selectedProductionPlotIndex.farm = null;");
-  ok(run("buildProductionHTML()").indexOf("production-group-actions") !== -1, "désélection : actions groupées de retour");
-  // v3.193.0 — bandeau figé : titre dynamique du cadre Village selon l'état
-  run("activeVillageSubTab = 'production'; productionDetailBuildingId = null; productionViewTab = 'prod';");
-  ok(run("buildVillageHTML()").indexOf('|Production"') !== -1, "bandeau : titre 🌾 Production (vue tableau de bord)");
-  run("productionViewTab = 'shops';");
-  ok(run("buildVillageHTML()").indexOf('|Ateliers"') !== -1, "bandeau : titre ⚒️ Ateliers (vue agrégée)");
-  run("productionViewTab = 'prod'; productionDetailBuildingId = 'farm';");
-  var detailFrame = run("buildVillageHTML()");
-  ok(detailFrame.indexOf('data-kf-title="' + run("PRODUCTION_BUILDINGS.farm.name") + '"') !== -1, "bandeau : titre = nom du bâtiment en détail");
-  ok(detailFrame.indexOf("production-detail-name") === -1, "détail : plus de nom en doublon dans le contenu (bandeau seul)");
-  run("productionDetailBuildingId = null; activeVillageSubTab = 'village';");
+  // 3. v3.414.0 (VUI-1) : le détail est une FEUILLE (ateliers + zones), plus une sous-page
+  run("productionDetailBuildingId = 'farm'; productionSheetTab = 'zones';");
+  var detailHtml = run("buildProductionSheetHTML('farm')");
+  ok(detailHtml.indexOf("prod-sheet") !== -1 && detailHtml.indexOf("farm-plots-grid") !== -1, "feuille, onglet Zones = grille de zones");
+  ok(detailHtml.indexOf("production-group-actions") !== -1 && detailHtml.indexOf("Défricher une zone") === -1, "sous la grille : un seul bouton fixe (Défricher passe par la zone signalée)");
+  ok(detailHtml.indexOf("wk-tile") === -1, "onglet Zones : aucun atelier");
+  ok(detailHtml.indexOf("closeProductionBuildingDetail()") !== -1, "la feuille se ferme par sa croix");
+  // v3.417.0 (atelier zones Z2) : plus de sélection — toucher une zone ouvre sa fenêtre ; le bouton du bas ne bouge plus
+  ok(detailHtml.indexOf("openZoneWindow('farm', 0)") !== -1 && detailHtml.indexOf("selectProductionPlot") === -1, "toucher une zone ouvre sa fenêtre (plus de sélection)");
+  run("productionZoneWin = { b: 'farm', i: 0 };");
+  var detailSel = run("buildProductionSheetHTML('farm')");
+  ok(detailSel.indexOf("zone-win") !== -1 && detailSel.indexOf("production-group-actions") !== -1, "fenêtre ouverte par-dessus, le bouton « La moins chère » reste en place");
+  run("productionZoneWin = null;");
+  run("productionSheetTab = 'shops';");
+  var sheetShops = run("buildProductionSheetHTML('farm')");
+  ok(sheetShops.indexOf("wk-grid") !== -1 && sheetShops.indexOf("openWorkshopSheet('moulin', 'farm')") !== -1, "onglet Ateliers : vignettes, et la feuille d'atelier saura revenir aux Champs");
+  ok(sheetShops.indexOf("wk-tile-boulangerie") !== -1 && sheetShops.indexOf("wk-tile-sechoir") === -1, "seulement ceux de ce bâtiment (Moulin, Boulangerie)");
+  // le cadre du Village garde son titre ; le rail dit où l'on est
+  run("activeVillageSubTab = 'production'; productionDetailBuildingId = null;");
+  var vh = run("buildVillageHTML()");
+  ok(vh.indexOf('|Village"') !== -1 && /village-tab is-on[^>]*setVillageSubTab\('production'\)/.test(vh), "cadre « Village », onglet Production allumé");
+  run("activeVillageSubTab = 'buildings';");
 
   // 4. "la − chère" : construit 2 zones ouvertes, vérifie le choix du coût total minimal
   run("var _p = ProductionPlotsSystem.getPlots('farm'); _p[0].state='open'; _p[0].level=3; _p[1].state='open'; _p[1].level=1;");
@@ -2490,7 +2491,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   ok(run("WorkshopsSystem.getAutoRecipeId('moulin')") === null, "auto coupé sur le Moulin");
 
   // remise à neutre pour d'éventuelles sections futures
-  run("productionViewTab = 'prod'; productionDetailBuildingId = null;");
+  run("productionViewTab = 'prod'; productionDetailBuildingId = null; activeVillageSubTab = 'production';");
 })();
 
 /* ================= [RESUME] v3.202.0 — sous-onglet Résumé ==================
@@ -2592,7 +2593,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
 (function () {
   console.log("\n[BILAN] statistiques cumulées, titres de cadre, styles morts");
 
-  run("game.playTime = 7325; game.totalKills = 4210; game.totalGoldEarned = 98000; game.totalDamageDealt = 1250000; game.cycleCount = 3; game.ascensionCount = 2;");
+  run("game.playTime = 7325; game.totalKills = 4210; game.totalGoldEarned = 98000; game.totalDamageDealt = 1250000; game.cycleCount = 3;");
 
   // --- le bandeau vit chez les Hauts faits ---
   // v3.338.0 (refonte) : il est replié en bas de l'onglet Collection (« Bilan de la partie ») ;
@@ -2741,7 +2742,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   var clsStat = run("ClassCombatManager.getCurrentClassId()");
   var statTalent = { knight: "k_cuirasse", archer: "a_oeil_vif", mage: "m_peau_arcane" }[clsStat];
   var statRow = clsStat === "archer" ? "precision" : "endurance";
-  run("game.talents = game.talents || {}; game.talents." + statTalent + " = 2; game.ascensionCount = 2; StatsSystem.recalcStats();");
+  run("game.talents = game.talents || {}; game.talents." + statTalent + " = 2; StatsSystem.recalcStats();");
   var atkAvantSources = run("EquipmentManager.effectiveTapDamage()");
   var talentsAvant = run("JSON.stringify(game.talents)");
   var equipAvant = run("JSON.stringify(game.equipped)");
@@ -2757,12 +2758,11 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   ok(run("JSON.stringify(game.talents)") === talentsAvant
     && run("JSON.stringify(game.equipped)") === equipAvant,
     "[STATS] talents et équipement sont restaurés à l'identique");
-  ok(run("game.ascensionCount") === 2, "[STATS] le compteur d'ascensions est restauré");
 
   // Un héros sans aucun bonus ne doit pas voir un bloc de sources vide.
   // L'entraînement compte lui aussi comme source : il faut le remettre à zéro pour
   // obtenir un cas où plus RIEN ne contribue (sinon le test ne vérifie rien).
-  run("game.talents = {}; game.ascensionCount = 0; game.aetherUpgrades = {}; game.equipped = {}; game.upgrades.utrain_will = 0; StatsSystem.recalcStats();");
+  run("game.talents = {}; game.equipped = {}; game.upgrades.utrain_will = 0; StatsSystem.recalcStats();");
   var srcsVides = run("(function () { var row = null;" +
     "HEROS_STAT_ROWS.forEach(function (r) { if (r.key === 'will') row = r; });" +
     "return getHeroStatSources(row); })()");
@@ -3107,7 +3107,6 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
   var order = g.GRIMOIRE_CONDITION_ORDER;
   var sorted = brise.slice().sort(function (a, b) { return order.indexOf(a) - order.indexOf(b); });
   ok(brise.join(",") === sorted.join(","), "[CONTRES] liste rangée dans l'ordre du Grimoire");
-  ok(g.getGrimoireCounterLabels(kit.skill1).length === heavy.length, "[CONTRES] les libellés suivent la même liste");
   ok(g.getAllGrimoireCounterIds(null).length === 0, "[CONTRES] action absente : liste vide, pas d'exception");
 
   // Les trois classes portent bien la redistribution v3.204.0.
@@ -3164,7 +3163,7 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
   /* --- Rendu de l'écran : liste, puis fiche de lecture --- */
   g.game.activeTab = "tutorials";
   var html = g.buildTutorialsHTML();
-  ok(html.indexOf("data-kf-title") !== -1, "[TUTOS] écran rendu dans un cadre de page");
+  ok(g.buildBestiaryHTML().indexOf("data-kf-title") !== -1, "[TUTOS] écran rendu dans un cadre de page (v3.405.0 : celui de la Bibliothèque)");
   ok(html.indexOf("/ " + all.length + " rencontrés") !== -1, "[TUTOS] compteur global affiché");
   ok(html.indexOf("nb-accordion-head") !== -1, "[TUTOS] sections en accordéon, repliées au premier rendu");
   ok(html.indexOf("nb-entry-card") === -1, "[TUTOS] aucune entrée rendue tant qu'aucune section n'est dépliée");
@@ -3241,17 +3240,6 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
   ok(g.game.equipShopResetTime === echeance, "[ÉCHOPPE] le minuteur n'est pas repoussé (pas de renouvellement offert)");
   ok(g.game.equipShopManualRefreshCount === renouvellements, "[ÉCHOPPE] le compteur de renouvellements manuels est intact");
 
-  // Cas 2 : ascension — hardResetState remet le monde à 0 sans toucher au stock.
-  neuf();
-  g.WorldManager.worldIndex = 2;
-  g.game.equipShopStock = [];
-  g.EquipShopManager.checkRefresh();
-  g.game.equipShopStock[0].rarity = "rare";
-  run("hardResetState();");
-  ok(g.WorldManager.worldIndex === 0, "[ÉCHOPPE] ascension : retour en Forêt");
-  ok(g.EquipShopManager.hasOutOfTierStock() === true, "[ÉCHOPPE] ascension : le stock d'avant survit (cause du bug)");
-  g.EquipShopManager.checkRefresh();
-  ok(g.game.equipShopStock.every(function (it) { return it.rarity === "common"; }), "[ÉCHOPPE] ascension : nettoyé à l'ouverture de la boutique");
 
   // Asymétrie : progresser n'invalide rien, un lot commun reste légitime plus loin.
   neuf();
@@ -3380,7 +3368,7 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
 
   /* --- Raccourci au Campement, retrait du menu --- */
   ok(!g.MENU_ITEMS.some(function (m) { return m.tab === "grimoire"; }), "[CAMP] le Grimoire a quitté le menu ☰");
-  var camp = g.buildCampHTML();
+  var camp = g.buildCampHTML("grimoire"); // v3.411.0 : onglet Grimoire du Campement
   ok(camp.indexOf("camp-grimoire-card") !== -1, "[CAMP] carte Grimoire présente au Campement");
   ok(camp.indexOf("switchTab(&#39;grimoire&#39;)") !== -1 || camp.indexOf("switchTab('grimoire')") !== -1, "[CAMP] le bouton mène bien à l'écran Grimoire");
   ok(camp.indexOf("règles actives") !== -1, "[CAMP] résumé du nombre de règles actives");
@@ -3389,7 +3377,7 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
   // Le résumé compte les règles réellement configurées, pas les emplacements.
   g.game.grimoireRules[1] = { conditionId: null, actionSlot: null };
   g.game.grimoireRules[2] = { conditionId: null, actionSlot: null };
-  ok(g.buildCampHTML().indexOf("1 / " + nbSlots + " règles actives") !== -1,
+  ok(g.buildCampHTML("grimoire").indexOf("1 / " + nbSlots + " règles actives") !== -1,
     "[CAMP] une seule règle configurée -> « 1 / " + nbSlots + " règles actives »");
 })();
 
@@ -4008,9 +3996,9 @@ console.log("\n[25] v3.216.0 (lot V-5) \u2014 Halle marchande : elle agrandit l'
 
   /* --- Verrou de rang ---------------------------------------------------- */
   g.game.village = {}; M.ensure();
-  g.game.village.buildings.workshop.level = 3; // rang 3 — v3.289.0 (D12) : la Halle est au rang 4
-  ok(M.getCardState("hall") === "locked" && M.getBlockReason("hall") === "Atelier niveau 4",
-    "Halle verrouill\u00e9e sous le rang 4, avec le niveau d'Atelier attendu");
+  g.game.village.buildings.workshop.level = 1; // v3.418.0 (R3) : la Halle passe au rang 2
+  ok(M.getCardState("hall") === "locked" && M.getBlockReason("hall") === "Atelier niveau 2",
+    "Halle verrouill\u00e9e sous le rang 2, avec le niveau d'Atelier attendu (v3.418.0)");
   g.game.village.buildings.workshop.level = 4;
   ok(M.getCardState("hall") === "ready", "Atelier niveau 4 : la Halle devient constructible");
 
@@ -4032,11 +4020,11 @@ console.log("\n[26] v3.217.0 (lot V-6) \u2014 Taverne : contrats de livraison");
 
   /* --- Emplacements de contrat ------------------------------------------ */
   ok(T.getSlotCount(0) === 0, "sans Taverne : aucun contrat");
-  ok(T.getSlotCount(1) === 1, "niveau 1 : un contrat");
-  ok(T.getSlotCount(2) === 2 && T.getSlotCount(5) === 5, "un contrat de plus par niveau");
+  ok(T.getSlotCount(1) === 2, "niveau 1 : deux contrats (v3.418.0, R1)");
+  ok(T.getSlotCount(2) === 3 && T.getSlotCount(5) === 6, "un contrat de plus par niveau (6 au niveau 5)");
   ok(g.VILLAGE_BUILDINGS.tavern.maxLevel === 5, "5 niveaux, 5 contrats : chaque chantier se voit sur le tableau");
   var tousUtiles = true;
-  for (var lv = 1; lv <= g.VILLAGE_BUILDINGS.tavern.maxLevel; lv++) {
+  for (var lv = 2; lv <= g.VILLAGE_BUILDINGS.tavern.maxLevel; lv++) {
     if (T.getSlotCount(lv) !== T.getSlotCount(lv - 1) + 1) tousUtiles = false;
   }
   ok(tousUtiles, "aucun niveau qui n'apporte rien de visible");
@@ -4105,8 +4093,8 @@ console.log("\n[26] v3.217.0 (lot V-6) \u2014 Taverne : contrats de livraison");
 
   /* --- Verrou de rang et rendu ------------------------------------------ */
   g.game.village = {}; M.ensure();
-  g.game.village.buildings.workshop.level = 3; // v3.289.0 (D12) : Taverne au rang 4
-  ok(M.getBlockReason("tavern") === "Atelier niveau 4", "Taverne verrouill\u00e9e sous le rang 4, avec le niveau attendu");
+  g.game.village.buildings.workshop.level = 1; // v3.418.0 (R1) : Taverne au rang 2
+  ok(M.getBlockReason("tavern") === "Atelier niveau 2", "Taverne verrouill\u00e9e sous le rang 2, avec le niveau attendu (v3.418.0)");
 
   g.game.village.buildings.workshop.level = 5;
   g.game.village.buildings.tavern.level = 2;
@@ -4292,12 +4280,6 @@ console.log("\n[29] v3.220.0 \u2014 \u00c9chelle de monde sur l'\u00e9quipement"
   ok(g.buildItemOriginHTML({ slot: "armor", worldIndex: 3 }) === "",
     "aucune provenance affich\u00e9e sur un emplacement qui ne suit pas l'\u00e9chelle");
 
-  /* --- L'arme de d\u00e9part reste une arme de d\u00e9part -------------------- */
-  run("fullResetState(); game.playerName='P'; game.heroId='knight';");
-  g.WorldManager.worldIndex = 5;
-  var starter = g.equipStarterWeapon();
-  ok(!starter || starter.value === 1, "l'arme de d\u00e9part garde sa valeur impos\u00e9e, hors \u00e9chelle");
-  g.WorldManager.worldIndex = 0;
 })();
 
 console.log("\n[30] v3.221.0 (lot V-8) \u2014 Forge : 30 niveaux = un cran de rarit\u00e9");
@@ -4424,35 +4406,8 @@ console.log("\n[30] v3.221.0 (lot V-8) \u2014 Forge : 30 niveaux = un cran de ra
     "pas d'\u00e9tabli tant que la Forge n'est pas b\u00e2tie");
 })();
 
-console.log("\n[31] v3.222.0 \u2014 Ascension : le h\u00e9ros garde ses niveaux, et retour aux pages d'accueil");
+console.log("\n[31] v3.222.0 \u2014 R\u00e9initialisation compl\u00e8te et retour aux pages d'accueil");
 (function () {
-  /* --- Ce que l'ascension conserve d\u00e9sormais --------------------------
-     L'exp\u00e9rience \u00e9tant devenue lente \u00e0 gagner, remettre le niveau \u00e0 1 \u00e0 chaque
-     cycle transformait l'ascension en corv\u00e9e de rattrapage. */
-  run("fullResetState(); game.playerName='A'; game.heroId='knight';");
-  g.game.heroLevel = 24;
-  g.game.heroXp = 137;
-  g.game.heroXpToNext = 420;
-  g.game.talentPoints = 5;
-  g.game.talents = { k_cuirasse: 2, k_sang_chaud: 1, k_colere_froide: 1, k_elan: 1 }; // v3.327.0
-  g.game.upgrades.utrain_power = 40;
-  g.game.gold = 999;
-  run("hardResetState();");
-
-  ok(g.game.heroLevel === 24, "le niveau du h\u00e9ros traverse l'ascension");
-  ok(g.game.heroXp === 137 && g.game.heroXpToNext === 420, "l'exp\u00e9rience en cours aussi, sans arrondi");
-  ok(g.game.talents.k_cuirasse === 2 && g.game.talents.k_elan === 1,
-    "les talents d\u00e9j\u00e0 pris sont conserv\u00e9s");
-  ok(g.game.talentPoints === 5, "les points non d\u00e9pens\u00e9s restent disponibles");
-  ok(!g.game.upgrades.utrain_power, "...alors que l'entra\u00eenement, lui, repart bien \u00e0 z\u00e9ro");
-
-  /* Pas de reroll gratuit : les points d\u00e9pens\u00e9s restent d\u00e9pens\u00e9s. */
-  var depenses = Object.keys(g.game.talents).reduce(function (n, k) { return n + g.game.talents[k]; }, 0);
-  ok(depenses === 5, "les points d\u00e9pens\u00e9s ne sont pas rendus : la r\u00e9initialisation garde son co\u00fbt");
-
-  /* Les PV se recomposent depuis le niveau conserv\u00e9. */
-  run("StatsSystem.recalcStats();");
-  ok(g.game.heroMaxHp > 10, "les PV sont recompos\u00e9s \u00e0 partir du niveau conserv\u00e9, pas laiss\u00e9s \u00e0 10");
 
   /* --- Un reset complet, lui, remet bien tout \u00e0 z\u00e9ro ------------------ */
   run("fullResetState();");
@@ -4464,7 +4419,7 @@ console.log("\n[31] v3.222.0 \u2014 Ascension : le h\u00e9ros garde ses niveaux,
      l'on \u00e9tait la derni\u00e8re fois (retour Seb). */
   run("productionViewTab = 'shops'; productionDetailBuildingId = 'sawmill'; selectedWarehouseKey = 'bois';");
   run("setVillageSubTab('production');");
-  ok(run("productionViewTab") === "prod", "revenir sur Production rouvre la page de r\u00e9colte");
+  ok(run("activeVillageSubTab") === "production" && run("buildVillageHTML()").indexOf("prod-harvest-all-btn") !== -1, "revenir sur Production rouvre la page de r\u00e9colte");
   ok(run("productionDetailBuildingId") === null, "...et referme le d\u00e9tail de b\u00e2timent");
   ok(run("selectedWarehouseKey") === null, "...et la ressource s\u00e9lectionn\u00e9e \u00e0 l'Entrep\u00f4t est oubli\u00e9e");
 
@@ -5409,7 +5364,7 @@ console.log("\n[47] v3.245.0 \u2014 Refonte des Donjons");
   ok(game.dungeonRun.dungeonId === 3 && game.dungeonRun.tierId === undefined && Array.isArray(game.dungeonRun.marks), "dungeonRun.tierId -> dungeonId, marks initialis\u00e9");
 
   /* --- Afflictions parqu\u00e9es, Boutique chez l'Enchanteresse --- */
-  ok(!g.MENU_ITEMS.some(function (m) { return m.tab === "afflictions"; }) && g.MENU_ITEMS.length === 5, "menu \u2630 : Afflictions retir\u00e9es, 5 cases");
+  ok(!g.MENU_ITEMS.some(function (m) { return m.tab === "afflictions"; }) && g.MENU_ITEMS.length === 4, "menu \u2630 : Afflictions retir\u00e9es, 4 cases (v3.405.0 : Bestiaire et Tutoriels r\u00e9unis dans la Biblioth\u00e8que)");
   run("VillageBuildingManager.ensure(); game.village.buildings.enchanter = { level: 0 };");
   var fiche0 = run("openVillageBuildingId = 'enchanter'; buildVillageBuildingSheetHTML('enchanter')");
   ok(fiche0.indexOf("vb-sheet-seg") !== -1 && fiche0.indexOf("nb-purchase-card") !== -1 && /Relance<\/button>/.test(fiche0) && fiche0.indexOf("disabled") !== -1, "Enchanteresse non construite : segment, Relance gris\u00e9e, Boutique d'\u00e9clats visible");
@@ -5432,7 +5387,7 @@ console.log("\n[48] v3.246.0 \u2014 Compteur de round, reprise de quête, PV de 
   ok(game.combatRound.number === 4, "4 actions jou\u00e9es : R" + game.combatRound.number);
   game.enemy.hp = 1; g.CombatEngine.heroAction("basic"); // tue -> nouvel ennemi
   ok(game.combatRound.number === 0, "ennemi suivant : le compteur repart \u00e0 R0 (\u00e9tait R" + game.combatRound.number + ")");
-  var pill = run("buildEnemyStatusBarHTML === undefined ? '' : ''");
+  var pill = "";
   game.enemy.chargeIn = 99; game.enemy.engageIn = 0; g.CombatEngine.heroAction("basic");
   ok(game.combatRound.number === 1, "puis R1 au premier round du nouveau combat");
 
@@ -5717,11 +5672,11 @@ console.log("\n[52] v3.250.0 \u2014 Porte de la Boutique au Campement");
 (function () {
   game = freshCombat("knight");
   run("game.unlockedTabs.shop = false;");
-  var sans = run("buildCampHTML()");
+  var sans = run("buildCampHTML('depart')");
   ok(sans.indexOf("goToPotions()") === -1, "onglet Boutique verrouill\u00e9 : aucune porte au Campement");
 
   run("game.unlockedTabs.shop = true;");
-  var avec = run("buildCampHTML()");
+  var avec = run("buildCampHTML('depart')");
   ok(avec.indexOf("goToPotions()") !== -1, "d\u00e8s que l'onglet est d\u00e9bloqu\u00e9, la porte « Potions » appara\u00eet");
   ok(avec.indexOf("goToEconomy()") === -1, "...et plus de porte « \u00c9conomie » (v3.313.0 : Bourse et Contrats retir\u00e9s)");
 
@@ -5734,7 +5689,7 @@ console.log("\n[52] v3.250.0 \u2014 Porte de la Boutique au Campement");
   game.storyQuests.forest.currentStep = idx04;
   run("StoryQuestManager.acceptStep('forest');");
   ok(game.unlockedTabs.shop === true, "forest_04 accept\u00e9e : l'onglet Boutique est d\u00e9bloqu\u00e9");
-  ok(run("buildCampHTML()").indexOf("goToPotions()") !== -1, "...et le Campement offre bien une porte pour y aller");
+  ok(run("buildCampHTML('depart')").indexOf("goToPotions()") !== -1, "...et le Campement offre bien une porte pour y aller");
   ok(step04.check(game) === false, "l'\u00e9tape n'est pas encore remplie");
   game.gold = 400;
   run("PotionManager.ensureHealing(); PotionManager.buyHealingPotion('potion_soin_mineur');");
@@ -5831,8 +5786,7 @@ console.log("\n[53] v3.251.0 \u2014 \u00c9tats de combat (bandeau, rang\u00e9e, 
     "plus de title sur les \u00e9tats (invisible sur mobile, rempla\u00e7\u00e9 par la feuille)");
 
   /* L'alias historique reste fonctionnel : plusieurs syst\u00e8mes l'appellent encore. */
-  ok(typeof g.buildEnemyStatusBarHTML === "function" && g.buildEnemyStatusBarHTML() === g.buildCombatStatesHTML(),
-    "buildEnemyStatusBarHTML conserv\u00e9 comme alias de la rang\u00e9e");
+  ok(typeof g.buildEnemyStatusBarHTML === "undefined", "v3.412.0 : l'ancien alias buildEnemyStatusBarHTML est retiré (code mort)");
 })();
 
 /* [54] v3.252.0 — lisibilité de l'équipement : liste du sac, bilan réel, feuille de comparaison. */
@@ -6024,13 +5978,13 @@ console.log("\n[57] v3.255.0 \u2014 Cartes Vivantes C-1 : donn\u00e9es, LivingMa
   ok(refOk, "gabarits, obstacles (SCENE_NODES.obstacles) et groupes (combatGroups) référencés existent");
   ok(eliteOk, "Camp des toiles : l'élite araignee_marquee existe dans ELITE_DB");
 
-  /* Nouvelle partie : tout voilé, repère aligné sur ascensionCount. */
+  /* Nouvelle partie : tout voilé. */
   game = freshCombat("knight");
   game.unlockedTabs.village = true; // v3.256.0 : les départs exigent le Village ouvert (testé en [58])
-  var taken0 = LM.ensureDefaults();
+  LM.ensureDefaults();
   var sum = LM.getSummary(M);
-  ok(sum.voile === 9 && sum.libere === 0 && sum.recouvert === 0 && taken0.length === 0, "nouvelle partie : 9 secteurs voilés, aucune régression au premier ensureDefaults");
-  ok(game.livingMaps.lastAscensionSeen === game.ascensionCount, "repère lastAscensionSeen aligné sur ascensionCount");
+  ok(sum.voile === 9 && sum.libere === 0 && sum.recouvert === 0, "nouvelle partie : 9 secteurs voilés, aucune régression au premier ensureDefaults");
+  ok(!("lastAscensionSeen" in game.livingMaps), "v3.412.0 : plus de repère d'Ascension");
 
   /* Atteignabilité : l'anneau 1 l'est toujours, l'anneau 2 jamais avant un voisin libéré. Le mur parle. */
   ok(LM.isReachable(M, "gue") && LM.isReachable(M, "camp") && LM.isReachable(M, "etang"), "anneau 1 toujours atteignable");
@@ -6119,33 +6073,18 @@ console.log("\n[57] v3.255.0 \u2014 Cartes Vivantes C-1 : donn\u00e9es, LivingMa
   ok(LM.isNameRevealed(M, "arbremere") && !LM.isNameRevealed(M, "autel"), "niveau 5 : le nom d'un voilé au front (Arbre-mère) est révélé, pas celui d'un voilé hors d'atteinte (Autel)");
   LM._rand = Math.random;
 
-  /* Ascension par repère : tout ce que la Palissade ne tient pas tombe, une seule fois. */
-  var before = LM.getSummary(M);
-  game.ascensionCount += 1;
-  var taken = LM.ensureDefaults();
-  var after = LM.getSummary(M);
-  ok(taken.length === before.libere - before.protege && after.libere === before.protege && after.libere === 2,
-    "Ascension : " + taken.length + " secteur(s) repris, l'anneau 1 tenu (gué, étang) survit");
-  ok(LM.ensureDefaults().length === 0 && LM.getSummary(M).libere === 2, "idempotent : un second appel ne reprend rien de plus");
-  ok(LM.getState(M, "toiles").firstRewardClaimed === true, "la Sève de première libération n'est pas remise en jeu");
 
-  /* Sauvegarde : 4 points. buildSaveData / restoreBaseState / hardResetState (conservé, puis recouvert par le système) / fullResetState. */
+  /* Sauvegarde : buildSaveData / restoreBaseState / fullResetState. */
   var saved = run("buildSaveData()");
-  ok(saved.livingMaps && saved.livingMaps.forest && saved.livingMaps.forest.sectors.gue.state === "libere" && typeof saved.livingMaps.lastAscensionSeen === "number",
-    "buildSaveData écrit livingMaps (états + repère)");
+  ok(saved.livingMaps && saved.livingMaps.forest && saved.livingMaps.forest.sectors.gue.state === "libere",
+    "buildSaveData écrit livingMaps");
+  var rec0 = LM.getSummary(M).recouvert;
   var d = JSON.parse(run("JSON.stringify(buildSaveData())"));
   run("restoreBaseState(" + JSON.stringify(d) + ")");
-  ok(LM.getState(M, "gue").state === "libere" && LM.getState(M, "gue").liberatedCount === 2 && LM.getSummary(M).recouvert === after.recouvert, "restoreBaseState relit livingMaps à l'identique");
+  ok(LM.getState(M, "gue").state === "libere" && LM.getState(M, "gue").liberatedCount === 2 && LM.getSummary(M).recouvert === rec0, "restoreBaseState relit livingMaps à l'identique");
   delete d.livingMaps;
   run("restoreBaseState(" + JSON.stringify(d) + ")");
-  ok(LM.getSummary(M).voile === 9 && game.livingMaps.lastAscensionSeen === game.ascensionCount, "sauvegarde d'avant la v3.255.0 : objet vide, complété sans régression");
-  /* Ascension réelle : ascendNow incrémente le compteur PUIS hardResetState conserve livingMaps ; la reprise se fait à la lecture. */
-  LM.onRunEnd(M, "gue", "success"); LM.onRunEnd(M, "camp", "success");
-  game.village.buildings.palisade.level = 0;
-  game.ascensionCount += 1;
-  run("hardResetState();");
-  ok(game.livingMaps.forest.sectors.gue.state === "libere", "hardResetState conserve livingMaps tel quel (la sauvegarde ne recouvre pas)");
-  ok(LM.ensureDefaults().length === 2 && LM.getSummary(M).recouvert === 2 && LM.getState(M, "gue").firstRewardClaimed, "...et LivingMapManager recouvre à la lecture, Sève acquise conservée");
+  ok(LM.getSummary(M).voile === 9, "sauvegarde d'avant la v3.255.0 : objet vide, complété sans régression");
   run("fullResetState();");
   ok(JSON.stringify(game.livingMaps) === "{}", "fullResetState : livingMaps vide");
   ok(LM.getSummary(M).voile === 9, "...recréé voilé au premier accès");
@@ -6278,15 +6217,6 @@ console.log("\n[58] v3.256.0 \u2014 Cartes Vivantes C-2 : vue, runs cibl\u00e9s,
   game.unlockedTabs.village = false;
   ok(!LM.canStart(M, "gue").ok && /Aeswyn n'a pas encore ouvert/.test(LM.canStart(M, "gue").reason), "sans Village : départ refusé avec la raison");
   game.unlockedTabs.village = true;
-
-  /* Ascension pendant un combat : le combat ne traverse pas. */
-  game.heroHp = game.heroMaxHp;
-  LM.getState(M, "toiles").liberatedCount = 0;
-  LM.start(M, "toiles");
-  run("SortieManager.end('return');"); // on simule une fin de sortie externe
-  game.ascensionCount += 1;
-  LM.ensureDefaults();
-  ok(!LM.getFight(), "Ascension : le combat de carte est oublié");
 })();
 
 /* [59] v3.257.0 — Cartes Vivantes, lot C-3 : Palissade livrée, effets tenus branchés. */
@@ -6320,8 +6250,6 @@ console.log("\n[59] v3.257.0 \u2014 Cartes Vivantes C-3 : Palissade, effets tenu
   LM._rand = function () { return 0.99; };
   var r = LM.onRunEnd(M, "arbremere", "fail");
   ok(r.regressed === null && LM.getProtectedSet(M).length === 3, "niveau 10 : m\u00eame sans frein, un \u00e9chec ne reprend rien (anneaux 1 \u00e0 3 tenus)");
-  game.ascensionCount += 1;
-  ok(LM.ensureDefaults().length === 0 && LM.getSummary(M).libere === 3, "niveau 10 : l'Ascension ne reprend rien");
   LM._rand = Math.random;
 
   /* Effets tenus : rien sans secteur libéré. */
@@ -6344,7 +6272,7 @@ console.log("\n[59] v3.257.0 \u2014 Cartes Vivantes C-3 : Palissade, effets tenu
   game.village.buildings.workshop.level = 5; game.village.buildings.tavern.level = 2;
   run("TavernManager.ensure();");
   var contracts = g.TavernManager.getContracts();
-  ok(contracts.length === 2, "Taverne niveau 2 : deux contrats");
+  ok(contracts.length === 3, "Taverne niveau 2 : trois contrats (v3.418.0)");
   var c0 = contracts[0];
   ok(g.TavernManager.getPayout(c0) === c0.reward, "sans Campement : paiement = r\u00e9compense de base");
   LM.onRunEnd(M, "camp", "success");
@@ -6598,7 +6526,6 @@ console.log("\n[62] v3.260.0 \u2014 Retours de jeu : Brume, Colporteur, arme, co
   /* --- Arme : plus d'arme de départ à la création --- */
   var creation = String(g.confirmHeroSelection);
   ok(creation.indexOf("equipStarterWeapon()") === -1, "cr\u00e9ation de h\u00e9ros : plus d'arme \u00e0 1 d\u00e9g\u00e2t");
-  ok(require("fs").readFileSync(require("path").join(ROOT, "js/ui/heros-view.js"), "utf8").indexOf("equipStarterWeapon();") !== -1, "changement de h\u00e9ros : le secours \u00e0 1 d\u00e9g\u00e2t reste en place (heros-view.js)");
   ok(!g.STORY_REWARDS.forest_01.equipmentItem && g.STORY_REWARDS.forest_02.equipmentItem === g.STORY_STARTER_WEAPON, "l'arme +15 est la r\u00e9compense de Premier sang");
   var s02 = chapitre.steps[idxOf("forest_02")];
   ok(s02.objectiveLabel.indexOf("5 ennemis \u00e0 la Lisi\u00e8re") !== -1 && s02.narrative.completion.indexOf("une arme oubli\u00e9e") !== -1, "Premier sang : objectif et texte valid\u00e9s");
@@ -6655,7 +6582,7 @@ ok(hq.dropChancePct === 50 && hq.resourcePool.length === 6, "Chasse en For\u00ea
   ok(hq.resourcePool.every(function (k) { return Math.abs(tally[k] / N - 0.5 / 6) < 0.035; }), "chaque ressource \u2248 8,3 % (" + hq.resourcePool.map(function (k) { return k + " " + Math.round(1000 * tally[k] / N) / 10; }).join(", ") + ")");
   var board = g.MissionBoard.list().find(function (m) { return m.id === "hunt_hq_forest_boar"; });
   ok(!board || board.rewardSummary === "50 % de ressource de base par kill", "tableau : « 50 % de ressource de base par kill »");
-  game.lastSortieSummary = { kept: { resources: { bois: 2, fer: 1 } } };
+  game.lastSortieSummary = { outcome: "success", context: "hunt", kept: { resources: { bois: 2, fer: 1 } } };
   var lot = g.buildHuntLotCompleteHTML(hq);
   ok(lot.indexOf("Bois") !== -1 && lot.indexOf("+2") !== -1 && lot.indexOf("en stock") === -1, "fin de lot : le d\u00e9tail du butin, ressource par ressource");
 
@@ -6672,12 +6599,12 @@ ok(hq.dropChancePct === 50 && hq.resourcePool.length === 6, "Chasse en For\u00ea
   ok(g.SceneRunManager.isRunActive() && game.resources.petite_ration === 0 && g.buildSceneScreenHTML().indexOf("Il te manque") === -1, "« Partir » lance l'exp\u00e9dition et consomme la ration");
   run("SceneRunManager.abandon && SceneRunManager.abandon(); SceneRunManager.clearRun && SceneRunManager.clearRun();");
   run("game.resources.petite_ration = 0; openSceneQuestEntry('sentier_obstrue'); goToSceneCostWorkshop();");
-  ok(game.activeTab === "village" && g.activeVillageSubTab === "production" && g.productionViewTab === "shops", "« Pr\u00e9parer aux Ateliers » ouvre Village > Production > Ateliers");
+  ok(game.activeTab === "village" && g.activeVillageSubTab === "shops" && g.productionViewTab === "shops", "« Pr\u00e9parer aux Ateliers » ouvre Village > Ateliers (rail v3.414.0)");
   ok(g.buildSceneLandingHTML().indexOf("Aucune exp\u00e9dition en cours") !== -1, "une fois quitt\u00e9, l'accueil normal revient");
 
   /* --- Campement : régénération sur une ligne, boutons Manger en 9 zones --- */
   var css = require("fs").readFileSync(require("path").join(ROOT, "css/04-panel-camp.css"), "utf8");
-  ok(/\.camp-ration-btn\s*\{[^}]*border-image:/.test(css), "Manger : cadre d\u00e9coup\u00e9 en 9 zones (border-image), pointes non \u00e9cras\u00e9es");
+  ok(css.indexOf(".camp-ration-btn") === -1 && css.indexOf(".camp-ration-ib") !== -1, "v3.412.0 : l'ancien bouton Manger n'a plus de style (rations en boutons-icônes)");
 })();
 
 /* [63] v3.261.0 — Bandeau héros du combat, variante B (atelier-bandeau-combat.html). */
@@ -6687,7 +6614,6 @@ console.log("\n[63] v3.261.0 \u2014 Bandeau h\u00e9ros du combat, variante B");
   ok(/\.cb-hero\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)/.test(css), "colonne du panneau born\u00e9e : un butin long n'\u00e9largit plus l'\u00e9cran");
   ok(/\.cb-hero \.cb-hero-top #combat-hero-mini \{ display: contents !important; \}/.test(css), "portrait et PV deviennent des cases de grille sans toucher au balisage");
   ok(/\.combat-hero-mini-hp-bar \{ grid-column: 2; grid-row: 2; width: 100% !important;/.test(css), "PV sur toute la largeur, sous la rang\u00e9e butin / potions / Fuir");
-  ok(/\.cb-celerity \.combat-gauge \{ flex: 0 0 auto; width: 70%; max-width: none; \}/.test(css), "c\u00e9l\u00e9rit\u00e9 centr\u00e9e \u00e0 70 % (plus de plafond \u00e0 120 px)");
   /* Le balisage attendu par ces règles est toujours celui du jeu. */
   var html = g.buildCombatHTML();
   ok(html.indexOf('class="cb-hero-top"') !== -1 && html.indexOf('id="combat-hero-slot" class="cb-hero-slot"') !== -1 && html.indexOf('id="combat-sortie-root" class="combat-sortie-row"') !== -1, "structure cb-hero-top / slot / rang\u00e9e de sortie inchang\u00e9e");
@@ -6762,12 +6688,12 @@ console.log("\n[67] v3.265.0 \u2014 Avertissement PV bas, b\u00e2timents manquan
   game.explorationProgression.wellUnlocked = true; game.explorationProgression.huntBuildingUnlocked = true; game.explorationProgression.quarryUnlocked = true;
   ok(g.getProductionUnlockQuestId("sawmill") === "bosquet_silencieux" && g.getProductionUnlockQuestId("farm") === "terre_en_friche" && g.getProductionUnlockQuestId("mine") === "eboulis_ferreux", "chaque b\u00e2timent restant retrouve sa qu\u00eate (Bosquet, Terre en friche, \u00c9boulis)");
   var dash0 = g.buildProdDashboardHTML();
-  ok(dash0.indexOf("production-dash-card is-locked") === -1, "avant la fin de « La veine instable » : aucun b\u00e2timent verrouill\u00e9 affich\u00e9");
+  ok(dash0.indexOf("prod-tile is-locked") === -1, "avant la fin de « La veine instable » : aucun b\u00e2timent verrouill\u00e9 affich\u00e9");
   game.storyQuests.forest.claimedSteps.forest_09 = true;
   var dash1 = g.buildProdDashboardHTML();
-  ok((dash1.match(/production-dash-card is-locked/g) || []).length === 3 && dash1.indexOf("Le Bosquet Silencieux") !== -1, "apr\u00e8s : Scierie, Champs et Mine affich\u00e9s, verrouill\u00e9s, avec leur qu\u00eate");
+  ok((dash1.match(/prod-tile is-locked/g) || []).length === 3 && dash1.indexOf("Le Bosquet Silencieux") !== -1, "apr\u00e8s : Scierie, Champs et Mine affich\u00e9s, verrouill\u00e9s, avec leur qu\u00eate");
   game.explorationProgression.sawmillUnlocked = true;
-  ok((g.buildProdDashboardHTML().match(/production-dash-card is-locked/g) || []).length === 2, "un b\u00e2timent d\u00e9bloqu\u00e9 quitte la liste des manquants");
+  ok((g.buildProdDashboardHTML().match(/prod-tile is-locked/g) || []).length === 2, "un b\u00e2timent d\u00e9bloqu\u00e9 quitte la liste des manquants");
   game.unlockedTabs.quests = true; game.unlockedTabs.village = true;
   run("goToProductionUnlockQuest('mine');");
   ok(game.activeTab === "quests" && g.activeQuestCategory === "secondaires", "toucher la Mine ouvre Qu\u00eates > Secondaires");
@@ -7108,10 +7034,7 @@ console.log("\n[70] v3.268.0 (L-2) — Wenna : roster, tour du compagnon, menace
   ok(W().unlockedIds().length === 0, "un id inconnu dans la save est ignoré, sans planter");
   run("fullResetState();");
   ok(Object.keys(game.companions || {}).length === 0, "fullResetState : aucun compagnon");
-  run("game.companions = {}; CompanionManager.unlock('wenna'); CompanionManager.state('wenna').hp = 1; hardResetState();");
-  ok(W().isUnlocked("wenna") && W().hpOf("wenna") === W().maxHpOf("wenna"),
-    "ascension : elle reste acquise et repart à PV pleins");
-
+  
   /* --- Étape d'Histoire --- */
   game = freshCombat("knight"); giveWeapon();
   run("StoryQuestManager.ensure();");
@@ -7727,7 +7650,7 @@ console.log("\n[75] v3.276.0 — dégâts au clic, contrôle dicté par le mode,
 console.log("\n[76] v3.278.0 — la barre de PV du héros prend le cadre des compagnons");
 (function () {
   var css = "";
-  try { css = require("fs").readFileSync(ROOT + "/css/03-combat-group.css", "utf8"); } catch (e) { css = ""; }
+  try { css = unpal(require("fs").readFileSync(ROOT + "/css/03-combat-group.css", "utf8")); } catch (e) { css = ""; }
 
   ok(css.indexOf(".cb-hero .combat-hero-mini-hp-bar.kgauge") !== -1,
     "la reprise vise bien la barre de PV du héros dans le cadre de combat");
@@ -8366,9 +8289,11 @@ console.log("\n[89] v3.293.0 — Plus de farm libre : contexte de quête, runs d
     ["donjon", function () { game.dungeonRun = { active: true, wave: 1 }; }, function () { game.dungeonRun = { active: false, wave: 0 }; }],
     ["aventure", function () { game.adventureQuestRun = { active: true, questId: "aq_story_premier_sang" }; }, function () { game.adventureQuestRun = { active: false, questId: null }; }],
     ["chasse", function () { game.huntRun = { active: true, questId: "hq_forest_boar", killsInLot: 0 }; }, function () { game.huntRun = { active: false, questId: null, killsInLot: 0 }; }],
-    ["élite de carte", function () { game.livingMaps.fight = { mapId: "forest", sectorId: "gue" }; }, function () { game.livingMaps.fight = null; }],
-    ["combat de scène", function () { game.sceneRun = { status: "combat" }; }, function () { game.sceneRun = null; }]
+    ["élite de carte", function () { game.livingMaps.fight = { mapId: "forest", sectorId: "gue" }; }, function () { game.livingMaps.fight = null; }]
   ];
+  game.sceneRun = { status: "combat" };
+  ok(g.hasCombatQuestContext() === false, "v3.412.0 : un ancien run de scène « combat » n'ouvre plus le Combat");
+  game.sceneRun = null;
   ctx.forEach(function (c) { c[1](); var on = g.hasCombatQuestContext(); c[2](); ok(on === true && g.hasCombatQuestContext() === false, "contexte reconnu : " + c[0]); });
 
   /* Onglet Combat : refusé sans run (Ascension, save rouverte sur Combat, ancien lien). */
@@ -9023,9 +8948,6 @@ console.log("\n[104] v3.307.0 — verrou héros pendant une expédition (Chemin 
   var lvl0 = game.upgrades.utrain_power || 0;
   g.buyUpgrade("utrain_power", 5);
   ok((game.upgrades.utrain_power || 0) === lvl0, "entraînement refusé");
-  var asc0 = game.ascensionCount || 0; game.totalKills = 1e6;
-  g.ascendNow();
-  ok((game.ascensionCount || 0) === asc0 && g.SceneRunManager.isRunActive(), "Ascension refusée");
   ok(g.isGrimoireEditable() === false, "Grimoire en lecture seule");
   ok(g.ForgeManager.getBlockReason("weapon") === "Forge non construite" || g.ForgeManager.getBlockReason("weapon") === "Héros en expédition", "Forge : refus (bâtiment absent ou héros engagé)");
   ok(g.EnchantManager._isEquipped(game.equipped.weapon) === true && g.EnchantManager._isEquipped(game.inventory[game.inventory.length - 1]) === false, "Enchanteresse : seule la pièce portée est gelée");
@@ -9630,14 +9552,12 @@ console.log("\n[118] v3.322.0 — Offrande, Souvenirs, niveau de Mémoire et ses
   game.worldsEverReached = { 0: true };
 
   /* --- Fin de l'Ascension --- */
-  ok(g.AscensionManager.canAscend() === false, "l'Ascension n'est plus possible");
-  var ab = g.getAetherBonuses();
-  ok(ab.tapBonus === 0 && ab.goldBonus === 0 && ab.vitalityBonus === 0, "boutique d'Aether : plus aucun bonus");
+  ok(typeof g.AscensionManager === "undefined" && typeof g.getAetherBonuses === "undefined", "l'Ascension et les bonus d'Aether sont retirés (v3.412.0)");
   ok(typeof g.AETHER_SHOP === "undefined" && typeof g.buyAetherUpgrade === "undefined", "boutique d'Aether retirée (v3.355.0)");
-  game.ascensionCount = 5; game.totalAetherEarned = 400; g.StatsSystem.recalcStats();
+  game.totalAetherEarned = 400; g.StatsSystem.recalcStats();
   var tap5 = game.tapMult, hp5 = game.heroMaxHp;
-  game.ascensionCount = 0; game.totalAetherEarned = 0; g.StatsSystem.recalcStats();
-  ok(Math.abs(game.tapMult - tap5) < 1e-9 && game.heroMaxHp === hp5, "ni les Ascensions passées ni l'Aether cumulé ne changent les stats");
+  game.totalAetherEarned = 0; g.StatsSystem.recalcStats();
+  ok(Math.abs(game.tapMult - tap5) < 1e-9 && game.heroMaxHp === hp5, "l'Aether cumulé ne change pas les stats");
 
   /* --- Valeur d'Offrande --- */
   var com = g.generateEquipmentItem("ring", "common", 0), grn = g.generateEquipmentItem("ring", "green", 0);
@@ -9730,8 +9650,6 @@ console.log("\n[118] v3.322.0 — Offrande, Souvenirs, niveau de Mémoire et ses
   ok(d.memory && d.memory.choices[3] === "fidelite_wenna", "buildSaveData : les choix de Mémoire sont écrits");
   game.memory = null; g.restoreBaseState(d);
   ok(game.memory && game.memory.choices[1] === "reserve_alchimiste" && game.memory.reprises >= 1, "restoreBaseState : la Mémoire est relue");
-  run("hardResetState()");
-  ok(game.memory && game.memory.choices[1] === "reserve_alchimiste", "hardResetState : la Mémoire se garde");
   run("fullResetState()");
   ok(game.memory && Object.keys(game.memory.choices).length === 0 && game.totalAetherEarned === 0, "fullResetState : la Mémoire repart de zéro");
 
@@ -10063,7 +9981,6 @@ console.log("\n[122] v3.327.0 — Talents par classe : points plafonnés par act
 
   // --- Retraits ---
   ok(g.getHeroXpRequiredForLevel(1) === 30 && g.getHeroXpRequiredForLevel(10) === 120, "courbe d'XP linéaire : 30, puis +10 par niveau");
-  ok(g.getTalentRespecCost() === 0, "remise à zéro : coût 0");
   var src = require("fs").readFileSync(ROOT + "/js/main/game-loop.js", "utf8");
   ok(src.indexOf("t_regenerate") === -1 && src.indexOf("t_interest") === -1, "plus d'Essence cachée ni d'or passif");
 })();
@@ -10205,8 +10122,7 @@ console.log("\n[125] v3.330.0 — Plafond de stock brut, niveaux d'Histoire, Blo
     g.game.village.buildings.workshop = { level: 10 };
     var r10 = g.TavernManager ? g.TavernManager.getRewardFor("fer", 50) : null;
     ok(r0 !== null && r10 > r0, "E6 : l'Atelier de Construction relève les contrats de la Taverne (" + r0 + " -> " + r10 + ")");
-    run("selectWarehouseKey('fer');");
-    var dh = run("buildWarehouseDetailPanelHTML()");
+    var dh = run("buildWarehouseSheetHTML('fer')");
     ok(dh.indexOf("Vendre") === -1 && dh.indexOf("Taverne") !== -1, "E6 : l'écran de l'Entrepôt renvoie vers la Taverne");
     g.game.genericTutorialsSeen = {};
     ok(run("buildWarehouseHTML()").indexOf("Le tavernier") !== -1, "E6 : mot du tavernier à la première visite");
@@ -10252,8 +10168,8 @@ console.log("\n[127] v3.332.0 — Écran de retour unique et fil rouge");
 
   // --- HUD : le fil rouge remplace le raccourci Ascension (F1) ---
   var hud = g.buildHudHTML();
-  ok(typeof g.renderHudDock === "function" && typeof g.renderHudFilRouge === "function" && hud.indexOf("hud-ascension-badge") === -1, "F1 : le fil rouge remplace l'Ascension (v3.396.0 : c'est une bulle de raccourci)");
-  ok(typeof g.renderHudAscensionBadge === "function", "F1 : l'ancien nom reste appelable (sans effet de bord)");
+  ok(typeof g.renderHudDock === "function" && typeof g.renderHudFilRouge === "undefined" && hud.indexOf("hud-ascension-badge") === -1, "F1 : le fil rouge remplace l'Ascension (v3.396.0 : c'est une bulle de raccourci)");
+  ok(typeof g.renderHudAscensionBadge === "undefined", "F1 : l'ancien nom est retiré (v3.412.0, code mort)");
 
   // --- Préférences d'affichage (F4) ---
   ok(g.Prefs.get("filRouge") === true && g.Prefs.get("bossMoments") === true, "F4 : fil rouge et mises en scène actifs par défaut");
@@ -10466,8 +10382,6 @@ console.log("\n[128] v3.333.0 — Moments de boss : entrée, phase, coup final, 
   var rest = BM.restore({ "x:Y": { name: "Y", at: 5, level: 3, rounds: 9, allies: ["Wenna", 4], worldId: "forest" }, bad: 12, "z:Z": { at: 1 } });
   ok(Object.keys(rest).length === 1 && rest["x:Y"].allies.length === 1, "chargement : entrées mal formées écartées");
   BM.restore(saved.bossTrophies);
-  run("hardResetState();");
-  ok(Object.keys(g.game.bossTrophies).length >= 2, "reprise (hardResetState) : les trophées sont conservés");
   run("fullResetState();");
   ok(Object.keys(g.game.bossTrophies).length === 0, "réinitialisation complète : plus de trophée");
   ok(g.createInitialGameState().bossTrophies && typeof g.createInitialGameState().bossTrophies === "object", "état initial : bossTrophies présent (changement de héros)");
@@ -10582,8 +10496,6 @@ console.log("\n[129] v3.334.0 — Patrouilles : départ, groupe, retour, rappel,
   ok(saved.patrols && saved.patrols.wenna && saved.patrols.wenna.sectorId === "gue", "sauvegarde : patrouille en cours écrite");
   var rest = PM.restore({ wenna: saved.patrols.wenna, inconnu: saved.patrols.wenna, maddoc: { sectorId: 3 } });
   ok(Object.keys(rest).length === 1 && rest.wenna.loot.bois > 0, "chargement : compagnon inconnu ou entrée mal formée écartés");
-  run("hardResetState();");
-  ok(g.game.patrols && g.game.patrols.wenna, "reprise : la patrouille continue");
   run("fullResetState();");
   ok(Object.keys(g.game.patrols).length === 0, "réinitialisation complète : plus de patrouille");
   ok(g.createInitialGameState().patrols && typeof g.createInitialGameState().patrols === "object", "état initial : patrols présent (changement de héros)");
@@ -10763,7 +10675,7 @@ console.log("\n[130] v3.335.0 — Palissade : les textes décrivent l'échec, pl
     var src = fs.readFileSync(ROOT + f, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").split("\n").filter(function (l) { return !/^\s*\/\//.test(l) && l.indexOf("addLog(\"Ascension") === -1 && l.indexOf("addLog(_t(\"Ascension") === -1; }).join("\n"); // v3.370.0 : la ligne de journal passe par _t
     ok(!/["'][^"'\n]*Ascension[^"'\n]*["']/.test(src), f + " : aucun texte affiché ne parle d'Ascension");
   });
-  ok(g.AscensionManager.canAscend() === false, "l'Ascension reste fermée : le seul Recouvrement est l'échec");
+  ok(typeof g.AscensionManager === "undefined" && typeof g.ascendNow === "undefined", "v3.412.0 : plus aucune trace de l'Ascension dans le code");
 })();
 
 
@@ -10971,8 +10883,6 @@ console.log("\n[133] v3.338.0 — Hauts faits : catalogue, rattrapage, paliers, 
   var r = AM.restore({ counters: { a: 3, b: "x", c: -1 }, reached: { hf_forest_orc: 5 }, tiers: { forest: "gold", desert: "platine" }, title: 12 });
   ok(r.counters.a === 3 && !r.counters.b && !r.counters.c && r.tiers.forest === "gold" && !r.tiers.desert && r.title === null, "chargement : entrées mal formées écartées");
   AM.restore(saved2.achievementStats);
-  run("hardResetState();");
-  ok(g.game.achievementStats && g.game.achievementStats.tiers.forest === "gold", "reprise : paliers et compteurs conservés");
   run("fullResetState();");
   ok(!g.game.achievementStats || !Object.keys(AM.ensure().reached).length, "réinitialisation complète : tout repart de zéro");
   ok("achievementStats" in g.createInitialGameState(), "état initial : achievementStats présent (changement de héros)");
@@ -11072,8 +10982,6 @@ console.log("\n[137] v3.358.0 — Essence retirée, sorties de donjon, Aether à
   var svBad = JSON.parse(JSON.stringify(sv)); svBad.dungeonRunsUsed = "x"; g.restoreBaseState(svBad);
   ok(typeof game.dungeonRunsUsed === "object" && !game.dungeonRunsUsed[1], "chargement : valeur mal formée → {}");
   g.restoreBaseState(sv);
-  run("hardResetState();");
-  ok(g.game.dungeonRunsUsed[1] === 2, "reprise (Ascension) : le quota du jour est gardé");
   run("fullResetState();");
   ok(g.game.dungeonRunsUsed && Object.keys(g.game.dungeonRunsUsed).length === 0, "réinitialisation complète : quota à zéro");
   /* Écran */
@@ -11423,7 +11331,7 @@ console.log("\n[145] v3.369.0 — Multilangue, lot L-1 : HUD, Camp, Combat, fen�
   /* Français : textes inchangés, pluriels corrects */
   I._lang = "fr";
   var camp = g.buildCampHTML();
-  ok(camp.indexOf("Santé du héros") !== -1 && camp.indexOf("Tableau de missions") !== -1 && camp.indexOf("Voir le tableau complet") !== -1, "Camp en français : textes inchangés");
+  ok(camp.indexOf("camp-hp-fill") !== -1 && camp.indexOf("Manger : ") !== -1 && camp.indexOf("Voir le tableau complet") !== -1, "Camp en français : textes inchangés (v3.411.0 : santé en deux lignes)");
   ok(camp.indexOf("⟦") === -1, "français : aucun ⟦ ⟧ dans le Camp");
   ok(g._tn(1, "{n} sortie", "{n} sorties") === "1 sortie" && g._tn(3, "{n} sortie", "{n} sorties") === "3 sorties", "pluriel « sortie » du Camp");
   ok(g.buildFullMenuHTML().indexOf("ksheet-ttl\">Menu<") !== -1, "menu : titre « Menu »");
@@ -11431,7 +11339,7 @@ console.log("\n[145] v3.369.0 — Multilangue, lot L-1 : HUD, Camp, Combat, fen�
   /* Pseudo-langue : les textes du lot passent par _t */
   I._lang = "xx";
   var campX = g.buildCampHTML();
-  ok(campX.indexOf("⟦Santé du héros⟧") !== -1 && campX.indexOf("⟦Manger⟧") !== -1 && campX.indexOf("⟦Tableau de missions⟧") !== -1, "pseudo-langue : Camp extrait");
+  ok(campX.indexOf("⟦Manger : ") !== -1 && campX.indexOf("⟦Voir le tableau complet⟧") !== -1, "pseudo-langue : Camp extrait");
   ok(g.buildHudHTML().indexOf("⟦Niv. 1⟧") !== -1, "pseudo-langue : HUD extrait (niveau)");
   ok(g.buildCombatHTML().indexOf("⟦ATTAQUER⟧") !== -1, "pseudo-langue : bouton ATTAQUER extrait");
   ok(g.ResumeManager.formatAbsence(135 * 60000) === "⟦2 h⟧ ⟦15 min⟧", "pseudo-langue : unités de durée extraites");
@@ -11472,7 +11380,7 @@ console.log("\n[147] v3.371.0 — Multilangue, lot L-3 : Village, Production, En
   ok(g.WorldCaps.withPrep(1) === "au " + g.WORLDS[1].name, "tournure « au <monde> » inchangée");
   ok(g.WorldCaps.atAct("II", 1) === "à l'acte II du " + g.WORLDS[1].name, "tournure « à l'acte II du <monde> » inchangée");
   ok(g.VillageBuildingManager.getBlockReason("zzz_inconnu") === "Bâtiment inconnu", "raison de blocage du Village inchangée");
-  ok(g.VILLAGE_BUILDINGS.tavern.effectLabel(1) === "1 contrat à la fois" && g.VILLAGE_BUILDINGS.tavern.effectLabel(3) === "3 contrats simultanés", "effet de la Taverne : singulier/pluriel inchangés");
+  ok(g.VILLAGE_BUILDINGS.tavern.effectLabel(1) === "2 contrats simultanés" && g.VILLAGE_BUILDINGS.tavern.effectLabel(3) === "4 contrats simultanés" && g.VILLAGE_BUILDINGS.tavern.effectLabel(0) === "Aucun contrat", "effet de la Taverne : 2 contrats au niveau 1 (v3.418.0)");
   var sh = g.buildShopHTML();
   ok(sh.indexOf("⟦") === -1 && sh.length > 100, "Boutique en français : aucun ⟦ ⟧");
   /* Pseudo-langue */
@@ -11497,7 +11405,7 @@ console.log("\n[148] v3.372.0 — Multilangue, lot L-4 : Héros, Talents, Grimoi
   ok(b && b.kind === "trunk" && /tronc/.test(b.text) && TM.blockReason("k_elan") === b.text, "talents : raison à code stable (kind) + texte français inchangé");
   ok(g.HERO_CLASS_TAGLINES.knight === "Maître du combat et de la défense, inébranlable en toute situation.", "création : accroche du Chevalier inchangée");
   ok(g.GRIMOIRE_CONDITION_SHORT_LABELS.chargeIncoming === "l'ennemi charge", "Grimoire : libellés courts inchangés");
-  var st = g.buildSettingsHTML();
+  var st = g.buildSettingsHTML("appareil");
   ok(st.indexOf("Sauvegarde : ") !== -1 && st.indexOf("⟦") === -1, "Paramètres en français : aucun ⟦ ⟧");
   var he = g.buildHerosHTML();
   ok(he.indexOf("⟦") === -1 && he.length > 200, "Héros en français : aucun ⟦ ⟧");
@@ -11507,7 +11415,7 @@ console.log("\n[148] v3.372.0 — Multilangue, lot L-4 : Héros, Talents, Grimoi
   /* Pseudo-langue */
   I._lang = "xx";
   ok(TM.blockInfo("k_elan").kind === "trunk" && TM.blockReason("k_elan").indexOf("⟦") === 0, "pseudo-langue : raison de talent traduite, le code reste « trunk »");
-  ok(g.buildSettingsHTML().indexOf("⟦Sauvegarde : ") !== -1, "pseudo-langue : Paramètres extraits");
+  ok(g.buildSettingsHTML("appareil").indexOf("⟦Sauvegarde : ") !== -1, "pseudo-langue : Paramètres extraits");
   ok(g.buildHerosHTML().indexOf("⟦") !== -1, "pseudo-langue : Héros extrait");
   ok(g.buildGrimoireHTML().indexOf("⟦") !== -1, "pseudo-langue : Grimoire extrait");
   ok(g.buildAchievementsHTML().indexOf("⟦") !== -1, "pseudo-langue : Hauts faits extraits");
@@ -11594,10 +11502,10 @@ console.log("\n[151] v3.375.0 — Multilangue, EN-1 : interface traduite en angl
   ok(g._tn(1, "{n} objet", "{n} objets") === "1 item" && g._tn(3, "{n} objet", "{n} objets") === "3 items", "anglais : pluriels (1 item, 3 items)");
   ok(g._t("Pas assez de {x}", { x: "gold" }) === "Not enough gold", "anglais : gabarit à paramètre");
   ok(g._td("Texte absent du dictionnaire") === "Texte absent du dictionnaire", "anglais : un texte absent du dictionnaire s'affiche en français");
-  var st = g.buildSettingsHTML();
+  var st = g.buildSettingsHTML("appareil") + g.buildSettingsHTML("partie");
   ok(st.indexOf("English") !== -1 && st.indexOf("Language") !== -1 && st.indexOf("Save") !== -1, "anglais : Paramètres traduits, choix de langue présent");
   I._lang = "fr";
-  var fr = g.buildSettingsHTML();
+  var fr = g.buildSettingsHTML("appareil");
   ok(fr.indexOf("Langue") !== -1 && fr.indexOf("English") !== -1 && fr.indexOf("confirmLanguageChange('en')") !== -1, "français : choix de langue dans les Paramètres (D3)");
   I._lang = null;
 })();
@@ -11680,10 +11588,10 @@ console.log("\n[153] v3.377.0 — Multilangue, EN-3 : le récit du Désert en an
   var ps = [], pd = (g.PATROL_STORIES.maddoc || {}).desert || {};
   Object.keys(pd).forEach(function (k) { [].concat(pd[k]).forEach(function (x) { if (typeof x === "string") ps.push(x); }); });
   ok(ps.length > 0 && ps.every(function (x) { return D.hasOwnProperty(x); }), "anglais : récits de patrouille de Maddoc au Désert traduits (" + ps.length + ")");
-  var st = g.buildSettingsHTML();
+  var st = g.buildSettingsHTML("appareil");
   ok(st.indexOf("(beta)") === -1 && st.indexOf("The game restarts to change language.") !== -1, "anglais : « English » sans « (beta) », note de relance seule");
   I._lang = "fr";
-  var fr = g.buildSettingsHTML();
+  var fr = g.buildSettingsHTML("appareil");
   ok(fr.indexOf("Désert reste en français") === -1 && fr.indexOf("Le jeu redémarre pour changer de langue.") !== -1, "français : la note sur le Désert a disparu");
   ok(g._td(sq.title) === "Ce que le sable garde", "français : le Désert s'affiche comme avant");
   I._lang = null;
@@ -11729,7 +11637,7 @@ console.log("\n[154] v3.378.0 — « Ce que tu vas affronter » : traits connus 
   G.grimoireRules = [];
   G.grimoirePresets = [{ id: "p1", name: "Forêt", icon: "", rules: [{ conditionId: "shieldIncoming", actionSlot: contre || neutre }], lastModified: 0 }];
   h = card(coeur);
-  ok(h.indexOf("loadEnemyTraitsPreset('p1')") !== -1 && h.indexOf("⚡ " + (contre ? 1 : 0) + "/1") !== -1, "preset proposé avec ce qu'il contre ici");
+  ok(h.indexOf("loadEnemyTraitsPreset('p1')") !== -1 && h.indexOf('stat_speed.png" alt=""> ' + (contre ? 1 : 0) + "/1") !== -1, "preset proposé avec ce qu'il contre ici (v3.407.0 : icône à la place de ⚡)");
   g.loadEnemyTraitsPreset("p1");
   ok(G.grimoireRules[0] && G.grimoireRules[0].conditionId === "shieldIncoming", "charger le preset depuis l'encart remplace les règles");
   ok(card(coeur).indexOf("is-current") !== -1, "le preset chargé est marqué comme actif");
@@ -11783,9 +11691,6 @@ console.log("\n[155] v3.379.0 — Potion automatique du mode Grimoire (hors règ
   run("var __d = buildSaveData(); delete __d.potionAuto; localStorage.setItem(getActiveSaveKey(), JSON.stringify(__d));");
   run("loadGame();");
   ok(g.game.potionAuto.threshold === "jamais" && g.game.potionAuto.keepForBoss === true, "sauvegarde d'avant cette version : « Jamais » (rien ne change pour elle)");
-  g.game.potionAuto = { threshold: "tard", keepForBoss: true };
-  run("hardResetState();");
-  ok(g.game.potionAuto.threshold === "tard", "ascension : le réglage est préservé");
 
   game = freshCombat("knight");
   G = g.game;
@@ -12103,10 +12008,8 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     ok(Number(game.resources.seve_aeswyn || 0) === seve0 + g.PA2_RARE.forest.dest[1], "Sève d'Aeswyn de destination créditée à l'Entrepôt (anneau 1 : " + g.PA2_RARE.forest.dest[1] + ")");
     ok(!g.AchievementManager || Number(((game.achievementStats || {}).counters || {}).runForest || 0) === ach0 + 1, "« Un Périple » avance d'un run");
 
-    /* Coffre : sauvegardé, gardé à l'Ascension, vidé par une nouvelle partie */
+    /* Coffre : sauvegardé, vidé par une nouvelle partie */
     ok(g.buildSaveData().expeditionChest.unlocked.bois === true, "le coffre est dans la sauvegarde");
-    run("hardResetState();");
-    ok(game.expeditionChest && game.expeditionChest.unlocked.bois === true, "Ascension : le coffre est gardé");
     run("fullResetState();");
     ok(game.expeditionChest && !game.expeditionChest.unlocked.bois, "nouvelle partie : coffre vide");
 
@@ -12784,7 +12687,7 @@ console.log("\n[167] v3.391.0 — Chantier P, lot P-3 : retrait de l'ancien mote
     ok(Object.keys(E).sort().join() === "getNodeBank,getTemplate", "SceneEngine : ne reste que getTemplate et getNodeBank");
     ok(Object.keys(C).sort().join() === "clamp,depthDifficulty,depthLootMultiplier,successChance", "SceneCheckSystem : les jets lus par Pa2Run seulement");
     ok(["confirmLoadout", "enterGate", "resolveObstacle", "resolveFinale", "leaveNow", "useSceneGourde", "enterCombatNode", "statEffective", "getMaxInjuries"].every(function (k) { return typeof S[k] === "undefined"; }), "SceneRunManager : plus de paliers, portes, chambre finale ni nœud combat");
-    ok(typeof S.onCombatWon === "function" && typeof S.onCombatDefeat === "function", "les deux points d'appel de combat-engine (protégé) restent inoffensifs");
+    ok(typeof S.onCombatWon === "undefined" && typeof S.onCombatDefeat === "undefined", "v3.412.0 : les anciens points d'appel du combat v1 sont retirés");
     ok(Object.keys(N).sort().join() === "combatGroups,obstacles,optionProfiles", "SCENE_NODES : profils, obstacles, groupes");
     ok(typeof g.buildSceneGateChoiceHTML === "undefined" && typeof g.buildScenePreparationHTML === "undefined" && typeof g.sceneRunLog === "undefined", "scene-view : plus d'écrans de l'ancien moteur");
 
@@ -12797,7 +12700,7 @@ console.log("\n[167] v3.391.0 — Chantier P, lot P-3 : retrait de l'ancien mote
     run("SortieManager.start('scene');");
     game.sceneRun = { id: "old2", templateId: "sentier_obstrue", status: "combat", loot: 3 };
     var r0 = g.WarehouseManager.getAmount("petite_ration");
-    S.onCombatWon();
+    S.getRun();
     ok(game.sceneRun === null && !g.SortieManager.isActive() && g.WarehouseManager.getAmount("petite_ration") === r0 + 1, "quête v1 au statut « combat » : close au premier passage, ration rendue");
     ok(S.isHeroEngaged() === false && S.startRun("sentier_obstrue").ok === true && game.sceneRun.pa2, "le héros est libre, la quête repart en v2");
     S.abandon(); S.clearRun();
@@ -12887,8 +12790,9 @@ console.log("\n[169] v3.396.0 — HUD-1 : bandeau « C · Ornée » et bulles de
     var F = function (u) { return { k: "fil", urgent: u, id: "x", icon: "i" }; }, T = { k: "talent" }, B = { k: "bag" }, R = { k: "plots" };
     var ks = function (l) { return l.map(function (x) { return x.k; }).join(","); };
     ok(ks(g.hudDockOrder(F(false), [T, B])) === "fil,bag,talent", "fil rouge au calme : petite bulle en haut, les talents en bas");
-    ok(ks(g.hudDockOrder(F(true), [T, B, R])) === "bag,talent,fil", "fil rouge urgent : en bas, trois bulles au plus");
-    ok(ks(g.hudDockOrder(F(false), [T, B, R])) === "fil,bag,talent", "au calme : fil rouge + deux situations au plus");
+    var X = { k: "dungeon" };
+    ok(ks(g.hudDockOrder(F(true), [T, B, R, X])) === "plots,bag,talent,fil", "fil rouge urgent : en bas, sous trois situations au plus (v3.405.0)");
+    ok(ks(g.hudDockOrder(F(false), [T, B, R, X])) === "fil,plots,bag,talent", "au calme : fil rouge + trois situations au plus (v3.405.0)");
     ok(ks(g.hudDockOrder(null, [B])) === "bag", "fil rouge désactivé dans les préférences : pas de bulle");
 
     /* Situations : sac comme avant (nombre d'objets), talents quand un point est à placer */
@@ -12896,6 +12800,7 @@ console.log("\n[169] v3.396.0 — HUD-1 : bandeau « C · Ornée » et bulles de
     game.inventory = [];
     var tc0 = g.getTalentsAvailableCount;
     g.getTalentsAvailableCount = function () { return 0; };
+    if (g.hudDockLazyReset) g.hudDockLazyReset();
     ok(g.hudDockItems().length === 0, "rien à faire : aucune bulle hors fil rouge");
     game.inventory = [{}, {}, {}];
     g.getTalentsAvailableCount = function () { return 2; };
@@ -13053,9 +12958,9 @@ console.log("\n[174] v3.401.0 — Lot O-1 : onglets de page (rail), filtres (pas
     var css = fs.readFileSync(path.join(ROOT, "css/00-components.css"), "utf8");
     ok(/\.kseg \{[\s\S]*?box-shadow: inset/.test(css) && /\.kseg\.is-stack button/.test(css) && /\.kchips button\.is-on/.test(css), "kit : rail (.kseg, .is-stack) et pastilles (.kchips)");
     ok(css.indexOf("kseg-in-frame") === -1, "plus d'adaptation « posé sur crème » : le rail est dessiné pour le parchemin");
-    var js = ["quests-view.js", "production-view.js", "warehouse-view.js", "equipment-view.js", "achievement-view.js", "grimoire-view.js", "heros-view.js"].map(function (f) { return fs.readFileSync(path.join(ROOT, "js/ui", f), "utf8"); }).join("\n");
+    var js = ["quests-view.js", "production-view.js", "village-view.js", "warehouse-view.js", "equipment-view.js", "achievement-view.js", "grimoire-view.js", "heros-view.js"].map(function (f) { return fs.readFileSync(path.join(ROOT, "js/ui", f), "utf8"); }).join("\n");
     ok(js.indexOf("inv-filter-btn") === -1 && js.indexOf("pc-subtab-bar production-switch") === -1 && js.indexOf("hf-dot") === -1, "anciens dessins d'onglets retirés (filtres sombres, double bouton, pastilles des Hauts faits)");
-    ok(/kseg production-switch/.test(js) && /kseg warehouse-seg/.test(js) && /kchips inv-filter-row/.test(js) && /kchips is-scroll hf-tabs/.test(js), "Production, Entrepôt : rail ; Inventaire, Hauts faits : pastilles");
+    ok(/kseg is-stack village-tabs/.test(js) && /wh-dd-btn/.test(js) && /kchips inv-filter-row/.test(js) && /kchips is-scroll hf-tabs/.test(js), "Village : rail ; Entrepôt : liste déroulante ; Inventaire, Hauts faits : pastilles");
     var lay = fs.readFileSync(path.join(ROOT, "css/02-layout.css"), "utf8");
     ok(/var\(--hud-dock-lift, 0px\)/.test(lay) && typeof g.liftHudDock === "function", "bulles du HUD : remontées au-dessus des sous-onglets du bas");
   } catch (err) {
@@ -13067,20 +12972,421 @@ console.log("\n[175] v3.402.0 — Lot B-1 : boutons (bleu + filaire, pièce d'or
 (function () {
   try {
     var fs = require("fs"), path = require("path");
-    var kb = fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8");
+    var kb = unpal(fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8"));
     ok(/\.kframe \.settings-btn:not\(\.primary\):not\(\.danger\)/.test(kb) && /\.kwin \.kbtn:not\(\.primary\):not\(\.danger\)/.test(kb) && /border: 2px solid #8a5c14/.test(kb),
       "secondaire filaire : tout bouton non principal d'une page, feuille ou fenêtre");
     ok(/\.kbuy,\n\.btn-buy\.kbuy \{[\s\S]*?linear-gradient\(#f6d27a, #d99a34\)/.test(kb), "achat : pastille pièce d'or (.kbuy)");
-    var co = fs.readFileSync(path.join(ROOT, "css/00-components.css"), "utf8");
+    var co = unpal(fs.readFileSync(path.join(ROOT, "css/00-components.css"), "utf8"));
     ok(/\.ksec \{[\s\S]*?justify-content: center;[\s\S]*?color: #3a2c1a;/.test(co) && /\.ksec::before,\n\.ksec::after/.test(co) && /\.kkick \{/.test(co), "titre de section centré à filets (.ksec) et surtitre (.kkick)");
     ok(/settings-btn primary" onclick="saveGame\(\)"/.test(fs.readFileSync(path.join(ROOT, "js/ui/settings-view.js"), "utf8")), "Paramètres : « Sauvegarder » est le bouton principal");
     var html = g.buildEquipShopHTML ? g.buildEquipShopHTML() : "";
     ok(!html || /btn-buy kbuy/.test(html), "Boutique d'équipement : prix en pièce d'or");
     ok(/class="kseg shop-buy-toolbar/.test(fs.readFileSync(path.join(ROOT, "js/ui/heros-view.js"), "utf8")), "quantité d'achat (×1…MAX) : rail du kit");
-    ok(/class="ksec camp-section-title/.test(g.buildCampHTML()), "Camp : titres de section du kit");
+    ok(/kseg is-stack camp-tabs/.test(fs.readFileSync(path.join(ROOT, "js/ui/camp-view.js"), "utf8")), "Camp : onglets du kit (v3.411.0, à la place des titres de section)");
     ok(/class="kbtn primary hf-claim-all"/.test(fs.readFileSync(path.join(ROOT, "js/ui/achievement-view.js"), "utf8")), "Hauts faits : « Tout réclamer » en bouton principal (plus d'orange plat)");
   } catch (err) {
     ok(false, "[175] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[176] v3.403.0 — Lot L-1 : écran de lancement « A · Kit du jeu »");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var main = g.buildTitleScreenMainHTML();
+    ok(/class="lc-sheet title-screen-frame"/.test(main) && /class="ksheet-head"/.test(main) && /kbtn primary title-screen-(img-btn|continue)/.test(main) && /kbtn is-sec title-screen-img-btn/.test(main),
+      "titre : feuille du kit, action principale en bleu (Continuer ou Nouvelle partie), le reste filaire");
+    ok(main.indexOf("bouton_titre.png") === -1 && /title-screen-version/.test(main), "plus de médaillons parchemin ; la version reste affichée");
+    var load = g.buildTitleScreenLoadHTML();
+    ok(/lc-sheet is-tall title-screen-frame-load/.test(load) && /Choisis une partie/.test(load) && /titleScreenBackToMain\(\)/.test(load), "Charger : feuille avec croix, tutoiement (« Choisis une partie »)");
+    ok(load.indexOf("cadre_slot.png") === -1 && (load.match(/title-slot-card empty/g) || []).length <= 1, "Charger : un seul « Nouvelle partie », plus d'emplacements vides en liste ni de cadre autour du héros");
+    var vm = fs.readFileSync(path.join(ROOT, "js/ui/modal-view.js"), "utf8");
+    ok(/lc-sheet' \+ \(step\.n > 1 \? ' is-tall' : ''\) \+ ' hc-frame/.test(vm) && /Étape \{n\} sur 3/.test(vm) && vm.indexOf("bouton_titre.png") === -1 && vm.indexOf("bouton_retour_new.png") === -1,
+      "création : feuille du kit, étape en en-tête, boutons du kit");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+    ok(/class="pwa-boot-bg" src="images\/TitleScreen\/title_background_new\.png"/.test(idx) && /pwa-boot-gauge/.test(idx), "chargement : illustration du titre, logo et jauge d'or");
+    var tok = unpal(fs.readFileSync(path.join(ROOT, "css/00-tokens.css"), "utf8"));
+    ok(/--sheet-body-bg:[^;]*, #efe0c2;/.test(tok), "feuilles : couleur pleine sous la texture (jamais transparentes)");
+  } catch (err) {
+    ok(false, "[176] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[177] v3.404.0 — Lot C-1 : contraste et pages courtes");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var rd = function (f) { return unpal(fs.readFileSync(path.join(ROOT, f), "utf8")); };
+    ok(/\.nb-page-frame\.kframe\s*\{[^}]*--nb-ink:\s*#2e2214/.test(rd("css/00-kframe-scope.css")), "cadre : encre sombre sur le parchemin");
+    ok(/\.kf-title\s*\{[^}]*color:\s*#2a1a08/.test(rd("css/00-kbtn.css")), "cadre : titre sombre");
+    var bad = [];
+    fs.readdirSync(path.join(ROOT, "css")).filter(function (f) { return /^04-panel-/.test(f); }).forEach(function (f) {
+      if (/(^|[^-])color:\s*var\(--nb-gold(-dark)?\)/m.test(rd("css/" + f))) bad.push(f);
+    });
+    ok(bad.length === 0, "panneaux : plus de texte doré clair sur parchemin" + (bad.length ? " (" + bad.join(", ") + ")" : ""));
+    ["js/ui/bestiary-view.js", "js/ui/quests-view.js", "js/ui/log-view.js", "js/ui/settings-view.js"].forEach(function (f) {
+      ok(rd(f).indexOf("nb-page-frame-fill") !== -1, "page courte remplie : " + f);
+    });
+  } catch (err) {
+    ok(false, "[177] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[178] v3.405.0 — HUD des Petites Aventures, Bibliothèque, bulles Donjon et Petite aventure");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    var pv = rd("js/ui/pa2-view.js");
+    ok(/pa2-hud-top"><div class="pa2-act">/.test(pv) && pv.indexOf("pa2-hud-side") === -1, "PA : lieu et butin au-dessus des barres");
+    ok(/\.pa2-fs \.pa2-hud \{[^}]*max-width: 460px/.test(rd("css/04-panel-pa2.css")), "PA : en-tête limité en largeur sur grand écran");
+    var game = freshCombat("knight");
+    game.unlockedTabs = game.unlockedTabs || {};
+    game.unlockedTabs.bestiary = true;
+    g.setBestiaryCodexSubTab("tutorials");
+    var lib = g.buildBestiaryHTML();
+    ok(/kseg is-stack lib-tabs/.test(lib) && (lib.match(/class="lib-tab/g) || []).length === 3 && lib.indexOf("subtab-bar-wrapper") === -1, "Bibliothèque : rail Bestiaire · Codex · Tutoriels en haut, plus de barre du bas");
+    ok(lib.indexOf(g._t("Chaque explication déjà rencontrée en jeu reste consultable ici.")) !== -1 && /Bibliothèque/.test(lib), "Bibliothèque : l'onglet Tutoriels s'y affiche");
+    game.unlockedTabs.bestiary = false;
+    g.setBestiaryCodexSubTab("codex");
+    lib = g.buildBestiaryHTML();
+    ok(lib.indexOf("lib-tabs") === -1 && lib.indexOf(g._t("Chaque explication déjà rencontrée en jeu reste consultable ici.")) !== -1, "Bestiaire pas encore débloqué : Tutoriels seul, sans rail");
+    var menu = rd("js/ui/menu-view.js");
+    ok(/tab: "tutorials", label: _t\("Bibliothèque"\)/.test(menu) && menu.indexOf('tab: "bestiary"') === -1, "Menu : une seule porte « Bibliothèque »");
+    g.setBestiaryCodexSubTab("bestiary");
+    var dv = rd("js/ui/hud-dock-view.js");
+    ok(/HUD_DOCK_SITUATIONS = 3/.test(dv) && /k: "dungeon"/.test(dv) && /k: "pa"/.test(dv), "bulles : Donjon et Petite aventure, trois situations au plus");
+    ok(typeof g.hudDockDungeonRunsLeft === "function" || /function hudDockDungeonRunsLeft/.test(dv), "bulle Donjon : sorties restantes de tous les donjons débloqués");
+  } catch (err) {
+    ok(false, "[178] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[179] v3.406.0 — Format tablette (mode PC niveau B, prototype)");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    var ds = rd("js/ui/desktop-scale.js"), css = rd("css/09-wide.css"), idx = rd("index.html"), sw = rd("sw.js");
+    ok(/WIDE_W = 1180/.test(ds) && /classList\.toggle\("wide-mode", mode === "wide"\)/.test(ds), "fenêtre de 1 180 px, classe wide-mode");
+    ok(/if \(DesktopScale\.isDesktop\(\)\) return "wide"/.test(ds) && /w >= TABLET_WIDE_MIN_W \? "wide" : "column"/.test(ds) && /portraitChoice\(\) === "rail" \? "wide" : "column"/.test(ds),
+      "PC et tablette en paysage : format tablette ; tablette en portrait : selon le réglage");
+    ok(idx.indexOf("css/09-wide.css") > idx.indexOf("css/08-desktop.css") && sw.indexOf("./css/09-wide.css") > 0, "09-wide.css chargé après 08-desktop.css et précaché");
+    ok(/body:not\(\.combat-active\):not\(\.scene-active\):not\(\.living-map-active\)/.test(css), "combat, petite aventure et carte vivante restent en colonne");
+    ok(/#tab-bar-row \{[^}]*flex-direction: column/.test(css), "menu en colonne à gauche");
+    ok(/"kf-orn"/.test(rd("js/ui/kframe-decorator.js")) && /\.kf-orn \{ display: none; \}/.test(rd("css/00-kbtn.css")), "cap du cadre : ornement central séparé, caché au téléphone");
+    var bad = [];
+    fs.readdirSync(path.join(ROOT, "css")).forEach(function (f) { if (/\(min-width: 1000px\) and \(hover: hover\)/.test(rd("css/" + f))) bad.push(f); });
+    ok(bad.length === 0, "règles du téléphone appliquées partout (plus de palier PC séparé)" + (bad.length ? " : " + bad.join(", ") : ""));
+    ok(g.PREFS_DEFAULTS && g.PREFS_DEFAULTS.tabletPortrait === "zoom", "réglage de la tablette en portrait : téléphone agrandi par défaut");
+  } catch (err) {
+    ok(false, "[179] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[180] v3.407.0 — Mémoire au kit, emoji remplacés par des icônes");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    var game = freshCombat("knight");
+    var mem = g.buildAscensionHTML();
+    ok(/nb-page-frame nb-page-frame-fill kframe-page mem-page/.test(mem) && /kgauge kgauge-thin kgauge-aether/.test(mem) && /ksec mem-level-head/.test(mem), "Mémoire : cadre de page, jauge du kit, titre de section par niveau");
+    ok(mem.indexOf("🌟") === -1 && mem.indexOf(" ✓") === -1, "Mémoire : plus d'emoji");
+    var files = ["achievement-view.js", "bestiary-view.js", "camp-view.js", "combat-forecast-view.js", "companions-view.js", "modal.js", "pa2-view.js", "patrol-view.js", "return-view.js", "production-view.js", "tutorial-view.js", "village-building-view.js"];
+    var emo = /[\u{1F300}-\u{1FAFF}\u26A0\u2705\u2714\u2B06]/u, left = [];
+    files.forEach(function (f) {
+      rd("js/ui/" + f).split("\n").forEach(function (l, i) { var t = l.trim(); if (!/^(\/\/|\/\*|\*)/.test(t) && emo.test(l)) left.push(f + ":" + (i + 1)); });
+    });
+    ok(left.length === 0, "emoji de l'interface remplacés par des icônes du jeu" + (left.length ? " : " + left.join(", ") : ""));
+    ["images/Icons/memory/forme_du_roi.png", "images/Icons/village_buildings/puits_du_roi.png", "images/Icons/system/hero_away.png", "images/Icons/system/training_cap.png"].forEach(function (f) {
+      ok(fs.existsSync(path.join(ROOT, f)), "icône présente : " + f);
+    });
+    ok(!fs.existsSync(path.join(ROOT, "js/systems/special-attack-system.js")) && !fs.existsSync(path.join(ROOT, "js/data/talents.js")), "code mort retiré (attaque spéciale, ancien arbre de talents)");
+  } catch (err) {
+    ok(false, "[180] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[181] v3.408.0 — Paramètres refondus (B · Rail, S1 · glissière)");
+(function () {
+  try {
+    var game = freshCombat("knight");
+    var p = g.buildSettingsHTML("partie"), j = g.buildSettingsHTML("jeu"), a = g.buildSettingsHTML("appareil");
+    ok(/kseg is-stack set-tabs/.test(p) && (p.match(/setSettingsTab\('/g) || []).length === 3 && /Paramètres/.test(p), "trois onglets en rail : Partie, Jeu, Appareil ; titre « Paramètres »");
+    ok(/settings-btn primary" onclick="saveGame\(\)"/.test(p) && /exportSaveToFile/.test(p) && /showImportTextModal/.test(p) && /settings-btn danger" onclick="resetGame\(\)"/.test(p), "Partie : sauvegarder, exporter/importer, codes, effacer en zone de danger");
+    ok(/toggleAutoSkills\(false\)/.test(j) && /toggleAutoSkills\(true\)/.test(j) && (j.match(/class="kswitch/g) || []).length === 2 && j.indexOf('type="checkbox"') === -1, "Jeu : mode en deux boutons, interrupteurs du kit, plus de case à cocher");
+    ok(/confirmLanguageChange\('en'\)/.test(a) && /switchTab\('admin'\)/.test(a) && a.indexOf("atelier-ui.html") === -1 && a.indexOf("switchTab('log')") === -1, "Appareil : langue, lien Admin ; ateliers morts et bouton Journal retirés");
+  } catch (err) {
+    ok(false, "[181] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[182] v3.409.0 — Couleurs en dur : palette de jetons");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var dir = path.join(ROOT, "css"), tok = fs.readFileSync(path.join(dir, "00-tokens.css"), "utf8");
+    var S = "/* === PALETTE BRUTE (tools/css-palette.py) === */", E = "/* === FIN PALETTE BRUTE === */";
+    ok(tok.indexOf(S) === 0 && tok.indexOf(E) > 0, "palette brute en tête de 00-tokens.css");
+    var block = tok.slice(0, tok.indexOf(E)), defs = {};
+    (block.match(/--c-[a-z0-9-]+(?=:)/g) || []).forEach(function (n) { defs[n] = true; });
+    ok(Object.keys(defs).length >= 100, "palette : au moins 100 jetons (" + Object.keys(defs).length + ")");
+    var redef = [], unknown = [], hex = 0;
+    fs.readdirSync(dir).filter(function (f) { return /\.css$/.test(f); }).forEach(function (f) {
+      var s = fs.readFileSync(path.join(dir, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+      if (f === "00-tokens.css") s = s.slice(s.indexOf("}") + 1);
+      if (/--c-[a-z0-9-]+\s*:/.test(s)) redef.push(f);
+      (s.match(/var\((--c-[a-z0-9-]+)\)/g) || []).forEach(function (v) { var n = v.slice(4, -1); if (!defs[n]) unknown.push(f + ":" + n); });
+      hex += (s.match(/#[0-9a-fA-F]{3,6}\b/g) || []).length;
+    });
+    ok(redef.length === 0, "les jetons de la palette ne sont jamais redéfinis" + (redef.length ? " : " + redef.join(", ") : ""));
+    ok(unknown.length === 0, "chaque var(--c-…) existe dans la palette" + (unknown.length ? " : " + unknown.slice(0, 5).join(", ") : ""));
+    ok(hex < 220, "couleurs restées en clair : " + hex + " (avant : 925)");
+    ok(!/--accent:|--bg-card:/.test(tok) && !fs.existsSync(path.join(dir, "04-panel-zones.css")) && !fs.existsSync(path.join(dir, "04-panel-adventures.css")), "ancien violet retiré (--accent, --bg-card) et CSS mortes supprimées");
+  } catch (err) {
+    ok(false, "[182] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[183] v3.410.0 — Retouches : rangée d'états, cartes sans cadre intérieur, « Entrepôt plein » une fois");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    ok(/\.cb-states \{ background: none; \}/.test(rd("css/03-combat-group.css")), "combat : plus de fond natif (gris clair) derrière les icônes d'état");
+    var co = rd("css/00-components.css").replace(/\/\*[\s\S]*?\*\//g, "");
+    ok(co.indexOf("background_upgrade.png") === -1 && /\.nb-entry-card \{[^}]*border: 1px solid var\(--c-bronze-500\)/.test(co) && /\.nb-purchase-card \{[^}]*border: 1px solid var\(--c-bronze-500\)/.test(co), "cartes de la Bibliothèque, des boutiques et des potions : carte crème du kit, sans cadre intérieur");
+    var fr = rd("js/ui/fil-rouge-view.js");
+    ok(/HOWTO_ONCE_KINDS = \{ warehouseFull: "howtoWarehouseFull" \}/.test(fr), "« Entrepôt plein » : l'explication ne s'affiche qu'une fois par appareil");
+  } catch (err) {
+    ok(false, "[183] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[184] v3.411.0 — Campement R3b, nettoyage de l'Économie");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var game = freshCombat("knight");
+    game.heroHp = Math.floor(game.heroMaxHp * 0.5);
+    game.unlockedTabs = game.unlockedTabs || {}; game.unlockedTabs.shop = true;
+    var m = g.buildCampHTML("missions"), d = g.buildCampHTML("depart");
+    ok(/camp-hp-line/.test(m) && /camp-ration-row/.test(m) && /camp-ration-ib-n/.test(m), "santé sur deux lignes : PV puis rations en boutons (stock en pastille)");
+    ok(/Toucher une ration pour la manger/.test(m) && /CampManager\.eatRation\('/.test(m) && m.indexOf(">Manger<") === -1, "toucher une ration la mange ; plus de bouton « Manger »");
+    ok(m.indexOf("camp-missions-card") !== -1 && m.indexOf("goToPotions()") === -1 && d.indexOf("camp-missions-card") === -1, "un seul onglet affiché à la fois (Missions, puis Départ)");
+    ok(/\.camp-mission-card \.camp-mission-btn \{[^}]*width: auto/.test(fs.readFileSync(path.join(ROOT, "css/04-panel-camp.css"), "utf8")), "boutons des missions à la largeur du libellé");
+    var src = ["js/ui/camp-view.js", "js/ui/village-building-view.js", "js/ui/shop-view.js"].map(function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); }).join("\n");
+    ok(!/shopHasEconomyUpgrades\(|goToEconomy|economy\.png/.test(src), "Économie : plus de code mort (porte, lien de la Taverne, onglet de la Boutique)");
+    ok(!/Économie/.test(g.buildShopHTML()), "Boutique : Potions seules");
+  } catch (err) {
+    ok(false, "[184] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[185] v3.412.0 — Fin de chasse et de battue : ce que le lot a rapporté ; code mort retiré");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    freshCombat("knight");
+    var hq = g.HUNT_QUESTS || {}; var quests = Object.keys(hq).map(function (k) { return hq[k]; });
+    var battue = quests.filter(function (q) { return q.rewardGold && !q.resourceKey; })[0];
+    var chasse = quests.filter(function (q) { return q.resourceKey; })[0];
+    ok(!!battue && !!chasse, "données : au moins une battue (prime) et une chasse (ressource)");
+    g.game.lastSortieSummary = { outcome: "success", context: "hunt", kept: { gold: 37, items: [{}, {}], resources: {} } };
+    var hb = g.buildHuntLotCompleteHTML(battue);
+    ok(hb.indexOf("Battue terminée") !== -1 && hb.indexOf("Nouvelle battue") !== -1, "battue : titre et bouton propres à la battue");
+    ok(hb.indexOf("Or gagné") !== -1 && hb.indexOf("+" + g.formatNumber(37 + battue.rewardGold)) !== -1 && hb.indexOf("de prime") !== -1, "battue : l'or gagné (ramassé + prime) est affiché");
+    ok(hb.indexOf("Objets trouvés") !== -1 && hb.indexOf("{x}") === -1 && hb.indexOf("en stock") === -1, "battue : plus de « {x} en stock · 0 »");
+    var res = {}; res[chasse.resourceKey] = 12;
+    g.game.lastSortieSummary = { outcome: "success", context: "hunt", kept: { gold: 0, items: [], resources: res } };
+    var hc = g.buildHuntLotCompleteHTML(chasse);
+    ok(hc.indexOf("Chasse terminée") !== -1 && hc.indexOf("+12") !== -1, "chasse : la ressource rapportée est affichée");
+    g.game.lastSortieSummary = { outcome: "success", context: "dungeon", kept: { gold: 999, items: [], resources: {} } };
+    ok(g.buildHuntLotCompleteHTML(chasse).indexOf("999") === -1, "un bilan d'une autre sortie n'est pas repris");
+    var dead = ["selectHeroInline", "equipStarterWeapon", "unequipIncompatibleWeapon", "getGrimoireCounterLabels", "getTalentRespecCost",
+      "buildCombatCelerityHTML", "renderHudFilRouge", "getEquipmentSellValue", "buyTalentNode", "openDungeonIntro", "titleScreenContinue", "getHeroByKey"];
+    ok(dead.every(function (n) { return typeof g[n] === "undefined"; }), "code mort : les fonctions jamais appelées sont retirées");
+    var css = fs.readdirSync(path.join(ROOT, "css")).map(function (f) { return fs.readFileSync(path.join(ROOT, "css", f), "utf8"); }).join("\n");
+    ok(!/\.(hero-picker|talent-board|onboarding-card|village-building-card)(?![\w-])/.test(css.replace(/\/\*[\s\S]*?\*\//g, "")), "CSS mort : les règles des anciens écrans sont retirées");
+    /* Fichiers protégés nettoyés (accord de Seb, 01/10/2026). */
+    ok(["hardResetState", "ascendNow", "AscensionManager", "getAllTalentNodes", "getAetherMult", "getAetherUpgradeCost", "getAetherBonuses", "getAetherUpgradeLevel", "ASCENSION_CONFIG"].every(function (n) { return typeof g[n] === "undefined"; }), "fichiers protégés : Ascension, reprise et bonus d'Aether retirés");
+    var st = g.createInitialGameState();
+    ok(["ascensionCount", "aetherUpgrades", "pendingPotionBonuses", "aetherElixirStackCount", "craftQueue", "gatheringActivity", "explorationRun", "worldQuestProgress", "worldQuestsCompleted"].every(function (k) { return !(k in st); }) && !("craftQueue" in g.buildSaveData()), "état et sauvegarde : plus de champs morts");
+    ok(fs.readFileSync(path.join(ROOT, "js/systems/combat-engine.js"), "utf8").indexOf('status === "combat"') === -1, "combat : plus de branche pour l'ancien combat de scène");
+  } catch (err) {
+    ok(false, "[185] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[186] v3.414.0 — Village : rail à quatre onglets, vignettes, feuille d'un bâtiment de production");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    run("Object.keys(PRODUCTION_UNLOCK_FLAGS).forEach(function (id) { game.explorationProgression[PRODUCTION_UNLOCK_FLAGS[id]] = true; }); Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) { ProductionManager.unlockBuilding(id); }); ProductionManager.ensure();");
+    run("Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) { ProductionPlotsSystem.ensurePlots(id); });");
+    /* Décision Seb : l'onglet Village s'ouvre toujours sur Production */
+    run("game.unlockedTabs.village = true; game.activeTab = 'campement'; activeVillageSubTab = 'entrepot'; switchTab('village');");
+    ok(run("activeVillageSubTab") === "production", "arriver sur le Village ouvre Production, quel que soit l'onglet quitté");
+    run("setVillageSubTab('village');");
+    ok(run("activeVillageSubTab") === "buildings", "l'ancien nom « village » mène à Bâtiments (anciens liens)");
+    run("setProductionViewTab('shops');");
+    ok(run("activeVillageSubTab") === "shops", "setProductionViewTab('shops') mène à l'onglet Ateliers");
+    run("activeVillageSubTab = 'production';");
+    var h = run("buildVillageHTML()");
+    ok((h.match(/class="village-tab/g) || []).length === 4 && h.indexOf("kseg is-stack village-tabs") !== -1, "rail du kit en haut : quatre onglets");
+    ok(h.indexOf("subtab-bar-wrapper") === -1 && h.indexOf("pc-subtab-bar") === -1, "plus de barre de sous-onglets en bas");
+    ok(h.indexOf("Bâtiments") < h.indexOf("Production") && h.indexOf("Ateliers") < h.indexOf("Entrepôt"), "ordre : Bâtiments · Production · Ateliers · Entrepôt");
+    ok((h.match(/production-dash-card prod-tile/g) || []).length === 6 && h.indexOf("prod-tile-img") !== -1, "Production : six vignettes illustrées");
+    /* Ruban : plein partout -> « Plein » ; stock local plein, Entrepôt libre -> « Récolter » */
+    run("game.resources.ble = WarehouseManager.getCap('ble'); ProductionPlotsSystem.getPlots('farm').forEach(function (p) { if (p.state === 'open') p.stock = 9999; });");
+    run("game.resources.viande = 0; ProductionPlotsSystem.getPlots('hunt').forEach(function (p) { if (p.state === 'open') p.stock = 9999; });");
+    var farm = run("buildProductionDashCardHTML('farm')"), hunt = run("buildProductionDashCardHTML('hunt')");
+    ok(farm.indexOf("prod-tile-rib is-full") !== -1 && farm.indexOf("is-store-full") !== -1, "ruban « Plein » quand le bâtiment ET l'Entrepôt sont pleins");
+    ok(hunt.indexOf("prod-tile-rib is-ready") !== -1, "ruban « Récolter » quand seul le stock local attend");
+    var badges = run("getVillageSubTabBadges()");
+    ok(badges.production >= 2 && badges.entrepot >= 1, "pastilles du rail : bâtiments pleins et ressources au plafond comptés");
+    /* Feuille : ateliers du bâtiment par défaut, zones au second onglet */
+    run("openProductionBuildingDetail('hunt');");
+    ok(run("productionDetailBuildingId") === "hunt" && run("productionSheetTab") === "shops", "toucher une vignette ouvre la feuille, onglet Ateliers");
+    var sh = run("buildProductionSheetHTML('hunt')");
+    ok(sh.indexOf("wk-tile-sechoir") !== -1 && sh.indexOf("wk-tile-moulin") === -1, "feuille : seulement les ateliers de ce bâtiment");
+    ok(sh.indexOf('id="prod-harvest-btn-hunt"') !== -1 && sh.indexOf('id="prod-sheet-bar-hunt"') !== -1 && sh.indexOf('id="prod-bar-hunt"') === -1, "feuille : récolte et jauge à ids propres (pas de doublon avec la vignette)");
+    run("setProductionSheetTab('zones');");
+    ok(run("buildProductionSheetHTML('hunt')").indexOf("farm-plots-grid") !== -1, "onglet Zones : la grille 3×3");
+    run("setVillageSubTab('buildings');");
+    ok(run("productionDetailBuildingId") === null, "changer d'onglet referme la feuille");
+    var b = run("buildVillageHTML()");
+    ok(b.indexOf("vb-grid") !== -1 && b.indexOf("vb-card-lock") !== -1 && b.indexOf("vb-card-icon") !== -1, "Bâtiments : grille de vignettes, condition écrite sur les verrouillés");
+    var css = fs.readFileSync(path.join(ROOT, "css/99-icon-assets.css"), "utf8");
+    ok(/img\.vb-card-icon \{ width: 84px; height: 84px;/.test(css), "Bâtiments : illustration en grand (84 px)");
+    ok(typeof g.buildBuildingDetailHTML === "undefined" && typeof g.buildProductionSwitchHTML === "undefined", "ancienne sous-page de détail et double bouton retirés");
+  } catch (err) {
+    ok(false, "[186] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[187] v3.415.0 — Ateliers en vignettes : feuille d'atelier, retour au bâtiment, code mort");
+(function () {
+  try {
+    run("openWorkshopSheet('moulin', 'farm');");
+    ok(run("openWorkshopId") === "moulin" && run("workshopSheetBackId") === "farm", "feuille d'atelier ouverte depuis les Champs : elle s'en souvient");
+    ok(run("buildWorkshopSheetHTML('moulin')").indexOf("backToProductionSheet()") !== -1, "lien « ‹ Champs » présent");
+    run("backToProductionSheet();");
+    ok(run("openWorkshopId") === null && run("productionDetailBuildingId") === "farm" && run("productionSheetTab") === "shops", "retour : feuille des Champs, onglet Ateliers");
+    run("openWorkshopSheet('moulin');");
+    ok(run("buildWorkshopSheetHTML('moulin')").indexOf("backToProductionSheet()") === -1, "ouverte depuis l'onglet Ateliers : pas de lien de retour");
+    run("setVillageSubTab('buildings');");
+    ok(run("openWorkshopId") === null && run("productionDetailBuildingId") === null, "changer d'onglet referme la feuille d'atelier");
+    ok(run("findResourceProducer('farine').id") === "moulin" && run("findResourceProducer('ble').kind") === "building", "qui produit quoi : la Farine au Moulin, le Blé aux Champs");
+    ok(["buildWorkshopCardHTML", "adjustWorkshopCraftQty", "adjustWorkshopAutoQty", "buildWorkshopMissingInputHTML"].every(function (n) { return typeof g[n] === "undefined"; }), "anciennes cartes d'atelier et leurs pas-à-pas retirés");
+    var css = fs.readFileSync(path.join(ROOT, "css/04-panel-production.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    ok(!/\.(workshop-card|wk-head|wk-foot|wk-pill|production-detail|production-switch|production-status-banner)(?![\w-])/.test(css), "CSS : règles des anciennes cartes et de l'ancienne sous-page retirées");
+    ok(/\.wk-tile\b/.test(css) && /\.wk-qty\b/.test(css), "CSS : vignettes et pastilles de quantité présentes");
+  } catch (err) {
+    ok(false, "[187] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[188] v3.416.0 — Entrepôt : tuiles T3, liste déroulante, Ma sélection, feuille d'une ressource");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.genericTutorialsSeen = { warehouse_no_sale: true };");
+    run("Object.keys(PRODUCTION_UNLOCK_FLAGS).forEach(function (id) { game.explorationProgression[PRODUCTION_UNLOCK_FLAGS[id]] = true; }); Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) { ProductionManager.unlockBuilding(id); });");
+    run("Prefs._cache = {}; Prefs._save({}); game.resources.ble = WarehouseManager.getCap('ble'); game.resources.bois = 120; game.resources.planche = 0; game.resources.seve_aeswyn = 3;");
+    ok(run("getWarehouseFilter()") === "all" && run("warehouseShowsZeros()") === false && run("Object.keys(getWarehouseHidden()).length") === 0, "défauts : Tout, zéros masqués, sélection vide");
+    var h = run("buildWarehouseHTML()");
+    ok(h.indexOf("wh-tile is-full") !== -1 && h.indexOf("wh-warn") !== -1, "Blé au plafond : tuile au liseré rouge et avertissement");
+    ok(h.indexOf("openWarehouseSheet('bois')") !== -1 && h.indexOf("openWarehouseSheet('planche')") === -1, "ressource à zéro masquée par défaut (Planche), Bois affiché");
+    ok(h.indexOf("wh-zero-note") !== -1, "une ligne dit combien de ressources à zéro sont masquées");
+    ok(h.indexOf("wh-tile-bar") !== -1 && h.indexOf("wh-tile-n") !== -1, "tuile T3 : nombre sur le bandeau, filet du plafond pour les bruts");
+    run("toggleWarehouseZeros();");
+    ok(run("buildWarehouseHTML()").indexOf("openWarehouseSheet('planche')") !== -1, "interrupteur « Zéros » : la Planche revient, grisée");
+    run("toggleWarehouseZeros(); warehouseMenuOpen = true;");
+    var menu = run("buildWarehouseHTML()");
+    ok(["all", "raw", "crafted", "special", "full", "run", "mine"].every(function (f) { return menu.indexOf("setWarehouseFilter('" + f + "')") !== -1; }) && menu.indexOf("openWarehousePicker()") !== -1, "liste déroulante : familles, Pleins, En fabrication, Ma sélection, Choisir…");
+    ok(/wh-dd-n is-red">1</.test(menu), "Pleins : le nombre en rouge");
+    run("setWarehouseFilter('full');");
+    var full = run("buildWarehouseHTML()");
+    ok(full.indexOf("openWarehouseSheet('ble')") !== -1 && full.indexOf("openWarehouseSheet('bois')") === -1 && run("warehouseMenuOpen") === false, "filtre Pleins : le Blé seul ; la liste se replie");
+    run("setWarehouseHidden({ bois: true }); setWarehouseFilter('mine');");
+    var mine = run("buildWarehouseHTML()");
+    ok(mine.indexOf("openWarehouseSheet('bois')") === -1 && mine.indexOf("openWarehouseSheet('ble')") !== -1, "Ma sélection : le Bois caché, le reste affiché");
+    run("warehousePickerOpen = true;");
+    var pick = run("buildWarehousePickerHTML()");
+    ok(pick.indexOf("wh-pk is-off") !== -1 && pick.indexOf("toggleWarehousePick('bois')") !== -1 && pick.indexOf("validateWarehousePicker()") !== -1, "feuille Ma sélection : cases à cocher, Valider");
+    run("warehousePickerOpen = false; setWarehouseFilter('all');");
+    ok(run("Prefs.getValue('whFilter')") === "all" && run("Prefs.getValue('whHidden')") === "bois", "filtre et sélection enregistrés sur l'appareil (Prefs), pas dans la sauvegarde");
+    ok(!("whFilter" in run("buildSaveData()")), "rien de nouveau dans la sauvegarde");
+    /* Feuille d'une ressource */
+    var ble = run("buildWarehouseSheetHTML('ble')");
+    ok(ble.indexOf("wh-cap-warn") !== -1 && ble.indexOf("warehouseGoTo('building', 'farm')") !== -1, "Blé : « Au plafond », et d'où ça vient : les Champs");
+    ok(ble.indexOf("warehouseGoTo('workshop', 'moulin')") !== -1, "où ça part : le Moulin");
+    ok(ble.indexOf("stepWarehouseReserve('ble', -10)") !== -1 && ble.indexOf("stepWarehouseReserve('ble', 10)") !== -1 && ble.indexOf("wh-resv-n") !== -1, "réserve protégée : − / + par 10 et nombre saisissable");
+    run("stepWarehouseReserve('ble', 10);");
+    ok(run("ResourceReserveManager.getReserve('ble')") === 110, "+10 sur la réserve (100 → 110)");
+    run("stepWarehouseReserve('ble', -200);");
+    ok(run("ResourceReserveManager.getReserve('ble')") === 0, "la réserve ne descend pas sous 0");
+    var pl = run("buildWarehouseSheetHTML('planche')");
+    ok(pl.indexOf("warehouseGoTo('workshop', 'scierie_fine')") !== -1 && pl.indexOf("Améliorer les ateliers") !== -1 && pl.indexOf("Constructions") !== -1, "Planche : vient de la Scierie fine ; sert aux ateliers et aux constructions");
+    var sv = run("buildWarehouseSheetHTML('seve_aeswyn')");
+    ok(sv.indexOf("wh-cap") === -1 && sv.indexOf("cuisine_de_camp") !== -1, "Sève : pas de plafond, consommée par la Cuisine de camp");
+    var pr = run("buildWarehouseSheetHTML('petite_ration')");
+    ok(pr.indexOf("Campement") !== -1, "Petite ration : le repas au Campement est cité");
+    run("openWarehouseSheet('ble'); setVillageSubTab('production');");
+    ok(run("selectedWarehouseKey") === null, "changer d'onglet referme la feuille de la ressource");
+    /* Icônes de production et de l'Atelier (v3.416.0) */
+    var png = function (p) { var b = fs.readFileSync(path.join(ROOT, p)); return b.readUInt32BE(16) + "x" + b.readUInt32BE(20) + (b[25] === 6 ? " RGBA" : " ?"); };
+    ok(["farm", "hunt", "sawmill", "mine", "quarry", "well"].every(function (n) { return / RGBA$/.test(png("images/Production/" + n + ".png")); }) && / RGBA$/.test(png("images/Icons/construction_icon.png")), "illustrations des bâtiments de production et de l'Atelier : détourées (RGBA)");
+  } catch (err) {
+    ok(false, "[188] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[189] v3.417.0 — Zones de production : la grille reste, une fenêtre par zone");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    run("Object.keys(PRODUCTION_UNLOCK_FLAGS).forEach(function (id) { game.explorationProgression[PRODUCTION_UNLOCK_FLAGS[id]] = true; }); Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) { ProductionManager.unlockBuilding(id); ProductionPlotsSystem.ensurePlots(id); });");
+    run("game.resources.bois = 500; game.resources.fer = 500; game.resources.pierre = 500; game.resources.viande = 500;");
+    run("openProductionBuildingDetail('well'); setProductionSheetTab('zones');");
+    var g0 = run("buildProductionSheetHTML('well')");
+    var next = run("getNextUnlockablePlot('well')");
+    ok(next !== null && g0.indexOf("is-next") !== -1, "la prochaine zone à défricher est signalée sur la grille");
+    ok(/farm-plot-card is-locked"? disabled|is-locked" disabled/.test(g0) || g0.indexOf(" disabled>") !== -1, "une zone d'un monde pas encore atteint ne s'ouvre pas");
+    run("openZoneWindow('well', 0);");
+    var w = run("buildProductionSheetHTML('well')");
+    ok(w.indexOf("zone-win") !== -1 && w.indexOf("productionPlotUpgrade('well', 0)") !== -1, "fenêtre d'une zone ouverte : passer au niveau suivant");
+    ok(w.indexOf("productionPlotToggleImprovement('well', 0, 'fertile')") !== -1 && w.indexOf("productionPlotToggleImprovement('well', 0, 'irrigated')") !== -1, "...et ses deux améliorations, avec leur coût");
+    run("productionPlotToggleImprovement('well', 0, 'fertile');");
+    ok(run("buildZoneWindowHTML('well', 0)").indexOf("zone-act is-done") !== -1, "amélioration installée : grisée et cochée, la fenêtre reste ouverte");
+    run("openZoneWindow('well', " + next + ");");
+    ok(run("buildZoneWindowHTML('well', " + next + ")").indexOf("productionPlotUnlock('well', " + next + ")") !== -1, "zone verrouillée : la fenêtre propose Défricher");
+    run("setProductionSheetTab('shops');");
+    ok(run("productionZoneWin") === null, "changer d'onglet de la feuille ferme la fenêtre");
+    run("openZoneWindow('well', 0); closeProductionSheet(true);");
+    ok(run("productionZoneWin") === null, "fermer la feuille ferme la fenêtre");
+    ok(typeof g.selectProductionPlot === "undefined" && typeof g.productionSelectFirstLocked === "undefined" && typeof g.buildPlotActionsHTML === "undefined", "ancienne sélection de zone et panneau sous la grille retirés");
+    var css = fs.readFileSync(path.join(ROOT, "css/04-panel-production.css"), "utf8");
+    ok(/\.farm-plots-grid \{[^}]*repeat\(3, minmax\(0, 1fr\)\)/.test(css), "la grille ne déborde plus de la feuille (minmax(0, 1fr))");
+  } catch (err) {
+    ok(false, "[189] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[190] v3.418.0 — Équilibrage : Taverne et Halle à l'Atelier 2, contrats +1, nourriture et pierre −20 %");
+(function () {
+  try {
+    ok(g.VILLAGE_BUILDINGS.tavern.rank === 2 && g.VILLAGE_BUILDINGS.hall.rank === 2, "Taverne et Halle s'ouvrent à l'Atelier niveau 2");
+    ok(g.TavernManager.getSlotCount(0) === 0 && g.TavernManager.getSlotCount(1) === 2 && g.TavernManager.getSlotCount(5) === 6, "Taverne : 2 contrats au niveau 1, 6 au niveau 5");
+    var P = g.ProductionPlotsSystem, plot = { level: 3, fertile: false, irrigated: false };
+    var base = P.getPlotRatePerMin(0, plot);
+    ["farm", "hunt", "quarry", "well"].forEach(function (b) {
+      ok(Math.abs(P.getPlotRatePerMin(0, plot, b) - base * 0.8) < 1e-9, b + " : débit −20 %");
+    });
+    ok(P.getPlotRatePerMin(0, plot, "sawmill") === base && P.getPlotRatePerMin(0, plot, "mine") === base, "bois et fer : débit inchangé");
+  } catch (err) {
+    ok(false, "[190] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

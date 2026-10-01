@@ -28,7 +28,8 @@ var TavernManager = {
      partout ailleurs dans le village. */
   getSlotCount: function (level) {
     var lvl = (typeof level === "number") ? level : this.getLevel();
-    return Math.max(0, Math.min(VILLAGE_BUILDINGS.tavern.maxLevel, lvl));
+    // v3.418.0 (R1, décision Seb) : 2 contrats au niveau 1, puis +1 par niveau (6 au niveau 5)
+    return lvl <= 0 ? 0 : Math.min(VILLAGE_BUILDINGS.tavern.maxLevel + 1, lvl + 1);
   },
 
   /* Rang de modèles accessible : les contrats de ressources fabriquées, plus

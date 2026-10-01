@@ -77,6 +77,7 @@ var PRODUCTION_PLOTS_SHARED = {
    pour un futur bâtiment qui n'aurait pas encore sa propre liste. */
 var PRODUCTION_PLOTS_BUILDINGS = {
   farm: {
+    rateMult: 0.8, // v3.418.0 (R4, décision Seb) : nourriture et pierre −20 %, trop de surplus
     sectionLabel: "🌾 Parcelles",
     zoneNamePrefix: "Parcelle",
     zoneNames: ["Clos d'Aeswyn", "Champ Béni", "Clos du Sage", "Terre des Anciens", "Champ Maudit", "Clos Runique", "Terre d'Automne", "Champ des Âmes", "Clos Oublié"],
@@ -88,6 +89,7 @@ var PRODUCTION_PLOTS_BUILDINGS = {
     }
   },
   hunt: {
+    rateMult: 0.8, // v3.418.0 (R4, décision Seb) : nourriture et pierre −20 %, trop de surplus
     sectionLabel: "🌲 Territoires",
     zoneNamePrefix: "Territoire",
     zoneNames: ["Bois d'Aeswyn", "Orée Runique", "Bois du Veneur", "Ravin des Loups", "Bois des Ombres", "Layon Maudit", "Forêt Interdite", "Repaire du Wyrm", "Confins d'Argent"],
@@ -121,6 +123,7 @@ var PRODUCTION_PLOTS_BUILDINGS = {
     }
   },
   quarry: {
+    rateMult: 0.8, // v3.418.0 (R4, décision Seb) : nourriture et pierre −20 %, trop de surplus
     sectionLabel: "🪨 Filons",
     zoneNamePrefix: "Filon",
     zoneNames: ["Carreau d'Aeswyn", "Talus Sacré", "Front Runique", "Fosse des Titans", "Veine Maudite", "Roche d'Ombre", "Faille Béante", "Gouffre du Wyrm", "Roche Primordiale"],
@@ -132,6 +135,7 @@ var PRODUCTION_PLOTS_BUILDINGS = {
     }
   },
   well: {
+    rateMult: 0.8, // v3.418.0 (R4, décision Seb) : nourriture et pierre −20 %, trop de surplus
     sectionLabel: "💧 Réseau hydraulique",
     zoneNamePrefix: "Point d'eau",
     zoneNames: ["Source d'Aeswyn", "Mare Sacrée", "Puisard Runique", "Bassin des Anciens", "Ruisseau Maudit", "Nappe d'Ombre", "Rivière Oubliée", "Œil du Wyrm", "Abysse Primordial"],

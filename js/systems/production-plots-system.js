@@ -66,9 +66,12 @@ var ProductionPlotsSystem = {
     return PRODUCTION_PLOTS_SHARED.profiles[profileKey];
   },
 
-  getPlotRatePerMin: function (plotIndex, plot) {
+  /* v3.418.0 (R4, décision Seb) : buildingId facultatif — applique le rateMult du bâtiment
+     (nourriture et pierre −20 %, data/production-plots.js). */
+  getPlotRatePerMin: function (plotIndex, plot, buildingId) {
     var profile = this.getProfile(plotIndex);
-    var rate = profile.baseRatePerMin * Math.pow(profile.rateGrowthPerLevel, plot.level - 1);
+    var cfg = buildingId ? PRODUCTION_PLOTS_BUILDINGS[buildingId] : null;
+    var rate = profile.baseRatePerMin * Math.pow(profile.rateGrowthPerLevel, plot.level - 1) * ((cfg && cfg.rateMult) || 1);
     var bonus = 1;
     if (plot.fertile) bonus += PRODUCTION_PLOTS_SHARED.bonusPerImprovement.fertile;
     if (plot.irrigated) bonus += PRODUCTION_PLOTS_SHARED.bonusPerImprovement.irrigated;
@@ -129,7 +132,7 @@ var ProductionPlotsSystem = {
   getTotalRatePerMin: function (buildingId) {
     var self = this;
     var total = 0;
-    this.getPlots(buildingId).forEach(function (p, i) { if (p.state === "open") total += self.getPlotRatePerMin(i, p); });
+    this.getPlots(buildingId).forEach(function (p, i) { if (p.state === "open") total += self.getPlotRatePerMin(i, p, buildingId); });
     return total;
   },
 
@@ -152,7 +155,7 @@ var ProductionPlotsSystem = {
         plot.lastTick = Date.now();
         return;
       }
-      var ratePerSec = self.getPlotRatePerMin(index, plot) / 60;
+      var ratePerSec = self.getPlotRatePerMin(index, plot, buildingId) / 60;
       plot.stock = Math.min(capacity, plot.stock + ratePerSec * dt);
       plot.lastTick = Date.now();
     });
@@ -169,7 +172,7 @@ var ProductionPlotsSystem = {
       if (elapsedMs > 1000) {
         var capacity = self.getPlotCapacity(index, plot);
         if (plot.stock < capacity) {
-          var ratePerSec = self.getPlotRatePerMin(index, plot) / 60;
+          var ratePerSec = self.getPlotRatePerMin(index, plot, buildingId) / 60;
           plot.stock = Math.min(capacity, plot.stock + ratePerSec * (elapsedMs / 1000));
         }
       }

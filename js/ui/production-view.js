@@ -326,8 +326,8 @@ function buildZoneWindowHTML(buildingId, index) {
         : '<div class="zone-act is-info is-done"><span class="zone-act-t"><b>' + _t("Niveau max") + '</b></span></div>';
     } else {
       var up = getProductionPlotUpgradeCost(buildingId, plot.level, index);
-      var rateNow = ProductionPlotsSystem.getPlotRatePerMin(index, plot);
-      var rateNext = ProductionPlotsSystem.getPlotRatePerMin(index, { level: plot.level + 1, fertile: plot.fertile, irrigated: plot.irrigated });
+      var rateNow = ProductionPlotsSystem.getPlotRatePerMin(index, plot, buildingId);
+      var rateNext = ProductionPlotsSystem.getPlotRatePerMin(index, { level: plot.level + 1, fertile: plot.fertile, irrigated: plot.irrigated }, buildingId);
       h += buildZoneActionHTML({ main: true, onclick: "productionPlotUpgrade('" + buildingId + "', " + index + ")", iconHTML: '<img class="zone-act-ico" src="images/Icons/system/upgrade.png" alt="">',
         label: _t("Niveau {n}", { n: plot.level + 1 }), desc: _t("{x}/min : {a} → {b}", { x: resName, a: formatNumber(rateNow), b: formatNumber(rateNext) }), cost: up, canAfford: affordable(up) });
     }

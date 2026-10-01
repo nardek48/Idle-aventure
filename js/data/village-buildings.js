@@ -315,7 +315,7 @@ var VILLAGE_BUILDINGS = {
     name: "Halle marchande",
     icon: "images/Icons/subtabs/equipment_shop.png",
     iconImg: "images/Icons/village_buildings/merchant_hall.png",
-    rank: 4,   // v3.289.0 (D12) : Atelier 4
+    rank: 2,   // v3.418.0 (R3, décision Seb) : Atelier 2 — la Halle accueille la caravane
     /* 10 niveaux : 5 emplacements de vitrine gagnés (un tous les deux niveaux)
        et une remise croissante sur le renouvellement. */
     maxLevel: 10,
@@ -351,9 +351,9 @@ var VILLAGE_BUILDINGS = {
     name: "Taverne",
     icon: "images/Icons/village_buildings/tavern.png",
     iconImg: "images/Icons/village_buildings/tavern.png",
-    rank: 4,   // v3.289.0 (D12) : Atelier 4
-    /* 5 niveaux, un contrat par niveau : chaque chantier se voit tout de suite
-       sur le tableau. */
+    rank: 2,   // v3.418.0 (R1, décision Seb) : Atelier 2 (était Atelier 4, D12)
+    /* 5 niveaux ; v3.418.0 : 2 contrats au niveau 1 puis +1 par niveau
+       (TavernManager.getSlotCount) — chaque chantier se voit tout de suite sur le tableau. */
     maxLevel: 5,
     implemented: true,
     desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. C'est le seul débouché du surplus de Production : l'Entrepôt ne rachète plus rien.",
