@@ -1,17 +1,6 @@
 "use strict";
 /* ui/map-view.js — Carte du monde v2.90.14 : chemin illustré (nœuds ronds + tracé SVG), popup détail par monde (#map-modal-root). Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-function getMapSelectedWorldIndex() {
-  if (typeof game.mapSelectedWorldIndex !== "number") {
-    game.mapSelectedWorldIndex = WorldManager.worldIndex || 0;
-  }
-  if (game.mapSelectedWorldIndex < 0) game.mapSelectedWorldIndex = 0;
-  if (game.mapSelectedWorldIndex >= WORLDS.length) {
-    game.mapSelectedWorldIndex = WORLDS.length - 1;
-  }
-  return game.mapSelectedWorldIndex;
-}
-
 /* v3.301.0 (W-2b) : un monde est ouvert dès qu'il a été atteint — le voyage permet d'en
    revenir, donc « plus loin que le monde courant » ne veut plus dire « fermé ». */
 function isWorldUnlocked(index) {
@@ -243,12 +232,6 @@ function closeWorldPopup() {
   if (host) host.innerHTML = "";
 }
 
-function selectMapWorld(index) {
-  openWorldPopup(index);
-}
-
-window.getMapSelectedWorldIndex = getMapSelectedWorldIndex;
-window.selectMapWorld = selectMapWorld;
 window.getWorldMonsterList = getWorldMonsterList;
 window.buildMapHTML = buildMapHTML;
 window.openWorldPopup = openWorldPopup;

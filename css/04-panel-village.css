@@ -29,165 +29,28 @@
    v2.90, désormais mortes).
    ========================= */
 
-.village-building-grid {
-  display: grid;
-  /* minmax(0, 1fr) : sans le "0" explicite, une grille CSS prend par
-     défaut la taille INTRINSÈQUE du contenu comme largeur minimale
-     de chaque colonne, ce qui casserait le 50/50 (voir historique
-     v2.90.3). */
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0; /* v2.90.12 : les fonds doivent se toucher, pas d'espace */
-  border-radius: var(--nb-radius-md);
-  overflow: hidden; /* coins arrondis de l'ensemble, pas par case */
-  border: 1px solid var(--nb-frame);
-}
-
-.village-building-card {
-  position: relative;
-  display: block;
-  min-width: 0;
-  /* v2.90.12 : 768×900~929 selon la case (voir commentaire ci-dessus)
-     — un seul ratio moyen pour les 6, l'écart entre cases (< 3%) est
-     imperceptible une fois recadré en cover, et garantit que les 2
-     colonnes d'une même ligne restent bien à la même hauteur. */
-  aspect-ratio: 768 / 910;
-  /* Neutralise les styles par défaut du navigateur pour un <button>. */
-  margin: 0;
-  padding: 0;
-  border: none;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-}
-
-.village-building-card:active {
-  filter: brightness(0.94);
-}
-
 /* Fond (scène de sol/chemin) : remplit toute la case. */
-.village-building-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  user-select: none;
-  -webkit-user-drag: none;
-}
 
 /* Bâtiment détouré (PNG, transparence) : posé PAR-DESSUS le fond,
    centré horizontalement, ancré vers le bas (comme un bâtiment posé
    sur le sol plutôt que flottant au centre) — contain pour ne jamais
    déformer l'illustration, quel que soit son ratio d'origine (varie
    d'un bâtiment à l'autre). */
-.village-building-sprite {
-  position: absolute;
-  left: 50%;
-  bottom: 3%;
-  transform: translateX(-50%);
-  width: 84%;
-  height: 82%;
-  object-fit: contain;
-  object-position: bottom center;
-  display: block;
-  user-select: none;
-  -webkit-user-drag: none;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.4));
-}
 
 /* v2.90.12 : étiquette nom + niveau superposée en bas de la case
    (avant : zone dédiée sous l'image, disparue avec le retrait des
    bordures/cartes séparées). Fond sombre semi-transparent pour rester
    lisible par-dessus n'importe quelle partie du panorama. */
-.village-building-tag {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  padding: 4px 6px 5px;
-  /* v2.90.17 : dégradé sombre retiré — visible comme une "ombre" à
-     la jonction de chaque case de la mosaïque (retour utilisateur),
-     cassait l'effet panorama continu. Le text-shadow déjà présent
-     sur .village-building-name/-level (voir plus bas) suffit pour
-     la lisibilité, sans bande sombre en travers de l'image. */
-}
-
-.village-building-name {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--c-white-50);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-}
-
-.village-building-level {
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-}
 
 /* =========================
    Popup de détail d'un bâtiment (#village-modal-root) — même
    principe visuel que .dungeon-story-* (voir css/04-panel-dungeon.css),
    classes propres pour rester dans le fichier dédié au Village.
    ========================= */
-.village-popup-card {
-  padding: 24px 22px;
-  text-align: center;
-}
-
-.village-popup-icon {
-  font-size: 40px;
-  margin-bottom: 8px;
-}
-
-.village-popup-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  margin-bottom: 10px;
-}
-
-.village-popup-text {
-  font-size: 13px;
-  line-height: 1.5;
-  color: rgba(58, 44, 26, 0.83);
-  margin-bottom: 12px;
-}
-
-.village-popup-meta {
-  font-size: 12px;
-  color: rgba(58, 44, 26, 0.7);
-  margin-bottom: 6px;
-}
-
-.village-popup-meta strong {
-  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
-}
-
-.village-popup-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.village-popup-actions .settings-btn {
-  margin-bottom: 0;
-}
 
 /* v3.168.0 : .is-maxed / .is-unaffordable locaux retirés — couverts
    par l'état désactivé unique de css/00-kbtn.css (variante filtre,
    choix Seb). */
-
-@media (max-width: 380px) {
-  .village-popup-card {
-    padding: 18px 16px;
-  }
-}
 
 /* =========================
    Entrepôt (sous-onglet Village, v3.30 — refonte v3.32) — grille +
@@ -198,18 +61,6 @@
    ========================= */
 .warehouse-tile {
   cursor: pointer;
-}
-
-.warehouse-tile .eq-bag-tile-icon-emoji {
-  font-size: 30px;
-}
-
-.warehouse-hint {
-  margin-top: 10px;
-  padding: 0 2px;
-  font-size: 12px;
-  color: rgba(58, 44, 26, 0.65);
-  text-align: center;
 }
 
 .warehouse-empty-hint {
@@ -343,20 +194,6 @@
    Vendre dans le panneau détail. Réutilise .warehouse-qty-stepper/
    .warehouse-qty-btn/.warehouse-qty-max-btn/.btn-buy tels quels, seul
    le titre + la recette sont propres à ce bloc. */
-.warehouse-craft-block {
-  width: 100%;
-  margin: 8px 0 4px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--nb-frame);
-}
-
-.warehouse-craft-recipe-tabs {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
 
 .warehouse-craft-recipe-tab {
   padding: 4px 10px;
@@ -387,29 +224,6 @@
   border-color: var(--c-green-600);
 }
 
-.warehouse-craft-title {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--nb-ink);
-}
-
-.warehouse-craft-title-icon {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-}
-
-.warehouse-craft-recipe {
-  margin-top: 4px;
-  font-size: 12px;
-  color: rgba(58, 44, 26, 0.75);
-  text-align: center;
-}
-
 /* v3.43 : file d'attente de craft — même bordure pointillée que
    .warehouse-craft-block juste au-dessus, pour marquer une section
    distincte sans dupliquer le style de carte complet. */
@@ -419,63 +233,6 @@
   padding-top: 10px;
   border-top: 1px dashed var(--nb-frame);
 }
-
-.warehouse-craft-queue-title {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  text-align: center;
-  margin-bottom: 6px;
-}
-
-.warehouse-craft-queue-row {
-  padding: 6px 8px;
-  margin-bottom: 6px;
-  border-radius: 8px;
-  background: rgba(58, 44, 26, 0.05);
-}
-
-.warehouse-craft-queue-row.is-current {
-  background: rgba(139, 94, 31, 0.12);
-}
-
-.warehouse-craft-queue-row-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.warehouse-craft-queue-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-ink);
-}
-
-.warehouse-craft-queue-time {
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(58, 44, 26, 0.75);
-  white-space: nowrap;
-}
-
-.warehouse-craft-queue-cancel {
-  border: none;
-  background: rgba(180, 40, 40, 0.12);
-  color: #a02020;
-  font-size: 12px;
-  font-weight: 800;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.warehouse-craft-queue-row .map-quest-step-bar {
-  margin-top: 6px;
-}
-
 
 /* ============================================================
    v3.213.0 (lot V-1) — Sous-onglet Village : grille de construction.
@@ -610,7 +367,7 @@
   text-transform: uppercase;
 }
 .vb-card.is-ready .vb-card-flag { background: var(--nb-gold); color: var(--c-brown-950-vivid); }
-.vb-card.is-site .vb-card-flag { background: var(--aether); color: var(--c-blue-50); }
+.vb-card.is-site .vb-card-flag { background: var(--aether); color: #eaf6ff; }
 /* Les deux états à pastille réservent la bande du haut : sinon la pastille
    recouvre le nom sur une carte à nom long. */
 .vb-card.is-ready,
@@ -725,7 +482,6 @@
    cette largeur et le bouton avale toute la place, éjectant son voisin. */
 .vb-sheet-actions .settings-btn { flex: 1 1 0; width: auto; min-width: 0; }
 
-
 /* =====================================================================
    v3.215.0 (lot V-4) — Apothicaire : ligne « Préparer » sous les cartes de
    potion (ui/potion-view.js). Posée ici plutôt que dans une feuille de la
@@ -759,7 +515,6 @@
 .potion-craft-locked { font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); flex: 0 0 auto; }
 .potion-craft-btn { flex: 0 0 auto; }
 
-
 /* v3.216.0 : note de la Halle en tête de l'échoppe (ui/equip-shop-view.js). */
 .equip-shop-hall-note {
   margin: 4px 0 8px;
@@ -772,7 +527,6 @@
   text-align: center;
   color: var(--nb-ink);
 }
-
 
 /* =====================================================================
    v3.217.0 (lot V-6) — Taverne : tableau de contrats, rendu DANS la fiche
@@ -861,7 +615,6 @@
   border-color: var(--nb-frame-light);
   cursor: default;
 }
-
 
 /* =====================================================================
    v3.221.0 (lot V-8) — Forge : établi rendu DANS la fiche du bâtiment.

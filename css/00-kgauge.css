@@ -128,7 +128,7 @@
 
 /* ----- Couleurs de remplissage usuelles ----- */
 .kgauge.kgauge-hp { --kgauge-fill: linear-gradient(90deg, var(--c-green-700), var(--c-green-400)); }
-.kgauge.kgauge-hp-enemy { --kgauge-fill: linear-gradient(90deg, var(--c-red-650), var(--c-red-400)); }
+.kgauge.kgauge-hp-enemy { --kgauge-fill: linear-gradient(90deg, #991b1b, var(--c-red-400)); }
 .kgauge.kgauge-rage { --kgauge-fill: linear-gradient(90deg, var(--c-red-600-vivid), #f97316); }
 .kgauge.kgauge-mana { --kgauge-fill: linear-gradient(90deg, #1d4ed8, var(--c-blue-300)); }
 .kgauge.kgauge-focus { --kgauge-fill: linear-gradient(90deg, #0f766e, #2dd4bf); }

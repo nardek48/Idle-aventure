@@ -118,11 +118,6 @@ function selectHeroGender(gender) {
   openHeroSelection();
 }
 
-function selectHeroTemp(heroId) {
-  pendingHeroId = heroId;
-  openHeroSelection();
-}
-
 /* v3.149.0 : clic sur une colonne de classe. Si on change de classe, on
    repart sur la variante de base (pas de Chaos hérité de l'autre classe). */
 function selectHeroClass(classId) {
@@ -271,7 +266,7 @@ function confirmHeroSelection() {
   window.pendingHeroCreationOrigin = null; // v3.29 : création confirmée, la croix <img class=ico-inline src=images/Icons/system/close.png> n'a plus lieu d'être pour cet emplacement
 
   // v3.260.0 (décision Seb) : plus d'arme de départ à la création — la première arme est la
-  // récompense de « Premier sang ». equipStarterWeapon reste le secours du changement de héros.
+  // récompense de « Premier sang ».
 
   if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
     StatsSystem.recalcStats();
@@ -486,7 +481,6 @@ function buildConfirmStepHTML(selectedHero) {
 
 window.getSelectedHero = getSelectedHero;
 window.needsHeroSetup = needsHeroSetup;
-window.selectHeroTemp = selectHeroTemp;
 window.selectHeroClass = selectHeroClass;
 window.selectHeroGender = selectHeroGender;
 window.toggleHeroChaosVariant = toggleHeroChaosVariant;

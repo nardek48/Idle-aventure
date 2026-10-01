@@ -113,61 +113,12 @@
    l'Entrepôt). Volontairement distincte des tuiles de ressources
    (.warehouse-grid) : pas de sélection, pas de panneau détail, juste
    un clic vers une popup dédiée. */
-.construction-entry-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-  padding: 12px 14px;
-  border: 1px dashed var(--nb-gold-dark);
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream);
-  cursor: pointer;
-}
-
-.construction-entry-card:active {
-  transform: scale(0.98);
-}
-
-.construction-entry-icon {
-  font-size: 26px;
-  flex: 0 0 auto;
-}
 
 /* v3.45 : version image (images/Icons/construction_icon.png fournie
    par Seb) — remplace l'emoji 🏗️ générique par une illustration
    dédiée à l'Atelier, via renderIconOrEmojiHTML() (voir
    ui/warehouse-view.js). L'emoji reste le repli automatique si
    CONSTRUCTION_BUILDINGS[id].icon est absent. */
-.construction-entry-icon-img {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-  border-radius: 50%;
-}
-
-.construction-entry-info {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.construction-entry-name {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: var(--nb-ink);
-}
-
-.construction-entry-level {
-  font-size: 12px;
-  color: rgba(58, 44, 26, 0.7);
-  margin-top: 2px;
-}
-
-.construction-entry-arrow {
-  flex: 0 0 auto;
-  font-size: 20px;
-  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
-}
 
 /* v3.38 : état "objectif de quête" de la carte d'accès — entre
    l'étape 3 validée (Récolter 15 Pierre) et l'étape 4 complétée
@@ -175,23 +126,6 @@
    en systems/workshop-unlock-system.js. Reste cliquable comme une
    carte normale ; seul le style change pour signaler "objectif de
    tutoriel", pas un bâtiment ordinaire. */
-.construction-entry-card.is-quest-pending {
-  border-style: solid;
-  border-color: var(--c-green-650-vivid);
-  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.25);
-}
-
-.construction-quest-badge {
-  display: inline-block;
-  margin-left: 4px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: var(--c-green-650-vivid);
-  color: var(--c-white-50);
-  font-size: 12px;
-  font-weight: 800;
-  vertical-align: middle;
-}
 
 /* v3.39 : popup d'objectif (non-bloquant) — voir
    ui/workshop-quest-modal.js, buildWorkshopStepPopupHTML(). Même
@@ -211,5 +145,4 @@
   font-size: 13px;
   font-weight: 800;
 }
-
 

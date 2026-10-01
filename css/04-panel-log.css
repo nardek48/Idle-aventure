@@ -30,10 +30,6 @@
   border-left-color: var(--nb-gold);
 }
 
-.log-entry.ascend {
-  border-left-color: var(--aether);
-}
-
 .log-entry.quest {
   border-left-color: var(--rarity-rare);
 }

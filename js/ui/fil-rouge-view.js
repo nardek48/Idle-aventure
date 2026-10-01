@@ -12,11 +12,7 @@
 var filRougeLastKey = null;
 var filRougeShown = []; // propositions affichées dans la bulle : le toucher agit sur CE qui est vu
 
-/* v3.396.0 (lot HUD-1) : le bouton du fil rouge quitte le bandeau du HUD ; c'est une bulle de
-   ui/hud-dock-view.js (petite et discrète au calme, plus grande avec « ! » si urgent).
-   Nom gardé pour les appels extérieurs. */
-function renderHudFilRouge() { if (typeof renderHudDock === "function") renderHudDock(); }
-window.renderHudFilRouge = renderHudFilRouge;
+/* v3.396.0 (lot HUD-1) : le bouton du fil rouge est une bulle de ui/hud-dock-view.js. */
 
 function getFilRougeRoot() {
   var root = document.getElementById("filrouge-bubble-root");
@@ -76,7 +72,16 @@ var HOWTO_TOAST_MS = 5000;
 var howToTimer = null;
 var howToCurrent = null;
 
+/* v3.410.0 (Seb) : certaines explications ne s'affichent qu'UNE fois par appareil ; ensuite,
+   un message court suffit (le joueur sait ce qui se passe). Mémorisé dans Prefs (hors sauvegarde). */
+var HOWTO_ONCE_KINDS = { warehouseFull: "howtoWarehouseFull" };
 function showHowToToast(message, kind, ctx) {
+  var onceKey = HOWTO_ONCE_KINDS[kind];
+  if (onceKey && window.Prefs && Prefs.get(onceKey) === true) {
+    if (typeof showToast === "function") showToast(message, 1500);
+    return null;
+  }
+  if (onceKey && window.Prefs) Prefs.set(onceKey, true);
   var how = (window.FilRouge && typeof FilRouge.howTo === "function") ? FilRouge.howTo(kind, ctx) : null;
   if (!how) { if (typeof showToast === "function") showToast(message, 1800); return null; }
   howToCurrent = how;
@@ -115,7 +120,6 @@ window.showHowToToast = showHowToToast;
 window.closeHowToToast = closeHowToToast;
 window.howToGo = howToGo;
 
-window.renderHudFilRouge = renderHudFilRouge;
 window.openFilRougeBubble = openFilRougeBubble;
 window.closeFilRougeBubble = closeFilRougeBubble;
 window.filRougeGo = filRougeGo;

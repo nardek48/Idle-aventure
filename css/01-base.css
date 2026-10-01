@@ -92,8 +92,7 @@ html, body {
 
 input,
 textarea,
-[contenteditable="true"],
-.selectable-text {
+[contenteditable="true"] {
   -webkit-user-select: text;
   user-select: text;
 }

@@ -26,46 +26,6 @@ function selectWarehouseKey(key) {
 }
 window.selectWarehouseKey = selectWarehouseKey;
 
-function isWarehouseScreenVisible() {
-  return game.activeTab === "village" && activeVillageSubTab === "entrepot";
-}
-window.isWarehouseScreenVisible = isWarehouseScreenVisible;
-
-function adjustWarehouseSellQty(delta) {
-  if (!selectedWarehouseKey) return;
-  var stock = Math.floor(WarehouseManager.getAmount(selectedWarehouseKey));
-  if (stock <= 0) return;
-
-  if (delta === "max") {
-    warehouseSellQty = stock;
-  } else {
-    warehouseSellQty = Math.max(1, Math.min(stock, warehouseSellQty + Number(delta || 0)));
-  }
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.adjustWarehouseSellQty = adjustWarehouseSellQty;
-
-/* v3.98.16 : saisie directe dans le champ de quantité à vendre — mêmes règles que les
-   steppers de craft (correction silencieuse vers la borne valide la plus proche). */
-function setWarehouseSellQty(rawValue) {
-  if (!selectedWarehouseKey) return;
-  var stock = Math.floor(WarehouseManager.getAmount(selectedWarehouseKey));
-  if (stock <= 0) return;
-
-  var parsed = Math.floor(Number(rawValue));
-  if (!isFinite(parsed)) parsed = 1;
-  warehouseSellQty = Math.max(1, Math.min(stock, parsed));
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.setWarehouseSellQty = setWarehouseSellQty;
-
-function confirmSellWarehouseResource() {
-  if (!selectedWarehouseKey) return;
-  WarehouseManager.sellResource(selectedWarehouseKey, warehouseSellQty);
-  warehouseSellQty = 1; // repart à 1 après vente (le stock restant a changé)
-}
-window.confirmSellWarehouseResource = confirmSellWarehouseResource;
-
 /* v3.98.13 : réserve protégée — seuil que le CHAÎNAGE AUTO des ateliers (voir
    WorkshopsSystem/ResourceReserveManager) ne consommera jamais. Un input numérique
    directement modifiable (pas un stepper -/+ : les seuils utiles peuvent être élevés,
@@ -203,31 +163,6 @@ function buildWarehouseHTML() {
      builder buildConstructionEntryCardHTML() est conservé plus bas, inerte,
      le temps d'une version : rien ne l'appelle. */
 
-  return h;
-}
-
-function buildConstructionEntryCardHTML() {
-  var id = "workshop";
-  var def = CONSTRUCTION_BUILDINGS[id];
-  if (!def) return "";
-
-  if (window.WorkshopUnlockManager && typeof WorkshopUnlockManager.isWorkshopVisible === "function") {
-    if (!WorkshopUnlockManager.isWorkshopVisible()) return ""; // pas encore débloqué : totalement invisible
-  }
-
-  var questPending = window.WorkshopUnlockManager && typeof WorkshopUnlockManager.isWorkshopQuestPending === "function" && WorkshopUnlockManager.isWorkshopQuestPending();
-
-  var level = ConstructionManager.getLevel(id);
-  var maxed = ConstructionManager.isMaxLevel(id);
-
-  var h = '<div class="construction-entry-card' + (questPending ? ' is-quest-pending' : '') + '" onclick="openConstructionModal(\'' + id + '\')">';
-  h += '<div class="construction-entry-icon">' + renderIconOrEmojiHTML(def.icon || "images/Icons/workshops/masonry.png", "construction-entry-icon-img", _td(def.name)) + '</div>';
-  h += '<div class="construction-entry-info">';
-  h += '<div class="construction-entry-name">' + esc(_td(def.name)) + (questPending ? ' <span class="construction-quest-badge"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> ' + _t("Quête") + '</span>' : '') + '</div>';
-  h += '<div class="construction-entry-level">' + (maxed ? _t("Niveau maximum") : _t("Niveau {a} / {b}", { a: level, b: VillageBuildingManager.getMaxLevel(id) })) + '</div>';
-  h += '</div>';
-  h += '<div class="construction-entry-arrow">›</div>';
-  h += '</div>';
   return h;
 }
 

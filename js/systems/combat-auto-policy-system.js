@@ -18,21 +18,7 @@ function chooseAutoAction(priorityList, kit, resourceState, cooldownState, comba
   return null;
 }
 
-function sanitizeAutoPolicyList(rawList, kit) {
-  if (!rawList || !Array.isArray(rawList) || !kit || !kit.actions) return [];
-  var seen = {};
-  var cleaned = [];
-  for (var i = 0; i < rawList.length; i++) {
-    var slot = rawList[i];
-    if (typeof slot !== "string" || seen[slot] || !kit.actions[slot]) continue;
-    seen[slot] = true;
-    cleaned.push(slot);
-  }
-  return cleaned;
-}
-
 window.chooseAutoAction = chooseAutoAction;
-window.sanitizeAutoPolicyList = sanitizeAutoPolicyList;
 
 var HERO_LOW_HP_THRESHOLD_PCT = 0.40;
 
@@ -155,14 +141,9 @@ function getGrimoireSlotCount(worldsEverReached) {
   return Math.min(stored, GRIMOIRE_BASE_SLOT_COUNT + extra);
 }
 
-function isGrimoireWorldUnlockMilestone(worldIndex) {
-  return GRIMOIRE_UNLOCK_WORLD_INDEXES.indexOf(worldIndex) !== -1;
-}
-
 window.GRIMOIRE_BASE_SLOT_COUNT = GRIMOIRE_BASE_SLOT_COUNT;
 window.GRIMOIRE_UNLOCK_WORLD_INDEXES = GRIMOIRE_UNLOCK_WORLD_INDEXES;
 window.getGrimoireSlotCount = getGrimoireSlotCount;
-window.isGrimoireWorldUnlockMilestone = isGrimoireWorldUnlockMilestone;
 
 function isConditionPossibleForEnemy(conditionId, enemy) {
   if (conditionId === "heroLowHp") return true;

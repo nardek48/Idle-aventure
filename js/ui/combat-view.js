@@ -336,10 +336,6 @@ function renderEnemyStatusBar() {
   if (sheetHost && sheetHost.innerHTML) setHtmlIfChanged(sheetHost, buildCombatStatesSheetHTML());
 }
 
-/* Alias historique : plusieurs systèmes appellent encore buildEnemyStatusBarHTML(). */
-function buildEnemyStatusBarHTML() { return buildCombatStatesHTML(); }
-
-window.buildEnemyStatusBarHTML = buildEnemyStatusBarHTML;
 window.renderEnemyStatusBar = renderEnemyStatusBar;
 
 /* Barre de round : n° du round, mode Tactique/Grimoire (bascule si le Grimoire est débloqué), Continuer l'attaque, jauge de célérité. */
@@ -373,18 +369,6 @@ function buildCombatControlsHTML() {
   }
   return h;
 }
-
-/* v3.241.0 : jauge de célérité — dans le panneau héros, sous la ressource de classe. */
-function buildCombatCelerityHTML() {
-  var gaugeMax = (typeof CELERITY_GAUGE_MAX === "number") ? CELERITY_GAUGE_MAX : 100;
-  var gaugePct = Math.max(0, Math.min(100, Math.round((Number(game.heroGauge || 0) / gaugeMax) * 100)));
-  var h = '<div class="combat-gauge kgauge kgauge-thin" title="' + esc(_t("Jauge de célérité : à 100 %, une frappe bonus suit ta prochaine attaque")) + '">';
-  h += '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + gaugePct + '%"></div></div>';
-  h += '<span class="kgauge-text"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + _t("Célérité {n} %", { n: gaugePct }) + '</span>';
-  h += '</div>';
-  return h;
-}
-window.buildCombatCelerityHTML = buildCombatCelerityHTML;
 
 /* Rangée de sortie (v3.102.1) : butin en cours + Rentrer (exploration) ou Fuir (mission, 50 % du butin). */
 function buildCombatSortieHTML() {

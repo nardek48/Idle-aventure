@@ -24,116 +24,6 @@ les classes de l'ancien thème pendant la migration progressive.
   padding: 12px 14px;
 }
 
-.nb-card-alt {
-  background: var(--nb-cream-alt);
-}
-
-/* =========================
-   Boutons
-   ========================= */
-.nb-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 18px;
-  border-radius: var(--nb-radius-sm);
-  border: 2px solid var(--nb-frame);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-  cursor: pointer;
-  text-align: center;
-}
-
-.nb-btn:active {
-  transform: translateY(2px);
-  box-shadow: none !important;
-}
-
-.nb-btn-primary {
-  background: linear-gradient(180deg, var(--c-bronze-300), var(--nb-gold));
-  color: var(--c-brown-850-vivid);
-  box-shadow: var(--nb-shadow-btn);
-}
-
-.nb-btn-secondary {
-  background: var(--nb-cream-alt);
-  color: var(--nb-ink);
-  box-shadow: 0 3px 0 var(--nb-frame-light);
-}
-
-.nb-btn.is-disabled,
-.nb-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .nb-btn:active {
-    transform: none;
-  }
-}
-
-/* =========================
-   Tuiles d'icône (grille de menu, emplacements...)
-   ========================= */
-.nb-icon-tile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--nb-radius-sm);
-  background: var(--nb-cream-alt);
-  border: 2px solid var(--nb-frame);
-  color: var(--nb-ink);
-}
-
-/* =========================
-   Pastille de ressource (barre du haut : or/essence/aether)
-   ========================= */
-.nb-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 10px 5px 6px;
-  border-radius: var(--nb-radius-pill);
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--nb-ink-inverse);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.nb-pill-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  font-size: 12px;
-  flex-shrink: 0;
-}
-
-/* =========================
-   Titres de section
-   ========================= */
-.nb-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  text-align: center;
-}
-
-.nb-subtitle {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: var(--nb-ink-dim);
-}
-
 /* =========================
    Bouton d'achat (vert)
    v2.80 : déplacé ici depuis css/04-panel-upgrades.css (où il
@@ -233,7 +123,11 @@ les classes de l'ancien thème pendant la migration progressive.
   padding: 8px 12px;
   border-radius: 12px;
   margin: 4px 0;
-  background: var(--c-cream-100-3) url('../images/Borders/background_upgrade.png') center / 100% 100% no-repeat;
+  /* v3.410.0 (Seb) : plus de cadre intérieur peint (background_upgrade.png) — carte crème du kit,
+     comme les autres cartes du jeu. */
+  background: var(--c-cream-100-soft);
+  border: 1px solid var(--c-bronze-500);
+  box-shadow: 0 2px 5px rgba(58, 44, 26, 0.15);
 }
 
 /* Carte non achetable (pas assez de monnaie) : léger flouté */
@@ -338,13 +232,6 @@ img.nb-purchase-icon {
    emoji (voir renderIconOrEmojiHTML dans core/utils.js) — même
    empreinte 46x46 que la version <img>, juste centrée avec une
    taille de police adaptée. */
-.nb-purchase-icon-emoji {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  line-height: 1;
-}
 
 .nb-purchase-info-col {
   flex: 1;
@@ -394,30 +281,13 @@ img.nb-purchase-icon {
 }
 
 /* Barre de niveau + progression (Amélioration, Donjon) */
-.nb-purchase-level-row {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  margin-top: 2px;
-}
 
 /* v3.178.0 : pilule remplacée par l'écu du kit (markup shop-view.js).
    NB : ce fichier charge AVANT 00-kbtn.css -> pas de conflit de couleur. */
-.nb-purchase-level-badge {
-  width: 26px;
-  font-size: 10px;
-}
 
 /* v3.173.0 : barre de niveau des améliorations migrée sur la jauge
    fine du kit (structure kgauge posée par shop-view.js) — ne reste que
    sa place dans la rangée ; texte réduit (barre étroite). */
-.nb-purchase-level-bar {
-  flex: 1;
-}
-
-.nb-purchase-level-bar .kgauge-text {
-  font-size: 10px;
-}
 
 .nb-purchase-buy-col {
   flex-shrink: 0;
@@ -446,14 +316,6 @@ img.nb-purchase-icon {
 
 /* Petits labels facultatifs au-dessus/dessous du bouton d'achat
    (ex. "COÛT" en haut, "x1"/"MAX" en bas — voir Amélioration). */
-.nb-purchase-buy-label {
-  color: var(--c-brown-850-soft);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  text-align: center;
-  text-transform: uppercase;
-}
 
 /* =========================
    Carte de collection (icône + infos + statut/progression)
@@ -474,7 +336,11 @@ img.nb-purchase-icon {
   padding: 10px 12px;
   border-radius: 12px;
   margin: 6px 0;
-  background: var(--c-cream-100-3) url('../images/Borders/background_upgrade.png') center / 100% 100% no-repeat;
+  /* v3.410.0 (Seb) : plus de cadre intérieur peint (background_upgrade.png) — carte crème du kit,
+     comme les autres cartes du jeu. */
+  background: var(--c-cream-100-soft);
+  border: 1px solid var(--c-bronze-500);
+  box-shadow: 0 2px 5px rgba(58, 44, 26, 0.15);
 }
 
 /* Reset pour les cas où ".nb-entry-card" est posée sur un <button>
@@ -482,7 +348,7 @@ img.nb-purchase-icon {
    annule les styles natifs de bouton du navigateur, le reste des
    règles ci-dessus s'applique normalement par-dessus. */
 button.nb-entry-card {
-  border: none;
+  border: 1px solid var(--c-bronze-500);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
@@ -526,8 +392,7 @@ button.nb-entry-card {
   flex-shrink: 0;
 }
 
-.nb-entry-icon-frame img,
-.nb-entry-icon-frame .nb-entry-icon {
+.nb-entry-icon-frame img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -592,16 +457,6 @@ button.nb-entry-card {
   color: var(--nb-gold-deep);
 }
 
-.nb-entry-progress-bar {
-  position: relative;
-  height: 14px;
-  border-radius: 999px;
-  background: var(--c-brown-850-2);
-  border: 1px solid var(--c-bronze-450-soft);
-  overflow: hidden;
-  margin-top: 4px;
-}
-
 .nb-entry-progress-fill {
   height: 100%;
   width: 0;
@@ -612,18 +467,6 @@ button.nb-entry-card {
 
 .nb-entry-progress-fill.done {
   background: linear-gradient(to bottom, var(--c-green-400), var(--c-green-650-vivid));
-}
-
-.nb-entry-progress-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--c-white-50);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
 .nb-entry-status-col {
@@ -646,22 +489,9 @@ button.nb-entry-card {
 
 .nb-entry-status-label.is-ready,
 .nb-entry-status-label.is-complete {
-  color: var(--c-green-650);
+  color: var(--c-green-650-2);
   font-style: normal;
   font-weight: 800;
-}
-
-.nb-entry-category-label {
-  margin: 14px 0 4px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--nb-ink-dim);
-}
-
-.nb-entry-category-label:first-child {
-  margin-top: 0;
 }
 
 @media all { /* v3.367.0 : + mode PC ; v3.406.0 : règles du téléphone partout (tablette comprise) — le jeu est toujours une mise en page de téléphone */
@@ -991,8 +821,7 @@ button.nb-entry-card {
 
 .ksec img { width: 22px; height: 22px; object-fit: contain; flex: 0 0 auto; }
 
-.ksec small,
-.ksec .ksec-n { font-size: 12.5px; font-weight: 700; color: var(--c-brown-700-vivid); }
+.ksec small { font-size: 12.5px; font-weight: 700; color: var(--c-brown-700-vivid); }
 
 .kkick {
   margin: 0 0 6px;
@@ -1053,7 +882,7 @@ button.nb-entry-card {
 .kseg button img { width: 22px; height: 22px; object-fit: contain; flex: 0 0 auto; }
 
 .kseg button.is-on {
-  background: linear-gradient(var(--c-bronze-300-soft), var(--c-bronze-450-3));
+  background: linear-gradient(var(--c-bronze-300-soft), var(--c-bronze-450));
   border-color: var(--c-brown-700-vivid);
   color: var(--c-brown-900);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 2px 4px rgba(0, 0, 0, 0.35);
@@ -1139,7 +968,7 @@ button.nb-entry-card {
 .kchips button.is-on {
   background: var(--c-brown-800-3);
   border-color: var(--c-brown-800-3);
-  color: var(--c-cream-100-4);
+  color: var(--c-cream-100-3);
 }
 
 .kchips .kseg-dot { top: -6px; right: -4px; }
@@ -1248,8 +1077,7 @@ button.nb-entry-card {
   line-height: 1.2;
 }
 
-.ksheet-title > img,
-.ksheet-title > .ksheet-ico { width: 32px; height: 32px; object-fit: contain; flex: 0 0 auto; }
+.ksheet-title > img { width: 32px; height: 32px; object-fit: contain; flex: 0 0 auto; }
 
 .ksheet-ttl { min-width: 0; overflow-wrap: anywhere; }
 
@@ -1419,5 +1247,4 @@ button.nb-entry-card {
 @media (prefers-reduced-motion: reduce) {
   .kwin { animation: none; }
 }
-
 

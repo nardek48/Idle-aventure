@@ -14,54 +14,8 @@
   align-items: center;
 }
 
-.quest-top-actions {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin: 8px 0 12px;
-  flex-wrap: wrap;
-  width: 100%;
-  max-width: 720px;
-  margin-inline: auto;
-}
-
-.quest-mode-btn {
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--nb-frame);
-  background: var(--nb-cream);
-  color: var(--nb-ink);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
 /* v3.29.7 : filtre "Quête active" / "Quête terminée" (remplace les
    anciens boutons Raid/Donjon). */
-.quest-mode-btn.is-active {
-  background: var(--nb-gold);
-  border-color: var(--nb-gold-dark);
-  color: var(--c-brown-850-3);
-}
-
-.quest-timer {
-  margin-bottom: 12px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-  width: 100%;
-  max-width: 720px;
-  margin-inline: auto;
-}
-
-.quest-list {
-  width: 100%;
-  max-width: 720px;
-  margin-inline: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
 
 /* v3.29.8 : section principale par monde (Journal de quête) — regroupe
    les cartes repliables sous un en-tête par monde, dans l'ordre de
@@ -200,38 +154,6 @@
 /* v3.90.0 : popups du moteur d'Expéditions (ui/exploration-view.js) — liste d'options
    empilée (provisions/approche/choix d'événement), réutilise .settings-btn tel quel pour
    la base du bouton, juste le layout interne (label + coût/estimation sur 2 lignes). */
-.exploration-option-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 10px 0;
-  width: 100%;
-}
-
-.exploration-option-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  width: 100%;
-  text-align: left;
-}
-
-.exploration-option-label {
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.exploration-option-cost,
-.exploration-option-estimate {
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-  font-weight: 400;
-}
-
-.exploration-prep-card .dungeon-summary-rewards {
-  width: 100%;
-}
 
 /* v3.100.0 : chaîne Histoire « Les Braises d'Aeswyn » (ui/quests-view.js:buildStoryChainHTML),
    en tête de la section Histoire. Étapes réclamées en une ligne, étape courante mise en avant. */
@@ -409,10 +331,6 @@
 .story-step-actions .settings-btn {
   flex: 1;
   margin: 0;
-}
-
-.camp-summary-story {
-  cursor: pointer;
 }
 
 /* ============================================================
@@ -673,11 +591,11 @@
 
 /* v3.265.0 : carte d'arrivée depuis un bâtiment verrouillé (Production) */
 .qb-card.is-highlight {
-  box-shadow: 0 0 0 3px var(--nb-gold, var(--c-bronze-450-2)), 0 0 14px rgba(217, 164, 65, 0.7);
+  box-shadow: 0 0 0 3px var(--nb-gold, var(--c-bronze-450-soft)), 0 0 14px rgba(217, 164, 65, 0.7);
   animation: qb-highlight-pulse 0.9s ease-in-out 3;
 }
 @keyframes qb-highlight-pulse {
-  50% { box-shadow: 0 0 0 3px var(--nb-gold, var(--c-bronze-450-2)), 0 0 22px rgba(217, 164, 65, 0.95); }
+  50% { box-shadow: 0 0 0 3px var(--nb-gold, var(--c-bronze-450-soft)), 0 0 22px rgba(217, 164, 65, 0.95); }
 }
 @media (prefers-reduced-motion: reduce) { .qb-card.is-highlight { animation: none; } }
 

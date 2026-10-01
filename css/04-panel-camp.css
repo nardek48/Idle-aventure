@@ -5,21 +5,6 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 écrans — seules les classes propres au Campement sont définies ici.
 ============================================================ */
 
-.camp-hero-title {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  text-align: center;
-  margin-bottom: 4px;
-}
-
-.camp-hero-sub {
-  font-size: 13px;
-  color: var(--nb-ink-dim);
-  text-align: center;
-  margin-bottom: 16px;
-}
-
 .camp-card {
   background: var(--nb-cream);
   border: 1px solid var(--nb-frame-light);
@@ -51,11 +36,6 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
    retour au titre texte d'avant v3.178. */
 /* v3.402.0 (lot B-1) : titre de section du kit (.ksec, css/00-components.css). */
 
-.camp-section-sub {
-  font-size: 13px;
-  margin-top: 14px;
-}
-
 /* Barre de PV (rouge) */
 /* v3.173.0 : .camp-hp-bar/.camp-hp-fill migrées sur la jauge fine du
    kit (structure kgauge posée par camp-view.js, vert kgauge-hp aligné
@@ -65,70 +45,12 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
    s'affichent dans la jauge elle-même (kgauge-text). */
 
 /* Grille de rations (3 colonnes) */
-.camp-ration-grid {
-  display: flex;
-  gap: 8px;
-}
-
-.camp-ration-item {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 10px 6px;
-  border: 1px solid var(--nb-frame-light);
-  border-radius: var(--nb-radius-md);
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.camp-ration-item.is-empty {
-  opacity: 0.55;
-}
-
-.camp-ration-icon-img,
-.camp-ration-icon {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  font-size: 32px;
-  line-height: 44px;
-}
-
-.camp-ration-heal {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--c-green-700);
-}
-
-.camp-ration-stock {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-ink-dim);
-}
 
 /* v3.233.0 (Seb) : le bouton collait aux bords de la carte (width 100 %).
    Il se dimensionne maintenant sur son texte, centré par le flex parent.
    v3.260.0 (retour Seb) : l'asset 393x88 plaqué en 100 % 100 % dans ~63x48 écrasait
    les pointes du cadre. Découpe en 9 zones : coins et pointes gardent leurs proportions,
    seul le centre s'étire. Limité à ce bouton, le composant du kit ne change pas. */
-.camp-ration-btn {
-  width: auto;
-  max-width: 100%;
-  min-height: 36px;
-  padding: 0 4px;
-  font-size: 12px;
-  background: none;
-  border-style: solid;
-  border-width: 9px 13px;
-  border-image: url('../images/UI/buttons/btn-rect-normal.png') 26 38 fill / 9px 13px stretch;
-}
-
-.camp-ration-btn:not(:disabled):active {
-  background-image: none;
-  border-image-source: url('../images/UI/buttons/btn-rect-pressed.png');
-}
 
 /* Bloc Régénération — v3.260.0 : une ligne (icône, rythme, temps restant, « ? ») */
 .camp-regen-line {
@@ -176,26 +98,12 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 /* v3.233.0 : .camp-regen-bar/.camp-regen-fill supprimées du rendu
    (elles affichaient hpPct, donc la barre de PV en double). */
 
-.camp-regen-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 6px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .camp-regen-rate {
   color: var(--c-green-700);
 }
 
 .camp-regen-eta {
   color: var(--nb-ink-dim);
-}
-
-.camp-fire-btn-cooldown {
-  opacity: 0.6;
 }
 
 /* v3.14 : message affiché une fois après une mort (game.justDied),
@@ -225,11 +133,6 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 
 .camp-summary-row:last-of-type {
   border-bottom: none;
-}
-
-.camp-summary-highlight {
-  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
-  font-weight: 700;
 }
 
 .camp-summary-empty {
@@ -407,7 +310,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   color: var(--nb-ink);
 }
 
-.camp-grimoire-counters { color: var(--c-green-750-3); }
+.camp-grimoire-counters { color: var(--c-green-750); }
 
 .camp-grimoire-mode {
   margin-bottom: 8px;
@@ -477,8 +380,6 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 
 /* v3.260.0 : petits écrans (320-359 px) — rations et ligne de régénération tiennent sans déborder */
 @media (max-width: 359px) {
-  .camp-ration-item { padding: 8px 3px; }
-  .camp-ration-btn { font-size: 12px; padding: 0 1px; border-width: 8px 10px; border-image-width: 8px 10px; }
   .camp-regen-line { gap: 4px; font-size: 12px; }
   .camp-regen-line .ico-lg { width: 20px; height: 20px; }
   .camp-help-btn { width: 24px; height: 24px; font-size: 0.8rem; }
@@ -492,3 +393,63 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   text-align: center;
   opacity: 0.85;
 }
+
+/* ============================================================
+   v3.411.0 (atelier Campement, Seb : R3b) — santé sur deux lignes, toujours visible :
+   PV (icône + jauge) puis rations en boutons carrés ; onglets Missions · Départ · Grimoire.
+   ============================================================ */
+.camp-health-card { padding: 10px 12px; }
+.camp-hp-line { display: flex; align-items: center; gap: 8px; }
+.camp-hp-ico { flex: 0 0 auto; width: 24px; height: 24px; object-fit: contain; }
+.camp-hp-line .camp-hp-bar { flex: 1 1 auto; min-width: 0; }
+.camp-health-card .camp-regen-line { margin-top: 4px; padding: 0 2px; }
+.camp-health-card .camp-regen-rate { color: var(--c-green-650-3); }
+.camp-health-card .camp-help-btn { width: 24px; height: 24px; font-size: 0.8rem; }
+
+.camp-ration-row { display: flex; justify-content: center; gap: 12px; margin-top: 10px; }
+.camp-ration-ib {
+  position: relative;
+  flex: 0 0 auto;
+  width: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px 5px;
+  border: 1px solid var(--c-brown-700-vivid);
+  border-radius: 12px;
+  background: linear-gradient(#fffaf0, var(--c-cream-150-soft));
+  box-shadow: 0 2px 0 var(--c-brown-700-vivid);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.camp-ration-ib:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
+.camp-ration-ib:disabled { cursor: default; }
+.camp-ration-ib.is-empty { opacity: 0.45; box-shadow: none; }
+.camp-ration-ib-img { width: 34px; height: 34px; object-fit: contain; }
+.camp-ration-ib b { font-size: 13px; font-weight: 800; color: var(--c-green-650-3); }
+.camp-ration-ib-n {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--c-brown-850-2);
+  color: var(--c-cream-150-vivid);
+  font-size: 12px;
+  font-weight: 800;
+  font-style: normal;
+  line-height: 20px;
+  text-align: center;
+}
+.camp-ration-hint { margin-top: 6px; text-align: center; font-size: 12px; color: var(--nb-ink-dim); }
+
+.camp-tabs { margin: 0 0 10px; }
+
+/* Boutons des missions : largeur du libellé, centrés (plus étirés sur toute la carte) */
+.camp-mission-actions { justify-content: center; }
+.camp-mission-card .camp-mission-btn { flex: 0 0 auto; width: auto; min-width: 150px; max-width: 100%; margin: 8px auto 0; padding: 7px 22px; font-size: 13px; }
+.camp-mission-actions .camp-mission-btn { margin: 8px 0 0; }

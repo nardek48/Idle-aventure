@@ -131,12 +131,6 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
   position: static; flex-direction: row; flex-wrap: wrap; justify-content: center;
   gap: 8px; margin-top: 0; min-height: 0;
 }
-.cb-arena .enemy-status-icon {
-  width: clamp(40px, 11.9vw, 50px); height: clamp(40px, 11.9vw, 50px);
-  border-width: 2.5px; background: rgba(10, 8, 6, 0.85);
-}
-.cb-arena .enemy-status-img { width: 74%; height: 74%; }
-.cb-arena .enemy-status-timer { min-width: 18px; height: 18px; font-size: 12px; bottom: -6px; right: -6px; }
 
 /* Ennemi : occupe l'espace restant, bords fondus (les JPG n'ont pas d'alpha) */
 .cb-arena #enemy-emoji {
@@ -222,7 +216,6 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 
 .cb-hero .class-resource-bar { position: static; bottom: auto; padding: 0; pointer-events: auto; }
 .cb-hero .class-resource-track { width: 100%; }
-.cb-celerity .combat-gauge { width: 100%; }
 .cb-hero .kgauge-text { font-size: 10px; }
 
 /* ---------- Petits écrans (SE) : le panneau héros se compacte ---------- */
@@ -231,7 +224,6 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
   .cb-hero .combat-hero-mini-portrait { width: 44px; height: 44px; }
   .cb-cmd #class-skills-root { --cb-skill: clamp(58px, 17vw, 66px); }
   .cb-arena .enemy-status-bar { margin-top: 3px; min-height: 34px; }
-  .cb-arena .enemy-status-icon { width: 36px; height: 36px; }
   .cb-ctl-row { margin-top: 4px; }
 }
 
@@ -311,7 +303,6 @@ body.combat-active #game-area { padding-top: calc(4px + var(--safe-top, env(safe
 .cb-hero .combat-hero-mini-hp-bar .kgauge-text { font-size: 12px; }
 
 .cb-hero .cb-celerity { display: flex; justify-content: center; }
-.cb-hero .cb-celerity .combat-gauge { flex: 0 0 auto; width: 70%; max-width: none; }
 .cb-hero .cb-celerity .kgauge-text { font-size: 11px; }
 .cb-hero .cb-celerity .kgauge-text img { margin-right: 3px; }
 

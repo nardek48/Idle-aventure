@@ -87,13 +87,6 @@ function buildEquipmentAffixLinesHTML(item) {
   return h;
 }
 
-function getCurrentHeroForEquipmentView() {
-  if (typeof getSelectedHero === "function") {
-    return getSelectedHero();
-  }
-  return null;
-}
-
 function buildEquipmentSlot(slot, label, icon) {
   var item = game.equipped[slot];
   var isSelected = selectedEquipSlot === slot;
@@ -103,12 +96,6 @@ function buildEquipmentSlot(slot, label, icon) {
     : '<div class="eq-orbit-slot-icon eq-orbit-slot-placeholder">' + renderIconOrEmojiHTML(icon, "eq-orbit-slot-img", _td(label)) + '</div>';
   h += '</button>';
   return h;
-}
-
-function getEquipmentStatDelta(candidate, current) {
-  if (!candidate || !current) return null;
-  if (candidate.stat !== current.stat) return null;
-  return Number(candidate.value || 0) - Number(current.value || 0);
 }
 
 function formatStatDelta(stat, delta) {

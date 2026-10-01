@@ -8,14 +8,6 @@
    A1-A3 validés par Seb le 18/09/2026). Préfixe .lmx- pour le cadre plein écran.
 ============================================================ */
 
-.lm-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; margin: 0 0 8px; padding: 6px 9px; border: 1px solid var(--c-bronze-500); border-radius: 10px; background-color: var(--c-cream-100-soft); }
-.lm-title { font-size: 13px; font-weight: 800; color: var(--c-brown-850-soft); min-width: 0; overflow: hidden; }
-.lm-title small { display: block; font-size: 12px; font-weight: 600; color: var(--c-brown-700-soft); }
-.lm-pills { display: flex; gap: 5px; flex: 0 0 auto; }
-.lm-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 800; padding: 2px 6px; border-radius: 10px; border: 1px solid var(--c-bronze-500); background-color: var(--c-cream-100-soft); color: var(--c-brown-850-soft); white-space: nowrap; }
-.lm-pill .ico-inline { width: 14px; height: 14px; }
-.lm-pill.is-pal { border-color: var(--c-brown-550-vivid); background-color: var(--c-cream-100-vivid); }
-
 /* Carte carrée : l'asset fait le décor, quatre calques au-dessus.
    --lm-r (rayon en %) et --lm-fog (opacité) sont posés en inline par la vue. */
 .lm-map {
@@ -73,7 +65,7 @@
 .lm-node-name {
   position: absolute; left: 50%; top: 42px; transform: translateX(-50%);
   font-size: 12px; font-weight: 800; white-space: nowrap; pointer-events: none;
-  color: var(--c-cream-100-4); background-color: rgba(0,0,0,.62); padding: 1px 5px; border-radius: 6px;
+  color: var(--c-cream-100-3); background-color: rgba(0,0,0,.62); padding: 1px 5px; border-radius: 6px;
 }
 .lm-node.is-edge-r .lm-node-name { left: auto; right: -2px; transform: none; }
 .lm-node.is-edge-l .lm-node-name { left: -2px; transform: none; }
@@ -100,14 +92,9 @@
 .lm-panel .settings-btn { margin: 8px auto 0; }
 .lm-panel .settings-btn.is-running { pointer-events: none; }
 
-.lm-actions { display: flex; gap: 6px; margin: 10px 0 0; }
-.lm-actions .settings-btn { margin: 0; flex: 1 1 auto; min-height: 38px; font-size: 12px; padding: 6px 8px; }
-
 /* Bilan d'expédition : ligne de carte (ui/scene-view.js) */
 .scene-map-report { font-size: 12px; line-height: 1.45; margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--c-bronze-500); background-color: var(--c-cream-100-soft); color: var(--c-brown-850-soft); }
 .scene-map-report.is-loss { color: var(--c-red-700-soft); }
-.scene-map-target { font-size: 12px; line-height: 1.45; margin: 0 0 8px; font-style: italic; color: var(--c-brown-750-soft); }
-.scene-map-target b { color: var(--c-brown-850-soft); font-style: normal; }
 
 /* ============================================================
    v3.292.0 — carte vivante plein écran

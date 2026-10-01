@@ -76,7 +76,7 @@
 }
 
 .scene-cost-input.is-missing {
-  color: var(--c-red-600-3);
+  color: var(--c-red-600);
 }
 
 .scene-cost-input-img {

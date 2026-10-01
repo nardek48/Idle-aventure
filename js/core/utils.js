@@ -28,10 +28,6 @@ function escPreservingIcons(text) {
   return out;
 }
 
-function cloneQuestProgress() {
-  return Object.assign({}, DEFAULT_QUEST_PROGRESS);
-}
-
 /* v3.397.0 (socle, audit design) : nombres à la française. Espace fine insécable entre les
    milliers (5 000), virgule décimale (12,5) ; au-delà de 10 000, trois chiffres et l'unité :
    12,3 k · 123 k · 1,23 M · 1,5 Md (avant : 5.00K, 1.23M, 1.50B). */
@@ -102,7 +98,6 @@ function vibrate(pattern) {
 }
 
 window.escPreservingIcons = escPreservingIcons;
-window.cloneQuestProgress = cloneQuestProgress;
 window.formatNumber = formatNumber;
 window.formatTime = formatTime;
 window.formatCraftDuration = formatCraftDuration;

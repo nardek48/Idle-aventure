@@ -42,15 +42,6 @@ function setHerosSubTabSilent(tab) {
    étrangers au reste de l'app. Le bouton "Mes héros" du Résumé ouvre
    désormais cet écran-là : un seul endroit gère les emplacements. */
 
-function buildPcStatRowHTML(icon, label, value) {
-  return ''
-    + '<div class="pc-stat-row">'
-    + '<span class="pc-stat-icon">' + renderIconOrEmojiHTML(icon, "pc-stat-ico-img", "") + '</span>'
-    + '<span class="pc-stat-label">' + esc(label) + '</span>'
-    + '<span class="pc-stat-value">' + esc(value) + '</span>'
-    + '</div>';
-}
-
 /* v3.202.0 — ÉCRAN 1 : RÉSUMÉ (maquette atelier-heros.html, validée par Seb).
    Cet écran ne fait que LIRE : aucun achat, aucun dépliage, seulement des
    sorties. C'est ce qui lui permet de tenir sur une hauteur d'écran, ce que
@@ -316,7 +307,6 @@ var HEROS_TRAINING_UPGRADE_IDS = [
   "utrain_will"
 ];
 
-
 /* =====================================================================
    v3.203.0 — SOUS-ONGLET STATS (écran 2 sur 3, maquette validée par Seb)
 
@@ -498,7 +488,6 @@ function getHeroStatFirstVisibleStep(row) {
 
   return found;
 }
-
 
 /* Sources de bonus, mesurées une par une sur le VRAI moteur.
 
@@ -978,41 +967,8 @@ window.openHerosSheet = openHerosSheet;
 window.closeHerosSheet = closeHerosSheet;
 window.setHerosSubTabSilent = setHerosSubTabSilent;
 
-function selectHeroInline(heroId) {
-  if (!heroId || heroId === game.heroId) return;
-  if (typeof HEROES_DB === "undefined") return;
-
-  var found = null;
-  Object.keys(HEROES_DB).forEach(function (key) {
-    if (HEROES_DB[key] && HEROES_DB[key].id === heroId) found = HEROES_DB[key];
-  });
-  if (!found) return;
-
-  game.heroId = heroId;
-  if (heroId.indexOf("chaos") === 0) game.codexChaosSeen = true;
-
-  if (window.ClassCombatManager && typeof ClassCombatManager.resetForNewHero === "function") {
-    ClassCombatManager.resetForNewHero();
-  }
-
-  // Arme de l'ancienne classe potentiellement incompatible avec la nouvelle -> retour inventaire.
-  if (typeof unequipIncompatibleWeapon === "function") unequipIncompatibleWeapon();
-  if ((!game.equipped || !game.equipped.weapon) && typeof equipStarterWeapon === "function") {
-    equipStarterWeapon();
-  }
-
-  if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
-    StatsSystem.recalcStats();
-  }
-
-  if (typeof saveGame === "function") saveGame();
-  if (typeof renderAll === "function") renderAll();
-  if (typeof showToast === "function") showToast(_t("Héros changé : {x}", { x: _td(found.name) }), 1200);
-}
-
 window.buildHerosHTML = buildHerosHTML;
 window.openHeroSlotsScreen = openHeroSlotsScreen; // v3.202.0
-window.selectHeroInline = selectHeroInline; // v3.25 : conservée pour compat
 window.setHerosSubTab = setHerosSubTab;
 window.toggleHeroStat = toggleHeroStat;   // v3.203.0
 window.toggleHeroSkill = toggleHeroSkill; // v3.203.0

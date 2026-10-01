@@ -329,7 +329,7 @@ Deux contraintes mesurées à l'atelier :
 }
 
 .cbg-act.is-picked {
-  border-color: var(--c-bronze-450-2);
+  border-color: var(--c-bronze-450-soft);
   box-shadow: 0 0 0 2px rgba(217, 164, 65, .55);
 }
 
@@ -448,7 +448,6 @@ Deux contraintes mesurées à l'atelier :
 
 /* La célérité était déjà bornée à 70 % de son conteneur : elle suit maintenant la même
    règle que la ressource de classe, sinon les deux ne font pas la même largeur. */
-.cb-hero .cb-gauges .cb-celerity .combat-gauge { width: 100%; }
 
 /* Carte du héros dans la rangée des acteurs. */
 .cbg-ally.cbg-me { border-color: rgba(217, 164, 65, .55); }
@@ -489,8 +488,6 @@ Deux contraintes mesurées à l'atelier :
   color: var(--c-brown-850-soft);
   white-space: nowrap;
 }
-
-.cbg-band-right { min-width: 0; }
 
 /* À la place de Mana et Célérité, qu'un compagnon n'a pas : ce qu'il a vraiment. */
 .cbg-band-line {
@@ -747,6 +744,9 @@ Deux contraintes mesurées à l'atelier :
 
 .cb-alert,
 .cb-states { border: 0; }
+/* v3.410.0 (Seb) : la rangée d'états est un <button> — sans fond explicite, le navigateur lui
+   donnait son gris clair natif (le « cadre blanc » autour des icônes d'état de l'ennemi). */
+.cb-states { background: none; }
 
 /* Un bouton désactivé (carte non cliquable hors mode Manuel) garde son apparence : c'est
    une fiche d'information, pas un contrôle grisé. */

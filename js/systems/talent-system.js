@@ -375,8 +375,6 @@ var TalentManager = {
   bonusStrikeMult: function () { return this.has("a_transe") ? 1 + this.V("a_transe") : 1; }
 };
 
-/* Façades d'écran (onclick) et compat des anciens appelants. */
-function buyTalentNode(id) { return TalentManager.buy(id); }
 function respecTalents() {
   if (!TalentManager.spent()) return TalentManager.respec();
   var n = TalentManager.spent();
@@ -385,9 +383,6 @@ function respecTalents() {
     showConfirmModal(_t("Réinitialiser les talents ?"), _tn(n, "C'est gratuit : tes {n} point te sont rendus.", "C'est gratuit : tes {n} points te sont rendus."), "🔄", go);
   } else if (window.confirm(_t("Réinitialiser les talents ?"))) go();
 }
-function getTalentRespecCost() { return 0; }
 
 window.TalentManager = TalentManager;
-window.buyTalentNode = buyTalentNode;
 window.respecTalents = respecTalents;
-window.getTalentRespecCost = getTalentRespecCost;

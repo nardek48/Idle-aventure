@@ -125,16 +125,7 @@ function getAllGrimoireCounterIds(action) {
   return ids.sort(function (a, b) { return order.indexOf(a) - order.indexOf(b); });
 }
 
-/* v3.208.0 : s'appuie désormais sur getAllGrimoireCounterIds() — inclut donc les contres
-   d'archétype portés par action.effects, invisibles jusqu'ici. */
-function getGrimoireCounterLabels(action) {
-  return getAllGrimoireCounterIds(action).map(function (conditionId) {
-    return GRIMOIRE_CONDITIONS[conditionId].label;
-  });
-}
-
 window.GRIMOIRE_CONDITIONS = GRIMOIRE_CONDITIONS;
 window.GRIMOIRE_CONDITION_ORDER = GRIMOIRE_CONDITION_ORDER;
 window.getGrimoireCondition = getGrimoireCondition;
 window.getAllGrimoireCounterIds = getAllGrimoireCounterIds;
-window.getGrimoireCounterLabels = getGrimoireCounterLabels;

@@ -111,7 +111,7 @@
 
 /* Homme / Femme : le rail du kit (.kseg) ; l'actif garde la classe .active du code */
 .hc-gender-toggle .hc-gender-btn.active {
-  background: linear-gradient(var(--c-bronze-300-soft), var(--c-bronze-450-3));
+  background: linear-gradient(var(--c-bronze-300-soft), var(--c-bronze-450));
   border-color: var(--c-brown-700-vivid);
   color: var(--c-brown-900);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 2px 4px rgba(0, 0, 0, 0.35);

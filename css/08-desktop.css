@@ -20,7 +20,6 @@ html.pc-mode body {
 html.pc-mode .title-screen-stage {
   max-width: min(390px, calc(100vh / var(--pc-zoom, 1) * 0.54));
 }
-html.pc-mode .hero-picker { max-height: calc(94vh / var(--pc-zoom, 1)); }
 html.pc-mode .full-menu { max-height: calc(88vh / var(--pc-zoom, 1)); }
 html.pc-mode .ksheet { max-height: calc(84vh / var(--pc-zoom, 1)); }
 html.pc-mode .ksheet.hf-sheet { max-height: calc(70vh / var(--pc-zoom, 1)); }

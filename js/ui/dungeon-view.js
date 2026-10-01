@@ -98,10 +98,6 @@ function buildDungeonRunsLineHTML(dungeonId) {
 }
 window.buildDungeonRunsLineHTML = buildDungeonRunsLineHTML;
 
-// alias historique (harnais)
-function buildDungeonTierCardHTML(dungeon) { return buildDungeonCardHTML(dungeon); }
-window.buildDungeonTierCardHTML = buildDungeonTierCardHTML;
-
 /* v3.358.0 (D7) : plus de tickets. Le bandeau dit la règle et le renouvellement ; le compte
    de chaque donjon est sur sa carte. */
 function buildDungeonTicketBadgeHTML() {
@@ -228,8 +224,6 @@ function openDungeonSheet(dungeonId) {
   pendingDungeonMarks = [];
   renderDungeonSheet();
 }
-// alias historique
-function openDungeonIntro(dungeonId) { return openDungeonSheet(dungeonId); }
 
 function closeDungeonSheet() {
   pendingDungeonId = null;
@@ -237,7 +231,6 @@ function closeDungeonSheet() {
   var host = document.getElementById("dungeon-modal-root");
   if (host) host.innerHTML = "";
 }
-function closeDungeonIntro() { return closeDungeonSheet(); }
 
 function toggleDungeonMark(markId) {
   if (pendingDungeonId == null) return;
@@ -304,8 +297,6 @@ function closeDungeonSummary() {
 window.openDungeonSheet = openDungeonSheet;
 window.closeDungeonSheet = closeDungeonSheet;
 window.toggleDungeonMark = toggleDungeonMark;
-window.openDungeonIntro = openDungeonIntro;
-window.closeDungeonIntro = closeDungeonIntro;
 window.confirmDungeonStart = confirmDungeonStart;
 window.openDungeonSummary = openDungeonSummary;
 window.closeDungeonSummary = closeDungeonSummary;

@@ -197,8 +197,7 @@ var ELITE_DB = {
    à la Lisière, puis en survie au Cœur, où le combat est plus long.
 
    ARME — déclinée PAR CLASSE : generateEquipmentItem() restreint l'icône d'arme à
-   la classe du héros (un Rôdeur ne trouve pas de bâton) et
-   unequipIncompatibleWeapon() déséquipe ce qui ne l'est plus. Une arme unique à
+   la classe du héros (un Rôdeur ne trouve pas de bâton). Une arme unique à
    icône fixe serait donc inutilisable par deux classes sur trois.
    Valeur 26 : juste au-dessus du plafond commun (25), donc un gain GARANTI quelle
    que soit l'arme portée, et dans le premier tiers de l'Inhabituel (23-32) pour ne

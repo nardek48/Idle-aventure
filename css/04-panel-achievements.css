@@ -2,14 +2,6 @@
    Hauts faits
    ========================= */
 
-.achievement-summary {
-  text-align: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
-  margin-bottom: 12px;
-}
-
 /* v3.202.1 : bandeau de bilan, au-dessus de la liste. Deux colonnes sur
    la largeur d'un 390 : sept lignes empilées auraient repoussé le premier
    haut fait hors de l'écran, ce qui aurait déplacé le problème au lieu de
@@ -87,7 +79,6 @@
 .hf-title-btn b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 /* v3.402.0 (lot B-1) : bouton principal du kit (.kbtn.primary), en taille compacte */
 .hf-claim-all.kbtn { flex: 0 0 auto; width: auto; min-height: 40px; margin: 0; padding: 6px 12px; font-size: 12px; }
-
 
 /* v3.401.0 (lot O-1) : catégories = pastilles du kit (.kchips, css/00-components.css) */
 .hf-tiers { background: var(--c-cream-100-soft); border: 1px solid var(--c-bronze-250-soft); border-radius: 12px; padding: 9px 10px 8px; color: var(--c-brown-850-soft); margin-bottom: 8px; }

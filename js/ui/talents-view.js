@@ -13,10 +13,6 @@ function talentIconHTML(node) {
   return '<span class="tt-ico"><img src="' + esc(node.img || "") + '" alt=""></span>';
 }
 
-function getTalentClassId() {
-  return (window.TalentManager && TalentManager.getClassId()) || "knight";
-}
-
 function talentPipsHTML(node) {
   var r = TalentManager.rank(node.id), max = TalentManager.maxRank(node), h = '<span class="tt-pips">';
   for (var i = 1; i <= max; i++) h += '<i' + (i <= r ? ' class="is-on"' : '') + '></i>';
@@ -133,12 +129,8 @@ function buildTalentsHTML() {
     + buildTalentBoardHTML() + '</div></div></div>';
 }
 
-/* Compat : les trois branches n'existent plus. */
-function setTalentCategory() { if (typeof renderPanel === "function") renderPanel(); }
-
 window.buildTalentsHTML = buildTalentsHTML;
 window.buildTalentBoardHTML = buildTalentBoardHTML;
 window.buildTalentSheetBodyHTML = buildTalentSheetBodyHTML;
 window.openTalentSheet = openTalentSheet;
 window.learnOpenTalent = learnOpenTalent;
-window.setTalentCategory = setTalentCategory;

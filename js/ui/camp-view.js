@@ -79,7 +79,21 @@ function toggleCampRegenHelp() {
 }
 window.toggleCampRegenHelp = toggleCampRegenHelp;
 
-function buildCampHTML() {
+/* v3.411.0 : onglet ouvert du Campement (retenu pendant la session). */
+var CAMP_TABS = [
+  { key: "missions", label: _t("Missions"), icon: "images/Icons/quests/quest_list.png" },
+  { key: "depart", label: _t("Départ"), icon: "images/Icons/subtabs/dungeon.png" },
+  { key: "grimoire", label: _t("Grimoire"), icon: "images/Icons/codex/codex_lore.png" }
+];
+var campTab = "missions";
+function setCampTab(tab) {
+  campTab = tab;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setCampTab = setCampTab;
+
+/* tab : optionnel (harnais) — sinon l'onglet retenu */
+function buildCampHTML(tab) {
   if (window.CampManager) CampManager.ensureDefaults();
 
   // v3.101.0 (P3-lite) : régénération lente + Rations (v3.106.0), plus de repos à horloge.
@@ -91,7 +105,7 @@ function buildCampHTML() {
   var minutesToFull = window.CampManager ? CampManager.getMinutesToFull() : 0;
   var rationOptions = window.CampManager ? CampManager.getRationOptions() : [];
 
-  var h = '<div class="nb-page-frame camp-page kframe-page" data-kf-title="images/Icons/quests/village_quest.png|' + _t("Campement") + '">';
+  var h = '<div class="nb-page-frame nb-page-frame-fill camp-page kframe-page" data-kf-title="images/Icons/quests/village_quest.png|' + _t("Campement") + '">';
 
   // v3.194.0 (Seb) : titre et sous-titre retirés — le bandeau figé porte
   // déjà « <img class=ico-inline src=images/Icons/quests/village_quest.png> Campement », la ligne d'ambiance n'apportait rien.
@@ -103,38 +117,18 @@ function buildCampHTML() {
 
   var hpPct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
 
-  // v3.116.0 (Lot C, maquette Seb) : bloc Santé du Héros — barre de PV pleine largeur.
+  /* v3.411.0 (atelier Campement, Seb : R3b) : la santé tient en deux lignes et reste toujours
+     visible — ligne 1 : icône + jauge de PV (+ régénération dessous) ; ligne 2 : les rations en
+     boutons carrés (icône, soin, stock en pastille). Toucher une ration = la manger.
+     Les identifiants camp-hp-fill, camp-fire-hp-value et camp-fire-eta sont gardés : le
+     système de camp les met à jour en direct. */
   h += '<div class="camp-card camp-health-card">';
-  h += '<div class="ksec camp-section-title"><img class="ico-lg" src="images/Icons/combat_stats/stat_health.png" alt=""> ' + _t("Santé du héros") + '</div>';
-  // v3.173.0 : jauge fine du kit (vert, aligné sur les PV héros du combat — avant : rouge).
-  // v3.174.0 (retour Seb) : PV courants/max affichés DANS la barre (kgauge-text)
-  // au lieu d'une ligne séparée dessous — l'id camp-fire-hp-value migre sur le
-  // texte de la jauge (camp-system.js le met à jour tel quel).
+  h += '<div class="camp-hp-line"><img class="camp-hp-ico" src="images/Icons/combat_stats/stat_health.png" alt="">';
   h += '<div class="camp-hp-bar kgauge kgauge-thin kgauge-hp"><div class="kgauge-track"><div class="kgauge-fill" id="camp-hp-fill" style="width:' + hpPct + '%"></div></div>'
-    + '<span class="kgauge-text" id="camp-fire-hp-value">' + formatNumber(Math.floor(hp)) + ' / ' + formatNumber(maxHp) + '</span></div>';
+    + '<span class="kgauge-text" id="camp-fire-hp-value">' + formatNumber(Math.floor(hp)) + ' / ' + formatNumber(maxHp) + '</span></div></div>';
 
-  // Bloc Rations — 3 cartes côte à côte (icône, soin, stock, bouton Manger).
-  h += '<div class="ksec camp-section-title camp-section-sub"><img class="ico-lg" src="images/Icons/quests/ration_reward.png" alt=""> ' + _t("Rations") + '</div>';
-  var campLock = (window.heroLockReason && heroLockReason()) || null; // v3.307.0
-  if (campLock) h += '<div class="camp-lock-note"><img class="ico-inline" src="images/Icons/system/hero_away.png" alt=""> ' + esc(campLock) + '</div>';
-  h += '<div class="camp-ration-grid">';
-  rationOptions.forEach(function (r) {
-    var def = (window.WAREHOUSE_RESOURCES || {})[r.id] || {};
-    var healValue = Math.floor(maxHp * r.healPct);
-    var canEat = r.amount >= 1 && !hpFull && !campLock;
-    h += '<div class="camp-ration-item' + (r.amount < 1 ? ' is-empty' : '') + '" title="' + esc(_td(r.name)) + '">';
-    h += '<div class="camp-ration-icon">' + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.png", "camp-ration-icon-img", _td(r.name)) + '</div>';
-    h += '<div class="camp-ration-heal"><img class=ico-inline src=images/Icons/combat_stats/stat_health.png> +' + formatNumber(healValue) + '</div>';
-    h += '<div class="camp-ration-stock">×' + formatNumber(r.amount) + ' · ' + Math.round(r.healPct * 100) + ' %</div>';
-    h += '<button class="settings-btn primary camp-ration-btn" type="button"' + (canEat ? ' onclick="CampManager.eatRation(\'' + esc(r.id) + '\');"' : ' disabled') + '>' + _t("Manger") + '</button>';
-    h += '</div>';
-  });
-  h += '</div>';
-
-  /* Bloc Régénération — v3.260.0 (décision Seb) : une seule ligne (rythme + temps restant) et
-     un « ? » qui déplie l'explication. La phrase ne s'affiche plus en permanence. */
+  /* Régénération — v3.260.0 (décision Seb) : une seule ligne et un « ? » qui déplie l'explication. */
   h += '<div class="camp-regen-line">';
-  h += '<img class="ico-lg" src="images/Icons/camp/regeneration.png" alt="">';
   h += '<span class="camp-regen-rate">' + _t("+{n} % PV/min", { n: regenPct }) + '</span>';
   // v3.242.0 (bug Seb) : esc() enveloppait AUSSI la balise <img> — seule la partie texte est échappée.
   h += '<span class="camp-regen-eta" id="camp-fire-eta">' + (hpFull
@@ -147,6 +141,23 @@ function buildCampHTML() {
       { n: Math.round((typeof getCampOfflineRegenCap === "function" ? getCampOfflineRegenCap() : 0.5) * 100) }) + '</div>';
   }
 
+  var campLock = (window.heroLockReason && heroLockReason()) || null; // v3.307.0
+  if (campLock) h += '<div class="camp-lock-note"><img class="ico-inline" src="images/Icons/system/hero_away.png" alt=""> ' + esc(campLock) + '</div>';
+  h += '<div class="camp-ration-row">';
+  rationOptions.forEach(function (r) {
+    var def = (window.WAREHOUSE_RESOURCES || {})[r.id] || {};
+    var healValue = Math.floor(maxHp * r.healPct);
+    var canEat = r.amount >= 1 && !hpFull && !campLock;
+    h += '<button type="button" class="camp-ration-ib' + (r.amount < 1 ? ' is-empty' : '') + '"'
+      + ' title="' + esc(_td(r.name) + " · " + Math.round(r.healPct * 100) + " %") + '" aria-label="' + esc(_t("Manger : {x}", { x: _td(r.name) })) + '"'
+      + (canEat ? ' onclick="CampManager.eatRation(\'' + esc(r.id) + '\');"' : ' disabled') + '>';
+    h += renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.png", "camp-ration-ib-img", _td(r.name));
+    h += '<b>+' + formatNumber(healValue) + '</b>';
+    h += '<i class="camp-ration-ib-n">' + formatNumber(r.amount) + '</i>';
+    h += '</button>';
+  });
+  h += '</div>';
+  if (!hpFull && !campLock && rationOptions.some(function (r) { return r.amount >= 1; })) h += '<div class="camp-ration-hint">' + _t("Toucher une ration pour la manger") + '</div>';
   h += '</div>'; // fin .camp-health-card
 
   // v3.133.0 : bloc « Les braises » — offrande de l'étape Histoire courante (forest_15), affiché
@@ -172,22 +183,19 @@ function buildCampHTML() {
     h += '</div>';
   }
 
-  h += '<div class="camp-card camp-missions-card">';
-  h += '<div class="camp-card-title"><img class=ico-inline src=images/Icons/quests/quest_list.png> ' + _t("Tableau de missions") + '</div>';
-  h += buildCampMissionBoardHTML();
-  h += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">' + _t("Voir le tableau complet") + '</button>';
-  h += '</div>';
-
-  // v3.244.0 (chantier Navigation, décision Seb) : Donjon et Carte du monde quittent le
-  // menu ☰ pour le bloc « Expédition » du Campement — c'est d'ici qu'on part. Mêmes
-  // verrous d'Histoire que leurs anciennes cases ; rien tant que rien n'est débloqué.
-  h += buildCampPreparationDoorsHTML();
-  h += buildCampExpeditionDoorsHTML();
-
-  // v3.210.0 (décision Seb) : raccourci vers le Grimoire, retiré du menu ☰ au passage.
-  // Le Campement est le lieu de préparation — on règle ses tactiques avant de partir.
-  // Respecte le même verrou que l'entrée de menu qu'il remplace : rien tant que
-  // l'onglet n'est pas débloqué.
+  /* v3.411.0 (atelier Campement, R3) : sous la santé, trois onglets en rail du kit —
+     Missions · Départ (préparer, expédition) · Grimoire. Un onglet n'apparaît que s'il a du
+     contenu ; s'il n'en reste qu'un, pas de rail. L'onglet ouvert est retenu (campTab). */
+  var tabsHTML = {};
+  var mh = '<div class="camp-card camp-missions-card">';
+  mh += buildCampMissionBoardHTML();
+  mh += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">' + _t("Voir le tableau complet") + '</button>';
+  mh += '</div>';
+  tabsHTML.missions = mh;
+  // v3.244.0 (chantier Navigation, décision Seb) : Donjon et Carte du monde quittent le menu ☰ pour le bloc « Expédition »
+  var dep = buildCampPreparationDoorsHTML() + buildCampExpeditionDoorsHTML();
+  if (dep) tabsHTML.depart = dep;
+  // v3.210.0 (décision Seb) : raccourci vers le Grimoire, même verrou que l'ancienne entrée de menu.
   if (typeof isTabUnlocked !== "function" || isTabUnlocked("grimoire")) {
     ensureGrimoireRules();
     var slotCount = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : 6;
@@ -198,18 +206,31 @@ function buildCampHTML() {
     var counterCount = activeRules.filter(function (r) {
       return (typeof isGrimoireRuleCounter === "function") && isGrimoireRuleCounter(r, kit);
     }).length;
-
-    h += '<div class="camp-card camp-grimoire-card">';
-    h += '<div class="camp-card-title"><img class=ico-inline src=images/Icons/codex/codex_lore.png> ' + _t("Grimoire de tactiques") + '</div>';
-    h += '<div class="camp-grimoire-summary">' + _t("{a} / {b} règles actives", { a: activeRules.length, b: slotCount })
+    var gh = '<div class="camp-card camp-grimoire-card">';
+    gh += '<div class="camp-grimoire-summary">' + _t("{a} / {b} règles actives", { a: activeRules.length, b: slotCount })
       + (counterCount ? ' · <span class="camp-grimoire-counters"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + _tn(counterCount, "{n} contre", "{n} contres") + '</span>' : '')
       + '</div>';
-    h += '<div class="camp-grimoire-mode">' + (game.combatMode === "grimoire"
+    gh += '<div class="camp-grimoire-mode">' + (game.combatMode === "grimoire"
       ? '<img class=ico-inline src=images/Icons/codex/codex_lore.png> ' + _t("Mode Grimoire : tes règles jouent seules.")
       : '<img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> ' + _t("Mode Tactique : tes règles conseillent, tu choisis.")) + '</div>';
-    h += '<button class="settings-btn" type="button" onclick="switchTab(\'grimoire\')">' + _t("Régler mes tactiques") + '</button>';
+    gh += '<button class="settings-btn" type="button" onclick="switchTab(\'grimoire\')">' + _t("Régler mes tactiques") + '</button>';
+    gh += '</div>';
+    tabsHTML.grimoire = gh;
+  }
+  var order = CAMP_TABS.filter(function (t) { return !!tabsHTML[t.key]; });
+  var want = tab || campTab;
+  var cur = tabsHTML[want] ? want : order[0].key;
+  if (order.length > 1) {
+    var claimable = window.MissionBoard ? MissionBoard.top(3).filter(function (m) { return !!m.claim; }).length : 0;
+    h += '<div class="kseg is-stack camp-tabs">';
+    order.forEach(function (t) {
+      h += '<button type="button" class="' + (cur === t.key ? 'is-on' : '') + '" onclick="setCampTab(\'' + t.key + '\')">'
+        + '<img src="' + t.icon + '" alt=""><span>' + esc(t.label) + '</span>'
+        + (t.key === "missions" && claimable ? '<span class="kseg-dot">' + claimable + '</span>' : '') + '</button>';
+    });
     h += '</div>';
   }
+  h += tabsHTML[cur];
 
   // v3.181.0 (décision Seb) : carte « Accès rapide » supprimée — la nav du
   // bas couvre ces raccourcis depuis la refonte.
@@ -253,16 +274,6 @@ function buildCampPreparationDoorsHTML() {
   if (potions > 0) h += '<span class="camp-door-badge kbadge kbadge-round"><span>' + potions + '</span></span>';
   h += '<span class="camp-door-chev">›</span>';
   h += '</button>';
-
-  // v3.313.0 : porte « Économie » seulement s'il reste une amélioration d'or à vendre
-  if (typeof shopHasEconomyUpgrades === "function" && shopHasEconomyUpgrades()) {
-    h += '<button type="button" class="camp-door" onclick="goToEconomy()">';
-    h += '<img class="camp-door-ico" src="images/Icons/subtabs/economy.png" alt="">';
-    h += '<span class="camp-door-txt"><span class="camp-door-t">' + _t("Économie") + '</span>';
-    h += '<span class="camp-door-s">' + _t("Améliorations d'or") + '</span></span>';
-    h += '<span class="camp-door-chev">›</span>';
-    h += '</button>';
-  }
 
   h += '</div></div>';
   return h;

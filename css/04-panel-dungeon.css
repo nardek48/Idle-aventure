@@ -11,45 +11,6 @@
 /* v3.168.0 : le bloc local .settings-btn:disabled/.disabled est retiré
    — l'état désactivé est couvert par la source unique css/00-kbtn.css. */
 
-.dungeon-ticket-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 10px 0;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--nb-cream-alt);
-}
-
-.dungeon-ticket-count {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
-}
-
-.dungeon-ticket-reset {
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-}
-
-.dungeon-ticket-limit {
-  margin-bottom: 8px;
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-  text-align: center;
-}
-
-.dungeon-best-wave {
-  margin: 10px 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: var(--nb-cream-alt);
-  font-size: 12px;
-  font-weight: 700;
-  text-align: center;
-  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
-}
-
 .dungeon-active-card {
   text-align: center;
 }
@@ -96,12 +57,6 @@
    emplacement d'image (voir buildDungeonTierCardHTML) — repli sur un
    numéro stylisé tant qu'aucune image n'est fournie.
    ========================= */
-.dungeon-tier-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 10px;
-}
 
 .dungeon-tier-card {
   display: flex;
@@ -217,13 +172,6 @@
 /* =========================
    Boutique du donjon (Éclats)
    ========================= */
-.dungeon-shard-count {
-  text-align: center;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--c-blue-250);
-  margin: 8px 0 12px;
-}
 
 .dungeon-shop-grid {
   display: flex;
@@ -284,12 +232,6 @@
 
 /* v2.83.10 : petite icône inline (Essence/Aether) dans les lignes de
    résumé de fin de donjon. */
-.dungeon-summary-icon {
-  width: 13px;
-  height: 13px;
-  object-fit: contain;
-  vertical-align: -2px;
-}
 
 .dungeon-summary-loot span:last-child {
   color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
@@ -334,10 +276,6 @@
 
 /* v3.178.0 : compteur sur le badge rond du kit (markup dungeon-view.js)
    — ne reste que la taille. */
-.dungeon-ticket-badge-count {
-  width: 26px;
-  font-size: 11px;
-}
 
 .dungeon-list {
   display: flex;
@@ -345,99 +283,9 @@
   gap: 10px;
 }
 
-.dungeon-card {
-  border-radius: var(--nb-radius-md);
-  border: 1px solid var(--nb-frame);
-  background: var(--nb-cream-alt);
-  overflow: hidden;
-}
-
-.dungeon-card.is-expanded {
-  border-color: var(--nb-gold-dark);
-}
-
-.dungeon-card.is-locked {
-  opacity: 0.55;
-}
-
 /* v2.83.12 : l'en-tête cliquable EST maintenant le bandeau (voir
    buildDungeonCardHTML) — plus de petite icône carrée à côté d'une
    colonne de texte, le nom s'affiche en surimpression sur l'image. */
-.dungeon-card-head {
-  position: relative;
-  width: 100%;
-  height: 110px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  background: var(--nb-cream-deep);
-  border: none;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.dungeon-card.is-locked .dungeon-card-head {
-  cursor: not-allowed;
-}
-
-.dungeon-card-head-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.dungeon-card-head-placeholder {
-  font-size: 44px;
-  opacity: 0.5;
-}
-
-.dungeon-card-head-name {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 8px 34px 8px 12px;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.6), transparent);
-  color: var(--c-white-50);
-  font-size: 15px;
-  font-weight: 800;
-  text-align: left;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-}
-
-.dungeon-card-head-hint {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  top: 10px;
-  font-size: 12px;
-  color: var(--c-white-50);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-}
-
-.dungeon-card-chevron {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  font-size: 12px;
-  color: var(--c-white-50);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-}
-
-.dungeon-card-body {
-  padding: 12px;
-}
-
-.dungeon-card-desc {
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-  line-height: 1.5;
-  margin-bottom: 10px;
-}
-
 
 /* v3.223.0 : matériau de monde annoncé sur la carte de palier. */
 .dungeon-tier-special {
@@ -491,7 +339,7 @@
   background: rgba(58, 44, 26, 0.18); border: 1px solid var(--nb-frame-light); transition: background 0.15s;
 }
 .dmark-state::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--c-cream-50); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); transition: left 0.15s; }
-.dmark.is-on { border-color: var(--nb-gold); background: var(--c-cream-100-4); }
+.dmark.is-on { border-color: var(--nb-gold); background: var(--c-cream-100-3); }
 .dmark.is-on .dmark-state { background: var(--nb-gold); }
 .dmark.is-on .dmark-state::after { left: 18px; }
 .dmark.is-locked { opacity: 0.55; cursor: default; }

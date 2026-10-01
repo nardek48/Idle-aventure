@@ -179,16 +179,6 @@ function buildVillageBuildingSheetHTML(id) {
     h += buildTavernContractsHTML();
   }
 
-  /* v3.244.0 (chantier Navigation, transitoire) : la Boutique a quitté le menu ☰. Ses
-     améliorations d'or (Bourse lourde, Contrats lucratifs) n'avaient plus de porte —
-     la Taverne, qui vend déjà des contrats, les héberge. Lien de renvoi en N-1 ; le
-     lot N-2 embarque les cartes ici même. */
-  // v3.313.0 : Bourse et Contrats retirés — la porte n'apparaît que s'il reste une amélioration d'or
-  if (id === "tavern" && typeof shopHasEconomyUpgrades === "function" && shopHasEconomyUpgrades()) {
-    h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToEconomy()">'
-       + '<img class=ico-inline src=images/Icons/subtabs/economy.png> ' + _t("Bourse et contrats d'or ›") + '</div>';
-  }
-
   /* L'Entrepôt agrandi renvoie vers l'Entrepôt lui-même. */
   if (id === "warehouse" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToWarehouse()">'
@@ -390,13 +380,6 @@ function goToPotions() {
 }
 window.goToPotions = goToPotions;
 
-/* v3.244.0 : renvoi de la Taverne vers les améliorations d'or (ex-Boutique › Économie). */
-function goToEconomy() {
-  closeVillageBuildingSheet();
-  if (typeof switchTab === "function") switchTab("shop");
-  if (typeof setShopSubTab === "function") setShopSubTab("upgrades");
-}
-window.goToEconomy = goToEconomy;
 
 /* Renvoi de la fiche de la Halle vers l'échoppe d'équipement. */
 function goToEquipShop() {

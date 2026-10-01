@@ -4,7 +4,7 @@
    Préfixe tt-. Couleur de classe : --cl (trait), --cl-bg (fond), --cl-ink (texte).
    ========================= */
 
-.tt-board { --cl: var(--c-red-600-soft); --cl-bg: #a33b2a1a; --cl-ink: var(--c-red-650-soft); color: var(--c-brown-850-soft); width: 100%; }
+.tt-board { --cl: var(--c-red-600-soft); --cl-bg: #a33b2a1a; --cl-ink: var(--c-red-650); color: var(--c-brown-850-soft); width: 100%; }
 .tt-class-archer { --cl: var(--c-green-700-soft); --cl-bg: #4a6b2a1a; --cl-ink: var(--c-green-750-soft); }
 .tt-class-mage { --cl: #3b4fa3; --cl-bg: #3b4fa31a; --cl-ink: #2f3f86; }
 
@@ -66,7 +66,7 @@
 .tt-node.is-avail .tt-node-col { padding-right: 12px; }
 .tt-node.is-locked { opacity: 0.75; } /* v3.404.0 : lisible même verrouillé */
 .tt-node.is-closed { opacity: 0.55; filter: grayscale(0.8); }
-.tt-node.is-closed .tt-node-short::before { content: "Fermée · "; font-weight: 800; color: var(--c-red-650-soft); }
+.tt-node.is-closed .tt-node-short::before { content: "Fermée · "; font-weight: 800; color: var(--c-red-650); }
 
 /* Tronc : trois tuiles */
 .tt-trunk { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
@@ -89,7 +89,7 @@
 .tt-link { width: 2px; height: 9px; margin: 0 auto; background: var(--c-gold-550); }
 
 /* Clé de voûte */
-.tt-node.is-key { border-width: 2px; border-color: var(--c-gold-550); background: linear-gradient(var(--c-cream-100-4), var(--c-cream-200)); }
+.tt-node.is-key { border-width: 2px; border-color: var(--c-gold-550); background: linear-gradient(var(--c-cream-100-3), var(--c-cream-200)); }
 .tt-key-tag { font-size: 12px; font-weight: 900; color: var(--c-gold-650); letter-spacing: 0.3px; text-transform: uppercase; }
 .tt-node.is-key.is-owned { box-shadow: inset 0 0 0 1px var(--c-gold-550), 0 0 8px #f0cf5a88; }
 
@@ -100,7 +100,7 @@
 .tt-sheet-where { font-size: 12px; color: var(--c-brown-550-soft); font-weight: 700; }
 .tt-sheet-effect { font-size: 13px; line-height: 1.45; margin: 10px 0 6px; }
 .tt-sheet-now { font-size: 12px; color: var(--c-green-700-soft); font-weight: 700; margin-bottom: 6px; }
-.tt-sheet-state { font-size: 12px; font-weight: 700; color: var(--c-red-650-soft); margin-bottom: 8px; }
+.tt-sheet-state { font-size: 12px; font-weight: 700; color: var(--c-red-650); margin-bottom: 8px; }
 .tt-go {
   width: 100%; font: inherit; font-size: 13px; font-weight: 800;
   padding: 10px; border-radius: 11px; cursor: pointer; margin-top: 4px;

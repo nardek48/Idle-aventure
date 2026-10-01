@@ -68,11 +68,6 @@ function buildEquipmentIconHTML(item, cssClass) {
     + '</div>';
 }
 
-function getHeroByKey(heroKey) {
-  if (typeof HEROES_DB === "undefined" || !heroKey) return null;
-  return HEROES_DB[heroKey] || null;
-}
-
 function getHeroByGameId(heroId) {
   if (typeof HEROES_DB === "undefined") return null;
   var keys = Object.keys(HEROES_DB);
@@ -81,18 +76,6 @@ function getHeroByGameId(heroId) {
     if (hero && hero.id === heroId) return hero;
   }
   return null;
-}
-
-function getStatLabel(statKey) {
-  if (typeof RPG_STAT_LABELS !== "undefined" && RPG_STAT_LABELS[statKey]) {
-    return RPG_STAT_LABELS[statKey];
-  }
-  return statKey;
-}
-
-function clampStatValue(value) {
-  var n = Number(value) || 0;
-  return Math.max(0, Math.min(100, n));
 }
 
 window.__equipBagScrollTop = 0;

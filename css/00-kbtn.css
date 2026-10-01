@@ -74,7 +74,7 @@
 .kbtn.danger,
 .settings-btn.danger,
 .combat-report-reset-btn {
-  color: var(--c-red-150);
+  color: #ffb0a6;
   text-shadow: 0 1px 2px rgba(60, 8, 0, 0.85);
 }
 
@@ -113,7 +113,6 @@
    (bouton_retour_new.png) ; .krbtn-back/-plus restent disponibles pour
    de futurs usages (spécimens dans l'atelier, section 9). */
 
-.krbtn,
 .full-menu-close,
 .hc-close-btn {
   border: none;
@@ -125,26 +124,16 @@
   transition: transform 0.08s ease;
 }
 
-.krbtn:active,
 .full-menu-close:active,
 .hc-close-btn:active {
   transform: scale(0.92);
 }
 
-.krbtn { width: 40px; aspect-ratio: 1 / 1; }
-
-.krbtn-close,
 .full-menu-close,
 .hc-close-btn { background-image: url('../images/UI/buttons/btn-round-close.png'); }
 
-.krbtn-close:active,
 .full-menu-close:active,
 .hc-close-btn:active { background-image: url('../images/UI/buttons/btn-round-close-pressed.png'); }
-
-.krbtn-back { background-image: url('../images/UI/buttons/btn-round-back.png'); }
-.krbtn-back:active { background-image: url('../images/UI/buttons/btn-round-back-pressed.png'); }
-.krbtn-plus { background-image: url('../images/UI/buttons/btn-round-plus.png'); }
-.krbtn-plus:active { background-image: url('../images/UI/buttons/btn-round-plus-pressed.png'); }
 
 /* =====================================================================
    v3.176.0 : badges et banderoles du kit (.kbadge) — ATELIER UNIQUEMENT.
@@ -208,11 +197,6 @@
 
 /* v3.179.0 : banderole RETIRÉE du jeu (retour Seb — il refera l'asset).
    La variante reste disponible pour l'atelier et la future version. */
-.kbadge-ribbon {
-  aspect-ratio: 297 / 135;
-  background-image: url('../images/UI/badges/title-ribbon-small.png');
-  --kb-l: 16%; --kb-r: 16%; --kb-t: 40%; --kb-b: 30%;   /* centre 55 % (bandeau mesuré) */
-}
 
 /* =====================================================================
    v3.185→187 : .kframe — cadre principal des écrans, VERSION 2
@@ -327,31 +311,10 @@
    alignés au pixel avec la longue) — pour les fenêtres basses, où la
    longue (1006px) serait fortement compressée et densifierait les
    gravures des rails. Variante à poser sur le conteneur. */
-.kframe.kframe-court .kf-mid::after {
-  background-image: url('../images/UI/frames/page/Cadre_Milieux_court.png');
-}
 
 /* --- variantes de remplissage (la texture est le défaut depuis
    v3.189.0 ; .kframe-texture conservée en alias inoffensif pour les
    spécimens existants) --- */
-.kframe.kframe-dark {
-  --kf-fill: #241a10;
-  color: var(--c-cream-100-2);
-}
-
-.kframe.kframe-dark .kf-top::before,
-.kframe.kframe-dark .kf-mid::before,
-.kframe.kframe-dark .kf-bot::before,
-.kframe.kframe-parchment .kf-top::before,
-.kframe.kframe-parchment .kf-mid::before,
-.kframe.kframe-parchment .kf-bot::before {
-  background-image: none;
-}
-
-.kframe.kframe-parchment {
-  --kf-fill: var(--nb-cream, var(--c-cream-150));
-  color: var(--nb-ink, var(--c-brown-850-soft));
-}
 
 /* ============================================================
    v3.193.0/193.1 — MODE PAGE « haut figé » (.kframe-page), proposition
@@ -544,7 +507,7 @@
   padding: 4px 12px;
   border: 1px solid var(--c-brown-700-vivid);
   border-radius: 19px;
-  background: linear-gradient(var(--c-bronze-300-soft), var(--c-bronze-450-3));
+  background: linear-gradient(var(--c-bronze-300-soft), var(--c-bronze-450));
   color: var(--c-brown-900);
   text-shadow: none;
   font-family: inherit;
@@ -564,8 +527,8 @@
 
 .kbuy:not(:disabled):active,
 .btn-buy.kbuy:not(:disabled):active {
-  background: linear-gradient(var(--c-bronze-450-3), var(--c-brown-600));
-  background-image: linear-gradient(var(--c-bronze-450-3), var(--c-brown-600));
+  background: linear-gradient(var(--c-bronze-450), var(--c-brown-600));
+  background-image: linear-gradient(var(--c-bronze-450), var(--c-brown-600));
   transform: translateY(1px);
 }
 

@@ -163,13 +163,6 @@ var WORKSHOPS_CONFIG = {
   }
 };
 
-/* Liste des ateliers d'un bâtiment donné, dans l'ordre de définition ci-dessus. */
-function getWorkshopsForBuilding(buildingId) {
-  return Object.keys(WORKSHOPS_CONFIG)
-    .filter(function (id) { return WORKSHOPS_CONFIG[id].buildingId === buildingId; })
-    .map(function (id) { return Object.assign({ id: id }, WORKSHOPS_CONFIG[id]); });
-}
-
 /* Coût pour faire passer l'atelier `workshopId` DE `level` À `level+1`. */
 function getWorkshopUpgradeCost(workshopId, level) {
   var def = WORKSHOPS_CONFIG[workshopId];
@@ -184,7 +177,6 @@ function getWorkshopUpgradeCost(workshopId, level) {
 
 window.WORKSHOP_LEVEL_CONFIG = WORKSHOP_LEVEL_CONFIG;
 window.WORKSHOPS_CONFIG = WORKSHOPS_CONFIG;
-window.getWorkshopsForBuilding = getWorkshopsForBuilding;
 window.getWorkshopUpgradeCost = getWorkshopUpgradeCost;
 
 /* v3.303.0 : atelier ouvert par une étape d'Histoire. `active` devient une lecture : vrai dès

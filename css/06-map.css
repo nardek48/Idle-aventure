@@ -202,7 +202,7 @@
 
 .map-popup-status.status-done {
   background: rgba(74, 222, 128, 0.15);
-  color: var(--c-green-650);
+  color: var(--c-green-650-2);
 }
 
 .map-popup-status.status-locked {
@@ -279,13 +279,6 @@
   border-top: none;
 }
 
-.map-quest-step-text {
-  font-size: 12px;
-  font-style: italic;
-  color: var(--nb-ink-dim);
-  margin-bottom: 4px;
-}
-
 .map-quest-step-row {
   display: flex;
   justify-content: space-between;
@@ -356,49 +349,12 @@
    Quêtes) plutôt que ui/map-view.js (popup Carte) — classes CSS
    inchangées, gardées ici (déjà présentes, pas de raison de les
    déplacer de fichier). */
-.map-adventure-quests {
-  margin-bottom: 12px;
-  text-align: left;
-}
-
-.map-adventure-quests-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--nb-ink-dim);
-}
-
-.map-adventure-quests-resource {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--nb-gold);
-}
 
 /* v3.5 : en-tête de monde au-dessus des quêtes de ce monde (voir
    buildAdventureQuestsSectionHTML, ui/quests-view.js) — pour
    distinguer les groupes une fois qu'il y a des quêtes sur plusieurs
    mondes. Discret, pas un titre de section (déjà géré par
    .map-adventure-quests-title ci-dessus). */
-.map-adventure-quests-world-header {
-  margin: 14px 0 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-gold);
-  border-bottom: 1px solid var(--nb-border, rgba(212, 165, 74, 0.3));
-  padding-bottom: 4px;
-}
-
-.map-adventure-quests-world-header:first-of-type {
-  margin-top: 0;
-}
 
 .map-quest-card.is-claimed {
   opacity: 0.7;
@@ -518,15 +474,10 @@
   color: var(--nb-gold);
 }
 
-.map-adventure-text,
-.map-adventure-meta {
+.map-adventure-text {
   font-size: 12px;
   line-height: 1.45;
   color: var(--nb-ink-dim);
-}
-
-.map-adventure-meta {
-  margin-top: 6px;
 }
 
 /* v2.74 : le bloc "Fond dynamique des panels" (.panel-world-bg) a été

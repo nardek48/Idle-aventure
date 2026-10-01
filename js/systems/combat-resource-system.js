@@ -82,20 +82,8 @@ function tickResourceRegen(state, gainRule, elapsedRounds) {
   });
 }
 
-function restoreResourcePercent(state, percent) {
-  if (!state) return state;
-  var pct = (typeof percent === "number" && percent > 0) ? Math.min(100, percent) : 0;
-  if (pct <= 0) return Object.assign({}, state);
-
-  var gain = state.max * (pct / 100);
-  return Object.assign({}, state, {
-    current: Math.min(state.max, state.current + gain)
-  });
-}
-
 window.createCombatResourceState = createCombatResourceState;
 window.canAfford = canAfford;
 window.spendResource = spendResource;
 window.applyResourceGain = applyResourceGain;
 window.tickResourceRegen = tickResourceRegen;
-window.restoreResourcePercent = restoreResourcePercent;

@@ -138,17 +138,6 @@ function titleScreenBackToMain() {
   renderTitleScreen();
 }
 
-/* v3.99.11 : clic sur une carte occupée -> sélection seule (bordure dorée), ne charge
-   pas encore. Le chargement effectif se fait via titleScreenConfirmLoad() (bouton
-   "Charger" par carte OU bouton CHARGER global en bas, les deux appellent la même
-   fonction une fois un slot sélectionné). */
-function titleScreenSelectSlot(slotNumber) {
-  if (!window.HeroSlotManager || !HeroSlotManager.hasSlot(slotNumber)) return;
-  titleScreenSelectedSlot = slotNumber;
-  titleScreenDeleteConfirmSlot = null;
-  renderTitleScreen();
-}
-
 /* Charge effectivement l'emplacement sélectionné et résout l'écran titre. */
 function titleScreenConfirmLoad(slotNumber) {
   var target = slotNumber || titleScreenSelectedSlot;
@@ -331,11 +320,6 @@ function buildTitleScreenContinueHTML(slot) {
     + '<span class="title-screen-continue-txt"><b>' + _t("Continuer") + '</b><small>' + line + '</small></span></button>';
 }
 
-function titleScreenContinue() {
-  var slot = getTitleScreenContinueSlot();
-  if (slot) titleScreenConfirmLoad(slot);
-}
-
 function buildTitleScreenMainHTML() {
   var continueSlot = getTitleScreenContinueSlot();
   var html = buildTitleScreenStageOpenHTML(false);
@@ -395,13 +379,11 @@ function renderTitleScreen() {
 }
 
 window.openTitleScreen = openTitleScreen;
-window.titleScreenContinue = titleScreenContinue;
 window.getTitleScreenContinueSlot = getTitleScreenContinueSlot;
 window.resolveTitleScreen = resolveTitleScreen;
 window.titleScreenNewGame = titleScreenNewGame;
 window.titleScreenShowLoad = titleScreenShowLoad;
 window.titleScreenBackToMain = titleScreenBackToMain;
-window.titleScreenSelectSlot = titleScreenSelectSlot;
 window.titleScreenConfirmLoad = titleScreenConfirmLoad;
 window.titleScreenAskDeleteSlot = titleScreenAskDeleteSlot;
 window.titleScreenCancelDelete = titleScreenCancelDelete;

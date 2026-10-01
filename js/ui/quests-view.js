@@ -8,10 +8,6 @@ function getTalentsAvailableCount() {
   return (window.TalentManager && TalentManager.hasAffordable()) ? 1 : 0;
 }
 
-function getAscensionAvailableCount() {
-  return (window.AscensionManager && typeof AscensionManager.canAscend === "function" && AscensionManager.canAscend()) ? 1 : 0;
-}
-
 /* v3.320.0 (décision Seb) : pastille du bouton Menu retirée — elle additionnait des
    destinations sorties du menu (talents, ascension, donjon, Histoire). Gardée vide : 4 fichiers l'appellent. */
 function updateQuestBadge() {}
@@ -782,50 +778,6 @@ function buildCompletedQuestCardsHTML() {
   return buildQuestCardsGroupedBySectionHTML(collectCompletedQuestCardEntries());
 }
 
-function buildHuntQuestDetailHTML(quest, runningHunt) {
-  var isRunning = !!(runningHunt && runningHunt.id === quest.id);
-  var stock = Number((game.resources || {})[quest.resourceKey] || 0);
-  var resDef = (window.WAREHOUSE_RESOURCES && WAREHOUSE_RESOURCES[quest.resourceKey]) || null;
-
-  var h = '';
-  h += '<div class="map-quest-step">';
-  h += '<div class="map-quest-step-row">';
-  h += '<span class="map-quest-step-desc">' + _t("{x} en Entrepôt", { x: resDef ? renderIconOrEmojiHTML(resDef.icon, "inline-res-ico", _td(resDef.name)) + ' ' + esc(_td(resDef.name)) : _t("Ressource") }) + '</span>';
-  h += '<span class="map-quest-step-count">' + formatNumber(stock) + '</span>';
-  h += '</div>';
-  h += '</div>';
-
-  if (isRunning) {
-    var inLot = Number((game.huntRun && game.huntRun.killsInLot) || 0);
-    var pct = Math.min(100, Math.floor((inLot / quest.lotSize) * 100));
-    h += '<div class="map-quest-step is-done">';
-    h += '<div class="map-quest-step-row">';
-    h += '<span class="map-quest-step-desc">' + _t("Lot en cours") + '</span>';
-    h += '<span class="map-quest-step-count">' + inLot + '/' + quest.lotSize + '</span>';
-    h += '</div>';
-    h += '<div class="map-quest-step-bar"><div class="map-quest-step-fill" style="width:' + pct + '%"></div></div>';
-    h += '</div>';
-  }
-
-  h += '<div class="map-quest-reward">';
-  h += '<span class="map-quest-reward-label">' + _t("Chance par kill") + '</span>';
-  h += '<span class="map-quest-reward-value">' + _t("{p}% · lot de {n}", { p: quest.dropChancePct, n: quest.lotSize }) + '</span>';
-  h += '</div>';
-
-  if (isRunning) {
-    h += '<div class="map-quest-run-actions">';
-    h += '<button class="settings-btn primary" type="button" onclick="event.stopPropagation(); switchTab(\'combat\')">' + _t("Voir le combat") + '</button>';
-    h += '<button class="settings-btn danger" type="button" onclick="event.stopPropagation(); HuntQuestManager.stop(); if (typeof renderPanel === \'function\') renderPanel();">' + _t("Arrêter la chasse") + '</button>';
-    h += '</div>';
-  } else if (runningHunt) {
-    h += '<div class="map-quest-claimed-label">' + _t("Termine ta chasse en cours d'abord") + '</div>';
-  } else {
-    h += '<button class="settings-btn primary map-quest-claim-btn" type="button" onclick="event.stopPropagation(); openHuntQuestIntro(\'' + quest.id + '\')">' + _t("Chasser") + '</button>';
-  }
-
-  return h;
-}
-
 var pendingHuntQuestId = null;
 
 function buildHuntQuestIntroHTML(questId) {
@@ -948,37 +900,43 @@ function closeQuestCompletePopup() {
 }
 window.closeQuestCompletePopup = closeQuestCompletePopup;
 
-/* v3.260.0 : une chasse à ressources multiples affiche ce que le lot a rapporté, ressource par
-   ressource (résumé de sortie). Une chasse à ressource unique garde sa ligne « en stock ». */
-function buildHuntLotRewardRows(quest, resource, stock) {
-  if (!(quest.resourcePool && quest.resourcePool.length > 1)) {
-    return [{ label: _t("{x} en stock", { x: resource ? _td(resource.name) : quest.resourceKey }), value: formatNumber(stock) }];
-  }
-  var kept = (game.lastSortieSummary && game.lastSortieSummary.kept && game.lastSortieSummary.kept.resources) || {};
+/* v3.412.0 (retour Seb) : la fenêtre de fin de chasse ou de battue dit ce que le lot a rapporté,
+   à partir du bilan de sortie (game.lastSortieSummary.kept) : l'or gagné (ramassé + prime de
+   battue), puis chaque ressource et les objets. Avant, une battue (pas de ressource) affichait
+   « {x} en stock · 0 ». */
+function buildHuntLotRewardRows(quest) {
+  var sum = game.lastSortieSummary;
+  // Le bilan ne compte que s'il vient bien de cette chasse (sinon il resterait celui d'une sortie précédente).
+  var kept = (sum && sum.context === "hunt" && sum.outcome === "success" && sum.kept) || {};
   var rows = [];
-  quest.resourcePool.forEach(function (key) {
-    var n = Number(kept[key] || 0);
+  var gold = Number(kept.gold || 0) + Number(quest.rewardGold || 0);
+  if (gold > 0) rows.push({ label: _t("Or gagné"), value: "+" + formatNumber(gold) + (quest.rewardGold ? " " + _t("(dont {n} de prime)", { n: formatNumber(quest.rewardGold) }) : "") });
+  var res = kept.resources || {};
+  Object.keys(res).forEach(function (key) {
+    var n = Number(res[key] || 0);
     if (n <= 0) return;
     var def = (window.WAREHOUSE_RESOURCES || {})[key];
     rows.push({ label: def ? _td(def.name) : key, value: "+" + formatNumber(n) });
   });
+  var items = Array.isArray(kept.items) ? kept.items.length : 0;
+  if (items > 0) rows.push({ label: _t("Objets trouvés"), value: "+" + formatNumber(items) });
   if (!rows.length) rows.push({ label: _t("Butin"), value: _t("rien cette fois") });
   return rows;
 }
 
 function buildHuntLotCompleteHTML(quest) {
   if (!quest) return "";
-  var stock = Number((game.resources && game.resources[quest.resourceKey]) || 0);
-  var resource = window.WAREHOUSE_RESOURCES ? WAREHOUSE_RESOURCES[quest.resourceKey] : null;
-
+  var battue = !!quest.rewardGold && !quest.resourceKey;
   return buildQuestCompleteHTML({
     icon: quest.icon || "images/Icons/classes/class_ranger.png",
-    title: _t("Chasse terminée !"),
-    text: _t("{n} bêtes abattues. Le gibier se fait plus rare pour l’instant — reviens plus tard, ou relance une nouvelle chasse tout de suite.", { n: quest.lotSize }),
-    rewardRows: buildHuntLotRewardRows(quest, resource, stock),
+    title: battue ? _t("Battue terminée !") : _t("Chasse terminée !"),
+    text: battue
+      ? _t("{n} ennemis vaincus. La prime est à toi — relance une battue quand tu veux.", { n: quest.lotSize })
+      : _t("{n} bêtes abattues. Le gibier se fait plus rare pour l’instant — reviens plus tard, ou relance une nouvelle chasse tout de suite.", { n: quest.lotSize }),
+    rewardRows: buildHuntLotRewardRows(quest),
     closeLabel: _t("Fermer"),
     closeOnclick: "closeHuntLotComplete()", // v3.208.0 : ramène au Campement (le lot est fini, plus rien à faire en Combat)
-    extraActionLabel: _t("Chasser à nouveau"),
+    extraActionLabel: battue ? _t("Nouvelle battue") : _t("Chasser à nouveau"),
     extraActionOnclick: "restartHuntQuest(\'" + quest.id + "\')"
   });
 }
@@ -1010,11 +968,9 @@ window.buildHuntLotCompleteHTML = buildHuntLotCompleteHTML;
 window.openHuntQuestIntro = openHuntQuestIntro;
 window.closeHuntQuestIntro = closeHuntQuestIntro;
 window.confirmHuntQuestStart = confirmHuntQuestStart;
-window.buildHuntQuestDetailHTML = buildHuntQuestDetailHTML;
 
 window.updateQuestBadge = updateQuestBadge;
 window.getTalentsAvailableCount = getTalentsAvailableCount;
-window.getAscensionAvailableCount = getAscensionAvailableCount;
 window.buildQuestsHTML = buildQuestsHTML;
 window.buildCompletedQuestCardsHTML = buildCompletedQuestCardsHTML;
 window.buildQuestCardsGroupedBySectionHTML = buildQuestCardsGroupedBySectionHTML;

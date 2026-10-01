@@ -161,8 +161,8 @@ body.living-map-active .hud-dock { display: none; }
   height: 19px;
   padding: 0 5px;
   border-radius: 10px;
-  background: var(--c-red-600-3);
-  border: 1.5px solid var(--c-cream-100-4);
+  background: var(--c-red-600);
+  border: 1.5px solid var(--c-cream-100-3);
   color: var(--c-white-50);
   font-size: 11px;
   font-weight: 800;
@@ -523,33 +523,12 @@ body.living-map-active .hud-dock { display: none; }
    préfixe d'id, le `display: none` perdait l'arbitrage et l'icône restait visible en
    fantôme dans le cadre verrouillé (mesuré au rendu, invisible à l'œil sur maquette). */
 #tab-bar .tab-btn.is-locked .tab-icon-img,
-#tab-bar .tab-btn.is-locked .tab-label,
-#tab-bar .tab-btn.is-locked .tab-badge {
+#tab-bar .tab-btn.is-locked .tab-label {
   display: none;
 }
 
 .tab-btn:active {
   transform: scale(0.95);
-}
-
-.tab-badge {
-  position: absolute;
-  top: -4%;
-  right: -2%;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  min-width: clamp(14.72px, calc(7.27px + 2.33vw), 17.28px);
-  height: clamp(14.72px, calc(7.27px + 2.33vw), 17.28px);
-  padding: 0 clamp(3.68px, calc(1.82px + 0.58vw), 4.32px);
-
-  border-radius: 8px;
-  background: var(--danger);
-  color: var(--c-white-50);
-  font-size: max(10px, clamp(8.28px, calc(4.09px + 1.31vw), 9.72px));
-  font-weight: 700;
 }
 
 /* =========================

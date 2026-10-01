@@ -89,13 +89,6 @@ var STORY_TAB_LABELS = {
    Consommée par StoryQuestManager.offerToEmbers(), compteur counters.offeringDone (0/1). */
 var STORY_STEP15_OFFERING = { seve_aeswyn: 3, ration: 1 };
 
-/* v3.133.0 : ressources encore à réunir pour l'offrande (0 si tout est là). */
-function storyOfferingMissing(offering) {
-  var missing = 0;
-  Object.keys(offering || {}).forEach(function (key) { missing += Math.max(0, Number(offering[key]) - storyResourceAmount(key)); });
-  return missing;
-}
-
 /* Kills en Forêt : les 2 aventures partagent le même enemyPool, donc somme de killCounts sur ce pool. */
 function storyCountForestKills(game) {
   var pool = (window.WORLDS && WORLDS[0] && WORLDS[0].adventures[0]) ? WORLDS[0].adventures[0].enemyPool : (window.STORY_COEUR_BASE_POOL || ["slime", "goblin", "spider"]); // v3.135.0 : repli aligné sur le pool réel
@@ -204,11 +197,6 @@ function storyCountActiveGrimoireRules(game) {
   return (game.grimoireRules || []).filter(function (r) { return r && r.conditionId && r.actionSlot; }).length;
 }
 
-/* v3.245.0 : nombre de Marques du run de donjon en cours (ex-afflictions actives). */
-function storyActiveAfflictions() {
-  return (window.AfflictionManager && typeof AfflictionManager.getActiveCount === "function") ? AfflictionManager.getActiveCount() : 0;
-}
-
 var STORY_QUESTS = {
   forest: {
     id: "forest",
@@ -309,7 +297,7 @@ var STORY_QUESTS = {
           objective: "Un colporteur a planté sa carriole à la Lisière. Sarkel, il s'appelle. Il vend cher, mais il vend ce qu'on ne trouve pas dans la forêt.",
           completion: "L'or a un usage. Sarkel reviendra tant que tu paieras. Il vient de plus loin que la forêt, et il en parle peu."
         },
-        objectiveLabel: "Faire 1 achat en boutique (Économie ou Potion)",
+        objectiveLabel: "Faire 1 achat en boutique (une potion)", // v3.411.0 : plus d'Économie
         unlockTabs: ["shop"],
         reward: STORY_REWARDS.forest_04,
         linkTo: { tab: "shop", subTab: "potions" }, // v3.260.0 (retour Seb) : arrive sur Potions, pas sur Économie
@@ -319,8 +307,8 @@ var STORY_QUESTS = {
           icon: "images/Icons/subtabs/equipment_shop.png",
           title: "La Boutique",
           points: [
-            { icon: "images/Icons/subtabs/equipment_shop.png", text: "La Boutique vend des potions et des améliorations d'Économie contre de l'or." },
-            { icon: "images/Icons/subtabs/potions.png", text: "Potions de soin — sur le 2e onglet de la Boutique. Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 400 or). Utilisables en combat comme une action à part entière — elles consomment ton tour." },
+            { icon: "images/Icons/subtabs/equipment_shop.png", text: "La Boutique vend des potions contre de l'or." },
+            { icon: "images/Icons/subtabs/potions.png", text: "Potions de soin : Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 400 or). Utilisables en combat comme une action à part entière — elles consomment ton tour." },
             { icon: "images/Icons/system/warning.png", text: "Maximum 2 potions par sortie — pense à te ménager pour la suite du combat." }
           ]
         },
@@ -1670,7 +1658,6 @@ window.STORY_REWARDS = STORY_REWARDS;
 window.STORY_STARTER_WEAPON = STORY_STARTER_WEAPON;
 window.STORY_TAB_LABELS = STORY_TAB_LABELS;
 window.STORY_STEP15_OFFERING = STORY_STEP15_OFFERING;
-window.storyOfferingMissing = storyOfferingMissing;
 // v3.107.4 : Troll des forêts + Ronce animée réapparaissent au Cœur dès l'Acte III (v3.109.0 : dès « Franchir la Lisière ») —
 // pool de base réduit (slime/goblin/spider, voir data/worlds.js), synchronisé dynamiquement par
 // StoryQuestManager._trackKills() (systems/story-quest-system.js) selon l'étape Histoire en cours.

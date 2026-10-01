@@ -148,20 +148,6 @@ function renderHudAchievementTier() {
   hudAchTierLast = tier === "none" ? null : tier;
 }
 
-/* v3.396.0 : la pastille « Up » du portrait et le badge du sac deviennent des bulles
-   (ui/hud-dock-view.js). Noms gardés pour les appels extérieurs. */
-function renderHudLevelUpBadge() { if (typeof renderHudDock === "function") renderHudDock(); }
-window.renderHudLevelUpBadge = renderHudLevelUpBadge;
-function renderHudBagBadge() { if (typeof renderHudDock === "function") renderHudDock(); }
-window.renderHudBagBadge = renderHudBagBadge;
-
-/* v3.332.0 : le bouton Ascension du HUD n'existe plus (fil rouge à sa place). Gardée pour
-   un éventuel appel extérieur : rend le bouton du fil rouge. */
-function renderHudAscensionBadge() {
-  if (typeof renderHudFilRouge === "function") renderHudFilRouge();
-}
-window.renderHudAscensionBadge = renderHudAscensionBadge;
-
 /* v3.379.1 : PV du mini-héros (panneau du combat), format court qui tient dans la fenêtre de la
    jauge (~47 px sur iPhone). v3.397.0 : à la française, sans espace pour tenir (1,2k · 45k · 1,2M). */
 function hudHpShort(n) {

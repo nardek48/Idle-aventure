@@ -86,85 +86,8 @@
   }
 }
 
-
-.talent-board {
-  padding: 12px;
-  border: 1px solid var(--nb-frame);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-soft);
-}
-
 /* v3.233.0 : .talent-board-bg SUPPRIMÉE. Elle pointait vers un
    fichier talent (jpg) absent du dépôt, et aucun JS ne génère
    cette classe — vérifié : talents-view.js produit talent-board-{branche}
    et les branches sont combat / fortune / survival, jamais "bg". */
 
-.talent-board-grid {
-  position: relative;
-  width: 100%;
-  height: 760px;
-}
-
-.talent-node {
-  background: transparent;
-  backdrop-filter: blur(2px);
-}
-
-.talent-node:hover,
-.talent-node:focus-visible {
-  transform: translate(-50%, -50%) scale(1.05);
-}
-
-.talent-node.unlocked {
-  border-color: #4caf50;
-}
-
-.talent-node.available {
-  border-color: #ffc107;
-}
-
-.talent-node.locked {
-  opacity: 0.42;
-}
-
-.talent-node.branch-capstone {
-  border-color: var(--aether-dark);
-  box-shadow: 0 0 12px rgba(255, 215, 120, 0.28);
-}
-
-.talent-icon {
-  font-size: 24px;
-}
-
-
-.talent-name {
-  margin-top: 2px;
-  font-size: 12px;
-  font-weight: 700;
-  text-align: center;
-  line-height: 1.1;
-  max-width: 68px;
-}
-
-@media all { /* v3.367.0 : + mode PC ; v3.406.0 : règles du téléphone partout (tablette comprise) — le jeu est toujours une mise en page de téléphone */
-  .talent-board-bg {
-    min-height: 560px;
-  }
-
-  .talent-board-grid {
-    height: 560px;
-  }
-
-  .talent-node {
-    width: 60px;
-    height: 60px;
-  }
-
-  .talent-icon {
-    font-size: 20px;
-  }
-
-  .talent-name {
-    font-size: 12px;
-  }
-}

@@ -7,29 +7,6 @@
    background-image plutôt que .settings-btn — visuel dédié demandé.
    ========================= */
 
-.production-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 2px;
-}
-
-.production-card {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 10px;
-  border: 1px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream-alt);
-  padding: 10px;
-}
-
-.production-card.is-full {
-  border-color: var(--nb-gold-dark);
-  box-shadow: 0 0 0 1px rgba(194, 127, 31, 0.25);
-}
-
 /* v3.95.6 : rangée principale (portrait + infos + actions), toujours sur une seule
    ligne — corrige un bug où .production-card-actions (Récolter/Améliorer) pouvait
    passer sur sa propre ligne quand le texte de statut (ex. "Plein dans 1m 28s") ou le
@@ -37,85 +14,17 @@
    visuellement les 2 boutons d'action l'un de l'autre. width:100% pour permettre à
    .production-card-full-row (Parcelles) de passer dessous dans le flex-wrap parent,
    flex-wrap:nowrap en interne pour ne jamais éclater portrait/infos/actions entre eux. */
-.production-card-main-row {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-}
 
 /* v3.95.1 : ligne pleine largeur DANS la carte (pas un second cadre séparé) — utilisée
    pour le panneau "Parcelles et améliorations" des Champs. width:100% force le passage
    à la ligne suivante dans le flex-wrap parent. */
-.production-card-full-row {
-  width: 100%;
-}
 
 /* Illustration ronde du bâtiment — occupe toute la hauteur de la
    carte, comme sur la maquette (portrait circulaire, pas une simple
    icône carrée). */
-.production-card-portrait {
-  flex: 0 0 auto;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  border: 3px solid var(--nb-gold-dark);
-  box-shadow: 0 0 0 2px var(--nb-cream), 0 2px 4px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-}
-
-.production-card-portrait-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.production-card-info {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.production-card-title-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 3px;
-}
-
-.production-card-name {
-  font-size: 14.5px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* v3.178.0 : pilule remplacée par l'écu du kit (.kbadge.kbadge-shield,
    markup production-view.js) — ne reste que la taille. */
-.production-card-level-badge {
-  width: 46px;
-  font-size: 10px;
-  flex-shrink: 0;
-}
-
-.production-card-rate {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-gold-deep);
-  margin-bottom: 5px;
-}
-
-.production-rate-icon {
-  width: 14px;
-  height: 14px;
-  object-fit: contain;
-}
 
 /* v3.173.0 : barre migrée sur la jauge fine du kit (structure kgauge,
    production-view.js) — height fixe RETIRÉE (elle écraserait le ratio
@@ -123,37 +32,8 @@
    anti-texte n'a plus d'objet (plus de nb-entry-progress-text dans le
    markup). L'état .done (stock plein, vert) continue de fonctionner
    via la classe nb-entry-progress-fill conservée sur le remplissage. */
-.production-stock-bar {
-  margin: 0 0 3px;
-}
-
-.production-card-stock-label {
-  font-size: 12px;
-  color: rgba(58, 44, 26, 0.7);
-  margin-bottom: 2px;
-}
-
-.production-card-status {
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(58, 44, 26, 0.65);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.production-card-status.is-full {
-  color: var(--c-green-650-vivid);
-}
 
 /* Colonne actions — 2 boutons empilés, fonds fournis en image. */
-.production-card-actions {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 108px;
-}
 
 .production-action-btn {
   width: 100%;
@@ -197,10 +77,6 @@
   background-image: url("../images/Production/btn_harvest.png");
 }
 
-.production-upgrade-btn {
-  background-image: url("../images/Production/btn_upgrade.png");
-}
-
 .production-action-btn.is-disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -212,28 +88,8 @@
 
 /* v3.96.0 : Champs n'a plus de bouton "Améliorer" de bâtiment — le bouton Récolter
    occupe alors toute la largeur de la colonne actions (au lieu de 2 boutons empilés). */
-.production-action-btn.full-width {
-  width: 100%;
-}
 
 @media (max-width: 360px) {
-  .production-card {
-    gap: 6px;
-    padding: 8px;
-  }
-
-  .production-card-portrait {
-    width: 52px;
-    height: 52px;
-  }
-
-  .production-card-name {
-    font-size: 13px;
-  }
-
-  .production-card-actions {
-    width: 88px;
-  }
 
   .production-action-btn {
     font-size: 12px;
@@ -279,36 +135,9 @@
    choix de palier global (.farm-plot / .farm-upgrade-*, supprimées). Toggle dépliable
    inchangé, grille 3×3 de mini-cartes à la place de la grille d'icônes précédente.
    ========================= */
-.farm-plots-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  min-height: 40px;
-  margin-top: 8px;
-  padding: 8px 11px;
-  border: 1px solid var(--nb-frame);
-  border-radius: var(--nb-radius-sm);
-  background: var(--nb-cream-deep);
-  color: var(--nb-ink);
-  font-size: 12.5px;
-  font-weight: 700;
-}
 
 /* v3.96.1 : badge "3 / 9" déplacé ici depuis le titre de la carte (débordait le nom du
    bâtiment quand le nom était long, ex. "Champs" tronqué en "C..."). */
-.farm-plots-count {
-  margin-left: auto;
-  margin-right: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--nb-gold-deep);
-}
-
-.farm-plots-chevron {
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-}
 
 .farm-plots-panel {
   margin-top: 8px;
@@ -501,7 +330,7 @@
    sur bouton à fond image sombre — trop peu lisible sur le fond clair des mini-cartes de
    parcelle. Surcharge locale en rouge foncé lisible sur --nb-cream-deep. */
 .farm-plot-action-btn .production-cost-item.is-missing {
-  color: var(--c-red-600-3);
+  color: var(--c-red-600);
 }
 
 /* =========================
@@ -532,13 +361,6 @@
   border-style: dashed;
 }
 
-.workshop-card-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
 .workshop-card-icon {
   font-size: 1.2rem;
   line-height: 1;
@@ -554,31 +376,9 @@
 /* v3.98.6 : badge "Niv. X" juste après le nom (comme la maquette fournie par Seb) —
    même style que .production-card-level-badge (cartes de bâtiment). */
 /* v3.178.0 : idem production-card-level-badge (écu du kit). */
-.workshop-card-level-badge {
-  width: 42px;
-  font-size: 10px;
-}
 
 /* v3.98.2 : badge "File : X" à côté du nom (agencement repris du prototype fourni par
    Seb, style propre au thème du jeu — pas de CSS importé du prototype). */
-.workshop-card-queue-badge {
-  margin-left: auto;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--nb-gold-deep);
-  border: 1px solid var(--nb-gold-dark);
-  border-radius: 999px;
-  padding: 1px 7px;
-  background: var(--nb-cream-alt);
-  white-space: nowrap;
-}
-
-.workshop-recipe-detail {
-  margin: -6px 0 8px;
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-  text-align: center;
-}
 
 .workshop-card-soon {
   margin-left: auto;
@@ -592,160 +392,30 @@
   white-space: nowrap;
 }
 
-.workshop-recipe-line {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin: 4px 0 8px;
-  font-size: 12px;
-  color: rgba(58, 44, 26, 0.8);
-  text-align: center;
-  justify-content: center;
-}
-
-.workshop-recipe-icon {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
 /* v3.98.13 : toggle "Production automatique" — pleine largeur, vert quand actif (même
    teinte que le liseré des tabs .is-auto), gris/neutre sinon. Placé sous la ligne de
    recette et avant la file, pour rester visible même si la file est vide. */
-.workshop-auto-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  min-height: 32px;
-  margin-bottom: 6px;
-  border: 1px solid var(--nb-frame);
-  border-radius: var(--nb-radius-sm);
-  background: var(--nb-cream-alt);
-  color: var(--nb-ink-dim);
-  font-size: 12px;
-  font-weight: 700;
-  padding: 5px 8px;
-  cursor: pointer;
-}
-
-.workshop-auto-toggle.is-active {
-  border-color: var(--c-green-600);
-  background: rgba(47, 158, 68, 0.12);
-  color: var(--c-green-750-2);
-}
-
-.workshop-auto-toggle:active {
-  transform: scale(0.98);
-}
-
-.workshop-auto-hint {
-  margin: -3px 0 6px;
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-  text-align: center;
-}
 
 /* v3.98.17 : indicateur "en attente" quand la réserve protégée bloque le chaînage —
    orange/ambre pour se distinguer du hint neutre ci-dessus (info) et du vert de l'auto
    actif (succès) : c'est un état intermédiaire, ni une erreur ni un fonctionnement
    normal silencieux. */
-.workshop-auto-blocked-hint {
-  margin: 0 0 8px;
-  padding: 6px 8px;
-  border: 1px solid #d97706;
-  border-radius: var(--nb-radius-sm);
-  background: rgba(217, 119, 6, 0.1);
-  color: #92400e;
-  font-size: 12px;
-  text-align: center;
-}
 
 /* v3.98.15 : stepper dédié à la quantité du chaînage auto, visuellement distinct du
    stepper manuel (fond vert clair, cohérent avec la couleur du toggle auto actif) pour
    qu'il n'y ait plus d'ambiguïté sur "quel champ je règle". */
-.workshop-auto-qty-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 0 0 8px;
-  padding: 6px 8px;
-  border: 1px solid var(--c-green-600);
-  border-radius: var(--nb-radius-sm);
-  background: rgba(47, 158, 68, 0.08);
-}
-
-.workshop-auto-qty-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--c-green-750-2);
-  flex-shrink: 1;
-  min-width: 0;
-}
-
-.workshop-auto-qty-row .warehouse-qty-stepper {
-  margin: 0;
-  flex-shrink: 0;
-}
 
 /* v3.98.6 : bouton "Améliorer" fonctionnel — remplace l'ancien bouton "Bientôt"
    désactivé (v3.98.3). Style repris de .production-upgrade-btn (doré, cliquable) au
    lieu du gris neutre précédent, cohérent avec le bouton Améliorer des zones. */
-.workshop-upgrade-btn {
-  width: 100%;
-  margin-top: 8px;
-  min-height: 36px;
-  border: 1px solid var(--nb-gold-dark);
-  border-radius: var(--nb-radius-sm);
-  background: var(--nb-cream-alt);
-  color: var(--nb-gold-deep);
-  font-size: 12px;
-  font-weight: 700;
-  padding: 6px 10px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.workshop-upgrade-label {
-  font-size: 12px;
-  font-weight: 700;
-}
 
 /* v3.98.16 : ligne d'effet (vitesse + taille de file au niveau suivant) — retour Seb,
    le bouton ne disait auparavant que le coût. */
-.workshop-upgrade-effect {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--nb-ink-dim);
-}
-
-.workshop-upgrade-btn:not(.is-disabled):active {
-  transform: scale(0.98);
-}
-
-.workshop-upgrade-btn.is-disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  color: var(--nb-ink-dim);
-}
 
 /* v3.98.4 : stepper + bouton Fabriquer sur UNE SEULE ligne (maquette fournie par Seb),
    au lieu du stepper centré puis bouton pleine largeur en dessous. Stepper compacté
    (boutons ronds réduits) pour laisser assez de place au bouton Fabriquer, qui reprend
    le visuel fond-image de .production-harvest-btn plutôt que .btn-buy. */
-.workshop-craft-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 8px 0;
-}
 
 .workshop-qty-stepper-compact {
   margin: 0;
@@ -771,18 +441,7 @@
   font-size: 12px;
 }
 
-.workshop-craft-btn {
-  width: auto;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 34px;
-  font-size: 12px;
-}
-
 @media (max-width: 360px) {
-  .workshop-craft-row {
-    gap: 5px;
-  }
 
   .workshop-qty-stepper-compact {
     gap: 3px;
@@ -799,11 +458,6 @@
     font-size: 12px;
   }
 
-  .workshop-craft-btn {
-    font-size: 12px;
-    min-height: 30px;
-    padding: 3px 5px;
-  }
 }
 
 /* v3.98.5 : bouton "Tout récolter" en tête de page Production — même style que
@@ -816,10 +470,6 @@
   justify-content: flex-end;
   gap: 8px;
   margin-bottom: 10px;
-}
-
-.production-harvest-all-btn {
-  width: 108px;
 }
 
 .production-queues-btn {
@@ -913,7 +563,7 @@
 .workshop-summary-row-auto-badge {
   font-size: 12px;
   font-weight: 700;
-  color: var(--c-green-750-2);
+  color: #206b32;
   background: rgba(47, 158, 68, 0.15);
   border: 1px solid var(--c-green-600);
   border-radius: 999px;
@@ -1018,7 +668,7 @@
 }
 
 .production-dash-flag.is-full-flag {
-  color: var(--c-cream-100-4);
+  color: var(--c-cream-100-3);
   background: var(--c-red-600-soft);
 }
 
@@ -1158,12 +808,6 @@
 }
 
 /* --- détail bâtiment (zones seules) --- */
-.production-detail-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
 
 /* Retour rond : assets du kit, LONGHANDS uniquement (jamais background: raccourci sur
    un composant à image — leçon v3.183, voir Guide UI §5). */
@@ -1183,21 +827,6 @@
 
 .production-detail-back:active {
   background-image: url('../images/UI/buttons/btn-round-back-pressed.png');
-}
-
-.production-detail-ico {
-  width: 26px;
-  height: 26px;
-  object-fit: contain;
-  font-size: 22px;
-  line-height: 1;
-}
-
-.production-detail-name {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--nb-gold-bright, var(--c-cream-150-vivid));
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
 }
 
 .production-detail-stockline {
@@ -1470,7 +1099,7 @@
   height: 14px;
   border-radius: 50%;
   background: var(--c-red-600-soft);
-  color: var(--c-cream-100-4);
+  color: var(--c-cream-100-3);
   font-size: 12px;
   font-weight: 900;
   line-height: 14px;

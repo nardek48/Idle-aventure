@@ -42,110 +42,30 @@
   pointer-events: none;
 }
 
-.enemy-status-icon {
-  position: relative;
-  width: clamp(22px, 5vw, 26px);
-  height: clamp(22px, 5vw, 26px);
-  border-radius: 999px;
-  border: 1px solid var(--nb-gold-dark);
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.enemy-status-emoji {
-  font-size: max(12px, clamp(11px, 2.8vw, 13px));
-  line-height: 1;
-}
-
-.enemy-status-vulnerability {
-  border-color: var(--c-bronze-450-vivid);
-}
-
-.enemy-status-dot {
-  border-color: #f87171;
-}
-
 /* v3.48.0 : télégraphe de Charge — pulsation rouge pour bien
    distinguer "danger imminent" (1.5s pour réagir) des 2 statuts
    ci-dessus (effets déjà appliqués, pas d'urgence à percevoir). */
-.enemy-status-charge {
-  border-color: var(--c-red-400);
-  animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
-}
 
 @keyframes chargeTelegraphPulse {
   from { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
   to   { box-shadow: 0 0 6px 2px rgba(239, 68, 68, 0.55); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .enemy-status-charge {
-    animation: none;
-  }
-}
-
 /* v3.49.0 : patterns de boss — Bouclier (télégraphe + actif,
    distincts) et Soin (télégraphe). Même pulsation que la Charge pour
    le télégraphe (danger imminent, cohérence visuelle), couleurs
    dédiées par pattern pour rester lisible en un coup d'œil. */
-.enemy-status-shield-telegraph {
-  border-color: var(--c-blue-300);
-  animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
-}
-
-.enemy-status-shield-active {
-  border-color: var(--c-blue-400);
-  background: rgba(59, 130, 246, 0.25);
-}
-
-.enemy-status-heal-telegraph {
-  border-color: var(--c-green-400);
-  animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
-}
 
 /* v3.57.0 : badge de CONFIRMATION d'un contre réussi — couleur
    électrique cyan (cohérente avec .counter-success-popup), animation
    de "pop" ponctuelle plutôt que la pulsation continue des badges de
    danger ci-dessus (c'est une bonne nouvelle, pas un avertissement à
    surveiller). */
-.enemy-status-countered {
-  border-color: #38bdf8;
-  background: rgba(56, 189, 248, 0.25);
-  animation: counterBadgePop 0.3s ease-out;
-}
 
 @keyframes counterBadgePop {
   0% { transform: scale(0.5); opacity: 0; }
   60% { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .enemy-status-shield-telegraph,
-  .enemy-status-heal-telegraph,
-  .enemy-status-countered {
-    animation: none;
-  }
-}
-
-.enemy-status-timer {
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  min-width: 14px;
-  height: 14px;
-  padding: 0 3px;
-  border-radius: 999px;
-  background: var(--c-blue-900);
-  border: 1px solid var(--nb-gold-dark);
-  color: var(--c-white-50);
-  font-size: 12px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 #enemy-display,
@@ -437,7 +357,7 @@
   pointer-events: none;
   font-size: clamp(18px, calc(9px + 2.8vw), 22px);
   font-weight: 900;
-  color: var(--c-blue-250);
+  color: #7dd3fc;
   text-shadow:
     2px 2px 4px rgba(0, 0, 0, 0.9),
     0 0 10px rgba(56, 189, 248, 0.7);
@@ -475,8 +395,6 @@
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
   animation: goldPop 1s ease forwards;
 }
-
-
 
 /* =========================
    v2.41 : la carte "❤️ Points de vie" sous le bouton Attaque a été
@@ -697,10 +615,6 @@ img.combat-action-icon {
 
 /* v3.77.0 : combat auto (autoSkillsEnabled) — pas de décompte précis
    utile puisque le joueur ne clique pas, juste une légère opacité. */
-.combat-action-cooldown-fill-auto {
-  right: 0;
-  background: rgba(20, 15, 8, 0.22);
-}
 
 .combat-action-active-tag {
   position: absolute;
@@ -978,38 +892,6 @@ img.combat-action-icon {
   font-size: max(10px, clamp(9px, calc(4.5px + 1.4vw), 10.5px));
 }
 
-
-/* =========================
-   v3.68.0 : archétype Enragé (Phase 9)
-   Badge PERMANENT (pas de pulsation "urgence" comme les télégraphes
-   ci-dessus — c'est un état stable de l'ennemi, pas un danger imminent
-   ponctuel), contour orange/rouge distinct. Variante .is-suppressed
-   (gel actif suite au contre skill3) : contour bleuté pour signaler
-   visuellement "apaisé pour l'instant", cohérent avec l'emoji dédié
-   (😮‍💨 vs 😡, voir buildEnemyStatusBarHTML(), ui/combat-view.js).
-   ========================= */
-.enemy-status-enraged {
-  border-color: var(--c-red-500);
-  background: rgba(80, 10, 10, 0.5);
-}
-
-.enemy-status-enraged.is-suppressed {
-  border-color: var(--c-blue-300);
-  background: rgba(10, 30, 80, 0.4);
-}
-
-/* =========================
-   v3.69.0 : archétype Corrupteur (Phase 9)
-   Badge PERMANENT avec compteur de stacks (contrairement à Enragé,
-   affiche un chiffre — Corrupteur agit par stacks discrets, un
-   compteur exact est plus lisible qu'une simple icône). Teinte
-   violette/sombre pour se distinguer visuellement d'Enragé (rouge).
-   ========================= */
-.enemy-status-corrupted {
-  border-color: #7c3aed;
-  background: rgba(40, 10, 70, 0.5);
-}
-
 /* =========================
    v3.71.0 : archétype Silencieux (Phase 9)
    Télégraphe (danger imminent, même pulsation que Charge/Bouclier/
@@ -1018,21 +900,6 @@ img.combat-action-icon {
    avec l'idée de "voix étouffée" plutôt qu'un danger physique classique
    (rouge/bleu déjà pris par Charge/Bouclier).
    ========================= */
-.enemy-status-silence-telegraph {
-  border-color: var(--c-violet-250);
-  animation: chargeTelegraphPulse 0.4s ease-in-out infinite alternate;
-}
-
-.enemy-status-silenced-active {
-  border-color: #6b7280;
-  background: rgba(60, 60, 70, 0.5);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .enemy-status-silence-telegraph {
-    animation: none;
-  }
-}
 
 /* Bouton skill1/2/3 bloqué pendant le silence — grisé/désaturé,
    distinct de .not-affordable (pas un problème de ressource) et de
@@ -1040,39 +907,6 @@ img.combat-action-icon {
 .combat-action-btn.is-silenced {
   filter: grayscale(0.8);
   opacity: 0.55;
-}
-
-/* =========================
-   v3.72.0 : archétype Vampirique (Phase 9)
-   Badge PERMANENT (comme Enragé/Corrupteur), teinte bordeaux/violette
-   sombre distincte. Variante .is-suppressed (blocage du vol de vie
-   suite au contre skill2) — même pattern que .enemy-status-enraged.is-
-   suppressed.
-   ========================= */
-.enemy-status-vampiric {
-  border-color: var(--c-red-650);
-  background: rgba(60, 5, 20, 0.5);
-}
-
-.enemy-status-vampiric.is-suppressed {
-  border-color: var(--c-blue-300);
-  background: rgba(10, 30, 80, 0.4);
-}
-
-/* =========================
-   v3.73.0 : archétype Blindé (Phase 9)
-   Badge PERMANENT (comme Enragé/Corrupteur/Vampirique), teinte
-   grise/métallique distincte. Variante .is-suppressed (blindage
-   fissuré suite au contre defense).
-   ========================= */
-.enemy-status-armored {
-  border-color: #78716c;
-  background: rgba(50, 45, 40, 0.5);
-}
-
-.enemy-status-armored.is-suppressed {
-  border-color: var(--c-blue-300);
-  background: rgba(10, 30, 80, 0.4);
 }
 
 /* =========================
@@ -1098,30 +932,9 @@ img.combat-action-icon {
   pointer-events: auto;
 }
 
-.combat-round-pill {
-  flex: 0 0 auto;
-  padding: 2px 7px;
-  border-radius: 999px;
-  border: 1px solid rgba(212, 175, 55, 0.55);
-  background: rgba(15, 20, 32, 0.78);
-  color: var(--c-cream-150);
-  font-size: max(12px, clamp(10px, calc(6px + 1.2vw), 12px));
-  font-weight: 800;
-  letter-spacing: 0.3px;
-}
-
 /* v3.172.0 : célérité migrée sur la jauge fine du kit (structure kgauge
    posée par combat-view.js) — .combat-gauge ne garde que sa place dans
    la barre de round ; piste/remplissage/cadre/texte via 00-kgauge.css. */
-.combat-gauge {
-  flex: 1 1 auto;
-  max-width: 120px;
-}
-
-.combat-gauge .kgauge-text {
-  font-size: max(10px, clamp(9px, calc(5px + 1.2vw), 11px));
-}
-
 
 .combat-mode-btn,
 .combat-continue-btn {
@@ -1175,10 +988,6 @@ img.combat-action-icon {
   cursor: default;
 }
 
-.enemy-status-double-strike {
-  border-color: rgba(253, 230, 138, 0.8);
-}
-
 /* v3.102.1 — rangée de sortie : butin en cours, potions restantes, Rentrer / Fuir (au-dessus de la barre de round). */
 .combat-sortie-row {
   position: absolute;
@@ -1212,10 +1021,6 @@ img.combat-action-icon {
   font-weight: 700;
 }
 
-.combat-potion-pill {
-  flex: 0 0 auto;
-}
-
 .combat-sortie-btn {
   flex: 0 0 auto;
   padding: 3px 9px;
@@ -1241,9 +1046,6 @@ img.combat-action-icon {
 
 /* v3.105.0 : approche (distance) — l'ennemi n'est pas encore au contact. Statut calme (pas un
    danger imminent : il ne frappe pas), teinte terre pour le distinguer des télégraphes. */
-.enemy-status-approaching {
-  border-color: #a78b5f;
-}
 
 /* v3.106.0 : bandeau de progression de mission (aventure/chasse/donjon), ancré en haut à gauche de
    #enemy-display, symétrique du badge de statuts à droite. Vide/masqué hors mission de type kill. */

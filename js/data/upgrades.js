@@ -2,7 +2,6 @@
 /* data/upgrades.js — UPGRADES (or, apply(lvl) fixe la valeur au niveau TOTAL).
    unlockWorld = index de monde minimum. Détail complet : COMMENTAIRES_ORIGINAUX.md */
 
-
 /* v3.248.0 (décision Seb 15/09/2026) — PRIX DES CINQ ENTRAÎNEMENTS.
    Deux problèmes mesurés (sim/upgrade-economy-bench.js) :
      1. les prix ne tenaient pas compte du GAIN : la stat principale d'une classe rapporte
@@ -98,13 +97,6 @@ var UPGRADES = [
      libre (< 10 % de l'or d'une quête). L'or dépensé est rendu au chargement (core/state.js,
      RETIRED_UPGRADES). */
 ];
-
-function getUpgradeById(id) {
-  for (var i = 0; i < UPGRADES.length; i++) {
-    if (UPGRADES[i].id === id) return UPGRADES[i];
-  }
-  return null;
-}
 
 /* v3.355.0 : AETHER_SHOP et son achat retirés (boutique vide depuis la v3.322.0, remplacée par
    la Mémoire). game.aetherUpgrades reste lu par la sauvegarde, sans effet. */

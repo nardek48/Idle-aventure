@@ -20,131 +20,17 @@
   max-width: 720px;
 }
 
-.aether-shop-title {
-  width: 100%;
-  text-align: center;
-}
-
 /* =========================
    Prestige / Ascension
 ========================= */
 
-.prestige-section {
-  width: 100%;
-  max-width: 620px;
-  margin: 12px auto 10px;
-  padding: 16px 14px;
-  text-align: center;
-  background: linear-gradient(
-    180deg,
-    var(--aether-tint-strong),
-    var(--aether-tint-soft)
-  );
-  border: 1px solid var(--aether-tint-border);
-  border-radius: var(--nb-radius-md);
-  box-shadow: var(--nb-shadow-card);
-}
-
-.prestige-icon {
-  margin-bottom: 8px;
-  font-size: 42px;
-  line-height: 1;
-}
-
 /* v2.83.10 : .prestige-icon accueille maintenant une vraie image
    (aether_icon.png) via renderIconOrEmojiHTML — même empreinte que le
    ⭐ emoji qu'elle remplace. */
-.prestige-icon-img {
-  width: 42px;
-  height: 42px;
-  object-fit: contain;
-}
-
-.prestige-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--aether);
-}
-
-.prestige-desc {
-  margin-top: 4px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--nb-ink-dim);
-}
-
-.prestige-gain {
-  margin: 10px 0 8px;
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--aether);
-}
-
-.prestige-btn {
-  min-height: 42px;
-  margin-top: 10px;
-  padding: 10px 22px;
-  border: none;
-  border-radius: var(--nb-radius-sm);
-  background: var(--aether-dark);
-  color: var(--c-white-50);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    transform 0.08s ease,
-    background-color 0.2s ease,
-    opacity 0.2s ease,
-    filter 0.2s ease;
-}
-
-.prestige-btn:active:not(:disabled):not(.disabled) {
-  transform: scale(0.96);
-}
-
-.prestige-btn:disabled,
-.prestige-btn.disabled {
-  background: #555;
-  color: #aaa;
-  cursor: default;
-  opacity: 0.9;
-}
-
-/* =========================
-   Infos ascension
-========================= */
-
-.ascension-conditions {
-  width: 100%;
-  max-width: 620px;
-  margin: 0 auto 10px;
-  padding: 12px 12px;
-  background: var(--nb-cream);
-  border: 1px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  color: var(--nb-ink);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.ascension-ok {
-  color: var(--hp-green);
-  font-weight: 700;
-}
-
-.ascension-lock {
-  color: var(--nb-ink-dim);
-  font-weight: 700;
-}
 
 /* =========================
    Boutique Aether
 ========================= */
-
-.aether-shop-title {
-  margin-top: 8px;
-  margin-bottom: 10px;
-}
 
 /* v2.81 : ".aether-shop-card" et ses enfants (icône/infos/nom/coût/
    niveau/desc) ont été retirés d'ici — remplacés par la classe
@@ -161,7 +47,6 @@
 ========================= */
 
 @media (prefers-reduced-motion: reduce) {
-  .prestige-btn,
   .btn-buy {
     transition: none;
   }
@@ -176,46 +61,6 @@
     max-width: 100%;
   }
 
-  .prestige-section,
-  .ascension-conditions {
-    max-width: 100%;
-  }
-
-  .prestige-section {
-    padding: 14px 12px;
-  }
-
-  .prestige-icon {
-    font-size: 36px;
-  }
-
-  .prestige-icon-img {
-    width: 36px;
-    height: 36px;
-  }
-
-  .prestige-title {
-    font-size: 14px;
-  }
-
-  .prestige-gain {
-    font-size: 22px;
-  }
-
-  .prestige-desc,
-  .ascension-conditions {
-    font-size: 12px;
-  }
-
-  .prestige-btn {
-    width: 100%;
-    max-width: 280px;
-  }
-
-  .ascension-conditions {
-    padding: 10px;
-  }
-
   .btn-buy {
     min-height: 34px;
     padding: 7px 9px;
@@ -226,7 +71,7 @@
    v3.407.0 (audit design) : passé au kit. Carte crème en tête, jauge fine teinte Aether,
    titre de section par niveau, choix en cartes crème ; le choix retenu porte une coche et un
    liseré bronze, l'autre s'estompe ; le niveau à choisir a un liseré doré. */
-.kgauge.kgauge-aether { --kgauge-fill: linear-gradient(90deg, #4c2a8a, var(--c-violet-250)); }
+.kgauge.kgauge-aether { --kgauge-fill: linear-gradient(90deg, #4c2a8a, #a78bfa); }
 
 .mem-head {
   margin: 0 0 6px;
@@ -270,7 +115,7 @@
 }
 div.mem-option { cursor: default; }
 .mem-level.is-pending .mem-option { border-color: var(--c-brown-550-vivid); box-shadow: 0 0 0 1px var(--c-bronze-400-4), 0 2px 6px rgba(58, 44, 26, 0.2); }
-.mem-option.is-chosen { border-color: var(--c-brown-700-vivid); background-color: var(--c-cream-100-4); box-shadow: 0 0 0 2px var(--c-brown-550-3), 0 2px 6px rgba(58, 44, 26, 0.2); }
+.mem-option.is-chosen { border-color: var(--c-brown-700-vivid); background-color: var(--c-cream-100-3); box-shadow: 0 0 0 2px var(--c-brown-550-3), 0 2px 6px rgba(58, 44, 26, 0.2); }
 .mem-option.is-other { opacity: 0.6; }
 .mem-option-ico { flex: 0 0 44px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
 .mem-option-img { max-width: 44px; max-height: 44px; object-fit: contain; border-radius: 6px; }

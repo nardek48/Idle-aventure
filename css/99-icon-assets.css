@@ -2,12 +2,18 @@
    Chargé en dernier, ne touche à aucune règle existante. */
 
 /* Classe générique : toute icône posée par renderIconOrEmojiHTML garde son ratio. */
-.ico-sys, .ico-lg,
-.pc-subtab-ico, .enemy-status-img,
-.farm-plot-improvement-img, .workshop-card-icon-img, .wk-emoji-img,
-.qb-tab-icon-img, .eq-orbit-slot-img, .pc-sum-class-ico,
-.affliction-toggle-img, .active-affliction-img,
-.grimoire-rule-ico, .hc-stat-ico-img {
+.ico-sys,
+.ico-lg,
+.pc-subtab-ico,
+.farm-plot-improvement-img,
+.workshop-card-icon-img,
+.wk-emoji-img,
+.qb-tab-icon-img,
+.eq-orbit-slot-img,
+.pc-sum-class-ico,
+.active-affliction-img,
+.grimoire-rule-ico,
+.hc-stat-ico-img {
   display: inline-block;
   object-fit: contain;
   vertical-align: middle;
@@ -33,7 +39,6 @@ img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
 .farm-plot-improvement-img { width: 17px; height: 17px; }
 
 /* Badges de statut ennemi — contrainte de lisibilité la plus dure du jeu. */
-.enemy-status-img { width: 19px; height: 19px; }
 
 /* Onglets de catégorie du tableau de quêtes. */
 .qb-tab-icon-img { width: 22px; height: 22px; }
@@ -47,7 +52,6 @@ img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
 .hc-stat-ico-img { width: 16px; height: 16px; }
 
 /* Afflictions et Grimoire. */
-.affliction-toggle-img { width: 24px; height: 24px; }
 .active-affliction-img { width: 18px; height: 18px; }
 /* v3.242.0 (retour Seb) : l'icône remplit tout le disque de 38 px au lieu de
    flotter à 20 px en son centre. */
@@ -64,27 +68,23 @@ img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
   vertical-align: -0.16em;
 }
 /* Porteurs convertis vers renderIconOrEmojiHTML lors de la passe globale. */
-.grimoire-sheet-ico, .grimoire-preset-ico, .grimoire-choice-ico,
-.tutorial-point-ico, .pc-stat-ico-img, .pc-skill-counter-img, .pc-section-ico,
-.full-menu-card-icon-img, .story-chain-ico, .inline-res-ico,
-.scene-node-ico, .scene-seg-ico, .scene-pill-ico, .scene-card-ico, .scene-mutator-img,
-.talent-node-ico, .dungeon-card-head-ico {
+.grimoire-sheet-ico,
+.grimoire-preset-ico,
+.grimoire-choice-ico,
+.tutorial-point-ico,
+.pc-skill-counter-img,
+.pc-section-ico,
+.full-menu-card-icon-img,
+.story-chain-ico {
   display: inline-block; object-fit: contain; vertical-align: middle;
 }
 .grimoire-sheet-ico { width: 22px; height: 22px; }
 .grimoire-preset-ico, .grimoire-choice-ico { width: 22px; height: 22px; }
 .tutorial-point-ico { width: 20px; height: 20px; }
-.pc-stat-ico-img { width: 16px; height: 16px; }
 .pc-skill-counter-img { width: 14px; height: 14px; }
 .pc-section-ico { width: 18px; height: 18px; margin-right: 3px; }
 .full-menu-card-icon-img { width: 42px; height: 42px; }
 .story-chain-ico { width: 22px; height: 22px; }
-.inline-res-ico { width: 15px; height: 15px; vertical-align: -3px; }
-.scene-node-ico, .scene-seg-ico { width: 100%; height: 100%; }
-.scene-pill-ico { width: 15px; height: 15px; }
-.scene-card-ico, .scene-mutator-img { width: 30px; height: 30px; }
-.talent-node-ico { width: 100%; height: 100%; }
-.dungeon-card-head-ico { width: 36px; height: 36px; }
 
 /* Icône du titre de cadre (.kframe-page). */
 /* v3.242.0 : marge explicite — l'espace du nœud texte se collapse selon la
@@ -95,7 +95,6 @@ img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
 
 /* Icônes ajoutées par les correctifs. */
 .plot-act-ico { width: 16px; height: 16px; object-fit: contain; vertical-align: -3px; }
-.scene-card-ico { width: 30px; height: 30px; object-fit: contain; }
 .map-fallback-ico, .hc-confirm-class-ico, .workshop-sum-ico {
   width: 20px; height: 20px; object-fit: contain; vertical-align: middle;
 }
@@ -104,24 +103,8 @@ img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
 .grimoire-back-btn .ico-inline { width: 16px; height: 16px; vertical-align: -3px; }
 
 /* Afflictions — le texte doit rester lisible même quand aucune n'est active. */
-.affliction-intro,
-.affliction-intro *,
-.affliction-toggle,
-.affliction-toggle-name,
-.affliction-toggle-desc,
-.affliction-toggle-body {
-  opacity: 1 !important;
-}
-.affliction-intro-title, .affliction-toggle-name { color: var(--nb-ink) !important; }
-.affliction-intro-desc, .affliction-toggle-desc { color: var(--c-brown-850-2) !important; }
-.affliction-toggle:disabled { opacity: 1 !important; }
 
 /* Ascension — même correction. */
-.prestige-card, .prestige-card *,
-.nb-purchase, .nb-purchase * { opacity: 1; }
-#panel-container .prestige-title,
-#panel-container .prestige-sub,
-#panel-container .prestige-desc,
 #panel-container .nb-purchase-name,
 #panel-container .nb-purchase-desc { color: var(--c-brown-850-2) !important; }
 
@@ -130,12 +113,7 @@ img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
 
 /* Titres d'affliction et d'ascension : couleur en dur, une règle plus haut
    dans la cascade les rendait quasi invisibles sur le fond crème. */
-#panel-container .affliction-toggle-name,
-#panel-container .affliction-intro-title,
-#panel-container .affliction-intro-count,
-#panel-container .prestige-card h3,
-#panel-container .nb-purchase-name,
-#panel-container .nb-purchase-title {
+#panel-container .nb-purchase-name {
   color: var(--c-brown-850-soft) !important;
   -webkit-text-fill-color: var(--c-brown-850-soft) !important;
   background: none !important;
@@ -146,11 +124,8 @@ img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
 /* Les 10 icônes ajoutées au second envoi. */
 .combat-continue-btn .ico-inline,
 .combat-sortie-btn .ico-inline { width: 17px; height: 17px; vertical-align: -3px; }
-.talent-side-tag .ico-inline { width: 13px; height: 13px; vertical-align: -2px; }
 .eq-detail-setbonus-icon .ico-inline { width: 18px; height: 18px; }
-.title-slot-stat-icon .ico-inline { width: 15px; height: 15px; vertical-align: -3px; }
-.dungeon-wave-label .ico-inline,
-.dungeon-best-wave .ico-inline { width: 18px; height: 18px; vertical-align: -3px; }
+.dungeon-wave-label .ico-inline { width: 18px; height: 18px; vertical-align: -3px; }
 
 /* Hauts faits : icônes des sept compteurs. */
 .ach-total-ico { width: 18px; height: 18px; object-fit: contain; vertical-align: middle; }
@@ -171,8 +146,6 @@ img.vb-card-icon { width: 40px; height: 40px; object-fit: contain; }
 img { color: transparent !important; }
 
 /* Nouvelle texture parchemin : les compteurs orange clair ne passaient plus. */
-#panel-container .achievement-summary,
-#panel-container .nb-count,
 #panel-container .achievement-total-lbl { color: #4a3a22 !important; }
 #panel-container .achievement-total-val { color: var(--c-brown-850-2) !important; }
 

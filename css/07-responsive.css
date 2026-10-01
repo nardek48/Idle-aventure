@@ -1,24 +1,4 @@
-/* =========================
-   Tablette large
-   ========================= */
-@media all { /* v3.367.0 : + mode PC ; v3.406.0 : règles du téléphone partout (tablette comprise) — le jeu est toujours une mise en page de téléphone */
-  .talent-tree-columns {
-    grid-template-columns: 1fr;
-  }
-}
 
-/* =========================
-   Tablette
-   ========================= */
-@media all { /* v3.367.0 : + mode PC ; v3.406.0 : règles du téléphone partout (tablette comprise) — le jeu est toujours une mise en page de téléphone */
-  /* v3.21 : grille des 3 héros gardée à 3 colonnes ici aussi (voir
-     note détaillée dans la media-query "Petit mobile" plus bas) —
-     avant, ce palier forçait 2 colonnes. */
-
-  .hero-picker {
-    border-radius: 18px;
-  }
-}
 
 /* =========================
    Mobile
@@ -35,57 +15,6 @@
     max-height: 210px;
   }
 
-  .hero-summary-row,
-  .ascension-card {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .hero-summary-meta {
-    width: 100%;
-  }
-
-  .hero-summary-image,
-  .hero-summary-placeholder {
-    width: 128px;
-    height: 128px;
-  }
-
-  .world-map-card {
-    padding: 8px;
-  }
-
-  .map-monster-node {
-    width: 24px;
-    height: 24px;
-  }
-
-  .map-monster-node.is-boss {
-    width: 32px;
-    height: 32px;
-  }
-
-  .map-monster-icon {
-    font-size: 13px;
-  }
-
-  .map-monster-node.is-boss .map-monster-icon {
-    font-size: 16px;
-  }
-
-  .map-world-card {
-    padding: 12px;
-  }
-
-  .map-world-title {
-    font-size: 16px;
-  }
-
-  .map-world-icon {
-    font-size: 24px;
-  }
-
   .map-adventure-item {
     padding: 10px;
   }
@@ -96,21 +25,3 @@
   }
 }
 
-/* =========================
-   Petit mobile
-   ========================= */
-@media all { /* v3.367.0 : + mode PC ; v3.406.0 : règles du téléphone partout (tablette comprise) — le jeu est toujours une mise en page de téléphone */
-  /* v3.21 : la grille des 3 héros reste TOUJOURS sur 3 colonnes (voir
-     refonte de l'écran de sélection de héros) — avant, ce média-query
-     forçait 1 seule colonne, ce qui s'appliquait systématiquement vu
-     que le jeu cible justement 320-430px (donc TOUJOURS sous ce
-     seuil de 560px) : la grille 3 colonnes définie dans
-     css/05-overlays.css n'avait donc jamais d'effet visible en
-     pratique. Retiré — la maquette fournie montre bien les 3 héros
-     côte à côte, compacts, sur mobile. */
-
-  .hero-picker-header h2 {
-    font-size: 24px;
-  }
-
-}

@@ -22,9 +22,7 @@ function setAchievementTab(tab) {
 window.setAchievementTab = setAchievementTab;
 
 function toggleAchievementOld() { achievementOldOpen = !achievementOldOpen; if (typeof renderPanel === "function") renderPanel(); }
-function toggleAchievementTotals() { achievementTotalsOpen = !achievementTotalsOpen; if (typeof renderPanel === "function") renderPanel(); }
 window.toggleAchievementOld = toggleAchievementOld;
-window.toggleAchievementTotals = toggleAchievementTotals;
 
 function formatAchievementRewardHTML(ach) {
   var r = ach.reward || {}, parts = [];

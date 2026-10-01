@@ -291,11 +291,6 @@
 .eq-power-desc { font-size: 12px; line-height: 1.3; color: var(--nb-ink); }
 .nb-purchase-info-col .eq-power-line { margin: 2px 0 0; padding: 3px 5px; }
 
-.eq-compat-affix-badge {
-  display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 6px;
-  font-size: 12px; font-weight: 800; color: var(--nb-cream); background-color: var(--nb-gold-deep);
-}
-
 .eq-detail-hint {
   font-size: 12px;
   color: var(--nb-ink-dim);
@@ -465,23 +460,6 @@
   color: var(--nb-ink-dim);
 }
 
-.eq-compare-delta {
-  margin-top: 6px;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.eq-compare-delta.is-up { color: var(--c-green-650-vivid); }
-.eq-compare-delta.is-down { color: var(--c-red-500); }
-.eq-compare-delta.is-flat { color: var(--nb-ink-dim); }
-
-.eq-compare-hint {
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-  font-style: italic;
-}
-
 /* v2.83.22 : rappel compact du bonus de set, sous le panneau de
    détail — version courte du bandeau "BONUS DE SET" du haut d'écran
    (voir buildCompactSetBonusHTML), pour suivre son état sans remonter
@@ -511,15 +489,6 @@
 .eq-detail-setbonus-icon {
   flex: 0 0 auto;
   font-size: 12px;
-}
-
-.eq-orbit-slot-label {
-  margin-bottom: 4px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--nb-ink-dim);
 }
 
 /* =========================
@@ -564,15 +533,6 @@
   line-height: 1;
 }
 
-.eq-orbit-slot-name {
-  display: inline-block;
-  vertical-align: middle;
-  margin-bottom: 0;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.2;
-}
-
 .eq-orbit-slot-placeholder {
   opacity: 0.55;
 }
@@ -581,20 +541,6 @@
    .eq-slot-col qui se trouvaient ici (copies exactes de celles du haut
    du fichier, reliquat d'un ancien réarrangement) sont supprimées —
    une seule source de vérité, en tête de fichier. */
-
-.eq-orbit-slot-name.rarity-common { color: var(--rarity-common); }
-.eq-orbit-slot-name.rarity-green { color: var(--rarity-green); }
-.eq-orbit-slot-name.rarity-rare { color: var(--rarity-rare); }
-.eq-orbit-slot-name.rarity-epic { color: var(--rarity-epic); }
-.eq-orbit-slot-name.rarity-legendary { color: var(--rarity-legendary); }
-
-.eq-orbit-slot-stat,
-.eq-orbit-slot-empty {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-  line-height: 1.25;
-}
 
 .eq-bag-panel {
   overflow-anchor: none;
@@ -664,22 +610,6 @@
   font-size: 13px;
   font-weight: 700;
   color: var(--nb-ink);
-}
-
-.equip-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 12px;
-}
-
-.equip-toolbar .settings-btn {
-  flex: 1 1 calc(33.333% - 8px);
-  width: auto;
-  min-height: 40px;
-  margin-bottom: 0;
-  padding: 10px 12px;
-  font-size: 12px;
 }
 
 /* =========================
@@ -813,28 +743,6 @@
 /* v3.169.0 : « Tout vendre » aligné sur la variante danger du kit
    (cadre or + texte rouge, mêmes valeurs que .settings-btn.danger de
    css/00-kbtn.css) — remplace l'ancien style CSS rouge à bordure. */
-.inv-sell-all-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 260px;
-  min-height: 40px;
-  margin: 18px auto 0;
-  padding: 10px 12px;
-  border: none;
-  background: url('../images/UI/buttons/btn-rect-normal.png') center / 100% 100% no-repeat;
-  color: var(--c-red-150);
-  text-shadow: 0 1px 2px rgba(60, 8, 0, 0.85);
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.inv-sell-all-btn:active {
-  background-image: url('../images/UI/buttons/btn-rect-pressed.png');
-  transform: translateY(1px);
-}
 
 /* v3.164.0 : le bloc mort .eq-bag-grid/.eq-bag-item/.eq-bag-main/
    .eq-bag-icon/.eq-bag-name/.eq-bag-stat/.eq-bag-sell (ancienne liste
@@ -1003,9 +911,6 @@
     padding: 12px;
   }
 
-  .equip-toolbar .settings-btn {
-    flex: 1 1 calc(50% - 8px);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

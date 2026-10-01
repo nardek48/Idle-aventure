@@ -51,14 +51,6 @@ function hasLegendaryPower(powerId) {
   return false;
 }
 
-function getEquipmentSellValue(item) {
-  if (!item) return 0;
-  return item.rarity === "legendary" ? 1000 :
-         item.rarity === "epic" ? 200 :
-         item.rarity === "rare" ? 50 :
-         item.rarity === "green" ? 25 : 10;
-}
-
 var EQUIPMENT_ICON_PNG_TYPES = {
   amulet: true, armor: true, axe: true, bottes: true, bow: true, casque: true,
   gants: true, ring: true, robe: true, staff: true, sword: true
@@ -90,43 +82,6 @@ function isWeaponIconAllowedForCurrentHero(icon) {
   return allowed.indexOf(icon) !== -1;
 }
 
-/* Génère et équipe directement (sans passer par l'inventaire) une arme de départ à 1 dégât tap, liée à la classe du héros actif.
-   v3.260.0 : plus appelée à la création, seulement au changement de héros sans arme compatible (heros-view.js). */
-function equipStarterWeapon() {
-  if (typeof getAllowedWeaponIconsForCurrentHero !== "function" || typeof generateEquipmentItem !== "function") return null;
-  if (!game.equipped) return null;
-
-  var allowedIcons = getAllowedWeaponIconsForCurrentHero();
-  var icon = (Array.isArray(allowedIcons) && allowedIcons.length) ? allowedIcons[0] : null;
-
-  var item = generateEquipmentItem("weapon", "common");
-  if (!item) return null;
-  if (icon) {
-    item.icon = icon;
-    var config = (typeof EQUIPMENT_SLOT_CONFIG !== "undefined") ? EQUIPMENT_SLOT_CONFIG.weapon : null;
-    var namePool = config && config.namesByIcon && config.namesByIcon[icon];
-    if (namePool && namePool.length) item.name = namePool[0];
-  }
-  item.value = 1;
-
-  game.equipped.weapon = item;
-  return item;
-}
-window.equipStarterWeapon = equipStarterWeapon;
-
-/* Déséquipe l'arme active si elle n'est plus compatible avec la classe du héros actif (ex. après changement de héros). Renvoie l'arme retirée vers l'inventaire. */
-function unequipIncompatibleWeapon() {
-  if (!game.equipped || !game.equipped.weapon) return false;
-  if (isWeaponIconAllowedForCurrentHero(game.equipped.weapon.icon)) return false;
-
-  var item = game.equipped.weapon;
-  game.inventory.push(item);
-  game.equipped.weapon = null;
-
-  addLog("⚔️ " + _t("{x} retirée (incompatible avec la nouvelle classe)", { x: _td(item.name) }), "event");
-  return true;
-}
-window.unequipIncompatibleWeapon = unequipIncompatibleWeapon;
 window.isWeaponIconAllowedForCurrentHero = isWeaponIconAllowedForCurrentHero;
 
 /* v3.322.0 (Offrande, O8) : 25 places de base, 50 avec le Sac profond. MAX_INVENTORY_SIZE
@@ -363,7 +318,6 @@ sortInventoryByType: function () {
   }
 };
 
-window.getEquipmentSellValue = getEquipmentSellValue;
 window.getItemAffixes = getItemAffixes;
 window.getEquipmentCompareLines = getEquipmentCompareLines;
 window.getItemPower = getItemPower;

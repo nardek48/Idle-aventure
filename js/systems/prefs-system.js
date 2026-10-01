@@ -9,6 +9,7 @@
      installHint  true   v3.359.0 : bouton « Installer le jeu » sur l'écran titre ; « Plus tard » le passe à
                          false (l'installation reste proposée dans Paramètres › Application)
      logTotals    true   v3.365.0 : Bilan de la partie ouvert en tête du Journal
+     howtoWarehouseFull (absente) v3.410.0 : l'explication « Entrepôt plein » a déjà été montrée (une seule fois)
      tabletPortrait "zoom" v3.406.0 : tablette tenue en portrait — "zoom" (téléphone agrandi) ou "rail"
                          (format tablette, menu à gauche) ; lu par ui/desktop-scale.js
      lang         "fr"   v3.368.0 : langue du jeu (core/i18n.js) ; texte, lu par getValue/setValue.

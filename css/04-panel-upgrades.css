@@ -1,15 +1,3 @@
-/* =========================
-   Upgrades - ligne compacte
-   v2.81 : ".upgrade-card" et ses enfants (icône/colonnes/niveau) ont
-   été retirés d'ici — remplacés par la classe partagée
-   ".nb-purchase-card" (voir css/00-components.css), réutilisée par
-   TOUTES les cartes d'achat du jeu. Ne reste ici que
-   ".upgrade-buy-price", propre à la mise en page de CETTE carte.
-   ========================= */
-
-.upgrade-buy-price {
-  white-space: nowrap;
-}
 
 /* =========================
    Mobile
@@ -33,7 +21,6 @@
     transition: none;
   }
 }
-
 
 /* v2.83.5 : .shop-shell / .shop-sub-tabs / .shop-sub-tab supprimées
    (remplacées par les classes génériques .subtab-page/-content/
@@ -100,73 +87,17 @@
    ".btn-buy" (voir css/00-components.css), comme tous les autres
    boutons d'achat du jeu. */
 
-
-
-.shop-mode-info {
-  text-align: center;
-}
-
-.shop-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 /* v2.83.42 : passé de grille 2 colonnes à liste 1 colonne (empilée),
    comme tous les autres écrans d'achat du jeu — la media query
    @media(max-width:640px) qui forçait 1 colonne sur mobile n'a donc
    plus lieu d'être, retirée. */
 
-
 /* Ligne niveau + barre */
-.upgrade-level-row {
-  display: flex;
-  align-items: center;
-  gap: 0;            /* pas d'espace automatique entre les enfants */
-}
 
 /* Badge collé à la barre */
-.upgrade-level-badge {
-  min-width: 23px;
-  padding: 4px 6px;
-  border-radius: 999px;
-  background: var(--c-brown-850-soft);
-  color: var(--c-cream-100-3);
-  font-size: 11px;
-  font-weight: 700;
-  text-align: center;
-  margin-right: 0;   /* on s'assure qu'il n'y a aucune marge à droite */
-}
 
 /* Barre tout de suite à droite du badge */
-.upgrade-level-bar {
-  position: relative;
-  flex: 1;
-  height: 16px;
-  border-radius: 999px;
-  background: var(--c-brown-850-2);
-  overflow: hidden;
-  border: 1px solid var(--c-bronze-450-soft);
-  margin-left: 0;    /* aucune marge à gauche */
-}
 
 /* Remplissage de la barre */
-.upgrade-level-fill {
-  height: 100%;
-  width: 0; /* override par style="width: xx%;" */
-  background: linear-gradient(to bottom, var(--c-blue-300), #2563eb); /* bleu clair -> bleu foncé */
-  border-radius: inherit;
-  transition: width 0.3s ease;
-}
 
 /* Texte centré dans la barre */
-.upgrade-level-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--c-white-50);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-}

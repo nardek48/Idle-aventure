@@ -14,68 +14,14 @@
    utilisée nulle part. */
 
 /* ===== Carte fiche de personnage ===== */
-.pc-card {
-  position: relative;
-  padding: 16px;
-  margin-bottom: 14px;
-
-  background: url('../images/Templates/ecrantext1.png') center / 100% 100% no-repeat;
-}
-
-.pc-card-top {
-  display: flex;
-  gap: 14px;
-}
-
-.pc-portrait-col {
-  flex-shrink: 0;
-  width: 118px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start; /* contenu en haut */
-
-  flex: 0 0 35%;
-   margin-top: 6px;            /* réduit vs 25px : le nom (v3.29) ci-dessous occupe désormais une partie de cet espace */
-
-}
 
 /* v3.29 : nom au-dessus du portrait, dans l'onglet Héros. */
-.pc-hero-name-label {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--nb-ink);
-  text-align: center;
-  max-width: 130px;
-  margin-bottom: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* v3.151.0 : big-hero-frame.png (cadre carré décoratif) retiré — les
    nouveaux portraits (Seb) ont déjà leur médaillon rond avec cadre doré
    peint dans l'image (fond transparent hors du cercle), un 2e cadre carré
    superposé aurait fait doublon visuel. Fond crème retiré aussi (transparent
    hors du cercle sur les nouvelles images -> laisse voir le panneau derrière). */
-.pc-portrait-frame {
-  position: relative;
-  width: 130px;
-  height: 130px;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pc-portrait-frame img {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
 
 .pc-portrait-placeholder {
   width: 100%;
@@ -89,18 +35,6 @@
   background: var(--nb-cream-deep);
 }
 
-.pc-exp-label {
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  color: var(--nb-ink-dim);
-  margin-bottom: 3px;
-}
-
-
-
-
-
 /* v3.233.0 : .pc-info-wrapper et son ::before SUPPRIMÉS. Le ::before
    pointait vers un cadre de panneau (Templates) absent du dépôt, et
    aucun JS ne génère la classe .pc-info-wrapper.
@@ -109,106 +43,12 @@
    passe de nettoyage des vestiges. */
 
 /* contenu du panneau au-dessus du cadre */
-.pc-info-col {
-  position: relative;
-  z-index: 1;
-}
 
 /* tu peux garder tes styles existants pour les éléments à l’intérieur */
-.pc-level-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.25);
-  color: var(--c-white-50);
-  font-size: 12px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.pc-level-badge {
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: var(--c-bronze-450-soft);
-  color: var(--c-black-950);
-  font-size: 10px;
-  text-transform: uppercase;
-}
-
-.pc-stat-list {
-  margin-top: 4px;
-  padding: 4px 10px 2px; /* padding interne : haut / droite / bas / gauche */
-  /* 10px de chaque côté pour que le texte ne colle pas aux bords du cadre */
-  background-color: var(--c-cream-100-soft) !important;  /* fond plus clair forcé */
-  border-radius: 6px;              /* léger arrondi interne */
-}
-
-/* ===== Barres niveau/XP =====
-   v3.173.0 : migrées sur la jauge fine du kit (structure kgauge posée
-   par heros-view.js, couleur kgauge-xp) — anciens styles locaux
-   supprimés, y compris le réemploi du cadre barre-pv-ennemi.png sur
-   .pc-bar-exp (vestige). Ne restent que les dimensionnements. */
-.pc-bar {
-  width: 100%;
-}
-
-.pc-bar-compact {
-  margin-bottom: 10px;
-}
-
-.pc-bar-exp {
-  width: 130px;
-}
-
-.pc-bar .kgauge-text {
-  font-size: 10px;
-}
 
 /* ===== Liste de stats PV/ATK/DEF/VIT/CRIT ===== */
-.pc-stat-list {
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream-alt);
-  border: 1px solid var(--nb-frame-light);
-  overflow: hidden;
-}
 
 /* Une ligne de stat : icône + label + valeur */
-.pc-stat-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-  line-height: 1.6;   /* comme dans ton exemple à gauche, pas trop serré */
-  padding: 2px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08); /* ligne fine entre les stats */
-}
-
-.pc-stat-row:last-child {
-  border-bottom: none;
-}
-
-.pc-stat-icon {
-  margin-right: 6px;  /* un peu d’air entre l’icône et le label */
-}
-
-.pc-stat-label {
-  flex: 1;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-ink-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;  
-}
-
-.pc-stat-value {
-  font-size: 13px;
-  font-weight: 800;
-  margin-left: 8px;
-  text-align: right;
-  color: var(--nb-ink);
-}
 
 /* ===== Sections (labels au-dessus du carrousel, stats cumulées...) ===== */
 /* v3.402.0 (lot B-1) : titre de section du kit (.ksec, css/00-components.css). */
@@ -226,110 +66,21 @@
 }
 
 /* ===== Capacités actives (sous-onglet "Stats") ===== */
-.ability-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  border-radius: 12px;
-  background: var(--nb-cream);
-  border: 1px solid var(--nb-frame);
-}
-
-.ability-card.attack {
-  border-color: rgba(239, 68, 68, 0.4);
-  background: #fdeaea;
-}
-
-.ability-card.defense {
-  border-color: rgba(96, 165, 250, 0.4);
-  background: var(--c-blue-50);
-}
-
-.ability-icon-wrap {
-  flex-shrink: 0;
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  background: var(--nb-cream-alt);
-}
 
 /* v3.8 : illustration dédiée à la place de l'emoji (voir
    renderIconOrEmojiHTML, appelé dans buildCharacterAbilityCardHTML,
    ui/heros-view.js). */
-.ability-icon-wrap img.ability-icon {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-}
-
-.ability-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.ability-name {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--nb-ink);
-}
-
-.ability-desc {
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-  line-height: 1.4;
-  margin-top: 2px;
-}
 
 /* v3.53.0 : ligne "⚡ Contre : ..." sur une capacité qui contre un
    pattern ennemi (voir action.counters, data/class-skills.js) —
    distincte de .ability-desc (couleur dorée, poids fort) pour
    ressortir immédiatement sur la carte. */
-.ability-counter {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
-  margin-top: 4px;
-}
-
-.ability-cd {
-  flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--nb-ink-dim);
-  background: var(--nb-cream-alt);
-  padding: 3px 8px;
-  border-radius: 999px;
-}
-
-.ability-cd.is-active {
-  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
-  background: rgba(255, 200, 61, 0.1);
-}
 
 /* ===== Sous-onglets Héros/Amélioration/Stats =====
    v2.83.5 : classes génériques .subtab-page / .subtab-page-content /
    .subtab-bar-wrapper / .pc-subtab-bar / .pc-subtab-btn déplacées vers
    css/00-components.css (réutilisées par Donjon et Boutique). Ne reste
    ici que ce qui est propre à CET écran. */
-
-@media (prefers-reduced-motion: reduce) {
-  .pc-bar-fill {
-    transition: none;
-  }
-}
-
-.pc-heros-train-content {
-  display: flex;
-  flex-direction: column;
-  min-height: 0; /* important pour autoriser le scroll interne */
-  overflow: hidden;
-}
 
 .pc-heros-train-section {
   flex: 1 1 auto;
@@ -345,12 +96,6 @@
 /* v3.402.0 (lot B-1) : la quantité d'achat (×1…MAX) est le rail du kit (.kseg). */
 
 /* Grille des upgrades dans la section Héros */
-.pc-heros-train-list .shop-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0px;            /* espace vertical entre les cartes, réduit */
-  padding: 0;          /* évite du padding supplémentaire autour */
-}
 
 /* v2.81 : tout le bloc de règles ".upgrade-card"/".upgrade-icon"/
    ".upgrade-buy"/etc. qui vivait ici a été retiré — la carte
@@ -447,7 +192,7 @@
   font-weight: 800;
   color: var(--nb-ink-dim);
 }
-.pc-sum-class.is-class-knight { border-color: var(--c-red-600-soft); background: rgba(163, 59, 42, 0.1); color: var(--c-red-650-soft); }
+.pc-sum-class.is-class-knight { border-color: var(--c-red-600-soft); background: rgba(163, 59, 42, 0.1); color: var(--c-red-650); }
 .pc-sum-class.is-class-archer { border-color: var(--c-green-700-soft); background: rgba(74, 107, 42, 0.1); color: var(--c-green-750-soft); }
 .pc-sum-class.is-class-mage { border-color: var(--nb-blue-dark); background: rgba(44, 125, 191, 0.1); color: var(--nb-blue-dark); }
 
@@ -569,12 +314,6 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-}
-.pc-sum-jump-kit-ico.pc-sum-jump-kit-ico-emoji {
-  width: auto;
-  height: auto;
-  font-size: 12px;
-  line-height: 1;
 }
 
 /* Barre de marge d'entraînement. Elle mesure la progression vers les
@@ -768,7 +507,7 @@
   padding: 2px 7px; white-space: nowrap;
   border: 1px solid var(--nb-frame); background: var(--nb-cream-alt); color: var(--nb-ink-dim);
 }
-.pc-skill-tag.is-cost { border-color: var(--c-red-600-soft); background: rgba(163, 59, 42, 0.12); color: var(--c-red-650-soft); }
+.pc-skill-tag.is-cost { border-color: var(--c-red-600-soft); background: rgba(163, 59, 42, 0.12); color: var(--c-red-650); }
 .pc-skill-tag.is-free { border-color: var(--c-green-700-soft); background: rgba(74, 107, 42, 0.12); color: var(--c-green-750-soft); }
 .pc-skill-tag.is-cd.is-active { border-color: var(--nb-gold-dark); color: var(--nb-gold-deep); font-weight: 900; }
 .pc-skill-chev { font-size: 12px; color: var(--nb-ink-dim); transition: transform 0.16s ease; }

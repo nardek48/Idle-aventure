@@ -12,9 +12,4 @@
    pour le Village lui-même ; ne reste que Boutique classique
    (Économie/Potions, ".shop-*" ci-dessous), toujours utilisée. */
 
-.shop-mode-info {
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-}
-
 /* v3.402.0 (lot B-1) : quantité d'achat = rail du kit (.kseg, css/00-components.css). */

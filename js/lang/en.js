@@ -1,7 +1,6 @@
 "use strict";
 /* lang/en.js — dictionnaire FRANÇAIS → ANGLAIS (conception i18n v1.1, D1).
    La clé est le texte français exact passé à _t() (ou « contexte|texte ») ; la valeur, son anglais.
-     "Santé du héros": "Hero's Health",
      "quête|Partir": "Set out",                                   contexte : _t("Partir", "quête")
      "Prochaine expédition dans {d}": "Next expedition in {d}",   mêmes {paramètres} des deux côtés
      "{n} place||{n} places": ["{n} slot", "{n} slots"]            pluriel : _tn(n, "{n} place", "{n} places")
@@ -287,7 +286,6 @@ I18n.register("en", {
   "{x} acheté à l'échoppe ({n} or)": "{x} bought at the stall ({n} gold)",
 
   // js/systems/equipment-system.js
-  "{x} retirée (incompatible avec la nouvelle classe)": "{x} removed (not suited to your new class)",
   "Sac plein : {x} offert (+{n} Aether)": "Bag full: {x} offered (+{n} Aether)",
   "Sac plein : {x} offert": "Bag full: {x} offered",
   "⚔️ Cette arme ne convient pas à ta classe": "⚔️ This weapon doesn't suit your class",
@@ -706,7 +704,6 @@ I18n.register("en", {
   "Nouveau monde : {x}.": "New world: {x}.",
   "Tu rejoins {x}.": "You head to {x}.",
   "Monde inconnu": "Unknown world",
-  "Monde {n}": "World {n}",
   "Étape {n} sur 3": "Step {n} of 3",
   "Supprimer {x} ?": "Delete {x}?",
   "La partie de {x} sera effacée de cet appareil. C'est définitif.": "{x}'s game will be erased from this device. This is permanent.",
@@ -803,16 +800,12 @@ I18n.register("en", {
   "Rien à signaler pour l'instant.": "Nothing to report for now.",
   "Campement": "Camp",
   "Tu es tombé au combat. Mange une ration, ou laisse le feu faire son œuvre, avant de repartir.": "You fell in battle. Eat a ration, or let the fire do its work, before setting out again.",
-  "Santé du héros": "Hero's Health",
-  "Rations": "Rations",
-  "Manger": "Eat",
   "+{n} % PV/min": "+{n}% HP/min",
   "Régénération : explication": "Regeneration: explanation",
   "Hors combat, tes PV remontent seuls au rythme indiqué. Les rations soignent tout de suite. Pendant ton absence, le feu rend au plus {n} % des PV max.": "Out of combat, your HP recovers on its own at the rate shown. Rations heal instantly. While you're away, the fire restores at most {n}% of your max HP.",
   "Les braises": "The embers",
   "Offrir aux braises": "Offer to the embers",
   "Voir le tableau complet": "See the full board",
-  "Grimoire de tactiques": "Grimoire of tactics",
   "{a} / {b} règles actives": "{a} / {b} rules active",
   "Mode Grimoire : tes règles jouent seules.": "Grimoire mode: your rules play on their own.",
   "Mode Tactique : tes règles conseillent, tu choisis.": "Tactics mode: your rules advise, you choose.",
@@ -822,7 +815,6 @@ I18n.register("en", {
   "{n} en réserve": "{n} in reserve",
   "aucune en réserve": "none in reserve",
   "Économie": "Economy",
-  "Améliorations d'or": "Gold upgrades",
   "Carte": "Map",
   "{n} contre||{n} contres": ["{n} counter", "{n} counters"],
   "{n} sortie||{n} sorties": ["{n} run", "{n} runs"],
@@ -965,7 +957,6 @@ I18n.register("en", {
   "Tactique": "Tactics",
   "Répète l’Attaque jusqu’au prochain événement (PV < 50 %, télégraphe, double frappe, nouvel ennemi)": "Repeats Attack until the next event (HP < 50%, tell, double strike, new enemy)",
   "Stop": "Stop",
-  "Jauge de célérité : à 100 %, une frappe bonus suit ta prochaine attaque": "Celerity gauge: at 100%, a bonus strike follows your next attack",
   "Célérité {n} %": "Celerity {n}%",
   "Butin de la sortie — banqué au retour, perdu si tu tombes": "Run loot — banked on your return, lost if you fall",
   "Fuir : la mission n’est pas validée, tu rapportes 50 % du butin": "Flee: the mission isn't completed, you bring back 50% of the loot",
@@ -1249,7 +1240,6 @@ I18n.register("en", {
   "Sac": "Bag",
   "Talents indisponibles.": "Talents unavailable.",
   "Talent": "Talent",
-  "Héros changé : {x}": "Hero changed: {x}",
   "{n} technique||{n} techniques": ["{n} technique", "{n} techniques"],
   "Effet visible à partir de {n} niveau d'un coup.||Effet visible à partir de {n} niveaux d'un coup.": ["Effect visible from {n} level at once.", "Effect visible from {n} levels at once."],
 
@@ -1333,6 +1323,14 @@ I18n.register("en", {
 
   // js/ui/menu-view.js
   "Bibliothèque": "Library",
+  "(dont {n} de prime)": "(including {n} bounty)",
+  "Objets trouvés": "Items found",
+  "Battue terminée !": "Beat complete!",
+  "{n} ennemis vaincus. La prime est à toi — relance une battue quand tu veux.": "{n} enemies defeated. The bounty is yours — start another beat whenever you like.",
+  "Nouvelle battue": "New beat",
+  "Missions": "Missions",
+  "Manger : {x}": "Eat: {x}",
+  "Toucher une ration pour la manger": "Tap a ration to eat it",
   "Le jeu se sauvegarde tout seul toutes les 30 secondes, dans ce navigateur. Exporte une copie de temps en temps : elle te suit sur un autre appareil.": "The game saves itself every 30 seconds, in this browser. Export a copy now and then: it follows you to another device.",
   "Sauvegarder maintenant": "Save now",
   "Exporter": "Export",
@@ -1517,14 +1515,6 @@ I18n.register("en", {
   "Chapitre terminé.": "Chapter complete.",
   "La suite de l'histoire arrive bientôt…": "The rest of the story is coming soon…",
   "Ressource": "Resource",
-  "{x} en Entrepôt": "{x} in the Warehouse",
-  "Lot en cours": "Current batch",
-  "Chance par kill": "Chance per kill",
-  "{p}% · lot de {n}": "{p}% · batch of {n}",
-  "Arrêter la chasse": "Stop the hunt",
-  "Termine ta chasse en cours d'abord": "Finish your current hunt first",
-  "Chasser": "Hunt",
-  "{x} en stock": "{x} in stock",
   "rien cette fois": "nothing this time",
   "Chasse terminée !": "Hunt complete!",
   "{n} bêtes abattues. Le gibier se fait plus rare pour l’instant — reviens plus tard, ou relance une nouvelle chasse tout de suite.": "{n} beasts brought down. Game is getting scarcer for now — come back later, or start a new hunt right away.",
@@ -1582,23 +1572,6 @@ I18n.register("en", {
   "Tous les onglets sont débloqués": "All tabs unlocked",
 
   // js/ui/shop-view.js
-  "catégorie boutique|Bonus": "Bonus",
-  "catégorie boutique|Force": "Strength",
-  "catégorie boutique|Célérité": "Celerity",
-  "catégorie boutique|Précision": "Precision",
-  "catégorie boutique|Volonté": "Willpower",
-  "catégorie boutique|Endurance": "Endurance",
-  "catégorie boutique|Or": "Gold",
-  "catégorie boutique|Boss gold": "Boss gold",
-  "Force {a} → {b}  (+{c} → +{d} dgts)": "Strength {a} → {b}  (+{c} → +{d} dmg)",
-  "Célérité {a} → {b}  (+{c} → +{d} DPS)": "Celerity {a} → {b}  (+{c} → +{d} DPS)",
-  "Précision {a} → {b}  ({c}% → {d}%)": "Precision {a} → {b}  ({c}% → {d}%)",
-  "Endurance {a} → {b}  (+{c} → +{d} PV)": "Endurance {a} → {b}  (+{c} → +{d} HP)",
-  "Volonté {a} → {b}  (x{c} → x{d})": "Willpower {a} → {b}  (x{c} → x{d})",
-  "Or x{a} → x{b}": "Gold x{a} → x{b}",
-  "Or boss +{a}% → +{b}%": "Boss gold +{a}% → +{b}%",
-  "COÛT": "COST",
-  "Mode d’achat :": "Buy mode:",
 
   // js/ui/talents-view.js
   "Clé de voûte": "Keystone",
@@ -1654,7 +1627,6 @@ I18n.register("en", {
   "S'entraîner dans Héros → Stats ›": "Train in Hero → Stats ›",
   "Préparer dans Boutique → Potions ›": "Brew in Shop → Potions ›",
   "Relance": "Reroll",
-  "Bourse et contrats d'or ›": "Purse and gold contracts ›",
   "Voir l'Entrepôt ›": "See the Warehouse ›",
   "Voir l'échoppe dans Héros → Équipement ›": "See the stall in Hero → Equipment ›",
   "Rang {n} — chantiers ouverts jusqu'à ce rang.": "Rank {n} — building work open up to this rank.",
@@ -1722,7 +1694,6 @@ I18n.register("en", {
   "Le tavernier": "The tavern keeper",
   "L’Entrepôt ne rachète plus rien. Ce qu’il te reste, porte-le-moi : mes contrats paient mieux, et on sait ce qu’on te demande.": "The Warehouse doesn't buy anything any more. Whatever you have left, bring it to me: my contracts pay better, and you know what you're being asked for.",
   "Rien ici pour l'instant.": "Nothing here for now.",
-  "Quête": "Quest",
 
   // js/ui/workshop-quest-modal.js
   "Chaîne terminée": "Chain complete",
@@ -3119,7 +3090,7 @@ I18n.register("en", {
   "Accepter la quête": "Accept the quest",
   "Terminer « Premier sang » : vaincre 5 ennemis à la Lisière": "Complete “First blood”: defeat 5 enemies at the Forest Edge",
   "Équiper ton arme et acheter 1 amélioration d'entraînement": "Equip your weapon and buy 1 training upgrade",
-  "Faire 1 achat en boutique (Économie ou Potion)": "Make 1 shop purchase (Economy or Potion)",
+  "Faire 1 achat en boutique (une potion)": "Make 1 shop purchase (a potion)",
   "Terminer la quête d'aventure « Prouver sa valeur »": "Complete the adventure quest “Prove your worth”",
   "Terminer « La Meute Affamée »": "Complete “The Hungry Pack”",
   "Terminer l'expédition « La source tarie » (Puits)": "Complete the expedition “The dried-up spring” (Well)",
@@ -3206,8 +3177,8 @@ I18n.register("en", {
   "Volonté — dégâts bonus en cas de critique.": "Willpower — bonus damage on a critical hit.",
   "Endurance — PV maximum et une partie de ta défense.": "Endurance — maximum HP and part of your defence.",
   "Célérité — remplit ta jauge de combat plus vite (frappe bonus plus fréquente).": "Celerity — fills your combat gauge faster (more frequent bonus strikes).",
-  "La Boutique vend des potions et des améliorations d'Économie contre de l'or.": "The Shop sells potions and Economy upgrades for gold.",
-  "Potions de soin — sur le 2e onglet de la Boutique. Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 400 or). Utilisables en combat comme une action à part entière — elles consomment ton tour.": "Healing potions — on the Shop's 2nd tab. Minor (35% HP, 150 gold) or Major (60% HP, 400 gold). Usable in combat as a full action — they use up your turn.",
+  "La Boutique vend des potions contre de l'or.": "The Shop sells potions for gold.",
+  "Potions de soin : Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 400 or). Utilisables en combat comme une action à part entière — elles consomment ton tour.": "Healing potions: Minor (35% HP, 150 gold) or Major (60% HP, 400 gold). Usable in combat as a full action — they use up your turn.",
   "Maximum 2 potions par sortie — pense à te ménager pour la suite du combat.": "Maximum 2 potions per run — remember to save something for the rest of the fight.",
   "Cette expédition consomme une Petite ration — il faut d'abord la fabriquer avant de partir.": "This expedition uses up a Small ration — you need to craft it before setting out.",
   "Rends-toi au Village, dans l'atelier Cuisine de camp (bâtiment Chasse).": "Go to the Village, to the Camp Kitchen workshop (Hunting Lodge building).",

@@ -59,7 +59,7 @@
   border-radius: var(--nb-radius-md);
   border: 1px solid var(--nb-frame-light);
   border-left: 3px solid var(--nb-gold);
-  background: var(--c-cream-100-4);
+  background: var(--c-cream-100-3);
 }
 .cf-hint { font-size: 12px; font-style: italic; color: var(--nb-ink-dim); margin-bottom: 8px; }
 

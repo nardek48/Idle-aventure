@@ -162,9 +162,6 @@ html.wide-mode #panel-container .kf-mid::after {
   border-width: 0 calc(var(--kfh) * 62 / 269) 0 calc(var(--kfh) * 60 / 269);
   border-image: url('../images/UI/frames/page/Cadre_Milieux.png') 0 62 0 60 / 0 calc(var(--kfh) * 62 / 269) 0 calc(var(--kfh) * 60 / 269) stretch;
 }
-html.wide-mode #panel-container .kframe-court .kf-mid::after {
-  border-image-source: url('../images/UI/frames/page/Cadre_Milieux_court.png');
-}
 html.wide-mode #panel-container .kf-bot::after {
   background: none;
   border-style: solid;

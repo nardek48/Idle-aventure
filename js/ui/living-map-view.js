@@ -481,9 +481,7 @@ function lmxCoverW() { return lmxCam.coverW(); }
 function lmxMaxW() { return lmxCam.maxW(); }
 function lmxClamp() { lmxCam.clamp(); }
 function lmxApply(anim) { lmxCam.apply(anim); }
-function lmxGeo() { return lmxCam.geo(); }
 function lmxLocal(e) { return lmxCam.local(e); }
-function lmxZoomAt(nw, px, py, anim) { lmxCam.zoomAt(nw, px, py, anim); }
 /* Place un point de la carte (x %, y %) au centre de la zone utile (sous l'en-tête, au-dessus du volet). */
 function lmxCenterOn(xp, yp, anim) { lmxCam.centerOn(xp / 100, yp / 100, anim); }
 function lmxRecenter() {
