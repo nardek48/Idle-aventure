@@ -375,10 +375,12 @@ function pa2HudHTML(run) {
   var act = n && n.row >= 0 ? (run.parcours ? _t("Étape {a}/{b}", { a: n.row + 1, b: Pa2Run.rows(Pa2Run.getMap(run)).dest + 1 }) : PA2_ACT_WORD[n.act]) : _t("Départ");
   // v3.394.0 : plus de cadre de page — le monde (ou le parcours) se lit dans l'en-tête.
   var where = (run.parcours ? _td((SceneEngine.getTemplate(run.templateId) || {}).title || "") : pa2WorldName(run.worldId)) + " · " + act;
-  return '<div class="pa2-hud" id="pa2-hud">' + pa2Img(hero.image, "pa2-portrait", hero.name) +
+  // v3.405.0 : le lieu et le butin passent sur une ligne au-dessus — les barres prennent toute la largeur.
+  return '<div class="pa2-hud" id="pa2-hud">' +
+    '<div class="pa2-hud-top"><div class="pa2-act">' + esc(where) + '</div><div class="pa2-gold">' + pa2Img(pa2LootRes(run) ? pa2LootRes(run).icon : PA2_ICONS.gold) + pa2Num(v.loot) + '</div></div>' +
+    pa2Img(hero.image, "pa2-portrait", hero.name) +
     '<div class="pa2-gauges">' + pa2GaugeHTML("hp", v.hp, v.max, _t("{a} / {b} PV", { a: pa2Num(v.hp), b: pa2Num(v.max) })) +
     pa2GaugeHTML("breath", v.breath, 100, _t("Souffle {n}", { n: pa2Num(v.breath) })) + '</div>' +
-    '<div class="pa2-hud-side"><div class="pa2-gold">' + pa2Img(pa2LootRes(run) ? pa2LootRes(run).icon : PA2_ICONS.gold) + pa2Num(v.loot) + '</div><div class="pa2-act">' + esc(where) + '</div></div>' +
     (chips || rel ? '<div class="pa2-hud-row">' + chips + '<span class="pa2-spacer"></span>' + rel + '</div>' : '') + '</div>';
 }
 function pa2RefreshHud() {

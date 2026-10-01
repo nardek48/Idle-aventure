@@ -8,11 +8,12 @@ var MENU_ITEMS = [
      deviennent des sous-onglets de Héros, Ascension s'ouvre depuis le Résumé du héros,
      Boutique migre vers les bâtiments du Village (lot N-2). Six cases, deux rangées. */
   /* v3.369.0 : libellés traduits à la définition — possible car changer de langue relance le jeu (i18n D2). */
-  { tab: "bestiary", label: _t("Bestiaire & Codex"), img: "./images/Icons/menu_icons/bestiaire_menu.png" },
   { tab: "achievements", label: _t("Hauts faits"), img: "./images/Icons/menu_icons/achivment_menu.png" },
   /* v3.245.0 (refonte Donjons) : Afflictions retirées — devenues les Marques, choisies à l'entrée d'un donjon. 5 cases (décision 12.4). */
   { tab: "log", label: _t("Journal"), img: "./images/Icons/menu_icons/journal_menu.png" },
-  { tab: "tutorials", label: _t("Tutoriels"), icon: "images/Icons/codex/codex_lore.png" },
+  /* v3.405.0 : une seule porte, la Bibliothèque (Bestiaire, Codex, Tutoriels en rail). L'onglet
+     "tutorials" est toujours ouvert : la porte existe dès le début, Bestiaire et Codex s'y ajoutent. */
+  { tab: "tutorials", label: _t("Bibliothèque"), img: "./images/Icons/menu_icons/bestiaire_menu.png" },
   { tab: "settings", label: _t("Paramètres"), img: "./images/Icons/menu_icons/settings_menu.png" }
 ];
 

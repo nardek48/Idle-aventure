@@ -122,6 +122,7 @@ function buildTutorialsHTML() {
     h += buildTutorialListHTML();
   }
 
-  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/codex/codex_lore.png|" + _t("Tutoriels")) + '">' + h + '</div>';
+  // v3.405.0 : le cadre est posé par la Bibliothèque (ui/bestiary-view.js), Tutoriels en est un onglet.
+  return h;
 }
 window.buildTutorialsHTML = buildTutorialsHTML;

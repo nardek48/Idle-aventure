@@ -167,7 +167,7 @@
 }
 
 .village-popup-meta strong {
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 .village-popup-actions {

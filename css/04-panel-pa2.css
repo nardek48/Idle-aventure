@@ -135,11 +135,13 @@ body.pa2-night .pa2-link, body.pa2-night .pa2-note { color: var(--pa2-ink-dim); 
 .pa2-mult b { font-size: 26px; color: var(--pa2-gold); }
 
 /* --- HUD du run (collé en haut de la zone qui défile) --- */
-.pa2-hud { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center;
+.pa2-hud { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 4px 10px; align-items: center;
   padding: 8px 10px; border-radius: var(--pa2-radius); border: 1.5px solid var(--pa2-gold-dark); background: rgba(14, 11, 8, 0.95); box-shadow: 0 8px 18px -8px #000; }
 .pa2-hud .pa2-portrait { width: 46px; height: 46px; }
 .pa2-gauges { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.pa2-hud-side { text-align: right; }
+/* v3.405.0 : ligne du lieu et du butin au-dessus des barres */
+.pa2-hud-top { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.pa2-hud-top .pa2-act { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pa2-gold { display: flex; align-items: center; justify-content: flex-end; gap: 3px; font-weight: 800; color: var(--pa2-gold); font-variant-numeric: tabular-nums; }
 .pa2-gold img { width: 22px; height: 22px; object-fit: contain; }
 .pa2-act { font-size: 12px; letter-spacing: .12em; color: var(--pa2-ink-dim); text-transform: uppercase; }
@@ -201,9 +203,10 @@ body.pa2-full #panel-container { padding: 0; overflow: hidden; max-width: none; 
 .pa2-fs .pa2-hero-mark { width: calc(7.5% * var(--nk, 1)); }
 /* En-tête flottant, compact */
 .pa2-fs .pa2-hud { position: absolute; left: 8px; right: 8px; top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 8px); z-index: 10;
-  grid-template-columns: 40px minmax(0, 1fr) auto; gap: 3px 9px; padding: 6px 10px 6px 6px; background: rgba(12, 9, 6, 0.84);
+  grid-template-columns: 40px minmax(0, 1fr); gap: 3px 9px; max-width: 460px; /* v3.405.0 : sur grand écran les barres ne s'étirent plus */ padding: 6px 10px 6px 6px; background: rgba(12, 9, 6, 0.84);
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 6px 16px -6px #000; }
 .pa2-fs .pa2-hud .pa2-portrait { width: 40px; height: 40px; }
+.pa2-fs .pa2-hud-top { padding-left: 4px; }
 .pa2-fs .pa2-gauges { gap: 2px; }
 .pa2-fs .pa2-hud-row { min-height: 0; }
 .pa2-fs .pa2-chip { height: 26px; }

@@ -234,58 +234,56 @@ function formatSavedAtDate(epochMs) {
     + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
 }
 
+/* =====================================================================
+   v3.403.0 (lot L-1, choix de Seb « A · Kit du jeu », atelier-lancement.html) :
+   l'écran de lancement parle la langue du jeu. Illustration plein écran, logo, et en
+   bas une FEUILLE du kit (en-tête de pierre, corps parchemin, css/00-title-screen.css,
+   .lc-sheet) avec les boutons du kit : bleu serti = action principale, filaire =
+   secondaire. Les héros sont montrés dans leur médaillon peint, ENTIER (le cadre doré
+   et le blason sont dans l'image : plus de cadre_slot ni de cercle ajouté par-dessus).
+   ===================================================================== */
+function titleScreenHeroImage(summary) {
+  return (summary && summary.heroImage) ? '<img class="lc-med" src="' + esc(summary.heroImage) + '" alt="">' : '';
+}
+
+/* Fond commun : illustration, voile pour la lisibilité, logo (petit sur les écrans longs). */
+function buildTitleScreenStageOpenHTML(small) {
+  var html = '<div class="title-screen-overlay">';
+  html += '  <div class="title-screen-stage">';
+  html += '    <img src="images/TitleScreen/title_background_new.png" alt="" class="title-screen-bg">';
+  html += '    <div class="lc-shade' + (small ? ' is-dim' : '') + '"></div>';
+  html += '    <img src="images/TitleScreen/titre_logo.png" alt="' + esc(_t("Aethervale")) + '" class="title-screen-logo-img' + (small ? ' is-small' : '') + '">';
+  return html;
+}
+
 function buildTitleScreenLoadListHTML() {
   var maxSlots = HeroSlotManager.getMaxSlots();
   var html = '<div class="title-screen-load-list">';
+  var free = 0, firstFree = null;
 
   for (var i = 1; i <= maxSlots; i++) {
-    var occupied = HeroSlotManager.hasSlot(i);
+    if (!HeroSlotManager.hasSlot(i)) { free++; if (firstFree === null) firstFree = i; continue; }
+    var summary = HeroSlotManager.getSlotSummary(i) || {};
+    var worldName = getWorldNameByIndex(summary.worldIndex);
+    html += '<div class="title-slot-card occupied lc-row">';
+    html += titleScreenHeroImage(summary);
+    html += '  <div class="lc-row-tx">';
+    html += '    <b class="title-slot-name">' + esc(summary.playerName || _t("Emplacement {n}", { n: i })) + '</b>';
+    if (summary.heroTitle) html += '    <small class="title-slot-heroic-title">' + esc(_td(summary.heroTitle)) + '</small>'; // v3.338.0 (H8)
+    html += '    <small>' + esc(_t("Niveau {n}", { n: formatNumber(summary.heroLevel) })) + (worldName ? ' · ' + esc(worldName) : '') + '</small>';
+    html += '    <small>' + esc(_t("Temps de jeu : {d}", { d: formatPlayTimeClock(summary.playTime) })) + '</small>';
+    if (summary.savedAt) html += '    <small>' + esc(_t("Dernière partie : {d}", { d: formatSavedAtDate(summary.savedAt) })) + '</small>';
+    html += '  </div>';
+    html += '  <button type="button" class="kbtn primary title-slot-load-btn" onclick="titleScreenConfirmLoad(' + i + ')">' + _t("Charger") + '</button>';
+    html += '  <button type="button" class="lc-trash title-slot-delete-btn" aria-label="' + esc(_t("Supprimer")) + '" onclick="titleScreenAskDeleteSlot(' + i + ', event)"><img src="images/Icons/system/trash.png" alt=""></button>';
+    html += '</div>';
+  }
 
-    if (occupied) {
-      var summary = HeroSlotManager.getSlotSummary(i) || {};
-      var heroImage = summary.heroImage || "";
-      var isSelected = titleScreenSelectedSlot === i;
-      var selectedClass = isSelected ? " selected" : "";
-      var worldName = getWorldNameByIndex(summary.worldIndex);
-
-      /* v3.145.0 : cadre cadre_slot.png (Seb) — parchemin clair avec médaillon
-         rond DÉCOUPÉ EN TRANSPARENCE (pas un cercle blanc opaque) : le
-         portrait est posé DERRIÈRE en position identique, le cadre par-dessus
-         masque tout sauf le disque. Remplace la carte 100% CSS de v3.144.0. */
-      html += '<div class="title-slot-card occupied' + selectedClass + '" onclick="titleScreenSelectSlot(' + i + ')">';
-      html += '  <div class="title-slot-portrait">';
-      if (heroImage) html += '<img src="' + esc(heroImage) + '" alt="">';
-      html += '  </div>';
-      html += '  <img src="images/TitleScreen/cadre_slot.png" alt="" class="title-slot-card-bg">';
-      html += '  <div class="title-slot-body">';
-      html += '    <div class="title-slot-name">' + esc(summary.playerName || _t("Emplacement {n}", { n: i })) + '</div>';
-      if (summary.heroTitle) html += '    <div class="title-slot-stat title-slot-heroic-title">' + esc(_td(summary.heroTitle)) + '</div>'; // v3.338.0 (H8)
-      html += '    <div class="title-slot-stat"><span class="title-slot-stat-icon"><img class=ico-inline src=images/Icons/classes/hero_level.png></span>' + esc(_t("Niveau {n}", { n: formatNumber(summary.heroLevel) })) + (worldName ? ' · ' + esc(worldName) : '') + '</div>';
-      html += '    <div class="title-slot-stat"><span class="title-slot-stat-icon">◷</span>' + esc(_t("Temps de jeu : {d}", { d: formatPlayTimeClock(summary.playTime) })) + '</div>';
-      if (summary.savedAt) {
-        html += '    <div class="title-slot-stat"><span class="title-slot-stat-icon"><img class=ico-inline src=images/Icons/equipment_slots/set_bonus.png></span>' + esc(_t("Dernière partie : {d}", { d: formatSavedAtDate(summary.savedAt) })) + '</div>';
-      }
-      html += '  </div>';
-      html += '  <div class="title-slot-actions">';
-      html += '    <button type="button" class="title-slot-load-btn" onclick="event.stopPropagation(); titleScreenConfirmLoad(' + i + ')">';
-      html += '      <img src="images/TitleScreen/bouton_charger.png" alt="" class="title-slot-load-btn-bg">';
-      html += '      <span>' + _t("Charger") + '</span>';
-      html += '    </button>';
-      html += '    <button type="button" class="title-slot-delete-btn" aria-label="' + esc(_t("Supprimer")) + '" onclick="titleScreenAskDeleteSlot(' + i + ', event)">';
-      html += '      <img src="images/TitleScreen/bouton_supprimer.png" alt="">';
-      html += '    </button>';
-      html += '  </div>';
-      html += '</div>';
-    } else {
-      html += '<button type="button" class="title-slot-card empty" onclick="titleScreenCreateInSlot(' + i + ')">';
-      html += '  <img src="images/TitleScreen/cadre_slot.png" alt="" class="title-slot-card-bg">';
-      html += '  <div class="title-slot-portrait title-slot-portrait-empty">+</div>';
-      html += '  <div class="title-slot-body title-slot-body-empty">';
-      html += '    <div class="title-slot-name">' + _t("Emplacement vide") + '</div>';
-      html += '    <div class="title-slot-stat">' + _t("Toucher pour créer une nouvelle partie") + '</div>';
-      html += '  </div>';
-      html += '</button>';
-    }
+  // Un seul « Nouvelle partie », qui dit combien de places restent (plus de liste d'emplacements vides).
+  if (firstFree !== null) {
+    html += '<button type="button" class="title-slot-card empty lc-row lc-new" onclick="titleScreenCreateInSlot(' + firstFree + ')">'
+      + '<span class="lc-new-plus">+</span>' + _t("Nouvelle partie")
+      + '<small>' + esc(_tn(free, "{n} emplacement libre", "{n} emplacements libres")) + '</small></button>';
   }
 
   html += '</div>';
@@ -297,13 +295,14 @@ function buildTitleScreenDeleteConfirmHTML() {
   var summary = HeroSlotManager.getSlotSummary(titleScreenDeleteConfirmSlot) || {};
   var name = summary.playerName || _t("Emplacement {n}", { n: titleScreenDeleteConfirmSlot });
 
-  var html = '<div class="title-screen-delete-overlay">';
-  html += '  <div class="title-screen-delete-card">';
-  html += '    <div class="title-screen-delete-title">' + _t("Supprimer cette partie ?") + '</div>';
-  html += '    <div class="title-screen-delete-text">' + esc(_t("{x} sera définitivement supprimée. Cette action est irréversible.", { x: name })) + '</div>';
-  html += '    <div class="title-screen-delete-buttons">';
-  html += '      <button type="button" class="title-screen-delete-cancel" onclick="titleScreenCancelDelete()">' + _t("Annuler") + '</button>';
-  html += '      <button type="button" class="title-screen-delete-confirm" onclick="titleScreenConfirmDelete()">' + _t("Supprimer") + '</button>';
+  // v3.403.0 : fenêtre du kit (.kwin), danger D1 — comme toutes les confirmations du jeu.
+  var html = '<div class="kwin-veil title-screen-delete-overlay">';
+  html += '  <div class="kwin">';
+  html += kWinHeadHTML({ icon: '<img src="images/Icons/system/trash.png" alt="">', title: esc(_t("Supprimer {x} ?", { x: name })) });
+  html += '    <div class="kwin-body"><p class="kwin-text">' + esc(_t("La partie de {x} sera effacée de cet appareil. C'est définitif.", { x: name })) + '</p></div>';
+  html += '    <div class="kwin-foot">';
+  html += '      <button type="button" class="kbtn is-sec" onclick="titleScreenCancelDelete()">' + _t("Annuler") + '</button>';
+  html += '      <button type="button" class="kbtn danger" onclick="titleScreenConfirmDelete()">' + _t("Supprimer") + '</button>';
   html += '    </div>';
   html += '  </div>';
   html += '</div>';
@@ -327,10 +326,8 @@ function getTitleScreenContinueSlot() {
 /* « Continuer » : le dernier héros, nommé sur le bouton (plusieurs joueurs sur un appareil). */
 function buildTitleScreenContinueHTML(slot) {
   var sum = HeroSlotManager.getSlotSummary(slot) || {};
-  var world = getWorldNameByIndex(sum.worldIndex);
-  var line = esc(sum.playerName || _t("Emplacement {n}", { n: slot })) + ' · ' + esc(_t("niv. {n}", { n: formatNumber(sum.heroLevel || 1) })) + (world ? ' · ' + esc(world) : '');
-  return '<button type="button" class="title-screen-img-btn title-screen-continue" onclick="titleScreenConfirmLoad(' + slot + ')">'
-    + '<img src="images/TitleScreen/bouton_titre.png" alt="" class="title-screen-img-btn-bg">'
+  var line = esc(sum.playerName || _t("Emplacement {n}", { n: slot })) + ' · ' + esc(_t("niv. {n}", { n: formatNumber(sum.heroLevel || 1) }));
+  return '<button type="button" class="kbtn primary title-screen-continue" onclick="titleScreenConfirmLoad(' + slot + ')">'
     + '<span class="title-screen-continue-txt"><b>' + _t("Continuer") + '</b><small>' + line + '</small></span></button>';
 }
 
@@ -340,29 +337,35 @@ function titleScreenContinue() {
 }
 
 function buildTitleScreenMainHTML() {
-  var html = '<div class="title-screen-overlay">';
-  html += '  <div class="title-screen-stage">';
-  html += '    <img src="images/TitleScreen/title_background_new.png" alt="" class="title-screen-bg">';
-  html += '    <img src="images/TitleScreen/titre_logo.png" alt="' + esc(_t("Aethervale")) + '" class="title-screen-logo-img">';
+  var continueSlot = getTitleScreenContinueSlot();
+  var html = buildTitleScreenStageOpenHTML(false);
   // v3.359.0 : « Installer le jeu » (main/pwa.js), en haut de l'écran ; vide si déjà installé ou masqué par « Plus tard »
   if (typeof buildPwaInstallButtonHTML === "function") html += buildPwaInstallButtonHTML("title");
-  html += '    <div class="title-screen-frame">';
-  var continueSlot = getTitleScreenContinueSlot();
-  html += '      <div class="title-screen-buttons' + (continueSlot ? ' has-continue' : '') + '">';
-  if (continueSlot) html += buildTitleScreenContinueHTML(continueSlot);
-  if (continueSlot) html += '<div class="title-screen-btn-row">';
-  html += '        <button type="button" class="title-screen-img-btn" onclick="titleScreenNewGame()">';
-  html += '          <img src="images/TitleScreen/bouton_titre.png" alt="" class="title-screen-img-btn-bg">';
-  html += '          <span>' + _t("Nouvelle partie") + '</span>';
-  html += '        </button>';
-  html += '        <button type="button" class="title-screen-img-btn" onclick="titleScreenShowLoad()">';
-  html += '          <img src="images/TitleScreen/bouton_titre.png" alt="" class="title-screen-img-btn-bg">';
-  html += '          <span>' + (continueSlot ? _t("Charger") : _t("Charger la partie")) + '</span>';
-  html += '        </button>';
-  if (continueSlot) html += '</div>';
+
+  html += '    <div class="lc-sheet title-screen-frame">';
+  if (continueSlot) {
+    var sum = HeroSlotManager.getSlotSummary(continueSlot) || {};
+    var world = getWorldNameByIndex(sum.worldIndex);
+    html += kSheetHeadHTML({ icon: titleScreenHeroImage(sum), title: esc(sum.playerName || _t("Emplacement {n}", { n: continueSlot })),
+      sub: esc(_t("Niveau {n}", { n: formatNumber(sum.heroLevel || 1) })) + (world ? ' · ' + esc(world) : '') });
+  } else {
+    html += kSheetHeadHTML({ title: _t("Bienvenue"), sub: _t("Une aventure t'attend au-delà de la Lisière.") });
+  }
+  html += '      <div class="ksheet-body">';
+  html += '        <div class="title-screen-buttons' + (continueSlot ? ' has-continue' : '') + '">';
+  if (continueSlot) {
+    html += buildTitleScreenContinueHTML(continueSlot);
+    html += '<div class="title-screen-btn-row">';
+    html += '<button type="button" class="kbtn is-sec title-screen-img-btn" onclick="titleScreenNewGame()">' + _t("Nouvelle partie") + '</button>';
+    html += '<button type="button" class="kbtn is-sec title-screen-img-btn" onclick="titleScreenShowLoad()">' + _t("Charger") + '</button>';
+    html += '</div>';
+  } else {
+    html += '<button type="button" class="kbtn primary title-screen-img-btn" onclick="titleScreenNewGame()">' + _t("Nouvelle partie") + '</button>';
+    html += '<button type="button" class="kbtn is-sec title-screen-img-btn" onclick="titleScreenShowLoad()">' + _t("Charger la partie") + '</button>';
+  }
+  html += '        </div>';
   html += '      </div>';
-  // v3.233.0 : lu depuis GAME_VERSION (core/constants.js) — le numéro était
-  // codé en dur ici et figé à v3.151.0.
+  // v3.233.0 : lu depuis GAME_VERSION (core/constants.js).
   html += '      <div class="title-screen-version">v' + (typeof GAME_VERSION !== "undefined" ? GAME_VERSION : "?") + '</div>';
   html += '    </div>';
   html += '  </div>';
@@ -371,20 +374,11 @@ function buildTitleScreenMainHTML() {
 }
 
 function buildTitleScreenLoadHTML() {
-  var html = '<div class="title-screen-overlay">';
-  html += '  <div class="title-screen-stage">';
-  html += '    <img src="images/TitleScreen/title_background_new.png" alt="" class="title-screen-bg">';
-  html += '  </div>';
-  html += '  <div class="title-screen-frame title-screen-frame-load">';
-  html += '    <div class="title-screen-load-header-row">';
-  html += '      <button type="button" class="title-screen-back-btn" onclick="titleScreenBackToMain()"><img src="images/TitleScreen/bouton_retour_new.png" alt="' + esc(_t("Retour")) + '"></button>';
-  html += '      <div class="title-screen-load-heading-wrap">';
-  html += '        <img src="images/TitleScreen/titre_charger.png" alt="" class="title-screen-load-heading-img">';
-  html += '        <h2 class="title-screen-load-heading-text">' + _t("Charger une partie") + '</h2>';
-  html += '      </div>';
+  var html = buildTitleScreenStageOpenHTML(true);
+  html += '    <div class="lc-sheet is-tall title-screen-frame-load">';
+  html += kSheetHeadHTML({ title: _t("Charger une partie"), sub: _t("Choisis une partie"), close: "titleScreenBackToMain()" });
+  html += '      <div class="ksheet-body">' + buildTitleScreenLoadListHTML() + '</div>';
   html += '    </div>';
-  html += '    <div class="title-screen-load-subheading">' + _t("Sélectionnez une sauvegarde") + '</div>';
-  html += buildTitleScreenLoadListHTML();
   html += '  </div>';
   html += buildTitleScreenDeleteConfirmHTML();
   html += '</div>';

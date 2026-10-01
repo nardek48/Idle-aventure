@@ -44,48 +44,80 @@
   display: none;
   position: fixed;
   inset: 0;
-  /* Doit rester AU-DESSUS de tout le reste, y compris les plus
-     hauts z-index déjà utilisés dans le jeu (le sélecteur de héros
-     .hero-picker-overlay est à 3001, le plus élevé du projet à ce
-     jour) — sinon le voile se retrouve caché DERRIÈRE l'écran de
-     création de personnage bien qu'il ait display:flex (bug constaté
-     et corrigé : z-index: 400 ne suffisait pas). */
+  /* Doit rester AU-DESSUS de tout le reste (écran titre 9000, création 3001). */
   z-index: 9999;
   align-items: center;
   justify-content: center;
-  /* v3.397.0 (audit design) : la première image du jeu prend la pierre de nuit du HUD */
-  background: linear-gradient(rgba(16, 12, 8, 0.8), rgba(16, 12, 8, 0.92)), url('../images/UI/textures/bg-stone-tile.png') 0 0 / 256px, var(--nb-shell);
+  overflow: hidden;
+  /* v3.403.0 (lot L-1) : la même illustration que l'écran titre, assombrie : plus de saut */
+  background: #1a1006;
 }
 
 #pwa-boot-gate.show {
   display: flex;
 }
 
+.pwa-boot-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+  filter: brightness(0.55) saturate(0.9);
+}
+
 .pwa-boot-gate-inner {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+  width: min(300px, 78%);
+  margin-top: -6vh;
 }
 
-.pwa-boot-spinner {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 3px solid rgba(240, 170, 62, 0.25);
-  border-top-color: var(--nb-gold);
-  animation: pwa-boot-spin 0.8s linear infinite;
+.pwa-boot-logo {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.6));
 }
 
-@keyframes pwa-boot-spin {
-  to { transform: rotate(360deg); }
+/* Jauge d'or : on ne connaît pas la durée, elle avance et recommence */
+.pwa-boot-gauge {
+  width: 78%;
+  height: 10px;
+  overflow: hidden;
+  border: 1.5px solid #c27f1f;
+  border-radius: 6px;
+  background: rgba(12, 9, 6, 0.75);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+.pwa-boot-gauge i {
+  display: block;
+  width: 4%;
+  height: 100%;
+  background: linear-gradient(90deg, #8a5c14, #e2b14a, #ffe08a);
+  animation: pwa-boot-fill 2.6s ease-in-out infinite;
+}
+
+@keyframes pwa-boot-fill {
+  0% { width: 4%; }
+  70% { width: 92%; }
+  100% { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pwa-boot-gauge i { animation: none; width: 60%; }
 }
 
 .pwa-boot-gate-text {
-  color: var(--nb-cream);
-  font-size: 13px;
+  color: #f3e0b0;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.3px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
 /* v2.90.5 : bannière PWA "nouvelle version disponible" (voir
@@ -452,28 +484,7 @@
   pointer-events: none;
 }
 
-#player-name-input {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  padding: 0 46px 0 20px;
-  background: transparent;
-  color: var(--nb-ink);
-  font-size: 15px;
-  font-weight: 600;
-  border: none;
-  box-sizing: border-box;
-  text-align: center; /* v3.29 : demandé par Seb, était à gauche par défaut */
-}
-
-#player-name-input::placeholder {
-  color: var(--nb-ink-dim);
-}
-
-#player-name-input:focus {
-  outline: none;
-}
+/* v3.403.0 (lot L-1) : le champ du nom est stylé par .hc-name-input (css/00-hero-creation.css). */
 
 /* =========================
    Responsive
@@ -757,7 +768,6 @@
    ========================= */
 @media (prefers-reduced-motion: reduce) {
   #toast,
-  #player-name-input,
   .hero-card,
   .hero-picker-confirm-btn {
     transition: none;

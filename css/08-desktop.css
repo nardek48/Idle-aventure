@@ -14,7 +14,6 @@ html.pc-mode {
 html.pc-mode body {
   min-height: calc(100vh / var(--pc-zoom, 1));
 }
-html.pc-mode .title-screen-frame-load { max-height: calc(100vh / var(--pc-zoom, 1)); }
 
 /* Écran titre : même largeur que la colonne de jeu, et jamais plus large qu'un
    téléphone de même hauteur (sinon les deux boutons sortent par le bas). */

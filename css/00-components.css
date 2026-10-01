@@ -490,7 +490,7 @@ button.nb-entry-card {
 }
 
 .nb-entry-card.is-locked {
-  opacity: 0.55;
+  opacity: 0.75; /* v3.404.0 : 0.55 rendait le texte illisible */
 }
 
 .nb-entry-card.is-complete {
@@ -922,9 +922,9 @@ button.nb-entry-card {
 
 .nb-accordion-count {
   flex: 0 0 auto;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--nb-gold-dark);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--nb-gold-deep); /* v3.404.0 : l'orange clair était illisible sur le parchemin */
 }
 
 .nb-accordion-chevron {

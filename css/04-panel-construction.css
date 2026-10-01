@@ -23,7 +23,7 @@
 }
 
 .construction-popup-meta strong {
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 .construction-popup-delta {
@@ -166,7 +166,7 @@
 .construction-entry-arrow {
   flex: 0 0 auto;
   font-size: 20px;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 /* v3.38 : état "objectif de quête" de la carte d'accès — entre

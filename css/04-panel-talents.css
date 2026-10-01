@@ -64,8 +64,8 @@
   display: flex; align-items: center; justify-content: center; line-height: 1;
 }
 .tt-node.is-avail .tt-node-col { padding-right: 12px; }
-.tt-node.is-locked { opacity: 0.55; }
-.tt-node.is-closed { opacity: 0.4; filter: grayscale(0.8); }
+.tt-node.is-locked { opacity: 0.75; } /* v3.404.0 : lisible même verrouillé */
+.tt-node.is-closed { opacity: 0.55; filter: grayscale(0.8); }
 .tt-node.is-closed .tt-node-short::before { content: "Fermée · "; font-weight: 800; color: #8a2f20; }
 
 /* Tronc : trois tuiles */
@@ -81,7 +81,7 @@
   border-radius: 9px; padding: 5px 6px; margin-bottom: 5px;
   background: var(--cl-bg); border: 1px solid var(--cl); color: var(--cl-ink);
 }
-.tt-path-head.is-locked { opacity: 0.6; }
+.tt-path-head.is-locked { opacity: 0.8; } /* v3.404.0 : 0.6 rendait le texte illisible */
 .tt-path-name { font-size: 12px; font-weight: 800; }
 .tt-path-tag { font-size: 12px; line-height: 1.25; opacity: 0.9; }
 .tt-path-count { font-size: 10px; font-weight: 800; margin-top: 2px; }

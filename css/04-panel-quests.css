@@ -79,7 +79,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   border-bottom: 1px solid var(--nb-frame);
   padding-bottom: 4px;
   margin-top: 6px;
@@ -187,7 +187,7 @@
 
 .quest-badge-main {
   margin-left: 4px;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   border-color: var(--nb-gold-dark);
 }
 
@@ -256,7 +256,7 @@
   margin-left: auto;
   font-size: 12px;
   font-weight: 700;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 .story-chain-sub {
@@ -287,7 +287,7 @@
   text-align: right;
   font-size: 12px;
   font-weight: 700;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   margin-top: 4px;
 }
 
@@ -338,7 +338,7 @@
 
 .story-step-num {
   font-size: 12px;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   flex-shrink: 0;
 }
 
@@ -378,7 +378,7 @@
   font-weight: 700;
   font-variant: small-caps;
   letter-spacing: .02em;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   margin-right: 6px;
 }
 
@@ -396,7 +396,7 @@
 .story-step-unlock {
   font-size: 12px;
   font-weight: 700;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   margin-top: 8px;
 }
 
@@ -544,7 +544,7 @@
 .qb-card-progress {
   font-size: 12px;
   font-weight: 700;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 /* v3.131.0 : détail des étapes d'une mission à chaîne (ex. "Les fondations") — voir
@@ -589,7 +589,7 @@
 }
 
 .qb-card-step.is-current .qb-card-step-icon {
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 .qb-card-step.is-pending {
@@ -605,7 +605,7 @@
 .qb-card-step-progress {
   flex-shrink: 0;
   font-size: 12px;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   font-weight: 700;
 }
 

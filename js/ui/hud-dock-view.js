@@ -6,11 +6,17 @@
    - fil rouge : toujours présent, en petite bulle discrète ; plus grand avec « ! » si urgent ;
    - sac : comme avant, visible dès que l'inventaire contient des objets, avec leur nombre ;
    - talents : quand un point est à placer (remplace la pastille « Up » du portrait).
-   Trois bulles au plus, la plus importante en bas (sous le pouce). Une lueur et le libellé à
+   v3.405.0 (décisions Seb 01/10/2026) :
+   - donjons : tant qu'il reste des sorties du jour dans un donjon débloqué, avec leur nombre ;
+   - petite aventure : quand celle du jour est disponible (ou en cours) ;
+   - trois situations au plus (avant : deux) en plus du fil rouge.
+   La plus importante en bas (sous le pouce). Une lueur et le libellé à
    l'apparition, une seule fois : jamais d'animation en boucle (pas de pression).
    renderHud tourne à chaque image : le calque n'est réécrit que si son contenu change. */
 
-var HUD_DOCK_ICONS = { bag: "images/Icons/menu_icons/equip_menu.png", talent: "images/Icons/talents/up_icon.png" };
+var HUD_DOCK_ICONS = { bag: "images/Icons/menu_icons/equip_menu.png", talent: "images/Icons/talents/up_icon.png",
+  dungeon: "images/Icons/subtabs/dungeon.png", pa: "images/Icons/scene/journey_long.png" };
+var HUD_DOCK_SITUATIONS = 3; // v3.405.0 : trois situations au plus, plus le fil rouge
 var hudDockLastKey = null;
 var hudDockSeen = null;   // bulles affichées au rendu précédent (null : premier rendu, pas de lueur)
 var hudDockFilId = null;  // proposition du fil rouge au rendu précédent
@@ -30,11 +36,60 @@ function hudDockItems() {
   var n = typeof getTalentsAvailableCount === "function" ? Number(getTalentsAvailableCount() || 0) : 0;
   if (n > 0) out.push({ k: "talent", icon: HUD_DOCK_ICONS.talent, badge: n > 1 ? String(n) : "",
     tip: _tn(n, "Un point de talent à placer", "{n} points de talent à placer", { n: n }), go: "switchTab('talents')" });
+  // v3.405.0 : petite aventure du jour, puis sorties de donjon restantes (pas sur leur propre écran)
+  var tab = typeof currentTab === "string" ? currentTab : "";
+  var lazy = hudDockLazy();
+  var pa = lazy.pa;
+  if (pa && tab !== "scene") out.push({ k: "pa", icon: HUD_DOCK_ICONS.pa, badge: "",
+    tip: pa.status === "running" ? _t("Ta petite aventure t'attend") : _t("Une petite aventure est disponible"), go: "openPaFromHud()" });
+  var d = lazy.dungeon;
+  if (d > 0 && tab !== "dungeon") out.push({ k: "dungeon", icon: HUD_DOCK_ICONS.dungeon, badge: String(d),
+    tip: _tn(d, "Une sortie de donjon disponible", "{n} sorties de donjon disponibles", { n: d }), go: "switchTab('dungeon')" });
   var c = Array.isArray(game.inventory) ? game.inventory.length : 0;
   if (c > 0) out.push({ k: "bag", icon: HUD_DOCK_ICONS.bag, badge: c > 99 ? "99+" : String(c),
     tip: _tn(c, "{n} objet dans le sac", "{n} objets dans le sac", { n: c }), go: "openBagFromHud()" });
   return out;
 }
+/* Le dock est recalculé à chaque image : donjons et petite aventure ne le sont qu'une fois par seconde
+   (ou aussitôt après un changement d'onglet). */
+var hudDockLazyCache = null;
+function hudDockLazy() {
+  var now = Date.now(), tab = typeof currentTab === "string" ? currentTab : "";
+  var c = hudDockLazyCache;
+  if (c && c.tab === tab && now - c.at < 1000) return c;
+  hudDockLazyCache = { at: now, tab: tab, pa: hudDockPaMission(), dungeon: hudDockDungeonRunsLeft() };
+  return hudDockLazyCache;
+}
+window.hudDockLazyReset = function () { hudDockLazyCache = null; };
+
+/* Sorties du jour restantes, tous donjons débloqués confondus (0 si l'onglet Donjon est fermé). */
+function hudDockDungeonRunsLeft() {
+  if (!window.DungeonManager || !Array.isArray(window.DUNGEONS)) return 0;
+  if (typeof isTabUnlocked === "function" && !isTabUnlocked("dungeon")) return 0;
+  var n = 0;
+  DUNGEONS.forEach(function (dg) {
+    if (dg && DungeonManager.isUnlocked(dg.id)) n += Number(DungeonManager.getRunsLeft(dg.id) || 0);
+  });
+  return n;
+}
+/* Petite aventure à proposer : celle en cours d'abord, sinon une disponible aujourd'hui. */
+function hudDockPaMission() {
+  if (!window.MissionBoard || typeof MissionBoard._petiteAventureMissions !== "function") return null;
+  var list = MissionBoard._petiteAventureMissions(), avail = null;
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].status === "running") return list[i];
+    if (!avail && list[i].status === "available" && !MissionBoard._isOtherWorld(list[i], MissionBoard._currentWorldId())) avail = list[i];
+  }
+  return avail;
+}
+function openPaFromHud() {
+  var m = hudDockPaMission();
+  if (!m) return;
+  var fn = m.launch || m.accept;
+  if (typeof fn === "function") fn();
+}
+window.openPaFromHud = openPaFromHud;
+
 function hudDockFil() {
   if ((window.Prefs && !Prefs.get("filRouge")) || !window.FilRouge) return null;
   var a = FilRouge.get();
@@ -42,11 +97,12 @@ function hudDockFil() {
 }
 
 /* Ordre d'affichage, de haut en bas : la plus importante en bas.
-   Fil rouge urgent : il compte parmi les trois et se place en bas.
-   Fil rouge au calme : petite bulle tout en haut, plus deux situations au plus. */
+   Fil rouge urgent : il se place en bas, sous trois situations au plus.
+   Fil rouge au calme : petite bulle tout en haut, plus trois situations au plus. */
 function hudDockOrder(fil, items) {
-  if (fil && fil.urgent) return [fil].concat(items).slice(0, 3).reverse();
-  return (fil ? [fil] : []).concat(items.slice(0, 2).reverse());
+  var n = HUD_DOCK_SITUATIONS;
+  if (fil && fil.urgent) return [fil].concat(items.slice(0, n)).reverse();
+  return (fil ? [fil] : []).concat(items.slice(0, n).reverse());
 }
 
 function hudDockBubbleHTML(it, isNew) {

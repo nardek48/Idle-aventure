@@ -31,7 +31,7 @@ function buildLogHTML() {
   }
 
   h += '</div>';
-  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/codex/codex_lore.png|" + _t("Journal")) + '">' + h + '</div>';
+  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/codex/codex_lore.png|" + _t("Journal")) + '">' + h + '</div>';
 }
 
 window.buildLogHTML = buildLogHTML;

@@ -54,8 +54,8 @@
   height: 36px;
   border-radius: 50%;
   border: 2px solid var(--nb-frame);
-  background-color: rgba(0, 0, 0, 0.3);
-  color: var(--nb-gold);
+  background-color: rgba(255, 248, 232, 0.4); /* v3.404.0 : clair, l'encre du cadre est sombre */
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   font-family: inherit;
   font-size: 1rem;
   font-weight: 800;
@@ -120,7 +120,7 @@
 }
 
 .grimoire-rule-arrow {
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   font-weight: 800;
   padding: 0 2px;
 }
@@ -135,7 +135,7 @@
 .grimoire-rule-chevron {
   flex: 0 0 auto;
   font-size: 1.1rem;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 /* Marqueur de contre : principal outil pédagogique du système, il reste
@@ -156,7 +156,7 @@
 
 /* --- Emplacement vide --- */
 .grimoire-rule-row.is-empty {
-  background-color: rgba(0, 0, 0, 0.22);
+  background-color: rgba(58, 44, 26, 0.08); /* v3.404.0 : sur le fond clair du cadre */
   border-style: dashed;
   box-shadow: none;
 }
@@ -170,8 +170,8 @@
 .grimoire-rule-row.is-empty .grimoire-rule-text,
 .grimoire-rule-row.is-empty .grimoire-rule-order,
 .grimoire-rule-row.is-empty .grimoire-rule-sub {
-  color: var(--nb-ink-inverse);
-  opacity: 0.8;
+  color: #4f3d26; /* v3.404.0 : encre sombre, le cadre est clair */
+  opacity: 1;
   font-weight: 600;
 }
 
@@ -200,7 +200,7 @@
   padding: 9px 8px;
   border: 2px solid var(--nb-frame);
   border-radius: var(--nb-radius-md);
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(255, 248, 232, 0.4); /* v3.404.0 : clair, l'encre du cadre est sombre */
   color: var(--nb-ink);
   font-family: inherit;
   font-size: 0.78rem;
@@ -228,7 +228,7 @@
   margin-bottom: 10px;
   border: 2px solid var(--nb-frame);
   border-radius: var(--nb-radius-md);
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(255, 248, 232, 0.4); /* v3.404.0 : clair, l'encre du cadre est sombre */
   color: var(--nb-ink);
   font-family: inherit;
   font-size: 0.82rem;
@@ -333,7 +333,7 @@
   border: 2px dashed var(--nb-frame);
   border-radius: var(--nb-radius-sm);
   background-color: transparent;
-  color: var(--nb-ink-inverse);
+  color: #4f3d26; /* v3.404.0 */
   font-family: inherit;
   font-size: 0.78rem;
   font-weight: 700;
@@ -629,7 +629,7 @@
   margin-bottom: 10px;
   border-radius: var(--nb-radius-sm);
   border-left: 4px solid var(--hp-yellow);
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(255, 248, 232, 0.4); /* v3.404.0 : clair, l'encre du cadre est sombre */
   color: var(--nb-ink);
   font-size: 0.76rem;
   line-height: 1.35;

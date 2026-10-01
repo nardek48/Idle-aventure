@@ -236,7 +236,7 @@ function cancelHeroSelection() {
    v3.149.0 : aussi affichée quand la création vient de l'écran titre (retour au titre). */
 function buildHeroPickerCloseButtonHTML() {
   if (!window.pendingHeroCreationOrigin && !window.titleScreenSlotBeingCreated) return "";
-  return '<button type="button" class="hc-close-btn" aria-label="' + esc(_t("Annuler")) + '" onclick="cancelHeroSelection()"><img class=ico-inline src=images/Icons/system/close.png></button>';
+  return '<button type="button" class="ksheet-x hc-close-btn" aria-label="' + esc(_t("Annuler")) + '" onclick="cancelHeroSelection()"></button>';
 }
 
 function toggleHeroAttackPreview() {
@@ -312,12 +312,12 @@ function openHeroSelection() {
     }
   }
 
-  var body;
-  if (heroSelectionStep === "confirm") body = buildConfirmStepHTML(selectedHero);
-  else if (heroSelectionStep === "hero") body = buildHeroStepHTML(selectedHero);
-  else body = buildNameStepHTML();
+  var step;
+  if (heroSelectionStep === "confirm") step = buildConfirmStepHTML(selectedHero);
+  else if (heroSelectionStep === "hero") step = buildHeroStepHTML(selectedHero);
+  else step = buildNameStepHTML();
 
-  host.innerHTML = buildHeroCreationShellHTML(body);
+  host.innerHTML = buildHeroCreationShellHTML(step);
 
   // Étape "name" : focus direct dans le champ (sans scroll intempestif sur mobile).
   if (heroSelectionStep === "name") {
@@ -330,31 +330,32 @@ function openHeroSelection() {
    Rendu — coquille plein écran commune aux 3 étapes
    --------------------------------------------------------------- */
 
-/* Fond + cadre parchemin + logo + croix <img class=ico-inline src=images/Icons/system/close.png>. Le contenu de l'étape est
-   injecté dans .hc-body (zone scrollable). */
-function buildHeroCreationShellHTML(bodyHtml) {
+/* v3.403.0 (lot L-1, choix de Seb « A · Kit du jeu ») : même habillage que l'écran titre —
+   illustration assombrie, petit logo, et une FEUILLE du kit (en-tête de pierre avec le titre
+   de l'étape et « Étape n sur 3 », corps parchemin, pied avec Retour (filaire) et l'action
+   principale (bleu serti)). Les héros sont montrés dans leur médaillon peint, entier.
+   step = { n, title, hint, body, back, next, nextLabel, nextClass } */
+function buildHeroCreationShellHTML(step) {
   var html = '<div class="hc-overlay">';
-  html += '  <img src="images/TitleScreen/title_background_new.png" alt="" class="hc-bg">';
-  html += '  <div class="hc-frame">';
-  html += buildHeroPickerCloseButtonHTML();
+  html += '  <div class="lc-col">';
+  html += '    <img src="images/TitleScreen/title_background_new.png" alt="" class="hc-bg">';
+  html += '    <div class="lc-shade is-dim"></div>';
   html += '    <img src="images/TitleScreen/titre_logo.png" alt="' + esc(_t("Aethervale")) + '" class="hc-logo">';
-  html += '    <div class="hc-body">';
-  html += bodyHtml;
+  html += '    <div class="lc-sheet' + (step.n > 1 ? ' is-tall' : '') + ' hc-frame">'; // le nom tient en bas, l'illustration reste visible
+  html += '      <div class="ksheet-head"><div class="ksheet-handle"></div><div class="ksheet-title"><span class="ksheet-ttl">' + esc(step.title)
+    + '<small class="ksheet-sub">' + esc(_t("Étape {n} sur 3", { n: step.n })) + '</small></span></div>' + buildHeroPickerCloseButtonHTML() + '</div>';
+  html += '      <div class="ksheet-body hc-body">';
+  if (step.hint) html += '<p class="hc-step-subtitle">' + esc(step.hint) + '</p>';
+  html += step.body;
+  html += '<div class="hc-dots">' + [1, 2, 3].map(function (i) { return '<i' + (i <= step.n ? ' class="on"' : '') + '></i>'; }).join("") + '</div>';
+  html += '      </div>';
+  html += '      <div class="ksheet-foot hc-actions">';
+  if (step.back) html += '<button type="button" class="kbtn is-sec hc-back-btn" onclick="' + step.back + '">' + _t("Retour") + '</button>';
+  html += '<button type="button" class="kbtn primary hc-img-btn' + (step.nextClass ? ' ' + step.nextClass : '') + '" onclick="' + step.next + '">' + step.nextLabel + '</button>';
+  html += '      </div>';
   html += '    </div>';
   html += '  </div>';
   html += '</div>';
-  return html;
-}
-
-/* Ruban de titre d'étape (titre_charger.png réutilisé comme cadre, texte
-   HTML par-dessus — même technique que l'écran Charger). v3.150.0 : la
-   pastille numérotée ①②③ a été retirée (demande Seb, capture annotée). */
-function buildHeroStepHeaderHTML(title, subtitle) {
-  var html = '<div class="hc-step-title-wrap">';
-  html += '  <img src="images/TitleScreen/titre_charger.png" alt="" class="hc-step-title-img">';
-  html += '  <h2 class="hc-step-title-text">' + esc(title) + '</h2>';
-  html += '</div>';
-  if (subtitle) html += '<p class="hc-step-subtitle">' + esc(subtitle) + '</p>';
   return html;
 }
 
@@ -363,21 +364,8 @@ function buildHeroStepHeaderHTML(title, subtitle) {
    --------------------------------------------------------------- */
 function buildNameStepHTML() {
   var currentName = pendingPlayerName || game.playerName || "";
-
-  var html = buildHeroStepHeaderHTML(_t("Choix du nom"), _t("Entre le nom de ton héros."));
-
-  html += '<div class="hc-name-wrap">';
-  html += '  <img src="images/TitleScreen/bouton_titre.png" alt="" class="hc-name-bg">';
-  html += '  <input id="player-name-input" type="text" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="' + esc(_t("Entre un nom…")) + '" value="' + esc(currentName) + '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();goToHeroStep();}">';
-  html += '</div>';
-
-  html += '<div class="hc-actions">';
-  html += '  <button type="button" class="hc-img-btn" onclick="goToHeroStep()">';
-  html += '    <img src="images/TitleScreen/bouton_titre.png" alt="" class="hc-img-btn-bg">';
-  html += '    <span>' + _t("Continuer") + '</span>';
-  html += '  </button>';
-  html += '</div>';
-  return html;
+  var body = '<input id="player-name-input" class="hc-name-input" type="text" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="' + esc(_t("Entre un nom…")) + '" value="' + esc(currentName) + '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();goToHeroStep();}">';
+  return { n: 1, title: _t("Choix du nom"), hint: _t("Entre le nom de ton héros."), body: body, next: "goToHeroStep()", nextLabel: _t("Continuer") };
 }
 
 /* ---------------------------------------------------------------
@@ -388,9 +376,7 @@ function buildHeroStepHTML(selectedHero) {
   var selectedIsChaos = selectedHero ? isChaosHeroId(selectedHero.id) : false;
   var gender = getPendingHeroGender();
 
-  var html = buildHeroStepHeaderHTML(_t("Choix de la classe"), _t("Choisis la voie que suivra ton héros."));
-
-  html += '<div class="hc-class-grid">';
+  var html = '<div class="hc-class-grid">';
   if (typeof CLASSES !== "undefined") {
     CLASSES.forEach(function (cls) {
       if (!cls || !cls.heroIds || !cls.heroIds.length) return;
@@ -399,22 +385,22 @@ function buildHeroStepHTML(selectedHero) {
       var isActive = selectedClass && selectedClass.id === cls.id;
       // Portrait affiché dans la colonne : la variante réellement sélectionnée si c'est cette classe, sinon la base.
       var shownHero = (isActive && selectedHero) ? selectedHero : baseHero;
-      var tagline = HERO_CLASS_TAGLINES[cls.id] || "";
-
       html += '<button type="button" class="hc-class-card' + (isActive ? ' active' : '') + '" onclick="selectHeroClass(\'' + esc(cls.id) + '\')">';
-      html += '  <div class="hc-class-portrait"><img src="' + esc(getHeroImageForGender(shownHero, gender)) + '" alt="' + esc(_td(baseHero.name)) + '"></div>';
+      html += '  <img class="lc-med" src="' + esc(getHeroImageForGender(shownHero, gender)) + '" alt="' + esc(_td(baseHero.name)) + '">';
       html += '  <div class="hc-class-name">' + esc(_td(baseHero.name)) + '</div>';
-      html += '  <div class="hc-class-tagline">' + esc(tagline) + '</div>';
       html += '</button>';
     });
   }
   html += '</div>';
 
-  // Toggle Homme/Femme (v3.151.0, skin cosmétique — option A).
-  html += '<div class="hc-gender-toggle">';
+  // Toggle Homme/Femme (v3.151.0, skin cosmétique) — v3.403.0 : rail du kit (.kseg)
+  html += '<div class="kseg hc-gender-toggle">';
   html += '  <button type="button" class="hc-gender-btn' + (gender === "m" ? ' active' : '') + '" onclick="selectHeroGender(\'m\')">' + _t("Homme") + '</button>';
   html += '  <button type="button" class="hc-gender-btn' + (gender === "f" ? ' active' : '') + '" onclick="selectHeroGender(\'f\')">' + _t("Femme") + '</button>';
   html += '</div>';
+
+  // v3.403.0 : la description de la classe choisie, sous le rail (une seule, plus lisible que trois)
+  if (selectedClass && HERO_CLASS_TAGLINES[selectedClass.id]) html += '<p class="hc-class-tagline">' + esc(HERO_CLASS_TAGLINES[selectedClass.id]) + '</p>';
 
   // Toggle Chaos — uniquement si la classe active a bien 2 variantes.
   if (selectedClass && selectedClass.heroIds && selectedClass.heroIds.length >= 2) {
@@ -436,15 +422,8 @@ function buildHeroStepHTML(selectedHero) {
   html += '</div>';
 
   html += buildHeroAttackPreviewBandeauHTML(selectedHero);
-
-  html += '<div class="hc-actions hc-actions-row">';
-  html += '  <button type="button" class="hc-back-btn" onclick="backToNameStep()"><img src="images/TitleScreen/bouton_retour_new.png" alt="' + esc(_t("Retour")) + '"></button>';
-  html += '  <button type="button" class="hc-img-btn" onclick="goToConfirmStep()">';
-  html += '    <img src="images/TitleScreen/bouton_titre.png" alt="" class="hc-img-btn-bg">';
-  html += '    <span>' + _t("Continuer") + '</span>';
-  html += '  </button>';
-  html += '</div>';
-  return html;
+  return { n: 2, title: _t("Choix de la classe"), hint: _t("Choisis la voie que suivra ton héros."), body: html,
+    back: "backToNameStep()", next: "goToConfirmStep()", nextLabel: _t("Continuer") };
 }
 
 /* v3.29 : bandeau dépliable des compétences de classe (conservé tel quel, classes CSS renommées hc-). */
@@ -490,9 +469,7 @@ function buildConfirmStepHTML(selectedHero) {
   var className = baseHero ? _td(baseHero.name) : (selectedHero ? _td(selectedHero.name) : "");
   var tagline = (cls && HERO_CLASS_TAGLINES[cls.id]) || "";
 
-  var html = buildHeroStepHeaderHTML(_t("Confirmation"), _t("Vérifie ton héros avant de commencer l'aventure."));
-
-  html += '<div class="hc-confirm-portrait">';
+  var html = '<div class="hc-confirm-portrait">';
   var confirmImg = getHeroImageForGender(selectedHero, getPendingHeroGender());
   if (confirmImg) html += '<img src="' + esc(confirmImg) + '" alt="' + esc(selectedHero ? _td(selectedHero.name) : "") + '">';
   html += '</div>';
@@ -503,15 +480,8 @@ function buildConfirmStepHTML(selectedHero) {
     html += '<div class="hc-confirm-variant">' + esc(_td(selectedHero.name)) + '</div>';
   }
   if (tagline) html += '<div class="hc-confirm-tagline">' + esc(tagline) + '</div>';
-
-  html += '<div class="hc-actions hc-actions-row">';
-  html += '  <button type="button" class="hc-back-btn" onclick="backToHeroStep()"><img src="images/TitleScreen/bouton_retour_new.png" alt="' + esc(_t("Retour")) + '"></button>';
-  html += '  <button type="button" class="hc-img-btn hc-img-btn-start" onclick="confirmHeroSelection()">';
-  html += '    <img src="images/TitleScreen/bouton_titre.png" alt="" class="hc-img-btn-bg">';
-  html += '    <span>' + _t("Commencer l'aventure") + '</span>';
-  html += '  </button>';
-  html += '</div>';
-  return html;
+  return { n: 3, title: _t("Confirmation"), hint: _t("Vérifie ton héros avant de commencer l'aventure."), body: html,
+    back: "backToHeroStep()", next: "confirmHeroSelection()", nextLabel: _t("Commencer l'aventure"), nextClass: "hc-img-btn-start" };
 }
 
 window.getSelectedHero = getSelectedHero;

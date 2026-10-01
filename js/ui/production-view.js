@@ -68,7 +68,7 @@ function buildProductionDashCardHTML(id) {
   var openCount = window.ProductionPlotsSystem ? ProductionPlotsSystem.getOpenPlotsCount(id) : 0;
   var upgradable = hasAffordableZoneAction(id);
 
-  var h = '<div class="production-dash-card' + (isFull ? ' is-full' : '') + '" onclick="openProductionBuildingDetail(\'' + id + '\')">';
+  var h = '<div class="production-dash-card' + (isFull ? ' is-full' : '') + ((isFull || upgradable) ? ' has-flag' : '') + '" onclick="openProductionBuildingDetail(\'' + id + '\')">';
   if (isFull) h += '<span class="production-dash-flag is-full-flag">' + _t("PLEIN") + '</span>';
   else if (upgradable) h += '<span class="production-dash-flag is-up-flag"><img class="ico-sys" src="images/Icons/system/upgrade.png" alt=""> ' + _t("AMÉLIORABLE") + '</span>';
 

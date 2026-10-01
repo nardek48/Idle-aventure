@@ -293,7 +293,7 @@
 .ability-counter {
   font-size: 12px;
   font-weight: 700;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   margin-top: 4px;
 }
 
@@ -308,7 +308,7 @@
 }
 
 .ability-cd.is-active {
-  color: var(--nb-gold);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   background: rgba(255, 200, 61, 0.1);
 }
 
@@ -519,7 +519,7 @@
 .pc-sum-cell-hint {
   margin-top: 1px;
   font-size: 12px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 /* --- raccourcis vers les autres sous-onglets --- */

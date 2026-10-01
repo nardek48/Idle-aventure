@@ -47,7 +47,7 @@
   margin-bottom: 0;
   font-size: 12px;
   font-style: italic;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 /* v3.62.0 : bouton de reset — distinct visuellement du bouton

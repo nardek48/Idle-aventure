@@ -241,7 +241,7 @@
 .eq-detail-stat {
   font-size: 12px;
   font-weight: 700;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   margin-bottom: 14px;
 }
 
@@ -265,7 +265,7 @@
 /* v3.226.0 (Lot 2) : lignes de comparaison — texte à gauche, delta à droite, sur une ligne à 320 px. */
 .eq-cmp-lines { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; }
 .eq-cmp-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 700; color: var(--nb-ink); }
-.eq-cmp-row.is-base { font-size: 12px; color: var(--nb-gold-dark); }
+.eq-cmp-row.is-base { font-size: 12px; color: var(--nb-gold-deep); }
 .eq-cmp-row.is-secondary { font-weight: 600; font-style: italic; color: var(--nb-ink-dim); }
 .eq-cmp-row.is-lost { font-weight: 600; color: var(--nb-ink-dim); opacity: 0.85; }
 .eq-cmp-row.is-lost small { font-size: 12px; font-weight: 600; }
@@ -398,7 +398,7 @@
   padding: 6px;
   border: none;
   background: none;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   font-size: 12px;
   font-weight: 700;
   text-decoration: underline;
@@ -505,7 +505,7 @@
 
 .eq-detail-setbonus.is-active {
   border-color: var(--nb-gold-dark);
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 .eq-detail-setbonus-icon {

@@ -86,7 +86,7 @@ function buildSettingsHTML() {
   h += (game.saveSupported ? _t("Sauvegarde : locale navigateur.") : _t("Sauvegarde : indisponible.")) + '<br>';
   h += _t("La progression hors-ligne, l'équipement et les quêtes sont activés.");
   h += '</div>';
-  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/system/settings.png|" + _t("Options")) + '">' + h + '</div>';
+  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/system/settings.png|" + _t("Options")) + '">' + h + '</div>';
 }
 
 function toggleAutoSkills(enabled) {

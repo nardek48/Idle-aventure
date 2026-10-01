@@ -1,13 +1,13 @@
 /* =========================================================
-   CRÉATION DE HÉROS — plein écran, 3 étapes (v3.149.0)
-   Voir js/ui/modal-view.js. Charte or/bronze de l'écran titre
-   (css/00-title-screen.css), mêmes assets images/TitleScreen/*.
-   Monté dans #hero-selection-root (z-index 3000, 05-overlays.css) —
-   l'écran titre (#title-screen-root, 9000) est vidé par
-   title-screen-view.js avant l'ouverture, donc pas de conflit.
-   Préfixe hc- : les anciens .hero-picker-* / .hero-card de
-   05-overlays.css sont laissés en place (.hero-card est réutilisé
-   par le carrousel de 04-panel-hero-summary.css).
+   CRÉATION DE HÉROS — 3 étapes (nom, classe, confirmation)
+   Voir js/ui/modal-view.js. Monté dans #hero-selection-root (z-index 3000,
+   05-overlays.css) ; l'écran titre (#title-screen-root, 9000) est vidé avant
+   l'ouverture.
+   v3.403.0 (lot L-1, choix de Seb « A · Kit du jeu ») : même socle que l'écran
+   titre (css/00-title-screen.css : .lc-col, .lc-shade, .lc-sheet, .lc-med) —
+   illustration assombrie, petit logo, feuille du kit avec l'étape en en-tête,
+   Retour (filaire) et l'action principale (bleu serti) dans le pied. Les
+   portraits des classes et de la confirmation sont les médaillons entiers.
    ========================================================= */
 
 .hc-overlay {
@@ -24,569 +24,250 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center center;
-}
-
-.hc-frame {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 430px;
-  height: 100%;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  padding: 14px 20px calc(14px + var(--safe-bottom, 0px));
-  box-sizing: border-box;
-  gap: 8px;
-}
-
-/* v3.175.0 : visuel porté par le bouton rond du kit (css/00-kbtn.css)
-   — ne restent que le positionnement et la taille. */
-.hc-close-btn {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  z-index: 3;
-  width: 34px;
-  height: 34px;
+  object-position: center 40%;
 }
 
 .hc-logo {
-  display: block;
-  width: 62%;
-  max-width: 260px;
-  height: auto;
-  margin: 0 auto;
-  flex: 0 0 auto;
-}
-
-/* Zone d'étape : seule partie scrollable (logo figé au-dessus). */
-.hc-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 6px;
-}
-
-/* ---- En-tête d'étape : ruban titre + sous-titre ----
-   v3.150.0 : pastille numérotée ①②③ retirée (demande Seb, capture
-   annotée). Règle .hc-step-badge supprimée avec elle. */
-.hc-step-title-wrap {
-  position: relative;
-  width: 82%;
-  max-width: 340px;
-  flex: 0 0 auto;
-}
-
-.hc-step-title-img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.hc-step-title-text {
   position: absolute;
-  inset: 0;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 18%;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  color: #f3e0b0;
-  text-align: center;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
-  line-height: 1.1;
+  left: 50%;
+  top: calc(var(--safe-top) + 14px);
+  transform: translateX(-50%);
+  width: min(200px, 52%);
+  height: auto;
+  z-index: 1;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.55));
 }
 
 .hc-step-subtitle {
-  margin: 0;
-  font-size: 12px;
-  color: rgba(240, 224, 190, 0.85);
+  margin: 0 0 12px;
   text-align: center;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-  padding: 0 10px;
+  font-size: 13px;
+  color: #6b5a40;
 }
 
-/* ---- Boutons image (Continuer / Commencer) ---- */
-.hc-actions {
+/* Étapes : trois traits sous le contenu */
+.hc-dots { display: flex; justify-content: center; gap: 6px; margin: 14px 0 2px; }
+.hc-dots i { width: 22px; height: 4px; border-radius: 2px; background: rgba(58, 44, 26, 0.2); }
+.hc-dots i.on { background: #c27f1f; }
+
+.hc-actions .kbtn { flex: 1 1 0; }
+.hc-actions .hc-back-btn { flex: 0.6 1 0; }
+
+/* ---- Étape 1 : le nom ---- */
+.hc-name-input {
+  display: block;
   width: 100%;
-  margin-top: auto; /* colle les actions en bas de la zone quand il reste de la place */
-  padding-top: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  flex: 0 0 auto;
-}
-
-.hc-actions-row {
-  flex-direction: row;
-  justify-content: center;
-}
-
-.hc-img-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72%;
-  max-width: 300px;
-  aspect-ratio: 1200 / 405;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
-.hc-actions-row .hc-img-btn {
-  width: 64%;
-}
-
-.hc-img-btn-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  pointer-events: none;
-}
-
-.hc-img-btn span {
-  position: relative;
-  z-index: 1;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: #3a2410;
-  text-shadow: 0 1px 1px rgba(255, 244, 214, 0.5);
-  padding: 0 14%;
-  text-align: center;
-  line-height: 1.05;
-}
-
-.hc-img-btn:active {
-  transform: scale(0.97);
-}
-
-/* "Commencer l'aventure" : seul bouton d'une autre couleur (vert, comme
-   la maquette) — en attendant un asset dédié, CSS pur : le cadre image est
-   masqué et remplacé par un dégradé vert + bordure or. */
-.hc-img-btn-start {
-  aspect-ratio: auto;
-  min-height: 48px;
-  padding: 10px 12px;
+  min-height: 50px;
+  padding: 10px 14px;
+  border: 2px solid #8a5c14;
   border-radius: 12px;
-  border: 2px solid #d8a85a;
-  background: linear-gradient(180deg, #2f7a3a, #17451f);
-  box-shadow: 0 0 0 1px rgba(20, 60, 25, 0.9), 0 4px 12px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-.hc-img-btn-start .hc-img-btn-bg {
-  display: none;
-}
-
-.hc-img-btn-start span {
-  color: #f6e3a8;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-  padding: 0;
-}
-
-.hc-back-btn {
-  flex: 0 0 auto;
-  width: 46px;
-  aspect-ratio: 306 / 337;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
-.hc-back-btn img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.hc-back-btn:active {
-  transform: scale(0.93);
-}
-
-/* ---- Étape 1 : champ de nom sur cadre parchemin ---- */
-.hc-name-wrap {
-  position: relative;
-  width: 86%;
-  max-width: 340px;
-  aspect-ratio: 1200 / 405;
-  margin-top: 18px;
-  flex: 0 0 auto;
-}
-
-.hc-name-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  pointer-events: none;
-}
-
-/* v3.150.0 : centrage vertical robuste — top/bottom en % seuls ne centrent
-   pas le texte d'un <input> (sa hauteur réelle dépend de line-height, pas
-   du bloc englobant), d'où le texte collé en bas du cadre observé par Seb
-   (capture annotée). Fix : hauteur fixe + line-height identique + centrage
-   par transform, indépendant du rendu par défaut du navigateur. */
-.hc-name-wrap #player-name-input {
-  position: absolute;
-  left: 16%;
-  right: 16%;
-  top: 50%;
-  height: 34px;
-  line-height: 34px;
-  transform: translateY(-50%);
-  width: auto;
-  padding: 0 8px;
-  margin: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-family: Georgia, "Times New Roman", serif;
+  background: rgba(255, 252, 244, 0.85);
+  color: #3a2c1a;
+  font-family: inherit;
   font-size: 17px;
   font-weight: 700;
-  color: #3a2410;
   text-align: center;
-  vertical-align: middle;
-  box-shadow: none;
-  border-radius: 0;
+  outline: none;
 }
 
-.hc-name-wrap #player-name-input::placeholder {
-  color: rgba(90, 60, 30, 0.5);
-  font-weight: 400;
-}
+.hc-name-input::placeholder { color: #9a8a6c; font-weight: 600; }
+.hc-name-input:focus { border-color: #c27f1f; box-shadow: 0 0 0 3px rgba(226, 177, 74, 0.35); }
 
-/* ---- Étape 2 : 3 colonnes de classe ---- */
+/* ---- Étape 2 : la classe ---- */
 .hc-class-grid {
-  width: 100%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  flex: 0 0 auto;
+  margin-bottom: 10px;
 }
 
 .hc-class-card {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 6px 4px 8px;
+  padding: 8px 4px 10px;
+  border: 1.5px solid var(--sheet-card-bd);
   border-radius: 12px;
-  border: 1.5px solid rgba(216, 168, 90, 0.4);
-  background: linear-gradient(180deg, rgba(236, 214, 170, 0.92), rgba(206, 176, 124, 0.92));
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+  background: var(--sheet-card-bg);
+  color: #3a2c1a;
+  font-family: inherit;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
+
+.hc-class-card .lc-med { width: 72px; height: 75px; }
 
 .hc-class-card.active {
-  border-color: #e0b25c;
-  box-shadow: 0 0 0 1px rgba(224, 178, 92, 0.6), 0 0 18px rgba(224, 178, 92, 0.6), 0 3px 10px rgba(0, 0, 0, 0.45);
-  transform: translateY(-3px);
-}
-
-.hc-class-card:active {
-  transform: scale(0.97);
-}
-
-/* v3.151.0 : nouveaux portraits (Seb) déjà en médaillon rond avec cadre
-   doré peint dans l'image (fond transparent hors du cercle, ratio réel
-   ~546/570 ≈ carré) — bordure/fond CSS retirés pour ne pas dupliquer
-   l'effet (un cadre carré CSS + un cadre rond peint aurait fait doublon). */
-.hc-class-portrait {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-}
-
-.hc-class-portrait img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
+  border: 2px solid #c27f1f;
+  box-shadow: 0 0 0 1px #e2b14a, 0 3px 10px rgba(194, 127, 31, 0.35);
 }
 
 .hc-class-name {
-  font-family: Georgia, "Times New Roman", serif;
   font-size: 13px;
-  font-weight: 700;
-  color: #3a2410;
-  letter-spacing: 0.3px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  text-align: center;
-  line-height: 1.1;
+}
+
+/* Homme / Femme : le rail du kit (.kseg) ; l'actif garde la classe .active du code */
+.hc-gender-toggle .hc-gender-btn.active {
+  background: linear-gradient(#f6d27a, #d99a34);
+  border-color: #8a5c14;
+  color: #2a1a08;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
 .hc-class-tagline {
-  font-size: 12px;
-  line-height: 1.25;
-  color: rgba(58, 36, 16, 0.85);
+  margin: 0 6px 10px;
   text-align: center;
-  padding: 0 2px;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.45;
+  color: #6b5a40;
 }
 
-/* Toggle Homme/Femme (v3.151.0, skin cosmétique — option A validée). Style
-   pilule à 2 segments, cohérent avec le toggle Chaos juste en dessous. */
-.hc-gender-toggle {
-  display: flex;
-  gap: 4px;
-  padding: 3px;
-  border-radius: 999px;
-  border: 1.5px solid rgba(216, 168, 90, 0.4);
-  background: rgba(26, 16, 6, 0.6);
-  flex: 0 0 auto;
-}
-
-.hc-gender-btn {
-  padding: 6px 18px;
-  border-radius: 999px;
-  border: none;
-  background: transparent;
-  color: rgba(240, 224, 190, 0.65);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.hc-gender-btn.active {
-  background: linear-gradient(180deg, #e0b25c, #a5722a);
-  color: #2a1a08;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-}
-
-/* Toggle variante Chaos (option A validée) */
+/* Variante du Chaos : une ligne à case, sur le parchemin */
 .hc-chaos-toggle {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  margin: 0 0 10px;
   padding: 6px 12px;
-  border-radius: 999px;
-  border: 1.5px solid rgba(216, 168, 90, 0.5);
-  background: rgba(26, 16, 6, 0.7);
-  color: rgba(240, 224, 190, 0.85);
-  font-size: 12px;
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 12px;
+  background: var(--sheet-card-bg);
+  color: #3a2c1a;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  flex: 0 0 auto;
 }
 
 .hc-chaos-toggle.on {
-  border-color: #b06cff;
-  color: #e8d6ff;
-  background: rgba(60, 24, 90, 0.75);
-  box-shadow: 0 0 10px rgba(176, 108, 255, 0.5);
+  border: 2px solid #7a3fb8;
+  background: rgba(122, 63, 184, 0.1);
+  color: #4a1f78;
 }
 
 .hc-chaos-toggle-box {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1.5px solid currentColor;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  line-height: 1;
+  width: 20px;
+  height: 20px;
+  border: 2px solid currentColor;
+  border-radius: 5px;
 }
 
-/* Aperçu stats */
+.hc-chaos-toggle-box img { width: 14px; height: 14px; }
+
+/* Aperçu des stats */
 .hc-stats {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   gap: 4px;
-  padding: 6px 8px;
-  border-radius: 10px;
-  border: 1px solid rgba(216, 168, 90, 0.35);
-  background: rgba(26, 16, 6, 0.65);
-  flex: 0 0 auto;
+  margin: 0 0 10px;
+  padding: 8px 6px;
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 12px;
+  background: var(--sheet-card-bg);
+  text-align: center;
 }
 
-.hc-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  min-width: 0;
-  flex: 1 1 0;
-}
+.hc-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 0; }
+.hc-stat-ico-img { width: 20px; height: 20px; object-fit: contain; }
+.hc-stat strong { font-size: 15px; color: #3a2c1a; order: 2; }
+.hc-stat-label { font-size: 12px; font-weight: 700; color: #6b5a40; order: 3; }
 
-.hc-stat-icon {
-  font-size: 13px;
-}
-
-.hc-stat-label {
-  font-size: 12px;
-  letter-spacing: 0.5px;
-  color: rgba(240, 224, 190, 0.7);
-}
-
-.hc-stat strong {
-  font-size: 12px;
-  color: #f3e0b0;
-}
-
-/* Bandeau compétences (v3.29) */
+/* Compétences de classe (dépliable, v3.29) */
 .hc-skills-toggle {
-  width: 100%;
-  padding: 7px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(216, 168, 90, 0.35);
-  background: rgba(26, 16, 6, 0.65);
-  color: #f3e0b0;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex: 0 0 auto;
-}
-
-.hc-skills-chevron {
-  color: #d8a85a;
-}
-
-.hc-skills-list {
+  justify-content: space-between;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 2px solid #8a5c14;
+  border-radius: 10px;
+  background: rgba(255, 248, 232, 0.35);
+  color: #4a3218;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
 }
+
+.hc-skills-chevron { color: #8a5c14; }
+
+.hc-skills-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 
 .hc-skill-card {
   display: flex;
-  gap: 8px;
   align-items: flex-start;
-  padding: 7px 9px;
-  border-radius: 10px;
-  border: 1px solid rgba(216, 168, 90, 0.3);
-  background: rgba(236, 214, 170, 0.92);
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 12px;
+  background: var(--sheet-card-bg);
 }
 
-.hc-skill-icon-wrap {
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
+.hc-skill-icon-wrap { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; }
+.hc-skill-icon { width: 24px; height: 24px; object-fit: contain; }
+.hc-skill-body { min-width: 0; }
+.hc-skill-name { font-size: 13px; font-weight: 800; color: #3a2c1a; }
+.hc-skill-desc { font-size: 12px; line-height: 1.35; color: #6b5a40; }
 
-.hc-skill-icon {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-}
+/* ---- Étape 3 : confirmation — le médaillon entier, sans cercle ajouté ---- */
+.hc-body { text-align: left; }
 
-.hc-skill-body {
-  min-width: 0;
-}
-
-.hc-skill-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: #3a2410;
-}
-
-.hc-skill-desc {
-  font-size: 12px;
-  line-height: 1.3;
-  color: rgba(58, 36, 16, 0.85);
-}
-
-/* ---- Étape 3 : confirmation ---- */
-/* v3.151.0 : le cadre doré est déjà peint dans l'image (voir
-   .hc-class-portrait) -> bordure/fond CSS retirés, garde juste un léger
-   glow doré autour pour la mettre en valeur sur l'étape de confirmation. */
 .hc-confirm-portrait {
-  width: 56%;
-  max-width: 220px;
-  aspect-ratio: 1 / 1;
-  filter: drop-shadow(0 0 16px rgba(224, 178, 92, 0.6)) drop-shadow(0 6px 14px rgba(0, 0, 0, 0.6));
-  margin-top: 6px;
-  flex: 0 0 auto;
+  width: 168px;
+  height: 175px;
+  margin: 2px auto 4px;
+  filter: drop-shadow(0 0 14px rgba(224, 178, 92, 0.45)) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.45));
 }
 
-.hc-confirm-portrait img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
+.hc-confirm-portrait img { display: block; width: 100%; height: 100%; object-fit: contain; }
 
 .hc-confirm-name {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #f0c76a;
-  text-shadow: 0 2px 0 #5a3a10, 0 3px 10px rgba(0, 0, 0, 0.8);
   text-align: center;
-  line-height: 1.1;
-  word-break: break-word;
-  padding: 0 8px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #2a1a08;
+  overflow-wrap: anywhere;
 }
 
 .hc-confirm-class {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #f3e0b0;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  color: #8a5c14;
 }
 
-.hc-confirm-class-icon {
-  font-size: 20px;
-}
+.hc-confirm-class-ico { width: 22px; height: 22px; object-fit: contain; }
 
-.hc-confirm-variant {
-  font-size: 12px;
-  color: #d9b8ff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-  margin-top: -4px;
-}
+.hc-confirm-variant { text-align: center; font-size: 13px; font-weight: 700; color: #4a1f78; margin-top: 2px; }
 
 .hc-confirm-tagline {
-  font-size: 12px;
-  color: rgba(240, 224, 190, 0.85);
+  margin: 8px 10px 0;
   text-align: center;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-  padding: 0 16px;
-  line-height: 1.35;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.45;
+  color: #6b5a40;
 }
 
 /* ---- Petits écrans (320px) ---- */
 @media (max-width: 360px) {
-  .hc-class-tagline { font-size: 12px; }
-  .hc-class-name { font-size: 12px; }
-  .hc-confirm-name { font-size: 26px; }
-  .hc-img-btn span { font-size: 14px; }
-  .hc-logo { width: 56%; }
+  .hc-class-card .lc-med { width: 60px; height: 63px; }
+  .hc-confirm-portrait { width: 140px; height: 146px; }
 }

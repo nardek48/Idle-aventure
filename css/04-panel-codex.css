@@ -20,7 +20,7 @@
   text-align: center;
   font-size: 13px;
   font-weight: 700;
-  color: var(--nb-gold);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   margin-bottom: 14px;
 }
 
@@ -71,7 +71,7 @@
 .codex-reading-title {
   font-size: 17px;
   font-weight: 800;
-  color: var(--nb-gold);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   text-align: center;
   margin-bottom: 14px;
 }

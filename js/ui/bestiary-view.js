@@ -1,18 +1,43 @@
 "use strict";
 /* ui/bestiary-view.js — écran Bestiaire (liste par monde, accordéon) fusionné avec Codex (2 sous-onglets, v2.83.40). Estimation combat resynchronisée sur progression-system.js (v3.46.0). Détail : COMMENTAIRES_ORIGINAUX.md */
 
-var activeBestiaryCodexSubTab = "bestiary"; // "bestiary" | "codex"
+/* v3.405.0 (décision Seb 01/10/2026) : la Bibliothèque regroupe Bestiaire, Codex et Tutoriels
+   dans un rail en haut (comme Quêtes) au lieu de la barre du bas. Les onglets "bestiary" et
+   "tutorials" ouvrent tous deux cette page ; Bestiaire et Codex n'apparaissent qu'une fois
+   l'onglet Bestiaire débloqué par l'Histoire, Tutoriels est toujours là. */
+var activeBestiaryCodexSubTab = "bestiary"; // "bestiary" | "codex" | "tutorials"
+
+function libraryHasBestiary() {
+  return typeof isTabUnlocked !== "function" || isTabUnlocked("bestiary");
+}
+function libraryActiveSub() {
+  var s = activeBestiaryCodexSubTab;
+  if (s !== "codex" && s !== "tutorials") s = "bestiary";
+  return (s !== "tutorials" && !libraryHasBestiary()) ? "tutorials" : s;
+}
 
 function setBestiaryCodexSubTab(tab) {
-  activeBestiaryCodexSubTab = (tab === "codex") ? "codex" : "bestiary";
+  activeBestiaryCodexSubTab = (tab === "codex" || tab === "tutorials") ? tab : "bestiary";
   if (typeof renderPanel === "function") renderPanel();
 }
 window.setBestiaryCodexSubTab = setBestiaryCodexSubTab;
 
+var LIBRARY_SUBS = [
+  { key: "bestiary", icon: "images/Icons/subtabs/bestiary.png", label: _t("Bestiaire") },
+  { key: "codex", icon: "images/Icons/subtabs/codex.png", label: _t("Codex") },
+  { key: "tutorials", icon: "images/Icons/codex/codex_lore.png", label: _t("Tutoriels") }
+];
+
+/* Rail du kit (.kseg.is-stack). Masqué s'il ne reste qu'un onglet (Bestiaire pas encore débloqué). */
 function buildBestiaryCodexSubTabBarHTML() {
-  var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeBestiaryCodexSubTab === "bestiary" ? ' is-active' : '') + '" onclick="setBestiaryCodexSubTab(\'bestiary\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/bestiary.png" alt=""><span>' + _t("Bestiaire") + '</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeBestiaryCodexSubTab === "codex" ? ' is-active' : '') + '" onclick="setBestiaryCodexSubTab(\'codex\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/codex.png" alt=""><span>' + _t("Codex") + '</span></button>';
+  var subs = LIBRARY_SUBS.filter(function (s) { return s.key === "tutorials" || libraryHasBestiary(); });
+  if (subs.length < 2) return "";
+  var cur = libraryActiveSub();
+  var h = '<div class="kseg is-stack lib-tabs">';
+  subs.forEach(function (s) {
+    h += '<button type="button" class="lib-tab' + (cur === s.key ? ' is-on' : '') + '" onclick="setBestiaryCodexSubTab(\'' + s.key + '\')">';
+    h += '<img src="' + s.icon + '" alt=""><span>' + esc(s.label) + '</span></button>';
+  });
   h += '</div>';
   return h;
 }
@@ -242,26 +267,19 @@ function buildBestiaryTrophiesHTML() {
 window.buildBestiaryTrophiesHTML = buildBestiaryTrophiesHTML;
 
 function buildBestiaryHTML() {
-  var h = '<div class="subtab-page">';
-  h += '<div class="subtab-page-content">';
-  // v3.194.0 (Seb) : le bandeau suit le sous-onglet actif.
-  var kfTitle = activeBestiaryCodexSubTab === "codex" ? _t("Codex") : _t("Bestiaire");
-  h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + kfTitle + '">';
+  var cur = libraryActiveSub();
+  var h = '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/menu_icons/bestiaire_menu.png|" + _t("Bibliothèque")) + '">';
+  h += buildBestiaryCodexSubTabBarHTML();
 
-  if (activeBestiaryCodexSubTab === "codex") {
+  if (cur === "codex") {
     h += (typeof buildCodexHTML === "function") ? buildCodexHTML() : "";
+  } else if (cur === "tutorials") {
+    h += (typeof buildTutorialsHTML === "function") ? buildTutorialsHTML() : "";
   } else {
     h += (typeof buildCodexExcerptHTML === "function") ? buildCodexExcerptHTML("bestiary") : "";
     h += buildBestiaryTrophiesHTML(); // v3.333.0 (B5)
     h += buildBestiaryListHTML();
   }
-
-  h += '</div>';
-  h += '</div>';
-
-  h += '<div class="subtab-bar-wrapper">';
-  h += buildBestiaryCodexSubTabBarHTML();
-  h += '</div>';
 
   h += '</div>';
   return h;

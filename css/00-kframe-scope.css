@@ -27,10 +27,16 @@ Deux responsabilités ici :
   padding: 8px 6.5% 10px;
 }
 
-/* --- encre crème sur la pierre --- */
+/* --- encre du cadre ---
+   v3.404.0 (audit design, contraste) : l'intérieur du cadre est un fond clair (texture
+   bg-moss-stone, brun-beige mesuré ~ rgb(171,138,96)), pas la pierre sombre d'origine.
+   L'encre crème y tombait à un contraste de 1,7 (« Chaque round attend ton choix… »,
+   « Deux compagnons au maximum… », compteurs, notes). L'encre du cadre est donc
+   SOMBRE ; les conteneurs listés ci-dessous la redéclarent (sans effet désormais,
+   gardés pour ne rien casser si un cadre sombre revient). */
 .nb-page-frame.kframe {
-  --nb-ink: #f4e9d0;
-  --nb-ink-dim: rgba(244, 233, 208, 0.78);
+  --nb-ink: #2e2214;
+  --nb-ink-dim: #4f3d26;
 }
 
 /* --- restauration de l'encre sombre dans les conteneurs clairs ---

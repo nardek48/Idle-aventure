@@ -975,8 +975,7 @@
 .production-dash-hint {
   font-size: 12px;
   text-align: center;
-  color: var(--nb-gold-soft, #e8d5a8);
-  opacity: 0.85;
+  color: var(--nb-ink-dim, #4f3d26); /* v3.404.0 : lisible sur le parchemin */
   margin: 0 0 10px;
 }
 
@@ -1027,6 +1026,9 @@
   color: #2a3d1c;
   background: #b9d18a;
 }
+
+/* v3.404.0 : le drapeau ne recouvre plus le nom du bâtiment */
+.production-dash-card.has-flag { padding-top: 22px; }
 
 .production-dash-card-top {
   display: flex;

@@ -113,10 +113,10 @@
      plus tard reviendra à changer ces jetons. */
   --sheet-veil: rgba(12, 8, 5, 0.62);
   --sheet-radius: 18px;
-  --sheet-body-bg: linear-gradient(rgba(246, 236, 217, 0.55), rgba(239, 224, 194, 0.4)), url('../images/UI/frames/parchment-tile.png') 0 0 / 300px;
+  --sheet-body-bg: linear-gradient(rgba(246, 236, 217, 0.55), rgba(239, 224, 194, 0.4)), url('../images/UI/frames/parchment-tile.png') 0 0 / 300px, #efe0c2; /* v3.403.0 : couleur pleine en dernier : opaque même si la texture manque */
   --sheet-ink: #3a2c1a;
   --sheet-ink-dim: #6b5a40;
-  --sheet-head-bg: linear-gradient(rgba(16, 12, 8, 0.78), rgba(16, 12, 8, 0.9)), url('../images/UI/textures/bg-stone-tile.png') 0 0 / 256px;
+  --sheet-head-bg: linear-gradient(rgba(16, 12, 8, 0.78), rgba(16, 12, 8, 0.9)), url('../images/UI/textures/bg-stone-tile.png') 0 0 / 256px, #1c1610;
   --sheet-head-ink: #f4e9d0;
   --sheet-accent: #c27f1f;
   --sheet-card-bg: rgba(251, 245, 232, 0.9);

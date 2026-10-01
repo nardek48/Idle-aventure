@@ -1,14 +1,18 @@
 /* =========================================================
-   ÉCRAN TITRE — Nouvelle Partie / Charger la Partie
-   Voir js/ui/title-screen-view.js + js/main/boot.js.
-   Affiché AVANT init() du jeu, par-dessus tout (sauf le voile
-   PWA #pwa-boot-gate, z-index 9999, qui reste le plus prioritaire
-   le temps que le service worker se règle au tout premier lancement).
-   Palette propre, indépendante des tokens du thème "parchemin"
-   actuel du jeu — nouvelle direction visuelle.
-   v3.99.0 (violet nuit / or) -> v3.144.0 (bascule or/bronze crépuscule,
-   maquette Seb visuel_attendu.png — nouveaux assets titre_logo.png,
-   bouton_titre.png, title_background_new.png).
+   ÉCRAN DE LANCEMENT — titre, « Charger une partie », et socle commun
+   à la création de héros (css/00-hero-creation.css).
+   Voir js/ui/title-screen-view.js + js/ui/modal-view.js + js/main/boot.js.
+   Affiché AVANT init() du jeu, par-dessus tout (sauf le voile de chargement
+   #pwa-boot-gate, z-index 9999, css/05-overlays.css).
+
+   v3.403.0 (lot L-1, choix de Seb « A · Kit du jeu », atelier-lancement.html) :
+   l'écran de lancement parle la langue du jeu. Illustration plein écran + logo,
+   et une FEUILLE du kit (.lc-sheet : en-tête de pierre .ksheet-head, corps
+   parchemin, jetons --sheet-*) avec les boutons du kit (bleu serti principal,
+   filaire secondaire). Les héros sont montrés dans leur médaillon peint, entier
+   (.lc-med) : plus de cadre_slot.png ni de cercle ajouté autour.
+   Assets retirés de l'écran : bouton_titre.png, bouton_charger.png,
+   bouton_supprimer.png, bouton_retour_new.png, cadre_slot.png, titre_charger.png.
    ========================================================= */
 
 #title-screen-root:empty {
@@ -26,19 +30,15 @@
   justify-content: center;
 }
 
-/* v3.146.0 : object-fit COVER remplace CONTAIN — sur les écrans étroits et
-   hauts (ratio < ratio image, ex iPhone 12 Pro 390×844 = 0.462 vs image
-   0.558), "contain" laissait une bande vide en bas (bug remonté par Seb,
-   capture d'écran). Contrepartie assumée : l'image peut être recadrée sur
-   les bords selon l'appareil, pas de bande vide en échange. Le stage n'a
-   plus de ratio fixe : il occupe tout l'espace disponible, l'image de fond
-   remplit et recadre pour combler. */
-.title-screen-stage {
+/* v3.146.0 : l'image remplit (cover) — pas de bande vide sur les écrans hauts. */
+.title-screen-stage,
+.lc-col {
   position: relative;
   width: 100%;
   height: 100%;
   max-width: 430px;
   margin: 0 auto;
+  overflow: hidden;
 }
 
 .title-screen-bg {
@@ -47,544 +47,149 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center center;
+  object-position: center 40%;
 }
 
-.title-screen-frame {
+/* Voile : lisibilité du logo en haut et de la feuille en bas */
+.lc-shade {
   position: absolute;
-  left: 50%;
-  top: 64%;
-  transform: translate(-50%, 0);
-  z-index: 1;
-  width: 100%;
-  max-width: 430px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 28px;
-  box-sizing: border-box;
-  gap: 14px;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(rgba(20, 12, 5, 0.15), rgba(20, 12, 5, 0) 30%, rgba(20, 12, 5, 0.35) 62%, rgba(12, 8, 4, 0.85));
 }
 
-/* v3.144.0 : logo image (titre_logo.png) remplace le texte HTML — mesuré sur la
-   maquette Seb (visuel_attendu.png) : bandeau centré, ~5% à 27% en hauteur du
-   stage, quasi pleine largeur. Ratio réel du fichier 1319/644. */
+.lc-shade.is-dim { background: rgba(14, 9, 4, 0.55); }
+
 .title-screen-logo-img {
   position: absolute;
   left: 50%;
-  top: 15%;
-  transform: translate(-50%, -50%);
-  width: 92%;
-  max-width: 480px;
+  top: calc(var(--safe-top) + 5%);
+  transform: translateX(-50%);
+  width: min(300px, 76%);
   height: auto;
   z-index: 1;
-  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.55));
 }
 
-.title-screen-buttons {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.title-screen-logo-img.is-small {
+  top: calc(var(--safe-top) + 14px);
+  width: min(200px, 52%);
 }
 
-/* v3.144.0 : cadre unique bouton_titre.png (1200/405) partagé par les 2
-   boutons, même taille pour les deux (alignement sur visuel_attendu.png —
-   avant v3.144.0, "Charger" était volontairement plus petit à 80%, décision
-   abandonnée). */
-.title-screen-img-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  aspect-ratio: 1200 / 405;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
-.title-screen-img-btn:active {
-  transform: scale(0.97);
-}
-
-.title-screen-img-btn-bg {
+/* ---------- Feuille du kit, posée en bas de l'écran ---------- */
+.lc-sheet {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-}
-
-/* ===========================================================
-   RÉGLAGE DU TEXTE DANS LES BOUTONS — c'est ici que ça se joue.
-   Le centrage flex de .title-screen-img-btn ci-dessus fait l'essentiel
-   du travail ; les 2 lignes ci-dessous ne servent qu'à un micro-réglage
-   fin (quelques px). Si un jour tu changes à nouveau les images, modifie
-   SEULEMENT CES 2 LIGNES (positif = descend le texte, négatif = remonte) :
-   =========================================================== */
-/* v3.144.0 : fond parchemin clair (bouton_titre.png) -> texte foncé, plus
-   clair comme avec les anciens cadres sombres violet/or. */
-.title-screen-img-btn span {
-  position: relative;
-  z-index: 1;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  color: #3a2410;
-  text-shadow: 0 1px 1px rgba(255, 244, 214, 0.5);
-}
-
-.title-screen-version {
-  margin-top: 4px;
-  font-size: 12px;
-  color: rgba(60, 40, 15, 0.65);
-  letter-spacing: 0.5px;
-  text-shadow: 0 1px 2px rgba(255, 240, 200, 0.4);
-}
-
-/* ---------------------------------------------------------
-   Vue "Charger la Partie" — liste des emplacements (v3.99.11 : refonte
-   selon maquette Seb — sélection + bouton Charger par carte + bouton
-   CHARGER global + suppression avec confirmation dédiée)
-   --------------------------------------------------------- */
-/* v3.146.0 : overflow-y retiré d'ici, déplacé sur .title-screen-load-list —
-   seule la liste scrolle désormais, le header (retour/titre/sous-titre)
-   reste figé en haut de l'écran. display:flex hérité de .title-screen-frame
-   (column) : c'est ce qui permet à .title-screen-load-list de prendre tout
-   l'espace restant via flex:1 (voir plus bas) sans que le header ne bouge. */
-.title-screen-frame-load {
-  position: fixed;
-  top: 0;
-  bottom: 0;
   left: 0;
   right: 0;
-  width: 100%;
-  max-width: 430px;
-  transform: none;
-  margin: 0 auto;
-  align-items: stretch;
-  padding: 18px 20px calc(16px + var(--safe-bottom, 0px));
-  max-height: 100vh;
-  box-sizing: border-box;
+  bottom: 0;
   z-index: 2;
-  gap: 10px;
-}
-
-/* v3.147.0 : bouton retour + titre dans un wrapper commun (voir
-   buildTitleScreenLoadHTML) -> le bouton est en absolute PAR RAPPORT À CE
-   WRAPPER (pas à tout l'écran comme avant), et le wrapper prend la hauteur
-   du titre (élément normal du flux) -> le bouton reste automatiquement
-   aligné sur le centre vertical du titre quelle que soit sa hauteur réelle,
-   sans calcul de position en dur (fragile — cause du bug remonté par Seb,
-   capture annotée : bouton collé en haut, trop loin du bandeau titre). */
-.title-screen-load-header-row {
-  position: relative;
-  width: 100%;
-  flex: 0 0 auto;
-}
-
-.title-screen-back-btn {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 50px;
-  aspect-ratio: 306 / 337; /* ratio réel de images/TitleScreen/bouton_retour_new.png */
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  z-index: 3;
-}
-
-.title-screen-back-btn img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.title-screen-back-btn:active {
-  transform: translateY(-50%) scale(0.93);
-}
-
-/* v3.148.0 : titre_charger.png confirmé être un cadre VIDE (vérifié en
-   ouvrant le fichier hors du jeu, à la demande de Seb) -> texte HTML
-   "Charger une partie" superposé au cadre plutôt qu'attendre un nouvel
-   asset. .title-screen-load-heading-wrap sert de conteneur relatif commun
-   pour l'image (fond) et le <h2> (superposé en absolute, centré). */
-.title-screen-load-heading-wrap {
-  position: relative;
-  width: 78%;
-  max-width: 340px;
-  margin: 0 auto;
-}
-
-.title-screen-load-heading-img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.title-screen-load-heading-text {
-  position: absolute;
-  inset: 0;
-  margin: 0;
+  max-height: 80%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 18%; /* laisse la place aux ornements/losanges latéraux du cadre */
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: #f3e0b0;
-  text-align: center;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
-  line-height: 1.1;
+  flex-direction: column;
+  padding-bottom: calc(10px + var(--safe-bottom));
+  border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+  background: var(--sheet-body-bg);
+  color: var(--sheet-ink);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.55);
+  --nb-ink: #3a2c1a;
+  --nb-ink-dim: #6b5a40;
 }
 
-.title-screen-load-subheading {
-  margin: 0 0 8px;
-  font-size: 12px;
-  color: rgba(240, 224, 190, 0.7);
-  text-align: center;
-  letter-spacing: 0.3px;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+.lc-sheet.is-tall {
+  top: calc(var(--safe-top) + 108px);
+  max-height: none;
+}
+
+/* Médaillon d'un héros : l'image entière, jamais recadrée ni cerclée */
+.lc-med {
+  display: block;
   flex: 0 0 auto;
+  width: 52px;
+  height: 54px;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45));
 }
 
-/* v3.146.0 : la liste devient la SEULE zone scrollable (voir
-   .title-screen-frame-load ci-dessus, overflow-y déplacé ici) — le titre,
-   sous-titre et bouton retour restent figés visuellement en haut. */
-.title-screen-load-list {
+.ksheet-title > .lc-med { width: 44px; height: 46px; }
+
+/* ---------- Écran titre ---------- */
+.title-screen-buttons {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 14px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  flex: 1 1 auto;
-  min-height: 0;
 }
 
-/* v3.148.0 : background:transparent explicite — élément de base partagé par
-   <div class="occupied"> ET <button class="empty">. Sans ça, le <button>
-   hérite du style natif "buttonface" (souvent blanc) du navigateur, visible
-   à travers les zones semi-transparentes de cadre_slot.png -> c'était la
-   VRAIE cause du fond blanc sur "Emplacement vide" (bug remonté 2 fois par
-   Seb ; le fix v3.147.0 sur .title-slot-portrait-empty ne suffisait pas
-   car le blanc venait du bouton entier, pas juste du médaillon). */
-.title-slot-card {
-  position: relative;
-  display: block;
+.title-screen-btn-row { display: flex; gap: 10px; }
+.title-screen-btn-row .kbtn { flex: 1 1 0; min-width: 0; }
+.title-screen-buttons .kbtn { max-width: none; margin: 0; }
+
+.title-screen-continue-txt { display: flex; flex-direction: column; line-height: 1.15; }
+.title-screen-continue-txt b { font-size: 16px; }
+.title-screen-continue-txt small { font-size: 12px; font-weight: 700; opacity: 0.85; }
+
+.title-screen-version {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: #6b5a40;
+}
+
+/* ---------- « Charger une partie » ---------- */
+.title-screen-load-list { display: flex; flex-direction: column; gap: 8px; }
+
+.lc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
+  padding: 8px 10px;
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 12px;
+  background: var(--sheet-card-bg);
+  color: #3a2c1a;
+  font-family: inherit;
   text-align: left;
-  overflow: visible;
 }
 
-/* v3.145.0 : cadre cadre_slot.png (Seb, ratio 2503/784), parchemin clair avec
-   médaillon rond découpé en TRANSPARENCE (mesuré : centre à 16.9%/50.3%,
-   diamètre 20.1% largeur / 68.9% hauteur de l'image). Remplace la carte
-   100% CSS de v3.144.0 (dégradés bronze, faute d'asset à l'époque). Le
-   portrait est posé dans le DOM avant le cadre (z-index inférieur) à la
-   même position que le trou, pour apparaître au travers. */
-.title-slot-card.occupied,
-.title-slot-card.empty {
-  aspect-ratio: 2503 / 784;
-  min-height: 0;
-}
+.lc-row-tx { flex: 1 1 auto; min-width: 0; }
+.lc-row-tx b { display: block; font-size: 15px; }
+.lc-row-tx small { display: block; font-size: 12px; line-height: 1.35; color: #6b5a40; }
+.lc-row-tx .title-slot-heroic-title { color: #8a5c14; font-weight: 700; }
+.lc-row .kbtn { flex: 0 0 auto; width: auto; min-height: 38px; margin: 0; padding: 6px 14px; font-size: 13px; }
 
-.title-slot-card.occupied:active,
-.title-slot-card.empty:active {
-  transform: scale(0.99);
-}
-
-/* .selected : léger glow doré superposé (le cadre n'a pas de variante
-   "active" dédiée fournie par Seb pour cet asset). */
-.title-slot-card.occupied.selected {
-  filter: drop-shadow(0 0 10px rgba(224, 178, 92, 0.65));
-}
-
-.title-slot-card-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  z-index: 1;
-  pointer-events: none;
-}
-
-/* Portrait positionné exactement sous le trou transparent du cadre (mesures
-   ci-dessus). z-index 0 : reste SOUS title-slot-card-bg (z-index 1). */
-.title-slot-portrait {
-  position: absolute;
-  left: 6.9%;
-  top: 15.8%;
-  width: 20.1%;
-  height: 68.9%;
-  border-radius: 50%;
-  overflow: hidden;
-  background: transparent;
-  z-index: 0;
-}
-
-/* v3.151.0 : cover -> contain. Les nouveaux portraits (Seb) sont déjà un
-   médaillon rond avec cadre doré peint dans l'image (comme cadre_slot.png
-   ici) — "cover" les recadrait/zoomait, tronquant ce cadre peint. "contain"
-   affiche le médaillon complet, qui vient alors se superposer proprement
-   au trou rond du cadre de la carte. */
-.title-slot-portrait img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* v3.147.0 : background:transparent explicite — sans ça, cet élément
-   hérite d'un fond blanc opaque (probablement un style global du jeu sur
-   les div/boutons), masquant le cadre_slot.png en dessous (bug remonté par
-   Seb, capture d'écran). Le médaillon vide doit laisser voir le cadre à
-   travers, comme le fait le portrait d'un héros réel. */
-.title-slot-portrait-empty {
+.lc-trash {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  font-size: 22px;
-  color: rgba(150, 110, 60, 0.7);
-  z-index: 2; /* au-dessus du cadre : le "+" doit rester visible dans le trou */
-}
-
-/* Corps de texte à droite du médaillon (zone libre après le cercle, avant
-   la colonne d'actions Charger/Suppression). */
-.title-slot-body {
-  position: absolute;
-  left: 30%;
-  top: 8%;
-  right: 24%;
-  bottom: 8%;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-}
-
-.title-slot-body-empty {
-  left: 30%;
-  right: 5%;
-}
-
-.title-slot-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #3a2410;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.title-slot-stat {
-  font-size: 12px;
-  color: rgba(58, 36, 16, 0.85);
-  line-height: 1.5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.title-slot-stat-icon {
-  display: inline-block;
-  width: 13px;
-  color: #8a5a1e;
-  margin-right: 3px;
-}
-
-/* Boutons Charger/Poubelle, colonne à droite de la carte (alignement sur
-   Ecran_final.png : Charger en haut, poubelle ronde centrée dessous). */
-.title-slot-actions {
-  position: absolute;
-  right: 3%;
-  top: 12%;
-  bottom: 12%;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.title-slot-load-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 84px;
-  aspect-ratio: 718 / 271;
+  width: 38px;
+  height: 38px;
   padding: 0;
-  border: none;
-  background: none;
+  border: 2px solid #8a5c14;
+  border-radius: 10px;
+  background: rgba(255, 248, 232, 0.35);
   cursor: pointer;
 }
 
-.title-slot-load-btn-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  pointer-events: none;
-}
+.lc-trash img { width: 20px; height: 20px; object-fit: contain; }
+.lc-trash:active { background: rgba(138, 92, 20, 0.15); }
 
-.title-slot-load-btn span {
-  position: relative;
-  z-index: 1;
-  font-size: 12px;
-  font-weight: 700;
-  color: #f3e0b0;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
-}
-
-.title-slot-load-btn:active {
-  transform: scale(0.95);
-}
-
-.title-slot-delete-btn {
-  width: 26px;
-  aspect-ratio: 175 / 192;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
-.title-slot-delete-btn img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.title-slot-delete-btn:active {
-  transform: scale(0.9);
-}
-
-/* v3.146.0 : bouton CHARGER global et lien "Nouvelle Partie" retirés de
-   l'écran Charger (demande Seb — le bouton "Charger" par carte suffit,
-   "Nouvelle Partie" reste accessible via le bouton retour + écran
-   principal). Règles CSS supprimées avec eux. */
-
-/* ---------------------------------------------------------
-   Confirmation de suppression — dédiée à l'écran titre (pas le
-   #confirm-modal du jeu principal, hors de portée en z-index ici).
-   --------------------------------------------------------- */
-.title-screen-delete-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9100;
-  display: flex;
-  align-items: center;
+.lc-new {
   justify-content: center;
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.75);
-  box-sizing: border-box;
-}
-
-.title-screen-delete-card {
-  width: 100%;
-  max-width: 340px;
-  padding: 22px 20px;
-  border-radius: 18px;
-  border: 1.5px solid rgba(216, 168, 90, 0.55);
-  background: linear-gradient(180deg, #3d2a14, #1a1006);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-  text-align: center;
-}
-
-.title-screen-delete-title {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 17px;
-  font-weight: 700;
-  color: #f3e0b0;
-  margin-bottom: 10px;
-}
-
-.title-screen-delete-text {
-  font-size: 13px;
-  color: rgba(240, 224, 190, 0.8);
-  line-height: 1.5;
-  margin-bottom: 18px;
-}
-
-.title-screen-delete-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.title-screen-delete-cancel,
-.title-screen-delete-confirm {
-  flex: 1 1 0;
-  padding: 10px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
+  min-height: 56px;
+  border-style: dashed;
+  font-size: 14px;
+  font-weight: 800;
+  color: #5a4630;
   cursor: pointer;
 }
 
-.title-screen-delete-cancel {
-  border: 1px solid rgba(240, 224, 190, 0.3);
-  background: rgba(255, 255, 255, 0.05);
-  color: #f0e4c8;
-}
+.lc-new small { font-size: 12px; font-weight: 700; color: #6b5a40; }
+.lc-new-plus { font-size: 22px; line-height: 1; }
+.lc-new:active { background: rgba(138, 92, 20, 0.12); }
 
-.title-screen-delete-confirm {
-  border: 1px solid rgba(239, 68, 68, 0.6);
-  background: rgba(239, 68, 68, 0.25);
-  color: #fecaca;
-}
-
-.title-screen-delete-cancel:active,
-.title-screen-delete-confirm:active {
-  transform: scale(0.96);
-}
-
-/* ---------------------------------------------------------
-   v3.341.0 : « Continuer » (dernier héros) en tête, pleine largeur ;
-   « Nouvelle Partie » et « Charger » côte à côte, plus petits, en dessous.
-   --------------------------------------------------------- */
-.title-screen-buttons.has-continue { gap: 8px; }
-
-.title-screen-continue-txt {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  max-width: 72%;
-}
-.title-screen-continue-txt b { font-size: 20px; }
-.title-screen-continue-txt small {
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0;
-  color: #5a3c1c;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-.title-screen-btn-row { display: flex; gap: 8px; }
-.title-screen-btn-row .title-screen-img-btn { flex: 1 1 0; min-width: 0; }
-.title-screen-btn-row .title-screen-img-btn span { font-size: 14px; letter-spacing: 0.2px; }
+/* La fenêtre de suppression (.kwin) passe au-dessus de l'écran titre */
+.title-screen-delete-overlay { z-index: 9100; }
 
 /* v3.359.0 : « Installer le jeu » (main/pwa.js). Posé en haut de l'écran, au-dessus du logo,
    pour ne pas pousser les boutons ni la version hors de l'écran. Il n'apparaît que dans le
@@ -594,14 +199,14 @@
   top: calc(8px + env(safe-area-inset-top, 0px));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 2;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
   border: 1.5px solid rgba(90, 60, 20, 0.55);
   border-radius: 999px;
-  background-color: rgba(255, 244, 214, 0.82);
+  background-color: rgba(255, 244, 214, 0.92);
   color: #3a2410;
   font-family: inherit;
   font-size: 12px;

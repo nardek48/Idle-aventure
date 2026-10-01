@@ -340,7 +340,7 @@ function renderPanel() {
       container.innerHTML = '<div class="panel-card"><p class="panel-sub">' + _t("Les Marques se choisissent désormais à l’entrée d’un donjon (Campement → Expédition → Donjon).") + '</p></div>';
       break;
     case "tutorials": // v3.208.0 : ui/tutorials-view.js (consultation des popups pédagogiques)
-      container.innerHTML = buildTutorialsHTML();
+      container.innerHTML = buildBestiaryHTML(); // v3.405.0 : Tutoriels est un onglet de la Bibliothèque
       break;
     default:
       container.innerHTML = "";

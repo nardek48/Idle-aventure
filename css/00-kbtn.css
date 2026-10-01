@@ -256,7 +256,7 @@
 .kframe {
   display: flex;
   flex-direction: column;
-  color: #f4e9d0;
+  color: #2e2214; /* v3.404.0 : encre sombre, l'intérieur du cadre est clair */
   --kf-fill: #1c2318;
 }
 
@@ -424,11 +424,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: 0.6px;
-  color: #ffe9b0;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  /* v3.404.0 : le titre est posé sur le fond clair du cadre : encre sombre (contraste 1,7 -> 9) */
+  color: #2a1a08;
+  text-shadow: 0 1px 0 rgba(255, 240, 200, 0.45);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

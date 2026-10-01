@@ -24,7 +24,7 @@
 .dungeon-ticket-count {
   font-size: 15px;
   font-weight: 800;
-  color: var(--nb-gold);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 .dungeon-ticket-reset {
@@ -47,7 +47,7 @@
   font-size: 12px;
   font-weight: 700;
   text-align: center;
-  color: var(--nb-gold);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 .dungeon-active-card {
@@ -57,7 +57,7 @@
 .dungeon-active-tier {
   font-size: 12px;
   font-weight: 700;
-  color: var(--nb-gold);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
@@ -178,7 +178,7 @@
 .dungeon-tier-num {
   font-size: 32px;
   font-weight: 800;
-  color: var(--nb-gold-dark);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   opacity: 0.55;
 }
 
@@ -255,7 +255,7 @@
 }
 
 .dungeon-story-meta strong {
-  color: var(--nb-gold);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 .dungeon-summary-rewards {
@@ -292,7 +292,7 @@
 }
 
 .dungeon-summary-loot span:last-child {
-  color: var(--nb-gold);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
 }
 
 /* =========================
@@ -308,7 +308,7 @@
   border-radius: 999px;
   border: 1px solid var(--nb-frame);
   background: var(--nb-cream-alt);
-  color: var(--nb-gold);
+  color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
   font-size: 13px;
   font-weight: 800;
   cursor: pointer;
