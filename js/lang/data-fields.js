@@ -57,6 +57,7 @@ var DATA_TEXT_FIELDS = {
   ELITE_UNIQUE_LOOT_LABELS: ["*"],
   BOSS_MOMENTS: ["*.title", "*.intro", "*.phase", "*.death"],
   COMBAT_STATES: ["*.nom", "*.mot", "*.desc", "*.hint", "*.descSuppressed"],
+  COMBAT_STATES_SCREEN: ["*.nom", "*.mot", "*.desc", "*.hint"],
   COMBAT_STATE_FAMILIES: ["*.titre"],
   CLASSES: ["*.label", "*.resource.label"],
   CLASS_SKILLS: ["*.actions.*.label", "*.actions.*.description", "*.resource.label"],

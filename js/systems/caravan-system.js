@@ -261,7 +261,7 @@ var CaravanManager = {
     var c = this.get();
     if (!c || c.notified || this._now() < c.endsAt) return false;
     c.notified = true;
-    if (typeof showToast === "function") showToast("🐪 " + _t("La caravane est rentrée : décharge-la à la Halle marchande"), 2500);
+    if (typeof showToast === "function") showToast("🐪 " + _t("La caravane est rentrée : décharge-la dans Campement › Expéditions"), 2500);
     return true;
   },
 

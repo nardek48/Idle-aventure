@@ -705,6 +705,10 @@
 .prod-tile .prod-tile-img { width: 100px; height: 88px; object-fit: contain; filter: drop-shadow(0 4px 3px rgba(40, 25, 10, 0.35)); } /* v3.416.0 : illustrations isométriques */
 .prod-tile .production-dash-name { font-size: 14px; font-weight: 800; line-height: 1.15; }
 .prod-tile .prod-tile-gauge { width: 100%; margin-top: 2px; }
+/* v3.426.2 (retour Seb) : jauge du stock plus épaisse sur mobile — le cadre fin étiré en hauteur
+   (989/111 → 989/180), la fenêtre passe d'environ 8 à 14 px ; texte à 12 px. */
+.prod-tile .prod-tile-gauge.kgauge-thin { aspect-ratio: 989 / 180; }
+.prod-tile .prod-tile-gauge .kgauge-text { font-size: 12px; }
 .prod-tile-meta { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: 12px; line-height: 1.3; color: var(--c-brown-750-2); }
 .prod-tile-meta .ico-inline { width: 16px; height: 16px; }
 .prod-tile-meta.is-store-full { color: var(--c-red-600); font-weight: 800; }

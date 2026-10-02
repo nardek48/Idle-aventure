@@ -46,13 +46,18 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hs-eslot-ico.is-empty img { width: 30px; height: 30px; opacity: .6; }
 .hs-eslot small { font-size: 12px; font-weight: 700; color: var(--c-brown-800-3); text-shadow: 0 0 3px var(--c-cream-50); }
 .hs-eslot.is-sel .hs-eslot-ico { box-shadow: 0 0 0 3px var(--c-bronze-400-4), 0 0 10px rgba(242, 193, 78, .8); }
-.hs-edetail { padding: 10px 12px 12px; background: var(--c-cream-50); color: var(--c-brown-850-3); }
-.hs-edetail-head { display: flex; flex-direction: column; gap: 2px; }
+/* v3.426.2 : le détail est un panneau collé en bas, par-dessus la silhouette (comme les Talents). */
+.hs-edetail { position: sticky; bottom: 0; z-index: 2; display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 10px; border-radius: 14px;
+  border: 2px solid var(--c-bronze-450); background: var(--c-cream-50); box-shadow: 0 -4px 10px rgba(40, 20, 0, .2); color: var(--c-brown-850-3); }
+.hs-edetail-ico { flex: 0 0 auto; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 12px; }
+.hs-edetail-ico.is-empty { border: 1px dashed var(--c-bronze-500); }
+.hs-edetail-ico.is-empty img { width: 30px; height: 30px; opacity: .6; }
+.hs-edetail-head { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .hs-edetail-head small { font-size: 12px; font-weight: 700; color: var(--c-brown-650-soft); text-transform: uppercase; letter-spacing: .4px; }
 .hs-edetail-head b { font-size: 16px; }
 .hs-edetail-head > span { font-size: 13px; }
-.hs-edetail-act { display: flex; gap: 8px; margin-top: 8px; }
-.hs-edetail-act .kbtn { flex: 1; }
+.hs-edetail-act { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; max-width: 128px; }
+.hs-edetail-act .kbtn { width: 100%; min-height: 38px; padding: 4px 8px; font-size: 13px; line-height: 1.15; }
 .hs-bagcap { flex: none; display: flex; flex-direction: column; align-items: center; font-size: 13px; color: var(--c-brown-800-3); line-height: 1.1; }
 .hs-bagcap b { font-size: 18px; }
 .hs-bagcap small { font-size: 12px; }
@@ -129,11 +134,11 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hs-roster-btn b { font-size: 16px; }
 .hs-roster-btn small { font-size: 12px; color: var(--c-brown-650-soft); }
 .hs-eq { position: relative; border-radius: 16px; border: 2px solid var(--c-bronze-450); background-color: var(--c-bronze-200); background-repeat: no-repeat; background-position: 50% 50%; background-size: cover; box-shadow: inset 0 0 24px rgba(90, 60, 20, .35); }
-.hs-eq .hs-eslot-ico { width: 60px; height: 60px; background: rgba(36, 23, 11, .85); border: 2px solid var(--c-brown-600-soft); box-shadow: 0 2px 6px rgba(40, 20, 0, .35); }
+.hs-eq .hs-eslot-ico { width: 70px; height: 70px; background: rgba(36, 23, 11, .85); border: 2px solid var(--c-brown-600-soft); box-shadow: 0 2px 6px rgba(40, 20, 0, .35); }
 .hs-eq .hs-eslot-ico.is-empty { background: rgba(255, 248, 234, .55); border: 2px dashed var(--c-brown-550-2); }
 .hs-eq .hs-eslot-ico img { width: 100%; height: 100%; object-fit: contain; }
 .hs-eq .hs-eslot small { padding: 0 6px; border-radius: 6px; background: rgba(255, 248, 234, .85); text-shadow: none; }
-.hs-eq { height: 470px; }
+.hs-eq { height: 500px; } /* v3.426.2 : icônes agrandies (60 → 70 px) */
 .hs-eq .hs-eslot { position: absolute; transform: translate(-50%, -50%); }
 .hs-eq .pin-helmet { left: 24%; top: 11%; } /* à gauche de la capuche */
 .hs-eq .pin-amulet { left: 77%; top: 21%; }
@@ -142,7 +147,6 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hs-eq .pin-gloves { left: 15%; top: 45%; }
 .hs-eq .pin-ring   { left: 84%; top: 57%; }
 .hs-eq .pin-boots  { left: 50%; top: 87%; }
-.hs-eq + .hs-edetail { margin-top: 8px; border-radius: 14px; border: 1px solid var(--c-bronze-400-2); }
 .hs-btile-img { position: absolute; top: 6%; left: 14%; width: 72%; height: 72%; object-fit: contain; display: flex; align-items: center; justify-content: center; font-size: 30px; }
 .hs-cmp { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 3px; border-radius: 10px; font: 900 12px/1 system-ui; font-style: normal; color: var(--c-white-50-soft); border: 1px solid rgba(0, 0, 0, .35); }
 .hs-btile .hs-cmp { position: absolute; top: 4px; right: 4px; }
@@ -172,10 +176,10 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hst-path.is-p1 .hst-banner-txt b { color: #1a3f72; }
 .hst-emb { position: absolute; left: 50%; top: 0; z-index: 1; width: 48px; height: 48px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(var(--c-brown-900), var(--c-brown-950-soft)); border: 2px solid var(--c-brown-550-3); box-shadow: 0 2px 4px rgba(0, 0, 0, .5); object-fit: cover; }
 .hst-node { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; padding: 0; }
-.hst-art { position: relative; width: 54px; height: 54px; display: block; }
+.hst-art { position: relative; width: 64px; height: 64px; display: block; } /* v3.426.2 : 54 → 64 px */
 .hst-ico { position: absolute; inset: 12%; width: 76%; height: 76%; object-fit: cover; border-radius: 4px; }
 .hst-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
-.hst-node.is-key .hst-art { width: 74px; height: 74px; }
+.hst-node.is-key .hst-art { width: 86px; height: 86px; }
 .hst-node.is-key .hst-ico { inset: 20%; width: 60%; height: 60%; border-radius: 50%; }
 .hst-lock { position: absolute; right: -4px; bottom: -2px; width: 26px; height: 26px; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6)); }
 .hst-node.is-locked .hst-ico, .hst-node.is-closed .hst-ico { filter: grayscale(.85) brightness(.8); }
@@ -186,3 +190,6 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hst-node.is-key.is-sel .hst-art::after { border-radius: 50%; }
 .hst-chain { position: absolute; left: 50%; bottom: 6px; width: 30px; height: 50px; transform: translateX(-50%) rotate(-50deg); object-fit: contain; }
 .hst-tree .hst-pips i { background: var(--c-brown-550-soft); }
+/* v3.426.3 : panoplies sous la silhouette */
+.hs-sets { margin-top: 8px; }
+.hs-sets .hs-set:last-child { margin-bottom: 0; }

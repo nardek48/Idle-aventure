@@ -130,5 +130,22 @@ var COMBAT_STATE_FAMILIES = [
 var COMBAT_STATES_MAX_VISIBLE = 6;
 
 window.COMBAT_STATES = COMBAT_STATES;
+
+/* v3.427.0 (nouvel écran de combat) : états que seul l'écran affiche — le moteur ne les pose pas
+   comme tels (le Tireur se lit sur ENEMY_ENGAGE_ROUNDS, l'Exaltation sur surgeTelegraphed).
+   Séparés de COMBAT_STATES pour ne rien changer à l'ancienne rangée ni à ses contrôles. */
+var COMBAT_STATES_SCREEN = {
+  ranged: {
+    famille: "enemy", nom: "Tireur", icon: COMBAT_STATE_ICON + "ranged.png", // à générer (icône générique en attendant)
+    desc: "Il frappe de loin : il ne s'approche pas et touche dès le premier round.",
+    hint: "Il ne viendra pas à toi : vise-le en premier si l'équipe souffre."
+  },
+  surge: {
+    famille: "alerte", nom: "Exaltation", icon: COMBAT_STATE_ICON + "arcane_burn.png", mot: "Il s'exalte !",
+    desc: "Son trait d'élite va compter triple pendant quelques rounds.",
+    hint: "Tiens bon ou abrège : le pic ne dure pas."
+  }
+};
+window.COMBAT_STATES_SCREEN = COMBAT_STATES_SCREEN;
 window.COMBAT_STATE_FAMILIES = COMBAT_STATE_FAMILIES;
 window.COMBAT_STATES_MAX_VISIBLE = COMBAT_STATES_MAX_VISIBLE;

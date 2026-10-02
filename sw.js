@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.426.1"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.427.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -74,6 +74,7 @@ var PRECACHE_APP_SHELL = [
   "./css/04-panel-log.css",
   "./css/04-panel-quests.css",
   "./css/03-combat-group.css",
+  "./css/03-combat-screen.css",
   "./css/04-panel-camp.css",
   "./css/04-panel-companions.css",
   "./css/04-panel-settings.css",
@@ -179,6 +180,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/tap-rescue.js",
   "./js/ui/desktop-scale.js",
   "./js/ui/combat-group-view.js",
+  "./js/ui/combat-screen-view.js",
   "./js/ui/combat-view.js",
   "./js/ui/combat-forecast-view.js",
   "./js/ui/dungeon-view.js",

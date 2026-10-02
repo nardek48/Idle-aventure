@@ -167,10 +167,13 @@
       + mark + '<small>' + esc(slotLabel(slot)) + '</small></button>';
   }
 
-  // Détail de l'emplacement choisi, sous la silhouette : pas de feuille à ouvrir pour lire.
+  // Détail de l'emplacement choisi : panneau collé en bas, par-dessus la silhouette, comme celui des
+  // Talents (v3.426.2, retour Seb). Icône à gauche, texte au milieu, actions à droite.
   function slotDetailHTML() {
     var slot = selectedEquipSlot || "weapon", it = game.equipped ? game.equipped[slot] : null, up = countInBag(slot, "up");
-    var h = '<div class="hs-edetail"><div class="hs-edetail-head"><small>' + esc(slotLabel(slot)) + '</small>';
+    var h = '<div class="hs-edetail">'
+      + (it ? buildEquipmentIconHTML(it, "hs-edetail-ico rframe") : '<span class="hs-edetail-ico is-empty">' + renderIconOrEmojiHTML(EQUIPMENT_SLOT_EMOJI[slot], "", "") + '</span>')
+      + '<div class="hs-edetail-head"><small>' + esc(slotLabel(slot)) + '</small>';
     if (it) h += '<b class="rarity-' + esc(it.rarity) + '">' + esc(_td(it.name)) + '</b><span>' + esc(formatEquipmentStat(it)) + '</span>' + buildEquipmentAffixLinesHTML(it);
     else h += '<b>' + _t("Emplacement vide") + '</b>';
     h += '</div><div class="hs-edetail-act">';
@@ -182,8 +185,9 @@
 
   function buildHerosEquippedHTML() {
     if (!selectedEquipSlot) selectedEquipSlot = "weapon";
-    return setLineHTML()
-      + '<div class="hs-eq" style="background-image:url(' + silhouette() + ')">' + SLOTS.map(slotBtn).join("") + '</div>'
+    // v3.426.3 (retour Seb) : les bonus de panoplie passent SOUS la silhouette.
+    return '<div class="hs-eq" style="background-image:url(' + silhouette() + ')">' + SLOTS.map(slotBtn).join("") + '</div>'
+      + '<div class="hs-sets">' + setLineHTML() + '</div>'
       + slotDetailHTML();
   }
 
