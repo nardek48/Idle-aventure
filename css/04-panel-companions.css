@@ -241,5 +241,8 @@ seules les classes propres aux compagnons sont définies ici.
   color: var(--nb-ink);
   margin-bottom: 6px;
 }
-.cp-voie-other > span { flex: 1 1 auto; min-width: 0; }
-.cp-voie-other .kbtn { flex: 0 0 auto; }
+/* v3.425.0 (lot H-2) : le texte au-dessus, le bouton dessous. Côte à côte, le bouton prenait
+   toute la largeur et le texte de l'autre Voie s'écrasait sur une colonne (vu sur Maddoc). */
+.cp-voie-other { flex-direction: column; align-items: stretch; gap: 6px; font-size: 13px; }
+.cp-voie-other > span { min-width: 0; }
+.cp-voie-other .kbtn { align-self: stretch; }

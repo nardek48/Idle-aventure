@@ -559,3 +559,10 @@
    l'assertion [ENCRE] du harnais, qui listait des conteneurs à fond crème
    non enregistrés : ils n'avaient pas à l'être, ils n'existaient plus. */
 
+
+/* v3.424.0 (chantier Héros, H-1) : rail du kit en haut du cadre « Héros » */
+.heros-tabs { margin-bottom: 10px; }
+.heros-frame .kseg + .kseg { margin-top: 0; }
+
+/* L'échoppe dans la feuille de la Halle */
+.vb-hall-shop .equip-shop-grid { margin-top: 8px; }

@@ -266,20 +266,9 @@ function buildHeroSummaryTraitsHTML() {
 }
 
 function buildHeroFicheHTML() {
-  var hero = getSelectedHero();
-
-  var h = buildHeroSummaryIdentityHTML(hero);
-  h += buildHeroSummaryCombatHTML();
-  h += buildHeroSummaryJumpsHTML();
-  h += buildHeroSummaryTraitsHTML(); // v3.363.0 (acte IV)
-
-  h += '<div class="pc-sum-foot">';
-  h += '<button class="settings-btn" type="button" onclick="openHeroSlotsScreen()"><img class=ico-inline src=images/Icons/subtabs/hero_roster.png> ' + _t("Mes héros") + '</button>';
-  // v3.424.0 (H-1) : le bouton Compagnons est parti — c'est un onglet du rail.
-  // v3.244.0 : le bouton « Équipement » est parti — c'est un sous-onglet de cet écran.
-  h += '</div>';
-
-  return herosFrameOpen() + h + '</div>';
+  // v3.425.0 (chantier Héros, lot H-2) : Résumé refait (ui/heros-screens-view.js). Les anciens
+  // morceaux (buildHeroSummary*) restent pour la feuille Stats et les tests de rendu.
+  return herosFrameOpen("hs-page nb-page-frame-fill") + buildHerosResumeHTML() + '</div>';
 }
 
 /* Ouvre l'écran titre directement sur "Charger une partie", qui est la gestion
@@ -605,7 +594,8 @@ function buildHeroStatCardHTML(row, buyAmount) {
   } else if (capped) {
     /* Le mur pointe vers sa solution : un clic ouvre le Village, là où se
        bâtit le Terrain. */
-    h += '<button type="button" class="pc-stat-card-buy is-training-wall" onclick="goToTrainingGround()">' + _t("Terrain") + '<small>' + _t("à améliorer") + '</small></button>';
+    // v3.425.0 (lot H-2) : la carte dit « Plafond », le bandeau en tête de feuille pointe vers le Terrain.
+    h += '<div class="pc-stat-card-buy is-capped is-training-wall">' + _t("Plafond") + '<small>' + cap + '</small></div>';
   } else if (locked) {
     h += '<div class="pc-stat-card-buy is-locked">' + _t("Monde") + '<small>' + ((upgrade.unlockWorld || 0) + 1) + '</small></div>';
   } else if (gain) {
@@ -687,9 +677,16 @@ function buildHerosAmeliorationHTML() {
   });
   h += '</div>';
 
-  h += '<div class="pc-stat-list-v2">';
-  HEROS_STAT_ROWS.forEach(function (row) { h += buildHeroStatCardHTML(getHeroStatRowView(row), buyAmount); });
-  h += '</div>';
+  var cards = '';
+  HEROS_STAT_ROWS.forEach(function (row) { cards += buildHeroStatCardHTML(getHeroStatRowView(row), buyAmount); });
+  // v3.425.0 (lot H-2) : au plafond de l'entraînement, UN bandeau explique et mène au Terrain.
+  if (cards.indexOf("is-training-wall") !== -1) {
+    var terrain = window.VillageBuildingManager ? VillageBuildingManager.getLevel("training") : 0;
+    h += '<div class="hs-capbanner"><span><b>' + _t("Plafond de l'entraînement : {c}", { c: getTrainingCapLevels() }) + '</b><br>'
+      + _t("Terrain d'entraînement niv. {t} — chaque niveau ouvre +10.", { t: terrain }) + '</span>'
+      + '<button type="button" onclick="closeHerosSheet();goToTrainingGround()">' + _t("Terrain") + ' ›</button></div>';
+  }
+  h += '<div class="pc-stat-list-v2">' + cards + '</div>';
 
   h += '</div>';
   return h;
@@ -885,10 +882,6 @@ function isEquipShopAtHall() {
 }
 window.isEquipShopAtHall = isEquipShopAtHall;
 
-function buildHerosShopHintHTML() {
-  return '<button type="button" class="heros-shop-hint" onclick="goToEquipShop()"><img src="images/Icons/subtabs/equipment_shop.png" alt="">'
-    + '<span><b>' + _t("Boutique d’équipement") + '</b><small>' + _t("À la Halle marchande du Village") + '</small></span><i>›</i></button>';
-}
 
 /* v3.244.0 : sous-onglet Équipement — un segment Équipé / Sac (/ Boutique, transitoire
    jusqu'au lot N-2 qui l'emmène à la Halle marchande) au-dessus du contenu existant de
@@ -899,33 +892,26 @@ function buildHerosEquipHTML() {
   var atHall = isEquipShopAtHall(); // v3.424.0 (H-1) : la Boutique part à la Halle
   if (atHall && cur === "shop") { activeEquipSubTab = "equipment"; cur = "equipment"; }
   var bagCount = Array.isArray(game.inventory) ? game.inventory.length : 0;
-  // Le segment est passé EN TÊTE DU CADRE (topHTML) : posé avant, il tomberait entre le
-  // bandeau, que kframe-decorator sort du flux, et le corps du cadre.
-  var seg = '<div class="kseg">'; // v3.401.0 (lot O-1) : rail du kit, déjà taillé pour le parchemin
+  var seg = '<div class="kseg hs-subseg">'; // v3.401.0 (lot O-1) : rail du kit, déjà taillé pour le parchemin
   seg += '<button type="button" class="' + (cur === "equipment" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'equipment\')"><span>' + _t("Équipé") + '</span></button>';
   seg += '<button type="button" class="' + (cur === "inventory" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'inventory\')"><span>' + _t("Sac") + '<span class="kseg-count">' + bagCount + '</span></span></button>';
   if (!atHall) seg += '<button type="button" class="' + (cur === "shop" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'shop\')"><span>' + _t("Boutique") + '</span></button>';
   seg += '</div>';
-  var top = buildHerosRailHTML() + seg;
 
-  var h = '';
-  if (cur === "inventory") {
-    h += (typeof buildInventoryTabContentHTML === "function") ? asHerosFrame(buildInventoryTabContentHTML(top)) : "";
-  } else if (cur === "shop") {
-    h += herosFrameOpen("nb-page-frame-fill") + seg;
-    h += (typeof buildEquipShopHTML === "function") ? buildEquipShopHTML() : "";
-    h += '</div>';
-  } else {
-    h += (typeof buildEquipmentTabContentHTML === "function") ? asHerosFrame(buildEquipmentTabContentHTML(top)) : "";
-    if (atHall) { var k = h.lastIndexOf("</div>"); h = h.slice(0, k) + buildHerosShopHintHTML() + h.slice(k); }
-  }
-  return h;
+  // v3.425.0 (lot H-2) : Équipé (silhouette, emplacements autour du corps) et Sac (modèle de
+  // l'Entrepôt, pastilles de comparaison) sont dans ui/heros-screens-view.js.
+  var body;
+  if (cur === "inventory") body = buildHerosBagHTML();
+  else if (cur === "shop") body = (typeof buildEquipShopHTML === "function") ? buildEquipShopHTML() : "";
+  else body = buildHerosEquippedHTML();
+  return herosFrameOpen("hs-page nb-page-frame-fill") + seg + body + '</div>';
 }
 
 /* v3.327.0 : sous-onglet Talents — un arbre par classe (ui/talents-view.js). */
+/* v3.425.0 (lot H-2) : l'arbre d'icônes sur le fond de la classe (ui/heros-screens-view.js).
+   ui/talents-view.js garde l'ancien plateau (buildTalentBoardHTML) et la feuille « talent ». */
 function buildHerosTalentsHTML() {
-  if (typeof buildTalentBoardHTML !== "function") return '<div class="pc-empty">' + _t("Talents indisponibles.") + '</div>';
-  return herosFrameOpen() + buildTalentBoardHTML() + '</div>';
+  return herosFrameOpen("hs-page nb-page-frame-fill") + buildHerosTalentTreeHTML() + '</div>';
 }
 
 function buildHerosHTML() {
@@ -933,7 +919,8 @@ function buildHerosHTML() {
   if (activeHerosSubTab === "companions" && !getHerosTabs().some(function (t) { return t[0] === "companions"; })) activeHerosSubTab = "hero";
   if (activeHerosSubTab === "equip") return buildHerosEquipHTML();
   if (activeHerosSubTab === "talents") return buildHerosTalentsHTML();
-  if (activeHerosSubTab === "companions") return (typeof buildHerosCompanionsHTML === "function") ? asHerosFrame(buildHerosCompanionsHTML(), true) : "";
+  // v3.425.0 (lot H-2) : une carte courte par compagnon, la fiche complète en feuille.
+  if (activeHerosSubTab === "companions") return herosFrameOpen("hs-page nb-page-frame-fill") + buildHerosCompanionListHTML() + '</div>';
   return buildHeroFicheHTML();
 }
 

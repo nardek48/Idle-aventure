@@ -242,6 +242,12 @@ function renderAll() {
 
 var lastRenderedTab = null;
 
+/* v3.425.0 : « le même écran » pour renderPanel = même onglet + mêmes boutons allumés dans les rails
+   (.kseg). Changer de sous-onglet change la clé : on repart alors en haut, comme avant. */
+function getPanelScreenKey(container) {
+  return game.activeTab + "|" + Array.prototype.map.call(container.querySelectorAll(".kseg .is-on"), function (b) { return b.textContent.trim(); }).join("|");
+}
+
 function renderPanel() {
   var container = document.getElementById("panel-container");
   if (!container) return;
@@ -250,6 +256,11 @@ function renderPanel() {
   var savedScrollTop = sameTab ? container.scrollTop : 0;
   var innerScroll = sameTab ? container.querySelector(".subtab-page-content") : null;
   var savedInnerScrollTop = innerScroll ? innerScroll.scrollTop : null;
+  // v3.425.0 (lot H-2) : la zone de défilement des cadres .kframe-page (.kfp-scrollzone) n'était
+  // pas restaurée : toute action dans un cadre (choisir un emplacement, acheter…) renvoyait en
+  // haut. On la garde tant que l'écran est le même : même onglet, mêmes boutons « allumés ».
+  var frameZone = sameTab ? container.querySelector(".kfp-scrollzone") : null;
+  var savedFrameScroll = frameZone ? { key: getPanelScreenKey(container), top: frameZone.scrollTop } : null;
 
   container.classList.toggle("sandbox-wide-mode", game.activeTab === "combat-sandbox" || game.activeTab === "admin");
 
@@ -347,7 +358,13 @@ function renderPanel() {
       var newInnerScroll = container.querySelector(".subtab-page-content");
       if (newInnerScroll) newInnerScroll.scrollTop = savedInnerScrollTop;
     }
+    if (savedFrameScroll && savedFrameScroll.top) {
+      var newZone = container.querySelector(".kfp-scrollzone");
+      if (newZone && getPanelScreenKey(container) === savedFrameScroll.key) newZone.scrollTop = savedFrameScroll.top;
+    }
   }
+  // v3.425.0 (lot H-2) : pas de bulles flottantes sur Héros (css/04-panel-heros-screens.css).
+  if (document.body) document.body.classList.toggle("hs-on-heros", game.activeTab === "more");
   lastRenderedTab = game.activeTab;
   // v3.401.0 (lot O-1) : les bulles du HUD remontent au-dessus des sous-onglets du bas
   if (typeof liftHudDock === "function") liftHudDock();

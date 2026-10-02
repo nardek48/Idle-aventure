@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.424.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.425.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -69,6 +69,7 @@ var PRECACHE_APP_SHELL = [
   "./css/04-panel-equipment.css",
   "./css/04-panel-combat-sandbox.css",
   "./css/04-panel-hero-summary.css",
+  "./css/04-panel-heros-screens.css",
   "./css/04-panel-log.css",
   "./css/04-panel-quests.css",
   "./css/03-combat-group.css",
@@ -184,6 +185,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/equipment-view.js",
   "./js/ui/companions-view.js",
   "./js/ui/heros-view.js",
+  "./js/ui/heros-screens-view.js",
   "./js/ui/hud-view.js",
   "./js/ui/fil-rouge-view.js",
   "./js/ui/hud-dock-view.js", // v3.396.0 : NOUVEAU fichier (bulles de raccourci du HUD)
