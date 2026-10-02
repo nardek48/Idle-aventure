@@ -275,16 +275,11 @@ function buildHeroFicheHTML() {
 
   h += '<div class="pc-sum-foot">';
   h += '<button class="settings-btn" type="button" onclick="openHeroSlotsScreen()"><img class=ico-inline src=images/Icons/subtabs/hero_roster.png> ' + _t("Mes héros") + '</button>';
-  /* v3.268.3 (retour Seb) : l'accès aux Compagnons passe du haut au bas de l'écran —
-     les boutons du pied sont nettement plus lisibles que la barre de sous-onglets.
-     Même gabarit que « Mes héros », .pc-sum-foot les met côte à côte. */
-  if (typeof isTabUnlocked !== "function" || isTabUnlocked("companions")) {
-    h += '<button class="settings-btn" type="button" onclick="setHerosSubTab(\'companions\')"><img class=ico-inline src=images/Icons/subtabs/hero_abilities.png> ' + _t("Compagnons") + '</button>';
-  }
+  // v3.424.0 (H-1) : le bouton Compagnons est parti — c'est un onglet du rail.
   // v3.244.0 : le bouton « Équipement » est parti — c'est un sous-onglet de cet écran.
   h += '</div>';
 
-  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/combat_stats/stat_defense.png|" + _t("Résumé")) + '">' + h + '</div>';
+  return herosFrameOpen() + h + '</div>';
 }
 
 /* Ouvre l'écran titre directement sur "Charger une partie", qui est la gestion
@@ -827,23 +822,72 @@ function buildHerosStatsHTML() {
   return '<div>' + h + '</div>';
 }
 
-function buildHerosSubTabBarHTML() {
+/* v3.424.0 (chantier Héros, H-1, décisions de Seb du 02/10/2026) : un seul cadre « Héros »,
+   le rail du kit EN HAUT (.kseg.is-stack, comme Village, Camp, Quêtes) et quatre onglets :
+   Résumé · Équipement · Talents · Compagnons. Plus de barre de sous-onglets en bas.
+   Compagnons redevient un onglet (il n'apparaît qu'une fois un compagnon recruté). */
+var HEROS_FRAME_ICON = "images/Icons/menu_icons/heroes_menu.png";
+
+function getHerosTabs() {
   var unlocked = function (t) { return typeof isTabUnlocked !== "function" || isTabUnlocked(t); };
-  var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "hero" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'hero\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/hero_summary.png" alt=""><span>' + _t("Résumé") + '</span></button>';
-  // v3.244.0 : Équipement et Talents rejoignent Héros. Mêmes verrous d'Histoire que
-  // leurs anciennes cases de menu — un sous-onglet verrouillé n'est pas dessiné.
-  if (unlocked("equip")) {
-    h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "equip" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'equip\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/equipment.png" alt=""><span>' + _t("Équipement") + '</span></button>';
+  var tabs = [["hero", "images/Icons/subtabs/hero_summary.png", _t("Résumé")]];
+  if (unlocked("equip")) tabs.push(["equip", "images/Icons/subtabs/equipment.png", _t("Équipement")]);
+  if (unlocked("talents")) tabs.push(["talents", "images/Icons/scene/node_discovery.png", _t("Talents")]);
+  if (unlocked("companions") && window.CompanionManager && CompanionManager.unlockedIds().length) {
+    tabs.push(["companions", "images/Icons/subtabs/hero_abilities.png", _t("Compagnons")]);
   }
-  if (unlocked("talents")) {
-    h += '<button type="button" class="pc-subtab-btn' + (activeHerosSubTab === "talents" ? ' is-active' : '') + '" onclick="setHerosSubTab(\'talents\')"><img class="pc-subtab-ico" src="images/Icons/scene/node_discovery.png" alt=""><span>' + _t("Talents") + '</span></button>';
-  }
-  /* v3.268.3 (retour Seb) : Compagnons n'est plus dans cette barre — son accès est un
-     bouton bleu au pied du Résumé (buildHeroFicheHTML), plus lisible. Le sous-onglet
-     existe toujours comme valeur d'activeHerosSubTab, seul son point d'entrée a bougé. */
-  h += '</div>';
-  return h;
+  return tabs;
+}
+window.getHerosTabs = getHerosTabs;
+
+/* Pastilles du rail : points de talent à placer, patrouilles rentrées (0 = pas de pastille). */
+function getHerosTabBadges() {
+  var b = { hero: 0, equip: 0, talents: 0, companions: 0 };
+  if (window.TalentManager && typeof TalentManager.available === "function") b.talents = Number(TalentManager.available() || 0);
+  if (window.PatrolManager && typeof PatrolManager.getReturned === "function") b.companions = PatrolManager.getReturned().length;
+  return b;
+}
+window.getHerosTabBadges = getHerosTabBadges;
+
+function buildHerosRailHTML() {
+  var tabs = getHerosTabs(), badges = getHerosTabBadges();
+  if (tabs.length < 2) return "";
+  var h = '<div class="kseg is-stack heros-tabs">';
+  tabs.forEach(function (t) {
+    h += '<button type="button" class="heros-tab' + (activeHerosSubTab === t[0] ? ' is-on' : '') + '" onclick="setHerosSubTab(\'' + t[0] + '\')">';
+    h += '<img src="' + t[1] + '" alt=""><span>' + esc(t[2]) + '</span>';
+    if (badges[t[0]] > 0) h += '<span class="kseg-dot">' + badges[t[0]] + '</span>';
+    h += '</button>';
+  });
+  return h + '</div>';
+}
+window.buildHerosRailHTML = buildHerosRailHTML;
+
+/* Ouverture du cadre « Héros », rail compris. extraClass : classes propres à la sous-vue. */
+function herosFrameOpen(extraClass) {
+  return '<div class="nb-page-frame kframe-page heros-frame' + (extraClass ? ' ' + extraClass : '') + '" data-kf-title="' + esc(HEROS_FRAME_ICON + "|" + _t("Héros")) + '">' + buildHerosRailHTML();
+}
+window.herosFrameOpen = herosFrameOpen;
+
+/* Le cadre d'une sous-vue construite ailleurs (équipement, compagnons) devient le cadre
+   « Héros » : même titre, rail juste sous le bandeau. */
+function asHerosFrame(html, withRail) {
+  var out = String(html || "").replace(/data-kf-title="[^"]*"/, 'data-kf-title="' + esc(HEROS_FRAME_ICON + "|" + _t("Héros")) + '"');
+  if (!withRail) return out;
+  var i = out.indexOf(">", out.indexOf("nb-page-frame"));
+  return i < 0 ? out : out.slice(0, i + 1) + buildHerosRailHTML() + out.slice(i + 1);
+}
+
+/* La Boutique d'équipement s'installe à la Halle marchande dès qu'elle est bâtie (H-1).
+   Avant, elle reste ici : un joueur doit pouvoir acheter sa première arme. */
+function isEquipShopAtHall() {
+  return !!(window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function" && VillageBuildingManager.getLevel("hall") > 0);
+}
+window.isEquipShopAtHall = isEquipShopAtHall;
+
+function buildHerosShopHintHTML() {
+  return '<button type="button" class="heros-shop-hint" onclick="goToEquipShop()"><img src="images/Icons/subtabs/equipment_shop.png" alt="">'
+    + '<span><b>' + _t("Boutique d’équipement") + '</b><small>' + _t("À la Halle marchande du Village") + '</small></span><i>›</i></button>';
 }
 
 /* v3.244.0 : sous-onglet Équipement — un segment Équipé / Sac (/ Boutique, transitoire
@@ -852,25 +896,28 @@ function buildHerosSubTabBarHTML() {
    fonctions qui le lisent (sélection d'objet, tri, autovente). */
 function buildHerosEquipHTML() {
   var cur = (typeof activeEquipSubTab !== "undefined") ? activeEquipSubTab : "equipment";
+  var atHall = isEquipShopAtHall(); // v3.424.0 (H-1) : la Boutique part à la Halle
+  if (atHall && cur === "shop") { activeEquipSubTab = "equipment"; cur = "equipment"; }
   var bagCount = Array.isArray(game.inventory) ? game.inventory.length : 0;
   // Le segment est passé EN TÊTE DU CADRE (topHTML) : posé avant, il tomberait entre le
   // bandeau, que kframe-decorator sort du flux, et le corps du cadre.
   var seg = '<div class="kseg">'; // v3.401.0 (lot O-1) : rail du kit, déjà taillé pour le parchemin
   seg += '<button type="button" class="' + (cur === "equipment" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'equipment\')"><span>' + _t("Équipé") + '</span></button>';
   seg += '<button type="button" class="' + (cur === "inventory" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'inventory\')"><span>' + _t("Sac") + '<span class="kseg-count">' + bagCount + '</span></span></button>';
-  seg += '<button type="button" class="' + (cur === "shop" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'shop\')"><span>' + _t("Boutique") + '</span></button>';
+  if (!atHall) seg += '<button type="button" class="' + (cur === "shop" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'shop\')"><span>' + _t("Boutique") + '</span></button>';
   seg += '</div>';
+  var top = buildHerosRailHTML() + seg;
 
   var h = '';
   if (cur === "inventory") {
-    h += (typeof buildInventoryTabContentHTML === "function") ? buildInventoryTabContentHTML(seg) : "";
+    h += (typeof buildInventoryTabContentHTML === "function") ? asHerosFrame(buildInventoryTabContentHTML(top)) : "";
   } else if (cur === "shop") {
-    h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/equipment_shop.png|" + _t("Boutique d’équipement")) + '">';
-    h += seg;
+    h += herosFrameOpen("nb-page-frame-fill") + seg;
     h += (typeof buildEquipShopHTML === "function") ? buildEquipShopHTML() : "";
     h += '</div>';
   } else {
-    h += (typeof buildEquipmentTabContentHTML === "function") ? buildEquipmentTabContentHTML(seg) : "";
+    h += (typeof buildEquipmentTabContentHTML === "function") ? asHerosFrame(buildEquipmentTabContentHTML(top)) : "";
+    if (atHall) { var k = h.lastIndexOf("</div>"); h = h.slice(0, k) + buildHerosShopHintHTML() + h.slice(k); }
   }
   return h;
 }
@@ -878,38 +925,16 @@ function buildHerosEquipHTML() {
 /* v3.327.0 : sous-onglet Talents — un arbre par classe (ui/talents-view.js). */
 function buildHerosTalentsHTML() {
   if (typeof buildTalentBoardHTML !== "function") return '<div class="pc-empty">' + _t("Talents indisponibles.") + '</div>';
-  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/scene/node_discovery.png|" + _t("Talents")) + '">'
-    + buildTalentBoardHTML() + '</div>';
+  return herosFrameOpen() + buildTalentBoardHTML() + '</div>';
 }
 
 function buildHerosHTML() {
-  var h = '<div class="subtab-page">';
-
-  // v3.194.1 : chaque sous-vue possède en fait SON cadre racine — le bandeau
-  // autonome de v3.194.0 le doublait (retour Seb). Les cadres portent
-  // désormais le titre eux-mêmes (schéma standard des autres pages).
-
-  h += '<div class="subtab-page-content">';
-
-  if (activeHerosSubTab === "equip") {
-    h += buildHerosEquipHTML();
-  } else if (activeHerosSubTab === "talents") {
-    h += buildHerosTalentsHTML();
-  } else if (activeHerosSubTab === "companions") {
-    h += (typeof buildHerosCompanionsHTML === "function") ? buildHerosCompanionsHTML() : "";
-  } else {
-    h += buildHeroFicheHTML();
-  }
-
-  h += '</div>'; // fin .subtab-page-content
-
-  h += '<div class="subtab-bar-wrapper">';
-  h +=   buildHerosSubTabBarHTML();
-  h += '</div>';
-
-  h += '</div>'; // fin .subtab-page
-
-  return h;
+  // v3.424.0 (H-1) : une page simple (un cadre « Héros », rail en haut), comme le Village.
+  if (activeHerosSubTab === "companions" && !getHerosTabs().some(function (t) { return t[0] === "companions"; })) activeHerosSubTab = "hero";
+  if (activeHerosSubTab === "equip") return buildHerosEquipHTML();
+  if (activeHerosSubTab === "talents") return buildHerosTalentsHTML();
+  if (activeHerosSubTab === "companions") return (typeof buildHerosCompanionsHTML === "function") ? asHerosFrame(buildHerosCompanionsHTML(), true) : "";
+  return buildHeroFicheHTML();
 }
 
 /* ============================================================

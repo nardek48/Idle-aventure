@@ -88,6 +88,23 @@ var CombatForecast = {
     return Math.max(1, base * (1 + crit * (mult - 1)) * this.getKitDamageMultiplier() * this.getStrikesPerRound());
   },
 
+  /* v3.422.0 → v3.423.0 (chantier Difficulté, A et D) : PV effectifs du héros (défense comprise). */
+  getHeroEffectiveHp: function () {
+    var def = Math.min(0.9, Math.max(0, Number(game.heroDefensePct || 0)));
+    return Math.max(1, Number(game.heroMaxHp || 1) / (1 - def));
+  },
+
+  /* Multiplicateurs d'un ennemi face au héros actuel (data/worlds.js, HERO_SCALING_REFS).
+     refKey : héros de référence ; cfg : { exp, margin, cap }. Rend { hp, power } (>= 1) :
+     PV de l'ennemi selon les dégâts du héros, Puissance selon ses PV effectifs. */
+  getHeroScale: function (refKey, cfg) {
+    var ref = window.HERO_SCALING_REFS ? HERO_SCALING_REFS[refKey] : null;
+    if (!ref || !cfg) return { hp: 1, power: 1 };
+    var margin = Number(cfg.margin || 1), exp = Number(cfg.exp || 0), cap = Number(cfg.cap || 1);
+    var f = function (ratio) { return Math.min(cap, Math.max(1, Math.pow(Math.max(0, ratio) / margin, exp))); };
+    return { hp: f(this.getHeroDamagePerRound() / ref.dmg), power: f(this.getHeroEffectiveHp() / ref.ehp) };
+  },
+
   /* Soin disponible pendant le combat : les potions de soin en stock, dans la limite du cap
      de sortie (SORTIE_POTION_CAP). Mesuré déterminant : à profil égal, 3 potions font passer
      l'échec réel de 98 % à 0 % sur « Prouver sa valeur ». */

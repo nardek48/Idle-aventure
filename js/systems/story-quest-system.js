@@ -496,7 +496,7 @@ var StoryQuestManager = {
           addLog("🎁 " + _t("Récompense d'histoire : {x}", { x: _td(item.name) }), "event");
         }
       }
-      if (granted) rows.push({ label: "Objet", value: granted + " (" + ((window.RARITY_LABELS || {})[reward.equipmentRarity] || reward.equipmentRarity) + ")" });
+      if (granted) rows.push({ label: "Objet", value: granted + " (" + _td((window.RARITY_LABELS || {})[reward.equipmentRarity] || reward.equipmentRarity) + ")" });
     }
     return rows;
   },

@@ -178,3 +178,41 @@ var AMBIANCE_TEXTS = [
   "Sur la pierre, des traits qui luisent quand tu ne regardes pas.",
   "Quelqu'un parle, trop bas pour les mots."
 ];
+
+/* v3.423.0 (chantier Difficulté, décisions de Seb du 01/10/2026, points A et D) — LES ENNEMIS
+   SUIVENT UN PEU LA FORCE RÉELLE DU HÉROS.
+   Constat (sauvegarde « Luca », mage niveau 16, entraînement 110 partout) : 3,2 fois les dégâts
+   par round et 1,5 fois les PV effectifs du héros de référence de fin de Désert ; un combat
+   du Désert durait 1,5 round. Le niveau ne compte pas : c'est l'entraînement, l'équipement et
+   les talents qui font la force. On compare donc le héros à un HÉROS DE RÉFÉRENCE mesuré
+   (moyenne des trois classes, sim/pa2-bench.js, CombatForecast) :
+     - dmg : dégâts par round (CombatForecast.getHeroDamagePerRound) ;
+     - ehp : PV max / (1 − défense).
+   Ennemi : PV × (dmg du héros / dmg de réf. / marge)^exp, Puissance × (ehp / ehp de réf. /
+   marge)^exp, jamais en dessous de ×1, plafonnés à ×cap. Le héros garde toujours une part de
+   son avance (exp < 1) : s'entraîner et s'équiper restent payants.
+   Mondes sans référence (Ruines et au-delà) : pas d'ajustement tant qu'ils ne sont pas calés.
+   L'or et l'XP ne changent pas. Logique : CombatForecast.getHeroScale (combat-forecast-system.js). */
+var HERO_SCALING_REFS = {
+  foret1:   { dmg: 64,  ehp: 361 },  // Forêt, acte I (niveau 3, arme +15)
+  foret2:   { dmg: 117, ehp: 498 },  // Forêt, acte II (niveau 6, vitrine, entraînement 20)
+  foret3:   { dmg: 127, ehp: 634 },  // Forêt, actes III-IV (niveau 8, entraînement 40)
+  desert10: { dmg: 151, ehp: 741 },  // Désert, milieu (niveau 10, arme +32, entraînement 55)
+  desert12: { dmg: 178, ehp: 845 },  // Désert, fin (niveau 12, arme +40, entraînement 70)
+  /* Le joueur appliqué : le robot de campagne en vrais combats (campagne-harness.js --combats,
+     TRACE_FORCE=1, v3.422.0), moyenne des trois classes à la FIN de chaque segment. Il entraîne
+     les cinq caractéristiques jusqu'au plafond de l'acte : bien plus fort que les héros du banc. */
+  joueurForet:   { dmg: 185, ehp: 691 },  // fin de la Forêt (forest_15)
+  joueurDesert1: { dmg: 217, ehp: 785 },  // Désert, 1re aventure (desert_06)
+  joueurDesert2: { dmg: 371, ehp: 971 }   // Désert, fin du chapitre (desert_18)
+};
+/* D : les mondes. « Un peu » (Seb) : exp 0,5, et une marge de 15 % au-dessus du joueur
+   appliqué de fin de segment : le robot de campagne ne voit aucune différence (mesuré : avec
+   les héros du banc comme référence, il prenait 11 morts et butait sur le Trône de sable).
+   Référence par aventure du monde. */
+var WORLD_HERO_SCALING = {
+  exp: 0.5, margin: 1.15, cap: 2.5,
+  refByWorld: { forest: ["joueurForet", "joueurForet"], desert: ["joueurDesert1", "joueurDesert2"] }
+};
+window.HERO_SCALING_REFS = HERO_SCALING_REFS;
+window.WORLD_HERO_SCALING = WORLD_HERO_SCALING;

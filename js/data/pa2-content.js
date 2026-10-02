@@ -111,11 +111,20 @@ var PA2_RINGS = {
    Plancher : le monde de la carte. Repères de campagne (sim/campagne-lot.js, v3.365.0) : niveau 8
    à l'arrivée au Désert, 12 à la fin du chapitre II. Au-delà, la dernière tranche s'applique. */
 var PA2_LEVEL_BANDS = [
-  { minLevel: 1,  worldId: "forest", adventureIndex: 0, obstacleScale: 1.0, foeScale: 0.8 }, // v3.383.0 : héros sans vitrine (banc)
-  { minLevel: 5,  worldId: "forest", adventureIndex: 1, obstacleScale: 1.5 },
-  { minLevel: 8,  worldId: "desert", adventureIndex: 0, obstacleScale: 2.1 },
-  { minLevel: 11, worldId: "desert", adventureIndex: 1, obstacleScale: 2.7 }
+  { minLevel: 1,  worldId: "forest", adventureIndex: 0, obstacleScale: 1.0, foeScale: 0.8, heroRef: "foret1" }, // v3.383.0 : héros sans vitrine (banc)
+  { minLevel: 5,  worldId: "forest", adventureIndex: 1, obstacleScale: 1.5, heroRef: "foret2" },
+  { minLevel: 8,  worldId: "desert", adventureIndex: 0, obstacleScale: 2.1, heroRef: "desert10" },
+  { minLevel: 11, worldId: "desert", adventureIndex: 1, obstacleScale: 2.7, heroRef: "desert12" }
 ];
+
+/* v3.423.0 (chantier Difficulté, A, décision Seb) : la tranche donne les ennemis et les obstacles
+   d'un héros NORMAL de ce niveau ; au-delà, l'aventure suit la force RÉELLE du héros, comparée au
+   héros de référence de la tranche (heroRef, data/worlds.js). Avant, la dernière tranche (niv. 11)
+   plafonnait tout : un héros entraîné à fond traversait le Périple sans perdre un quart de ses PV.
+   exp 0,75 : le héros garde environ un quart de son avance (log). Obstacles : difficulté ×
+   (moyenne des deux multiplicateurs)^obstacleExp. Marge de 10 % : les écarts entre classes d'un héros normal ne comptent pas.
+   Banc (sim/_campagne… non livré, sauvegarde « Luca ») : voir CHANGELOG_v3.423.0. */
+var PA2_HERO_SCALING = { exp: 0.75, margin: 1.1, cap: 3, obstacleExp: 0.6 };
 
 /* Obstacles : gabarits partagés (SCENE_NODES.obstacles) et pas de difficulté par rangée.
    Les voies reprennent le triangle de la Forêt v1 (optionProfiles du canevas). */
@@ -173,7 +182,7 @@ var PA2_RULES = {
   mistBreath: 10,            // « de justesse » sur un obstacle
   sourceAmount: 20, sourceDry: 5, sourceLantern: 10,   // v3.383.0 (C2) : 25 -> 20
   altarCostPct: 0.25, altarMinCost: 10, altarHealPct: 0.20,
-  campRestPct: 0.15, seuilRestPct: 0.10, cookPct: 0.70, // v3.383.0 (C2) : 30/20 -> 15/10, les rations comptent
+  campRestPct: 0.10, seuilRestPct: 0.06, cookPct: 0.70, // v3.383.0 (C2) : 30/20 -> 15/10 ; v3.423.0 (C) : 10/6, les rations comptent
   fioleHpPct: 0.40,
   revengeMult: 1.3, enrageMult: 1.4, torchDmgMult: 1.15, armorDmgMult: 0.65, armorBreath: 8,
   dentMult: 0.75, flecheMult: 0.85, boisChargeMult: 0.85,
@@ -184,7 +193,8 @@ var PA2_RULES = {
 /* v3.387.0 (PA2-5, F2) : la soif du Désert. stepBreath : Souffle perdu à chaque pas ;
    gourdeUses : gorgées de la gourde (décision Seb de la v1 : une seule au Désert). Banc. */
 var PA2_WORLD_RULES = {
-  desert: { stepBreath: 3, gourdeUses: 1 }
+  forest: { stepBreath: 4 },                // v3.423.0 (B) : la marche essouffle aussi en Forêt
+  desert: { stepBreath: 4, gourdeUses: 1 }  // v3.423.0 (B) : 3 -> 4
 };
 
 /* ---------- Textes ---------- */
@@ -465,6 +475,7 @@ window.PA2_NODE_WEIGHTS = PA2_NODE_WEIGHTS;
 window.PA2_ACTS = PA2_ACTS;
 window.PA2_RINGS = PA2_RINGS;
 window.PA2_LEVEL_BANDS = PA2_LEVEL_BANDS;
+window.PA2_HERO_SCALING = PA2_HERO_SCALING;
 window.PA2_OBSTACLES = PA2_OBSTACLES;
 window.PA2_OBSTACLE_TERTRE = PA2_OBSTACLE_TERTRE;
 window.PA2_GUARDIAN = PA2_GUARDIAN;

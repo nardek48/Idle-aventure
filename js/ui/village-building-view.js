@@ -14,7 +14,7 @@ var openVillageBuildingId = null;
 var hallSheetSegment = "caravan"; // v3.419.0 (E-2) : segment de la feuille de la Halle
 
 function setHallSheetSegment(seg) {
-  hallSheetSegment = seg === "build" ? "build" : "caravan";
+  hallSheetSegment = (seg === "build" || seg === "shop") ? seg : "caravan"; // v3.424.0 (H-1) : + Échoppe
   if (openVillageBuildingId === "hall") openVillageBuildingSheet("hall");
 }
 window.setHallSheetSegment = setHallSheetSegment;
@@ -136,17 +136,24 @@ function buildVillageBuildingSheetHTML(id) {
   /* v3.419.0 (E-2) : la Halle construite porte deux segments — Caravane (par défaut,
      ce dont on se sert) et Agrandir (la fiche habituelle du bâtiment). */
   if (id === "hall" && level > 0 && typeof buildCaravanHTML === "function") {
-    var hseg = hallSheetSegment === "build" ? "build" : "caravan";
+    var hseg = (hallSheetSegment === "build" || hallSheetSegment === "shop") ? hallSheetSegment : "caravan";
     var back = window.CaravanManager && CaravanManager.isBack();
     h += '<div class="kseg vb-sheet-seg">';
     h += '<button type="button" class="' + (hseg === "caravan" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'caravan\')"><img class="vb-seg-ico" src="images/Icons/village_buildings/caravan.png" alt="">' + _t("Caravane")
        + (back ? '<span class="kseg-dot"></span>' : '') + '</button>';
+    // v3.424.0 (chantier Héros, H-1, décision Seb) : la Boutique d'équipement s'installe à la Halle
+    h += '<button type="button" class="' + (hseg === "shop" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'shop\')"><img class="vb-seg-ico" src="images/Icons/subtabs/equipment_shop.png" alt="">' + _t("Échoppe") + '</button>';
     h += '<button type="button" class="' + (hseg === "build" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'build\')">'
        + (maxed ? _t("Halle") : _t("Agrandir · niv. {n}", { n: level + 1 })) + '</button>';
     h += '</div>';
     if (hseg === "caravan") {
       h += buildCaravanHTML();
       h += '</div></div></div>'; // ksheet-body, carte, voile
+      return h;
+    }
+    if (hseg === "shop" && typeof buildEquipShopHTML === "function") {
+      h += '<div class="vb-hall-shop">' + buildEquipShopHTML() + '</div>';
+      h += '</div></div></div>';
       return h;
     }
   }
@@ -213,10 +220,7 @@ function buildVillageBuildingSheetHTML(id) {
   /* La Halle renvoie vers l'échoppe qu'elle agrandit — même principe que le
      Terrain et l'Apothicaire : le bâtiment change les règles, l'écran d'origine
      reste le lieu où l'on s'en sert. */
-  if (id === "hall" && level > 0) {
-    h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToEquipShop()">'
-       + '<img class=ico-inline src=images/Icons/subtabs/equipment_shop.png> ' + _t("Voir l'échoppe dans Héros → Équipement ›") + '</div>';
-  }
+  // v3.424.0 (H-1) : l'échoppe est un segment de cette feuille, plus de renvoi vers Héros.
 
   /* L'Atelier annonce le rang qu'il ouvre : c'est sa vraie fonction. */
   if (id === "workshop") {
@@ -413,6 +417,16 @@ window.goToPotions = goToPotions;
 /* Renvoi de la fiche de la Halle vers l'échoppe d'équipement. */
 function goToEquipShop() {
   closeVillageBuildingSheet();
+  // v3.424.0 (H-1) : Halle bâtie -> son segment Échoppe ; avant, la Boutique reste dans Héros
+  if (typeof isEquipShopAtHall === "function" && isEquipShopAtHall()) {
+    if (typeof switchTab === "function") switchTab("village");
+    if (typeof setVillageSubTab === "function") setVillageSubTab("buildings");
+    hallSheetSegment = "shop";
+    openVillageBuildingSheet("hall");
+    hallSheetSegment = "shop";
+    if (openVillageBuildingId === "hall") openVillageBuildingSheet("hall");
+    return;
+  }
   if (typeof switchTab === "function") switchTab("equip");
   if (typeof setEquipSubTab === "function") setEquipSubTab("shop");
 }

@@ -157,8 +157,27 @@ var Pa2Run = {
     band = band || run.band;
     var q = { worldId: band.worldId, adventureIndex: band.adventureIndex };
     if (!boss && foeId) q.enemyFilter = [foeId];
-    var e = QuestEnemyManager.spawnFor(q, !!boss);
+    // v3.423.0 : l'ajustement du monde (D) est coupé ici, l'aventure applique le sien (heroScale)
+    var W = window.WorldManager, was = W ? W._heroScaleOff : false;
+    if (W) W._heroScaleOff = true;
+    var e;
+    try { e = QuestEnemyManager.spawnFor(q, !!boss); } finally { if (W) W._heroScaleOff = was; }
     return Array.isArray(e) ? e[0] : e;
+  },
+
+  /* v3.423.0 (chantier Difficulté, A) : ajustement à la force réelle du héros, figé au départ
+     du run (un objet changé en route ne le refait pas). { hp, power, obstacle }. Un run d'une
+     ancienne sauvegarde le calcule au premier besoin. */
+  heroScale: function (run) {
+    run = run || this.getRun();
+    if (!run) return { hp: 1, power: 1, obstacle: 1 };
+    if (run.heroScale && typeof run.heroScale.hp === "number") return run.heroScale;
+    var cfg = window.PA2_HERO_SCALING, key = run.band && run.band.heroRef;
+    var hs = (cfg && key && window.CombatForecast && typeof CombatForecast.getHeroScale === "function")
+      ? CombatForecast.getHeroScale(key, cfg) : { hp: 1, power: 1 };
+    var obs = cfg ? Math.pow(Math.sqrt(hs.hp * hs.power), Number(cfg.obstacleExp || 0)) : 1;
+    run.heroScale = { hp: hs.hp, power: hs.power, obstacle: obs };
+    return run.heroScale;
   },
 
   // Tranche qui paie (C3, PA2-3) : l'or de référence ne dépasse jamais le monde de la carte.
@@ -229,6 +248,7 @@ var Pa2Run = {
       lastResult: null, end: null
     };
     game.sceneRun = run;
+    this.heroScale(run); // v3.423.0 (A) : figé au départ
     this._save();
     return { ok: true, reason: null, run: run };
   },
@@ -271,6 +291,7 @@ var Pa2Run = {
       livingMapReport: null, lastResult: null, end: null
     };
     game.sceneRun = run;
+    this.heroScale(run); // v3.423.0 (A) : figé au départ
     if (!run.bagSize) { // rien à préparer : on part tout de suite
       var d = this.depart();
       if (d && d.ok === false) { game.sceneRun = null; return { ok: false, reason: d.reason, run: null }; }
@@ -512,7 +533,7 @@ var Pa2Run = {
       var gab = SceneEngine.getNodeBank().obstacles[gid];
       var base = (t === "tertre") ? PA2_OBSTACLE_TERTRE.baseDifficulty : Number(gab.baseDifficulty || 4);
       n.gabaritId = gid;
-      n.diff = SceneCheckSystem.depthDifficulty(base, this._depth(n, run)) * this.ring(run).diffMult * Number(run.band.obstacleScale || 1);
+      n.diff = SceneCheckSystem.depthDifficulty(base, this._depth(n, run)) * this.ring(run).diffMult * Number(run.band.obstacleScale || 1) * this.heroScale(run).obstacle;
     } else if (t === "combat") {
       var hook = run.hookId ? PA2_HOOKS[run.hookId] : null;
       if (n.foeId && this.isParcours(run)) {
@@ -527,7 +548,7 @@ var Pa2Run = {
           run.flags.assisted = true; n.assist = true; n.pack = Math.max(1, n.pack - 1); n.echo = hook.echo.assist;
         }
       }
-      n.diff = SceneCheckSystem.depthDifficulty(5, this._depth(n, run)) * this.ring(run).diffMult * Number(run.band.obstacleScale || 1);
+      n.diff = SceneCheckSystem.depthDifficulty(5, this._depth(n, run)) * this.ring(run).diffMult * Number(run.band.obstacleScale || 1) * this.heroScale(run).obstacle;
     } else if (t === "boss") {
       n.pack = 1;
     } else if (t === "trouvaille") {
@@ -750,9 +771,10 @@ var Pa2Run = {
     // Le gardien a ses propres multiplicateurs : régler les actes ne le touche pas.
     var mult = (guard ? 1 : PA2_ACTS[boss ? 3 : n.act].foeMult * this.tune(run, "foeMult") * Number(n.foeMult || 1)) * this.ring(run).foeMult * Number(run.band.foeScale || 1);
     e = JSON.parse(JSON.stringify(e));
-    e.maxHp = Math.max(1, Math.round(Number(e.maxHp || 1) * mult * (guard ? guard.hpMult : 1)));
+    var hs = this.heroScale(run); // v3.423.0 (A)
+    e.maxHp = Math.max(1, Math.round(Number(e.maxHp || 1) * mult * (guard ? guard.hpMult : 1) * hs.hp));
     e.hp = e.maxHp;
-    if (e.stats) e.stats.power = Math.max(1, Math.round(Number(e.stats.power || 1) * mult * (guard ? guard.powMult : 1)));
+    if (e.stats) e.stats.power = Math.max(1, Math.round(Number(e.stats.power || 1) * mult * (guard ? guard.powMult : 1) * hs.power));
     return e;
   },
   _dmgMult: function (run, n, apId) {
@@ -831,7 +853,7 @@ var Pa2Run = {
     this._creditKills(n, { id: est.foe });
     if (n.type === "boss") {
       var drop = this._guardianDrop();
-      if (drop) { res.drop = { name: drop.name, rarity: drop.rarity }; this._log("🎁 " + _t("Objet trouvé : {x} ({r})", { x: _td(drop.name), r: drop.rarity }) + " — " + _t("dans le butin de sortie")); }
+      if (drop) { res.drop = { name: drop.name, rarity: drop.rarity }; this._log("🎁 " + _t("Objet trouvé : {x} ({r})", { x: _td(drop.name), r: _td((window.RARITY_LABELS || {})[drop.rarity] || drop.rarity) }) + " — " + _t("dans le butin de sortie")); }
       run.flags.bossDown = true;
       n.done = true; run.lastResult = res;
       this.finish("dest");

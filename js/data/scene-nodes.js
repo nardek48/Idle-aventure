@@ -24,9 +24,11 @@ var SCENE_NODES = {
      meilleure a la fois sur le risque ET sur le Souffle, pour -20 % de butin : elle n'avait
      aucune contrepartie reelle. */
   optionProfiles: {
-    power: { diffMod: 1.05, lootMod: 1.20, breathCost: 10, injurySeverity: "grave" },
-    precision: { diffMod: 1.0, lootMod: 1.0, breathCost: 5, injurySeverity: "normale" },
-    endurance: { diffMod: 0.92, lootMod: 0.8, breathCost: 20, injurySeverity: "legere" }
+    /* v3.423.0 (chantier Difficulté, B) : coûts en Souffle 10/5/20 -> 15/8/25 : on finissait
+       une Petite Aventure avec 90 de Souffle sur 100, la gourde ne servait jamais. */
+    power: { diffMod: 1.05, lootMod: 1.20, breathCost: 15, injurySeverity: "grave" },
+    precision: { diffMod: 1.0, lootMod: 1.0, breathCost: 8, injurySeverity: "normale" },
+    endurance: { diffMod: 0.92, lootMod: 0.8, breathCost: 25, injurySeverity: "legere" }
   },
 
 

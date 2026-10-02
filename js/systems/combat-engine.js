@@ -1709,7 +1709,7 @@ var CombatEngine = {
         if (window.LootSystem && typeof LootSystem.rollDrop === "function" && chance(lootChance)) {
           var drop = LootSystem.rollDrop();
           if (this.grantDrop(drop)) {
-            addLog("🎁 " + _t("Objet trouvé : {x} ({r})", { x: _td(drop.name), r: drop.rarity }) + (this.inSortie() ? " — " + _t("dans le butin de sortie") : ""), "event");
+            addLog("🎁 " + _t("Objet trouvé : {x} ({r})", { x: _td(drop.name), r: _td((window.RARITY_LABELS || {})[drop.rarity] || drop.rarity) }) + (this.inSortie() ? " — " + _t("dans le butin de sortie") : ""), "event");
             showToast("🎁 " + _td(drop.name), 1800);
           }
         }

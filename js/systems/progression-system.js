@@ -46,6 +46,7 @@ var WorldManager = {
     }
 
     var milestoneMult = this.getCycleMilestoneMult();
+    var heroScale = this.getHeroScale(); // v3.423.0 (D) : les ennemis suivent un peu le héros
 
     var forceAllBosses = window.AfflictionManager && typeof AfflictionManager.shouldForceAllBosses === "function" && AfflictionManager.shouldForceAllBosses();
     var isBoss = forceAllBosses || this.enemyIndex >= Math.max(0, (adventure.enemyCount || 1) - 1);
@@ -64,7 +65,7 @@ var WorldManager = {
       // GLOBAL du joueur (toutes zones confondues), rendant les boss plus durs à mesure qu'on progresse
       // normalement dans le jeu (+111 % de PV à seulement 100 kills). Le boss suit désormais la même
       // logique que les ennemis normaux (monde/aventure/cycle uniquement, cf. plus bas dans ce fichier).
-      var bossHp = Math.floor(bossEndurance * BOSS_PV_MULT * bossScale * milestoneMult);
+      var bossHp = Math.floor(bossEndurance * BOSS_PV_MULT * bossScale * milestoneMult * heroScale.hp);
       if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") {
         var bossHpMods = AfflictionManager.getCombinedModifiers();
         if (bossHpMods.bossHpMult !== 1) bossHp = Math.floor(bossHp * bossHpMods.bossHpMult);
@@ -74,7 +75,7 @@ var WorldManager = {
         bossStats.power = Math.floor(bossStats.power * milestoneMult);
       }
       if (bossStats) {
-        bossStats.power = Math.floor(bossStats.power * Math.pow(bossScale, ENEMY_POWER_SCALE_EXP));
+        bossStats.power = Math.floor(bossStats.power * Math.pow(bossScale, ENEMY_POWER_SCALE_EXP) * heroScale.power);
       }
 
       var archetype = (typeof decideEnemyArchetype === "function")
@@ -106,14 +107,14 @@ var WorldManager = {
     var enemyIndexFactor = this.worldIndex === 0 ? 0 : this.enemyIndex;
     var scale = worldComponent + this.adventureIndex * 0.30 + (game.cycleCount || 0) * 0.45 + enemyIndexFactor * 0.05;
     var enemyEndurance = (enemyData.stats && enemyData.stats.endurance) || 18;
-    var hp = Math.floor(enemyEndurance * ENEMY_PV_MULT * scale * milestoneMult + enemyIndexFactor * 5);
+    var hp = Math.floor((enemyEndurance * ENEMY_PV_MULT * scale * milestoneMult + enemyIndexFactor * 5) * heroScale.hp);
 
     var effectiveStats = enemyData.stats ? Object.assign({}, enemyData.stats) : null;
     if (effectiveStats && milestoneMult !== 1) {
       effectiveStats.power = Math.floor(effectiveStats.power * milestoneMult);
     }
     if (effectiveStats) {
-      effectiveStats.power = Math.floor(effectiveStats.power * Math.pow(scale, ENEMY_POWER_SCALE_EXP));
+      effectiveStats.power = Math.floor(effectiveStats.power * Math.pow(scale, ENEMY_POWER_SCALE_EXP) * heroScale.power);
     }
 
     var normalArchetype = (typeof decideNormalEnemyArchetype === "function")
@@ -133,6 +134,20 @@ var WorldManager = {
       weak: enemyData.weak || [],
       stats: effectiveStats
     };
+  },
+
+  /* v3.423.0 (chantier Difficulté, D, décision Seb) : multiplicateurs { hp, power } du monde et
+     de l'aventure en cours face au héros (data/worlds.js, WORLD_HERO_SCALING). Coupé par
+     _heroScaleOff (les Petites Aventures appliquent leur propre ajustement) et dans les Cycles. */
+  _heroScaleOff: false,
+  getHeroScale: function () {
+    var none = { hp: 1, power: 1 };
+    if (this._heroScaleOff || (game.cycleCount || 0) > 0) return none;
+    if (!window.WORLD_HERO_SCALING || !window.CombatForecast || typeof CombatForecast.getHeroScale !== "function") return none;
+    var w = WORLDS[this.worldIndex], refs = w ? WORLD_HERO_SCALING.refByWorld[w.id] : null;
+    if (!refs) return none;
+    var key = refs[Math.min(refs.length - 1, Math.max(0, Number(this.adventureIndex || 0)))];
+    return CombatForecast.getHeroScale(key, WORLD_HERO_SCALING);
   },
 
   CYCLE_MILESTONE_BONUS_PER_STEP: 0.25,

@@ -894,7 +894,11 @@ function pa2EchoHTML(n, st) {
 
 function pa2FoeInfo(run, n, pv) {
   var dests = pa2Dests(run), hook = pa2Hook(run);
-  if (n.type === "boss") return { name: _td(dests.boss.name), line: _td(dests.boss.line), image: PA2_ICONS.boss, boss: true, pack: 1 };
+  if (n.type === "boss") {
+    // v3.423.1 (retour Seb) : hors Forêt, le portrait est celui du gardien du monde (le Ver au Désert), plus le cerf
+    var gd = (window.PA2_GUARDIAN && PA2_GUARDIAN[run.worldId]) || null, gimg = (run.worldId !== "forest" && gd && window.ENEMY_DB && ENEMY_DB[gd.foe]) ? ENEMY_DB[gd.foe].image : null;
+    return { name: _td(dests.boss.name), line: _td(dests.boss.line), image: gimg || PA2_ICONS.boss, boss: true, pack: 1 };
+  }
   var db = (window.ENEMY_DB && ENEMY_DB[n.foeId]) || {};
   if (n.revenge && hook) return { name: _td(hook.revenge.name), line: _td(hook.revenge.line), image: db.image || PA2_ICONS.combat, boss: false, pack: 1 };
   return { name: _td(db.name || (pv && pv.charger ? pv.charger.foeName : "")), line: _td(PA2_FOE_LINES[n.foeId] || ""), image: db.image || PA2_ICONS.combat, boss: false, pack: Number(n.pack || 1) };
@@ -954,7 +958,7 @@ function pa2FightOutcome(run, n, r) {
   var h = '<div class="pa2-verdict is-ok">' + esc(n.type === "boss" ? _t("Le gardien s'effondre") : _t("Victoire")) + '</div><p class="pa2-result">+' + pa2Num(r.gain) + ' ' + esc(pa2Unit(run)) + '</p>';
   if (n.after) h += '<p class="pa2-echo">' + esc(_td(n.after)) + '</p>'; // parcours : la suite du combat
   if (n.type === "boss") h += '<p class="pa2-narr pa2-center">' + esc(_td(pa2Dests(run).boss.win)) + '</p>';
-  if (r.drop) h += '<p class="pa2-result is-drop"><img class="ico-inline" src="images/Icons/dungeon/dungeon_guaranteed_loot.png" alt=""> ' + esc(_t("Objet trouvé : {x} ({r})", { x: _td(r.drop.name), r: r.drop.rarity })) + '</p>';
+  if (r.drop) h += '<p class="pa2-result is-drop"><img class="ico-inline" src="images/Icons/dungeon/dungeon_guaranteed_loot.png" alt=""> ' + esc(_t("Objet trouvé : {x} ({r})", { x: _td(r.drop.name), r: _td((window.RARITY_LABELS || {})[r.drop.rarity] || r.drop.rarity) })) + '</p>';
   return h + pa2ContinueButton(run);
 }
 function pa2RoundsHTML(st, count) {

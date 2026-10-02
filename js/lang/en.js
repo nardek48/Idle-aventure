@@ -1646,7 +1646,6 @@ I18n.register("en", {
   "Préparer dans Boutique → Potions ›": "Brew in Shop → Potions ›",
   "Relance": "Reroll",
   "Voir l'Entrepôt ›": "See the Warehouse ›",
-  "Voir l'échoppe dans Héros → Équipement ›": "See the stall in Hero → Equipment ›",
   "Rang {n} — chantiers ouverts jusqu'à ce rang.": "Rank {n} — building work open up to this rank.",
   "Aucun rang atteint : construis l'Atelier pour ouvrir les premiers chantiers.": "No rank reached: build the Workshop to open the first building projects.",
   "Chantier en cours — fin dans {d}": "Building in progress — done in {d}",
@@ -4150,4 +4149,7 @@ I18n.register("en", {
   "Attaque (barre espace)": "Attack (space bar)",
   "Espace": "Space",
   "Revenir au combat": "Back to the fight",
+  // v3.424.0
+  "À la Halle marchande du Village": "At the Village Market Hall",
+  "Échoppe": "Stall",
 });
