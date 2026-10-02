@@ -54,16 +54,28 @@ var PatrolManager = {
     return null;
   },
 
-  getDestinations: function () {
-    var mapId = this.currentMapId();
-    if (!mapId || !window.LivingMapManager) return [];
-    var self = this;
-    return LIVING_MAPS[mapId].sectors.filter(function (s) {
-      return LivingMapManager.isLiberated(mapId, s.id);
-    }).map(function (s) {
-      var res = self.sectorResources(mapId, s.id);
-      return { mapId: mapId, sectorId: s.id, name: s.name, ring: s.ring, main: res[0], second: res[1] };
+  /* v3.426.0 (chantier Expéditions, décision Seb) : toutes les cartes atteintes, plus seulement
+     celle du monde courant — on envoie un compagnon en Forêt depuis le Désert. Une carte compte
+     dès qu'un de ses secteurs est libéré. Les identifiants de secteur sont uniques entre cartes. */
+  reachedMapIds: function () {
+    if (!window.LIVING_MAPS || !window.LivingMapManager) return [];
+    return Object.keys(LIVING_MAPS).filter(function (m) {
+      return LIVING_MAPS[m].sectors.some(function (s) { return LivingMapManager.isLiberated(m, s.id); });
     });
+  },
+
+  /* getDestinations([mapId]) : les secteurs libérés d'une carte, ou de toutes les cartes atteintes. */
+  getDestinations: function (mapId) {
+    if (!window.LivingMapManager || !window.LIVING_MAPS) return [];
+    var self = this, maps = mapId ? (LIVING_MAPS[mapId] ? [mapId] : []) : this.reachedMapIds(), out = [];
+    maps.forEach(function (m) {
+      LIVING_MAPS[m].sectors.forEach(function (s) {
+        if (!LivingMapManager.isLiberated(m, s.id)) return;
+        var res = self.sectorResources(m, s.id);
+        out.push({ mapId: m, sectorId: s.id, name: s.name, ring: s.ring, main: res[0], second: res[1] });
+      });
+    });
+    return out;
   },
 
   sectorResources: function (mapId, sectorId) {

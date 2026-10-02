@@ -11,10 +11,10 @@
    mêmes lignes de coût, même feuille basse, mais pour N bâtiments. */
 
 var openVillageBuildingId = null;
-var hallSheetSegment = "caravan"; // v3.419.0 (E-2) : segment de la feuille de la Halle
+var hallSheetSegment = "shop"; // v3.419.0 (E-2) : segment de la feuille de la Halle ; v3.426.0 : Échoppe · Agrandir
 
 function setHallSheetSegment(seg) {
-  hallSheetSegment = (seg === "build" || seg === "shop") ? seg : "caravan"; // v3.424.0 (H-1) : + Échoppe
+  hallSheetSegment = (seg === "build") ? "build" : "shop"; // v3.426.0 : la Caravane est partie aux Expéditions
   if (openVillageBuildingId === "hall") openVillageBuildingSheet("hall");
 }
 window.setHallSheetSegment = setHallSheetSegment;
@@ -133,24 +133,17 @@ function buildVillageBuildingSheetHTML(id) {
   });
   h += '<div class="ksheet-body">';
 
-  /* v3.419.0 (E-2) : la Halle construite porte deux segments — Caravane (par défaut,
-     ce dont on se sert) et Agrandir (la fiche habituelle du bâtiment). */
-  if (id === "hall" && level > 0 && typeof buildCaravanHTML === "function") {
-    var hseg = (hallSheetSegment === "build" || hallSheetSegment === "shop") ? hallSheetSegment : "caravan";
-    var back = window.CaravanManager && CaravanManager.isBack();
+  /* v3.419.0 (E-2) : la Halle construite porte des segments. v3.426.0 (chantier Expéditions) :
+     la Caravane part dans Campement › Expéditions ; ici, un renvoi qui dit où elle en est. */
+  if (id === "hall" && level > 0) {
+    var hseg = (hallSheetSegment === "build") ? "build" : "shop";
+    if (typeof buildHallCaravanLinkHTML === "function") h += buildHallCaravanLinkHTML();
     h += '<div class="kseg vb-sheet-seg">';
-    h += '<button type="button" class="' + (hseg === "caravan" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'caravan\')"><img class="vb-seg-ico" src="images/Icons/village_buildings/caravan.png" alt="">' + _t("Caravane")
-       + (back ? '<span class="kseg-dot"></span>' : '') + '</button>';
     // v3.424.0 (chantier Héros, H-1, décision Seb) : la Boutique d'équipement s'installe à la Halle
     h += '<button type="button" class="' + (hseg === "shop" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'shop\')"><img class="vb-seg-ico" src="images/Icons/subtabs/equipment_shop.png" alt="">' + _t("Échoppe") + '</button>';
     h += '<button type="button" class="' + (hseg === "build" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'build\')">'
        + (maxed ? _t("Halle") : _t("Agrandir · niv. {n}", { n: level + 1 })) + '</button>';
     h += '</div>';
-    if (hseg === "caravan") {
-      h += buildCaravanHTML();
-      h += '</div></div></div>'; // ksheet-body, carte, voile
-      return h;
-    }
     if (hseg === "shop" && typeof buildEquipShopHTML === "function") {
       h += '<div class="vb-hall-shop">' + buildEquipShopHTML() + '</div>';
       h += '</div></div></div>';
@@ -334,7 +327,7 @@ function openVillageBuildingSheet(id) {
   var def = VILLAGE_BUILDINGS[id];
   if (!def) return;
   VillageBuildingManager.ensure();
-  if (openVillageBuildingId !== id) hallSheetSegment = "caravan"; // v3.419.0 : la Halle s'ouvre sur sa caravane
+  if (openVillageBuildingId !== id) hallSheetSegment = "shop"; // v3.426.0 : la Halle s'ouvre sur son Échoppe
   openVillageBuildingId = id;
   if (typeof productionDetailBuildingId !== "undefined") productionDetailBuildingId = null; // v3.414.0 : la feuille de production cède la place
   if (typeof openWorkshopId !== "undefined") openWorkshopId = null; // v3.415.0 : la feuille d'atelier aussi

@@ -270,6 +270,8 @@ function renderPanel() {
   if (typeof renderGrimoireSheet === "function") renderGrimoireSheet(game.activeTab === "grimoire");
   // v3.244.0 : même mécanique pour les feuilles Stats / Capacités du Résumé du héros.
   if (typeof renderHerosSheet === "function") renderHerosSheet(game.activeTab === "more");
+  // v3.426.0 : feuilles Patrouille / Caravane de Campement › Expéditions, même mécanique.
+  if (typeof renderExpeditionsSheet === "function") renderExpeditionsSheet();
 
   // v3.100.0 : vérification opportuniste de l'étape Histoire (throttlée 1/s dans le manager,
   // ne déclenche jamais de rendu — en combat renderPanel tourne à chaque kill).
@@ -365,6 +367,8 @@ function renderPanel() {
   }
   // v3.425.0 (lot H-2) : pas de bulles flottantes sur Héros (css/04-panel-heros-screens.css).
   if (document.body) document.body.classList.toggle("hs-on-heros", game.activeTab === "more");
+  // v3.426.0 : idem sur Campement › Expéditions (les bulles cachaient les boutons des lignes).
+  if (document.body) document.body.classList.toggle("exp-on-board", game.activeTab === "campement" && typeof campShownTab !== "undefined" && campShownTab === "depart");
   lastRenderedTab = game.activeTab;
   // v3.401.0 (lot O-1) : les bulles du HUD remontent au-dessus des sous-onglets du bas
   if (typeof liftHudDock === "function") liftHudDock();

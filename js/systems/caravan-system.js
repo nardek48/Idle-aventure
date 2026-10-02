@@ -146,8 +146,9 @@ var CaravanManager = {
     return Math.floor(v * t.valuePct);
   },
 
-  getRareKey: function () {
-    var w = (window.WorldManager) ? Number(WorldManager.worldIndex || 0) : 0;
+  /* v3.426.0 : worldIndex = le monde du MARCHÉ choisi (par défaut, celui où l'on se trouve). */
+  getRareKey: function (worldIndex) {
+    var w = (typeof worldIndex === "number") ? worldIndex : ((window.WorldManager) ? Number(WorldManager.worldIndex || 0) : 0);
     var key = CARAVAN_RARE_BY_WORLD[w];
     if (!key) { // monde sans matériau déclaré : le dernier connu en dessous
       for (var i = w; i >= 0 && !key; i--) key = CARAVAN_RARE_BY_WORLD[i];
@@ -156,6 +157,24 @@ var CaravanManager = {
   },
 
   get: function () { this.ensure(); return game.village.caravan; },
+
+  /* v3.426.0 (chantier Expéditions, décision Seb) : les marchés où partir, sans changer de monde.
+     Un par carte vivante qui a un marché, atteinte (un secteur libéré) ou du monde courant.
+     -> [{ mapId, world (index dans WORLDS), name }] */
+  getMarkets: function () {
+    if (!window.LIVING_MAPS || !window.WORLDS) return [];
+    var cur = window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0, out = [];
+    Object.keys(LIVING_MAPS).forEach(function (m) {
+      var map = LIVING_MAPS[m];
+      if (!map.caravanMarket) return;
+      var wi = -1;
+      WORLDS.forEach(function (w, i) { if (w.id === map.worldId) wi = i; });
+      if (wi < 0) return;
+      var reached = wi === cur || (window.LivingMapManager && map.sectors.some(function (s) { return LivingMapManager.isLiberated(m, s.id); }));
+      if (reached) out.push({ mapId: m, world: wi, name: WORLDS[wi].name });
+    });
+    return out;
+  },
 
   /* v3.420.0 (E-3) : la carte vivante où roule la caravane (celle du monde de départ). */
   getMapId: function () {
@@ -203,8 +222,10 @@ var CaravanManager = {
     return "";
   },
 
-  depart: function (tripId) {
+  /* worldIndex (v3.426.0) : le monde du marché choisi ; par défaut, le monde courant. */
+  depart: function (tripId, worldIndex) {
     if (this.getBlockReason(tripId)) return false;
+    var world = (typeof worldIndex === "number" && window.WORLDS && WORLDS[worldIndex]) ? worldIndex : (window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0);
     var t = CARAVAN_TRIPS[tripId];
     var load = this.computeLoad(tripId);
     Object.keys(load).forEach(function (k) {
@@ -214,7 +235,7 @@ var CaravanManager = {
 
     var rare = null, item = null;
     if (t.rareChance > 0 && Math.random() < t.rareChance) {
-      var rk = this.getRareKey();
+      var rk = this.getRareKey(world);
       if (rk) rare = { key: rk, n: CARAVAN_RARE_QTY[0] + Math.floor(Math.random() * (CARAVAN_RARE_QTY[1] - CARAVAN_RARE_QTY[0] + 1)) };
     }
     if (t.itemChance > 0 && Math.random() < t.itemChance && window.LootSystem && typeof LootSystem.rollDrop === "function") {
@@ -224,7 +245,7 @@ var CaravanManager = {
     var now = this._now();
     game.village.caravan = {
       trip: tripId, startedAt: now, endsAt: now + t.seconds * 1000,
-      world: (window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0), // v3.420.0 : la carte où elle roule
+      world: world, // v3.420.0 : la carte où elle roule ; v3.426.0 : celle du marché choisi
       cargo: load, gold: this.getLoadGold(load, tripId), rare: rare, item: item, notified: false
     };
     if (typeof addLog === "function") {

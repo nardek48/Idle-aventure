@@ -1,9 +1,12 @@
 "use strict";
 /* ui/patrol-view.js — v3.334.0 (Évolutions, lot P-1) : patrouilles, côté écran.
-   Deux endroits (P9) : la fiche du compagnon (Héros › Compagnons) et la rubrique
-   « Patrouilles » de l'écran de retour. Règles : systems/patrol-system.js. */
+   v3.426.0 (chantier Expéditions) : la patrouille se lance depuis Campement › Expéditions
+   (feuille « Patrouille », ui/expeditions-view.js : durée, monde, une carte par lieu avec ce
+   qu'il rapporte). Ici : l'état d'une patrouille partie (en route / rentrée), le renvoi de la
+   fiche du compagnon, et la rubrique « Patrouilles » de l'écran de retour.
+   Règles : systems/patrol-system.js. */
 
-var patrolUi = {};       // choix en cours par compagnon : { sectorId, hours }
+var patrolUi = {};       // choix en cours par compagnon : { mapId, sectorId, hours } (ui/expeditions-view.js)
 var patrolLastResult = {}; // dernier butin pris, affiché sur la fiche jusqu'au prochain départ
 
 function patrolResName(k) { var d = (window.WAREHOUSE_RESOURCES || {})[k]; return d ? _td(d.name) : k; }
@@ -26,77 +29,57 @@ function buildPatrolLostHTML(lost) {
   return '<div class="ret-warn">' + ((k.length > 1 || lost[k[0]] > 1) ? _t("Entrepôt plein : {liste} perdus.", { liste: liste }) : _t("Entrepôt plein : {liste} perdu.", { liste: liste })) + '</div>';
 }
 
-/* ---------- Fiche du compagnon ---------- */
+/* ---------- Patrouille partie : en route ou rentrée (feuille « Patrouille ») ---------- */
+
+/* "" quand le compagnon est au camp : le formulaire de départ est dans ui/expeditions-view.js. */
+function buildPatrolProgressHTML(companionId) {
+  var PM = window.PatrolManager;
+  if (!PM) return "";
+  var p = PM.get(companionId);
+  if (!p) return "";
+  var sec = PM.getSectorDef(p.mapId, p.sectorId);
+  var sName = sec ? _td(sec.name) : p.sectorId;
+  var h = '<div class="pt-box">';
+  if (Date.now() >= p.endsAt) {
+    h += '<div class="pt-line">' + (PATROL_COMPANION_FEMININE[companionId] ? _t("Rentrée de <b>{x}</b>.", { x: esc(sName) }) : _t("Rentré de <b>{x}</b>.", { x: esc(sName) })) + '</div>';
+    h += '<button type="button" class="kbtn pt-go" onclick="patrolCollect(\'' + companionId + '\')">' + _t("Prendre le butin") + '</button>';
+  } else {
+    var left = window.ResumeManager ? ResumeManager.formatAbsence(p.endsAt - Date.now()) : "";
+    h += '<div class="pt-line">' + _t("En route : <b>{x}</b> · retour dans {d}.", { x: esc(sName), d: esc(left) }) + '</div>';
+    h += '<div class="pt-hint">' + _t("Absent des combats jusqu’à son retour.") + '</div>';
+    h += '<button type="button" class="kbtn pt-recall" onclick="patrolRecall(\'' + companionId + '\')">' + _t("Rappeler (butin au prorata)") + '</button>';
+  }
+  return h + '</div>';
+}
+
+/* Dernier butin pris, en tête de la feuille jusqu'au prochain départ. */
+function buildPatrolLastResultHTML(companionId) {
+  var last = patrolLastResult[companionId];
+  if (!last) return "";
+  var h = '<div class="exp-last"><small>' + _t("Dernier retour") + '</small>' + buildPatrolLootHTML(last.loot, last.gold, true) + buildPatrolLostHTML(last.lost);
+  if (last.story) h += '<div class="ret-story">« ' + esc(_td(last.story)) + ' »</div>';
+  return h + '</div>';
+}
+
+/* ---------- Fiche du compagnon : un renvoi vers les Expéditions (v3.426.0) ---------- */
 
 function buildCompanionPatrolHTML(companionId) {
   var PM = window.PatrolManager;
   if (!PM || !PM.isUnlocked()) return "";
-  var p = PM.get(companionId);
-  var h = '<div class="pt-box"><div class="pt-title"><img src="images/Icons/quests/mission_exploration.png" alt=""> ' + _t("Patrouille") + '</div>';
-
-  if (p) {
-    var sec = PM.getSectorDef(p.mapId, p.sectorId);
-    var sName = sec ? _td(sec.name) : p.sectorId;
-    if (Date.now() >= p.endsAt) {
-      h += '<div class="pt-line">' + (PATROL_COMPANION_FEMININE[companionId] ? _t("Rentrée de <b>{x}</b>.", { x: esc(sName) }) : _t("Rentré de <b>{x}</b>.", { x: esc(sName) })) + '</div>';
-      h += '<button type="button" class="kbtn pt-go" onclick="patrolCollect(\'' + companionId + '\')">' + _t("Prendre le butin") + '</button>';
-    } else {
-      var left = window.ResumeManager ? ResumeManager.formatAbsence(p.endsAt - Date.now()) : "";
-      h += '<div class="pt-line">' + _t("En route : <b>{x}</b> · retour dans {d}.", { x: esc(sName), d: esc(left) }) + '</div>';
-      h += '<div class="pt-hint">' + _t("Absent des combats jusqu’à son retour.") + '</div>';
-      h += '<button type="button" class="kbtn pt-recall" onclick="patrolRecall(\'' + companionId + '\')">' + _t("Rappeler (butin au prorata)") + '</button>';
-    }
-    return h + '</div>';
-  }
-
-  var last = patrolLastResult[companionId];
-  if (last) {
-    h += buildPatrolLootHTML(last.loot, last.gold, true) + buildPatrolLostHTML(last.lost);
-    if (last.story) h += '<div class="ret-story">« ' + esc(_td(last.story)) + ' »</div>';
-  }
-
-  var dests = PM.getDestinations();
-  if (!dests.length) {
-    h += '<div class="pt-hint">' + _t("Libère un secteur de la carte pour l’envoyer en patrouille.") + '</div>';
-    return h + '</div>';
-  }
-  var ui = patrolUi[companionId] || {};
-  if (!ui.sectorId || !dests.some(function (d) { return d.sectorId === ui.sectorId; })) ui.sectorId = dests[0].sectorId;
-  if (PATROL_DURATIONS_H.indexOf(ui.hours) === -1) ui.hours = 8;
-  patrolUi[companionId] = ui;
-
-  h += '<select class="pt-select" onchange="patrolPick(\'' + companionId + '\', \'sectorId\', this.value)">';
-  dests.forEach(function (d) {
-    h += '<option value="' + esc(d.sectorId) + '"' + (d.sectorId === ui.sectorId ? ' selected' : '') + '>'
-      + esc(_td(d.name) + ' — ' + patrolResName(d.main) + ', ' + patrolResName(d.second)) + '</option>';
-  });
-  h += '</select>';
-  h += '<div class="kseg pt-seg">';
-  PATROL_DURATIONS_H.forEach(function (hrs) {
-    h += '<button type="button" class="' + (ui.hours === hrs ? 'is-on' : '') + '" onclick="patrolPick(\'' + companionId + '\', \'hours\', ' + hrs + ')">' + hrs + ' h</button>';
-  });
-  h += '</div>';
-  var mapId = PM.currentMapId();
-  var est = PM.estimate(companionId, mapId, ui.sectorId, ui.hours);
-  h += buildPatrolLootHTML(est.loot, est.gold, false);
-  h += '<div class="pt-hint">' + _t("Absent des combats pendant la patrouille. Aucun risque : il revient toujours.") + '</div>';
-  var why = PM.canStart(companionId);
-  h += '<button type="button" class="kbtn pt-go' + (why ? ' is-disabled' : '') + '"' + (why ? ' disabled title="' + esc(why) + '"' : '')
-    + ' onclick="patrolStart(\'' + companionId + '\')">' + _t("Envoyer") + '</button>';
-  if (why) h += '<div class="pt-hint">' + esc(why) + '</div>';
-  return h + '</div>';
+  var p = PM.get(companionId), sub;
+  if (p && Date.now() >= p.endsAt) sub = _t("Rentré · butin à prendre");
+  else if (p) sub = _t("En route · retour dans {d}", { d: window.ResumeManager ? ResumeManager.formatAbsence(p.endsAt - Date.now()) : "" });
+  else sub = _t("Se lance depuis Campement › Expéditions");
+  return '<button type="button" class="exp-moved" onclick="closeHerosSheet();goToExpeditions(\'patrol\', \'' + companionId + '\')">'
+    + '<img src="images/Icons/quests/mission_exploration.png" alt=""><span><b>' + _t("Patrouille") + '</b><small>' + esc(sub) + '</small></span><i class="exp-chev">›</i></button>';
 }
 
-function patrolPick(companionId, key, value) {
-  var ui = patrolUi[companionId] || (patrolUi[companionId] = {});
-  ui[key] = key === "hours" ? Number(value) : value;
-  if (typeof renderPanel === "function") renderPanel();
-}
-
+/* Départ depuis la feuille « Patrouille » (choix tenus dans patrolUi par ui/expeditions-view.js). */
 function patrolStart(companionId) {
   var ui = patrolUi[companionId] || {};
+  if (!ui.sectorId || !window.PatrolManager) return;
   delete patrolLastResult[companionId];
-  if (window.PatrolManager) PatrolManager.start(companionId, ui.sectorId, ui.hours || 8);
+  if (PatrolManager.start(companionId, ui.sectorId, ui.hours || 8) && typeof renderPanel === "function") renderPanel();
 }
 
 function patrolCollect(companionId) {
@@ -113,10 +96,9 @@ function patrolRecall(companionId) {
   if (typeof renderPanel === "function") renderPanel();
 }
 
-/* Fil rouge « patrouille rentrée » : l'écran Compagnons. */
+/* Fil rouge « patrouille rentrée ». v3.426.0 : les patrouilles vivent dans Campement › Expéditions. */
 function openPatrolScreen() {
-  if (typeof switchTab === "function") switchTab("more");
-  if (typeof setHerosSubTab === "function") setHerosSubTab("companions");
+  if (typeof goToExpeditions === "function") goToExpeditions();
 }
 
 /* ---------- Écran de retour : rubrique Patrouilles ---------- */
@@ -170,7 +152,7 @@ function returnOpenPatrolStory(id) {
   if (typeof renderReturnScreen === "function") renderReturnScreen();
 }
 
-/* Même route, même durée — si le secteur est encore libéré dans le monde courant. */
+/* Même route, même durée — si le secteur est encore libéré (v3.426.0 : quelle que soit sa carte). */
 function returnRelaunchPatrol(id) {
   var st = (typeof getReturnScreenState === "function") ? getReturnScreenState() : null;
   var res = st && st.patrolResults && st.patrolResults[id];
@@ -180,7 +162,8 @@ function returnRelaunchPatrol(id) {
 }
 
 window.buildCompanionPatrolHTML = buildCompanionPatrolHTML;
-window.patrolPick = patrolPick;
+window.buildPatrolProgressHTML = buildPatrolProgressHTML;
+window.buildPatrolLastResultHTML = buildPatrolLastResultHTML;
 window.patrolStart = patrolStart;
 window.patrolCollect = patrolCollect;
 window.patrolRecall = patrolRecall;

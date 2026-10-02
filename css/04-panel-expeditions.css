@@ -1,0 +1,100 @@
+/* css/04-panel-expeditions.css — v3.426.0 (chantier Expéditions) : Campement › Expéditions
+   (ui/expeditions-view.js). Ateliers E-0 et E-1 validés par Seb le 02/10/2026. Préfixe .exp-*. */
+
+/* Pas de bulles flottantes sur le tableau des départs (elles cachaient les boutons des lignes). */
+body.exp-on-board .hud-dock { display: none !important; }
+/* Résumé en tête : trois compteurs */
+.exp-sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0 0 10px; }
+.exp-sum span { display: flex; flex-direction: column; align-items: center; padding: 6px 4px; border-radius: 12px; border: 1px solid var(--c-bronze-400-2); background: var(--c-cream-50); font-size: 12px; color: var(--c-brown-800-3); text-align: center; line-height: 1.15; }
+.exp-sum b { font-size: 20px; line-height: 1.1; }
+.exp-sum .is-collect b { color: var(--c-green-650-soft); }
+.exp-sum .is-ready b { color: var(--c-brown-700-vivid); }
+.exp-sum .is-away b { color: #2d5d8a; }
+
+.exp-sec.is-collect span { color: var(--c-green-650-soft); }
+.exp-sec.is-away span { color: #2d5d8a; }
+
+/* Une ligne */
+.exp-list { display: flex; flex-direction: column; gap: 6px; }
+.exp-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 12px; border: 1px solid var(--c-bronze-350); background: var(--c-cream-50); color: var(--c-brown-850-3); cursor: pointer; }
+.exp-row.is-collect { border-color: var(--c-green-650-2); box-shadow: inset 4px 0 0 var(--c-green-650-2); background: var(--c-cream-50-soft); }
+.exp-row.is-ready { box-shadow: inset 4px 0 0 var(--c-brown-550-3); }
+.exp-row.is-away { box-shadow: inset 4px 0 0 #2d5d8a; }
+.exp-row.is-wait { opacity: .75; }
+.exp-row-ico { position: relative; flex: 0 0 auto; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+.exp-row-ico img { width: 100%; height: 100%; object-fit: contain; }
+.exp-row-ico.is-portrait > img:first-child { border-radius: 50%; object-fit: cover; border: 2px solid var(--c-bronze-450); }
+.exp-row-sub { position: absolute; right: -4px; bottom: -4px; width: 20px !important; height: 20px !important; border-radius: 50%; background: var(--c-cream-50); padding: 1px; }
+.exp-row-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.exp-row-txt b { font-size: 15px; line-height: 1.15; }
+.exp-row-txt small { font-size: 12px; color: var(--c-brown-700-soft); line-height: 1.25; }
+.exp-kind { font-weight: 600; color: var(--c-brown-600-soft); }
+.exp-left { font-weight: 800; color: #2d5d8a; }
+.exp-act { flex: 0 0 auto; max-width: 46%; min-height: 36px; padding: 4px 12px; border-radius: 10px; border: 1px solid var(--c-bronze-500); background: linear-gradient(var(--c-cream-100-vivid), var(--c-cream-200)); font: inherit; font-size: 13px; font-weight: 800; color: var(--c-brown-800-3); line-height: 1.15; }
+.exp-act.is-primary { border-color: var(--c-green-650-soft); background: linear-gradient(#5aa65a, var(--c-green-650-soft)); color: var(--c-white-50-soft); text-shadow: 0 1px 1px rgba(0, 0, 0, .35); }
+.exp-row.is-ready .exp-act.is-primary { border-color: var(--c-brown-700-vivid); background: linear-gradient(var(--c-bronze-400-3), var(--c-brown-550-3)); }
+.exp-chev { font-style: normal; font-size: 20px; color: var(--c-brown-700-vivid); }
+.exp-pips { display: flex; gap: 3px; margin-top: 2px; }
+.exp-pips i { width: 14px; height: 6px; border-radius: 3px; background: var(--c-bronze-250-soft); }
+.exp-pips i.is-on { background: var(--c-brown-550-3); }
+
+/* Pied : Carte et Potions */
+.exp-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
+.exp-door { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 12px; border: 1px solid var(--c-bronze-400-2); background: var(--c-cream-50); color: var(--c-brown-850-3); text-align: left; }
+.exp-door img { width: 30px; height: 30px; object-fit: contain; }
+.exp-door span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.exp-door b { font-size: 14px; }
+.exp-door small { font-size: 12px; color: var(--c-brown-700-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Pastille verte sur l'onglet du Campement */
+.kseg-dot.is-green { background: var(--c-green-650-2); }
+
+/* Fiche du compagnon : renvoi vers les Expéditions */
+.exp-moved { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--c-bronze-400-2); background: var(--c-cream-50); color: var(--c-brown-850-3); text-align: left; }
+.exp-moved img { width: 30px; height: 30px; object-fit: contain; }
+.exp-moved span { flex: 1; display: flex; flex-direction: column; }
+.exp-moved small { font-size: 12px; color: var(--c-brown-700-soft); }
+
+/* ===== E-1 : feuille Patrouille (cartes de lieux) ===== */
+.exp-pick-row { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+.exp-pick-lbl { flex: 0 0 56px; font-size: 13px; font-weight: 800; color: var(--c-brown-800-3); }
+.exp-seg { flex: 1; margin: 0; }
+.exp-dests { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px; }
+.exp-dest { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--c-bronze-350); background: var(--c-cream-50); color: var(--c-brown-850-3); text-align: left; }
+.exp-dest.is-on { border: 2px solid var(--c-brown-550-3); background: var(--c-cream-100-3); box-shadow: 0 0 0 2px rgba(200, 144, 30, .25); }
+.exp-dest-head { display: flex; align-items: center; gap: 8px; }
+.exp-dest-head b { font-size: 15px; }
+.exp-ring { display: inline-flex; gap: 2px; }
+.exp-ring i { width: 7px; height: 7px; border-radius: 50%; background: var(--c-bronze-250-soft); }
+.exp-ring i.is-on { background: var(--c-brown-700-vivid); }
+.exp-best { margin-left: auto; padding: 1px 8px; border-radius: 9px; background: var(--c-green-650-2); color: var(--c-white-50-soft); font: 800 12px/1.5 system-ui; font-style: normal; }
+.exp-dest-loot { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.exp-res { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
+.exp-res img { width: 22px; height: 22px; object-fit: contain; }
+.exp-res b { font-weight: 800; }
+.exp-res small { font-size: 12px; color: var(--c-brown-700-soft); }
+.exp-go { position: sticky; bottom: 0; display: flex; flex-direction: column; gap: 4px; padding: 8px 0 2px; background: linear-gradient(rgba(251, 243, 223, 0), var(--c-cream-50-soft) 30%); }
+.exp-go-btn { max-width: none; width: 100%; min-height: 44px; font-size: 14px; }
+.exp-go-btn:disabled { opacity: .5; }
+.exp-why { font-size: 12px; color: #8a3a0c; text-align: center; }
+.exp-hint { font-size: 12px; color: var(--c-brown-700-soft); text-align: center; }
+.exp-last { margin: 0 0 8px; padding: 6px 8px; border-radius: 10px; background: rgba(63, 143, 63, .08); border: 1px solid rgba(63, 143, 63, .3); }
+.exp-last small { font-size: 12px; font-weight: 700; color: var(--c-green-750-soft); }
+.exp-empty { padding: 12px; font-size: 13px; color: var(--c-brown-700-soft); text-align: center; }
+
+/* ===== E-1 : feuille Caravane (choix du marché) ===== */
+.exp-worlds { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 0 10px; }
+.exp-world { position: relative; height: 84px; padding: 0; border-radius: 12px; border: 2px solid var(--c-bronze-400-2); background-size: cover; background-position: center; overflow: hidden; }
+.exp-world.is-on { border-color: var(--c-brown-550-3); box-shadow: 0 0 0 3px rgba(200, 144, 30, .45); }
+.exp-world:not(.is-on) { filter: saturate(.5) brightness(.85); }
+.exp-world-txt { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; padding: 14px 8px 6px; background: linear-gradient(transparent, rgba(20, 12, 4, .85)); color: var(--c-cream-150-vivid); text-align: left; }
+.exp-world-txt b { font-size: 14px; }
+.exp-world-txt small { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--c-cream-200); }
+.exp-world-txt small img { width: 16px; height: 16px; object-fit: contain; }
+
+/* Fiche de la Halle : renvoi vers la Caravane (Campement › Expéditions) */
+.vb-hall-caravan { margin: 0 0 10px; }
+.vb-hall-caravan.is-collect { border-color: var(--c-green-650-2); background: var(--c-cream-50-soft); }
+/* v3.426.1 : une seule carte atteinte — la vignette sur toute la largeur, sans effet « non choisi ». */
+.exp-worlds.is-single { grid-template-columns: 1fr; }
+.exp-worlds.is-single .exp-world { height: 72px; }

@@ -1,13 +1,15 @@
 "use strict";
-/* ui/caravan-view.js — v3.419.0 (lot E-2) : la Caravane, dans la feuille de la Halle marchande
-   (segment « Caravane »). Atelier validé : atelier-caravane.html, version C1 « Surplus auto ».
+/* ui/caravan-view.js — v3.419.0 (lot E-2) : la Caravane. Atelier validé : atelier-caravane.html,
+   version C1 « Surplus auto ». v3.426.0 (chantier Expéditions) : elle quitte la feuille de la Halle
+   pour Campement › Expéditions (feuille « Caravane », ui/expeditions-view.js), et l'on choisit
+   son MARCHÉ (Forêt, Désert) sans changer de monde.
 
    Trois moments :
      - au départ  : trois trajets (Court / Moyen / Long), le chargement calculé, « Partir » ;
      - en route   : la piste, le compte à rebours, les chances du trajet Long ;
      - de retour  : le butin et « Décharger ».
 
-   La feuille vit dans #village-modal-root (voir village-building-view.js). Le compte à
+   La feuille vit dans #exp-sheet-root (ui/expeditions-view.js). Le compte à
    rebours est tenu par refreshCaravanDOM(), appelé chaque seconde depuis
    ProductionManager.updateDOM() → refreshProductionSheetDOM(). Logique : CaravanManager. */
 
@@ -27,10 +29,25 @@ function selectCaravanTrip(tripId) {
 }
 window.selectCaravanTrip = selectCaravanTrip;
 
+/* v3.426.0 : marché choisi (mapId), mémorisé sur l'appareil comme le trajet. */
+function getCaravanSelectedMarket() {
+  var list = CaravanManager.getMarkets();
+  if (!list.length) return null;
+  var want = (window.Prefs && typeof Prefs.getValue === "function") ? Prefs.getValue("caravanMarket") : null;
+  var cur = window.PatrolManager ? PatrolManager.currentMapId() : null;
+  return list.filter(function (m) { return m.mapId === want; })[0] || list.filter(function (m) { return m.mapId === cur; })[0] || list[0];
+}
+
+function selectCaravanMarket(mapId) {
+  if (window.Prefs && typeof Prefs.setValue === "function") Prefs.setValue("caravanMarket", mapId);
+  rerenderCaravanSheet();
+}
+window.selectCaravanMarket = selectCaravanMarket;
+
+function caravanMarketWorld() { var m = getCaravanSelectedMarket(); return m ? m.world : undefined; }
+
 function rerenderCaravanSheet() {
-  if (typeof openVillageBuildingId !== "undefined" && openVillageBuildingId === "hall" && typeof openVillageBuildingSheet === "function") {
-    openVillageBuildingSheet("hall");
-  }
+  if (typeof renderExpeditionsSheet === "function") renderExpeditionsSheet(); // v3.426.0
 }
 
 /* Noms des trajets, en toutes lettres pour l'audit de traduction. */
@@ -40,7 +57,7 @@ function caravanTripLabel(t) {
 }
 
 function caravanRareIcon() {
-  var k = CaravanManager.getRareKey();
+  var k = CaravanManager.getRareKey(caravanMarketWorld());
   return k ? WAREHOUSE_RESOURCES[k].icon : "";
 }
 
@@ -48,10 +65,30 @@ function caravanGoldHTML(n) {
   return '<img class="car-gold" src="images/Icons/gold_icon.png" alt=""> ' + formatNumber(n);
 }
 
-/* Bannière de piste : celle du Désert quand on y est, la Forêt sinon. */
+/* Bannière de piste : celle du monde du marché (en route : celui du départ). */
+function caravanRoadImageFor(world) {
+  return world >= 1 ? "images/Maps/parcours/desert_route.jpg" : "images/Maps/parcours/foret_quetes.jpg";
+}
 function caravanRoadImage() {
-  var w = window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0;
-  return w >= 1 ? "images/Maps/parcours/desert_route.jpg" : "images/Maps/parcours/foret_quetes.jpg";
+  var c = CaravanManager.get();
+  var w = (c && typeof c.world === "number") ? c.world : caravanMarketWorld();
+  return caravanRoadImageFor(typeof w === "number" ? w : (window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0));
+}
+
+/* v3.426.0 : choix du marché, en vignettes (comme le monde d'une patrouille). */
+function buildCaravanMarketsHTML() {
+  var list = CaravanManager.getMarkets();
+  if (!list.length) return "";
+  var sel = getCaravanSelectedMarket();
+  // v3.426.1 (retour Seb) : le marché reste visible même s'il n'y en a qu'un.
+  var h = '<div class="car-h6">' + _t("Marché") + '</div><div class="exp-worlds' + (list.length === 1 ? ' is-single' : '') + '">';
+  list.forEach(function (m) {
+    var rk = CaravanManager.getRareKey(m.world), rd = rk ? WAREHOUSE_RESOURCES[rk] : null;
+    h += '<button type="button" class="exp-world' + (sel && sel.mapId === m.mapId ? ' is-on' : '') + '" onclick="selectCaravanMarket(\'' + m.mapId + '\')" style="background-image:url(\'' + caravanRoadImageFor(m.world) + '\')">'
+      + '<span class="exp-world-txt"><b>' + esc(_td(m.name)) + '</b>'
+      + (rd ? '<small><img src="' + rd.icon + '" alt="">' + esc(_t("Long : {x}", { x: _td(rd.name) })) + '</small>' : '') + '</span></button>';
+  });
+  return h + '</div>';
 }
 
 function buildCaravanTripsHTML(sel) {
@@ -80,7 +117,8 @@ function buildCaravanTripsHTML(sel) {
 
 function buildCaravanChancesHTML(t) {
   if (!(t.rareChance > 0 || t.itemChance > 0)) return "";
-  var rk = CaravanManager.getRareKey();
+  var c = CaravanManager.get();
+  var rk = CaravanManager.getRareKey(c && typeof c.world === "number" ? c.world : caravanMarketWorld());
   var h = '<div class="car-hope">';
   if (t.rareChance > 0 && rk) h += '<span><img src="' + WAREHOUSE_RESOURCES[rk].icon + '" alt="">'
     + esc(_t("{p} % : {x}", { p: Math.round(t.rareChance * 100), x: _td(WAREHOUSE_RESOURCES[rk].name) })) + '</span>';
@@ -95,7 +133,7 @@ function buildCaravanDepartHTML() {
   var units = CaravanManager.getLoadUnits(load), cap = CaravanManager.getCapacity(sel);
   var gold = CaravanManager.getLoadGold(load, sel);
 
-  var h = '<div class="car-h6">' + _t("Trajet") + '</div>' + buildCaravanTripsHTML(sel);
+  var h = buildCaravanMarketsHTML() + '<div class="car-h6">' + _t("Trajet") + '</div>' + buildCaravanTripsHTML(sel);
   h += buildCaravanChancesHTML(t);
 
   h += '<div class="car-load"><div class="car-load-h"><b>' + _t("Chargement") + '</b><span>'
@@ -155,7 +193,7 @@ function buildCaravanBackHTML() {
   return h;
 }
 
-/* Segment « Caravane » de la feuille de la Halle. */
+/* Contenu de la feuille « Caravane » (Campement › Expéditions). */
 function buildCaravanHTML() {
   if (!window.CaravanManager || !CaravanManager.isAvailable()) return "";
   if (CaravanManager.isBack()) return '<div class="car" data-car="back">' + buildCaravanBackHTML() + '</div>';
@@ -165,7 +203,7 @@ function buildCaravanHTML() {
 window.buildCaravanHTML = buildCaravanHTML;
 
 function departCaravanFromSheet() {
-  if (CaravanManager.depart(getCaravanSelectedTrip())) {
+  if (CaravanManager.depart(getCaravanSelectedTrip(), caravanMarketWorld())) {
     rerenderCaravanSheet();
     if (typeof renderPanel === "function") renderPanel(); // stocks de l'Entrepôt, pastilles
   }
@@ -183,7 +221,7 @@ window.unloadCaravanFromSheet = unloadCaravanFromSheet;
 
 /* v3.420.0 (E-3) : la caravane sur la carte vivante de son monde. Aller vers le marché la
    première moitié du trajet, retour la seconde ; rentrée, elle attend au village avec son
-   ruban. La toucher ouvre la Halle. */
+   ruban. La toucher ouvre sa feuille, dans Campement › Expéditions (v3.426.0). */
 function buildLivingMapCaravanHTML(mapId) {
   if (!window.CaravanManager || CaravanManager.getMapId() !== mapId) return "";
   var map = LIVING_MAPS[mapId], pos = CaravanManager.getMapPosition(mapId);
@@ -199,12 +237,11 @@ function buildLivingMapCaravanHTML(mapId) {
 }
 window.buildLivingMapCaravanHTML = buildLivingMapCaravanHTML;
 
-/* De la carte (ou d'ailleurs) vers la feuille de la Halle, segment Caravane. */
+/* De la carte (ou de la Halle) vers sa feuille, dans Campement › Expéditions (v3.426.0). */
 function goToCaravan() {
   if (typeof isLivingMapOpen === "function" && isLivingMapOpen() && typeof closeLivingMap === "function") closeLivingMap();
-  if (typeof switchTab === "function") switchTab("village");
-  hallSheetSegment = "caravan";
-  if (typeof openVillageBuildingSheet === "function") openVillageBuildingSheet("hall");
+  if (typeof closeVillageBuildingSheet === "function" && typeof openVillageBuildingId !== "undefined" && openVillageBuildingId) closeVillageBuildingSheet();
+  if (typeof goToExpeditions === "function") goToExpeditions("caravan");
 }
 window.goToCaravan = goToCaravan;
 
@@ -229,9 +266,9 @@ function refreshCaravanDOM() {
   var arrived = CaravanManager.checkArrival();
   if (typeof document === "undefined") return;
   refreshLivingMapCaravanDOM(arrived); // v3.420.0 : la carte vivante, si elle est ouverte
-  var box = document.querySelector ? document.querySelector("#village-modal-root .car") : null;
+  var box = document.querySelector ? document.querySelector("#exp-sheet-root .car") : null;
   if (!box) {
-    if (arrived && game.activeTab === "village" && typeof renderPanel === "function") renderPanel(); // ruban « De retour »
+    if (arrived && (game.activeTab === "village" || game.activeTab === "campement") && typeof renderPanel === "function") renderPanel(); // ruban « De retour », tableau des départs
     return;
   }
   var state = box.getAttribute("data-car");

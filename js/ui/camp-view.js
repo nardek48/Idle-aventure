@@ -82,10 +82,11 @@ window.toggleCampRegenHelp = toggleCampRegenHelp;
 /* v3.411.0 : onglet ouvert du Campement (retenu pendant la session). */
 var CAMP_TABS = [
   { key: "missions", label: _t("Missions"), icon: "images/Icons/quests/quest_list.png" },
-  { key: "depart", label: _t("Départ"), icon: "images/Icons/subtabs/dungeon.png" },
+  { key: "depart", label: _t("Expéditions"), icon: "images/Icons/quests/start_expedition.png" }, // v3.426.0 : était « Départ »
   { key: "grimoire", label: _t("Grimoire"), icon: "images/Icons/codex/codex_lore.png" }
 ];
 var campTab = "missions";
+var campShownTab = null; // v3.426.0 : l'onglet réellement affiché au dernier rendu
 function setCampTab(tab) {
   campTab = tab;
   if (typeof renderPanel === "function") renderPanel();
@@ -193,7 +194,8 @@ function buildCampHTML(tab) {
   mh += '</div>';
   tabsHTML.missions = mh;
   // v3.244.0 (chantier Navigation, décision Seb) : Donjon et Carte du monde quittent le menu ☰ pour le bloc « Expédition »
-  var dep = buildCampPreparationDoorsHTML() + buildCampExpeditionDoorsHTML();
+  // v3.426.0 (chantier Expéditions) : l'onglet devient le tableau des départs (ui/expeditions-view.js)
+  var dep = (typeof buildExpeditionsBoardHTML === "function") ? buildExpeditionsBoardHTML() : "";
   if (dep) tabsHTML.depart = dep;
   // v3.210.0 (décision Seb) : raccourci vers le Grimoire, même verrou que l'ancienne entrée de menu.
   if (typeof isTabUnlocked !== "function" || isTabUnlocked("grimoire")) {
@@ -222,14 +224,17 @@ function buildCampHTML(tab) {
   var cur = tabsHTML[want] ? want : order[0].key;
   if (order.length > 1) {
     var claimable = window.MissionBoard ? MissionBoard.top(3).filter(function (m) { return !!m.claim; }).length : 0;
+    var toCollect = (typeof countExpeditionsToCollect === "function") ? countExpeditionsToCollect() : 0; // v3.426.0
     h += '<div class="kseg is-stack camp-tabs">';
     order.forEach(function (t) {
       h += '<button type="button" class="' + (cur === t.key ? 'is-on' : '') + '" onclick="setCampTab(\'' + t.key + '\')">'
         + '<img src="' + t.icon + '" alt=""><span>' + esc(t.label) + '</span>'
-        + (t.key === "missions" && claimable ? '<span class="kseg-dot">' + claimable + '</span>' : '') + '</button>';
+        + (t.key === "missions" && claimable ? '<span class="kseg-dot">' + claimable + '</span>' : '')
+        + (t.key === "depart" && toCollect ? '<span class="kseg-dot is-green">' + toCollect + '</span>' : '') + '</button>';
     });
     h += '</div>';
   }
+  campShownTab = cur; // v3.426.0 : lu par renderPanel (bulles masquées sur Expéditions)
   h += tabsHTML[cur];
 
   // v3.181.0 (décision Seb) : carte « Accès rapide » supprimée — la nav du
@@ -241,87 +246,6 @@ function buildCampHTML(tab) {
 
 window.buildCampHTML = buildCampHTML;
 
-/* v3.250.0 (bug remonté par Seb) — PORTE DE LA BOUTIQUE.
-   Le lot Navigation N-1 (v3.244.0) a retiré la Boutique du menu ☰ en prévision du lot N-2,
-   qui devait l'installer dans les bâtiments du Village. Entre les deux, l'écran n'avait plus
-   AUCUNE porte accessible en début de partie : les seuls renvois vivent dans les fiches de
-   l'Apothicaire (niveau > 0) et de la Taverne, deux bâtiments de rang 2 qui exigent le Village
-   — débloqué à forest_06. Or forest_04 débloque `shop` et demande « faire 1 achat en boutique » :
-   la chaîne d'Histoire était bloquée à la 4e étape sur une partie neuve, et les potions de soin
-   (décisives : 98 % d'échec sans, 0 % avec, cf. sim/forecast-calibration-bench.js) étaient
-   inatteignables.
-
-   La porte vit au Campement, comme celle du Grimoire : c'est le lieu où l'on prépare sa sortie.
-   Transitoire — quand la Halle et l'Apothicaire porteront les boutiques (lot N-2), elle pointera
-   vers eux ou disparaîtra. */
-function buildCampPreparationDoorsHTML() {
-  var unlocked = function (t) { return typeof isTabUnlocked !== "function" || isTabUnlocked(t); };
-  if (!unlocked("shop")) return "";
-
-  var potions = 0;
-  if (window.PotionManager && typeof PotionManager.getHealingStock === "function") {
-    (window.HEALING_POTIONS_DB || []).forEach(function (po) { potions += Number(PotionManager.getHealingStock(po.id) || 0); });
-  }
-
-  var h = '<div class="camp-card camp-expedition-card">';
-  h += '<div class="camp-card-title"><img class=ico-inline src=images/Icons/subtabs/potions.png> ' + _t("Préparer") + '</div>';
-  h += '<div class="camp-doors">';
-
-  h += '<button type="button" class="camp-door" onclick="goToPotions()">';
-  h += '<img class="camp-door-ico" src="images/Icons/subtabs/potions.png" alt="">';
-  h += '<span class="camp-door-txt"><span class="camp-door-t">' + _t("Potions") + '</span>';
-  h += '<span class="camp-door-s">' + (potions > 0 ? _t("{n} en réserve", { n: potions }) : _t("aucune en réserve")) + '</span></span>';
-  if (potions > 0) h += '<span class="camp-door-badge kbadge kbadge-round"><span>' + potions + '</span></span>';
-  h += '<span class="camp-door-chev">›</span>';
-  h += '</button>';
-
-  h += '</div></div>';
-  return h;
-}
-window.buildCampPreparationDoorsHTML = buildCampPreparationDoorsHTML;
-
-/* v3.244.0 : deux portes côte à côte — Donjon (tickets en pastille) et Carte du monde
-   (monde courant · aventure). Chacune n'apparaît que si son onglet est débloqué ; si
-   aucune ne l'est, le bloc entier reste absent. */
-function buildCampExpeditionDoorsHTML() {
-  var unlocked = function (t) { return typeof isTabUnlocked !== "function" || isTabUnlocked(t); };
-  var showDungeon = unlocked("dungeon");
-  var showMap = unlocked("map");
-  if (!showDungeon && !showMap) return "";
-
-  var h = '<div class="camp-card camp-expedition-card">';
-  h += '<div class="camp-card-title"><img class=ico-inline src=images/Icons/quests/start_expedition.png> ' + _t("Expédition") + '</div>';
-  h += '<div class="camp-doors">';
-
-  if (showDungeon) {
-    if (window.DungeonManager && typeof DungeonManager.checkTicketReset === "function") DungeonManager.checkTicketReset();
-    // v3.358.0 (D7) : sorties du jour, tous donjons ouverts confondus
-    var tickets = (window.DUNGEONS || []).filter(function (dg) { return DungeonManager.isUnlocked(dg.id); })
-      .reduce(function (t, dg) { return t + DungeonManager.getRunsLeft(dg.id); }, 0);
-    var running = !!(game.dungeonRun && game.dungeonRun.active);
-    h += '<button type="button" class="camp-door" onclick="switchTab(\'dungeon\')">';
-    h += '<img class="camp-door-ico" src="images/Icons/subtabs/dungeon.png" alt="">';
-    h += '<span class="camp-door-txt"><span class="camp-door-t">' + _t("Donjon") + '</span>';
-    h += '<span class="camp-door-s">' + (running ? _t("En cours") : _tn(tickets, "{n} sortie", "{n} sorties")) + '</span></span>';
-    if (tickets > 0 && !running) h += '<span class="camp-door-badge kbadge kbadge-round"><span>' + tickets + '</span></span>';
-    h += '<span class="camp-door-chev">›</span>';
-    h += '</button>';
-  }
-
-  if (showMap) {
-    var world = (window.WorldManager && typeof WorldManager.getWorld === "function") ? WorldManager.getWorld() : null;
-    h += '<button type="button" class="camp-door" onclick="switchTab(\'map\')">';
-    h += '<img class="camp-door-ico" src="images/Icons/menu_icons/map_menu.png" alt="">';
-    h += '<span class="camp-door-txt"><span class="camp-door-t">' + _t("Carte") + '</span>';
-    // Nom du monde seul : « Forêt enchantée · 1/8 » se coupait à 390 px.
-    h += '<span class="camp-door-s">' + esc(world && world.name ? _td(world.name) : _t("Monde")) + '</span></span>';
-    h += '<span class="camp-door-chev">›</span>';
-    h += '</button>';
-  }
-
-  h += '</div>';
-  h += '</div>';
-  return h;
-}
-window.buildCampExpeditionDoorsHTML = buildCampExpeditionDoorsHTML;
+/* v3.426.0 (chantier Expéditions) : les portes Potions (v3.250.0), Donjon et Carte (v3.244.0) de
+   l'ancien onglet « Départ » sont dans le tableau des départs (ui/expeditions-view.js). */
 
