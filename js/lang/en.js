@@ -3094,7 +3094,7 @@ I18n.register("en", {
   "Terminer la quête d'aventure « Prouver sa valeur »": "Complete the adventure quest “Prove your worth”",
   "Terminer « La Meute Affamée »": "Complete “The Hungry Pack”",
   "Terminer l'expédition « La source tarie » (Puits)": "Complete the expedition “The dried-up spring” (Well)",
-  "Fabriquer 1 Petite ration et terminer l'expédition « Le sentier obstrué »": "Craft 1 Small ration and complete the expedition “The blocked trail”",
+  "Avoir 1 Petite ration et terminer l'expédition « Le sentier obstrué »": "Have 1 Small ration and complete the expedition “The blocked trail”",
   "Terminer l'expédition « La veine instable » (Carrière)": "Complete the expedition “The unstable vein” (Quarry)",
   "Libérer un secteur de la carte de la Forêt": "Free a sector of the Forest map",
   "Terminer « Franchir la Lisière » : 9 ennemis puis le Roi Slime, d'une traite": "Complete “Cross the Forest Edge”: 9 enemies then the Slime King, in one go",
@@ -3180,7 +3180,7 @@ I18n.register("en", {
   "La Boutique vend des potions contre de l'or.": "The Shop sells potions for gold.",
   "Potions de soin : Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 400 or). Utilisables en combat comme une action à part entière — elles consomment ton tour.": "Healing potions: Minor (35% HP, 150 gold) or Major (60% HP, 400 gold). Usable in combat as a full action — they use up your turn.",
   "Maximum 2 potions par sortie — pense à te ménager pour la suite du combat.": "Maximum 2 potions per run — remember to save something for the rest of the fight.",
-  "Cette expédition consomme une Petite ration — il faut d'abord la fabriquer avant de partir.": "This expedition uses up a Small ration — you need to craft it before setting out.",
+  "Cette expédition consomme une Petite ration — la source t'en a donné une. Les suivantes, il faudra les fabriquer.": "This expedition uses up a Small ration — the spring gave you one. You'll have to craft the next ones.",
   "Rends-toi au Village, dans l'atelier Cuisine de camp (bâtiment Chasse).": "Go to the Village, to the Camp Kitchen workshop (Hunting Lodge building).",
   "Choisis la recette Petite ration (8 Viande + 4 Eau) et clique sur Fabriquer.": "Choose the Small ration recipe (8 Meat + 4 Water) and tap Craft.",
   "Une fois la ration en stock, reviens sur ce tableau et lance l'expédition — elle la consommera automatiquement.": "Once the ration is in stock, come back to this board and launch the expedition — it will use the ration automatically.",
@@ -4250,4 +4250,8 @@ I18n.register("en", {
   "Son trait d'élite va compter triple pendant quelques rounds.": "Its elite trait will count triple for a few rounds.",
   "Il ne viendra pas à toi : vise-le en premier si l'équipe souffre.": "It won't come to you: target it first if the team is suffering.",
   "Tiens bon ou abrège : le pic ne dure pas.": "Hold on or finish it fast: the spike doesn't last.",
+  // js/ui/pa2-view.js — v3.427.2 : besace du dernier départ
+  "Comme la dernière fois": "Same as last time",
+  "Besace reprise.": "Bag restored.",
+  "Besace reprise. Manque : {x}.||Besace reprise. Manquent : {x}.": ["Bag restored. Missing: {x}.", "Bag restored. Missing: {x}."],
 });

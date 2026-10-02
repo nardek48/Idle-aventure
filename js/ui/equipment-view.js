@@ -584,18 +584,20 @@ window.openInventorySettings = openInventorySettings;
 window.closeInventorySettings = closeInventorySettings;
 
 /* v3.322.0 (O2) : confirmations d'Offrande. Les noms des fonctions sont gardés (appelants). */
-function confirmSellItem(uid) {
+/* v3.427.1 : `after` (facultatif) est appelé une fois l'Offrande faite — l'écran Héros s'en sert pour
+   refermer la fiche de l'objet et revenir au sac (retour Seb). */
+function confirmSellItem(uid, after) {
   var item = (Array.isArray(game.inventory) ? game.inventory : []).find(function (i) { return i.uid === uid; });
   var itemName = item ? _td(item.name) : _t("cet objet");
   var value = (item && window.MemoryManager) ? MemoryManager.getOfferingValue(item) : 0;
-  if (typeof showConfirmModal !== "function") { EquipmentManager.sell(uid); return; }
+  if (typeof showConfirmModal !== "function") { EquipmentManager.sell(uid); if (typeof after === "function") after(); return; }
   showConfirmModal(
     _t("Offrir cet objet ?"),
     value > 0
       ? _t("Tu donnes {x} à l'Aether, qui t'en rendra {n}. L'objet disparaît.", { x: itemName, n: formatNumber(value) })
       : _t("{x} a été acheté : il ne porte aucun souvenir et ne rendra pas d'Aether. L'objet disparaît.", { x: itemName }),
     "images/Icons/system/ascension.png",
-    function () { EquipmentManager.sell(uid); }
+    function () { EquipmentManager.sell(uid); if (typeof after === "function") after(); }
   );
 }
 window.confirmSellItem = confirmSellItem;

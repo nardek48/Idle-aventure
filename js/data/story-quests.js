@@ -43,7 +43,7 @@ var STORY_REWARDS = {
   forest_05: { gold: 450, potions: { potion_power: 1 } }, // v3.115.0 : découverte des potions per-run
   forest_06: { gold: 200, resources: { viande: 15 } },
   forest_brume: { gold: 150, resources: { seve_aeswyn: 3 } }, // v3.259.0 (C-4) : les 3 Sève que réclamera l'offrande aux braises (forest_15)
-  forest_07: { gold: 175, resources: { eau: 5 } },
+  forest_07: { gold: 175, resources: { eau: 5, petite_ration: 1 } }, // v3.427.1 (retour Seb) : une Petite ration pour enchaîner sur Le sentier obstrué
   forest_08: { gold: 225 },
   forest_09: { gold: 225 },
   forest_crossing: { gold: 300 }, // v3.109.0 : Franchir la Lisière (placeholder, même échelle que 08/09)
@@ -382,7 +382,7 @@ var STORY_QUESTS = {
             { who: "Brannoc", text: "Il en est venu un autre, avant toi. Il n'est pas revenu. Bon. Pousse, je tire." }
           ]
         },
-        objectiveLabel: "Fabriquer 1 Petite ration et terminer l'expédition « Le sentier obstrué »",
+        objectiveLabel: "Avoir 1 Petite ration et terminer l'expédition « Le sentier obstrué »",
         unlockTabs: [],
         reward: STORY_REWARDS.forest_08,
         linkTo: { section: "expedition", cardId: "scene_sentier_obstrue" }, // v3.122.0 (Lot S2a) : migrée vers le scene-engine
@@ -393,7 +393,7 @@ var STORY_QUESTS = {
           icon: "images/Icons/subtabs/inventory.png",
           title: "Fabriquer une ration",
           points: [
-            { icon: "images/Icons/subtabs/inventory.png", text: "Cette expédition consomme une Petite ration — il faut d'abord la fabriquer avant de partir." },
+            { icon: "images/Icons/subtabs/inventory.png", text: "Cette expédition consomme une Petite ration — la source t'en a donné une. Les suivantes, il faudra les fabriquer." },
             { icon: "images/Icons/quests/mission_construction.png", text: "Rends-toi au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
             { icon: "images/Icons/quests/ration_reward.png", text: "Choisis la recette Petite ration (8 Viande + 4 Eau) et clique sur Fabriquer." },
             { icon: "images/Icons/quests/quest_adventure.png", text: "Une fois la ration en stock, reviens sur ce tableau et lance l'expédition — elle la consommera automatiquement." }

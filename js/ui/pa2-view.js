@@ -237,7 +237,13 @@ function buildPa2PrepHTML(run) {
     h += '<div class="pa2-bag" id="pa2-bag">' + cells + '</div>';
     h += '<div class="pa2-bag-meta"><span>' + esc(_t("{a} / {b} places", { a: used, b: size })) + '</span><span>' +
       esc(run.bag.length ? _t("Touche un objet pour le retirer") : _t("Touche une case pour la remplir")) + '</span></div>';
-    h += '<p class="pa2-small pa2-dim">' + esc(_t("Les rations viennent de l'Entrepôt ; celles que tu ne manges pas y retournent.")) + '</p></div>';
+    h += '<p class="pa2-small pa2-dim">' + esc(_t("Les rations viennent de l'Entrepôt ; celles que tu ne manges pas y retournent.")) + '</p>';
+    // v3.427.2 (retour Seb, option A) : la besace du dernier départ, remise en un toucher
+    var last = pa2LastBag(run);
+    if (last.length && pa2BagKey(run.bag) !== pa2BagKey(last)) {
+      h += '<button type="button" class="kbtn is-sec pa2-lastbag" onclick="pa2ReuseLastBag()">' + pa2Img(PA2_ICONS.bag) + esc(_t("Comme la dernière fois")) + '</button>';
+    }
+    h += '</div>';
     if (par) h += '<button type="button" class="kbtn primary" onclick="pa2Depart()">' + esc(tpl.departLabel ? _td(tpl.departLabel) : _t("Partir")) + '</button>';
     else h += '<button type="button" class="kbtn primary" onclick="pa2PrepStep(\'pacts\')">' + esc(_t("Choisir mes pactes")) + '</button>';
   } else {
@@ -298,9 +304,37 @@ function pa2RemoveItem(idx) {
 }
 function pa2TogglePact(id) { Pa2Run.togglePact(id); pa2Rerender(); }
 
+/* v3.427.2 (retour Seb, option A) : « Comme la dernière fois ». La besace du dernier départ est retenue
+   SUR L'APPAREIL (Prefs, comme le marché de la Caravane), par monde — et par parcours pour les parcours
+   à besace. Rien n'entre dans la sauvegarde. */
+function pa2LastBagPref(run) { return "pa2LastBag:" + (run.parcours ? run.templateId : run.worldId); }
+function pa2BagKey(bag) { return (bag || []).slice().sort().join(","); }
+function pa2LastBag(run) {
+  if (!run || !window.Prefs || typeof Prefs.getValue !== "function") return [];
+  var v = Prefs.getValue(pa2LastBagPref(run));   // Prefs range du texte : « corde,petite_ration,… »
+  return (typeof v === "string" && v) ? v.split(",").filter(function (id) { return !!PA2_ITEMS[id]; }) : [];
+}
+function pa2ReuseLastBag() {
+  var run = Pa2Run.getRun();
+  if (!run || run.status !== PA2_STATUS.prep) return;
+  for (var i = run.bag.length - 1; i >= 0; i--) Pa2Run.removeItem(i);   // on repart de la besace retenue, rations rendues
+  var missing = [];
+  pa2LastBag(run).forEach(function (id) {
+    var r = Pa2Run.addItem(id);
+    if (!r.ok) missing.push(pa2ItemName(id));
+  });
+  if (typeof showToast === "function") {
+    showToast(missing.length ? _tn(missing.length, "Besace reprise. Manque : {x}.", "Besace reprise. Manquent : {x}.", { x: missing.join(", ") }) : _t("Besace reprise."), missing.length ? 2600 : 1400);
+  }
+  pa2Rerender();
+}
+window.pa2ReuseLastBag = pa2ReuseLastBag;
+
 function pa2Depart() {
+  var run = Pa2Run.getRun(), bag = run ? run.bag.slice() : [], key = run ? pa2LastBagPref(run) : null;
   var r = Pa2Run.depart();
   if (!r.ok) { if (typeof showToast === "function") showToast(r.reason, 2200); return; }
+  if (key && bag.length && window.Prefs && typeof Prefs.setValue === "function") Prefs.setValue(key, bag.join(","));
   pa2Rerender();
 }
 function pa2CancelPrep() {

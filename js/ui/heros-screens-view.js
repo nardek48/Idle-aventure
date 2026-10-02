@@ -367,8 +367,31 @@
      ========================================================= */
   HEROS_SHEETS.slot = { title: _t("Emplacement"), icon: "images/Icons/subtabs/equipment.png", build: function () {
     return '<div class="hs-sheet">' + buildEquipDetailPanelHTML() + buildCompatibleItemsListHTML(selectedEquipSlot) + '</div>'; } };
+  /* v3.427.1 (retour Seb) : après Équiper ou Offrir, on revient directement au sac — la fiche se
+     referme au lieu de rester ouverte sur « Aucun objet sélectionné ». Les boutons du panneau partagé
+     (equipment-view.js) sont redirigés ici, sans toucher au panneau lui-même. */
   HEROS_SHEETS.item = { title: _t("Objet"), icon: "images/Icons/subtabs/inventory.png", build: function () {
-    return '<div class="hs-sheet">' + buildUnifiedDetailPanelHTML(getUnifiedInventoryEntries()) + '</div>'; } };
+    var panel = buildUnifiedDetailPanelHTML(getUnifiedInventoryEntries())
+      .replace(/onclick="EquipmentManager\.equip\('([^']*)'\)"/g, 'onclick="herosItemEquip(\'$1\')"')
+      .replace(/onclick="confirmSellItem\('([^']*)'\)"/g, 'onclick="herosItemOffer(\'$1\')"');
+    return '<div class="hs-sheet">' + panel + '</div>'; } };
+
+  function inBag(uid) { return (Array.isArray(game.inventory) ? game.inventory : []).some(function (i) { return i && i.uid === uid; }); }
+  function herosItemEquip(uid) {
+    EquipmentManager.equip(uid);
+    if (!inBag(uid) && herosOpenSheet === "item") closeHerosSheet();   // refusé (classe, expédition) : la fiche reste
+  }
+  function herosItemOffer(uid) {
+    confirmSellItem(uid, function () { if (!inBag(uid) && herosOpenSheet === "item") closeHerosSheet(); });
+  }
+  /* Même retour depuis Équipé › emplacement › comparer › Équiper : on revient à la silhouette. */
+  var origEquipFromCompare = window.equipFromCompareSheet;
+  window.equipFromCompareSheet = function (uid) {
+    if (typeof origEquipFromCompare === "function") origEquipFromCompare(uid);
+    if (!inBag(uid) && herosOpenSheet === "slot") closeHerosSheet();
+  };
+  window.herosItemEquip = herosItemEquip;
+  window.herosItemOffer = herosItemOffer;
   HEROS_SHEETS.companion = { title: _t("Compagnon"), icon: "images/Icons/subtabs/hero_abilities.png", build: function () {
     return '<div class="hs-sheet">' + (openCompanionId ? buildCompanionCardHTML(openCompanionId) : "") + '</div>'; } };
 

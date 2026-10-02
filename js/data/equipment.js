@@ -204,16 +204,18 @@ var EQUIPMENT_SLOT_CONFIG = {
     }
   },
   ring: {
-    stat: "goldMult",
-    decimals: 2,
+    /* v3.427.2 (décision Seb 02/10) : l'or ne jouait que sur les kills, l'anneau devient « précision ».
+       Environ 60 % de l'amulette ; l'or reste en affixe secondaire. Les anneaux existants gardent leur stat. */
+    stat: "critChance",
+    decimals: 0,
     icons: ["ring"],
     names: ["Anneau", "Bague", "Chevalière"],
     ranges: {
-      common: [0.05, 0.10],
-      green: [0.10, 0.18],
-      rare: [0.18, 0.30],
-      epic: [0.30, 0.50],
-      legendary: [0.50, 0.80]
+      common: [1, 2],
+      green: [2, 3],
+      rare: [3, 5],
+      epic: [5, 8],
+      legendary: [8, 12]
     }
   },
   amulet: {
@@ -250,7 +252,7 @@ var EQUIP_SHOP_STARTER = [
   { slot: "helmet", stat: "critMult", value: 0.10, name: "Casque cabossé", icon: "casque" },
   { slot: "gloves", stat: "tapMult", value: 0.10, name: "Gants de marche", icon: "gants" },
   { slot: "boots", stat: "autoDps", value: 2, name: "Bottes éculées", icon: "bottes" },
-  { slot: "ring", stat: "goldMult", value: 0.05, name: "Anneau de cuivre", icon: "ring" },
+  { slot: "ring", stat: "critChance", value: 1, name: "Anneau de cuivre", icon: "ring" },
   { slot: "amulet", stat: "critChance", value: 1, name: "Amulette ternie", icon: "amulet" }
 ];
 
@@ -285,7 +287,7 @@ var AFFIX_POOLS = {
   helmet: { primary: ["critChance", "maxHpPct", "tapMult"], secondary: ["goldMult", "xpMult", "dropChance"] },
   gloves: { primary: ["tapDmg", "critChance", "autoDps"], secondary: ["goldMult", "xpMult", "dropChance"] },
   boots: { primary: ["maxHpPct", "defense", "critMult"], secondary: ["goldMult", "xpMult", "dropChance"] },
-  ring: { primary: ["tapDmg", "critChance", "tapMult"], secondary: ["xpMult", "dropChance"] },
+  ring: { primary: ["tapDmg", "tapMult", "critMult"], secondary: ["goldMult", "xpMult", "dropChance"] }, // v3.427.2 : critChance est la base
   amulet: { primary: ["critMult", "tapMult", "maxHpPct"], secondary: ["goldMult", "xpMult", "dropChance"] }
 };
 

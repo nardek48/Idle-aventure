@@ -50,3 +50,32 @@ Ateliers CB-0 à CB-8 validés par Seb le 02/10/2026. S'applique sur la v3.426.3
 
 ## À supprimer de ton côté
 - Les fichiers de l'atelier : `atelier-combat.html`, `atelier/atelier-combat.js`, `atelier/atelier-combat.css`.
+
+---
+
+# v3.427.1 — Retours de Seb (21 h 29)
+
+- **Héros › Sac** : après **Équiper** ou **Offrir** (une fois confirmé), la fiche de l'objet se referme et on revient directement au sac. Avant, elle restait ouverte sur « Aucun objet sélectionné ». Si l'objet est refusé (arme d'une autre classe, héros en expédition), la fiche reste ouverte.
+- **Héros › Équipé** : même chose en passant par un emplacement (Comparer › Équiper) : retour à la silhouette.
+- **La source tarie** (forest_07) : **+1 Petite ration** en récompense, en plus des 5 Eau, pour enchaîner sur Le sentier obstrué. L'objectif de l'étape suivante devient « Avoir 1 Petite ration et terminer l'expédition « Le sentier obstrué » », et son tutoriel le dit (« la source t'en a donné une ; les suivantes, il faudra les fabriquer »).
+- Code : `confirmSellItem(uid, after)` accepte un rappel après l'Offrande ; l'écran Héros redirige les boutons du panneau d'objet (`herosItemEquip`, `herosItemOffer`) et enveloppe `equipFromCompareSheet`.
+- Harnais : section [200] (4 contrôles). Round **3 882 OK** · parcours 139 · boot 4 · création 44 · campagne A 38 / 38 · i18n 100 %.
+
+---
+
+# v3.427.2 — Besace retenue, anneau de précision (décisions Seb, option A)
+
+## Petites Aventures : « Comme la dernière fois »
+- Dans la préparation, sous la besace : un bouton **Comme la dernière fois** remet les babioles du dernier départ. Il n'apparaît que si la besace actuelle est différente.
+- Retenue **par monde** (ou par parcours), sur l'appareil (préférences, pas la sauvegarde). Enregistrée à chaque départ réussi.
+- S'il manque des babioles au stock, la besace est reprise sans elles et un message le dit (« Besace reprise. Manque : … »).
+
+## Anneau : la critique en base, l'or en affixe
+- La stat de base de l'anneau devient la **chance de critique** (l'or ne jouait que sur l'or des ennemis vaincus). Fourchettes ≈ 60 % de l'amulette : commun 1-2, inhabituel 2-3, rare 3-5, épique 5-8, légendaire 8-12.
+- Affixes de l'anneau : primaires dégâts plats, dégâts %, dégâts critiques ; **l'or rejoint les secondaires** (avec XP et butin). D16 inchangée.
+- Vitrine de départ : l'**Anneau de cuivre** donne +1 % critique.
+- Les anneaux déjà possédés gardent leur stat (or) et leur effet.
+- Banc `plafond-bench` (40 runs, 18 contenus × 3 classes), avant / après : Forêt +1 point de critique, écarts dans le bruit ; fin du Désert avec un anneau inhabituel à 3 (`--ringcrit 3`, nouvelle option du banc) : 2 à 4 rounds de moins sur la Cité, réussites inchangées. Pas d'ajustement.
+
+## Contrôles
+- Harnais : sections [201] (besace) et [202] (anneau, 6 contrôles). Round **3 892 OK** · parcours 139 · boot 4 · création 44 · campagne A 38 / 38 · i18n 3 849 textes, 100 %, 0 orphelin.

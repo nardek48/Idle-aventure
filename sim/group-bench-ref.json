@@ -1,0 +1,65 @@
+{
+  "1|1|knight": {
+    "hpLostPct": 0.4059512195121947,
+    "rounds": 11.083333333333334,
+    "strikeRounds": 10.083333333333334,
+    "deathRate": 0,
+    "samples": 300
+  },
+  "1|1|ranger": {
+    "hpLostPct": 0.41259029927760554,
+    "rounds": 10.4,
+    "strikeRounds": 6.816666666666666,
+    "deathRate": 0,
+    "samples": 300
+  },
+  "1|1|mage": {
+    "hpLostPct": 0.273918322295806,
+    "rounds": 7.246666666666667,
+    "strikeRounds": 4.37,
+    "deathRate": 0,
+    "samples": 300
+  },
+  "2|1|knight": {
+    "hpLostPct": 0.8620000000000001,
+    "rounds": 11.803333333333333,
+    "strikeRounds": 11.026666666666667,
+    "deathRate": 0.22333333333333333,
+    "samples": 300
+  },
+  "2|1|ranger": {
+    "hpLostPct": 0.913034055727555,
+    "rounds": 11.226666666666667,
+    "strikeRounds": 8.11,
+    "deathRate": 0.39666666666666667,
+    "samples": 300
+  },
+  "2|1|mage": {
+    "hpLostPct": 0.6006953642384106,
+    "rounds": 7.956666666666667,
+    "strikeRounds": 5.0633333333333335,
+    "deathRate": 0,
+    "samples": 300
+  },
+  "3|1|knight": {
+    "hpLostPct": 0.9958373983739838,
+    "rounds": 8.856666666666667,
+    "strikeRounds": 8.81,
+    "deathRate": 0.9533333333333334,
+    "samples": 300
+  },
+  "3|1|ranger": {
+    "hpLostPct": 0.999907120743034,
+    "rounds": 8.85,
+    "strikeRounds": 6.57,
+    "deathRate": 0.9966666666666667,
+    "samples": 300
+  },
+  "3|1|mage": {
+    "hpLostPct": 0.8736313465783665,
+    "rounds": 7.58,
+    "strikeRounds": 5.203333333333333,
+    "deathRate": 0.5466666666666666,
+    "samples": 300
+  }
+}

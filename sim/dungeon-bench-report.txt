@@ -1,0 +1,109 @@
+Banc Donjon — 100 runs par cellule · élite générique ×2.4 PV / ×1.1 puissance · cumul +15 %/Marque
+Colonnes : † taux d'échec · v vague moyenne atteinte (16 = boss vaincu) · rounds du run. Potions : 3 soins mineurs, cap 2/sortie.
+
+=== Forêt · fin · Donjon 1 (Tanière) ===
+  Chevalier kit CCCCCCC n4 · héros 434 PV, 41 dég/coup · référence monde : farm 109–140 PV, boss 672 (Seigneur de guerre orc)
+    PV ennemis  v1 37 · v5 46 · v10 58 · v15 54 · boss 826   || élite v5 174 (×3.8) · élite v10 123 (×2.1) · boss/v15 ×15.3
+    Run nu (état actuel)         †10% v15.9 28rd 0.8po          Sève/run 1.8
+    + élites vagues 5/10         †12% v15.9 31rd 0.9po          Sève/run 1.8
+    Traque seule                 †32% v15.7 42rd 1.4po   ×1.15  Sève/run 2.7
+    Colosses seule               †51% v15.5 39rd 1.6po   ×1.15  Sève/run 2.0
+    Fléau seule                  †24% v15.8 30rd 1.3po   ×1.15  Sève/run 3.0
+    Fragilité seule              †29% v15.7 28rd 1.2po   ×1.15  Sève/run 2.8
+    Ascétisme seule              †25% v15.8 28rd 0.0po   ×1.15  Sève/run 3.0
+    Colosses+Traque+Fléau        †76% v15.2 44rd 1.9po   ×1.45  Sève/run 1.9
+    Fragilité+Ascétisme+Fléau    †64% v15.4 23rd 0.0po   ×1.45  Sève/run 2.9
+  Rôdeur    kit CCCCCCC n4 · héros 339 PV, 36 dég/coup · référence monde : farm 109–140 PV, boss 672 (Seigneur de guerre orc)
+    PV ennemis  v1 37 · v5 46 · v10 58 · v15 54 · boss 826   || élite v5 174 (×3.8) · élite v10 123 (×2.1) · boss/v15 ×15.3
+    Run nu (état actuel)         †26% v15.7 27rd 0.9po          Sève/run 1.5
+    + élites vagues 5/10         †18% v15.8 30rd 0.8po          Sève/run 1.6
+    Traque seule                  †8% v15.9 39rd 0.7po   ×1.15  Sève/run 3.7
+    Colosses seule               †71% v15.3 37rd 1.7po   ×1.15  Sève/run 1.2
+    Fléau seule                  †27% v15.7 30rd 1.1po   ×1.15  Sève/run 2.9
+    Fragilité seule              †27% v15.7 26rd 0.9po   ×1.15  Sève/run 2.9
+    Ascétisme seule              †31% v15.7 27rd 0.0po   ×1.15  Sève/run 2.8
+    Colosses+Traque+Fléau        †68% v15.3 44rd 1.4po   ×1.45  Sève/run 2.6
+    Fragilité+Ascétisme+Fléau    †47% v15.5 24rd 0.0po   ×1.45  Sève/run 4.2
+  Mage      kit CCCCCCC n4 · héros 311 PV, 39 dég/coup · référence monde : farm 109–140 PV, boss 672 (Seigneur de guerre orc)
+    PV ennemis  v1 37 · v5 46 · v10 58 · v15 54 · boss 826   || élite v5 174 (×3.8) · élite v10 123 (×2.1) · boss/v15 ×15.3
+    Run nu (état actuel)         †19% v15.8 27rd 0.8po          Sève/run 1.6
+    + élites vagues 5/10         †23% v15.8 30rd 0.8po          Sève/run 1.5
+    Traque seule                 †26% v15.7 39rd 1.0po   ×1.15  Sève/run 3.0
+    Colosses seule               †56% v15.4 36rd 1.4po   ×1.15  Sève/run 1.8
+    Fléau seule                  †28% v15.7 29rd 1.0po   ×1.15  Sève/run 2.9
+    Fragilité seule              †31% v15.7 28rd 1.0po   ×1.15  Sève/run 2.8
+    Ascétisme seule              †29% v15.7 27rd 0.0po   ×1.15  Sève/run 2.8
+    Colosses+Traque+Fléau        †69% v15.3 42rd 1.3po   ×1.45  Sève/run 2.5
+    Fragilité+Ascétisme+Fléau    †53% v15.5 24rd 0.0po   ×1.45  Sève/run 3.8
+
+=== Désert · fin · Donjon 1 (Tanière) ===
+  Chevalier kit CCCGGCC n7 · héros 518 PV, 67 dég/coup · référence monde : farm 307–782 PV, boss 1806 (Djinn des dunes)
+    PV ennemis  v1 29 · v5 46 · v10 45 · v15 54 · boss 766   || élite v5 174 (×3.8) · élite v10 123 (×2.7) · boss/v15 ×14.2
+    Run nu (état actuel)          †0% v16.0 17rd 0.1po          Sève/run 2.0
+    + élites vagues 5/10          †0% v16.0 20rd 0.1po          Sève/run 2.0
+    Traque seule                  †0% v16.0 28rd 0.1po   ×1.15  Sève/run 4.0
+    Colosses seule                †7% v15.9 27rd 0.8po   ×1.15  Sève/run 3.7
+    Fléau seule                   †0% v16.0 20rd 0.4po   ×1.15  Sève/run 4.0
+    Fragilité seule               †0% v16.0 19rd 0.4po   ×1.15  Sève/run 4.0
+    Ascétisme seule               †0% v16.0 19rd 0.0po   ×1.15  Sève/run 4.0
+    Colosses+Traque+Fléau        †22% v15.8 34rd 1.1po   ×1.45  Sève/run 6.2
+    Fragilité+Ascétisme+Fléau    †20% v15.8 18rd 0.0po   ×1.45  Sève/run 6.4
+  Rôdeur    kit CCCGGCC n7 · héros 416 PV, 59 dég/coup · référence monde : farm 307–782 PV, boss 1806 (Djinn des dunes)
+    PV ennemis  v1 29 · v5 46 · v10 45 · v15 54 · boss 766   || élite v5 174 (×3.8) · élite v10 123 (×2.7) · boss/v15 ×14.2
+    Run nu (état actuel)          †0% v16.0 17rd 0.0po          Sève/run 2.0
+    + élites vagues 5/10          †0% v16.0 19rd 0.0po          Sève/run 2.0
+    Traque seule                  †0% v16.0 26rd 0.0po   ×1.15  Sève/run 4.0
+    Colosses seule               †13% v15.9 25rd 0.6po   ×1.15  Sève/run 3.5
+    Fléau seule                   †0% v16.0 19rd 0.1po   ×1.15  Sève/run 4.0
+    Fragilité seule               †0% v16.0 18rd 0.1po   ×1.15  Sève/run 4.0
+    Ascétisme seule               †0% v16.0 19rd 0.0po   ×1.15  Sève/run 4.0
+    Colosses+Traque+Fléau        †32% v15.7 32rd 1.0po   ×1.45  Sève/run 5.4
+    Fragilité+Ascétisme+Fléau     †1% v16.0 18rd 0.0po   ×1.45  Sève/run 7.9
+  Mage      kit CCCGGCC n7 · héros 388 PV, 64 dég/coup · référence monde : farm 307–782 PV, boss 1806 (Djinn des dunes)
+    PV ennemis  v1 29 · v5 46 · v10 45 · v15 54 · boss 766   || élite v5 174 (×3.8) · élite v10 123 (×2.7) · boss/v15 ×14.2
+    Run nu (état actuel)          †0% v16.0 17rd 0.0po          Sève/run 2.0
+    + élites vagues 5/10          †0% v16.0 19rd 0.0po          Sève/run 2.0
+    Traque seule                  †0% v16.0 26rd 0.0po   ×1.15  Sève/run 4.0
+    Colosses seule               †19% v15.8 26rd 0.9po   ×1.15  Sève/run 3.2
+    Fléau seule                   †0% v16.0 19rd 0.1po   ×1.15  Sève/run 4.0
+    Fragilité seule               †0% v16.0 19rd 0.1po   ×1.15  Sève/run 4.0
+    Ascétisme seule               †0% v16.0 19rd 0.0po   ×1.15  Sève/run 4.0
+    Colosses+Traque+Fléau        †31% v15.7 32rd 1.2po   ×1.45  Sève/run 5.5
+    Fragilité+Ascétisme+Fléau     †5% v15.9 18rd 0.0po   ×1.45  Sève/run 7.6
+
+=== Désert · fin · Donjon 2 ===
+  Chevalier kit CCCGGCC n7 · héros 518 PV, 67 dég/coup · référence monde : farm 307–782 PV, boss 1806 (Djinn des dunes)
+    PV ennemis  v1 449 · v5 312 · v10 702 · v15 624 · boss 3064   || élite v5 696 (×2.2) · élite v10 494 (×0.7) · boss/v15 ×4.9
+    Run nu (état actuel)         †92% v15.0 58rd 2.0po
+    + élites vagues 5/10         †98% v14.5 57rd 2.0po
+    Traque seule                †100%  v8.0 48rd 2.0po   ×1.15
+    Colosses seule              †100% v14.5 57rd 2.0po   ×1.15
+    Fléau seule                 †100% v12.9 48rd 2.0po   ×1.15
+    Fragilité seule             †100% v12.9 45rd 2.0po   ×1.15
+    Ascétisme seule             †100% v11.9 41rd 0.0po   ×1.15
+    Colosses+Traque+Fléau       †100%  v6.2 38rd 2.0po   ×1.45
+    Fragilité+Ascétisme+Fléau   †100%  v8.0 25rd 0.0po   ×1.45
+  Rôdeur    kit CCCGGCC n7 · héros 416 PV, 59 dég/coup · référence monde : farm 307–782 PV, boss 1806 (Djinn des dunes)
+    PV ennemis  v1 449 · v5 312 · v10 702 · v15 624 · boss 3064   || élite v5 696 (×2.2) · élite v10 494 (×0.7) · boss/v15 ×4.9
+    Run nu (état actuel)         †80% v15.2 57rd 1.9po
+    + élites vagues 5/10         †90% v15.1 59rd 2.0po
+    Traque seule                †100%  v9.0 54rd 2.0po   ×1.15
+    Colosses seule              †100% v15.0 60rd 2.0po   ×1.15
+    Fléau seule                  †97% v14.9 55rd 1.9po   ×1.15
+    Fragilité seule             †100% v14.9 52rd 1.8po   ×1.15
+    Ascétisme seule              †98% v14.8 51rd 0.0po   ×1.15
+    Colosses+Traque+Fléau       †100%  v7.3 44rd 2.0po   ×1.45
+    Fragilité+Ascétisme+Fléau   †100% v12.1 37rd 0.0po   ×1.45
+  Mage      kit CCCGGCC n7 · héros 388 PV, 64 dég/coup · référence monde : farm 307–782 PV, boss 1806 (Djinn des dunes)
+    PV ennemis  v1 449 · v5 312 · v10 702 · v15 624 · boss 3064   || élite v5 696 (×2.2) · élite v10 494 (×0.7) · boss/v15 ×4.9
+    Run nu (état actuel)         †75% v15.3 53rd 1.9po
+    + élites vagues 5/10         †90% v15.1 55rd 1.9po
+    Traque seule                †100%  v8.5 49rd 2.0po   ×1.15
+    Colosses seule              †100% v15.0 56rd 1.9po   ×1.15
+    Fléau seule                  †98% v14.7 51rd 1.9po   ×1.15
+    Fragilité seule              †99% v14.7 48rd 1.7po   ×1.15
+    Ascétisme seule             †100% v14.6 47rd 0.0po   ×1.15
+    Colosses+Traque+Fléau       †100%  v6.9 39rd 2.0po   ×1.45
+    Fragilité+Ascétisme+Fléau   †100% v11.7 34rd 0.0po   ×1.45
+
+Sortie détaillée : sim/dungeon-bench-out.json
