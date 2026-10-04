@@ -36,7 +36,8 @@ function getHeroSilenceRounds() {
 var FIXED_ENEMY_ARCHETYPES = {
   foresttroll: "shielded",
   bramble: "silenced",
-  sandwarrior: "armored" // v3.302.0 (D1) : le Blindé descend au monde 1, porté par le Guerrier des sables
+  sandwarrior: "armored", // v3.302.0 (D1) : le Blindé descend au monde 1, porté par le Guerrier des sables
+  gargoyle: "armored"     // v3.428.0 (Ruines, U-3) : la Gargouille, lourde, porte le Blindé (le « golem » de RU3)
 };
 
 // v3.105.0 : distance d'approche — rounds avant le contact face à un héros À DISTANCE (arc/magie). 0 = frappe

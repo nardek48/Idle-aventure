@@ -229,6 +229,9 @@ var PA2_OBSTACLE_LINES = {
   puits_effondre: "Le puits s'est effondré sur le chemin. En bas, pas d'eau. Du froid.",
   vent_de_face: "Le vent se lève d'un coup. Il porte du sable, et il ne tourne pas.",
   dalles_ensablees: "Des dalles sous le sable, bien alignées. Quelqu'un a construit une route ici. Elle s'enfonce.",
+  // v3.428.0 (Ruines)
+  route_de_pierre: "Une route de pierre, propre, sans une trace de pas. Des blocs sont tombés dessus cette nuit.",
+  rue_qui_tourne: "La rue tourne là où elle allait tout droit. Le mur d'en face est neuf.",
   // v3.389.0 (chantier P) : les obstacles des quêtes de déblocage
   tronc_deracine: "Un tronc en travers du sentier. Ses racines tiennent encore une motte de terre.",
   troncs_jumeaux: "Deux troncs poussés l'un contre l'autre. Entre eux, à peine la place d'un bras.",

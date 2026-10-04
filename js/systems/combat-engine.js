@@ -346,6 +346,7 @@ var CombatEngine = {
 
     // v3.102.1 : le premier round hors mission ouvre une sortie d'exploration (décision 1a)
     if (window.SortieManager && !SortieManager.isActive()) SortieManager.start(null);
+    if (source === "auto" && window.RiseSystem) RiseSystem.aim(arg && arg.matchedConditionId); // v3.428.0 : réglage « Cible »
 
     var round = game.combatRound;
     round.busy = true;
@@ -836,6 +837,7 @@ var CombatEngine = {
     var e = game.enemy;
     if (!e || !e.stats) return;
     if ((game.heroHp || 0) <= 0) return;
+    if (window.RiseSystem && RiseSystem.onEnemyTurn(e)) return; // v3.428.0 (Ruines) : à terre, il ne frappe pas
     this.prepareEnemy(e);
     e.roundsAlive += 1;
 
@@ -1328,6 +1330,7 @@ var CombatEngine = {
     var potionAuto = (window.PotionAutoManager && typeof PotionAutoManager.pick === "function") ? PotionAutoManager.pick() : null;
     if (potionAuto && this.heroAction("potion", potionAuto, "auto")) return;
 
+    if (window.RiseSystem) RiseSystem.aim(null); // v3.428.0 : la cible d'abord, les conditions la lisent
     var decision = (window.ClassCombatManager && typeof ClassCombatManager.chooseRoundAction === "function")
       ? ClassCombatManager.chooseRoundAction(true)
       : null;
@@ -1460,6 +1463,7 @@ var CombatEngine = {
   },
 
   onHeroDefeated: function () {
+    if (window.RiseSystem && RiseSystem.tryHeroRise()) return; // v3.428.0 (Ruines) : Le seuil
     this.ensureState();
     game.combatRound.continueAttack = false;
     game.silencedRounds = 0;
@@ -1570,6 +1574,7 @@ var CombatEngine = {
   killEnemy: function (enemyArg) {
     var enemy = enemyArg || game.enemy;
     if (!enemy) return;
+    if (window.RiseSystem && RiseSystem.tryRise(enemy)) return; // v3.428.0 (Ruines) : à terre, il se relèvera
     if (window.TalentManager) TalentManager.onEnemyKilled(enemy); // v3.327.0 : Soif du bourreau, Brasier
 
     if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {

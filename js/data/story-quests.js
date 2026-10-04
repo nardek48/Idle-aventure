@@ -72,7 +72,13 @@ var STORY_REWARDS = {
   // v3.361.0 à v3.363.0 (acte IV) : provisoires, calés sur la suite de l'acte III (banc « or par acte » à refaire)
   desert_16: { gold: 1900 },
   desert_17: { gold: 2500 },
-  desert_18: { gold: 3000, uniqueLoot: "arme_fleuve" }
+  desert_18: { gold: 3000, uniqueLoot: "arme_fleuve" },
+  /* v3.428.0 (Ruines, acte I) : provisoires, à caler au banc avec l'acte I (lot U-4). */
+  ruines_01: { gold: 1500 },
+  ruines_02: { gold: 1600 },
+  ruines_03: { gold: 1700 },
+  ruines_04: { gold: 1800, resources: { pierre_errante: 3 } }, // les pierres « qu'aucune carrière ne taille comme ça »
+  ruines_05: { gold: 2000 }
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -148,7 +154,8 @@ var STORY_CHOICE_AXES = {
      laisser en place = garder, emporter = donner. À REVOIR avec le registre des axes (W-5) :
      la conception du registre n'était pas disponible à l'écriture de l'acte III. */
   serment: { relever: ["donner"], laisser: ["garder"] },
-  roi: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] }
+  roi: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] },
+  seuil: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] } // v3.428.0 (Ruines, acte I étape 5) : la pierre de seuil
 };
 
 /* v3.293.0 (règle Seb 18/09/2026) : storyResetLisiere, storyLisiereCrossingProgress et
@@ -1612,6 +1619,269 @@ STORY_QUESTS.desert = {
     }
   ]
 };
+
+/* v3.428.0 (Ruines, lot U-4) — CHAPITRE III, ACTE I « La route du nord ».
+   Document « Ruines — Acte I » v1.0 : cinq étapes écrites et validées une à une par Seb le
+   03/10/2026. Monde 3 : l'Aether rebâtit la cité du Veilleur (Conception Ruines v1.3, RU1).
+   Seul l'acte I existe : la fin du chapitre annonce la suite. Récompenses provisoires (banc). */
+
+/* v3.428.0 : les deux complétions de « La pierre de seuil », dans une table déclarée au registre
+   des textes (js/lang/data-fields.js) pour que les deux branches soient traduites. */
+var STORY_SEUIL_TEXTS = {
+  soi: {
+    completion: "Tu la glisses dans ton sac. Elle pèse plus lourd qu'une pierre. Le Veilleur se lève et regarde la porte, pas toi.",
+    dialogue: [{ who: "Le Veilleur", text: "Maintenant, elle sort avec toi." }]
+  },
+  aeswyn: {
+    completion: "À Aeswyn, Orwen la pose devant la première maison, celle qui n'a pas brûlé. Elle la tasse du talon.",
+    dialogue: [
+      { who: "Orwen", text: "Un seuil, c'est pour rentrer." },
+      { who: "Brannoc", text: "Elle était pas là, avant, celle-là ? Non… enfin. Elle y est, maintenant." }
+    ]
+  }
+};
+function storySeuilBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("seuil") === "aeswyn") ? "aeswyn" : "soi";
+}
+
+// v3.428.0 : Edda est-elle du groupe (présente, pas en patrouille) ?
+function storyEddaInParty() {
+  return !!(window.CompanionManager && CompanionManager.partyIds().indexOf("edda") !== -1);
+}
+
+STORY_QUESTS.ruins = {
+  id: "ruins",
+  worldId: "ruins",
+  requiresChapter: "desert",
+  title: "La ville rangée",
+  subtitle: "Chapitre 3 — Ruines",
+  icon: "images/Icons/codex/world_ruins.png",
+  endText: "Fin de l'acte I — la ville n'a pas fini de bouger.",
+  steps: [
+    /* ---------- Acte I — La route du nord ---------- */
+    /* Étape 1 (doc §3) : la traversée, parcours v2 de quatre paliers ; le monde est posé à
+       l'arrivée (travelOnSuccess). Deux Outres pleines, le prix de Sarkel. */
+    {
+      id: "ruines_01",
+      title: "La route du nord",
+      act: "Acte I — La route du nord",
+      narrative: {
+        objective: "Au camp du Portail, Sarkel a rechargé sa carriole. Moins de sel, plus de corde. Depuis trois jours, il regarde vers le nord.",
+        completion: "Au pied de la borne, Sarkel tend sa toile entre deux murs qui n'ont pas bougé depuis qu'il les connaît. Trois feux, rien d'autre. Devant, une ville entière, debout. Personne dedans.",
+        dialogue: [
+          { who: "Sarkel", text: "Je te l'avais dit : au nord, des pierres qui bougent. J'y suis allé une fois. Je suis revenu par un autre chemin. Pas par choix." },
+          { who: "Wenna", text: "Comment ça, un autre chemin ?" },
+          { who: "Sarkel", text: "Celui de l'aller n'était plus là." },
+          { who: "Maddoc", text: "Le fleuve aussi était parti." },
+          { who: "Sarkel", text: "Deux outres pleines, payées avant. Là-haut, les puits ne restent pas au même endroit." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Elle a l'air neuve, cette ville." },
+          { who: "Sarkel", text: "Elle est vieille. Elle est rangée, c'est tout." },
+          { who: "Maddoc", text: "Quelqu'un la range." },
+          { who: null, text: "Personne ne demande qui." }
+        ]
+      },
+      objectiveLabel: "Terminer la route du nord (coût : 2 Outres pleines)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_01,
+      linkTo: { section: "expedition", cardId: "scene_traversee_ruines" },
+      check: function () { return storyDesertFlag("ruinsCrossingCompleted"); },
+      progress: function () { return "Route du nord " + (storyDesertFlag("ruinsCrossingCompleted") ? "1/1" : "0/1"); }
+    },
+    /* Étape 2 (doc §4) : la relève. Cinq rencontres aux Couloirs effondrés. */
+    {
+      id: "ruines_02",
+      title: "Ce qui se relève",
+      act: "Acte I — La route du nord",
+      narrative: {
+        objective: "Au matin, la rue de la veille n'est plus là. À sa place, un couloir, avec un toit. Il n'y avait pas de toit hier.",
+        completion: "Cinq rencontres. Les os restent à terre, cette fois. Wenna en pousse un du pied, pour voir. Il ne bouge pas. Elle recule quand même.",
+        dialogue: [
+          { who: "Sarkel", text: "Je reste à la Borne. Les couloirs, c'est pour ceux qui ont une lame." },
+          { who: "Wenna", text: "Hier, ils se sont relevés. Tous." },
+          { who: "Maddoc", text: "Alors on frappe deux fois." },
+          { who: "Wenna", text: "Et s'ils se relèvent deux fois ?" },
+          { who: "Maddoc", text: "Trois." }
+        ]
+      },
+      objectiveLabel: "Terminer « Les couloirs qui changent » : 5 rencontres aux Couloirs effondrés",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_02,
+      linkTo: { section: "adventure", cardId: "adv_aq_ruines_couloirs" },
+      tutorial: {
+        tab: "combat",
+        icon: "images/Icons/combat_status/rising.png",
+        title: "La relève",
+        points: [
+          { icon: "images/Icons/combat_status/rising.png", text: "Aux Ruines, certains ennemis ne restent pas à terre. Quand ils tombent, ils l'annoncent : ils se relèveront au round suivant." },
+          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Frappe-les pendant ce round, et ils restent à terre. Sinon, ils reviennent avec la moitié de leurs PV." },
+          { icon: "images/Icons/combat_stats/stat_health.png", text: "Un ennemi ne se relève qu'une fois." },
+          { icon: "images/Icons/memory/grimoire_etendu.png", text: "Dans le Grimoire, c'est la condition « Un ennemi se relève »." }
+        ]
+      },
+      check: function (game) { return storyAdvDone(game, "aq_ruines_couloirs"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_ruines_couloirs", "rencontres_couloirs", 5) + "/5"; }
+    },
+    /* Étape 3 (doc §5) : Edda rejoint. Le choix « deux sur trois » est imposé dès cette étape :
+       Wenna ou Maddoc reste à la Borne (choix de composition, hors registre). Edda ne peut pas
+       quitter le groupe tant que l'étape n'est pas réclamée (CompanionManager.setPresent). */
+    {
+      id: "ruines_03",
+      title: "Celle qui dessine les murs",
+      act: "Acte I — La route du nord",
+      narrative: {
+        objective: "La route de la Borne aux Couloirs a disparu dans la nuit. À sa place, un mur. Sur le mur, un trait de craie, frais, qui fait le tour d'une porte qui n'existe pas encore.",
+        completion: "Edda referme son carnet. Il est plein de rues qui n'existent plus, et de quelques-unes qui n'existent pas encore.",
+        dialogue: [
+          { who: "Sarkel", text: "Ça, ce n'est pas moi." },
+          { who: "Wenna", text: "Quelqu'un dessine sur les murs." },
+          { who: null, text: "Une femme, assise dans l'encadrement d'une fenêtre, un carnet sur les genoux." },
+          { who: "Edda", text: "Je ne dessine pas sur les murs. Je dessine où ils seront." },
+          { who: "Edda", text: "Celui-là s'ouvre à midi. Le couloir est étroit. On y passe à trois, pas à quatre." },
+          { who: "Maddoc", text: "Elle compte bien." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Tu viens d'où ?" },
+          { who: "Edda", text: "D'un pays où les murs restent en place. Je voulais voir." },
+          { who: "Edda", text: "Je vous suis jusqu'à ce que ma carte soit finie." },
+          { who: "Wenna", text: "Et quand elle sera finie ?" },
+          { who: "Edda", text: "Elle ne l'est jamais." }
+        ]
+      },
+      objectiveLabel: "Choisir qui reste à la Borne, puis 4 rencontres avec Edda",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_03,
+      linkTo: { section: "adventure", cardId: "adv_aq_ruines_edda" },
+      onAccept: function () {
+        if (!window.CompanionManager) return;
+        CompanionManager.unlock("edda");
+      },
+      choice: {
+        key: "borne", onStoryCard: true, noRecord: true,
+        buttonLabel: "Choisir qui reste",
+        title: "On y passe à trois",
+        text: "Le couloir est étroit. Edda vient avec toi. Quelqu'un garde la Borne.",
+        options: [
+          { value: "wenna", label: "Wenna reste à la Borne", desc: "Edda et Maddoc partent avec toi." },
+          { value: "maddoc", label: "Maddoc reste à la Borne", desc: "Edda et Wenna partent avec toi." }
+        ],
+        isDone: function () { return storyEddaInParty(); },
+        apply: function (value) {
+          if (!window.CompanionManager) return;
+          var reste = CompanionManager.state(value === "maddoc" ? "maddoc" : "wenna");
+          if (reste) reste.present = false;
+          var edda = CompanionManager.state("edda");
+          if (edda) edda.present = true;
+          CompanionManager.refreshParty();
+        }
+      },
+      tutorial: {
+        tab: "more",
+        icon: "images/Icons/subtabs/hero_summary.png",
+        title: "Deux sur trois",
+        points: [
+          { icon: "images/Icons/subtabs/hero_summary.png", text: "Tu as maintenant trois compagnons, mais deux seulement t'accompagnent en combat. Choisis-les avant de partir, dans Héros › Compagnons." },
+          { icon: "images/Icons/camp/campfire.png", text: "Celui qui reste garde le camp, et peut partir en patrouille." },
+          { icon: "images/Icons/companions/edda_dernier_trait.png", text: "Chacun a sa place : Wenna soigne, Maddoc tient ou frappe de loin, Edda achève ceux qui veulent se relever." }
+        ]
+      },
+      check: function (game) { return storyEddaInParty() && storyAdvDone(game, "aq_ruines_edda"); },
+      progress: function (game) {
+        return "Edda avec toi " + (storyEddaInParty() ? "1/1" : "0/1") + " · Rencontres " + storyAdvProgress(game, "aq_ruines_edda", "rencontres_edda", 4) + "/4";
+      }
+    },
+    /* Étape 4 (doc §6) : le Marché des Ruines s'ouvre à la caravane (CARAVAN_WORLD_MARKETS).
+       Garde-fou E2 : la Halle se construit au prix d'Histoire si elle manque (isStoryVillageLevel). */
+    {
+      id: "ruines_04",
+      title: "On n'y vend rien. Pas encore.",
+      act: "Acte I — La route du nord",
+      narrative: {
+        objective: "Derrière la Borne, une place carrée. Des étals de pierre, bien alignés. Rien dessus. Sarkel en fait le tour deux fois.",
+        completion: "Au matin, les étals sont vides. Le soir, la caravane rentre à Aeswyn avec de l'or, et des pierres qu'aucune carrière ne taille comme ça. Personne n'a vu d'acheteur.",
+        dialogue: [
+          { who: "Sarkel", text: "Je te l'avais dit : on n'y vend rien." },
+          { who: "Sarkel", text: "Pas encore." },
+          { who: "Sarkel", text: "Envoie-moi une caravane d'Aeswyn. Du blé, de la pierre, ce que tu as en trop. On le pose ici, et on verra ce que la place en fait." },
+          { who: "Edda", text: "Elle en fera quelque chose. Elle range tout." }
+        ],
+        completionDialogue: [
+          { who: "Sarkel", text: "Un client qui paie et qu'on ne voit pas. J'ai connu pire." },
+          { who: "Wenna", text: "Et si c'est la ville qui paie ?" },
+          { who: "Sarkel", text: "Alors c'est un bon client." }
+        ]
+      },
+      objectiveLabel: "Envoyer une caravane au Marché des Ruines et la décharger à son retour",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_04,
+      linkTo: {
+        tab: "campement",
+        afterGo: function () {
+          if (typeof setCampTab === "function") setCampTab("depart");
+          if (typeof openExpeditionsSheet === "function") openExpeditionsSheet("caravan");
+        }
+      },
+      tutorial: {
+        tab: "village",
+        icon: "images/Icons/resources/pierre_errante_icon.png",
+        title: "Le Marché des Ruines",
+        points: [
+          { icon: "images/Icons/village_buildings/merchant_hall.png", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines. Tu choisis le marché au départ, dans Campement › Expéditions." },
+          { icon: "images/Icons/resources/pierre_errante_icon.png", text: "Elle en rapporte de l'or et de la Pierre errante, la pierre des Ruines." }
+        ]
+      },
+      check: function () { return storyDesertFlag("ruinsMarketDone"); },
+      progress: function () { return "Caravane du Marché des Ruines " + (storyDesertFlag("ruinsMarketDone") ? "1/1" : "0/1"); }
+    },
+    /* Étape 5 (doc §7) : premier choix pesant des Ruines, clé « seuil », axe Soi / Aeswyn.
+       Garder -> Le seuil (le héros se relève une fois par combat, RiseSystem.tryHeroRise).
+       Rapporter -> le seuil d'Aeswyn (chantiers −10 % de matériaux, VillageBuildingManager). */
+    {
+      id: "ruines_05",
+      title: "La pierre de seuil",
+      act: "Acte I — La route du nord",
+      narrative: {
+        objective: "Au fond des Couloirs, une porte basse. Pas de mur autour : seulement la porte, et devant elle une pierre plate, creusée au milieu par des pas. Beaucoup de pas, toujours les mêmes.",
+        get completion() { return STORY_SEUIL_TEXTS[storySeuilBranch()].completion; },
+        dialogue: [
+          { who: "Edda", text: "Celle-là n'est sur aucune de mes cartes. Elle n'a jamais bougé." },
+          { who: null, text: "Un homme est assis sur la pierre. Tu ne l'as pas entendu arriver." },
+          { who: "Le Veilleur", text: "Elle est usée de ce côté-ci. On sortait toujours du même pied." },
+          { who: "Wenna", text: "Tu la connais ?" },
+          { who: "Le Veilleur", text: "Je l'ai connue." },
+          { who: "Le Veilleur", text: "Prends-la. Une pierre de seuil garde ce qui passe. Sur toi, elle te gardera." },
+          { who: "Wenna", text: "Orwen dirait qu'un seuil, ça se pose devant une maison." },
+          { who: "Le Veilleur", text: "Elle le dirait. Et elle aurait raison." },
+          { who: "Maddoc", text: "Lourde, pour une pierre." }
+        ],
+        get completionDialogue() { return STORY_SEUIL_TEXTS[storySeuilBranch()].dialogue; }
+      },
+      objectiveLabel: "Décider de la pierre de seuil",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_05,
+      choice: {
+        key: "seuil", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "La pierre de seuil",
+        text: "Le Veilleur a dit de la prendre. Wenna pense à Orwen. Personne ne choisira pour toi.",
+        options: [
+          { value: "soi", label: "Garder la pierre", desc: "Elle te gardera. Une fois par combat, ce qui te fait tomber ne te garde pas à terre." },
+          { value: "aeswyn", label: "La rapporter à Aeswyn", desc: "Orwen la posera devant le village. Les chantiers d'Aeswyn coûteront moins." }
+        ],
+        apply: function (value) {
+          if (typeof addLog !== "function") return;
+          if (value === "soi") addLog(_t("Le seuil : une fois par combat, tu te relèves avec le quart de tes PV."), "event");
+          else addLog(_t("Le seuil d'Aeswyn : les chantiers du village coûtent 10 % de matériaux en moins."), "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("seuil")); },
+      progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("seuil")) ? "1/1" : "0/1"); }
+    }
+  ]
+};
+window.storyEddaInParty = storyEddaInParty;
+window.STORY_SEUIL_TEXTS = STORY_SEUIL_TEXTS;
 
 /* v3.316.0 (W-4b) — le palier de l'étape 13, en un seul endroit pour que check et progress
    ne puissent pas diverger. Lecture seule : équipement porté, niveau du bâtiment Forge,

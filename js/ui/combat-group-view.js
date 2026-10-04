@@ -103,6 +103,7 @@ function selectEnemyTarget(actorId) {
   if (!window.CombatActors || !actorId) return;
   var e = CombatActors.setTarget(actorId);
   if (!e || Number(e.hp || 0) <= 0) return;
+  game.combat.targetLocked = true; // v3.428.0 : le toucher prime sur le réglage « Cible »
   if (typeof renderEnemy === "function") renderEnemy();
 }
 

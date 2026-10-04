@@ -131,6 +131,7 @@ var ENEMY_DB = {
     image: "./images/Enemies/skeleton.jpg",
     resists: ["sword"],
     weak: ["magic"],
+    rises: true, // v3.428.0 (Ruines, U-3) : se relève une fois (systems/rise-system.js)
     stats: makeRpgStats(26, 34, 18, 26, 20)
   },
   ghoul: {
@@ -163,6 +164,7 @@ var ENEMY_DB = {
     image: "./images/Enemies/zombie.jpg",
     resists: ["sword"],
     weak: ["magic"],
+    rises: true, // v3.428.0 (Ruines, U-3) : se relève une fois
     stats: makeRpgStats(24, 42, 10, 12, 8)
   },
   wraith: {

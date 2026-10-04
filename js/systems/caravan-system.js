@@ -42,7 +42,10 @@ var CARAVAN_EXCLUDED = ["bois", "fer"];
 var CARAVAN_CAPACITY_PER_LEVEL = 0.10;   // +10 % par niveau de Halle au-delà du premier
 var CARAVAN_KEEP_SHARE = 0.5;            // la moitié basse du plafond ne part jamais
 /* Matériau rare rapporté par le trajet Long : celui du monde où l'on se trouve au départ. */
-var CARAVAN_RARE_BY_WORLD = { 0: "seve_aeswyn", 1: "verre_des_dunes" };
+var CARAVAN_RARE_BY_WORLD = { 0: "seve_aeswyn", 1: "verre_des_dunes", 2: "pierre_errante" };
+/* v3.428.0 (Ruines, étape ruines_04) : marchés SANS carte vivante. Les Ruines n'ont pas encore
+   de carte (lot U-5) : leur marché s'ouvre par l'Histoire. mapId sert d'identifiant de marché. */
+var CARAVAN_WORLD_MARKETS = { ruins: { requiresStoryStep: "ruines_04" } };
 var CARAVAN_RARE_QTY = [2, 3];
 
 var CaravanManager = {
@@ -173,6 +176,16 @@ var CaravanManager = {
       var reached = wi === cur || (window.LivingMapManager && map.sectors.some(function (s) { return LivingMapManager.isLiberated(m, s.id); }));
       if (reached) out.push({ mapId: m, world: wi, name: WORLDS[wi].name });
     });
+    // v3.428.0 : marchés ouverts par l'Histoire, sans carte vivante (le Marché des Ruines)
+    Object.keys(CARAVAN_WORLD_MARKETS).forEach(function (worldId) {
+      if (out.some(function (o) { return o.mapId === worldId; })) return;
+      var wi = -1;
+      WORLDS.forEach(function (w, i) { if (w.id === worldId) wi = i; });
+      var req = CARAVAN_WORLD_MARKETS[worldId].requiresStoryStep;
+      var open = wi >= 0 && !!(game.worldsEverReached && game.worldsEverReached[wi])
+        && (!req || (window.StoryQuestManager && StoryQuestManager.isStepReached(req)));
+      if (open) out.push({ mapId: worldId, world: wi, name: WORLDS[wi].name });
+    });
     return out;
   },
 
@@ -275,6 +288,11 @@ var CaravanManager = {
     if (c.rare && WAREHOUSE_RESOURCES[c.rare.key]) WarehouseManager.addResource(c.rare.key, c.rare.n, true);
     if (c.item && typeof addLootToInventory === "function") addLootToInventory(c.item); // sac plein : l'objet est offert
     var loot = { trip: c.trip, gold: gold, rare: c.rare, item: c.item, units: this.getLoadUnits(c.cargo) };
+    // v3.428.0 (ruines_04) : une caravane revenue du Marché des Ruines
+    if (Number(c.world) === 2) {
+      if (!game.explorationProgression || typeof game.explorationProgression !== "object") game.explorationProgression = {};
+      game.explorationProgression.ruinsMarketDone = true;
+    }
     game.village.caravan = null;
     if (typeof addLog === "function") {
       addLog("🐪 " + _t("Caravane déchargée : +{n} or", { n: formatNumber(gold) })
@@ -288,4 +306,5 @@ var CaravanManager = {
 
 window.CaravanManager = CaravanManager;
 window.CARAVAN_TRIPS = CARAVAN_TRIPS;
+window.CARAVAN_WORLD_MARKETS = CARAVAN_WORLD_MARKETS;
 window.CARAVAN_TRIP_ORDER = CARAVAN_TRIP_ORDER;

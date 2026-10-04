@@ -131,6 +131,8 @@ var MissionBoard = {
       if (quest.type === "elite") {
         if (!isRunning && !isEliteQuestUnlocked(quest)) return;
       } else if (!isRunning && quest.category !== "main" && !isStoryLinkedQuest(quest.id)) return;
+      // v3.428.0 (Ruines, ruines_03) : une quête qui exige un compagnon dans le groupe
+      if (!isRunning && quest.requiresParty && window.CompanionManager && CompanionManager.partyIds().indexOf(quest.requiresParty) === -1) return;
       var stepsDone = quest.steps.filter(function (s) { return AdventureQuestManager.isStepComplete(quest, s); }).length;
       var status = isRunning ? "running" : (running ? "locked" : "available");
       var m = {

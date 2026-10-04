@@ -92,6 +92,25 @@ var SCENE_NODES = {
        "forest" comme le reste, mais volontairement narratifs (liés au lore d'origine des
        quêtes plutôt que génériques) : ces canevas sont courts (2-3 paliers), chaque obstacle
        doit raconter une étape précise, pas juste varier un décor interchangeable. */
+    /* v3.428.0 (Ruines, U-4) — premiers gabarits des RUINES, écrits pour la route du nord. */
+    route_de_pierre: {
+      id: "route_de_pierre", biome: "ruins", name: "La route de pierre",
+      baseDifficulty: 4,
+      options: {
+        power: { stat: "power", label: "Dégager les blocs tombés" },
+        precision: { stat: "precision", label: "Marcher où la pierre est usée" },
+        endurance: { stat: "endurance", label: "Longer le bord, pas à pas" }
+      }
+    },
+    rue_qui_tourne: {
+      id: "rue_qui_tourne", biome: "ruins", name: "La rue qui tourne",
+      baseDifficulty: 5,
+      options: {
+        power: { stat: "power", label: "Escalader le mur qui barre la rue" },
+        precision: { stat: "precision", label: "Suivre les bornes" },
+        endurance: { stat: "endurance", label: "Faire le tour par les cours" }
+      }
+    },
     /* v3.300.0 (W-2) — premiers gabarits du DÉSERT, écrits pour la traversée (acte I, étape 1).
        Réutilisables par la Petite Aventure du Désert. */
     dalles_ensablees: {

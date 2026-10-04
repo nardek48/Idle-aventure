@@ -67,6 +67,7 @@ function caravanGoldHTML(n) {
 
 /* Bannière de piste : celle du monde du marché (en route : celui du départ). */
 function caravanRoadImageFor(world) {
+  if (world >= 2) return "images/Maps/parcours/ruines_route.jpg"; // v3.428.0 : fond de Seb à venir
   return world >= 1 ? "images/Maps/parcours/desert_route.jpg" : "images/Maps/parcours/foret_quetes.jpg";
 }
 function caravanRoadImage() {

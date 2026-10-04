@@ -123,6 +123,39 @@ var COMPANIONS_DB = {
   }
 };
 
+/* v3.428.0 (Ruines, acte I étape 3) — EDDA, la cartographe, troisième compagnon. Venue « d'un
+   pays où les murs restent en place ». À la pioche, au corps à corps. Rôle : Achever — sa
+   compétence frappe un ennemi À TERRE et l'empêche de se relever (systems/rise-system.js).
+   Stats et prix provisoires, au banc (sim/ruines-bench.js). Portrait à fournir par Seb. */
+COMPANIONS_DB.edda = {
+  id: "edda",
+  name: "Edda",
+  image: "./images/Companions/edda.png",
+  role: "finisher",
+  weaponType: "pick",
+  base: { power: 46, endurance: 52, celerity: 40, precision: 44, will: 30 },
+  threatMult: 1.0,
+  skill: {
+    id: "edda_dernier_trait",
+    name: "Le dernier trait",
+    icon: "images/Icons/companions/edda_dernier_trait.png", // à générer
+    type: "finish",
+    value: 1.5,                          // ×1,5 ses dégâts de base sur l'ennemi à terre (une frappe l'achève)
+    cooldown: 2, charges: 0,
+    desc: "Frappe un ennemi à terre : il ne se relèvera pas."
+  },
+  autoPolicy: ["skill", "basic"],
+  upgrades: { costs: [480, 960, 1920, 3840, 7200], statPct: 0.06 }, // prix des Ruines, provisoires
+  unlockedBy: "ruines_03",
+  lines: {
+    join: "Je note par où on passe. Pour le retour.",
+    skill: "Celui-là, il reste où il est.",
+    ko: "Edda tombe. Elle serre son carnet contre elle.",
+    bossIntro: "Il n'est sur aucune carte. On va l'y mettre.",
+    bossWin: "Je le note. Là, en bas de la page."
+  }
+};
+
 /* v3.311.0 : changement de voie (D4b) — 2 000 or, ×3 à chaque changement. Le premier choix
    (étape 8) est gratuit. */
 var VOIE_CHANGE_BASE_COST = 2000;
@@ -167,7 +200,8 @@ function isCompanionHealThreshold(id) {
 var COMPANION_ROLE_LABELS = {
   assault: "Assaut",
   guard: "Garde",
-  support: "Soutien"
+  support: "Soutien",
+  finisher: "Achever" // v3.428.0 (Ruines) : Edda
 };
 
 var _companionVoieCache = {}; // fiche fusionnée par « id:voie », identité stable

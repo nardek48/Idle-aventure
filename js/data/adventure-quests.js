@@ -300,6 +300,65 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.428.0 (Ruines, acte I étape 2) — « Ce qui se relève » : cinq rencontres aux Couloirs
+     effondrés, la leçon de la relève (systems/rise-system.js). Cible du banc (Seb, 03/10/2026) :
+     aucun mort, 30 à 45 % de PV perdus. Multiplicateurs provisoires, au banc (sim/ruines-bench.js). */
+  aq_ruines_couloirs: {
+    id: "aq_ruines_couloirs",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "ruins",
+    adventureIndex: 0,
+    encounters: [
+      { enemy: "skeleton" },
+      { enemy: "zombie" },
+      { group: ["skeleton", "skeleton"], groupHpMult: 0.55 },
+      { enemy: "gargoyle" },
+      { group: ["ghoul", "zombie", "zombie"], groupHpMult: 0.35 }
+    ],
+    encounterHpMult: 1.75, // banc (fin2, sans potion) : 44 / 34 / 29 % de PV perdus, 100 % de réussite
+    enemyPowerMult: 4.4,
+    name: "Les couloirs qui changent",
+    story: "Un couloir avec un toit, là où il y avait une rue. Ce qui tombe dedans ne reste pas à terre.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    steps: [
+      { id: "rencontres_couloirs", type: "encounter", worldId: "ruins", target: 5, desc: "Vaincre {target} rencontres aux Couloirs effondrés" }
+    ],
+    reward: {}
+  },
+
+  /* v3.428.0 (Ruines, acte I étape 3) — « Celle qui dessine les murs » : quatre rencontres avec
+     Edda dans le groupe (requiresParty, lu par le tableau). Même cible que l'étape 2. */
+  aq_ruines_edda: {
+    id: "aq_ruines_edda",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "ruins",
+    adventureIndex: 0,
+    requiresParty: "edda",
+    encounters: [
+      { group: ["skeleton", "zombie"], groupHpMult: 0.55 },
+      { enemy: "gargoyle" },
+      { group: ["skeleton", "skeleton", "zombie"], groupHpMult: 0.35 },
+      { group: ["ghoul", "skeleton"], groupHpMult: 0.55 }
+    ],
+    encounterHpMult: 1.6, // banc (fin2, sans potion) : 33 à 39 % de PV perdus selon la classe et le compagnon laissé
+    enemyPowerMult: 4.0,
+    name: "Le couloir de midi",
+    story: "Le mur s'ouvre à midi, comme Edda l'a dit. Le couloir est étroit : on y passe à trois.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    steps: [
+      { id: "rencontres_edda", type: "encounter", worldId: "ruins", target: 4, desc: "Vaincre {target} rencontres avec Edda" }
+    ],
+    reward: {}
+  },
+
   hq_wolf_pack: {
     id: "hq_wolf_pack",
     type: "kill",

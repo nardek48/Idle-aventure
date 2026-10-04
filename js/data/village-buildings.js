@@ -51,6 +51,8 @@ function isStoryVillageLevel(id, targetLevel) {
     return targetLevel <= cap;
   }
   if (id === "forge") return targetLevel <= STORY_FORGE_LEVELS;
+  // v3.428.0 (Ruines, ruines_04) : la caravane du Marché des Ruines exige la Halle — son niveau 1 est aidé
+  if (id === "hall") return targetLevel <= 1 && !!(window.StoryQuestManager && StoryQuestManager.isStepReached("ruines_04"));
   return false;
 }
 

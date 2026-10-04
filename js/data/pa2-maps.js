@@ -174,6 +174,12 @@ var PA2_PARCOURS_IMAGES = {
     image: "images/Maps/parcours/foret_quetes.jpg", width: 1024, height: 1536, start: [512, 1245],
     tracks: { sentier: [[460, 1160], [505, 1015], [440, 870], [495, 720], [460, 590], [485, 480], [585, 455], [530, 320], [515, 210]] }
   },
+  /* v3.428.0 (Ruines) : fond de la route du nord, À FOURNIR par Seb (images/Maps/parcours/ruines_route.jpg).
+     Piste provisoire : celle de la route du Désert, à reposer sur l'image. */
+  ruines_route: {
+    image: "images/Maps/parcours/ruines_route.jpg", width: 1024, height: 1536, start: [520, 1270],
+    tracks: { route: [[520, 1150], [560, 1000], [560, 860], [575, 700], [540, 560], [470, 420], [520, 260]] }
+  },
   desert_route: {
     image: "images/Maps/parcours/desert_route.jpg", width: 1024, height: 1536, start: [520, 1270],
     tracks: {

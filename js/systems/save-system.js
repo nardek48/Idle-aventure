@@ -466,6 +466,7 @@ function buildSaveData() {
     grimoirePresets: Array.isArray(game.grimoirePresets) ? game.grimoirePresets : [],
     // v3.379.0 : potion automatique du mode Grimoire (systems/potion-system.js)
     potionAuto: game.potionAuto || null,
+    grimoireTarget: game.grimoireTarget || "proche", // v3.428.0 (Ruines) : réglage « Cible »
     // v3.34.0 : lastSpecialUse/specialBuffExpires/specialBuffPct/
     // lastDefenseUse/defenseBuffExpires retirés (ancien système), voir
     // classResource/classCooldowns/classActiveDefense ci-dessous.
@@ -733,6 +734,7 @@ function restoreBaseState(d) {
   // par restoreBaseState() selon le chemin de chargement (voir plus
   // haut dans ce fichier pour le contexte des 2 chemins existants).
   // v3.379.0 : potion automatique — une sauvegarde d'avant n'a pas le champ : « Jamais » (rien ne change pour elle)
+  game.grimoireTarget = (d.grimoireTarget === "faible" || d.grimoireTarget === "soutien") ? d.grimoireTarget : "proche"; // v3.428.0
   game.potionAuto = (window.PotionAutoManager && typeof PotionAutoManager.normalize === "function")
     ? PotionAutoManager.normalize(d.potionAuto, window.POTION_AUTO_OLD_SAVE) : (d.potionAuto || null);
   game.grimoirePresets = Array.isArray(d.grimoirePresets)
@@ -1088,6 +1090,7 @@ function fullResetState() {
   game.grimoirePresets = [];
   // v3.379.0 : partie neuve = potion automatique « Normal », dernière gardée pour le boss
   game.potionAuto = { threshold: "tard", keepForBoss: true }; // v3.380.0 : « Tard » par défaut
+  game.grimoireTarget = "proche"; // v3.428.0 (Ruines) : réglage « Cible »
   game.hasSeenOnboarding = false;
   game.genericTutorialsSeen = {}; // v3.107.9
 

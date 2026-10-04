@@ -30,6 +30,16 @@ var WORLD_CAPS = [
     zoneLevel: 5,
     workshopLevel: 3,
     petiteAventureCap: 4 // D10 : 4 au Désert — une seconde ressource exclusive (Verre des dunes)
+  },
+  /* 2 — Ruines anciennes. v3.428.0 (Conception Ruines §4.2, lot U-1) : PROVISOIRE, égal au Désert,
+     pour que rien ne s'ouvre d'un coup à l'arrivée (un monde absent n'aurait aucun plafond).
+     Les plafonds du monde 3 se calent au banc avec l'acte II (lot U-7). */
+  {
+    village: { workshop: 7, training: 9, hall: 7, warehouse: 6, palisade: 7, tavern: 5, apothecary: 6, forge: 3, enchanter: 1 },
+    zoneRows: 2,      // pas de zone de production aux Ruines par défaut (RU7, décision au banc)
+    zoneLevel: 5,
+    workshopLevel: 3,
+    petiteAventureCap: 4
   }
 ];
 
@@ -45,7 +55,8 @@ var TRAINING_CAP_BY_ACT = [
   { worldIndex: 0, stepId: "forest_crossing", act: "III", terrain: 4 }, // 60, acte IV compris
   { worldIndex: 1, stepId: "desert_01", act: "I", terrain: 5 },       // 70
   { worldIndex: 1, stepId: "desert_06", act: "II", terrain: 7 },      // 90
-  { worldIndex: 1, stepId: "desert_11", act: "III", terrain: 9 }      // 110
+  { worldIndex: 1, stepId: "desert_11", act: "III", terrain: 9 },     // 110
+  { worldIndex: 2, stepId: "ruines_01", act: "I", terrain: 9 }        // v3.428.0 : Ruines, acte I — inchangé (palier en acte II)
 ];
 
 /* v3.327.0 (conception Talents v1.1, T2 option B) — PLAFOND DE POINTS DE TALENT PAR ACTE.
@@ -56,7 +67,8 @@ var TALENT_CAP_BY_ACT = [
   { worldIndex: 0, stepId: "forest_crossing", act: "III", points: 5 },  // acte IV compris
   { worldIndex: 1, stepId: "desert_01", act: "I", points: 7 },
   { worldIndex: 1, stepId: "desert_06", act: "II", points: 9 },
-  { worldIndex: 1, stepId: "desert_11", act: "III", points: 11 }
+  { worldIndex: 1, stepId: "desert_11", act: "III", points: 11 },
+  { worldIndex: 2, stepId: "ruines_01", act: "I", points: 11 }        // v3.428.0 : Ruines, acte I — inchangé
 ];
 
 /* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ».

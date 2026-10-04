@@ -65,6 +65,10 @@ var WAREHOUSE_RESOURCES = {
      NOURRIT la reforge : deux matériaux du Désert, deux rôles. */
   chitine_profondeurs: { id: "chitine_profondeurs", name: "Chitine des profondeurs", icon: "images/Icons/resources/chitine_profondeurs_icon.png", desc: "Une plaque arrachée au dard de la bête. Elle ne chauffe pas : elle boit le feu. On s'en sert pour les dernières reforges.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 1, worldName: "Désert", sourceHint: "Le Dard des profondeurs (la bête sous la dune, carte du Désert)" },
 
+  /* v3.428.0 (Ruines, RU7) : la pierre qui bouge d'un Cycle à l'autre. Matériau brut du monde 3 :
+     marché de la caravane (acte I), puis chantier errant, Petite Aventure et donjon (acte II).
+     Sa forme raffinée, la Clé de voûte, viendra avec la Forge 4 (acte III). Icône à générer. */
+  pierre_errante: { id: "pierre_errante", name: "Pierre errante", icon: "images/Icons/resources/pierre_errante_icon.png", desc: "Une pierre taillée qui n'était pas là hier. Elle vient des Ruines, où rien ne reste en place.", sellPrice: 0, tier: "special", worldIndex: 2, worldName: "Ruines anciennes", sourceHint: "Le Marché des Ruines (caravane de la Halle marchande)" },
   verre_trempe: { id: "verre_trempe", name: "Verre trempé", icon: "images/Icons/resources/verre_trempe_icon.png", desc: "Verre des dunes chauffé deux fois au Tailleur de pierre. Il coupe le fer. Matériau des hauts paliers du village, au Désert.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 1, worldName: "Désert", sourceHint: "Verre des dunes et Pierre chauffés au Tailleur de pierre (Carrière)" },
   /* v3.214.0 (lot V-3) : matériau de construction de la Forêt. Premier des six
      matériaux de monde — c'est lui qui porte le plafond de construction, à la

@@ -49,6 +49,20 @@ var COMPAGNONS_MALINS = ARGS.indexOf("--compagnons-malins") >= 0;   // --tactiqu
 var POTION_AUTO = ARGS.indexOf("--potion-auto") >= 0 ? ARGS[ARGS.indexOf("--potion-auto") + 1] : null;
 var POTION_MAIN = ARGS.indexOf("--sans-potion-main") < 0;
 var JSON_OUT = ARGS.indexOf("--json") >= 0 ? ARGS[ARGS.indexOf("--json") + 1] : null;
+/* v3.428.0 (Ruines, U-0) : --avise = un joueur appliqué QUI LIT SON JEU. Le robot d'avant prenait
+   la voie de talents offensive et une seule règle de Grimoire : contre un boss Vampirique (Nezzam),
+   20 % de réussite, 100 % avec les talents défensifs (rapport U-0 v1.1, §4.4). Ici : voie B des
+   talents (celle de plafond-bench.js) et jusqu'à trois règles, chacune tenue par l'action que
+   l'éditeur marque comme contre (⚡). Sans l'option, rien ne change : les mesures restent comparables. */
+var AVISE = ARGS.indexOf("--avise") >= 0;
+/* v3.428.0 : --jusqua <étape> arrête la campagne à l'entrée de cette étape (sauvegarde de test). */
+var JUSQUA = ARGS.indexOf("--jusqua") >= 0 ? ARGS[ARGS.indexOf("--jusqua") + 1] : null;
+var TALENTS_AVISES = {
+  knight: ["k_cuirasse", "k_cuirasse", "k_sang_chaud", "k_elan", "k_curee", "k_colere_froide", "k_brise_os", "k_sentence", "k_soif_bourreau", "k_rancune", "k_garde_vengeresse"],
+  archer: ["a_oeil_vif", "a_rythme", "a_souffle_court", "a_pas_de_cote", "a_contre_tir", "a_oeil_vif", "a_transe", "a_danse_ombres", "a_nuee_fleches", "a_tir_ajuste", "a_coup_au_but"],
+  mage: ["m_flux", "m_peau_arcane", "m_peau_arcane", "m_barriere_vive", "m_economie", "m_reserve", "m_echo_barriere", "m_surcharge", "m_surtension", "m_braises_tenaces", "m_incendie"]
+};
+var REGLES_AVISEES = ["enemyRising", "healIncoming", "enemyArmored", "chargeIncoming", "enemySilenceIncoming"];
 var RECHARGE_H = ARGS.indexOf("--recharge") >= 0 ? Number(ARGS[ARGS.indexOf("--recharge") + 1]) : null;   // v3.366.0 : banc du délai de recharge des Petites Aventures
 var SCRIPTS = fs.readFileSync("/tmp/scripts.txt", "utf8").trim().split("\n").filter(function (s) { return !/pwa\.js/.test(s); });
 var SOURCES = SCRIPTS.map(function (s) { return { name: s, code: fs.readFileSync(path.join(ROOT, s), "utf8") }; });
@@ -131,7 +145,7 @@ function relaunch() {
   });
   return G;
 }
-var LAST_END = null, QUEST_END = null, DEFEATED = false;
+var LAST_END = null, QUEST_END = null, DEFEATED = false, STOPPED_AT = null;
 
 /* Le temps passe : la production tourne, les chantiers et les ateliers avancent. */
 function wait(ms) {
@@ -347,10 +361,17 @@ function entretien() {
   if (g.TalentManager) {
     for (var k = 0; k < 30; k++) {
       if (g.TalentManager.available() <= 0) break;
-      var n = (g.TalentManager.getNodes() || []).map(function (x) { return x.node || x; }).filter(function (x) { return g.TalentManager.canBuy(x.id); })[0];
+      var nodes = (g.TalentManager.getNodes() || []).map(function (x) { return x.node || x; });
+      var n = null;
+      if (AVISE) {   // v3.428.0 : la voie B, dans l'ordre, puis n'importe quel talent achetable
+        var cls = g.ClassCombatManager.getCurrentClassId(), ordre = TALENTS_AVISES[cls] || [];
+        for (var o = 0; o < ordre.length && !n; o++) if (g.TalentManager.canBuy(ordre[o])) n = { id: ordre[o] };
+      }
+      if (!n) n = nodes.filter(function (x) { return g.TalentManager.canBuy(x.id); })[0];
       if (!n) break; g.TalentManager.buy(n.id);
     }
   }
+  if (AVISE) reglesAvisees(g);
   refillPotions();
   if (SAVING) return;
   /* Échoppe : une pièce meilleure que celle portée, si elle coûte moins de 40 % de la bourse. */
@@ -644,6 +665,25 @@ function freeSectorAgain(mapId, sectorId) {
   return true;
 }
 
+/* v3.428.0 (ruines_04) : une caravane Courte au Marché des Ruines, attendue puis déchargée.
+   La Halle se bâtit au prix d'Histoire si elle manque ; la cargaison vient de la production. */
+function caravaneMarcheRuines(g) {
+  var C = g.CaravanManager;
+  if (!C.isAvailable()) upgradeBuilding("hall", 1);
+  if (!C.isAvailable()) { note("Halle marchande introuvable : " + g.VillageBuildingManager.getLevel("hall")); return; }
+  var m = C.getMarkets().filter(function (x) { return x.world === 2; })[0];
+  if (!m) { note("Marché des Ruines absent : " + JSON.stringify(C.getMarkets())); return; }
+  for (var essai = 0; essai < 6 && !g.storyDesertFlag("ruinsMarketDone"); essai++) {
+    if (C.get() && C.isBack()) C.unload();
+    if (C.get()) { wait(Math.max(60e3, C.getSecondsLeft() * 1000 + 1000)); continue; }
+    var why = C.getBlockReason("court");
+    if (why) { note("caravane : " + why); wait(2 * 3600e3); continue; }
+    C.depart("court", m.world);
+    wait(Math.max(60e3, C.getSecondsLeft() * 1000 + 1000));
+    if (C.isBack()) C.unload();
+  }
+}
+
 /* Étape à choix : sur la carte (secteur à libérer d'abord) ou sur la carte d'étape. Premier choix. */
 function choiceStep(g, step) {
   var c = step.choice;
@@ -651,7 +691,7 @@ function choiceStep(g, step) {
   if (c.mapId && !g.LivingMapManager.isLiberated(c.mapId, c.sectorId)) freeSector(c.mapId, c.sectorId);
   var val = c.options[0].value;
   if (c.options.some(function (o) { return o.value === SERMENT; })) val = SERMENT;
-  if (!g.storyMakeChoice(step.chapterId || (c.mapId === "desert" || /desert/.test(step.id) ? "desert" : "forest"), val)) note("choix refusé (" + c.key + ")");
+  if (!g.storyMakeChoice(step.chapterId || (c.mapId === "desert" || /desert/.test(step.id) ? "desert" : (/ruines/.test(step.id) ? "ruins" : "forest")), val)) note("choix refusé (" + c.key + ")");
 }
 
 /* Le secteur qui porte la descente au Temple. */
@@ -705,7 +745,7 @@ function run() {
   ok(G.game.playerName === "Robot" && G.game.heroId, "héros créé (" + G.game.heroId + ")");
   G.saveGame();
 
-  var chapters = ["forest", "desert"];
+  var chapters = ["forest", "desert", "ruins"]; // v3.428.0 : chapitre III (acte I)
   var t0 = Date.now();
   for (var c = 0; c < chapters.length; c++) {
     var cid = chapters[c];
@@ -715,11 +755,12 @@ function run() {
       if (G.StoryQuestManager.isChapterCompleted(cid)) break;
       var step = G.StoryQuestManager.getCurrentStep(cid);
       if (!step) { ok(false, cid + " : pas d'étape courante"); return; }
+      if (JUSQUA && step.id === JUSQUA) { STOPPED_AT = step.id; ok(true, "arrêt à l'entrée de " + step.id); return; }
       var avant = notes.length;
       CURRENT_STEP = step.id;
       // v3.423.0 : TRACE_FORCE=1 relève la force du héros à chaque étape (référence des ajustements de difficulté)
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
-      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
+      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
       var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
       G.StoryQuestManager.acceptStep(cid);
       var solver = SOLVERS[step.id];
@@ -986,6 +1027,19 @@ var SOLVERS = {
   // v3.364.0 (acte IV) : la remontée du fleuve, Nezzam, le choix du roi (« prendre » par défaut, --rapporter sinon)
   desert_16: function (g) { playExpedition("remontee_fleuve", function () { return g.storyDesertFlag("remonteeFleuveDone"); }); },
   desert_17: function (g) { playAdventure("aq_desert_trone"); },
+  // v3.428.0 (Ruines, acte I)
+  ruines_01: function (g) { playExpedition("traversee_ruines", function () { return g.storyDesertFlag("ruinsCrossingCompleted"); }); },
+  ruines_02: function (g) { playAdventure("aq_ruines_couloirs"); },
+  ruines_03: function (g, step) {
+    choiceStep(g, step);
+    if (!g.storyEddaInParty()) note("Edda n'est pas du groupe : " + JSON.stringify(g.CompanionManager.partyIds()));
+    playAdventure("aq_ruines_edda");
+  },
+  ruines_04: function (g) { caravaneMarcheRuines(g); },
+  ruines_05: function (g) {
+    var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
+    if (!g.storyMakeChoice("ruins", val)) note("choix refusé (seuil)");
+  },
   desert_18: function (g, step) {
     var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
     if (!g.storyMakeChoice("desert", val)) note("choix refusé (roi)");
@@ -998,6 +1052,28 @@ var SOLVERS = {
     }
   }
 };
+
+/* v3.428.0 (--avise) : jusqu'à trois règles, par les fonctions de l'éditeur. Chaque condition est
+   tenue par l'action marquée ⚡ (contre) si l'éditeur en propose une, sinon par la première
+   compétence. Rejoué à chaque entretien : un emplacement de plus s'ouvre aux Ruines. */
+function reglesAvisees(g) {
+  if (!g.game.unlockedTabs || !g.game.unlockedTabs.grimoire) return;
+  g.ensureGrimoireRules();
+  var places = g.getGrimoireSlotCount(g.game.worldsEverReached), i = 0;
+  REGLES_AVISEES.forEach(function (cond) {
+    if (i >= places) return;
+    if (cond === "enemyRising" && !(g.game.worldsEverReached || {})[2]) return;
+    var html = g.buildGrimoireActionOptionsHTML(g.getGrimoireCurrentKit(), null, cond);
+    var opts = (html.match(/<option value="([^"]+)"[^>]*>([^<]*)/g) || []).map(function (o) {
+      var m = /value="([^"]+)"[^>]*>([^<]*)/.exec(o); return { v: m[1], counter: m[2].indexOf("\u26a1") === 0 };
+    });
+    var pick = opts.filter(function (o) { return o.counter; })[0] || (cond === "enemyRising" ? opts.filter(function (o) { return o.v !== "defense"; })[0] : null);
+    if (!pick) return;
+    g.setGrimoireRuleCondition(i, cond);
+    g.setGrimoireRuleAction(i, pick.v);
+    i++;
+  });
+}
 
 /* Une règle du Grimoire, par les fonctions de l'éditeur (condition, puis action). */
 function activateGrimoireRule(g) {

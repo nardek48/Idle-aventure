@@ -53,6 +53,8 @@ function evaluateGrimoireCondition(conditionId, combatContext) {
       return typeof ctx.allyLowestHpPercent === "number" && ctx.allyLowestHpPercent <= ALLY_LOW_HP_THRESHOLD_PCT;
     case "multipleEnemies":
       return Number(ctx.aliveEnemyCount || 0) >= 2;
+    case "enemyRising":
+      return !!ctx.enemyRising; // v3.428.0 (Ruines)
     default:
       return false;
   }
@@ -161,6 +163,7 @@ function isConditionPossibleForEnemy(conditionId, enemy) {
   if (conditionId === "enemySilenceIncoming") return !enemy.isBoss && enemy.archetype === "silenced";
   if (conditionId === "enemyVampiric") return enemy.archetype === "vampiric";
   if (conditionId === "enemyArmored") return enemy.archetype === "armored";
+  if (conditionId === "enemyRising") return !!(window.RiseSystem && RiseSystem.canRise(enemy)); // v3.428.0
 
   return false;
 }

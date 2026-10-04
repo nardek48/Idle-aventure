@@ -26,6 +26,8 @@ var DATA_TEXT_FIELDS = {
   ACHIEVEMENT_CATEGORY_LABELS: ["*"],
 
   /* --- Quêtes, Histoire, village --- */
+  GRIMOIRE_TARGET_POLICIES: ["*.label", "*.desc"], // v3.428.0 (Ruines)
+  STORY_SEUIL_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.428.0 (Ruines) : les deux branches du choix « seuil »
   ADVENTURE_QUESTS: ["*.name", "*.story", "*.bossLog", "*.bossPhases.*.label", "*.bossPhases.*.line", "*.steps.*.desc"],
   HUNT_QUESTS: ["*.name", "*.story"],
   STORY_QUESTS: [

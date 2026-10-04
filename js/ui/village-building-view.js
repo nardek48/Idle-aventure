@@ -58,6 +58,10 @@ function buildVillageCostListHTML(id) {
   if (VillageBuildingManager.isNextLevelStoryProvided && VillageBuildingManager.isNextLevelStoryProvided(id)) {
     h += '<div class="vb-cost-where vb-cost-provided">' + _t("Matériaux fournis par le village (niveau exigé par l’Histoire)") + '</div>';
   }
+  // v3.428.0 (Ruines, choix « seuil ») : la remise du seuil d'Aeswyn se voit sur chaque chantier
+  if (window.StoryQuestManager && StoryQuestManager.getChoice("seuil") === "aeswyn") {
+    h += '<div class="vb-cost-where vb-cost-provided">' + _t("Le seuil d'Aeswyn : 10 % de matériaux en moins") + '</div>';
+  }
   keys.forEach(function (key) {
     var meta = getVillageCostMeta(key);
     var ok = !!afford[key];

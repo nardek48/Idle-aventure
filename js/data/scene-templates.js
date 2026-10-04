@@ -246,6 +246,36 @@ var SCENE_TEMPLATES = {
   },
 
 
+  /* ================= v3.428.0 (Ruines, U-4) — LA ROUTE DU NORD, acte I étape 1 des Ruines =================
+     Document « Ruines — Acte I » v1.0, §3. Quatre paliers écrits ; un combat au palier 3 : trois
+     morts qui se relèvent (le combat de parcours est résolu par approche : la relève se lit dans le
+     texte et dans la force du groupe, foeMult au banc — cible 30 à 40 % de PV perdus). Coût : deux
+     Outres pleines, le prix de Sarkel. Le monde bascule à l'arrivée (travelOnSuccess). */
+  traversee_ruines: {
+    id: "traversee_ruines",
+    worldId: "ruins",
+    adventureIndex: 0,
+    mode: "parcours",
+    title: "La route du nord",
+    icon: "images/Icons/codex/world_ruins.png",
+    parcours: {
+      image: "ruines_route", track: "route", points: [0, 2, 4, 6],
+      steps: [
+        { type: "obstacle", gabaritId: "route_de_pierre", text: "Le sable s'arrête net. Après, de la pierre, à plat, comme une route posée hier." },
+        { type: "source", text: "Une borne, plantée de travers. Sarkel la touche en passant. « Celle-là ne bouge pas. »" },
+        // banc (fin2) : « Tenir » 31 à 35 % des PV, « Charger » 57 à 65 % (traversée du Désert : 3 à 6 %)
+        { type: "combat", foe: "skeleton", pack: 3, foeMult: 1.3, text: "Trois silhouettes, assises contre un mur. Elles se lèvent quand vous passez.",
+          after: "Le dernier tombe pour de bon. Wenna compte les os. Chacun est tombé deux fois." },
+        { type: "obstacle", gabaritId: "rue_qui_tourne", text: "La rue que vous venez de prendre tourne à gauche. Tout à l'heure, elle allait tout droit." }
+      ]
+    },
+    entryCost: { resourceId: "outre_pleine", amount: 2 },
+    lootResource: "gold",
+    unlockOnSuccess: { buildingId: null, unlockFlag: "ruinsReached", completionFlag: "ruinsCrossingCompleted" },
+    travelOnSuccess: { worldId: "ruins", adventureIndex: 0 }
+  },
+
+
   /* v3.310.0 (W-3a, acte II §4) — LA DESCENTE. Première libération de la porte du Temple, lancée
      depuis la carte (firstContent du secteur) : hors cap journalier (pas de profileWeights), un seul
      combat, journal fixe. L'arrivée pose le Temple ensablé (adventureIndex 1). */

@@ -159,6 +159,7 @@ var ClassCombatManager = {
 
     /* v3.271.0 (L-5) : état du GROUPE, pour les deux conditions de groupe. */
     base.aliveEnemyCount = window.CombatActors ? CombatActors.aliveEnemies().length : (e ? 1 : 0);
+    base.enemyRising = !!(window.RiseSystem && RiseSystem.downedEnemies().length); // v3.428.0 (Ruines)
     base.allyLowestHpPercent = null;
     if (window.CombatActors) {
       CombatActors.aliveAllies().forEach(function (a) {

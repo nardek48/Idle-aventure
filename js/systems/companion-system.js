@@ -93,7 +93,8 @@ var CompanionManager = {
     var st = this.state(companionId);
     if (!def || !st || st.unlocked) return false;
     st.unlocked = true;
-    st.present = true;
+    // v3.428.0 : au-delà de deux compagnons, le nouveau venu attend au camp (Edda : choix « borne »)
+    st.present = this.partyIds().length < COMPANION_MAX_PRESENT;
     st.hp = this.maxHpOf(companionId);
     this.refreshParty(); // v3.422.0 : il est là dès le combat déjà engagé
     if (def.lines && def.lines.join && typeof addLog === "function") {
@@ -125,6 +126,14 @@ var CompanionManager = {
     if (window.heroLockToast && heroLockToast()) return false; // v3.307.0 : héros en expédition
     var st = this.state(companionId);
     if (!st || !st.unlocked) return false;
+    // v3.428.0 (Ruines, ruines_03) : Edda reste du groupe tant que l'étape de sa rencontre n'est pas réclamée
+    if (!present && companionId === "edda" && window.StoryQuestManager) {
+      var cur = StoryQuestManager.getCurrentStep("ruins");
+      if (cur && cur.id === "ruines_03") {
+        if (typeof showToast === "function") showToast(_t("Edda doit t'accompagner pour cette étape"), 1600);
+        return false;
+      }
+    }
     if (present && this.partyIds().length >= COMPANION_MAX_PRESENT && !st.present) {
       if (typeof showToast === "function") showToast(_t("Deux compagnons au maximum"), 1400);
       return false;
@@ -356,6 +365,8 @@ var CompanionManager = {
         }
         // v3.311.0 : « Planté » seulement quand un autre allié a pris des coups (sinon il gâche le round)
         if (def.skill && def.skill.type === "taunt" && !this._someoneElseHurt(actor)) continue;
+        // v3.428.0 (Ruines) : « Le dernier trait » seulement quand un ennemi est à terre
+        if (def.skill && def.skill.type === "finish" && !(window.RiseSystem && RiseSystem.downedEnemies().length)) continue;
         return "skill";
       }
       if (policy[i] === "basic") return "basic";
@@ -488,6 +499,18 @@ var CompanionManager = {
       actor.hp = Math.min(actor.maxHp, actor.hp + soin);
       actor.cooldown = Number(skill.cooldown || 0);
       if (typeof addLog === "function") addLog("🛡️ " + _t("{x} — {s} : il attire les coups (+{n} PV)", { x: _td(def.name), s: _td(skill.name), n: (typeof formatNumber === "function" ? formatNumber(soin) : soin) }), "event");
+      return true;
+    }
+
+    /* v3.428.0 (Ruines) — Le dernier trait (Edda) : elle frappe un ennemi À TERRE ; une frappe
+       l'achève (RiseSystem.tryRise). Pas d'ennemi à terre : pas de compétence. */
+    if (skill.type === "finish") {
+      var aTerre = window.RiseSystem ? RiseSystem.downedEnemies()[0] : null;
+      if (!aTerre || !window.CombatEngine) return false;
+      var coup = Math.max(1, Math.floor(Number(actor.damage || 1) * Number(skill.value || 1)));
+      if (typeof addLog === "function") addLog("🪦 " + _t("{x} — {s} sur {y}", { x: _td(def.name), s: _td(skill.name), y: aTerre.name ? _td(aTerre.name) : _t("l'ennemi") }), "event");
+      CombatEngine.dealDamage(coup, false, true, true, aTerre);
+      actor.cooldown = Number(skill.cooldown || 0);
       return true;
     }
 

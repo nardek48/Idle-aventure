@@ -77,6 +77,44 @@ var CombatActors = {
     return this.enemies().filter(function (e) { return e && Number(e.hp || 0) > 0; });
   },
 
+  /* v3.428.0 (Ruines, relève) : les ennemis vivants qui ne sont pas à terre. */
+  standingEnemies: function () {
+    return this.aliveEnemies().filter(function (e) { return !e.downed; });
+  },
+
+  /* v3.428.0 : la cible tombe (morte ou à terre) — la suivante selon le réglage « Cible »,
+     parmi les ennemis debout ; à défaut, le premier vivant. Le verrou du doigt saute. */
+  retarget: function (fallen) {
+    var c = this.ensure();
+    if (!c) return null;
+    c.targetLocked = false;
+    var policy = (window.RiseSystem && game.combatMode === "grimoire") ? RiseSystem.getPolicy() : "proche";
+    var pick = this.pickByPolicy(policy, fallen);
+    c.targetId = pick ? pick.actorId : (c.enemies.length ? c.enemies[0].actorId : null);
+    return pick;
+  },
+
+  /* v3.428.0 : choix d'une cible parmi les ennemis debout. « proche » garde la cible actuelle
+     si elle est debout, sinon le premier debout ; « faible » le moins de PV ; « soutien » un
+     ennemi marqué support, sinon comme « proche ». Aucun debout : le premier vivant. */
+  pickByPolicy: function (policy, exclude) {
+    var standing = this.standingEnemies().filter(function (e) { return e !== exclude; });
+    if (!standing.length) {
+      var alive = this.aliveEnemies().filter(function (e) { return e !== exclude; });
+      return alive[0] || null;
+    }
+    if (policy === "faible") {
+      return standing.slice().sort(function (a, b) { return Number(a.hp || 0) - Number(b.hp || 0); })[0];
+    }
+    if (policy === "soutien" && window.RiseSystem) {
+      var sup = standing.filter(function (e) { return RiseSystem.isSupport(e); })[0];
+      if (sup) return sup;
+    }
+    var cur = this.target();
+    if (cur && standing.indexOf(cur) !== -1) return cur;
+    return standing[0];
+  },
+
   /* L'ennemi visé : la cible collante si elle est encore là, sinon le premier du groupe.
      C'est ce que renvoie game.enemy. */
   target: function () {
@@ -110,6 +148,8 @@ var CombatActors = {
     c.enemies.length = 0;
     c.targetId = null;
     c.nextActorId = 1;
+    c.targetLocked = false; // v3.428.0 : nouveau groupe, plus de cible au doigt
+    c.heroRose = false;     // v3.428.0 : Le seuil, une fois par combat
     for (var i = 0; i < arr.length; i++) {
       // Nouveau groupe = nouveaux identifiants : un objet réutilisé (harnais, respawn de run)
       // ne doit pas garder l'actorId d'un combat précédent.
@@ -136,7 +176,8 @@ var CombatActors = {
     var idx = c.enemies.indexOf(actor);
     if (idx === -1) return false;
     c.enemies.splice(idx, 1);
-    if (c.targetId === actor.actorId) c.targetId = c.enemies.length ? c.enemies[0].actorId : null;
+    // v3.428.0 : la suivante parmi les ennemis debout (un ennemi à terre n'est plus visé d'office)
+    if (c.targetId === actor.actorId) this.retarget(actor);
     return true;
   },
 

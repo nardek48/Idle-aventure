@@ -85,10 +85,26 @@ var GRIMOIRE_CONDITIONS = {
     label: "Ils sont plusieurs",
     description: "Au moins deux ennemis sont encore debout.",
     icon: "images/Icons/combat_status/double_strike.png"
+  },
+  /* v3.428.0 (Ruines, relève) : un ennemi est à terre et va se relever. L'action de la règle
+     le vise (RiseSystem.aim) : une frappe l'achève. Icône à générer. */
+  enemyRising: {
+    id: "enemyRising",
+    label: "Un ennemi se relève",
+    description: "Un ennemi est à terre et se relèvera au prochain round. Ton action le vise : une frappe l'achève.",
+    icon: "images/Icons/combat_status/rising.png"
   }
 };
 
-var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "heroLowHp", "allyLowHp", "multipleEnemies", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
+var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "heroLowHp", "allyLowHp", "multipleEnemies", "enemyRising", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
+
+/* v3.428.0 (Ruines, Conception §4.4 point 3) — réglage « Cible » du Grimoire (systems/rise-system.js). */
+var GRIMOIRE_TARGET_POLICIES = [
+  { id: "proche", label: "La plus proche", desc: "Tu finis ce que tu as commencé. Quand ta cible tombe, tu passes à la suivante." },
+  { id: "faible", label: "La plus faible", desc: "Tu frappes l'ennemi debout qui a le moins de PV." },
+  { id: "soutien", label: "Celle qui soutient", desc: "Tu frappes d'abord l'ennemi qui renforce ou soigne les autres. S'il n'y en a pas, la plus proche." }
+];
+window.GRIMOIRE_TARGET_POLICIES = GRIMOIRE_TARGET_POLICIES;
 
 function getGrimoireCondition(conditionId) {
   if (!conditionId || typeof conditionId !== "string") return null;

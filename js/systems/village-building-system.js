@@ -19,6 +19,7 @@
    vers ce manager : le bâtiment « Atelier de Construction » est le premier cas
    du socle, pas un système à part. */
 
+var VILLAGE_SEUIL_DISCOUNT = 0.10; // v3.428.0 : le seuil d'Aeswyn (choix « seuil »), au banc
 var VillageBuildingManager = {
 
   /* ---------- état ---------- */
@@ -177,6 +178,12 @@ var VillageBuildingManager = {
     }
     // v3.330.0 (E2) : niveau exigé par l'Histoire -> or et matériaux du monde seulement
     if (typeof isStoryVillageLevel === "function" && isStoryVillageLevel(id, level + 1)) out = stripStoryMaterials(out).cost;
+    // v3.428.0 (Ruines, choix « seuil » = aeswyn) : le seuil d'Aeswyn, −10 % de matériaux (pas d'or)
+    if (window.StoryQuestManager && StoryQuestManager.getChoice("seuil") === "aeswyn") {
+      Object.keys(out).forEach(function (k) {
+        if (k !== "gold" && out[k] > 0) out[k] = Math.max(1, Math.ceil(out[k] * (1 - VILLAGE_SEUIL_DISCOUNT)));
+      });
+    }
     return out;
   },
 

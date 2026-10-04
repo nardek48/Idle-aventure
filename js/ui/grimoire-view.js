@@ -229,7 +229,8 @@ var GRIMOIRE_CONDITION_SHORT_LABELS = {
   enemyCorrupted: _t("l'ennemi est corrompu", "grimoire court"),
   enemySilenceIncoming: _t("il va te silencer", "grimoire court"),
   enemyVampiric: _t("l'ennemi est vampirique", "grimoire court"),
-  enemyArmored: _t("l'ennemi est blindé", "grimoire court")
+  enemyArmored: _t("l'ennemi est blindé", "grimoire court"),
+  enemyRising: _t("un ennemi se relève", "grimoire court") // v3.428.0 (Ruines)
 };
 
 function getGrimoireConditionShortLabel(conditionId) {
@@ -635,6 +636,7 @@ function buildGrimoireListHTML(kit, unlockedCount) {
     h += buildGrimoireRuleRowHTML(index, rule, kit, index >= unlockedCount);
   });
 
+  h += buildGrimoireTargetHTML(); // v3.428.0 (Ruines) : réglage « Cible »
   h += buildGrimoirePotionAutoHTML(); // v3.379.0
   h += '<div class="grimoire-foot">';
   h += '<button type="button" onclick="openGrimoireSheet(\'presets\')"><img class=ico-inline src=images/Icons/system/save.png> ' + _t("Presets") + '<span class="grimoire-foot-badge">'
@@ -669,6 +671,34 @@ function buildGrimoirePotionAutoHTML() {
   h += '</div>';
   return h;
 }
+
+/* v3.428.0 (Ruines, Conception §4.4 point 3) — RÉGLAGE « CIBLE », hors des règles comme les
+   potions : qui le héros vise en mode Grimoire. Les compagnons frappent la même cible ; une
+   cible touchée au doigt prime jusqu'à ce qu'elle tombe. */
+function buildGrimoireTargetHTML() {
+  if (!window.RiseSystem) return "";
+  var cur = RiseSystem.getPolicy();
+  var lock = isGrimoireEditable() ? '' : ' disabled';
+  var h = '<div class="cp-behavior grimoire-target">';
+  h += '<div class="cp-behavior-title"><img class=ico-inline src=images/Icons/combat_status/target.png> ' + _t("Cible")
+    + (game.combatMode === "grimoire" ? '' : ' <span class="cp-behavior-off">' + _t("— sert en mode Grimoire") + '</span>') + '</div>';
+  h += '<div class="cp-behavior-row"><span>' + _t("Viser") + '</span><div class="kseg">';
+  GRIMOIRE_TARGET_POLICIES.forEach(function (p) {
+    h += '<button type="button" class="' + (cur === p.id ? 'is-on' : '') + '"' + lock
+      + ' onclick="setGrimoireTarget(\'' + p.id + '\')">' + esc(_td(p.label)) + '</button>';
+  });
+  h += '</div></div>';
+  h += '<div class="cp-behavior-hint">' + esc(_td(RiseSystem.getPolicyDef(cur).desc)) + '</div>';
+  h += '</div>';
+  return h;
+}
+
+function setGrimoireTarget(id) {
+  if (!isGrimoireEditable() || !window.RiseSystem) return;
+  RiseSystem.setPolicy(id);
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.setGrimoireTarget = setGrimoireTarget;
 
 function setGrimoirePotionAuto(key, value) {
   if (!isGrimoireEditable() || !window.PotionAutoManager) return;

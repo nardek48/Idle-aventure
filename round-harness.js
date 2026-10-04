@@ -995,7 +995,8 @@ game.enemy.chargeIn = 99; game.enemy.engageIn = 0; game.enemy.hp = 1; g.CombatEn
 ok(g.getCombatMissionProgressLabel().indexOf("Vague 2/") !== -1, "donjon : label avance à la vague 2 après le 1er kill");
 game = freshCombat("knight");
 var html2 = g.buildCombatHTML();
-ok(html2.indexOf("combat-mission-progress") !== -1, "l'écran Combat contient le slot du bandeau de mission");
+/* v3.427.0 : la progression de la mission vit dans la barre du haut du nouvel écran (#cbx-top). */
+ok(html2.indexOf('id="cbx-top"') !== -1, "l'écran Combat contient la barre du haut (lieu et progression de la mission)");
 
 console.log("\n[51] Difficulté Forêt plate (3.106.1) : enemyIndex neutralisé en Forêt, intact ailleurs");
 run("WorldManager.worldIndex = 0; WorldManager.adventureIndex = 0;");
@@ -1094,9 +1095,9 @@ ok(!scoutMission, "point 5/3 : une quête non liée à l'étape courante est mas
 console.log("\n[55] Retours de test v3.107.2 : 3 points (rations 1er lancement, position compteur, quête allégée)");
 ok(g.ADVENTURE_QUESTS.aq_forest_expedition.steps[0].target === 9, "point 3 : Prouver sa valeur — 15 -> 9 kills (+ boss = 10 combats)");
 var htmlCheck = g.buildCombatHTML();
-var idxProg = htmlCheck.indexOf("combat-mission-progress");
-var idxName = htmlCheck.indexOf("enemy-name");
-ok(idxProg !== -1 && idxProg < idxName, "point 2 : le compteur de mission précède le nom de l'ennemi dans le DOM");
+var idxProg = htmlCheck.indexOf('id="cbx-top"');
+var idxName = htmlCheck.indexOf('id="cbx-target"');
+ok(idxProg !== -1 && idxProg < idxName, "point 2 : le compteur de mission précède le nom de l'ennemi dans le DOM (v3.427.0 : barre du haut, puis bandeau de la cible)");
 ok(g.game.resources.ration === 3, "point 1 (contrôle nouvelle partie via fullResetState) : 3 rations toujours posées");
 // Le vrai bug (1er lancement, jamais de save, avant fullResetState) est couvert par un harnais séparé
 // incluant boot.js (round-harness ne le charge pas — cf. session, chemin init()/ensureGameStateDefaults()).
@@ -1117,10 +1118,10 @@ g.restoreBaseState(dCorrupt);
 ok(game.activeTab === "campement", "point 1 : une save chargée avec activeTab=combat + 0 PV retombe sur Campement (pas de blocage au reload)");
 
 var htmlOrder = g.buildCombatHTML();
-var idxMissionProg = htmlOrder.indexOf("combat-mission-progress");
-var idxEnemyDisplay = htmlOrder.indexOf('id="enemy-display"');
-var idxEnemyName = htmlOrder.indexOf("enemy-name");
-ok(idxMissionProg !== -1 && idxEnemyDisplay < idxMissionProg && idxMissionProg < idxEnemyName, "point 2 (v3.107.5) : le compteur est DANS #enemy-display, avant enemy-name (suit le même margin-top que le reste du bloc)");
+var idxMissionProg = htmlOrder.indexOf('id="cbx-top"');
+var idxEnemyDisplay = htmlOrder.indexOf('id="cbx-arena"');
+var idxEnemyName = htmlOrder.indexOf('id="cbx-target"');
+ok(idxMissionProg !== -1 && idxMissionProg < idxEnemyDisplay && idxEnemyDisplay < idxEnemyName, "point 2 (v3.427.0) : la progression est dans la barre du haut, au-dessus de l'arène et du bandeau de la cible");
 
 ok(typeof g.createInitialGameState === "function", "point 3 : createInitialGameState existe (vraie source d'un nouveau slot)");
 var freshState = g.createInitialGameState();
@@ -1204,13 +1205,13 @@ ok(!m6b.find(function (m) { return m.id === "scene_source_tarie"; }), "point 6 :
 
 console.log("\n[58] Compteur de mission — repositionnement définitif (3.107.5)");
 var htmlFinal = g.buildCombatHTML();
-var idxED = htmlFinal.indexOf('id="enemy-display"');
-var idxMP = htmlFinal.indexOf("combat-mission-progress");
-var idxEN = htmlFinal.indexOf('id="enemy-name"');
-var idxESB = htmlFinal.indexOf("enemy-status-bar");
-var idxEHP = htmlFinal.indexOf('id="enemy-hp-bar-wrapper"');
-// v3.241.0 (layout A2) : les statuts passent SOUS la jauge de PV, en rangée.
-ok(idxED < idxMP && idxMP < idxEN && idxEN < idxEHP && idxEHP < idxESB, "ordre DOM : enemy-display > mission > enemy-name > PV > enemy-status-bar (v3.241.0)");
+// v3.427.0 (atelier CB) : barre du haut > arène (bandeau de la cible, scène) > Équipe > commandes.
+var idxED = htmlFinal.indexOf('id="cbx-top"');
+var idxMP = htmlFinal.indexOf('id="cbx-target"');
+var idxEN = htmlFinal.indexOf('id="cbx-stage"');
+var idxEHP = htmlFinal.indexOf('id="cbx-team"');
+var idxESB = htmlFinal.indexOf('id="cbx-cmd"');
+ok(idxED !== -1 && idxED < idxMP && idxMP < idxEN && idxEN < idxEHP && idxEHP < idxESB, "ordre DOM : barre du haut > cible > scène > Équipe > commandes (v3.427.0)");
 ok(htmlFinal.indexOf("position: absolute") === -1 || true, "pas de contrainte sur inline styles (vérif CSS externe séparée)");
 var cssFinal = fs.readFileSync(path.join(ROOT, "css/03-combat.css"), "utf8");
 var cssBlockStart = cssFinal.indexOf(".combat-mission-progress {");
@@ -2507,13 +2508,12 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   run("game.unlockedTabs.equip = true; game.unlockedTabs.talents = true; game.unlockedTabs.ascension = true;");
   var html = run("buildHerosHTML()");
 
-  // --- structure : barre de sous-onglets EN BAS et HORS du cadre du héros ---
-  ok(html.indexOf("subtab-page-content") !== -1 && html.indexOf("subtab-bar-wrapper") !== -1,
-    "[RESUME] structure .subtab-page conservée (contenu défilant + barre)");
-  ok(html.indexOf("subtab-bar-wrapper") > html.indexOf("kframe-page"),
-    "[RESUME] la barre de sous-onglets vient APRÈS le cadre du héros (donc en bas, hors cadre)");
-  var frameEnd = html.lastIndexOf("</div>", html.indexOf("subtab-bar-wrapper"));
-  ok(frameEnd !== -1, "[RESUME] le cadre est refermé avant la barre");
+  // --- v3.424.0 (chantier Héros, H-1) : un cadre « Héros », rail du kit EN HAUT, plus de barre en bas ---
+  ok(html.indexOf("subtab-bar-wrapper") === -1 && html.indexOf("pc-subtab-bar") === -1,
+    "[RESUME] H-1 : plus de barre de sous-onglets en bas");
+  ok(/kseg is-stack heros-tabs/.test(html) && html.indexOf("heros-tabs") > html.indexOf("kframe-page"),
+    "[RESUME] H-1 : le rail est dans le cadre, en tête");
+  ok(/data-kf-title="[^"]*\|Héros"/.test(html), "[RESUME] H-1 : le cadre s'appelle « Héros »");
 
   // --- v3.244.0 (chantier Navigation) : sous-onglets Résumé / Équipement / Talents ;
   //     Stats et Capacités sont des feuilles basses ouvertes depuis le Résumé ---
@@ -2534,10 +2534,12 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   run("closeHerosSheet(); setHerosSubTab('hero');");
 
   // --- la classe est enfin visible ---
-  ok(html.indexOf("pc-sum-class") !== -1, "[RESUME] pastille de classe rendue");
+  // v3.425.0 (lot H-2) : la classe est dans la bannière du portrait ; la ressource de classe
+  // (Rage, Mana…) n'est plus sur le Résumé (elle vit en combat et dans la feuille Stats).
+  ok(html.indexOf("hs-banner") !== -1 && html.indexOf("hs-banner-sub") !== -1, "[RESUME] H-2 : bannière du portrait rendue");
   ok(html.indexOf("Chevalier") !== -1, "[RESUME] le libellé de classe apparaît");
-  ok(html.indexOf("Rage") !== -1, "[RESUME] la ressource de classe apparaît");
-  ok(html.indexOf("is-class-knight") !== -1, "[RESUME] la couleur de classe est portée par le portrait et la pastille");
+  ok(html.indexOf("hs-kstrip") !== -1 && (html.match(/class="hs-kstat"/g) || []).length === 4, "[RESUME] H-2 : les 4 chiffres sur une ligne");
+  ok(html.indexOf("hs-roster-btn") !== -1 && html.indexOf("openHeroSlotsScreen()") !== -1, "[RESUME] H-2 : « Mes héros » en bas, en vrai bouton");
 
   // getHeroSummaryResource ne DOIT PAS créer d'état de combat
   run("game.classResource = null;");
@@ -2562,7 +2564,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
     "[RESUME] le raccourci le dit au lieu d'afficher « 0 niveaux restants »");
 
   // --- icônes de capacité : chemins d'image rendus en <img>, pas en texte ---
-  ok(html.indexOf("special_attacks/") === -1 || html.indexOf("<img class=\"pc-sum-jump-kit-ico\"") !== -1,
+  ok(html.indexOf("special_attacks/") === -1 || html.indexOf("<img class=\"hs-mini-ico\"") !== -1,
     "[RESUME] les icônes de capacité passent par renderIconOrEmojiHTML (jamais de chemin en clair)");
   ok(html.indexOf(">./images/") === -1, "[RESUME] aucun chemin d'image affiché comme texte");
 
@@ -2630,7 +2632,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
      Le joueur tapait "Stats" et arrivait sur un cadre titré "Amélioration". Ces trois
      assertions lisent le libellé du bouton actif et le titre du cadre rendu, pour qu'aucun
      renommage futur ne puisse en oublier un. */
-  [["hero", "Résumé"], ["amelioration", "Stats"], ["stats", "Capacités"]].forEach(function (pair) {
+  [["hero", "Héros"], ["amelioration", "Stats"], ["stats", "Capacités"]].forEach(function (pair) { // v3.424.0 : le cadre s'appelle « Héros »
     run("closeHerosSheet(); setHerosSubTab('" + pair[0] + "');");
     // v3.244.0 : Résumé = titre de cadre ; Stats / Capacités = titre de la feuille basse.
     var html = pair[0] === "hero" ? run("buildHerosHTML()") : run("buildHerosSheetHTML()");
@@ -6615,8 +6617,9 @@ console.log("\n[63] v3.261.0 \u2014 Bandeau h\u00e9ros du combat, variante B");
   ok(/\.cb-hero \.cb-hero-top #combat-hero-mini \{ display: contents !important; \}/.test(css), "portrait et PV deviennent des cases de grille sans toucher au balisage");
   ok(/\.combat-hero-mini-hp-bar \{ grid-column: 2; grid-row: 2; width: 100% !important;/.test(css), "PV sur toute la largeur, sous la rang\u00e9e butin / potions / Fuir");
   /* Le balisage attendu par ces règles est toujours celui du jeu. */
+  /* v3.427.0 : le bandeau héros est remplacé par la carte du héros dans l'Équipe (CB-7). */
   var html = g.buildCombatHTML();
-  ok(html.indexOf('class="cb-hero-top"') !== -1 && html.indexOf('id="combat-hero-slot" class="cb-hero-slot"') !== -1 && html.indexOf('id="combat-sortie-root" class="combat-sortie-row"') !== -1, "structure cb-hero-top / slot / rang\u00e9e de sortie inchang\u00e9e");
+  ok(html.indexOf('id="cbx-team"') !== -1 && html.indexOf('id="combat-sortie-sheet-root"') !== -1, "nouvel écran : l'Équipe porte le héros, le sac garde sa racine");
   var hud = g.buildHudHTML ? g.buildHudHTML() : require("fs").readFileSync(require("path").join(ROOT, "js/ui/hud-view.js"), "utf8");
   ok(hud.indexOf("combat-hero-mini-portrait") !== -1 && hud.indexOf("combat-hero-mini-hp-bar") !== -1, "mini-h\u00e9ros : portrait et jauge toujours enfants directs");
 })();
@@ -7083,12 +7086,16 @@ console.log("\n[70] v3.268.0 (L-2) — Wenna : roster, tour du compagnon, menace
   W().unlock("wenna");
   run("game.unlockedTabs.companions = true; setHerosSubTabSilent('companions');");
   ok(g.activeHerosSubTab === "companions", "setHerosSubTab('companions') retient bien le sous-onglet");
-  ok(g.buildHerosHTML().indexOf("cp-card") !== -1, "l'écran Héros affiche alors la fiche du compagnon");
+  // v3.425.0 (lot H-2) : une carte courte par compagnon ; la fiche complète (cp-card) s'ouvre en feuille.
+  ok(g.buildHerosHTML().indexOf("hs-comp") !== -1 && g.buildHerosHTML().indexOf("herosOpenCompanion('wenna')") !== -1, "l'écran Héros affiche alors la carte du compagnon");
+  run("herosOpenCompanion('wenna');");
+  ok(g.buildHerosSheetHTML().indexOf("cp-card") !== -1, "...et sa fiche complète s'ouvre en feuille");
+  run("closeHerosSheet();");
   run("setHerosSubTabSilent('hero');");
-  ok(g.buildHerosHTML().indexOf("setHerosSubTab(\'companions\')") !== -1, "v3.268.3 : le bouton Compagnons est au pied du Résumé, une fois débloqué");
-  ok(g.buildHerosSubTabBarHTML().indexOf("companions") === -1, "v3.268.3 : il n'est plus dans la barre de sous-onglets");
+  ok(g.buildHerosHTML().indexOf("setHerosSubTab(\'companions\')") !== -1, "v3.424.0 (H-1) : Compagnons est un onglet du rail, une fois débloqué");
+  ok(g.buildHerosHTML().indexOf("hs-roster-btn") !== -1 && g.buildHeroFicheHTML().split("setHerosSubTab(\'companions\')").length === 2, "v3.424.0 : plus de bouton Compagnons au pied du Résumé (seul l'onglet reste)");
   run("game.unlockedTabs.companions = false;");
-  ok(g.buildHerosHTML().indexOf("setHerosSubTab(\'companions\')") === -1, "non débloqué : aucun bouton");
+  ok(g.buildHerosHTML().indexOf("setHerosSubTab(\'companions\')") === -1, "non débloqué : aucun onglet");
   run("game.unlockedTabs.companions = true; setHerosSubTabSilent('companions');");
   run("setHerosSubTabSilent('nimporte_quoi');");
   ok(g.activeHerosSubTab === "hero", "une valeur inconnue retombe toujours sur le Résumé");
@@ -7966,8 +7973,8 @@ console.log("\n[85] v3.287.0 — raccourcis clavier du combat : garde-fous et af
   g.CombatEngine.spawnEnemy();
 
   /* Le raccourci existait déjà ; ce lot ajoute ses garde-fous et le rend visible. */
-  var html = g.buildCombatHTML();
-  ok(html.indexOf("cb-key-hint") !== -1 && html.indexOf("Espace") !== -1,
+  var html = g.buildCbxCmdHTML();   // v3.427.0 : les commandes sont rendues par le nouvel écran
+  ok(html.indexOf("cbx-key-badge") !== -1 && html.indexOf("Espace") !== -1,
     "le bouton d'attaque annonce son raccourci");
   ok(html.indexOf('aria-label="Attaque (barre espace)"') !== -1,
     "et l'annonce aussi aux lecteurs d'écran");
@@ -9781,7 +9788,7 @@ console.log("\n[120] v3.325.0 — Plafond du Terrain d'entraînement par acte");
   pose(F.length, 0, { 0: true, 1: true });
   game.village.buildings.training.level = 9;
   ok(VB.getMaxLevel("training") === 9 && VB.isMaxLevel("training"), "Terrain 9 déjà construit à l'acte I : rien n'est repris, pas de niveau au-delà");
-  pose(0, 0, { 0: true, 1: true, 2: true });
+  pose(0, 0, { 0: true, 1: true, 2: true, 3: true }); // v3.428.0 : les Ruines ont leur entrée, la Crypte non
   ok(WC.getTrainingActCap() === Infinity, "monde sans entrée d'acte : aucun plafond d'acte");
   game.storyQuests.forest.skipped = true; game.worldsEverReached = { 0: true };
   ok(WC.getVillageCap("training") === 4, "chapitre de la Forêt court-circuité : Forêt au complet (4)");
@@ -11239,7 +11246,10 @@ console.log("\n[142] v3.365.0 — Lot J : le Bilan de la partie en tête du Jour
   ok(g.Prefs.get("logTotals") === true, "et se rouvre");
   game.storyQuests.forest.currentStep = g.STORY_QUESTS.forest.steps.length;
   game.storyQuests.desert.currentStep = g.STORY_QUESTS.desert.steps.length;
-  ok(g.buildTotalsStoryLabel() === "Ch. 2 terminé", "Histoire : « Ch. 2 terminé » à la fin du Désert");
+  // v3.428.0 : la fin du Désert ouvre le chapitre 3 (Ruines)
+  ok(g.buildTotalsStoryLabel() === "Ch. 3 · 1 / " + g.STORY_QUESTS.ruins.steps.length, "Histoire : le Ch. 3 s'ouvre à la fin du Désert (" + g.buildTotalsStoryLabel() + ")");
+  game.storyQuests.ruins.currentStep = g.STORY_QUESTS.ruins.steps.length;
+  ok(g.buildTotalsStoryLabel() === "Ch. 3 terminé", "Histoire : « Ch. 3 terminé » à la fin des Ruines");
 })();
 
 console.log("\n[143] v3.366.0 — Petites Aventures : réserve rechargeable ; Ensablement du seul secteur tenté");
@@ -11338,7 +11348,7 @@ console.log("\n[145] v3.369.0 — Multilangue, lot L-1 : HUD, Camp, Combat, fen�
   var campX = g.buildCampHTML();
   ok(campX.indexOf("⟦Manger : ") !== -1 && campX.indexOf("⟦Voir le tableau complet⟧") !== -1, "pseudo-langue : Camp extrait");
   ok(g.buildHudHTML().indexOf("⟦Niv. 1⟧") !== -1, "pseudo-langue : HUD extrait (niveau)");
-  ok(g.buildCombatHTML().indexOf("⟦ATTAQUER⟧") !== -1, "pseudo-langue : bouton ATTAQUER extrait");
+  ok(g.buildCbxCmdHTML().indexOf("⟦ATTAQUER⟧") !== -1, "pseudo-langue : bouton ATTAQUER extrait");
   ok(g.ResumeManager.formatAbsence(135 * 60000) === "⟦2 h⟧ ⟦15 min⟧", "pseudo-langue : unités de durée extraites");
   I._lang = null;
 })();
@@ -11904,7 +11914,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
 
     /* Un obstacle : crans, blessures, corde */
     runv.nodes.C0.type = "obstacle"; runv.nodes.C0.done = false;
-    ok(P.moveTo("C0").ok && runv.status === "pa2-node" && runv.breath === 100 - R.heavyStep, "un pas : « Pas lourd » coûte 4 Souffle");
+    ok(P.moveTo("C0").ok && runv.status === "pa2-node" && runv.breath === 100 - R.heavyStep - (g.PA2_WORLD_RULES.forest ? g.PA2_WORLD_RULES.forest.stepBreath : 0), "un pas : « Pas lourd » coûte 4 Souffle (+ la marche en Forêt, v3.423.0)");
     var opts = P.obstacleOptions();
     ok(opts.length === 3 && opts.every(function (o) { return o.thr >= 2 && o.thr <= 6 && typeof o.cran === "string"; }), "trois voies, seuil de dé entre 2 et 6");
     var before = opts.map(function (o) { return o.thr; });
@@ -12525,7 +12535,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
     P.depart();
     ok(game.resources.outre_pleine === 1 && r.stock.outre === 1 && r.stock.gourde === 1, "l'Outre est prise à l'Entrepôt ; la gourde n'a qu'une gorgée au Désert");
     var b0 = r.breath; P.moveTo(P.openMoves()[0]);
-    ok(r.breath === b0 - 3, "la soif : chaque pas coûte 3 Souffle");
+    ok(r.breath === b0 - g.PA2_WORLD_RULES.desert.stepBreath && g.PA2_WORLD_RULES.desert.stepBreath === 4, "la soif : chaque pas coûte 4 Souffle (v3.423.0)");
     r.breath = 30; P.useItem("outre");
     ok(r.breath === 70 && r.stock.outre === 0, "l'Outre rend 40 Souffle");
     var gab = Object.keys(r.nodes).map(function (k) { return r.nodes[k]; });
@@ -13412,14 +13422,18 @@ console.log("\n[191] v3.419.0 — La Caravane de la Halle marchande (R3, version
     ok(run("game.resources.ble") >= 250 && run("game.resources.bois") === 500 && run("game.resources.viande") === 400, "jamais sous la moitié du plafond ni sous la réserve ; le Bois n'est pas touché");
     ok(run("CaravanManager.getBlockReason('court')") !== "" && run("CaravanManager.depart('court')") === false, "une seule caravane à la fois");
     ok(run("buildSaveData()").village.caravan.trip === "moyen", "la caravane est dans la sauvegarde (game.village)");
-    run("hallSheetSegment = 'caravan'; openVillageBuildingId = 'hall';");
-    var route = run("buildVillageBuildingSheetHTML('hall')");
-    ok(route.indexOf('data-car="route"') !== -1 && route.indexOf("car-left") !== -1 && route.indexOf("setHallSheetSegment('build')") !== -1, "feuille de la Halle : segment Caravane, en route avec le compte à rebours");
+    // v3.426.0 (chantier Expéditions) : la Caravane vit dans Campement › Expéditions ; la Halle garde un renvoi.
+    run("expSheet = { type: 'caravan' };");
+    var route = run("buildExpeditionsSheetHTML()");
+    ok(route.indexOf('data-car="route"') !== -1 && route.indexOf("car-left") !== -1, "feuille « Caravane » des Expéditions : en route avec le compte à rebours");
+    var hallSheet = run("openVillageBuildingId = 'hall'; buildVillageBuildingSheetHTML('hall')");
+    ok(hallSheet.indexOf("vb-hall-caravan") !== -1 && hallSheet.indexOf("goToCaravan()") !== -1 && hallSheet.indexOf("setHallSheetSegment('caravan')") === -1 && hallSheet.indexOf("setHallSheetSegment('build')") !== -1, "feuille de la Halle : un renvoi vers la Caravane, segments Échoppe · Agrandir");
     ok(run("CaravanManager.unload()") === null, "pas de déchargement avant l'arrivée");
     run("CaravanManager._now = function () { return 1000000 + 4 * 3600 * 1000 + 5; };");
     ok(run("CaravanManager.isBack()") && run("CaravanManager.checkArrival()") === true && run("CaravanManager.checkArrival()") === false, "retour hors ligne : annoncé une seule fois");
     ok(run("getVillageSubTabBadges().buildings") >= 1 && run("buildVillageBuildingCardHTML('hall')").indexOf("is-caravan-back") !== -1, "ruban « De retour » sur la tuile de la Halle, pastille sur Bâtiments");
-    ok(run("buildVillageBuildingSheetHTML('hall')").indexOf("unloadCaravanFromSheet()") !== -1, "de retour : bouton Décharger");
+    ok(run("buildExpeditionsSheetHTML()").indexOf("unloadCaravanFromSheet()") !== -1 && run("buildExpeditionsBoardHTML()").indexOf("unloadCaravanFromSheet()") !== -1, "de retour : bouton Décharger (feuille et tableau des départs)");
+    run("expSheet = null;");
     var loot = run("CaravanManager.unload()");
     ok(loot && loot.gold === 400 && run("game.gold") === gold0 + 400 && run("game.village.caravan") === null, "décharger : +400 or, la Halle est libre");
     /* Trajet Long au niveau 3 : matériau du monde et objet, tirés au départ */
@@ -13458,12 +13472,13 @@ console.log("\n[192] v3.420.0 — La caravane sur la carte vivante, icône de Se
     var p2 = run("CaravanManager.getMapPosition('desert')");
     ok(!p2.outbound && Math.abs(p2.x - (v.x + m.x) / 2) < 1e-6, "aux trois quarts : sur le retour, à mi-chemin");
     var h = run("buildLivingMapHTML('desert')");
-    ok(h.indexOf('id="lm-caravan"') !== -1 && h.indexOf("is-return") !== -1 && h.indexOf("goToCaravan()") !== -1 && h.indexOf("lm-car-trail") !== -1, "sur la carte : la piste, la caravane qui revient, toucher ouvre la Halle");
+    ok(h.indexOf('id="lm-caravan"') !== -1 && h.indexOf("is-return") !== -1 && h.indexOf("goToCaravan()") !== -1 && h.indexOf("lm-car-trail") !== -1, "sur la carte : la piste, la caravane qui revient, toucher ouvre sa feuille");
     ok(run("buildLivingMapHTML('forest')").indexOf("lm-caravan") === -1, "pas sur la carte de l'autre monde");
     run("CaravanManager._now = function () { return 5e12 + 9 * 3600 * 1000; };");
     ok(run("buildLivingMapHTML('desert')").indexOf("lm-caravan is-back") !== -1, "rentrée : au village, ruban « De retour »");
     run("hallSheetSegment = 'build'; openVillageBuildingId = null; goToCaravan();");
-    ok(run("openVillageBuildingId") === "hall" && run("hallSheetSegment") === "caravan", "goToCaravan : la feuille de la Halle, segment Caravane");
+    ok(run("game.activeTab") === "campement" && run("campTab") === "depart" && run("expSheet && expSheet.type") === "caravan", "goToCaravan : Campement › Expéditions, feuille Caravane ouverte (v3.426.0)");
+    run("expSheet = null;");
     run("CaravanManager.unload(); CaravanManager._now = function () { return Date.now(); };");
     var b = fs.readFileSync(path.join(ROOT, "images/Icons/village_buildings/caravan.png"));
     ok(b[25] === 6 && b.readUInt32BE(16) === 256, "icône de la caravane : 256 px, détourée (RGBA)");
@@ -13541,6 +13556,525 @@ console.log("\n[193] v3.422.0 — Débit des zones, pools des secteurs, groupe d
     ok(/html\.pc-mode \.kfp-scrollzone,[\s\S]*?scrollbar-width: auto;/.test(fs.readFileSync(path.join(ROOT, "css/08-desktop.css"), "utf8")), "mode PC : barre de défilement de largeur normale sur les pages");
   } catch (err) {
     ok(false, "[193] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[194] v3.423.0 — Difficulté : les ennemis suivent un peu la force réelle du héros, Souffle et repos");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
+    run("WorldManager.worldIndex = 1; WorldManager.adventureIndex = 1; WorldManager.enemyIndex = 3;");
+    var h0 = run("WorldManager.getHeroScale()");
+    ok(h0.hp === 1 && h0.power === 1, "héros neuf au Désert : aucun ajustement (jamais sous ×1)");
+    // Héros très fort : on gonfle ses dégâts et ses PV
+    run("window.__d = CombatForecast.getHeroDamagePerRound; CombatForecast.getHeroDamagePerRound = function () { return 371 * 4; }; game.heroMaxHp = 971 * 2; game.heroDefensePct = 0;");
+    var h1 = run("WorldManager.getHeroScale()");
+    ok(Math.abs(h1.hp - Math.sqrt(4 / 1.15)) < 1e-9 && Math.abs(h1.power - Math.sqrt(2 / 1.15)) < 1e-9, "D : PV × (dégâts / réf. / 1,15)^0,5, Puissance × (PV effectifs / réf. / 1,15)^0,5");
+    run("WorldManager._heroScaleOff = true;"); var e0 = run("WorldManager.generateEnemy()"); run("WorldManager._heroScaleOff = false;");
+    run("Math.__r = Math.random; Math.random = function () { return 0.3; };");
+    run("WorldManager._heroScaleOff = true;"); var eA = run("WorldManager.generateEnemy()"); run("WorldManager._heroScaleOff = false;"); var eB = run("WorldManager.generateEnemy()");
+    run("Math.random = Math.__r;");
+    ok(eB.maxHp > eA.maxHp * 1.7 && eB.stats.power > eA.stats.power * 1.2 && eB.goldReward === eA.goldReward, "l'ennemi du monde a plus de PV et de Puissance, pas plus d'or");
+    run("game.cycleCount = 1;"); var hc = run("WorldManager.getHeroScale()"); run("game.cycleCount = 0;");
+    ok(hc.hp === 1 && hc.power === 1, "dans les Cycles : pas d'ajustement (les Cycles ont le leur)");
+    run("WorldManager.worldIndex = 3;"); var hr = run("WorldManager.getHeroScale()"); run("WorldManager.worldIndex = 1;");
+    ok(hr.hp === 1, "Crypte : pas encore de référence, pas d'ajustement"); // v3.428.0 : les Ruines ont une référence provisoire
+    var cap = run("CombatForecast.getHeroScale('desert12', { exp: 1, margin: 1, cap: 2.5 })");
+    ok(cap.hp === 2.5, "plafond : ×2,5 au plus");
+
+    /* A : Petites Aventures */
+    run("CombatForecast.getHeroDamagePerRound = function () { return 178 * 4; };");
+    run("game.heroLevel = 16; SceneRunManager.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null }; game.sceneRun = null; SceneRunManager.startRun('petite_aventure_desert');");
+    var hs = run("game.sceneRun.heroScale");
+    ok(hs && hs.hp > 1 && hs.power >= 1 && hs.obstacle > 1, "PA : ajustement calculé au départ (niveau 16, tranche du niveau 11)");
+    ok(Math.abs(hs.hp - Math.pow(4 / 1.1, 0.75)) < 1e-9 && Math.abs(hs.obstacle - Math.pow(Math.sqrt(hs.hp * hs.power), 0.6)) < 1e-9, "PA : exp 0,75, marge 10 %, obstacles × (moyenne)^0,6");
+    run("CombatForecast.getHeroDamagePerRound = function () { return 1; };");
+    ok(run("Pa2Run.heroScale(game.sceneRun).hp") === hs.hp, "figé au départ : changer d'arme en route ne le refait pas");
+    run("CombatForecast.getHeroDamagePerRound = function () { return 178 * 4; };");
+    var raw = run("(function () { WorldManager._heroScaleOff = true; var q = QuestEnemyManager.spawnFor({ worldId: 'desert', adventureIndex: 1, enemyFilter: ['scarab'] }, false); WorldManager._heroScaleOff = false; return Array.isArray(q) ? q[0] : q; })()");
+    var sp = run("Pa2Run._spawn(game.sceneRun, 'scarab', false)");
+    ok(Math.abs(sp.maxHp - raw.maxHp) <= 1, "PA : l'ajustement du monde est coupé au tirage (pas de double ajustement)");
+    run("Pa2Run.abandon(); SceneRunManager.clearRun && SceneRunManager.clearRun(); game.sceneRun = null; CombatForecast.getHeroDamagePerRound = window.__d;");
+
+    /* B et C */
+    ok(run("SCENE_NODES.optionProfiles.power.breathCost") === 15 && run("SCENE_NODES.optionProfiles.precision.breathCost") === 8 && run("SCENE_NODES.optionProfiles.endurance.breathCost") === 25, "B : approches 15 / 8 / 25 de Souffle");
+    ok(run("PA2_WORLD_RULES.forest.stepBreath") === 4 && run("PA2_WORLD_RULES.desert.stepBreath") === 4, "B : chaque pas coûte 4 de Souffle, en Forêt comme au Désert");
+    ok(run("PA2_RULES.campRestPct") === 0.10 && run("PA2_RULES.seuilRestPct") === 0.06, "C : repos au camp 10 %, au seuil 6 %");
+  } catch (err) {
+    ok(false, "[194] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[195] v3.423.1 — Retours de Seb : rareté lisible, portrait du gardien du Désert");
+(function () {
+  try {
+    var src = ["js/ui/pa2-view.js", "js/systems/pa2-run.js", "js/systems/combat-engine.js"].map(function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); }).join("\n");
+    ok(src.indexOf("r: r.drop.rarity }") === -1 && src.indexOf("r: drop.rarity }") === -1, "« Objet trouvé » : la rareté s'affiche en clair (Inhabituel), plus « green »");
+    var info = run("pa2FoeInfo({ worldId: 'desert', templateId: 'petite_aventure_desert', hookId: null }, { type: 'boss' }, null)");
+    ok(info.image === run("ENEMY_DB.sandworm.image"), "gardien du Désert : le portrait du Ver, plus le cerf");
+    var infoF = run("pa2FoeInfo({ worldId: 'forest', templateId: 'petite_aventure_foret', hookId: null }, { type: 'boss' }, null)");
+    ok(infoF.image === run("PA2_ICONS.boss"), "gardien de la Forêt : inchangé");
+  } catch (err) {
+    ok(false, "[195] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[196] v3.424.0 — Chantier Héros, H-1 : rail en haut, quatre onglets, Boutique à la Halle");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure();");
+    run("game.unlockedTabs.equip = true; game.unlockedTabs.talents = true; game.unlockedTabs.companions = true; activeHerosSubTab = 'hero';");
+    var tabs = run("getHerosTabs().map(function (t) { return t[0]; }).join()");
+    ok(tabs === "hero,equip,talents", "sans compagnon : Résumé · Équipement · Talents");
+    run("CompanionManager.unlock('wenna');");
+    ok(run("getHerosTabs().map(function (t) { return t[0]; }).join()") === "hero,equip,talents,companions", "un compagnon recruté : l'onglet Compagnons apparaît");
+    ["hero", "equip", "talents", "companions"].forEach(function (t) {
+      run("setHerosSubTabSilent('" + t + "');");
+      var h = run("buildHerosHTML()");
+      ok(/kseg is-stack heros-tabs/.test(h) && /\|Héros"/.test(h) && h.indexOf("subtab-bar-wrapper") === -1, "onglet " + t + " : cadre « Héros », rail en haut, rien en bas");
+    });
+    run("TalentManager.__a = TalentManager.available; TalentManager.available = function () { return 2; };");
+    ok(run("buildHerosRailHTML()").indexOf('<span class="kseg-dot">2</span>') !== -1, "pastille : points de talent à placer");
+    run("TalentManager.available = TalentManager.__a;");
+    // Boutique : dans Héros tant que la Halle n'est pas bâtie, à la Halle ensuite
+    run("game.village.buildings.hall.level = 0; setHerosSubTabSilent('equip'); activeEquipSubTab = 'shop';");
+    ok(run("buildHerosHTML()").indexOf("equip-shop-grid") !== -1 && !run("isEquipShopAtHall()"), "Halle non bâtie : la Boutique reste dans Héros › Équipement");
+    run("game.village.buildings.hall.level = 2; activeEquipSubTab = 'shop';");
+    var eq = run("buildHerosHTML()");
+    ok(eq.indexOf("equip-shop-grid") === -1 && eq.indexOf("setEquipSubTab('shop')") === -1 && eq.indexOf("heros-shop-hint") === -1, "Halle bâtie : plus de Boutique dans Héros, ni de renvoi (v3.424.1)");
+    run("game.gold = 1e6; openVillageBuildingId = 'hall'; hallSheetSegment = 'shop';");
+    var hall = run("buildVillageBuildingSheetHTML('hall')");
+    ok(hall.indexOf("setHallSheetSegment('shop')") !== -1 && hall.indexOf("equip-shop-grid") !== -1 && hall.indexOf("equipShopRefresh()") !== -1, "feuille de la Halle : segment Échoppe avec la vitrine");
+    run("openVillageBuildingId = null; goToEquipShop();");
+    ok(run("openVillageBuildingId") === "hall" && run("hallSheetSegment") === "shop", "goToEquipShop : ouvre la Halle sur son Échoppe");
+    run("closeVillageBuildingSheet();");
+  } catch (err) {
+    ok(false, "[196] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[197] v3.425.0 — Chantier Héros, lot H-2 : écrans refaits (Résumé, Équipé, Sac, Talents, Compagnons)");
+(function () {
+  try {
+    var fsx = require("fs"), px = require("path");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; game.heroGender='m'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure();");
+    run("game.unlockedTabs.equip = true; game.unlockedTabs.talents = true; game.unlockedTabs.companions = true; herosOpenSheet = null;");
+    // --- Résumé ---
+    run("setHerosSubTabSilent('hero');");
+    var res = run("buildHerosHTML()");
+    ok(res.indexOf("hs-banner") !== -1 && res.indexOf("hs-kstrip") !== -1 && res.indexOf("hs-roster-btn") !== -1 && res.indexOf("nb-page-frame-fill") !== -1, "Résumé : bannière, 4 chiffres sur une ligne, « Mes héros » en bas, cadre jusqu'en bas");
+    ok(res.indexOf("h2-") === -1 && res.indexOf("Atelier") === -1, "Résumé : aucun reste d'atelier");
+    // --- Équipé ---
+    run("setHerosSubTabSilent('equip'); activeEquipSubTab = 'equipment'; selectedEquipSlot = null;");
+    var eq = run("buildHerosHTML()");
+    ok(eq.indexOf("silhouette_hood_m.webp") !== -1 && (eq.match(/class="hs-eslot pin-/g) || []).length === 7, "Équipé : silhouette à capuche (homme) et 7 emplacements autour du corps");
+    run("game.heroGender = 'f';");
+    ok(run("buildHerosHTML()").indexOf("silhouette_hood_f.webp") !== -1, "Équipé : silhouette à capuche femme pour une héroïne");
+    run("game.heroGender = 'm'; game.equipped.weapon = generateEquipmentItem('weapon', 'common', 0); herosPickSlot('weapon');");
+    var det = run("buildHerosHTML()");
+    ok(run("selectedEquipSlot") === "weapon" && det.indexOf("hs-edetail") !== -1 && det.indexOf("EquipmentManager.unequip('weapon')") !== -1, "Équipé : toucher un emplacement montre son détail sous la silhouette");
+    // --- comparaison (pastilles) ---
+    run("game.equipped.ring = null; window.__r = generateEquipmentItem('ring', 'common', 0);");
+    ok(run("herosItemCompareState(window.__r)") === "up", "pastille : emplacement vide → ▲ mieux");
+    run("game.equipped.ring = JSON.parse(JSON.stringify(window.__r)); game.equipped.ring.uid = 'autre';");
+    ok(run("herosItemCompareState(window.__r)") === "same", "pastille : le même objet → pareil");
+    run("window.__w = JSON.parse(JSON.stringify(game.equipped.ring)); window.__w.value = window.__w.value * 3; window.__w.uid = 'mieux';");
+    ok(run("herosItemCompareState(window.__w)") === "up", "pastille : stat de base plus forte, rien de perdu → ▲");
+    run("window.__d = JSON.parse(JSON.stringify(game.equipped.ring)); window.__d.value = Math.max(0, window.__d.value / 3); window.__d.uid = 'moins';");
+    ok(run("herosItemCompareState(window.__d)") === "down", "pastille : stat de base plus faible → ▼");
+    // --- Sac ---
+    run("game.inventory = [window.__w, window.__d]; activeEquipSubTab = 'inventory';");
+    var bag = run("buildHerosHTML()");
+    ok(bag.indexOf("wh-dd-btn") !== -1 && (bag.match(/class="wh-tile hs-btile/g) || []).length >= 2 && bag.indexOf("hs-cmp is-up") !== -1 && bag.indexOf("hs-cmp is-down") !== -1, "Sac : liste déroulante de l'Entrepôt, tuiles, pastilles ▲ et ▼");
+    ok(bag.indexOf("h2-btile-stat") === -1 && bag.indexOf("hs-btile-stat") === -1, "Sac : pas de stat sur la tuile (pastille seule)");
+    run("herosBagFilter('better');");
+    var better = run("buildHerosHTML()");
+    ok((better.match(/class="wh-tile hs-btile/g) || []).length === 1 && better.indexOf("herosOpenItem('eq:mieux')") !== -1, "Sac : « Mieux que l'équipé » ne garde que les ▲");
+    run("herosBagFilter('all'); herosBagMenu();");
+    ok(run("buildHerosHTML()").indexOf("wh-dd-menu") !== -1 && run("buildHerosHTML()").indexOf("openInventorySettings()") !== -1, "Sac : le menu montre filtres, tri et Autovente");
+    run("herosBagMenu(); herosOpenItem('eq:mieux');");
+    ok(run("herosOpenSheet") === "item" && run("buildHerosSheetHTML()").length > 100, "Sac : toucher une tuile ouvre la feuille de l'objet");
+    run("closeHerosSheet();");
+    // --- Talents ---
+    ["knight", "archer", "mage"].forEach(function (cls) {
+      run("TalentManager.__c = TalentManager.getClassId; TalentManager.getClassId = function () { return '" + cls + "'; }; setHerosSubTabSilent('talents');");
+      var tt = run("buildHerosHTML()");
+      run("TalentManager.getClassId = TalentManager.__c;");
+      var imgs = (tt.match(/images\/UI\/talents\/[\w.]+/g) || []);
+      var missing = imgs.filter(function (f) { return !fsx.existsSync(px.join(ROOT, f)); });
+      ok(tt.indexOf("bg_" + cls + ".webp") !== -1 && (tt.match(/class="hst-emb"/g) || []).length === 2 && missing.length === 0, "Talents " + cls + " : fond de classe, 2 emblèmes, toutes les images existent" + (missing.length ? " (manque " + missing.join(", ") + ")" : ""));
+    });
+    run("game.heroLevel = 5; game.talents = {}; setHerosSubTabSilent('talents');");
+    var first = run("TalentManager.getTree().trunk[0].id");
+    run("herosTalentSelect('" + first + "');");
+    ok(run("buildHerosHTML()").indexOf("herosTalentLearn()") !== -1, "Talents : le panneau du bas propose « Apprendre »");
+    run("TalentManager.__cap = TalentManager.cap; TalentManager.cap = function () { return Infinity; }; herosTalentLearn();");
+    ok(run("TalentManager.rank('" + first + "')") === 1, "Talents : « Apprendre » achète le talent choisi");
+    run("TalentManager.cap = TalentManager.__cap;");
+    // --- Compagnons : la Patrouille reste dans la fiche tant que l'écran Expéditions n'existe pas ---
+    run("CompanionManager.unlock('wenna'); setHerosSubTabSilent('companions');");
+    ok(run("buildHerosHTML()").indexOf("hs-comp-head") !== -1, "Compagnons : carte courte");
+    ok(run("buildCompanionCardHTML('wenna')").indexOf("patrolStart") !== -1 || run("typeof buildCompanionPatrolHTML") === "function", "Compagnons : la Patrouille reste accessible dans la fiche");
+    // --- feuille Stats : plafond expliqué une fois ---
+    run("HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { game.upgrades[id] = getTrainingCapLevels(); });");
+    var st = run("buildHerosAmeliorationHTML()");
+    ok((st.match(/hs-capbanner/g) || []).length === 1 && st.indexOf("goToTrainingGround()") !== -1 && st.indexOf("is-training-wall") !== -1, "Stats : au plafond, un seul bandeau qui mène au Terrain");
+    // --- défilement des cadres et bulles ---
+    ok(run("typeof getPanelScreenKey") === "function", "renderPanel : clé d'écran pour garder le défilement des cadres");
+    var css = fsx.readFileSync(px.join(ROOT, "css/04-panel-heros-screens.css"), "utf8");
+    ok(/body\.hs-on-heros \.hud-dock \{ display: none/.test(css), "Héros : pas de bulles flottantes");
+    ok(/\.cp-voie-other \{ flex-direction: column/.test(fsx.readFileSync(px.join(ROOT, "css/04-panel-companions.css"), "utf8")), "fiche compagnon : l'autre Voie, texte au-dessus du bouton");
+    ["images/Heroes/full/silhouette_hood_m.webp", "images/Heroes/full/silhouette_hood_f.webp"].forEach(function (f) { ok(fsx.existsSync(px.join(ROOT, f)), "image présente : " + f); });
+  } catch (err) {
+    ok(false, "[197] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[198] v3.426.0 — Chantier Expéditions : Campement › Expéditions, patrouilles et caravane vers toute carte atteinte");
+(function () {
+  try {
+    var fsx = require("fs"), px = require("path");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure(); Prefs._cache = {}; Prefs._save({});");
+    run("game.unlockedTabs.map = true; game.unlockedTabs.dungeon = true; game.unlockedTabs.shop = true; game.unlockedTabs.companions = true; game.activeTab = 'campement';");
+    run("CompanionManager.unlock('wenna'); CompanionManager.unlock('maddoc'); WorldManager.worldIndex = 1;");
+    run("LivingMapManager.__lib = LivingMapManager.isLiberated; LivingMapManager.isLiberated = function (m, s) { return (m === 'forest' && (s === 'gue' || s === 'arbremere')) || (m === 'desert' && s === 'puits_sec'); };");
+    // --- l'onglet ---
+    var camp = run("buildCampHTML('depart')");
+    ok(camp.indexOf("setCampTab('depart')") !== -1 && camp.indexOf("<span>Expéditions</span>") !== -1 && camp.indexOf("start_expedition.png") !== -1, "Campement : l'onglet « Départ » devient « Expéditions »");
+    ok(camp.indexOf("exp-sum") !== -1 && camp.indexOf("Prêts à partir") !== -1 && camp.indexOf("goToPotions()") !== -1 && camp.indexOf("switchTab('map')") !== -1, "tableau des départs : compteurs, « Prêts à partir », Carte et Potions en pied");
+    ok(run("getExpeditionEntries().map(function (e) { return e.kind; }).join()") === "pa,patrol,patrol,dungeon", "entrées : Petites Aventures, deux compagnons, Donjon (pas de Halle, pas de caravane)");
+    // --- patrouilles vers toute carte atteinte ---
+    ok(run("PatrolManager.reachedMapIds().join()") === "forest,desert", "cartes atteintes : la Forêt et le Désert");
+    ok(run("PatrolManager.getDestinations().length") === 3 && run("PatrolManager.getDestinations('forest').length") === 2, "destinations : toutes les cartes (3), ou une seule (Forêt : 2)");
+    run("expSheet = { type: 'patrol', id: 'wenna' };");
+    var sheet = run("buildExpeditionsSheetHTML()");
+    ok((sheet.match(/class="exp-world( is-on)?"/g) || []).length === 2 && sheet.indexOf("pt-select") === -1, "feuille Patrouille : deux vignettes de monde, plus de liste déroulante");
+    ok((sheet.match(/class="exp-dest( is-on)?"/g) || []).length === 1 && sheet.indexOf("Le puits sec") !== -1 && sheet.indexOf("exp-best") !== -1, "au Désert (monde courant) : une carte par lieu, ce qu'il rapporte, « le plus »");
+    run("patrolPick('wenna', 'mapId', 'forest'); patrolPick('wenna', 'sectorId', 'arbremere'); patrolPick('wenna', 'hours', 4);");
+    sheet = run("buildExpeditionsSheetHTML()");
+    ok((sheet.match(/class="exp-dest( is-on)?"/g) || []).length === 2 && sheet.indexOf("exp-dest is-on") !== -1 && sheet.indexOf("patrolStart('wenna')") !== -1, "Forêt choisie depuis le Désert : ses deux lieux, l'Arbre-mère sélectionné");
+    run("patrolStart('wenna');");
+    var p = run("PatrolManager.get('wenna')");
+    ok(p && p.mapId === "forest" && p.sectorId === "arbremere" && p.hours === 4, "départ : Wenna patrouille en Forêt sans changer de monde");
+    ok(run("getExpeditionEntries().filter(function (e) { return e.id === 'wenna'; })[0].tone") === "away" && run("buildExpeditionsBoardHTML()").indexOf("data-exp-end") !== -1, "en route : rubrique « En route », compte à rebours");
+    run("PatrolManager.get('wenna').endsAt = Date.now() - 1000;");
+    ok(run("countExpeditionsToCollect()") === 1 && run("buildCampHTML('missions')").indexOf("kseg-dot is-green") !== -1, "rentrée : « À récupérer », pastille verte sur l'onglet");
+    ok(run("buildExpeditionsBoardHTML()").indexOf("patrolCollect('wenna')") !== -1, "...avec « Prendre le butin » sur la ligne");
+    run("patrolCollect('wenna');");
+    ok(!run("PatrolManager.get('wenna')") && run("buildPatrolSheetHTML('wenna')").indexOf("exp-last") !== -1, "butin pris : la feuille montre le dernier retour");
+    // --- fiche du compagnon : renvoi ---
+    var card = run("buildCompanionCardHTML('maddoc')");
+    ok(card.indexOf("exp-moved") !== -1 && card.indexOf("goToExpeditions('patrol', 'maddoc')") !== -1 && card.indexOf("pt-select") === -1, "fiche du compagnon : un renvoi vers les Expéditions, plus de formulaire");
+    run("game.activeTab = 'more'; openPatrolScreen();");
+    ok(run("game.activeTab") === "campement" && run("campTab") === "depart", "fil rouge « patrouille rentrée » : Campement › Expéditions");
+    // --- caravane : choisir le marché ---
+    run("game.village.buildings.hall.level = 3; game.village.buildings.warehouse.level = 0; ['ble','viande','eau'].forEach(function (k) { game.resources[k] = 500; });");
+    ok(run("CaravanManager.getMarkets().map(function (m) { return m.mapId; }).join()") === "forest,desert", "marchés : Forêt et Désert");
+    run("expSheet = { type: 'caravan' }; selectCaravanMarket('forest');");
+    var cs = run("buildExpeditionsSheetHTML()");
+    ok((cs.match(/class="exp-world( is-on)?"/g) || []).length === 2 && cs.indexOf("exp-world is-on") !== -1 && cs.indexOf("seve") !== -1, "feuille Caravane : deux vignettes de marché, la Forêt choisie (Sève au trajet Long)");
+    run("selectCaravanTrip('long'); var _r = Math.random; Math.random = function () { return 0; }; departCaravanFromSheet(); Math.random = _r;");
+    var c = run("game.village.caravan");
+    ok(c && c.world === 0 && c.rare && c.rare.key === "seve_aeswyn" && run("CaravanManager.getMapId()") === "forest", "départ au marché de la Forêt depuis le Désert : Sève d'Aeswyn, roule sur la carte de la Forêt");
+    ok(run("getExpeditionEntries().filter(function (e) { return e.kind === 'caravan'; })[0].tone") === "away", "caravane en route dans le tableau");
+    run("game.village.caravan = null; expSheet = null;");
+    // --- fichiers ---
+    var idx = fsx.readFileSync(px.join(ROOT, "index.html"), "utf8"), sw = fsx.readFileSync(px.join(ROOT, "sw.js"), "utf8");
+    ok(idx.indexOf('id="exp-sheet-root"') !== -1 && idx.indexOf("js/ui/expeditions-view.js") > idx.indexOf("js/ui/patrol-view.js") && sw.indexOf("./js/ui/expeditions-view.js") > 0 && sw.indexOf("./css/04-panel-expeditions.css") > 0, "fichiers chargés et précachés");
+    ok(/body\.exp-on-board \.hud-dock \{ display: none/.test(fsx.readFileSync(px.join(ROOT, "css/04-panel-expeditions.css"), "utf8")), "pas de bulles flottantes sur le tableau des départs");
+    // v3.426.1 (retour Seb) : une seule carte atteinte -> sa vignette reste visible
+    run("LivingMapManager.isLiberated = function (m, s) { return m === 'forest' && s === 'etang'; }; WorldManager.worldIndex = 0; patrolUi = {}; expSheet = { type: 'patrol', id: 'maddoc' };");
+    var one = run("buildExpeditionsSheetHTML()");
+    ok(one.indexOf("exp-worlds is-single") !== -1 && (one.match(/class="exp-world( is-on)?"/g) || []).length === 1, "une seule carte atteinte : sa vignette reste affichée (v3.426.1)");
+    run("game.village.caravan = null; expSheet = { type: 'caravan' };");
+    ok(run("buildExpeditionsSheetHTML()").indexOf("exp-worlds is-single") !== -1, "...et le marché de la Caravane aussi");
+    run("expSheet = null;");
+    // v3.426.2 (retours Seb) : jauge du stock plus épaisse, icônes plus grandes, détail d'Équipé collé en bas
+    var cssP = fsx.readFileSync(px.join(ROOT, "css/04-panel-production.css"), "utf8"), cssH = fsx.readFileSync(px.join(ROOT, "css/04-panel-heros-screens.css"), "utf8");
+    ok(/\.prod-tile-gauge\.kgauge-thin \{ aspect-ratio: 989 \/ 180/.test(cssP), "Production : jauge du stock épaissie");
+    ok(/\.hs-eq \.hs-eslot-ico \{ width: 70px/.test(cssH) && /\.hst-art \{[^}]*width: 64px/.test(cssH) && /\.hs-edetail \{ position: sticky; bottom: 0/.test(cssH), "Héros : emplacements 70 px, talents 64 px, détail d'Équipé collé en bas");
+    run("game.activeTab = 'more'; setHerosSubTabSilent('equip'); activeEquipSubTab = 'equipment';");
+    var eqh = run("buildHerosHTML()");
+    ok(eqh.indexOf("hs-sets") > eqh.indexOf('class="hs-eq"') && eqh.indexOf("hs-sets") < eqh.indexOf('class="hs-edetail"'), "Équipé : bonus de panoplie sous la silhouette (v3.426.3)");
+    ok(run("_t('La caravane est rentrée : décharge-la dans Campement › Expéditions')").indexOf("Expéditions") !== -1 && fsx.readFileSync(px.join(ROOT, "js/systems/caravan-system.js"), "utf8").indexOf("à la Halle marchande\")") === -1, "annonce du retour de la caravane : Campement › Expéditions");
+    run("LivingMapManager.isLiberated = LivingMapManager.__lib; WorldManager.worldIndex = 0;");
+  } catch (err) {
+    ok(false, "[198] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[199] v3.427.0 — Nouvel écran de combat (atelier CB, validé par Seb)");
+(function () {
+  try {
+    var fsx = require("fs"), px = require("path");
+    var game = freshCombat("ranger"); giveWeapon();
+    var html = g.buildCombatHTML();
+    ok(["cbx-top", "cbx-arena", "cbx-target", "cbx-stage", "cbx-team", "cbx-cmd", "combat-sortie-sheet-root", "active-potions-bar", "combat-speed-inline"].every(function (id) { return html.indexOf('id="' + id + '"') !== -1; }),
+      "squelette : barre du haut, arène (cible, scène), Équipe, commandes, racines des feuilles");
+    // --- Distance et couloirs ---
+    var mk = function (id, engage) { var e = g.WorldManager.generateEnemy(); e.id = id; e.isBoss = false; e.isElite = false; return e; };
+    g.CombatEngine.spawnGroup([mk("wolf"), mk("goblin"), mk("foresttroll")]);
+    // spawnGroup trie par célérité : on retrouve chacun par son identifiant, et on garde l'ordre loup · gobelin · troll
+    var byId = function (id) { return game.combat.enemies.filter(function (e) { return e.id === id; })[0]; };
+    var en = [byId("wolf"), byId("goblin"), byId("foresttroll")];
+    en.forEach(function (e) { e._cbxLane = null; });
+    en[0].engageIn = 0; en[1].engageIn = 0; en[2].engageIn = 2;
+    ok(g.cbxIsRanged(en[1]) && !g.cbxIsRanged(en[0]), "tireur : lu sur ENEMY_ENGAGE_ROUNDS (gobelin frondeur), pas le loup");
+    var pos = g.cbxLayout(en);
+    var lanes = en.map(function (e) { return e._cbxLane; }).join("");
+    ok(lanes === "LCR", "trois ennemis : un couloir chacun, gauche · centre · droite (" + lanes + ")");
+    ok(pos[en[0].actorId].rank === 0 && pos[en[1].actorId].rank === 1 && pos[en[2].actorId].rank === 2, "rangs : contact 0, tireur posté à « approche » 1, loin 2");
+    ok(pos[en[2].actorId].bottom > pos[en[0].actorId].bottom && pos[en[2].actorId].s < pos[en[0].actorId].s, "au loin : plus haut et plus petit");
+    en[2].engageIn = 0;
+    var pos2 = g.cbxLayout(en);
+    ok(en[2]._cbxLane === "R" && pos2[en[2].actorId].left > pos[en[2].actorId].left && pos2[en[2].actorId].rank === 0, "il avance DANS son couloir (le couloir ne change pas, il s'écarte en descendant)");
+    en[1].engageIn = 0; en[1].id = "wolf";
+    var pos3 = g.cbxLayout(en);
+    ok(pos3[en[1].actorId].bottom > pos3[en[0].actorId].bottom, "formation en V à trois : le couloir central en retrait, plus haut");
+    // --- Boss : grand au fond, sbires devant sur les côtés ---
+    var boss = mk("slimeking"); boss.isBoss = true;
+    g.CombatEngine.spawnGroup([boss, mk("spider")]);
+    en = game.combat.enemies;
+    var b = en.filter(function (e) { return e.isBoss; })[0], add = en.filter(function (e) { return !e.isBoss; })[0];
+    var pb = g.cbxLayout(en);
+    ok(b._cbxLane === "C" && pb[b.actorId].left === 50 && pb[b.actorId].z < pb[add.actorId].z, "boss : couloir central, derrière ses sbires");
+    ok(pb[add.actorId].left < 30 || pb[add.actorId].left > 70, "le sbire se place sur un côté, pas devant le boss");
+    // --- Bandeau de la cible : télégraphes de tout le groupe ---
+    add.healTelegraphed = true; b.chargeTelegraphed = true;
+    g.CombatActors.setTarget(b);
+    var tgt = g.buildCbxTargetHTML();
+    ok(tgt.indexOf("cbx-chip is-urgent is-heal") !== -1 && tgt.indexOf("Interromps-le") !== -1, "soin annoncé : pastille bleue « Interromps-le ! »");
+    ok(tgt.indexOf(add.name) !== -1, "un télégraphe d'un autre ennemi que la cible porte son nom");
+    var sheet = g.buildCbxStatesSheetHTML();
+    ok(sheet.indexOf("Tireur") !== -1 && sheet.indexOf("Au prochain round") !== -1 && sheet.indexOf(b.name) !== -1, "feuille des états : tout le groupe, ennemi par ennemi, et le Tireur");
+    // --- Équipe et tour manuel ---
+    g.CompanionManager.unlock("wenna");
+    g.CombatEngine.spawnGroup([mk("wolf")]);
+    game.combatMode = "tactique"; game.combatRound.continueAttack = false;
+    var cmd = g.buildCbxCmdHTML();
+    ok((cmd.match(/class="cbx-skill[ "]/g) || []).length === 4 && cmd.indexOf("ATTAQUER") !== -1 && cmd.indexOf("cbx-advice") !== -1, "Tactique : conseil du Grimoire, 4 techniques, ATTAQUER");
+    ok(/cbx-advice[\s\S]*(Par défaut|Si |→)/.test(cmd), "le conseil dit pourquoi (sa condition, ou « Par défaut »)");
+    g.CombatEngine.heroAction("basic");
+    cmd = g.buildCbxCmdHTML();
+    ok(cmd.indexOf("companionAction('skill')") !== -1 && cmd.indexOf("cbx-attack is-comp") !== -1, "tour de Wenna : sa compétence, et ATTAQUER joue pour elle");
+    g.renderEnemy();
+    var team = g.document.getElementById("cbx-team") ? g.document.getElementById("cbx-team").innerHTML : "";
+    ok(team === "" || (team.indexOf("cbx-turn-badge is-done") !== -1 && team.indexOf("cbx-turn-badge is-now") !== -1), "cartes d'Équipe : ✓ pour le héros qui a joué, « À toi » pour Wenna");
+    // --- Grimoire : bande fine et règle jouée ---
+    g.CombatEngine.spawnGroup([mk("wolf")]);
+    game.unlockedTabs.grimoire = true; game.unlockedTabs.grimoireUnlocked = true;
+    if (!g.isTabUnlocked("grimoire")) g.isTabUnlocked = (function (orig) { return function (t) { return t === "grimoire" ? true : orig(t); }; })(g.isTabUnlocked);
+    g.CombatEngine.setCombatMode("grimoire");
+    cmd = g.buildCbxCmdHTML();
+    ok(cmd.indexOf("cbx-strip") !== -1 && cmd.indexOf("cbx-attack") === -1 && cmd.indexOf("cbxCycleSpeed") !== -1, "Grimoire : bande fine, vitesse en un bouton, pas d'ATTAQUER");
+    g.cbxState.notes = [];
+    g.ClassCombatManager.chooseRoundAction(true);
+    ok(g.cbxState.notes.length === 1 && !!g.cbxState.notes[0].label, "la décision du Grimoire est relevée pour s'afficher dans l'arène");
+    g.CombatEngine.setCombatMode("tactique");
+    g.cbxState.notes = [];
+    // --- Effets du moteur repris par l'écran ---
+    ok(String(g.showFloatingDamage).indexOf("onDamageShown") !== -1 && String(g.showDamageTakenPopup).indexOf("watch") !== -1, "les chiffres du moteur passent par l'écran (le bon ennemi, la bonne carte)");
+    // --- Fichiers ---
+    var idx = fsx.readFileSync(px.join(ROOT, "index.html"), "utf8"), sw = fsx.readFileSync(px.join(ROOT, "sw.js"), "utf8");
+    ok(idx.indexOf("js/ui/combat-screen-view.js") > idx.indexOf("js/ui/combat-group-view.js") && idx.indexOf("js/ui/combat-screen-view.js") < idx.indexOf("js/ui/ui-root.js")
+      && sw.indexOf("./js/ui/combat-screen-view.js") > 0 && sw.indexOf("./css/03-combat-screen.css") > 0 && idx.indexOf("css/03-combat-screen.css") > idx.indexOf("css/03-combat-group.css"), "fichiers chargés (après les vues de combat) et précachés");
+    var css = fsx.readFileSync(px.join(ROOT, "css/03-combat-screen.css"), "utf8");
+    ok(/\.cbx-chip\.is-heal \{[^}]*--cbx-blue/.test(css) && /\.cbx-foe\.tele-heal \.cbx-foe-hit::after/.test(css) && css.indexOf("has-heal-tele") === -1, "soin ennemi en bleu, sur le monstre seul (pas de cadre sur l'arène)");
+    ok(/\.cbx-hpbar span[^{]*\{[^}]*justify-content: center/.test(css), "barre de PV du héros : chiffres centrés");
+  } catch (err) {
+    ok(false, "[199] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[200] v3.427.1 — Retours de Seb : retour au sac, ration de la source");
+(function () {
+  try {
+    var game = freshCombat("knight");
+    ok(g.STORY_REWARDS.forest_07.resources.petite_ration === 1 && g.STORY_REWARDS.forest_07.resources.eau === 5, "La source tarie : une Petite ration en plus de l'eau, pour enchaîner");
+    // --- Sac : après Équiper, la fiche se referme ---
+    game.activeTab = "more"; g.setHerosSubTabSilent("equip"); run("activeEquipSubTab = 'inventory';");
+    var it = { uid: "t1", name: "Armure", rarity: "common", slot: "armor", stat: "defense", value: 0.02, icon: "armor" };
+    game.inventory = [it];
+    run("selectedInventoryKey = 'eq:t1';");
+    g.openHerosSheet("item");
+    var sheet = g.HEROS_SHEETS.item.build();
+    ok(sheet.indexOf("herosItemEquip('t1')") !== -1 && sheet.indexOf("herosItemOffer('t1')") !== -1 && sheet.indexOf("EquipmentManager.equip(") === -1, "fiche de l'objet : Équiper et Offrir passent par l'écran Héros");
+    g.herosItemEquip("t1");
+    ok(game.equipped.armor && game.equipped.armor.uid === "t1" && run("herosOpenSheet") === null, "équipé : la fiche se referme, retour au sac");
+    // --- Offrir : la fiche se referme après la confirmation ---
+    var it2 = { uid: "t2", name: "Anneau", rarity: "common", slot: "ring", stat: "goldMult", value: 0.05, icon: "ring" };
+    game.inventory = [it2];
+    run("selectedInventoryKey = 'eq:t2';");
+    g.openHerosSheet("item");
+    var _scm = g.showConfirmModal; g.showConfirmModal = function (a, b, c, cb) { cb(); };
+    g.herosItemOffer("t2");
+    g.showConfirmModal = _scm;
+    ok(!game.inventory.some(function (i) { return i.uid === "t2"; }) && run("herosOpenSheet") === null, "offert : la fiche se referme, retour au sac");
+    run("herosOpenSheet = null;");
+  } catch (err) {
+    ok(false, "[200] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[201] v3.427.2 — Petites Aventures : « Comme la dernière fois »");
+(function () {
+  try {
+    freshCombat("ranger");
+    var P = g.Pa2Run, keep = { getRun: P.getRun, addItem: P.addItem, removeItem: P.removeItem, depart: P.depart };
+    var toast = "", _st = g.showToast; g.showToast = function (m) { toast = m; };
+    var fake = { status: g.PA2_STATUS.prep, bag: ["gourde"], worldId: "forest", parcours: null, templateId: "petite_aventure_foret" };
+    P.getRun = function () { return fake; };
+    P.removeItem = function (i) { fake.bag.splice(i, 1); return { ok: true }; };
+    P.addItem = function (id) { if (id === "torche") return { ok: false, reason: "x" }; fake.bag.push(id); return { ok: true }; };
+    P.depart = function () { return { ok: true }; };
+    var _rr = g.pa2Rerender; g.pa2Rerender = function () {};
+    // départ : la besace est retenue sur l'appareil, par monde
+    fake.bag = ["corde", "torche"];
+    g.pa2Depart();
+    ok(g.Prefs.getValue("pa2LastBag:forest") === "corde,torche" && g.pa2LastBag(fake).join() === "corde,torche", "au départ, la besace est retenue (préférence de l'appareil, par monde)");
+    // préparation suivante : un toucher la remet, ce qui manque est dit
+    fake.bag = ["gourde"];
+    g.pa2ReuseLastBag();
+    ok(fake.bag.join() === "corde" && /Manque/.test(toast) , "« Comme la dernière fois » : la besace revient, l'objet impossible est signalé");
+    ok(g.pa2LastBag({ worldId: "desert", parcours: null }).length === 0, "chaque monde a sa propre besace retenue");
+    P.getRun = keep.getRun; P.addItem = keep.addItem; P.removeItem = keep.removeItem; P.depart = keep.depart; g.pa2Rerender = _rr; g.showToast = _st;
+    var src = require("fs").readFileSync(ROOT + "/js/ui/pa2-view.js", "utf8");
+    ok(src.indexOf("pa2ReuseLastBag()") !== -1 && src.indexOf("Comme la dernière fois") !== -1, "bouton dans la préparation, sous la besace");
+  } catch (err) {
+    ok(false, "[201] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[202] v3.427.2 — Anneau : la critique en base, l'or en affixe");
+(function () {
+  try {
+    var cfg = g.EQUIPMENT_SLOT_CONFIG.ring;
+    ok(cfg.stat === "critChance" && cfg.ranges.common[0] === 1 && cfg.ranges.legendary[1] === 12, "anneau : critique en base, 1 à 12 points");
+    ok(["common", "green", "rare", "epic", "legendary"].every(function (r) { return cfg.ranges[r][1] < g.EQUIPMENT_SLOT_CONFIG.amulet.ranges[r][1]; }), "anneau sous l'amulette à chaque rareté");
+    var pool = g.AFFIX_POOLS.ring;
+    ok(pool.primary.indexOf("critChance") === -1 && pool.secondary.indexOf("goldMult") !== -1, "or en affixe secondaire, critique hors du pool");
+    var star = g.EQUIP_SHOP_STARTER.filter(function (d) { return d.slot === "ring"; })[0];
+    ok(star && star.stat === "critChance" && star.value === cfg.ranges.common[0], "Anneau de cuivre : +1 % critique (bas de la fourchette)");
+    var bad = 0;
+    for (var i = 0; i < 300; i++) {
+      var it = g.generateEquipmentItem("ring", ["common", "green", "rare", "epic", "legendary"][i % 5], 0);
+      if (it.stat !== "critChance" || (it.affixes || []).some(function (a) { return a.stat === "critChance"; })) bad++;
+    }
+    ok(bad === 0, "300 anneaux tirés : critique en base, jamais en affixe");
+    // Un vieil anneau d'or garde sa stat et son effet
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; game.equipped.ring = { uid: 'old_r', slot: 'ring', name: 'Anneau', rarity: 'common', stat: 'goldMult', value: 0.08, affixes: [] }; EquipmentManager.recalcStats();");
+    ok(Math.abs(g.game.goldMult - 1.08) < 1e-9, "anneau d'avant v3.427.2 : garde son bonus d'or");
+  } catch (err) {
+    ok(false, "[202] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[203] v3.428.0 — Ruines, acte I : relève, réglage « Cible », Edda, Le seuil, Halle, Marché");
+(function () {
+  try {
+    var game = freshCombat("knight");
+    var R = g.RiseSystem, CA = g.CombatActors;
+    function sk(name, hp) { return { id: "skeleton", name: name, isBoss: false, hp: hp, maxHp: hp, stats: g.ENEMY_DB.skeleton.stats, resists: [], weak: [] }; }
+    function byName(n) { return game.combat.enemies.filter(function (x) { return x.name === n; })[0]; }
+    function sl(name, hp) { return { id: "slime", name: name, isBoss: false, hp: hp, maxHp: hp, stats: g.ENEMY_DB.slime.stats, resists: [], weak: [] }; }
+
+    /* --- Relève --- */
+    ok(g.ENEMY_DB.skeleton.rises === true && g.ENEMY_DB.zombie.rises === true && !g.ENEMY_DB.ghoul.rises, "Squelette et Zombie se relèvent, la Goule non");
+    ok(g.FIXED_ENEMY_ARCHETYPES.gargoyle === "armored", "la Gargouille porte le Blindé");
+    g.CombatEngine.spawnGroup([sk("A", 100), sl("B", 100)]);
+    var a = byName("A"), b = byName("B");
+    a.hp = 0; g.CombatEngine.killEnemy(a);
+    ok(a.downed === true && a.hp === 1 && game.combat.enemies.length === 2, "le squelette tombe à terre (1 PV) au lieu de mourir");
+    ok(game.enemy === b, "la cible passe à l'ennemi debout");
+    ok(R.onEnemyTurn(a) === true && a.downed === true, "tour ennemi du round de la chute : il reste à terre et ne frappe pas");
+    ok(R.onEnemyTurn(a) === true && !a.downed && a.hasRisen && a.hp === 50, "au round suivant, il se relève avec 50 % de ses PV");
+    a.hp = 0; g.CombatEngine.killEnemy(a);
+    ok(game.combat.enemies.indexOf(a) === -1, "il ne se relève qu'une fois : la seconde mort est la bonne");
+    g.CombatEngine.spawnGroup([sk("C", 80), sl("D", 80)]);
+    var c = byName("C");
+    c.hp = 0; g.CombatEngine.killEnemy(c);
+    g.CombatEngine.dealDamage(5, false, false, true, c);
+    ok(game.combat.enemies.indexOf(c) === -1, "une frappe pendant qu'il est à terre l'achève");
+    g.CombatEngine.spawnGroup([sl("Seul", 50)]);
+    var s1 = game.enemy; s1.hp = 0; g.CombatEngine.killEnemy(s1);
+    ok(!s1.downed, "un ennemi sans `rises` meurt normalement");
+
+    /* --- Condition du Grimoire et visée --- */
+    ok(!!g.GRIMOIRE_CONDITIONS.enemyRising && g.GRIMOIRE_CONDITION_ORDER.indexOf("enemyRising") !== -1, "condition « Un ennemi se relève » au Grimoire");
+    g.CombatEngine.spawnGroup([sk("E", 100), sl("F", 100)]);
+    var e = byName("E");
+    e.hp = 0; g.CombatEngine.killEnemy(e);
+    var ctx = g.ClassCombatManager.getGrimoireCombatContext();
+    ok(ctx.enemyRising === true && g.evaluateGrimoireCondition("enemyRising", ctx) === true, "la condition est vraie quand un ennemi est à terre");
+    R.aim("enemyRising");
+    ok(game.enemy === e, "l'action de la règle vise l'ennemi à terre");
+
+    /* --- Réglage « Cible » --- */
+    game.combatMode = "grimoire";
+    ok(R.getPolicy() === "proche" && g.GRIMOIRE_TARGET_POLICIES.length === 3, "réglage « Cible » : « La plus proche » par défaut, trois choix");
+    g.CombatEngine.spawnGroup([sl("G", 100), sl("H", 30), sl("I", 60)]);
+    R.setPolicy("faible"); R.aim(null);
+    ok(game.enemy.name === "H", "« La plus faible » vise l'ennemi debout qui a le moins de PV");
+    g.CombatEngine.spawnGroup([sl("J", 100), sl("K", 30)]);
+    g.selectEnemyTarget(byName("J").actorId); R.aim(null);
+    ok(game.enemy.name === "J", "une cible touchée au doigt prime sur le réglage");
+    R.setPolicy("proche"); game.combatMode = "tactique";
+
+    /* --- Sauvegarde du réglage --- */
+    run("game.grimoireTarget = 'soutien'; saveGame();");
+    run("loadGame();");
+    ok(g.game.grimoireTarget === "soutien", "le réglage « Cible » est sauvegardé et relu");
+    run("fullResetState();");
+    ok(g.game.grimoireTarget === "proche", "partie neuve : « La plus proche »");
+
+    /* --- Edda --- */
+    game = freshCombat("knight");
+    var CM = g.CompanionManager;
+    ok(g.COMPANIONS_DB.edda && g.COMPANIONS_DB.edda.skill.type === "finish" && g.COMPANION_ROLE_LABELS.finisher === "Achever", "Edda : rôle Achever, compétence « Le dernier trait »");
+    CM.unlock("wenna"); CM.unlock("maddoc"); CM.unlock("edda");
+    ok(CM.partyIds().join() === "wenna,maddoc" && CM.state("edda").present === false, "groupe plein : Edda attend au camp (le choix « qui reste » la fera venir)");
+    CM.state("wenna").present = false; CM.state("edda").present = true; CM.refreshParty();
+    g.CombatEngine.spawnGroup([sk("L", 100), sl("M", 100)]);
+    var l = byName("L"); l.hp = 0; g.CombatEngine.killEnemy(l);
+    var eddaActor = CA.allies().filter(function (x) { return x.companionId === "edda"; })[0];
+    ok(!!eddaActor && CM.chooseAction(eddaActor) === "skill", "Edda choisit « Le dernier trait » quand un ennemi est à terre");
+    CM.takeTurn(eddaActor);
+    ok(game.combat.enemies.indexOf(l) === -1, "« Le dernier trait » l'achève : il ne se relèvera pas");
+
+    /* --- Le seuil --- */
+    run("StoryQuestManager.ensure();");
+    game.storyQuests.ruins.choices = { seuil: "soi" };
+    g.CombatEngine.spawnGroup([sl("N", 100)]);
+    game.heroHp = 0; g.CombatEngine.onHeroDefeated();
+    ok(game.heroHp === Math.floor(game.heroMaxHp * 0.25), "Le seuil : le héros se relève avec 25 % de ses PV");
+    ok(R.tryHeroRise() === false, "une fois par combat seulement");
+    game.storyQuests.ruins.choices = {};
+
+    /* --- Chapitre, plafonds, Halle, Marché, seuil d'Aeswyn --- */
+    var ch = g.STORY_QUESTS.ruins;
+    ok(ch && ch.requiresChapter === "desert" && ch.steps.length === 5 && ch.steps[0].id === "ruines_01", "chapitre 3 : ouvert après le Désert, cinq étapes");
+    ok(!!g.WORLD_CAPS[2] && g.WORLD_CAPS[2].village.forge === g.WORLD_CAPS[1].village.forge, "plafonds du monde 3 posés (provisoires, égaux au Désert)");
+    ok(g.STORY_AXES_OK !== false && g.STORY_CHOICE_AXES.seuil.soi.indexOf("soi") !== -1, "choix « seuil » sur l'axe Soi / Aeswyn");
+    ok(g.WAREHOUSE_RESOURCES.pierre_errante && g.CARAVAN_RARE_BY_WORLD[2] === "pierre_errante", "Pierre errante : ressource du monde 3, rare du Marché des Ruines");
+    var VB = g.VillageBuildingManager;
+    var hall0 = VB.getLevelCost("hall", 0);
+    var _reached = g.StoryQuestManager.isStepReached;
+    g.StoryQuestManager.isStepReached = function (id) { return id === "ruines_04" ? true : _reached.call(this, id); };
+    var hallStory = VB.getLevelCost("hall", 0);
+    ok(Object.keys(hallStory).every(function (k) { return g.STORY_PROVIDED_MATERIALS.indexOf(k) === -1; }) && hallStory.gold === hall0.gold, "ruines_04 : la Halle niveau 1 au prix d'Histoire (matériaux communs fournis)");
+    game.worldsEverReached = { 0: true, 1: true, 2: true };
+    ok(g.CaravanManager.getMarkets().some(function (m) { return m.world === 2; }), "le Marché des Ruines s'ouvre à la caravane");
+    g.StoryQuestManager.isStepReached = _reached;
+    var w0 = VB.getLevelCost("workshop", 6);
+    game.storyQuests.ruins.choices = { seuil: "aeswyn" };
+    var w1 = VB.getLevelCost("workshop", 6);
+    ok(w1.gold === w0.gold && Object.keys(w0).filter(function (k) { return k !== "gold"; }).every(function (k) { return w1[k] === Math.max(1, Math.ceil(w0[k] * 0.9)); }), "le seuil d'Aeswyn : −10 % de matériaux sur les chantiers, l'or inchangé");
+    game.storyQuests.ruins.choices = {};
+    game.village.caravan = { trip: "court", startedAt: 0, endsAt: 1, world: 2, cargo: {}, gold: 10, rare: null, item: null, notified: true };
+    g.CaravanManager.unload();
+    ok(!!(game.explorationProgression || {}).ruinsMarketDone, "une caravane revenue du Marché des Ruines valide l'étape 4");
+  } catch (err) {
+    ok(false, "[203] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 
