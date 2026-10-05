@@ -37,6 +37,7 @@ var FIXED_ENEMY_ARCHETYPES = {
   foresttroll: "shielded",
   bramble: "silenced",
   sandwarrior: "armored", // v3.302.0 (D1) : le Blindé descend au monde 1, porté par le Guerrier des sables
+  batisseur: "shielded",  // v3.429.0 (Ruines, U-3) : son mur se pose sur un allié (rise-system.js)
   gargoyle: "armored"     // v3.428.0 (Ruines, U-3) : la Gargouille, lourde, porte le Blindé (le « golem » de RU3)
 };
 
@@ -48,7 +49,8 @@ var ENEMY_ENGAGE_ROUNDS = {
   spider: 0,      // cracheuse
   goblin: 0,      // frondeur
   bramble: 0,     // lianes-fouets
-  foresttroll: 2  // lourd et lent
+  foresttroll: 2, // lourd et lent
+  batisseur: 3    // v3.429.0 : il reste en retrait, derrière ses murs
 };
 
 /* Rounds d'approche pour un ennemi donné (héros à distance uniquement — l'appelant gère le cas mêlée). */

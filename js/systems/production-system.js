@@ -165,7 +165,7 @@ var ProductionManager = {
 
   /* v3.257.0 (Cartes Vivantes, C-3) : Étang aux roseaux tenu -> Puits +10 %, Arbre doré tenu
      -> Scierie +10 %. Lu à chaque tick, donc perdu dès que le secteur régresse. */
-  LIVING_MAP_EFFECT_BY_BUILDING: { well: "puits_plus", sawmill: "scierie_plus" },
+  LIVING_MAP_EFFECT_BY_BUILDING: { well: "puits_plus", sawmill: "scierie_plus", quarry: "carriere_plus", mine: "mine_plus" }, // v3.429.0 : carrière et échafaudages des Ruines
   getLivingMapMult: function (id) {
     var effectId = this.LIVING_MAP_EFFECT_BY_BUILDING[id];
     if (!effectId || !window.LivingMapManager || !LivingMapManager.hasEffect(effectId)) return 1;

@@ -219,6 +219,100 @@ var LIVING_MAPS = {
         lore: "Un siège taillé dans la dune, face au sud. Le vent ne l'use pas." }
     ],
     landmarks: []
+  },
+
+  /* ================= v3.429.0 (Ruines, U-5) — LA CARTE DES RUINES =================
+     Image de Seb (04/10/2026), carrée, centre = la Borne. Quatorze quartiers, positions relevées sur
+     l'image. Même moteur que le Désert ; s'y ajoute LE CHANTIER ERRANT (chantier, ci-dessous, lu par
+     LivingMapManager.getChantier) : chaque jour civil la cité rebâtit un quartier — un quartier libéré
+     repasse « Rebâti » —, et le libérer ce jour-là rapporte des Pierres errantes. L'échec : l'Éboulement.
+     La carte s'ouvre avec l'étape ruines_07. */
+  ruins: {
+    id: "ruins",
+    worldId: "ruins",
+    name: "Ruines anciennes",
+    asset: "images/Maps/ruines.jpg",
+    opensAtStoryStep: "ruines_07",
+    rewardResourceId: "pierre_errante",
+    chantier: { reward: 3 },   // Pierres errantes pour le chantier du jour (provisoire, banc)
+    words: {
+      cover: "l'Éboulement", coverCap: "L'Éboulement", coveredState: "Rebâti",
+      home: "la Borne", fogLore: "Les rues changent trop vite pour qu'on sache ce qu'il y a là.",
+      openElsewhere: "La ville attend encore ailleurs",
+      homeTitle: "La Borne ne bouge pas.",
+      homeLore: "Le camp de Sarkel, autour de la borne. C'est la seule pierre de la ville qui reste à sa place. Les quartiers de l'anneau 1 sont toujours à portée.",
+      intro: "Touche un quartier pour voir ce qu'on en sait. Chaque jour, la ville rebâtit un quartier : le chantier.",
+      runLoot: "Pierre du run seule",
+      mapBlurb: "Choisis un quartier sur la carte des Ruines : la ville se rebâtit, un quartier par jour."
+    },
+    village: { x: 48.3, y: 49.3, name: "La Borne" },
+    caravanMarket: { x: 41, y: 40 },          // le Marché des Ruines, entre la place aux étals et la Borne
+    sectors: [
+      /* Anneau 1 — autour de la Borne */
+      { id: "place_etals", name: "La place aux étals", x: 35.2, y: 35.2, ring: 1, neighbors: ["couloirs", "fenetres", "cimetiere"],
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["dalle_qui_glisse", "mur_neuf"] } },
+        heldEffect: null,
+        lore: "Des étals de pierre bien alignés. Ce qu'on y pose le soir n'y est plus le matin." },
+      { id: "rue_tourne", name: "La rue qui tourne", x: 61, y: 34.7, ring: 1, neighbors: ["couloirs", "bibliotheque", "pont"],
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["rue_qui_tourne", "route_de_pierre"] } },
+        heldEffect: { id: "craie_plus", label: "La Craie : un trait de plus en Petite Aventure." },
+        lore: "Une rue ronde qui revient sur elle-même. Edda y a usé un bâton de craie entier." },
+      { id: "puits_range", name: "Le puits rangé", x: 64, y: 57.6, ring: 1, neighbors: ["pont", "echafaudages"],
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["dalle_qui_glisse", "route_de_pierre"] } },
+        heldEffect: { id: "puits_plus", label: "Puits +10 %." },
+        lore: "Un puits au milieu d'une cour balayée. Le seau est toujours remonté, jamais par personne." },
+      { id: "maisons_basses", name: "Les maisons basses", x: 36.1, y: 62.5, ring: 1, neighbors: ["cimetiere", "tour_garde", "porte_sanctuaire"],
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["mur_neuf", "rue_qui_tourne"] } },
+        heldEffect: null,
+        lore: "Des maisons sans étage, toutes pareilles. Les portes sont à la bonne hauteur, ici." },
+
+      /* Anneau 2 */
+      { id: "couloirs", name: "Les couloirs couverts", x: 49.3, y: 17.6, ring: 2, neighbors: ["place_etals", "rue_tourne", "escalier"], labelTop: true,
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["mur_neuf", "escalier_sans_fin"] } },
+        heldEffect: null,
+        lore: "Une rue qui a reçu un toit pendant la nuit. Dessous, il fait plus froid que dehors." },
+      { id: "fenetres", name: "Le quartier des fenêtres", x: 27.3, y: 19.5, ring: 2, neighbors: ["place_etals", "carriere", "cimetiere"],
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["escalier_sans_fin", "dalle_qui_glisse"] } },
+        heldEffect: null,
+        lore: "Des maisons pleines de fenêtres. Le soir, l'une d'elles est éclairée. Jamais la même." },
+      { id: "bibliotheque", name: "La bibliothèque murée", x: 74.2, y: 23, ring: 2, neighbors: ["rue_tourne", "escalier", "pont"],
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["mur_neuf", "porte_qui_attend"] } },
+        heldEffect: null,
+        lore: "Les fenêtres ont été murées de l'intérieur. Quelqu'un voulait garder ce qui est dedans." },
+      { id: "cimetiere", name: "Le cimetière aligné", x: 16, y: 43, ring: 2, neighbors: ["place_etals", "fenetres", "maisons_basses", "tour_garde"],
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["route_de_pierre", "dalle_qui_glisse"] } },
+        heldEffect: null,
+        lore: "Des tombes en rangs parfaits. Certaines sont ouvertes. Elles se referment le jour." },
+      { id: "pont", name: "Le pont de pierre", x: 87.9, y: 42, ring: 2, neighbors: ["rue_tourne", "puits_range", "bibliotheque", "echafaudages"],
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["route_de_pierre", "escalier_sans_fin"] } },
+        heldEffect: null,
+        lore: "Un pont au-dessus d'un ravin sec. Il est plus neuf que le ravin." },
+
+      /* Anneau 3 */
+      { id: "escalier", name: "L'escalier sans fin", x: 48.8, y: 6.3, ring: 3, neighbors: ["couloirs", "bibliotheque"], labelTop: true,
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["escalier_sans_fin", "mur_neuf"] } },
+        heldEffect: null,
+        lore: "Une tour qu'on monte par l'extérieur. On compte les marches, et le compte ne tombe jamais juste." },
+      { id: "carriere", name: "La carrière", x: 16, y: 12.2, ring: 3, neighbors: ["fenetres"],
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["dalle_qui_glisse", "route_de_pierre"] } },
+        heldEffect: { id: "carriere_plus", label: "Carrière +10 %." },
+        lore: "Une falaise taillée en marches. Les blocs qui en sortent sont déjà à la bonne taille." },
+      { id: "tour_garde", name: "La tour de garde", x: 17.6, y: 72.3, ring: 3, neighbors: ["cimetiere", "maisons_basses", "porte_sanctuaire"],
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["escalier_sans_fin", "mur_neuf"] } },
+        heldEffect: null,
+        lore: "Une tour qui regarde la ville, pas la plaine. On gardait quelque chose à l'intérieur." },
+      { id: "echafaudages", name: "Le chantier aux échafaudages", x: 79.1, y: 67.4, ring: 3, neighbors: ["puits_range", "pont", "porte_sanctuaire"],
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["mur_neuf", "dalle_qui_glisse"] } },
+        heldEffect: { id: "mine_plus", label: "Mine +10 %." },
+        lore: "Des échafaudages autour d'un bloc qui flotte. Personne ne monte dessus. Le bloc monte quand même." },
+      // Fermé jusqu'à l'acte III : la porte du Sanctuaire scellé (donjon 3)
+      { id: "porte_sanctuaire", name: "La porte du Sanctuaire", x: 49.3, y: 83, ring: 3, neighbors: ["maisons_basses", "tour_garde", "echafaudages"],
+        requiresStoryStep: "ruines_11",
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["porte_qui_attend", "mur_neuf"] } },
+        heldEffect: null,
+        lore: "Une arche qui descend sous la ville. C'est la seule porte qu'aucun chantier ne touche." }
+    ],
+    landmarks: []
   }
 };
 window.LIVING_MAPS = LIVING_MAPS;

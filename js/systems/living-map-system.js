@@ -245,6 +245,36 @@ var LivingMapManager = {
     return def.content;
   },
 
+  /* ---------- Le chantier errant (v3.429.0, Ruines U-5) ----------
+     map.chantier : chaque jour civil, la cité rebâtit UN quartier. Tirage au premier passage du
+     jour : un quartier libéré et non tenu par la Palissade d'abord (il repasse « Rebâti »), sinon
+     un quartier atteignable pas encore libéré. Le libérer ce jour-là rapporte map.chantier.reward
+     Pierres errantes, une fois. État : game.livingMaps[mapId].chantier = { day, sectorId, done }. */
+  getChantier: function (mapId) {
+    var map = this.getMap(mapId);
+    if (!map || !map.chantier || !this.isMapOpen(mapId)) return null;
+    this.ensureDefaults();
+    var lm = game.livingMaps[mapId], today = this._todayKey(), self = this;
+    var c = lm.chantier;
+    if (c && c.day === today && this.getSectorDef(mapId, c.sectorId)) return c;
+    var open = map.sectors.filter(function (d) {
+      return !(d.requiresStoryStep && !self.isStoryStepReached(d.requiresStoryStep)) && !self.isRepeatable(mapId, d.id);
+    });
+    var held = open.filter(function (d) { return self.isLiberated(mapId, d.id) && !self.isProtected(mapId, d.id); });
+    var pool = held.length ? held : open.filter(function (d) { return self.isReachable(mapId, d.id) && !self.isLiberated(mapId, d.id); });
+    if (!pool.length) { lm.chantier = { day: today, sectorId: null, done: true }; return lm.chantier; }
+    var pick = pool[Math.min(pool.length - 1, Math.floor(this._rand() * pool.length))];
+    if (this.isLiberated(mapId, pick.id)) this.regress(mapId, pick.id, "chantier du jour");
+    lm.chantier = { day: today, sectorId: pick.id, done: false };
+    if (typeof addLog === "function") addLog("🧱 " + _t("Cette nuit, la ville a rebâti {x}.", { x: _td(pick.name) }), "event");
+    return lm.chantier;
+  },
+
+  isChantier: function (mapId, sectorId) {
+    var c = this.getChantier(mapId);
+    return !!(c && c.sectorId === sectorId && !c.done);
+  },
+
   /* ---------- Élite répétable (C-5) ---------- */
 
   isRepeatable: function (mapId, sectorId) {
@@ -333,6 +363,7 @@ var LivingMapManager = {
      chaque refus dit pourquoi et par où. Le cap journalier est celui des Petites Aventures
      (décision 9) et ne porte que sur les expéditions ; un secteur d'élite est un combat. */
   canStart: function (mapId, sectorId) {
+    this.getChantier(mapId); // v3.429.0 : le quartier du jour est rebâti avant tout départ
     var def = this.getSectorDef(mapId, sectorId);
     if (!def) return { ok: false, reason: _t("Secteur inconnu") };
     var content = this.getContentFor(mapId, sectorId);
@@ -552,10 +583,18 @@ var LivingMapManager = {
     var s = this.getState(mapId, sectorId);
 
     if (result === "success") {
+      var chantierDuJour = this.isChantier(mapId, sectorId); // v3.429.0 : lu avant la libération
       s.state = "libere";
       s.liberatedCount += 1;
       report.liberated = true;
       report.message = _t("{x} est libéré.", { x: _td(def.name) });
+      if (chantierDuJour) {
+        var cmap = this.getMap(mapId), cn = Number((cmap.chantier || {}).reward || 0);
+        game.livingMaps[mapId].chantier.done = true;
+        if (cn > 0 && window.WarehouseManager) WarehouseManager.addResource(this.getRewardResourceId(mapId), cn, true);
+        report.chantier = cn;
+        report.message += " " + _t("Chantier du jour : +{n} {x}.", { n: cn, x: _td(this.getRewardResourceName(mapId)) });
+      }
       if (!s.firstRewardClaimed) {
         s.firstRewardClaimed = true;
         var seve = this.getFirstReward(def);

@@ -384,6 +384,8 @@ function buildLivingMapHTML(mapId) {
       else if (LM.isNameRevealed(mapId, d.id)) cls += " is-named";
     }
     if (LM.isProtected(mapId, d.id)) cls += " is-protege";
+    var chantier = LM.isChantier && LM.isChantier(mapId, d.id); // v3.429.0 : le chantier du jour (Ruines)
+    if (chantier) cls += " is-chantier";
     if (livingMapSelected === d.id) cls += " is-selected";
     if (running === d.id) cls += " is-running";
     if (d.x > 84) cls += " is-edge-r"; else if (d.x < 14) cls += " is-edge-l";
@@ -391,6 +393,7 @@ function buildLivingMapHTML(mapId) {
     h += '<button type="button" class="' + cls + '" style="left:' + d.x + '%;top:' + d.y + '%;" onclick="event.stopPropagation();lmxTapSector(\'' + d.id + '\')">';
     h += '<span class="lm-node-disc">' + (s.state === "voile" ? "?" : String(i + 1)) + '</span>';
     h += '<span class="lm-node-name">' + esc(_td(d.name)) + '</span>';
+    if (chantier) h += '<img class="lm-node-chantier" src="images/Icons/resources/pierre_errante_icon.png" alt="">';
     h += '</button>';
   });
 
@@ -606,6 +609,10 @@ function buildLivingMapPanelHTML(mapId, running) {
     else h += '<p class="lm-panel-line"><b>' + _t("Effet :") + '</b> ' + (known ? esc(_td(d.heldEffect.label)) : _t("inconnu")) + '</p>';
   }
   var repeatable = LM.isRepeatable(mapId, d.id);
+  if (LM.isChantier && LM.isChantier(mapId, d.id)) { // v3.429.0 (Ruines) : le chantier errant
+    var cmap = LM.getMap(mapId);
+    h += '<p class="lm-panel-line is-chantier"><b>' + _t("Chantier du jour :") + '</b> ' + esc(_t("la ville l'a rebâti cette nuit. Le libérer aujourd'hui : +{n} {x}.", { n: Number((cmap.chantier || {}).reward || 0), x: _td(rName) })) + '</p>';
+  }
   if (!s.firstRewardClaimed) h += '<p class="lm-panel-line"><b>' + _t("Première libération :") + '</b> +' + LM.getFirstReward(d) + ' ' + esc(_td(rName)) + '</p>';
   else if (s.state !== "libere") h += '<p class="lm-panel-line"><b>' + _t("Reprise :") + '</b> ' + esc(_t("{x}, pas de récompense de secteur.", { x: _td(W.runLoot) })) + '</p>';
   else if (!repeatable) h += '<p class="lm-panel-line"><b>' + _t("Rejeu :") + '</b> ' + esc(_t("Petite Aventure ordinaire, {x}.", { x: _td(W.runLoot) })) + '</p>';

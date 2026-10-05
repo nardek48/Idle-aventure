@@ -144,6 +144,12 @@ var COMBAT_STATES_SCREEN = {
     famille: "alerte", nom: "Exaltation", icon: COMBAT_STATE_ICON + "arcane_burn.png", mot: "Il s'exalte !",
     desc: "Son trait d'élite va compter triple pendant quelques rounds.",
     hint: "Tiens bon ou abrège : le pic ne dure pas."
+  },
+  // v3.428.2 (Ruines) : la relève, enfin visible à l'écran
+  rising: {
+    famille: "alerte", nom: "À terre", icon: COMBAT_STATE_ICON + "rising.png", mot: "Il se relève !",
+    desc: "Il est tombé, mais il se relèvera au prochain round avec la moitié de ses PV. Une seule fois.",
+    hint: "Frappe-le maintenant (touche-le, ou la règle « Un ennemi se relève ») : il reste à terre."
   }
 };
 window.COMBAT_STATES_SCREEN = COMBAT_STATES_SCREEN;

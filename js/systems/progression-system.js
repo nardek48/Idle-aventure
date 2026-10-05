@@ -248,8 +248,33 @@ var WorldManager = {
     var world = this.getWorld();
     if (!root || !world) return;
     root.style.setProperty("--world-bg", world.bg || "#111");
+    if (this.applyRunTheme()) return; // v3.428.2 : le décor d'une sortie (donjon, quête…) tient entre deux vagues
     if (world.combatMap) root.style.setProperty("--world-combat-map", 'url("' + world.combatMap + '")');
     else root.style.setProperty("--world-combat-map", "none");
+  },
+
+  /* v3.428.2 (retour Seb) : spawnGroup rappelle applyWorldTheme à chaque vague ; une sortie qui a son
+     propre décor (donjon, quête d'aventure ou de chasse, élite de carte) le reprend. Renvoie true si posé. */
+  applyRunTheme: function () {
+    var dr = game.dungeonRun;
+    if (dr && dr.active && window.DungeonManager) {
+      var d = DungeonManager.getById(dr.dungeonId);
+      if (d && d.combatMap) { DungeonManager.applyDungeonTheme(d.id); return true; }
+      return false;
+    }
+    var aq = game.adventureQuestRun;
+    if (aq && aq.active && window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[aq.questId] && window.AdventureQuestManager) {
+      AdventureQuestManager.applyQuestTheme(ADVENTURE_QUESTS[aq.questId]); return true;
+    }
+    var hr = game.huntRun;
+    if (hr && hr.active && window.HUNT_QUESTS && HUNT_QUESTS[hr.questId] && HUNT_QUESTS[hr.questId].worldId && window.HuntQuestManager) {
+      HuntQuestManager.applyQuestTheme(HUNT_QUESTS[hr.questId]); return true;
+    }
+    var lm = game.livingMaps && game.livingMaps.fight;
+    if (lm && window.LivingMapManager && LivingMapManager.getMap(lm.mapId)) {
+      LivingMapManager._applyFightTheme(LivingMapManager.getMap(lm.mapId)); return true;
+    }
+    return false;
   }
 };
 

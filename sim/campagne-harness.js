@@ -558,7 +558,7 @@ function waitCap() {
   DAYS_WAITED++; CAP_WAIT_H += (ms + 60000) / 3600e3;
   wait(ms + 60000);
 }
-var STATS = { expeditionFails: [], recouvrements: 0, farms: 0, shopBuys: 0, obstacles: {}, sacPlein: 0, secteurs: {}, fights: [], deaths: 0, potions: 0, combatMs: 0, healMs: 0, steps: [], retries: {}, grinds: {}, grindNone: {}, grindMs: 0, provisions: 0, murs: [], village: [], goldFarm: {}, elites: [], d13: [], profils: {} };
+var STATS = { expeditionFails: [], recouvrements: 0, farms: 0, shopBuys: 0, obstacles: {}, sacPlein: 0, secteurs: {}, fights: [], deaths: 0, potions: 0, combatMs: 0, healMs: 0, steps: [], retries: {}, grinds: {}, grindNone: {}, grindMs: 0, provisions: 0, murs: [], village: [], goldFarm: {}, elites: [], d13: [], r09: [], profils: {} };
 var D13_FORGE = 3, D13_REFORGE = 4;
 var CURRENT_STEP = "création";   // jours attendus à cause du plafond journalier des Petites Aventures
 function freeSector(mapId, sectorId) {
@@ -662,6 +662,8 @@ function freeSectorAgain(mapId, sectorId) {
   }
   if (!r.ok) { note(sectorId + " rejoué : " + r.reason); return false; }
   winCombat();
+  // v3.429.0 : combat d'élite pas fini (élite trop forte pour ce farm) : le joueur fuit, sinon la carte reste bloquée
+  if (LM.getFight()) { if (g.SortieManager && g.SortieManager.flee) g.SortieManager.flee(); if (LM.getFight()) LM.abandonFight(); return false; }
   return true;
 }
 
@@ -848,6 +850,7 @@ function farmOnce() {
   STATS.farms++;
   var c = cibles[0];
   var ok = freeSectorAgain(c[0], c[1]);
+  if (!ok && COMBATS && grindOnce("farm")) return true; // v3.429.0 : l'élite résiste, on farme ailleurs
   if (!ok) wait(3600e3);
   return ok;
 }
@@ -1040,6 +1043,22 @@ var SOLVERS = {
     var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
     if (!g.storyMakeChoice("ruins", val)) note("choix refusé (seuil)");
   },
+  // v3.429.0 (Ruines, acte II)
+  ruines_06: function (g) { playExpedition("petite_aventure_ruines", function () { return g.storyDesertFlag("ruinsPaCompleted"); }); },
+  ruines_07: function (g) { for (var i = 0; i < 5 && g.storyRuinsSectorsFreed() < 2; i++) freeSector("ruins"); },
+  ruines_08: function (g) { playAdventure("aq_ruines_batisseur"); },
+  ruines_09: function (g) {
+    var P = g.STORY_PALIER_RUINES;
+    function part(nom, fn) {
+      var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
+      fn();
+      STATS.r09.push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
+    }
+    part(P.pieces + " Inhabituels", function () { gearRarity("green", P.pieces, true); });
+    part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
+    part("reforge armure " + P.reforge, function () { reforgeTo("armor", P.reforge); });
+  },
+  ruines_10: function (g) { playAdventure("aq_ruines_salle"); },
   desert_18: function (g, step) {
     var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
     if (!g.storyMakeChoice("desert", val)) note("choix refusé (roi)");
@@ -1092,6 +1111,7 @@ catch (e) { ok(false, "interrompu : " + e.message + "\n" + String(e.stack).split
 if (COMBATS) {
   console.log("Renforcement (lots de chasse joués pour débloquer) : " + JSON.stringify(STATS.grinds) + " · " + (STATS.grindMs / 3600e3).toFixed(1) + " h" + (Object.keys(STATS.grindNone).length ? " · rien à farmer pendant : " + JSON.stringify(STATS.grindNone) : ""));
   Object.keys(STATS.goldFarm).forEach(function (k) { var f = STATS.goldFarm[k]; console.log("Farm " + k + " : " + f.lots + " lots, " + Math.round(f.or / Math.max(1, f.lots)) + " or par lot, " + Math.round(f.or / Math.max(0.01, f.h)) + " or par heure (soin compris), " + f.morts + " morts"); });
+  if (STATS.r09 && STATS.r09.length) console.log("ruines_09 : " + STATS.r09.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · "));
   if (STATS.d13.length) console.log("desert_13 : " + STATS.d13.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, Inhabituels portés au départ " + d.verts0 + ", or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · "));
   console.log("Quêtes d'élite : " + (STATS.elites.map(function (e) { return e.quest + (e.ok ? " ✔" : " ✘") + " (" + e.step + ", " + e.essais + " essai" + (e.essais > 1 ? "s" : "") + ")"; }).join(" · ") || "aucune"));
   console.log("Village pour la puissance : " + (STATS.village.join(" · ") || "rien"));

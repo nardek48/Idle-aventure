@@ -359,6 +359,63 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.429.0 (Ruines, acte II étape 8) — « Celui qui pose les pierres » : le Bâtisseur, escorté.
+     Leçon : le tuer en premier (réglage « Cible » sur « Le soutien ») ou contrer son mur. */
+  aq_ruines_batisseur: {
+    id: "aq_ruines_batisseur",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "ruins",
+    adventureIndex: 0,
+    encounters: [
+      { group: ["batisseur", "skeleton"], groupHpMult: 0.55 },
+      { group: ["batisseur", "zombie", "zombie"], groupHpMult: 0.35 },
+      { enemy: "gargoyle" },
+      { group: ["batisseur", "skeleton", "skeleton"], groupHpMult: 0.35 },
+      { group: ["batisseur", "ghoul"], groupHpMult: 0.55 }
+    ],
+    encounterHpMult: 1.6, // banc (fin2, sans potion, 12 runs) : 100 %, 30 à 46 % de PV perdus selon la classe et la paire
+    enemyPowerMult: 4.0,
+    name: "Celui qui pose les pierres",
+    story: "Il pose une pierre, la regarde, la repose ailleurs. Devant ceux qui se relèvent, il monte des murs.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    steps: [
+      { id: "rencontres_batisseur", type: "encounter", worldId: "ruins", target: 5, desc: "Vaincre {target} rencontres aux Couloirs effondrés" }
+    ],
+    reward: {}
+  },
+
+  /* v3.429.0 (Ruines, acte II étape 10) — « La salle qu'il évite » : fin d'acte, au profil du palier.
+     Bâtisseurs escortés de gargouilles (le golem de RU3) et de squelettes. */
+  aq_ruines_salle: {
+    id: "aq_ruines_salle",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "ruins",
+    adventureIndex: 1,
+    encounters: [
+      { group: ["batisseur", "gargoyle"], groupHpMult: 0.55 },
+      { group: ["skeleton", "skeleton", "batisseur"], groupHpMult: 0.35 },
+      { group: ["gargoyle", "gargoyle"], groupHpMult: 0.55 },
+      { group: ["batisseur", "batisseur", "gargoyle"], groupHpMult: 0.35 }
+    ],
+    encounterHpMult: 1.8, // banc (palier, sans potion) : Wenna + Maddoc 100 %, 34-46 % ; sans Wenna, Chevalier 92 %, 69 %
+    enemyPowerMult: 4.3,
+    name: "La salle qu'il évite",
+    story: "Une porte basse au fond de la maison. Elle se remonte plus vite que les autres.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    steps: [
+      { id: "rencontres_salle", type: "encounter", worldId: "ruins", target: 4, desc: "Vaincre {target} rencontres au Sanctuaire enseveli" }
+    ],
+    reward: {}
+  },
+
   hq_wolf_pack: {
     id: "hq_wolf_pack",
     type: "kill",

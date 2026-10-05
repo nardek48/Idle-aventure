@@ -234,7 +234,8 @@ var SCENE_TEMPLATES = {
       steps: [
         { type: "obstacle", gabaritId: "dalles_ensablees", text: "Les dalles du portail. Du sable entre elles, puis dessus, puis plus de dalles du tout." },
         { type: "source", text: "Un puits. La corde est neuve. Quelqu'un l'entretient, et ce n'est pas Sarkel." },
-        { type: "combat", foe: "scarab", pack: 3, foeMult: 0.5, text: "Le sable bouge à trois endroits à la fois. Sarkel arrête la carriole. Il ne descend pas.",
+        // v3.428.2 (retour Seb : trop facile) : 0,5 -> 1,3, banc fin de Forêt « Tenir » 20 à 23 %, « Charger » 38 à 42 % (avant 3 et 6 %)
+        { type: "combat", foe: "scarab", pack: 3, foeMult: 1.3, text: "Le sable bouge à trois endroits à la fois. Sarkel arrête la carriole. Il ne descend pas.",
           after: "Wenna compte les carapaces. Trois. Elle recompte." },
         { type: "obstacle", gabaritId: "vent_de_face", text: "Le deuxième puits est sec. Sarkel n'a pas l'air surpris. Il a de l'eau pour deux jours. Il te compte la tienne." }
       ]
@@ -359,6 +360,20 @@ var SCENE_TEMPLATES = {
     icon: "images/Icons/scene/path_easy.png",
     boardRequires: { tabUnlocked: "village", storyStep: "desert_03" },
     successFlag: "desertPaCompleted"
+  },
+
+  /* v3.429.0 (Ruines, U-6) — la Petite Aventure des Ruines : les murs bougent, la Craie d'Edda.
+     Ouverte avec l'étape ruines_06 « Les murs bougent ». */
+  petite_aventure_ruines: {
+    id: "petite_aventure_ruines",
+    mode: "pa2",
+    worldId: "ruins",
+    adventureIndex: 0,
+    title: "Petite aventure — Ruines",
+    departLabel: "Partir dans la ville",
+    icon: "images/Icons/scene/path_easy.png",
+    boardRequires: { tabUnlocked: "village", storyStep: "ruines_06" },
+    successFlag: "ruinsPaCompleted"
   }
 };
 

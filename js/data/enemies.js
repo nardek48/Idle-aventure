@@ -28,6 +28,7 @@ var ASSETS = {
     sandworm: "🪱",
     sandwarrior: "⚔️",
     foresttroll: "🌳",
+    batisseur: "🧱",
     bramble: "🥀"
   },
   bosses: {
@@ -166,6 +167,19 @@ var ENEMY_DB = {
     weak: ["magic"],
     rises: true, // v3.428.0 (Ruines, U-3) : se relève une fois
     stats: makeRpgStats(24, 42, 10, 12, 8)
+  },
+  /* v3.429.0 (Ruines, U-3) — le Bâtisseur : il frappe peu et blinde un allié par télégraphe
+     (trait « shielded » détourné vers l'allié, systems/rise-system.js). support : visé par le
+     réglage « Cible » sur « Le soutien ». Résiste à la magie, craint l'épée : il compense l'écart
+     épée / magie du bestiaire des Ruines (mesure U-0). Image à générer. */
+  batisseur: {
+    name: "Bâtisseur",
+    asset: "batisseur",
+    image: "./images/Enemies/batisseur.jpg",
+    resists: ["magic"],
+    weak: ["sword"],
+    support: true,
+    stats: makeRpgStats(18, 38, 14, 18, 30)
   },
   wraith: {
     name: "Spectre errant",

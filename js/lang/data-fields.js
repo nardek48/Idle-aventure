@@ -138,7 +138,9 @@ var DATA_TEXT_IGNORED = {
   WORLD_CAPS_PREP: [""],
   TALENT_TREES: ["**.mods.*.path"],   // chemins techniques (« actions.defense.resourceGain »)
   STORY_QUESTS: ["*.steps.*.linkTo.cardId"],
-  PA2_MAPS: ["**"]                    // v3.381.0 : identifiants de nœuds des tracés (« CAMP », « SEUIL »…)
+  PA2_MAPS: ["**"],                   // v3.381.0 : identifiants de nœuds des tracés (« CAMP », « SEUIL »…)
+  RUINES_PA_LINKS: ["**"],            // v3.429.0 : tracé partagé des deux cartes des Ruines
+  RUINES_PA_SHIFTS: ["**"]            // v3.429.0 : bascules « les murs bougent »
 };
 
 if (typeof module !== "undefined") module.exports = { DATA_TEXT_FIELDS: DATA_TEXT_FIELDS, DATA_TEXT_IGNORED: DATA_TEXT_IGNORED, DATA_TEXT_SOURCES: DATA_TEXT_SOURCES };

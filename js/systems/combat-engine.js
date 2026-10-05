@@ -347,6 +347,7 @@ var CombatEngine = {
     // v3.102.1 : le premier round hors mission ouvre une sortie d'exploration (décision 1a)
     if (window.SortieManager && !SortieManager.isActive()) SortieManager.start(null);
     if (source === "auto" && window.RiseSystem) RiseSystem.aim(arg && arg.matchedConditionId); // v3.428.0 : réglage « Cible »
+    if (window.RiseSystem) RiseSystem.beginAction(source !== "auto" || !!(arg && arg.matchedConditionId === "enemyRising")); // v3.428.3 : achever = décision
 
     var round = game.combatRound;
     round.busy = true;
@@ -1043,8 +1044,10 @@ var CombatEngine = {
     }
     e.shieldTelegraphed = false;
     e.shieldIn = randInt(BOSS_SHIELD_ROUNDS_MIN, BOSS_SHIELD_ROUNDS_MAX);
-    e.shieldRounds = BOSS_SHIELD_DURATION_ROUNDS;
-    addLog("🛡️ " + _t("Le bouclier se referme ({n} rounds) !", { n: BOSS_SHIELD_DURATION_ROUNDS }), "event");
+    var wall = (window.RiseSystem && RiseSystem.shieldTarget) ? RiseSystem.shieldTarget(e) : e; // v3.429.0 : le Bâtisseur blinde un allié
+    wall.shieldRounds = BOSS_SHIELD_DURATION_ROUNDS;
+    if (wall !== e) addLog("🧱 " + _t("{x} monte un mur devant {y} ({n} rounds) !", { x: _td(e.name), y: _td(wall.name), n: BOSS_SHIELD_DURATION_ROUNDS }), "event");
+    else addLog("🛡️ " + _t("Le bouclier se referme ({n} rounds) !", { n: BOSS_SHIELD_DURATION_ROUNDS }), "event");
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
@@ -1522,6 +1525,7 @@ var CombatEngine = {
   dealDamage: function (dmg, isCrit, fromTap, ignoreAffinity, target) {
     var foe = target || game.enemy;
     if (!foe) return;
+    if (window.RiseSystem && RiseSystem.blocksHit(foe)) return; // v3.428.3 (Ruines) : à terre, seule une décision l'achève
     this.prepareEnemy(foe);
 
     dmg = Math.max(0, Number(dmg || 0));
@@ -1537,7 +1541,7 @@ var CombatEngine = {
       dmg *= (1 + Number(foe.vulnerableMult || 0));
     }
 
-    if ((foe.isBoss || foe.archetype === "shielded") && Number(foe.shieldRounds || 0) > 0) {
+    if ((foe.isBoss || foe.archetype === "shielded" || foe.wallShield) && Number(foe.shieldRounds || 0) > 0) { // v3.429.0 : mur du Bâtisseur
       dmg *= (1 - BOSS_SHIELD_REDUCTION);
     }
 

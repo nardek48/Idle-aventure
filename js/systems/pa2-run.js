@@ -398,6 +398,7 @@ var Pa2Run = {
     run.bag.forEach(function (id) { var it = PA2_ITEMS[id]; if (it.uses) run.stock[id] = (run.stock[id] || 0) + (id === "gourde" && gUses ? gUses : it.uses); });
     // Q11 : Seconde gorgée (Mémoire) +1 gorgée, Gué tenu +1 corde.
     if (run.stock.gourde && window.MemoryManager && MemoryManager.has("seconde_gorgee")) run.stock.gourde += 1;
+    if (run.stock.craie && window.LivingMapManager && LivingMapManager.hasEffect("craie_plus")) run.stock.craie += 1; // v3.429.0 : la rue qui tourne tenue
     if (run.stock.corde && window.LivingMapManager && LivingMapManager.hasEffect("corde_plus")) {
       run.stock.corde += Number(LivingMapManager.getEffectValue("ropeBonus", 1));
     }
@@ -489,7 +490,43 @@ var Pa2Run = {
   openMoves: function () {
     var run = this.getRun();
     if (!run || run.status !== PA2_STATUS.map) return [];
-    return (this.getMap(run).links[run.at] || []).slice();
+    return (this.links(run)[run.at] || []).slice();
+  },
+
+  /* v3.429.0 (Ruines, U-6) — LES MURS BOUGENT. Le tracé du run : celui de la carte, sauf les
+     nœuds dont un mur a bougé (run.walls[nœud] = sorties du moment). */
+  links: function (run) {
+    run = run || this.getRun();
+    var base = (this.getMap(run) || {}).links || {};
+    if (!run || !run.walls) return base;
+    var out = {};
+    Object.keys(base).forEach(function (k) { out[k] = run.walls[k] || base[k]; });
+    return out;
+  },
+
+  /* Après un pas : une chance qu'une bascule de la carte (map.shifts) joue DEVANT le héros.
+     La Craie (2 traits) l'empêche si le nœud est à portée de vue (PA2_RULES.wallChalkRows). */
+  _shiftWalls: function (run) {
+    var map = this.getMap(run), here = this.node(run.at, run), self = this;
+    if (!map || !map.shifts || !here || this.isParcours(run)) return null;
+    if (this.rand() >= Number(PA2_RULES.wallShiftPct || 0)) return null;
+    var cand = map.shifts.filter(function (sh) { var n = map.nodes[sh.from]; return n && n.row > here.row && !self._walked(run, sh.from); });
+    if (!cand.length) return null;
+    var sh = this._pick(cand), from = map.nodes[sh.from];
+    if (!run.walls) run.walls = {};
+    var cur = run.walls[sh.from] || map.links[sh.from] || [];
+    var next = cur.join() === sh.a.join() ? sh.b : sh.a;
+    var closed = cur.filter(function (k) { return next.indexOf(k) < 0; }), opened = next.filter(function (k) { return cur.indexOf(k) < 0; });
+    if (Number(run.stock.craie || 0) > 0 && this.hasItem("craie", run) && from.row - here.row <= Number(PA2_RULES.wallChalkRows || 2)) {
+      run.stock.craie -= 1;
+      run.wallNote = _t("Un mur a voulu bouger devant toi. Le trait de craie a tenu.");
+      this._log("🖍️ " + run.wallNote);
+      return { chalk: true, from: sh.from };
+    }
+    run.walls[sh.from] = next.slice();
+    run.wallNote = opened.length ? _t("Un mur a bougé devant toi : un passage s'est fermé, un autre s'est ouvert.") : _t("Un mur a bougé devant toi : un passage s'est fermé.");
+    this._log("🧱 " + run.wallNote);
+    return { from: sh.from, closed: closed, opened: opened };
   },
 
   moveTo: function (key) {
@@ -502,6 +539,8 @@ var Pa2Run = {
     if (step) run.breath = Math.max(0, run.breath - step);
     if (this.hasRelic("braise", run)) this._heal(game.heroMaxHp * PA2_RULES.braiseHealPct);
     this._prepareNode(run, this.node(key, run));
+    run.wallNote = null;
+    this._shiftWalls(run); // v3.429.0 (Ruines) : les murs bougent
     run.status = PA2_STATUS.node;
     run.lastResult = null;
     this._save();

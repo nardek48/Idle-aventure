@@ -28,6 +28,10 @@ var PA2_ITEMS = {
   outre: { id: "outre", resource: "outre_pleine", size: 1, uses: 1, breath: 40, worlds: ["desert"], bonusEffect: "outre_plus",
     icon: "images/Icons/resources/outre_pleine_icon.png",
     pro: "Une grande gorgée : +40 Souffle.", con: "Une seule gorgée." },
+  // v3.429.0 (Ruines, U-6) : la Craie d'Edda, gratuite. Chaque trait empêche un mur de bouger à portée de vue.
+  craie: { id: "craie", name: "Craie", size: 1, uses: 2, worlds: ["ruins"],
+    icon: "images/Icons/scene/items/item_chalk.png",
+    pro: "Deux traits : un mur qui bougerait près de toi reste en place.", con: "Ne sert qu'aux Ruines." },
   corde: { id: "corde", name: "Corde", size: 1, uses: 1,
     icon: "images/Icons/scene/rope.png",
     pro: "Réussite assurée sur un obstacle, voie précision.", con: "Une seule fois." },
@@ -52,7 +56,7 @@ var PA2_ITEMS = {
     pro: "Toute la carte est visible, et les sources rendent +10.",
     lockedHint: "Coffre d'expédition : atteindre la Clairière aux lanternes." }
 };
-var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "outre", "corde", "torche", "armure", "carte", "fiole", "bois", "veilleurs"];
+var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "outre", "craie", "corde", "torche", "armure", "carte", "fiole", "bois", "veilleurs"];
 
 /* Pactes (V14, Q6) : malus choisis contre du butin final. */
 var PA2_PACTS = {
@@ -114,7 +118,10 @@ var PA2_LEVEL_BANDS = [
   { minLevel: 1,  worldId: "forest", adventureIndex: 0, obstacleScale: 1.0, foeScale: 0.8, heroRef: "foret1" }, // v3.383.0 : héros sans vitrine (banc)
   { minLevel: 5,  worldId: "forest", adventureIndex: 1, obstacleScale: 1.5, heroRef: "foret2" },
   { minLevel: 8,  worldId: "desert", adventureIndex: 0, obstacleScale: 2.1, heroRef: "desert10" },
-  { minLevel: 11, worldId: "desert", adventureIndex: 1, obstacleScale: 2.7, heroRef: "desert12" }
+  { minLevel: 11, worldId: "desert", adventureIndex: 1, obstacleScale: 2.7, heroRef: "desert12" },
+  // v3.429.0 (Ruines) : tranche PLANCHER de la carte des Ruines seulement (levelBand) — minLevel hors
+  // d'atteinte pour ne pas changer les Petites Aventures de la Forêt et du Désert d'un héros avancé
+  { minLevel: 99, worldId: "ruins", adventureIndex: 0, obstacleScale: 3.3, heroRef: "joueurDesert2" }
 ];
 
 /* v3.423.0 (chantier Difficulté, A, décision Seb) : la tranche donne les ennemis et les obstacles
@@ -130,15 +137,17 @@ var PA2_HERO_SCALING = { exp: 0.75, margin: 1.1, cap: 3, obstacleExp: 0.6 };
    Les voies reprennent le triangle de la Forêt v1 (optionProfiles du canevas). */
 var PA2_OBSTACLES = {
   forest: ["eboulis", "gouffre", "porte_scellee", "paroi", "riviere", "racines"],
-  desert: ["sables_mouvants", "dune", "dalle_scellee", "puits_effondre", "vent_de_face", "dalles_ensablees"] // v3.387.0
+  desert: ["sables_mouvants", "dune", "dalle_scellee", "puits_effondre", "vent_de_face", "dalles_ensablees"], // v3.387.0
+  ruins: ["route_de_pierre", "rue_qui_tourne", "mur_neuf", "escalier_sans_fin", "dalle_qui_glisse"] // v3.429.0
 };
-var PA2_OBSTACLE_TERTRE = { baseDifficulty: 7, gabaritId: "porte_scellee", byWorld: { desert: "dalle_scellee" } };
+var PA2_OBSTACLE_TERTRE = { baseDifficulty: 7, gabaritId: "porte_scellee", byWorld: { desert: "dalle_scellee", ruins: "porte_qui_attend" } };
 
 /* Gardien de la destination « combat » (v3.383.0, PA2-3) : un ennemi d'acte III renforcé,
    indexé sur la tranche de niveau comme les autres. Multiplicateurs calés au banc. */
 var PA2_GUARDIAN = {
   forest: { foe: "foresttroll", hpMult: 5, powMult: 2.2 },
-  desert: { foe: "sandworm", hpMult: 4.25, powMult: 1.9 } // v3.387.0 (F4) : le Ver du plateau, adouci de 15 %
+  desert: { foe: "sandworm", hpMult: 4.25, powMult: 1.9 }, // v3.387.0 (F4) : le Ver du plateau, adouci de 15 %
+  ruins: { foe: "skeleton", hpMult: 6.4, powMult: 1.9 }    // v3.429.0 : le gardien se relève une fois (PV ×1,5, combat par approche)
 };
 
 /* Approches de combat (V17, Q2). dmg : dégâts reçus ; loot : or gagné. Ruser = jet de précision. */
@@ -164,7 +173,8 @@ var PA2_GOLD = {
 /* Ressource rare (Sève d'Aeswyn en Forêt) : jamais perdue (comme en v1). Banc. */
 var PA2_RARE = {
   forest: { resourceId: "seve_aeswyn", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } },
-  desert: { resourceId: "verre_des_dunes", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } } // v3.387.0
+  desert: { resourceId: "verre_des_dunes", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }, // v3.387.0
+  ruins: { resourceId: "pierre_errante", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } } // v3.429.0
 };
 
 /* Coffre d'expédition : destination -> objet débloqué (V12, Q8). */
@@ -187,14 +197,16 @@ var PA2_RULES = {
   revengeMult: 1.3, enrageMult: 1.4, torchDmgMult: 1.15, armorDmgMult: 0.65, armorBreath: 8,
   dentMult: 0.75, flecheMult: 0.85, boisChargeMult: 0.85,
   surprisedMult: 1.2, heavyStep: 4, ronceStep: 3, ronceLoot: 1.3, braiseHealPct: 0.03,
-  carteLoot: 0.8, fioleLoot: 0.5, damageSpread: 0.15, maxRounds: 60
+  carteLoot: 0.8, fioleLoot: 0.5, damageSpread: 0.15, maxRounds: 60,
+  wallShiftPct: 0.35, wallChalkRows: 2   // v3.429.0 (Ruines) : un mur bouge après un pas ; la Craie tient à 2 rangées devant
 };
 
 /* v3.387.0 (PA2-5, F2) : la soif du Désert. stepBreath : Souffle perdu à chaque pas ;
    gourdeUses : gorgées de la gourde (décision Seb de la v1 : une seule au Désert). Banc. */
 var PA2_WORLD_RULES = {
   forest: { stepBreath: 4 },                // v3.423.0 (B) : la marche essouffle aussi en Forêt
-  desert: { stepBreath: 4, gourdeUses: 1 }  // v3.423.0 (B) : 3 -> 4
+  desert: { stepBreath: 4, gourdeUses: 1 }, // v3.423.0 (B) : 3 -> 4
+  ruins: { stepBreath: 4 }                  // v3.429.0 : pas de soif, des murs qui bougent (PA2_RULES.wallShiftPct)
 };
 
 /* ---------- Textes ---------- */
@@ -202,7 +214,8 @@ var PA2_WORLD_RULES = {
 /* Combats : ennemis par acte (ENEMY_DB), réplique d'entrée. */
 var PA2_FOES = {
   forest: { 1: ["wolf", "goblin"], 2: ["spider", "bramble"], 3: ["foresttroll", "bramble"] },
-  desert: { 1: ["scarab"], 2: ["sandwarrior", "scarab"], 3: ["sandworm", "sandwarrior"] } // v3.387.0 (F4)
+  desert: { 1: ["scarab"], 2: ["sandwarrior", "scarab"], 3: ["sandworm", "sandwarrior"] }, // v3.387.0 (F4)
+  ruins: { 1: ["skeleton", "zombie"], 2: ["ghoul", "skeleton"], 3: ["gargoyle", "batisseur"] } // v3.429.0
 };
 var PA2_FOE_LINES = {
   wolf: "Deux yeux dans la fougère. Puis quatre.",
@@ -212,7 +225,13 @@ var PA2_FOE_LINES = {
   foresttroll: "Ce que tu prenais pour un rocher se déplie.",
   scarab: "Le sable bouge sous tes pieds. Il a des pattes.",
   sandwarrior: "Des silhouettes sur la crête. Elles ne se cachent pas.",
-  sandworm: "Le sol se soulève, puis retombe. Quelque chose respire dessous."
+  sandworm: "Le sol se soulève, puis retombe. Quelque chose respire dessous.",
+  // v3.429.0 (Ruines)
+  skeleton: "Des os rangés contre un mur, bien alignés. Ils se lèvent ensemble.",
+  zombie: "Il marche droit vers toi, sans se presser. Il a tout son temps.",
+  ghoul: "Quelque chose court sur les toits, plus vite que toi.",
+  gargoyle: "La statue du carrefour n'était pas tournée de ce côté tout à l'heure.",
+  batisseur: "Quelqu'un pose des pierres au milieu de la rue. Il en pose une devant toi."
 };
 
 /* Obstacles : une phrase d'ambiance par gabarit (bible narrative §4.3). */
@@ -268,6 +287,15 @@ var PA2_PLACES_BY_WORLD = {
     trouvaille: { name: "Une trouvaille", text: "Quelque chose dépasse du sable. Pas pour toi, mais tu es là." },
     camp: { name: "L'oasis", text: "Un creux de palmiers au fond du canyon. De la cendre froide, et des traces qui repartent." },
     seuil: { name: "Le seuil", text: "Le pont sur l'oued. Au-delà, le vent tombe d'un coup. Ce qui t'attend là-bas ne dort plus." }
+  },
+  ruins: { // v3.429.0 (U-6)
+    source: { name: "Une fontaine", text: "Une fontaine de pierre, neuve. L'eau coule. Personne ne l'a mise en route." },
+    sourceDry: { name: "Une fontaine sèche", text: "Le bassin est propre et vide. Au fond, un filet d'eau, pour une gorgée." },
+    autel: { name: "Une niche", text: "Une niche dans le mur, une coupe posée. Elle demande {cost} or. Elle rend une plaie." },
+    autelFree: { name: "Une niche", text: "Une niche dans le mur. La coupe est déjà pleine. Elle ne demande rien." },
+    trouvaille: { name: "Une trouvaille", text: "Une pierre posée à part, comme mise de côté. Pas pour toi, mais tu es là." },
+    camp: { name: "La cour", text: "Une cour carrée, des bancs de pierre. Quelqu'un les a balayés ce matin." },
+    seuil: { name: "Le seuil", text: "Une arche, au milieu de la rue. De l'autre côté, les murs sont plus neufs. Ce qui t'attend là-bas ne dort plus." }
   }
 };
 
@@ -290,6 +318,15 @@ var PA2_DESTS = {
     tertre: { name: "Les colonnes ensablées", line: "Des colonnes qui ne portent plus rien. Entre elles, une dalle scellée. Le sceau est tiède.",
       win: "La dalle a glissé. Dessous, un escalier que le sable n'a pas rempli. Il reste ce qu'il gardait.",
       fail: "La dalle n'a pas bougé. Tu repars avec ce que tu portais, et du sable plein les yeux." }
+  },
+  ruins: { // v3.429.0 (U-6) : la porte gardée, la cour au puits, la chambre scellée
+    boss: { name: "Le gardien de la porte", line: "Devant la grille, un squelette plus grand que les autres, assis sur une marche. Il se lève. Il se relèvera.",
+      win: "Il tombe une deuxième fois, et cette fois les os se rangent d'eux-mêmes au pied de la grille. Entre eux, une pierre taillée." },
+    clairiere: { name: "La cour au puits", line: "Un puits, un arbre, une cour fermée. Rien ici n'a été rebâti : c'est resté.",
+      win: "Sur la margelle, quelqu'un a posé une pierre pour toi." },
+    tertre: { name: "La chambre scellée", line: "Une chambre fermée, un coffre au milieu. La porte attend quelque chose. Elle n'a pas l'air pressée.",
+      win: "La porte a cédé. Dans le coffre, rangé comme on range pour quelqu'un, ce qu'elle gardait.",
+      fail: "La porte a tenu. Tu repars avec ce que tu portais. Derrière toi, elle se referme mieux qu'avant." }
   }
 };
 
@@ -460,9 +497,30 @@ PA2_HOOKS.sentinelle = {
     other: "Les tentes sont vides. Au loin, la tour de guet ne répond toujours pas."
   }
 };
+/* v3.429.0 (Ruines, U-6) : une accroche, la page du carnet d'Edda. */
+PA2_HOOKS.carnet = {
+  id: "carnet", worldId: "ruins",
+  title: "La page qui manque",
+  lede: "Une page du carnet d'Edda s'est envolée hier soir. Elle dit qu'elle ne la retrouvera pas où elle l'a perdue : la rue n'est plus là.",
+  event: {
+    name: "La page",
+    text: "Une feuille coincée sous une pierre, au milieu d'une cour. Les rues tracées dessus ne ressemblent à rien d'ici. Puis tu reconnais celle où tu es.",
+    branches: {
+      suivre: { label: "Suivre le tracé", cost: { breath: 15 }, text: "Tu prends la rue de la page plutôt que celle de tes yeux. Elle mène où la page dit." },
+      garder: { label: "La ranger pour Edda", text: "Tu plies la page en quatre. Edda la voudra telle qu'elle est." }
+    }
+  },
+  mark: { branch: "suivre", dmgMult: 1.2 },
+  echo: { mark: "Tu marches sur des rues d'hier. Ce qui vit dans celles d'aujourd'hui te remarque." },
+  clairiere: {
+    suivre: "Sur la margelle, la même écriture que sur la page : « ici, ça reste ».",
+    other: "Sur la margelle, un trait de craie. Edda est passée avant toi, un autre jour."
+  }
+};
 var PA2_HOOKS_BY_WORLD = {
   forest: ["chasseur", "gouffre", "pierre", "feu"],
-  desert: ["maddoc", "caravane", "sentinelle"]
+  desert: ["maddoc", "caravane", "sentinelle"],
+  ruins: ["carnet"]
 };
 
 window.PA2_BAG_SIZE = PA2_BAG_SIZE;

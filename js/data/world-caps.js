@@ -31,11 +31,12 @@ var WORLD_CAPS = [
     workshopLevel: 3,
     petiteAventureCap: 4 // D10 : 4 au Désert — une seconde ressource exclusive (Verre des dunes)
   },
-  /* 2 — Ruines anciennes. v3.428.0 (Conception Ruines §4.2, lot U-1) : PROVISOIRE, égal au Désert,
-     pour que rien ne s'ouvre d'un coup à l'arrivée (un monde absent n'aurait aucun plafond).
-     Les plafonds du monde 3 se calent au banc avec l'acte II (lot U-7). */
+  /* 2 — Ruines anciennes. v3.428.0 (Conception Ruines §4.2, lot U-1) : provisoire, égal au Désert.
+     v3.429.0 (lot U-7, acte II) : un cran de plus là où l'acte II s'en sert — Terrain 10 (palier
+     d'acte), Palissade 8 (l'Éboulement), Atelier, Halle, Entrepôt, Enchanteur 2. La Forge 4 et les
+     niveaux payés en Clé de voûte viennent avec l'acte III. */
   {
-    village: { workshop: 7, training: 9, hall: 7, warehouse: 6, palisade: 7, tavern: 5, apothecary: 6, forge: 3, enchanter: 1 },
+    village: { workshop: 8, training: 10, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 6, forge: 3, enchanter: 2 },
     zoneRows: 2,      // pas de zone de production aux Ruines par défaut (RU7, décision au banc)
     zoneLevel: 5,
     workshopLevel: 3,
@@ -56,7 +57,8 @@ var TRAINING_CAP_BY_ACT = [
   { worldIndex: 1, stepId: "desert_01", act: "I", terrain: 5 },       // 70
   { worldIndex: 1, stepId: "desert_06", act: "II", terrain: 7 },      // 90
   { worldIndex: 1, stepId: "desert_11", act: "III", terrain: 9 },     // 110
-  { worldIndex: 2, stepId: "ruines_01", act: "I", terrain: 9 }        // v3.428.0 : Ruines, acte I — inchangé (palier en acte II)
+  { worldIndex: 2, stepId: "ruines_01", act: "I", terrain: 9 },       // v3.428.0 : Ruines, acte I — inchangé (palier en acte II)
+  { worldIndex: 2, stepId: "ruines_06", act: "II", terrain: 10 }      // v3.429.0 : 120
 ];
 
 /* v3.327.0 (conception Talents v1.1, T2 option B) — PLAFOND DE POINTS DE TALENT PAR ACTE.
@@ -68,7 +70,8 @@ var TALENT_CAP_BY_ACT = [
   { worldIndex: 1, stepId: "desert_01", act: "I", points: 7 },
   { worldIndex: 1, stepId: "desert_06", act: "II", points: 9 },
   { worldIndex: 1, stepId: "desert_11", act: "III", points: 11 },
-  { worldIndex: 2, stepId: "ruines_01", act: "I", points: 11 }        // v3.428.0 : Ruines, acte I — inchangé
+  { worldIndex: 2, stepId: "ruines_01", act: "I", points: 11 },       // v3.428.0 : Ruines, acte I — inchangé
+  { worldIndex: 2, stepId: "ruines_06", act: "II", points: 12 }       // v3.429.0
 ];
 
 /* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ».

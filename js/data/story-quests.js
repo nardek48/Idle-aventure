@@ -78,7 +78,14 @@ var STORY_REWARDS = {
   ruines_02: { gold: 1600 },
   ruines_03: { gold: 1700 },
   ruines_04: { gold: 1800, resources: { pierre_errante: 3 } }, // les pierres « qu'aucune carrière ne taille comme ça »
-  ruines_05: { gold: 2000 }
+  ruines_05: { gold: 2000 },
+  // v3.429.0 (acte II, provisoire : au banc)
+  // ruines_06 à 08 : une pièce Inhabituelle chacune, pour le palier de l'étape 9 (banc : sans elles, 74 à 200 h de farm)
+  ruines_06: { gold: 1900, resources: { pierre_errante: 2 }, equipmentRarity: "green", equipmentCount: 1, equipmentFill: true },
+  ruines_07: { gold: 2000, equipmentRarity: "green", equipmentCount: 1, equipmentFill: true },
+  ruines_08: { gold: 2100, resources: { pierre_errante: 2 }, equipmentRarity: "green", equipmentCount: 1, equipmentFill: true },
+  ruines_09: { gold: 2200 },
+  ruines_10: { gold: 2600, resources: { pierre_errante: 4 } }
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -1656,7 +1663,7 @@ STORY_QUESTS.ruins = {
   title: "La ville rangée",
   subtitle: "Chapitre 3 — Ruines",
   icon: "images/Icons/codex/world_ruins.png",
-  endText: "Fin de l'acte I — la ville n'a pas fini de bouger.",
+  endText: "Fin de l'acte II — la cité se souvient mieux que lui.",
   steps: [
     /* ---------- Acte I — La route du nord ---------- */
     /* Étape 1 (doc §3) : la traversée, parcours v2 de quatre paliers ; le monde est posé à
@@ -1717,7 +1724,7 @@ STORY_QUESTS.ruins = {
           { icon: "images/Icons/combat_status/rising.png", text: "Aux Ruines, certains ennemis ne restent pas à terre. Quand ils tombent, ils l'annoncent : ils se relèveront au round suivant." },
           { icon: "images/Icons/combat_stats/stat_attack.png", text: "Frappe-les pendant ce round, et ils restent à terre. Sinon, ils reviennent avec la moitié de leurs PV." },
           { icon: "images/Icons/combat_stats/stat_health.png", text: "Un ennemi ne se relève qu'une fois." },
-          { icon: "images/Icons/memory/grimoire_etendu.png", text: "Dans le Grimoire, c'est la condition « Un ennemi se relève »." }
+          { icon: "images/Icons/memory/grimoire_etendu.png", text: "En Grimoire, ton héros n'achève pas seul un ennemi à terre : pose la règle « Un ennemi se relève »." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_ruines_couloirs"); },
@@ -1877,9 +1884,223 @@ STORY_QUESTS.ruins = {
       },
       check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("seuil")); },
       progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("seuil")) ? "1/1" : "0/1"); }
+    },
+
+    /* ---------- Acte II — Le chantier (document « Ruines — Acte II » v1.0, carte blanche de Seb du 04/10) ---------- */
+    /* Étape 6 (§1) : la Petite Aventure des Ruines, les murs bougent ; la Craie d'Edda. */
+    {
+      id: "ruines_06",
+      title: "Les murs bougent",
+      act: "Acte II — Le chantier",
+      narrative: {
+        objective: "Edda pose sur la table de la Borne un bâton de craie, puis un deuxième.",
+        completion: "Au retour, Edda recopie le trajet dans son carnet. Deux passages sont barrés. Elle ne les efface pas.",
+        dialogue: [
+          { who: "Edda", text: "Pour les couloirs de nuit. Ils changent pendant qu'on marche." },
+          { who: "Wenna", text: "Pendant ?" },
+          { who: "Edda", text: "Pas souvent. Assez pour qu'on se perde. Un trait de craie sur un passage, et il reste où il est." },
+          { who: "Maddoc", text: "Et quand il n'y a plus de craie ?" },
+          { who: "Edda", text: "Alors on regarde mieux." }
+        ],
+        completionDialogue: [
+          { who: "Edda", text: "Celui-là s'est fermé derrière toi." },
+          { who: "Wenna", text: "On l'a vu." },
+          { who: "Edda", text: "Moi aussi. Mais je ne l'avais pas dessiné." }
+        ]
+      },
+      objectiveLabel: "Atteindre une destination en Petite aventure des Ruines",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_06,
+      linkTo: { section: "expedition", cardId: "petite_aventure_ruines" },
+      tutorial: {
+        tab: "scene",
+        icon: "images/Icons/scene/items/item_chalk.png",
+        title: "Les murs bougent",
+        points: [
+          { icon: "images/Icons/scene/node_obstacle.png", text: "Aux Ruines, la nuit, les passages changent : un chemin devant toi peut se fermer, et un autre s'ouvrir." },
+          { icon: "images/Icons/scene/items/item_chalk.png", text: "La Craie d'Edda se met dans ta besace sans rien coûter : chaque trait empêche un mur de bouger près de toi." },
+          { icon: "images/Icons/resources/pierre_errante_icon.png", text: "La Pierre errante se trouve dans les trouvailles et aux destinations. Elle n'est jamais perdue." }
+        ]
+      },
+      check: function () { return storyDesertFlag("ruinsPaCompleted"); },
+      progress: function () { return "Petite aventure " + (storyDesertFlag("ruinsPaCompleted") ? "1/1" : "0/1"); }
+    },
+    /* Étape 7 (§2) : la carte des Ruines s'ouvre (opensAtStoryStep) ; le chantier errant. */
+    {
+      id: "ruines_07",
+      title: "La carte d'Edda",
+      act: "Acte II — Le chantier",
+      narrative: {
+        objective: "Edda déroule une feuille sur la table. Elle est couverte de rues, puis de ratures, puis de rues par-dessus les ratures.",
+        completion: "Deux quartiers de plus sur la feuille d'Edda. Elle les trace à l'encre. Le lendemain, l'un d'eux a changé quand même.",
+        dialogue: [
+          { who: "Edda", text: "La cité, telle qu'elle était hier." },
+          { who: "Sarkel", text: "Et aujourd'hui ?" },
+          { who: "Edda", text: "Aujourd'hui, un quartier a été refait cette nuit. Je ne sais jamais lequel avant d'y aller." },
+          { who: "Maddoc", text: "Refait par qui ?" },
+          { who: "Edda", text: "Par personne. C'est ça qui est gênant." }
+        ]
+      },
+      objectiveLabel: "Libérer 2 quartiers de la carte des Ruines",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_07,
+      linkTo: { section: "map", cardId: "livingmap_ruins" },
+      tutorial: {
+        tab: "map",
+        icon: "images/Icons/resources/pierre_errante_icon.png",
+        title: "Le chantier errant",
+        points: [
+          { icon: "images/Icons/scene/node_obstacle.png", text: "La carte des Ruines fonctionne comme celle du Désert : tu libères un quartier en terminant sa Petite Aventure." },
+          { icon: "images/Icons/scene/node_unknown.png", text: "Chaque jour, la cité rebâtit un quartier : le chantier. Il change de place à minuit, et même un quartier libéré peut redevenir chantier." },
+          { icon: "images/Icons/resources/pierre_errante_icon.png", text: "Libérer le chantier du jour rapporte des Pierres errantes. Un échec sur un quartier déjà libéré le fait retomber : c'est l'Éboulement." },
+          { icon: "images/Icons/scene/protective_amulet.png", text: "La Palissade d'Aeswyn freine l'Éboulement." }
+        ]
+      },
+      check: function () { return storyRuinsSectorsFreed() >= 2; },
+      progress: function () { return "Quartiers libérés " + Math.min(2, storyRuinsSectorsFreed()) + "/2"; }
+    },
+    /* Étape 8 (§3) : le Bâtisseur ; réglage « Cible » ; composer le groupe. */
+    {
+      id: "ruines_08",
+      title: "Celui qui pose les pierres",
+      act: "Acte II — Le chantier",
+      narrative: {
+        objective: "Sur la place aux étals, quelqu'un travaille. Il pose une pierre, la regarde, la repose ailleurs.",
+        completion: "Le dernier bâtisseur tombe sur sa pierre. Elle ne bouge plus. Personne ne la reposera ailleurs.",
+        dialogue: [
+          { who: "Wenna", text: "Il est vivant ?" },
+          { who: "Edda", text: "Il est occupé." },
+          { who: "Maddoc", text: "Il monte des murs devant les autres. Devant ceux qui se relèvent." },
+          { who: "Edda", text: "Alors c'est lui d'abord." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Le premier, à chaque fois." },
+          { who: "Wenna", text: "Et si on n'y arrive pas ?" },
+          { who: "Maddoc", text: "On frappe le mur. C'est plus long." }
+        ]
+      },
+      objectiveLabel: "Terminer « Celui qui pose les pierres » : 5 rencontres aux Couloirs effondrés",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_08,
+      linkTo: { section: "adventure", cardId: "adv_aq_ruines_batisseur" },
+      tutorial: {
+        tab: "combat",
+        icon: "images/Icons/combat_status/shield_incoming.png",
+        title: "Le Bâtisseur",
+        points: [
+          { icon: "images/Icons/combat_status/shield_incoming.png", text: "Le Bâtisseur frappe peu. Il annonce un mur, puis blinde un de ses alliés : tes coups sur lui passent mal pendant quelques rounds." },
+          { icon: "images/Icons/memory/grimoire_etendu.png", text: "Contre l'annonce, la même réponse qu'au bouclier : la condition « Bouclier au prochain tour » du Grimoire." },
+          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Mieux : le tuer en premier. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
+          { icon: "images/Icons/camp/campfire.png", text: "Deux compagnons sur trois : Wenna soigne, Maddoc frappe de loin, Edda achève. Choisis selon ce qui t'attend." }
+        ]
+      },
+      check: function (game) { return storyAdvDone(game, "aq_ruines_batisseur"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_ruines_batisseur", "rencontres_batisseur", 5) + "/5"; }
+    },
+    /* Étape 9 (§4) : premier palier des Ruines (RU6) — équipement Inhabituel complet et reforgé. */
+    {
+      id: "ruines_09",
+      title: "La porte trop haute",
+      act: "Acte II — Le chantier",
+      narrative: {
+        objective: "Une maison s'est remontée cette nuit, entière. La porte est trop haute pour Maddoc, et Maddoc est grand.",
+        completion: "Tu passes sous la porte sans baisser la tête. Dedans, un banc de pierre, trop long pour un homme ordinaire, juste assez large pour un seul.",
+        dialogue: [
+          { who: "Edda", text: "Elle n'était pas sur ma carte hier." },
+          { who: "Le Veilleur", text: "Elle était là avant ta carte." },
+          { who: "Wenna", text: "Tu la connais ?" },
+          { who: "Le Veilleur", text: "Je connais la hauteur de la porte." },
+          { who: "Maddoc", text: "Pour entrer là-dedans, pas avec ce que tu portes." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Quelqu'un vivait seul ici." },
+          { who: "Le Veilleur", text: "Quelqu'un attendait." }
+        ]
+      },
+      objectiveLabel: "6 emplacements Inhabituels sur 7, arme et armure reforgées à 4",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_09,
+      linkTo: { tab: "equip" },
+      tutorial: {
+        tab: "equip",
+        icon: "images/Icons/workshops/smithing_station.png",
+        title: "Le premier palier",
+        points: [
+          { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller plus loin aux Ruines, six emplacements sur sept doivent être au moins Inhabituels. L'arme du Fleuve compte." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "Les étapes de l'acte t'en ont donné trois. Les autres : échoppe, donjon, élites." },
+          { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge reforge l'arme et l'armure jusqu'au niveau 4 avec ce que tu as déjà. Le niveau de reforge reste à l'emplacement." }
+        ]
+      },
+      check: function (game) {
+        var p = storyPalierRuines(game);
+        return p.pieces >= STORY_PALIER_RUINES.pieces && p.arme >= STORY_PALIER_RUINES.reforge && p.armure >= STORY_PALIER_RUINES.reforge;
+      },
+      progress: function (game) {
+        var p = storyPalierRuines(game), P = STORY_PALIER_RUINES;
+        return "Inhabituels " + Math.min(p.pieces, P.pieces) + "/" + P.pieces
+          + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge
+          + " · de l'armure " + Math.min(p.armure, P.reforge) + "/" + P.reforge;
+      }
+    },
+    /* Étape 10 (§5) : fin de l'acte II. Le Veilleur dit ce qu'il veut : que la cité tienne. */
+    {
+      id: "ruines_10",
+      title: "La salle qu'il évite",
+      act: "Acte II — Le chantier",
+      narrative: {
+        objective: "Au fond de la maison, une porte basse. Le Veilleur s'arrête devant et ne va pas plus loin.",
+        completion: "La salle est vide. Au mur, des traits à hauteur d'enfant, puis plus haut, puis plus haut encore. Le dernier est trop haut pour un homme.",
+        dialogue: [
+          { who: "Le Veilleur", text: "Pas celle-là." },
+          { who: "Edda", text: "Elle se remonte plus vite que les autres. Quelqu'un tient à ce qu'elle existe." },
+          { who: "Le Veilleur", text: "Moi." },
+          { who: "Wenna", text: "Et tu n'y entres pas ?" },
+          { who: "Le Veilleur", text: "Je veux qu'elle tienne. Ce n'est pas pareil." }
+        ],
+        completionDialogue: [
+          { who: "Edda", text: "Je la dessine ?" },
+          { who: "Le Veilleur", text: "Dessine-la. Elle ne bougera plus." },
+          { who: "Edda", text: "Rien ne reste en place, ici." },
+          { who: "Le Veilleur", text: "Celle-là, si. J'y veille." }
+        ]
+      },
+      objectiveLabel: "Terminer « La salle qu'il évite » : 4 rencontres, bâtisseurs et gargouilles",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_10,
+      linkTo: { section: "adventure", cardId: "adv_aq_ruines_salle" },
+      check: function (game) { return storyAdvDone(game, "aq_ruines_salle"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_ruines_salle", "rencontres_salle", 4) + "/4"; }
     }
   ]
 };
+
+/* v3.429.0 (Ruines, acte II) — quartiers de la carte des Ruines libérés au moins une fois. */
+function storyRuinsSectorsFreed() {
+  var lm = window.LivingMapManager, map = lm && lm.getMap("ruins");
+  if (!map) return 0;
+  return map.sectors.filter(function (d) { var st = lm.getState("ruins", d.id); return !!(st && st.liberatedCount > 0); }).length;
+}
+
+/* v3.429.0 (Ruines, ruines_09) — premier palier (RU6) : emplacements au moins Inhabituels (l'arme du
+   Fleuve compte), reforge de l'arme et de l'armure. Lecture seule, comme storyPalierDesert. */
+var STORY_PALIER_RUINES = { pieces: 6, reforge: 4 }; // banc (robot, 3 classes) : à 7, 0 à 109 h selon la chance de l'échoppe ; à 6, la variance tombe
+function storyPalierRuines(game) {
+  var portes = (game && game.equipped) || {};
+  var order = window.RARITY_ORDER || ["common", "green", "rare", "epic", "legendary"], rang = order.indexOf("green");
+  var pieces = 0;
+  (window.EQUIPMENT_SLOTS || []).forEach(function (slot) {
+    var it = portes[slot];
+    if (it && order.indexOf(it.rarity) >= rang) pieces++;
+  });
+  var F = window.ForgeManager;
+  return {
+    pieces: pieces,
+    arme: (F && typeof F.getLevel === "function") ? F.getLevel("weapon") : 0,
+    armure: (F && typeof F.getLevel === "function") ? F.getLevel("armor") : 0
+  };
+}
+window.storyPalierRuines = storyPalierRuines;
+window.storyRuinsSectorsFreed = storyRuinsSectorsFreed;
 window.storyEddaInParty = storyEddaInParty;
 window.STORY_SEUIL_TEXTS = STORY_SEUIL_TEXTS;
 

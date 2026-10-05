@@ -13,7 +13,8 @@ var DETAIL = process.argv.indexOf("--detail") > 0;
 var NO_RATION = process.argv.indexOf("--sans-rations") > 0; // v3.383.0 : le joueur qui part sans vivres
 var SUMMARY = process.argv.indexOf("--resume") > 0;          // v3.383.0 : une ligne de moyennes (recherche de réglages)
 var DESERT = process.argv.indexOf("--desert") > 0;        // v3.387.0 : la Petite Aventure du Désert (étapes de niveau 8 et plus, Outre)
-var TPL = DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
+var RUINES = process.argv.indexOf("--ruines") > 0;        // v3.429.0 : la Petite Aventure des Ruines (murs qui bougent, Craie)
+var TPL = RUINES ? "petite_aventure_ruines" : DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
 var OVR = (process.argv.filter(function (a) { return a.indexOf("--ovr=") === 0; })[0] || "").slice(6); // réglages d'essai, JSON
 
 var src = fs.readFileSync(path.join(__dirname, "forecast-calibration-bench.js"), "utf8").replace(/\nmain\(\);\s*$/, "\n");
@@ -49,7 +50,11 @@ var STAGES_ALL = [
 ];
 
 STAGES_ALL.splice(3, 0, { id: "desert10", label: "Désert, milieu du chapitre (niv. 10)", level: 10, p: { weapon: 32, kit: true, train: 55, potions: 0 } });
-var STAGES = DESERT ? STAGES_ALL.filter(function (x) { return x.level >= 8; }) : STAGES_ALL.filter(function (x) { return x.id !== "desert10"; });
+var STAGES_RUINES = [
+  { id: "ruines1", label: "Ruines, acte I (niv. 12)", level: 12, p: { weapon: 50, kit: true, train: 110, potions: 0 } },
+  { id: "ruines2", label: "Ruines, acte II (niv. 13)", level: 13, p: { weapon: 55, kit: true, train: 120, potions: 0 } }
+];
+var STAGES = RUINES ? STAGES_RUINES : DESERT ? STAGES_ALL.filter(function (x) { return x.level >= 8; }) : STAGES_ALL.filter(function (x) { return x.id !== "desert10"; });
 
 /* Secondes par action, pour l'estimation de durée : lire, choisir, voir le dé ou le combat. */
 /* v3.383.0 : même base que l'ancien banc v1 (retiré en v3.388.0 ; ses chiffres : CHANGELOG_v3.383.0). */
@@ -70,12 +75,14 @@ function playRun(c, stage) {
   var P = g.Pa2Run, S = g.SceneRunManager, T = g.SCENE_TEMPLATES[TPL];
   prepHero(c, stage);
   var opts = null;
-  if (RING !== "sentier") opts = DESERT ? { livingMap: { mapId: "desert", sectorId: RING === "chemin" ? "verrerie" : "bete_dune" } }
+  if (RING !== "sentier" && RUINES) opts = { livingMap: { mapId: "ruins", sectorId: RING === "chemin" ? "couloirs" : "escalier" } };
+  else if (RING !== "sentier") opts = DESERT ? { livingMap: { mapId: "desert", sectorId: RING === "chemin" ? "verrerie" : "bete_dune" } }
     : { livingMap: { mapId: "forest", sectorId: RING === "chemin" ? "menhirs" : "portail" } };
   S.startRun(TPL, opts);
   var run = g.game.sceneRun;
   (NO_RATION ? ["gourde", "corde", "torche"] : ["petite_ration", "petite_ration", "gourde", "corde", "torche"]).forEach(function (id) { P.addItem(id); });
   if (DESERT) { g.game.resources.outre_pleine = 5; P.addItem("outre"); } // la place libre : l'Outre
+  if (RUINES) P.addItem("craie"); // la place libre : la Craie d'Edda (gratuite)
   var pr0 = g.game.resources.petite_ration;
   P.depart();
   var max = g.game.heroMaxHp, seconds = SECONDS.prep, nodes = 0;
@@ -147,7 +154,7 @@ function playRun(c, stage) {
   var kept = (end.summary && end.summary.kept) ? end.summary.kept.gold : 0;
   return {
     how: end.how || "stuck", dest: end.dest, target: target, koAt: koAt, gold: kept, eaten: pr0 - g.game.resources.petite_ration, seve: Number(run.rareFound || 0), // Sève du run seul (hors récompense de secteur)
-    nodes: nodes, seconds: seconds,
+    nodes: nodes, seconds: seconds, shifts: Object.keys(run.walls || {}).length,
     loss: { 1: lossByAct[1] / max, 2: lossByAct[2] / max, 3: lossByAct[3] / max }
   };
 }

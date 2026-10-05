@@ -490,7 +490,15 @@ var StoryQuestManager = {
     if (reward.equipmentRarity && reward.equipmentCount) {
       var granted = 0;
       for (var i = 0; i < reward.equipmentCount; i++) {
-        var item = (window.LootSystem && typeof LootSystem.rollDropAtRarity === "function") ? LootSystem.rollDropAtRarity(reward.equipmentRarity) : null;
+        var item = null;
+        /* v3.429.0 (Ruines, palier de l'acte II) : equipmentFill — la pièce va à un emplacement porté
+           SOUS la rareté donnée (hors arme : son type dépend de la classe), sinon tirage habituel. */
+        if (reward.equipmentFill && typeof generateEquipmentItem === "function") {
+          var ord = window.RARITY_ORDER || [], need = ord.indexOf(reward.equipmentRarity), eq = game.equipped || {};
+          var trous = (window.EQUIPMENT_SLOTS || []).filter(function (sl) { return sl !== "weapon" && (!eq[sl] || ord.indexOf(eq[sl].rarity) < need); });
+          if (trous.length) item = generateEquipmentItem(trous[Math.floor(Math.random() * trous.length)], reward.equipmentRarity);
+        }
+        if (!item) item = (window.LootSystem && typeof LootSystem.rollDropAtRarity === "function") ? LootSystem.rollDropAtRarity(reward.equipmentRarity) : null;
         if (item && typeof addLootToInventory === "function" && addLootToInventory(item)) {
           granted += 1;
           addLog("🎁 " + _t("Récompense d'histoire : {x}", { x: _td(item.name) }), "event");

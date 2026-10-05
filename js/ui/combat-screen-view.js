@@ -124,6 +124,7 @@
     var out = [];
     if (!e || num(e.hp) <= 0) return out;
     function push(id, n, sup) { var d = stateDef(id); if (d) out.push({ id: id, def: d, n: (typeof n === "number" && n > 0) ? n : null, suppressed: !!sup }); }
+    if (e.downed) push("rising");   // v3.428.2 : à terre, il se relèvera
     if (num(e.engageIn) > 0) push("approaching", num(e.engageIn));
     if (e.chargeTelegraphed) push("charge");
     if (e.silenceTelegraphed) push("silence");
@@ -168,10 +169,10 @@
     list.forEach(function (e) {
       statesOf(e, e === t).forEach(function (s) {
         if (s.def.famille !== "alerte" || s.id === "approaching") return;
-        var heal = s.id === "healIncoming";
-        chips += '<button type="button" class="cbx-chip is-urgent' + (heal ? ' is-heal' : '') + '" onclick="openCombatStatesSheet()">' + ico(stIcon(s))
+        var heal = s.id === "healIncoming", rise = s.id === "rising";
+        chips += '<button type="button" class="cbx-chip is-urgent' + (heal ? ' is-heal' : '') + (rise ? ' is-rise' : '') + '" onclick="openCombatStatesSheet()">' + ico(stIcon(s))
           + (list.length > 1 && e !== t ? esc(_td(e.name || "")) + ' · ' : '') + esc(_td(s.def.mot || s.def.nom))
-          + (heal ? ' <small>' + _t("Interromps-le !") + '</small>' : '') + '</button>';
+          + (heal ? ' <small>' + _t("Interromps-le !") + '</small>' : '') + (rise ? ' <small>' + _t("Achève-le !") + '</small>' : '') + '</button>';
       });
     });
     if (cbx.phase) chips += '<button type="button" class="cbx-chip is-phase" onclick="cbxReplayPhase()">⚑ ' + esc(cbx.phase.label) + '</button>';
@@ -238,7 +239,7 @@
   function foeUiHTML(e, solo) {
     var pct = num(e.maxHp) > 0 ? Math.max(0, num(e.hp) / num(e.maxHp) * 100) : 0;
     var h = solo ? '' : '<div class="cbx-foe-hp"><i style="width:' + pct.toFixed(1) + '%"></i></div>';
-    var tele = e.chargeTelegraphed ? "charge" : e.healTelegraphed ? "healIncoming" : e.silenceTelegraphed ? "silence" : e.shieldTelegraphed ? "shieldIncoming" : e.surgeTelegraphed ? "surge" : null;
+    var tele = e.downed ? "rising" : e.chargeTelegraphed ? "charge" : e.healTelegraphed ? "healIncoming" : e.silenceTelegraphed ? "silence" : e.shieldTelegraphed ? "shieldIncoming" : e.surgeTelegraphed ? "surge" : null;
     if (tele) h += '<button type="button" class="cbx-foe-tele" onclick="openCombatStatesSheet()"><span class="cbx-badge is-urgent">' + ico(stateDef(tele).icon) + '</span></button>';
     if (e.dot && num(e.dot.rounds) > 0) h += '<button type="button" class="cbx-foe-dot" onclick="openCombatStatesSheet()">' + ico(IC.st + "arcane_burn.png") + '<b>' + num(e.dot.rounds) + '</b></button>';
     var marks = "";
@@ -286,7 +287,7 @@
         + (e.chargeTelegraphed ? " tele-charge" : "") + (e.healTelegraphed ? " tele-heal" : "") + (e.silenceTelegraphed ? " tele-silence" : "")
         + (e.shieldTelegraphed ? " tele-shield" : "") + (e.surgeTelegraphed ? " tele-surge" : "")
         + (e.dot && num(e.dot.rounds) > 0 ? " dot-burn" : "") + (num(e.shieldRounds) > 0 ? " is-shielded" : "") + (num(e.vulnerableRounds) > 0 ? " is-vuln" : "")
-        + (e._cbxDash ? " is-dash" : "");
+        + (e._cbxDash ? " is-dash" : "") + (e.downed ? " is-downed" : "");
       if (el.className !== cls) el.className = cls;
       var ui = el.querySelector(".cbx-foe-ui"), html = foeUiHTML(e, list.length === 1);
       if (ui && ui._h !== html) { ui.innerHTML = html; ui._h = html; }

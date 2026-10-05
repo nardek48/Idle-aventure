@@ -87,6 +87,27 @@ var RiseSystem = {
     return true;   // le round de la relève, il ne frappe pas encore
   },
 
+  /* ---------- Qui peut achever (décision Seb du 04/10/2026, option A) ----------
+     Achever est une DÉCISION : le coup du joueur en Tactique, la règle « Un ennemi se relève »,
+     un ennemi touché au doigt, ou Le dernier trait d'Edda. Le Grimoire seul et les autres
+     compagnons ne frappent pas un ennemi à terre : sans décision, il se relève. */
+  _allow: false,
+
+  /* Début d'une action (héros ou compagnon) : true si elle peut achever. */
+  beginAction: function (allow) { this._allow = !!allow; },
+
+  /* Garde de dealDamage : true si ce coup ne doit pas toucher l'ennemi à terre. */
+  blocksHit: function (foe) {
+    if (!foe || !foe.downed || this._allow) return false;
+    var c = window.CombatActors ? CombatActors.ensure() : null;
+    if (c && c.targetLocked && CombatActors.target() === foe) return false;
+    if (foe._riseWaitLog !== (game.combatRound && game.combatRound.number)) {
+      foe._riseWaitLog = game.combatRound && game.combatRound.number;
+      addLog("🦴 " + _t("{x} est à terre : personne ne l'achève.", { x: _td(foe.name) }), "normal");
+    }
+    return true;
+  },
+
   /* ---------- Le seuil (héros) ---------- */
 
   heroHasThreshold: function () {
@@ -105,6 +126,19 @@ var RiseSystem = {
     if (typeof showToast === "function") showToast("🪨 " + _t("Le seuil : tu te relèves"), 1400);
     if (typeof renderHeroHp === "function") renderHeroHp();
     return true;
+  },
+
+  /* ---------- Le Bâtisseur (v3.429.0, Ruines U-3) ----------
+     Son télégraphe est celui du bouclier (trait « shielded », contre « Bouclier au prochain
+     tour ») ; à l'impact, le mur se pose sur l'allié debout le plus entamé, sur lui s'il est seul.
+     wallShield : l'allié profite de la réduction du bouclier (dealDamage). */
+  shieldTarget: function (e) {
+    if (!e || !this.isSupport(e) || !window.CombatActors) return e;
+    var others = CombatActors.standingEnemies().filter(function (o) { return o !== e && Number(o.hp || 0) > 0; });
+    if (!others.length) return e;
+    others.sort(function (a, b) { return Number(a.hp || 0) / Math.max(1, Number(a.maxHp || 1)) - Number(b.hp || 0) / Math.max(1, Number(b.maxHp || 1)); });
+    others[0].wallShield = true;
+    return others[0];
   },
 
   /* ---------- Réglage « Cible » ---------- */

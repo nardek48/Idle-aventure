@@ -533,8 +533,9 @@ function pa2MapHTML(run) {
   svg += '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#050302" opacity="' + veil + '" mask="url(#pa2-fog)"/>';
   svg += '<circle cx="' + cur.x + '" cy="' + cur.y + '" r="' + Math.round(light * 0.8) + '" fill="url(#pa2-glow)"/>';
   // Seuls les sentiers possibles (pointillés dorés) et la trace parcourue sont dessinés.
-  Object.keys(map.links).forEach(function (a) {
-    map.links[a].forEach(function (b) {
+  var runLinks = Pa2Run.links(run); // v3.429.0 : les murs qui ont bougé
+  Object.keys(runLinks).forEach(function (a) {
+    runLinks[a].forEach(function (b) {
       var w = walked[a + ">" + b], o = a === run.at && open.indexOf(b) >= 0;
       if (!w && !o) return;
       var A = map.nodes[a], B = map.nodes[b];
@@ -733,7 +734,7 @@ function pa2ActKicker(n, what) {
 }
 
 function pa2SheetBody(run, n, st) {
-  var h = pa2EchoHTML(n, st), dests = pa2Dests(run), hook = pa2Hook(run), R = PA2_RULES;
+  var h = pa2EchoHTML(n, st) + (run.wallNote && st && st.step === "intro" ? '<p class="pa2-echo">' + esc(run.wallNote) + '</p>' : ""), dests = pa2Dests(run), hook = pa2Hook(run), R = PA2_RULES;
   switch (n.type) {
     case "obstacle":
     case "tertre": {

@@ -111,6 +111,43 @@ var SCENE_NODES = {
         endurance: { stat: "endurance", label: "Faire le tour par les cours" }
       }
     },
+    /* v3.429.0 (Ruines, U-6) — gabarits de la Petite Aventure des Ruines. */
+    mur_neuf: {
+      id: "mur_neuf", biome: "ruins", name: "Le mur neuf",
+      baseDifficulty: 5,
+      options: {
+        power: { stat: "power", label: "Desceller les pierres encore fraîches" },
+        precision: { stat: "precision", label: "Trouver la pierre mal posée" },
+        endurance: { stat: "endurance", label: "Faire le tour par les toits" }
+      }
+    },
+    escalier_sans_fin: {
+      id: "escalier_sans_fin", biome: "ruins", name: "L'escalier qui monte encore",
+      baseDifficulty: 5,
+      options: {
+        power: { stat: "power", label: "Monter d'une traite" },
+        precision: { stat: "precision", label: "Compter les marches qui reviennent" },
+        endurance: { stat: "endurance", label: "Monter lentement, sans s'arrêter" }
+      }
+    },
+    dalle_qui_glisse: {
+      id: "dalle_qui_glisse", biome: "ruins", name: "Les dalles qui glissent",
+      baseDifficulty: 4,
+      options: {
+        power: { stat: "power", label: "Bloquer la dalle avec une pierre" },
+        precision: { stat: "precision", label: "Sauter de joint en joint" },
+        endurance: { stat: "endurance", label: "Attendre qu'elles se rangent" }
+      }
+    },
+    porte_qui_attend: {
+      id: "porte_qui_attend", biome: "ruins", name: "La porte qui attend",
+      baseDifficulty: 7,
+      options: {
+        power: { stat: "power", label: "Forcer le battant" },
+        precision: { stat: "precision", label: "Trouver le mécanisme" },
+        endurance: { stat: "endurance", label: "Attendre qu'elle s'ouvre" }
+      }
+    },
     /* v3.300.0 (W-2) — premiers gabarits du DÉSERT, écrits pour la traversée (acte I, étape 1).
        Réutilisables par la Petite Aventure du Désert. */
     dalles_ensablees: {

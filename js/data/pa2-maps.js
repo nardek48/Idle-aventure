@@ -9,6 +9,29 @@
    Un nœud sans type reçoit le sien au tirage (PA2_NODE_WEIGHTS, data/pa2-content.js).
    links : nœud -> nœuds atteignables à la rangée suivante. dests : nœud -> destination. */
 
+/* v3.429.0 (Ruines, U-6) — LES MURS BOUGENT. Les deux cartes des Ruines (images de Seb du 04/10/2026)
+   partagent le même tracé logique : places relevées sur l'image, la cour (camp) et l'arche (seuil)
+   au milieu des rangées. shifts : bascules du tracé (Pa2Run._shiftWalls) — from passe de a à b et
+   retour ; chaque état garde au moins une sortie vers l'avant. Le run note l'état dans run.walls. */
+var RUINES_PA_LINKS = {
+  S: ["L0", "C0", "R0"],
+  L0: ["L1"], C0: ["L1", "R1"], R0: ["R1"],
+  L1: ["CAMP"], R1: ["CAMP"],
+  CAMP: ["L3", "C3", "R3"],
+  L3: ["L4"], C3: ["L4", "R4"], R3: ["R4"],
+  L4: ["SEUIL"], R4: ["SEUIL"],
+  SEUIL: ["L6", "C6", "R6"],
+  L6: ["BOSS", "CLAIRIERE"], C6: ["CLAIRIERE", "BOSS"], R6: ["TERTRE"]
+};
+var RUINES_PA_SHIFTS = [
+  { from: "C0", a: ["L1", "R1"], b: ["L1"] },
+  { from: "R0", a: ["R1"], b: ["CAMP"] },       // un passage s'ouvre droit vers la cour
+  { from: "C3", a: ["L4", "R4"], b: ["R4"] },
+  { from: "L3", a: ["L4"], b: ["SEUIL"] },
+  { from: "L6", a: ["BOSS", "CLAIRIERE"], b: ["BOSS"] },
+  { from: "R6", a: ["TERTRE"], b: ["TERTRE", "CLAIRIERE"] }
+];
+
 var PA2_MAPS = {
   foret_1: {
     id: "foret_1",
@@ -157,13 +180,66 @@ var PA2_MAPS = {
       C8: ["BOSS", "CLAIRIERE"],
       R8: ["TERTRE"]
     }
+  },
+  /* La ville en labyrinthe : cinq rangées de places, la grille du gardien, la cour au puits, la chambre au coffre. */
+  ruines_1: {
+    id: "ruines_1",
+    worldId: "ruins",
+    image: "images/Maps/pa2/ruines_1.jpg",
+    width: 848,
+    height: 1264,
+    start: "S",
+    rows: { camp: 2, seuil: 5, dest: 7 },
+    tune: { foeMult: 0.85 }, // banc (pa2-bench --ruines) : même adoucissement que le Désert
+    nodes: {
+      S: { row: -1, x: 428, y: 1190, type: "depart" },
+      L0: { row: 0, x: 140, y: 990 }, C0: { row: 0, x: 420, y: 975 }, R0: { row: 0, x: 690, y: 990 },
+      L1: { row: 1, x: 165, y: 825 }, R1: { row: 1, x: 690, y: 820 },
+      CAMP: { row: 2, x: 420, y: 830, type: "camp" },
+      L3: { row: 3, x: 165, y: 660 }, C3: { row: 3, x: 430, y: 650 }, R3: { row: 3, x: 690, y: 650 },
+      L4: { row: 4, x: 165, y: 505 }, R4: { row: 4, x: 690, y: 500 },
+      SEUIL: { row: 5, x: 430, y: 490, type: "seuil" },
+      L6: { row: 6, x: 165, y: 335 }, C6: { row: 6, x: 425, y: 330 }, R6: { row: 6, x: 690, y: 335 },
+      BOSS: { row: 7, x: 165, y: 165, type: "boss" },
+      CLAIRIERE: { row: 7, x: 420, y: 175, type: "clairiere" },
+      TERTRE: { row: 7, x: 690, y: 170, type: "tertre" }
+    },
+    links: RUINES_PA_LINKS,
+    shifts: RUINES_PA_SHIFTS
+  },
+  /* Les quartiers aux arènes : places rondes et ruelles, mêmes destinations. */
+  ruines_2: {
+    id: "ruines_2",
+    worldId: "ruins",
+    image: "images/Maps/pa2/ruines_2.jpg",
+    width: 848,
+    height: 1264,
+    start: "S",
+    rows: { camp: 2, seuil: 5, dest: 7 },
+    tune: { foeMult: 0.85 }, // banc (pa2-bench --ruines) : même adoucissement que le Désert
+    nodes: {
+      S: { row: -1, x: 425, y: 1175, type: "depart" },
+      L0: { row: 0, x: 240, y: 900 }, C0: { row: 0, x: 420, y: 805 }, R0: { row: 0, x: 650, y: 900 },
+      L1: { row: 1, x: 130, y: 670 }, R1: { row: 1, x: 700, y: 700 },
+      CAMP: { row: 2, x: 430, y: 600, type: "camp" },
+      L3: { row: 3, x: 180, y: 540 }, C3: { row: 3, x: 430, y: 490 }, R3: { row: 3, x: 600, y: 520 },
+      L4: { row: 4, x: 150, y: 370 }, R4: { row: 4, x: 680, y: 450 },
+      SEUIL: { row: 5, x: 430, y: 370, type: "seuil" },
+      L6: { row: 6, x: 155, y: 265 }, C6: { row: 6, x: 430, y: 270 }, R6: { row: 6, x: 690, y: 290 },
+      BOSS: { row: 7, x: 150, y: 140, type: "boss" },
+      CLAIRIERE: { row: 7, x: 425, y: 150, type: "clairiere" },
+      TERTRE: { row: 7, x: 690, y: 190, type: "tertre" }
+    },
+    links: RUINES_PA_LINKS,
+    shifts: RUINES_PA_SHIFTS
   }
 };
 
 /* Cartes proposées par monde (tirage au lancement). */
 var PA2_MAPS_BY_WORLD = {
   forest: ["foret_1", "foret_2"], // v3.386.0 : tirée au lancement, comme l'accroche
-  desert: ["desert_1"]             // v3.387.0 (PA2-5)
+  desert: ["desert_1"],            // v3.387.0 (PA2-5)
+  ruins: ["ruines_1", "ruines_2"]  // v3.429.0 (U-6)
 };
 
 /* v3.390.0 (chantier P, lot P-2) : fonds illustrés des parcours (images de Seb du 29/09/2026).

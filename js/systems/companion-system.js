@@ -430,6 +430,7 @@ var CompanionManager = {
     if (!def) return false;
 
     var slot = forcedSlot || this.chooseAction(actor);
+    if (window.RiseSystem) RiseSystem.beginAction(!!forcedSlot); // v3.428.3 : un compagnon n'achève que sur ordre (Tactique, Manuel)
 
     var sansCharge = this.chargesMax(actor.companionId) > 0 && Number(actor.charges || 0) <= 0;
     if (slot === "skill" && Number(actor.cooldown || 0) <= 0 && !sansCharge && def.skill) {
@@ -448,6 +449,7 @@ var CompanionManager = {
     // Passe par le VRAI dealDamage : affinités, archétypes, bouclier et vulnérabilité
     // s'appliquent au compagnon exactement comme au héros.
     var dmg = Math.max(1, Number(actor.damage || 1));
+    if (window.RiseSystem && RiseSystem.blocksHit(target)) return true; // v3.428.3 : à terre, il attend
 
     /* La menace est attribuée par CombatEngine.noteThreat() — l'allié qui frappe est celui
        que le moteur a posé, héros compris. Rien à compter ici.
@@ -509,6 +511,7 @@ var CompanionManager = {
       if (!aTerre || !window.CombatEngine) return false;
       var coup = Math.max(1, Math.floor(Number(actor.damage || 1) * Number(skill.value || 1)));
       if (typeof addLog === "function") addLog("🪦 " + _t("{x} — {s} sur {y}", { x: _td(def.name), s: _td(skill.name), y: aTerre.name ? _td(aTerre.name) : _t("l'ennemi") }), "event");
+      if (window.RiseSystem) RiseSystem.beginAction(true); // Le dernier trait : c'est sa raison d'être
       CombatEngine.dealDamage(coup, false, true, true, aTerre);
       actor.cooldown = Number(skill.cooldown || 0);
       return true;
@@ -518,6 +521,7 @@ var CompanionManager = {
     if (skill.type === "strike") {
       var cible = window.CombatActors ? CombatActors.target() : null;
       if (!cible || Number(cible.hp || 0) <= 0 || !window.CombatEngine) return false;
+      if (cible.downed && window.RiseSystem && RiseSystem.blocksHit(cible)) return false; // v3.428.3 : pas de Tir ajusté perdu
       var dmg = Math.max(1, Math.floor(Number(actor.damage || 1) * Number(skill.value || 1)));
       CombatEngine.dealDamage(dmg, false, true, true, cible);
       actor.cooldown = Number(skill.cooldown || 0);
