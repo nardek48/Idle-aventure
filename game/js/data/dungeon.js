@@ -161,7 +161,10 @@ var DUNGEONS = [
     story: "Un froid ancien s'infiltre jusque dans les os. Ces lieux ne sont pas laissés à l'abandon — quelque chose les garde, avec méthode.",
     enemyPool: null, eliteWaves: null,
     boss: { baseId: "skeletonlord", name: "Gardien scellé", archetype: "armored", statMult: { endurance: 1, power: 1 }, image: null },
-    locked: false
+    /* v3.429.2 (bug Seb) : ouvert dès l'arrivée aux Ruines. Fermé jusqu'à l'acte III (porte du
+       Sanctuaire), faute de pool, d'élites et de boss calibré — comme la Cité avant W-4. */
+    locked: true,
+    lockedHint: "Le Sanctuaire est encore scellé."
   },
   {
     id: 4, key: "crypt",

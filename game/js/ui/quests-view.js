@@ -98,6 +98,7 @@ function buildQuestBoardActionHTML(m) {
     var h = '';
     // v3.117.0 : "accepted" (pas encore lancée) -> Partir ; "running" (déjà en cours) -> Continuer.
     var launchLabel = m.status === "running" ? '<img class="ico-btn" src="images/Icons/quests/continue.png" alt=""> ' + _t("Continuer") : '<img class="ico-btn" src="images/Icons/quests/start_expedition.png" alt=""> ' + _t("Partir");
+    if (m.launchLabel) launchLabel = esc(m.launchLabel); // v3.429.2 : verbe propre à la mission (ex. « Décider »)
     if (m.launch) h += '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'launch\')">' + launchLabel + '</button>';
     if (m.abandon) h += '<button class="settings-btn danger qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'abandon\')">' + _t("Abandonner") + '</button>';
     return h;

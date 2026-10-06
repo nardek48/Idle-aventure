@@ -107,7 +107,13 @@ var MissionBoard = {
       };
       if (status === "available") m.accept = function () { return StoryQuestManager.acceptStep(chapterId); };
       if (status === "claimable") m.claim = function () { return StoryQuestManager.claimStep(chapterId); };
-      if (status === "accepted" && step.linkTo) m.launch = function () { StoryQuestManager.goToLink(chapterId); };
+      /* v3.429.2 (bug Seb) : un choix en attente (« Décider ») ne se fait que sur la carte d'étape
+         de Quêtes › Histoire — le bouton y mène, avant tout lien de l'étape. */
+      var cardChoice = status === "accepted" && typeof storyPendingCardChoice === "function" ? storyPendingCardChoice(chapterId) : null;
+      if (cardChoice) {
+        m.launch = function () { if (typeof openQuestsAt === "function") openQuestsAt("worldexpedition"); };
+        m.launchLabel = cardChoice.choice.buttonLabel ? _td(cardChoice.choice.buttonLabel) : _t("Choisir");
+      } else if (status === "accepted" && step.linkTo) m.launch = function () { StoryQuestManager.goToLink(chapterId); };
       out.push(m);
     });
     return out;

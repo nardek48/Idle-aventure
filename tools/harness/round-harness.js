@@ -14190,5 +14190,44 @@ console.log("\n[204] v3.429.0 — Ruines, acte II : Bâtisseur, murs qui bougent
   }
 })();
 
+console.log("\n[205] v3.429.2 — Donjon des Ruines fermé ; « Décider » mène à Quêtes › Histoire");
+(function () {
+  var SQ = g.StoryQuestManager, saved = {};
+  try {
+    var game = freshCombat("knight");
+    /* --- Le Sanctuaire scellé ne s'ouvre pas à l'arrivée aux Ruines --- */
+    var D = g.DungeonManager;
+    D.ensure();
+    game.worldsEverReached = { 0: true, 1: true, 2: true };
+    game.dungeonTierCleared = { 1: true, 2: true };
+    var d3 = g.DUNGEONS.filter(function (d) { return d.id === 3; })[0];
+    ok(d3.locked === true && D.getLockReason(3) === "data" && !D.isUnlocked(3), "Ruines : le donjon reste fermé, Cité terminée ou non");
+    ok(!!d3.lockedHint, "Ruines : la carte du donjon dit pourquoi");
+
+    /* --- Un choix en attente : le tableau mène à la carte d'étape --- */
+    ["getCurrentStep", "isCurrentStepAccepted", "isCurrentStepReady", "getChoice"].forEach(function (k) { saved[k] = SQ[k]; });
+    var roi = g.STORY_QUESTS.desert.steps.filter(function (st) { return st.id === "desert_18"; })[0];
+    SQ.getCurrentStep = function (id) { return id === "desert" ? roi : null; };
+    SQ.isCurrentStepAccepted = function () { return true; };
+    SQ.isCurrentStepReady = function () { return false; };
+    SQ.getChoice = function () { return null; };
+    var m = g.MissionBoard._storyMissions()[0];
+    ok(m && m.status === "accepted" && typeof m.launch === "function" && m.launchLabel === g._td("Décider"), "roi : la mission porte un bouton « Décider »");
+    ok(g.buildCampMissionCardHTML(m).indexOf(g.esc(g._td("Décider"))) > 0, "roi : le Campement affiche « Décider »");
+    var oqa = g.openQuestsAt, cible = null;
+    g.openQuestsAt = function (k) { cible = k; };
+    m.launch();
+    g.openQuestsAt = oqa;
+    ok(cible === "worldexpedition", "roi : le bouton ouvre Quêtes › Histoire");
+    SQ.getChoice = function () { return "soi"; };
+    m = g.MissionBoard._storyMissions()[0];
+    ok(m && !m.launchLabel, "choix fait : plus de bouton « Décider »");
+  } catch (err) {
+    ok(false, "[205] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    Object.keys(saved).forEach(function (k) { SQ[k] = saved[k]; });
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

@@ -12,6 +12,7 @@ function buildCampMissionActionHTML(m) {
     // v3.117.0 : "accepted" = acceptée mais pas encore lancée (ex. expédition à mini-jeu juste
     // acceptée) -> "Partir" ; "running" = déjà en cours -> "Continuer". Même bouton launch.
     var launchLabel = m.status === "running" ? '<img class="ico-btn" src="images/Icons/quests/continue.png" alt=""> ' + _t("Continuer") : '<img class="ico-btn" src="images/Icons/quests/start_expedition.png" alt=""> ' + _t("Partir");
+    if (m.launchLabel) launchLabel = esc(m.launchLabel); // v3.429.2 : verbe propre à la mission (ex. « Décider »)
     if (m.launch) h += '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'launch\')">' + launchLabel + '</button>';
     if (m.abandon) h += '<button class="settings-btn danger camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'abandon\')">' + _t("Abandonner") + '</button>';
     h += '</div>';

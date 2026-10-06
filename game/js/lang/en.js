@@ -3552,6 +3552,7 @@ I18n.register("en", {
   "Une cité que le sable a prise, salle après salle.": "A city the sand has taken, hall after hall.",
   "Les couloirs se resserrent. Des ombres inhabituelles glissent entre les pierres, et l'air se charge d'une tension nouvelle.": "The corridors narrow. Unusual shadows slip between the stones, and the air grows heavy with a new tension.",
   "Le sable la garde encore.": "The sand still guards it.",
+  "Le Sanctuaire est encore scellé.": "The Sanctuary is still sealed.",
 
   // LIVING_MAPS
   "La margelle est chaude au toucher. Au fond, pas d'eau, mais le seau est neuf.": "The well's rim is warm to the touch. At the bottom, no water, but the bucket is new.",
