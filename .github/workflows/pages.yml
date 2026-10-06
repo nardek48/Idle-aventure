@@ -1,0 +1,48 @@
+# Publie game/ sur GitHub Pages à chaque push sur main, si les harnais passent.
+# Réglage requis une fois : Settings › Pages › Source = « GitHub Actions ».
+name: Publier le jeu
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Une seule publication à la fois ; celle en cours va au bout.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  harnais:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Rounds
+        run: node tools/harness/round-harness.js
+      - name: Premier lancement
+        run: node tools/harness/boot-harness.js
+      - name: Création du héros
+        run: node tools/harness/hero-creation-harness.js
+
+  publier:
+    needs: harnais
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: game
+      - id: deploiement
+        uses: actions/deploy-pages@v4

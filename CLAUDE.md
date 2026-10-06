@@ -8,12 +8,18 @@ Seb est seul développeur, designer, testeur et décideur. Public : adultes et a
 - Commentaires de code : 2 lignes max, format « quoi + pourquoi bref ».
 - Réponses directes et concises. Seb valide souvent d'un mot (« ok tu peux », « oui »).
 
+## Arborescence
+- `game/` : le jeu, **seul dossier publié** (workflow `.github/workflows/pages.yml`, après les harnais). Les chemins `js/…`, `css/…`, `index.html`, `sw.js` cités ici sont relatifs à `game/`.
+- `tools/harness/` (round, boot, création du héros, parcours, `index-scripts.js`), `tools/sim/` (bancs, campagne), `tools/audit/` (i18n, icônes, design, captures), `tools/docs-gen/` (générateurs). `tools/chemins.js` : racine du jeu et dossier de sortie, communs aux outils.
+- `atelier/` : prototypes HTML d'interface. `docs/` : changelogs (`docs/changelog/`), glossaire i18n.
+- `captures/` : sorties des outils (captures, lots de campagne), ignoré par git.
+
 ## Méthode de décision
 1. **Lire le vrai code avant de proposer quoi que ce soit.** Ne jamais inventer un nom de champ, une signature ou un état ; vérifier qu'une fonctionnalité existe (ou pas) avant de l'affirmer.
 2. Proposer des **options chiffrées** avec une recommandation, attendre la validation, puis coder. Une décision à la fois.
 3. Une **décision close ne se rouvre pas** sans demande explicite de Seb.
 4. UI transversale : **atelier d'abord** (prototype HTML autonome dans `atelier/`, testé sur iPhone) avant de toucher au jeu.
-5. Équilibrage : **mesurer au banc** (`sim/`) contre le vrai moteur avant d'engager un chiffre. Pas besoin d'être au pour-cent près : un ou deux relevés, un ajustement, puis livrer et juger en jeu. Ne pas relancer le banc en boucle.
+5. Équilibrage : **mesurer au banc** (`tools/sim/`) contre le vrai moteur avant d'engager un chiffre. Pas besoin d'être au pour-cent près : un ou deux relevés, un ajustement, puis livrer et juger en jeu. Ne pas relancer le banc en boucle.
 6. Mesures visuelles (tailles, positions) : au pixel, via Playwright/Chromium headless ou scan PIL, jamais à l'œil.
 
 ## Fichiers protégés — confirmation explicite de Seb AVANT toute modification
@@ -47,17 +53,18 @@ Une fois l'accord obtenu : modification minimale, limitée au besoin.
 3. Supprimer un fichier seulement après publication d'un `sw.js` qui ne le précache plus.
 4. `node --check` sur chaque JS modifié.
 5. `round-harness.js` à **0 échec**, stable sur plusieurs passes.
-6. Entrée de changelog `vX.Y.Z` + commit git intitulé `vX.Y.Z`.
+6. Changelog `docs/changelog/CHANGELOG_vX.Y.Z.md` + commit git intitulé `vX.Y.Z`. Le push sur `main` publie `game/` si les harnais passent.
 
 ## Tests et bancs
+Depuis la racine du dépôt. Sans argument, les outils visent `game/` ; avec des options, passer la racine d'abord (`.` ou `game`).
 ```
-node round-harness.js .                 # >3 000 contrôles, 0 échec exigé
-node boot-harness.js .  /  node hero-creation-harness.js .
-node sim/parcours-harness.js . [P11]    # Chromium, parcours joueur à taille iPhone
-node sim/campagne-lot.js . --combats --n 4
-node sim/missing-icons.js .
+node tools/harness/round-harness.js                  # >3 000 contrôles, 0 échec exigé
+node tools/harness/boot-harness.js  /  node tools/harness/hero-creation-harness.js
+node tools/harness/parcours-harness.js . P11         # Chromium (Playwright), parcours joueur à taille iPhone
+node tools/sim/campagne-lot.js . --combats --n 4
+node tools/audit/missing-icons.js
 ```
-⚠ Les harnais lisent actuellement la liste des scripts dans `/tmp/scripts.txt` (Linux uniquement) — à remplacer par une lecture d'`index.html` lors de la réorganisation.
+La liste des scripts est lue dans `game/index.html` (`tools/harness/index-scripts.js`) : rien à régénérer.
 
 ## Documentation
 - Le document de conception fait foi sur les **décisions** ; l'État des chantiers fait foi sur l'**état du code**.
