@@ -139,7 +139,7 @@ var VILLAGE_BUILDINGS = {
     maxLevel: 14,
     implemented: true,
     lockLabel: "Atteins 20 dans une caractéristique",
-    desc: "Chaque niveau ouvre 10 niveaux d'entraînement supplémentaires sur chacune des cinq caractéristiques. L'entraînement lui-même se paie en or, dans Personnage → Stats.",
+    desc: "Chaque niveau ouvre 10 niveaux d'entraînement supplémentaires sur chacune des cinq caractéristiques. L'entraînement lui-même se paie en or, dans Héros → Entraînement.",
     /* La porte d'entrée du Terrain n'est pas une quête du tableau : c'est le
        mur lui-même. Quand une caractéristique bute à 10, le bâtiment devient
        constructible — le joueur découvre le besoin avant l'objet. */

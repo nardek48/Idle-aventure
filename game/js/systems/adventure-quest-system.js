@@ -186,6 +186,8 @@ var AdventureQuestManager = {
     if (!quest) return showToast(_t("Quête introuvable"), 1200);
     if (game.adventureQuestsCompleted[questId]) return showToast(_t("Quête déjà terminée"), 1200);
     if (game.adventureQuestRun.active) return showToast(_t("Une quête est déjà en cours"), 1200);
+    // v3.429.3 : à 0 PV, le run démarrait sans combat possible et bloquait la régénération
+    if ((game.heroHp || 0) <= 0) return showToast(_t("Tu es à terre — soigne-toi au Campement avant de repartir."), 2000);
     if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
       return showToast(_t("Termine ou abandonne ton donjon avant de lancer une quête"), 1600);
     }

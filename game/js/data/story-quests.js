@@ -289,7 +289,7 @@ var STORY_QUESTS = {
           title: "L'Amélioration",
           points: [
             { icon: "images/Icons/system/upgrade.png", text: "Chaque amélioration augmente une statistique de façon permanente contre de l'or. Le prix grimpe à chaque achat — étale tes investissements plutôt que de tout miser sur une seule stat." },
-            { icon: "images/Icons/improvement_icons/power.png", text: "Puissance — dégâts de ton attaque de base." },
+            { icon: "images/Icons/improvement_icons/power.png", text: "Force — dégâts de ton attaque de base." },
             { icon: "images/Icons/combat_stats/stat_critical.png", text: "Précision — chance de coup critique." },
             { icon: "images/Icons/scene/node_discovery.png", text: "Volonté — dégâts bonus en cas de critique." },
             { icon: "images/Icons/combat_stats/stat_health.png", text: "Endurance — PV maximum et une partie de ta défense." },
@@ -322,7 +322,7 @@ var STORY_QUESTS = {
           title: "La Boutique",
           points: [
             { icon: "images/Icons/subtabs/equipment_shop.png", text: "La Boutique vend des potions contre de l'or." },
-            { icon: "images/Icons/subtabs/potions.png", text: "Potions de soin : Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 400 or). Utilisables en combat comme une action à part entière — elles consomment ton tour." },
+            { icon: "images/Icons/subtabs/potions.png", text: "Potions de soin : Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 600 or). Utilisables en combat comme une action à part entière — elles consomment ton tour." },
             { icon: "images/Icons/system/warning.png", text: "Maximum 2 potions par sortie — pense à te ménager pour la suite du combat." }
           ]
         },

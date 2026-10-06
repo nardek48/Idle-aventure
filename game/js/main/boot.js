@@ -39,6 +39,10 @@ function init() {
     ProductionManager.catchUpOffline();
   }
 
+  // v3.101.0 : régénération au camp accumulée hors ligne (plafond 50 % PV max), voir systems/camp-system.js.
+  // v3.429.3 : avant tout spawn — renderHud soignait sans plafond et consommait l'absence.
+  if (loaded && window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(true);
+
 
   if (window.WorldManager && typeof WorldManager.markWorldReached === "function") {
     WorldManager.markWorldReached(WorldManager.worldIndex || 0);
@@ -60,8 +64,6 @@ function init() {
 
     // v3.332.0 (R-1) : le résumé de retour est fait en FIN d'init (plus bas), une fois le feu
     // passé et le chantier soldé — l'écran de retour les montre.
-    // v3.101.0 : régénération au camp accumulée hors ligne (plafond 50 % PV max), voir systems/camp-system.js
-    if (window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(true);
   } else {
     addLog(_t("Bienvenue, héros ! Tape l'ennemi pour commencer."), "event");
     // v3.107.2 : bug préexistant — game.resources ne recevait aucune valeur de départ pour une TOUTE

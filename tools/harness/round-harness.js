@@ -6511,7 +6511,7 @@ console.log("\n[62] v3.260.0 \u2014 Retours de jeu : Brume, Colporteur, arme, co
   /* --- Colporteur : Potions, soin en tête, potions de mission cachées --- */
   var s04 = chapitre.steps[idxOf("forest_04")];
   ok(s04.linkTo.tab === "shop" && s04.linkTo.subTab === "potions", "forest_04 m\u00e8ne \u00e0 Boutique > Potions");
-  ok(s04.tutorial.points.some(function (p) { return p.text.indexOf("400 or") !== -1 && p.text.indexOf("3000") === -1; }), "tutoriel : potion majeure \u00e0 400 or (prix r\u00e9el)");
+  ok(s04.tutorial.points.some(function (p) { return p.text.indexOf("600 or") !== -1 && p.text.indexOf("3000") === -1; }), "tutoriel : potion majeure \u00e0 600 or (prix r\u00e9el, v3.291.0)");
   game = freshCombat("knight");
   run("StoryQuestManager.ensure(); PotionManager.ensure(); game.potionsOwned = {}; game.unlockedTabs.shop = true;");
   var shop0 = g.buildPotionShopHTML();

@@ -38,11 +38,12 @@ var CampManager = {
   },
 
   /* Accrual paresseux : appelé par renderHud (chaque tick) et au boot (offline = plafond 50 %).
-     Le repère est toujours avancé, même sans soin, pour ne pas accumuler du temps de combat. */
+     Le repère est avancé hors régénération (pas de temps de combat accumulé), conservé tant que le soin arrondit à 0. */
   applyRegen: function (offline) {
     this.ensureDefaults();
     var now = Date.now();
-    var elapsedMin = Math.max(0, now - game.campRegenLastAt) / 60000;
+    var lastAt = game.campRegenLastAt;
+    var elapsedMin = Math.max(0, now - lastAt) / 60000;
     game.campRegenLastAt = now;
     if (elapsedMin <= 0) return 0;
     // Hors ligne : le joueur était absent, on régénère quel que soit l'onglet restauré (sauf run en cours).
@@ -55,7 +56,8 @@ var CampManager = {
     var heal = maxHp * this.getRegenPctPerMin() * elapsedMin;
     if (offline) heal = Math.min(heal, maxHp * getCampOfflineRegenCap());
     heal = Math.floor(Math.min(heal, maxHp - hp));
-    if (heal <= 0) return 0;
+    // v3.429.3 : soin < 1 PV (appel à chaque image) -> le temps s'accumule au lieu d'être perdu
+    if (heal <= 0) { game.campRegenLastAt = lastAt; return 0; }
 
     game.heroHp = hp + heal;
     if (offline) addLog("🔥 " + _t("Régénération au camp pendant ton absence : +{n} PV.", { n: formatNumber(heal) }), "event");

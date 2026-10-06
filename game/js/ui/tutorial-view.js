@@ -104,10 +104,10 @@ var GENERIC_TUTORIALS = {
     icon: "images/Icons/combat_stats/stat_critical.png",
     title: "Le Terrain d'entraînement",
     points: [
-      { icon: "images/Icons/system/training_cap.png", text: "Tes caractéristiques butent à 10 : c'est la limite de l'entraînement de fortune du campement. Pour aller plus loin, il faut un vrai terrain." },
+      { icon: "images/Icons/system/training_cap.png", text: "Tes caractéristiques butent à 20 : c'est la limite de l'entraînement de fortune du campement. Pour aller plus loin, il faut un vrai terrain." },
       { icon: "images/Icons/workshops/masonry.png", text: "Le Terrain se bâtit ici, au Village, comme l'Atelier : des matériaux, puis un chantier qui prend un peu de temps." },
       { icon: "images/Icons/combat_stats/stat_critical.png", text: "Chaque niveau du Terrain ouvre 10 niveaux de plus sur CHACUNE des cinq caractéristiques — jamais un total à répartir." },
-      { icon: "images/Icons/gold_icon.png", text: "L'entraînement lui-même se paie toujours en or, dans Personnage → Stats. Le Terrain décide jusqu'où tu peux monter, pas combien ça coûte." }
+      { icon: "images/Icons/gold_icon.png", text: "L'entraînement lui-même se paie toujours en or, dans Héros → Entraînement. Le Terrain décide jusqu'où tu peux monter, pas combien ça coûte." }
     ]
   },
   village_production: {
