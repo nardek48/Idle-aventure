@@ -12433,7 +12433,9 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
 
     /* 200 runs au hasard sur foret_2 */
     g.PA2_MAPS_BY_WORLD.forest = ["foret_2"];
-    var bad = 0, finished = 0, dests = 0, evRow = 0, lens = [];
+    var bad = 0, finished = 0, dests = 0, evRow = 0, lens = [], why = "";
+    // v3.429.1 : échec rare (~1 passe sur 150, non reproduit) : le message dira quel run a calé et pourquoi
+    function noteRun(k, txt) { if (!why) why = " ; 1er run fautif n°" + k + " (niv. " + game.heroLevel + ") : " + txt; }
     for (var k = 0; k < 200; k++) {
       prep(1 + (k % 13));
       S.startRun("petite_aventure_foret");
@@ -12456,14 +12458,14 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
         else if (t === "evenement") { var hb = P.hookBranches().filter(function (b) { return b.ok; }); res = P.eventChoice(hb[Math.floor(Math.random() * hb.length)].id); }
         else if (t === "camp" || t === "seuil") res = P.placeAction("rest");
         else if (t === "clairiere") res = P.clairiere();
-        if (!res || !res.ok) { bad++; break; }
+        if (!res || !res.ok) { bad++; noteRun(k, "nœud " + r.at + " (" + t + "), statut " + r.status + ", résultat " + JSON.stringify(res) + ", PV " + game.heroHp + "/" + game.heroMaxHp + ", souffle " + r.breath); break; }
       }
-      if (guard <= 0) bad++;
+      if (guard <= 0) { bad++; noteRun(k, "200 actions sans fin, nœud " + r.at + ", statut " + r.status); }
       if (r.status === "completed") finished++;
       if (r.end && r.end.dest) { dests++; lens.push(played); }
-      if (!(game.heroHp >= 0) || !isFinite(r.loot) || r.breath < 0) bad++;
+      if (!(game.heroHp >= 0) || !isFinite(r.loot) || r.breath < 0) { bad++; noteRun(k, "valeur absurde : PV " + game.heroHp + ", butin " + r.loot + ", souffle " + r.breath); }
     }
-    ok(finished === 200 && bad === 0, "200 runs au hasard sur foret_2 : tous terminés, aucune valeur absurde (" + finished + " / 200)");
+    ok(finished === 200 && bad === 0, "200 runs au hasard sur foret_2 : tous terminés, aucune valeur absurde (" + finished + " / 200" + why + ")");
     ok(evRow === 0, "la rencontre tombe dans l'acte I, avant le camp");
     ok(dests > 0 && lens.every(function (x) { return x === M.rows.dest + 1; }), "un run qui atteint sa destination traverse " + (M.rows.dest + 1) + " nœuds (" + dests + " destinations)");
 
@@ -12595,7 +12597,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
       P.depart();
       if (!play(r)) bad++;
       if (r.status === "completed") done++;
-      if (!(game.heroHp >= 0) || !isFinite(r.loot) || r.breath < 0) bad++;
+      if (!(game.heroHp >= 0) || !isFinite(r.loot) || r.breath < 0) { bad++; noteRun(k, "valeur absurde : PV " + game.heroHp + ", butin " + r.loot + ", souffle " + r.breath); }
     }
     ok(done === 150 && bad === 0, "150 runs au hasard au Désert : tous terminés, aucune valeur absurde (" + done + " / 150)");
 

@@ -196,7 +196,8 @@ P(table(["Ration", "Recette (Cuisine de camp)", "Soin", "Vivres de sortie"], ["p
 P("**Vivres de sortie (E4)** : une ration pour **repartir** — chasse dont un lot a déjà été bouclé, donjon déjà fini une fois (jamais sur une sortie d'Histoire), élite de carte dont le secteur est libéré. Gratuit aux actes I et II de la Forêt et pour toute première fois. Les parcours gardent leur propre coût d'entrée. Une ligne « Vivres » s'affiche sur les fiches de départ.\n");
 
 H(2, "1.7 Petite Aventure et parcours");
-P(table(["Intensité", "Paliers", "Difficulté (obstacles)", "Butin"], Object.keys(G.SCENE_INTENSITY).map(function (k) { var s = G.SCENE_INTENSITY[k]; return [s.label, s.depthMax, "×" + fr(s.diffMult), "×" + fr(s.lootMult)]; })));
+// v3.429.1 : SCENE_INTENSITY (Petites Aventures v1) n'existe plus depuis v3.388.0 ; tableau omis sans lui
+if (G.SCENE_INTENSITY) P(table(["Intensité", "Paliers", "Difficulté (obstacles)", "Butin"], Object.keys(G.SCENE_INTENSITY).map(function (k) { var s = G.SCENE_INTENSITY[k]; return [s.label, s.depthMax, "×" + fr(s.diffMult), "×" + fr(s.lootMult)]; })));
 var ST = G.SCENE_TEMPLATES;
 function entryText(c) { if (!c) return "—"; if (c.resourceId) return (c.amount || 1) + " " + resName(c.resourceId); return costText(c); }
 P(table(["Canevas", "Monde", "Combats par run", "Rencontres par combat", "Boss final", "Force des combats (dégâts / PV)", "Entrée"],
