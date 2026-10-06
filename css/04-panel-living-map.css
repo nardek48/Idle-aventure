@@ -186,3 +186,8 @@ body.living-map-active #panel-container { padding: 0; overflow: hidden; max-widt
 .lm-caravan.is-back { margin: -50px 0 0 4px; } /* rentrée : posée à côté du village, pas dessus */
 .lm-caravan.is-back img { box-shadow: 0 0 0 3px var(--c-green-650-2), 0 3px 8px rgba(0,0,0,.65); }
 .lm-caravan.is-back .lm-caravan-tag { background: var(--c-green-650-2); color: var(--c-white-50-soft); }
+
+/* v3.429.0 (Ruines) : le chantier errant, quartier rebâti du jour */
+.lm-node-chantier { position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .7)); pointer-events: none; }
+.lm-node.is-chantier .lm-node-disc { box-shadow: 0 0 0 3px rgba(240, 170, 62, .85), 0 0 12px rgba(240, 170, 62, .6); }
+.lm-panel-line.is-chantier { color: var(--c-gold-650); }

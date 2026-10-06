@@ -383,3 +383,7 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 @media (prefers-reduced-motion: reduce) {
   .pa2-page *, #pa2-overlay * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* v3.427.2 : « Comme la dernière fois » — reprend la besace du dernier départ, sous la grille. */
+.pa2-lastbag { margin: 8px auto 0; gap: 8px; }
+.pa2-lastbag img { width: 22px; height: 22px; }

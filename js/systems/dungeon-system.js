@@ -257,7 +257,7 @@ var DungeonManager = {
         image: data.image,
         isBoss: false,
         isElite: false,
-        archetype: (window.FIXED_ENEMY_ARCHETYPES && FIXED_ENEMY_ARCHETYPES[id]) || null, // v3.380.0 : trait fixe de la créature, comme hors donjon
+        archetype: null,
         hp: hp,
         maxHp: hp,
         goldReward: Math.max(1, Math.floor(8 * scale * goldMult)),
@@ -330,8 +330,7 @@ var DungeonManager = {
       asset: data ? data.asset : "slime",
       image: (isBossWave && bossDef && bossDef.image) ? bossDef.image : (data ? data.image : undefined),
       isBoss: isBossWave,
-      // v3.380.0 : vague normale → trait fixe de la créature (Troll, Ronce, Guerrier des sables), oublié depuis la refonte
-      archetype: (isBossWave && bossDef && bossDef.archetype) ? bossDef.archetype : (!isBossWave && window.FIXED_ENEMY_ARCHETYPES && FIXED_ENEMY_ARCHETYPES[id]) || null,
+      archetype: (isBossWave && bossDef && bossDef.archetype) ? bossDef.archetype : null, // trait signature, lu tel quel par combat-engine.js
       // v3.288.0 : seuils de phase du boss, lus par CombatEngine.checkPhases().
       phases: (isBossWave && bossDef && Array.isArray(bossDef.phases)) ? bossDef.phases : null,
       hp: hp,
