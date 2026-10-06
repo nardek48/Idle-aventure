@@ -1,6 +1,6 @@
 "use strict";
 /* Harnais VM v3.102.0 (P2) : charge tous les scripts d'index.html (sauf pwa/boot) dans un contexte simulé
-   et joue de vrais rounds. node round-harness.js <racine projet>  (liste des scripts attendue dans /tmp/scripts.txt) */
+   et joue de vrais rounds. node round-harness.js <racine projet>  (liste des scripts lue dans index.html) */
 var fs = require("fs"), path = require("path"), vm = require("vm");
 var ROOT = process.argv[2];
 /* v3.409.0 : les couleurs du CSS passent par la palette --c-* (css/00-tokens.css). Les tests qui
@@ -13,7 +13,7 @@ function unpal(text) {
   } catch (e) {}
   return String(text).replace(/var\((--c-[a-z0-9-]+)\)/g, function (m, n) { return pal[n] || m; });
 }
-var scripts = fs.readFileSync("/tmp/scripts.txt", "utf8").trim().split("\n").filter(function (s) { return !/pwa\.js|boot\.js/.test(s); });
+var scripts = require("./sim/index-scripts.js")(ROOT, /pwa\.js|boot\.js/);
 
 function el() {
   return { style: { setProperty: function(){}, removeProperty: function(){} }, classList: { add: function(){}, remove: function(){}, toggle: function(){}, contains: function(){ return false; } },
@@ -8590,6 +8590,10 @@ console.log("\n[95] v3.300.0 — W-2 : chapitre du Désert, la traversée");
   ok(/Les dalles du portail/.test(r.nodes.P0.narr) && /Wenna compte les carapaces/.test(r.nodes.P2.after), "journal : texte à chaque étape, et après la nuée");
   var sheet = g.pa2SheetBody(r, r.nodes.P0, { key: "P0", step: "intro" });
   ok(sheet.indexOf(g.esc("Les dalles du portail")) > 0, "le texte de l'étape s'affiche en tête de la feuille");
+  // v3.428.2 : nuée plus forte (foeMult 1,3) — héros au profil de fin de Forêt du banc (entraînement 60, Wenna +5)
+  ["power", "endurance", "celerity", "precision", "will"].forEach(function (s) { game.upgrades["utrain_" + s] = 60; });
+  game.heroLevel = 30; g.CompanionManager.state("wenna").upgrades = 5;
+  run("EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; CompanionManager.healAll();");
   var est = (function () { P.moveTo("P0"); r.nodes.P0.done = true; r.status = "pa2-map"; r.at = "P1"; r.nodes.P1.done = true; r.at = "P2"; r.status = "pa2-node"; P._prepareNode(r, r.nodes.P2); return P.combatPreview(); })();
   ok(est && est.tenir && !est.tenir.unwinnable && est.tenir.verdict !== "mortel", "la nuée : trois scarabées, un combat tenable pour un héros de fin de Forêt (" + (est && est.tenir && est.tenir.verdict) + ")");
   r.at = "S"; r.status = "pa2-map"; r.path = []; ["P0", "P1", "P2"].forEach(function (k) { r.nodes[k].done = false; });
@@ -13993,8 +13997,12 @@ console.log("\n[203] v3.428.0 — Ruines, acte I : relève, réglage « Cible »
     g.CombatEngine.spawnGroup([sk("C", 80), sl("D", 80)]);
     var c = byName("C");
     c.hp = 0; g.CombatEngine.killEnemy(c);
+    R.beginAction(false); game.combatRound.number = 77;
     g.CombatEngine.dealDamage(5, false, false, true, c);
-    ok(game.combat.enemies.indexOf(c) === -1, "une frappe pendant qu'il est à terre l'achève");
+    ok(game.combat.enemies.indexOf(c) !== -1 && c.downed, "option A (04/10) : un coup du Grimoire sans la règle ne l'achève pas");
+    R.beginAction(true);
+    g.CombatEngine.dealDamage(5, false, false, true, c);
+    ok(game.combat.enemies.indexOf(c) === -1, "une frappe décidée (Tactique, règle, toucher) l'achève");
     g.CombatEngine.spawnGroup([sl("Seul", 50)]);
     var s1 = game.enemy; s1.hp = 0; g.CombatEngine.killEnemy(s1);
     ok(!s1.downed, "un ennemi sans `rises` meurt normalement");
@@ -14052,7 +14060,7 @@ console.log("\n[203] v3.428.0 — Ruines, acte I : relève, réglage « Cible »
 
     /* --- Chapitre, plafonds, Halle, Marché, seuil d'Aeswyn --- */
     var ch = g.STORY_QUESTS.ruins;
-    ok(ch && ch.requiresChapter === "desert" && ch.steps.length === 5 && ch.steps[0].id === "ruines_01", "chapitre 3 : ouvert après le Désert, cinq étapes");
+    ok(ch && ch.requiresChapter === "desert" && ch.steps.length === 10 && ch.steps[0].id === "ruines_01" && ch.steps[9].id === "ruines_10", "chapitre 3 : ouvert après le Désert, dix étapes (actes I et II)");
     ok(!!g.WORLD_CAPS[2] && g.WORLD_CAPS[2].village.forge === g.WORLD_CAPS[1].village.forge, "plafonds du monde 3 posés (provisoires, égaux au Désert)");
     ok(g.STORY_AXES_OK !== false && g.STORY_CHOICE_AXES.seuil.soi.indexOf("soi") !== -1, "choix « seuil » sur l'axe Soi / Aeswyn");
     ok(g.WAREHOUSE_RESOURCES.pierre_errante && g.CARAVAN_RARE_BY_WORLD[2] === "pierre_errante", "Pierre errante : ressource du monde 3, rare du Marché des Ruines");
@@ -14075,6 +14083,108 @@ console.log("\n[203] v3.428.0 — Ruines, acte I : relève, réglage « Cible »
     ok(!!(game.explorationProgression || {}).ruinsMarketDone, "une caravane revenue du Marché des Ruines valide l'étape 4");
   } catch (err) {
     ok(false, "[203] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[204] v3.429.0 — Ruines, acte II : Bâtisseur, murs qui bougent, Craie, chantier errant, palier");
+(function () {
+  try {
+    var game = freshCombat("knight");
+    var R = g.RiseSystem;
+    function foe(id, name, hp) { return { id: id, name: name, isBoss: false, hp: hp, maxHp: hp, stats: g.ENEMY_DB[id].stats, resists: [], weak: [], archetype: g.FIXED_ENEMY_ARCHETYPES[id] || null }; }
+    function byName(n) { return game.combat.enemies.filter(function (x) { return x.name === n; })[0]; }
+
+    /* --- Le Bâtisseur --- */
+    ok(g.ENEMY_DB.batisseur && g.ENEMY_DB.batisseur.support === true && g.FIXED_ENEMY_ARCHETYPES.batisseur === "shielded", "Bâtisseur : soutien, trait « Bouclier »");
+    ok(g.ENEMY_DB.batisseur.weak.indexOf("sword") !== -1 && g.ENEMY_DB.batisseur.resists.indexOf("magic") !== -1, "il craint l'épée et résiste à la magie (écart épée / magie des Ruines)");
+    g.CombatEngine.spawnGroup([foe("batisseur", "B", 200), foe("skeleton", "S1", 200), foe("skeleton", "S2", 200)]);
+    var b = byName("B"), s1 = byName("S1"), s2 = byName("S2");
+    s2.hp = 80;
+    var wall = R.shieldTarget(b);
+    ok(wall === s2 && s2.wallShield === true, "son mur va sur l'allié debout le plus entamé");
+    var prevT = game.combat.targetId; game.combat.targetId = b.actorId; b.shieldTelegraphed = true; g.CombatEngine.resolveBossShield(); game.combat.targetId = prevT;
+    ok(Number(s2.shieldRounds) > 0 && !(Number(b.shieldRounds) > 0), "à l'impact, le mur protège l'allié, pas le Bâtisseur");
+    var hp0 = s2.hp; R.beginAction(true); g.CombatEngine.dealDamage(40, false, false, true, s2);
+    ok(hp0 - s2.hp > 0 && hp0 - s2.hp < 40, "un allié derrière le mur prend moins de dégâts");
+    game.grimoireTarget = "soutien"; game.combatMode = "grimoire";
+    ok(g.CombatActors.pickByPolicy("soutien") === b, "réglage « Le soutien » : le Bâtisseur d'abord");
+    game.grimoireTarget = "proche"; game.combatMode = "tactique";
+    g.CombatEngine.spawnGroup([foe("batisseur", "Seul", 150)]);
+    ok(R.shieldTarget(game.enemy) === game.enemy, "seul, il se blinde lui-même");
+
+    /* --- Quêtes de l'acte II --- */
+    var qb = g.ADVENTURE_QUESTS.aq_ruines_batisseur, qs = g.ADVENTURE_QUESTS.aq_ruines_salle;
+    ok(qb && qb.encounters.length === 5 && qb.encounters.filter(function (e) { return e.group && e.group.indexOf("batisseur") !== -1; }).length === 4, "« Celui qui pose les pierres » : 5 rencontres, 4 avec un Bâtisseur");
+    ok(qs && qs.encounters.length === 4 && qs.adventureIndex === 1, "« La salle qu'il évite » : 4 rencontres au Sanctuaire enseveli");
+
+    /* --- Petite Aventure des Ruines : les murs bougent --- */
+    var T = g.SCENE_TEMPLATES.petite_aventure_ruines;
+    ok(T && T.mode === "pa2" && T.worldId === "ruins" && g.PA2_MAPS_BY_WORLD.ruins.join() === "ruines_1,ruines_2", "canevas des Ruines, deux cartes");
+    ["ruines_1", "ruines_2"].forEach(function (id) {
+      var m = g.PA2_MAPS[id], bad = [];
+      Object.keys(m.links).forEach(function (k) { m.links[k].forEach(function (t) { if (!m.nodes[t]) bad.push(k + ">" + t); }); });
+      m.shifts.forEach(function (sh) { [sh.a, sh.b].forEach(function (l) { if (!l.length) bad.push(sh.from + " vide"); l.forEach(function (t) { if (!m.nodes[t]) bad.push(sh.from + ">" + t); }); }); });
+      ok(!bad.length, id + " : liens et bascules valides" + (bad.length ? " " + bad.join(",") : ""));
+    });
+    ok(g.PA2_ITEMS.craie && g.PA2_ITEMS.craie.worlds.join() === "ruins" && !g.PA2_ITEMS.craie.resource, "la Craie : objet des Ruines, gratuit");
+    ok(g.PA2_RARE.ruins.resourceId === "pierre_errante" && g.PA2_GUARDIAN.ruins && g.PA2_DESTS.ruins.boss, "Pierre errante au butin, un gardien, trois destinations");
+    var P = g.Pa2Run;
+    var prun = { pa2: true, worldId: "ruins", mapId: "ruines_1", at: "S", path: [], walls: null, bag: ["craie"], stock: { craie: 0 }, nodes: {} };
+    Object.keys(g.PA2_MAPS.ruines_1.nodes).forEach(function (k) { prun.nodes[k] = { row: g.PA2_MAPS.ruines_1.nodes[k].row }; });
+    var _r = P.rand; P.rand = function () { return 0; };
+    var sh = P._shiftWalls(prun);
+    ok(sh && prun.walls && prun.walls[sh.from] && P.links(prun)[sh.from].join() !== g.PA2_MAPS.ruines_1.links[sh.from].join(), "un mur bouge devant le héros : le tracé du run change");
+    ok(g.PA2_MAPS.ruines_1.links[sh.from] === g.RUINES_PA_LINKS[sh.from], "la carte, elle, ne change pas");
+    prun.walls = null; prun.stock.craie = 1;
+    var before = JSON.stringify(P.links(prun));
+    sh = P._shiftWalls(prun);
+    ok(sh && sh.chalk === true && prun.stock.craie === 0 && JSON.stringify(P.links(prun)) === before, "la Craie tient : le mur ne bouge pas, un trait est dépensé");
+    P.rand = function () { return 0.99; };
+    ok(P._shiftWalls(prun) === null, "pas à chaque pas (" + Math.round(g.PA2_RULES.wallShiftPct * 100) + " %)");
+    P.rand = _r;
+
+    /* --- Carte des Ruines : le chantier errant --- */
+    var LM = g.LivingMapManager, map = LM.getMap("ruins");
+    ok(map && map.sectors.length === 14 && map.rewardResourceId === "pierre_errante" && map.opensAtStoryStep === "ruines_07", "carte des Ruines : 14 quartiers, Pierre errante, ouverte à ruines_07");
+    ok(map.sectors.every(function (d) { return d.neighbors.every(function (n) { return !!LM.getSectorDef("ruins", n); }); }), "voisinages valides");
+    var _reached = g.StoryQuestManager.isStepReached;
+    g.StoryQuestManager.isStepReached = function (id) { return id === "ruines_07" ? true : _reached.call(this, id); };
+    run("LivingMapManager.ensureDefaults();");
+    game.livingMaps.ruins.chantier = null;
+    LM.setState("ruins", "place_etals", "libere", "test");
+    var _rnd = LM._rand; LM._rand = function () { return 0; };
+    var c = LM.getChantier("ruins");
+    ok(c && c.sectorId === "place_etals" && LM.getState("ruins", "place_etals").state === "recouvert", "le chantier du jour rebâtit un quartier libéré (« Rebâti »)");
+    ok(LM.getChantier("ruins") === c, "un seul chantier par jour");
+    var pe0 = g.WarehouseManager.getAmount("pierre_errante");
+    var rep = LM.onRunEnd("ruins", "place_etals", "success");
+    ok(rep.chantier === map.chantier.reward && g.WarehouseManager.getAmount("pierre_errante") - pe0 >= map.chantier.reward && c.done === true, "le libérer ce jour-là rapporte " + map.chantier.reward + " Pierres errantes, une fois");
+    ok(!LM.isChantier("ruins", "place_etals"), "le chantier fait n'est plus à refaire");
+    game.livingMaps.ruins.chantier.day = "hier";
+    LM._rand = function () { return 0.99; };
+    ok(LM.getChantier("ruins").day !== "hier", "le lendemain, un nouveau chantier");
+    LM._rand = _rnd;
+    ok(!LM.isReachable("ruins", "porte_sanctuaire"), "la porte du Sanctuaire reste fermée (acte III)");
+    g.StoryQuestManager.isStepReached = _reached;
+
+    /* --- Étapes, palier, plafonds --- */
+    var ids = g.STORY_QUESTS.ruins.steps.map(function (st) { return st.id; });
+    ok(ids.slice(5).join() === "ruines_06,ruines_07,ruines_08,ruines_09,ruines_10", "acte II : cinq étapes");
+    game.equipped = {};
+    g.EQUIPMENT_SLOTS.forEach(function (sl) { game.equipped[sl] = { uid: "t_" + sl, slot: sl, rarity: "green", stat: "tapDmg", value: 1, affixes: [] }; });
+    game.forge = { levels: { weapon: 4, armor: 3 } };
+    var st9 = g.STORY_QUESTS.ruins.steps[8];
+    ok(!st9.check(game) && /armure 3\/4/.test(st9.progress(game)), "palier : l'armure reforgée à 4 manque");
+    game.forge.levels.armor = 4;
+    ok(st9.check(game), "palier : Inhabituels, arme et armure à 4");
+    game.equipped.ring.rarity = "common";
+    ok(st9.check(game), "six sur sept suffisent");
+    game.equipped.amulet.rarity = "common";
+    ok(!st9.check(game), "deux pièces communes : refusé");
+    var cap = g.TRAINING_CAP_BY_ACT.filter(function (a) { return a.stepId === "ruines_06"; })[0];
+    ok(cap && cap.terrain === 10 && g.WORLD_CAPS[2].village.training >= 10 && g.WORLD_CAPS[2].village.palisade === 8, "acte II : Terrain 10, Palissade 8");
+  } catch (err) {
+    ok(false, "[204] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

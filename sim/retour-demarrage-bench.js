@@ -3,10 +3,10 @@
    Un héros joué la veille, l'app tuée, relancée : écran titre -> « Charger ».
    Deux cas : le héros chargé est le dernier joué, ou un autre (switchToSlot).
    Attendu : UN écran de retour dès 5 min d'absence, dans les deux cas.
-   Lancer : node sim/retour-demarrage-bench.js <racine>   (/tmp/scripts.txt requis) */
+   Lancer : node sim/retour-demarrage-bench.js <racine>   (scripts lus dans index.html) */
 var fs = require("fs"), path = require("path"), vm = require("vm");
 var ROOT = process.argv[2] || ".";
-var scripts = fs.readFileSync("/tmp/scripts.txt", "utf8").trim().split("\n").filter(function (s) { return !/pwa\.js/.test(s); });
+var scripts = require("./index-scripts.js")(ROOT, /pwa\.js/);
 
 function el() { return { style:{setProperty:function(){},removeProperty:function(){}}, classList:{add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}}, innerHTML:"", textContent:"", scrollTop:0, disabled:false, querySelector:function(){return null;}, querySelectorAll:function(){return [];}, addEventListener:function(){}, setAttribute:function(){}, getAttribute:function(){return null;}, appendChild:function(){}, removeChild:function(){}, remove:function(){}, hasChildNodes:function(){return false;}, focus:function(){}, dataset:{}, offsetWidth:0, parentNode:null }; }
 

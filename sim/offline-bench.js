@@ -59,12 +59,7 @@ var sandbox = {
 sandbox.window = sandbox; sandbox.self = sandbox; sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
 
-var listePath = "/tmp/scripts.txt";
-if (!fs.existsSync(listePath)) {
-  console.error("ANCRE MANQUANTE : /tmp/scripts.txt — régénérer par\n  grep -o '<script src=\"[^\"]*\"' index.html | sed 's/<script src=\"//;s/\"$//' > /tmp/scripts.txt");
-  process.exit(1);
-}
-var scripts = fs.readFileSync(listePath, "utf8").trim().split("\n").filter(function (s) { return !/pwa\.js|boot\.js/.test(s); });
+var scripts = require("./index-scripts.js")(ROOT, /pwa\.js|boot\.js/);
 scripts.forEach(function (s) {
   var code = fs.readFileSync(path.join(ROOT, s), "utf8");
   try { vm.runInContext(code, sandbox, { filename: s }); }

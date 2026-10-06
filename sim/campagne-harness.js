@@ -29,7 +29,7 @@
    USAGE :
      node sim/campagne-harness.js . [--classe knight|ranger|mage] [--verbose]
      node sim/campagne-harness.js . --combats [--tactique] [--json sortie.json]
-   Prérequis : /tmp/scripts.txt (liste des scripts d'index.html), comme les autres harnais.
+   Liste des scripts lue dans index.html (sim/index-scripts.js).
    TRACE_OR=1 : trace l'or et la vitrine pendant la recherche d'équipement Inhabituel. */
 
 var fs = require("fs"), path = require("path"), vm = require("vm");
@@ -64,7 +64,7 @@ var TALENTS_AVISES = {
 };
 var REGLES_AVISEES = ["enemyRising", "healIncoming", "enemyArmored", "chargeIncoming", "enemySilenceIncoming"];
 var RECHARGE_H = ARGS.indexOf("--recharge") >= 0 ? Number(ARGS[ARGS.indexOf("--recharge") + 1]) : null;   // v3.366.0 : banc du délai de recharge des Petites Aventures
-var SCRIPTS = fs.readFileSync("/tmp/scripts.txt", "utf8").trim().split("\n").filter(function (s) { return !/pwa\.js/.test(s); });
+var SCRIPTS = require("./index-scripts.js")(ROOT, /pwa\.js/);
 var SOURCES = SCRIPTS.map(function (s) { return { name: s, code: fs.readFileSync(path.join(ROOT, s), "utf8") }; });
 
 /* ---------- Horloge simulée ---------- */
