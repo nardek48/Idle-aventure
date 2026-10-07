@@ -181,18 +181,13 @@ function buildDungeonSheetHTML(dungeonId) {
   }
   h += '</div>';
 
-  /* v3.247.0 : pronostic du BOSS du donjon, Marques comprises. buildWaveEnemy lit
-     game.dungeonRun.dungeonId : on le pose le temps du calcul (le run n'est pas actif,
-     start() le réécrira de toute façon) et on restaure ensuite. */
-  if (window.CombatForecast && window.DungeonManager) {
-    var savedRun = game.dungeonRun;
+  /* v3.247.0 : pronostic du donjon, Marques comprises. v3.429.7 : le run ENTIER (usure des
+     quinze vagues, entrée à PV pleins), puis le boss avec ce qui reste. */
+  if (window.CombatForecast && typeof CombatForecast.forDungeon === "function") {
     try {
-      game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, marks: pendingDungeonMarks.slice() };
-      var bossPreview = DungeonManager.buildWaveEnemy(DUNGEON_CONFIG.waveCount + 1);
-      game.dungeonRun = savedRun;
-      var f = CombatForecast.forEnemy(bossPreview);
+      var f = CombatForecast.forDungeon(dungeon.id, pendingDungeonMarks);
       if (f) h += buildCombatForecastLineHTML(f);
-    } catch (e) { game.dungeonRun = savedRun; }
+    } catch (e) { /* pronostic indisponible : la feuille reste utilisable */ }
   }
   if (typeof buildEnemyTraitsCardHTML === "function") h += buildEnemyTraitsCardHTML({ type: "dungeon", id: dungeon.id }); // v3.378.0
   // v3.429.6 : conseil de préparation, tant que le donjon n'a jamais été vaincu

@@ -159,6 +159,45 @@ var CombatForecast = {
     return Math.max(0, Math.floor(perFight * n));
   },
 
+  /* v3.429.7 : usure d'une vague à plusieurs ennemis, tués l'un après l'autre (le plus faible
+     d'abord) : tant qu'un ennemi est debout, il frappe. Un ennemi seul = getAttritionCost(e, 1). */
+  getGroupAttrition: function (list) {
+    var heroDmg = Math.max(1, this.getHeroDamagePerRound());
+    var alive = (list || []).filter(Boolean).slice().sort(function (a, b) { return Number(a.maxHp || 0) - Number(b.maxHp || 0); });
+    var cost = 0;
+    while (alive.length) {
+      var rounds = Math.ceil(Number(alive[0].maxHp || 0) / heroDmg);
+      var dmg = 0;
+      for (var i = 0; i < alive.length; i++) dmg += this.getEnemyDamagePerRound(alive[i]);
+      cost += rounds * dmg;
+      alive.shift();
+    }
+    return Math.floor(cost);
+  },
+
+  /* v3.429.7 : pronostic d'un donjon ENTIER (tous les donjons) : usure des vagues, puis le boss
+     avec ce qui reste. On entre à PV pleins (DungeonManager.start). Les Marques comptent. */
+  forDungeon: function (dungeonId, marks) {
+    if (!window.DungeonManager || !window.DUNGEON_CONFIG) return null;
+    var savedRun = game.dungeonRun, savedHp = game.heroHp, out = null;
+    try {
+      game.dungeonRun = { active: true, wave: 0, dungeonId: Number(dungeonId), marks: (marks || []).slice() };
+      var n = DUNGEON_CONFIG.waveCount, attrition = 0;
+      for (var w = 1; w <= n; w++) attrition += this.getGroupAttrition([].concat(DungeonManager.buildWaveEnemy(w)));
+      // Correctif propre au donjon (data/dungeon.js, forecastAttritionMult), calé au banc
+      var dDef = DungeonManager.getById(Number(dungeonId)) || {};
+      attrition = Math.floor(attrition * (Number(dDef.forecastAttritionMult) > 0 ? Number(dDef.forecastAttritionMult) : 1));
+      var boss = firstOfGroup(DungeonManager.buildWaveEnemy(n + 1));
+      game.heroHp = game.heroMaxHp || 1;
+      out = boss ? this.forEnemy(boss, { attrition: attrition }) : null;
+      if (out) { out.enemyName = boss.name; out.precedingFights = n; }
+    } finally {
+      game.dungeonRun = savedRun;
+      game.heroHp = savedHp;
+    }
+    return out;
+  },
+
   /* Pronostic pour UN ennemi. options.attrition : PV déjà consommés par les combats qui
      précèdent dans la même sortie. */
   forEnemy: function (enemy, options) {
@@ -306,6 +345,8 @@ var CombatForecast = {
 
   /* Pronostic d'une mission du tableau, usure du run comprise. Null si on ne sait pas estimer. */
   forMission: function (mission) {
+    // v3.429.7 : un donjon lancé du tableau du Camp reçoit le pronostic du run entier
+    if (mission && mission.sourceKind === "dungeon") return this.forDungeon(String(mission.id).replace("dungeon_", ""), []);
     var enemy = this.getReferenceEnemy(mission);
     if (!enemy) return null;
     var attrition = 0;

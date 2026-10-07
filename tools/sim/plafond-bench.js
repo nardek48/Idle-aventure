@@ -27,6 +27,7 @@ var RING_CRIT = null;
 var SUITE = false, PA_POWER = null, PA_HP = null, JOURNEE = false, BRAKE = 1;
 var VOIE_ARG = null, POINTS_ARG = null, NO_TAL_ARG = false;
 var CITE_ARG = null;
+var PRONO = false; // v3.429.7 : --pronostic, verdict de CombatForecast.forDungeon à côté de la mesure
 var RUNS = 40, ONLY = null, TRAIN = null, PROFIL_FORCE = null, SOLO = false, ELITE_MULT = null, DIFF = null, BOSS = null;
 for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--runs") RUNS = Number(process.argv[ai + 1]) || RUNS;
@@ -42,6 +43,7 @@ for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--ringcrit") RING_CRIT = Number(process.argv[ai + 1]); // v3.427.2 : anneau de Mar en critique (base) au lieu de l'or
   if (process.argv[ai] === "--journee") JOURNEE = true; // élite répétable : victoires d'une journée avec le frein (LIVING_MAP_RULES)
   if (process.argv[ai] === "--pa") { var pm = String(process.argv[ai + 1]).split(","); PA_POWER = Number(pm[0]); PA_HP = Number(pm[1]); } // puissance,PV des combats de PA // v3.331.0 : seulement les contenus de la suite du recalage
+  if (process.argv[ai] === "--pronostic") PRONO = true;
   if (process.argv[ai] === "--solo") SOLO = true; // sans compagnons : ce qu'ils portent
   if (process.argv[ai] === "--train") TRAIN = Number(process.argv[ai + 1]); // balayage : entraînement imposé
   if (process.argv[ai] === "--profil") PROFIL_FORCE = process.argv[ai + 1];   // un seul profil pour tous les contenus
@@ -234,14 +236,18 @@ function playDungeon(dungeonId) {
   g.DungeonManager.start(dungeonId, MARKS.slice());
   d.requiresStoryStep = garde;
   if (!g.game.dungeonRun.active) return null;
-  var rounds = 0, guard = 4000, maxWave = 1;
+  var rounds = 0, guard = 4000, maxWave = 1, hpBoss = null, potBoss = null;
+  var potDepart = Number(g.game.healingPotionsOwned.potion_soin_mineur || 0);
   while (g.game.dungeonRun.active && g.game.heroHp > 0 && guard-- > 0) {
     maxWave = Math.max(maxWave, g.game.dungeonRun.wave || 1);
+    if (hpBoss === null && (g.game.dungeonRun.wave || 1) > g.DUNGEON_CONFIG.waveCount) { hpBoss = g.game.heroHp; potBoss = potDepart - Number(g.game.healingPotionsOwned.potion_soin_mineur || 0); }
     g.game.activeTab = "combat";
     if (!autoRound()) break;
     rounds++;
   }
-  return { ok: Number(g.game.dungeonBossClears || 0) > boss0, rounds: rounds, v5: maxWave > 5 };
+  // v3.429.7 : usure réelle des vagues (PV perdus avant le boss, potions bues comprises), pour --pronostic
+  var usure = hpBoss === null ? null : (g.game.heroMaxHp - hpBoss) + potBoss * Math.floor(g.game.heroMaxHp * 0.35);
+  return { ok: Number(g.game.dungeonBossClears || 0) > boss0, rounds: rounds, v5: maxWave > 5, usure: usure };
 }
 
 /* ---------- Contenus mesurés : étape, sorte, monde, compagnons, profils ---------- */
@@ -272,21 +278,27 @@ var CONTENUS = [
 
 function mesure(ct, profilId, c) {
   var p = PROFILS[profilId];
-  var n = 0, ok = 0, rounds = 0, hp = 0, pots = 0, v5 = 0;
+  var n = 0, ok = 0, rounds = 0, hp = 0, pots = 0, v5 = 0, prono = null, usureSum = 0, usureN = 0;
   for (var i = 0; i < RUNS; i++) {
     B.seedRng(93000 + i);
     prepare(c, p, ct.world, ct.wenna && !SOLO, ct.maddoc && !SOLO);
+    if (PRONO && i === 0 && ct.kind === "dungeon") {
+      if (DIFF) g.DUNGEONS.filter(function (x) { return x.id === ct.ref; })[0].difficultyMult = DIFF;
+      var fp = g.CombatForecast.forDungeon(ct.ref, MARKS.slice());
+      prono = fp ? fp.id + " (ratio " + (fp.ratio != null ? fp.ratio.toFixed(2) : "—") + ", usure " + fp.attrition + " / PV " + Math.round(g.game.heroMaxHp) + "+" + fp.healingReserve + ")" : "—";
+    }
     var pot0 = Number(g.game.healingPotionsOwned.potion_soin_mineur || 0);
     var r = ct.kind === "quest" ? playQuest(ct.ref) : ct.kind === "elite" ? playElite(ct.ref, ct.worldId)
       : ct.kind === "hunt" ? playHunt(ct.ref) : playDungeon(ct.ref);
     if (!r) continue;
     n++;
     if (r.v5) v5++;
+    if (r.usure != null) { usureSum += r.usure; usureN++; }
     pots += pot0 - Number(g.game.healingPotionsOwned.potion_soin_mineur || 0);
     if (r.ok) { ok++; rounds += r.rounds; hp += Math.max(0, g.game.heroHp) / g.game.heroMaxHp; }
   }
   if (!n) return null;
-  return { win: ok / n, rounds: ok ? rounds / ok : 0, hp: ok ? hp / ok : 0, pots: pots / n, v5: ct.kind === "dungeon" ? v5 / n : null };
+  return { win: ok / n, rounds: ok ? rounds / ok : 0, hp: ok ? hp / ok : 0, pots: pots / n, v5: ct.kind === "dungeon" ? v5 / n : null, prono: prono, usure: usureN ? usureSum / usureN : null, usureN: usureN };
 }
 
 function profilStats(profilId, c) {
@@ -316,7 +328,9 @@ CONTENUS.forEach(function (ct) {
         + "   rounds " + String(Math.round(r.rounds)).padStart(4)
         + "   PV restants " + String(Math.round(100 * r.hp)).padStart(3) + " %"
         + "   potions " + r.pots.toFixed(1)
-        + (r.v5 != null ? "   vague 5 passée " + Math.round(100 * r.v5) + " %" : ""));
+        + (r.v5 != null ? "   vague 5 passée " + Math.round(100 * r.v5) + " %" : "")
+        + (r.prono ? "   pronostic " + r.prono : "")
+        + (PRONO && r.usure != null ? "   usure réelle " + Math.round(r.usure) + " (" + r.usureN + " runs au boss)" : ""));
     });
   });
 });

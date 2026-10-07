@@ -96,6 +96,9 @@ var DUNGEONS = [
        (dungeon-system.js). Elles vivent maintenant dans la donnée, comme pour la Cité. */
     storyChapterId: "forest",
     storyFreeSteps: ["forest_13", "forest_14"],
+    /* v3.429.7 : correctif de l'usure estimée des vagues (CombatForecast.forDungeon), calé au banc
+       (plafond-bench --only taniere --pronostic) : réel ~2× l'estimé quand le héros est juste. */
+    forecastAttritionMult: 2,
     // v3.429.6 : la Tanière se prépare (banc plafond : 0 % sans les uniques des élites, 100 % avec)
     prepHint: "Conseil : les armes des deux élites de la Forêt (Quêtes › Aventure) et un Terrain d'entraînement au niveau 4 sont presque indispensables pour tenir les quinze vagues et le Basilic."
   },
@@ -150,7 +153,10 @@ var DUNGEONS = [
     requiresStoryStep: "desert_12",
     lockedHint: "Le sable la garde encore.",
     storyChapterId: "desert",
-    storyFreeSteps: ["desert_12", "desert_15"] // v3.319.0 : l'entrée est aussi offerte pour le sphinx
+    storyFreeSteps: ["desert_12", "desert_15"], // v3.319.0 : l'entrée est aussi offerte pour le sphinx
+    /* v3.429.7 : Wenna et Maddoc encaissent et frappent, l'estimation les ignore : réel ~0,2× l'estimé
+       (plafond-bench --only cite --pronostic). */
+    forecastAttritionMult: 0.2
   },
   {
     id: 3, key: "ruins",
