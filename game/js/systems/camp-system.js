@@ -18,7 +18,8 @@ var CampManager = {
 
   /* Run à sortie en cours (donjon / chasse / quête d'aventure) : pas de repos au camp tant qu'il n'est pas clos. */
   _hasActiveRun: function () {
-    if (window.SceneRunManager && SceneRunManager.isRunActive()) return true; // v3.307.0 : pas de feu de camp en expédition
+    // v3.307.0 : pas de feu de camp en expédition. v3.429.4 : la préparation (besace, pactes) n'engage pas le héros
+    if (window.SceneRunManager && SceneRunManager.isHeroEngaged()) return true;
     if (game.dungeonRun && game.dungeonRun.active) return true;
     if (game.huntRun && game.huntRun.active) return true;
     if (game.adventureQuestRun && game.adventureQuestRun.active) return true;
