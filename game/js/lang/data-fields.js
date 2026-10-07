@@ -32,7 +32,7 @@ var DATA_TEXT_FIELDS = {
   HUNT_QUESTS: ["*.name", "*.story"],
   STORY_QUESTS: [
     "*.title", "*.subtitle", "*.endText",
-    "*.steps.*.title", "*.steps.*.act", "*.steps.*.objectiveLabel",
+    "*.steps.*.title", "*.steps.*.act", "*.steps.*.objectiveLabel", "*.steps.*.hint",
     "*.steps.*.narrative.objective", "*.steps.*.narrative.completion",
     "*.steps.*.narrative.dialogue.*.text", "*.steps.*.narrative.dialogue.*.who",
     "*.steps.*.narrative.completionDialogue.*.text", "*.steps.*.narrative.completionDialogue.*.who",
@@ -86,7 +86,7 @@ var DATA_TEXT_FIELDS = {
   POTIONS_DB: ["*.name", "*.desc"],
   HEALING_POTIONS_DB: ["*.name"],
   UPGRADES: ["*.name", "*.desc"],
-  DUNGEONS: ["*.name", "*.desc", "*.story", "*.lockedHint", "*.boss.name", "*.boss.phases.*.label"],
+  DUNGEONS: ["*.name", "*.desc", "*.story", "*.lockedHint", "*.prepHint", "*.boss.name", "*.boss.phases.*.label"],
   DUNGEON_MARKS: ["*.name", "*.desc"],
   DUNGEON_SHOP: ["*.name", "*.desc"],
   MEMORY_LEVELS: ["*.theme", "*.options.*.name", "*.options.*.desc"],

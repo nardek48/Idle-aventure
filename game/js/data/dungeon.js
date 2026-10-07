@@ -95,7 +95,9 @@ var DUNGEONS = [
     /* v3.315.0 (W-4a2) : ces deux étapes étaient nommées en dur dans isStoryTicketFree
        (dungeon-system.js). Elles vivent maintenant dans la donnée, comme pour la Cité. */
     storyChapterId: "forest",
-    storyFreeSteps: ["forest_13", "forest_14"]
+    storyFreeSteps: ["forest_13", "forest_14"],
+    // v3.429.6 : la Tanière se prépare (banc plafond : 0 % sans les uniques des élites, 100 % avec)
+    prepHint: "Conseil : les armes des deux élites de la Forêt (Quêtes › Aventure) et un Terrain d'entraînement au niveau 4 sont presque indispensables pour tenir les quinze vagues et le Basilic."
   },
   {
     id: 2, key: "desert",

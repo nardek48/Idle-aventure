@@ -608,6 +608,7 @@ var STORY_QUESTS = {
           completion: "Le Basilic recule. Ses éclats ouvriront des portes que l'or ne peut pas."
         },
         objectiveLabel: "Vaincre le Donjon I",
+        hint: "Conseil : les armes des deux élites de la Forêt (Quêtes › Aventure) et un Terrain d'entraînement au niveau 4 sont presque indispensables pour tenir les quinze vagues et le Basilic.", // v3.429.6 : même conseil que la feuille de lancement
         unlockTabs: ["dungeon"],
         reward: STORY_REWARDS.forest_14,
         linkTo: { tab: "dungeon" },

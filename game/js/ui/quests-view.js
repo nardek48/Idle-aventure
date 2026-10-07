@@ -631,6 +631,7 @@ function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
   if (progressText) h += '<div class="story-step-progress">' + esc(progressText) + '</div>';
   h += '</div>';
 
+  if (step.hint) h += '<div class="story-step-unlock story-step-hint"><img class=ico-inline src=images/Icons/system/warning.png> ' + esc(_td(step.hint)) + '</div>'; // v3.429.6
   if (unlockText) h += '<div class="story-step-unlock"><img class=ico-inline src=images/Icons/system/lock_open.png> ' + esc(_t("Débloque : {x}", { x: unlockText })) + '</div>';
   h += '<div class="map-quest-reward"><span class="map-quest-reward-label">' + _t("Récompense") + '</span><span class="map-quest-reward-value">' + esc(buildStoryStepRewardText(step.reward)) + '</span></div>';
 

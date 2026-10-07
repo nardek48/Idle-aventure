@@ -3172,6 +3172,7 @@ I18n.register("en", {
   "Défense — réduit ou évite le prochain coup. Utile quand ce bandeau apparaît sous la barre de vie de l'ennemi : il prépare une attaque plus forte.": "Defence — reduces or avoids the next hit. Useful when this banner appears under the enemy's health bar: it's preparing a stronger attack.",
   "Jauge de célérité — se remplit à chaque round. Une fois pleine, tu frappes deux fois d'affilée.": "Celerity gauge — fills up every round. Once it's full, you strike twice in a row.",
   "Chaque amélioration augmente une statistique de façon permanente contre de l'or. Le prix grimpe à chaque achat — étale tes investissements plutôt que de tout miser sur une seule stat.": "Each upgrade permanently increases a stat in exchange for gold. The price goes up with each purchase — spread your investments rather than putting everything into a single stat.",
+  "Conseil : les armes des deux élites de la Forêt (Quêtes › Aventure) et un Terrain d'entraînement au niveau 4 sont presque indispensables pour tenir les quinze vagues et le Basilic.": "Tip: the weapons from the Forest's two elites (Quests › Adventure) and a Training Ground at level 4 are almost essential to last fifteen waves and the Basilisk.",
   "Force — dégâts de ton attaque de base.": "Strength — your basic attack's damage.",
   "Précision — chance de coup critique.": "Precision — critical hit chance.",
   "Volonté — dégâts bonus en cas de critique.": "Willpower — bonus damage on a critical hit.",

@@ -195,6 +195,8 @@ function buildDungeonSheetHTML(dungeonId) {
     } catch (e) { game.dungeonRun = savedRun; }
   }
   if (typeof buildEnemyTraitsCardHTML === "function") h += buildEnemyTraitsCardHTML({ type: "dungeon", id: dungeon.id }); // v3.378.0
+  // v3.429.6 : conseil de préparation, tant que le donjon n'a jamais été vaincu
+  if (dungeon.prepHint && !(game.dungeonTierCleared || {})[dungeon.id]) h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/system/warning.png> ' + esc(_td(dungeon.prepHint)) + '</div>';
 
   if (storyFree) {
     h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> <strong>' + _t("Entrée offerte") + '</strong> ' + _t("— les braises te guident, aucune sortie du jour consommée") + '</div>';
