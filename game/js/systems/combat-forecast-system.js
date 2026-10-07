@@ -259,7 +259,7 @@ var CombatForecast = {
     if (empty > 0) parts.push(_tn(empty, "{n} emplacement d'équipement vide — l'échoppe du village est le gain le plus rapide", "{n} emplacements d'équipement vides — l'échoppe du village est le gain le plus rapide"));
     else if (commons >= 4) parts.push(_t("ton équipement est encore tout en commun : une pièce de meilleure qualité change plus que dix niveaux d'entraînement"));
     if (capped) parts.push(_t("tes caractéristiques butent sur le plafond : c'est le Terrain d'entraînement qu'il faut monter"));
-    else parts.push(_t("monte tes caractéristiques dans Héros → Stats"));
+    else parts.push(_t("monte tes caractéristiques dans Héros → Entraînement"));
 
     return unwinnable ? _t("Reviens plus fort : {liste}.", { liste: parts.join(", ") }) : _t("Pour améliorer tes chances : {liste}.", { liste: parts.join(", ") });
   },

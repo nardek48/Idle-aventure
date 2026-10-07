@@ -16,6 +16,7 @@ var BOSS_BANNER_MS = 1000;  // entrée rejouée
 var BOSS_PHASE_MS = 1600;
 var BOSS_FINAL_HIT_MS = 600;   // pause avant le coup
 var BOSS_FINAL_WIN_MS = 1900;  // carte de victoire
+var BOSS_GRIMOIRE_WIN_MS = 2500; // v3.429.5 : en mode Grimoire, la carte se ferme seule (le combat reprend sans toucher)
 
 var bossMomentTimers = [];
 
@@ -133,6 +134,7 @@ function showBossVictory(enemy, trophy) {
   if (ally) h += '<div class="bm-win-line">' + esc(_td(ally.name)) + ' : « ' + esc(_td(ally.text)) + ' »</div>';
   h += '<button type="button" class="settings-btn primary" onclick="closeBossFinal()">' + _t("Continuer") + '</button></div></div>';
   root.innerHTML = h;
+  if (game.combatMode === "grimoire") bossMomentTimers.push(setTimeout(closeBossFinal, BOSS_GRIMOIRE_WIN_MS));
 }
 
 function closeBossFinal() {
