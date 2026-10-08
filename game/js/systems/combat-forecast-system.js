@@ -39,6 +39,10 @@ var FORECAST_RATIO_THRESHOLDS = {
    contre 0,57 à 0,89 à distance. 0,7 le recale sur les classes à distance, sur qui les seuils sont calés. */
 var FORECAST_CLASS_DMG_MULT = { knight: 0.7 };
 
+/* v3.429.15 : part des soins de compagnon modélisés qui compte. Au banc, le héros boit ses potions
+   avant de passer sous le seuil de Wenna : soins réels 0,3 à 0,8 du modèle pour le Chevalier. */
+var FORECAST_COMPANION_HEAL_MULT = 0.75;
+
 /* Verdicts, du plus sûr au pire. `level` sert au tri et au style ; `label` est le texte. */
 var COMBAT_FORECAST_LEVELS = [
   { id: "trivial", level: 0, label: _t("Sans danger"), hint: "" },
@@ -206,6 +210,11 @@ var CombatForecast = {
   /* v3.429.7 : usure d'une vague à plusieurs ennemis, tués l'un après l'autre (le plus faible
      d'abord) : tant qu'un ennemi est debout, il frappe. Un ennemi seul = getAttritionCost(e, 1). */
   getGroupAttrition: function (list, fullParty) {
+    return this.getGroupFight(list, fullParty).cost;
+  },
+
+  /* v3.429.15 : la même vague, avec sa durée en rounds (rythme des soins de compagnon). */
+  getGroupFight: function (list, fullParty) {
     var heroDmg = Math.max(1, this.getPartyDamagePerRound(fullParty)); // v3.429.9 : compagnons compris
     var alive = (list || []).filter(Boolean).slice().sort(function (a, b) { return Number(a.maxHp || 0) - Number(b.maxHp || 0); });
     var cost = 0, elapsed = 0, self = this;
@@ -229,7 +238,54 @@ var CombatForecast = {
       elapsed += rounds;
       alive.shift(); arrive.shift();
     }
-    return Math.floor(cost);
+    return { cost: Math.floor(cost), rounds: elapsed };
+  },
+
+  /* v3.429.15 : un combat contre un ennemi seul, coût et durée (getAttritionCost pour un). */
+  getSingleFight: function (enemy) {
+    var rounds = Math.ceil(Number((enemy && enemy.maxHp) || 0) / Math.max(1, this.getPartyDamagePerRound()));
+    return { cost: this.getAttritionCost(enemy, 1), rounds: rounds };
+  },
+
+  /* v3.429.15 : PV que les compagnons rendent pendant les combats [{ cost, rounds }], selon
+     leurs vraies règles : Wenna (heal) sous son seuil, charges et recharge ; Maddoc (taunt)
+     dès qu'un allié est touché. Groupe approché en un seul réservoir de PV. Un compagnon ne
+     joue plus une fois l'ennemi tombé (alliesTurn) : un combat d'un round ne lui laisse aucun soin. */
+  getCompanionHeals: function (fights, fullParty) {
+    if (!window.CompanionManager || typeof CompanionManager.partyIds !== "function" || typeof getCompanionDef !== "function") return 0;
+    var heroMax = Number(game.heroMaxHp || 1), poolMax = heroMax, deficit = fullParty ? 0 : Math.max(0, heroMax - Number(game.heroHp != null ? game.heroHp : heroMax));
+    var healers = [];
+    CompanionManager.partyIds().forEach(function (id) {
+      var def = getCompanionDef(id), max = CompanionManager.maxHpOf(id);
+      var hp = fullParty ? max : CompanionManager.hpOf(id);
+      if (!def || !(hp > 0)) return;
+      poolMax += max; deficit += Math.max(0, max - hp);
+      var sk = def.skill;
+      if (!sk || !(Number(sk.value) > 0)) return;
+      if (sk.type === "heal") {
+        var st = CompanionManager.state(id) || {};
+        healers.push({ amount: sk.value * heroMax, gate: 1 - getCompanionHealThreshold(st.healThreshold).value, cd: Number(sk.cooldown || 1), charges: Number(sk.charges || 0) });
+      } else if (sk.type === "taunt") {
+        healers.push({ amount: sk.value * max, gate: 0.1, cd: Number(sk.cooldown || 1), charges: Number(sk.charges || 0) }); // « Planté » : un allié sous 90 %
+      }
+    });
+    if (!healers.length) return 0;
+    var healed = 0;
+    (fights || []).forEach(function (f) {
+      var slots = Math.max(1, Math.ceil(Number(f.rounds || 1) / 4)), share = Number(f.cost || 0) / slots;
+      var used = healers.map(function () { return 0; });
+      for (var j = 0; j < slots; j++) { // fenêtres de 4 rounds : les coups tombent, puis chacun soigne si sa règle le permet
+        deficit += share;
+        healers.forEach(function (h, k) {
+          if (used[k] >= Math.ceil(Math.max(0, Number(f.rounds || 1) - 1) / h.cd)) return; // recharge ; dernier round : l'ennemi tombe avant son tour
+          if (h.charges > 0 && used[k] >= h.charges) return;                 // charges du combat
+          if (deficit / poolMax <= h.gate) return;
+          var gain = Math.min(deficit, h.amount);
+          deficit -= gain; healed += gain; used[k]++;
+        });
+      }
+    });
+    return Math.floor(healed * FORECAST_COMPANION_HEAL_MULT);
   },
 
   /* v3.429.7 : pronostic d'un donjon ENTIER (tous les donjons) : usure des vagues, puis le boss
@@ -239,8 +295,10 @@ var CombatForecast = {
     var savedRun = game.dungeonRun, savedHp = game.heroHp, out = null;
     try {
       game.dungeonRun = { active: true, wave: 0, dungeonId: Number(dungeonId), marks: (marks || []).slice() };
-      var n = DUNGEON_CONFIG.waveCount, attrition = 0;
-      for (var w = 1; w <= n; w++) attrition += this.getGroupAttrition([].concat(DungeonManager.buildWaveEnemy(w)), true);
+      var n = DUNGEON_CONFIG.waveCount, attrition = 0, waves = [];
+      for (var w = 1; w <= n; w++) waves.push(this.getGroupFight([].concat(DungeonManager.buildWaveEnemy(w)), true));
+      waves.forEach(function (f) { attrition += f.cost; });
+      attrition = Math.max(0, attrition - this.getCompanionHeals(waves, true)); // v3.429.15 : soins de compagnon
       // Correctif propre au donjon (data/dungeon.js, forecastAttritionMult), calé au banc
       var dDef = DungeonManager.getById(Number(dungeonId)) || {};
       attrition = Math.floor(attrition * (Number(dDef.forecastAttritionMult) > 0 ? Number(dDef.forecastAttritionMult) : 1));
@@ -409,7 +467,7 @@ var CombatForecast = {
     if (mission && mission.sourceKind === "dungeon") return this.forDungeon(String(mission.id).replace("dungeon_", ""), []);
     var enemy = this.getReferenceEnemy(mission);
     if (!enemy) return null;
-    var attrition = 0;
+    var attrition = 0, list = [];
     var fights = this.getPrecedingFights(mission);
     if (fights > 0 && window.QuestEnemyManager) {
       var quest = (mission.sourceKind === "adventure") ? (window.ADVENTURE_QUESTS || {})[mission.questId]
@@ -418,17 +476,19 @@ var CombatForecast = {
         /* v3.429.9 : rencontres scriptées — l'objectif compte des RENCONTRES (un groupe = un cran) ;
            chacune a son groupe, on les additionne dans l'ordre du run. */
         for (var k = 0; k < fights; k++) {
-          attrition += this.getGroupAttrition([].concat(QuestEnemyManager.spawnFor(AdventureQuestManager._encounterQuest(quest, k), false) || []));
+          list.push(this.getGroupFight([].concat(QuestEnemyManager.spawnFor(AdventureQuestManager._encounterQuest(quest, k), false) || [])));
         }
       } else {
         var spawned = quest ? QuestEnemyManager.spawnFor(quest, false) : null;
         /* v3.429.8 : un groupe (meute, escouade) frappe à plusieurs. On compte les combats de groupe
            (cible / taille du groupe) et l'usure de chacun membre par membre, comme en donjon. */
         var group = [].concat(spawned || []).filter(Boolean);
-        attrition = group.length > 1
-          ? this.getGroupAttrition(group) * Math.ceil(fights / group.length)
-          : this.getAttritionCost(group[0] || null, fights);
+        var one = group.length > 1 ? this.getGroupFight(group) : (group[0] ? this.getSingleFight(group[0]) : null);
+        var reps = group.length > 1 ? Math.ceil(fights / group.length) : (one ? fights : 0);
+        for (var r = 0; r < reps; r++) list.push(one);
       }
+      list.forEach(function (f) { attrition += f.cost; });
+      attrition = Math.max(0, attrition - this.getCompanionHeals(list, false)); // v3.429.15 : soins de Wenna et Maddoc
     }
     var out = this.forEnemy(enemy, { attrition: attrition });
     if (out) { out.enemyName = enemy.name; out.precedingFights = fights; }
@@ -453,5 +513,6 @@ var CombatForecast = {
 
 window.FORECAST_RATIO_THRESHOLDS = FORECAST_RATIO_THRESHOLDS;
 window.FORECAST_CLASS_DMG_MULT = FORECAST_CLASS_DMG_MULT;
+window.FORECAST_COMPANION_HEAL_MULT = FORECAST_COMPANION_HEAL_MULT;
 window.COMBAT_FORECAST_LEVELS = COMBAT_FORECAST_LEVELS;
 window.CombatForecast = CombatForecast;
