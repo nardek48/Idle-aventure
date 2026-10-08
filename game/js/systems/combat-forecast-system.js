@@ -88,6 +88,27 @@ var CombatForecast = {
     return Math.max(1, base * (1 + crit * (mult - 1)) * this.getKitDamageMultiplier() * this.getStrikesPerRound());
   },
 
+  /* v3.429.9 : compagnons présents (hors patrouille). Chacun frappe une fois par round et
+     encaisse une part des coups (pickVictim, au prorata de la menace) : ses dégâts s'ajoutent
+     à ceux du héros, ses PV au réservoir. full = PV max (entrée de donjon, groupe soigné). */
+  getPartyBonus: function (full) {
+    var out = { dmg: 0, hp: 0 };
+    if (!window.CompanionManager || typeof CompanionManager.partyIds !== "function") return out;
+    CompanionManager.partyIds().forEach(function (id) {
+      var s = CompanionManager.statsOf(id);
+      var hp = full ? CompanionManager.maxHpOf(id) : CompanionManager.hpOf(id);
+      if (!s || !(hp > 0)) return;
+      out.dmg += Number(s.damage || 0);
+      out.hp += Number(hp || 0);
+    });
+    return out;
+  },
+
+  /* Dégâts du groupe par round : le héros, plus les compagnons présents. */
+  getPartyDamagePerRound: function (full) {
+    return this.getHeroDamagePerRound() + this.getPartyBonus(full).dmg;
+  },
+
   /* v3.422.0 → v3.423.0 (chantier Difficulté, A et D) : PV effectifs du héros (défense comprise). */
   getHeroEffectiveHp: function () {
     var def = Math.min(0.9, Math.max(0, Number(game.heroDefensePct || 0)));
@@ -153,7 +174,7 @@ var CombatForecast = {
   getAttritionCost: function (normalEnemy, count) {
     var n = Math.max(0, Number(count || 0));
     if (!normalEnemy || n === 0) return 0;
-    var heroDmg = this.getHeroDamagePerRound();
+    var heroDmg = this.getPartyDamagePerRound(); // v3.429.9 : compagnons compris
     var rounds = Math.ceil(Number(normalEnemy.maxHp || 0) / Math.max(1, heroDmg));
     var perFight = rounds * this.getEnemyDamagePerRound(normalEnemy);
     return Math.max(0, Math.floor(perFight * n));
@@ -161,8 +182,8 @@ var CombatForecast = {
 
   /* v3.429.7 : usure d'une vague à plusieurs ennemis, tués l'un après l'autre (le plus faible
      d'abord) : tant qu'un ennemi est debout, il frappe. Un ennemi seul = getAttritionCost(e, 1). */
-  getGroupAttrition: function (list) {
-    var heroDmg = Math.max(1, this.getHeroDamagePerRound());
+  getGroupAttrition: function (list, fullParty) {
+    var heroDmg = Math.max(1, this.getPartyDamagePerRound(fullParty)); // v3.429.9 : compagnons compris
     var alive = (list || []).filter(Boolean).slice().sort(function (a, b) { return Number(a.maxHp || 0) - Number(b.maxHp || 0); });
     var cost = 0;
     while (alive.length) {
@@ -183,13 +204,13 @@ var CombatForecast = {
     try {
       game.dungeonRun = { active: true, wave: 0, dungeonId: Number(dungeonId), marks: (marks || []).slice() };
       var n = DUNGEON_CONFIG.waveCount, attrition = 0;
-      for (var w = 1; w <= n; w++) attrition += this.getGroupAttrition([].concat(DungeonManager.buildWaveEnemy(w)));
+      for (var w = 1; w <= n; w++) attrition += this.getGroupAttrition([].concat(DungeonManager.buildWaveEnemy(w)), true);
       // Correctif propre au donjon (data/dungeon.js, forecastAttritionMult), calé au banc
       var dDef = DungeonManager.getById(Number(dungeonId)) || {};
       attrition = Math.floor(attrition * (Number(dDef.forecastAttritionMult) > 0 ? Number(dDef.forecastAttritionMult) : 1));
       var boss = firstOfGroup(DungeonManager.buildWaveEnemy(n + 1));
       game.heroHp = game.heroMaxHp || 1;
-      out = boss ? this.forEnemy(boss, { attrition: attrition }) : null;
+      out = boss ? this.forEnemy(boss, { attrition: attrition, fullParty: true }) : null;
       if (out) { out.enemyName = boss.name; out.precedingFights = n; }
     } finally {
       game.dungeonRun = savedRun;
@@ -204,7 +225,8 @@ var CombatForecast = {
     options = options || {};
     if (!enemy) return null;
 
-    var heroDmg = this.getHeroDamagePerRound();
+    var party = this.getPartyBonus(!!options.fullParty); // v3.429.9
+    var heroDmg = this.getHeroDamagePerRound() + party.dmg;
     var enemyDmg = this.getEnemyDamagePerRound(enemy);
     var heroHp = Number(game.heroHp != null ? game.heroHp : (game.heroMaxHp || 1));
     var heroMaxHp = Number(game.heroMaxHp || 1);
@@ -217,13 +239,14 @@ var CombatForecast = {
        L'usure des combats précédents les retire. */
     var reserve = this.getHealingReserve();
     var attrition = Math.max(0, Number(options.attrition || 0));
-    var effectiveHp = Math.max(1, heroHp + reserve - attrition);
+    var effectiveHp = Math.max(1, heroHp + party.hp + reserve - attrition);
 
     var out = {
       heroDamagePerRound: Math.round(heroDmg),
       enemyDamagePerRound: Math.round(enemyDmg),
       enemyHp: enemyHp,
       heroHp: heroHp,
+      partyHp: party.hp,
       healingReserve: reserve,
       attrition: attrition,
       healThreshold: Math.ceil(healThreshold),
@@ -318,8 +341,9 @@ var CombatForecast = {
       var aq = (window.ADVENTURE_QUESTS || {})[mission.questId];
       if (!aq) return null;
       var hasBoss = (aq.steps || []).some(function (st) { return st.type === "bossKill"; });
-      // v3.311.0 : rencontres scriptées -> la rencontre en cours sert de référence
-      if (aq.encounters && window.AdventureQuestManager) return firstOfGroup(QuestEnemyManager.spawnFor(AdventureQuestManager._encounterQuest(aq), false));
+      // v3.311.0 : rencontres scriptées -> la rencontre en cours sert de référence.
+      // v3.429.9 : sauf si la quête finit sur un boss (le trône de sable) : c'est lui qui décide.
+      if (aq.encounters && window.AdventureQuestManager && !hasBoss) return firstOfGroup(QuestEnemyManager.spawnFor(AdventureQuestManager._encounterQuest(aq), false));
       return firstOfGroup(QuestEnemyManager.spawnFor(aq, hasBoss)); // v3.269.0 : spawnFor peut renvoyer un groupe
     }
     if (mission.sourceKind === "hunt") {
@@ -354,13 +378,21 @@ var CombatForecast = {
     if (fights > 0 && window.QuestEnemyManager) {
       var quest = (mission.sourceKind === "adventure") ? (window.ADVENTURE_QUESTS || {})[mission.questId]
         : (window.HUNT_QUESTS || {})[mission.questId];
-      var spawned = quest ? QuestEnemyManager.spawnFor((quest.encounters && window.AdventureQuestManager) ? AdventureQuestManager._encounterQuest(quest) : quest, false) : null; // v3.311.0
-      /* v3.429.8 : un groupe (meute, escouade) frappe à plusieurs. On compte les combats de groupe
-         (cible / taille du groupe) et l'usure de chacun membre par membre, comme en donjon. */
-      var group = [].concat(spawned || []).filter(Boolean);
-      attrition = group.length > 1
-        ? this.getGroupAttrition(group) * Math.ceil(fights / group.length)
-        : this.getAttritionCost(group[0] || null, fights);
+      if (quest && quest.encounters && window.AdventureQuestManager) {
+        /* v3.429.9 : rencontres scriptées — l'objectif compte des RENCONTRES (un groupe = un cran) ;
+           chacune a son groupe, on les additionne dans l'ordre du run. */
+        for (var k = 0; k < fights; k++) {
+          attrition += this.getGroupAttrition([].concat(QuestEnemyManager.spawnFor(AdventureQuestManager._encounterQuest(quest, k), false) || []));
+        }
+      } else {
+        var spawned = quest ? QuestEnemyManager.spawnFor(quest, false) : null;
+        /* v3.429.8 : un groupe (meute, escouade) frappe à plusieurs. On compte les combats de groupe
+           (cible / taille du groupe) et l'usure de chacun membre par membre, comme en donjon. */
+        var group = [].concat(spawned || []).filter(Boolean);
+        attrition = group.length > 1
+          ? this.getGroupAttrition(group) * Math.ceil(fights / group.length)
+          : this.getAttritionCost(group[0] || null, fights);
+      }
     }
     var out = this.forEnemy(enemy, { attrition: attrition });
     if (out) { out.enemyName = enemy.name; out.precedingFights = fights; }

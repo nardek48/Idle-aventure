@@ -153,10 +153,7 @@ var DUNGEONS = [
     requiresStoryStep: "desert_12",
     lockedHint: "Le sable la garde encore.",
     storyChapterId: "desert",
-    storyFreeSteps: ["desert_12", "desert_15"], // v3.319.0 : l'entrée est aussi offerte pour le sphinx
-    /* v3.429.7 : Wenna et Maddoc encaissent et frappent, l'estimation les ignore : réel ~0,2× l'estimé
-       (plafond-bench --only cite --pronostic). */
-    forecastAttritionMult: 0.2
+    storyFreeSteps: ["desert_12", "desert_15"] // v3.319.0 : l'entrée est aussi offerte pour le sphinx
   },
   {
     id: 3, key: "ruins",

@@ -120,8 +120,10 @@ var AdventureQuestManager = {
     return step ? Number(p[step.id] || 0) : 0;
   },
 
-  _encounterQuest: function (quest) {
-    var list = quest.encounters, e = list[Math.min(this._encounterIndex(quest), list.length - 1)] || list[0];
+  _encounterQuest: function (quest, index) {
+    // v3.429.9 : index facultatif (pronostic : toutes les rencontres du run, pas seulement la courante)
+    var i = (typeof index === "number") ? index : this._encounterIndex(quest);
+    var list = quest.encounters, e = list[Math.min(i, list.length - 1)] || list[0];
     var mult = Number(quest.encounterHpMult || 1);
     var q = { id: quest.id, worldId: quest.worldId, adventureIndex: quest.adventureIndex };
     if (Array.isArray(e.group) && e.group.length > 1) {
