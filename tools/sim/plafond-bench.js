@@ -29,7 +29,8 @@ var VOIE_ARG = null, POINTS_ARG = null, NO_TAL_ARG = false;
 var CITE_ARG = null;
 var PRONO = false; // v3.429.7 : --pronostic, verdict de CombatForecast.forDungeon à côté de la mesure
 var FRAPPES = false; // v3.429.14 : --frappes, frappes et dégâts réels contre l'estimation
-var KCHEV = null;    // v3.429.14 : --kchev k, essai du coefficient de classe du Chevalier (FORECAST_CLASS_DMG_MULT)
+var KCHEV = null;
+var SOINSCOMP = null; // v3.429.15 : --soinscomp k, essai : réserve = k charges de soin de compagnon    // v3.429.14 : --kchev k, essai du coefficient de classe du Chevalier (FORECAST_CLASS_DMG_MULT)
 var RUNS = 40, ONLY = null, TRAIN = null, PROFIL_FORCE = null, SOLO = false, ELITE_MULT = null, DIFF = null, BOSS = null;
 for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--runs") RUNS = Number(process.argv[ai + 1]) || RUNS;
@@ -47,6 +48,7 @@ for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--pa") { var pm = String(process.argv[ai + 1]).split(","); PA_POWER = Number(pm[0]); PA_HP = Number(pm[1]); } // puissance,PV des combats de PA // v3.331.0 : seulement les contenus de la suite du recalage
   if (process.argv[ai] === "--pronostic") PRONO = true;
   if (process.argv[ai] === "--frappes") FRAPPES = true;
+  if (process.argv[ai] === "--soinscomp") SOINSCOMP = Number(process.argv[ai + 1]);
   if (process.argv[ai] === "--kchev") KCHEV = Number(process.argv[ai + 1]); // essai : dégâts du Chevalier estimés × k
   if (process.argv[ai] === "--solo") SOLO = true; // sans compagnons : ce qu'ils portent
   if (process.argv[ai] === "--train") TRAIN = Number(process.argv[ai + 1]); // balayage : entraînement imposé
@@ -175,12 +177,30 @@ function prepare(c, p, worldIndex, withWenna, withMaddoc) {
 
 /* v3.429.14 : --frappes. Enveloppe enemyTurn (tour au contact -> dégâts estimés du round) et
    enemyStrike (PV du groupe perdus, par sorte de frappe). Le moteur n'est pas modifié. */
+function bossEnVie() {
+  var l = g.CombatActors ? g.CombatActors.enemies() : [g.game.enemy];
+  return l.filter(function (e) { return e && e.isBoss && Number(e.hp || 0) > 0; })[0] || null;
+}
 function installFrappes(F) {
-  var CE = g.CombatEngine;
+  var CE = g.CombatEngine, FB = F.B, CM = g.CompanionManager, PM = g.PotionManager;
+  F.runs++;
+  if (!CE._frappesSoins) CE._frappesSoins = { take: CM.takeTurn, pot: PM.useHealingPotion };
+  CM.takeTurn = function () { // soin d'un compagnon = PV du groupe regagnés pendant son tour
+    var before = partyHp(), out = CE._frappesSoins.take.apply(CM, arguments), gain = Math.max(0, partyHp() - before);
+    F.soinsComp += gain; if (!FB._enCours) F.soinsCompAvant += gain;
+    return out;
+  };
+  PM.useHealingPotion = function () {
+    var before = partyHp(), out = CE._frappesSoins.pot.apply(PM, arguments), gain = Math.max(0, partyHp() - before);
+    F.soinsPot += gain; if (!FB._enCours) F.soinsPotAvant += gain;
+    return out;
+  };
+  FB._enCours = false;
   if (!CE._frappesOrig) CE._frappesOrig = { act: CE.performHeroAction, deal: CE.dealDamage, turns: CE.enemiesTurn, turn: CE.enemyTurn, strike: CE.enemyStrike };
   CE.performHeroAction = function (slot) { // action jouée : répartition par emplacement, héros estimé
     var ok = CE._frappesOrig.act.apply(CE, arguments);
     if (ok) { F.slots[slot] = (F.slots[slot] || 0) + 1; F.heroEst += g.CombatForecast.getHeroDamagePerRound(); }
+    if (ok && bossEnVie()) { FB.actions++; if (slot === "defense") FB.gardes++; }
     return ok;
   };
   CE.dealDamage = function (dmg, isCrit, fromTap, ignoreAffinity, target) { // utile = PV réellement retirés (sans excédent)
@@ -192,6 +212,13 @@ function installFrappes(F) {
   };
   CE.enemiesTurn = function () { // un appel par round : dégâts du groupe estimés pour ce round
     F.rounds++; F.dmgEst += g.CombatForecast.getPartyDamagePerRound();
+    var b = bossEnVie();
+    if (b && !b._frappesBoss) { // arrivée du boss : ce que dirait le pronostic à cet instant (PV actuels)
+      b._frappesBoss = true; FB._enCours = true; FB.combats++; FB.pv0 += partyHp();
+      var fe = g.CombatForecast.forEnemy(b, {});
+      if (fe) { FB.tueEst += Number(fe.roundsToKill || 0); FB.tombeEst += Math.min(999, Number(fe.roundsToDie || 0)); }
+    }
+    if (b) FB.rounds++;
     return CE._frappesOrig.turns.apply(CE, arguments);
   };
   CE.enemyTurn = function () {
@@ -200,13 +227,15 @@ function installFrappes(F) {
       e._frappesVu = true; F.ennemis++; F.pvEnn += Number(e.maxHp || 0);
       F.toursEst += Math.max(0, Math.ceil(Number(e.maxHp || 0) / Math.max(1, CF.getPartyDamagePerRound())) - CF.getEngageRounds(e));
     }
-    if (e && e.stats && !(Number(e.engageIn || 0) > 0) && g.game.heroHp > 0) { F.tours++; F.est += g.CombatForecast.getEnemyDamagePerRound(e); }
+    if (e && e.stats && !(Number(e.engageIn || 0) > 0) && g.game.heroHp > 0) { F.tours++; F.est += g.CombatForecast.getEnemyDamagePerRound(e);
+      if (bossEnVie()) { FB.tours++; FB.est += g.CombatForecast.getEnemyDamagePerRound(e); } }
     return CE._frappesOrig.turn.apply(CE, arguments);
   };
   CE.enemyStrike = function (mult, isPatternOrBonus) {
     var before = partyHp();
     var out = CE._frappesOrig.strike.apply(CE, arguments);
     F.reel += Math.max(0, before - partyHp());
+    if (bossEnVie() || (g.game.enemy && g.game.enemy.isBoss)) { FB.reel += Math.max(0, before - partyHp()); }
     if (!isPatternOrBonus) F.normales++; else if (mult === 1) F.secondes++; else F.charges++;
     return out;
   };
@@ -338,7 +367,16 @@ function mesure(ct, profilId, c) {
   if (KCHEV != null) { var CFk = g.CombatForecast; // pronostic seul : remplace le coefficient du Chevalier
     if (!CFk._fhOrig) CFk._fhOrig = CFk.getForecastHeroDamage;
     CFk.getForecastHeroDamage = function () { return /knight/i.test(String(g.game.heroId)) ? Math.max(1, CFk.getHeroDamagePerRound() * KCHEV) : CFk._fhOrig.call(CFk); }; }
-  var F = { heroEst: 0, heroBrut: 0, heroUtile: 0, alliesUtile: 0, slots: {}, rounds: 0, dmgEst: 0, pvEnn: 0, ennemis: 0, toursEst: 0, tours: 0, est: 0, reel: 0, normales: 0, secondes: 0, charges: 0, tourMax: 0 };
+  if (SOINSCOMP != null) { var CFs = g.CombatForecast; // réserve + k soins (valeur × PV max du héros) par compagnon soigneur présent
+    if (!CFs._hrOrig) CFs._hrOrig = CFs.getHealingReserve;
+    CFs.getHealingReserve = function () {
+      var add = 0;
+      g.CompanionManager.partyIds().forEach(function (id) { var d = g.getCompanionDef(id); if (d && d.skill && d.skill.type === "heal") add += SOINSCOMP * d.skill.value * Number(g.game.heroMaxHp || 0); });
+      return CFs._hrOrig.call(CFs) + Math.round(add);
+    }; }
+  var F = { heroEst: 0, heroBrut: 0, heroUtile: 0, alliesUtile: 0, slots: {}, rounds: 0, dmgEst: 0, pvEnn: 0, ennemis: 0, toursEst: 0, tours: 0, est: 0, reel: 0, normales: 0, secondes: 0, charges: 0, tourMax: 0,
+    soinsComp: 0, soinsCompAvant: 0, soinsPot: 0, soinsPotAvant: 0, runs: 0,
+    B: { combats: 0, rounds: 0, tueEst: 0, tombeEst: 0, pv0: 0, perdu: 0, tours: 0, est: 0, reel: 0, gardes: 0, actions: 0 } };
   for (var i = 0; i < RUNS; i++) {
     B.seedRng(93000 + i);
     prepare(c, p, ct.world, ct.wenna && !SOLO, ct.maddoc && !SOLO);
@@ -398,6 +436,9 @@ CONTENUS.forEach(function (ct) {
         + (PRONO && r.usure != null ? "   usure réelle " + Math.round(r.usure) + " (" + r.usureN + " runs au boss)" : ""));
       var nAct = 0; if (r.F) Object.keys(r.F.slots).forEach(function (k) { nAct += r.F.slots[k]; });
       if (r.F && nAct) console.log("              héros : " + nAct + " actions (" + Object.keys(r.F.slots).map(function (k) { return k + " " + Math.round(100 * r.F.slots[k] / nAct) + " %"; }).join(", ") + ") · estimé " + Math.round(r.F.heroEst / nAct) + " / action · brut " + Math.round(r.F.heroBrut / nAct) + " · utile " + Math.round(r.F.heroUtile / nAct) + " · compagnons utile " + Math.round(r.F.alliesUtile / nAct));
+      var fb = r.F && r.F.B;
+      if (r.F && r.F.runs) console.log("              soins par run : compagnons " + Math.round(r.F.soinsComp / r.F.runs) + " (avant le boss " + Math.round(r.F.soinsCompAvant / r.F.runs) + ") · potions " + Math.round(r.F.soinsPot / r.F.runs) + " (avant le boss " + Math.round(r.F.soinsPotAvant / r.F.runs) + ")");
+      if (fb && fb.combats) console.log("              boss : " + fb.combats + " combats · PV du groupe à l'arrivée " + Math.round(fb.pv0 / fb.combats) + " · rounds pour le tuer estimés " + Math.round(fb.tueEst / fb.combats) + " / réels " + Math.round(fb.rounds / fb.combats) + " · rounds avant de tomber estimés " + Math.round(fb.tombeEst / fb.combats) + " · PV perdus au boss " + Math.round(fb.reel / fb.combats) + " (estimé " + Math.round(fb.est / fb.combats) + ") · gardes " + Math.round(100 * fb.gardes / Math.max(1, fb.actions)) + " %");
       if (r.F && r.F.tours) console.log("              groupe : dégâts estimés " + Math.round(r.F.dmgEst / Math.max(1, r.F.rounds)) + " / round · réels ≤ " + Math.round(r.F.pvEnn / Math.max(1, r.F.rounds)) + " (PV ennemis / rounds)");
       console.log("              frappes : " + r.F.ennemis + " ennemis · tours au contact estimés " + r.F.toursEst + " / réels " + r.F.tours + " (×" + (r.F.tours / Math.max(1, r.F.toursEst)).toFixed(2) + ") · estimé " + Math.round(r.F.est / r.F.tours) + " / tour · réel " + Math.round(r.F.reel / r.F.tours) + " / tour (×" + (r.F.reel / Math.max(1, r.F.est)).toFixed(2) + ") · par tour : " + (r.F.normales / r.F.tours).toFixed(2) + " normale, " + (r.F.secondes / r.F.tours).toFixed(2) + " seconde, " + (r.F.charges / r.F.tours).toFixed(2) + " charge");
     });
