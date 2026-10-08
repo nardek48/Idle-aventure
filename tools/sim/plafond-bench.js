@@ -29,7 +29,7 @@ var VOIE_ARG = null, POINTS_ARG = null, NO_TAL_ARG = false;
 var CITE_ARG = null;
 var PRONO = false; // v3.429.7 : --pronostic, verdict de CombatForecast.forDungeon à côté de la mesure
 var FRAPPES = false; // v3.429.14 : --frappes, frappes et dégâts réels contre l'estimation
-var KCHEV = null;    // v3.429.14 : --kchev k, essai : dégâts estimés du Chevalier × k
+var KCHEV = null;    // v3.429.14 : --kchev k, essai du coefficient de classe du Chevalier (FORECAST_CLASS_DMG_MULT)
 var RUNS = 40, ONLY = null, TRAIN = null, PROFIL_FORCE = null, SOLO = false, ELITE_MULT = null, DIFF = null, BOSS = null;
 for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--runs") RUNS = Number(process.argv[ai + 1]) || RUNS;
@@ -335,8 +335,9 @@ var CONTENUS = [
 function mesure(ct, profilId, c) {
   var p = PROFILS[profilId];
   var n = 0, ok = 0, rounds = 0, hp = 0, pots = 0, v5 = 0, prono = null, usureSum = 0, usureN = 0;
-  if (KCHEV) { var CFk = g.CombatForecast; if (!CFk._hdOrig) CFk._hdOrig = CFk.getHeroDamagePerRound;
-    CFk.getHeroDamagePerRound = function () { var v = CFk._hdOrig.apply(CFk, arguments); return /knight/i.test(String(g.game.heroId)) ? v * KCHEV : v; }; }
+  if (KCHEV != null) { var CFk = g.CombatForecast; // pronostic seul : remplace le coefficient du Chevalier
+    if (!CFk._fhOrig) CFk._fhOrig = CFk.getForecastHeroDamage;
+    CFk.getForecastHeroDamage = function () { return /knight/i.test(String(g.game.heroId)) ? Math.max(1, CFk.getHeroDamagePerRound() * KCHEV) : CFk._fhOrig.call(CFk); }; }
   var F = { heroEst: 0, heroBrut: 0, heroUtile: 0, alliesUtile: 0, slots: {}, rounds: 0, dmgEst: 0, pvEnn: 0, ennemis: 0, toursEst: 0, tours: 0, est: 0, reel: 0, normales: 0, secondes: 0, charges: 0, tourMax: 0 };
   for (var i = 0; i < RUNS; i++) {
     B.seedRng(93000 + i);

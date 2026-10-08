@@ -34,6 +34,11 @@ var FORECAST_RATIO_THRESHOLDS = {
   abordable: 0.35    // en dessous : aucun échec observé, quel que soit le profil
 };
 
+/* v3.429.14 : dégâts réels / estimés, par classe. Mesuré au banc (--frappes) : le Chevalier
+   garde 12 à 30 % de ses actions et n'exécute presque jamais, il touche 0,38 à 0,65 de l'estimé
+   contre 0,57 à 0,89 à distance. 0,7 le recale sur les classes à distance, sur qui les seuils sont calés. */
+var FORECAST_CLASS_DMG_MULT = { knight: 0.7 };
+
 /* Verdicts, du plus sûr au pire. `level` sert au tri et au style ; `label` est le texte. */
 var COMBAT_FORECAST_LEVELS = [
   { id: "trivial", level: 0, label: _t("Sans danger"), hint: "" },
@@ -88,6 +93,13 @@ var CombatForecast = {
     return Math.max(1, base * (1 + crit * (mult - 1)) * this.getKitDamageMultiplier() * this.getStrikesPerRound());
   },
 
+  /* v3.429.14 : dégâts du héros pour le pronostic seul, coefficient de classe compris. La mise à
+     l'échelle des ennemis et les Petites Aventures gardent getHeroDamagePerRound. */
+  getForecastHeroDamage: function () {
+    var cls = (typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
+    return Math.max(1, this.getHeroDamagePerRound() * ((cls && FORECAST_CLASS_DMG_MULT[cls.id]) || 1));
+  },
+
   /* v3.429.9 : compagnons présents (hors patrouille). Chacun frappe une fois par round et
      encaisse une part des coups (pickVictim, au prorata de la menace) : ses dégâts s'ajoutent
      à ceux du héros, ses PV au réservoir. full = PV max (entrée de donjon, groupe soigné). */
@@ -106,7 +118,7 @@ var CombatForecast = {
 
   /* Dégâts du groupe par round : le héros, plus les compagnons présents. */
   getPartyDamagePerRound: function (full) {
-    return this.getHeroDamagePerRound() + this.getPartyBonus(full).dmg;
+    return this.getForecastHeroDamage() + this.getPartyBonus(full).dmg;
   },
 
   /* v3.422.0 → v3.423.0 (chantier Difficulté, A et D) : PV effectifs du héros (défense comprise). */
@@ -250,7 +262,7 @@ var CombatForecast = {
     if (!enemy) return null;
 
     var party = this.getPartyBonus(!!options.fullParty); // v3.429.9
-    var heroDmg = this.getHeroDamagePerRound() + party.dmg;
+    var heroDmg = this.getForecastHeroDamage() + party.dmg;
     var enemyDmg = this.getEnemyDamagePerRound(enemy);
     var heroHp = Number(game.heroHp != null ? game.heroHp : (game.heroMaxHp || 1));
     var heroMaxHp = Number(game.heroMaxHp || 1);
@@ -440,5 +452,6 @@ var CombatForecast = {
 };
 
 window.FORECAST_RATIO_THRESHOLDS = FORECAST_RATIO_THRESHOLDS;
+window.FORECAST_CLASS_DMG_MULT = FORECAST_CLASS_DMG_MULT;
 window.COMBAT_FORECAST_LEVELS = COMBAT_FORECAST_LEVELS;
 window.CombatForecast = CombatForecast;
