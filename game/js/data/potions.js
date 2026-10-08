@@ -79,14 +79,14 @@ window.POTION_STOCK_CAP = POTION_STOCK_CAP;
 var HEALING_POTIONS_DB = [
   {
     id: "potion_soin_mineur",
-    name: "Potion de soin mineur",
+    name: "Potion de soin mineure",
     icon: "images/Icons/potions/potion_soin_mineur_icone.png",
     healPercent: 0.35, // v3.101.0 : 25 → 35 % (LIGNE_DIRECTRICE §10 n°10)
     cost: 150 // v3.101.0 : 1000 → 150, accessible dès l'Acte I (le soin complet reste le Repas)
   },
   {
     id: "potion_soin_majeur",
-    name: "Potion de soin majeur",
+    name: "Potion de soin majeure",
     icon: "images/Icons/potions/potion_soin_majeur_icone.png",
     healPercent: 0.60,
     /* v3.291.0 (décision Seb) : 400 -> 600 et 10 achats par jour civil. Pousse vers la

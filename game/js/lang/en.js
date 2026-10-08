@@ -1097,7 +1097,7 @@ I18n.register("en", {
   "Équipement": "Equipment",
   "Inventaire": "Inventory",
   "Boutique": "Shop",
-  "+{n} dégâts/tap": "+{n} damage/tap",
+  "+{n} dégâts par coup": "+{n} damage per hit",
   "+{n}% défense": "+{n}% defence",
   "+{n}% PV max": "+{n}% max HP",
   "+{n}% expérience": "+{n}% experience",
@@ -1730,7 +1730,6 @@ I18n.register("en", {
 I18n.register("en", {
   // CLASSES
   "Chevalier": "Knight",
-  "Archer": "Archer",
   "Mage": "Mage",
   "Rage": "Rage",
   "Concentration": "Focus",
@@ -1892,15 +1891,15 @@ I18n.register("en", {
   "+25% or gagné pendant la prochaine mission.": "+25% gold earned during the next mission.",
 
   // HEALING_POTIONS_DB
-  "Potion de soin mineur": "Minor Healing Potion",
-  "Potion de soin majeur": "Major Healing Potion",
+  "Potion de soin mineure": "Minor Healing Potion",
+  "Potion de soin majeure": "Major Healing Potion",
 
   // UPGRADES
-  "AMELIORATION DE FORCE": "STRENGTH UPGRADE",
-  "AMELIORATION DE CELERITE": "CELERITY UPGRADE",
-  "AMELIORATION DE PRECISION": "PRECISION UPGRADE",
-  "AMELIORATION DE VOLONTE": "WILLPOWER UPGRADE",
-  "AMELIORATION D'ENDURANCE": "ENDURANCE UPGRADE",
+  "AMÉLIORATION DE FORCE": "STRENGTH UPGRADE",
+  "AMÉLIORATION DE CÉLÉRITÉ": "CELERITY UPGRADE",
+  "AMÉLIORATION DE PRÉCISION": "PRECISION UPGRADE",
+  "AMÉLIORATION DE VOLONTÉ": "WILLPOWER UPGRADE",
+  "AMÉLIORATION D'ENDURANCE": "ENDURANCE UPGRADE",
   "Augmente les dégâts de ton attaque de base.": "Increases your basic attack damage.",
   "Augmente l'auto DPS.": "Increases auto DPS.",
   "Augmente la chance de critique.": "Increases critical chance.",

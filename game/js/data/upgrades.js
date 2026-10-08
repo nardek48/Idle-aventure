@@ -24,7 +24,7 @@
 var UPGRADES = [
   {
     id: "utrain_power",
-    name: "AMELIORATION DE FORCE",
+    name: "AMÉLIORATION DE FORCE",
     icon: "./images/Icons/improvement_icons/power.png",
     desc: "Augmente les dégâts de ton attaque de base.",
     baseCost: 9,
@@ -38,7 +38,7 @@ var UPGRADES = [
   },
   {
     id: "utrain_celerity",
-    name: "AMELIORATION DE CELERITE",
+    name: "AMÉLIORATION DE CÉLÉRITÉ",
     icon: "./images/Icons/improvement_icons/celerity.png",
     desc: "Augmente l'auto DPS.",
     baseCost: 5.5,     // v3.309.0 : 4 → 5,5, suit le coefficient du Rôdeur (0,09 → 0,12) pour garder l'iso-prix
@@ -52,7 +52,7 @@ var UPGRADES = [
   },
   {
     id: "utrain_precision",
-    name: "AMELIORATION DE PRECISION",
+    name: "AMÉLIORATION DE PRÉCISION",
     icon: "./images/Icons/improvement_icons/accuracy.png",
     desc: "Augmente la chance de critique.",
     baseCost: 7,
@@ -66,7 +66,7 @@ var UPGRADES = [
   },
   {
     id: "utrain_will",
-    name: "AMELIORATION DE VOLONTE",
+    name: "AMÉLIORATION DE VOLONTÉ",
     icon: "./images/Icons/improvement_icons/will.png",
     desc: "Améliore les critiques.",
     baseCost: 5,
@@ -80,7 +80,7 @@ var UPGRADES = [
   },
   {
     id: "utrain_endurance",
-    name: "AMELIORATION D'ENDURANCE",
+    name: "AMÉLIORATION D'ENDURANCE",
     icon: "./images/Icons/improvement_icons/endurance.png",
     desc: "Augmente les PV du héros.",
     baseCost: 7,

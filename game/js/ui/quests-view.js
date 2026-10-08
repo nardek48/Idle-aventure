@@ -833,7 +833,9 @@ function buildQuestCompleteHTML(config) {
   h += '  <div class="kwin dungeon-story-card is-success">';
   // v3.370.0 : titre et texte peuvent venir d'un fichier protégé (adventure-quest-system.js) : traduits ici
   h += kWinHeadHTML({ icon: renderIconOrEmojiHTML(config.icon || "images/Icons/quests/quest_story.png", "dungeon-story-icon-img", _td(config.title || "")),
-    title: esc(config.title ? _td(config.title) : _t("Quête terminée !")), sub: config.title ? _t("Quête terminée !") : "" }); // v3.400.0 (F-2)
+    title: esc(config.title ? _td(config.title) : _t("Quête terminée !")),
+    // v3.429.10 : pas de sous-titre qui répète le titre (« Quête terminée ! » deux fois)
+    sub: (config.title && _td(config.title) !== _t("Quête terminée !")) ? _t("Quête terminée !") : "" }); // v3.400.0 (F-2)
   h += '    <div class="kwin-body">';
   if (config.text) h += '    <div class="kwin-quote dungeon-story-text">' + esc(_td(config.text)) + '</div>';
   // v3.297.0 (W-1a) : dialogue de complétion d'une étape d'Histoire (narrative.completionDialogue)
@@ -865,11 +867,22 @@ window.buildQuestCompleteHTML = buildQuestCompleteHTML;
 
 // v3.109.0 : bouton « Quête suivante » du popup de fin retiré (décision Seb) — il proposait des quêtes
 // masquées par le tableau de missions (aq_forest_scout, depuis supprimée) : c'est le tableau qui guide.
+/* v3.429.10 : la carte de victoire d'un boss (#cycle-modal-root) passe d'abord ; la fin de
+   quête attend sa fermeture (closeBossFinal) au lieu de s'empiler dessous. */
+var pendingQuestCompleteConfig = null;
 function openQuestCompletePopup(config) {
   applyQuestUnlockSideEffects();
+  var boss = document.getElementById("cycle-modal-root");
+  if (boss && boss.innerHTML) { pendingQuestCompleteConfig = config; return; }
   var host = document.getElementById("adventure-quest-modal-root");
   if (host) host.innerHTML = buildQuestCompleteHTML(config);
 }
+function flushPendingQuestComplete() {
+  var config = pendingQuestCompleteConfig;
+  pendingQuestCompleteConfig = null;
+  if (config) openQuestCompletePopup(config);
+}
+window.flushPendingQuestComplete = flushPendingQuestComplete;
 window.openQuestCompletePopup = openQuestCompletePopup;
 window.applyQuestUnlockSideEffects = applyQuestUnlockSideEffects;
 

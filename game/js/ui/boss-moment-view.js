@@ -141,6 +141,7 @@ function closeBossFinal() {
   bossMomentClearTimers();
   var root = getBossBlockingRoot();
   if (root) root.innerHTML = "";
+  if (typeof flushPendingQuestComplete === "function") flushPendingQuestComplete(); // v3.429.10 : la fin de quête, ensuite
 }
 
 window.showBossIntro = showBossIntro;

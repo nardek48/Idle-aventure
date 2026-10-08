@@ -53,7 +53,7 @@ function formatEquipmentStat(item) {
 
 /* v3.225.0 : texte d'une stat quelle que soit sa source (stat de base ou affixe). */
 function formatEquipmentStatValue(stat, value) {
-  if (stat === "tapDmg") return _t("+{n} dégâts/tap", { n: formatNumber(value) });
+  if (stat === "tapDmg") return _t("+{n} dégâts par coup", { n: formatNumber(value) });
   if (stat === "tapMult") return _t("+{n}% dégâts", { n: Math.round(value * 100) });
   if (stat === "goldMult") return _t("+{n}% or", { n: Math.round(value * 100) });
   if (stat === "critChance") return _t("+{n}% critique", { n: formatNumber(value) });

@@ -27,7 +27,7 @@ var CLASSES = [
   },
   {
     id: "archer",
-    label: "Archer",
+    label: "Rôdeur", // v3.429.10 : le nom de la classe partout ailleurs (création, CLAUDE.md)
     icon: "images/Icons/classes/class_ranger.png",
     weaponType: "bow",
     weaponIcons: ["bow"],

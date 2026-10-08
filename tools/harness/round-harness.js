@@ -6515,13 +6515,13 @@ console.log("\n[62] v3.260.0 \u2014 Retours de jeu : Brume, Colporteur, arme, co
   game = freshCombat("knight");
   run("StoryQuestManager.ensure(); PotionManager.ensure(); game.potionsOwned = {}; game.unlockedTabs.shop = true;");
   var shop0 = g.buildPotionShopHTML();
-  ok(shop0.indexOf("Potion de soin mineur") !== -1 && shop0.indexOf("Potion de Force") === -1, "avant le Roi des marais : seules les potions de soin");
+  ok(shop0.indexOf("Potion de soin mineure") !== -1 && shop0.indexOf("Potion de Force") === -1, "avant le Roi des marais : seules les potions de soin");
   game.storyQuests.forest.currentStep = idxOf("forest_04"); game.storyQuests.forest.accepted = true;
   g.StoryQuestManager.goToLink("forest");
   ok(game.activeTab === "shop" && g.activeShopSubTab === "potions", "« Aller \u00e0 la qu\u00eate » ouvre directement Potions");
   game.storyQuests.forest.claimedSteps.forest_05 = true;
   var shop1 = g.buildPotionShopHTML();
-  ok(shop1.indexOf("Potion de Force") !== -1 && shop1.indexOf("Potion de soin mineur") < shop1.indexOf("Potion de Force"), "apr\u00e8s le Roi des marais : potions de mission visibles, sous le soin");
+  ok(shop1.indexOf("Potion de Force") !== -1 && shop1.indexOf("Potion de soin mineure") < shop1.indexOf("Potion de Force"), "apr\u00e8s le Roi des marais : potions de mission visibles, sous le soin");
   delete game.storyQuests.forest.claimedSteps.forest_05; game.potionsOwned = { potion_power: 1 };
   ok(g.isPerRunPotionShopOpen() === true, "save qui poss\u00e8de d\u00e9j\u00e0 une potion de mission : la section reste visible");
 
@@ -11387,7 +11387,7 @@ console.log("\n[147] v3.371.0 — Multilangue, lot L-3 : Village, Production, En
   var I = g.I18n;
   game = freshCombat("knight");
   I._lang = "fr";
-  ok(g.formatEquipmentStatValue("tapDmg", 5) === "+5 dégâts/tap" && g.formatEquipmentStatValue("maxHpPct", 0.1) === "+10% PV max", "stats d'équipement en français inchangées");
+  ok(g.formatEquipmentStatValue("tapDmg", 5) === "+5 dégâts par coup" && g.formatEquipmentStatValue("maxHpPct", 0.1) === "+10% PV max", "stats d'équipement en français inchangées");
   ok(g.WorldCaps.withPrep(1) === "au " + g.WORLDS[1].name, "tournure « au <monde> » inchangée");
   ok(g.WorldCaps.atAct("II", 1) === "à l'acte II du " + g.WORLDS[1].name, "tournure « à l'acte II du <monde> » inchangée");
   ok(g.VillageBuildingManager.getBlockReason("zzz_inconnu") === "Bâtiment inconnu", "raison de blocage du Village inchangée");
@@ -11396,7 +11396,7 @@ console.log("\n[147] v3.371.0 — Multilangue, lot L-3 : Village, Production, En
   ok(sh.indexOf("⟦") === -1 && sh.length > 100, "Boutique en français : aucun ⟦ ⟧");
   /* Pseudo-langue */
   I._lang = "xx";
-  ok(g.formatEquipmentStatValue("tapDmg", 5) === "⟦+5 dégâts/tap⟧", "pseudo-langue : stats d'équipement extraites");
+  ok(g.formatEquipmentStatValue("tapDmg", 5) === "⟦+5 dégâts par coup⟧", "pseudo-langue : stats d'équipement extraites");
   ok(g.VillageBuildingManager.getBlockReason("zzz_inconnu") === "⟦Bâtiment inconnu⟧", "pseudo-langue : raisons de blocage du Village extraites");
   ok(g.WORLD_CAPS_PREP.every(function (x) { return x.indexOf("{w}") !== -1; }) && g.WORLD_CAPS_DE.every(function (x) { return x.indexOf("{a}") !== -1 && x.indexOf("{w}") !== -1; }), "tournures WorldCaps : phrases entières à {w}/{a}, traduites au chargement (D2)");
   ok(String(g.VILLAGE_BUILDINGS.tavern.effectLabel(3)).indexOf("⟦") === 0, "pseudo-langue : effets des bâtiments extraits");
