@@ -179,17 +179,30 @@ function autoRound() {
 
 /* ---------- Trois sortes de combat ---------- */
 
+/* v3.429.10 : PV du groupe (héros + compagnons présents), pour mesurer l'usure réelle (--pronostic). */
+function partyHp() {
+  var t = Number(g.game.heroHp || 0);
+  if (g.CompanionManager) g.CompanionManager.partyIds().forEach(function (id) { t += Number(g.CompanionManager.hpOf(id) || 0); });
+  return t;
+}
+
 function playQuest(questId) {
   g.AdventureQuestManager.ensureDefaults();
   g.AdventureQuestManager.start(questId);
   if (!g.game.adventureQuestRun.active) return null;
-  var rounds = 0, guard = 3000;
+  var rounds = 0, guard = 3000, hp0 = partyHp(), pot0 = Number(g.game.healingPotionsOwned.potion_soin_mineur || 0), usure = null;
+  var quest = g.ADVENTURE_QUESTS[questId], hasBoss = (quest.steps || []).some(function (st) { return st.type === "bossKill"; });
   while (g.game.adventureQuestRun.active && g.game.heroHp > 0 && guard-- > 0) {
     g.game.activeTab = "combat";
+    // usure réelle : PV du groupe perdus avant le boss (ou sur tout le run sans boss), potions comprises
+    if (hasBoss && usure === null && g.game.enemy && (g.game.enemy.isBoss || (Array.isArray(g.game.enemy) && g.game.enemy.some(function (e) { return e.isBoss; })))) {
+      usure = hp0 - partyHp() + (pot0 - Number(g.game.healingPotionsOwned.potion_soin_mineur || 0)) * Math.floor(g.game.heroMaxHp * 0.35);
+    }
     if (!autoRound()) break;
     rounds++;
   }
-  return { ok: !!g.game.adventureQuestsCompleted[questId], rounds: rounds };
+  if (!hasBoss && g.game.heroHp > 0) usure = hp0 - partyHp() + (pot0 - Number(g.game.healingPotionsOwned.potion_soin_mineur || 0)) * Math.floor(g.game.heroMaxHp * 0.35);
+  return { ok: !!g.game.adventureQuestsCompleted[questId], rounds: rounds, usure: usure };
 }
 
 function playElite(eliteId, worldId) {

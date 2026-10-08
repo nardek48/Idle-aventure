@@ -146,6 +146,16 @@ var CombatForecast = {
     return Math.floor(total);
   },
 
+  /* v3.429.11 : rounds d'approche. Face à un héros à arc ou à magie, l'ennemi met engageIn
+     rounds à venir au contact (combat-engine prepareEnemy) : autant de rounds sans coup reçu.
+     Le Chevalier (épée) est au contact dès le premier round. */
+  getEngageRounds: function (enemy) {
+    if (!enemy || typeof getEnemyEngageRounds !== "function") return 0;
+    var heroDef = (window.HEROES_DB && game.heroId) ? HEROES_DB[game.heroId] : null;
+    var ranged = !!(heroDef && heroDef.weaponType && heroDef.weaponType !== "sword");
+    return ranged ? Math.max(0, Number(getEnemyEngageRounds(enemy.id, !!enemy.isBoss) || 0)) : 0;
+  },
+
   /* Dégâts moyens que l'ennemi inflige par round, défense du héros déduite. */
   getEnemyDamagePerRound: function (enemy) {
     if (!enemy || !enemy.stats) return 0;
@@ -176,6 +186,7 @@ var CombatForecast = {
     if (!normalEnemy || n === 0) return 0;
     var heroDmg = this.getPartyDamagePerRound(); // v3.429.9 : compagnons compris
     var rounds = Math.ceil(Number(normalEnemy.maxHp || 0) / Math.max(1, heroDmg));
+    rounds = Math.max(0, rounds - this.getEngageRounds(normalEnemy)); // v3.429.11 : approche sans coup
     var perFight = rounds * this.getEnemyDamagePerRound(normalEnemy);
     return Math.max(0, Math.floor(perFight * n));
   },
@@ -185,13 +196,26 @@ var CombatForecast = {
   getGroupAttrition: function (list, fullParty) {
     var heroDmg = Math.max(1, this.getPartyDamagePerRound(fullParty)); // v3.429.9 : compagnons compris
     var alive = (list || []).filter(Boolean).slice().sort(function (a, b) { return Number(a.maxHp || 0) - Number(b.maxHp || 0); });
-    var cost = 0;
+    var cost = 0, elapsed = 0, self = this;
+    /* v3.429.11 : arrivée au contact, règle du moteur (spawnGroup) : seul, l'ennemi met engageIn
+       rounds ; en groupe, ceux qui approchent sont échelonnés 0, 1, 2… par célérité décroissante. */
+    var arrive;
+    if (alive.length > 1) {
+      var bySpeed = alive.slice().sort(function (x, y) { return Number((y.stats && y.stats.celerity) || 0) - Number((x.stats && x.stats.celerity) || 0); });
+      var retard = 0, delays = [];
+      bySpeed.forEach(function (e) { delays.push(self.getEngageRounds(e) > 0 ? retard++ : 0); });
+      arrive = alive.map(function (e) { return delays[bySpeed.indexOf(e)]; });
+    } else {
+      arrive = alive.map(function (e) { return self.getEngageRounds(e); });
+    }
     while (alive.length) {
       var rounds = Math.ceil(Number(alive[0].maxHp || 0) / heroDmg);
-      var dmg = 0;
-      for (var i = 0; i < alive.length; i++) dmg += this.getEnemyDamagePerRound(alive[i]);
-      cost += rounds * dmg;
-      alive.shift();
+      for (var i = 0; i < alive.length; i++) {
+        var hitting = Math.max(0, Math.min(rounds, elapsed + rounds - arrive[i]));
+        cost += hitting * this.getEnemyDamagePerRound(alive[i]);
+      }
+      elapsed += rounds;
+      alive.shift(); arrive.shift();
     }
     return Math.floor(cost);
   },
@@ -251,7 +275,7 @@ var CombatForecast = {
       attrition: attrition,
       healThreshold: Math.ceil(healThreshold),
       roundsToKill: null,
-      roundsToDie: enemyDmg > 0 ? Math.ceil(effectiveHp / enemyDmg) : Infinity,
+      roundsToDie: enemyDmg > 0 ? Math.ceil(effectiveHp / enemyDmg) + this.getEngageRounds(enemy) : Infinity, // v3.429.11 : approche
       unwinnable: false,
       id: "abordable",
       reason: "",
@@ -396,6 +420,21 @@ var CombatForecast = {
     }
     var out = this.forEnemy(enemy, { attrition: attrition });
     if (out) { out.enemyName = enemy.name; out.precedingFights = fights; }
+    /* v3.429.11 : sans boss, l'ennemi de référence n'est qu'un ennemi de plus — c'est le run
+       entier qui décide. Usure / réservoir (PV + compagnons + potions) au-delà de 0,95 : le run
+       mange tout le réservoir (Meute à l'entraînement 0 : 0,97-1,06 -> 0 % de réussite). Seuils
+       plus bas écartés au banc : ils condamnaient la Nuée et le Cœur, réussis à 90-100 %. */
+    if (out && !enemy.isBoss && !out.unwinnable) {
+      var pool = Math.max(1, Number(out.heroHp || 0) + Number(out.partyHp || 0) + Number(out.healingReserve || 0));
+      var runRatio = attrition / pool, LV = { trivial: 0, abordable: 1, risque: 2, tresdur: 3, horsportee: 4 };
+      var runId = runRatio >= 0.95 ? "horsportee" : null;
+      if (runId && LV[runId] > LV[out.id]) {
+        out.id = runId;
+        out.runRatio = runRatio;
+        out.reason = _t("Les combats qui s'enchaînent t'usent plus vite que tu ne récupères.");
+        if (runId !== "risque" && !out.advice) out.advice = this.buildAdvice(false);
+      }
+    }
     return out;
   }
 };

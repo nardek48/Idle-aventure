@@ -210,6 +210,7 @@ I18n.register("en", {
   "Très difficile": "Very hard",
   "Hors de portée": "Out of reach",
   "Il se soigne plus vite que tu ne frappes : ce combat ne peut pas être gagné en l'état.": "It heals faster than you hit: this fight can't be won as things stand.",
+  "Les combats qui s'enchaînent t'usent plus vite que tu ne récupères.": "The back-to-back fights wear you down faster than you recover.",
   "Il te met à terre bien avant de tomber.": "It will put you down long before it falls.",
   "La course est trop serrée : la moindre charge peut te coûter le combat.": "The race is too close: a single charge could cost you the fight.",
   "Il t'entamera sérieusement.": "It will hurt you badly.",
