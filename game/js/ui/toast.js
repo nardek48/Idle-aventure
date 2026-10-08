@@ -8,9 +8,12 @@ function showToast(message, duration) {
   if (!el) return;
   el.textContent = message;
   el.classList.add("show");
+  // v3.429.13 : les libellés des bulles de raccourci s'effacent le temps du message (chevauchement)
+  if (document.body) document.body.classList.add("toast-shown");
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(function () {
     el.classList.remove("show");
+    if (document.body) document.body.classList.remove("toast-shown");
   }, duration || 2000);
 }
 

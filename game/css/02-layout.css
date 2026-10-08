@@ -190,6 +190,8 @@ body.living-map-active .hud-dock { display: none; }
   transition: opacity 0.3s;
 }
 .hud-bub.show-tip .hud-bub-tip { opacity: 1; }
+/* v3.429.13 : pendant un message (#toast), le libellé s'efface, l'icône reste */
+body.toast-shown .hud-bub .hud-bub-tip { opacity: 0; }
 /* Fil rouge au calme : petite bulle discrète */
 .hud-bub.is-quiet { width: 36px; height: 36px; border-width: 1.5px; border-color: var(--c-brown-700-vivid); opacity: 0.8; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
 .hud-bub.is-quiet .hud-bub-ico { width: 22px; height: 22px; }
