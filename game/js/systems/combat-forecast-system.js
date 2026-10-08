@@ -354,8 +354,13 @@ var CombatForecast = {
     if (fights > 0 && window.QuestEnemyManager) {
       var quest = (mission.sourceKind === "adventure") ? (window.ADVENTURE_QUESTS || {})[mission.questId]
         : (window.HUNT_QUESTS || {})[mission.questId];
-      var normal = quest ? firstOfGroup(QuestEnemyManager.spawnFor((quest.encounters && window.AdventureQuestManager) ? AdventureQuestManager._encounterQuest(quest) : quest, false)) : null; // v3.311.0
-      attrition = this.getAttritionCost(normal, fights);
+      var spawned = quest ? QuestEnemyManager.spawnFor((quest.encounters && window.AdventureQuestManager) ? AdventureQuestManager._encounterQuest(quest) : quest, false) : null; // v3.311.0
+      /* v3.429.8 : un groupe (meute, escouade) frappe à plusieurs. On compte les combats de groupe
+         (cible / taille du groupe) et l'usure de chacun membre par membre, comme en donjon. */
+      var group = [].concat(spawned || []).filter(Boolean);
+      attrition = group.length > 1
+        ? this.getGroupAttrition(group) * Math.ceil(fights / group.length)
+        : this.getAttritionCost(group[0] || null, fights);
     }
     var out = this.forEnemy(enemy, { attrition: attrition });
     if (out) { out.enemyName = enemy.name; out.precedingFights = fights; }

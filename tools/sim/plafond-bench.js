@@ -282,6 +282,10 @@ function mesure(ct, profilId, c) {
   for (var i = 0; i < RUNS; i++) {
     B.seedRng(93000 + i);
     prepare(c, p, ct.world, ct.wenna && !SOLO, ct.maddoc && !SOLO);
+    if (PRONO && i === 0 && (ct.kind === "quest" || ct.kind === "hunt")) {
+      var fm = g.CombatForecast.forMission({ sourceKind: ct.kind === "quest" ? "adventure" : "hunt", questId: ct.ref });
+      prono = fm ? fm.id + " (ratio " + (fm.ratio != null ? fm.ratio.toFixed(2) : "—") + ", usure " + fm.attrition + " / PV " + Math.round(g.game.heroMaxHp) + "+" + fm.healingReserve + ", " + (fm.precedingFights || 0) + " combats)" : "—";
+    }
     if (PRONO && i === 0 && ct.kind === "dungeon") {
       if (DIFF) g.DUNGEONS.filter(function (x) { return x.id === ct.ref; })[0].difficultyMult = DIFF;
       var fp = g.CombatForecast.forDungeon(ct.ref, MARKS.slice());
