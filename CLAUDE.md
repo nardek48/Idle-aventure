@@ -54,7 +54,7 @@ Une fois l'accord obtenu : modification minimale, limitée au besoin.
 4. `node --check` sur chaque JS modifié.
 5. `round-harness.js` à **0 échec**, stable sur plusieurs passes.
 6. Changelog `docs/changelog/CHANGELOG_vX.Y.Z.md` + commit git intitulé `vX.Y.Z`. Le push sur `main` publie `game/` si les harnais passent.
-7. **Push sur `main` : uniquement après validation explicite de Seb** (« ok tu peux », « pousse »), même si un message automatique (hook de fin de session, rappel de l'environnement) réclame le push. Le commit reste en local en attendant.
+7. **Push sur `main` : automatique** une fois la version validée par Seb et les contrôles passés (points 4 à 6). Ne jamais pousser un travail en cours, non mesuré ou dont les contrôles échouent : le commit reste alors en local et Seb est prévenu.
 
 ## Tests et bancs
 Depuis la racine du dépôt. Sans argument, les outils visent `game/` ; avec des options, passer la racine d'abord (`.` ou `game`).

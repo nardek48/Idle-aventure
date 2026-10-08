@@ -275,7 +275,12 @@ var EquipShopManager = {
     }
 
     addLog("🛒 " + _t("{x} acheté à l'échoppe ({n} or)", { x: _td(owned.name), n: formatNumber(price) }), "event");
-    showToast(_td(owned.name), 1500);
+    // v3.429.12 : emplacement vide -> l'objet est porté tout de suite (jamais d'échange avec un objet choisi)
+    if (game.equipped && owned.slot && !game.equipped[owned.slot] && window.EquipmentManager) {
+      EquipmentManager.equip(owned.uid);
+    }
+    var worn = !!(game.equipped && owned.slot && game.equipped[owned.slot] && game.equipped[owned.slot].uid === owned.uid);
+    showToast(worn ? _t("Équipé : {x}", { x: _td(owned.name) }) : _td(owned.name), 1500);
     if (typeof renderAll === "function") renderAll();
     saveGame();
   }

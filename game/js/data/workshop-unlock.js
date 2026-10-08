@@ -26,6 +26,9 @@ var WORKSHOP_UNLOCK_STEPS = [
   {
     id: "craft_planks",
     label: "Fabriquer 5 Planches",
+    // v3.429.12 : tant que la Scierie n'existe pas, l'étape dit où la débloquer
+    lockedHint: "Débloque d'abord la Scierie : quête « Le Bosquet Silencieux » (Quêtes › Secondaires)",
+    isLocked: function (game) { return !(game.explorationProgression || {}).sawmillUnlocked; },
     narrative: {
       objective: "Le bois brut ne suffit pas : il faut le tailler. Va à la Scierie fine, l'atelier de ta Scierie, pour transformer ton bois en planches.",
       completion: "Les premières planches sont prêtes. Le bruit de la scie a attiré l'attention de quelques curieux du village."

@@ -48,7 +48,7 @@ var DATA_TEXT_FIELDS = {
   STORY_TAB_LABELS: ["*"],
   STORY_MADDOC_GREETING: ["*"],
   VILLAGE_QUESTS: ["*.title", "*.objectiveLabel", "*.narrative.objective", "*.narrative.completion", "*.tutorial.title", "*.tutorial.points.*.text"],
-  WORKSHOP_UNLOCK_STEPS: ["*.label", "*.narrative.objective", "*.narrative.completion"],
+  WORKSHOP_UNLOCK_STEPS: ["*.label", "*.lockedHint", "*.narrative.objective", "*.narrative.completion"],
   TAVERN_CONTRACT_TEMPLATES: ["*.title"],
 
   /* --- Combat, ennemis, compagnons --- */

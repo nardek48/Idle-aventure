@@ -388,8 +388,9 @@ var MissionBoard = {
     var stepsDetail = (window.WORKSHOP_UNLOCK_STEPS || []).map(function (step, idx) {
       var isDone = ready || idx < currentStep;
       var isCurrent = !ready && idx === currentStep;
+      var hint = (isCurrent && step.lockedHint && typeof step.isLocked === "function" && step.isLocked(game)) ? " — " + _td(step.lockedHint) : ""; // v3.429.12
       return {
-        label: _td(step.label),
+        label: _td(step.label) + hint,
         done: isDone,
         current: isCurrent,
         progress: isCurrent ? step.progress(game) : ""
@@ -401,7 +402,9 @@ var MissionBoard = {
     // brut d'étapes "2/4" — plus lisible sur le résumé compact du Campement, qui n'a pas la place
     // pour le détail complet des 4 étapes (réservé à la carte de l'écran Quêtes, stepsDetail).
     var stepProgressLabel = ready ? _t("Prête à réclamer")
-      : (currentStepData ? _td(currentStepData.label) + " (" + currentStepData.progress(game) + ")" : (done + "/" + total));
+      : (currentStepData ? _td(currentStepData.label) + " (" + currentStepData.progress(game) + ")"
+        + ((currentStepData.lockedHint && typeof currentStepData.isLocked === "function" && currentStepData.isLocked(game)) ? " — " + _td(currentStepData.lockedHint) : "") // v3.429.12
+        : (done + "/" + total));
     var m = {
       id: "workshop_foundations", sourceKind: "workshop", worldId: null,
       title: _t("Les fondations"), blurb: _t("Bois, planches, pierre. Assemble-les, et Aeswyn aura son premier mur."),
