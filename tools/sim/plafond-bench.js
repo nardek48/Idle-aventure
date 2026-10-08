@@ -28,6 +28,8 @@ var SUITE = false, PA_POWER = null, PA_HP = null, JOURNEE = false, BRAKE = 1;
 var VOIE_ARG = null, POINTS_ARG = null, NO_TAL_ARG = false;
 var CITE_ARG = null;
 var PRONO = false; // v3.429.7 : --pronostic, verdict de CombatForecast.forDungeon à côté de la mesure
+var FRAPPES = false; // v3.429.14 : --frappes, frappes et dégâts réels contre l'estimation
+var KCHEV = null;    // v3.429.14 : --kchev k, essai : dégâts estimés du Chevalier × k
 var RUNS = 40, ONLY = null, TRAIN = null, PROFIL_FORCE = null, SOLO = false, ELITE_MULT = null, DIFF = null, BOSS = null;
 for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--runs") RUNS = Number(process.argv[ai + 1]) || RUNS;
@@ -44,6 +46,8 @@ for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--journee") JOURNEE = true; // élite répétable : victoires d'une journée avec le frein (LIVING_MAP_RULES)
   if (process.argv[ai] === "--pa") { var pm = String(process.argv[ai + 1]).split(","); PA_POWER = Number(pm[0]); PA_HP = Number(pm[1]); } // puissance,PV des combats de PA // v3.331.0 : seulement les contenus de la suite du recalage
   if (process.argv[ai] === "--pronostic") PRONO = true;
+  if (process.argv[ai] === "--frappes") FRAPPES = true;
+  if (process.argv[ai] === "--kchev") KCHEV = Number(process.argv[ai + 1]); // essai : dégâts du Chevalier estimés × k
   if (process.argv[ai] === "--solo") SOLO = true; // sans compagnons : ce qu'ils portent
   if (process.argv[ai] === "--train") TRAIN = Number(process.argv[ai + 1]); // balayage : entraînement imposé
   if (process.argv[ai] === "--profil") PROFIL_FORCE = process.argv[ai + 1];   // un seul profil pour tous les contenus
@@ -169,6 +173,45 @@ function prepare(c, p, worldIndex, withWenna, withMaddoc) {
   g.game.resources.petite_ration = 5; g.game.resources.ration = 5; // v3.331.0 : vivres (E4), jamais le goulot du banc
 }
 
+/* v3.429.14 : --frappes. Enveloppe enemyTurn (tour au contact -> dégâts estimés du round) et
+   enemyStrike (PV du groupe perdus, par sorte de frappe). Le moteur n'est pas modifié. */
+function installFrappes(F) {
+  var CE = g.CombatEngine;
+  if (!CE._frappesOrig) CE._frappesOrig = { act: CE.performHeroAction, deal: CE.dealDamage, turns: CE.enemiesTurn, turn: CE.enemyTurn, strike: CE.enemyStrike };
+  CE.performHeroAction = function (slot) { // action jouée : répartition par emplacement, héros estimé
+    var ok = CE._frappesOrig.act.apply(CE, arguments);
+    if (ok) { F.slots[slot] = (F.slots[slot] || 0) + 1; F.heroEst += g.CombatForecast.getHeroDamagePerRound(); }
+    return ok;
+  };
+  CE.dealDamage = function (dmg, isCrit, fromTap, ignoreAffinity, target) { // utile = PV réellement retirés (sans excédent)
+    var foe = target || g.game.enemy, hp0 = foe ? Math.max(0, Number(foe.hp || 0)) : 0;
+    var out = CE._frappesOrig.deal.apply(CE, arguments);
+    var hp1 = foe ? Math.max(0, Number(foe.hp || 0)) : 0;
+    if (CE._actingAlly) F.alliesUtile += hp0 - hp1; else { F.heroUtile += hp0 - hp1; F.heroBrut += Number(out || 0); }
+    return out;
+  };
+  CE.enemiesTurn = function () { // un appel par round : dégâts du groupe estimés pour ce round
+    F.rounds++; F.dmgEst += g.CombatForecast.getPartyDamagePerRound();
+    return CE._frappesOrig.turns.apply(CE, arguments);
+  };
+  CE.enemyTurn = function () {
+    var e = g.game.enemy, CF = g.CombatForecast;
+    if (e && e.stats && !e._frappesVu) { // 1er tour de cet ennemi : rounds au contact estimés (comme getAttritionCost)
+      e._frappesVu = true; F.ennemis++; F.pvEnn += Number(e.maxHp || 0);
+      F.toursEst += Math.max(0, Math.ceil(Number(e.maxHp || 0) / Math.max(1, CF.getPartyDamagePerRound())) - CF.getEngageRounds(e));
+    }
+    if (e && e.stats && !(Number(e.engageIn || 0) > 0) && g.game.heroHp > 0) { F.tours++; F.est += g.CombatForecast.getEnemyDamagePerRound(e); }
+    return CE._frappesOrig.turn.apply(CE, arguments);
+  };
+  CE.enemyStrike = function (mult, isPatternOrBonus) {
+    var before = partyHp();
+    var out = CE._frappesOrig.strike.apply(CE, arguments);
+    F.reel += Math.max(0, before - partyHp());
+    if (!isPatternOrBonus) F.normales++; else if (mult === 1) F.secondes++; else F.charges++;
+    return out;
+  };
+}
+
 function autoRound() {
   var mx = g.game.heroMaxHp;
   if (mx > 0 && g.game.heroHp / mx < 0.35 && g.CombatEngine.heroAction("potion", "potion_soin_mineur", "auto")) return true;
@@ -292,6 +335,9 @@ var CONTENUS = [
 function mesure(ct, profilId, c) {
   var p = PROFILS[profilId];
   var n = 0, ok = 0, rounds = 0, hp = 0, pots = 0, v5 = 0, prono = null, usureSum = 0, usureN = 0;
+  if (KCHEV) { var CFk = g.CombatForecast; if (!CFk._hdOrig) CFk._hdOrig = CFk.getHeroDamagePerRound;
+    CFk.getHeroDamagePerRound = function () { var v = CFk._hdOrig.apply(CFk, arguments); return /knight/i.test(String(g.game.heroId)) ? v * KCHEV : v; }; }
+  var F = { heroEst: 0, heroBrut: 0, heroUtile: 0, alliesUtile: 0, slots: {}, rounds: 0, dmgEst: 0, pvEnn: 0, ennemis: 0, toursEst: 0, tours: 0, est: 0, reel: 0, normales: 0, secondes: 0, charges: 0, tourMax: 0 };
   for (var i = 0; i < RUNS; i++) {
     B.seedRng(93000 + i);
     prepare(c, p, ct.world, ct.wenna && !SOLO, ct.maddoc && !SOLO);
@@ -305,6 +351,7 @@ function mesure(ct, profilId, c) {
       prono = fp ? fp.id + " (ratio " + (fp.ratio != null ? fp.ratio.toFixed(2) : "—") + ", usure " + fp.attrition + " / PV " + Math.round(g.game.heroMaxHp) + "+" + fp.healingReserve + ")" : "—";
     }
     var pot0 = Number(g.game.healingPotionsOwned.potion_soin_mineur || 0);
+    if (FRAPPES) installFrappes(F);
     var r = ct.kind === "quest" ? playQuest(ct.ref) : ct.kind === "elite" ? playElite(ct.ref, ct.worldId)
       : ct.kind === "hunt" ? playHunt(ct.ref) : playDungeon(ct.ref);
     if (!r) continue;
@@ -315,7 +362,7 @@ function mesure(ct, profilId, c) {
     if (r.ok) { ok++; rounds += r.rounds; hp += Math.max(0, g.game.heroHp) / g.game.heroMaxHp; }
   }
   if (!n) return null;
-  return { win: ok / n, rounds: ok ? rounds / ok : 0, hp: ok ? hp / ok : 0, pots: pots / n, v5: ct.kind === "dungeon" ? v5 / n : null, prono: prono, usure: usureN ? usureSum / usureN : null, usureN: usureN };
+  return { win: ok / n, rounds: ok ? rounds / ok : 0, hp: ok ? hp / ok : 0, pots: pots / n, v5: ct.kind === "dungeon" ? v5 / n : null, prono: prono, usure: usureN ? usureSum / usureN : null, usureN: usureN, F: FRAPPES ? F : null };
 }
 
 function profilStats(profilId, c) {
@@ -348,6 +395,10 @@ CONTENUS.forEach(function (ct) {
         + (r.v5 != null ? "   vague 5 passée " + Math.round(100 * r.v5) + " %" : "")
         + (r.prono ? "   pronostic " + r.prono : "")
         + (PRONO && r.usure != null ? "   usure réelle " + Math.round(r.usure) + " (" + r.usureN + " runs au boss)" : ""));
+      var nAct = 0; if (r.F) Object.keys(r.F.slots).forEach(function (k) { nAct += r.F.slots[k]; });
+      if (r.F && nAct) console.log("              héros : " + nAct + " actions (" + Object.keys(r.F.slots).map(function (k) { return k + " " + Math.round(100 * r.F.slots[k] / nAct) + " %"; }).join(", ") + ") · estimé " + Math.round(r.F.heroEst / nAct) + " / action · brut " + Math.round(r.F.heroBrut / nAct) + " · utile " + Math.round(r.F.heroUtile / nAct) + " · compagnons utile " + Math.round(r.F.alliesUtile / nAct));
+      if (r.F && r.F.tours) console.log("              groupe : dégâts estimés " + Math.round(r.F.dmgEst / Math.max(1, r.F.rounds)) + " / round · réels ≤ " + Math.round(r.F.pvEnn / Math.max(1, r.F.rounds)) + " (PV ennemis / rounds)");
+      console.log("              frappes : " + r.F.ennemis + " ennemis · tours au contact estimés " + r.F.toursEst + " / réels " + r.F.tours + " (×" + (r.F.tours / Math.max(1, r.F.toursEst)).toFixed(2) + ") · estimé " + Math.round(r.F.est / r.F.tours) + " / tour · réel " + Math.round(r.F.reel / r.F.tours) + " / tour (×" + (r.F.reel / Math.max(1, r.F.est)).toFixed(2) + ") · par tour : " + (r.F.normales / r.F.tours).toFixed(2) + " normale, " + (r.F.secondes / r.F.tours).toFixed(2) + " seconde, " + (r.F.charges / r.F.tours).toFixed(2) + " charge");
     });
   });
 });
