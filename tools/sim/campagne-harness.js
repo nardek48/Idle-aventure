@@ -528,9 +528,8 @@ function obtainIn(res, qty, depth) {
       if (process.env.TRACE_CARTE) console.log("      [carte] " + res + " " + CURRENT_STEP + " victoires du jour " + gagnes + " · frein " + LMc.getBrakeMult(CARTE[res][0], CARTE[res][1]).toFixed(2) + " · " + new RealDate(FakeDate.now()).toDateString());
       if (freeSectorAgain(CARTE[res][0], CARTE[res][1])) { ca.victoires++; continue; }
       if (gagnes <= 0) break;   // perdu sans frein : l'élite est trop forte, pas une question d'attente
-      ca.lendemains++; ca.parJour.push(gagnes);
-      var nowC = FakeDate.now(), dC = new RealDate(nowC);
-      wait(new RealDate(dC.getFullYear(), dC.getMonth(), dC.getDate() + 1).getTime() - nowC + 60e3, "carte : lendemain");
+      ca.parJour.push(gagnes);
+      attendreLendemain();
     }
     if (have() < qty) note(res + " : " + have() + " / " + qty + " après les combats de carte");
     return have() >= qty;
@@ -662,7 +661,9 @@ function freeSector(mapId, sectorId) {
     if (!LM.isLiberated(mapId, cible)) {
       var fr = g.game.sceneRun || {};
       STATS.expeditionFails.push(cible + " (" + (LAST_END || "?") + ", profondeur " + fr.depth + ", Souffle " + fr.breath + ", blessures " + (fr.injuries || []).length + ")");
-      note("secteur " + cible + " : essai " + (essai + 1) + " sans libération (" + LAST_END + ")"); wait(3600e3, "échec à rejouer");
+      note("secteur " + cible + " : essai " + (essai + 1) + " sans libération (" + LAST_END + ")");
+      // élite répétable déjà battue aujourd'hui : le frein reste, un joueur revient le lendemain
+      if (LM.isRepeatable(mapId, cible) && LM.getDailyWins(mapId, cible) > 0) attendreLendemain(); else wait(3600e3, "échec à rejouer");
     }
   }
   return LM.isLiberated(mapId, cible);
@@ -867,6 +868,13 @@ function run() {
     }
     ok(true, "chapitre " + cid + " terminé");
   }
+}
+
+/* Retour au jour civil suivant (le frein des élites répétables retombe). */
+function attendreLendemain() {
+  var ca = STATS.carte = STATS.carte || { victoires: 0, lendemains: 0, parJour: [] }; ca.lendemains++;
+  var now = FakeDate.now(), d = new RealDate(now);
+  wait(new RealDate(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime() - now + 60e3, "carte : lendemain");
 }
 
 /* Où part le temps : combat, soin au camp et chaque cause d'attente (heures). */
