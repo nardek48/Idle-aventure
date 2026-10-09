@@ -1724,7 +1724,7 @@ var CombatEngine = {
         }
       }
     } else if (chance(8)) {
-      this.triggerRandomEvent();
+      this.triggerRandomEvent(goldGain);
     }
 
     saveEquipBagScroll();
@@ -1769,7 +1769,7 @@ var CombatEngine = {
     saveGame();
   },
 
-    triggerRandomEvent: function () {
+    triggerRandomEvent: function (killGold) {
     var events = [
       function () {
         var bonus = randInt(10, 50);
@@ -1781,7 +1781,8 @@ var CombatEngine = {
         }
       },
       function () {
-        var bonus = Math.floor(game.gold * 0.05);
+        // v3.436.1 (bug Seb) : 5 × l'or du kill ; l'ancien 5 % de la bourse faisait croître l'or de façon exponentielle
+        var bonus = Math.floor(Math.max(0, Number(killGold) || 0) * 5);
         if (bonus > 0) {
           CombatEngine.grantGold(bonus);
           addLog("✨ " + _t("Bénédiction ! +{n} or", { n: formatNumber(bonus) }), "event");

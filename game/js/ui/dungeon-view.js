@@ -400,9 +400,13 @@ function buildDungeonSummaryHTML(result) {
     var names = result.marks.map(function (id) { var m = DungeonManager.getMark(id); return m ? _td(m.name) : id; }).join(", ");
     h += '      <div class="dungeon-summary-row"><span>' + _t("Marques") + '</span><span>×' + Number(result.markMult || 1).toFixed(2).replace(/0$/, "") + ' · ' + esc(names) + '</span></div>';
   }
-  h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/gold_icon.png> ' + _t("Or") + '</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
+  // v3.436.1 (bug Seb) : l'or ramassé dans les vagues est versé aussi ; le rapport l'affiche avec la prime et le total
+  var wavesGold = Number(result.wavesGold || 0), campGold = Number((result.campLoot && result.campLoot.gold) || 0);
+  if (wavesGold > 0) h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/gold_icon.png> ' + _t("Butin des vagues") + '</span><span>+' + formatNumber(wavesGold) + '</span></div>';
+  h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/gold_icon.png> ' + (wavesGold > 0 ? _t("Prime de fin") : _t("Or")) + '</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
   // v3.430.0 : ce que le campement avait déjà mis en sûreté (étape 1)
   if (result.campLoot && result.campLoot.gold > 0) h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/camp/campfire.png> ' + _t("En sûreté au campement") + '</span><span>+' + formatNumber(result.campLoot.gold) + ' ' + _t("or") + '</span></div>';
+  if (wavesGold > 0 || campGold > 0) h += '      <div class="dungeon-summary-row"><span><b>' + _t("Total or") + '</b></span><span><b>+' + formatNumber(wavesGold + campGold + Number(result.goldReward || 0)) + '</b></span></div>';
   h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + _t("Éclats") + '</span><span>+' + formatNumber(result.shardsGained) + '</span></div>';
   if (result.specialGained > 0 && result.specialName) {
     h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/scene/path_easy.png> ' + esc(_td(result.specialName)) + '</span><span>+' + result.specialGained + '</span></div>';

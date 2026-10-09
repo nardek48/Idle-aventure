@@ -706,7 +706,9 @@ var DungeonManager = {
         markMult: markMult,
         // v3.430.0 : sortie par le campement, et le butin de l'étape 1 mis en sûreté
         outcome: outcome || (success ? "success" : null),
-        campLoot: campLoot
+        campLoot: campLoot,
+        // v3.436.1 (bug Seb) : l'or des vagues, banqué par SortieManager.end, absent du rapport jusqu'ici
+        wavesGold: (game.lastSortieSummary && game.lastSortieSummary.context === "dungeon" && game.lastSortieSummary.kept) ? Number(game.lastSortieSummary.kept.gold || 0) : 0
       });
     }
 
