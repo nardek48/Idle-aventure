@@ -120,6 +120,9 @@ function renderHudDock() {
   var root = document.getElementById("hud-dock");
   if (!root) { mountHudDock(); root = document.getElementById("hud-dock"); if (!root) return; }
   var fil = hudDockFil(), list = hudDockOrder(fil, hudDockItems());
+  // v3.429.24 : l'or à investir, en plus des trois situations, tout en haut (loin du pouce)
+  var or = typeof hudDockOr === "function" ? hudDockOr() : null;
+  if (or) list.unshift(or);
   var key = list.map(function (it) { return it.k + ":" + (it.badge || "") + ":" + (it.urgent ? 1 : 0) + ":" + (it.id || "") + ":" + it.icon; }).join("|");
   if (key === hudDockLastKey) return;
   hudDockLastKey = key;

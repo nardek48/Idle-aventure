@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.429.23"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.429.24"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -192,6 +192,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/heros-screens-view.js",
   "./js/ui/hud-view.js",
   "./js/ui/fil-rouge-view.js",
+  "./js/ui/or-a-investir-view.js", // v3.429.24 : NOUVEAU fichier (bulle « or à investir »)
   "./js/ui/hud-dock-view.js", // v3.396.0 : NOUVEAU fichier (bulles de raccourci du HUD)
   "./js/ui/return-view.js",
   "./js/ui/boss-moment-view.js",

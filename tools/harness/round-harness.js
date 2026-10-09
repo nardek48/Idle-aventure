@@ -12820,6 +12820,18 @@ console.log("\n[169] v3.396.0 — HUD-1 : bandeau « C · Ornée » et bulles de
     var it = g.hudDockItems();
     ok(it.length === 2 && it[0].k === "talent" && it[0].badge === "2" && it[1].k === "bag" && it[1].badge === "3", "talents (2 points) puis sac (3 objets), avec leurs nombres");
     g.getTalentsAvailableCount = tc0;
+
+    /* v3.429.24 : bulle « or à investir » — seulement pour une dépense payable, et une seule fois */
+    ok(idx.indexOf("js/ui/or-a-investir-view.js") > 0 && idx.indexOf("js/ui/or-a-investir-view.js") < idx.indexOf("js/ui/hud-dock-view.js") && sw.indexOf("./js/ui/or-a-investir-view.js") > 0,
+      "or-a-investir-view.js chargé avant le dock et précaché");
+    game.upgrades = {}; game.gold = 500; g.orInvestReset();
+    ok(g.hudDockOr() === null, "moins de 1 000 or : pas de bulle d'or");
+    game.gold = 5000; g.orInvestReset();
+    var oi = g.hudDockOr(), ol = g.orInvestList();
+    ok(!!oi && oi.k === "or" && ol.some(function (x) { return x.id.indexOf("t:") === 0; }), "5 000 or et un entraînement payable : bulle d'or");
+    ol.forEach(function (x) { g.orInvestSeen[x.id] = true; }); g.orInvestReset();
+    ok(g.hudDockOr() === null, "dépenses déjà montrées : la bulle se tait");
+    g.orInvestSeen = {}; g.orInvestReset(); game.gold = 0;
   } catch (err) {
     ok(false, "[169] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }

@@ -42,6 +42,27 @@ Maquette de référence : atelier-evolutions.html.
   cursor: pointer;
 }
 
+/* ---------- 1 bis. Or à investir (v3.429.24, ui/or-a-investir-view.js) ---------- */
+.oi-bg.kwin-veil { z-index: 9000; }
+.oi-win .kwin-body { text-align: left; }
+.oi-best { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 10px; padding: 10px; border-radius: 12px; border: 2px solid var(--c-brown-550-vivid); background: rgba(255, 248, 232, 0.55); }
+.oi-best .oi-best-ico { grid-row: span 2; width: 44px; height: 44px; object-fit: contain; }
+.oi-best-txt b { display: block; font-size: 15px; line-height: 1.2; }
+.oi-best-txt span { display: block; font-size: 13px; line-height: 1.35; color: var(--sheet-ink-dim); }
+.oi-cost { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.oi-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 9px; background: rgba(107, 74, 34, 0.14); font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.oi-chip .oi-chip-ico { width: 18px; height: 18px; object-fit: contain; }
+.oi-chip.is-ok { color: var(--c-green-650-2); }
+.oi-chip.is-ko { color: var(--c-red-600); background: rgba(179, 38, 30, 0.1); }
+.oi-hint { grid-column: 1 / -1; margin: 2px 0 0; font-size: 13px; line-height: 1.35; }
+.oi-also { margin: 12px 0 0; font-size: 12px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; color: var(--sheet-ink-dim); }
+.oi-alt { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; margin-top: 6px; padding: 6px 10px; border-radius: 10px; border: 1.5px solid rgba(138, 92, 20, 0.45); background: rgba(255, 248, 232, 0.35); color: var(--sheet-ink); font: inherit; font-size: 14px; font-weight: 700; text-align: left; cursor: pointer; }
+.oi-alt .oi-alt-ico { width: 30px; height: 30px; object-fit: contain; flex: none; }
+.oi-alt-lbl { flex: 1 1 auto; min-width: 0; }
+.oi-alt-lbl small { display: block; font-size: 12px; font-weight: 600; color: var(--sheet-ink-dim); }
+.oi-alt-px { flex: none; display: inline-flex; align-items: center; gap: 3px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.oi-alt-px .oi-px-ico { width: 16px; height: 16px; object-fit: contain; }
+
 /* ---------- 2. Écran de retour ---------- */
 /* v3.400.0 (lot F-2) : fenêtre .kwin ; ne restent que l'étagement et le contenu */
 .ret-bg.kwin-veil { z-index: 8500; }
