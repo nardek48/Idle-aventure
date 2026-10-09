@@ -65,14 +65,9 @@ function gameLoop() {
     ProductionManager.tick(dt);
   }
 
-  if (window.PotionManager && typeof PotionManager.tick === "function") {
-    var potionExpired = PotionManager.tick();
-    game._potionUiTimer = (game._potionUiTimer || 0) + dt;
-    if (potionExpired || game._potionUiTimer >= 1) {
-      game._potionUiTimer = 0;
-      if (game.activeTab === "shop" && typeof renderPanel === "function") renderPanel();
-    }
-  }
+  // v3.429.20 (accord Seb) : plus de redessin de la Boutique chaque seconde. Les potions n'ont plus de
+  // minuteur (elles valent pour le run) ; le rendu identique remplacé en plein défilement saccadait.
+  if (window.PotionManager && typeof PotionManager.tick === "function") PotionManager.tick();
 
   // v3.327.0 : l'Essence cachée de « Cœur vaillant » est retirée avec le talent (T9)
 
