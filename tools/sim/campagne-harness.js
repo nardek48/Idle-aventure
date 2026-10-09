@@ -182,6 +182,8 @@ function fightCombat(maxKills) {
       if (kills > (maxKills || 60) + 1) { note("combat : plus de " + maxKills + " ennemis"); return false; }
       rec = { step: CURRENT_STEP, name: e.name, kind: e.isBoss ? "boss" : (e.isElite ? "élite" : "normal"), hp0: g.game.heroHp / (g.game.heroMaxHp || 1), rounds: 0, potions: 0, died: false };
     }
+    // v3.433.0 : halte du Sanctuaire — le joueur souffle (dans le jeu, la feuille bloque le combat)
+    if (g.DungeonManager && g.DungeonManager.isCampPending && g.DungeonManager.isCampPending()) { g.DungeonManager.campAction("souffler"); STATS.camps = (STATS.camps || 0) + 1; continue; }
     if (POTION_AUTO) g.game.potionAuto = { threshold: POTION_AUTO, keepForBoss: true };
     var ratio = g.game.heroHp / (g.game.heroMaxHp || 1);
     if (POTION_MAIN && ratio < 0.30) {
@@ -398,6 +400,7 @@ function winCombat(maxKills) {
   if (COMBATS && !FORCE) return fightCombat(maxKills);
   var g = G;
   for (var i = 0; i < (maxKills || 60); i++) {
+    if (g.DungeonManager.isCampPending && g.DungeonManager.isCampPending()) g.DungeonManager.campAction("souffler"); // v3.433.0
     var e = g.game.enemy;
     if (!e || !g.hasCombatQuestContext()) return true;
     g.game.heroHp = Math.max(g.game.heroHp || 1, g.game.heroMaxHp || 1);
@@ -493,6 +496,8 @@ function obtain(res, qty, depth) {
     if (have() < qty) note(res + " : " + have() + " / " + qty + " après les combats de carte");
     return have() >= qty;
   }
+  // 0 bis. v3.433.0 : la Pierre errante (chantier du jour, Sanctuaire, Petite Aventure des Ruines)
+  if (res === "pierre_errante") return obtainPierre(qty);
   // 1. une zone de production la donne ?
   var bid = Object.keys(g.PRODUCTION_BUILDINGS).filter(function (id) { return g.PRODUCTION_BUILDINGS[id].resourceKey === res; })[0];
   if (bid) {
@@ -518,6 +523,22 @@ function obtain(res, qty, depth) {
     for (var t = 0; t < 48 && g.WorkshopsSystem.getQueue(wid).length; t++) wait(10 * 60e3);
   }
   if (have() < qty) note(res + " : " + have() + " / " + qty + " après fabrication");
+  return have() >= qty;
+}
+
+/* v3.433.0 : des Pierres errantes. D'abord le chantier du jour (+3), puis une sortie au Sanctuaire
+   (1 au campement, 2 en fin de run) s'il est ouvert, sinon une Petite Aventure des Ruines. */
+function obtainPierre(qty) {
+  var g = G, LM = g.LivingMapManager, have = function () { return g.WarehouseManager.getAmount("pierre_errante"); };
+  var t0 = CLOCK.offset;
+  for (var k = 0; k < 60 && have() < qty; k++) {
+    var c = LM.getChantier && LM.getChantier("ruins");
+    if (c && c.sectorId && !c.done && LM.canStart("ruins", c.sectorId).ok) { freeSector("ruins", c.sectorId); continue; }
+    if (g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (playDungeonOnce(3, false) === null) wait(3600e3); continue; }
+    if (!playExpedition("petite_aventure_ruines", null)) wait(3600e3);
+  }
+  STATS.pierreH = (STATS.pierreH || 0) + (CLOCK.offset - t0) / 3600e3;
+  if (have() < qty) note("pierre_errante : " + have() + " / " + qty);
   return have() >= qty;
 }
 
@@ -747,7 +768,7 @@ function run() {
   ok(G.game.playerName === "Robot" && G.game.heroId, "héros créé (" + G.game.heroId + ")");
   G.saveGame();
 
-  var chapters = ["forest", "desert", "ruins"]; // v3.428.0 : chapitre III (acte I)
+  var chapters = ["forest", "desert", "ruins"]; // v3.428.0 : chapitre III ; v3.433.0 : ses 20 étapes
   var t0 = Date.now();
   for (var c = 0; c < chapters.length; c++) {
     var cid = chapters[c];
@@ -762,7 +783,7 @@ function run() {
       CURRENT_STEP = step.id;
       // v3.423.0 : TRACE_FORCE=1 relève la force du héros à chaque étape (référence des ajustements de difficulté)
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
-      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
+      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
       var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
       G.StoryQuestManager.acceptStep(cid);
       var solver = SOLVERS[step.id];
@@ -948,7 +969,9 @@ function gearRarity(rarity, n, needWeapon) {
     });
     if (done()) break;
     var orAvant = g.game.gold;
-    farmOnce();
+    // v3.433.0 : le Rare se trouve au Sanctuaire (butin de fin de run, et sac de la sortie)
+    if (rarity === "rare" && g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (playDungeonOnce(3, false) === null) farmOnce(); }
+    else farmOnce();
     if (process.env.TRACE_OR) console.log("      [or] " + Math.floor(orAvant) + " → " + Math.floor(g.game.gold) + " (farm) · équipé " + g.EQUIPMENT_SLOTS.map(function (s) { var it = g.game.equipped[s]; return s + ":" + (it ? it.rarity : "-"); }).join(",") + " · vitrine " + (g.game.equipShopStock || []).map(function (it) { return it.slot + "/" + it.rarity + "/" + it.price + (it.bought ? "✓" : ""); }).join(" ") + " · sac " + (g.game.inventory || []).length);
     wait(2 * 3600e3);   // le joueur repasse à l'échoppe quelques heures plus tard
   }
@@ -1059,6 +1082,36 @@ var SOLVERS = {
     part("reforge armure " + P.reforge, function () { reforgeTo("armor", P.reforge); });
   },
   ruines_10: function (g) { playAdventure("aq_ruines_salle"); },
+  // v3.433.0 (Ruines, actes III et IV)
+  ruines_11: function (g) { freeSector("ruins", "porte_sanctuaire"); },
+  ruines_12: function (g) { playDungeon(3, false, function () { return g.storySanctuaireCamp(g.game); }); },
+  ruines_13: function (g) {
+    var P = g.STORY_PALIER_RUINES_RARE;
+    function part(nom, fn) {
+      var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
+      fn();
+      (STATS.r13 = STATS.r13 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
+    }
+    part(P.pieces + " Rares", function () { gearRarity("rare", P.pieces, true); });
+    part("Forge " + P.forge, function () { upgradeBuilding("forge", P.forge); });
+    part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
+  },
+  ruines_14: function (g, step) { playAdventure("aq_ruines_golem"); choiceStep(g, step); },
+  ruines_15: function (g) { if (!(g.game.dungeonTierCleared || {})[3]) playDungeon(3, false); },
+  ruines_16: function (g) {
+    var d = g.LivingMapManager.getSectorDef("ruins", "coeur");
+    for (var i = 0; i < 8 && g.storyCoeurVoisins() < 3; i++) {
+      var id = d.neighbors.filter(function (n) { return !g.LivingMapManager.isLiberated("ruins", n); })[0];
+      if (!id || !freeSector("ruins", id)) wait(3600e3);
+    }
+  },
+  ruines_17: function (g) { playExpedition("vers_le_coeur", function () { return g.storyDesertFlag("versLeCoeurDone"); }); },
+  ruines_18: function (g) { playAdventure("aq_ruines_coeur"); },
+  ruines_19: function (g) { playAdventure("aq_ruines_plan"); },
+  ruines_20: function (g) {
+    var val = ARGS.indexOf("--tomber") >= 0 ? "tomber" : "finir";
+    if (!g.storyMakeChoice("ruins", val)) note("choix refusé (plan)");
+  },
   desert_18: function (g, step) {
     var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
     if (!g.storyMakeChoice("desert", val)) note("choix refusé (roi)");
@@ -1111,6 +1164,7 @@ catch (e) { ok(false, "interrompu : " + e.message + "\n" + String(e.stack).split
 if (COMBATS) {
   console.log("Renforcement (lots de chasse joués pour débloquer) : " + JSON.stringify(STATS.grinds) + " · " + (STATS.grindMs / 3600e3).toFixed(1) + " h" + (Object.keys(STATS.grindNone).length ? " · rien à farmer pendant : " + JSON.stringify(STATS.grindNone) : ""));
   Object.keys(STATS.goldFarm).forEach(function (k) { var f = STATS.goldFarm[k]; console.log("Farm " + k + " : " + f.lots + " lots, " + Math.round(f.or / Math.max(1, f.lots)) + " or par lot, " + Math.round(f.or / Math.max(0.01, f.h)) + " or par heure (soin compris), " + f.morts + " morts"); });
+  if (STATS.r13 && STATS.r13.length) console.log("ruines_13 : " + STATS.r13.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · ") + " · Pierres errantes cherchées : " + (STATS.pierreH || 0).toFixed(0) + " h · campements : " + (STATS.camps || 0));
   if (STATS.r09 && STATS.r09.length) console.log("ruines_09 : " + STATS.r09.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · "));
   if (STATS.d13.length) console.log("desert_13 : " + STATS.d13.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, Inhabituels portés au départ " + d.verts0 + ", or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · "));
   console.log("Quêtes d'élite : " + (STATS.elites.map(function (e) { return e.quest + (e.ok ? " ✔" : " ✘") + " (" + e.step + ", " + e.essais + " essai" + (e.essais > 1 ? "s" : "") + ")"; }).join(" · ") || "aucune"));
