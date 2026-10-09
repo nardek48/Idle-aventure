@@ -594,6 +594,26 @@ var MissionBoard = {
     return m;
   },
 
+  /* v3.434.0 (Ruines, RU12) : le Labyrinthe aux leviers, après l'étape 10. Réserve à part
+     (3 descentes, une revient toutes les 4 h) ; accepter = descendre, comme une Petite Aventure. */
+  _labyrinthMissions: function () {
+    var L = window.LabyrinthRun;
+    if (!L || !L.isUnlocked()) return [];
+    var run = L.getRun(), running = !!(run && run.status !== "completed"), left = L.reserveLeft(), cap = LABYRINTH_CONFIG.reserve;
+    var blurb = _td(LABYRINTH_TEXTS.blurb);
+    if (!running && left <= 0) blurb += " " + _t("Prochaine descente dans {d}", { d: SceneRunManager.formatPetiteAventureWait(L.nextInMs()) }) + ".";
+    var m = {
+      id: "labyrinthe", sourceKind: "scene", worldId: LABYRINTH_CONFIG.worldId, isLabyrinth: true,
+      title: _td(LABYRINTH_TEXTS.title), blurb: blurb, type: "expedition", place: "", objectiveLabel: "",
+      progressLabel: running ? _t("En cours") : "",
+      rewardSummary: (!running && left > 0) ? _t("{a}/{b} descentes", { a: left, b: cap }) : "",
+      badge: "contract", status: running ? "running" : (left > 0 ? "available" : "unavailable"), isMain: false
+    };
+    if (running) m.launch = function () { if (typeof labLaunch === "function") labLaunch(); };
+    else if (left > 0) m.accept = function () { if (typeof labLaunch === "function") labLaunch(); };
+    return [m];
+  },
+
   /* ---------- Agrégation ---------- */
   /* Toutes les missions actives/proposables, Histoire en tête, triées par priorité (isMain, puis claimable > running > available). */
   /* v3.301.0 (W-2b) — LE TABLEAU MONTRE LE MONDE OÙ TU ES. Une quête d'un autre monde est
@@ -626,7 +646,7 @@ var MissionBoard = {
     var self = this;
     var groups = [this._storyMissions(), // v3.299.0 (W-1c) : questlines de monde retirées
       this._adventureMissions(), this._huntMissions(), this._dungeonMissions(), this._sceneMissions(), this._workshopMissions(),
-      this._villageMissions(), this._petiteAventureMissions()]; // v3.116.0 : _contractMissions (journalières) retirées
+      this._villageMissions(), this._petiteAventureMissions(), this._labyrinthMissions()]; // v3.434.0 : le Labyrinthe aux leviers // v3.116.0 : _contractMissions (journalières) retirées
     var all = [].concat.apply([], groups);
     var rank = { story: 0 }; // l'Histoire garde toujours le rang 0 (colonne vertébrale, LIGNE_DIRECTRICE §3)
     var statusRank = { claimable: 0, ready: 0, running: 1, accepted: 1, available: 2, locked: 3 };

@@ -145,7 +145,7 @@ var SceneRunManager = {
   getRun: function () {
     this.ensureDefaults();
     var run = game.sceneRun;
-    if (run && !run.pa2) { this._retireLegacyRun(run); return null; }
+    if (run && !run.pa2 && !run.lab) { this._retireLegacyRun(run); return null; } // v3.434.0 : le labyrinthe est un run à part
     return run;
   },
 
@@ -242,6 +242,7 @@ var SceneRunManager = {
   /* abandon() : quitter l'expédition (garde de switchTab, bouton retour). Sans run, ne fait rien. */
   abandon: function () {
     var run = this.getRun();
+    if (run && run.lab && run.status !== "completed" && window.LabyrinthRun) return LabyrinthRun.abandon(); // v3.434.0
     if (!run || run.status === "completed" || !window.Pa2Run) return { ok: false, reason: _t("Aucune expédition en cours") };
     return Pa2Run.abandon();
   },

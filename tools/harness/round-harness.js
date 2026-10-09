@@ -14549,5 +14549,118 @@ console.log("\n[209] v3.433.0 — Ruines, acte IV (livraison 2) : le Maître d'�
   }
 })();
 
+console.log("\n[210] v3.434.0 — Ruines : le Labyrinthe aux leviers (livraison 1)");
+(function () {
+  var SQ = g.StoryQuestManager, L = g.LabyrinthRun, savedReach = SQ.isStepReached;
+  /* Le joueur parfait : le plus court chemin (pas et tirages) depuis la position actuelle */
+  function plan(run) {
+    var F = run.F, seen = {}, q = [{ k: run.at, bits: run.bits, path: [] }]; seen[run.at + "#" + run.bits] = 1;
+    while (q.length) {
+      var st = q.shift(); if (st.k === F.stairs) return st.path;
+      var mv = [];
+      L.nbrs(F, st.k).forEach(function (m) { if (L.isOpen(F, L.door(st.k, m), st.bits)) mv.push({ k: m, bits: st.bits, path: st.path.concat([m]) }); });
+      F.levers.forEach(function (lk, li) { if (lk === st.k) mv.push({ k: st.k, bits: st.bits ^ F.map[li], path: st.path.concat(["#" + li]) }); });
+      mv.forEach(function (m) { var id = m.k + "#" + m.bits; if (!seen[id]) { seen[id] = 1; q.push(m); } });
+    }
+    return null;
+  }
+  function playFloor() {
+    var run = L.getRun(), p = plan(run);
+    if (!p) return false;
+    for (var i = 0; i < p.length; i++) {
+      if (L.getRun().status !== "lab-map") return false;
+      if (p[i].charAt(0) === "#") { var li = +p[i].slice(1); if (li === run.F.guarded && run.guardUp) L.fightGuard(li); if (!L.pull(li).ok) return false; }
+      else if (!L.move(p[i]).ok) return false;
+      if (run.foe) run.foe.stun = 99; // le Contremaître est mesuré à part
+    }
+    return run.at === run.F.stairs;
+  }
+  try {
+    var game = freshCombat("knight");
+    var C = g.LABYRINTH_CONFIG;
+    ok(C && C.reserve === 3 && C.requiresStoryStep === "ruines_11" && C.entryCost.resourceId === "petite_ration", "réglages : 3 descentes, après l'étape 10, 1 Petite ration");
+    ok(!L.isUnlocked(), "fermé tant que l'étape 10 n'est pas franchie");
+    /* --- Génération : tous les étages tirés sont jouables --- */
+    var bad = 0, sizes = {}, okLev = true;
+    for (var n = 1; n <= 10; n++) for (var t = 0; t < 40; t++) {
+      var F = L.genFloor(n);
+      if (!F || !L.solve(F)) { bad++; continue; }
+      sizes[n] = F.w + "x" + F.h;
+      if (F.levers.length !== 2 || (F.guarded !== 0 && F.guarded !== 1) || F.pivots.length < (n >= 2 ? 2 : 1)) okLev = false;
+    }
+    ok(bad === 0, "400 étages tirés (étages 1 à 10) : tous jouables (" + bad + " sans issue)");
+    ok(okLev, "deux leviers par étage, un seul gardé ; une porte-pan à l'étage 1, deux ensuite");
+    ok(sizes[1] === "5x6" && sizes[10] === "6x8", "les étages grandissent : 5 × 6, puis 6 × 8 en profondeur");
+    var F5 = L.genFloor(5); ok(F5.boss && !L.genFloor(4).boss, "le Gardien du plan garde l'escalier tous les 5 étages");
+    /* --- Départ --- */
+    SQ.isStepReached = function (id) { return id === "ruines_11" ? true : savedReach.call(SQ, id); };
+    ok(L.isUnlocked(), "ouvert une fois l'étape 10 franchie");
+    game.sceneRun = null; game.explorationProgression.labyrinth = null;
+    g.WarehouseManager.addResource("petite_ration", 3);
+    var ra = g.WarehouseManager.getAmount("petite_ration");
+    var r = L.start();
+    ok(r.ok && game.sceneRun && game.sceneRun.lab && game.sceneRun.floor === 1, "départ : un run « lab » à l'étage 1");
+    ok(g.WarehouseManager.getAmount("petite_ration") === ra - 1 && L.reserveLeft() === 2, "le départ coûte 1 Petite ration et une descente");
+    ok(g.SceneRunManager.getRun() === game.sceneRun && g.SceneRunManager.isHeroEngaged(), "le run n'est pas pris pour un ancien run ; le héros est engagé");
+    ok(g.Pa2Run.getRun() === null, "les Petites Aventures ne le voient pas");
+    ok(/lab-root/.test(run("buildSceneScreenHTML()")), "l'onglet « scene » affiche le labyrinthe");
+    ok(!L.start().ok, "pas de seconde descente pendant la première");
+    /* --- Combats résolus --- */
+    var estSaved = null;
+    var eg = L.estimate("guard"), ef = L.estimate("foe"), eb = L.estimate("boss");
+    ok(eg && ef && eb && isFinite(eg.hpLoss) && isFinite(ef.hpLoss) && isFinite(eb.hpLoss) && eg.hpLoss > 0, "estimations : garde " + eg.hpLoss + ", Contremaître " + ef.hpLoss + ", Gardien " + eb.hpLoss + " PV (héros " + game.heroMaxHp + " PV)");
+    /* --- Un étage joué au plus court (héros du harnais très solide : on teste la mécanique, pas les chiffres) --- */
+    var maxHp0 = game.heroMaxHp; game.heroMaxHp = 1e7; game.heroHp = 1e7;
+    estSaved = L.estimate; L.estimate = function (kind) { return { kind: kind, foeName: "test", hpLoss: 10, unwinnable: false, verdict: "leger" }; };
+    var b0 = game.sceneRun.breath;
+    ok(playFloor(), "étage 1 : le plus court chemin mène à l'escalier");
+    ok(game.sceneRun.breath < b0, "le Souffle baisse à chaque pas et à chaque tirage");
+    ok(Object.keys(game.sceneRun.knownPiv).length >= 1, "Edda a noté au moins un pan sur sa carte");
+    var bag0 = game.sceneRun.stones, gain = L.claimStairs();   // le chemin peut traverser le coffre oublié
+    ok(gain && gain.stones === 2 && game.sceneRun.stones === bag0 + 2 && !L.claimStairs(), "l'escalier rapporte 2 Pierres errantes à l'étage 1, une seule fois");
+    var saved = JSON.parse(JSON.stringify(run("buildSaveData()")));
+    ok(saved.sceneRun && saved.sceneRun.lab && saved.sceneRun.F && saved.sceneRun.F.pivots.length >= 1, "la descente en cours est dans la sauvegarde (reprise après rechargement)");
+    ok(L.descend().ok && game.sceneRun.floor === 2 && game.sceneRun.foe, "descendre : étage 2, le Contremaître traque");
+    /* --- Le Contremaître --- */
+    var run2 = game.sceneRun; run2.foe.stun = 0; run2.foe.every = 1;
+    var near = L.nbrs(run2.F, run2.at).filter(function (m) { return L.openNow(run2, L.door(run2.at, m)); })[0];
+    run2.foe.at = near; var hp0 = game.heroHp;
+    var mv = L.move(near);
+    ok(mv.event === "caught" && game.heroHp < hp0 && run2.foe.stun > 0 && run2.foe.at !== run2.at, "le Contremaître rattrape le héros : PV perdus, puis il recule, sonné");
+    /* --- Remonter avec le sac --- */
+    var pe = g.WarehouseManager.getAmount("pierre_errante"), bagAll = game.sceneRun.stones;
+    var end = L.finish("remonte");
+    ok(end && end.how === "remonte" && game.sceneRun.status === "completed", "remonter : la descente se termine");
+    ok(g.WarehouseManager.getAmount("pierre_errante") - pe === bagAll && bagAll >= 2, "remonter garde tout le sac (" + bagAll + " Pierres errantes)");
+    run("leaveSceneScreen()");
+    game.heroMaxHp = maxHp0; game.heroHp = maxHp0; L.estimate = estSaved;
+    /* --- Tomber : la moitié du sac, la descente rendue --- */
+    r = L.start(); ok(r.ok && L.reserveLeft() === 1, "deuxième descente");
+    L._gain(game.sceneRun, 4, 400);
+    pe = g.WarehouseManager.getAmount("pierre_errante");
+    game.heroHp = 1; L._hit(game.sceneRun, { hpLoss: 50, unwinnable: false });
+    ok(game.sceneRun.status === "completed" && game.sceneRun.end.how === "ko", "PV à 0 : on tombe");
+    ok(g.WarehouseManager.getAmount("pierre_errante") - pe === 2, "tomber ne garde que la moitié du sac");
+    ok(L.reserveLeft() === 2, "un échec subi rend la descente (comme une Petite Aventure)");
+    run("leaveSceneScreen()");
+    /* --- Abandon par l'onglet, réserve vide, tableau --- */
+    game.heroHp = game.heroMaxHp;
+    L.start(); g.SceneRunManager.abandon();
+    ok(game.sceneRun.end && game.sceneRun.end.how === "abandon", "quitter l'onglet en pleine descente : abandon (la moitié du sac)");
+    run("leaveSceneScreen()");
+    game.explorationProgression.labyrinth.spent = 3; game.explorationProgression.labyrinth.since = Date.now();
+    ok(!L.canStart().ok && /Prochaine descente/.test(L.canStart().reason), "réserve vide : la prochaine descente revient dans 4 h");
+    game.explorationProgression.labyrinth.since = Date.now() - 4 * 3600e3 - 1000;
+    ok(L.reserveLeft() === 1, "une descente revient toutes les 4 h");
+    var lm = g.MissionBoard.list({ allWorlds: true }).filter(function (m) { return m.id === "labyrinthe"; })[0];
+    ok(lm && lm.isLabyrinth && lm.status === "available" && typeof lm.accept === "function", "la mission est sur le tableau, prête à descendre");
+  } catch (err) {
+    ok(false, "[210] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.isStepReached = savedReach; if (typeof estSaved === "function") L.estimate = estSaved;
+    if (g.game) { g.game.sceneRun = null; if (g.game.explorationProgression) g.game.explorationProgression.labyrinth = null; }
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

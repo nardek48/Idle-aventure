@@ -111,7 +111,8 @@ function buildQuestBoardActionHTML(m) {
   // même habillage visuel que "locked" (qb-card-locked, is-locked sur la carte).
   // v3.366.0 : les places se rechargent une à une — on dit quand revient la prochaine
   if (m.status === "unavailable") return '<span class="qb-card-locked"><img class=ico-inline src=images/Icons/system/hourglass_waiting.png> '
-    + (m.isPetiteAventure && window.SceneRunManager ? esc(_t("Dans {d}", { d: SceneRunManager.formatPetiteAventureWait(SceneRunManager.petiteAventureNextInMs()) })) : _t("Revenez demain")) + '</span>';
+    + (m.isLabyrinth && window.LabyrinthRun ? esc(_t("Dans {d}", { d: SceneRunManager.formatPetiteAventureWait(LabyrinthRun.nextInMs()) })) // v3.434.0
+      : m.isPetiteAventure && window.SceneRunManager ? esc(_t("Dans {d}", { d: SceneRunManager.formatPetiteAventureWait(SceneRunManager.petiteAventureNextInMs()) })) : _t("Revenez demain")) + '</span>';
   return "";
 }
 

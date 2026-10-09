@@ -17,6 +17,7 @@ window.sceneStatLabel = sceneStatLabel;
 function buildSceneScreenHTML() {
   var run = SceneRunManager.getRun();
   if (run && run.end && run.end.how === "cancel") { SceneRunManager.clearRun(); run = null; } // préparation abandonnée : rien à montrer
+  if (run && run.lab && window.buildLabyrinthScreenHTML) return buildLabyrinthScreenHTML(run); // v3.434.0 : le Labyrinthe aux leviers
   if (run && window.buildPa2ScreenHTML) return buildPa2ScreenHTML(run);
   return buildSceneLandingHTML();
 }
