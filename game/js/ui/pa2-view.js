@@ -92,6 +92,26 @@ function pa2RareName(worldId) {
   return res ? _td(res.name) : "";
 }
 function pa2Dests(run) { return (PA2_DESTS[run.worldId] || PA2_DESTS.forest); }
+/* v3.429.16 : textes du lieu, par monde. Ils disaient « la forêt » au Désert et aux Ruines.
+   Littéraux _t() pour l'audit i18n ; la Forêt garde ses textes d'origine. */
+function pa2Words(run) {
+  var w = run && run.worldId;
+  if (w === "desert") return {
+    enter: _t("Entrer dans le désert"), listen: _t("Écouter le désert"), home: _t("Tu as choisi de rentrer avant la nuit profonde. Le désert garde ses secrets. Tu gardes ton butin."),
+    koHalf: _t("Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste dans le sable."),
+    koAll: _t("Le silence, d'un coup. Puis des voix, des mains. Tout ce que tu portais reste dans le sable."),
+    take: _t("Fouiller les tentes"), takeIcon: null };
+  if (w === "ruins") return {
+    enter: _t("Entrer dans les ruines"), listen: _t("Écouter les ruines"), home: _t("Tu as choisi de rentrer avant la nuit profonde. Les ruines gardent leurs secrets. Tu gardes ton butin."),
+    koHalf: _t("Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste dans les ruines."),
+    koAll: _t("Le silence, d'un coup. Puis des voix, des mains. Tout ce que tu portais reste dans les ruines."),
+    take: _t("S'approcher du puits"), takeIcon: null };
+  return {
+    enter: _t("Entrer dans la forêt"), listen: _t("Écouter la forêt"), home: _t("Tu as choisi de rentrer avant la nuit profonde. La forêt garde ses secrets. Tu gardes ton butin."),
+    koHalf: _t("Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste dans la forêt."),
+    koAll: _t("Le silence, d'un coup. Puis des voix, des mains. Tout ce que tu portais reste dans la forêt."),
+    take: _t("Prendre la lanterne qui t'attend"), takeIcon: PA2_ITEMS.veilleurs.icon };
+}
 function pa2Hook(run) { return run.hookId ? PA2_HOOKS[run.hookId] : null; }
 
 function pa2ClearTimers() {
@@ -258,7 +278,7 @@ function buildPa2PrepHTML(run) {
     h += '</div>';
     h += '<div class="pa2-panel pa2-mult"><span>' + esc(_t("Butin final")) + '</span><b>' + pa2Mult(Pa2Run.pactMult(run)) + '</b></div>';
     h += '<div class="pa2-btnrow"><button type="button" class="kbtn" onclick="pa2PrepStep(\'bag\')">' + esc(_t("Besace")) + '</button>' +
-      '<button type="button" class="kbtn primary" onclick="pa2Depart()">' + esc(_t("Entrer dans la forêt")) + '</button></div>';
+      '<button type="button" class="kbtn primary" onclick="pa2Depart()">' + esc(pa2Words(run).enter) + '</button></div>';
   }
   h += '<button type="button" class="pa2-link" onclick="pa2CancelPrep()">' + esc(par ? _t("Renoncer") : _t("Renoncer à cette aventure")) + '</button>';
   h += '</div></div>';
@@ -890,7 +910,7 @@ function pa2SheetBody(run, n, st) {
       h += '<button type="button" class="pa2-choice is-noicon" onclick="pa2Place(\'rest\')"><span class="pa2-t">' + esc(camp ? _t("Dormir") : _t("Reprendre ton souffle")) + '</span><span class="pa2-cost">' + esc(_t("+{n} % PV · +{n} Souffle", { n: Math.round(pct * 100) })) + '</span></button>';
       h += '<button type="button" class="pa2-choice"' + (hasR ? '' : ' disabled') + ' onclick="pa2Place(\'cook\')">' + pa2Img(PA2_ITEMS.petite_ration.icon) + '<span class="pa2-t">' + esc(_t("Cuisiner une ration")) + '</span>' +
         '<span class="pa2-cost">' + esc(_t("+{n} PV · −1 blessure", { n: pa2Pct(R.cookPct) })) + '</span><span class="pa2-s">' + esc(hasR ? _t("Au feu, une ration vaut bien plus.") : _t("Il te faut une ration.")) + '</span></button>';
-      h += '<button type="button" class="pa2-choice is-noicon" onclick="pa2Place(\'listen\')"><span class="pa2-t">' + esc(camp ? _t("Écouter la forêt") : _t("Lire les traces")) + '</span>' +
+      h += '<button type="button" class="pa2-choice is-noicon" onclick="pa2Place(\'listen\')"><span class="pa2-t">' + esc(camp ? pa2Words(run).listen : _t("Lire les traces")) + '</span>' +
         '<span class="pa2-cost">' + esc(camp ? _t("Acte II révélé") : _t("Acte III révélé")) + '</span><span class="pa2-s">' + esc(camp ? _t("Tu sais ce qui t'attend jusqu'au seuil.") : _t("Tu sais ce qui t'attend jusqu'au bout.")) + '</span></button>';
       h += '<button type="button" class="pa2-choice is-noicon" onclick="pa2Place(\'home\')"><span class="pa2-t">' + esc(_t("Rentrer au village")) + '</span>' +
         '<span class="pa2-cost is-gold">' + esc(_t("Tout le butin")) + '</span><span class="pa2-s">' + esc(_t("Pas de destination, pas de trophée.")) + '</span></button>';
@@ -903,7 +923,8 @@ function pa2SheetBody(run, n, st) {
       var clGain = Math.round(run.refGold * share * Pa2Run.ring(run).lootMult * Pa2Run.destGoldMult(run) * (Pa2Run.hasRelic("ronce", run) ? R.ronceLoot : 1));
       h += pa2Head(run, n, _td(cl.name), _t("Destination"));
       h += '<p class="pa2-narr">' + esc(_td(cl.line)) + (hook ? " " + esc(_td(pa2HookClairiere(run, hook))) : "") + '</p><div class="pa2-choices">';
-      h += '<button type="button" class="pa2-choice" onclick="pa2Clairiere()">' + pa2Img(PA2_ITEMS.veilleurs.icon) + '<span class="pa2-t">' + esc(_t("Prendre la lanterne qui t'attend")) + '</span>' +
+      var pw = pa2Words(run);
+      h += '<button type="button" class="pa2-choice' + (pw.takeIcon ? '' : ' is-noicon') + '" onclick="pa2Clairiere()">' + (pw.takeIcon ? pa2Img(pw.takeIcon) : '') + '<span class="pa2-t">' + esc(pw.take) + '</span>' +
         '<span class="pa2-cost is-gold">' + esc(_t("Trophée")) + '</span><span class="pa2-s">' + esc(_t("Fin sans combat · +{n} or", { n: clGain })) + '</span></button></div>';
       break;
     }
@@ -1189,10 +1210,10 @@ function buildPa2EndHTML(run) {
   var title, text, icon = null;
   if (e.how === "ko") {
     title = _t("On te ramène");
-    text = Pa2Run.hasPact("retour", run) ? _t("Le silence, d'un coup. Puis des voix, des mains. Tout ce que tu portais reste dans la forêt.") : _t("Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste dans la forêt.");
+    text = Pa2Run.hasPact("retour", run) ? pa2Words(run).koAll : pa2Words(run).koHalf;
   } else if (e.how === "home") {
     title = _t("Retour au feu");
-    text = _t("Tu as choisi de rentrer avant la nuit profonde. La forêt garde ses secrets. Tu gardes ton butin.");
+    text = pa2Words(run).home;
   } else if (e.how === "abandon") {
     title = _t("Tu fais demi-tour");
     text = _t("Tu rentres sans finir. Une part du butin reste en route.");

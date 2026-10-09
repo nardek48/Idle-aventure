@@ -1401,7 +1401,7 @@ var cuisineRecipes = g.WORKSHOPS_CONFIG.cuisine_de_camp.recipes;
 var petiteRecipe = cuisineRecipes.find(function (r) { return r.id === "petite_ration"; });
 var rationRecipe = cuisineRecipes.find(function (r) { return r.id === "ration"; });
 ok(petiteRecipe.inputs.length === 2 && petiteRecipe.inputs[0].resourceId === "viande" && petiteRecipe.inputs[0].quantity === 8 && petiteRecipe.inputs[1].resourceId === "eau" && petiteRecipe.inputs[1].quantity === 4, "Petite ration inchangée : 8 Viande + 4 Eau brutes");
-ok(rationRecipe.inputs.length === 2 && rationRecipe.inputs[0].resourceId === "viande_sechee" && rationRecipe.inputs[0].quantity === 3 /* v3.330.0 (E4) : 10 -> 3 */ && rationRecipe.inputs[1].resourceId === "pain" && rationRecipe.inputs[1].quantity === 1, "Ration moyenne restaurée : 10 Viande séchée + 1 Pain (recette d'origine, retour arrière du passage v3.106.0)");
+ok(rationRecipe.inputs.length === 2 && rationRecipe.inputs[0].resourceId === "viande_sechee" && rationRecipe.inputs[0].quantity === 3 /* v3.330.0 (E4) : 10 -> 3 */ && rationRecipe.inputs[1].resourceId === "pain" && rationRecipe.inputs[1].quantity === 1, "Ration moyenne : 3 Viande séchée + 1 Pain (v3.330.0)");
 
 console.log("\n[67] v3.108.0 — lot 3 : cohérence textes/données Forêt, chasse au Loup, regen coupée en quête, reset sortie");
 ok(g.STORY_QUESTS.forest.steps.length === 17, "chaîne Histoire : 17 étapes (en-tête de story-quests.js aligné)");

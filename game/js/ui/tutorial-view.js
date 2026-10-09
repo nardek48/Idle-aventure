@@ -176,7 +176,7 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/dungeon/dungeon_sacoche.png", text: "La besace : touche une case pour y mettre des rations ou des objets. Chacun a un avantage (en vert) et souvent un prix (en rouge). Les rations que tu ne manges pas retournent à l'Entrepôt." },
       { icon: "images/Icons/combat_stats/stat_health.png", text: "Tu pars avec tes PV actuels : en route, seules les rations de la besace, les sources et le feu de camp te soignent." },
       { icon: "images/Icons/scene/pacts/pact_awake.png", text: "Les pactes ne sont pas obligatoires. Chacun rend la nuit plus dure et le retour plus riche : choisis-les quand tu te sens prêt." },
-      { icon: "images/Icons/scene/node_threshold.png", text: "« Renoncer à cette aventure » te ramène sans rien perdre, tant que tu n'es pas entré dans la forêt." }
+      { icon: "images/Icons/scene/node_threshold.png", text: "« Renoncer à cette aventure » te ramène sans rien perdre, tant que tu n'es pas encore parti." }
     ]
   },
   grimoire_rules: {

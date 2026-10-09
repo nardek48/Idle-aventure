@@ -101,7 +101,9 @@ var CombatForecast = {
      l'échelle des ennemis et les Petites Aventures gardent getHeroDamagePerRound. */
   getForecastHeroDamage: function () {
     var cls = (typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
-    return Math.max(1, this.getHeroDamagePerRound() * ((cls && FORECAST_CLASS_DMG_MULT[cls.id]) || 1));
+    var tm = Number(game.tapMult || 1), mk = this._markMods; // v3.429.16 : Ascétisme, Fragilité (+dégâts)
+    var markMult = (mk && mk.tapDelta && tm > 0) ? Math.max(0, (tm + mk.tapDelta) / tm) : 1;
+    return Math.max(1, this.getHeroDamagePerRound() * ((cls && FORECAST_CLASS_DMG_MULT[cls.id]) || 1) * markMult);
   },
 
   /* v3.429.9 : compagnons présents (hors patrouille). Chacun frappe une fois par round et
@@ -147,6 +149,7 @@ var CombatForecast = {
      l'échec réel de 98 % à 0 % sur « Prouver sa valeur ». */
   getHealingReserve: function () {
     if (!window.PotionManager || typeof PotionManager.getHealingStock !== "function") return 0;
+    if (this._markMods && this._markMods.noPotions) return 0; // v3.429.16 : Ascétisme
     var cap = (typeof getSortiePotionCap === "function") ? getSortiePotionCap() : 2; // v3.322.0
     var used = (game.sortie && game.sortie.active) ? Number(game.sortie.potionsUsed || 0) : 0;
     var restantes = Math.max(0, cap - used);
@@ -177,7 +180,8 @@ var CombatForecast = {
     if (!enemy || !enemy.stats) return 0;
     var coef = (typeof ENEMY_POWER_DMG_COEF === "number") ? ENEMY_POWER_DMG_COEF : 1;
     var bossMult = enemy.isBoss ? ((typeof BOSS_DMG_MULT === "number") ? BOSS_DMG_MULT : 1.5) : 1;
-    var raw = Math.max(1, Number(enemy.stats.power || 0) * coef * bossMult);
+    var fleau = (this._markMods && this._markMods.enemyMult) || 1; // v3.429.16 : Fléau, appliqué par le moteur à chaque coup
+    var raw = Math.max(1, Number(enemy.stats.power || 0) * coef * bossMult * fleau);
     var def = Math.min(0.9, Number(game.heroDefensePct || 0));
     return Math.max(1, raw * (1 - def));
   },
@@ -292,9 +296,18 @@ var CombatForecast = {
      avec ce qui reste. On entre à PV pleins (DungeonManager.start). Les Marques comptent. */
   forDungeon: function (dungeonId, marks) {
     if (!window.DungeonManager || !window.DUNGEON_CONFIG) return null;
-    var savedRun = game.dungeonRun, savedHp = game.heroHp, out = null;
+    var savedRun = game.dungeonRun, savedHp = game.heroHp, savedMax = game.heroMaxHp, out = null;
+    var AM = window.AfflictionManager, baked = AM ? AM.getCombinedModifiers() : null; // déjà dans les stats si un run est en cours
     try {
       game.dungeonRun = { active: true, wave: 0, dungeonId: Number(dungeonId), marks: (marks || []).slice() };
+      /* v3.429.16 : effets des Marques sur le héros, que recalcStats n'applique qu'une fois le run lancé.
+         On ne compte que l'écart avec ce qui est déjà dans les stats. */
+      if (AM && baked) {
+        var want = AM.getCombinedModifiers();
+        this._markMods = { tapDelta: want.tapMult - baked.tapMult, enemyMult: want.enemyPowerMult, noPotions: !!want.forbidPotions };
+        var hpMult = want.heroMaxHpMult / (baked.heroMaxHpMult || 1);
+        if (hpMult !== 1) game.heroMaxHp = Math.max(1, Math.floor(Number(savedMax || 1) * hpMult));
+      }
       var n = DUNGEON_CONFIG.waveCount, attrition = 0, waves = [];
       for (var w = 1; w <= n; w++) waves.push(this.getGroupFight([].concat(DungeonManager.buildWaveEnemy(w)), true));
       waves.forEach(function (f) { attrition += f.cost; });
@@ -309,6 +322,8 @@ var CombatForecast = {
     } finally {
       game.dungeonRun = savedRun;
       game.heroHp = savedHp;
+      game.heroMaxHp = savedMax;
+      this._markMods = null;
     }
     return out;
   },
