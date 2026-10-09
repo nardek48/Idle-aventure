@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Labyrinthe aux leviers</title>
+<style>
+/* Atelier v3.433.1 : Labyrinthe aux leviers (RU12, lot U-6b). Carte schématique : l'image sera dessinée d'après elle. Couleurs = jetons du jeu. */
+:root {
+  --bronze: #b98a4a; --cream: #f3e6c4; --ink: #3a2c1a; --ink-dim: #6b5a40; --brown: #8a5c14; --accent: #c27f1f;
+  --gold-a: #f0c64a; --gold-b: #c27f1f; --card: rgba(251, 245, 232, .9); --card-bd: #dcc79c; --head-ink: #f4e9d0;
+  --hp: #c0392b; --breath: #3d8fd1; --violet: #9b6bff; --violet-soft: rgba(155, 107, 255, .35);
+  --page: #1c140c; --stone: #3b3127; --stone-hi: #5b4c3c; --floor: #c9b48c; --floor-dim: #a8936c;
+  --safe-b: env(safe-area-inset-bottom, 0px); color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+/* Barre de l'atelier (hors jeu) */
+.bar { position: sticky; top: 0; z-index: 950; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 16px; background: #000; color: var(--cream); }
+.bar b { font-size: 12px; margin-right: auto; }
+.bar button { min-height: 32px; padding: 3px 10px; border-radius: 9px; border: 1.5px solid var(--bronze); background: transparent; color: var(--cream); font: inherit; font-size: 12px; font-weight: 700; }
+.bar button[aria-pressed="true"] { background: linear-gradient(var(--gold-a), var(--gold-b)); color: #2e2214; }
+/* HUD du run (comme celui des Petites Aventures) */
+.hud { margin: 10px 16px 0; padding: 10px 12px; border: 1.5px solid var(--accent); border-radius: 16px; background: rgba(16, 12, 8, .88); color: var(--head-ink); }
+.hud .top { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; opacity: .85; }
+.gauge { position: relative; height: 18px; margin-top: 7px; border-radius: 9px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+.gauge i { position: absolute; inset: 0 auto 0 0; border-radius: 9px; transition: width .35s; }
+.gauge span { position: relative; display: block; text-align: center; font-size: 12px; font-weight: 800; line-height: 18px; color: #fff; text-shadow: 0 1px 2px #000; }
+.g-hp i { background: var(--hp); } .g-br i { background: var(--breath); }
+/* La carte */
+.mapwrap { margin: 10px 16px 0; padding: 8px; border-radius: 16px; background: #2a2118; border: 1.5px solid var(--stone-hi); }
+svg { display: block; width: 100%; height: auto; touch-action: manipulation; }
+.room { fill: var(--floor-dim); stroke: var(--stone); stroke-width: 3; }
+.room.seen { fill: var(--floor); }
+.room.can { fill: #e6d3a6; stroke: var(--gold-b); stroke-width: 4; cursor: pointer; }
+.room.here { fill: #f3e2b8; }
+.door { fill: var(--floor); }
+.door.piv { fill: rgba(155, 107, 255, .6); stroke: var(--violet); stroke-width: 2; }
+.wall { stroke: var(--stone); stroke-width: 7; stroke-linecap: round; }
+.wall.piv { stroke: var(--violet); stroke-width: 8; filter: drop-shadow(0 0 4px rgba(155, 107, 255, .8)); }
+.wall.flash { animation: flash .9s ease-out; }
+@keyframes flash { 0% { stroke: #fff; stroke-width: 14; } 100% { stroke: var(--violet); stroke-width: 8; } }
+.door.flash { animation: dflash .9s ease-out; }
+@keyframes dflash { 0% { fill: #fff; } 100% { fill: rgba(155, 107, 255, .6); } }
+.glyph { font-size: 26px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.lab { font-size: 11px; font-weight: 800; text-anchor: middle; fill: var(--ink); pointer-events: none; }
+.hero { fill: #2563c9; stroke: #fff; stroke-width: 3; transition: cx .25s, cy .25s; }
+.preview { stroke: #ffd34d !important; stroke-dasharray: 6 5; }
+.door.preview { fill: rgba(255, 211, 77, .55) !important; }
+/* Légende et note */
+.note { margin: 8px 16px 0; padding: 8px 12px; border-radius: 12px; background: var(--card); border: 1.5px solid var(--card-bd); font-weight: 600; line-height: 1.35; min-height: 40px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 16px 0; color: var(--cream); font-size: 12px; opacity: .85; }
+.legend i { display: inline-block; width: 14px; height: 4px; margin-right: 4px; vertical-align: middle; border-radius: 2px; }
+.actions { display: flex; gap: 8px; margin: 10px 16px calc(16px + var(--safe-b)); }
+.btn { flex: 1; min-height: 46px; border-radius: 12px; border: 2px solid #5a3a0c; background: linear-gradient(var(--gold-a), var(--gold-b)); color: #2e2214; font: inherit; font-weight: 800; font-size: 15px; }
+.btn.ghost { background: transparent; color: var(--cream); border-color: var(--bronze); }
+.btn:disabled { opacity: .45; }
+/* Feuille basse (.ksheet du jeu) */
+.veil { position: fixed; inset: 0; z-index: 900; background: rgba(12, 8, 5, .62); }
+.ksheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 901; max-height: 84vh; display: flex; flex-direction: column; padding-bottom: calc(14px + var(--safe-b)); border-radius: 18px 18px 0 0; background: #efe0c2; box-shadow: 0 -10px 30px rgba(0, 0, 0, .55); }
+.khead { flex: none; padding: 10px 16px 12px; border-bottom: 2px solid var(--accent); border-radius: 18px 18px 0 0; background: #1b1510; color: var(--head-ink); }
+.ktitle { font-size: 17px; font-weight: 800; }
+.ksub { display: block; margin-top: 2px; font-size: 12.5px; font-weight: 600; opacity: .8; }
+.kbody { flex: 1 1 auto; overflow-y: auto; padding: 14px 16px 6px; line-height: 1.4; }
+.kbody p { margin: 0 0 10px; }
+.quote { font-style: italic; color: var(--ink-dim); }
+.kfoot { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 8px 16px 0; }
+.cost { font-size: 12.5px; font-weight: 700; color: var(--brown); }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Atelier · Labyrinthe aux leviers</b>
+  <button id="bNew">Nouvel essai</button>
+  <button id="bSol" aria-pressed="false">Solution</button>
+  <button id="bFog" aria-pressed="false">Brouillard</button>
+</div>
+
+<div class="hud">
+  <div class="top"><span>Labyrinthe aux leviers</span><span id="tries"></span></div>
+  <div class="gauge g-hp"><i id="hpBar"></i><span id="hpTxt"></span></div>
+  <div class="gauge g-br"><i id="brBar"></i><span id="brTxt"></span></div>
+</div>
+
+<div class="mapwrap"><svg id="map" viewBox="0 0 400 500" aria-label="Carte du labyrinthe"></svg></div>
+<div class="legend">
+  <span><i style="background:var(--stone)"></i>mur fixe</span>
+  <span><i style="background:var(--violet)"></i>pan tournant (fermé)</span>
+  <span><i style="background:rgba(155,107,255,.6);outline:1px solid var(--violet)"></i>pan tournant (ouvert)</span>
+</div>
+<div class="note" id="note"></div>
+<div class="actions">
+  <button class="btn ghost" id="bEdda">Edda : montrer un levier (1)</button>
+  <button class="btn ghost" id="bLeave">Rentrer</button>
+</div>
+
+<div class="veil hidden" id="veil"></div>
+<div class="ksheet hidden" id="sheet">
+  <div class="khead"><div class="ktitle" id="sTitle"></div><span class="ksub" id="sSub"></span></div>
+  <div class="kbody" id="sBody"></div>
+  <div class="kfoot" id="sFoot"></div>
+</div>
+
+<script>
+"use strict";
+/* ---------- La carte (fixe : l'image sera dessinée d'après elle) ----------
+   Grille 4 × 5. Une salle = "c,r" (r = 0 en bas). Les portes fixes sont ouvertes ou murées ;
+   un pan tournant ouvre une porte (a) OU l'autre (b), jamais les deux : tirer un levier le fait tourner. */
+var COLS = 4, ROWS = 5, CELL = 100, ROOM = 64;
+var START = "1,0", EXIT = "2,4";
+var LEVERS = { L1: "0,1", L2: "3,2", L3: "0,3" };   // salles des leviers
+/* Trois zones : la cour d'entrée (rangées 0-1), la galerie (rangée 2), les salles hautes (rangées 3-4).
+   Chaque passage d'une zone à l'autre est un pan tournant ; l'autre porte du pan ferme un couloir. */
+var OPEN = ["1,0|0,0", "0,0|0,1", "0,1|1,1", "1,1|2,1", "2,1|3,1", "3,1|3,0", "3,0|2,0", "2,0|1,0",
+  "0,2|1,2", "2,2|3,2",
+  "3,3|2,3", "1,3|0,3", "0,3|0,4", "0,4|1,4", "1,3|1,4"];
+/* Les pans tournants : état 0 = porte a ouverte, état 1 = porte b ouverte. */
+var PIVOTS = [
+  { a: "1,0|1,1", b: "1,1|1,2" },   // entrée de la galerie
+  { a: "1,2|2,2", b: "3,2|3,3" },   // montée vers les salles hautes
+  { a: "1,3|2,3", b: "2,3|2,4" },   // première porte du coffre
+  { a: "3,3|3,4", b: "1,4|2,4" }    // seconde porte du coffre
+];
+var BREATH_START = 100, STEP = 4, PULL = 6, GUARD_HP = [0.10, 0.18]; // chiffres d'atelier, au banc ensuite
+
+/* ---------- Outils ---------- */
+function key(c, r) { return c + "," + r; }
+function cr(k) { var p = k.split(","); return [+p[0], +p[1]]; }
+function door(a, b) { return a < b ? a + "|" + b : b + "|" + a; }
+function norm(d) { var p = d.split("|"); return door(p[0], p[1]); }
+OPEN = OPEN.map(norm); PIVOTS.forEach(function (p) { p.a = norm(p.a); p.b = norm(p.b); });
+function rnd(n) { return Math.floor(Math.random() * n); }
+function neighbours(k) { var p = cr(k), out = []; [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) { var c = p[0] + d[0], r = p[1] + d[1]; if (c >= 0 && c < COLS && r >= 0 && r < ROWS) out.push(key(c, r)); }); return out; }
+/* Une porte est-elle ouverte, pour un état des pans (bits) ? */
+function isOpen(d, bits) {
+  for (var i = 0; i < PIVOTS.length; i++) {
+    if (PIVOTS[i].a === d) return !((bits >> i) & 1);
+    if (PIVOTS[i].b === d) return !!((bits >> i) & 1);
+  }
+  return OPEN.indexOf(d) >= 0;
+}
+function pivotOf(d) { for (var i = 0; i < PIVOTS.length; i++) if (PIVOTS[i].a === d || PIVOTS[i].b === d) return i; return -1; }
+
+/* ---------- Le solveur : (salle, état des pans) en largeur ; un levier se tire dans sa salle ----------
+   Renvoie la plus courte solution (pas et tirages) ou null. Sert à tirer un essai jouable. */
+function solve(map, bits0) {
+  var seen = {}, q = [{ k: START, bits: bits0, steps: 0, pulls: 0, path: [] }];
+  seen[START + "#" + bits0] = 1;
+  while (q.length) {
+    var s = q.shift();
+    if (s.k === EXIT) return s;
+    var moves = [];
+    neighbours(s.k).forEach(function (n) { if (isOpen(door(s.k, n), s.bits)) moves.push({ k: n, bits: s.bits, steps: s.steps + 1, pulls: s.pulls, path: s.path.concat(n) }); });
+    Object.keys(LEVERS).forEach(function (L) { if (LEVERS[L] === s.k) { var b = s.bits ^ map[L]; moves.push({ k: s.k, bits: b, steps: s.steps, pulls: s.pulls + 1, path: s.path.concat("⚙" + L) }); } });
+    moves.forEach(function (m) { var id = m.k + "#" + m.bits; if (!seen[id]) { seen[id] = 1; q.push(m); } });
+  }
+  return null;
+}
+/* Un essai : chaque levier fait tourner 1 ou 2 pans, tirés au hasard ; on garde un tirage où la sortie
+   est fermée au départ, qui demande au moins 2 tirages, et que le Souffle permet de finir avec de la marge. */
+function draw() {
+  for (var t = 0; t < 500; t++) {
+    var map = {}, used = 0;
+    Object.keys(LEVERS).forEach(function (L) { var m = 1 << rnd(PIVOTS.length); if (Math.random() < 0.5) m |= 1 << rnd(PIVOTS.length); map[L] = m; used |= m; });
+    if (used !== (1 << PIVOTS.length) - 1) continue;           // chaque pan tourne avec au moins un levier
+    var sol = solve(map, 0);
+    if (!sol || sol.pulls < 2) continue;
+    var cost = sol.steps * STEP + sol.pulls * PULL;
+    if (cost > BREATH_START * 0.7 || cost < BREATH_START * 0.3) continue;   // marge : on peut errer un peu
+    return { map: map, sol: sol, tries: t + 1 };
+  }
+  return null;
+}
+
+/* ---------- L'essai ---------- */
+var run, triesLeft = 3, fog = false, showSol = false, previewL = null;
+function newRun() {
+  var d = draw();
+  run = { map: d.map, sol: d.sol, bits: 0, at: START, breath: BREATH_START, hp: 1, guarded: { L1: true, L2: true, L3: true }, seen: {}, edda: 1, over: false, pulls: 0, steps: 0 };
+  run.seen[START] = 1;
+  previewL = null;
+  say("L'entrée du labyrinthe. Les murs ne bougent pas tout seuls, ici : il faut tirer les leviers. Trouve le chemin du coffre.");
+  render();
+}
+function say(t) { document.getElementById("note").textContent = t; }
+
+function canMove(n) { return !run.over && neighbours(run.at).indexOf(n) >= 0 && isOpen(door(run.at, n), run.bits); }
+function moveTo(n) {
+  if (!canMove(n)) return;
+  run.at = n; run.seen[n] = 1; run.steps++;
+  run.breath = Math.max(0, run.breath - STEP);
+  render();
+  if (n === EXIT) return finish(true);
+  if (run.breath <= 0) return finish(false);
+  var L = leverAt(n);
+  if (L) openLever(L); else say("Tu avances. Souffle −" + STEP + ".");
+}
+function leverAt(k) { var out = null; Object.keys(LEVERS).forEach(function (L) { if (LEVERS[L] === k) out = L; }); return out; }
+
+/* ---------- Le levier : un combat de garde la première fois, puis tirer ---------- */
+function openLever(L) {
+  var guarded = run.guarded[L];
+  sheet("Levier " + L.slice(1), guarded ? "Un levier, et quelqu'un qui le garde" : "Un levier de pierre, scellé dans le mur",
+    (guarded ? "<p class='quote'>Deux squelettes se lèvent devant le levier. Ils ne regardent pas toi : ils regardent le mur.</p>"
+      : "<p class='quote'>" + (run.pulled && run.pulled[L] ? "Tiré " + run.pulled[L] + " fois. Il revient toujours en place : le tirer encore refait tourner les mêmes pans." : "Le levier est libre. Personne ne sait encore ce qu'il fait tourner.") + "</p>")
+    + (previewL === L ? "<p><b>Edda :</b> « Celui-là fait tourner " + countPivots(run.map[L]) + " pan" + (countPivots(run.map[L]) > 1 ? "s" : "") + ". Regarde, en jaune. »</p>" : "")
+    + "<p class='cost'>" + (guarded ? "Combat de garde (PV), puis tirer : Souffle −" + PULL : "Tirer : Souffle −" + PULL) + "</p>",
+    [guarded ? { t: "Combattre", f: function () { fightGuard(L); } } : { t: "Tirer le levier", f: function () { pull(L); } },
+      { t: "Laisser", ghost: true, f: closeSheet }]);
+}
+function countPivots(m) { var n = 0; for (var i = 0; i < PIVOTS.length; i++) if ((m >> i) & 1) n++; return n; }
+function fightGuard(L) {
+  var loss = GUARD_HP[0] + Math.random() * (GUARD_HP[1] - GUARD_HP[0]);
+  run.hp = Math.max(0, run.hp - loss); run.guarded[L] = false;
+  closeSheet(); render();
+  if (run.hp <= 0) return finish(false);
+  say("Combat de garde gagné : PV −" + Math.round(loss * 100) + " %. Le levier est libre.");
+  openLever(L);
+}
+function pull(L) {
+  closeSheet();
+  if (run.breath < PULL) { say("Plus assez de Souffle pour tirer."); return; }
+  var before = run.bits;
+  run.bits ^= run.map[L]; run.breath -= PULL; run.pulls++;
+  run.pulled = run.pulled || {}; run.pulled[L] = (run.pulled[L] || 0) + 1;
+  var opened = 0, closed = 0, flashes = [];
+  PIVOTS.forEach(function (p, i) { if ((run.map[L] >> i) & 1) { flashes.push(p.a, p.b); } });
+  /* Ce que le joueur voit : quelles portes viennent de s'ouvrir ou de se fermer */
+  PIVOTS.forEach(function (p, i) { if (((before ^ run.bits) >> i) & 1) { opened++; closed++; } });
+  previewL = null;
+  render(flashes);
+  say("Le levier grince. " + (opened > 1 ? opened + " pans de mur tournent : des passages s'ouvrent, d'autres se ferment" : "Un pan de mur tourne : un passage s'ouvre, un autre se ferme") + ". Souffle −" + PULL + ".");
+  if (run.breath <= 0) finish(false);
+}
+
+/* ---------- Edda : une fois par essai, montrer ce que fait un levier ---------- */
+function edda() {
+  if (!run.edda || run.over) return;
+  var opts = Object.keys(LEVERS).map(function (L) { return { t: "Levier " + L.slice(1), f: function () { run.edda = 0; previewL = L; closeSheet(); render(); say("Edda trace à la craie, en jaune, les pans que tourne le levier " + L.slice(1) + "."); } }; });
+  opts.push({ t: "Plus tard", ghost: true, f: closeSheet });
+  sheet("Edda, la cartographe", "Une fois par essai", "<p class='quote'>« Je ne sais pas où ils mènent. Mais je sais lire un mur. Un seul, montre-moi lequel. »</p>", opts);
+}
+
+/* ---------- Fin ---------- */
+function finish(win) {
+  run.over = true;
+  var stones = win ? 3 + (run.breath >= 40 ? 1 : 0) : 0;
+  sheet(win ? "Le coffre du labyrinthe" : (run.hp <= 0 ? "Tombé dans le labyrinthe" : "À bout de souffle"),
+    win ? "Sorti en " + run.steps + " pas et " + run.pulls + " tirage" + (run.pulls > 1 ? "s" : "") : "Le labyrinthe te raccompagne à l'entrée",
+    win ? "<p><b>+" + stones + " Pierres errantes</b>" + (stones > 3 ? " (Souffle restant ≥ 40 : +1)" : "") + ", or du coffre.</p><p class='cost'>Solution la plus courte de cet essai : " + run.sol.steps + " pas, " + run.sol.pulls + " tirages.</p>"
+      : "<p>Pas de coffre. Le labyrinthe garde ses Pierres errantes.</p>",
+    [{ t: triesLeft > 1 ? "Nouvel essai (" + (triesLeft - 1) + " restant" + (triesLeft - 1 > 1 ? "s" : "") + ")" : "Plus d'essai aujourd'hui", f: function () { closeSheet(); if (triesLeft > 1) { triesLeft--; newRun(); } } }]);
+}
+
+/* ---------- Feuille basse ---------- */
+function sheet(title, sub, body, buttons) {
+  document.getElementById("sTitle").textContent = title;
+  document.getElementById("sSub").textContent = sub;
+  document.getElementById("sBody").innerHTML = body;
+  var foot = document.getElementById("sFoot"); foot.innerHTML = "";
+  buttons.forEach(function (b) { var e = document.createElement("button"); e.className = "btn" + (b.ghost ? " ghost" : ""); if (b.ghost) e.style.color = "var(--ink)"; e.textContent = b.t; e.onclick = b.f; foot.appendChild(e); });
+  document.getElementById("veil").classList.remove("hidden"); document.getElementById("sheet").classList.remove("hidden");
+}
+function closeSheet() { document.getElementById("veil").classList.add("hidden"); document.getElementById("sheet").classList.add("hidden"); }
+
+/* ---------- Dessin ---------- */
+function cx(k) { return 50 + cr(k)[0] * CELL; }
+function cy(k) { return 450 - cr(k)[1] * CELL; }
+function render(flashes) {
+  flashes = flashes || [];
+  var svg = [], prev = previewL ? run.map[previewL] : 0, solRooms = showSol ? run.sol.path : [];
+  /* Portes ouvertes (couloirs), puis salles, puis murs fermés entre salles voisines */
+  var doors = {};
+  for (var c = 0; c < COLS; c++) for (var r = 0; r < ROWS; r++) neighbours(key(c, r)).forEach(function (n) { doors[door(key(c, r), n)] = 1; });
+  Object.keys(doors).forEach(function (d) {
+    var p = d.split("|"), a = p[0], b = p[1], pv = pivotOf(d), open = isOpen(d, run.bits);
+    var hidden = fog && !run.seen[a] && !run.seen[b];
+    if (hidden) return;
+    var mark = (pv >= 0 && ((prev >> pv) & 1)) ? " preview" : "", fl = flashes.indexOf(d) >= 0 ? " flash" : "";
+    if (open) {
+      var x = Math.min(cx(a), cx(b)), y = Math.min(cy(a), cy(b)), horiz = cy(a) === cy(b);
+      svg.push('<rect class="door' + (pv >= 0 ? " piv" : "") + mark + fl + '" x="' + (horiz ? x : x - 14) + '" y="' + (horiz ? y - 14 : y) + '" width="' + (horiz ? CELL : 28) + '" height="' + (horiz ? 28 : CELL) + '"/>');
+    }
+  });
+  for (var c2 = 0; c2 < COLS; c2++) for (var r2 = 0; r2 < ROWS; r2++) {
+    var k = key(c2, r2), cls = "room" + (run.seen[k] ? " seen" : "") + (k === run.at ? " here" : "") + (canMove(k) ? " can" : "");
+    if (fog && !run.seen[k] && !canMove(k)) cls += " fogged";
+    svg.push('<rect class="' + cls + '" data-k="' + k + '" x="' + (cx(k) - ROOM / 2) + '" y="' + (cy(k) - ROOM / 2) + '" width="' + ROOM + '" height="' + ROOM + '" rx="8"' + (fog && !run.seen[k] && !canMove(k) ? ' style="opacity:.25"' : "") + '/>');
+    var L = leverAt(k), g = k === EXIT ? "🧰" : (k === START ? "🚪" : (L ? (run.guarded[L] ? "⚔️" : "🕹️") : ""));
+    if (g) svg.push('<text class="glyph" x="' + cx(k) + '" y="' + (cy(k) - 4) + '">' + g + '</text>');
+    if (L) svg.push('<text class="lab" x="' + cx(k) + '" y="' + (cy(k) + 22) + '">Levier ' + L.slice(1) + '</text>');
+    if (showSol && solRooms.indexOf(k) >= 0) svg.push('<circle cx="' + (cx(k) + 22) + '" cy="' + (cy(k) - 22) + '" r="5" fill="#ffd34d"/>');
+  }
+  Object.keys(doors).forEach(function (d) {
+    var p = d.split("|"), a = p[0], b = p[1], pv = pivotOf(d);
+    if (isOpen(d, run.bits)) return;
+    if (fog && !run.seen[a] && !run.seen[b]) return;
+    var mx = (cx(a) + cx(b)) / 2, my = (cy(a) + cy(b)) / 2, horiz = cy(a) === cy(b);
+    var mark = (pv >= 0 && ((prev >> pv) & 1)) ? " preview" : "", fl = flashes.indexOf(d) >= 0 ? " flash" : "";
+    svg.push('<line class="wall' + (pv >= 0 ? " piv" : "") + mark + fl + '" x1="' + (horiz ? mx : mx - 30) + '" y1="' + (horiz ? my - 30 : my) + '" x2="' + (horiz ? mx : mx + 30) + '" y2="' + (horiz ? my + 30 : my) + '"/>');
+  });
+  svg.push('<circle class="hero" cx="' + cx(run.at) + '" cy="' + (cy(run.at) + 2) + '" r="11"/>');
+  var el = document.getElementById("map"); el.innerHTML = svg.join("");
+  document.getElementById("hpBar").style.width = Math.round(run.hp * 100) + "%";
+  document.getElementById("hpTxt").textContent = "PV " + Math.round(run.hp * 100) + " %";
+  document.getElementById("brBar").style.width = run.breath + "%";
+  document.getElementById("brTxt").textContent = "Souffle " + run.breath;
+  document.getElementById("tries").textContent = "Essais " + triesLeft + " / 3";
+  var be = document.getElementById("bEdda"); be.disabled = !run.edda || run.over; be.textContent = "Edda : montrer un levier (" + run.edda + ")";
+}
+
+/* ---------- Gestes ---------- */
+document.getElementById("map").addEventListener("click", function (e) { var k = e.target.getAttribute && e.target.getAttribute("data-k"); if (k) moveTo(k); });
+document.getElementById("bEdda").onclick = edda;
+document.getElementById("bLeave").onclick = function () { if (!run.over) finish(false); };
+document.getElementById("bNew").onclick = function () { triesLeft = 3; newRun(); };
+document.getElementById("bSol").onclick = function () { showSol = !showSol; this.setAttribute("aria-pressed", showSol); render(); };
+document.getElementById("bFog").onclick = function () { fog = !fog; this.setAttribute("aria-pressed", fog); render(); };
+document.getElementById("veil").onclick = closeSheet;
+newRun();
+</script>
+</body>
+</html>
