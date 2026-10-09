@@ -41,7 +41,8 @@ var COMBATS = ARGS.indexOf("--combats") >= 0;   // option B : vrais combats, rou
 var POLICY = ARGS.indexOf("--tactique") >= 0 ? "attentif" : "grimoire";   // B : Grimoire dès qu'il est ouvert (défaut), ou --tactique : le bouton mis en avant, à chaque round
 var SERMENT = ARGS.indexOf("--laisser") >= 0 ? "laisser" : "relever";   // desert_11 : relever le Serment (heaume) par défaut
 var ELITES_SECONDAIRES = ARGS.indexOf("--sans-elites") < 0;           // les quêtes d'élite du tableau (butin unique)
-var INVESTI = ARGS.indexOf("--investi") >= 0;   // B : le joueur bâtit la Forge dès qu'elle ouvre et reforge tout
+var INVESTI = ARGS.indexOf("--investi") >= 0;
+var ZONES = ARGS.indexOf("--zones") >= 0;     // le joueur monte ses zones de production (Mine, Scierie…)   // B : le joueur bâtit la Forge dès qu'elle ouvre et reforge tout
 var ARME_DESERT = ARGS.indexOf("--arme-desert") >= 0;   // ESSAI (hors jeu) : une arme Inhabituelle du Désert offerte à desert_12
 var COMPAGNONS_MALINS = ARGS.indexOf("--compagnons-malins") >= 0;   // --tactique : les compagnons jouent leur choix automatique
 // v3.379.0 : banc de la potion automatique — --potion-auto jamais|tard|normal|tot (réglage du Grimoire),
@@ -141,7 +142,12 @@ function relaunch() {
   });
   [["CombatEngine", "onHeroDefeated"], ["AdventureQuestManager", "forfeit"], ["AdventureQuestManager", "onDefeat"], ["SortieManager", "flee"], ["AdventureQuestManager", "finish"]].forEach(function (p) {
     var obj = G[p[0]], orig = obj[p[1]];
-    obj[p[1]] = function () { if (VERBOSE && p[1] !== "finish") note("   → " + p[0] + "." + p[1] + " (PV " + G.game.heroHp + ")"); if (p[1] === "finish" && arguments[1] === false) QUEST_END = "échec"; if (p[1] === "onHeroDefeated") DEFEATED = true; return orig.apply(this, arguments); };
+    obj[p[1]] = function () { if (VERBOSE && p[1] !== "finish") note("   → " + p[0] + "." + p[1] + " (PV " + G.game.heroHp + ")"); if (p[1] === "finish" && arguments[1] === false) QUEST_END = "échec"; var ca = G.CombatActors && G.CombatActors.ensure(), rose0 = !!(ca && ca.heroRose);
+      var res = orig.apply(this, arguments);
+      // « Le seuil » (RiseSystem.tryHeroRise) relève le héros : ce n'est pas une défaite, le run continue
+      var rose = p[1] === "onHeroDefeated" && !rose0 && ca && ca.heroRose && G.game.heroHp > 0;
+      if (p[1] === "onHeroDefeated" && !rose) DEFEATED = true;
+      return res; };
   });
   return G;
 }
@@ -309,6 +315,18 @@ function developVillage() {
     var cc = g.getCompanionUpgradeCost(cid, st.upgrades);
     if (cc != null && cc <= g.game.gold * 0.3 && g.CompanionManager.buyUpgrade(cid)) STATS.village.push(cid + " +" + st.upgrades + " (" + CURRENT_STEP + ")");
   });
+  /* --zones : le joueur défriche et monte ses zones de production avec ce qu'il a en stock,
+     si l'or du cran coûte moins de 20 % de la bourse. Une action par zone et par passage. */
+  if (ZONES && g.ProductionPlotsSystem) g.ProductionPlotsSystem.getManagedBuildingIds().forEach(function (bid) {
+    var P = g.ProductionPlotsSystem;
+    P.getPlots(bid).forEach(function (pl, i) {
+      var cost = pl.state === "locked" ? (P.isPlotRowOpen(i) && g.getProductionPlotUnlockCost(bid, i))
+        : (pl.state === "open" && !P.isPlotMaxLevel(pl) && g.getProductionPlotUpgradeCost(bid, pl.level, i));
+      if (!cost || Number(cost.gold || 0) > g.game.gold * 0.2) return;
+      var r = pl.state === "locked" ? P.unlockPlot(bid, i) : P.upgradePlot(bid, i);
+      if (r.ok) STATS.zones = (STATS.zones || 0) + 1;
+    });
+  });
   /* Forge : l'arme et l'armure d'abord (30 % de la bourse), les autres pièces ensuite (15 %). */
   if (F && F.getBuildingLevel() > 0) g.EQUIPMENT_SLOTS.forEach(function (slot) {
     var why2 = F.getBlockReason(slot), c2 = F.getCost(slot);
@@ -339,6 +357,7 @@ function refillPotions() {
 function healUp(seuil) {
   var g = G;
   if (!SAVING) refillPotions();
+  if (g.game.dungeonRun && g.game.dungeonRun.active) return;   // pas de feu de camp en plein donjon (l'onglet figeait le run)
   if ((g.game.heroHp || 0) >= (g.game.heroMaxHp || 1) * (seuil || 0.95)) return;
   g.game.activeTab = "campement";
   g.CampManager.applyRegen(false);
@@ -484,6 +503,13 @@ function playPa2Step(run) {
    fabriquer à l'atelier qui le sait (ingrédients obtenus d'abord, récursivement). Le temps
    passe par pas d'une heure, 72 h au plus : au-delà, la ressource est déclarée introuvable. */
 function obtain(res, qty, depth) {
+  // Temps passé à obtenir chaque ressource (appel de tête seulement), pour lire où part le temps
+  if (!depth) { var t0o = CLOCK.offset, okO = obtainIn(res, qty, 0), dH = (CLOCK.offset - t0o) / 3600e3;
+    if (dH > 0) { var oh = STATS.obtainH = STATS.obtainH || {}; oh[res + " (" + CURRENT_STEP + ")"] = (oh[res + " (" + CURRENT_STEP + ")"] || 0) + dH; }
+    return okO; }
+  return obtainIn(res, qty, depth);
+}
+function obtainIn(res, qty, depth) {
   var g = G;
   depth = depth || 0;
   if (depth > 6) { note("chaîne de fabrication trop profonde pour " + res); return false; }
@@ -657,6 +683,7 @@ function playDungeonOnce(id, withMark) {
   if (!g.game.dungeonRun.active) { note("donjon " + id + " : entrée refusée (sorties restantes " + D.getRunsLeft(id) + ")"); return null; }
   winCombat(200);
   flushTimers(g);
+  if (process.env.TRACE_SORTIE) console.log("      [donjon " + id + "] run actif " + !!g.game.dungeonRun.active + " · sortie active " + g.SortieManager.isActive() + " · halte " + D.isCampPending() + " · vague " + g.game.dungeonRun.wave + " · PV " + Math.floor(g.game.heroHp));
   if (g.closeDungeonSummary) g.closeDungeonSummary();
   return !!(g.game.dungeonTierCleared || {})[id];
 }
@@ -1165,6 +1192,7 @@ if (COMBATS) {
   console.log("Renforcement (lots de chasse joués pour débloquer) : " + JSON.stringify(STATS.grinds) + " · " + (STATS.grindMs / 3600e3).toFixed(1) + " h" + (Object.keys(STATS.grindNone).length ? " · rien à farmer pendant : " + JSON.stringify(STATS.grindNone) : ""));
   Object.keys(STATS.goldFarm).forEach(function (k) { var f = STATS.goldFarm[k]; console.log("Farm " + k + " : " + f.lots + " lots, " + Math.round(f.or / Math.max(1, f.lots)) + " or par lot, " + Math.round(f.or / Math.max(0.01, f.h)) + " or par heure (soin compris), " + f.morts + " morts"); });
   if (STATS.r13 && STATS.r13.length) console.log("ruines_13 : " + STATS.r13.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · ") + " · Pierres errantes cherchées : " + (STATS.pierreH || 0).toFixed(0) + " h · campements : " + (STATS.camps || 0));
+  if (STATS.obtainH) console.log("Temps d'obtention (h) : " + Object.keys(STATS.obtainH).filter(function (k) { return STATS.obtainH[k] >= 1; }).map(function (k) { return k + " " + STATS.obtainH[k].toFixed(0); }).join(" · "));
   if (STATS.r09 && STATS.r09.length) console.log("ruines_09 : " + STATS.r09.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · "));
   if (STATS.d13.length) console.log("desert_13 : " + STATS.d13.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, Inhabituels portés au départ " + d.verts0 + ", or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · "));
   console.log("Quêtes d'élite : " + (STATS.elites.map(function (e) { return e.quest + (e.ok ? " ✔" : " ✘") + " (" + e.step + ", " + e.essais + " essai" + (e.essais > 1 ? "s" : "") + ")"; }).join(" · ") || "aucune"));
@@ -1186,6 +1214,7 @@ if (COMBATS) {
 }
 STATS.economie = { orGagne: G.game.totalGoldEarned, or: G.game.gold, aetherTotal: G.game.totalAetherEarned, attenteDonjonH: STATS.attenteDonjonH || 0 };
 if (COMBATS) console.log("Économie : " + JSON.stringify(STATS.economie));
+if (ZONES) console.log("Zones défrichées ou montées : " + (STATS.zones || 0));
 if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ classe: CLASSE, policy: POLICY, combats: COMBATS, passes: passes, failures: failures, totalH: CLOCK.offset / 3600e3,
   daysCap: DAYS_WAITED, capWaitH: CAP_WAIT_H, stats: STATS }, null, 1));
 console.log("\n" + passes + " OK, " + failures + " échec(s) — temps simulé : " + (CLOCK.offset / 3600e3).toFixed(1) + " h (dont " + DAYS_WAITED + " attente(s) de recharge des expéditions, " + CAP_WAIT_H.toFixed(1) + " h)");
