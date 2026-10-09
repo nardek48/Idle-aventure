@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Labyrinthe des profondeurs</title>
+<style>
+/* Atelier v3.433.1 (v2) : Labyrinthe aux leviers, version « profondeurs » (RU12, retours de Seb du 09/10).
+   Brouillard noir, caméra qui suit le héros, étages générés sans fin, le Contremaître qui traque. */
+:root {
+  --bronze: #b98a4a; --cream: #f3e6c4; --ink: #3a2c1a; --ink-dim: #6b5a40; --brown: #8a5c14; --accent: #c27f1f;
+  --gold-a: #f0c64a; --gold-b: #c27f1f; --head-ink: #f4e9d0;
+  --hp: #c0392b; --breath: #3d8fd1; --violet: #9b6bff;
+  --page: #0b0806; --stone: #2b231b; --floor: #b9a37a; --floor-mem: #5d5140;
+  --safe-b: env(safe-area-inset-bottom, 0px); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--page); color: var(--cream); font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+.bar { position: sticky; top: 0; z-index: 950; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 16px; background: #000; }
+.bar b { font-size: 12px; margin-right: auto; }
+.bar button { min-height: 30px; padding: 2px 9px; border-radius: 9px; border: 1.5px solid var(--bronze); background: transparent; color: var(--cream); font: inherit; font-size: 12px; font-weight: 700; }
+.bar button[aria-pressed="true"] { background: linear-gradient(var(--gold-a), var(--gold-b)); color: #2e2214; }
+/* HUD */
+.hud { margin: 8px 16px 0; padding: 8px 12px; border: 1.5px solid var(--accent); border-radius: 16px; background: rgba(16, 12, 8, .92); }
+.hud .top { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: var(--head-ink); }
+.hud .floorname { display: block; margin-top: 1px; font-size: 13px; font-weight: 700; font-style: italic; text-transform: none; letter-spacing: 0; color: #d9c49a; }
+.gauges { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+.gauge { position: relative; height: 18px; border-radius: 9px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+.gauge i { position: absolute; inset: 0 auto 0 0; border-radius: 9px; transition: width .35s; }
+.gauge span { position: relative; display: block; text-align: center; font-size: 12px; font-weight: 800; line-height: 18px; color: #fff; text-shadow: 0 1px 2px #000; }
+.g-hp i { background: var(--hp); } .g-br i { background: var(--breath); }
+.loot { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12.5px; font-weight: 700; color: #d9c49a; }
+/* La vue : une fenêtre sur le labyrinthe, centrée sur le héros */
+.view { position: relative; margin: 8px 16px 0; border-radius: 16px; overflow: hidden; background: #000; border: 1.5px solid #3a2e22; }
+svg { display: block; width: 100%; height: auto; touch-action: manipulation; }
+#world { transition: transform .35s ease-out; }
+.room { fill: var(--floor); stroke: #1a140e; stroke-width: 3; }
+.room.mem { fill: var(--floor-mem); }
+.room.lit { fill: #8f7d5c; }
+.room.can { stroke: var(--gold-a); stroke-width: 4; cursor: pointer; }
+.door { fill: var(--floor); } .door.mem { fill: var(--floor-mem); } .door.lit { fill: #8f7d5c; }
+.door.piv { fill: rgba(155, 107, 255, .65); stroke: var(--violet); stroke-width: 2; }
+.wall { stroke: #120d09; stroke-width: 8; stroke-linecap: round; }
+.wall.piv { stroke: var(--violet); stroke-width: 8; filter: drop-shadow(0 0 5px rgba(155, 107, 255, .9)); }
+.flash { animation: flash 1s ease-out; }
+@keyframes flash { 0% { opacity: .2; } 30% { opacity: 1; } 60% { opacity: .4; } 100% { opacity: 1; } }
+.preview { stroke: #ffd34d !important; stroke-dasharray: 6 5; }
+.door.preview { fill: rgba(255, 211, 77, .6) !important; }
+.glyph { font-size: 24px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.hero { fill: #2563c9; stroke: #fff; stroke-width: 3; }
+.foe { font-size: 28px; text-anchor: middle; dominant-baseline: central; pointer-events: none; filter: drop-shadow(0 0 6px #ff3b3b); }
+/* Vignette : la torche */
+.vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 50%, transparent 32%, rgba(0, 0, 0, .55) 62%, rgba(0, 0, 0, .9) 100%); }
+.compass { position: absolute; right: 10px; top: 8px; font-size: 11px; font-weight: 800; color: #d9c49a; opacity: .8; pointer-events: none; }
+.note { margin: 8px 16px 0; padding: 8px 12px; border-radius: 12px; background: rgba(243, 230, 196, .94); color: var(--ink); font-weight: 600; line-height: 1.35; min-height: 40px; }
+.note.alert { background: #f6d2c8; }
+.actions { display: flex; gap: 8px; margin: 8px 16px calc(14px + var(--safe-b)); }
+.btn { flex: 1; min-height: 46px; border-radius: 12px; border: 2px solid #5a3a0c; background: linear-gradient(var(--gold-a), var(--gold-b)); color: #2e2214; font: inherit; font-weight: 800; font-size: 14px; }
+.btn.ghost { background: transparent; color: var(--cream); border-color: var(--bronze); }
+.btn:disabled { opacity: .4; }
+/* Feuille basse */
+.veil { position: fixed; inset: 0; z-index: 900; background: rgba(5, 3, 2, .66); }
+.ksheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 901; max-height: 84vh; display: flex; flex-direction: column; padding-bottom: calc(14px + var(--safe-b)); border-radius: 18px 18px 0 0; background: #efe0c2; color: var(--ink); box-shadow: 0 -10px 30px rgba(0, 0, 0, .7); }
+.khead { flex: none; padding: 10px 16px 12px; border-bottom: 2px solid var(--accent); border-radius: 18px 18px 0 0; background: #1b1510; color: var(--head-ink); }
+.ktitle { font-size: 17px; font-weight: 800; }
+.ksub { display: block; margin-top: 2px; font-size: 12.5px; font-weight: 600; opacity: .8; }
+.kbody { flex: 1 1 auto; overflow-y: auto; padding: 14px 16px 6px; line-height: 1.4; }
+.kbody p { margin: 0 0 10px; }
+.quote { font-style: italic; color: var(--ink-dim); }
+.kfoot { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 8px 16px 0; }
+.kfoot .btn.ghost { color: var(--ink); }
+.cost { font-size: 12.5px; font-weight: 700; color: var(--brown); }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Atelier · Labyrinthe v2</b>
+  <button id="bNew">Nouvelle descente</button>
+  <button id="bFog" aria-pressed="true">Brouillard</button>
+  <button id="bHunt" aria-pressed="true">Traque</button>
+  <button id="bSol" aria-pressed="false">Solution</button>
+  <button id="bFloor">Étage +1</button>
+</div>
+
+<div class="hud">
+  <div class="top"><span id="fNum"></span><span id="tries"></span></div>
+  <span class="floorname" id="fName"></span>
+  <div class="gauges">
+    <div class="gauge g-hp"><i id="hpBar"></i><span id="hpTxt"></span></div>
+    <div class="gauge g-br"><i id="brBar"></i><span id="brTxt"></span></div>
+  </div>
+  <div class="loot"><span id="lootTxt"></span><span id="foeTxt"></span></div>
+</div>
+
+<div class="view">
+  <svg id="map" viewBox="0 0 400 460" aria-label="Le labyrinthe"><g id="world"></g></svg>
+  <div class="vignette" id="vig"></div>
+  <div class="compass">N ↑</div>
+</div>
+<div class="note" id="note"></div>
+<div class="actions">
+  <button class="btn ghost" id="bEdda">Edda (1)</button>
+  <button class="btn ghost" id="bLeave">Remonter</button>
+</div>
+
+<div class="veil hidden" id="veil"></div>
+<div class="ksheet hidden" id="sheet">
+  <div class="khead"><div class="ktitle" id="sTitle"></div><span class="ksub" id="sSub"></span></div>
+  <div class="kbody" id="sBody"></div>
+  <div class="kfoot" id="sFoot"></div>
+</div>
+
+<script>
+"use strict";
+/* ================= Réglages d'atelier (chiffres à caler au banc) ================= */
+var W = 7, H = 9, CELL = 100, ROOM = 60;      // étage 1 : 7 × 9 salles ; il grandit avec la profondeur ; on en voit 4 × 4,5
+var STEP = 2, PULL = 4;                        // Souffle par pas, par tirage
+var BREATH_START = 100, BREATH_FLOOR = 35, SPRING = 30;  // départ ; regain en descendant ; source
+var GUARD = [0.08, 0.15], FOE_HIT = 0.30, BOSS_HIT = 0.40; // PV perdus : garde, Contremaître, Gardien
+var FOE_FROM = 2, FOE_EVERY = 2, FOE_STUN = 5;           // la traque : dès l'étage 2, une salle tous les 2 pas
+var FLOOR_NAMES = ["La cour des fondations", "Les salles qu'on a oublié de finir", "Les citernes sèches", "La galerie des plans",
+  "Le cœur qui n'est pas fini", "Les fondations sous les fondations", "Là où les pierres se taisent"];
+var FLOOR_LINES = ["Edda déroule une feuille vierge. « Ici, personne n'a jamais dessiné. »",
+  "Les murs sont plus hauts. Quelqu'un les a montés pour que tu ne voies pas par-dessus.",
+  "De l'eau coulait ici. Il n'en reste que le bruit.",
+  "Sur les dalles, des traits de craie. Pas ceux d'Edda.",
+  "Le Gardien du plan attend devant l'escalier. Il ne bouge pas. Il n'en a pas besoin.",
+  "Plus bas que la ville. Plus bas que la carte.",
+  "Le Veilleur n'est jamais descendu jusqu'ici."];
+
+/* ================= Outils ================= */
+function key(c, r) { return c + "," + r; }
+function cr(k) { var p = k.split(","); return [+p[0], +p[1]]; }
+function door(a, b) { return a < b ? a + "|" + b : b + "|" + a; }
+function rnd(n) { return Math.floor(Math.random() * n); }
+function pick(a) { return a[rnd(a.length)]; }
+function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = rnd(i + 1), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function nbrs(k) { var p = cr(k), o = []; [[0, 1], [1, 0], [0, -1], [-1, 0]].forEach(function (d) { var c = p[0] + d[0], r = p[1] + d[1]; if (c >= 0 && c < W && r >= 0 && r < H) o.push(key(c, r)); }); return o; }
+
+/* ================= Un étage ================= */
+/* Génération : un labyrinthe parfait (dos de pierre), coupé par des portes-pans sur le chemin de
+   l'escalier (une par zone), puis quelques boucles à l'intérieur des zones. Leviers placés de préférence
+   dans les culs-de-sac. Un solveur garde un tirage jouable et assez difficile. */
+function genFloor(n) {
+  W = 7 + Math.min(2, Math.floor((n - 1) / 3)); H = 9 + Math.min(4, 2 * Math.floor((n - 1) / 2));   // 7 × 9 … 9 × 13
+  var gates = Math.min(2 + Math.floor((n - 1) / 2), 4), decoys = n >= 3 ? 1 : 0, levers = gates + 1 + (n >= 4 ? 1 : 0);
+  for (var t = 0; t < 3000; t++) {
+    var F = tryFloor(n, gates, decoys, levers);
+    if (F) { F.tries = t + 1; return F; }
+  }
+  return null;
+}
+function tryFloor(n, nGates, nDecoys, nLevers) {
+  var start = key(Math.floor(W / 2), 0), open = {}, seen = {}, stack = [start];
+  seen[start] = 1;
+  while (stack.length) {                                     // dos de pierre : parcours en profondeur
+    var cur = stack[stack.length - 1], cand = nbrs(cur).filter(function (x) { return !seen[x]; });
+    if (!cand.length) { stack.pop(); continue; }
+    var nx = pick(cand); open[door(cur, nx)] = 1; seen[nx] = 1; stack.push(nx);
+  }
+  /* L'escalier : dans le haut de l'étage, à une distance qui grandit doucement avec la profondeur
+     (la carte grandit plus vite : il reste du noir à explorer et des culs-de-sac où se perdre). */
+  var dist = bfsTree(start, open), far = null, target = Math.min(18 + 2 * n, 32);
+  Object.keys(dist).forEach(function (k) { if (cr(k)[1] >= H - 3 && (!far || Math.abs(dist[k] - target) < Math.abs(dist[far] - target))) far = k; });
+  var stairs = far, path = treePath(start, stairs, open);
+  if (path.length < 14) return null;
+  /* Les portes-pans du chemin : réparties le long du chemin */
+  var gates = [];
+  for (var g = 1; g <= nGates; g++) { var i = Math.floor(path.length * g / (nGates + 1)); gates.push(door(path[i - 1], path[i])); }
+  gates.forEach(function (d) { delete open[d]; });
+  var zone = zones(path, gates, open);                      // zones séparées par les portes
+  /* Boucles : quelques murs abattus à l'intérieur d'une même zone */
+  Object.keys(dist).forEach(function (k) { nbrs(k).forEach(function (m) { var d = door(k, m); if (!open[d] && gates.indexOf(d) < 0 && zone[k] === zone[m] && Math.random() < 0.10) open[d] = 1; }); });
+  /* Pans : chaque porte de chemin est le côté b d'un pan ; le côté a est un couloir de sa zone */
+  var pivots = [], used = {};
+  gates.forEach(function (gd, gi) {
+    var zIn = Object.keys(open).filter(function (d) { var p = d.split("|"); return zone[p[0]] === gi && !used[d]; });
+    var a = pick(zIn); used[a] = 1;
+    pivots.push({ a: a, b: gd, gate: true });
+  });
+  for (var dcy = 0; dcy < nDecoys; dcy++) {                  // un leurre : il ferme un couloir, en ouvre un autre
+    var opened = Object.keys(open).filter(function (d) { return !used[d]; }), a2 = pick(opened);
+    var p0 = a2.split("|")[0], closedNear = nbrs(p0).map(function (m) { return door(p0, m); }).filter(function (d) { return !open[d] && gates.indexOf(d) < 0 && zone[d.split("|")[0]] === zone[d.split("|")[1]]; });
+    if (!closedNear.length) continue;
+    used[a2] = 1; pivots.push({ a: a2, b: pick(closedNear), gate: false });
+  }
+  pivots.forEach(function (p) { delete open[p.a]; delete open[p.b]; });
+  /* Leviers : dans les culs-de-sac d'abord, un par zone au moins, jamais au départ ni à l'escalier */
+  var deg = {}; Object.keys(dist).forEach(function (k) { deg[k] = nbrs(k).filter(function (m) { return open[door(k, m)]; }).length; });
+  var spots = {}, levers = [];
+  for (var z = 0; z <= nGates && levers.length < nLevers; z++) {
+    var inZone = Object.keys(zone).filter(function (k) { return zone[k] === z && k !== start && k !== stairs && !spots[k]; });
+    if (!inZone.length) return null;
+    var ends = inZone.filter(function (k) { return deg[k] <= 1; }), k2 = pick(ends.length ? ends : inZone);
+    spots[k2] = 1; levers.push(k2);
+  }
+  while (levers.length < nLevers) { var any = pick(Object.keys(zone).filter(function (k) { return zone[k] < nGates && k !== start && k !== stairs && !spots[k]; })); spots[any] = 1; levers.push(any); }
+  /* Ce que fait chaque levier : 1 ou 2 pans ; chaque pan tourne avec au moins un levier */
+  var P = pivots.length, map = levers.map(function () { var m = 1 << rnd(P); if (Math.random() < 0.55) m |= 1 << rnd(P); return m; });
+  var all = 0; map.forEach(function (m) { all |= m; });
+  if (all !== (1 << P) - 1) return null;
+  var F = { n: n, start: start, stairs: stairs, open: open, pivots: pivots, levers: levers, map: map, zone: zone };
+  var sol = solve(F, 0, start);
+  if (!sol || sol.pulls < Math.max(2, nGates - 1)) return null;
+  var cost = sol.steps * STEP + sol.pulls * PULL;
+  if (cost > 52 + 6 * nGates) return null;                  // le plus court reste faisable ; explorer coûte le reste
+  F.sol = sol; F.cost = cost;
+  /* Une source et un coffre, dans des culs-de-sac libres */
+  var free = Object.keys(dist).filter(function (k) { return k !== start && k !== stairs && !spots[k] && deg[k] <= 1; });
+  shuffle(free); F.spring = free[0] || null; F.chest = free[1] || null;
+  F.boss = n % 5 === 0;                                      // tous les 5 étages, le Gardien du plan garde l'escalier
+  return F;
+}
+function bfsTree(s, open) { var d = {}, q = [s]; d[s] = 0; while (q.length) { var k = q.shift(); nbrs(k).forEach(function (m) { if (open[door(k, m)] && d[m] == null) { d[m] = d[k] + 1; q.push(m); } }); } return d; }
+function treePath(s, e, open) { var prev = {}, q = [s]; prev[s] = null; while (q.length) { var k = q.shift(); if (k === e) break; nbrs(k).forEach(function (m) { if (open[door(k, m)] && !(m in prev)) { prev[m] = k; q.push(m); } }); } var p = [], c = e; while (c) { p.unshift(c); c = prev[c]; } return p; }
+/* Zones séparées par les portes du chemin, numérotées dans l'ordre du chemin : 0 = la zone du départ. */
+function zones(path, gates, open) {
+  var comp = {}, id = 0, all = []; for (var c = 0; c < W; c++) for (var r = 0; r < H; r++) all.push(key(c, r));
+  all.forEach(function (k) { if (comp[k] != null) return; var q = [k]; comp[k] = id; while (q.length) { var x = q.shift(); nbrs(x).forEach(function (m) { if (open[door(x, m)] && comp[m] == null) { comp[m] = id; q.push(m); } }); } id++; });
+  var remap = {}; remap[comp[path[0]]] = 0;
+  gates.forEach(function (gd, gi) { var after = gd.split("|").filter(function (k) { return remap[comp[k]] == null; })[0]; if (after) remap[comp[after]] = gi + 1; });
+  var z = {}; all.forEach(function (k) { z[k] = remap[comp[k]] != null ? remap[comp[k]] : 99; });
+  return z;
+}
+/* Une porte est-elle ouverte, pour un état des pans ? */
+function isOpen(F, d, bits) {
+  for (var i = 0; i < F.pivots.length; i++) { if (F.pivots[i].a === d) return !((bits >> i) & 1); if (F.pivots[i].b === d) return !!((bits >> i) & 1); }
+  return !!F.open[d];
+}
+function pivotOf(F, d) { for (var i = 0; i < F.pivots.length; i++) if (F.pivots[i].a === d || F.pivots[i].b === d) return i; return -1; }
+function solve(F, bits0, from) {
+  var seen = {}, q = [{ k: from, bits: bits0, steps: 0, pulls: 0, path: [] }]; seen[from + "#" + bits0] = 1;
+  while (q.length) {
+    var s = q.shift(); if (s.k === F.stairs) return s;
+    var mv = [];
+    nbrs(s.k).forEach(function (m) { if (isOpen(F, door(s.k, m), s.bits)) mv.push({ k: m, bits: s.bits, steps: s.steps + 1, pulls: s.pulls, path: s.path.concat(m) }); });
+    F.levers.forEach(function (lk, li) { if (lk === s.k) mv.push({ k: s.k, bits: s.bits ^ F.map[li], steps: s.steps, pulls: s.pulls + 1, path: s.path.concat("⚙" + li) }); });
+    mv.forEach(function (m) { var id = m.k + "#" + m.bits; if (!seen[id]) { seen[id] = 1; q.push(m); } });
+  }
+  return null;
+}
+
+/* ================= La descente ================= */
+var R, fog = true, hunt = true, showSol = false, previewL = -1, triesLeft = 3;
+function newDescent() { R = { floor: 0, hp: 1, breath: BREATH_START, stones: 0, gold: 0, over: false }; nextFloor(); }
+function nextFloor() {
+  R.floor++;
+  var F = null; while (!F) F = genFloor(R.floor);              // très rare : on relance la génération
+  R.F = F;
+  R.bits = 0; R.at = F.start; R.seen = {}; R.seen[F.start] = 1; R.guarded = F.levers.map(function () { return true; }); R.edda = 1;
+  R.steps = 0; R.springUsed = false; R.chestTaken = false; R.bossDown = !F.boss; previewL = -1;
+  if (R.floor > 1) R.breath = Math.min(BREATH_START, R.breath + BREATH_FLOOR);
+  /* Le Contremaître : il entre par la salle la plus loin du héros, après quelques pas */
+  R.foe = (hunt && R.floor >= FOE_FROM) ? { at: farthestFrom(F.start), stun: 6, tick: 0 } : null;
+  say(FLOOR_LINES[(R.floor - 1) % FLOOR_LINES.length]);
+  render(true);
+}
+function farthestFrom(s) { var d = bfsOpen(s, R.F, 0xffff), far = s; Object.keys(d).forEach(function (k) { if (d[k] > d[far]) far = k; }); return far; }
+function bfsOpen(s, F, bits) { var d = {}, q = [s]; d[s] = 0; while (q.length) { var k = q.shift(); nbrs(k).forEach(function (m) { var dd = door(k, m); if ((bits === 0xffff ? (F.open[dd] || pivotOf(F, dd) >= 0) : isOpen(F, dd, bits)) && d[m] == null) { d[m] = d[k] + 1; q.push(m); } }); } return d; }
+function say(t, alert) { var n = document.getElementById("note"); n.textContent = t; n.classList.toggle("alert", !!alert); }
+
+/* Visible : la salle où l'on est, et les salles voisines par une porte ouverte (la torche) */
+function lit(k) { if (k === R.at) return true; return nbrs(R.at).indexOf(k) >= 0 && isOpen(R.F, door(R.at, k), R.bits); }
+function canMove(k) { return !R.over && nbrs(R.at).indexOf(k) >= 0 && isOpen(R.F, door(R.at, k), R.bits); }
+function leverIdx(k) { return R.F.levers.indexOf(k); }
+
+function moveTo(k) {
+  if (!canMove(k)) return;
+  R.at = k; R.seen[k] = 1; R.steps++;
+  R.breath = Math.max(0, R.breath - STEP);
+  var caught = foeTurn();
+  render();
+  if (caught) return;
+  if (R.breath <= 0) return finish("souffle");
+  var F = R.F, li = leverIdx(k);
+  if (k === F.stairs) return stairs();
+  if (li >= 0) return openLever(li);
+  if (k === F.spring && !R.springUsed) { R.springUsed = true; R.breath = Math.min(BREATH_START, R.breath + SPRING); R.hp = Math.min(1, R.hp + 0.2); render(); return say("Une source, sous une dalle fendue. Souffle +" + SPRING + ", PV +20 %."); }
+  if (k === F.chest && !R.chestTaken) { R.chestTaken = true; var s = 1 + Math.floor(R.floor / 2); R.stones += s; R.gold += 120 * R.floor; render(); return say("Un coffre oublié dans un cul-de-sac : +" + s + " Pierre" + (s > 1 ? "s" : "") + " errante" + (s > 1 ? "s" : "") + ", +" + 120 * R.floor + " or."); }
+  say(foeHint() || "Tu avances. Souffle −" + STEP + ".");
+}
+
+/* ================= Le Contremaître : il traque ================= */
+function foeTurn() {
+  var f = R.foe; if (!f) return false;
+  if (f.stun > 0) { f.stun--; return false; }
+  f.tick++;
+  if (f.tick % FOE_EVERY === 0) {
+    var d = bfsOpen(R.at, R.F, R.bits);
+    if (d[f.at] != null) { var best = null; nbrs(f.at).forEach(function (m) { if (isOpen(R.F, door(f.at, m), R.bits) && d[m] != null && (best === null || d[m] < d[best])) best = m; }); if (best) f.at = best; }
+  }
+  if (f.at === R.at) {
+    R.hp = Math.max(0, R.hp - FOE_HIT); f.stun = FOE_STUN; f.at = farthestFrom(R.at);
+    if (R.hp <= 0) { render(); finish("mort"); return true; }
+    say("Le Contremaître te rattrape. Combat d'élite : PV −" + Math.round(FOE_HIT * 100) + " %. Il recule dans le noir… pour l'instant.", true);
+    return true;
+  }
+  return false;
+}
+function foeHint() {
+  var f = R.foe; if (!f || f.stun > 0) return "";
+  var d = bfsOpen(R.at, R.F, R.bits)[f.at];
+  if (d == null) return "Des pas de pierre, quelque part. Un mur vous sépare.";
+  if (d <= 2) return "Des pas de pierre, tout près — " + dir(R.at, f.at) + ".";
+  if (d <= 5) return "Des pas de pierre, " + dir(R.at, f.at) + ".";
+  return "";
+}
+function dir(a, b) { var p = cr(a), q = cr(b), dx = q[0] - p[0], dy = q[1] - p[1], s = "";
+  if (dy > 0) s += "nord"; else if (dy < 0) s += "sud";
+  if (dx > 0) s += (s ? "-" : "") + "est"; else if (dx < 0) s += (s ? "-" : "") + "ouest";
+  return "vers le " + (s || "même endroit"); }
+
+/* ================= Leviers ================= */
+function countBits(m) { var n = 0; while (m) { n += m & 1; m >>= 1; } return n; }
+function openLever(li) {
+  var g = R.guarded[li], m = R.F.map[li];
+  sheet("Un levier", g ? "Gardé" : "Libre",
+    (g ? "<p class='quote'>" + pick(["Deux squelettes se lèvent devant le levier. Ils ne te regardent pas : ils regardent le mur.", "Un bâtisseur pose une pierre devant le levier. Puis une autre. Il ne veut pas qu'on y touche.", "Une gargouille descend du plafond et se pose sur le levier."]) + "</p>"
+       : "<p class='quote'>Le levier revient toujours en place. Le tirer encore refait tourner les mêmes pans.</p>")
+    + (previewL === li ? "<p><b>Edda :</b> « Celui-là fait tourner " + countBits(m) + " pan" + (countBits(m) > 1 ? "s" : "") + ". En jaune, ceux que tu as déjà vus. »</p>" : "")
+    + "<p class='cost'>" + (g ? "Combat de garde, puis tirer (Souffle −" + PULL + ")" : "Tirer : Souffle −" + PULL) + "</p>",
+    [g ? { t: "Combattre", f: function () { guard(li); } } : { t: "Tirer le levier", f: function () { pull(li); } }, { t: "Laisser", ghost: true, f: closeSheet }]);
+}
+function guard(li) {
+  var loss = GUARD[0] + Math.random() * (GUARD[1] - GUARD[0]) + 0.01 * R.floor;
+  R.hp = Math.max(0, R.hp - loss); R.guarded[li] = false; closeSheet(); render();
+  if (R.hp <= 0) return finish("mort");
+  say("Combat de garde gagné : PV −" + Math.round(loss * 100) + " %."); openLever(li);
+}
+function pull(li) {
+  closeSheet();
+  if (R.breath < PULL) return say("Plus assez de Souffle pour tirer.", true);
+  var m = R.F.map[li], seenTurn = 0, far = [];
+  R.bits ^= m; R.breath -= PULL; previewL = -1;
+  R.F.pivots.forEach(function (p, i) { if (!((m >> i) & 1)) return; var ends = p.a.split("|").concat(p.b.split("|")); if (ends.some(function (k) { return R.seen[k]; })) seenTurn++; else far.push(dir(R.at, ends[0])); });
+  render(false, m);
+  var txt = "Le levier grince. ";
+  if (seenTurn) txt += (seenTurn > 1 ? seenTurn + " pans tournent sous tes yeux" : "Un pan tourne sous tes yeux") + ". ";
+  if (far.length) txt += "Un grondement au loin, " + far.join(", puis ") + ".";
+  say(txt + " Souffle −" + PULL + ".");
+  if (R.breath <= 0) finish("souffle");
+}
+
+/* ================= Edda : une fois par étage ================= */
+function edda() {
+  if (!R.edda || R.over) return;
+  var known = R.F.levers.map(function (k, i) { return { k: k, i: i }; }).filter(function (x) { return R.seen[x.k]; });
+  if (!known.length) return say("Edda : « Trouve-moi d'abord un levier. Je ne lis pas les murs que je n'ai pas vus. »");
+  var opts = known.map(function (x, n) { return { t: "Le levier " + dir(R.at, x.k).replace("vers le ", "du ").replace("du même endroit", "d'ici"), f: function () { R.edda = 0; previewL = x.i; closeSheet(); render(); say("Edda trace à la craie, en jaune, les pans que tourne ce levier. Ceux qu'on n'a pas vus restent dans le noir."); } }; });
+  opts.push({ t: "Plus tard", ghost: true, f: closeSheet });
+  sheet("Edda, la cartographe", "Une fois par étage", "<p class='quote'>« Je ne sais pas où ils mènent. Mais je sais lire un mur. Un seul. »</p>", opts);
+}
+
+/* ================= L'escalier : descendre ou remonter ================= */
+function stairs() {
+  var F = R.F, gain = 1 + R.floor;
+  if (!R.bossDown) {
+    return sheet("Le Gardien du plan", "Étage " + R.floor + " · il garde l'escalier",
+      "<p class='quote'>Il est fait des marches qu'il garde. Quand il bouge, l'escalier bouge avec lui.</p><p class='cost'>Combat de boss : PV −" + Math.round(BOSS_HIT * 100) + " % environ</p>",
+      [{ t: "Combattre", f: function () { closeSheet(); R.hp = Math.max(0, R.hp - BOSS_HIT); R.bossDown = true; render(); if (R.hp <= 0) return finish("mort"); R.stones += 3; say("Le Gardien s'effondre en marches. +3 Pierres errantes."); stairs(); } },
+       { t: "Reculer", ghost: true, f: closeSheet }]);
+  }
+  R.stones += gain; R.gold += 200 * R.floor; render();
+  sheet("L'escalier", "Étage " + R.floor + " franchi · +" + gain + " Pierres errantes",
+    "<p class='quote'>" + (R.floor >= 4 ? "En bas, plus de lumière du tout. Edda allume la dernière bougie." : "L'escalier descend plus loin que la ville n'est haute.") + "</p>"
+    + "<p>Dans le sac : <b>" + R.stones + " Pierres errantes</b>, " + R.gold + " or.</p>"
+    + "<p class='cost'>Descendre : Souffle +" + BREATH_FLOOR + ", étage plus grand et plus dur" + (R.floor + 1 >= FOE_FROM && hunt ? ", le Contremaître suit" : "") + ". Tomber ou s'essouffler plus bas fait perdre la moitié du sac.</p>",
+    [{ t: "Descendre à l'étage " + (R.floor + 1), f: function () { closeSheet(); nextFloor(); } },
+     { t: "Remonter avec le sac", ghost: true, f: function () { closeSheet(); finish("remonte"); } }]);
+}
+
+/* ================= Fin ================= */
+function finish(why) {
+  R.over = true;
+  var keep = why === "remonte" ? 1 : 0.5, st = Math.floor(R.stones * keep), g = Math.floor(R.gold * keep);
+  var title = { remonte: "Remonté des profondeurs", mort: "Tombé à l'étage " + R.floor, souffle: "À bout de souffle, étage " + R.floor }[why];
+  sheet(title, "Profondeur atteinte : étage " + R.floor,
+    "<p><b>" + st + " Pierres errantes</b>, " + g + " or" + (keep < 1 ? " (la moitié du sac : Edda te ramène à la surface)" : "") + ".</p>",
+    [{ t: triesLeft > 1 ? "Nouvelle descente (" + (triesLeft - 1) + " restante" + (triesLeft - 1 > 1 ? "s" : "") + ")" : "Plus de descente aujourd'hui", f: function () { closeSheet(); if (triesLeft > 1) { triesLeft--; newDescent(); } } }]);
+}
+
+/* ================= Feuille basse ================= */
+function sheet(title, sub, body, buttons) {
+  document.getElementById("sTitle").textContent = title; document.getElementById("sSub").textContent = sub;
+  document.getElementById("sBody").innerHTML = body;
+  var foot = document.getElementById("sFoot"); foot.innerHTML = "";
+  buttons.forEach(function (b) { var e = document.createElement("button"); e.className = "btn" + (b.ghost ? " ghost" : ""); e.textContent = b.t; e.onclick = b.f; foot.appendChild(e); });
+  document.getElementById("veil").classList.remove("hidden"); document.getElementById("sheet").classList.remove("hidden");
+}
+function closeSheet() { document.getElementById("veil").classList.add("hidden"); document.getElementById("sheet").classList.add("hidden"); }
+
+/* ================= Dessin : le monde entier, la caméra centrée sur le héros ================= */
+function X(k) { return 50 + cr(k)[0] * CELL; }
+function Y(k) { return 50 + (H - 1 - cr(k)[1]) * CELL; }
+function shown(k) { return !fog || R.seen[k] || lit(k); }
+function render(jump, flashMask) {
+  var F = R.F, svg = [], prev = previewL >= 0 ? F.map[previewL] : 0, sol = showSol ? F.sol.path : [];
+  var all = []; for (var c = 0; c < W; c++) for (var r = 0; r < H; r++) all.push(key(c, r));
+  var doors = {}; all.forEach(function (k) { nbrs(k).forEach(function (m) { doors[door(k, m)] = 1; }); });
+  function state(k) { return k === R.at || lit(k) ? "lit" : (R.seen[k] ? "mem" : ""); }
+  Object.keys(doors).forEach(function (d) {
+    var p = d.split("|"), a = p[0], b = p[1]; if (!isOpen(F, d, R.bits)) return;
+    if (fog && !((shown(a) && R.seen[a]) || (shown(b) && R.seen[b]) || (lit(a) && lit(b)))) return;
+    var pv = pivotOf(F, d), cls = "door" + (pv >= 0 ? " piv" : " " + (state(a) === "mem" && state(b) !== "lit" ? "mem" : "lit"));
+    if (pv >= 0 && ((prev >> pv) & 1)) cls += " preview"; if (pv >= 0 && flashMask && ((flashMask >> pv) & 1)) cls += " flash";
+    var hz = Y(a) === Y(b), x = Math.min(X(a), X(b)), y = Math.min(Y(a), Y(b));
+    svg.push('<rect class="' + cls + '" x="' + (hz ? x : x - 13) + '" y="' + (hz ? y - 13 : y) + '" width="' + (hz ? CELL : 26) + '" height="' + (hz ? 26 : CELL) + '"/>');
+  });
+  all.forEach(function (k) {
+    if (fog && !shown(k)) return;
+    var st = state(k), cls = "room" + (fog ? (st === "mem" ? " mem" : (k === R.at ? "" : " lit")) : "") + (canMove(k) ? " can" : "");
+    svg.push('<rect class="' + cls + '" data-k="' + k + '" x="' + (X(k) - ROOM / 2) + '" y="' + (Y(k) - ROOM / 2) + '" width="' + ROOM + '" height="' + ROOM + '" rx="8"/>');
+    var li = leverIdx(k), g = k === F.stairs ? (R.bossDown ? "🪜" : "🗿") : k === F.start ? (R.floor === 1 ? "🚪" : "🪜") : li >= 0 ? (R.guarded[li] ? "⚔️" : "🕹️") : (k === F.spring && !R.springUsed ? "💧" : (k === F.chest && !R.chestTaken ? "🧰" : ""));
+    if (g) svg.push('<text class="glyph" x="' + X(k) + '" y="' + Y(k) + '">' + g + '</text>');
+    if (showSol && sol.indexOf(k) >= 0) svg.push('<circle cx="' + (X(k) + 20) + '" cy="' + (Y(k) - 20) + '" r="5" fill="#ffd34d"/>');
+  });
+  Object.keys(doors).forEach(function (d) {
+    var p = d.split("|"), a = p[0], b = p[1]; if (isOpen(F, d, R.bits)) return;
+    if (fog && !(R.seen[a] || R.seen[b] || a === R.at || b === R.at)) return;
+    var pv = pivotOf(F, d), hz = Y(a) === Y(b), mx = (X(a) + X(b)) / 2, my = (Y(a) + Y(b)) / 2;
+    var cls = "wall" + (pv >= 0 ? " piv" : "") + (pv >= 0 && ((prev >> pv) & 1) ? " preview" : "") + (pv >= 0 && flashMask && ((flashMask >> pv) & 1) ? " flash" : "");
+    svg.push('<line class="' + cls + '" x1="' + (hz ? mx : mx - 31) + '" y1="' + (hz ? my - 31 : my) + '" x2="' + (hz ? mx : mx + 31) + '" y2="' + (hz ? my + 31 : my) + '"/>');
+  });
+  if (R.foe && (!fog || lit(R.foe.at) || R.foe.at === R.at)) svg.push('<text class="foe" x="' + X(R.foe.at) + '" y="' + Y(R.foe.at) + '">' + (R.foe.stun > 0 ? "😵" : "🗿") + '</text>');
+  svg.push('<circle class="hero" cx="' + X(R.at) + '" cy="' + Y(R.at) + '" r="11"/>');
+  var w = document.getElementById("world");
+  if (jump) w.style.transition = "none";
+  w.innerHTML = svg.join("");
+  w.style.transform = "translate(" + (200 - X(R.at)) + "px," + (230 - Y(R.at)) + "px)";
+  if (jump) { w.getBoundingClientRect(); w.style.transition = ""; }
+  document.getElementById("vig").style.display = fog ? "" : "none";
+  document.getElementById("fNum").textContent = "Étage " + R.floor + (F.boss ? " · Gardien" : "");
+  document.getElementById("tries").textContent = "Descentes " + triesLeft + " / 3";
+  document.getElementById("fName").textContent = FLOOR_NAMES[(R.floor - 1) % FLOOR_NAMES.length];
+  document.getElementById("hpBar").style.width = Math.round(R.hp * 100) + "%"; document.getElementById("hpTxt").textContent = "PV " + Math.round(R.hp * 100) + " %";
+  document.getElementById("brBar").style.width = R.breath + "%"; document.getElementById("brTxt").textContent = "Souffle " + R.breath;
+  document.getElementById("lootTxt").textContent = "Sac : " + R.stones + " Pierres errantes · " + R.gold + " or";
+  document.getElementById("foeTxt").textContent = R.foe ? (R.foe.stun > 0 ? "Contremaître : sonné" : "Contremaître : en chasse") : "";
+  var be = document.getElementById("bEdda"); be.disabled = !R.edda || R.over; be.textContent = "Edda (" + R.edda + ")";
+}
+
+/* ================= Gestes ================= */
+document.getElementById("map").addEventListener("click", function (e) { var k = e.target.getAttribute && e.target.getAttribute("data-k"); if (k) moveTo(k); });
+document.getElementById("bEdda").onclick = edda;
+document.getElementById("bLeave").onclick = function () { if (!R.over) finish(R.floor > 1 || R.stones ? "remonte" : "remonte"); };
+document.getElementById("bNew").onclick = function () { triesLeft = 3; newDescent(); };
+document.getElementById("bFog").onclick = function () { fog = !fog; this.setAttribute("aria-pressed", fog); render(); };
+document.getElementById("bHunt").onclick = function () { hunt = !hunt; this.setAttribute("aria-pressed", hunt); if (!hunt) R.foe = null; render(); };
+document.getElementById("bSol").onclick = function () { showSol = !showSol; this.setAttribute("aria-pressed", showSol); render(); };
+document.getElementById("bFloor").onclick = function () { if (!R.over) nextFloor(); };
+document.getElementById("veil").onclick = closeSheet;
+newDescent();
+</script>
+</body>
+</html>
