@@ -42,7 +42,7 @@ var POLICY = ARGS.indexOf("--tactique") >= 0 ? "attentif" : "grimoire";   // B :
 var SERMENT = ARGS.indexOf("--laisser") >= 0 ? "laisser" : "relever";   // desert_11 : relever le Serment (heaume) par défaut
 var ELITES_SECONDAIRES = ARGS.indexOf("--sans-elites") < 0;           // les quêtes d'élite du tableau (butin unique)
 var INVESTI = ARGS.indexOf("--investi") >= 0;
-var ZONES = ARGS.indexOf("--zones") >= 0;     // le joueur monte ses zones de production (Mine, Scierie…)   // B : le joueur bâtit la Forge dès qu'elle ouvre et reforge tout
+var ZONES = ARGS.indexOf("--sans-zones") < 0;  // le joueur monte ses zones de production (Mine, Scierie…) ; --sans-zones pour l'ancien profil   // B : le joueur bâtit la Forge dès qu'elle ouvre et reforge tout
 var ARME_DESERT = ARGS.indexOf("--arme-desert") >= 0;   // ESSAI (hors jeu) : une arme Inhabituelle du Désert offerte à desert_12
 var COMPAGNONS_MALINS = ARGS.indexOf("--compagnons-malins") >= 0;   // --tactique : les compagnons jouent leur choix automatique
 // v3.379.0 : banc de la potion automatique — --potion-auto jamais|tard|normal|tot (réglage du Grimoire),
