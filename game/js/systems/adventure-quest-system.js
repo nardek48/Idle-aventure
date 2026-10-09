@@ -162,7 +162,8 @@ var AdventureQuestManager = {
 
   spawnRunEnemy: function (quest) {
     if (this.nextSpawnIsElite(quest)) {
-      var elite = EliteManager.spawn(quest.eliteId, quest.worldId, quest.adventureIndex);
+      // v3.431.0 : eliteStatMult de quête (l'élite calée pour CETTE quête, sans toucher au donjon)
+      var elite = EliteManager.spawn(quest.eliteId, quest.worldId, quest.adventureIndex, quest.eliteStatMult ? { statMult: quest.eliteStatMult } : null);
       if (elite) { this.applyQuestTheme(quest); return; }
       // élite introuvable (donnée incohérente) : on retombe sur le spawn normal
     }

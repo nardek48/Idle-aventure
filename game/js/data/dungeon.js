@@ -176,11 +176,12 @@ var DUNGEONS = [
     camp: { afterWave: 8, healPct: 0.4, stoneAmount: 1, storyFlag: "sanctuaireCamp" },
     /* Varrek, le Garde scellé (nom validé le 09/10) : base Seigneur squelette, Blindé, se relève
        une fois (rises, systems/rise-system.js) : sa relève vaut une demi-barre, d'où l'endurance
-       basse. Banc sim/ruines-acte3-bench.js (24 runs, profil Rare provisoire, Wenna + Maddoc) :
-       à 1 / 1, 8-42 % ; à 0,8 / 0,6 -> Chev. 71 / Rôd. 54 / Mage 67 %. Provisoire : à recaler sur
-       le vrai palier Rare (Forge 4) en livraison 2. Portrait à générer. */
+       basse. Banc sim/ruines-acte3-bench.js (24 runs, palier Rare de ruines_13, Wenna + Maddoc) :
+       à 1 / 1, 8-42 % ; à 0,8 / 0,6, 71 / 54 / 67 % ; v3.431.0 : à 0,72 / 0,6 -> Chev. 75 /
+       Rôd. 58 / Mage 79 %, 1 à 1,7 potion. Le Rôdeur reste un cran sous 60 %. Portrait à générer. */
     boss: { baseId: "skeletonlord", name: "Varrek, le Garde scellé", archetype: "armored", rises: true,
-      statMult: { endurance: 0.6, power: 0.8 }, image: "./images/Boss/varrek.jpg" },
+      riseLine: "Varrek se relève. Personne ne lui a dit de rester à terre.",
+      statMult: { endurance: 0.6, power: 0.72 }, image: "./images/Boss/varrek.jpg" },
     /* v3.429.2 : fermé dès l'arrivée aux Ruines, faute de contenu. v3.430.0 : verrou d'Histoire,
        comme la Cité — il s'ouvre à ruines_12 ; entrée offerte pendant les étapes 12 et 15. */
     locked: false,

@@ -82,6 +82,7 @@ var RiseSystem = {
     e.hasRisen = true;
     e.hp = Math.max(1, Math.floor(Number(e.maxHp || 1) * RISE_HP_PCT));
     addLog("🦴 " + _t("{x} se relève !", { x: _td(e.name) }), "event");
+    if (e.riseLine) addLog(_td(e.riseLine), "event"); // v3.431.0 : ligne propre (Varrek)
     if (typeof showToast === "function") showToast("🦴 " + _t("{x} se relève !", { x: _td(e.name) }), 1200);
     if (typeof renderEnemyHp === "function") renderEnemyHp();
     return true;   // le round de la relève, il ne frappe pas encore

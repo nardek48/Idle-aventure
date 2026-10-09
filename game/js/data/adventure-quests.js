@@ -416,6 +416,41 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.431.0 (Ruines, acte III étape 14) — « Ce que la cité ne finit pas » : trois rencontres de
+     gargouilles escortées, puis le Golem (élite de données, la même que la vague 12 du Sanctuaire).
+     Cible (RU6) : 65-80 % par classe au palier Rare. Multiplicateurs au banc (sim/ruines-acte3-bench.js). */
+  aq_ruines_golem: {
+    id: "aq_ruines_golem",
+    type: "elite",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "ruins",
+    adventureIndex: 1,
+    eliteId: "golem",
+    requiresStoryStep: "ruines_14", // une quête d'élite paraît au tableau d'elle-même : pas avant son étape
+    encounters: [
+      { group: ["gargoyle", "batisseur"], groupHpMult: 0.55 },
+      { group: ["skeleton", "gargoyle", "batisseur"], groupHpMult: 0.35 },
+      { group: ["gargoyle", "gargoyle"], groupHpMult: 0.55 }
+    ],
+    encounterHpMult: 2.0,
+    enemyPowerMult: 4.8,
+    /* Le Golem de la quête, à l'échelle du monde (celui du donjon garde ses chiffres, à l'échelle
+       de la vague). Banc (profil Rare, Wenna + Maddoc, 24 runs) : à 4 / 3,5, 0 / 13 / 25 % ;
+       à 2,9 / 2,6 -> 71 / 79 / 96 % (Chev. / Rôd. / Mage), 38-49 % de PV à la fin. */
+    eliteStatMult: { power: 2.9, endurance: 2.6 },
+    name: "Ce que la cité ne finit pas",
+    story: "Sous la ville, une salle qui se refait chaque nuit et n'est jamais finie. Devant, une masse de pierre qui a des bras.",
+    icon: "./images/Icons/quest_icons/elite/elite_golem.png",
+    steps: [
+      { id: "rencontres_golem", type: "encounter", worldId: "ruins", target: 3, desc: "Vaincre {target} rencontres au Sanctuaire enseveli" },
+      { id: "elite_golem", type: "eliteKill", eliteId: "golem", target: 1, desc: "Vaincre le Golem" }
+    ],
+    reward: {}
+  },
+
   hq_wolf_pack: {
     id: "hq_wolf_pack",
     type: "kill",

@@ -125,7 +125,10 @@ var WORKSHOPS_CONFIG = {
     upgradeCostBase: { planche: 4, lingot: 3 },
     recipes: [
       { id: "verre_trempe", inputs: [{ resourceId: "verre_des_dunes", quantity: 2 }, { resourceId: "pierre", quantity: 10 }],
-        outputs: [{ resourceId: "verre_trempe", quantity: 1 }], craftTimeMs: 30000, firstCraftFlag: "verreTrempe" }
+        outputs: [{ resourceId: "verre_trempe", quantity: 1 }], craftTimeMs: 30000, firstCraftFlag: "verreTrempe" },
+      // v3.431.0 (Ruines, acte III) : la Clé de voûte. Quantités provisoires, au banc.
+      { id: "cle_de_voute", inputs: [{ resourceId: "pierre_errante", quantity: 3 }, { resourceId: "pierre", quantity: 10 }],
+        outputs: [{ resourceId: "cle_de_voute", quantity: 1 }], craftTimeMs: 30000 }
     ]
   },
   /* v3.330.0 (économie du village, décision E3 de Seb) : la Maçonnerie s'ouvre à l'arrivée au

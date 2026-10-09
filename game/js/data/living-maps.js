@@ -235,6 +235,11 @@ var LIVING_MAPS = {
     opensAtStoryStep: "ruines_07",
     rewardResourceId: "pierre_errante",
     chantier: { reward: 3 },   // Pierres errantes pour le chantier du jour (provisoire, banc)
+    /* v3.431.0 (acte III, choix « salle ») : la salle laissée se fermer freine l'Éboulement sur toute la
+       carte, tant que la porte du Sanctuaire tient (elle n'est jamais rebâtie par le chantier). */
+    choiceBrakes: [
+      { key: "salle", value: "fermer", sectorId: "porte_sanctuaire", bonus: 0.10 }
+    ],
     words: {
       cover: "l'Éboulement", coverCap: "L'Éboulement", coveredState: "Rebâti",
       home: "la Borne", fogLore: "Les rues changent trop vite pour qu'on sache ce qu'il y a là.",

@@ -69,6 +69,9 @@ var WAREHOUSE_RESOURCES = {
      marché de la caravane (acte I), puis chantier errant, Petite Aventure et donjon (acte II).
      Sa forme raffinée, la Clé de voûte, viendra avec la Forge 4 (acte III). Icône à générer. */
   pierre_errante: { id: "pierre_errante", name: "Pierre errante", icon: "images/Icons/resources/pierre_errante_icon.png", desc: "Une pierre taillée qui n'était pas là hier. Elle vient des Ruines, où rien ne reste en place.", sellPrice: 0, tier: "special", worldIndex: 2, worldName: "Ruines anciennes", sourceHint: "Le Marché des Ruines (caravane de la Halle marchande)" },
+  /* v3.431.0 (Ruines, acte III §3, RU7) : la forme raffinée de la Pierre errante, taillée au Tailleur
+     de pierre. Elle CONSTRUIT la Forge 4 et NOURRIT les reforges 7 et 8. Icône à générer. */
+  cle_de_voute: { id: "cle_de_voute", name: "Clé de voûte", icon: "images/Icons/resources/cle_de_voute_icon.png", desc: "Une pierre taillée en coin, plus large en haut qu'en bas. Elle tient une arche à elle seule. Matériau de la Forge 4 et des dernières reforges.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 2, worldName: "Ruines anciennes", sourceHint: "Pierres errantes et Pierre taillées au Tailleur de pierre (Carrière)" },
   verre_trempe: { id: "verre_trempe", name: "Verre trempé", icon: "images/Icons/resources/verre_trempe_icon.png", desc: "Verre des dunes chauffé deux fois au Tailleur de pierre. Il coupe le fer. Matériau des hauts paliers du village, au Désert.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 1, worldName: "Désert", sourceHint: "Verre des dunes et Pierre chauffés au Tailleur de pierre (Carrière)" },
   /* v3.214.0 (lot V-3) : matériau de construction de la Forêt. Premier des six
      matériaux de monde — c'est lui qui porte le plafond de construction, à la

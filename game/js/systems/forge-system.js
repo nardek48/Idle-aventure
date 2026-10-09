@@ -136,7 +136,9 @@ var ForgeManager = {
     /* v3.317.0 (W-4c) : la bande ouverte par la Forge 3 (niveaux 5 et 6) demande en plus la
        Chitine du Dard. Même règle que la Résine au palier précédent : le matériau du monde
        accompagne les niveaux que ce monde ouvre. */
-    if (target > seuil * 2) cost.chitine_profondeurs = target - seuil * 2;
+    if (target > seuil * 2 && target <= seuil * 3) cost.chitine_profondeurs = target - seuil * 2;
+    // v3.431.0 (Ruines) : la bande de la Forge 4 (niveaux 7 et 8) demande la Clé de voûte, à la place de la Chitine
+    if (target > seuil * 3) cost.cle_de_voute = target - seuil * 3;
     // v3.330.0 (E2) : reforges de l'arme exigées par l'Histoire -> or et matériaux du monde seulement
     if (this.isStoryReforge(slot, target) && typeof stripStoryMaterials === "function") cost = stripStoryMaterials(cost).cost;
     return cost;

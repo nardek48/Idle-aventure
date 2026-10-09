@@ -88,7 +88,11 @@ var STORY_REWARDS = {
   ruines_10: { gold: 2600, resources: { pierre_errante: 4 } },
   // v3.430.0 (acte III, livraison 1, provisoire : au banc) : une pièce Rare chacune, pour le palier de ruines_13
   ruines_11: { gold: 2700, equipmentRarity: "rare", equipmentCount: 1, equipmentFill: true },
-  ruines_12: { gold: 2800, resources: { pierre_errante: 2 }, equipmentRarity: "rare", equipmentCount: 1, equipmentFill: true }
+  ruines_12: { gold: 2800, resources: { pierre_errante: 2 }, equipmentRarity: "rare", equipmentCount: 1, equipmentFill: true },
+  // v3.431.0 (acte III, livraison 2, provisoire : au banc)
+  ruines_13: { gold: 2900 },
+  ruines_14: { gold: 3000 },  // + selon le choix : le frein de la salle scellée, ou le sceau de la salle
+  ruines_15: { gold: 3400, resources: { pierre_errante: 4, cle_de_voute: 1 } }
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -165,7 +169,8 @@ var STORY_CHOICE_AXES = {
      la conception du registre n'était pas disponible à l'écriture de l'acte III. */
   serment: { relever: ["donner"], laisser: ["garder"] },
   roi: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] },
-  seuil: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] } // v3.428.0 (Ruines, acte I étape 5) : la pierre de seuil
+  seuil: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] }, // v3.428.0 (Ruines, acte I étape 5) : la pierre de seuil
+  salle: { fermer: ["garder"], rouvrir: ["donner"] }    // v3.431.0 (Ruines, acte III étape 14) : la salle que la cité ne finit pas
 };
 
 /* v3.293.0 (règle Seb 18/09/2026) : storyResetLisiere, storyLisiereCrossingProgress et
@@ -750,6 +755,7 @@ function storyPendingCardChoice(chapterId) {
   var step = StoryQuestManager.getCurrentStep(chapterId), c = step && step.choice;
   if (!c || !c.onStoryCard || !StoryQuestManager.isCurrentStepAccepted(chapterId)) return null;
   if (typeof c.isDone === "function" ? c.isDone() : StoryQuestManager.getChoice(c.key) != null) return null;
+  if (typeof c.ready === "function" && !c.ready()) return null; // v3.431.0 : choix après la quête (ruines_14)
   return { chapterId: chapterId, step: step, choice: c };
 }
 window.storyPendingCardChoice = storyPendingCardChoice;
@@ -1683,7 +1689,7 @@ STORY_QUESTS.ruins = {
   title: "La ville rangée",
   subtitle: "Chapitre 3 — Ruines",
   icon: "images/Icons/codex/world_ruins.png",
-  endText: "La suite de l'acte III arrive bientôt.", // v3.430.0 : livraison 1 de l'acte III (étapes 11 et 12)
+  endText: "Fin de l'acte III — sous la ville, la carte est finie.", // v3.431.0
   steps: [
     /* ---------- Acte I — La route du nord ---------- */
     /* Étape 1 (doc §3) : la traversée, parcours v2 de quatre paliers ; le monde est posé à
@@ -2160,9 +2166,175 @@ STORY_QUESTS.ruins = {
       },
       check: function (game) { return storySanctuaireCamp(game); },
       progress: function (game) { return "Campement " + (storySanctuaireCamp(game) ? "1/1" : "0/1"); }
+    },
+    /* Étape 13 (§3) : le palier Rare (RU6) — Clé de voûte, Forge 4, pièces Rares, reforge de l'arme. */
+    {
+      id: "ruines_13",
+      title: "La clé de voûte",
+      act: "Acte III — Le cœur de pierre",
+      narrative: {
+        objective: "Au retour, Edda pose sur la table de la Borne une pierre taillée en coin, plus large en haut qu'en bas.",
+        completion: "Le marteau de la Forge sonne plus grave. Le fer prend. La pierre aussi.",
+        dialogue: [
+          { who: "Edda", text: "Trouvée sous la ville. Elle tient une arche à elle seule." },
+          { who: "Maddoc", text: "Une seule pierre, et tout tient." },
+          { who: "Sarkel", text: "Une seule pierre, et tout tombe. Ça dépend du côté où on se tient." },
+          { who: "Edda", text: "La Pierre errante se taille comme ça. Il faut savoir où frapper." },
+          { who: "Maddoc", text: "En bas, ils tiennent mieux que nous. Il faut tenir mieux qu'eux." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Maintenant, on descend." }
+        ]
+      },
+      objectiveLabel: "4 emplacements Rares sur 7, Forge 4, arme reforgée à 7",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_13,
+      linkTo: { tab: "equip" },
+      tutorial: {
+        tab: "equip",
+        icon: "images/Icons/resources/cle_de_voute_icon.png",
+        title: "Le palier Rare",
+        points: [
+          { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour descendre au bout du Sanctuaire, quatre emplacements sur sept doivent être Rares. L'arme du Fleuve compte." },
+          { icon: "images/Icons/resources/cle_de_voute_icon.png", text: "La Clé de voûte se taille au Tailleur de pierre, avec des Pierres errantes. Elle construit la Forge 4." },
+          { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge 4 ouvre la reforge jusqu'au niveau 8. Les derniers niveaux demandent aussi des Clés de voûte." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "Les pièces Rares viennent du Sanctuaire, de l'échoppe et des élites. Les étapes 11 et 12 t'en ont donné une chacune." }
+        ]
+      },
+      check: function (game) {
+        var p = storyPalierRuinesRare(game), P = STORY_PALIER_RUINES_RARE;
+        return p.pieces >= P.pieces && p.forge >= P.forge && p.arme >= P.reforge;
+      },
+      progress: function (game) {
+        var p = storyPalierRuinesRare(game), P = STORY_PALIER_RUINES_RARE;
+        return "Rares " + Math.min(p.pieces, P.pieces) + "/" + P.pieces
+          + " · Forge " + Math.min(p.forge, P.forge) + "/" + P.forge
+          + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
+      }
+    },
+    /* Étape 14 (§4) : le Golem, puis le deuxième choix pesant (clé « salle », Donner / Garder).
+       Fermer -> La salle scellée (frein de l'Éboulement, living-maps.js choiceBrakes).
+       Rouvrir -> Le sceau de la salle (anneau Rare unique, elites.js ELITE_UNIQUE_LOOT). */
+    {
+      id: "ruines_14",
+      title: "Ce que la cité ne finit pas",
+      act: "Acte III — Le cœur de pierre",
+      narrative: {
+        objective: "Sous la ville, une salle qu'Edda n'avait pas vue au premier passage. Chaque nuit, elle se refait. Chaque matin, elle n'est pas finie. Devant la porte, une masse de pierre qui a des bras.",
+        get completion() { return STORY_SALLE_TEXTS[storySalleBranch()].completion; },
+        dialogue: [
+          { who: "Edda", text: "Elle était là hier. Pas finie. Avant-hier non plus." },
+          { who: "Wenna", text: "Qu'est-ce qui manque ?" },
+          { who: "Edda", text: "Je ne sais pas. Ce qui manque, je ne le dessine pas." },
+          { who: "Le Veilleur", text: "Laissez-la. Elle se fermera seule." },
+          { who: "Maddoc", text: "Et celui devant ?" },
+          { who: "Le Veilleur", text: "Lui ne vous laissera pas le choix." }
+        ],
+        get completionDialogue() { return STORY_SALLE_TEXTS[storySalleBranch()].dialogue; }
+      },
+      objectiveLabel: "Terminer « Ce que la cité ne finit pas » (3 rencontres, puis le Golem), puis décider",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_14,
+      linkTo: { section: "adventure", cardId: "adv_aq_ruines_golem" },
+      choice: {
+        key: "salle", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "Ce que la cité ne finit pas",
+        text: "Le Golem tombe en travers du seuil. Derrière, une longue table et des chaises taillées dans la pierre. Il en manque une. Aux murs, des niches faites pour des noms. Elles sont vides. La porte recommence à se fermer. Le Veilleur veut qu'elle se ferme. Sur la table, quelque chose attend encore.",
+        options: [
+          { value: "fermer", label: "Laisser la salle se fermer", desc: "Elle se ferme pour de bon. La carte tient mieux." },
+          { value: "rouvrir", label: "Rouvrir la salle", desc: "Tu prends ce qu'elle gardait. Elle ne se fermera plus." }
+        ],
+        ready: function () { return storyAdvDone(game, "aq_ruines_golem"); },
+        apply: function (value) {
+          if (value === "rouvrir") {
+            var loot = window.EliteManager && EliteManager.buildUniqueLoot("sceau_salle");
+            if (loot && typeof addLootToInventory === "function") {
+              addLootToInventory(loot);
+              if (typeof addLog === "function") addLog(_t("Sur la table, un anneau de pierre noire. ({x})", { x: _td(loot.name) }), "event");
+            }
+          } else if (typeof addLog === "function") addLog(_t("La salle scellée : l'Éboulement recule plus souvent sur la carte des Ruines."), "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("salle")); },
+      progress: function (game) {
+        var chosen = !!(window.StoryQuestManager && StoryQuestManager.getChoice("salle"));
+        return "Golem " + (storyAdvDone(game, "aq_ruines_golem") ? "1/1" : "0/1") + " · Choix " + (chosen ? "1/1" : "0/1");
+      }
+    },
+    /* Étape 15 (§5) : Varrek, le Garde scellé, au bout du Sanctuaire (donjon 3 terminé). */
+    {
+      id: "ruines_15",
+      title: "Le garde scellé",
+      act: "Acte III — Le cœur de pierre",
+      narrative: {
+        objective: "Au bout de la deuxième étape, une porte ronde. Devant, un garde en armure, assis sur ses talons. Il se lève quand vous approchez. Il ne regarde que le Veilleur.",
+        completion: "Varrek reste à terre, cette fois. Derrière la porte ronde, une salle vide, sauf le sol. Le sol est une carte. Toute la cité, finie, taillée dans une seule pierre.",
+        dialogue: [
+          { who: "Wenna", text: "Tu le connais ?" },
+          { who: "Le Veilleur", text: "Varrek. Il gardait cette porte." },
+          { who: "Le Veilleur", text: "Je lui avais dit de ne laisser passer personne." },
+          { who: "Maddoc", text: "Pas même toi ?" },
+          { who: "Le Veilleur", text: "Il ne me reconnaît pas. Je n'ai plus la même taille." }
+        ],
+        completionDialogue: [
+          { who: "Edda", text: "Elle est finie." },
+          { who: "Edda", text: "Elle est finie, et ce n'est pas la mienne." },
+          { who: "Wenna", text: "C'est la carte de qui, alors ?" },
+          { who: "Le Veilleur", text: "Celle qu'elle bâtit. Je m'en souvenais. Elle aussi, maintenant." }
+        ]
+      },
+      objectiveLabel: "Vaincre Varrek, le Garde scellé, au bout du Sanctuaire",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_15,
+      linkTo: { tab: "dungeon" },
+      check: function (game) { return !!((game.dungeonTierCleared || {})[3]); },
+      progress: function (game) { return "Varrek vaincu " + ((game.dungeonTierCleared || {})[3] ? "1/1" : "0/1"); }
     }
   ]
 };
+
+/* v3.431.0 (Ruines, ruines_14) — textes des deux branches du choix « salle ». */
+var STORY_SALLE_TEXTS = {
+  fermer: {
+    completion: "Tu recules. La pierre glisse, rejoint l'autre, et il n'y a plus de porte. Le Veilleur pose la main à plat sur le mur. Une fois.",
+    dialogue: [
+      { who: "Edda", text: "Je la mets sur la carte ?" },
+      { who: "Le Veilleur", text: "Mets un mur." }
+    ]
+  },
+  rouvrir: {
+    completion: "Maddoc cale l'épaule. La pierre cède d'un doigt, puis d'une main. Sur la table, un anneau de pierre noire. Tu le prends. Derrière toi, la salle recommence à se bâtir.",
+    dialogue: [
+      { who: "Le Veilleur", text: "Elle ne la finira pas. Elle essaiera quand même." },
+      { who: "Wenna", text: "Tu es fâché ?" },
+      { who: "Le Veilleur", text: "Non." }
+    ]
+  }
+};
+function storySalleBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("salle") === "rouvrir") ? "rouvrir" : "fermer";
+}
+
+/* v3.431.0 (Ruines, ruines_13) — palier Rare (RU6) : emplacements au moins Rares (l'arme du Fleuve
+   compte), niveau du bâtiment Forge, reforge de l'arme. Lecture seule, comme storyPalierRuines.
+   Chiffres provisoires (document « Ruines — Acte III » v1.0, à mesurer au robot). */
+var STORY_PALIER_RUINES_RARE = { pieces: 4, forge: 4, reforge: 7 };
+function storyPalierRuinesRare(game) {
+  var portes = (game && game.equipped) || {};
+  var order = window.RARITY_ORDER || ["common", "green", "rare", "epic", "legendary"], rang = order.indexOf("rare");
+  var pieces = 0;
+  (window.EQUIPMENT_SLOTS || []).forEach(function (slot) {
+    var it = portes[slot];
+    if (it && order.indexOf(it.rarity) >= rang) pieces++;
+  });
+  var F = window.ForgeManager, V = window.VillageBuildingManager;
+  return {
+    pieces: pieces,
+    forge: (V && typeof V.getLevel === "function") ? V.getLevel("forge") : 0,
+    arme: (F && typeof F.getLevel === "function") ? F.getLevel("weapon") : 0
+  };
+}
 
 /* v3.430.0 (Ruines, ruines_11) — la porte du Sanctuaire libérée au moins une fois. */
 function storyPorteSanctuaire() {
@@ -2204,6 +2376,9 @@ function storyPalierRuines(game) {
 window.storyPalierRuines = storyPalierRuines;
 window.storyRuinsSectorsFreed = storyRuinsSectorsFreed;
 window.storyPorteSanctuaire = storyPorteSanctuaire;
+window.storyPalierRuinesRare = storyPalierRuinesRare;
+window.STORY_PALIER_RUINES_RARE = STORY_PALIER_RUINES_RARE;
+window.STORY_SALLE_TEXTS = STORY_SALLE_TEXTS;
 window.storySanctuaireCamp = storySanctuaireCamp;
 window.storyEddaInParty = storyEddaInParty;
 window.STORY_SEUIL_TEXTS = STORY_SEUIL_TEXTS;

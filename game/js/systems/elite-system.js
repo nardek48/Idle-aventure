@@ -103,6 +103,12 @@ var EliteManager = {
       multSauve = def.statMult;
       def.statMult = Object.assign({}, def.statMult, specEscorte.eliteStatMult);
     }
+    /* v3.431.0 : opts.statMult — une QUÊTE peut caler l'élite à sa place (le Golem du donjon et
+       celui de l'étape 14 ne vivent pas à la même échelle). Prime sur l'escorte. */
+    if (opts && opts.statMult && def && def.statMult) {
+      if (!multSauve) multSauve = def.statMult;
+      def.statMult = Object.assign({}, def.statMult, opts.statMult);
+    }
     var enemy;
     try {
       enemy = this.build(eliteId, this.scaleFor(worldIndex, adventureIndex || 0), opts || null); // v3.258.0 : opts.brakeMult

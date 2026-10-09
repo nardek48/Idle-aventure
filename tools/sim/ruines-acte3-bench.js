@@ -10,7 +10,8 @@
    Cibles (Conception RU6) : combats d'Histoire 65-80 % par classe, Rôdeur ≥ 60 %.
 
    USAGE : node tools/sim/ruines-acte3-bench.js . [--runs N] [--profil palier|rare] [--diff x] [--boss p,e]
-           [--setelite id:puissance,endurance] [--party wenna,maddoc] [--camp souffler|changer] */
+           [--party wenna,maddoc] [--camp souffler|changer]
+           node tools/sim/ruines-acte3-bench.js . --golem [--runs N] [--enc pv,puissance] [--golemmult puissance,endurance]  (étape 14) */
 var fs = require("fs"), path = require("path");
 var base = fs.readFileSync(path.join(__dirname, "plafond-bench.js"), "utf8");
 base = base.slice(0, base.indexOf('console.log("COMBATS DE L\'HISTOIRE'));
@@ -19,6 +20,9 @@ function arg(k) { return ARGV.indexOf(k) >= 0 ? ARGV[ARGV.indexOf(k) + 1] : null
 var PROFIL_ARG = arg("--profil");
 var PARTY = (arg("--party") || "wenna,maddoc").split(",");
 var CAMP = arg("--camp") || "souffler";
+var GOLEM = ARGV.indexOf("--golem") >= 0;   // v3.431.0 : la quête de l'étape 14 au lieu du Sanctuaire
+var QENC = arg("--enc") ? arg("--enc").split(",").map(Number) : null; // essai : encounterHpMult,enemyPowerMult
+var GOLEM_MULT = arg("--golemmult") ? arg("--golemmult").split(",").map(Number) : null; // essai : puissance,endurance
 
 var extra = function () {
   PROFILS.palier = { label: "Palier de l'acte II", train: 120, gear: "palier", points: 12, wenna: 5, maddoc: 4 };
@@ -97,6 +101,35 @@ var extra = function () {
       if (r.ok) { ok++; rounds += r.rounds; hp += r.hp; }
     }
     return { n: n, camp: camp / n, hpCamp: camp ? hpCamp / camp : 0, boss: boss / n, win: ok / n, rounds: ok ? rounds / ok : 0, hp: ok ? hp / ok : 0, pots: pots / n };
+  }
+
+  /* v3.431.0 — étape 14 : « Ce que la cité ne finit pas » (3 rencontres puis le Golem), au palier Rare. */
+  if (GOLEM) {
+    var Q = g.ADVENTURE_QUESTS.aq_ruines_golem;
+    if (QENC) { Q.encounterHpMult = QENC[0]; Q.enemyPowerMult = QENC[1]; }
+    if (GOLEM_MULT) { g.ELITE_DB.golem.statMult.power = GOLEM_MULT[0]; g.ELITE_DB.golem.statMult.endurance = GOLEM_MULT[1]; }
+    var garde = Q.requiresStoryStep; Q.requiresStoryStep = null;
+    console.log("CE QUE LA CITÉ NE FINIT PAS — " + RUNS + " runs, profil Rare, " + PARTY.join(" + ") + ", potions du profil"
+      + (QENC ? " · essai rencontres PV ×" + QENC[0] + " puissance ×" + QENC[1] : "") + (GOLEM_MULT ? " · essai Golem p" + GOLEM_MULT[0] + " e" + GOLEM_MULT[1] : ""));
+    console.log("Cible (RU6) : 65-80 % par classe, Rôdeur ≥ 60 %.\n");
+    B.CLASSES.forEach(function (c) {
+      var n = 0, ok = 0, rounds = 0, hp = 0;
+      for (var i = 0; i < RUNS; i++) {
+        B.seedRng(77000 + i);
+        prepare(c, PROFILS[PROFIL_ARG || "rare"], 2, true, true);
+        g.CompanionManager.unlock("edda"); party(PARTY);
+        B.run("CompanionManager.healAll();");
+        g.game.adventureQuestsCompleted = {};
+        var r = playQuest("aq_ruines_golem");
+        if (!r) continue;
+        n++;
+        if (r.ok) { ok++; rounds += r.rounds; hp += Math.max(0, g.game.heroHp) / g.game.heroMaxHp; }
+      }
+      console.log("   " + c.label.padEnd(10) + " réussite " + String(Math.round(100 * ok / Math.max(1, n))).padStart(3) + " %   rounds " + String(Math.round(ok ? rounds / ok : 0)).padStart(4)
+        + "   PV fin " + String(Math.round(100 * (ok ? hp / ok : 0))).padStart(3) + " %   (" + n + " runs)");
+    });
+    Q.requiresStoryStep = garde;
+    return;
   }
 
   var profils = PROFIL_ARG ? [PROFIL_ARG] : ["palier", "rare"];

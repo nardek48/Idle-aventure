@@ -28,6 +28,7 @@ var DATA_TEXT_FIELDS = {
   /* --- Quêtes, Histoire, village --- */
   GRIMOIRE_TARGET_POLICIES: ["*.label", "*.desc"], // v3.428.0 (Ruines)
   STORY_SEUIL_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.428.0 (Ruines) : les deux branches du choix « seuil »
+  STORY_SALLE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.431.0 (Ruines) : les deux branches du choix « salle »
   ADVENTURE_QUESTS: ["*.name", "*.story", "*.bossLog", "*.bossPhases.*.label", "*.bossPhases.*.line", "*.steps.*.desc"],
   HUNT_QUESTS: ["*.name", "*.story"],
   STORY_QUESTS: [
@@ -86,7 +87,7 @@ var DATA_TEXT_FIELDS = {
   POTIONS_DB: ["*.name", "*.desc"],
   HEALING_POTIONS_DB: ["*.name"],
   UPGRADES: ["*.name", "*.desc"],
-  DUNGEONS: ["*.name", "*.desc", "*.story", "*.lockedHint", "*.prepHint", "*.boss.name", "*.boss.phases.*.label"],
+  DUNGEONS: ["*.name", "*.desc", "*.story", "*.lockedHint", "*.prepHint", "*.boss.name", "*.boss.phases.*.label", "*.boss.riseLine"],
   DUNGEON_MARKS: ["*.name", "*.desc"],
   DUNGEON_SHOP: ["*.name", "*.desc"],
   MEMORY_LEVELS: ["*.theme", "*.options.*.name", "*.options.*.desc"],

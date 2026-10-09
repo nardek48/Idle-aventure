@@ -335,6 +335,7 @@ var DungeonManager = {
       // v3.288.0 : seuils de phase du boss, lus par CombatEngine.checkPhases().
       phases: (isBossWave && bossDef && Array.isArray(bossDef.phases)) ? bossDef.phases : null,
       rises: !!(isBossWave && bossDef && bossDef.rises), // v3.430.0 : Varrek se relève une fois (rise-system.js)
+      riseLine: (isBossWave && bossDef && bossDef.riseLine) || null, // v3.431.0 : sa ligne de journal à la relève
       hp: hp,
       maxHp: hp,
       goldReward: Math.floor((isBossWave ? 60 : 8) * scale),

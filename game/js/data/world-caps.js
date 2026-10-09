@@ -36,7 +36,7 @@ var WORLD_CAPS = [
      d'acte), Palissade 8 (l'Éboulement), Atelier, Halle, Entrepôt, Enchanteur 2. La Forge 4 et les
      niveaux payés en Clé de voûte viennent avec l'acte III. */
   {
-    village: { workshop: 8, training: 10, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 6, forge: 3, enchanter: 2 },
+    village: { workshop: 8, training: 11, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 6, forge: 4, enchanter: 2 }, // v3.431.0 (acte III) : Terrain 11, Forge 4
     zoneRows: 2,      // pas de zone de production aux Ruines par défaut (RU7, décision au banc)
     zoneLevel: 5,
     workshopLevel: 3,
@@ -58,7 +58,8 @@ var TRAINING_CAP_BY_ACT = [
   { worldIndex: 1, stepId: "desert_06", act: "II", terrain: 7 },      // 90
   { worldIndex: 1, stepId: "desert_11", act: "III", terrain: 9 },     // 110
   { worldIndex: 2, stepId: "ruines_01", act: "I", terrain: 9 },       // v3.428.0 : Ruines, acte I — inchangé (palier en acte II)
-  { worldIndex: 2, stepId: "ruines_06", act: "II", terrain: 10 }      // v3.429.0 : 120
+  { worldIndex: 2, stepId: "ruines_06", act: "II", terrain: 10 },     // v3.429.0 : 120
+  { worldIndex: 2, stepId: "ruines_11", act: "III", terrain: 11 }     // v3.431.0 : 130
 ];
 
 /* v3.327.0 (conception Talents v1.1, T2 option B) — PLAFOND DE POINTS DE TALENT PAR ACTE.
@@ -71,7 +72,8 @@ var TALENT_CAP_BY_ACT = [
   { worldIndex: 1, stepId: "desert_06", act: "II", points: 9 },
   { worldIndex: 1, stepId: "desert_11", act: "III", points: 11 },
   { worldIndex: 2, stepId: "ruines_01", act: "I", points: 11 },       // v3.428.0 : Ruines, acte I — inchangé
-  { worldIndex: 2, stepId: "ruines_06", act: "II", points: 12 }       // v3.429.0
+  { worldIndex: 2, stepId: "ruines_06", act: "II", points: 12 },      // v3.429.0
+  { worldIndex: 2, stepId: "ruines_11", act: "III", points: 13 }      // v3.431.0
 ];
 
 /* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ».

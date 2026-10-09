@@ -9333,7 +9333,7 @@ console.log("\n[111] v3.315.0 — Acte III, étape 12 : la Cité engloutie");
 console.log("\n[112] v3.316.0 — Acte III, étape 13 : le palier d'équipement");
 (function () {
   var F = g.VILLAGE_BUILDINGS.forge;
-  ok(F.maxLevel === 3, "la Forge monte au niveau 3");
+  ok(F.maxLevel >= 3 && g.WORLD_CAPS[1].village.forge === 3, "la Forge monte au niveau 3 au Désert"); // v3.431.0 : 4 aux Ruines
   var t3 = F.costTiers.filter(function (t) { return t.minLevel === 2; })[0];
   ok(!!t3 && t3.baseCost.verre_trempe > 0, "le niveau 3 se paie en Verre trempé");
   ok(g.WORLD_CAPS[1].village.forge === 3, "le plafond du Désert suit");
@@ -14075,7 +14075,7 @@ console.log("\n[203] v3.428.0 — Ruines, acte I : relève, réglage « Cible »
     /* --- Chapitre, plafonds, Halle, Marché, seuil d'Aeswyn --- */
     var ch = g.STORY_QUESTS.ruins;
     ok(ch && ch.requiresChapter === "desert" && ch.steps.length >= 10 && ch.steps[0].id === "ruines_01" && ch.steps[9].id === "ruines_10", "chapitre 3 : ouvert après le Désert, les étapes des actes I et II en tête");
-    ok(!!g.WORLD_CAPS[2] && g.WORLD_CAPS[2].village.forge === g.WORLD_CAPS[1].village.forge, "plafonds du monde 3 posés (provisoires, égaux au Désert)");
+    ok(!!g.WORLD_CAPS[2] && g.WORLD_CAPS[2].village.forge === g.WORLD_CAPS[1].village.forge + 1, "plafonds du monde 3 posés (v3.431.0 : la Forge 4 de l'acte III)");
     ok(g.STORY_AXES_OK !== false && g.STORY_CHOICE_AXES.seuil.soi.indexOf("soi") !== -1, "choix « seuil » sur l'axe Soi / Aeswyn");
     ok(g.WAREHOUSE_RESOURCES.pierre_errante && g.CARAVAN_RARE_BY_WORLD[2] === "pierre_errante", "Pierre errante : ressource du monde 3, rare du Marché des Ruines");
     var VB = g.VillageBuildingManager;
@@ -14255,7 +14255,7 @@ console.log("\n[206] v3.430.0 — Ruines, acte III (livraison 1) : étapes 11-12
     ok(d3.camp && d3.camp.afterWave === 8 && d3.boss.rises === true && d3.boss.name === "Varrek, le Garde scellé" && d3.maxRarity === "rare", "campement après la vague 8 ; Varrek se relève ; butin Rare");
     ok(d3.storyChapterId === "ruins" && d3.storyFreeSteps.join() === "ruines_12,ruines_15", "entrée offerte aux étapes 12 et 15");
     var ids = g.STORY_QUESTS.ruins.steps.map(function (st) { return st.id; });
-    ok(ids.slice(10).join() === "ruines_11,ruines_12" && g.STORY_REWARDS.ruines_11.equipmentRarity === "rare" && g.STORY_REWARDS.ruines_12.equipmentFill === true, "acte III : étapes 11 et 12, une pièce Rare chacune");
+    ok(ids.slice(10, 12).join() === "ruines_11,ruines_12" && g.STORY_REWARDS.ruines_11.equipmentRarity === "rare" && g.STORY_REWARDS.ruines_12.equipmentFill === true, "acte III : étapes 11 et 12, une pièce Rare chacune");
     var porte = g.LivingMapManager.getSectorDef("ruins", "porte_sanctuaire");
     ok(porte && porte.noChantier === true && porte.requiresStoryStep === "ruines_11", "la porte du Sanctuaire s'ouvre à ruines_11 et le chantier ne la touche pas");
 
@@ -14323,6 +14323,91 @@ console.log("\n[206] v3.430.0 — Ruines, acte III (livraison 1) : étapes 11-12
   } finally {
     SQ.isStepReached = _reached;
     g.openDungeonCampSheet = _open;
+  }
+})();
+
+console.log("\n[207] v3.431.0 — Ruines, acte III (livraison 2) : Clé de voûte, Forge 4, palier Rare, choix « salle », Varrek");
+(function () {
+  var SQ = g.StoryQuestManager, saved = {};
+  try {
+    var game = freshCombat("knight");
+    /* --- Clé de voûte et Forge 4 --- */
+    var R = g.WAREHOUSE_RESOURCES.cle_de_voute;
+    ok(R && R.worldIndex === 2 && R.tier === "crafted", "la Clé de voûte, matériau du monde 3");
+    var rec = g.WORKSHOPS_CONFIG.tailleur_de_pierre.recipes.filter(function (r) { return r.id === "cle_de_voute"; })[0];
+    ok(rec && rec.inputs[0].resourceId === "pierre_errante" && rec.outputs[0].resourceId === "cle_de_voute", "taillée au Tailleur de pierre, à partir de Pierres errantes");
+    var F = g.VILLAGE_BUILDINGS.forge, t4 = g.VillageBuildingManager.getCostTierForLevel(F, 3);
+    ok(F.maxLevel === 4 && t4 && t4.baseCost.cle_de_voute === 3 && g.WORLD_CAPS[2].village.forge === 4 && g.WORLD_CAPS[1].village.forge === 3, "Forge 4 aux Ruines, payée en Clés de voûte ; 3 au Désert");
+    ok(g.isStoryVillageLevel("forge", 4), "la Forge 4 est un niveau d'Histoire (matériaux communs fournis)");
+    g.VillageBuildingManager.ensure();
+    game.village.buildings.forge = { level: 4 };
+    game.forge = { levels: { weapon: 6, armor: 5 } };
+    var c7 = g.ForgeManager.getCost ? g.ForgeManager.getCost("weapon") : null, c6 = g.ForgeManager.getCost ? g.ForgeManager.getCost("armor") : null;
+    ok(g.ForgeManager.getMaxLevel() === 8, "Forge 4 : reforge jusqu'au niveau 8");
+    ok(c7 && c7.cle_de_voute === 1 && !c7.chitine_profondeurs && c6 && c6.chitine_profondeurs === 2 && !c6.cle_de_voute, "reforge 7 : une Clé de voûte ; reforge 6 : la Chitine, comme avant");
+
+    /* --- Plafonds de l'acte III --- */
+    var tc = g.TRAINING_CAP_BY_ACT.filter(function (a) { return a.stepId === "ruines_11"; })[0], pc = g.TALENT_CAP_BY_ACT.filter(function (a) { return a.stepId === "ruines_11"; })[0];
+    ok(tc && tc.terrain === 11 && g.WORLD_CAPS[2].village.training >= 11 && pc && pc.points === 13, "acte III : Terrain 11, 13 points de talent");
+
+    /* --- Étape 13 : le palier Rare --- */
+    var steps = g.STORY_QUESTS.ruins.steps, ids = steps.map(function (st) { return st.id; });
+    ok(ids.slice(12).join() === "ruines_13,ruines_14,ruines_15", "acte III : étapes 13 à 15");
+    var st13 = steps[12];
+    game.equipped = {};
+    g.EQUIPMENT_SLOTS.forEach(function (sl) { game.equipped[sl] = { uid: "t_" + sl, slot: sl, rarity: "green", stat: "tapDmg", value: 1, affixes: [] }; });
+    ["weapon", "armor", "helmet", "boots"].forEach(function (sl) { game.equipped[sl].rarity = "rare"; });
+    game.forge.levels.weapon = 6;
+    ok(!st13.check(game) && /arme 6\/7/.test(st13.progress(game)), "palier : l'arme reforgée à 7 manque");
+    game.forge.levels.weapon = 7;
+    ok(st13.check(game), "palier : 4 Rares, Forge 4, arme à 7");
+    game.equipped.boots.rarity = "green";
+    ok(!st13.check(game), "trois Rares : refusé");
+    game.equipped.boots.rarity = "epic";
+    game.village.buildings.forge = { level: 3 };
+    ok(!st13.check(game) && /Forge 3\/4/.test(st13.progress(game)), "Forge 3 : refusé ; une pièce Épique compte comme Rare");
+
+    /* --- Étape 14 : le Golem, puis le choix --- */
+    var q = g.ADVENTURE_QUESTS.aq_ruines_golem;
+    ok(q && q.type === "elite" && q.eliteId === "golem" && q.requiresStoryStep === "ruines_14" && q.encounters.length === 3, "« Ce que la cité ne finit pas » : 3 rencontres, puis le Golem");
+    ["getCurrentStep", "isCurrentStepAccepted"].forEach(function (k) { saved[k] = SQ[k]; });
+    var st14 = steps[13];
+    SQ.getCurrentStep = function (id) { return id === "ruins" ? st14 : saved.getCurrentStep.call(SQ, id); };
+    SQ.isCurrentStepAccepted = function () { return true; };
+    run("StoryQuestManager.ensure();");
+    game.storyQuests.ruins.choices = {};
+    game.adventureQuestsCompleted = {};
+    ok(g.storyPendingCardChoice("ruins") === null, "le choix n'est pas proposé avant le Golem");
+    game.adventureQuestsCompleted.aq_ruines_golem = true;
+    ok(g.storyPendingCardChoice("ruins") !== null, "le Golem vaincu : le choix attend sur la carte d'étape");
+    var LM = g.LivingMapManager;
+    run("LivingMapManager.ensureDefaults();");
+    LM.setState("ruins", "porte_sanctuaire", "libere", "test");
+    var b0 = LM.getBrakeChance("ruins");
+    ok(g.storyMakeChoice("ruins", "fermer") && SQ.getChoice("salle") === "fermer" && Math.abs(LM.getBrakeChance("ruins") - b0 - 0.10) < 1e-9, "fermer : l'Éboulement est freiné de 10 % sur la carte des Ruines");
+    ok(st14.check(game) && /Le Veilleur pose la main/.test(st14.narrative.completion), "fermer : l'étape est faite, le texte suit la branche");
+    ok(JSON.stringify(g.STORY_CHOICE_AXES.salle) === JSON.stringify({ fermer: ["garder"], rouvrir: ["donner"] }), "registre : fermer = Garder, rouvrir = Donner");
+    game.storyQuests.ruins.choices = {};
+    ok(g.storyMakeChoice("ruins", "rouvrir") && (game.inventory || []).some(function (it) { return it && it.eliteId === "sceau_salle" && it.rarity === "rare" && it.slot === "ring"; }), "rouvrir : le sceau de la salle, anneau Rare unique");
+    ok(Math.abs(LM.getBrakeChance("ruins") - b0) < 1e-9 && /anneau de pierre noire/.test(st14.narrative.completion), "rouvrir : pas de frein ; le texte suit la branche");
+    game.storyQuests.ruins.choices = {};
+
+    /* --- Étape 15 : Varrek --- */
+    var st15 = steps[14];
+    game.dungeonTierCleared = { 1: true, 2: true };
+    ok(!st15.check(game), "Varrek pas encore vaincu");
+    game.dungeonTierCleared[3] = true;
+    ok(st15.check(game), "le Sanctuaire terminé : l'étape 15 est faite");
+    var boss = { name: "Varrek", maxHp: 100, hp: 1, downed: true, riseIn: 1, riseLine: g.DUNGEONS[2].boss.riseLine };
+    var logs = []; var _al = g.addLog; g.addLog = function (m) { logs.push(m); };
+    g.RiseSystem.onEnemyTurn(boss);
+    g.addLog = _al;
+    ok(logs.some(function (m) { return /Personne ne lui a dit/.test(m); }), "Varrek se relève avec sa ligne de journal");
+    ok(g.STORY_QUESTS.ruins.endText === "Fin de l'acte III — sous la ville, la carte est finie.", "fin de l'acte III");
+  } catch (err) {
+    ok(false, "[207] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    Object.keys(saved).forEach(function (k) { SQ[k] = saved[k]; });
   }
 })();
 

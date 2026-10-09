@@ -41,7 +41,7 @@ window.getVillageBuildSeconds = getVillageBuildSeconds;
        le 3e reste aidé, pour ne pas renchérir ce qui l'était) ;
      - reforge de l'ARME : niveaux 1 à 4 (même palier, STORY_PALIER_REFORGE). */
 var STORY_PROVIDED_MATERIALS = ["bois", "planche", "pierre", "fer", "lingot", "acier", "bloc", "eau", "ble", "viande"];
-var STORY_FORGE_LEVELS = 3;
+var STORY_FORGE_LEVELS = 4; // v3.431.0 : la Forge 4 du palier Rare (ruines_13), aidée comme les trois premières
 var STORY_WEAPON_REFORGE_LEVELS = 4;
 
 /* Vrai si le niveau `targetLevel` du bâtiment `id` est un niveau d'Histoire. */
@@ -199,7 +199,7 @@ var VILLAGE_BUILDINGS = {
        coûte du Verre trempé (étape 9) et ouvre la reforge jusqu'au niveau 6 — c'est le
        deuxième compteur du palier de l'étape 13. Les niveaux 4 à 6 attendent les mondes
        suivants, comme avant. */
-    maxLevel: 3,
+    maxLevel: 4, // v3.431.0 (Ruines, acte III) : la Forge 4 à la Clé de voûte (plafond par monde : world-caps.js)
     implemented: true,
     desc: "Reforge une pièce d'équipement. Le niveau appartient à l'emplacement, pas à l'objet : changer de pièce ne fait rien perdre.",
     costTiers: [
@@ -222,6 +222,14 @@ var VILLAGE_BUILDINGS = {
         minLevel: 2, maxLevel: 2,
         resources: ["gold", "pierre", "acier", "verre_trempe"],
         baseCost: { gold: 5200, pierre: 180, acier: 40, verre_trempe: 3 },
+        costMult: 1.50
+      },
+      /* v3.431.0 (Ruines, acte III §3) : palier des Ruines, deuxième compteur du palier Rare
+         (ruines_13). 3 Clés = 9 Pierres errantes et 30 Pierre au Tailleur. Provisoire, au banc. */
+      {
+        minLevel: 3, maxLevel: 3,
+        resources: ["gold", "pierre", "acier", "cle_de_voute"],
+        baseCost: { gold: 8000, pierre: 300, acier: 70, cle_de_voute: 3 },
         costMult: 1.50
       }
     ],

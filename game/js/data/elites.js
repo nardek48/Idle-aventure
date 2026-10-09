@@ -321,6 +321,19 @@ var ELITE_UNIQUE_LOOT = {
     }
   },
 
+  /* v3.431.0 (Ruines, acte III, choix « salle » = rouvrir) — LE SCEAU DE LA SALLE : un anneau de
+     pierre noire pris sur la table. Haut de la fourchette Rare de l'anneau (3-5), affixe primaire
+     de dégâts. Donné par le choix, pas par une victoire. Chiffres au banc. */
+  sceau_salle: {
+    slot: "ring",
+    stat: "critChance",
+    rarity: "rare",
+    value: 5,
+    worldIndex: 2,
+    affixes: [{ stat: "tapMult", value: 0.10, tier: "P" }],
+    item: { name: "Le sceau de la salle", icon: "ring" }
+  },
+
   ronce_ardente: {
     slot: "armor",
     stat: "defense",
