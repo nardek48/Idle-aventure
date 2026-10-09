@@ -34,19 +34,21 @@ h1 { margin: 0 0 8px; font-size: 18px; text-align: center; }
 .dd-btn img, .menu img { width: 24px; height: 24px; object-fit: contain; flex: none; }
 .dd-btn small { display: block; font-size: 12px; font-weight: 700; color: var(--brown); }
 .car { margin-left: auto; font-size: 13px; color: var(--brown); }
-.menu { position: absolute; left: 0; right: 0; top: calc(100% + 4px); padding: 4px; border: 1.5px solid var(--brown); border-radius: 12px; background: var(--menu-bg); box-shadow: 0 8px 20px rgba(0, 0, 0, .45); }
+.menu { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 4px); padding: 4px; border: 1.5px solid var(--brown); border-radius: 12px; background: var(--menu-bg); box-shadow: 0 8px 20px rgba(0, 0, 0, .45); }
 .menu button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 42px; padding: 6px 10px; border: 0; border-radius: 9px; background: none; color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; text-align: left; }
 .menu button.on { background: linear-gradient(var(--gold-a), var(--gold-b)); }
 .menu hr { border: 0; border-top: 1px dashed rgba(138, 92, 20, .4); margin: 4px 6px; }
-.n { margin-left: auto; min-width: 24px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--chip); color: var(--chip-ink); font-size: 12px; font-weight: 800; line-height: 20px; text-align: center; font-variant-numeric: tabular-nums; }
+.lbl { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.n { flex: none; margin-left: auto; min-width: 24px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--chip); color: var(--chip-ink); font-size: 12px; font-weight: 800; line-height: 20px; text-align: center; font-variant-numeric: tabular-nums; }
 .sort { display: flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 13px; color: var(--chip-ink); white-space: nowrap; }
 .menu .sort button { width: auto; min-height: 32px; padding: 3px 12px; border-radius: 8px; border: 1px solid var(--bronze); background: var(--menu-bg); }
 .pick { color: var(--link) !important; text-decoration: underline; }
-/* Variante A : catégories en grille 2 × 2 */
+/* Variante A : catégories en grille 2 × 2 ; le menu prend toute la largeur de la ligne (il se place sur .filter) */
+.v-new .dd { position: static; }
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 2px 0; }
-.grid2 button { width: auto; min-width: 0; min-height: 40px; padding: 4px 8px; gap: 6px; font-size: 13px; border: 1px solid rgba(185, 138, 74, .45); }
+.grid2 button { width: auto; min-width: 0; min-height: 40px; padding: 4px 6px; gap: 5px; font-size: 13px; border: 1px solid rgba(185, 138, 74, .45); }
 .grid2 button img { width: 20px; height: 20px; }
-.grid2 .n { min-width: 20px; padding: 0 5px; }
+.grid2 .n { min-width: 20px; height: 18px; padding: 0 4px; font-size: 11px; line-height: 18px; }
 /* Variante C : Autovente sortie du menu, à côté du compteur */
 .cap { flex: none; display: flex; flex-direction: column; align-items: center; font-size: 13px; line-height: 1.1; color: var(--chip-ink); }
 .cap b { font-size: 18px; }
@@ -75,7 +77,7 @@ var state = { v: "new", open: true, f: "all" };
 // Même sac que la capture de Seb : aucun équipement, 6 potions.
 var counts = { all: 6, weapon: 0, armor: 0, jewel: 0, potion: 6, better: 0 };
 var F = [["all", "Tout"], ["weapon", "Armes"], ["armor", "Armures"], ["jewel", "Bijoux"], ["potion", "Potions"], "-", ["better", "Mieux que l'équipé"]];
-function row(d) { return '<button type="button" class="' + (d[0] === state.f ? 'on' : '') + '" data-f="' + d[0] + '"><img src="' + I[d[0]] + '" alt="">' + d[1] + '<span class="n">' + counts[d[0]] + '</span></button>'; }
+function row(d) { return '<button type="button" class="' + (d[0] === state.f ? 'on' : '') + '" data-f="' + d[0] + '"><img src="' + I[d[0]] + '" alt=""><span class="lbl">' + d[1] + '</span><span class="n">' + counts[d[0]] + '</span></button>'; }
 function menuOld() {
   var h = '<div class="menu" id="menu">';
   F.forEach(function (d) { h += d === "-" ? '<hr>' : row(d); });
@@ -101,7 +103,7 @@ function render() {
   h += '</div>';
   h += '<div class="ksec">Potions</div><div class="tiles"><div class="tile"><img src="' + I.pot + '" alt=""><i>Potion de Force</i></div><div class="tile"><img src="' + I.potion + '" alt=""><i>Potion de soin</i></div></div>';
   h += '<p class="mesure" id="mesure"></p>';
-  document.getElementById("zone").innerHTML = h;
+  var z = document.getElementById("zone"); z.className = "zone v-" + state.v; z.innerHTML = h;
   measure();
 }
 function measure() {
