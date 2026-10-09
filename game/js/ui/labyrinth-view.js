@@ -3,7 +3,7 @@
    Atelier validé : atelier/labyrinthe-final.html. La vue à la torche suit le héros, la carte d'Edda
    se dessine dans le coin ; le moteur (systems/labyrinth-run.js) applique et sauvegarde chaque geste. */
 
-var LAB_CELL = 100, LAB_ROOM = 74, LAB_WALK_MS = 170;
+var LAB_CELL = 100, LAB_ROOM = 74, LAB_WALK_MS = 170, LAB_VIEW_W = 340; // v3.435.1 : caméra un peu plus près (vue plein écran)
 var labView = { sheet: null, walk: null, flash: 0, drawn: null };
 
 /* ---------- Routage (buildSceneScreenHTML) ---------- */
@@ -16,7 +16,7 @@ function buildLabyrinthScreenHTML(run) {
   h += '<div class="lab-gauges"><div class="lab-gauge is-hp"><i id="lab-hpbar"></i><span id="lab-hp"></span></div>';
   h += '<div class="lab-gauge is-br"><i id="lab-brbar"></i><span id="lab-br"></span></div></div>';
   h += '<div class="lab-loot"><span id="lab-bag"></span><span id="lab-foe" class="is-hunt"></span></div></div>';
-  h += '<div class="lab-view"><svg id="lab-map" viewBox="0 0 400 440" onclick="labTapMap(event)"><g id="lab-world"></g></svg>';
+  h += '<div class="lab-view"><svg id="lab-map" viewBox="0 0 400 440" preserveAspectRatio="xMidYMid slice" onclick="labTapMap(event)"><g id="lab-world"></g></svg>';
   h += '<div class="lab-vignette"></div>';
   h += '<button type="button" class="lab-chart" id="lab-chart" onclick="labOpenChart()" aria-label="' + esc(_t("Ouvrir la carte d'Edda")) + '"></button></div>';
   h += '<div class="lab-note" id="lab-note"></div>';
@@ -77,7 +77,11 @@ function labDraw(jump, flashMask) {
   svg.push('<circle class="lab-hero" cx="' + labX(F, run.at) + '" cy="' + labY(F, run.at) + '" r="11"/>');
   if (jump || labView.drawn !== run.floor) w.style.transition = "none";
   w.innerHTML = svg.join("");
-  w.style.transform = "translate(" + (200 - labX(F, run.at)) + "px," + (240 - labY(F, run.at)) + "px)";
+  /* La vue suit la hauteur de l'écran : LAB_VIEW_W de large, la hauteur au prorata ; le héros au centre */
+  var sv = document.getElementById("lab-map"), vw = LAB_VIEW_W, vh = 440;
+  if (sv && sv.clientWidth > 0 && sv.clientHeight > 0) vh = Math.max(260, Math.round(vw * sv.clientHeight / sv.clientWidth));
+  if (sv) sv.setAttribute("viewBox", "0 0 " + vw + " " + vh);
+  w.style.transform = "translate(" + Math.round(vw / 2 - labX(F, run.at)) + "px," + (Math.round(vh / 2) - labY(F, run.at)) + "px)";
   if (jump || labView.drawn !== run.floor) { w.getBoundingClientRect(); w.style.transition = ""; }
   labView.drawn = run.floor;
   var ch = document.getElementById("lab-chart"); if (ch) ch.innerHTML = labChartSVG(false) + '<span class="lab-chart-cap">' + esc(_t("Carte d'Edda")) + '</span>';
