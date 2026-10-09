@@ -3897,6 +3897,10 @@ I18n.register("en", {
   "Tu as choisi de rentrer avant la nuit profonde. La forêt garde ses secrets. Tu gardes ton butin.": "You chose to head back before deep night. The forest keeps its secrets. You keep your loot.",
   // v3.429.16 : textes du lieu au Désert et aux Ruines
   "Entrer dans le désert": "Enter the desert",
+  // v3.429.23 : Petite aventure offerte par l'Histoire
+  "Expédition offerte": "Free expedition",
+  "— l'Histoire t'y mène, aucune place de la réserve consommée": "— the Story leads you there, no slot used from your reserve",
+  "Offerte par l'Histoire": "Free, from the Story",
   "Entrer dans les ruines": "Enter the ruins",
   "Écouter le désert": "Listen to the desert",
   "Écouter les ruines": "Listen to the ruins",

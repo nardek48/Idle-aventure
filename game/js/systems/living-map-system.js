@@ -404,7 +404,8 @@ var LivingMapManager = {
     var capTpl = (content && content.type === "expedition" && window.SceneEngine) ? SceneEngine.getTemplate(content.templateId) : null;
     if (capTpl && window.Pa2Run && Pa2Run.isPaTemplate(capTpl) && window.SceneRunManager
         && typeof SceneRunManager.canStartPetiteAventureToday === "function"
-        && !SceneRunManager.canStartPetiteAventureToday()) {
+        && !SceneRunManager.canStartPetiteAventureToday()
+        && !(typeof SceneRunManager.isStoryPaFree === "function" && SceneRunManager.isStoryPaFree(null, { mapId: mapId, sectorId: sectorId }))) { // v3.429.23
       return { ok: false, reason: SceneRunManager.petiteAventureWaitLabel() + ".", content: content, intensity: intensity, waitMs: SceneRunManager.petiteAventureNextInMs() }; // v3.366.0
     }
     /* v3.260.0 (retour Seb) : le coût d'entrée de l'expédition se dit dans le panneau, avant

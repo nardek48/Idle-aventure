@@ -73,6 +73,38 @@ var SceneRunManager = {
     return this.petiteAventureCountToday() < this.getPetiteAventureCap();
   },
 
+  /* v3.429.23 (décision Seb, option B) : une Petite aventure qui sert l'Histoire ne prend pas de place,
+     comme l'entrée de donjon offerte. L'étape en cours porte storyPa { worldId, untilFlag? } :
+     - untilFlag : offerte dans ce monde tant que la destination demandée n'est pas atteinte ;
+     - sinon : offerte vers un secteur de la carte de ce monde pas encore libéré (rejouer un secteur
+       libéré reste payant : pas de butin à volonté pendant l'étape). */
+  isStoryPaFree: function (worldId, livingMap) {
+    if (!window.StoryQuestManager || typeof StoryQuestManager.activeChapterIds !== "function") return false;
+    var lm = livingMap && livingMap.mapId ? livingMap : null;
+    if (lm && window.LIVING_MAPS && LIVING_MAPS[lm.mapId]) worldId = LIVING_MAPS[lm.mapId].worldId;
+    var ids = StoryQuestManager.activeChapterIds();
+    for (var i = 0; i < ids.length; i++) {
+      var step = StoryQuestManager.getCurrentStep(ids[i]), sp = step && step.storyPa;
+      if (!sp || sp.worldId !== worldId || !StoryQuestManager.isCurrentStepAccepted(ids[i])) continue;
+      if (sp.untilFlag) { if (!(game.explorationProgression && game.explorationProgression[sp.untilFlag])) return true; continue; }
+      if (lm && window.LivingMapManager && !LivingMapManager.isLiberated(lm.mapId, lm.sectorId)) return true;
+    }
+    return false;
+  },
+
+  /* v3.429.23 : la carte « Petite aventure » du tableau : un départ offert existe-t-il dans ce monde ?
+     (étape « destination », ou un secteur atteignable encore à libérer). */
+  hasStoryPaFree: function (worldId) {
+    if (this.isStoryPaFree(worldId, null)) return true;
+    var LM = window.LivingMapManager, map = LM && LM.getMapForWorld(worldId);
+    if (!map || !map.sectors) return false;
+    for (var i = 0; i < map.sectors.length; i++) {
+      var d = map.sectors[i];
+      if (LM.isReachable(map.id, d.id) && !LM.isLiberated(map.id, d.id) && this.isStoryPaFree(worldId, { mapId: map.id, sectorId: d.id })) return true;
+    }
+    return false;
+  },
+
   /* v3.366.0 : délai avant la prochaine place (ms), 0 si une place est libre ou si rien ne recharge. */
   petiteAventureNextInMs: function () {
     var pa = this._paState();

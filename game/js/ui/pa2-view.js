@@ -237,6 +237,10 @@ function buildPa2PrepHTML(run) {
       h += '<p class="pa2-note">' + esc(_t("Tu pars avec tes PV actuels. Les rations de la besace soignent en route.")) + '</p>';
     }
 
+    // v3.429.23 : comme l'entrée de donjon offerte — l'Histoire paie la place
+    if (!par && SceneRunManager.isStoryPaFree(run.worldId, run.livingMap)) {
+      h += '<p class="pa2-note pa2-storyfree"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> <b>' + esc(_t("Expédition offerte")) + '</b> ' + esc(_t("— l'Histoire t'y mène, aucune place de la réserve consommée")) + '</p>';
+    }
     if (!par) h += pa2TrophiesHTML(run);
 
     // Besace : l'objet dans une case ; ses autres places sont bloquées (v3.394.0, retour Seb).

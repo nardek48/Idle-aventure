@@ -461,6 +461,7 @@ var STORY_QUESTS = {
           ]
         },
         objectiveLabel: "Libérer un secteur de la carte de la Forêt",
+        storyPa: { worldId: "forest" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
         unlockTabs: [],
         reward: STORY_REWARDS.forest_brume,
         /* Pas de carte de mission : la carte vivante est une sous-vue de l'onglet Carte, ouverte
@@ -891,6 +892,7 @@ STORY_QUESTS.desert = {
         ]
       },
       objectiveLabel: "Remplir 1 Outre au Réservoir, puis atteindre une destination en Petite aventure du Désert",
+      storyPa: { worldId: "desert", untilFlag: "desertPaCompleted" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
       unlockTabs: [],
       reward: STORY_REWARDS.desert_03,
       /* v3.429.18 : l'Outre d'abord (Réservoir, comme « Donner l'Outre »), puis la Petite aventure.
@@ -938,6 +940,7 @@ STORY_QUESTS.desert = {
         ]
       },
       objectiveLabel: "Libérer 2 secteurs de la carte du Désert",
+      storyPa: { worldId: "desert" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
       unlockTabs: [],
       reward: STORY_REWARDS.desert_04,
       linkTo: { section: "map", cardId: "livingmap_desert" },
@@ -977,6 +980,7 @@ STORY_QUESTS.desert = {
         ]
       },
       objectiveLabel: "Aller aux stèles penchées (carte du Désert) et choisir",
+      storyPa: { worldId: "desert" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
       unlockTabs: [],
       reward: STORY_REWARDS.desert_05,
       linkTo: { section: "map", cardId: "livingmap_desert:steles" },
@@ -1041,6 +1045,7 @@ STORY_QUESTS.desert = {
         ]
       },
       objectiveLabel: "Libérer la porte du Temple (carte du Désert, par la verrerie ou le marché de sel)",
+      storyPa: { worldId: "desert" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
       unlockTabs: [],
       reward: STORY_REWARDS.desert_06,
       linkTo: { section: "map", cardId: "livingmap_desert:porte_temple" },
@@ -1280,6 +1285,7 @@ STORY_QUESTS.desert = {
         }
       },
       objectiveLabel: "Libérer la tour de guet (carte du Désert), puis choisir",
+      storyPa: { worldId: "desert" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
       unlockTabs: [],
       reward: STORY_REWARDS.desert_11,
       linkTo: { section: "map", cardId: "livingmap_desert:tour_guet" },
@@ -1432,6 +1438,7 @@ STORY_QUESTS.desert = {
         ]
       },
       objectiveLabel: "Libérer la bête sous la dune (carte du Désert)",
+      storyPa: { worldId: "desert" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
       unlockTabs: [],
       reward: STORY_REWARDS.desert_14,
       linkTo: { section: "map", cardId: "livingmap_desert:bete_dune" },
@@ -1919,6 +1926,7 @@ STORY_QUESTS.ruins = {
         ]
       },
       objectiveLabel: "Atteindre une destination en Petite aventure des Ruines",
+      storyPa: { worldId: "ruins", untilFlag: "ruinsPaCompleted" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_06,
       linkTo: { section: "expedition", cardId: "petite_aventure_ruines" },
@@ -1952,6 +1960,7 @@ STORY_QUESTS.ruins = {
         ]
       },
       objectiveLabel: "Libérer 2 quartiers de la carte des Ruines",
+      storyPa: { worldId: "ruins" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_07,
       linkTo: { section: "map", cardId: "livingmap_ruins" },

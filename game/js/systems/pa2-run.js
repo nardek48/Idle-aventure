@@ -211,10 +211,10 @@ var Pa2Run = {
   start: function (templateId, opts) {
     var template = SceneEngine.getTemplate(templateId);
     if (template.mode === "parcours") return this._startParcours(template, opts);
-    if (!SceneRunManager.canStartPetiteAventureToday()) {
+    var worldId = template.worldId || "forest";
+    if (!SceneRunManager.canStartPetiteAventureToday() && !SceneRunManager.isStoryPaFree(worldId, opts && opts.livingMap)) { // v3.429.23
       return { ok: false, reason: SceneRunManager.petiteAventureWaitLabel(), run: null };
     }
-    var worldId = template.worldId || "forest";
     var maps = (window.PA2_MAPS_BY_WORLD && PA2_MAPS_BY_WORLD[worldId]) || [];
     if (!maps.length) return { ok: false, reason: _t("Expédition introuvable"), run: null };
     var ringId = "sentier";
@@ -375,7 +375,8 @@ var Pa2Run = {
     var run = this.getRun();
     if (!run || run.status !== PA2_STATUS.prep) return { ok: false, reason: _t("Choix impossible") };
     var par = this.isParcours(run);
-    if (!par && !SceneRunManager.canStartPetiteAventureToday()) return { ok: false, reason: SceneRunManager.petiteAventureWaitLabel() };
+    var storyFree = !par && SceneRunManager.isStoryPaFree(run.worldId, run.livingMap); // v3.429.23 : offerte par l'Histoire
+    if (!par && !storyFree && !SceneRunManager.canStartPetiteAventureToday()) return { ok: false, reason: SceneRunManager.petiteAventureWaitLabel() };
     if (!(Number(game.heroHp || 0) > 0)) return { ok: false, reason: _t("Ton héros est à terre : soigne-le au Campement avant de partir.") };
     var taken = {}, self = this, fail = null;
     run.bag.forEach(function (id) {
@@ -407,7 +408,8 @@ var Pa2Run = {
     run.nodes = this.generate(run);
     run.at = this.getMap(run).start;
     run.path = [];
-    if (!par) { SceneRunManager._consumePetiteAventureSlot(); run.paSlotDay = SceneRunManager._today(); }
+    if (!par && !storyFree) { SceneRunManager._consumePetiteAventureSlot(); run.paSlotDay = SceneRunManager._today(); } // offerte : pas de place prise, rien à rendre en cas d'échec
+    run.storyFree = storyFree;
     if (window.SortieManager) SortieManager.start("scene");
     run.status = PA2_STATUS.map;
     this._save();

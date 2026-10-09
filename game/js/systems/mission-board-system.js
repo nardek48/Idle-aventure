@@ -563,7 +563,8 @@ var MissionBoard = {
     var isRunning = !!(activeRun && activeRun.templateId === templateId && activeRun.status !== "completed");
     var cap = SceneRunManager.getPetiteAventureCap(); // v3.298.0 : cap par monde
     var remaining = cap - SceneRunManager.petiteAventureCountToday();
-    var canStart = SceneRunManager.canStartPetiteAventureToday();
+    var storyFree = !!(template.worldId && typeof SceneRunManager.hasStoryPaFree === "function" && SceneRunManager.hasStoryPaFree(template.worldId)); // v3.429.23
+    var canStart = SceneRunManager.canStartPetiteAventureToday() || storyFree;
 
     // v3.256.0 (C-2, décision 7) : la carte du monde, si elle existe, est la seule porte d'entrée.
     var worldId = template.worldId || null;
@@ -578,7 +579,7 @@ var MissionBoard = {
       type: "expedition", place: "", objectiveLabel: "",
       // v3.125.0 : le compteur "X/N aujourd'hui" passe par rewardSummary (progressLabel = running seulement)
       progressLabel: isRunning ? _t("En cours") : "",
-      rewardSummary: (canStart && !isRunning) ? _t("{a}/{b} disponibles", { a: remaining, b: cap }) : "", // v3.366.0
+      rewardSummary: (storyFree && !isRunning) ? _t("Offerte par l'Histoire") : (canStart && !isRunning) ? _t("{a}/{b} disponibles", { a: remaining, b: cap }) : "", // v3.366.0 ; v3.429.23
       badge: "contract",
       status: isRunning ? "running" : (canStart ? "available" : "unavailable"),
       isMain: false
