@@ -1028,6 +1028,10 @@ function gearRarity(rarity, n, needWeapon) {
     });
     if (done()) break;
     var orAvant = g.game.gold;
+    /* Un joueur fait d'abord ses sorties du jour dans les donjons qui donnent cette rareté (un run
+       complet en garantit une pièce) ; l'échoppe et le farm ne viennent qu'ensuite. */
+    var dj = [3, 2].filter(function (id) { var t = g.DungeonManager.getById(id); return t && g.DungeonManager.isUnlocked(id) && g.DungeonManager.hasRunLeft(id) && ORD.indexOf(t.maxRarity) >= min; })[0];
+    if (dj) { if (COMBATS) healUp(); STATS.donjonsEquipement = (STATS.donjonsEquipement || 0) + 1; playDungeonOnce(dj, false); continue; }
     // v3.433.0 : le Rare se trouve au Sanctuaire (butin de fin de run, et sac de la sortie)
     if (rarity === "rare" && g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (playDungeonOnce(3, false) === null) farmOnce(); }
     else farmOnce();
@@ -1234,6 +1238,7 @@ if (COMBATS) {
 }
 console.log("Farm d'élites : " + STATS.farms + " · achats à l'échoppe : " + STATS.shopBuys + " · secteurs repris au sable : " + STATS.recouvrements + " · sac plein : " + STATS.sacPlein);
 console.log("Secteurs de carte (essais → libérés) : " + JSON.stringify(STATS.secteurs));
+if (STATS.donjonsEquipement) console.log("Runs de donjon pour l'équipement : " + STATS.donjonsEquipement);
 if (STATS.armes) console.log("Armes vues pendant la recherche d'Inhabituels : " + JSON.stringify(STATS.armes));
 console.log("Obstacles (estimation → réussis/ratés) : " + JSON.stringify(STATS.obstacles) + " · niveau du héros : " + G.game.heroLevel);
 if (STATS.expeditionFails.length) console.log("Expéditions ratées : " + STATS.expeditionFails.join(", "));

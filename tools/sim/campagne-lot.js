@@ -17,9 +17,11 @@ var OUT = require("../chemins.js").captures("campagne-lot");
 if (!fs.existsSync(OUT)) fs.mkdirSync(OUT);
 
 var runs = [];
+var RELIRE = ARGS.indexOf("--relire") >= 0;   // relit les JSON du dernier lot sans rejouer les parties
 CLASSES.forEach(function (c) {
   for (var i = 1; i <= N; i++) {
     var json = path.join(OUT, c + "_" + i + ".json");
+    if (RELIRE) { if (fs.existsSync(json)) runs.push(JSON.parse(fs.readFileSync(json, "utf8"))); continue; }
     process.stdout.write("  " + c + " #" + i + " … ");
     var txt = cp.spawnSync(process.execPath, [path.join(__dirname, "campagne-harness.js"), ROOT, "--classe", c, "--json", json].concat(PASS), { encoding: "utf8", maxBuffer: 1 << 28 }).stdout || "";
     fs.writeFileSync(json.replace(/\.json$/, ".txt"), txt);
@@ -38,6 +40,30 @@ console.log("Temps simulé : médiane " + med(tot).toFixed(0) + " h (de " + Math
 // Temps actif = combats seuls, à comparer au « Temps de jeu » du journal (le reste avance hors ligne)
 var act = runs.map(function (j) { return j.stats.combatMs / 3600e3; });
 if (PASS.indexOf("--combats") >= 0 && act.length) console.log("Temps actif estimé (combats) : médiane " + med(act).toFixed(1) + " h (de " + Math.min.apply(null, act).toFixed(1) + " à " + Math.max.apply(null, act).toFixed(1) + " h)");
+
+// où part le temps : médiane par cause, puis les étapes qui pèsent (moyenne du lot)
+if (runs.length && runs[0].stats.attente) {
+  var causes = {};
+  runs.forEach(function (j) {
+    var p = { combat: j.stats.combatMs / 3600e3, "soin au camp": j.stats.healMs / 3600e3 };
+    Object.keys(j.stats.attente).forEach(function (k) { p[k] = j.stats.attente[k] / 3600e3; });
+    Object.keys(p).forEach(function (k) { (causes[k] = causes[k] || []).push(p[k]); });
+  });
+  console.log("\nOù part le temps (médiane par partie, h) : " + Object.keys(causes).map(function (k) { while (causes[k].length < runs.length) causes[k].push(0); return [k, med(causes[k]), Math.max.apply(null, causes[k])]; })
+    .sort(function (a, b) { return b[1] - a[1]; }).filter(function (x) { return x[2] >= 0.5; }).map(function (x) { return x[0] + " " + x[1].toFixed(1) + " (max " + x[2].toFixed(0) + ")"; }).join(" · "));
+  var parEtape = {};
+  runs.forEach(function (j) { j.stats.steps.forEach(function (st) {
+    if (!st.temps) return;
+    var a = parEtape[st.id] = parEtape[st.id] || { tot: [], parts: {} };
+    a.tot.push(st.temps.total);
+    Object.keys(st.temps.parts).forEach(function (k) { a.parts[k] = (a.parts[k] || 0) + st.temps.parts[k] / runs.length; });
+  }); });
+  console.log("Étapes qui pèsent (h : médiane, max ; causes en moyenne du lot) :");
+  Object.keys(parEtape).filter(function (k) { return Math.max.apply(null, parEtape[k].tot) >= 3; }).forEach(function (k) {
+    var a = parEtape[k], top = Object.keys(a.parts).filter(function (c) { return a.parts[c] >= 0.3; }).sort(function (x, y) { return a.parts[y] - a.parts[x]; }).slice(0, 4);
+    console.log("  " + k.padEnd(16) + med(a.tot).toFixed(1).padStart(6) + Math.max.apply(null, a.tot).toFixed(0).padStart(6) + "   " + top.map(function (c) { return c + " " + a.parts[c].toFixed(1); }).join(" · "));
+  });
+}
 
 // par classe
 CLASSES.forEach(function (c) {
