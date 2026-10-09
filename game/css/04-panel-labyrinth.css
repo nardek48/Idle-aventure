@@ -99,7 +99,59 @@ body.scene-active.lab-run .lab-page { position: fixed; inset: 0; z-index: 60; ma
 .lab-bigchart { padding: 6px; border-radius: 12px; border: 2px solid var(--lab-gold); background: var(--lab-paper) url("../images/Maps/labyrinthe/papier.jpg") center / cover; }
 .lab-bigchart svg { display: block; width: 100%; height: auto; max-height: 52vh; }
 
-/* Bilan */
-.lab-end { align-items: center; text-align: center; padding: 24px 16px; }
-.lab-end-icon { width: 120px; height: auto; }
-.lab-endloot { font-size: 15px; }
+/* v3.436.0 : combats comme les Petites Aventures (approches, échanges, issue) */
+.lab-ksheet.is-shake { animation: lab-shake 0.35s; }
+@keyframes lab-shake { 0%, 100% { transform: none; } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+.lab-foehead { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; align-items: center; margin-bottom: 12px; }
+.lab-foehead > img { width: 76px; height: 76px; object-fit: cover; border-radius: 12px; border: 2px solid var(--lab-gold); background: #1b1510; }
+.lab-foehead.is-boss > img { object-position: top; }
+.lab-foehead b { font-size: 16px; }
+.lab-foehead .lab-quote { margin: 4px 0 0; font-size: 13px; }
+.lab-pack { color: #a3281c; }
+.lab-banner { padding: 8px 10px; border-radius: 10px; background: #f6d2c8; color: #7a1d12; font-weight: 700; }
+.lab-choices { display: flex; flex-direction: column; gap: 8px; }
+.lab-choice { width: 100%; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; text-align: left; padding: 10px;
+  border: 1.5px solid #b89a66; border-radius: 12px; background: #f8efd9; color: #3a2c1a; font: inherit; cursor: pointer; }
+.lab-choice:active { transform: scale(0.99); }
+.lab-choice > img { width: 40px; height: 40px; object-fit: contain; grid-row: span 2; }
+.lab-ct { font-weight: 800; font-size: 15px; }
+.lab-cc { font-size: 12px; font-weight: 800; color: #a3281c; white-space: nowrap; text-align: right; }
+.lab-cc.is-deadly { text-transform: uppercase; letter-spacing: 0.06em; }
+.lab-cc.is-gold { color: #8a5a12; }
+.lab-cc.is-br { color: #2c5d94; }
+.lab-cs { grid-column: 2 / -1; font-size: 12.5px; color: #6b5a40; }
+.lab-rounds { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.lab-round { display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 10px; background: #1b1510; color: var(--lab-ink); animation: lab-rise 0.25s; }
+.lab-round b { color: #ff8a7a; white-space: nowrap; }
+@keyframes lab-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.lab-verdict { text-align: center; font-size: 20px; font-weight: 800; margin: 4px 0; animation: lab-rise 0.3s; }
+.lab-verdict.is-ok { color: #2f7a3a; }
+.lab-verdict.is-ko { color: #a3281c; }
+.lab-result { text-align: center; font-weight: 800; color: #8a5a12; }
+.lab-rounds ~ .lab-quote { text-align: center; }
+.lab-kfoot.is-inline { padding: 4px 0 0; }
+@media (prefers-reduced-motion: reduce) { .lab-ksheet.is-shake, .lab-round, .lab-verdict { animation: none; } }
+
+/* Bilan (v3.436.0) : carte de fin, défilante, sur le fond de nuit */
+body.scene-active.lab-run .lab-page.lab-end { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.lab-end { align-items: stretch; }
+.lab-end-card { display: flex; flex-direction: column; gap: 12px; margin: auto 0; padding: 18px 16px 16px; border: 1.5px solid var(--lab-gold); border-radius: 18px;
+  background: radial-gradient(circle at 50% 0%, rgba(240, 170, 62, 0.18), transparent 60%), rgba(20, 15, 10, 0.96); text-align: center; }
+.lab-end.is-ko .lab-end-card, .lab-end.is-souffle .lab-end-card { background: radial-gradient(circle at 50% 0%, rgba(192, 57, 43, 0.22), transparent 60%), rgba(20, 15, 10, 0.96); }
+.lab-end-head { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.lab-end-icon { width: 96px; height: 96px; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.7)); }
+.lab-end-kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lab-gold); }
+.lab-end-title { margin: 0; font-size: 21px; line-height: 1.2; font-weight: 800; color: var(--lab-ink); }
+.lab-end-record { margin-top: 4px; padding: 4px 12px; border-radius: 999px; background: var(--lab-gold); color: #1b1510; font-size: 12.5px; font-weight: 800; animation: lab-flash 1.2s ease-out; }
+.lab-end-line { margin: 0; color: #d9c49a; }
+.lab-end-loot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lab-end-loot > div { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px; border-radius: 14px; background: rgba(243, 230, 196, 0.08); border: 1px solid rgba(240, 170, 62, 0.35); }
+.lab-end-loot img { width: 36px; height: 36px; object-fit: contain; }
+.lab-end-loot b { font-size: 22px; color: var(--lab-ink); }
+.lab-end-loot span { font-size: 12.5px; color: #d9c49a; }
+.lab-end-lost { margin: 0; font-size: 12.5px; font-weight: 700; color: var(--lab-alert); }
+.lab-end-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0; text-align: left; }
+.lab-end-stats > div { display: flex; justify-content: space-between; gap: 6px; padding: 6px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); }
+.lab-end-stats dt { font-size: 12px; color: #d9c49a; }
+.lab-end-stats dd { margin: 0; font-size: 13px; font-weight: 800; color: var(--lab-ink); }
+.lab-end-chart svg { max-height: 30vh; }

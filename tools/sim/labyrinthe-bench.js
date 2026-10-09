@@ -11,6 +11,7 @@ base = base.slice(0, base.indexOf('console.log("COMBATS DE L\'HISTOIRE'));
 var ARGV = process.argv.slice(3);
 function arg(k) { return ARGV.indexOf(k) >= 0 ? ARGV[ARGV.indexOf(k) + 1] : null; }
 var PROFIL_ARG = arg("--profil");
+var AP = ARGV.indexOf("--charger") >= 0 ? "charger" : "tenir";   // v3.436.0 : approche des combats du robot
 var ROBOT = ARGV.indexOf("--robot") >= 0, RUNS = Number(arg("--runs") || 60), PRUDENT = ARGV.indexOf("--prudent") >= 0;
 
 var extra = function () {
@@ -60,7 +61,7 @@ var extra = function () {
         var pick = null; for (var j = 0; j < lv.length && !pick; j++) { var pp = L.pathTo(F, run.at, lv[j].k, known); if (pp) { pick = lv[j]; path = pp; } }
         if (!pick) return false;   // coincé : remonter
         if (path.length === 1) {   // déjà sur le levier
-          if (pick.i === F.guarded && run.guardUp) { st.fights++; L.fightGuard(pick.i); if (run.status !== "lab-map") return false; }
+          if (pick.i === F.guarded && run.guardUp) { st.fights++; L.fightGuard(pick.i, AP); if (run.status !== "lab-map") return false; }
           st.pulls++; if (!L.pull(pick.i).ok) return false; continue;
         }
         target = "lever";
@@ -69,11 +70,11 @@ var extra = function () {
       var hp0 = g.game.heroHp, r = L.move(next);
       if (!r.ok) return false;
       st.steps++;
-      if (r.event === "caught") st.caught++;
+      if (r.event === "caught") { st.caught++; if (run.pending) L.fight(AP); }   // v3.436.0 : le Contremaître attend un choix
       if (run.status !== "lab-map") return false;
       if (r.event === "lever" && !run.pulled[L.leverAt(run, run.at)]) {   // un levier découvert : le tirer une fois (combat de garde d'abord)
         var li = L.leverAt(run, run.at);
-        if (li === F.guarded && run.guardUp) { st.fights++; L.fightGuard(li); if (run.status !== "lab-map") return false; }
+        if (li === F.guarded && run.guardUp) { st.fights++; L.fightGuard(li, AP); if (run.status !== "lab-map") return false; }
         st.pulls++; L.pull(li); if (run.status !== "lab-map") return false;
       }
     }
@@ -109,7 +110,7 @@ var extra = function () {
               F0.start = saveS; if (sol) tot.lost = (tot.lost || 0) + 1; else tot.trap = (tot.trap || 0) + 1;
               tot.stuck++; L.finish("remonte"); break; }
             tot.floors++;
-            if (!run.bossDown) { st.fights++; L.fightBoss(); if (run.status !== "lab-map") break; }
+            if (!run.bossDown) { st.fights++; L.fightBoss(AP); if (run.status !== "lab-map") break; }
             L.claimStairs();
             if (decide(run)) L.descend(); else L.finish("remonte");
           }

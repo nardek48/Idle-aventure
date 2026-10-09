@@ -30,6 +30,10 @@ var LABYRINTH_CONFIG = {
   foeHpMult: 0.55, foePowMult: 0.80,  // le Contremaître du labyrinthe : un coup (~30 % des PV), pas un combat d'élite entier
   bossEvery: 5, bossFoe: "skeleton", bossHpMult: 8, bossPowMult: 2.4, // le Gardien du plan : bâti comme le gardien des Petites Aventures des Ruines, un cran au-dessus (banc : ~40 % des PV)
   bossName: "Le Gardien du plan",
+  /* v3.436.0 : combats comme les Petites Aventures — Charger (×1,3 dégâts, ×1,4 or) ou Tenir ; Ruse sur la garde, Fuir le Contremaître */
+  combatGold: { guard: 1.7, foe: 2.5, boss: 6 },   // × or d'un squelette des Ruines × approche
+  ruseBase: 0.6, rusePerFloor: 0.05, ruseMin: 0.3, ruseBreath: 10,
+  fleeBreath: 10,
 
   /* Gains (banc, robot explorateur) : 1 Pierre par escalier ; l'or grandit avec la profondeur */
   stairsStones: 1, stairsStonesPerFloor: 0, stairsGoldPerFloor: 150,

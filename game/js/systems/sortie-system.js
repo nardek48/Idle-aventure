@@ -106,7 +106,8 @@ var SortieManager = {
     if (loot.items.length) parts.push(_tn(loot.items.length, "{n} objet", "{n} objets"));
     Object.keys(loot.resources).forEach(function (k) {
       var q = Math.floor(loot.resources[k]);
-      if (q > 0) parts.push(q + " " + k);
+      var def = typeof WAREHOUSE_RESOURCES !== "undefined" ? WAREHOUSE_RESOURCES[k] : null;   // v3.436.0 : le nom, pas l'identifiant
+      if (q > 0) parts.push(q + " " + (def ? _td(def.name) : k));
     });
     return parts.length ? parts.join(", ") : _t("rien");
   },

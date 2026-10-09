@@ -14611,7 +14611,7 @@ console.log("\n[210] v3.434.0 — Ruines : le Labyrinthe aux leviers (livraison 
     ok(eg && ef && eb && isFinite(eg.hpLoss) && isFinite(ef.hpLoss) && isFinite(eb.hpLoss) && eg.hpLoss > 0, "estimations : garde " + eg.hpLoss + ", Contremaître " + ef.hpLoss + ", Gardien " + eb.hpLoss + " PV (héros " + game.heroMaxHp + " PV)");
     /* --- Un étage joué au plus court (héros du harnais très solide : on teste la mécanique, pas les chiffres) --- */
     var maxHp0 = game.heroMaxHp; game.heroMaxHp = 1e7; game.heroHp = 1e7;
-    estSaved = L.estimate; L.estimate = function (kind) { return { kind: kind, foeName: "test", hpLoss: 10, unwinnable: false, verdict: "leger" }; };
+    estSaved = L.estimate; L.estimate = function (kind) { return { kind: kind, foeName: "test", hpLoss: 10, unwinnable: false, verdict: "leger", gold: 5, rounds: 3 }; };
     var b0 = game.sceneRun.breath;
     ok(playFloor(), "étage 1 : le plus court chemin mène à l'escalier");
     ok(game.sceneRun.breath < b0, "le Souffle baisse à chaque pas et à chaque tirage");
@@ -14625,8 +14625,8 @@ console.log("\n[210] v3.434.0 — Ruines : le Labyrinthe aux leviers (livraison 
     var run2 = game.sceneRun; run2.foe.stun = 0; run2.foe.every = 1;
     var near = L.nbrs(run2.F, run2.at).filter(function (m) { return L.openNow(run2, L.door(run2.at, m)); })[0];
     run2.foe.at = near; var hp0 = game.heroHp;
-    var mv = L.move(near);
-    ok(mv.event === "caught" && game.heroHp < hp0 && run2.foe.stun > 0 && run2.foe.at !== run2.at, "le Contremaître rattrape le héros : PV perdus, puis il recule, sonné");
+    var mv = L.move(near), pend = run2.pending && run2.pending.kind, fr = L.fight("tenir");   // v3.436.0 : un combat en attente
+    ok(mv.event === "caught" && pend === "foe" && fr.ok && game.heroHp < hp0 && run2.foe.stun > 0 && run2.foe.at !== run2.at, "le Contremaître rattrape le héros : combat, PV perdus, puis il recule, sonné");
     /* --- Remonter avec le sac --- */
     var pe = g.WarehouseManager.getAmount("pierre_errante"), bagAll = game.sceneRun.stones;
     var end = L.finish("remonte");
@@ -14676,6 +14676,66 @@ console.log("\n[211] v3.435.0 — Ruines : le Labyrinthe aux leviers (livraison 
     game.sceneRun = null;
   } catch (err) {
     ok(false, "[211] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[212] v3.436.0 — Labyrinthe : combats comme les Petites Aventures, bilan");
+(function () {
+  var SQ = g.StoryQuestManager, L = g.LabyrinthRun, savedReach = SQ.isStepReached, savedRnd = g.Math.random;
+  try {
+    var game = freshCombat("knight"), C = g.LABYRINTH_CONFIG;
+    SQ.isStepReached = function (id) { return id === "ruines_11" ? true : savedReach.call(SQ, id); };
+    game.sceneRun = null; game.explorationProgression.labyrinth = null;
+    g.WarehouseManager.addResource("petite_ration", 3);
+    ok(L.start().ok, "départ");
+    var run1 = game.sceneRun;
+    var ec = L.estimate("guard", "charger"), et = L.estimate("guard", "tenir");
+    ok(ec.hpLoss > et.hpLoss && ec.gold > et.gold && et.gold > 0 && ec.rounds === 2 && et.rounds === 3, "Charger : plus de PV perdus et plus d'or que Tenir (" + ec.hpLoss + "/" + et.hpLoss + " PV, " + ec.gold + "/" + et.gold + " or), en 2 échanges contre 3");
+    ok(L.estimate("boss", "tenir").gold > L.estimate("foe", "tenir").gold && L.estimate("foe", "tenir").gold > 0, "le Gardien rapporte plus que le Contremaître");
+    game.heroMaxHp = 1e7; game.heroHp = 1e7;
+    /* Le levier gardé : se poster devant, engager */
+    var li = run1.F.guarded; run1.at = run1.F.levers[li]; run1.guardUp = true;
+    ok(!L.engage("guard", 1 - li).ok, "on n'engage que la garde du levier gardé");
+    ok(L.engage("guard", li).ok && run1.pending && run1.pending.kind === "guard", "engager : un combat en attente");
+    var saved = JSON.parse(JSON.stringify(run("buildSaveData()")));
+    ok(saved.sceneRun.pending && saved.sceneRun.pending.kind === "guard", "le combat en attente est sauvegardé");
+    var nb = L.nbrs(run1.F, run1.at).filter(function (m) { return L.openNow(run1, L.door(run1.at, m)); })[0];
+    ok(!nb || !L.move(nb).ok, "pas de pas tant que le combat attend");
+    /* La ruse ratée, puis le combat surpris */
+    var br0 = run1.breath; g.Math.random = function () { return 0.99; };
+    var ru = L.ruse(); g.Math.random = savedRnd;
+    ok(ru.ok && !ru.success && run1.breath === br0 - C.ruseBreath && run1.pending.surprised, "ruse ratée : Souffle −" + C.ruseBreath + ", la garde frappe la première");
+    ok(!L.ruse().ok, "pas de seconde ruse une fois repéré");
+    var hp0 = game.heroHp, gold0 = run1.gold, f = L.fight("charger");
+    ok(f.ok && f.result.parts.length === 2 && game.heroHp < hp0 && run1.gold > gold0 && !run1.guardUp && !run1.pending, "Charger : 2 échanges, PV perdus, or au sac, le levier est libre");
+    ok(run1.stats.fights === 1, "le combat est compté pour le bilan");
+    /* La ruse réussie */
+    run1.guardUp = true; L.engage("guard", li); g.Math.random = function () { return 0; };
+    ru = L.ruse(); g.Math.random = savedRnd;
+    ok(ru.ok && ru.success && !run1.guardUp && !run1.pending && run1.stats.ruses === 1, "ruse réussie : le levier est libre, sans combat");
+    ok(L.ruseChance(run1) === C.ruseBase && L.ruseChance({ floor: 99 }) === C.ruseMin, "ruse : " + Math.round(C.ruseBase * 100) + " % à l'étage 1, " + Math.round(C.ruseMin * 100) + " % au plus bas");
+    /* Le Contremaître : fuir */
+    run1.foe = { at: run1.at, stun: 0, every: 2, tick: 0 }; run1.pending = { kind: "foe" };
+    br0 = run1.breath; hp0 = game.heroHp;
+    var fl = L.flee();
+    ok(fl.ok && run1.breath === br0 - C.fleeBreath && game.heroHp === hp0 && !run1.pending && run1.foe.stun > 0, "fuir le Contremaître : Souffle −" + C.fleeBreath + ", sans dégâts, il est semé");
+    /* Le Gardien */
+    run1.at = run1.F.stairs; run1.bossDown = false;
+    var estB = L.estimate; L.estimate = function (kind, ap) { return { kind: kind, approach: ap, foeName: "test", hpLoss: 10, unwinnable: false, verdict: "leger", gold: 5, rounds: 3 }; };
+    var fb = L.fightBoss("tenir"); L.estimate = estB;   // le héros du harnais ne passe pas le Gardien : on teste la mécanique
+    ok(fb.ok && run1.bossDown && run1.stats.fights === 2, "le Gardien : engager puis combattre (raccourci des bancs)");
+    /* Bilan */
+    run1.floor = 3; L.claimStairs();
+    var end = L.finish("remonte");
+    ok(end.record && end.stats.fights === 2 && end.stats.ruses === 1, "bilan : record battu, combats et ruses comptés");
+    var html = run("buildSceneScreenHTML()");
+    ok(/lab-end-record/.test(html) && /lab-end-stats/.test(html) && /lab-end-loot/.test(html) && /lab-end-chart/.test(html), "l'écran de fin : record, butin, relevé et carte d'Edda");
+    run("leaveSceneScreen()");
+  } catch (err) {
+    ok(false, "[212] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.isStepReached = savedReach; g.Math.random = savedRnd;
+    if (g.game) { g.game.sceneRun = null; if (g.game.explorationProgression) g.game.explorationProgression.labyrinth = null; }
   }
 })();
 

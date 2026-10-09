@@ -32,6 +32,8 @@ function labAfterRender() {
   if (document.body && document.body.classList) document.body.classList.toggle("lab-run", !!run && game.activeTab === "scene");
   if (!run || run.status === LAB_STATUS.done || !document.getElementById("lab-root")) return;
   labDraw(true);
+  // v3.436.0 : un combat en attente (rechargement, Contremaître) rouvre sa feuille
+  if (run.pending && !(labView.sheet && labView.sheet.kind === "fight")) labView.sheet = { kind: "fight", fk: run.pending.kind, li: run.pending.li };
   if (labView.sheet) labShowSheet();
 }
 
@@ -150,7 +152,7 @@ function labChartSVG(big) {
 /* ---------- Gestes ---------- */
 function labTapMap(e) {
   var k = e.target && e.target.getAttribute && e.target.getAttribute("data-k"), run = LabyrinthRun.getRun();
-  if (!k || !run || labView.sheet) return;
+  if (!k || !run || labView.sheet || labPendingSheet(run)) return;
   if (LabyrinthRun.canMove(run, k)) { labStopWalk(); labStep(k, false); }
   else if (run.seen[k]) labWalkTo(k);
 }
@@ -161,7 +163,8 @@ function labStep(k, passing) {
   var run = LabyrinthRun.getRun();
   if (r.event === "end") { labStopWalk(); refreshSceneScreen(); return r; }
   labDraw(false);
-  if (r.event === "lever") { labStopWalk(); labOpenSheet({ kind: "lever", li: LabyrinthRun.leverAt(run, run.at) }); }
+  if (run.pending) { labStopWalk(); labOpenSheet({ kind: "fight", fk: run.pending.kind, li: run.pending.li }); }
+  else if (r.event === "lever") { labStopWalk(); labOpenSheet({ kind: "lever", li: LabyrinthRun.leverAt(run, run.at) }); }
   else if (r.event === "stairs") { labStopWalk(); labOpenSheet({ kind: "stairs" }); }
   else if (r.event) labStopWalk();
   else if (run.note && run.note.alert) labStopWalk();
@@ -183,41 +186,34 @@ function labStopWalk() { if (labView.walk) { clearInterval(labView.walk); labVie
 function labOpenSheet(s) { labView.sheet = s; labShowSheet(); }
 function labCloseSheet() { labView.sheet = null; var b = document.getElementById("lab-sheet"); if (b) b.innerHTML = ""; }
 window.labCloseSheet = labCloseSheet;
-function labSheetHTML(title, sub, body, buttons) {
-  var h = '<div class="lab-scrim" onclick="labCloseSheet()"></div><div class="lab-ksheet" role="dialog">';
+function labSheetHTML(title, sub, body, buttons, locked) {
+  var h = '<div class="lab-scrim"' + (locked ? '' : ' onclick="labCloseSheet()"') + '></div><div class="lab-ksheet" role="dialog">';
   h += '<div class="lab-khead"><div class="lab-ktitle">' + esc(title) + '</div><span class="lab-ksub">' + esc(sub) + '</span></div>';
   h += '<div class="lab-kbody">' + body + '</div><div class="lab-kfoot">';
   buttons.forEach(function (b) { h += '<button type="button" class="kbtn ' + (b.sec ? "is-sec" : "primary") + '" onclick="' + b.on + '">' + esc(b.t) + '</button>'; });
   return h + '</div></div>';
 }
-function labVerdictHTML(est) {
-  if (!est) return "";
-  var words = window.PA2_VERDICT_WORD || {}, v = est.unwinnable ? "mortel" : est.verdict;
-  return '<p class="lab-cost">' + esc(_t("Combat : {x}", { x: _td(est.foeName || "") })) + ' · <b>' + esc(words[v] || "") + '</b>' + (est.unwinnable ? "" : " · ~" + est.hpLoss + " " + esc(_t("PV"))) + '</p>';
-}
 function labShowSheet() {
   var box = document.getElementById("lab-sheet"), s = labView.sheet, run = LabyrinthRun.getRun(), c = LABYRINTH_CONFIG;
   if (!box || !s || !run) return;
   var h = "";
-  if (s.kind === "lever") {
+  // Un levier gardé, le Gardien à l'escalier : la feuille devient celle du combat
+  if (s.kind === "lever" && LabyrinthRun.leverInfo(s.li).guarded) s = labView.sheet = { kind: "fight", fk: "guard", li: s.li };
+  else if (s.kind === "stairs" && !run.bossDown) s = labView.sheet = { kind: "fight", fk: "boss" };
+  if (s.kind === "fight") h = labFightSheetHTML(s, run);
+  else if (s.kind === "lever") {
     var info = LabyrinthRun.leverInfo(s.li);
-    h = labSheetHTML(_t("Un levier"), info.guarded ? _t("Gardé") : (info.pulled ? _t("Déjà tiré {n} fois", { n: info.pulled }) : _t("Libre")),
-      '<p class="lab-quote">' + esc(info.guarded ? _td(info.guardLine) : (info.pulled ? _t("Le tirer encore remet les pans comme avant.") : _t("Personne ne sait encore ce qu'il fait tourner. Edda tient sa craie prête."))) + '</p>'
-      + (info.guarded ? labVerdictHTML(info.estimate) : "") + '<p class="lab-cost">' + esc(info.guarded ? _t("Puis tirer : Souffle −{n}", { n: c.pull }) : _t("Tirer : Souffle −{n}", { n: c.pull })) + '</p>',
-      [info.guarded ? { t: _t("Combattre"), on: "labGuard(" + s.li + ")" } : { t: _t("Tirer le levier"), on: "labPull(" + s.li + ")" }, { t: _t("Laisser"), sec: true, on: "labCloseSheet()" }]);
+    h = labSheetHTML(_t("Un levier"), info.pulled ? _t("Déjà tiré {n} fois", { n: info.pulled }) : _t("Libre"),
+      '<p class="lab-quote">' + esc(info.pulled ? _t("Le tirer encore remet les pans comme avant.") : _t("Personne ne sait encore ce qu'il fait tourner. Edda tient sa craie prête.")) + '</p>'
+      + '<p class="lab-cost">' + esc(_t("Tirer : Souffle −{n}", { n: c.pull })) + '</p>',
+      [{ t: _t("Tirer le levier"), on: "labPull(" + s.li + ")" }, { t: _t("Laisser"), sec: true, on: "labCloseSheet()" }]);
   } else if (s.kind === "stairs") {
-    if (!run.bossDown) {
-      h = labSheetHTML(_td(c.bossName), _t("Étage {n} · il garde l'escalier", { n: run.floor }),
-        '<img class="lab-portrait" src="' + LABYRINTH_TILES.bossPortrait + '" alt="" onerror="this.style.display=\'none\'"><p class="lab-quote">' + esc(_td(LABYRINTH_TEXTS.bossLine)) + '</p>' + labVerdictHTML(LabyrinthRun.estimate("boss")),
-        [{ t: _t("Combattre"), on: "labBoss()" }, { t: _t("Reculer"), sec: true, on: "labCloseSheet()" }]);
-    } else {
       var g = LabyrinthRun.claimStairs() || LabyrinthRun.stairsGain(run);
       labHud(run);
       h = labSheetHTML(_t("L'escalier"), _t("Étage {n} franchi · +{s} Pierres errantes", { n: run.floor, s: g.stones }),
         '<div class="lab-bigchart">' + labChartSVG(false) + '</div><p>' + esc(_t("Dans le sac : {s} Pierres errantes, {g} or.", { s: run.stones, g: run.gold })) + '</p>'
         + '<p class="lab-cost">' + esc(_t("Descendre : Souffle +{n}, étage plus dur. Tomber ou s'essouffler plus bas fait perdre la moitié du sac.", { n: c.breathFloor })) + '</p>',
         [{ t: _t("Descendre à l'étage {n}", { n: run.floor + 1 }), on: "labDescend()" }, { t: _t("Remonter avec le sac"), sec: true, on: "labLeave()" }]);
-    }
   } else if (s.kind === "chart") {
     h = labSheetHTML(_t("La carte d'Edda"), _t("Étage {n} · touche une salle dessinée pour y aller", { n: run.floor }),
       '<div class="lab-bigchart">' + labChartSVG(true) + '</div><p class="lab-cost">' + esc(_t("En violet : les pans qui tournent. Pointillés : les salles qu'on devine. Cercle rouge : les pas qu'on entend.")) + '</p>',
@@ -229,38 +225,153 @@ function labShowSheet() {
   }
   box.innerHTML = h;
 }
-function labOpenChart() { var run = LabyrinthRun.getRun(); if (run && run.status === LAB_STATUS.map) { labStopWalk(); labOpenSheet({ kind: "chart" }); } }
+function labPendingSheet(run) { if (!run || !run.pending) return false; labOpenSheet({ kind: "fight", fk: run.pending.kind, li: run.pending.li }); return true; }
+function labOpenChart() { var run = LabyrinthRun.getRun(); if (run && run.status === LAB_STATUS.map && !labPendingSheet(run)) { labStopWalk(); labOpenSheet({ kind: "chart" }); } }
 window.labOpenChart = labOpenChart;
 function labTapChart(e) { var k = e.target && e.target.getAttribute && e.target.getAttribute("data-go"); if (k) labWalkTo(k); }
 window.labTapChart = labTapChart;
-function labAskLeave() { labStopWalk(); labOpenSheet({ kind: "leave" }); }
+function labAskLeave() { labStopWalk(); if (!labPendingSheet(LabyrinthRun.getRun())) labOpenSheet({ kind: "leave" }); }
 window.labAskLeave = labAskLeave;
-function labGuard(li) {
-  var r = LabyrinthRun.fightGuard(li);
-  if (r.ko) { labCloseSheet(); refreshSceneScreen(); return; }
-  labDraw(false); labOpenSheet({ kind: "lever", li: li });
-}
-window.labGuard = labGuard;
 function labPull(li) { var r = LabyrinthRun.pull(li); labCloseSheet(); if (LabyrinthRun.getRun().status === LAB_STATUS.done) { refreshSceneScreen(); return; } labDraw(false, r.mask); }
 window.labPull = labPull;
-function labBoss() { var r = LabyrinthRun.fightBoss(); if (r.ko) { labCloseSheet(); refreshSceneScreen(); return; } labDraw(false); labOpenSheet({ kind: "stairs" }); }
-window.labBoss = labBoss;
 function labDescend() { labCloseSheet(); LabyrinthRun.descend(); labDraw(true); }
 window.labDescend = labDescend;
 function labLeave() { labCloseSheet(); labStopWalk(); LabyrinthRun.finish("remonte"); refreshSceneScreen(); }
 window.labLeave = labLeave;
 
-/* ---------- Bilan ---------- */
+/* ---------- Combats (v3.436.0) : comme les Petites Aventures ---------- */
+// s : { fk: "guard" | "foe" | "boss", li, step: null | "anim" | "done", res, banner }. Le combat est engagé au premier choix.
+function labFightSheetHTML(s, run) {
+  var c = LABYRINTH_CONFIG, p = run.pending, surprised = !!(p && p.surprised), locked = !!p;
+  var te = LabyrinthRun.estimate(s.fk, "tenir"); if (!te) return "";
+  var title, sub, line, img = te.foeImage;
+  if (s.fk === "guard") { title = _t("Un levier gardé"); sub = _t("Étage {n} · la garde ne bouge pas du levier", { n: run.floor }); line = _td(LabyrinthRun.leverInfo(s.li).guardLine); }
+  else if (s.fk === "foe") { title = _td(te.foeName); sub = _t("Il t'a rattrapé dans le noir"); line = _t("Il ne court pas. Il connaît chaque mur, et les murs l'attendent."); }
+  else { title = _td(c.bossName); sub = _t("Étage {n} · il garde l'escalier", { n: run.floor }); line = _td(LABYRINTH_TEXTS.bossLine); img = LABYRINTH_TILES.bossPortrait; }
+  var body = '<div class="lab-foehead' + (s.fk === "boss" ? ' is-boss' : '') + '"><img src="' + esc(img || LABYRINTH_TILES.icon) + '" alt="" onerror="this.src=\'' + LABYRINTH_TILES.icon + '\'">'
+    + '<div><b>' + esc(_td(te.foeName)) + (te.pack > 1 ? ' <span class="lab-pack">×' + te.pack + '</span>' : '') + '</b><p class="lab-quote">' + esc(line) + '</p></div></div>';
+  if (s.step) return labSheetHTML(title, sub, body + labFightLogHTML(s, run), [], true);
+  if (s.banner) body += '<p class="lab-banner">' + esc(s.banner) + '</p>';
+  body += '<div class="lab-choices">' + labApproachHTML(s.fk, "charger", surprised) + labApproachHTML(s.fk, "tenir", surprised);
+  if (s.fk === "guard" && !surprised) {
+    body += '<button type="button" class="lab-choice" onclick="labRuse()"><img src="' + PA2_ICONS.ruse + '" alt=""><span class="lab-ct">' + esc(_t("Ruser")) + '</span>'
+      + '<span class="lab-cc is-gold">' + Math.round(LabyrinthRun.ruseChance(run) * 100) + ' %</span><span class="lab-cs">'
+      + esc(_t("Passer sans combat, sans butin. Raté : Souffle −{n} et ils frappent les premiers.", { n: c.ruseBreath })) + '</span></button>';
+  }
+  if (s.fk === "foe") {
+    body += '<button type="button" class="lab-choice" onclick="labFlee()"><img src="' + PA2_ICONS.flee + '" alt=""><span class="lab-ct">' + esc(_t("Fuir dans le noir")) + '</span>'
+      + '<span class="lab-cc is-br">' + esc(_t("Souffle −{n}", { n: c.fleeBreath })) + '</span><span class="lab-cs">' + esc(_t("Il te perd, mais revient plus vite.")) + '</span></button>';
+  }
+  body += '</div>';
+  var foot = locked ? [] : [{ t: s.fk === "boss" ? _t("Reculer") : _t("Laisser"), sec: true, on: "labCloseSheet()" }];
+  return labSheetHTML(title, sub, body, foot, locked);
+}
+function labApproachHTML(fk, id, surprised) {
+  var est = LabyrinthRun.estimate(fk, id), ap = PA2_APPROACHES[id];
+  var loss = surprised ? Math.round(est.hpLoss * PA2_RULES.surprisedMult) : est.hpLoss, v = est.unwinnable ? "mortel" : Pa2Run.verdictOf(loss);
+  var name = surprised ? _t("Se défendre") + " · " + (id === "charger" ? _t("Charger", "combat") : _t("Tenir")) : (id === "charger" ? _t("Charger", "combat") : _t("Tenir"));
+  var sub = id === "charger" ? _t("Court et brutal. Plus de coups reçus, plus de butin.") : _t("Bouclier levé. Moins de coups, butin normal.");
+  return '<button type="button" class="lab-choice" onclick="labFight(\'' + id + '\')"><img src="' + esc(ap.icon) + '" alt=""><span class="lab-ct">' + esc(name) + '</span>'
+    + '<span class="lab-cc' + (v === "mortel" ? ' is-deadly' : '') + '">' + esc(PA2_VERDICT_WORD[v] || "") + (est.unwinnable ? '' : ' · ~' + loss + ' ' + esc(_t("PV"))) + '</span>'
+    + '<span class="lab-cs">' + esc(sub) + ' ' + esc(_t("Butin ~{n} or.", { n: est.gold })) + '</span></button>';
+}
+// Les échanges déjà joués, puis l'issue une fois l'animation finie
+function labFightLogHTML(s, run) {
+  var h = '<div class="lab-rounds" id="lab-rounds">';
+  for (var i = 0; i < (s.shown || 0); i++) h += '<div class="lab-round"><span>' + esc(s.lines[i]) + '</span><b>−' + s.res.parts[i] + ' ' + esc(_t("PV")) + '</b></div>';
+  h += '</div>';
+  if (s.step !== "done") return h;
+  var r = s.res;
+  if (r.ko) h += '<div class="lab-verdict is-ko">' + esc(_t("À terre")) + '</div><p class="lab-result">' + esc(_t("Edda te traîne jusqu'à l'escalier. La moitié du sac reste en bas.")) + '</p>';
+  else {
+    h += '<div class="lab-verdict is-ok">' + esc(r.kind === "boss" ? _t("Le Gardien s'effondre") : (r.kind === "foe" ? _t("Il recule") : _t("Victoire"))) + '</div>';
+    h += '<p class="lab-result">+' + r.gain + ' ' + esc(_t("or")) + (r.stones ? ' · +' + r.stones + ' ' + esc(_t("Pierres errantes")) : '') + '</p>';
+    if (r.kind === "guard") h += '<p class="lab-quote">' + esc(_t("Le levier est libre.")) + '</p>';
+    if (r.kind === "foe") h += '<p class="lab-quote">' + esc(_t("Il se fond dans le noir. Il reviendra.")) + '</p>';
+  }
+  return h + '<div class="lab-kfoot is-inline"><button type="button" class="kbtn primary" onclick="labFightNext()">' + esc(r.ko ? _t("Voir le bilan") : _t("Continuer")) + '</button></div>';
+}
+function labShake() {
+  var k = document.querySelector("#lab-sheet .lab-ksheet");
+  if (k) { k.classList.remove("is-shake"); void k.offsetWidth; k.classList.add("is-shake"); }
+  try { if (navigator.vibrate) navigator.vibrate(35); } catch (e) { /* vibration indisponible */ }
+}
+function labHpShow(hp) {
+  var hb = document.getElementById("lab-hpbar"), t = document.getElementById("lab-hp");
+  if (hb) hb.style.width = Math.round(Math.max(0, Math.min(1, hp / Math.max(1, game.heroMaxHp))) * 100) + "%";
+  if (t) t.textContent = _t("PV {a} / {b}", { a: Math.round(hp), b: Math.round(game.heroMaxHp || 0) });
+}
+function labFight(apId) {
+  var s = labView.sheet, run = LabyrinthRun.getRun(); if (!s || !run || s.step) return;
+  if (!run.pending && !LabyrinthRun.engage(s.fk, s.li).ok) return;
+  var surprised = !!run.pending.surprised, hp0 = Number(game.heroHp || 0);
+  var r = LabyrinthRun.fight(apId); if (!r.ok) return;
+  var res = r.result, k = res.parts.length;
+  s.kind = "fight"; s.step = "anim"; s.res = res; s.shown = 0; s.banner = null;
+  s.lines = surprised ? [_t("Ils frappent les premiers"), _t("Tu te reprends"), _t("Le dernier échange")]
+    : (k === 2 ? [_t("Tu fonces dans le tas"), _t("Le coup qui décide")] : [_t("Premier échange"), _t("Ça revient à la charge"), _t("Le coup final")]);
+  labHpShow(hp0); labShowSheet();
+  var hp = hp0, tick = function () {
+    if (labView.sheet !== s) return;
+    hp = Math.max(0, hp - res.parts[s.shown]); s.shown++;
+    labHpShow(hp); labShowSheet(); labShake();
+    if (s.shown >= k || hp <= 0) { s.shown = Math.min(s.shown, k); s.step = "done"; setTimeout(function () { if (labView.sheet === s) { labShowSheet(); if (!res.ko) labHud(LabyrinthRun.getRun()); } }, 380); return; }
+    setTimeout(tick, 560);
+  };
+  setTimeout(tick, 420);
+}
+window.labFight = labFight;
+function labFightNext() {
+  var s = labView.sheet, run = LabyrinthRun.getRun();
+  if (!run || run.status === LAB_STATUS.done) { labCloseSheet(); refreshSceneScreen(); return; }
+  labDraw(false);
+  if (s && s.res && s.res.kind === "guard") labOpenSheet({ kind: "lever", li: s.li });
+  else if (s && s.res && s.res.kind === "boss") labOpenSheet({ kind: "stairs" });
+  else labCloseSheet();
+}
+window.labFightNext = labFightNext;
+function labRuse() {
+  var s = labView.sheet, run = LabyrinthRun.getRun(); if (!s || !run || s.step) return;
+  if (!run.pending && !LabyrinthRun.engage("guard", s.li).ok) return;
+  var r = LabyrinthRun.ruse(); if (!r.ok) return;
+  run = LabyrinthRun.getRun();
+  if (run.status === LAB_STATUS.done) { labCloseSheet(); refreshSceneScreen(); return; }
+  labDraw(false);
+  if (r.success) { if (typeof showToast === "function") showToast(_t("Ils ne t'ont jamais vu. Le levier est libre."), 2000); labOpenSheet({ kind: "lever", li: s.li }); }
+  else { s.banner = _t("Repéré ! Souffle −{n}. Ils frappent les premiers.", { n: LABYRINTH_CONFIG.ruseBreath }); labShowSheet(); labShake(); }
+}
+window.labRuse = labRuse;
+function labFlee() {
+  var r = LabyrinthRun.flee(); if (!r.ok) return;
+  labCloseSheet();
+  if (LabyrinthRun.getRun().status === LAB_STATUS.done) { refreshSceneScreen(); return; }
+  labDraw(false);
+}
+window.labFlee = labFlee;
+
+/* ---------- Bilan (v3.436.0) : l'issue, le butin, le relevé et la carte d'Edda ---------- */
 function labEndHTML(run) {
   labStopWalk(); labView.sheet = null;
-  var e = run.end || {}, kept = (e.summary && e.summary.kept) || { gold: 0, resources: {} };
-  var stones = Number((kept.resources || {})[LABYRINTH_CONFIG.stoneResource] || 0);
-  var title = { remonte: _t("Remonté des profondeurs"), ko: _t("Tombé à l'étage {n}", { n: e.floor }), souffle: _t("À bout de souffle, étage {n}", { n: e.floor }), abandon: _t("Descente abandonnée") }[e.how] || _t("Labyrinthe");
-  var h = '<div class="lab-page lab-end"><img class="lab-end-icon" src="' + LABYRINTH_TILES.icon + '" alt="" onerror="this.style.display=\'none\'">';
-  h += '<div class="lab-ktitle">' + esc(title) + '</div><p>' + esc(_t("Profondeur atteinte : étage {n}. Record : étage {b}.", { n: e.floor, b: LabyrinthRun.bestFloor() })) + '</p>';
-  h += '<p class="lab-endloot"><b>' + esc(_t("{s} Pierres errantes", { s: stones })) + '</b> · ' + esc(_t("{g} or", { g: Math.floor(kept.gold || 0) })) + '</p>';
-  if (e.how !== "remonte") h += '<p class="lab-cost">' + esc(_t("La moitié du sac est restée en bas.")) + '</p>';
-  h += '<button type="button" class="kbtn primary" onclick="leaveSceneScreen()">' + esc(_t("Retour au village")) + '</button></div>';
+  var c = LABYRINTH_CONFIG, e = run.end || {}, sm = e.summary || {}, kept = sm.kept || { gold: 0, resources: {} }, lost = sm.lost || { gold: 0, resources: {} };
+  var st = e.stats || run.stats || {}, stoneOf = function (o) { return Number(((o || {}).resources || {})[c.stoneResource] || 0); };
+  var how = e.how || "remonte";
+  var title = { remonte: _t("Remonté des profondeurs"), ko: _t("Tombé à l'étage {n}", { n: e.floor }), souffle: _t("À bout de souffle, étage {n}", { n: e.floor }), abandon: _t("Descente abandonnée") }[how] || _t("Labyrinthe");
+  var line = { remonte: _t("Edda roule sa carte. « On reviendra. Elle aura encore changé. »"), ko: _t("Edda t'a traîné jusqu'à l'escalier. « La ville a gardé la moitié du sac. Elle garde toujours quelque chose. »"),
+    souffle: _t("Tu ne sens plus tes jambes. Edda te guide vers la sortie, la carte sous le bras."), abandon: _t("Edda range ses craies sans un mot.") }[how] || "";
+  var res = (window.WAREHOUSE_RESOURCES || {})[c.stoneResource] || {};
+  var h = '<div class="lab-page lab-end is-' + esc(how) + '"><div class="lab-end-card">';
+  h += '<div class="lab-end-head"><img class="lab-end-icon" src="' + LABYRINTH_TILES.icon + '" alt="" onerror="this.style.display=\'none\'">';
+  h += '<span class="lab-end-kicker">' + esc(_td(LABYRINTH_TEXTS.title)) + '</span><h2 class="lab-end-title">' + esc(title) + '</h2>';
+  if (e.record) h += '<span class="lab-end-record">' + esc(_t("Nouveau record : étage {n}", { n: e.floor })) + '</span>';
+  h += '</div><p class="lab-quote lab-end-line">' + esc(line) + '</p>';
+  h += '<div class="lab-end-loot"><div><img src="' + esc(res.icon || LABYRINTH_TILES.icon) + '" alt=""><b>' + stoneOf(kept) + '</b><span>' + esc(_t("Pierres errantes")) + '</span></div>';
+  h += '<div><img src="images/Icons/dungeon/dungeon_gold.png" alt=""><b>' + Math.floor(kept.gold || 0) + '</b><span>' + esc(_t("or")) + '</span></div></div>';
+  if (how !== "remonte" && (stoneOf(lost) || lost.gold)) h += '<p class="lab-end-lost">' + esc(_t("Resté en bas : {s} Pierres errantes, {g} or.", { s: stoneOf(lost), g: Math.floor(lost.gold || 0) })) + '</p>';
+  var rows = [[_t("Étage atteint"), e.floor], [_t("Record"), _t("étage {n}", { n: LabyrinthRun.bestFloor() })], [_t("Étages franchis"), Number(st.floors || 0)],
+    [_t("Combats gagnés"), Number(st.fights || 0)], [_t("Ruses réussies"), Number(st.ruses || 0)], [_t("Rattrapé par le Contremaître"), Number(st.caught || 0)]];
+  h += '<dl class="lab-end-stats">' + rows.map(function (r) { return '<div><dt>' + esc(r[0]) + '</dt><dd>' + esc(String(r[1])) + '</dd></div>'; }).join("") + '</dl>';
+  if (run.F) h += '<div class="lab-bigchart lab-end-chart">' + labChartSVG(false) + '<span class="lab-chart-cap">' + esc(_t("La carte d'Edda · étage {n}", { n: e.floor })) + '</span></div>';
+  h += '<button type="button" class="kbtn primary" onclick="leaveSceneScreen()">' + esc(_t("Retour au village")) + '</button></div></div>';
   return h;
 }
 
