@@ -14462,5 +14462,92 @@ console.log("\n[208] v3.432.0 — Ruines, acte IV (livraison 1) : le Cœur, « V
   }
 })();
 
+console.log("\n[209] v3.433.0 — Ruines, acte IV (livraison 2) : le Maître d'œuvre, le plan, l'arme du Cœur");
+(function () {
+  var SQ = g.StoryQuestManager, saved = {};
+  try {
+    var game = freshCombat("knight");
+    var R = g.RiseSystem, B = g.BOSS_DB.maitre_oeuvre;
+    /* --- Le Maître d'œuvre --- */
+    ok(B && B.rises && B.riseForced && B.riseAdds.adds.join() === "batisseur,batisseur" && B.risePhases[0].atPct === 0.15 && B.risePhases[0].archetype === "armored", "le Maître d'œuvre : relève forcée, deux bâtisseurs, blindage à 30 % de la seconde vie");
+    var q = g.ADVENTURE_QUESTS.aq_ruines_plan;
+    ok(q && q.bossId === "maitre_oeuvre" && q.encounters.length === 2 && !q.bossPhases && q.steps[1].type === "bossKill", "« Le plan fait pierre » : 2 rencontres, puis le boss (phases dans sa fiche)");
+    var boss = { id: "maitre_oeuvre", name: "Le Maître d'œuvre", isBoss: true, hp: 400, maxHp: 400, stats: B.stats, resists: [], weak: [], archetype: null, phases: null };
+    g.CombatEngine.spawnGroup([boss]);
+    var e = game.combat.enemies[0];
+    ok(R.canRise(e), "il peut se relever");
+    e.hp = 0; ok(R.tryRise(e) && e.downed, "il tombe : à terre");
+    R.beginAction(true);
+    ok(R.blocksHit(e) === true, "personne ne l'achève à terre, même par une décision (Edda, toucher)");
+    e.riseIn = 1; R.onEnemyTurn(e);
+    ok(!e.downed && e.hasRisen && e.hp === Math.floor(e.maxHp * 0.5), "il se relève avec la moitié de ses PV");
+    ok(game.combat.enemies.filter(function (x) { return x.id === "batisseur"; }).length === 2, "à la relève : deux bâtisseurs sortent des dalles");
+    ok(Array.isArray(e.phases) && e.phases[0].atPct === 0.15 && !e.archetype, "la phase de la seconde vie est armée, pas encore jouée");
+    e.hp = Math.floor(e.maxHp * 0.14); g.CombatEngine.checkPhases(e);
+    ok(e.archetype === "armored", "sous 30 % de la seconde vie : il se blinde");
+    R.beginAction(false);
+
+    /* --- Étapes 19 et 20 --- */
+    var steps = g.STORY_QUESTS.ruins.steps, ids = steps.map(function (st) { return st.id; });
+    ok(ids.slice(18).join() === "ruines_19,ruines_20" && steps.length === 20, "chapitre III complet : 20 étapes");
+    var st19 = steps[18], st20 = steps[19];
+    run("StoryQuestManager.ensure();");
+    game.storyQuests.ruins.choices = {};
+    ok(!/chaise/.test(JSON.stringify(st19.narrative.dialogue)), "salle fermée : pas de chaise au Cœur");
+    game.storyQuests.ruins.choices.salle = "rouvrir";
+    ok(/Celle qui manquait/.test(JSON.stringify(st19.narrative.dialogue)), "salle rouverte : la chaise qui manquait est au pied de l'arche");
+    game.storyQuests.ruins.choices = {};
+    game.adventureQuestsCompleted = { aq_ruines_plan: true };
+    ok(st19.check(game), "étape 19 : faite quand le Maître d'œuvre tombe");
+    ok(g.STORY_REWARDS.ruines_20.uniqueLoot === "arme_coeur" && g.ELITE_UNIQUE_LOOT.arme_coeur.rarity === "epic", "étape 20 : l'arme du Cœur, Épique");
+    var arme = g.EliteManager.buildUniqueLoot("arme_coeur");
+    ok(arme && arme.rarity === "epic" && arme.slot === "weapon" && arme.name === "Lame du Cœur", "le Chevalier reçoit la Lame du Cœur");
+    ok(JSON.stringify(g.STORY_CHOICE_AXES.plan) === JSON.stringify({ finir: ["donner", "soi"], tomber: ["garder", "aeswyn"] }), "registre : finir = Donner + Soi, tomber = Garder + Aeswyn");
+    ok(g.STORY_QUESTS.ruins.endText === "Chapitre terminé — d'autres sont montés avant lui.", "fin du chapitre III : l'amorce de la Crypte");
+
+    /* --- Le plan : finir --- */
+    ["getCurrentStep", "isCurrentStepAccepted", "isStepReached"].forEach(function (k) { saved[k] = SQ[k]; });
+    SQ.getCurrentStep = function (id) { return id === "ruins" ? st20 : saved.getCurrentStep.call(SQ, id); };
+    SQ.isCurrentStepAccepted = function () { return true; };
+    SQ.isStepReached = function () { return true; };
+    var LM = g.LivingMapManager;
+    run("LivingMapManager.ensureDefaults();");
+    game.livingMaps.ruins.chantier = null; game.livingMaps.ruins.coeurDay = null;
+    var pe0 = g.WarehouseManager.getAmount("pierre_errante");
+    ok(g.storyMakeChoice("ruins", "finir") && st20.check(game), "finir : le choix est fait");
+    ok(LM.getChantier("ruins") === null && LM.getBrakeChance("ruins") === 1, "la cité finie : plus de chantier, plus d'Éboulement");
+    ok(g.WarehouseManager.getAmount("pierre_errante") - pe0 === 3, "le Cœur rapporte 3 Pierres errantes");
+    LM.getChantier("ruins");
+    ok(g.WarehouseManager.getAmount("pierre_errante") - pe0 === 3, "une fois par jour seulement");
+    ok(/s'assoit sur le banc/.test(JSON.stringify(st20.narrative.completionDialogue)) && /Ça, je ne le vends pas/.test(JSON.stringify(st20.narrative.completionDialogue)), "finir : le Veilleur s'assoit ; Sarkel ferme le chapitre");
+
+    /* --- Le plan : tomber --- */
+    game.storyQuests.ruins.choices = {};
+    ["escalier", "bibliotheque", "carriere", "echafaudages"].forEach(function (id) { LM.setState("ruins", id, "libere", "test"); });
+    ok(g.storyMakeChoice("ruins", "tomber"), "tomber : le choix est fait");
+    ok(["escalier", "bibliotheque", "carriere", "echafaudages"].every(function (id) { return !LM.isLiberated("ruins", id); }), "quatre quartiers passent en éboulis");
+    LM.setState("ruins", "carriere", "libere", "test");
+    ok(!LM.hasEffect("carriere_plus"), "un quartier en éboulis perd son effet tenu");
+    var pe1 = g.WarehouseManager.getAmount("pierre_errante");
+    var rep = LM.onRunEnd("ruins", "escalier", "success");
+    ok(rep.quarry === 2 && g.WarehouseManager.getAmount("pierre_errante") - pe1 >= 2, "un éboulis rejoué rapporte +2 Pierres errantes");
+    ok(LM.getChantier("ruins") !== undefined && LM.getBrakeChance("ruins") < 1, "la cité tombée garde son chantier et son Éboulement");
+    g.VillageBuildingManager.ensure();
+    var cf = g.VillageBuildingManager.getLevelCost("forge", 3); // coût du niveau 3 -> 4 (sans le plafond du monde de ce héros)
+    ok(cf && cf.cle_de_voute === 2, "la clé du Cœur : la Forge 4 coûte 2 Clés de voûte au lieu de 3");
+    game.village.buildings.forge = { level: 4 };
+    game.forge = { levels: { weapon: 6 } };
+    var c7 = g.ForgeManager.getCost("weapon");
+    ok(c7 && !c7.cle_de_voute, "la clé du Cœur : la reforge 7 ne coûte plus de Clé de voûte");
+    ok(/Au milieu de quoi/.test(JSON.stringify(st20.narrative.completionDialogue)) && /violet/.test(JSON.stringify(st20.narrative.completionDialogue)), "tomber : Orwen pose la pierre au milieu ; l'arme d'Edda dans les deux branches");
+    game.storyQuests.ruins.choices = {};
+  } catch (err) {
+    ok(false, "[209] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    Object.keys(saved).forEach(function (k) { SQ[k] = saved[k]; });
+    if (g.RiseSystem) g.RiseSystem.beginAction(false);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

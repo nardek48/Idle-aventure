@@ -334,6 +334,25 @@ var ELITE_UNIQUE_LOOT = {
     item: { name: "Le sceau de la salle", icon: "ring" }
   },
 
+  /* v3.433.0 (Ruines, acte IV §5bis, décision Seb du 09/10) — L'ARME DU CŒUR. Récompense de ruines_20
+     (STORY_REWARDS.ruines_20.uniqueLoot), dans les deux branches du plan, donnée par Edda. Premier
+     objet Épique du jeu : « le plus bas du violet ». Aux Ruines, l'Épique d'arme va de 108 à 158
+     (49-72 × 2,2) : 110 est le bas de la fourchette. Plancher Épique des affixes : +20 % et +5 %
+     d'expérience. Remise APRÈS le Maître d'œuvre : aucun banc de l'Histoire ne bouge. */
+  arme_coeur: {
+    slot: "weapon",
+    stat: "tapDmg",
+    rarity: "epic",
+    value: 110,
+    worldIndex: 2,
+    affixes: [{ stat: "tapMult", value: 0.20, tier: "P" }, { stat: "xpMult", value: 0.05, tier: "S" }],
+    byClass: {
+      knight: { name: "Lame du Cœur", icon: "sword" },
+      archer: { name: "Arc du Cœur", icon: "bow" },
+      mage: { name: "Bâton du Cœur", icon: "staff" }
+    }
+  },
+
   ronce_ardente: {
     slot: "armor",
     stat: "defense",

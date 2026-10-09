@@ -28,7 +28,8 @@ var DATA_TEXT_FIELDS = {
   /* --- Quêtes, Histoire, village --- */
   GRIMOIRE_TARGET_POLICIES: ["*.label", "*.desc"], // v3.428.0 (Ruines)
   STORY_SEUIL_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.428.0 (Ruines) : les deux branches du choix « seuil »
-  STORY_SALLE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.431.0 (Ruines) : les deux branches du choix « salle »
+  STORY_SALLE_TEXTS: ["*.completion", "*.chaise", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.431.0 (Ruines) : les deux branches du choix « salle »
+  STORY_PLAN_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who", "suite.*.text", "suite.*.who"], // v3.433.0 (Ruines) : le plan et la fin du chapitre
   ADVENTURE_QUESTS: ["*.name", "*.story", "*.bossLog", "*.bossPhases.*.label", "*.bossPhases.*.line", "*.steps.*.desc"],
   HUNT_QUESTS: ["*.name", "*.story"],
   STORY_QUESTS: [
@@ -54,7 +55,7 @@ var DATA_TEXT_FIELDS = {
 
   /* --- Combat, ennemis, compagnons --- */
   ENEMY_DB: ["*.name", "*.lore"],
-  BOSS_DB: ["*.name", "*.lore"],
+  BOSS_DB: ["*.name", "*.lore", "*.riseLine", "*.riseAdds.line", "*.risePhases.*.label", "*.risePhases.*.line"], // v3.433.0 : phases à la relève (le Maître d'œuvre)
   ELITE_DB: ["*.name", "*.lore"],
   ELITE_UNIQUE_LOOT: ["*.item.name", "*.byClass.*.name"],
   ELITE_UNIQUE_LOOT_LABELS: ["*"],

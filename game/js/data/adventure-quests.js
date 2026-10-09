@@ -485,6 +485,42 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.433.0 (Ruines, acte IV étape 19) — « Le plan fait pierre » : deux rencontres dans le Cœur,
+     puis le Maître d'œuvre (bossId, combat unique comme Nezzam). Ses phases vivent dans sa fiche
+     (BOSS_DB, relève forcée, renforts, blindage) : pas de bossPhases de quête.
+     Cible (RU6) : 65-80 % par classe, Rôdeur ≥ 60 %. Chiffres au banc (sim/ruines-acte3-bench.js). */
+  aq_ruines_plan: {
+    id: "aq_ruines_plan",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "ruins",
+    adventureIndex: 1,
+    encounters: [
+      { group: ["batisseur", "gargoyle"], groupHpMult: 0.55 },
+      { group: ["batisseur", "batisseur", "gargoyle"], groupHpMult: 0.35 }
+    ],
+    encounterHpMult: 2.1,
+    enemyPowerMult: 5.0,
+    bossId: "maitre_oeuvre",
+    /* Banc (fin d'acte, Wenna + Maddoc, 24 runs) : à 4 / 1,7 (les chiffres de Nezzam), 0 % ; à 2 / 1,
+       13 / 38 / 81 % ; à 1,6 / 0,8, 88 / 100 / 100 % ; retenu 1,8 / 0,9 -> 71 / 88 / 100 %
+       (Chev. / Rôd. / Mage), 41-55 % de PV à la fin. Sa relève vaut déjà une demi-barre. */
+    bossHpMult: 1.8,
+    bossPowerMult: 0.9,
+    bossLog: "Au milieu du Cœur, les pierres se lèvent ensemble.",
+    name: "Le plan fait pierre",
+    story: "Au milieu du Cœur, les pierres se lèvent ensemble. Ce n'est pas un homme. C'est la cité, debout.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    steps: [
+      { id: "rencontres_plan", type: "encounter", worldId: "ruins", target: 2, desc: "Vaincre {target} rencontres dans le Cœur" },
+      { id: "boss_plan", type: "bossKill", bossId: "maitre_oeuvre", target: 1, desc: "Vaincre le Maître d'œuvre" }
+    ],
+    reward: {}
+  },
+
   hq_wolf_pack: {
     id: "hq_wolf_pack",
     type: "kill",

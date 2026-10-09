@@ -20,6 +20,7 @@
    du socle, pas un système à part. */
 
 var VILLAGE_SEUIL_DISCOUNT = 0.10; // v3.428.0 : le seuil d'Aeswyn (choix « seuil »), au banc
+var VILLAGE_COEUR_KEY_DISCOUNT = 1; // v3.433.0 : la clé du Cœur (choix « plan » = tomber), Clés de voûte en moins
 var VillageBuildingManager = {
 
   /* ---------- état ---------- */
@@ -178,6 +179,10 @@ var VillageBuildingManager = {
     }
     // v3.330.0 (E2) : niveau exigé par l'Histoire -> or et matériaux du monde seulement
     if (typeof isStoryVillageLevel === "function" && isStoryVillageLevel(id, level + 1)) out = stripStoryMaterials(out).cost;
+    // v3.433.0 (Ruines, choix « plan » = tomber) : la clé du Cœur, une Clé de voûte de moins (jamais zéro)
+    if (out.cle_de_voute > 0 && window.StoryQuestManager && StoryQuestManager.getChoice("plan") === "tomber") {
+      out.cle_de_voute = Math.max(1, out.cle_de_voute - VILLAGE_COEUR_KEY_DISCOUNT);
+    }
     // v3.428.0 (Ruines, choix « seuil » = aeswyn) : le seuil d'Aeswyn, −10 % de matériaux (pas d'or)
     if (window.StoryQuestManager && StoryQuestManager.getChoice("seuil") === "aeswyn") {
       Object.keys(out).forEach(function (k) {

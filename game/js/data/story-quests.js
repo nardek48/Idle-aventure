@@ -96,7 +96,10 @@ var STORY_REWARDS = {
   // v3.432.0 (acte IV, livraison 1, provisoire : au banc)
   ruines_16: { gold: 3200, resources: { pierre_errante: 2 } },
   ruines_17: { gold: 3300 },
-  ruines_18: { gold: 3400, resources: { pierre_errante: 3 } }
+  ruines_18: { gold: 3400, resources: { pierre_errante: 3 } },
+  // v3.433.0 (acte IV, livraison 2, provisoire : au banc)
+  ruines_19: { gold: 3800, resources: { cle_de_voute: 2 } },
+  ruines_20: { gold: 4500, uniqueLoot: "arme_coeur" } // l'arme du Cœur, Épique, d'Edda (dans les deux branches)
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -174,7 +177,8 @@ var STORY_CHOICE_AXES = {
   serment: { relever: ["donner"], laisser: ["garder"] },
   roi: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] },
   seuil: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] }, // v3.428.0 (Ruines, acte I étape 5) : la pierre de seuil
-  salle: { fermer: ["garder"], rouvrir: ["donner"] }    // v3.431.0 (Ruines, acte III étape 14) : la salle que la cité ne finit pas
+  salle: { fermer: ["garder"], rouvrir: ["donner"] },   // v3.431.0 (Ruines, acte III étape 14) : la salle que la cité ne finit pas
+  plan: { finir: ["donner", "soi"], tomber: ["garder", "aeswyn"] } // v3.433.0 (Ruines, acte IV étape 20) : le plan, option A du 09/10
 };
 
 /* v3.293.0 (règle Seb 18/09/2026) : storyResetLisiere, storyLisiereCrossingProgress et
@@ -1693,7 +1697,7 @@ STORY_QUESTS.ruins = {
   title: "La ville rangée",
   subtitle: "Chapitre 3 — Ruines",
   icon: "images/Icons/codex/world_ruins.png",
-  endText: "La suite de l'acte IV arrive bientôt.", // v3.432.0 : livraison 1 de l'acte IV (étapes 16 à 18)
+  endText: "Chapitre terminé — d'autres sont montés avant lui.", // v3.433.0 : amorce de la Crypte (Sarkel)
   steps: [
     /* ---------- Acte I — La route du nord ---------- */
     /* Étape 1 (doc §3) : la traversée, parcours v2 de quatre paliers ; le monde est posé à
@@ -2384,9 +2388,133 @@ STORY_QUESTS.ruins = {
       linkTo: { section: "adventure", cardId: "adv_aq_ruines_coeur" },
       check: function (game) { return storyAdvDone(game, "aq_ruines_coeur"); },
       progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_ruines_coeur", "rencontres_coeur", 3) + "/3 · Golem " + (storyAdvDone(game, "aq_ruines_coeur") ? "1/1" : "0/1"); }
+    },
+    /* Étape 19 (§4) : le Maître d'œuvre, boss d'Histoire unique (aq_ruines_plan, BOSS_DB.maitre_oeuvre).
+       Conséquence différée du choix « salle » (bible §5.4) : rouverte, la chaise qui manquait est là. */
+    {
+      id: "ruines_19",
+      title: "Le plan fait pierre",
+      act: "Acte IV — Le plan",
+      narrative: {
+        objective: "Au milieu du Cœur, les pierres se lèvent ensemble. Des épaules, des bras, une tête qui touche presque l'arche. Ce n'est pas un homme. C'est la cité, debout.",
+        completion: "Le Maître d'œuvre s'effondre, et cette fois les pierres restent où elles tombent. En haut de l'arche, le vide est toujours là. Une pierre taillée en coin roule jusqu'à tes pieds.",
+        get dialogue() {
+          var d = [
+            { who: "Wenna", text: "Qu'est-ce que c'est ?" },
+            { who: "Le Veilleur", text: "Le plan. Elle lui a donné des bras." },
+            { who: "Maddoc", text: "Il se relève, lui aussi ?" },
+            { who: "Edda", text: "Tout se relève, ici. Une fois." }
+          ];
+          if (window.StoryQuestManager && StoryQuestManager.getChoice("salle") === "rouvrir") d.push({ who: null, text: STORY_SALLE_TEXTS.rouvrir.chaise });
+          return d;
+        },
+        completionDialogue: [
+          { who: "Edda", text: "Il ne manque plus qu'elle." }
+        ]
+      },
+      objectiveLabel: "Terminer « Le plan fait pierre » : 2 rencontres, puis le Maître d'œuvre",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_19,
+      linkTo: { section: "adventure", cardId: "adv_aq_ruines_plan" },
+      tutorial: {
+        tab: "combat",
+        icon: "images/Icons/combat_status/rising.png",
+        title: "Le Maître d'œuvre",
+        points: [
+          { icon: "images/Icons/combat_status/rising.png", text: "Il se relève une fois, quoi qu'il arrive, avec la moitié de ses PV." },
+          { icon: "images/Icons/memory/grimoire_etendu.png", text: "Relevé, il appelle deux bâtisseurs. Le réglage « Cible » sur « Le soutien » les vise d'abord." },
+          { icon: "images/Icons/combat_status/shield_incoming.png", text: "Sous les 30 %, il se blinde : la condition « Bouclier au prochain tour » du Grimoire." }
+        ]
+      },
+      check: function (game) { return storyAdvDone(game, "aq_ruines_plan"); },
+      progress: function (game) {
+        return "Rencontres " + storyAdvProgress(game, "aq_ruines_plan", "rencontres_plan", 2) + "/2 · Maître d'œuvre " + (storyAdvDone(game, "aq_ruines_plan") ? "1/1" : "0/1");
+      }
+    },
+    /* Étape 20 (§5) : le troisième choix pesant des Ruines, clé « plan » (option A du 09/10).
+       Finir (Donner + Soi) -> la carte se fige et le Cœur paie (living-map-system.js, map.plan).
+       Tomber (Garder + Aeswyn) -> quatre quartiers en éboulis, la clé du Cœur à Aeswyn.
+       Dans les deux branches : l'arme du Cœur (uniqueLoot), Sarkel ferme le chapitre. */
+    {
+      id: "ruines_20",
+      title: "Ce qui tient",
+      act: "Acte IV — Le plan",
+      narrative: {
+        objective: "Le Cœur est debout. Il ne lui manque qu'une pierre, en haut de l'arche. Elle est par terre, devant toi.",
+        get completion() { return STORY_PLAN_TEXTS[storyPlanBranch()].completion; },
+        dialogue: [
+          { who: "Le Veilleur", text: "Pose-la. Elle tiendra. Tout tiendra." },
+          { who: "Wenna", text: "Et si on ne la pose pas ?" },
+          { who: "Le Veilleur", text: "Alors elle tombera. Pas tout. Assez." },
+          { who: "Edda", text: "Et ma carte ?" },
+          { who: "Le Veilleur", text: "Elle sera juste, dans les deux cas." },
+          { who: "Maddoc", text: "Lourde, pour une pierre." }
+        ],
+        get completionDialogue() { return STORY_PLAN_TEXTS[storyPlanBranch()].dialogue.concat(STORY_PLAN_TEXTS.suite); }
+      },
+      objectiveLabel: "Décider du plan",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_20,
+      choice: {
+        key: "plan", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "Le plan",
+        text: "La pierre est à tes pieds. Le Veilleur veut que tu la poses. Wenna pense à Aeswyn.",
+        options: [
+          { value: "finir", label: "Finir la cité", desc: "Tu poses la pierre. La cité tient, finie. Elle te paiera chaque jour." },
+          { value: "tomber", label: "La laisser tomber", desc: "Tu emportes la pierre à Aeswyn. Une partie de la cité tombe. Le village s'en servira." }
+        ],
+        apply: function (value) {
+          var LM = window.LivingMapManager;
+          if (value === "tomber") {
+            var plan = LM && LM.getMap("ruins") && LM.getMap("ruins").plan;
+            if (plan) plan.tomber.collapse.forEach(function (id) { LM.setState("ruins", id, "recouvert", "plan"); });
+            if (typeof addLog === "function") addLog(_t("La clé du Cœur : à Aeswyn, les chantiers en Clés de voûte en demandent une de moins."), "event");
+          } else if (typeof addLog === "function") {
+            addLog(_t("La cité finie : la carte des Ruines ne s'éboule plus, et le Cœur rapporte des Pierres errantes chaque jour."), "event");
+          }
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("plan")); },
+      progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("plan")) ? "1/1" : "0/1"); }
     }
   ]
 };
+
+/* v3.433.0 (Ruines, ruines_20) — textes des deux branches du plan, puis la suite commune (Edda, l'arme, Sarkel). */
+var STORY_PLAN_TEXTS = {
+  finir: {
+    completion: "Tu poses la pierre. Elle glisse en place sans un bruit. Partout dans la ville, quelque chose s'arrête. Le chantier. Il n'y a plus rien à refaire.",
+    dialogue: [
+      { who: "Edda", text: "Leur carte est finie." },
+      { who: "Le Veilleur", text: "Oui." },
+      { who: null, text: "Il entre dans la maison à la porte trop haute et s'assoit sur le banc. Il ne se relève pas quand vous partez." }
+    ]
+  },
+  tomber: {
+    completion: "Tu ramasses la pierre. Au-dessus, l'arche attend, puis cède. Trois rues plus loin, un quartier s'affaisse, puis un autre. La poussière monte. Elle ne retombe pas tout de suite.",
+    dialogue: [
+      { who: "Edda", text: "Il faudra tout redessiner." },
+      { who: null, text: "Wenna regarde le Veilleur." },
+      { who: "Le Veilleur", text: "Tu as répondu. Elle aussi." },
+      { who: null, text: "À Aeswyn, Orwen prend la pierre à deux mains." },
+      { who: "Orwen", text: "Une pierre qui tient les autres. Au milieu." },
+      { who: "Brannoc", text: "Au milieu de quoi ? On n'a pas de… enfin. On en aura." }
+    ]
+  },
+  suite: [
+    { who: null, text: "À la Borne, Edda roule sa feuille et en sort une autre. Blanche." },
+    { who: "Edda", text: "Le chemin du retour. Personne ne l'a encore dessiné." },
+    { who: null, text: "Avant de partir, elle t'emmène dans une rue qu'elle seule a dessinée. Une porte, une salle d'armes, des râteliers. Les armes y sont neuves chaque matin. Une seule n'a jamais changé." },
+    { who: "Edda", text: "Je l'ai notée le premier jour. Je savais que tu reviendrais la chercher." },
+    { who: null, text: "Le fil du tranchant est violet, comme la poussière d'en bas quand le soleil la traverse." },
+    { who: "Sarkel", text: "Le vieux n'est pas le seul à être monté là-haut. Les autres, je sais où ils sont couchés." },
+    { who: "Sarkel", text: "Ça, je ne le vends pas." }
+  ]
+};
+function storyPlanBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("plan") === "tomber") ? "tomber" : "finir";
+}
 
 /* v3.432.0 (Ruines, ruines_16) — voisins du Cœur tenus (libérés maintenant : le chantier peut en reprendre un). */
 function storyCoeurVoisins() {
@@ -2405,6 +2533,7 @@ var STORY_SALLE_TEXTS = {
     ]
   },
   rouvrir: {
+    chaise: "Au pied de l'arche, une chaise de pierre, vide. Celle qui manquait.", // v3.433.0 : conséquence différée, à ruines_19
     completion: "Maddoc cale l'épaule. La pierre cède d'un doigt, puis d'une main. Sur la table, un anneau de pierre noire. Tu le prends. Derrière toi, la salle recommence à se bâtir.",
     dialogue: [
       { who: "Le Veilleur", text: "Elle ne la finira pas. Elle essaiera quand même." },
@@ -2481,6 +2610,7 @@ window.storyCoeurVoisins = storyCoeurVoisins;
 window.storyPalierRuinesRare = storyPalierRuinesRare;
 window.STORY_PALIER_RUINES_RARE = STORY_PALIER_RUINES_RARE;
 window.STORY_SALLE_TEXTS = STORY_SALLE_TEXTS;
+window.STORY_PLAN_TEXTS = STORY_PLAN_TEXTS;
 window.storySanctuaireCamp = storySanctuaireCamp;
 window.storyEddaInParty = storyEddaInParty;
 window.STORY_SEUIL_TEXTS = STORY_SEUIL_TEXTS;

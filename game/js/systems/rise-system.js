@@ -83,9 +83,26 @@ var RiseSystem = {
     e.hp = Math.max(1, Math.floor(Number(e.maxHp || 1) * RISE_HP_PCT));
     addLog("🦴 " + _t("{x} se relève !", { x: _td(e.name) }), "event");
     if (e.riseLine) addLog(_td(e.riseLine), "event"); // v3.431.0 : ligne propre (Varrek)
+    this.onBossRisen(e);
     if (typeof showToast === "function") showToast("🦴 " + _t("{x} se relève !", { x: _td(e.name) }), 1200);
     if (typeof renderEnemyHp === "function") renderEnemyHp();
     return true;   // le round de la relève, il ne frappe pas encore
+  },
+
+  /* v3.433.0 — phases d'un boss à la relève (le Maître d'œuvre) : sa ligne, ses renforts
+     (CombatEngine.summonAdds) et les phases de sa seconde vie, lues ensuite par checkPhases. */
+  onBossRisen: function (e) {
+    var def = this.defOf(e);
+    if (!e || !e.isBoss || !def) return;
+    if (def.riseLine && !e.riseLine) addLog(_td(def.riseLine), "event");
+    if (def.riseAdds && window.CombatEngine && typeof CombatEngine.summonAdds === "function") {
+      if (def.riseAdds.line) addLog(_td(def.riseAdds.line), "event");
+      CombatEngine.summonAdds(e, def.riseAdds);
+    }
+    if (Array.isArray(def.risePhases)) {
+      e.phases = JSON.parse(JSON.stringify(def.risePhases));
+      e._phasesDone = {};
+    }
   },
 
   /* ---------- Qui peut achever (décision Seb du 04/10/2026, option A) ----------
@@ -99,7 +116,11 @@ var RiseSystem = {
 
   /* Garde de dealDamage : true si ce coup ne doit pas toucher l'ennemi à terre. */
   blocksHit: function (foe) {
-    if (!foe || !foe.downed || this._allow) return false;
+    if (!foe || !foe.downed) return false;
+    // v3.433.0 : une relève forcée (le Maître d'œuvre) ne s'achève pas, même par une décision
+    var fdef = this.defOf(foe);
+    if (foe.riseForced || (fdef && fdef.riseForced)) return true;
+    if (this._allow) return false;
     var c = window.CombatActors ? CombatActors.ensure() : null;
     if (c && c.targetLocked && CombatActors.target() === foe) return false;
     if (foe._riseWaitLog !== (game.combatRound && game.combatRound.number)) {

@@ -240,6 +240,11 @@ var LIVING_MAPS = {
     choiceBrakes: [
       { key: "salle", value: "fermer", sectorId: "porte_sanctuaire", bonus: 0.10 }
     ],
+    /* v3.433.0 (acte IV, choix « plan », option A du 09/10) — lu par LivingMapManager :
+       finir : la carte se fige (plus de chantier ni d'Éboulement), le Cœur rapporte dailyStones par jour ;
+       tomber : les quartiers de collapse passent en éboulis (effet tenu perdu, effectLostOnChoice),
+                et se rejouent en carrières (+quarryBonus Pierres errantes par victoire). Chiffres au banc. */
+    plan: { key: "plan", finir: { dailyStones: 3 }, tomber: { collapse: ["escalier", "bibliotheque", "carriere", "echafaudages"], quarryBonus: 2 } },
     words: {
       cover: "l'Éboulement", coverCap: "L'Éboulement", coveredState: "Rebâti",
       home: "la Borne", fogLore: "Les rues changent trop vite pour qu'on sache ce qu'il y a là.",
@@ -301,6 +306,7 @@ var LIVING_MAPS = {
       { id: "carriere", name: "La carrière", x: 16, y: 12.2, ring: 3, neighbors: ["fenetres"],
         content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["dalle_qui_glisse", "route_de_pierre"] } },
         heldEffect: { id: "carriere_plus", label: "Carrière +10 %." },
+        effectLostOnChoice: { key: "plan", value: "tomber" }, // v3.433.0 : en éboulis si la cité tombe
         lore: "Une falaise taillée en marches. Les blocs qui en sortent sont déjà à la bonne taille." },
       { id: "tour_garde", name: "La tour de garde", x: 17.6, y: 72.3, ring: 3, neighbors: ["cimetiere", "maisons_basses", "porte_sanctuaire"],
         content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["escalier_sans_fin", "mur_neuf"] } },
@@ -309,6 +315,7 @@ var LIVING_MAPS = {
       { id: "echafaudages", name: "Le chantier aux échafaudages", x: 79.1, y: 67.4, ring: 3, neighbors: ["puits_range", "pont", "porte_sanctuaire"],
         content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["mur_neuf", "dalle_qui_glisse"] } },
         heldEffect: { id: "mine_plus", label: "Mine +10 %." },
+        effectLostOnChoice: { key: "plan", value: "tomber" }, // v3.433.0 : en éboulis si la cité tombe
         lore: "Des échafaudages autour d'un bloc qui flotte. Personne ne monte dessus. Le bloc monte quand même." },
       /* v3.432.0 (acte IV, étape 16) — LE CŒUR : la grande halle au-dessus de la Borne (choix de Seb
          du 09/10, emplacement A). Paraît à ruines_16 ; ne s'ouvre qu'avec ses trois voisins libérés ;

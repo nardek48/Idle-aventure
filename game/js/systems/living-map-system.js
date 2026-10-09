@@ -255,10 +255,30 @@ var LivingMapManager = {
      jour : un quartier libéré et non tenu par la Palissade d'abord (il repasse « Rebâti »), sinon
      un quartier atteignable pas encore libéré. Le libérer ce jour-là rapporte map.chantier.reward
      Pierres errantes, une fois. État : game.livingMaps[mapId].chantier = { day, sectorId, done }. */
+  /* v3.433.0 (choix « plan ») : la branche choisie pour cette carte, ou null. */
+  getPlan: function (mapId) {
+    var map = this.getMap(mapId), p = map && map.plan;
+    var v = p && window.StoryQuestManager ? StoryQuestManager.getChoice(p.key) : null;
+    return (v && p[v]) ? v : null;
+  },
+
+  /* v3.433.0 : la cité finie paie chaque jour (une fois par jour civil, au premier passage). */
+  collectFinishedCity: function (mapId) {
+    var map = this.getMap(mapId), lm = game.livingMaps[mapId], today = this._todayKey();
+    var n = Number((map.plan.finir || {}).dailyStones || 0);
+    if (!lm || lm.coeurDay === today || n <= 0) return 0;
+    lm.coeurDay = today;
+    if (window.WarehouseManager) WarehouseManager.addResource(this.getRewardResourceId(mapId), n, true);
+    if (typeof addLog === "function") addLog("🏛️ " + _t("La cité finie tient : le Cœur rapporte {n} {x}.", { n: n, x: _td(this.getRewardResourceName(mapId)) }), "event");
+    return n;
+  },
+
   getChantier: function (mapId) {
     var map = this.getMap(mapId);
     if (!map || !map.chantier || !this.isMapOpen(mapId)) return null;
     this.ensureDefaults();
+    // v3.433.0 : la cité finie ne se rebâtit plus ; elle paie à la place
+    if (this.getPlan(mapId) === "finir") { this.collectFinishedCity(mapId); return null; }
     var lm = game.livingMaps[mapId], today = this._todayKey(), self = this;
     var c = lm.chantier;
     if (c && c.day === today && this.getSectorDef(mapId, c.sectorId)) return c;
@@ -602,6 +622,13 @@ var LivingMapManager = {
         report.chantier = cn;
         report.message += " " + _t("Chantier du jour : +{n} {x}.", { n: cn, x: _td(this.getRewardResourceName(mapId)) });
       }
+      // v3.433.0 (plan = tomber) : un quartier en éboulis se rejoue en carrière
+      var tomber = this.getPlan(mapId) === "tomber" && this.getMap(mapId).plan.tomber;
+      if (tomber && tomber.collapse.indexOf(sectorId) !== -1 && tomber.quarryBonus > 0 && window.WarehouseManager) {
+        WarehouseManager.addResource(this.getRewardResourceId(mapId), tomber.quarryBonus, true);
+        report.quarry = tomber.quarryBonus;
+        report.message += " " + _t("Éboulis : +{n} {x}.", { n: tomber.quarryBonus, x: _td(this.getRewardResourceName(mapId)) });
+      }
       if (!s.firstRewardClaimed) {
         s.firstRewardClaimed = true;
         var seve = this.getFirstReward(def);
@@ -644,6 +671,7 @@ var LivingMapManager = {
   /* v3.306.0 : mapId facultatif — un choix pesant peut ajouter son frein sur SA carte
      (map.choiceBrakes, ex. les stèles laissées qui tiennent le sable tant qu'elles sont libérées). */
   getBrakeChance: function (mapId) {
+    if (mapId && this.getPlan(mapId) === "finir") return 1; // v3.433.0 : la cité figée ne s'éboule plus
     var per = Number((this.getRules().palisade || {}).brakePerLevel || 0);
     var brake = per * this.getPalisadeLevel();
     var map = mapId ? this.getMap(mapId) : null;

@@ -139,6 +139,11 @@ var ForgeManager = {
     if (target > seuil * 2 && target <= seuil * 3) cost.chitine_profondeurs = target - seuil * 2;
     // v3.431.0 (Ruines) : la bande de la Forge 4 (niveaux 7 et 8) demande la Clé de voûte, à la place de la Chitine
     if (target > seuil * 3) cost.cle_de_voute = target - seuil * 3;
+    // v3.433.0 (choix « plan » = tomber) : la clé du Cœur, une Clé de voûte de moins (la reforge 7 n'en coûte plus)
+    if (cost.cle_de_voute && window.StoryQuestManager && StoryQuestManager.getChoice("plan") === "tomber") {
+      cost.cle_de_voute -= (typeof VILLAGE_COEUR_KEY_DISCOUNT === "number" ? VILLAGE_COEUR_KEY_DISCOUNT : 1);
+      if (cost.cle_de_voute <= 0) delete cost.cle_de_voute;
+    }
     // v3.330.0 (E2) : reforges de l'arme exigées par l'Histoire -> or et matériaux du monde seulement
     if (this.isStoryReforge(slot, target) && typeof stripStoryMaterials === "function") cost = stripStoryMaterials(cost).cost;
     return cost;

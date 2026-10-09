@@ -38,6 +38,7 @@ var ASSETS = {
     ancientdragon: "🐉",
     archmage: "🧙",
     nezzam: "🧞", // v3.360.0 : le Djinn des dunes devient Nezzam le Desséché
+    maitre_oeuvre: "🗿", // v3.433.0 : le boss d'Histoire des Ruines
     orcwarlord: "🪓"
   },
   worlds: {

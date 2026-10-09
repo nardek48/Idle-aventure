@@ -29,6 +29,33 @@ var BOSS_DB = {
      unique, ne sort que par sa quête (aq_desert_trone, bossId) ; worldId place sa fiche au Désert
      dans le Bestiaire, puisqu'aucune aventure ne le déclare. Stats de base du Djinn, affûtées par
      bossPowerMult / bossHpMult de sa quête (banc sim/nezzam-bench.js). */
+  /* v3.433.0 (Ruines, acte IV étape 19, nom validé par Seb le 09/10) — LE MAÎTRE D'ŒUVRE, « le plan
+     fait pierre » : ce que l'Aether a bâti à partir de la cité. Boss d'Histoire unique, par sa quête
+     (aq_ruines_plan). Trois phases (Conception RU10), portées par systems/rise-system.js :
+       1. il se relève une fois, QUOI QU'IL ARRIVE (riseForced : personne ne l'achève à terre) ;
+       2. à la relève, il appelle deux bâtisseurs (riseAdds) ;
+       3. à 30 % de sa seconde vie (15 % des PV max), il se blinde (risePhases).
+     Craint l'épée, résiste à la magie (l'écart épée / magie des Ruines, comme le Bâtisseur).
+     Portrait à générer. Chiffres affûtés par bossHpMult / bossPowerMult de sa quête. */
+  maitre_oeuvre: {
+    name: "Le Maître d'œuvre",
+    asset: "maitre_oeuvre",
+    image: "./images/Boss/maitre_oeuvre.jpg",
+    worldId: "ruins",
+    lore: "Ce n'est pas un homme. C'est la cité, debout.",
+    resists: ["magic"],
+    weak: ["sword"],
+    rises: true,
+    riseForced: true,
+    riseLine: "Le Maître d'œuvre tombe en pièces. Les pièces se remettent en place.",
+    riseAdds: { adds: ["batisseur", "batisseur"], addsHpMult: 0.15, addsPowerMult: 0.45,
+      line: "Il frappe le sol. Deux bâtisseurs sortent des dalles, une pierre à la main." },
+    risePhases: [
+      { atPct: 0.15, archetype: "armored", label: "il ne frappe plus, il tient", line: "Il ramène les pierres sur lui. Il ne frappe plus. Il tient." }
+    ],
+    stats: makeRpgStats(58, 88, 16, 28, 40)
+  },
+
   nezzam: {
     name: "Nezzam le Desséché",
     asset: "nezzam",
