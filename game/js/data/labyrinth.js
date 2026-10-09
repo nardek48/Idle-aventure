@@ -20,20 +20,20 @@ var LABYRINTH_CONFIG = {
   costMaxBase: 44, costMaxPerGate: 10, // Souffle du plus court chemin, au plus (marge pour explorer)
 
   /* Souffle */
-  breathStart: 100, step: 3, pull: 4, breathFloor: 30,
+  breathStart: 100, step: 3, pull: 4, breathFloor: 30, // banc (robot explorateur) : le Souffle arrête environ une descente sur cinq
   springBreath: 25, springHealPct: 0.20,
 
   /* Combats résolus comme les Petites Aventures (CombatForecast, héros seul) */
   guardFoes: ["skeleton", "batisseur", "gargoyle"], guardPack: 2, guardMult: 1.8, guardPerFloor: 0.04,
   guardFoeMult: { skeleton: 1, batisseur: 1.2, gargoyle: 0.65 }, // banc : chaque garde vaut 12 à 20 % des PV
-  foeEliteId: "contremaitre", foeFrom: 2, foeEvery: 3, foeEveryFast: 2, foeFastFrom: 4, foeStun: 4,
+  foeEliteId: "contremaitre", foeFrom: 2, foeEvery: 2, foeEveryFast: 1, foeFastFrom: 5, foeStun: 4, // banc (robot) : 1 salle / 2 pas, puis 1 / pas dès l'étage 5
   foeHpMult: 0.55, foePowMult: 0.80,  // le Contremaître du labyrinthe : un coup (~30 % des PV), pas un combat d'élite entier
   bossEvery: 5, bossFoe: "skeleton", bossHpMult: 8, bossPowMult: 2.4, // le Gardien du plan : bâti comme le gardien des Petites Aventures des Ruines, un cran au-dessus (banc : ~40 % des PV)
   bossName: "Le Gardien du plan",
 
-  /* Gains, provisoires (banc en livraison 2) */
-  stairsStones: 1, stairsStonesPerFloor: 1, stairsGoldPerFloor: 150,
-  chestStones: 1, chestStonesPerTwoFloors: 1, chestGoldPerFloor: 100,
+  /* Gains (banc, robot explorateur) : 1 Pierre par escalier ; l'or grandit avec la profondeur */
+  stairsStones: 1, stairsStonesPerFloor: 0, stairsGoldPerFloor: 150,
+  chestStones: 1, chestStonesPerTwoFloors: 0, chestGoldPerFloor: 100,
   bossStones: 3,
   stoneResource: "pierre_errante"
 };

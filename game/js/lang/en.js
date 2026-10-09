@@ -4959,4 +4959,10 @@ I18n.register("en", {
   "Une gargouille descend du plafond et se pose sur le levier.": "A gargoyle comes down from the ceiling and settles on the lever.",
   "Il est fait des marches qu'il garde. Quand il bouge, l'escalier bouge avec lui.": "He is made of the steps he guards. When he moves, the staircase moves with him.",
   "Le Gardien du plan": "The Keeper of the Plan",
+  // v3.435.0 : tutoriel de la première descente
+  "Il fait noir : tu ne vois que ta salle et celles qui s'ouvrent à côté. Touche une salle voisine pour avancer. Chaque pas coûte du Souffle.": "It's dark: you only see your room and the ones that open next to it. Tap a neighbouring room to move on. Every step costs Breath.",
+  "Un levier fait tourner des pans de mur : un passage s'ouvre, un autre se ferme. Le tirer encore remet tout comme avant. L'un des deux leviers de l'étage est gardé.": "A lever turns wall panels: one passage opens, another closes. Pulling it again puts everything back. One of the floor's two levers is guarded.",
+  "Edda dessine la carte dans le coin. Ce que les leviers font tourner, même au loin, y est noté en violet. Touche une salle dessinée sur la grande carte pour y retourner.": "Edda draws the map in the corner. Whatever the levers turn, even far away, is marked on it in violet. Tap a drawn room on the big map to go back there.",
+  "À l'escalier : descends pour un sac plus lourd, ou remonte avec tout ce que tu portes. Tomber ou t'essouffler en bas n'en garde que la moitié.": "At the stairs: go down for a heavier bag, or go back up with everything you carry. Falling or running out of breath down there keeps only half of it.",
+  "Dès l'étage 2, le Contremaître te cherche. Tu l'entends avant de le voir : écoute de quel côté viennent ses pas.": "From floor 2, the Foreman is looking for you. You hear him before you see him: listen to which side his footsteps come from.",
 });

@@ -14617,7 +14617,7 @@ console.log("\n[210] v3.434.0 — Ruines : le Labyrinthe aux leviers (livraison 
     ok(game.sceneRun.breath < b0, "le Souffle baisse à chaque pas et à chaque tirage");
     ok(Object.keys(game.sceneRun.knownPiv).length >= 1, "Edda a noté au moins un pan sur sa carte");
     var bag0 = game.sceneRun.stones, gain = L.claimStairs();   // le chemin peut traverser le coffre oublié
-    ok(gain && gain.stones === 2 && game.sceneRun.stones === bag0 + 2 && !L.claimStairs(), "l'escalier rapporte 2 Pierres errantes à l'étage 1, une seule fois");
+    ok(gain && gain.stones === 1 && game.sceneRun.stones === bag0 + 1 && !L.claimStairs(), "l'escalier rapporte 1 Pierre errante, une seule fois (v3.435.0 : réglage du banc)");
     var saved = JSON.parse(JSON.stringify(run("buildSaveData()")));
     ok(saved.sceneRun && saved.sceneRun.lab && saved.sceneRun.F && saved.sceneRun.F.pivots.length >= 1, "la descente en cours est dans la sauvegarde (reprise après rechargement)");
     ok(L.descend().ok && game.sceneRun.floor === 2 && game.sceneRun.foe, "descendre : étage 2, le Contremaître traque");
@@ -14631,7 +14631,7 @@ console.log("\n[210] v3.434.0 — Ruines : le Labyrinthe aux leviers (livraison 
     var pe = g.WarehouseManager.getAmount("pierre_errante"), bagAll = game.sceneRun.stones;
     var end = L.finish("remonte");
     ok(end && end.how === "remonte" && game.sceneRun.status === "completed", "remonter : la descente se termine");
-    ok(g.WarehouseManager.getAmount("pierre_errante") - pe === bagAll && bagAll >= 2, "remonter garde tout le sac (" + bagAll + " Pierres errantes)");
+    ok(g.WarehouseManager.getAmount("pierre_errante") - pe === bagAll && bagAll >= 1, "remonter garde tout le sac (" + bagAll + " Pierres errantes)");
     run("leaveSceneScreen()");
     game.heroMaxHp = maxHp0; game.heroHp = maxHp0; L.estimate = estSaved;
     /* --- Tomber : la moitié du sac, la descente rendue --- */
@@ -14659,6 +14659,23 @@ console.log("\n[210] v3.434.0 — Ruines : le Labyrinthe aux leviers (livraison 
   } finally {
     SQ.isStepReached = savedReach; if (typeof estSaved === "function") L.estimate = estSaved;
     if (g.game) { g.game.sceneRun = null; if (g.game.explorationProgression) g.game.explorationProgression.labyrinth = null; }
+  }
+})();
+
+console.log("\n[211] v3.435.0 — Ruines : le Labyrinthe aux leviers (livraison 2) : réglages du banc, tutoriel");
+(function () {
+  try {
+    var game = freshCombat("knight"), C = g.LABYRINTH_CONFIG, T = g.GENERIC_TUTORIALS.labyrinth_first;
+    ok(C.step === 3 && C.pull === 4 && C.breathFloor === 30, "Souffle : 3 par pas, 4 par tirage, +30 en descendant (banc du robot explorateur)");
+    ok(C.foeEvery === 2 && C.foeEveryFast === 1 && C.foeFastFrom === 5, "le Contremaître : une salle tous les 2 pas, puis à chaque pas dès l'étage 5");
+    ok(C.stairsStones === 1 && !C.stairsStonesPerFloor && C.chestStones === 1 && !C.chestStonesPerTwoFloors && C.bossStones === 3, "gains : 1 Pierre par escalier et par coffre, 3 au Gardien (environ 5 par descente au banc)");
+    ok(T && T.tab === "scene" && T.points.length === 5, "tutoriel de la première descente : 5 points, sur l'écran du labyrinthe");
+    game.sceneRun = null; ok(!T.condition(), "le tutoriel attend une descente");
+    game.sceneRun = { lab: true, status: "lab-map" }; ok(T.condition(), "il s'ouvre à la première descente");
+    game.sceneRun = { pa2: true, status: "pa2-map" }; ok(!T.condition(), "pas pendant une Petite Aventure");
+    game.sceneRun = null;
+  } catch (err) {
+    ok(false, "[211] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 
