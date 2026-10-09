@@ -12,7 +12,7 @@ var ARGS = process.argv.slice(3);
 function arg(name, def) { var i = ARGS.indexOf(name); return i >= 0 ? ARGS[i + 1] : def; }
 var N = Number(arg("--n", 4));
 var CLASSES = arg("--classes", "knight,ranger,mage").split(",");
-var PASS = ["--combats", "--tactique", "--compagnons-malins", "--investi", "--laisser"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
+var PASS = ["--combats", "--tactique", "--compagnons-malins", "--investi", "--laisser", "--farm-reforges"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
 var OUT = require("../chemins.js").captures("campagne-lot");
 if (!fs.existsSync(OUT)) fs.mkdirSync(OUT);
 

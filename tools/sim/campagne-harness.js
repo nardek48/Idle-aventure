@@ -42,6 +42,7 @@ var POLICY = ARGS.indexOf("--tactique") >= 0 ? "attentif" : "grimoire";   // B :
 var SERMENT = ARGS.indexOf("--laisser") >= 0 ? "laisser" : "relever";   // desert_11 : relever le Serment (heaume) par défaut
 var ELITES_SECONDAIRES = ARGS.indexOf("--sans-elites") < 0;           // les quêtes d'élite du tableau (butin unique)
 var INVESTI = ARGS.indexOf("--investi") >= 0;   // B : le joueur bâtit la Forge dès qu'elle ouvre et reforge tout
+var FARM_REFORGES = ARGS.indexOf("--farm-reforges") >= 0;   // ancien comportement : farmer les matériaux de toutes les reforges
 var ZONES = ARGS.indexOf("--sans-zones") < 0;  // le joueur monte ses zones de production (Mine, Scierie…) ; --sans-zones pour l'ancien profil
 var ARME_DESERT = ARGS.indexOf("--arme-desert") >= 0;   // ESSAI (hors jeu) : une arme Inhabituelle du Désert offerte à desert_12
 var COMPAGNONS_MALINS = ARGS.indexOf("--compagnons-malins") >= 0;   // --tactique : les compagnons jouent leur choix automatique
@@ -334,6 +335,8 @@ function developVillage() {
     var why2 = F.getBlockReason(slot), c2 = F.getCost(slot);
     var part = (slot === "weapon" || slot === "armor") ? (INVESTI ? 0.5 : 0.3) : (INVESTI ? 0.3 : 0.15);
     if (!c2 || (why2 && why2 !== "Matériaux manquants") || Number(c2.gold || 0) > g.game.gold * part) return;
+    // décision Seb (option A) : les pièces hors arme/armure ne se reforgent qu'avec les matériaux en stock, sans farm
+    if (why2 === "Matériaux manquants" && slot !== "weapon" && slot !== "armor" && !FARM_REFORGES) return;
     if (reforgeTo(slot, F.getLevel(slot) + 1)) STATS.village.push("reforge " + slot + " " + F.getLevel(slot) + " (" + CURRENT_STEP + ")");
   });
 }
