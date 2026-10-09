@@ -368,7 +368,7 @@ var WS = G.WORLD_HERO_SCALING;
 P("Fichiers : `data/worlds.js` (HERO_SCALING_REFS, WORLD_HERO_SCALING), `CombatForecast.getHeroScale`. Le héros est comparé à un **héros de référence** (dégâts par round, PV effectifs = PV / (1 − défense)) : PV ennemis × (dmg / dmg de réf. / " + fr(WS.margin) + ")^" + fr(WS.exp) + ", puissance × (ehp / ehp de réf. / " + fr(WS.margin) + ")^" + fr(WS.exp) + ", jamais sous ×1, plafond ×" + fr(WS.cap) + ". L'or et l'XP ne changent pas.\n");
 P(table(["Référence", "Dégâts par round", "PV effectifs"], Object.keys(G.HERO_SCALING_REFS).map(function (k) { var r = G.HERO_SCALING_REFS[k]; return [k, r.dmg, r.ehp]; })));
 P(table(["Monde", "Référence par aventure"], Object.keys(WS.refByWorld).map(function (w) { return [worldName(w), WS.refByWorld[w].join(" · ")]; })));
-P("*Ruines : provisoire, le héros de fin du chapitre II (`joueurDesert2`) en attendant des références mesurées au robot de campagne. Tant qu'elle reste en place, l'ajustement compare le héros des Ruines au héros de fin du Désert.*\n");
+P("*Ruines : le héros de fin du chapitre II (`joueurDesert2`). Posé provisoirement en v3.428.0, **gardé par décision de Seb du 09/10** : tous les bancs des Ruines ont été faits avec cette référence. L'ajustement compare donc le héros des Ruines au héros de fin du Désert.*\n");
 
 H(1, "Partie 3 — Combat : ennemis, boss, missions, calibrages");
 H(2, "3.1 Mise à l'échelle des ennemis");
@@ -580,8 +580,7 @@ P(table(["Banc", "Mesure"], [
 ]));
 P("Harnais de non-régression : `round-harness.js` (section [85] v3.287.0 neutralisée), `boot-harness.js`, `hero-creation-harness.js`, `tools/sim/retour-demarrage-bench.js`. Documents : `tools/docs-gen/generate-balance-guide.js` (ce guide), `tools/docs-gen/generate-function-reference.js` (Référence des fonctions).\n");
 H(2, "6.2 Points ouverts");
-P("- **Références de héros des Ruines** (`refByWorld.ruins`) : provisoires (fin du chapitre II), à mesurer au robot de campagne (§2.8).");
-P("- **Zone de production aux Ruines** (RU7) : la 3ᵉ rangée reste fermée (`zoneRows` 2) ; décision après simulation. Niveaux de village payés en Clé de voûte : pas encore posés, seule la Forge 4 en demande.");
+P("- **Décisions de Seb du 09/10 (closes)** : la référence de héros des Ruines reste `joueurDesert2` (§2.8) ; la 3ᵉ rangée de zones de production reste fermée aux Ruines (`zoneRows` 2) ; la Clé de voûte ne paie que la Forge 4 et les reforges 7 et 8, les autres niveaux du monde 3 se paient comme au Désert.");
 P("- **Varrek et le Rôdeur** : 58 % pour une cible de 60 %. À juger en jeu.");
 P("- **Le Chevalier meurt beaucoup au Sanctuaire** dans la campagne du robot (21 morts sur la partie).");
 P("- **Gains provisoires des Ruines** : chantier du jour (" + G.LIVING_MAPS.ruins.chantier.reward + "), Cœur (" + G.LIVING_MAPS.ruins.plan.finir.dailyStones + " par jour), éboulis (+" + G.LIVING_MAPS.ruins.plan.tomber.quarryBonus + "), remise de la clé du Cœur, or des étapes 11 à 20.");
