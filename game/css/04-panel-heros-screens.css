@@ -62,6 +62,16 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hs-bagcap b { font-size: 18px; }
 .hs-bagcap small { font-size: 12px; }
 .wh-dd-n.is-green { background: var(--c-green-650-2); color: var(--c-white-50-soft); }
+/* v3.429.21 (atelier menu-sac) : le menu du Sac se place sur la ligne entière, catégories en grille 2 x 2,
+   Autovente en bouton à côté du compteur. */
+.hs-bagfilter .wh-dd { position: static; }
+.hs-bagfilter .wh-dd-menu { z-index: 5; }
+.hs-dd-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 2px 0; }
+.wh-dd-menu .hs-dd-grid button { width: auto; min-width: 0; min-height: 40px; padding: 4px 6px; gap: 5px; font-size: 13px; border: 1px solid rgba(185, 138, 74, .45); }
+.wh-dd-menu .hs-dd-grid button img { width: 20px; height: 20px; }
+.hs-dd-grid .wh-dd-n { min-width: 20px; height: 18px; padding: 0 4px; font-size: 12px; line-height: 18px; }
+.hs-bag-auto { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 72px; min-height: 48px; padding: 2px 6px; border: 1.5px solid var(--c-bronze-500); border-radius: 12px; background: linear-gradient(var(--c-white-50), var(--c-cream-150-3)); color: var(--c-brown-750-3); font: inherit; font-size: 12px; font-weight: 800; }
+.hs-bag-auto img { width: 24px; height: 24px; object-fit: contain; }
 .hs-dd-sort { white-space: nowrap; display: flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 13px; color: var(--c-brown-800-3); }
 .wh-dd-menu .hs-dd-sort button { width: auto; min-height: 0; flex: 0 0 auto; padding: 3px 10px; border-radius: 8px; border: 1px solid var(--c-bronze-500); background: var(--c-cream-50-soft); font-weight: 700; color: var(--c-brown-800-3); }
 .hs-bgrid { margin-bottom: 10px; }

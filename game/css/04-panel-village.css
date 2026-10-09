@@ -614,7 +614,9 @@
 .wh-dd-menu button img { width: 24px; height: 24px; object-fit: contain; }
 .wh-dd-menu button.is-on { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); color: var(--c-brown-900-soft); }
 .wh-dd-menu hr { border: 0; border-top: 1px dashed rgba(138, 92, 20, 0.4); margin: 4px 6px; }
-.wh-dd-n { margin-left: auto; min-width: 24px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--c-bronze-200); color: var(--c-brown-750-2); font-size: 12px; font-weight: 800; line-height: 20px; text-align: center; }
+/* v3.429.21 : le nom rétrécit (…) ; le nombre reste toujours entier dans sa ligne (police iOS plus large). */
+.wh-dd-lbl { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wh-dd-n { flex: none; margin-left: auto; min-width: 24px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--c-bronze-200); color: var(--c-brown-750-2); font-size: 12px; font-weight: 800; line-height: 20px; text-align: center; }
 .wh-dd-n.is-red { background: var(--c-red-550); color: var(--c-white-50-soft); }
 .wh-dd-menu .wh-dd-pick { color: var(--c-brown-750-3); text-decoration: underline; }
 .wh-zeros { flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; color: var(--c-brown-750-2); }

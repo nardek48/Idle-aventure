@@ -242,21 +242,25 @@
     var cur = filters.filter(function (d) { return d !== "-" && d[0] === bagFilter; })[0] || filters[0];
     var n = Array.isArray(game.inventory) ? game.inventory.length : 0, cap = (typeof getInventoryCap === "function" ? getInventoryCap() : 25);
     var h = '<div class="hs-cmp-legend">' + ["up", "down", "mix"].map(function (c) { return '<span>' + cmpBadge(c) + esc(cmpLabel(c)) + '</span>'; }).join("") + '</div>';
-    h += '<div class="wh-filter">';
+    h += '<div class="wh-filter hs-bagfilter">'; // v3.429.21 (atelier menu-sac) : menu sur toute la largeur de la ligne
     if (bagMenuOpen) h += '<div class="wh-dd-veil" onclick="herosBagMenu()"></div>';
     h += '<div class="wh-dd' + (bagMenuOpen ? ' is-open' : '') + '"><button type="button" class="wh-dd-btn" onclick="herosBagMenu()"><img src="' + cur[2] + '" alt=""><span><small>' + _t("Afficher") + '</small>' + esc(cur[1]) + '</span><span class="wh-dd-car">▼</span></button>';
     if (bagMenuOpen) {
-      h += '<div class="wh-dd-menu">';
-      filters.forEach(function (d) {
-        if (d === "-") { h += '<hr>'; return; }
+      /* v3.429.21 (atelier menu-sac, validé par Seb) : « Tout » en ligne, les 4 catégories en grille 2 × 2,
+         puis « Mieux que l'équipé » et le tri. 359 -> 235 px : le menu tient au-dessus de la barre du bas. */
+      var item = function (d) {
         var c = bagEntries(d[0]).length;
-        h += '<button type="button" class="' + (d[0] === bagFilter ? 'is-on' : '') + '" onclick="herosBagFilter(\'' + d[0] + '\')"><img src="' + d[2] + '" alt="">' + esc(d[1]) + '<span class="wh-dd-n' + (d[0] === "better" && c ? ' is-green' : '') + '">' + c + '</span></button>';
-      });
-      h += '<hr><div class="hs-dd-sort">' + _t("Trier :") + ' <button type="button" onclick="herosBagSort(\'rarity\')">' + _t("Rareté") + '</button>'
-        + '<button type="button" onclick="herosBagSort(\'type\')">' + _t("Type") + '</button></div>';
-      h += '<button type="button" class="wh-dd-pick" onclick="herosBagMenu();openInventorySettings()"><img src="images/Icons/system/auto_sell.png" alt="">' + _t("Autovente") + '…</button></div>';
+        return '<button type="button" class="' + (d[0] === bagFilter ? 'is-on' : '') + '" onclick="herosBagFilter(\'' + d[0] + '\')"><img src="' + d[2] + '" alt=""><span class="wh-dd-lbl">' + esc(d[1]) + '</span><span class="wh-dd-n' + (d[0] === "better" && c ? ' is-green' : '') + '">' + c + '</span></button>';
+      };
+      var rows = filters.filter(function (d) { return d !== "-"; });
+      h += '<div class="wh-dd-menu">' + item(rows[0]) + '<div class="hs-dd-grid">' + rows.slice(1, 5).map(item).join("") + '</div><hr>';
+      rows.slice(5).forEach(function (d) { h += item(d); });
+      h += '<div class="hs-dd-sort">' + _t("Trier :") + ' <button type="button" onclick="herosBagSort(\'rarity\')">' + _t("Rareté") + '</button>'
+        + '<button type="button" onclick="herosBagSort(\'type\')">' + _t("Type") + '</button></div></div>';
     }
-    h += '</div><span class="hs-bagcap"><b>' + n + '</b> / ' + cap + '<small>' + _t("objets") + '</small></span></div>';
+    h += '</div><span class="hs-bagcap"><b>' + n + '</b> / ' + cap + '<small>' + _t("objets") + '</small></span>';
+    // v3.429.21 : l'Autovente sort du menu (elle était coupée sous la barre du bas sur iPhone)
+    h += '<button type="button" class="hs-bag-auto" onclick="openInventorySettings()"><img src="images/Icons/system/auto_sell.png" alt="">' + _t("Autovente") + '</button></div>';
     var es = bagEntries(bagFilter);
     var eqs = es.filter(function (e) { return e.type === "equipment"; }), pots = es.filter(function (e) { return e.type === "potion"; });
     if (eqs.length) h += '<div class="ksec"><span>' + _t("Équipement") + '</span></div><div class="wh-grid hs-bgrid">' + eqs.map(bagTileHTML).join("") + '</div>';

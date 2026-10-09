@@ -171,7 +171,7 @@ function buildWarehouseFilterRowHTML(keys) {
     D.forEach(function (d) {
       if (d === "-") { h += '<hr>'; return; }
       var n = count(d[0]);
-      h += '<button type="button" class="' + (d[0] === f ? 'is-on' : '') + '" onclick="setWarehouseFilter(\'' + d[0] + '\')"><img src="' + d[2] + '" alt="">' + esc(d[1])
+      h += '<button type="button" class="' + (d[0] === f ? 'is-on' : '') + '" onclick="setWarehouseFilter(\'' + d[0] + '\')"><img src="' + d[2] + '" alt=""><span class="wh-dd-lbl">' + esc(d[1]) + '</span>'
         + '<span class="wh-dd-n' + (d[3] && n ? ' is-red' : '') + '">' + n + '</span></button>';
     });
     h += '<button type="button" class="wh-dd-pick" onclick="openWarehousePicker()"><img src="images/Icons/system/sort.png" alt="">' + _t("Choisir ma sélection…") + '</button>';
