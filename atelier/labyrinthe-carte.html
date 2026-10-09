@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Labyrinthe, carte d'Edda</title>
+<style>
+/* Atelier v3 (09/10) : Labyrinthe aux leviers (RU12). Étages courts, la carte d'Edda qui se dessine,
+   leviers lisibles, marche automatique vers une salle vue, le Contremaître qui traque. */
+:root {
+  --bronze: #b98a4a; --cream: #f3e6c4; --ink: #3a2c1a; --ink-dim: #6b5a40; --brown: #8a5c14; --accent: #c27f1f;
+  --gold-a: #f0c64a; --gold-b: #c27f1f; --head-ink: #f4e9d0;
+  --hp: #c0392b; --breath: #3d8fd1; --violet: #9b6bff;
+  --page: #0b0806; --floor: #b9a37a; --floor-mem: #5d5140;
+  --paper: #e9dcbc; --chalk: #4a3b28;
+  --safe-b: env(safe-area-inset-bottom, 0px); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--page); color: var(--cream); font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+.bar { position: sticky; top: 0; z-index: 950; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 16px; background: #000; }
+.bar b { font-size: 12px; margin-right: auto; }
+.bar button { min-height: 30px; padding: 2px 9px; border-radius: 9px; border: 1.5px solid var(--bronze); background: transparent; color: var(--cream); font: inherit; font-size: 12px; font-weight: 700; }
+.bar button[aria-pressed="true"] { background: linear-gradient(var(--gold-a), var(--gold-b)); color: #2e2214; }
+/* HUD */
+.hud { margin: 8px 16px 0; padding: 8px 12px; border: 1.5px solid var(--accent); border-radius: 16px; background: rgba(16, 12, 8, .92); }
+.hud .top { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: var(--head-ink); }
+.hud .floorname { display: block; margin-top: 1px; font-size: 13px; font-weight: 700; font-style: italic; color: #d9c49a; }
+.gauges { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+.gauge { position: relative; height: 18px; border-radius: 9px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+.gauge i { position: absolute; inset: 0 auto 0 0; border-radius: 9px; transition: width .35s; }
+.gauge span { position: relative; display: block; text-align: center; font-size: 12px; font-weight: 800; line-height: 18px; color: #fff; text-shadow: 0 1px 2px #000; }
+.g-hp i { background: var(--hp); } .g-br i { background: var(--breath); }
+.loot { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12.5px; font-weight: 700; color: #d9c49a; }
+.loot .hunt { color: #ff8a7a; }
+/* La vue (torche) */
+.view { position: relative; margin: 8px 16px 0; border-radius: 16px; overflow: hidden; background: #000; border: 1.5px solid #3a2e22; }
+.view > svg { display: block; width: 100%; height: auto; touch-action: manipulation; }
+#world { transition: transform .3s ease-out; }
+.room { fill: var(--floor); stroke: #1a140e; stroke-width: 3; }
+.room.mem { fill: var(--floor-mem); cursor: pointer; }
+.room.lit { fill: #8f7d5c; }
+.room.can { stroke: var(--gold-a); stroke-width: 4; cursor: pointer; }
+.door { fill: var(--floor); } .door.mem { fill: var(--floor-mem); } .door.lit { fill: #8f7d5c; }
+.door.piv { fill: rgba(155, 107, 255, .65); stroke: var(--violet); stroke-width: 2; }
+.wall { stroke: #120d09; stroke-width: 8; stroke-linecap: round; }
+.wall.piv { stroke: var(--violet); filter: drop-shadow(0 0 5px rgba(155, 107, 255, .9)); }
+.flash { animation: flash 1s ease-out; }
+@keyframes flash { 0% { opacity: .2; } 30% { opacity: 1; } 60% { opacity: .4; } 100% { opacity: 1; } }
+.glyph { font-size: 24px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.hero { fill: #2563c9; stroke: #fff; stroke-width: 3; }
+.foe { font-size: 28px; text-anchor: middle; dominant-baseline: central; pointer-events: none; filter: drop-shadow(0 0 6px #ff3b3b); }
+.vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0, 0, 0, .55) 60%, rgba(0, 0, 0, .92) 100%); }
+/* La carte d'Edda : vignette dans le coin, papier et craie */
+.chart { position: absolute; right: 8px; top: 8px; width: 34%; max-height: 46%; overflow: hidden; padding: 4px; border-radius: 10px; background: var(--paper); border: 2px solid var(--bronze); box-shadow: 0 3px 10px rgba(0, 0, 0, .6); cursor: pointer; }
+.chart svg { display: block; width: 100%; height: auto; max-height: 150px; }
+.chart .cap { display: block; margin-top: 1px; font-size: 10px; font-weight: 800; text-align: center; color: var(--chalk); letter-spacing: .3px; }
+.c-room { fill: #f4ead1; stroke: var(--chalk); stroke-width: 2.4; }
+.c-room.go { cursor: pointer; }
+.c-room.here { fill: #c9dcf7; }
+.c-door { stroke: var(--chalk); stroke-width: 2.4; }
+.c-wall { stroke: var(--chalk); stroke-width: 5; stroke-linecap: round; }
+.c-piv { stroke: var(--violet); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 5 3; }
+.c-piv.new { animation: flash 1.2s ease-out 2; }
+.c-glyph { text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.c-foe { fill: none; stroke: #c0392b; stroke-width: 3; stroke-dasharray: 4 3; }
+.note { margin: 8px 16px 0; padding: 8px 12px; border-radius: 12px; background: rgba(243, 230, 196, .94); color: var(--ink); font-weight: 600; line-height: 1.35; min-height: 40px; }
+.note.alert { background: #f6d2c8; }
+.actions { display: flex; gap: 8px; margin: 8px 16px calc(14px + var(--safe-b)); }
+.btn { flex: 1; min-height: 46px; border-radius: 12px; border: 2px solid #5a3a0c; background: linear-gradient(var(--gold-a), var(--gold-b)); color: #2e2214; font: inherit; font-weight: 800; font-size: 14px; }
+.btn.ghost { background: transparent; color: var(--cream); border-color: var(--bronze); }
+.btn:disabled { opacity: .4; }
+/* Feuille basse */
+.veil { position: fixed; inset: 0; z-index: 900; background: rgba(5, 3, 2, .66); }
+.ksheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 901; max-height: 88vh; display: flex; flex-direction: column; padding-bottom: calc(14px + var(--safe-b)); border-radius: 18px 18px 0 0; background: #efe0c2; color: var(--ink); box-shadow: 0 -10px 30px rgba(0, 0, 0, .7); }
+.khead { flex: none; padding: 10px 16px 12px; border-bottom: 2px solid var(--accent); border-radius: 18px 18px 0 0; background: #1b1510; color: var(--head-ink); }
+.ktitle { font-size: 17px; font-weight: 800; }
+.ksub { display: block; margin-top: 2px; font-size: 12.5px; font-weight: 600; opacity: .8; }
+.kbody { flex: 1 1 auto; overflow-y: auto; padding: 14px 16px 6px; line-height: 1.4; }
+.kbody p { margin: 0 0 10px; }
+.kbody .bigchart { padding: 6px; border-radius: 12px; background: var(--paper); border: 2px solid var(--bronze); }
+.kbody .bigchart svg { display: block; width: 100%; height: auto; max-height: 52vh; }
+.quote { font-style: italic; color: var(--ink-dim); }
+.kfoot { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 8px 16px 0; }
+.kfoot .btn.ghost { color: var(--ink); }
+.cost { font-size: 12.5px; font-weight: 700; color: var(--brown); }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Atelier · Labyrinthe v3</b>
+  <button id="bNew">Nouvelle descente</button>
+  <button id="bHunt" aria-pressed="true">Traque</button>
+  <button id="bSol" aria-pressed="false">Solution</button>
+  <button id="bFloor">Étage +1</button>
+</div>
+
+<div class="hud">
+  <div class="top"><span id="fNum"></span><span id="tries"></span></div>
+  <span class="floorname" id="fName"></span>
+  <div class="gauges">
+    <div class="gauge g-hp"><i id="hpBar"></i><span id="hpTxt"></span></div>
+    <div class="gauge g-br"><i id="brBar"></i><span id="brTxt"></span></div>
+  </div>
+  <div class="loot"><span id="lootTxt"></span><span id="foeTxt" class="hunt"></span></div>
+</div>
+
+<div class="view">
+  <svg id="map" viewBox="0 0 400 440" aria-label="Le labyrinthe"><g id="world"></g></svg>
+  <div class="vignette"></div>
+  <div class="chart" id="chart" role="button" aria-label="Ouvrir la carte d'Edda"><svg id="mini"></svg><span class="cap">CARTE D'EDDA</span></div>
+</div>
+<div class="note" id="note"></div>
+<div class="actions">
+  <button class="btn ghost" id="bChart">Carte</button>
+  <button class="btn ghost" id="bLeave">Remonter</button>
+</div>
+
+<div class="veil hidden" id="veil"></div>
+<div class="ksheet hidden" id="sheet">
+  <div class="khead"><div class="ktitle" id="sTitle"></div><span class="ksub" id="sSub"></span></div>
+  <div class="kbody" id="sBody"></div>
+  <div class="kfoot" id="sFoot"></div>
+</div>
+
+<script>
+"use strict";
+/* ================= Réglages d'atelier (à caler au banc) ================= */
+var W = 5, H = 6, CELL = 100, ROOM = 60;       // étage 1 : 5 × 6 salles ; un peu plus grand en descendant
+var STEP = 3, PULL = 4;                        // Souffle par pas, par tirage
+var BREATH_START = 100, BREATH_FLOOR = 30, SPRING = 25;
+var GUARD = [0.12, 0.18], FOE_HIT = 0.30, BOSS_HIT = 0.40;
+var FOE_FROM = 2, FOE_STUN = 4, WALK_MS = 170;
+var FLOOR_NAMES = ["La cour des fondations", "Les salles qu'on a oublié de finir", "Les citernes sèches", "La galerie des plans",
+  "Le cœur qui n'est pas fini", "Les fondations sous les fondations", "Là où les pierres se taisent"];
+var FLOOR_LINES = ["Edda déroule une feuille vierge. « Ici, personne n'a jamais dessiné. Je dessine, tu marches. »",
+  "Les murs sont plus hauts. Quelqu'un les a montés pour que tu ne voies pas par-dessus.",
+  "De l'eau coulait ici. Il n'en reste que le bruit.",
+  "Sur les dalles, des traits de craie. Pas ceux d'Edda.",
+  "Le Gardien du plan attend devant l'escalier. Il ne bouge pas. Il n'en a pas besoin.",
+  "Plus bas que la ville. Plus bas que la carte.",
+  "Le Veilleur n'est jamais descendu jusqu'ici."];
+
+/* ================= Outils ================= */
+function key(c, r) { return c + "," + r; }
+function cr(k) { var p = k.split(","); return [+p[0], +p[1]]; }
+function door(a, b) { return a < b ? a + "|" + b : b + "|" + a; }
+function rnd(n) { return Math.floor(Math.random() * n); }
+function pick(a) { return a[rnd(a.length)]; }
+function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = rnd(i + 1), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function nbrs(k) { var p = cr(k), o = []; [[0, 1], [1, 0], [0, -1], [-1, 0]].forEach(function (d) { var c = p[0] + d[0], r = p[1] + d[1]; if (c >= 0 && c < W && r >= 0 && r < H) o.push(key(c, r)); }); return o; }
+function allRooms() { var a = []; for (var c = 0; c < W; c++) for (var r = 0; r < H; r++) a.push(key(c, r)); return a; }
+
+/* ================= Un étage court ================= */
+/* Labyrinthe parfait, une ou deux portes-pans sur le chemin de l'escalier, quelques boucles, deux leviers
+   (un seul gardé). Le solveur garde un tirage jouable : le plus court chemin fait une douzaine de pas. */
+function genFloor(n) {
+  W = 5 + Math.min(1, Math.floor((n - 1) / 3)); H = 6 + Math.min(2, Math.floor((n - 1) / 2));
+  var gates = n >= 2 ? 2 : 1, decoys = n >= 4 ? 1 : 0;   // un seul pan à l'étage 1, pour apprendre
+  for (var t = 0; t < 3000; t++) { var F = tryFloor(n, gates, decoys); if (F) return F; }
+  return null;
+}
+function tryFloor(n, nGates, nDecoys) {
+  var start = key(Math.floor(W / 2), 0), open = {}, seen = {}, stack = [start]; seen[start] = 1;
+  while (stack.length) { var cur = stack[stack.length - 1], cand = nbrs(cur).filter(function (x) { return !seen[x]; });
+    if (!cand.length) { stack.pop(); continue; } var nx = pick(cand); open[door(cur, nx)] = 1; seen[nx] = 1; stack.push(nx); }
+  var dist = bfs(start, function (d) { return open[d]; }), stairs = null, target = Math.min(9 + n, 16);
+  Object.keys(dist).forEach(function (k) { if (cr(k)[1] >= H - 2 && (!stairs || Math.abs(dist[k] - target) < Math.abs(dist[stairs] - target))) stairs = k; });
+  var path = pathTo(start, stairs, function (d) { return open[d]; });
+  if (path.length < 8) return null;
+  var gates = [];
+  for (var g = 1; g <= nGates; g++) { var i = Math.floor(path.length * g / (nGates + 1)); gates.push(door(path[i - 1], path[i])); }
+  gates.forEach(function (d) { delete open[d]; });
+  var zone = zones(path, gates, open);
+  allRooms().forEach(function (k) { nbrs(k).forEach(function (m) { var d = door(k, m); if (!open[d] && gates.indexOf(d) < 0 && zone[k] === zone[m] && Math.random() < 0.12) open[d] = 1; }); });
+  var pivots = [], used = {};
+  gates.forEach(function (gd, gi) { var zIn = Object.keys(open).filter(function (d) { var p = d.split("|"); return zone[p[0]] === gi && !used[d]; }); if (!zIn.length) return; var a = pick(zIn); used[a] = 1; pivots.push({ a: a, b: gd }); });
+  if (pivots.length < nGates) return null;
+  for (var dc = 0; dc < nDecoys; dc++) {
+    var a2 = pick(Object.keys(open).filter(function (d) { return !used[d]; })), p0 = a2.split("|")[0];
+    var shut = nbrs(p0).map(function (m) { return door(p0, m); }).filter(function (d) { return !open[d] && gates.indexOf(d) < 0 && zone[d.split("|")[0]] === zone[d.split("|")[1]]; });
+    if (shut.length) { used[a2] = 1; pivots.push({ a: a2, b: pick(shut) }); }
+  }
+  pivots.forEach(function (p) { delete open[p.a]; delete open[p.b]; });
+  var deg = {}; allRooms().forEach(function (k) { deg[k] = nbrs(k).filter(function (m) { return open[door(k, m)]; }).length; });
+  /* Deux leviers, de préférence au fond des culs-de-sac des premières zones */
+  var spots = {}, levers = [];
+  [0, Math.min(1, nGates - 1)].forEach(function (z) {
+    var inZ = allRooms().filter(function (k) { return zone[k] <= z && k !== start && k !== stairs && !spots[k]; }), ends = inZ.filter(function (k) { return deg[k] <= 1; });
+    var k2 = pick(ends.length ? ends : inZ); if (k2) { spots[k2] = 1; levers.push(k2); }
+  });
+  if (levers.length < 2) return null;
+  var P = pivots.length, map = levers.map(function () { var m = 1 << rnd(P); if (Math.random() < 0.6) m |= 1 << rnd(P); return m; }), all = 0;
+  map.forEach(function (m) { all |= m; }); if (all !== (1 << P) - 1) return null;
+  var F = { n: n, start: start, stairs: stairs, open: open, pivots: pivots, levers: levers, map: map, guarded: rnd(2) };
+  var sol = solve(F); if (!sol || sol.pulls < nGates) return null;
+  var cost = sol.steps * STEP + sol.pulls * PULL;
+  if (cost > 44 + 10 * nGates) return null;
+  F.sol = sol;
+  var free = allRooms().filter(function (k) { return k !== start && k !== stairs && !spots[k] && deg[k] <= 1; }); shuffle(free);
+  F.spring = free[0] || null; F.chest = free[1] || null; F.boss = n % 5 === 0;
+  return F;
+}
+function bfs(s, ok) { var d = {}, q = [s]; d[s] = 0; while (q.length) { var k = q.shift(); nbrs(k).forEach(function (m) { if (ok(door(k, m), m) && d[m] == null) { d[m] = d[k] + 1; q.push(m); } }); } return d; }
+function pathTo(s, e, ok) { var prev = {}, q = [s]; prev[s] = null; while (q.length) { var k = q.shift(); if (k === e) break; nbrs(k).forEach(function (m) { if (ok(door(k, m), m) && !(m in prev)) { prev[m] = k; q.push(m); } }); } if (!(e in prev)) return null; var p = [], c = e; while (c) { p.unshift(c); c = prev[c]; } return p; }
+function zones(path, gates, open) {
+  var comp = {}, id = 0; allRooms().forEach(function (k) { if (comp[k] != null) return; var q = [k]; comp[k] = id; while (q.length) { var x = q.shift(); nbrs(x).forEach(function (m) { if (open[door(x, m)] && comp[m] == null) { comp[m] = id; q.push(m); } }); } id++; });
+  var remap = {}; remap[comp[path[0]]] = 0;
+  gates.forEach(function (gd, gi) { var after = gd.split("|").filter(function (k) { return remap[comp[k]] == null; })[0]; if (after) remap[comp[after]] = gi + 1; });
+  var z = {}; allRooms().forEach(function (k) { z[k] = remap[comp[k]] != null ? remap[comp[k]] : 99; }); return z;
+}
+function isOpen(F, d, bits) { for (var i = 0; i < F.pivots.length; i++) { if (F.pivots[i].a === d) return !((bits >> i) & 1); if (F.pivots[i].b === d) return !!((bits >> i) & 1); } return !!F.open[d]; }
+function pivotOf(F, d) { for (var i = 0; i < F.pivots.length; i++) if (F.pivots[i].a === d || F.pivots[i].b === d) return i; return -1; }
+function solve(F) {
+  var seen = {}, q = [{ k: F.start, bits: 0, steps: 0, pulls: 0, path: [] }]; seen[F.start + "#0"] = 1;
+  while (q.length) { var s = q.shift(); if (s.k === F.stairs) return s; var mv = [];
+    nbrs(s.k).forEach(function (m) { if (isOpen(F, door(s.k, m), s.bits)) mv.push({ k: m, bits: s.bits, steps: s.steps + 1, pulls: s.pulls, path: s.path.concat(m) }); });
+    F.levers.forEach(function (lk, li) { if (lk === s.k) mv.push({ k: s.k, bits: s.bits ^ F.map[li], steps: s.steps, pulls: s.pulls + 1, path: s.path.concat("⚙" + li) }); });
+    mv.forEach(function (m) { var id = m.k + "#" + m.bits; if (!seen[id]) { seen[id] = 1; q.push(m); } }); }
+  return null;
+}
+
+/* ================= La descente ================= */
+var R, hunt = true, showSol = false, triesLeft = 3, walking = null, walkTarget = null;
+function newDescent() { R = { floor: 0, hp: 1, breath: BREATH_START, stones: 0, gold: 0, over: false }; nextFloor(); }
+function nextFloor() {
+  stopWalk(); R.floor++;
+  var F = null; while (!F) F = genFloor(R.floor); R.F = F;
+  R.bits = 0; R.at = F.start; R.seen = {}; R.seen[F.start] = 1; R.knownPiv = {}; R.newPiv = {}; R.guardUp = true;
+  R.springUsed = false; R.chestTaken = false; R.bossDown = !F.boss;
+  if (R.floor > 1) R.breath = Math.min(BREATH_START, R.breath + BREATH_FLOOR);
+  R.foe = (hunt && R.floor >= FOE_FROM) ? { at: farthest(F.start), stun: 3, tick: 0, every: R.floor >= 4 ? 2 : 3 } : null;
+  look(); say(FLOOR_LINES[(R.floor - 1) % FLOOR_LINES.length]); render(true);
+}
+function farthest(s) { var d = bfs(s, function (dd) { return R.F.open[dd] || pivotOf(R.F, dd) >= 0; }), far = s; Object.keys(d).forEach(function (k) { if (d[k] > d[far]) far = k; }); return far; }
+function say(t, alert) { var n = document.getElementById("note"); n.textContent = t; n.classList.toggle("alert", !!alert); }
+function openNow(d) { return isOpen(R.F, d, R.bits); }
+function lit(k) { return k === R.at || (nbrs(R.at).indexOf(k) >= 0 && openNow(door(R.at, k))); }
+/* Ce que la torche montre, Edda le dessine : la salle, ses voisines ouvertes, et les pans qu'on voit */
+function look() { nbrs(R.at).forEach(function (m) { var d = door(R.at, m), pv = pivotOf(R.F, d); if (pv >= 0) R.knownPiv[pv] = 1; }); }
+function canMove(k) { return !R.over && nbrs(R.at).indexOf(k) >= 0 && openNow(door(R.at, k)); }
+
+function moveTo(k) {
+  if (!canMove(k)) return false;
+  var passing = walking && R.seen[k] && k !== walkTarget;   // en marchant, une salle déjà vue ne rouvre rien
+  R.at = k; R.seen[k] = 1; look();
+  R.breath = Math.max(0, R.breath - STEP);
+  var caught = foeTurn(); render();
+  if (caught) { stopWalk(); return false; }
+  if (R.breath <= 0) { stopWalk(); finish("souffle"); return false; }
+  var F = R.F, li = F.levers.indexOf(k);
+  if (passing) { var h0 = foeHint(); if (/tout près/.test(h0)) { stopWalk(); say(h0, true); } return true; }
+  if (k === F.stairs) { stopWalk(); stairs(); return false; }
+  if (li >= 0) { stopWalk(); openLever(li); return false; }
+  if (k === F.spring && !R.springUsed) { stopWalk(); R.springUsed = true; R.breath = Math.min(BREATH_START, R.breath + SPRING); R.hp = Math.min(1, R.hp + 0.2); render(); say("Une source, sous une dalle fendue. Souffle +" + SPRING + ", PV +20 %."); return false; }
+  if (k === F.chest && !R.chestTaken) { stopWalk(); R.chestTaken = true; var s = 1 + Math.floor(R.floor / 2); R.stones += s; R.gold += 100 * R.floor; render(); say("Un coffre oublié : +" + s + " Pierre" + (s > 1 ? "s" : "") + " errante" + (s > 1 ? "s" : "") + ", +" + 100 * R.floor + " or."); return false; }
+  var h = foeHint(); if (h && walking && /tout près/.test(h)) stopWalk();
+  say(h || "Tu avances. Souffle −" + STEP + ".", /tout près/.test(h));
+  return true;
+}
+
+/* ================= Marcher jusqu'à une salle déjà dessinée ================= */
+function walkTo(target) {
+  if (R.over || target === R.at) return;
+  var p = pathTo(R.at, target, function (d, m) { return openNow(d) && (R.seen[m] || m === target); });
+  if (!p) return say("Edda : « Je n'ai pas de chemin dessiné jusque-là. Un pan l'a fermé. »");
+  closeSheet(); stopWalk();
+  var steps = p.slice(1); walkTarget = target; walking = setInterval(function () { if (!steps.length || !moveTo(steps.shift())) stopWalk(); }, WALK_MS);
+  say("Tu suis la carte d'Edda : " + steps.length + " pas, Souffle −" + steps.length * STEP + ".");
+}
+function stopWalk() { if (walking) { clearInterval(walking); walking = null; } walkTarget = null; }
+
+/* ================= Le Contremaître ================= */
+function foeTurn() {
+  var f = R.foe; if (!f) return false;
+  if (f.stun > 0) { f.stun--; return false; }
+  if (++f.tick % f.every === 0) {
+    var d = bfs(R.at, function (dd) { return openNow(dd); });
+    if (d[f.at] != null) { var best = null; nbrs(f.at).forEach(function (m) { if (openNow(door(f.at, m)) && d[m] != null && (best === null || d[m] < d[best])) best = m; }); if (best) f.at = best; }
+  }
+  if (f.at === R.at) {
+    R.hp = Math.max(0, R.hp - FOE_HIT); f.stun = FOE_STUN; f.at = farthest(R.at);
+    if (R.hp <= 0) { render(); finish("mort"); return true; }
+    say("Le Contremaître te rattrape. Combat d'élite : PV −" + Math.round(FOE_HIT * 100) + " %. Il recule dans le noir… pour l'instant.", true);
+    return true;
+  }
+  return false;
+}
+function foeDist() { var f = R.foe; if (!f || f.stun > 0) return null; var d = bfs(R.at, function (dd) { return openNow(dd); })[f.at]; return d == null ? -1 : d; }
+function foeHint() { var d = foeDist(); if (d == null) return ""; if (d < 0) return "Des pas de pierre, quelque part. Un mur vous sépare.";
+  if (d <= 2) return "Des pas de pierre, tout près — " + dir(R.at, R.foe.at) + "."; if (d <= 4) return "Des pas de pierre, " + dir(R.at, R.foe.at) + "."; return ""; }
+function dir(a, b) { var p = cr(a), q = cr(b), dx = q[0] - p[0], dy = q[1] - p[1], s = ""; if (dy > 0) s += "nord"; else if (dy < 0) s += "sud";
+  if (dx > 0) s += (s ? "-" : "") + "est"; else if (dx < 0) s += (s ? "-" : "") + "ouest"; return s ? "vers le " + s : "ici"; }
+
+/* ================= Leviers : un seul gardé, et Edda note tout ce qui tourne ================= */
+function openLever(li) {
+  var g = li === R.F.guarded && R.guardUp, n = R.pulled && R.pulled[li];
+  sheet("Un levier", g ? "Gardé" : (n ? "Déjà tiré " + n + " fois" : "Libre"),
+    (g ? "<p class='quote'>" + pick(["Deux squelettes se lèvent devant le levier. Ils ne te regardent pas : ils regardent le mur.", "Un bâtisseur pose une pierre devant le levier. Puis une autre.", "Une gargouille descend du plafond et se pose sur le levier."]) + "</p>"
+      : "<p class='quote'>" + (n ? "Le tirer encore remet les pans comme avant." : "Personne ne sait encore ce qu'il fait tourner. Edda tient sa craie prête.") + "</p>")
+    + "<p class='cost'>" + (g ? "Combat de garde, puis tirer (Souffle −" + PULL + ")" : "Tirer : Souffle −" + PULL) + "</p>",
+    [g ? { t: "Combattre", f: function () { guard(li); } } : { t: "Tirer le levier", f: function () { pull(li); } }, { t: "Laisser", ghost: true, f: closeSheet }]);
+}
+function guard(li) {
+  var loss = GUARD[0] + Math.random() * (GUARD[1] - GUARD[0]) + 0.01 * R.floor;
+  R.hp = Math.max(0, R.hp - loss); R.guardUp = false; closeSheet(); render();
+  if (R.hp <= 0) return finish("mort");
+  say("Combat de garde gagné : PV −" + Math.round(loss * 100) + " %."); openLever(li);
+}
+function pull(li) {
+  closeSheet(); if (R.breath < PULL) return say("Plus assez de Souffle pour tirer.", true);
+  var m = R.F.map[li], far = 0; R.bits ^= m; R.breath -= PULL; R.newPiv = {};
+  R.pulled = R.pulled || {}; R.pulled[li] = (R.pulled[li] || 0) + 1;
+  R.F.pivots.forEach(function (p, i) { if (!((m >> i) & 1)) return; if (!R.knownPiv[i]) far++; R.knownPiv[i] = 1; R.newPiv[i] = 1; });
+  look(); render(false, m);
+  say("Le levier grince. " + (countBits(m) > 1 ? countBits(m) + " pans tournent" : "Un pan tourne") + (far ? ", dont " + (far > 1 ? far + " au loin" : "un au loin") : "") + ". Edda le note sur sa carte, en violet. Souffle −" + PULL + ".");
+  if (R.breath <= 0) finish("souffle");
+}
+function countBits(m) { var n = 0; while (m) { n += m & 1; m >>= 1; } return n; }
+
+/* ================= L'escalier ================= */
+function stairs() {
+  var gain = 1 + R.floor;
+  if (!R.bossDown) return sheet("Le Gardien du plan", "Étage " + R.floor + " · il garde l'escalier",
+    "<p class='quote'>Il est fait des marches qu'il garde. Quand il bouge, l'escalier bouge avec lui.</p><p class='cost'>Combat de boss : PV −" + Math.round(BOSS_HIT * 100) + " % environ</p>",
+    [{ t: "Combattre", f: function () { closeSheet(); R.hp = Math.max(0, R.hp - BOSS_HIT); R.bossDown = true; render(); if (R.hp <= 0) return finish("mort"); R.stones += 3; say("Le Gardien s'effondre en marches. +3 Pierres errantes."); stairs(); } },
+     { t: "Reculer", ghost: true, f: closeSheet }]);
+  R.stones += gain; R.gold += 150 * R.floor; render();
+  sheet("L'escalier", "Étage " + R.floor + " franchi · +" + gain + " Pierres errantes",
+    "<div class='bigchart'>" + chartSVG(true) + "</div><p style='margin-top:10px'>Dans le sac : <b>" + R.stones + " Pierres errantes</b>, " + R.gold + " or.</p>"
+    + "<p class='cost'>Descendre : Souffle +" + BREATH_FLOOR + ", étage plus dur. Tomber ou s'essouffler plus bas fait perdre la moitié du sac.</p>",
+    [{ t: "Descendre à l'étage " + (R.floor + 1), f: function () { closeSheet(); nextFloor(); } }, { t: "Remonter avec le sac", ghost: true, f: function () { closeSheet(); finish("remonte"); } }]);
+}
+function finish(why) {
+  stopWalk(); R.over = true;
+  var keep = why === "remonte" ? 1 : 0.5, st = Math.floor(R.stones * keep), g = Math.floor(R.gold * keep);
+  sheet({ remonte: "Remonté des profondeurs", mort: "Tombé à l'étage " + R.floor, souffle: "À bout de souffle, étage " + R.floor }[why], "Profondeur atteinte : étage " + R.floor,
+    "<p><b>" + st + " Pierres errantes</b>, " + g + " or" + (keep < 1 ? " (la moitié du sac : Edda te ramène à la surface)" : "") + ".</p>",
+    [{ t: triesLeft > 1 ? "Nouvelle descente (" + (triesLeft - 1) + " restante" + (triesLeft - 1 > 1 ? "s" : "") + ")" : "Plus de descente aujourd'hui", f: function () { closeSheet(); if (triesLeft > 1) { triesLeft--; newDescent(); } } }]);
+}
+
+/* ================= La carte d'Edda ================= */
+/* Papier et craie : les salles vues, les portes entre elles, les murs connus, les pans (violet) dès qu'on
+   les a vus ou qu'un levier les a fait tourner. Grande : on touche une salle pour y marcher. */
+function chartSVG(big) {
+  /* Cadrage : ce qu'Edda a dessiné (salles vues ou devinées, pans connus), une salle de marge, 3 × 3 au moins */
+  var F = R.F, S = 40, pad = 10, o = [], c0 = 99, c1 = -1, r0 = 99, r1 = -1;
+  function grow(k) { var p = cr(k); c0 = Math.min(c0, p[0]); c1 = Math.max(c1, p[0]); r0 = Math.min(r0, p[1]); r1 = Math.max(r1, p[1]); }
+  allRooms().forEach(function (k) { if (R.seen[k] || lit(k)) grow(k); });
+  F.pivots.forEach(function (pv, i) { if (R.knownPiv[i]) pv.a.split("|").concat(pv.b.split("|")).forEach(grow); });
+  c0 = Math.max(0, c0 - 1); c1 = Math.min(W - 1, c1 + 1); r0 = Math.max(0, r0 - 1); r1 = Math.min(H - 1, r1 + 1);
+  while (c1 - c0 < 2) { if (c0 > 0) c0--; else if (c1 < W - 1) c1++; else break; }
+  while (r1 - r0 < 2) { if (r0 > 0) r0--; else if (r1 < H - 1) r1++; else break; }
+  var w = (c1 - c0 + 1) * S + pad * 2, h = (r1 - r0 + 1) * S + pad * 2;
+  function x(k) { return pad + (cr(k)[0] - c0) * S + S / 2; } function y(k) { return pad + (r1 - cr(k)[1]) * S + S / 2; }
+  var doors = {}; allRooms().forEach(function (k) { nbrs(k).forEach(function (m) { doors[door(k, m)] = 1; }); });
+  Object.keys(doors).forEach(function (d) {
+    var p = d.split("|"), a = p[0], b = p[1], pv = pivotOf(F, d), op = openNow(d), hz = y(a) === y(b), mx = (x(a) + x(b)) / 2, my = (y(a) + y(b)) / 2;
+    if (pv >= 0 && R.knownPiv[pv]) {                        // un pan connu : violet, ouvert (trait) ou fermé (barre)
+      if (op) o.push('<line class="c-piv' + (R.newPiv[pv] ? " new" : "") + '" x1="' + x(a) + '" y1="' + y(a) + '" x2="' + x(b) + '" y2="' + y(b) + '" style="stroke-width:3"/>');
+      else o.push('<line class="c-piv' + (R.newPiv[pv] ? " new" : "") + '" x1="' + (hz ? mx : mx - 13) + '" y1="' + (hz ? my - 13 : my) + '" x2="' + (hz ? mx : mx + 13) + '" y2="' + (hz ? my + 13 : my) + '"/>');
+      return;
+    }
+    if (!(R.seen[a] && R.seen[b]) && !(R.seen[a] && lit(b)) && !(R.seen[b] && lit(a))) return;
+    if (op) o.push('<line class="c-door" x1="' + x(a) + '" y1="' + y(a) + '" x2="' + x(b) + '" y2="' + y(b) + '"/>');
+  });
+  allRooms().forEach(function (k) {
+    var vis = R.seen[k] || lit(k); if (!vis) return;
+    o.push('<rect class="c-room' + (k === R.at ? " here" : "") + (big && R.seen[k] && k !== R.at ? " go" : "") + '"' + (big && R.seen[k] ? ' data-go="' + k + '"' : "") + ' x="' + (x(k) - 13) + '" y="' + (y(k) - 13) + '" width="26" height="26" rx="3"' + (!R.seen[k] ? ' style="stroke-dasharray:3 3;fill:none"' : "") + '/>');
+    var li = F.levers.indexOf(k), gl = k === F.stairs ? "⬇" : li >= 0 ? "⚙" : (k === F.spring && !R.springUsed ? "💧" : (k === F.chest && !R.chestTaken ? "▣" : ""));
+    if (gl && R.seen[k]) o.push('<text class="c-glyph" x="' + x(k) + '" y="' + y(k) + '" font-size="' + (big ? 15 : 14) + '">' + gl + '</text>');
+    if (showSol && F.sol.path.indexOf(k) >= 0) o.push('<circle cx="' + (x(k) + 9) + '" cy="' + (y(k) - 9) + '" r="3" fill="#d4a017"/>');
+  });
+  allRooms().forEach(function (k) {                           // murs fixes entre deux salles vues
+    if (!R.seen[k]) return; nbrs(k).forEach(function (m) { var d = door(k, m); if (k > m || pivotOf(F, d) >= 0 || openNow(d) || !(R.seen[m] || lit(m))) return;
+      var hz = y(k) === y(m), mx = (x(k) + x(m)) / 2, my = (y(k) + y(m)) / 2; o.push('<line class="c-wall" x1="' + (hz ? mx : mx - 13) + '" y1="' + (hz ? my - 13 : my) + '" x2="' + (hz ? mx : mx + 13) + '" y2="' + (hz ? my + 13 : my) + '"/>'); });
+  });
+  var fd = foeDist(); if (fd != null && fd >= 0 && fd <= 4) o.push('<circle class="c-foe" cx="' + x(R.foe.at) + '" cy="' + y(R.foe.at) + '" r="16"/>');
+  o.push('<circle cx="' + x(R.at) + '" cy="' + y(R.at) + '" r="6" fill="#2563c9" stroke="#fff" stroke-width="2"/>');
+  return '<svg viewBox="0 0 ' + w + ' ' + h + '">' + o.join("") + '</svg>';
+}
+function openChart() {
+  sheet("La carte d'Edda", "Étage " + R.floor + " · touche une salle dessinée pour y aller",
+    "<div class='bigchart' id='big'>" + chartSVG(true) + "</div><p class='cost' style='margin-top:8px'>En violet : les pans qui tournent. Pointillés : les salles qu'on devine. Cercle rouge : les pas qu'on entend.</p>",
+    [{ t: "Fermer", ghost: true, f: closeSheet }]);
+  document.getElementById("big").addEventListener("click", function (e) { var k = e.target.getAttribute && e.target.getAttribute("data-go"); if (k) walkTo(k); });
+}
+
+/* ================= Feuille basse ================= */
+function sheet(title, sub, body, buttons) {
+  document.getElementById("sTitle").textContent = title; document.getElementById("sSub").textContent = sub; document.getElementById("sBody").innerHTML = body;
+  var foot = document.getElementById("sFoot"); foot.innerHTML = "";
+  buttons.forEach(function (b) { var e = document.createElement("button"); e.className = "btn" + (b.ghost ? " ghost" : ""); e.textContent = b.t; e.onclick = b.f; foot.appendChild(e); });
+  document.getElementById("veil").classList.remove("hidden"); document.getElementById("sheet").classList.remove("hidden");
+}
+function closeSheet() { document.getElementById("veil").classList.add("hidden"); document.getElementById("sheet").classList.add("hidden"); }
+
+/* ================= La vue (torche), centrée sur le héros ================= */
+function X(k) { return 50 + cr(k)[0] * CELL; } function Y(k) { return 50 + (H - 1 - cr(k)[1]) * CELL; }
+function render(jump, flashMask) {
+  var F = R.F, svg = [], doors = {};
+  allRooms().forEach(function (k) { nbrs(k).forEach(function (m) { doors[door(k, m)] = 1; }); });
+  function st(k) { return k === R.at ? "" : (lit(k) ? "lit" : "mem"); }
+  function shown(k) { return R.seen[k] || lit(k); }
+  Object.keys(doors).forEach(function (d) {
+    var p = d.split("|"), a = p[0], b = p[1]; if (!openNow(d) || !shown(a) || !shown(b) || !(R.seen[a] || R.seen[b])) return;
+    var pv = pivotOf(F, d), cls = "door " + (pv >= 0 ? "piv" : (st(a) === "mem" && st(b) === "mem" ? "mem" : "lit")) + (pv >= 0 && flashMask && ((flashMask >> pv) & 1) ? " flash" : "");
+    var hz = Y(a) === Y(b), x = Math.min(X(a), X(b)), y = Math.min(Y(a), Y(b));
+    svg.push('<rect class="' + cls + '" x="' + (hz ? x : x - 13) + '" y="' + (hz ? y - 13 : y) + '" width="' + (hz ? CELL : 26) + '" height="' + (hz ? 26 : CELL) + '"/>');
+  });
+  allRooms().forEach(function (k) {
+    if (!shown(k)) return;
+    svg.push('<rect class="room ' + st(k) + (canMove(k) ? " can" : "") + '" data-k="' + k + '" x="' + (X(k) - ROOM / 2) + '" y="' + (Y(k) - ROOM / 2) + '" width="' + ROOM + '" height="' + ROOM + '" rx="8"/>');
+    var li = F.levers.indexOf(k), g = k === F.stairs ? (R.bossDown ? "🪜" : "🗿") : k === F.start ? (R.floor === 1 ? "🚪" : "🪜") : li >= 0 ? (li === F.guarded && R.guardUp ? "⚔️" : "🕹️") : (k === F.spring && !R.springUsed ? "💧" : (k === F.chest && !R.chestTaken ? "🧰" : ""));
+    if (g) svg.push('<text class="glyph" x="' + X(k) + '" y="' + Y(k) + '">' + g + '</text>');
+  });
+  Object.keys(doors).forEach(function (d) {
+    var p = d.split("|"), a = p[0], b = p[1]; if (openNow(d) || !(R.seen[a] || R.seen[b])) return;
+    var pv = pivotOf(F, d), hz = Y(a) === Y(b), mx = (X(a) + X(b)) / 2, my = (Y(a) + Y(b)) / 2;
+    svg.push('<line class="wall' + (pv >= 0 ? " piv" : "") + (pv >= 0 && flashMask && ((flashMask >> pv) & 1) ? " flash" : "") + '" x1="' + (hz ? mx : mx - 31) + '" y1="' + (hz ? my - 31 : my) + '" x2="' + (hz ? mx : mx + 31) + '" y2="' + (hz ? my + 31 : my) + '"/>');
+  });
+  if (R.foe && lit(R.foe.at)) svg.push('<text class="foe" x="' + X(R.foe.at) + '" y="' + Y(R.foe.at) + '">' + (R.foe.stun > 0 ? "😵" : "🗿") + '</text>');
+  svg.push('<circle class="hero" cx="' + X(R.at) + '" cy="' + Y(R.at) + '" r="11"/>');
+  var w = document.getElementById("world"); if (jump) w.style.transition = "none";
+  w.innerHTML = svg.join(""); w.style.transform = "translate(" + (200 - X(R.at)) + "px," + (240 - Y(R.at)) + "px)";
+  if (jump) { w.getBoundingClientRect(); w.style.transition = ""; }
+  document.getElementById("mini").outerHTML = chartSVG(false).replace("<svg ", '<svg id="mini" ');
+  document.getElementById("fNum").textContent = "Étage " + R.floor + (F.boss ? " · Gardien" : "");
+  document.getElementById("tries").textContent = "Descentes " + triesLeft + " / 3";
+  document.getElementById("fName").textContent = FLOOR_NAMES[(R.floor - 1) % FLOOR_NAMES.length];
+  document.getElementById("hpBar").style.width = Math.round(R.hp * 100) + "%"; document.getElementById("hpTxt").textContent = "PV " + Math.round(R.hp * 100) + " %";
+  document.getElementById("brBar").style.width = R.breath + "%"; document.getElementById("brTxt").textContent = "Souffle " + R.breath;
+  document.getElementById("lootTxt").textContent = "Sac : " + R.stones + " Pierres errantes · " + R.gold + " or";
+  var fd = foeDist(); document.getElementById("foeTxt").textContent = !R.foe ? "" : (R.foe.stun > 0 ? "Contremaître : sonné" : (fd != null && fd >= 0 && fd <= 4 ? "Des pas, tout près" : "Contremaître : quelque part"));
+}
+
+/* ================= Gestes ================= */
+document.getElementById("map").addEventListener("click", function (e) { var k = e.target.getAttribute && e.target.getAttribute("data-k"); if (!k) return; if (canMove(k)) { stopWalk(); moveTo(k); } else if (R.seen[k]) walkTo(k); });
+document.getElementById("chart").onclick = openChart;
+document.getElementById("bChart").onclick = openChart;
+document.getElementById("bLeave").onclick = function () { if (!R.over) finish("remonte"); };
+document.getElementById("bNew").onclick = function () { triesLeft = 3; newDescent(); };
+document.getElementById("bHunt").onclick = function () { hunt = !hunt; this.setAttribute("aria-pressed", hunt); if (!hunt) R.foe = null; render(); };
+document.getElementById("bSol").onclick = function () { showSol = !showSol; this.setAttribute("aria-pressed", showSol); render(); };
+document.getElementById("bFloor").onclick = function () { if (!R.over) nextFloor(); };
+document.getElementById("veil").onclick = closeSheet;
+newDescent();
+</script>
+</body>
+</html>
