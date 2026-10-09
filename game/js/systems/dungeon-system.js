@@ -690,6 +690,8 @@ var DungeonManager = {
     if (typeof renderAll === "function") renderAll();
 
     if (typeof openDungeonSummary === "function") {
+      var specialInfo = specialDef || (tier.specialResourceId && WAREHOUSE_RESOURCES[tier.specialResourceId]) || null; // la part du campement compte aussi en sortie
+      var sortieKept = (game.lastSortieSummary && game.lastSortieSummary.context === "dungeon") ? game.lastSortieSummary.kept : null;
       openDungeonSummary({
         success: success,
         tierName: tier.name,
@@ -700,15 +702,17 @@ var DungeonManager = {
         lootedItem: lootedItem,
         // v3.223.0 : matériau de monde gagné (0 si aucun), pour le rapport de fin
         specialGained: specialGained,
-        specialName: specialDef ? specialDef.name : null,
+        specialName: specialInfo ? specialInfo.name : null,
+        specialIcon: specialInfo ? specialInfo.icon : null, // v3.436.2 : l'icône du matériau, pas une image empruntée
         // v3.245.0 : Marques du run et multiplicateur, pour la ligne « Marques ×1,45 » du rapport
         marks: runMarks,
         markMult: markMult,
         // v3.430.0 : sortie par le campement, et le butin de l'étape 1 mis en sûreté
         outcome: outcome || (success ? "success" : null),
         campLoot: campLoot,
-        // v3.436.1 (bug Seb) : l'or des vagues, banqué par SortieManager.end, absent du rapport jusqu'ici
-        wavesGold: (game.lastSortieSummary && game.lastSortieSummary.context === "dungeon" && game.lastSortieSummary.kept) ? Number(game.lastSortieSummary.kept.gold || 0) : 0
+        // v3.436.1 (bug Seb) : or et objets des vagues, banqués par SortieManager.end, absents du rapport jusqu'ici
+        wavesGold: sortieKept ? Number(sortieKept.gold || 0) : 0,
+        wavesItems: sortieKept ? (sortieKept.items || []).map(function (it) { return { name: it.name, rarity: it.rarity }; }) : []
       });
     }
 

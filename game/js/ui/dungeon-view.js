@@ -400,19 +400,26 @@ function buildDungeonSummaryHTML(result) {
     var names = result.marks.map(function (id) { var m = DungeonManager.getMark(id); return m ? _td(m.name) : id; }).join(", ");
     h += '      <div class="dungeon-summary-row"><span>' + _t("Marques") + '</span><span>×' + Number(result.markMult || 1).toFixed(2).replace(/0$/, "") + ' · ' + esc(names) + '</span></div>';
   }
-  // v3.436.1 (bug Seb) : l'or ramassé dans les vagues est versé aussi ; le rapport l'affiche avec la prime et le total
-  var wavesGold = Number(result.wavesGold || 0), campGold = Number((result.campLoot && result.campLoot.gold) || 0);
-  if (wavesGold > 0) h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/gold_icon.png> ' + _t("Butin des vagues") + '</span><span>+' + formatNumber(wavesGold) + '</span></div>';
-  h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/gold_icon.png> ' + (wavesGold > 0 ? _t("Prime de fin") : _t("Or")) + '</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
-  // v3.430.0 : ce que le campement avait déjà mis en sûreté (étape 1)
-  if (result.campLoot && result.campLoot.gold > 0) h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/camp/campfire.png> ' + _t("En sûreté au campement") + '</span><span>+' + formatNumber(result.campLoot.gold) + ' ' + _t("or") + '</span></div>';
+  // v3.436.1 (bug Seb) : tout l'or reçu, dans l'ordre du run — vagues, campement, prime, total
+  var wavesGold = Number(result.wavesGold || 0), campLoot = result.campLoot || {}, campGold = Number(campLoot.gold || 0);
+  var goldIco = '<img class=ico-inline src=images/Icons/gold_icon.png> ';
+  if (wavesGold > 0) h += '      <div class="dungeon-summary-row"><span>' + goldIco + _t("Butin des vagues") + '</span><span>+' + formatNumber(wavesGold) + '</span></div>';
+  if (campGold > 0) h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/camp/campfire.png> ' + _t("En sûreté au campement") + '</span><span>+' + formatNumber(campGold) + '</span></div>';
+  h += '      <div class="dungeon-summary-row"><span>' + goldIco + (wavesGold > 0 || campGold > 0 ? _t("Prime de fin") : _t("Or")) + '</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
   if (wavesGold > 0 || campGold > 0) h += '      <div class="dungeon-summary-row"><span><b>' + _t("Total or") + '</b></span><span><b>+' + formatNumber(wavesGold + campGold + Number(result.goldReward || 0)) + '</b></span></div>';
   h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + _t("Éclats") + '</span><span>+' + formatNumber(result.shardsGained) + '</span></div>';
-  if (result.specialGained > 0 && result.specialName) {
-    h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/scene/path_easy.png> ' + esc(_td(result.specialName)) + '</span><span>+' + result.specialGained + '</span></div>';
+  // v3.436.2 : matériau avec sa vraie icône, part du campement comprise
+  var special = Number(result.specialGained || 0) + Number(campLoot.stone || 0);
+  if (special > 0 && result.specialName) {
+    h += '      <div class="dungeon-summary-row"><span>' + renderIconOrEmojiHTML(result.specialIcon, "ico-inline", _td(result.specialName)) + ' ' + esc(_td(result.specialName)) + '</span><span>+' + special + '</span></div>';
   }
-  if (result.lootedItem) {
-    h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> ' + _t("Butin") + '</span><span>' + esc(_td(result.lootedItem.name)) + '</span></div>';
+  // v3.436.2 (Seb) : tout le butin d'objets — campement, vagues, récompense de fin
+  var objets = [].concat(campLoot.items || [], result.wavesItems || [], result.lootedItem ? [result.lootedItem] : []);
+  if (objets.length) {
+    h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> ' + _t("Butin") + '</span><span>' + objets.map(function (it) {
+      var col = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[it.rarity]) || "inherit";
+      return '<span style="color:' + col + '">' + esc(_td(it.name)) + '</span>';
+    }).join(', ') + '</span></div>';
   }
   h += '    </div>';
   // v3.245.0 : les éclats se dépensent chez l'Enchanteresse

@@ -225,7 +225,7 @@
   color: rgba(58, 44, 26, 0.9);
 }
 
-.dungeon-summary-row span:last-child {
+.dungeon-summary-row > span:last-child { /* v3.436.2 : enfant direct, les noms d'objets colorés sont imbriqués */
   font-weight: 700;
   color: var(--nb-ink);
 }
@@ -233,9 +233,12 @@
 /* v2.83.10 : petite icône inline (Essence/Aether) dans les lignes de
    résumé de fin de donjon. */
 
-.dungeon-summary-loot span:last-child {
+.dungeon-summary-loot > span:last-child {
   color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */
+  text-align: right; /* v3.436.2 : plusieurs objets passent à la ligne, calés à droite */
+  margin-left: 12px;
 }
+.dungeon-summary-loot > span:first-child { white-space: nowrap; } /* l'icône et « Butin » restent ensemble */
 
 /* =========================
    v2.83.6 : liste de donjons en accordéon + badge ticket compact
