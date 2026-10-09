@@ -176,7 +176,8 @@ span.pa2-chip { cursor: default; }
 .pa2-node.is-dest { width: 17%; border: 0; background: none; box-shadow: none; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .85)); }
 .pa2-node.is-dest img { width: 100%; height: 100%; }
 .pa2-node.is-done { opacity: .55; }
-.pa2-node.is-open { cursor: pointer; border-color: var(--pa2-gold); }
+/* v3.429.17 : le nœud jouable passe devant ses voisins ; un chevauchement ne lui vole plus le toucher. */
+.pa2-node.is-open { z-index: 3; cursor: pointer; border-color: var(--pa2-gold); }
 /* Zone de toucher élargie et anneau qui pulse sur les nœuds atteignables */
 .pa2-node.is-open::before { content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 3px solid var(--pa2-gold); animation: pa2-pulse 1.4s ease-in-out infinite; }
 .pa2-node.is-dest.is-open::before { inset: -2px; }
