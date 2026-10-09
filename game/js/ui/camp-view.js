@@ -165,24 +165,25 @@ function buildCampHTML(tab) {
   // v3.133.0 : bloc « Les braises » — offrande de l'étape Histoire courante (forest_15), affiché
   // seulement pendant l'étape acceptée et tant que l'offrande n'est pas faite (StoryQuestManager.getOfferingInfo).
   var offering = (window.StoryQuestManager && typeof StoryQuestManager.getOfferingInfo === "function") ? StoryQuestManager.getOfferingInfo(null, "camp") : null; // v3.297.0 : chapitre actif ; v3.310.0 : offrandes du Camp seulement
+  var eh = ""; // v3.429.19 : rendu ici, posé SOUS les onglets (le Partir de l'Histoire restait sous la nav)
   if (offering) {
-    h += '<div class="camp-card camp-embers-card">';
-    h += '<div class="ksec camp-section-title"><img class="ico-lg" src="images/Icons/camp/campfire.png" alt=""> ' + _t("Les braises") + '</div>';
-    h += '<div class="camp-embers-desc">' + esc(_td(offering.step.narrative.objective)) + '</div>';
+    eh += '<div class="camp-card camp-embers-card">';
+    eh += '<div class="ksec camp-section-title"><img class="ico-lg" src="images/Icons/camp/campfire.png" alt=""> ' + _t("Les braises") + '</div>';
+    eh += '<div class="camp-embers-desc">' + esc(_td(offering.step.narrative.objective)) + '</div>';
     // v3.197.0 (passe de ton) : les anciens parlent avant l'offrande (buildStoryDialogueHTML, quests-view.js).
-    if (typeof buildStoryDialogueHTML === "function") h += buildStoryDialogueHTML(offering.step);
-    h += '<div class="camp-embers-list">';
+    if (typeof buildStoryDialogueHTML === "function") eh += buildStoryDialogueHTML(offering.step);
+    eh += '<div class="camp-embers-list">';
     offering.items.forEach(function (it) {
       var okItem = it.have >= it.need;
-      h += '<div class="camp-embers-item' + (okItem ? ' is-ready' : '') + '">';
-      h += '<span class="camp-embers-icon">' + renderIconOrEmojiHTML(it.icon || "images/Icons/scene/path_easy.png", "camp-embers-icon-img", _td(it.name)) + '</span>';
-      h += '<span class="camp-embers-name">' + esc(_td(it.name)) + '</span>';
-      h += '<span class="camp-embers-count">' + (okItem ? '<img class=ico-inline src=images/Icons/system/check_valid.png> ' : '') + formatNumber(Math.min(it.have, it.need)) + '/' + formatNumber(it.need) + '</span>';
-      h += '</div>';
+      eh += '<div class="camp-embers-item' + (okItem ? ' is-ready' : '') + '">';
+      eh += '<span class="camp-embers-icon">' + renderIconOrEmojiHTML(it.icon || "images/Icons/scene/path_easy.png", "camp-embers-icon-img", _td(it.name)) + '</span>';
+      eh += '<span class="camp-embers-name">' + esc(_td(it.name)) + '</span>';
+      eh += '<span class="camp-embers-count">' + (okItem ? '<img class=ico-inline src=images/Icons/system/check_valid.png> ' : '') + formatNumber(Math.min(it.have, it.need)) + '/' + formatNumber(it.need) + '</span>';
+      eh += '</div>';
     });
-    h += '</div>';
-    h += '<button class="settings-btn primary camp-embers-btn" type="button"' + (offering.canOffer ? ' onclick="StoryQuestManager.offerToEmbers(\'' + esc(offering.chapterId) + '\');"' : ' disabled') + '><img class=ico-inline src=images/Icons/camp/campfire.png> ' + _t("Offrir aux braises") + '</button>';
-    h += '</div>';
+    eh += '</div>';
+    eh += '<button class="settings-btn primary camp-embers-btn" type="button"' + (offering.canOffer ? ' onclick="StoryQuestManager.offerToEmbers(\'' + esc(offering.chapterId) + '\');"' : ' disabled') + '><img class=ico-inline src=images/Icons/camp/campfire.png> ' + _t("Offrir aux braises") + '</button>';
+    eh += '</div>';
   }
 
   /* v3.411.0 (atelier Campement, R3) : sous la santé, trois onglets en rail du kit —
@@ -237,6 +238,7 @@ function buildCampHTML(tab) {
   }
   campShownTab = cur; // v3.426.0 : lu par renderPanel (bulles masquées sur Expéditions)
   h += tabsHTML[cur];
+  h += eh; // v3.429.19 : bloc « Les braises » sous les Missions (mesuré : Partir 1076 -> 520 px, nav à 752)
 
   // v3.181.0 (décision Seb) : carte « Accès rapide » supprimée — la nav du
   // bas couvre ces raccourcis depuis la refonte.
