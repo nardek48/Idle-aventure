@@ -14,7 +14,9 @@ function initPwaServiceWorker() {
   }
 
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./sw.js").catch(function (err) {
+    navigator.serviceWorker.register("./sw.js").then(function (reg) {
+      watchPwaUpdateOnResume(reg);
+    }).catch(function (err) {
       console.warn("Service worker non enregistré :", err);
     });
   });
@@ -22,6 +24,19 @@ function initPwaServiceWorker() {
   navigator.serviceWorker.addEventListener("message", function (event) {
     if (!event.data || event.data.type !== "QUEST_IDLE_SW_UPDATED") return;
     if (pwaHadControllerAtLoad) showPwaUpdateBanner();
+  });
+}
+
+/* v3.436.3 : le navigateur ne vérifie sw.js qu'au lancement à froid ; une appli restée en mémoire
+   (iPhone) gardait l'ancienne version. Au retour au premier plan, vérification, au plus toutes les 30 min. */
+var PWA_UPDATE_CHECK_MS = 30 * 60 * 1000;
+function watchPwaUpdateOnResume(reg) {
+  var lastCheck = Date.now(); // register() vient de vérifier
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible" || !navigator.onLine) return;
+    if (Date.now() - lastCheck < PWA_UPDATE_CHECK_MS) return;
+    lastCheck = Date.now();
+    reg.update().catch(function () { /* réseau absent : on réessaiera au prochain retour */ });
   });
 }
 
