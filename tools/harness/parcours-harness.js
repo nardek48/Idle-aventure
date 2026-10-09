@@ -537,6 +537,8 @@ async function P7(browser, base) {
   await tap(page, '.lm-node[onclick*="autel"]');
   await tap(page, "button[onclick*=\"startLivingMapSector('autel')\"]");
   ok(await page.evaluate(function () { return game.activeTab === "scene" && game.sceneRun && game.sceneRun.status === "pa2-prep"; }), "Petite Aventure v2 ouverte sur la préparation");
+  await page.waitForTimeout(400);
+  await dismissTutorials(page); // le tutoriel « Préparer une petite aventure » recouvre la besace
 
   // Besace : une case libre ouvre la liste, on y choisit une petite ration puis une gourde
   await tap(page, ".pa2-cell.is-free");
