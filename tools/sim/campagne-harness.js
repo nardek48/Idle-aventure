@@ -747,6 +747,7 @@ function caravaneMarcheRuines(g) {
   for (var essai = 0; essai < 6 && !g.storyDesertFlag("ruinsMarketDone"); essai++) {
     if (C.get() && C.isBack()) C.unload();
     if (C.get()) { wait(Math.max(60e3, C.getSecondsLeft() * 1000 + 1000), "caravane"); continue; }
+    harvest();   // un joueur récolte avant de charger : la caravane ne prend que le surplus de l'Entrepôt
     var why = C.getBlockReason("court");
     if (why) { note("caravane : " + why); wait(2 * 3600e3, "caravane"); continue; }
     C.depart("court", m.world);
