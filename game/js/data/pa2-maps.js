@@ -256,6 +256,13 @@ var PA2_PARCOURS_IMAGES = {
     image: "images/Maps/parcours/ruines_route.jpg", width: 1024, height: 1536, start: [420, 1300],
     tracks: { route: [[555, 1170], [500, 1030], [510, 885], [592, 760], [455, 665], [540, 560], [570, 500]] }
   },
+  /* v3.433.1 (Ruines, acte IV) : image de Seb (09/10/2026) ; piste relevée sur le trait violet, de la
+     porte basse à l'arche du Cœur. Paliers : la rue qui tourne, la place aux ossements, la brèche du
+     mur, les toits aux gargouilles, l'arche. */
+  vers_le_coeur: {
+    image: "images/Maps/parcours/vers_le_coeur.jpg", width: 1024, height: 1536, start: [478, 1440],
+    tracks: { route: [[575, 1290], [521, 1140], [644, 960], [626, 810], [512, 665], [490, 550], [565, 430], [528, 330], [520, 205]] }
+  },
   desert_route: {
     image: "images/Maps/parcours/desert_route.jpg", width: 1024, height: 1536, start: [520, 1270],
     tracks: {

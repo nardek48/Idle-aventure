@@ -212,8 +212,8 @@ var HERO_SCALING_REFS = {
    Référence par aventure du monde. */
 var WORLD_HERO_SCALING = {
   exp: 0.5, margin: 1.15, cap: 2.5,
-  /* v3.428.0 (Ruines, U-1) : provisoire — le héros de fin du chapitre II, en attendant les
-     références « joueur » des Ruines mesurées au robot de campagne. */
+  /* v3.428.0 (Ruines, U-1) : le héros de fin du chapitre II. Gardé par décision de Seb du 09/10/2026 :
+     tous les bancs des Ruines ont été faits avec cette référence. */
   refByWorld: { forest: ["joueurForet", "joueurForet"], desert: ["joueurDesert1", "joueurDesert2"], ruins: ["joueurDesert2", "joueurDesert2"] }
 };
 window.HERO_SCALING_REFS = HERO_SCALING_REFS;

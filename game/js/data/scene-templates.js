@@ -340,8 +340,8 @@ var SCENE_TEMPLATES = {
   /* v3.432.0 (Ruines, acte IV étape 17, texte validé par Seb le 09/10) — VERS LE CŒUR. Parcours dédié,
      sur le modèle de la remontée du fleuve : lancé depuis la carte d'étape, une Ration moyenne, hors
      cap journalier. Palier 3 : les murs se ferment, le Veilleur pose la main, le mur s'ouvre — une
-     source pleine, sans épreuve (la ville le reconnaît, elle). Fond provisoire : la route des Ruines
-     (image dédiée à générer). Pas de boss. */
+     source pleine, sans épreuve (la ville le reconnaît, elle). Pas de boss.
+     v3.433.1 : fond dédié (image de Seb), un palier par lieu peint sur le chemin. */
   vers_le_coeur: {
     id: "vers_le_coeur",
     worldId: "ruins",
@@ -351,7 +351,7 @@ var SCENE_TEMPLATES = {
     departLabel: "Marcher vers le Cœur",
     icon: "images/Icons/codex/world_ruins.png",
     parcours: {
-      image: "ruines_route", track: "route", points: [0, 1, 3, 4, 6], bag: 3,
+      image: "vers_le_coeur", track: "route", points: [0, 2, 4, 6, 8], bag: 3,
       steps: [
         { type: "obstacle", gabaritId: "rue_qui_tourne", text: "Les rues d'en haut ont la forme de celles d'en bas. Edda marche sans regarder sa feuille." },
         { type: "combat", foe: "skeleton", pack: 2, act: 2, text: "Des squelettes, et derrière eux quelqu'un qui pose des pierres.",
