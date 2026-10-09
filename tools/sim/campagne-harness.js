@@ -1031,7 +1031,15 @@ function gearRarity(rarity, n, needWeapon) {
     /* Un joueur fait d'abord ses sorties du jour dans les donjons qui donnent cette rareté (un run
        complet en garantit une pièce) ; l'échoppe et le farm ne viennent qu'ensuite. */
     var dj = [3, 2].filter(function (id) { var t = g.DungeonManager.getById(id); return t && g.DungeonManager.isUnlocked(id) && g.DungeonManager.hasRunLeft(id) && ORD.indexOf(t.maxRarity) >= min; })[0];
-    if (dj) { if (COMBATS) healUp(); STATS.donjonsEquipement = (STATS.donjonsEquipement || 0) + 1; playDungeonOnce(dj, false); continue; }
+    if (dj) {
+      var vivres = g.ProvisionsManager && g.ProvisionsManager.getRequirement("dungeon", g.DungeonManager.getById(dj));
+      if (vivres) obtain(vivres.resourceId, vivres.amount);   // vivres de sortie, comme le dit le refus
+      if (COMBATS) healUp();
+      var used0 = g.DungeonManager.getRunsUsed(dj);
+      playDungeonOnce(dj, false);
+      if (g.DungeonManager.getRunsUsed(dj) > used0) { STATS.donjonsEquipement = (STATS.donjonsEquipement || 0) + 1; continue; }
+      // entrée refusée malgré tout : on ne boucle pas sans que le temps passe, échoppe et farm prennent le relais
+    }
     // v3.433.0 : le Rare se trouve au Sanctuaire (butin de fin de run, et sac de la sortie)
     if (rarity === "rare" && g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (playDungeonOnce(3, false) === null) farmOnce(); }
     else farmOnce();
