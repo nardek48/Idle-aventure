@@ -73,17 +73,26 @@ var V = G.GAME_VERSION;
 var PA_RECHARGE_H = G.SceneRunManager.PETITE_AVENTURE_RECHARGE_MS / 3600000;
 /* ================================================================== */
 H(1, "Aethervale — Guide d'équilibrage");
-P("**État du code au 28/09/2026 — v" + V + ".** Toutes les tables sont **extraites automatiquement du code** (scripts d'`index.html` chargés dans le bac à sable du harnais, par `tools/docs-gen/generate-balance-guide.js`) ; aucune valeur n'est recopiée à la main. Les commentaires et les mesures viennent des bancs de `sim/`.\n");
-P("La version précédente datait de la v3.331.0 (24/09/2026). Parties : 0 Changements · 1 Économie · 2 Héros et progression · 3 Combat · 4 Cartes Vivantes · 5 Combat de groupe · 6 Outils et points ouverts.\n");
+var NOW = new Date(), DATE = ("0" + NOW.getDate()).slice(-2) + "/" + ("0" + (NOW.getMonth() + 1)).slice(-2) + "/" + NOW.getFullYear();
+P("**État du code au " + DATE + " — v" + V + ".** Toutes les tables sont **extraites automatiquement du code** (scripts d'`index.html` chargés dans le bac à sable du harnais, par `tools/docs-gen/generate-balance-guide.js`) ; aucune valeur n'est recopiée à la main. Les commentaires et les mesures viennent des bancs de `sim/`.\n");
+P("La version précédente datait de la v3.392.0, complétée par la mise à jour v3.392.0 → v3.427.2 : ce guide remplace les deux. Parties : 0 Changements · 1 Économie · 2 Héros et progression · 3 Combat · 4 Cartes Vivantes · 5 Combat de groupe · 6 Outils et points ouverts.\n");
 
 /* ---------- 0. Changements ---------- */
-H(1, "0. Changements depuis la v3.331.0");
+H(1, "0. Changements depuis la v3.392.0");
+var D3 = G.DUNGEONS.filter(function (d) { return d.camp; })[0] || {};
 P(table(["Période", "Chantier", "Ce qui change pour l'équilibrage"], [
-  ["v3.332 → v3.338", "Hauts faits et Évolutions", "Les Hauts faits remplacent les anciens succès : récompenses en or par Haut fait et par palier de monde (§1.10). Évolutions des compétences"],
-  ["v3.339 → v3.358", "Campagne B (D1 à D7)", "Rythme de la campagne recalé sur un robot joueur. **Plus d'essence** : donjon à " + G.DUNGEON_CONFIG.runsPerDay + " sorties par jour et par donjon, sorties d'Histoire offertes ; or de fin de donjon " + fr(G.DUNGEON_CONFIG.fullClearGoldBase) + ". Reprise d'un choix de Mémoire payée **en or**"],
-  ["v3.360 → v3.363", "Désert, acte IV", "Boss de quête (bossId, phases) ; Nezzam le Desséché (PV ×" + fr(G.ADVENTURE_QUESTS.aq_desert_trone.bossHpMult) + ", puissance ×" + fr(G.ADVENTURE_QUESTS.aq_desert_trone.bossPowerMult) + ") ; parcours « Personne ne remonte le fleuve » ; choix `roi` (silence 1 round, ou puits du roi) ; **arme du Fleuve**, premier objet Rare"],
-  ["v3.365.0", "Journal", "Bilan de la partie en tête du Journal (sans effet sur l'équilibrage)"],
-  ["v3.366.0", "Petites Aventures et cartes", "Plus de plafond par jour : une **réserve** par monde, une place revient toutes les " + fr(PA_RECHARGE_H) + " h. Un échec de carte ne recule plus un autre secteur (option A)"]
+  ["v3.393 → v3.417", "Audit design, Village (écrans)", "Rien : retrait de l'Ascension et des bonus d'Aether qui valaient zéro, écrans refaits"],
+  ["v3.418.0", "Économie E-1", "Taverne et Halle à l'Atelier 2 ; Taverne 2 contrats au niveau 1, +1 par niveau. **Production −20 %** sur le Blé, la Viande, l'Eau et la Pierre"],
+  ["v3.419 → v3.421", "Caravane", "Caravane de la Halle marchande, visible sur la carte ; elle rapporte le rare du monde (§1.11)"],
+  ["v3.422.0", "Points ouverts", "Bonus de carte sur la production appliqués (+10 %). Obstacles des Petites Aventures tirés 3 fois sur 4 dans le pool du secteur"],
+  ["v3.423.0", "**Difficulté**", "Les ennemis suivent un peu la force réelle du héros (§2.8). Souffle plus cher, repos plus court"],
+  ["v3.427.2", "Anneau", "Base de l'anneau : chance de critique au lieu de l'or"],
+  ["v3.428.0", "Ruines, acte I", "Monde 3 ouvert. **La relève** : certains ennemis se relèvent une fois à " + pct(G.RISE_HP_PCT) + " de leurs PV (§3.2). Choix « seuil » : **Le seuil**, le héros tombé se relève une fois par combat à " + pct(G.HERO_RISE_HP_PCT) + ", ou −10 % de matériaux au village. Edda, troisième compagnon. **Pierre errante**"],
+  ["v3.429.0", "Ruines, acte II", "Le **Bâtisseur** (il pose un mur sur un allié). Carte des Ruines : **chantier errant** (" + G.LIVING_MAPS.ruins.chantier.reward + " Pierres errantes) et **Éboulement**. Les murs bougent en Petite Aventure. Terrain 10"],
+  ["v3.429.1 → v3.429.24", "Correctifs, pronostic", "Pronostic des donjons, quêtes et chasses : le run entier, les groupes, les compagnons et leurs soins comptent. Sans effet sur les chiffres de combat"],
+  ["v3.430.0", "Ruines, acte III (1)", "**" + D3.name + "** : campement après la vague " + (D3.camp || {}).afterWave + " (soin " + pct((D3.camp || {}).healPct || 0) + ", butin mis en sûreté). Élites Contremaître et Golem ; Varrek se relève"],
+  ["v3.431.0", "Ruines, acte III (2)", "**Clé de voûte** et **Forge 4** (reforges 7 et 8). Terrain 11, 13 points de talent. Golem de quête calé à part (`eliteStatMult`). Choix « salle »"],
+  ["v3.432.0 → v3.433.0", "Ruines, acte IV", "Le Cœur (requiresAllNeighbors), « Vers le Cœur », « Le dernier trait ». **Le Maître d'œuvre** : relève forcée, renforts, blindage. Choix « plan ». **Arme du Cœur**, premier Épique (valeur " + G.ELITE_UNIQUE_LOOT.arme_coeur.value + ")"]
 ]));
 P("**Principes posés par Seb**, à garder pour tout réglage futur :\n");
 P("- **Calibrer au plafond atteignable de l'acte**, et vérifier les premiers contenus d'un acte au plafond de l'acte précédent (plan C).");
@@ -239,6 +248,9 @@ G.ACHIEVEMENT_CATEGORIES.forEach(function (c) { (c.tierRewards || []).forEach(fu
 P("Catalogue : " + ACH.length + " Hauts faits, " + fr(achGold) + " or au total, plus " + fr(tierGold) + " or de paliers. Nouveaux à l'acte IV : « Le trône vide » (vaincre Nezzam) et « Pas une goutte » (caché : le vaincre sans boire de potion).\n");
 
 /* ---------- 2. Héros ---------- */
+H(2, "1.11 Caravane de la Halle marchande");
+P("Fichier : `systems/caravan-system.js`. La caravane part sur la carte vivante et rapporte le matériau rare du marché choisi : " + Object.keys(G.CARAVAN_RARE_BY_WORLD).map(function (w) { return worldName(Number(w)) + " → " + resName(G.CARAVAN_RARE_BY_WORLD[w]); }).join(" · ") + ".\n");
+
 H(1, "Partie 2 — Héros et progression");
 H(2, "2.1 Les héros et l'expérience");
 P(table(["Héros", "Classe", "Puissance", "Endurance", "Célérité", "Précision", "Volonté"], Object.keys(G.HEROES_DB).map(function (id) {
@@ -291,7 +303,7 @@ function affText(a) {
   var txt = (s === "critChance") ? "+" + fr(v) + " %" : (Math.abs(v) < 1 ? "+" + pct(v) : "+" + fr(v));
   return (STATL[s] || s) + " " + txt + " (" + (a.tier === "P" ? "principal" : "secondaire") + ")";
 }
-var UL = G.ELITE_UNIQUE_LOOT, ulSource = { araignee_marquee: "élite : la Fileuse", ronce_ardente: "élite : la Ronce", heaume_guet: "choix du Serment (desert_11)", arme_cite: "la Cité engloutie (desert_12)", arme_fleuve: "Maddoc après Nezzam (desert_18)" };
+var UL = G.ELITE_UNIQUE_LOOT, ulSource = { araignee_marquee: "élite : la Fileuse", ronce_ardente: "élite : la Ronce", heaume_guet: "choix du Serment (desert_11)", arme_cite: "la Cité engloutie (desert_12)", arme_fleuve: "Maddoc après Nezzam (desert_18)", sceau_salle: "choix « salle » = rouvrir (ruines_14)", arme_coeur: "Edda, fin du chapitre III (ruines_20)" };
 P(table(["Objet", "Emplacement", "Rareté", "Valeur", "Affixes", "Source"], Object.keys(UL).map(function (id) {
   var u = UL[id];
   var names = u.byClass ? Object.keys(u.byClass).map(function (k) { return u.byClass[k].name; }).join(" / ") : (u.item ? u.item.name : id);
@@ -300,7 +312,16 @@ P(table(["Objet", "Emplacement", "Rareté", "Valeur", "Affixes", "Source"], Obje
 })));
 P("**L'arme du Fleuve** est le premier objet Rare : bas de la fourchette Rare, mais au-dessus de toute arme Inhabituelle. Elle prépare le monde 3.\n");
 H(3, "Forge");
-P("30 niveaux de forge valent un cran de rareté ; " + G.FORGE_LEVELS_PER_BUILDING_LEVEL + " niveaux par niveau de bâtiment ; le niveau appartient à l'emplacement. Coût d'une reforge : or 400 × 1,35^niveau (−25 % avec « Main du forgeron »), acier max(2, 2 + 1,5 × niveau), résine au-delà du 2e niveau de bâtiment, Chitine pour les niveaux 5 et 6. **Reforges de l'arme 1 à " + G.STORY_WEAPON_REFORGE_LEVELS + " : sans acier (E2).**\n");
+P(G.FORGE_LEVELS_PER_RARITY_STEP + " niveaux de forge valent un cran de rareté ; " + G.FORGE_LEVELS_PER_BUILDING_LEVEL + " niveaux par niveau de bâtiment ; le niveau appartient à l'emplacement. Or −25 % avec « Main du forgeron ». **Reforges de l'arme 1 à " + G.STORY_WEAPON_REFORGE_LEVELS + " : or et matériaux du monde seulement (E2).** Choix « plan » = tomber : une Clé de voûte de moins (au moins une), la reforge 7 n'en coûte plus.\n");
+/* Barème lu dans ForgeManager.getCost, niveau de l'emplacement simulé (une pièce hors arme). */
+var F = G.ForgeManager, gl0 = F.getLevel, gm0 = F.getMaxLevel, forgeRows = [];
+for (var lv = 0; lv < 8; lv++) {
+  F.getLevel = function () { return lv; }; F.getMaxLevel = function () { return 99; };
+  var fc = null; try { fc = F.getCost("armor"); } catch (e) { fc = null; }
+  if (fc) forgeRows.push([lv + 1, fr(fc.gold), fc.acier || "—", fc.resine_durcie || "—", fc.chitine_profondeurs || "—", fc.cle_de_voute || "—", "Forge " + Math.ceil((lv + 1) / G.FORGE_LEVELS_PER_BUILDING_LEVEL)]);
+}
+F.getLevel = gl0; F.getMaxLevel = gm0;
+P(table(["Niveau visé", "Or", "Acier", "Résine durcie", "Chitine", "Clé de voûte", "Bâtiment"], forgeRows));
 
 H(2, "2.5 Potions");
 P(table(["Potion", "Effet", "Prix"], G.POTIONS_DB.map(function (p) { return [p.name, p.desc || p.description || "", fr(p.cost || p.price || 0) + " or"]; }).concat(G.HEALING_POTIONS_DB.map(function (p) { return [p.name, "Soigne " + pct(p.healPercent || 0) + " des PV max, consomme le tour", fr(p.cost || 0) + " or"]; }))));
@@ -342,19 +363,26 @@ P("Améliorations d'un compagnon : " + (up.costs || []).map(function (x) { retur
 P("Dégâts par frappe = Puissance × " + fr(G.COMPANION_POWER_DMG_COEF) + " × échelle ; PV = Endurance × " + fr(G.COMPANION_HP_COEF) + " × échelle ; retour après KO à " + pct(G.COMPANION_KO_RETURN_PCT) + " des PV (tous avec la Fidélité de Mémoire). " + G.COMPANION_MAX_PRESENT + " compagnons présents au plus. Changement de voie de Maddoc : " + fr(G.VOIE_CHANGE_BASE_COST) + " or, ×" + G.VOIE_CHANGE_COST_MULT + " à chaque fois.\n");
 
 /* ---------- 3. Combat ---------- */
+H(2, "2.8 Difficulté : les ennemis suivent la force du héros");
+var WS = G.WORLD_HERO_SCALING;
+P("Fichiers : `data/worlds.js` (HERO_SCALING_REFS, WORLD_HERO_SCALING), `CombatForecast.getHeroScale`. Le héros est comparé à un **héros de référence** (dégâts par round, PV effectifs = PV / (1 − défense)) : PV ennemis × (dmg / dmg de réf. / " + fr(WS.margin) + ")^" + fr(WS.exp) + ", puissance × (ehp / ehp de réf. / " + fr(WS.margin) + ")^" + fr(WS.exp) + ", jamais sous ×1, plafond ×" + fr(WS.cap) + ". L'or et l'XP ne changent pas.\n");
+P(table(["Référence", "Dégâts par round", "PV effectifs"], Object.keys(G.HERO_SCALING_REFS).map(function (k) { var r = G.HERO_SCALING_REFS[k]; return [k, r.dmg, r.ehp]; })));
+P(table(["Monde", "Référence par aventure"], Object.keys(WS.refByWorld).map(function (w) { return [worldName(w), WS.refByWorld[w].join(" · ")]; })));
+P("*Ruines : provisoire, le héros de fin du chapitre II (`joueurDesert2`) en attendant des références mesurées au robot de campagne. Tant qu'elle reste en place, l'ajustement compare le héros des Ruines au héros de fin du Désert.*\n");
+
 H(1, "Partie 3 — Combat : ennemis, boss, missions, calibrages");
 H(2, "3.1 Mise à l'échelle des ennemis");
 P("Ennemi ordinaire : PV = floor(Endurance × 6 × échelle × jalon + indice × 5), échelle = (1 + monde × M)^1,45 + aventure × 0,30 + cycle × 0,45 + indice × 0,05. Boss : Endurance × 12 × échelle boss (M × " + fr(G.BOSS_WORLD_MULT_RATIO || 1.444) + "), dégâts ×" + fr(G.BOSS_DMG_MULT) + ". Dégâts d'une frappe = puissance × " + fr(G.ENEMY_POWER_DMG_COEF) + " ; critique ennemi min(40 %, Précision × " + fr(G.ENEMY_PRECISION_CRIT_COEF) + ") à ×" + fr(G.ENEMY_CRIT_MULT) + ".\n");
 P(table(["Monde"].concat(G.WORLDS.map(function (w) { return w.name; })), [["M (WORLD_MULT_BY_WORLD)"].concat(G.WORLD_MULT_BY_WORLD.map(function (x) { return fr(x); }))]));
 var enemyIds = [];
-G.WORLDS.slice(0, 2).forEach(function (w) { (w.adventures || []).forEach(function (a) { (a.enemyPool || []).forEach(function (e) { if (enemyIds.indexOf(e) < 0) enemyIds.push(e); }); }); });
-["wolf", "foresttroll", "bramble"].forEach(function (e) { if (enemyIds.indexOf(e) < 0) enemyIds.push(e); });
-P(table(["Ennemi (Forêt, Désert)", "Puissance", "Endurance", "Célérité", "Précision", "Volonté", "Résiste / faible"], enemyIds.filter(function (id) { return G.ENEMY_DB[id]; }).map(function (id) {
+G.WORLDS.slice(0, 3).forEach(function (w) { (w.adventures || []).forEach(function (a) { (a.enemyPool || []).forEach(function (e) { if (enemyIds.indexOf(e) < 0) enemyIds.push(e); }); }); });
+["wolf", "foresttroll", "bramble", "batisseur"].forEach(function (e) { if (enemyIds.indexOf(e) < 0) enemyIds.push(e); });
+P(table(["Ennemi (Forêt, Désert, Ruines)", "Puissance", "Endurance", "Célérité", "Précision", "Volonté", "Résiste / faible"], enemyIds.filter(function (id) { return G.ENEMY_DB[id]; }).map(function (id) {
   var e = G.ENEMY_DB[id], s = e.stats; return [e.name, s.power, s.endurance, s.celerity, s.precision, s.will, (e.resists || []).join(",") + " / " + (e.weak || []).join(",")];
 })));
 
 H(2, "3.2 Boss");
-P("Fichier : `data/bosses.js` (BOSS_DB). Un boss d'aventure sort en fin d'aventure (`WORLDS[].adventures[].boss`) ; un **boss de quête** ne sort que par sa quête (`bossId`, v3.360.0) et ne vient jamais au hasard. Seuls les boss des deux premiers mondes sont utilisés.\n");
+P("Fichier : `data/bosses.js` (BOSS_DB). Un boss d'aventure sort en fin d'aventure (`WORLDS[].adventures[].boss`) ; un **boss de quête** ne sort que par sa quête (`bossId`, v3.360.0) et ne vient jamais au hasard. Seuls les boss des trois premiers mondes sont utilisés.\n");
 var bossUse = {};
 var bossWorld = {};
 G.WORLDS.forEach(function (w) { (w.adventures || []).forEach(function (a) { if (a.boss) { (bossUse[a.boss] = bossUse[a.boss] || []).push(a.name || "aventure"); if (!bossWorld[a.boss]) bossWorld[a.boss] = w.name; } }); });
@@ -375,14 +403,27 @@ Object.keys(G.ADVENTURE_QUESTS).forEach(function (id) {
   });
 });
 P(table(["Quête", "Boss", "Moment", "Archétype", "Renforts", "Réglage / libellé"], phRows));
+H(3, "La relève (Ruines)");
+P("Fichier : `systems/rise-system.js`. Un ennemi qui porte `rises` tombe à terre au lieu de mourir ; s'il n'est pas achevé (règle « Un ennemi se relève » du Grimoire, ou Edda), il se relève au tour ennemi suivant avec " + pct(G.RISE_HP_PCT) + " de ses PV max, une seule fois. `riseForced` : il se relève quoi qu'il arrive. À la relève, `riseAdds` fait entrer des renforts et `risePhases` arme les phases de la seconde vie. **Le seuil** (choix « seuil » = soi) : le héros tombé se relève aussitôt avec " + pct(G.HERO_RISE_HP_PCT) + " de ses PV, une fois par combat.\n");
+var riseRows = [];
+Object.keys(G.BOSS_DB).forEach(function (id) {
+  var b = G.BOSS_DB[id]; if (!b.rises) return;
+  var ra = b.riseAdds;
+  riseRows.push([b.name, "boss de quête", b.riseForced ? "oui" : "non", ra ? ra.adds.map(function (a) { return (G.ENEMY_DB[a] || {}).name || a; }).join(", ") + " (PV ×" + fr(ra.addsHpMult) + ", puissance ×" + fr(ra.addsPowerMult) + ")" : "—",
+    (b.risePhases || []).map(function (ph) { return "sous " + pct(ph.atPct) + " : " + (ph.archetype || "") + (ph.label ? " (" + ph.label + ")" : ""); }).join(" ; ") || "—"]);
+});
+G.DUNGEONS.forEach(function (d) { if (d.boss && d.boss.rises) riseRows.push([d.boss.name, "boss de " + d.name, d.boss.riseForced ? "oui" : "non", "—", "—"]); });
+Object.keys(G.ENEMY_DB).forEach(function (id) { var e = G.ENEMY_DB[id]; if (e.rises) riseRows.push([e.name, "ennemi ordinaire", "non", "—", "—"]); });
+P(table(["Qui", "Où", "Relève forcée", "Renforts à la relève", "Phases de la seconde vie"], riseRows));
 P("Silence : " + G.SILENCE_DURATION_ROUNDS + " rounds par défaut, " + G.SILENCE_DURATION_ROUNDS_ROI + " si le héros a pris *la forme du roi* (choix `roi` = prendre, `getHeroSilenceRounds()`).\n");
 
 H(2, "3.3 Multiplicateurs propres aux quêtes");
-P("Leviers (`systems/quest-enemy-system.js`) : `enemyHpMult` / `bossHpMult` (PV), `enemyPowerMult` / `bossPowerMult` (dégâts), `encounterHpMult` (rencontres scriptées).\n");
+P("Leviers (`systems/quest-enemy-system.js`) : `enemyHpMult` / `bossHpMult` (PV), `enemyPowerMult` / `bossPowerMult` (dégâts), `encounterHpMult` (rencontres scriptées), `eliteStatMult` (élite d'une quête, calée à part de son donjon, v3.431.0).\n");
 var AQ = G.ADVENTURE_QUESTS, qrows = [];
 Object.keys(AQ).forEach(function (id) {
   var q = AQ[id], f = [];
   ["enemyHpMult", "bossHpMult", "enemyPowerMult", "bossPowerMult", "encounterHpMult"].forEach(function (k) { if (q[k] != null && q[k] !== 1) f.push(k + " ×" + fr(q[k])); });
+  if (q.eliteStatMult) f.push("eliteStatMult " + Object.keys(q.eliteStatMult).map(function (k) { return k + " ×" + fr(q.eliteStatMult[k]); }).join(", "));
   qrows.push([q.name || id, id + (q.bossId ? " (boss : " + ((G.BOSS_DB[q.bossId] || {}).name || q.bossId) + ")" : ""), f.join(" · ") || "×1"]);
 });
 Object.keys(G.HUNT_QUESTS).forEach(function (id) { var q = G.HUNT_QUESTS[id]; qrows.push([q.name, id + " (chasse, lot de " + q.lotSize + ")", q.enemyPowerMult ? "enemyPowerMult ×" + fr(q.enemyPowerMult) : "×1"]); });
@@ -408,7 +449,12 @@ H(2, "3.6 Donjons");
 var DC = G.DUNGEON_CONFIG;
 P(DC.waveCount + " vagues + boss. **" + DC.runsPerDay + " sorties par jour et par donjon**, remises à zéro toutes les " + DC.ticketResetHours + " h ; les sorties demandées par l'Histoire sont offertes et hors quota (plus de tickets ni d'essence depuis la v3.358.0). Donjon terminé : " + fr(DC.fullClearGoldBase) + " or de base. Éclats : " + DC.shardsPerWaveCleared + " par vague, +" + DC.shardsBossBonus + " au boss, +" + DC.eliteShardsBonus + " par vague élite. Marques : " + DC.maxMarks + " au plus par run, +" + pct(DC.markStackBonus) + " d'or et de matériau par Marque, +" + DC.specialPerMark + " matériau de monde.\n");
 P(table(["Marque", "Effet"], G.DUNGEON_MARKS.map(function (mk) { return [mk.name, mk.desc || mk.description || ""]; })));
-P(table(["Donjon", "Monde", "Difficulté", "Rareté max"], G.DUNGEONS.map(function (d) { return [d.name, worldName(d.worldId), "×" + fr(d.difficultyMult), G.RARITY_LABELS[d.maxRarity] || d.maxRarity]; })));
+P(table(["Donjon", "Monde", "Difficulté", "Rareté max", "Boss", "Matériau de fin", "Campement"], G.DUNGEONS.map(function (d) {
+  var c = d.camp;
+  return [d.name, worldName(d.worldId), "×" + fr(d.difficultyMult), G.RARITY_LABELS[d.maxRarity] || d.maxRarity, (d.boss && d.boss.name) || "—", d.specialResourceId ? d.specialResourceAmount + " " + resName(d.specialResourceId) : "—",
+    c ? "après la vague " + c.afterWave + " : souffler (" + pct(c.healPct) + "), changer de compagnon ou sortir ; sac mis en sûreté, +" + c.stoneAmount + " " + resName(d.specialResourceId) : "—"];
+})));
+P("Le campement (v3.430.0) : sortir à la halte garde tout le butin de la première moitié, sans la moitié de fuite. Élites de vague : " + G.DUNGEONS.filter(function (d) { return d.eliteWaves; }).map(function (d) { return d.name + " " + Object.keys(d.eliteWaves).map(function (w) { return "vague " + w + " " + ((G.ELITE_DB[d.eliteWaves[w]] || {}).name || d.eliteWaves[w]); }).join(", "); }).join(" ; ") + ".\n");
 
 H(2, "3.7 Sortie, soins et pronostic");
 P(table(["Règle", "Valeur"], [
@@ -457,6 +503,31 @@ P(table(["Mesure", "v3.365.0 (plafond par jour)", "v3.366.0 (réserve, recharge 
 ]));
 P("*Recharge à 3 h mesurée : 72 h de fin de partie (non retenue). Principaux tueurs de la campagne (v3.365.0) : le sphinx de desert_12 (43 % de morts par combat), le Basilic de forest_13 (37 %), l'orc de forest_15.*\n");
 
+H(3, "Ruines (bancs, v3.428.0 à v3.433.0)");
+P("Bancs `tools/sim/ruines-acte1-bench.js`, `ruines-acte2-bench.js`, `ruines-acte3-bench.js` (Sanctuaire complet, campement compris ; `--golem --quete <id>` pour les quêtes d'élite et de boss), Wenna + Maddoc, Grimoire automatique. Réussite Chevalier / Rôdeur / Mage.\n");
+P(table(["Contenu", "Profil", "Réussite", "Réglage retenu"], [
+  ["Quêtes de l'acte I (étapes 2 et 3)", "fin du chapitre II", "100 / 100 / 100 %, 29 à 43 % de PV perdus", "—"],
+  ["« Celui qui pose les pierres »", "fin d'acte I", "100 %, 30 à 46 % de PV perdus", "—"],
+  ["« La salle qu'il évite »", "palier de l'acte II", "100 % (92 % sans Wenna)", "—"],
+  ["Sanctuaire : campement atteint", "fin d'acte II / palier Rare", "100 %", "—"],
+  ["Golem de quête (étape 14)", "palier Rare", "71-81 / 79-81 / 94-96 %", "puissance ×" + fr(G.ADVENTURE_QUESTS.aq_ruines_golem.eliteStatMult.power) + ", endurance ×" + fr(G.ADVENTURE_QUESTS.aq_ruines_golem.eliteStatMult.endurance)],
+  ["Varrek (étape 15)", "palier Rare", "75 / 58 / 79 %", "puissance ×0,72, endurance ×0,6"],
+  ["« Le dernier trait » (étape 18)", "fin d'acte III", "79 / 88 / 96 %", "rencontres ×" + fr(G.ADVENTURE_QUESTS.aq_ruines_coeur.encounterHpMult) + " / ×" + fr(G.ADVENTURE_QUESTS.aq_ruines_coeur.enemyPowerMult) + ", Golem ×" + fr(G.ADVENTURE_QUESTS.aq_ruines_coeur.eliteStatMult.power) + " / ×" + fr(G.ADVENTURE_QUESTS.aq_ruines_coeur.eliteStatMult.endurance)],
+  ["Le Maître d'œuvre (étape 19)", "fin d'acte III", "71 / 88 / 100 %", "PV ×" + fr(G.ADVENTURE_QUESTS.aq_ruines_plan.bossHpMult) + ", puissance ×" + fr(G.ADVENTURE_QUESTS.aq_ruines_plan.bossPowerMult)]
+]));
+P("*Lecture : les relèves valent une demi-barre de PV et la pente est raide (Maître d'œuvre ×2 / ×1 : 13 / 38 / 81 % ; ×1,6 / ×0,8 : 88 / 100 / 100 %). Le Rôdeur reste sous 60 % contre Varrek.*\n");
+H(3, "Campagne du chapitre III (robot joueur, v3.433.0)");
+P("Banc `tools/sim/campagne-harness.js --combats --avise`, un run par classe, toute l'Histoire jusqu'à ruines_20. Le robot monte ses zones de production (profil par défaut depuis le 09/10 ; `--sans-zones` pour l'ancien profil). Décision de Seb du 09/10 (option A) : on ne touche à rien, le chemin obligatoire est dans la cible.\n");
+P(table(["Mesure", "Chevalier", "Rôdeur", "Mage"], [
+  ["Chapitre III, étapes seules (chemin obligatoire, cible 16 à 36 h)", "39 h", "22 h", "26 h"],
+  ["dont ruines_13, le palier Rare", "31 h", "18 h", "22 h"],
+  ["Chapitre III avec l'entretien du robot (reforges 5 à 8 de toutes les pièces)", "180 h", "167 h", "92 h"],
+  ["Même chose sans monter les zones (`--sans-zones`)", "468 h", "335 h", "332 h"],
+  ["Morts sur toute la campagne", "21", "0", "3"],
+  ["Murs", "aucun", "aucun", "aucun"]
+]));
+P("*Lecture : le palier Rare coûte surtout la reforge de l'arme 5 et 6 (Résine de la Forêt, Chitine du Désert), pas la Clé de voûte ni les Pierres errantes (les récompenses suffisent). Le temps facultatif part en Résine (50 à 100 h) et en Chitine (20 à 40 h). Sans zones montées, l'acier coûte 200 à 350 h. Le robot attend 1 h entre deux combats rejoués contre l'Arbre-mère ou le Dard : hypothèse du robot, ces heures sont peut-être surestimées.*\n");
+
 /* ---------- 4. Cartes vivantes ---------- */
 H(1, "Partie 4 — Cartes Vivantes");
 var LR = G.LIVING_MAP_RULES;
@@ -466,6 +537,10 @@ P(table(["Règle", "Valeur"], [
   ["Palissade", "frein de " + pct(LR.palisade.brakePerLevel) + " par niveau"],
   ["Effets tenus", Object.keys(LR.effects).map(function (k) { return k + " " + fr(LR.effects[k]); }).join(" · ")],
   ["Élite répétable", "frein +" + pct(RE.brakePerWin) + " par victoire, " + RE.sevePerWin + " Sève"],
+  ["Ruines : chantier errant (v3.429.0)", "chaque jour la cité rebâtit un quartier (un quartier libéré repasse « Rebâti ») ; le libérer ce jour-là rapporte " + G.LIVING_MAPS.ruins.chantier.reward + " " + resName(G.LIVING_MAPS.ruins.rewardResourceId) + ". Jamais sur les quartiers `noChantier` (porte du Sanctuaire, Cœur). L'échec s'appelle l'Éboulement"],
+  ["Ruines : freins de choix", (G.LIVING_MAPS.ruins.choiceBrakes || []).map(function (b) { return "« " + b.key + " » = " + b.value + " : −" + pct(b.bonus) + " d'Éboulement tant que " + b.sectorId + " tient"; }).join(" ; ")],
+  ["Ruines : choix « plan » (v3.433.0)", "finir : plus de chantier ni d'Éboulement, le Cœur rapporte " + G.LIVING_MAPS.ruins.plan.finir.dailyStones + " Pierres errantes par jour ; tomber : " + G.LIVING_MAPS.ruins.plan.tomber.collapse.length + " quartiers en éboulis (effet tenu perdu), +" + G.LIVING_MAPS.ruins.plan.tomber.quarryBonus + " Pierres errantes par victoire dans un éboulis"],
+  ["Ruines : le Cœur (v3.432.0)", "ne s'ouvre qu'avec ses trois voisins libérés (`requiresAllNeighbors`)"],
   ["Échec d'une expédition (v3.366.0, option A)", "seul le secteur tenté peut reculer (s'il était libéré et non protégé par la Palissade ou un choix) ; sinon rien n'est perdu. Plus de recul tiré au hasard dans un autre secteur"]
 ]));
 
@@ -489,7 +564,9 @@ P("Tous les bancs chargent les vrais scripts du jeu et jouent de vrais rounds av
 P(table(["Banc", "Mesure"], [
   ["plafond-bench.js", "Combats de l'Histoire au plafond de l'acte ; options --voie, --points, --sans-talents, --suite, --pa, --journee, --setelite, --qset, --diff, --boss, --mark, --train, --solo ; contenu « trone »"],
   ["nezzam-bench.js", "Le trône de sable en entier (rencontres + Nezzam) ; --runs, --enc hp,puissance, --boss hp,puissance, --profil campagne|desertfin, --voie ; sonde du vol de vie et des silences"],
-  ["campagne-harness.js", "Robot joueur sur toute l'Histoire : structure (option A) ou --combats ; --classe, --rapporter, --recharge H"],
+  ["campagne-harness.js", "Robot joueur sur toute l'Histoire, chapitre III compris : structure (option A) ou --combats ; --classe, --avise, --rapporter, --recharge H, --investi, --sans-zones, --tomber ; temps d'obtention par ressource en fin de rapport"],
+  ["ruines-acte1-bench.js, ruines-acte2-bench.js", "Quêtes des actes I et II des Ruines"],
+  ["ruines-acte3-bench.js", "Sanctuaire scellé (profils palier / rare, --boss, --camp) ; --golem --quete <id> [--enc] [--golemmult] [--qboss] pour les quêtes d'élite et le Maître d'œuvre"],
   ["campagne-lot.js", "Lot de parties de campagne (médianes, murs, qui tue, farm) ; --recharge, --tag"],
   ["parcours-harness.js", "Douze parcours joués dans Chromium (Playwright), P1 à P12"],
   ["revente-bench.js", "Production horaire par monde et dépenses d'or"],
@@ -501,17 +578,18 @@ P(table(["Banc", "Mesure"], [
   ["group-bench.js, quest-cost-bench.js", "Combat de groupe"],
   ["missing-icons.js", "Chemins d'images cités dans le code et absents du dossier"]
 ]));
-P("Harnais de non-régression : `round-harness.js` (section [85] v3.287.0 neutralisée), `boot-harness.js`, `hero-creation-harness.js`, `tools/sim/retour-demarrage-bench.js`.\n");
+P("Harnais de non-régression : `round-harness.js` (section [85] v3.287.0 neutralisée), `boot-harness.js`, `hero-creation-harness.js`, `tools/sim/retour-demarrage-bench.js`. Documents : `tools/docs-gen/generate-balance-guide.js` (ce guide), `tools/docs-gen/generate-function-reference.js` (Référence des fonctions).\n");
 H(2, "6.2 Points ouverts");
-P("- **Or de l'acte IV** (1 900 / 2 500 / 3 000) : provisoire, banc « or par acte » à refaire en surveillant l'or ponctuel des Hauts faits.");
-P("- **Nezzam et les classes** : Mage à 95 % (5 points au-dessus), Rôdeur à 78 %. Marche raide : ne pas durcir sans banc.");
-P("- **Recharge des Petites Aventures** (" + fr(PA_RECHARGE_H) + " h) : à confirmer en jeu ; 3 h raccourcit encore la campagne (72 h).");
-P("- **Rôdeur** : le plus fragile sur les combats courts et violents (le Dard, 77 %).");
-P("- **Sphinx de desert_12** : premier tueur de la campagne.");
-P("- **Compteur Chaos** posé par le choix `roi`, sans effet visible.");
-P("- **Bonus de l'Atelier de Construction** passé aux contrats de la Taverne (à confirmer).");
-P("- **Terrain aux Ruines** : sans matériaux communs tant que les mondes suivants n'ont pas de plafond par acte.");
-P("- **Descriptions des compétences** : n'affichent pas les valeurs modifiées par les talents.");
+P("- **Références de héros des Ruines** (`refByWorld.ruins`) : provisoires (fin du chapitre II), à mesurer au robot de campagne (§2.8).");
+P("- **Zone de production aux Ruines** (RU7) : la 3ᵉ rangée reste fermée (`zoneRows` 2) ; décision après simulation. Niveaux de village payés en Clé de voûte : pas encore posés, seule la Forge 4 en demande.");
+P("- **Varrek et le Rôdeur** : 58 % pour une cible de 60 %. À juger en jeu.");
+P("- **Le Chevalier meurt beaucoup au Sanctuaire** dans la campagne du robot (21 morts sur la partie).");
+P("- **Gains provisoires des Ruines** : chantier du jour (" + G.LIVING_MAPS.ruins.chantier.reward + "), Cœur (" + G.LIVING_MAPS.ruins.plan.finir.dailyStones + " par jour), éboulis (+" + G.LIVING_MAPS.ruins.plan.tomber.quarryBonus + "), remise de la clé du Cœur, or des étapes 11 à 20.");
+P("- **Le seuil** (" + pct(G.HERO_RISE_HP_PCT) + " des PV) : banc à faire.");
+P("- **Reforges hautes de toutes les pièces** : longues (Résine et Chitine des mondes précédents). Décision de Seb du 09/10 : on garde, c'est un objectif facultatif.");
+P("- **Labyrinthe aux leviers** (RU12) : reporté.");
+P("- **Recharge des Petites Aventures** (" + fr(PA_RECHARGE_H) + " h) : à confirmer en jeu.");
+P("- **Compteur Chaos** posé par le choix `roi`, sans effet visible. **Descriptions des compétences** : n'affichent pas les valeurs modifiées par les talents.");
 P("- Inchangés : Piste C (production par bâtiment), courbe d'XP linéaire, Fiole de réserve aux Ruines, sac à 25, section [85] du harnais.\n");
 
 fs.writeFileSync(OUT, out.join("\n"));
