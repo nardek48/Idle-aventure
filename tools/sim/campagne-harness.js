@@ -520,7 +520,18 @@ function obtainIn(res, qty, depth) {
   // 0. un matériau de monde : il se gagne sur la carte (élite répétable)
   var CARTE = { seve_aeswyn: ["forest", "arbremere"], chitine_profondeurs: ["desert", "bete_dune"] };
   if (CARTE[res]) {
-    for (var k = 0; k < 20 && have() < qty; k++) { if (!freeSectorAgain(CARTE[res][0], CARTE[res][1])) break; wait(3600e3, "carte"); }
+    /* Comme un joueur : élites enchaînées tant que le frein du jour le permet ; refusé ou perdu après
+       au moins une victoire du jour, on revient le lendemain (le frein retombe au jour civil). */
+    var LMc = g.LivingMapManager, ca = STATS.carte = STATS.carte || { victoires: 0, lendemains: 0, parJour: [] };
+    for (var k = 0; k < 60 && have() < qty; k++) {
+      var gagnes = LMc.getDailyWins(CARTE[res][0], CARTE[res][1]);
+      if (process.env.TRACE_CARTE) console.log("      [carte] " + res + " " + CURRENT_STEP + " victoires du jour " + gagnes + " · frein " + LMc.getBrakeMult(CARTE[res][0], CARTE[res][1]).toFixed(2) + " · " + new RealDate(FakeDate.now()).toDateString());
+      if (freeSectorAgain(CARTE[res][0], CARTE[res][1])) { ca.victoires++; continue; }
+      if (gagnes <= 0) break;   // perdu sans frein : l'élite est trop forte, pas une question d'attente
+      ca.lendemains++; ca.parJour.push(gagnes);
+      var nowC = FakeDate.now(), dC = new RealDate(nowC);
+      wait(new RealDate(dC.getFullYear(), dC.getMonth(), dC.getDate() + 1).getTime() - nowC + 60e3, "carte : lendemain");
+    }
     if (have() < qty) note(res + " : " + have() + " / " + qty + " après les combats de carte");
     return have() >= qty;
   }
@@ -1239,6 +1250,7 @@ if (COMBATS) {
   var parts = { combat: STATS.combatMs / 3600e3, "soin au camp": STATS.healMs / 3600e3 };
   Object.keys(STATS.attente).forEach(function (k) { parts[k] = STATS.attente[k] / 3600e3; });
   var somme = Object.keys(parts).reduce(function (s, k) { return s + parts[k]; }, 0);
+  if (STATS.carte) console.log("Élites répétables : " + STATS.carte.victoires + " victoires, " + STATS.carte.lendemains + " retours au lendemain (victoires avant l'arrêt : " + (STATS.carte.parJour.join(" ") || "—") + ")");
   console.log("Total par cause : " + topParts(parts, 20, 0) + " (somme " + somme.toFixed(1) + " / " + (CLOCK.offset / 3600e3).toFixed(1) + " h)");
 }
 STATS.economie = { orGagne: G.game.totalGoldEarned, or: G.game.gold, aetherTotal: G.game.totalAetherEarned, attenteDonjonH: STATS.attenteDonjonH || 0 };
