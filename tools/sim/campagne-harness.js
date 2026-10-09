@@ -154,8 +154,10 @@ function relaunch() {
 var LAST_END = null, QUEST_END = null, DEFEATED = false, STOPPED_AT = null;
 
 /* Le temps passe : la production tourne, les chantiers et les ateliers avancent. */
-function wait(ms) {
+/* kind : cause de l'attente, cumulée dans STATS.attente pour voir où part le temps. */
+function wait(ms, kind) {
   CLOCK.offset += ms;
+  kind = kind || "autre"; STATS.attente[kind] = (STATS.attente[kind] || 0) + ms;
   var g = G;
   if (g.ProductionManager) g.ProductionManager.catchUpOffline();
   if (g.VillageBuildingManager) g.VillageBuildingManager.tick();
@@ -518,7 +520,7 @@ function obtainIn(res, qty, depth) {
   // 0. un matériau de monde : il se gagne sur la carte (élite répétable)
   var CARTE = { seve_aeswyn: ["forest", "arbremere"], chitine_profondeurs: ["desert", "bete_dune"] };
   if (CARTE[res]) {
-    for (var k = 0; k < 20 && have() < qty; k++) { if (!freeSectorAgain(CARTE[res][0], CARTE[res][1])) break; wait(3600e3); }
+    for (var k = 0; k < 20 && have() < qty; k++) { if (!freeSectorAgain(CARTE[res][0], CARTE[res][1])) break; wait(3600e3, "carte"); }
     if (have() < qty) note(res + " : " + have() + " / " + qty + " après les combats de carte");
     return have() >= qty;
   }
@@ -528,7 +530,7 @@ function obtainIn(res, qty, depth) {
   var bid = Object.keys(g.PRODUCTION_BUILDINGS).filter(function (id) { return g.PRODUCTION_BUILDINGS[id].resourceKey === res; })[0];
   if (bid) {
     if (!g.ProductionManager.isBuildingUnlocked(bid)) { note(res + " : bâtiment " + bid + " verrouillé"); return false; }
-    for (var h = 0; h < 72 && have() < qty; h++) { wait(3600e3); harvest(); }
+    for (var h = 0; h < 72 && have() < qty; h++) { wait(3600e3, "production"); harvest(); }
     if (have() < qty) note(res + " : " + have() + " / " + qty + " après 72 h de production (plafond de l'Entrepôt ?)");
     return have() >= qty;
   }
@@ -546,7 +548,11 @@ function obtainIn(res, qty, depth) {
     if (!g.WorkshopsSystem.enqueueCraft(wid, recipe.id, fois)) {
       if (!g.WorkshopsSystem.enqueueCraft(wid, recipe.id, 1)) { note(res + " : l'atelier " + wid + " refuse la fabrication (verrouillé ?)"); return false; }
     }
-    for (var t = 0; t < 48 && g.WorkshopsSystem.getQueue(wid).length; t++) wait(10 * 60e3);
+    // attendre le temps réel de la file (les recettes durent quelques secondes), pas des paliers de 10 min
+    for (var t = 0; t < 48 && g.WorkshopsSystem.getQueue(wid).length; t++) {
+      var resteMs = g.WorkshopsSystem.getQueue(wid).reduce(function (s, e) { return s + Number(e.msRemaining || 0); }, 0);
+      wait(Math.max(1000, resteMs + 1000), "atelier");
+    }
   }
   if (have() < qty) note(res + " : " + have() + " / " + qty + " après fabrication");
   return have() >= qty;
@@ -560,8 +566,8 @@ function obtainPierre(qty) {
   for (var k = 0; k < 60 && have() < qty; k++) {
     var c = LM.getChantier && LM.getChantier("ruins");
     if (c && c.sectorId && !c.done && LM.canStart("ruins", c.sectorId).ok) { freeSector("ruins", c.sectorId); continue; }
-    if (g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (playDungeonOnce(3, false) === null) wait(3600e3); continue; }
-    if (!playExpedition("petite_aventure_ruines", null)) wait(3600e3);
+    if (g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (playDungeonOnce(3, false) === null) wait(3600e3, "pierre errante"); continue; }
+    if (!playExpedition("petite_aventure_ruines", null)) wait(3600e3, "pierre errante");
   }
   STATS.pierreH = (STATS.pierreH || 0) + (CLOCK.offset - t0) / 3600e3;
   if (have() < qty) note("pierre_errante : " + have() + " / " + qty);
@@ -589,7 +595,7 @@ function playExpedition(templateId, flag) {
     pourquoi += ", profondeur " + fin.depth + "/" + ((fin.card || []).length) + ", Souffle " + fin.breath;
     STATS.expeditionFails.push(templateId + " (" + pourquoi + ")");
     note(templateId + " : essai " + (essai + 1) + " sans succès — " + pourquoi);
-    wait(3600e3);
+    wait(3600e3, "échec à rejouer");
   }
   return !!(flag && flag());
 }
@@ -603,9 +609,9 @@ var CAP_RE = /aujourd'hui|Prochaine exp/;
 function waitCap() {
   var ms = (G.SceneRunManager.petiteAventureNextInMs && G.SceneRunManager.petiteAventureNextInMs()) || 24 * 3600e3;
   DAYS_WAITED++; CAP_WAIT_H += (ms + 60000) / 3600e3;
-  wait(ms + 60000);
+  wait(ms + 60000, "recharge");
 }
-var STATS = { expeditionFails: [], recouvrements: 0, farms: 0, shopBuys: 0, obstacles: {}, sacPlein: 0, secteurs: {}, fights: [], deaths: 0, potions: 0, combatMs: 0, healMs: 0, steps: [], retries: {}, grinds: {}, grindNone: {}, grindMs: 0, provisions: 0, murs: [], village: [], goldFarm: {}, elites: [], d13: [], r09: [], profils: {} };
+var STATS = { expeditionFails: [], recouvrements: 0, farms: 0, shopBuys: 0, obstacles: {}, sacPlein: 0, secteurs: {}, fights: [], deaths: 0, potions: 0, combatMs: 0, healMs: 0, attente: {}, steps: [], retries: {}, grinds: {}, grindNone: {}, grindMs: 0, provisions: 0, murs: [], village: [], goldFarm: {}, elites: [], d13: [], r09: [], profils: {} };
 var D13_FORGE = 3, D13_REFORGE = 4;
 var CURRENT_STEP = "création";   // jours attendus à cause du plafond journalier des Petites Aventures
 function freeSector(mapId, sectorId) {
@@ -635,7 +641,7 @@ function freeSector(mapId, sectorId) {
     var r = LM.start(mapId, cible);
     if (!r.ok && CAP_RE.test(r.reason || "")) { waitCap(); r = LM.start(mapId, cible); }
     if (!r.ok && /Petite ration/.test(r.reason || "")) { obtain("petite_ration", 1); r = LM.start(mapId, cible); }
-    if (!r.ok) { note("secteur " + cible + " : " + r.reason); wait(3600e3); continue; }
+    if (!r.ok) { note("secteur " + cible + " : " + r.reason); wait(3600e3, "échec à rejouer"); continue; }
     LAST_END = null;
     if (g.SceneRunManager.isRunActive()) { if (!playScene() && g.SceneRunManager.isRunActive()) g.SceneRunManager.abandon(); }
     else winCombat();
@@ -645,7 +651,7 @@ function freeSector(mapId, sectorId) {
     if (!LM.isLiberated(mapId, cible)) {
       var fr = g.game.sceneRun || {};
       STATS.expeditionFails.push(cible + " (" + (LAST_END || "?") + ", profondeur " + fr.depth + ", Souffle " + fr.breath + ", blessures " + (fr.injuries || []).length + ")");
-      note("secteur " + cible + " : essai " + (essai + 1) + " sans libération (" + LAST_END + ")"); wait(3600e3);
+      note("secteur " + cible + " : essai " + (essai + 1) + " sans libération (" + LAST_END + ")"); wait(3600e3, "échec à rejouer");
     }
   }
   return LM.isLiberated(mapId, cible);
@@ -677,7 +683,7 @@ function playDungeonOnce(id, withMark) {
   /* v3.358.0 (D7) : plus de tickets. Sorties du jour épuisées : on attend le renouvellement. */
   if (!D.hasRunLeft(id)) {
     var attente = Math.max(60e3, (g.game.dungeonTicketResetTime || 0) - FakeDate.now() + 1000);
-    wait(attente); D.checkTicketReset(); STATS.attenteDonjonH = (STATS.attenteDonjonH || 0) + attente / 3600e3;
+    wait(attente, "donjon"); D.checkTicketReset(); STATS.attenteDonjonH = (STATS.attenteDonjonH || 0) + attente / 3600e3;
   }
   D.start(id, marks);
   if (!g.game.dungeonRun.active) { note("donjon " + id + " : entrée refusée (sorties restantes " + D.getRunsLeft(id) + ")"); return null; }
@@ -725,11 +731,11 @@ function caravaneMarcheRuines(g) {
   if (!m) { note("Marché des Ruines absent : " + JSON.stringify(C.getMarkets())); return; }
   for (var essai = 0; essai < 6 && !g.storyDesertFlag("ruinsMarketDone"); essai++) {
     if (C.get() && C.isBack()) C.unload();
-    if (C.get()) { wait(Math.max(60e3, C.getSecondsLeft() * 1000 + 1000)); continue; }
+    if (C.get()) { wait(Math.max(60e3, C.getSecondsLeft() * 1000 + 1000), "caravane"); continue; }
     var why = C.getBlockReason("court");
-    if (why) { note("caravane : " + why); wait(2 * 3600e3); continue; }
+    if (why) { note("caravane : " + why); wait(2 * 3600e3, "caravane"); continue; }
     C.depart("court", m.world);
-    wait(Math.max(60e3, C.getSecondsLeft() * 1000 + 1000));
+    wait(Math.max(60e3, C.getSecondsLeft() * 1000 + 1000), "caravane");
     if (C.isBack()) C.unload();
   }
 }
@@ -812,6 +818,7 @@ function run() {
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
       if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
       var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
+      var snap0 = snapTemps();
       G.StoryQuestManager.acceptStep(cid);
       var solver = SOLVERS[step.id];
       if (!solver) { ok(false, step.id + " « " + step.title + " » : aucun geste connu pour « " + step.objectiveLabel + " »"); return; }
@@ -843,10 +850,24 @@ function run() {
       }
       if (ELITES_SECONDAIRES) elitesDuTableau();
       if (COMBATS) entretien();
+      // temps complet de l'étape, y compris ce qui suit la récompense (élites du tableau, entretien)
+      var stRec = STATS.steps[STATS.steps.length - 1]; stRec.temps = diffTemps(snap0, snapTemps()); stRec.apresH = stRec.temps.total - stRec.h;
       G.saveGame();
     }
     ok(true, "chapitre " + cid + " terminé");
   }
+}
+
+/* Où part le temps : combat, soin au camp et chaque cause d'attente (heures). */
+function snapTemps() { return { t: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, a: JSON.parse(JSON.stringify(STATS.attente)) }; }
+function diffTemps(a, b) {
+  var r = { total: (b.t - a.t) / 3600e3, parts: { combat: (b.c - a.c) / 3600e3, "soin au camp": (b.s - a.s) / 3600e3 } };
+  Object.keys(b.a).forEach(function (k) { var v = (b.a[k] - (a.a[k] || 0)) / 3600e3; if (v > 0) r.parts[k] = v; });
+  return r;
+}
+function topParts(parts, n, min) {
+  return Object.keys(parts).filter(function (k) { return parts[k] >= (min || 0.05); }).sort(function (x, y) { return parts[y] - parts[x]; }).slice(0, n)
+    .map(function (k) { return k + " " + parts[k].toFixed(1); }).join(" · ");
 }
 
 /* ---------- Un geste par étape (réels, par l'API que les boutons appellent) ---------- */
@@ -899,7 +920,7 @@ function farmOnce() {
   var c = cibles[0];
   var ok = freeSectorAgain(c[0], c[1]);
   if (!ok && COMBATS && grindOnce("farm")) return true; // v3.429.0 : l'élite résiste, on farme ailleurs
-  if (!ok) wait(3600e3);
+  if (!ok) wait(3600e3, "échec à rejouer");
   return ok;
 }
 
@@ -940,7 +961,7 @@ function workshopChain() {
 function upgradeBuilding(id, target) {
   var g = G, V = g.VillageBuildingManager;
   for (var k = 0; k < 20 && V.getLevel(id) < target; k++) {
-    if (V.isBuilding()) { wait(V.getSiteSecondsLeft() * 1000 + 1000); V.tick(); continue; }
+    if (V.isBuilding()) { wait(V.getSiteSecondsLeft() * 1000 + 1000, "chantier"); V.tick(); continue; }
     var why = V.getBlockReason(id);
     if (why === "Objectif en cours" && id === "workshop") { if (!workshopChain()) return false; continue; }
     var rang = /^Atelier niveau (\d+)/.exec(why || "");
@@ -948,7 +969,7 @@ function upgradeBuilding(id, target) {
     if (why === "Matériaux manquants") { if (!ensureCost(V.getNextCost(id))) return false; why = V.getBlockReason(id); }
     if (why) { note(id + " niveau " + (V.getLevel(id) + 1) + " : " + why); return false; }
     V.startBuild(id);
-    wait(V.getSiteSecondsLeft() * 1000 + 1000); V.tick();
+    wait(V.getSiteSecondsLeft() * 1000 + 1000, "chantier"); V.tick();
   }
   return V.getLevel(id) >= target;
 }
@@ -1000,7 +1021,7 @@ function gearRarity(rarity, n, needWeapon) {
     if (rarity === "rare" && g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (playDungeonOnce(3, false) === null) farmOnce(); }
     else farmOnce();
     if (process.env.TRACE_OR) console.log("      [or] " + Math.floor(orAvant) + " → " + Math.floor(g.game.gold) + " (farm) · équipé " + g.EQUIPMENT_SLOTS.map(function (s) { var it = g.game.equipped[s]; return s + ":" + (it ? it.rarity : "-"); }).join(",") + " · vitrine " + (g.game.equipShopStock || []).map(function (it) { return it.slot + "/" + it.rarity + "/" + it.price + (it.bought ? "✓" : ""); }).join(" ") + " · sac " + (g.game.inventory || []).length);
-    wait(2 * 3600e3);   // le joueur repasse à l'échoppe quelques heures plus tard
+    wait(2 * 3600e3, "échoppe");   // le joueur repasse à l'échoppe quelques heures plus tard
   }
   SAVING--;
   STATS.armes = vus;
@@ -1129,7 +1150,7 @@ var SOLVERS = {
     var d = g.LivingMapManager.getSectorDef("ruins", "coeur");
     for (var i = 0; i < 8 && g.storyCoeurVoisins() < 3; i++) {
       var id = d.neighbors.filter(function (n) { return !g.LivingMapManager.isLiberated("ruins", n); })[0];
-      if (!id || !freeSector("ruins", id)) wait(3600e3);
+      if (!id || !freeSector("ruins", id)) wait(3600e3, "échec à rejouer");
     }
   },
   ruines_17: function (g) { playExpedition("vers_le_coeur", function () { return g.storyDesertFlag("versLeCoeurDone"); }); },
@@ -1211,6 +1232,14 @@ if (COMBATS) {
     var mur = STATS.murs.some(function (m) { return m.step === st.id; });
     console.log("  " + (st.id + (mur ? " ▲" : "")).padEnd(28) + (st.h.toFixed(1) + " h").padStart(8) + (st.combatH.toFixed(1) + " h").padStart(8) + (st.healH.toFixed(1) + " h").padStart(7) + String(st.deaths).padStart(6) + String(st.level).padStart(6) + ("  " + st.totalH.toFixed(0) + " h"));
   });
+}
+if (COMBATS) {
+  console.log("\nOù part le temps, par étape (h, étape + élites et entretien qui suivent) :");
+  STATS.steps.forEach(function (st) { if (st.temps && st.temps.total >= 0.5) console.log("  " + st.id.padEnd(16) + (st.temps.total.toFixed(1) + " h").padStart(8) + "  " + topParts(st.temps.parts, 4, 0.1)); });
+  var parts = { combat: STATS.combatMs / 3600e3, "soin au camp": STATS.healMs / 3600e3 };
+  Object.keys(STATS.attente).forEach(function (k) { parts[k] = STATS.attente[k] / 3600e3; });
+  var somme = Object.keys(parts).reduce(function (s, k) { return s + parts[k]; }, 0);
+  console.log("Total par cause : " + topParts(parts, 20, 0) + " (somme " + somme.toFixed(1) + " / " + (CLOCK.offset / 3600e3).toFixed(1) + " h)");
 }
 STATS.economie = { orGagne: G.game.totalGoldEarned, or: G.game.gold, aetherTotal: G.game.totalAetherEarned, attenteDonjonH: STATS.attenteDonjonH || 0 };
 if (COMBATS) console.log("Économie : " + JSON.stringify(STATS.economie));
