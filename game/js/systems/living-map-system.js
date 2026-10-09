@@ -258,7 +258,8 @@ var LivingMapManager = {
     var c = lm.chantier;
     if (c && c.day === today && this.getSectorDef(mapId, c.sectorId)) return c;
     var open = map.sectors.filter(function (d) {
-      return !(d.requiresStoryStep && !self.isStoryStepReached(d.requiresStoryStep)) && !self.isRepeatable(mapId, d.id);
+      // v3.430.0 : noChantier (porte du Sanctuaire) — jamais rebâtie
+      return !d.noChantier && !(d.requiresStoryStep && !self.isStoryStepReached(d.requiresStoryStep)) && !self.isRepeatable(mapId, d.id);
     });
     var held = open.filter(function (d) { return self.isLiberated(mapId, d.id) && !self.isProtected(mapId, d.id); });
     var pool = held.length ? held : open.filter(function (d) { return self.isReachable(mapId, d.id) && !self.isLiberated(mapId, d.id); });

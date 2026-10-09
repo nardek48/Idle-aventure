@@ -308,6 +308,7 @@ var LIVING_MAPS = {
       // Fermé jusqu'à l'acte III : la porte du Sanctuaire scellé (donjon 3)
       { id: "porte_sanctuaire", name: "La porte du Sanctuaire", x: 49.3, y: 83, ring: 3, neighbors: ["maisons_basses", "tour_garde", "echafaudages"],
         requiresStoryStep: "ruines_11",
+        noChantier: true, // v3.430.0 : « la seule porte qu'aucun chantier ne touche » (hors tirage du chantier errant)
         content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["porte_qui_attend", "mur_neuf"] } },
         heldEffect: null,
         lore: "Une arche qui descend sous la ville. C'est la seule porte qu'aucun chantier ne touche." }

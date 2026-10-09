@@ -173,6 +173,41 @@ var ELITE_DB = {
     repeatable: true
   },
 
+  /* v3.430.0 (Ruines, acte III §2) — LE CONTREMAÎTRE, vague élite 8 du Sanctuaire scellé. Une
+     élite est isBoss : le trait « Bouclier » lui est fermé. C'est donc son ESCORTE qui porte le
+     mur : un Bâtisseur ordinaire le pose sur l'allié le plus entamé (RiseSystem.shieldTarget),
+     souvent le Contremaître. Le tuer d'abord, ou viser le soutien. Chiffres au banc. */
+  contremaitre: {
+    id: "contremaitre",
+    baseId: "batisseur",
+    name: "Le Contremaître",
+    archetype: "armored",
+    statMult: { endurance: 3, power: 3, celerity: 1.0 },
+    lore: "Il ne pose plus de pierres. Il regarde où les autres les posent, et il corrige.",
+    image: "./images/Enemies/elite_contremaitre.jpg", // à générer : icône générique en attendant
+    questIcon: "./images/Icons/quest_icons/elite/elite_contremaitre.png",
+    escort: { members: ["batisseur", "skeleton"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: false
+  },
+
+  /* v3.430.0 (Ruines, acte III, RU3) — LE GOLEM : lent, lourd, frappe rarement mais fort. Base
+     Gargouille (Blindée en trait fixe). Vague élite 12 du Sanctuaire ; gardien de la salle de
+     l'étape 14 (livraison 2). Chiffres au banc. */
+  golem: {
+    id: "golem",
+    baseId: "gargoyle",
+    name: "Le Golem",
+    archetype: "armored",
+    statMult: { endurance: 3.5, power: 4, celerity: 0.6 },
+    lore: "Une masse de pierre qui a des bras. Elle ne dort pas. Elle attend qu'on passe devant.",
+    image: "./images/Enemies/elite_golem.jpg", // à générer : icône générique en attendant
+    questIcon: "./images/Icons/quest_icons/elite/elite_golem.png",
+    escort: { members: ["zombie"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: false
+  },
+
   arbre_mere: {
     id: "arbre_mere",
     baseId: "foresttroll",

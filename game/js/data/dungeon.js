@@ -160,15 +160,33 @@ var DUNGEONS = [
     name: "Sanctuaire scellé",
     worldId: "ruins", worldRequired: 2, worldPower: 2, difficultyMult: 6,
     maxRarity: "rare",
-    specialResourceId: null, specialResourceAmount: 0,
+    // v3.430.0 (acte III) : la Pierre errante en fin de run, comme le Verre des dunes à la Cité
+    specialResourceId: "pierre_errante", specialResourceAmount: 2,
     icon: "images/Dungeons/Icone_base/palier3.jpg", banner: null, combatMap: null,
     desc: "Ce que les ruines gardent encore, elles le gardent avec méthode.",
     story: "Un froid ancien s'infiltre jusque dans les os. Ces lieux ne sont pas laissés à l'abandon — quelque chose les garde, avec méthode.",
-    enemyPool: null, eliteWaves: null,
-    boss: { baseId: "skeletonlord", name: "Gardien scellé", archetype: "armored", statMult: { endurance: 1, power: 1 }, image: null },
-    /* v3.429.2 (bug Seb) : ouvert dès l'arrivée aux Ruines. Fermé jusqu'à l'acte III (porte du
-       Sanctuaire), faute de pool, d'élites et de boss calibré — comme la Cité avant W-4. */
-    locked: true,
+    /* v3.430.0 (Ruines, acte III §2) : le pool des Ruines (squelette et zombie se relèvent,
+       gargouille blindée). Vague 8 : le Contremaître, dont l'escorte blinde l'élite ; vague 12 :
+       le Golem, le même qu'à l'étape 14. */
+    enemyPool: ["skeleton", "zombie", "ghoul", "gargoyle"],
+    eliteWaves: { 8: "contremaitre", 12: "golem" },
+    /* v3.430.0 (RU13, validé le 09/10) — LE CAMPEMENT : halte dans le run après la vague
+       afterWave. Le butin de l'étape 1 est mis en sûreté ; une action au choix (Souffler,
+       Changer de compagnon, Sortir). storyFlag : noté pour l'étape ruines_12. */
+    camp: { afterWave: 8, healPct: 0.4, stoneAmount: 1, storyFlag: "sanctuaireCamp" },
+    /* Varrek, le Garde scellé (nom validé le 09/10) : base Seigneur squelette, Blindé, se relève
+       une fois (rises, systems/rise-system.js) : sa relève vaut une demi-barre, d'où l'endurance
+       basse. Banc sim/ruines-acte3-bench.js (24 runs, profil Rare provisoire, Wenna + Maddoc) :
+       à 1 / 1, 8-42 % ; à 0,8 / 0,6 -> Chev. 71 / Rôd. 54 / Mage 67 %. Provisoire : à recaler sur
+       le vrai palier Rare (Forge 4) en livraison 2. Portrait à générer. */
+    boss: { baseId: "skeletonlord", name: "Varrek, le Garde scellé", archetype: "armored", rises: true,
+      statMult: { endurance: 0.6, power: 0.8 }, image: "./images/Boss/varrek.jpg" },
+    /* v3.429.2 : fermé dès l'arrivée aux Ruines, faute de contenu. v3.430.0 : verrou d'Histoire,
+       comme la Cité — il s'ouvre à ruines_12 ; entrée offerte pendant les étapes 12 et 15. */
+    locked: false,
+    requiresStoryStep: "ruines_12",
+    storyChapterId: "ruins",
+    storyFreeSteps: ["ruines_12", "ruines_15"],
     lockedHint: "Le Sanctuaire est encore scellé."
   },
   {

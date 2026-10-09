@@ -85,7 +85,10 @@ var STORY_REWARDS = {
   ruines_07: { gold: 2000, equipmentRarity: "green", equipmentCount: 1, equipmentFill: true },
   ruines_08: { gold: 2100, resources: { pierre_errante: 2 }, equipmentRarity: "green", equipmentCount: 1, equipmentFill: true },
   ruines_09: { gold: 2200 },
-  ruines_10: { gold: 2600, resources: { pierre_errante: 4 } }
+  ruines_10: { gold: 2600, resources: { pierre_errante: 4 } },
+  // v3.430.0 (acte III, livraison 1, provisoire : au banc) : une pièce Rare chacune, pour le palier de ruines_13
+  ruines_11: { gold: 2700, equipmentRarity: "rare", equipmentCount: 1, equipmentFill: true },
+  ruines_12: { gold: 2800, resources: { pierre_errante: 2 }, equipmentRarity: "rare", equipmentCount: 1, equipmentFill: true }
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -1680,7 +1683,7 @@ STORY_QUESTS.ruins = {
   title: "La ville rangée",
   subtitle: "Chapitre 3 — Ruines",
   icon: "images/Icons/codex/world_ruins.png",
-  endText: "Fin de l'acte II — la cité se souvient mieux que lui.",
+  endText: "La suite de l'acte III arrive bientôt.", // v3.430.0 : livraison 1 de l'acte III (étapes 11 et 12)
   steps: [
     /* ---------- Acte I — La route du nord ---------- */
     /* Étape 1 (doc §3) : la traversée, parcours v2 de quatre paliers ; le monde est posé à
@@ -2089,9 +2092,89 @@ STORY_QUESTS.ruins = {
       linkTo: { section: "adventure", cardId: "adv_aq_ruines_salle" },
       check: function (game) { return storyAdvDone(game, "aq_ruines_salle"); },
       progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_ruines_salle", "rencontres_salle", 4) + "/4"; }
+    },
+
+    /* ---------- Acte III — Le cœur de pierre (document « Ruines — Acte III » v1.0, validé le 09/10) ---------- */
+    /* Étape 11 (§1) : la porte du Sanctuaire s'ouvre sur la carte (requiresStoryStep). */
+    {
+      id: "ruines_11",
+      title: "La porte qui descend",
+      act: "Acte III — Le cœur de pierre",
+      narrative: {
+        objective: "Cette nuit, le chantier a refait un quartier de plus. Edda rature, recopie, puis pose le doigt sur la seule arche de sa feuille qui n'a jamais été raturée.",
+        completion: "L'arche est dégagée. En bas, des marches couvertes de poussière. C'est la première poussière que tu vois aux Ruines. En bas, personne ne range.",
+        dialogue: [
+          { who: "Edda", text: "Celle-là ne bouge jamais. Les autres tournent autour." },
+          { who: "Sarkel", text: "Une porte que personne ne range. C'est qu'on la garde." },
+          { who: "Maddoc", text: "Ou qu'on n'ose pas." },
+          { who: "Le Veilleur", text: "On la gardait." },
+          { who: "Wenna", text: "Qui, on ?" },
+          { who: "Le Veilleur", text: "Ceux qui sont en bas." }
+        ],
+        completionDialogue: [
+          { who: "Edda", text: "Je n'ai jamais dessiné le dessous." },
+          { who: "Le Veilleur", text: "Il n'a pas changé. Il n'en a pas besoin." }
+        ]
+      },
+      objectiveLabel: "Libérer « La porte du Sanctuaire » (carte des Ruines)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_11,
+      linkTo: { section: "map", cardId: "livingmap_ruins" },
+      check: function () { return storyPorteSanctuaire(); },
+      progress: function () { return "Porte du Sanctuaire " + (storyPorteSanctuaire() ? "1/1" : "0/1"); }
+    },
+    /* Étape 12 (§2) : le Sanctuaire scellé s'ouvre (requiresStoryStep) ; atteindre le campement,
+       noté par le donjon lui-même (camp.storyFlag, game.explorationProgression). */
+    {
+      id: "ruines_12",
+      title: "Sous la ville",
+      act: "Acte III — Le cœur de pierre",
+      narrative: {
+        objective: "Les marches descendent plus loin que la ville n'est haute. En bas, des couloirs droits. Ici, rien ne bouge. Sauf ceux qui les gardent.",
+        completion: "La salle de garde. Des lits de pierre, trop courts pour Maddoc. Tu fais du feu. La fumée monte droit, par un trou percé exprès pour elle.",
+        dialogue: [
+          { who: "Maddoc", text: "Ils se relèvent aussi, en bas ?" },
+          { who: "Edda", text: "En bas surtout. Ils n'ont rien d'autre à faire." },
+          { who: "Wenna", text: "Et si c'est trop long ?" },
+          { who: "Le Veilleur", text: "À mi-chemin, il y a une salle de garde. On y dormait entre deux tours. Vous pourrez y faire du feu." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Quelqu'un a pensé à la fumée ?" },
+          { who: "Le Veilleur", text: "Oui." }
+        ]
+      },
+      objectiveLabel: "Atteindre le campement du Sanctuaire scellé (l'élite de la vague 8)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_12,
+      linkTo: { tab: "dungeon" },
+      tutorial: {
+        tab: "dungeon",
+        icon: "images/Icons/camp/campfire.png",
+        title: "Le campement",
+        points: [
+          { icon: "images/Icons/subtabs/dungeon.png", text: "Le Sanctuaire scellé se joue en deux étapes. Entre les deux, le campement : une halte, un seul choix." },
+          { icon: "images/Icons/combat_stats/stat_health.png", text: "Souffler : tu reprends une partie de tes PV. Changer de compagnon : deux sur trois, selon ce qui attend en bas." },
+          { icon: "images/Icons/camp/campfire.png", text: "Sortir : tu remontes avec le butin de la première étape. Il est à toi, quoi qu'il arrive ensuite." },
+          { icon: "images/Icons/dungeon/dungeon_guaranteed_loot.png", text: "Tomber dans la deuxième étape ne coûte que le butin de la deuxième étape." }
+        ]
+      },
+      check: function (game) { return storySanctuaireCamp(game); },
+      progress: function (game) { return "Campement " + (storySanctuaireCamp(game) ? "1/1" : "0/1"); }
     }
   ]
 };
+
+/* v3.430.0 (Ruines, ruines_11) — la porte du Sanctuaire libérée au moins une fois. */
+function storyPorteSanctuaire() {
+  var lm = window.LivingMapManager, st = lm && lm.getState("ruins", "porte_sanctuaire");
+  return !!(st && st.liberatedCount > 0);
+}
+
+/* v3.430.0 (Ruines, ruines_12) — campement du Sanctuaire atteint : drapeau posé par
+   DungeonManager à la halte (dungeon.camp.storyFlag), lecture seule ici. */
+function storySanctuaireCamp(game) {
+  return !!(game && game.explorationProgression && game.explorationProgression.sanctuaireCamp);
+}
 
 /* v3.429.0 (Ruines, acte II) — quartiers de la carte des Ruines libérés au moins une fois. */
 function storyRuinsSectorsFreed() {
@@ -2120,6 +2203,8 @@ function storyPalierRuines(game) {
 }
 window.storyPalierRuines = storyPalierRuines;
 window.storyRuinsSectorsFreed = storyRuinsSectorsFreed;
+window.storyPorteSanctuaire = storyPorteSanctuaire;
+window.storySanctuaireCamp = storySanctuaireCamp;
 window.storyEddaInParty = storyEddaInParty;
 window.STORY_SEUIL_TEXTS = STORY_SEUIL_TEXTS;
 

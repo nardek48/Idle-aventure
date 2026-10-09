@@ -246,6 +246,142 @@ function confirmDungeonStart() {
   if (id != null) DungeonManager.start(id, marks);
 }
 
+/* ---------- Le campement (v3.430.0, RU13 — atelier/campement-sanctuaire.html, validé le 09/10) ----------
+   Feuille sans croix : on n'en sort qu'en choisissant. Une seule action : Souffler, Changer de
+   compagnon (le nouveau venu descend à PV pleins), Sortir. Le combat attend derrière (modale bloquante). */
+var campPick = null;
+var campParty = [];
+
+function openDungeonCampSheet() {
+  if (!DungeonManager.isCampPending()) return;
+  campPick = null;
+  campParty = window.CompanionManager ? CompanionManager.partyIds().slice() : [];
+  renderDungeonCampSheet();
+}
+
+function renderDungeonCampSheet() {
+  var host = document.getElementById("dungeon-modal-root");
+  if (!host) return;
+  if (!DungeonManager.isCampPending()) { host.innerHTML = ""; return; }
+  host.innerHTML = buildDungeonCampSheetHTML();
+}
+
+function campPct(hp, max) { return Math.max(0, Math.min(100, Math.round(Number(hp || 0) / Math.max(1, Number(max || 1)) * 100))); }
+
+/* Une ligne du groupe : PV, et l'aperçu avant / après quand Souffler est choisi. */
+function buildCampMemberHTML(img, name, hp, max, gain, fresh) {
+  var p = campPct(hp, max), a = gain ? campPct(Math.min(max, hp + gain), max) : p;
+  var h = '<div class="dcamp-who">' + (img ? '<img class="dcamp-ava" src="' + esc(img) + '" alt="">' : '<span class="dcamp-ava is-hero">' + _t("Toi") + '</span>');
+  h += '<b>' + esc(name) + (fresh ? ' <small>· ' + _t("frais") + '</small>' : '') + '</b>';
+  h += '<span class="dcamp-num">' + (gain ? p + ' % → <em>' + a + ' %</em>' : p + ' %') + '</span>';
+  h += '<div class="dcamp-pv"><i class="' + (gain ? 'is-gain' : (p < 35 ? 'is-low' : '')) + '" style="width:' + a + '%' + (gain && a > 0 ? ';--from:' + Math.round(p / a * 100) + '%' : '') + '"></i></div></div>';
+  return h;
+}
+
+function buildDungeonCampSheetHTML() {
+  var run = game.dungeonRun || {}, dungeon = DungeonManager.getById(run.dungeonId), camp = DungeonManager.getCamp(dungeon) || {};
+  var CM = window.CompanionManager, heal = campPick === "souffler", pct = Number(camp.healPct) || 0.4;
+  var cand = DungeonManager.campCandidates(), now = CM ? CM.partyIds() : [];
+  var canSwap = CM && cand.length > now.length;
+  var shown = campPick === "changer" ? campParty : now;
+  var loot = run.campLoot || {};
+
+  var h = '<div class="ksheet-backdrop"></div>';
+  h += '<div class="ksheet dungeon-camp-sheet">';
+  h += kSheetHeadHTML({
+    icon: '<img src="images/Icons/camp/campfire.png" alt="">',
+    title: _t("Le campement"),
+    sub: _t("Salle de garde · étape 1 sur 2 passée")
+  });
+  h += '<div class="ksheet-body">';
+  h += '<p class="dcamp-quote">' + _t("Des lits de pierre, trop courts pour Maddoc. Tu fais du feu. La fumée monte droit, par un trou percé exprès pour elle.") + '</p>';
+
+  h += '<div class="dcamp-lbl">' + _t("Le groupe") + '</div><div class="dcamp-card">';
+  h += buildCampMemberHTML(null, _t("Toi"), game.heroHp || 0, game.heroMaxHp || 1, heal ? Math.floor((game.heroMaxHp || 1) * pct) : 0, false);
+  shown.forEach(function (id) {
+    var def = getCompanionDef(id), max = CM.maxHpOf(id), fresh = now.indexOf(id) === -1;
+    var hp = fresh ? max : CM.hpOf(id);
+    h += buildCampMemberHTML(def && def.image, def ? _td(def.name) : id, hp, max, heal ? Math.floor(max * pct) : 0, fresh);
+  });
+  h += '</div>';
+
+  h += '<div class="dcamp-lbl">' + _t("Butin de l’étape 1") + '</div><div class="dcamp-card dcamp-loot">';
+  h += '<span><img class=ico-inline src=images/Icons/gold_icon.png> +' + formatNumber(loot.gold || 0) + ' ' + _t("or") + '</span>';
+  h += '<span><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> +' + formatNumber(loot.shards || 0) + ' ' + _t("Éclats") + '</span>';
+  var sDef = loot.stoneId && WAREHOUSE_RESOURCES[loot.stoneId];
+  if (sDef && loot.stone > 0) h += '<span>' + renderIconOrEmojiHTML(sDef.icon, "ico-inline", _td(sDef.name)) + ' +' + loot.stone + ' ' + esc(_td(sDef.name)) + '</span>';
+  (loot.items || []).forEach(function (it) {
+    var col = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[it.rarity]) || "inherit";
+    h += '<span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> <span style="color:' + col + '">' + esc(_td(it.name)) + '</span></span>';
+  });
+  h += '</div>';
+
+  h += '<div class="dcamp-lbl">' + _t("Une seule action") + '</div>';
+  h += buildCampOptionHTML("souffler", "images/Icons/combat_stats/stat_health.png", _t("Souffler"), _t("Le groupe reprend {n} % de ses PV.", { n: Math.round(pct * 100) }), heal ? _t("Puis la descente reprend.") : "", "", true);
+  var sw = "";
+  if (campPick === "changer") {
+    sw = '<div class="dcamp-swap">' + cand.map(function (id) {
+      var def = getCompanionDef(id), on = campParty.indexOf(id) !== -1;
+      return '<button type="button" aria-pressed="' + on + '" onclick="event.stopPropagation();toggleCampCompanion(\'' + esc(id) + '\')">'
+        + '<img src="' + esc(def && def.image || "") + '" alt="">' + esc(def ? _td(def.name) : id) + '</button>';
+    }).join("") + '</div>';
+  }
+  h += buildCampOptionHTML("changer", "images/Icons/subtabs/hero_summary.png", _t("Changer de compagnon"),
+    canSwap ? _t("Deux sur trois, selon ce qui attend en bas. Celui qui arrive est frais.") : _t("Aucun autre compagnon ne peut descendre."), campSwapText(now), sw, canSwap);
+  h += buildCampOptionHTML("sortir", "images/Icons/camp/campfire.png", _t("Sortir"), _t("Tu remontes avec le butin de l’étape 1. Il est à toi."), campPick === "sortir" ? _t("La sortie s’arrête là.") : "", "", true);
+  h += '<p class="dcamp-next">' + _t("En bas : vagues {a} à {b}, une élite, puis le boss. Tomber en bas ne coûte que le butin d’en bas.", { a: (Number(camp.afterWave) || 8) + 1, b: DUNGEON_CONFIG.waveCount }) + '</p>';
+  h += '</div>';
+
+  var changed = campParty.slice().sort().join() !== now.slice().sort().join();
+  var ready = campPick === "souffler" || campPick === "sortir" || (campPick === "changer" && changed && campParty.length === Math.min(COMPANION_MAX_PRESENT, cand.length));
+  var label = !campPick ? _t("Choisis une action") : campPick === "souffler" ? _t("Souffler, puis descendre")
+    : campPick === "sortir" ? _t("Remonter avec le butin") : (ready ? _t("Changer, puis descendre") : _t("Choisis qui descend"));
+  h += '<div class="ksheet-foot"><button type="button" class="kbtn primary"' + (ready ? '' : ' disabled') + ' onclick="confirmCampAction()">' + label + '</button></div>';
+  h += '</div>';
+  return h;
+}
+
+function buildCampOptionHTML(id, icon, title, desc, eff, extra, enabled) {
+  var on = campPick === id;
+  return '<div class="dcamp-opt' + (on ? ' is-on' : '') + (enabled ? '' : ' is-off') + '" role="radio" tabindex="0" aria-checked="' + on + '"'
+    + (enabled ? ' onclick="pickCampAction(\'' + id + '\')"' : '') + '>'
+    + '<img src="' + icon + '" alt=""><b>' + title + '</b><span>' + desc + '</span>'
+    + (eff ? '<span class="dcamp-eff">' + eff + '</span>' : '') + (extra || '') + '</div>';
+}
+
+function campSwapText(now) {
+  if (campPick !== "changer") return "";
+  var inn = campParty.filter(function (id) { return now.indexOf(id) === -1; });
+  var out = now.filter(function (id) { return campParty.indexOf(id) === -1; });
+  if (campParty.length < Math.min(COMPANION_MAX_PRESENT, DungeonManager.campCandidates().length)) return _t("Touche qui descend.");
+  if (!inn.length) return _t("Touche celui qui garde le feu, puis celui qui descend.");
+  var n = function (id) { var d = getCompanionDef(id); return d ? _td(d.name) : id; };
+  return _t("{a} descend, {b} garde le feu.", { a: n(inn[0]), b: n(out[0]) });
+}
+
+function pickCampAction(id) {
+  campPick = id;
+  if (id !== "changer") campParty = window.CompanionManager ? CompanionManager.partyIds().slice() : [];
+  renderDungeonCampSheet();
+}
+
+function toggleCampCompanion(id) {
+  var i = campParty.indexOf(id);
+  if (i !== -1) campParty.splice(i, 1);
+  else if (campParty.length < COMPANION_MAX_PRESENT) campParty.push(id);
+  renderDungeonCampSheet();
+}
+
+function confirmCampAction() {
+  var pick = campPick, party = campParty.slice();
+  if (!pick) return;
+  var host = document.getElementById("dungeon-modal-root");
+  if (pick !== "sortir" && host) host.innerHTML = "";
+  if (!DungeonManager.campAction(pick, party)) { renderDungeonCampSheet(); return; }
+  campPick = null;
+  if (pick !== "sortir" && typeof switchTab === "function") switchTab("combat");
+}
+
 /* ---------- Rapport de fin ---------- */
 function buildDungeonSummaryHTML(result) {
   var h = '<div class="full-menu-overlay kwin-veil">';
@@ -255,6 +391,7 @@ function buildDungeonSummaryHTML(result) {
   h += '    <div class="kwin-body">';
   h += '    <div class="kwin-quote dungeon-story-text">' + (result.success
     ? _t("Le boss s’effondre. La salle retrouve son calme — pour cette fois.")
+    : result.outcome === "camp" ? _t("Tu remontes du campement. Ce que tu portais est à toi.")
     : _t("La tentative s’arrête à la vague {a} sur {b}. Tu récupères quand même quelque chose avant de te replier.", { a: result.clearedWave, b: result.wavesTotal })) + '</div>';
 
   h += '    <div class="dungeon-summary-rewards">';
@@ -264,6 +401,8 @@ function buildDungeonSummaryHTML(result) {
     h += '      <div class="dungeon-summary-row"><span>' + _t("Marques") + '</span><span>×' + Number(result.markMult || 1).toFixed(2).replace(/0$/, "") + ' · ' + esc(names) + '</span></div>';
   }
   h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/gold_icon.png> ' + _t("Or") + '</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
+  // v3.430.0 : ce que le campement avait déjà mis en sûreté (étape 1)
+  if (result.campLoot && result.campLoot.gold > 0) h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/camp/campfire.png> ' + _t("En sûreté au campement") + '</span><span>+' + formatNumber(result.campLoot.gold) + ' ' + _t("or") + '</span></div>';
   h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + _t("Éclats") + '</span><span>+' + formatNumber(result.shardsGained) + '</span></div>';
   if (result.specialGained > 0 && result.specialName) {
     h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/scene/path_easy.png> ' + esc(_td(result.specialName)) + '</span><span>+' + result.specialGained + '</span></div>';
@@ -297,5 +436,9 @@ window.toggleDungeonMark = toggleDungeonMark;
 window.confirmDungeonStart = confirmDungeonStart;
 window.openDungeonSummary = openDungeonSummary;
 window.closeDungeonSummary = closeDungeonSummary;
+window.openDungeonCampSheet = openDungeonCampSheet;
+window.pickCampAction = pickCampAction;
+window.toggleCampCompanion = toggleCampCompanion;
+window.confirmCampAction = confirmCampAction;
 
 /* v3.358.0 (D7) : l'overlay d'achat de tickets est retiré avec l'essence. */

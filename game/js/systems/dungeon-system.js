@@ -334,6 +334,7 @@ var DungeonManager = {
       archetype: (isBossWave && bossDef && bossDef.archetype) ? bossDef.archetype : (!isBossWave && window.FIXED_ENEMY_ARCHETYPES && FIXED_ENEMY_ARCHETYPES[id]) || null,
       // v3.288.0 : seuils de phase du boss, lus par CombatEngine.checkPhases().
       phases: (isBossWave && bossDef && Array.isArray(bossDef.phases)) ? bossDef.phases : null,
+      rises: !!(isBossWave && bossDef && bossDef.rises), // v3.430.0 : Varrek se relève une fois (rise-system.js)
       hp: hp,
       maxHp: hp,
       goldReward: Math.floor((isBossWave ? 60 : 8) * scale),
@@ -369,6 +370,93 @@ var DungeonManager = {
     if (window.CombatEngine && typeof CombatEngine.prepareEnemy === "function") CombatEngine.prepareEnemy(game.enemy);
     if (typeof renderEnemy === "function") renderEnemy();
     if (typeof renderHud === "function") renderHud();
+    // v3.430.0 : run rechargé à la halte (save-system respawne la vague) : la feuille du campement revient
+    if (this.isCampPending() && typeof openDungeonCampSheet === "function") setTimeout(openDungeonCampSheet, 0);
+  },
+
+  /* ---------- Le campement (v3.430.0, RU13 — Conception Ruines v1.4, validé le 09/10) ----------
+     Donjon à `camp` : après la vague camp.afterWave, le run s'arrête au campement. Le butin de
+     l'étape 1 est mis en sûreté (SortieManager.secure) avec camp.stoneAmount du matériau du donjon,
+     puis UNE action : Souffler, Changer de compagnon, Sortir. État dans game.dungeonRun, déjà
+     sauvegardé en entier : camp = "pending" (halte), "done" (étape 2), campLoot (affichage). */
+  getCamp: function (dungeon) {
+    var c = dungeon && dungeon.camp;
+    return (c && Number(c.afterWave) > 0 && Number(c.afterWave) < DUNGEON_CONFIG.waveCount) ? c : null;
+  },
+
+  isCampPending: function () {
+    return !!(game.dungeonRun && game.dungeonRun.active && game.dungeonRun.camp === "pending");
+  },
+
+  /* Appelé par onEnemyKilled : true si la halte commence (la vague suivante attend derrière la feuille). */
+  reachCamp: function (clearedWave) {
+    var run = game.dungeonRun, dungeon = this.getById(run.dungeonId), camp = this.getCamp(dungeon);
+    if (!camp || run.camp || clearedWave !== Number(camp.afterWave)) return false;
+    run.camp = "pending";
+    var kept = window.SortieManager ? SortieManager.secure() : { gold: 0, items: [], resources: {} };
+    var stone = 0;
+    if (dungeon.specialResourceId && camp.stoneAmount > 0 && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
+      stone = WarehouseManager.addResource(dungeon.specialResourceId, Number(camp.stoneAmount), true) || 0;
+    }
+    run.campLoot = {
+      gold: Number(kept.gold || 0),
+      items: (kept.items || []).map(function (it) { return { name: it.name, rarity: it.rarity }; }),
+      shards: Number(run.shardsEarned || 0),
+      stone: stone, stoneId: dungeon.specialResourceId || null
+    };
+    if (camp.storyFlag) {
+      if (!game.explorationProgression || typeof game.explorationProgression !== "object") game.explorationProgression = {};
+      game.explorationProgression[camp.storyFlag] = true;
+    }
+    addLog("🔥 " + _t("Le campement : le butin de la première étape est en sûreté."), "event");
+    this.spawnWave(clearedWave + 1);   // la vague suivante attend ; la feuille bloque le combat
+    saveGame();
+    return true;
+  },
+
+  /* Compagnons qui peuvent descendre (débloqués, pas en patrouille). */
+  campCandidates: function () {
+    if (!window.CompanionManager) return [];
+    return CompanionManager.unlockedIds().filter(function (id) {
+      return !(window.PatrolManager && PatrolManager.isOnPatrol(id));
+    });
+  },
+
+  /* action : "souffler" | "changer" (party : deux ids) | "sortir". Une seule par halte. */
+  campAction: function (action, party) {
+    if (!this.isCampPending()) return false;
+    var run = game.dungeonRun, dungeon = this.getById(run.dungeonId), camp = this.getCamp(dungeon) || {};
+    if (action === "sortir") {
+      run.camp = "done";
+      this.finish(false, Number(camp.afterWave) || (run.wave - 1), "camp");
+      return true;
+    }
+    if (action === "souffler") {
+      var pct = Number(camp.healPct) || 0.4;
+      game.heroHp = Math.min(game.heroMaxHp || 1, Math.floor((game.heroHp || 0) + (game.heroMaxHp || 1) * pct));
+      if (window.CompanionManager) CompanionManager.partyIds().forEach(function (id) {
+        var st = CompanionManager.state(id), max = CompanionManager.maxHpOf(id);
+        st.hp = Math.min(max, Math.floor(CompanionManager.hpOf(id) + max * pct));
+      });
+      addLog("🔥 " + _t("Le groupe souffle au campement."), "event");
+    } else if (action === "changer") {
+      var CM = window.CompanionManager, want = Array.isArray(party) ? party.slice(0, COMPANION_MAX_PRESENT) : [];
+      var cand = this.campCandidates(), now = CM ? CM.partyIds() : [];
+      if (!CM || want.length !== Math.min(COMPANION_MAX_PRESENT, cand.length) || want.some(function (id) { return cand.indexOf(id) === -1; })) return false;
+      if (want.slice().sort().join() === now.slice().sort().join()) return false;
+      // Ceux qui partent gardent le feu ; ceux qui arrivent descendent à PV pleins (validé à l'atelier)
+      cand.forEach(function (id) {
+        var st = CM.state(id), on = want.indexOf(id) !== -1;
+        if (on && now.indexOf(id) === -1) st.hp = CM.maxHpOf(id);
+        st.present = on;
+      });
+      CM.refreshParty();
+      addLog("🔥 " + _t("Au campement, le groupe change : {x} descendent.", { x: want.map(function (id) { var d = getCompanionDef(id); return d ? _td(d.name) : id; }).join(", ") }), "event");
+    } else return false;
+    run.camp = "done";
+    if (typeof renderAll === "function") renderAll();
+    saveGame();
+    return true;
   },
 
   /* v3.136.0 (audit Forêt §3.4) : ticket OFFERT par l'Histoire sur le Donjon I tant que l'étape forest_14
@@ -446,6 +534,8 @@ var DungeonManager = {
     }
 
     var nextWave = clearedWave + 1;
+    // v3.430.0 (RU13) : le campement, halte après la vague de la première étape
+    if (this.reachCamp(clearedWave)) return;
     if (nextWave > DUNGEON_CONFIG.waveCount) {
       addLog(_t("🏰 Vagues terminées ! Le boss du donjon apparaît..."), "event");
       showToast(_t("👑 Le boss du donjon apparaît !"), 2000);
@@ -487,6 +577,8 @@ var DungeonManager = {
     var runMarks = (game.dungeonRun.marks || []).slice();
     var markMult = this.getMarkRewardMult(runMarks.length); // v3.245.0 : cumul des Marques, appliqué ici (or et matériau de fin ne passent pas par goldMult)
     if (success && window.SortieManager) SortieManager.end("success");
+    if (outcome === "camp" && window.SortieManager) SortieManager.end("return"); // v3.430.0 : rien à perdre, le sac de l'étape 1 est banqué
+    var campLoot = game.dungeonRun.campLoot || null; // v3.430.0 : pour le rapport de fin
     var wavesTotal = DUNGEON_CONFIG.waveCount;
     var progress = Math.max(0, Math.min(1, clearedWave / wavesTotal));
 
@@ -515,6 +607,11 @@ var DungeonManager = {
       goldReward = 0;
       grantLoot = false;
       lootRarity = null;
+    } else if (outcome === "camp") {
+      // v3.430.0 (RU13) : Sortir au campement — la part de l'étape 1, sans la moitié de la fuite
+      goldReward = Math.floor(DUNGEON_CONFIG.fullClearGoldBase * worldBonus * progress * 0.6);
+      grantLoot = chance(DUNGEON_CONFIG.partialLootChance);
+      lootRarity = allowedForTier[randInt(0, allowedForTier.length - 1)];
     } else {
       var fleeKeep = (typeof SORTIE_FLEE_KEEP_PCT === "number") ? SORTIE_FLEE_KEEP_PCT : 0.5;
       goldReward = Math.floor(DUNGEON_CONFIG.fullClearGoldBase * worldBonus * progress * 0.6 * fleeKeep);
@@ -569,6 +666,8 @@ var DungeonManager = {
 
     var msg = success
       ? "🏆 " + _t("{x} terminé ! +{g} or", { x: _td(tier.name), g: formatNumber(goldReward) })
+      : outcome === "camp"
+        ? "🔥 " + _t("{x} : tu remontes du campement (vague {a}/{b}) : +{g} or", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) })
       : (outcome === "death"
         ? "🏰 " + _t("{x} : terrassé à la vague {a}/{b} — aucune récompense, le butin reste dans le donjon.", { x: _td(tier.name), a: clearedWave + 1, b: wavesTotal })
         : "🏰 " + _t("{x} abandonné (vague {a}/{b}) : +{g} or (moitié)", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) }));
@@ -603,7 +702,10 @@ var DungeonManager = {
         specialName: specialDef ? specialDef.name : null,
         // v3.245.0 : Marques du run et multiplicateur, pour la ligne « Marques ×1,45 » du rapport
         marks: runMarks,
-        markMult: markMult
+        markMult: markMult,
+        // v3.430.0 : sortie par le campement, et le butin de l'étape 1 mis en sûreté
+        outcome: outcome || (success ? "success" : null),
+        campLoot: campLoot
       });
     }
 

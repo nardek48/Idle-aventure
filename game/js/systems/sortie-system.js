@@ -111,6 +111,17 @@ var SortieManager = {
     return parts.length ? parts.join(", ") : _t("rien");
   },
 
+  /* v3.430.0 (campement du Sanctuaire, RU13) : met en sûreté le butin porté sans clore la
+     sortie. Banqué tel quel ; la suite de la sortie repart d'un sac vide. Renvoie ce qui a été banqué. */
+  secure: function () {
+    var s = this.ensure();
+    if (!s.active) return this.emptyLoot();
+    var kept = s.loot;
+    this.bank(kept);
+    s.loot = this.emptyLoot();
+    return kept;
+  },
+
   /* ---------- Fin de sortie ---------- */
   /* outcome : "return" (Rentrer, farm) | "success" (mission réussie) | "flee" (50 %) | "death" (tout perdu). Idempotent. */
   end: function (outcome) {

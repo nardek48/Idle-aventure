@@ -4482,9 +4482,9 @@ console.log("\n[32] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9riau
   ok(!!g.WAREHOUSE_RESOURCES[t1.specialResourceId], "...et cette ressource existe bien \u00e0 l'Entrep\u00f4t");
 
   var sansMateriau = (g.DUNGEONS || []).filter(function (t) { return !t.specialResourceId; });
-  // v3.321.0 : la Cité engloutie rapporte du Verre des dunes — il en reste quatre à venir
-  ok(sansMateriau.length === 4 && D.getById(2).specialResourceId === "verre_des_dunes",
-    "la Cit\u00e9 rapporte du Verre des dunes, les quatre donjons suivants attendent le leur");
+  // v3.321.0 : la Cité engloutie rapporte du Verre des dunes ; v3.430.0 : le Sanctuaire, de la Pierre errante — trois à venir
+  ok(sansMateriau.length === 3 && D.getById(2).specialResourceId === "verre_des_dunes" && D.getById(3).specialResourceId === "pierre_errante",
+    "la Cit\u00e9 rapporte du Verre des dunes, le Sanctuaire de la Pierre errante, les trois donjons suivants attendent le leur");
   var tousDeclares = (g.DUNGEONS || []).every(function (t) { return typeof t.worldRequired === "number"; });
   ok(tousDeclares, "chaque donjon d\u00e9clare son monde requis");
 
@@ -14074,7 +14074,7 @@ console.log("\n[203] v3.428.0 — Ruines, acte I : relève, réglage « Cible »
 
     /* --- Chapitre, plafonds, Halle, Marché, seuil d'Aeswyn --- */
     var ch = g.STORY_QUESTS.ruins;
-    ok(ch && ch.requiresChapter === "desert" && ch.steps.length === 10 && ch.steps[0].id === "ruines_01" && ch.steps[9].id === "ruines_10", "chapitre 3 : ouvert après le Désert, dix étapes (actes I et II)");
+    ok(ch && ch.requiresChapter === "desert" && ch.steps.length >= 10 && ch.steps[0].id === "ruines_01" && ch.steps[9].id === "ruines_10", "chapitre 3 : ouvert après le Désert, les étapes des actes I et II en tête");
     ok(!!g.WORLD_CAPS[2] && g.WORLD_CAPS[2].village.forge === g.WORLD_CAPS[1].village.forge, "plafonds du monde 3 posés (provisoires, égaux au Désert)");
     ok(g.STORY_AXES_OK !== false && g.STORY_CHOICE_AXES.seuil.soi.indexOf("soi") !== -1, "choix « seuil » sur l'axe Soi / Aeswyn");
     ok(g.WAREHOUSE_RESOURCES.pierre_errante && g.CARAVAN_RARE_BY_WORLD[2] === "pierre_errante", "Pierre errante : ressource du monde 3, rare du Marché des Ruines");
@@ -14183,7 +14183,7 @@ console.log("\n[204] v3.429.0 — Ruines, acte II : Bâtisseur, murs qui bougent
 
     /* --- Étapes, palier, plafonds --- */
     var ids = g.STORY_QUESTS.ruins.steps.map(function (st) { return st.id; });
-    ok(ids.slice(5).join() === "ruines_06,ruines_07,ruines_08,ruines_09,ruines_10", "acte II : cinq étapes");
+    ok(ids.slice(5, 10).join() === "ruines_06,ruines_07,ruines_08,ruines_09,ruines_10", "acte II : cinq étapes");
     game.equipped = {};
     g.EQUIPMENT_SLOTS.forEach(function (sl) { game.equipped[sl] = { uid: "t_" + sl, slot: sl, rarity: "green", stat: "tapDmg", value: 1, affixes: [] }; });
     game.forge = { levels: { weapon: 4, armor: 3 } };
@@ -14213,7 +14213,8 @@ console.log("\n[205] v3.429.2 — Donjon des Ruines fermé ; « Décider » mèn
     game.worldsEverReached = { 0: true, 1: true, 2: true };
     game.dungeonTierCleared = { 1: true, 2: true };
     var d3 = g.DUNGEONS.filter(function (d) { return d.id === 3; })[0];
-    ok(d3.locked === true && D.getLockReason(3) === "data" && !D.isUnlocked(3), "Ruines : le donjon reste fermé, Cité terminée ou non");
+    // v3.430.0 : le verrou de donnée devient un verrou d'Histoire (ruines_12), comme la Cité
+    ok(!d3.locked && d3.requiresStoryStep === "ruines_12" && D.getLockReason(3) === "data" && !D.isUnlocked(3), "Ruines : le donjon reste fermé avant ruines_12, Cité terminée ou non");
     ok(!!d3.lockedHint, "Ruines : la carte du donjon dit pourquoi");
 
     /* --- Un choix en attente : le tableau mène à la carte d'étape --- */
@@ -14238,6 +14239,90 @@ console.log("\n[205] v3.429.2 — Donjon des Ruines fermé ; « Décider » mèn
     ok(false, "[205] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
     Object.keys(saved).forEach(function (k) { SQ[k] = saved[k]; });
+  }
+})();
+
+console.log("\n[206] v3.430.0 — Ruines, acte III (livraison 1) : étapes 11-12, Sanctuaire scellé, campement");
+(function () {
+  var SQ = g.StoryQuestManager, _reached = SQ.isStepReached, _open = g.openDungeonCampSheet;
+  try {
+    var game = freshCombat("knight");
+    var D = g.DungeonManager, CM = g.CompanionManager;
+    /* --- Données --- */
+    var d3 = D.getById(3);
+    ok(d3.enemyPool.join() === "skeleton,zombie,ghoul,gargoyle" && d3.eliteWaves[8] === "contremaitre" && d3.eliteWaves[12] === "golem", "Sanctuaire : pool des Ruines, élites en vagues 8 et 12");
+    ok(g.ELITE_DB.contremaitre.baseId === "batisseur" && g.ELITE_DB.contremaitre.escort.members.indexOf("batisseur") !== -1 && g.ELITE_DB.golem.baseId === "gargoyle", "le Contremaître (escorté d'un Bâtisseur) et le Golem");
+    ok(d3.camp && d3.camp.afterWave === 8 && d3.boss.rises === true && d3.boss.name === "Varrek, le Garde scellé" && d3.maxRarity === "rare", "campement après la vague 8 ; Varrek se relève ; butin Rare");
+    ok(d3.storyChapterId === "ruins" && d3.storyFreeSteps.join() === "ruines_12,ruines_15", "entrée offerte aux étapes 12 et 15");
+    var ids = g.STORY_QUESTS.ruins.steps.map(function (st) { return st.id; });
+    ok(ids.slice(10).join() === "ruines_11,ruines_12" && g.STORY_REWARDS.ruines_11.equipmentRarity === "rare" && g.STORY_REWARDS.ruines_12.equipmentFill === true, "acte III : étapes 11 et 12, une pièce Rare chacune");
+    var porte = g.LivingMapManager.getSectorDef("ruins", "porte_sanctuaire");
+    ok(porte && porte.noChantier === true && porte.requiresStoryStep === "ruines_11", "la porte du Sanctuaire s'ouvre à ruines_11 et le chantier ne la touche pas");
+
+    /* --- Un run jusqu'au campement --- */
+    SQ.isStepReached = function () { return true; };
+    g.openDungeonCampSheet = function () {}; // pas d'interface dans le harnais
+    game.worldsEverReached = { 0: true, 1: true, 2: true };
+    game.dungeonTierCleared = { 1: true, 2: true };
+    game.dungeonRunsUsed = {};
+    ok(D.isUnlocked(3), "ruines_12 atteinte : le Sanctuaire s'ouvre");
+    ["wenna", "maddoc", "edda"].forEach(function (id) { var st = CM.state(id); st.unlocked = true; st.present = id !== "edda"; st.hp = CM.maxHpOf(id); });
+    CM.refreshParty();
+    D.start(3);
+    ok(game.dungeonRun.active && game.dungeonRun.dungeonId === 3, "le run commence");
+    var boss = D.buildWaveEnemy(g.DUNGEON_CONFIG.waveCount + 1);
+    ok(boss.isBoss && boss.rises === true && g.RiseSystem.canRise(boss), "le boss du Sanctuaire peut se relever");
+    var w8 = D.buildEliteWave("contremaitre", d3, 8);
+    ok(Array.isArray(w8) && w8[0].isElite && w8.some(function (e) { return e.id === "batisseur"; }), "vague 8 : le Contremaître et son Bâtisseur");
+
+    var gold0 = game.gold, pe0 = g.WarehouseManager.getAmount("pierre_errante");
+    g.SortieManager.addGold(500);
+    game.heroHp = Math.floor(game.heroMaxHp * 0.3);
+    game.dungeonRun.wave = 8;
+    D.onEnemyKilled();
+    ok(D.isCampPending() && game.dungeonRun.wave === 9, "après la vague 8 : la halte, la vague 9 attend");
+    ok(game.gold - gold0 >= 500 && g.SortieManager.ensure().loot.gold === 0, "le butin de l'étape 1 est en sûreté (banqué, sac vidé)");
+    ok(g.WarehouseManager.getAmount("pierre_errante") - pe0 >= 1 && game.dungeonRun.campLoot.gold === 500, "une Pierre errante au campement ; le butin noté pour la feuille");
+    ok(g.storySanctuaireCamp(game) && g.STORY_QUESTS.ruins.steps[11].check(game), "ruines_12 : le campement est atteint");
+    var html = g.buildDungeonCampSheetHTML();
+    ok(html.indexOf("ksheet-x") === -1 && html.indexOf("confirmCampAction") > 0, "la feuille n'a pas de croix : on en sort en choisissant");
+    ok(!D.campAction("rien"), "action inconnue refusée");
+
+    /* Souffler */
+    var hp0 = game.heroHp, m0 = CM.hpOf("maddoc");
+    CM.state("maddoc").hp = 10;
+    ok(D.campAction("souffler") && game.heroHp === Math.min(game.heroMaxHp, Math.floor(hp0 + game.heroMaxHp * 0.4)) && CM.hpOf("maddoc") > 10, "Souffler : +40 % des PV, compagnons compris");
+    ok(game.dungeonRun.camp === "done" && !D.campAction("souffler"), "une seule action par halte");
+
+    /* Changer de compagnon (nouvelle halte) */
+    game.dungeonRun.camp = null; game.dungeonRun.wave = 8; D.onEnemyKilled();
+    CM.state("edda").hp = 1;
+    ok(!D.campAction("changer", ["wenna", "maddoc"]), "Changer sans changement : refusé");
+    ok(D.campAction("changer", ["edda", "maddoc"]) && CM.partyIds().sort().join() === "edda,maddoc" && CM.hpOf("edda") === CM.maxHpOf("edda"), "Changer : Edda descend, à PV pleins ; Wenna garde le feu");
+
+    /* Mort dans l'étape 2 : seul le butin d'en bas est perdu */
+    var goldSafe = game.gold;
+    g.SortieManager.addGold(300);
+    D.onDefeat();
+    ok(!game.dungeonRun.active && game.gold === goldSafe, "tomber dans l'étape 2 : l'étape 1 reste acquise, le sac d'en bas est perdu");
+
+    /* Sortir */
+    game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {};
+    D.start(3); game.dungeonRun.wave = 8; D.onEnemyKilled();
+    var g1 = game.gold;
+    ok(D.campAction("sortir") && !game.dungeonRun.active && game.gold > g1, "Sortir : le run s'arrête, la part de l'étape 1 est payée sans moitié");
+
+    /* Rechargement à la halte : la feuille revient */
+    game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {};
+    D.start(3); game.dungeonRun.wave = 8; D.onEnemyKilled();
+    D.spawnWave(game.dungeonRun.wave);
+    ok(D.isCampPending(), "rechargé à la halte : le run attend toujours au campement");
+    D.forfeit();
+  } catch (err) {
+    ok(false, "[206] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.isStepReached = _reached;
+    g.openDungeonCampSheet = _open;
   }
 })();
 
