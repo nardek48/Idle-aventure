@@ -170,6 +170,11 @@ var LivingMapManager = {
     var def = this.getSectorDef(mapId, sectorId);
     if (!def) return false;
     if (def.requiresStoryStep && !this.isStoryStepReached(def.requiresStoryStep)) return false; // v3.305.0
+    // v3.432.0 (le Cœur des Ruines) : ne s'ouvre qu'avec TOUS ses voisins libérés
+    if (def.requiresAllNeighbors) {
+      for (var k = 0; k < def.neighbors.length; k++) if (!this.isLiberated(mapId, def.neighbors[k])) return false;
+      return true;
+    }
     if (def.ring === 1) return true;
     for (var i = 0; i < def.neighbors.length; i++) {
       if (this.isLiberated(mapId, def.neighbors[i])) return true;

@@ -92,7 +92,11 @@ var STORY_REWARDS = {
   // v3.431.0 (acte III, livraison 2, provisoire : au banc)
   ruines_13: { gold: 2900 },
   ruines_14: { gold: 3000 },  // + selon le choix : le frein de la salle scellée, ou le sceau de la salle
-  ruines_15: { gold: 3400, resources: { pierre_errante: 4, cle_de_voute: 1 } }
+  ruines_15: { gold: 3400, resources: { pierre_errante: 4, cle_de_voute: 1 } },
+  // v3.432.0 (acte IV, livraison 1, provisoire : au banc)
+  ruines_16: { gold: 3200, resources: { pierre_errante: 2 } },
+  ruines_17: { gold: 3300 },
+  ruines_18: { gold: 3400, resources: { pierre_errante: 3 } }
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -1689,7 +1693,7 @@ STORY_QUESTS.ruins = {
   title: "La ville rangée",
   subtitle: "Chapitre 3 — Ruines",
   icon: "images/Icons/codex/world_ruins.png",
-  endText: "Fin de l'acte III — sous la ville, la carte est finie.", // v3.431.0
+  endText: "La suite de l'acte IV arrive bientôt.", // v3.432.0 : livraison 1 de l'acte IV (étapes 16 à 18)
   steps: [
     /* ---------- Acte I — La route du nord ---------- */
     /* Étape 1 (doc §3) : la traversée, parcours v2 de quatre paliers ; le monde est posé à
@@ -2290,9 +2294,106 @@ STORY_QUESTS.ruins = {
       linkTo: { tab: "dungeon" },
       check: function (game) { return !!((game.dungeonTierCleared || {})[3]); },
       progress: function (game) { return "Varrek vaincu " + ((game.dungeonTierCleared || {})[3] ? "1/1" : "0/1"); }
+    },
+
+    /* ---------- Acte IV — Le plan (document « Ruines — Acte IV » v1.0, validé le 09/10) ---------- */
+    /* Étape 16 (§1) : le Cœur paraît sur la carte (requiresStoryStep) ; ses trois voisins tenus. */
+    {
+      id: "ruines_16",
+      title: "La carte qui manque",
+      act: "Acte IV — Le plan",
+      narrative: {
+        objective: "Au matin, la carte de pierre n'est plus seulement sous la ville. Les rues d'en haut ont commencé à lui ressembler. Au milieu, là où Edda n'a jamais rien dessiné, un quartier qui n'était pas là hier.",
+        completion: "Trois quartiers tenus autour du Cœur. Au centre, une arche gagne une rangée de pierres chaque nuit. Personne ne les pose.",
+        dialogue: [
+          { who: "Edda", text: "Ce n'est pas un chantier. Les chantiers changent de place. Celui-là grandit." },
+          { who: "Sarkel", text: "J'ai vendu des cartes fausses, dans ma vie. Jamais une carte qui se mettait à avoir raison." },
+          { who: "Maddoc", text: "On y va par où ?" },
+          { who: "Edda", text: "Par où il nous laisse." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Le Veilleur n'est pas venu avec nous." },
+          { who: "Edda", text: "Il est là-bas. Il regarde l'arche." }
+        ]
+      },
+      objectiveLabel: "Tenir les 3 quartiers qui touchent le Cœur (carte des Ruines)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_16,
+      linkTo: { section: "map", cardId: "livingmap_ruins" },
+      tutorial: {
+        tab: "map",
+        icon: "images/Icons/scene/node_unknown.png",
+        title: "Le Cœur",
+        points: [
+          { icon: "images/Icons/scene/node_unknown.png", text: "Un quartier nouveau est apparu au centre de la carte des Ruines : le Cœur." },
+          { icon: "images/Icons/resources/pierre_errante_icon.png", text: "Il s'ouvre quand les trois quartiers qui le touchent sont libérés. Le chantier errant ne s'y pose pas." }
+        ]
+      },
+      check: function () { return storyCoeurVoisins() >= 3; },
+      progress: function () { return "Quartiers tenus autour du Cœur " + Math.min(3, storyCoeurVoisins()) + "/3"; }
+    },
+    /* Étape 17 (§2) : la demande du Veilleur ; le parcours « Vers le Cœur » (scene-templates.js). */
+    {
+      id: "ruines_17",
+      title: "Ce qu'il demande",
+      act: "Acte IV — Le plan",
+      narrative: {
+        objective: "Le Veilleur attend au bord du Cœur. Debout. Il ne regarde pas l'arche. Il te regarde.",
+        completion: "Le Veilleur s'arrête au seuil du Cœur. Il ne le franchit pas.",
+        dialogue: [
+          { who: "Le Veilleur", text: "Elle a presque fini. Il lui manque une pierre, et quelqu'un pour la poser." },
+          { who: "Wenna", text: "Pourquoi pas toi ?" },
+          { who: "Le Veilleur", text: "Je l'ai déjà bâtie une fois." },
+          { who: "Le Veilleur", text: "Aide-la à finir." },
+          { who: null, text: "C'est la deuxième chose qu'il te demande." },
+          { who: "Maddoc", text: "Et si on ne veut pas ?" },
+          { who: "Le Veilleur", text: "Tu le diras là-bas. Pas ici." }
+        ],
+        completionDialogue: [
+          { who: "Le Veilleur", text: "Après, c'est à toi." }
+        ]
+      },
+      objectiveLabel: "Terminer « Vers le Cœur » (coût : 1 Ration moyenne)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_17,
+      linkTo: { section: "expedition", cardId: "scene_vers_le_coeur" },
+      check: function () { return storyDesertFlag("versLeCoeurDone"); },
+      progress: function () { return "Vers le Cœur " + (storyDesertFlag("versLeCoeurDone") ? "1/1" : "0/1"); }
+    },
+    /* Étape 18 (§3) : « Le dernier trait », bâtisseurs en masse puis le Golem ; l'étape d'Edda. */
+    {
+      id: "ruines_18",
+      title: "Le dernier trait",
+      act: "Acte IV — Le plan",
+      narrative: {
+        objective: "Dans le Cœur, ils sont des dizaines. Des bâtisseurs, chacun avec sa pierre. Ils ne se battent pas entre eux. Ils se battent contre ce qui n'est pas dans le plan.",
+        completion: "Le dernier bâtisseur tombe. Edda s'accroupit et trace à la craie, sur la dalle du Cœur, un trait qui n'est sur aucun plan : le chemin par où vous êtes venus.",
+        dialogue: [
+          { who: "Maddoc", text: "Nous." },
+          { who: "Edda", text: "Et moi. Je ne suis pas sur leur carte." }
+        ],
+        completionDialogue: [
+          { who: "Edda", text: "Leur carte est finie. La mienne, non. Il y manque nous." },
+          { who: "Wenna", text: "Tu restes, alors ?" },
+          { who: "Edda", text: "Tant qu'il y aura un chemin à dessiner." }
+        ]
+      },
+      objectiveLabel: "Terminer « Le dernier trait » : 3 rencontres dans le Cœur, puis le Golem",
+      unlockTabs: [],
+      reward: STORY_REWARDS.ruines_18,
+      linkTo: { section: "adventure", cardId: "adv_aq_ruines_coeur" },
+      check: function (game) { return storyAdvDone(game, "aq_ruines_coeur"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_ruines_coeur", "rencontres_coeur", 3) + "/3 · Golem " + (storyAdvDone(game, "aq_ruines_coeur") ? "1/1" : "0/1"); }
     }
   ]
 };
+
+/* v3.432.0 (Ruines, ruines_16) — voisins du Cœur tenus (libérés maintenant : le chantier peut en reprendre un). */
+function storyCoeurVoisins() {
+  var lm = window.LivingMapManager, def = lm && lm.getSectorDef("ruins", "coeur");
+  if (!def) return 0;
+  return def.neighbors.filter(function (id) { return lm.isLiberated("ruins", id); }).length;
+}
 
 /* v3.431.0 (Ruines, ruines_14) — textes des deux branches du choix « salle ». */
 var STORY_SALLE_TEXTS = {
@@ -2376,6 +2477,7 @@ function storyPalierRuines(game) {
 window.storyPalierRuines = storyPalierRuines;
 window.storyRuinsSectorsFreed = storyRuinsSectorsFreed;
 window.storyPorteSanctuaire = storyPorteSanctuaire;
+window.storyCoeurVoisins = storyCoeurVoisins;
 window.storyPalierRuinesRare = storyPalierRuinesRare;
 window.STORY_PALIER_RUINES_RARE = STORY_PALIER_RUINES_RARE;
 window.STORY_SALLE_TEXTS = STORY_SALLE_TEXTS;

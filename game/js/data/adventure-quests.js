@@ -451,6 +451,40 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.432.0 (Ruines, acte IV étape 18) — « Le dernier trait » : les bâtisseurs en masse qui élèvent
+     le Cœur, escortés de squelettes, puis le Golem. Même forme que l'étape 14 (quête d'élite à
+     rencontres). Cible (RU6) : 65-80 % par classe au profil de fin d'acte III. Chiffres au banc. */
+  aq_ruines_coeur: {
+    id: "aq_ruines_coeur",
+    type: "elite",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "ruins",
+    adventureIndex: 1,
+    eliteId: "golem",
+    requiresStoryStep: "ruines_18",
+    encounters: [
+      { group: ["batisseur", "batisseur", "skeleton"], groupHpMult: 0.35 },
+      { group: ["batisseur", "skeleton", "skeleton"], groupHpMult: 0.35 },
+      { group: ["batisseur", "batisseur", "gargoyle"], groupHpMult: 0.35 }
+    ],
+    /* Banc (fin d'acte III, Wenna + Maddoc, 24 runs) : aux chiffres de l'étape 14, 96 / 92 / 100 % ;
+       à 2,2 / 5,4 et Golem 3,3 / 2,9, 42 / 58 / 79 % ; retenu : 79 / 88 / 96 % (Chev. / Rôd. / Mage). */
+    encounterHpMult: 2.1,
+    enemyPowerMult: 5.0,
+    eliteStatMult: { power: 3.0, endurance: 2.7 },
+    name: "Le dernier trait",
+    story: "Dans le Cœur, ils sont des dizaines. Des bâtisseurs, chacun avec sa pierre. Ils se battent contre ce qui n'est pas dans le plan.",
+    icon: "./images/Icons/quest_icons/elite/elite_golem.png",
+    steps: [
+      { id: "rencontres_coeur", type: "encounter", worldId: "ruins", target: 3, desc: "Vaincre {target} rencontres dans le Cœur" },
+      { id: "elite_coeur", type: "eliteKill", eliteId: "golem", target: 1, desc: "Vaincre le Golem" }
+    ],
+    reward: {}
+  },
+
   hq_wolf_pack: {
     id: "hq_wolf_pack",
     type: "kill",

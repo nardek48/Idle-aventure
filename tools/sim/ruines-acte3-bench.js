@@ -11,7 +11,7 @@
 
    USAGE : node tools/sim/ruines-acte3-bench.js . [--runs N] [--profil palier|rare] [--diff x] [--boss p,e]
            [--party wenna,maddoc] [--camp souffler|changer]
-           node tools/sim/ruines-acte3-bench.js . --golem [--runs N] [--enc pv,puissance] [--golemmult puissance,endurance]  (étape 14) */
+           node tools/sim/ruines-acte3-bench.js . --golem [--quete aq_ruines_coeur] [--runs N] [--enc pv,puissance] [--golemmult puissance,endurance]  (étapes 14, 18) */
 var fs = require("fs"), path = require("path");
 var base = fs.readFileSync(path.join(__dirname, "plafond-bench.js"), "utf8");
 base = base.slice(0, base.indexOf('console.log("COMBATS DE L\'HISTOIRE'));
@@ -21,6 +21,7 @@ var PROFIL_ARG = arg("--profil");
 var PARTY = (arg("--party") || "wenna,maddoc").split(",");
 var CAMP = arg("--camp") || "souffler";
 var GOLEM = ARGV.indexOf("--golem") >= 0;   // v3.431.0 : la quête de l'étape 14 au lieu du Sanctuaire
+var QUETE = arg("--quete") || "aq_ruines_golem"; // v3.432.0 : ou aq_ruines_coeur (étape 18)
 var QENC = arg("--enc") ? arg("--enc").split(",").map(Number) : null; // essai : encounterHpMult,enemyPowerMult
 var GOLEM_MULT = arg("--golemmult") ? arg("--golemmult").split(",").map(Number) : null; // essai : puissance,endurance
 
@@ -105,11 +106,11 @@ var extra = function () {
 
   /* v3.431.0 — étape 14 : « Ce que la cité ne finit pas » (3 rencontres puis le Golem), au palier Rare. */
   if (GOLEM) {
-    var Q = g.ADVENTURE_QUESTS.aq_ruines_golem;
+    var Q = g.ADVENTURE_QUESTS[QUETE];
     if (QENC) { Q.encounterHpMult = QENC[0]; Q.enemyPowerMult = QENC[1]; }
-    if (GOLEM_MULT) { g.ELITE_DB.golem.statMult.power = GOLEM_MULT[0]; g.ELITE_DB.golem.statMult.endurance = GOLEM_MULT[1]; }
+    if (GOLEM_MULT) Q.eliteStatMult = { power: GOLEM_MULT[0], endurance: GOLEM_MULT[1] }; // v3.431.0 : le Golem de la quête
     var garde = Q.requiresStoryStep; Q.requiresStoryStep = null;
-    console.log("CE QUE LA CITÉ NE FINIT PAS — " + RUNS + " runs, profil Rare, " + PARTY.join(" + ") + ", potions du profil"
+    console.log(Q.name.toUpperCase() + " — " + RUNS + " runs, profil Rare, " + PARTY.join(" + ") + ", potions du profil"
       + (QENC ? " · essai rencontres PV ×" + QENC[0] + " puissance ×" + QENC[1] : "") + (GOLEM_MULT ? " · essai Golem p" + GOLEM_MULT[0] + " e" + GOLEM_MULT[1] : ""));
     console.log("Cible (RU6) : 65-80 % par classe, Rôdeur ≥ 60 %.\n");
     B.CLASSES.forEach(function (c) {
@@ -120,7 +121,7 @@ var extra = function () {
         g.CompanionManager.unlock("edda"); party(PARTY);
         B.run("CompanionManager.healAll();");
         g.game.adventureQuestsCompleted = {};
-        var r = playQuest("aq_ruines_golem");
+        var r = playQuest(QUETE);
         if (!r) continue;
         n++;
         if (r.ok) { ok++; rounds += r.rounds; hp += Math.max(0, g.game.heroHp) / g.game.heroMaxHp; }

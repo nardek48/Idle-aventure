@@ -254,11 +254,11 @@ var LIVING_MAPS = {
     caravanMarket: { x: 41, y: 40 },          // le Marché des Ruines, entre la place aux étals et la Borne
     sectors: [
       /* Anneau 1 — autour de la Borne */
-      { id: "place_etals", name: "La place aux étals", x: 35.2, y: 35.2, ring: 1, neighbors: ["couloirs", "fenetres", "cimetiere"],
+      { id: "place_etals", name: "La place aux étals", x: 35.2, y: 35.2, ring: 1, neighbors: ["couloirs", "fenetres", "cimetiere", "coeur"],
         content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["dalle_qui_glisse", "mur_neuf"] } },
         heldEffect: null,
         lore: "Des étals de pierre bien alignés. Ce qu'on y pose le soir n'y est plus le matin." },
-      { id: "rue_tourne", name: "La rue qui tourne", x: 61, y: 34.7, ring: 1, neighbors: ["couloirs", "bibliotheque", "pont"],
+      { id: "rue_tourne", name: "La rue qui tourne", x: 61, y: 34.7, ring: 1, neighbors: ["couloirs", "bibliotheque", "pont", "coeur"],
         content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["rue_qui_tourne", "route_de_pierre"] } },
         heldEffect: { id: "craie_plus", label: "La Craie : un trait de plus en Petite Aventure." },
         lore: "Une rue ronde qui revient sur elle-même. Edda y a usé un bâton de craie entier." },
@@ -272,7 +272,7 @@ var LIVING_MAPS = {
         lore: "Des maisons sans étage, toutes pareilles. Les portes sont à la bonne hauteur, ici." },
 
       /* Anneau 2 */
-      { id: "couloirs", name: "Les couloirs couverts", x: 49.3, y: 17.6, ring: 2, neighbors: ["place_etals", "rue_tourne", "escalier"], labelTop: true,
+      { id: "couloirs", name: "Les couloirs couverts", x: 49.3, y: 17.6, ring: 2, neighbors: ["place_etals", "rue_tourne", "escalier", "coeur"], labelTop: true,
         content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["mur_neuf", "escalier_sans_fin"] } },
         heldEffect: null,
         lore: "Une rue qui a reçu un toit pendant la nuit. Dessous, il fait plus froid que dehors." },
@@ -310,6 +310,14 @@ var LIVING_MAPS = {
         content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["mur_neuf", "dalle_qui_glisse"] } },
         heldEffect: { id: "mine_plus", label: "Mine +10 %." },
         lore: "Des échafaudages autour d'un bloc qui flotte. Personne ne monte dessus. Le bloc monte quand même." },
+      /* v3.432.0 (acte IV, étape 16) — LE CŒUR : la grande halle au-dessus de la Borne (choix de Seb
+         du 09/10, emplacement A). Paraît à ruines_16 ; ne s'ouvre qu'avec ses trois voisins libérés ;
+         le chantier errant ne s'y pose pas. Il porte le boss d'Histoire et le choix du plan (livraison 2). */
+      { id: "coeur", name: "Le Cœur", x: 50.5, y: 27, ring: 2, neighbors: ["place_etals", "rue_tourne", "couloirs"],
+        requiresStoryStep: "ruines_16", requiresAllNeighbors: true, noChantier: true,
+        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["mur_neuf", "porte_qui_attend"] } },
+        heldEffect: null,
+        lore: "Un quartier qui n'était pas là hier. Au milieu, une arche gagne une rangée de pierres chaque nuit. Personne ne les pose." },
       // Fermé jusqu'à l'acte III : la porte du Sanctuaire scellé (donjon 3)
       { id: "porte_sanctuaire", name: "La porte du Sanctuaire", x: 49.3, y: 83, ring: 3, neighbors: ["maisons_basses", "tour_garde", "echafaudages"],
         requiresStoryStep: "ruines_11",

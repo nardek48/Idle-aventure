@@ -337,6 +337,37 @@ var SCENE_TEMPLATES = {
   },
 
 
+  /* v3.432.0 (Ruines, acte IV étape 17, texte validé par Seb le 09/10) — VERS LE CŒUR. Parcours dédié,
+     sur le modèle de la remontée du fleuve : lancé depuis la carte d'étape, une Ration moyenne, hors
+     cap journalier. Palier 3 : les murs se ferment, le Veilleur pose la main, le mur s'ouvre — une
+     source pleine, sans épreuve (la ville le reconnaît, elle). Fond provisoire : la route des Ruines
+     (image dédiée à générer). Pas de boss. */
+  vers_le_coeur: {
+    id: "vers_le_coeur",
+    worldId: "ruins",
+    adventureIndex: 0,
+    mode: "parcours",
+    title: "Vers le Cœur",
+    departLabel: "Marcher vers le Cœur",
+    icon: "images/Icons/codex/world_ruins.png",
+    parcours: {
+      image: "ruines_route", track: "route", points: [0, 1, 3, 4, 6], bag: 3,
+      steps: [
+        { type: "obstacle", gabaritId: "rue_qui_tourne", text: "Les rues d'en haut ont la forme de celles d'en bas. Edda marche sans regarder sa feuille." },
+        { type: "combat", foe: "skeleton", pack: 2, act: 2, text: "Des squelettes, et derrière eux quelqu'un qui pose des pierres.",
+          after: "Ils tombent sur les dalles neuves. Les dalles ne gardent aucune trace." },
+        { type: "source", fullBreath: true, text: "Un mur se lève devant toi, puis un autre derrière. Le Veilleur pose la main à plat sur le premier. Il s'ouvre." },
+        { type: "combat", foe: "gargoyle", pack: 2, act: 3, text: "Des gargouilles sur les toits neufs. Elles regardent le Veilleur, pas toi.",
+          after: "La dernière s'arrête avant de tomber. Elle regarde le Veilleur. Puis elle tombe quand même." },
+        { type: "obstacle", gabaritId: "porte_qui_attend", text: "L'arche du Cœur. En haut, un vide de la taille d'une pierre." }
+      ]
+    },
+    entryCost: { resourceId: "ration", amount: 1 },
+    lootResource: "gold",
+    unlockOnSuccess: { buildingId: null, unlockFlag: null, completionFlag: "versLeCoeurDone" }
+  },
+
+
   /* ================= Petites Aventures (v3.388.0, PA2-6) =================
      Deux cartes de lancement, menées par Pa2Run (systems/pa2-run.js, ui/pa2-view.js) : le
      contenu (tracés, besace, pactes, accroches) vit dans data/pa2-maps.js et data/pa2-content.js.

@@ -14159,7 +14159,7 @@ console.log("\n[204] v3.429.0 — Ruines, acte II : Bâtisseur, murs qui bougent
 
     /* --- Carte des Ruines : le chantier errant --- */
     var LM = g.LivingMapManager, map = LM.getMap("ruins");
-    ok(map && map.sectors.length === 14 && map.rewardResourceId === "pierre_errante" && map.opensAtStoryStep === "ruines_07", "carte des Ruines : 14 quartiers, Pierre errante, ouverte à ruines_07");
+    ok(map && map.sectors.length >= 14 && map.rewardResourceId === "pierre_errante" && map.opensAtStoryStep === "ruines_07", "carte des Ruines : 14 quartiers (15 avec le Cœur), Pierre errante, ouverte à ruines_07");
     ok(map.sectors.every(function (d) { return d.neighbors.every(function (n) { return !!LM.getSectorDef("ruins", n); }); }), "voisinages valides");
     var _reached = g.StoryQuestManager.isStepReached;
     g.StoryQuestManager.isStepReached = function (id) { return id === "ruines_07" ? true : _reached.call(this, id); };
@@ -14352,7 +14352,7 @@ console.log("\n[207] v3.431.0 — Ruines, acte III (livraison 2) : Clé de voût
 
     /* --- Étape 13 : le palier Rare --- */
     var steps = g.STORY_QUESTS.ruins.steps, ids = steps.map(function (st) { return st.id; });
-    ok(ids.slice(12).join() === "ruines_13,ruines_14,ruines_15", "acte III : étapes 13 à 15");
+    ok(ids.slice(12, 15).join() === "ruines_13,ruines_14,ruines_15", "acte III : étapes 13 à 15");
     var st13 = steps[12];
     game.equipped = {};
     g.EQUIPMENT_SLOTS.forEach(function (sl) { game.equipped[sl] = { uid: "t_" + sl, slot: sl, rarity: "green", stat: "tapDmg", value: 1, affixes: [] }; });
@@ -14403,11 +14403,62 @@ console.log("\n[207] v3.431.0 — Ruines, acte III (livraison 2) : Clé de voût
     g.RiseSystem.onEnemyTurn(boss);
     g.addLog = _al;
     ok(logs.some(function (m) { return /Personne ne lui a dit/.test(m); }), "Varrek se relève avec sa ligne de journal");
-    ok(g.STORY_QUESTS.ruins.endText === "Fin de l'acte III — sous la ville, la carte est finie.", "fin de l'acte III");
+    ok(st15.narrative.completion.indexOf("Toute la cité, finie") > 0, "fin de l'acte III : la carte finie sous la ville");
   } catch (err) {
     ok(false, "[207] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
     Object.keys(saved).forEach(function (k) { SQ[k] = saved[k]; });
+  }
+})();
+
+console.log("\n[208] v3.432.0 — Ruines, acte IV (livraison 1) : le Cœur, « Vers le Cœur », « Le dernier trait »");
+(function () {
+  var SQ = g.StoryQuestManager, _reached = SQ.isStepReached;
+  try {
+    var game = freshCombat("knight");
+    var LM = g.LivingMapManager, d = LM.getSectorDef("ruins", "coeur");
+    ok(d && d.x === 50.5 && d.y === 27 && d.requiresStoryStep === "ruines_16" && d.requiresAllNeighbors && d.noChantier, "le Cœur : la grande halle, paraît à ruines_16, hors chantier");
+    ok(d.neighbors.join() === "place_etals,rue_tourne,couloirs" && d.neighbors.every(function (n) { return LM.getSectorDef("ruins", n).neighbors.indexOf("coeur") !== -1; }), "trois voisins, voisinage réciproque");
+    SQ.isStepReached = function () { return true; };
+    run("LivingMapManager.ensureDefaults();");
+    ["place_etals", "rue_tourne", "couloirs"].forEach(function (id) { LM.setState("ruins", id, "recouvert", "test"); });
+    LM.setState("ruins", "place_etals", "libere", "test");
+    LM.setState("ruins", "rue_tourne", "libere", "test");
+    var st16 = g.STORY_QUESTS.ruins.steps.filter(function (st) { return st.id === "ruines_16"; })[0];
+    ok(!LM.isReachable("ruins", "coeur") && !st16.check(game) && /2\/3/.test(st16.progress(game)), "deux voisins tenus : le Cœur reste fermé, l'étape attend");
+    LM.setState("ruins", "couloirs", "libere", "test");
+    ok(LM.isReachable("ruins", "coeur") && st16.check(game), "les trois voisins tenus : le Cœur s'ouvre, l'étape 16 est faite");
+    game.livingMaps.ruins.chantier = null;
+    var _rnd = LM._rand; LM._rand = function () { return 0.999; };
+    var c = LM.getChantier("ruins");
+    LM._rand = _rnd;
+    ok(!c || c.sectorId !== "coeur", "le chantier errant ne se pose pas sur le Cœur");
+
+    /* --- Étape 17 : le parcours --- */
+    var T = g.SCENE_TEMPLATES.vers_le_coeur;
+    ok(T && T.mode === "parcours" && T.worldId === "ruins" && T.parcours.steps.length === 5 && T.parcours.points.length === 5, "« Vers le Cœur » : parcours de cinq paliers aux Ruines");
+    ok(T.parcours.steps[2].type === "source" && T.parcours.steps[2].fullBreath === true && /Le Veilleur pose la main/.test(T.parcours.steps[2].text), "palier 3 : le Veilleur ouvre le mur (source pleine, sans épreuve)");
+    ok(T.entryCost.resourceId === "ration" && T.unlockOnSuccess.completionFlag === "versLeCoeurDone" && !T.travelOnSuccess, "une Ration moyenne, drapeau de fin, pas de voyage");
+    var st17 = g.STORY_QUESTS.ruins.steps.filter(function (st) { return st.id === "ruines_17"; })[0];
+    game.explorationProgression.versLeCoeurDone = false;
+    ok(!st17.check(game), "étape 17 : le parcours reste à faire");
+    game.explorationProgression.versLeCoeurDone = true;
+    ok(st17.check(game) && st17.linkTo.cardId === "scene_vers_le_coeur", "étape 17 : faite à l'arrivée ; la carte d'étape mène au parcours");
+
+    /* --- Étape 18 : Le dernier trait --- */
+    var q = g.ADVENTURE_QUESTS.aq_ruines_coeur;
+    ok(q && q.type === "elite" && q.eliteId === "golem" && q.requiresStoryStep === "ruines_18" && q.encounters.length === 3 && q.eliteStatMult, "« Le dernier trait » : bâtisseurs en masse, puis le Golem (calé pour la quête)");
+    var st18 = g.STORY_QUESTS.ruins.steps.filter(function (st) { return st.id === "ruines_18"; })[0];
+    game.adventureQuestsCompleted = {};
+    ok(!st18.check(game), "étape 18 : à faire");
+    game.adventureQuestsCompleted.aq_ruines_coeur = true;
+    ok(st18.check(game) && /Il y manque nous/.test(JSON.stringify(st18.narrative.completionDialogue)), "étape 18 : faite ; Edda reste");
+    var ids = g.STORY_QUESTS.ruins.steps.map(function (st) { return st.id; });
+    ok(ids.slice(15, 18).join() === "ruines_16,ruines_17,ruines_18", "acte IV : étapes 16 à 18");
+  } catch (err) {
+    ok(false, "[208] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.isStepReached = _reached;
   }
 })();
 
