@@ -43,7 +43,16 @@ window.setWarehouseFilter = setWarehouseFilter;
 function toggleWarehouseMenu() {
   warehouseMenuOpen = !warehouseMenuOpen;
   if (typeof renderPanel === "function") renderPanel();
+  if (warehouseMenuOpen) revealDropdownMenu(); // v3.429.22 : petit écran, le bas du menu reste visible
 }
+
+/* v3.429.22 : à l'ouverture, la zone défile juste ce qu'il faut pour montrer le menu entier
+   (iPhone SE : il dépassait sous la barre du bas). Partagé par le Sac. */
+function revealDropdownMenu() {
+  var m = document.querySelector ? document.querySelector(".wh-dd-menu") : null;
+  if (m && typeof m.scrollIntoView === "function") m.scrollIntoView({ block: "nearest" });
+}
+window.revealDropdownMenu = revealDropdownMenu;
 window.toggleWarehouseMenu = toggleWarehouseMenu;
 
 function toggleWarehouseZeros() {
@@ -162,18 +171,22 @@ function buildWarehouseFilterRowHTML(keys) {
     ["mine", _t("Ma sélection"), "images/Icons/system/sort.png"]
   ];
   var cur = D.filter(function (d) { return d !== "-" && d[0] === f; })[0];
-  var h = '<div class="wh-filter">';
+  var h = '<div class="wh-filter wh-filter-wide">'; // v3.429.22 (atelier menu-entrepot) : menu sur toute la ligne
   if (warehouseMenuOpen) h += '<div class="wh-dd-veil" onclick="toggleWarehouseMenu()"></div>'; // toucher ailleurs replie la liste
   h += '<div class="wh-dd' + (warehouseMenuOpen ? ' is-open' : '') + '">';
   h += '<button type="button" class="wh-dd-btn" onclick="toggleWarehouseMenu()"><img src="' + cur[2] + '" alt=""><span><small>' + _t("Afficher") + '</small>' + esc(cur[1]) + '</span><span class="wh-dd-car">▼</span></button>';
   if (warehouseMenuOpen) {
-    h += '<div class="wh-dd-menu">';
-    D.forEach(function (d) {
-      if (d === "-") { h += '<hr>'; return; }
+    /* v3.429.22 (atelier menu-entrepot, validé par Seb) : « Tout » en ligne, catégories et sélection en
+       grille 2 x 2, états en grille sous « État ». 364 -> 252 px : le menu tient au-dessus de la barre du bas. */
+    var item = function (d) {
       var n = count(d[0]);
-      h += '<button type="button" class="' + (d[0] === f ? 'is-on' : '') + '" onclick="setWarehouseFilter(\'' + d[0] + '\')"><img src="' + d[2] + '" alt=""><span class="wh-dd-lbl">' + esc(d[1]) + '</span>'
+      return '<button type="button" class="' + (d[0] === f ? 'is-on' : '') + '" onclick="setWarehouseFilter(\'' + d[0] + '\')"><img src="' + d[2] + '" alt=""><span class="wh-dd-lbl">' + esc(d[1]) + '</span>'
         + '<span class="wh-dd-n' + (d[3] && n ? ' is-red' : '') + '">' + n + '</span></button>';
-    });
+    };
+    var by = {}; D.forEach(function (d) { if (d !== "-") by[d[0]] = d; });
+    h += '<div class="wh-dd-menu">' + item(by.all)
+      + '<div class="wh-dd-grid">' + [by.raw, by.crafted, by.special, by.mine].map(item).join("") + '</div>'
+      + '<div class="wh-dd-cap">' + _t("État") + '</div><div class="wh-dd-grid">' + [by.full, by.run].map(item).join("") + '</div><hr>';
     h += '<button type="button" class="wh-dd-pick" onclick="openWarehousePicker()"><img src="images/Icons/system/sort.png" alt="">' + _t("Choisir ma sélection…") + '</button>';
     h += '</div>';
   }

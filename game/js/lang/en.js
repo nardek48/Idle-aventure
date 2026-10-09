@@ -4134,6 +4134,7 @@ I18n.register("en", {
   "En fabrication": "Being crafted",
   "Ma sélection": "My selection",
   "Afficher": "Show",
+  "État": "Status", // v3.429.22 : menu de l'Entrepôt
   "Choisir ma sélection…": "Choose my selection…",
   "Zéros": "Zeros",
   "Matières brutes · plafond {n}": "Raw materials · cap {n}",

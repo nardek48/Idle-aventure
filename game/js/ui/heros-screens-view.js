@@ -207,7 +207,7 @@
   }
   var bagFilter = "all", bagMenuOpen = false;
   function herosBagFilter(f) { bagFilter = f; bagMenuOpen = false; rerender(); }
-  function herosBagMenu() { bagMenuOpen = !bagMenuOpen; rerender(); }
+  function herosBagMenu() { bagMenuOpen = !bagMenuOpen; rerender(); if (bagMenuOpen && typeof revealDropdownMenu === "function") revealDropdownMenu(); } // v3.429.22
   // Le tri est une action ponctuelle (il réordonne game.inventory), pas un réglage gardé.
   function herosBagSort(k) { applyInventorySort(k); bagMenuOpen = false; rerender(); }
   function herosOpenItem(key) { selectedInventoryKey = key; openHerosSheet("item"); }
