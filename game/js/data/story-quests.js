@@ -893,7 +893,16 @@ STORY_QUESTS.desert = {
       objectiveLabel: "Remplir 1 Outre au Réservoir, puis atteindre une destination en Petite aventure du Désert",
       unlockTabs: [],
       reward: STORY_REWARDS.desert_03,
-      linkTo: { section: "expedition", cardId: "petite_aventure_desert" },
+      /* v3.429.18 : l'Outre d'abord (Réservoir, comme « Donner l'Outre »), puis la Petite aventure.
+         tab vide : goToLink retombe sur cardId. */
+      linkTo: {
+        section: "expedition", cardId: "petite_aventure_desert",
+        tab: function () { return storyDesertFlag("outreFilled") ? null : "village"; },
+        afterGo: function () {
+          if (typeof setVillageSubTab === "function") setVillageSubTab("production");
+          if (typeof setProductionViewTab === "function") setProductionViewTab("shops");
+        }
+      },
       tutorial: {
         tab: "village",
         icon: "images/Icons/workshops/water_reservoir.png",
