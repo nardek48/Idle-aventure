@@ -1217,5 +1217,7 @@ if (COMBATS) console.log("Économie : " + JSON.stringify(STATS.economie));
 if (ZONES) console.log("Zones défrichées ou montées : " + (STATS.zones || 0));
 if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ classe: CLASSE, policy: POLICY, combats: COMBATS, passes: passes, failures: failures, totalH: CLOCK.offset / 3600e3,
   daysCap: DAYS_WAITED, capWaitH: CAP_WAIT_H, stats: STATS }, null, 1));
+// Comparable au « Temps de jeu » du journal (game.playTime, app ouverte) : seuls les combats exigent l'écran, le reste (soin, production, recharges) avance aussi hors ligne.
+if (COMBATS) console.log("Temps actif estimé (combats, à comparer au journal) : " + (STATS.combatMs / 3600e3).toFixed(1) + " h · attente hors combat : " + ((CLOCK.offset - STATS.combatMs) / 3600e3).toFixed(1) + " h");
 console.log("\n" + passes + " OK, " + failures + " échec(s) — temps simulé : " + (CLOCK.offset / 3600e3).toFixed(1) + " h (dont " + DAYS_WAITED + " attente(s) de recharge des expéditions, " + CAP_WAIT_H.toFixed(1) + " h)");
 process.exit(failures ? 1 : 0);

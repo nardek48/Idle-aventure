@@ -35,6 +35,9 @@ function pct(a, b) { return b ? Math.round(a / b * 100) + " %" : "—"; }
 console.log("\n== " + runs.length + " parties" + (PASS.length ? " (" + PASS.join(" ") + ")" : ""));
 var tot = runs.map(function (j) { return j.totalH; });
 console.log("Temps simulé : médiane " + med(tot).toFixed(0) + " h (de " + Math.min.apply(null, tot).toFixed(0) + " à " + Math.max.apply(null, tot).toFixed(0) + " h)");
+// Temps actif = combats seuls, à comparer au « Temps de jeu » du journal (le reste avance hors ligne)
+var act = runs.map(function (j) { return j.stats.combatMs / 3600e3; });
+if (PASS.indexOf("--combats") >= 0 && act.length) console.log("Temps actif estimé (combats) : médiane " + med(act).toFixed(1) + " h (de " + Math.min.apply(null, act).toFixed(1) + " à " + Math.max.apply(null, act).toFixed(1) + " h)");
 
 // par classe
 CLASSES.forEach(function (c) {
