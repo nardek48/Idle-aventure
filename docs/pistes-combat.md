@@ -78,3 +78,4 @@ Rien n'est décidé : options en attente de validation.
 - Feuille avant chasse, quête, donjon, élite de carte ; mode figé ; rangée du mode retirée (+41 px de scène).
 - Réglages déplacés des onglets vers la feuille. Pas de « Comme la dernière fois » (réglages déjà persistants).
 - Restent ouverts : objets de combat (à discuter), effets de combat A/B/C, initiative.
+- À revoir en jeu (Seb) : bouton « Comme la dernière fois » (mémoriser les potions à bonus) ; fond sombre façon Petites Aventures.
