@@ -120,3 +120,5 @@ Rien n'est décidé : options en attente de validation.
   (arrêt, montée lumineuse floue, poussières). Critique et élite : secousse de la scène, élite en anneau doré.
 - L'or s'envole vers la pastille du butin. Pas d'XP par ennemi dans le jeu (XP par mission) : rien à faire voler.
 - Le boss a déjà son coup final (BossMomentManager) : le coup de grâce vise les ennemis normaux et les élites.
+- v3.444.0 livrée : coup de grâce, variante B (90 / 120 / 160 ms). Restent : initiative, bouton « Comme la dernière fois »,
+  renfort éventuel de l'Acide et de la Pastille, contrepartie de la Fiole sur les récompenses de quête.

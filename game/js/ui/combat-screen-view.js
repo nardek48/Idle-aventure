@@ -301,12 +301,69 @@
       if (ui && ui._h !== html) { ui.innerHTML = html; ui._h = html; }
       keep[key] = true;
     });
-    // Ceux qui ne sont plus là : fondu, puis retrait.
+    // Ceux qui ne sont plus là : coup de grâce (v3.444.0), puis retrait.
     Array.prototype.forEach.call(stage.querySelectorAll(".cbx-foe"), function (el) {
-      if (keep[el.getAttribute("data-k")] || el.classList.contains("is-dead")) return;
-      el.classList.add("is-dead");
-      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 650);
+      if (keep[el.getAttribute("data-k")] || el._cbxSlain) return;
+      el._cbxSlain = true;
+      slay(el);
     });
+  }
+
+  /* ---------- Coup de grâce (v3.444.0, variante B validée par Seb : atelier/coup-de-grace.html) ----------
+     Arrêt sur image (l'ennemi blanchit et se fige), puis fondu lumineux, anneau et poussières.
+     Critique et élite : arrêt plus long et secousse. Le boss garde son coup final (BossMomentManager). */
+  var SLAY_STOP_MS = { normal: 90, crit: 120, elite: 160 };
+  function lessMotion() { return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); }
+  function fxDiv(cls, a, size) {
+    var fx = byId("cbx-fx");
+    if (!fx || !a) return null;
+    var d = document.createElement("div");
+    d.className = cls;
+    d.style.left = a.x + "px"; d.style.top = a.y + "px";
+    if (size) { d.style.width = d.style.height = size + "px"; }
+    fx.appendChild(d);
+    return d;
+  }
+  function slay(el) {
+    var e = el._cbxRef || {};
+    // L'ennemi suivant peut reprendre le même actorId (chasse, vague) : l'élément mourant change de clé
+    el.setAttribute("data-k", "slain-" + el.getAttribute("data-k") + "-" + Date.now());
+    var drop = function (ms) { setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, ms); };
+    if ((e.isBoss && !e.isElite) || lessMotion()) { el.classList.add("is-dead"); return drop(650); }
+    var kind = e.isElite ? "elite" : (e._cbxLastCrit ? "crit" : "normal");
+    var stop = SLAY_STOP_MS[kind];
+    var a = anchorOf(el.querySelector(".cbx-foe-img") || el, 0.5);
+    el.classList.add("is-stop");
+    if (kind !== "normal") flash(byId("cbx-stage"), "is-quake");
+    setTimeout(function () {
+      el.classList.remove("is-stop");
+      el.classList.add("is-slain");
+      var ring = fxDiv("cbx-ring" + (kind === "elite" ? " is-gold" : ""), a, a ? Math.round(a.w * (kind === "elite" ? 0.9 : 0.7)) : 0);
+      if (ring) setTimeout(function () { ring.remove(); }, 500);
+      for (var k = 0; k < (kind === "normal" ? 6 : 10); k++) {
+        var m = fxDiv("cbx-mote", a ? { x: a.x + (Math.random() - 0.5) * a.w * 0.55, y: a.y + (Math.random() - 0.3) * a.w * 0.3 } : null);
+        if (!m) break;
+        m.style.setProperty("--dx", ((Math.random() - 0.5) * 40).toFixed(0) + "px");
+        m.style.animationDelay = (Math.random() * 0.15).toFixed(2) + "s";
+        (function (n) { setTimeout(function () { n.remove(); }, 1100); })(m);
+      }
+    }, stop);
+    drop(stop + 650);
+  }
+
+  /* L'or du coup de grâce file vers la pastille du butin, qui réagit à l'arrivée. */
+  function flyGold(amount) {
+    var a = cbx.lastDeadRect;
+    if (!a) { var st = byId("cbx-stage"); a = st ? anchorOf(st, 0.6) : null; }
+    var label = "+" + (typeof formatNumber === "function" ? formatNumber(amount) : amount);
+    var pill = document.querySelector("#cbx-top .cbx-pill:not(.is-tempo):not(.is-flee)");
+    var to = pill ? anchorOf(pill, 0.5) : null;
+    if (!to || lessMotion()) return floatAt(a, label, "is-gold", "gold");
+    var c = fxDiv("cbx-coin", a);
+    if (!c) return;
+    c.innerHTML = ico(IC.gold) + esc(label);
+    setTimeout(function () { c.classList.add("is-fly"); c.style.left = to.x + "px"; c.style.top = to.y + "px"; }, 350);
+    setTimeout(function () { c.remove(); flash(document.querySelector("#cbx-top .cbx-pill:not(.is-tempo):not(.is-flee)"), "is-pop"); }, 1050);
   }
 
   /* ---------- Équipe ---------- */
@@ -650,6 +707,7 @@
     });
     var e = best || target();
     if (!e) return;
+    e._cbxLastCrit = !!isCrit;   // v3.444.0 : le coup de grâce critique dure plus et secoue
     var el = foeEl(e);
     cbx.hp.set(e, num(e.hp));
     if (el) {
@@ -785,11 +843,7 @@
   // Le moteur affiche ses dégâts dans l'ancien décor : on les reprend ici, sur le bon ennemi.
   window.showFloatingDamage = function (amount, isCrit) { onDamageShown(amount, isCrit); };
   window.showDamageTakenPopup = function () { /* repris par watch() sur la carte touchée */ };
-  window.showGoldPopup = function (amount) {
-    var a = cbx.lastDeadRect;
-    if (!a) { var st = byId("cbx-stage"); a = st ? anchorOf(st, 0.6) : null; }
-    floatAt(a, "+" + (typeof formatNumber === "function" ? formatNumber(amount) : amount), "is-gold", "gold");
-  };
+  window.showGoldPopup = function (amount) { flyGold(amount); };   // v3.444.0 : vers la pastille du butin
 
   /* Phase de boss : le bandeau bref reste celui du jeu, une pastille le garde lisible ensuite. */
   window.showBossPhase = function (enemy, label, line, full) {

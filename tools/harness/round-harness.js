@@ -14973,5 +14973,19 @@ console.log("\n[218] v3.443.1 — Réserve de contre du Grimoire : un trait tenu
   }
 })();
 
+console.log("\n[219] v3.444.0 — Coup de grâce (variante B) : arrêt sur image, fondu lumineux, or vers le butin");
+(function () {
+  try {
+    var fs = require("fs");
+    var js = fs.readFileSync(ROOT + "/js/ui/combat-screen-view.js", "utf8"), css = fs.readFileSync(ROOT + "/css/03-combat-screen.css", "utf8");
+    ok(/SLAY_STOP_MS = \{ normal: 90, crit: 120, elite: 160 \}/.test(js), "arrêts sur image validés par Seb : 90 / 120 / 160 ms");
+    ok(/e\.isBoss && !e\.isElite/.test(js) && /prefers-reduced-motion/.test(js), "boss : son coup final reste ; animations réduites : l'ancien fondu");
+    ok(/\.cbx-foe\.is-slain/.test(css) && /\.cbx-foe\.is-stop/.test(css) && /\.cbx-ring/.test(css) && /\.cbx-mote/.test(css) && /\.cbx-coin/.test(css), "styles du coup de grâce présents");
+    ok(String(g.showGoldPopup).indexOf("flyGold") !== -1, "l'or du combat passe par le vol vers la pastille du butin");
+  } catch (err) {
+    ok(false, "[219] exception : " + err.message);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
