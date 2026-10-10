@@ -55,3 +55,12 @@ Rien n'est décidé : options en attente de validation.
   changement payant ×3 (décision D4b, close). Un choix gratuit à la sortie rouvrirait cette décision.
 - Options proposées : A = préparation avec les réglages existants déplacés ; B = A + voie de Maddoc à la sortie ;
   C = vrais rôles au choix pour chaque compagnon (nouvelles compétences). Recommandé : A.
+
+## Idée de Seb (2026-10-10) : l'initiative pour tous
+- Aujourd'hui (`combat-engine.js`) : héros, puis compagnons (`alliesTurn`), puis ennemis (`enemiesTurn`, triés par
+  célérité dans un groupe). La célérité remplit une jauge qui donne une frappe en plus (héros et ennemis).
+- Les annonces sont pensées pour cet ordre : annonce au round N, impact au round N+1, l'équipe joue entre les deux
+  pour contrer. Un ennemi plus rapide que le héros frapperait avant le contre : il faudrait revoir cette lecture.
+- Touché : moteur (protégé), mode Manuel (choix de tous les alliés puis riposte), pronostic (CombatForecast),
+  combats résolus des Petites Aventures, bancs, sens de la célérité (classe Rôdeur).
+- Avis : gros chantier, à faire APRÈS la préparation de sortie. Variante légère : afficher l'ordre des tours.
