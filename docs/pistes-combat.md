@@ -85,3 +85,4 @@ Rien n'est décidé : options en attente de validation.
    objets à contrepartie (C, façon besace des Petites Aventures).
    Contrainte : les objets AIDENT, ils ne sont jamais requis. Sans objet, l'équilibrage reste celui d'aujourd'hui :
    aucun ennemi n'est durci pour les rendre nécessaires.
+2. Places : 1 au départ, 2 plus tard ; la 2e s'ouvre par un niveau d'atelier au village (le joueur la gagne par la production).
