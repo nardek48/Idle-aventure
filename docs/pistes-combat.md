@@ -89,3 +89,8 @@ Rien n'est décidé : options en attente de validation.
 3. Consommation : objets contre les traits consommés à la fin de la sortie (servi ou non) ; seule la Fiole noire est rendue si elle n'a pas servi.
 4. Provenance : l'Apothicaire (préparations de combat, recette gagnée par commande, apparition avec le monde) ;
    comptées dans la capacité par jour ; la 2e place s'ouvre au niveau 4 de l'Apothicaire.
+5. Puissance : le même contre qu'une règle du Grimoire, posé automatiquement (et reposé quand il retombe), sans
+   compétence ni round. Premier lot : Huile de lame (Blindé), Baume froid (Enragé), Encens amer (Corrupteur),
+   Sel de fer (Vampirique), Fiole noire (à contrepartie, touche combat-engine.js). Bouclier et Silence : second lot.
+   Passif dans les deux modes. Tant que l'objet tient le trait, la condition du Grimoire correspondante est fausse
+   (combat-auto-policy-system.js) : pas de compétence gaspillée, le conseil Tactique ne le propose plus.
