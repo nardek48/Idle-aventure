@@ -1856,9 +1856,11 @@ STORY_QUESTS.ruins = {
       objectiveLabel: "Envoyer une caravane au Marché des Ruines et la décharger à son retour",
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_04,
+      // v3.436.5 : sans Halle marchande, pas de caravane : on mène d'abord à la Halle
       linkTo: {
-        tab: "campement",
+        tab: function () { return storyCaravanReady() ? "campement" : "village"; },
         afterGo: function () {
+          if (!storyCaravanReady()) { if (typeof goToCaravanHall === "function") goToCaravanHall(); return; }
           if (typeof setCampTab === "function") setCampTab("depart");
           if (typeof openExpeditionsSheet === "function") openExpeditionsSheet("caravan");
         }
@@ -1873,7 +1875,10 @@ STORY_QUESTS.ruins = {
         ]
       },
       check: function () { return storyDesertFlag("ruinsMarketDone"); },
-      progress: function () { return "Caravane du Marché des Ruines " + (storyDesertFlag("ruinsMarketDone") ? "1/1" : "0/1"); }
+      progress: function () {
+        if (!storyCaravanReady()) return "Bâtis d'abord la Halle marchande (Village › Bâtiments)"; // v3.436.5
+        return "Caravane du Marché des Ruines " + (storyDesertFlag("ruinsMarketDone") ? "1/1" : "0/1");
+      }
     },
     /* Étape 5 (doc §7) : premier choix pesant des Ruines, clé « seuil », axe Soi / Aeswyn.
        Garder -> Le seuil (le héros se relève une fois par combat, RiseSystem.tryHeroRise).
@@ -2605,6 +2610,9 @@ function storyPalierRuines(game) {
     armure: (F && typeof F.getLevel === "function") ? F.getLevel("armor") : 0
   };
 }
+/* v3.436.5 (ruines_04) : la caravane existe-t-elle ? Elle part de la Halle marchande. */
+function storyCaravanReady() { return !!(window.CaravanManager && CaravanManager.isAvailable()); }
+window.storyCaravanReady = storyCaravanReady;
 window.storyPalierRuines = storyPalierRuines;
 window.storyRuinsSectorsFreed = storyRuinsSectorsFreed;
 window.storyPorteSanctuaire = storyPorteSanctuaire;

@@ -1,6 +1,6 @@
 # Aethervale v3.437.0 — Journal de test
 
-Décision de Seb : enregistrer une vraie partie pour étalonner le robot de campagne (version complète, désactivée par défaut).
+S'applique sur la v3.436.5. Décision de Seb : enregistrer une vraie partie pour étalonner le robot de campagne (version complète, désactivée par défaut).
 
 ## Ce qui change
 - **Paramètres › Appareil › Journal de test** : interrupteur « Enregistrer ma partie », nombre de lignes, boutons Exporter et Effacer.
