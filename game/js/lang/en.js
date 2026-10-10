@@ -1688,7 +1688,7 @@ I18n.register("en", {
   "Le niveau appartient à l'emplacement : changer de pièce ne fait rien perdre.": "The level belongs to the slot: changing items loses nothing.",
   "niv. {a} / {b}": "lvl {a} / {b}",
   "Vide — le niveau attend sa pièce.": "Empty — the level awaits its item.",
-  "Matériaux fournis par le village (reforge exigée par l’Histoire)": "Materials provided by the village (reforge required by the Story)",
+  "Acier fourni par le village (reforge exigée par l’Histoire)": "Steel provided by the village (reforge required by the Story)",
   "Améliore": "Upgrade",
   "la Forge": "the Forge",
   "Reforger": "Reforge",

@@ -535,7 +535,8 @@ function buildForgeBoardHTML() {
 
     if (cost) {
       if (ForgeManager.isStoryReforge && ForgeManager.isStoryReforge(slot, level + 1)) {
-        h += '<div class="forge-board-note">' + _t("Matériaux fournis par le village (reforge exigée par l’Histoire)") + '</div>';
+        // v3.437.3 : seul l'acier est fourni (STORY_PROVIDED_MATERIALS) ; Résine, Chitine, Clé restent dues
+        h += '<div class="forge-board-note">' + _t("Acier fourni par le village (reforge exigée par l’Histoire)") + '</div>';
       }
       h += '<div class="forge-row-cost">';
       Object.keys(cost).forEach(function (key) {
