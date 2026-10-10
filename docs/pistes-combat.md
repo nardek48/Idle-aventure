@@ -64,3 +64,12 @@ Rien n'est décidé : options en attente de validation.
 - Touché : moteur (protégé), mode Manuel (choix de tous les alliés puis riposte), pronostic (CombatForecast),
   combats résolus des Petites Aventures, bancs, sens de la célérité (classe Rôdeur).
 - Avis : gros chantier, à faire APRÈS la préparation de sortie. Variante légère : afficher l'ordre des tours.
+
+## Décisions de Seb (2026-10-10) : préparation de sortie, option A
+- Préparation par SORTIE (chasse, quête, donjon, élite de carte), jamais par combat.
+- Mode verrouillé complètement pendant la sortie (pas de « reprendre la main ») : gagner de la place.
+- Objets de combat : plus tard, discussion à part.
+- Atelier : `atelier/preparation-sortie.html`. Mesure : sans la rangée du mode, la scène gagne 41 px (Tactique et Grimoire) ;
+  « Continuer » et la vitesse passent en pastille dans la barre du haut.
+- Trouvé en passant : `images/Icons/combat_status/target.png` (réglage Cible du Grimoire) n'existe pas, et
+  `missing-icons.js` ne le voit pas (attribut src sans guillemets).
