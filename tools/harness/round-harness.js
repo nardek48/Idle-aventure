@@ -11677,7 +11677,9 @@ console.log("\n[154] v3.378.0 — « Ce que tu vas affronter » : traits connus 
   h = card({ type: "dungeon", id: 2 });
   ok(h.indexOf("Blindé") !== -1 && h.indexOf("Serment sous") !== -1 && h.indexOf("sphinx") === -1, "Cité engloutie : élite vaincue affichée, sphinx caché tant que le donjon n'est pas terminé");
   G.dungeonTierCleared = { 2: true };
-  ok(card({ type: "dungeon", id: 2 }).indexOf("sphinx") !== -1, "donjon terminé : le trait du sphinx s'affiche");
+  h = card({ type: "dungeon", id: 2 });
+  ok(h.indexOf("sphinx") !== -1, "donjon terminé : le trait du sphinx s'affiche");
+  ok(/Corrupteur<\/b> · [^<]*sphinx/.test(h), "v3.438.1 : le sphinx est Corrupteur (3e trait de la Cité)");
   ok(card({ type: "elite", id: "serment_armure" }).indexOf("Blindé") !== -1, "élite de la carte : trait affiché");
 
   // Anglais

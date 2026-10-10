@@ -136,7 +136,8 @@ var DUNGEONS = [
          33 % : il change d'archétype et frappe comme il regarde, droit devant.
        Tant qu'un renfort tient debout, son soin de boss reste suspendu (combat-engine). */
     boss: {
-      baseId: "sphinx", name: "Le sphinx", archetype: "armored",
+      // v3.438.1 : Blindé -> Corrupteur (3e trait de la Cité, 3 traits pour 2 règles ; Blindé reste aux vagues)
+      baseId: "sphinx", name: "Le sphinx", archetype: "corrupted",
       /* Calibré au banc (sim/cite-vague5-bench.js --profil palier, 16 runs/classe, sans
          Marque), sur les VRAIES stats de BOSS_DB : Chevalier 69 % de boss vaincu en brûlant
          ses deux potions, Rôdeur et Mage 100 % pour 0,6 à 0,9. Multiplicateurs sous 1 parce
