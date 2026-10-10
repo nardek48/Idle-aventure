@@ -33,7 +33,9 @@ window.mountHudDock = mountHudDock;
 /* Situations actives, la plus importante d'abord. */
 function hudDockItems() {
   var out = [];
-  var n = typeof getTalentsAvailableCount === "function" ? Number(getTalentsAvailableCount() || 0) : 0;
+  // v3.437.1 : pas de bulle avant que l'Histoire ouvre les talents (forest_11) : switchTab la refuserait
+  var talentsOpen = typeof isTabUnlocked !== "function" || isTabUnlocked("talents");
+  var n = (talentsOpen && typeof getTalentsAvailableCount === "function") ? Number(getTalentsAvailableCount() || 0) : 0;
   if (n > 0) out.push({ k: "talent", icon: HUD_DOCK_ICONS.talent, badge: n > 1 ? String(n) : "",
     tip: _tn(n, "Un point de talent à placer", "{n} points de talent à placer", { n: n }), go: "switchTab('talents')" });
   // v3.405.0 : petite aventure du jour, puis sorties de donjon restantes (pas sur leur propre écran)

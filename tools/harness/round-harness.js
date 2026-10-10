@@ -12817,6 +12817,10 @@ console.log("\n[169] v3.396.0 — HUD-1 : bandeau « C · Ornée » et bulles de
     ok(g.hudDockItems().length === 0, "rien à faire : aucune bulle hors fil rouge");
     game.inventory = [{}, {}, {}];
     g.getTalentsAvailableCount = function () { return 2; };
+    // v3.437.1 : pas de bulle talent tant que l'Histoire n'a pas ouvert l'onglet (forest_11)
+    game.unlockedTabs = Object.assign({}, game.unlockedTabs, { talents: false });
+    ok(g.hudDockItems().map(function (x) { return x.k; }).join(",") === "bag", "talents fermés (avant forest_11) : pas de bulle talent, même avec des points");
+    game.unlockedTabs.talents = true;
     var it = g.hudDockItems();
     ok(it.length === 2 && it[0].k === "talent" && it[0].badge === "2" && it[1].k === "bag" && it[1].badge === "3", "talents (2 points) puis sac (3 objets), avec leurs nombres");
     g.getTalentsAvailableCount = tc0;
