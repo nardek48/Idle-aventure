@@ -122,3 +122,5 @@ Rien n'est décidé : options en attente de validation.
 - Le boss a déjà son coup final (BossMomentManager) : le coup de grâce vise les ennemis normaux et les élites.
 - v3.444.0 livrée : coup de grâce, variante B (90 / 120 / 160 ms). Restent : initiative, bouton « Comme la dernière fois »,
   renfort éventuel de l'Acide et de la Pastille, contrepartie de la Fiole sur les récompenses de quête.
+- Décision Seb (2026-10-10) : l'initiative est reportée à plus tard. Prochain chantier : le bouton « Comme la dernière fois »
+  dans la préparation de sortie (mémoriser au moins les potions à bonus et les objets du dernier départ).
