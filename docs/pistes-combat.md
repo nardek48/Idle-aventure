@@ -94,3 +94,10 @@ Rien n'est décidé : options en attente de validation.
    Sel de fer (Vampirique), Fiole noire (à contrepartie, touche combat-engine.js). Bouclier et Silence : second lot.
    Passif dans les deux modes. Tant que l'objet tient le trait, la condition du Grimoire correspondante est fausse
    (combat-auto-policy-system.js) : pas de compétence gaspillée, le conseil Tactique ne le propose plus.
+6. Prix : option B (décision Seb), le double d'une potion à bonus, pour consommer la production. Recette dès le monde du trait.
+   Baume froid (Enragé, Forêt) 8 Eau purifiée + 12 Blé, commande 80 Blé + 30 Eau purifiée ;
+   Encens amer (Corrupteur, Forêt) 8 Eau purifiée + 12 Bois, commande 80 Bois + 30 Eau purifiée ;
+   Huile de lame (Blindé, Désert) 10 Eau purifiée + 8 Fer, commande 60 Fer + 50 Eau purifiée ;
+   Fiole noire (chute, Désert) 12 Eau purifiée + 2 Chitine, commande 6 Chitine + 60 Eau purifiée ;
+   Sel de fer (Vampirique, Ruines) 12 Eau purifiée + 4 Lingots, commande 24 Lingots + 60 Eau purifiée.
+   Chiffres de départ, recalés au banc (charge sur la production).
