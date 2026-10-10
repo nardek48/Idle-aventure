@@ -196,12 +196,27 @@ function buildCaravanBackHTML() {
 
 /* Contenu de la feuille « Caravane » (Campement › Expéditions). */
 function buildCaravanHTML() {
-  if (!window.CaravanManager || !CaravanManager.isAvailable()) return "";
+  if (!window.CaravanManager) return "";
+  // v3.436.5 : sans Halle marchande, la feuille était vide ; elle dit où bâtir la caravane
+  if (!CaravanManager.isAvailable()) {
+    return '<div class="car" data-car="locked"><div class="car-back"><h4>' + _t("Pas encore de caravane") + '</h4>'
+      + '<span class="car-why">' + esc(_t("La caravane part de la Halle marchande. Bâtis-la au Village.")) + '</span>'
+      + '<button type="button" class="kbtn primary" onclick="goToCaravanHall()">' + _t("Voir la Halle marchande") + '</button></div></div>';
+  }
   if (CaravanManager.isBack()) return '<div class="car" data-car="back">' + buildCaravanBackHTML() + '</div>';
   if (CaravanManager.isTraveling()) return '<div class="car" data-car="route">' + buildCaravanRouteHTML() + '</div>';
   return '<div class="car" data-car="depart">' + buildCaravanDepartHTML() + '</div>';
 }
 window.buildCaravanHTML = buildCaravanHTML;
+
+/* v3.436.5 : fiche de la Halle marchande au Village (coût, prérequis), depuis la feuille ou l'Histoire. */
+function goToCaravanHall() {
+  if (typeof closeExpeditionsSheet === "function") closeExpeditionsSheet();
+  if (typeof switchTab === "function") switchTab("village");
+  if (typeof setVillageSubTab === "function") setVillageSubTab("buildings");
+  if (typeof openVillageBuildingSheet === "function") openVillageBuildingSheet("hall");
+}
+window.goToCaravanHall = goToCaravanHall;
 
 function departCaravanFromSheet() {
   if (CaravanManager.depart(getCaravanSelectedTrip(), caravanMarketWorld())) {
