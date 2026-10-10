@@ -195,7 +195,7 @@ function buildSortiePrepItemsHTML(grim) {
       var r = grim ? etRuleResponse(def.cond, game.grimoireRules || [], kit) : { status: "none" };
       if (r.status === "counter") counters[t.trait] = true;
       var cls = item ? "is-item" : (r.status === "counter" ? "is-rule" : (grim ? "is-none" : "is-free"));
-      var resp = item ? _t("{o} le tient.", { o: _td(COMBAT_ITEMS[item].name) })
+      var resp = item ? (COMBAT_ITEMS[item].soften ? _t("{o} l'atténue.", { o: _td(COMBAT_ITEMS[item].name) }) : _t("{o} le tient.", { o: _td(COMBAT_ITEMS[item].name) }))
         : r.status === "counter" ? _t("Ta règle « {r} » le contre.", { r: etRuleLabel(r.rule, kit) })
         : r.status === "react" ? _t("Ta règle « {r} » réagit, sans le contrer.", { r: etRuleLabel(r.rule, kit) })
         : grim ? _t("Aucune règle ni objet ne répond.") : _t("À toi de le contrer en combat.");
@@ -230,6 +230,7 @@ function buildSortiePrepItemsHTML(grim) {
       var o = COMBAT_ITEMS[oid], tn = o.trait ? sortiePrepTraitName(o.trait) : "";
       var tag = !o.trait ? '<span class="sp-tag is-cost">' + esc(_td(o.con || "")) + '</span>'   // v3.442.0 : objet à contrepartie
         : !known[o.trait] ? '<span class="sp-tag is-meh">' + esc(_t("Aucun {t} connu dans cette sortie", { t: tn })) + '</span>'
+        : (counters[o.trait] && o.soften) ? '<span class="sp-tag is-good">' + esc(_t("Utile ici : {t}, en plus de ta règle", { t: tn })) + '</span>'
         : counters[o.trait] ? '<span class="sp-tag is-meh">' + esc(_t("Déjà contré par ta règle")) + '</span>'
         : '<span class="sp-tag is-good">' + esc(_t("Utile ici : {t}", { t: tn })) + '</span>';
       h += '<button type="button" class="sp-item" onclick="sortiePrepItem(' + slot + ', \'' + oid + '\')"><img src="' + esc(o.icon) + '" alt="">'

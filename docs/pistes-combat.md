@@ -111,3 +111,5 @@ Rien n'est décidé : options en attente de validation.
 - Reste : lot 2 (Fiole noire, combat-engine.js, accord de Seb), puis Bouclier et Silence ; icônes à dessiner.
 - v3.442.0 livrée : Fiole noire (une ligne dans combat-engine.js, accord de Seb). Nezzam 5→40 % (Rôdeur, campagne).
   Point ouvert : la moitié de butin perdue ne touche pas la récompense de quête (payée hors sortie). Reste : Bouclier, Silence.
+- v3.443.0 livrée : Acide mordant (Bouclier 1 round), Pastille de miel (Silence 1 round). Mesure : effets faibles
+  (Arbre-mère −1 round, Nezzam dans le bruit). Pistes de renfort à proposer à Seb.

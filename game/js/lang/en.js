@@ -5056,5 +5056,13 @@ I18n.register("en", {
   "La Fiole noire revient si elle n'a pas servi.": "The Black vial comes back if it wasn't used.",
   "À 0 PV, tu te relèves avec 40 % des PV, une fois par sortie.": "At 0 HP, you get back up with 40% HP, once per run.",
   "Si elle sert : butin de la sortie divisé par deux. Rendue si elle n'a pas servi.": "If used: the run's loot is halved. Given back if unused.",
-  "À 0 PV, tu te relèves avec 40 % des PV, une fois par sortie. Si elle sert : butin de la sortie divisé par deux. Rendue si elle n'a pas servi.": "At 0 HP, you get back up with 40% HP, once per run. If used: the run's loot is halved. Given back if unused."
+  "À 0 PV, tu te relèves avec 40 % des PV, une fois par sortie. Si elle sert : butin de la sortie divisé par deux. Rendue si elle n'a pas servi.": "At 0 HP, you get back up with 40% HP, once per run. If used: the run's loot is halved. Given back if unused.",
+  // v3.443.0 : contre Bouclier et Silence
+  "{o} : le bouclier de {x} ne tiendra qu'un round.": "{o}: {x}'s shield will only last one round.",
+  "{o} l'atténue.": "{o} softens it.",
+  "Utile ici : {t}, en plus de ta règle": "Useful here: {t}, on top of your rule",
+  "Acide mordant": "Biting acid",
+  "Pastille de miel": "Honey lozenge",
+  "Contre le Bouclier : il ne tient qu'un round au lieu de deux. S'ajoute à ta règle du Grimoire.": "Counters the Shield: it only lasts one round instead of two. Adds to your Grimoire rule.",
+  "Contre le Silence : tes techniques ne sont bloquées qu'un round au lieu de deux (jamais moins d'un).": "Counters the Silence: your techniques are only blocked for one round instead of two (never less than one)."
 });

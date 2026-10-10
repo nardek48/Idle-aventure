@@ -14826,8 +14826,8 @@ console.log("\n[215] v3.441.0 — Objets de combat : préparations de l'Apothica
   var CI = g.CombatItems, A = g.ApothecaryManager, W = g.WarehouseManager;
   try {
     game = freshCombat("knight");
-    ok(g.COMBAT_ITEM_ORDER.length === 5 && g.COMBAT_ITEM_ORDER.every(function (id) { return g.WAREHOUSE_RESOURCES[id] && g.WAREHOUSE_RESOURCES[id].tier === "crafted" && A.getRecipe(id) && A.getRecipe(id).kind === "item"; }),
-      "5 objets (v3.442.0 : + Fiole noire) : rangés à l'Entrepôt (fabriqués) et préparés à l'Apothicaire");
+    ok(g.COMBAT_ITEM_ORDER.length === 7 && g.COMBAT_ITEM_ORDER.every(function (id) { return g.WAREHOUSE_RESOURCES[id] && g.WAREHOUSE_RESOURCES[id].tier === "crafted" && A.getRecipe(id) && A.getRecipe(id).kind === "item"; }),
+      "7 objets (v3.442.0 : Fiole noire ; v3.443.0 : Acide, Pastille) : rangés à l'Entrepôt (fabriqués) et préparés à l'Apothicaire");
     ok(A.getRecipe("baume_froid").worldIndex === 0 && A.getRecipe("huile_de_lame").worldIndex === 1 && A.getRecipe("sel_de_fer").worldIndex === 2, "recettes ouvertes avec le monde de leur trait");
     var CV = g.CaravanSystem || g.CaravanManager;
     ok(g.WAREHOUSE_RESOURCES.huile_de_lame.sellPrice === 0 && !!CV && CV.getEligibleKeys().indexOf("huile_de_lame") === -1, "ni caravane ni vente");
@@ -14920,6 +14920,33 @@ console.log("\n[216] v3.442.0 — Fiole noire : relevé à 40 % une fois par sor
   } catch (err) {
     ok(false, "[216] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
+})();
+
+console.log("\n[217] v3.443.0 — Acide mordant et Pastille de miel : Bouclier et Silence atténués (1 round au lieu de 2)");
+(function () {
+  var CI = g.CombatItems, S = g.SortieManager, SQ = g.StoryQuestManager, savedChoice = SQ.getChoice;
+  try {
+    game = freshCombat("knight");
+    var mk = function (arch, id) { return g.CombatEngine.prepareEnemy({ id: id || "goblin", name: "Gobelin", isBoss: false, archetype: arch, hp: 500, maxHp: 500, stats: g.ENEMY_DB.goblin.stats, resists: [], weak: [] }); };
+    ok(g.getHeroSilenceRounds() === 2, "sans objet : le Silence bloque 2 rounds");
+    S.start("hunt");
+    game.sortie.items = ["acide_mordant", "pastille_de_miel"];
+    var troll = mk("shielded", "foresttroll"), allie = mk(null, "slime");
+    game.enemy = troll; if (g.CombatActors) g.CombatActors.setEnemies([troll, allie]);   // game.enemy d'abord : l'affecter refait un groupe d'un seul
+    troll.shieldRounds = 2; allie.shieldRounds = 2;   // son bouclier, et un mur posé sur un allié (Bâtisseur)
+    CI.onRoundEnd();
+    ok(troll.shieldRounds === 1 && allie.shieldRounds === 1, "Acide mordant : tout bouclier posé ne tient qu'un round (le sien, le mur sur un allié)");
+    ok(g.getHeroSilenceRounds() === 1, "Pastille de miel : le Silence ne bloque qu'un round");
+    SQ.getChoice = function (k) { return k === "roi" ? "soi" : savedChoice.call(SQ, k); };
+    ok(g.getHeroSilenceRounds() === 1, "avec « La forme du roi » (déjà 1 round) : jamais moins d'un round");
+    SQ.getChoice = savedChoice;
+    var ctxRule = g.evaluateGrimoireCondition("shieldIncoming", { shieldIncoming: true });
+    ok(ctxRule === true, "la règle « Bouclier au prochain tour » joue toujours : l'objet s'y ajoute");
+    S.end("return");
+    ok(g.getHeroSilenceRounds() === 2, "sortie finie : le Silence revient à 2 rounds");
+  } catch (err) {
+    ok(false, "[217] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally { SQ.getChoice = savedChoice; }
 })();
 
 console.log("\n" + passes + " OK, " + failures + " échec(s)");

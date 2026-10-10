@@ -77,8 +77,21 @@ var CombatItems = {
     });
   },
 
+  /* v3.443.0 : Acide mordant. Un bouclier posé pendant le tour ennemi vaut 2 rounds ; ramené à 1 en fin
+     de round, il ne couvre plus qu'un tour du héros. Tout bouclier : le sien, d'un boss, le mur du Bâtisseur. */
+  softenShield: function (e, item) {
+    if (Number(e.shieldRounds || 0) <= 1) return false;
+    e.shieldRounds = 1;
+    addLog("🧪 " + _t("{o} : le bouclier de {x} ne tiendra qu'un round.", { o: _td(item.name), x: _td(e.name || "") }), "event");
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+    return true;
+  },
+
   applyTo: function (e, item) {
-    if (!e || !item || !item.trait || e.archetype !== item.trait) return false;
+    if (!e || !item || !item.trait) return false;
+    if (item.trait === "shielded") return this.softenShield(e, item);   // v3.443.0 : tout bouclier
+    if (item.soften) return false;   // le Silence se règle à sa durée (getHeroSilenceRounds)
+    if (e.archetype !== item.trait) return false;
     var posed = false;
     if (item.trait === "armored" && Number(e.armorSuppressedRounds || 0) <= 1) {
       e.armorSuppressedReduction = ARMORED_SUPPRESSION_REDUCTION_PCT;

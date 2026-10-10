@@ -31,6 +31,18 @@ var COMBAT_ITEMS = {
     icon: "images/Icons/combat_items/sel_de_fer.png",
     desc: "Contre le Vampirique : son vol de vie est bloqué, de nouveau tous les 4 rounds."
   },
+  /* v3.443.0 : contre les coups ANNONCÉS, l'objet atténue (soften) au lieu d'annuler : il s'ajoute
+     à la règle du Grimoire, qui seule annule le coup (décision Seb, option B). */
+  acide_mordant: {
+    id: "acide_mordant", name: "Acide mordant", trait: "shielded", soften: true,
+    icon: "images/Icons/combat_items/acide_mordant.png",
+    desc: "Contre le Bouclier : il ne tient qu'un round au lieu de deux. S'ajoute à ta règle du Grimoire."
+  },
+  pastille_de_miel: {
+    id: "pastille_de_miel", name: "Pastille de miel", trait: "silenced", soften: true,
+    icon: "images/Icons/combat_items/pastille_de_miel.png",
+    desc: "Contre le Silence : tes techniques ne sont bloquées qu'un round au lieu de deux (jamais moins d'un)."
+  },
   /* v3.442.0 : objet à contrepartie (besace des Petites Aventures). Rendue si elle n'a pas servi. */
   fiole_noire: {
     id: "fiole_noire", name: "Fiole noire", trait: null, returnIfUnused: true,
@@ -39,7 +51,7 @@ var COMBAT_ITEMS = {
     con: "Si elle sert : butin de la sortie divisé par deux. Rendue si elle n'a pas servi."
   }
 };
-var COMBAT_ITEM_ORDER = ["baume_froid", "encens_amer", "huile_de_lame", "sel_de_fer", "fiole_noire"];
+var COMBAT_ITEM_ORDER = ["baume_froid", "encens_amer", "huile_de_lame", "sel_de_fer", "acide_mordant", "pastille_de_miel", "fiole_noire"];
 var COMBAT_ITEM_FIOLE_HP_PCT = 0.40;
 var COMBAT_ITEM_FIOLE_LOOT_MULT = 0.5;
 
