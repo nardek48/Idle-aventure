@@ -49,7 +49,7 @@ function buildReturnScreenHTML() {
   // v3.400.0 (lot F-2) : fenêtre centrée du kit (.kwin)
   var h = '<div class="kwin ret-card" role="dialog" aria-label="' + _t("Pendant ton absence") + '">';
   h += kWinHeadHTML({ icon: '<img src="images/Icons/system/offline_progress.png" alt="">', title: _t("Pendant ton absence"),
-    sub: esc(_t("Tu es parti {d}.", { d: window.ResumeManager ? ResumeManager.formatAbsence(s.ms || 0) : "" })) });
+    sub: esc(_t("{d} d'absence.", { d: window.ResumeManager ? ResumeManager.formatAbsence(s.ms || 0) : "" })) });
   h += '<div class="kwin-body">';
   if (st.line) h += '<div class="kwin-quote ret-line">' + esc(_td(st.line)) + '</div>';
 

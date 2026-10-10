@@ -113,7 +113,7 @@ function buildCampHTML(tab) {
   // déjà « <img class=ico-inline src=images/Icons/quests/village_quest.png> Campement », la ligne d'ambiance n'apportait rien.
 
   if (game.justDied) {
-    h += '<div class="camp-death-banner"><img class="ico-lg" src="images/Icons/camp/hero_defeated.png" alt=""> ' + _t("Tu es tombé au combat. Mange une ration, ou laisse le feu faire son œuvre, avant de repartir.") + '</div>';
+    h += '<div class="camp-death-banner"><img class="ico-lg" src="images/Icons/camp/hero_defeated.png" alt=""> ' + _t("Tu es à terre. Mange une ration, ou laisse le feu faire son œuvre, avant de repartir.") + '</div>';
     game.justDied = false;
   }
 

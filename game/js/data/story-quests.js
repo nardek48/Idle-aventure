@@ -648,7 +648,7 @@ var STORY_QUESTS = {
             { who: "Wenna", text: "Tu repars quand ?" },
             { who: "Orwen", text: "Le pain d'abord." },
             { who: "Wenna", text: "C'est pas une réponse. Toi non plus tu réponds jamais." },
-            { who: "Brannoc", text: "Laisse-la partir, petit. Elle demande depuis qu'elle sait parler… enfin. Prends-en soin." },
+            { who: "Brannoc", text: "Laisse-la partir. Elle demande depuis qu'elle sait parler… enfin. Prends-en soin." },
             { who: null, text: "Orwen met un morceau de pain de côté. Deux, cette fois." }
           ]
         },
@@ -693,7 +693,7 @@ var STORY_QUESTS = {
             { who: "Orwen", text: "Pose ça là. Pas plus près." },
             { who: "Wenna", text: "Pourquoi elle prend le pain ? Le pain c'est pour nous." },
             { who: "Orwen", text: "Elle prend ce qu'on est. Le pain, c'est nous." },
-            { who: "Brannoc", text: "Elle prenait déjà, cette nuit-là. Elle ne savait pas encore quoi… enfin. Vas-y, petit. Elle t'attend, celle-là. Toi." },
+            { who: "Brannoc", text: "Elle prenait déjà, cette nuit-là. Elle ne savait pas encore quoi… enfin. Vas-y. Elle t'attend, celle-là. Toi." },
             { who: null, text: "Aldric ne dit rien. Il est retourné au moulin." }
           ]
         },
@@ -809,7 +809,7 @@ window.storyMaddocMet = storyMaddocMet;
 
 var STORY_MADDOC_GREETING = {
   aided: "Toi. La gourde. Je te dois une eau. Je paie en marchant devant.",
-  passed: "Toi. Tu étais pressé, là-haut. On l'est tous. Je viens.",
+  passed: "Toi. Tu courais, là-haut. On court tous. Je viens.",
   none: "Maddoc. J'habite de l'autre côté. Il n'y a plus vraiment de côté."
 };
 window.STORY_MADDOC_GREETING = STORY_MADDOC_GREETING;
@@ -839,7 +839,7 @@ STORY_QUESTS.desert = {
           { who: "Wenna", text: "Quel vieux ?" },
           { who: "Sarkel", text: "Le vieux. Bon. On part avant la chaleur." },
           { who: "Orwen", text: "L'eau d'abord. Le sable a soif." },
-          { who: "Brannoc", text: "Le sud, hein. Un autre a pris cette route, avant toi. Il n'est jamais… enfin. Toi, tu reviens, petit." },
+          { who: "Brannoc", text: "Le sud, hein. Un autre a pris cette route, avant toi. Il n'est jamais… enfin. Toi, tu reviens." },
           { who: null, text: "Aldric a compté les sacs deux fois. Il n'a rien dit. Il en a ajouté un." }
         ],
         completionDialogue: [
@@ -900,7 +900,7 @@ STORY_QUESTS.desert = {
       act: "Acte I — La surface",
       narrative: {
         objective: "Au camp, l'eau se paie à la mesure. À Aeswyn, le puits coule pour rien. Il manque de quoi la porter.",
-        completion: "L'outre est tiède contre ta hanche. Le sable a soif. Toi, un peu moins. Tu es allé plus loin qu'hier.",
+        completion: "L'outre est tiède contre ta hanche. Le sable a soif. Toi, un peu moins. Tu vas plus loin qu'hier.",
         dialogue: [
           { who: "Wenna", text: "La dame du puits coud les outres avec du boyau. J'ai regardé. Je sais faire." },
           { who: "Sarkel", text: "Pleine, une outre vaut trois repas ici. Vide, c'est un bout de cuir. Rapporte-les pleines." },
@@ -1197,10 +1197,10 @@ STORY_QUESTS.desert = {
           { who: "Wenna", text: "Chez toi, c'est où ?" },
           { who: "Maddoc", text: "De l'autre côté. Il y avait un four. Il est sous le sable, maintenant." },
           { who: "Sarkel", text: "Du verre qui coupe le fer. Je t'en prends dix. Non. Je t'en prends tout." },
-          { who: "Brannoc", text: "Le tailleur de la Carrière sait chauffer la pierre. Le verre, il apprendra. Montre-lui, petit." }
+          { who: "Brannoc", text: "Le tailleur de la Carrière sait chauffer la pierre. Le verre, il apprendra. Montre-lui." }
         ],
         completionDialogue: [
-          { who: "Brannoc", text: "Ça, petit, ça tiendra un toit." },
+          { who: "Brannoc", text: "Ça tiendra un toit, ça." },
           { who: "Maddoc", text: "Ça tenait des villes." }
         ]
       },
@@ -1351,7 +1351,7 @@ STORY_QUESTS.desert = {
       act: "Acte III — La cité engloutie",
       narrative: {
         objective: "Derrière le gouffre, la passerelle continue. En bas, des toits. Une ville entière, sous le sable, et le sable ne l'a pas écrasée : il l'a remplie, doucement, rue par rue.",
-        completion: "Au bout de la grande rue, une place. Sur la place, couché, quelque chose de très grand avec une tête d'homme. Ses yeux sont ouverts. Il ne te regarde pas : il regarde la rue par laquelle tu es venu, comme s'il attendait quelqu'un d'autre. Au bord de la place, une arme de la garde, propre comme au premier jour. Tu la prends.",
+        completion: "Au bout de la grande rue, une place. Sur la place, couché, quelque chose de très grand avec une tête d'homme. Ses yeux sont ouverts. Il ne te regarde pas : il regarde la rue par où tu arrives, comme s'il attendait quelqu'un d'autre. Au bord de la place, une arme de la garde, propre comme au premier jour. Tu la prends.",
         dialogue: [
           { who: "Maddoc", text: "J'ai vécu dans la première rue. Je ne suis jamais allé plus loin." },
           { who: "Wenna", text: "Pourquoi ?" },
@@ -1620,10 +1620,10 @@ STORY_QUESTS.desert = {
             ? [
               { who: "Orwen", text: "Pose ça là. Pas plus près." },
               { who: null, text: "Elle la glisse sous la braise. Le lendemain, au fond du vieux puits, l'eau monte d'un doigt. Elle n'a le goût de rien. Elle soigne." },
-              { who: "Brannoc", text: "Un puits de roi, dans un village de bûcherons… enfin. On l'a mérité, petit." }
+              { who: "Brannoc", text: "Un puits de roi, dans un village de bûcherons… enfin. On l'a mérité." }
             ]
             : [
-              { who: "Wenna", text: "Tu as l'air pareil." },
+              { who: "Wenna", text: "Tu n'as pas changé." },
               { who: "Le Veilleur", text: "Pour l'instant." },
               { who: null, text: "À Aeswyn, Orwen te regarde longtemps. Elle ne dit rien. Elle met un morceau de pain de côté." }
             ];

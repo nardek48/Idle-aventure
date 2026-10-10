@@ -9094,7 +9094,7 @@ console.log("\n[107] v3.311.0 — Maddoc, voies, étapes 8 à 10");
   ok(CM.state("maddoc").upgrades === 1, "le cadeau n'est donné qu'une fois");
   fresh("passed");
   SQ.acceptStep("desert");
-  ok(CM.state("maddoc").upgrades === 0 && /pressé/.test(steps[i8].narrative.dialogue[2].text), "passé : pas de cadeau, « Tu étais pressé »");
+  ok(CM.state("maddoc").upgrades === 0 && /Tu courais/.test(steps[i8].narrative.dialogue[2].text), "passé : pas de cadeau, « Tu courais, là-haut » (v3.437.5, tournure neutre)");
 
   var pend = g.storyPendingCardChoice("desert");
   ok(pend && pend.choice.key === "maddocVoie", "choix de voie en attente sur la carte d'étape");

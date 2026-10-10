@@ -29,7 +29,7 @@ var GRIMOIRE_CONDITIONS = {
   },
   heroLowHp: {
     id: "heroLowHp",
-    label: "Je suis blessé",
+    label: "Mes PV sont bas",
     description: "Tes PV sont bas.",
     icon: "images/Icons/combat_status/heal_incoming.png"
   },
