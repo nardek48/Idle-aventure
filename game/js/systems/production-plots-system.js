@@ -115,7 +115,7 @@ var ProductionPlotsSystem = {
   /* Monde qui ouvre la ligne de cette zone, avec sa préposition (« au Désert oublié »). */
   getPlotRowOpening: function (plotIndex) {
     var row = Math.floor(Number(plotIndex) / 3);
-    return window.WorldCaps ? WorldCaps.withPrep(row) : _t("dans un prochain monde");
+    return window.WorldCaps ? WorldCaps.withPrep(WorldCaps.getRowOpeningIndex(row)) : _t("dans un prochain monde"); // v3.437.2
   },
 
   /* Totaux agrégés, utilisés par ProductionManager. getTotalStock() somme

@@ -169,6 +169,12 @@ var WorldCaps = {
   },
 
   getZoneRows: function () { var e = this.getEntry(); return e ? e.zoneRows : Infinity; },
+  /* v3.437.2 : premier monde qui ouvre la rangée `row` de la grille (0 = Forêt) ; au-delà de
+     la table, le monde suivant. La 3e rangée s'ouvre à la Crypte, pas aux Ruines (RU7). */
+  getRowOpeningIndex: function (row) {
+    for (var i = 0; i < WORLD_CAPS.length; i++) if (Number(WORLD_CAPS[i].zoneRows) > row) return i;
+    return WORLD_CAPS.length;
+  },
   getZoneLevel: function () { var e = this.getEntry(); return e ? e.zoneLevel : Infinity; },
   getWorkshopLevel: function () { var e = this.getEntry(); return e ? e.workshopLevel : Infinity; },
   /* v3.298.0 : null au-delà de la table — SceneRunManager retombe alors sur sa valeur de base. */

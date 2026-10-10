@@ -229,7 +229,7 @@ function buildPlotCardHTML(buildingId, plot, index, nextIndex, cheapestIndex) {
     h0 += '<span class="farm-plot-card-lock-icon"><img class=ico-inline src=images/Icons/system/lock_closed.png></span>';
     h0 += '<span class="farm-plot-card-name">' + esc(zoneName) + '</span>';
     // v3.289.0 : une ligne par monde — la zone dit quel monde l'ouvre
-    if (!rowOpen) h0 += '<span class="farm-plot-card-profile">' + esc(_td((WORLDS[Math.floor(index / 3)] || {}).name || '')) + '</span>';
+    if (!rowOpen) h0 += '<span class="farm-plot-card-profile">' + esc(_td((WORLDS[WorldCaps.getRowOpeningIndex(Math.floor(index / 3))] || {}).name || '')) + '</span>'; // v3.437.2 : le monde qui ouvre la rangée
     else if (index === nextIndex) h0 += '<span class="farm-plot-card-profile">' + _t("Défricher") + '</span>';
     h0 += '</button>';
     return h0;
