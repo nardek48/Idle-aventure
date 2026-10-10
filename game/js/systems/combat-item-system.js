@@ -37,6 +37,12 @@ var CombatItems = {
     return this.carried().some(function (id) { return COMBAT_ITEMS[id].trait === trait; });
   },
 
+  /* v3.443.1 : condition du Grimoire d'un trait PERMANENT tenu par un objet (Bouclier et Silence : la règle reste utile). */
+  holdsCondition: function (conditionId) {
+    var trait = { enemyArmored: "armored", enemyEnraged: "enraged", enemyCorrupted: "corrupted", enemyVampiric: "vampiric" }[conditionId];
+    return !!trait && this.holds(trait);
+  },
+
   itemForTrait: function (trait) {
     var ids = this.carried();
     for (var i = 0; i < ids.length; i++) if (COMBAT_ITEMS[ids[i]].trait === trait) return COMBAT_ITEMS[ids[i]];

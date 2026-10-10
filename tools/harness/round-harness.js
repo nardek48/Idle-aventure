@@ -14949,5 +14949,29 @@ console.log("\n[217] v3.443.0 — Acide mordant et Pastille de miel : Bouclier e
   } finally { SQ.getChoice = savedChoice; }
 })();
 
+console.log("\n[218] v3.443.1 — Réserve de contre du Grimoire : un trait tenu par un objet ne bloque plus sa compétence");
+(function () {
+  var CI = g.CombatItems, S = g.SortieManager;
+  try {
+    game = freshCombat("knight");
+    var kit = g.getGrimoireCurrentKit();
+    var rules = [{ conditionId: "enemyArmored", actionSlot: "skill2" }];
+    var e = g.CombatEngine.prepareEnemy({ id: "sandwarrior", name: "Guerrier des sables", isBoss: false, archetype: "armored", hp: 500, maxHp: 500, stats: g.ENEMY_DB.goblin.stats, resists: [], weak: [] });
+    game.enemy = e; if (g.CombatActors) g.CombatActors.setEnemies([e]);
+    var sans = g.getPrioritaryCounterRule(rules, kit, e);
+    ok(!!sans && sans.actionSlot === "skill2", "sans objet : la règle Blindé → Brise-garde est la règle de contre prioritaire (compétence gardée de côté)");
+    S.start("hunt"); game.sortie.items = ["huile_de_lame"];
+    ok(g.getPrioritaryCounterRule(rules, kit, e) === null && CI.holdsCondition("enemyArmored") && !CI.holdsCondition("shieldIncoming"),
+      "avec l'Huile de lame : plus de règle prioritaire, Brise-garde revient dans la priorité par défaut");
+    game.sortie.items = ["acide_mordant"];
+    var rulesB = [{ conditionId: "shieldIncoming", actionSlot: "skill2" }];
+    e.archetype = "shielded";
+    ok(!!g.getPrioritaryCounterRule(rulesB, kit, e), "Acide mordant : la règle Bouclier garde sa réserve (elle seule annule le coup)");
+    S.end("return");
+  } catch (err) {
+    ok(false, "[218] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
