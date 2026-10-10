@@ -1351,7 +1351,7 @@ STORY_QUESTS.desert = {
       act: "Acte III — La cité engloutie",
       narrative: {
         objective: "Derrière le gouffre, la passerelle continue. En bas, des toits. Une ville entière, sous le sable, et le sable ne l'a pas écrasée : il l'a remplie, doucement, rue par rue.",
-        completion: "Au bout de la grande rue, une place. Sur la place, couché, quelque chose de très grand avec une tête d'homme. Ses yeux sont ouverts. Il ne regarde pas toi : il regarde la rue par laquelle tu es venu, comme s'il attendait quelqu'un d'autre. Au bord de la place, une arme de la garde, propre comme au premier jour. Tu la prends.",
+        completion: "Au bout de la grande rue, une place. Sur la place, couché, quelque chose de très grand avec une tête d'homme. Ses yeux sont ouverts. Il ne te regarde pas : il regarde la rue par laquelle tu es venu, comme s'il attendait quelqu'un d'autre. Au bord de la place, une arme de la garde, propre comme au premier jour. Tu la prends.",
         dialogue: [
           { who: "Maddoc", text: "J'ai vécu dans la première rue. Je ne suis jamais allé plus loin." },
           { who: "Wenna", text: "Pourquoi ?" },
@@ -1391,7 +1391,7 @@ STORY_QUESTS.desert = {
       act: "Acte III — La cité engloutie",
       narrative: {
         objective: "Vous remontez de la cité avec l'arme trouvée sur la place. Maddoc s'arrête sur la passerelle et la regarde, longtemps.", // v3.356.0 (D4)
-        completion: "La lame sort du feu avec un fil vert sur le tranchant, fin comme un cheveu. Maddoc passe le pouce dessus, sans appuyer.",
+        completion: "L'arme sort du feu avec un fil vert sur le métal, fin comme un cheveu. Maddoc passe le pouce dessus, sans appuyer.",
         dialogue: [
           { who: "Maddoc", text: "Pas avec ça." },
           { who: "Wenna", text: "Ça a suffi jusqu'ici." },

@@ -74,7 +74,7 @@ function buildCombatForecastHTML(f, opts) {
     h += '      <div class="cf-row' + (f.unwinnable ? ' is-blocking' : '') + '"><span>' + _t("Il se soigne") + '</span><span>' + _t("il faut plus de {n} dégâts / round", { n: formatNumber(f.healThreshold) }) + '</span></div>';
   }
   if (!f.unwinnable) {
-    h += '      <div class="cf-row"><span>' + _t("Estimation") + '</span><span>' + _t("~{a} rounds contre ~{b}", { a: f.roundsToKill, b: f.roundsToDie }) + '</span></div>';
+    h += '      <div class="cf-row"><span>' + _t("Estimation") + '</span><span>' + _tn(f.roundsToKill, "~{a} round contre ~{b}", "~{a} rounds contre ~{b}", { a: f.roundsToKill, b: f.roundsToDie }) + '</span></div>';
   }
   h += '    </div>';
 

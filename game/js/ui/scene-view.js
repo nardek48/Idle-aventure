@@ -71,8 +71,8 @@ function buildSceneStartBlockHTML(block) {
     var name = def.name ? _td(def.name) : cost.resourceId;
     h += '<div class="scene-landing-icon scene-cost-icon' + (have >= need ? ' is-ok' : '') + '">' + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.png", "scene-cost-img", name) + '</div>';
     if (have < need) {
-      h += '<div class="scene-cost-title">' + esc(need - have > 1 ? _t("Il te manque {n} {x}", { n: need - have, x: name }) : _t("Il te manque une {x}", { x: name })) + '</div>';
-      h += '<p class="scene-landing-text">' + esc(_t("{q} consomme {n} {x} au départ. Tu en as {h}.", { q: template.title ? _td(template.title) : _t("Cette expédition"), n: need, x: name, h: have })) + '</p>';
+      h += '<div class="scene-cost-title">' + esc(need - have > 1 ? _t("Il te manque {x} ×{n}", { n: need - have, x: name }) : _t("Il te manque une {x}", { x: name })) + '</div>';
+      h += '<p class="scene-landing-text">' + esc(_t("{q} consomme {x} ×{n} au départ. Tu en as {h}.", { q: template.title ? _td(template.title) : _t("Cette expédition"), n: need, x: name, h: have })) + '</p>';
       var recipe = findSceneCostRecipe(cost.resourceId);
       if (recipe) {
         h += '<div class="scene-cost-recipe"><span class="scene-cost-recipe-label">' + esc(_td(recipe.workshopName)) + '</span>';

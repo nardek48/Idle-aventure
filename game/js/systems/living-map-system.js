@@ -443,7 +443,7 @@ var LivingMapManager = {
         var resDef = (window.WAREHOUSE_RESOURCES || {})[cost.resourceId];
         var rName = (resDef && resDef.name) ? _td(resDef.name) : cost.resourceId;
         return { ok: false, reason: Number(cost.amount) > 1
-            ? _t("Il te manque {n} {x}. Elle se prépare à la Cuisine de camp, dans les Ateliers du Village.", { n: cost.amount, x: rName })
+            ? _t("Il te manque {x} ×{n}. Elle se prépare à la Cuisine de camp, dans les Ateliers du Village.", { n: cost.amount, x: rName })
             : _t("Il te manque une {x}. Elle se prépare à la Cuisine de camp, dans les Ateliers du Village.", { x: rName }), content: content, intensity: intensity, missingResource: cost.resourceId };
       }
     }
@@ -614,7 +614,7 @@ var LivingMapManager = {
       s.state = "libere";
       s.liberatedCount += 1;
       report.liberated = true;
-      report.message = _t("{x} est libéré.", { x: _td(def.name) });
+      report.message = _t("Libéré : {x}.", { x: _td(def.name) }); // v3.437.4 : sans accord, les secteurs ont les deux genres
       if (chantierDuJour) {
         var cmap = this.getMap(mapId), cn = Number((cmap.chantier || {}).reward || 0);
         game.livingMaps[mapId].chantier.done = true;

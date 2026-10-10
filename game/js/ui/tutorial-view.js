@@ -122,7 +122,7 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/subtabs/inventory.png", text: "Clique sur « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
       { icon: "images/Icons/system/upgrade.png", text: "Améliorer une parcelle augmente sa vitesse de production et sa capacité de stock local." },
       { icon: "images/Icons/quests/mission_construction.png", text: "Les Ateliers (comme la Cuisine de camp) transforment des ressources brutes (ex. viande + eau) en objets utiles (ex. rations) — file d'attente, continue même hors ligne." },
-      { icon: "images/Icons/system/warehouse_supplies.png", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée ou vendue." }
+      { icon: "images/Icons/system/warehouse_supplies.png", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée (l'Entrepôt ne rachète rien)." }
     ]
   },
 

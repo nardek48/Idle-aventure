@@ -224,10 +224,10 @@ var GRIMOIRE_CONDITION_SHORT_LABELS = {
   healIncoming: _t("le boss se soigne", "grimoire court"),
   eliteSurgeIncoming: _t("l'élite s'exalte", "grimoire court"),
   heroLowHp: _t("je suis blessé", "grimoire court"),
-  enemyAttackIncoming: _t("il frappe 2 fois", "grimoire court"),
+  enemyAttackIncoming: _t("l'ennemi frappe 2 fois", "grimoire court"), // v3.437.4 : « Si il » → sujet explicite
   enemyEnraged: _t("l'ennemi est enragé", "grimoire court"),
   enemyCorrupted: _t("l'ennemi est corrompu", "grimoire court"),
-  enemySilenceIncoming: _t("il va te silencer", "grimoire court"),
+  enemySilenceIncoming: _t("l'ennemi va te museler", "grimoire court"),
   enemyVampiric: _t("l'ennemi est vampirique", "grimoire court"),
   enemyArmored: _t("l'ennemi est blindé", "grimoire court"),
   enemyRising: _t("un ennemi se relève", "grimoire court") // v3.428.0 (Ruines)

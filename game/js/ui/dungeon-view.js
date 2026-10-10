@@ -387,7 +387,7 @@ function buildDungeonSummaryHTML(result) {
   var h = '<div class="full-menu-overlay kwin-veil">';
   h += '  <div class="kwin dungeon-story-card' + (result.success ? ' is-success' : ' is-failure') + '">';
   h += kWinHeadHTML({ icon: '<img src="images/Icons/' + (result.success ? 'scene/final_reward.png' : 'subtabs/dungeon.png') + '" alt="">',
-    title: esc(result.success ? _t("{x} terminé !", { x: _td(result.tierName) }) : _t("{x} interrompu", { x: _td(result.tierName) })) }); // v3.400.0 (F-2)
+    title: esc(result.success ? _t("{x} : sortie terminée !", { x: _td(result.tierName) }) : _t("{x} : sortie interrompue", { x: _td(result.tierName) })) }); // v3.400.0 (F-2)
   h += '    <div class="kwin-body">';
   h += '    <div class="kwin-quote dungeon-story-text">' + (result.success
     ? _t("Le boss s’effondre. La salle retrouve son calme — pour cette fois.")
