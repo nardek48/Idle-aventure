@@ -1477,6 +1477,7 @@ var CombatEngine = {
 
   onHeroDefeated: function () {
     if (window.RiseSystem && RiseSystem.tryHeroRise()) return; // v3.428.0 (Ruines) : Le seuil
+    if (window.CombatItems && CombatItems.tryFiole()) return; // v3.442.0 : Fiole noire (objet de combat), après le seuil
     this.ensureState();
     game.combatRound.continueAttack = false;
     game.silencedRounds = 0;

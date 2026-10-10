@@ -57,6 +57,7 @@ var SortieManager = {
     s.potionsUsed = 0;
     s.kills = 0;
     s.items = []; // v3.441.0 : les objets se prennent à la préparation, après ce départ
+    s.fioleUsed = false; // v3.442.0
     addLog("🎒 " + _t("Départ en sortie ({x}) — le butin sera banqué au retour.", { x: SORTIE_CONTEXT_LABELS[s.context] || s.context }), "event");
     // v3.115.0 : potions per-run — leurs effets ne vivent que pendant une mission (jamais le
     // farm libre), le recalc les applique à l'entrée. Voir potion-system.js.
@@ -133,6 +134,7 @@ var SortieManager = {
     // v3.307.0 : filet — un lancement ailleurs ne clôt jamais la sortie d'une expédition en cours.
     if (outcome === "return" && s.context === "scene" && window.SceneRunManager && SceneRunManager.isRunActive()) return null;
     var keepPct = (outcome === "flee") ? SORTIE_FLEE_KEEP_PCT : (outcome === "death" ? 0 : 1);
+    if (window.CombatItems) keepPct *= CombatItems.lootMultOf(s); // v3.442.0 : Fiole noire bue, moitié du butin
     var lost = this.emptyLoot();
     var kept = this.emptyLoot();
 
@@ -146,6 +148,7 @@ var SortieManager = {
     });
 
     this.bank(kept);
+    if (window.CombatItems) CombatItems.onSortieEnd(s); // v3.442.0 : la Fiole qui n'a pas servi revient
     if (outcome === "success") this.grantMissionXp(s);
 
     var summary = { outcome: outcome, context: s.context, kept: kept, lost: lost, kills: s.kills, potionsUsed: s.potionsUsed };

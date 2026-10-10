@@ -109,3 +109,5 @@ Rien n'est décidé : options en attente de validation.
 - Baume froid, Encens amer, Huile de lame, Sel de fer. Mesure dans le changelog : le Baume froid est le plus fort
   (Cité début d'acte III 20→48 % au Chevalier), l'Huile pèse peu dans la Cité. Sans objet : inchangé.
 - Reste : lot 2 (Fiole noire, combat-engine.js, accord de Seb), puis Bouclier et Silence ; icônes à dessiner.
+- v3.442.0 livrée : Fiole noire (une ligne dans combat-engine.js, accord de Seb). Nezzam 5→40 % (Rôdeur, campagne).
+  Point ouvert : la moitié de butin perdue ne touche pas la récompense de quête (payée hors sortie). Reste : Bouclier, Silence.

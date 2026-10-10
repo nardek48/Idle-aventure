@@ -227,8 +227,9 @@ function buildSortiePrepItemsHTML(grim) {
     h += '<div class="sp-pick"><button type="button" class="sp-item" onclick="sortiePrepItem(' + slot + ', \'\')"><span><b>' + _t("Aucun objet") + '</b></span></button>';
     owned.forEach(function (oid) {
       if (chosen.indexOf(oid) !== -1 && chosen[slot] !== oid) return;   // déjà dans l'autre place
-      var o = COMBAT_ITEMS[oid], tn = sortiePrepTraitName(o.trait);
-      var tag = !known[o.trait] ? '<span class="sp-tag is-meh">' + esc(_t("Aucun {t} connu dans cette sortie", { t: tn })) + '</span>'
+      var o = COMBAT_ITEMS[oid], tn = o.trait ? sortiePrepTraitName(o.trait) : "";
+      var tag = !o.trait ? '<span class="sp-tag is-cost">' + esc(_td(o.con || "")) + '</span>'   // v3.442.0 : objet à contrepartie
+        : !known[o.trait] ? '<span class="sp-tag is-meh">' + esc(_t("Aucun {t} connu dans cette sortie", { t: tn })) + '</span>'
         : counters[o.trait] ? '<span class="sp-tag is-meh">' + esc(_t("Déjà contré par ta règle")) + '</span>'
         : '<span class="sp-tag is-good">' + esc(_t("Utile ici : {t}", { t: tn })) + '</span>';
       h += '<button type="button" class="sp-item" onclick="sortiePrepItem(' + slot + ', \'' + oid + '\')"><img src="' + esc(o.icon) + '" alt="">'
@@ -237,7 +238,8 @@ function buildSortiePrepItemsHTML(grim) {
     if (!owned.length) h += '<div class="cp-behavior-hint">' + _t("Aucun objet en stock : prépare-les à l'Apothicaire (Boutique, Potions).") + '</div>';
     h += '</div>';
   }
-  h += '<div class="cp-behavior-hint">' + _t("Un objet agit seul, en Tactique comme en Grimoire. Il est consommé au retour, qu'il ait servi ou non.") + '</div>';
+  h += '<div class="cp-behavior-hint">' + _t("Un objet agit seul, en Tactique comme en Grimoire. Il est consommé au retour, qu'il ait servi ou non.")
+    + (COMBAT_ITEMS.fiole_noire && owned.indexOf("fiole_noire") !== -1 ? ' ' + _t("La Fiole noire revient si elle n'a pas servi.") : '') + '</div>';
   return h + '</div>';
 }
 

@@ -78,7 +78,9 @@ var APOTHECARY_RECIPES = [
   { potionId: "baume_froid", kind: "item", inputs: { eau_purifiee: 8, ble: 12 }, order: { ble: 80, eau_purifiee: 30 }, worldIndex: 0, capped: true },
   { potionId: "encens_amer", kind: "item", inputs: { eau_purifiee: 8, bois: 12 }, order: { bois: 80, eau_purifiee: 30 }, worldIndex: 0, capped: true },
   { potionId: "huile_de_lame", kind: "item", inputs: { eau_purifiee: 10, fer: 8 }, order: { fer: 60, eau_purifiee: 50 }, worldIndex: 1, capped: true },
-  { potionId: "sel_de_fer", kind: "item", inputs: { eau_purifiee: 12, lingot: 4 }, order: { lingot: 24, eau_purifiee: 60 }, worldIndex: 2, capped: true }
+  { potionId: "sel_de_fer", kind: "item", inputs: { eau_purifiee: 12, lingot: 4 }, order: { lingot: 24, eau_purifiee: 60 }, worldIndex: 2, capped: true },
+  // v3.442.0 : la Fiole noire, au Désert (mur de Nezzam) ; la Chitine la rend rare, elle revient si elle n'a pas servi
+  { potionId: "fiole_noire", kind: "item", inputs: { eau_purifiee: 12, chitine_profondeurs: 2 }, order: { chitine_profondeurs: 6, eau_purifiee: 60 }, worldIndex: 1, capped: true }
 ];
 
 // v3.363.0 (acte IV) : le puits du roi (choix « roi » = rapporter) ajoute 2 préparations par jour

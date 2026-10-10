@@ -5048,5 +5048,13 @@ I18n.register("en", {
   "Contre l'Enragé : sa rage retombe de 20 points et reste figée 4 rounds, de nouveau à chaque fois.": "Counters the Enraged: its rage drops by 20 points and stays frozen for 4 rounds, again each time.",
   "Contre le Corrupteur : sa corruption est purgée dès 3 charges.": "Counters the Corruptor: its corruption is purged at 3 stacks.",
   "Contre le Blindé : son armure se fissure (−5 % au lieu de −10 %), de nouveau tous les 4 rounds.": "Counters the Armoured: its armour cracks (−5% instead of −10%), again every 4 rounds.",
-  "Contre le Vampirique : son vol de vie est bloqué, de nouveau tous les 4 rounds.": "Counters the Vampiric: its life steal is blocked, again every 4 rounds."
+  "Contre le Vampirique : son vol de vie est bloqué, de nouveau tous les 4 rounds.": "Counters the Vampiric: its life steal is blocked, again every 4 rounds.",
+  // v3.442.0 : la Fiole noire
+  "Fiole noire : tu te relèves. Le butin de la sortie sera divisé par deux.": "Black vial: you get back up. The run's loot will be halved.",
+  "Fiole noire : tu te relèves": "Black vial: you get back up",
+  "{x} n'a pas servi : rangée à l'Entrepôt.": "{x} wasn't used: put back in the Warehouse.",
+  "La Fiole noire revient si elle n'a pas servi.": "The Black vial comes back if it wasn't used.",
+  "À 0 PV, tu te relèves avec 40 % des PV, une fois par sortie.": "At 0 HP, you get back up with 40% HP, once per run.",
+  "Si elle sert : butin de la sortie divisé par deux. Rendue si elle n'a pas servi.": "If used: the run's loot is halved. Given back if unused.",
+  "À 0 PV, tu te relèves avec 40 % des PV, une fois par sortie. Si elle sert : butin de la sortie divisé par deux. Rendue si elle n'a pas servi.": "At 0 HP, you get back up with 40% HP, once per run. If used: the run's loot is halved. Given back if unused."
 });

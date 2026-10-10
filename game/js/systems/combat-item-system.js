@@ -78,7 +78,7 @@ var CombatItems = {
   },
 
   applyTo: function (e, item) {
-    if (!e || !item || e.archetype !== item.trait) return false;
+    if (!e || !item || !item.trait || e.archetype !== item.trait) return false;
     var posed = false;
     if (item.trait === "armored" && Number(e.armorSuppressedRounds || 0) <= 1) {
       e.armorSuppressedReduction = ARMORED_SUPPRESSION_REDUCTION_PCT;
@@ -104,6 +104,37 @@ var CombatItems = {
     }
     return posed;
   }
+};
+
+/* ---------- v3.442.0 : la Fiole noire ----------
+   Appelée par CombatEngine.onHeroDefeated, juste après « Le seuil » des Ruines (gratuit, passe d'abord).
+   Une fois par sortie : le héros se relève à 40 % ; le butin de la sortie sera divisé par deux. */
+CombatItems.tryFiole = function () {
+  var s = game.sortie;
+  if (this.carried().indexOf("fiole_noire") === -1 || !s || s.fioleUsed) return false;
+  if (window.CombatActors && !CombatActors.aliveEnemies().length) return false;
+  s.fioleUsed = true;
+  game.heroHp = Math.max(1, Math.floor(Number(game.heroMaxHp || 1) * COMBAT_ITEM_FIOLE_HP_PCT));
+  addLog("⚗️ " + _t("Fiole noire : tu te relèves. Le butin de la sortie sera divisé par deux."), "event");
+  if (typeof showToast === "function") showToast("⚗️ " + _t("Fiole noire : tu te relèves"), 1600);
+  if (typeof renderHeroHp === "function") renderHeroHp();
+  return true;
+};
+
+/* Part du butin gardée (lue par SortieManager.end) : la moitié si la Fiole a servi. */
+CombatItems.lootMultOf = function (s) {
+  return (s && s.fioleUsed) ? COMBAT_ITEM_FIOLE_LOOT_MULT : 1;
+};
+
+/* Fin de sortie : un objet « rendu s'il n'a pas servi » retourne à l'Entrepôt (la Fiole, si elle n'a pas joué). */
+CombatItems.onSortieEnd = function (s) {
+  if (!s || !Array.isArray(s.items)) return;
+  s.items.forEach(function (id) {
+    var it = COMBAT_ITEMS[id];
+    if (!it || !it.returnIfUnused || (id === "fiole_noire" && s.fioleUsed)) return;
+    WarehouseManager.addResource(id, 1, true);
+    addLog("🎒 " + _t("{x} n'a pas servi : rangée à l'Entrepôt.", { x: _td(it.name) }), "event");
+  });
 };
 
 window.CombatItems = CombatItems;

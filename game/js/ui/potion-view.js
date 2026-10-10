@@ -131,8 +131,9 @@ function buildCombatItemShopHTML() {
     c += '<div class="nb-purchase-info-col">';
     c += '<div class="nb-purchase-name">' + esc(_td(it.name)) + '</div>';
     c += '<div class="nb-purchase-desc">' + esc(_td(it.desc)) + '</div>';
-    c += '<div class="nb-purchase-meta">' + (st.icon ? '<img class="ico-inline" src="' + esc(st.icon) + '" alt=""> ' : '') + esc(_t("Contre : {t}", { t: st.nom ? _td(st.nom) : it.trait }))
-      + ' · ' + _t("Stock : {n}", { n: CombatItems.getStock(id) }) + '</div>';
+    if (it.con) c += '<div class="nb-purchase-desc"><b>' + esc(_td(it.con)) + '</b></div>';   // v3.442.0 : objet à contrepartie
+    c += '<div class="nb-purchase-meta">' + (it.trait ? (st.icon ? '<img class="ico-inline" src="' + esc(st.icon) + '" alt=""> ' : '') + esc(_t("Contre : {t}", { t: st.nom ? _td(st.nom) : it.trait })) + ' · ' : '')
+      + _t("Stock : {n}", { n: CombatItems.getStock(id) }) + '</div>';
     c += '</div></div>';
     h += '<div class="potion-entry">' + c + buildApothecaryCraftRowHTML(id) + '</div>';
   });

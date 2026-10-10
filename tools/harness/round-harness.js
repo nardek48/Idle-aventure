@@ -14826,8 +14826,8 @@ console.log("\n[215] v3.441.0 — Objets de combat : préparations de l'Apothica
   var CI = g.CombatItems, A = g.ApothecaryManager, W = g.WarehouseManager;
   try {
     game = freshCombat("knight");
-    ok(g.COMBAT_ITEM_ORDER.length === 4 && g.COMBAT_ITEM_ORDER.every(function (id) { return g.WAREHOUSE_RESOURCES[id] && g.WAREHOUSE_RESOURCES[id].tier === "crafted" && A.getRecipe(id) && A.getRecipe(id).kind === "item"; }),
-      "4 objets : rangés à l'Entrepôt (fabriqués) et préparés à l'Apothicaire");
+    ok(g.COMBAT_ITEM_ORDER.length === 5 && g.COMBAT_ITEM_ORDER.every(function (id) { return g.WAREHOUSE_RESOURCES[id] && g.WAREHOUSE_RESOURCES[id].tier === "crafted" && A.getRecipe(id) && A.getRecipe(id).kind === "item"; }),
+      "5 objets (v3.442.0 : + Fiole noire) : rangés à l'Entrepôt (fabriqués) et préparés à l'Apothicaire");
     ok(A.getRecipe("baume_froid").worldIndex === 0 && A.getRecipe("huile_de_lame").worldIndex === 1 && A.getRecipe("sel_de_fer").worldIndex === 2, "recettes ouvertes avec le monde de leur trait");
     var CV = g.CaravanSystem || g.CaravanManager;
     ok(g.WAREHOUSE_RESOURCES.huile_de_lame.sellPrice === 0 && !!CV && CV.getEligibleKeys().indexOf("huile_de_lame") === -1, "ni caravane ni vente");
@@ -14881,6 +14881,44 @@ console.log("\n[215] v3.441.0 — Objets de combat : préparations de l'Apothica
     g.SortieManager.end("return");
   } catch (err) {
     ok(false, "[215] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[216] v3.442.0 — Fiole noire : relevé à 40 % une fois par sortie, butin divisé par deux, rendue si inutile");
+(function () {
+  var CI = g.CombatItems, W = g.WarehouseManager, S = g.SortieManager;
+  try {
+    game = freshCombat("knight");
+    ok(g.ApothecaryManager.getRecipe("fiole_noire").worldIndex === 1 && g.ApothecaryManager.getRecipe("fiole_noire").inputs.chitine_profondeurs === 2, "recette au Désert, avec de la Chitine des profondeurs");
+    var foe = function () { var x = g.CombatEngine.prepareEnemy({ id: "goblin", name: "Gobelin", isBoss: false, hp: 500, maxHp: 500, stats: g.ENEMY_DB.goblin.stats, resists: [], weak: [] }); game.enemy = x; if (g.CombatActors) g.CombatActors.setEnemies([x]); return x; };
+    /* Elle sert : relevé, puis la sortie continue */
+    W.addResource("fiole_noire", 1, true);
+    S.start("hunt"); foe();
+    CI.takeForSortie(["fiole_noire"]);
+    ok(W.getAmount("fiole_noire") === 0 && CI.carried()[0] === "fiole_noire", "emportée : retirée de l'Entrepôt");
+    game.heroHp = 0; g.CombatEngine.onHeroDefeated();
+    ok(game.sortie.active && game.sortie.fioleUsed && game.heroHp === Math.floor(game.heroMaxHp * 0.40), "à 0 PV : le héros se relève à 40 %, la sortie continue");
+    game.sortie.loot.gold = 101;
+    var or0 = game.gold;
+    S.end("return");
+    ok(game.gold - or0 === 50 && W.getAmount("fiole_noire") === 0, "retour : la moitié du butin (50 sur 101), la Fiole bue ne revient pas");
+    /* Une seule fois par sortie */
+    W.addResource("fiole_noire", 1, true);
+    S.start("hunt"); foe(); CI.takeForSortie(["fiole_noire"]);
+    game.heroHp = 0; g.CombatEngine.onHeroDefeated();
+    var vivant = game.sortie.active;
+    game.heroHp = 0; g.CombatEngine.onHeroDefeated();
+    ok(vivant && !game.sortie.active, "une fois par sortie : la seconde chute est une vraie défaite");
+    /* Elle ne sert pas : rendue, butin entier */
+    W.addResource("fiole_noire", 1, true);
+    game.heroHp = game.heroMaxHp;
+    S.start("hunt"); foe(); CI.takeForSortie(["fiole_noire"]);
+    game.sortie.loot.gold = 100; or0 = game.gold;
+    S.end("return");
+    ok(game.gold - or0 === 100 && W.getAmount("fiole_noire") === 1, "pas servie : butin entier, la Fiole revient à l'Entrepôt");
+    ok(CI.holds(null) === false, "la Fiole ne tient aucun trait (le Grimoire n'est pas touché)");
+  } catch (err) {
+    ok(false, "[216] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

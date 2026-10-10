@@ -170,3 +170,4 @@
 .sp-tag { display: inline-block; margin-top: 3px; padding: 1px 7px; border-radius: 10px; font-size: 12px; font-weight: 700; }
 .sp-tag.is-good { background-color: rgba(79, 168, 232, 0.16); color: var(--c-blue-400); }
 .sp-tag.is-meh { background-color: rgba(58, 44, 26, 0.08); color: var(--sheet-ink-dim); }
+.sp-tag.is-cost { background-color: rgba(255, 138, 122, 0.16); color: var(--c-red-700-soft); }
