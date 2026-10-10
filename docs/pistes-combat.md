@@ -45,3 +45,13 @@ Rien n'est décidé : options en attente de validation.
 - Désert : 72 % des combats normaux voient un coup spécial (22 % avant), Ruines 59 % (34 %). PV perdus, durée et morts stables.
 - Limite : le coup spécial REMPLACE la frappe (charge ×1,3, bouclier et silence sans dégâts), donc pas plus de danger.
   Si les combats restent plats en jeu : pistes visuelles A/B/C ci-dessus, ou rendre la charge plus punitive.
+
+## Idée de Seb (2026-10-10) : la préparation de sortie
+- Avant chaque sortie (pas avant chaque combat) : le mode (figé ensuite), les potions, peut-être des objets,
+  le rôle des compagnons. Concentrer là les réglages aujourd'hui éparpillés.
+- Existant vérifié : les règles du Grimoire sont déjà figées pendant une sortie ; les potions à bonus sont déjà
+  « par sortie » ; la besace des Petites Aventures existe (Armure de voyage, Fiole noire servent en combat).
+- Rôles : Wenna soutien, Edda finisseuse (fixes) ; Maddoc a deux voies (Devant/garde, Derrière/assaut),
+  changement payant ×3 (décision D4b, close). Un choix gratuit à la sortie rouvrirait cette décision.
+- Options proposées : A = préparation avec les réglages existants déplacés ; B = A + voie de Maddoc à la sortie ;
+  C = vrais rôles au choix pour chaque compagnon (nouvelles compétences). Recommandé : A.
