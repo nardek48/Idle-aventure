@@ -11680,6 +11680,16 @@ console.log("\n[154] v3.378.0 — « Ce que tu vas affronter » : traits connus 
   h = card({ type: "dungeon", id: 2 });
   ok(h.indexOf("sphinx") !== -1, "donjon terminé : le trait du sphinx s'affiche");
   ok(/Corrupteur<\/b> · [^<]*sphinx/.test(h), "v3.438.1 : le sphinx est Corrupteur (3e trait de la Cité)");
+  // v3.438.2 : Sanctuaire scellé, 4 traits ; l'escorte du Contremaître (Bâtisseur) compte
+  var kcAvant = G.killCounts, dtcAvant = G.dungeonTierCleared;
+  G.killCounts = { gargoyle: 1, ghoul: 1, batisseur: 1, contremaitre: 1, skeleton: 1, zombie: 1, golem: 1 };
+  G.dungeonTierCleared = { 3: true };
+  h = card({ type: "dungeon", id: 3 });
+  ok(/Bouclier<\/b> · [^<]*B\u00e2tisseur/.test(h), "Sanctuaire : le B\u00e2tisseur de l'escorte affiche le Bouclier");
+  ok(/Vampirique<\/b> · [^<]*Goule/.test(h) && /Enrag\u00e9<\/b> · [^<]*Varrek/.test(h) && h.indexOf("Blind\u00e9") !== -1,
+    "Sanctuaire : Goule Vampirique, Varrek Enrag\u00e9, Blind\u00e9 conserv\u00e9");
+  ok(h.split("et-row").length - 1 === 4, "Sanctuaire : 4 traits (3 r\u00e8gles actives au monde 2)");
+  G.killCounts = kcAvant; G.dungeonTierCleared = dtcAvant;
   ok(card({ type: "elite", id: "serment_armure" }).indexOf("Blindé") !== -1, "élite de la carte : trait affiché");
 
   // Anglais

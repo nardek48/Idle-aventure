@@ -197,7 +197,7 @@ function etQuestCreatures(quest) {
   (Array.isArray(quest.enemyFilter) ? quest.enemyFilter : []).forEach(add);
   if (!ids.length) etAdventurePool(quest.worldId, quest.adventureIndex).forEach(add);
   var out = ids.map(function (id) { return { kind: "enemy", id: id }; });
-  if (quest.eliteId) out.push({ kind: "elite", id: quest.eliteId });
+  if (quest.eliteId) etPushElite(out, quest.eliteId);
   if (quest.bossId) out.push({ kind: "boss", id: quest.bossId, archetype: quest.bossArchetype || null });
   return out;
 }
@@ -214,7 +214,7 @@ function etCreaturesFor(ctx) {
     var hq = window.HUNT_QUESTS && HUNT_QUESTS[ctx.id];
     return hq ? etQuestCreatures(hq) : [];
   }
-  if (ctx.type === "elite") return [{ kind: "elite", id: ctx.id }];
+  if (ctx.type === "elite") { var eo = []; etPushElite(eo, ctx.id); return eo; }
   if (ctx.type === "dungeon") {
     var d = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(ctx.id); })[0];
     if (!d) return [];
@@ -224,12 +224,21 @@ function etCreaturesFor(ctx) {
     });
     Object.keys(d.eliteWaves || {}).forEach(function (w) {
       var eid = d.eliteWaves[w];
-      if (!out.some(function (x) { return x.id === eid; })) out.push({ kind: "elite", id: eid });
+      if (!out.some(function (x) { return x.id === eid; })) etPushElite(out, eid);
     });
     if (d.boss) out.push({ kind: "dungeonBoss", id: d.id, name: d.boss.name, archetype: d.boss.archetype || null });
     return out;
   }
   return [];
+}
+
+/* v3.438.2 : une élite et son escorte (le Bâtisseur du Contremaître porte le Bouclier). */
+function etPushElite(out, eliteId) {
+  out.push({ kind: "elite", id: eliteId });
+  var el = window.ELITE_DB && ELITE_DB[eliteId];
+  ((el && el.escort && el.escort.members) || []).forEach(function (id) {
+    if (!out.some(function (x) { return x.kind === "enemy" && x.id === id; })) out.push({ kind: "enemy", id: id });
+  });
 }
 
 /* Pool des vagues normales d'un donjon : le sien, sinon les aventures des mondes jusqu'à sa puissance. */
