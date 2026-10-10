@@ -40,3 +40,8 @@ Rien n'est décidé : options en attente de validation.
   Rations au camp : 19 à 52 Petites rations mangées par partie, 2,5 à 6 h d'attente évitées.
 - Lecture : le temps gagné au camp est repris par l'attente du lendemain sur la carte (plafond du jour) et par la
   production. La durée de campagne est tenue par ces rythmes journaliers, pas par le soin.
+
+## v3.439.0 livrée : premier coup spécial avancé hors Forêt
+- Désert : 72 % des combats normaux voient un coup spécial (22 % avant), Ruines 59 % (34 %). PV perdus, durée et morts stables.
+- Limite : le coup spécial REMPLACE la frappe (charge ×1,3, bouclier et silence sans dégâts), donc pas plus de danger.
+  Si les combats restent plats en jeu : pistes visuelles A/B/C ci-dessus, ou rendre la charge plus punitive.

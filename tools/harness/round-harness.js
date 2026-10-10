@@ -14758,5 +14758,27 @@ console.log("\n[212] v3.436.0 — Labyrinthe : combats comme les Petites Aventur
   }
 })();
 
+console.log("\n[213] v3.439.0 — Hors Forêt, l'ennemi normal annonce son premier coup spécial dès le round 1-2");
+(function () {
+  var WM = g.WorldManager, w0 = WM.worldIndex;
+  try {
+    function prep(world, extra) {
+      game = freshCombat("knight"); WM.worldIndex = world;
+      return g.CombatEngine.prepareEnemy(Object.assign({ id: "goblin", name: "Gobelin", isBoss: false, hp: 50, maxHp: 50, stats: g.ENEMY_DB.goblin.stats, resists: [], weak: [] }, extra || {}));
+    }
+    var lo = 99, hi = 0, f = 0, b = 99;
+    for (var i = 0; i < 40; i++) {
+      var e = prep(1); lo = Math.min(lo, e.chargeIn, e.silenceIn, e.shieldIn); hi = Math.max(hi, e.chargeIn, e.silenceIn, e.shieldIn);
+      f = Math.max(f, prep(0).chargeIn >= g.ENEMY_CHARGE_ROUNDS_MIN ? 0 : 1);
+      b = Math.min(b, prep(1, { isBoss: true }).chargeIn);
+    }
+    ok(lo >= 1 && hi <= 2, "Désert : charge, silence et bouclier du premier coup entre 1 et 2 rounds (" + lo + "-" + hi + ")");
+    ok(f === 0, "Forêt : inchangée (charge à " + g.ENEMY_CHARGE_ROUNDS_MIN + " rounds au moins)");
+    ok(b >= g.ENEMY_CHARGE_ROUNDS_MIN, "boss : inchangé");
+  } catch (err) {
+    ok(false, "[213] exception : " + err.message);
+  } finally { WM.worldIndex = w0; }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

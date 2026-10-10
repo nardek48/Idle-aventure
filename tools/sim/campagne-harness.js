@@ -131,8 +131,16 @@ function note(msg) { notes.push(msg); if (VERBOSE) console.log("    · " + msg);
 
 var G = null;   // bac à sable courant
 
+/* Compte les coups spéciaux annoncés (charge, silence, bouclier…) : relevé « pat » de chaque combat. */
+var ANNONCES = 0;
+function compterAnnonces() {
+  var CE = G.CombatEngine, orig = CE && CE.telegraphPattern;
+  if (!orig) return;
+  CE.telegraphPattern = function () { ANNONCES++; return orig.apply(this, arguments); };
+}
+
 function relaunch() {
-  G = launch();
+  G = launch(); compterAnnonces();
   if (RECHARGE_H) G.SceneRunManager.PETITE_AVENTURE_RECHARGE_MS = RECHARGE_H * 3600e3;
   G.startGame();
   G.titleScreenConfirmLoad(Number(G.HeroSlotManager.getActiveSlot()));
@@ -190,7 +198,7 @@ function fightCombat(maxKills) {
       if (rec) closeRec(rec);
       cur = e; kills++;
       if (kills > (maxKills || 60) + 1) { note("combat : plus de " + maxKills + " ennemis"); return false; }
-      rec = { step: CURRENT_STEP, name: e.name, kind: e.isBoss ? "boss" : (e.isElite ? "élite" : "normal"), hp0: g.game.heroHp / (g.game.heroMaxHp || 1), rounds: 0, potions: 0, died: false };
+      rec = { step: CURRENT_STEP, name: e.name, kind: e.isBoss ? "boss" : (e.isElite ? "élite" : "normal"), hp0: g.game.heroHp / (g.game.heroMaxHp || 1), rounds: 0, potions: 0, died: false, pat0: ANNONCES };
     }
     // v3.433.0 : halte du Sanctuaire — le joueur souffle (dans le jeu, la feuille bloque le combat)
     if (g.DungeonManager && g.DungeonManager.isCampPending && g.DungeonManager.isCampPending()) { g.DungeonManager.campAction("souffler"); STATS.camps = (STATS.camps || 0) + 1; continue; }
@@ -344,6 +352,7 @@ function developVillage() {
 function closeRec(rec) {
   rec.hp1 = Math.max(0, G.game.heroHp / (G.game.heroMaxHp || 1));
   rec.hpLost = Math.max(0, rec.hp0 - rec.hp1);
+  rec.pat = ANNONCES - rec.pat0; delete rec.pat0;
   STATS.fights.push(rec);
 }
 
@@ -848,7 +857,7 @@ function playAdventure(id) {
 
 function run() {
   // Premier lancement, création du héros
-  G = launch();
+  G = launch(); compterAnnonces();
   if (RECHARGE_H) G.SceneRunManager.PETITE_AVENTURE_RECHARGE_MS = RECHARGE_H * 3600e3;
   G.startGame();
   G.titleScreenNewGame();

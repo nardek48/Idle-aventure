@@ -56,6 +56,11 @@ var ENEMY_CELERITY_GAUGE_COEF = 1.0;  // idem côté ennemi (le loup mord deux f
 var ENEMY_CHARGE_ROUNDS_MIN = 3;      // ex 8-12 s → 3-5 rounds
 var ENEMY_CHARGE_ROUNDS_MAX = 5;
 var ENEMY_CHARGE_DMG_MULT = 1.3;
+/* v3.439.0 (retour Seb) : hors Forêt, le PREMIER coup spécial d'un ennemi normal s'annonce dès le round 1-2 ;
+   il mourait en 2-3 rounds sans jamais le jouer. Les suivants gardent 3-5 rounds. */
+var NORMAL_FIRST_PATTERN_MIN_WORLD_INDEX = 1;
+var NORMAL_FIRST_PATTERN_ROUNDS_MIN = 1;
+var NORMAL_FIRST_PATTERN_ROUNDS_MAX = 2;
 
 var BOSS_SHIELD_ROUNDS_MIN = 4;       // ex 10-15 s → 4-6 rounds
 var BOSS_SHIELD_ROUNDS_MAX = 6;
@@ -240,6 +245,11 @@ var CombatEngine = {
     enemy.shieldIn = randInt(BOSS_SHIELD_ROUNDS_MIN, BOSS_SHIELD_ROUNDS_MAX);
     enemy.shieldTelegraphed = false;
     enemy.shieldRounds = 0;
+    if (!enemy.isBoss && !enemy.isElite && window.WorldManager && Number(WorldManager.worldIndex || 0) >= NORMAL_FIRST_PATTERN_MIN_WORLD_INDEX) {
+      enemy.chargeIn = randInt(NORMAL_FIRST_PATTERN_ROUNDS_MIN, NORMAL_FIRST_PATTERN_ROUNDS_MAX);
+      enemy.silenceIn = randInt(NORMAL_FIRST_PATTERN_ROUNDS_MIN, NORMAL_FIRST_PATTERN_ROUNDS_MAX);
+      enemy.shieldIn = randInt(NORMAL_FIRST_PATTERN_ROUNDS_MIN, NORMAL_FIRST_PATTERN_ROUNDS_MAX);
+    }
     enemy.healIn = BOSS_HEAL_ROUNDS;
     enemy.healTelegraphed = false;
     // v3.204.0 (E4) : l'élite troque le soin contre l'exaltation (voir constantes).
