@@ -2131,6 +2131,7 @@ STORY_QUESTS.ruins = {
         ]
       },
       objectiveLabel: "Libérer « La porte du Sanctuaire » (carte des Ruines)",
+      storyPa: { worldId: "ruins" }, // v3.436.4 : Petite aventure offerte par l'Histoire, oubliée à l'acte III
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_11,
       linkTo: { section: "map", cardId: "livingmap_ruins" },
@@ -2321,6 +2322,7 @@ STORY_QUESTS.ruins = {
         ]
       },
       objectiveLabel: "Tenir les 3 quartiers qui touchent le Cœur (carte des Ruines)",
+      storyPa: { worldId: "ruins" }, // v3.436.4 : Petite aventure offerte par l'Histoire, oubliée à l'acte IV
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_16,
       linkTo: { section: "map", cardId: "livingmap_ruins" },
