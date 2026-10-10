@@ -79,3 +79,9 @@ Rien n'est décidé : options en attente de validation.
 - Réglages déplacés des onglets vers la feuille. Pas de « Comme la dernière fois » (réglages déjà persistants).
 - Restent ouverts : objets de combat (à discuter), effets de combat A/B/C, initiative.
 - À revoir en jeu (Seb) : bouton « Comme la dernière fois » (mémoriser les potions à bonus) ; fond sombre façon Petites Aventures.
+
+## Objets de combat — décisions de Seb (2026-10-10)
+1. Rôle : B, répondre aux traits ennemis (Blindé, Bouclier, Enragé, Corrupteur, Vampirique, Silence), avec un ou deux
+   objets à contrepartie (C, façon besace des Petites Aventures).
+   Contrainte : les objets AIDENT, ils ne sont jamais requis. Sans objet, l'équilibrage reste celui d'aujourd'hui :
+   aucun ennemi n'est durci pour les rendre nécessaires.
