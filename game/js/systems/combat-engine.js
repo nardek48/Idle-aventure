@@ -1031,7 +1031,7 @@ var CombatEngine = {
     // v3.363.0 (accord Seb 28/09/2026) : La forme du roi (choix « roi » = prendre) réduit le silence à 1 round
     game.silencedRounds = (typeof getHeroSilenceRounds === "function") ? getHeroSilenceRounds()
       : ((typeof SILENCE_DURATION_ROUNDS === "number") ? SILENCE_DURATION_ROUNDS : 2);
-    addLog("🔇 " + _tn(game.silencedRounds, "Tu es réduit au silence ! Tes techniques sont bloquées {n} round.", "Tu es réduit au silence ! Tes techniques sont bloquées {n} rounds."), "event");
+    addLog("🔇 " + _tn(game.silencedRounds, "Silence ! Tes techniques sont bloquées {n} round.", "Silence ! Tes techniques sont bloquées {n} rounds."), "event");
     showToast(_t("🔇 Silencié !"), 1400);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },

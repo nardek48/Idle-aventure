@@ -200,7 +200,7 @@ I18n.register("en", {
   "Bénédiction ! +{n} or": "Blessing! +{n} gold",
   "{x} arrive en renfort !||{x} arrivent en renfort !": ["{x} arrives as reinforcements!", "{x} arrive as reinforcements!"],
   "{x} avance vers toi… (contact dans {n} round)||{x} avance vers toi… (contact dans {n} rounds)": ["{x} advances on you… (contact in {n} round)", "{x} advances on you… (contact in {n} rounds)"],
-  "Tu es réduit au silence ! Tes techniques sont bloquées {n} round.||Tu es réduit au silence ! Tes techniques sont bloquées {n} rounds.": ["You are silenced! Your techniques are blocked for {n} round.", "You are silenced! Your techniques are blocked for {n} rounds."],
+  "Silence ! Tes techniques sont bloquées {n} round.||Silence ! Tes techniques sont bloquées {n} rounds.": ["You are silenced! Your techniques are blocked for {n} round.", "You are silenced! Your techniques are blocked for {n} rounds."],
 
   // js/systems/combat-forecast-system.js
   "Sans danger": "No danger",
@@ -258,7 +258,7 @@ I18n.register("en", {
   "{x} entièrement terminé — palier suivant débloqué !": "{x} fully cleared — next tier unlocked!",
   "Souvenir : {x} terminé": "Keepsake: {x} cleared",
   "donjon": "dungeon",
-  "{x} terminé ! +{g} or": "{x} cleared! +{g} gold",
+  "{x} : sortie terminée ! +{g} or": "{x}: run cleared! +{g} gold",
   "{x} : terrassé à la vague {a}/{b} — aucune récompense, le butin reste dans le donjon.": "{x}: struck down at wave {a}/{b} — no reward, the loot stays in the dungeon.",
   "{x} abandonné (vague {a}/{b}) : +{g} or (moitié)": "{x} abandoned (wave {a}/{b}): +{g} gold (half)",
   "Donjon terminé !": "Dungeon cleared!",

@@ -666,7 +666,7 @@ var DungeonManager = {
     }
 
     var msg = success
-      ? "🏆 " + _t("{x} terminé ! +{g} or", { x: _td(tier.name), g: formatNumber(goldReward) })
+      ? "🏆 " + _t("{x} : sortie terminée ! +{g} or", { x: _td(tier.name), g: formatNumber(goldReward) })
       : outcome === "camp"
         ? "🔥 " + _t("{x} : tu remontes du campement (vague {a}/{b}) : +{g} or", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) })
       : (outcome === "death"
