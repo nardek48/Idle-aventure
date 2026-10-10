@@ -27,6 +27,7 @@ var RING_CRIT = null;
 var SUITE = false, PA_POWER = null, PA_HP = null, JOURNEE = false, BRAKE = 1;
 var VOIE_ARG = null, POINTS_ARG = null, NO_TAL_ARG = false;
 var CITE_ARG = null;
+var OBJETS = []; // v3.441.0 : --objet id[,id], objets de combat emportés à chaque sortie (sans stock ni Apothicaire)
 var PRONO = false; // v3.429.7 : --pronostic, verdict de CombatForecast.forDungeon à côté de la mesure
 var FRAPPES = false; // v3.429.14 : --frappes, frappes et dégâts réels contre l'estimation
 var KCHEV = null;
@@ -57,6 +58,7 @@ for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--points") POINTS_ARG = Number(process.argv[ai + 1]);
   if (process.argv[ai] === "--sans-talents") NO_TAL_ARG = true;
   if (process.argv[ai] === "--cite") CITE_ARG = Number(process.argv[ai + 1]); // v3.356.0 : valeur d'essai de l'arme de la Cité
+  if (process.argv[ai] === "--objet") OBJETS = String(process.argv[ai + 1]).split(",");
 }
 var mod = { exports: {} };
 new Function("require", "process", "module", "__dirname", src + "\nmodule.exports = { g: g, run: run, seedRng: seedRng, setup: setup, CLASSES: CLASSES };")(
@@ -159,6 +161,12 @@ function equipFor(p) {
 
 function prepare(c, p, worldIndex, withWenna, withMaddoc) {
   B.setup(c.hero, c.id, { weapon: 0, kit: false, train: 0, potions: 2 });
+  // v3.441.0 : --objet, les objets sont posés dans chaque sortie dès son ouverture (avant le premier combat)
+  if (OBJETS.length && !g.SortieManager._benchObjets) {
+    var start0 = g.SortieManager.start;
+    g.SortieManager.start = function (ctx) { var ok = start0.apply(this, arguments); if (ok && g.game.sortie) g.game.sortie.items = OBJETS.slice(); return ok; };
+    g.SortieManager._benchObjets = true;
+  }
   g.WorldManager.worldIndex = worldIndex;
   g.game.worldsEverReached = worldIndex ? { 0: true, 1: true } : { 0: true };
   STATS.forEach(function (s) { g.game.upgrades["utrain_" + s] = TRAIN != null ? TRAIN : p.train; });

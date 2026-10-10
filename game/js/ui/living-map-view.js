@@ -129,7 +129,7 @@ function startLivingMapSector(id) {
   var cs = LivingMapManager.canStart(mapId, id);
   if (cs.ok && cs.content && cs.content.type === "elite" && typeof openSortiePrep === "function") {
     var el = (window.ELITE_DB || {})[cs.content.eliteId];
-    return openSortiePrep({ title: el ? _td(el.name) : "", icon: "images/Icons/quests/mission_combat.png", onGo: go });
+    return openSortiePrep({ title: el ? _td(el.name) : "", icon: "images/Icons/quests/mission_combat.png", ctx: { type: "elite", id: cs.content.eliteId }, onGo: go });
   }
   go();
 }

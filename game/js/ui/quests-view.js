@@ -326,7 +326,7 @@ function confirmAdventureQuestStart() {
   if (!questId || !window.AdventureQuestManager) return;
   var quest = window.ADVENTURE_QUESTS ? ADVENTURE_QUESTS[questId] : null;
   // v3.440.0 : préparation de sortie avant le départ
-  openSortiePrep({ title: quest ? _td(quest.name) : "", icon: "images/Icons/quests/mission_combat.png",
+  openSortiePrep({ title: quest ? _td(quest.name) : "", icon: "images/Icons/quests/mission_combat.png", ctx: { type: "adventure", id: questId },
     onGo: function () { AdventureQuestManager.start(questId); } });
 }
 
@@ -830,7 +830,7 @@ function confirmHuntQuestStart() {
 function prepHuntQuestStart(questId) {
   if (!window.HuntQuestManager) return;
   var quest = window.HUNT_QUESTS ? HUNT_QUESTS[questId] : null;
-  openSortiePrep({ title: quest ? _td(quest.name) : "", icon: "images/Icons/quests/mission_hunt.png",
+  openSortiePrep({ title: quest ? _td(quest.name) : "", icon: "images/Icons/quests/mission_hunt.png", ctx: { type: "hunt", id: questId },
     onGo: function () { HuntQuestManager.start(questId); } });
 }
 

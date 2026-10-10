@@ -131,3 +131,42 @@
 .sortie-prep .cp-behavior-row { flex-direction: column; align-items: stretch; gap: 4px; }
 .sortie-prep .cp-behavior-row .kseg { margin-bottom: 4px; }
 .sortie-prep .kseg button { white-space: normal; text-align: center; }
+
+/* v3.441.0 : objets de combat — traits de la sortie, places, liste de choix (atelier/objets-combat.html). */
+.sp-trait { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin-bottom: 4px; border-radius: 10px; font-size: 12.5px; color: var(--sheet-ink); }
+.sp-trait img { width: 28px; height: 28px; flex: none; object-fit: contain; }
+.sp-trait span { flex: 1 1 auto; min-width: 0; }
+.sp-trait em { display: block; font-style: normal; font-weight: 700; }
+.sp-trait.is-rule { background-color: rgba(143, 191, 90, 0.2); }
+.sp-trait.is-rule em { color: var(--c-green-700-soft); }
+.sp-trait.is-item { background-color: rgba(79, 168, 232, 0.16); }
+.sp-trait.is-item em { color: var(--c-blue-400); }
+.sp-trait.is-none { background-color: rgba(255, 138, 122, 0.16); }
+.sp-trait.is-none em { color: var(--c-red-700-soft); }
+.sp-trait.is-free { background-color: rgba(58, 44, 26, 0.06); }
+.sp-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+.sp-slot {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 88px; padding: 8px; border: 2px dashed var(--sheet-card-bd); border-radius: 12px;
+  background: transparent; color: var(--sheet-ink-dim); font: inherit; font-size: 13px; font-weight: 700; text-align: center; cursor: pointer;
+}
+.sp-slot img { width: 38px; height: 38px; object-fit: contain; }
+.sp-slot small { font-size: 12px; font-weight: 600; }
+.sp-slot.is-full { border-style: solid; border-color: var(--sheet-accent); background-color: rgba(240, 170, 62, 0.16); color: var(--sheet-ink); }
+.sp-slot.is-open { box-shadow: 0 0 0 2px var(--sheet-accent); }
+.sp-slot.is-locked { opacity: 0.6; cursor: default; }
+.sp-slot.is-locked img { width: 22px; height: 22px; }
+.sp-plus { font-size: 26px; line-height: 1; }
+.sp-pick { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.sp-item {
+  display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 10px 6px 6px;
+  border: 1.5px solid var(--sheet-card-bd); border-radius: 12px; background-color: rgba(255, 250, 240, 0.9);
+  color: var(--sheet-ink); font: inherit; font-size: 12px; text-align: left; cursor: pointer;
+}
+.sp-item img { width: 36px; height: 36px; flex: none; object-fit: contain; }
+.sp-item span { flex: 1 1 auto; min-width: 0; line-height: 1.25; }
+.sp-item b { display: block; font-size: 13px; }
+.sp-item i { flex: none; font-style: normal; font-weight: 800; color: var(--sheet-ink-dim); }
+.sp-tag { display: inline-block; margin-top: 3px; padding: 1px 7px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+.sp-tag.is-good { background-color: rgba(79, 168, 232, 0.16); color: var(--c-blue-400); }
+.sp-tag.is-meh { background-color: rgba(58, 44, 26, 0.08); color: var(--sheet-ink-dim); }

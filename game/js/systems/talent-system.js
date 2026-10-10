@@ -277,6 +277,7 @@ var TalentManager = {
       if (this.has("m_brasier") && !game.enemy.dot) game.enemy.dot = game._talentBurnPending;
       delete game._talentBurnPending;
     }
+    if (window.CombatItems) CombatItems.onCombatStart(); // v3.441.0 : objets de combat, posés à l'ouverture comme les talents
   },
 
   /* 1-2. Coup reçu par le héros. ctx : { enemy, taken, blocked, evaded, defenseType } */

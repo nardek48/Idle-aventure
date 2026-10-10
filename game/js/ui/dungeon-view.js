@@ -246,7 +246,7 @@ function confirmDungeonStart() {
   if (id == null) return;
   var d = DungeonManager.getById(id);
   // v3.440.0 : préparation de sortie avant le départ
-  openSortiePrep({ title: d ? _td(d.name) : "", icon: (d && d.icon) || "images/Icons/quests/mission_dungeon.png",
+  openSortiePrep({ title: d ? _td(d.name) : "", icon: (d && d.icon) || "images/Icons/quests/mission_dungeon.png", ctx: { type: "dungeon", id: id },
     onGo: function () { DungeonManager.start(id, marks); } });
 }
 

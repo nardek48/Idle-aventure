@@ -28,6 +28,7 @@ var SortieManager = {
     if (typeof game.sortie.potionsUsed !== "number") game.sortie.potionsUsed = 0;
     if (typeof game.sortie.kills !== "number") game.sortie.kills = 0;
     if (typeof game.sortie.killedBoss !== "boolean") game.sortie.killedBoss = false;
+    if (!Array.isArray(game.sortie.items)) game.sortie.items = []; // v3.441.0 : objets de combat emportés
     return game.sortie;
   },
 
@@ -55,6 +56,7 @@ var SortieManager = {
     s.loot = this.emptyLoot();
     s.potionsUsed = 0;
     s.kills = 0;
+    s.items = []; // v3.441.0 : les objets se prennent à la préparation, après ce départ
     addLog("🎒 " + _t("Départ en sortie ({x}) — le butin sera banqué au retour.", { x: SORTIE_CONTEXT_LABELS[s.context] || s.context }), "event");
     // v3.115.0 : potions per-run — leurs effets ne vivent que pendant une mission (jamais le
     // farm libre), le recalc les applique à l'entrée. Voir potion-system.js.

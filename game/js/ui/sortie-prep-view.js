@@ -4,7 +4,7 @@
    retour, règles du Grimoire, cible, potion automatique, équipe, comportement de Wenna, potions à boire.
    Les réglages déjà persistants s'appliquent au toucher ; preset et potions seulement à « Partir ». */
 
-var sortiePrep = null;   // { opts, preset, buffs } pendant que la feuille est ouverte
+var sortiePrep = null;   // { opts, preset, buffs, items, pick } pendant que la feuille est ouverte
 
 function sortiePrepRoot() {
   var host = document.getElementById("sortie-prep-root");
@@ -29,16 +29,18 @@ function sortiePrepBuffList() {
 /* Rien à choisir (début de partie) : on part directement, sans feuille vide. */
 function sortiePrepHasChoice() {
   var mates = window.CompanionManager ? CompanionManager.unlockedIds().length : 0;
-  return sortiePrepGrimoireOpen() || mates > 0 || sortiePrepBuffList().length > 0;
+  var items = window.CombatItems ? CombatItems.ownedIds().length : 0;   // v3.441.0 : objets de combat
+  return sortiePrepGrimoireOpen() || mates > 0 || sortiePrepBuffList().length > 0 || items > 0;
 }
 
-/* opts : { title, sub, icon, onGo }. onGo lance la sortie une fois la feuille validée. */
+/* opts : { title, sub, icon, ctx, onGo }. onGo lance la sortie une fois la feuille validée ;
+   ctx (comme « Ce que tu vas affronter » : { type, id }) sert à dire quels objets servent ici. */
 function openSortiePrep(opts) {
   opts = opts || {};
   if (typeof opts.onGo !== "function") return;
   if (!sortiePrepHasChoice()) return opts.onGo();
   if (!sortiePrepGrimoireOpen() && game.combatMode === "grimoire" && window.CombatEngine) CombatEngine.setCombatMode("tactique");
-  sortiePrep = { opts: opts, preset: null, buffs: {} };
+  sortiePrep = { opts: opts, preset: null, buffs: {}, items: [], pick: -1 };
   renderSortiePrep();
 }
 
@@ -116,6 +118,7 @@ function buildSortiePrepHTML() {
   }
 
   h += buildSortiePrepTeamHTML(grim);
+  h += buildSortiePrepItemsHTML(grim);
   h += buildSortiePrepPotionsHTML();
 
   h += '</div>';
@@ -164,6 +167,80 @@ function buildSortiePrepTeamHTML(grim) {
   return h + '</div>';
 }
 
+/* v3.441.0 — OBJETS DE COMBAT : les traits connus de la sortie et ce qui y répond (règle, objet, rien),
+   puis les places. Un objet tient un trait tout seul ; il est retiré de l'Entrepôt au départ. */
+function sortiePrepTraitName(trait) {
+  var def = (typeof ENEMY_TRAIT_DEFS !== "undefined") ? ENEMY_TRAIT_DEFS[trait] : null;
+  var st = def ? (window.COMBAT_STATES || {})[def.state] : null;
+  return st && st.nom ? _td(st.nom) : trait;
+}
+
+function buildSortiePrepItemsHTML(grim) {
+  if (!window.CombatItems || !window.ApothecaryManager) return "";
+  var owned = CombatItems.ownedIds();
+  var learned = COMBAT_ITEM_ORDER.some(function (id) { return ApothecaryManager.isLearned(id); });
+  if (!owned.length && !learned) return "";
+  var slots = CombatItems.slotCount(), chosen = sortiePrep.items;
+  var h = '<div class="sp-sec"><div class="sp-title">' + _t("Objets") + '<small>' + chosen.filter(Boolean).length + ' / ' + slots + '</small></div>';
+
+  // Ce que tu vas affronter : la réponse à chaque trait connu
+  var prev = (sortiePrep.opts.ctx && typeof getEnemyTraitsPreview === "function") ? getEnemyTraitsPreview(sortiePrep.opts.ctx) : { traits: [], unmet: 0 };
+  var kit = (typeof getGrimoireCurrentKit === "function") ? getGrimoireCurrentKit() : null;
+  var counters = {};
+  if (prev.traits.length) {
+    h += '<div class="cp-behavior-title">' + _t("Ce que tu vas affronter") + '</div>';
+    prev.traits.forEach(function (t) {
+      var def = ENEMY_TRAIT_DEFS[t.trait], st = (window.COMBAT_STATES || {})[def.state] || {};
+      var item = chosen.filter(function (id) { return id && COMBAT_ITEMS[id].trait === t.trait; })[0];
+      var r = grim ? etRuleResponse(def.cond, game.grimoireRules || [], kit) : { status: "none" };
+      if (r.status === "counter") counters[t.trait] = true;
+      var cls = item ? "is-item" : (r.status === "counter" ? "is-rule" : (grim ? "is-none" : "is-free"));
+      var resp = item ? _t("{o} le tient.", { o: _td(COMBAT_ITEMS[item].name) })
+        : r.status === "counter" ? _t("Ta règle « {r} » le contre.", { r: etRuleLabel(r.rule, kit) })
+        : r.status === "react" ? _t("Ta règle « {r} » réagit, sans le contrer.", { r: etRuleLabel(r.rule, kit) })
+        : grim ? _t("Aucune règle ni objet ne répond.") : _t("À toi de le contrer en combat.");
+      h += '<div class="sp-trait ' + cls + '"><img src="' + esc(st.icon || "") + '" alt=""><span><b>' + esc(_td(st.nom || t.trait)) + '</b> · '
+        + esc(t.names.map(function (n) { return _td(n); }).join(", ")) + '<em>' + esc(resp) + '</em></span></div>';
+    });
+  }
+  if (prev.unmet) h += '<div class="cp-behavior-hint">' + esc(_tn(prev.unmet, "{n} créature jamais vaincue : ses traits se révéleront au premier combat.", "{n} créatures jamais vaincues : leurs traits se révéleront au premier combat.")) + '</div>';
+
+  // Les places
+  var known = {};
+  prev.traits.forEach(function (t) { known[t.trait] = true; });
+  h += '<div class="sp-slots">';
+  for (var i = 0; i < 2; i++) {
+    if (i >= slots) {
+      h += '<div class="sp-slot is-locked"><img src="images/Icons/system/lock_closed.png" alt="">' + _t("2e place")
+        + '<small>' + _t("Apothicaire niveau {n}", { n: COMBAT_ITEM_SECOND_SLOT_APOTHECARY_LEVEL }) + '</small></div>';
+      continue;
+    }
+    var id = chosen[i], it = id ? COMBAT_ITEMS[id] : null;
+    h += '<button type="button" class="sp-slot' + (it ? ' is-full' : '') + (sortiePrep.pick === i ? ' is-open' : '') + '" onclick="sortiePrepPick(' + i + ')">'
+      + (it ? '<img src="' + esc(it.icon) + '" alt="">' + esc(_td(it.name)) + '<small>' + _t("Touche pour changer") + '</small>'
+            : '<span class="sp-plus">+</span>' + _t("Choisir un objet")) + '</button>';
+  }
+  h += '</div>';
+
+  if (sortiePrep.pick >= 0) {
+    var slot = sortiePrep.pick;
+    h += '<div class="sp-pick"><button type="button" class="sp-item" onclick="sortiePrepItem(' + slot + ', \'\')"><span><b>' + _t("Aucun objet") + '</b></span></button>';
+    owned.forEach(function (oid) {
+      if (chosen.indexOf(oid) !== -1 && chosen[slot] !== oid) return;   // déjà dans l'autre place
+      var o = COMBAT_ITEMS[oid], tn = sortiePrepTraitName(o.trait);
+      var tag = !known[o.trait] ? '<span class="sp-tag is-meh">' + esc(_t("Aucun {t} connu dans cette sortie", { t: tn })) + '</span>'
+        : counters[o.trait] ? '<span class="sp-tag is-meh">' + esc(_t("Déjà contré par ta règle")) + '</span>'
+        : '<span class="sp-tag is-good">' + esc(_t("Utile ici : {t}", { t: tn })) + '</span>';
+      h += '<button type="button" class="sp-item" onclick="sortiePrepItem(' + slot + ', \'' + oid + '\')"><img src="' + esc(o.icon) + '" alt="">'
+        + '<span><b>' + esc(_td(o.name)) + '</b>' + esc(_td(o.desc)) + tag + '</span><i>×' + CombatItems.getStock(oid) + '</i></button>';
+    });
+    if (!owned.length) h += '<div class="cp-behavior-hint">' + _t("Aucun objet en stock : prépare-les à l'Apothicaire (Boutique, Potions).") + '</div>';
+    h += '</div>';
+  }
+  h += '<div class="cp-behavior-hint">' + _t("Un objet agit seul, en Tactique comme en Grimoire. Il est consommé au retour, qu'il ait servi ou non.") + '</div>';
+  return h + '</div>';
+}
+
 /* Potions : le soin se lit (bu en combat), les potions à bonus se boivent au départ. */
 function buildSortiePrepPotionsHTML() {
   if (!window.PotionManager) return "";
@@ -202,6 +279,14 @@ function sortiePrepSetting(id, key, value) { if (window.CompanionManager) Compan
 function sortiePrepHeal(v) { sortiePrepSetting("wenna", "healThreshold", v); }
 function sortiePrepPrio(v) { sortiePrepSetting("wenna", "healPriority", v); }
 function sortiePrepBuff(id) { if (sortiePrep) sortiePrep.buffs[id] = !sortiePrep.buffs[id]; renderSortiePrep(); }
+function sortiePrepPick(slot) { if (sortiePrep) sortiePrep.pick = (sortiePrep.pick === slot) ? -1 : slot; renderSortiePrep(); }
+function sortiePrepItem(slot, id) {
+  if (!sortiePrep) return;
+  sortiePrep.items[slot] = id || null;
+  sortiePrep.items = sortiePrep.items.slice(0, window.CombatItems ? CombatItems.slotCount() : 1);
+  sortiePrep.pick = -1;
+  renderSortiePrep();
+}
 
 function confirmSortiePrep() {
   if (!sortiePrep) return;
@@ -210,6 +295,7 @@ function confirmSortiePrep() {
   if (s.preset && typeof loadGrimoirePreset === "function") loadGrimoirePreset(s.preset);
   Object.keys(s.buffs).forEach(function (id) { if (s.buffs[id] && !PotionManager.isArmed(id)) PotionManager.usePotion(id); });
   s.opts.onGo();
+  if (window.CombatItems) CombatItems.takeForSortie(s.items.filter(Boolean));   // v3.441.0 : une fois la sortie ouverte
 }
 
 window.openSortiePrep = openSortiePrep;
@@ -226,3 +312,5 @@ window.sortiePrepSetting = sortiePrepSetting;
 window.sortiePrepHeal = sortiePrepHeal;
 window.sortiePrepPrio = sortiePrepPrio;
 window.sortiePrepBuff = sortiePrepBuff;
+window.sortiePrepPick = sortiePrepPick;
+window.sortiePrepItem = sortiePrepItem;

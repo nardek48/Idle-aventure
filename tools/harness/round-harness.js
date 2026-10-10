@@ -14821,5 +14821,68 @@ console.log("\n[214] v3.440.0 — Préparation de sortie : mode figé, équipe, 
   }
 })();
 
+console.log("\n[215] v3.441.0 — Objets de combat : préparations de l'Apothicaire, emportés à la sortie, passifs");
+(function () {
+  var CI = g.CombatItems, A = g.ApothecaryManager, W = g.WarehouseManager;
+  try {
+    game = freshCombat("knight");
+    ok(g.COMBAT_ITEM_ORDER.length === 4 && g.COMBAT_ITEM_ORDER.every(function (id) { return g.WAREHOUSE_RESOURCES[id] && g.WAREHOUSE_RESOURCES[id].tier === "crafted" && A.getRecipe(id) && A.getRecipe(id).kind === "item"; }),
+      "4 objets : rangés à l'Entrepôt (fabriqués) et préparés à l'Apothicaire");
+    ok(A.getRecipe("baume_froid").worldIndex === 0 && A.getRecipe("huile_de_lame").worldIndex === 1 && A.getRecipe("sel_de_fer").worldIndex === 2, "recettes ouvertes avec le monde de leur trait");
+    var CV = g.CaravanSystem || g.CaravanManager;
+    ok(g.WAREHOUSE_RESOURCES.huile_de_lame.sellPrice === 0 && !!CV && CV.getEligibleKeys().indexOf("huile_de_lame") === -1, "ni caravane ni vente");
+    /* Préparer : commande livrée, ingrédients retirés, objet +1, compté dans le plafond du jour */
+    g.game.village = {}; A.ensureState();
+    g.game.village.buildings = g.game.village.buildings || {}; g.game.village.buildings.apothecary = { level: 2 };
+    if (A.getLevel() !== 2 && g.VillageBuildingManager && g.VillageBuildingManager.ensure) { g.VillageBuildingManager.ensure(); g.game.village.buildings.apothecary.level = 2; }
+    A.ensureState().learned.baume_froid = true;
+    W.addResource("eau_purifiee", 50, true); W.addResource("ble", 50, true);
+    var used0 = A.getDailyUsed();
+    ok(A.craft("baume_froid") === true && W.getAmount("baume_froid") === 1 && A.getDailyUsed() === used0 + 1, "préparer un Baume froid : +1 à l'Entrepôt, une préparation du jour");
+    ok(CI.slotCount() === 1, "Apothicaire niveau 2 : une place");
+    g.game.village.buildings.apothecary.level = 4;
+    ok(CI.slotCount() === 2, "Apothicaire niveau 4 : deux places");
+    g.game.village.buildings.apothecary.level = 2;
+    /* Emporter : retiré au départ, noté dans la sortie, une place */
+    W.addResource("huile_de_lame", 2, true);
+    g.SortieManager.start("hunt");
+    var pris = CI.takeForSortie(["huile_de_lame", "baume_froid"]);
+    ok(pris.length === 1 && pris[0] === "huile_de_lame" && W.getAmount("huile_de_lame") === 1 && W.getAmount("baume_froid") === 1 && game.sortie.items.length === 1, "départ : un objet pris (une place), retiré de l'Entrepôt");
+    ok(CI.holds("armored") && !CI.holds("enraged"), "l'Huile tient le Blindé, rien d'autre");
+    /* Le premier combat est ouvert avant la prise des objets (départ) : le contre est posé à la prise */
+    game.sortie.items = []; W.addResource("huile_de_lame", 1, true);
+    var e0 = g.CombatEngine.prepareEnemy({ id: "sandwarrior", name: "Guerrier des sables", isBoss: false, archetype: "armored", hp: 500, maxHp: 500, stats: g.ENEMY_DB.goblin.stats, resists: [], weak: [] });
+    game.enemy = e0; if (g.CombatActors) g.CombatActors.setEnemies([e0]);
+    CI.takeForSortie(["huile_de_lame"]);
+    ok(e0.armorSuppressedRounds === g.ARMORED_SUPPRESSION_DURATION_ROUNDS, "premier combat déjà ouvert au départ : le blindage est fissuré dès la prise de l'objet");
+    /* Effet : contre posé à l'ouverture et reposé, condition du Grimoire fausse */
+    var e = g.CombatEngine.prepareEnemy({ id: "sandwarrior", name: "Guerrier des sables", isBoss: false, archetype: "armored", hp: 500, maxHp: 500, stats: g.ENEMY_DB.sandwarrior ? g.ENEMY_DB.sandwarrior.stats : g.ENEMY_DB.goblin.stats, resists: [], weak: [] });
+    game.enemy = e; if (g.CombatActors) g.CombatActors.setEnemies([e]);
+    CI.onCombatStart();
+    ok(e.armorSuppressedRounds === g.ARMORED_SUPPRESSION_DURATION_ROUNDS && g.getArmoredEffectiveDamageReduction(e) === g.ARMORED_SUPPRESSION_REDUCTION_PCT, "ouverture : le blindage est fissuré (−5 % au lieu de −10 %)");
+    e.armorSuppressedRounds = 1; CI.onRoundEnd();
+    ok(e.armorSuppressedRounds === g.ARMORED_SUPPRESSION_DURATION_ROUNDS, "il retombe : reposé avant le décompte du round, sans trou");
+    var ctx = g.ClassCombatManager.getGrimoireCombatContext();
+    ok(ctx.enemyArchetype === null && g.evaluateGrimoireCondition("enemyArmored", ctx) === false, "Grimoire : la condition « blindé » est fausse tant que l'Huile le tient");
+    /* Les trois autres traits */
+    var mk2 = function (arch, hpPct) { var x = g.CombatEngine.prepareEnemy({ id: "goblin", name: "Gobelin", isBoss: false, archetype: arch, hp: Math.round(500 * hpPct), maxHp: 500, stats: g.ENEMY_DB.goblin.stats, resists: [], weak: [] }); return x; };
+    game.sortie.items = ["baume_froid", "encens_amer", "sel_de_fer"];
+    var en = mk2("enraged", 0.4), co = mk2("corrupted", 1), va = mk2("vampiric", 1);
+    co.corruptedStacks = 3;
+    if (g.CombatActors) g.CombatActors.setEnemies([en, co, va]);
+    CI.apply();
+    ok(en.rageFreezeRounds === g.ENRAGED_FREEZE_DURATION_ROUNDS && Math.abs(en.rageFrozenPct - 0.4) < 1e-9, "Baume : rage figée 4 rounds, 20 points sous ses 60 % perdus");
+    ok(co.corruptedStacks === 0 && va.vampiricSuppressedRounds === g.VAMPIRIC_SUPPRESSION_DURATION_ROUNDS, "Encens : corruption purgée à 3 charges ; Sel : vol de vie bloqué");
+    /* Sortie terminée ou suivante : plus rien d'emporté */
+    g.SortieManager.end("return");
+    ok(CI.carried().length === 0, "sortie finie : plus aucun objet actif");
+    g.SortieManager.start("hunt");
+    ok(game.sortie.items.length === 0, "nouvelle sortie : les objets se reprennent à la préparation");
+    g.SortieManager.end("return");
+  } catch (err) {
+    ok(false, "[215] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

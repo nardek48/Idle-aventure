@@ -104,3 +104,8 @@ Rien n'est décidé : options en attente de validation.
 - Atelier : `atelier/objets-combat.html` (préparation : case Objet + « Ce que tu vas affronter » avec règle / objet / rien ;
   panneau Potions : préparations de combat ; combat : trait « contré » marqué de l'objet).
 - Images en double signalées à Seb : Viande et Viande séchée (meat_icon.png), Eau et Eau purifiée (water_icon.png).
+
+## v3.441.0 livrée : objets de combat, lot 1
+- Baume froid, Encens amer, Huile de lame, Sel de fer. Mesure dans le changelog : le Baume froid est le plus fort
+  (Cité début d'acte III 20→48 % au Chevalier), l'Huile pèse peu dans la Cité. Sans objet : inchangé.
+- Reste : lot 2 (Fiole noire, combat-engine.js, accord de Seb), puis Bouclier et Silence ; icônes à dessiner.

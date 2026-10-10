@@ -57,6 +57,8 @@
      css/04-panel-log.css), texte trop clair sur fond crème. */
   color: var(--nb-ink-dim);
 }
+/* v3.441.0 : note sous la section « Préparations de combat » (ui/potion-view.js). */
+.potion-section-note { margin: 6px 4px 12px; font-size: 12px; color: var(--nb-ink); opacity: 0.85; }
 
 /* =========================
    Échoppe d'équipement

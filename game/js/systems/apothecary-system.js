@@ -103,6 +103,7 @@ var ApothecaryManager = {
   },
 
   _getPotion: function (recipe) {
+    if (recipe.kind === "item") return (window.COMBAT_ITEMS || {})[recipe.potionId] || null; // v3.441.0 : objet de combat
     return (recipe.kind === "healing")
       ? PotionManager.getHealingPotion(recipe.potionId)
       : PotionManager.getPotion(recipe.potionId);
@@ -210,15 +211,13 @@ var ApothecaryManager = {
 
     /* Même interdit que l'achat : l'Ascétisme ferme TOUTES les voies, sinon
        l'affliction serait contournable en construisant un bâtiment. */
-    if (window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function"
+    if (recipe.kind !== "item" && window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function"
         && AfflictionManager.arePotionsForbidden()) {
       showToast(_t("🚫 Potions interdites (Ascétisme actif)"), 1600);
       return false;
     }
 
-    var potion = (recipe.kind === "healing")
-      ? PotionManager.getHealingPotion(potionId)
-      : PotionManager.getPotion(potionId);
+    var potion = this._getPotion(recipe);
     if (!potion) return false;
 
     /* Le plafond de stock des potions per-run s'applique à l'identique : la
@@ -247,7 +246,9 @@ var ApothecaryManager = {
 
     if (recipe.capped) this._countDaily();
 
-    if (recipe.kind === "healing") {
+    if (recipe.kind === "item") {
+      WarehouseManager.addResource(potionId, 1, true);   // v3.441.0 : objet de combat, rangé dans l'Entrepôt
+    } else if (recipe.kind === "healing") {
       PotionManager.ensureHealing();
       game.healingPotionsOwned[potionId] = Number(game.healingPotionsOwned[potionId] || 0) + 1;
     } else {
@@ -255,7 +256,8 @@ var ApothecaryManager = {
       game.potionsOwned[potionId] = PotionManager.getStock(potionId) + 1;
     }
 
-    addLog("⚗️ " + _t("{x} préparée à l'Apothicaire.", { x: _td(potion.name) }), "event");
+    if (recipe.kind === "item") addLog("⚗️ " + _t("Préparation de combat : {x}.", { x: _td(potion.name) }), "event");
+    else addLog("⚗️ " + _t("{x} préparée à l'Apothicaire.", { x: _td(potion.name) }), "event");
     showToast(_td(potion.name) + " +1", 1300);
 
     if (typeof renderAll === "function") renderAll();

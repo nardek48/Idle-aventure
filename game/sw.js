@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.440.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.441.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -147,6 +147,8 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/pa2-view.js", // v3.382.0 (PA2-1) : NOUVEAU fichier
   "./js/ui/labyrinth-view.js", // v3.434.0 : NOUVEAU fichier
   "./js/ui/sortie-prep-view.js", // v3.440.0 : NOUVEAU fichier (préparation de sortie)
+  "./js/data/combat-items.js", // v3.441.0 : NOUVEAU fichier (objets de combat)
+  "./js/systems/combat-item-system.js", // v3.441.0 : NOUVEAU fichier (objets de combat)
   "./js/systems/combat-resource-system.js",
   "./js/systems/combat-cooldown-system.js",
   "./js/systems/combat-auto-policy-system.js",

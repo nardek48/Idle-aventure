@@ -155,7 +155,8 @@ var ClassCombatManager = {
     base.enemyDoubleStrikeNext = !!(e && window.CombatEngine && typeof CombatEngine.enemyDoubleStrikeNext === "function"
       && CombatEngine.enemyDoubleStrikeNext());
 
-    base.enemyArchetype = e ? (e.archetype || null) : null;
+    // v3.441.0 : un trait tenu par un objet de combat ne déclenche plus sa règle (pas de compétence gaspillée)
+    base.enemyArchetype = (e && !(window.CombatItems && CombatItems.holds(e.archetype))) ? (e.archetype || null) : null;
 
     /* v3.271.0 (L-5) : état du GROUPE, pour les deux conditions de groupe. */
     base.aliveEnemyCount = window.CombatActors ? CombatActors.aliveEnemies().length : (e ? 1 : 0);
@@ -487,6 +488,7 @@ var ClassCombatManager = {
     /* Fin de round côté héros : cooldowns -1, mana passif, défense active -1 round. */
   onRoundEnd: function () {
     this.ensure();
+    if (window.CombatItems) CombatItems.onRoundEnd(); // v3.441.0 : objets de combat, reposés avant le décompte du round
     var classId = this.getCurrentClassId();
     if (!classId) return;
     this.ensureForCurrentClass();

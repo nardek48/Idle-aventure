@@ -112,9 +112,35 @@ function buildPotionShopHTML() {
     });
     h += '</div>';
   }
+  h += buildCombatItemShopHTML(); // v3.441.0
 
   return h;
 }
+
+/* v3.441.0 — OBJETS DE COMBAT : seulement préparés à l'Apothicaire (pas d'achat en or), rangés à l'Entrepôt.
+   La section n'existe qu'une fois l'Apothicaire construit ; la commande ou le monde se lisent sur la ligne. */
+function buildCombatItemShopHTML() {
+  if (!window.CombatItems || !window.ApothecaryManager || ApothecaryManager.getLevel() <= 0) return "";
+  var h = '<div class="potion-section-label"><img class=ico-inline src=images/Icons/village_buildings/apothecary.png> ' + _t("Préparations de combat") + '</div>';
+  h += '<div class="potion-grid">';
+  COMBAT_ITEM_ORDER.forEach(function (id) {
+    var it = COMBAT_ITEMS[id], def = (typeof ENEMY_TRAIT_DEFS !== "undefined") ? ENEMY_TRAIT_DEFS[it.trait] : null;
+    var st = def ? (window.COMBAT_STATES || {})[def.state] || {} : {};
+    var c = '<div class="nb-purchase-card">';
+    c += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(it.icon, "nb-purchase-icon", _td(it.name)) + '</div></div>';
+    c += '<div class="nb-purchase-info-col">';
+    c += '<div class="nb-purchase-name">' + esc(_td(it.name)) + '</div>';
+    c += '<div class="nb-purchase-desc">' + esc(_td(it.desc)) + '</div>';
+    c += '<div class="nb-purchase-meta">' + (st.icon ? '<img class="ico-inline" src="' + esc(st.icon) + '" alt=""> ' : '') + esc(_t("Contre : {t}", { t: st.nom ? _td(st.nom) : it.trait }))
+      + ' · ' + _t("Stock : {n}", { n: CombatItems.getStock(id) }) + '</div>';
+    c += '</div></div>';
+    h += '<div class="potion-entry">' + c + buildApothecaryCraftRowHTML(id) + '</div>';
+  });
+  h += '</div>';
+  h += '<p class="potion-section-note">' + _t("Un objet s'emporte à la préparation de sortie et tient son trait tout seul. Potions et objets comptent ensemble dans les préparations du jour.") + '</p>';
+  return h;
+}
+window.buildCombatItemShopHTML = buildCombatItemShopHTML;
 
 function buildHealingPotionCardHTML(potion) {
   var stock = PotionManager.getHealingStock(potion.id);

@@ -72,7 +72,13 @@ var APOTHECARY_RECIPES = [
     order: { pain: 10, viande_sechee: 15, eau_purifiee: 30 },
     worldIndex: 1,
     capped: true
-  }
+  },
+  /* v3.441.0 : objets de combat (data/combat-items.js), rangés dans l'Entrepôt. Prix : le double
+     d'une potion à bonus (décision Seb) ; la commande s'ouvre avec le monde de leur trait. */
+  { potionId: "baume_froid", kind: "item", inputs: { eau_purifiee: 8, ble: 12 }, order: { ble: 80, eau_purifiee: 30 }, worldIndex: 0, capped: true },
+  { potionId: "encens_amer", kind: "item", inputs: { eau_purifiee: 8, bois: 12 }, order: { bois: 80, eau_purifiee: 30 }, worldIndex: 0, capped: true },
+  { potionId: "huile_de_lame", kind: "item", inputs: { eau_purifiee: 10, fer: 8 }, order: { fer: 60, eau_purifiee: 50 }, worldIndex: 1, capped: true },
+  { potionId: "sel_de_fer", kind: "item", inputs: { eau_purifiee: 12, lingot: 4 }, order: { lingot: 24, eau_purifiee: 60 }, worldIndex: 2, capped: true }
 ];
 
 // v3.363.0 (acte IV) : le puits du roi (choix « roi » = rapporter) ajoute 2 préparations par jour

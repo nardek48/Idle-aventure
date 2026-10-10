@@ -88,6 +88,7 @@ var DATA_TEXT_FIELDS = {
   LEGENDARY_POWER_BY_ID: ["*.label", "*.desc"],
   SET_BONUS_CONFIG: ["tiers.*.bonuses.*.name"],
   POTIONS_DB: ["*.name", "*.desc"],
+  COMBAT_ITEMS: ["*.name", "*.desc"], // v3.441.0 : objets de combat
   HEALING_POTIONS_DB: ["*.name"],
   UPGRADES: ["*.name", "*.desc"],
   DUNGEONS: ["*.name", "*.desc", "*.story", "*.lockedHint", "*.prepHint", "*.boss.name", "*.boss.phases.*.label", "*.boss.riseLine"],
