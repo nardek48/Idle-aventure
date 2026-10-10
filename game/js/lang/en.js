@@ -1384,6 +1384,13 @@ I18n.register("en", {
   "La petite bulle qui propose ta prochaine action.": "The small bubble that suggests your next action.",
   "Carte d'entrée, changement de phase, coup final et trophée.": "Entrance card, phase change, final blow and trophy.",
   "Réglages propres à cet appareil.": "Settings for this device only.",
+  // v3.437.0 : journal de test (main/journal-test.js)
+  "Journal de test": "Test log",
+  "Enregistrer ma partie": "Record my game",
+  "Relevés et moments clés, pour comparer ta partie aux simulations.": "Snapshots and key moments, to compare your game with the simulations.",
+  "{n} ligne enregistrée sur cet appareil.||{n} lignes enregistrées sur cet appareil.": ["{n} line recorded on this device.", "{n} lines recorded on this device."],
+  "Effacer": "Clear",
+  "Effacer le journal de test ? Ta partie n'est pas touchée.": "Clear the test log? Your game is not affected.",
   "Version {v}": "Version {v}",
   "Outils de test (Admin)": "Test tools (Admin)",
   "Partie": "Game",

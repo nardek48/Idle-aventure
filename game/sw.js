@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.436.4"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.437.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -126,6 +126,7 @@ var PRECACHE_APP_SHELL = [
   "./js/main/game-loop.js",
   "./js/main/pwa.js",
   "./js/main/log-service.js",
+  "./js/main/journal-test.js",
   "./js/systems/achievement-system.js",
   "./js/systems/codex-system.js",
   "./js/sim/combat-round-sim.js",

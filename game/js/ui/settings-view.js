@@ -103,6 +103,21 @@ function buildSettingsAppareilHTML() {
     h += '</div>';
   }
 
+  // v3.437.0 : journal de test (main/journal-test.js) — relevés de la partie, comparés aux simulations
+  if (window.JournalTest) {
+    var jOn = JournalTest.isOn(), jN = JournalTest.count();
+    h += '<div class="set-card">';
+    h += '<div class="kkick">' + _t("Journal de test") + '</div>';
+    h += settingsRowHTML("images/Icons/system/hourglass_waiting.png", _t("Enregistrer ma partie"), _t("Relevés et moments clés, pour comparer ta partie aux simulations."),
+      kSwitchHTML(jOn, "JournalTest.setOn(" + !jOn + ")", _t("Enregistrer ma partie")));
+    h += '<p class="set-note">' + _tn(jN, "{n} ligne enregistrée sur cet appareil.", "{n} lignes enregistrées sur cet appareil.") + '</p>';
+    if (jN > 0) {
+      h += '<div class="set-pair"><button class="settings-btn" onclick="JournalTest.exportFile()"><img class=ico-inline src=images/Icons/system/export.png> ' + _t("Exporter") + '</button>';
+      h += '<button class="settings-btn" onclick="JournalTest.clear()"><img class=ico-inline src=images/Icons/system/trash.png> ' + _t("Effacer") + '</button></div>';
+    }
+    h += '</div>';
+  }
+
   h += '<div class="set-about"><b>' + _t("Aethervale") + '</b>'
     + _t("Version {v}", { v: (typeof GAME_VERSION === "string" ? GAME_VERSION : "") }) + ' · '
     + (game.saveSupported ? _t("Sauvegarde : locale navigateur.") : _t("Sauvegarde : indisponible.")) + '</div>';

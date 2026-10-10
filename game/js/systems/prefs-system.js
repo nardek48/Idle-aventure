@@ -12,11 +12,12 @@
      howtoWarehouseFull (absente) v3.410.0 : l'explication « Entrepôt plein » a déjà été montrée (une seule fois)
      tabletPortrait "zoom" v3.406.0 : tablette tenue en portrait — "zoom" (téléphone agrandi) ou "rail"
                          (format tablette, menu à gauche) ; lu par ui/desktop-scale.js
+     journalTest  false  v3.437.0 : journal de test (main/journal-test.js), activé dans Paramètres › Appareil
      lang         "fr"   v3.368.0 : langue du jeu (core/i18n.js) ; texte, lu par getValue/setValue.
                          v3.376.0 : absente au premier lancement, elle est fixée par I18n.firstLang() (D3) */
 
 var PREFS_STORAGE_KEY = "aethervale_prefs";
-var PREFS_DEFAULTS = { filRouge: true, bossMoments: true, installHint: true, logTotals: true, lang: "fr", tabletPortrait: "zoom" };
+var PREFS_DEFAULTS = { filRouge: true, bossMoments: true, installHint: true, logTotals: true, lang: "fr", tabletPortrait: "zoom", journalTest: false };
 
 var Prefs = {
   _cache: null,
