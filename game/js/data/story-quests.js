@@ -1765,7 +1765,7 @@ STORY_QUESTS.ruins = {
       progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_ruines_couloirs", "rencontres_couloirs", 5) + "/5"; }
     },
     /* Étape 3 (doc §5) : Edda rejoint. Le choix « deux sur trois » est imposé dès cette étape :
-       Wenna ou Maddoc reste à la Borne (choix de composition, hors registre). Edda ne peut pas
+       Wenna ou Maddoc reste en retrait au combat (composition, hors registre ; tous restent dans le récit). Edda ne peut pas
        quitter le groupe tant que l'étape n'est pas réclamée (CompanionManager.setPresent). */
     {
       id: "ruines_03",
@@ -1790,7 +1790,7 @@ STORY_QUESTS.ruins = {
           { who: "Edda", text: "Elle ne l'est jamais." }
         ]
       },
-      objectiveLabel: "Choisir qui reste à la Borne, puis 4 rencontres avec Edda",
+      objectiveLabel: "Choisir qui reste en retrait, puis 4 rencontres avec Edda",
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_03,
       linkTo: { section: "adventure", cardId: "adv_aq_ruines_edda" },
@@ -1800,12 +1800,12 @@ STORY_QUESTS.ruins = {
       },
       choice: {
         key: "borne", onStoryCard: true, noRecord: true,
-        buttonLabel: "Choisir qui reste",
+        buttonLabel: "Choisir qui reste en retrait",
         title: "On y passe à trois",
-        text: "Le couloir est étroit. Edda vient avec toi. Quelqu'un garde la Borne.",
+        text: "Le couloir est étroit : on s'y bat à trois. Edda prend une place. Qui reste en retrait ?",
         options: [
-          { value: "wenna", label: "Wenna reste à la Borne", desc: "Edda et Maddoc partent avec toi." },
-          { value: "maddoc", label: "Maddoc reste à la Borne", desc: "Edda et Wenna partent avec toi." }
+          { value: "wenna", label: "Wenna reste en retrait", desc: "Edda et Maddoc se battent à tes côtés." },
+          { value: "maddoc", label: "Maddoc reste en retrait", desc: "Edda et Wenna se battent à tes côtés." }
         ],
         isDone: function () { return storyEddaInParty(); },
         apply: function (value) {
@@ -1823,7 +1823,7 @@ STORY_QUESTS.ruins = {
         title: "Deux sur trois",
         points: [
           { icon: "images/Icons/subtabs/hero_summary.png", text: "Tu as maintenant trois compagnons, mais deux seulement t'accompagnent en combat. Choisis-les avant de partir, dans Héros › Compagnons." },
-          { icon: "images/Icons/camp/campfire.png", text: "Celui qui reste garde le camp, et peut partir en patrouille." },
+          { icon: "images/Icons/camp/campfire.png", text: "Celui qui ne se bat pas garde le camp, et peut partir en patrouille." },
           { icon: "images/Icons/companions/edda_dernier_trait.png", text: "Chacun a sa place : Wenna soigne, Maddoc tient ou frappe de loin, Edda achève ceux qui veulent se relever." }
         ]
       },
