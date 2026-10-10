@@ -113,3 +113,10 @@ Rien n'est décidé : options en attente de validation.
   Point ouvert : la moitié de butin perdue ne touche pas la récompense de quête (payée hors sortie). Reste : Bouclier, Silence.
 - v3.443.0 livrée : Acide mordant (Bouclier 1 round), Pastille de miel (Silence 1 round). Mesure : effets faibles
   (Arbre-mère −1 round, Nezzam dans le bruit). Pistes de renfort à proposer à Seb.
+
+## Coup de grâce — atelier (2026-10-10)
+- `atelier/coup-de-grace.html` : vrai fond de combat capturé, loups aux positions mesurées. Compare « Actuel »
+  (fondu gris 0,6 s) à A « Éclats » (arrêt sur image 90/120/160 ms, éclats de l'image, anneau) et B « Fondu lumineux »
+  (arrêt, montée lumineuse floue, poussières). Critique et élite : secousse de la scène, élite en anneau doré.
+- L'or s'envole vers la pastille du butin. Pas d'XP par ennemi dans le jeu (XP par mission) : rien à faire voler.
+- Le boss a déjà son coup final (BossMomentManager) : le coup de grâce vise les ennemis normaux et les élites.
