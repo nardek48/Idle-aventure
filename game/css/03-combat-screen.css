@@ -58,6 +58,10 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-pill img { width: 17px; height: 17px; }
 .cbx-pill.is-flee { border-color: rgba(239, 68, 68, .6); color: rgba(254, 202, 202, 1); }
 .cbx-pill:disabled { opacity: .5; }
+/* v3.440.0 : « Continuer » (Tactique) ou la vitesse (Grimoire), venus de l'ancienne rangée du mode */
+.cbx-pill.is-tempo { color: var(--cbx-gold); }
+.cbx-pill.is-tempo.is-on { border-color: var(--cbx-gold); box-shadow: 0 0 8px rgba(232, 191, 90, .4); }
+#cbx-grim-btn.is-firing { animation: cbxRing .5s ease; }
 
 /* ---------- 2. Arène ---------- */
 .cbx-arena { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }

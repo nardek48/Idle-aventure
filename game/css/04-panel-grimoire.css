@@ -36,6 +36,10 @@
    ailleurs. L'interrupteur est ici, toujours visible, et indique le mode actif. */
 /* v3.401.0 (lot O-1) : le sélecteur de mode est le rail du kit (.kseg) ; il prend la largeur. */
 .grimoire-mode { flex: 1 1 auto; margin-bottom: 0; }
+/* v3.440.0 : le mode se lit ici, il se choisit à la préparation de sortie. */
+.grimoire-mode-now { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; color: var(--nb-ink); font-size: 14px; font-weight: 800; }
+.grimoire-mode-now img { width: 26px; height: 26px; flex: none; object-fit: contain; }
+.grimoire-mode-now small { display: block; font-size: 12px; font-weight: 600; opacity: 0.8; }
 
 /* Une seule ligne d'explication, qui change avec le mode. */
 .grimoire-mode-desc {

@@ -243,7 +243,11 @@ function confirmDungeonStart() {
   var id = pendingDungeonId;
   var marks = pendingDungeonMarks.slice();
   closeDungeonSheet();
-  if (id != null) DungeonManager.start(id, marks);
+  if (id == null) return;
+  var d = DungeonManager.getById(id);
+  // v3.440.0 : préparation de sortie avant le départ
+  openSortiePrep({ title: d ? _td(d.name) : "", icon: (d && d.icon) || "images/Icons/quests/mission_dungeon.png",
+    onGo: function () { DungeonManager.start(id, marks); } });
 }
 
 /* ---------- Le campement (v3.430.0, RU13 — atelier/campement-sanctuaire.html, validé le 09/10) ----------

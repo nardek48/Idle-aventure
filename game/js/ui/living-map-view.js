@@ -120,8 +120,18 @@ window.refreshLivingMap = refreshLivingMap;
 
 function startLivingMapSector(id) {
   if (!window.LivingMapManager || !livingMapOpenId) return;
-  var r = LivingMapManager.start(livingMapOpenId, id);
-  if (!r.ok) { if (typeof showToast === "function") showToast(r.reason, 1800); refreshLivingMap(); }
+  var mapId = livingMapOpenId;
+  var go = function () {
+    var r = LivingMapManager.start(mapId, id);
+    if (!r.ok) { if (typeof showToast === "function") showToast(r.reason, 1800); refreshLivingMap(); }
+  };
+  // v3.440.0 : une élite de carte est une sortie de combat, préparée ; une expédition a sa propre préparation
+  var cs = LivingMapManager.canStart(mapId, id);
+  if (cs.ok && cs.content && cs.content.type === "elite" && typeof openSortiePrep === "function") {
+    var el = (window.ELITE_DB || {})[cs.content.eliteId];
+    return openSortiePrep({ title: el ? _td(el.name) : "", icon: "images/Icons/quests/mission_combat.png", onGo: go });
+  }
+  go();
 }
 window.startLivingMapSector = startLivingMapSector;
 

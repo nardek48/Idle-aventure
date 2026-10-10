@@ -590,22 +590,14 @@ window.handleSaveGrimoirePresetClick = handleSaveGrimoirePresetClick;
    ÉCRAN — liste par défaut, fiche quand une règle est ouverte
    ============================================================ */
 
-/* Sélecteur de mode de combat (demande Seb) : l'ancien écran se contentait d'un
-   bandeau disant d'aller basculer le mode AILLEURS (écran Combat ou Paramètres).
-   CombatEngine.setCombatMode() est appelable d'ici — c'est exactement ce que fait
-   le bouton de l'écran Combat, mêmes effets. Fichier protégé non modifié. */
+/* En-tête du Grimoire : le mode en cours (v3.440.0 : il se choisit à la préparation de sortie,
+   ui/sortie-prep-view.js ; ici, il se lit), son explication, le verrou de sortie. */
 function buildGrimoireModeHTML() {
   var on = game.combatMode === "grimoire";
   var editable = isGrimoireEditable();
-  // Basculer le mode remet à zéro l'horloge de round (CombatEngine.setCombatMode) :
-  // interdit en pleine sortie, au même titre que modifier une règle.
-  var lock = editable ? '' : ' disabled';
-
   var h = '<div class="grimoire-head">';
-  h += '<div class="kseg grimoire-mode' + (editable ? '' : ' is-locked') + '">'; // v3.401.0 (lot O-1) : onglets du kit
-  h += '<button type="button" class="' + (on ? '' : 'is-on') + '"' + lock + ' onclick="setGrimoireCombatMode(\'tactique\')"><img src="images/Icons/combat_stats/stat_critical.png" alt=""><span>' + _t("Tactique") + '</span></button>';
-  h += '<button type="button" class="' + (on ? 'is-on' : '') + '"' + lock + ' onclick="setGrimoireCombatMode(\'grimoire\')"><img src="images/Icons/codex/codex_lore.png" alt=""><span>' + _t("Grimoire") + '</span></button>';
-  h += '</div>';
+  h += '<div class="grimoire-mode-now"><img src="' + (on ? 'images/Icons/codex/codex_lore.png' : 'images/Icons/combat_stats/stat_critical.png') + '" alt=""><span>'
+    + _t("Mode : {x}", { x: on ? _t("Grimoire") : _t("Tactique") }) + '<small>' + _t("Il se choisit au départ de chaque sortie.") + '</small></span></div>';
   h += '<button type="button" class="grimoire-help-btn" onclick="openGrimoireSheet(\'help\')">?</button>';
   h += '</div>';
 
@@ -636,8 +628,7 @@ function buildGrimoireListHTML(kit, unlockedCount) {
     h += buildGrimoireRuleRowHTML(index, rule, kit, index >= unlockedCount);
   });
 
-  h += buildGrimoireTargetHTML(); // v3.428.0 (Ruines) : réglage « Cible »
-  h += buildGrimoirePotionAutoHTML(); // v3.379.0
+  // v3.440.0 : Cible et potion automatique se règlent à la préparation de sortie
   h += '<div class="grimoire-foot">';
   h += '<button type="button" onclick="openGrimoireSheet(\'presets\')"><img class=ico-inline src=images/Icons/system/save.png> ' + _t("Presets") + '<span class="grimoire-foot-badge">'
     + ensureGrimoirePresets().length + '</span></button>';

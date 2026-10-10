@@ -1,0 +1,133 @@
+/* ============================================================
+   Aethervale — css/04-panel-sortie-prep.css
+   v3.440.0 : feuille « Préparer la sortie » (ui/sortie-prep-view.js),
+   validée par Seb dans atelier/preparation-sortie.html. Posée sur la
+   feuille du bas du kit (.ksheet) et les blocs .cp-behavior / .kseg.
+   ============================================================ */
+
+.sortie-prep .ksheet-title img { width: 34px; height: 34px; object-fit: contain; }
+
+.sp-sec {
+  margin-bottom: 12px;
+  padding: 10px 12px 4px;
+  border: 1px solid var(--sheet-card-bd);
+  border-radius: 14px;
+  background-color: var(--sheet-card-bg);
+}
+
+.sp-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--sheet-ink);
+  font-size: 15px;
+  font-weight: 800;
+}
+.sp-title small { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--sheet-ink-dim); }
+
+/* Mode : deux grands boutons */
+.sp-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
+.sp-mode button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 70px;
+  padding: 8px;
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 12px;
+  background-color: rgba(58, 44, 26, 0.08);
+  color: var(--sheet-ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.sp-mode button img { width: 28px; height: 28px; object-fit: contain; }
+.sp-mode button.is-on {
+  border-color: var(--sheet-accent);
+  background: linear-gradient(var(--c-bronze-400-vivid), var(--c-brown-550-3));
+  color: var(--c-brown-900-soft);
+}
+.sp-lock { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; font-size: 12px; font-weight: 700; color: var(--c-brown-700-vivid); }
+
+/* Presets du Grimoire : rangée qui défile */
+.sp-presets { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 10px; padding-bottom: 2px; }
+.sp-presets button {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 4px 12px 4px 6px;
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--sheet-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sp-presets img { width: 24px; height: 24px; object-fit: contain; }
+.sp-presets button.is-on { border-color: var(--sheet-accent); background-color: rgba(240, 170, 62, 0.22); }
+
+/* Équipe */
+.sp-team { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 4px; }
+.sp-mate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 4px;
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--sheet-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.sp-mate img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--c-brown-700-vivid); filter: grayscale(0.85) brightness(0.8); }
+.sp-mate b { font-size: 14px; }
+.sp-mate small { font-size: 12px; color: var(--sheet-ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.sp-mate.is-on { border-color: var(--sheet-accent); background-color: rgba(240, 170, 62, 0.18); }
+.sp-mate.is-on img { filter: none; border-color: var(--sheet-accent); }
+.sp-mate:disabled { opacity: 0.5; cursor: default; }
+.sp-mate-set { margin-top: 8px; }
+
+/* Potions */
+.sp-heal { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.sp-pot { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; color: var(--sheet-ink); }
+.sp-pot img { width: 32px; height: 32px; flex: none; object-fit: contain; }
+.sp-pot b { display: block; font-size: 15px; }
+.sp-buffs { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.sp-buff {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 4px 10px 4px 6px;
+  border: 1.5px solid var(--sheet-card-bd);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--sheet-ink);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.sp-buff img { width: 36px; height: 36px; flex: none; object-fit: contain; }
+.sp-buff span { flex: 1 1 auto; min-width: 0; line-height: 1.25; }
+.sp-buff b { display: block; font-size: 13px; }
+.sp-buff i { flex: none; font-style: normal; font-weight: 800; font-size: 13px; color: var(--sheet-ink-dim); }
+.sp-buff.is-on { border-color: var(--c-green-450); background-color: rgba(143, 191, 90, 0.18); }
+.sp-buff.is-on i { color: var(--c-green-450); }
+.sp-buff:disabled { cursor: default; }
+.sp-buff:disabled:not(.is-on) { opacity: 0.5; }
+
+/* Libellé au-dessus du rail : les trois cibles tiennent sur 358 px de large. */
+.sortie-prep .cp-behavior-row { flex-direction: column; align-items: stretch; gap: 4px; }
+.sortie-prep .cp-behavior-row .kseg { margin-bottom: 4px; }
+.sortie-prep .kseg button { white-space: normal; text-align: center; }

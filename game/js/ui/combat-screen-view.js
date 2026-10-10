@@ -105,6 +105,14 @@
       h += '<button type="button" class="cbx-pill" onclick="openSortieSheet()" aria-label="' + esc(_t("Butin de la sortie")) + '">' + ico(IC.gold)
         + fmt(Math.floor(num(loot.gold))) + (objets ? ' · ' + _tn(objets, "{n} obj.", "{n} obj.") : '') + '</button>';
     }
+    // v3.440.0 : « Continuer » (Tactique) ou la vitesse (Grimoire), sortis de la rangée du mode
+    if (game.combatMode === "grimoire") {
+      h += '<button type="button" id="cbx-grim-btn" class="cbx-pill is-tempo" onclick="cbxCycleSpeed()" aria-label="' + esc(_t("Vitesse")) + '">▶ x' + num(game.combatSpeed || 1) + '</button>';
+    } else {
+      var cont = !!(game.combatRound && game.combatRound.continueAttack);
+      h += '<button type="button" class="cbx-pill is-tempo' + (cont ? ' is-on' : '') + '"' + (downed ? ' disabled' : '') + ' onclick="CombatEngine.toggleContinueAttack()" aria-label="'
+        + esc(cont ? _t("Stop") : _t("Continuer")) + '">' + ico(cont ? IC.stop : IC.cont) + '</button>';
+    }
     if (S && S.active && SortieManager.isMission()) {
       h += '<button type="button" class="cbx-pill is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()">' + ico(IC.flee) + _t("Fuir") + '</button>';
     } else {
@@ -475,26 +483,19 @@
   function buildCmdHTML() {
     if (!window.ClassCombatManager || !engine()) return "";
     CombatEngine.ensureState();
-    var mode = game.combatMode, grim = mode === "grimoire";
-    var unlocked = (typeof isTabUnlocked === "function") ? isTabUnlocked("grimoire") : true;
+    /* v3.440.0 : le mode se choisit à la préparation de sortie et reste figé ; « Continuer » et la
+       vitesse passent dans la barre du haut (buildTopHTML). La rangée du mode disparaît. */
+    var grim = game.combatMode === "grimoire";
     var downed = num(game.heroHp) <= 0;
     var cont = !!(game.combatRound && game.combatRound.continueAttack);
-
-    var h = '<div class="cbx-ctl"><div class="cbx-seg">'
-      + '<button type="button" class="' + (!grim ? 'is-on' : '') + '" onclick="CombatEngine.setCombatMode(\'tactique\')">' + ico(IC.tact) + _t("Tactique") + '</button>'
-      + (unlocked ? '<button type="button" id="cbx-grim-btn" class="' + (grim ? 'is-on' : '') + '" onclick="CombatEngine.setCombatMode(\'grimoire\')">' + ico(IC.grim) + _t("Grimoire") + '</button>' : '')
-      + '</div><span class="cbx-grow"></span>';
+    var h = '';
 
     if (grim) {
-      h += '<button type="button" class="cbx-small is-on" onclick="cbxCycleSpeed()" aria-label="' + esc(_t("Vitesse")) + '">▶ x' + num(game.combatSpeed || 1) + '</button></div>';
       h += '<div class="cbx-strip">' + potionHTML(0) + '<div class="cbx-strip-mid"><div class="cbx-strip-skills">';
       SLOTS.forEach(function (s) { h += skillButtonHTML(s, null, true); });
       h += '</div><div class="cbx-strip-last">' + _t("Le Grimoire joue pour toute l'équipe") + '</div></div>' + potionHTML(1) + '</div>';
       return h;
     }
-
-    h += '<button type="button" class="cbx-small' + (cont ? ' is-on' : '') + '"' + (downed ? ' disabled' : '') + ' onclick="CombatEngine.toggleContinueAttack()">'
-      + ico(cont ? IC.stop : IC.cont) + (cont ? _t("Stop") : _t("Continuer")) + '</button></div>';
 
     var manual = isManual();
     var sel = manual ? CombatEngine.selectedActor() : null;
@@ -806,6 +807,7 @@
     var opts = (typeof COMBAT_SPEED_OPTIONS !== "undefined") ? COMBAT_SPEED_OPTIONS : [1, 2, 4];
     var i = opts.indexOf(num(game.combatSpeed || 1));
     if (typeof setCombatSpeed === "function") setCombatSpeed(opts[(i + 1) % opts.length]);
+    setHtml(byId("cbx-top"), buildTopHTML());
     renderCmd();
   };
 

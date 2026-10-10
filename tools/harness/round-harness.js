@@ -524,7 +524,7 @@ var advMission = g.MissionBoard.list().find(function (m) { return m.sourceKind =
 ok(!!advMission && advMission.id === "adv_aq_forest_expedition", "au moins une quête d'aventure disponible, la bonne (liée à forest_05) : " + (advMission ? advMission.id : null));
 advMission.accept();
 ok(g.pendingAdventureQuestId === advMission.id.replace("adv_", ""), "accept() a bien ouvert l'intro (openAdventureQuestIntro)");
-g.confirmAdventureQuestStart();
+g.confirmAdventureQuestStart(); g.confirmSortiePrep(); // v3.440.0 : la préparation de sortie s'ouvre, le joueur part
 var runningMission = g.MissionBoard.list().find(function (m) { return m.id === advMission.id; });
 ok(runningMission.status === "running" && typeof runningMission.abandon === "function", "après acceptation réelle : statut 'running', abandon() disponible");
 var questId = runningMission.id.replace("adv_", "");
@@ -537,7 +537,7 @@ game.explorationProgression = { huntBuildingUnlocked: true };
 var huntMission = g.MissionBoard.list().find(function (m) { return m.sourceKind === "hunt"; });
 ok(!!huntMission && huntMission.status === "available", "chasse visible une fois le bâtiment débloqué");
 huntMission.accept();
-g.confirmHuntQuestStart();
+g.confirmHuntQuestStart(); g.confirmSortiePrep(); // v3.440.0 : la préparation de sortie s'ouvre, le joueur part
 var huntRunning = g.MissionBoard.list().find(function (m) { return m.id === huntMission.id; });
 ok(huntRunning.status === "running" && huntRunning.progressLabel === "0/" + g.HUNT_QUESTS[huntMission.id.replace("hunt_", "")].lotSize, "chasse lancée : statut running, progression 0/lot");
 g.HuntQuestManager.stop(); // DungeonManager.start() refuse si une chasse est en cours (comportement préexistant)
@@ -609,7 +609,7 @@ g.campMissionAction(advM.id, "accept");
    (le héros du harnais est nu, donc il l'est). On confirme, comme le joueur avec « Partir ». */
 if (typeof g.confirmCombatForecast === "function") g.confirmCombatForecast();
 ok(g.pendingAdventureQuestId === advM.id.replace("adv_", ""), "campMissionAction('accept') sur une quête d'aventure ouvre l'intro réelle");
-g.confirmAdventureQuestStart();
+g.confirmAdventureQuestStart(); g.confirmSortiePrep(); // v3.440.0 : la préparation de sortie s'ouvre, le joueur part
 var advRunning = g.MissionBoard.getById(advM.id);
 var htmlRunning = g.buildCampMissionCardHTML(advRunning);
 ok(htmlRunning.indexOf("Continuer") !== -1 && htmlRunning.indexOf("Abandonner") !== -1, "mission en cours : boutons Continuer + Abandonner");
@@ -7496,11 +7496,14 @@ console.log("\n[73] v3.271.0 (L-5) — Grimoire de groupe et comportement du com
 
   /* --- La fiche affiche les réglages --- */
   run("game.unlockedTabs.companions = true;");
-  var html = g.buildHerosCompanionsHTML();
-  ok(html.indexOf("cp-behavior") !== -1 && html.indexOf("companionSetSetting") !== -1,
-    "la fiche du compagnon porte le bloc Comportement");
-  ok(g.buildHerosCompanionsHTML().indexOf("sert en mode Grimoire") !== -1,
-    "hors Grimoire, la fiche annonce que ces réglages ne jouent pas");
+  // v3.440.0 : le comportement de soin se règle à la préparation de sortie
+  g.sortiePrep = { opts: { title: "t", onGo: function () {} }, preset: null, buffs: {} };
+  var html = g.buildSortiePrepHTML();
+  ok(html.indexOf("cp-behavior") !== -1 && html.indexOf("sortiePrepHeal") !== -1 && g.buildHerosCompanionsHTML().indexOf("sortiePrepHeal") === -1,
+    "la préparation de sortie porte le bloc Comportement (plus la fiche)");
+  ok(html.indexOf("sert en mode Grimoire") !== -1,
+    "hors Grimoire, la préparation annonce que ces réglages ne jouent pas");
+  g.sortiePrep = null;
   ok(g.buildHerosCompanionsHTML().indexOf("cp-controlnote") !== -1,
     "et rappelle où se règle Auto / Manuel : le mode de combat");
 })();
@@ -9158,7 +9161,7 @@ console.log("\n[107] v3.311.0 — Maddoc, voies, étapes 8 à 10");
   CM.restore(data);
   ok(CM.state("maddoc").voie === "tronc" && CM.state("maddoc").voieChanges === 1, "voie et compteur de changements survivent au rechargement");
   var card = g.buildCompanionCardHTML("maddoc"), cardW = (CM.unlock("wenna"), g.buildCompanionCardHTML("wenna"));
-  ok(/cp-voie/.test(card) && card.indexOf("Changer : " + g.formatNumber(6000) + " or") !== -1 && !/healThreshold/.test(card) && /healThreshold/.test(cardW), "fiche : bloc Voie et prix suivant pour Maddoc, réglages de soin pour Wenna seulement");
+  ok(/cp-voie/.test(card) && card.indexOf("Changer : " + g.formatNumber(6000) + " or") !== -1 && !/healThreshold/.test(card) && !/healThreshold/.test(cardW), "fiche : bloc Voie et prix suivant pour Maddoc ; réglages de soin à la préparation de sortie (v3.440.0)");
 
   /* --- Étape 10 : un groupe = une rencontre --- */
   game = freshCombat("knight"); giveWeapon();
@@ -11785,13 +11788,16 @@ console.log("\n[155] v3.379.0 — Potion automatique du mode Grimoire (hors règ
   ok(G.healingPotionsOwned.potion_soin_mineur === 1 && G.heroHp > hp0, "horloge du Grimoire : sous le seuil, il boit (Mineure −1, PV remontés)");
   g.hasCombatQuestContext = hasCtx;
 
-  // Grimoire : la carte « Potions »
-  var html = g.buildGrimoireHTML();
-  ok(html.indexOf("setGrimoirePotionAuto('threshold', 'tard')") !== -1 && html.indexOf("Garder la dernière pour le boss") !== -1, "Grimoire : carte « Potions » avec les quatre seuils et la case du boss");
+  // v3.440.0 : la potion automatique se règle à la préparation de sortie, en mode Grimoire
+  g.CombatEngine.setCombatMode("grimoire");
+  g.sortiePrep = { opts: { title: "t", onGo: function () {} }, preset: null, buffs: {} };
+  var html = g.buildSortiePrepHTML();
+  ok(html.indexOf("sortiePrepPotAuto('tard')") !== -1 && html.indexOf("Garder la dernière pour le boss") !== -1, "préparation : potion automatique avec les quatre seuils et la case du boss");
   g.I18n._lang = "en";
-  html = g.buildGrimoireHTML();
+  html = g.buildSortiePrepHTML();
   ok(html.indexOf("Keep the last one for the boss") !== -1 && html.indexOf(">Drink<") !== -1, "anglais : carte traduite");
   g.I18n._lang = null;
+  g.sortiePrep = null;
 })();
 
 console.log("\n[156] v3.380.0 — Donjon : les vagues normales portent le trait fixe de leur créature");
@@ -12998,7 +13004,7 @@ console.log("\n[174] v3.401.0 — Lot O-1 : onglets de page (rail), filtres (pas
     var fs = require("fs"), path = require("path");
     var q = g.buildQuestsHTML ? g.buildQuestsHTML() : "";
     ok(/class="kseg is-stack qb-tabs"/.test(q) && /class="qb-tab is-on"/.test(q) && q.indexOf("qb-tab is-active") === -1, "Quêtes : rail du kit, icône au-dessus du libellé");
-    ok(/class="kseg grimoire-mode/.test(g.buildGrimoireHTML()), "Grimoire : Tactique | Grimoire sur le rail");
+    ok(/grimoire-mode-now/.test(g.buildGrimoireHTML()) && !/setGrimoireCombatMode\(/.test(g.buildGrimoireHTML()), "Grimoire : le mode se lit, il se choisit à la préparation de sortie (v3.440.0)");
     var css = fs.readFileSync(path.join(ROOT, "css/00-components.css"), "utf8");
     ok(/\.kseg \{[\s\S]*?box-shadow: inset/.test(css) && /\.kseg\.is-stack button/.test(css) && /\.kchips button\.is-on/.test(css), "kit : rail (.kseg, .is-stack) et pastilles (.kchips)");
     ok(css.indexOf("kseg-in-frame") === -1, "plus d'adaptation « posé sur crème » : le rail est dessiné pour le parchemin");
@@ -13159,7 +13165,7 @@ console.log("\n[181] v3.408.0 — Paramètres refondus (B · Rail, S1 · glissi�
     var p = g.buildSettingsHTML("partie"), j = g.buildSettingsHTML("jeu"), a = g.buildSettingsHTML("appareil");
     ok(/kseg is-stack set-tabs/.test(p) && (p.match(/setSettingsTab\('/g) || []).length === 3 && /Paramètres/.test(p), "trois onglets en rail : Partie, Jeu, Appareil ; titre « Paramètres »");
     ok(/settings-btn primary" onclick="saveGame\(\)"/.test(p) && /exportSaveToFile/.test(p) && /showImportTextModal/.test(p) && /settings-btn danger" onclick="resetGame\(\)"/.test(p), "Partie : sauvegarder, exporter/importer, codes, effacer en zone de danger");
-    ok(/toggleAutoSkills\(false\)/.test(j) && /toggleAutoSkills\(true\)/.test(j) && (j.match(/class="kswitch/g) || []).length === 2 && j.indexOf('type="checkbox"') === -1, "Jeu : mode en deux boutons, interrupteurs du kit, plus de case à cocher");
+    ok(!/toggleAutoSkills\(/.test(j) && j.indexOf("Il se choisit au départ de chaque sortie.") !== -1 && (j.match(/class="kswitch/g) || []).length === 2 && j.indexOf('type="checkbox"') === -1, "Jeu : le mode se lit (préparation de sortie, v3.440.0), interrupteurs du kit, plus de case à cocher");
     ok(/confirmLanguageChange\('en'\)/.test(a) && /switchTab\('admin'\)/.test(a) && a.indexOf("atelier-ui.html") === -1 && a.indexOf("switchTab('log')") === -1, "Appareil : langue, lien Admin ; ateliers morts et bouton Journal retirés");
   } catch (err) {
     ok(false, "[181] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
@@ -13903,7 +13909,7 @@ console.log("\n[199] v3.427.0 — Nouvel écran de combat (atelier CB, validé p
     if (!g.isTabUnlocked("grimoire")) g.isTabUnlocked = (function (orig) { return function (t) { return t === "grimoire" ? true : orig(t); }; })(g.isTabUnlocked);
     g.CombatEngine.setCombatMode("grimoire");
     cmd = g.buildCbxCmdHTML();
-    ok(cmd.indexOf("cbx-strip") !== -1 && cmd.indexOf("cbx-attack") === -1 && cmd.indexOf("cbxCycleSpeed") !== -1, "Grimoire : bande fine, vitesse en un bouton, pas d'ATTAQUER");
+    ok(cmd.indexOf("cbx-strip") !== -1 && cmd.indexOf("cbx-attack") === -1 && g.buildCbxTopHTML().indexOf("cbxCycleSpeed") !== -1, "Grimoire : bande fine, vitesse en un bouton (barre du haut, v3.440.0), pas d'ATTAQUER");
     g.cbxState.notes = [];
     g.ClassCombatManager.chooseRoundAction(true);
     ok(g.cbxState.notes.length === 1 && !!g.cbxState.notes[0].label, "la décision du Grimoire est relevée pour s'afficher dans l'arène");
@@ -14778,6 +14784,41 @@ console.log("\n[213] v3.439.0 — Hors Forêt, l'ennemi normal annonce son premi
   } catch (err) {
     ok(false, "[213] exception : " + err.message);
   } finally { WM.worldIndex = w0; }
+})();
+
+console.log("\n[214] v3.440.0 — Préparation de sortie : mode figé, équipe, potions, avant chaque sortie");
+(function () {
+  var savedUnl = g.isTabUnlocked;
+  try {
+    game = freshCombat("knight");
+    run("PotionManager.ensure(); game.potionsOwned = {}; game.activePotions = {};");
+    g.isTabUnlocked = function (t) { return t === "grimoire" ? false : savedUnl(t); };
+    var parti = 0, go = function () { parti++; };
+    g.openSortiePrep({ title: "t", onGo: go });
+    ok(parti === 1 && !g.sortiePrep, "rien à choisir (Grimoire fermé, ni compagnon ni potion) : départ direct, sans feuille");
+    run("game.potionsOwned.potion_power = 1;");
+    g.openSortiePrep({ title: "t", onGo: go });
+    ok(parti === 1 && !!g.sortiePrep && g.buildSortiePrepHTML().indexOf("sortiePrepBuff('potion_power')") !== -1, "une potion à boire : la feuille s'ouvre et la propose");
+    g.sortiePrep.buffs.potion_power = true;
+    g.confirmSortiePrep();
+    ok(parti === 2 && g.PotionManager.isArmed("potion_power") && g.PotionManager.getStock("potion_power") === 0 && !g.sortiePrep, "« Partir » : la potion est bue (armée), la sortie part");
+    g.isTabUnlocked = function (t) { return t === "grimoire" ? true : savedUnl(t); };
+    game.grimoirePresets = [{ id: "p1", name: "Boss", icon: g.GRIMOIRE_PRESET_ICON_CHOICES[4], rules: game.grimoireRules.slice(), lastModified: 1 }];
+    g.openSortiePrep({ title: "t", onGo: go });
+    var html = g.buildSortiePrepHTML();
+    ok(html.indexOf("sortiePrepMode('grimoire')") !== -1 && html.indexOf("sortiePrepPreset('p1')") !== -1, "Grimoire ouvert : choix du mode et des presets");
+    g.closeSortiePrep();
+    ok(parti === 2 && !g.sortiePrep, "« Renoncer » : rien ne part");
+    g.CombatEngine.setCombatMode("tactique");
+    var top = g.buildCbxTopHTML();
+    ok(top.indexOf("toggleContinueAttack") !== -1 && top.indexOf("is-tempo") !== -1, "combat Tactique : « Continuer » dans la barre du haut");
+    var cmd = g.buildCbxCmdHTML();
+    ok(cmd.indexOf("setCombatMode(") === -1 && cmd.indexOf("cbx-ctl") === -1, "combat : plus de bascule de mode ni de rangée du mode");
+  } catch (err) {
+    ok(false, "[214] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    g.isTabUnlocked = savedUnl; g.sortiePrep = null;
+  }
 })();
 
 console.log("\n" + passes + " OK, " + failures + " échec(s)");

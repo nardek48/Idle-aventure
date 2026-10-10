@@ -323,7 +323,11 @@ function closeAdventureQuestIntro() {
 function confirmAdventureQuestStart() {
   var questId = pendingAdventureQuestId;
   closeAdventureQuestIntro();
-  if (questId && window.AdventureQuestManager) AdventureQuestManager.start(questId);
+  if (!questId || !window.AdventureQuestManager) return;
+  var quest = window.ADVENTURE_QUESTS ? ADVENTURE_QUESTS[questId] : null;
+  // v3.440.0 : préparation de sortie avant le départ
+  openSortiePrep({ title: quest ? _td(quest.name) : "", icon: "images/Icons/quests/mission_combat.png",
+    onGo: function () { AdventureQuestManager.start(questId); } });
 }
 
 window.openAdventureQuestIntro = openAdventureQuestIntro;
@@ -819,7 +823,15 @@ function closeHuntQuestIntro() {
 function confirmHuntQuestStart() {
   var questId = pendingHuntQuestId;
   closeHuntQuestIntro();
-  if (questId && window.HuntQuestManager) HuntQuestManager.start(questId);
+  if (questId) prepHuntQuestStart(questId);
+}
+
+/* v3.440.0 : préparation de sortie avant chaque chasse (« Chasser à nouveau » compris). */
+function prepHuntQuestStart(questId) {
+  if (!window.HuntQuestManager) return;
+  var quest = window.HUNT_QUESTS ? HUNT_QUESTS[questId] : null;
+  openSortiePrep({ title: quest ? _td(quest.name) : "", icon: "images/Icons/quests/mission_hunt.png",
+    onGo: function () { HuntQuestManager.start(questId); } });
 }
 
 /* --- Template générique popup de fin de quête (titre/texte/récompenses/actions) ---
@@ -973,7 +985,7 @@ function closeHuntLotComplete(backToCamp) {
 
 function restartHuntQuest(questId) {
   closeHuntLotComplete(false);
-  if (questId && window.HuntQuestManager) HuntQuestManager.start(questId);
+  if (questId) prepHuntQuestStart(questId);
 }
 
 window.openHuntLotComplete = openHuntLotComplete;

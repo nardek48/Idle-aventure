@@ -48,10 +48,8 @@ function buildSettingsJeuHTML() {
   var isGrim = game.combatMode === "grimoire";
   var h = '<div class="set-card">';
   h += '<div class="kkick">' + _t("Mode de combat") + '</div>';
-  h += '<div class="kseg set-seg">';
-  h += '<button type="button" class="' + (isGrim ? '' : 'is-on') + '" onclick="toggleAutoSkills(false)"><img src="images/Icons/combat_stats/stat_attack.png" alt=""><span>' + _t("Tactique") + '</span></button>';
-  h += '<button type="button" class="' + (isGrim ? 'is-on' : '') + '"' + (grimoireUnlocked ? '' : ' disabled') + ' onclick="toggleAutoSkills(true)"><img src="images/Icons/codex/codex_lore.png" alt=""><span>' + _t("Grimoire") + '</span></button>';
-  h += '</div>';
+  // v3.440.0 : le mode se choisit à la préparation de sortie ; ici, il se lit
+  h += '<p><b>' + _t("Mode : {x}", { x: isGrim ? _t("Grimoire") : _t("Tactique") }) + '</b> — ' + _t("Il se choisit au départ de chaque sortie.") + '</p>';
   h += '<p>' + (isGrim ? _t("Les rounds s'enchaînent seuls : tes règles du Grimoire (ou la priorité par défaut) choisissent l'action.")
     : _t("Chaque round attend ton choix : attaque, compétences, défense, potion."))
     + (grimoireUnlocked ? '' : ' ' + _t("Le mode Grimoire se débloque avec la chaîne Histoire.")) + '</p>';

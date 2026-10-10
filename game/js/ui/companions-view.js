@@ -45,15 +45,10 @@ function buildCompanionCardHTML(companionId) {
     + ' ' + esc(_t("Recharge : {n} rounds.", { n: def.skill.cooldown })) + '</div></div>';
   h += '</div>';
 
-  /* Présence et contrôle : deux segments, l'état du jeu se lit d'un coup d'œil. */
-  /* v3.334.0 (P2) : en patrouille, le choix Avec toi / Au camp ne s'applique pas — on le dit. */
+  /* v3.334.0 (P2) : en patrouille, on le dit. v3.440.0 : « Avec toi / Au camp » se choisit à la
+     préparation de sortie (ui/sortie-prep-view.js) ; la fiche le rappelle. */
   if (window.PatrolManager && PatrolManager.isOnPatrol(companionId)) {
     h += '<div class="cp-patrol-note">' + (st.present ? _t("En patrouille — repartira avec toi à son retour.") : _t("En patrouille — restera au camp à son retour.")) + '</div>';
-  } else {
-  h += '<div class="kseg cp-seg">';
-  h += '<button type="button" class="' + (st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + companionId + '\', true)">' + _t("Avec toi") + '</button>';
-  h += '<button type="button" class="' + (!st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + companionId + '\', false)">' + _t("Au camp") + '</button>';
-  h += '</div>';
   }
 
   // v3.334.0 (Évolutions, P9) : patrouille — départ, retour, rappel
@@ -63,43 +58,13 @@ function buildCompanionCardHTML(companionId) {
      combat qui décide, pour tout le monde. On le RAPPELLE ici plutôt que de laisser un
      réglage muet : le joueur doit savoir où se règle ce qu'il cherche. */
   h += '<div class="cp-controlnote">'
-    + _t("Il joue seul en mode <b>Grimoire</b>, tu le joues en mode <b>Tactique</b> — la bascule est sur l'écran de combat.")
+    + _t("Il joue seul en mode <b>Grimoire</b>, tu le joues en mode <b>Tactique</b>. Qui part avec toi, le mode et son comportement se choisissent au départ de chaque sortie.")
     + '</div>';
 
   /* v3.311.0 : voie (Maddoc) — la voie courante, l'autre, et le prix du changement (D4b). */
   if (CompanionManager.hasVoies(companionId)) h += buildCompanionVoieHTML(companionId, st);
 
-  /* v3.271.0 (L-5) : comportement en mode Auto. Volontairement sur SA fiche et pas dans
-     le Grimoire : ces réglages disent comment il se débrouille sans toi ; le Grimoire,
-     lui, pilote le kit du héros. En Manuel ils ne servent pas, et la carte le dit.
-     v3.311.0 : réglages de soin, donc seulement pour un compagnon qui soigne. */
-  if (def.skill && def.skill.type === "heal") {
-  h += '<div class="cp-behavior">';
-  var joueSeul = (window.CompanionManager && CompanionManager.controlOf() === "auto");
-  h += '<div class="cp-behavior-title">' + _t("Comportement")
-    + (joueSeul ? '' : ' <span class="cp-behavior-off">' + _t("— sert en mode Grimoire") + '</span>') + '</div>';
-
-  h += '<div class="cp-behavior-row"><span>' + _t("Soigne") + '</span><div class="kseg">';
-  COMPANION_HEAL_THRESHOLDS.forEach(function (t) {
-    h += '<button type="button" class="' + (st.healThreshold === t.id ? 'is-on' : '') + '"'
-      + ' onclick="companionSetSetting(\'' + companionId + '\', \'healThreshold\', \'' + t.id + '\')">' + esc(_td(t.label)) + '</button>';
-  });
-  h += '</div></div>';
-  h += '<div class="cp-behavior-hint">' + esc(_td(getCompanionHealThreshold(st.healThreshold).desc)) + '</div>';
-
-  h += '<div class="cp-behavior-row"><span>' + _t("En priorité") + '</span><div class="kseg">';
-  COMPANION_HEAL_PRIORITIES.forEach(function (p) {
-    h += '<button type="button" class="' + (st.healPriority === p.id ? 'is-on' : '') + '"'
-      + ' onclick="companionSetSetting(\'' + companionId + '\', \'healPriority\', \'' + p.id + '\')">' + esc(_td(p.label)) + '</button>';
-  });
-  h += '</div></div>';
-
-  h += '<label class="cp-behavior-check"><input type="checkbox"' + (st.keepReserve ? ' checked' : '')
-    + ' onclick="companionSetSetting(\'' + companionId + '\', \'keepReserve\', this.checked)">'
-    + '<span>' + _t("Garder une charge en réserve") + '</span></label>';
-  h += '<div class="cp-behavior-hint">' + _t("Il n'utilise pas sa dernière charge, sauf si un allié est vraiment bas.") + '</div>';
-  h += '</div>';
-  }
+  /* v3.271.0 (L-5) puis v3.440.0 : le comportement de soin se règle à la préparation de sortie. */
 
   var maxUp = getCompanionMaxUpgrades(companionId);
   var cost = getCompanionUpgradeCost(companionId, st.upgrades);

@@ -73,3 +73,8 @@ Rien n'est décidé : options en attente de validation.
   « Continuer » et la vitesse passent en pastille dans la barre du haut.
 - Trouvé en passant : `images/Icons/combat_status/target.png` (réglage Cible du Grimoire) n'existe pas, et
   `missing-icons.js` ne le voit pas (attribut src sans guillemets).
+
+## v3.440.0 livrée : préparation de sortie
+- Feuille avant chasse, quête, donjon, élite de carte ; mode figé ; rangée du mode retirée (+41 px de scène).
+- Réglages déplacés des onglets vers la feuille. Pas de « Comme la dernière fois » (réglages déjà persistants).
+- Restent ouverts : objets de combat (à discuter), effets de combat A/B/C, initiative.

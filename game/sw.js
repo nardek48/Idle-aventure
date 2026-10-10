@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.439.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.440.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 
 var PRECACHE_APP_SHELL = [
@@ -88,6 +88,7 @@ var PRECACHE_APP_SHELL = [
   "./css/04-panel-living-map.css",
   "./css/04-panel-pa2.css", // v3.382.0 (PA2-1) : NOUVEAU fichier
   "./css/04-panel-labyrinth.css", // v3.434.0 : NOUVEAU fichier (Labyrinthe aux leviers)
+  "./css/04-panel-sortie-prep.css", // v3.440.0 : NOUVEAU fichier (préparation de sortie)
   "./css/04-panel-evolutions.css",
   "./css/07-responsive.css",
   "./css/08-desktop.css",
@@ -145,6 +146,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/map-camera.js", // v3.394.0 : NOUVEAU fichier (caméra commune des cartes)
   "./js/ui/pa2-view.js", // v3.382.0 (PA2-1) : NOUVEAU fichier
   "./js/ui/labyrinth-view.js", // v3.434.0 : NOUVEAU fichier
+  "./js/ui/sortie-prep-view.js", // v3.440.0 : NOUVEAU fichier (préparation de sortie)
   "./js/systems/combat-resource-system.js",
   "./js/systems/combat-cooldown-system.js",
   "./js/systems/combat-auto-policy-system.js",

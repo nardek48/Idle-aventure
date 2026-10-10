@@ -1034,7 +1034,7 @@ I18n.register("en", {
   "En patrouille — restera au camp à son retour.": "On patrol — will stay at camp on return.",
   "Avec toi": "With you",
   "Au camp": "At camp",
-  "Il joue seul en mode <b>Grimoire</b>, tu le joues en mode <b>Tactique</b> — la bascule est sur l'écran de combat.": "Plays on its own in <b>Grimoire</b> mode; you play it in <b>Tactics</b> mode — the toggle is on the combat screen.",
+  "Il joue seul en mode <b>Grimoire</b>, tu le joues en mode <b>Tactique</b>. Qui part avec toi, le mode et son comportement se choisissent au départ de chaque sortie.": "Plays on its own in <b>Grimoire</b> mode; you play it in <b>Tactics</b> mode. Who comes with you, the mode and its behaviour are chosen at the start of each run.",
   "Comportement": "Behaviour",
   "— sert en mode Grimoire": "— used in Grimoire mode",
   "Soigne": "Heals",
@@ -5005,5 +5005,19 @@ I18n.register("en", {
   "Combats gagnés": "Fights won",
   "Ruses réussies": "Tricks pulled off",
   "Rattrapé par le Contremaître": "Caught by the Foreman",
-  "La carte d'Edda · étage {n}": "Edda's map · floor {n}"
+  "La carte d'Edda · étage {n}": "Edda's map · floor {n}",
+  // v3.440.0 : préparation de sortie
+  "Mode : {x}": "Mode: {x}",
+  "Il se choisit au départ de chaque sortie.": "It is chosen at the start of each run.",
+  "Préparer la sortie": "Prepare the run",
+  "Figé jusqu'au retour au Campement.": "Locked until you are back at the Camp.",
+  "Règles": "Rules",
+  "Mes règles actuelles": "My current rules",
+  "Équipe": "Party",
+  "En patrouille": "On patrol",
+  "Elle se change à sa fiche, dans Compagnons.": "It is changed on their card, in Companions.",
+  "En Grimoire, ils jouent seuls après toi à chaque round.": "In Grimoire, they act on their own after you each round.",
+  "En Tactique, tu choisis aussi leur action à chaque round.": "In Tactics, you also choose their action each round.",
+  "À boire avant de partir · 1 de chaque": "Drink before setting out · 1 of each",
+  "Soin : {n} par sortie, bue en combat||Soin : {n} par sortie, bues en combat": ["Healing: {n} per run, drunk in combat", "Healing: {n} per run, drunk in combat"]
 });

@@ -63,6 +63,11 @@ function campMissionAction(missionId, action) {
     m[action]();
     if (typeof renderPanel === "function") renderPanel();
   };
+  // v3.440.0 : le Donjon du tableau part sans feuille, la préparation de sortie passe ici
+  if (action === "accept" && m.sourceKind === "dungeon" && typeof openSortiePrep === "function") {
+    var go = run;
+    run = function () { openSortiePrep({ title: m.title, icon: "images/Icons/quests/mission_dungeon.png", onGo: go }); };
+  }
   /* v3.247.0 : avant de PARTIR (accept), on montre le pronostic si le combat est risqué ou
      pire, avec possibilité d'annuler. Les autres actions (réclamer, abandonner) passent direct. */
   if (action === "accept" && typeof launchWithForecast === "function") return launchWithForecast(m, run);
