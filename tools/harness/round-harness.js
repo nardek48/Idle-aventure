@@ -5865,7 +5865,10 @@ console.log("\n[55] v3.253.0 \u2014 \u00c9chelle des vagues du donjon");
   run("DungeonManager.ensure(); game.dungeonRunsUsed = {}; game.dungeonTierCleared = { 1: true };");
 
   var foret = D.getById(1);
-  ok(foret.wavePremiumMult === 2.8, "la Tani\u00e8re d\u00e9clare wavePremiumMult 2,8");
+  // v3.438.0 : 2,8 -> 3,2, pool fixe sans Troll ni Ronce (2 traits pour 2 règles)
+  ok(foret.wavePremiumMult === 3.2, "la Tani\u00e8re d\u00e9clare wavePremiumMult 3,2");
+  ok(Array.isArray(foret.enemyPool) && foret.enemyPool.indexOf("foresttroll") === -1 && foret.enemyPool.indexOf("bramble") === -1,
+    "la Tani\u00e8re a son pool fixe, sans Troll ni Ronce");
   ok(g.DUNGEON_CONFIG.basePremiumMult === 1.3, "le d\u00e9faut global reste 1,3 pour les donjons sans surcharge");
   var autres = (g.DUNGEONS || []).filter(function (d) { return d.id !== 1 && typeof d.wavePremiumMult === "number"; });
   ok(autres.length === 0, "aucun autre donjon n'est touch\u00e9 : leur monde aura son propre chantier");
@@ -5875,8 +5878,8 @@ console.log("\n[55] v3.253.0 \u2014 \u00c9chelle des vagues du donjon");
   var scaleB = D.getWaveScale(foret, g.DUNGEON_CONFIG.waveCount + 1);
   // v3.326.0 : la Tanière passe à difficultyMult 1,8 (lot C-2) — on compare à difficulté égale
   var sansSurcharge = D.getWaveScale({ worldPower: 0, difficultyMult: foret.difficultyMult }, 7);
-  ok(Math.abs(scaleV / sansSurcharge - (2.8 / 1.3)) < 0.001,
-    "vague 7 : \u00e9chelle multipli\u00e9e par 2,8/1,3 face \u00e0 un donjon sans surcharge");
+  ok(Math.abs(scaleV / sansSurcharge - (3.2 / 1.3)) < 0.001,
+    "vague 7 : \u00e9chelle multipli\u00e9e par 3,2/1,3 face \u00e0 un donjon sans surcharge");
   var scaleBSans = D.getWaveScale({ worldPower: 0, difficultyMult: foret.difficultyMult }, g.DUNGEON_CONFIG.waveCount + 1);
   ok(Math.abs(scaleB - scaleBSans) < 0.001, "le boss garde bossPremiumMult : wavePremiumMult ne le touche pas");
 

@@ -59,8 +59,10 @@ var DUNGEONS = [
        — le run nu restait à 0 % d'échec jusqu'à 1 286 PV de boss, tandis que Colosses passait
        de 0 à 100 %. C'est l'usure des quinze vagues qui manquait.
        À 2,8 : vagues de 80 à 117 PV, run de 37-41 rounds au lieu de 24-28, les potions
-       servent enfin, et les Marques restent jouables. */
-    wavePremiumMult: 2.8,
+       servent enfin, et les Marques restent jouables.
+       v3.438.0 : 2,8 -> 3,2 avec le pool fixe ci-dessous (plafond-bench, profil foret :
+       42-48 % de PV, 0,6 à 1,9 potion, 100 % de réussite). */
+    wavePremiumMult: 3.2,
     maxRarity: "common",
     specialResourceId: "seve_aeswyn", specialResourceAmount: 2,
     icon: "images/Dungeons/donjon_poison/donjon_poison.jpg",
@@ -68,7 +70,8 @@ var DUNGEONS = [
     combatMap: "../images/Dungeons/donjon_poison/donjon_poison.jpg",
     desc: "Un antre reptilien tapi sous la roche, jusqu'au repaire du Basilic lui-même.",
     story: "Les premières salles sentent la terre humide et la mousse. Des bruits de pas résonnent au loin — rien de bien effrayant, pour l'instant.",
-    enemyPool: null,
+    // v3.438.0 : pool fixe, sans Troll ni Ronce (Bouclier, Silence) — 2 traits pour 2 règles, courbe B
+    enemyPool: ["slime", "goblin", "spider"],
     eliteWaves: { 5: "araignee_marquee", 10: "ronce_ardente" },
     /* v3.288.0 — PHASES DU BASILIC (idée Seb). Deux seuils, pas plus : un combat de boss
        doit rester lisible. Chaque phase s'annonce dans le journal, et les renforts arrivent
