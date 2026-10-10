@@ -50,6 +50,7 @@ var COMPAGNONS_MALINS = ARGS.indexOf("--compagnons-malins") >= 0;   // --tactiqu
 // --sans-potion-main : le joueur absent ne touche jamais la potion (sinon : potion à la main sous 30 %)
 var POTION_AUTO = ARGS.indexOf("--potion-auto") >= 0 ? ARGS[ARGS.indexOf("--potion-auto") + 1] : null;
 var POTION_MAIN = ARGS.indexOf("--sans-potion-main") < 0;
+var RATIONS_CAMP = ARGS.indexOf("--attendre-camp") < 0;   // repas de ration au camp ; --attendre-camp : ancien robot, régénération seule
 var JSON_OUT = ARGS.indexOf("--json") >= 0 ? ARGS[ARGS.indexOf("--json") + 1] : null;
 /* v3.428.0 (Ruines, U-0) : --avise = un joueur appliqué QUI LIT SON JEU. Le robot d'avant prenait
    la voie de talents offensive et une seule règle de Grimoire : contre un boss Vampirique (Nezzam),
@@ -366,12 +367,53 @@ function healUp(seuil) {
   if ((g.game.heroHp || 0) >= (g.game.heroMaxHp || 1) * (seuil || 0.95)) return;
   g.game.activeTab = "campement";
   g.CampManager.applyRegen(false);
+  if (RATIONS_CAMP) mangerAuCamp();
   var min = g.CampManager.getMinutesToFull();
   if (min > 0) { CLOCK.offset += min * 60000 + 1000; STATS.healMs += min * 60000; }
   g.CampManager.applyRegen(false);
   if (g.ProductionManager) g.ProductionManager.catchUpOffline();
   if (g.VillageBuildingManager) g.VillageBuildingManager.tick();
   flushTimers(g);
+}
+
+/* Repas au camp, comme un joueur pressé : au-delà de 20 % de PV manquants (4 min d'attente), il mange
+   la plus grosse ration qui ne déborde pas trop, en gardant 1 de chaque pour les vivres de sortie ;
+   il cuisine des Petites/Moyennes rations avec le stock présent, sans attendre la production. */
+var RATION_RESERVE = 1;
+function mangerAuCamp() {
+  var g = G, CM = g.CampManager, WM = g.WarehouseManager, max = g.game.heroMaxHp || 1;
+  var R = STATS.rations = STATS.rations || { mangees: {}, cuisinees: {}, minutesEvitees: 0 };
+  function manque() { return 1 - (g.game.heroHp || 0) / max; }
+  function choisir() {
+    var opts = CM.getRationOptions().filter(function (r) { return r.amount > RATION_RESERVE && r.healPct > 0 && r.healPct <= manque() + 0.10; });
+    opts.sort(function (a, b) { return b.healPct - a.healPct; });
+    return opts[0] || null;
+  }
+  function cuisiner() {   // une recette dont les ingrédients sont déjà là, la plus nourrissante d'abord
+    var rec = ((g.WORKSHOPS_CONFIG.cuisine_de_camp || {}).recipes || []).filter(function (r) { return r.id !== "grande_ration"; }).reverse();
+    for (var i = 0; i < rec.length; i++) {
+      var r = rec[i], heal = ((g.WAREHOUSE_RESOURCES || {})[r.id] || {}).healPct || 0;
+      if (heal > manque() + 0.10) continue;
+      if (!r.inputs.every(function (inp) { return WM.getAmount(inp.resourceId) >= inp.quantity; })) continue;
+      if (!g.WorkshopsSystem.enqueueCraft("cuisine_de_camp", r.id, 1)) continue;
+      for (var t = 0; t < 10 && g.WorkshopsSystem.getQueue("cuisine_de_camp").length; t++) {
+        var resteMs = g.WorkshopsSystem.getQueue("cuisine_de_camp").reduce(function (s, e) { return s + Number(e.msRemaining || 0); }, 0);
+        wait(Math.max(1000, resteMs + 1000), "atelier");
+      }
+      R.cuisinees[r.id] = (R.cuisinees[r.id] || 0) + 1;
+      return true;
+    }
+    return false;
+  }
+  for (var k = 0; k < 12 && manque() > 0.20; k++) {
+    var r = choisir();
+    if (!r && cuisiner()) r = choisir();
+    if (!r) break;
+    var avant = g.game.heroHp || 0;
+    if (!CM.eatRation(r.id)) break;
+    R.mangees[r.id] = (R.mangees[r.id] || 0) + 1;
+    R.minutesEvitees += ((g.game.heroHp || 0) - avant) / (max * CM.getRegenPctPerMin());
+  }
 }
 
 /* Entre deux étapes, ce que fait un joueur : meilleur objet porté, points de talent, entraînement,
@@ -1254,6 +1296,7 @@ if (COMBATS) {
   console.log("Quêtes d'élite : " + (STATS.elites.map(function (e) { return e.quest + (e.ok ? " ✔" : " ✘") + " (" + e.step + ", " + e.essais + " essai" + (e.essais > 1 ? "s" : "") + ")"; }).join(" · ") || "aucune"));
   console.log("Village pour la puissance : " + (STATS.village.join(" · ") || "rien"));
   console.log("Morts : " + STATS.deaths + " · potions bues : " + STATS.potions + " à la main, " + (STATS.potionsBues || 0) + " en tout · or en potions : " + (STATS.potionGold || 0) + " · temps de combat : " + (STATS.combatMs / 3600e3).toFixed(1) + " h · temps de soin au camp : " + (STATS.healMs / 3600e3).toFixed(1) + " h");
+  if (STATS.rations) console.log("Rations au camp : mangées " + JSON.stringify(STATS.rations.mangees) + " · cuisinées " + JSON.stringify(STATS.rations.cuisinees) + " · attente évitée " + (STATS.rations.minutesEvitees / 60).toFixed(1) + " h");
   if (VERBOSE) STATS.fights.slice(-12).forEach(function (f) { console.log("    " + f.step + " · " + f.kind + " " + f.name + " : " + f.rounds + " rounds, PV " + Math.round(f.hp0 * 100) + "→" + Math.round((f.hp1 || 0) * 100) + " %" + (f.died ? " †" : "") + (f.potions ? " (" + f.potions + " potion)" : "")); });
 }
 console.log("Farm d'élites : " + STATS.farms + " · achats à l'échoppe : " + STATS.shopBuys + " · secteurs repris au sable : " + STATS.recouvrements + " · sac plein : " + STATS.sacPlein);

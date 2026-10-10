@@ -2,7 +2,7 @@
 /* tools/sim/campagne-lot.js — v3.354.0 : lance un LOT de campagnes (tools/sim/campagne-harness.js) et
    agrège les résultats : murs, temps par étape, qui tue, boss et élites, farm, obstacles.
 
-   USAGE : node tools/sim/campagne-lot.js . [--n 4] [--combats] [--tactique] [--classes knight,ranger,mage]
+   USAGE : node tools/sim/campagne-lot.js . [--n 4] [--combats] [--attendre-camp] [--tactique] [--classes knight,ranger,mage]
    Les fichiers de chaque partie sont écrits dans captures/campagne-lot/ (JSON + sortie texte).
    Compter environ 1 min par partie en --combats, 2 s sans. */
 
@@ -12,7 +12,7 @@ var ARGS = process.argv.slice(3);
 function arg(name, def) { var i = ARGS.indexOf(name); return i >= 0 ? ARGS[i + 1] : def; }
 var N = Number(arg("--n", 4));
 var CLASSES = arg("--classes", "knight,ranger,mage").split(",");
-var PASS = ["--combats", "--tactique", "--compagnons-malins", "--investi", "--laisser", "--farm-reforges"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
+var PASS = ["--combats", "--attendre-camp", "--tactique", "--compagnons-malins", "--investi", "--laisser", "--farm-reforges"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
 var OUT = require("../chemins.js").captures("campagne-lot");
 if (!fs.existsSync(OUT)) fs.mkdirSync(OUT);
 

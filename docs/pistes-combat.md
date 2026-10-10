@@ -30,3 +30,13 @@ Rien n'est décidé : options en attente de validation.
   Le chiffre « soin au camp 9 à 14 h » est donc pessimiste.
 - Idée de Seb : la Forêt reste comme aujourd'hui ; l'annonce avancée des ennemis normaux arrive plus tard,
   quand les rations sont plus simples à produire. Il existe déjà des seuils par monde (`*_MIN_WORLD_INDEX`).
+
+## Robot recalé : repas au camp (2026-10-10)
+- `campagne-harness.js` : `mangerAuCamp()` dans `healUp`. Au-delà de 20 % de PV manquants, le robot mange la plus
+  grosse ration qui ne déborde pas trop (réserve de 1 par type pour les vivres) et cuisine avec le stock présent.
+  `--attendre-camp` rend l'ancien comportement.
+- Lot `--combats --n 2` (6 parties), avant → après :
+  temps total médian 36 → 35 h ; soin au camp 9,4 → 5,4 h ; carte : lendemain 6,1 → 8,5 h ; combat 0,9 h.
+  Rations au camp : 19 à 52 Petites rations mangées par partie, 2,5 à 6 h d'attente évitées.
+- Lecture : le temps gagné au camp est repris par l'attente du lendemain sur la carte (plafond du jour) et par la
+  production. La durée de campagne est tenue par ces rythmes journaliers, pas par le soin.
