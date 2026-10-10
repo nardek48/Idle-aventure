@@ -101,3 +101,6 @@ Rien n'est décidé : options en attente de validation.
    Fiole noire (chute, Désert) 12 Eau purifiée + 2 Chitine, commande 6 Chitine + 60 Eau purifiée ;
    Sel de fer (Vampirique, Ruines) 12 Eau purifiée + 4 Lingots, commande 24 Lingots + 60 Eau purifiée.
    Chiffres de départ, recalés au banc (charge sur la production).
+- Atelier : `atelier/objets-combat.html` (préparation : case Objet + « Ce que tu vas affronter » avec règle / objet / rien ;
+  panneau Potions : préparations de combat ; combat : trait « contré » marqué de l'objet).
+- Images en double signalées à Seb : Viande et Viande séchée (meat_icon.png), Eau et Eau purifiée (water_icon.png).

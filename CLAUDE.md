@@ -38,6 +38,7 @@ Une fois l'accord obtenu : modification minimale, limitée au besoin.
 - **Nouvel état persistant** : câbler les 4 points de `save-system.js` — `buildSaveData`, `loadGame`, `hardResetState`, `fullResetState`. En oublier un = perte de données au rechargement.
 - Aucune progression (Histoire, monde, `worldIndex`) ne dépend d'un combat hors quête : seules les quêtes définies et testées font foi.
 - **Icône manquante** : garder son vrai chemin et afficher l'icône générique. Ne jamais emprunter une autre image du jeu.
+- **Images en double ou sans rapport** : dès qu'une image sert à deux choses différentes, ou ne correspond pas à ce qu'elle illustre, le signaler à Seb (sans la corriger d'office).
 - Tutoriel d'onboarding : ne pas retravailler, corriger seulement une erreur factuelle.
 - Le système de classes (Chevalier/Rage, Rôdeur/Concentration, Mage/Mana) est complet depuis v3.34.
 
