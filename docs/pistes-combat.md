@@ -131,3 +131,6 @@ Rien n'est décidé : options en attente de validation.
 - Constat pour la décision 2 : la célérité du héros monte avec les bottes (×18 à la Tour : ~40 Forêt → ~470 Tour),
   celle des ennemis reste brute (8 à 58 dans les données ; seul le Donjon la gonfle par vague). Un bonus direct
   sur la célérité mettrait le héros toujours premier en fin de partie.
+- Décision 2 (option 1) : bonus = 10 × c / (c + 60). Héros et compagnons : c = célérité ÷ multiplicateur d'équipement
+  du monde (EQUIP_WORLD_SCALE, ×1 Forêt → ×18 Tour). Ennemis : célérité brute. Rôdeur : 2d20, le meilleur.
+  Égalité : ton camp d'abord. Les ennemis se trient entre eux par leur jet (plus par célérité).
