@@ -140,3 +140,8 @@ Rien n'est décidé : options en attente de validation.
 - Décision 4 : bandeau d'initiative (maquette de Seb), prototype `atelier/initiative.html` : 44 px sous la barre du haut,
   portraits dans l'ordre avec le jet, celui qui joue s'allume, ceux qui ont joué pâlissent. Seul le bandeau est repris
   de la maquette (pas la bascule de mode, retirée en v3.440.0, ni le cadre « Prochain »).
+- Lot initiative codé (accord Seb sur combat-engine.js), branche wip/initiative, pas encore livré.
+  Écart à la décision 2 : la célérité des compagnons ne suit pas le monde (donnée brute) : elle n'est pas divisée.
+  Banc plafond-bench, 30 runs, ordre d'avant → initiative : Forêt 100 % partout, PV restants −0 à −13 pts ;
+  Cité (campagne) Rôdeur 83 → 77 %, Mage 87 → 80 % ; Cité (fin) PV −7 à −11 pts ; Nezzam (fin) Rôdeur 33 → 23 %,
+  Mage 53 → 40 % ; Serment et Dard inchangés.

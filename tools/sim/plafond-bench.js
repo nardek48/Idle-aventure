@@ -27,6 +27,7 @@ var RING_CRIT = null;
 var SUITE = false, PA_POWER = null, PA_HP = null, JOURNEE = false, BRAKE = 1;
 var VOIE_ARG = null, POINTS_ARG = null, NO_TAL_ARG = false;
 var CITE_ARG = null;
+var ORDRE_ANCIEN = false; // v3.447.0 : --ordre-ancien, sans initiative (héros, compagnons, ennemis), pour comparer
 var OBJETS = []; // v3.441.0 : --objet id[,id], objets de combat emportés à chaque sortie (sans stock ni Apothicaire)
 var PRONO = false; // v3.429.7 : --pronostic, verdict de CombatForecast.forDungeon à côté de la mesure
 var FRAPPES = false; // v3.429.14 : --frappes, frappes et dégâts réels contre l'estimation
@@ -58,6 +59,7 @@ for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--points") POINTS_ARG = Number(process.argv[ai + 1]);
   if (process.argv[ai] === "--sans-talents") NO_TAL_ARG = true;
   if (process.argv[ai] === "--cite") CITE_ARG = Number(process.argv[ai + 1]); // v3.356.0 : valeur d'essai de l'arme de la Cité
+  if (process.argv[ai] === "--ordre-ancien") ORDRE_ANCIEN = true;
   if (process.argv[ai] === "--objet") OBJETS = String(process.argv[ai + 1]).split(",");
 }
 var mod = { exports: {} };
@@ -162,6 +164,7 @@ function equipFor(p) {
 function prepare(c, p, worldIndex, withWenna, withMaddoc) {
   B.setup(c.hero, c.id, { weapon: 0, kit: false, train: 0, potions: 2 });
   // v3.441.0 : --objet, les objets sont posés dans chaque sortie dès son ouverture (avant le premier combat)
+  if (g.Initiative) g.Initiative.legacy = ORDRE_ANCIEN;
   if (OBJETS.length && !g.SortieManager._benchObjets) {
     var start0 = g.SortieManager.start;
     g.SortieManager.start = function (ctx) { var ok = start0.apply(this, arguments); if (ok && g.game.sortie) g.game.sortie.items = OBJETS.slice(); return ok; };

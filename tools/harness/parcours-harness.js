@@ -506,6 +506,7 @@ async function P6(browser, base) {
   var escorte = page.locator('.cbx-foe[data-k="' + kEscorte + '"] .cbx-foe-hit');
   await escorte.click(); await page.waitForTimeout(250);
   await page.evaluate(function () { var e = CombatActors.enemies()[1]; if (e) e.hp = 1; });
+  await visible(page, "#combat-attack-btn:not([disabled])", 4000);   // v3.447.0 : l'initiative peut faire jouer l'ennemi d'abord
   await tap(page, "#combat-attack-btn");
   await page.waitForTimeout(900);
   var etat = await page.evaluate(function () { var en = CombatActors.enemies(); return { vivants: en.filter(function (e) { return e.hp > 0; }).map(function (e) { return e.id; }), quete: game.adventureQuestRun.active, fini: !!game.adventureQuestsCompleted.eq_forest_spider }; });

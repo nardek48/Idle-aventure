@@ -40,6 +40,9 @@ scripts.forEach(function (s) {
 console.log("Chargé " + scripts.length + " scripts");
 
 var g = sandbox;
+/* v3.447.0 : l'initiative tire l'ordre des tours aux dés. Les contrôles historiques supposent l'ordre
+   d'avant (héros, compagnons, ennemis) : on le garde ici ; les contrôles de l'initiative le lèvent. */
+g.Initiative.legacy = true;
 var failures = 0, passes = 0;
 function ok(cond, msg) { if (cond) { passes++; console.log("  ✔ " + msg); } else { failures++; console.log("  ✘ " + msg); } }
 function run(code) { return vm.runInContext(code, g); }
@@ -7296,8 +7299,8 @@ console.log("\n[72] v3.270.0 (L-4) — mode Manuel : file d'attente, actions du 
   /* --- En Manuel : le round attend tout le monde --- */
   game = manuel();
   ok(g.CombatEngine.hasManualAllies() === true, "Wenna en Manuel entre dans la file");
-  var ordre = g.CombatEngine.actorsToChoose().map(function (a) { return a.name; });
-  ok(ordre.length === 2 && ordre[1] === "Wenna", "ordre de choix : le héros, puis les compagnons manuels");
+  var ordre = g.CombatEngine.actorsToChoose();
+  ok(ordre.length === 1 && ordre[0] === g.CombatActors.heroActor(), "v3.447.0 : un acteur choisit à la fois, celui dont c'est le tour (le héros d'abord)");
 
   /* v3.276.0 : les dégâts partent AU CLIC. Le round s'ouvre au premier acte, les ennemis
      ne ripostent qu'une fois que tout le monde a joué. */
@@ -7327,9 +7330,9 @@ console.log("\n[72] v3.270.0 (L-4) — mode Manuel : file d'attente, actions du 
   ok(g.buildAllyRowHTML().indexOf("is-active") !== -1, "sa mini-carte est marquée active");
 
   /* --- Sélection à la main --- */
-  ok(g.CombatEngine.selectActor(g.CombatActors.heroActor().actorId) === true
-    && g.CombatEngine.selectedActor() === g.CombatActors.heroActor(),
-    "on peut revenir sur le héros à la main");
+  ok(g.CombatEngine.selectActor(g.CombatActors.heroActor().actorId) === false
+    && g.CombatEngine.selectedActor() === acteur,
+    "v3.447.0 : l'ordre est fixe, on ne revient pas sur le héros qui a joué");
   ok(g.CombatEngine.selectActor("inconnu") === false, "un acteur inconnu est refusé");
 
   /* --- Soin : cible directe s'il n'y a qu'un blessé --- */
@@ -7373,17 +7376,16 @@ console.log("\n[72] v3.270.0 (L-4) — mode Manuel : file d'attente, actions du 
 
   /* --- Une potion reste une action DU héros --- */
   game = manuel();
-  g.CombatEngine.selectActor(game.combat.allies[1].actorId);
   run("game.heroHp = 1; PotionManager.ensureHealing(); game.healingPotionsOwned.potion_soin_mineur = 5;");
+  g.CombatEngine.heroAction("basic");
   var avantPotion = game.heroHp;
-  g.CombatEngine.queueChoice("potion", "potion_soin_mineur");
-  ok(!!g.CombatEngine.pendingOf(g.CombatActors.heroActor()) && game.heroHp > avantPotion,
-    "une potion choisie depuis un compagnon est bue par le héros, tout de suite");
+  ok(g.CombatEngine.queueChoice("potion", "potion_soin_mineur") === false && game.heroHp === avantPotion,
+    "v3.447.0 : au tour d'un compagnon, pas de potion (action du héros, à son tour)");
 
   /* --- Un nouveau combat repart d'une file vide --- */
   game = manuel();
   g.CombatEngine.heroAction("basic");
-  ok(Object.keys(game.combat.pending).length === 1, "une action en attente");
+  ok(!!g.CombatEngine.pendingOf(g.CombatActors.heroActor()) && g.CombatEngine._manualRoundOpen, "une action jouée, le round ouvert");
   g.CombatEngine.spawnEnemy();
   ok(Object.keys(game.combat.pending).length === 0 && game.combat.selection === null,
     "le combat suivant repart d'une file vide");
@@ -15033,6 +15035,94 @@ console.log("\n[221] v3.446.0 — « Ce que tu vas affronter » : seulement à l
   } catch (err) {
     ok(false, "[221] exception : " + err.message);
   } finally { g.sortiePrep = null; }
+})();
+
+console.log("\n[222] v3.447.0 — Initiative : jet, ordre, file de tours, Garde, cadence du jeu réel");
+(function () {
+  var I = g.Initiative, CE = g.CombatEngine, savedCtx = g.hasCombatQuestContext;
+  /* Ordre forcé : total de chacun posé à la main sur le combat en cours. */
+  function force(list) { list.forEach(function (p) { p[0]._ini = { key: I.combatKey, r1: p[1], r2: 0, bonus: 0, total: p[1] }; }); }
+  function calme(e) { e.engageIn = 0; e.chargeIn = e.shieldIn = e.silenceIn = e.healIn = 99; e.hp = e.maxHp = 100000; }
+  try {
+    I.legacy = false;
+    ok(I.bonusFromCelerity(0) === 0 && I.bonusFromCelerity(60) === 5 && I.bonusFromCelerity(5000) <= 10, "bonus = 10 × c / (c + 60) : 0 → +0, 60 → +5, jamais plus de +10");
+    game = freshCombat("knight"); giveWeapon();
+    var hero = g.CombatActors.heroActor(), tot = CE.getTotalCelerity();
+    g.WorldManager.worldIndex = 5;
+    ok(Math.abs(I.celerityOf(hero) - tot / 18) < 1e-9, "héros : célérité ramenée au monde (Tour ÷ 18)");
+    g.WorldManager.worldIndex = 0;
+    ok(I.hasAdvantage(hero) === false && !!I.rollOf(hero), "Chevalier : un dé, jet posé à l'ouverture du combat");
+    game = freshCombat("ranger");
+    hero = g.CombatActors.heroActor();
+    ok(I.hasAdvantage(hero) && I.rollOf(hero).r2 > 0 && I.rollOf(hero).total === Math.max(I.rollOf(hero).r1, I.rollOf(hero).r2) + I.rollOf(hero).bonus, "Rôdeur : deux dés, le meilleur compte");
+
+    // Égalité : ton camp d'abord ; sinon le plus haut total
+    game = freshCombat("knight"); giveWeapon();
+    hero = g.CombatActors.heroActor(); var e = game.enemy; calme(e);
+    force([[hero, 10], [e, 10]]);
+    ok(I.order()[0] === hero, "égalité : le héros passe devant l'ennemi");
+    force([[hero, 5], [e, 15]]);
+    ok(I.order()[0] === e && I.enemyBeforeHero(), "ennemi plus haut : il joue avant le héros");
+
+    // Synchrone : l'ennemi frappe AVANT l'action du héros, même si cette action le tue
+    e.hp = 1;
+    var pv = game.heroHp;
+    CE.heroAction("basic");
+    ok(game.heroHp < pv, "l'ennemi joue d'abord : il frappe avant de tomber sous le coup du héros");
+
+    // La Garde tient jusqu'au coup suivant de l'ennemi qui joue avant
+    game = freshCombat("knight"); giveWeapon(); fillResource();
+    hero = g.CombatActors.heroActor(); e = game.enemy; calme(e);
+    force([[hero, 5], [e, 15]]);
+    var gardes = [], strike = CE.enemyStrike;
+    CE.enemyStrike = function () { gardes.push(!!game.classActiveDefense); return strike.apply(this, arguments); };
+    var garde = CE.heroAction("defense");
+    var apres = !!game.classActiveDefense;
+    CE.heroAction("basic");
+    CE.enemyStrike = strike;
+    ok(garde && apres && gardes[1] === true, "Garde posée après le coup du loup : elle couvre son coup du round suivant");
+    ok(!game.classActiveDefense, "et s'éteint au tour suivant du héros");
+
+    // Contre : l'annonce tombe pendant le tour de l'ennemi, le héros la contre avant l'impact
+    game = freshCombat("knight"); giveWeapon(); fillResource();
+    hero = g.CombatActors.heroActor(); e = game.enemy; calme(e); e.chargeIn = 1;
+    force([[hero, 5], [e, 15]]);
+    CE.heroAction("basic");
+    ok(e.chargeTelegraphed === true, "le loup annonce sa charge à son tour");
+    var counter = (g.getClassSkills(g.ClassCombatManager.getCurrentClassId()) || {}).actions || {};
+    var slot = Object.keys(counter).filter(function (k) { return (g.getAllGrimoireCounterIds(counter[k]) || []).indexOf("chargeIncoming") !== -1; })[0];
+    pv = game.heroHp;
+    if (slot) { CE.heroAction(slot); ok(e.chargeTelegraphed === false, "le héros la contre à son tour, avant l'impact (" + slot + ")"); }
+
+    // Renfort : il lance son dé à son arrivée
+    var nouveau = g.CombatEngine.prepareEnemy(g.WorldManager.generateEnemy());
+    g.CombatActors.setEnemies(g.CombatActors.enemies().concat([nouveau]));
+    ok(I.order().indexOf(nouveau) !== -1 && !!I.rollOf(nouveau), "un renfort lance son dé et entre dans l'ordre");
+
+    // Jeu réel : un combattant toutes les 0,4 s, arrêt au tour du héros (Tactique)
+    game = freshCombat("knight"); giveWeapon();
+    hero = g.CombatActors.heroActor(); e = game.enemy; calme(e);
+    force([[hero, 5], [e, 15]]);
+    CE.paced = true; g.hasCombatQuestContext = function () { return true; };
+    pv = game.heroHp;
+    ok(CE.isHeroTurnAvailable() === false, "jeu réel : avant le tour du héros, ses boutons attendent");
+    CE.tickRoundClock(0.5);
+    ok(game.heroHp === pv, "ouverture du combat : le temps de voir les dés (1 s)");
+    CE.tickRoundClock(0.5);
+    ok(game.heroHp < pv && CE.isHeroTurnAvailable() === true, "le loup joue, puis le combat s'arrête au tour du héros");
+    var r = game.combatRound.number;
+    CE.tickRoundClock(2);
+    ok(CE.isHeroTurnAvailable() === true && game.combatRound.number === r, "Tactique : le combat attend le choix du joueur");
+    ok(CE.heroAction("basic") === true && CE._manualRoundOpen === true, "le héros joue ; la fin du round viendra au pas suivant");
+    CE.tickRoundClock(0.4);
+    ok(CE._manualRoundOpen === false, "pas suivant : le round se ferme");
+    CE.tickRoundClock(0.4);
+    ok(game.combatRound.number === r + 1, "et le suivant s'ouvre au pas d'après");
+  } catch (err) {
+    ok(false, "[222] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    CE.paced = false; I.legacy = true; g.hasCombatQuestContext = savedCtx; g.WorldManager.worldIndex = 0;
+  }
 })();
 
 console.log("\n" + passes + " OK, " + failures + " échec(s)");

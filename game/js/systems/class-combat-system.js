@@ -500,13 +500,17 @@ var ClassCombatManager = {
       game.classResource = tickResourceRegen(game.classResource, resourceDef.generation, 1);
     }
 
-    if (game.classActiveDefense) {
-      game.classActiveDefense.roundsLeft = Number(game.classActiveDefense.roundsLeft || 0) - 1;
-      if (game.classActiveDefense.roundsLeft <= 0) {
-        var ended = game.classActiveDefense;
-        game.classActiveDefense = null;
-        if (window.TalentManager) TalentManager.onDefenseEnd(ended); // v3.327.0 : Surcharge
-      }
+    // v3.447.0 : un ennemi joue avant le héros -> décomptée à son tour (CombatEngine.tickHeroOwnEffects)
+    if (!(window.CombatEngine && CombatEngine.heroEffectsOnOwnTurn())) this.tickActiveDefense();
+  },
+
+  tickActiveDefense: function () {
+    if (!game.classActiveDefense) return;
+    game.classActiveDefense.roundsLeft = Number(game.classActiveDefense.roundsLeft || 0) - 1;
+    if (game.classActiveDefense.roundsLeft <= 0) {
+      var ended = game.classActiveDefense;
+      game.classActiveDefense = null;
+      if (window.TalentManager) TalentManager.onDefenseEnd(ended); // v3.327.0 : Surcharge
     }
   },
 

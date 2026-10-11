@@ -305,6 +305,7 @@ var CombatEngine = {
     if (typeof isBlockingModalOpen === "function" && isBlockingModalOpen()) return false;
     if ((game.heroHp || 0) <= 0) return false;
     if (game.combatRound.busy) return false;
+    if (this.paced && !this.currentStop()) return false;   // v3.447.0 : ce n'est pas (encore) ton tour
     return true;
   },
 
@@ -346,47 +347,162 @@ var CombatEngine = {
     if (!this.isHeroTurnAvailable()) return false;
     if (game.combatMode === "grimoire" && source !== "auto" && slot !== "potion") return false;
 
-    /* v3.270.0 (L-4) : un compagnon en Manuel attend son choix — on précharge au lieu de
-       jouer. Le mode Grimoire ignore l'interrupteur (tout le monde est auto, décision
-       Seb), et _playingQueue est le drapeau qui laisse passer le round une fois la file
-       complète, sans repasser par ici. */
+    /* v3.270.0 (L-4) : en Tactique, les compagnons ont leur propre tour (v3.447.0 : un arrêt
+       chacun, dans l'ordre d'initiative) : le choix passe par queueChoice. */
     if (source !== "auto" && game.combatMode !== "grimoire" && this.hasManualAllies()) {
       return this.queueChoice(slot, arg);
     }
 
     // v3.102.1 : le premier round hors mission ouvre une sortie d'exploration (décision 1a)
     if (window.SortieManager && !SortieManager.isActive()) SortieManager.start(null);
+
+    // v3.447.0 : ceux qui précèdent le héros dans l'ordre jouent d'abord (seuls en mode synchrone)
+    var hero = window.CombatActors ? CombatActors.heroActor() : null;
+    if (this.runToStop() !== hero) return false;
+
     if (source === "auto" && window.RiseSystem) RiseSystem.aim(arg && arg.matchedConditionId); // v3.428.0 : réglage « Cible »
     if (window.RiseSystem) RiseSystem.beginAction(source !== "auto" || !!(arg && arg.matchedConditionId === "enemyRising")); // v3.428.3 : achever = décision
 
     var round = game.combatRound;
     round.busy = true;
-    round.number += 1;
-
-    /* v3.267.0 (L-1) : le groupe est photographié AVANT l'action du héros. Seuls les
-       ennemis présents à ce moment-là jouent leur tour — un ennemi tué puis remplacé
-       pendant l'action ne joue pas, exactement comme la condition historique
-       « game.enemy === enemyRef » le garantissait à un seul ennemi. */
-    var groupRef = window.CombatActors ? CombatActors.enemies().slice() : [game.enemy];
-
+    this.tickHeroOwnEffects();
     var played = this.performHeroAction(slot, arg, source);
     if (!played) {
-      round.number -= 1;
       round.busy = false;
+      this.undoEmptyRound();
       return false;
     }
-
-    this.alliesTurn();
-    this.enemiesTurn(groupRef);
-    this.endRoundGroup(groupRef);
+    this.actorDone(hero);
+    this.afterStop();
     round.busy = false;
-    round.clockMs = 0;
 
     if (typeof renderClassSkillButtons === "function") renderClassSkillButtons();
     if (typeof renderCombatControls === "function") renderCombatControls();
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
     if (typeof renderHealButtons === "function") renderHealButtons();
     return true;
+  },
+
+  /* ---------- v3.447.0 : FILE DE TOURS (initiative, décisions Seb 1 à 3) ----------
+     Un round = la file de Initiative.order(). Les « arrêts » (le héros ; en Tactique, chaque
+     compagnon) attendent un choix ; les autres jouent seuls. Synchrone par défaut (harnais,
+     bancs : une action du héros joue la fin du round) ; en jeu réel (paced), tickRoundClock
+     fait jouer un combattant toutes les INITIATIVE_STEP_MS. */
+  _turn: null,
+  paced: false,
+  get _manualRoundOpen() { return !!(this._turn && this._turn.open); },   // nom d'avant, lu par le harnais et le débogage
+
+  turn: function () {
+    var key = window.Initiative ? Initiative.combatKey : 0;
+    if (!this._turn || this._turn.key !== key) this._turn = { key: key, queue: [], acted: [], open: false, played: 0 };
+    return this._turn;
+  },
+
+  isStopActor: function (a) {
+    if (!a || !window.CombatActors) return false;
+    if (CombatActors.isHero(a)) return true;
+    // « Continuer l'attaque » : tout le monde joue seul, comme le héros
+    return !!a.companionId && !game.combatRound.continueAttack && this.manualAllies().indexOf(a) !== -1;
+  },
+
+  canAct: function (a) {
+    if (!a || !window.CombatActors) return false;
+    if (CombatActors.isHero(a)) return (game.heroHp || 0) > 0;
+    if (a.side === "enemy") return Number(a.hp || 0) > 0 && CombatActors.enemies().indexOf(a) !== -1;
+    return Number(a.hp || 0) > 0 && !a.ko && CombatActors.allies().indexOf(a) !== -1;
+  },
+
+  beginRound: function () {
+    var t = this.turn();
+    game.combatRound.number += 1;
+    t.queue = window.Initiative ? Initiative.order() : [];
+    t.acted = [];
+    t.played = 0;
+    t.open = true;
+  },
+
+  /* Prochain combattant en état de jouer (les morts et les remplacés sont retirés). */
+  headActor: function () {
+    var t = this.turn();
+    while (t.queue.length && !this.canAct(t.queue[0])) t.queue.shift();
+    return t.queue[0] || null;
+  },
+
+  actorDone: function (a) {
+    var t = this.turn();
+    if (t.queue[0] === a) t.queue.shift();
+    t.acted.push(a);
+    t.played += 1;
+  },
+
+  /* Une action du héros refusée alors que personne n'a encore joué : le round n'a pas eu lieu. */
+  undoEmptyRound: function () {
+    var t = this.turn();
+    if (t.open && t.played === 0) { t.open = false; t.queue = []; game.combatRound.number -= 1; }
+  },
+
+  playActor: function (a) {
+    var self = this;
+    this.actorDone(a);
+    if (a.side === "enemy") { this.withTarget(a, function () { self.enemyTurn(); }); return; }
+    if (a.companionId && window.CompanionManager && CombatActors.aliveEnemies().length) {
+      this._actingAlly = a;
+      try { CompanionManager.takeTurn(a, null, null); }
+      finally { this._actingAlly = null; }
+    }
+  },
+
+  closeRound: function () {
+    var t = this.turn();
+    var ref = (window.CombatActors ? CombatActors.enemies() : [game.enemy]).filter(function (e) { return t.acted.indexOf(e) !== -1; });
+    t.open = false; t.queue = []; t.acted = [];
+    this.endRoundGroup(ref);
+    game.combatRound.clockMs = 0;
+  },
+
+  /* Ouvre le round si besoin et fait jouer les combattants jusqu'au prochain arrêt.
+     single : un seul combattant (jeu réel). Renvoie l'arrêt atteint, ou null (round fermé,
+     combat changé, héros tombé). */
+  runToStop: function (single) {
+    if (!window.CombatActors || !CombatActors.enemies().length) return null;
+    var t = this.turn(), key = t.key;
+    if (!t.open) this.beginRound();
+    for (var guard = 0; guard < 40; guard++) {
+      if (this.turn().key !== key || (game.heroHp || 0) <= 0) return null;
+      var a = this.headActor();
+      if (!a) { this.closeRound(); return null; }
+      if (this.isStopActor(a)) return a;
+      this.playActor(a);
+      if (single) return null;
+    }
+    return null;
+  },
+
+  /* Après un arrêt : en synchrone, la fin du round se joue tout de suite (jusqu'à l'arrêt suivant
+     ou la fermeture du round) ; en jeu réel, l'horloge s'en charge, un combattant à la fois. */
+  afterStop: function () {
+    if (this.paced) return;
+    var t = this.turn();
+    if (t.open) this.runToStop();
+  },
+
+  /* Arrêt en tête de file (round ouvert), sinon null. */
+  currentStop: function () {
+    var t = this.turn();
+    if (!t.open) return null;
+    var a = this.headActor();
+    return this.isStopActor(a) ? a : null;
+  },
+
+  /* v3.447.0 : un ennemi joue avant le héros -> la Garde se décompte au tour du héros (sinon elle
+     s'éteindrait en fin de round, avant le coup suivant). Ordre d'avant : fin de round, inchangé. */
+  heroEffectsOnOwnTurn: function () {
+    return !!(window.Initiative && !Initiative.legacy && Initiative.enemyBeforeHero());
+  },
+
+  tickHeroOwnEffects: function () {
+    if (!this.heroEffectsOnOwnTurn() || !window.ClassCombatManager || typeof ClassCombatManager.tickActiveDefense !== "function") return;
+    ClassCombatManager.tickActiveDefense();
   },
 
   performHeroAction: function (slot, arg, source) {
@@ -612,120 +728,77 @@ var CombatEngine = {
     return this.manualAllies().length > 0;
   },
 
-  /* Qui doit encore choisir : le héros d'abord, puis les compagnons manuels vivants. */
+  /* v3.447.0 : un seul acteur choisit à la fois, celui dont c'est le tour (l'arrêt en tête de file). */
   actorsToChoose: function () {
     if (!window.CombatActors) return [];
-    var out = [CombatActors.heroActor()];
-    this.manualAllies().forEach(function (a) { out.push(a); });
-    return out;
+    return [this.currentStop() || CombatActors.heroActor()];
   },
 
+  /* A déjà joué ce round (lu par les cartes et le gros bouton). */
   pendingOf: function (actor) {
-    var c = game.combat;
-    return (c && actor && c.pending) ? c.pending[actor.actorId] : null;
+    var t = this.turn();
+    return !!(actor && t.open && t.acted.indexOf(actor) !== -1);
   },
 
-  allChosen: function () {
-    var self = this;
-    return this.actorsToChoose().every(function (a) { return !!self.pendingOf(a); });
-  },
+  allChosen: function () { return !this.currentStop(); },
 
   selectedActor: function () {
-    var c = CombatActors.ensure();
-    var list = this.actorsToChoose();
-    for (var i = 0; i < list.length; i++) if (list[i].actorId === c.selection) return list[i];
-    return list[0] || CombatActors.heroActor();
+    return this.actorsToChoose()[0] || CombatActors.heroActor();
   },
 
+  /* L'ordre est fixe : seul l'acteur dont c'est le tour peut être sélectionné. */
   selectActor: function (actorId) {
-    var c = CombatActors.ensure();
-    var list = this.actorsToChoose();
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].actorId === actorId) { c.selection = actorId; this.refreshCombatUI(); return true; }
-    }
+    var a = this.selectedActor();
+    if (a && a.actorId === actorId) { this.refreshCombatUI(); return true; }
     return false;
   },
 
-  /* Après un choix, on passe seul au premier acteur qui n'a pas encore le sien. */
-  advanceSelection: function () {
-    var c = CombatActors.ensure();
-    var self = this;
-    var list = this.actorsToChoose();
-    for (var i = 0; i < list.length; i++) {
-      if (!self.pendingOf(list[i])) { c.selection = list[i].actorId; return; }
-    }
-    c.selection = list.length ? list[0].actorId : null;
-  },
+  advanceSelection: function () {},
 
-  /* v3.276.0 (décision Seb) : l'action est RÉSOLUE AU CLIC, plus préchargée. Les dégâts
-     partent immédiatement, sur la cible désignée à cet instant — c'est ce qui permet de
-     frapper l'ennemi qu'on veut au moment où on le choisit, et de changer de cible entre
-     deux acteurs du même round. Les ennemis, eux, ne ripostent qu'une fois que tout le
-     monde a joué : le round reste une unité. */
+  /* v3.276.0 (décision Seb) : l'action est RÉSOLUE AU CLIC. v3.447.0 : au tour de l'acteur seulement ;
+     ceux qui le précèdent dans l'ordre jouent d'abord. */
   queueChoice: function (slot, arg) {
-    var c = CombatActors.ensure();
-    var acteur = this.selectedActor();
-
+    if (window.SortieManager && !SortieManager.isActive()) SortieManager.start(null);
+    var acteur = this.runToStop();
+    if (!acteur) return false;
     // Une potion est une action DU HÉROS : le plafond par sortie est calibré pour un seul buveur.
-    if (slot === "potion" && acteur && acteur.companionId) acteur = CombatActors.heroActor();
-    if (this.pendingOf(acteur)) return false;   // il a déjà joué ce round
+    if (slot === "potion" && acteur.companionId) return false;
 
-    // Le round s'ouvre au premier acte, et le groupe ennemi est photographié à cet instant.
-    if (!this._manualRoundOpen) {
-      if (window.SortieManager && !SortieManager.isActive()) SortieManager.start(null);
-      game.combatRound.number += 1;
-      this._manualGroupRef = window.CombatActors ? CombatActors.enemies().slice() : [game.enemy];
-      this._manualRoundOpen = true;
-    }
-
-    /* v3.277.0 (bug Seb) : `busy` ne couvre QUE la résolution d'un acte. Posé pour tout le
-       round manuel, il faisait échouer isHeroTurnAvailable() au clic suivant — le gros
-       bouton ne faisait donc rien pendant le tour d'un compagnon. */
-    var joue;
+    var hero = CombatActors.isHero(acteur), joue;
     game.combatRound.busy = true;
     try {
-      if (acteur.companionId) {
+      if (!hero) {
         this._actingAlly = acteur;
         try { joue = CompanionManager.takeTurn(acteur, slot, arg); }
         finally { this._actingAlly = null; }
       } else {
+        this.tickHeroOwnEffects();
         joue = this.performHeroAction(slot, arg, null);
       }
     } finally {
       game.combatRound.busy = false;
     }
+    if (!joue) { this.undoEmptyRound(); return false; }   // refusée (recharge, ressource) : rien n'est perdu
 
-    if (!joue) {
-      // action refusée (recharge, ressource, condition) : le round reste ouvert, rien n'est perdu
-      if (!Object.keys(c.pending).length) this.cancelManualRound();
-      return false;
-    }
-
-    c.pending[acteur.actorId] = { slot: slot, arg: arg || null };
-    this.advanceSelection();
-
-    if (this.allChosen()) return this.finishManualRound();
-    this.refreshCombatUI();
-    return true;
-  },
-
-  /* Le dernier acteur a joué : les ennemis ripostent, puis le round se ferme. */
-  finishManualRound: function () {
-    var groupRef = this._manualGroupRef || (window.CombatActors ? CombatActors.enemies().slice() : [game.enemy]);
-    this.enemiesTurn(groupRef);
-    this.endRoundGroup(groupRef);
-    this.cancelManualRound();
-    game.combatRound.clockMs = 0;
+    this.actorDone(acteur);
+    this.afterStop();
     this.refreshCombatUI();
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
     if (typeof renderHealButtons === "function") renderHealButtons();
     return true;
   },
 
+  /* Conservé pour les appels existants : termine le round en cours. */
+  finishManualRound: function () {
+    if (this.turn().open) this.runToStop();
+    this.refreshCombatUI();
+    return true;
+  },
+
   cancelManualRound: function () {
     this.clearQueue();
-    this._manualRoundOpen = false;
-    this._manualGroupRef = null;
+    var t = this.turn();
+    t.open = false; t.queue = []; t.acted = [];
     /* game.combatRound peut ne pas exister encore : spawnGroup est appelé pendant la
        création d'un héros, avant ensureState (constaté au harnais). */
     if (game.combatRound) game.combatRound.busy = false;
@@ -1317,6 +1390,7 @@ var CombatEngine = {
   /* ---------- Horloge des modes automatiques (appelée par game-loop, dt déjà × vitesse) ---------- */
   tickRoundClock: function (dt) {
     this.ensureState();
+    if (this.paced) return this.tickTurnClock(dt);   // v3.447.0 : jeu réel, un combattant à la fois
     var round = game.combatRound;
     var auto = game.combatMode === "grimoire";
     if (!auto && !round.continueAttack) return;
@@ -1351,6 +1425,62 @@ var CombatEngine = {
       if (this.heroAction(decision.slot, { matchedConditionId: decision.matchedConditionId || null }, "auto")) return;
     }
     this.heroAction("basic", null, "auto");
+  },
+
+  /* v3.447.0 : horloge du jeu réel. Toutes les INITIATIVE_STEP_MS (× vitesse : dt l'est déjà), le
+     combattant en tête de file joue ; à un arrêt, le combat attend le joueur (Tactique) ou le Grimoire. */
+  tickTurnClock: function (dt) {
+    var round = game.combatRound;
+    if (!game.enemy || game.activeTab !== "combat" || round.busy || (game.heroHp || 0) <= 0) return;
+    if (typeof isBlockingModalOpen === "function" && isBlockingModalOpen()) return;
+    if (typeof hasCombatQuestContext === "function" && !hasCombatQuestContext()) return;
+    if (this.turn().key !== this._clockKey) {   // nouveau combat : le temps de voir les dés
+      this._clockKey = this.turn().key;
+      round.clockMs = INITIATIVE_STEP_MS - INITIATIVE_FIRST_STEP_MS;
+    }
+    round.clockMs += Math.max(0, Number(dt || 0)) * 1000;
+    if (round.clockMs < INITIATIVE_STEP_MS) return;
+
+    var t = this.turn();
+    var stop = t.open ? this.currentStop() : null;
+    if (!stop) {
+      round.clockMs = 0;
+      if (!t.open && window.SortieManager && !SortieManager.isActive()) SortieManager.start(null);
+      this.runToStop(true);
+      this.refreshTurnUI();
+      return;
+    }
+    if (!CombatActors.isHero(stop)) return;   // compagnon en Tactique : il attend son choix
+
+    var auto = game.combatMode === "grimoire";
+    if (!auto && !round.continueAttack) return;   // Tactique : le joueur choisit
+    round.clockMs = 0;
+    if (round.continueAttack) {
+      if (this.shouldStopContinueAttack()) {
+        round.continueAttack = false;
+        showToast(_t("⏸️ Attaque interrompue : un choix s'impose"), 1200);
+        if (typeof renderCombatControls === "function") renderCombatControls();
+        return;
+      }
+      this.heroAction("basic", null, "auto");
+      return;
+    }
+    var potionAuto = (window.PotionAutoManager && typeof PotionAutoManager.pick === "function") ? PotionAutoManager.pick() : null;
+    if (potionAuto && this.heroAction("potion", potionAuto, "auto")) return;
+    if (window.RiseSystem) RiseSystem.aim(null);
+    var decision = (window.ClassCombatManager && typeof ClassCombatManager.chooseRoundAction === "function")
+      ? ClassCombatManager.chooseRoundAction(true) : null;
+    if (decision && decision.slot && decision.slot !== "basic") {
+      if (this.heroAction(decision.slot, { matchedConditionId: decision.matchedConditionId || null }, "auto")) return;
+    }
+    this.heroAction("basic", null, "auto");
+  },
+
+  refreshTurnUI: function () {
+    this.refreshCombatUI();
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+    if (typeof renderHealButtons === "function") renderHealButtons();
+    if (typeof renderHeroHp === "function") renderHeroHp();
   },
 
   /* « Continuer l'attaque » s'arrête sur : PV < 50 %, télégraphe ennemi, double frappe annoncée, nouvel ennemi. */
@@ -1451,6 +1581,7 @@ var CombatEngine = {
     // v3.268.0 (L-2) : le groupe allié est reconstruit depuis game.companions, et un
     // compagnon KO au combat précédent revient avec des PV réduits (§4.4).
     if (window.CompanionManager) CompanionManager.onCombatStart();
+    if (window.Initiative) Initiative.newCombat();   // v3.447.0 : un jet par combat
     this.cancelManualRound();   // v3.276.0 : un round manuel en cours ne survit pas au spawn suivant
 
     if (typeof WorldManager !== "undefined" && typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();

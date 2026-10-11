@@ -132,6 +132,7 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/codex-system.js",
   "./js/sim/combat-round-sim.js",
   "./js/systems/combat-engine.js",
+  "./js/systems/initiative-system.js",
   "./js/systems/rise-system.js",
   "./js/systems/companion-system.js",
   "./js/data/combat-states.js",

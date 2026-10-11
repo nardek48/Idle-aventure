@@ -65,6 +65,7 @@
       + '<div id="cbx" class="cbx">'
       +   '<header id="cbx-top" class="cbx-top"></header>'
       +   '<section id="cbx-arena" class="cbx-arena">'
+      +     '<div id="cbx-ini" class="cbx-ini" hidden></div>'   // v3.447.0 : bandeau d'initiative
       +     '<div id="active-potions-bar" class="cbx-buffs"></div>'
       +     '<div id="cbx-target" class="cbx-target"></div>'
       +     '<div id="cbx-stage" class="cbx-stage"></div>'
@@ -374,7 +375,7 @@
     if (!isManual() || num(actor.hp) <= 0) return "";
     var E = engine();
     if (E.pendingOf(actor)) return "done";
-    return E.selectedActor() === actor ? "now" : "wait";
+    return E.currentStop() === actor ? "now" : "wait";   // v3.447.0 : l'ordre d'initiative décide
   }
   function turnTagHTML(st) {
     if (st === "done") return '<span class="cbx-turn-badge is-done">✓</span>';
@@ -489,7 +490,7 @@
     var silenced = num(game.silencedRounds) > 0 && action.slot !== "defense";
     var condOk = (typeof checkActionConditions !== "function") || checkActionConditions(action.conditions, { enemyHp: game.enemy ? game.enemy.hp : null, enemyMaxHp: game.enemy ? game.enemy.maxHp : null });
     var heroDone = isManual() && engine().pendingOf(actorsApi().heroActor());
-    var disabled = cd > 0 || !affordable || auto || silenced || !condOk || num(game.heroHp) <= 0 || heroDone;
+    var disabled = cd > 0 || !affordable || auto || silenced || !condOk || num(game.heroHp) <= 0 || heroDone || waitingTurn();
     var sugg = !small && !disabled && advice && advice.slot === slot;
     var defense = (action.type === "defense" && typeof ClassCombatManager.getActiveDefenseEffect === "function") ? ClassCombatManager.getActiveDefenseEffect() : null;
     var active = !!(defense && defense.actionId === action.id);
@@ -504,6 +505,11 @@
     if (!small) h += '<span class="cbx-key-badge">' + KEYS[slot] + '</span>';
     return h + '</button>';
   }
+  /* v3.447.0 : en jeu réel, pendant le tour des autres, tes boutons attendent. */
+  function waitingTurn() {
+    var E = engine();
+    return !!(E && E.paced && typeof E.currentStop === "function" && !E.currentStop());
+  }
   function isManualOrSolo() {
     return game.combatMode !== "grimoire" && !(game.combatRound && game.combatRound.continueAttack);
   }
@@ -515,7 +521,7 @@
     var stock = PotionManager.getHealingStock(p.id);
     var busy = !!(game.combatRound && game.combatRound.busy);
     var heroDone = isManual() && engine().pendingOf(actorsApi().heroActor());
-    var dis = stock <= 0 || busy || num(game.heroHp) <= 0 || heroDone;
+    var dis = stock <= 0 || busy || num(game.heroHp) <= 0 || heroDone || waitingTurn();
     return '<button type="button" class="cbx-pot"' + (dis ? ' disabled' : '') + ' onclick="CombatEngine.heroAction(\'potion\', \'' + esc(p.id) + '\')" aria-label="' + esc(_td(p.name)) + '">'
       + ico(p.icon) + '<span class="cbx-pot-count">' + stock + '</span><em class="cbx-key-badge">' + (index + 5) + '</em></button>';
   }
@@ -569,7 +575,7 @@
       SLOTS.forEach(function (s) { h += skillButtonHTML(s, adv, false); });
       h += '</div>';
     }
-    var atkDis = cont || downed || (manual && !compTurn && CombatEngine.pendingOf(actorsApi().heroActor()));
+    var atkDis = cont || downed || waitingTurn() || (manual && !compTurn && CombatEngine.pendingOf(actorsApi().heroActor()));
     h += '<div class="cbx-attack-row">' + potionHTML(0)
       + '<button type="button" id="combat-attack-btn" class="cbx-attack' + (compTurn ? ' is-comp' : '') + '"' + (atkDis ? ' disabled' : '') + ' onclick="CombatEngine.heroAction(\'basic\')" aria-label="' + esc(_t("Attaque (barre espace)")) + '">'
       + (compTurn ? ico((getCompanionDef(sel.companionId) || {}).image) + _t("ATTAQUER") + ' <small>' + esc(_td(sel.name || "")) + '</small>' : _t("ATTAQUER"))
@@ -780,6 +786,74 @@
     ruleTimer = setTimeout(function () { el.classList.remove("is-on"); }, Math.max(700, 1500 / Math.max(1, num(game.combatSpeed) || 1)));
   }
 
+  /* ---------- v3.447.0 : bandeau d'initiative (atelier/initiative.html, validé par Seb) ----------
+     Portraits dans l'ordre des tours, avec le jet. Au début du combat, les dés défilent puis les
+     portraits glissent à leur place. Celui qui joue (ou dont on attend le choix) s'allume, sur le
+     bandeau, sur la scène et sur sa carte ; ceux qui ont joué ce round pâlissent. */
+  var INI_GAP = 42, INI_ROLL_MS = 650;
+  var ini = { key: -1, rollUntil: 0, nodes: {}, uid: 0 };
+  function iniId(a) {
+    var A = actorsApi();
+    if (A && A.isHero(a)) return "h";
+    if (a.companionId) return "c-" + a.companionId;
+    if (!a._iniUid) a._iniUid = ++ini.uid;
+    return "e-" + a._iniUid;
+  }
+  function iniImage(a) {
+    var A = actorsApi();
+    if (A && A.isHero(a)) { var d = heroDef(); return (d && d.image) || ""; }
+    if (a.companionId) { var c = (typeof getCompanionDef === "function") ? getCompanionDef(a.companionId) : null; return (c && c.image) || ""; }
+    return enemyImage(a);
+  }
+  function iniNow() {
+    var E = engine(), t = E.turn(), stop = E.currentStop();
+    return stop || (t.open && t.acted.length ? t.acted[t.acted.length - 1] : null);
+  }
+  function renderIni() {
+    var host = byId("cbx-ini"), I = window.Initiative, E = engine();
+    if (!host) return;
+    var on = !!(I && E && typeof E.turn === "function" && game.enemy && !I.legacy);
+    if (host.hidden === on) host.hidden = !on;
+    if (!on) return;
+    if (I.combatKey !== ini.key) {
+      ini.key = I.combatKey; ini.nodes = {};
+      ini.rollUntil = Date.now() + (lessMotion() ? 0 : INI_ROLL_MS);
+      host.innerHTML = '<div class="cbx-ini-rd">' + _t("Round") + '<b></b></div><div class="cbx-ini-row"></div>';
+    }
+    var row = host.querySelector(".cbx-ini-row"), rb = host.querySelector(".cbx-ini-rd b");
+    if (!row || !rb) return;
+    var rolling = Date.now() < ini.rollUntil, t = E.turn(), now = iniNow(), seen = {};
+    var rn = String(Math.max(1, num(game.combatRound && game.combatRound.number)));
+    if (rb.textContent !== rn) rb.textContent = rn;
+    var list = rolling ? I.participants() : I.order();
+    list.forEach(function (a, i) {
+      var id = iniId(a), el = ini.nodes[id], r = I.rollOf(a);
+      if (!el) {
+        el = document.createElement("div");
+        el.innerHTML = ico(iniImage(a)) + '<span class="cbx-ini-d"></span>';
+        el.style.left = (i * INI_GAP) + "px";
+        row.appendChild(el);
+        ini.nodes[id] = el;
+      }
+      seen[id] = true;
+      var dead = !E.canAct(a);
+      var cls = "cbx-ini-p" + (a.side === "enemy" ? " is-foe" : "") + (a === now ? " is-now" : "")
+        + (t.open && t.acted.indexOf(a) !== -1 && a !== now ? " is-done" : "") + (dead ? " is-out" : "") + (rolling ? " is-rolling" : "");
+      if (el.className !== cls) el.className = cls;
+      var left = (i * INI_GAP) + "px";
+      if (el.style.left !== left) el.style.left = left;
+      var d = el.lastChild, txt = !r ? "" : rolling
+        ? (r.r2 ? (1 + Math.floor(Math.random() * 20)) + "·" + (1 + Math.floor(Math.random() * 20)) : String(1 + Math.floor(Math.random() * 20)))
+        : String(r.total);
+      if (d.textContent !== txt) d.textContent = txt;
+    });
+    Object.keys(ini.nodes).forEach(function (id) { if (!seen[id]) { ini.nodes[id].remove(); delete ini.nodes[id]; } });
+    // Le même éclairage sur la scène (ennemi) et sur les cartes d'Équipe
+    var stage = byId("cbx-stage"), team = byId("cbx-team");
+    if (stage) Array.prototype.forEach.call(stage.querySelectorAll(".cbx-foe"), function (f) { f.classList.toggle("is-acting", !rolling && !!now && f._cbxRef === now); });
+    if (team) Array.prototype.forEach.call(team.querySelectorAll(".cbx-card"), function (c) { c.classList.toggle("is-acting", !rolling && !!now && now.side !== "enemy" && c.getAttribute("data-who") === String(now.actorId)); });
+  }
+
   /* ---------- Rendu complet / par image ---------- */
   /* Appelée à chaque image par la boucle (renderEnemyHp) : chaque bloc n'est réécrit que s'il a
      changé. Les commandes, elles, sont recalculées au plus 8 fois par seconde (le conseil du
@@ -791,6 +865,7 @@
     setHtml(byId("cbx-target"), buildTargetHTML());
     renderStage();
     renderTeam();
+    renderIni();
     var now = Date.now();
     if (force === true || now - lastCmdAt > 120) { lastCmdAt = now; renderCmd(); }
     refreshStatesSheet();
@@ -887,6 +962,9 @@
       return d;
     };
   }
+  // v3.447.0 : en jeu réel, la file de tours avance d'un combattant toutes les 0,4 s
+  if (window.CombatEngine && typeof window.matchMedia === "function") CombatEngine.paced = true;
+
   if (window.CompanionManager && typeof CompanionManager.takeTurn === "function") {
     var origTurn = CompanionManager.takeTurn;
     CompanionManager.takeTurn = function (actor, forcedSlot) {
