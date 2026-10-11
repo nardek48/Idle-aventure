@@ -118,6 +118,7 @@ function buildSortiePrepHTML() {
     h += '</div>';
   }
 
+  h += buildSortiePrepTraitsHTML(grim);
   h += buildSortiePrepTeamHTML(grim);
   h += buildSortiePrepItemsHTML(grim);
   h += buildSortiePrepPotionsHTML();
@@ -223,6 +224,34 @@ function sortiePrepTraitName(trait) {
   return st && st.nom ? _td(st.nom) : trait;
 }
 
+function sortiePrepTraitsPreview() {
+  return (sortiePrep.opts.ctx && typeof getEnemyTraitsPreview === "function") ? getEnemyTraitsPreview(sortiePrep.opts.ctx) : { traits: [], unmet: 0 };
+}
+
+/* v3.446.0 : « Ce que tu vas affronter », section à part (seul endroit depuis que l'encart des écrans de
+   lancement est retiré) : la réponse à chaque trait connu, par l'objet emporté ou la règle du départ. */
+function buildSortiePrepTraitsHTML(grim) {
+  var prev = sortiePrepTraitsPreview();
+  if (!prev.traits.length) return "";
+  var kit = (typeof getGrimoireCurrentKit === "function") ? getGrimoireCurrentKit() : null, chosen = sortiePrep.items;
+  var h = '<div class="sp-sec"><div class="sp-title">' + _t("Ce que tu vas affronter") + '</div>';
+  prev.traits.forEach(function (t) {
+    var def = ENEMY_TRAIT_DEFS[t.trait], st = (window.COMBAT_STATES || {})[def.state] || {};
+    var item = chosen.filter(function (id) { return id && COMBAT_ITEMS[id] && COMBAT_ITEMS[id].trait === t.trait; })[0];
+    var r = grim ? etRuleResponse(def.cond, sortiePrepRules(), kit) : { status: "none" };
+    var cls = item ? "is-item" : (r.status === "counter" ? "is-rule" : (grim ? "is-none" : "is-free"));
+    var resp = item ? (COMBAT_ITEMS[item].soften ? _t("{o} l'atténue.", { o: _td(COMBAT_ITEMS[item].name) }) : _t("{o} le tient.", { o: _td(COMBAT_ITEMS[item].name) }))
+      : r.status === "counter" ? _t("Ta règle « {r} » le contre.", { r: etRuleLabel(r.rule, kit) })
+      : r.status === "react" ? _t("Ta règle « {r} » réagit, sans le contrer.", { r: etRuleLabel(r.rule, kit) })
+      : grim ? _t("Aucune règle ni objet ne répond.") : _t("À toi de le contrer en combat.");
+    h += '<div class="sp-trait ' + cls + '"><img src="' + esc(st.icon || "") + '" alt=""><span><b>' + esc(_td(st.nom || t.trait)) + '</b> · '
+      + esc(t.names.map(function (n) { return _td(n); }).join(", ")) + '<em>' + esc(resp) + '</em></span>'
+      + (cls === "is-none" ? '<button type="button" class="sp-trait-fix" onclick="sortiePrepEditRules()">' + _t("Règle") + ' ›</button>' : '') + '</div>';
+  });
+  if (prev.unmet) h += '<div class="cp-behavior-hint">' + esc(_tn(prev.unmet, "{n} créature jamais vaincue : ses traits se révéleront au premier combat.", "{n} créatures jamais vaincues : leurs traits se révéleront au premier combat.")) + '</div>';
+  return h + '</div>';
+}
+
 function buildSortiePrepItemsHTML(grim) {
   if (!window.CombatItems || !window.ApothecaryManager) return "";
   var owned = CombatItems.ownedIds();
@@ -230,29 +259,9 @@ function buildSortiePrepItemsHTML(grim) {
   if (!owned.length && !learned) return "";
   var slots = CombatItems.slotCount(), chosen = sortiePrep.items;
   var h = '<div class="sp-sec"><div class="sp-title">' + _t("Objets") + '<small>' + chosen.filter(Boolean).length + ' / ' + slots + '</small></div>';
-
-  // Ce que tu vas affronter : la réponse à chaque trait connu
-  var prev = (sortiePrep.opts.ctx && typeof getEnemyTraitsPreview === "function") ? getEnemyTraitsPreview(sortiePrep.opts.ctx) : { traits: [], unmet: 0 };
-  var kit = (typeof getGrimoireCurrentKit === "function") ? getGrimoireCurrentKit() : null;
+  var prev = sortiePrepTraitsPreview(), kit = (typeof getGrimoireCurrentKit === "function") ? getGrimoireCurrentKit() : null;
   var counters = {};
-  if (prev.traits.length) {
-    h += '<div class="cp-behavior-title">' + _t("Ce que tu vas affronter") + '</div>';
-    prev.traits.forEach(function (t) {
-      var def = ENEMY_TRAIT_DEFS[t.trait], st = (window.COMBAT_STATES || {})[def.state] || {};
-      var item = chosen.filter(function (id) { return id && COMBAT_ITEMS[id].trait === t.trait; })[0];
-      var r = grim ? etRuleResponse(def.cond, sortiePrepRules(), kit) : { status: "none" };
-      if (r.status === "counter") counters[t.trait] = true;
-      var cls = item ? "is-item" : (r.status === "counter" ? "is-rule" : (grim ? "is-none" : "is-free"));
-      var resp = item ? (COMBAT_ITEMS[item].soften ? _t("{o} l'atténue.", { o: _td(COMBAT_ITEMS[item].name) }) : _t("{o} le tient.", { o: _td(COMBAT_ITEMS[item].name) }))
-        : r.status === "counter" ? _t("Ta règle « {r} » le contre.", { r: etRuleLabel(r.rule, kit) })
-        : r.status === "react" ? _t("Ta règle « {r} » réagit, sans le contrer.", { r: etRuleLabel(r.rule, kit) })
-        : grim ? _t("Aucune règle ni objet ne répond.") : _t("À toi de le contrer en combat.");
-      h += '<div class="sp-trait ' + cls + '"><img src="' + esc(st.icon || "") + '" alt=""><span><b>' + esc(_td(st.nom || t.trait)) + '</b> · '
-        + esc(t.names.map(function (n) { return _td(n); }).join(", ")) + '<em>' + esc(resp) + '</em></span>'
-        + (cls === "is-none" ? '<button type="button" class="sp-trait-fix" onclick="sortiePrepEditRules()">' + _t("Règle") + ' ›</button>' : '') + '</div>';
-    });
-  }
-  if (prev.unmet) h += '<div class="cp-behavior-hint">' + esc(_tn(prev.unmet, "{n} créature jamais vaincue : ses traits se révéleront au premier combat.", "{n} créatures jamais vaincues : leurs traits se révéleront au premier combat.")) + '</div>';
+  if (grim) prev.traits.forEach(function (t) { if (etRuleResponse(ENEMY_TRAIT_DEFS[t.trait].cond, sortiePrepRules(), kit).status === "counter") counters[t.trait] = true; });
 
   // Les places
   var known = {};

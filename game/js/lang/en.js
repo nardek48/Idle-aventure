@@ -887,14 +887,9 @@ I18n.register("en", {
 
   // js/ui/combat-forecast-view.js
   "Ce que tu vas affronter": "What you're about to face",
-  "Ton Grimoire jouera seul : vérifie qu'il répond.": "Your Grimoire will play on its own: check that it responds.",
   "Ta règle « {r} » le contre.": "Your rule “{r}” counters it.",
   "Ta règle « {r} » réagit, sans le contrer.": "Your rule “{r}” reacts, but doesn't counter it.",
-  "Aucune règle active ne répond.": "No active rule responds.",
   "{n} créature jamais vaincue : ses traits se révéleront au premier combat.||{n} créatures jamais vaincues : leurs traits se révéleront au premier combat.": ["{n} creature never defeated: its traits will show after the first fight.", "{n} creatures never defeated: their traits will show after the first fight."],
-  "Grimoire verrouillé pendant une sortie.": "Grimoire locked during a run.",
-  "Ouvrir le Grimoire": "Open the Grimoire",
-  "Preset « {x} » chargé": "Preset “{x}” loaded",
   "il se soigne plus vite que tu ne frappes": "it heals faster than you hit",
   "~{a} rounds pour le vaincre, ~{b} pour tomber": "~{a} rounds to beat it, ~{b} to fall",
   "Avant de partir": "Before you set out",
@@ -4182,7 +4177,6 @@ I18n.register("en", {
   "{n} {x}/min": "{n} {x}/min",
   "Attaque (barre espace)": "Attack (space bar)",
   "Espace": "Space",
-  "Revenir au combat": "Back to the fight",
   // v3.424.0
   "Échoppe": "Stall",
   // v3.425.0 (chantier Héros, lot H-2)

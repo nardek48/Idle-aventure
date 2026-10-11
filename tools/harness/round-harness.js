@@ -11614,7 +11614,7 @@ console.log("\n[153] v3.377.0 — Multilangue, EN-3 : le récit du Désert en an
   I._lang = null;
 })();
 
-console.log("\n[154] v3.378.0 — « Ce que tu vas affronter » : traits connus avant le combat, mode Grimoire");
+console.log("\n[154] v3.378.0 (v3.446.0 : à la préparation de sortie) — « Ce que tu vas affronter » : traits connus avant le combat");
 (function () {
   game = freshCombat("knight");
   var G = g.game;
@@ -11623,7 +11623,7 @@ console.log("\n[154] v3.378.0 — « Ce que tu vas affronter » : traits connus 
   G.grimoireRules = [];
   G.grimoirePresets = [];
   G.combatMode = "grimoire";
-  var card = function (ctx) { return g.buildEnemyTraitsCardHTML(ctx); };
+  var card = function (ctx) { g.sortiePrep = { opts: { ctx: ctx }, preset: null, buffs: {}, items: [], pick: -1 }; return g.buildSortiePrepTraitsHTML(G.combatMode === "grimoire"); };
   var coeur = { type: "adventure", id: "aq_story_coeur" };   // filtre : slime, gobelin, araignée, troll (bouclier), ronce (silence)
 
   ok(card(coeur) === "", "aucune créature vaincue : pas d'encart");
@@ -11633,7 +11633,7 @@ console.log("\n[154] v3.378.0 — « Ce que tu vas affronter » : traits connus 
   var h = card(coeur);
   ok(h.indexOf("Ce que tu vas affronter") !== -1 && h.indexOf("Bouclier") !== -1 && h.indexOf(g._td(g.ENEMY_DB.foresttroll.name)) !== -1, "troll vaincu : son trait « Bouclier » s'affiche");
   ok(h.indexOf("Silence") === -1 && /créatures jamais vaincues/.test(h), "ronce jamais vaincue : trait caché, compté parmi les créatures jamais vaincues");
-  ok(h.indexOf("Aucune règle active ne répond") !== -1, "aucune règle : « Aucune règle active ne répond »");
+  ok(h.indexOf("Aucune règle ni objet ne répond") !== -1 && h.indexOf("sortiePrepEditRules()") !== -1, "aucune règle : « Aucune règle ni objet ne répond », raccourci vers le Grimoire");
 
   // Une règle qui CONTRE le bouclier, et une qui y réagit sans contrer
   var kit = g.getClassSkills(g.ClassCombatManager.getCurrentClassId());
@@ -11644,24 +11644,22 @@ console.log("\n[154] v3.378.0 — « Ce que tu vas affronter » : traits connus 
   ok(/réagit, sans le contrer/.test(card(coeur)), "règle sans contre : « réagit, sans le contrer »");
   if (contre) {
     G.grimoireRules = [{ conditionId: "shieldIncoming", actionSlot: contre }];
-    ok(/le contre\./.test(card(coeur)) && card(coeur).indexOf("is-counter") !== -1, "règle qui contre : « Ta règle … le contre. »");
+    ok(/le contre\./.test(card(coeur)) && card(coeur).indexOf("is-rule") !== -1, "règle qui contre : « Ta règle … le contre. »");
   }
   // Règle au-delà des emplacements débloqués : ne compte pas
   G.grimoireRules = [{ conditionId: null, actionSlot: null }, { conditionId: null, actionSlot: null }, { conditionId: "shieldIncoming", actionSlot: contre || neutre }];
-  ok(/Aucune règle active ne répond/.test(card(coeur)), "règle hors des emplacements actifs : ignorée");
+  ok(/Aucune règle ni objet ne répond/.test(card(coeur)), "règle hors des emplacements actifs : ignorée");
 
-  // Presets : puce avec le compte de contres, chargement sur place
+  // Preset choisi à la préparation : la réponse suit SES règles
   G.grimoireRules = [];
   G.grimoirePresets = [{ id: "p1", name: "Forêt", icon: "", rules: [{ conditionId: "shieldIncoming", actionSlot: contre || neutre }], lastModified: 0 }];
-  h = card(coeur);
-  ok(h.indexOf("loadEnemyTraitsPreset('p1')") !== -1 && h.indexOf('stat_speed.png" alt=""> ' + (contre ? 1 : 0) + "/1") !== -1, "preset proposé avec ce qu'il contre ici (v3.407.0 : icône à la place de ⚡)");
-  g.loadEnemyTraitsPreset("p1");
-  ok(G.grimoireRules[0] && G.grimoireRules[0].conditionId === "shieldIncoming", "charger le preset depuis l'encart remplace les règles");
-  ok(card(coeur).indexOf("is-current") !== -1, "le preset chargé est marqué comme actif");
+  card(coeur); g.sortiePrep.preset = "p1";
+  h = g.buildSortiePrepTraitsHTML(true);
+  ok(contre ? /le contre\./.test(h) : /réagit/.test(h), "preset choisi : les traits sont lus avec ses règles");
 
   // Mode Tactique : rien
   G.combatMode = "tactique";
-  ok(card(coeur) === "", "mode Tactique : pas d'encart (le trait se lit en direct)");
+  ok(/À toi de le contrer en combat/.test(card(coeur)), "mode Tactique : le trait s'affiche, à contrer soi-même");
   G.combatMode = "grimoire";
 
   // Boss : trait de base après la victoire, jamais les phases
@@ -11672,7 +11670,7 @@ console.log("\n[154] v3.378.0 — « Ce que tu vas affronter » : traits connus 
   G.killCounts.nezzam = 1;
   h = card(trone);
   ok(h.indexOf("Vampirique") !== -1 && h.indexOf("Silence") === -1, "Nezzam vaincu : « Vampirique » ; sa phase de silence reste une surprise");
-  ok(h.split("et-row").length - 1 === 2, "scarabée et ver des sables (silence tiré au hasard) : aucun trait affiché");
+  ok(h.split("sp-trait ").length - 1 === 2, "scarabée et ver des sables (silence tiré au hasard) : aucun trait affiché");
 
   // Donjon : élites et boss seulement ; boss connu une fois le donjon terminé
   G.killCounts = { serment_armure: 1, sandwarrior: 4 };
@@ -11691,7 +11689,7 @@ console.log("\n[154] v3.378.0 — « Ce que tu vas affronter » : traits connus 
   ok(/Bouclier<\/b> · [^<]*B\u00e2tisseur/.test(h), "Sanctuaire : le B\u00e2tisseur de l'escorte affiche le Bouclier");
   ok(/Vampirique<\/b> · [^<]*Goule/.test(h) && /Enrag\u00e9<\/b> · [^<]*Varrek/.test(h) && h.indexOf("Blind\u00e9") !== -1,
     "Sanctuaire : Goule Vampirique, Varrek Enrag\u00e9, Blind\u00e9 conserv\u00e9");
-  ok(h.split("et-row").length - 1 === 4, "Sanctuaire : 4 traits (3 r\u00e8gles actives au monde 2)");
+  ok(h.split("sp-trait ").length - 1 === 4, "Sanctuaire : 4 traits (3 r\u00e8gles actives au monde 2)");
   G.killCounts = kcAvant; G.dungeonTierCleared = dtcAvant;
   ok(card({ type: "elite", id: "serment_armure" }).indexOf("Blindé") !== -1, "élite de la carte : trait affiché");
 
@@ -11700,6 +11698,7 @@ console.log("\n[154] v3.378.0 — « Ce que tu vas affronter » : traits connus 
   h = card(trone);
   ok(h.indexOf("What you're about to face") !== -1 && h.indexOf("Armoured") !== -1, "anglais : encart traduit");
   g.I18n._lang = null;
+  g.sortiePrep = null;
 })();
 
 console.log("\n[155] v3.379.0 — Potion automatique du mode Grimoire (hors règles)");
@@ -11828,8 +11827,9 @@ console.log("\n[156] v3.380.0 — Donjon : les vagues normales portent le trait 
   // L'encart avant combat les montre désormais (mode Grimoire, créature déjà vaincue)
   G.unlockedTabs.grimoire = true; G.combatMode = "grimoire"; G.grimoireRules = []; G.grimoirePresets = [];
   G.killCounts = { sandwarrior: 1 };
-  var h = g.buildEnemyTraitsCardHTML({ type: "dungeon", id: 2 });
-  ok(h.indexOf(g._td(g.ENEMY_DB.sandwarrior.name)) !== -1 && h.indexOf("Blindé") !== -1, "encart du donjon : le Guerrier des sables et son Blindage");
+  g.sortiePrep = { opts: { ctx: { type: "dungeon", id: 2 } }, preset: null, buffs: {}, items: [], pick: -1 };
+  var h = g.buildSortiePrepTraitsHTML(true); g.sortiePrep = null;
+  ok(h.indexOf(g._td(g.ENEMY_DB.sandwarrior.name)) !== -1 && h.indexOf("Blindé") !== -1, "préparation du donjon : le Guerrier des sables et son Blindage");
   G.killCounts = {};
 })();
 
@@ -13576,12 +13576,9 @@ console.log("\n[193] v3.422.0 — Débit des zones, pools des secteurs, groupe d
     run("PatrolManager.collect('maddoc');");
     ok(run("CombatActors.allies().some(function (a) { return a.companionId === 'maddoc'; })"), "rentré de patrouille : il est là dès le combat en cours (bug Seb)");
 
-    /* Retour au combat depuis le Grimoire. */
-    run("pendingAdventureQuestId = null; pendingHuntQuestId = null; pendingDungeonId = null; game.activeTab = 'quests';");
-    run("pendingAdventureQuestId = Object.keys(ADVENTURE_QUESTS)[0]; var __b = captureGrimoireReturn(); pendingAdventureQuestId = null;");
-    ok(run("!!__b && __b.fromTab === 'quests' && typeof __b.reopen === 'function'"), "Grimoire ouvert depuis une introduction de quête : le chemin du retour est noté");
-    run("grimoireReturn = __b; game.activeTab = 'grimoire';");
-    ok(run("buildGrimoireHTML()").indexOf("grimoireGoBack()") !== -1, "l'écran du Grimoire affiche « Revenir au combat »");
+    /* Retour depuis le Grimoire (v3.446.0 : seulement vers la préparation de sortie, cf. [220]). */
+    run("grimoireReturn = { fromTab: 'quests', label: 'Revenir à la préparation', reopen: function () {} }; game.activeTab = 'grimoire';");
+    ok(run("buildGrimoireHTML()").indexOf("grimoireGoBack()") !== -1, "l'écran du Grimoire affiche le bouton de retour");
     run("game.activeTab = 'campement';");
     ok(run("hasGrimoireReturn()") === false, "parti ailleurs : le retour est oublié");
 
@@ -15017,6 +15014,24 @@ console.log("\n[220] v3.445.0 — Préparation de sortie : règles du départ en
   } finally {
     g.isTabUnlocked = savedUnl; g.switchTab = savedSwitch; g.renderSortiePrep = savedRender; g.sortiePrep = null; g.grimoireReturn = null;
   }
+})();
+
+console.log("\n[221] v3.446.0 — « Ce que tu vas affronter » : seulement à la préparation de sortie");
+(function () {
+  try {
+    var fs = require("fs");
+    ["js/ui/dungeon-view.js", "js/ui/quests-view.js", "js/ui/living-map-view.js", "js/ui/combat-forecast-view.js"].forEach(function (f) {
+      ok(fs.readFileSync(ROOT + "/" + f, "utf8").indexOf("buildEnemyTraitsCardHTML") === -1, f + " : plus d'encart des traits (doublon de la préparation)");
+    });
+    game = freshCombat("knight");
+    var G = g.game;
+    G.unlockedTabs.grimoire = true; G.combatMode = "grimoire"; G.grimoireRules = []; G.killCounts = { sandwarrior: 1 };
+    g.sortiePrep = { opts: { title: "t", ctx: { type: "dungeon", id: 2 }, onGo: function () {} }, preset: null, buffs: {}, items: [], pick: -1 };
+    var h = g.buildSortiePrepHTML();
+    ok(g.CombatItems.ownedIds().length === 0 && h.indexOf("Ce que tu vas affronter") !== -1 && h.indexOf("Blindé") !== -1, "sans objet de combat : la section des traits s'affiche quand même");
+  } catch (err) {
+    ok(false, "[221] exception : " + err.message);
+  } finally { g.sortiePrep = null; }
 })();
 
 console.log("\n" + passes + " OK, " + failures + " échec(s)");

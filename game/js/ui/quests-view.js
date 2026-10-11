@@ -297,7 +297,6 @@ function buildAdventureQuestIntroHTML(questId) {
   h += kWinHeadHTML({ icon: renderIconOrEmojiHTML(quest.icon || "images/Icons/quests/quest_story.png", "dungeon-story-icon-img", _td(quest.name)), title: esc(_td(quest.name)) }); // v3.400.0 (F-2)
   h += '    <div class="kwin-body">';
   if (quest.story) h += '    <div class="kwin-quote dungeon-story-text">' + esc(_td(quest.story)) + '</div>';
-  if (typeof buildEnemyTraitsCardHTML === "function") h += buildEnemyTraitsCardHTML({ type: "adventure", id: questId }); // v3.378.0
   h += '    </div>';
   h += '    <div class="kwin-foot">';
   h += '      <button class="kbtn" type="button" onclick="closeAdventureQuestIntro()">' + _t("Annuler") + '</button>';
@@ -797,7 +796,6 @@ function buildHuntQuestIntroHTML(questId) {
   h += '    <div class="kwin-body">';
   if (quest.story) h += '    <div class="kwin-quote dungeon-story-text">' + esc(_td(quest.story)) + '</div>';
   if (window.ProvisionsManager) h += ProvisionsManager.buildLineHTML("hunt", quest); // v3.330.1 : vivres de sortie
-  if (typeof buildEnemyTraitsCardHTML === "function") h += buildEnemyTraitsCardHTML({ type: "hunt", id: questId }); // v3.378.0
   h += '    </div>';
   h += '    <div class="kwin-foot">';
   h += '      <button class="kbtn" type="button" onclick="closeHuntQuestIntro()">' + _t("Annuler") + '</button>';

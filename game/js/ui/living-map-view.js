@@ -656,7 +656,6 @@ function buildLivingMapPanelHTML(mapId, running) {
       h += ProvisionsManager.buildLineHTML("mapelite", { mapId: mapId, sectorId: d.id, worldId: lmap ? lmap.worldId : "forest" });
     }
     // v3.378.0 : traits connus de l'élite (mode Grimoire, élite déjà vaincue)
-    if (cs.ok && isElite && typeof buildEnemyTraitsCardHTML === "function") h += buildEnemyTraitsCardHTML({ type: "elite", id: content.eliteId });
     if (cs.ok) h += '<button class="settings-btn primary" type="button" onclick="startLivingMapSector(\'' + d.id + '\')">' + verb + '</button>';
     else {
       h += '<p class="lm-panel-wall">' + esc(_td(cs.reason)) + '</p>';
