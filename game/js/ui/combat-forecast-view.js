@@ -380,7 +380,7 @@ window.loadEnemyTraitsPreset = loadEnemyTraitsPreset;
 /* v3.422.0 (amélioration Seb) : depuis l'encart, le Grimoire garde le chemin du retour.
    On note, AVANT de fermer, la fenêtre de départ et l'onglet d'où l'on vient ; l'écran du
    Grimoire affiche alors « ↩ Revenir au combat », qui rouvre exactement cette fenêtre. */
-var grimoireReturn = null; // { fromTab, reopen }
+var grimoireReturn = null; // { fromTab, reopen, label? } (label : v3.445.0, retour vers la préparation de sortie)
 var lastForecastLaunch = null; // { mission, action } du dernier écran « Avant de partir »
 
 function captureGrimoireReturn() {
@@ -419,7 +419,7 @@ window.hasGrimoireReturn = hasGrimoireReturn;
 
 function buildGrimoireReturnHTML() {
   if (!hasGrimoireReturn()) return "";
-  return '<button type="button" class="kbtn primary grimoire-return-btn" onclick="grimoireGoBack()">↩ ' + esc(_t("Revenir au combat")) + '</button>';
+  return '<button type="button" class="kbtn primary grimoire-return-btn" onclick="grimoireGoBack()">↩ ' + esc(grimoireReturn.label || _t("Revenir au combat")) + '</button>';
 }
 window.buildGrimoireReturnHTML = buildGrimoireReturnHTML;
 

@@ -100,6 +100,7 @@ function buildSortiePrepHTML() {
       });
       h += '</div>';
     }
+    h += buildSortiePrepRulesHTML();
     if (grim) {
       if (window.RiseSystem) {
         var pol = RiseSystem.getPolicy();
@@ -127,6 +128,53 @@ function buildSortiePrepHTML() {
   h += '<button type="button" class="kbtn primary" onclick="confirmSortiePrep()">' + _t("Partir") + '</button>';
   h += '</div></div>';
   return h;
+}
+
+/* v3.445.0 : les règles avec lesquelles on part (celles du preset choisi, sinon les actuelles), en lecture ;
+   « Modifier » ouvre l'onglet Grimoire, qui garde le chemin du retour vers cette feuille. */
+function sortiePrepRules() {
+  var id = sortiePrep && sortiePrep.preset;
+  var p = id ? ensureGrimoirePresets().filter(function (x) { return x.id === id; })[0] : null;
+  var rules = p ? p.rules : (game.grimoireRules || []);
+  return (typeof sanitizeGrimoireRules === "function") ? sanitizeGrimoireRules(rules, getGrimoireCurrentKit()) : rules;
+}
+
+function buildSortiePrepRulesHTML() {
+  if (typeof getGrimoireCurrentKit !== "function") return "";
+  var kit = getGrimoireCurrentKit(), rules = sortiePrepRules();
+  var open = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : rules.length;
+  var h = '<div class="sp-rules">', n = 0;
+  rules.slice(0, open).forEach(function (r, i) {
+    var cond = getGrimoireCondition(r.conditionId), act = (kit && kit.actions && r.actionSlot) ? kit.actions[r.actionSlot] : null;
+    if (!cond || !act) return;
+    n++;
+    h += '<div class="sp-rule"><i>' + (i + 1) + '</i>' + renderIconOrEmojiHTML(cond.icon, "", "")
+      + '<span>' + esc(_t("Si {x}", { x: getGrimoireConditionShortLabel(r.conditionId) })) + ' <b>→</b> ' + esc(_td(act.label)) + '</span>'
+      + (isGrimoireRuleCounter(r, kit) ? '<em>' + _t("Contre") + '</em>' : '') + '</div>';
+  });
+  if (!n) h += '<div class="cp-behavior-hint">' + _t("Aucune règle : le Grimoire attaque à chaque round.") + '</div>';
+  else if (open - n > 0) h += '<div class="cp-behavior-hint">' + esc(_tn(open - n, "{n} emplacement libre.", "{n} emplacements libres.")) + '</div>';
+  h += '<button type="button" class="kbtn sp-rules-edit" onclick="sortiePrepEditRules()"><img class="ico-inline" src="images/Icons/codex/codex_lore.png" alt=""> '
+    + (sortiePrep.preset ? _t("Modifier ces règles") : _t("Modifier mes règles")) + '</button>';
+  if (sortiePrep.preset) h += '<div class="cp-behavior-hint">' + _t("Le preset devient tes règles actuelles, puis s'ouvre dans le Grimoire.") + '</div>';
+  return h + '</div>';
+}
+
+/* Va au Grimoire en gardant la feuille (choix compris) ; « Revenir à la préparation » la rouvre telle quelle. */
+function sortiePrepEditRules() {
+  if (!sortiePrep) return;
+  var saved = sortiePrep, fromTab = game.activeTab;
+  if (saved.preset && typeof loadGrimoirePreset === "function") loadGrimoirePreset(saved.preset);
+  saved.preset = null;
+  closeSortiePrep();
+  if (typeof switchTab === "function") switchTab("grimoire");
+  if (game.activeTab !== "grimoire") return;
+  grimoireEditIndex = null;
+  grimoireReturn = {
+    fromTab: fromTab, label: _t("Revenir à la préparation"),
+    reopen: function () { sortiePrep = saved; renderSortiePrep(); }
+  };
+  if (typeof renderPanel === "function") renderPanel();
 }
 
 /* Équipe : deux compagnons au plus ; Wenna règle ses soins, la voie de Maddoc se lit (elle se paie à sa fiche). */
@@ -192,7 +240,7 @@ function buildSortiePrepItemsHTML(grim) {
     prev.traits.forEach(function (t) {
       var def = ENEMY_TRAIT_DEFS[t.trait], st = (window.COMBAT_STATES || {})[def.state] || {};
       var item = chosen.filter(function (id) { return id && COMBAT_ITEMS[id].trait === t.trait; })[0];
-      var r = grim ? etRuleResponse(def.cond, game.grimoireRules || [], kit) : { status: "none" };
+      var r = grim ? etRuleResponse(def.cond, sortiePrepRules(), kit) : { status: "none" };
       if (r.status === "counter") counters[t.trait] = true;
       var cls = item ? "is-item" : (r.status === "counter" ? "is-rule" : (grim ? "is-none" : "is-free"));
       var resp = item ? (COMBAT_ITEMS[item].soften ? _t("{o} l'atténue.", { o: _td(COMBAT_ITEMS[item].name) }) : _t("{o} le tient.", { o: _td(COMBAT_ITEMS[item].name) }))
@@ -200,7 +248,8 @@ function buildSortiePrepItemsHTML(grim) {
         : r.status === "react" ? _t("Ta règle « {r} » réagit, sans le contrer.", { r: etRuleLabel(r.rule, kit) })
         : grim ? _t("Aucune règle ni objet ne répond.") : _t("À toi de le contrer en combat.");
       h += '<div class="sp-trait ' + cls + '"><img src="' + esc(st.icon || "") + '" alt=""><span><b>' + esc(_td(st.nom || t.trait)) + '</b> · '
-        + esc(t.names.map(function (n) { return _td(n); }).join(", ")) + '<em>' + esc(resp) + '</em></span></div>';
+        + esc(t.names.map(function (n) { return _td(n); }).join(", ")) + '<em>' + esc(resp) + '</em></span>'
+        + (cls === "is-none" ? '<button type="button" class="sp-trait-fix" onclick="sortiePrepEditRules()">' + _t("Règle") + ' ›</button>' : '') + '</div>';
     });
   }
   if (prev.unmet) h += '<div class="cp-behavior-hint">' + esc(_tn(prev.unmet, "{n} créature jamais vaincue : ses traits se révéleront au premier combat.", "{n} créatures jamais vaincues : leurs traits se révéleront au premier combat.")) + '</div>';
@@ -317,3 +366,4 @@ window.sortiePrepPrio = sortiePrepPrio;
 window.sortiePrepBuff = sortiePrepBuff;
 window.sortiePrepPick = sortiePrepPick;
 window.sortiePrepItem = sortiePrepItem;
+window.sortiePrepEditRules = sortiePrepEditRules;

@@ -171,3 +171,14 @@
 .sp-tag.is-good { background-color: rgba(79, 168, 232, 0.16); color: var(--c-blue-400); }
 .sp-tag.is-meh { background-color: rgba(58, 44, 26, 0.08); color: var(--sheet-ink-dim); }
 .sp-tag.is-cost { background-color: rgba(255, 138, 122, 0.16); color: var(--c-red-700-soft); }
+
+/* v3.445.0 : règles du départ, en lecture, et bouton vers le Grimoire. */
+.sp-rules { margin: -2px 0 10px; }
+.sp-rule { display: flex; align-items: center; gap: 7px; min-height: 34px; padding: 3px 8px 3px 4px; margin-bottom: 4px; border-radius: 10px; background-color: rgba(58, 44, 26, 0.06); font-size: 12.5px; color: var(--sheet-ink); }
+.sp-rule i { flex: none; width: 14px; text-align: center; font-style: normal; font-weight: 800; color: var(--sheet-ink-dim); }
+.sp-rule img { width: 24px; height: 24px; flex: none; object-fit: contain; }
+.sp-rule span { flex: 1 1 auto; min-width: 0; font-weight: 700; line-height: 1.25; }
+.sp-rule b { color: var(--c-brown-700-vivid); }
+.sp-rule em { flex: none; padding: 1px 7px; border-radius: 10px; font-size: 12px; font-style: normal; font-weight: 800; background-color: rgba(143, 191, 90, 0.2); color: var(--c-green-700-soft); }
+.sp-rules-edit { display: flex; width: 100%; justify-content: center; margin-top: 6px; }
+.sp-trait-fix { flex: none; min-height: 32px; padding: 2px 10px; border: 1.5px solid var(--sheet-card-bd); border-radius: 16px; background: transparent; color: var(--sheet-ink); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
