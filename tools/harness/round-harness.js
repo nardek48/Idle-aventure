@@ -14987,5 +14987,37 @@ console.log("\n[219] v3.444.0 — Coup de grâce (variante B) : arrêt sur image
   }
 })();
 
+console.log("\n[220] v3.445.0 — Préparation de sortie : règles du départ en lecture, aller-retour vers le Grimoire");
+(function () {
+  var savedUnl = g.isTabUnlocked, savedSwitch = g.switchTab, savedRender = g.renderSortiePrep;
+  try {
+    game = freshCombat("knight");
+    g.isTabUnlocked = function (t) { return t === "grimoire" ? true : savedUnl(t); };
+    var kit = g.getGrimoireCurrentKit(), slots = Object.keys(kit.actions);
+    game.grimoireRules = [{ conditionId: "chargeIncoming", actionSlot: slots[1] }];
+    g.ensureGrimoireRules();
+    game.grimoirePresets = [{ id: "p1", name: "Boss", icon: g.GRIMOIRE_PRESET_ICON_CHOICES[4], rules: [{ conditionId: "heroLowHp", actionSlot: slots[2] }], lastModified: 1 }];
+    g.renderSortiePrep = function () {};
+    g.openSortiePrep({ title: "t", onGo: function () {} });
+    var html = g.buildSortiePrepHTML();
+    ok(html.indexOf("sp-rule") !== -1 && html.indexOf(g.esc(g.getGrimoireConditionShortLabel("chargeIncoming"))) !== -1 && html.indexOf("sortiePrepEditRules()") !== -1, "règles actuelles affichées, bouton « Modifier mes règles »");
+    g.sortiePrepPreset("p1");
+    html = g.buildSortiePrepHTML();
+    ok(html.indexOf(g.getGrimoireConditionShortLabel("heroLowHp")) !== -1 && html.indexOf(g.esc(g.getGrimoireConditionShortLabel("chargeIncoming"))) === -1, "preset choisi : la liste montre SES règles");
+    g.sortiePrep.items = ["encens_amer"];
+    g.switchTab = function (t) { game.activeTab = t; };
+    game.activeTab = "campement";
+    g.sortiePrepEditRules();
+    ok(!g.sortiePrep && game.activeTab === "grimoire" && game.grimoireRules[0].conditionId === "heroLowHp", "« Modifier » : le preset devient les règles, l'onglet Grimoire s'ouvre");
+    ok(g.hasGrimoireReturn() && g.buildGrimoireReturnHTML().indexOf("Revenir à la préparation") !== -1, "le Grimoire propose « Revenir à la préparation »");
+    g.grimoireGoBack();
+    ok(!!g.sortiePrep && g.sortiePrep.items[0] === "encens_amer" && !g.sortiePrep.preset && game.activeTab === "campement", "retour : la feuille se rouvre avec ses choix, sur l'onglet de départ");
+  } catch (err) {
+    ok(false, "[220] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    g.isTabUnlocked = savedUnl; g.switchTab = savedSwitch; g.renderSortiePrep = savedRender; g.sortiePrep = null; g.grimoireReturn = null;
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

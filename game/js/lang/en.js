@@ -5052,6 +5052,13 @@ I18n.register("en", {
   // v3.442.0 : la Fiole noire
   "Fiole noire : tu te relèves. Le butin de la sortie sera divisé par deux.": "Black vial: you get back up. The run's loot will be halved.",
   "Fiole noire : tu te relèves": "Black vial: you get back up",
+  "Aucune règle : le Grimoire attaque à chaque round.": "No rules: the Grimoire attacks every round.",
+  "{n} emplacement libre.||{n} emplacements libres.": ["{n} free slot.", "{n} free slots."],
+  "Modifier ces règles": "Edit these rules",
+  "Modifier mes règles": "Edit my rules",
+  "Le preset devient tes règles actuelles, puis s'ouvre dans le Grimoire.": "The preset becomes your current rules, then opens in the Grimoire.",
+  "Revenir à la préparation": "Back to the preparation",
+  "Règle": "Rule",
   "{x} n'a pas servi : rangée à l'Entrepôt.": "{x} wasn't used: put back in the Warehouse.",
   "La Fiole noire revient si elle n'a pas servi.": "The Black vial comes back if it wasn't used.",
   "À 0 PV, tu te relèves avec 40 % des PV, une fois par sortie.": "At 0 HP, you get back up with 40% HP, once per run.",
