@@ -124,3 +124,10 @@ Rien n'est décidé : options en attente de validation.
   renfort éventuel de l'Acide et de la Pastille, contrepartie de la Fiole sur les récompenses de quête.
 - Décision Seb (2026-10-10) : l'initiative est reportée à plus tard. Prochain chantier : le bouton « Comme la dernière fois »
   dans la préparation de sortie (mémoriser au moins les potions à bonus et les objets du dernier départ).
+
+## Initiative — décisions de Seb (2026-10-11)
+- Idée : d20 + bonus lié aux stats, à la D&D ; le Rôdeur lance 2 dés et garde le meilleur (avantage, ≈ +3,3).
+- Décision 1 : **un jet par combat** (ordre fixe tout le combat : entre l'annonce et le coup, chacun joue une fois).
+- Constat pour la décision 2 : la célérité du héros monte avec les bottes (×18 à la Tour : ~40 Forêt → ~470 Tour),
+  celle des ennemis reste brute (8 à 58 dans les données ; seul le Donjon la gonfle par vague). Un bonus direct
+  sur la célérité mettrait le héros toujours premier en fin de partie.
