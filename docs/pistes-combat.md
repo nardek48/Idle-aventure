@@ -137,3 +137,6 @@ Rien n'est décidé : options en attente de validation.
 - Décision 3 (option 1) : le round suit l'ordre d'initiative ; ceux qui précèdent le héros jouent seuls, puis le combat
   attend son choix (Tactique) ou les règles (Grimoire, évaluées à son tour), puis les suivants. À vérifier au harnais :
   chaque contre doit tenir jusqu'au coup annoncé, quel que soit l'ordre.
+- Décision 4 : bandeau d'initiative (maquette de Seb), prototype `atelier/initiative.html` : 44 px sous la barre du haut,
+  portraits dans l'ordre avec le jet, celui qui joue s'allume, ceux qui ont joué pâlissent. Seul le bandeau est repris
+  de la maquette (pas la bascule de mode, retirée en v3.440.0, ni le cadre « Prochain »).
