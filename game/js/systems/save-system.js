@@ -38,6 +38,16 @@ function getActiveSaveKey() {
   return getSlotKey(getActiveSlot());
 }
 
+/* v3.448.1 : copies de secours d'un emplacement. `_bak` = dernière version chargée sans erreur,
+   `_illisible` = version qui n'a pas pu être lue, gardée à part au lieu d'être écrasée. */
+var SAVE_BACKUP_SUFFIX = "_bak";
+var SAVE_UNREADABLE_SUFFIX = "_illisible";
+var saveLockedKey = null; // clé à ne plus écrire : sa version illisible n'a pas pu être mise de côté
+
+function dropSlotBackup(key) {
+  try { localStorage.removeItem(key + SAVE_BACKUP_SUFFIX); } catch (e) {}
+}
+
 /* Migration unique : ancienne sauvegarde à plat -> Emplacement 1, si besoin.
    Détail : save-system_notes.md #3. */
 function migrateOldSaveToSlot1() {
@@ -214,6 +224,7 @@ var HeroSlotManager = {
     } catch (e) {
       return false;
     }
+    dropSlotBackup(getSlotKey(slotNumber)); // la copie saine d'un héros supprimé ne doit pas revenir
 
     if (wasActive) {
       var self = this;
@@ -540,6 +551,7 @@ function buildSaveData() {
 /* Écrit la sauvegarde dans localStorage ; renvoie false silencieusement si le stockage échoue (quota...), sans planter le jeu. */
 function saveGame() {
   if (!game.saveSupported) return false;
+  if (saveLockedKey && saveLockedKey === getActiveSaveKey()) return false;
   try {
     localStorage.setItem(getActiveSaveKey(), JSON.stringify(buildSaveData()));
     game.lastSave = Date.now();
@@ -926,10 +938,64 @@ function reapplyProgressEffects() {
 function loadGame() {
   if (!game.saveSupported) return false;
 
-  try {
-    var raw = localStorage.getItem(getActiveSaveKey());
-    if (!raw) return false;
+  var key = getActiveSaveKey();
+  var raw = null;
+  try { raw = localStorage.getItem(key); } catch (e) { return false; }
+  if (!raw) return false;
 
+  if (loadGameFromRaw(raw)) {
+    try { localStorage.setItem(key + SAVE_BACKUP_SUFFIX, raw); } catch (e) {}
+    return true;
+  }
+  return recoverUnreadableSave(key, raw);
+}
+
+/* v3.448.1 : une partie illisible n'est plus écrasée par une partie neuve. Elle est mise de côté
+   (`_illisible`), la dernière copie saine (`_bak`) est rechargée, et le joueur est prévenu. */
+function recoverUnreadableSave(key, raw) {
+  if (window.console && console.error) console.error("[save] emplacement illisible : " + key);
+  var kept = false;
+  try { localStorage.setItem(key + SAVE_UNREADABLE_SUFFIX, raw); kept = true; } catch (e) {}
+
+  var bak = null;
+  try { bak = localStorage.getItem(key + SAVE_BACKUP_SUFFIX); } catch (e) {}
+  resetGameToFreshState();
+  if (bak && bak !== raw && loadGameFromRaw(bak)) {
+    notifySaveRecovery(_t("Ta sauvegarde était abîmée : la dernière copie saine a été rechargée."));
+    return true;
+  }
+
+  resetGameToFreshState();
+  if (!kept) saveLockedKey = key; // rien n'a pu être mis de côté : on n'écrit plus sur cette partie
+  notifySaveRecovery(kept
+    ? _t("Ta sauvegarde n'a pas pu être lue. Elle est gardée à part : exporte tes sauvegardes (Paramètres) pour la récupérer.")
+    : _t("Ta sauvegarde n'a pas pu être lue. Elle reste intacte : rien ne sera écrit dessus pendant cette session."));
+  return false;
+}
+
+/* Repart d'un état neuf (même précaution que switchToSlot) : un chargement raté a pu remplir `game` à moitié. */
+function resetGameToFreshState() {
+  if (typeof createInitialGameState !== "function") return;
+  var keptSaveSupported = game.saveSupported;
+  var fresh = createInitialGameState();
+  Object.keys(game).forEach(function (k) { delete game[k]; });
+  Object.assign(game, fresh);
+  game.saveSupported = keptSaveSupported;
+  if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
+}
+
+var saveRecoveryNotified = false; // un seul avertissement par session (l'écran titre peut charger avant boot.js)
+function notifySaveRecovery(message) {
+  if (saveRecoveryNotified) return;
+  saveRecoveryNotified = true;
+  setTimeout(function () {
+    if (typeof showToast === "function") showToast("⚠️ " + message, 7000);
+  }, 2500);
+}
+
+/* Restaure une sauvegarde brute dans `game` ; false si elle est illisible ou si la restauration échoue. */
+function loadGameFromRaw(raw) {
+  try {
     var d = JSON.parse(raw);
     if (!d || typeof d !== "object") return false;
 
@@ -958,6 +1024,7 @@ function clearSaveData() {
   try {
     localStorage.removeItem(getActiveSaveKey());
   } catch (e) {}
+  dropSlotBackup(getActiveSaveKey());
 }
 
 /* Reset "complet" (bouton Paramètres) : efface VRAIMENT tout, y compris l'Aether et le héros. Redonne 1M d'or de départ (réglage debug à surveiller).
@@ -1169,6 +1236,7 @@ function buildMultiSaveExportPayload() {
   saveGame(); // l'emplacement actif doit être à jour avant de lire les autres
 
   var slots = {};
+  var unreadable = {}; // v3.448.1 : versions illisibles mises de côté, exportées brutes pour être réparées
   var maxSlots = window.MAX_HERO_SLOTS || 3;
   for (var i = 1; i <= maxSlots; i++) {
     if (window.HeroSlotManager && HeroSlotManager.hasSlot(i)) {
@@ -1177,14 +1245,20 @@ function buildMultiSaveExportPayload() {
         if (raw) slots[i] = JSON.parse(raw);
       } catch (e) {}
     }
+    try {
+      var bad = localStorage.getItem(getSlotKey(i) + SAVE_UNREADABLE_SUFFIX);
+      if (bad) unreadable[i] = bad;
+    } catch (e) {}
   }
 
-  return {
+  var payload = {
     aethervaleMultiSave: true,
     exportVersion: 1,
     activeSlot: getActiveSlot(),
     slots: slots
   };
+  if (Object.keys(unreadable).length) payload.unreadable = unreadable;
+  return payload;
 }
 
 /* Génère le JSON de sauvegarde et déclenche son téléchargement comme
@@ -1301,6 +1375,7 @@ function applyImportedSave(data) {
 
   var doImport = function () {
     if (isMulti) {
+      saveLockedKey = null; // import voulu : les emplacements peuvent de nouveau être écrits
       // Écrit chaque emplacement du fichier dans sa clé localStorage dédiée ; les emplacements absents du fichier restent inchangés.
       var maxSlots = window.MAX_HERO_SLOTS || 3;
       var importedCount = 0;
@@ -1311,6 +1386,7 @@ function applyImportedSave(data) {
         if (!slotData) return;
         try {
           localStorage.setItem(getSlotKey(slotNum), JSON.stringify(slotData));
+          dropSlotBackup(getSlotKey(slotNum));
           importedCount++;
         } catch (e) {}
       });
@@ -1350,6 +1426,8 @@ function applyImportedSave(data) {
         CombatEngine.spawnEnemy();
       }
 
+      saveLockedKey = null; // import voulu : l'emplacement peut de nouveau être écrit
+      dropSlotBackup(getActiveSaveKey());
       saveGame();
       if (typeof renderAll === "function") renderAll();
       showToast(_t("✅ Sauvegarde importée"), 1800);

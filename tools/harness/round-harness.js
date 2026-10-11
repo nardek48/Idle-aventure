@@ -15156,5 +15156,68 @@ console.log("\n[223] v3.448.0 — Camp : le feu et les rations soignent aussi le
   }
 })();
 
+/* [224] v3.448.1 — précache complet : tout script et toute feuille chargés par index.html doivent être
+   précachés par sw.js, sinon le jeu casse hors-ligne après une mise à jour (58 fichiers oubliés avant). */
+console.log("\n[224] v3.448.1 — Précache : index.html et sw.js concordent");
+(function () {
+  var html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+  var sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+  var re = /(?:src|href)="(?:\.\/)?((?:js|css)\/[^"?#]+)"/g, m, absents = [], n = 0;
+  while ((m = re.exec(html))) { n++; if (sw.indexOf('"./' + m[1] + '"') === -1) absents.push(m[1]); }
+  ok(n > 200, "index.html charge " + n + " scripts et feuilles");
+  ok(absents.length === 0, "tous sont précachés" + (absents.length ? " — absents : " + absents.join(", ") : ""));
+  var pre = sw.match(/"\.\/((?:js|css)\/[^"]+)"/g) || [], fantomes = [];
+  pre.forEach(function (q) { var f = q.slice(3, -1); if (!fs.existsSync(path.join(ROOT, f))) fantomes.push(f); });
+  ok(fantomes.length === 0, "aucun fichier précaché n'est absent du disque" + (fantomes.length ? " — " + fantomes.join(", ") : ""));
+})();
+
+/* [225] v3.448.1 — une sauvegarde illisible n'est plus écrasée : copie saine rechargée, version
+   illisible gardée à part, écriture bloquée si elle n'a pas pu être mise de côté. */
+console.log("\n[225] v3.448.1 — Sauvegarde illisible : copie saine, mise de côté, verrou");
+(function () {
+  var key = run("getActiveSaveKey()"), avant = {};
+  Object.keys(storage).forEach(function (k) { avant[k] = storage[k]; });
+  var realSet = g.localStorage.setItem;
+  try {
+    run("game.gold = 4242; saveGame();");
+    var sain = storage[key];
+    ok(run("loadGame()") === true && storage[key + "_bak"] === sain, "un chargement réussi garde une copie saine (_bak)");
+
+    run("game.gold = 9999; saveGame();");
+    storage[key] = storage[key].slice(0, -1); // JSON tronqué d'un octet
+    var abime = storage[key];
+    ok(run("loadGame()") === true, "partie tronquée : le chargement se rabat sur la copie saine");
+    ok(run("game.gold") === 4242, "l'or est celui de la copie saine (4242)");
+    ok(storage[key + "_illisible"] === abime, "la version illisible est gardée à part (_illisible)");
+
+    storage[key] = abime; storage[key + "_bak"] = "{rompu";
+    ok(run("loadGame()") === false, "copie saine illisible aussi : chargement refusé");
+    ok(run("game.gold") !== 4242 && run("!game.playerName"), "l'état repart de zéro, sans reste à moitié restauré");
+    ok(run("saveLockedKey") === null && run("saveGame()") === true, "version mise de côté : la partie neuve peut s'écrire");
+
+    storage[key] = abime; delete storage[key + "_bak"];
+    g.localStorage.setItem = function (k, v) { if (/_illisible$/.test(k)) throw new Error("quota"); realSet(k, v); };
+    ok(run("loadGame()") === false && run("saveLockedKey") === key, "mise de côté impossible : l'emplacement est verrouillé");
+    ok(run("saveGame()") === false && storage[key] === abime, "et rien n'est écrit dessus");
+    g.localStorage.setItem = realSet;
+
+    var exp = run("buildMultiSaveExportPayload()");
+    ok(exp.unreadable && typeof exp.unreadable[run("getActiveSlot()")] === "string", "l'export emporte la version illisible");
+
+    run("saveLockedKey = null; game.gold = 1; saveGame(); loadGame();");
+    ok(!!storage[key + "_bak"], "copie saine refaite");
+    run("clearSaveData()");
+    ok(!storage[key + "_bak"], "effacer la partie efface aussi sa copie saine");
+  } catch (err) {
+    ok(false, "[225] exception : " + err.message);
+  } finally {
+    g.localStorage.setItem = realSet;
+    run("saveLockedKey = null;");
+    Object.keys(storage).forEach(function (k) { delete storage[k]; });
+    Object.keys(avant).forEach(function (k) { storage[k] = avant[k]; });
+    if (storage[key]) run("resetGameToFreshState(); loadGame();");
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

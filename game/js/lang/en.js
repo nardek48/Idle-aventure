@@ -5071,5 +5071,8 @@ I18n.register("en", {
   "Acide mordant": "Biting acid",
   "Pastille de miel": "Honey lozenge",
   "Contre le Bouclier : il ne tient qu'un round au lieu de deux. S'ajoute à ta règle du Grimoire.": "Counters the Shield: it only lasts one round instead of two. Adds to your Grimoire rule.",
-  "Contre le Silence : tes techniques ne sont bloquées qu'un round au lieu de deux (jamais moins d'un).": "Counters the Silence: your techniques are only blocked for one round instead of two (never less than one)."
+  "Contre le Silence : tes techniques ne sont bloquées qu'un round au lieu de deux (jamais moins d'un).": "Counters the Silence: your techniques are only blocked for one round instead of two (never less than one).",
+  "Ta sauvegarde était abîmée : la dernière copie saine a été rechargée.": "Your save was damaged: the last healthy copy has been reloaded.",
+  "Ta sauvegarde n'a pas pu être lue. Elle est gardée à part : exporte tes sauvegardes (Paramètres) pour la récupérer.": "Your save could not be read. It has been kept aside: export your saves (Settings) to recover it.",
+  "Ta sauvegarde n'a pas pu être lue. Elle reste intacte : rien ne sera écrit dessus pendant cette session.": "Your save could not be read. It is left untouched: nothing will be written over it this session."
 });
