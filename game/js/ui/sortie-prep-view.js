@@ -79,6 +79,8 @@ function buildSortiePrepHTML() {
   });
   h += '<div class="ksheet-body">';
 
+  h += buildSortiePrepTraitsHTML(grim);   // v3.446.1 : la menace d'abord (décision Seb), la préparation ensuite
+
   /* Mode, figé jusqu'au retour au Campement */
   if (grimOpen) {
     h += '<div class="sp-sec"><div class="sp-title">' + _t("Mode de combat") + '</div>';
@@ -118,7 +120,6 @@ function buildSortiePrepHTML() {
     h += '</div>';
   }
 
-  h += buildSortiePrepTraitsHTML(grim);
   h += buildSortiePrepTeamHTML(grim);
   h += buildSortiePrepItemsHTML(grim);
   h += buildSortiePrepPotionsHTML();
@@ -228,8 +229,8 @@ function sortiePrepTraitsPreview() {
   return (sortiePrep.opts.ctx && typeof getEnemyTraitsPreview === "function") ? getEnemyTraitsPreview(sortiePrep.opts.ctx) : { traits: [], unmet: 0 };
 }
 
-/* v3.446.0 : « Ce que tu vas affronter », section à part (seul endroit depuis que l'encart des écrans de
-   lancement est retiré) : la réponse à chaque trait connu, par l'objet emporté ou la règle du départ. */
+/* v3.446.0 : « Ce que tu vas affronter », section à part en tête de feuille (seul endroit depuis le retrait de
+   l'encart des écrans de lancement) : la réponse à chaque trait connu, par l'objet emporté ou la règle du départ. */
 function buildSortiePrepTraitsHTML(grim) {
   var prev = sortiePrepTraitsPreview();
   if (!prev.traits.length) return "";

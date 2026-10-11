@@ -15029,6 +15029,7 @@ console.log("\n[221] v3.446.0 — « Ce que tu vas affronter » : seulement à l
     g.sortiePrep = { opts: { title: "t", ctx: { type: "dungeon", id: 2 }, onGo: function () {} }, preset: null, buffs: {}, items: [], pick: -1 };
     var h = g.buildSortiePrepHTML();
     ok(g.CombatItems.ownedIds().length === 0 && h.indexOf("Ce que tu vas affronter") !== -1 && h.indexOf("Blindé") !== -1, "sans objet de combat : la section des traits s'affiche quand même");
+    ok(h.indexOf("Ce que tu vas affronter") < h.indexOf("Mode de combat"), "v3.446.1 : la section des traits est en tête de la feuille");
   } catch (err) {
     ok(false, "[221] exception : " + err.message);
   } finally { g.sortiePrep = null; }
