@@ -149,13 +149,26 @@ function buildCampHTML(tab) {
       { n: Math.round((typeof getCampOfflineRegenCap === "function" ? getCampOfflineRegenCap() : 0.5) * 100) }) + '</div>';
   }
 
+  /* v3.448.0 : les compagnons au camp, une ligne fine chacun — le feu et les rations les soignent aussi. */
+  var campMates = window.CampManager ? CampManager.campCompanionIds() : [];
+  if (campMates.length) {
+    h += '<div class="camp-mates">';
+    campMates.forEach(function (id) {
+      var def = getCompanionDef(id), mx = Math.max(1, CompanionManager.maxHpOf(id)), cur = CompanionManager.hpOf(id);
+      h += '<div class="camp-mate">' + renderIconOrEmojiHTML(def.image, "camp-mate-ico", _td(def.name)) + '<span>' + esc(_td(def.name)) + '</span>'
+        + '<div class="kgauge kgauge-thin kgauge-hp"><div class="kgauge-track"><div class="kgauge-fill" id="camp-comp-hp-' + esc(id) + '" style="width:' + Math.max(0, Math.min(100, cur / mx * 100)) + '%"></div></div></div></div>';
+    });
+    h += '</div>';
+  }
+  var teamFull = window.CampManager ? CampManager.teamFull() : hpFull;
+
   var campLock = (window.heroLockReason && heroLockReason()) || null; // v3.307.0
   if (campLock) h += '<div class="camp-lock-note"><img class="ico-inline" src="images/Icons/system/hero_away.png" alt=""> ' + esc(campLock) + '</div>';
   h += '<div class="camp-ration-row">';
   rationOptions.forEach(function (r) {
     var def = (window.WAREHOUSE_RESOURCES || {})[r.id] || {};
     var healValue = Math.floor(maxHp * r.healPct);
-    var canEat = r.amount >= 1 && !hpFull && !campLock;
+    var canEat = r.amount >= 1 && !teamFull && !campLock;
     h += '<button type="button" class="camp-ration-ib' + (r.amount < 1 ? ' is-empty' : '') + '"'
       + ' title="' + esc(_td(r.name) + " · " + Math.round(r.healPct * 100) + " %") + '" aria-label="' + esc(_t("Manger : {x}", { x: _td(r.name) })) + '"'
       + (canEat ? ' onclick="CampManager.eatRation(\'' + esc(r.id) + '\');"' : ' disabled') + '>';
@@ -165,7 +178,7 @@ function buildCampHTML(tab) {
     h += '</button>';
   });
   h += '</div>';
-  if (!hpFull && !campLock && rationOptions.some(function (r) { return r.amount >= 1; })) h += '<div class="camp-ration-hint">' + _t("Toucher une ration pour la manger") + '</div>';
+  if (!teamFull && !campLock && rationOptions.some(function (r) { return r.amount >= 1; })) h += '<div class="camp-ration-hint">' + (campMates.length ? _t("Toucher une ration : toute l'équipe mange") : _t("Toucher une ration pour la manger")) + '</div>';
   h += '</div>'; // fin .camp-health-card
 
   // v3.133.0 : bloc « Les braises » — offrande de l'étape Histoire courante (forest_15), affiché

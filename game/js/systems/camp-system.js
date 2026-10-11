@@ -50,21 +50,35 @@ var CampManager = {
     // Hors ligne : le joueur était absent, on régénère quel que soit l'onglet restauré (sauf run en cours).
     if (offline ? this._hasActiveRun() : !this.isRegenActive()) return 0;
 
+    // v3.448.0 : le feu soigne aussi les compagnons restés au camp (même rythme, même plafond hors ligne)
+    var self = this, pctMin = this.getRegenPctPerMin(), cap = offline ? getCampOfflineRegenCap() : Infinity;
+    var gain = function (cur, max) { return Math.floor(Math.max(0, Math.min(max * pctMin * elapsedMin, max * cap, max - cur))); };
     var maxHp = game.heroMaxHp || 1;
     var hp = game.heroHp != null ? game.heroHp : maxHp;
-    if (hp >= maxHp) return 0;
-
-    var heal = maxHp * this.getRegenPctPerMin() * elapsedMin;
-    if (offline) heal = Math.min(heal, maxHp * getCampOfflineRegenCap());
-    heal = Math.floor(Math.min(heal, maxHp - hp));
+    var heal = gain(hp, maxHp), total = heal;
+    this.campCompanionIds().forEach(function (id) {
+      var max = CompanionManager.maxHpOf(id), cur = CompanionManager.hpOf(id), g = gain(cur, max);
+      if (g > 0) { CompanionManager.state(id).hp = cur + g; total += g; }
+    });
     // v3.429.3 : soin < 1 PV (appel à chaque image) -> le temps s'accumule au lieu d'être perdu
-    if (heal <= 0) { game.campRegenLastAt = lastAt; return 0; }
+    if (total <= 0) { if (!this.teamFull()) game.campRegenLastAt = lastAt; return 0; }
 
     game.heroHp = hp + heal;
-    if (offline) addLog("🔥 " + _t("Régénération au camp pendant ton absence : +{n} PV.", { n: formatNumber(heal) }), "event");
+    if (offline && heal > 0) addLog("🔥 " + _t("Régénération au camp pendant ton absence : +{n} PV.", { n: formatNumber(heal) }), "event");
     if (typeof renderHeroHp === "function") renderHeroHp();
-    this.refreshCampCard();
-    return heal;
+    self.refreshCampCard();
+    return total;
+  },
+
+  /* v3.448.0 : compagnons au camp (recrutés, pas en patrouille), que le feu et les rations soignent. */
+  campCompanionIds: function () {
+    if (!window.CompanionManager) return [];
+    return CompanionManager.unlockedIds().filter(function (id) { return !(window.PatrolManager && PatrolManager.isOnPatrol(id)); });
+  },
+
+  teamFull: function () {
+    if ((game.heroHp || 0) < (game.heroMaxHp || 1)) return false;
+    return this.campCompanionIds().every(function (id) { return CompanionManager.hpOf(id) >= CompanionManager.maxHpOf(id); });
   },
 
   /* Rafraîchit la carte Feu de camp sans re-rendre le panneau (renderHud tourne à chaque frame). */
@@ -81,6 +95,11 @@ var CampManager = {
     var pct = Math.max(0, Math.min(100, (hp / maxHp) * 100)) + "%";
     var hpFill = document.getElementById("camp-hp-fill");
     if (hpFill) hpFill.style.width = pct;
+    // v3.448.0 : les barres des compagnons au camp
+    this.campCompanionIds().forEach(function (id) {
+      var f = document.getElementById("camp-comp-hp-" + id);
+      if (f) f.style.width = Math.max(0, Math.min(100, CompanionManager.hpOf(id) / Math.max(1, CompanionManager.maxHpOf(id)) * 100)) + "%";
+    });
     // v3.233.0 : la barre camp-regen-fill n'existe plus (doublon de la barre de PV).
     var eta = document.getElementById("camp-fire-eta");
     if (eta) {
@@ -90,7 +109,7 @@ var CampManager = {
       eta.innerHTML = full
         ? '<img class=ico-inline src=images/Icons/system/check_valid.png> ' + _t("PV au maximum")
         : '<img class=ico-inline src=images/Icons/system/hourglass_waiting.png> ' + _t("Max dans {d}", { d: formatTime(Math.ceil(this.getMinutesToFull() * 60)) });
-      if (full && typeof renderPanel === "function") renderPanel(); // ré-évalue les boutons de ration (grisés si PV pleins)
+      if (this.teamFull() && typeof renderPanel === "function") renderPanel(); // ré-évalue les boutons de ration (grisés si tous pleins)
     }
   },
 
@@ -122,7 +141,7 @@ var CampManager = {
     var def = (window.WAREHOUSE_RESOURCES || {})[rationId];
     if (!def || !def.healPct) return false;
     var maxHp = game.heroMaxHp || 1;
-    if ((game.heroHp || 0) >= maxHp) { showToast(_t("PV déjà au maximum"), 1200); return false; }
+    if (this.teamFull()) { showToast(_t("PV déjà au maximum"), 1200); return false; }
     if (window.heroLockToast && heroLockToast()) return false; // v3.307.0
     if (!this.canEatRation(rationId)) { showToast(_t("Aucune {x} en stock", { x: _td(def.name).toLowerCase() }), 1600); return false; }
     if (!WarehouseManager.removeResource(rationId, 1)) return false;
@@ -134,8 +153,18 @@ var CampManager = {
     }
     var healed = Math.min(maxHp - (game.heroHp || 0), Math.floor(maxHp * pct));
     game.heroHp = (game.heroHp || 0) + healed;
-    addLog("🍖 " + _t("{x} — +{n} PV.", { x: _td(def.name), n: formatNumber(healed) }), "event");
-    showToast("🍖 " + _t("+{n} PV", { n: formatNumber(healed) }), 1600);
+    // v3.448.0 (décision Seb, option 3) : la ration nourrit toute l'équipe, du même pourcentage
+    var nourris = [];
+    this.campCompanionIds().forEach(function (id) {
+      var max = CompanionManager.maxHpOf(id), cur = CompanionManager.hpOf(id);
+      if (cur >= max) return;
+      CompanionManager.state(id).hp = Math.min(max, cur + Math.floor(max * pct));
+      nourris.push(_td(getCompanionDef(id).name));
+    });
+    addLog("🍖 " + (nourris.length
+      ? _t("{x} — +{n} PV, et pour {y}.", { x: _td(def.name), n: formatNumber(healed), y: nourris.join(", ") })
+      : _t("{x} — +{n} PV.", { x: _td(def.name), n: formatNumber(healed) })), "event");
+    showToast("🍖 " + (nourris.length ? _t("Toute l'équipe mange") : _t("+{n} PV", { n: formatNumber(healed) })), 1600);
     if (typeof renderAll === "function") renderAll();
     if (typeof saveGame === "function") saveGame();
     return true;

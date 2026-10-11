@@ -15125,5 +15125,36 @@ console.log("\n[222] v3.447.0 — Initiative : jet, ordre, file de tours, Garde,
   }
 })();
 
+console.log("\n[223] v3.448.0 — Camp : le feu et les rations soignent aussi les compagnons");
+(function () {
+  try {
+    game = freshCombat("knight");
+    var C = g.CompanionManager, K = g.CampManager;
+    C.unlock("wenna");
+    var mw = C.maxHpOf("wenna");
+    run("game.activeTab = 'campement'; CombatActors.clearEnemies();");
+    game.heroHp = game.heroMaxHp; C.state("wenna").hp = Math.floor(mw * 0.1);
+    ok(K.teamFull() === false, "héros plein, Wenna blessée : l'équipe n'est pas pleine");
+    game.campRegenLastAt = Date.now() - 60000;
+    K.applyRegen(false);
+    ok(C.hpOf("wenna") > Math.floor(mw * 0.1), "le feu de camp soigne Wenna même quand le héros est plein");
+    run("WarehouseManager.addResource('ration', 3, true);");
+    var def = g.WAREHOUSE_RESOURCES.ration;
+    game.heroHp = Math.floor(game.heroMaxHp * 0.1); C.state("wenna").hp = Math.floor(mw * 0.2);
+    var h0 = game.heroHp, w0 = C.hpOf("wenna");
+    ok(K.eatRation("ration") === true, "une ration se mange");
+    ok(game.heroHp - h0 === Math.floor(game.heroMaxHp * def.healPct) && C.hpOf("wenna") - w0 === Math.floor(mw * def.healPct),
+      "une ration soigne le héros ET Wenna du même pourcentage");
+    game.heroHp = game.heroMaxHp; C.state("wenna").hp = Math.floor(mw * 0.5);
+    ok(K.eatRation("ration") === true, "héros plein : la ration sert encore, pour Wenna");
+    C.state("wenna").hp = mw;
+    ok(K.eatRation("ration") === false, "tout le monde plein : la ration reste au stock");
+    var html = g.buildCampHTML();
+    ok(html.indexOf("camp-comp-hp-wenna") !== -1, "la carte du camp montre la jauge de Wenna");
+  } catch (err) {
+    ok(false, "[223] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

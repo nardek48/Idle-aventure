@@ -453,3 +453,9 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .camp-mission-actions { justify-content: center; }
 .camp-mission-card .camp-mission-btn { flex: 0 0 auto; width: auto; min-width: 150px; max-width: 100%; margin: 8px auto 0; padding: 7px 22px; font-size: 13px; }
 .camp-mission-actions .camp-mission-btn { margin: 8px 0 0; }
+
+/* v3.448.0 : compagnons au camp — une ligne fine chacun sous la jauge du héros */
+.camp-mates { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 2px; }
+.camp-mate { display: grid; grid-template-columns: 22px 64px 1fr; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--nb-ink); }
+.camp-mate .camp-mate-ico { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+.camp-mate span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

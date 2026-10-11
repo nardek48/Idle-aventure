@@ -465,6 +465,10 @@ async function P4(browser, base) {
   await tap(page, ".ret-pending");
   ok(!(await visible(page, ".ret-card", 300)), "toucher la pastille en combat : toujours rien d'ouvert");
 
+  /* v3.447.0 : la file de tours avance avec la boucle de jeu. Après le saut de l'horloge factice, la boucle
+     (requestAnimationFrame factice) peut rester figée : sujet du test = l'écran de retour, pas la cadence.
+     On rejoue donc ce combat en mode synchrone (une action joue la fin du round), comme le harnais. */
+  await page.evaluate(function () { CombatEngine.paced = false; renderCombatControls(); });   // la boucle figée ne redessine plus
   ok(await winFight(page, ".bm-win, .bm-final"), "combat gagné");
   if (await visible(page, ".bm-win", 4000)) await tap(page, ".bm-win button");
   ok(await visible(page, ".ret-card", 3000), "combat fini : l'écran de retour s'ouvre");

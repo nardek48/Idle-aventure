@@ -39,14 +39,14 @@ var WAREHOUSE_RESOURCES = {
   farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.png", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 },
   // v3.137.0 : desc corrigée — la Boulangerie (Champs), pas l'Atelier de Construction, cuit le Pain.
   pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.png", desc: "Cuit à la Boulangerie (Champs) à partir d'Eau et de Farine.", sellPrice: 19, tier: "crafted", cap: 999 },
-  ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.png", desc: "Repas au Campement : restaure 60 % des PV max. Vivres pour repartir au Désert (chasse, donjon, élite rejouée). Cuisine de camp : 3 Viandes séchées + 1 Pain.", sellPrice: 36, tier: "crafted", cap: 999, healPct: 0.60 },
-  petite_ration: { id: "petite_ration", name: "Petite ration", icon: "images/Icons/resources/petite_ration_icon.png", desc: "Repas au Campement : restaure 35 % des PV max. Vivres pour repartir en Forêt (chasse, donjon, élite rejouée). Crafté à la Cuisine de camp à partir de Viande et d'Eau.", sellPrice: 18, tier: "crafted", cap: 999, healPct: 0.35 },
+  ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.png", desc: "Repas au Campement : restaure 60 % des PV max de toute l'équipe. Vivres pour repartir au Désert (chasse, donjon, élite rejouée). Cuisine de camp : 3 Viandes séchées + 1 Pain.", sellPrice: 36, tier: "crafted", cap: 999, healPct: 0.60 },
+  petite_ration: { id: "petite_ration", name: "Petite ration", icon: "images/Icons/resources/petite_ration_icon.png", desc: "Repas au Campement : restaure 35 % des PV max de toute l'équipe. Vivres pour repartir en Forêt (chasse, donjon, élite rejouée). Crafté à la Cuisine de camp à partir de Viande et d'Eau.", sellPrice: 18, tier: "crafted", cap: 999, healPct: 0.35 },
   // v3.137.0 : recette de craft ajoutée (Cuisine de camp : Ration moyenne + 3 Sève d'Aeswyn) — desc mise à jour.
   /* v3.303.0 (W-2, Désert D3) : l'Outre pleine, fabriquée au Réservoir du Puits. Emportée dans
      la préparation d'un parcours du Désert, elle rend du Souffle une fois. Jamais obligatoire.
      v3.304.0 : icône propre (générique en jeu tant qu'elle n'est pas dessinée), plus celle de la gourde. */
   outre_pleine: { id: "outre_pleine", name: "Outre pleine", icon: "images/Icons/resources/outre_pleine_icon.png", desc: "Se remplit au Réservoir (Puits). Emportée dans un parcours du Désert, elle rend du Souffle une fois.", sellPrice: 20, tier: "crafted", cap: 99 },
-  grande_ration: { id: "grande_ration", name: "Grande ration", icon: "images/Icons/resources/grande_ration_icon.png", desc: "Repas au Campement : restaure 100 % des PV max. Cuisine de camp (Chasse) : 1 Ration moyenne + 3 Sève d'Aeswyn → 1.", sellPrice: 60, tier: "crafted", cap: 999, healPct: 1.00 },
+  grande_ration: { id: "grande_ration", name: "Grande ration", icon: "images/Icons/resources/grande_ration_icon.png", desc: "Repas au Campement : restaure 100 % des PV max de toute l'équipe. Cuisine de camp (Chasse) : 1 Ration moyenne + 3 Sève d'Aeswyn → 1.", sellPrice: 60, tier: "crafted", cap: 999, healPct: 1.00 },
   // v3.127.0 (Petites Aventures, Lot PA3) : butin exclusif du scene-engine petite_aventure_foret
   // (voir data/scene-templates.js, exclusiveLoot) — nom + icône validés Seb 03/09/2026.
   // Ressource de collection (tier "special", distinct de raw/crafted) : pas de sellPrice
