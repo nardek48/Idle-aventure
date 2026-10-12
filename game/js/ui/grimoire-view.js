@@ -611,13 +611,6 @@ function buildGrimoireModeHTML() {
   return h;
 }
 
-function setGrimoireCombatMode(mode) {
-  if (!isGrimoireEditable()) return;
-  if (window.CombatEngine && typeof CombatEngine.setCombatMode === "function") CombatEngine.setCombatMode(mode);
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.setGrimoireCombatMode = setGrimoireCombatMode;
-
 function buildGrimoireListHTML(kit, unlockedCount) {
   var h = buildGrimoireModeHTML();
 
@@ -637,66 +630,6 @@ function buildGrimoireListHTML(kit, unlockedCount) {
 
   return h;
 }
-
-/* v3.379.0 — potion automatique, HORS des règles (décision Seb) : même présentation que le
-   comportement de soin de Wenna. Figée pendant une sortie, comme les règles. */
-function buildGrimoirePotionAutoHTML() {
-  if (!window.PotionAutoManager) return "";
-  var s = PotionAutoManager.ensure();
-  var editable = isGrimoireEditable();
-  var lock = editable ? '' : ' disabled';
-  var h = '<div class="cp-behavior grimoire-potion">';
-  h += '<div class="cp-behavior-title"><img class=ico-inline src=images/Icons/potions/potion_soin_mineur_icone.png> ' + _t("Potions")
-    + (game.combatMode === "grimoire" ? '' : ' <span class="cp-behavior-off">' + _t("— sert en mode Grimoire") + '</span>') + '</div>';
-  h += '<div class="cp-behavior-row"><span>' + _t("Boire") + '</span><div class="kseg">';
-  POTION_AUTO_THRESHOLDS.forEach(function (t) {
-    h += '<button type="button" class="' + (s.threshold === t.id ? 'is-on' : '') + '"' + lock
-      + ' onclick="setGrimoirePotionAuto(\'threshold\', \'' + t.id + '\')">' + esc(t.label) + '</button>';
-  });
-  h += '</div></div>';
-  h += '<div class="cp-behavior-hint">' + esc(PotionAutoManager.getThreshold(s.threshold).desc) + '</div>';
-  h += '<label class="cp-behavior-check"><input type="checkbox"' + (s.keepForBoss ? ' checked' : '') + lock
-    + ' onclick="setGrimoirePotionAuto(\'keepForBoss\', this.checked)">'
-    + '<span>' + _t("Garder la dernière pour le boss") + '</span></label>';
-  h += '<div class="cp-behavior-hint">' + _t("Tant qu'un boss ou une élite reste à venir dans la sortie, ta dernière potion est gardée. La potion bue est la plus petite qui te remonte à 60 % de tes PV, sinon la plus forte.") + '</div>';
-  h += '</div>';
-  return h;
-}
-
-/* v3.428.0 (Ruines, Conception §4.4 point 3) — RÉGLAGE « CIBLE », hors des règles comme les
-   potions : qui le héros vise en mode Grimoire. Les compagnons frappent la même cible ; une
-   cible touchée au doigt prime jusqu'à ce qu'elle tombe. */
-function buildGrimoireTargetHTML() {
-  if (!window.RiseSystem) return "";
-  var cur = RiseSystem.getPolicy();
-  var lock = isGrimoireEditable() ? '' : ' disabled';
-  var h = '<div class="cp-behavior grimoire-target">';
-  h += '<div class="cp-behavior-title"><img class=ico-inline src=images/Icons/combat_status/target.png> ' + _t("Cible")
-    + (game.combatMode === "grimoire" ? '' : ' <span class="cp-behavior-off">' + _t("— sert en mode Grimoire") + '</span>') + '</div>';
-  h += '<div class="cp-behavior-row"><span>' + _t("Viser") + '</span><div class="kseg">';
-  GRIMOIRE_TARGET_POLICIES.forEach(function (p) {
-    h += '<button type="button" class="' + (cur === p.id ? 'is-on' : '') + '"' + lock
-      + ' onclick="setGrimoireTarget(\'' + p.id + '\')">' + esc(_td(p.label)) + '</button>';
-  });
-  h += '</div></div>';
-  h += '<div class="cp-behavior-hint">' + esc(_td(RiseSystem.getPolicyDef(cur).desc)) + '</div>';
-  h += '</div>';
-  return h;
-}
-
-function setGrimoireTarget(id) {
-  if (!isGrimoireEditable() || !window.RiseSystem) return;
-  RiseSystem.setPolicy(id);
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.setGrimoireTarget = setGrimoireTarget;
-
-function setGrimoirePotionAuto(key, value) {
-  if (!isGrimoireEditable() || !window.PotionAutoManager) return;
-  PotionAutoManager.set(key, value);
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.setGrimoirePotionAuto = setGrimoirePotionAuto;
 
 function buildGrimoireHTML() {
   ensureGrimoireRules();

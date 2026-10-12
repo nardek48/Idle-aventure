@@ -214,7 +214,6 @@ var SCREENS = {
   w_prevision: ["Fenêtres", "Avant de partir (prévision)", async function (p) { await richHero(p); await p.evaluate(function () { openCombatForecastConfirm({ id: "tresdur", heroDamagePerRound: 42, enemyDamagePerRound: 61, enemyHp: 900, roundsToKill: 22, roundsToDie: 9, enemyName: "Roi Slime", advice: "Monte ta Force ou reviens avec des potions." }, { title: "Prouver sa valeur", lowHp: true, onConfirm: function () {} }); }); }],
   w_fil: ["Fenêtres", "Fil rouge", async function (p) { await richHero(p); await p.evaluate(function () { openFilRougeBubble(); }); }],
   w_atelier_etape: ["Fenêtres", "Atelier › étape terminée", async function (p) { await richHero(p); await p.evaluate(function () { showWorkshopStepCompletionPopup(WORKSHOP_UNLOCK_STEPS[0], WORKSHOP_UNLOCK_STEPS[1]); }); }],
-  w_atelier_obj: ["Fenêtres", "Atelier › objectif", async function (p) { await richHero(p); await p.evaluate(function () { openWorkshopStepPopup(); }); }],
   w_sac: ["Fenêtres", "Sac › réglages de l'autovente", async function (p) { await richHero(p); await p.evaluate(function () {
     game.genericTutorialsSeen = game.genericTutorialsSeen || {}; Object.keys(GENERIC_TUTORIALS).forEach(function (k) { game.genericTutorialsSeen[k] = true; });
     switchTab("equip"); }); await closeTut(p); await p.evaluate(function () { document.getElementById("tutorial-modal-root").innerHTML = ""; openInventorySettings(); }); }],

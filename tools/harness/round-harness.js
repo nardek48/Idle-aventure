@@ -2544,14 +2544,6 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   ok(html.indexOf("hs-kstrip") !== -1 && (html.match(/class="hs-kstat"/g) || []).length === 4, "[RESUME] H-2 : les 4 chiffres sur une ligne");
   ok(html.indexOf("hs-roster-btn") !== -1 && html.indexOf("openHeroSlotsScreen()") !== -1, "[RESUME] H-2 : « Mes héros » en bas, en vrai bouton");
 
-  // getHeroSummaryResource ne DOIT PAS créer d'état de combat
-  run("game.classResource = null;");
-  var res = run("getHeroSummaryResource(getClassForHero(getSelectedHero()))");
-  ok(res && res.current === 0 && res.max === 100,
-    "[RESUME] ressource lue à 0/100 hors combat");
-  ok(run("game.classResource") === null,
-    "[RESUME] l'affichage ne crée aucun état de ressource (lecture seule)");
-
   // --- marge d'entraînement : plafonds RÉELS d'upgrades.js ---
   var prog = run("getHeroTrainingProgress()");
   var expectedTotal = run("(function () { var t = 0; UPGRADES.forEach(function (u) {"
@@ -3311,10 +3303,10 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
   /* --- Sélecteur de mode de combat --- */
   g.game.combatMode = "tactique";
   ok(g.buildGrimoireHTML().indexOf("surligner l&#39;action conseillée") !== -1 || g.buildGrimoireHTML().indexOf("surligner l'action conseillée") !== -1, "[GRIMOIRE] mode Tactique décrit");
-  g.setGrimoireCombatMode("grimoire");
-  ok(g.game.combatMode === "grimoire", "[GRIMOIRE] bascule en mode Grimoire depuis l'écran");
+  g.CombatEngine.setCombatMode("grimoire"); // v3.449.1 : la bascule vit dans la préparation de sortie (v3.440)
+  ok(g.game.combatMode === "grimoire", "[GRIMOIRE] bascule en mode Grimoire");
   ok(g.buildGrimoireHTML().indexOf("enchaînent seuls") !== -1, "[GRIMOIRE] mode Grimoire décrit");
-  g.setGrimoireCombatMode("tactique");
+  g.CombatEngine.setCombatMode("tactique");
   ok(g.game.combatMode === "tactique", "[GRIMOIRE] retour en mode Tactique");
 
   /* --- La fiche : deux listes déroulantes, un seul niveau de retour --- */
@@ -3527,10 +3519,6 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
   g.setGrimoireRuleAction(0, "skill3");
   g.clearGrimoireRule(0);
   ok(JSON.stringify(g.game.grimoireRules[0]) === avant, "[SORTIE] les écritures sont refusées, pas seulement grisées");
-
-  var modeAvant = g.game.combatMode;
-  g.setGrimoireCombatMode(modeAvant === "grimoire" ? "tactique" : "grimoire");
-  ok(g.game.combatMode === modeAvant, "[SORTIE] bascule de mode refusée (elle remettrait l'horloge de round à zéro)");
 
   // Charger un preset remplace les 6 règles : même verrou.
   g.game.sortie.active = false;
@@ -4747,14 +4735,6 @@ console.log("\n[36] v3.232.0 \u2014 Recalibrage For\u00eat (boss \u00d73,9, norm
 console.log("\n[37] v3.228.0 \u2014 Finitions (fiche R\u00e9sum\u00e9, aide autovente)");
 (function () {
   run("fullResetState(); game.playerName='Test'; game.heroId='mage'; EquipmentManager.recalcStats();");
-  ok(g.getHeroMainStatLabel() === "Volont\u00e9", "Mage : libell\u00e9 de la stat principale = Volont\u00e9");
-  run("game.heroId='ranger'; EquipmentManager.recalcStats();");
-  ok(g.getHeroMainStatLabel() === "C\u00e9l\u00e9rit\u00e9", "R\u00f4deur : C\u00e9l\u00e9rit\u00e9");
-  run("game.heroId='knight'; EquipmentManager.recalcStats();");
-  ok(g.getHeroMainStatLabel() === "Force", "Chevalier : Force (libell\u00e9 de l'Am\u00e9lioration, pas \u00ab Puissance \u00bb)");
-  var sum = run("buildHeroSummaryCombatHTML()");
-  ok(sum.indexOf("pc-sum-cell-hint") !== -1 && sum.indexOf(">Force<") !== -1, "la case ATK du R\u00e9sum\u00e9 nomme la stat principale");
-  ok((sum.match(/pc-sum-cell-hint/g) || []).length === 1, "...sur la seule case ATK");
   var set = run("buildInventorySettingsHTML()");
   ok(set.indexOf("rareté seule") !== -1, "R\u00e9glages du sac : l'autovente pr\u00e9vient qu'elle ignore les affixes");
 })();
@@ -7506,13 +7486,11 @@ console.log("\n[73] v3.271.0 (L-5) — Grimoire de groupe et comportement du com
   // v3.440.0 : le comportement de soin se règle à la préparation de sortie
   g.sortiePrep = { opts: { title: "t", onGo: function () {} }, preset: null, buffs: {} };
   var html = g.buildSortiePrepHTML();
-  ok(html.indexOf("cp-behavior") !== -1 && html.indexOf("sortiePrepHeal") !== -1 && g.buildHerosCompanionsHTML().indexOf("sortiePrepHeal") === -1,
+  ok(html.indexOf("cp-behavior") !== -1 && html.indexOf("sortiePrepHeal") !== -1,
     "la préparation de sortie porte le bloc Comportement (plus la fiche)");
   ok(html.indexOf("sert en mode Grimoire") !== -1,
     "hors Grimoire, la préparation annonce que ces réglages ne jouent pas");
   g.sortiePrep = null;
-  ok(g.buildHerosCompanionsHTML().indexOf("cp-controlnote") !== -1,
-    "et rappelle où se règle Auto / Manuel : le mode de combat");
 })();
 
 console.log("\n[74] v3.273.0 — bandeau de combat v2 : rangée d'acteurs, cadre qui suit, feuille de sortie");
@@ -12985,8 +12963,6 @@ console.log("\n[173] v3.400.0 — Lot F-2 : fenêtres centrées (.kwin)");
     var fc = g.buildCombatForecastHTML({ id: "tresdur", heroDamagePerRound: 1, enemyDamagePerRound: 1, enemyHp: 1, roundsToKill: 1, roundsToDie: 1 }, { title: "T" });
     win("Avant de partir", fc);
     ok(g.buildQuestCompleteHTML({ title: "T" }).indexOf(">Continuer</button>") !== -1, "fin de quête : « Continuer » plutôt que « Fermer »");
-    var st = g.buildWorkshopStepPopupHTML();
-    ok(/kwin-veil/.test(st) && /ksheet-x/.test(st) && !/>Fermer<\/button>/.test(st), "objectif de l'Atelier : croix et voile, plus de « Fermer »");
     var inv = g.buildInventorySettingsHTML();
     ok(/class="ksheet-head"/.test(inv) && /ksheet-x/.test(inv) && !/>Fermer<\/button>/.test(inv), "réglages du sac : feuille du bas avec croix");
     var rep = g.buildCombatReportHTML("defeat", "Araignée");
@@ -13692,8 +13668,6 @@ console.log("\n[196] v3.424.0 — Chantier Héros, H-1 : rail en haut, quatre on
     run("game.gold = 1e6; openVillageBuildingId = 'hall'; hallSheetSegment = 'shop';");
     var hall = run("buildVillageBuildingSheetHTML('hall')");
     ok(hall.indexOf("setHallSheetSegment('shop')") !== -1 && hall.indexOf("equip-shop-grid") !== -1 && hall.indexOf("equipShopRefresh()") !== -1, "feuille de la Halle : segment Échoppe avec la vitrine");
-    run("openVillageBuildingId = null; goToEquipShop();");
-    ok(run("openVillageBuildingId") === "hall" && run("hallSheetSegment") === "shop", "goToEquipShop : ouvre la Halle sur son Échoppe");
     run("closeVillageBuildingSheet();");
   } catch (err) {
     ok(false, "[196] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);

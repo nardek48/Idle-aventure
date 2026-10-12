@@ -124,21 +124,6 @@ function companionChangeVoie(companionId, voieId) {
 window.companionChangeVoie = companionChangeVoie;
 window.buildCompanionVoieHTML = buildCompanionVoieHTML;
 
-function buildHerosCompanionsHTML() {
-  var h = '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/subtabs/hero_summary.png|" + _t("Compagnons")) + '">';
-
-  var ids = (window.CompanionManager) ? CompanionManager.unlockedIds() : [];
-  if (!ids.length) {
-    h += '<div class="pc-empty">' + _t("Personne ne t'accompagne encore.") + '</div>';
-  } else {
-    h += '<div class="cp-intro">' + _t("Deux compagnons au maximum peuvent partir avec toi. Ils jouent après toi à chaque round.") + '</div>';
-    ids.forEach(function (id) { h += buildCompanionCardHTML(id); });
-  }
-
-  h += '</div>';
-  return h;
-}
-
 /* ---------- Actions ---------- */
 
 function companionSetPresent(companionId, present) {
@@ -147,21 +132,11 @@ function companionSetPresent(companionId, present) {
   if (typeof renderAll === "function") renderAll();
 }
 
-function companionSetSetting(companionId, key, value) {
-  if (!window.CompanionManager) return;
-  // v3.307.0 : garde ici et pas dans setSetting, que restore() rappelle au chargement
-  if (window.heroLockToast && heroLockToast()) { if (typeof renderAll === "function") renderAll(); return; }
-  CompanionManager.setSetting(companionId, key, value);
-  if (typeof renderAll === "function") renderAll();
-}
-
 function companionBuyUpgrade(companionId) {
   if (!window.CompanionManager) return;
   CompanionManager.buyUpgrade(companionId);
 }
 
-window.buildHerosCompanionsHTML = buildHerosCompanionsHTML;
 window.buildCompanionCardHTML = buildCompanionCardHTML;
 window.companionSetPresent = companionSetPresent;
 window.companionBuyUpgrade = companionBuyUpgrade;
-window.companionSetSetting = companionSetSetting;

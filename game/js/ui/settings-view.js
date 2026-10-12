@@ -136,12 +136,6 @@ function buildSettingsHTML(tab) {
   return '<div class="nb-page-frame nb-page-frame-fill kframe-page settings-page" data-kf-title="' + esc("images/Icons/menu_icons/settings_menu.png|" + _t("Paramètres")) + '">' + h + '</div>';
 }
 
-function toggleAutoSkills(enabled) {
-  if (!window.CombatEngine || typeof CombatEngine.setCombatMode !== "function") return;
-  if (!CombatEngine.setCombatMode(enabled ? "grimoire" : "tactique")) showToast(_t("Le mode Grimoire n'est pas encore débloqué"), 1400);
-  if (typeof renderPanel === "function") renderPanel();
-}
-
 /* v3.99.15 : débloque tous les onglets (tab-bar du bas + menu ☰ complet) en une
    fois — seul moyen de déblocage pour l'instant, en attendant le vrai système
    progressif par quêtes prévu pour une prochaine session. Construit la liste à
@@ -187,7 +181,6 @@ function confirmLanguageChange(lang) {
   } else go();
 }
 window.confirmLanguageChange = confirmLanguageChange;
-window.toggleAutoSkills = toggleAutoSkills;
 
 /* v3.332.0 : préférence d'affichage (Prefs). Le HUD relit le fil rouge à l'image suivante.
    v3.408.0 : l'interrupteur se redessine (plus de case à cocher qui garde son état seule). */

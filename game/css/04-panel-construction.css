@@ -127,22 +127,3 @@
    carte normale ; seul le style change pour signaler "objectif de
    tutoriel", pas un bâtiment ordinaire. */
 
-/* v3.39 : popup d'objectif (non-bloquant) — voir
-   ui/workshop-quest-modal.js, buildWorkshopStepPopupHTML(). Même
-   principe visuel que les popups de construction et de village
-   ci-dessus, classes propres pour ce popup précis.
-   v3.233.0 : le "*" suivi d'un "/" fermait le commentaire ici même,
-   et .workshop-step-popup-card était avalée par un sélecteur invalide. */
-/* v3.400.0 (lot F-2) : fenêtre du kit (.kwin) ; titre dans l'en-tête, récit en .kwin-quote. */
-.workshop-step-popup-condition {
-  display: inline-block;
-  padding: 6px 14px;
-  margin-bottom: 4px;
-  border-radius: 999px;
-  background: var(--sheet-card-bg);
-  border: 1px solid var(--nb-gold-dark);
-  color: var(--nb-gold-deep);
-  font-size: 13px;
-  font-weight: 800;
-}
-

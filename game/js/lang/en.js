@@ -883,7 +883,6 @@ I18n.register("en", {
   "Sous 55 % de tes PV, pour ne jamais frôler la chute.": "Below 55% of your HP, so you never come close to falling.",
   "Boire": "Drink",
   "Garder la dernière pour le boss": "Keep the last one for the boss",
-  "Tant qu'un boss ou une élite reste à venir dans la sortie, ta dernière potion est gardée. La potion bue est la plus petite qui te remonte à 60 % de tes PV, sinon la plus forte.": "While a boss or an elite is still ahead in the run, your last potion is kept. The potion drunk is the smallest one that brings you back to 60% of your HP, otherwise the strongest.",
 
   // js/ui/combat-forecast-view.js
   "Ce que tu vas affronter": "What you're about to face",
@@ -1049,7 +1048,6 @@ I18n.register("en", {
   "{x} passe à « {v} » gratuitement (Voie libre).": "{x} switches to “{v}” for free (Free Path).",
   "{x} passe à « {v} » pour {n} or.": "{x} switches to “{v}” for {n} gold.",
   "Compagnons": "Companions",
-  "Personne ne t'accompagne encore.": "No one travels with you yet.",
   "Deux compagnons au maximum peuvent partir avec toi. Ils jouent après toi à chaque round.": "Two companions at most can set out with you. They act after you each round.",
 
   // js/ui/construction-view.js
@@ -1216,20 +1214,11 @@ I18n.register("en", {
   "Rapport": "Report",
 
   // js/ui/heros-view.js
-  "Sans nom": "Nameless",
-  "unité|EXP": "XP",
-  "En combat": "In combat",
   "unité|ATK": "ATK",
   "unité|VIT": "SPD",
-  "DÉFENSE": "DEFENCE",
-  "CRITIQUE": "CRITICAL",
-  "Aller plus loin": "Go further",
   "Stats": "Stats",
-  "{n} niveaux d’entraînement restants": "{n} training levels left",
   "Tout est entraîné au maximum": "Everything is fully trained",
   "Capacités": "Abilities",
-  "Aucune capacité": "No abilities",
-  "un choix t'attend": "a choice awaits you",
   "Ce que tu portes": "What you carry",
   "La forme du roi": "The King's Form",
   "Le silence ne te tient plus qu’un round.": "Silence now holds you for only one round.",
@@ -1275,7 +1264,6 @@ I18n.register("en", {
   "Sac": "Bag",
   "Talents indisponibles.": "Talents unavailable.",
   "Talent": "Talent",
-  "{n} technique||{n} techniques": ["{n} technique", "{n} techniques"],
   "Effet visible à partir de {n} niveau d'un coup.||Effet visible à partir de {n} niveaux d'un coup.": ["Effect visible from {n} level at once.", "Effect visible from {n} levels at once."],
 
   // js/ui/hud-view.js
@@ -1393,7 +1381,6 @@ I18n.register("en", {
   "Partie": "Game",
   "Jeu": "Gameplay",
   "Appareil": "Device",
-  "Le mode Grimoire n'est pas encore débloqué": "Grimoire mode is not unlocked yet",
   "Un choix t'attend ici.": "A choice awaits you here.",
   "Choisi": "Chosen",
   "Tablette en portrait": "Tablet in portrait",
@@ -1715,12 +1702,8 @@ I18n.register("en", {
   "L’Entrepôt ne rachète plus rien. Ce qu’il te reste, porte-le-moi : mes contrats paient mieux, et on sait ce qu’on te demande.": "The Warehouse doesn't buy anything any more. Whatever you have left, bring it to me: my contracts pay better, and you know what you're being asked for.",
 
   // js/ui/workshop-quest-modal.js
-  "Chaîne terminée": "Chain complete",
-  "L'Atelier de Construction est débloqué en permanence.": "The Construction Workshop is permanently unlocked.",
   "Bois": "Wood",
-  "Planches fabriquées": "Planks crafted",
   "Pierre": "Stone",
-  "Niveau de l'Atelier": "Workshop level",
   "Étape terminée": "Step complete",
   "Prochain objectif : {x}": "Next objective: {x}",
 
@@ -4295,7 +4278,6 @@ I18n.register("en", {
   "Le seuil : tu te relèves": "The Threshold: you get back up",
   "grimoire court|un ennemi se relève": "an enemy gets up",
   "Cible": "Target",
-  "Viser": "Aim at",
   "Le seuil d'Aeswyn : 10 % de matériaux en moins": "Aeswyn's Threshold: 10% fewer materials",
   "La plus proche": "The nearest",
   "La plus faible": "The weakest",

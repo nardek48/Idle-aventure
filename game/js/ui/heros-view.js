@@ -51,20 +51,6 @@ function setHerosSubTabSilent(tab) {
      - deux raccourcis renseignés vers les deux autres sous-onglets ;
      - une sortie vers la gestion d'emplacements, au lieu du carrousel. */
 
-/* Ressource de classe (Rage / Concentration / Mana). Lecture SEULE de
-   game.classResource : on n'appelle pas ensureForCurrentClass() ici, un écran
-   d'affichage n'a pas à créer d'état de combat. Hors combat la valeur est
-   nulle, et c'est très bien : la jauge dit ce que le héros EST, pas ce qu'il
-   a en réserve à cet instant. */
-function getHeroSummaryResource(cls) {
-  if (!cls || !cls.resource) return null;
-  var state = game.classResource;
-  var sameClass = !!(state && state.classId === cls.id);
-  var current = (sameClass && typeof state.current === "number") ? state.current : 0;
-  var max = (sameClass && state.max) ? state.max : Number(cls.resource.max || 100);
-  return { label: cls.resource.label, current: current, max: Math.max(1, max) };
-}
-
 /* Marge d'entraînement restante, tous entraînements confondus. Alimente le
    raccourci "Stats" : sans ce chiffre, le raccourci serait une flèche muette. */
 function getHeroTrainingProgress() {
@@ -84,190 +70,9 @@ function getHeroTrainingProgress() {
   };
 }
 
-function buildHeroSummaryGaugeHTML(tag, cssClass, pct, text, extraClass) {
-  return '<div class="pc-sum-gauge-row"><span class="pc-sum-gauge-tag">' + esc(tag) + '</span>'
-    + '<div class="kgauge kgauge-thin ' + cssClass + (extraClass || "") + '">'
-    + '<div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct + '%"></div></div>'
-    + '<span class="kgauge-text">' + esc(text) + '</span></div></div>';
-}
-
-function buildHeroSummaryIdentityHTML(hero) {
-  var cls = (typeof getClassForHero === "function") ? getClassForHero(hero) : null;
-  var heroLevel = Number(game.heroLevel || 1);
-  var heroXp = Number(game.heroXp || 0);
-  var heroXpToNext = Math.max(1, Number(game.heroXpToNext || 20));
-  var xpPct = Math.max(2, Math.min(100, Math.round((heroXp / heroXpToNext) * 100)));
-
-  var h = '<div class="pc-sum-ident">';
-
-  var achTier = window.AchievementManager ? AchievementManager.getCurrentWorldTier() : null; // v3.338.0 (H4)
-  h += '<div class="pc-sum-portrait' + (cls ? ' is-class-' + esc(cls.id) : '') + (achTier ? ' hf-tier-' + achTier : '') + '">';
-  if (hero && hero.image) {
-    h += '<img src="' + esc(hero.image) + '" alt="' + esc(_td(hero.name)) + '">';
-  } else {
-    h += '<div class="pc-portrait-placeholder">?</div>';
-  }
-  h += '<div class="pc-sum-lvl">' + esc(_t("Niveau {n}", { n: heroLevel })) + '</div>';
-  h += '</div>';
-
-  h += '<div class="pc-sum-col">';
-  h += '<div class="pc-sum-name">' + esc(game.playerName || (hero ? _td(hero.name) : _t("Sans nom"))) + '</div>';
-  var heroicTitle = window.AchievementManager ? AchievementManager.getTitle() : null; // v3.338.0 (H8) : titre porté
-  if (heroicTitle) h += '<div class="pc-sum-title">' + esc(_td(heroicTitle)) + '</div>';
-
-  if (cls) {
-    h += '<div class="pc-sum-class is-class-' + esc(cls.id) + '">' + renderIconOrEmojiHTML(cls.icon, "pc-sum-class-ico", _td(cls.label)) + ' ' + esc(_td(cls.label));
-    if (cls.resource && cls.resource.label) {
-      h += '<span class="pc-sum-class-res">' + esc(_td(cls.resource.label)) + '</span>';
-    }
-    h += '</div>';
-  }
-
-  h += '<div class="pc-sum-gauges">';
-  h += buildHeroSummaryGaugeHTML(_t("EXP", "unité"), "kgauge-xp", xpPct,
-    formatNumber(heroXp) + " / " + formatNumber(heroXpToNext));
-  var res = getHeroSummaryResource(cls);
-  if (res) {
-    h += buildHeroSummaryGaugeHTML(_td(res.label), "", Math.round((res.current / res.max) * 100),
-      formatNumber(res.current) + " / " + formatNumber(res.max),
-      res.current <= 0 ? " is-res-empty" : "");
-  }
-  h += '</div>';
-
-  h += '</div></div>';
-  return h;
-}
-
-function buildHeroSummaryCellHTML(label, value, hint) {
-  return '<div class="pc-sum-cell"><div class="pc-sum-cell-lbl">' + esc(label) + '</div>'
-    + '<div class="pc-sum-cell-val">' + esc(value) + '</div>'
-    + (hint ? '<div class="pc-sum-cell-hint">' + esc(hint) + '</div>' : '') + '</div>';
-}
-
-/* v3.228.0 : nom de la stat principale de la classe, avec le libellé de l'écran
-   Amélioration (« Force », pas « Puissance »). Vide si la règle n'est pas chargée. */
-function getHeroMainStatLabel() {
-  if (typeof getHeroMainStat !== "function") return "";
-  var key = getHeroMainStat(game.heroId).stat;
-  for (var i = 0; i < HEROS_STAT_ROWS.length; i++) {
-    if (HEROS_STAT_ROWS[i].key === key) return HEROS_STAT_ROWS[i].name;
-  }
-  return "";
-}
-
-/* Les cinq valeurs de combat, telles que le moteur les lit. Mêmes sources
-   que l'ancienne fiche : aucune formule nouvelle ici. La PROVENANCE de ces
-   valeurs sera le sujet du sous-onglet Stats, pas de celui-ci. */
-function buildHeroSummaryCombatHTML() {
-  var heroMaxHp = Math.max(1, Math.floor(Number(game.heroMaxHp || 1)));
-  var atk = (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveTapDamage() : 0;
-  var defPct = Math.round(Number(game.heroDefensePct || 0) * 100);
-  var vit = Math.round((window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function")
-    ? CombatEngine.getTotalCelerity() : 0);
-  var critPct = (typeof EquipmentManager !== "undefined")
-    ? (Math.round(EquipmentManager.effectiveCritChance() * 10) / 10) : 0;
-  var critMult = (typeof EquipmentManager !== "undefined")
-    ? (Math.round(EquipmentManager.effectiveCritMult() * 100) / 100) : 1;
-
-  var h = '<div class="ksec pc-section-label">' + _t("En combat") + '</div>';
-  h += '<div class="pc-sum-combat">';
-  h += buildHeroSummaryCellHTML(_t("PV", "unité"), formatNumber(heroMaxHp));
-  h += buildHeroSummaryCellHTML(_t("ATK", "unité"), formatNumber(atk), getHeroMainStatLabel()); // v3.228.0 : quelle stat porte les dégâts
-  h += buildHeroSummaryCellHTML(_t("VIT", "unité"), formatNumber(vit));
-  h += '<div class="pc-sum-cell is-wide">';
-  h += '<span class="pc-sum-cell-lbl">' + _t("DÉFENSE") + '</span><span class="pc-sum-cell-val">' + defPct + ' %</span>';
-  h += '<span class="pc-sum-cell-lbl">' + _t("CRITIQUE") + '</span><span class="pc-sum-cell-val">' + esc(critPct) + ' % · ×' + esc(critMult) + '</span>';
-  h += '</div>';
-  h += '</div>';
-  return h;
-}
-
-/* Raccourcis vers les deux autres sous-onglets. Chacun porte l'information
-   qui donne une raison d'y aller : marge d'entraînement d'un côté, aperçu du
-   kit de classe de l'autre. */
-function buildHeroSummaryJumpsHTML() {
-  var h = '<div class="ksec pc-section-label">' + _t("Aller plus loin") + '</div>';
-
-  var prog = getHeroTrainingProgress();
-  h += '<button type="button" class="pc-sum-jump" onclick="openHerosSheet(\'stats\')">';
-  h += '<span class="pc-sum-jump-ico"><img class=ico-inline src=images/Icons/subtabs/hero_stats.png></span>';
-  h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">' + _t("Stats") + '</span>';
-  h += '<span class="pc-sum-jump-s">' + (prog
-    ? (prog.left > 0
-      ? _t("{n} niveaux d’entraînement restants", { n: formatNumber(prog.left) })
-      : _t("Tout est entraîné au maximum"))
-    : _t("Entraînement")) + '</span></span>';
-  if (prog) {
-    h += '<span class="pc-sum-jump-prog"><span class="pc-sum-jump-pct">' + prog.pct + ' %</span>';
-    h += '<span class="pc-sum-bar' + (prog.left === 0 ? ' is-capped' : '') + '">'
-      + '<i style="width:' + Math.max(2, prog.pct) + '%"></i></span></span>';
-  }
-  h += '<span class="pc-sum-jump-chev">›</span>';
-  h += '</button>';
-
-  var actions = [];
-  if (window.ClassCombatManager && typeof ClassCombatManager.getAction === "function") {
-    ["skill1", "skill2", "skill3", "defense"].forEach(function (slot) {
-      var a = ClassCombatManager.getAction(slot);
-      if (a) actions.push(a);
-    });
-  }
-  h += '<button type="button" class="pc-sum-jump" onclick="openHerosSheet(\'abilities\')">';
-  h += '<span class="pc-sum-jump-ico"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png></span>';
-  h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">' + _t("Capacités") + '</span>';
-  h += '<span class="pc-sum-jump-s">' + (actions.length
-    ? _tn(actions.length, "{n} technique", "{n} techniques")
-    : _t("Aucune capacité")) + '</span></span>';
-  if (actions.length) {
-    // CLASS_ACTION_ICON_FALLBACK contient des CHEMINS D'IMAGE, pas des emojis
-    // (class-combat-system.js) : esc() les affichait tels quels. On passe par
-    // renderIconOrEmojiHTML, qui gère les deux cas — même helper que les
-    // cartes de capacité plus haut dans ce fichier.
-    h += '<span class="pc-sum-jump-kit">';
-    actions.forEach(function (a) {
-      var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id])
-        || (a.type === "defense" ? "images/Icons/combat_stats/stat_defense.png" : "images/Icons/scene/node_discovery.png");
-      h += '<span>' + renderIconOrEmojiHTML(icon, "pc-sum-jump-kit-ico", a.label ? _td(a.label) : "") + '</span>';
-    });
-    h += '</span>';
-  }
-  h += '<span class="pc-sum-jump-chev">›</span>';
-  h += '</button>';
-
-  // v3.244.0 : l'Ascension quitte le menu ☰ — c'est une étape de progression du héros,
-  // elle s'ouvre d'ici. Même verrou d'Histoire que l'ancienne case de menu.
-  if (typeof isTabUnlocked !== "function" || isTabUnlocked("ascension")) {
-    // v3.322.0 : l'Ascension devient la Mémoire (même onglet)
-    var mp = window.MemoryManager ? MemoryManager.getProgress() : { level: 0 };
-    var nPending = window.MemoryManager ? MemoryManager.getPendingLevels().length : 0;
-    h += '<button type="button" class="pc-sum-jump" onclick="switchTab(\'ascension\')">';
-    h += '<span class="pc-sum-jump-ico"><img class=ico-inline src=images/Icons/subtabs/ascension_tab.png></span>';
-    h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">' + _t("Mémoire") + '</span>';
-    h += '<span class="pc-sum-jump-s">' + _t("Niveau {n}", { n: mp.level }) + (nPending ? ' · ' + _t("un choix t'attend") : '') + '</span></span>';
-    h += '<span class="pc-sum-jump-chev">›</span>';
-    h += '</button>';
-  }
-
-  return h;
-}
-
-/* v3.363.0 (acte IV) — traits gagnés par l'Histoire. Un seul pour l'instant : La forme du roi
-   (choix « roi » = prendre). Aucun état propre : le choix noté fait foi. */
-function buildHeroSummaryTraitsHTML() {
-  var soi = !!(window.StoryQuestManager && StoryQuestManager.getChoice("roi") === "soi");
-  if (!soi) return "";
-  var h = '<div class="ksec pc-section-label">' + _t("Ce que tu portes") + '</div>';
-  h += '<div class="pc-sum-jump is-static">';
-  h += '<span class="pc-sum-jump-ico"><img class="ico-inline" src="images/Icons/memory/forme_du_roi.png" alt=""></span>';
-  h += '<span class="pc-sum-jump-txt"><span class="pc-sum-jump-t">' + _t("La forme du roi") + '</span>';
-  h += '<span class="pc-sum-jump-s">' + _t("Le silence ne te tient plus qu’un round.") + '</span></span>';
-  h += '</div>';
-  return h;
-}
-
 function buildHeroFicheHTML() {
-  // v3.425.0 (chantier Héros, lot H-2) : Résumé refait (ui/heros-screens-view.js). Les anciens
-  // morceaux (buildHeroSummary*) restent pour la feuille Stats et les tests de rendu.
+  // v3.425.0 (chantier Héros, lot H-2) : Résumé refait (ui/heros-screens-view.js) ;
+  // v3.449.1 : les anciens morceaux buildHeroSummary*, plus appelés, sont retirés.
   return herosFrameOpen("hs-page nb-page-frame-fill") + buildHerosResumeHTML() + '</div>';
 }
 
@@ -866,22 +671,12 @@ function herosFrameOpen(extraClass) {
 }
 window.herosFrameOpen = herosFrameOpen;
 
-/* Le cadre d'une sous-vue construite ailleurs (équipement, compagnons) devient le cadre
-   « Héros » : même titre, rail juste sous le bandeau. */
-function asHerosFrame(html, withRail) {
-  var out = String(html || "").replace(/data-kf-title="[^"]*"/, 'data-kf-title="' + esc(HEROS_FRAME_ICON + "|" + _t("Héros")) + '"');
-  if (!withRail) return out;
-  var i = out.indexOf(">", out.indexOf("nb-page-frame"));
-  return i < 0 ? out : out.slice(0, i + 1) + buildHerosRailHTML() + out.slice(i + 1);
-}
-
 /* La Boutique d'équipement s'installe à la Halle marchande dès qu'elle est bâtie (H-1).
    Avant, elle reste ici : un joueur doit pouvoir acheter sa première arme. */
 function isEquipShopAtHall() {
   return !!(window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function" && VillageBuildingManager.getLevel("hall") > 0);
 }
 window.isEquipShopAtHall = isEquipShopAtHall;
-
 
 /* v3.244.0 : sous-onglet Équipement — un segment Équipé / Sac (/ Boutique, transitoire
    jusqu'au lot N-2 qui l'emmène à la Halle marchande) au-dessus du contenu existant de

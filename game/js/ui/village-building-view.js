@@ -414,25 +414,6 @@ function goToPotions() {
 }
 window.goToPotions = goToPotions;
 
-
-/* Renvoi de la fiche de la Halle vers l'échoppe d'équipement. */
-function goToEquipShop() {
-  closeVillageBuildingSheet();
-  // v3.424.0 (H-1) : Halle bâtie -> son segment Échoppe ; avant, la Boutique reste dans Héros
-  if (typeof isEquipShopAtHall === "function" && isEquipShopAtHall()) {
-    if (typeof switchTab === "function") switchTab("village");
-    if (typeof setVillageSubTab === "function") setVillageSubTab("buildings");
-    hallSheetSegment = "shop";
-    openVillageBuildingSheet("hall");
-    hallSheetSegment = "shop";
-    if (openVillageBuildingId === "hall") openVillageBuildingSheet("hall");
-    return;
-  }
-  if (typeof switchTab === "function") switchTab("equip");
-  if (typeof setEquipSubTab === "function") setEquipSubTab("shop");
-}
-window.goToEquipShop = goToEquipShop;
-
 /* --- Tableau de contrats de la Taverne (rendu DANS la fiche) -------------- */
 function buildTavernContractsHTML() {
   if (!window.TavernManager) return "";
