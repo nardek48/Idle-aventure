@@ -15457,5 +15457,38 @@ console.log("\n[236] v3.449.0 — « Comme la dernière fois » dans la prépara
   }
 })();
 
+console.log("\n[237] v3.449.2 — Acide mordant renforcé (bouclier rongé à 25 %), Fiole noire sur l'or de fin de donjon");
+(function () {
+  try {
+    var fs = require("fs");
+    ok(g.COMBAT_ITEM_ACID_SHIELD_REDUCTION === 0.25 && g.BOSS_SHIELD_REDUCTION === 0.5, "bouclier : 50 % sans objet, 25 % rongé par l'Acide (option A1)");
+    var eng = fs.readFileSync(ROOT + "/js/systems/combat-engine.js", "utf8");
+    ok(/CombatItems\.holds\("shielded"\)\) \? COMBAT_ITEM_ACID_SHIELD_REDUCTION : BOSS_SHIELD_REDUCTION/.test(eng), "moteur : la réduction du bouclier lit l'Acide emporté");
+    ok(/25 %/.test(g.COMBAT_ITEMS.acide_mordant.desc) && /donjon/.test(g.COMBAT_ITEMS.fiole_noire.con), "descriptions à jour (Acide, Fiole)");
+    // Or de fin d'un donjon terminé, sans puis avec la Fiole bue
+    function finDonjon(fiole) {
+      game = freshCombat("knight"); giveWeapon(); game.dungeonRunsUsed = {};
+      g.DungeonManager.start(1, []);
+      game.sortie.loot.gold = 0; game.sortie.fioleUsed = !!fiole;
+      var or0 = game.gold;
+      g.DungeonManager.finish(true, g.DUNGEON_CONFIG.waveCount, "success");
+      return game.gold - or0;
+    }
+    var plein = finDonjon(false), fiole = finDonjon(true);
+    ok(plein > 0 && fiole === Math.floor(plein * 0.5), "donjon terminé : or de fin " + plein + ", divisé par deux si la Fiole a servi (" + fiole + ")");
+    // Abandon : la sortie est close avant la récompense partielle, la Fiole se lit dans son résumé
+    function abandon(fiole) {
+      game = freshCombat("knight"); giveWeapon(); game.dungeonRunsUsed = {};
+      g.DungeonManager.start(1, []); game.dungeonRun.wave = 9;
+      game.sortie.loot.gold = 0; game.sortie.fioleUsed = !!fiole;
+      var or0 = game.gold; g.DungeonManager.forfeit(); return game.gold - or0;
+    }
+    var ab = abandon(false), abF = abandon(true);
+    ok(ab > 0 && abF === Math.floor(ab * 0.5), "abandon : récompense partielle " + ab + ", divisée par deux avec la Fiole (" + abF + ")");
+  } catch (err) {
+    ok(false, "[237] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

@@ -577,6 +577,8 @@ var DungeonManager = {
     var tier = this.getById(game.dungeonRun.dungeonId);
     var runMarks = (game.dungeonRun.marks || []).slice();
     var markMult = this.getMarkRewardMult(runMarks.length); // v3.245.0 : cumul des Marques, appliqué ici (or et matériau de fin ne passent pas par goldMult)
+    // v3.449.2 : Fiole noire bue, or de fin ÷ 2 ; lue avant la clôture (l'abandon a déjà clos la sortie : son résumé)
+    var fioleMult = !window.CombatItems ? 1 : CombatItems.lootMultOf(game.sortie && game.sortie.active ? game.sortie : game.lastSortieSummary);
     if (success && window.SortieManager) SortieManager.end("success");
     if (outcome === "camp" && window.SortieManager) SortieManager.end("return"); // v3.430.0 : rien à perdre, le sac de l'étape 1 est banqué
     var campLoot = game.dungeonRun.campLoot || null; // v3.430.0 : pour le rapport de fin
@@ -631,6 +633,7 @@ var DungeonManager = {
     }
     if (success && window.MemoryManager) MemoryManager.souvenir("dungeonClear", _t("Souvenir : {x} terminé", { x: tier && tier.name ? _td(tier.name) : _t("donjon") }));
 
+    goldReward = Math.floor(goldReward * fioleMult);
     game.gold += goldReward;
     game.totalGoldEarned += goldReward;
 

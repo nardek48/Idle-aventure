@@ -151,7 +151,7 @@ var SortieManager = {
     if (window.CombatItems) CombatItems.onSortieEnd(s); // v3.442.0 : la Fiole qui n'a pas servi revient
     if (outcome === "success") this.grantMissionXp(s);
 
-    var summary = { outcome: outcome, context: s.context, kept: kept, lost: lost, kills: s.kills, potionsUsed: s.potionsUsed };
+    var summary = { outcome: outcome, context: s.context, kept: kept, lost: lost, kills: s.kills, potionsUsed: s.potionsUsed, fioleUsed: !!s.fioleUsed }; // v3.449.2 : lu par la fin de donjon
     var label = SORTIE_CONTEXT_LABELS[s.context] || s.context;
     if (outcome === "death") {
       addLog("💀 " + _t("Sortie perdue ({x}) : butin abandonné sur place — {l}.", { x: label, l: this.getLootSummary(lost) }), "event");

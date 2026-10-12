@@ -36,7 +36,7 @@ var COMBAT_ITEMS = {
   acide_mordant: {
     id: "acide_mordant", name: "Acide mordant", trait: "shielded", soften: true,
     icon: "images/Icons/combat_items/acide_mordant.png",
-    desc: "Contre le Bouclier : il ne tient qu'un round au lieu de deux. S'ajoute à ta règle du Grimoire."
+    desc: "Contre le Bouclier : il ne tient qu'un round au lieu de deux et ne retient plus que 25 % des dégâts au lieu de 50 %. S'ajoute à ta règle du Grimoire."
   },
   pastille_de_miel: {
     id: "pastille_de_miel", name: "Pastille de miel", trait: "silenced", soften: true,
@@ -48,12 +48,13 @@ var COMBAT_ITEMS = {
     id: "fiole_noire", name: "Fiole noire", trait: null, returnIfUnused: true,
     icon: "images/Icons/scene/items/item_black_vial.png",   // la Fiole de la besace des Petites Aventures : même objet, même image
     desc: "À 0 PV, tu te relèves avec 40 % des PV, une fois par sortie.",
-    con: "Si elle sert : butin de la sortie divisé par deux. Rendue si elle n'a pas servi."
+    con: "Si elle sert : butin de la sortie divisé par deux, or de fin de donjon aussi. Rendue si elle n'a pas servi."
   }
 };
 var COMBAT_ITEM_ORDER = ["baume_froid", "encens_amer", "huile_de_lame", "sel_de_fer", "acide_mordant", "pastille_de_miel", "fiole_noire"];
 var COMBAT_ITEM_FIOLE_HP_PCT = 0.40;
-var COMBAT_ITEM_FIOLE_LOOT_MULT = 0.5;
+var COMBAT_ITEM_FIOLE_LOOT_MULT = 0.5;   // v3.449.2 : aussi sur l'or de fin de donjon (dungeon-system.js)
+var COMBAT_ITEM_ACID_SHIELD_REDUCTION = 0.25; // v3.449.2 : bouclier rongé par l'Acide (option A1), au lieu de BOSS_SHIELD_REDUCTION
 
 /* Rangés dans l'Entrepôt (fabriqués, plafond 999 comme les rations) : ni caravane ni vente. */
 COMBAT_ITEM_ORDER.forEach(function (id) {

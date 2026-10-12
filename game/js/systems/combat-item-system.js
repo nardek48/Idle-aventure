@@ -88,7 +88,7 @@ var CombatItems = {
   softenShield: function (e, item) {
     if (Number(e.shieldRounds || 0) <= 1) return false;
     e.shieldRounds = 1;
-    addLog("🧪 " + _t("{o} : le bouclier de {x} ne tiendra qu'un round.", { o: _td(item.name), x: _td(e.name || "") }), "event");
+    addLog("🧪 " + _t("{o} : le bouclier de {x} ne tiendra qu'un round, rongé (25 %).", { o: _td(item.name), x: _td(e.name || "") }), "event");
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
     return true;
   },

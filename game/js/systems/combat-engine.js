@@ -1684,7 +1684,7 @@ var CombatEngine = {
     }
 
     if ((foe.isBoss || foe.archetype === "shielded" || foe.wallShield) && Number(foe.shieldRounds || 0) > 0) { // v3.429.0 : mur du Bâtisseur
-      dmg *= (1 - BOSS_SHIELD_REDUCTION);
+      dmg *= (1 - ((window.CombatItems && CombatItems.holds("shielded")) ? COMBAT_ITEM_ACID_SHIELD_REDUCTION : BOSS_SHIELD_REDUCTION)); // v3.449.2 : Acide mordant (A1)
     }
 
     if (foe.archetype === "armored" && typeof getArmoredEffectiveDamageReduction === "function") {
