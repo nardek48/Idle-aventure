@@ -15448,5 +15448,40 @@ console.log("\n[235] v3.448.11 — Objets de combat dans le Sac");
   } finally { g.WarehouseManager.removeResource("baume_froid", 2); run("selectedInventoryKey = null;"); }
 })();
 
+/* [236] v3.449.0 — « Comme la dernière fois » : le dernier départ (potions à bonus, objets) est gardé dans la
+   sauvegarde ; un toucher recoche ce qui est en stock et nomme ce qui manque. */
+console.log("\n[236] v3.449.0 — « Comme la dernière fois » dans la préparation de sortie");
+(function () {
+  var sv = { last: game.lastSortiePrep, pots: JSON.stringify(game.potionsOwned || {}), huile: g.WarehouseManager.getAmount("huile_de_lame"), baume: g.WarehouseManager.getAmount("baume_froid") };
+  try {
+    var buff = g.POTIONS_DB.filter(function (p) { return p.perRun; })[0].id;
+    game.lastSortiePrep = { buffs: [buff], items: ["huile_de_lame", "baume_froid"] };
+    var data = JSON.parse(JSON.stringify(run("buildSaveData()")));
+    ok(data.lastSortiePrep && data.lastSortiePrep.items.length === 2, "buildSaveData garde le dernier départ");
+    game.lastSortiePrep = null;
+    run("game.lastSortiePrep = restoreLastSortiePrep(" + JSON.stringify(data.lastSortiePrep) + ");");
+    ok(game.lastSortiePrep && game.lastSortiePrep.buffs[0] === buff, "le chargement le rend");
+    ok(run("restoreLastSortiePrep({ buffs: ['inconnue'], items: ['pas_un_objet'] })") === null, "le chargement écarte les identifiants inconnus");
+    // État de stock : 1 potion, 1 Huile, 0 Baume
+    game.potionsOwned[buff] = 1;
+    g.WarehouseManager.removeResource("baume_froid", g.WarehouseManager.getAmount("baume_froid"));
+    if (g.WarehouseManager.getAmount("huile_de_lame") < 1) g.WarehouseManager.addResource("huile_de_lame", 1, true);
+    run("sortiePrep = { opts: { onGo: function () {} }, preset: null, buffs: {}, items: [], pick: -1 };");
+    ok(/Comme la dernière fois/.test(run("buildSortiePrepAgainHTML()")), "le bouton s'affiche quand un départ est gardé");
+    run("sortiePrepAgain();");
+    var sp = run("sortiePrep");
+    ok(sp.buffs[buff] === true && sp.items.indexOf("huile_de_lame") !== -1, "un toucher recoche la potion et l'Huile en stock");
+    ok(sp.items.indexOf("baume_froid") === -1 && sp.againMissing.indexOf("baume_froid") !== -1, "le Baume, absent du stock, est nommé « Plus en stock »");
+    run("closeSortiePrep(); fullResetState();");
+    ok(game.lastSortiePrep === null, "« Effacer la partie » oublie le dernier départ");
+    var src = fs.readFileSync(path.join(ROOT, "js/ui/sortie-prep-view.js"), "utf8");
+    ok(/if \(buffsPris\.length \|\| objetsPris\.length\) game\.lastSortiePrep =/.test(src), "un départ sans potion ni objet n'efface pas le précédent");
+  } catch (err) {
+    ok(false, "[236] exception : " + err.message);
+  } finally {
+    run("sortiePrep = null;");
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

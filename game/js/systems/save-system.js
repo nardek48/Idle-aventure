@@ -478,6 +478,7 @@ function buildSaveData() {
     // v3.379.0 : potion automatique du mode Grimoire (systems/potion-system.js)
     potionAuto: game.potionAuto || null,
     grimoireTarget: game.grimoireTarget || "proche", // v3.428.0 (Ruines) : réglage « Cible »
+    lastSortiePrep: game.lastSortiePrep || null, // v3.449.0 : « Comme la dernière fois » (potions à bonus, objets)
     // v3.34.0 : lastSpecialUse/specialBuffExpires/specialBuffPct/
     // lastDefenseUse/defenseBuffExpires retirés (ancien système), voir
     // classResource/classCooldowns/classActiveDefense ci-dessous.
@@ -579,6 +580,15 @@ function signalerSauvegardeImpossible(e) {
     : _t("Sauvegarde impossible pour l'instant. Exporte ta partie (Paramètres) pour ne rien perdre.");
   if (typeof showToast === "function") showToast("⚠️ " + msg, 7000);
   if (typeof addLog === "function") addLog("⚠️ " + msg, "event");
+}
+
+/* v3.449.0 : dernier départ gardé, réduit aux potions à bonus et objets de combat connus. */
+function restoreLastSortiePrep(v) {
+  if (!v || typeof v !== "object") return null;
+  var potions = (typeof POTIONS_DB !== "undefined") ? POTIONS_DB.map(function (p) { return p.id; }) : [];
+  var buffs = (Array.isArray(v.buffs) ? v.buffs : []).filter(function (id) { return potions.indexOf(id) !== -1; });
+  var items = (Array.isArray(v.items) ? v.items : []).filter(function (id) { return !!(window.COMBAT_ITEMS && COMBAT_ITEMS[id]); });
+  return (buffs.length || items.length) ? { buffs: buffs, items: items } : null;
 }
 
 /* Recharge une sauvegarde dans `game`. Aucun recalcul de stats dérivées ici — rôle de StatsSystem.recalcStats(), appelé après. */
@@ -766,6 +776,7 @@ function restoreBaseState(d) {
   // haut dans ce fichier pour le contexte des 2 chemins existants).
   // v3.379.0 : potion automatique — une sauvegarde d'avant n'a pas le champ : « Jamais » (rien ne change pour elle)
   game.grimoireTarget = (d.grimoireTarget === "faible" || d.grimoireTarget === "soutien") ? d.grimoireTarget : "proche"; // v3.428.0
+  game.lastSortiePrep = restoreLastSortiePrep(d.lastSortiePrep); // v3.449.0
   game.potionAuto = (window.PotionAutoManager && typeof PotionAutoManager.normalize === "function")
     ? PotionAutoManager.normalize(d.potionAuto, window.POTION_AUTO_OLD_SAVE) : (d.potionAuto || null);
   game.grimoirePresets = Array.isArray(d.grimoirePresets)
@@ -1177,6 +1188,7 @@ function fullResetState() {
   // v3.379.0 : partie neuve = potion automatique « Normal », dernière gardée pour le boss
   game.potionAuto = { threshold: "tard", keepForBoss: true }; // v3.380.0 : « Tard » par défaut
   game.grimoireTarget = "proche"; // v3.428.0 (Ruines) : réglage « Cible »
+  game.lastSortiePrep = null; // v3.449.0
   game.hasSeenOnboarding = false;
   game.genericTutorialsSeen = {}; // v3.107.9
 

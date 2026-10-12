@@ -165,6 +165,7 @@ function createInitialGameState() {
     grimoirePresets: [],
     grimoireTarget: "proche", // v3.428.0 (Ruines) : réglage « Cible » du Grimoire
     potionAuto: { threshold: "tard", keepForBoss: true }, // v3.380.0 : « Tard » par défaut sur une partie neuve (banc, potion-system.js)
+    lastSortiePrep: null, // v3.449.0 : potions à bonus et objets du dernier départ (« Comme la dernière fois »)
 
     classResource: null,
     classCooldowns: {},

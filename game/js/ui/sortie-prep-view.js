@@ -121,6 +121,7 @@ function buildSortiePrepHTML() {
   }
 
   h += buildSortiePrepTeamHTML(grim);
+  h += buildSortiePrepAgainHTML();   // v3.449.0 : « Comme la dernière fois »
   h += buildSortiePrepItemsHTML(grim);
   h += buildSortiePrepPotionsHTML();
 
@@ -303,6 +304,48 @@ function buildSortiePrepItemsHTML(grim) {
   return h + '</div>';
 }
 
+/* v3.449.0 (décision Seb, option A) : « COMME LA DERNIÈRE FOIS ». Le dernier départ avec des potions à
+   bonus ou des objets est gardé (game.lastSortiePrep) ; un toucher les recoche, s'ils sont en stock. */
+function sortiePrepLast() {
+  var l = game.lastSortiePrep;
+  return (l && typeof l === "object" && ((l.buffs || []).length || (l.items || []).length)) ? l : null;
+}
+function sortiePrepLastName(id) {
+  var d = (window.COMBAT_ITEMS && COMBAT_ITEMS[id]) || (typeof POTIONS_DB !== "undefined" ? POTIONS_DB.filter(function (p) { return p.id === id; })[0] : null);
+  return d ? _td(d.name) : id;
+}
+function buildSortiePrepAgainHTML() {
+  var l = sortiePrepLast();
+  if (!l) return "";
+  var noms = (l.buffs || []).concat(l.items || []).map(sortiePrepLastName);
+  var h = '<div class="sp-again"><button type="button" class="kbtn is-sec" onclick="sortiePrepAgain()">'
+    + '<img class="ico-inline" src="images/Icons/system/auto_repeat.png" alt=""> ' + _t("Comme la dernière fois") + '</button>'
+    + '<small>' + esc(noms.join(", ")) + '</small>';
+  if (sortiePrep.againMissing && sortiePrep.againMissing.length) {
+    h += '<div class="cp-behavior-hint">' + esc(_t("Plus en stock : {x}", { x: sortiePrep.againMissing.map(sortiePrepLastName).join(", ") })) + '</div>';
+  }
+  return h + '</div>';
+}
+function sortiePrepAgain() {
+  var l = sortiePrepLast();
+  if (!sortiePrep || !l) return;
+  var manque = [], banned = !!(window.AfflictionManager && typeof AfflictionManager.arePotionsForbidden === "function" && AfflictionManager.arePotionsForbidden());
+  (l.buffs || []).forEach(function (id) {
+    if (window.PotionManager && PotionManager.isArmed(id)) return;   // déjà bue pour cette sortie
+    if (!banned && window.PotionManager && PotionManager.getStock(id) > 0) sortiePrep.buffs[id] = true;
+    else manque.push(id);
+  });
+  var places = window.CombatItems ? CombatItems.slotCount() : 1, items = [];
+  (l.items || []).forEach(function (id) {
+    if (items.length < places && items.indexOf(id) === -1 && window.CombatItems && CombatItems.getStock(id) > 0) items.push(id);
+    else manque.push(id);
+  });
+  sortiePrep.items = items;
+  sortiePrep.pick = -1;
+  sortiePrep.againMissing = manque;
+  renderSortiePrep();
+}
+
 /* Potions : le soin se lit (bu en combat), les potions à bonus se boivent au départ. */
 function buildSortiePrepPotionsHTML() {
   if (!window.PotionManager) return "";
@@ -355,6 +398,10 @@ function confirmSortiePrep() {
   var s = sortiePrep;
   closeSortiePrep();
   if (s.preset && typeof loadGrimoirePreset === "function") loadGrimoirePreset(s.preset);
+  // v3.449.0 : on retient ce départ s'il emportait des potions à bonus ou des objets
+  var buffsPris = Object.keys(s.buffs).filter(function (id) { return s.buffs[id] && !PotionManager.isArmed(id); });
+  var objetsPris = s.items.filter(Boolean);
+  if (buffsPris.length || objetsPris.length) game.lastSortiePrep = { buffs: buffsPris, items: objetsPris };
   Object.keys(s.buffs).forEach(function (id) { if (s.buffs[id] && !PotionManager.isArmed(id)) PotionManager.usePotion(id); });
   s.opts.onGo();
   if (window.CombatItems) CombatItems.takeForSortie(s.items.filter(Boolean));   // v3.441.0 : une fois la sortie ouverte
@@ -376,4 +423,5 @@ window.sortiePrepPrio = sortiePrepPrio;
 window.sortiePrepBuff = sortiePrepBuff;
 window.sortiePrepPick = sortiePrepPick;
 window.sortiePrepItem = sortiePrepItem;
+window.sortiePrepAgain = sortiePrepAgain;
 window.sortiePrepEditRules = sortiePrepEditRules;

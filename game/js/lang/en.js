@@ -5087,5 +5087,7 @@ I18n.register("en", {
   "Sauvegarde impossible pour l'instant. Exporte ta partie (Paramètres) pour ne rien perdre.": "Cannot save right now. Export your game (Settings) so nothing is lost.",
   "Consommables": "Consumables",
   "Aucune potion ni préparation de combat en stock.": "No potions or combat preparations in stock.",
-  "Se prépare à l'Apothicaire. S'emporte au départ, dans la préparation de sortie.": "Made at the Apothecary. Taken along when setting out, in the run preparation."
+  "Se prépare à l'Apothicaire. S'emporte au départ, dans la préparation de sortie.": "Made at the Apothecary. Taken along when setting out, in the run preparation.",
+  "Comme la dernière fois": "Same as last time",
+  "Plus en stock : {x}": "Out of stock: {x}"
 });

@@ -182,3 +182,8 @@
 .sp-rule em { flex: none; padding: 1px 7px; border-radius: 10px; font-size: 12px; font-style: normal; font-weight: 800; background-color: rgba(143, 191, 90, 0.2); color: var(--c-green-700-soft); }
 .sp-rules-edit { display: flex; width: 100%; justify-content: center; margin-top: 6px; }
 .sp-trait-fix { flex: none; min-height: 32px; padding: 2px 10px; border: 1.5px solid var(--sheet-card-bd); border-radius: 16px; background: transparent; color: var(--sheet-ink); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+
+/* v3.449.0 : « Comme la dernière fois », avant les Objets */
+.sp-again { display: grid; gap: 4px; margin: 4px 0 10px; }
+.sp-again .kbtn { justify-self: start; }
+.sp-again small { font-size: 12px; color: var(--sheet-ink-dim); }
