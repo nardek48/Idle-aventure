@@ -15265,5 +15265,19 @@ console.log("\n[227] v3.448.3 — Images allégées : écran titre et barre d'on
   });
 })();
 
+/* [228] v3.448.4 — en.js (424 Ko) n'est chargé qu'en anglais : index.html l'insère après i18n.js,
+   sous condition ; les outils (index-scripts.js) le voient toujours, et il reste précaché. */
+console.log("\n[228] v3.448.4 — Dictionnaire anglais chargé seulement en anglais");
+(function () {
+  var html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8").replace(/<!--[\s\S]*?-->/g, "");
+  ok(html.indexOf('<script src="js/lang/en.js"></script>') === -1, "plus de chargement inconditionnel de en.js");
+  ok(/<script>if \(I18n\.lang\(\) === "en"\) document\.write\('<script src="js\/lang\/en\.js"><\\\/script>'\);<\/script>/.test(html),
+    "en.js inséré seulement si I18n.lang() vaut « en »");
+  var list = require(path.join(__dirname, "index-scripts.js"))(ROOT);
+  var iI = list.indexOf("js/core/i18n.js"), iE = list.indexOf("js/lang/en.js");
+  ok(iI !== -1 && iE === iI + 1, "les outils voient en.js juste après i18n.js");
+  ok(fs.readFileSync(path.join(ROOT, "sw.js"), "utf8").indexOf('"./js/lang/en.js"') !== -1, "en.js reste précaché (bascule hors-ligne)");
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
