@@ -23,6 +23,11 @@ var QuestEnemyManager = {
 
     WorldManager.worldIndex = worldIdx;
     WorldManager.adventureIndex = quest.adventureIndex;
+    /* v3.448.2 : heroRef de quête = héros de référence de l'ajustement D (fin de chapitre jouée sur
+       l'aventure 0, ex. le Trône de sable). Absent : la référence de l'aventure, comme avant. */
+    var quDef = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || quest;
+    var savedHeroRef = WorldManager._heroRefKey;
+    WorldManager._heroRefKey = quDef.heroRef || null;
     var adventure = WorldManager.getAdventure();
     var enemyCount = (adventure && adventure.enemyCount) || 1;
     WorldManager.enemyIndex = forceBoss ? Math.max(0, enemyCount - 1) : 0;
@@ -54,6 +59,7 @@ var QuestEnemyManager = {
       WorldManager.worldIndex = savedWorldIndex;
       WorldManager.adventureIndex = savedAdventureIndex;
       WorldManager.enemyIndex = savedEnemyIndex;
+      WorldManager._heroRefKey = savedHeroRef;
       return groupe;
     }
 
@@ -95,6 +101,7 @@ var QuestEnemyManager = {
     WorldManager.worldIndex = savedWorldIndex;
     WorldManager.adventureIndex = savedAdventureIndex;
     WorldManager.enemyIndex = savedEnemyIndex;
+    WorldManager._heroRefKey = savedHeroRef;
 
     return enemy;
   },

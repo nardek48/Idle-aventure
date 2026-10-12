@@ -15219,5 +15219,31 @@ console.log("\n[225] v3.448.1 — Sauvegarde illisible : copie saine, mise de c�
   }
 })();
 
+/* [226] v3.448.2 — le Trône de sable (fin du chapitre II, déclaré sur l'aventure 0) ajuste ses ennemis
+   au héros de FIN de Désert (heroRef), plus au héros de début de Désert : Nezzam passait à 0-15 %. */
+console.log("\n[226] v3.448.2 — Trône de sable : référence de l'ajustement au héros (heroRef)");
+(function () {
+  var W = g.WorldManager, CF = g.CombatForecast, Q = g.ADVENTURE_QUESTS.aq_desert_trone;
+  var dmg0 = CF.getHeroDamagePerRound, ehp0 = CF.getHeroEffectiveHp, gen0 = W.generateEnemy, vus = [];
+  try {
+    CF.getHeroDamagePerRound = function () { return 340; };   // héros du profil campagne
+    CF.getHeroEffectiveHp = function () { return 1400; };
+    W.generateEnemy = function () { vus.push(W.getHeroScale()); return gen0.apply(this, arguments); };
+    ok(Q.heroRef === "joueurDesert2" && Q.adventureIndex === 0, "le Trône déclare heroRef joueurDesert2 (aventure 0)");
+    var boss = g.QuestEnemyManager.spawnFor(Q, true);
+    ok(boss && boss.id === "nezzam", "spawnFor donne Nezzam");
+    ok(vus.length && vus[0].hp === 1, "PV de Nezzam : pas d'ajustement (340 < 371 × 1,15), ×" + (vus[0] && vus[0].hp.toFixed(2)));
+    ok(W._heroRefKey === null, "la référence de quête est rendue après la génération");
+    W.worldIndex = 1; W.adventureIndex = 0;
+    ok(W.getHeroScale().hp > 1.1, "hors quête, l'aventure 0 garde sa référence (début de Désert)");
+    ok(Q.enemyPowerMult === 6 && Q.bossPowerMult === 1.4, "calage v3.448.2 : rencontres ×6, Nezzam ×1,4");
+  } catch (err) {
+    ok(false, "[226] exception : " + err.message);
+  } finally {
+    CF.getHeroDamagePerRound = dmg0; CF.getHeroEffectiveHp = ehp0; W.generateEnemy = gen0;
+    W._heroRefKey = null; W.worldIndex = 0; W.adventureIndex = 0;
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

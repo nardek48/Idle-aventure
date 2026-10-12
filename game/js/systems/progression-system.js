@@ -140,13 +140,15 @@ var WorldManager = {
      de l'aventure en cours face au héros (data/worlds.js, WORLD_HERO_SCALING). Coupé par
      _heroScaleOff (les Petites Aventures appliquent leur propre ajustement) et dans les Cycles. */
   _heroScaleOff: false,
+  _heroRefKey: null, // v3.448.2 : référence imposée par la quête en cours de génération (heroRef)
   getHeroScale: function () {
     var none = { hp: 1, power: 1 };
     if (this._heroScaleOff || (game.cycleCount || 0) > 0) return none;
     if (!window.WORLD_HERO_SCALING || !window.CombatForecast || typeof CombatForecast.getHeroScale !== "function") return none;
     var w = WORLDS[this.worldIndex], refs = w ? WORLD_HERO_SCALING.refByWorld[w.id] : null;
     if (!refs) return none;
-    var key = refs[Math.min(refs.length - 1, Math.max(0, Number(this.adventureIndex || 0)))];
+    var key = (this._heroRefKey && HERO_SCALING_REFS[this._heroRefKey]) ? this._heroRefKey
+      : refs[Math.min(refs.length - 1, Math.max(0, Number(this.adventureIndex || 0)))];
     return CombatForecast.getHeroScale(key, WORLD_HERO_SCALING);
   },
 

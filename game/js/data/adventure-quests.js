@@ -270,16 +270,17 @@ var ADVENTURE_QUESTS = {
     category: "side",
     worldId: "desert",
     adventureIndex: 0,
+    heroRef: "joueurDesert2", // v3.448.2 : fin du chapitre II, pas le héros de début de Désert (aventure 0)
     requiresVoie: "maddoc",
     encounters: [
       { group: ["sandwarrior", "sandwarrior"], groupHpMult: 0.55 },
       { group: ["scarab", "scarab", "scarab"], groupHpMult: 0.35 },
       { enemy: "sandworm" }
     ],
-    // Banc (profil campagne, 60 runs) : 90 / 78 / 95 % (Ch./Rô./Ma.), 67-73 % de PV à l'arrivée,
-    // 35-46 % à la fin, 1,6-1,9 potion, Nezzam en 24-28 rounds. Le Mage reste le plus à l'aise.
+    // v3.448.2 (heroRef fin de Désert, recalé) : banc campagne 40 runs 75 / 88 / 98 % (Ch./Rô./Ma.),
+    // 63-68 % de PV à l'arrivée, 27-46 % à la fin, 1,4-2 potions, Nezzam en 23-28 rounds. Avant : 6,5 et 1,7.
     encounterHpMult: 2.4,
-    enemyPowerMult: 6.5,
+    enemyPowerMult: 6,
     bossId: "nezzam",
     bossArchetype: "vampiric",
     bossPhases: [
@@ -288,7 +289,7 @@ var ADVENTURE_QUESTS = {
       { atPct: 0.3, archetype: "silenced", label: "il prend ta voix", line: "« Ici, on ne parle pas au roi. »" }
     ],
     bossHpMult: 4,
-    bossPowerMult: 1.7,
+    bossPowerMult: 1.4,
     bossLog: "Il revient par le fleuve. Il n'y a plus de fleuve.",
     name: "Le trône de sable",
     story: "Il revient par le lit du fleuve. Tiens le lit jusqu'au trône, puis tiens le trône.",
