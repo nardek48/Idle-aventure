@@ -4757,7 +4757,7 @@ I18n.register("en", {
   "Le sceau de la salle": "The Room's Seal",
   "Varrek se relève. Personne ne lui a dit de rester à terre.": "Varrek gets back up. Nobody told him to stay down.",
   "Une pierre taillée en coin, plus large en haut qu'en bas. Elle tient une arche à elle seule. Matériau de la Forge 4 et des dernières reforges.": "A wedge-cut stone, wider at the top than at the bottom. It holds up an arch on its own. Material for Forge 4 and the last reforges.",
-  "Pierres errantes et Pierre taillées au Tailleur de pierre (Carrière)": "Wandering Stones and Stone cut at the Stonemason (Quarry)",
+  "Se taille au Tailleur de pierre (Carrière), à partir de Pierres errantes et de Pierre": "Cut at the Stonemason (Quarry), from Wandering Stones and Stone",
   // v3.432.0 — Ruines, acte IV (livraison 1) : étapes 16-18, le Cœur, Vers le Cœur, Le dernier trait
   "Dans le Cœur, ils sont des dizaines. Des bâtisseurs, chacun avec sa pierre. Ils se battent contre ce qui n'est pas dans le plan.": "In the Heart, there are dozens of them. Builders, each with his stone. They fight whatever isn't in the plan.",
   "Vaincre {target} rencontres dans le Cœur": "Win {target} encounters in the Heart",

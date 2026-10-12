@@ -15407,5 +15407,26 @@ console.log("\n[233] v3.448.9 — Erreurs rattrapées tracées, sauvegarde impos
   } finally { g.localStorage.setItem = set0; g.showToast = toast0; run("sauvegardeImpossibleVueA = 0;"); }
 })();
 
+/* [234] v3.448.10 — icônes ramenées à 384 px au plus (affichées à 86 px au plus, ×3), anciens PNG de
+   l'écran titre et de la barre supprimés, provenance de la Clé de voûte réécrite. */
+console.log("\n[234] v3.448.10 — Images allégées (icônes), texte de la Clé de voûte");
+(function () {
+  function dims(f) { // largeur et hauteur d'un PNG, lues dans son en-tête IHDR
+    var b = fs.readFileSync(f); return [b.readUInt32BE(16), b.readUInt32BE(20)];
+  }
+  var trop = [];
+  (function walk(d) {
+    fs.readdirSync(d).forEach(function (n) {
+      var p = path.join(d, n);
+      if (fs.statSync(p).isDirectory()) return walk(p);
+      if (/\.png$/i.test(n)) { var wh = dims(p); if (Math.max(wh[0], wh[1]) > 400) trop.push(path.relative(ROOT, p) + " " + wh.join("×")); }
+    });
+  })(path.join(ROOT, "images", "Icons"));
+  ok(trop.length === 0, "aucune icône au-delà de 400 px (les lourdes ramenées à 384)" + (trop.length ? " — " + trop.slice(0, 5).join(", ") : ""));
+  ok(["images/Borders/menu-bar-gold.png", "images/TitleScreen/title_background_new.png", "images/TitleScreen/titre_logo.png"].every(function (f) { return !fs.existsSync(path.join(ROOT, f)); }),
+    "les trois PNG remplacés par du WebP (v3.448.3) sont supprimés");
+  ok(g.WAREHOUSE_RESOURCES.cle_de_voute.sourceHint === "Se taille au Tailleur de pierre (Carrière), à partir de Pierres errantes et de Pierre", "provenance de la Clé de voûte réécrite");
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
