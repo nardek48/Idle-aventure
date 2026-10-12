@@ -212,6 +212,9 @@ var HERO_SCALING_REFS = {
    Référence par aventure du monde. */
 var WORLD_HERO_SCALING = {
   exp: 0.5, margin: 1.15, cap: 2.5,
+  /* v3.448.7 : gabarit de PV effectifs par classe (la puissance ennemie suit PV effectifs ÷ gabarit).
+     Chevalier ÷1,3, calé au banc : Nuée 53 → 88 %, Trône 70 → 100 % ; Rôdeur et Mage inchangés. */
+  classEhpGabarit: { knight: 1.3 },
   /* v3.428.0 (Ruines, U-1) : le héros de fin du chapitre II. Gardé par décision de Seb du 09/10/2026 :
      tous les bancs des Ruines ont été faits avec cette référence. */
   refByWorld: { forest: ["joueurForet", "joueurForet"], desert: ["joueurDesert1", "joueurDesert2"], ruins: ["joueurDesert2", "joueurDesert2"] }

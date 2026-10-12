@@ -141,7 +141,11 @@ var CombatForecast = {
     if (!ref || !cfg) return { hp: 1, power: 1 };
     var margin = Number(cfg.margin || 1), exp = Number(cfg.exp || 0), cap = Number(cfg.cap || 1);
     var f = function (ratio) { return Math.min(cap, Math.max(1, Math.pow(Math.max(0, ratio) / margin, exp))); };
-    return { hp: f(this.getHeroDamagePerRound() / ref.dmg), power: f(this.getHeroEffectiveHp() / ref.ehp) };
+    /* v3.448.7 : PV effectifs ramenés au gabarit de la classe (cfg.classEhpGabarit) : le Chevalier encaisse
+       mieux par nature, il n'est plus frappé plus fort pour cela (décision de Seb du 12/10, option B). */
+    var cls = (cfg.classEhpGabarit && typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
+    var gab = (cls && Number(cfg.classEhpGabarit[cls.id])) || 1;
+    return { hp: f(this.getHeroDamagePerRound() / ref.dmg), power: f(this.getHeroEffectiveHp() / gab / ref.ehp) };
   },
 
   /* Soin disponible pendant le combat : les potions de soin en stock, dans la limite du cap

@@ -13604,7 +13604,7 @@ console.log("\n[193] v3.422.0 — Débit des zones, pools des secteurs, groupe d
 console.log("\n[194] v3.423.0 — Difficulté : les ennemis suivent un peu la force réelle du héros, Souffle et repos");
 (function () {
   try {
-    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
+    run("fullResetState(); game.playerName='Test'; game.heroId='mage'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;"); // v3.448.7 : Mage, la formule sans gabarit de classe (le Chevalier est vu en [231])
     run("WorldManager.worldIndex = 1; WorldManager.adventureIndex = 1; WorldManager.enemyIndex = 3;");
     var h0 = run("WorldManager.getHeroScale()");
     ok(h0.hp === 1 && h0.power === 1, "héros neuf au Désert : aucun ajustement (jamais sous ×1)");
@@ -15328,6 +15328,27 @@ console.log("\n[230] v3.448.6 — Palier Rare : « Ce qui manque », et où");
   } finally {
     game.equipped = sv.eq; game.gold = sv.gold; game.village = JSON.parse(sv.vb); game.forge = JSON.parse(sv.fg); game.worldsEverReached = sv.wr;
   }
+})();
+
+/* [231] v3.448.7 — la puissance ennemie suit les PV effectifs ramenés au gabarit de la classe : le
+   Chevalier n'est plus frappé plus fort parce qu'il encaisse mieux (Nuée 53 → 88 %). */
+console.log("\n[231] v3.448.7 — Ajustement au héros : gabarit de PV effectifs par classe");
+(function () {
+  var CF = g.CombatForecast, d0 = CF.getHeroDamagePerRound, e0 = CF.getHeroEffectiveHp, h0 = game.heroId;
+  try {
+    ok(g.WORLD_HERO_SCALING.classEhpGabarit && g.WORLD_HERO_SCALING.classEhpGabarit.knight === 1.3, "gabarit du Chevalier : 1,3");
+    CF.getHeroDamagePerRound = function () { return 300; }; CF.getHeroEffectiveHp = function () { return 1500; };
+    var heroDe = function (cid) { var c = null; g.CLASSES.forEach(function (k) { if (k.id === cid) c = k; }); return c.heroIds[0]; };
+    game.heroId = heroDe("knight"); var k = CF.getHeroScale("joueurDesert2", g.WORLD_HERO_SCALING);
+    game.heroId = heroDe("mage"); var m = CF.getHeroScale("joueurDesert2", g.WORLD_HERO_SCALING);
+    ok(Math.abs(m.power - Math.sqrt(1500 / 971 / 1.15)) < 1e-9, "Mage : puissance × (PV eff. / réf. / 1,15)^0,5 (×" + m.power.toFixed(3) + ")");
+    ok(Math.abs(k.power - Math.max(1, Math.sqrt(1500 / 1.3 / 971 / 1.15))) < 1e-9 && k.power < m.power, "Chevalier : mêmes PV effectifs, puissance ramenée au gabarit (×" + k.power.toFixed(3) + ")");
+    ok(k.hp === m.hp, "la part « PV des ennemis » ne dépend pas de la classe");
+    var pa = CF.getHeroScale("joueurDesert2", { exp: 0.5, margin: 1.15, cap: 2.5 });
+    ok(pa.power === m.power, "sans classEhpGabarit (Petites Aventures, Labyrinthe), rien ne change");
+  } catch (err) {
+    ok(false, "[231] exception : " + err.message);
+  } finally { CF.getHeroDamagePerRound = d0; CF.getHeroEffectiveHp = e0; game.heroId = h0; }
 })();
 
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
