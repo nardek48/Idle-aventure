@@ -5333,9 +5333,14 @@ console.log("\n[47] v3.245.0 \u2014 Refonte des Donjons");
   function clearRun(marks) {
     game.heroHp = game.heroMaxHp;
     game.dungeonRunsUsed = {}; // v3.358.0 : le test enchaîne plus de 3 sorties dans la journée
-    D.start(1, marks);
-    var guard = 60;
-    while (game.dungeonRun.active && guard-- > 0) { game.enemy.hp = 1; game.enemy.chargeIn = 99; game.enemy.engageIn = 0; game.heroHp = game.heroMaxHp; g.CombatEngine.heroAction("basic"); }
+    // v3.448.8 : sans les événements aléatoires après un kill (trésor, Bénédiction = 5 × l'or du kill),
+    // qui gonflaient parfois le run nu et faisaient échouer la comparaison ×1,3 (2 fois sur 12 en CI).
+    var evt0 = g.CombatEngine.triggerRandomEvent; g.CombatEngine.triggerRandomEvent = function () {};
+    try {
+      D.start(1, marks);
+      var guard = 60;
+      while (game.dungeonRun.active && guard-- > 0) { game.enemy.hp = 1; game.enemy.chargeIn = 99; game.enemy.engageIn = 0; game.heroHp = game.heroMaxHp; g.CombatEngine.heroAction("basic"); }
+    } finally { g.CombatEngine.triggerRandomEvent = evt0; }
   }
   game.dungeonTierCleared = { 1: true };
   run("game.resources.seve_aeswyn = 0;");
