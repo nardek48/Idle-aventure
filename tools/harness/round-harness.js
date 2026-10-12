@@ -15351,5 +15351,25 @@ console.log("\n[231] v3.448.7 — Ajustement au héros : gabarit de PV effectifs
   } finally { CF.getHeroDamagePerRound = d0; CF.getHeroEffectiveHp = e0; game.heroId = h0; }
 })();
 
+/* [232] v3.448.8 — une erreur dans un pas de boucle ne fige plus la partie : l'image suivante est
+   toujours demandée, et chaque message n'est écrit qu'une fois en console. */
+console.log("\n[232] v3.448.8 — Boucle de jeu protégée");
+(function () {
+  var raf0 = g.requestAnimationFrame, hud0 = g.renderHud, err0 = console.error, demandes = 0, ecrits = 0;
+  try {
+    g.requestAnimationFrame = function () { demandes++; };
+    g.renderHud = function () { throw new Error("panne de test [232]"); };
+    console.error = function () { ecrits++; };
+    var t0 = game.playTime;
+    g.lastTick = Date.now() - 100; g.gameLoop();
+    g.lastTick = Date.now() - 100; g.gameLoop();
+    ok(demandes === 2, "l'image suivante est demandée malgré l'erreur (" + demandes + "/2)");
+    ok(game.playTime > t0, "le temps de jeu avance avant l'erreur");
+    ok(ecrits === 1, "l'erreur n'est écrite qu'une fois (" + ecrits + ")");
+  } catch (err) {
+    ok(false, "[232] exception : " + err.message);
+  } finally { g.requestAnimationFrame = raf0; g.renderHud = hud0; console.error = err0; }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

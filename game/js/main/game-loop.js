@@ -26,7 +26,23 @@ function getCombatSpeedMult() {
 }
 window.getCombatSpeedMult = getCombatSpeedMult;
 
+/* v3.448.8 (accord de Seb) : une erreur dans un pas de boucle ne fige plus la partie. Le pas est
+   protégé, l'image suivante est toujours demandée ; chaque message d'erreur n'est écrit qu'une fois. */
+var gameLoopErrorsSeen = {};
 function gameLoop() {
+  try {
+    gameLoopStep();
+  } catch (e) {
+    var msg = String((e && e.message) || e);
+    if (!gameLoopErrorsSeen[msg]) {
+      gameLoopErrorsSeen[msg] = true;
+      if (window.console && console.error) console.error("[boucle] " + msg, e);
+    }
+  }
+  requestAnimationFrame(gameLoop);
+}
+
+function gameLoopStep() {
   var now = Date.now();
   var dt = (now - lastTick) / 1000;
   lastTick = now;
@@ -117,7 +133,5 @@ function gameLoop() {
       }
     }
   }
-
-  requestAnimationFrame(gameLoop);
 }
 
