@@ -333,9 +333,9 @@ function openHeroSelection() {
 function buildHeroCreationShellHTML(step) {
   var html = '<div class="hc-overlay">';
   html += '  <div class="lc-col">';
-  html += '    <img src="images/TitleScreen/title_background_new.png" alt="" class="hc-bg">';
+  html += '    <img src="images/TitleScreen/title_background_new.webp" alt="" class="hc-bg">';
   html += '    <div class="lc-shade is-dim"></div>';
-  html += '    <img src="images/TitleScreen/titre_logo.png" alt="' + esc(_t("Aethervale")) + '" class="hc-logo">';
+  html += '    <img src="images/TitleScreen/titre_logo.webp" alt="' + esc(_t("Aethervale")) + '" class="hc-logo">';
   html += '    <div class="lc-sheet' + (step.n > 1 ? ' is-tall' : '') + ' hc-frame">'; // le nom tient en bas, l'illustration reste visible
   html += '      <div class="ksheet-head"><div class="ksheet-handle"></div><div class="ksheet-title"><span class="ksheet-ttl">' + esc(step.title)
     + '<small class="ksheet-sub">' + esc(_t("Étape {n} sur 3", { n: step.n })) + '</small></span></div>' + buildHeroPickerCloseButtonHTML() + '</div>';

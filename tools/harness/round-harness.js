@@ -13056,7 +13056,7 @@ console.log("\n[176] v3.403.0 — Lot L-1 : écran de lancement « A · Kit du j
     ok(/lc-sheet' \+ \(step\.n > 1 \? ' is-tall' : ''\) \+ ' hc-frame/.test(vm) && /Étape \{n\} sur 3/.test(vm) && vm.indexOf("bouton_titre.png") === -1 && vm.indexOf("bouton_retour_new.png") === -1,
       "création : feuille du kit, étape en en-tête, boutons du kit");
     var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
-    ok(/class="pwa-boot-bg" src="images\/TitleScreen\/title_background_new\.png"/.test(idx) && /pwa-boot-gauge/.test(idx), "chargement : illustration du titre, logo et jauge d'or");
+    ok(/class="pwa-boot-bg" src="images\/TitleScreen\/title_background_new\.webp"/.test(idx) && /pwa-boot-gauge/.test(idx), "chargement : illustration du titre, logo et jauge d'or");
     var tok = unpal(fs.readFileSync(path.join(ROOT, "css/00-tokens.css"), "utf8"));
     ok(/--sheet-body-bg:[^;]*, #efe0c2;/.test(tok), "feuilles : couleur pleine sous la texture (jamais transparentes)");
   } catch (err) {
@@ -15243,6 +15243,26 @@ console.log("\n[226] v3.448.2 — Trône de sable : référence de l'ajustement 
     CF.getHeroDamagePerRound = dmg0; CF.getHeroEffectiveHp = ehp0; W.generateEnemy = gen0;
     W._heroRefKey = null; W.worldIndex = 0; W.adventureIndex = 0;
   }
+})();
+
+/* [227] v3.448.3 — images lourdes : l'écran titre et la barre d'onglets passent en WebP (15,4 Mo → 0,5 Mo),
+   les gros JPG sont recompressés. Garde-fou : plus aucune référence aux PNG lourds, et rien d'énorme ne revient. */
+console.log("\n[227] v3.448.3 — Images allégées : écran titre et barre d'onglets en WebP");
+(function () {
+  var lourds = ["title_background_new.png", "titre_logo.png", "menu-bar-gold.png"], trouves = [];
+  ["index.html", "css/02-layout.css", "css/08-desktop.css", "js/ui/modal-view.js", "js/ui/title-screen-view.js"].forEach(function (f) {
+    var src = fs.readFileSync(path.join(ROOT, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    lourds.forEach(function (n) { if (src.indexOf("/" + n) !== -1) trouves.push(f + " → " + n); });
+  });
+  ok(trouves.length === 0, "plus de référence aux PNG lourds" + (trouves.length ? " — " + trouves.join(", ") : ""));
+  ["images/TitleScreen/title_background_new.webp", "images/TitleScreen/titre_logo.webp", "images/Borders/menu-bar-gold.webp"].forEach(function (f) {
+    var st = fs.existsSync(path.join(ROOT, f)) ? fs.statSync(path.join(ROOT, f)).size : -1;
+    ok(st > 0 && st < 400000, f + " présent et léger (" + Math.round(st / 1024) + " Ko)");
+  });
+  ["Maps/forest-combat.jpg", "Maps/ruins-combat.jpg", "Enemies/corruptmage.jpg", "Enemies/guardian.jpg"].forEach(function (f) {
+    var st = fs.statSync(path.join(ROOT, "images", f)).size;
+    ok(st < 900000, f + " recompressé (" + Math.round(st / 1024) + " Ko)");
+  });
 })();
 
 console.log("\n" + passes + " OK, " + failures + " échec(s)");

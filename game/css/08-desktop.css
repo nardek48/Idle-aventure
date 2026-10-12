@@ -84,7 +84,7 @@ html.pc-mode #panel-container {
 html.pc-mode .title-screen-overlay {
   background:
     linear-gradient(rgba(20, 12, 4, 0.62), rgba(20, 12, 4, 0.62)),
-    url("../images/TitleScreen/title_background_new.png") center / cover no-repeat,
+    url("../images/TitleScreen/title_background_new.webp") center / cover no-repeat,
     var(--c-brown-950-3);
 }
 html.pc-mode .title-screen-stage {

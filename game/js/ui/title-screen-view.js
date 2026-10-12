@@ -239,9 +239,9 @@ function titleScreenHeroImage(summary) {
 function buildTitleScreenStageOpenHTML(small) {
   var html = '<div class="title-screen-overlay">';
   html += '  <div class="title-screen-stage">';
-  html += '    <img src="images/TitleScreen/title_background_new.png" alt="" class="title-screen-bg">';
+  html += '    <img src="images/TitleScreen/title_background_new.webp" alt="" class="title-screen-bg">';
   html += '    <div class="lc-shade' + (small ? ' is-dim' : '') + '"></div>';
-  html += '    <img src="images/TitleScreen/titre_logo.png" alt="' + esc(_t("Aethervale")) + '" class="title-screen-logo-img' + (small ? ' is-small' : '') + '">';
+  html += '    <img src="images/TitleScreen/titre_logo.webp" alt="' + esc(_t("Aethervale")) + '" class="title-screen-logo-img' + (small ? ' is-small' : '') + '">';
   return html;
 }
 

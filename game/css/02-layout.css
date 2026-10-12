@@ -434,7 +434,7 @@ body.toast-shown .hud-bub .hud-bub-tip { opacity: 0; }
 }
 
 /* =========================
-   Barre d'onglets — v3.152.0 : cadre menu-bar-gold.png (Seb, ratio réel
+   Barre d'onglets — v3.152.0 : cadre menu-bar-gold.png (Seb, ratio réel ; WebP 2032 px depuis v3.448.3, même ratio
    4064/971), remplace menu-principal.png. Les 5 emplacements de bouton
    sont positionnés dans la zone "ardoise" du cadre (hors bordure dorée et
    têtes de dragon), mesurée par scan de pixels sur l'asset réel :
@@ -447,7 +447,7 @@ body.toast-shown .hud-bub .hud-bub-tip { opacity: 0; }
   width: min(430px, 99%);
   margin: 0 auto;
   aspect-ratio: 4064 / 971;
-  background: url('../images/Borders/menu-bar-gold.png') center / 100% 100% no-repeat;
+  background: url('../images/Borders/menu-bar-gold.webp') center / 100% 100% no-repeat;
   border-top: none;
   padding-bottom: var(--safe-bottom);
 }
