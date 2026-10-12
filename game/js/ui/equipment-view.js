@@ -345,6 +345,11 @@ function getUnifiedInventoryEntries() {
     getOwnedPotionsList().forEach(function (p) {
       entries.push({ key: p.key, type: "potion", potion: p.potion, isHealing: p.isHealing, stock: p.stock });
     });
+    // v3.448.11 : les objets de combat rejoignent les potions (stock toujours tenu par l'Entrepôt)
+    (window.COMBAT_ITEM_ORDER || []).forEach(function (id) {
+      var stock = window.WarehouseManager ? WarehouseManager.getAmount(id) : 0;
+      if (stock > 0) entries.push({ key: "item:" + id, type: "combatItem", item: COMBAT_ITEMS[id], stock: stock });
+    });
   }
 
   return entries;
@@ -359,6 +364,14 @@ function buildUnifiedTileHTML(entry) {
     h += buildEquipmentIconHTML(item, "eq-bag-tile-icon");
     h += '</button>';
     return h;
+  }
+
+  if (entry.type === "combatItem") {
+    var ci = entry.item;
+    var h3 = '<button class="eq-bag-tile rframe rarity-common' + (isSelected ? ' is-selected' : '') + '" onclick="selectInventoryKey(\'' + esc(entry.key) + '\')" aria-label="' + esc(_td(ci.name)) + '">';
+    h3 += renderIconOrEmojiHTML(ci.icon, "eq-bag-tile-icon", _td(ci.name));
+    h3 += '<span class="eq-bag-tile-stock">' + entry.stock + '</span>';
+    return h3 + '</button>';
   }
 
   var potion = entry.potion;
@@ -405,6 +418,14 @@ function buildUnifiedDetailPanelHTML(entries) {
     var offerVal = window.MemoryManager ? MemoryManager.getOfferingValue(item) : 0;
     h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="confirmSellItem(\'' + esc(item.uid) + '\')">' + (offerVal > 0 ? _t("Offrir (+{n} Aether)", { n: offerVal }) : _t("Offrir (aucun souvenir)")) + '</button>';
     h += buildEquippedComparisonHTML(item);
+  } else if (entry.type === "combatItem") {
+    // v3.448.11 : fiche d'un objet de combat — ce qu'il contre, d'où il vient, où il sert
+    var ci = entry.item;
+    h += '<div class="eq-detail-icon">' + renderIconOrEmojiHTML(ci.icon, "eq-detail-icon-img", _td(ci.name)) + '</div>';
+    h += '<div class="eq-detail-name">' + esc(_td(ci.name)) + '</div>';
+    h += '<div class="eq-detail-stat">' + esc(_td(ci.desc)) + (ci.con ? ' ' + esc(_td(ci.con)) : '') + '</div>';
+    h += '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/subtabs/inventory.png> ' + _t("Stock : {n}", { n: entry.stock }) + '</div>';
+    h += '<div class="eq-detail-hint">' + _t("Se prépare à l'Apothicaire. S'emporte au départ, dans la préparation de sortie.") + '</div>';
   } else {
     var potion = entry.potion;
     var descText = entry.isHealing
@@ -530,7 +551,7 @@ function buildInventoryFilterRowHTML() {
   var h = '<div class="kchips inv-filter-row">';
   h += '<button type="button" class="' + (inventoryFilter === "all" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'all\')">' + _t("Tout") + '</button>';
   h += '<button type="button" class="' + (inventoryFilter === "equipment" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'equipment\')"><img src="images/Icons/combat_stats/stat_defense.png" alt="">' + _t("Équipement") + '</button>';
-  h += '<button type="button" class="' + (inventoryFilter === "potions" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'potions\')"><img src="images/Icons/subtabs/potions.png" alt="">' + _t("Potions") + '</button>';
+  h += '<button type="button" class="' + (inventoryFilter === "potions" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'potions\')"><img src="images/Icons/subtabs/potions.png" alt="">' + _t("Consommables") + '</button>'; // v3.448.11 : potions et objets de combat
   h += '</div>';
   return h;
 }
@@ -654,7 +675,7 @@ function buildInventoryTabContentHTML(topHTML) {
 
   if (!entries.length) {
     var emptyMsg = inventoryFilter === "potions"
-      ? _t("Aucune potion en stock — achète-en depuis la Boutique.")
+      ? _t("Aucune potion ni préparation de combat en stock.")
       : inventoryFilter === "equipment"
         ? _t("Sac vide, vainquez des boss pour obtenir du loot.")
         : _t("Rien à afficher pour l’instant.");

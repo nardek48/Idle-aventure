@@ -1150,7 +1150,6 @@ I18n.register("en", {
   "Tout offrir ?": "Offer everything?",
   "Tu donnes les {n} objets de ton sac à l'Aether, pour {v} Aether environ. Les armes d'élite restent. Cette action est irréversible.": "You give the {n} items in your bag to the Aether, for about {v} Aether. Elite weapons stay. This cannot be undone.",
   "Sac ({a}/{b})": "Bag ({a}/{b})",
-  "Aucune potion en stock — achète-en depuis la Boutique.": "No potions in stock — buy some from the Shop.",
   "Sac vide, vainquez des boss pour obtenir du loot.": "Bag empty — defeat bosses to get loot.",
   "Rien à afficher pour l’instant.": "Nothing to show for now.",
   "Boutique d’équipement": "Equipment shop",
@@ -5059,7 +5058,7 @@ I18n.register("en", {
   "Toucher une ration : toute l'équipe mange": "Tap a ration: the whole team eats",
   "{x} entre dans l'ordre des tours.": "{x} joins the turn order.",
   "Règle": "Rule",
-  "{x} n'a pas servi : rangée à l'Entrepôt.": "{x} wasn't used: put back in the Warehouse.",
+  "{x} n'a pas servi : rangée dans le Sac.": "{x} was not used: put back in the Bag.",
   "La Fiole noire revient si elle n'a pas servi.": "The Black vial comes back if it wasn't used.",
   "À 0 PV, tu te relèves avec 40 % des PV, une fois par sortie.": "At 0 HP, you get back up with 40% HP, once per run.",
   "Si elle sert : butin de la sortie divisé par deux. Rendue si elle n'a pas servi.": "If used: the run's loot is halved. Given back if unused.",
@@ -5085,5 +5084,8 @@ I18n.register("en", {
   "Tout est là : à la Forge, Établi.": "Everything is ready: at the Forge, Workbench.",
   "Sauvegarde impossible : la mémoire du navigateur est pleine. Efface le Journal de test, puis exporte ta partie (Paramètres).": "Cannot save: the browser storage is full. Clear the Test log, then export your game (Settings).",
   "Sauvegarde impossible : la mémoire du navigateur est pleine. Exporte ta partie (Paramètres) pour ne rien perdre.": "Cannot save: the browser storage is full. Export your game (Settings) so nothing is lost.",
-  "Sauvegarde impossible pour l'instant. Exporte ta partie (Paramètres) pour ne rien perdre.": "Cannot save right now. Export your game (Settings) so nothing is lost."
+  "Sauvegarde impossible pour l'instant. Exporte ta partie (Paramètres) pour ne rien perdre.": "Cannot save right now. Export your game (Settings) so nothing is lost.",
+  "Consommables": "Consumables",
+  "Aucune potion ni préparation de combat en stock.": "No potions or combat preparations in stock.",
+  "Se prépare à l'Apothicaire. S'emporte au départ, dans la préparation de sortie.": "Made at the Apothecary. Taken along when setting out, in the run preparation."
 });

@@ -64,6 +64,8 @@ window.toggleWarehouseZeros = toggleWarehouseZeros;
 
 /* ---------- Données d'une ressource ---------- */
 function warehouseTier(key) { return (WAREHOUSE_RESOURCES[key] || {}).tier || "raw"; }
+/* v3.448.11 : les objets de combat restent stockés ici, mais se montrent dans le Sac (Consommables). */
+function warehouseListedKeys() { return Object.keys(WAREHOUSE_RESOURCES).filter(function (k) { return !(window.COMBAT_ITEMS && COMBAT_ITEMS[k]); }); }
 
 function isWarehouseFull(key) {
   if (warehouseTier(key) !== "raw") return false;
@@ -200,7 +202,7 @@ function buildWarehouseHTML() {
   if (typeof HuntQuestManager !== "undefined") HuntQuestManager.ensureDefaults();
   if (typeof WarehouseManager !== "undefined") WarehouseManager.ensure();
 
-  var all = Object.keys(WAREHOUSE_RESOURCES);
+  var all = warehouseListedKeys();
   if (!all.length) return '<div class="eq-empty">' + _t("Entrepôt vide pour l'instant.") + '</div>';
 
   var f = getWarehouseFilter(), hidden = getWarehouseHidden(), zeros = warehouseShowsZeros();
@@ -459,7 +461,7 @@ window.closeWarehousePicker = closeWarehousePicker;
 
 function buildWarehousePickerHTML() {
   var hidden = getWarehouseHidden();
-  var all = Object.keys(WAREHOUSE_RESOURCES);
+  var all = warehouseListedKeys();
   var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeWarehousePicker()">';
   h += '<div class="full-menu vb-sheet-card wh-sheet wh-picker" onclick="event.stopPropagation()">';
   h += kSheetHeadHTML({

@@ -15428,5 +15428,25 @@ console.log("\n[234] v3.448.10 — Images allégées (icônes), texte de la Clé
   ok(g.WAREHOUSE_RESOURCES.cle_de_voute.sourceHint === "Se taille au Tailleur de pierre (Carrière), à partir de Pierres errantes et de Pierre", "provenance de la Clé de voûte réécrite");
 })();
 
+/* [235] v3.448.11 — les objets de combat se montrent dans le Sac (Consommables), avec les potions ; leur
+   stock reste tenu par l'Entrepôt, qui ne les liste plus. */
+console.log("\n[235] v3.448.11 — Objets de combat dans le Sac");
+(function () {
+  var avant = g.WarehouseManager.getAmount("baume_froid");
+  try {
+    g.WarehouseManager.addResource("baume_froid", 2, true);
+    var e = g.getUnifiedInventoryEntries().filter(function (x) { return x.key === "item:baume_froid"; })[0];
+    ok(e && e.type === "combatItem" && e.stock === avant + 2, "le Baume froid est une entrée du Sac, stock lu dans l'Entrepôt");
+    run("selectedInventoryKey = 'item:baume_froid';");
+    var fiche = g.buildUnifiedDetailPanelHTML(g.getUnifiedInventoryEntries());
+    ok(/Baume froid/.test(fiche) && /Contre l(?:'|&#39;|&#x27;)Enragé/.test(fiche) && /Se prépare à l'Apothicaire/.test(fiche), "sa fiche : ce qu'il contre, d'où il vient, où il sert");
+    ok(g.warehouseListedKeys().indexOf("baume_froid") === -1 && g.warehouseListedKeys().indexOf("ble") !== -1, "l'Entrepôt ne le liste plus (les ressources, si)");
+    var src = fs.readFileSync(path.join(ROOT, "js/ui/heros-screens-view.js"), "utf8");
+    ok(/\["potion", _t\("Consommables"\)/.test(src) && /COMBAT_ITEM_ORDER/.test(src), "Sac Héros : filtre « Consommables », objets de combat compris");
+  } catch (err) {
+    ok(false, "[235] exception : " + err.message);
+  } finally { g.WarehouseManager.removeResource("baume_froid", 2); run("selectedInventoryKey = null;"); }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

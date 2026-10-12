@@ -200,7 +200,7 @@
       ["weapon", _t("Armes"), "images/Icons/equipment_slots/slot_weapon.png", ["weapon"]],
       ["armor", _t("Armures"), "images/Icons/equipment_slots/slot_armor.png", ["helmet", "armor", "gloves", "boots"]],
       ["jewel", _t("Bijoux"), "images/Icons/equipment_slots/slot_ring.png", ["ring", "amulet"]],
-      ["potion", _t("Potions"), "images/Icons/subtabs/potions.png"],
+      ["potion", _t("Consommables"), "images/Icons/subtabs/potions.png"], // v3.448.11 : potions et objets de combat
       "-",
       ["better", _t("Mieux que l'équipé"), "images/Icons/system/upgrade.png"]
     ];
@@ -222,6 +222,11 @@
       out.push({ key: "eq:" + it.uid, type: "equipment", item: it });
     });
     if (f === "all" || f === "potion") getOwnedPotionsList().forEach(function (p) { out.push({ key: p.key, type: "potion", potion: p.potion, stock: p.stock }); });
+    // v3.448.11 : les objets de combat (stock tenu par l'Entrepôt) se rangent avec les potions
+    if (f === "all" || f === "potion") (window.COMBAT_ITEM_ORDER || []).forEach(function (id) {
+      var n = window.WarehouseManager ? WarehouseManager.getAmount(id) : 0;
+      if (n > 0) out.push({ key: "item:" + id, type: "potion", potion: COMBAT_ITEMS[id], stock: n });
+    });
     return out;
   }
 
@@ -264,7 +269,7 @@
     var es = bagEntries(bagFilter);
     var eqs = es.filter(function (e) { return e.type === "equipment"; }), pots = es.filter(function (e) { return e.type === "potion"; });
     if (eqs.length) h += '<div class="ksec"><span>' + _t("Équipement") + '</span></div><div class="wh-grid hs-bgrid">' + eqs.map(bagTileHTML).join("") + '</div>';
-    if (pots.length) h += '<div class="ksec"><span>' + _t("Potions") + '</span></div><div class="wh-grid hs-bgrid">' + pots.map(bagTileHTML).join("") + '</div>';
+    if (pots.length) h += '<div class="ksec"><span>' + _t("Consommables") + '</span></div><div class="wh-grid hs-bgrid">' + pots.map(bagTileHTML).join("") + '</div>';
     if (!es.length) h += '<div class="eq-empty">' + _t("Rien à afficher pour l’instant.") + '</div>';
     return h;
   }
