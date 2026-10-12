@@ -1042,7 +1042,7 @@ function pa2Shake() {
   if (!s) return;
   s.classList.remove("is-shake"); void s.offsetWidth; s.classList.add("is-shake");
 }
-function pa2Buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) { /* vibration indisponible */ } }
+function pa2Buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) { noteErreur("pa2-view.pa2Buzz", e); /* vibration indisponible */ } }
 
 // Dé qui roule, puis se pose sur la valeur déjà tirée par le moteur.
 function pa2RollDie(finalVal, then) {

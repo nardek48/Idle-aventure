@@ -33,12 +33,12 @@ var JournalTest = {
       lines.push({ t: Date.now(), pt: Math.round(Number(game.playTime || 0)), h: game.heroId || "", type: type, d: data || {} });
       if (lines.length > JOURNAL_TEST_MAX) lines.splice(0, lines.length - JOURNAL_TEST_MAX);
       this._dirty = true;
-    } catch (e) { /* le journal ne doit jamais gêner la partie */ }
+    } catch (e) { noteErreur("journal-test.log", e); /* le journal ne doit jamais gêner la partie */ }
   },
 
   flush: function () {
     if (!this._dirty) return;
-    try { localStorage.setItem(JOURNAL_TEST_KEY, JSON.stringify(this._lines)); this._dirty = false; } catch (e) { /* stockage plein : on garde en mémoire */ }
+    try { localStorage.setItem(JOURNAL_TEST_KEY, JSON.stringify(this._lines)); this._dirty = false; } catch (e) { noteErreur("journal-test.flush", e); /* stockage plein : on garde en mémoire */ }
   },
 
   /* L'état du héros, de quoi situer la partie face au banc. */
@@ -51,12 +51,12 @@ var JournalTest = {
         var st = StoryQuestManager.getCurrentStep(cid);
         steps[cid] = StoryQuestManager.isChapterCompleted(cid) ? "fini" : (st ? st.id : null);
       });
-    } catch (e) { /* lecture seule */ }
+    } catch (e) { noteErreur("journal-test.snapshot", e); /* lecture seule */ }
     var slots = window.EQUIPMENT_SLOTS || [], equip = {}, forge = {};
     slots.forEach(function (s) {
       var it = g.equipped && g.equipped[s];
       equip[s] = it ? it.rarity : null;
-      if (window.ForgeManager) { try { forge[s] = ForgeManager.getLevel(s); } catch (e) { /* forge absente */ } }
+      if (window.ForgeManager) { try { forge[s] = ForgeManager.getLevel(s); } catch (e) { noteErreur("journal-test.snapshot", e); /* forge absente */ } }
     });
     this.log("releve", {
       motif: reason || "temps",
@@ -131,7 +131,7 @@ function journalWrap(obj, name, before, after) {
     var ctx = null;
     if (JournalTest.isOn()) { try { ctx = before ? before.apply(this, arguments) : null; } catch (e) { ctx = null; } }
     var r = orig.apply(this, arguments);
-    if (JournalTest.isOn()) { try { if (after) after.call(this, r, arguments, ctx); } catch (e) { /* relevé seulement */ } }
+    if (JournalTest.isOn()) { try { if (after) after.call(this, r, arguments, ctx); } catch (e) { noteErreur("journal-test.journalWrap", e); /* relevé seulement */ } }
     return r;
   };
   obj[name].toString = function () { return orig.toString(); }; // les contrôles qui lisent le code voient l'original

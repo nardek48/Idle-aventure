@@ -28,7 +28,7 @@ var TouchDebug = {
   },
 
   setOn: function (value) {
-    try { localStorage.setItem(TOUCH_DEBUG_KEY, value ? "1" : "0"); } catch (e) { /* stockage indisponible : réglage de session seulement */ }
+    try { localStorage.setItem(TOUCH_DEBUG_KEY, value ? "1" : "0"); } catch (e) { noteErreur("debug-touch-view.setOn", e); /* stockage indisponible : réglage de session seulement */ }
     if (value) this.start(); else this.stop();
   },
 
@@ -181,8 +181,8 @@ var TouchDebug = {
       window.addEventListener("unhandledrejection", function (e) { if (self.on) self.onError("promesse : " + (e.reason && e.reason.message || e.reason), "", ""); });
     }
     var fromUrl = false;
-    try { fromUrl = /[?&]debug=touch\b/.test(String(location.search || "")); } catch (e) { /* location absente (harnais) */ }
-    if (fromUrl) { try { localStorage.setItem(TOUCH_DEBUG_KEY, "1"); } catch (e) { /* ignoré */ } }
+    try { fromUrl = /[?&]debug=touch\b/.test(String(location.search || "")); } catch (e) { noteErreur("debug-touch-view.install", e); /* location absente (harnais) */ }
+    if (fromUrl) { try { localStorage.setItem(TOUCH_DEBUG_KEY, "1"); } catch (e) { noteErreur("debug-touch-view.install", e); /* ignoré */ } }
     if (this.isOn()) {
       if (document.body) this.start();
       else document.addEventListener("DOMContentLoaded", function () { self.start(); });

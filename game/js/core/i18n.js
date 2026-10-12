@@ -91,7 +91,7 @@ var I18n = {
         var pr = this._plural[lang] || (this._plural[lang] = new Intl.PluralRules(I18N_LANGS[lang].locale));
         return pr.select(n) === "one" ? 0 : 1;
       }
-    } catch (e) { /* navigateur ancien : règle simple ci-dessous */ }
+    } catch (e) { noteErreur("i18n.pluralIndex", e); /* navigateur ancien : règle simple ci-dessous */ }
     return (lang === "fr" ? Math.abs(n) < 2 : n === 1) ? 0 : 1;
   },
 
@@ -131,7 +131,7 @@ var I18n = {
   setLang: function (lang) {
     if (!I18N_LANGS.hasOwnProperty(lang) || lang === this.lang()) return false;
     if (window.Prefs && typeof Prefs.setValue === "function") Prefs.setValue("lang", lang);
-    try { if (typeof saveGame === "function" && typeof game !== "undefined" && game && game.heroId) saveGame(); } catch (e) { /* la relance se fait quand même */ }
+    try { if (typeof saveGame === "function" && typeof game !== "undefined" && game && game.heroId) saveGame(); } catch (e) { noteErreur("i18n.setLang", e); /* la relance se fait quand même */ }
     if (typeof location !== "undefined" && typeof location.reload === "function") location.reload();
     return true;
   }

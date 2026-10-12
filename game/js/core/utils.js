@@ -1,6 +1,17 @@
 "use strict";
 /* core/utils.js — utilitaires génériques (formatage, aléatoire, vibration), ne touchent pas à game (sauf cloneQuestProgress). Détail : COMMENTAIRES_ORIGINAUX.md */
 
+/* v3.448.9 : trace d'une erreur rattrapée volontairement (catch qui ne fait rien d'autre). Chaque lieu
+   n'est écrit qu'une fois en console ; les lieux vus restent dans window.erreursNotees (Admin, harnais). */
+var erreursNotees = {};
+function noteErreur(lieu, e) {
+  if (erreursNotees[lieu]) { erreursNotees[lieu].n++; return; }
+  erreursNotees[lieu] = { n: 1, msg: String((e && e.message) || e) };
+  try { if (window.console && console.warn) console.warn("[rattrapée] " + lieu + " : " + erreursNotees[lieu].msg); } catch (x) { return; } // console absente : rien où tracer
+}
+window.noteErreur = noteErreur;
+window.erreursNotees = erreursNotees;
+
 function renderIconOrEmojiHTML(icon, baseClass, altText) {
   // v3.242.0 : la passe icônes v3.240 a laissé des balises <img ...> COMPLÈTES là où
   // cette fonction attend un chemin — elles ressortaient échappées (le joueur voyait

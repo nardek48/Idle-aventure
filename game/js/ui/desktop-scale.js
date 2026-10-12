@@ -77,7 +77,7 @@ var DesktopScale = {
     root.classList.toggle("wide-mode", mode === "wide");
     root.style.setProperty("--pc-zoom", String(z));
     // Le HUD et la page se redessinent pour leur nouvelle disposition (mesures, bulles)
-    if (changed && typeof renderPanel === "function" && window.game) { try { renderPanel(); } catch (e) {} }
+    if (changed && typeof renderPanel === "function" && window.game) { try { renderPanel(); } catch (e) { noteErreur("desktop-scale.apply", e); } }
   },
 
   /* Réglage de la tablette en portrait (Paramètres › Affichage) */

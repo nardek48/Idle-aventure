@@ -187,7 +187,7 @@ function buildDungeonSheetHTML(dungeonId) {
     try {
       var f = CombatForecast.forDungeon(dungeon.id, pendingDungeonMarks);
       if (f) h += buildCombatForecastLineHTML(f);
-    } catch (e) { /* pronostic indisponible : la feuille reste utilisable */ }
+    } catch (e) { noteErreur("dungeon-view.buildDungeonSheetHTML", e); /* pronostic indisponible : la feuille reste utilisable */ }
   }
   // v3.429.6 : conseil de préparation, tant que le donjon n'a jamais été vaincu
   if (dungeon.prepHint && !(game.dungeonTierCleared || {})[dungeon.id]) h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/system/warning.png> ' + esc(_td(dungeon.prepHint)) + '</div>';

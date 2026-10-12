@@ -22,14 +22,14 @@ function getActiveSlot() {
     var raw = localStorage.getItem(ACTIVE_SLOT_KEY);
     var n = parseInt(raw, 10);
     if (n >= 1 && n <= MAX_HERO_SLOTS) return n;
-  } catch (e) {}
+  } catch (e) { noteErreur("save-system.getActiveSlot", e); }
   return 1;
 }
 
 function setActiveSlot(slotNumber) {
   try {
     localStorage.setItem(ACTIVE_SLOT_KEY, String(slotNumber));
-  } catch (e) {}
+  } catch (e) { noteErreur("save-system.setActiveSlot", e); }
 }
 
 /* La clé RÉELLEMENT utilisée par saveGame()/loadGame()/clearSaveData()
@@ -45,7 +45,7 @@ var SAVE_UNREADABLE_SUFFIX = "_illisible";
 var saveLockedKey = null; // clé à ne plus écrire : sa version illisible n'a pas pu être mise de côté
 
 function dropSlotBackup(key) {
-  try { localStorage.removeItem(key + SAVE_BACKUP_SUFFIX); } catch (e) {}
+  try { localStorage.removeItem(key + SAVE_BACKUP_SUFFIX); } catch (e) { noteErreur("save-system.dropSlotBackup", e); }
 }
 
 /* Migration unique : ancienne sauvegarde à plat -> Emplacement 1, si besoin.
@@ -60,7 +60,7 @@ function migrateOldSaveToSlot1() {
 
     localStorage.setItem(slot1Key, oldRaw);
     setActiveSlot(1);
-  } catch (e) {}
+  } catch (e) { noteErreur("save-system.migrateOldSaveToSlot1", e); }
 }
 
 /* HeroSlotManager : créer/switcher/supprimer un emplacement de héros (couche fine sur saveGame()/loadGame()).
@@ -558,8 +558,27 @@ function saveGame() {
     game.lastOnline = game.lastSave;
     return true;
   } catch (e) {
+    noteErreur("save-system.saveGame", e);
+    signalerSauvegardeImpossible(e);
     return false;
   }
+}
+
+/* v3.448.9 : une sauvegarde qui échoue (stockage plein le plus souvent) ne passe plus inaperçue. Le joueur
+   est prévenu au premier échec, puis au plus toutes les 5 minutes tant que ça dure. */
+var sauvegardeImpossibleVueA = 0;
+function signalerSauvegardeImpossible(e) {
+  var now = Date.now();
+  if (sauvegardeImpossibleVueA && now - sauvegardeImpossibleVueA < 5 * 60 * 1000) return;
+  sauvegardeImpossibleVueA = now;
+  var plein = !!(e && (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED" || e.code === 22 || e.code === 1014));
+  var journal = !!(window.JournalTest && typeof JournalTest.isOn === "function" && JournalTest.isOn());
+  var msg = plein
+    ? (journal ? _t("Sauvegarde impossible : la mémoire du navigateur est pleine. Efface le Journal de test, puis exporte ta partie (Paramètres).")
+               : _t("Sauvegarde impossible : la mémoire du navigateur est pleine. Exporte ta partie (Paramètres) pour ne rien perdre."))
+    : _t("Sauvegarde impossible pour l'instant. Exporte ta partie (Paramètres) pour ne rien perdre.");
+  if (typeof showToast === "function") showToast("⚠️ " + msg, 7000);
+  if (typeof addLog === "function") addLog("⚠️ " + msg, "event");
 }
 
 /* Recharge une sauvegarde dans `game`. Aucun recalcul de stats dérivées ici — rôle de StatsSystem.recalcStats(), appelé après. */
@@ -944,7 +963,7 @@ function loadGame() {
   if (!raw) return false;
 
   if (loadGameFromRaw(raw)) {
-    try { localStorage.setItem(key + SAVE_BACKUP_SUFFIX, raw); } catch (e) {}
+    try { localStorage.setItem(key + SAVE_BACKUP_SUFFIX, raw); } catch (e) { noteErreur("save-system.loadGame", e); }
     return true;
   }
   return recoverUnreadableSave(key, raw);
@@ -955,10 +974,10 @@ function loadGame() {
 function recoverUnreadableSave(key, raw) {
   if (window.console && console.error) console.error("[save] emplacement illisible : " + key);
   var kept = false;
-  try { localStorage.setItem(key + SAVE_UNREADABLE_SUFFIX, raw); kept = true; } catch (e) {}
+  try { localStorage.setItem(key + SAVE_UNREADABLE_SUFFIX, raw); kept = true; } catch (e) { noteErreur("save-system.recoverUnreadableSave", e); }
 
   var bak = null;
-  try { bak = localStorage.getItem(key + SAVE_BACKUP_SUFFIX); } catch (e) {}
+  try { bak = localStorage.getItem(key + SAVE_BACKUP_SUFFIX); } catch (e) { noteErreur("save-system.recoverUnreadableSave", e); }
   resetGameToFreshState();
   if (bak && bak !== raw && loadGameFromRaw(bak)) {
     notifySaveRecovery(_t("Ta sauvegarde était abîmée : la dernière copie saine a été rechargée."));
@@ -1023,7 +1042,7 @@ function clearSaveData() {
   if (!game.saveSupported) return;
   try {
     localStorage.removeItem(getActiveSaveKey());
-  } catch (e) {}
+  } catch (e) { noteErreur("save-system.clearSaveData", e); }
   dropSlotBackup(getActiveSaveKey());
 }
 
@@ -1243,12 +1262,12 @@ function buildMultiSaveExportPayload() {
       try {
         var raw = localStorage.getItem(getSlotKey(i));
         if (raw) slots[i] = JSON.parse(raw);
-      } catch (e) {}
+      } catch (e) { noteErreur("save-system.buildMultiSaveExportPayload", e); }
     }
     try {
       var bad = localStorage.getItem(getSlotKey(i) + SAVE_UNREADABLE_SUFFIX);
       if (bad) unreadable[i] = bad;
-    } catch (e) {}
+    } catch (e) { noteErreur("save-system.buildMultiSaveExportPayload", e); }
   }
 
   var payload = {
@@ -1388,7 +1407,7 @@ function applyImportedSave(data) {
           localStorage.setItem(getSlotKey(slotNum), JSON.stringify(slotData));
           dropSlotBackup(getSlotKey(slotNum));
           importedCount++;
-        } catch (e) {}
+        } catch (e) { noteErreur("save-system.doImport", e); signalerSauvegardeImpossible(e); } // v3.448.9 : emplacement refusé par le stockage
       });
 
       var targetSlot = (data.activeSlot && data.slots[data.activeSlot]) ? Number(data.activeSlot) : Number(Object.keys(data.slots)[0]);

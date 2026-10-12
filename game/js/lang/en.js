@@ -5082,5 +5082,8 @@ I18n.register("en", {
   "Reforge {n} de l'arme": "Weapon reforge {n}",
   "Tout est là : à construire au Village, Bâtiments.": "Everything is ready: build it in the Village, Buildings.",
   "Il faut d'abord la Forge {n}.": "Forge {n} comes first.",
-  "Tout est là : à la Forge, Établi.": "Everything is ready: at the Forge, Workbench."
+  "Tout est là : à la Forge, Établi.": "Everything is ready: at the Forge, Workbench.",
+  "Sauvegarde impossible : la mémoire du navigateur est pleine. Efface le Journal de test, puis exporte ta partie (Paramètres).": "Cannot save: the browser storage is full. Clear the Test log, then export your game (Settings).",
+  "Sauvegarde impossible : la mémoire du navigateur est pleine. Exporte ta partie (Paramètres) pour ne rien perdre.": "Cannot save: the browser storage is full. Export your game (Settings) so nothing is lost.",
+  "Sauvegarde impossible pour l'instant. Exporte ta partie (Paramètres) pour ne rien perdre.": "Cannot save right now. Export your game (Settings) so nothing is lost."
 });

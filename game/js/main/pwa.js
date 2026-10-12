@@ -95,7 +95,7 @@ var PwaInstall = {
   isStandalone: function () {
     try {
       if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) return true;
-    } catch (e) { /* vieux navigateur */ }
+    } catch (e) { noteErreur("pwa.isStandalone", e); /* vieux navigateur */ }
     return window.navigator.standalone === true; // Safari iOS
   },
 
@@ -157,7 +157,7 @@ var PwaInstall = {
   persist: function () {
     try {
       if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
-    } catch (e) { /* non supporté */ }
+    } catch (e) { noteErreur("pwa.persist", e); /* non supporté */ }
   },
 
   openIosSheet: function () {

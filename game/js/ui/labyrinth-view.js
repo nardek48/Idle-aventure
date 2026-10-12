@@ -294,7 +294,7 @@ function labFightLogHTML(s, run) {
 function labShake() {
   var k = document.querySelector("#lab-sheet .lab-ksheet");
   if (k) { k.classList.remove("is-shake"); void k.offsetWidth; k.classList.add("is-shake"); }
-  try { if (navigator.vibrate) navigator.vibrate(35); } catch (e) { /* vibration indisponible */ }
+  try { if (navigator.vibrate) navigator.vibrate(35); } catch (e) { noteErreur("labyrinth-view.labShake", e); /* vibration indisponible */ }
 }
 function labHpShow(hp) {
   var hb = document.getElementById("lab-hpbar"), t = document.getElementById("lab-hp");

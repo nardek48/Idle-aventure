@@ -65,7 +65,7 @@ var Prefs = {
   },
 
   _save: function (data) {
-    try { if (window.localStorage) localStorage.setItem(PREFS_STORAGE_KEY, JSON.stringify(data)); } catch (e) { /* mode privé : garde en mémoire */ }
+    try { if (window.localStorage) localStorage.setItem(PREFS_STORAGE_KEY, JSON.stringify(data)); } catch (e) { noteErreur("prefs-system._save", e); /* mode privé : garde en mémoire */ }
   }
 };
 

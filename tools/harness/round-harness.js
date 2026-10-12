@@ -15376,5 +15376,36 @@ console.log("\n[232] v3.448.8 — Boucle de jeu protégée");
   } finally { g.requestAnimationFrame = raf0; g.renderHud = hud0; console.error = err0; }
 })();
 
+/* [233] v3.448.9 — plus de catch muet dans le jeu (noteErreur, une trace par lieu) ; une sauvegarde qui
+   échoue faute de place prévient le joueur, au plus toutes les 5 minutes. */
+console.log("\n[233] v3.448.9 — Erreurs rattrapées tracées, sauvegarde impossible signalée");
+(function () {
+  var muets = [], re = /catch\s*\(\s*\w+\s*\)\s*\{((?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*)\}/g;
+  require(path.join(__dirname, "index-scripts.js"))(ROOT).forEach(function (f) {
+    var src = fs.readFileSync(path.join(ROOT, f), "utf8"), m;
+    while ((m = re.exec(src))) muets.push(f + ":" + (src.slice(0, m.index).split("\n").length));
+  });
+  ok(muets.length === 0, "aucun catch muet dans les scripts du jeu" + (muets.length ? " — " + muets.join(", ") : ""));
+  var w0 = console.warn, avert = 0; console.warn = function () { avert++; };
+  try {
+    g.noteErreur("[233].essai", new Error("a")); g.noteErreur("[233].essai", new Error("b"));
+    ok(avert === 1 && g.erreursNotees["[233].essai"].n === 2, "noteErreur : une trace par lieu, les suivantes comptées");
+  } finally { console.warn = w0; }
+  var set0 = g.localStorage.setItem, toast0 = g.showToast, toasts = [];
+  try {
+    g.showToast = function (m) { toasts.push(m); };
+    g.localStorage.setItem = function () { var e = new Error("plein"); e.name = "QuotaExceededError"; throw e; };
+    run("sauvegardeImpossibleVueA = 0;");
+    ok(run("saveGame()") === false, "stockage plein : saveGame renvoie false");
+    ok(toasts.length === 1 && /mémoire du navigateur est pleine/.test(toasts[0]), "le joueur est prévenu");
+    run("saveGame()");
+    ok(toasts.length === 1, "pas de nouveau message avant 5 minutes");
+    run("sauvegardeImpossibleVueA = Date.now() - 6 * 60 * 1000; saveGame();");
+    ok(toasts.length === 2, "nouveau message après 5 minutes si ça dure");
+  } catch (err) {
+    ok(false, "[233] exception : " + err.message);
+  } finally { g.localStorage.setItem = set0; g.showToast = toast0; run("sauvegardeImpossibleVueA = 0;"); }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

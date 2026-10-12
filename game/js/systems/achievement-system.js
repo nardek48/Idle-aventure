@@ -49,7 +49,7 @@ var AchievementManager = {
 
   getTarget: function (ach) {
     if (typeof ach.targetFn === "function") {
-      try { var t = Number(ach.targetFn()); if (t > 0) return t; } catch (e) { /* repli sur target */ }
+      try { var t = Number(ach.targetFn()); if (t > 0) return t; } catch (e) { noteErreur("achievement-system.getTarget", e); /* repli sur target */ }
     }
     return Number(ach.target || 1);
   },
