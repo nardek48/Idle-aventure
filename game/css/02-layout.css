@@ -89,7 +89,7 @@
   bottom: -6px;
   transform: translateX(-50%);
   white-space: nowrap;
-  font-size: 10px;
+  font-size: 12px; /* v3.448.5 : 10 → 12 px */
   font-weight: 800;
   line-height: 1;
   padding: 2px 6px;
@@ -108,7 +108,7 @@
 .hud-gauge.is-hp { --kgauge-fill: linear-gradient(90deg, var(--c-green-700), var(--c-green-400)); }
 .hud-gauge.is-hp.is-low { --kgauge-fill: linear-gradient(90deg, var(--c-red-700), var(--c-red-450)); }
 .hud-gauge.is-xp { --kgauge-fill: linear-gradient(90deg, var(--c-brown-700-vivid), var(--c-bronze-400-vivid)); }
-.hud-gauge .kgauge-text { font-size: 10.5px; white-space: nowrap; }
+.hud-gauge .kgauge-text { font-size: 12px; white-space: nowrap; } /* v3.448.5 : 10,5 → 12 px */
 /* Or et ressource de la carte du monde */
 .hud-res { display: flex; flex-direction: column; gap: 4px; flex: 0 0 auto; }
 .hud-res-item { display: flex; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 800; line-height: 1; color: var(--c-cream-150-vivid); font-variant-numeric: tabular-nums; }

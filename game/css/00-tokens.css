@@ -204,13 +204,14 @@
 
   /* Texte (inversé par rapport à l'ancien thème : sombre sur clair) */
   --nb-ink: var(--c-brown-850-soft);            /* texte principal, brun très foncé */
-  --nb-ink-dim: var(--c-brown-550-soft);        /* texte secondaire */
+  --nb-ink-dim: #6b5d45;                        /* texte secondaire ; v3.448.5 : 3,2-3,6 → 4,8-5,4:1 sur crème (avant c-brown-550-soft) */
   --nb-ink-inverse: var(--c-cream-100-soft);    /* texte clair, pour les fonds sombres (barre du haut, boutons) */
 
   /* Or (réutilise les mêmes teintes que l'ancien thème, l'accent doré fonctionne dans les deux) */
   --nb-gold: var(--c-bronze-400-vivid);
   --nb-gold-dark: var(--c-brown-550-3);
-  --nb-gold-deep: var(--c-brown-700-vivid);
+  --nb-gold-deep: #7c5114;                      /* or de texte sur parchemin ; v3.448.5 : 4,5-5,0 → 5,3-5,9:1 (avant c-brown-700-vivid) */
+  --nb-green-text: #1e7236;                     /* v3.448.5 : vert de texte sur parchemin, 4,6-5,1:1 */
 
   /* Bleu gemme (essence) */
   --nb-blue: var(--c-blue-400-soft);

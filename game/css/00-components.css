@@ -1089,6 +1089,14 @@ button.nb-entry-card {
   opacity: 0.8;
 }
 
+/* v3.448.5 : surface de toucher portée à 44 px sur les petits boutons, sans changer leur taille visible.
+   Pseudo-élément ::after transparent, centré sur le bouton (vérifié : aucun ne prend le toucher d'un voisin). */
+.camp-help-btn, .cbx-pill, .cbx-dist-badge, .cbx-badges, .qb-completed-link, .exp-act, .klink { position: relative; }
+.camp-help-btn::after, .ksheet-x::after, .cbx-pill::after, .cbx-dist-badge::after, .cbx-badges::after,
+.qb-completed-link::after, .hud-bub::after, .exp-act::after, .klink::after {
+  content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%);
+}
+
 .ksheet-x {
   position: absolute;
   right: 10px;

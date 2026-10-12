@@ -15279,5 +15279,26 @@ console.log("\n[228] v3.448.4 — Dictionnaire anglais chargé seulement en angl
   ok(fs.readFileSync(path.join(ROOT, "sw.js"), "utf8").indexOf('"./js/lang/en.js"') !== -1, "en.js reste précaché (bascule hors-ligne)");
 })();
 
+/* [229] v3.448.5 — lisibilité (atelier/lisibilite.html, validé par Seb) : contrastes 4,5:1 sur le parchemin,
+   textes à 12 px, surface de toucher de 44 px. Garde-fou contre un retour en arrière. */
+console.log("\n[229] v3.448.5 — Lisibilité : contrastes, textes à 12 px, zones de toucher");
+(function () {
+  function css(f) { return fs.readFileSync(path.join(ROOT, "css", f), "utf8"); }
+  function hex(h) { h = h.replace("#", ""); return [0, 2, 4].map(function (i) { return parseInt(h.substr(i, 2), 16); }); }
+  function lum(c) { var a = c.map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2]; }
+  function ratio(a, b) { var x = lum(hex(a)), y = lum(hex(b)); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+  var tok = css("00-tokens.css"), lire = function (n) { var m = tok.match(new RegExp(n + ":\\s*(#[0-9a-fA-F]{6})")); return m ? m[1] : null; };
+  [["--nb-ink-dim", "texte secondaire"], ["--nb-gold-deep", "or de texte"], ["--nb-green-text", "vert de texte"]].forEach(function (t) {
+    var v = lire(t[0]);
+    ok(v && ratio(v, "#f6ecd9") >= 4.5 && ratio(v, "#efe0c2") >= 4.5, t[1] + " (" + t[0] + " " + v + ") : 4,5:1 au moins sur les deux crèmes");
+  });
+  ok(/\.map-quest-reward-value \{\s*color: var\(--nb-gold-deep\)/.test(css("06-map.css")), "l'or de la carte n'utilise plus --nb-gold (1,7:1)");
+  ok(/\.hud-gauge \.kgauge-text \{ font-size: 12px/.test(css("02-layout.css")), "PV et XP du haut à 12 px");
+  var cb = css("03-combat-screen.css");
+  ok(!/\.cbx-(turn-badge|lvl-badge|cost-badge)[^}]*font-size: 10px/.test(cb) && !/cbx-cd-count \{ font-size: 10px/.test(cb), "badges de combat : plus de texte à 10 px");
+  ok(/@media \(max-width: 359px\) \{ \.cbx-card-nm \.cbx-cd-count\.is-ready \{ display: none; \} \}/.test(cb), "sous 360 px, « Prêt » cède la place au nom");
+  ok(/\.klink::after \{\s*content: ""; position: absolute;[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/.test(css("00-components.css")), "zones de toucher de 44 px sur les petits boutons");
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

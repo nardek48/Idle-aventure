@@ -722,7 +722,7 @@
 .car-trip b { font-size: 14px; }
 .car-trip small { font-size: 12px; line-height: 1.25; color: var(--c-brown-750-2); }
 .car-trip-d { padding: 3px 8px; border-radius: 9px; background: var(--c-brown-850-2); color: var(--c-white-50-soft); font-size: 12px; font-weight: 800; line-height: 1; }
-.car-trip-pct { font-weight: 800; color: var(--c-green-650-4) !important; }
+.car-trip-pct { font-weight: 800; color: var(--nb-green-text) !important; }
 .car-trip-lock .ico-sys { width: 14px; height: 14px; vertical-align: -2px; }
 .car-trip-bonus { display: flex; gap: 3px; min-height: 20px; }
 .car-trip-bonus img { width: 20px; height: 20px; object-fit: contain; }

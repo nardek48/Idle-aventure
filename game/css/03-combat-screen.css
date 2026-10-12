@@ -145,7 +145,7 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-dist-badge { display: inline-flex !important; align-items: center; gap: 3px; height: 22px; padding: 0 7px 0 3px !important; border-radius: 11px;
   background: rgba(0, 0, 0, .78) !important; border: 1px solid var(--cbx-gold-soft) !important; font-size: 13px; font-weight: 900; color: var(--cbx-gold); }
 .cbx-dist-badge img { width: 16px; height: 16px; }
-.cbx-dist-badge.is-ranged { font-size: 10px; font-weight: 800; color: var(--cbx-ink); }
+.cbx-dist-badge.is-ranged { font-size: 12px; font-weight: 800; color: var(--cbx-ink); }
 
 /* Effets sur le monstre : lueur derrière lui (::before), voile masqué sur lui (::after), particules, sol. */
 .cbx-foe-hit::before { content: ""; position: absolute; inset: 12%; border-radius: 50%; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 0; }
@@ -239,18 +239,20 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-card.is-crushed { animation: cbxCrush .45s ease; }
 .cbx-card.t-now { box-shadow: 0 0 0 2px var(--cbx-gold), 0 0 14px rgba(232, 191, 90, .55); border-color: var(--cbx-gold); }
 .cbx-card.t-done { opacity: .62; }
-.cbx-turn-badge { position: absolute; top: -7px; right: 6px; z-index: 2; height: 15px; padding: 0 6px; border-radius: 8px; font-size: 10px; font-weight: 900; line-height: 15px; }
+.cbx-turn-badge { position: absolute; top: -7px; right: 6px; z-index: 2; height: 17px; padding: 0 6px; border-radius: 8px; font-size: 12px; font-weight: 900; line-height: 17px; }
 .cbx-turn-badge.is-now { background: linear-gradient(180deg, rgba(242, 207, 115, 1), var(--cbx-gold-deep)); color: rgba(42, 26, 6, 1); }
 .cbx-turn-badge.is-done { background: rgba(20, 83, 45, 1); border: 1px solid var(--cbx-green); color: rgba(220, 252, 231, 1); }
 .cbx-turn-badge.is-wait { width: 8px; height: 8px; padding: 0; top: -3px; background: var(--cbx-gold); animation: cbxHalo 1.2s ease-in-out infinite; }
 .cbx-card-pt { position: relative; width: 38px; height: 38px; grid-row: span 2; }
 .cbx-card-pt > img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: top; border: 2px solid var(--cbx-line); box-sizing: border-box; background: rgba(42, 29, 16, 1); }
-.cbx-lvl-badge { position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); font-size: 10px; font-weight: 900; padding: 0 4px; border-radius: 5px; white-space: nowrap;
+.cbx-lvl-badge { position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); font-size: 12px; font-weight: 900; padding: 0 4px; border-radius: 5px; white-space: nowrap;
   background: rgba(245, 230, 196, 1); color: rgba(59, 42, 18, 1); border: 1px solid rgba(138, 106, 48, 1); }
 .cbx-card-nm { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; min-width: 0; font-size: 12px; font-weight: 800; }
 .cbx-card-nm span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cbx-card-nm .cbx-cd-count { font-size: 10px; font-weight: 700; color: var(--cbx-ink-dim); white-space: nowrap; }
+.cbx-card-nm .cbx-cd-count { font-size: 12px; font-weight: 700; color: var(--cbx-ink-dim); white-space: nowrap; }
 .cbx-team.c3 .cbx-card-nm .cbx-cd-count.is-ready { display: none; }   /* à trois, « Prêt » cède la place au nom */
+/* v3.448.5 : textes de combat passés de 10 à 12 px ; sous 360 px, « Prêt » cède aussi la place au nom. */
+@media (max-width: 359px) { .cbx-card-nm .cbx-cd-count.is-ready { display: none; } }
 .cbx-bars { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .cbx-bar { position: relative; height: 9px; border-radius: 5px; background: rgba(0, 0, 0, .65); border: 1px solid rgba(0, 0, 0, .8); overflow: hidden; }
 .cbx-bar i { position: absolute; inset: 0 auto 0 0; transition: width .25s ease; background: linear-gradient(90deg, rgba(21, 128, 61, 1), var(--cbx-green)); }
@@ -276,7 +278,7 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-hpbar.is-low i.is-fill { background: linear-gradient(180deg, rgba(252, 165, 165, 1), var(--cbx-red) 45%, rgba(153, 27, 27, 1)); animation: cbxLowHp 1s ease-in-out infinite; }
 .cbx-hpbar span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; line-height: 1;
   font-size: 12px; font-weight: 900; color: var(--cbx-ink); font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000, 0 0 3px #000; }
-.cbx-hpbar .gauge-text small { font-size: 10px; font-weight: 700; opacity: .8; margin-left: 1px; }
+.cbx-hpbar .gauge-text small { font-size: 12px; font-weight: 700; opacity: .8; margin-left: 1px; }
 .cbx-team.c1 .cbx-card-pt { width: 52px; height: 52px; }
 .cbx-team.c1 .cbx-hpbar { height: 22px; border-radius: 11px; }
 .cbx-team.c1 .cbx-hpbar span { font-size: 14px; }
@@ -327,7 +329,7 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-skill.is-active { box-shadow: 0 0 0 2px var(--cbx-teal), 0 0 12px rgba(45, 212, 191, .6); }
 .cbx-skill-cd, .cbx-on-badge { position: absolute; inset: 0; display: grid; place-items: center; font-size: 18px; font-weight: 900; text-shadow: 0 2px 3px #000; }
 .cbx-on-badge { font-size: 10px; color: var(--cbx-teal); }
-.cbx-cost-badge { position: absolute; right: -2px; bottom: -2px; min-width: 20px; height: 18px; padding: 0 3px; border-radius: 9px; font-size: 10px; font-weight: 900; box-sizing: border-box;
+.cbx-cost-badge { position: absolute; right: -2px; bottom: -2px; min-width: 20px; height: 18px; padding: 0 3px; border-radius: 9px; font-size: 12px; font-weight: 900; box-sizing: border-box;
   display: grid; place-items: center; background: rgba(15, 61, 56, 1); border: 1px solid var(--cbx-teal); color: rgba(204, 251, 241, 1); }
 .cbx-key-badge { display: none; position: absolute; left: -2px; top: -2px; font-size: 10px; font-style: normal; font-weight: 900; padding: 0 4px; border-radius: 5px;
   background: rgba(0, 0, 0, .7); border: 1px solid var(--cbx-line); color: var(--cbx-ink); }
