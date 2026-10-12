@@ -5074,5 +5074,13 @@ I18n.register("en", {
   "Contre le Silence : tes techniques ne sont bloquées qu'un round au lieu de deux (jamais moins d'un).": "Counters the Silence: your techniques are only blocked for one round instead of two (never less than one).",
   "Ta sauvegarde était abîmée : la dernière copie saine a été rechargée.": "Your save was damaged: the last healthy copy has been reloaded.",
   "Ta sauvegarde n'a pas pu être lue. Elle est gardée à part : exporte tes sauvegardes (Paramètres) pour la récupérer.": "Your save could not be read. It has been kept aside: export your saves (Settings) to recover it.",
-  "Ta sauvegarde n'a pas pu être lue. Elle reste intacte : rien ne sera écrit dessus pendant cette session.": "Your save could not be read. It is left untouched: nothing will be written over it this session."
+  "Ta sauvegarde n'a pas pu être lue. Elle reste intacte : rien ne sera écrit dessus pendant cette session.": "Your save could not be read. It is left untouched: nothing will be written over it this session.",
+  "Ce qui manque": "What's missing",
+  "Pièces Rares : {a} / {b}": "Rare pieces: {a} / {b}",
+  "Le Sanctuaire scellé, l'échoppe de la Halle marchande et les élites des Ruines.": "The Sealed Sanctuary, the Market Hall shop and the Ruins elites.",
+  "Forge {n}": "Forge {n}",
+  "Reforge {n} de l'arme": "Weapon reforge {n}",
+  "Tout est là : à construire au Village, Bâtiments.": "Everything is ready: build it in the Village, Buildings.",
+  "Il faut d'abord la Forge {n}.": "Forge {n} comes first.",
+  "Tout est là : à la Forge, Établi.": "Everything is ready: at the Forge, Workbench."
 });

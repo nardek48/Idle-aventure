@@ -623,3 +623,10 @@
   margin: 0;
   padding: 6px 14px;
 }
+
+/* v3.448.6 : « Ce qui manque » sur la carte d'étape, et où le trouver */
+.story-missing { display: grid; gap: 6px; margin-top: 8px; padding: 8px 10px; border-radius: var(--nb-radius-sm); background: var(--nb-cream-alt); }
+.story-missing-title { font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--nb-ink-dim); }
+.story-missing-row { display: grid; gap: 1px; }
+.story-missing-text { font-size: 13px; font-weight: 700; color: var(--nb-ink); }
+.story-missing-where { font-size: 12px; color: var(--nb-ink-dim); }

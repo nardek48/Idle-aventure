@@ -507,6 +507,7 @@ function buildForgeBoardHTML() {
      + '<span class="forge-board-max">' + _t("Niveau maximum : {n}", { n: max }) + '</span></div>';
   h += '<div class="forge-board-note">' + _t("Le niveau appartient à l'emplacement : changer de pièce ne fait rien perdre.") + '</div>';
 
+  var provenancesVues = {}; // v3.448.6 : chaque provenance une seule fois sur l'établi
   EQUIPMENT_SLOTS.forEach(function (slot) {
     var level = ForgeManager.getLevel(slot);
     var item = (game.equipped || {})[slot];
@@ -539,14 +540,21 @@ function buildForgeBoardHTML() {
         h += '<div class="forge-board-note">' + _t("Acier fourni par le village (reforge exigée par l’Histoire)") + '</div>';
       }
       h += '<div class="forge-row-cost">';
+      var manquants = [];
       Object.keys(cost).forEach(function (key) {
         var meta = getVillageCostMeta(key);
         var have = (key === "gold") ? Number(game.gold || 0) : WarehouseManager.getAmount(key);
         var ok = have >= cost[key];
         h += '<span class="forge-cost-item' + (ok ? '' : ' is-missing') + '">'
            + meta.iconHTML + formatNumber(cost[key]) + '</span>';
+        if (!ok && key !== "gold" && !provenancesVues[key]) { provenancesVues[key] = true; manquants.push(key); }
       });
       h += '</div>';
+      // v3.448.6 : où trouver chaque matériau qui manque (comme sur les chantiers du village)
+      manquants.forEach(function (key) {
+        var hint = getVillageResourceHint(key);
+        if (hint) h += '<div class="vb-cost-where forge-row-where">' + esc(_td(getVillageCostMeta(key).label)) + ' : ' + esc(hint) + '</div>';
+      });
     }
     h += '</div>';
 

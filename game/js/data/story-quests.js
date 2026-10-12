@@ -2224,7 +2224,8 @@ STORY_QUESTS.ruins = {
         return "Rares " + Math.min(p.pieces, P.pieces) + "/" + P.pieces
           + " · Forge " + Math.min(p.forge, P.forge) + "/" + P.forge
           + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
-      }
+      },
+      missing: function (game) { return storyPalierRuinesRareMissing(game); } // v3.448.6 : ce qui manque, et où
     },
     /* Étape 14 (§4) : le Golem, puis le deuxième choix pesant (clé « salle », Donner / Garder).
        Fermer -> La salle scellée (frein de l'Éboulement, living-maps.js choiceBrakes).
@@ -2557,6 +2558,45 @@ function storySalleBranch() {
    compte), niveau du bâtiment Forge, reforge de l'arme. Lecture seule, comme storyPalierRuines.
    Chiffres provisoires (document « Ruines — Acte III » v1.0, à mesurer au robot). */
 var STORY_PALIER_RUINES_RARE = { pieces: 4, forge: 4, reforge: 7 };
+
+/* v3.448.6 (audit du 11/10) : « Ce qui manque » d'une étape. Les lignes d'un coût qui manquent, avec
+   l'endroit où trouver chaque matériau (sourceHint, getVillageResourceHint). Lecture seule. */
+function storyMissingCostLines(cost, prefix) {
+  var out = [];
+  Object.keys(cost || {}).forEach(function (key) {
+    var have = key === "gold" ? Number((window.game && game.gold) || 0)
+      : (window.WarehouseManager ? WarehouseManager.getAmount(key) : 0);
+    if (have >= cost[key]) return;
+    var def = key === "gold" ? null : (window.WAREHOUSE_RESOURCES || {})[key];
+    var nom = key === "gold" ? _t("Or") : (def ? _td(def.name) : key);
+    out.push({
+      text: prefix + " : " + nom + " " + formatNumber(Math.floor(have)) + " / " + formatNumber(cost[key]),
+      where: key === "gold" ? "" : (typeof getVillageResourceHint === "function" ? getVillageResourceHint(key) : "")
+    });
+  });
+  return out;
+}
+
+/* ruines_13 : pièces Rares, puis le prochain niveau de Forge, puis la prochaine reforge de l'arme. */
+function storyPalierRuinesRareMissing(game) {
+  var p = storyPalierRuinesRare(game), P = STORY_PALIER_RUINES_RARE, out = [];
+  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Rares : {a} / {b}", { a: p.pieces, b: P.pieces }),
+    where: _t("Le Sanctuaire scellé, l'échoppe de la Halle marchande et les élites des Ruines.") });
+  var V = window.VillageBuildingManager, F = window.ForgeManager;
+  if (p.forge < P.forge && V && typeof V.getNextCost === "function") {
+    var fl = storyMissingCostLines(V.getNextCost("forge"), _t("Forge {n}", { n: p.forge + 1 }));
+    out = out.concat(fl.length ? fl : [{ text: _t("Forge {n}", { n: p.forge + 1 }), where: _t("Tout est là : à construire au Village, Bâtiments.") }]);
+  }
+  if (p.arme < P.reforge && F && typeof F.getCost === "function") {
+    var c = F.getCost("weapon"), lab = _t("Reforge {n} de l'arme", { n: p.arme + 1 });
+    if (!c) out.push({ text: lab, where: _t("Il faut d'abord la Forge {n}.", { n: p.forge + 1 }) });
+    else {
+      var rl = storyMissingCostLines(c, lab);
+      out = out.concat(rl.length ? rl : [{ text: lab, where: _t("Tout est là : à la Forge, Établi.") }]);
+    }
+  }
+  return out;
+}
 function storyPalierRuinesRare(game) {
   var portes = (game && game.equipped) || {};
   var order = window.RARITY_ORDER || ["common", "green", "rare", "epic", "legendary"], rang = order.indexOf("rare");
@@ -2619,6 +2659,8 @@ window.storyPorteSanctuaire = storyPorteSanctuaire;
 window.storyCoeurVoisins = storyCoeurVoisins;
 window.storyPalierRuinesRare = storyPalierRuinesRare;
 window.STORY_PALIER_RUINES_RARE = STORY_PALIER_RUINES_RARE;
+window.storyMissingCostLines = storyMissingCostLines;
+window.storyPalierRuinesRareMissing = storyPalierRuinesRareMissing;
 window.STORY_SALLE_TEXTS = STORY_SALLE_TEXTS;
 window.STORY_PLAN_TEXTS = STORY_PLAN_TEXTS;
 window.storySanctuaireCamp = storySanctuaireCamp;

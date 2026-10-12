@@ -634,6 +634,16 @@ function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
   var progressText = accepted ? step.progress(game) : "";
   if (progressText) h += '<div class="story-step-progress">' + esc(progressText) + '</div>';
   h += '</div>';
+  // v3.448.6 : « Ce qui manque », et où le trouver (step.missing, ex. le palier Rare de ruines_13)
+  var manque = (accepted && !ready && typeof step.missing === "function") ? (step.missing(game) || []) : [];
+  if (manque.length) {
+    h += '<div class="story-missing"><div class="story-missing-title">' + _t("Ce qui manque") + '</div>';
+    manque.forEach(function (m) {
+      h += '<div class="story-missing-row"><span class="story-missing-text">' + esc(m.text) + '</span>'
+        + (m.where ? '<span class="story-missing-where">' + esc(m.where) + '</span>' : '') + '</div>';
+    });
+    h += '</div>';
+  }
 
   if (step.hint) h += '<div class="story-step-unlock story-step-hint"><img class=ico-inline src=images/Icons/system/warning.png> ' + esc(_td(step.hint)) + '</div>'; // v3.429.6
   if (unlockText) h += '<div class="story-step-unlock"><img class=ico-inline src=images/Icons/system/lock_open.png> ' + esc(_t("Débloque : {x}", { x: unlockText })) + '</div>';

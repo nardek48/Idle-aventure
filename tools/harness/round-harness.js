@@ -15300,5 +15300,35 @@ console.log("\n[229] v3.448.5 — Lisibilité : contrastes, textes à 12 px, zon
   ok(/\.klink::after \{\s*content: ""; position: absolute;[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/.test(css("00-components.css")), "zones de toucher de 44 px sur les petits boutons");
 })();
 
+/* [230] v3.448.6 — le palier Rare (ruines_13) dit ce qui manque et où le trouver ; l'établi de la Forge
+   donne la provenance des matériaux manquants, une fois chacune. */
+console.log("\n[230] v3.448.6 — Palier Rare : « Ce qui manque », et où");
+(function () {
+  var sv = { eq: game.equipped, gold: game.gold, vb: JSON.stringify(game.village || {}), fg: JSON.stringify(game.forge || {}), wr: game.worldsEverReached };
+  try {
+    var step = null; g.STORY_QUESTS.ruins.steps.forEach(function (s) { if (s.id === "ruines_13") step = s; });
+    ok(step && typeof step.missing === "function", "ruines_13 porte missing()");
+    g.VillageBuildingManager.ensure(); g.ForgeManager.ensure();
+    game.village.buildings.forge = Object.assign({}, game.village.buildings.forge, { level: 3 });
+    game.forge.levels.weapon = 6; game.gold = 0; game.worldsEverReached = { 0: true, 1: true, 2: true }; // aux Ruines
+    game.equipped = { weapon: { slot: "weapon", rarity: "rare", name: "x", stat: "tapDmg", value: 10 } };
+    var m = step.missing(game), txt = m.map(function (l) { return l.text + " | " + l.where; }).join("\n");
+    ok(/Pièces Rares : 1 \/ 4/.test(txt) && /Sanctuaire scellé/.test(txt), "pièces Rares : le compte et d'où elles viennent");
+    ok(/Forge 4 : Clé de voûte 0 \/ \d/.test(txt) && /Tailleur de pierre/.test(txt), "Forge 4 : la Clé de voûte et où la tailler");
+    ok(/Reforge 7 de l'arme \| Il faut d'abord la Forge 4\./.test(txt), "reforge 7 : la Forge 4 d'abord");
+    game.village.buildings.forge.level = 4;
+    m = step.missing(game); txt = m.map(function (l) { return l.text + " | " + l.where; }).join("\n");
+    ok(/Reforge 7 de l'arme : Clé de voûte/.test(txt), "Forge 4 bâtie : la reforge 7 liste ses matériaux manquants");
+    var board = g.buildForgeBoardHTML(), acier = (board.match(/Acier : /g) || []).length;
+    ok(acier === 1, "établi : la provenance de l'Acier n'apparaît qu'une fois (" + acier + ")");
+    var q = fs.readFileSync(path.join(ROOT, "js/ui/quests-view.js"), "utf8");
+    ok(/step\.missing\(game\)/.test(q) && /story-missing-title/.test(q), "la carte d'étape affiche « Ce qui manque »");
+  } catch (err) {
+    ok(false, "[230] exception : " + err.message);
+  } finally {
+    game.equipped = sv.eq; game.gold = sv.gold; game.village = JSON.parse(sv.vb); game.forge = JSON.parse(sv.fg); game.worldsEverReached = sv.wr;
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
