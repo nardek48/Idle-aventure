@@ -35,7 +35,7 @@ Une fois l'accord obtenu : modification minimale, limitée au besoin.
 - Node.js uniquement pour l'outillage (harnais, bancs, générateurs).
 
 ## Règles de jeu à ne pas casser
-- **Nouvel état persistant** : câbler les 4 points de `save-system.js` — `buildSaveData`, `loadGame`, `hardResetState`, `fullResetState`. En oublier un = perte de données au rechargement.
+- **Nouvel état persistant** : câbler les 4 points — `buildSaveData`, `restoreBaseState` (appelé par `loadGame`) et `fullResetState` dans `save-system.js`, plus la valeur par défaut dans `createInitialGameState` (`core/state.js`). En oublier un = perte de données au rechargement.
 - Aucune progression (Histoire, monde, `worldIndex`) ne dépend d'un combat hors quête : seules les quêtes définies et testées font foi.
 - **Icône manquante** : garder son vrai chemin et afficher l'icône générique. Ne jamais emprunter une autre image du jeu.
 - **Images en double ou sans rapport** : dès qu'une image sert à deux choses différentes, ou ne correspond pas à ce qu'elle illustre, le signaler à Seb (sans la corriger d'office).
@@ -46,7 +46,6 @@ Une fois l'accord obtenu : modification minimale, limitée au besoin.
 - CSS : une séquence `*/` dans un commentaire casse silencieusement tout le CSS qui suit.
 - CSS : le raccourci `background:` sur un composant dont l'image vient d'une autre classe provoque des régressions.
 - CSS : `isolation: isolate` peut passer les bottom sheets derrière la barre de navigation.
-- `DEFAULT_QUEST_PROGRESS` est déclaré dans `core/constants.js` et redéclaré dans `data/quests.js` : garder les deux synchronisés.
 
 ## Livraison d'une version
 1. Incrémenter **`GAME_VERSION`** (`js/core/constants.js`) et **`CACHE_VERSION`** (`sw.js`) — toujours égaux, le harnais vérifie.
