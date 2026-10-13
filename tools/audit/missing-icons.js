@@ -7,7 +7,8 @@
    USAGE : node tools/audit/missing-icons.js . */
 var fs = require("fs"), path = require("path");
 var ROOT = require("../chemins.js").jeu(process.argv[2]);
-var RE = /["'(]((?:\.{0,2}\/)*images\/[^"'()\s]+?\.(?:png|jpe?g|webp|svg|gif))["')]/gi;
+// v3.449.3 : aussi src=… sans guillemets (src=images/….png>), qui échappait au contrôle
+var RE = /["'(=]((?:\.{0,2}\/)*images\/[^"'()\s>]+?\.(?:png|jpe?g|webp|svg|gif))(?=["')>\s])/gi;
 
 function walk(dir, out) {
   fs.readdirSync(dir).forEach(function (f) {
