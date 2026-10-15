@@ -69,6 +69,10 @@ html, body { margin: 0; min-height: 100%; background: #000; overflow-x: hidden; 
 .v-c .foe.zz img { filter: grayscale(1) brightness(.75); }
 .v-c .foe.zz .zz-chip { display: block; }
 .foe.zz .hp u { background: #6f8d93; }
+/* Compte à rebours du réveil seul */
+.foe .wk { display: none; position: absolute; left: 50%; top: 18px; transform: translateX(-50%); width: 30px; height: 30px; border-radius: 50%; align-items: center; justify-content: center; font-weight: 900; font-size: 16px; color: #071014; background: var(--ice); border: 2px solid #071014; box-shadow: 0 0 10px rgba(159,227,230,.7); }
+.foe .wk.soon { background: #ffb24a; box-shadow: 0 0 12px rgba(255,178,74,.9); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { transform: translateX(-50%) scale(1.15); } }
 @keyframes breathe { 50% { transform: scale(.965) translateY(3px); } }
 @keyframes sway { 50% { transform: translateY(4px); } }
 /* Réveil */
@@ -158,9 +162,11 @@ html, body { margin: 0; min-height: 100%; background: #000; overflow-x: hidden; 
     <div class="seg" id="seg-v"><button type="button" data-v="a" aria-pressed="true">A · Gisant</button><button type="button" data-v="b">B · Brume</button><button type="button" data-v="c">C · Pierre</button></div>
     <b class="lab">Dormeurs par combat</b>
     <div class="seg" id="seg-n"><button type="button" data-n="1" aria-pressed="true">1</button><button type="button" data-n="2">2</button><button type="button" data-n="r">1 ou 2</button></div>
+    <b class="lab">Réveil seul</b>
+    <div class="seg" id="seg-w"><button type="button" data-w="0">Jamais</button><button type="button" data-w="3-5" aria-pressed="true">3 à 5 rounds</button><button type="button" data-w="4-6">4 à 6 rounds</button></div>
     <b class="lab">Qui joue</b>
     <div class="seg" id="seg-m"><button type="button" data-m="manuel" aria-pressed="true">Toi</button><button type="button" data-m="laisser">Grimoire : laisser</button><button type="button" data-m="reveiller">Grimoire : réveiller</button></div>
-    <p class="note">Règles de l'essai : un dormeur ne joue pas et n'est pas visé par défaut. Le combat est gagné quand les éveillés sont tombés. Frapper un dormeur le réveille ; le coup de zone réveille tout le monde. Un dormeur réveillé puis vaincu rapporte +50 % d'or.</p>
+    <p class="note">Règles de l'essai : un dormeur ne joue pas et n'est pas visé par défaut. Le combat est gagné quand les éveillés sont tombés. Frapper un dormeur le réveille ; le coup de zone réveille tout le monde. Un dormeur que tu réveilles puis vaincs rapporte +50 % d'or. Réveil seul : il se lève au bout du compte à rebours, sans bonus.</p>
     <button type="button" class="go" id="b-set-ok">Valider</button>
   </div></div>
 </div></div>
@@ -177,7 +183,7 @@ var FOES = {
 };
 var POS = [{ x: -23, y: 370 }, { x: 98, y: 300 }, { x: 218, y: 370 }];   // mesurées en jeu (3 ennemis)
 var HERO_MAX = 600, GOLD = 10, WAKE_BONUS = 1.5, ZONE_CD = 3;
-var S = { v: "a", n: "1", m: "manuel" };
+var S = { v: "a", n: "1", m: "manuel", w: "3-5" };
 var hero, foes, target, zoneCd, round, busy, total = 0, ended, stats, auto;
 var $ = function (id) { return document.getElementById(id); };
 var stage = $("stage"), screen = $("screen");
@@ -204,14 +210,14 @@ function newFight() {
   var ids = shuffle(Object.keys(FOES)).slice(0, 3);
   var nz = S.n === "r" ? rnd(1, 2) : Number(S.n);
   var zz = shuffle([0, 1, 2]).slice(0, nz);
-  foes = ids.map(function (id, i) { var d = FOES[id]; return { i: i, id: id, name: d.name, hp: d.hp, max: d.hp, atk: d.atk, zz: zz.indexOf(i) !== -1, dead: false }; });
+  foes = ids.map(function (id, i) { var d = FOES[id]; return { i: i, id: id, name: d.name, hp: d.hp, max: d.hp, atk: d.atk, zz: zz.indexOf(i) !== -1, dead: false, wakeIn: wakeRoll() }; });
   stats.sleepers = nz;
   target = firstAwake();
   stage.innerHTML = "";
   foes.forEach(function (f) {
     var el = document.createElement("div");
     el.className = "foe"; el.style.left = POS[f.i].x + "px"; el.style.top = POS[f.i].y + "px";
-    el.innerHTML = '<img src="' + IMG[f.id] + '" alt=""><div class="zs"><b>z</b><b>z</b><b>z</b></div><span class="zz-chip">Endormi</span><div class="hp"><u></u></div>';
+    el.innerHTML = '<img src="' + IMG[f.id] + '" alt=""><div class="zs"><b>z</b><b>z</b><b>z</b></div><span class="zz-chip">Endormi</span><span class="wk"></span><div class="hp"><u></u></div>';
     el.onclick = function () { if (!ended && !auto) pick(f); };
     f.el = el; stage.appendChild(el);
   });
@@ -220,6 +226,8 @@ function newFight() {
   render();
   if (S.m !== "manuel") runAuto();
 }
+/* Réveil seul : un dormeur se lève au bout de 3 à 5 rounds (réglage), sans bonus d'or (seul celui qu'on réveille en rapporte). */
+function wakeRoll() { if (S.w === "0") return 0; var ab = S.w.split("-"); return rnd(Number(ab[0]), Number(ab[1])); }
 function firstAwake() { for (var i = 0; i < foes.length; i++) if (!foes[i].dead && !foes[i].zz) return foes[i]; return null; }
 function alive() { return foes.filter(function (f) { return !f.dead; }); }
 function awake() { return foes.filter(function (f) { return !f.dead && !f.zz; }); }
@@ -237,12 +245,13 @@ function render() {
     f.el.classList.toggle("zz", f.zz && !f.dead);
     f.el.classList.toggle("dead", f.dead);
     f.el.classList.toggle("is-target", f === target && !f.dead);
+    var wk = f.el.querySelector(".wk"); wk.textContent = f.wakeIn > 0 ? String(f.wakeIn) : ""; wk.style.display = f.zz && !f.dead && f.wakeIn > 0 ? "flex" : "none"; wk.classList.toggle("soon", f.wakeIn === 1);
     f.el.querySelector(".hp u").style.width = Math.max(0, f.hp / f.max * 100) + "%";
   });
   var t = $("tgt");
   if (target && !target.dead) {
     t.className = "tgt" + (target.zz ? " is-zz" : "");
-    t.innerHTML = '<div class="n">' + target.name + (target.zz ? '<i>endormi</i>' : '') + '</div><div class="bar"><u style="width:' + (target.hp / target.max * 100) + '%"></u><span>' + Math.max(0, Math.ceil(target.hp)) + ' / ' + target.max + '</span></div>';
+    t.innerHTML = '<div class="n">' + target.name + (target.zz ? '<i>' + (target.wakeIn > 0 ? 'se lève dans ' + target.wakeIn + ' round' + (target.wakeIn > 1 ? 's' : '') : 'endormi') + '</i>' : '') + '</div><div class="bar"><u style="width:' + (target.hp / target.max * 100) + '%"></u><span>' + Math.max(0, Math.ceil(target.hp)) + ' / ' + target.max + '</span></div>';
   } else t.innerHTML = "";
   var ini = '<div class="r">Round<b>' + round + '</b></div><div class="p hero"><img src="' + IMG.hero + '" alt=""></div>';
   foes.forEach(function (f) { ini += '<div class="p' + (f.dead ? ' dead' : (f.zz ? ' zz' : '')) + '"><img src="' + IMG[f.id] + '" alt=""></div>'; });
@@ -319,6 +328,9 @@ function foesTurn() {
   setTimeout(function () {
     if (hero.hp <= 0) return lose();
     round++; if (zoneCd > 0) zoneCd--; busy = false;
+    var lev = [];
+    sleepers().forEach(function (f) { if (f.wakeIn > 0 && --f.wakeIn === 0) { wake(f); lev.push(f.name); } });
+    if (lev.length) say(lev.join(" et ") + (lev.length > 1 ? " se lèvent" : " se lève") + " tout seul" + (lev.length > 1 ? "s." : "."));
     if (!target || target.dead) target = firstAwake() || null;
     render();
     if (auto) setTimeout(autoStep, 550);
@@ -376,7 +388,7 @@ function seg(id, key) {
     };
   });
 }
-seg("seg-v", "v"); seg("seg-n", "n"); seg("seg-m", "m");
+seg("seg-v", "v"); seg("seg-n", "n"); seg("seg-m", "m"); seg("seg-w", "w");
 newFight();
 </script>
 </body>
