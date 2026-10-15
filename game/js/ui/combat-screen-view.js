@@ -134,6 +134,7 @@
     if (!e || num(e.hp) <= 0) return out;
     function push(id, n, sup) { var d = stateDef(id); if (d) out.push({ id: id, def: d, n: (typeof n === "number" && n > 0) ? n : null, suppressed: !!sup }); }
     if (e.downed) push("rising");   // v3.428.2 : à terre, il se relèvera
+    if (e.asleep) push("asleep");   // v3.451.0 (Crypte) : il dort
     if (num(e.engageIn) > 0) push("approaching", num(e.engageIn));
     if (e.chargeTelegraphed) push("charge");
     if (e.silenceTelegraphed) push("silence");
@@ -252,6 +253,7 @@
     if (tele) h += '<button type="button" class="cbx-foe-tele" onclick="openCombatStatesSheet()"><span class="cbx-badge is-urgent">' + ico(stateDef(tele).icon) + '</span></button>';
     if (e.dot && num(e.dot.rounds) > 0) h += '<button type="button" class="cbx-foe-dot" onclick="openCombatStatesSheet()">' + ico(IC.st + "arcane_burn.png") + '<b>' + num(e.dot.rounds) + '</b></button>';
     var marks = "";
+    if (e.asleep) marks += '<button type="button" class="cbx-dist-badge is-asleep" onclick="openCombatStatesSheet()">' + ico(CBX_STATES.asleep.icon) + '<b>' + num(e.wakeIn) + '</b></button>'; // v3.451.0 : réveil seul dans N rounds
     if (num(e.engageIn) > 0) marks += '<button type="button" class="cbx-dist-badge" onclick="openCombatStatesSheet()">' + ico(IC.st + "enemy_approaching.png") + '<b>' + num(e.engageIn) + '</b></button>';
     if (isRanged(e)) marks += '<button type="button" class="cbx-dist-badge is-ranged" onclick="openCombatStatesSheet()">' + ico(CBX_STATES.ranged.icon) + '<span>' + _t("à distance") + '</span></button>';
     if (marks) h += '<div class="cbx-foe-marks">' + marks + '</div>';
@@ -296,7 +298,7 @@
         + (e.chargeTelegraphed ? " tele-charge" : "") + (e.healTelegraphed ? " tele-heal" : "") + (e.silenceTelegraphed ? " tele-silence" : "")
         + (e.shieldTelegraphed ? " tele-shield" : "") + (e.surgeTelegraphed ? " tele-surge" : "")
         + (e.dot && num(e.dot.rounds) > 0 ? " dot-burn" : "") + (num(e.shieldRounds) > 0 ? " is-shielded" : "") + (num(e.vulnerableRounds) > 0 ? " is-vuln" : "")
-        + (e._cbxDash ? " is-dash" : "") + (e.downed ? " is-downed" : "");
+        + (e._cbxDash ? " is-dash" : "") + (e.downed ? " is-downed" : "") + (e.asleep ? " is-asleep" : "");
       if (el.className !== cls) el.className = cls;
       var ui = el.querySelector(".cbx-foe-ui"), html = foeUiHTML(e, list.length === 1);
       if (ui && ui._h !== html) { ui.innerHTML = html; ui._h = html; }
@@ -838,7 +840,7 @@
       seen[id] = true;
       var dead = !E.canAct(a);
       var cls = "cbx-ini-p" + (a.side === "enemy" ? " is-foe" : "") + (a === now ? " is-now" : "")
-        + (t.open && t.acted.indexOf(a) !== -1 && a !== now ? " is-done" : "") + (dead ? " is-out" : "") + (rolling ? " is-rolling" : "");
+        + (t.open && t.acted.indexOf(a) !== -1 && a !== now ? " is-done" : "") + (dead ? " is-out" : "") + (rolling ? " is-rolling" : "") + (a.asleep ? " is-asleep" : "");
       if (el.className !== cls) el.className = cls;
       var left = (i * INI_GAP) + "px";
       if (el.style.left !== left) el.style.left = left;

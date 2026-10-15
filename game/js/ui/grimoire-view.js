@@ -230,7 +230,8 @@ var GRIMOIRE_CONDITION_SHORT_LABELS = {
   enemySilenceIncoming: _t("l'ennemi va te museler", "grimoire court"),
   enemyVampiric: _t("l'ennemi est vampirique", "grimoire court"),
   enemyArmored: _t("l'ennemi est blindé", "grimoire court"),
-  enemyRising: _t("un ennemi se relève", "grimoire court") // v3.428.0 (Ruines)
+  enemyRising: _t("un ennemi se relève", "grimoire court"), // v3.428.0 (Ruines)
+  enemySleeping: _t("un ennemi dort", "grimoire court") // v3.451.0 (Crypte)
 };
 
 function getGrimoireConditionShortLabel(conditionId) {

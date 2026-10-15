@@ -77,9 +77,10 @@ var CombatActors = {
     return this.enemies().filter(function (e) { return e && Number(e.hp || 0) > 0; });
   },
 
-  /* v3.428.0 (Ruines, relève) : les ennemis vivants qui ne sont pas à terre. */
+  /* v3.428.0 (Ruines, relève) : les ennemis vivants qui ne sont pas à terre.
+     v3.451.0 (Crypte) : ni endormis — un dormeur n'est jamais visé d'office. */
   standingEnemies: function () {
-    return this.aliveEnemies().filter(function (e) { return !e.downed; });
+    return this.aliveEnemies().filter(function (e) { return !e.downed && !e.asleep; });
   },
 
   /* v3.428.0 : la cible tombe (morte ou à terre) — la suivante selon le réglage « Cible »,
@@ -156,7 +157,10 @@ var CombatActors = {
       arr[i].actorId = null;
       c.enemies.push(this.attach(arr[i], "enemy"));
     }
-    if (c.enemies.length) c.targetId = c.enemies[0].actorId;
+    if (c.enemies.length) {
+      var first = c.enemies.filter(function (e) { return !e.asleep; })[0] || c.enemies[0]; // v3.451.0 : pas un dormeur
+      c.targetId = first.actorId;
+    }
     return c.enemies;
   },
 

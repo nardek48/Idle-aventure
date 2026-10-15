@@ -361,6 +361,7 @@ var CombatEngine = {
     if (this.runToStop() !== hero) return false;
 
     if (source === "auto" && window.RiseSystem) RiseSystem.aim(arg && arg.matchedConditionId); // v3.428.0 : réglage « Cible »
+    if (source === "auto" && window.SleepSystem) SleepSystem.aim(arg && arg.matchedConditionId); // v3.451.0 : « Un ennemi dort » le vise
     if (window.RiseSystem) RiseSystem.beginAction(source !== "auto" || !!(arg && arg.matchedConditionId === "enemyRising")); // v3.428.3 : achever = décision
 
     var round = game.combatRound;
@@ -922,6 +923,7 @@ var CombatEngine = {
     if (!e || !e.stats) return;
     if ((game.heroHp || 0) <= 0) return;
     if (window.RiseSystem && RiseSystem.onEnemyTurn(e)) return; // v3.428.0 (Ruines) : à terre, il ne frappe pas
+    if (window.SleepSystem && SleepSystem.onEnemyTurn(e)) return; // v3.451.0 (Crypte) : il dort, il ne joue pas
     this.prepareEnemy(e);
     e.roundsAlive += 1;
 
@@ -1575,6 +1577,7 @@ var CombatEngine = {
       }
     }
 
+    if (window.SleepSystem) SleepSystem.onGroupSpawn(prepared); // v3.451.0 (Crypte) : les morts qui dorment
     if (window.CombatActors) CombatActors.setEnemies(prepared);
     else game.enemy = prepared[0];
 
@@ -1668,6 +1671,7 @@ var CombatEngine = {
     var foe = target || game.enemy;
     if (!foe) return;
     if (window.RiseSystem && RiseSystem.blocksHit(foe)) return; // v3.428.3 (Ruines) : à terre, seule une décision l'achève
+    if (window.SleepSystem) SleepSystem.onHit(foe); // v3.451.0 (Crypte) : le frapper le réveille
     this.prepareEnemy(foe);
 
     dmg = Math.max(0, Number(dmg || 0));
@@ -1750,6 +1754,7 @@ var CombatEngine = {
     }
 
     var goldGain = Number(enemy.goldReward || 0); // v3.358.0 (D7) : plus d'essence au kill
+    if (window.SleepSystem) goldGain = Math.floor(goldGain * SleepSystem.goldMult(enemy)); // v3.451.0 : réveillé puis vaincu
 
     if (window.EquipmentManager && typeof EquipmentManager.effectiveGoldMult === "function") {
       goldGain = Math.floor(goldGain * EquipmentManager.effectiveGoldMult());
@@ -1788,6 +1793,7 @@ var CombatEngine = {
       // v3.288.0 : vaut aussi pour les renforts de phase d'un boss, même raison.
     }
 
+    if (window.SleepSystem) SleepSystem.onKill(enemy); // v3.451.0 (Crypte) : dernier éveillé, les dormeurs restent couchés
     if (window.CombatActors && CombatActors.enemies().length > 1) {
       CombatActors.removeEnemy(enemy);
       if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("kills", 1);

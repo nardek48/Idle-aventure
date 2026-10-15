@@ -93,10 +93,18 @@ var GRIMOIRE_CONDITIONS = {
     label: "Un ennemi se relève",
     description: "Un ennemi est à terre et se relèvera au prochain round. Ton action le vise : une frappe l'achève.",
     icon: "images/Icons/combat_status/rising.png"
+  },
+  /* v3.451.0 (Crypte, CR2) : un mort dort. L'action de la règle le vise (SleepSystem.aim) : le frapper
+     le réveille, pour plus d'or. Sans règle, on le laisse dormir. Icône à générer. */
+  enemySleeping: {
+    id: "enemySleeping",
+    label: "Un ennemi dort",
+    description: "Un mort dort encore. Ton action le vise : le frapper le réveille, et vaincu il rapporte plus d'or. Sans cette règle, tu le laisses dormir.",
+    icon: "images/Icons/combat_status/asleep.png"
   }
 };
 
-var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "heroLowHp", "allyLowHp", "multipleEnemies", "enemyRising", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
+var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "heroLowHp", "allyLowHp", "multipleEnemies", "enemyRising", "enemySleeping", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
 
 /* v3.428.0 (Ruines, Conception §4.4 point 3) — réglage « Cible » du Grimoire (systems/rise-system.js). */
 var GRIMOIRE_TARGET_POLICIES = [

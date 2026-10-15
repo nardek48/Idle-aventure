@@ -150,6 +150,12 @@ var COMBAT_STATES_SCREEN = {
     famille: "alerte", nom: "À terre", icon: COMBAT_STATE_ICON + "rising.png", mot: "Il se relève !",
     desc: "Il est tombé, mais il se relèvera au prochain round avec la moitié de ses PV. Une seule fois.",
     hint: "Frappe-le maintenant (touche-le, ou la règle « Un ennemi se relève ») : il reste à terre."
+  },
+  // v3.451.0 (Crypte, CR2) : les morts qui dorment. Icône à générer.
+  asleep: {
+    famille: "enemy", nom: "Endormi", icon: COMBAT_STATE_ICON + "asleep.png",
+    desc: "Il dort : il ne joue pas, et le combat est gagné sans lui. Le chiffre compte les rounds avant qu'il se lève seul.",
+    hint: "Laisse-le dormir, ou touche-le pour le réveiller : vaincu, il rapporte la moitié d'or en plus."
   }
 };
 window.COMBAT_STATES_SCREEN = COMBAT_STATES_SCREEN;

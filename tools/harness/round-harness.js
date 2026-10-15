@@ -15523,5 +15523,72 @@ console.log("\n[238] v3.450.0 — Crypte, lot C-0 : socle et passage entre les m
   }
 })();
 
+console.log("\n[239] v3.451.0 — Crypte, lot C-1 : les morts qui dorment");
+(function () {
+  var CE = g.CombatEngine, SL = g.SleepSystem, CA = g.CombatActors, grant = CE.grantGold, gains = [];
+  var wiAvant = g.WorldManager.worldIndex;
+  try {
+    game = freshCombat("knight");
+    g.WorldManager.worldIndex = 3;
+    var mk = function (id) { var d = g.ENEMY_DB[id]; return { id: id, name: d.name, isBoss: false, archetype: null, hp: 300, maxHp: 300, stats: d.stats, resists: [], weak: [], goldReward: 20 }; };
+    CE.grantGold = function (n) { gains.push(n); };
+    // Ouverture : deux dormeurs, la cible est l'éveillé
+    SL.planNext(2);
+    CE.spawnGroup([mk("spectre"), mk("wraith"), mk("deadknight")]);
+    var dorment = SL.sleepers(), eveille = CA.standingEnemies();
+    ok(dorment.length === 2 && eveille.length === 1 && CA.target() === eveille[0], "deux dorment ; ni la cible ni les ennemis debout ne comptent un dormeur");
+    ok(dorment.every(function (e) { return e.wakeIn >= 3 && e.wakeIn <= 5; }), "réveil seul : 3 à 5 rounds");
+    // Un dormeur ne joue pas ; son compte à rebours descend
+    var pv0 = game.heroHp, w0 = dorment[0].wakeIn;
+    CE.withTarget(dorment[0], function () { CE.enemyTurn(); });
+    ok(game.heroHp === pv0 && dorment[0].asleep && dorment[0].wakeIn === w0 - 1, "à son tour, il dort : aucun coup, le compte à rebours descend");
+    // Le Grimoire : condition vraie, la règle le vise
+    ok(g.isConditionPossibleForEnemy("enemySleeping", eveille[0]) === true, "Grimoire : « Un ennemi dort » est proposée");
+    SL.aim("enemySleeping");
+    ok(CA.target().asleep === true, "la règle « Un ennemi dort » vise un dormeur");
+    CA.setTarget(eveille[0]);
+    // Le dernier éveillé tombe : victoire, les dormeurs restent couchés
+    gains.length = 0;
+    eveille[0].hp = 1; CE.killEnemy(eveille[0]);
+    ok(game.combatSleepersLeft === 2 && SL.sleepers().length === 0, "le dernier éveillé tombe : le combat est gagné, deux dorment encore");
+    ok(gains[0] === 20, "un éveillé vaincu : or normal (" + gains[0] + ")");
+    // Réveillé par un coup, puis vaincu : +50 % d'or
+    SL.planNext(1);
+    CE.spawnGroup([mk("spectre"), mk("wraith")]);
+    var z = SL.sleepers()[0];
+    CE.dealDamage(10, false, false, true, z);
+    ok(!z.asleep && z.wokenByHero === true, "le frapper le réveille");
+    gains.length = 0;
+    z.hp = 1; CE.killEnemy(z);
+    ok(gains[0] === 30, "réveillé puis vaincu : +50 % d'or (" + gains[0] + ")");
+    // Réveil seul : sans bonus
+    SL.planNext(1);
+    CE.spawnGroup([mk("spectre"), mk("wraith")]);
+    var s1 = SL.sleepers()[0]; s1.wakeIn = 1;
+    CE.withTarget(s1, function () { CE.enemyTurn(); });
+    ok(!s1.asleep && s1.wokenByHero === false && SL.goldMult(s1) === 1, "le compte à rebours à zéro : il se lève seul, sans bonus");
+    // Un coup de zone les réveille tous
+    SL.planNext(2);
+    CE.spawnGroup([mk("spectre"), mk("wraith"), mk("deadknight")]);
+    CA.aliveEnemies().forEach(function (e) { CE.dealDamage(5, false, false, true, e); });
+    ok(SL.sleepers().length === 0, "un coup de zone réveille tous les dormeurs");
+    // Hors de la Crypte, personne ne dort ; un boss ne dort jamais
+    g.WorldManager.worldIndex = 2;
+    CE.spawnGroup([mk("spectre"), mk("wraith"), mk("deadknight")]);
+    ok(SL.sleepers().length === 0, "hors de la Crypte : personne ne dort");
+    g.WorldManager.worldIndex = 3;
+    var b = mk("spectre"); b.isBoss = true;
+    SL.planNext(2);
+    CE.spawnGroup([b, mk("wraith")]);
+    ok(!b.asleep && SL.sleepers().length === 1, "un boss ne dort jamais ; toujours au moins un éveillé");
+    var src = require("fs").readFileSync(ROOT + "/sw.js", "utf8");
+    ok(src.indexOf("./js/systems/sleep-system.js") !== -1, "sleep-system.js est précaché par le service worker");
+  } catch (err) {
+    ok(false, "[239] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    CE.grantGold = grant; g.WorldManager.worldIndex = wiAvant;
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
