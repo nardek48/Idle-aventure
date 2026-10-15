@@ -9,7 +9,7 @@
    - Un niveau déjà construit n'est jamais repris : le plafond ne vaut que pour les
      achats à venir.
    - Un index de monde absent de la table = pas de plafond (le max propre à l'objet).
-   Les plafonds des mondes 3 et suivants seront fixés quand ces mondes seront travaillés.
+   Les plafonds des mondes 5 et suivants seront fixés quand ces mondes seront travaillés.
 
    Lu par : VillageBuildingManager, ProductionPlotsSystem, WorkshopsSystem. */
 
@@ -41,6 +41,15 @@ var WORLD_CAPS = [
     zoneLevel: 5,
     workshopLevel: 3,
     petiteAventureCap: 4
+  },
+  /* 3 — Crypte oubliée. v3.450.0 (Conception Crypte CR8, lot C-0) : écrit avant d'ouvrir le monde.
+     Provisoire, égal aux Ruines ; seule la 3e rangée de zones s'ouvre. Les crans des actes II-III au banc. */
+  {
+    village: { workshop: 8, training: 11, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 6, forge: 4, enchanter: 2 },
+    zoneRows: 3,
+    zoneLevel: 5,
+    workshopLevel: 3,
+    petiteAventureCap: 4
   }
 ];
 
@@ -59,7 +68,8 @@ var TRAINING_CAP_BY_ACT = [
   { worldIndex: 1, stepId: "desert_11", act: "III", terrain: 9 },     // 110
   { worldIndex: 2, stepId: "ruines_01", act: "I", terrain: 9 },       // v3.428.0 : Ruines, acte I — inchangé (palier en acte II)
   { worldIndex: 2, stepId: "ruines_06", act: "II", terrain: 10 },     // v3.429.0 : 120
-  { worldIndex: 2, stepId: "ruines_11", act: "III", terrain: 11 }     // v3.431.0 : 130
+  { worldIndex: 2, stepId: "ruines_11", act: "III", terrain: 11 },    // v3.431.0 : 130
+  { worldIndex: 3, stepId: "crypte_01", act: "I", terrain: 11 }       // v3.450.0 : Crypte, acte I — inchangé (paliers au banc)
 ];
 
 /* v3.327.0 (conception Talents v1.1, T2 option B) — PLAFOND DE POINTS DE TALENT PAR ACTE.
@@ -73,7 +83,8 @@ var TALENT_CAP_BY_ACT = [
   { worldIndex: 1, stepId: "desert_11", act: "III", points: 11 },
   { worldIndex: 2, stepId: "ruines_01", act: "I", points: 11 },       // v3.428.0 : Ruines, acte I — inchangé
   { worldIndex: 2, stepId: "ruines_06", act: "II", points: 12 },      // v3.429.0
-  { worldIndex: 2, stepId: "ruines_11", act: "III", points: 13 }      // v3.431.0
+  { worldIndex: 2, stepId: "ruines_11", act: "III", points: 13 },     // v3.431.0
+  { worldIndex: 3, stepId: "crypte_01", act: "I", points: 13 }        // v3.450.0 : Crypte, acte I — inchangé
 ];
 
 /* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ».

@@ -3575,7 +3575,9 @@ console.log("\n[21] v3.213.0 (lot V-1) \u2014 Socle des b\u00e2timents du Villag
   ok(costsMatch, "co\u00fbts de l'Atelier inchang\u00e9s depuis la v3.212.0 sur les paliers 0-7 (sauf le niveau 1, all\u00e9g\u00e9 en v3.264.0)");
 
   g.game.village.buildings.workshop.level = 8;
+  var reachedAvant = g.game.worldsEverReached; g.game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true }; // v3.450.0 : au-delà de la table (la Crypte plafonne l'Atelier à 8)
   var haut = M.getNextCost("workshop");
+  g.game.worldsEverReached = reachedAvant;
   ok(!!haut && haut.resine_durcie > 0,
     "les derniers niveaux de l'Atelier exigent le mat\u00e9riau de monde");
 
@@ -9783,7 +9785,7 @@ console.log("\n[120] v3.325.0 — Plafond du Terrain d'entraînement par acte");
   pose(F.length, 0, { 0: true, 1: true });
   game.village.buildings.training.level = 9;
   ok(VB.getMaxLevel("training") === 9 && VB.isMaxLevel("training"), "Terrain 9 déjà construit à l'acte I : rien n'est repris, pas de niveau au-delà");
-  pose(0, 0, { 0: true, 1: true, 2: true, 3: true }); // v3.428.0 : les Ruines ont leur entrée, la Crypte non
+  pose(0, 0, { 0: true, 1: true, 2: true, 3: true, 4: true }); // v3.450.0 : la Crypte a son entrée, la Montagne non
   ok(WC.getTrainingActCap() === Infinity, "monde sans entrée d'acte : aucun plafond d'acte");
   game.storyQuests.forest.skipped = true; game.worldsEverReached = { 0: true };
   ok(WC.getVillageCap("training") === 4, "chapitre de la Forêt court-circuité : Forêt au complet (4)");
@@ -13601,7 +13603,10 @@ console.log("\n[194] v3.423.0 — Difficulté : les ennemis suivent un peu la fo
     run("game.cycleCount = 1;"); var hc = run("WorldManager.getHeroScale()"); run("game.cycleCount = 0;");
     ok(hc.hp === 1 && hc.power === 1, "dans les Cycles : pas d'ajustement (les Cycles ont le leur)");
     run("WorldManager.worldIndex = 3;"); var hr = run("WorldManager.getHeroScale()"); run("WorldManager.worldIndex = 1;");
-    ok(hr.hp === 1, "Crypte : pas encore de référence, pas d'ajustement"); // v3.428.0 : les Ruines ont une référence provisoire
+    var hrRef = run("CombatForecast.getHeroScale('joueurRuines', WORLD_HERO_SCALING)");
+    ok(hr.hp === hrRef.hp && hr.power === hrRef.power, "Crypte : ajustement sur la référence de fin des Ruines (joueurRuines)"); // v3.450.0
+    run("WorldManager.worldIndex = 4;"); var hm = run("WorldManager.getHeroScale()"); run("WorldManager.worldIndex = 1;");
+    ok(hm.hp === 1 && hm.power === 1, "Montagne : pas encore de référence, pas d'ajustement");
     var cap = run("CombatForecast.getHeroScale('desert12', { exp: 1, margin: 1, cap: 2.5 })");
     ok(cap.hp === 2.5, "plafond : ×2,5 au plus");
 
@@ -15487,6 +15492,34 @@ console.log("\n[237] v3.449.2 — Acide mordant renforcé (bouclier rongé à 25
     ok(ab > 0 && abF === Math.floor(ab * 0.5), "abandon : récompense partielle " + ab + ", divisée par deux avec la Fiole (" + abF + ")");
   } catch (err) {
     ok(false, "[237] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[238] v3.450.0 — Crypte, lot C-0 : socle et passage entre les mondes");
+(function () {
+  var reachedAvant = game.worldsEverReached, wiAvant = g.WorldManager.worldIndex, advAvant = g.WorldManager.adventureIndex;
+  try {
+    var e3 = g.WORLD_CAPS[3];
+    ok(!!e3 && e3.zoneRows === 3 && g.WorldCaps.getRowOpeningIndex(2) === 3, "WORLD_CAPS[3] écrit avant d'ouvrir le monde ; la 3e rangée de zones s'ouvre à la Crypte");
+    ok(g.TRAINING_CAP_BY_ACT.some(function (a) { return a.worldIndex === 3 && a.stepId === "crypte_01"; })
+      && g.TALENT_CAP_BY_ACT.some(function (a) { return a.worldIndex === 3 && a.stepId === "crypte_01"; }), "Terrain et talents : entrée d'acte I à la Crypte");
+    var R = g.WAREHOUSE_RESOURCES;
+    ok(R.cire_sepulcre && R.cire_sepulcre.worldIndex === 3 && R.cire_consacree && R.cire_consacree.worldIndex === 3, "Cire de sépulcre et Cire consacrée : matériaux du monde 4");
+    ok(g.WORLD_HERO_SCALING.refByWorld.crypt && g.HERO_SCALING_REFS.joueurRuines, "ajustement au héros : référence de fin des Ruines");
+    var d4 = g.DUNGEONS.filter(function (d) { return d.id === 4; })[0];
+    ok(d4.locked === true && d4.requiresStoryStep === "crypte_12" && d4.storyChapterId === "crypt", "Ossuaire : fermé jusqu'à son contenu, puis derrière son étape d'Histoire (acte III)");
+    // Le passage : arrivée, monde posé, plafonds de la Crypte, Ossuaire toujours fermé, voyage retour
+    game.worldsEverReached = { 0: true, 1: true, 2: true };
+    game.dungeonTierCleared = { 1: true, 2: true, 3: true };
+    ok(g.WorldTravel.arrive("crypt", 0) === true && g.WorldManager.worldIndex === 3 && game.worldsEverReached[3] === true, "arrivée : la Crypte devient le monde de résidence, notée atteinte");
+    ok(g.WorldCaps.getReachedWorldIndex() === 3 && g.WorldCaps.getZoneRows() === 3, "plafonds lus sur la Crypte");
+    ok(g.DungeonManager.isUnlocked(4) === false, "l'Ossuaire reste fermé à l'arrivée (pas de contenu avant l'acte III)");
+    ok(g.WorldTravel.canTravelTo("ruins") && g.WorldTravel.travelTo && (g.WorldTravel.travelTo("ruins"), g.WorldManager.worldIndex === 2), "voyage retour vers les Ruines");
+    ok(g.WorldCaps.getZoneRows() === 3, "retour aux Ruines : rien ne se referme (plus haut monde atteint)");
+  } catch (err) {
+    ok(false, "[238] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    game.worldsEverReached = reachedAvant; g.WorldManager.worldIndex = wiAvant; g.WorldManager.adventureIndex = advAvant;
   }
 })();
 

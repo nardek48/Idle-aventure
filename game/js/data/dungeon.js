@@ -206,7 +206,13 @@ var DUNGEONS = [
     story: "Les murs eux-mêmes semblent respirer. Peu de ceux qui s'aventurent ici en ressortent sans égratignures — et encore moins sans butin.",
     enemyPool: null, eliteWaves: null,
     boss: { baseId: "necrosupreme", name: "Liche des sépulcres", archetype: "corrupted", statMult: { endurance: 1, power: 1 }, image: null },
-    locked: false
+    /* v3.450.0 (Crypte, lot C-0) : fermé tant que l'Ossuaire n'a pas son contenu (acte III, CR11).
+       locked tant que le chapitre n'existe pas (isStepReached dit oui pour une étape inconnue) ;
+       à l'acte III, locked passe à false et le verrou d'Histoire prend le relais. */
+    locked: true,
+    requiresStoryStep: "crypte_12",
+    storyChapterId: "crypt",
+    lockedHint: "L'Ossuaire est encore fermé."
   },
   {
     id: 5, key: "mountain",

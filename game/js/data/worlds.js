@@ -191,7 +191,7 @@ var AMBIANCE_TEXTS = [
    Ennemi : PV × (dmg du héros / dmg de réf. / marge)^exp, Puissance × (ehp / ehp de réf. /
    marge)^exp, jamais en dessous de ×1, plafonnés à ×cap. Le héros garde toujours une part de
    son avance (exp < 1) : s'entraîner et s'équiper restent payants.
-   Mondes sans référence (Ruines et au-delà) : pas d'ajustement tant qu'ils ne sont pas calés.
+   Mondes sans référence (Montagne et au-delà) : pas d'ajustement tant qu'ils ne sont pas calés.
    L'or et l'XP ne changent pas. Logique : CombatForecast.getHeroScale (combat-forecast-system.js). */
 var HERO_SCALING_REFS = {
   foret1:   { dmg: 64,  ehp: 361 },  // Forêt, acte I (niveau 3, arme +15)
@@ -204,7 +204,10 @@ var HERO_SCALING_REFS = {
      les cinq caractéristiques jusqu'au plafond de l'acte : bien plus fort que les héros du banc. */
   joueurForet:   { dmg: 185, ehp: 691 },  // fin de la Forêt (forest_15)
   joueurDesert1: { dmg: 217, ehp: 785 },  // Désert, 1re aventure (desert_06)
-  joueurDesert2: { dmg: 371, ehp: 971 }   // Désert, fin du chapitre (desert_18)
+  joueurDesert2: { dmg: 371, ehp: 971 },  // Désert, fin du chapitre (desert_18)
+  /* v3.450.0 (Crypte, lot C-0) : fin des Ruines (ruines_20), campagne --combats --avise, v3.449.2.
+     Chevalier 657 / 1724, Rôdeur 903 / 1573, Mage 1050 / 1549. */
+  joueurRuines:  { dmg: 870, ehp: 1615 }
 };
 /* D : les mondes. « Un peu » (Seb) : exp 0,5, et une marge de 15 % au-dessus du joueur
    appliqué de fin de segment : le robot de campagne ne voit aucune différence (mesuré : avec
@@ -217,7 +220,8 @@ var WORLD_HERO_SCALING = {
   classEhpGabarit: { knight: 1.3 },
   /* v3.428.0 (Ruines, U-1) : le héros de fin du chapitre II. Gardé par décision de Seb du 09/10/2026 :
      tous les bancs des Ruines ont été faits avec cette référence. */
-  refByWorld: { forest: ["joueurForet", "joueurForet"], desert: ["joueurDesert1", "joueurDesert2"], ruins: ["joueurDesert2", "joueurDesert2"] }
+  refByWorld: { forest: ["joueurForet", "joueurForet"], desert: ["joueurDesert1", "joueurDesert2"], ruins: ["joueurDesert2", "joueurDesert2"],
+    crypt: ["joueurRuines", "joueurRuines"] } // v3.450.0 : le héros de fin des Ruines
 };
 window.HERO_SCALING_REFS = HERO_SCALING_REFS;
 window.WORLD_HERO_SCALING = WORLD_HERO_SCALING;

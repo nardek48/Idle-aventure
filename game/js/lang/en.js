@@ -1590,6 +1590,14 @@ I18n.register("en", {
 
   // js/ui/talents-view.js
   "Clé de voûte": "Keystone",
+  // v3.450.0 (Crypte, lot C-0) : matériaux et Ossuaire
+  "Cire de sépulcre": "Sepulchre Wax",
+  "Cire consacrée": "Consecrated Wax",
+  "Un pain de cire blanche, encore tiède. On le trouve là où on a laissé du pain aux morts.": "A block of white wax, still warm. You find it where bread was left for the dead.",
+  "Cire de sépulcre fondue et coulée en barres. Elle ne coule plus, même au feu. Matériau du palier Épique de la Forge et des dernières reforges.": "Sepulchre Wax melted and cast into bars. It no longer runs, even in the fire. Material for the Forge's Epic tier and the last reforges.",
+  "Le Marché de la Crypte (caravane de la Halle marchande)": "The Crypt Market (Market Hall caravan)",
+  "Se coule à partir de Cire de sépulcre (recette à l'acte III de la Crypte)": "Cast from Sepulchre Wax (recipe in act III of the Crypt)",
+  "L'Ossuaire est encore fermé.": "The Ossuary is still closed.",
   "{a} / {b} placés · plafond de l'acte": "{a} / {b} placed · act cap",
   "{a} placés": "{a} placed",
   "Réinitialiser": "Reset",
