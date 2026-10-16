@@ -198,7 +198,12 @@ var CompanionManager = {
 
   statsOf: function (companionId) {
     var st = this.state(companionId);
-    return getCompanionStats(companionId, this.worldIndex(), st ? st.upgrades : 0);
+    var s = getCompanionStats(companionId, this.worldIndex(), st ? st.upgrades : 0);
+    if (s && window.TalentManager && TalentManager.companionHpMult) { // v3.453.0 : Commandement (Serrez les rangs, À mon signal)
+      s.maxHp = Math.floor(s.maxHp * TalentManager.companionHpMult());
+      s.damage = Math.floor(s.damage * TalentManager.companionDamageMult());
+    }
+    return s;
   },
 
   maxHpOf: function (companionId) {
@@ -326,7 +331,8 @@ var CompanionManager = {
      (qui, lui, tient le rythme à l'intérieur d'un même combat). */
   chargesMax: function (companionId) {
     var def = getCompanionDef(companionId);
-    return (def && def.skill && typeof def.skill.charges === "number") ? def.skill.charges : 0;
+    var n = (def && def.skill && typeof def.skill.charges === "number") ? def.skill.charges : 0;
+    return n > 0 && window.TalentManager && TalentManager.companionExtraCharges ? n + TalentManager.companionExtraCharges() : n; // v3.453.0 : Une charge de plus
   },
 
   /* Ouverture d'un combat : un compagnon KO revient avec des PV réduits (§4.4). */
@@ -338,7 +344,8 @@ var CompanionManager = {
       if (typeof st.hp !== "number" || !isFinite(st.hp)) st.hp = max;
       // v3.322.0 : Fidélité de Wenna / de Maddoc (Mémoire niveaux 3 et 7) — retour à 100 %
       var fidele = window.MemoryManager && MemoryManager.has("fidelite_" + id);
-      if (st.hp <= 0) st.hp = fidele ? max : Math.max(1, Math.floor(max * COMPANION_KO_RETURN_PCT));
+      var retour = window.TalentManager && TalentManager.companionKoReturnPct ? TalentManager.companionKoReturnPct(COMPANION_KO_RETURN_PCT) : COMPANION_KO_RETURN_PCT; // v3.453.0 : Personne ne reste à terre
+      if (st.hp <= 0) st.hp = fidele ? max : Math.max(1, Math.floor(max * retour));
       if (st.hp > max) st.hp = max;
     });
     this.syncParty();
@@ -453,7 +460,7 @@ var CompanionManager = {
 
     var sansCharge = this.chargesMax(actor.companionId) > 0 && Number(actor.charges || 0) <= 0;
     if (slot === "skill" && Number(actor.cooldown || 0) <= 0 && !sansCharge && def.skill) {
-      if (this.useSkill(actor, def, forcedArg)) return true;
+      if (this.useSkill(actor, def, forcedArg)) { if (window.TalentManager && TalentManager.onCompanionSkill) TalentManager.onCompanionSkill(); return true; } // v3.453.0 : Relais
       slot = "basic"; // compétence sans cible utile : on frappe plutôt que de perdre le round
     }
 
@@ -532,14 +539,15 @@ var CompanionManager = {
       if (typeof addLog === "function") addLog("🪦 " + _t("{x} — {s} sur {y}", { x: _td(def.name), s: _td(skill.name), y: aTerre.name ? _td(aTerre.name) : _t("l'ennemi") }), "event");
       if (window.RiseSystem) RiseSystem.beginAction(true); // Le dernier trait : c'est sa raison d'être
       CombatEngine.dealDamage(coup, false, true, true, aTerre);
-      actor.cooldown = Number(skill.cooldown || 0);
+      actor.cooldown = (window.MemoryManager && MemoryManager.has("trait_sur")) ? MemoryManager.V("trait_sur_cooldown") : Number(skill.cooldown || 0); // v3.453.0 : Trait sûr (Mémoire 11)
       return true;
     }
 
     /* v3.452.0 (Crypte) — Pas encore (Ysolt) : le dormeur qui allait se lever dort deux rounds de plus. */
     if (skill.type === "delaySleep") {
       var dort = this._sleeperAboutToWake(skill) || (window.SleepSystem ? SleepSystem.sleepers()[0] : null);
-      if (!dort || !SleepSystem.delay(dort, Number(skill.value || 2))) return false;
+      var tours = (window.MemoryManager && MemoryManager.has("pas_encore_encore")) ? MemoryManager.V("pas_encore_rounds") : Number(skill.value || 2); // v3.453.0 : Mémoire 15
+      if (!dort || !SleepSystem.delay(dort, tours)) return false;
       actor.cooldown = Number(skill.cooldown || 0);
       if (typeof actor.charges === "number") actor.charges = Math.max(0, actor.charges - 1);
       if (typeof addLog === "function") addLog("🌫️ " + _t("{x} — {s} : {y} dort encore.", { x: _td(def.name), s: _td(skill.name), y: dort.name ? _td(dort.name) : _t("l'ennemi") }), "event");

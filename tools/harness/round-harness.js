@@ -15634,5 +15634,97 @@ console.log("\n[240] v3.452.0 — Crypte, lot C-2 : acte I « La descente »");
   }
 })();
 
+console.log("\n[241] v3.453.0 — Voie du Commandement et Mémoire 9 à 16 (Garder / Donner, ligne du jalon)");
+(function () {
+  var TM = g.TalentManager, MM = g.MemoryManager, CM = g.CompanionManager, SL = g.SleepSystem, CE = g.CombatEngine;
+  var wiAvant = g.WorldManager.worldIndex, hasAvant = MM.has;
+  try {
+    freshCombat("knight");
+    var G = g.game;
+    // --- Commandement ---
+    var cmd = TM.getNodes().filter(function (e) { return e.zone === "command"; });
+    ok(cmd.length === 5 && cmd[4].node.key && cmd[4].node.id === "c_relais", "Commandement : 5 nœuds communs, Relais en clé");
+    G.worldsEverReached = { 0: true, 1: true, 2: true };
+    G.heroLevel = 40;
+    ok(!TM.commandOpen() && TM.blockInfo("c_serrez_rangs").kind === "commandClosed", "fermé avant la Crypte");
+    G.worldsEverReached[3] = true;
+    ok(TM.commandOpen() && TM.blockInfo("c_mon_signal").kind === "commandOrder", "ouvert à la Crypte ; nœuds dans l'ordre");
+    var pc = g.TALENT_CAP_BY_ACT.filter(function (a) { return a.stepId === "crypte_01"; })[0];
+    ok(pc && pc.points === 15, "plafond de la Crypte, acte I : 15 points (13 → 18 sur le monde)");
+    G.talents = { c_serrez_rangs: 1, c_mon_signal: 1, c_charge_plus: 1, c_personne_terre: 1, c_relais: 1 };
+    TM.sync();
+    ok(Object.keys(G.talents).length === 5 && TM.spent() === 5, "sync garde les talents du Commandement (points partagés)");
+    var base = g.getCompanionStats("wenna", CM.worldIndex(), 0), st = CM.statsOf("wenna");
+    ok(st.maxHp === Math.floor(base.maxHp * 1.08) && st.damage === Math.floor(base.damage * 1.10), "Serrez les rangs +8 % PV, À mon signal +10 % dégâts");
+    ok(CM.chargesMax("wenna") === 4 && CM.chargesMax("maddoc") === 0, "Une charge de plus : Wenna 4 soins, rien pour un compagnon sans charges");
+    CM.unlock("wenna"); CM.state("wenna").present = true; CM.refreshParty();
+    CM.state("wenna").hp = 0; CM.onCombatStart();
+    ok(CM.state("wenna").hp === Math.floor(CM.maxHpOf("wenna") * 0.5), "Personne ne reste à terre : retour à 50 % des PV");
+    TM.onCompanionSkill();
+    ok(Math.abs(TM.heroDamageMult({ id: "x" }, G.enemy) - 1) < 1e-9 && G._relaisReady, "Relais : une compétence du héros ne le consomme pas");
+    ok(Math.abs(TM.heroDamageMult(null, G.enemy) - 1.4) < 1e-9 && Math.abs(TM.heroDamageMult(null, G.enemy) - 1) < 1e-9, "Relais : +40 % sur l'attaque de base suivante, une fois");
+    // --- Mémoire : niveaux, coûts, ligne ---
+    ok(g.MEMORY_LEVEL_COSTS.length === 16 && g.MEMORY_LEVELS.length === 16, "16 niveaux et 16 coûts");
+    G.worldsEverReached = { 0: true, 1: true, 2: true };
+    ok(MM.getCap() === 12, "Ruines : plafond 12");
+    G.worldsEverReached[3] = true;
+    ok(MM.getCap() === 16, "Crypte : plafond 16");
+    ok(g.MEMORY_LEVELS.slice(8).every(function (d) { return d.options.filter(function (o) { return o.side === "garder"; }).length === 1 && d.options.filter(function (o) { return o.side === "donner"; }).length === 1; }), "niveaux 9 à 16 : un Garder et un Donner chacun");
+    G.totalAetherEarned = 99999; G.gold = 1e9;
+    MM.ensure().choices = { 9: "fiole_reserve", 10: "craie_epaisse", 11: "fidelite_edda" };
+    ok(MM.lineOpen(12, "garder") && !MM.lineOpen(12, "donner"), "ligne Garder ouverte après trois Garder");
+    ok(!MM.choose(12, "tout_ou_rien") && MM.choose(12, "ce_qui_reste") && MM.has("ce_qui_reste"), "la ligne fermée se refuse, l'ouverte se prend");
+    ok(g.SortieManager.fleeKeepPct() === 0.75, "Ce qui reste : 75 % du butin à la fuite");
+    MM.choose(10, "pierre_de_plus");
+    ok(MM.isLineBroken(12) && !MM.has("ce_qui_reste") && MM.getPendingLevels().indexOf(12) !== -1 && g.SortieManager.fleeKeepPct() === 0.5, "ligne cassée : effet éteint, le jalon redemande un choix");
+    var rep = MM.ensure().reprises;
+    ok(MM.choose(12, "cle_econome") && MM.ensure().reprises === rep, "le jalon se rechoisit sans frais");
+    // --- crochets (Mémoire simulée) ---
+    var on = {};
+    MM.has = function (id) { return !!on[id]; };
+    on.main_offrante = true;
+    ok(MM.rollOfferingValue({ rarity: "rare" }) === 12, "Main offrante : +50 % d'Aether (Rare 8 → 12)");
+    on.achever_net = true;
+    var r = { id: "skeleton", name: "x", rises: true, hp: 0, maxHp: 400 };
+    ok(g.RiseSystem.tryRise(r) && (r.hp = 0, true), "relève : l'ennemi tombe à terre");
+    g.RiseSystem.onEnemyTurn(r); g.RiseSystem.onEnemyTurn(r);
+    ok(r.hp === 100, "Achever net : il se relève avec 25 % de ses PV (" + r.hp + ")");
+    g.WorldManager.worldIndex = 3;
+    var mk = function (id) { var d = g.ENEMY_DB[id]; return { id: id, name: d.name, isBoss: false, archetype: null, hp: 300, maxHp: 300, stats: d.stats, resists: [], weak: [], goldReward: 20 }; };
+    on.sommeil_lourd = true;
+    SL.planNext(1); CE.spawnGroup([mk("spectre"), mk("wraith")]);
+    var z = SL.sleepers()[0];
+    ok(z.wakeIn >= 4 && z.wakeIn <= 6, "Sommeil lourd : réveil seul en 4 à 6 rounds (" + z.wakeIn + ")");
+    on.reveil_brutal = true;
+    SL.onHit(z);
+    ok(!z.asleep && z.vulnerableRounds === 1 && Math.abs(z.vulnerableMult - 0.25) < 1e-9, "Réveil brutal : +25 % sur le coup qui réveille");
+    SL.onHit(z);
+    ok(!(Number(z.vulnerableRounds || 0) > 0), "Réveil brutal : effacé dès le coup suivant");
+    on.butin_des_morts = true;
+    ok(Math.abs(SL.wakeBonus() - 0.75) < 1e-9, "Le butin des morts : +25 % d'or en plus au réveillé vaincu");
+    on.personne_ne_se_leve = true;
+    SL.planNext(1); CE.spawnGroup([mk("spectre"), mk("wraith")]);
+    var z2 = SL.sleepers()[0]; z2.wakeIn = 1;
+    SL.onEnemyTurn(z2);
+    ok(z2.asleep && z2.wakeIn >= 3, "Personne ne se lève : le premier qui allait se lever se rendort");
+    z2.wakeIn = 1; SL.onEnemyTurn(z2);
+    ok(!z2.asleep, "… une fois par combat");
+    on.pas_encore_encore = true;
+    SL.planNext(1); CE.spawnGroup([mk("spectre"), mk("wraith")]);
+    var z3 = SL.sleepers()[0], w0 = z3.wakeIn;
+    ok(CM.useSkill({ companionId: "ysolt", charges: 1, cooldown: 0, damage: 10 }, g.COMPANIONS_DB.ysolt) && z3.wakeIn === w0 + 3, "Pas encore, encore : 3 rounds au lieu de 2");
+    on.cle_econome = true;
+    G.forge = { levels: { weapon: 7 } };
+    var cost = g.ForgeManager ? g.ForgeManager.getCost("weapon") : null;
+    ok(!cost || cost.cle_de_voute === 1, "Clé économe : la reforge 8 demande une Clé au lieu de deux");
+    on.tout_ou_rien = true;
+    ok(g.SortieManager.fleeKeepPct() === 0.5, "Tout ou rien ne touche pas la fuite");
+  } catch (err) {
+    ok(false, "[241] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    MM.has = hasAvant; g.WorldManager.worldIndex = wiAvant;
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

@@ -177,6 +177,10 @@ var PA2_RARE = {
   ruins: { resourceId: "pierre_errante", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } } // v3.429.0
 };
 
+/* v3.453.0 : choix de Mémoire qui ajoutent 1 matériau rare par destination atteinte, par monde.
+   La Crypte n'a pas encore sa Petite Aventure (acte II) : Cire chaude s'y branchera seule. */
+var PA2_MEMORY_DEST_RARE = { ruins: "pierre_de_plus", crypt: "cire_chaude" };
+
 /* Coffre d'expédition : destination -> objet débloqué (V12, Q8). */
 /* v3.387.0 : par monde. Le Désert n'a pas encore ses objets (il faudrait leurs icônes). */
 var PA2_CHEST_REWARDS = { forest: { boss: "bois", clairiere: "veilleurs" } };
@@ -543,6 +547,7 @@ window.PA2_GUARDIAN = PA2_GUARDIAN;
 window.PA2_APPROACHES = PA2_APPROACHES;
 window.PA2_GOLD = PA2_GOLD;
 window.PA2_RARE = PA2_RARE;
+window.PA2_MEMORY_DEST_RARE = PA2_MEMORY_DEST_RARE;
 window.PA2_CHEST_REWARDS = PA2_CHEST_REWARDS;
 window.PA2_RULES = PA2_RULES;
 window.PA2_FOES = PA2_FOES;

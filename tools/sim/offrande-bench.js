@@ -19,7 +19,8 @@ B.setup(B.CLASSES[0].hero, B.CLASSES[0].id, { weapon: 30, kit: true, train: 40, 
 
 /* Barème de la conception v1.1 §4 */
 var BAREME = g.MEMORY_OFFERING_VALUES || { common: 1, green: 3, rare: 8, epic: 25, legendary: 80 }; // v3.322.0 : lu dans data/memory.js
-var WORLDS = [{ idx: 0, id: "forest", nom: "Forêt" }, { idx: 1, id: "desert", nom: "Désert" }];
+var WORLDS = [{ idx: 0, id: "forest", nom: "Forêt" }, { idx: 1, id: "desert", nom: "Désert" },
+  { idx: 2, id: "ruins", nom: "Ruines" }, { idx: 3, id: "crypt", nom: "Crypte" }]; // v3.453.0 : Mémoire 9 à 16
 var BOSS_LOOT = 0.5; // lootChance de base sur un boss (combat-engine.js), sans affixe ni bestiaire
 
 function aetherParTirage(idx) {
@@ -89,8 +90,8 @@ console.log("\n=== Piste v1.1 : niveau N coûte 10 x N Aether ===");
 var MS = g.MEMORY_SOUVENIRS || {};
 var SOUV = { etape: MS.storyStep || 1, boss: MS.adventureBoss || 2, elite: MS.elite || 3, donjon: MS.dungeonClear || 3 };
 var COUTS = g.MEMORY_LEVEL_COSTS || [5, 8, 11, 14, 20, 25, 30, 35];
-var ELITES = { forest: 3, desert: 2 };   // araignée, ronce, arbre-mère / Serment, Dard (lus dans elites.js)
-var ETAPES = { forest: 15, desert: 15 }; // actes I à III au Désert, l'acte IV viendra en plus
+var ELITES = { forest: 3, desert: 2, ruins: 2, crypt: 2 };   // araignée, ronce, arbre-mère / Serment, Dard / deux élites des Ruines / Crypte : les élites de l'Ossuaire (prévision)
+var ETAPES = { forest: 15, desert: 15, ruins: 20, crypt: 15 }; // Crypte : trois actes de 5 étapes (conception Crypte), seul l'acte I existe
 console.log("\n=== Scénario Souvenirs " + JSON.stringify(SOUV) + " ===");
 function passage(w) {
   var r = res[w];
@@ -128,13 +129,16 @@ console.log("Désert, reste après le passage : " + resteDe.toFixed(0) + " Aethe
    monde : N (0 en Forêt, 14 runs de la Cité au Désert). Pour un nouveau monde : déclarer ses
    étapes, aventures, élites et son donjon, ajouter une ligne ici, relancer le banc. */
 var REGLE = { part: 0.8, repartition: [0.18, 0.23, 0.27, 0.32] };
-var REPETITIONS = { forest: { n: 0, parRep: dFo }, desert: { n: 14, parRep: dDe } };
+var dRu = SOUV.donjon + res.ruins.donjon.a, dCr = SOUV.donjon + res.crypt.donjon.a;
+var REPETITIONS = { forest: { n: 0, parRep: dFo }, desert: { n: 14, parRep: dDe }, ruins: { n: 14, parRep: dRu }, crypt: { n: 14, parRep: dCr } };
+/* v3.453.0 : la Crypte n'a que son acte I ; ses aventures des actes II et III sont comptées comme celles des Ruines. */
+if (res.crypt.nAv < res.ruins.nAv) { res.crypt.nAv = res.ruins.nAv; res.crypt.avA = res.crypt.nAv * BOSS_LOOT * res.crypt.tirage; }
 console.log("\n=== Règle de coût : 80 % du passage + N répétitions, réparti 18/23/27/32 % ===");
 Object.keys(REPETITIONS).forEach(function (w) {
-  var P = w === "forest" ? fo : de, R = REPETITIONS[w];
+  var P = passage(w), R = REPETITIONS[w];
   var total = REGLE.part * P + R.n * R.parRep;
   var couts = REGLE.repartition.map(function (x) { return Math.max(1, Math.round(total * x)); });
-  var actuels = w === "forest" ? COUTS.slice(0, 4) : COUTS.slice(4, 8);
-  console.log((w === "forest" ? "Forêt " : "Désert") + " : passage " + P.toFixed(0) + ", N = " + R.n + " (" + R.parRep + " Aether chacune)"
+  var k = Object.keys(REPETITIONS).indexOf(w), actuels = COUTS.slice(4 * k, 4 * k + 4);
+  console.log(w.padEnd(6) + " : passage " + P.toFixed(0) + ", N = " + R.n + " (" + R.parRep + " Aether chacune)"
     + " -> total " + total.toFixed(0) + " -> coûts " + couts.join(" / ") + "   (en jeu : " + actuels.join(" / ") + ")");
 });

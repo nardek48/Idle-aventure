@@ -123,3 +123,10 @@ div.mem-option { cursor: default; }
 .mem-option-name { font-weight: 800; font-size: 14px; }
 .mem-option-desc { font-size: 12.5px; line-height: 1.4; color: var(--c-brown-750-2); }
 .mem-option-check { flex: 0 0 auto; width: 24px; height: 24px; object-fit: contain; }
+/* v3.453.0 : marques Garder / Donner (Mémoire 9 à 16) ; ligne du jalon grisée tant qu'elle n'est pas ouverte (atelier memoire-garder-donner) */
+.mem-tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 9px; font-size: 12px; font-weight: 800; letter-spacing: .03em; vertical-align: 2px; }
+.mem-tag.is-garder { background: #dbe8e0; color: var(--c-green-750); border: 1px solid #7fa58d; }
+.mem-tag.is-donner { background: var(--c-cream-150-2); color: var(--c-red-650); border: 1px solid var(--c-bronze-500); }
+.mem-tag.is-line { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); color: var(--c-brown-850-2); border: 1px solid var(--c-brown-750-3); }
+.mem-option.is-line-locked { opacity: .55; filter: grayscale(.6); border-style: dashed; }
+.mem-line-cond { display: block; margin-top: 3px; font-size: 12px; font-style: italic; color: var(--c-brown-650-soft); }

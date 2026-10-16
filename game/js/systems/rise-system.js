@@ -80,7 +80,8 @@ var RiseSystem = {
     if (e.riseIn > 0) return true;
     e.downed = false;
     e.hasRisen = true;
-    e.hp = Math.max(1, Math.floor(Number(e.maxHp || 1) * RISE_HP_PCT));
+    var pct = (window.MemoryManager && MemoryManager.has("achever_net")) ? MemoryManager.V("achever_net_rise") : RISE_HP_PCT; // v3.453.0 : Achever net (Mémoire 9)
+    e.hp = Math.max(1, Math.floor(Number(e.maxHp || 1) * pct));
     addLog("🦴 " + _t("{x} se relève !", { x: _td(e.name) }), "event");
     if (e.riseLine) addLog(_td(e.riseLine), "event"); // v3.431.0 : ligne propre (Varrek)
     this.onBossRisen(e);

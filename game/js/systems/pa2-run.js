@@ -400,6 +400,7 @@ var Pa2Run = {
     // Q11 : Seconde gorgée (Mémoire) +1 gorgée, Gué tenu +1 corde.
     if (run.stock.gourde && window.MemoryManager && MemoryManager.has("seconde_gorgee")) run.stock.gourde += 1;
     if (run.stock.craie && window.LivingMapManager && LivingMapManager.hasEffect("craie_plus")) run.stock.craie += 1; // v3.429.0 : la rue qui tourne tenue
+    if (run.stock.craie && window.MemoryManager && MemoryManager.has("craie_epaisse")) run.stock.craie += 1; // v3.453.0 : Craie épaisse (Mémoire 10)
     if (run.stock.corde && window.LivingMapManager && LivingMapManager.hasEffect("corde_plus")) {
       run.stock.corde += Number(LivingMapManager.getEffectValue("ropeBonus", 1));
     }
@@ -1127,6 +1128,7 @@ var Pa2Run = {
       var rare = PA2_RARE[run.worldId];
       var amt = rare ? Number(rare.dest[this.ring(run).ring] || 0) : 0;
       if (window.MemoryManager && MemoryManager.has("recolte")) amt += 1; // Récolte (Q11)
+      if (window.MemoryManager && MemoryManager.has(PA2_MEMORY_DEST_RARE[run.worldId])) amt += 1; // v3.453.0 : Pierre de plus, Cire chaude (Mémoire 10, 14)
       var hk = this._hook(run);
       if (hk && hk.destRare && hk.destRare[this.hookBranch(run)]) amt += Number(hk.destRare[this.hookBranch(run)]); // le feu nourri
       end.rare = this._creditRare(run, amt);

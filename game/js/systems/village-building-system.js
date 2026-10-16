@@ -183,6 +183,7 @@ var VillageBuildingManager = {
     if (out.cle_de_voute > 0 && window.StoryQuestManager && StoryQuestManager.getChoice("plan") === "tomber") {
       out.cle_de_voute = Math.max(1, out.cle_de_voute - VILLAGE_COEUR_KEY_DISCOUNT);
     }
+    if (out.cle_de_voute > 1 && window.MemoryManager && MemoryManager.has("cle_econome")) out.cle_de_voute -= 1; // v3.453.0 : Clé économe (Mémoire 12), jamais moins d'une
     // v3.428.0 (Ruines, choix « seuil » = aeswyn) : le seuil d'Aeswyn, −10 % de matériaux (pas d'or)
     if (window.StoryQuestManager && StoryQuestManager.getChoice("seuil") === "aeswyn") {
       Object.keys(out).forEach(function (k) {

@@ -15,12 +15,28 @@ var MEMORY_SOUVENIRS = {
   dungeonClear: 3   // run de donjon complet
 };
 
-/* Coût de chaque niveau (O11), mesuré au banc : Forêt 5/8/11/14, Désert 20/25/30/35. */
-var MEMORY_LEVEL_COSTS = [5, 8, 11, 14, 20, 25, 30, 35];
+/* Coût de chaque niveau (O11), mesuré au banc : Forêt 5/8/11/14, Désert 20/25/30/35.
+   v3.453.0 : règle O16 (sim/offrande-bench.js, N = 14 runs du donjon du monde) — Ruines 35/44/52/62,
+   Crypte 77/99/116/138 (provisoire : seul l'acte I existe, ses aventures sont comptées comme aux Ruines). */
+var MEMORY_LEVEL_COSTS = [5, 8, 11, 14, 20, 25, 30, 35, 35, 44, 52, 62, 77, 99, 116, 138];
 var MEMORY_LEVELS_PER_WORLD = 4;        // O6 : plafond par monde atteint
 var MEMORY_REPRISE_BASE_COST = 500;     // O5 : reprise d'un choix, ×3 à chaque fois ; v3.358.0 : en or (10 Aether × AETHER_GOLD_RATE)
 var MEMORY_REPRISE_MULT = 3;
 var MEMORY_CUISINE_PETITE_RATION_MULT = 1.25; // Cuisine de campagne : +25 % sur la Petite ration seule (décision Seb)
+/* v3.453.0 : chiffres des niveaux 9 à 16 (conception Mémoire Ruines-Crypte v1.0), au banc. */
+var MEMORY_VALUES = {
+  achever_net_rise: 0.25,     // un ennemi qui se relève revient avec 25 % de ses PV au lieu de 50 %
+  trait_sur_cooldown: 1,      // Le dernier trait : recharge 1 round au lieu de 2
+  ce_qui_reste_keep: 0.75,    // fuite : 75 % du butin au lieu de 50 %
+  tout_ou_rien_mult: 1.15,    // sortie réussie : +15 % de butin (or et ressources)
+  taille_rapide_mult: 2,      // Clé de voûte taillée deux fois plus vite
+  sommeil_lourd_rounds: 1,    // réveil seul un round plus tard
+  reveil_brutal_mult: 0.25,   // le coup qui réveille : +25 %
+  pas_encore_rounds: 3,       // Pas encore : 3 rounds au lieu de 2
+  main_offrante_mult: 1.5,    // Offrande : +50 % d'Aether
+  butin_des_morts: 0.25,      // dormeur réveillé puis vaincu : +25 % d'or (s'ajoute au choix « portent »)
+  rien_ne_dort_pct: 15        // dormeur réveillé puis vaincu : 15 % de chances d'un objet
+};
 
 /* Les huit niveaux (conception v1.2 §5.3-5.4). `id` est la clé lue par MemoryManager.has().
    Icônes : images/Icons/memory/<id>.png, à générer (icône générique en attendant, règle Seb). */
@@ -79,6 +95,66 @@ var MEMORY_LEVELS = [
       desc: "Une Chitine des profondeurs de plus à chaque victoire sur le Dard." },
     { id: "regard_marchand", name: "Regard du marchand", icon: "images/Icons/memory/regard_marchand.png",
       desc: "Les objets Inhabituels peuvent occuper jusqu'à 40 % de la vitrine au lieu de 25 %." }
+  ] },
+  /* v3.453.0 : niveaux 9 à 16 (Ruines, Crypte), option C de Seb (16/10/2026) — chaque niveau oppose
+     Garder (`side: "garder"`) à Donner (`side: "donner"`). Au jalon, la LIGNE (`line`) ne s'ouvre que si
+     les trois niveaux précédents du monde ont été pris du même côté ; ligne cassée = effet éteint,
+     le jalon se rechoisit sans frais (MemoryManager.lineOpen, isLineBroken). */
+  { level: 9, theme: "La relève", options: [
+    { id: "fiole_reserve", side: "garder", name: "Fiole de réserve", icon: "images/Icons/memory/fiole_reserve.png",
+      desc: "Une potion de soin de plus emportée en sortie." },
+    { id: "achever_net", side: "donner", name: "Achever net", icon: "images/Icons/memory/achever_net.png",
+      desc: "Un ennemi qui se relève ne revient qu'avec 25 % de ses PV au lieu de 50 %." }
+  ] },
+  { level: 10, theme: "Les murs", options: [
+    { id: "craie_epaisse", side: "garder", name: "Craie épaisse", icon: "images/Icons/memory/craie_epaisse.png",
+      desc: "Un trait de Craie de plus par Petite Aventure." },
+    { id: "pierre_de_plus", side: "donner", name: "Pierre de plus", icon: "images/Icons/memory/pierre_de_plus.png",
+      desc: "+1 Pierre errante à chaque destination atteinte aux Ruines." }
+  ] },
+  { level: 11, theme: "Edda", options: [
+    { id: "fidelite_edda", side: "garder", name: "Fidélité d'Edda", icon: "images/Icons/memory/fidelite_edda.png",
+      desc: "Après un KO, Edda revient au combat suivant avec tous ses PV." },
+    { id: "trait_sur", side: "donner", name: "Trait sûr", icon: "images/Icons/memory/trait_sur.png",
+      desc: "Le dernier trait se recharge en 1 round au lieu de 2." }
+  ] },
+  { level: 12, theme: "La pierre qui tient", jalon: true, options: [
+    { id: "cle_econome", side: "garder", name: "Clé économe", icon: "images/Icons/memory/cle_econome.png",
+      desc: "La Forge 4 et les reforges 7 et 8 demandent une Clé de voûte de moins (jamais moins d'une)." },
+    { id: "taille_rapide", side: "donner", name: "Taille rapide", icon: "images/Icons/memory/taille_rapide.png",
+      desc: "Les Clés de voûte se taillent deux fois plus vite." },
+    { id: "ce_qui_reste", line: "garder", name: "Ce qui reste", icon: "images/Icons/memory/ce_qui_reste.png",
+      desc: "Quand tu fuis une sortie, tu gardes 75 % du butin au lieu de 50 %." },
+    { id: "tout_ou_rien", line: "donner", name: "Tout ou rien", icon: "images/Icons/memory/tout_ou_rien.png",
+      desc: "Le butin des sorties réussies augmente de 15 %." }
+  ] },
+  { level: 13, theme: "Le sommeil", options: [
+    { id: "sommeil_lourd", side: "garder", name: "Sommeil lourd", icon: "images/Icons/memory/sommeil_lourd.png",
+      desc: "Un dormeur se lève seul un round plus tard (4 à 6)." },
+    { id: "reveil_brutal", side: "donner", name: "Réveil brutal", icon: "images/Icons/memory/reveil_brutal.png",
+      desc: "Un dormeur que tu réveilles prend 25 % de dégâts en plus à ce premier coup." }
+  ] },
+  { level: 14, theme: "La lanterne", options: [
+    { id: "meche_longue", side: "garder", name: "Mèche longue", icon: "images/Icons/memory/meche_longue.png",
+      desc: "La Lanterne de la Petite Aventure de la Crypte éclaire deux pas de plus." },
+    { id: "cire_chaude", side: "donner", name: "Cire chaude", icon: "images/Icons/memory/cire_chaude.png",
+      desc: "+1 Cire de sépulcre à chaque destination atteinte à la Crypte." }
+  ] },
+  { level: 15, theme: "Ysolt", options: [
+    { id: "fidelite_ysolt", side: "garder", name: "Fidélité d'Ysolt", icon: "images/Icons/memory/fidelite_ysolt.png",
+      desc: "Après un KO, Ysolt revient au combat suivant avec tous ses PV." },
+    { id: "pas_encore_encore", side: "donner", name: "Pas encore, encore", icon: "images/Icons/memory/pas_encore_encore.png",
+      desc: "Pas encore repousse le réveil de 3 rounds au lieu de 2." }
+  ] },
+  { level: 16, theme: "Ceux qui sont montés", jalon: true, options: [
+    { id: "main_offrante", side: "garder", name: "Main offrante", icon: "images/Icons/memory/main_offrante.png",
+      desc: "+50 % d'Aether pour les objets offerts." },
+    { id: "butin_des_morts", side: "donner", name: "Le butin des morts", icon: "images/Icons/memory/butin_des_morts.png",
+      desc: "Un dormeur réveillé puis vaincu rapporte 25 % d'or en plus." },
+    { id: "personne_ne_se_leve", line: "garder", name: "Personne ne se lève", icon: "images/Icons/memory/personne_ne_se_leve.png",
+      desc: "Une fois par combat, le premier dormeur qui allait se lever seul se rendort." },
+    { id: "rien_ne_dort", line: "donner", name: "Rien ne dort pour rien", icon: "images/Icons/memory/rien_ne_dort.png",
+      desc: "Un dormeur réveillé puis vaincu a 15 % de chances de laisser un objet." }
   ] }
 ];
 
@@ -90,3 +166,4 @@ window.MEMORY_REPRISE_BASE_COST = MEMORY_REPRISE_BASE_COST;
 window.MEMORY_REPRISE_MULT = MEMORY_REPRISE_MULT;
 window.MEMORY_CUISINE_PETITE_RATION_MULT = MEMORY_CUISINE_PETITE_RATION_MULT;
 window.MEMORY_LEVELS = MEMORY_LEVELS;
+window.MEMORY_VALUES = MEMORY_VALUES;

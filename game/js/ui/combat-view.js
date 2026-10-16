@@ -389,7 +389,7 @@ function buildCombatSortieHTML() {
       + '</button>';
   }
   if (s.active && SortieManager.isMission()) {
-    h += '<button type="button" class="combat-sortie-btn is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()" title="' + esc(_t("Fuir : la mission n’est pas validée, tu rapportes 50 % du butin")) + '"><img class=ico-inline src=images/Icons/quests/flee.png> ' + _t("Fuir") + '</button>';
+    h += '<button type="button" class="combat-sortie-btn is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()" title="' + esc(_t("Fuir : la mission n’est pas validée, tu rapportes {n} % du butin", { n: Math.round(100 * SortieManager.fleeKeepPct()) })) + '"><img class=ico-inline src=images/Icons/quests/flee.png> ' + _t("Fuir") + '</button>';
   } else {
     h += '<button type="button" class="combat-sortie-btn"' + (downed ? ' disabled' : '') + ' onclick="SortieManager.returnToCamp()" title="' + esc(_t("Rentrer au Campement avec tout le butin")) + '"><img class=ico-inline src=images/Icons/plots/hunting_blind.png> ' + _t("Rentrer") + '</button>';
   }
@@ -449,7 +449,7 @@ window.closeSortieSheet = closeSortieSheet;
 
 function confirmFlee() {
   if (!window.SortieManager || !SortieManager.isActive()) return;
-  if (confirm(_t("Fuir ? La mission ne sera pas validée et tu ne rapporteras que 50 % du butin de la sortie."))) SortieManager.flee();
+  if (confirm(_t("Fuir ? La mission ne sera pas validée et tu ne rapporteras que {n} % du butin de la sortie.", { n: Math.round(100 * SortieManager.fleeKeepPct()) }))) SortieManager.flee();
 }
 window.buildCombatSortieHTML = buildCombatSortieHTML;
 window.confirmFlee = confirmFlee;

@@ -14,6 +14,8 @@
      5. tick de brûlure-> rollDotCrit         (class-combat tickDoTRound)
      6. fin de défense -> onDefenseEnd        (class-combat onRoundEnd)
      7. calcul         -> heroDamageMult, basicGainMult, afterAction, gaugeBonus, bonusStrikeMult
+   v3.453.0 : Commandement -> companionHpMult, companionDamageMult, companionExtraCharges,
+   companionKoReturnPct, onCompanionSkill (companion-system) ; Relais lu dans heroDamageMult.
    Plus onCombatStart (Sang chaud, Brasier en attente) et getStatBonuses (stats-system). */
 
 var TalentManager = {
@@ -31,13 +33,28 @@ var TalentManager = {
     return (window.TALENT_TREES || {})[classId || this.getClassId()] || null;
   },
 
-  /* Liste à plat : { node, zone: "trunk" | index de voie, path } */
+  /* Liste à plat : { node, zone: "trunk" | index de voie | "command", path }.
+     v3.453.0 : la voie du Commandement suit l'arbre de classe (commune, points partagés). */
   getNodes: function (classId) {
-    var t = this.getTree(classId), out = [];
+    var t = this.getTree(classId), out = [], C = this.getCommand();
     if (!t) return out;
     t.trunk.forEach(function (n) { out.push({ node: n, zone: "trunk", path: null }); });
     t.paths.forEach(function (p, i) { p.nodes.forEach(function (n) { out.push({ node: n, zone: i, path: p }); }); });
+    if (C) C.nodes.forEach(function (n) { out.push({ node: n, zone: "command", path: C }); });
     return out;
+  },
+
+  /* v3.453.0 : voie du Commandement (data/talent-trees.js), ouverte quand la Crypte est atteinte. */
+  getCommand: function () { return window.TALENT_COMMAND || null; },
+  commandOpen: function () {
+    var C = this.getCommand();
+    if (!C) return false;
+    var w = (window.WorldCaps && typeof WorldCaps.getReachedWorldIndex === "function") ? WorldCaps.getReachedWorldIndex() : 0;
+    return w >= Number(C.opensAt || 0);
+  },
+  commandSpent: function () {
+    var C = this.getCommand(), self = this;
+    return C ? C.nodes.reduce(function (s, n) { return s + self.rank(n.id); }, 0) : 0;
   },
 
   find: function (id, classId) {
@@ -80,7 +97,11 @@ var TalentManager = {
     if (!e) return { kind: "missing", text: _t("Talent introuvable.") };
     var n = e.node, t = this.getTree();
     if (this.rank(id) >= this.maxRank(n)) return { kind: "maxRank", text: _t("Rang maximum atteint.") };
-    if (e.zone !== "trunk") {
+    if (e.zone === "command") {   // v3.453.0 : ouverte à la Crypte, nœuds appris dans l'ordre
+      if (!this.commandOpen()) return { kind: "commandClosed", text: _t("Le Commandement s'ouvre à la Crypte.") };
+      var i = e.path.nodes.indexOf(n), prev = i > 0 ? e.path.nodes[i - 1] : null;
+      if (prev && !this.has(prev.id)) return { kind: "commandOrder", text: _t("Apprends d'abord « {x} ».", { x: _td(prev.name) }) };
+    } else if (e.zone !== "trunk") {
       var gate = window.TALENT_TRUNK_GATE || 2;
       if (this.trunkSpent() < gate) return { kind: "trunk", text: _t("Les voies s'ouvrent après {n} points dans le tronc.", { n: gate }) };
       if (n.key) {
@@ -273,6 +294,7 @@ var TalentManager = {
     if (this.has("k_sang_chaud") && game.classResource) {
       game.classResource.current = Math.max(Number(game.classResource.current || 0), this.V("k_sang_chaud"));
     }
+    delete game._relaisReady; // v3.453.0 : Relais ne passe pas d'un combat à l'autre
     if (game._talentBurnPending && game.enemy) {
       if (this.has("m_brasier") && !game.enemy.dot) game.enemy.dot = game._talentBurnPending;
       delete game._talentBurnPending;
@@ -361,8 +383,16 @@ var TalentManager = {
       m *= 1 + this.V("m_surtension");
     }
     if (action && action.id === "mage_arcane_nova" && foe && foe.dot && this.has("m_incendie")) m *= 1 + this.V("m_incendie");
+    if (!action && game._relaisReady) { delete game._relaisReady; if (this.has("c_relais")) m *= 1 + this.V("c_relais"); } // Relais : consommé par l'attaque de base
     return m;
   },
+
+  /* v3.453.0 : crochets du Commandement, lus par companion-system. */
+  onCompanionSkill: function () { if (this.has("c_relais")) game._relaisReady = true; },
+  companionHpMult: function () { return this.has("c_serrez_rangs") ? 1 + this.V("c_serrez_rangs") : 1; },
+  companionDamageMult: function () { return this.has("c_mon_signal") ? 1 + this.V("c_mon_signal") : 1; },
+  companionExtraCharges: function () { return this.has("c_charge_plus") ? this.V("c_charge_plus") : 0; },
+  companionKoReturnPct: function (base) { return this.has("c_personne_terre") ? Math.max(base, this.V("c_personne_terre")) : base; },
   afterAction: function (action, target) {
     if (action && action.id === "mage_arcane_blast" && target && target.dot && this.has("m_attiser")) {
       target.dot.rounds = Number(target.dot.rounds || 0) + 1;

@@ -279,17 +279,22 @@
      ========================================================= */
   var TT_IMG = "images/UI/talents/";
   var talentSel = null;
+  var talentMode = "classe"; // v3.453.0 : « classe » ou « cmd » (voie du Commandement, atelier talents-commandement)
   function slug(x) { return String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z]/g, ""); }
 
   // Choisir un talent ne re-rend pas la page : on déplace la sélection et on remplace le panneau du bas.
   function herosTalentSelect(id) {
     talentSel = id;
-    var root = document.querySelector("#panel-container .hst-tree");
+    var root = document.querySelector("#panel-container .hst-tree, #panel-container .hst-cmd");
     var det = document.querySelector("#panel-container .hst-detail");
     if (!root || !det) { rerender(); return; }
     root.querySelectorAll(".hst-node.is-sel").forEach(function (b) { b.classList.remove("is-sel"); });
     root.querySelectorAll(".hst-node").forEach(function (b) { if (b.getAttribute("data-id") === id) b.classList.add("is-sel"); });
     det.outerHTML = talentDetailHTML();
+  }
+  function herosTalentMode(m) {
+    if (m === "cmd" && !TalentManager.commandOpen()) return;
+    talentMode = m === "cmd" ? "cmd" : "classe"; talentSel = null; rerender();
   }
   function herosTalentLearn() {
     if (talentSel && TalentManager.buy(talentSel)) { if (typeof saveGame === "function") saveGame(); rerender(); }
@@ -305,11 +310,12 @@
   }
 
   function talentDetailHTML() {
-    var TM = TalentManager, t = TM.getTree();
-    if (!talentSel || !TM.find(talentSel)) talentSel = (t.trunk[0] || {}).id;
+    var TM = TalentManager, t = TM.getTree(), C = TM.getCommand();
+    var cmd = talentMode === "cmd" && C, e0 = talentSel ? TM.find(talentSel) : null;
+    if (!e0 || (e0.zone === "command") !== !!cmd) talentSel = cmd ? C.nodes[0].id : (t.trunk[0] || {}).id;
     var e = TM.find(talentSel); if (!e) return '<div class="hst-detail"></div>';
     var n = e.node, r = TM.rank(n.id), max = TM.maxRank(n), block = TM.blockInfo ? TM.blockInfo(n.id) : null;
-    var where = e.zone === "trunk" ? _t("Tronc") : _t("Voie {x}", { x: _td(e.path.name) }) + (n.key ? " · " + _t("clé de voûte") : "");
+    var where = e.zone === "trunk" ? _t("Tronc") : (e.zone === "command" ? _td(e.path.name) : _t("Voie {x}", { x: _td(e.path.name) })) + (n.key ? " · " + _t("clé de voûte") : "");
     var h = '<div class="hst-detail"><span class="hst-detail-ico">' + img(n.img || "") + '</span><div class="hst-detail-txt"><b>' + esc(_td(n.name)) + '</b><small>' + esc(where) + (max > 1 ? ' · ' + esc(_t("rang {a} / {b}", { a: r, b: max })) : '') + '</small><span>' + esc(_td(n.effect)) + '</span></div><div class="hst-detail-act">';
     if (r >= max) h += '<span class="hst-done">' + _t("Appris") + ' ✓</span>';
     else h += '<button type="button" class="kbtn primary"' + (block ? ' disabled' : '') + ' onclick="herosTalentLearn()">' + (r ? _t("Rang suivant") : _t("Apprendre")) + '<small>' + _t("1 point") + '</small></button>' + (block ? '<small class="hst-why">' + esc(block.text) + '</small>' : '');
@@ -324,6 +330,15 @@
     var h = '<div class="hst-bar"><span class="hst-bar-pts"><b>' + av + '</b> ' + esc(_tn(av, "point à placer", "points à placer")) + '</span>'
       + '<span class="hst-bar-cap">' + esc(_t("{a} / {b} placés", { a: TM.spent(), b: isFinite(cap) ? cap : "∞" })) + '</span>'
       + '<button type="button" class="hst-bar-reset" onclick="respecTalents()"' + (TM.spent() ? '' : ' disabled') + ' aria-label="' + esc(_t("Réinitialiser")) + '">↺</button></div>';
+    var C = TM.getCommand(), open = C && TM.commandOpen();
+    if (!open) talentMode = "classe";
+    if (C) {   // v3.453.0 : sélecteur « Classe · Commandement », points partagés
+      var clsDef = (window.CLASSES || []).filter(function (c) { return c.id === cls; })[0];
+      h = '<div class="hst-seg"><button type="button" aria-pressed="' + (talentMode === "classe") + '" onclick="herosTalentMode(\'classe\')">' + esc(_td(clsDef ? clsDef.label : "")) + '<small>' + _t("ta classe") + '</small></button>'
+        + '<button type="button" aria-pressed="' + (talentMode === "cmd") + '"' + (open ? '' : ' disabled') + ' onclick="herosTalentMode(\'cmd\')">' + esc(_td(C.name)) + '<small>'
+        + (open ? esc(TM.commandSpent() + " / " + C.nodes.length) : _t("s'ouvre à la Crypte")) + '</small></button></div>' + h;
+    }
+    if (talentMode === "cmd") return h + buildCommandTreeHTML(C) + talentDetailHTML();
     h += '<div class="hst-tree" style="background-image:url(' + TT_IMG + 'bg_' + cls + '.webp)">'
       + '<div class="hst-trunk">' + t.trunk.map(function (n) { return talentNode(n, false); }).join('<i class="hst-link-h"></i>') + '</div>'
       + '<div class="hst-fork' + (TM.trunkSpent() >= gate ? ' is-open' : '') + '"></div><div class="hst-paths">';
@@ -335,6 +350,14 @@
     });
     h += img(TT_IMG + "chain.webp", "hst-chain") + '</div></div>';
     return h + talentDetailHTML();
+  }
+
+  /* v3.453.0 : la voie du Commandement, une colonne de 5 nœuds (atelier talents-commandement). */
+  function buildCommandTreeHTML(C) {
+    var h = '<div class="hst-cmd"><div class="hst-cmd-banner">' + img(TT_IMG + "emb_commandement.webp", "hst-emb")
+      + '<b>' + esc(_td(C.name)) + '</b><small>' + esc(_t("{a} / {b} · commune aux trois classes", { a: TalentManager.commandSpent(), b: C.nodes.length })) + '</small></div>';
+    C.nodes.forEach(function (n, i) { h += (i ? '<i class="hst-link-v"></i>' : '') + talentNode(n, !!n.key); });
+    return h + '</div>';
   }
 
   /* =========================================================
@@ -419,5 +442,6 @@
   window.herosOpenItem = herosOpenItem;
   window.herosTalentSelect = herosTalentSelect;
   window.herosTalentLearn = herosTalentLearn;
+  window.herosTalentMode = herosTalentMode;
   window.herosOpenCompanion = herosOpenCompanion;
 })();

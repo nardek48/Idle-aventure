@@ -144,6 +144,7 @@ var ForgeManager = {
       cost.cle_de_voute -= (typeof VILLAGE_COEUR_KEY_DISCOUNT === "number" ? VILLAGE_COEUR_KEY_DISCOUNT : 1);
       if (cost.cle_de_voute <= 0) delete cost.cle_de_voute;
     }
+    if (cost.cle_de_voute > 1 && window.MemoryManager && MemoryManager.has("cle_econome")) cost.cle_de_voute -= 1; // v3.453.0 : Clé économe (Mémoire 12), jamais moins d'une
     // v3.330.0 (E2) : reforges de l'arme exigées par l'Histoire -> or et matériaux du monde seulement
     if (this.isStoryReforge(slot, target) && typeof stripStoryMaterials === "function") cost = stripStoryMaterials(cost).cost;
     return cost;

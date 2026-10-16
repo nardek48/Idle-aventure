@@ -126,6 +126,11 @@ var SortieManager = {
     return kept;
   },
 
+  /* v3.453.0 : part du butin gardée à la fuite — Ce qui reste (ligne Garder du jalon 12) : 75 %. */
+  fleeKeepPct: function () {
+    return (window.MemoryManager && MemoryManager.has("ce_qui_reste")) ? MemoryManager.V("ce_qui_reste_keep") : SORTIE_FLEE_KEEP_PCT;
+  },
+
   /* ---------- Fin de sortie ---------- */
   /* outcome : "return" (Rentrer, farm) | "success" (mission réussie) | "flee" (50 %) | "death" (tout perdu). Idempotent. */
   end: function (outcome) {
@@ -133,7 +138,8 @@ var SortieManager = {
     if (!s.active) return null;
     // v3.307.0 : filet — un lancement ailleurs ne clôt jamais la sortie d'une expédition en cours.
     if (outcome === "return" && s.context === "scene" && window.SceneRunManager && SceneRunManager.isRunActive()) return null;
-    var keepPct = (outcome === "flee") ? SORTIE_FLEE_KEEP_PCT : (outcome === "death" ? 0 : 1);
+    var keepPct = (outcome === "flee") ? this.fleeKeepPct() : (outcome === "death" ? 0 : 1);
+    if (outcome === "success" && window.MemoryManager && MemoryManager.has("tout_ou_rien")) keepPct *= MemoryManager.V("tout_ou_rien_mult"); // v3.453.0 : ligne Donner du jalon 12
     if (window.CombatItems) keepPct *= CombatItems.lootMultOf(s); // v3.442.0 : Fiole noire bue, moitié du butin
     var lost = this.emptyLoot();
     var kept = this.emptyLoot();
@@ -157,7 +163,7 @@ var SortieManager = {
       addLog("💀 " + _t("Sortie perdue ({x}) : butin abandonné sur place — {l}.", { x: label, l: this.getLootSummary(lost) }), "event");
     } else if (outcome === "flee") {
       addLog("🏳️ " + _t("Fuite ({x}) : {k} rapportés, {l} perdus.", { x: label, k: this.getLootSummary(kept), l: this.getLootSummary(lost) }), "event");
-      showToast(_t("🏳️ Fuite : 50 % du butin conservé"), 1800);
+      showToast(_t("🏳️ Fuite : {n} % du butin conservé", { n: Math.round(100 * this.fleeKeepPct()) }), 1800);
     } else {
       addLog("🏕️ " + _tn(s.kills, "Retour au camp ({x}, {n} ennemi) : {k} rapportés.", "Retour au camp ({x}, {n} ennemis) : {k} rapportés.", { x: label, n: s.kills, k: this.getLootSummary(kept) }), "event");
       if (kept.gold > 0 || kept.items.length || Object.keys(kept.resources).length) {

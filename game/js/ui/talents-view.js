@@ -83,7 +83,7 @@ function buildTalentSheetBodyHTML() {
   var TM = window.TalentManager, e = TM && openTalentId ? TM.find(openTalentId) : null;
   if (!e) return '<div class="pc-empty">' + _t("Talent introuvable.") + '</div>';
   var n = e.node, r = TM.rank(n.id), max = TM.maxRank(n);
-  var where = e.zone === "trunk" ? _t("Tronc") : _t("Voie {x}", { x: _td(e.path.name) }) + (n.key ? " · " + _t("clé de voûte") : "");
+  var where = e.zone === "trunk" ? _t("Tronc") : (e.zone === "command" ? _td(e.path.name) : _t("Voie {x}", { x: _td(e.path.name) })) + (n.key ? " · " + _t("clé de voûte") : "");
   var block = TM.blockInfo ? TM.blockInfo(n.id) : null;
   var reason = block ? block.text : null;
   var h = '<div class="tt-sheet"><div class="tt-sheet-top">' + talentIconHTML(n)

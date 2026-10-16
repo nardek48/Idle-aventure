@@ -78,6 +78,7 @@ var DATA_TEXT_FIELDS = {
   PATROL_STORIES: [""],
   TALENT_TREES: ["*.trunk.*.name", "*.trunk.*.short", "*.trunk.*.effect",
     "*.paths.*.name", "*.paths.*.tag", "*.paths.*.nodes.*.name", "*.paths.*.nodes.*.short", "*.paths.*.nodes.*.effect"],
+  TALENT_COMMAND: ["name", "tag", "nodes.*.name", "nodes.*.short", "nodes.*.effect"], // v3.453.0 : voie du Commandement
 
   /* --- Équipement, objets, économie --- */
   EQUIPMENT_SLOT_LABELS: ["*"],

@@ -10,7 +10,8 @@
 
    USAGE : node tools/sim/crypte-acte1-bench.js . [--runs N] [--enc hp,power] [--reveiller]
      --enc       : multiplicateurs d'essai des rencontres (encounterHpMult, enemyPowerMult) ; --enc2 : ceux de l'étape 3 seule
-     --reveiller : le héros a la règle « Un ennemi dort » (il réveille les dormeurs) */
+     --reveiller : le héros a la règle « Un ennemi dort » (il réveille les dormeurs)
+     --cmd N     : v3.453.0, les N premiers nœuds du Commandement (plafond 15 de l'acte I = 13 + 2) */
 var fs = require("fs"), path = require("path");
 var base = fs.readFileSync(path.join(__dirname, "plafond-bench.js"), "utf8");
 base = base.slice(0, base.indexOf('console.log("COMBATS DE L\'HISTOIRE'));
@@ -18,6 +19,7 @@ var ARGV = process.argv.slice(3);
 var ENC = ARGV.indexOf("--enc") >= 0 ? ARGV[ARGV.indexOf("--enc") + 1].split(",").map(Number) : null;
 var ENC2 = ARGV.indexOf("--enc2") >= 0 ? ARGV[ARGV.indexOf("--enc2") + 1].split(",").map(Number) : ENC; // quête d'Ysolt (étape 3)
 var REVEILLER = ARGV.indexOf("--reveiller") >= 0;
+var CMD = ARGV.indexOf("--cmd") >= 0 ? Number(ARGV[ARGV.indexOf("--cmd") + 1]) : 0; // v3.453.0 : N premiers nœuds du Commandement en plus
 
 var extra = function () {
   PROFILS.crypte = { label: "Fin des Ruines (entrée de la Crypte)", train: 130, gear: "coeur", points: 13, wenna: 5, maddoc: 5 };
@@ -62,6 +64,7 @@ var extra = function () {
       prepare(c, PROFILS.crypte, 3, true, true);
       g.game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
       g.CompanionManager.unlock("edda"); g.CompanionManager.unlock("ysolt");
+      g.TALENT_COMMAND.nodes.slice(0, CMD).forEach(function (n) { g.game.talents[n.id] = 1; });
       party(ct.party);
       B.run("CompanionManager.healAll();");
       g.game.healingPotionsOwned = {};
@@ -80,7 +83,7 @@ var extra = function () {
     return n ? { win: ok / n, rounds: ok ? rounds / ok / enc : 0, hp: ok ? hp / ok : 0, seuls: s0 / n } : null;
   }
 
-  console.log("CRYPTE, ACTE I — " + RUNS + " runs, profil crypte, SANS potion, Grimoire auto" + (REVEILLER ? " + règle « Un ennemi dort » (réveiller)" : " (laisser dormir)")
+  console.log("CRYPTE, ACTE I — " + RUNS + " runs, profil crypte, SANS potion, Grimoire auto" + (REVEILLER ? " + règle « Un ennemi dort » (réveiller)" : " (laisser dormir)") + (CMD ? " · Commandement " + CMD + " nœud(s)" : "")
     + (ENC ? " · essai : rencontres PV ×" + ENC[0] + ", puissance ×" + ENC[1] + (ENC2 !== ENC ? " ; étape 3 PV ×" + ENC2[0] + ", puissance ×" + ENC2[1] : "") : " · réglage du jeu"));
   console.log("Cibles : aucun mort, 25 à 35 % des PV restants en fin d'étape, 3 à 5 rounds par combat.\n");
   CAS.forEach(function (ct) {

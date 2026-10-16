@@ -99,7 +99,8 @@ var WorkshopsSystem = {
     if (!recipe) return 0;
     var level = typeof levelOverride === "number" ? levelOverride : this.getLevel(workshopId);
     var reduction = Math.min(0.95, WORKSHOP_LEVEL_CONFIG.speedBonusPerLevel * (level - 1));
-    return Math.max(1, Math.round(Number(recipe.craftTimeMs || 0) * (1 - reduction) / this.getLivingMapSpeedMult(workshopId)));
+    var rapide = (recipe.id === "cle_de_voute" && window.MemoryManager && MemoryManager.has("taille_rapide")) ? MemoryManager.V("taille_rapide_mult") : 1; // v3.453.0 : Mémoire 12
+    return Math.max(1, Math.round(Number(recipe.craftTimeMs || 0) * (1 - reduction) / this.getLivingMapSpeedMult(workshopId) / rapide));
   },
 
   /* v3.305.0 (carte du Désert) : un secteur tenu accélère un atelier de 10 % — l'oasis basse le

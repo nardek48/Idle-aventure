@@ -27,10 +27,32 @@ var MemoryManager = {
   has: function (optionId) {
     var m = this.ensure();
     for (var lvl in m.choices) {
-      if (m.choices[lvl] === optionId && Number(lvl) <= this.getLevel()) return true;
+      if (m.choices[lvl] === optionId && Number(lvl) <= this.getLevel()) return !this.isLineBroken(Number(lvl)); // v3.453.0 : ligne cassée = éteinte
     }
     return false;
   },
+
+  /* ---------- v3.453.0 : Garder / Donner et la ligne du jalon (niveaux 9 à 16) ---------- */
+  getOptionDef: function (level, optionId) {
+    var def = this.getLevelDef(level);
+    return def ? (def.options.filter(function (o) { return o.id === optionId; })[0] || null) : null;
+  },
+  /* Côté (garder | donner) pris à un niveau, ou null. */
+  sideOf: function (level) {
+    var o = this.getOptionDef(level, this.getChoice(level));
+    return o ? (o.side || null) : null;
+  },
+  /* La ligne `line` du jalon `level` : les trois niveaux précédents du monde pris de ce côté. */
+  lineOpen: function (level, line) {
+    for (var l = level - 3; l < level; l++) if (this.sideOf(l) !== line) return false;
+    return level > 3;
+  },
+  /* Le choix du jalon est une ligne qui ne tient plus (reprise d'un niveau plus bas). */
+  isLineBroken: function (level) {
+    var o = this.getOptionDef(level, this.getChoice(level));
+    return !!(o && o.line && !this.lineOpen(level, o.line));
+  },
+  V: function (k) { return Number((window.MEMORY_VALUES || {})[k] || 0); },
 
   /* Voie libre (niveau 7) : un changement de voie gratuit par jour (date locale). */
   todayKey: function () {
@@ -90,7 +112,7 @@ var MemoryManager = {
 
   getPendingLevels: function () {
     var out = [], lvl = this.getLevel();
-    for (var i = 1; i <= lvl; i++) if (!this.getChoice(i)) out.push(i);
+    for (var i = 1; i <= lvl; i++) if (!this.getChoice(i) || this.isLineBroken(i)) out.push(i);
     return out;
   },
 
@@ -103,10 +125,12 @@ var MemoryManager = {
     if (window.heroLockToast && heroLockToast()) return false; // v3.307.0 : héros en expédition
     var m = this.ensure(), def = this.getLevelDef(level);
     if (!def || level > this.getLevel()) return false;
-    if (!def.options.some(function (o) { return o.id === optionId; })) return false;
+    var opt = this.getOptionDef(level, optionId);
+    if (!opt) return false;
+    if (opt.line && !this.lineOpen(level, opt.line)) return false; // v3.453.0 : ligne fermée
     var current = m.choices[level];
     if (current === optionId) return false;
-    if (current) {
+    if (current && !this.isLineBroken(level)) {   // ligne cassée : on rechoisit sans frais
       var cost = this.getRepriseCost();
       if (Number(game.gold || 0) < cost) { showToast(_t("Pas assez d'or ({n})", { n: formatNumber(cost) }), 1400); return false; }
       game.gold = Number(game.gold || 0) - cost;
@@ -163,7 +187,7 @@ var MemoryManager = {
 
   /* v3.327.0 : « Main offrante » sort des talents (T4) ; l'Offrande rend sa valeur fixe. */
   rollOfferingValue: function (item) {
-    return this.getOfferingValue(item);
+    return this.getOfferingValue(item) * (this.has("main_offrante") ? this.V("main_offrante_mult") : 1); // v3.453.0 : Main offrante (niveau 16)
   },
 
   /* Offre un objet déjà retiré du sac (ou qui n'y est jamais entré). Retourne l'Aether gagné. */
@@ -223,7 +247,7 @@ var MemoryManager = {
   /* Somme affichée avant « Tout offrir » (valeur sans le hasard de la Main offrante). */
   previewOfferAll: function () {
     var self = this;
-    return (game.inventory || []).reduce(function (s, it) { return s + (it && !it.unique ? self.getOfferingValue(it) : 0); }, 0);
+    return Math.floor((game.inventory || []).reduce(function (s, it) { return s + (it && !it.unique ? self.rollOfferingValue(it) : 0); }, 0));
   }
 };
 

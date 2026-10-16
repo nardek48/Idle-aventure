@@ -6,7 +6,7 @@
 function chooseMemoryOption(level, optionId) {
   if (!window.MemoryManager) return;
   var current = MemoryManager.getChoice(level);
-  if (current && current !== optionId && typeof showConfirmModal === "function") {
+  if (current && current !== optionId && !MemoryManager.isLineBroken(level) && typeof showConfirmModal === "function") { // v3.453.0 : ligne cassée, sans frais
     var cost = MemoryManager.getRepriseCost();
     showConfirmModal(
       _t("Reprendre ce choix ?"),
@@ -38,25 +38,33 @@ function buildMemoryLevelHTML(def, p) {
   var level = def.level, chosen = MemoryManager.getChoice(level);
   var reached = level <= p.level;
   var worldLocked = !reached && level > p.cap;
-  var pending = reached && !chosen;
+  var broken = reached && !!chosen && MemoryManager.isLineBroken(level); // v3.453.0 : la ligne ne tient plus
+  var pending = reached && (!chosen || broken);
   var h = '<div class="mem-level' + (reached ? '' : ' is-locked') + (pending ? ' is-pending' : '') + '">';
   h += '<div class="ksec mem-level-head"><span>' + _t("Niveau {n}", { n: level }) + ' <small>' + esc(_td(def.theme)) + (def.jalon ? ' · ' + _t("jalon") : '') + '</small></span></div>';
   if (!reached) {
     h += '<div class="mem-level-lock"><img class="ico-inline" src="images/Icons/system/lock_closed.png" alt=""> ' + (worldLocked ? _t("S'ouvre dans un monde plus lointain.") : _t("Encore un peu d'Aether à rassembler.")) + '</div>';
   } else if (pending) {
-    h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + _t("Un choix t'attend ici.") + '</div>';
+    h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + (broken ? _t("La ligne ne tient plus : choisis à nouveau, sans frais.") : _t("Un choix t'attend ici.")) + '</div>';
   }
   h += '<div class="mem-options">';
   def.options.forEach(function (o) {
-    var isChosen = chosen === o.id;
-    var cls = 'mem-option' + (isChosen ? ' is-chosen' : '') + (chosen && !isChosen ? ' is-other' : '');
-    if (reached) h += '<button type="button" class="' + cls + '" onclick="chooseMemoryOption(' + level + ',\'' + esc(o.id) + '\')">';
+    var isChosen = chosen === o.id && !(broken && o.line);
+    // v3.453.0 : la ligne du jalon reste grisée tant que les trois niveaux d'avant ne sont pas du même côté
+    var lineLocked = !!o.line && !MemoryManager.lineOpen(level, o.line);
+    var cls = 'mem-option' + (isChosen ? ' is-chosen' : '') + (chosen && !isChosen ? ' is-other' : '') + (lineLocked ? ' is-line-locked' : '');
+    if (reached && !lineLocked) h += '<button type="button" class="' + cls + '" onclick="chooseMemoryOption(' + level + ',\'' + esc(o.id) + '\')">';
     else h += '<div class="' + cls + '">';
+    var side = o.line || o.side;
+    var tag = !side ? '' : ' <span class="mem-tag is-' + (o.line ? 'line' : side) + '">'
+      + (o.line ? (side === "garder" ? _t("Ligne Garder") : _t("Ligne Donner")) : (side === "garder" ? _t("Garder") : _t("Donner"))) + '</span>';
     h += '<span class="mem-option-ico">' + renderIconOrEmojiHTML(o.icon, "mem-option-img", _td(o.name)) + '</span>';
-    h += '<span class="mem-option-txt"><span class="mem-option-name">' + esc(_td(o.name)) + '</span>';
-    h += '<span class="mem-option-desc">' + esc(_td(o.desc)) + '</span></span>';
+    h += '<span class="mem-option-txt"><span class="mem-option-name">' + esc(_td(o.name)) + tag + '</span>';
+    h += '<span class="mem-option-desc">' + esc(_td(o.desc)) + '</span>';
+    if (lineLocked) h += '<span class="mem-line-cond">' + esc(side === "garder" ? _t("S'ouvre si tu as choisi Garder aux niveaux {a}, {b}, {c}.", { a: level - 3, b: level - 2, c: level - 1 }) : _t("S'ouvre si tu as choisi Donner aux niveaux {a}, {b}, {c}.", { a: level - 3, b: level - 2, c: level - 1 })) + '</span>';
+    h += '</span>';
     if (isChosen) h += '<img class="mem-option-check" src="images/Icons/system/check_valid.png" alt="' + esc(_t("Choisi")) + '">';
-    h += reached ? '</button>' : '</div>';
+    h += (reached && !lineLocked) ? '</button>' : '</div>';
   });
   h += '</div></div>';
   return h;

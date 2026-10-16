@@ -415,7 +415,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += buildItemOriginHTML(item);
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">' + _t("Équiper") + '</button>';
     // v3.322.0 (O2) : la vente devient l'Offrande ; la valeur s'affiche, 0 compris (O9)
-    var offerVal = window.MemoryManager ? MemoryManager.getOfferingValue(item) : 0;
+    var offerVal = window.MemoryManager ? Math.floor(MemoryManager.rollOfferingValue(item)) : 0; // v3.453.0 : Main offrante comprise
     h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="confirmSellItem(\'' + esc(item.uid) + '\')">' + (offerVal > 0 ? _t("Offrir (+{n} Aether)", { n: offerVal }) : _t("Offrir (aucun souvenir)")) + '</button>';
     h += buildEquippedComparisonHTML(item);
   } else if (entry.type === "combatItem") {
@@ -610,7 +610,7 @@ window.closeInventorySettings = closeInventorySettings;
 function confirmSellItem(uid, after) {
   var item = (Array.isArray(game.inventory) ? game.inventory : []).find(function (i) { return i.uid === uid; });
   var itemName = item ? _td(item.name) : _t("cet objet");
-  var value = (item && window.MemoryManager) ? MemoryManager.getOfferingValue(item) : 0;
+  var value = (item && window.MemoryManager) ? Math.floor(MemoryManager.rollOfferingValue(item)) : 0; // v3.453.0 : Main offrante comprise
   if (typeof showConfirmModal !== "function") { EquipmentManager.sell(uid); if (typeof after === "function") after(); return; }
   showConfirmModal(
     _t("Offrir cet objet ?"),

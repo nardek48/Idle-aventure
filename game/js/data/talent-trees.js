@@ -195,6 +195,31 @@ var TALENT_TREES = {
   }
 };
 
+/* v3.453.0 : LA VOIE DU COMMANDEMENT (conception Talents v1.1 §4ter, décisions de Seb du 16/10/2026).
+   Commune aux trois classes, ouverte à la Crypte (monde `opensAt`) ; 5 nœuds appris dans l'ordre,
+   le dernier est sa clé (indépendante des clés de classe). Points partagés avec l'arbre de classe.
+   Tous les effets sont des CROCHETS, lus par TalentManager.has(id) dans companion-system. */
+var TALENT_COMMAND = {
+  id: "commandement", name: "Commandement", tag: "Mener tes compagnons", opensAt: 3,
+  nodes: [
+    { id: "c_serrez_rangs", img: "images/Icons/talents/command/c_serrez_rangs.png",
+      name: "Serrez les rangs", short: "Compagnons : +8 % PV",
+      effect: "Tes compagnons ont 8 % de PV en plus." },
+    { id: "c_mon_signal", img: "images/Icons/talents/command/c_mon_signal.png",
+      name: "À mon signal", short: "Compagnons : +10 % dégâts",
+      effect: "Tes compagnons frappent 10 % plus fort." },
+    { id: "c_charge_plus", img: "images/Icons/talents/command/c_charge_plus.png",
+      name: "Une charge de plus", short: "+1 charge par combat",
+      effect: "Les compétences à charges de tes compagnons en ont une de plus par combat (Wenna : 4 soins, Ysolt : 2)." },
+    { id: "c_personne_terre", img: "images/Icons/talents/command/c_personne_terre.png",
+      name: "Personne ne reste à terre", short: "KO : retour à 50 % PV",
+      effect: "Un compagnon tombé revient au combat suivant avec la moitié de ses PV." },
+    { id: "c_relais", img: "images/Icons/talents/command/c_relais.png",
+      name: "Relais", key: true, short: "Compétence → +40 % au coup suivant",
+      effect: "Quand un compagnon utilise sa compétence, ta prochaine attaque de base fait 40 % de dégâts en plus." }
+  ]
+};
+
 /* Chiffres des crochets (un seul endroit à régler au banc). */
 var TALENT_VALUES = {
   k_sang_chaud: 25,          // Rage minimale à l'ouverture d'un combat
@@ -208,10 +233,16 @@ var TALENT_VALUES = {
   m_incendie: 0.25,
   m_echo_pct: 0.25,
   m_surtension_seuil: 80, m_surtension: 0.10,
-  m_surcharge_pct: 1.0
+  m_surcharge_pct: 1.0,
+  c_serrez_rangs: 0.08,      // v3.453.0 : Commandement (au banc)
+  c_mon_signal: 0.10,
+  c_charge_plus: 1,
+  c_personne_terre: 0.5,
+  c_relais: 0.40
 };
 
 window.TALENT_TREES = TALENT_TREES;
 window.TALENT_VALUES = TALENT_VALUES;
+window.TALENT_COMMAND = TALENT_COMMAND;
 window.TALENT_TRUNK_GATE = TALENT_TRUNK_GATE;
 window.TALENT_KEY_GATE = TALENT_KEY_GATE;

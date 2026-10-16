@@ -57,12 +57,13 @@ var SleepSystem = {
   onGroupSpawn: function (list) {
     if (!Array.isArray(list)) return 0;
     list.forEach(function (e) { e.asleep = false; e.wokenByHero = false; e.wakeIn = 0; });
+    game._sleepRelapseUsed = false; // v3.453.0 : Personne ne se lève, une fois par combat
     var pool = list.filter(function (e) { return !e.isBoss && !e.isElite; });
     var n = list.length > 1 ? Math.min(this.countFor(list), pool.length) : (this._planned = null, 0);
     for (var i = pool.length - 1; i > 0; i--) { var j = randInt(0, i), t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
     for (var k = 0; k < n; k++) {
       pool[k].asleep = true;
-      pool[k].wakeIn = randInt(SLEEP_WAKE_ROUNDS_MIN, SLEEP_WAKE_ROUNDS_MAX);
+      pool[k].wakeIn = randInt(SLEEP_WAKE_ROUNDS_MIN, SLEEP_WAKE_ROUNDS_MAX) + this.mem("sommeil_lourd", "sommeil_lourd_rounds"); // v3.453.0 : Sommeil lourd
     }
     if (n) addLog("🌫️ " + _tn(n, "Un des morts dort encore.", "{n} des morts dorment encore."), "event");
     return n;
@@ -81,9 +82,18 @@ var SleepSystem = {
   onEnemyTurn: function (e) {
     if (!this.isAsleep(e)) return false;
     e.wakeIn = Number(e.wakeIn || 0) - 1;
+    if (e.wakeIn <= 0 && this.has("personne_ne_se_leve") && !game._sleepRelapseUsed) { // v3.453.0 : ligne Garder du jalon 16
+      game._sleepRelapseUsed = true;
+      e.wakeIn = randInt(SLEEP_WAKE_ROUNDS_MIN, SLEEP_WAKE_ROUNDS_MAX);
+      addLog("🌫️ " + _t("{x} allait se lever. Il se rendort.", { x: _td(e.name) }), "event");
+    }
     if (e.wakeIn <= 0) this.wake(e, false);
     return true;
   },
+
+  /* v3.453.0 : choix de Mémoire (niveaux 13 et 16). */
+  has: function (id) { return !!(window.MemoryManager && MemoryManager.has(id)); },
+  mem: function (id, key) { return this.has(id) ? MemoryManager.V(key) : 0; },
 
   wake: function (e, byHero) {
     if (!e || !e.asleep) return;
@@ -98,18 +108,31 @@ var SleepSystem = {
   },
 
   /* Garde de dealDamage : un coup réveille le dormeur qu'il touche. */
-  onHit: function (foe) { if (this.isAsleep(foe)) this.wake(foe, true); },
+  /* v3.453.0 : Réveil brutal (Mémoire 13) — ce coup-là seulement, par la vulnérabilité que lit
+     dealDamage juste après ; elle est rendue à son état d'avant dès le coup suivant. */
+  onHit: function (foe) {
+    var b = this._brutal;
+    if (b) { this._brutal = null; b.e.vulnerableRounds = b.r; b.e.vulnerableMult = b.m; }
+    if (!this.isAsleep(foe)) return;
+    this.wake(foe, true);
+    if (this.has("reveil_brutal")) {
+      this._brutal = { e: foe, r: foe.vulnerableRounds, m: foe.vulnerableMult };
+      foe.vulnerableMult = (Number(foe.vulnerableRounds || 0) > 0 ? Number(foe.vulnerableMult || 0) : 0) + MemoryManager.V("reveil_brutal_mult");
+      foe.vulnerableRounds = Math.max(1, Number(foe.vulnerableRounds || 0));
+    }
+  },
 
   /* Butin d'un ennemi vaincu : bonus s'il a été réveillé par ton camp. */
   wakeBonus: function () {
     var soi = !!(window.StoryQuestManager && typeof StoryQuestManager.getChoice === "function" && StoryQuestManager.getChoice("portent") === "soi");
-    return soi ? SLEEP_GOLD_BONUS_SOI : SLEEP_GOLD_BONUS;
+    return (soi ? SLEEP_GOLD_BONUS_SOI : SLEEP_GOLD_BONUS) + this.mem("butin_des_morts", "butin_des_morts"); // v3.453.0 : Mémoire 16
   },
   goldMult: function (e) { return (e && e.wokenByHero) ? 1 + this.wakeBonus() : 1; },
 
   /* Garde de killEnemy : le dernier éveillé tombe — les dormeurs restent couchés et quittent le
      combat, qui se termine comme sur un ennemi seul. Renvoie le nombre de dormeurs laissés. */
   onKill: function (enemy) {
+    if (enemy && enemy.wokenByHero) this.deadLoot();
     if (!window.CombatActors) return 0;
     var self = this;
     var others = CombatActors.aliveEnemies().filter(function (e) { return e !== enemy; });
@@ -119,6 +142,15 @@ var SleepSystem = {
     this.aeswynVigil(others.length);   // dernier combat gagné : dormeurs laissés (choix `portent`, lot C-2) ; non sauvegardé
     addLog("🌫️ " + _tn(others.length, "Les éveillés sont tombés. Un mort dort encore.", "Les éveillés sont tombés. {n} morts dorment encore."), "normal");
     return others.length;
+  },
+
+  /* v3.453.0 : Rien ne dort pour rien (ligne Donner du jalon 16) — un objet, parfois. */
+  deadLoot: function () {
+    if (!this.has("rien_ne_dort") || !window.LootSystem || !window.CombatEngine || !chance(MemoryManager.V("rien_ne_dort_pct"))) return null;
+    var drop = LootSystem.rollDrop();
+    if (!drop || !CombatEngine.grantDrop(drop)) return null;
+    addLog("🎁 " + _t("Rien ne dort pour rien : {x}", { x: _td(drop.name) }), "event");
+    return drop;
   },
 
   /* v3.452.0 (crypte_05, La veillée d'Aeswyn) : chaque dormeur laissé rapporte de la Cire au village. */
