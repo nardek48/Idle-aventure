@@ -11246,7 +11246,8 @@ console.log("\n[142] v3.365.0 — Lot J : le Bilan de la partie en tête du Jour
   // v3.428.0 : la fin du Désert ouvre le chapitre 3 (Ruines)
   ok(g.buildTotalsStoryLabel() === "Ch. 3 · 1 / " + g.STORY_QUESTS.ruins.steps.length, "Histoire : le Ch. 3 s'ouvre à la fin du Désert (" + g.buildTotalsStoryLabel() + ")");
   game.storyQuests.ruins.currentStep = g.STORY_QUESTS.ruins.steps.length;
-  ok(g.buildTotalsStoryLabel() === "Ch. 3 terminé", "Histoire : « Ch. 3 terminé » à la fin des Ruines");
+  // v3.452.0 : la fin des Ruines ouvre le chapitre 4 (Crypte)
+  ok(g.buildTotalsStoryLabel() === "Ch. 4 · 1 / " + g.STORY_QUESTS.crypt.steps.length, "Histoire : le Ch. 4 s'ouvre à la fin des Ruines (" + g.buildTotalsStoryLabel() + ")");
 })();
 
 console.log("\n[143] v3.366.0 — Petites Aventures : réserve rechargeable ; Ensablement du seul secteur tenté");
@@ -15587,6 +15588,49 @@ console.log("\n[239] v3.451.0 — Crypte, lot C-1 : les morts qui dorment");
     ok(false, "[239] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
     CE.grantGold = grant; g.WorldManager.worldIndex = wiAvant;
+  }
+})();
+
+console.log("\n[240] v3.452.0 — Crypte, lot C-2 : acte I « La descente »");
+(function () {
+  var SQ = g.StoryQuestManager, savedChoice = SQ.getChoice, CE = g.CombatEngine, SL = g.SleepSystem, wiAvant = g.WorldManager.worldIndex;
+  try {
+    var ch = g.STORY_QUESTS.crypt;
+    ok(ch && ch.requiresChapter === "ruins" && ch.steps.map(function (s) { return s.id; }).join() === "crypte_01,crypte_02,crypte_03,crypte_04,crypte_05", "chapitre IV : cinq étapes, ouvert par la fin des Ruines");
+    var t = g.SceneEngine.getTemplate("traversee_crypte");
+    ok(t && t.travelOnSuccess && t.travelOnSuccess.worldId === "crypt" && t.entryCost.resourceId === "ration" && t.unlockOnSuccess.completionFlag === "cryptCrossingCompleted", "la descente : passage vers la Crypte, deux Rations moyennes");
+    ok(t.parcours.steps.length === 4 && t.parcours.steps[2].type === "combat" && t.parcours.steps[2].pack === 2, "quatre paliers ; au palier 3, deux éveillés (le troisième dort)");
+    var aq = g.ADVENTURE_QUESTS.aq_crypte_sepulcres, ay = g.ADVENTURE_QUESTS.aq_crypte_ysolt;
+    ok(aq.encounters.length === 5 && ay.encounters.length === 4 && ay.requiresParty === "ysolt", "Sépulcres : 5 rencontres ; Ysolt : 4, avec elle dans le groupe");
+    ok(aq.encounters.every(function (e) { return !e.group || typeof e.sleepers === "number"; }), "chaque groupe déclare ses dormeurs");
+    var y = g.COMPANIONS_DB.ysolt;
+    ok(y && y.skill.type === "delaySleep" && y.skill.charges === 1 && y.unlockedBy === "crypte_03", "Ysolt : Pas encore, une fois par combat");
+    // Pas encore : un dormeur qui va se lever dort deux rounds de plus
+    game = freshCombat("knight");
+    g.WorldManager.worldIndex = 3;
+    var mk = function (id) { var d = g.ENEMY_DB[id]; return { id: id, name: d.name, isBoss: false, archetype: null, hp: 300, maxHp: 300, stats: d.stats, resists: [], weak: [], goldReward: 20 }; };
+    SL.planNext(1);
+    CE.spawnGroup([mk("spectre"), mk("wraith")]);
+    var z = SL.sleepers()[0]; z.wakeIn = 1;
+    var CM = g.CompanionManager, actor = { companionId: "ysolt", charges: 1, cooldown: 0, damage: 10 };
+    ok(CM.useSkill(actor, y) === true && z.wakeIn === 3 && actor.charges === 0, "Pas encore : le dormeur dort deux rounds de plus (" + z.wakeIn + ")");
+    // Marché de la Crypte
+    ok(g.CARAVAN_RARE_BY_WORLD[3] === "cire_sepulcre" && g.CARAVAN_WORLD_MARKETS.crypt.requiresStoryStep === "crypte_04", "Marché de la Crypte : Cire de sépulcre, ouvert à l'étape 4");
+    // Le choix « portent »
+    ok(g.STORY_CHOICE_AXES.portent && g.STORY_CHOICE_AXES.portent.soi.indexOf("soi") !== -1 && g.STORY_CHOICE_AXES.portent.aeswyn[0] === "aeswyn", "choix « portent » : axe Soi / Aeswyn");
+    SQ.getChoice = function (k) { return k === "portent" ? "soi" : savedChoice.call(SQ, k); };
+    ok(SL.wakeBonus() === 0.75, "Le dû des morts : +75 % d'or au réveillé vaincu");
+    SQ.getChoice = function (k) { return k === "portent" ? "aeswyn" : savedChoice.call(SQ, k); };
+    var W = g.WarehouseManager, c0 = W.getAmount("cire_sepulcre");
+    SL.planNext(2);
+    CE.spawnGroup([mk("spectre"), mk("wraith"), mk("deadknight")]);
+    var eveille = g.CombatActors.standingEnemies()[0];
+    eveille.hp = 1; CE.killEnemy(eveille);
+    ok(W.getAmount("cire_sepulcre") - c0 === 2 && SL.wakeBonus() === 0.5, "La veillée d'Aeswyn : deux dormeurs laissés, deux Cires au village");
+  } catch (err) {
+    ok(false, "[240] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.getChoice = savedChoice; g.WorldManager.worldIndex = wiAvant;
   }
 })();
 

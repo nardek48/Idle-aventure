@@ -301,6 +301,69 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.452.0 (Crypte, acte I étape 2) — « Ici, on ne repose pas » : cinq rencontres aux Sépulcres
+     silencieux, la leçon des dormeurs (systems/sleep-system.js, `sleepers` par rencontre). Cible du
+     banc (Seb, 16/10/2026) : aucun mort, l'étape finie avec 25 à 35 % des PV en laissant dormir. */
+  aq_crypte_sepulcres: {
+    id: "aq_crypte_sepulcres",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "crypt",
+    adventureIndex: 0,
+    encounters: [
+      { group: ["spectre", "wraith"], groupHpMult: 0.55, sleepers: 1 },
+      { group: ["wraith", "wraith"], groupHpMult: 0.55, sleepers: 0 },
+      { group: ["necromancer", "spectre", "wraith"], groupHpMult: 0.35, sleepers: 2 },
+      { enemy: "deadknight" },
+      { group: ["spectre", "necromancer", "wraith"], groupHpMult: 0.35, sleepers: 1 }
+    ],
+    // banc (crypte-acte1-bench, 30 runs, sans potion, laisser dormir) : 100 % de réussite, 4,9 à 5,7 rounds
+    // par combat, 43 / 58 / 50 % des PV restants (Ch. / Rô. / Ma.). Plus dur, le Chevalier meurt sans potion.
+    encounterHpMult: 2.2,
+    enemyPowerMult: 5,
+    name: "Les Sépulcres silencieux",
+    story: "Ici, il n'y a pas de matin. Certains morts dorment encore dans le passage.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    steps: [
+      { id: "rencontres_sepulcres", type: "encounter", worldId: "crypt", target: 5, desc: "Vaincre {target} rencontres aux Sépulcres silencieux" }
+    ],
+    reward: {}
+  },
+
+  /* v3.452.0 (Crypte, acte I étape 3) — « Le carquois vide » : quatre rencontres avec Ysolt dans le
+     groupe (requiresParty), dont deux avec deux dormeurs. Même cible que l'étape 2. */
+  aq_crypte_ysolt: {
+    id: "aq_crypte_ysolt",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "crypt",
+    adventureIndex: 0,
+    requiresParty: "ysolt",
+    encounters: [
+      { group: ["wraith", "spectre", "deadknight"], groupHpMult: 0.35, sleepers: 2 },
+      { group: ["necromancer", "wraith"], groupHpMult: 0.55, sleepers: 1 },
+      { group: ["deadknight", "spectre", "spectre"], groupHpMult: 0.35, sleepers: 2 },
+      { group: ["necromancer", "deadknight"], groupHpMult: 0.55, sleepers: 0 }
+    ],
+    // banc (30 runs, sans potion) : avec Ysolt et Wenna 77 / 97 / 90 % de réussite, 39 / 43 / 33 % des PV
+    // restants ; avec Ysolt et Maddoc 97 / 100 / 97 %, 53 / 58 / 52 %. 3,6 à 4,3 rounds par combat.
+    encounterHpMult: 1.9,
+    enemyPowerMult: 4.4,
+    name: "Le carquois vide",
+    story: "Une femme assise devant une alcôve vide. Elle connaît la place de chaque dormeur.",
+    icon: "./images/Icons/quest_icons/exploration/exploration4.png",
+    steps: [
+      { id: "rencontres_ysolt", type: "encounter", worldId: "crypt", target: 4, desc: "Vaincre {target} rencontres avec Ysolt" }
+    ],
+    reward: {}
+  },
+
   /* v3.428.0 (Ruines, acte I étape 2) — « Ce qui se relève » : cinq rencontres aux Couloirs
      effondrés, la leçon de la relève (systems/rise-system.js). Cible du banc (Seb, 03/10/2026) :
      aucun mort, 30 à 45 % de PV perdus. Multiplicateurs provisoires, au banc (sim/ruines-bench.js). */

@@ -156,6 +156,39 @@ COMPANIONS_DB.edda = {
   }
 };
 
+/* v3.452.0 (Crypte, acte I étape 3, CR5) — YSOLT, une Rôdeuse montée neuf fois, revenue huit.
+   Elle porte un carquois vide et ne tire plus. Rôle : Garder le sommeil — sa compétence repousse
+   le réveil seul d'un dormeur (systems/sleep-system.js), une fois par combat. Stats et prix
+   provisoires, au banc. Portrait à fournir par Seb. */
+COMPANIONS_DB.ysolt = {
+  id: "ysolt",
+  name: "Ysolt",
+  image: "./images/Companions/ysolt.png",
+  role: "keeper",
+  weaponType: "bow",
+  base: { power: 42, endurance: 48, celerity: 52, precision: 50, will: 40 },
+  threatMult: 0.9,
+  skill: {
+    id: "ysolt_pas_encore",
+    name: "Pas encore",
+    icon: "images/Icons/companions/ysolt_pas_encore.png", // à générer
+    type: "delaySleep",
+    value: 2,                            // rounds de plus avant le réveil seul
+    cooldown: 0, charges: 1,             // une fois par combat (CR5)
+    desc: "Une fois par combat, un mort qui allait se lever dort encore deux rounds."
+  },
+  autoPolicy: ["skill", "basic"],
+  upgrades: { costs: [960, 1920, 3840, 7200, 12000], statPct: 0.06 }, // prix de la Crypte, provisoires
+  unlockedBy: "crypte_03",
+  lines: {
+    join: "Ne marchez pas si fort. Ils dorment.",
+    skill: "Pas encore. Dors.",
+    ko: "Ysolt s'assoit contre le mur. Elle ne tombe pas. Elle attend.",
+    bossIntro: "Celui-là ne dort jamais.",
+    bossWin: "Il dormira, maintenant."
+  }
+};
+
 /* v3.311.0 : changement de voie (D4b) — 2 000 or, ×3 à chaque changement. Le premier choix
    (étape 8) est gratuit. */
 var VOIE_CHANGE_BASE_COST = 2000;
@@ -201,7 +234,8 @@ var COMPANION_ROLE_LABELS = {
   assault: "Assaut",
   guard: "Garde",
   support: "Soutien",
-  finisher: "Achever" // v3.428.0 (Ruines) : Edda
+  finisher: "Achever", // v3.428.0 (Ruines) : Edda
+  keeper: "Garder le sommeil" // v3.452.0 (Crypte) : Ysolt
 };
 
 var _companionVoieCache = {}; // fiche fusionnée par « id:voie », identité stable

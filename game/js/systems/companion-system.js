@@ -134,6 +134,14 @@ var CompanionManager = {
         return false;
       }
     }
+    // v3.452.0 (Crypte, crypte_03) : Ysolt reste du groupe tant que l'étape de sa rencontre n'est pas réclamée
+    if (!present && companionId === "ysolt" && window.StoryQuestManager) {
+      var curC = StoryQuestManager.getCurrentStep("crypt");
+      if (curC && curC.id === "crypte_03") {
+        if (typeof showToast === "function") showToast(_t("Ysolt doit t'accompagner pour cette étape"), 1600);
+        return false;
+      }
+    }
     if (present && this.partyIds().length >= COMPANION_MAX_PRESENT && !st.present) {
       if (typeof showToast === "function") showToast(_t("Deux compagnons au maximum"), 1400);
       return false;
@@ -367,11 +375,22 @@ var CompanionManager = {
         if (def.skill && def.skill.type === "taunt" && !this._someoneElseHurt(actor)) continue;
         // v3.428.0 (Ruines) : « Le dernier trait » seulement quand un ennemi est à terre
         if (def.skill && def.skill.type === "finish" && !(window.RiseSystem && RiseSystem.downedEnemies().length)) continue;
+        // v3.452.0 (Crypte) : « Pas encore » seulement quand un dormeur va se lever
+        if (def.skill && def.skill.type === "delaySleep" && !this._sleeperAboutToWake(def.skill)) continue;
         return "skill";
       }
       if (policy[i] === "basic") return "basic";
     }
     return "basic";
+  },
+
+  /* v3.452.0 : le dormeur qui se lève le plus tôt, s'il se lève dans au plus `value` rounds. */
+  _sleeperAboutToWake: function (skill) {
+    if (!window.SleepSystem) return null;
+    var lim = Number((skill && skill.value) || 2);
+    var s = SleepSystem.sleepers().filter(function (e) { return Number(e.wakeIn || 0) <= lim; });
+    s.sort(function (a, b) { return Number(a.wakeIn || 0) - Number(b.wakeIn || 0); });
+    return s[0] || null;
   },
 
   _someoneElseHurt: function (actor) {
@@ -514,6 +533,16 @@ var CompanionManager = {
       if (window.RiseSystem) RiseSystem.beginAction(true); // Le dernier trait : c'est sa raison d'être
       CombatEngine.dealDamage(coup, false, true, true, aTerre);
       actor.cooldown = Number(skill.cooldown || 0);
+      return true;
+    }
+
+    /* v3.452.0 (Crypte) — Pas encore (Ysolt) : le dormeur qui allait se lever dort deux rounds de plus. */
+    if (skill.type === "delaySleep") {
+      var dort = this._sleeperAboutToWake(skill) || (window.SleepSystem ? SleepSystem.sleepers()[0] : null);
+      if (!dort || !SleepSystem.delay(dort, Number(skill.value || 2))) return false;
+      actor.cooldown = Number(skill.cooldown || 0);
+      if (typeof actor.charges === "number") actor.charges = Math.max(0, actor.charges - 1);
+      if (typeof addLog === "function") addLog("🌫️ " + _t("{x} — {s} : {y} dort encore.", { x: _td(def.name), s: _td(skill.name), y: dort.name ? _td(dort.name) : _t("l'ennemi") }), "event");
       return true;
     }
 

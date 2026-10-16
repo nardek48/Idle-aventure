@@ -252,6 +252,35 @@ var SCENE_TEMPLATES = {
      morts qui se relèvent (le combat de parcours est résolu par approche : la relève se lit dans le
      texte et dans la force du groupe, foeMult au banc — cible 30 à 40 % de PV perdus). Coût : deux
      Outres pleines, le prix de Sarkel. Le monde bascule à l'arrivée (travelOnSuccess). */
+  /* v3.452.0 (Crypte, acte I étape 1, texte validé par Seb le 16/10) — LA DESCENTE. Passage des
+     Ruines à la Crypte : parcours v2 de quatre paliers, monde posé à l'arrivée. Sarkel ne fait pas
+     payer le chemin ; deux Rations moyennes pour la longueur. Palier 3 : trois morts, un dort — le
+     combat de parcours se joue contre les deux éveillés (pack 2). Fond à fournir : crypte_descente. */
+  traversee_crypte: {
+    id: "traversee_crypte",
+    worldId: "crypt",
+    adventureIndex: 0,
+    mode: "parcours",
+    title: "Là où ils sont couchés",
+    departLabel: "Descendre",
+    icon: "images/Icons/codex/world_crypt.png",
+    parcours: {
+      image: "crypte_descente", track: "route", points: [0, 2, 4, 6],
+      steps: [
+        { type: "obstacle", gabaritId: "escalier_sans_fin", text: "Un escalier, sous la dernière rue des Ruines. Les marches sont propres. Personne ne les a balayées." },
+        { type: "source", text: "Le froid monte d'en bas. Les lampes tiennent. Sarkel compte les marches à voix basse, puis s'arrête de compter." },
+        // banc (campagne --combats --avise, v3.452.0) : à ×2,4, la descente finie avec 40 à 48 % des PV ; ×2,7 vise 25 à 35 %
+        { type: "combat", foe: "spectre", pack: 2, foeMult: 2.7, text: "Trois formes en travers du passage. Deux se tournent vers la lumière. La troisième ne bouge pas.",
+          after: "Celui qui dormait dort encore. Wenna passe à côté sans respirer." },
+        { type: "obstacle", gabaritId: "dalle_qui_glisse", text: "En bas, une salle longue. Des alcôves dans les murs, du sol au plafond. Elles ne sont pas vides." }
+      ]
+    },
+    entryCost: { resourceId: "ration", amount: 2 },
+    lootResource: "gold",
+    unlockOnSuccess: { buildingId: null, unlockFlag: "cryptReached", completionFlag: "cryptCrossingCompleted" },
+    travelOnSuccess: { worldId: "crypt", adventureIndex: 0 }
+  },
+
   traversee_ruines: {
     id: "traversee_ruines",
     worldId: "ruins",

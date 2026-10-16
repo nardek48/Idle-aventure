@@ -256,6 +256,12 @@ var PA2_PARCOURS_IMAGES = {
     image: "images/Maps/parcours/ruines_route.jpg", width: 1024, height: 1536, start: [420, 1300],
     tracks: { route: [[555, 1170], [500, 1030], [510, 885], [592, 760], [455, 665], [540, 560], [570, 500]] }
   },
+  /* v3.452.0 (Crypte, acte I) : la descente. Image à fournir par Seb ; piste provisoire (celle de la
+     route du nord), à relever sur l'image quand elle arrivera. */
+  crypte_descente: {
+    image: "images/Maps/parcours/crypte_descente.jpg", width: 1024, height: 1536, start: [420, 1300],
+    tracks: { route: [[555, 1170], [500, 1030], [510, 885], [592, 760], [455, 665], [540, 560], [570, 500]] }
+  },
   /* v3.433.1 (Ruines, acte IV) : image de Seb (09/10/2026) ; piste relevée sur le trait violet, de la
      porte basse à l'arche du Cœur. Paliers : la rue qui tourne, la place aux ossements, la brèche du
      mur, les toits aux gargouilles, l'arche. */

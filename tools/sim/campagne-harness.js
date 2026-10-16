@@ -652,6 +652,7 @@ function playExpedition(templateId, flag) {
     if (!r.ok) { note(templateId + " : départ refusé — " + r.reason); return false; }
     var fini = playScene();
     var fin = g.game.sceneRun || {};
+    if (COMBATS && /crypte/.test(templateId)) console.log("  ◦ fin de " + templateId + " : PV " + Math.round(100 * g.game.heroHp / g.game.heroMaxHp) + " %"); // v3.452.0 : cible 25 à 35 %
     if (!fini && g.SceneRunManager.isRunActive()) g.SceneRunManager.abandon();
     if (!flag || flag()) return true;
     var pourquoi = LAST_END ? LAST_END + " — " : "";
@@ -789,13 +790,14 @@ function freeSectorAgain(mapId, sectorId) {
 
 /* v3.428.0 (ruines_04) : une caravane Courte au Marché des Ruines, attendue puis déchargée.
    La Halle se bâtit au prix d'Histoire si elle manque ; la cargaison vient de la production. */
-function caravaneMarcheRuines(g) {
+function caravaneMarcheRuines(g, world, flagKey) {
+  world = world || 2; flagKey = flagKey || "ruinsMarketDone"; // v3.452.0 : aussi le Marché de la Crypte
   var C = g.CaravanManager;
   if (!C.isAvailable()) upgradeBuilding("hall", 1);
   if (!C.isAvailable()) { note("Halle marchande introuvable : " + g.VillageBuildingManager.getLevel("hall")); return; }
-  var m = C.getMarkets().filter(function (x) { return x.world === 2; })[0];
-  if (!m) { note("Marché des Ruines absent : " + JSON.stringify(C.getMarkets())); return; }
-  for (var essai = 0; essai < 6 && !g.storyDesertFlag("ruinsMarketDone"); essai++) {
+  var m = C.getMarkets().filter(function (x) { return x.world === world; })[0];
+  if (!m) { note("marché du monde " + world + " absent : " + JSON.stringify(C.getMarkets())); return; }
+  for (var essai = 0; essai < 6 && !g.storyDesertFlag(flagKey); essai++) {
     if (C.get() && C.isBack()) C.unload();
     if (C.get()) { wait(Math.max(60e3, C.getSecondsLeft() * 1000 + 1000), "caravane"); continue; }
     harvest();   // un joueur récolte avant de charger : la caravane ne prend que le surplus de l'Entrepôt
@@ -844,6 +846,11 @@ function playAdventure(id) {
     var nf = STATS.fights.length;
     var fin = winCombat(80);
     flushTimers(g);
+    // v3.452.0 (Crypte) : PV restants et potions bues à la fin du run (cible : 25 à 35 % des PV, sans mort)
+    if (COMBATS && /crypte/.test(id) && g.game.adventureQuestsCompleted[id]) {
+      var sm = g.game.lastSortieSummary || {};
+      console.log("  ◦ fin de " + id + " : PV " + Math.round(100 * g.game.heroHp / g.game.heroMaxHp) + " %, potions " + (sm.potionsUsed || 0) + ", essai " + (essai + 1));
+    }
     if (!g.game.adventureQuestsCompleted[id] && COMBATS) {
       var fs2 = STATS.fights.slice(nf);
       note("   " + (fin ? "combat fini" : "combat perdu") + ", " + fs2.length + " ennemis (" + fs2.map(function (f) { return f.name + " " + Math.round(f.hp0 * 100) + "→" + Math.round((f.hp1 || 0) * 100) + (f.died ? "†" : ""); }).join(", ") + "), run actif " + !!g.game.adventureQuestRun.active + ", ennemi " + (g.game.enemy && g.game.enemy.name) + ", PV " + Math.round(g.game.heroHp) + "/" + g.game.heroMaxHp);
@@ -868,7 +875,7 @@ function run() {
   ok(G.game.playerName === "Robot" && G.game.heroId, "héros créé (" + G.game.heroId + ")");
   G.saveGame();
 
-  var chapters = ["forest", "desert", "ruins"]; // v3.428.0 : chapitre III ; v3.433.0 : ses 20 étapes
+  var chapters = ["forest", "desert", "ruins", "crypt"]; // v3.428.0 : chapitre III ; v3.433.0 : ses 20 étapes ; v3.452.0 : Crypte, acte I
   var t0 = Date.now();
   for (var c = 0; c < chapters.length; c++) {
     var cid = chapters[c];
@@ -883,7 +890,7 @@ function run() {
       CURRENT_STEP = step.id;
       // v3.423.0 : TRACE_FORCE=1 relève la force du héros à chaque étape (référence des ajustements de difficulté)
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
-      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
+      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
       var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
       var snap0 = snapTemps();
       G.StoryQuestManager.acceptStep(cid);
@@ -1199,6 +1206,19 @@ var SOLVERS = {
   ruines_05: function (g) {
     var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
     if (!g.storyMakeChoice("ruins", val)) note("choix refusé (seuil)");
+  },
+  // v3.452.0 (Crypte, acte I)
+  crypte_01: function (g) { playExpedition("traversee_crypte", function () { return g.storyDesertFlag("cryptCrossingCompleted"); }); },
+  crypte_02: function (g) { playAdventure("aq_crypte_sepulcres"); },
+  crypte_03: function (g, step) {
+    choiceStep(g, step);
+    if (!g.storyYsoltInParty()) note("Ysolt n'est pas du groupe : " + JSON.stringify(g.CompanionManager.partyIds()));
+    playAdventure("aq_crypte_ysolt");
+  },
+  crypte_04: function (g) { caravaneMarcheRuines(g, 3, "cryptMarketDone"); },
+  crypte_05: function (g) {
+    var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
+    if (!g.storyMakeChoice("crypt", val)) note("choix refusé (portent)");
   },
   // v3.429.0 (Ruines, acte II)
   ruines_06: function (g) { playExpedition("petite_aventure_ruines", function () { return g.storyDesertFlag("ruinsPaCompleted"); }); },

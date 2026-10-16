@@ -20,6 +20,7 @@ var SLEEP_WAKE_ROUNDS_MAX = 5;
 var SLEEP_GOLD_BONUS = 0.5;        // réveillé puis vaincu : +50 % d'or
 var SLEEP_GOLD_BONUS_SOI = 0.75;   // choix `portent` = « soi » (Le dû des morts) : +75 %, au banc
 var SLEEP_MAX_PER_GROUP = 2;
+var SLEEP_VIGIL_WAX = 1;           // v3.452.0 : La veillée d'Aeswyn, Cire par dormeur laissé (au banc)
 
 var SleepSystem = {
 
@@ -114,9 +115,19 @@ var SleepSystem = {
     var others = CombatActors.aliveEnemies().filter(function (e) { return e !== enemy; });
     if (!others.length || others.some(function (e) { return !self.isAsleep(e); })) return 0;
     others.forEach(function (e) { CombatActors.removeEnemy(e); });
-    game.combatSleepersLeft = others.length;   // dernier combat gagné : dormeurs laissés (choix `portent`, lot C-2) ; non sauvegardé
+    game.combatSleepersLeft = others.length;
+    this.aeswynVigil(others.length);   // dernier combat gagné : dormeurs laissés (choix `portent`, lot C-2) ; non sauvegardé
     addLog("🌫️ " + _tn(others.length, "Les éveillés sont tombés. Un mort dort encore.", "Les éveillés sont tombés. {n} morts dorment encore."), "normal");
     return others.length;
+  },
+
+  /* v3.452.0 (crypte_05, La veillée d'Aeswyn) : chaque dormeur laissé rapporte de la Cire au village. */
+  aeswynVigil: function (n) {
+    if (!n || !window.StoryQuestManager || StoryQuestManager.getChoice("portent") !== "aeswyn" || !window.WarehouseManager) return 0;
+    var q = n * SLEEP_VIGIL_WAX;
+    WarehouseManager.addResource("cire_sepulcre", q, true);
+    addLog("🕯️ " + _t("La veillée d'Aeswyn : +{n} Cire de sépulcre.", { n: q }), "event");
+    return q;
   },
 
   /* Action automatique : la règle « Un ennemi dort » vise un dormeur (le réveiller est une décision). */

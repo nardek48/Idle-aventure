@@ -42,10 +42,10 @@ var CARAVAN_EXCLUDED = ["bois", "fer"];
 var CARAVAN_CAPACITY_PER_LEVEL = 0.10;   // +10 % par niveau de Halle au-delà du premier
 var CARAVAN_KEEP_SHARE = 0.5;            // la moitié basse du plafond ne part jamais
 /* Matériau rare rapporté par le trajet Long : celui du monde où l'on se trouve au départ. */
-var CARAVAN_RARE_BY_WORLD = { 0: "seve_aeswyn", 1: "verre_des_dunes", 2: "pierre_errante" };
+var CARAVAN_RARE_BY_WORLD = { 0: "seve_aeswyn", 1: "verre_des_dunes", 2: "pierre_errante", 3: "cire_sepulcre" }; // v3.452.0 : la Crypte
 /* v3.428.0 (Ruines, étape ruines_04) : marchés SANS carte vivante. Les Ruines n'ont pas encore
    de carte (lot U-5) : leur marché s'ouvre par l'Histoire. mapId sert d'identifiant de marché. */
-var CARAVAN_WORLD_MARKETS = { ruins: { requiresStoryStep: "ruines_04" } };
+var CARAVAN_WORLD_MARKETS = { ruins: { requiresStoryStep: "ruines_04" }, crypt: { requiresStoryStep: "crypte_04" } }; // v3.452.0 : Marché de la Crypte (crypte_04)
 var CARAVAN_RARE_QTY = [2, 3];
 
 var CaravanManager = {
@@ -292,6 +292,11 @@ var CaravanManager = {
     if (Number(c.world) === 2) {
       if (!game.explorationProgression || typeof game.explorationProgression !== "object") game.explorationProgression = {};
       game.explorationProgression.ruinsMarketDone = true;
+    }
+    // v3.452.0 (crypte_04) : une caravane revenue du Marché de la Crypte
+    if (Number(c.world) === 3) {
+      if (!game.explorationProgression || typeof game.explorationProgression !== "object") game.explorationProgression = {};
+      game.explorationProgression.cryptMarketDone = true;
     }
     game.village.caravan = null;
     if (typeof addLog === "function") {

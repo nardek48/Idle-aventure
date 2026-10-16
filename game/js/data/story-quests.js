@@ -99,7 +99,13 @@ var STORY_REWARDS = {
   ruines_18: { gold: 3400, resources: { pierre_errante: 3 } },
   // v3.433.0 (acte IV, livraison 2, provisoire : au banc)
   ruines_19: { gold: 3800, resources: { cle_de_voute: 2 } },
-  ruines_20: { gold: 4500, uniqueLoot: "arme_coeur" } // l'arme du Cœur, Épique, d'Edda (dans les deux branches)
+  ruines_20: { gold: 4500, uniqueLoot: "arme_coeur" }, // l'arme du Cœur, Épique, d'Edda (dans les deux branches)
+  // v3.452.0 (Crypte, acte I, provisoire : au banc)
+  crypte_01: { gold: 4800 },
+  crypte_02: { gold: 5000 },
+  crypte_03: { gold: 5200 },
+  crypte_04: { gold: 5400, resources: { cire_sepulcre: 3 } }, // les pains de cire de la pierre plate
+  crypte_05: { gold: 5800 }
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -178,7 +184,8 @@ var STORY_CHOICE_AXES = {
   roi: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] },
   seuil: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] }, // v3.428.0 (Ruines, acte I étape 5) : la pierre de seuil
   salle: { fermer: ["garder"], rouvrir: ["donner"] },   // v3.431.0 (Ruines, acte III étape 14) : la salle que la cité ne finit pas
-  plan: { finir: ["donner", "soi"], tomber: ["garder", "aeswyn"] } // v3.433.0 (Ruines, acte IV étape 20) : le plan, option A du 09/10
+  plan: { finir: ["donner", "soi"], tomber: ["garder", "aeswyn"] }, // v3.433.0 (Ruines, acte IV étape 20) : le plan, option A du 09/10
+  portent: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] }            // v3.452.0 (Crypte, acte I étape 5) : ce que portent les morts
 };
 
 /* v3.293.0 (règle Seb 18/09/2026) : storyResetLisiere, storyLisiereCrossingProgress et
@@ -2490,6 +2497,266 @@ STORY_QUESTS.ruins = {
 };
 
 /* v3.433.0 (Ruines, ruines_20) — textes des deux branches du plan, puis la suite commune (Edda, l'arme, Sarkel). */
+/* ======================= CHAPITRE IV — LA CRYPTE (Conception Crypte v1.0) =======================
+   v3.452.0 (lot C-2) : acte I « La descente », document Aethervale_Crypte_Acte_I v0.2, relu
+   d'ensemble et validé par Seb le 16/10/2026. Les actes II à IV viennent avec les lots C-3 à C-5. */
+
+/* v3.452.0 (crypte_03) : Ysolt est dans le groupe de combat. */
+function storyYsoltInParty() {
+  return !!(window.CompanionManager && CompanionManager.partyIds().indexOf("ysolt") !== -1);
+}
+
+/* v3.452.0 (crypte_05) : textes des deux branches du choix « portent ». */
+var STORY_PORTENT_TEXTS = {
+  soi: {
+    completion: "Tu prends la bourse. Elle est froide. Dans l'alcôve, celui qui dort ne bouge pas.",
+    dialogue: [
+      { who: "Ysolt", text: "Il ne t'en voudra pas. Les autres, peut-être." }
+    ]
+  },
+  aeswyn: {
+    completion: "Tu ne touches à rien. À Aeswyn, ce soir-là, Orwen allume une lampe de plus à la fenêtre, et la laisse brûler.",
+    dialogue: [
+      { who: "Orwen", text: "Pour ceux d'en bas." },
+      { who: "Brannoc", text: "On ne les connaît pas. Si… enfin. Un peu." }
+    ]
+  }
+};
+function storyPortentBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("portent") === "aeswyn") ? "aeswyn" : "soi";
+}
+
+STORY_QUESTS.crypt = {
+  id: "crypt",
+  worldId: "crypt",
+  requiresChapter: "ruins",
+  title: "Ceux qui sont montés", // provisoire
+  subtitle: "Chapitre 4 — Crypte",
+  icon: "images/Icons/codex/world_crypt.png",
+  endText: "La suite de l'histoire arrive bientôt…", // v3.452.0 : acte I seul ; l'amorce de la Montagne viendra avec l'acte IV
+  steps: [
+    /* ---------- Acte I — La descente ---------- */
+    /* Étape 1 (doc §3) : le passage entre les mondes, parcours v2 de quatre paliers ; le monde est
+       posé à l'arrivée (travelOnSuccess). Deux Rations moyennes : Sarkel ne vend pas le chemin. */
+    {
+      id: "crypte_01",
+      title: "Là où ils sont couchés",
+      act: "Acte I — La descente",
+      narrative: {
+        objective: "À la Borne, Sarkel a vidé sa carriole. Plus de corde, plus de sel. Des lampes, et de l'huile pour les lampes.",
+        completion: "Sarkel pose trois lampes contre le premier mur et s'assoit entre elles. Plus loin, la salle continue. On n'en voit pas le bout.",
+        dialogue: [
+          { who: "Sarkel", text: "Je t'ai dit que je ne le vendais pas. Je ne le vends pas. Je t'y emmène." },
+          { who: "Wenna", text: "C'est loin ?" },
+          { who: "Sarkel", text: "C'est en dessous." },
+          { who: "Edda", text: "Sous les Ruines, il n'y a rien sur mes cartes." },
+          { who: "Sarkel", text: "Parce que là-bas, rien ne bouge. Tu n'as jamais eu à le dessiner deux fois." }
+        ],
+        completionDialogue: [
+          { who: "Edda", text: "Rien ne bouge, ici." },
+          { who: "Edda", text: "Je croyais que ce serait plus facile." },
+          { who: "Sarkel", text: "Ceux qui sont montés avant lui, ils sont là. Pas tous. Assez." },
+          { who: null, text: "Personne ne demande lequel est lequel." }
+        ]
+      },
+      objectiveLabel: "Descendre à la Crypte (coût : 2 Rations moyennes)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_01,
+      linkTo: { section: "expedition", cardId: "scene_traversee_crypte" },
+      check: function () { return storyDesertFlag("cryptCrossingCompleted"); },
+      progress: function () { return "Descente " + (storyDesertFlag("cryptCrossingCompleted") ? "1/1" : "0/1"); }
+    },
+    /* Étape 2 (doc §4) : les morts qui dorment. Cinq rencontres aux Sépulcres silencieux. */
+    {
+      id: "crypte_02",
+      title: "Ici, on ne repose pas",
+      act: "Acte I — La descente",
+      narrative: {
+        objective: "Au matin, il fait aussi froid qu'hier. Ici, il n'y a pas de matin. Sarkel a rallumé les lampes à l'heure où il aurait fait jour.",
+        completion: "Cinq rencontres. Derrière vous, des morts dorment encore dans le passage. Wenna se retourne une fois, pour vérifier. Ils sont toujours couchés.",
+        dialogue: [
+          { who: "Wenna", text: "Hier, il y en avait un qui dormait. Il n'a pas bougé." },
+          { who: "Maddoc", text: "On le laisse dormir." },
+          { who: "Wenna", text: "Et s'il se réveille ?" },
+          { who: "Maddoc", text: "On ne traîne pas." }
+        ]
+      },
+      objectiveLabel: "Terminer « Les Sépulcres silencieux » : 5 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_02,
+      linkTo: { section: "adventure", cardId: "adv_aq_crypte_sepulcres" },
+      tutorial: {
+        tab: "combat",
+        icon: "images/Icons/combat_status/asleep.png",
+        title: "Les morts qui dorment",
+        points: [
+          { icon: "images/Icons/combat_status/asleep.png", text: "Dans la Crypte, certains morts dorment. Ils ne jouent pas, et ton camp ne les vise pas." },
+          { icon: "images/Icons/system/check_valid.png", text: "Le combat est gagné quand les éveillés sont tombés. Les dormeurs restent couchés." },
+          { icon: "images/Icons/gold_icon.png", text: "Touche un dormeur pour le viser : le frapper le réveille. Vaincu, il rapporte la moitié d'or en plus." },
+          { icon: "images/Icons/combat_status/enemy_approaching.png", text: "Un dormeur laissé se lève seul au bout de quelques rounds, sans or en plus. Le chiffre sous lui compte les rounds." },
+          { icon: "images/Icons/memory/grimoire_etendu.png", text: "Un coup de zone réveille tous les dormeurs. Dans le Grimoire, c'est la condition « Un ennemi dort »." }
+        ]
+      },
+      check: function (game) { return storyAdvDone(game, "aq_crypte_sepulcres"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_crypte_sepulcres", "rencontres_sepulcres", 5) + "/5"; }
+    },
+    /* Étape 3 (doc §5) : Ysolt rejoint. « Deux sur quatre » : Ysolt et un seul des trois autres
+       (composition, hors registre). Ysolt ne quitte pas le groupe tant que l'étape n'est pas réclamée. */
+    {
+      id: "crypte_03",
+      title: "Le carquois vide",
+      act: "Acte I — La descente",
+      narrative: {
+        objective: "Dans la salle longue, une alcôve est vide. Devant elle, une femme assise par terre, le dos au mur. Un carquois sur les genoux. Pas de flèches.",
+        completion: "Ysolt marche entre les dormeurs sans en réveiller un seul. Elle connaît leur place. Elle ne dit pas leurs noms.",
+        dialogue: [
+          { who: "Ysolt", text: "Ne marchez pas si fort. Ils dorment." },
+          { who: "Wenna", text: "Tu es…" },
+          { who: "Ysolt", text: "Ysolt. Montée neuf fois. Revenue huit." },
+          { who: "Maddoc", text: "Et la neuvième ?" },
+          { who: null, text: "Ysolt regarde l'alcôve vide." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Pourquoi tu restes avec eux ?" },
+          { who: "Ysolt", text: "Quelqu'un doit rester éveillé." },
+          { who: "Ysolt", text: "Je viens avec vous. Pas loin." }
+        ]
+      },
+      objectiveLabel: "Choisir qui accompagne Ysolt, puis 4 rencontres avec elle",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_03,
+      linkTo: { section: "adventure", cardId: "adv_aq_crypte_ysolt" },
+      onAccept: function () {
+        if (!window.CompanionManager) return;
+        CompanionManager.unlock("ysolt");
+      },
+      choice: {
+        key: "carquois", onStoryCard: true, noRecord: true,
+        buttonLabel: "Choisir qui l'accompagne",
+        title: "Deux sur quatre",
+        text: "Ysolt vient avec toi. Une seule autre place au combat : qui la prend ?",
+        options: [
+          { value: "wenna", label: "Wenna", desc: "Wenna et Ysolt se battent à tes côtés." },
+          { value: "maddoc", label: "Maddoc", desc: "Maddoc et Ysolt se battent à tes côtés." },
+          { value: "edda", label: "Edda", desc: "Edda et Ysolt se battent à tes côtés." }
+        ],
+        isDone: function () { return storyYsoltInParty(); },
+        apply: function (value) {
+          if (!window.CompanionManager) return;
+          ["wenna", "maddoc", "edda"].forEach(function (id) {
+            var st = CompanionManager.state(id);
+            if (st) st.present = (id === value);
+          });
+          var ys = CompanionManager.state("ysolt");
+          if (ys) ys.present = true;
+          CompanionManager.refreshParty();
+        }
+      },
+      tutorial: {
+        tab: "more",
+        icon: "images/Icons/subtabs/hero_summary.png",
+        title: "Deux sur quatre",
+        points: [
+          { icon: "images/Icons/subtabs/hero_summary.png", text: "Tu as maintenant quatre compagnons. Deux seulement t'accompagnent en combat : choisis-les avant de partir, dans Héros › Compagnons." },
+          { icon: "images/Icons/companions/ysolt_pas_encore.png", text: "Ysolt garde le sommeil : une fois par combat, elle retarde le réveil d'un dormeur." }
+        ]
+      },
+      check: function (game) { return storyYsoltInParty() && storyAdvDone(game, "aq_crypte_ysolt"); },
+      progress: function (game) {
+        return "Ysolt avec toi " + (storyYsoltInParty() ? "1/1" : "0/1") + " · Rencontres " + storyAdvProgress(game, "aq_crypte_ysolt", "rencontres_ysolt", 4) + "/4";
+      }
+    },
+    /* Étape 4 (doc §6) : le Marché de la Crypte s'ouvre à la caravane (CARAVAN_WORLD_MARKETS). */
+    {
+      id: "crypte_04",
+      title: "Les morts n'achètent pas",
+      act: "Acte I — La descente",
+      narrative: {
+        objective: "À la Veillée, une pierre plate, à hauteur de main. Dessus, des traces de cire, et rien d'autre.",
+        completion: "Au matin, le pain n'est plus sur la pierre. À sa place, des pains de cire, blancs, tièdes. Dans la Crypte, rien d'autre n'est tiède.",
+        dialogue: [
+          { who: "Sarkel", text: "Ici, je ne vends rien. Les morts n'achètent pas." },
+          { who: "Sarkel", text: "Mais ils laissent quelque chose quand on leur laisse quelque chose." },
+          { who: "Sarkel", text: "Envoie-moi une caravane d'Aeswyn. Du pain, surtout." },
+          { who: "Ysolt", text: "Le pain, ils s'en souviennent." }
+        ],
+        completionDialogue: [
+          { who: "Sarkel", text: "Je ne demande pas d'où ça vient. Je le vends là-haut." },
+          { who: "Wenna", text: "Tu as dit que tu ne vendais rien." },
+          { who: "Sarkel", text: "Ici." }
+        ]
+      },
+      objectiveLabel: "Envoyer une caravane au Marché de la Crypte et la décharger à son retour",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_04,
+      linkTo: {
+        tab: function () { return storyCaravanReady() ? "campement" : "village"; },
+        afterGo: function () {
+          if (!storyCaravanReady()) { if (typeof goToCaravanHall === "function") goToCaravanHall(); return; }
+          if (typeof setCampTab === "function") setCampTab("depart");
+          if (typeof openExpeditionsSheet === "function") openExpeditionsSheet("caravan");
+        }
+      },
+      tutorial: {
+        tab: "village",
+        icon: "images/Icons/resources/cire_sepulcre_icon.png",
+        title: "Le Marché de la Crypte",
+        points: [
+          { icon: "images/Icons/village_buildings/merchant_hall.png", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte. Tu choisis le marché au départ, dans Campement › Expéditions." },
+          { icon: "images/Icons/resources/cire_sepulcre_icon.png", text: "Elle en rapporte de l'or et de la Cire de sépulcre." }
+        ]
+      },
+      check: function () { return storyDesertFlag("cryptMarketDone"); },
+      progress: function () {
+        if (!storyCaravanReady()) return "Bâtis d'abord la Halle marchande (Village › Bâtiments)";
+        return "Caravane du Marché de la Crypte " + (storyDesertFlag("cryptMarketDone") ? "1/1" : "0/1");
+      }
+    },
+    /* Étape 5 (doc §7) : premier choix pesant de la Crypte, clé « portent », axe Soi / Aeswyn.
+       Soi -> Le dû des morts (réveillé puis vaincu : +75 % d'or, SleepSystem.wakeBonus).
+       Aeswyn -> La veillée d'Aeswyn (dormeur laissé : Cire de sépulcre, SleepSystem.aeswynVigil). */
+    {
+      id: "crypte_05",
+      title: "Ce que portent les morts",
+      act: "Acte I — La descente",
+      narrative: {
+        objective: "Au fond de la salle longue, les alcôves sont plus grandes. Ceux qui y dorment ont gardé ce qu'ils avaient en montant : une épée, un anneau, une bourse. Rien n'a été pris.",
+        get completion() { return STORY_PORTENT_TEXTS[storyPortentBranch()].completion; },
+        dialogue: [
+          { who: "Ysolt", text: "Personne ne prend rien, ici." },
+          { who: "Maddoc", text: "Ça vaut de l'or." },
+          { who: "Ysolt", text: "Ça valait." },
+          { who: "Wenna", text: "À Aeswyn, Orwen dirait qu'on garde une lampe allumée pour ceux qui sont partis." }
+        ],
+        get completionDialogue() { return STORY_PORTENT_TEXTS[storyPortentBranch()].dialogue; }
+      },
+      objectiveLabel: "Décider de ce que portent les morts",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_05,
+      choice: {
+        key: "portent", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "Ce que portent les morts",
+        text: "Ysolt dit que personne ne prend rien, ici. Wenna pense à Orwen. Personne ne choisira pour toi.",
+        options: [
+          { value: "soi", label: "Garder ce qu'ils portent", desc: "Ce qu'ils ont gardé te revient. Un mort que tu réveilles rapporte plus." },
+          { value: "aeswyn", label: "Le laisser, pour Aeswyn", desc: "Tu laisses tout en place. Aeswyn veillera ceux que tu laisses dormir." }
+        ],
+        apply: function (value) {
+          if (typeof addLog !== "function") return;
+          if (value === "soi") addLog(_t("Le dû des morts : un mort que tu réveilles puis vaincs rapporte trois quarts d'or en plus."), "event");
+          else addLog(_t("La veillée d'Aeswyn : chaque mort que tu laisses dormir rapporte de la Cire de sépulcre au village."), "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("portent")); },
+      progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("portent")) ? "1/1" : "0/1"); }
+    }
+  ]
+};
+
+window.storyYsoltInParty = storyYsoltInParty;
+window.STORY_PORTENT_TEXTS = STORY_PORTENT_TEXTS;
+
 var STORY_PLAN_TEXTS = {
   finir: {
     completion: "Tu poses la pierre. Elle glisse en place sans un bruit. Partout dans la ville, quelque chose s'arrête. Le chantier. Il n'y a plus rien à refaire.",
