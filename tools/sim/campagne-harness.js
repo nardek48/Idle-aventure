@@ -590,6 +590,7 @@ function obtainIn(res, qty, depth) {
   }
   // 0 bis. v3.433.0 : la Pierre errante (chantier du jour, Sanctuaire, Petite Aventure des Ruines)
   if (res === "pierre_errante") return obtainPierre(qty);
+  if (res === "cire_sepulcre") return obtainCire(qty); // v3.456.0 (lot C-6)
   // 1. une zone de production la donne ?
   var bid = Object.keys(g.PRODUCTION_BUILDINGS).filter(function (id) { return g.PRODUCTION_BUILDINGS[id].resourceKey === res; })[0];
   if (bid) {
@@ -607,6 +608,8 @@ function obtainIn(res, qty, depth) {
   for (var guard = 0; guard < 40 && have() < qty; guard++) {
     var manque = qty - have();
     var fois = Math.max(1, Math.ceil(manque / recipe.outputs[0].quantity));
+    // v3.456.0 : par lots qui tiennent dans l'Entrepôt (1 500 fers pour 100 aciers ne tiennent pas d'un coup)
+    recipe.inputs.forEach(function (inp) { var cap = Number(g.WarehouseManager.getCap(inp.resourceId) || 0); if (cap > 0) fois = Math.max(1, Math.min(fois, Math.floor(cap / inp.quantity))); });
     var okIng = recipe.inputs.every(function (inp) { return obtain(inp.resourceId, inp.quantity * fois, depth + 1); });
     if (!okIng) { note(res + " : ingrédients introuvables (" + wid + ")"); return false; }
     if (!g.WorkshopsSystem.enqueueCraft(wid, recipe.id, fois)) {
@@ -636,6 +639,27 @@ function obtainPierre(qty) {
   STATS.pierreH = (STATS.pierreH || 0) + (CLOCK.offset - t0) / 3600e3;
   if (have() < qty) note("pierre_errante : " + have() + " / " + qty);
   return have() >= qty;
+}
+
+/* v3.456.0 (Crypte, lot C-6) : la Cire de sépulcre — l'Ossuaire s'il est ouvert, sinon la Petite Aventure de la Crypte. */
+function obtainCire(qty) {
+  var g = G, have = function () { return g.WarehouseManager.getAmount("cire_sepulcre"); };
+  var t0 = CLOCK.offset;
+  for (var k = 0; k < 60 && have() < qty; k++) {
+    if (g.DungeonManager.isUnlocked(4)) { if (COMBATS) healUp(); if (playDungeonOnce(4, false) === null) wait(3600e3, "cire de sépulcre"); continue; }
+    if (!playExpedition("petite_aventure_crypte", null)) wait(3600e3, "cire de sépulcre");
+  }
+  STATS.cireH = (STATS.cireH || 0) + (CLOCK.offset - t0) / 3600e3;
+  if (have() < qty) note("cire_sepulcre : " + have() + " / " + qty);
+  return have() >= qty;
+}
+
+/* v3.456.0 : mettre un compagnon dans le groupe (en retirant le premier autre si le groupe est plein). */
+function withCompanion(g, id) {
+  var CM = g.CompanionManager;
+  if (CM.partyIds().indexOf(id) >= 0) return;
+  if (CM.partyIds().length >= g.COMPANION_MAX_PRESENT) CM.setPresent(CM.partyIds()[0], false);
+  CM.setPresent(id, true);
 }
 
 /* Lancer une expédition (scene-engine) et la jouer jusqu'au bout. */
@@ -816,7 +840,7 @@ function choiceStep(g, step) {
   if (c.mapId && !g.LivingMapManager.isLiberated(c.mapId, c.sectorId)) freeSector(c.mapId, c.sectorId);
   var val = c.options[0].value;
   if (c.options.some(function (o) { return o.value === SERMENT; })) val = SERMENT;
-  if (!g.storyMakeChoice(step.chapterId || (c.mapId === "desert" || /desert/.test(step.id) ? "desert" : (/ruines/.test(step.id) ? "ruins" : "forest")), val)) note("choix refusé (" + c.key + ")");
+  if (!g.storyMakeChoice(step.chapterId || (c.mapId === "desert" || /desert/.test(step.id) ? "desert" : (/ruines/.test(step.id) ? "ruins" : (/crypte/.test(step.id) ? "crypt" : "forest"))), val)) note("choix refusé (" + c.key + ")");
 }
 
 /* Le secteur qui porte la descente au Temple. */
@@ -890,7 +914,7 @@ function run() {
       CURRENT_STEP = step.id;
       // v3.423.0 : TRACE_FORCE=1 relève la force du héros à chaque étape (référence des ajustements de difficulté)
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
-      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
+      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
       var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
       var snap0 = snapTemps();
       G.StoryQuestManager.acceptStep(cid);
@@ -1100,7 +1124,7 @@ function gearRarity(rarity, n, needWeapon) {
     var orAvant = g.game.gold;
     /* Un joueur fait d'abord ses sorties du jour dans les donjons qui donnent cette rareté (un run
        complet en garantit une pièce) ; l'échoppe et le farm ne viennent qu'ensuite. */
-    var dj = [3, 2].filter(function (id) { var t = g.DungeonManager.getById(id); return t && g.DungeonManager.isUnlocked(id) && g.DungeonManager.hasRunLeft(id) && ORD.indexOf(t.maxRarity) >= min; })[0];
+    var dj = [4, 3, 2].filter(function (id) { var t = g.DungeonManager.getById(id); return t && g.DungeonManager.isUnlocked(id) && g.DungeonManager.hasRunLeft(id) && ORD.indexOf(t.maxRarity) >= min; })[0];
     if (dj) {
       var vivres = g.ProvisionsManager && g.ProvisionsManager.getRequirement("dungeon", g.DungeonManager.getById(dj));
       if (vivres) obtain(vivres.resourceId, vivres.amount);   // vivres de sortie, comme le dit le refus
@@ -1220,6 +1244,49 @@ var SOLVERS = {
     var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
     if (!g.storyMakeChoice("crypt", val)) note("choix refusé (portent)");
   },
+  // v3.456.0 (Crypte, actes II à IV, lot C-6)
+  crypte_06: function (g) { playExpedition("petite_aventure_crypte", function () { return g.storyDesertFlag("cryptPaCompleted"); }); },
+  crypte_07: function (g) { for (var i = 0; i < 6 && g.storyCryptSectorsFreed() < 2; i++) freeSector("crypt"); },
+  crypte_08: function (g) { playAdventure("aq_crypte_appel"); },
+  crypte_09: function (g) {
+    var P = g.STORY_PALIER_CRYPTE_RARE;
+    function part(nom, fn) {
+      var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
+      fn();
+      (STATS.c09 = STATS.c09 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
+    }
+    part(P.pieces + " Rares", function () { gearRarity("rare", P.pieces, true); });
+    part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
+  },
+  crypte_10: function (g) { playAdventure("aq_crypte_chaines"); },
+  crypte_11: function (g) { freeSector("crypt", "cotes"); },
+  crypte_12: function (g) { playDungeon(4, false, function () { return !!(g.game.explorationProgression || {}).ossuaireCamp; }); },
+  crypte_13: function (g) {
+    var P = g.STORY_PALIER_CRYPTE_EPIQUE;
+    function part(nom, fn) {
+      var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
+      fn();
+      (STATS.c13 = STATS.c13 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
+    }
+    part(P.pieces + " Épiques", function () { gearRarity("epic", P.pieces, true); });
+    part("Forge " + P.forge, function () { upgradeBuilding("forge", P.forge); });
+    part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
+  },
+  crypte_14: function (g, step) {
+    withCompanion(g, "ysolt");
+    playAdventure("aq_crypte_pleureuse");
+    var val = ARGS.indexOf("--ysolt-donner") >= 0 ? "donner" : "garder";
+    if (!g.storyMakeChoice("crypt", val)) note("choix refusé (ysolt)");
+  },
+  crypte_15: function (g) { if (!(g.game.dungeonTierCleared || {})[4]) playDungeon(4, false); },
+  crypte_16: function (g) { g.STORY_CHAIN_SECTORS.forEach(function (id) { if (!g.LivingMapManager.isLiberated("crypt", id)) freeSector("crypt", id); }); },
+  crypte_17: function (g) { playExpedition("le_long_de_la_chaine", function () { return g.storyDesertFlag("longDeLaChaineDone"); }); },
+  crypte_18: function (g) { playAdventure("aq_crypte_maillons"); },
+  crypte_19: function (g) { playAdventure("aq_crypte_retient"); },
+  crypte_20: function (g) {
+    var val = ARGS.indexOf("--laisser-battre") >= 0 ? "laisser" : "reveiller";
+    if (!g.storyMakeChoice("crypt", val)) note("choix refusé (bat)");
+  },
   // v3.429.0 (Ruines, acte II)
   ruines_06: function (g) { playExpedition("petite_aventure_ruines", function () { return g.storyDesertFlag("ruinsPaCompleted"); }); },
   ruines_07: function (g) { for (var i = 0; i < 5 && g.storyRuinsSectorsFreed() < 2; i++) freeSector("ruins"); },
@@ -1320,6 +1387,9 @@ if (COMBATS) {
   Object.keys(STATS.goldFarm).forEach(function (k) { var f = STATS.goldFarm[k]; console.log("Farm " + k + " : " + f.lots + " lots, " + Math.round(f.or / Math.max(1, f.lots)) + " or par lot, " + Math.round(f.or / Math.max(0.01, f.h)) + " or par heure (soin compris), " + f.morts + " morts"); });
   if (STATS.r13 && STATS.r13.length) console.log("ruines_13 : " + STATS.r13.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · ") + " · Pierres errantes cherchées : " + (STATS.pierreH || 0).toFixed(0) + " h · campements : " + (STATS.camps || 0));
   if (STATS.obtainH) console.log("Temps d'obtention (h) : " + Object.keys(STATS.obtainH).filter(function (k) { return STATS.obtainH[k] >= 1; }).map(function (k) { return k + " " + STATS.obtainH[k].toFixed(0); }).join(" · "));
+  ["c09", "c13"].forEach(function (k) { // v3.456.0 : paliers Rare et Épique de la Crypte
+    if (STATS[k] && STATS[k].length) console.log("crypte_" + k.slice(1) + " : " + STATS[k].map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · ") + (k === "c13" ? " · Cire de sépulcre cherchée : " + (STATS.cireH || 0).toFixed(0) + " h" : ""));
+  });
   if (STATS.r09 && STATS.r09.length) console.log("ruines_09 : " + STATS.r09.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · "));
   if (STATS.d13.length) console.log("desert_13 : " + STATS.d13.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, Inhabituels portés au départ " + d.verts0 + ", or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · "));
   console.log("Quêtes d'élite : " + (STATS.elites.map(function (e) { return e.quest + (e.ok ? " ✔" : " ✘") + " (" + e.step + ", " + e.essais + " essai" + (e.essais > 1 ? "s" : "") + ")"; }).join(" · ") || "aucune"));
