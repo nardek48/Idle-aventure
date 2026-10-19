@@ -380,7 +380,7 @@ var ELITE_UNIQUE_LOOT = {
     rarity: "epic",
     value: 110,
     worldIndex: 2,
-    affixes: [{ stat: "tapMult", value: 0.20, tier: "P" }, { stat: "xpMult", value: 0.05, tier: "S" }],
+    affixes: [{ stat: "tapMult", value: 0.25, tier: "P" }, { stat: "xpMult", value: 0.10, tier: "S" }], // v3.456.4 (règle Seb) : affixes au plancher Épique
     byClass: {
       knight: { name: "Lame du Cœur", icon: "sword" },
       archer: { name: "Arc du Cœur", icon: "bow" },
@@ -397,7 +397,7 @@ var ELITE_UNIQUE_LOOT = {
     rarity: "epic",
     value: 9,
     worldIndex: 3,
-    affixes: [{ stat: "maxHpPct", value: 0.06, tier: "P" }],
+    affixes: [{ stat: "maxHpPct", value: 0.10, tier: "P" }], // v3.456.4 (règle Seb) : plancher Épique
     item: { name: "Le carquois d'Ysolt", icon: "amulet" }
   },
   /* v3.456.3 (Crypte, lot C-6, décision Seb du 19/10) — LA SECONDE COURONNE : butin de la quête d'élite
@@ -410,7 +410,7 @@ var ELITE_UNIQUE_LOOT = {
     rarity: "epic",
     value: 0.58,
     worldIndex: 3,
-    affixes: [{ stat: "maxHpPct", value: 0.06, tier: "P" }],
+    affixes: [{ stat: "maxHpPct", value: 0.10, tier: "P" }], // v3.456.4 (règle Seb) : plancher Épique
     item: { name: "La seconde couronne", icon: "casque" }
   },
   /* v3.456.0 (Crypte, crypte_20) — LE MAILLON : un maillon de la chaîne brisée, que Wenna a limé en bague.
@@ -422,7 +422,7 @@ var ELITE_UNIQUE_LOOT = {
     rarity: "epic",
     value: 6,
     worldIndex: 3,
-    affixes: [{ stat: "critMult", value: 0.15, tier: "P" }, { stat: "goldMult", value: 0.05, tier: "S" }],
+    affixes: [{ stat: "critMult", value: 0.25, tier: "P" }, { stat: "goldMult", value: 0.10, tier: "S" }], // v3.456.4 (règle Seb) : plancher Épique
     item: { name: "Le maillon", icon: "ring" }
   },
 
