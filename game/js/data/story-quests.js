@@ -3111,7 +3111,7 @@ STORY_QUESTS.crypt = {
               addLootToInventory(loot);
               if (typeof addLog === "function") addLog(_t("Au bord de l'alcôve, un carquois vide. ({x})", { x: _td(loot.name) }), "event");
             }
-            if (window.CompanionManager) CompanionManager.refreshParty();
+            if (window.CompanionManager) { CompanionManager.refreshParty(); CompanionManager.fillParty(); } // v3.456.2 : la place libre est reprise
           } else if (typeof addLog === "function") addLog(_t("Ysolt reste : Pas encore sert deux fois par combat. Elle s'use un peu."), "event");
         }
       },

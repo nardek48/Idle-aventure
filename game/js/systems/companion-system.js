@@ -92,6 +92,21 @@ var CompanionManager = {
     var def = getCompanionDef(companionId), d = def && def.departsOnChoice;
     return !!(d && window.StoryQuestManager && StoryQuestManager.getChoice(d.key) === d.value);
   },
+  /* v3.456.2 : une place libre dans le groupe (Ysolt recouchée) est reprise par le premier compagnon disponible. */
+  fillParty: function () {
+    var self = this, pris = [];
+    this.unlockedIds().forEach(function (id) {
+      if (self.partyIds().length >= COMPANION_MAX_PRESENT || self.partyIds().indexOf(id) !== -1) return;
+      if (window.PatrolManager && PatrolManager.isOnPatrol(id)) return;
+      self.state(id).present = true;
+      pris.push(id);
+    });
+    if (!pris.length) return [];
+    this.refreshParty();
+    pris.forEach(function (id) { var d = getCompanionDef(id); if (typeof addLog === "function") addLog(_t("{x} prend la place libre dans le groupe.", { x: _td(d ? d.name : id) }), "event"); });
+    return pris;
+  },
+
   /* v3.455.0 : modificateurs d'un choix pesant sur un compagnon (Ysolt, branche Donner), ou null. */
   choiceModsOf: function (companionId) {
     var def = getCompanionDef(companionId), m = def && def.choiceMods;

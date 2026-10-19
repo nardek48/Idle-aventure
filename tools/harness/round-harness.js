@@ -16029,5 +16029,27 @@ console.log("\n[244] v3.456.0 — Crypte, lot C-5 : acte IV (les chaînes, le N�
   }
 })();
 
+console.log("\n[245] v3.456.2 — Crypte, lot C-6 : groupe repris, crans du Terrain, la descente");
+(function () {
+  var SQ = g.StoryQuestManager, CM = g.CompanionManager, savedChoice = SQ.getChoice;
+  try {
+    var caps = g.TRAINING_CAP_BY_ACT.filter(function (a) { return a.worldIndex === 3; }).map(function (a) { return a.stepId + ":" + a.terrain; }).join();
+    ok(caps === "crypte_01:11,crypte_06:12,crypte_11:13" && g.WORLD_CAPS[3].village.training === 13, "Terrain de la Crypte : 11, puis 12 à l'acte II, 13 à l'acte III");
+    var desc = g.SCENE_TEMPLATES.traversee_crypte.parcours.steps.filter(function (st) { return st.type === "combat"; })[0];
+    ok(desc.foeMult === 2.4, "la descente : combat à ×2,4");
+    game = freshCombat("knight");
+    ["wenna", "maddoc", "edda", "ysolt"].forEach(function (id) { CM.unlock(id); CM.state(id).present = false; });
+    CM.state("ysolt").present = true; CM.state("wenna").present = true;
+    SQ.getChoice = function (k) { return k === "ysolt" ? "garder" : savedChoice.call(SQ, k); };
+    CM.refreshParty();
+    ok(CM.partyIds().join() === "wenna", "Ysolt recouchée : il ne reste qu'un compagnon");
+    var pris = CM.fillParty();
+    ok(pris.length === 1 && CM.partyIds().length === 2 && CM.partyIds().indexOf("ysolt") < 0, "la place libre est reprise (" + CM.partyIds().join() + ")");
+    ok(CM.fillParty().length === 0, "groupe plein : rien de plus");
+  } catch (err) {
+    ok(false, "[245] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally { SQ.getChoice = savedChoice; }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

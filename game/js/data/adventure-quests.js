@@ -707,9 +707,10 @@ var ADVENTURE_QUESTS = {
     encounterHpMult: 2.2,
     enemyPowerMult: 5.4,
     bossId: "necrosupreme",
-    // banc (12 runs) : à 1,8 / 0,9, 58 / 100 / 100 % ; retenu 2,1 / 0,8 -> 75 / 92 / 100 % (Chev. / Rôd. / Mage), 38-50 % des PV
+    // banc (12 runs) : à 1,8 / 0,9, 58 / 100 / 100 % ; à 2,1 / 0,8 -> 75 / 92 / 100 % (Chev. / Rôd. / Mage), 38-50 % des PV.
+    // v3.456.2 (lot C-6) : campagne avec le Terrain 13, 0 % de morts à 0,8 ; banc à 0,9 -> 58 / 67 / 83 %. Retenu 0,85.
     bossHpMult: 2.1,
-    bossPowerMult: 0.8,
+    bossPowerMult: 0.85,
     bossChains: { every: 3 },
     bossPhases: [
       { atPct: 1, sleepAdds: ["spectre", "wraith"], addsHpMult: 0.15, addsPowerMult: 0.45, label: "à ses pieds, deux morts enchaînés", line: "À ses pieds, deux morts, enchaînés. Ils dorment." },

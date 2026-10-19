@@ -270,7 +270,8 @@ var SCENE_TEMPLATES = {
         { type: "obstacle", gabaritId: "escalier_sans_fin", text: "Un escalier, sous la dernière rue des Ruines. Les marches sont propres. Personne ne les a balayées." },
         { type: "source", text: "Le froid monte d'en bas. Les lampes tiennent. Sarkel compte les marches à voix basse, puis s'arrête de compter." },
         // banc (campagne --combats --avise, v3.452.0) : à ×2,4, la descente finie avec 40 à 48 % des PV ; ×2,7 vise 25 à 35 %
-        { type: "combat", foe: "spectre", pack: 2, foeMult: 2.7, text: "Trois formes en travers du passage. Deux se tournent vers la lumière. La troisième ne bouge pas.",
+        // v3.456.2 (lot C-6) : à ×2,7, mur dans 2 à 3 parties sur 6 au robot ; retour à ×2,4
+        { type: "combat", foe: "spectre", pack: 2, foeMult: 2.4, text: "Trois formes en travers du passage. Deux se tournent vers la lumière. La troisième ne bouge pas.",
           after: "Celui qui dormait dort encore. Wenna passe à côté sans respirer." },
         { type: "obstacle", gabaritId: "dalle_qui_glisse", text: "En bas, une salle longue. Des alcôves dans les murs, du sol au plafond. Elles ne sont pas vides." }
       ]

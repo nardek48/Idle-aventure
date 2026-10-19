@@ -1268,6 +1268,7 @@ var SOLVERS = {
       fn();
       (STATS.c13 = STATS.c13 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
     }
+    if (process.env.TRACE_EPIC) console.log("      [épiques] portées " + g.EQUIPMENT_SLOTS.map(function (sl) { var it = g.game.equipped[sl]; return sl + ":" + (it ? it.rarity : "-"); }).join(" ") + " · sac " + (g.game.inventory || []).filter(function (it) { return it.rarity === "epic"; }).map(function (it) { return it.slot + "/" + it.name; }).join(", ") + " · sac " + (g.game.inventory || []).length + "/" + g.getInventoryCap() + " · verrou « " + (g.heroLockReason() || "") + " » · sceneRun " + !!g.game.sceneRun + " · sortie " + g.SortieManager.isActive());
     part(P.pieces + " Épiques", function () { gearRarity("epic", P.pieces, true); });
     part("Forge " + P.forge, function () { upgradeBuilding("forge", P.forge); });
     part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });

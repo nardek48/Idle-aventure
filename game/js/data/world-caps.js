@@ -46,7 +46,7 @@ var WORLD_CAPS = [
      Provisoire, égal aux Ruines ; seule la 3e rangée de zones s'ouvre. Les crans des actes II-III au banc.
      v3.455.0 (acte III) : Forge 5, à la Cire consacrée (reforges 9 et 10). */
   {
-    village: { workshop: 8, training: 11, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 6, forge: 5, enchanter: 2 },
+    village: { workshop: 8, training: 13, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 6, forge: 5, enchanter: 2 }, // v3.456.2 : Terrain 13
     zoneRows: 3,
     zoneLevel: 5,
     workshopLevel: 3,
@@ -70,7 +70,9 @@ var TRAINING_CAP_BY_ACT = [
   { worldIndex: 2, stepId: "ruines_01", act: "I", terrain: 9 },       // v3.428.0 : Ruines, acte I — inchangé (palier en acte II)
   { worldIndex: 2, stepId: "ruines_06", act: "II", terrain: 10 },     // v3.429.0 : 120
   { worldIndex: 2, stepId: "ruines_11", act: "III", terrain: 11 },    // v3.431.0 : 130
-  { worldIndex: 3, stepId: "crypte_01", act: "I", terrain: 11 }       // v3.450.0 : Crypte, acte I — inchangé (paliers au banc)
+  { worldIndex: 3, stepId: "crypte_01", act: "I", terrain: 11 },      // v3.450.0 : Crypte, acte I — inchangé
+  { worldIndex: 3, stepId: "crypte_06", act: "II", terrain: 12 },     // v3.456.2 (lot C-6) : 140, le profil des bancs de l'acte II
+  { worldIndex: 3, stepId: "crypte_11", act: "III", terrain: 13 }     // v3.456.2 : 150, celui des actes III et IV
 ];
 
 /* v3.327.0 (conception Talents v1.1, T2 option B) — PLAFOND DE POINTS DE TALENT PAR ACTE.
