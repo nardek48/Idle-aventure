@@ -30,11 +30,13 @@ var DATA_TEXT_FIELDS = {
   STORY_SEUIL_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.428.0 (Ruines) : les deux branches du choix « seuil »
   STORY_PORTENT_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.452.0 (Crypte) : les deux branches du choix « portent »
   STORY_YSOLT_TEXTS: ["*.completion", "*.edda15", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.455.0 (Crypte) : les deux branches du choix « ysolt »
+  STORY_CHAINE_YS: ["*.donner", "*.garder"], // v3.456.0 (Crypte, acte IV) : répliques selon le choix « ysolt »
+  STORY_BAT_TEXTS: ["*.completion", "*.aeswyn", "*.text", "*.*.*.text", "*.*.*.who", "*.aeswynDialogue.*.text", "*.aeswynDialogue.*.who", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.456.0 : le choix « bat »
   LABYRINTH_TEXTS: [""], // v3.434.0 (Ruines, RU12) : le Labyrinthe aux leviers
   LABYRINTH_CONFIG: ["bossName"],
   STORY_SALLE_TEXTS: ["*.completion", "*.chaise", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.431.0 (Ruines) : les deux branches du choix « salle »
   STORY_PLAN_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who", "suite.*.text", "suite.*.who"], // v3.433.0 (Ruines) : le plan et la fin du chapitre
-  ADVENTURE_QUESTS: ["*.name", "*.story", "*.bossLog", "*.bossPhases.*.label", "*.bossPhases.*.line", "*.steps.*.desc"],
+  ADVENTURE_QUESTS: ["*.name", "*.story", "*.bossLog", "*.bossPhases.*.label", "*.bossPhases.*.line", "*.steps.*.desc", "*.encounterLines.*"],
   HUNT_QUESTS: ["*.name", "*.story"],
   STORY_QUESTS: [
     "*.title", "*.subtitle", "*.endText",

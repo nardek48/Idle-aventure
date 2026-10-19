@@ -117,7 +117,13 @@ var STORY_REWARDS = {
   crypte_12: { gold: 7600, resources: { cire_sepulcre: 4 }, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true },
   crypte_13: { gold: 7800, resources: { cire_consacree: 2 } },
   crypte_14: { gold: 8000 },  // + selon le choix : le carquois d'Ysolt
-  crypte_15: { gold: 9000, resources: { cire_consacree: 4 } }
+  crypte_15: { gold: 9000, resources: { cire_consacree: 4 } },
+  // v3.456.0 (Crypte, acte IV, provisoire : au banc)
+  crypte_16: { gold: 9400, resources: { cire_consacree: 2 } },
+  crypte_17: { gold: 9600 },
+  crypte_18: { gold: 9800, resources: { cire_consacree: 2 } },
+  crypte_19: { gold: 10500, resources: { cire_consacree: 3 } },
+  crypte_20: { gold: 12000, uniqueLoot: "maillon_wenna" } // Le maillon, Épique, de Wenna (dans les deux branches)
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -198,7 +204,8 @@ var STORY_CHOICE_AXES = {
   salle: { fermer: ["garder"], rouvrir: ["donner"] },   // v3.431.0 (Ruines, acte III étape 14) : la salle que la cité ne finit pas
   plan: { finir: ["donner", "soi"], tomber: ["garder", "aeswyn"] }, // v3.433.0 (Ruines, acte IV étape 20) : le plan, option A du 09/10
   portent: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] },           // v3.452.0 (Crypte, acte I étape 5) : ce que portent les morts
-  ysolt: { garder: ["garder"], donner: ["donner"] }                 // v3.455.0 (Crypte, acte III étape 14) : ce qu'elle garde
+  ysolt: { garder: ["garder"], donner: ["donner"] },                // v3.455.0 (Crypte, acte III étape 14) : ce qu'elle garde
+  bat: { reveiller: ["donner", "soi"], laisser: ["garder", "aeswyn"] } // v3.456.0 (Crypte, acte IV étape 20) : ce qui bat (CR4)
 };
 
 /* v3.293.0 (règle Seb 18/09/2026) : storyResetLisiere, storyLisiereCrossingProgress et
@@ -2546,7 +2553,7 @@ STORY_QUESTS.crypt = {
   title: "Ceux qui sont montés", // provisoire
   subtitle: "Chapitre 4 — Crypte",
   icon: "images/Icons/codex/world_crypt.png",
-  endText: "La suite de l'histoire arrive bientôt…", // v3.455.0 : actes I à III ; l'amorce de la Montagne viendra avec l'acte IV
+  endText: "Chapitre terminé — plus haut, la roche est chaude.", // v3.456.0 : l'acte IV clôt le chapitre, amorce de la Montagne
   steps: [
     /* ---------- Acte I — La descente ---------- */
     /* Étape 1 (doc §3) : le passage entre les mondes, parcours v2 de quatre paliers ; le monde est
@@ -3160,6 +3167,170 @@ STORY_QUESTS.crypt = {
       },
       check: function (game) { return !!((game.dungeonTierCleared || {})[4]); },
       progress: function (game) { return "Liche vaincue " + ((game.dungeonTierCleared || {})[4] ? "1/1" : "0/1"); }
+    },
+    /* ---------- Acte IV — Ceux qui sont retenus (document Crypte — Acte IV v0.1, validé par Seb le 19/10) ---------- */
+    /* Étape 16 (§3) : la chaîne remonte des côtes à la porte murée ; trois couloirs tenus (déjà tenu compte :
+       la carte de la Crypte ne reprend rien). Tracé sur la carte (living-maps.js, chainTrace). */
+    {
+      id: "crypte_16",
+      title: "La chaîne",
+      act: "Acte IV — Ceux qui sont retenus",
+      narrative: {
+        objective: "La chaîne de la Liche ne descend pas. Elle remonte. Edda la suit du doigt sur sa feuille, couloir après couloir, et son doigt s'arrête tout près de la Veillée.",
+        completion: "Devant la porte murée, la chaîne entre sous la pierre par un trou de la taille d'un poing. Elle bouge un peu. Tirée d'en bas, relâchée, tirée.",
+        dialogue: [
+          { who: "Edda", text: "La porte murée. On est passés devant cent fois." },
+          { who: "Maddoc", text: "Celle qui est fermée de l'intérieur ?" },
+          { who: "Sarkel", text: "J'ai dormi à trois couloirs de là pendant des années." },
+          { who: "Sarkel", text: "Je croyais que c'était ma tête qui battait." }
+        ],
+        get completionDialogue() { return [{ who: "Wenna", text: "Elle respire." }, storyYs("s16")]; }
+      },
+      objectiveLabel: "Libérer Le cercle tracé, Les maisons des morts et La porte murée (carte de la Crypte)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_16,
+      linkTo: { section: "map", cardId: "livingmap_crypt" },
+      check: function () { return storyChainSectors() >= STORY_CHAIN_SECTORS.length; },
+      progress: function () { return "Couloirs de la chaîne " + storyChainSectors() + "/" + STORY_CHAIN_SECTORS.length; }
+    },
+    /* Étape 17 (§4) : le parcours dédié « Le long de la chaîne » (scene-templates.js), une Ration moyenne. */
+    {
+      id: "crypte_17",
+      title: "Derrière la porte murée",
+      act: "Acte IV — Ceux qui sont retenus",
+      narrative: {
+        objective: "La porte murée n'a pas de serrure. Maddoc pousse. Elle ne bouge pas. Il tire sur la chaîne, une fois, et la porte s'ouvre vers vous, lentement, comme si quelqu'un, de l'autre côté, la lâchait.",
+        completion: "La main est maigre, gantée de fer. Elle ne serre pas fort. Elle n'en a pas besoin. Au bout du bras, quelqu'un est assis, le dos à vous, et compte à voix basse.",
+        get dialogue() { return [{ who: "Maddoc", text: "Il nous a ouvert." }, storyYs("s17a")]; },
+        get completionDialogue() { return [{ who: "Wenna", text: "Il compte quoi ?" }, storyYs("s17b")]; }
+      },
+      objectiveLabel: "Terminer « Le long de la chaîne » (coût : 1 Ration moyenne)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_17,
+      linkTo: { section: "expedition", cardId: "scene_le_long_de_la_chaine" },
+      check: function () { return storyDesertFlag("longDeLaChaineDone"); },
+      progress: function () { return "Le long de la chaîne " + (storyDesertFlag("longDeLaChaineDone") ? "1/1" : "0/1"); }
+    },
+    /* Étape 18 (§5) : « Les maillons », 4 rencontres ; les chaînes apparaissent (SleepSystem.onChain). L'étape de Wenna. */
+    {
+      id: "crypte_18",
+      title: "Les maillons",
+      act: "Acte IV — Ceux qui sont retenus",
+      narrative: {
+        objective: "Dans la salle, les petites chaînes passent au-dessus de vos têtes comme du linge tendu. Sous chaque alcôve, un nom gravé. Certains se lisent encore.",
+        completion: "Le dernier Nécromancien tombe, et sa chaîne avec. Dans l'alcôve au-dessus, un mort ouvre les yeux, regarde la chaîne par terre, et les referme.",
+        get dialogue() {
+          return [
+            { who: "Wenna", text: "Je les note. Tous ceux que j'arrive à lire." },
+            { who: "Maddoc", text: "Ça va prendre la nuit." },
+            { who: "Wenna", text: "J'ai le temps. Eux, ils l'ont eu." },
+            storyYs("s18a")
+          ];
+        },
+        get completionDialogue() {
+          return [
+            { who: "Wenna", text: "Il aurait pu partir." },
+            storyYs("s18b"),
+            { who: "Maddoc", text: "Et celui qui les tient ?" },
+            { who: "Wenna", text: "Lui, je ne le note pas." }
+          ];
+        }
+      },
+      objectiveLabel: "Terminer « Les maillons » : 4 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_18,
+      linkTo: { section: "adventure", cardId: "adv_aq_crypte_maillons" },
+      tutorial: {
+        tab: "combat",
+        icon: "images/Icons/combat_status/chained.png",
+        title: "Les chaînes",
+        points: [
+          { icon: "images/Icons/combat_status/chained.png", text: "Un ennemi qui lève une chaîne enchaînera un compagnon au tour suivant." },
+          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Enchaîné, un compagnon ne joue plus. La chaîne cède au bout de 2 rounds, ou plus tôt si tu frappes fort celui qui la tient." },
+          { icon: "images/Icons/memory/grimoire_etendu.png", text: "Toi, il ne t'enchaîne pas. Dans le Grimoire, la condition « Un compagnon est enchaîné » t'aide à frapper au bon moment." }
+        ]
+      },
+      check: function (game) { return storyAdvDone(game, "aq_crypte_maillons"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_crypte_maillons", "rencontres_maillons", 4) + "/4"; }
+    },
+    /* Étape 19 (§6) : le Nécromancien suprême, boss d'Histoire unique (aq_crypte_retient, BOSS_DB.necrosupreme). */
+    {
+      id: "crypte_19",
+      title: "Celui qui retient",
+      act: "Acte IV — Ceux qui sont retenus",
+      narrative: {
+        objective: "Il se lève. Il est plus petit que sa chaîne. Une robe noire, un visage qui n'a pas vu le jour depuis longtemps et qui ne le cherche pas. Il vous regarde un par un, et s'arrête sur toi plus longtemps.",
+        completion: "Il tombe, et toutes les chaînes tombent avec lui, en même temps, d'un seul bruit. Dans les alcôves, au-dessus, autour, personne ne bouge. Ils sont libres, et ils restent couchés, comme des gens à qui on a ouvert une porte et qui ne savent plus sur quoi elle donne.",
+        get dialogue() {
+          return [
+            { who: "Le Nécromancien suprême", text: "Toi, tu reviens d'en haut." },
+            { who: "Le Nécromancien suprême", text: "Je ne tiens pas ceux qui reviennent." },
+            { who: "Maddoc", text: "Et eux ?" },
+            { who: "Le Nécromancien suprême", text: "Eux, s'ils partaient, où iraient-ils ? Je les garde. Quelqu'un doit les garder." },
+            storyYs("s19a")
+          ];
+        },
+        get completionDialogue() { return [{ who: "Wenna", text: "Ils ne se lèvent pas." }, storyYs("s19b")]; }
+      },
+      objectiveLabel: "Terminer « Celui qui retient » : 2 rencontres, puis le Nécromancien suprême",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_19,
+      linkTo: { section: "adventure", cardId: "adv_aq_crypte_retient" },
+      tutorial: {
+        tab: "combat",
+        icon: "images/Icons/combat_status/chained.png",
+        title: "Celui qui retient",
+        points: [
+          { icon: "images/Icons/combat_status/chained.png", text: "Tous les 3 rounds, il enchaîne un compagnon. Frappe-le fort pour faire céder la chaîne." },
+          { icon: "images/Icons/combat_status/asleep.png", text: "À 75, 50 et 25 % de ses PV, il tire : les dormeurs se lèvent, et d'autres arrivent. Garde de quoi les tenir." },
+          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Sous les 25 %, sa chaîne prend tes deux compagnons à la fois." }
+        ]
+      },
+      check: function (game) { return storyAdvDone(game, "aq_crypte_retient"); },
+      progress: function (game) {
+        return "Rencontres " + storyAdvProgress(game, "aq_crypte_retient", "rencontres_retient", 2) + "/2 · Nécromancien suprême " + (storyAdvDone(game, "aq_crypte_retient") ? "1/1" : "0/1");
+      }
+    },
+    /* Étape 20 (§7) : le troisième choix pesant de la Crypte, clé « bat » (CR4). Réveiller (Donner + Soi) :
+       ce qu'elle prend, puis la garde des montés ; Laisser battre (Garder + Aeswyn) : la table des noms.
+       Dans les deux branches : Le maillon (uniqueLoot), Sarkel ferme le chapitre. */
+    {
+      id: "crypte_20",
+      title: "Ce qui bat",
+      act: "Acte IV — Ceux qui sont retenus",
+      narrative: {
+        objective: "Au fond de la salle, derrière le Nécromancien tombé, une niche. Dedans, une pierre grosse comme un poing, tiède, qui bat. Lentement. Chaque fois qu'elle bat, les alcôves de la Crypte entière répondent, un peu.",
+        get completion() { return STORY_BAT_TEXTS[storyBatBranch()].completion; },
+        get dialogue() { return STORY_BAT_TEXTS.offre[storyYsoltBranch()]; },
+        get completionDialogue() {
+          var b = STORY_BAT_TEXTS[storyBatBranch()], d = b[storyYsoltBranch()].slice();
+          if (b.aeswyn) d = d.concat([{ who: null, text: b.aeswyn }], b.aeswynDialogue);
+          return d.concat([{ who: null, text: STORY_BAT_TEXTS.suite.text }], STORY_BAT_TEXTS.suite.dialogue);
+        }
+      },
+      objectiveLabel: "Décider de ce qui bat",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_20,
+      choice: {
+        key: "bat", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "Ce qui bat",
+        text: "Au fond de la salle, quelque chose bat. Les morts attendent. Wenna tient son carnet.",
+        options: [
+          { value: "reveiller", label: "Réveiller les montés", desc: "Tu poses la main sur ce qui bat. Il te prendra quelque chose. Ils se lèveront pour toi." },
+          { value: "laisser", label: "Laisser battre", desc: "Tu ne vas pas au fond. Leurs noms remontent avec toi, jusqu'à Aeswyn." }
+        ],
+        apply: function (value) {
+          if (value === "reveiller") {
+            var pris = storyBatTake();
+            if (typeof addLog === "function") addLog(_t("Ce qu'elle prend : −{n} Aether sur la jauge de Mémoire. Dans les combats de boss et d'élite, un monté se lèvera à tes côtés.", { n: pris }), "event");
+          } else if (typeof addLog === "function") {
+            addLog(_t("La table des noms : chez Orwen, chaque jour, de la Cire consacrée. Le carnet de Wenna est dans le Codex."), "event");
+          }
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("bat")); },
+      progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("bat")) ? "1/1" : "0/1"); }
     }
   ]
 };
@@ -3337,6 +3508,112 @@ function storyPalierCrypteEpiqueMissing(game) {
   return out;
 }
 
+/* v3.456.0 (Crypte, acte IV) — répliques des étapes 16 à 19 selon le choix « ysolt » : Ysolt les dit
+   (Donner), ou Edda rapporte ce qu'elle disait (Garder). */
+var STORY_CHAINE_YS = {
+  s16: { donner: "Non. Il compte.", garder: "Ysolt disait qu'il compte. Je n'ai jamais su quoi." },
+  s17a: { donner: "Il veut voir qui tire.", garder: "Ysolt n'a jamais passé cette porte. Elle disait que ce n'était pas la peine, qu'il viendrait la chercher un jour." },
+  s17b: { donner: "Nous.", garder: "Ceux qui ne sont pas remontés." },
+  s18a: { donner: "Le mien est par là. Ne le cherche pas.", garder: "Le sien est par là. Je l'ai dessiné, pour qu'elle n'ait pas à l'écrire." },
+  s18b: { donner: "Partir où ? Il ne sait plus le chemin. Aucun de nous ne le sait.", garder: "Ysolt disait qu'ils ne savent plus le chemin. Qu'il faut qu'on le leur dise." },
+  s19a: { donner: "Personne ne te l'a demandé.", garder: "Ysolt ne t'a rien demandé." },
+  s19b: { donner: "Il faut qu'on les réveille. Ou qu'on les laisse.", garder: "Ysolt m'a dit ce qu'il y a au fond. Je crois que c'est maintenant." }
+};
+function storyYs(key) {
+  var b = storyYsoltBranch();
+  return { who: b === "garder" ? "Edda" : "Ysolt", text: STORY_CHAINE_YS[key][b] };
+}
+
+/* v3.456.0 (crypte_16) — les couloirs que traverse la chaîne, tenus (la carte de la Crypte ne reprend rien). */
+var STORY_CHAIN_SECTORS = ["cercle", "maisons", "porte_muree"];
+function storyChainSectors() {
+  var lm = window.LivingMapManager;
+  return lm ? STORY_CHAIN_SECTORS.filter(function (id) { return lm.isLiberated("crypt", id); }).length : 0;
+}
+
+/* v3.456.0 (crypte_20) — textes du choix « bat » : l'offre (selon « ysolt »), les deux complétions
+   (selon « ysolt »), la scène d'Aeswyn (Laisser battre), la suite commune (le Veilleur, Sarkel). */
+var STORY_BAT_TEXTS = {
+  offre: {
+    donner: [
+      { who: "Ysolt", text: "Voilà. Maintenant tu peux nous réveiller. Vraiment, je veux dire." },
+      { who: "Ysolt", text: "Ça te prendra quelque chose, et on se relèvera. Neuf fois montée, je saurais me battre pour toi. On serait une armée." },
+      { who: "Maddoc", text: "Et si on ne touche à rien ?" },
+      { who: "Ysolt", text: "Alors on reste couchés. Libres, cette fois." }
+    ],
+    garder: [
+      { who: "Edda", text: "Ysolt me l'a dit, avant de se coucher. Si on pose la main dessus, ça prend quelque chose, et ils se relèvent tous." },
+      { who: "Maddoc", text: "Tous ? Elle aussi ?" },
+      { who: "Edda", text: "Elle aussi. Elle le savait. Elle s'est couchée quand même." }
+    ]
+  },
+  reveiller: {
+    completion: "Tu poses la main sur la pierre. Elle est tiède, puis chaude. Quelque chose part de toi, tu ne sais pas quoi, et tu ne le sauras pas. Dans les alcôves, ils ouvrent les yeux. Ils se lèvent sans bruit et se tournent vers toi.",
+    donner: [
+      { who: "Ysolt", text: "Bon. Alors on y va." },
+      { who: null, text: "Elle remet le carquois vide sur son dos. Derrière elle, cent morts font le même geste." }
+    ],
+    garder: [
+      { who: null, text: "Au fond de son alcôve, Ysolt se lève avec les autres. Elle ne te regarde pas. Elle prend sa place dans le rang." },
+      { who: "Wenna", text: "Elle était bien, couchée." },
+      { who: "Edda", text: "Je sais." }
+    ]
+  },
+  laisser: {
+    completion: "Tu regardes la pierre. Tu ne vas pas au fond. Elle bat encore, un peu moins fort, ou c'est toi qui écoutes moins.",
+    donner: [
+      { who: null, text: "Ysolt ne bouge pas pendant un long moment." },
+      { who: "Ysolt", text: "Bon." },
+      { who: "Ysolt", text: "Alors fais-moi une chose. Dis mon nom quelque part où il y a du pain. C'est tout. Je ne voulais pas d'armée. Je voulais savoir si tu en voulais une." }
+    ],
+    garder: [
+      { who: "Wenna", text: "Elle aurait aimé ça, je crois. Qu'on la laisse." }
+    ],
+    aeswyn: "Chez Orwen, Wenna lit son carnet à voix haute. Ça prend la soirée. Orwen coupe le pain et en pose une tranche devant une place vide. Personne ne s'y assoit. Le lendemain, la tranche n'est plus là.",
+    aeswynDialogue: [
+      { who: "Brannoc", text: "C'est le chat." },
+      { who: "Orwen", text: "Il n'y a pas de chat à Aeswyn." }
+    ]
+  },
+  suite: {
+    text: "En haut de l'escalier, à l'entrée de la Crypte, le Veilleur attend. Il ne demande pas ce que tu as vu. Il regarde le carnet de Wenna, longtemps, puis le chemin qui monte.",
+    dialogue: [
+      { who: "Sarkel", text: "Je monte, moi." },
+      { who: "Maddoc", text: "Toi ?" },
+      { who: "Sarkel", text: "Pas pour vous. Pour ce qu'on peut tailler, là-haut. Le vieux y a taillé, autrefois. Je veux voir la coupe." },
+      { who: null, text: "Il a une pioche sur l'épaule. Il ne sait pas la tenir." }
+    ]
+  }
+};
+function storyBatBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("bat") === "laisser") ? "laisser" : "reveiller";
+}
+
+/* v3.456.0 (crypte_20, Réveiller) — CE QU'ELLE PREND : une part de la jauge vers le prochain niveau de
+   Mémoire, une fois. Jamais un niveau déjà atteint. Renvoie l'Aether pris. Au banc. */
+var STORY_BAT_TAKE_PCT = 0.25;
+function storyBatTake() {
+  var M = window.MemoryManager;
+  if (!M || typeof M.getProgress !== "function") return 0;
+  var p = M.getProgress(), n = Math.min(Number(p.into || 0), Math.floor(Number(p.need || 0) * STORY_BAT_TAKE_PCT));
+  if (n <= 0) return 0;
+  game.totalAetherEarned = Math.max(0, Number(game.totalAetherEarned || 0) - n);
+  return n;
+}
+
+/* v3.456.0 (crypte_20, Laisser battre) — LA TABLE DES NOMS : chez Orwen, chaque jour civil, de la Cire
+   consacrée à l'Entrepôt. Jour noté dans explorationProgression (déjà sauvegardé). Au banc. */
+var STORY_TABLE_NOMS_WAX = 1;
+function storyTableDesNoms() {
+  if (!window.StoryQuestManager || StoryQuestManager.getChoice("bat") !== "laisser" || !window.WarehouseManager) return 0;
+  var ep = game.explorationProgression || (game.explorationProgression = {}), today = new Date().toDateString();
+  if (ep.tableNomsDay === today) return 0;
+  ep.tableNomsDay = today;
+  WarehouseManager.addResource("cire_consacree", STORY_TABLE_NOMS_WAX, true);
+  if (typeof addLog === "function") addLog("🍞 " + _t("La table des noms : +{n} Cire consacrée.", { n: STORY_TABLE_NOMS_WAX }), "event");
+  return STORY_TABLE_NOMS_WAX;
+}
+
 /* v3.455.0 (crypte_14) : textes des deux branches du choix « ysolt ». */
 var STORY_YSOLT_TEXTS = {
   garder: {
@@ -3428,6 +3705,16 @@ window.storyPalierCrypteEpique = storyPalierCrypteEpique;
 window.storyPalierCrypteEpiqueMissing = storyPalierCrypteEpiqueMissing;
 window.STORY_YSOLT_TEXTS = STORY_YSOLT_TEXTS;
 window.storyYsoltBranch = storyYsoltBranch;
+window.STORY_CHAINE_YS = STORY_CHAINE_YS;
+window.storyYs = storyYs;
+window.STORY_CHAIN_SECTORS = STORY_CHAIN_SECTORS;
+window.storyChainSectors = storyChainSectors;
+window.STORY_BAT_TEXTS = STORY_BAT_TEXTS;
+window.storyBatBranch = storyBatBranch;
+window.STORY_BAT_TAKE_PCT = STORY_BAT_TAKE_PCT;
+window.storyBatTake = storyBatTake;
+window.STORY_TABLE_NOMS_WAX = STORY_TABLE_NOMS_WAX;
+window.storyTableDesNoms = storyTableDesNoms;
 window.storyMissingCostLines = storyMissingCostLines;
 window.storyPalierRuinesRareMissing = storyPalierRuinesRareMissing;
 window.STORY_SALLE_TEXTS = STORY_SALLE_TEXTS;

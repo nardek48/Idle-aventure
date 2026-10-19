@@ -162,6 +162,12 @@ var COMBAT_STATES_SCREEN = {
     famille: "alerte", nom: "Appel", icon: COMBAT_STATE_ICON + "calling.png", mot: "Il appelle !",
     desc: "Il dit un nom. Au tour suivant, un dormeur se lève, sans or en plus.",
     hint: "Tue-le avant : le réglage « Cible » sur « Le soutien » le vise d'abord."
+  },
+  // v3.456.0 (Crypte, acte IV) : il lève une chaîne. Icône à générer.
+  chaining: {
+    famille: "alerte", nom: "Chaîne", icon: COMBAT_STATE_ICON + "chained.png", mot: "Une chaîne !",
+    desc: "Il lève une chaîne. Au tour suivant, un compagnon est enchaîné : il ne joue plus pendant 2 rounds.",
+    hint: "Frappe fort celui qui la tient : elle cède plus tôt. Toi, il ne t'enchaîne pas."
   }
 };
 window.COMBAT_STATES_SCREEN = COMBAT_STATES_SCREEN;

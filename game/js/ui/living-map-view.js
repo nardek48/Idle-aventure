@@ -385,6 +385,13 @@ function buildLivingMapHTML(mapId) {
   /* v3.420.0 (E-3) : la caravane de la Halle sur sa piste (caravan-view.js) */
   if (typeof buildLivingMapCaravanHTML === "function") h += buildLivingMapCaravanHTML(mapId);
 
+  /* v3.456.0 (Crypte, crypte_16) : le tracé de la chaîne, en pointillé d'un couloir à l'autre */
+  var trace = map.chainTrace;
+  if (trace && (!trace.requiresStoryStep || !window.StoryQuestManager || StoryQuestManager.isStepReached(trace.requiresStoryStep))) {
+    var pts = trace.sectors.map(function (id) { var d = LivingMapManager.getSectorDef(map.id, id); return d ? d.x + "," + d.y : null; }).filter(Boolean);
+    h += '<svg class="lm-chain" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + pts.join(" ") + '"/></svg>';
+  }
+
   /* Secteurs */
   map.sectors.forEach(function (d, i) {
     var s = LM.getState(mapId, d.id);

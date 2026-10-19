@@ -15919,5 +15919,115 @@ console.log("\n[243] v3.455.0 — Crypte, lot C-4 : acte III (Ossuaire, Porte-co
   }
 })();
 
+console.log("\n[244] v3.456.0 — Crypte, lot C-5 : acte IV (les chaînes, le Nécromancien suprême, le choix « bat », fin du chapitre)");
+(function () {
+  var SL = g.SleepSystem, CE = g.CombatEngine, SQ = g.StoryQuestManager, CM = g.CompanionManager, LM = g.LivingMapManager;
+  var wiAvant = g.WorldManager.worldIndex, savedChoice = SQ.getChoice;
+  var choix = function (k, v) { var prev = SQ.getChoice; SQ.getChoice = function (x) { return x === k ? v : prev.call(SQ, x); }; };
+  try {
+    var ch = g.STORY_QUESTS.crypt;
+    ok(ch.steps.map(function (st) { return st.id; }).slice(15).join() === "crypte_16,crypte_17,crypte_18,crypte_19,crypte_20" && ch.steps.length === 20, "acte IV : cinq étapes, 20 au chapitre");
+    ok(ch.endText.indexOf("la roche est chaude") >= 0, "fin du chapitre : l'amorce de la Montagne");
+    ok(g.SCENE_TEMPLATES.le_long_de_la_chaine.unlockOnSuccess.completionFlag === "longDeLaChaineDone" && g.PA2_PARCOURS_IMAGES.le_long_de_la_chaine.tracks.route.length === 9, "parcours « Le long de la chaîne » : cinq paliers, piste déclarée");
+    var qm = g.ADVENTURE_QUESTS.aq_crypte_maillons, qr = g.ADVENTURE_QUESTS.aq_crypte_retient;
+    ok(qm.chains && qm.encounters.length === 4 && qm.encounterLines.length === 3, "Les maillons : 4 rencontres, les Nécromanciens enchaînent, 3 lignes du carnet");
+    ok(qr.bossId === "necrosupreme" && qr.bossChains.every === 3 && qr.bossPhases.length === 4 && qr.bossPhases[3].chainBoth, "Celui qui retient : chaîne tous les 3 rounds, 4 phases, la double chaîne à 25 %");
+    // L'étape 16 : les trois couloirs de la chaîne, tenus
+    LM.ensureDefaults();
+    ["cercle", "maisons", "porte_muree"].forEach(function (id) { LM.setState("crypt", id, "voile"); });
+    var st16 = ch.steps[15];
+    ok(!st16.check(game) && g.storyChainSectors() === 0, "étape 16 : rien tant que les couloirs ne sont pas tenus");
+    ["cercle", "maisons", "porte_muree"].forEach(function (id) { LM.onRunEnd("crypt", id, "success"); });
+    ok(st16.check(game), "les trois couloirs libérés : l'étape passe");
+    // Les chaînes (quête « Les maillons »)
+    game = freshCombat("knight"); giveWeapon();
+    g.WorldManager.worldIndex = 3;
+    game.adventureQuestRun = { active: true, questId: "aq_crypte_maillons" };
+    game.adventureQuestProgress = {};
+    var mk = function (id) { var d = g.ENEMY_DB[id]; return { id: id, name: d.name, isBoss: false, archetype: null, hp: 300, maxHp: 300, stats: d.stats, resists: [], weak: [], goldReward: 20 }; };
+    SL.planNext(0);
+    CE.spawnGroup([mk("necromancer"), mk("spectre")]);
+    var nec = g.CombatActors.aliveEnemies().filter(function (e) { return e.id === "necromancer"; })[0];
+    var al = g.CombatActors.allies();
+    var ys = { companionId: "ysolt", name: "Ysolt", hp: 100, maxHp: 100, charges: 1, cooldown: 0, damage: 10, actorId: "c_ys" };
+    al.push(ys);
+    ok(SL.onEnemyTurn(nec) === false && nec.chainArmed && !nec.callArmed && !ys.chained, "il lève une chaîne (annonce), il n'appelle pas");
+    SL.onEnemyTurn(nec);
+    ok(ys.chained && ys.chained.rounds === 2 && !nec.chainArmed, "au tour suivant, Ysolt est enchaînée, 2 rounds");
+    ok(!game.heroChained && g.CombatActors.heroActor && !g.CombatActors.heroActor().chained, "le héros n'est jamais enchaîné");
+    ok(g.isConditionPossibleForEnemy("allyChained", nec) && SL.anyChained(), "condition du Grimoire « Un compagnon est enchaîné »");
+    SL.aim("allyChained");
+    ok(g.CombatActors.ensure().targetId === nec.actorId, "la règle vise celui qui tient la chaîne");
+    ok(CM.takeTurn(ys) === true && ys.chained && ys.chained.rounds === 1 && ys.charges === 1, "enchaînée, elle ne joue pas");
+    nec.hp -= Math.ceil(nec.maxHp * g.CHAIN_BREAK_PCT);
+    SL.checkChains();
+    ok(!ys.chained, "il perd 15 % de ses PV : la chaîne cède");
+    // Le Nécromancien suprême : chaîne tous les 3 rounds, double sous 25 %, phases
+    game.adventureQuestRun = { active: true, questId: "aq_crypte_retient" };
+    SL.planNext(0);
+    var boss = { id: "necrosupreme", name: "Nécromancien suprême", isBoss: true, archetype: null, hp: 10000, maxHp: 10000, stats: g.BOSS_DB.necrosupreme.stats, resists: [], weak: [], goldReward: 200, phases: JSON.parse(JSON.stringify(qr.bossPhases)) };
+    CE.spawnGroup([boss]);
+    boss = g.CombatActors.enemies()[0];
+    al = g.CombatActors.allies();
+    var c1 = { companionId: "wenna", name: "Wenna", hp: 100, maxHp: 100, actorId: "c_w" }, c2 = { companionId: "maddoc", name: "Maddoc", hp: 100, maxHp: 100, actorId: "c_m" };
+    al.push(c1, c2);
+    SL.onEnemyTurn(boss); SL.onEnemyTurn(boss);
+    ok(boss.chainArmed && !c1.chained && !c2.chained, "boss : au 2e round, il lève la chaîne");
+    SL.onEnemyTurn(boss);
+    ok([c1, c2].filter(function (a) { return a.chained; }).length === 1, "au 3e, un compagnon enchaîné");
+    boss.hp = 9990; CE.checkPhases(boss);
+    var morts = g.CombatActors.enemies().filter(function (e) { return e !== boss; });
+    ok(morts.length === 2 && morts.every(function (e) { return e.asleep; }), "au premier coup : deux morts dorment à ses pieds");
+    morts.forEach(function (e) { e.hp = 0; g.CombatActors.removeEnemy(e); });
+    boss.hp = 7400; CE.checkPhases(boss);
+    var neufs = g.CombatActors.enemies().filter(function (e) { return e !== boss; });
+    ok(neufs.length === 2 && neufs.every(function (e) { return e.asleep; }), "75 % : il tire, deux autres arrivent, endormis");
+    boss.hp = 4900; CE.checkPhases(boss);
+    ok(neufs.every(function (e) { return !e.asleep && !e.wokenByHero; }), "50 % : les dormeurs se lèvent");
+    boss.hp = 2400; CE.checkPhases(boss);
+    c1.chained = null; c2.chained = null; boss.chainIn = 1;
+    SL.onEnemyTurn(boss);
+    ok(boss.chainBoth && c1.chained && c2.chained, "25 % : la chaîne prend les deux compagnons");
+    boss.hp = 0; SL.checkChains();
+    ok(!c1.chained && !c2.chained, "il tombe : toutes les chaînes tombent");
+    game.adventureQuestRun = null;
+    // Le choix « bat »
+    ok(g.STORY_CHOICE_AXES.bat.reveiller.join() === "donner,soi" && g.STORY_CHOICE_AXES.bat.laisser.join() === "garder,aeswyn", "choix « bat » : Donner + Soi, Garder + Aeswyn");
+    choix("bat", "reveiller");
+    SL.planNext(0);
+    CE.spawnGroup([{ id: "necrosupreme", name: "Boss", isBoss: true, archetype: null, hp: 10000, maxHp: 10000, stats: g.BOSS_DB.necrosupreme.stats, resists: [], weak: [], goldReward: 1 }]);
+    var b2 = g.CombatActors.enemies()[0];
+    ok(game._gardeRounds === 3, "Réveiller : un monté se lève dans un combat de boss");
+    SL.onEnemyTurn(b2);
+    ok(b2.hp === 10000 - 300 && game._gardeRounds === 2, "il frappe 3 % des PV max à son tour");
+    var M = g.MemoryManager, t0 = game.totalAetherEarned;
+    game.totalAetherEarned = g.MEMORY_LEVEL_COSTS[0] + Math.floor(g.MEMORY_LEVEL_COSTS[1] / 2);
+    var lv0 = M.getGaugeLevel(), pris = g.storyBatTake();
+    ok(pris === Math.floor(g.MEMORY_LEVEL_COSTS[1] * 0.25) && M.getGaugeLevel() === lv0, "ce qu'elle prend : un quart d'un niveau de Mémoire, aucun niveau perdu (" + pris + ")");
+    game.totalAetherEarned = g.MEMORY_LEVEL_COSTS[0];
+    ok(g.storyBatTake() === 0, "jauge vide au-dessus du niveau : rien n'est pris");
+    game.totalAetherEarned = t0;
+    SQ.getChoice = savedChoice; choix("bat", "laisser");
+    var W = g.WarehouseManager, w0 = W.getAmount("cire_consacree");
+    game.explorationProgression.tableNomsDay = "";
+    ok(g.storyTableDesNoms() === 1 && g.storyTableDesNoms() === 0 && W.getAmount("cire_consacree") === w0 + 1, "Laisser battre : la table des noms, une Cire consacrée par jour");
+    ok(g.CodexManager ? g.CodexManager.isUnlocked(g.CODEX_ENTRIES.filter(function (e) { return e.id === "carnet_wenna"; })[0]) : true, "le carnet de Wenna dans le Codex");
+    SL.planNext(0); CE.spawnGroup([mk("spectre"), mk("wraith")]);
+    ok(game._gardeRounds === 0, "Laisser battre : pas de monté");
+    var maillon = g.EliteManager.buildUniqueLoot("maillon_wenna");
+    ok(maillon && maillon.slot === "ring" && maillon.rarity === "epic" && g.STORY_REWARDS.crypte_20.uniqueLoot === "maillon_wenna", "Le maillon : bague Épique, cadeau de fin de chapitre");
+    // Répliques selon « ysolt »
+    SQ.getChoice = savedChoice; choix("ysolt", "garder"); choix("bat", "reveiller");
+    ok(g.storyYs("s16").who === "Edda" && ch.steps[19].narrative.completionDialogue[0].text.indexOf("Ysolt se lève") >= 0, "Garder puis Réveiller : Edda parle, Ysolt se lève avec les autres");
+    SQ.getChoice = savedChoice; choix("ysolt", "donner"); choix("bat", "laisser");
+    var cd = ch.steps[19].narrative.completionDialogue;
+    ok(g.storyYs("s16").who === "Ysolt" && cd.some(function (l) { return /du pain/.test(l.text); }) && cd.some(function (l) { return /chat/.test(l.text); }), "Donner puis Laisser battre : la phrase d'Ysolt, puis le pain et le chat");
+  } catch (err) {
+    ok(false, "[244] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.getChoice = savedChoice; g.WorldManager.worldIndex = wiAvant; game.adventureQuestRun = null;
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

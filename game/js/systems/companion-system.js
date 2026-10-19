@@ -467,6 +467,7 @@ var CompanionManager = {
   takeTurn: function (actor, forcedSlot, forcedArg) {
     if (!actor || !actor.companionId) return false;
     if (actor.hp <= 0) return false;
+    if (window.SleepSystem && SleepSystem.chainedTurn(actor)) return true; // v3.456.0 : enchaîné, il ne joue pas
     if (actor.lulled > 0) { // v3.455.0 : endormi par la Pleureuse, un round
       actor.lulled -= 1;
       if (typeof addLog === "function") addLog("💤 " + _t("{x} dort debout.", { x: actor.name ? _td(actor.name) : _t("Compagnon") }), "normal");

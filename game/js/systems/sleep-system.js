@@ -21,6 +21,10 @@ var SLEEP_GOLD_BONUS = 0.5;        // réveillé puis vaincu : +50 % d'or
 var SLEEP_GOLD_BONUS_SOI = 0.75;   // choix `portent` = « soi » (Le dû des morts) : +75 %, au banc
 var SLEEP_MAX_PER_GROUP = 2;
 var SLEEP_VIGIL_WAX = 1;           // v3.452.0 : La veillée d'Aeswyn, Cire par dormeur laissé (au banc)
+var CHAIN_ROUNDS = 2;              // v3.456.0 (acte IV) : une chaîne tient 2 rounds
+var CHAIN_BREAK_PCT = 0.15;        // ou cède quand son poseur perd 15 % de ses PV max (au banc)
+var GARDE_ROUNDS = 3;              // v3.456.0 (choix « bat » = réveiller) : le monté frappe 3 rounds
+var GARDE_PCT = 0.03;              // 3 % des PV max du boss ou de l'élite par coup (au banc)
 
 var SleepSystem = {
 
@@ -67,6 +71,8 @@ var SleepSystem = {
         + (this.wearsQuiver() ? 1 : 0); // v3.455.0 : le carquois d'Ysolt
     }
     if (n) addLog("🌫️ " + _tn(n, "Un des morts dort encore.", "{n} des morts dorment encore."), "event");
+    this.encounterLine();
+    this.gardeStart(list);
     return n;
   },
 
@@ -83,8 +89,9 @@ var SleepSystem = {
   onEnemyTurn: function (e) {
     if (e && Number(e.halfSleepRounds || 0) > 0) return this.halfSleepTurn(e); // v3.455.0 : la Liche à moitié couchée
     if (e) e._crownReady = true; // v3.455.0 : le Porte-couronne peut de nouveau réveiller (une fois par round)
+    this.gardeStrike(e);
     if (!this.isAsleep(e) && this.onLull(e)) return false;
-    if (!this.isAsleep(e)) return this.onCall(e);
+    if (!this.isAsleep(e)) { this.checkChains(); this.onChain(e); return this.onCall(e); } // v3.456.0 : la chaîne ne coûte pas son coup
     e.wakeIn = Number(e.wakeIn || 0) - 1;
     if (e.wakeIn <= 0 && this.has("personne_ne_se_leve") && !game._sleepRelapseUsed) { // v3.453.0 : ligne Garder du jalon 16
       game._sleepRelapseUsed = true;
@@ -102,6 +109,7 @@ var SleepSystem = {
   onCall: function (e) {
     var def = this.callerDef(e);
     if (!def || !def.calls || !e || Number(e.hp || 0) <= 0 || e.downed) return false;
+    if (this.chainRule(e)) return false; // v3.456.0 : dans « Les maillons », il enchaîne au lieu d'appeler
     // l'appel s'apprend à crypte_08 (tutoriel) : avant, le Nécromancien des Sépulcres ne réveille personne
     if (!window.StoryQuestManager || !StoryQuestManager.isStepReached("crypte_08")) return false;
     var sl = this.sleepers();
@@ -116,6 +124,106 @@ var SleepSystem = {
     addLog("🗣️ " + _t("{x} dit un nom.", { x: _td(e.name) }), "event");
     this.wake(sl[0], false);
     return true;
+  },
+
+  /* ---------- v3.456.0 (Crypte, acte IV) : LES CHAÎNES ----------
+     Un ennemi qui enchaîne l'annonce, puis, au tour suivant, prend un compagnon (jamais le héros) :
+     le compagnon perd ses tours 2 rounds, ou moins si le poseur perd 15 % de ses PV max entre-temps.
+     Qui enchaîne : les Nécromanciens d'une quête `chains`, le boss d'une quête `bossChains`. Non sauvegardé. */
+  questDef: function () {
+    var run = game.adventureQuestRun;
+    return (run && run.active && run.questId && window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[run.questId]) || null;
+  },
+  chainRule: function (e) {
+    var q = this.questDef();
+    if (!q || !e || e.downed) return null;
+    if (e.isBoss && q.bossChains) return { every: Number(q.bossChains.every || 3) };
+    var def = this.callerDef(e);
+    return (!e.isBoss && q.chains && def && def.calls) ? { every: 3 } : null;
+  },
+  chainTargets: function () {
+    if (!window.CombatActors) return [];
+    return CombatActors.aliveAllies().filter(function (a) { return a && a.companionId && !a.chained; });
+  },
+  onChain: function (e) {
+    var rule = this.chainRule(e);
+    if (!rule || Number(e.hp || 0) <= 0) return false;
+    if (typeof e.chainIn !== "number") e.chainIn = e.isBoss ? rule.every : 2;
+    e.chainIn -= 1;
+    if (e.chainIn > 1) return false;
+    if (!this.chainTargets().length) { e.chainIn = 2; e.chainArmed = false; return false; }
+    if (e.chainIn === 1) {
+      e.chainArmed = true;
+      var ys = e.isBoss && CombatActors.aliveAllies().some(function (a) { return a && a.companionId === "ysolt"; });
+      addLog("⛓️ " + (ys ? _t("Ysolt : « Il lève la main gauche. »") : _t("{x} lève une chaîne.", { x: _td(e.name) })), "event");
+      return false;
+    }
+    e.chainArmed = false;
+    e.chainIn = rule.every;
+    var pool = this.chainTargets(), n = e.chainBoth ? 2 : 1;
+    for (var i = pool.length - 1; i > 0; i--) { var j = randInt(0, i), t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+    pool.slice(0, n).forEach(function (a) {
+      a.chained = { rounds: CHAIN_ROUNDS, by: e, mark: Number(e.hp || 0) };
+      addLog("⛓️ " + _t("{x} est enchaîné.", { x: _td(a.name) }), "event");
+    });
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+    return true;
+  },
+  /* Une chaîne cède si son poseur est tombé, ou a perdu sa part de PV depuis la pose. */
+  chainHolds: function (c) {
+    var by = c && c.by;
+    if (!by || Number(by.hp || 0) <= 0) return false;
+    return Number(by.hp || 0) > c.mark - Number(by.maxHp || 0) * CHAIN_BREAK_PCT;
+  },
+  checkChains: function () {
+    if (!window.CombatActors) return;
+    var self = this;
+    CombatActors.allies().forEach(function (a) {
+      if (!a || !a.chained || self.chainHolds(a.chained)) return;
+      a.chained = null;
+      addLog("⛓️ " + _t("La chaîne de {x} cède.", { x: _td(a.name) }), "event");
+    });
+  },
+  /* Garde de CompanionManager.takeTurn : true si le compagnon est enchaîné (il ne joue pas). */
+  chainedTurn: function (a) {
+    this.checkChains();
+    if (!a || !a.chained) return false;
+    a.chained.rounds -= 1;
+    addLog("⛓️ " + _t("{x} tire sur sa chaîne.", { x: _td(a.name) }), "normal");
+    if (a.chained.rounds <= 0) a.chained = null;
+    return true;
+  },
+  anyChained: function () {
+    return !!(window.CombatActors && CombatActors.aliveAllies().some(function (a) { return a && a.chained; }));
+  },
+
+  /* v3.456.0 (« Les maillons ») : une ligne du carnet de Wenna au début des rencontres 2 et suivantes. */
+  encounterLine: function () {
+    var q = this.questDef(), AQ = window.AdventureQuestManager;
+    if (!q || !Array.isArray(q.encounterLines) || !AQ || typeof AQ._encounterIndex !== "function") return;
+    var i = AQ._encounterIndex(q), line = i > 0 ? q.encounterLines[i - 1] : null;
+    if (line) addLog("📓 " + _td(line), "event");
+  },
+
+  /* v3.456.0 (choix « bat » = réveiller) — LA GARDE DES MONTÉS : dans un combat de boss ou d'élite, un monté
+     se lève au premier round et frappe 3 rounds, au tour du boss ou de l'élite. Il ne l'achève jamais. */
+  gardeStart: function (list) {
+    game._gardeRounds = 0;
+    if (!window.StoryQuestManager || StoryQuestManager.getChoice("bat") !== "reveiller") return;
+    if (!list.some(function (e) { return e && (e.isBoss || e.isElite); })) return;
+    game._gardeRounds = GARDE_ROUNDS;
+    addLog("💀 " + _t("Un monté se lève à tes côtés."), "event");
+  },
+  gardeStrike: function (e) {
+    if (!e || !(e.isBoss || e.isElite) || !(Number(game._gardeRounds || 0) > 0) || Number(e.hp || 0) <= 1) return 0;
+    game._gardeRounds -= 1;
+    var dmg = Math.min(Math.floor(Number(e.maxHp || 0) * GARDE_PCT), Number(e.hp || 0) - 1);
+    if (dmg <= 0) return 0;
+    e.hp -= dmg;
+    addLog("💀 " + _t("Le monté frappe {x} (−{n}).", { x: _td(e.name), n: formatNumber(dmg) }), "event");
+    if (!game._gardeRounds) addLog("💀 " + _t("Le monté se recouche."), "normal");
+    if (typeof renderEnemyHp === "function") renderEnemyHp();
+    return dmg;
   },
 
   /* ---------- v3.455.0 (Crypte, acte III) : l'Ossuaire ---------- */
@@ -153,6 +261,7 @@ var SleepSystem = {
   /* Phases de boss propres à la Crypte, appelées par BossMomentManager.onPhase (checkPhases). */
   onBossPhase: function (e, ph) {
     if (!e || !ph) return;
+    if (ph.wakeAll) { var self = this; this.sleepers().forEach(function (x) { self.wake(x, false); }); } // v3.456.0 : avant les nouveaux venus
     if (Array.isArray(ph.sleepAdds) && ph.sleepAdds.length && window.CombatEngine && window.CombatActors) {
       var avant = CombatActors.enemies().slice();
       CombatEngine.summonAdds(e, { adds: ph.sleepAdds, addsHpMult: ph.addsHpMult, addsPowerMult: ph.addsPowerMult });
@@ -160,7 +269,7 @@ var SleepSystem = {
         x.asleep = true; x.wokenByHero = false; x.wakeIn = randInt(SLEEP_WAKE_ROUNDS_MIN, SLEEP_WAKE_ROUNDS_MAX);
       });
     }
-    if (ph.wakeAll) { var self = this; this.sleepers().forEach(function (x) { self.wake(x, false); }); }
+    if (ph.chainBoth) e.chainBoth = true; // v3.456.0 : le Nécromancien suprême, sous 25 %
     if (ph.halfSleep) { e.halfSleepRounds = Number(ph.halfSleep.rounds || 2); e.halfSleepHeal = Number(ph.halfSleep.healPct || 0); }
   },
   /* Demi-sommeil : il ne frappe pas, il se soigne d'une part de ses PV max. */
@@ -198,6 +307,7 @@ var SleepSystem = {
   /* v3.453.0 : Réveil brutal (Mémoire 13) — ce coup-là seulement, par la vulnérabilité que lit
      dealDamage juste après ; elle est rendue à son état d'avant dès le coup suivant. */
   onHit: function (foe) {
+    this.checkChains(); // v3.456.0 : le coup d'avant a pu faire céder une chaîne
     this.onCrownHit(foe); // v3.455.0 : le Porte-couronne frappé réveille un dormeur
     var b = this._brutal;
     if (b) { this._brutal = null; b.e.vulnerableRounds = b.r; b.e.vulnerableMult = b.m; }
@@ -223,6 +333,7 @@ var SleepSystem = {
     if (enemy && enemy.wokenByHero) this.deadLoot();
     if (!window.CombatActors) return 0;
     var self = this;
+    this.checkChains(); // v3.456.0 : il tombe, ses chaînes tombent
     var others = CombatActors.aliveEnemies().filter(function (e) { return e !== enemy; });
     if (!others.length || others.some(function (e) { return !self.isAsleep(e); })) return 0;
     others.forEach(function (e) { CombatActors.removeEnemy(e); });
@@ -252,6 +363,12 @@ var SleepSystem = {
 
   /* Action automatique : la règle « Un ennemi dort » vise un dormeur (le réveiller est une décision). */
   aim: function (matchedConditionId) {
+    if (matchedConditionId === "allyChained" && window.CombatActors) { // v3.456.0 : vise celui qui tient la chaîne
+      var ch = CombatActors.aliveAllies().filter(function (a) { return a && a.chained && a.chained.by && Number(a.chained.by.hp || 0) > 0; })[0];
+      var cc = CombatActors.ensure();
+      if (ch && cc) cc.targetId = ch.chained.by.actorId;
+      return;
+    }
     if (matchedConditionId !== "enemySleeping" || !window.CombatActors) return;
     var s = this.sleepers()[0], c = CombatActors.ensure();
     if (s && c) c.targetId = s.actorId;
@@ -269,3 +386,5 @@ window.SleepSystem = SleepSystem;
 window.SLEEP_WAKE_ROUNDS_MIN = SLEEP_WAKE_ROUNDS_MIN;
 window.SLEEP_WAKE_ROUNDS_MAX = SLEEP_WAKE_ROUNDS_MAX;
 window.SLEEP_GOLD_BONUS = SLEEP_GOLD_BONUS;
+window.CHAIN_ROUNDS = CHAIN_ROUNDS;
+window.CHAIN_BREAK_PCT = CHAIN_BREAK_PCT;

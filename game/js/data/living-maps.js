@@ -422,6 +422,8 @@ var LIVING_MAPS = {
         heldEffect: null,
         lore: "Un temple, trois portes. Une seule s'ouvre, jamais la même." }
     ],
+    // v3.456.0 (crypte_16) : la chaîne de la Liche, des côtes à la porte murée, tracée à partir de l'étape
+    chainTrace: { requiresStoryStep: "crypte_16", sectors: ["cotes", "cercle", "maisons", "porte_muree"] },
     landmarks: []
   }
 };

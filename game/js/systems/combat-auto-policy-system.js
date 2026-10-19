@@ -57,6 +57,8 @@ function evaluateGrimoireCondition(conditionId, combatContext) {
       return !!ctx.enemyRising; // v3.428.0 (Ruines)
     case "enemySleeping":
       return !!ctx.enemySleeping; // v3.451.0 (Crypte)
+    case "allyChained":
+      return !!ctx.allyChained; // v3.456.0 (Crypte, acte IV)
     default:
       return false;
   }
@@ -167,6 +169,7 @@ function isConditionPossibleForEnemy(conditionId, enemy) {
   if (conditionId === "enemyArmored") return enemy.archetype === "armored";
   if (conditionId === "enemyRising") return !!(window.RiseSystem && RiseSystem.canRise(enemy)); // v3.428.0
   if (conditionId === "enemySleeping") return !!(window.SleepSystem && SleepSystem.sleepers().length); // v3.451.0
+  if (conditionId === "allyChained") return !!(window.SleepSystem && SleepSystem.anyChained()); // v3.456.0
 
   return false;
 }

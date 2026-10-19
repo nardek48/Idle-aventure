@@ -39,6 +39,9 @@
 .lm-links path { fill: none; stroke: var(--c-cream-150-vivid); stroke-width: 2; stroke-dasharray: 5 6; stroke-linecap: round; opacity: .9; }
 
 /* Calque 4 : nœuds. Cible de 44 px, position en %. */
+/* v3.456.0 (Crypte, crypte_16) : la chaîne tracée d'un couloir à l'autre, sous les pastilles */
+.lm-chain { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.lm-chain polyline { fill: none; stroke: var(--c-gold-550); stroke-width: 3; stroke-dasharray: 8 6; stroke-linecap: round; opacity: 0.9; vector-effect: non-scaling-stroke; }
 .lm-node {
   position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px;
   padding: 0; border: 0; background: transparent; cursor: pointer;

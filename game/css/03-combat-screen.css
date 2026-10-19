@@ -249,6 +249,7 @@ html body.combat-active #combat-speed-bar { display: none !important; }
   background: rgba(245, 230, 196, 1); color: rgba(59, 42, 18, 1); border: 1px solid rgba(138, 106, 48, 1); }
 .cbx-card-nm { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; min-width: 0; font-size: 12px; font-weight: 800; }
 .cbx-card-nm span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cbx-card-nm .cbx-cd-count.is-chained { color: var(--cbx-ink); }   /* v3.456.0 : enchaîné */
 .cbx-card-nm .cbx-cd-count { font-size: 12px; font-weight: 700; color: var(--cbx-ink-dim); white-space: nowrap; }
 .cbx-team.c3 .cbx-card-nm .cbx-cd-count.is-ready { display: none; }   /* à trois, « Prêt » cède la place au nom */
 /* v3.448.5 : textes de combat passés de 10 à 12 px ; sous 360 px, « Prêt » cède aussi la place au nom. */

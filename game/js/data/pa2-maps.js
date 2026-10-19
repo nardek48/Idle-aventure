@@ -320,6 +320,12 @@ var PA2_PARCOURS_IMAGES = {
   /* v3.433.1 (Ruines, acte IV) : image de Seb (09/10/2026) ; piste relevée sur le trait violet, de la
      porte basse à l'arche du Cœur. Paliers : la rue qui tourne, la place aux ossements, la brèche du
      mur, les toits aux gargouilles, l'arche. */
+  /* v3.456.0 (Crypte, acte IV) : le long de la chaîne. Image à fournir par Seb ; piste provisoire (celle de
+     « Vers le Cœur »), à relever sur l'image quand elle arrivera. */
+  le_long_de_la_chaine: {
+    image: "images/Maps/parcours/le_long_de_la_chaine.jpg", width: 1024, height: 1536, start: [478, 1440],
+    tracks: { route: [[575, 1290], [521, 1140], [644, 960], [626, 810], [512, 665], [490, 550], [565, 430], [528, 330], [520, 205]] }
+  },
   vers_le_coeur: {
     image: "images/Maps/parcours/vers_le_coeur.jpg", width: 1024, height: 1536, start: [478, 1440],
     tracks: { route: [[575, 1290], [521, 1140], [644, 960], [626, 810], [512, 665], [490, 550], [565, 430], [528, 330], [520, 205]] }

@@ -35,6 +35,11 @@ var CODEX_ENTRIES = [
     text: "Elle perce le ciel exactement à l'endroit où la Rupture s'est produite. Personne n'a jamais atteint son sommet et n'est redescendu pour le raconter en entier — seulement des fragments, des mots à demi cohérents sur une silhouette au sommet, sur un choix qu'il faudra faire. La Tour n'est pas une fin. C'est un seuil.",
     isUnlocked: function () { return !!(game.worldsEverReached && game.worldsEverReached[5]); } },
 
+  /* v3.456.0 (Crypte, crypte_20, Laisser battre) : le carnet de Wenna, lu chez Orwen. */
+  { id: "carnet_wenna", title: "Le carnet de Wenna", icon: "images/Icons/codex/world_crypt.png", category: "world",
+    text: "Un carnet acheté trop cher à Sarkel. Les premières pages comptent des sillons. Les suivantes sont des noms, recopiés sous les alcôves de la Crypte, à la lampe.\n\nAldwin. Rôdeur. Trois.\nMerrin. Chevalier. Cinq.\nPersonne n'a de nom de famille, en bas.\nYsolt. Rôdeuse. Neuf.\n\nLa dernière page est pleine jusque dans la marge. En bas, en tout petit : « beaucoup ».\n\nChez Orwen, il y a une place vide à table. Le pain posé devant n'y est jamais le lendemain.",
+    isUnlocked: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("bat") === "laisser"); } },
+
   {
     id: "ascension",
     title: "La Mémoire et la promesse de l'Aether",

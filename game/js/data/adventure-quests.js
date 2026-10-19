@@ -647,6 +647,87 @@ var ADVENTURE_QUESTS = {
      puis le Maître d'œuvre (bossId, combat unique comme Nezzam). Ses phases vivent dans sa fiche
      (BOSS_DB, relève forcée, renforts, blindage) : pas de bossPhases de quête.
      Cible (RU6) : 65-80 % par classe, Rôdeur ≥ 60 %. Chiffres au banc (sim/ruines-acte3-bench.js). */
+  /* v3.456.0 (Crypte, acte IV, étape 18) — LES MAILLONS : quatre rencontres ; les Nécromanciens y
+     enchaînent un compagnon au lieu d'appeler (chains, SleepSystem.onChain). L'étape de Wenna : une ligne
+     de son carnet au début des rencontres 2 à 4 (encounterLines). Chiffres au banc. */
+  aq_crypte_maillons: {
+    id: "aq_crypte_maillons",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "crypt",
+    adventureIndex: 1,
+    requiresStoryStep: "crypte_18",
+    chains: true,
+    encounters: [
+      { group: ["necromancer", "deadknight", "spectre"], groupHpMult: 0.35, sleepers: 1 },
+      { group: ["necromancer", "wraith", "spectre"], groupHpMult: 0.35, sleepers: 1 },
+      { group: ["deadknight", "necromancer"], groupHpMult: 0.55, sleepers: 0 },
+      { group: ["necromancer", "necromancer", "deadknight"], groupHpMult: 0.35, sleepers: 1 }
+    ],
+    encounterLines: [
+      "Wenna tourne une page. « Aldwin. Rôdeur. Trois. »",
+      "« Personne n'a de nom de famille, ici. » Elle note quand même.",
+      "Le carnet est plein. Elle écrit dans la marge, en tout petit."
+    ],
+    // banc (crypte-acte3-bench --quete, profil Épique, 12 runs) : à 2,2 / 5,4, 100 % et 60-69 % des PV ;
+    // à 2,8 / 6,8, toujours 100 %, 41-59 % des PV (même limite qu'aux actes I et II), 2,6 à 3,4 tours enchaînés
+    encounterHpMult: 2.8,
+    enemyPowerMult: 6.8,
+    name: "Les maillons",
+    story: "Dans la salle, les petites chaînes passent au-dessus de vos têtes comme du linge tendu. Sous chaque alcôve, un nom gravé.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    steps: [
+      { id: "rencontres_maillons", type: "encounter", worldId: "crypt", target: 4, desc: "Vaincre {target} rencontres" }
+    ],
+    reward: {}
+  },
+
+  /* v3.456.0 (Crypte, acte IV, étape 19) — CELUI QUI RETIENT : deux rencontres, puis le Nécromancien suprême,
+     combat unique. Toutes les 3 rounds il enchaîne un compagnon (bossChains) ; à 75, 50 et 25 % il tire :
+     les dormeurs se lèvent et d'autres arrivent (SleepSystem.onBossPhase) ; sous 25 %, la chaîne prend
+     les deux compagnons. La phase à 100 % pose les deux premiers dormeurs au premier coup. Chiffres au banc. */
+  aq_crypte_retient: {
+    id: "aq_crypte_retient",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "crypt",
+    adventureIndex: 1,
+    requiresStoryStep: "crypte_19",
+    chains: true,
+    encounters: [
+      { group: ["necromancer", "wraith", "spectre"], groupHpMult: 0.35, sleepers: 1 },
+      { group: ["deadknight", "deadknight", "necromancer"], groupHpMult: 0.35, sleepers: 1 }
+    ],
+    encounterHpMult: 2.2,
+    enemyPowerMult: 5.4,
+    bossId: "necrosupreme",
+    // banc (12 runs) : à 1,8 / 0,9, 58 / 100 / 100 % ; retenu 2,1 / 0,8 -> 75 / 92 / 100 % (Chev. / Rôd. / Mage), 38-50 % des PV
+    bossHpMult: 2.1,
+    bossPowerMult: 0.8,
+    bossChains: { every: 3 },
+    bossPhases: [
+      { atPct: 1, sleepAdds: ["spectre", "wraith"], addsHpMult: 0.15, addsPowerMult: 0.45, label: "à ses pieds, deux morts enchaînés", line: "À ses pieds, deux morts, enchaînés. Ils dorment." },
+      { atPct: 0.75, wakeAll: true, sleepAdds: ["deadknight", "spectre"], addsHpMult: 0.15, addsPowerMult: 0.45, label: "il tire", line: "Il tire. Quelque part au-dessus, deux alcôves se vident." },
+      { atPct: 0.5, wakeAll: true, sleepAdds: ["wraith", "deadknight"], addsHpMult: 0.15, addsPowerMult: 0.45, label: "il tire encore", line: "Il tire encore. Les petites chaînes chantent contre la pierre." },
+      { atPct: 0.25, wakeAll: true, chainBoth: true, label: "il tire tout", line: "Il tire tout. Il n'en lâche aucun." }
+    ],
+    bossLog: "Il se lève. Il est plus petit que sa chaîne.",
+    name: "Celui qui retient",
+    story: "Une salle sans alcôves. Toutes les petites chaînes y arrivent et se nouent en une seule, qu'une main tient.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    steps: [
+      { id: "rencontres_retient", type: "encounter", worldId: "crypt", target: 2, desc: "Vaincre {target} rencontres dans la salle des chaînes" },
+      { id: "boss_retient", type: "bossKill", bossId: "necrosupreme", target: 1, desc: "Vaincre le Nécromancien suprême" }
+    ],
+    reward: {}
+  },
+
   aq_ruines_plan: {
     id: "aq_ruines_plan",
     type: "kill",

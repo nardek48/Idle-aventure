@@ -101,10 +101,18 @@ var GRIMOIRE_CONDITIONS = {
     label: "Un ennemi dort",
     description: "Un mort dort encore. Ton action le vise : le frapper le réveille, et vaincu il rapporte plus d'or. Sans cette règle, tu le laisses dormir.",
     icon: "images/Icons/combat_status/asleep.png"
+  },
+  /* v3.456.0 (Crypte, acte IV) : un compagnon est enchaîné. L'action de la règle vise celui qui
+     tient la chaîne (SleepSystem.aim) : le frapper fort la fait céder. Icône à générer. */
+  allyChained: {
+    id: "allyChained",
+    label: "Un compagnon est enchaîné",
+    description: "Un compagnon est enchaîné et ne joue plus. Ton action vise celui qui tient la chaîne : frappe-le fort pour la faire céder.",
+    icon: "images/Icons/combat_status/chained.png"
   }
 };
 
-var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "heroLowHp", "allyLowHp", "multipleEnemies", "enemyRising", "enemySleeping", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
+var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "heroLowHp", "allyLowHp", "multipleEnemies", "enemyRising", "enemySleeping", "allyChained", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
 
 /* v3.428.0 (Ruines, Conception §4.4 point 3) — réglage « Cible » du Grimoire (systems/rise-system.js). */
 var GRIMOIRE_TARGET_POLICIES = [

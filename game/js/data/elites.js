@@ -400,6 +400,18 @@ var ELITE_UNIQUE_LOOT = {
     affixes: [{ stat: "maxHpPct", value: 0.06, tier: "P" }],
     item: { name: "Le carquois d'Ysolt", icon: "amulet" }
   },
+  /* v3.456.0 (Crypte, crypte_20) — LE MAILLON : un maillon de la chaîne brisée, que Wenna a limé en bague.
+     Cadeau de fin de chapitre dans les deux branches (comme les armes du Fleuve et du Cœur). Bas de la
+     fourchette Épique de l'anneau (5 à 8). Chiffres au banc. */
+  maillon_wenna: {
+    slot: "ring",
+    stat: "critChance",
+    rarity: "epic",
+    value: 6,
+    worldIndex: 3,
+    affixes: [{ stat: "critMult", value: 0.15, tier: "P" }, { stat: "goldMult", value: 0.05, tier: "S" }],
+    item: { name: "Le maillon", icon: "ring" }
+  },
 
   ronce_ardente: {
     slot: "armor",

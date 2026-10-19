@@ -136,6 +136,7 @@
     if (e.downed) push("rising");   // v3.428.2 : à terre, il se relèvera
     if (e.asleep) push("asleep");   // v3.451.0 (Crypte) : il dort
     if (e.callArmed) push("calling"); // v3.454.0 (Crypte) : l'appel du Nécromancien
+    if (e.chainArmed) push("chaining"); // v3.456.0 (Crypte) : il lève une chaîne
     if (num(e.engageIn) > 0) push("approaching", num(e.engageIn));
     if (e.chargeTelegraphed) push("charge");
     if (e.silenceTelegraphed) push("silence");
@@ -433,8 +434,9 @@
       + (st === "wait" || st === "now" ? ' onclick="selectCombatActor(\'' + esc(a.actorId) + '\')"' : '') + '>';
     h += turnTagHTML(st);
     h += '<div class="cbx-card-pt">' + ico((def && def.image) || "") + '</div>';
-    h += '<div class="cbx-card-nm"><span>' + esc(_td(a.name || "")) + '</span><small class="cbx-cd-count' + (!ko && !num(a.cooldown) ? ' is-ready' : '') + '">'
-      + (ko ? _t("K.O.") : (num(a.cooldown) > 0 ? _t("{n} r", { n: num(a.cooldown) }) : _t("Prêt"))) + '</small></div>';
+    var chained = !ko && a.chained && num(a.chained.rounds) > 0; // v3.456.0 : enchaîné, il ne joue pas
+    h += '<div class="cbx-card-nm"><span>' + esc(_td(a.name || "")) + '</span><small class="cbx-cd-count' + (chained ? ' is-chained' : (!ko && !num(a.cooldown) ? ' is-ready' : '')) + '">'
+      + (ko ? _t("K.O.") : chained ? "⛓️ " + _t("{n} r", { n: num(a.chained.rounds) }) : (num(a.cooldown) > 0 ? _t("{n} r", { n: num(a.cooldown) }) : _t("Prêt"))) + '</small></div>';
     h += '<div class="cbx-bars"><div class="cbx-bar' + (pct < 35 ? ' is-low' : '') + '"><i style="width:' + pct.toFixed(1) + '%"></i></div>'
       + (cmax ? '<span class="cbx-dots">' + dots + '</span>' : '') + '</div>';
     return h + '</button>';

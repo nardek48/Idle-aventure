@@ -9,15 +9,18 @@
 
    USAGE : node tools/sim/crypte-acte3-bench.js . [--runs N] [--profil rare|epique] [--party wenna,maddoc] [--camp souffler|sortir]
            [--diff x] [--boss p,e]
-           node tools/sim/crypte-acte3-bench.js . --pleureuse [--runs N] [--party ysolt,maddoc] [--enc pv,puissance] [--elite p,e] */
+           node tools/sim/crypte-acte3-bench.js . --pleureuse [--runs N] [--party ysolt,maddoc] [--enc pv,puissance] [--elite p,e]
+           node tools/sim/crypte-acte3-bench.js . --quete aq_crypte_maillons|aq_crypte_retient [--runs N] [--enc pv,puissance] [--qboss pv,puissance]  (v3.456.0, acte IV) */
 var fs = require("fs"), path = require("path");
 var base = fs.readFileSync(path.join(__dirname, "plafond-bench.js"), "utf8");
 base = base.slice(0, base.indexOf('console.log("COMBATS DE L\'HISTOIRE'));
 var ARGV = process.argv.slice(3);
 function arg(k) { return ARGV.indexOf(k) >= 0 ? ARGV[ARGV.indexOf(k) + 1] : null; }
 var PROFIL_ARG = arg("--profil");
-var PLEUREUSE = ARGV.indexOf("--pleureuse") >= 0;
-var PARTY = (arg("--party") || (PLEUREUSE ? "ysolt,maddoc" : "wenna,maddoc")).split(",");
+var QUETE = arg("--quete");   // v3.456.0 : une quête de l'acte IV (aq_crypte_maillons, aq_crypte_retient), même profil
+var PLEUREUSE = ARGV.indexOf("--pleureuse") >= 0 || !!QUETE;
+var PARTY = (arg("--party") || (PLEUREUSE && !QUETE ? "ysolt,maddoc" : "wenna,maddoc")).split(",");
+var QBOSS4 = arg("--qboss") ? arg("--qboss").split(",").map(Number) : null; // essai bossHpMult,bossPowerMult
 var CAMP = arg("--camp") || "souffler";
 var QENC = arg("--enc") ? arg("--enc").split(",").map(Number) : null;
 var QELITE = arg("--elite") ? arg("--elite").split(",").map(Number) : null;
@@ -60,25 +63,29 @@ var extra = function () {
   }
 
   if (PLEUREUSE) {
-    var Q = g.ADVENTURE_QUESTS.aq_crypte_pleureuse;
+    var QID = QUETE || "aq_crypte_pleureuse", Q = g.ADVENTURE_QUESTS[QID];
+    if (QBOSS4) { Q.bossHpMult = QBOSS4[0]; Q.bossPowerMult = QBOSS4[1]; }
     if (QENC) { Q.encounterHpMult = QENC[0]; Q.enemyPowerMult = QENC[1]; }
     if (QELITE) Q.eliteStatMult = { power: QELITE[0], endurance: QELITE[1] };
     var garde = Q.requiresStoryStep; Q.requiresStoryStep = null;
-    console.log("CE QU'ELLE GARDE — " + RUNS + " runs, profil Épique, " + PARTY.join(" + ") + ", potions du profil"
-      + (QENC ? " · essai rencontres PV ×" + QENC[0] + " puissance ×" + QENC[1] : "") + (QELITE ? " · essai Pleureuse p" + QELITE[0] + " e" + QELITE[1] : ""));
+    console.log(Q.name.toUpperCase() + " — " + RUNS + " runs, profil Épique, " + PARTY.join(" + ") + ", potions du profil"
+      + (QENC ? " · essai rencontres PV ×" + QENC[0] + " puissance ×" + QENC[1] : "") + (QELITE ? " · essai Pleureuse p" + QELITE[0] + " e" + QELITE[1] : "") + (QBOSS4 ? " · essai boss PV ×" + QBOSS4[0] + " puissance ×" + QBOSS4[1] : ""));
     console.log("Cible : 65-80 % par classe, Rôdeur ≥ 60 %.\n");
+    var chaines = 0, _chain = g.SleepSystem.chainedTurn; // v3.456.0 : tours perdus aux chaînes
+    g.SleepSystem.chainedTurn = function (a) { var r = _chain.apply(this, arguments); if (r) chaines++; return r; };
     B.CLASSES.forEach(function (c) {
       var n = 0, ok = 0, rounds = 0, hp = 0;
+      chaines = 0;
       for (var i = 0; i < RUNS; i++) {
         prep(c, PROFILS.epique, 79000 + i);
         g.game.adventureQuestsCompleted = {};
-        var r = playQuest("aq_crypte_pleureuse");
+        var r = playQuest(QID);
         if (!r) continue;
         n++;
         if (r.ok) { ok++; rounds += r.rounds; hp += Math.max(0, g.game.heroHp) / g.game.heroMaxHp; }
       }
       console.log("   " + c.label.padEnd(10) + " réussite " + String(Math.round(100 * ok / Math.max(1, n))).padStart(3) + " %   rounds " + String(Math.round(ok ? rounds / ok : 0)).padStart(4)
-        + "   PV fin " + String(Math.round(100 * (ok ? hp / ok : 0))).padStart(3) + " %   (" + n + " runs)");
+        + "   PV fin " + String(Math.round(100 * (ok ? hp / ok : 0))).padStart(3) + " %   tours enchaînés " + (chaines / Math.max(1, n)).toFixed(1) + "   (" + n + " runs)");
     });
     Q.requiresStoryStep = garde;
     return;

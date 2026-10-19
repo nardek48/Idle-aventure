@@ -397,6 +397,35 @@ var SCENE_TEMPLATES = {
   },
 
 
+  /* v3.456.0 (Crypte, acte IV étape 17, texte validé par Seb le 19/10) — LE LONG DE LA CHAÎNE. Parcours dédié,
+     sur le modèle de « Vers le Cœur » : lancé depuis la carte d'étape, une Ration moyenne. Palier 3 : les
+     traits gravés, une source pleine, sans épreuve. Fond à fournir : le_long_de_la_chaine. */
+  le_long_de_la_chaine: {
+    id: "le_long_de_la_chaine",
+    worldId: "crypt",
+    adventureIndex: 1,
+    mode: "parcours",
+    title: "Le long de la chaîne",
+    departLabel: "Descendre le long de la chaîne",
+    icon: "images/Icons/codex/world_crypt.png",
+    parcours: {
+      image: "le_long_de_la_chaine", track: "route", points: [0, 2, 4, 6, 8], bag: 3,
+      steps: [
+        { type: "obstacle", gabaritId: "escalier_sans_fin", text: "Un escalier étroit. La chaîne descend au milieu des marches, et on marche de part et d'autre." },
+        { type: "combat", foe: "spectre", pack: 3, act: 3, text: "Des alcôves de chaque côté. Dans chacune, un maillon est scellé au mur. Une petite chaîne part de chaque maillon et rejoint la grande.",
+          after: "Ceux qui dormaient dorment encore, la chaîne au poignet." },
+        { type: "source", fullBreath: true, text: "Un palier. Sur le mur, à hauteur d'épaule, des traits gravés, par paquets de neuf." },
+        { type: "combat", foe: "deadknight", pack: 2, act: 3, text: "Le froid change. Il ne vient plus des murs. Il vient d'en bas, par bouffées.",
+          after: "Le dernier tombe sur les marches. Sa chaîne glisse jusqu'en bas, puis se tend." },
+        { type: "obstacle", gabaritId: "porte_qui_attend", text: "Une salle sans alcôves. Toutes les petites chaînes y arrivent, des centaines, et se nouent en une seule, qu'une main tient." }
+      ]
+    },
+    entryCost: { resourceId: "ration", amount: 1 },
+    lootResource: "gold",
+    unlockOnSuccess: { buildingId: null, unlockFlag: null, completionFlag: "longDeLaChaineDone" }
+  },
+
+
   /* ================= Petites Aventures (v3.388.0, PA2-6) =================
      Deux cartes de lancement, menées par Pa2Run (systems/pa2-run.js, ui/pa2-view.js) : le
      contenu (tracés, besace, pactes, accroches) vit dans data/pa2-maps.js et data/pa2-content.js.

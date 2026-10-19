@@ -162,6 +162,7 @@ var ClassCombatManager = {
     base.aliveEnemyCount = window.CombatActors ? CombatActors.aliveEnemies().length : (e ? 1 : 0);
     base.enemyRising = !!(window.RiseSystem && RiseSystem.downedEnemies().length); // v3.428.0 (Ruines)
     base.enemySleeping = !!(window.SleepSystem && SleepSystem.sleepers().length); // v3.451.0 (Crypte)
+    base.allyChained = !!(window.SleepSystem && SleepSystem.anyChained()); // v3.456.0 (Crypte, acte IV)
     base.allyLowestHpPercent = null;
     if (window.CombatActors) {
       CombatActors.aliveAllies().forEach(function (a) {
