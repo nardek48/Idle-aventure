@@ -427,6 +427,27 @@ function mangerAuCamp() {
 
 /* Entre deux étapes, ce que fait un joueur : meilleur objet porté, points de talent, entraînement,
    potions en poche. Seulement en option B (en A, les combats sont gagnés d'office). */
+/* v3.456.3 (retour de Seb) : un joueur fait ses choix de Mémoire (le premier possible de chaque niveau :
+   « Sac profond » au niveau 1) et ne laisse jamais son sac se remplir : il offre ce qui ne sert pas.
+   Appelé par l'entretien et, sans combats, après chaque étape. */
+function memoireEtSac() {
+  var g = G, ORD = g.RARITY_ORDER, M = g.MemoryManager;
+  function score(it) { return it ? ORD.indexOf(it.rarity) * 1000 + Number(it.value || 0) : -1; }
+  if (!M || typeof M.getPendingLevels !== "function") return;
+  M.getPendingLevels().forEach(function (lvl) {
+    if (M.getChoice(lvl) && !M.isLineBroken(lvl)) return;
+    var def = M.getLevelDef(lvl);
+    (def ? def.options : []).some(function (o) { return M.choose(lvl, o.id); });
+  });
+  STATS.memoire = M.getLevel();
+  var inv = g.game.inventory || [], cap = g.getInventoryCap();
+  if (inv.length < Math.floor(cap * 0.6)) return;
+  inv.slice().forEach(function (it) {
+    if (!it || !it.slot || it.unique || ORD.indexOf(it.rarity) >= ORD.indexOf("epic")) return;
+    if (score(it) <= score(g.game.equipped[it.slot])) M.offer(it.uid);
+  });
+}
+
 function entretien() {
   var g = G, ORD = g.RARITY_ORDER;
   function score(it) { return it ? ORD.indexOf(it.rarity) * 1000 + Number(it.value || 0) : -1; }
@@ -450,6 +471,7 @@ function entretien() {
   }
   if (AVISE) reglesAvisees(g);
   refillPotions();
+  memoireEtSac();
   if (SAVING) return;
   /* Échoppe : une pièce meilleure que celle portée, si elle coûte moins de 40 % de la bourse. */
   var S = g.EquipShopManager; S.checkRefresh();
@@ -947,7 +969,7 @@ function run() {
         G.EquipmentManager.equip("itm_essai_desert");
       }
       if (ELITES_SECONDAIRES) elitesDuTableau();
-      if (COMBATS) entretien();
+      if (COMBATS) entretien(); else memoireEtSac(); // v3.456.3
       // temps complet de l'étape, y compris ce qui suit la récompense (élites du tableau, entretien)
       var stRec = STATS.steps[STATS.steps.length - 1]; stRec.temps = diffTemps(snap0, snapTemps()); stRec.apresH = stRec.temps.total - stRec.h;
       G.saveGame();
@@ -1270,6 +1292,7 @@ var SOLVERS = {
       (STATS.c13 = STATS.c13 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
       if (process.env.TRACE_EPIC) console.log("      [palier] " + nom + " : " + ((CLOCK.offset - t0) / 3600e3).toFixed(1) + " h · obtention " + JSON.stringify(Object.keys(STATS.obtainH || {}).filter(function (k) { return /crypte_13/.test(k); }).map(function (k) { return k + " " + STATS.obtainH[k].toFixed(0); })) + " · attentes " + JSON.stringify(STATS.attente));
     }
+    if (process.env.TRACE_EPIC) console.log("      [mémoire] niveau " + g.MemoryManager.getLevel() + " · choix " + JSON.stringify(g.MemoryManager.ensure().choices) + " · Aether " + g.game.totalAetherEarned + " · sac " + g.getInventoryCap());
     if (process.env.TRACE_EPIC) console.log("      [épiques] portées " + g.EQUIPMENT_SLOTS.map(function (sl) { var it = g.game.equipped[sl]; return sl + ":" + (it ? it.rarity : "-"); }).join(" ") + " · sac " + (g.game.inventory || []).filter(function (it) { return it.rarity === "epic"; }).map(function (it) { return it.slot + "/" + it.name; }).join(", ") + " · sac " + (g.game.inventory || []).length + "/" + g.getInventoryCap() + " · verrou « " + (g.heroLockReason() || "") + " » · sceneRun " + !!g.game.sceneRun + " · sortie " + g.SortieManager.isActive());
     part("La couronne de trop", function () { playAdventure("aq_crypte_couronne"); }); // v3.456.3 : le casque Épique sûr
     part(P.pieces + " Épiques", function () { gearRarity("epic", P.pieces, true); });
