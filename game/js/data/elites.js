@@ -219,7 +219,7 @@ var ELITE_DB = {
     wakesOnHit: true,
     statMult: { endurance: 3, power: 3, celerity: 1.0 },
     lore: "Il porte deux couronnes, l'une sur l'autre. La seconde n'est pas à lui. Il ne l'enlève pas.",
-    image: "./images/Enemies/elite_porte_couronne.jpg", // à générer : icône générique en attendant
+    image: "./images/Enemies/elite_porte_couronne.jpg",
     questIcon: "./images/Icons/quest_icons/elite/elite_porte_couronne.png",
     escort: { members: ["spectre", "wraith"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
@@ -236,7 +236,7 @@ var ELITE_DB = {
     lulls: true,
     statMult: { endurance: 3, power: 3.2, celerity: 1.0 },
     lore: "Elle pleure tous ceux qui ne dorment pas. Ça fait beaucoup.",
-    image: "./images/Enemies/elite_pleureuse.jpg", // à générer : icône générique en attendant
+    image: "./images/Enemies/elite_pleureuse.jpg",
     questIcon: "./images/Icons/quest_icons/elite/elite_pleureuse.png",
     escort: { members: ["spectre"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
