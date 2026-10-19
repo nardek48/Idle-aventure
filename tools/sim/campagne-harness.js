@@ -690,9 +690,9 @@ function playExpedition(templateId, flag) {
   for (var essai = 0; essai < 10; essai++) {
     if (flag && flag()) return true;
     var tpl = g.SceneEngine.getTemplate(templateId), cost = tpl && tpl.entryCost;
+    if (COMBATS) healUp(); // v3.456.4 : se soigner d'abord (le soin mange des rations), réunir le coût ensuite
     if (cost && !obtain(cost.resourceId, Number(cost.amount || 1))) { note(templateId + " : coût d'entrée introuvable (" + cost.resourceId + ")"); return false; }
     LAST_END = null;
-    if (COMBATS) healUp();
     var r = g.SceneRunManager.startRun(templateId);
     if (!r.ok && CAP_RE.test(r.reason || "")) { waitCap(); essai--; continue; } // v3.366.0 : recharge, plus le lendemain
     if (!r.ok) { note(templateId + " : départ refusé — " + r.reason); return false; }
