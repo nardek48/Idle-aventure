@@ -399,7 +399,7 @@ var SCENE_TEMPLATES = {
 
   /* v3.456.0 (Crypte, acte IV étape 17, texte validé par Seb le 19/10) — LE LONG DE LA CHAÎNE. Parcours dédié,
      sur le modèle de « Vers le Cœur » : lancé depuis la carte d'étape, une Ration moyenne. Palier 3 : les
-     traits gravés, une source pleine, sans épreuve. Fond à fournir : le_long_de_la_chaine. */
+     traits gravés, une source pleine, sans épreuve. Fond : image de Seb (v3.456.1). */
   le_long_de_la_chaine: {
     id: "le_long_de_la_chaine",
     worldId: "crypt",

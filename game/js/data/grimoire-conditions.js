@@ -103,7 +103,7 @@ var GRIMOIRE_CONDITIONS = {
     icon: "images/Icons/combat_status/asleep.png"
   },
   /* v3.456.0 (Crypte, acte IV) : un compagnon est enchaîné. L'action de la règle vise celui qui
-     tient la chaîne (SleepSystem.aim) : le frapper fort la fait céder. Icône à générer. */
+     tient la chaîne (SleepSystem.aim) : le frapper fort la fait céder. */
   allyChained: {
     id: "allyChained",
     label: "Un compagnon est enchaîné",
