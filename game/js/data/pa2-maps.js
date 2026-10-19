@@ -258,9 +258,11 @@ var PA2_PARCOURS_IMAGES = {
   },
   /* v3.452.0 (Crypte, acte I) : la descente. Image à fournir par Seb ; piste provisoire (celle de la
      route du nord), à relever sur l'image quand elle arrivera. */
+  /* v3.453.1 : image de Seb (19/10/2026) ; piste relevée sur le trait bleu, de la dernière rue des Ruines
+     à la salle des alcôves. Paliers (points 0, 2, 4, 6) : l'escalier, les lampes, les trois formes, la salle. */
   crypte_descente: {
-    image: "images/Maps/parcours/crypte_descente.jpg", width: 1024, height: 1536, start: [420, 1300],
-    tracks: { route: [[555, 1170], [500, 1030], [510, 885], [592, 760], [455, 665], [540, 560], [570, 500]] }
+    image: "images/Maps/parcours/crypte_descente.jpg", width: 1024, height: 1536, start: [512, 1415],
+    tracks: { route: [[512, 1290], [560, 1170], [590, 950], [455, 830], [512, 610], [512, 450], [512, 250]] }
   },
   /* v3.433.1 (Ruines, acte IV) : image de Seb (09/10/2026) ; piste relevée sur le trait violet, de la
      porte basse à l'arche du Cœur. Paliers : la rue qui tourne, la place aux ossements, la brèche du

@@ -200,18 +200,18 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hst-node.is-key.is-sel .hst-art::after { border-radius: 50%; }
 .hst-chain { position: absolute; left: 50%; bottom: 6px; width: 30px; height: 50px; transform: translateX(-50%) rotate(-50deg); object-fit: contain; }
 .hst-tree .hst-pips i { background: var(--c-brown-550-soft); }
-/* v3.453.0 : sélecteur « Classe · Commandement » et colonne du Commandement (atelier talents-commandement) */
+/* v3.453.0 : sélecteur « Classe · Commandement » et colonne du Commandement (atelier talents-commandement) ; v3.453.1 : fond parchemin, titre en brun */
 .hst-seg { display: flex; gap: 4px; padding: 3px; margin: 0 0 8px; border-radius: 12px; background: rgba(60, 40, 15, .14); }
 .hst-seg button { flex: 1 1 0; min-height: 40px; border: 0; border-radius: 9px; background: none; font: inherit; font-weight: 800; font-size: 13px; color: var(--c-brown-800-3); }
 .hst-seg button[aria-pressed="true"] { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); color: var(--c-brown-850-3); box-shadow: 0 2px 0 var(--c-brown-750-3); }
 .hst-seg button:disabled { opacity: .55; }
 .hst-seg button small { display: block; font-size: 12px; font-weight: 700; opacity: .75; }
 .hst-cmd { position: relative; display: flex; flex-direction: column; align-items: center; padding: 14px 10px 16px; border-radius: 16px; border: 2px solid var(--c-brown-700-vivid);
-  background-image: url(../images/UI/talents/bg_commandement.webp), radial-gradient(ellipse at 50% 20%, #3b4a52, #1c2429 70%); background-size: cover; background-position: 50% 0; box-shadow: inset 0 0 30px rgba(40, 20, 0, .45); }
+  background-image: url(../images/UI/talents/bg_commandement.webp); background-size: cover; background-position: 50% 0; box-shadow: inset 0 0 30px rgba(40, 20, 0, .45); }
 .hst-cmd-banner { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 6px; }
 .hst-cmd-banner .hst-emb { position: static; transform: none; width: 56px; height: 56px; }
-.hst-cmd-banner b { font-size: 15px; font-weight: 900; color: var(--c-cream-100-2); }
-.hst-cmd-banner small { font-size: 12px; font-weight: 700; color: rgba(244, 233, 208, .75); text-align: center; }
+.hst-cmd-banner b { font-size: 15px; font-weight: 900; color: var(--c-brown-850-3); }
+.hst-cmd-banner small { font-size: 12px; font-weight: 700; color: var(--c-brown-700-soft); text-align: center; }
 .hst-cmd .hst-link-v { height: 14px; background: linear-gradient(var(--c-brown-550-3), var(--c-brown-750-3)); }
 /* v3.426.3 : panoplies sous la silhouette */
 .hs-sets { margin-top: 8px; }
