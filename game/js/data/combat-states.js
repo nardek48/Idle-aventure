@@ -156,6 +156,12 @@ var COMBAT_STATES_SCREEN = {
     famille: "enemy", nom: "Endormi", icon: COMBAT_STATE_ICON + "asleep.png",
     desc: "Il dort : il ne joue pas, et le combat est gagné sans lui. Le chiffre compte les rounds avant qu'il se lève seul.",
     hint: "Laisse-le dormir, ou touche-le pour le réveiller : vaincu, il rapporte la moitié d'or en plus."
+  },
+  // v3.454.0 (Crypte, acte II) : l'appel du Nécromancien. Icône à générer.
+  calling: {
+    famille: "alerte", nom: "Appel", icon: COMBAT_STATE_ICON + "calling.png", mot: "Il appelle !",
+    desc: "Il dit un nom. Au tour suivant, un dormeur se lève, sans or en plus.",
+    hint: "Tue-le avant : le réglage « Cible » sur « Le soutien » le vise d'abord."
   }
 };
 window.COMBAT_STATES_SCREEN = COMBAT_STATES_SCREEN;

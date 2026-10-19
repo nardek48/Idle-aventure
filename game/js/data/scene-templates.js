@@ -434,6 +434,20 @@ var SCENE_TEMPLATES = {
     icon: "images/Icons/scene/path_easy.png",
     boardRequires: { tabUnlocked: "village", storyStep: "ruines_06" },
     successFlag: "ruinsPaCompleted"
+  },
+
+  /* v3.454.0 (Crypte, lot C-3, CR10) — la Petite Aventure de la Crypte : l'obscurité, la Lanterne de Sarkel,
+     le gardien qui dort. Ouverte avec l'étape crypte_06 « La lampe de Sarkel ». */
+  petite_aventure_crypte: {
+    id: "petite_aventure_crypte",
+    mode: "pa2",
+    worldId: "crypt",
+    adventureIndex: 0,
+    title: "Petite aventure — Crypte",
+    departLabel: "Descendre dans le noir",
+    icon: "images/Icons/scene/path_easy.png",
+    boardRequires: { tabUnlocked: "village", storyStep: "crypte_06" },
+    successFlag: "cryptPaCompleted"
   }
 };
 

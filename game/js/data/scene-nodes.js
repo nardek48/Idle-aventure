@@ -139,6 +139,52 @@ var SCENE_NODES = {
         endurance: { stat: "endurance", label: "Attendre qu'elles se rangent" }
       }
     },
+    /* v3.454.0 (Crypte, lot C-3) — gabarits de la Petite Aventure de la Crypte. */
+    allee_des_gisants: {
+      id: "allee_des_gisants", biome: "crypt", name: "L'allée des gisants",
+      baseDifficulty: 5,
+      options: {
+        power: { stat: "power", label: "Enjamber les gisants" },
+        precision: { stat: "precision", label: "Poser le pied entre eux" },
+        endurance: { stat: "endurance", label: "Passer à genoux, sans bruit" }
+      }
+    },
+    grille_basse: {
+      id: "grille_basse", biome: "crypt", name: "La grille basse",
+      baseDifficulty: 5,
+      options: {
+        power: { stat: "power", label: "Soulever la grille" },
+        precision: { stat: "precision", label: "Trouver le loquet" },
+        endurance: { stat: "endurance", label: "Passer dessous en rampant" }
+      }
+    },
+    couloir_noir: {
+      id: "couloir_noir", biome: "crypt", name: "Le couloir sans lampe",
+      baseDifficulty: 4,
+      options: {
+        power: { stat: "power", label: "Avancer vite, la main sur le mur" },
+        precision: { stat: "precision", label: "Compter les pas" },
+        endurance: { stat: "endurance", label: "Avancer à tâtons" }
+      }
+    },
+    cire_au_sol: {
+      id: "cire_au_sol", biome: "crypt", name: "La cire au sol",
+      baseDifficulty: 4,
+      options: {
+        power: { stat: "power", label: "Arracher ses bottes à chaque pas" },
+        precision: { stat: "precision", label: "Marcher sur les dalles nues" },
+        endurance: { stat: "endurance", label: "Avancer lentement" }
+      }
+    },
+    porte_basse: {
+      id: "porte_basse", biome: "crypt", name: "La porte basse",
+      baseDifficulty: 6,
+      options: {
+        power: { stat: "power", label: "Pousser la porte" },
+        precision: { stat: "precision", label: "Trouver la serrure" },
+        endurance: { stat: "endurance", label: "Attendre qu'elle cède" }
+      }
+    },
     porte_qui_attend: {
       id: "porte_qui_attend", biome: "ruins", name: "La porte qui attend",
       baseDifficulty: 7,

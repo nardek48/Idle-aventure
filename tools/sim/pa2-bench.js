@@ -14,7 +14,9 @@ var NO_RATION = process.argv.indexOf("--sans-rations") > 0; // v3.383.0 : le jou
 var SUMMARY = process.argv.indexOf("--resume") > 0;          // v3.383.0 : une ligne de moyennes (recherche de réglages)
 var DESERT = process.argv.indexOf("--desert") > 0;        // v3.387.0 : la Petite Aventure du Désert (étapes de niveau 8 et plus, Outre)
 var RUINES = process.argv.indexOf("--ruines") > 0;        // v3.429.0 : la Petite Aventure des Ruines (murs qui bougent, Craie)
-var TPL = RUINES ? "petite_aventure_ruines" : DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
+var CRYPTE = process.argv.indexOf("--crypte") > 0;        // v3.454.0 : la Petite Aventure de la Crypte (obscurité, Lanterne, gardien qui dort)
+var REVEIL = process.argv.indexOf("--reveiller") > 0;     // v3.454.0 : gisants réveillés au départ (carte de la Crypte)
+var TPL = CRYPTE ? "petite_aventure_crypte" : RUINES ? "petite_aventure_ruines" : DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
 var OVR = (process.argv.filter(function (a) { return a.indexOf("--ovr=") === 0; })[0] || "").slice(6); // réglages d'essai, JSON
 
 var src = fs.readFileSync(path.join(__dirname, "forecast-calibration-bench.js"), "utf8").replace(/\nmain\(\);\s*$/, "\n");
@@ -54,7 +56,10 @@ var STAGES_RUINES = [
   { id: "ruines1", label: "Ruines, acte I (niv. 12)", level: 12, p: { weapon: 50, kit: true, train: 110, potions: 0 } },
   { id: "ruines2", label: "Ruines, acte II (niv. 13)", level: 13, p: { weapon: 55, kit: true, train: 120, potions: 0 } }
 ];
-var STAGES = RUINES ? STAGES_RUINES : DESERT ? STAGES_ALL.filter(function (x) { return x.level >= 8; }) : STAGES_ALL.filter(function (x) { return x.id !== "desert10"; });
+var STAGES_CRYPTE = [
+  { id: "crypte1", label: "Crypte, acte II (niv. 17)", level: 17, p: { weapon: 65, kit: true, train: 130, potions: 0 } }
+];
+var STAGES = CRYPTE ? STAGES_CRYPTE : RUINES ? STAGES_RUINES : DESERT ? STAGES_ALL.filter(function (x) { return x.level >= 8; }) : STAGES_ALL.filter(function (x) { return x.id !== "desert10"; });
 
 /* Secondes par action, pour l'estimation de durée : lire, choisir, voir le dé ou le combat. */
 /* v3.383.0 : même base que l'ancien banc v1 (retiré en v3.388.0 ; ses chiffres : CHANGELOG_v3.383.0). */
@@ -75,7 +80,8 @@ function playRun(c, stage) {
   var P = g.Pa2Run, S = g.SceneRunManager, T = g.SCENE_TEMPLATES[TPL];
   prepHero(c, stage);
   var opts = null;
-  if (RING !== "sentier" && RUINES) opts = { livingMap: { mapId: "ruins", sectorId: RING === "chemin" ? "couloirs" : "escalier" } };
+  if (CRYPTE) opts = { livingMap: { mapId: "crypt", sectorId: RING === "chemin" ? "fosse" : RING === "periple" ? "nef" : "lac", wake: REVEIL } };
+  else if (RING !== "sentier" && RUINES) opts = { livingMap: { mapId: "ruins", sectorId: RING === "chemin" ? "couloirs" : "escalier" } };
   else if (RING !== "sentier") opts = DESERT ? { livingMap: { mapId: "desert", sectorId: RING === "chemin" ? "verrerie" : "bete_dune" } }
     : { livingMap: { mapId: "forest", sectorId: RING === "chemin" ? "menhirs" : "portail" } };
   S.startRun(TPL, opts);
@@ -83,8 +89,10 @@ function playRun(c, stage) {
   (NO_RATION ? ["gourde", "corde", "torche"] : ["petite_ration", "petite_ration", "gourde", "corde", "torche"]).forEach(function (id) { P.addItem(id); });
   if (DESERT) { g.game.resources.outre_pleine = 5; P.addItem("outre"); } // la place libre : l'Outre
   if (RUINES) P.addItem("craie"); // la place libre : la Craie d'Edda (gratuite)
+  if (CRYPTE) P.addItem("lanterne"); // la place libre : la Lanterne de Sarkel (gratuite)
   var pr0 = g.game.resources.petite_ration;
   P.depart();
+  if (CRYPTE && run.stock.lanterne > 0) P.useItem("lanterne"); // allumée au départ
   var max = g.game.heroMaxHp, seconds = SECONDS.prep, nodes = 0;
   var lossByAct = { 1: 0, 2: 0, 3: 0 }, guard = 200, koAt = null;
   var target = ["BOSS", "CLAIRIERE", "TERTRE"][Math.floor(Math.random() * 3)];
@@ -128,7 +136,9 @@ function playRun(c, stage) {
     } else if (t === "boss") {
       // Le joueur lit l'estimation : il mange tant que le gardien s'annonce mortel.
       ["grande_ration", "ration", "petite_ration"].forEach(function (id) { while (run.stock[id] > 0 && P.combatPreview().tenir.hpLoss * 1.2 >= g.game.heroHp && P.useItem(id).ok) { /* mange */ } });
-      res = P.fight("tenir");
+      // v3.454.0 (Crypte) : le gardien dort ; trop cher, le joueur fait le tour
+      if (P.canPassGuardian && P.canPassGuardian() && P.combatPreview().tenir.hpLoss >= g.game.heroHp * 0.8) res = P.passGuardian();
+      else res = P.fight("tenir");
     }
     else if (t === "source") res = P.drink();
     else if (t === "autel") res = P.altar(run.wounds > 0 && run.loot >= P.altarCost());

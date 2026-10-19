@@ -334,6 +334,95 @@ var LIVING_MAPS = {
         lore: "Une arche qui descend sous la ville. C'est la seule porte qu'aucun chantier ne touche." }
     ],
     landmarks: []
+  },
+  /* v3.454.0 (Crypte, lot C-3, CR9) — LES GISANTS. Visuel de Seb du 19/10/2026. Chaque couloir a ses gisants :
+     au départ, on les laisse (comme d'habitude) ou on les réveille (gisants.wakeMult plus dur, +wakeRare
+     Cire de sépulcre à la destination). L'échec ne reprend rien (ici, rien ne bouge) : c'est « Le réveil »,
+     le couloir raté reste hostile jusqu'au lendemain (hostileMult). Pas de chantier. Chiffres au banc.
+     La carte s'ouvre avec l'étape crypte_07. */
+  crypt: {
+    id: "crypt",
+    worldId: "crypt",
+    name: "Crypte oubliée",
+    asset: "images/Maps/crypte.jpg",
+    opensAtStoryStep: "crypte_07",
+    rewardResourceId: "cire_sepulcre",
+    gisants: { wakeMult: 1.3, wakeRare: 2, hostileMult: 1.25 },
+    noRegress: true,
+    words: {
+      cover: "le réveil", coverCap: "Le réveil", coveredState: "Hostile",
+      home: "la Veillée", fogLore: "Les lampes ne vont pas jusque-là. On ne sait pas qui y dort.",
+      openElsewhere: "La Crypte attend encore ailleurs",
+      homeTitle: "La Veillée tient.",
+      homeLore: "Le camp de Sarkel, trois lampes contre un mur. Les couloirs de l'anneau 1 sont toujours à portée.",
+      intro: "Touche un couloir pour voir ce qu'on en sait. Avant de partir, choisis : laisser dormir ses gisants, ou les réveiller.",
+      runLoot: "Cire du run seule",
+      mapBlurb: "Choisis un couloir sur la carte de la Crypte : chacun a ses gisants."
+    },
+    village: { x: 50, y: 86, name: "La Veillée" },
+    caravanMarket: { x: 37, y: 86 },          // le Marché de la Crypte, la pierre plate à côté de la Veillée
+    sectors: [
+      /* Anneau 1 — autour de la Veillée */
+      { id: "salle_ronde", name: "La salle ronde", x: 50, y: 58, ring: 1, neighbors: ["lac", "fosse", "obelisque", "cercle", "maisons"],
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["allee_des_gisants", "couloir_noir"] } },
+        heldEffect: null,
+        lore: "Une salle ronde, des bancs de pierre tournés vers le milieu. On s'y assoit pour attendre." },
+      { id: "lac", name: "Le lac froid", x: 18, y: 80, ring: 1, neighbors: ["salle_ronde", "fosse"],
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["cire_au_sol", "dalle_qui_glisse"] } },
+        heldEffect: null,
+        lore: "Une eau verte, immobile. Des tombes à moitié dedans. Personne ne les a noyées : l'eau est montée." },
+      { id: "maisons", name: "Les maisons des morts", x: 82, y: 72, ring: 1, neighbors: ["salle_ronde", "cercle", "porte_muree"],
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["grille_basse", "allee_des_gisants"] } },
+        heldEffect: null,
+        lore: "Des maisons basses, sans fenêtres. Chacune a son lit de pierre." },
+      { id: "porte_muree", name: "La porte murée", x: 90, y: 87, ring: 1, neighbors: ["maisons"],
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["grille_basse", "couloir_noir"] } },
+        heldEffect: null,
+        lore: "Une porte violette, murée de l'intérieur. La lumière passe quand même." },
+      /* Anneau 2 */
+      { id: "fosse", name: "La fosse rouge", x: 24, y: 55, ring: 2, neighbors: ["lac", "salle_ronde", "tombes"],
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["cire_au_sol", "couloir_noir"] } },
+        heldEffect: null,
+        lore: "Une lueur rouge monte du fond. Elle ne chauffe pas." },
+      { id: "cercle", name: "Le cercle tracé", x: 78, y: 52, ring: 2, neighbors: ["salle_ronde", "maisons", "etais", "cotes"],
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["allee_des_gisants", "dalle_qui_glisse"] } },
+        heldEffect: null,
+        lore: "Un cercle gravé au sol, des bougies autour. Les bougies sont neuves. Personne ne les allume." },
+      { id: "obelisque", name: "L'obélisque", x: 50, y: 41, ring: 2, neighbors: ["salle_ronde", "tombes", "cotes", "source"],
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["couloir_noir", "grille_basse"] } },
+        heldEffect: { id: "lanterne_plus", label: "La Lanterne : un pas de plus en Petite Aventure." },
+        lore: "Une pierre dressée, plus haute que les autres. Des noms dessus, effacés un par un." },
+      { id: "tombes", name: "Les tombes rangées", x: 30, y: 40, ring: 2, neighbors: ["fosse", "obelisque", "crane", "nef"],
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["allee_des_gisants", "cire_au_sol"] } },
+        heldEffect: null,
+        lore: "Des tombes en rangs serrés. Toutes ouvertes. Toutes occupées." },
+      { id: "etais", name: "Les étais", x: 88, y: 40, ring: 2, neighbors: ["cercle", "temple"],
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["dalle_qui_glisse", "grille_basse"] } },
+        heldEffect: null,
+        lore: "Des étais de bois contre la paroi. Quelqu'un a commencé à creuser, et s'est arrêté." },
+      /* Anneau 3 */
+      { id: "crane", name: "Le crâne", x: 10, y: 30, ring: 3, neighbors: ["tombes", "nef"],
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["couloir_noir", "allee_des_gisants"] } },
+        heldEffect: null,
+        lore: "Une entrée taillée en crâne. Dedans, des lueurs violettes. Ysolt n'y va pas." },
+      { id: "nef", name: "La nef", x: 22, y: 12, ring: 3, neighbors: ["tombes", "crane", "source"], labelTop: true,
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["allee_des_gisants", "grille_basse"] } },
+        heldEffect: null,
+        lore: "Une église sous la terre, plus haute qu'aucune maison d'Aeswyn. Elle n'a pas de fidèles. Elle a des dormeurs." },
+      { id: "source", name: "La source verte", x: 51, y: 10, ring: 3, neighbors: ["obelisque", "nef", "temple"], labelTop: true,
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["cire_au_sol", "dalle_qui_glisse"] } },
+        heldEffect: null,
+        lore: "De l'eau qui tombe d'une fente, verte, sans bruit. En bas, des statues regardent l'eau." },
+      { id: "cotes", name: "Les côtes", x: 64, y: 33, ring: 3, neighbors: ["obelisque", "cercle", "temple"],
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["couloir_noir", "cire_au_sol"] } },
+        heldEffect: null,
+        lore: "Des os plus grands qu'une maison, en voûte. Quelque chose est mort ici, et on a construit dedans." },
+      { id: "temple", name: "Le temple aux portes", x: 78, y: 12, ring: 3, neighbors: ["source", "cotes", "etais"], labelTop: true,
+        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["grille_basse", "couloir_noir"] } },
+        heldEffect: null,
+        lore: "Un temple, trois portes. Une seule s'ouvre, jamais la même." }
+    ],
+    landmarks: []
   }
 };
 window.LIVING_MAPS = LIVING_MAPS;

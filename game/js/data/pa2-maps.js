@@ -232,6 +232,58 @@ var PA2_MAPS = {
     },
     links: RUINES_PA_LINKS,
     shifts: RUINES_PA_SHIFTS
+  },
+  /* v3.454.0 (Crypte, CR10) : les couloirs aux alcôves (image de Seb du 19/10/2026). Même tracé logique
+     que les Ruines, sans murs qui bougent : ici, rien ne bouge, mais on ne voit que la rangée devant soi. */
+  crypte_1: {
+    id: "crypte_1",
+    worldId: "crypt",
+    image: "images/Maps/pa2/crypte_1.jpg",
+    width: 848,
+    height: 1264,
+    start: "S",
+    rows: { camp: 2, seuil: 5, dest: 7 },
+    tune: { foeMult: 0.7 }, // banc (pa2-bench --crypte, 100 runs, niv. 17) : 85-89 % de destinations, 3-9 % de KO
+    nodes: {
+      S: { row: -1, x: 425, y: 1180, type: "depart" },
+      L0: { row: 0, x: 150, y: 960 }, C0: { row: 0, x: 430, y: 940 }, R0: { row: 0, x: 630, y: 975 },
+      L1: { row: 1, x: 115, y: 820 }, R1: { row: 1, x: 720, y: 850 },
+      CAMP: { row: 2, x: 430, y: 800, type: "camp" },
+      L3: { row: 3, x: 120, y: 640 }, C3: { row: 3, x: 330, y: 660 }, R3: { row: 3, x: 580, y: 680 },
+      L4: { row: 4, x: 130, y: 470 }, R4: { row: 4, x: 680, y: 580 },
+      SEUIL: { row: 5, x: 420, y: 530, type: "seuil" },
+      L6: { row: 6, x: 290, y: 400 }, C6: { row: 6, x: 515, y: 315 }, R6: { row: 6, x: 690, y: 280 },
+      BOSS: { row: 7, x: 420, y: 125, type: "boss" },
+      CLAIRIERE: { row: 7, x: 140, y: 150, type: "clairiere" },
+      TERTRE: { row: 7, x: 660, y: 150, type: "tertre" }
+    },
+    links: RUINES_PA_LINKS
+  },
+  /* v3.454.0 : le gouffre aux cascades (image de Seb du 19/10/2026) : la tour au crâne (camp), la place
+     à l'obélisque (seuil), la forteresse, la cathédrale et l'arène en haut. */
+  crypte_2: {
+    id: "crypte_2",
+    worldId: "crypt",
+    image: "images/Maps/pa2/crypte_2.jpg",
+    width: 848,
+    height: 1264,
+    start: "S",
+    rows: { camp: 2, seuil: 5, dest: 7 },
+    tune: { foeMult: 0.7 },
+    nodes: {
+      S: { row: -1, x: 425, y: 1170, type: "depart" },
+      L0: { row: 0, x: 190, y: 980 }, C0: { row: 0, x: 430, y: 1060 }, R0: { row: 0, x: 680, y: 1040 },
+      L1: { row: 1, x: 110, y: 860 }, R1: { row: 1, x: 650, y: 850 },
+      CAMP: { row: 2, x: 430, y: 800, type: "camp" },
+      L3: { row: 3, x: 130, y: 650 }, C3: { row: 3, x: 330, y: 710 }, R3: { row: 3, x: 720, y: 620 },
+      L4: { row: 4, x: 90, y: 470 }, R4: { row: 4, x: 740, y: 450 },
+      SEUIL: { row: 5, x: 440, y: 540, type: "seuil" },
+      L6: { row: 6, x: 150, y: 310 }, C6: { row: 6, x: 530, y: 410 }, R6: { row: 6, x: 660, y: 300 },
+      BOSS: { row: 7, x: 440, y: 120, type: "boss" },
+      CLAIRIERE: { row: 7, x: 150, y: 130, type: "clairiere" },
+      TERTRE: { row: 7, x: 720, y: 210, type: "tertre" }
+    },
+    links: RUINES_PA_LINKS
   }
 };
 
@@ -239,7 +291,8 @@ var PA2_MAPS = {
 var PA2_MAPS_BY_WORLD = {
   forest: ["foret_1", "foret_2"], // v3.386.0 : tirée au lancement, comme l'accroche
   desert: ["desert_1"],            // v3.387.0 (PA2-5)
-  ruins: ["ruines_1", "ruines_2"]  // v3.429.0 (U-6)
+  ruins: ["ruines_1", "ruines_2"], // v3.429.0 (U-6)
+  crypt: ["crypte_1", "crypte_2"]  // v3.454.0
 };
 
 /* v3.390.0 (chantier P, lot P-2) : fonds illustrés des parcours (images de Seb du 29/09/2026).

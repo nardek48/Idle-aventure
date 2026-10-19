@@ -12179,8 +12179,10 @@ console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (prépa
     Object.keys(g.PA2_RELICS).forEach(function (k) { dataIcons.push(g.PA2_RELICS[k].icon); });
     Object.keys(g.PA2_PACTS).forEach(function (k) { dataIcons.push(g.PA2_PACTS[k].icon); });
     Object.keys(g.PA2_ICONS).forEach(function (k) { dataIcons.push(g.PA2_ICONS[k]); });
-    var absent = dataIcons.filter(function (s) { return !fs.existsSync(path.join(ROOT, s)); });
-    ok(absent.length === 0, "icônes du mode v2 : toutes présentes (" + dataIcons.length + ")" + (absent.length ? " — manquent " + absent.join(", ") : ""));
+    // v3.454.0 : icônes demandées à Seb, affichées en icône générique en attendant (règle « icône manquante »)
+    var aFournir = ["images/Icons/scene/items/item_lantern.png"];
+    var absent = dataIcons.filter(function (s) { return !fs.existsSync(path.join(ROOT, s)) && aFournir.indexOf(s) < 0; });
+    ok(absent.length === 0, "icônes du mode v2 : toutes présentes, hors celles à fournir (" + dataIcons.length + ")" + (absent.length ? " — manquent " + absent.join(", ") : ""));
   } catch (e) {
     ok(false, "[159] exception : " + e.message);
   } finally {
@@ -15596,7 +15598,7 @@ console.log("\n[240] v3.452.0 — Crypte, lot C-2 : acte I « La descente »");
   var SQ = g.StoryQuestManager, savedChoice = SQ.getChoice, CE = g.CombatEngine, SL = g.SleepSystem, wiAvant = g.WorldManager.worldIndex;
   try {
     var ch = g.STORY_QUESTS.crypt;
-    ok(ch && ch.requiresChapter === "ruins" && ch.steps.map(function (s) { return s.id; }).join() === "crypte_01,crypte_02,crypte_03,crypte_04,crypte_05", "chapitre IV : cinq étapes, ouvert par la fin des Ruines");
+    ok(ch && ch.requiresChapter === "ruins" && ch.steps.map(function (s) { return s.id; }).slice(0, 5).join() === "crypte_01,crypte_02,crypte_03,crypte_04,crypte_05", "chapitre IV : l'acte I en cinq étapes, ouvert par la fin des Ruines");
     var t = g.SceneEngine.getTemplate("traversee_crypte");
     ok(t && t.travelOnSuccess && t.travelOnSuccess.worldId === "crypt" && t.entryCost.resourceId === "ration" && t.unlockOnSuccess.completionFlag === "cryptCrossingCompleted", "la descente : passage vers la Crypte, deux Rations moyennes");
     ok(t.parcours.steps.length === 4 && t.parcours.steps[2].type === "combat" && t.parcours.steps[2].pack === 2, "quatre paliers ; au palier 3, deux éveillés (le troisième dort)");
@@ -15723,6 +15725,96 @@ console.log("\n[241] v3.453.0 — Voie du Commandement et Mémoire 9 à 16 (Gard
     ok(false, "[241] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
     MM.has = hasAvant; g.WorldManager.worldIndex = wiAvant;
+  }
+})();
+
+console.log("\n[242] v3.454.0 — Crypte, lot C-3 : acte II (obscurité, Lanterne, gardien qui dort, gisants, l'appel, palier Rare)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, LM = g.LivingMapManager, SL = g.SleepSystem, CE = g.CombatEngine, SQ = g.StoryQuestManager;
+  var wiAvant = g.WorldManager.worldIndex, savedReached = SQ.isStepReached, savedHas = g.MemoryManager.has, savedEff = LM.hasEffect;
+  try {
+    var ch = g.STORY_QUESTS.crypt;
+    ok(ch.steps.map(function (st) { return st.id; }).slice(5).join() === "crypte_06,crypte_07,crypte_08,crypte_09,crypte_10", "acte II : cinq étapes, crypte_06 à crypte_10");
+    ok(g.PA2_MAPS_BY_WORLD.crypt.join() === "crypte_1,crypte_2" && g.SCENE_TEMPLATES.petite_aventure_crypte.boardRequires.storyStep === "crypte_06", "Petite Aventure de la Crypte : deux cartes, ouverte à crypte_06");
+    ["crypte_1", "crypte_2"].forEach(function (id) {
+      var m = g.PA2_MAPS[id], miss = [];
+      Object.keys(m.links).forEach(function (k) { m.links[k].forEach(function (t) { if (!m.nodes[t]) miss.push(t); }); if (!m.nodes[k]) miss.push(k); });
+      ok(!miss.length && fs.existsSync(path.join(ROOT, m.image)), id + " : tracé complet, image présente");
+    });
+    // Un run : obscurité, Lanterne, gardien qui dort
+    game = freshCombat("knight"); giveWeapon();
+    run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+    var r = S.startRun("petite_aventure_crypte");
+    var run0 = game.sceneRun;
+    ok(r.ok && run0.worldId === "crypt" && run0.band.worldId === "crypt", "départ dans la Crypte : tranche plancher de la Crypte");
+    ok(P.addItem("lanterne").ok && P.depart().ok && run0.stock.lanterne === 1, "la Lanterne se prend gratuitement, une mèche");
+    var here = P.node(run0.at, run0), row2 = Object.keys(run0.nodes).filter(function (k) { var n = run0.nodes[k]; return n.row === 1 && !n.type.match(/camp|seuil|boss|clairiere|tertre/); });
+    ok(row2.length && row2.every(function (k) { return !P.isVisible(k, run0); }), "l'obscurité : la deuxième rangée reste cachée");
+    ok(P.useItem("lanterne").ok && run0.lanternLeft === g.PA2_RULES.lanternSteps && row2.every(function (k) { return P.isVisible(k, run0); }), "Lanterne allumée : deux rangées de plus, " + run0.lanternLeft + " pas");
+    ok(!P.useItem("lanterne").ok, "une seule mèche");
+    // le gardien : on le saute, on fait le tour
+    var boss = Object.keys(run0.nodes).filter(function (k) { return run0.nodes[k].type === "boss"; })[0];
+    run0.at = boss; run0.status = "pa2-node";
+    var rare0 = g.WarehouseManager.getAmount("cire_sepulcre");
+    ok(P.canPassGuardian() && P.passGuardian().ok && run0.flags.guardianPassed && !run0.flags.bossDown && run0.end && run0.end.dest === "boss", "le gardien dort : on fait le tour, destination atteinte sans combat");
+    ok(g.WarehouseManager.getAmount("cire_sepulcre") > rare0, "Cire de sépulcre à la destination");
+    // La carte vivante : les gisants, Le réveil
+    var map = g.LIVING_MAPS.crypt, bad = [];
+    map.sectors.forEach(function (d) { d.neighbors.forEach(function (nb) { var o = LM.getSectorDef("crypt", nb); if (!o || o.neighbors.indexOf(d.id) < 0) bad.push(d.id + ">" + nb); }); });
+    ok(map.sectors.length === 14 && !bad.length && map.opensAtStoryStep === "crypte_07", "carte de la Crypte : 14 couloirs, voisins réciproques, ouverte à crypte_07");
+    LM.ensureDefaults();
+    var rep = LM.onRunEnd("crypt", "lac", "fail");
+    ok(rep.hostile && LM.isHostile("crypt", "lac") && LM.getState("crypt", "lac").state === "voile", "Le réveil : couloir hostile jusqu'au lendemain, rien n'est repris");
+    var fake = { livingMap: { mapId: "crypt", sectorId: "lac", wake: true }, ring: "sentier" };
+    ok(Math.abs(P.gisantsMult(fake) - 1.3 * 1.25) < 1e-9 && Math.abs(P.ring(fake).diffMult - 1.3 * 1.25) < 1e-9, "gisants réveillés sur un couloir hostile : ×1,3 ×1,25");
+    LM.onRunEnd("crypt", "lac", "success");
+    ok(!LM.isHostile("crypt", "lac") && LM.isLiberated("crypt", "lac") && g.storyCryptSectorsFreed() === 1, "repris : le couloir se recouche, compté pour crypte_07");
+    // L'appel du Nécromancien
+    g.WorldManager.worldIndex = 3;
+    SQ.isStepReached = function (id) { return id === "crypte_08" ? true : savedReached.call(SQ, id); };
+    game = freshCombat("knight");
+    var mk = function (id) { var d = g.ENEMY_DB[id]; return { id: id, name: d.name, isBoss: false, archetype: null, hp: 300, maxHp: 300, stats: d.stats, resists: [], weak: [], goldReward: 20 }; };
+    SL.planNext(1);
+    CE.spawnGroup([mk("necromancer"), mk("spectre")]);
+    // le tirage peut endormir le Nécromancien lui-même : on pose l'état (lui éveillé, le spectre endormi)
+    var fixe = function () {
+      var es = g.CombatActors.aliveEnemies();
+      es.forEach(function (e) { e.asleep = e.id !== "necromancer"; e.wakeIn = e.asleep ? 3 : 0; e.wokenByHero = false; });
+      return es.filter(function (e) { return e.id === "necromancer"; })[0];
+    };
+    var nec = fixe(), dort = SL.sleepers()[0];
+    ok(nec && dort && g.ENEMY_DB.necromancer.support, "le Nécromancien est un soutien, et un mort dort");
+    ok(SL.onEnemyTurn(nec) === false && nec.callArmed, "il annonce l'appel (il frappe quand même ce tour-ci)");
+    ok(SL.onEnemyTurn(nec) === true && !dort.asleep && !dort.wokenByHero && !nec.callArmed, "au tour suivant, il réveille le dormeur : sans or en plus, et ne frappe pas");
+    SQ.isStepReached = function (id) { return id === "crypte_08" ? false : savedReached.call(SQ, id); };
+    SL.planNext(1); CE.spawnGroup([mk("necromancer"), mk("spectre")]);
+    nec = fixe();
+    ok(SL.onEnemyTurn(nec) === false && !nec.callArmed, "avant crypte_08 (son tutoriel), il n'appelle pas");
+    // Palier Rare
+    game.equipped = {};
+    g.EQUIPMENT_SLOTS.forEach(function (sl) { game.equipped[sl] = g.generateEquipmentItem(sl, "rare", 2); });
+    game.forge = { levels: { weapon: 8 } };
+    var st9 = ch.steps.filter(function (x) { return x.id === "crypte_09"; })[0];
+    ok(st9.check(game), "palier : 7 Rares et l'arme à 8, l'étape passe");
+    game.equipped.ring = g.generateEquipmentItem("ring", "green", 2);
+    ok(!st9.check(game) && g.storyPalierCrypteRareMissing(game).length >= 1, "une pièce Inhabituelle : il manque, et on sait où chercher");
+    // Mèche longue et l'obélisque tenu
+    g.MemoryManager.has = function (id) { return id === "meche_longue"; };
+    LM.hasEffect = function (id) { return id === "lanterne_plus"; };
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return");
+    S.startRun("petite_aventure_crypte"); P.addItem("lanterne"); P.depart(); P.useItem("lanterne");
+    ok(game.sceneRun.lanternLeft === g.PA2_RULES.lanternSteps + 3, "Mèche longue (+2) et l'obélisque tenu (+1) : " + game.sceneRun.lanternLeft + " pas");
+    ok(g.TALENT_CAP_BY_ACT.some(function (a) { return a.stepId === "crypte_06" && a.points === 17; }), "plafond de talents de l'acte II : 17");
+  } catch (err) {
+    ok(false, "[242] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.isStepReached = savedReached; g.MemoryManager.has = savedHas; LM.hasEffect = savedEff; g.WorldManager.worldIndex = wiAvant;
+    if (game.sceneRun) game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
   }
 })();
 

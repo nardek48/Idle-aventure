@@ -84,7 +84,8 @@ var TALENT_CAP_BY_ACT = [
   { worldIndex: 2, stepId: "ruines_01", act: "I", points: 11 },       // v3.428.0 : Ruines, acte I — inchangé
   { worldIndex: 2, stepId: "ruines_06", act: "II", points: 12 },      // v3.429.0
   { worldIndex: 2, stepId: "ruines_11", act: "III", points: 13 },     // v3.431.0
-  { worldIndex: 3, stepId: "crypte_01", act: "I", points: 15 }        // v3.453.0 : Crypte, acte I — +2 pour le Commandement (13 → 18 sur la Crypte)
+  { worldIndex: 3, stepId: "crypte_01", act: "I", points: 15 },       // v3.453.0 : Crypte, acte I — +2 pour le Commandement (13 → 18 sur la Crypte)
+  { worldIndex: 3, stepId: "crypte_06", act: "II", points: 17 }        // v3.454.0 : Crypte, acte II
 ];
 
 /* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ».

@@ -33,7 +33,20 @@ var Pa2Run = {
   hasItem: function (id, run) { run = run || this.getRun(); return !!run && run.bag.indexOf(id) >= 0; },
   hasRelic: function (id, run) { run = run || this.getRun(); return !!run && run.relics.indexOf(id) >= 0; },
   hasPact: function (id, run) { run = run || this.getRun(); return !!run && run.pacts.indexOf(id) >= 0; },
-  ring: function (run) { return PA2_RINGS[(run || this.getRun()).ring] || PA2_RINGS.sentier; },
+  ring: function (run) {
+    run = run || this.getRun();
+    var r = PA2_RINGS[run.ring] || PA2_RINGS.sentier, g = this.gisantsMult(run);
+    return g === 1 ? r : { ring: r.ring, label: r.label, diffMult: r.diffMult * g, foeMult: r.foeMult * g, lootMult: r.lootMult };
+  },
+  /* v3.454.0 (Crypte, CR9) : les gisants réveillés au départ, et « Le réveil » (couloir raté du jour)
+     rendent le secteur plus dur. Lu sur la carte vivante (gisants.wakeMult, hostileMult). */
+  gisantsMult: function (run) {
+    var lm = run && run.livingMap, map = lm && window.LIVING_MAPS ? LIVING_MAPS[lm.mapId] : null, g = map && map.gisants;
+    if (!g) return 1;
+    var m = lm.wake ? Number(g.wakeMult || 1) : 1;
+    if (window.LivingMapManager && LivingMapManager.isHostile && LivingMapManager.isHostile(lm.mapId, lm.sectorId)) m *= Number(g.hostileMult || 1);
+    return m;
+  },
   /* v3.386.0 : réglage propre au tracé (tune: { foeMult, lootMult }), pour qu'une carte longue pèse autant qu'une courte. */
   tune: function (run, key) { var m = this.getMap(run), t = m && m.tune; return Number((t && t[key]) || 1); },
   /* Profondeur des jets ramenée à l'échelle de la carte courte (destination en 9) : même courbe sur une carte longue. */
@@ -243,7 +256,7 @@ var Pa2Run = {
       relics: [], flags: {}, reveal: {},
       fioleUsed: false, altarFreeUsed: false,
       refGold: 1, loot: 0, rareFound: 0,
-      livingMap: (opts && opts.livingMap) ? { mapId: opts.livingMap.mapId, sectorId: opts.livingMap.sectorId } : null,
+      livingMap: (opts && opts.livingMap) ? { mapId: opts.livingMap.mapId, sectorId: opts.livingMap.sectorId, wake: !!opts.livingMap.wake } : null,
       livingMapReport: null,
       lastResult: null, end: null
     };
@@ -477,7 +490,9 @@ var Pa2Run = {
     if (this.isDest(n, run) || n.type === "camp" || n.type === "seuil" || n.type === "depart") return true;
     if (key === run.at || this._walked(run, key)) return true;
     if (run.reveal[n.act]) return true;
-    var reach = PA2_RULES.sightRows + (this.hasItem("torche", run) ? 1 : 0);
+    var sight = this.worldRule(run, "sightRows"); // v3.454.0 (Crypte) : l'obscurité
+    var reach = (sight != null ? sight : PA2_RULES.sightRows) + (this.hasItem("torche", run) ? 1 : 0)
+      + (Number(run.lanternLeft || 0) > 0 ? PA2_RULES.lanternRows : 0); // la Lanterne allumée
     return n.row > here.row && n.row <= here.row + reach;
   },
   // isShown(key) : le nœud apparaît sur la carte (V7) — parcouru, repère, ou visible devant soi.
@@ -544,6 +559,7 @@ var Pa2Run = {
     this._prepareNode(run, this.node(key, run));
     run.wallNote = null;
     this._shiftWalls(run); // v3.429.0 (Ruines) : les murs bougent
+    if (Number(run.lanternLeft || 0) > 0) run.lanternLeft -= 1; // v3.454.0 : la mèche brûle à chaque pas
     run.status = PA2_STATUS.node;
     run.lastResult = null;
     this._save();
@@ -670,7 +686,11 @@ var Pa2Run = {
     if (!run || (run.status !== PA2_STATUS.map && run.status !== PA2_STATUS.node) || !it || !(run.stock[itemId] > 0)) {
       return { ok: false, reason: _t("Choix impossible") };
     }
-    if (it.breath) {
+    if (it.light) { // v3.454.0 (Crypte) : allumer la Lanterne ; Mèche longue (Mémoire 14) +2 pas
+      if (Number(run.lanternLeft || 0) > 0) return { ok: false, reason: _t("La Lanterne est déjà allumée.") };
+      run.lanternLeft = PA2_RULES.lanternSteps + ((window.MemoryManager && MemoryManager.has("meche_longue")) ? 2 : 0)
+        + ((window.LivingMapManager && LivingMapManager.hasEffect("lanterne_plus")) ? 1 : 0); // l'obélisque tenu
+    } else if (it.breath) {
       if (run.breath >= 100) return { ok: false, reason: _t("Ton Souffle est déjà plein.") };
       var amt = it.breath;
       if (itemId === "gourde" && window.LivingMapManager && LivingMapManager.hasEffect("gourde_40")) amt = Number(LivingMapManager.getEffectValue("gourdeBreath", 40));
@@ -904,6 +924,22 @@ var Pa2Run = {
     return this._done(run, n, res);
   },
 
+  /* v3.454.0 (Crypte, CR10) : le gardien dort. Faire le tour : la destination est atteinte, sans combat,
+     sans l'or du gardien ni son objet. */
+  canPassGuardian: function () {
+    var n = this._current(["boss"]), run = this.getRun();
+    var g = n && window.PA2_GUARDIAN ? PA2_GUARDIAN[run.worldId] : null;
+    return !!(g && g.sleeps);
+  },
+  passGuardian: function () {
+    if (!this.canPassGuardian()) return { ok: false, reason: _t("Choix impossible") };
+    var run = this.getRun(), n = this._current(["boss"]);
+    run.flags.guardianPassed = true;
+    n.done = true; run.lastResult = { passed: true };
+    this.finish("dest");
+    return { ok: true, reason: null, result: run.lastResult };
+  },
+
   ruse: function () {
     var n = this._current(["combat"]);
     if (!n) return { ok: false, reason: _t("Choix impossible") };
@@ -1129,6 +1165,8 @@ var Pa2Run = {
       var amt = rare ? Number(rare.dest[this.ring(run).ring] || 0) : 0;
       if (window.MemoryManager && MemoryManager.has("recolte")) amt += 1; // Récolte (Q11)
       if (window.MemoryManager && MemoryManager.has(PA2_MEMORY_DEST_RARE[run.worldId])) amt += 1; // v3.453.0 : Pierre de plus, Cire chaude (Mémoire 10, 14)
+      var gis = run.livingMap && run.livingMap.wake && window.LIVING_MAPS && LIVING_MAPS[run.livingMap.mapId] && LIVING_MAPS[run.livingMap.mapId].gisants;
+      if (gis) amt += Number(gis.wakeRare || 0); // v3.454.0 (Crypte) : gisants réveillés, plus de Cire
       var hk = this._hook(run);
       if (hk && hk.destRare && hk.destRare[this.hookBranch(run)]) amt += Number(hk.destRare[this.hookBranch(run)]); // le feu nourri
       end.rare = this._creditRare(run, amt);

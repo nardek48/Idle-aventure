@@ -194,6 +194,7 @@ var ENEMY_DB = {
     name: "Nécromancien",
     asset: "necromancer",
     image: "./images/Enemies/necromancer.jpg",
+    support: true, calls: true, // v3.454.0 (Crypte, acte II) : l'appel — il réveille un dormeur (sleep-system.js)
     resists: ["magic"],
     weak: ["sword", "bow"],
     stats: makeRpgStats(28, 20, 24, 34, 68)

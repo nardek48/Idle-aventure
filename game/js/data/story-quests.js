@@ -105,7 +105,13 @@ var STORY_REWARDS = {
   crypte_02: { gold: 5000 },
   crypte_03: { gold: 5200 },
   crypte_04: { gold: 5400, resources: { cire_sepulcre: 3 } }, // les pains de cire de la pierre plate
-  crypte_05: { gold: 5800 }
+  crypte_05: { gold: 5800 },
+  // v3.454.0 (Crypte, acte II, provisoire : au banc) : une pièce Rare aux étapes 6 à 8, pour le palier de crypte_09
+  crypte_06: { gold: 6000, resources: { cire_sepulcre: 3 }, equipmentRarity: "rare", equipmentCount: 1, equipmentFill: true },
+  crypte_07: { gold: 6200, equipmentRarity: "rare", equipmentCount: 1, equipmentFill: true },
+  crypte_08: { gold: 6400, resources: { cire_sepulcre: 3 }, equipmentRarity: "rare", equipmentCount: 1, equipmentFill: true },
+  crypte_09: { gold: 6600 },
+  crypte_10: { gold: 7200, resources: { cire_sepulcre: 5 } }
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -2533,7 +2539,7 @@ STORY_QUESTS.crypt = {
   title: "Ceux qui sont montés", // provisoire
   subtitle: "Chapitre 4 — Crypte",
   icon: "images/Icons/codex/world_crypt.png",
-  endText: "La suite de l'histoire arrive bientôt…", // v3.452.0 : acte I seul ; l'amorce de la Montagne viendra avec l'acte IV
+  endText: "La suite de l'histoire arrive bientôt…", // v3.454.0 : actes I et II ; l'amorce de la Montagne viendra avec l'acte IV
   steps: [
     /* ---------- Acte I — La descente ---------- */
     /* Étape 1 (doc §3) : le passage entre les mondes, parcours v2 de quatre paliers ; le monde est
@@ -2750,6 +2756,195 @@ STORY_QUESTS.crypt = {
       },
       check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("portent")); },
       progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("portent")) ? "1/1" : "0/1"); }
+    },
+    /* ---------- Acte II — Les Sépulcres (document « Crypte — Acte II » v0.1, validé le 19/10/2026) ---------- */
+    /* Étape 6 (§3) : première Petite Aventure de la Crypte — l'obscurité, la Lanterne, le gardien qui dort. */
+    {
+      id: "crypte_06",
+      title: "La lampe de Sarkel",
+      act: "Acte II — Les Sépulcres",
+      narrative: {
+        objective: "À la Veillée, Sarkel taille une mèche. Il la mesure contre son pouce, la coupe, recommence.",
+        completion: "Au retour, la mèche a fondu jusqu'au fer. Sarkel la remplace sans rien dire. Dans la besace, un pain de cire pris au fond, encore tiède.",
+        dialogue: [
+          { who: "Sarkel", text: "Plus loin que la salle longue, les lampes ne tiennent plus. Trop de couloirs, pas assez d'huile." },
+          { who: "Edda", text: "Alors on y va sans voir ?" },
+          { who: "Sarkel", text: "Tu vois la rangée devant toi. C'est assez pour marcher. Pas pour choisir." },
+          { who: "Sarkel", text: "Une lanterne. Une seule. Elle éclaire loin, pas longtemps." },
+          { who: "Wenna", text: "Et le Veilleur ? Il connaît le chemin, lui." },
+          { who: "Sarkel", text: "Il ne descend pas. Il n'a jamais dit pourquoi. Je n'ai jamais demandé." },
+          { who: "Ysolt", text: "Ne tenez pas la lanterne au-dessus d'eux. Ça les gêne." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Il y en avait un, couché en travers du chemin. On a fait le tour." },
+          { who: "Ysolt", text: "Celui-là, oui. Il a toujours aimé qu'on fasse le tour." }
+        ]
+      },
+      objectiveLabel: "Atteindre une destination en Petite aventure de la Crypte",
+      storyPa: { worldId: "crypt", untilFlag: "cryptPaCompleted" },
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_06,
+      linkTo: { section: "expedition", cardId: "petite_aventure_crypte" },
+      tutorial: {
+        tab: "scene",
+        icon: "images/Icons/scene/items/item_lantern.png",
+        title: "L'obscurité",
+        points: [
+          { icon: "images/Icons/scene/node_unknown.png", text: "Dans la Crypte, la Petite Aventure se fait dans le noir : tu ne vois que la rangée devant toi." },
+          { icon: "images/Icons/scene/items/item_lantern.png", text: "La Lanterne de Sarkel se met dans ta besace sans rien coûter. Allumée, elle montre deux rangées de plus pendant quelques pas." },
+          { icon: "images/Icons/combat_status/asleep.png", text: "Le gardien dort. Fais le tour, ou réveille-le pour son coffre : plus dur, plus riche." },
+          { icon: "images/Icons/resources/cire_sepulcre_icon.png", text: "La Cire de sépulcre se trouve dans les trouvailles et aux destinations. Elle n'est jamais perdue." }
+        ]
+      },
+      check: function () { return storyDesertFlag("cryptPaCompleted"); },
+      progress: function () { return "Petite aventure " + (storyDesertFlag("cryptPaCompleted") ? "1/1" : "0/1"); }
+    },
+    /* Étape 7 (§4) : la carte de la Crypte s'ouvre (opensAtStoryStep) ; les gisants, « Le réveil ». */
+    {
+      id: "crypte_07",
+      title: "Ceux qu'on laisse",
+      act: "Acte II — Les Sépulcres",
+      narrative: {
+        objective: "Edda déplie une feuille neuve. Elle trace la salle longue, les couloirs, la Veillée. Elle n'a rien à raturer.",
+        completion: "Deux couloirs de plus sur la feuille d'Edda. À côté de chacun, un petit trait par dormeur. Elle n'en a effacé aucun.",
+        dialogue: [
+          { who: "Edda", text: "Ici, ce que je dessine reste dessiné. Je n'ai pas l'habitude." },
+          { who: "Ysolt", text: "Dessine aussi où ils dorment. Chaque couloir a les siens." },
+          { who: "Maddoc", text: "On passe à côté, ou on les réveille ?" },
+          { who: "Ysolt", text: "Ça dépend de ce que tu veux rapporter. Et de ce que tu veux laisser derrière toi." }
+        ],
+        completionDialogue: [
+          { who: "Edda", text: "Celui-là, on l'a réveillé. Je le barre ?" },
+          { who: "Ysolt", text: "Non. Il s'est recouché. Ils finissent toujours par se recoucher." }
+        ]
+      },
+      objectiveLabel: "Libérer 2 couloirs de la carte de la Crypte",
+      storyPa: { worldId: "crypt" },
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_07,
+      linkTo: { section: "map", cardId: "livingmap_crypt" },
+      tutorial: {
+        tab: "map",
+        icon: "images/Icons/resources/cire_sepulcre_icon.png",
+        title: "Les gisants",
+        points: [
+          { icon: "images/Icons/scene/node_obstacle.png", text: "La carte de la Crypte fonctionne comme celle des Ruines : tu libères un couloir en terminant sa Petite Aventure." },
+          { icon: "images/Icons/combat_status/asleep.png", text: "Chaque couloir a ses gisants. Avant de partir, tu choisis : les laisser (plus facile, rapporte moins) ou les réveiller (plus dur, plus de Cire de sépulcre)." },
+          { icon: "images/Icons/scene/node_unknown.png", text: "Un échec réveille le couloir : c'est Le réveil. Il reste hostile, et plus dur, jusqu'au lendemain." },
+          { icon: "images/Icons/resources/cire_sepulcre_icon.png", text: "Le Marché de la Crypte est sur la carte, à côté de la Veillée." }
+        ]
+      },
+      check: function () { return storyCryptSectorsFreed() >= 2; },
+      progress: function () { return "Couloirs libérés " + Math.min(2, storyCryptSectorsFreed()) + "/2"; }
+    },
+    /* Étape 8 (§5) : l'appel du Nécromancien (SleepSystem.onCall, actif dès cette étape) ; réglage « Cible ». */
+    {
+      id: "crypte_08",
+      title: "Celui qui appelle",
+      act: "Acte II — Les Sépulcres",
+      narrative: {
+        objective: "Dans la Chambre funéraire, une voix. Pas un cri : un nom, dit doucement, puis un autre. Dans une alcôve, quelqu'un se retourne.",
+        completion: "Le dernier nécromancien se tait au milieu d'un nom. Dans les alcôves, ceux qu'il appelait se recouchent, un par un.",
+        dialogue: [
+          { who: "Wenna", text: "Il les appelle." },
+          { who: "Ysolt", text: "Il les réveille. Il n'a pas le droit." },
+          { who: "Maddoc", text: "Le droit, je ne sais pas. S'il les réveille, c'est lui d'abord." },
+          { who: "Edda", text: "Comme le Bâtisseur." },
+          { who: "Maddoc", text: "Comme le Bâtisseur." }
+        ],
+        completionDialogue: [
+          { who: "Ysolt", text: "Il ne savait pas leurs noms. Il les inventait." },
+          { who: "Wenna", text: "Et ça marchait ?" },
+          { who: "Ysolt", text: "Assez." }
+        ]
+      },
+      objectiveLabel: "Terminer « Celui qui appelle » : 5 rencontres à la Chambre funéraire",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_08,
+      linkTo: { section: "adventure", cardId: "adv_aq_crypte_appel" },
+      tutorial: {
+        tab: "combat",
+        icon: "images/Icons/combat_status/calling.png",
+        title: "Celui qui appelle",
+        points: [
+          { icon: "images/Icons/combat_status/calling.png", text: "Le Nécromancien annonce un appel, puis réveille un dormeur au tour suivant. Celui-là ne rapporte pas d'or en plus : ce n'est pas toi qui l'as réveillé." },
+          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Le tuer en premier coupe l'appel. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
+          { icon: "images/Icons/camp/campfire.png", text: "Ysolt retarde un réveil, Wenna soigne, Maddoc frappe de loin, Edda achève. Deux sur quatre : choisis selon ce qui t'attend." }
+        ]
+      },
+      check: function (game) { return storyAdvDone(game, "aq_crypte_appel"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_crypte_appel", "rencontres_appel", 5) + "/5"; }
+    },
+    /* Étape 9 (§6) : palier Rare de la Crypte (CR7) — 7 emplacements Rares ou mieux (l'Épique compte), arme à 8. */
+    {
+      id: "crypte_09",
+      title: "Les alcôves du fond",
+      act: "Acte II — Les Sépulcres",
+      narrative: {
+        objective: "Au fond de la salle longue, une grille. Derrière, des alcôves plus hautes, plus larges. Ceux qui y dorment portent encore leur armure.",
+        completion: "Tu passes la grille. Dans la plus haute alcôve, une armure vide, posée comme si on l'avait ôtée pour dormir. À côté, un carquois. Vide aussi.",
+        dialogue: [
+          { who: "Maddoc", text: "Si l'un d'eux se lève, on ne le tiendra pas avec ce qu'on porte." },
+          { who: "Ysolt", text: "Ils se lèvent toujours, un jour." },
+          { who: "Sarkel", text: "Alors équipe-toi avant ce jour-là. Ici, je ne vends rien. En haut, si." }
+        ],
+        completionDialogue: [
+          { who: "Ysolt", text: "C'était la mienne. Je dormais là." },
+          { who: "Wenna", text: "Tu es partie ?" },
+          { who: "Ysolt", text: "Je me suis réveillée. Ce n'est pas pareil." }
+        ]
+      },
+      objectiveLabel: "7 emplacements Rares ou mieux sur 7, arme reforgée à 8",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_09,
+      linkTo: { tab: "equip" },
+      tutorial: {
+        tab: "equip",
+        icon: "images/Icons/equipment_slots/slot_weapon.png",
+        title: "Le palier Rare",
+        points: [
+          { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller plus loin dans la Crypte, tes sept emplacements doivent être au moins Rares. L'arme du Cœur, Épique, compte." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "Les étapes de l'acte t'en ont donné trois. Les autres : l'échoppe, le Sanctuaire scellé, les élites des Ruines." },
+          { icon: "images/Icons/resources/cle_de_voute_icon.png", text: "L'arme se reforge jusqu'au niveau 8 à la Forge 4, avec des Clés de voûte." }
+        ]
+      },
+      check: function (game) {
+        var p = storyPalierRuinesRare(game), P = STORY_PALIER_CRYPTE_RARE;
+        return p.pieces >= P.pieces && p.arme >= P.reforge;
+      },
+      progress: function (game) {
+        var p = storyPalierRuinesRare(game), P = STORY_PALIER_CRYPTE_RARE;
+        return "Rares " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
+      },
+      missing: function (game) { return storyPalierCrypteRareMissing(game); }
+    },
+    /* Étape 10 (§7) : fin de l'acte II — la chaîne, la porte basse ; quelque chose bat derrière. */
+    {
+      id: "crypte_10",
+      title: "Ceux qui sont tenus",
+      act: "Acte II — Les Sépulcres",
+      narrative: {
+        objective: "Derrière la Chambre funéraire, un couloir que les lampes n'éclairent pas. Au sol, des maillons. Une chaîne court d'alcôve en alcôve.",
+        completion: "Au bout de la chaîne, une porte basse, fermée de l'intérieur. Derrière, quelque chose bat. Lentement. Ysolt pose la main sur la porte, puis la retire.",
+        dialogue: [
+          { who: "Edda", text: "Elle n'était pas là hier." },
+          { who: "Ysolt", text: "Si. On ne la voit que quand on cherche la sortie." },
+          { who: "Wenna", text: "Ils sont attachés ?" },
+          { who: "Ysolt", text: "Pas eux. Leur sommeil." }
+        ],
+        completionDialogue: [
+          { who: "Ysolt", text: "Pas encore." },
+          { who: "Sarkel", text: "Je connais ce bruit." },
+          { who: "Wenna", text: "Tu es déjà venu jusqu'ici ?" },
+          { who: "Sarkel", text: "Une fois. Je suis remonté. Ce que j'ai vu, je ne l'ai pas vendu." }
+        ]
+      },
+      objectiveLabel: "Terminer « Ceux qui sont tenus » : 4 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_10,
+      linkTo: { section: "adventure", cardId: "adv_aq_crypte_chaines" },
+      check: function (game) { return storyAdvDone(game, "aq_crypte_chaines"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_crypte_chaines", "rencontres_chaines", 4) + "/4"; }
     }
   ]
 };
@@ -2893,6 +3088,31 @@ function storySanctuaireCamp(game) {
 }
 
 /* v3.429.0 (Ruines, acte II) — quartiers de la carte des Ruines libérés au moins une fois. */
+/* v3.454.0 (Crypte, crypte_07) — couloirs de la carte de la Crypte libérés au moins une fois. */
+function storyCryptSectorsFreed() {
+  var lm = window.LivingMapManager, map = lm && lm.getMap("crypt");
+  if (!map) return 0;
+  return map.sectors.filter(function (d) { var st = lm.getState("crypt", d.id); return !!(st && st.liberatedCount > 0); }).length;
+}
+
+/* v3.454.0 (Crypte, crypte_09) — palier Rare de la Crypte (CR7, décision Seb du 15/10 : « 7 Rares ou mieux »,
+   l'Épique compte). Lecture par storyPalierRuinesRare (pièces au moins Rares, reforge de l'arme). Au banc. */
+var STORY_PALIER_CRYPTE_RARE = { pieces: 7, reforge: 8 };
+function storyPalierCrypteRareMissing(game) {
+  var p = storyPalierRuinesRare(game), P = STORY_PALIER_CRYPTE_RARE, out = [], F = window.ForgeManager;
+  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Rares ou mieux : {a} / {b}", { a: p.pieces, b: P.pieces }),
+    where: _t("Le Sanctuaire scellé, l'échoppe de la Halle marchande et les élites des Ruines.") });
+  if (p.arme < P.reforge && F && typeof F.getCost === "function") {
+    var c = F.getCost("weapon"), lab = _t("Reforge {n} de l'arme", { n: p.arme + 1 });
+    if (!c) out.push({ text: lab, where: _t("Il faut d'abord la Forge {n}.", { n: p.forge + 1 }) });
+    else {
+      var rl = storyMissingCostLines(c, lab);
+      out = out.concat(rl.length ? rl : [{ text: lab, where: _t("Tout est là : à la Forge, Établi.") }]);
+    }
+  }
+  return out;
+}
+
 function storyRuinsSectorsFreed() {
   var lm = window.LivingMapManager, map = lm && lm.getMap("ruins");
   if (!map) return 0;
@@ -2926,6 +3146,9 @@ window.storyPorteSanctuaire = storyPorteSanctuaire;
 window.storyCoeurVoisins = storyCoeurVoisins;
 window.storyPalierRuinesRare = storyPalierRuinesRare;
 window.STORY_PALIER_RUINES_RARE = STORY_PALIER_RUINES_RARE;
+window.STORY_PALIER_CRYPTE_RARE = STORY_PALIER_CRYPTE_RARE;
+window.storyPalierCrypteRareMissing = storyPalierCrypteRareMissing;
+window.storyCryptSectorsFreed = storyCryptSectorsFreed;
 window.storyMissingCostLines = storyMissingCostLines;
 window.storyPalierRuinesRareMissing = storyPalierRuinesRareMissing;
 window.STORY_SALLE_TEXTS = STORY_SALLE_TEXTS;

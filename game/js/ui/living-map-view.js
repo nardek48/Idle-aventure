@@ -118,11 +118,11 @@ function refreshLivingMap() {
 }
 window.refreshLivingMap = refreshLivingMap;
 
-function startLivingMapSector(id) {
+function startLivingMapSector(id, wake) { // v3.454.0 : wake — réveiller les gisants (Crypte)
   if (!window.LivingMapManager || !livingMapOpenId) return;
   var mapId = livingMapOpenId;
   var go = function () {
-    var r = LivingMapManager.start(mapId, id);
+    var r = LivingMapManager.start(mapId, id, { wake: !!wake });
     if (!r.ok) { if (typeof showToast === "function") showToast(r.reason, 1800); refreshLivingMap(); }
   };
   // v3.440.0 : une élite de carte est une sortie de combat, préparée ; une expédition a sa propre préparation
@@ -655,7 +655,13 @@ function buildLivingMapPanelHTML(mapId, running) {
       h += ProvisionsManager.buildLineHTML("mapelite", { mapId: mapId, sectorId: d.id, worldId: lmap ? lmap.worldId : "forest" });
     }
     // v3.378.0 : traits connus de l'élite (mode Grimoire, élite déjà vaincue)
-    if (cs.ok) h += '<button class="settings-btn primary" type="button" onclick="startLivingMapSector(\'' + d.id + '\')">' + verb + '</button>';
+    var gis = !isElite && LM.getMap(mapId) && LM.getMap(mapId).gisants; // v3.454.0 (Crypte) : les gisants
+    if (gis && LM.isHostile(mapId, d.id)) h += '<p class="lm-panel-wall">' + esc(_t("Le réveil : ce couloir reste hostile jusqu'à demain. Plus dur, pas plus riche.")) + '</p>';
+    if (cs.ok && gis) {
+      h += '<button class="settings-btn primary" type="button" onclick="startLivingMapSector(\'' + d.id + '\', false)">' + esc(_t("Laisser dormir")) + '</button>';
+      h += '<button class="settings-btn" type="button" onclick="startLivingMapSector(\'' + d.id + '\', true)">' + esc(_t("Réveiller les gisants")) + '</button>';
+      h += '<p class="lm-panel-note">' + esc(_t("Réveillés : plus dur, +{n} {x} à la destination.", { n: gis.wakeRare, x: _td(LM.getRewardResourceName(mapId)) })) + '</p>';
+    } else if (cs.ok) h += '<button class="settings-btn primary" type="button" onclick="startLivingMapSector(\'' + d.id + '\')">' + verb + '</button>';
     else {
       h += '<p class="lm-panel-wall">' + esc(_td(cs.reason)) + '</p>';
       // v3.260.0 : ressource d'entrée manquante -> raccourci vers les Ateliers plutôt qu'un bouton mort

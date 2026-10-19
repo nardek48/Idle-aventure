@@ -131,6 +131,7 @@ var LivingMapManager = {
         if (this.STATES.indexOf(s.state) < 0) s.state = "voile";
         s.firstRewardClaimed = !!s.firstRewardClaimed;
         s.liberatedCount = Math.max(0, Math.floor(Number(s.liberatedCount || 0)));
+        if (typeof s.hostileDay !== "string") delete s.hostileDay; // v3.454.0 (Crypte) : « Le réveil » du jour
         /* v3.258.0 (C-5) : compteur du jour d'une élite répétable, sur son secteur seulement. */
         var c = map.sectors[j].content;
         if (c && c.type === "elite" && c.repeatable) {
@@ -296,6 +297,12 @@ var LivingMapManager = {
     return lm.chantier;
   },
 
+  /* v3.454.0 (Crypte, CR9) — « Le réveil » : un couloir raté reste hostile (plus dur) jusqu'au lendemain. */
+  isHostile: function (mapId, sectorId) {
+    var map = this.getMap(mapId), s = map && map.gisants ? this.getState(mapId, sectorId) : null;
+    return !!(s && s.hostileDay && s.hostileDay === this._todayKey());
+  },
+
   isChantier: function (mapId, sectorId) {
     var c = this.getChantier(mapId);
     return !!(c && c.sectorId === sectorId && !c.done);
@@ -455,12 +462,14 @@ var LivingMapManager = {
   /* start(mapId, sectorId) -> { ok, reason }. Expédition : SceneRunManager.startRun avec la
      cible de carte (l'anneau fixe l'intensité, les pools du secteur surchargent le gabarit,
      SceneRunManager rappelle onRunEnd à la fin). Élite : combat direct, voir startEliteFight. */
-  start: function (mapId, sectorId) {
+  /* v3.454.0 (Crypte) : opts.wake — réveiller les gisants du couloir (carte à gisants seulement). */
+  start: function (mapId, sectorId, opts) {
     var cs = this.canStart(mapId, sectorId);
     if (!cs.ok) return cs;
     if (cs.content && cs.content.type === "elite") return this.startEliteFight(mapId, sectorId, cs.content);
     if (!window.SceneRunManager || typeof SceneRunManager.startRun !== "function") return { ok: false, reason: _t("Expéditions indisponibles") };
-    var r = SceneRunManager.startRun(cs.content.templateId, { livingMap: { mapId: mapId, sectorId: sectorId } });
+    var map = this.getMap(mapId), wake = !!(opts && opts.wake && map && map.gisants);
+    var r = SceneRunManager.startRun(cs.content.templateId, { livingMap: { mapId: mapId, sectorId: sectorId, wake: wake } });
     if (!r.ok) return { ok: false, reason: r.reason };
     if (typeof switchTab === "function") switchTab("scene");
     return { ok: true, reason: "" };
@@ -610,6 +619,7 @@ var LivingMapManager = {
     var s = this.getState(mapId, sectorId);
 
     if (result === "success") {
+      delete s.hostileDay; // v3.454.0 : le couloir repris se recouche
       var chantierDuJour = this.isChantier(mapId, sectorId); // v3.429.0 : lu avant la libération
       s.state = "libere";
       s.liberatedCount += 1;
@@ -639,6 +649,14 @@ var LivingMapManager = {
         report.firstReward = seve;
         if (seve > 0) report.message += " +" + seve + " " + _td(this.getRewardResourceName(mapId)) + ".";
       }
+      if (typeof addLog === "function") addLog(_t("Carte : {x}", { x: report.message }), "event");
+      return report;
+    }
+
+    if (result === "fail" && this.getMap(mapId).noRegress) { // v3.454.0 (Crypte) : Le réveil, rien n'est repris
+      s.hostileDay = this._todayKey();
+      report.hostile = true;
+      report.message = _t("Échec devant {x}.", { x: _td(def.name) }) + " " + _t("Le réveil : {x} reste hostile jusqu'à demain. Rien n'est perdu.", { x: _td(def.name) });
       if (typeof addLog === "function") addLog(_t("Carte : {x}", { x: report.message }), "event");
       return report;
     }

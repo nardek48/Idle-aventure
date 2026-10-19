@@ -364,6 +364,67 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.454.0 (Crypte, acte II étape 8) — « Celui qui appelle » : cinq rencontres à la Chambre funéraire,
+     des nécromanciens escortés (l'appel : SleepSystem.onCall). Cible : aucun mort, 25 à 35 % des PV
+     restants, combats de 3 à 5 rounds. Multiplicateurs au banc. */
+  aq_crypte_appel: {
+    id: "aq_crypte_appel",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_mid",
+    category: "side",
+    worldId: "crypt",
+    adventureIndex: 1,
+    encounters: [
+      { group: ["necromancer", "spectre", "wraith"], groupHpMult: 0.35, sleepers: 1 },
+      { group: ["necromancer", "deadknight"], groupHpMult: 0.55, sleepers: 1 },
+      { group: ["wraith", "necromancer", "spectre"], groupHpMult: 0.35, sleepers: 2 },
+      { group: ["deadknight", "wraith"], groupHpMult: 0.55, sleepers: 1 },
+      { group: ["necromancer", "necromancer", "deadknight"], groupHpMult: 0.35, sleepers: 1 }
+    ],
+    // banc (crypte-acte2-bench, 20 runs, sans potion, laisser dormir) : 100 % de réussite, 3,7 à 5,2 rounds,
+    // 43 à 70 % des PV restants. Plus bas, le Chevalier meurt sans potion (même limite qu'à l'acte I).
+    encounterHpMult: 1.6,
+    enemyPowerMult: 4.0,
+    name: "Celui qui appelle",
+    story: "Dans la Chambre funéraire, une voix dit des noms. Dans les alcôves, on se retourne.",
+    icon: "./images/Icons/quest_icons/exploration/exploration4.png",
+    steps: [
+      { id: "rencontres_appel", type: "encounter", worldId: "crypt", target: 5, desc: "Vaincre {target} rencontres à la Chambre funéraire" }
+    ],
+    reward: {}
+  },
+
+  /* v3.454.0 (Crypte, acte II étape 10) — « Ceux qui sont tenus » : quatre rencontres, au profil du palier
+     Rare ; deux dormeurs dans la plupart des groupes. Même cible. Multiplicateurs au banc. */
+  aq_crypte_chaines: {
+    id: "aq_crypte_chaines",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_mid",
+    category: "side",
+    worldId: "crypt",
+    adventureIndex: 1,
+    encounters: [
+      { group: ["necromancer", "deadknight", "spectre"], groupHpMult: 0.35, sleepers: 2 },
+      { group: ["wraith", "wraith", "necromancer"], groupHpMult: 0.35, sleepers: 2 },
+      { group: ["deadknight", "deadknight"], groupHpMult: 0.55, sleepers: 1 },
+      { group: ["necromancer", "deadknight", "wraith"], groupHpMult: 0.35, sleepers: 2 }
+    ],
+    // banc (profil du palier Rare, 20 runs) : 95 à 100 % de réussite, 3,7 à 5,1 rounds, 54 à 72 % des PV restants.
+    encounterHpMult: 1.8,
+    enemyPowerMult: 4.4,
+    name: "Ceux qui sont tenus",
+    story: "Une chaîne court d'alcôve en alcôve. Au bout, une porte basse, fermée de l'intérieur.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    steps: [
+      { id: "rencontres_chaines", type: "encounter", worldId: "crypt", target: 4, desc: "Vaincre {target} rencontres" }
+    ],
+    reward: {}
+  },
+
   /* v3.428.0 (Ruines, acte I étape 2) — « Ce qui se relève » : cinq rencontres aux Couloirs
      effondrés, la leçon de la relève (systems/rise-system.js). Cible du banc (Seb, 03/10/2026) :
      aucun mort, 30 à 45 % de PV perdus. Multiplicateurs provisoires, au banc (sim/ruines-bench.js). */

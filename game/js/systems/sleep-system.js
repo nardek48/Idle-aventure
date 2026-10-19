@@ -80,7 +80,7 @@ var SleepSystem = {
   /* Garde de enemyTurn : true si l'ennemi dort (il ne joue pas). Le compte à rebours du réveil
      seul descend à son tour ; à zéro, il se lève, et joue au round suivant. */
   onEnemyTurn: function (e) {
-    if (!this.isAsleep(e)) return false;
+    if (!this.isAsleep(e)) return this.onCall(e);
     e.wakeIn = Number(e.wakeIn || 0) - 1;
     if (e.wakeIn <= 0 && this.has("personne_ne_se_leve") && !game._sleepRelapseUsed) { // v3.453.0 : ligne Garder du jalon 16
       game._sleepRelapseUsed = true;
@@ -88,6 +88,29 @@ var SleepSystem = {
       addLog("🌫️ " + _t("{x} allait se lever. Il se rendort.", { x: _td(e.name) }), "event");
     }
     if (e.wakeIn <= 0) this.wake(e, false);
+    return true;
+  },
+
+  /* v3.454.0 (Crypte, acte II) — L'APPEL : un ennemi qui porte `calls` (le Nécromancien) annonce un appel
+     s'il reste un dormeur, puis, à son tour suivant, réveille celui qui allait se lever le premier, sans
+     bonus d'or ; ce tour-là il ne frappe pas. Le tuer avant coupe l'appel. Renvoie true s'il a appelé. */
+  callerDef: function (e) { return (e && window.ENEMY_DB && ENEMY_DB[e.id]) || null; },
+  onCall: function (e) {
+    var def = this.callerDef(e);
+    if (!def || !def.calls || !e || Number(e.hp || 0) <= 0 || e.downed) return false;
+    // l'appel s'apprend à crypte_08 (tutoriel) : avant, le Nécromancien des Sépulcres ne réveille personne
+    if (!window.StoryQuestManager || !StoryQuestManager.isStepReached("crypte_08")) return false;
+    var sl = this.sleepers();
+    if (!sl.length) { e.callArmed = false; return false; }
+    if (!e.callArmed) {
+      e.callArmed = true;
+      addLog("🗣️ " + _t("{x} commence à appeler.", { x: _td(e.name) }), "event");
+      return false; // il frappe quand même ce tour-ci
+    }
+    e.callArmed = false;
+    sl.sort(function (a, b) { return Number(a.wakeIn || 0) - Number(b.wakeIn || 0); });
+    addLog("🗣️ " + _t("{x} dit un nom.", { x: _td(e.name) }), "event");
+    this.wake(sl[0], false);
     return true;
   },
 

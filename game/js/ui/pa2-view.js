@@ -101,6 +101,11 @@ function pa2Words(run) {
     koHalf: _t("Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste dans le sable."),
     koAll: _t("Le silence, d'un coup. Puis des voix, des mains. Tout ce que tu portais reste dans le sable."),
     take: _t("Fouiller les tentes"), takeIcon: null };
+  if (w === "crypt") return { // v3.454.0
+    enter: _t("Descendre dans le noir"), listen: _t("Écouter la Crypte"), home: _t("Tu as choisi de remonter avant que la mèche ne s'éteigne. La Crypte garde ses dormeurs. Tu gardes ton butin."),
+    koHalf: _t("Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste dans le noir."),
+    koAll: _t("Le silence, d'un coup. Puis des voix, des mains. Tout ce que tu portais reste dans le noir."),
+    take: _t("S'approcher de l'autel"), takeIcon: null };
   if (w === "ruins") return {
     enter: _t("Entrer dans les ruines"), listen: _t("Écouter les ruines"), home: _t("Tu as choisi de rentrer avant la nuit profonde. Les ruines gardent leurs secrets. Tu gardes ton butin."),
     koHalf: _t("Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste dans les ruines."),
@@ -426,6 +431,9 @@ function pa2HudHTML(run) {
     if (run.stock[id] > 0) chips += '<button type="button" class="pa2-chip" onclick="pa2Use(\'' + id + '\')" aria-label="' + esc(_t("Utiliser : {n}", { n: pa2ItemName(id) })) + '">' + pa2Img(PA2_ITEMS[id].icon) + '×' + run.stock[id] + '</button>';
   });
   if (run.stock.corde > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("corde")) + '">' + pa2Img(PA2_ITEMS.corde.icon) + '×' + run.stock.corde + '</span>';
+  // v3.454.0 (Crypte) : la Lanterne, à allumer ; allumée, le nombre de pas qu'il lui reste
+  if (Number(run.lanternLeft || 0) > 0) chips += '<span class="pa2-chip is-lit" title="' + esc(pa2ItemName("lanterne")) + '">' + pa2Img(PA2_ITEMS.lanterne.icon) + esc(_tn(run.lanternLeft, "{n} pas", "{n} pas")) + '</span>';
+  else if (run.stock.lanterne > 0) chips += '<button type="button" class="pa2-chip" onclick="pa2Use(\'lanterne\')" aria-label="' + esc(_t("Allumer la Lanterne")) + '">' + pa2Img(PA2_ITEMS.lanterne.icon) + '×' + run.stock.lanterne + '</button>';
   var rel = run.relics.map(function (id) {
     var r = PA2_RELICS[id];
     return '<button type="button" class="pa2-chip is-relic is-' + r.rar + '" onclick="pa2RelicInfo(\'' + id + '\')" aria-label="' + esc(_td(r.name)) + '">' + pa2Img(r.icon) + '</button>';
@@ -638,6 +646,7 @@ function pa2Use(id) {
   if (run.breath > before.breath) pa2Float("+" + pa2Num(run.breath - before.breath) + " " + _t("Souffle"), "breath");
   pa2RefreshHud();
   if (pa2View.sheet && pa2View.sheet.step === "intro") pa2RenderSheet();
+  if (PA2_ITEMS[id] && PA2_ITEMS[id].light) pa2Rerender(); // v3.454.0 : la Lanterne montre de nouvelles rangées
 }
 function pa2RelicInfo(id) {
   var r = PA2_RELICS[id];
@@ -809,6 +818,10 @@ function pa2SheetBody(run, n, st) {
           h += pa2ApproachButton("tenir", sur, loss, true);
         } else {
           ["charger", "tenir"].forEach(function (id) { h += pa2ApproachButton(id, pv[id], pv[id].hpLoss, false); });
+          if (boss && Pa2Run.canPassGuardian()) { // v3.454.0 (Crypte) : le gardien dort
+            h += '<button type="button" class="pa2-choice" onclick="pa2PassGuardian()">' + pa2Img(PA2_ICONS.ruse) + '<span class="pa2-t">' + esc(_t("Faire le tour")) + '</span>' +
+              '<span class="pa2-s">' + esc(_t("Il dort. Tu atteins la destination sans combat, mais son coffre reste sous lui.")) + '</span></button>';
+          }
           if (!boss) {
             h += '<button type="button" class="pa2-choice" onclick="pa2Ruse()">' + pa2Img(PA2_ICONS.ruse) + '<span class="pa2-t">' + esc(_t("Ruser")) + '</span>' + pa2OddsHTML(pv.ruse.cran) +
               '<span class="pa2-s">' + pa2WhyHTML(pv.ruse, run) + '. ' + esc(_t("Réussi : pas de combat, un peu de butin. Raté : il frappe le premier.")) + '</span></button>';
@@ -1142,6 +1155,9 @@ function pa2Ruse() {
   pa2RenderSheet();
   pa2RollDie(r.result.roll, function () { pa2Reveal(Pa2Run.getRun() || run); });
 }
+function pa2PassGuardian() { // v3.454.0 (Crypte)
+  if (pa2Quick(function () { return Pa2Run.passGuardian(); })) pa2CloseSheet();
+}
 function pa2Flee() {
   var r = Pa2Run.flee();
   if (pa2Fail(r)) return;
@@ -1221,6 +1237,8 @@ function buildPa2EndHTML(run) {
   } else if (e.how === "abandon") {
     title = _t("Tu fais demi-tour");
     text = _t("Tu rentres sans finir. Une part du butin reste en route.");
+  } else if (e.dest === "boss" && run.flags.guardianPassed) { // v3.454.0 (Crypte) : on a fait le tour
+    icon = PA2_ICONS.boss; title = _t("{n} dort encore", { n: _td(dests.boss.name) }); text = _td(dests.boss.pass || "");
   } else if (e.dest === "boss") {
     icon = PA2_ICONS.boss; title = _t("{n} est tombé", { n: _td(dests.boss.name) }); text = _td(dests.boss.win);
   } else if (e.dest === "clairiere") {
@@ -1313,6 +1331,7 @@ window.pa2ToggleLegend = pa2ToggleLegend;
 window.pa2Obstacle = pa2Obstacle;
 window.pa2Brute = pa2Brute;
 window.pa2Fight = pa2Fight;
+window.pa2PassGuardian = pa2PassGuardian;
 window.pa2Surprised = pa2Surprised;
 window.pa2Ruse = pa2Ruse;
 window.pa2Flee = pa2Flee;

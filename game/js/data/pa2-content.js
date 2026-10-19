@@ -32,6 +32,10 @@ var PA2_ITEMS = {
   craie: { id: "craie", name: "Craie", size: 1, uses: 2, worlds: ["ruins"],
     icon: "images/Icons/scene/items/item_chalk.png",
     pro: "Deux traits : un mur qui bougerait près de toi reste en place.", con: "Ne sert qu'aux Ruines." },
+  // v3.454.0 (Crypte, CR10) : la Lanterne de Sarkel, gratuite. Allumée, elle éclaire deux rangées de plus quelques pas.
+  lanterne: { id: "lanterne", name: "Lanterne de Sarkel", size: 1, uses: 1, worlds: ["crypt"], light: true,
+    icon: "images/Icons/scene/items/item_lantern.png",
+    pro: "Allumée, elle montre deux rangées de plus pendant quelques pas.", con: "Une seule mèche." },
   corde: { id: "corde", name: "Corde", size: 1, uses: 1,
     icon: "images/Icons/scene/rope.png",
     pro: "Réussite assurée sur un obstacle, voie précision.", con: "Une seule fois." },
@@ -56,7 +60,7 @@ var PA2_ITEMS = {
     pro: "Toute la carte est visible, et les sources rendent +10.",
     lockedHint: "Coffre d'expédition : atteindre la Clairière aux lanternes." }
 };
-var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "outre", "craie", "corde", "torche", "armure", "carte", "fiole", "bois", "veilleurs"];
+var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "outre", "craie", "lanterne", "corde", "torche", "armure", "carte", "fiole", "bois", "veilleurs"];
 
 /* Pactes (V14, Q6) : malus choisis contre du butin final. */
 var PA2_PACTS = {
@@ -121,7 +125,8 @@ var PA2_LEVEL_BANDS = [
   { minLevel: 11, worldId: "desert", adventureIndex: 1, obstacleScale: 2.7, heroRef: "desert12" },
   // v3.429.0 (Ruines) : tranche PLANCHER de la carte des Ruines seulement (levelBand) — minLevel hors
   // d'atteinte pour ne pas changer les Petites Aventures de la Forêt et du Désert d'un héros avancé
-  { minLevel: 99, worldId: "ruins", adventureIndex: 0, obstacleScale: 3.3, heroRef: "joueurDesert2" }
+  { minLevel: 99, worldId: "ruins", adventureIndex: 0, obstacleScale: 3.3, heroRef: "joueurDesert2" },
+  { minLevel: 99, worldId: "crypt", adventureIndex: 0, obstacleScale: 3.9, heroRef: "joueurRuines" } // v3.454.0 (Crypte) : plancher de la carte, au banc
 ];
 
 /* v3.423.0 (chantier Difficulté, A, décision Seb) : la tranche donne les ennemis et les obstacles
@@ -138,16 +143,18 @@ var PA2_HERO_SCALING = { exp: 0.75, margin: 1.1, cap: 3, obstacleExp: 0.6 };
 var PA2_OBSTACLES = {
   forest: ["eboulis", "gouffre", "porte_scellee", "paroi", "riviere", "racines"],
   desert: ["sables_mouvants", "dune", "dalle_scellee", "puits_effondre", "vent_de_face", "dalles_ensablees"], // v3.387.0
-  ruins: ["route_de_pierre", "rue_qui_tourne", "mur_neuf", "escalier_sans_fin", "dalle_qui_glisse"] // v3.429.0
+  ruins: ["route_de_pierre", "rue_qui_tourne", "mur_neuf", "escalier_sans_fin", "dalle_qui_glisse"], // v3.429.0
+  crypt: ["allee_des_gisants", "grille_basse", "couloir_noir", "cire_au_sol", "dalle_qui_glisse"] // v3.454.0
 };
-var PA2_OBSTACLE_TERTRE = { baseDifficulty: 7, gabaritId: "porte_scellee", byWorld: { desert: "dalle_scellee", ruins: "porte_qui_attend" } };
+var PA2_OBSTACLE_TERTRE = { baseDifficulty: 7, gabaritId: "porte_scellee", byWorld: { desert: "dalle_scellee", ruins: "porte_qui_attend", crypt: "porte_basse" } };
 
 /* Gardien de la destination « combat » (v3.383.0, PA2-3) : un ennemi d'acte III renforcé,
    indexé sur la tranche de niveau comme les autres. Multiplicateurs calés au banc. */
 var PA2_GUARDIAN = {
   forest: { foe: "foresttroll", hpMult: 5, powMult: 2.2 },
   desert: { foe: "sandworm", hpMult: 4.25, powMult: 1.9 }, // v3.387.0 (F4) : le Ver du plateau, adouci de 15 %
-  ruins: { foe: "skeleton", hpMult: 6.4, powMult: 1.9 }    // v3.429.0 : le gardien se relève une fois (PV ×1,5, combat par approche)
+  ruins: { foe: "skeleton", hpMult: 6.4, powMult: 1.9 },   // v3.429.0 : le gardien se relève une fois (PV ×1,5, combat par approche)
+  crypt: { foe: "deadknight", hpMult: 4.3, powMult: 1.9, sleeps: true } // v3.454.0 (CR10) : il dort ; on fait le tour ou on le réveille (au banc)
 };
 
 /* Approches de combat (V17, Q2). dmg : dégâts reçus ; loot : or gagné. Ruser = jet de précision. */
@@ -174,11 +181,11 @@ var PA2_GOLD = {
 var PA2_RARE = {
   forest: { resourceId: "seve_aeswyn", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } },
   desert: { resourceId: "verre_des_dunes", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }, // v3.387.0
-  ruins: { resourceId: "pierre_errante", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } } // v3.429.0
+  ruins: { resourceId: "pierre_errante", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }, // v3.429.0
+  crypt: { resourceId: "cire_sepulcre", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }   // v3.454.0
 };
 
-/* v3.453.0 : choix de Mémoire qui ajoutent 1 matériau rare par destination atteinte, par monde.
-   La Crypte n'a pas encore sa Petite Aventure (acte II) : Cire chaude s'y branchera seule. */
+/* v3.453.0 : choix de Mémoire qui ajoutent 1 matériau rare par destination atteinte, par monde. */
 var PA2_MEMORY_DEST_RARE = { ruins: "pierre_de_plus", crypt: "cire_chaude" };
 
 /* Coffre d'expédition : destination -> objet débloqué (V12, Q8). */
@@ -202,7 +209,8 @@ var PA2_RULES = {
   dentMult: 0.75, flecheMult: 0.85, boisChargeMult: 0.85,
   surprisedMult: 1.2, heavyStep: 4, ronceStep: 3, ronceLoot: 1.3, braiseHealPct: 0.03,
   carteLoot: 0.8, fioleLoot: 0.5, damageSpread: 0.15, maxRounds: 60,
-  wallShiftPct: 0.35, wallChalkRows: 2   // v3.429.0 (Ruines) : un mur bouge après un pas ; la Craie tient à 2 rangées devant
+  wallShiftPct: 0.35, wallChalkRows: 2,  // v3.429.0 (Ruines) : un mur bouge après un pas ; la Craie tient à 2 rangées devant
+  lanternRows: 2, lanternSteps: 3        // v3.454.0 (Crypte) : la Lanterne, deux rangées de plus pendant 3 pas (Mèche longue : +2 pas)
 };
 
 /* v3.387.0 (PA2-5, F2) : la soif du Désert. stepBreath : Souffle perdu à chaque pas ;
@@ -210,7 +218,8 @@ var PA2_RULES = {
 var PA2_WORLD_RULES = {
   forest: { stepBreath: 4 },                // v3.423.0 (B) : la marche essouffle aussi en Forêt
   desert: { stepBreath: 4, gourdeUses: 1 }, // v3.423.0 (B) : 3 -> 4
-  ruins: { stepBreath: 4 }                  // v3.429.0 : pas de soif, des murs qui bougent (PA2_RULES.wallShiftPct)
+  ruins: { stepBreath: 4 },                 // v3.429.0 : pas de soif, des murs qui bougent (PA2_RULES.wallShiftPct)
+  crypt: { stepBreath: 4, sightRows: 1 }    // v3.454.0 (CR10) : l'obscurité, on ne voit que la rangée devant soi
 };
 
 /* ---------- Textes ---------- */
@@ -219,7 +228,8 @@ var PA2_WORLD_RULES = {
 var PA2_FOES = {
   forest: { 1: ["wolf", "goblin"], 2: ["spider", "bramble"], 3: ["foresttroll", "bramble"] },
   desert: { 1: ["scarab"], 2: ["sandwarrior", "scarab"], 3: ["sandworm", "sandwarrior"] }, // v3.387.0 (F4)
-  ruins: { 1: ["skeleton", "zombie"], 2: ["ghoul", "skeleton"], 3: ["gargoyle", "batisseur"] } // v3.429.0
+  ruins: { 1: ["skeleton", "zombie"], 2: ["ghoul", "skeleton"], 3: ["gargoyle", "batisseur"] }, // v3.429.0
+  crypt: { 1: ["spectre", "wraith"], 2: ["wraith", "necromancer"], 3: ["deadknight", "necromancer"] } // v3.454.0
 };
 var PA2_FOE_LINES = {
   wolf: "Deux yeux dans la fougère. Puis quatre.",
@@ -235,7 +245,12 @@ var PA2_FOE_LINES = {
   zombie: "Il marche droit vers toi, sans se presser. Il a tout son temps.",
   ghoul: "Quelque chose court sur les toits, plus vite que toi.",
   gargoyle: "La statue du carrefour n'était pas tournée de ce côté tout à l'heure.",
-  batisseur: "Quelqu'un pose des pierres au milieu de la rue. Il en pose une devant toi."
+  batisseur: "Quelqu'un pose des pierres au milieu de la rue. Il en pose une devant toi.",
+  // v3.454.0 (Crypte)
+  spectre: "Une forme pâle au bout du couloir. Elle ne marche pas : elle se rapproche.",
+  wraith: "La lumière baisse d'un coup. Quelque chose est passé devant.",
+  necromancer: "Une voix dit un nom, doucement. Pas le tien.",
+  deadknight: "Un chevalier couché en travers du passage. Il se lève sans un bruit d'armure."
 };
 
 /* Obstacles : une phrase d'ambiance par gabarit (bible narrative §4.3). */
@@ -267,7 +282,12 @@ var PA2_OBSTACLE_LINES = {
   veine_rougeatre: "Une veine rouge court dans la pierre. Elle tache les doigts.",
   eboulis_recent: "Des pierres fraîchement tombées. La poussière n'est pas encore retombée.",
   source_irreguliere: "L'eau sort par à-coups, puis s'arrête. Puis reprend.",
-  bassin_trouble: "Un bassin d'eau grise. On ne voit pas le fond. On ne voit pas non plus où il finit."
+  bassin_trouble: "Un bassin d'eau grise. On ne voit pas le fond. On ne voit pas non plus où il finit.",
+  // v3.454.0 (Crypte)
+  allee_des_gisants: "Des gisants en travers de l'allée, de mur à mur. Il faut passer entre eux.",
+  grille_basse: "Une grille à hauteur de genou. De l'autre côté, le couloir continue.",
+  couloir_noir: "Un couloir sans lampe. La lumière s'arrête au premier pas.",
+  cire_au_sol: "De la cire sur tout le sol, épaisse, encore molle. Elle garde la forme des pas."
 };
 
 /* Lieux sans choix de voie (bible narrative §4.5). */
@@ -300,6 +320,15 @@ var PA2_PLACES_BY_WORLD = {
     trouvaille: { name: "Une trouvaille", text: "Une pierre posée à part, comme mise de côté. Pas pour toi, mais tu es là." },
     camp: { name: "La cour", text: "Une cour carrée, des bancs de pierre. Quelqu'un les a balayés ce matin." },
     seuil: { name: "Le seuil", text: "Une arche, au milieu de la rue. De l'autre côté, les murs sont plus neufs. Ce qui t'attend là-bas ne dort plus." }
+  },
+  crypt: { // v3.454.0 (Crypte)
+    source: { name: "Une eau qui suinte", text: "De l'eau qui suinte du plafond, froide. Elle a le goût de la pierre." },
+    sourceDry: { name: "Une eau qui suinte", text: "Une goutte, puis rien. Il faut attendre pour une gorgée." },
+    autel: { name: "Une alcôve vide", text: "Une alcôve vide, une coupe posée devant. Elle demande {cost} or. Elle rend une plaie." },
+    autelFree: { name: "Une alcôve vide", text: "Une alcôve vide. La coupe est déjà pleine. Elle ne demande rien." },
+    trouvaille: { name: "Une trouvaille", text: "Quelque chose posé au bord d'une alcôve, à portée de main. Pas pour toi, mais tu es là." },
+    camp: { name: "La salle aux lampes", text: "Une salle basse, trois lampes contre le mur. Sarkel est passé par ici." },
+    seuil: { name: "Le seuil", text: "Une grille ouverte. De l'autre côté, il fait plus froid. Ce qui t'attend là-bas dort encore." }
   }
 };
 
@@ -331,6 +360,16 @@ var PA2_DESTS = {
     tertre: { name: "La chambre scellée", line: "Une chambre fermée, un coffre au milieu. La porte attend quelque chose. Elle n'a pas l'air pressée.",
       win: "La porte a cédé. Dans le coffre, rangé comme on range pour quelqu'un, ce qu'elle gardait.",
       fail: "La porte a tenu. Tu repars avec ce que tu portais. Derrière toi, elle se referme mieux qu'avant." }
+  },
+  crypt: { // v3.454.0 : le sanctuaire à la statue, la chapelle de l'ouest, la rotonde
+    boss: { name: "Le gardien couché", line: "Devant la statue voilée, un chevalier mort, allongé en travers des marches, l'épée sur la poitrine. Il dort.",
+      win: "Il retombe sur les marches, l'épée en travers. Sous lui, un coffre.",
+      pass: "Tu fais le tour, par le bord des marches. Il ne bouge pas. Le coffre reste sous lui." },
+    clairiere: { name: "La chapelle de l'ouest", line: "Une chapelle basse, deux vasques allumées. Rien ne dort ici.",
+      win: "Au pied de l'autel, quelqu'un a laissé de la cire, encore tiède." },
+    tertre: { name: "La rotonde", line: "Une rotonde sous une coupole, un sarcophage au milieu. Une porte basse le ferme.",
+      win: "La porte a cédé. Dans le sarcophage, personne. Il reste ce qu'il gardait.",
+      fail: "La porte a tenu. Tu repars avec ce que tu portais. Derrière toi, quelqu'un se retourne dans son sommeil." }
   }
 };
 
@@ -521,10 +560,31 @@ PA2_HOOKS.carnet = {
     other: "Sur la margelle, un trait de craie. Edda est passée avant toi, un autre jour."
   }
 };
+/* v3.454.0 (Crypte) : une accroche, la lampe qui manque à Sarkel. */
+PA2_HOOKS.lampe = {
+  id: "lampe", worldId: "crypt",
+  title: "La lampe qui manque",
+  lede: "Sarkel a compté ses lampes en rentrant. Il en manque une. Il dit qu'il ne l'a pas posée, et qu'il ne la cherchera pas.",
+  event: {
+    name: "La lampe",
+    text: "Une lampe posée par terre, au milieu du couloir, allumée. Personne autour. La flamme ne bouge pas.",
+    branches: {
+      porter: { label: "La porter devant toi", cost: { breath: 15 }, text: "Elle est lourde pour une lampe. Elle éclaire loin, et elle ne fume pas." },
+      laisser: { label: "La laisser où elle est", text: "Tu passes à côté. Derrière toi, quelqu'un se lève pour la prendre." }
+    }
+  },
+  destRare: { porter: 1 },
+  echo: { dest: "Quelqu'un attendait cette lampe. Il a laissé de la cire en échange." },
+  clairiere: {
+    porter: "Sur l'autel, une place vide, à la taille d'une lampe. Tu y poses la tienne.",
+    other: "Sur l'autel, une lampe éteinte. Personne ne l'a rallumée."
+  }
+};
 var PA2_HOOKS_BY_WORLD = {
   forest: ["chasseur", "gouffre", "pierre", "feu"],
   desert: ["maddoc", "caravane", "sentinelle"],
-  ruins: ["carnet"]
+  ruins: ["carnet"],
+  crypt: ["lampe"] // v3.454.0
 };
 
 window.PA2_BAG_SIZE = PA2_BAG_SIZE;

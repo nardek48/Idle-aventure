@@ -135,6 +135,7 @@
     function push(id, n, sup) { var d = stateDef(id); if (d) out.push({ id: id, def: d, n: (typeof n === "number" && n > 0) ? n : null, suppressed: !!sup }); }
     if (e.downed) push("rising");   // v3.428.2 : à terre, il se relèvera
     if (e.asleep) push("asleep");   // v3.451.0 (Crypte) : il dort
+    if (e.callArmed) push("calling"); // v3.454.0 (Crypte) : l'appel du Nécromancien
     if (num(e.engageIn) > 0) push("approaching", num(e.engageIn));
     if (e.chargeTelegraphed) push("charge");
     if (e.silenceTelegraphed) push("silence");
